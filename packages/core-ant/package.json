@@ -1,0 +1,28 @@
+{
+  "name": "@mpxjs/core-ant",
+  "version": "1.0.0",
+  "description": "mpx runtime core",
+  "keywords": [
+    "miniprogram",
+    "mpx"
+  ],
+  "author": "donghongping",
+  "homepage": "",
+  "license": "ISC",
+  "main": "src/index.js",
+  "directories": {
+    "src": "src"
+  },
+  "files": [
+    "src"
+  ],
+  "dependencies": {
+    "mobx": "^3.6.1"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org"
+  },
+  "scripts": {
+    "test": "echo \"Error: run tests from root\" && exit 1"
+  }
+}

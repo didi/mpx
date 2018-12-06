@@ -1,0 +1,182 @@
+<template>
+  <view class="{{todoCls}}">
+    <view class="view">
+      <checkbox-group class="toggle-wrap" bindchange="toggleTodo">
+        <checkbox class="{{todo.done ? 'toggle checked' : 'toggle'}}" id="toggle" checked="{{todo.done}}"/>
+        <label for="toggle" class="label">
+        </label>
+      </checkbox-group>
+      <view class="label-wrap" bindlongpress="setEditing">
+        <view class="label">{{todo.text}}</view>
+      </view>
+      <view class="destroy" bindtap="deleteTodo"></view>
+    </view>
+    <input class="input" type="text" value="{{todo.text}}" hidden="{{!editing}}" focus="{{editing}}"
+           bindblur="cancelEdit" bindconfirm="doneEdit"/>
+  </view>
+
+</template>
+
+<script>
+  import {createComponent} from '@mpxjs/core'
+  import store from '../store/index'
+
+  createComponent({
+    properties: {
+      todo: Object,
+      index: Number
+    },
+    data: {
+      editing: false
+    },
+    computed: {
+      todoCls () {
+        let cls = 'li todo'
+        if (this.todo.done) {
+          cls += ' completed'
+        }
+        if (this.editing) {
+          cls += ' editing'
+        }
+        return cls
+      }
+    },
+    methods: {
+      ...store.mapMutations(['editTodo']),
+      toggleTodo () {
+        store.commit('toggleTodo', {index: this.index})
+      },
+      setEditing () {
+        this.editing = true
+      },
+      deleteTodo () {
+        store.commit('deleteTodo', {index: this.index})
+      },
+      doneEdit (e) {
+        const value = e.detail.value.trim()
+        if (!value) {
+          this.deleteTodo()
+        } else if (this.editing) {
+          this.editTodo({
+            index: this.index,
+            value
+          })
+        }
+        this.editing = false
+      },
+      cancelEdit () {
+        this.editing = false
+      }
+    }
+  })
+</script>
+
+<style>
+
+  .li {
+    position: relative;
+    font-size: 24px;
+  }
+
+  .li.editing {
+    padding: 0;
+  }
+
+  .li.editing .edit {
+    display: block;
+    width: 506px;
+    padding: 12px 16px;
+    margin: 0 0 0 43px;
+  }
+
+  .li.editing .view {
+    display: none;
+  }
+
+  .li .view {
+    display: flex;
+  }
+
+  .li .toggle {
+    text-align: center;
+    width: 40px;
+    /* auto, since non-WebKit browsers doesn't support input styling */
+    height: auto;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    margin: auto 0;
+    border: none; /* Mobile Safari */
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  .li .toggle {
+    opacity: 0;
+  }
+
+  .li .toggle + .label {
+    /*
+    Firefox requires `#` to be escaped - https://bugzilla.mozilla.org/show_bug.cgi?id=922433
+    IE and Edge requires *everything* to be escaped to render, so we do that instead of just the `#` - https://developer.microsoft.com/en-us/microsoft-edge/platform/issues/7157459/
+    */
+    /*background: red;*/
+    padding: 30px 25px;
+    background-image: url('data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2240%22%20height%3D%2240%22%20viewBox%3D%22-10%20-18%20100%20135%22%3E%3Ccircle%20cx%3D%2250%22%20cy%3D%2250%22%20r%3D%2250%22%20fill%3D%22none%22%20stroke%3D%22%23ededed%22%20stroke-width%3D%223%22/%3E%3C/svg%3E');
+    background-repeat: no-repeat;
+    background-position: center left;
+  }
+
+  .li .toggle.checked + .label {
+    background-image: url('data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2240%22%20height%3D%2240%22%20viewBox%3D%22-10%20-18%20100%20135%22%3E%3Ccircle%20cx%3D%2250%22%20cy%3D%2250%22%20r%3D%2250%22%20fill%3D%22none%22%20stroke%3D%22%23bddad5%22%20stroke-width%3D%223%22/%3E%3Cpath%20fill%3D%22%235dc2af%22%20d%3D%22M72%2025L42%2071%2027%2056l-4%204%2020%2020%2034-52z%22/%3E%3C/svg%3E');
+  }
+
+  .li .toggle-wrap {
+    flex: 0;
+  }
+
+  .li .label {
+    word-break: break-all;
+    padding: 15px 15px 15px 0;
+    display: block;
+    line-height: 30px;
+    transition: color 0.4s;
+  }
+
+  .li .label-wrap {
+    flex: 1;
+  }
+
+  .li.completed .label {
+    color: #d9d9d9;
+    text-decoration: line-through;
+  }
+
+  .li .destroy {
+    display: block;
+    flex: 0;
+
+  }
+
+  .li .destroy:after {
+    content: '\D7';
+    color: #af5b5e;
+    font-size: 30px;
+    position: absolute;
+    right: 20px;
+    top: 16px
+  }
+
+  .li .input {
+    padding: 15px 15px 15px 50px;
+    line-height: 50px;
+    height: 30px;
+  }
+
+</style>
+
+<script type="application/json">
+  {
+    "component": true
+  }
+</script>

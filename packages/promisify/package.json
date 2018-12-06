@@ -1,0 +1,21 @@
+{
+  "name": "@mpxjs/promisify",
+  "version": "1.0.0",
+  "description": "mpx promisify",
+  "author": "donghongping",
+  "homepage": "",
+  "license": "ISC",
+  "main": "src/index.js",
+  "directories": {
+    "src": "src"
+  },
+  "files": [
+    "src"
+  ],
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org"
+  },
+  "scripts": {
+    "test": "echo \"Error: run tests from root\" && exit 1"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "name": "@mpxjs/url-loader",
+  "version": "1.0.2",
+  "description": "url loader for mpx",
+  "author": "donghongping",
+  "license": "Apache",
+  "main": "lib/index.js",
+  "dependencies": {
+    "loader-utils": "^1.1.0",
+    "mime": "^2.2.2"
+  },
+  "directories": {
+    "lib": "lib"
+  },
+  "files": [
+    "lib"
+  ],
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org"
+  },
+  "scripts": {
+    "test": "echo \"Error: run tests from root\" && exit 1"
+  }
+}

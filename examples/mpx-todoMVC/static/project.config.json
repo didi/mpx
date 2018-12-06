@@ -1,0 +1,10 @@
+{
+  "compileType": "miniprogram",
+  "setting": {
+    "newFeature": true
+  },
+  "appid": "touristappid",
+  "projectname": "mpx-test",
+  "description": "A mpx project",
+  "condition": {}
+}

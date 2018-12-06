@@ -1,0 +1,269 @@
+<template>
+  <view class="todoapp">
+    <view class="header">
+      <view class="h1">todos</view>
+      <input class="new-todo" type="text" focus placeholder="What needs to be done?" wx:model="{{inputVal}}" bindconfirm="addTodo"/>
+    </view>
+
+    <view class="main" hidden="{{todos.length===0}}">
+      <checkbox-group bindchange="toggleAll">
+        <checkbox class="toggle-all" id="toggle-all" checked="{{allChecked}}"/>
+        <label class=".label" for="toggle-all"></label>
+      </checkbox-group>
+      <view class="todo-list">
+        <view class="todo-wrap" wx:for="{{filteredTodos}}" wx:key="{{index}}">
+          <todo todo="{{item}}" index="{{index}}"></todo>
+        </view>
+      </view>
+    </view>
+
+    <view class="footer clearfix" hidden="{{todos.length===0}}">
+      <view class="todo-count">
+        <view class="strong">{{remaining}}</view>items left
+      </view>
+
+      <view class="filters" bindtap="setVisibility">
+        <view wx:for="{{filters}}" wx:key="{{index}}" class="li">
+          <view data-item="{{item}}" class="{{visibility === item?'a selected':'a'}}">{{item}}</view>
+        </view>
+      </view>
+
+      <view class="clear-completed" hidden="{{todos.length <= remaining}}" bindtap="clearCompleted">
+        Clear completed
+      </view>
+    </view>
+  </view>
+</template>
+
+<script>
+  import {createComponent} from '@mpxjs/core'
+  import store from '../store/index'
+
+  const filters = {
+    all: todos => todos,
+    active: todos => todos.filter(todo => !todo.done),
+    completed: todos => todos.filter(todo => todo.done)
+  }
+  createComponent({
+    data: {
+      visibility: 'all',
+      filters: Object.keys(filters),
+      inputVal: ''
+    },
+    computed: {
+      ...store.mapState(['todos']),
+      allChecked () {
+        return this.todos.every(todo => todo.done)
+      },
+      filteredTodos () {
+        return filters[this.visibility](this.todos)
+      },
+      remaining () {
+        return filters.active(this.todos).length
+      }
+    },
+    attached () {
+      console.log(this.filteredTodos)
+    },
+    methods: {
+      addTodo (e) {
+        var text = this.inputVal
+        if (text.trim()) {
+          store.commit('addTodo', {text})
+        }
+        this.inputVal = ''
+      },
+      toggleAll () {
+        store.commit('toggleAll', {done: !this.allChecked})
+      },
+      ...store.mapMutations([
+        'clearCompleted'
+      ]),
+      setVisibility (e) {
+        console.log(e.target.dataset.item)
+        this.visibility = e.target.dataset.item
+      }
+    }
+  })
+</script>
+
+<style>
+  .todoapp {
+    background: #fff;
+    margin: 100px 0 40px 0;
+    position: relative;
+    box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.2),
+    0 25px 50px 0 rgba(0, 0, 0, 0.1);
+  }
+
+  .todoapp .h1 {
+    position: absolute;
+    top: -60px;
+    width: 100%;
+    font-size: 80px;
+    font-weight: 100;
+    text-align: center;
+    color: rgba(175, 47, 47, 0.15);
+    -webkit-text-rendering: optimizeLegibility;
+    -moz-text-rendering: optimizeLegibility;
+    text-rendering: optimizeLegibility;
+  }
+
+  .new-todo {
+    font-style: italic;
+    font-weight: 300;
+    color: #333;
+    position: relative;
+    margin: 0;
+    font-size: 20px;
+    padding: 16px 16px 16px 50px;
+    border: none;
+    background: rgba(0, 0, 0, 0.003);
+    box-shadow: inset 0 -2px 1px rgba(0, 0, 0, 0.03);
+  }
+
+  .main {
+    position: relative;
+    z-index: 2;
+    border-top: 1px solid #e6e6e6;
+  }
+
+  .toggle-all {
+    text-align: center;
+    border: none; /* Mobile Safari */
+    opacity: 0;
+    position: absolute;
+  }
+
+  .toggle-all + .label {
+    width: 60px;
+    height: 34px;
+    font-size: 0;
+    position: absolute;
+    top: -48px;
+    left: -20px;
+    -webkit-transform: rotate(90deg);
+    transform: rotate(90deg);
+  }
+
+  .toggle-all + .label:before {
+    content: '\276F';
+    font-size: 22px;
+    color: #e6e6e6;
+    padding: 10px 27px 10px 27px;
+  }
+
+  .toggle-all.checked + .label:before {
+    color: #737373;
+  }
+
+  .todo-wrap + .todo-wrap {
+    border-top: 1px solid #ededed;
+  }
+
+  .footer {
+    color: #777;
+    padding: 10px;
+    text-align: center;
+    border-top: 1px solid #e6e6e6;
+  }
+
+  .footer:before {
+    content: '';
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    height: 50px;
+    overflow: hidden;
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.2),
+    0 8px 0 -3px #f6f6f6,
+    0 9px 1px -3px rgba(0, 0, 0, 0.2),
+    0 16px 0 -6px #f6f6f6,
+    0 17px 2px -6px rgba(0, 0, 0, 0.2);
+  }
+
+  .clearfix:after {
+    content: ".";
+    display: block;
+    height: 0;
+    clear: both;
+    visibility: hidden
+  }
+
+  .todo-count {
+    float: left;
+    text-align: left;
+  }
+
+  .todo-count .strong {
+    font-weight: 300;
+    display: inline;
+  }
+
+  .filters {
+    float: right;
+  }
+
+  .filters .li {
+    display: inline;
+  }
+
+  .filters .li .a {
+    display: inline;
+    color: inherit;
+    margin: 0 3px;
+    padding: 2px 6px;
+    text-decoration: none;
+    border: 1px solid transparent;
+    border-radius: 3px;
+    position: relative;
+
+  }
+
+  .filters .li .a:active, .filters .li .a.selected {
+    border-color: rgba(175, 47, 47, 0.2);
+  }
+
+  .clear-completed,
+  .clear-completed:active {
+    float: left;
+    clear: both;
+    position: relative;
+    line-height: 20px;
+    text-decoration: none;
+  }
+
+  .info {
+    margin: 65px auto 0;
+    color: #bfbfbf;
+    font-size: 10px;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+    text-align: center;
+  }
+
+  .info .p {
+    line-height: 1;
+  }
+
+  .info .a {
+    color: inherit;
+    text-decoration: none;
+    font-weight: 400;
+  }
+
+  .info .a:hover {
+    text-decoration: underline;
+  }
+
+
+</style>
+
+<script type="application/json">
+  {
+    "component": true,
+    "usingComponents": {
+      "todo": "./todo"
+    }
+  }
+</script>
