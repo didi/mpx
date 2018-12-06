@@ -2,7 +2,7 @@ language: node_js
 node_js:
   - 11.3.0
 before_install:
-  - npm ci
+  - npm i
 script:
   - npm run lint
 before_deploy:
