@@ -1,5 +1,7 @@
 # MPX
 
+[![Build Status](https://travis-ci.org/didi/mpx.svg?branch=master)](https://travis-ci.org/didi/mpx)
+
 ## 简介
 
 Mpx是一款致力于提高小程序开发体验的增强型小程序框架，通过Mpx，我们可以在小程序开发中享受到最先进的web开发体验(Vue + Webpack)，Mpx具有以下一些优秀特性：
@@ -38,6 +40,10 @@ npm run build -p
 ```
 
 打开微信开发者工具打开项目目录下的dist文件夹即可预览效果。
+
+## 文档
+
+https://didi.github.io/mpx
 
 ## 生态周边
 
