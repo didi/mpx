@@ -1,0 +1,32 @@
+{
+  "title": "mpx文档",
+  "author": "滴滴出行webapp团队",
+  "structure": {
+    "readme": "intro"
+  },
+  "plugins": ["github", "edit-link", "anchors", "copy-code-button", "github-buttons"],
+  "pluginsConfig": {
+    "github": {
+      "url": "https://github.com/didi/mpx"
+    },
+    "edit-link": {
+      "base": "https://github.com/didi/mpx/tree/master/docs",
+      "label": "完善文档"
+    },
+    "github-buttons": {
+      "buttons": [{
+        "user" : "didi",
+        "repo" : "mpx",
+        "type" : "star",
+        "size" : "small",
+        "count": true
+      }, {
+        "user" : "didi",
+        "repo" : "mpx",
+        "type" : "fork",
+        "size" : "small",
+        "count": true
+      }]
+    }
+  }
+}
