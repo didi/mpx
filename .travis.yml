@@ -15,4 +15,4 @@ deploy:
   github_token: $GH_TOKEN_LHY_MPX
   local_dir: docs/_book
   on:
-    branch: dev
+    branch: master
