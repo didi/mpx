@@ -1,0 +1,17 @@
+language: node_js
+node_js:
+  - 11.3.0
+before_install:
+  - npm ci
+script:
+  - npm run lint
+before_deploy:
+  - cd docs
+  - gitbook install
+  - gitbook build
+  - ls
+deploy:
+  provider: pages
+  skip_cleanup: true
+  github_token: $GH_TOKEN_LHY_MPX
+  local_dir: docs/_book
