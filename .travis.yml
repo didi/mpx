@@ -7,11 +7,12 @@ script:
   - npm run lint
 before_deploy:
   - cd docs
-  - gitbook install
-  - gitbook build
-  - ls
+  - npx gitbook-cli install
+  - npx gitbook-cli build
 deploy:
   provider: pages
   skip_cleanup: true
   github_token: $GH_TOKEN_LHY_MPX
   local_dir: docs/_book
+  on:
+    branch: dev
