@@ -2,12 +2,12 @@ import {
   Reaction,
   action,
   toJS,
-  isObservableArray,
-  comparer
+  isObservableArray
 } from 'mobx'
 import {
   getByPath,
-  type
+  type,
+  isObject
 } from '../helper/utils'
 import queueWatcher from './queueWatcher'
 
@@ -58,8 +58,8 @@ export default class Watcher {
   run () {
     const oldValue = this.value
     this.value = this.getValue()
-    if (this.callback && (!comparer.default(this.value, oldValue) || this.options.forceCallback)) {
-      this.callback(this.value, oldValue)
+    if (this.value !== oldValue || isObject(this.value) || this.options.forceCallback) {
+      this.callback && this.callback(this.value, oldValue)
     }
   }
 
