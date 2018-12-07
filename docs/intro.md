@@ -17,7 +17,7 @@ Mpx是一款致力于提高小程序开发体验的增强型小程序框架，�
 
 ```bash
 # 安装mpx命令行工具
-npm i -g mpx-cli
+npm i -g @mpxjs/cli
 
 # 初始化项目
 mpx init <project-name>
