@@ -1,7 +1,6 @@
 # Summary
 
 * [Introduction](intro.md)
-* [更新记录](update.md)
 * [开始](start.md)
 * [单文件](single/what-is-single-file.md#单文件)
     * [什么是单文件](single/what-is-single-file.md#介绍)
