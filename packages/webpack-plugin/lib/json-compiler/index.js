@@ -6,6 +6,7 @@ const loaderUtils = require('loader-utils')
 const parse = require('../parser')
 const config = require('../config')
 const stripJsonComments = require('strip-json-comments')
+const RawSource = require('webpack-sources').RawSource
 
 module.exports = function (raw) {
   // 该loader中会在每次编译中动态添加entry，不能缓存，否则watch不好使
@@ -161,7 +162,7 @@ module.exports = function (raw) {
           async.waterfall([
             (callback) => {
               if (srcRoot) {
-                callback(null, path.join(context, srcRoot, page) + '.mpx')
+                callback(null, path.posix.join(context, srcRoot, page) + '.mpx')
               } else {
                 this.resolve(context, page, (err, result) => {
                   callback(err, result)
@@ -254,22 +255,81 @@ module.exports = function (raw) {
   } else {
     // page.json或component.json
     if (json.usingComponents) {
+      const processNativeComponent = (sourceDir, outputDir, callback) => {
+        let compilation = this._compilation
+        let compiler = this._compiler
+
+        const finder = (dir, callback) => {
+          async.waterfall([
+            (callback) => {
+              compiler.inputFileSystem.readdir(dir, callback)
+            },
+            (files, callback) => {
+              async.forEach(files, (val, callback) => {
+                let fullPath = path.posix.join(dir, val)
+                let stats = compiler.inputFileSystem.statSync(fullPath)
+                if (stats.isDirectory()) {
+                  finder(fullPath, callback)
+                }
+                if (stats.isFile()) {
+                  let sourcePath = path.posix.relative(sourceDir, fullPath)
+                  let assetsPath = path.posix.join(outputDir, sourcePath)
+                  compiler.inputFileSystem.readFile(fullPath, (err, content) => {
+                    if (err) {
+                      callback(err)
+                    } else {
+                      compilation.assets[assetsPath] = new RawSource(content)
+                      callback()
+                    }
+                  })
+                }
+              }, callback)
+            },
+            (callback) => {
+              this.addContextDependency(sourceDir)
+              callback()
+            }
+          ], callback)
+        }
+
+        finder(sourceDir, callback)
+      }
+
       async.forEachOf(json.usingComponents, (component, name, callback) => {
         if (/^plugin:\/\//.test(component)) {
           return callback()
         }
-        this.resolve(this.context, component, (err, result) => {
+        this.resolve(this.context, component, (err, result, resolveResult) => {
           if (err) return callback(err)
-          let parsed = path.parse(result)
+          let componentResource = resolveResult.path
+          let componentQuery = resolveResult.query
+          let parsed = path.parse(componentResource)
           let componentName = parsed.name
-          let dirName = componentName + hash(result)
-          let componentPath = path.posix.join('components', dirName, componentName)
-          json.usingComponents[name] = publicPath + componentPath
-          // output += `json.usingComponents["${name}"] = "${publicPath + componentPath}";\n`
+          let hashDirName = componentName + hash(result)
+          let outputDir = path.posix.join('components', hashDirName)
+          let componentPath = path.posix.join(outputDir, componentName)
           // 如果之前已经创建了入口，直接return
           if (componentsMap[result] === componentPath) return callback()
           componentsMap[result] = componentPath
-          addEntrySafely(result, componentPath, callback)
+
+          if (parsed.ext === '.js') {
+            // 原生组件
+            let sourceDir = parsed.dir
+            let queryObj = componentQuery ? loaderUtils.parseQuery(componentQuery) : {}
+            let fileName = componentName
+            if (typeof queryObj.relativePath === 'string') {
+              sourceDir = path.posix.resolve(componentResource, queryObj.relativePath)
+              fileName = path.posix.relative(sourceDir, componentResource)
+            }
+
+            json.usingComponents[name] = path.posix.join(publicPath, outputDir, fileName)
+            processNativeComponent(sourceDir, outputDir, callback)
+          } else if (parsed.ext === '.mpx') {
+            json.usingComponents[name] = publicPath + componentPath
+            addEntrySafely(result, componentPath, callback)
+          } else {
+            callback(new Error(`package ${result} should have an entrance with .js or .mpx extension`))
+          }
         })
       }, callback)
     } else {
