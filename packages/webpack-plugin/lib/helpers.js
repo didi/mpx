@@ -339,7 +339,7 @@ module.exports = function createHelpers (loaderContext, options, moduleId, parts
       '!'
     )
   }
-  
+
   return {
     loaders,
     getRequire,
