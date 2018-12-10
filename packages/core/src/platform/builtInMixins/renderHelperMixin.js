@@ -1,13 +1,12 @@
-import {isObject} from '../../helper/utils'
+import {isObject, likeArray} from '../../helper/utils'
 import {toJS, isObservable} from 'mobx'
 
 export default function renderHelperMixin () {
   return {
     methods: {
       __iterate (val, handler) {
-        val = toJS(val)
         let i, l, keys, key
-        if (Array.isArray(val) || typeof val === 'string') {
+        if (likeArray(val) || typeof val === 'string') {
           for (i = 0, l = val.length; i < l; i++) {
             handler(val[i], i)
           }

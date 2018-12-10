@@ -1,3 +1,7 @@
+import {
+  isObservableArray
+} from 'mobx'
+
 export function type (n) {
   return Object.prototype.toString.call(n).slice(8, -1)
 }
@@ -146,12 +150,16 @@ export function isObject (obj) {
   return obj !== null && typeof obj === 'object'
 }
 
+export function likeArray (arr) {
+  return Array.isArray(arr) || isObservableArray(arr)
+}
+
 export function isDef (v) {
   return v !== undefined && v !== null
 }
 
 export function stringifyClass (value) {
-  if (Array.isArray(value)) {
+  if (likeArray(value)) {
     return stringifyArray(value)
   }
   if (isObject(value)) {
@@ -237,7 +245,7 @@ export function mergeObjectArray (arr) {
 }
 
 export function normalizeDynamicStyle (value) {
-  if (Array.isArray(value)) {
+  if (likeArray(value)) {
     return mergeObjectArray(value)
   }
   if (typeof value === 'string') {
