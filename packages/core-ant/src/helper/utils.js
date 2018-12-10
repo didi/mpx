@@ -2,6 +2,10 @@ export function type (n) {
   return Object.prototype.toString.call(n).slice(8, -1)
 }
 
+export function isObject (obj) {
+  return obj !== null && typeof obj === 'object'
+}
+
 export function normalizeMap (arr) {
   if (type(arr) === 'Array') {
     const map = {}
