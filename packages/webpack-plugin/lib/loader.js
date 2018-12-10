@@ -145,11 +145,7 @@ module.exports = function (content) {
   //
   // <json>
   output += '/* json */\n'
-  let json = parts.json
-  // 组件没有json的情况下可以自动补全，所以还是建立require
-  if (componentsMap[this.resource]) {
-    json = json || {}
-  }
+  let json = parts.json || {}
   if (json) {
     output += json.src
       ? (getRequireForSrc('json', json) + '\n')
