@@ -1,3 +1,13 @@
+<p align="center">
+  <a href="https://didi.github.io/">
+    <img alt="babel" src="https://dpubstatic.udache.com/static/dpubimg/34b5079c-0399-406d-8d2e-b8624678f7ff.png" width="546">
+  </a>
+</p>
+
+<p align="center">
+    A enhanced miniprogram framework with data reactivity and deep optimizition.
+</p>
+
 # Introduction
 
 Mpx是一款致力于提高小程序开发体验的增强型小程序框架，通过Mpx，我们能够最先进的web开发体验(Vue + Webpack)来开发生产性能深度优化的小程序，Mpx具有以下一些优秀特性：
