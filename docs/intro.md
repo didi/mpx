@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-    A enhanced miniprogram framework with data reactivity and deep optimizition.
+    An enhanced miniprogram framework with data reactivity and deep optimizition.
 </p>
 
 # Introduction
