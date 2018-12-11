@@ -4,14 +4,18 @@ import { COMPONENT_HOOKS, PAGE_HOOKS, APP_HOOKS } from '../platform/lifecycle'
 const HOOKS_MAP = {
   'component': COMPONENT_HOOKS,
   'page': PAGE_HOOKS,
-  'app': APP_HOOKS
+  'app': APP_HOOKS,
+  'blend': PAGE_HOOKS.concat(COMPONENT_HOOKS)
 }
 
 let CURRENT_HOOKS = []
+let curType
 
 export default function mergeOptions (options = {}, type) {
   if (!options.mixins || !options.mixins.length) return options
-  CURRENT_HOOKS = HOOKS_MAP[type]
+  // 微信小程序使用Component创建page
+  curType = options.blend ? 'blend' : type
+  CURRENT_HOOKS = HOOKS_MAP[curType]
   const newOptions = {}
   extractMixins(newOptions, options)
   return transformHOOKS(newOptions)
@@ -23,7 +27,26 @@ function extractMixins (mergeOptions, options) {
       extractMixins(mergeOptions, mix)
     }
   }
-  mergeMixins(mergeOptions, options)
+  mergeMixins(mergeOptions, extractPageHooks(options))
+}
+
+function extractPageHooks (options) {
+  if (curType === 'blend') {
+    const newOptions = extend({}, options)
+    const methods = newOptions.methods
+    methods && Object.keys(methods).forEach(key => {
+      if (PAGE_HOOKS.indexOf(key) > -1) {
+        if (newOptions[key]) {
+          console.warn(`Don't redefine the lifecycle [${key}] in methods， it will ignore the methods's lifecycle if redefined`)
+        } else {
+          newOptions[key] = methods[key]
+        }
+      }
+    })
+    return newOptions
+  } else {
+    return options
+  }
 }
 
 function mergeMixins (parent, child) {
@@ -101,6 +124,11 @@ function transformHOOKS (options) {
       }
       return result
     })
+    if (options[key] && curType === 'blend' && PAGE_HOOKS.indexOf(key) > -1) {
+      // 使用Component创建page实例，页面专属生命周期需写在methods内部
+      (options.methods || (options.methods = {}))[key] = options[key]
+      delete options[key]
+    }
   })
   return options
 }

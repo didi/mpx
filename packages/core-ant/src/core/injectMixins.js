@@ -33,7 +33,7 @@ export function getInjectedMixins (type) {
 export function mergeInjectedMixins (options, type) {
   const injectedMixins = getInjectedMixins(type)
   if (injectedMixins.length) {
-    options.mixins = options.mixins ? options.mixins.concat(injectedMixins) : injectedMixins
+    options.mixins = options.mixins ? injectedMixins.concat(options.mixins) : injectedMixins
   }
   return options
 }

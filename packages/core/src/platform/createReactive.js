@@ -2,8 +2,7 @@ import {
   proxy,
   deleteProperties,
   enumerableKeys,
-  extend,
-  dissolveAttrs
+  extend
 } from '../helper/utils'
 
 import { mergeInjectedMixins } from '../core/injectMixins'
@@ -12,10 +11,9 @@ import getBuiltInMixins from './builtInMixins/index'
 import MPXProxy from '../core/proxy'
 import CustomKeys from '../core/customOptionKeys'
 
-function getReactiveMixin (mixinType, options = {}, currentInject) {
-  const hookNames = mixinType === 'component' ? ['created', 'detached'] : ['onLoad', 'onUnload']
+function getReactiveMixin (options = {}, currentInject) {
   return {
-    [hookNames[0]] () {
+    created () {
       // 提供代理对象需要的api
       transformApiForProxy(this, currentInject)
       // 缓存options
@@ -31,14 +29,12 @@ function getReactiveMixin (mixinType, options = {}, currentInject) {
       this.$updated = (...rest) => mpxProxy.updated(...rest)
       // 强制执行render
       this.$forceUpdate = (...rest) => mpxProxy.forceUpdate(...rest)
-      // 页面监听视图数据更新
-      mixinType === 'page' && mpxProxy.watchRender()
     },
     attached () {
       // 组件监听视图数据更新, attached之后才能拿到properties
-      mixinType === 'component' && this.$mpxProxy.watchRender()
+      this.$mpxProxy.watchRender()
     },
-    [hookNames[1]] () {
+    detached () {
       this.$mpxProxy.clearWatchers()
     }
   }
@@ -117,6 +113,8 @@ function transformApiForProxy (context, currentInject) {
 
 export default function createReactive (type) {
   return (options) => {
+    // 使用Component创建page，视为混合模式
+    options.blend = type === 'page'
     let currentInject
     if (global.currentInject && global.currentInject.moduleId === global.currentModuleId) {
       currentInject = global.currentInject
@@ -137,21 +135,17 @@ export default function createReactive (type) {
     // reactiveMixin 需转换业务所有数据，故需先进行merge
     let newOptions = mergeOptions(options, type)
     // 实现响应式的mixin必须最先执行
-    const defaultMixins = [getReactiveMixin(type, newOptions, currentInject)]
+    const defaultMixins = [getReactiveMixin(newOptions, currentInject)]
     newOptions.mixins = defaultMixins
     // 二次merge，处理融合defaultMixins
     newOptions = mergeOptions(newOptions, type)
-    if (type === 'component') {
-      newOptions.properties && (newOptions.properties = transformProperties(newOptions.properties))
-    } else {
-      newOptions = dissolveAttrs(newOptions, 'methods')
-    }
+    newOptions.properties && (newOptions.properties = transformProperties(newOptions.properties))
     /**
      * delete CustomKeys
      * 目前微信小程序对实例数据的深拷贝存在bug, 会导致数据实例的引用属性被篡改
      * 防止原生小程序未来支持这些属性导致冲突
      */
     newOptions = deleteProperties(newOptions, CustomKeys)
-    type === 'component' ? Component(newOptions) : Page(newOptions)
+    Component(newOptions)
   }
 }
