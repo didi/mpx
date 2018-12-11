@@ -12,6 +12,8 @@ createApp(object)
 
 ### createPage
 
+> 内部使用[Component的方式创建页面](https://developers.weixin.qq.com/miniprogram/dev/framework/custom-component/component.html)，所以除了支持页面的生命周期之外还同时`支持组件的一切特性`。当使用Component创建页面时，`页面生命周期`需要写在`methods内部`（微信小程序原生规则），mpx进行了一定封装，页面生命周期既能写在外层（同组件生命周期），也可写在methods内部
+
 ``` js
 import mpx, {createPage} from '@mpxjs/core'
 mpx.createPage(object)
@@ -37,7 +39,7 @@ createComponent(object)
   - this.$updated(callback)
 
 
-- this.$forceUpdate (用于强制同步进行setData)
+- this.$forceUpdate (用于强制进行setData，无论数据是否发生改变)
   - this.$forceUpdate()
   - this.$forceUpdate(params) // params的数据会merge到this上已挂载的数据
   - this.$forceUpdate(callback)
