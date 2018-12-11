@@ -38,6 +38,9 @@
         * optimization
    
 * [API参考](api.md)
+    - [createApp](api.md#createapp)
+    - [createPage](api.md#createpage)
+    - [createComponent](api.md#createcomponent)
     - [createStore](api.md#createstore)
     - [toPureObject](api.md#topureobject)
     - [observable](api.md#observable)
