@@ -1,4 +1,12 @@
-# MPX
+<p align="center">
+  <a href="https://didi.github.io/">
+    <img alt="babel" src="https://dpubstatic.udache.com/static/dpubimg/34b5079c-0399-406d-8d2e-b8624678f7ff.png" width="546">
+  </a>
+</p>
+
+<p align="center">
+    A enhanced miniprogram framework with data reactivity and deep optimizition.
+</p>
 
 [![Build Status](https://travis-ci.org/didi/mpx.svg?branch=master)](https://travis-ci.org/didi/mpx)
 
