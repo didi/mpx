@@ -3,7 +3,7 @@ import { buildUrl, filterUndefined } from './util'
 export default function request (config) {
   return new Promise((resolve, reject) => {
     if (!config.url) {
-      reject('no url')
+      reject(new Error('no url'))
       return
     }
     if (!config.method) {

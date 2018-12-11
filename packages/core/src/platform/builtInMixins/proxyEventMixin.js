@@ -1,4 +1,4 @@
-import {getByPath} from '../../helper/utils'
+import { getByPath } from '../../helper/utils'
 
 export default function proxyEventMixin (mixinType) {
   return {

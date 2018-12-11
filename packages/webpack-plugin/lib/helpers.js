@@ -26,7 +26,7 @@ const postcssExtensions = [
   'postcss', 'pcss', 'sugarss', 'sss'
 ]
 
-function getRawRequest ({resource, loaderIndex, loaders}, excludedPreLoaders = /eslint-loader/) {
+function getRawRequest ({ resource, loaderIndex, loaders }, excludedPreLoaders = /eslint-loader/) {
   return loaderUtils.getRemainingRequest({
     resource: resource,
     loaderIndex: loaderIndex,
@@ -229,7 +229,7 @@ module.exports = function createHelpers (loaderContext, options, moduleId, parts
     return loader
   }
 
-  function getLangString (type, {lang}) {
+  function getLangString (type, { lang }) {
     if (type === 'script' || type === 'template' || type === 'styles') {
       return lang || defaultLang[type]
     } else {

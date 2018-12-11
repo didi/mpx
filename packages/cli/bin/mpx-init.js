@@ -118,7 +118,7 @@ function downloadAndGenerate (template) {
   spinner.start()
   // Remove if local template exists
   if (exists(tmp)) rm(tmp)
-  download(template, tmp, {clone}, err => {
+  download(template, tmp, { clone }, err => {
     spinner.stop()
     if (err) logger.fatal('Failed to download repo ' + template + ': ' + err.message.trim())
     generate(name, tmp, to, err => {

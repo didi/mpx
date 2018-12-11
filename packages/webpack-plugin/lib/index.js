@@ -10,16 +10,16 @@ const config = require('./config')
 const normalize = require('./utils/normalize')
 
 class MpxWebpackPlugin {
-  constructor (options = {mode: 'wx'}) {
+  constructor (options = { mode: 'wx' }) {
     this.options = options
   }
 
   static loader (options) {
-    return {loader: normalize.lib('loader'), options}
+    return { loader: normalize.lib('loader'), options }
   }
 
   static pluginLoader (options) {
-    return {loader: normalize.lib('plugin-loader'), options}
+    return { loader: normalize.lib('plugin-loader'), options }
   }
 
   apply (compiler) {
