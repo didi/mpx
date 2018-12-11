@@ -340,96 +340,6 @@ module.exports = function createHelpers (loaderContext, options, moduleId, parts
     )
   }
 
-  function validateJsonByType (json, type) {
-    let warnings = []
-
-    if (!json) {
-      // page和component允许json为空，但是app必须有json
-      if (type === 'page' || type === 'component') {
-        return {
-          type: 'success'
-        }
-      } else if (type === 'app') {
-        return {
-          type: 'error',
-          message: 'App entry must have a json field, now is undefined.'
-        }
-      }
-    }
-
-    const knownConfigs = {
-      'app': {
-        'pages': Array,
-        'window': Object,
-        'tooBar': Object,
-        'networkTimeout': Object,
-        'debug': Boolean,
-        'plugins': Object
-      },
-      'component': {
-        'component': Boolean,
-        'usingComponents': Object
-      },
-      'page': {
-        'navigationBarBackgroundColor': String,
-        'navigationBarTextStyle': String,
-        'navigationBarTitleText': String,
-        'navigationStyle': String,
-        'backgroundColor': String,
-        'backgroundTextStyle': String,
-        'backgroundColorTop': String,
-        'backgroundColorBottom': String,
-        'enablePullDownRefresh': String,
-        'onReachBottomDistance': String,
-        'usingComponents': Object
-      }
-    }
-
-    if (!(type in knownConfigs)) {
-      return {
-        type: 'success'
-      }
-    }
-
-    let config = knownConfigs[type]
-
-    let jsonObj
-    try {
-      jsonObj = JSON.parse(json.content)
-    } catch (e) {
-      return {
-        type: 'error',
-        message: 'fail to parse'
-      }
-    }
-
-    if (typeof jsonObj !== 'object') {
-      return {
-        type: 'error',
-        message: 'invalid format, config should be Object'
-      }
-    }
-
-    for (let i in jsonObj) {
-      if (!(i in config)) {
-        warnings.push({
-          type: 'warn',
-          message: `Maybe config [${i}] is not a valid weixin miniapp config.`
-        })
-      } else {
-        let currentType = Object.prototype.toString.call(jsonObj[i]).slice(8, -1)
-        let configType = config[i].name
-        if (currentType !== configType) {
-          return {
-            type: 'error',
-            message: `Expect the type of config [${i}] to be ${configType} but got ${currentType}`
-          }
-        }
-      }
-    }
-    return warnings
-  }
-
   return {
     loaders,
     getRequire,
@@ -439,7 +349,6 @@ module.exports = function createHelpers (loaderContext, options, moduleId, parts
     getImportForSrc,
     getNamedExportsForSrc,
     getRequestString,
-    getSrcRequestString,
-    validateJsonByType
+    getSrcRequestString
   }
 }
