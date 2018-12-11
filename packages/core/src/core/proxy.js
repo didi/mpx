@@ -16,7 +16,7 @@ import {
   processUndefined
 } from '../helper/utils'
 
-import {watch} from './watcher'
+import { watch } from './watcher'
 
 export default class MPXProxy {
   constructor (options, target, deepDiff) {
@@ -61,7 +61,7 @@ export default class MPXProxy {
   initComputed (computedConfig) {
     const newComputed = {}
     this.computedKeys.forEach(key => {
-      newComputed[key] = computed(computedConfig[key], {context: this.target})
+      newComputed[key] = computed(computedConfig[key], { context: this.target })
     })
     return newComputed
   }

@@ -1,7 +1,7 @@
 language: node_js
 node_js:
   - 11.3.0
-before_install:
+install:
   - npm i
 script:
   - npm run lint
@@ -9,10 +9,17 @@ before_deploy:
   - cd docs
   - npx gitbook-cli install
   - npx gitbook-cli build
+  - echo "//registry.npmjs.org/:_authToken=\${NPM_TOKEN}" >> $HOME/.npmrc 2> /dev/null
 deploy:
-  provider: pages
-  skip_cleanup: true
-  github_token: $GH_TOKEN_LHY_MPX
-  local_dir: docs/_book
-  on:
-    branch: master
+  - provider: pages
+    skip_cleanup: true
+    github_token: $GH_TOKEN_LHY_MPX
+    local_dir: docs/_book
+    on:
+      branch: master
+  - provider: script
+    skip_cleanup: true
+    script:
+      - npm run lerna:publish
+    on:
+      branch: master

@@ -42,7 +42,7 @@ module.exports = function (css, map) {
         .process(css, options)
         .then(result => {
           if (result.messages) {
-            result.messages.forEach(({type, file}) => {
+            result.messages.forEach(({ type, file }) => {
               if (type === 'dependency') {
                 this.addDependency(file)
               }

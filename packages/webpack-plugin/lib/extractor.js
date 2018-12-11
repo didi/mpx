@@ -37,7 +37,7 @@ module.exports = function (content) {
     new LibraryTemplatePlugin(null, 'commonjs2'),
     new NodeTargetPlugin(),
     new SingleEntryPlugin(this.context, request, resourcePath),
-    new LimitChunkCountPlugin({maxChunks: 1})
+    new LimitChunkCountPlugin({ maxChunks: 1 })
   ])
 
   childCompiler.hooks.thisCompilation.tap('MpxWebpackPlugin', (compilation) => {

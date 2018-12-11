@@ -10,7 +10,7 @@ module.exports = (content, filename, needMap) => {
   const cacheKey = hash(filename + content)
   let output = cache.get(cacheKey)
   if (output) return output
-  output = compiler.parseComponent(content, {pad: 'line'})
+  output = compiler.parseComponent(content, { pad: 'line' })
   if (needMap) {
     // source-map cache busting for hot-reloadded modules
     const filenameWithHash = filename + '?' + cacheKey

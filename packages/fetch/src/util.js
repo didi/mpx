@@ -43,4 +43,4 @@ function filterUndefined (data) {
   return data
 }
 
-export {parseUrl, buildUrl, filterUndefined, type}
+export { parseUrl, buildUrl, filterUndefined, type }
