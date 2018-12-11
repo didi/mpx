@@ -1,4 +1,12 @@
-# MPX
+<p align="center">
+  <a href="https://didi.github.io/">
+    <img alt="babel" src="https://dpubstatic.udache.com/static/dpubimg/34b5079c-0399-406d-8d2e-b8624678f7ff.png" width="546">
+  </a>
+</p>
+
+<p align="center">
+    A enhanced miniprogram framework with data reactivity and deep optimizition.
+</p>
 
 [![Build Status](https://travis-ci.org/didi/mpx.svg?branch=master)](https://travis-ci.org/didi/mpx)
 
@@ -55,3 +63,9 @@ https://didi.github.io/mpx
 |@mpxjs/fetch|[![npm version](https://badge.fury.io/js/%40mpxjs%2Ffetch.svg)](https://badge.fury.io/js/%40mpxjs%2Ffetch)|mpx网络请求库，处理wx并发请求限制|
 |@mpxjs/promisify|[![npm version](https://badge.fury.io/js/%40mpxjs%2Fpromisify.svg)](https://badge.fury.io/js/%40mpxjs%2Fpromisify)|将小程序的api转为promise|
 |@mpxjs/url-loader|[![npm version](https://badge.fury.io/js/%40mpxjs%2Furl-loader.svg)](https://badge.fury.io/js/%40mpxjs%2Furl-loader)|处理wxss中图像资源只能用base64引用|
+
+## 交流
+
+微信交流群
+
+![微信交流群](https://dpubstatic.udache.com/static/dpubimg/at_XEnlFb0/WechatIMG1.jpeg)
