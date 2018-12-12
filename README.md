@@ -66,6 +66,4 @@ https://didi.github.io/mpx
 
 ## 交流
 
-微信交流群
-
-![微信交流群](https://dpubstatic.udache.com/static/dpubimg/at_XEnlFb0/WechatIMG1.jpeg)
+打开连接扫码进入微信群或QQ群：https://s.didi.cn/rod
