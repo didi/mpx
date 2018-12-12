@@ -1,4 +1,3 @@
-const path = require('path')
 const normalize = require('./utils/normalize')
 const extractorPath = normalize.lib('extractor')
 const stripExtension = require('./utils/strip-extention')
