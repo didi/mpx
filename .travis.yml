@@ -22,4 +22,4 @@ deploy:
     script:
       - npm run lerna:publish
     on:
-      branch: master
+      branch: release
