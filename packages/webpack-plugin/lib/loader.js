@@ -4,6 +4,7 @@ const parse = require('./parser')
 const createHelpers = require('./helpers')
 const loaderUtils = require('loader-utils')
 const InjectDependency = require('./dependency/InjectDependency')
+const stripExtension = require('./utils/strip-extention')
 
 module.exports = function (content) {
   this.cacheable()
@@ -13,6 +14,7 @@ module.exports = function (content) {
 
   const pagesMap = this._compilation.__mpx__.pagesMap
   const componentsMap = this._compilation.__mpx__.componentsMap
+  const resource = stripExtension(this.resource)
 
   const loaderContext = this
   const isProduction = this.minimize || process.env.NODE_ENV === 'production'
@@ -37,7 +39,7 @@ module.exports = function (content) {
 
   const parts = parse(content, fileName, this.sourceMap)
   //
-  const hasScoped = parts.styles.some(({ scoped }) => scoped)
+  const hasScoped = parts.styles.some(({scoped}) => scoped)
   const templateAttrs = parts.template && parts.template.attrs && parts.template.attrs
   const hasComment = templateAttrs && templateAttrs.comments
 
@@ -85,10 +87,10 @@ module.exports = function (content) {
       ? (getNamedExportsForSrc('script', script) + '\n')
       : (getNamedExports('script', script) + '\n') + '\n'
   } else {
-    if (pagesMap[this.resource]) {
+    if (pagesMap[resource]) {
       // page
       output += 'Page({})' + '\n'
-    } else if (componentsMap[this.resource]) {
+    } else if (componentsMap[resource]) {
       // component
       output += 'Component({})' + '\n'
     } else {

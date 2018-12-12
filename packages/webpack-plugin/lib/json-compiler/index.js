@@ -6,6 +6,9 @@ const loaderUtils = require('loader-utils')
 const parse = require('../parser')
 const config = require('../config')
 const stripJsonComments = require('strip-json-comments')
+const normalize = require('../utils/normalize')
+const nativeLoaderPath = normalize.lib('native-loader')
+const stripExtension = require('../utils/strip-extention')
 
 module.exports = function (raw) {
   // 该loader中会在每次编译中动态添加entry，不能缓存，否则watch不好使
@@ -20,7 +23,8 @@ module.exports = function (raw) {
   const componentsMap = this._compilation.__mpx__.componentsMap
   const mode = this._compilation.__mpx__.mode
   const rootName = this._compilation._preparedEntrypoints[0].name
-  const resourcePath = pagesMap[this.resource] || componentsMap[this.resource] || rootName
+  const resource = stripExtension(this.resource)
+  const resourcePath = pagesMap[resource] || componentsMap[resource] || rootName
   const publicPath = this._compilation.outputOptions.publicPath || ''
 
   let entryDeps = new Set()
@@ -164,6 +168,8 @@ module.exports = function (raw) {
                 callback(null, path.join(context, srcRoot, page) + '.mpx')
               } else {
                 this.resolve(context, page, (err, result) => {
+                  if (err) return callback(err)
+                  result = stripExtension(result)
                   callback(err, result)
                 })
               }
@@ -261,15 +267,23 @@ module.exports = function (raw) {
         this.resolve(this.context, component, (err, result) => {
           if (err) return callback(err)
           let parsed = path.parse(result)
-          let componentName = parsed.name
-          let dirName = componentName + hash(result)
-          let componentPath = path.posix.join('components', dirName, componentName)
-          json.usingComponents[name] = publicPath + componentPath
-          // output += `json.usingComponents["${name}"] = "${publicPath + componentPath}";\n`
-          // 如果之前已经创建了入口，直接return
-          if (componentsMap[result] === componentPath) return callback()
-          componentsMap[result] = componentPath
-          addEntrySafely(result, componentPath, callback)
+          let ext = parsed.ext
+          if (ext === '.mpx' || ext === '.js') {
+            result = stripExtension(result)
+            let componentName = parsed.name
+            let dirName = componentName + hash(result)
+            let componentPath = path.posix.join('components', dirName, componentName)
+            json.usingComponents[name] = publicPath + componentPath
+            // 如果之前已经创建了入口，直接return
+            if (componentsMap[result] === componentPath) return callback()
+            componentsMap[result] = componentPath
+            if (ext === '.js') {
+              result = nativeLoaderPath + '!' + result
+            }
+            addEntrySafely(result, componentPath, callback)
+          } else {
+            callback(new Error('Component\'s extension must be .mpx or .js'))
+          }
         })
       }, callback)
     } else {

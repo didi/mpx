@@ -2,6 +2,7 @@ const path = require('path')
 const async = require('async')
 const hash = require('hash-sum')
 const SingleEntryPlugin = require('webpack/lib/SingleEntryPlugin')
+const stripExtension = require('./utils/strip-extention')
 
 // webpack4中.json文件会走json parser，抽取内容的占位内容必须为合法json，否则会在parse阶段报错
 const defaultResultSource = '{}'
@@ -92,6 +93,7 @@ module.exports = function (source) {
       async.forEachOf(components, (component, name, callback) => {
         this.resolve(this.context, component, (err, result) => {
           if (err) return callback(err)
+          result = stripExtension(result)
           let parsed = path.parse(result)
           let componentName = parsed.name
           let dirName = componentName + hash(result)
@@ -111,6 +113,7 @@ module.exports = function (source) {
       async.forEachOf(pages, (page, name, callback) => {
         this.resolve(this.context, page, (err, result) => {
           if (err) return callback(err)
+          result = stripExtension(result)
           let pagePath = getName(path.posix.join('', page))
           if (/^\./.test(pagePath)) {
             return callback(new Error(`Page's path ${page} which is referenced in ${this.context} must be a subdirectory of ${this.context}!`))

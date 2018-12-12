@@ -5,6 +5,7 @@ const LibraryTemplatePlugin = require('webpack/lib/LibraryTemplatePlugin')
 const SingleEntryPlugin = require('webpack/lib/SingleEntryPlugin')
 const LimitChunkCountPlugin = require('webpack/lib/optimize/LimitChunkCountPlugin')
 const normalize = require('./utils/normalize')
+const stripExtension = require('./utils/strip-extention')
 
 const defaultResultSource = '// removed by extractor'
 
@@ -22,7 +23,8 @@ module.exports = function (content) {
   const extract = this._compilation.__mpx__.extract
   const rootName = this._compilation._preparedEntrypoints[0].name
 
-  const resourcePath = pagesMap[this.resource] || componentsMap[this.resource] || rootName
+  const resource = stripExtension(this.resource)
+  const resourcePath = pagesMap[resource] || componentsMap[resource] || rootName
 
   // 使用子编译器生成需要抽离的json，styles和template
   const contentLoader = normalize.lib('content-loader')
@@ -37,7 +39,7 @@ module.exports = function (content) {
     new LibraryTemplatePlugin(null, 'commonjs2'),
     new NodeTargetPlugin(),
     new SingleEntryPlugin(this.context, request, resourcePath),
-    new LimitChunkCountPlugin({ maxChunks: 1 })
+    new LimitChunkCountPlugin({maxChunks: 1})
   ])
 
   childCompiler.hooks.thisCompilation.tap('MpxWebpackPlugin', (compilation) => {
@@ -78,7 +80,7 @@ module.exports = function (content) {
     }, this)
 
     if (!source) {
-      return nativeCallback(new Error("Didn't get a result from child compiler"))
+      return nativeCallback(new Error('Didn\'t get a result from child compiler'))
     }
 
     try {
