@@ -20,7 +20,6 @@ const PAGE_HOOKS = [
   'onResize'
 ]
 
-// 微信小程序可以使用Component创建页面
 const COMPONENT_HOOKS = [
   'created',
   'attached',
@@ -29,7 +28,7 @@ const COMPONENT_HOOKS = [
   'detached',
   'pageShow',
   'pageHide'
-].concat(PAGE_HOOKS)
+]
 
 export {
   APP_HOOKS,

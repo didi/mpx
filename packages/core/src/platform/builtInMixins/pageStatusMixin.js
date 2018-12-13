@@ -1,5 +1,5 @@
 export default function pageStatusMixin (mixinType, options) {
-  if (mixinType === 'page' || options.page) {
+  if (mixinType === 'page') {
     return {
       data: {
         __pageStatus: 'show'

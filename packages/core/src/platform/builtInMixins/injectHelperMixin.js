@@ -1,4 +1,4 @@
-import {extend, concat, stringifyClass, normalizeDynamicStyle, parseStyleText, genStyleText} from '../../helper/utils'
+import { extend, concat, stringifyClass, normalizeDynamicStyle, parseStyleText, genStyleText } from '../../helper/utils'
 
 export default function injectHelperMixin () {
   return {

@@ -31,13 +31,16 @@
 * [构建配置](compilationEnhance/index.md)
     * [自动配置](compilationEnhance/index.md#自动配置)
     * [手动配置](compilationEnhance/index.md#手动配置)
-        * MpxWebpackPlugin.loader
-        * @mpxjs/url-loader
-        * MpxWebpackPlugin
-        * output.filename
-        * optimization
-   
+        * [@mpxjs/webpack-plugin](compilationEnhance/index.md#mpxjswebpack-plugin)
+        * [MpxWebpackPlugin.loader](compilationEnhance/index.md#mpxwebpackpluginloader)
+        * [@mpxjs/url-loader](compilationEnhance/index.md#mpxjsurl-loader)
+        * [output.filename](compilationEnhance/index.md#outputfilename)
+        * [optimization](compilationEnhance/index.md#optimization)
+* [原生组件支持](native-component.md)
 * [API参考](api.md)
+    - [createApp](api.md#createapp)
+    - [createPage](api.md#createpage)
+    - [createComponent](api.md#createcomponent)
     - [createStore](api.md#createstore)
     - [toPureObject](api.md#topureobject)
     - [observable](api.md#observable)
@@ -49,7 +52,7 @@
     * [fetch](extend/index.md#fetch)
     * [promisify](extend/index.md#promisify)
 * [mpx-ant vs mpx](mpx-ant.md)
-* [mpx运行机制](understanding.md)
-    * [数据响应与性能优化](understanding.md#数据响应与性能优化)
-    * [编译构建](understanding.md#编译构建)
-    * [图像资源处理](understanding.md#图像资源处理)
+* [mpx运行机制](understanding/understanding.md)
+    * [数据响应与性能优化](understanding/understanding.md#数据响应与性能优化)
+    * [编译构建](understanding/understanding.md#编译构建)
+    * [图像资源处理](understanding/resource.md#图像资源处理)

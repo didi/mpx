@@ -40,7 +40,7 @@ module.exports = function generate (name, src, dest, done) {
     noEscape: true
   })
 
-  const helpers = {chalk, logger}
+  const helpers = { chalk, logger }
 
   if (opts.metalsmith && typeof opts.metalsmith.before === 'function') {
     opts.metalsmith.before(metalsmith, opts, helpers)
@@ -62,7 +62,7 @@ module.exports = function generate (name, src, dest, done) {
     .build((err, files) => {
       done(err)
       if (typeof opts.complete === 'function') {
-        const helpers = {chalk, logger, files}
+        const helpers = { chalk, logger, files }
         opts.complete(data, helpers)
       } else {
         logMessage(opts.completeMessage, data)
@@ -115,7 +115,7 @@ function renderTemplateFiles (skipInterpolation) {
     const metalsmithMetadata = metalsmith.metadata()
     async.each(keys, (file, next) => {
       // skipping files with skipInterpolation option
-      if (skipInterpolation && multimatch([file], skipInterpolation, {dot: true}).length) {
+      if (skipInterpolation && multimatch([file], skipInterpolation, { dot: true }).length) {
         return next()
       }
       const str = files[file].contents.toString()
@@ -124,7 +124,7 @@ function renderTemplateFiles (skipInterpolation) {
           err.message = `[${file}] ${err.message}`
           return next(err)
         }
-        files[file].contents = new Buffer(res)
+        files[file].contents = Buffer.from(res)
         next()
       })
     }, done)

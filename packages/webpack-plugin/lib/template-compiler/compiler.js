@@ -365,7 +365,7 @@ function parseHTML (html, options) {
     }
 
     if (!unary) {
-      stack.push({tag: tagName, lowerCasedTag: tagName.toLowerCase(), attrs: attrs})
+      stack.push({ tag: tagName, lowerCasedTag: tagName.toLowerCase(), attrs: attrs })
       lastTag = tagName
     }
 
@@ -1051,7 +1051,7 @@ function postProcessComponentIs (el, root) {
     }
     el = tempNode
   }
-  return {el, root}
+  return { el, root }
 }
 
 function serialize (root) {
