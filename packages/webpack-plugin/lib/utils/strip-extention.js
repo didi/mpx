@@ -10,7 +10,7 @@ function stripExtension (request) {
       resource = request.slice(0, queryIndex)
     }
     let parsed = path.parse(resource)
-    seen[request] = path.posix.join(parsed.dir, parsed.name)
+    seen[request] = path.join(parsed.dir, parsed.name)
   }
   return seen[request]
 }

@@ -2,6 +2,7 @@ const normalize = require('./utils/normalize')
 const extractorPath = normalize.lib('extractor')
 const stripExtension = require('./utils/strip-extention')
 const jsonCompilerPath = normalize.lib('json-compiler/index')
+const loaderUtils = require('loader-utils')
 
 module.exports = function (content) {
   this.cacheable()
@@ -44,7 +45,7 @@ module.exports = function (content) {
       requestString = defaultLoaders[type] + '!' + requestString
     }
     requestString = '!!' + getExtractorString(type, 0) + '!' + requestString
-    return `require('${requestString}')\n`
+    return `require(${loaderUtils.stringifyRequest(this, requestString)})\n`
   }
 
   for (let type in relativeFiles) {
