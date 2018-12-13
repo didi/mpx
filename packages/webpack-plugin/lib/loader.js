@@ -39,7 +39,7 @@ module.exports = function (content) {
 
   const parts = parse(content, fileName, this.sourceMap)
   //
-  const hasScoped = parts.styles.some(({scoped}) => scoped)
+  const hasScoped = parts.styles.some(({ scoped }) => scoped)
   const templateAttrs = parts.template && parts.template.attrs && parts.template.attrs
   const hasComment = templateAttrs && templateAttrs.comments
 
