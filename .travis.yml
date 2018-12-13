@@ -9,6 +9,7 @@ before_deploy:
   - cd docs
   - npx gitbook-cli install
   - npx gitbook-cli build
+  - cd ..
   - echo "//registry.npmjs.org/:_authToken=\${NPM_TOKEN}" >> $HOME/.npmrc 2> /dev/null
 deploy:
   - provider: pages
@@ -22,4 +23,5 @@ deploy:
     script:
       - npm run lerna:publish
     on:
-      branch: release
+      branch: master
+      tags: true
