@@ -1,6 +1,7 @@
 const path = require('path')
 const parse = require('./parser')
 const loaderUtils = require('loader-utils')
+const stripExtension = require('./utils/strip-extention')
 
 module.exports = function (content) {
   this.cacheable()
@@ -9,6 +10,7 @@ module.exports = function (content) {
   }
   const pagesMap = this._compilation.__mpx__.pagesMap
   const componentsMap = this._compilation.__mpx__.componentsMap
+  const resource = stripExtension(this.resource)
   const query = loaderUtils.getOptions(this) || {}
   const filename = path.basename(this.resourcePath)
   const parts = parse(content, filename, this.sourceMap)
@@ -23,12 +25,12 @@ module.exports = function (content) {
       jsonObj = JSON.parse(part.content)
     }
 
-    if (pagesMap[this.resource]) {
+    if (pagesMap[resource]) {
       // page
       if (!jsonObj.usingComponents) {
         jsonObj.usingComponents = {}
       }
-    } else if (componentsMap[this.resource]) {
+    } else if (componentsMap[resource]) {
       // component
       if (jsonObj.component !== true) {
         jsonObj.component = true

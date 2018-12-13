@@ -8,6 +8,7 @@ const InjectDependency = require('./dependency/InjectDependency')
 const NullFactory = require('webpack/lib/NullFactory')
 const config = require('./config')
 const normalize = require('./utils/normalize')
+const stripExtension = require('./utils/strip-extention')
 
 class MpxWebpackPlugin {
   constructor (options = { mode: 'wx' }) {
@@ -65,7 +66,7 @@ class MpxWebpackPlugin {
       params.normalModuleFactory.hooks.parser.for('javascript/auto').tap('MpxWebpackPlugin', (parser) => {
         parser.hooks.call.for('__mpx_resolve_path__').tap('MpxWebpackPlugin', (expr) => {
           if (expr.arguments[0]) {
-            const resource = expr.arguments[0].value
+            const resource = stripExtension(expr.arguments[0].value)
             const pagesMap = compilation.__mpx__.pagesMap
             const componentsMap = compilation.__mpx__.componentsMap
             const publicPath = compilation.outputOptions.publicPath || ''
