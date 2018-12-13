@@ -258,32 +258,48 @@ module.exports = function (raw) {
     })
   } else {
     // page.json或component.json
+    const processComponent = (component, rewritePath, callback) => {
+      if (/^plugin:\/\//.test(component)) {
+        return callback()
+      }
+      this.resolve(this.context, component, (err, result) => {
+        if (err) return callback(err)
+        let parsed = path.parse(result)
+        let ext = parsed.ext
+        if (ext === '.mpx' || ext === '.js') {
+          result = stripExtension(result)
+          let componentName = parsed.name
+          let dirName = componentName + hash(result)
+          let componentPath = path.posix.join('components', dirName, componentName)
+          rewritePath(publicPath + componentPath)
+          // 如果之前已经创建了入口，直接return
+          if (componentsMap[result] === componentPath) return callback()
+          componentsMap[result] = componentPath
+          if (ext === '.js') {
+            result = nativeLoaderPath + '!' + result
+          }
+          addEntrySafely(result, componentPath, callback)
+        } else {
+          callback(new Error('Component\'s extension must be .mpx or .js'))
+        }
+      })
+    }
     if (json.usingComponents) {
       async.forEachOf(json.usingComponents, (component, name, callback) => {
-        if (/^plugin:\/\//.test(component)) {
-          return callback()
+        processComponent(component, (path) => {
+          json.usingComponents[name] = path
+        }, callback)
+      }, callback)
+    } else if (json.componentGenerics) {
+      // 处理抽象节点
+      async.forEachOf(json.componentGenerics, (genericCfg, name, callback) => {
+        if (genericCfg && genericCfg.default) {
+          processComponent(genericCfg.default, (path) => {
+            json.componentGenerics[name].default = path
+          }, callback)
+        } else {
+          callback()
         }
-        this.resolve(this.context, component, (err, result) => {
-          if (err) return callback(err)
-          let parsed = path.parse(result)
-          let ext = parsed.ext
-          if (ext === '.mpx' || ext === '.js') {
-            result = stripExtension(result)
-            let componentName = parsed.name
-            let dirName = componentName + hash(result)
-            let componentPath = path.posix.join('components', dirName, componentName)
-            json.usingComponents[name] = publicPath + componentPath
-            // 如果之前已经创建了入口，直接return
-            if (componentsMap[result] === componentPath) return callback()
-            componentsMap[result] = componentPath
-            if (ext === '.js') {
-              result = nativeLoaderPath + '!' + result
-            }
-            addEntrySafely(result, componentPath, callback)
-          } else {
-            callback(new Error('Component\'s extension must be .mpx or .js'))
-          }
-        })
       }, callback)
     } else {
       callback()
