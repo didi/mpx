@@ -54,7 +54,7 @@ mpx.createApp({
 
 ## Fetch
 
-小程序request存在不限域名的并发限制，因此封装一个fetch来处理这种缺陷，能支持请求优先级，同时fetch还支持请求加签名，拦截器，请求取消等等
+小程序request存在不限域名的并发限制，因此封装一个fetch来处理这种缺陷，能支持请求优先级，同时fetch还支持拦截器，请求取消等等
 
 
 ### 使用说明
@@ -84,25 +84,9 @@ mpx-fetch提供了一个实例 **xfetch** ，该实例包含以下api
 
 - fetch(config, priority)， 正常的promisify风格的请求方法, priority表示请求优先级（normal，low），默认为normal
 - addLowPriorityWhiteList(rules)， 按域名规则设置低优先级请求的白名单，接收一个参数，可以是字符串，也可以是正则表达式，也可以是数组 (如果fetch传入了第二个参数，那么无视这个白名单)
-- addSignWhiteList(rules)， 设置签名白名单，接收一个参数，可以是字符串，也可以是正则表达式，也可以是数组
 - CancelToken，实例属性，用于创建一个取消请求的凭证。
 - create()， 用于创建一个新的mpx-fetch实例
 - interceptors，实例属性，用于添加拦截器，包含两个属性，request & response
-
-### 请求加签名
-
-```js
-mpx.xfetch.fetch({
-	url: 'http://xxx.com',
-	data: {
-		name: 'test'
-	},
-	needSign: true
-})
-
-// or addSignWhiteList
-mpx.xfetch.addSignWhiteList('http://xxx.com')
-```
 
 ### 请求优先级
 
@@ -146,7 +130,7 @@ mpx.xfetch.fetch({
 })
 cancelToken.exec('手动取消请求') // 执行后请求中断，返回abort fail
 ```
-### 支持 emulateJSON (version: 2.0.3)
+### 支持 emulateJSON
 
 ```js
 mpx.xfetch.fetch({
@@ -159,7 +143,7 @@ mpx.xfetch.fetch({
 })
 ```
 
-### 支持 params （version 2.0.3, ps: 小程序本身不支持params）
+### 支持 params
 ```js
 mpx.xfetch.fetch({
 	url: 'http://xxx.com',
@@ -180,7 +164,7 @@ mpx.xfetch.fetch({
 	emulateJSON: true // 等价于header = {'content-type': 'application/x-www-form-urlencoded'}
 })
 ```
-### 自动过滤值为undefined和null的属性，其中null未转换成空字符串（version 2.0.4）
+### 自动过滤值为undefined和null的属性，其中null未转换成空字符串
 
 ## Promisify
 
