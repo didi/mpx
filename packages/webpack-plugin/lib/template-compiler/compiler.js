@@ -829,7 +829,7 @@ function parseMustache (raw) {
     while (match = tagREG.exec(raw)) {
       let pre = raw.substring(lastLastIndex, match.index)
       if (pre) ret.push(stringify(pre))
-      ret.push(match[1])
+      ret.push(`(${match[1]})`)
       lastLastIndex = tagREG.lastIndex
     }
     let post = raw.substring(lastLastIndex)
