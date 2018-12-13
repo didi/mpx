@@ -22,4 +22,5 @@ deploy:
     script:
       - npm run lerna:publish
     on:
-      branch: release
+      branch: master
+      tags: true
