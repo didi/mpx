@@ -25,7 +25,8 @@ module.exports = function (css, map) {
       if (loaderOptions.transRpx) {
         plugins.push(rpx({
           mode: loaderOptions.transRpx === 'all' ? 'all' : 'only',
-          comment: loaderOptions.comment
+          comment: loaderOptions.comment,
+          designWidth: loaderOptions.designWidth
         }))
       }
 

@@ -251,7 +251,8 @@ module.exports = function createHelpers (loaderContext, options, moduleId, parts
           scoped: !!scoped,
           sourceMap: needCssSourceMap,
           transRpx: options.transRpx,
-          comment: options.comment || 'use rpx'
+          comment: options.comment,
+          designWidth: options.designWidth
         }) +
         '!'
       // normalize scss/sass/postcss if no specific loaders have been provided
