@@ -5,7 +5,6 @@ const SingleEntryPlugin = require('webpack/lib/SingleEntryPlugin')
 const loaderUtils = require('loader-utils')
 const parse = require('../parser')
 const config = require('../config')
-const stripJsonComments = require('strip-json-comments')
 const normalize = require('../utils/normalize')
 const nativeLoaderPath = normalize.lib('native-loader')
 const stripExtension = require('../utils/strip-extention')
@@ -63,7 +62,7 @@ module.exports = function (raw) {
 
   let json
   try {
-    json = JSON.parse(stripJsonComments(raw))
+    json = JSON.parse(raw)
   } catch (err) {
     return callback(err)
   }
