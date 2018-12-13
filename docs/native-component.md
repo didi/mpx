@@ -71,18 +71,22 @@
 </script>
 ```
 
-**node_modules/npm-b-wx-component/src/index.js**
+**node_modules/npm-a-wx-component/src/index.wxml**
 ```html
 <template>
   <view>
+    <view>this is a native component</view>
     <!-- 原生组件内部使用原生组件 -->
     <npm-b-wx-component></npm-b-wx-component>
   </view>
 </template>
+```
 
-<script type="application/json">
+**node_modules/npm-a-wx-component/src/index.json**
+```json
+{
   "usingComponents": {
     "npm-b-wx-component": "npm-b-wx-component"
   }
-</script>
+}
 ```
