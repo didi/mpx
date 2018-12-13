@@ -5,10 +5,10 @@
 * [单文件](single/what-is-single-file.md#单文件)
     * [什么是单文件](single/what-is-single-file.md#介绍)
     * [编辑器/IDE配置](single/what-is-single-file.md#编辑器ide高亮、提示)
-* [template扩展特性](single/template-enhance.md#template扩展特性)
-    * [动态组件](single/template-enhance.md#动态组件)
+* [template扩展特性](single/template-enhance.md#template扩展特性) 
     * [class与style绑定](single/template-enhance.md#class与style绑定)
     * [内联事件绑定](single/template-enhance.md#内联事件绑定)
+    * [动态组件](single/template-enhance.md#动态组件)
     * [双向绑定](single/template-enhance.md#双向绑定)
 * [script扩展特性](single/script-enhance.md#script域扩展)
     * [computed](single/script-enhance.md#computed)
@@ -31,12 +31,12 @@
 * [构建配置](compilationEnhance/index.md)
     * [自动配置](compilationEnhance/index.md#自动配置)
     * [手动配置](compilationEnhance/index.md#手动配置)
-        * MpxWebpackPlugin.loader
-        * @mpxjs/url-loader
-        * MpxWebpackPlugin
-        * output.filename
-        * optimization
-   
+        * [@mpxjs/webpack-plugin](compilationEnhance/index.md#mpxjswebpack-plugin)
+        * [MpxWebpackPlugin.loader](compilationEnhance/index.md#mpxwebpackpluginloader)
+        * [@mpxjs/url-loader](compilationEnhance/index.md#mpxjsurl-loader)
+        * [output.filename](compilationEnhance/index.md#outputfilename)
+        * [optimization](compilationEnhance/index.md#optimization)
+* [原生组件支持](native-component.md)
 * [API参考](api.md)
     - [createApp](api.md#createapp)
     - [createPage](api.md#createpage)
@@ -52,7 +52,7 @@
     * [fetch](extend/index.md#fetch)
     * [promisify](extend/index.md#promisify)
 * [mpx-ant vs mpx](mpx-ant.md)
-* [mpx运行机制](understanding.md)
-    * [数据响应与性能优化](understanding.md#数据响应与性能优化)
-    * [编译构建](understanding.md#编译构建)
-    * [图像资源处理](understanding.md#图像资源处理)
+* [mpx运行机制](understanding/understanding.md)
+    * [数据响应与性能优化](understanding/understanding.md#数据响应与性能优化)
+    * [编译构建](understanding/understanding.md#编译构建)
+    * [图像资源处理](understanding/resource.md#图像资源处理)
