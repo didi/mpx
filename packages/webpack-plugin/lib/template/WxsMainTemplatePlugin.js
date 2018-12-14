@@ -1,9 +1,6 @@
 const Template = require('webpack/lib/Template')
 
 module.exports = class WxsMainTemplatePlugin {
-  constructor () {
-  }
-
   apply (mainTemplate) {
     mainTemplate.hooks.require.tap('MainTemplate', (source, chunk, hash) => {
       return Template.asString([
@@ -37,7 +34,7 @@ module.exports = class WxsMainTemplatePlugin {
     })
     mainTemplate.hooks.requireExtensions.tap(
       'WxsMainTemplatePlugin',
-      (source) => {
+      () => {
         return ''
       }
     )
