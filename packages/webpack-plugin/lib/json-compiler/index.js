@@ -262,15 +262,24 @@ module.exports = function (raw) {
       if (/^plugin:\/\//.test(component)) {
         return callback()
       }
-      this.resolve(this.context, component, (err, result) => {
+      this.resolve(this.context, component, (err, result, info) => {
         if (err) return callback(err)
         let parsed = path.parse(result)
         let ext = parsed.ext
+        result = stripExtension(result)
         if (ext === '.mpx' || ext === '.js') {
-          result = stripExtension(result)
-          let componentName = parsed.name
-          let dirName = componentName + hash(result)
-          let componentPath = path.posix.join('components', dirName, componentName)
+          let componentPath
+          if (ext === '.js') {
+            let root = info.descriptionFileRoot
+            if (info.descriptionFileData && info.descriptionFileData.miniprogram) {
+              root = path.join(root, info.descriptionFileData.miniprogram)
+            }
+            let relativePath = path.posix.relative(root, result)
+            componentPath = path.posix.join('components', hash(root), relativePath)
+          } else {
+            let componentName = parsed.name
+            componentPath = path.posix.join('components', componentName + hash(result), componentName)
+          }
           rewritePath(publicPath + componentPath)
           // 如果之前已经创建了入口，直接return
           if (componentsMap[result] === componentPath) return callback()

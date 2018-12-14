@@ -13,7 +13,7 @@ module.exports = function (content) {
   }
 
   const defaultLoaders = {
-    template: 'html-loader?attrs=audio:src image:src video:src cover-image:src',
+    template: 'html-loader?attrs=audio:src image:src video:src cover-image:src wxs:src',
     styles: 'css-loader' + cssLoaderOptions,
     json: jsonCompilerPath
   }
