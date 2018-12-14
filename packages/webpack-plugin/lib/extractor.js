@@ -46,7 +46,9 @@ module.exports = function (content) {
     compilation.hooks.normalModuleLoader.tap('MpxWebpackPlugin', (loaderContext, module) => {
       // 传递编译结果，子编译器进入content-loader后直接输出
       loaderContext.__mpx__ = {
-        content
+        content,
+        fileDependencies: this.getDependencies(),
+        contextDependencies: this.getContextDependencies()
       }
     })
   })
