@@ -34,6 +34,7 @@ class MpxWebpackPlugin {
         compilation.__mpx__ = {
           pagesMap: {},
           componentsMap: {},
+          wxsMap: {},
           mode: this.options.mode,
           extract: (content, type, resourcePath, index) => {
             let file = resourcePath + typeExtMap[type]
