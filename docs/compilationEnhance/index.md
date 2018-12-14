@@ -128,6 +128,34 @@ webpackconfig = {
   
   `<style>`中的注释内容与`options.comment`一致时，会被识别为一个`rpx注释`
 
+- **designWidth**
+
+  `Number`
+  
+  设计稿宽度，单位为`px`。默认值为`750px`。
+  
+  `mpx`会基于小程序标准的屏幕宽度`baseWidth 750rpx`，与`option.designWidth`计算出一个转换比例`transRatio`
+
+  转换比例的计算方式为`transRatio = (baseWidth / designWidth)`。精度为小数点后2位四舍五入
+
+  所有生效的`rpx注释样式`中的px会乘上`transRatio`得出最终的rpx值
+
+  例如：
+
+  ```css
+  /* 转换前：designWidth = 1280 */
+  .btn {
+    width: 200px;
+    height: 100px;
+  }
+
+  /* 转换后: transRatio = 0.59 */
+  .btn {
+    width: 118rpx;
+    height: 59rpx;
+  }
+  ```
+
 #### rpx注释样式
 根据`rpx注释`的位置，`mpx`会将`一段css规则`或者`一条css声明`视为`rpx注释样式`
 
@@ -146,7 +174,8 @@ webpackconfig = {
         test: /\.mpx$/,
         use: MpxWebpackPlugin.loader({
           transRpx: 'all',
-          comment: 'use px'
+          comment: 'use px',
+          designWidth: 750
         })
       }
     ]
@@ -194,7 +223,8 @@ webpackconfig = {
         test: /\.mpx$/,
         use: MpxWebpackPlugin.loader({
           transRpx: 'only',
-          comment: 'use rpx'
+          comment: 'use rpx',
+          designWidth: 750
         })
       }
     ]
@@ -362,9 +392,13 @@ webpackConfig = {
       name: 'bundle'
     },
     splitChunks: {
-      chunks: 'all',
-      name: 'bundle',
-      minChunks: 2
+      cacheGroups: {
+        bundle: {
+          chunks: 'all',
+          name: 'bundle',
+          minChunks: 2
+        }
+      }
     }
   }
 }
