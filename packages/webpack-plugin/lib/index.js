@@ -23,6 +23,10 @@ class MpxWebpackPlugin {
     return { loader: normalize.lib('plugin-loader'), options }
   }
 
+  static wxsLoader (options) {
+    return { loader: normalize.lib('wxs-loader'), options }
+  }
+
   apply (compiler) {
     // 强制设置publicPath为'/'
     compiler.options.output.publicPath = '/'
