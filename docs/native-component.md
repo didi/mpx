@@ -9,7 +9,7 @@
 > 注：mpx并不限制第三方包的格式。开发者可以自己参考小程序官方的[开发第三方自定义组件](https://developers.weixin.qq.com/miniprogram/dev/framework/custom-component/trdparty.html)
 
 ## 原理
-根据`unsingComponent`中设定的路径，`mpx`会去查找包的入口js文件。然后提取入口文件所在的**目录**中的`js` `json` `wxss` `wxml`进行编译
+根据`unsingComponents`中设定的路径，`mpx`会去查找包的入口js文件。然后提取入口文件所在的**目录**中的`js` `json` `wxss` `wxml`进行编译
 
 编译带来的好处是，常规的拷贝操作，会造成组件内部的依赖缺失，以及冗余代码被打包。而执行了编译，使得`mpx`可以精确的收集依赖，这表现在：
 
