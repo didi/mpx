@@ -8,6 +8,7 @@ const config = require('../config')
 const normalize = require('../utils/normalize')
 const nativeLoaderPath = normalize.lib('native-loader')
 const stripExtension = require('../utils/strip-extention')
+const toPosix = require('../utils/to-posix')
 
 module.exports = function (raw) {
   // 该loader中会在每次编译中动态添加entry，不能缓存，否则watch不好使
@@ -157,7 +158,8 @@ module.exports = function (raw) {
         srcRoot = srcRoot || ''
         tarRoot = tarRoot || ''
         async.forEach(pages, (page, callback) => {
-          let name = getName(path.posix.join(tarRoot, page))
+          let name = getName(path.join(tarRoot, page))
+          name = toPosix(name)
           if (/^\./.test(name)) {
             return callback(new Error(`Page's path ${page} which is referenced in ${context} must be a subdirectory of ${context}!`))
           }
@@ -187,7 +189,7 @@ module.exports = function (raw) {
                 if (!subPackagesMap[tarRoot]) {
                   subPackagesMap[tarRoot] = []
                 }
-                subPackagesMap[tarRoot].push(path.posix.join('', page))
+                subPackagesMap[tarRoot].push(toPosix(path.join('', page)))
               } else {
                 localPages.push(name)
               }
@@ -274,12 +276,13 @@ module.exports = function (raw) {
             if (info.descriptionFileData && info.descriptionFileData.miniprogram) {
               root = path.join(root, info.descriptionFileData.miniprogram)
             }
-            let relativePath = path.posix.relative(root, result)
-            componentPath = path.posix.join('components', hash(root), relativePath)
+            let relativePath = path.relative(root, result)
+            componentPath = path.join('components', hash(root), relativePath)
           } else {
             let componentName = parsed.name
-            componentPath = path.posix.join('components', componentName + hash(result), componentName)
+            componentPath = path.join('components', componentName + hash(result), componentName)
           }
+          componentPath = toPosix(componentPath)
           rewritePath(publicPath + componentPath)
           // 如果之前已经创建了入口，直接return
           if (componentsMap[result] === componentPath) return callback()

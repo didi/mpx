@@ -9,6 +9,7 @@ const NullFactory = require('webpack/lib/NullFactory')
 const config = require('./config')
 const normalize = require('./utils/normalize')
 const stripExtension = require('./utils/strip-extention')
+const toPoisx = require('./utils/to-posix')
 
 class MpxWebpackPlugin {
   constructor (options = { mode: 'wx' }) {
@@ -139,10 +140,11 @@ class MpxWebpackPlugin {
           } else {
             let selfPath = getTargetFile(chunk.files[0])
             let runtimePath = getTargetFile(runtimeChunk.files[0])
-            let relativePath = path.posix.relative(path.posix.dirname(selfPath), runtimePath)
+            let relativePath = path.relative(path.dirname(selfPath), runtimePath)
             if (!/^\./.test(relativePath)) {
-              relativePath = `.${path.posix.sep}${relativePath}`
+              relativePath = `.${path.sep}${relativePath}`
             }
+            relativePath = toPoisx(relativePath)
             source.add('var window = window || {};\n')
             source.add(`window[${JSON.stringify(jsonpFunction)}] = require("${relativePath}");\n`)
             if (compilation.__mpx__.pluginMain === chunk.name) {

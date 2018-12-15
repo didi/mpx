@@ -7,6 +7,7 @@ const getMainCompilation = require('./utils/get-main-compilation')
 const stripExtension = require('./utils/strip-extention')
 const hash = require('hash-sum')
 const path = require('path')
+const toPosix = require('./utils/to-posix')
 
 module.exports = function () {
   const nativeCallback = this.async()
@@ -22,7 +23,13 @@ module.exports = function () {
 
   const callback = (err) => {
     if (err) return nativeCallback(err)
-    nativeCallback(null, `module.exports = ${JSON.stringify(path.posix.relative(issuerDir, wxsMap[resource]))};`)
+    let relativePath = toPosix(path.relative(issuerDir, wxsMap[resource]))
+    nativeCallback(null, `module.exports = ${JSON.stringify(relativePath)};`)
+  }
+
+  const getName = (raw) => {
+    const match = /^(.*?)(\.[^.]*)?$/.exec(raw)
+    return match[1]
   }
 
   const resource = stripExtension(this.resource)
@@ -30,7 +37,8 @@ module.exports = function () {
     callback()
   } else {
     const name = path.parse(resource).name + hash(resource)
-    const filename = path.posix.join('wxs', `${name}.wxs`)
+    let filename = path.join('wxs', `${name}.wxs`)
+    filename = toPosix(filename)
     wxsMap[resource] = filename
     const outputOptions = {
       filename
@@ -40,7 +48,7 @@ module.exports = function () {
       new WxsTemplatePlugin(),
       new LibraryTemplatePlugin(null, 'commonjs2'),
       new NodeTargetPlugin(),
-      new SingleEntryPlugin(this.context, request, filename),
+      new SingleEntryPlugin(this.context, request, getName(filename)),
       new LimitChunkCountPlugin({ maxChunks: 1 })
     ])
 
