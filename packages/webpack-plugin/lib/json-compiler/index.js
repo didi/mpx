@@ -115,10 +115,12 @@ module.exports = function (raw) {
 
     const subPackagesMap = {}
     const localPages = []
+    // 确保首页不变
+    const firstPage = json.pages[0]
 
     const processPackages = (packages, context, callback) => {
       if (packages) {
-        async.forEach(json.packages, (packagePath, callback) => {
+        async.forEach(packages, (packagePath, callback) => {
           let queryIndex = packagePath.indexOf('?')
           let packageQuery = '?'
           if (queryIndex >= 0) {
@@ -228,7 +230,12 @@ module.exports = function (raw) {
                 }
                 subPackagesMap[tarRoot].push(toPosix(path.join('', page)))
               } else {
-                localPages.push(name)
+                // 确保首页不变
+                if (page === firstPage) {
+                  localPages.unshift(name)
+                } else {
+                  localPages.push(name)
+                }
               }
               addEntrySafely(resource, name, callback)
             }
