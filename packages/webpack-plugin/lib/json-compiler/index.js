@@ -73,6 +73,43 @@ module.exports = function (raw) {
     return match[1]
   }
 
+  const processComponent = (component, context, rewritePath, callback) => {
+    if (/^plugin:\/\//.test(component)) {
+      return callback()
+    }
+    this.resolve(context, component, (err, result, info) => {
+      if (err) return callback(err)
+      let parsed = path.parse(result)
+      let ext = parsed.ext
+      result = stripExtension(result)
+      if (ext === '.mpx' || ext === '.js') {
+        let componentPath
+        if (ext === '.js') {
+          let root = info.descriptionFileRoot
+          if (info.descriptionFileData && info.descriptionFileData.miniprogram) {
+            root = path.join(root, info.descriptionFileData.miniprogram)
+          }
+          let relativePath = path.relative(root, result)
+          componentPath = path.join('components', hash(root), relativePath)
+        } else {
+          let componentName = parsed.name
+          componentPath = path.join('components', componentName + hash(result), componentName)
+        }
+        componentPath = toPosix(componentPath)
+        rewritePath(publicPath + componentPath)
+        // 如果之前已经创建了入口，直接return
+        if (componentsMap[result] === componentPath) return callback()
+        componentsMap[result] = componentPath
+        if (ext === '.js') {
+          result = nativeLoaderPath + '!' + result
+        }
+        addEntrySafely(result, componentPath, callback)
+      } else {
+        callback(new Error('Component\'s extension must be .mpx or .js'))
+      }
+    })
+  }
+
   if (resourcePath === rootName) {
     // app.json
 
@@ -229,6 +266,18 @@ module.exports = function (raw) {
       return output
     }
 
+    const processComponents = (components, context, callback) => {
+      if (components) {
+        async.forEachOf(components, (component, name, callback) => {
+          processComponent(component, context, (path) => {
+            json.usingComponents[name] = path
+          }, callback)
+        }, callback)
+      } else {
+        callback()
+      }
+    }
+
     async.parallel([
       (callback) => {
         processPackages(json.packages, this.context, callback)
@@ -238,6 +287,9 @@ module.exports = function (raw) {
       },
       (callback) => {
         processPages(json.pages, '', '', this.context, callback)
+      },
+      (callback) => {
+        processComponents(json.usingComponents, this.context, callback)
       }
     ], (err) => {
       if (err) return callback(err)
@@ -260,45 +312,9 @@ module.exports = function (raw) {
     })
   } else {
     // page.json或component.json
-    const processComponent = (component, rewritePath, callback) => {
-      if (/^plugin:\/\//.test(component)) {
-        return callback()
-      }
-      this.resolve(this.context, component, (err, result, info) => {
-        if (err) return callback(err)
-        let parsed = path.parse(result)
-        let ext = parsed.ext
-        result = stripExtension(result)
-        if (ext === '.mpx' || ext === '.js') {
-          let componentPath
-          if (ext === '.js') {
-            let root = info.descriptionFileRoot
-            if (info.descriptionFileData && info.descriptionFileData.miniprogram) {
-              root = path.join(root, info.descriptionFileData.miniprogram)
-            }
-            let relativePath = path.relative(root, result)
-            componentPath = path.join('components', hash(root), relativePath)
-          } else {
-            let componentName = parsed.name
-            componentPath = path.join('components', componentName + hash(result), componentName)
-          }
-          componentPath = toPosix(componentPath)
-          rewritePath(publicPath + componentPath)
-          // 如果之前已经创建了入口，直接return
-          if (componentsMap[result] === componentPath) return callback()
-          componentsMap[result] = componentPath
-          if (ext === '.js') {
-            result = nativeLoaderPath + '!' + result
-          }
-          addEntrySafely(result, componentPath, callback)
-        } else {
-          callback(new Error('Component\'s extension must be .mpx or .js'))
-        }
-      })
-    }
     if (json.usingComponents) {
       async.forEachOf(json.usingComponents, (component, name, callback) => {
-        processComponent(component, (path) => {
+        processComponent(component, this.context, (path) => {
           json.usingComponents[name] = path
         }, callback)
       }, callback)
@@ -306,7 +322,7 @@ module.exports = function (raw) {
       // 处理抽象节点
       async.forEachOf(json.componentGenerics, (genericCfg, name, callback) => {
         if (genericCfg && genericCfg.default) {
-          processComponent(genericCfg.default, (path) => {
+          processComponent(genericCfg.default, this.context, (path) => {
             json.componentGenerics[name].default = path
           }, callback)
         } else {
