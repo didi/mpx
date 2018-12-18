@@ -37,10 +37,9 @@ function extractPageHooks (options) {
     methods && Object.keys(methods).forEach(key => {
       if (PAGE_HOOKS.indexOf(key) > -1) {
         if (newOptions[key]) {
-          console.warn(`Don't redefine the lifecycle [${key}] in methods， it will ignore the methods's lifecycle if redefined`)
-        } else {
-          newOptions[key] = methods[key]
+          console.warn(`Don't redefine the lifecycle [${key}]， it will use the methods's lifecycle if redefined`)
         }
+        newOptions[key] = methods[key]
       }
     })
     return newOptions
@@ -124,11 +123,15 @@ function transformHOOKS (options) {
       }
       return result
     })
-    if (options[key] && curType === 'blend' && PAGE_HOOKS.indexOf(key) > -1) {
-      // 使用Component创建page实例，页面专属生命周期需写在methods内部
-      (options.methods || (options.methods = {}))[key] = options[key]
-      delete options[key]
-    }
   })
+  if (curType === 'blend') {
+    for (const key in options) {
+      // 使用Component创建page实例，页面专属生命周期&自定义方法需写在methods内部
+      if (typeof options[key] === 'function' && COMPONENT_HOOKS.indexOf(key) === -1) {
+        (options.methods || (options.methods = {}))[key] = options[key]
+        delete options[key]
+      }
+    }
+  }
   return options
 }
