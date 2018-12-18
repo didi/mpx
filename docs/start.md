@@ -64,7 +64,7 @@ npm run watch
 
 ![开启服务](images/start-start.png)
 
-用微信开发者工具打开目录 `~/testproject/mpx-test/dist` ，注意要到**dist**目录
+用微信开发者工具打开目录 `~/testproject/mpx-test`
 
 在src/app.mpx创建一个App
 
