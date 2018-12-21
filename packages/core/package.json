@@ -9,6 +9,7 @@
   "author": "donghongping",
   "license": "Apache",
   "module": "src/index.js",
+  "typings": "types/index.d.ts",
   "directories": {
     "src": "src"
   },
