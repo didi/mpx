@@ -27,7 +27,6 @@ module.exports = function (raw) {
   const publicPath = this._compilation.outputOptions.publicPath || ''
   const fs = this._compiler.inputFileSystem
 
-
   const copydir = (dir, context, callback) => {
     fs.readdir(dir, (err, files) => {
       if (err) return callback(err)
