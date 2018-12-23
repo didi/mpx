@@ -24,5 +24,8 @@
   },
   "scripts": {
     "test": "echo \"Error: run tests from root\" && exit 1"
+  },
+  "devDependencies": {
+    "@types/weixin-app": "^2.2.17"
   }
 }
