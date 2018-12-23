@@ -4,10 +4,8 @@
 // Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped
 // TypeScript Version: 2.8
 
-export function createStore (): any;
+import * as mpx from './mpx'
 
-declare class mpx {
-  createStore: Function
-}
+export * from './mpx'
 
 export default mpx
