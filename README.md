@@ -74,4 +74,4 @@ https://didi.github.io/mpx
 
 ## 交流
 
-打开连接扫码进入微信群或QQ群：https://s.didi.cn/rod
+打开链接扫码进入微信群或QQ群：https://s.didi.cn/rod

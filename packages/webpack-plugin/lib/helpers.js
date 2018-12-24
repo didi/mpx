@@ -34,17 +34,16 @@ function getRawRequest ({ resource, loaderIndex, loaders }, excludedPreLoaders =
   })
 }
 
-// sass => sass-loader
-// sass-loader => sass-loader
-// sass?indentedSyntax!css => sass-loader?indentedSyntax!css-loader
+// sass => sass-loader?fromMpx
+// sass-loader => sass-loader?fromMpx
+// sass?indentedSyntax!css => sass-loader?indentedSyntax&?fromMpx!css-loader?fromMpx
 function ensureLoader (lang) {
   return lang
     .split('!')
     .map(loader =>
       loader.replace(
         /^([\w-]+)(\?.*)?/,
-        (_, name, query) =>
-          (/-loader$/.test(name) ? name : name + '-loader') + (query || '')
+        (_, name, query) => (/-loader$/.test(name) ? name : name + '-loader') + (!query ? '?fromMpx' : (loaderUtils.parseQuery(query).fromMpx ? query : query + '&fromMpx'))
       )
     )
     .join('!')
