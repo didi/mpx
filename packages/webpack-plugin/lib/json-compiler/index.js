@@ -241,7 +241,7 @@ module.exports = function (raw) {
           async.waterfall([
             (callback) => {
               if (srcRoot) {
-                callback(null, path.join(context, srcRoot, page) + '.mpx')
+                callback(null, path.join(context, srcRoot, page))
               } else {
                 this.resolve(context, page, (err, result) => {
                   if (err) return callback(err)
