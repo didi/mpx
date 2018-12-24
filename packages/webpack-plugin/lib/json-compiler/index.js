@@ -152,7 +152,7 @@ module.exports = function (raw) {
     const subPackagesMap = {}
     const localPages = []
     // 确保首页不变
-    const firstPage = json.pages[0]
+    const firstPage = json.pages && json.pages[0]
 
     const processPackages = (packages, context, callback) => {
       if (packages) {
