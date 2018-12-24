@@ -25,6 +25,14 @@
   "scripts": {
     "test": "echo \"Error: run tests from root\" && exit 1"
   },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:didi/mpx.git"
+  },
+  "homepage": "https://didi.github.io/mpx/",
+  "bugs": {
+    "url": "https://github.com/didi/mpx/issues"
+  },
   "devDependencies": {
     "@types/weixin-app": "^2.2.17"
   }
