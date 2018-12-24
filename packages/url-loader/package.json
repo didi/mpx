@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/url-loader",
-  "version": "1.0.5",
+  "version": "1.0.14",
   "description": "url loader for mpx",
   "author": "donghongping",
   "license": "Apache",
