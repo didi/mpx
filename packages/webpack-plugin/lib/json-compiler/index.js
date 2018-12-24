@@ -22,10 +22,43 @@ module.exports = function (raw) {
   const pagesMap = this._compilation.__mpx__.pagesMap
   const componentsMap = this._compilation.__mpx__.componentsMap
   const mode = this._compilation.__mpx__.mode
-  const rootName = this._compilation._preparedEntrypoints[0].name
   const resource = stripExtension(this.resource)
-  const resourcePath = pagesMap[resource] || componentsMap[resource] || rootName
+  const isApp = !(pagesMap[resource] || componentsMap[resource])
   const publicPath = this._compilation.outputOptions.publicPath || ''
+  const fs = this._compiler.inputFileSystem
+
+  const copydir = (dir, context, callback) => {
+    fs.readdir(dir, (err, files) => {
+      if (err) return callback(err)
+      async.forEach(files, (file, callback) => {
+        file = path.join(dir, file)
+        async.waterfall([
+          (callback) => {
+            fs.stat(file, callback)
+          },
+          (stats, callback) => {
+            if (stats.isDirectory()) {
+              copydir(file, context, callback)
+            } else {
+              fs.readFile(file, (err, content) => {
+                if (err) return callback(err)
+                let targetPath = path.relative(context, file)
+                this._compilation.assets[targetPath] = {
+                  size: function size () {
+                    return stats.size
+                  },
+                  source: function source () {
+                    return content
+                  }
+                }
+                callback()
+              })
+            }
+          }
+        ], callback)
+      }, callback)
+    })
+  }
 
   let entryDeps = new Set()
 
@@ -41,6 +74,8 @@ module.exports = function (raw) {
   }
 
   const addEntrySafely = (resource, name, callback) => {
+    // 如果loader已经回调，就不再添加entry
+    if (callbacked) return callback()
     const dep = SingleEntryPlugin.createDependency(resource, name)
     entryDeps.add(dep)
     this._compilation.addEntry(this._compiler.context, dep, name, (err, module) => {
@@ -50,9 +85,10 @@ module.exports = function (raw) {
     })
   }
 
-  // 初次处理json
+  let callbacked = false
   const callback = (err, processOutput) => {
     checkEntryDeps(() => {
+      callbacked = true
       if (err) return nativeCallback(err)
       let output = `var json = ${JSON.stringify(json, null, 2)};\n`
       if (processOutput) output = processOutput(output)
@@ -110,7 +146,7 @@ module.exports = function (raw) {
     })
   }
 
-  if (resourcePath === rootName) {
+  if (isApp) {
     // app.json
 
     const subPackagesMap = {}
@@ -135,7 +171,7 @@ module.exports = function (raw) {
               })
             },
             (result, callback) => {
-              this._compiler.inputFileSystem.readFile(result, (err, content) => {
+              fs.readFile(result, (err, content) => {
                 callback(err, result, content.toString('utf-8'))
               })
             },
@@ -285,6 +321,16 @@ module.exports = function (raw) {
       }
     }
 
+    const processWorkers = (workers, context, callback) => {
+      if (workers) {
+        let workersPath = path.join(context, workers)
+        this.addContextDependency(workersPath)
+        copydir(workersPath, context, callback)
+      } else {
+        callback()
+      }
+    }
+
     async.parallel([
       (callback) => {
         processPackages(json.packages, this.context, callback)
@@ -297,6 +343,9 @@ module.exports = function (raw) {
       },
       (callback) => {
         processComponents(json.usingComponents, this.context, callback)
+      },
+      (callback) => {
+        processWorkers(json.workers, this.context, callback)
       }
     ], (err) => {
       if (err) return callback(err)

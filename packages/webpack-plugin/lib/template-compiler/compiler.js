@@ -753,15 +753,13 @@ function processPageStatus (el, options) {
 }
 
 function parseFuncStr2 (str) {
-  let funcRE = /^([^()]+)(?:\((.*)\))?/
+  let funcRE = /^([^()]+)(\((.*)\))?/
   let match = funcRE.exec(str)
-  if (match) {
+  if (match && match[2]) {
     let funcName = stringify(match[1])
-    let args = match[2] ? `,${match[2]}` : ''
-    if (args) {
-      args = args.replace('$event', stringify('$event'))
-      return `[${funcName + args}]`
-    }
+    let args = match[3] ? `,${match[3]}` : ''
+    args = args.replace('$event', stringify('$event'))
+    return `[${funcName + args}]`
   }
 }
 
