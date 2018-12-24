@@ -152,7 +152,7 @@ module.exports = function (raw) {
     const subPackagesMap = {}
     const localPages = []
     // 确保首页不变
-    const firstPage = json.pages[0]
+    const firstPage = json.pages && json.pages[0]
 
     const processPackages = (packages, context, callback) => {
       if (packages) {
@@ -241,7 +241,7 @@ module.exports = function (raw) {
           async.waterfall([
             (callback) => {
               if (srcRoot) {
-                callback(null, path.join(context, srcRoot, page) + '.mpx')
+                callback(null, path.join(context, srcRoot, page))
               } else {
                 this.resolve(context, page, (err, result) => {
                   if (err) return callback(err)
