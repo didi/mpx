@@ -890,8 +890,18 @@ function processFor (el) {
   }
 }
 
-function processAttrs (el) {
+function addWxsModule (meta, module) {
+  if (!meta.wxsModuleMap) {
+    meta.wxsModuleMap = {}
+  }
+  meta.wxsModuleMap[module] = true
+}
+
+function processAttrs (el, meta) {
   el.attrsList.forEach((attr) => {
+    if (el.tag === 'wxs' && attr.name === 'module') {
+      return addWxsModule(meta, attr.value)
+    }
     let parsed = parseMustache(attr.value)
     if (parsed.hasBinding) {
       addExp(el, parsed.result)
@@ -1007,7 +1017,7 @@ function processElement (el, options, meta) {
   processComponentIs(el, options)
   processClass(el, meta)
   processStyle(el, meta)
-  processAttrs(el)
+  processAttrs(el, meta)
 }
 
 function closeElement (el, root) {

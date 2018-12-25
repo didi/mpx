@@ -39,7 +39,7 @@ function processkeyPathMap (keyPathMap) {
 }
 
 module.exports = {
-  transform (code, needKeyPathArr) {
+  transform (code, ignoreMap = {}, needKeyPathArr = false) {
     const ast = babylon.parse(code, {
       plugins: [
         'objectRestSpread'
@@ -60,6 +60,15 @@ module.exports = {
           !path.scope.hasBinding(path.node.name) &&
           !hash[path.node.name]
         ) {
+          if (ignoreMap[path.node.name]) {
+            let current = path.parentPath
+            let last = path
+            while (current.isMemberExpression() && last.parentKey !== 'property') {
+              last = current
+              current = current.parentPath
+            }
+            last.remove()
+          }
           if (needKeyPathArr) {
             let keyPath = path.node.name
             let current = path.parentPath

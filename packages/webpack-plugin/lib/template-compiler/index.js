@@ -22,7 +22,7 @@ module.exports = function (raw) {
       var __seen = [];
       ${compiler.genNode(ast)}
     }
-};\n`, true)
+};\n`, meta.wxsModuleMap, true)
 
     let globalInjectCode = renderResult.code + '\n'
 
