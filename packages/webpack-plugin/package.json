@@ -24,7 +24,7 @@
     "de-indent": "^1.0.2",
     "hash-sum": "^1.0.2",
     "he": "^1.1.1",
-    "loader-utils": "^1.1.0",
+    "loader-utils": "1.1.0",
     "lru-cache": "^4.1.2",
     "postcss": "^6.0.19",
     "postcss-load-config": "^1.2.0",
