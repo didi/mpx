@@ -27,7 +27,8 @@ const COMPONENT_HOOKS = [
   'moved',
   'detached',
   'pageShow',
-  'pageHide'
+  'pageHide',
+  'updated'
 ]
 
 export {
