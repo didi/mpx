@@ -736,7 +736,7 @@ function processComponentIs (el, options) {
       if (process.env.NODE_ENV !== 'production' && match[0] !== is) {
         warn$1('only first mustache expression is valid in <component> attrs[is].')
       }
-      el.is = match[1]
+      el.is = match[1].trim()
     } else {
       el.is = stringify(is)
     }
@@ -794,7 +794,7 @@ function processBindEvent (el, options) {
     if (match) {
       let modelProp = getAndRemoveAttr(el, config[mode].directive.modelProp) || config[mode].event.defaultModelProp
       let modelEvent = getAndRemoveAttr(el, config[mode].directive.modelEvent) || config[mode].event.defaultModelEvent
-      modelValue = match[1]
+      modelValue = match[1].trim()
       if (!result[modelEvent]) {
         result[modelEvent] = []
       }
@@ -829,7 +829,7 @@ function parseMustache (raw) {
     while (match = tagREG.exec(raw)) {
       let pre = raw.substring(lastLastIndex, match.index)
       if (pre) ret.push(stringify(pre))
-      ret.push(`(${match[1]})`)
+      ret.push(`(${match[1].trim()})`)
       lastLastIndex = tagREG.lastIndex
     }
     let post = raw.substring(lastLastIndex)
