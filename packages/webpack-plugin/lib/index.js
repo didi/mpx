@@ -103,6 +103,18 @@ class MpxWebpackPlugin {
         }
         callback(null, data)
       })
+
+      normalModuleFactory.hooks.afterResolve.tapAsync('MpxWebpackPlugin', (data, callback) => {
+        if (data.loaders) {
+          data.loaders.forEach((loader) => {
+            const fromMpx = !!loader.options && (typeof loader.options === 'string' ? loader.options === 'fromMpx' : loader.options.fromMpx === true)
+            if (/ts-loader/.test(loader.loader) && fromMpx) {
+              loader.options = Object.assign({}, { appendTsSuffixTo: [/\.mpx$/] })
+            }
+          })
+        }
+        callback(null, data)
+      })
     })
 
     compiler.hooks.emit.tapAsync('MpxWebpackPlugin', (compilation, callback) => {

@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/core",
-  "version": "1.0.12",
+  "version": "1.0.14",
   "description": "mpx runtime core",
   "keywords": [
     "miniprogram",
@@ -9,6 +9,7 @@
   "author": "donghongping",
   "license": "Apache",
   "module": "src/index.js",
+  "typings": "types/index.d.ts",
   "directories": {
     "src": "src"
   },
@@ -23,5 +24,16 @@
   },
   "scripts": {
     "test": "echo \"Error: run tests from root\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:didi/mpx.git"
+  },
+  "homepage": "https://didi.github.io/mpx/",
+  "bugs": {
+    "url": "https://github.com/didi/mpx/issues"
+  },
+  "devDependencies": {
+    "@types/weixin-app": "^2.2.17"
   }
 }

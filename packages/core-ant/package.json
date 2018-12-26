@@ -1,13 +1,12 @@
 {
   "name": "@mpxjs/core-ant",
-  "version": "1.0.5",
+  "version": "1.0.14",
   "description": "mpx runtime core",
   "keywords": [
     "miniprogram",
     "mpx"
   ],
   "author": "donghongping",
-  "homepage": "",
   "license": "ISC",
   "main": "src/index.js",
   "directories": {
@@ -18,6 +17,14 @@
   ],
   "dependencies": {
     "mobx": "^3.6.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:didi/mpx.git"
+  },
+  "homepage": "https://didi.github.io/mpx/",
+  "bugs": {
+    "url": "https://github.com/didi/mpx/issues"
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org"

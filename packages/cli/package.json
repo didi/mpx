@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/cli",
-  "version": "1.0.5",
+  "version": "1.0.14",
   "description": "mpx脚手架",
   "bin": {
     "mpx": "bin/mpx.js",
@@ -30,7 +30,6 @@
     "cli"
   ],
   "author": "donghongping",
-  "homepage": "",
   "license": "Apache",
   "main": "bin/mpx-init.js",
   "directories": {
@@ -43,6 +42,14 @@
   ],
   "publishConfig": {
     "registry": "https://registry.npmjs.org"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:didi/mpx.git"
+  },
+  "homepage": "https://didi.github.io/mpx/",
+  "bugs": {
+    "url": "https://github.com/didi/mpx/issues"
   },
   "engines": {
     "node": ">=6.0.0"

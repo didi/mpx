@@ -1,12 +1,12 @@
 {
   "name": "@mpxjs/url-loader",
-  "version": "1.0.5",
+  "version": "1.0.15",
   "description": "url loader for mpx",
   "author": "donghongping",
   "license": "Apache",
   "main": "lib/index.js",
   "dependencies": {
-    "loader-utils": "^1.1.0",
+    "loader-utils": "1.1.0",
     "mime": "^2.2.2"
   },
   "directories": {
@@ -17,6 +17,14 @@
   ],
   "publishConfig": {
     "registry": "https://registry.npmjs.org"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:didi/mpx.git"
+  },
+  "homepage": "https://didi.github.io/mpx/",
+  "bugs": {
+    "url": "https://github.com/didi/mpx/issues"
   },
   "scripts": {
     "test": "echo \"Error: run tests from root\" && exit 1"
