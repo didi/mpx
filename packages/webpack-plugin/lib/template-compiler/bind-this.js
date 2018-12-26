@@ -67,7 +67,7 @@ module.exports = {
               last = current
               current = current.parentPath
             }
-            last.remove()
+            last.replaceWith(t.stringLiteral('__wxs_placeholer'))
           }
           if (needKeyPathArr) {
             let keyPath = path.node.name

@@ -16,7 +16,7 @@ import {
   processUndefined
 } from '../helper/utils'
 
-import { watch } from './watcher'
+import {watch} from './watcher'
 
 export default class MPXProxy {
   constructor (options, target, deepDiff) {
@@ -199,10 +199,27 @@ export default class MPXProxy {
 
   watchRender () {
     let renderWatcher
+    let renderExecutionFailed = false
     if (this.target.__injectedRender) {
-      renderWatcher = watch(this.target, this.target.__injectedRender, {
+      renderWatcher = watch(this.target, () => {
+        if (renderExecutionFailed) {
+          this.render()
+        } else {
+          try {
+            this.target.__injectedRender()
+          } catch (e) {
+            console.warn(`Failed to execute render function, degrade to full-set-data mode!`)
+            console.warn(e)
+            console.warn('If the render function execution failed because of "__wxs_placeholder", ignore this warning.')
+            renderExecutionFailed = true
+            this.render()
+          }
+        }
+      }, {
         handler: () => {
-          this.renderWithData()
+          if (!renderExecutionFailed) {
+            this.renderWithData()
+          }
         },
         immediate: true,
         forceCallback: true
