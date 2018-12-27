@@ -14,7 +14,8 @@
     "src": "src"
   },
   "files": [
-    "src"
+    "src",
+    "types"
   ],
   "dependencies": {
     "mobx": "^3.6.1"
