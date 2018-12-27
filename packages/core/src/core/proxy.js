@@ -93,10 +93,18 @@ export default class MPXProxy {
       typeof callback === 'function' && callback.apply(this.target)
       callback = pendingList.shift()
     }
+    this.callUserHook('updated')
   }
 
-  watch (expr, handler = {}) {
-    const watcher = watch(this.target, expr, handler)
+  callUserHook (hookName) {
+    const hook = this.target.$rawOptions[hookName]
+    if (typeof hook === 'function') {
+      hook.call(this.target)
+    }
+  }
+
+  watch (expr, handler, options) {
+    const watcher = watch(this.target, expr, handler, options)
     this.watchers.push(watcher)
     return this.removeWatch(watcher)
   }

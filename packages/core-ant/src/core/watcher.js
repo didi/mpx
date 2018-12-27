@@ -69,12 +69,11 @@ export default class Watcher {
   }
 }
 
-export function watch (context, expr, handler = {}) {
+export function watch (context, expr, handler, options) {
   let callback
-  let options
   if (typeof handler === 'function') {
     callback = handler
-  } else {
+  } else if (type(handler) === 'Object') {
     callback = handler.handler
     options = {
       ...handler
