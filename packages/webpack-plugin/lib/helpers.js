@@ -250,8 +250,6 @@ module.exports = function createHelpers (loaderContext, options, moduleId, parts
           scoped: !!scoped,
           sourceMap: needCssSourceMap,
           transRpx: options.transRpx,
-          rpxInclude: options.rpxInclude,
-          rpxExclude: options.rpxExclude,
           comment: options.comment,
           designWidth: options.designWidth
         }) +

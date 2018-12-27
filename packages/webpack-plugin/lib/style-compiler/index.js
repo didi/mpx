@@ -19,6 +19,14 @@ module.exports = function (css, map) {
   const cb = this.async()
   const loaderOptions = loaderUtils.getOptions(this) || {}
 
+  const {
+    mode = typeof loaderOptions.transRpx === 'string' && loaderOptions.transRpx,
+    comment = loaderOptions.comment,
+    include,
+    exclude,
+    designWidth = loaderOptions.designWidth
+  } = loaderOptions.transRpx
+
   const normalizeCondition = (condition) => {
     if (!condition) throw new Error('Expected condition but got falsy value')
     if (typeof condition === 'string') {
@@ -55,8 +63,8 @@ module.exports = function (css, map) {
         config.options
       )
 
-      const matchInclude = loaderOptions.rpxInclude && normalizeCondition(loaderOptions.rpxInclude)
-      const matchExclude = loaderOptions.rpxExclude && normalizeCondition(loaderOptions.rpxExclude)
+      const matchInclude = include && normalizeCondition(include)
+      const matchExclude = exclude && normalizeCondition(exclude)
 
       let useRpxPlugin = true
       if (!matchInclude(this.resourcePath)) {
@@ -67,11 +75,7 @@ module.exports = function (css, map) {
       }
 
       if (loaderOptions.transRpx && useRpxPlugin) {
-        plugins.push(rpx({
-          mode: loaderOptions.transRpx === 'all' ? 'all' : 'only',
-          comment: loaderOptions.comment,
-          designWidth: loaderOptions.designWidth
-        }))
+        plugins.push(rpx({ mode, comment, designWidth }))
       }
 
       // source map
