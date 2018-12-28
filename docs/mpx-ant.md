@@ -15,3 +15,9 @@
 ### 其他
 
 主要是小程序原生差异，具体可以查看文档，mpx并没有抹平`原生差异`，比如`props vs properties`，`生命周期差异` 等等，对于mpx增强小程序的部分，比如watch， computed， pageShow， pageHide， Store 等等，都是一致的
+
+mpx支付宝 目前部分功能落后于 mpx微信， 主要有以下特性不支持，请暂时不要在支付宝小程序中使用：
+
+- class与style绑定
+- 内联事件绑定
+- 双向绑定
