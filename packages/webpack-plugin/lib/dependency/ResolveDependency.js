@@ -14,6 +14,11 @@ class ResolveDependency extends NullDependency {
   get type () {
     return 'navigator'
   }
+
+  updateHash (hash) {
+    super.updateHash(hash)
+    hash.update(this.resource)
+  }
 }
 
 ResolveDependency.Template = class ResolveDependencyTemplate {
