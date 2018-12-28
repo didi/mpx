@@ -20,7 +20,7 @@ module.exports = function (css, map) {
   const loaderOptions = loaderUtils.getOptions(this) || {}
 
   const {
-    mode = typeof loaderOptions.transRpx === 'string' && loaderOptions.transRpx,
+    mode = (typeof loaderOptions.transRpx === 'string' && loaderOptions.transRpx) || (typeof loaderOptions.transRpx === 'boolean' && loaderOptions.transRpx && 'all'),
     comment = loaderOptions.comment,
     include,
     exclude,
