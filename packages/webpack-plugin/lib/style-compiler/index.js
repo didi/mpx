@@ -67,10 +67,10 @@ module.exports = function (css, map) {
       const matchExclude = exclude && normalizeCondition(exclude)
 
       let useRpxPlugin = true
-      if (!matchInclude(this.resourcePath)) {
+      if (matchInclude && !matchInclude(this.resourcePath)) {
         useRpxPlugin = false
       }
-      if (matchExclude(this.resourcePath)) {
+      if (matchExclude && matchExclude(this.resourcePath)) {
         useRpxPlugin = false
       }
 
