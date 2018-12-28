@@ -6,7 +6,7 @@ const generate = require('babel-generator').default
 let names = 'Infinity,undefined,NaN,isFinite,isNaN,' +
   'parseFloat,parseInt,decodeURI,decodeURIComponent,encodeURI,encodeURIComponent,' +
   'Math,Number,Date,Array,Object,Boolean,String,RegExp,Map,Set,JSON,Intl,' +
-  'require,global'
+  'require,global,__seen'
 
 let hash = {}
 names.split(',').forEach(function (name) {
@@ -39,7 +39,11 @@ function processkeyPathMap (keyPathMap) {
 }
 
 module.exports = {
-  transform (code, ignoreMap = {}, needKeyPathArr = false) {
+  transform (code, {
+    needKeyPath = false,
+    needTravel = false,
+    ignoreMap = {}
+  } = {}) {
     const ast = babylon.parse(code, {
       plugins: [
         'objectRestSpread'
@@ -60,19 +64,44 @@ module.exports = {
           !path.scope.hasBinding(path.node.name) &&
           !hash[path.node.name]
         ) {
+          let current
+          let last
           if (ignoreMap[path.node.name]) {
-            let current = path.parentPath
-            let last = path
+            current = path.parentPath
+            last = path
+            let exps = []
             while (current.isMemberExpression() && last.parentKey !== 'property') {
+              if (current.node.computed) {
+                exps.push(current.node.property)
+              }
+              last.stop()
               last = current
               current = current.parentPath
             }
-            last.replaceWith(t.stringLiteral('__wxs_placeholer'))
+            if (current.isMemberExpression() && last.parentKey === 'property') {
+              exps.push(current.node.object)
+              current.replaceWith(t.sequenceExpression(exps))
+              return
+            }
+            if (current.isCallExpression() && last.parentKey === 'callee') {
+              exps.push(t.functionExpression(null, [], t.blockStatement([])))
+            } else if (current.isSpreadProperty()) {
+              exps.push(t.objectExpression([]))
+            } else if (current.isSpreadElement()) {
+              exps.push(t.arrayExpression([]))
+            } else {
+              if (!exps.length) {
+                exps.push(t.stringLiteral('__wxs__'))
+              }
+            }
+            last.replaceWith(t.sequenceExpression(exps))
+            return
           }
-          if (needKeyPathArr) {
+
+          if (needKeyPath) {
+            current = path.parentPath
+            last = path
             let keyPath = path.node.name
-            let current = path.parentPath
-            let last = path
             while (current.isMemberExpression() && last.parentKey !== 'property') {
               if (current.node.computed) {
                 if (t.isLiteral(current.node.property)) {
@@ -98,8 +127,28 @@ module.exports = {
             }
             keyPathMap[keyPath] = true
           }
-          let targetNode = t.memberExpression(t.thisExpression(), path.node)
-          path.replaceWith(targetNode)
+          // bind this
+          path.replaceWith(t.memberExpression(t.thisExpression(), path.node))
+
+          if (needTravel) {
+            current = path.parentPath
+            last = path
+            while (current.isMemberExpression() && last.parentKey !== 'property') {
+              last = current
+              current = current.parentPath
+            }
+            last.needTravel = true
+          }
+        }
+      },
+      Expression: {
+        exit (path) {
+          if (path.needTravel) {
+            delete path.needTravel
+            let targetNode = t.callExpression(t.memberExpression(t.thisExpression(), t.identifier('__travel')), [path.node, t.identifier('__seen')])
+            path.replaceWith(targetNode)
+            // path.skip()
+          }
         }
       }
     }

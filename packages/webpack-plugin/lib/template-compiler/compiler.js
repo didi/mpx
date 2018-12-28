@@ -1144,7 +1144,7 @@ function genElse (node) {
 
 function genExps (node) {
   return `${node.exps.map((exp) => {
-    return `this.__travel(${exp}, __seen);\n`
+    return `${exp};\n`
   }).join('')}`
 }
 
