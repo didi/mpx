@@ -23,7 +23,7 @@ module.exports = function (raw) {
       ${compiler.genNode(ast)}
     }
 };\n`, {
-      needTravel: true,
+      needTravel: false,
       needKeyPath: true,
       ignoreMap: meta.wxsModuleMap
     })

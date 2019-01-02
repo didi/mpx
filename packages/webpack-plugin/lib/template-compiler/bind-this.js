@@ -99,10 +99,12 @@ module.exports = {
               last = current
               current = current.parentPath
             }
+            // m1 in ignoreMap
+            // someData[m1.someKey] => this.__travel(this.someData, __seen)["__wxs__"];
             if (current.isMemberExpression() && last.parentKey === 'property') {
-              exps.push(current.node.object)
-              current.replaceWith(t.sequenceExpression(exps))
-              return
+              let objectPath = current.get('object')
+              let targetNode = t.callExpression(t.memberExpression(t.thisExpression(), t.identifier('__travel')), [objectPath.node, t.identifier('__seen')])
+              objectPath.replaceWith(targetNode)
             }
             if (current.isCallExpression() && last.parentKey === 'callee') {
               exps.push(t.functionExpression(null, [], t.blockStatement([])))
@@ -151,6 +153,7 @@ module.exports = {
           // bind this
           path.replaceWith(t.memberExpression(t.thisExpression(), path.node))
 
+          // 暂时不需要在每个this表达式上都添加travel,因为路径中的this表达式只能是字符串或数字
           if (needTravel && !inCheckIgnore) {
             last = path
             current = path.parentPath
