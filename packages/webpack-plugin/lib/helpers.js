@@ -300,7 +300,7 @@ module.exports = function createHelpers (loaderContext, options, moduleId, parts
       switch (type) {
         case 'template':
           // allow passing options to the template preprocessor via `templateOption` option
-          const preprocessorOption = Object.assign({ engine: lang }, options.templateOption || {})
+          const preprocessorOption = { engine: lang, templateOption: options.templateOption || {} }
           return defaultLoaders.html + '!' + templatePreprocessorPath + '?' + JSON.stringify(preprocessorOption) + '!'
         case 'styles':
           loader = addCssModulesToLoader(defaultLoaders.css, part, index)

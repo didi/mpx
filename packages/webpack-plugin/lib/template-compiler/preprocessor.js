@@ -1,12 +1,12 @@
 // loader for pre-processing templates with e.g. pug
 
-var cons = require('consolidate')
-var loaderUtils = require('loader-utils')
+const cons = require('consolidate')
+const loaderUtils = require('loader-utils')
 
 module.exports = function (content) {
   this.cacheable && this.cacheable()
-  var callback = this.async()
-  var opt = loaderUtils.getOptions(this) || {}
+  const callback = this.async()
+  const opt = loaderUtils.getOptions(this) || {}
 
   if (!cons[opt.engine]) {
     return callback(new Error(
@@ -15,10 +15,12 @@ module.exports = function (content) {
     ))
   }
 
-  // for relative includes
-  opt.filename = this.resourcePath
+  const templateOption = opt.templateOption
 
-  cons[opt.engine].render(content, opt, function (err, html) {
+  // for relative includes
+  templateOption.filename = this.resourcePath
+
+  cons[opt.engine].render(content, templateOption, function (err, html) {
     if (err) {
       return callback(err)
     }
