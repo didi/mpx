@@ -71,7 +71,6 @@ module.exports = {
             path.pushContainer('arguments', t.booleanLiteral(hasIgnore))
           }
         }
-
       },
       Identifier (path) {
         if (
