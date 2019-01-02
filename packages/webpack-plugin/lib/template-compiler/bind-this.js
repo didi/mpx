@@ -53,23 +53,25 @@ module.exports = {
     let keyPathMap = {}
 
     let hasIgnore = false
-    let checkIgnoreVisitor = {
-      Identifier (path) {
-        if (ignoreMap[path.node.name]) {
-          hasIgnore = true
-        }
-      }
-    }
+    let inCheckIgnore = false
 
     let bindThisVisitor = {
-      CallExpression (path) {
-        let callee = path.node.callee
-        if (t.isMemberExpression(callee) && t.isThisExpression(callee.object) && callee.property.name === '__checkIgnore') {
-          let expPath = path.get('arguments.0')
-          hasIgnore = false
-          expPath.traverse(checkIgnoreVisitor)
-          path.pushContainer('arguments', t.booleanLiteral(hasIgnore))
+      CallExpression: {
+        enter (path) {
+          let callee = path.node.callee
+          if (t.isMemberExpression(callee) && t.isThisExpression(callee.object) && callee.property.name === '__checkIgnore') {
+            inCheckIgnore = true
+            hasIgnore = false
+          }
+        },
+        exit (path) {
+          let callee = path.node.callee
+          if (t.isMemberExpression(callee) && t.isThisExpression(callee.object) && callee.property.name === '__checkIgnore') {
+            inCheckIgnore = false
+            path.pushContainer('arguments', t.booleanLiteral(hasIgnore))
+          }
         }
+
       },
       Identifier (path) {
         if (
@@ -86,8 +88,9 @@ module.exports = {
           let current
           let last
           if (ignoreMap[path.node.name]) {
-            current = path.parentPath
+            hasIgnore = true
             last = path
+            current = path.parentPath
             let exps = []
             while (current.isMemberExpression() && last.parentKey !== 'property') {
               if (current.node.computed) {
@@ -113,7 +116,7 @@ module.exports = {
                 exps.push(t.stringLiteral('__wxs__'))
               }
             }
-            last.replaceWith(t.sequenceExpression(exps))
+            last.replaceWith(exps.length > 1 ? t.sequenceExpression(exps) : exps[0])
             return
           }
 
@@ -149,9 +152,9 @@ module.exports = {
           // bind this
           path.replaceWith(t.memberExpression(t.thisExpression(), path.node))
 
-          if (needTravel) {
-            current = path.parentPath
+          if (needTravel && !inCheckIgnore) {
             last = path
+            current = path.parentPath
             while (current.isMemberExpression() && last.parentKey !== 'property') {
               last = current
               current = current.parentPath
@@ -166,7 +169,6 @@ module.exports = {
             delete path.needTravel
             let targetNode = t.callExpression(t.memberExpression(t.thisExpression(), t.identifier('__travel')), [path.node, t.identifier('__seen')])
             path.replaceWith(targetNode)
-            // path.skip()
           }
         }
       }
