@@ -36,6 +36,5 @@
   },
   "devDependencies": {
     "@types/weixin-app": "^2.2.17"
-  },
-  "gitHead": "4edeec2471257d1be7c07e39487c6e93e39e4983"
+  }
 }
