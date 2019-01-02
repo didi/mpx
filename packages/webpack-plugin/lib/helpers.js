@@ -76,7 +76,7 @@ function resolveLoaders (options, moduleId, isProduction, hasScoped, hasComment,
     })
 
   const defaultLoaders = {
-    html: 'html-loader?attrs=audio:src image:src video:src cover-image:src' + '!' + templateCompilerPath + templateCompilerOptions,
+    html: 'html-loader?attrs=audio:src wxs:src image:src video:src cover-image:src' + '!' + templateCompilerPath + templateCompilerOptions,
     css: getCSSLoaderString(),
     js: hasBabel ? 'babel-loader' : '',
     json: jsonCompilerPath
