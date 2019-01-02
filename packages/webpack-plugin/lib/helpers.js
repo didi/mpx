@@ -299,6 +299,10 @@ module.exports = function createHelpers (loaderContext, options, moduleId, parts
       // unknown lang, infer the loader to be used
       switch (type) {
         case 'template':
+          // do not deal lang="wxml", may used by vscode plugin
+          if (lang === 'wxml') {
+            return defaultLoaders.html + '!'
+          }
           // allow passing options to the template preprocessor via `templateOption` option
           const preprocessorOption = { engine: lang, templateOption: options.templateOption || {} }
           return defaultLoaders.html + '!' + templatePreprocessorPath + '?' + JSON.stringify(preprocessorOption) + '!'
