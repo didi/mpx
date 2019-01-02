@@ -29,6 +29,12 @@ export default function renderHelperMixin () {
           __seen.push(val)
         }
         return val
+      },
+      __checkIgnore (exp, hasIgnore = false) {
+        if (hasIgnore) {
+          throw new Error('Expressions in wx:if/wx:elif/wx:for can not contain wxs module data.')
+        }
+        return exp
       }
     }
   }

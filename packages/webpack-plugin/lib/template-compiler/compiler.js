@@ -1119,14 +1119,14 @@ function findPrevNode (node) {
 
 function genIf (node) {
   node.ifProcessed = true
-  return `if(${node.if.exp}){\n${genNode(node)}}\n`
+  return `if(this.__checkIgnore(${node.if.exp})){\n${genNode(node)}}\n`
 }
 
 function genElseif (node) {
   node.elseifProcessed = true
   let preNode = findPrevNode(node)
   if (preNode && (preNode.if || preNode.elseif)) {
-    return `else if(${node.elseif.exp}){\n${genNode(node)}}\n`
+    return `else if(this.__checkIgnore(${node.elseif.exp})){\n${genNode(node)}}\n`
   } else {
     warn$1(`wx:elif (wx:elif="${node.elseif.raw}") used on element <"${node.tag}"> without corresponding wx:if or wx:elif.`)
   }
@@ -1152,7 +1152,7 @@ function genFor (node) {
   node.forProcessed = true
   let index = node.for.index || 'index'
   let item = node.for.item || 'item'
-  return `this.__iterate((${node.for.exp}), function(${item},${index}){\n${genNode(node)}}.bind(this));\n`
+  return `this.__iterate(this.__checkIgnore(${node.for.exp}), function(${item},${index}){\n${genNode(node)}}.bind(this));\n`
 }
 
 function genNode (node) {

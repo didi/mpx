@@ -51,7 +51,26 @@ module.exports = {
     })
 
     let keyPathMap = {}
+
+    let hasIgnore = false
+    let checkIgnoreVisitor = {
+      Identifier (path) {
+        if (ignoreMap[path.node.name]) {
+          hasIgnore = true
+        }
+      }
+    }
+
     let bindThisVisitor = {
+      CallExpression (path) {
+        let callee = path.node.callee
+        if (t.isMemberExpression(callee) && t.isThisExpression(callee.object) && callee.property.name === '__checkIgnore') {
+          let expPath = path.get('arguments.0')
+          hasIgnore = false
+          expPath.traverse(checkIgnoreVisitor)
+          path.pushContainer('arguments', t.booleanLiteral(hasIgnore))
+        }
+      },
       Identifier (path) {
         if (
           !(t.isDeclaration(path.parent) && path.parentKey === 'id') &&
