@@ -114,21 +114,24 @@ webpackconfig = {
 
 - **transRpx**
 
-  `false | string `
-
+  `Object | boolean | string`
+  
     - `false`关闭转换rpx
 
     - `'all'`普通样式中的px全部转换为rpx，`rpx注释样式`不转换
 
     - `'only'`普通样式中的px全部**不转换**为rpx，`rpx注释样式`转换
-
-- **comment**
+    
+    - Object包含属性：mode/comment/designWidth/include/exclude
+        > include/exclude属性的用法和webpack对module.rules里的规则是一样的，参考[webpack文档-exclude](https://webpack.js.org/configuration/module/#rule-exclude)
+    
+- **comment** (即将废弃外层写法，迁移至transRpx内层)
 
   `String`
   
   `<style>`中的注释内容与`options.comment`一致时，会被识别为一个`rpx注释`
 
-- **designWidth**
+- **designWidth** (即将废弃外层写法，迁移至transRpx内层)
 
   `Number`
   
@@ -173,9 +176,12 @@ webpackconfig = {
       {
         test: /\.mpx$/,
         use: MpxWebpackPlugin.loader({
-          transRpx: 'all',
-          comment: 'use px',
-          designWidth: 750
+          transRpx: {
+            mode: 'all',
+            comment: 'use px',
+            designWidth: 750,
+            include: resolve('src')
+          },
         })
       }
     ]
