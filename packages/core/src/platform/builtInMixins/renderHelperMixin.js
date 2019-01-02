@@ -1,5 +1,5 @@
-import {isObject, likeArray} from '../../helper/utils'
-import {toJS, isObservable} from 'mobx'
+import { isObject, likeArray } from '../../helper/utils'
+import { toJS, isObservable } from 'mobx'
 
 export default function renderHelperMixin () {
   return {
