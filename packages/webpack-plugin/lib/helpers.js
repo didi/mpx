@@ -238,7 +238,7 @@ module.exports = function createHelpers (loaderContext, options, moduleId, parts
   }
 
   function getRawLoaderString (type, part, index, scoped) {
-    let lang = part.lang || defaultLang[type]
+    let lang = (part.lang && part.lang !== 'wxml') ? part.lang : defaultLang[type]
 
     let styleCompiler = ''
     if (type === 'styles') {
@@ -299,10 +299,6 @@ module.exports = function createHelpers (loaderContext, options, moduleId, parts
       // unknown lang, infer the loader to be used
       switch (type) {
         case 'template':
-          // do not deal lang="wxml", may used by vscode plugin
-          if (lang === 'wxml') {
-            lang = defaultLang[type]
-          }
           // allow passing options to the template preprocessor via `templateOption` option
           const preprocessorOption = { engine: lang, templateOption: options.templateOption || {} }
           return defaultLoaders.html + '!' + templatePreprocessorPath + '?' + JSON.stringify(preprocessorOption) + '!'
