@@ -1,4 +1,4 @@
-import { toJS as toPureObject, extendObservable, observable, set, remove } from 'mobx'
+import { toJS as toPureObject, extendObservable, observable, set, get, remove } from 'mobx'
 import * as platform from './platform'
 import createStore from './core/createStore'
 import { injectMixins } from './core/injectMixins'
@@ -78,12 +78,14 @@ const APIs = {
   watch,
   use,
   set,
+  get,
   remove
 }
 
 // 实例属性
 const InstanceAPIs = {
   $set: set,
+  $get: get,
   $remove: remove
 }
 

@@ -1,5 +1,7 @@
 import {
-  isObservableArray
+  isObservableArray,
+  isObservable,
+  get
 } from 'mobx'
 
 export function type (n) {
@@ -35,7 +37,9 @@ export function getByPath (data, pathStr, notExistOutput) {
   let notExist = false
   let value = data
   for (let key of path) {
-    if (isExistAttr(value, key)) {
+    if (isObservable(value)) {
+      value = get(value, key)
+    } else if (isExistAttr(value, key)) {
       value = value[key]
     } else {
       value = undefined
