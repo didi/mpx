@@ -17,7 +17,7 @@
     "src"
   ],
   "dependencies": {
-    "mobx": "^3.6.1"
+    "mobx": "^4.7.0"
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org"

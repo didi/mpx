@@ -1,10 +1,15 @@
 import {
   observable,
-  computed,
   action,
   extendObservable
 } from 'mobx'
-import { proxy, getByPath } from '../helper/utils'
+
+import {
+  proxy,
+  getByPath,
+  defineGetter
+} from '../helper/utils'
+
 import mapStore from './mapStore'
 function transformGetters (getters, module, store) {
   const newGetters = {}
@@ -12,9 +17,13 @@ function transformGetters (getters, module, store) {
     if (key in store.getters) {
       console.warn(new Error(`duplicate getter type: ${key}`))
     }
-    newGetters[key] = typeof getters[key] === 'function' ? computed(function () {
-      return getters[key](module.state, store.getters, store.state)
-    }) : getters[key]
+    if (typeof getters[key] === 'function') {
+      defineGetter(newGetters, key, function () {
+        return getters[key](module.state, store.getters, store.state)
+      })
+    } else {
+      newGetters[key] = getters[key]
+    }
   }
   return newGetters
 }
