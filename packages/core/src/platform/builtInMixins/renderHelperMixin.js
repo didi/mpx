@@ -22,12 +22,19 @@ export default function renderHelperMixin () {
           }
         }
       },
-      __travel (val, seen = []) {
+      __travel (val, __seen = []) {
         // render函数中深度遍历对象，处理props传递问题
-        if (isObservable(val) && seen.indexOf(val) === -1) {
+        if (isObservable(val) && __seen.indexOf(val) === -1) {
           toJS(val, false)
-          seen.push(val)
+          __seen.push(val)
         }
+        return val
+      },
+      __checkIgnore (exp, hasIgnore = false) {
+        if (hasIgnore) {
+          throw new Error('Expressions in wx:if/wx:elif/wx:for can not contain wxs module data.')
+        }
+        return exp
       }
     }
   }

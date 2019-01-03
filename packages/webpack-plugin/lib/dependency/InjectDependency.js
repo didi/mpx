@@ -11,6 +11,11 @@ class InjectDependency extends NullDependency {
   get type () {
     return 'navigator'
   }
+
+  updateHash (hash) {
+    super.updateHash(hash)
+    hash.update(this.content)
+  }
 }
 
 InjectDependency.Template = class InjectDependencyTemplate {

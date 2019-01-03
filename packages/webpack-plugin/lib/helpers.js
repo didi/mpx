@@ -5,6 +5,7 @@ const tryRequire = require('./utils/try-require')
 const styleCompilerPath = normalize.lib('style-compiler/index')
 const templateCompilerPath = normalize.lib('template-compiler/index')
 const jsonCompilerPath = normalize.lib('json-compiler/index')
+const templatePreprocessorPath = normalize.lib('template-compiler/preprocessor')
 
 // internal lib loaders
 const selectorPath = normalize.lib('selector')
@@ -76,7 +77,7 @@ function resolveLoaders (options, moduleId, isProduction, hasScoped, hasComment,
     })
 
   const defaultLoaders = {
-    html: 'html-loader?attrs=audio:src image:src video:src cover-image:src' + '!' + templateCompilerPath + templateCompilerOptions,
+    html: 'html-loader?attrs=audio:src wxs:src image:src video:src cover-image:src' + '!' + templateCompilerPath + templateCompilerOptions,
     css: getCSSLoaderString(),
     js: hasBabel ? 'babel-loader' : '',
     json: jsonCompilerPath
@@ -298,9 +299,9 @@ module.exports = function createHelpers (loaderContext, options, moduleId, parts
       // unknown lang, infer the loader to be used
       switch (type) {
         case 'template':
-          return (
-            defaultLoaders.html + '!'
-          )
+          // allow passing options to the template preprocessor via `templateOption` option
+          const preprocessorOption = { engine: lang, templateOption: options.templateOption || {} }
+          return defaultLoaders.html + '!' + templatePreprocessorPath + '?' + JSON.stringify(preprocessorOption) + '!'
         case 'styles':
           loader = addCssModulesToLoader(defaultLoaders.css, part, index)
           return loader + '!' + styleCompiler + ensureBang(ensureLoader(lang))
