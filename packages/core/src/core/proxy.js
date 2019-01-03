@@ -1,8 +1,7 @@
 import {
   observable,
-  computed,
   toJS,
-  extras
+  comparer
 } from 'mobx'
 
 import {
@@ -14,7 +13,8 @@ import {
   proxy,
   isEmptyObject,
   processUndefined,
-  diffAndCloneA
+  diffAndCloneA,
+  defineGetter
 } from '../helper/utils'
 
 import {watch} from './watcher'
@@ -47,10 +47,9 @@ export default class MPXProxy {
   }
 
   init (options) {
-    // 初始化computed
-    const computed = this.initComputed(options.computed)
-    const initialData = this.initialData
-    this.data = observable(extend({}, initialData, computed))
+    const proxyData = extend({}, this.initialData)
+    this.initComputed(options.computed, proxyData)
+    this.data = observable(proxyData)
     /* 计算属性在mobx里面是不可枚举的，所以篡改下 */
     enumerable(this.data, this.computedKeys)
     /* target的数据访问代理到将proxy的data */
@@ -59,12 +58,14 @@ export default class MPXProxy {
     this.initWatch(options.watch)
   }
 
-  initComputed (computedConfig) {
-    const newComputed = {}
+  initComputed (computedConfig, proxyData) {
     this.computedKeys.forEach(key => {
-      newComputed[key] = computed(computedConfig[key], { context: this.target })
+      if (key in proxyData) {
+        console.error(`the computed key 【${key}】 is duplicated, please check`)
+      } else {
+        defineGetter(proxyData, key, computedConfig[key], this.target)
+      }
     })
-    return newComputed
   }
 
   initWatch (watches) {
@@ -94,10 +95,18 @@ export default class MPXProxy {
       typeof callback === 'function' && callback.apply(this.target)
       callback = pendingList.shift()
     }
+    this.callUserHook('updated')
   }
 
-  watch (expr, handler = {}) {
-    const watcher = watch(this.target, expr, handler)
+  callUserHook (hookName) {
+    const hook = this.target.$rawOptions[hookName]
+    if (typeof hook === 'function') {
+      hook.call(this.target)
+    }
+  }
+
+  watch (expr, handler, options) {
+    const watcher = watch(this.target, expr, handler, options)
     this.watchers.push(watcher)
     return this.removeWatch(watcher)
   }
@@ -139,7 +148,7 @@ export default class MPXProxy {
          * 支付宝小程序setData是异步的，所以需要主动遍历所有属性进行track
          */
         if (ignoreKeys.indexOf(key) === -1 && (this.deepDiff || !isForceUpdateKey)) {
-          if (extras.deepEqual(this.cacheData[key], this.data[key])) {
+          if (comparer.structural(this.cacheData[key], this.data[key])) {
             // 强制更新的key，无论是否变化，都要进行最终的setData
             !isForceUpdateKey && ignoreKeys.push(key)
           } else {
@@ -200,10 +209,27 @@ export default class MPXProxy {
 
   watchRender () {
     let renderWatcher
+    let renderExecutionFailed = false
     if (this.target.__injectedRender) {
-      renderWatcher = watch(this.target, this.target.__injectedRender, {
+      renderWatcher = watch(this.target, () => {
+        if (renderExecutionFailed) {
+          this.render()
+        } else {
+          try {
+            this.target.__injectedRender()
+          } catch (e) {
+            console.warn(`Failed to execute render function, degrade to full-set-data mode!`)
+            console.warn(e)
+            console.warn('If the render function execution failed because of "__wxs_placeholder", ignore this warning.')
+            renderExecutionFailed = true
+            this.render()
+          }
+        }
+      }, {
         handler: () => {
-          this.renderWithData()
+          if (!renderExecutionFailed) {
+            this.renderWithData()
+          }
         },
         immediate: true,
         forceCallback: true

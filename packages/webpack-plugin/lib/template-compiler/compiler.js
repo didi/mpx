@@ -736,7 +736,7 @@ function processComponentIs (el, options) {
       if (process.env.NODE_ENV !== 'production' && match[0] !== is) {
         warn$1('only first mustache expression is valid in <component> attrs[is].')
       }
-      el.is = match[1]
+      el.is = match[1].trim()
     } else {
       el.is = stringify(is)
     }
@@ -794,7 +794,7 @@ function processBindEvent (el, options) {
     if (match) {
       let modelProp = getAndRemoveAttr(el, config[mode].directive.modelProp) || config[mode].event.defaultModelProp
       let modelEvent = getAndRemoveAttr(el, config[mode].directive.modelEvent) || config[mode].event.defaultModelEvent
-      modelValue = match[1]
+      modelValue = match[1].trim()
       if (!result[modelEvent]) {
         result[modelEvent] = []
       }
@@ -829,7 +829,7 @@ function parseMustache (raw) {
     while (match = tagREG.exec(raw)) {
       let pre = raw.substring(lastLastIndex, match.index)
       if (pre) ret.push(stringify(pre))
-      ret.push(`(${match[1]})`)
+      ret.push(`(${match[1].trim()})`)
       lastLastIndex = tagREG.lastIndex
     }
     let post = raw.substring(lastLastIndex)
@@ -890,8 +890,18 @@ function processFor (el) {
   }
 }
 
-function processAttrs (el) {
+function addWxsModule (meta, module) {
+  if (!meta.wxsModuleMap) {
+    meta.wxsModuleMap = {}
+  }
+  meta.wxsModuleMap[module] = true
+}
+
+function processAttrs (el, meta) {
   el.attrsList.forEach((attr) => {
+    if (el.tag === 'wxs' && attr.name === 'module') {
+      return addWxsModule(meta, attr.value)
+    }
     let parsed = parseMustache(attr.value)
     if (parsed.hasBinding) {
       addExp(el, parsed.result)
@@ -1007,7 +1017,7 @@ function processElement (el, options, meta) {
   processComponentIs(el, options)
   processClass(el, meta)
   processStyle(el, meta)
-  processAttrs(el)
+  processAttrs(el, meta)
 }
 
 function closeElement (el, root) {
@@ -1109,14 +1119,14 @@ function findPrevNode (node) {
 
 function genIf (node) {
   node.ifProcessed = true
-  return `if(${node.if.exp}){\n${genNode(node)}}\n`
+  return `if(this.__checkIgnore(${node.if.exp})){\n${genNode(node)}}\n`
 }
 
 function genElseif (node) {
   node.elseifProcessed = true
   let preNode = findPrevNode(node)
   if (preNode && (preNode.if || preNode.elseif)) {
-    return `else if(${node.elseif.exp}){\n${genNode(node)}}\n`
+    return `else if(this.__checkIgnore(${node.elseif.exp})){\n${genNode(node)}}\n`
   } else {
     warn$1(`wx:elif (wx:elif="${node.elseif.raw}") used on element <"${node.tag}"> without corresponding wx:if or wx:elif.`)
   }
@@ -1142,7 +1152,7 @@ function genFor (node) {
   node.forProcessed = true
   let index = node.for.index || 'index'
   let item = node.for.item || 'item'
-  return `this.__iterate((${node.for.exp}), function(${item},${index}){\n${genNode(node)}}.bind(this));\n`
+  return `this.__iterate(this.__checkIgnore(${node.for.exp}), function(${item},${index}){\n${genNode(node)}}.bind(this));\n`
 }
 
 function genNode (node) {

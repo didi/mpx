@@ -63,6 +63,22 @@ export function enumerable (target, keys) {
   return target
 }
 
+export function defineGetter (target, key, value, context) {
+  let get
+  if (typeof value === 'function') {
+    get = context ? value.bind(context) : value
+  } else {
+    get = function () {
+      return value
+    }
+  }
+  Object.defineProperty(target, key, {
+    get,
+    configurable: true,
+    enumerable: true
+  })
+}
+
 export function proxy (target, source, keys, mapKeys, readonly) {
   if (typeof mapKeys === 'boolean') {
     readonly = mapKeys

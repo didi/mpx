@@ -6,7 +6,7 @@ const generate = require('babel-generator').default
 let names = 'Infinity,undefined,NaN,isFinite,isNaN,' +
   'parseFloat,parseInt,decodeURI,decodeURIComponent,encodeURI,encodeURIComponent,' +
   'Math,Number,Date,Array,Object,Boolean,String,RegExp,Map,Set,JSON,Intl,' +
-  'require,global'
+  'require,global,__seen'
 
 let hash = {}
 names.split(',').forEach(function (name) {
@@ -39,7 +39,11 @@ function processkeyPathMap (keyPathMap) {
 }
 
 module.exports = {
-  transform (code, needKeyPathArr) {
+  transform (code, {
+    needKeyPath = false,
+    needTravel = false,
+    ignoreMap = {}
+  } = {}) {
     const ast = babylon.parse(code, {
       plugins: [
         'objectRestSpread'
@@ -47,7 +51,27 @@ module.exports = {
     })
 
     let keyPathMap = {}
+
+    let hasIgnore = false
+    let inCheckIgnore = false
+
     let bindThisVisitor = {
+      CallExpression: {
+        enter (path) {
+          let callee = path.node.callee
+          if (t.isMemberExpression(callee) && t.isThisExpression(callee.object) && callee.property.name === '__checkIgnore') {
+            inCheckIgnore = true
+            hasIgnore = false
+          }
+        },
+        exit (path) {
+          let callee = path.node.callee
+          if (t.isMemberExpression(callee) && t.isThisExpression(callee.object) && callee.property.name === '__checkIgnore') {
+            inCheckIgnore = false
+            path.pushContainer('arguments', t.booleanLiteral(hasIgnore))
+          }
+        }
+      },
       Identifier (path) {
         if (
           !(t.isDeclaration(path.parent) && path.parentKey === 'id') &&
@@ -60,10 +84,47 @@ module.exports = {
           !path.scope.hasBinding(path.node.name) &&
           !hash[path.node.name]
         ) {
-          if (needKeyPathArr) {
+          let current
+          let last
+          if (ignoreMap[path.node.name]) {
+            hasIgnore = true
+            last = path
+            current = path.parentPath
+            let exps = []
+            while (current.isMemberExpression() && last.parentKey !== 'property') {
+              if (current.node.computed) {
+                exps.push(current.node.property)
+              }
+              last.stop()
+              last = current
+              current = current.parentPath
+            }
+            // m1 in ignoreMap
+            // someData[m1.someKey] => this.__travel(this.someData, __seen)["__wxs__"];
+            if (current.isMemberExpression() && last.parentKey === 'property') {
+              let objectPath = current.get('object')
+              let targetNode = t.callExpression(t.memberExpression(t.thisExpression(), t.identifier('__travel')), [objectPath.node, t.identifier('__seen')])
+              objectPath.replaceWith(targetNode)
+            }
+            if (current.isCallExpression() && last.parentKey === 'callee') {
+              exps.push(t.functionExpression(null, [], t.blockStatement([])))
+            } else if (current.isSpreadProperty()) {
+              exps.push(t.objectExpression([]))
+            } else if (current.isSpreadElement()) {
+              exps.push(t.arrayExpression([]))
+            } else {
+              if (!exps.length) {
+                exps.push(t.stringLiteral('__wxs__'))
+              }
+            }
+            last.replaceWith(exps.length > 1 ? t.sequenceExpression(exps) : exps[0])
+            return
+          }
+
+          if (needKeyPath) {
+            current = path.parentPath
+            last = path
             let keyPath = path.node.name
-            let current = path.parentPath
-            let last = path
             while (current.isMemberExpression() && last.parentKey !== 'property') {
               if (current.node.computed) {
                 if (t.isLiteral(current.node.property)) {
@@ -89,8 +150,28 @@ module.exports = {
             }
             keyPathMap[keyPath] = true
           }
-          let targetNode = t.memberExpression(t.thisExpression(), path.node)
-          path.replaceWith(targetNode)
+          // bind this
+          path.replaceWith(t.memberExpression(t.thisExpression(), path.node))
+
+          // 暂时不需要在每个this表达式上都添加travel,因为路径中的this表达式只能是字符串或数字
+          if (needTravel && !inCheckIgnore) {
+            last = path
+            current = path.parentPath
+            while (current.isMemberExpression() && last.parentKey !== 'property') {
+              last = current
+              current = current.parentPath
+            }
+            last.needTravel = true
+          }
+        }
+      },
+      Expression: {
+        exit (path) {
+          if (path.needTravel) {
+            delete path.needTravel
+            let targetNode = t.callExpression(t.memberExpression(t.thisExpression(), t.identifier('__travel')), [path.node, t.identifier('__seen')])
+            path.replaceWith(targetNode)
+          }
         }
       }
     }

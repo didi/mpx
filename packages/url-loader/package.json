@@ -1,12 +1,12 @@
 {
   "name": "@mpxjs/url-loader",
-  "version": "1.0.14",
+  "version": "1.0.15",
   "description": "url loader for mpx",
   "author": "donghongping",
   "license": "Apache",
   "main": "lib/index.js",
   "dependencies": {
-    "loader-utils": "^1.1.0",
+    "loader-utils": "1.1.0",
     "mime": "^2.2.2"
   },
   "directories": {

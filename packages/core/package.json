@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/core",
-  "version": "1.0.14",
+  "version": "1.0.19",
   "description": "mpx runtime core",
   "keywords": [
     "miniprogram",
@@ -14,10 +14,11 @@
     "src": "src"
   },
   "files": [
-    "src"
+    "src",
+    "types"
   ],
   "dependencies": {
-    "mobx": "^3.6.1"
+    "mobx": "^4.7.0"
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org"

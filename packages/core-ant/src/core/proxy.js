@@ -86,8 +86,8 @@ export default class MPXProxy {
       typeof callback === 'function' && callback.apply(this.target)
     }
   }
-  watch (expr, handler = {}) {
-    const watcher = watch(this.target, expr, handler)
+  watch (expr, handler, options) {
+    const watcher = watch(this.target, expr, handler, options)
     this.watchers.push(watcher)
     return this.removeWatch(watcher)
   }
