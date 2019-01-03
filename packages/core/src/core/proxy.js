@@ -13,10 +13,11 @@ import {
   extend,
   proxy,
   isEmptyObject,
-  processUndefined
+  processUndefined,
+  diffAndCloneA
 } from '../helper/utils'
 
-import { watch } from './watcher'
+import {watch} from './watcher'
 
 export default class MPXProxy {
   constructor (options, target, deepDiff) {
@@ -165,12 +166,11 @@ export default class MPXProxy {
           let match = /[^[.]*/.exec(key)
           let firstKey = match ? match[0] : key
           if (ignoreKeys.indexOf(firstKey) === -1) {
-            this.miniRenderData[key] = toJS(renderData[key])
+            this.miniRenderData[key] = diffAndCloneA(renderData[key]).clone
           }
           this.firstKeyMap[key] = firstKey
         }
       }
-
       this.doRender(this.miniRenderData)
     } else {
       this.doRender(this.processRenderData(renderData))
@@ -181,8 +181,9 @@ export default class MPXProxy {
     let result = {}
     for (let key in this.miniRenderData) {
       if (this.miniRenderData.hasOwnProperty(key)) {
-        if (this.forceUpdateKeys.indexOf(this.firstKeyMap[key]) > -1 || !extras.deepEqual(this.miniRenderData[key], data[key])) {
-          this.miniRenderData[key] = result[key] = toJS(data[key])
+        let { clone, diff } = diffAndCloneA(data[key], this.miniRenderData[key])
+        if (this.forceUpdateKeys.indexOf(this.firstKeyMap[key]) > -1 || diff) {
+          this.miniRenderData[key] = result[key] = clone
         }
       }
     }
