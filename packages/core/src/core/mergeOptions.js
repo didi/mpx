@@ -27,7 +27,19 @@ function extractMixins (mergeOptions, options) {
       extractMixins(mergeOptions, mix)
     }
   }
-  mergeMixins(mergeOptions, extractPageHooks(options))
+  options = extractLifetimes(options)
+  options = extractPageHooks(options)
+  mergeMixins(mergeOptions, options)
+}
+
+function extractLifetimes (options) {
+  if (type(options.lifetimes) === 'Object') {
+    const newOptions = extend({}, options, options.lifetimes)
+    delete newOptions.lifetimes
+    return newOptions
+  } else {
+    return options
+  }
 }
 
 function extractPageHooks (options) {
@@ -56,7 +68,7 @@ function mergeMixins (parent, child) {
       mergeData(parent, child, key)
     } else if (/computed|properties|methods|proto/.test(key)) {
       mergeSimpleProps(parent, child, key)
-    } else if (/watch|lifetimes|pageLifetimes/.test(key)) {
+    } else if (/watch|pageLifetimes/.test(key)) {
       mergeCompose(parent, child, key)
     } else if (key !== 'mixins') {
       mergeDefault(parent, child, key)
@@ -130,7 +142,6 @@ function composeHooks (target, includes) {
 
 function transformHOOKS (options) {
   composeHooks(options, CURRENT_HOOKS)
-  options.lifetimes && composeHooks(options.lifetimes)
   options.pageLifetimes && composeHooks(options.pageLifetimes)
   if (curType === 'blend') {
     for (const key in options) {
