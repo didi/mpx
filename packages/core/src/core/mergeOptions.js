@@ -69,7 +69,7 @@ function mergeMixins (parent, child) {
     } else if (/computed|properties|methods|proto/.test(key)) {
       mergeSimpleProps(parent, child, key)
     } else if (/watch|pageLifetimes/.test(key)) {
-      mergeCompose(parent, child, key)
+      mergeToArray(parent, child, key)
     } else if (key !== 'mixins') {
       mergeDefault(parent, child, key)
     }
@@ -105,7 +105,7 @@ function mergeData (parent, child, key) {
   merge(parent[key], childVal)
 }
 
-function mergeCompose (parent, child, key) {
+function mergeToArray (parent, child, key) {
   let parentVal = parent[key]
   const childVal = child[key]
   if (!parentVal) {
