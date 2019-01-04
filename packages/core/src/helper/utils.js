@@ -291,8 +291,12 @@ export function processUndefined (obj) {
 }
 
 function unwrap (a) {
-  if (isObservableArray(a)) { return a.peek() }
-  if (isObservableMap(a)) { return a.entries() }
+  if (isObservableArray(a)) {
+    return a.peek()
+  }
+  if (isObservableMap(a)) {
+    return a.entries()
+  }
   return a
 }
 
@@ -301,11 +305,11 @@ export function diffAndCloneA (a, b) {
   const curPath = []
   let diff = false
 
-  function deepDiffAndCloneA (a, b, curentDiff) {
+  function deepDiffAndCloneA (a, b, currentDiff) {
     const setDiff = (val) => {
-      if (curentDiff) return
+      if (currentDiff) return
       if (val) {
-        curentDiff = val
+        currentDiff = val
         diffPaths.push(curPath.slice())
       }
     }
@@ -348,7 +352,7 @@ export function diffAndCloneA (a, b) {
           clone = []
           while (length--) {
             curPath.push(length)
-            clone[length] = deepDiffAndCloneA(a[length], sameClass ? b[length] : undefined, curentDiff)
+            clone[length] = deepDiffAndCloneA(a[length], sameClass ? b[length] : undefined, currentDiff)
             curPath.pop()
           }
           break
@@ -356,17 +360,20 @@ export function diffAndCloneA (a, b) {
           let keys = Object.keys(a)
           let key
           length = keys.length
+          if (sameClass && length !== Object.keys(b).length) {
+            setDiff(true)
+          }
           clone = {}
           while (length--) {
             key = keys[length]
             curPath.push(key)
-            clone[key] = deepDiffAndCloneA(a[key], sameClass ? b[key] : undefined, curentDiff)
+            clone[key] = deepDiffAndCloneA(a[key], sameClass ? b[key] : undefined, currentDiff)
             curPath.pop()
           }
       }
     }
-    if (curentDiff) {
-      diff = curentDiff
+    if (currentDiff) {
+      diff = currentDiff
     }
     return clone
   }
