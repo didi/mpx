@@ -1,5 +1,5 @@
-import { isObject, likeArray } from '../../helper/utils'
-import { toJS, isObservable } from 'mobx'
+import {isObject, likeArray} from '../../helper/utils'
+import {toJS, isObservable, get} from 'mobx'
 
 export default function renderHelperMixin () {
   return {
@@ -35,6 +35,12 @@ export default function renderHelperMixin () {
           throw new Error('Expressions in wx:if/wx:elif/wx:for can not contain wxs module data.')
         }
         return exp
+      },
+      __get (target, property) {
+        if (isObservable(target)) {
+          return get(target, property)
+        }
+        return target[property]
       }
     }
   }
