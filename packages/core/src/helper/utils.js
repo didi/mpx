@@ -305,11 +305,11 @@ export function diffAndCloneA (a, b) {
   const curPath = []
   let diff = false
 
-  function deepDiffAndCloneA (a, b, curentDiff) {
+  function deepDiffAndCloneA (a, b, currentDiff) {
     const setDiff = (val) => {
-      if (curentDiff) return
+      if (currentDiff) return
       if (val) {
-        curentDiff = val
+        currentDiff = val
         diffPaths.push(curPath.slice())
       }
     }
@@ -352,7 +352,7 @@ export function diffAndCloneA (a, b) {
           clone = []
           while (length--) {
             curPath.push(length)
-            clone[length] = deepDiffAndCloneA(a[length], sameClass ? b[length] : undefined, curentDiff)
+            clone[length] = deepDiffAndCloneA(a[length], sameClass ? b[length] : undefined, currentDiff)
             curPath.pop()
           }
           break
@@ -367,13 +367,13 @@ export function diffAndCloneA (a, b) {
           while (length--) {
             key = keys[length]
             curPath.push(key)
-            clone[key] = deepDiffAndCloneA(a[key], sameClass ? b[key] : undefined, curentDiff)
+            clone[key] = deepDiffAndCloneA(a[key], sameClass ? b[key] : undefined, currentDiff)
             curPath.pop()
           }
       }
     }
-    if (curentDiff) {
-      diff = curentDiff
+    if (currentDiff) {
+      diff = currentDiff
     }
     return clone
   }
