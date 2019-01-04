@@ -291,8 +291,12 @@ export function processUndefined (obj) {
 }
 
 function unwrap (a) {
-  if (isObservableArray(a)) { return a.peek() }
-  if (isObservableMap(a)) { return a.entries() }
+  if (isObservableArray(a)) {
+    return a.peek()
+  }
+  if (isObservableMap(a)) {
+    return a.entries()
+  }
   return a
 }
 
@@ -356,6 +360,9 @@ export function diffAndCloneA (a, b) {
           let keys = Object.keys(a)
           let key
           length = keys.length
+          if (sameClass && length !== Object.keys(b).length) {
+            setDiff(true)
+          }
           clone = {}
           while (length--) {
             key = keys[length]
