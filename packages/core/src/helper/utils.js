@@ -32,10 +32,9 @@ export function isExistAttr (obj, attr) {
   }
 }
 
-export function getByPath (data, pathStr, notExistOutput) {
+export function getByPath (data, pathStr, defaultVal = '') {
   if (!pathStr) return data
   const path = pathStr.split('.')
-  let notExist = false
   let value = data
   for (let key of path) {
     if (isObservable(value)) {
@@ -44,16 +43,11 @@ export function getByPath (data, pathStr, notExistOutput) {
       value = value[key]
     } else {
       value = undefined
-      notExist = true
       break
     }
   }
-  if (notExistOutput) {
-    return notExist ? notExistOutput : value
-  } else {
-    // 小程序setData时不允许undefined数据
-    return value === undefined ? '' : value
-  }
+  // 小程序setData时不允许undefined数据
+  return value === undefined ? defaultVal : value
 }
 
 export function enumerable (target, keys) {
@@ -296,18 +290,13 @@ export function processUndefined (obj) {
   return result
 }
 
-
 function unwrap (a) {
-  if (isObservableArray(a))
-    return a.peek()
-  if (isObservableMap(a))
-    return a.entries()
+  if (isObservableArray(a)) { return a.peek() }
+  if (isObservableMap(a)) { return a.entries() }
   return a
 }
 
-
 export function diffAndCloneA (a, b) {
-
   const diffPaths = []
   const curPath = []
   let diff = false
@@ -364,7 +353,8 @@ export function diffAndCloneA (a, b) {
           }
           break
         default:
-          let keys = Object.keys(a), key
+          let keys = Object.keys(a)
+          let key
           length = keys.length
           clone = {}
           while (length--) {
@@ -389,6 +379,3 @@ export function diffAndCloneA (a, b) {
     diffPaths
   }
 }
-
-
-
