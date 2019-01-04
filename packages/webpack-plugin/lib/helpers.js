@@ -238,7 +238,7 @@ module.exports = function createHelpers (loaderContext, options, moduleId, parts
   }
 
   function getRawLoaderString (type, part, index, scoped) {
-    let lang = part.lang || defaultLang[type]
+    let lang = (part.lang && part.lang !== 'wxml') ? part.lang : defaultLang[type]
 
     let styleCompiler = ''
     if (type === 'styles') {
