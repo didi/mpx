@@ -59,11 +59,7 @@ export default class Watcher {
     const oldValue = this.value
     this.value = this.getValue()
     if (this.value !== oldValue || isObject(this.value) || this.options.forceCallback) {
-      try {
-        this.callback && this.callback(this.value, oldValue)
-      } catch (e) {
-        console.error(e)
-      }
+      this.callback && this.callback(this.value, oldValue)
     }
   }
 
