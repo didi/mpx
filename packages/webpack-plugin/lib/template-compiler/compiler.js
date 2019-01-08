@@ -976,19 +976,18 @@ function processText (el) {
   }
 }
 
-function injectComputed (el, meta, type, body) {
-  if (!meta.computed) {
-    meta.computed = []
-    meta.computedId = 0
-  }
-  let injectName = `__injected_${type}_${++meta.computedId}`
-  meta.computed.push(`${injectName}: function(){\n${body}}`)
-  addAttrs(el, [{
-    name: type,
-    value: `{{${injectName}}}`
-  }])
-}
-
+// function injectComputed (el, meta, type, body) {
+//   if (!meta.computed) {
+//     meta.computed = []
+//     meta.computedId = 0
+//   }
+//   let injectName = `__injected_${type}_${++meta.computedId}`
+//   meta.computed.push(`${injectName}: function(){\n${body}}`)
+//   addAttrs(el, [{
+//     name: type,
+//     value: `{{${injectName}}}`
+//   }])
+// }
 
 function injectWxs (meta, module, src, root) {
   if (addWxsModule(meta, module)) {

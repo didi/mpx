@@ -52,21 +52,18 @@ module.exports = {
     let keyPathMap = {}
 
     let hasIgnore = false
-    let inCheckIgnore = false
 
     let bindThisVisitor = {
       CallExpression: {
         enter (path) {
           let callee = path.node.callee
           if (t.isMemberExpression(callee) && t.isThisExpression(callee.object) && callee.property.name === '__checkIgnore') {
-            inCheckIgnore = true
             hasIgnore = false
           }
         },
         exit (path) {
           let callee = path.node.callee
           if (t.isMemberExpression(callee) && t.isThisExpression(callee.object) && callee.property.name === '__checkIgnore') {
-            inCheckIgnore = false
             path.pushContainer('arguments', t.booleanLiteral(hasIgnore))
           }
         }
@@ -151,7 +148,6 @@ module.exports = {
           }
           // bind this
           path.replaceWith(t.memberExpression(t.thisExpression(), path.node))
-
 
           // flag get
           last = path
