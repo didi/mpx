@@ -1,6 +1,7 @@
 const deindent = require('de-indent')
 const he = require('he')
 const config = require('../config')
+const normalize = require('../utils/normalize')
 
 /**
  * Make a map and return a function for checking if a key
@@ -580,26 +581,28 @@ function parse (template, options) {
         )
       }
 
-      processElement(element, options, meta)
-
-      // tree management
+      // gen root
       if (!root) {
-        root = element
-      } else {
-        if (currentParent) {
-          if (!element.forbidden) {
-            currentParent.children.push(element)
-            element.parent = currentParent
-          }
-        } else {
-          // fix mutiple root case
-          let temp = root
-          root = currentParent = getTempNode()
-          currentParent.children.push(temp, element)
-          temp.parent = currentParent
+        root = currentParent = getTempNode()
+        stack.unshift(root)
+      }
+
+      processElement(element, options, meta, root)
+
+      // mount element
+      if (currentParent) {
+        if (!element.forbidden) {
+          currentParent.children.push(element)
           element.parent = currentParent
-          stack.unshift(root)
         }
+      } else {
+        // fix mutiple root case
+        let temp = root
+        root = currentParent = getTempNode()
+        currentParent.children.push(temp, element)
+        temp.parent = currentParent
+        element.parent = currentParent
+        stack.unshift(root)
       }
 
       if (!unary) {
@@ -894,6 +897,7 @@ function addWxsModule (meta, module) {
   if (!meta.wxsModuleMap) {
     meta.wxsModuleMap = {}
   }
+  if (meta.wxsModuleMap[module]) return true
   meta.wxsModuleMap[module] = true
 }
 
@@ -985,29 +989,55 @@ function injectComputed (el, meta, type, body) {
   }])
 }
 
-function processClass (el, meta) {
+
+function injectWxs (meta, module, src, root) {
+  if (addWxsModule(meta, module)) {
+    return
+  }
+  let wxsNode = createASTElement('wxs', [
+    {
+      name: 'module',
+      value: module
+    },
+    {
+      name: 'src',
+      value: src
+    }
+  ])
+  root.children.unshift(wxsNode)
+}
+
+const injectHelperWxsPath = normalize.lib('runtime/injectHelper.wxs')
+
+function processClass (el, meta, root) {
   let type = 'class'
   let dynamicClass = getAndRemoveAttr(el, config[mode].directive.dynamicClass)
   if (dynamicClass) {
     let staticClassExp = parseMustache(getAndRemoveAttr(el, type)).result
     let dynamicClassExp = parseMustache(dynamicClass).result
-    let body = `return this.__transformClass(${staticClassExp}, ${dynamicClassExp});\n`
-    injectComputed(el, meta, type, body)
+    addAttrs(el, [{
+      name: type,
+      value: `{{__injectHelper.transformClass(${staticClassExp}, ${dynamicClassExp})}}`
+    }])
+    injectWxs(meta, '__injectHelper', injectHelperWxsPath, root)
   }
 }
 
-function processStyle (el, meta) {
+function processStyle (el, meta, root) {
   let type = 'style'
   let dynamicStyle = getAndRemoveAttr(el, config[mode].directive.dynamicStyle)
   if (dynamicStyle) {
     let staticStyleExp = parseMustache(getAndRemoveAttr(el, type)).result
     let dynamicStyleExp = parseMustache(dynamicStyle).result
-    let body = `return this.__transformStyle(${staticStyleExp}, ${dynamicStyleExp});\n`
-    injectComputed(el, meta, type, body)
+    addAttrs(el, [{
+      name: type,
+      value: `{{__injectHelper.transformStyle(${staticStyleExp}, ${dynamicStyleExp})}}`
+    }])
+    injectWxs(meta, '__injectHelper', injectHelperWxsPath, root)
   }
 }
 
-function processElement (el, options, meta) {
+function processElement (el, options, meta, root) {
   processIf(el)
   processFor(el)
   if (mode === 'wx') {
@@ -1015,8 +1045,8 @@ function processElement (el, options, meta) {
     processBindEvent(el, options)
   }
   processComponentIs(el, options)
-  processClass(el, meta)
-  processStyle(el, meta)
+  processClass(el, meta, root)
+  processStyle(el, meta, root)
   processAttrs(el, meta)
 }
 

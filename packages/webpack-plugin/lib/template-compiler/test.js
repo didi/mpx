@@ -11,11 +11,17 @@ let parsed = compiler.parse(input, {
 let ast = parsed.root
 let meta = parsed.meta
 
+console.log(compiler.serialize(ast))
+
 let renderResult = bindThis(`global.currentInject = {
     render: function () {
       ${compiler.genNode(ast)}
     }
-};\n`, true)
+};\n`, {
+  needTravel: false,
+  needKeyPath: true,
+  ignoreMap: meta.wxsModuleMap
+})
 
 let globalInjectCode = renderResult.code + '\n'
 
