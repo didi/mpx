@@ -2,7 +2,8 @@ import {
   isObservableArray,
   isObservableMap,
   isObservable,
-  get
+  get,
+  toJS
 } from 'mobx'
 
 export function type (n) {
@@ -99,12 +100,12 @@ export function proxy (target, source, keys, mapKeys, readonly) {
 }
 
 export function deleteProperties (source, props = []) {
-  if (!props.length) return source
   const sourceKeys = Object.keys(source)
   const newData = {}
   for (let key of sourceKeys) {
     if (props.indexOf(key) < 0) {
-      newData[key] = source[key]
+      const result = source[key]
+      newData[key] = isObservable(result) ? toJS(result) : result
     }
   }
   return newData

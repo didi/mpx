@@ -1,6 +1,5 @@
 import {
   observable,
-  toJS,
   comparer
 } from 'mobx'
 
@@ -17,10 +16,10 @@ import {
   defineGetter
 } from '../helper/utils'
 
-import {watch} from './watcher'
+import { watch } from './watcher'
 
 export default class MPXProxy {
-  constructor (options, target, deepDiff) {
+  constructor (options, target) {
     this.target = target
     if (typeof target.__getInitialData !== 'function') {
       console.error(`please specify a 【__getInitialData】function to get miniprogram's initial data`)
@@ -33,16 +32,7 @@ export default class MPXProxy {
     this.computedKeys = options.computed ? enumerableKeys(options.computed) : []
     this.propKeys = enumerableKeys(options.properties || options.props || {})
     this.forceUpdateKeys = [] // 强制更新的key，无论是否发生change
-    this.deepDiff = options.deepDiff || deepDiff
-    // 需要强制diff的属性数组
-    if (this.deepDiff) {
-      this.forceDiffKeys = enumerableKeys(this.initialData).concat(this.computedKeys)
-    } else if (type(options.forceDiffKeys) === 'Array') {
-      this.forceDiffKeys = options.forceDiffKeys
-    } else if (options.forceDiffKeys) {
-      console.warn('[forceDiffKeys] must be Array of key')
-    }
-    this.cacheData = this.initialData // 缓存数据，用于diff
+    this.cacheData = extend({}, this.initialData) // 缓存数据，用于diff
     this.init(options)
   }
 
@@ -138,26 +128,18 @@ export default class MPXProxy {
       console.error('please specify a 【__render】 function to render view')
       return
     }
-    const ignoreKeys = this.propKeys.slice()
     const forceUpdateKeys = this.forceUpdateKeys
-    if (this.forceDiffKeys) {
-      this.forceDiffKeys.forEach(key => {
-        const isForceUpdateKey = forceUpdateKeys.indexOf(key) > -1
-        /**
-         * 微信小程序能利用setData的同步性质来track依赖，因此属于forceUpdateKey时，可以不进行diff
-         * 支付宝小程序setData是异步的，所以需要主动遍历所有属性进行track
-         */
-        if (ignoreKeys.indexOf(key) === -1 && (this.deepDiff || !isForceUpdateKey)) {
-          if (comparer.structural(this.cacheData[key], this.data[key])) {
-            // 强制更新的key，无论是否变化，都要进行最终的setData
-            !isForceUpdateKey && ignoreKeys.push(key)
-          } else {
-            this.cacheData[key] = toJS(this.data[key])
-          }
-        }
-      })
-    }
-    this.target.__render(deleteProperties(this.data, ignoreKeys), () => this.handleUpdatedCallbacks())
+    const newData = deleteProperties(this.data, this.propKeys)
+    Object.keys(newData).forEach(key => {
+      const isForceUpdateKey = forceUpdateKeys.indexOf(key) > -1
+      if (!isForceUpdateKey && comparer.structural(this.cacheData[key], newData[key])) {
+        // 强制更新的key，无论是否变化，都要进行最终的setData
+        delete newData[key]
+      } else {
+        this.cacheData[key] = newData[key]
+      }
+    })
+    this.target.__render(newData, () => this.handleUpdatedCallbacks())
     this.forceUpdateKeys = [] // 仅用于当次的render
   }
 
