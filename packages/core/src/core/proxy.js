@@ -18,7 +18,7 @@ import {
   isNumberStr
 } from '../helper/utils'
 
-import {watch} from './watcher'
+import { watch } from './watcher'
 
 export default class MPXProxy {
   constructor (options, target) {
