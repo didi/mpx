@@ -13,10 +13,12 @@ import {
   isEmptyObject,
   processUndefined,
   diffAndCloneA,
-  defineGetter
+  defineGetter,
+  isValidIdentifierStr,
+  isNumberStr
 } from '../helper/utils'
 
-import { watch } from './watcher'
+import {watch} from './watcher'
 
 export default class MPXProxy {
   constructor (options, target) {
@@ -168,6 +170,51 @@ export default class MPXProxy {
     }
   }
 
+  renderWithDiffClone () {
+    const selfData = deleteProperties(this.data, this.propKeys)
+    const result = diffAndCloneA(selfData, this.selfDataClone || {})
+    this.selfDataClone = result.clone
+    if (result.diff) {
+      let renderData = {}
+      const forceUpdateKeys = this.forceUpdateKeys
+      forceUpdateKeys.forEach((key) => {
+        renderData[key] = data[key]
+      })
+      const diffPaths = result.diffPaths
+      for (let i = 0; i < diffPaths.length; i++) {
+        let diffPath = diffPaths[i]
+        if (diffPath.length === 0) {
+          renderData = data
+          break
+        }
+
+        if (this.forceUpdateKeys.indexOf(diffPath[0]) > -1) {
+          continue
+        }
+
+        let key = ''
+        let value = data
+        for (let j = 0; j < diffPath.length; j++) {
+          const path = diffPath[j]
+          const isNumber = isNumberStr(path)
+          const isValidIdentifier = isValidIdentifierStr(path)
+          if (isNumber || isValidIdentifier) {
+            value = value[path]
+            if (isNumber) {
+              key += `[${path}]`
+            } else {
+              key += `.${path}`
+            }
+          }
+        }
+        if (key) {
+          renderData[key] = value
+        }
+      }
+      this.doRender(renderData)
+    }
+  }
+
   processRenderData (data) {
     let result = {}
     for (let key in this.miniRenderData) {
@@ -210,7 +257,7 @@ export default class MPXProxy {
       }, {
         handler: () => {
           if (!renderExecutionFailed) {
-            this.renderWithData()
+            this.renderWithDiffClone()
           }
         },
         immediate: true,

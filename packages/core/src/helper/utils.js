@@ -387,3 +387,11 @@ export function diffAndCloneA (a, b) {
     diffPaths
   }
 }
+
+export function isValidIdentifierStr (str) {
+  return /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(str)
+}
+
+export function isNumberStr (str) {
+  return /^\d+$/.test(str)
+}
