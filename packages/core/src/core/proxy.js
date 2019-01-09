@@ -173,10 +173,11 @@ export default class MPXProxy {
   renderWithDiffClone () {
     const data = deleteProperties(this.data, this.propKeys)
     const result = diffAndCloneA(data, this.dataClone || {})
+    const forceUpdateKeys = this.forceUpdateKeys
     this.dataClone = result.clone
-    if (result.diff) {
+
+    if (result.diff || forceUpdateKeys.length) {
       let renderData = {}
-      const forceUpdateKeys = this.forceUpdateKeys
       forceUpdateKeys.forEach((key) => {
         renderData[key] = data[key]
       })
@@ -188,7 +189,7 @@ export default class MPXProxy {
           break
         }
 
-        if (this.forceUpdateKeys.indexOf(diffPath[0]) > -1) {
+        if (forceUpdateKeys.indexOf(diffPath[0]) > -1) {
           continue
         }
 
@@ -216,6 +217,7 @@ export default class MPXProxy {
         }
       }
       this.doRender(renderData)
+      this.forceUpdateKeys = []
     }
   }
 
