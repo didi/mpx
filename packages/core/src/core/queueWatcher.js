@@ -19,6 +19,8 @@ export default function queueWatcher (watcher) {
       waiting = true
       Promise.resolve().then(() => {
         flushQueue()
+      }).catch(e => {
+        console.error(e)
       })
     }
   }

@@ -758,7 +758,7 @@ function processPageStatus (el, options) {
 function parseFuncStr2 (str) {
   let funcRE = /^([^()]+)(\((.*)\))?/
   let match = funcRE.exec(str)
-  if (match && match[2]) {
+  if (match) {
     let funcName = stringify(match[1])
     let args = match[3] ? `,${match[3]}` : ''
     args = args.replace('$event', stringify('$event'))
