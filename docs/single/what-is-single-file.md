@@ -49,7 +49,9 @@
 
 ##### vscode插件
 
-1. `minapp`此插件主要功能是给`template`加上`wxml`的`snippet`功能，只要在 template 标签中添加属性`minapp='native' lang='wxml'`就可以使用
+**更新**: `minapp`最新版已经支持了mpx，所以对`minapp`的使用加以修改
+
+1. `minapp`此插件主要功能是给`template`加上`wxml`的`snippet`功能，只要在 template 标签中添加属性`minapp='mpx' xlang='wxml'`就可以使用
 2. `wechat-snippet`，主要是使用里面的`wx.xxx`的snippet
 3. `vetur`主要使用其高亮和格式化功能，配套安装有`prettier`，新版配置为
 
@@ -69,7 +71,7 @@
 ```
 
 **注意**: 
-1. 当添加了`lang="wxml"`后，是无法使用格式化的，只要把这个去掉就会格式化`template`了，不过要注意`image`这个标签，因为`html`中是没有`image`的。
+1. 当添加了`xlang="wxml"`后，可以使用`vetur`配置的`template`的格式化，但是会存在vue插件的`snippet`
 2. 注意使用vscode的工作区功能，最好把`vue`插件相关提示先关闭了
 3. 因为`mpx`单文件具有两个script标签，直接格式化会出问题，需要
 ```
@@ -92,7 +94,7 @@
 "Print to weapp page": {
  "prefix": "page",
  "body": [
-   "<template minapp='native' lang='wxml'>",
+   "<template minapp='native' xlang='wxml'>",
    "  <view class='container'>\n",
    "  </view>",
    "</template>\n",
@@ -141,7 +143,7 @@
 "Print to weapp components": {
  "prefix": "components",
  "body": [
-   "<template minapp='native' lang='wxml'>",
+   "<template minapp='native' xlang='wxml'>",
    "  <view class='container'>\n",
    "  </view>",
    "</template>\n",
