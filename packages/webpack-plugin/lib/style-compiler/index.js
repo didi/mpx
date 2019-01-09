@@ -25,7 +25,7 @@ module.exports = function (css, map) {
     include,
     exclude,
     designWidth = loaderOptions.designWidth
-  } = loaderOptions.transRpx
+  } = loaderOptions.transRpx || {}
 
   const normalizeCondition = (condition) => {
     if (!condition) throw new Error('Expected condition but got falsy value')
