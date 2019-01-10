@@ -72,8 +72,9 @@
 
 **注意**: 
 1. 当添加了`xlang="wxml"`后，可以使用`vetur`配置的`template`的格式化，但是会存在vue插件的`snippet`
-2. 注意使用vscode的工作区功能，最好把`vue`插件相关提示先关闭了
-3. 因为`mpx`单文件具有两个script标签，直接格式化会出问题，需要
+2. **在改成`xlang="wxml"`后，虽然能格式化了，但是`image`和`input`标签的格式化会出问题，所以最好在最后完成的时候，改回`lang="wxml"`关闭格式化**
+3. 注意使用vscode的工作区功能，最好把`vue`插件相关提示先关闭了
+4. 因为`mpx`单文件具有两个script标签，直接格式化会出问题，需要
 ```
 <script  type='application/json' lang='json'>
 {
