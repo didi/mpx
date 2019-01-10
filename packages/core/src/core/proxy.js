@@ -54,9 +54,8 @@ export default class MPXProxy {
     this.computedKeys.forEach(key => {
       if (key in proxyData) {
         console.error(`the computed key 【${key}】 is duplicated, please check`)
-      } else {
-        defineGetter(proxyData, key, computedConfig[key], this.target)
       }
+      defineGetter(proxyData, key, computedConfig[key], this.target)
     })
   }
 
