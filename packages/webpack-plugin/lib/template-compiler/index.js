@@ -9,7 +9,9 @@ module.exports = function (raw) {
   const options = loaderUtils.getOptions(this) || {}
   let parsed = compiler.parse(raw, Object.assign(options, {
     warn: (msg) => {
-      console.error(('[template compiler][' + this.resource + ']: ' + msg))
+      this.emitWarning(
+        new Error('[template compiler][' + this.resource + ']: ' + msg)
+      )
     },
     mode
   }))

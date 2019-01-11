@@ -783,7 +783,7 @@ function processBindEvent (el, options) {
       if (parsed) {
         if (!isValidIdentifierStr(type)) {
           if (parsed.args) {
-            console.error(`EventName ${type} which need inline args processing must be a valid identifier!`)
+            warn$1(`EventName ${type} which need inline args processing must be a valid identifier!`)
           }
           return
         }
@@ -805,7 +805,7 @@ function processBindEvent (el, options) {
       let modelProp = getAndRemoveAttr(el, config[mode].directive.modelProp) || config[mode].event.defaultModelProp
       let modelEvent = getAndRemoveAttr(el, config[mode].directive.modelEvent) || config[mode].event.defaultModelEvent
       if (!isValidIdentifierStr(modelEvent)) {
-        console.error(`EventName ${modelEvent} which is used in wx:model must be a valid identifier!`)
+        warn$1(`EventName ${modelEvent} which is used in wx:model must be a valid identifier!`)
         return
       }
       modelValue = match[1].trim()
