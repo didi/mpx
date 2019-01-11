@@ -1,10 +1,14 @@
 import { type, merge, extend } from '../helper/utils'
-import { COMPONENT_HOOKS, PAGE_HOOKS, APP_HOOKS } from '../platform/lifecycle'
+import LifeCycle from '../platform/lifecycle'
+import { INNER_LIFECYCLES } from './innerLifecycle'
+
+const PAGE_HOOKS = LifeCycle.PAGE_HOOKS.concat(INNER_LIFECYCLES)
+const COMPONENT_HOOKS = LifeCycle.COMPONENT_HOOKS.concat(INNER_LIFECYCLES)
 
 const HOOKS_MAP = {
-  'component': COMPONENT_HOOKS,
+  'app': LifeCycle.APP_HOOKS,
   'page': PAGE_HOOKS,
-  'app': APP_HOOKS,
+  'component': COMPONENT_HOOKS,
   'blend': PAGE_HOOKS.concat(COMPONENT_HOOKS)
 }
 
@@ -65,7 +69,7 @@ function mergeMixins (parent, child) {
     if (CURRENT_HOOKS.indexOf(key) > -1) {
       mergeHooks(parent, child, key)
     } else if (key === 'data') {
-      mergeData(parent, child, key)
+      mergeDataFn(parent, child, key)
     } else if (/computed|properties|methods|proto/.test(key)) {
       mergeSimpleProps(parent, child, key)
     } else if (/watch|pageLifetimes/.test(key)) {
@@ -95,6 +99,28 @@ function mergeSimpleProps (parent, child, key) {
     parent[key] = parentVal = {}
   }
   extend(parentVal, childVal)
+}
+
+function mergeDataFn (parent, child, key) {
+  const parentVal = parent[key]
+  const childVal = child[key]
+  if (!parentVal) {
+    if (typeof childVal === 'function') {
+      parent[key] = childVal
+    } else {
+      parent[key] = {}
+      merge(parent[key], childVal)
+    }
+  } else if (typeof parentVal !== 'function' && typeof childVal !== 'function') {
+    mergeData(parent, child, key)
+  } else {
+    parent[key] = function mergeFn () {
+      return merge(
+        typeof parentVal === 'function' ? parentVal.call(this, this) : parentVal,
+        typeof childVal === 'function' ? childVal.call(this, this) : childVal
+      )
+    }
+  }
 }
 
 function mergeData (parent, child, key) {
