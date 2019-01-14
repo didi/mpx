@@ -43,7 +43,7 @@ export default class MPXProxy {
     this.renderReaction = null
     this.updatedCallbacks = [] // 保存设置的更新回调
     this.computedKeys = options.computed ? enumerableKeys(options.computed) : []
-    this.propKeys = enumerableKeys(options.properties || options.props || {})
+    this.propKeys = enumerableKeys(Object.assign({}, options.properties, options.props))
     this.forceUpdateKeys = [] // 强制更新的key，无论是否发生change
   }
 
@@ -124,9 +124,8 @@ export default class MPXProxy {
   }
 
   initData (dataFn) {
-    if (dataFn) {
-      return dataFn.call(this.target)
-    }
+    const data = typeof dataFn === 'function' ? dataFn.call(this.target) : dataFn
+    return data
   }
 
   initComputed (computedConfig, proxyData) {

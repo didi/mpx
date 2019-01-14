@@ -8,7 +8,8 @@ export default function createFactory (type) {
     if (typeof wx !== 'undefined') {
       constructor = Component
       getDefaultOptions = getWXDefaultOptions
-      type = 'component'
+      // 微信小程序使用组件创建页面，走混合merge
+      type === 'page' && (options.blend = true)
     } else {
       getDefaultOptions = getANTDefaultOptions
     }

@@ -70,7 +70,7 @@ function mergeMixins (parent, child) {
       mergeHooks(parent, child, key)
     } else if (key === 'data') {
       mergeDataFn(parent, child, key)
-    } else if (/computed|properties|methods|proto/.test(key)) {
+    } else if (/computed|properties|props|methods|proto/.test(key)) {
       mergeSimpleProps(parent, child, key)
     } else if (/watch|pageLifetimes/.test(key)) {
       mergeToArray(parent, child, key)
@@ -172,7 +172,7 @@ function transformHOOKS (options) {
   if (curType === 'blend') {
     for (const key in options) {
       // 使用Component创建page实例，页面专属生命周期&自定义方法需写在methods内部
-      if (typeof options[key] === 'function' && COMPONENT_HOOKS.indexOf(key) === -1) {
+      if (typeof options[key] === 'function' && key !== 'data' && COMPONENT_HOOKS.indexOf(key) === -1) {
         (options.methods || (options.methods = {}))[key] = options[key]
         delete options[key]
       }

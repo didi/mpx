@@ -3,6 +3,8 @@ import {
 } from 'mobx'
 
 import MPXProxy from '../../../core/proxy'
+import customeKey from '../../../core/customOptionKeys'
+import mergeOptions from '../../../core/mergeOptions'
 
 function transformApiForProxy (context) {
   const rawSetData = context.setData.bind(context)
@@ -22,19 +24,28 @@ function transformApiForProxy (context) {
   })
 }
 
+function filterOptions (options, type) {
+  const newOptions = {}
+  Object.keys(options).forEach(key => {
+    if (customeKey.indexOf(key) !== -1 || key === 'data' && typeof options[key] === 'function') {
+      return
+    } else {
+      if (key === 'properties' || key === 'props') {
+        newOptions['props'] = Object.assign({}, options['properties'], options['props'])
+      } else if (key === 'methods' && type === 'page') {
+        Object.assign(newOptions, options[key])
+      } else {
+        newOptions[key] = options[key]
+      }
+    }
+  })
+  return newOptions
+}
+
 export function getDefaultOptions (type, { rawOptions = {} }) {
   const hookNames = type === 'component' ? ['didMount', 'didUnmount'] : ['onLoad', 'onUnload']
-  let extraOptions = {}
-  if (type === 'page') {
-    Object.assign(extraOptions, rawOptions.methods)
-  } else {
-    extraOptions = {
-      methods: rawOptions.methods,
-      props: rawOptions.props
-    }
-  }
-  return {
-    ...extraOptions,
+  const options = filterOptions(rawOptions, type)
+  options.mixins = [{
     [hookNames[0]] () {
       // 提供代理对象需要的api
       transformApiForProxy(this)
@@ -62,5 +73,6 @@ export function getDefaultOptions (type, { rawOptions = {} }) {
     [hookNames[1]] () {
       this.$mpxProxy.destroyed()
     }
-  }
+  }]
+  return mergeOptions(options, type)
 }

@@ -4,6 +4,8 @@ import {
 } from '../../../helper/utils'
 
 import MPXProxy from '../../../core/proxy'
+import customeKey from '../../../core/customOptionKeys'
+import mergeOptions from '../../../core/mergeOptions'
 
 function transformProperties (properties) {
   if (!properties) {
@@ -82,10 +84,25 @@ function transformApiForProxy (context, currentInject) {
   }
 }
 
+function filterOptions (options) {
+  const newOptions = {}
+  Object.keys(options).forEach(key => {
+    if (customeKey.indexOf(key) !== -1 || key === 'data' && typeof options[key] === 'function') {
+      return
+    } else {
+      if (key === 'properties' || key === 'props') {
+        newOptions['properties'] = transformProperties(Object.assign({}, options['properties'], options['props']))
+      } else {
+        newOptions[key] = options[key]
+      }
+    }
+  })
+  return newOptions
+}
+
 export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
-  return {
-    properties: transformProperties(rawOptions.props),
-    methods: rawOptions.methods || {},
+  const options = filterOptions(rawOptions)
+  options.mixins = [{
     attached () {
       // 提供代理对象需要的api
       transformApiForProxy(this, currentInject)
@@ -100,5 +117,6 @@ export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
     detached () {
       this.$mpxProxy.destroyed()
     }
-  }
+  }]
+  return mergeOptions(options, type)
 }
