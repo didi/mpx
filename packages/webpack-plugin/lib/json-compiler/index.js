@@ -118,7 +118,7 @@ module.exports = function (raw) {
       let parsed = path.parse(result)
       let ext = parsed.ext
       result = stripExtension(result)
-      if (ext === '.mpx' || ext === '.js') {
+      if (ext === '.mpx' || ext === '.js' || ext === '.th') {
         let componentPath
         if (ext === '.js') {
           let root = info.descriptionFileRoot
@@ -141,7 +141,7 @@ module.exports = function (raw) {
         }
         addEntrySafely(result, componentPath, callback)
       } else {
-        callback(new Error('Component\'s extension must be .mpx or .js'))
+        callback(new Error('Component\'s extension must be .mpx, .js or .th'))
       }
     })
   }
