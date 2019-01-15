@@ -1,6 +1,6 @@
 import { getByPath } from '../../helper/utils'
 
-export default function proxyEventMixin (mixinType) {
+export default function proxyEventMixin () {
   return {
     methods: {
       __invoke ($event) {

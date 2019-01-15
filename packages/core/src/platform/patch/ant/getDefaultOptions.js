@@ -6,7 +6,7 @@ import MPXProxy from '../../../core/proxy'
 import customeKey from '../../../core/customOptionKeys'
 import mergeOptions from '../../../core/mergeOptions'
 
-function transformApiForProxy (context) {
+function transformApiForProxy (context, currentInject) {
   const rawSetData = context.setData.bind(context)
   Object.defineProperties(context, {
     __getInitialData: {
@@ -22,6 +22,18 @@ function transformApiForProxy (context) {
       configurable: false
     }
   })
+  if (currentInject) {
+    if (currentInject.getRefsData) {
+      Object.defineProperties(context, {
+        __getRefsData: {
+          get () {
+            return currentInject.getRefsData
+          },
+          configurable: false
+        }
+      })
+    }
+  }
 }
 
 function filterOptions (options, type) {
@@ -42,13 +54,13 @@ function filterOptions (options, type) {
   return newOptions
 }
 
-export function getDefaultOptions (type, { rawOptions = {} }) {
+export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
   const hookNames = type === 'component' ? ['didMount', 'didUnmount'] : ['onLoad', 'onUnload']
   const options = filterOptions(rawOptions, type)
   options.mixins = [{
     [hookNames[0]] () {
       // 提供代理对象需要的api
-      transformApiForProxy(this)
+      transformApiForProxy(this, currentInject)
       // 缓存options
       this.$rawOptions = rawOptions
       // 创建proxy对象

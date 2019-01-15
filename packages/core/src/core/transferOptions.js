@@ -6,7 +6,7 @@ export default function transferOptions (options, type, builtInMixins = []) {
   if (global.currentInject && global.currentInject.moduleId === global.currentModuleId) {
     currentInject = global.currentInject
   }
-  // 注入外部扩展写入的mixins
+  // 注入全局写入的mixins
   options = mergeInjectedMixins(options, type)
   // 注入内建的mixins
   options.mixins = options.mixins ? builtInMixins.concat(options.mixins) : builtInMixins
