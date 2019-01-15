@@ -97,12 +97,10 @@ function transformApiForProxy (context, currentInject) {
           configurable: false
         }
       })
-    }
-    if (currentInject.getRenderData) {
       Object.defineProperties(context, {
         __getRenderData: {
           get () {
-            return currentInject.getRenderData
+            return currentInject.render.call(context)
           },
           configurable: false
         }

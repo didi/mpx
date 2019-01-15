@@ -118,35 +118,43 @@ module.exports = {
             return
           }
 
-          if (needKeyPath) {
-            current = path.parentPath
-            last = path
-            let keyPath = path.node.name
-            while (current.isMemberExpression() && last.parentKey !== 'property') {
-              if (current.node.computed) {
-                if (t.isLiteral(current.node.property)) {
-                  if (t.isStringLiteral(current.node.property)) {
-                    if (!isValidIdentifierStr(current.node.property.value) || dangerousKeyMap[current.node.property.value]) {
-                      break
-                    }
-                    keyPath += `.${current.node.property.value}`
-                  } else {
-                    keyPath += `[${current.node.property.value}]`
+          current = path.parentPath
+          last = path
+          let keyPath = path.node.name
+          while (current.isMemberExpression() && last.parentKey !== 'property') {
+            if (current.node.computed) {
+              if (t.isLiteral(current.node.property)) {
+                if (t.isStringLiteral(current.node.property)) {
+                  if (!isValidIdentifierStr(current.node.property.value) || dangerousKeyMap[current.node.property.value]) {
+                    break
                   }
+                  keyPath += `.${current.node.property.value}`
                 } else {
-                  break
+                  keyPath += `[${current.node.property.value}]`
                 }
               } else {
-                if (dangerousKeyMap[current.node.property.name]) {
-                  break
-                }
-                keyPath += `.${current.node.property.name}`
+                break
               }
-              last = current
-              current = current.parentPath
+            } else {
+              if (dangerousKeyMap[current.node.property.name]) {
+                break
+              }
+              keyPath += `.${current.node.property.name}`
             }
-            keyPathMap[keyPath] = true
+            last = current
+            current = current.parentPath
           }
+          keyPathMap[keyPath] = true
+
+          // 构造赋值语句收集renderData
+          const assignment = t.assignmentExpression('=', t.memberExpression(t.identifier('renderData'), t.stringLiteral(keyPath), true), t.memberExpression(t.thisExpression(), t.identifier(keyPath)))
+          // 向上找到方法调用
+          const parentPath = path.findParent((path) => path.isCallExpression())
+          // 取到方法调用的参数
+          const parentPathArgumentArr = parentPath.node.arguments
+          // 修改第一个参数
+          parentPathArgumentArr[0] = t.sequenceExpression([assignment, parentPathArgumentArr[0]])
+
           // bind this
           path.replaceWith(t.memberExpression(t.thisExpression(), path.node))
 
