@@ -52,5 +52,9 @@
   },
   "scripts": {
     "test": "echo \"Error: run tests from root\" && exit 1"
+  },
+  "devDependencies": {
+    "@types/babel-traverse": "^6.25.4",
+    "@types/babel-types": "^7.0.4"
   }
 }
