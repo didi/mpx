@@ -287,13 +287,16 @@ module.exports = function (raw) {
       let itemKey = tabBarCfg.itemKey
       let iconKey = tabBarCfg.iconKey
       let activeIconKey = tabBarCfg.activeIconKey
+
+      const tabBarIconPathAddFallback = str => str.includes('?fallback') ? str : str + '?fallback'
+
       if (json.tabBar && json.tabBar[itemKey]) {
         json.tabBar[itemKey].forEach((item, index) => {
           if (item.iconPath) {
-            output += `json.tabBar.${itemKey}[${index}].${iconKey} = require("${item[iconKey]}");\n`
+            output += `json.tabBar.${itemKey}[${index}].${iconKey} = require("${tabBarIconPathAddFallback(item[iconKey])}");\n`
           }
           if (item.selectedIconPath) {
-            output += `json.tabBar.${itemKey}[${index}].${activeIconKey} = require("${item[activeIconKey]}");\n`
+            output += `json.tabBar.${itemKey}[${index}].${activeIconKey} = require("${tabBarIconPathAddFallback(item[activeIconKey])}");\n`
           }
         })
       }
