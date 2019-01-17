@@ -20,21 +20,6 @@ dangerousKeys.split(',').forEach((key) => {
   dangerousKeyMap[key] = true
 })
 
-function processkeyPathMap (keyPathMap) {
-  let keyPath = Object.keys(keyPathMap)
-  return keyPath.filter((keyA) => {
-    return keyPath.every((keyB) => {
-      if (keyA.startsWith(keyB) && keyA !== keyB) {
-        let nextChar = keyA[keyB.length]
-        if (nextChar === '.' || nextChar === '[') {
-          return false
-        }
-      }
-      return true
-    })
-  })
-}
-
 module.exports = {
   transform (code, {
     needKeyPath = false,
@@ -46,8 +31,6 @@ module.exports = {
         'objectRestSpread'
       ]
     })
-
-    let keyPathMap = {}
 
     let hasIgnore = false
     let inCheckIgnore = false
@@ -118,6 +101,7 @@ module.exports = {
             return
           }
 
+          // 找到访问路径
           current = path.parentPath
           last = path
           let keyPath = path.node.name
@@ -144,9 +128,8 @@ module.exports = {
             last = current
             current = current.parentPath
           }
-          keyPathMap[keyPath] = true
 
-          // 构造赋值语句收集renderData
+          // 构造赋值语句把访问的路径和值收集进renderData
           const assignment = t.assignmentExpression('=', t.memberExpression(t.identifier('renderData'), t.stringLiteral(keyPath), true), t.memberExpression(t.thisExpression(), t.identifier(keyPath)))
           // 向上找到方法调用
           const parentPath = path.findParent((path) => path.isCallExpression())
@@ -184,8 +167,7 @@ module.exports = {
     traverse(ast, bindThisVisitor)
 
     return {
-      code: generate(ast).code,
-      keyPathArr: processkeyPathMap(keyPathMap)
+      code: generate(ast).code
     }
   }
 }

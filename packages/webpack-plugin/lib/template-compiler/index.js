@@ -24,12 +24,12 @@ module.exports = function (raw) {
       var __seen = [];
       var renderData = {};
       ${compiler.genNode(ast)}
-      // var finalRenderDataKey = this.__processKeyPathMap(renderData)
-      // var finalRenderData = {}
-      // finalRenderDataKey.forEach(item => {
-      //   finalRenderData[item] = this[item]
-      // })
-      // return finalRenderData;
+      var renderDataFinalKey = this.__processKeyPathMap(renderData)
+      for (var key in renderData) {
+        if (renderDataFinalKey.indexOf(key) === -1) {
+          delete renderData[key]
+        }
+      }
       return renderData;
     }
 };\n`, {
