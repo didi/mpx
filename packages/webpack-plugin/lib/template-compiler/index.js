@@ -34,7 +34,7 @@ module.exports = function (raw) {
     }
 };\n`, {
       needTravel: false,
-      needKeyPath: true,
+      needCollect: true,
       ignoreMap: meta.wxsModuleMap
     })
 

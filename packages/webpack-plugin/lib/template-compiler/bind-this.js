@@ -22,7 +22,7 @@ dangerousKeys.split(',').forEach((key) => {
 
 module.exports = {
   transform (code, {
-    needKeyPath = false,
+    needCollect = false,
     needTravel = false,
     ignoreMap = {}
   } = {}) {
@@ -101,42 +101,44 @@ module.exports = {
             return
           }
 
-          // 找到访问路径
-          current = path.parentPath
-          last = path
-          let keyPath = path.node.name
-          while (current.isMemberExpression() && last.parentKey !== 'property') {
-            if (current.node.computed) {
-              if (t.isLiteral(current.node.property)) {
-                if (t.isStringLiteral(current.node.property)) {
-                  if (!isValidIdentifierStr(current.node.property.value) || dangerousKeyMap[current.node.property.value]) {
-                    break
+          if (needCollect) {
+            // 找到访问路径
+            current = path.parentPath
+            last = path
+            let keyPath = path.node.name
+            while (current.isMemberExpression() && last.parentKey !== 'property') {
+              if (current.node.computed) {
+                if (t.isLiteral(current.node.property)) {
+                  if (t.isStringLiteral(current.node.property)) {
+                    if (!isValidIdentifierStr(current.node.property.value) || dangerousKeyMap[current.node.property.value]) {
+                      break
+                    }
+                    keyPath += `.${current.node.property.value}`
+                  } else {
+                    keyPath += `[${current.node.property.value}]`
                   }
-                  keyPath += `.${current.node.property.value}`
                 } else {
-                  keyPath += `[${current.node.property.value}]`
+                  break
                 }
               } else {
-                break
+                if (dangerousKeyMap[current.node.property.name]) {
+                  break
+                }
+                keyPath += `.${current.node.property.name}`
               }
-            } else {
-              if (dangerousKeyMap[current.node.property.name]) {
-                break
-              }
-              keyPath += `.${current.node.property.name}`
+              last = current
+              current = current.parentPath
             }
-            last = current
-            current = current.parentPath
-          }
 
-          // 构造赋值语句把访问的路径和值收集进renderData
-          const assignment = t.assignmentExpression('=', t.memberExpression(t.identifier('renderData'), t.stringLiteral(keyPath), true), t.memberExpression(t.thisExpression(), t.identifier(keyPath)))
-          // 向上找到方法调用
-          const parentPath = path.findParent((path) => path.isCallExpression())
-          // 取到方法调用的参数
-          const parentPathArgumentArr = parentPath.node.arguments
-          // 修改第一个参数
-          parentPathArgumentArr[0] = t.sequenceExpression([assignment, parentPathArgumentArr[0]])
+            // 构造赋值语句把访问的路径和值收集进renderData
+            const assignment = t.assignmentExpression('=', t.memberExpression(t.identifier('renderData'), t.stringLiteral(keyPath), true), t.memberExpression(t.thisExpression(), t.identifier(keyPath)))
+            // 向上找到方法调用
+            const parentPath = path.findParent((path) => path.isCallExpression())
+            // 取到方法调用的参数
+            const parentPathArgumentArr = parentPath.node.arguments
+            // 修改第一个参数
+            parentPathArgumentArr[0] = t.sequenceExpression([assignment, parentPathArgumentArr[0]])
+          }
 
           // bind this
           path.replaceWith(t.memberExpression(t.thisExpression(), path.node))
