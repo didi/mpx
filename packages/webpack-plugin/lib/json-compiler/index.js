@@ -9,6 +9,8 @@ const normalize = require('../utils/normalize')
 const nativeLoaderPath = normalize.lib('native-loader')
 const stripExtension = require('../utils/strip-extention')
 const toPosix = require('../utils/to-posix')
+const parseQuery = require('../utils/query').parseQuery
+const stringifyQuery = require('../utils/query').stringifyQuery
 
 module.exports = function (raw) {
   // 该loader中会在每次编译中动态添加entry，不能缓存，否则watch不好使
@@ -288,7 +290,26 @@ module.exports = function (raw) {
       let iconKey = tabBarCfg.iconKey
       let activeIconKey = tabBarCfg.activeIconKey
 
-      const tabBarIconPathAddFallback = str => str.includes('?fallback') ? str : str + '?fallback'
+      // tabBarIcon只支持路径，为了避免用户困扰，用此方法补上?fallback避免base64转换
+      const tabBarIconPathAddFallback = str => {
+        const tempArr = str.split('?')
+        if (tempArr.length === 1) {
+          return str + '?fallback'
+        }
+        if (tempArr.length > 2) {
+          // illegal query string, do not process
+          return str
+        }
+        const queryStr = tempArr[1]
+        const parsedQuery = parseQuery('?' + queryStr)
+        if (parsedQuery.fallback) {
+          return str
+        } else {
+          parsedQuery.fallback = true
+          tempArr[1] = stringifyQuery(parsedQuery).slice(1)
+          return tempArr.join('?')
+        }
+      }
 
       if (json.tabBar && json.tabBar[itemKey]) {
         json.tabBar[itemKey].forEach((item, index) => {
