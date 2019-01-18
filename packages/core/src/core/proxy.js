@@ -145,10 +145,10 @@ export default class MPXProxy {
   }
 
   renderWithData () {
-    if (typeof this.target.__getRenderData !== 'function') {
+    if (!this.target.__getRenderData) {
       return this.render()
     }
-    let renderData = this.target.__getRenderData.call(this.data)
+    let renderData = this.target.__getRenderData
     if (!this.miniRenderData) {
       this.miniRenderData = {}
       this.firstKeyMap = {}
@@ -250,7 +250,7 @@ export default class MPXProxy {
           this.render()
         } else {
           try {
-            this.target.__injectedRender()
+            this.__getRenderData = this.target.__injectedRender()
           } catch (e) {
             console.warn(`Failed to execute render function, degrade to full-set-data mode!`)
             console.warn(e)
