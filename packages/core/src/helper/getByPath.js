@@ -2,30 +2,31 @@ let curStack
 let targetStacks
 let varibale
 class Stack {
-  constructor (type) {
-    this.type = type
+  constructor (mark) {
+    this.mark = mark
+    // 字符串stack需要特殊处理
+    this.type = /['"]/.test(mark) ? 'string' : 'normal'
     this.value = []
-    this.hasPlus = false
   }
   push (data) {
     this.value.push(data)
   }
 }
 
-function startStack (type) {
+function startStack (mark) {
   // 开启栈或关闭栈都意味着前面的字符拼接截止
   varibaleFinish()
   curStack && targetStacks.push(curStack)
-  curStack = new Stack(type)
+  curStack = new Stack(mark)
 }
 
-function endStack (type) {
+function endStack () {
   // 开启栈或关闭栈都意味着前面的字符拼接截止
   varibaleFinish()
   // 字符串栈直接拼接
   const result = curStack.type === 'string' ? `'${curStack.value.join('')}'` : curStack.value
   curStack = targetStacks.pop()
-  // 将当前stack结果保证到父级stack里
+  // 将当前stack结果保存到父级stack里
   curStack.push(result)
 }
 
@@ -36,6 +37,7 @@ function varibaleFinish () {
 
 function init () {
   varibale = ''
+  // 根stack
   curStack = new Stack()
   targetStacks = []
 }
@@ -44,13 +46,12 @@ function parse (str) {
   // 重置全局数据
   init()
   for (const char of str) {
-    if (/['"]/.test(char)) {
-      curStack.type === 'string' ? endStack('string') : startStack('string')
-    } else if (curStack.type === 'string') {
-      // 引号内的字符，直接push
-      curStack.push(char)
-    } else if (char === '[') {
-      startStack()
+    // 当前遍历引号内的字符串时
+    if (curStack.type === 'string') {
+      // 若为对应的结束flag，则出栈，反之直接push
+      curStack.mark === char ? endStack() : curStack.push(char)
+    } else if (/['"\[]/.test(char)) {
+      startStack(char)
     } else if (char === ']') {
       endStack()
     } else if (char === '.' || char === '+') {
