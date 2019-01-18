@@ -30,7 +30,6 @@ const temp = `global.currentInject = {
 console.log(temp)
 
 const bindConfig = {
-  needTravel: false,
   needCollect: true,
   ignoreMap: meta.wxsModuleMap
 }

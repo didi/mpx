@@ -1,4 +1,4 @@
-import { toJS as toPureObject, observable, extendObservable } from 'mobx'
+import { toJS as toPureObject, extendObservable, observable, set, get, remove } from 'mobx'
 import * as platform from './platform'
 import createStore from './core/createStore'
 import { injectMixins } from './core/injectMixins'
@@ -76,7 +76,17 @@ const APIs = {
   observable,
   extendObservable,
   watch,
-  use
+  use,
+  set,
+  get,
+  remove
+}
+
+// 实例属性
+const InstanceAPIs = {
+  $set: set,
+  $get: get,
+  $remove: remove
 }
 
 function factory () {
@@ -85,6 +95,7 @@ function factory () {
     this.proto = extend({}, this)
   }
   extend(MPX, APIs)
+  extend(MPX.prototype, InstanceAPIs)
   return MPX
 }
 

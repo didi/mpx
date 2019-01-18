@@ -23,7 +23,6 @@ dangerousKeys.split(',').forEach((key) => {
 module.exports = {
   transform (code, {
     needCollect = false,
-    needTravel = false,
     ignoreMap = {}
   } = {}) {
     const ast = babylon.parse(code, {
@@ -33,21 +32,18 @@ module.exports = {
     })
 
     let hasIgnore = false
-    let inCheckIgnore = false
 
     let bindThisVisitor = {
       CallExpression: {
         enter (path) {
           let callee = path.node.callee
           if (t.isMemberExpression(callee) && t.isThisExpression(callee.object) && callee.property.name === '__checkIgnore') {
-            inCheckIgnore = true
             hasIgnore = false
           }
         },
         exit (path) {
           let callee = path.node.callee
           if (t.isMemberExpression(callee) && t.isThisExpression(callee.object) && callee.property.name === '__checkIgnore') {
-            inCheckIgnore = false
             path.pushContainer('arguments', t.booleanLiteral(hasIgnore))
           }
         }
@@ -143,23 +139,27 @@ module.exports = {
           // bind this
           path.replaceWith(t.memberExpression(t.thisExpression(), path.node))
 
-          // 暂时不需要在每个this表达式上都添加travel,因为路径中的this表达式只能是字符串或数字
-          if (needTravel && !inCheckIgnore) {
-            last = path
-            current = path.parentPath
-            while (current.isMemberExpression() && last.parentKey !== 'property') {
-              last = current
-              current = current.parentPath
-            }
-            last.needTravel = true
+          // flag get
+          last = path
+          current = path.parentPath
+          while (current.isMemberExpression() && last.parentKey !== 'property') {
+            current.shouldGet = true
+            last = current
+            current = current.parentPath
           }
         }
       },
-      Expression: {
+      MemberExpression: {
         exit (path) {
-          if (path.needTravel) {
-            delete path.needTravel
-            let targetNode = t.callExpression(t.memberExpression(t.thisExpression(), t.identifier('__travel')), [path.node, t.identifier('__seen')])
+          if (path.shouldGet) {
+            delete path.shouldGet
+            let property
+            if (path.node.computed) {
+              property = path.node.property
+            } else {
+              property = t.stringLiteral(path.node.property.name)
+            }
+            let targetNode = t.callExpression(t.memberExpression(t.thisExpression(), t.identifier('__get')), [path.node.object, property])
             path.replaceWith(targetNode)
           }
         }
