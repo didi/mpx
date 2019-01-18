@@ -2,7 +2,8 @@ import {
   proxy,
   deleteProperties,
   enumerableKeys,
-  extend
+  extend,
+  processRenderData
 } from '../helper/utils'
 
 import { mergeInjectedMixins } from '../core/injectMixins'
@@ -84,6 +85,11 @@ function transformApiForProxy (context, currentInject) {
         return rawSetData
       },
       configurable: false
+    },
+    __processRenderData: {
+      get () {
+        return processRenderData
+      }
     }
   })
   // 绑定注入的render
@@ -93,14 +99,6 @@ function transformApiForProxy (context, currentInject) {
         __injectedRender: {
           get () {
             return currentInject.render.bind(context)
-          },
-          configurable: false
-        }
-      })
-      Object.defineProperties(context, {
-        __getRenderData: {
-          get () {
-            return currentInject.render.call(context)
           },
           configurable: false
         }

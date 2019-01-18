@@ -395,3 +395,35 @@ export function isValidIdentifierStr (str) {
 export function isNumberStr (str) {
   return /^\d+$/.test(str)
 }
+
+/**
+ * process renderData, remove sub node if visit parent node already
+ * @param {Object} renderData
+ * @return {Object} processedRenderData
+ */
+export function processRenderData (renderData) {
+  // method for get key path array
+  const processKeyPathMap = (keyPathMap) => {
+    let keyPath = Object.keys(keyPathMap)
+    return keyPath.filter((keyA) => {
+      return keyPath.every((keyB) => {
+        if (keyA.startsWith(keyB) && keyA !== keyB) {
+          let nextChar = keyA[keyB.length]
+          if (nextChar === '.' || nextChar === '[') {
+            return false
+          }
+        }
+        return true
+      })
+    })
+  }
+
+  const processedRenderData = {}
+  const renderDataFinalKey = processKeyPathMap(renderData)
+  Object.keys(renderData).forEach(item => {
+    if (!renderDataFinalKey.include(item)) {
+      processedRenderData[item] = renderData[item]
+    }
+  })
+  return processedRenderData
+}

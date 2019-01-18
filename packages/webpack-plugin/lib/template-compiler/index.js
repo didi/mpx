@@ -24,16 +24,9 @@ module.exports = function (raw) {
       var __seen = [];
       var renderData = {};
       ${compiler.genNode(ast)}
-      var renderDataFinalKey = this.__processKeyPathMap(renderData)
-      for (var key in renderData) {
-        if (renderDataFinalKey.indexOf(key) === -1) {
-          delete renderData[key]
-        }
-      }
-      return renderData;
+      return this.__processRenderData(renderData)
     }
 };\n`, {
-      needTravel: false,
       needCollect: true,
       ignoreMap: meta.wxsModuleMap
     })
