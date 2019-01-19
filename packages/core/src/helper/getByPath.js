@@ -1,6 +1,6 @@
 let curStack
 let targetStacks
-let varibale
+let property
 class Stack {
   constructor (mark) {
     this.mark = mark
@@ -15,14 +15,14 @@ class Stack {
 
 function startStack (mark) {
   // 开启栈或关闭栈都意味着前面的字符拼接截止
-  varibaleFinish()
+  propertyJoinOver()
   curStack && targetStacks.push(curStack)
   curStack = new Stack(mark)
 }
 
 function endStack () {
   // 开启栈或关闭栈都意味着前面的字符拼接截止
-  varibaleFinish()
+  propertyJoinOver()
   // 字符串栈直接拼接
   const result = curStack.type === 'string' ? `'${curStack.value.join('')}'` : curStack.value
   curStack = targetStacks.pop()
@@ -30,13 +30,13 @@ function endStack () {
   curStack.push(result)
 }
 
-function varibaleFinish () {
-  varibale && curStack.push(varibale)
-  varibale = ''
+function propertyJoinOver () {
+  property && curStack.push(property)
+  property = ''
 }
 
 function init () {
-  varibale = ''
+  property = ''
   // 根stack
   curStack = new Stack()
   targetStacks = []
@@ -50,19 +50,19 @@ function parse (str) {
     if (curStack.type === 'string') {
       // 若为对应的结束flag，则出栈，反之直接push
       curStack.mark === char ? endStack() : curStack.push(char)
-    } else if (/['"\[]/.test(char)) {
+    } else if (/['"[]/.test(char)) {
       startStack(char)
     } else if (char === ']') {
       endStack()
     } else if (char === '.' || char === '+') {
-      varibaleFinish()
+      propertyJoinOver()
       char === '+' && curStack.push(char)
     } else {
-      varibale += char.trim()
+      property += char.trim()
     }
   }
   // 字符解析收尾
-  varibaleFinish()
+  propertyJoinOver()
   return curStack.value
 }
 
