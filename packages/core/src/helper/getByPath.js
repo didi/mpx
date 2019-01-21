@@ -75,7 +75,7 @@ function outPutByPath (context, path, transfer) {
       if (Object.prototype.toString.call(item) === '[object Array]') {
         // 数组最终得到一个key
         const key = outPutByPath(context, item, transfer)
-        result = transfer ? transfer(result, key) : result[key]
+        result = transfer ? transfer(result, key, index === len - 1) : result[key]
       } else if (/^'.+'$/.test(item) || /^\d+$/.test(item) && index === 0) {
         result = item.replace(/'/g, '')
       } else if (item === '+') {
@@ -83,7 +83,7 @@ function outPutByPath (context, path, transfer) {
         result += outPutByPath(context, path.slice(index + 1), transfer)
         break
       } else {
-        result = transfer ? transfer(result, item) : result[item]
+        result = transfer ? transfer(result, item, index === len - 1) : result[item]
       }
     }
   }
