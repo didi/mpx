@@ -39,7 +39,7 @@ function transformApiForProxy (context, currentInject) {
 function filterOptions (options, type) {
   const newOptions = {}
   Object.keys(options).forEach(key => {
-    if (customeKey.indexOf(key) !== -1 || key === 'data' && typeof options[key] === 'function') {
+    if (customeKey.indexOf(key) !== -1 || key === 'data' || key === 'didMount') {
       return
     } else {
       if (key === 'properties' || key === 'props') {
@@ -69,6 +69,9 @@ export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
       this.$mpxProxy.created()
     },
     didUpdate (prevProps) {
+      if (this.$mpxProxy.state === '__created__') {
+        return '__abort__'
+      }
       if (prevProps && prevProps !== this.props) {
         let isChanged = false
         Object.keys(prevProps).forEach(key => {
