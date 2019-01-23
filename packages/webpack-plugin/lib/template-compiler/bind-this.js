@@ -97,12 +97,17 @@ module.exports = {
             return
           }
 
+          // bind this
+          path.replaceWith(t.memberExpression(t.thisExpression(), path.node))
+
           if (needCollect) {
             // 找到访问路径
             current = path.parentPath
             last = path
-            let keyPath = path.node.name
+            let keyPath = path.node.property.name
+            let rightExpression = t.memberExpression(t.thisExpression(), t.identifier(keyPath))
             while (current.isMemberExpression() && last.parentKey !== 'property') {
+              last.skip()
               if (current.node.computed) {
                 if (t.isLiteral(current.node.property)) {
                   if (t.isStringLiteral(current.node.property)) {
@@ -110,8 +115,10 @@ module.exports = {
                       break
                     }
                     keyPath += `.${current.node.property.value}`
+                    rightExpression = t.memberExpression(rightExpression, t.identifier(current.node.property.value))
                   } else {
                     keyPath += `[${current.node.property.value}]`
+                    rightExpression = t.memberExpression(rightExpression, t.identifier(current.node.property.value), true)
                   }
                 } else {
                   break
@@ -121,23 +128,17 @@ module.exports = {
                   break
                 }
                 keyPath += `.${current.node.property.name}`
+                rightExpression = t.memberExpression(rightExpression, t.identifier(current.node.property.name))
               }
               last = current
               current = current.parentPath
             }
 
             // 构造赋值语句把访问的路径和值收集进renderData
-            const assignment = t.assignmentExpression('=', t.memberExpression(t.identifier('renderData'), t.stringLiteral(keyPath), true), t.memberExpression(t.thisExpression(), t.identifier(keyPath)))
-            // 向上找到方法调用
-            const parentPath = path.findParent((path) => path.isCallExpression())
-            // 取到方法调用的参数
-            const parentPathArgumentArr = parentPath.node.arguments
-            // 修改第一个参数
-            parentPathArgumentArr[0] = t.sequenceExpression([assignment, parentPathArgumentArr[0]])
+            const assignment = t.assignmentExpression('=', t.memberExpression(t.identifier('renderData'), t.stringLiteral(keyPath.toString()), true), rightExpression)
+            // current.node.arguments[0] = t.sequenceExpression([assignment, current.node.arguments[0]])
+            last.replaceWith(t.sequenceExpression([assignment, last.node]))
           }
-
-          // bind this
-          path.replaceWith(t.memberExpression(t.thisExpression(), path.node))
 
           // flag get
           last = path
