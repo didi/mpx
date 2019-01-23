@@ -104,7 +104,8 @@ module.exports = {
             // 找到访问路径
             current = path.parentPath
             last = path
-            let keyPath = path.node.property.name
+            let firstKey
+            let keyPath = firstKey = path.node.property.name
             let rightExpression = t.memberExpression(t.thisExpression(), t.identifier(keyPath))
             while (current.isMemberExpression() && last.parentKey !== 'property') {
               if (current.node.computed) {
@@ -114,7 +115,7 @@ module.exports = {
                       break
                     }
                     keyPath += `.${current.node.property.value}`
-                    rightExpression = t.memberExpression(rightExpression, t.stringLiteral(current.node.property.value))
+                    rightExpression = t.memberExpression(rightExpression, t.stringLiteral(current.node.property.value), true)
                   } else {
                     keyPath += `[${current.node.property.value}]`
                     rightExpression = t.memberExpression(rightExpression, t.numericLiteral(current.node.property.value), true)
@@ -133,6 +134,7 @@ module.exports = {
               current = current.parentPath
             }
 
+            rightExpression = t.arrayExpression([rightExpression, t.stringLiteral(firstKey)])
             // 构造赋值语句并挂到要改的path下，等对memberExpression访问exit时处理
             last.assignment = t.assignmentExpression('=', t.memberExpression(t.identifier('renderData'), t.stringLiteral(keyPath.toString()), true), rightExpression)
           }
@@ -162,6 +164,7 @@ module.exports = {
           }
           if (path.assignment) {
             path.replaceWith(t.sequenceExpression([path.assignment, path.node]))
+            path.stop()
           }
         }
       }

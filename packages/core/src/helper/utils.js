@@ -419,7 +419,7 @@ export function preprocessRenderData (renderData) {
   const processedRenderData = {}
   const renderDataFinalKey = processKeyPathMap(renderData)
   Object.keys(renderData).forEach(item => {
-    if (!renderDataFinalKey.include(item)) {
+    if (renderDataFinalKey.indexOf(item) > -1) {
       processedRenderData[item] = renderData[item]
     }
   })

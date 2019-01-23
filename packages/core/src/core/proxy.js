@@ -149,16 +149,15 @@ export default class MPXProxy {
     const renderData = preprocessRenderData(rawRenderData)
     if (!this.miniRenderData) {
       this.miniRenderData = {}
-      this.firstKeyMap = {}
       let ignoreKeys = this.propKeys.slice()
       for (let key in renderData) {
         if (renderData.hasOwnProperty(key)) {
-          let match = /[^[.]*/.exec(key)
-          let firstKey = match ? match[0] : key
+          let item = renderData[key]
+          let data = item[0]
+          let firstKey = item[1]
           if (ignoreKeys.indexOf(firstKey) === -1) {
-            this.miniRenderData[key] = diffAndCloneA(renderData[key]).clone
+            this.miniRenderData[key] = diffAndCloneA(data).clone
           }
-          this.firstKeyMap[key] = firstKey
         }
       }
       this.doRender(this.miniRenderData)
@@ -218,12 +217,15 @@ export default class MPXProxy {
     }
   }
 
-  processRenderData (data) {
+  processRenderData (renderData) {
     let result = {}
-    for (let key in this.miniRenderData) {
-      if (this.miniRenderData.hasOwnProperty(key)) {
-        let { clone, diff } = diffAndCloneA(data[key], this.miniRenderData[key])
-        if (this.forceUpdateKeys.indexOf(this.firstKeyMap[key]) > -1 || diff) {
+    for (let key in renderData) {
+      if (renderData.hasOwnProperty(key)) {
+        let item = renderData[key]
+        let data = item[0]
+        let firstKey = item[1]
+        let { clone, diff } = diffAndCloneA(data, this.miniRenderData[key])
+        if (this.forceUpdateKeys.indexOf(firstKey) > -1 || diff) {
           this.miniRenderData[key] = result[key] = clone
         }
       }
