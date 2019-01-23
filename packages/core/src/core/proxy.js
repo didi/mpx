@@ -15,7 +15,8 @@ import {
   diffAndCloneA,
   defineGetter,
   isValidIdentifierStr,
-  isNumberStr
+  isNumberStr,
+  processRenderData
 } from '../helper/utils'
 
 import { watch } from './watcher'
@@ -144,11 +145,8 @@ export default class MPXProxy {
     this.forceUpdateKeys = [] // 仅用于当次的render
   }
 
-  renderWithData () {
-    if (!this.target.__getRenderData) {
-      return this.render()
-    }
-    let renderData = this.target.__getRenderData
+  renderWithData (rawRenderData) {
+    const renderData = processRenderData(rawRenderData)
     if (!this.miniRenderData) {
       this.miniRenderData = {}
       this.firstKeyMap = {}
@@ -250,7 +248,7 @@ export default class MPXProxy {
           this.render()
         } else {
           try {
-            this.__getRenderData = this.target.__injectedRender()
+            return this.target.__injectedRender()
           } catch (e) {
             console.warn(`Failed to execute render function, degrade to full-set-data mode!`)
             console.warn(e)
@@ -260,9 +258,9 @@ export default class MPXProxy {
           }
         }
       }, {
-        handler: () => {
+        handler: (ret) => {
           if (!renderExecutionFailed) {
-            this.renderWithDiffClone()
+            this.renderWithData(ret)
           }
         },
         immediate: true,

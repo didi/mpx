@@ -24,7 +24,7 @@ module.exports = function (raw) {
       var __seen = [];
       var renderData = {};
       ${compiler.genNode(ast)}
-      return this.__processRenderData(renderData)
+      return renderData
     }
 };\n`, {
       needCollect: true,
