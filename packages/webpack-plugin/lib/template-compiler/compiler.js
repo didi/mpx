@@ -2,6 +2,7 @@ const deindent = require('de-indent')
 const he = require('he')
 const config = require('../config')
 const normalize = require('../utils/normalize')
+const isValidIdentifierStr = require('../utils/is-valid-identifier-str')
 
 /**
  * Make a map and return a function for checking if a key
@@ -762,7 +763,10 @@ function parseFuncStr2 (str) {
     let funcName = stringify(match[1])
     let args = match[3] ? `,${match[3]}` : ''
     args = args.replace('$event', stringify('$event'))
-    return `[${funcName + args}]`
+    return {
+      args,
+      result: `[${funcName + args}]`
+    }
   }
 }
 
@@ -778,13 +782,19 @@ function processBindEvent (el, options) {
     let match = bindRE.exec(attr.name)
     if (match) {
       let type = config[mode].event.getType(match)
-      let parsedFunc = parseFuncStr2(attr.value)
-      if (parsedFunc) {
+      let parsed = parseFuncStr2(attr.value)
+      if (parsed) {
+        if (!isValidIdentifierStr(type)) {
+          if (parsed.args) {
+            warn$1(`EventName ${type} which need inline args processing must be a valid identifier!`)
+          }
+          return
+        }
         hasBind = true
         if (!result[type]) {
           result[type] = []
         }
-        result[type].push(parsedFunc)
+        result[type].push(parsed.result)
         modifyAttr(el, attr.name, '__invoke')
       }
     }
@@ -797,6 +807,10 @@ function processBindEvent (el, options) {
     if (match) {
       let modelProp = getAndRemoveAttr(el, config[mode].directive.modelProp) || config[mode].event.defaultModelProp
       let modelEvent = getAndRemoveAttr(el, config[mode].directive.modelEvent) || config[mode].event.defaultModelEvent
+      if (!isValidIdentifierStr(modelEvent)) {
+        warn$1(`EventName ${modelEvent} which is used in wx:model must be a valid identifier!`)
+        return
+      }
       modelValue = match[1].trim()
       if (!result[modelEvent]) {
         result[modelEvent] = []

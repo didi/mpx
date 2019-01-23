@@ -2,6 +2,7 @@ const babylon = require('babylon')
 const traverse = require('babel-traverse').default
 const t = require('babel-types')
 const generate = require('babel-generator').default
+const isValidIdentifierStr = require('../utils/is-valid-identifier-str')
 
 let names = 'Infinity,undefined,NaN,isFinite,isNaN,' +
   'parseFloat,parseInt,decodeURI,decodeURIComponent,encodeURI,encodeURIComponent,' +
@@ -12,10 +13,6 @@ let hash = {}
 names.split(',').forEach(function (name) {
   hash[name] = true
 })
-
-function isValidIdentifierStr (str) {
-  return /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(str)
-}
 
 let dangerousKeys = 'length,size,prototype'
 let dangerousKeyMap = {}
