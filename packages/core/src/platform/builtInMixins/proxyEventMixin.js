@@ -1,6 +1,6 @@
-import { getByPath } from '../../helper/utils'
+import getByPath from '../../helper/getByPath'
 
-export default function proxyEventMixin (mixinType) {
+export default function proxyEventMixin () {
   return {
     methods: {
       __invoke ($event) {
@@ -32,19 +32,17 @@ export default function proxyEventMixin (mixinType) {
         })
       },
       __model (expr, $event) {
-        expr = expr.replace(/\[/g, '.').replace(/[\]'"]/g, '')
-        const lastIndex = expr.lastIndexOf('.')
-        let path = ''
-        let varible = ''
-        if (lastIndex > -1) {
-          path = expr.slice(0, lastIndex)
-          varible = expr.slice(lastIndex + 1)
-        } else {
-          varible = expr
-        }
-        try {
-          getByPath(this, path)[varible] = $event.detail.value
-        } catch (e) {
+        let parent
+        let varible
+        getByPath(this, expr, (value, key, end) => {
+          if (end) {
+            parent = value
+            varible = key
+          }
+          return value[key]
+        })
+        if (parent) {
+          parent[varible] = $event.detail.value
         }
       }
     }

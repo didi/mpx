@@ -6,6 +6,8 @@ import {
   toJS
 } from 'mobx'
 
+import _getByPath from './getByPath'
+
 export function type (n) {
   return Object.prototype.toString.call(n).slice(8, -1)
 }
@@ -34,21 +36,17 @@ export function isExistAttr (obj, attr) {
 }
 
 export function getByPath (data, pathStr, defaultVal = '') {
-  if (!pathStr) return data
-  const path = pathStr.split('.')
-  let value = data
-  for (let key of path) {
+  const result = _getByPath(data, pathStr, (value, key) => {
+    let newValue
     if (isObservable(value)) {
-      value = get(value, key)
+      newValue = get(value, key)
     } else if (isExistAttr(value, key)) {
-      value = value[key]
-    } else {
-      value = undefined
-      break
+      newValue = value[key]
     }
-  }
+    return newValue
+  })
   // 小程序setData时不允许undefined数据
-  return value === undefined ? defaultVal : value
+  return result === undefined ? defaultVal : result
 }
 
 export function enumerable (target, keys) {
