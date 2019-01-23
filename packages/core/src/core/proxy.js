@@ -16,7 +16,7 @@ import {
   defineGetter,
   isValidIdentifierStr,
   isNumberStr,
-  processRenderData
+  preprocessRenderData
 } from '../helper/utils'
 
 import { watch } from './watcher'
@@ -146,7 +146,7 @@ export default class MPXProxy {
   }
 
   renderWithData (rawRenderData) {
-    const renderData = processRenderData(rawRenderData)
+    const renderData = preprocessRenderData(rawRenderData)
     if (!this.miniRenderData) {
       this.miniRenderData = {}
       this.firstKeyMap = {}

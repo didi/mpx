@@ -399,7 +399,7 @@ export function isNumberStr (str) {
  * @param {Object} renderData
  * @return {Object} processedRenderData
  */
-export function processRenderData (renderData) {
+export function preprocessRenderData (renderData) {
   // method for get key path array
   const processKeyPathMap = (keyPathMap) => {
     let keyPath = Object.keys(keyPathMap)
