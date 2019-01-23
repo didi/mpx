@@ -164,7 +164,6 @@ module.exports = {
           }
           if (path.assignment) {
             path.replaceWith(t.sequenceExpression([path.assignment, path.node]))
-            path.stop()
           }
         }
       }
