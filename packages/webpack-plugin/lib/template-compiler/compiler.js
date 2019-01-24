@@ -719,6 +719,34 @@ function stringify (str) {
 let tagRE = /\{\{((?:.|\n)+?)\}\}/
 let tagREG = /\{\{((?:.|\n)+?)\}\}/g
 
+function processLifecycleHack (el, options) {
+  if (options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component') {
+    if (el.if) {
+      el.if = {
+        raw: `{{${el.if.exp} && __lifecycle_hack__}}`,
+        exp: `${el.if.exp} && __lifecycle_hack__`
+      }
+    } else if (el.elseif) {
+      el.elseif = {
+        raw: `{{${el.elseif.exp} && __lifecycle_hack__}}`,
+        exp: `${el.elseif.exp} && __lifecycle_hack__`
+      }
+
+    } else if (el.else) {
+      el.elseif = {
+        raw: '{{__lifecycle_hack__}}',
+        exp: '__lifecycle_hack__'
+      }
+      delete el.else
+    } else {
+      el.if = {
+        raw: '{{__lifecycle_hack__}}',
+        exp: '__lifecycle_hack__'
+      }
+    }
+  }
+}
+
 function processComponentIs (el, options) {
   if (el.tag !== 'component') {
     return
@@ -770,14 +798,10 @@ function parseFuncStr2 (str) {
   }
 }
 
-function processBindEvent (el, options) {
+function processBindEvent (el) {
   let bindRE = config[mode].event.bindReg
   let result = {}
   let hasBind = false
-  let isComponent = options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component'
-  if (mode === 'ali' && isComponent) {
-    return
-  }
   el.attrsList.forEach(function (attr) {
     let match = bindRE.exec(attr.name)
     if (match) {
@@ -831,7 +855,7 @@ function processBindEvent (el, options) {
 
   if (hasBind || modelValue) {
     addAttrs(el, [{
-      name: 'data-__bindconfigs',
+      name: 'data-bindconfigs',
       value: `{{${config[mode].event.shallowStringify(result)}}}`
     }])
   }
@@ -904,6 +928,40 @@ function processFor (el) {
     if (val = getAndRemoveAttr(el, config[mode].directive.key)) {
       el.for.key = val
     }
+  }
+}
+
+function processRef (el, options, meta) {
+  let val = getAndRemoveAttr(el, config[mode].directive.ref)
+  if (val) {
+    if (!meta.refs) {
+      meta.refs = []
+    }
+    let refClassName = `__ref_${val}`
+    let type = options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component' ? 'component' : 'node'
+    meta.refs.push({
+      key: val,
+      selector: `.${refClassName}`,
+      type
+    })
+    if (type === 'component' && mode === 'ali') {
+      addAttrs(el, [
+        {
+          name: 'data-ref',
+          value: val
+        },
+        {
+          name: 'onUpdateRef',
+          value: '__updateRef'
+        }
+      ])
+    }
+    let className = getAndRemoveAttr(el, 'class')
+    className = className ? className + ' ' + refClassName : refClassName
+    addAttrs(el, [{
+      name: 'class',
+      value: className
+    }])
   }
 }
 
@@ -1053,20 +1111,24 @@ function processStyle (el, meta, root) {
 function processElement (el, options, meta, root) {
   processIf(el)
   processFor(el)
-  if (mode === 'wx') {
-    processPageStatus(el, options)
-    processBindEvent(el, options)
+  // if (mode === 'wx') {
+  //   processPageStatus(el, options)
+  // }
+  processBindEvent(el)
+  if (mode === 'ali') {
+    processLifecycleHack(el, options)
   }
   processComponentIs(el, options)
+  processRef(el, options, meta)
   processClass(el, meta, root)
   processStyle(el, meta, root)
   processAttrs(el, meta)
 }
 
 function closeElement (el, root) {
-  let ret = postProcessComponentIs(el, root)
-  el = ret.el
-  root = ret.root
+  const result = postProcessComponentIs(el, root)
+  el = result.el
+  root = result.root
   postProcessFor(el)
   postProcessIf(el)
   return root
@@ -1092,6 +1154,7 @@ function postProcessComponentIs (el, root) {
       }
       newChild.children = el.children
       newChild.exps = el.exps
+      newChild.parent = tempNode
       postProcessIf(newChild)
       return newChild
     })
