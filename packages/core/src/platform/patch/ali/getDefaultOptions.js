@@ -33,6 +33,16 @@ function transformApiForProxy (context, currentInject) {
         }
       })
     }
+    if (currentInject.getSelfRefData) {
+      Object.defineProperties(context, {
+        __getSelfRefData: {
+          get () {
+            return currentInject.getSelfRefData
+          },
+          configurable: false
+        }
+      })
+    }
   }
 }
 

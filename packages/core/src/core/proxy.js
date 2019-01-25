@@ -5,7 +5,7 @@ import {
 
 import {
   enumerable,
-  deleteProperties,
+  filterProperties,
   type,
   enumerableKeys,
   extend,
@@ -43,7 +43,7 @@ export default class MPXProxy {
     this.renderReaction = null
     this.updatedCallbacks = [] // 保存设置的更新回调
     this.computedKeys = options.computed ? enumerableKeys(options.computed) : []
-    this.propKeys = enumerableKeys(Object.assign({}, options.properties, options.props))
+    this.localKeys = this.computedKeys.slice()
     this.forceUpdateKeys = [] // 强制更新的key，无论是否发生change
   }
 
@@ -58,12 +58,12 @@ export default class MPXProxy {
   }
 
   beforeMount () {
-    mountedQueue.enter(this.uid)
+    mountedQueue.enter(this.depth, this.uid)
   }
 
   mounted () {
     if (this.state === CREATED) {
-      mountedQueue.exit(this.uid, () => {
+      mountedQueue.exit(this.depth, this.uid, () => {
         this.state = MOUNTED
         this.callUserHook(MOUNTED)
       })
@@ -111,6 +111,7 @@ export default class MPXProxy {
     const proxyData = extend({}, this.initialData, data)
     this.initComputed(options.computed, proxyData)
     this.data = observable(proxyData)
+    this.depth = this.data['__depth__']
     /* 计算属性在mobx里面是不可枚举的，所以篡改下 */
     enumerable(this.data, this.computedKeys)
     /* target的数据访问代理到将proxy的data */
@@ -120,11 +121,12 @@ export default class MPXProxy {
   }
 
   initProps () {
-    proxy(this.target, this.initialData, this.propKeys)
+    proxy(this.target, this.initialData, enumerableKeys(this.initialData))
   }
 
   initData (dataFn) {
     const data = typeof dataFn === 'function' ? dataFn.call(this.target) : dataFn
+    this.collectLocalKeys(data)
     return data
   }
 
@@ -150,6 +152,10 @@ export default class MPXProxy {
         }
       })
     }
+  }
+
+  collectLocalKeys (data) {
+    this.localKeys.push.apply(this.localKeys, enumerableKeys(data))
   }
 
   onUpdated (fn) {
@@ -203,7 +209,7 @@ export default class MPXProxy {
 
   render () {
     const forceUpdateKeys = this.forceUpdateKeys
-    const newData = deleteProperties(this.data, this.propKeys)
+    const newData = filterProperties(this.data, this.localKeys)
     Object.keys(newData).forEach(key => {
       const isForceUpdateKey = forceUpdateKeys.indexOf(key) > -1
       if (!isForceUpdateKey && comparer.structural(this.cacheData[key], newData[key])) {
@@ -224,12 +230,11 @@ export default class MPXProxy {
     if (!this.miniRenderData) {
       this.miniRenderData = {}
       this.firstKeyMap = {}
-      let ignoreKeys = this.propKeys.slice()
       for (let key in renderData) {
         if (renderData.hasOwnProperty(key)) {
           let match = /[^[.]*/.exec(key)
           let firstKey = match ? match[0] : key
-          if (ignoreKeys.indexOf(firstKey) === -1) {
+          if (this.localKeys.indexOf(firstKey) > -1) {
             this.miniRenderData[key] = diffAndCloneA(renderData[key]).clone
           }
           this.firstKeyMap[key] = firstKey
@@ -242,7 +247,7 @@ export default class MPXProxy {
   }
 
   renderWithDiffClone () {
-    const data = deleteProperties(this.data, this.propKeys)
+    const data = filterProperties(this.data, this.localKeys)
     const result = diffAndCloneA(data, this.dataClone || {})
     const forceUpdateKeys = this.forceUpdateKeys
     this.dataClone = result.clone

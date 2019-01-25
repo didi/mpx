@@ -98,11 +98,11 @@ export function proxy (target, source, keys, mapKeys, readonly) {
   return target
 }
 
-export function deleteProperties (source, props = []) {
+export function filterProperties (source, props = []) {
   const sourceKeys = Object.keys(source)
   const newData = {}
   for (let key of sourceKeys) {
-    if (props.indexOf(key) < 0) {
+    if (props.indexOf(key) > -1) {
       const result = source[key]
       newData[key] = isObservable(result) ? toJS(result) : result
     }

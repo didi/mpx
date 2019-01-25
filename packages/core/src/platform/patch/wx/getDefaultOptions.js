@@ -97,7 +97,7 @@ function transformApiForProxy (context, currentInject) {
 function filterOptions (options) {
   const newOptions = {}
   Object.keys(options).forEach(key => {
-    if (customeKey.indexOf(key) !== -1 || key === 'data' && typeof options[key] === 'function') {
+    if (customeKey.indexOf(key) !== -1 || key === 'data' && typeof options[key] === 'function' || key === 'created') {
       return
     } else {
       if (key === 'properties' || key === 'props') {

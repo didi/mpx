@@ -3,7 +3,7 @@ import proxyEventMixin from './proxyEventMixin'
 import renderHelperMixin from './renderHelperMixin'
 import injectHelperMixin from './injectHelperMixin'
 import refsMixin from './refsMixin'
-import antLifecycle from './antLifecycle'
+import lifecycleMixin from './lifecycleMixin'
 export default function getBuiltInMixins (options, type) {
   return [
     pageStatusMixin(type),
@@ -11,6 +11,6 @@ export default function getBuiltInMixins (options, type) {
     renderHelperMixin(),
     injectHelperMixin(),
     refsMixin(),
-    antLifecycle()
+    lifecycleMixin(type)
   ].filter(item => item)
 }
