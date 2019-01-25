@@ -22,24 +22,16 @@ module.exports = function (raw) {
     moduleId: ${JSON.stringify(options.moduleId)},
     render: function () {
       var __seen = [];
+      var renderData = {};
       ${compiler.genNode(ast)}
+      return renderData
     }
 };\n`, {
-      needTravel: false,
-      needKeyPath: true,
+      needCollect: true,
       ignoreMap: meta.wxsModuleMap
     })
 
     let globalInjectCode = renderResult.code + '\n'
-
-    if (renderResult.keyPathArr.length) {
-      let renderData = `{${renderResult.keyPathArr.map((keyPath) => {
-        return `${JSON.stringify(keyPath)}: this.${keyPath}`
-      }).join(', ')}}`
-      globalInjectCode += `global.currentInject.getRenderData = function () { 
-  return ${renderData}; 
-};\n`
-    }
 
     if (meta.computed) {
       globalInjectCode += bindThis(`global.currentInject.injectComputed = {

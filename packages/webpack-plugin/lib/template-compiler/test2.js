@@ -1,7 +1,6 @@
 const bindThis = require('./bind-this').transform
 
-var result = bindThis('someData[m1.someKey];', {
-  needTravel: false,
+var result = bindThis('asdasd[aaa][123].aaa[sasd["asdsas"]];', {
   needKeyPath: true,
   ignoreMap: { m1: true }
 })

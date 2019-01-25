@@ -2,7 +2,8 @@ const compiler = require('./compiler')
 const bindThis = require('./bind-this').transform
 var input = '<view wx:style="{{aa}}" wx:class="{{a}}">{{a.b.c["aaa"].e}}</view>' +
   '<view wx:for="{{list}}">{{item}}</view>' +
-  '<view>{{a.prototypea}}</view>'
+  '<view>{{a.prototypea}}</view>' +
+  '<view>{{b.c.d}}</view>'
 
 let parsed = compiler.parse(input, {
   usingComponents: ['com1', 'com2', 'com3'],
@@ -11,22 +12,31 @@ let parsed = compiler.parse(input, {
 let ast = parsed.root
 let meta = parsed.meta
 
-let renderResult = bindThis(`global.currentInject = {
+const temp = `global.currentInject = {
     render: function () {
+      var __seen = [];
+      var renderData = {};
       ${compiler.genNode(ast)}
+      var renderDataFinalKey = this.__processKeyPathMap(renderData)
+      for (var key in renderData) {
+        if (renderDataFinalKey.indexOf(key) === -1) {
+          delete renderData[key]
+        }
+      }
+      return renderData;
     }
-};\n`, true)
+};\n`
+
+console.log(temp)
+
+const bindConfig = {
+  needCollect: true,
+  ignoreMap: meta.wxsModuleMap
+}
+
+let renderResult = bindThis(temp, bindConfig)
 
 let globalInjectCode = renderResult.code + '\n'
-
-if (renderResult.keyPathArr.length) {
-  let renderData = `{${renderResult.keyPathArr.map((keyPath) => {
-    return `${JSON.stringify(keyPath)}: this.${keyPath}`
-  }).join(', ')}}`
-  globalInjectCode += `global.currentInject.getRenderData = function () { 
-  return ${renderData}; 
-};\n`
-}
 
 if (meta.computed) {
   globalInjectCode += bindThis(`global.currentInject.injectComputed = {

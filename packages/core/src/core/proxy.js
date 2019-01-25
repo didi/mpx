@@ -1,8 +1,6 @@
 import {
   observable,
-  computed,
-  toJS,
-  extras
+  comparer
 } from 'mobx'
 
 import {
@@ -13,13 +11,18 @@ import {
   extend,
   proxy,
   isEmptyObject,
-  processUndefined
+  processUndefined,
+  diffAndCloneA,
+  defineGetter,
+  isValidIdentifierStr,
+  isNumberStr,
+  preprocessRenderData
 } from '../helper/utils'
 
 import { watch } from './watcher'
 
 export default class MPXProxy {
-  constructor (options, target, deepDiff) {
+  constructor (options, target) {
     this.target = target
     if (typeof target.__getInitialData !== 'function') {
       console.error(`please specify a 【__getInitialData】function to get miniprogram's initial data`)
@@ -32,24 +35,14 @@ export default class MPXProxy {
     this.computedKeys = options.computed ? enumerableKeys(options.computed) : []
     this.propKeys = enumerableKeys(options.properties || options.props || {})
     this.forceUpdateKeys = [] // 强制更新的key，无论是否发生change
-    this.deepDiff = options.deepDiff || deepDiff
-    // 需要强制diff的属性数组
-    if (this.deepDiff) {
-      this.forceDiffKeys = enumerableKeys(this.initialData).concat(this.computedKeys)
-    } else if (type(options.forceDiffKeys) === 'Array') {
-      this.forceDiffKeys = options.forceDiffKeys
-    } else if (options.forceDiffKeys) {
-      console.warn('[forceDiffKeys] must be Array of key')
-    }
-    this.cacheData = this.initialData // 缓存数据，用于diff
+    this.cacheData = extend({}, this.initialData) // 缓存数据，用于diff
     this.init(options)
   }
 
   init (options) {
-    // 初始化computed
-    const computed = this.initComputed(options.computed)
-    const initialData = this.initialData
-    this.data = observable(extend({}, initialData, computed))
+    const proxyData = extend({}, this.initialData)
+    this.initComputed(options.computed, proxyData)
+    this.data = observable(proxyData)
     /* 计算属性在mobx里面是不可枚举的，所以篡改下 */
     enumerable(this.data, this.computedKeys)
     /* target的数据访问代理到将proxy的data */
@@ -58,12 +51,13 @@ export default class MPXProxy {
     this.initWatch(options.watch)
   }
 
-  initComputed (computedConfig) {
-    const newComputed = {}
+  initComputed (computedConfig, proxyData) {
     this.computedKeys.forEach(key => {
-      newComputed[key] = computed(computedConfig[key], { context: this.target })
+      if (key in proxyData) {
+        console.error(`the computed key 【${key}】 is duplicated, please check`)
+      }
+      defineGetter(proxyData, key, computedConfig[key], this.target)
     })
-    return newComputed
   }
 
   initWatch (watches) {
@@ -136,61 +130,102 @@ export default class MPXProxy {
       console.error('please specify a 【__render】 function to render view')
       return
     }
-    const ignoreKeys = this.propKeys.slice()
     const forceUpdateKeys = this.forceUpdateKeys
-    if (this.forceDiffKeys) {
-      this.forceDiffKeys.forEach(key => {
-        const isForceUpdateKey = forceUpdateKeys.indexOf(key) > -1
-        /**
-         * 微信小程序能利用setData的同步性质来track依赖，因此属于forceUpdateKey时，可以不进行diff
-         * 支付宝小程序setData是异步的，所以需要主动遍历所有属性进行track
-         */
-        if (ignoreKeys.indexOf(key) === -1 && (this.deepDiff || !isForceUpdateKey)) {
-          if (extras.deepEqual(this.cacheData[key], this.data[key])) {
-            // 强制更新的key，无论是否变化，都要进行最终的setData
-            !isForceUpdateKey && ignoreKeys.push(key)
-          } else {
-            this.cacheData[key] = toJS(this.data[key])
-          }
-        }
-      })
-    }
-    this.target.__render(deleteProperties(this.data, ignoreKeys), () => this.handleUpdatedCallbacks())
+    const newData = deleteProperties(this.data, this.propKeys)
+    Object.keys(newData).forEach(key => {
+      const isForceUpdateKey = forceUpdateKeys.indexOf(key) > -1
+      if (!isForceUpdateKey && comparer.structural(this.cacheData[key], newData[key])) {
+        // 强制更新的key，无论是否变化，都要进行最终的setData
+        delete newData[key]
+      } else {
+        this.cacheData[key] = newData[key]
+      }
+    })
+    this.target.__render(newData, () => this.handleUpdatedCallbacks())
     this.forceUpdateKeys = [] // 仅用于当次的render
   }
 
-  renderWithData () {
-    if (typeof this.target.__getRenderData !== 'function') {
-      return this.render()
-    }
-    let renderData = this.target.__getRenderData.call(this.data)
+  renderWithData (rawRenderData) {
+    const renderData = preprocessRenderData(rawRenderData)
     if (!this.miniRenderData) {
       this.miniRenderData = {}
-      this.firstKeyMap = {}
-      let ignoreKeys = this.propKeys.slice()
       for (let key in renderData) {
         if (renderData.hasOwnProperty(key)) {
-          let match = /[^[.]*/.exec(key)
-          let firstKey = match ? match[0] : key
-          if (ignoreKeys.indexOf(firstKey) === -1) {
-            this.miniRenderData[key] = toJS(renderData[key])
+          let item = renderData[key]
+          let data = item[0]
+          let firstKey = item[1]
+          if (this.propKeys.indexOf(firstKey) === -1) {
+            this.miniRenderData[key] = diffAndCloneA(data).clone
           }
-          this.firstKeyMap[key] = firstKey
         }
       }
-
       this.doRender(this.miniRenderData)
     } else {
       this.doRender(this.processRenderData(renderData))
     }
   }
 
-  processRenderData (data) {
+  renderWithDiffClone () {
+    const data = deleteProperties(this.data, this.propKeys)
+    const result = diffAndCloneA(data, this.dataClone || {})
+    const forceUpdateKeys = this.forceUpdateKeys
+    this.dataClone = result.clone
+
+    if (result.diff || forceUpdateKeys.length) {
+      let renderData = {}
+      forceUpdateKeys.forEach((key) => {
+        renderData[key] = data[key]
+      })
+      const diffPaths = result.diffPaths
+      for (let i = 0; i < diffPaths.length; i++) {
+        let diffPath = diffPaths[i]
+        if (diffPath.length === 0) {
+          renderData = data
+          break
+        }
+
+        if (forceUpdateKeys.indexOf(diffPath[0]) > -1) {
+          continue
+        }
+
+        let key = ''
+        let value = data
+        for (let j = 0; j < diffPath.length; j++) {
+          const path = diffPath[j]
+          const isNumber = isNumberStr(path)
+          const isValidIdentifier = isValidIdentifierStr(path)
+          if (isNumber || isValidIdentifier) {
+            value = value[path]
+            if (isNumber) {
+              key += `[${path}]`
+            } else {
+              if (key) {
+                key += `.${path}`
+              } else {
+                key = path
+              }
+            }
+          }
+        }
+        if (key) {
+          renderData[key] = value
+        }
+      }
+      this.doRender(renderData)
+      this.forceUpdateKeys = []
+    }
+  }
+
+  processRenderData (renderData) {
     let result = {}
-    for (let key in this.miniRenderData) {
-      if (this.miniRenderData.hasOwnProperty(key)) {
-        if (this.forceUpdateKeys.indexOf(this.firstKeyMap[key]) > -1 || !extras.deepEqual(this.miniRenderData[key], data[key])) {
-          this.miniRenderData[key] = result[key] = toJS(data[key])
+    for (let key in renderData) {
+      if (renderData.hasOwnProperty(key)) {
+        let item = renderData[key]
+        let data = item[0]
+        let firstKey = item[1]
+        let { clone, diff } = diffAndCloneA(data, this.miniRenderData[key])
+        if (this.propKeys.indexOf(firstKey) === -1 && (this.forceUpdateKeys.indexOf(firstKey) > -1 || diff)) {
+          this.miniRenderData[key] = result[key] = clone
         }
       }
     }
@@ -214,7 +249,7 @@ export default class MPXProxy {
           this.render()
         } else {
           try {
-            this.target.__injectedRender()
+            return this.target.__injectedRender()
           } catch (e) {
             console.warn(`Failed to execute render function, degrade to full-set-data mode!`)
             console.warn(e)
@@ -224,9 +259,9 @@ export default class MPXProxy {
           }
         }
       }, {
-        handler: () => {
+        handler: (ret) => {
           if (!renderExecutionFailed) {
-            this.renderWithData()
+            this.renderWithData(ret)
           }
         },
         immediate: true,
