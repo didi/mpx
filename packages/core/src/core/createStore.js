@@ -71,8 +71,10 @@ function mergeDeps (module, deps, getterKeys) {
         console.warn(new Error(`deps's name: [${key}] conflicts with ${prop}'s key in current options`))
       } else {
         module[prop] = module[prop] || {}
-        module[prop][key] = store[prop]
         prop === 'getters' && getterKeys.push(key)
+        prop === 'state' ? extendObservable(module[prop], {
+          [key]: store[prop]
+        }) : (module[prop][key] = store[prop])
       }
     })
   })

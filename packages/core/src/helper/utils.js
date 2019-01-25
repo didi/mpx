@@ -39,7 +39,8 @@ export function getByPath (data, pathStr, defaultVal = '') {
   const result = _getByPath(data, pathStr, (value, key) => {
     let newValue
     if (isObservable(value)) {
-      newValue = get(value, key)
+      // key可能不是一个响应式属性，那么get将无法返回正确值
+      newValue = get(value, key) || value[key]
     } else if (isExistAttr(value, key)) {
       newValue = value[key]
     }
