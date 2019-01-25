@@ -1,12 +1,15 @@
 const compiler = require('./compiler')
 const bindThis = require('./bind-this').transform
-var input = '<view wx:style="{{aa}}" wx:class="{{a}}">{{a.b.c["aaa"].e}}</view>' +
-  '<view wx:for="{{list}}">{{item}}</view>' +
-  '<view>{{a.prototypea}}</view>'
+var input = '<view a:style="{{aa}}" a:class="{{a}}">{{a.b.c["aaa"].e}}</view>' +
+  '<view a:for="{{list}}">{{item}}</view>' +
+  '<view>{{a.prototypea}}</view>' +
+  '<com1 a:if="{{aasda || aaasdsa}}asdasds{{aaa}}"></com1>' +
+  '<com2 a:class="{{aasd}}" class="asdas" a:ref="com2" a:else></com2>'
 
 let parsed = compiler.parse(input, {
   usingComponents: ['com1', 'com2', 'com3'],
-  compileBindEvent: true
+  compileBindEvent: true,
+  mode: 'ali'
 })
 let ast = parsed.root
 let meta = parsed.meta

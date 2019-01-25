@@ -1,4 +1,5 @@
 import { getByPath } from '../../helper/utils'
+
 export default function proxyEventMixin (mixinType) {
   return {
     methods: {
@@ -10,7 +11,7 @@ export default function proxyEventMixin (mixinType) {
         //   fallbackType = 'regionchange'
         // }
         const target = $event.currentTarget || $event.target
-        const bindConfigs = target.dataset.__bindconfigs || {}
+        const bindConfigs = target.dataset.bindconfigs || {}
         const curEventConfig = bindConfigs[type] || bindConfigs[fallbackType] || []
         if (!curEventConfig.length) return
         const callbackName = curEventConfig[0]

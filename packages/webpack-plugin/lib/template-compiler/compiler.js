@@ -2,6 +2,7 @@ const deindent = require('de-indent')
 const he = require('he')
 const config = require('../config')
 const normalize = require('../utils/normalize')
+const isValidIdentifierStr = require('../utils/is-valid-identifier-str')
 
 /**
  * Make a map and return a function for checking if a key
@@ -718,6 +719,34 @@ function stringify (str) {
 let tagRE = /\{\{((?:.|\n)+?)\}\}/
 let tagREG = /\{\{((?:.|\n)+?)\}\}/g
 
+function processLifecycleHack (el, options) {
+  if (options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component') {
+    if (el.if) {
+      el.if = {
+        raw: `{{${el.if.exp} && __lifecycle_hack__}}`,
+        exp: `${el.if.exp} && __lifecycle_hack__`
+      }
+    } else if (el.elseif) {
+      el.elseif = {
+        raw: `{{${el.elseif.exp} && __lifecycle_hack__}}`,
+        exp: `${el.elseif.exp} && __lifecycle_hack__`
+      }
+
+    } else if (el.else) {
+      el.elseif = {
+        raw: '{{__lifecycle_hack__}}',
+        exp: '__lifecycle_hack__'
+      }
+      delete el.else
+    } else {
+      el.if = {
+        raw: '{{__lifecycle_hack__}}',
+        exp: '__lifecycle_hack__'
+      }
+    }
+  }
+}
+
 function processComponentIs (el, options) {
   if (el.tag !== 'component') {
     return
@@ -762,29 +791,34 @@ function parseFuncStr2 (str) {
     let funcName = stringify(match[1])
     let args = match[3] ? `,${match[3]}` : ''
     args = args.replace('$event', stringify('$event'))
-    return `[${funcName + args}]`
+    return {
+      args,
+      result: `[${funcName + args}]`
+    }
   }
 }
 
-function processBindEvent (el, options) {
+function processBindEvent (el) {
   let bindRE = config[mode].event.bindReg
   let result = {}
   let hasBind = false
-  let isComponent = options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component'
-  if (mode === 'ali' && isComponent) {
-    return
-  }
   el.attrsList.forEach(function (attr) {
     let match = bindRE.exec(attr.name)
     if (match) {
       let type = config[mode].event.getType(match)
-      let parsedFunc = parseFuncStr2(attr.value)
-      if (parsedFunc) {
+      let parsed = parseFuncStr2(attr.value)
+      if (parsed) {
+        if (!isValidIdentifierStr(type)) {
+          if (parsed.args) {
+            warn$1(`EventName ${type} which need inline args processing must be a valid identifier!`)
+          }
+          return
+        }
         hasBind = true
         if (!result[type]) {
           result[type] = []
         }
-        result[type].push(parsedFunc)
+        result[type].push(parsed.result)
         modifyAttr(el, attr.name, '__invoke')
       }
     }
@@ -797,6 +831,10 @@ function processBindEvent (el, options) {
     if (match) {
       let modelProp = getAndRemoveAttr(el, config[mode].directive.modelProp) || config[mode].event.defaultModelProp
       let modelEvent = getAndRemoveAttr(el, config[mode].directive.modelEvent) || config[mode].event.defaultModelEvent
+      if (!isValidIdentifierStr(modelEvent)) {
+        warn$1(`EventName ${modelEvent} which is used in wx:model must be a valid identifier!`)
+        return
+      }
       modelValue = match[1].trim()
       if (!result[modelEvent]) {
         result[modelEvent] = []
@@ -817,7 +855,7 @@ function processBindEvent (el, options) {
 
   if (hasBind || modelValue) {
     addAttrs(el, [{
-      name: 'data-__bindconfigs',
+      name: 'data-bindconfigs',
       value: `{{${config[mode].event.shallowStringify(result)}}}`
     }])
   }
@@ -890,6 +928,40 @@ function processFor (el) {
     if (val = getAndRemoveAttr(el, config[mode].directive.key)) {
       el.for.key = val
     }
+  }
+}
+
+function processRef (el, options, meta) {
+  let val = getAndRemoveAttr(el, config[mode].directive.ref)
+  if (val) {
+    if (!meta.refs) {
+      meta.refs = []
+    }
+    let refClassName = `__ref_${val}`
+    let type = options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component' ? 'component' : 'node'
+    meta.refs.push({
+      key: val,
+      selector: `.${refClassName}`,
+      type
+    })
+    if (type === 'component' && mode === 'ali') {
+      addAttrs(el, [
+        {
+          name: 'data-ref',
+          value: val
+        },
+        {
+          name: 'onUpdateRef',
+          value: '__updateRef'
+        }
+      ])
+    }
+    let className = getAndRemoveAttr(el, 'class')
+    className = className ? className + ' ' + refClassName : refClassName
+    addAttrs(el, [{
+      name: 'class',
+      value: className
+    }])
   }
 }
 
@@ -1039,20 +1111,24 @@ function processStyle (el, meta, root) {
 function processElement (el, options, meta, root) {
   processIf(el)
   processFor(el)
-  if (mode === 'wx') {
-    processPageStatus(el, options)
-    processBindEvent(el, options)
+  // if (mode === 'wx') {
+  //   processPageStatus(el, options)
+  // }
+  processBindEvent(el)
+  if (mode === 'ali') {
+    processLifecycleHack(el, options)
   }
   processComponentIs(el, options)
+  processRef(el, options, meta)
   processClass(el, meta, root)
   processStyle(el, meta, root)
   processAttrs(el, meta)
 }
 
 function closeElement (el, root) {
-  let ret = postProcessComponentIs(el, root)
-  el = ret.el
-  root = ret.root
+  const result = postProcessComponentIs(el, root)
+  el = result.el
+  root = result.root
   postProcessFor(el)
   postProcessIf(el)
   return root
@@ -1078,6 +1154,7 @@ function postProcessComponentIs (el, root) {
       }
       newChild.children = el.children
       newChild.exps = el.exps
+      newChild.parent = tempNode
       postProcessIf(newChild)
       return newChild
     })

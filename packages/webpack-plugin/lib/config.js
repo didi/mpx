@@ -46,7 +46,8 @@ module.exports = {
       forItem: 'wx:for-item',
       key: 'wx:key',
       dynamicClass: 'wx:class',
-      dynamicStyle: 'wx:style'
+      dynamicStyle: 'wx:style',
+      ref: 'wx:ref'
     }
   },
   ali: {
@@ -105,7 +106,8 @@ module.exports = {
       forItem: 'a:for-item',
       key: 'a:key',
       dynamicClass: 'a:class',
-      dynamicStyle: 'a:style'
+      dynamicStyle: 'a:style',
+      ref: 'a:ref'
     }
   }
 }
