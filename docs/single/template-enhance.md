@@ -33,8 +33,6 @@
 
 当该组件接受一个参数isActive为true时，就会为view加上class:active。
 
-> 注意：由于编译能力的限制，在wx:for中使用class和style绑定不能将for中的item和index作为数据传入，如果有对应需求可以使用包装组件将item和index作为props传入，在包装组件内部使用class和style绑定实现。
-
 例子：
 父组件
 ```html
