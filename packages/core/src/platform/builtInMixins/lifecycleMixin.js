@@ -23,21 +23,20 @@ export default function aliLifecycle (type) {
       }
     }
   } else if (is('wx')) {
-    if (type === 'page') {
-      return {
-        data: {
-          __depth__: 0
-        }
-      }
-    } else {
-      return {
-        properties: {
-          __depth__: Number
-        },
-        [CREATED] () {
-          typeof this.$rawOptions.created === 'function' && this.$rawOptions.created.call(this)
-        }
+    const options = {
+      [CREATED] () {
+        typeof this.$rawOptions.created === 'function' && this.$rawOptions.created.call(this)
       }
     }
+    if (type === 'page') {
+      options.data = {
+        __depth__: 0
+      }
+    } else {
+      options.properties = {
+        __depth__: Number
+      }
+    }
+    return options
   }
 }
