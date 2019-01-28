@@ -15,7 +15,8 @@ import {
   diffAndCloneA,
   defineGetter,
   isValidIdentifierStr,
-  isNumberStr
+  isNumberStr,
+  preprocessRenderData
 } from '../helper/utils'
 
 import { watch } from './watcher'
@@ -222,14 +223,10 @@ export default class MPXProxy {
     this.doRender(newData)
   }
 
-  renderWithData () {
-    if (typeof this.target.__getRenderData !== 'function') {
-      return this.render()
-    }
-    let renderData = this.target.__getRenderData.call(this.data)
+  renderWithData (rawRenderData) {
+    const renderData = preprocessRenderData(rawRenderData)
     if (!this.miniRenderData) {
       this.miniRenderData = {}
-      this.firstKeyMap = {}
       for (let key in renderData) {
         if (renderData.hasOwnProperty(key)) {
           let match = /[^[.]*/.exec(key)
@@ -237,7 +234,6 @@ export default class MPXProxy {
           if (this.localKeys.indexOf(firstKey) > -1) {
             this.miniRenderData[key] = diffAndCloneA(renderData[key]).clone
           }
-          this.firstKeyMap[key] = firstKey
         }
       }
       this.doRender(this.miniRenderData)
@@ -299,12 +295,15 @@ export default class MPXProxy {
     }
   }
 
-  processRenderData (data) {
+  processRenderData (renderData) {
     let result = {}
-    for (let key in this.miniRenderData) {
-      if (this.miniRenderData.hasOwnProperty(key)) {
-        let { clone, diff } = diffAndCloneA(data[key], this.miniRenderData[key])
-        if (this.forceUpdateKeys.indexOf(this.firstKeyMap[key]) > -1 || diff) {
+    for (let key in renderData) {
+      if (renderData.hasOwnProperty(key)) {
+        let item = renderData[key]
+        let data = item[0]
+        let firstKey = item[1]
+        let { clone, diff } = diffAndCloneA(data, this.miniRenderData[key])
+        if (this.propKeys.indexOf(firstKey) === -1 && (this.forceUpdateKeys.indexOf(firstKey) > -1 || diff)) {
           this.miniRenderData[key] = result[key] = clone
         }
       }
@@ -337,7 +336,7 @@ export default class MPXProxy {
           this.render()
         } else {
           try {
-            this.target.__injectedRender()
+            return this.target.__injectedRender()
           } catch (e) {
             console.warn(`Failed to execute render function, degrade to full-set-data mode!`)
             console.warn(e)
@@ -347,9 +346,9 @@ export default class MPXProxy {
           }
         }
       }, {
-        handler: () => {
+        handler: (ret) => {
           if (!renderExecutionFailed) {
-            this.renderWithDiffClone()
+            this.renderWithData(ret)
           }
         },
         immediate: true,

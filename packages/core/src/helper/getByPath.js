@@ -76,7 +76,7 @@ function outPutByPath (context, path, transfer) {
         // 数组最终得到一个key
         const key = outPutByPath(context, item, transfer)
         result = transfer ? transfer(result, key, index === len - 1) : result[key]
-      } else if (/^'.+'$/.test(item) || /^\d+$/.test(item) && index === 0) {
+      } else if (/^'.+'$/.test(item) || (/^\d+$/.test(item) && index === 0)) {
         result = item.replace(/'/g, '')
       } else if (item === '+') {
         // 获取加号后面所有path最终的结果

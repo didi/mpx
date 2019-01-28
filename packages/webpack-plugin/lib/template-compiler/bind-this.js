@@ -20,24 +20,9 @@ dangerousKeys.split(',').forEach((key) => {
   dangerousKeyMap[key] = true
 })
 
-function processkeyPathMap (keyPathMap) {
-  let keyPath = Object.keys(keyPathMap)
-  return keyPath.filter((keyA) => {
-    return keyPath.every((keyB) => {
-      if (keyA.startsWith(keyB) && keyA !== keyB) {
-        let nextChar = keyA[keyB.length]
-        if (nextChar === '.' || nextChar === '[') {
-          return false
-        }
-      }
-      return true
-    })
-  })
-}
-
 module.exports = {
   transform (code, {
-    needKeyPath = false,
+    needCollect = false,
     ignoreMap = {}
   } = {}) {
     const ast = babylon.parse(code, {
@@ -45,8 +30,6 @@ module.exports = {
         'objectRestSpread'
       ]
     })
-
-    let keyPathMap = {}
 
     let hasIgnore = false
 
@@ -114,10 +97,16 @@ module.exports = {
             return
           }
 
-          if (needKeyPath) {
+          // bind this
+          path.replaceWith(t.memberExpression(t.thisExpression(), path.node))
+
+          if (needCollect) {
+            // 找到访问路径
             current = path.parentPath
             last = path
-            let keyPath = path.node.name
+            let firstKey
+            let keyPath = firstKey = path.node.property.name
+            let rightExpression = t.memberExpression(t.thisExpression(), t.identifier(keyPath))
             while (current.isMemberExpression() && last.parentKey !== 'property') {
               if (current.node.computed) {
                 if (t.isLiteral(current.node.property)) {
@@ -126,8 +115,10 @@ module.exports = {
                       break
                     }
                     keyPath += `.${current.node.property.value}`
+                    rightExpression = t.memberExpression(rightExpression, t.stringLiteral(current.node.property.value), true)
                   } else {
                     keyPath += `[${current.node.property.value}]`
+                    rightExpression = t.memberExpression(rightExpression, t.numericLiteral(current.node.property.value), true)
                   }
                 } else {
                   break
@@ -137,14 +128,16 @@ module.exports = {
                   break
                 }
                 keyPath += `.${current.node.property.name}`
+                rightExpression = t.memberExpression(rightExpression, t.identifier(current.node.property.name))
               }
               last = current
               current = current.parentPath
             }
-            keyPathMap[keyPath] = true
+
+            rightExpression = t.arrayExpression([rightExpression, t.stringLiteral(firstKey)])
+            // 构造赋值语句并挂到要改的path下，等对memberExpression访问exit时处理
+            last.assignment = t.assignmentExpression('=', t.memberExpression(t.identifier('renderData'), t.stringLiteral(keyPath.toString()), true), rightExpression)
           }
-          // bind this
-          path.replaceWith(t.memberExpression(t.thisExpression(), path.node))
 
           // flag get
           last = path
@@ -171,6 +164,9 @@ module.exports = {
             let targetNode = t.callExpression(t.memberExpression(t.thisExpression(), t.identifier('__get')), [path.node.object, property])
             path.replaceWith(targetNode)
           }
+          if (path.assignment) {
+            path.replaceWith(t.sequenceExpression([path.assignment, path.node]))
+          }
         }
       }
     }
@@ -178,8 +174,7 @@ module.exports = {
     traverse(ast, bindThisVisitor)
 
     return {
-      code: generate(ast).code,
-      keyPathArr: processkeyPathMap(keyPathMap)
+      code: generate(ast).code
     }
   }
 }

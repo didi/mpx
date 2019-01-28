@@ -14,28 +14,31 @@ let parsed = compiler.parse(input, {
 let ast = parsed.root
 let meta = parsed.meta
 
-console.log(compiler.serialize(ast))
-
-let renderResult = bindThis(`global.currentInject = {
+const temp = `global.currentInject = {
     render: function () {
+      var __seen = [];
+      var renderData = {};
       ${compiler.genNode(ast)}
+      var renderDataFinalKey = this.__processKeyPathMap(renderData)
+      for (var key in renderData) {
+        if (renderDataFinalKey.indexOf(key) === -1) {
+          delete renderData[key]
+        }
+      }
+      return renderData;
     }
-};\n`, {
-  needTravel: false,
-  needKeyPath: true,
+};\n`
+
+console.log(temp)
+
+const bindConfig = {
+  needCollect: true,
   ignoreMap: meta.wxsModuleMap
-})
+}
+
+let renderResult = bindThis(temp, bindConfig)
 
 let globalInjectCode = renderResult.code + '\n'
-
-if (renderResult.keyPathArr.length) {
-  let renderData = `{${renderResult.keyPathArr.map((keyPath) => {
-    return `${JSON.stringify(keyPath)}: this.${keyPath}`
-  }).join(', ')}}`
-  globalInjectCode += `global.currentInject.getRenderData = function () { 
-  return ${renderData}; 
-};\n`
-}
 
 if (meta.computed) {
   globalInjectCode += bindThis(`global.currentInject.injectComputed = {
