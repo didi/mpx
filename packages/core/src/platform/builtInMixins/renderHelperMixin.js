@@ -1,5 +1,5 @@
 import { isObject, likeArray } from '../../helper/utils'
-import { toJS, isObservable, get } from 'mobx'
+import { toJS, isObservable, get, isObservableArray } from 'mobx'
 
 export default function renderHelperMixin () {
   return {
@@ -37,7 +37,7 @@ export default function renderHelperMixin () {
         return exp
       },
       __get (target, property) {
-        if (isObservable(target)) {
+        if (isObservable(target) && !isObservableArray(target)) {
           return get(target, property)
         }
         return target[property]
