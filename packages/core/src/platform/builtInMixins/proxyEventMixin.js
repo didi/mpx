@@ -1,7 +1,9 @@
 import getByPath from '../../helper/getByPath'
+import { is } from '../../helper/env'
+import { collectDataset } from '../../helper/utils'
 
 export default function proxyEventMixin () {
-  return {
+  const result = {
     methods: {
       __invoke ($event) {
         const type = $event.type
@@ -33,18 +35,47 @@ export default function proxyEventMixin () {
       },
       __model (expr, $event) {
         let parent
-        let varible
+        let variable
         getByPath(this, expr, (value, key, end) => {
           if (end) {
             parent = value
-            varible = key
+            variable = key
           }
           return value[key]
         })
         if (parent) {
-          parent[varible] = $event.detail.value
+          parent[variable] = $event.detail.value
         }
       }
     }
   }
+  if (is('ant')) {
+    Object.assign(result, {
+      triggerEvent (eventName, eventDetail) {
+        const handlerName = eventName.replace(/^./, matched => matched.toUpperCase())
+        const handler = this['on' + handlerName] || this['catch' + handlerName]
+        if (handler && typeof handler === 'function') {
+          const dataset = collectDataset(this.props)
+          const id = this.props.id || ''
+          const timeStamp = +new Date()
+          const eventObj = {
+            type: eventName,
+            timeStamp,
+            target: {
+              id,
+              dataset,
+              targetDataset: dataset
+            },
+            currentTarget: {
+              id,
+              dataset
+            },
+            detail: eventDetail
+          }
+          handler.call(this, eventObj)
+        }
+      }
+    })
+  }
+  return result
 }

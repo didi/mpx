@@ -775,11 +775,11 @@ function processComponentIs (el, options) {
   }
 }
 
-function processPageStatus (el, options) {
+function processComponentDepth (el, options) {
   if (options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component') {
     addAttrs(el, [{
-      name: '__pageStatus',
-      value: '{{__pageStatus}}'
+      name: '__depth',
+      value: '{{__depth + 1}}'
     }])
   }
 }
@@ -1111,9 +1111,7 @@ function processStyle (el, meta, root) {
 function processElement (el, options, meta, root) {
   processIf(el)
   processFor(el)
-  // if (mode === 'wx') {
-  //   processPageStatus(el, options)
-  // }
+  processComponentDepth(el, options)
   processBindEvent(el)
   if (mode === 'ali') {
     processLifecycleHack(el, options)

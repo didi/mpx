@@ -396,3 +396,18 @@ export function isValidIdentifierStr (str) {
 export function isNumberStr (str) {
   return /^\d+$/.test(str)
 }
+
+let datasetReg = /^data-(.+)$/
+
+export function collectDataset (props) {
+  let dataset = {}
+  for (let key in props) {
+    if (props.hasOwnProperty(key)) {
+      let matched = datasetReg.exec(key)
+      if (matched) {
+        dataset[matched[1]] = props[key]
+      }
+    }
+  }
+  return dataset
+}
