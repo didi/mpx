@@ -8,25 +8,35 @@ export default class Queue {
     this.top = null
   }
 
-  enter (id) {
-    // 栈顶id
-    this.top = id
+  enter (depth, id) {
+    // 栈顶
+    this.top = {
+      depth,
+      id
+    }
   }
 
-  exit (id, fn) {
+  exit (depth, id, fn) {
     this.stack.push({
       cb: fn,
-      id
+      id,
+      depth
     })
     // 最后一个开始退出
-    if (id === this.top) {
+    if (id === this.top.id) {
       this.run()
     }
   }
 
   run () {
     this.stack.sort((a, b) => {
-      return b.id - a.id
+      if (a.depth === b.depth) {
+        // 兄弟组件id越小越先执行
+        return a.id - b.id
+      } else {
+        // 组件层级越深，就越先执行
+        return b.depth - a.depth
+      }
     })
     this.stack.forEach(item => {
       typeof item.cb === 'function' && item.cb()

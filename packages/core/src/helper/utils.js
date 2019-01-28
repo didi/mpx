@@ -39,7 +39,8 @@ export function getByPath (data, pathStr, defaultVal = '') {
   const result = _getByPath(data, pathStr, (value, key) => {
     let newValue
     if (isObservable(value)) {
-      newValue = get(value, key)
+      // key可能不是一个响应式属性，那么get将无法返回正确值
+      newValue = get(value, key) || value[key]
     } else if (isExistAttr(value, key)) {
       newValue = value[key]
     }
@@ -97,11 +98,11 @@ export function proxy (target, source, keys, mapKeys, readonly) {
   return target
 }
 
-export function deleteProperties (source, props = []) {
+export function filterProperties (source, props = []) {
   const sourceKeys = Object.keys(source)
   const newData = {}
   for (let key of sourceKeys) {
-    if (props.indexOf(key) < 0) {
+    if (props.indexOf(key) > -1) {
       const result = source[key]
       newData[key] = isObservable(result) ? toJS(result) : result
     }

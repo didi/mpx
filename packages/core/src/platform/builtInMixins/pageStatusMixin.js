@@ -35,7 +35,7 @@ export default function pageStatusMixin (mixinType) {
           }
         }
       }
-    } else if (is('ant')) {
+    } else if (is('ali')) {
       return {
         watch: {
           '$page.__pageStatus': {
