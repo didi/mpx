@@ -778,8 +778,8 @@ function processComponentIs (el, options) {
 function processComponentDepth (el, options) {
   if (options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component') {
     addAttrs(el, [{
-      name: '__depth',
-      value: '{{__depth + 1}}'
+      name: '__depth__',
+      value: '{{__depth__ + 1}}'
     }])
   }
 }

@@ -1,38 +1,36 @@
 import { MOUNTED, UPDATED, DESTROYED } from '../../core/innerLifecycle'
 import { is } from '../../helper/env'
+
 export default function getRefsMixin () {
   let aliMethods
   if (is('ali')) {
     aliMethods = {
-      __setRefToParent (destroyed) {
-        const selfRef = this.__getSelfRefData && this.__getSelfRefData()
-        if (selfRef && this.onPassComponentToParent) {
-          this.onPassComponentToParent({
-            key: selfRef.key,
-            all: selfRef.all,
-            component: this,
-            destroyed
-          })
-        }
+      __updateRef (destroyed) {
+        this.triggerEvent('updateRef', {
+          component: this,
+          destroyed
+        })
       },
-      __getaliChildComponent (ref) {
+      __handleUpdateRef (ref, e) {
         if (!this.$componentRefs) {
           this.$componentRefs = {}
         }
+        const component = e.detail.component
+        const destroyed = e.detail.destroyed
         let refs = this.$componentRefs[ref.key]
         if (ref.all) {
           if (refs) {
-            if (ref.destroyed) {
-              const index = refs.indexOf(ref.component)
+            if (destroyed) {
+              const index = refs.indexOf(component)
               index > -1 && refs.splice(index, 1)
             } else {
-              refs.push(ref.component)
+              refs.push(component)
             }
           } else {
-            !ref.destroyed && (refs = [ref.component])
+            !destroyed && (refs = [component])
           }
         } else {
-          ref.destroyed ? (refs = null) : (refs = ref.component)
+          destroyed ? (refs = null) : (refs = component)
         }
         this.$componentRefs[ref.key] = refs
         this.$refs && (this.$refs[ref.key] = refs)
@@ -43,14 +41,14 @@ export default function getRefsMixin () {
     [MOUNTED] () {
       this.$refs = {}
       this.__getRefs()
-      this.__setRefToParent && this.__setRefToParent()
+      this.__updateRef && this.__updateRef()
     },
     [UPDATED] () {
       this.__getRefs()
     },
     [DESTROYED] () {
       // 销毁ref
-      this.__setRefToParent && this.__setRefToParent(true)
+      this.__updateRef && this.__updateRef(true)
     },
     methods: {
       ...aliMethods,

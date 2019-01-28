@@ -49,7 +49,7 @@ export default function proxyEventMixin () {
       }
     }
   }
-  if (is('ant')) {
+  if (is('ali')) {
     Object.assign(result, {
       triggerEvent (eventName, eventDetail) {
         const handlerName = eventName.replace(/^./, matched => matched.toUpperCase())
