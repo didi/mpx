@@ -150,7 +150,9 @@ module.exports = {
           last = path
           current = path.parentPath
           while (current.isMemberExpression() && last.parentKey !== 'property') {
-            current.shouldGet = true
+            if (!dangerousKeyMap[current.node.property.name || current.node.property.value]) {
+              current.shouldGet = true
+            }
             last = current
             current = current.parentPath
           }

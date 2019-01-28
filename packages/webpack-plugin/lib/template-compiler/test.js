@@ -1,7 +1,7 @@
 const compiler = require('./compiler')
 const bindThis = require('./bind-this').transform
 var input = '<view a:style="{{aa}}" a:class="{{a}}">{{a.b.c["aaa"].e}}</view>' +
-  '<view a:for="{{list}}">{{item}}</view>' +
+  '<view a:for="{{list}}" a:if="{{a.b.c.list.length}}">{{item}}</view>' +
   '<view>{{a.prototypea}}</view>' +
   '<com1 a:if="{{aasda || aaasdsa}}asdasds{{aaa}}"></com1>' +
   '<com2 a:class="{{aasd}}" class="asdas" a:ref="com2" a:else></com2>'
