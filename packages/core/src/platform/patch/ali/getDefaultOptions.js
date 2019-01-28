@@ -23,21 +23,21 @@ function transformApiForProxy (context, currentInject) {
     }
   })
   if (currentInject) {
-    if (currentInject.getRefsData) {
+    if (currentInject.render) {
       Object.defineProperties(context, {
-        __getRefsData: {
+        __injectedRender: {
           get () {
-            return currentInject.getRefsData
+            return currentInject.render.bind(context)
           },
           configurable: false
         }
       })
     }
-    if (currentInject.getSelfRefData) {
+    if (currentInject.getRefsData) {
       Object.defineProperties(context, {
-        __getSelfRefData: {
+        __getRefsData: {
           get () {
-            return currentInject.getSelfRefData
+            return currentInject.getRefsData
           },
           configurable: false
         }

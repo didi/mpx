@@ -29,7 +29,7 @@ const temp = `global.currentInject = {
     }
 };\n`
 
-console.log(temp)
+console.log(compiler.serialize(ast))
 
 const bindConfig = {
   needCollect: true,

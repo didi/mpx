@@ -71,16 +71,6 @@ function transformApiForProxy (context, currentInject) {
         }
       })
     }
-    if (currentInject.getRenderData) {
-      Object.defineProperties(context, {
-        __getRenderData: {
-          get () {
-            return currentInject.getRenderData
-          },
-          configurable: false
-        }
-      })
-    }
     if (currentInject.getRefsData) {
       Object.defineProperties(context, {
         __getRefsData: {

@@ -936,32 +936,32 @@ function processRef (el, options, meta) {
   if (val) {
     if (!meta.refs) {
       meta.refs = []
+      meta.refId = 0
     }
-    let refClassName = `__ref_${val}`
     let type = options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component' ? 'component' : 'node'
-    meta.refs.push({
-      key: val,
-      selector: `.${refClassName}`,
-      type
-    })
-    if (type === 'component' && mode === 'ali') {
-      addAttrs(el, [
-        {
-          name: 'data-ref',
-          value: val
-        },
-        {
-          name: 'onUpdateRef',
-          value: '__updateRef'
-        }
-      ])
-    }
+    let all = !!el.for
+    let refClassName = `__ref_${val}_${++meta.refId}`
     let className = getAndRemoveAttr(el, 'class')
     className = className ? className + ' ' + refClassName : refClassName
     addAttrs(el, [{
       name: 'class',
       value: className
     }])
+    meta.refs.push({
+      key: val,
+      selector: `.${refClassName}`,
+      type,
+      all
+    })
+
+    if (type === 'component' && mode === 'ali') {
+      addAttrs(el, [
+        {
+          name: 'onUpdateRef',
+          value: `__handleUpdateRef({key:${stringify(val)}, all:${stringify(all)}}, $event)`
+        }
+      ])
+    }
   }
 }
 
@@ -975,6 +975,10 @@ function addWxsModule (meta, module) {
 
 function processAttrs (el, meta) {
   el.attrsList.forEach((attr) => {
+    if (mode === 'ali') {
+      let processed = attr.value.replace(/["']/g, '\'')
+      attr.value = el.attrsMap[attr.name] = processed
+    }
     if (el.tag === 'wxs' && attr.name === 'module') {
       return addWxsModule(meta, attr.value)
     }
@@ -1112,12 +1116,12 @@ function processElement (el, options, meta, root) {
   processIf(el)
   processFor(el)
   processComponentDepth(el, options)
+  processRef(el, options, meta)
   processBindEvent(el)
   if (mode === 'ali') {
     processLifecycleHack(el, options)
   }
   processComponentIs(el, options)
-  processRef(el, options, meta)
   processClass(el, meta, root)
   processStyle(el, meta, root)
   processAttrs(el, meta)

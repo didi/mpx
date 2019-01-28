@@ -65,9 +65,7 @@ module.exports = {
     optionMenu: {
       iconKey: 'icon'
     },
-    stringify (str) {
-      return `'${str}'`
-    },
+    stringify: JSON.stringify,
     event: {
       bindReg: /^(?:on|catch)([A-Z].*)$/,
       getType (match) {
