@@ -48,8 +48,9 @@ function transformApiForProxy (context, currentInject) {
 
 function filterOptions (options, type) {
   const newOptions = {}
+  const ignoreProps = customeKey.concat(['data', 'didMount', 'onReady'])
   Object.keys(options).forEach(key => {
-    if (customeKey.indexOf(key) !== -1 || key === 'data' || key === 'didMount') {
+    if (ignoreProps.indexOf(key) !== -1) {
       return
     } else {
       if (key === 'properties' || key === 'props') {
