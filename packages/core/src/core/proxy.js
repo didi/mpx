@@ -23,6 +23,7 @@ import { watch } from './watcher'
 import { mountedQueue } from './lifecycleQueue'
 import {
   CREATED,
+  BEFOREMOUNT,
   MOUNTED,
   UPDATED,
   DESTROYED
@@ -66,6 +67,8 @@ export default class MPXProxy {
     if (this.state === CREATED) {
       mountedQueue.exit(this.depth, this.uid, () => {
         this.state = MOUNTED
+        // 用于处理refs等前置工作
+        this.callUserHook(BEFOREMOUNT)
         this.callUserHook(MOUNTED)
       })
     }
@@ -309,7 +312,6 @@ export default class MPXProxy {
         }
       }
     }
-    this.forceUpdateKeys = []
     return result
   }
 

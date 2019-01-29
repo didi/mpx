@@ -1,4 +1,4 @@
-import { MOUNTED, UPDATED, DESTROYED } from '../../core/innerLifecycle'
+import { BEFOREMOUNT, UPDATED, DESTROYED } from '../../core/innerLifecycle'
 import { is } from '../../helper/env'
 
 export default function getRefsMixin () {
@@ -6,7 +6,7 @@ export default function getRefsMixin () {
   if (is('ali')) {
     aliMethods = {
       __updateRef (destroyed) {
-        this.triggerEvent('updateRef', {
+        this.triggerEvent && this.triggerEvent('updateRef', {
           component: this,
           destroyed
         })
@@ -38,7 +38,7 @@ export default function getRefsMixin () {
     }
   }
   return {
-    [MOUNTED] () {
+    [BEFOREMOUNT] () {
       this.$refs = {}
       this.__getRefs()
       this.__updateRef && this.__updateRef()
