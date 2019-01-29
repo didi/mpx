@@ -14,6 +14,7 @@ module.exports = function (content) {
 
   const pagesMap = this._compilation.__mpx__.pagesMap
   const componentsMap = this._compilation.__mpx__.componentsMap
+  const mode = this._compilation.__mpx__.mode
   const resource = stripExtension(this.resource)
 
   const loaderContext = this
@@ -66,7 +67,8 @@ module.exports = function (content) {
     hasScoped,
     hasComment,
     usingComponents,
-    needCssSourceMap
+    needCssSourceMap,
+    mode
   )
 
   // 注入模块id

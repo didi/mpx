@@ -3,25 +3,26 @@ const extractorPath = normalize.lib('extractor')
 const stripExtension = require('./utils/strip-extention')
 const jsonCompilerPath = normalize.lib('json-compiler/index')
 const loaderUtils = require('loader-utils')
+const config = require('./config')
 
 module.exports = function (content) {
   this.cacheable()
   const isProduction = this.minimize || process.env.NODE_ENV === 'production'
+  const mode = this._compilation.__mpx__.mode
   let cssLoaderOptions = ''
   if (isProduction) {
     cssLoaderOptions += (cssLoaderOptions ? '&' : '?') + 'minimize'
   }
 
   const defaultLoaders = {
-    template: 'html-loader?attrs=audio:src image:src video:src cover-image:src wxs:src',
+    template: `html-loader?attrs=audio:src image:src video:src cover-image:src ${config[mode].wxs.tag}:${config[mode].wxs.src}`,
     styles: 'css-loader' + cssLoaderOptions,
     json: jsonCompilerPath
   }
-  const relativeFiles = {
-    styles: '.wxss',
-    json: '.json',
-    template: '.wxml'
-  }
+
+  const relativeFiles = Object.assign({}, config[mode].typeExtMap)
+  delete relativeFiles.script
+  
   const baseRequest = stripExtension(this.resourcePath)
 
   function getExtractorString (type, index) {

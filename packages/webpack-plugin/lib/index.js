@@ -10,6 +10,7 @@ const config = require('./config')
 const normalize = require('./utils/normalize')
 const stripExtension = require('./utils/strip-extention')
 const toPoisx = require('./utils/to-posix')
+const DefinePlugin = require('webpack/lib/DefinePlugin')
 
 class MpxWebpackPlugin {
   constructor (options = { mode: 'wx' }) {
@@ -31,6 +32,10 @@ class MpxWebpackPlugin {
   apply (compiler) {
     // 强制设置publicPath为'/'
     compiler.options.output.publicPath = '/'
+    // define mode
+    new DefinePlugin({
+      '__mpx_mode__': JSON.stringify(this.options.mode)
+    }).apply(compiler)
 
     compiler.hooks.thisCompilation.tap('MpxWebpackPlugin', (compilation, params) => {
       const typeExtMap = config[this.options.mode].typeExtMap

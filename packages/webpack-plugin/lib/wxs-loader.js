@@ -8,11 +8,13 @@ const stripExtension = require('./utils/strip-extention')
 const hash = require('hash-sum')
 const path = require('path')
 const toPosix = require('./utils/to-posix')
+const config = require('./config')
 
 module.exports = function () {
   const nativeCallback = this.async()
 
   const mainCompilation = getMainCompilation(this._compilation)
+  const mode = mainCompilation.__mpx__.mode
   const wxsMap = mainCompilation.__mpx__.wxsMap
   const componentsMap = mainCompilation.__mpx__.componentsMap
   const pagesMap = mainCompilation.__mpx__.pagesMap
@@ -37,7 +39,7 @@ module.exports = function () {
     callback()
   } else {
     const name = path.parse(resource).name + hash(resource)
-    let filename = path.join('wxs', `${name}.wxs`)
+    let filename = path.join(config[mode].wxs.ext, `${name}.${config[mode].wxs.ext}`)
     filename = toPosix(filename)
     wxsMap[resource] = filename
     const outputOptions = {
@@ -45,8 +47,7 @@ module.exports = function () {
     }
     const request = `!!${this.resource}`
     const childCompiler = mainCompilation.createChildCompiler(request, outputOptions, [
-      new WxsTemplatePlugin(),
-      new LibraryTemplatePlugin(null, 'commonjs2'),
+      new WxsTemplatePlugin({ mode }),
       new NodeTargetPlugin(),
       new SingleEntryPlugin(this.context, request, getName(filename)),
       new LimitChunkCountPlugin({ maxChunks: 1 })

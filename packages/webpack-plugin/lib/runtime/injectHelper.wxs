@@ -132,7 +132,11 @@ function dash2hump (value) {
 
 function parseStyleText (cssText) {
   var res = {}
-  var listDelimiter = getRegExp(';(?![^(]*\))', 'g')
+  if (__mpx_mode__ === 'wx') {
+    var listDelimiter = getRegExp(';(?![^(]*\))', 'g')
+  } else {
+    listDelimiter = getRegExp(';(?![^(]*\\))', 'g')
+  }
   var propertyDelimiter = getRegExp(':(.+)')
   cssText.split(listDelimiter).forEach(function (item) {
     if (item) {

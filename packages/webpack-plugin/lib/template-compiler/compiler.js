@@ -979,7 +979,7 @@ function processAttrs (el, meta) {
       let processed = attr.value.replace(/["']/g, '\'')
       attr.value = el.attrsMap[attr.name] = processed
     }
-    if (el.tag === 'wxs' && attr.name === 'module') {
+    if (el.tag === config[mode].wxs.tag && attr.name === config[mode].wxs.module) {
       return addWxsModule(meta, attr.value)
     }
     let parsed = parseMustache(attr.value)
@@ -1069,13 +1069,13 @@ function injectWxs (meta, module, src, root) {
   if (addWxsModule(meta, module)) {
     return
   }
-  let wxsNode = createASTElement('wxs', [
+  let wxsNode = createASTElement(config[mode].wxs.tag, [
     {
-      name: 'module',
+      name: config[mode].wxs.module,
       value: module
     },
     {
-      name: 'src',
+      name: config[mode].wxs.src,
       value: src
     }
   ])
@@ -1115,9 +1115,9 @@ function processStyle (el, meta, root) {
 function processElement (el, options, meta, root) {
   processIf(el)
   processFor(el)
-  processComponentDepth(el, options)
   processRef(el, options, meta)
   processBindEvent(el)
+  processComponentDepth(el, options)
   if (mode === 'ali') {
     processLifecycleHack(el, options)
   }

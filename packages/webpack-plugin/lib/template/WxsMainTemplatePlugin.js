@@ -1,6 +1,12 @@
 const Template = require('webpack/lib/Template')
+const config = require('../config')
+const { ConcatSource } = require('webpack-sources')
 
 module.exports = class WxsMainTemplatePlugin {
+  constructor (options = { mode: 'wx' }) {
+    this.options = options
+  }
+
   apply (mainTemplate) {
     mainTemplate.hooks.require.tap('MainTemplate', (source, chunk, hash) => {
       return Template.asString([
@@ -38,9 +44,17 @@ module.exports = class WxsMainTemplatePlugin {
         return ''
       }
     )
-    mainTemplate.hooks.hash.tap('NodeMainTemplatePlugin', hash => {
+    mainTemplate.hooks.renderWithEntry.tap(
+      'WxsMainTemplatePlugin',
+      (source, chunk, hash) => {
+        const prefix = config[this.options.mode].wxs.templatePrefix
+        return new ConcatSource(prefix, source)
+      }
+    )
+
+    mainTemplate.hooks.hash.tap('WxsMainTemplatePlugin', hash => {
       hash.update('wxs')
-      hash.update('4')
+      hash.update(this.options.mode)
     })
   }
 }

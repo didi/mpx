@@ -34,6 +34,13 @@ module.exports = {
         return ` {${arr.join(',')}} `
       }
     },
+    wxs: {
+      tag: 'wxs',
+      module: 'module',
+      src: 'src',
+      ext: 'wxs',
+      templatePrefix: 'module.exports = \n'
+    },
     directive: {
       if: 'wx:if',
       elseif: 'wx:elif',
@@ -91,6 +98,13 @@ module.exports = {
         }
         return ` {${arr.join(',')}} `
       }
+    },
+    wxs: {
+      tag: 'import-sjs',
+      module: 'name',
+      src: 'from',
+      ext: 'sjs',
+      templatePrefix: 'export default \n'
     },
     directive: {
       if: 'a:if',
