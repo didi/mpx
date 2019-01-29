@@ -245,60 +245,7 @@ export default class MPXProxy {
       this.doRender(this.processRenderData(renderData))
     }
   }
-
-  renderWithDiffClone () {
-    const data = filterProperties(this.data, this.localKeys)
-    const result = diffAndCloneA(data, this.dataClone || {})
-    const forceUpdateKeys = this.forceUpdateKeys
-    this.dataClone = result.clone
-
-    if (result.diff || forceUpdateKeys.length) {
-      let renderData = {}
-      forceUpdateKeys.forEach((key) => {
-        renderData[key] = data[key]
-      })
-      const diffPaths = result.diffPaths
-      for (let i = 0; i < diffPaths.length; i++) {
-        let diffPath = diffPaths[i]
-        if (diffPath.length === 0) {
-          renderData = data
-          break
-        }
-
-        if (forceUpdateKeys.indexOf(diffPath[0]) > -1) {
-          continue
-        }
-
-        let key = ''
-        let value = data
-        for (let j = 0; j < diffPath.length; j++) {
-          const path = diffPath[j]
-          const isNumber = isNumberStr(path)
-          const isValidIdentifier = isValidIdentifierStr(path)
-          if (isNumber || isValidIdentifier) {
-            value = value[path]
-            if (isNumber) {
-              key += `[${path}]`
-            } else {
-              if (key) {
-                key += `.${path}`
-              } else {
-                key = path
-              }
-            }
-          }
-        }
-        if (key) {
-          renderData[key] = value
-        }
-      }
-      this.doRender(renderData)
-    } else {
-      // 仅用于用于触发__mounted__
-      this.doRender()
-    }
-  }
-
+  
   processRenderData (renderData) {
     let result = {}
     for (let key in renderData) {

@@ -832,7 +832,7 @@ function processBindEvent (el) {
       let modelProp = getAndRemoveAttr(el, config[mode].directive.modelProp) || config[mode].event.defaultModelProp
       let modelEvent = getAndRemoveAttr(el, config[mode].directive.modelEvent) || config[mode].event.defaultModelEvent
       if (!isValidIdentifierStr(modelEvent)) {
-        warn$1(`EventName ${modelEvent} which is used in wx:model must be a valid identifier!`)
+        warn$1(`EventName ${modelEvent} which is used in ${config[mode].directive.model} must be a valid identifier!`)
         return
       }
       modelValue = match[1].trim()
