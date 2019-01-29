@@ -35,6 +35,21 @@ export function isExistAttr (obj, attr) {
   }
 }
 
+export function setByPath (data, pathStr, value) {
+  let parent
+  let variable
+  _getByPath(data, pathStr, (value, key, end) => {
+    if (end) {
+      parent = value
+      variable = key
+    }
+    return value[key]
+  })
+  if (parent) {
+    parent[variable] = value
+  }
+}
+
 export function getByPath (data, pathStr, defaultVal = '') {
   const result = _getByPath(data, pathStr, (value, key) => {
     let newValue
@@ -48,17 +63,6 @@ export function getByPath (data, pathStr, defaultVal = '') {
   })
   // 小程序setData时不允许undefined数据
   return result === undefined ? defaultVal : result
-}
-
-export function enumerable (target, keys) {
-  keys.forEach(key => {
-    const descriptor = Object.getOwnPropertyDescriptor(target, key)
-    if (!descriptor.enumerable) {
-      descriptor.enumerable = true
-      Object.defineProperty(target, key, descriptor)
-    }
-  })
-  return target
 }
 
 export function defineGetter (target, key, value, context) {
@@ -99,14 +103,13 @@ export function proxy (target, source, keys, mapKeys, readonly) {
 }
 
 export function filterProperties (source, props = []) {
-  const sourceKeys = Object.keys(source)
   const newData = {}
-  for (let key of sourceKeys) {
-    if (props.indexOf(key) > -1) {
-      const result = source[key]
-      newData[key] = isObservable(result) ? toJS(result) : result
+  props.forEach(prop => {
+    if (prop in source) {
+      const result = source[prop]
+      newData[prop] = isObservable(result) ? toJS(result) : result
     }
-  }
+  })
   return newData
 }
 

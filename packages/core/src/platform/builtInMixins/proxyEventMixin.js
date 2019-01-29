@@ -1,6 +1,5 @@
-import getByPath from '../../helper/getByPath'
 import { is } from '../../helper/env'
-import { collectDataset } from '../../helper/utils'
+import { collectDataset, setByPath } from '../../helper/utils'
 
 export default function proxyEventMixin () {
   const methods = {
@@ -33,18 +32,7 @@ export default function proxyEventMixin () {
       })
     },
     __model (expr, $event) {
-      let parent
-      let variable
-      getByPath(this, expr, (value, key, end) => {
-        if (end) {
-          parent = value
-          variable = key
-        }
-        return value[key]
-      })
-      if (parent) {
-        parent[variable] = $event.detail.value
-      }
+      setByPath(this, expr, $event.detail.value)
     }
   }
   if (is('ali')) {
