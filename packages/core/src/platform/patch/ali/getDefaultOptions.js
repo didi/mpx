@@ -51,7 +51,7 @@ function filterOptions (options, type) {
   const ignoreProps = customeKey.concat(['data', 'didMount', 'onReady'])
   Object.keys(options).forEach(key => {
     if (ignoreProps.indexOf(key) !== -1) {
-      return
+
     } else {
       if (key === 'properties' || key === 'props') {
         newOptions['props'] = Object.assign({}, options['properties'], options['props'])

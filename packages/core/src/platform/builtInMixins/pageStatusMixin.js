@@ -4,25 +4,25 @@ export default function pageStatusMixin (mixinType) {
   if (mixinType === 'page') {
     return {
       data: {
-        __pageStatus: 'show'
+        mpxPageStatus: 'show'
       },
       onShow () {
-        this.__pageStatus = 'show'
+        this.mpxPageStatus = 'show'
       },
       onHide () {
-        this.__pageStatus = 'hide'
+        this.mpxPageStatus = 'hide'
       }
     }
   } else {
     if (is('wx') || is('swan')) {
       return {
         properties: {
-          __pageStatus: {
+          mpxPageStatus: {
             type: String
           }
         },
         watch: {
-          __pageStatus: {
+          mpxPageStatus: {
             handler (val) {
               if (val) {
                 const rawOptions = this.$rawOptions
@@ -39,7 +39,7 @@ export default function pageStatusMixin (mixinType) {
     } else if (is('ali')) {
       return {
         watch: {
-          '$page.__pageStatus': {
+          '$page.mpxPageStatus': {
             handler (val) {
               if (val) {
                 const rawOptions = this.$rawOptions

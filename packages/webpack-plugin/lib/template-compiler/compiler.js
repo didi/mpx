@@ -723,27 +723,35 @@ function processLifecycleHack (el, options) {
   if (options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component') {
     if (el.if) {
       el.if = {
-        raw: `{{${el.if.exp} && __lifecycle_hack}}`,
-        exp: `${el.if.exp} && __lifecycle_hack`
+        raw: `{{${el.if.exp} && mpxLifecycleHack}}`,
+        exp: `${el.if.exp} && mpxLifecycleHack`
       }
     } else if (el.elseif) {
       el.elseif = {
-        raw: `{{${el.elseif.exp} && __lifecycle_hack}}`,
-        exp: `${el.elseif.exp} && __lifecycle_hack`
+        raw: `{{${el.elseif.exp} && mpxLifecycleHack}}`,
+        exp: `${el.elseif.exp} && mpxLifecycleHack`
       }
-
     } else if (el.else) {
       el.elseif = {
-        raw: '{{__lifecycle_hack}}',
-        exp: '__lifecycle_hack'
+        raw: '{{mpxLifecycleHack}}',
+        exp: 'mpxLifecycleHack'
       }
       delete el.else
     } else {
       el.if = {
-        raw: '{{__lifecycle_hack}}',
-        exp: '__lifecycle_hack'
+        raw: '{{mpxLifecycleHack}}',
+        exp: 'mpxLifecycleHack'
       }
     }
+  }
+}
+
+function processPageStatus (el, options) {
+  if (options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component') {
+    addAttrs(el, [{
+      name: 'mpxPageStatus',
+      value: '{{mpxPageStatus}}'
+    }])
   }
 }
 
@@ -778,8 +786,8 @@ function processComponentIs (el, options) {
 function processComponentDepth (el, options) {
   if (options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component') {
     addAttrs(el, [{
-      name: '__depth',
-      value: '{{__depth + 1}}'
+      name: 'mpxDepth',
+      value: '{{mpxDepth + 1}}'
     }])
   }
 }
@@ -1120,6 +1128,8 @@ function processElement (el, options, meta, root) {
   processComponentDepth(el, options)
   if (mode === 'ali') {
     processLifecycleHack(el, options)
+  } else {
+    processPageStatus(el, options)
   }
   processComponentIs(el, options)
   processClass(el, meta, root)

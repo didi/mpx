@@ -1,6 +1,5 @@
 const WxsTemplatePlugin = require('./template/WxsTemplatePlugin')
 const NodeTargetPlugin = require('webpack/lib/node/NodeTargetPlugin')
-const LibraryTemplatePlugin = require('webpack/lib/LibraryTemplatePlugin')
 const SingleEntryPlugin = require('webpack/lib/SingleEntryPlugin')
 const LimitChunkCountPlugin = require('webpack/lib/optimize/LimitChunkCountPlugin')
 const getMainCompilation = require('./utils/get-main-compilation')

@@ -22,7 +22,7 @@ module.exports = function (content) {
 
   const relativeFiles = Object.assign({}, config[mode].typeExtMap)
   delete relativeFiles.script
-  
+
   const baseRequest = stripExtension(this.resourcePath)
 
   function getExtractorString (type, index) {

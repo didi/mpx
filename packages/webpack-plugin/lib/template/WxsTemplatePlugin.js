@@ -1,7 +1,7 @@
 const WxsMainTemplatePlugin = require('./WxsMainTemplatePlugin')
 
 class WxsTemplatePlugin {
-  constructor (options = {mode:'wx'}) {
+  constructor (options = { mode: 'wx' }) {
     this.options = options
   }
 

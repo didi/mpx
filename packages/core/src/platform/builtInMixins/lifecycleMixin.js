@@ -6,7 +6,7 @@ export default function lifecycleMixin (type) {
   if (is('ali')) {
     options = {
       data: {
-        __lifecycle_hack: true
+        mpxLifecycleHack: true
       },
       [MOUNTED] () {
         typeof this.$rawOptions.didMount === 'function' && this.$rawOptions.didMount.call(this)
@@ -14,10 +14,10 @@ export default function lifecycleMixin (type) {
       }
     }
     if (type === 'page') {
-      options.data.__depth = 0
+      options.data.mpxDepth = 0
     } else {
       options.props = {
-        __depth: 0
+        mpxDepth: 0
       }
     }
   } else if (is('wx') || is('swan')) {
@@ -28,13 +28,14 @@ export default function lifecycleMixin (type) {
     }
     if (type === 'page') {
       options.data = {
-        __depth: 0
+        mpxDepth: 0
       }
     } else {
       options.properties = {
-        __depth: Number
+        mpxDepth: Number
       }
     }
   }
+
   return options
 }
