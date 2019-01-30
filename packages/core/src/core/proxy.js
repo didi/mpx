@@ -4,7 +4,6 @@ import {
 } from 'mobx'
 
 import {
-  enumerable,
   filterProperties,
   type,
   enumerableKeys,
@@ -14,8 +13,6 @@ import {
   processUndefined,
   diffAndCloneA,
   defineGetter,
-  isValidIdentifierStr,
-  isNumberStr,
   preprocessRenderData
 } from '../helper/utils'
 
@@ -116,10 +113,8 @@ export default class MPXProxy {
     this.initComputed(options.computed, proxyData)
     this.data = observable(proxyData)
     this.depth = this.data['__depth']
-    /* 计算属性在mobx里面是不可枚举的，所以篡改下 */
-    enumerable(this.data, this.computedKeys)
     /* target的数据访问代理到将proxy的data */
-    proxy(this.target, this.data, enumerableKeys(this.data))
+    proxy(this.target, this.data, enumerableKeys(this.data).concat(this.computedKeys))
     // 初始化watch
     this.initWatch(options.watch)
   }
@@ -322,9 +317,9 @@ export default class MPXProxy {
       callback = params
       params = null
     } else if (paramsType === 'Object') {
-      this.setForceUpdateKeys(params)
       extend(this.data, params)
     }
+    this.setForceUpdateKeys(params ? Object.keys(params) : this.localKeys)
     type(callback) === 'Function' && this.onUpdated(callback)
     // 无论是否改变，强制将状态置为stale，从而触发render
     if (this.renderReaction) {
@@ -333,8 +328,8 @@ export default class MPXProxy {
     }
   }
 
-  setForceUpdateKeys (obj) {
-    Object.keys(obj).forEach(key => {
+  setForceUpdateKeys (keys = []) {
+    keys.forEach(key => {
       if (this.forceUpdateKeys.indexOf(key) === -1) {
         this.forceUpdateKeys.push(key)
       }
