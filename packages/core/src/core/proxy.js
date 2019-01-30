@@ -115,7 +115,7 @@ export default class MPXProxy {
     const proxyData = extend({}, this.initialData, data)
     this.initComputed(options.computed, proxyData)
     this.data = observable(proxyData)
-    this.depth = this.data['__depth__']
+    this.depth = this.data['__depth']
     /* 计算属性在mobx里面是不可枚举的，所以篡改下 */
     enumerable(this.data, this.computedKeys)
     /* target的数据访问代理到将proxy的data */
@@ -245,7 +245,7 @@ export default class MPXProxy {
       this.doRender(this.processRenderData(renderData))
     }
   }
-  
+
   processRenderData (renderData) {
     let result = {}
     for (let key in renderData) {
@@ -274,7 +274,9 @@ export default class MPXProxy {
     if (this.state === CREATED) {
       this.beforeMount()
     }
-    this.target.__render(processUndefined(data), () => this.updated(true))
+    this.target.__render(processUndefined(data), () => {
+      this.updated(true)
+    })
     this.forceUpdateKeys = [] // 仅用于当次的render
   }
 

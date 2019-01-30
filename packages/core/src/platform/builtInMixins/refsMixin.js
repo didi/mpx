@@ -67,10 +67,12 @@ export default function getRefsMixin () {
             query = wx.createSelectorQuery().in(this)
           } else if (is('ali')) {
             query = my.createSelectorQuery()
+          } else if (is('swan')) {
+            query = swan.createSelectorQuery().in(this)
           }
           return query && (ref.all ? query.selectAll(ref.selector) : query.select(ref.selector))
         } else if (ref.type === 'component') {
-          if (is('wx')) {
+          if (is('wx') || is('swan')) {
             return ref.all ? this.selectAllComponents(ref.selector) : this.selectComponent(ref.selector)
           } else if (is('ali')) {
             return this.$componentRefs ? this.$componentRefs[ref.key] : null

@@ -1,4 +1,5 @@
 import { is } from '../../helper/env'
+
 export default function pageStatusMixin (mixinType) {
   if (mixinType === 'page') {
     return {
@@ -13,7 +14,7 @@ export default function pageStatusMixin (mixinType) {
       }
     }
   } else {
-    if (is('wx')) {
+    if (is('wx') || is('swan')) {
       return {
         properties: {
           __pageStatus: {

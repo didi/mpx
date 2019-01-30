@@ -1,11 +1,12 @@
 import { CREATED, MOUNTED } from '../../core/innerLifecycle'
 import { is } from '../../helper/env'
+
 export default function lifecycleMixin (type) {
   let options
   if (is('ali')) {
     options = {
       data: {
-        __lifecycle_hack__: true
+        __lifecycle_hack: true
       },
       [MOUNTED] () {
         typeof this.$rawOptions.didMount === 'function' && this.$rawOptions.didMount.call(this)
@@ -13,13 +14,13 @@ export default function lifecycleMixin (type) {
       }
     }
     if (type === 'page') {
-      options.data.__depth__ = 0
+      options.data.__depth = 0
     } else {
       options.props = {
-        __depth__: 0
+        __depth: 0
       }
     }
-  } else if (is('wx')) {
+  } else if (is('wx') || is('swan')) {
     options = {
       [CREATED] () {
         typeof this.$rawOptions.created === 'function' && this.$rawOptions.created.call(this)
@@ -27,11 +28,11 @@ export default function lifecycleMixin (type) {
     }
     if (type === 'page') {
       options.data = {
-        __depth__: 0
+        __depth: 0
       }
     } else {
       options.properties = {
-        __depth__: Number
+        __depth: Number
       }
     }
   }

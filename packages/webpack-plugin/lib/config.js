@@ -121,5 +121,63 @@ module.exports = {
       dynamicStyle: 'a:style',
       ref: 'a:ref'
     }
+  },
+  swan: {
+    typeExtMap: {
+      json: '.json',
+      script: '.js',
+      template: '.swan',
+      styles: '.css'
+    },
+    tabBar: {
+      itemKey: 'list',
+      iconKey: 'iconPath',
+      activeIconKey: 'selectedIconPath'
+    },
+    stringify: JSON.stringify,
+    event: {
+      bindReg: /^bind(.*)$/,
+      getType (match) {
+        return match[1]
+      },
+      defaultModelProp: 'value',
+      defaultModelEvent: 'input',
+      getBind (eventName) {
+        return 'bind' + eventName
+      },
+      shallowStringify (obj) {
+        let arr = []
+        for (let key in obj) {
+          let value = obj[key]
+          if (Array.isArray(value)) {
+            value = `[${value.join(',')}]`
+          }
+          arr.push(`${key}:${value}`)
+        }
+        return ` {${arr.join(',')}} `
+      }
+    },
+    wxs: {
+      tag: 'filter',
+      module: 'module',
+      src: 'src',
+      ext: 'js',
+      templatePrefix: 'export default \n'
+    },
+    directive: {
+      if: 's-if',
+      elseif: 's-elif',
+      else: 's-else',
+      model: 's-model',
+      modelProp: 's-model-prop',
+      modelEvent: 's-model-event',
+      for: 's-for',
+      forIndex: 's-for-index',
+      forItem: 's-for-item',
+      key: 's-key',
+      dynamicClass: 's-class',
+      dynamicStyle: 's-style',
+      ref: 's-ref'
+    }
   }
 }

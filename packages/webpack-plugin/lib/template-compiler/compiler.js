@@ -723,25 +723,25 @@ function processLifecycleHack (el, options) {
   if (options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component') {
     if (el.if) {
       el.if = {
-        raw: `{{${el.if.exp} && __lifecycle_hack__}}`,
-        exp: `${el.if.exp} && __lifecycle_hack__`
+        raw: `{{${el.if.exp} && __lifecycle_hack}}`,
+        exp: `${el.if.exp} && __lifecycle_hack`
       }
     } else if (el.elseif) {
       el.elseif = {
-        raw: `{{${el.elseif.exp} && __lifecycle_hack__}}`,
-        exp: `${el.elseif.exp} && __lifecycle_hack__`
+        raw: `{{${el.elseif.exp} && __lifecycle_hack}}`,
+        exp: `${el.elseif.exp} && __lifecycle_hack`
       }
 
     } else if (el.else) {
       el.elseif = {
-        raw: '{{__lifecycle_hack__}}',
-        exp: '__lifecycle_hack__'
+        raw: '{{__lifecycle_hack}}',
+        exp: '__lifecycle_hack'
       }
       delete el.else
     } else {
       el.if = {
-        raw: '{{__lifecycle_hack__}}',
-        exp: '__lifecycle_hack__'
+        raw: '{{__lifecycle_hack}}',
+        exp: '__lifecycle_hack'
       }
     }
   }
@@ -778,8 +778,8 @@ function processComponentIs (el, options) {
 function processComponentDepth (el, options) {
   if (options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component') {
     addAttrs(el, [{
-      name: '__depth__',
-      value: '{{__depth__ + 1}}'
+      name: '__depth',
+      value: '{{__depth + 1}}'
     }])
   }
 }
