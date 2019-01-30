@@ -13,8 +13,6 @@ import {
   processUndefined,
   diffAndCloneA,
   defineGetter,
-  isValidIdentifierStr,
-  isNumberStr,
   preprocessRenderData
 } from '../helper/utils'
 
@@ -243,7 +241,7 @@ export default class MPXProxy {
       this.doRender(this.processRenderData(renderData))
     }
   }
-  
+
   processRenderData (renderData) {
     let result = {}
     for (let key in renderData) {

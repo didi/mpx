@@ -5,15 +5,11 @@ export default class Queue {
 
   init () {
     this.stack = []
-    this.top = null
+    this.stackNum = 0
   }
 
   enter (depth, id) {
-    // 栈顶
-    this.top = {
-      depth,
-      id
-    }
+    this.stackNum++
   }
 
   exit (depth, id, fn) {
@@ -22,8 +18,9 @@ export default class Queue {
       id,
       depth
     })
+    this.stackNum--
     // 最后一个开始退出
-    if (id === this.top.id) {
+    if (this.stackNum === 0) {
       this.run()
     }
   }
@@ -38,10 +35,10 @@ export default class Queue {
         return b.depth - a.depth
       }
     })
-    this.stack.forEach(item => {
+    let item
+    while (item = this.stack.shift()) {
       typeof item.cb === 'function' && item.cb()
-    })
-    this.init()
+    }
   }
 }
 
