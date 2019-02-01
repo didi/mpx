@@ -38,7 +38,7 @@ module.exports = function () {
     callback()
   } else {
     const name = path.parse(resource).name + hash(resource)
-    let filename = path.join(config[mode].wxs.ext, `${name}.${config[mode].wxs.ext}`)
+    let filename = path.join(/^\.([^.]+)/.exec(config[mode].wxs.ext)[1], `${name}${config[mode].wxs.ext}`)
     filename = toPosix(filename)
     wxsMap[resource] = filename
     const outputOptions = {

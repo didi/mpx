@@ -11,8 +11,8 @@ export default function proxyEventMixin () {
         fallbackType = 'regionchange'
       }
       const target = $event.currentTarget || $event.target
-      const bindConfigs = target.dataset.bindconfigs || {}
-      const curEventConfig = bindConfigs[type] || bindConfigs[fallbackType] || []
+      const eventConfigs = target.dataset.eventConfigs || {}
+      const curEventConfig = eventConfigs[type] || eventConfigs[fallbackType] || []
       curEventConfig.forEach((item) => {
         const callbackName = item[0]
         if (callbackName) {

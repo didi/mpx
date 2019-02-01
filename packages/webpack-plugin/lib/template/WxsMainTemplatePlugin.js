@@ -35,13 +35,37 @@ module.exports = class WxsMainTemplatePlugin {
         'module.l = true;',
         '',
         '// Return the exports of the module',
-        'return module.exports;'
+        'return module.exports && module.exports.__esModule ?',
+        Template.indent([
+          'module.exports["default"] :',
+          'module.exports;'
+        ])
       ])
     })
     mainTemplate.hooks.requireExtensions.tap(
       'WxsMainTemplatePlugin',
       () => {
-        return ''
+        return Template.asString([
+          '// define __esModule on exports',
+          `${mainTemplate.requireFn}.r = function(exports) {`,
+          Template.indent([
+            'exports.__esModule = true;'
+          ]),
+          '};',
+          '',
+          '// getDefaultExport function for compatibility with non-harmony modules',
+          mainTemplate.requireFn + '.n = function(module) {',
+          Template.indent([
+            'var getter = module && module.__esModule ?',
+            Template.indent([
+              'function getDefault() { return module["default"]; } :',
+              'function getModuleExports() { return module; };'
+            ]),
+            `getter.a = getter();`,
+            'return getter;'
+          ]),
+          '};'
+        ])
       }
     )
     mainTemplate.hooks.renderWithEntry.tap(

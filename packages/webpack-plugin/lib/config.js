@@ -38,7 +38,7 @@ module.exports = {
       tag: 'wxs',
       module: 'module',
       src: 'src',
-      ext: 'wxs',
+      ext: '.wxs',
       templatePrefix: 'module.exports = \n'
     },
     directive: {
@@ -103,7 +103,7 @@ module.exports = {
       tag: 'import-sjs',
       module: 'name',
       src: 'from',
-      ext: 'sjs',
+      ext: '.sjs',
       templatePrefix: 'export default \n'
     },
     directive: {
@@ -161,7 +161,7 @@ module.exports = {
       tag: 'filter',
       module: 'module',
       src: 'src',
-      ext: 'js',
+      ext: '.filter.js',
       templatePrefix: 'export default \n'
     },
     directive: {
