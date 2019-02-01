@@ -35,11 +35,7 @@ module.exports = class WxsMainTemplatePlugin {
         'module.l = true;',
         '',
         '// Return the exports of the module',
-        'return module.exports && module.exports.__esModule ?',
-        Template.indent([
-          'module.exports["default"] :',
-          'module.exports;'
-        ])
+        'return module.exports;'
       ])
     })
     mainTemplate.hooks.requireExtensions.tap(
@@ -75,6 +71,23 @@ module.exports = class WxsMainTemplatePlugin {
         return new ConcatSource(prefix, source)
       }
     )
+
+    mainTemplate.hooks.startup.tap('MainTemplate', (source, chunk, hash) => {
+      /** @type {string[]} */
+      const buf = []
+      if (chunk.entryModule) {
+        buf.push('// Load entry module and return exports')
+        buf.push(
+          `var entryExports = ${mainTemplate.renderRequireFunctionForModule(
+            hash,
+            chunk,
+            JSON.stringify(chunk.entryModule.id)
+          )}(${mainTemplate.requireFn}.s = ${JSON.stringify(chunk.entryModule.id)});`
+        )
+        buf.push('return entryExports && entryExports.__esModule? entryExports["default"] : entryExports;')
+      }
+      return Template.asString(buf)
+    })
 
     mainTemplate.hooks.hash.tap('WxsMainTemplatePlugin', hash => {
       hash.update('wxs')
