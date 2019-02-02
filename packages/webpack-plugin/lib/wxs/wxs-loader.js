@@ -21,7 +21,6 @@ module.exports = function () {
   const issuerResource = stripExtension(this._module.issuer.resource)
   const issuerName = pagesMap[issuerResource] || componentsMap[issuerResource] || rootName
   const issuerDir = path.dirname(issuerName)
-  const fs = this._compiler.inputFileSystem
 
   const callback = (err) => {
     if (err) return nativeCallback(err)

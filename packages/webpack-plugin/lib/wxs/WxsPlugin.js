@@ -23,7 +23,6 @@ class WxsPlugin {
       normalModuleFactory.hooks.parser
         .for('javascript/auto')
         .tap('SwanExportsParserPlugin', handler)
-
     })
   }
 }

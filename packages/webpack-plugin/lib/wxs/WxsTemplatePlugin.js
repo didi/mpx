@@ -81,7 +81,6 @@ module.exports = class WxsMainTemplatePlugin {
                 args = args.join(', ')
                 exportsItems.push(`${key}: function(${args}){ return __swan_exports__.${key}(${args});},`)
               }
-
             }
 
             if (exportsItems.length === 0) {
@@ -102,7 +101,6 @@ module.exports = class WxsMainTemplatePlugin {
           const prefix = config[this.options.mode].wxs.templatePrefix
           return new ConcatSource(prefix, source)
         }
-
       }
     )
 
