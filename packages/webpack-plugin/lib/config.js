@@ -162,7 +162,7 @@ module.exports = {
       module: 'module',
       src: 'src',
       ext: '.filter.js',
-      templatePrefix: 'export default \n'
+      templatePrefix: 'var __swan_exports__ = \n'
     },
     directive: {
       if: 's-if',

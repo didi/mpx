@@ -26,7 +26,7 @@ class MpxWebpackPlugin {
   }
 
   static wxsLoader (options) {
-    return { loader: normalize.lib('wxs-loader'), options }
+    return { loader: normalize.lib('wxs/wxs-loader'), options }
   }
 
   apply (compiler) {

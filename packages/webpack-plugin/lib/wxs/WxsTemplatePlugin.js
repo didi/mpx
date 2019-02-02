@@ -7,7 +7,7 @@ module.exports = class WxsMainTemplatePlugin {
     this.options = options
   }
 
-  apply (mainTemplate) {
+  apply (mainTemplate, compilation) {
     mainTemplate.hooks.require.tap('MainTemplate', (source, chunk, hash) => {
       return Template.asString([
         '// Check if module is in cache',
@@ -67,8 +67,42 @@ module.exports = class WxsMainTemplatePlugin {
     mainTemplate.hooks.renderWithEntry.tap(
       'WxsMainTemplatePlugin',
       (source, chunk, hash) => {
-        const prefix = config[this.options.mode].wxs.templatePrefix
-        return new ConcatSource(prefix, source)
+        if (this.options.mode === 'swan') {
+          if (compilation.__swan_exports_map__) {
+            const prefix = config[this.options.mode].wxs.templatePrefix
+            const exportsItems = []
+            for (let key in compilation.__swan_exports_map__) {
+              if (compilation.__swan_exports_map__.hasOwnProperty(key)) {
+                let argsNum = compilation.__swan_exports_map__[key]
+                let args = []
+                for (let i = 0; i < argsNum; i++) {
+                  args.push(`__arg_${i}`)
+                }
+                args = args.join(', ')
+                exportsItems.push(`${key}: function(${args}){ return __swan_exports__.${key}(${args});},`)
+              }
+
+            }
+
+            if (exportsItems.length === 0) {
+              throw new Error('Swan filter module must has an ExportDefaultDeclaration!')
+            }
+
+            const postfix = Template.asString([
+              ';',
+              '',
+              '// transform swan exports to export default object expression',
+              'export default {',
+              Template.indent(exportsItems),
+              '}'
+            ])
+            return new ConcatSource(prefix, source, postfix)
+          }
+        } else {
+          const prefix = config[this.options.mode].wxs.templatePrefix
+          return new ConcatSource(prefix, source)
+        }
+
       }
     )
 
