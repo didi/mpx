@@ -33,16 +33,16 @@ export default function proxyEventMixin () {
       },
       __model (expr, $event) {
         let parent
-        let varible
+        let variable
         getByPath(this, expr, (value, key, end) => {
           if (end) {
             parent = value
-            varible = key
+            variable = key
           }
           return value[key]
         })
         if (parent) {
-          parent[varible] = $event.detail.value
+          parent[variable] = $event.detail.value
         }
       }
     }
