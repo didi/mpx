@@ -807,6 +807,7 @@ function processBindEvent (el, options) {
     if (match) {
       let modelProp = getAndRemoveAttr(el, config[mode].directive.modelProp) || config[mode].event.defaultModelProp
       let modelEvent = getAndRemoveAttr(el, config[mode].directive.modelEvent) || config[mode].event.defaultModelEvent
+      const modelValuePath = getAndRemoveAttr(el, config[mode].directive.modelValuePath) || config[mode].event.defaultModelValuePath
       if (!isValidIdentifierStr(modelEvent)) {
         warn$1(`EventName ${modelEvent} which is used in wx:model must be a valid identifier!`)
         return
@@ -815,7 +816,7 @@ function processBindEvent (el, options) {
       if (!result[modelEvent]) {
         result[modelEvent] = []
       }
-      result[modelEvent].push(`[${stringify('__model')},${stringify(modelValue)},${stringify('$event')}]`)
+      result[modelEvent].push(`[${stringify('__model')},${stringify(modelValue)},${stringify('$event')},${stringify(modelValuePath)}]`)
       addAttrs(el, [
         {
           name: modelProp,

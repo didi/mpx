@@ -19,6 +19,7 @@ module.exports = {
       },
       defaultModelProp: 'value',
       defaultModelEvent: 'input',
+      defaultModelValuePath: 'value',
       getBind (eventName) {
         return 'bind' + eventName
       },
@@ -41,6 +42,7 @@ module.exports = {
       model: 'wx:model',
       modelProp: 'wx:model-prop',
       modelEvent: 'wx:model-event',
+      modelValuePath: 'wx:model-value-path',
       for: 'wx:for',
       forIndex: 'wx:for-index',
       forItem: 'wx:for-item',
@@ -76,6 +78,7 @@ module.exports = {
       },
       defaultModelProp: 'value',
       defaultModelEvent: 'input',
+      defaultModelValuePath: 'value',
       getBind (eventName) {
         return 'on' + eventName.replace(/^./, (matched) => {
           return matched.toUpperCase()
@@ -100,6 +103,7 @@ module.exports = {
       model: 'a:model',
       modelProp: 'a:model-prop',
       modelEvent: 'a:model-event',
+      modelValuePath: 'a:model-value-path',
       for: 'a:for',
       forIndex: 'a:for-index',
       forItem: 'a:for-item',
