@@ -31,7 +31,7 @@ export default function proxyEventMixin () {
           }
         })
       },
-      __model (expr, $event, valuePath = 'value') {
+      __model (expr, $event, valuePath = 'value', needTrim = false) {
         let parent
         let variable
         getByPath(this, expr, (value, key, end) => {
@@ -42,7 +42,11 @@ export default function proxyEventMixin () {
           return value[key]
         })
         if (parent) {
-          parent[variable] = $event.detail[valuePath]
+          if (needTrim) {
+            parent[variable] = $event.detail[valuePath].trim()
+          } else {
+            parent[variable] = $event.detail[valuePath]
+          }
         }
       }
     }

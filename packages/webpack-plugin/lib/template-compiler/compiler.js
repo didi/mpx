@@ -800,6 +800,17 @@ function processBindEvent (el, options) {
     }
   })
 
+  // process model.trim
+  let modelNeedTrim = false
+  if (el.attrsMap[config[mode].directive.modelTrim]) {
+    modelNeedTrim = true
+    el.attrsMap[config[mode].directive.model] = el.attrsMap[config[mode].directive.modelTrim]
+    el.attrsList.forEach(function (item) {
+      if (item.name === config[mode].directive.modelTrim) { item.name = config[mode].directive.model }
+    })
+    delete el.attrsMap[config[mode].directive.modelTrim]
+  }
+
   let modelExp = getAndRemoveAttr(el, config[mode].directive.model)
   let modelValue
   if (modelExp) {
@@ -816,7 +827,7 @@ function processBindEvent (el, options) {
       if (!result[modelEvent]) {
         result[modelEvent] = []
       }
-      result[modelEvent].push(`[${stringify('__model')},${stringify(modelValue)},${stringify('$event')},${stringify(modelValuePath)}]`)
+      result[modelEvent].push(`[${stringify('__model')},${stringify(modelValue)},${stringify('$event')},${stringify(modelValuePath)},${modelNeedTrim}]`)
       addAttrs(el, [
         {
           name: modelProp,
