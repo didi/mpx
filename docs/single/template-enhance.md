@@ -187,6 +187,8 @@ wx:model并不会影响相关的事件处理函数，比如像下面这样：
 
 #### wx:model对应的属性和事件
 
+对于原生组件比如input，默认是取$event.detail.value，但是某些原生组件比如swipe，在变化的时候新值是通过$event.detail.current来抛出的，为此可以使用`wx:model-value-path`来指定原生组件的取值路径。
+
 wx:model默认监听`input`事件使用`value`属性传值，如果我们希望改变默认行为，可以使用`wx:model-prop`和`wx:model-event`来定义wx:model对应的属性和事件：
 
 父组件
@@ -232,3 +234,11 @@ wx:model默认监听`input`事件使用`value`属性传值，如果我们希望�
 如示例，当子组件被点击时，父组件的checked数据会发生变化
 
 > 注意：由于微信的限制，如果事件名使用横线链接分割（如: 'checked-change'），将不可以使用该feature。
+
+#### .trim
+
+如果要自动过滤用户输入的首尾空白字符，可以给 wx:model 添加 trim 修饰符：
+
+```html
+<input wx:model.trim="{{msg}}">
+```
