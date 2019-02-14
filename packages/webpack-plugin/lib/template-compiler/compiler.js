@@ -832,6 +832,17 @@ function processBindEvent (el) {
     }
   })
 
+  // process model.trim
+  let modelNeedTrim = false
+  if (el.attrsMap[config[mode].directive.modelTrim]) {
+    modelNeedTrim = true
+    el.attrsMap[config[mode].directive.model] = el.attrsMap[config[mode].directive.modelTrim]
+    el.attrsList.forEach(function (item) {
+      if (item.name === config[mode].directive.modelTrim) { item.name = config[mode].directive.model }
+    })
+    delete el.attrsMap[config[mode].directive.modelTrim]
+  }
+
   let modelExp = getAndRemoveAttr(el, config[mode].directive.model)
   let modelValue
   if (modelExp) {
@@ -839,6 +850,7 @@ function processBindEvent (el) {
     if (match) {
       let modelProp = getAndRemoveAttr(el, config[mode].directive.modelProp) || config[mode].event.defaultModelProp
       let modelEvent = getAndRemoveAttr(el, config[mode].directive.modelEvent) || config[mode].event.defaultModelEvent
+      const modelValuePath = getAndRemoveAttr(el, config[mode].directive.modelValuePath) || config[mode].event.defaultModelValuePath
       if (!isValidIdentifierStr(modelEvent)) {
         warn$1(`EventName ${modelEvent} which is used in ${config[mode].directive.model} must be a valid identifier!`)
         return
@@ -847,7 +859,7 @@ function processBindEvent (el) {
       if (!result[modelEvent]) {
         result[modelEvent] = []
       }
-      result[modelEvent].push(`[${stringify('__model')},${stringify(modelValue)},${stringify('$event')}]`)
+      result[modelEvent].push(`[${stringify('__model')},${stringify(modelValue)},${stringify('$event')},${stringify(modelValuePath)},${modelNeedTrim}]`)
       addAttrs(el, [
         {
           name: modelProp,

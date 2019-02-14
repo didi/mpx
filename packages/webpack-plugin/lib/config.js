@@ -19,6 +19,7 @@ module.exports = {
       },
       defaultModelProp: 'value',
       defaultModelEvent: 'input',
+      defaultModelValuePath: 'value',
       getBind (eventName) {
         return 'bind' + eventName
       },
@@ -46,8 +47,10 @@ module.exports = {
       elseif: 'wx:elif',
       else: 'wx:else',
       model: 'wx:model',
+      modelTrim: 'wx:model.trim',
       modelProp: 'wx:model-prop',
       modelEvent: 'wx:model-event',
+      modelValuePath: 'wx:model-value-path',
       for: 'wx:for',
       forIndex: 'wx:for-index',
       forItem: 'wx:for-item',
@@ -82,6 +85,7 @@ module.exports = {
       },
       defaultModelProp: 'value',
       defaultModelEvent: 'input',
+      defaultModelValuePath: 'value',
       getBind (eventName) {
         return 'on' + eventName.replace(/^./, (matched) => {
           return matched.toUpperCase()
@@ -111,8 +115,10 @@ module.exports = {
       elseif: 'a:elif',
       else: 'a:else',
       model: 'a:model',
+      modelTrim: 'a:model.trim',
       modelProp: 'a:model-prop',
       modelEvent: 'a:model-event',
+      modelValuePath: 'a:model-value-path',
       for: 'a:for',
       forIndex: 'a:for-index',
       forItem: 'a:for-item',
