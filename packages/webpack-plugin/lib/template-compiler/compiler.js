@@ -696,6 +696,27 @@ function getAndRemoveAttr (el, name, removeFromMap) {
   return val
 }
 
+/**
+ * get and remove attr from element's attrslist by reg. return a object contains value and reg exec result
+ * @param el
+ * @param {RegExp} reg
+ * @return {Object} rs
+ */
+function getAndRemoveAttrByReg (el, reg) {
+  const rs = {}
+  const list = el.attrsList
+  for (let i = 0, l = list.length; i < l; i++) {
+    const regRes = reg.exec(list[i].name)
+    if (regRes) {
+      rs.regRes = regRes
+      rs.value = list[i].value
+      list.splice(i, 1)
+      break
+    }
+  }
+  return rs
+}
+
 function addAttrs (el, attrs) {
   el.attrsList = el.attrsList.concat(attrs)
   Object.assign(el.attrsMap, makeAttrsMap(attrs))
@@ -832,25 +853,16 @@ function processBindEvent (el) {
     }
   })
 
-  // process model.trim
-  let modelNeedTrim = false
-  if (el.attrsMap[config[mode].directive.modelTrim]) {
-    modelNeedTrim = true
-    el.attrsMap[config[mode].directive.model] = el.attrsMap[config[mode].directive.modelTrim]
-    el.attrsList.forEach(function (item) {
-      if (item.name === config[mode].directive.modelTrim) { item.name = config[mode].directive.model }
-    })
-    delete el.attrsMap[config[mode].directive.modelTrim]
-  }
-
-  let modelExp = getAndRemoveAttr(el, config[mode].directive.model)
+  const expRes = getAndRemoveAttrByReg(el, config[mode].directive.model.reg)
+  const modelExp = expRes.value
   let modelValue
   if (modelExp) {
     let match = tagRE.exec(modelExp)
     if (match) {
-      let modelProp = getAndRemoveAttr(el, config[mode].directive.modelProp) || config[mode].event.defaultModelProp
-      let modelEvent = getAndRemoveAttr(el, config[mode].directive.modelEvent) || config[mode].event.defaultModelEvent
-      const modelValuePath = getAndRemoveAttr(el, config[mode].directive.modelValuePath) || config[mode].event.defaultModelValuePath
+      const props = config[mode].directive.model.props
+      const modelProp = getAndRemoveAttr(el, props.modelProp.name) || props.modelProp.default
+      const modelEvent = getAndRemoveAttr(el, props.modelEvent.name) || props.modelEvent.default
+      const modelValuePath = getAndRemoveAttr(el, props.modelValuePath.name) || props.modelValuePath.default
       if (!isValidIdentifierStr(modelEvent)) {
         warn$1(`EventName ${modelEvent} which is used in ${config[mode].directive.model} must be a valid identifier!`)
         return
@@ -859,7 +871,10 @@ function processBindEvent (el) {
       if (!result[modelEvent]) {
         result[modelEvent] = []
       }
-      result[modelEvent].push(`[${stringify('__model')},${stringify(modelValue)},${stringify('$event')},${stringify(modelValuePath)},${modelNeedTrim}]`)
+
+      const modifiers = expRes.regRes[1] ? (',' + expRes.regRes[1]) : ''
+      const str = `[${stringify('__model')},${stringify(modelValue)},${stringify('$event')},${stringify(modelValuePath)}${modifiers}]`
+      result[modelEvent].push(str)
       addAttrs(el, [
         {
           name: modelProp,

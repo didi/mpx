@@ -17,9 +17,6 @@ module.exports = {
       getType (match) {
         return match[1]
       },
-      defaultModelProp: 'value',
-      defaultModelEvent: 'input',
-      defaultModelValuePath: 'value',
       getBind (eventName) {
         return 'bind' + eventName
       },
@@ -46,11 +43,23 @@ module.exports = {
       if: 'wx:if',
       elseif: 'wx:elif',
       else: 'wx:else',
-      model: 'wx:model',
-      modelTrim: 'wx:model.trim',
-      modelProp: 'wx:model-prop',
-      modelEvent: 'wx:model-event',
-      modelValuePath: 'wx:model-value-path',
+      model: {
+        reg: /^wx:model$|wx:model(\..*)/,
+        props: {
+          modelProp: {
+            name: 'wx:model-prop',
+            default: 'value'
+          },
+          modelEvent: {
+            name: 'wx:model-event',
+            default: 'input'
+          },
+          modelValuePath: {
+            name: 'wx:model-value-path',
+            default: 'value'
+          }
+        }
+      },
       for: 'wx:for',
       forIndex: 'wx:for-index',
       forItem: 'wx:for-item',
