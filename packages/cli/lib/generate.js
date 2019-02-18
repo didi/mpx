@@ -47,6 +47,7 @@ module.exports = function generate (name, src, dest, done) {
   }
 
   metalsmith.use(askQuestions(opts.prompts))
+    .use(computed(opts.computed))
     .use(filterFiles(opts.filters))
     .use(renderTemplateFiles(opts.skipInterpolation))
 
@@ -83,6 +84,27 @@ function askQuestions (prompts) {
   return (files, metalsmith, done) => {
     ask(prompts, metalsmith.metadata(), done)
   }
+}
+
+function computed (computed) {
+  return (files, metalsmith, done) => {
+    processComputed(computed, metalsmith.metadata(), done)
+  }
+}
+
+function processComputed (computed, data, done) {
+  if (!computed) {
+    return done()
+  }
+  Object.keys(computed).forEach((key) => {
+    Object.defineProperty(data, key, {
+      get () {
+        return computed[key].call(data)
+      },
+      enumerable: true
+    })
+  })
+  done()
 }
 
 /**
