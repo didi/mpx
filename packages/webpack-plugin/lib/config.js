@@ -124,15 +124,15 @@ module.exports = {
         reg: /^a:model$|a:model(\..*)/,
         props: {
           modelProp: {
-            name: 'wx:model-prop',
+            name: 'a:model-prop',
             default: 'value'
           },
           modelEvent: {
-            name: 'wx:model-event',
+            name: 'a:model-event',
             default: 'input'
           },
           modelValuePath: {
-            name: 'wx:model-value-path',
+            name: 'a:model-value-path',
             default: 'value'
           }
         }
