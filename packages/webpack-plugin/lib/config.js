@@ -12,26 +12,6 @@ module.exports = {
       activeIconKey: 'selectedIconPath'
     },
     stringify: JSON.stringify,
-    // event: {
-    //   bindReg: /^(?:bind|catch):?(.*)$/,
-    //   getType (match) {
-    //     return match[1]
-    //   },
-    //   getBind (eventName) {
-    //     return 'bind' + eventName
-    //   },
-    //   shallowStringify (obj) {
-    //     let arr = []
-    //     for (let key in obj) {
-    //       let value = obj[key]
-    //       if (Array.isArray(value)) {
-    //         value = `[${value.join(',')}]`
-    //       }
-    //       arr.push(`${key}:${value}`)
-    //     }
-    //     return ` {${arr.join(',')}} `
-    //   }
-    // },
     wxs: {
       tag: 'wxs',
       module: 'module',
@@ -105,33 +85,6 @@ module.exports = {
       iconKey: 'icon'
     },
     stringify: JSON.stringify,
-    // event: {
-    //   bindReg: /^(?:on|catch)([A-Z].*)$/,
-    //   getType (match) {
-    //     return match[1].replace(/^./, function (match) {
-    //       return match.toLowerCase()
-    //     })
-    //   },
-    //   defaultModelProp: 'value',
-    //   defaultModelEvent: 'input',
-    //   defaultModelValuePath: 'value',
-    //   getBind (eventName) {
-    //     return 'on' + eventName.replace(/^./, (matched) => {
-    //       return matched.toUpperCase()
-    //     })
-    //   },
-    //   shallowStringify (obj) {
-    //     let arr = []
-    //     for (let key in obj) {
-    //       let value = obj[key]
-    //       if (Array.isArray(value)) {
-    //         value = `[${value.join(',')}]`
-    //       }
-    //       arr.push(`${key}:${value}`)
-    //     }
-    //     return ` {${arr.join(',')}} `
-    //   }
-    // },
     wxs: {
       tag: 'import-sjs',
       module: 'name',
@@ -144,12 +97,16 @@ module.exports = {
       elseif: 'a:elif',
       else: 'a:else',
       event: {
-        reg: /^(?:bind|catch):?(.*)$/,
+        reg: /^(?:on|catch)([A-Z].*)$/,
         getType (match) {
-          return match[1]
+          return match[1].replace(/^./, function (match) {
+            return match.toLowerCase()
+          })
         },
         getBind (eventName) {
-          return 'bind' + eventName
+          return 'on' + eventName.replace(/^./, (matched) => {
+            return matched.toUpperCase()
+          })
         },
         shallowStringify (obj) {
           let arr = []
@@ -202,28 +159,6 @@ module.exports = {
       activeIconKey: 'selectedIconPath'
     },
     stringify: JSON.stringify,
-    // event: {
-    //   bindReg: /^bind(.*)$/,
-    //   getType (match) {
-    //     return match[1]
-    //   },
-    //   defaultModelProp: 'value',
-    //   defaultModelEvent: 'input',
-    //   getBind (eventName) {
-    //     return 'bind' + eventName
-    //   },
-    //   shallowStringify (obj) {
-    //     let arr = []
-    //     for (let key in obj) {
-    //       let value = obj[key]
-    //       if (Array.isArray(value)) {
-    //         value = `[${value.join(',')}]`
-    //       }
-    //       arr.push(`${key}:${value}`)
-    //     }
-    //     return ` {${arr.join(',')}} `
-    //   }
-    // },
     wxs: {
       tag: 'filter',
       module: 'module',
@@ -236,7 +171,7 @@ module.exports = {
       elseif: 's-elif',
       else: 's-else',
       event: {
-        reg: /^(?:bind|catch):?(.*)$/,
+        reg: /^bind(.*)$/,
         getType (match) {
           return match[1]
         },

@@ -828,13 +828,13 @@ function parseFuncStr2 (str) {
 }
 
 function processBindEvent (el) {
-  let bindRE = config[mode].event.bindReg
+  let bindRE = config[mode].directive.event.bindReg
   let result = {}
   let hasBind = false
   el.attrsList.forEach(function (attr) {
     let match = bindRE.exec(attr.name)
     if (match) {
-      let type = config[mode].event.getType(match)
+      let type = config[mode].directive.event.getType(match)
       let parsed = parseFuncStr2(attr.value)
       if (parsed) {
         if (!isValidIdentifierStr(type)) {
@@ -881,7 +881,7 @@ function processBindEvent (el) {
           value: modelExp
         },
         {
-          name: config[mode].event.getBind(modelEvent),
+          name: config[mode].directive.event.getBind(modelEvent),
           value: '__invoke'
         }
       ])
@@ -891,7 +891,7 @@ function processBindEvent (el) {
   if (hasBind || modelValue) {
     addAttrs(el, [{
       name: 'data-eventConfigs',
-      value: `{{${config[mode].event.shallowStringify(result)}}}`
+      value: `{{${config[mode].directive.event.shallowStringify(result)}}}`
     }])
   }
 }
