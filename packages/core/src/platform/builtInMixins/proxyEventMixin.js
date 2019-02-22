@@ -11,7 +11,7 @@ export default function proxyEventMixin () {
         fallbackType = 'regionchange'
       }
       const target = $event.currentTarget || $event.target
-      const eventConfigs = target.dataset.eventConfigs || {}
+      const eventConfigs = target.dataset.eventconfigs || {}
       const curEventConfig = eventConfigs[type] || eventConfigs[fallbackType] || []
       curEventConfig.forEach((item) => {
         const callbackName = item[0]
@@ -31,8 +31,15 @@ export default function proxyEventMixin () {
         }
       })
     },
-    __model (expr, $event) {
-      setByPath(this, expr, $event.detail.value)
+    __model (expr, $event, valuePath = 'value', modifiers) {
+      let value = $event.detail[valuePath]
+      if (modifiers) {
+        const modifiersArr = modifiers.split('.')
+        if (modifiersArr.includes('trim')) {
+          value = value.trim()
+        }
+      }
+      setByPath(this, expr, value)
     }
   }
   if (is('ali')) {

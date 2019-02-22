@@ -828,7 +828,7 @@ function parseFuncStr2 (str) {
 }
 
 function processBindEvent (el) {
-  let bindRE = config[mode].directive.event.bindReg
+  let bindRE = config[mode].directive.event.reg
   let result = {}
   let hasBind = false
   el.attrsList.forEach(function (attr) {
@@ -872,7 +872,7 @@ function processBindEvent (el) {
         result[modelEvent] = []
       }
 
-      const modifiers = expRes.regRes[1] ? (',' + expRes.regRes[1]) : ''
+      const modifiers = expRes.regRes[1] ? (',' + stringify(expRes.regRes[1])) : ''
       const str = `[${stringify('__model')},${stringify(modelValue)},${stringify('$event')},${stringify(modelValuePath)}${modifiers}]`
       result[modelEvent].push(str)
       addAttrs(el, [
@@ -890,7 +890,7 @@ function processBindEvent (el) {
 
   if (hasBind || modelValue) {
     addAttrs(el, [{
-      name: 'data-eventConfigs',
+      name: 'data-eventconfigs',
       value: `{{${config[mode].directive.event.shallowStringify(result)}}}`
     }])
   }

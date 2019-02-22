@@ -44,7 +44,7 @@ module.exports = {
         }
       },
       model: {
-        reg: /^wx:model$|wx:model(\..*)/,
+        reg: /^wx:model$|wx:model\.(.*)/,
         props: {
           modelProp: {
             name: 'wx:model-prop',
@@ -121,7 +121,7 @@ module.exports = {
         }
       },
       model: {
-        reg: /^a:model$|a:model(\..*)/,
+        reg: /^a:model$|a:model\.(.*)/,
         props: {
           modelProp: {
             name: 'a:model-prop',
@@ -191,7 +191,7 @@ module.exports = {
         }
       },
       model: {
-        reg: /^s-model$|s-model(\..*)/,
+        reg: /^s-model$|s-model\.(.*)/,
         props: {
           modelProp: {
             name: 's-model-prop',
