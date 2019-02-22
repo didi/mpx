@@ -931,43 +931,49 @@ function addExp (el, exp) {
 }
 
 function processIf (el) {
-  let val = getAndRemoveAttr(el, config[mode].directive.if)
-  if (val) {
+  const { value: ifVal } = getAndRemoveAttrByReg(el, config[mode].directive.if)
+  const { value: elseifVal } = getAndRemoveAttrByReg(el, config[mode].directive.elseif)
+  const { value: elseVal } = getAndRemoveAttrByReg(el, config[mode].directive.else)
+
+  if (ifVal) {
     el.if = {
-      raw: val,
-      exp: parseMustache(val).result
+      raw: ifVal,
+      exp: parseMustache(ifVal).result
     }
-  } else if (val = getAndRemoveAttr(el, config[mode].directive.elseif)) {
+  } else if (elseifVal) {
     el.elseif = {
-      raw: val,
-      exp: parseMustache(val).result
+      raw: elseifVal,
+      exp: parseMustache(elseifVal).result
     }
-  } else if (getAndRemoveAttr(el, config[mode].directive.else) != null) {
+  } else if (elseVal) {
     el.else = true
   }
 }
 
 function processFor (el) {
-  let val = getAndRemoveAttr(el, config[mode].directive.for)
-  if (val) {
+  const { value: forVal } = getAndRemoveAttrByReg(el, config[mode].directive.for)
+  if (forVal) {
     el.for = {
-      raw: val,
-      exp: parseMustache(val).result
+      raw: forVal,
+      exp: parseMustache(forVal).result
     }
-    if (val = getAndRemoveAttr(el, config[mode].directive.forIndex)) {
-      el.for.index = val
+    const { value: indexVal } = getAndRemoveAttrByReg(el, config[mode].directive.forIndex)
+    const { value: itemVal } = getAndRemoveAttrByReg(el, config[mode].directive.forIndex)
+    const { value: keyVal } = getAndRemoveAttrByReg(el, config[mode].directive.forIndex)
+    if (indexVal) {
+      el.for.index = indexVal
     }
-    if (val = getAndRemoveAttr(el, config[mode].directive.forItem)) {
-      el.for.item = val
+    if (itemVal) {
+      el.for.item = itemVal
     }
-    if (val = getAndRemoveAttr(el, config[mode].directive.key)) {
-      el.for.key = val
+    if (keyVal) {
+      el.for.key = keyVal
     }
   }
 }
 
 function processRef (el, options, meta) {
-  let val = getAndRemoveAttr(el, config[mode].directive.ref)
+  const { value: val } = getAndRemoveAttrByReg(el, config[mode].directive.ref)
   if (val) {
     if (!meta.refs) {
       meta.refs = []

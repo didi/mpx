@@ -20,9 +20,9 @@ module.exports = {
       templatePrefix: 'module.exports = \n'
     },
     directive: {
-      if: 'wx:if',
-      elseif: 'wx:elif',
-      else: 'wx:else',
+      if: /wx:if/,
+      elseif: /wx:elif/,
+      else: /wx:else/,
       event: {
         reg: /^(?:bind|catch):?(.*)$/,
         getType (match) {
@@ -44,7 +44,7 @@ module.exports = {
         }
       },
       model: {
-        reg: /^wx:model$|wx:model\.(.*)/,
+        reg: /^wx:model(?:\.(.*))?$/,
         props: {
           modelProp: {
             name: 'wx:model-prop',
@@ -60,13 +60,13 @@ module.exports = {
           }
         }
       },
-      for: 'wx:for',
-      forIndex: 'wx:for-index',
-      forItem: 'wx:for-item',
-      key: 'wx:key',
-      dynamicClass: 'wx:class',
-      dynamicStyle: 'wx:style',
-      ref: 'wx:ref'
+      for: /wx:for$/,
+      forIndex: /wx:for-index/,
+      forItem: /wx:for-item/,
+      key: /wx:key/,
+      dynamicClass: /wx:class/,
+      dynamicStyle: /wx:style/,
+      ref: /wx:ref/
     }
   },
   ali: {
@@ -93,9 +93,9 @@ module.exports = {
       templatePrefix: 'export default \n'
     },
     directive: {
-      if: 'a:if',
-      elseif: 'a:elif',
-      else: 'a:else',
+      if: /a:if/,
+      elseif: /a:elif/,
+      else: /a:else/,
       event: {
         reg: /^(?:on|catch)([A-Z].*)$/,
         getType (match) {
@@ -121,7 +121,7 @@ module.exports = {
         }
       },
       model: {
-        reg: /^a:model$|a:model\.(.*)/,
+        reg: /^a:model(?:\.(.*))?$/,
         props: {
           modelProp: {
             name: 'a:model-prop',
@@ -137,13 +137,13 @@ module.exports = {
           }
         }
       },
-      for: 'a:for',
-      forIndex: 'a:for-index',
-      forItem: 'a:for-item',
-      key: 'a:key',
-      dynamicClass: 'a:class',
-      dynamicStyle: 'a:style',
-      ref: 'a:ref'
+      for: /a:for$/,
+      forIndex: /a:for-index/,
+      forItem: /a:for-item/,
+      key: /a:key/,
+      dynamicClass: /a:class/,
+      dynamicStyle: /a:style/,
+      ref: /a:ref/
     }
   },
   swan: {
@@ -167,9 +167,9 @@ module.exports = {
       templatePrefix: 'var __swan_exports__ = \n'
     },
     directive: {
-      if: 's-if',
-      elseif: 's-elif',
-      else: 's-else',
+      if: /s-if/,
+      elseif: /s-elif/,
+      else: /s-else/,
       event: {
         reg: /^bind(.*)$/,
         getType (match) {
@@ -191,7 +191,7 @@ module.exports = {
         }
       },
       model: {
-        reg: /^s-model$|s-model\.(.*)/,
+        reg: /^s-model(?:\.(.*))?$/,
         props: {
           modelProp: {
             name: 's-model-prop',
@@ -207,13 +207,13 @@ module.exports = {
           }
         }
       },
-      for: 's-for',
-      forIndex: 's-for-index',
-      forItem: 's-for-item',
-      key: 's-key',
-      dynamicClass: 's-class',
-      dynamicStyle: 's-style',
-      ref: 's-ref'
+      for: /s-for$/,
+      forIndex: /s-for-index/,
+      forItem: /s-for-item/,
+      key: /s-key/,
+      dynamicClass: /s-class/,
+      dynamicStyle: /s-style/,
+      ref: /s-ref/
     }
   }
 }
