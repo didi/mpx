@@ -78,7 +78,16 @@ module.exports = function (content) {
   })
   this._module.addDependency(dep)
   // 触发webpack global var 注入
-  let output = 'global.currentModuleId;\n'
+  let output = ''
+
+  if (!pagesMap[resource] && !componentsMap[resource] && mode === 'swan') {
+    output += 'if (!global.navigator) {\n'
+    output += '  global.navigator = {};\n'
+    output += '}\n'
+    output += 'global.navigator.standalone = true;\n'
+  } else {
+    output = 'global.currentModuleId;\n'
+  }
 
   //
   // <script>
