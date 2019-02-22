@@ -13,6 +13,7 @@ export default function proxyEventMixin () {
         const target = $event.currentTarget || $event.target
         const bindConfigs = target.dataset.__bindconfigs || {}
         const curEventConfig = bindConfigs[type] || bindConfigs[fallbackType] || []
+        let returnedValue
         curEventConfig.forEach((item) => {
           const callbackName = item[0]
           if (callbackName) {
@@ -24,12 +25,13 @@ export default function proxyEventMixin () {
               }
             }) : [$event]
             if (typeof this[callbackName] === 'function') {
-              this[callbackName].apply(this, params)
+              returnedValue = this[callbackName].apply(this, params)
             } else {
               console.warn(`[${callbackName}] is not function`)
             }
           }
         })
+        return returnedValue
       },
       __model (expr, $event) {
         let parent
