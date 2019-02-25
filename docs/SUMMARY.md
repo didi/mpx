@@ -56,3 +56,4 @@
     * [数据响应与性能优化](understanding/understanding.md#数据响应与性能优化)
     * [编译构建](understanding/understanding.md#编译构建)
     * [图像资源处理](understanding/resource.md#图像资源处理)
+* [更新记录](https://github.com/didi/mpx/releases)
