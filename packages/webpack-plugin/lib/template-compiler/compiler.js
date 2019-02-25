@@ -863,7 +863,7 @@ function processBindEvent (el) {
 
   if (hasBind || modelValue) {
     addAttrs(el, [{
-      name: 'data-eventConfigs',
+      name: 'data-event-configs',
       value: `{{${config[mode].event.shallowStringify(result)}}}`
     }])
   }
