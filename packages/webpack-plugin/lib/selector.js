@@ -10,6 +10,7 @@ module.exports = function (content) {
   }
   const pagesMap = this._compilation.__mpx__.pagesMap
   const componentsMap = this._compilation.__mpx__.componentsMap
+  const mode = this._compilation.__mpx__.mode
   const resource = stripExtension(this.resource)
   const query = loaderUtils.getOptions(this) || {}
   const filename = path.basename(this.resourcePath)
@@ -29,6 +30,9 @@ module.exports = function (content) {
       // page
       if (!jsonObj.usingComponents) {
         jsonObj.usingComponents = {}
+      }
+      if (!jsonObj.component && mode === 'swan') {
+        jsonObj.component = true
       }
     } else if (componentsMap[resource]) {
       // component
