@@ -57,7 +57,6 @@ export default class MPXProxy {
   }
 
   beforeMount () {
-    console.log(this)
     mountedQueue.enter(this.depth, this.uid)
   }
 
