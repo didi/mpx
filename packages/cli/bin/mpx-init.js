@@ -14,6 +14,8 @@ const logger = require('../lib/logger')
 const generate = require('../lib/generate')
 const checkVersion = require('../lib/check-version')
 const localPath = require('../lib/local-path')
+const pkg = require('../package.json')
+const updateNotifier = require('update-notifier')
 
 const isLocalPath = localPath.isLocalPath
 const getTemplatePath = localPath.getTemplatePath
@@ -55,6 +57,8 @@ if (program.offline) {
   console.log(`> Use cached template at ${chalk.yellow(tildify(tmp))}`)
   template = tmp
 }
+
+updateNotifier({ pkg }).notify({ isGlobal: true })
 
 /**
  * Padding.

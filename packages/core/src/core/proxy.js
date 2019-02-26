@@ -57,8 +57,7 @@ export default class MPXProxy {
   }
 
   beforeMount () {
-    console.log(this)
-    mountedQueue.enter(this.depth, this.uid)
+    mountedQueue.enter()
   }
 
   mounted () {
@@ -97,7 +96,7 @@ export default class MPXProxy {
 
   initApi () {
     // 挂载扩展属性到实例上
-    proxy(this, this.options.proto, enumerableKeys(this.options.proto), true)
+    proxy(this.target, this.options.proto, enumerableKeys(this.options.proto), true)
     // 挂载$watch
     this.target.$watch = (...rest) => this.watch(...rest)
     // 强制执行render

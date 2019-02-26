@@ -8,7 +8,7 @@ export default class Queue {
     this.stackNum = 0
   }
 
-  enter (depth, id) {
+  enter () {
     this.stackNum++
   }
 
@@ -21,7 +21,6 @@ export default class Queue {
     this.stackNum--
     // 最后一个开始退出
     if (this.stackNum === 0) {
-      console.log(JSON.stringify(this.stack))
       this.run()
     }
   }

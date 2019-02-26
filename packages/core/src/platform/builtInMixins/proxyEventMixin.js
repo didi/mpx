@@ -11,8 +11,9 @@ export default function proxyEventMixin () {
         fallbackType = 'regionchange'
       }
       const target = $event.currentTarget || $event.target
-      const eventConfigs = target.dataset.eventconfigs || {}
+      const eventConfigs = target.dataset.eventConfigs || {}
       const curEventConfig = eventConfigs[type] || eventConfigs[fallbackType] || []
+      let returnedValue
       curEventConfig.forEach((item) => {
         const callbackName = item[0]
         if (callbackName) {
@@ -24,12 +25,13 @@ export default function proxyEventMixin () {
             }
           }) : [$event]
           if (typeof this[callbackName] === 'function') {
-            this[callbackName].apply(this, params)
+            returnedValue = this[callbackName].apply(this, params)
           } else {
             console.warn(`[${callbackName}] is not function`)
           }
         }
       })
+      return returnedValue
     },
     __model (expr, $event, valuePath = 'value', modifiers) {
       let value = $event.detail[valuePath]

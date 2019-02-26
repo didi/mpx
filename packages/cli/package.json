@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/cli",
-  "version": "1.0.14",
+  "version": "1.1.0",
   "description": "mpx脚手架",
   "bin": {
     "mpx": "bin/mpx.js",
@@ -22,6 +22,7 @@
     "rimraf": "^2.5.0",
     "semver": "^5.1.0",
     "tildify": "^1.2.0",
+    "update-notifier": "^2.5.0",
     "user-home": "^2.0.0",
     "validate-npm-package-name": "^3.0.0"
   },

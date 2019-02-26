@@ -22,7 +22,11 @@ class WxsParserPlugin {
           if (statement.type === 'ExportDefaultDeclaration') {
             if (statement.declaration.type === 'ObjectExpression') {
               statement.declaration.properties.forEach((property) => {
-                if (property.type === 'Property' && property.value.type === 'FunctionExpression') {
+                if (
+                  property.type === 'Property' &&
+                    (property.value.type === 'FunctionExpression' ||
+                      property.value.type === 'ArrowFunctionExpression')
+                ) {
                   compilation.__swan_exports_map__[property.key.name] = property.value.params.length
                 } else {
                   throw new Error('Swan filter module exports value must be a FunctionExpression!')
