@@ -1,8 +1,8 @@
 const deindent = require('de-indent')
 const he = require('he')
 const config = require('../config')
-const isValidIdentifierStr = require('../utils/is-valid-identifier-str')
 const normalize = require('../utils/normalize')
+const isValidIdentifierStr = require('../utils/is-valid-identifier-str')
 
 /**
  * Make a map and return a function for checking if a key
@@ -719,6 +719,42 @@ function stringify (str) {
 let tagRE = /\{\{((?:.|\n)+?)\}\}/
 let tagREG = /\{\{((?:.|\n)+?)\}\}/g
 
+function processLifecycleHack (el, options) {
+  if (options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component') {
+    if (el.if) {
+      el.if = {
+        raw: `{{${el.if.exp} && mpxLifecycleHack}}`,
+        exp: `${el.if.exp} && mpxLifecycleHack`
+      }
+    } else if (el.elseif) {
+      el.elseif = {
+        raw: `{{${el.elseif.exp} && mpxLifecycleHack}}`,
+        exp: `${el.elseif.exp} && mpxLifecycleHack`
+      }
+    } else if (el.else) {
+      el.elseif = {
+        raw: '{{mpxLifecycleHack}}',
+        exp: 'mpxLifecycleHack'
+      }
+      delete el.else
+    } else {
+      el.if = {
+        raw: '{{mpxLifecycleHack}}',
+        exp: 'mpxLifecycleHack'
+      }
+    }
+  }
+}
+
+function processPageStatus (el, options) {
+  if (options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component') {
+    addAttrs(el, [{
+      name: 'mpxPageStatus',
+      value: '{{mpxPageStatus}}'
+    }])
+  }
+}
+
 function processComponentIs (el, options) {
   if (el.tag !== 'component') {
     return
@@ -747,11 +783,11 @@ function processComponentIs (el, options) {
   }
 }
 
-function processPageStatus (el, options) {
+function processComponentDepth (el, options) {
   if (options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component') {
     addAttrs(el, [{
-      name: '__pageStatus',
-      value: '{{__pageStatus}}'
+      name: 'mpxDepth',
+      value: '{{mpxDepth + 1}}'
     }])
   }
 }
@@ -770,14 +806,10 @@ function parseFuncStr2 (str) {
   }
 }
 
-function processBindEvent (el, options) {
+function processBindEvent (el) {
   let bindRE = config[mode].event.bindReg
   let result = {}
   let hasBind = false
-  let isComponent = options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component'
-  if (mode === 'ali' && isComponent) {
-    return
-  }
   el.attrsList.forEach(function (attr) {
     let match = bindRE.exec(attr.name)
     if (match) {
@@ -808,7 +840,7 @@ function processBindEvent (el, options) {
       let modelProp = getAndRemoveAttr(el, config[mode].directive.modelProp) || config[mode].event.defaultModelProp
       let modelEvent = getAndRemoveAttr(el, config[mode].directive.modelEvent) || config[mode].event.defaultModelEvent
       if (!isValidIdentifierStr(modelEvent)) {
-        warn$1(`EventName ${modelEvent} which is used in wx:model must be a valid identifier!`)
+        warn$1(`EventName ${modelEvent} which is used in ${config[mode].directive.model} must be a valid identifier!`)
         return
       }
       modelValue = match[1].trim()
@@ -831,7 +863,7 @@ function processBindEvent (el, options) {
 
   if (hasBind || modelValue) {
     addAttrs(el, [{
-      name: 'data-__bindconfigs',
+      name: 'data-event-configs',
       value: `{{${config[mode].event.shallowStringify(result)}}}`
     }])
   }
@@ -907,6 +939,40 @@ function processFor (el) {
   }
 }
 
+function processRef (el, options, meta) {
+  let val = getAndRemoveAttr(el, config[mode].directive.ref)
+  if (val) {
+    if (!meta.refs) {
+      meta.refs = []
+      meta.refId = 0
+    }
+    let type = options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component' ? 'component' : 'node'
+    let all = !!el.for
+    let refClassName = `__ref_${val}_${++meta.refId}`
+    let className = getAndRemoveAttr(el, 'class')
+    className = className ? className + ' ' + refClassName : refClassName
+    addAttrs(el, [{
+      name: 'class',
+      value: className
+    }])
+    meta.refs.push({
+      key: val,
+      selector: `.${refClassName}`,
+      type,
+      all
+    })
+
+    if (type === 'component' && mode === 'ali') {
+      addAttrs(el, [
+        {
+          name: 'onUpdateRef',
+          value: `__handleUpdateRef({key:${stringify(val)}, all:${stringify(all)}}, $event)`
+        }
+      ])
+    }
+  }
+}
+
 function addWxsModule (meta, module) {
   if (!meta.wxsModuleMap) {
     meta.wxsModuleMap = {}
@@ -917,7 +983,11 @@ function addWxsModule (meta, module) {
 
 function processAttrs (el, meta) {
   el.attrsList.forEach((attr) => {
-    if (el.tag === 'wxs' && attr.name === 'module') {
+    if (mode === 'ali') {
+      let processed = attr.value.replace(/["']/g, '\'')
+      attr.value = el.attrsMap[attr.name] = processed
+    }
+    if (el.tag === config[mode].wxs.tag && attr.name === config[mode].wxs.module) {
       return addWxsModule(meta, attr.value)
     }
     let parsed = parseMustache(attr.value)
@@ -1007,13 +1077,13 @@ function injectWxs (meta, module, src, root) {
   if (addWxsModule(meta, module)) {
     return
   }
-  let wxsNode = createASTElement('wxs', [
+  let wxsNode = createASTElement(config[mode].wxs.tag, [
     {
-      name: 'module',
+      name: config[mode].wxs.module,
       value: module
     },
     {
-      name: 'src',
+      name: config[mode].wxs.src,
       value: src
     }
   ])
@@ -1053,9 +1123,13 @@ function processStyle (el, meta, root) {
 function processElement (el, options, meta, root) {
   processIf(el)
   processFor(el)
-  if (mode === 'wx') {
+  processRef(el, options, meta)
+  processBindEvent(el)
+  processComponentDepth(el, options)
+  if (mode === 'ali') {
+    processLifecycleHack(el, options)
+  } else {
     processPageStatus(el, options)
-    processBindEvent(el, options)
   }
   processComponentIs(el, options)
   processClass(el, meta, root)
@@ -1064,9 +1138,9 @@ function processElement (el, options, meta, root) {
 }
 
 function closeElement (el, root) {
-  let ret = postProcessComponentIs(el, root)
-  el = ret.el
-  root = ret.root
+  const result = postProcessComponentIs(el, root)
+  el = result.el
+  root = result.root
   postProcessFor(el)
   postProcessIf(el)
   return root
@@ -1092,6 +1166,7 @@ function postProcessComponentIs (el, root) {
       }
       newChild.children = el.children
       newChild.exps = el.exps
+      newChild.parent = tempNode
       postProcessIf(newChild)
       return newChild
     })

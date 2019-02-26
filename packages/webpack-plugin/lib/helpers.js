@@ -6,6 +6,7 @@ const styleCompilerPath = normalize.lib('style-compiler/index')
 const templateCompilerPath = normalize.lib('template-compiler/index')
 const jsonCompilerPath = normalize.lib('json-compiler/index')
 const templatePreprocessorPath = normalize.lib('template-compiler/preprocessor')
+const config = require('./config')
 
 // internal lib loaders
 const selectorPath = normalize.lib('selector')
@@ -59,7 +60,7 @@ function ensureBang (loader) {
   }
 }
 
-function resolveLoaders (options, moduleId, isProduction, hasScoped, hasComment, usingComponents, needCssSourceMap) {
+function resolveLoaders (options, moduleId, isProduction, hasScoped, hasComment, usingComponents, needCssSourceMap, mode) {
   let cssLoaderOptions = ''
   if (needCssSourceMap) {
     cssLoaderOptions += '?sourceMap'
@@ -78,7 +79,7 @@ function resolveLoaders (options, moduleId, isProduction, hasScoped, hasComment,
     })
 
   const defaultLoaders = {
-    html: 'html-loader?root=/&attrs=audio:src wxs:src image:src video:src cover-image:src' + '!' + templateCompilerPath + templateCompilerOptions,
+    html: `html-loader?root=/&attrs=audio:src image:src video:src cover-image:src ${config[mode].wxs.tag}:${config[mode].wxs.src}` + '!' + templateCompilerPath + templateCompilerOptions,
     css: getCSSLoaderString(),
     js: hasBabel ? 'babel-loader' : '',
     json: jsonCompilerPath
@@ -98,7 +99,7 @@ function resolveLoaders (options, moduleId, isProduction, hasScoped, hasComment,
   }
 }
 
-module.exports = function createHelpers (loaderContext, options, moduleId, parts, isProduction, hasScoped, hasComment, usingComponents, needCssSourceMap) {
+module.exports = function createHelpers (loaderContext, options, moduleId, parts, isProduction, hasScoped, hasComment, usingComponents, needCssSourceMap, mode) {
   const rawRequest = getRawRequest(loaderContext, options.excludedPreLoaders)
   const {
     defaultLoaders,
@@ -113,7 +114,8 @@ module.exports = function createHelpers (loaderContext, options, moduleId, parts
     hasScoped,
     hasComment,
     usingComponents,
-    needCssSourceMap
+    needCssSourceMap,
+    mode
   )
 
   function getRequire (type, part, index, scoped) {

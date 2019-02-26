@@ -35,11 +35,27 @@ export function isExistAttr (obj, attr) {
   }
 }
 
+export function setByPath (data, pathStr, value) {
+  let parent
+  let variable
+  _getByPath(data, pathStr, (value, key, end) => {
+    if (end) {
+      parent = value
+      variable = key
+    }
+    return value[key]
+  })
+  if (parent) {
+    parent[variable] = value
+  }
+}
+
 export function getByPath (data, pathStr, defaultVal = '') {
   const result = _getByPath(data, pathStr, (value, key) => {
     let newValue
     if (isObservable(value)) {
-      newValue = get(value, key)
+      // key可能不是一个响应式属性，那么get将无法返回正确值
+      newValue = get(value, key) || value[key]
     } else if (isExistAttr(value, key)) {
       newValue = value[key]
     }
@@ -47,17 +63,6 @@ export function getByPath (data, pathStr, defaultVal = '') {
   })
   // 小程序setData时不允许undefined数据
   return result === undefined ? defaultVal : result
-}
-
-export function enumerable (target, keys) {
-  keys.forEach(key => {
-    const descriptor = Object.getOwnPropertyDescriptor(target, key)
-    if (!descriptor.enumerable) {
-      descriptor.enumerable = true
-      Object.defineProperty(target, key, descriptor)
-    }
-  })
-  return target
 }
 
 export function defineGetter (target, key, value, context) {
@@ -97,15 +102,14 @@ export function proxy (target, source, keys, mapKeys, readonly) {
   return target
 }
 
-export function deleteProperties (source, props = []) {
-  const sourceKeys = Object.keys(source)
+export function filterProperties (source, props = []) {
   const newData = {}
-  for (let key of sourceKeys) {
-    if (props.indexOf(key) < 0) {
-      const result = source[key]
-      newData[key] = isObservable(result) ? toJS(result) : result
+  props.forEach(prop => {
+    if (prop in source) {
+      const result = source[prop]
+      newData[prop] = isObservable(result) ? toJS(result) : result
     }
-  }
+  })
   return newData
 }
 
@@ -269,6 +273,9 @@ export function normalizeDynamicStyle (value) {
 }
 
 export function isEmptyObject (obj) {
+  if (!obj) {
+    return true
+  }
   for (let key in obj) {
     return false
   }
@@ -392,6 +399,21 @@ export function isValidIdentifierStr (str) {
 
 export function isNumberStr (str) {
   return /^\d+$/.test(str)
+}
+
+let datasetReg = /^data-(.+)$/
+
+export function collectDataset (props) {
+  let dataset = {}
+  for (let key in props) {
+    if (props.hasOwnProperty(key)) {
+      let matched = datasetReg.exec(key)
+      if (matched) {
+        dataset[matched[1]] = props[key]
+      }
+    }
+  }
+  return dataset
 }
 
 /**
