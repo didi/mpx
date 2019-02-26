@@ -2,12 +2,15 @@ import pageStatusMixin from './pageStatusMixin'
 import proxyEventMixin from './proxyEventMixin'
 import renderHelperMixin from './renderHelperMixin'
 import injectHelperMixin from './injectHelperMixin'
-
-export default function getBuiltInMixins (type, options) {
+import refsMixin from './refsMixin'
+import lifecycleMixin from './lifecycleMixin'
+export default function getBuiltInMixins (options, type) {
   return [
-    pageStatusMixin(type, options),
-    proxyEventMixin(type, options),
+    pageStatusMixin(type),
+    proxyEventMixin(),
     renderHelperMixin(),
-    injectHelperMixin()
+    injectHelperMixin(),
+    refsMixin(),
+    lifecycleMixin(type)
   ].filter(item => item)
 }

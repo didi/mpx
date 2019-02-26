@@ -1,55 +1,67 @@
 function objectKeys (obj) {
-  var keys = []
-  var stackMap = {
-    '{': '}',
-    '[': ']',
-    '(': ')'
-  }
-  var shiftMap = {
-    'n': '\n',
-    'b': '\b',
-    'f': '\f',
-    'r': '\r',
-    't': '\t'
-  }
-  if (typeof obj === 'object') {
-    var objStr = JSON.stringify(obj)
-    if (objStr[0] === '{' && objStr[objStr.length - 1] === '}') {
-      var key = ''
-      var inKey = true
-      var stack = []
-      var shift = false
-      for (var i = 1; i < objStr.length - 1; i++) {
-        var item = objStr[i]
-        if (inKey) {
-          if (item === ':') {
-            keys.push(key.slice(1, -1))
-            key = ''
-            inKey = false
+  if (__mpx_mode__ === 'swan') {
+    return Object.keys(obj)
+  } else {
+    var keys = []
+    var stackMap = {
+      '{': '}',
+      '[': ']',
+      '(': ')'
+    }
+    var shiftMap = {
+      'n': '\n',
+      'b': '\b',
+      'f': '\f',
+      'r': '\r',
+      't': '\t'
+    }
+    if (typeof obj === 'object') {
+      var objStr = JSON.stringify(obj)
+      if (objStr[0] === '{' && objStr[objStr.length - 1] === '}') {
+        var key = ''
+        var inKey = true
+        var stack = []
+        var shift = false
+        for (var i = 1; i < objStr.length - 1; i++) {
+          var item = objStr[i]
+          if (inKey) {
+            if (item === ':') {
+              keys.push(key.slice(1, -1))
+              key = ''
+              inKey = false
+            } else {
+              if (shift === false && item === '\\') {
+                shift = true
+                continue
+              }
+              if (shift) {
+                item = shiftMap[item] || item
+                shift = false
+              }
+              key += item
+            }
           } else {
-            if (shift === false && item === '\\') {
-              shift = true
-              continue
+            if (stackMap[item]) {
+              stack.push(item)
+            } else if (stackMap[stack[stack.length - 1]] === item) {
+              stack.pop()
+            } else if (stack.length === 0 && item === ',') {
+              inKey = true
             }
-            if (shift) {
-              item = shiftMap[item] || item
-              shift = false
-            }
-            key += item
-          }
-        } else {
-          if (stackMap[item]) {
-            stack.push(item)
-          } else if (stackMap[stack[stack.length - 1]] === item) {
-            stack.pop()
-          } else if (stack.length === 0 && item === ',') {
-            inKey = true
           }
         }
       }
     }
+    return keys
   }
-  return keys
+}
+
+function genRegExp (str, flags) {
+  if (__mpx_mode__ === 'swan') {
+    return new RegExp(str, flags)
+  } else {
+    return getRegExp(str, flags)
+  }
 }
 
 function extend (target, from) {
@@ -117,14 +129,14 @@ function stringifyObject (value) {
 }
 
 function hump2dash (value) {
-  var reg = getRegExp('[A-Z]', 'g')
+  var reg = genRegExp('[A-Z]', 'g')
   return value.replace(reg, function (match) {
     return '-' + match.toLowerCase()
   })
 }
 
 function dash2hump (value) {
-  var reg = getRegExp('-([a-z])', 'g')
+  var reg = genRegExp('-([a-z])', 'g')
   return value.replace(reg, function (match, p1) {
     return p1.toUpperCase()
   })
@@ -132,8 +144,8 @@ function dash2hump (value) {
 
 function parseStyleText (cssText) {
   var res = {}
-  var listDelimiter = getRegExp(';(?![^(]*\))', 'g')
-  var propertyDelimiter = getRegExp(':(.+)')
+  var listDelimiter = genRegExp(';(?![^(]*[)])', 'g')
+  var propertyDelimiter = genRegExp(':(.+)')
   cssText.split(listDelimiter).forEach(function (item) {
     if (item) {
       var tmp = item.split(propertyDelimiter)
@@ -176,7 +188,7 @@ function normalizeDynamicStyle (value) {
 }
 
 
-module.exports = {
+export default {
   transformClass: function (staticClass, dynamicClass) {
     if (typeof staticClass !== 'string') {
       return console.log('Template attr class must be a string!')
@@ -184,6 +196,7 @@ module.exports = {
     return concat(staticClass, stringifyClass(dynamicClass))
   },
   transformStyle: function (staticStyle, dynamicStyle) {
+    console.log('123123123')
     if (typeof staticStyle !== 'string') {
       return console.log('Template attr style must be a string!')
     }

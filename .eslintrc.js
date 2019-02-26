@@ -11,6 +11,7 @@ module.exports = {
   'globals': {
     'wx': false,
     'my': false,
+    'swan': false,
     'Component': false,
     'Page': false,
     'App': false

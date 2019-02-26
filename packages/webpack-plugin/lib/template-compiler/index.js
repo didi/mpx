@@ -17,8 +17,7 @@ module.exports = function (raw) {
   }))
   let ast = parsed.root
   let meta = parsed.meta
-  if (mode === 'wx') {
-    let renderResult = bindThis(`global.currentInject = {
+  let renderResult = bindThis(`global.currentInject = {
     moduleId: ${JSON.stringify(options.moduleId)},
     render: function () {
       var __seen = [];
@@ -27,23 +26,28 @@ module.exports = function (raw) {
       return renderData
     }
 };\n`, {
-      needCollect: true,
-      ignoreMap: meta.wxsModuleMap
-    })
+    needCollect: true,
+    ignoreMap: meta.wxsModuleMap
+  })
 
-    let globalInjectCode = renderResult.code + '\n'
+  let globalInjectCode = renderResult.code + '\n'
 
-    if (meta.computed) {
-      globalInjectCode += bindThis(`global.currentInject.injectComputed = {
+  if (meta.computed) {
+    globalInjectCode += bindThis(`global.currentInject.injectComputed = {
   ${meta.computed.join(',')}
   };`).code + '\n'
-    }
-
-    const dep = new InjectDependency({
-      content: globalInjectCode,
-      index: -2
-    })
-    this._module.issuer.addDependency(dep)
   }
+
+  if (meta.refs) {
+    globalInjectCode += `global.currentInject.getRefsData = function () {
+  return ${JSON.stringify(meta.refs)};
+  };\n`
+  }
+
+  const dep = new InjectDependency({
+    content: globalInjectCode,
+    index: -2
+  })
+  this._module.issuer.addDependency(dep)
   return compiler.serialize(ast)
 }

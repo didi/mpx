@@ -14,6 +14,7 @@ module.exports = function (content) {
 
   const pagesMap = this._compilation.__mpx__.pagesMap
   const componentsMap = this._compilation.__mpx__.componentsMap
+  const mode = this._compilation.__mpx__.mode
   const resource = stripExtension(this.resource)
 
   const loaderContext = this
@@ -66,7 +67,8 @@ module.exports = function (content) {
     hasScoped,
     hasComment,
     usingComponents,
-    needCssSourceMap
+    needCssSourceMap,
+    mode
   )
 
   // 注入模块id
@@ -76,7 +78,16 @@ module.exports = function (content) {
   })
   this._module.addDependency(dep)
   // 触发webpack global var 注入
-  let output = 'global.currentModuleId;\n'
+  let output = ''
+
+  if (!pagesMap[resource] && !componentsMap[resource] && mode === 'swan') {
+    output += 'if (!global.navigator) {\n'
+    output += '  global.navigator = {};\n'
+    output += '}\n'
+    output += 'global.navigator.standalone = true;\n'
+  } else {
+    output = 'global.currentModuleId;\n'
+  }
 
   //
   // <script>

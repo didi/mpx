@@ -1,3 +1,3 @@
-import createReactive from './createReactive'
+import createFactory from './patch'
 
-export default createReactive('page')
+export default createFactory('page')

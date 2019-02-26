@@ -360,7 +360,7 @@ module.exports = function (raw) {
         processPackages(json.packages, this.context, callback)
       },
       (callback) => {
-        processSubPackages(json.subPackages, this.context, callback)
+        processSubPackages(json.subPackages || json.subpackages, this.context, callback)
       },
       (callback) => {
         processPages(json.pages, '', '', this.context, callback)
@@ -374,6 +374,7 @@ module.exports = function (raw) {
     ], (err) => {
       if (err) return callback(err)
       delete json.packages
+      delete json.subpackages
       json.pages = localPages
       json.subPackages = []
       for (let root in subPackagesMap) {

@@ -4,8 +4,7 @@ import {
 } from 'mobx'
 
 import {
-  enumerable,
-  deleteProperties,
+  filterProperties,
   type,
   enumerableKeys,
   extend,
@@ -14,12 +13,20 @@ import {
   processUndefined,
   diffAndCloneA,
   defineGetter,
-  isValidIdentifierStr,
-  isNumberStr,
   preprocessRenderData
 } from '../helper/utils'
 
 import { watch } from './watcher'
+import { mountedQueue } from './lifecycleQueue'
+import {
+  CREATED,
+  BEFOREMOUNT,
+  MOUNTED,
+  UPDATED,
+  DESTROYED
+} from './innerLifecycle'
+
+let uid = 0
 
 export default class MPXProxy {
   constructor (options, target) {
@@ -28,27 +35,98 @@ export default class MPXProxy {
       console.error(`please specify a 【__getInitialData】function to get miniprogram's initial data`)
       return
     }
-    this.initialData = target.__getInitialData()
+    this.uid = uid++
+    this.options = options
+    this.state = 'initial' // initial -> created -> mounted -> destroyed
     this.watchers = [] // 保存所有观察者
     this.renderReaction = null
     this.updatedCallbacks = [] // 保存设置的更新回调
     this.computedKeys = options.computed ? enumerableKeys(options.computed) : []
-    this.propKeys = enumerableKeys(options.properties || options.props || {})
+    this.localKeys = this.computedKeys.slice()
     this.forceUpdateKeys = [] // 强制更新的key，无论是否发生change
-    this.cacheData = extend({}, this.initialData) // 缓存数据，用于diff
-    this.init(options)
   }
 
-  init (options) {
-    const proxyData = extend({}, this.initialData)
+  created () {
+    this.initApi()
+    this.initialData = this.target.__getInitialData()
+    this.cacheData = extend({}, this.initialData) // 缓存数据，用于diff
+    this.initState(this.options)
+    this.state = CREATED
+    this.callUserHook(CREATED)
+    this.initRender()
+  }
+
+  beforeMount () {
+    mountedQueue.enter()
+  }
+
+  mounted () {
+    if (this.state === CREATED) {
+      mountedQueue.exit(this.depth, this.uid, () => {
+        this.state = MOUNTED
+        // 用于处理refs等前置工作
+        this.callUserHook(BEFOREMOUNT)
+        this.callUserHook(MOUNTED)
+      })
+    }
+  }
+
+  updated (fromCallback) {
+    if (this.state === CREATED && fromCallback) {
+      // 首次setData
+      this.mounted()
+    } else if (!this.updating && this.state === MOUNTED) {
+      this.updating = true
+      this.nextTick(() => {
+        // 由于异步，需要确认 this.state
+        if (this.state === MOUNTED) {
+          this.handleUpdatedCallbacks()
+          this.callUserHook(UPDATED)
+        }
+        this.updating = false
+      })
+    }
+  }
+
+  destroyed () {
+    this.clearWatchers()
+    this.state = DESTROYED
+    this.callUserHook(DESTROYED)
+  }
+
+  initApi () {
+    // 挂载扩展属性到实例上
+    proxy(this.target, this.options.proto, enumerableKeys(this.options.proto), true)
+    // 挂载$watch
+    this.target.$watch = (...rest) => this.watch(...rest)
+    // 强制执行render
+    this.target.$forceUpdate = (...rest) => this.forceUpdate(...rest)
+    // 监听单次回调
+    this.target.$updated = (...rest) => this.onUpdated(...rest)
+  }
+
+  initState () {
+    const options = this.options
+    this.initProps()
+    const data = this.initData(options.data)
+    const proxyData = extend({}, this.initialData, data)
     this.initComputed(options.computed, proxyData)
     this.data = observable(proxyData)
-    /* 计算属性在mobx里面是不可枚举的，所以篡改下 */
-    enumerable(this.data, this.computedKeys)
+    this.depth = this.data['mpxDepth']
     /* target的数据访问代理到将proxy的data */
-    proxy(this.target, this.data, enumerableKeys(this.data))
+    proxy(this.target, this.data, enumerableKeys(this.data).concat(this.computedKeys))
     // 初始化watch
     this.initWatch(options.watch)
+  }
+
+  initProps () {
+    proxy(this.target, this.initialData, enumerableKeys(this.initialData))
+  }
+
+  initData (dataFn) {
+    const data = typeof dataFn === 'function' ? dataFn.call(this.target) : dataFn
+    this.collectLocalKeys(data)
+    return data
   }
 
   initComputed (computedConfig, proxyData) {
@@ -75,7 +153,11 @@ export default class MPXProxy {
     }
   }
 
-  updated (fn) {
+  collectLocalKeys (data) {
+    this.localKeys.push.apply(this.localKeys, enumerableKeys(data))
+  }
+
+  onUpdated (fn) {
     this.updatedCallbacks.push(fn)
   }
 
@@ -87,11 +169,10 @@ export default class MPXProxy {
       typeof callback === 'function' && callback.apply(this.target)
       callback = pendingList.shift()
     }
-    this.callUserHook('updated')
   }
 
   callUserHook (hookName) {
-    const hook = this.target.$rawOptions[hookName]
+    const hook = this.options[hookName]
     if (typeof hook === 'function') {
       hook.call(this.target)
     }
@@ -126,12 +207,8 @@ export default class MPXProxy {
   }
 
   render () {
-    if (typeof this.target.__render !== 'function') {
-      console.error('please specify a 【__render】 function to render view')
-      return
-    }
     const forceUpdateKeys = this.forceUpdateKeys
-    const newData = deleteProperties(this.data, this.propKeys)
+    const newData = filterProperties(this.data, this.localKeys)
     Object.keys(newData).forEach(key => {
       const isForceUpdateKey = forceUpdateKeys.indexOf(key) > -1
       if (!isForceUpdateKey && comparer.structural(this.cacheData[key], newData[key])) {
@@ -141,8 +218,7 @@ export default class MPXProxy {
         this.cacheData[key] = newData[key]
       }
     })
-    this.target.__render(newData, () => this.handleUpdatedCallbacks())
-    this.forceUpdateKeys = [] // 仅用于当次的render
+    this.doRender(newData)
   }
 
   renderWithData (rawRenderData) {
@@ -154,7 +230,7 @@ export default class MPXProxy {
           let item = renderData[key]
           let data = item[0]
           let firstKey = item[1]
-          if (this.propKeys.indexOf(firstKey) === -1) {
+          if (this.localKeys.indexOf(firstKey) > -1) {
             this.miniRenderData[key] = diffAndCloneA(data).clone
           }
         }
@@ -162,57 +238,6 @@ export default class MPXProxy {
       this.doRender(this.miniRenderData)
     } else {
       this.doRender(this.processRenderData(renderData))
-    }
-  }
-
-  renderWithDiffClone () {
-    const data = deleteProperties(this.data, this.propKeys)
-    const result = diffAndCloneA(data, this.dataClone || {})
-    const forceUpdateKeys = this.forceUpdateKeys
-    this.dataClone = result.clone
-
-    if (result.diff || forceUpdateKeys.length) {
-      let renderData = {}
-      forceUpdateKeys.forEach((key) => {
-        renderData[key] = data[key]
-      })
-      const diffPaths = result.diffPaths
-      for (let i = 0; i < diffPaths.length; i++) {
-        let diffPath = diffPaths[i]
-        if (diffPath.length === 0) {
-          renderData = data
-          break
-        }
-
-        if (forceUpdateKeys.indexOf(diffPath[0]) > -1) {
-          continue
-        }
-
-        let key = ''
-        let value = data
-        for (let j = 0; j < diffPath.length; j++) {
-          const path = diffPath[j]
-          const isNumber = isNumberStr(path)
-          const isValidIdentifier = isValidIdentifierStr(path)
-          if (isNumber || isValidIdentifier) {
-            value = value[path]
-            if (isNumber) {
-              key += `[${path}]`
-            } else {
-              if (key) {
-                key += `.${path}`
-              } else {
-                key = path
-              }
-            }
-          }
-        }
-        if (key) {
-          renderData[key] = value
-        }
-      }
-      this.doRender(renderData)
-      this.forceUpdateKeys = []
     }
   }
 
@@ -224,23 +249,33 @@ export default class MPXProxy {
         let data = item[0]
         let firstKey = item[1]
         let { clone, diff } = diffAndCloneA(data, this.miniRenderData[key])
-        if (this.propKeys.indexOf(firstKey) === -1 && (this.forceUpdateKeys.indexOf(firstKey) > -1 || diff)) {
+        if (this.localKeys.indexOf(firstKey) > -1 && (this.forceUpdateKeys.indexOf(firstKey) > -1 || diff)) {
           this.miniRenderData[key] = result[key] = clone
         }
       }
     }
-    this.forceUpdateKeys = []
     return result
   }
 
   doRender (data) {
-    if (isEmptyObject(data)) {
+    if (typeof this.target.__render !== 'function') {
+      console.error('please specify a 【__render】 function to render view')
       return
     }
-    this.target.__render(processUndefined(data), () => this.handleUpdatedCallbacks())
+    // 空对象在state 为 CREATED 阶段也要执行，用于正常触发mounted
+    if (isEmptyObject(data) && this.state !== CREATED) {
+      return
+    }
+    if (this.state === CREATED) {
+      this.beforeMount()
+    }
+    this.target.__render(processUndefined(data), () => {
+      this.updated(true)
+    })
+    this.forceUpdateKeys = [] // 仅用于当次的render
   }
 
-  watchRender () {
+  initRender () {
     let renderWatcher
     let renderExecutionFailed = false
     if (this.target.__injectedRender) {
@@ -282,10 +317,10 @@ export default class MPXProxy {
       callback = params
       params = null
     } else if (paramsType === 'Object') {
-      this.setForceUpdateKeys(params)
       extend(this.data, params)
     }
-    type(callback) === 'Function' && this.updated(callback)
+    this.setForceUpdateKeys(params ? Object.keys(params) : this.localKeys)
+    type(callback) === 'Function' && this.onUpdated(callback)
     // 无论是否改变，强制将状态置为stale，从而触发render
     if (this.renderReaction) {
       this.renderReaction.dependenciesState = 2
@@ -293,11 +328,15 @@ export default class MPXProxy {
     }
   }
 
-  setForceUpdateKeys (obj) {
-    Object.keys(obj).forEach(key => {
+  setForceUpdateKeys (keys = []) {
+    keys.forEach(key => {
       if (this.forceUpdateKeys.indexOf(key) === -1) {
         this.forceUpdateKeys.push(key)
       }
     })
+  }
+
+  nextTick (fn) {
+    return Promise.resolve().then(fn)
   }
 }

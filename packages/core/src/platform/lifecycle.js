@@ -1,38 +1,7 @@
-const APP_HOOKS = [
-  'onLaunch',
-  'onShow',
-  'onHide',
-  'onError',
-  'onPageNotFound'
-]
+import * as wxLifecycle from './patch/wx/lifecycle'
+import * as aliLifecycle from './patch/ali/lifecycle'
+import { is } from '../helper/env'
 
-const PAGE_HOOKS = [
-  'onLoad',
-  'onReady',
-  'onShow',
-  'onHide',
-  'onUnload',
-  'onPullDownRefresh',
-  'onReachBottom',
-  'onShareAppMessage',
-  'onPageScroll',
-  'onTabItemTap',
-  'onResize'
-]
+const lifecycle = is('ali') ? aliLifecycle : wxLifecycle
 
-const COMPONENT_HOOKS = [
-  'created',
-  'attached',
-  'ready',
-  'moved',
-  'detached',
-  'pageShow',
-  'pageHide',
-  'updated'
-]
-
-export {
-  APP_HOOKS,
-  PAGE_HOOKS,
-  COMPONENT_HOOKS
-}
+export default lifecycle
