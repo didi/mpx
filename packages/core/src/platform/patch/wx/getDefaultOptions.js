@@ -1,12 +1,15 @@
 import {
   enumerableKeys,
-  extend
+  extend,
+  getValuesFromObject
 } from '../../../helper/utils'
 
 import MPXProxy from '../../../core/proxy'
 import customeKey from '../../../core/customOptionKeys'
 import mergeOptions from '../../../core/mergeOptions'
+import { lifecycleProxyMap } from './lifecycle'
 
+const ignoreLifecycles = getValuesFromObject(lifecycleProxyMap)
 function transformProperties (properties) {
   if (!properties) {
     return {}
@@ -86,15 +89,17 @@ function transformApiForProxy (context, currentInject) {
 
 function filterOptions (options) {
   const newOptions = {}
+  const ignoreProps = customeKey.concat(ignoreLifecycles)
   Object.keys(options).forEach(key => {
-    if (customeKey.indexOf(key) !== -1 || (key === 'data' && typeof options[key] === 'function') || key === 'created') {
-
+    if (ignoreProps.indexOf(key) !== -1 || (key === 'data' && typeof options[key] === 'function')) {
+      return
+    }
+    if (key === 'properties' || key === 'props') {
+      newOptions['properties'] = transformProperties(Object.assign({}, options['properties'], options['props']))
+    } else if (key === 'methods') {
+      newOptions[key] = filterOptions(options[key])
     } else {
-      if (key === 'properties' || key === 'props') {
-        newOptions['properties'] = transformProperties(Object.assign({}, options['properties'], options['props']))
-      } else {
-        newOptions[key] = options[key]
-      }
+      newOptions[key] = options[key]
     }
   })
   return newOptions
