@@ -8,7 +8,7 @@ export default class Queue {
     this.stackNum = 0
   }
 
-  enter (depth, id) {
+  enter () {
     this.stackNum++
   }
 
