@@ -1,3 +1,7 @@
+---
+description: mpx是一款增强型小程序框架，极致性能优化，提供双向数据绑定，样式绑定，方法内联传参等方便开发者使用的特性。
+---
+
 <p align="center">
   <a href="https://didi.github.io/mpx/">
     <img alt="babel" src="https://dpubstatic.udache.com/static/dpubimg/34b5079c-0399-406d-8d2e-b8624678f7ff.png" width="546">
@@ -11,18 +15,18 @@
 # Introduction
 
 Mpx是一款致力于提高小程序开发体验的增强型小程序框架，通过Mpx，我们能够最先进的web开发体验(Vue + Webpack)来开发生产性能深度优化的小程序，Mpx具有以下一些优秀特性：
-* 数据响应特性(watch/computed)
-* 增强的模板语法(动态组件/样式绑定/类名绑定/内联事件函数/双向绑定等)
-* 深度性能优化(原生自定义组件/基于依赖收集和数据变化的setData)
+* 数据响应特性([watch](single/script-enhance.md#watch) / [computed](single/script-enhance.md#computed))
+* 增强的模板语法([动态组件](single/template-enhance.md#动态组件) / [样式绑定 / 类名绑定 ](single/template-enhance.md#class与style绑定) / [内联事件函数](single/template-enhance.md#内联事件绑定) / [双向绑定](single/template-enhance.md#双向绑定) 等)
+* [深度性能优化](understanding/understanding.html#数据响应与性能优化)(原生自定义组件/基于依赖收集和数据变化的setData)
 * Webpack编译(npm/循环依赖/Babel/ESLint/css预编译/代码优化等)
-* 单文件组件开发
-* 原生组件支持
-* 状态管理(Vuex规范/多实例/可合并)
+* [单文件组件开发](single/what-is-single-file.md)
+* [原生组件支持](native-component.md)
+* [状态管理](store/index.md#数据管理)(Vuex规范/多实例/可合并)
 * 跨团队合作(packages)
-* 逻辑复用能力(mixins)
+* 逻辑复用能力([mixins](single/script-enhance.md#mixins))
 * 脚手架支持
 * 小程序自身规范的完全支持
-* 支付宝小程序的支持
+* [多平台支持](platform.md)(微信、支付宝、百度)
 
 ## 安装使用
 
@@ -43,7 +47,7 @@ npm i
 npm run watch
 
 # production
-npm run build -p
+npm run prod
 ```
 
 使用微信开发者工具打开项目文件夹即可进行预览调试和发布。
@@ -60,8 +64,8 @@ npm run build -p
 |包名|版本|描述|
 |-----|----|----|
 |@mpxjs/core|[![npm version](https://badge.fury.io/js/%40mpxjs%2Fcore.svg)](https://badge.fury.io/js/%40mpxjs%2Fcore)|mpx微信运行时核心|
-|@mpxjs/core-ant|[![npm version](https://badge.fury.io/js/%40mpxjs%2Fcore-ant.svg)](https://badge.fury.io/js/%40mpxjs%2Fcore-ant)|mpx支付宝运行时核心|
 |@mpxjs/webpack-plugin|[![npm version](https://badge.fury.io/js/%40mpxjs%2Fwebpack-plugin.svg)](https://badge.fury.io/js/%40mpxjs%2Fwebpack-plugin)|mpx编译核心|
+|@mpxjs/cli|[![npm version](https://badge.fury.io/js/%40mpxjs%2Fcli.svg)](https://badge.fury.io/js/%40mpxjs%2Fcli)|mpx脚手架命令行工具|
 |@mpxjs/fetch|[![npm version](https://badge.fury.io/js/%40mpxjs%2Ffetch.svg)](https://badge.fury.io/js/%40mpxjs%2Ffetch)|mpx网络请求库，处理wx并发请求限制|
 |@mpxjs/promisify|[![npm version](https://badge.fury.io/js/%40mpxjs%2Fpromisify.svg)](https://badge.fury.io/js/%40mpxjs%2Fpromisify)|api promisify|
 |@mpxjs/url-loader|[![npm version](https://badge.fury.io/js/%40mpxjs%2Furl-loader.svg)](https://badge.fury.io/js/%40mpxjs%2Furl-loader)|处理wxss中图像资源只能用base64引用|
