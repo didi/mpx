@@ -5,7 +5,7 @@
   "structure": {
     "readme": "intro"
   },
-  "plugins": ["github", "edit-link", "anchors", "copy-code-button", "github-buttons", "expandable-chapters-small"],
+  "plugins": ["github", "edit-link", "anchors", "copy-code-button", "github-buttons", "expandable-chapters-small", "insert-logo"],
   "pluginsConfig": {
     "github": {
       "url": "https://github.com/didi/mpx"
@@ -28,6 +28,10 @@
         "size" : "small",
         "count": true
       }]
+    },
+    "insert-logo": {
+      "url": "https://dpubstatic.udache.com/static/dpubimg/cd8de8e4-e4f4-4f0a-9c53-f833bc30ba69.png",
+      "style": "background: none; width: 200px"
     }
   }
 }
