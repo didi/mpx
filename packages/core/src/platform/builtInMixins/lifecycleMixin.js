@@ -1,5 +1,4 @@
 import { is } from '../../helper/env'
-import { getLifecycleOptions } from '../lifecycle'
 
 export default function lifecycleMixin (type) {
   let options
@@ -7,8 +6,7 @@ export default function lifecycleMixin (type) {
     options = {
       data: {
         mpxLifecycleHack: true
-      },
-      ...getLifecycleOptions()
+      }
     }
     if (type === 'page') {
       options.data.mpxDepth = 0
@@ -18,16 +16,17 @@ export default function lifecycleMixin (type) {
       }
     }
   } else if (is('wx') || is('swan')) {
-    options = {
-      ...getLifecycleOptions()
-    }
     if (type === 'page') {
-      options.data = {
-        mpxDepth: 0
+      options = {
+        data: {
+          mpxDepth: 0
+        }
       }
     } else {
-      options.properties = {
-        mpxDepth: Number
+      options = {
+        properties: {
+          mpxDepth: Number
+        }
       }
     }
   }

@@ -448,15 +448,3 @@ export function preprocessRenderData (renderData) {
   return processedRenderData
 }
 
-export function getValuesFromObject (Obj = {}) {
-  const result = []
-  Object.keys(Obj).forEach(key => {
-    const val = Obj[key]
-    if (type(val) === 'Array') {
-      result.push.apply(result, val)
-    } else {
-      result.push(val)
-    }
-  })
-  return result
-}

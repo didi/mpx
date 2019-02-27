@@ -5,10 +5,7 @@ import {
 import MPXProxy from '../../../core/proxy'
 import customeKey from '../../../core/customOptionKeys'
 import mergeOptions from '../../../core/mergeOptions'
-import { getValuesFromObject } from '../../../helper/utils'
-import { lifecycleProxyMap } from './lifecycle'
 
-const ignoreLifecycles = getValuesFromObject(lifecycleProxyMap)
 function transformApiForProxy (context, currentInject) {
   const rawSetData = context.setData.bind(context)
   Object.defineProperties(context, {
@@ -51,7 +48,7 @@ function transformApiForProxy (context, currentInject) {
 
 function filterOptions (options, type) {
   const newOptions = {}
-  const ignoreProps = customeKey.concat(['data']).concat(ignoreLifecycles)
+  const ignoreProps = customeKey.concat(['data'])
   Object.keys(options).forEach(key => {
     if (ignoreProps.indexOf(key) !== -1) {
       return
@@ -102,5 +99,5 @@ export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
       this.$mpxProxy.destroyed()
     }
   }]
-  return mergeOptions(options, type)
+  return mergeOptions(options, type, false)
 }
