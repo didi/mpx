@@ -19,13 +19,15 @@ mpx**暂时**没有提供跨平台的能力，所以并没有抹平`原生差异
 
 对于mpx增强小程序的部分，比如watch， computed， pageShow， pageHide， Store 等等，都是一致的。
 
-在使用mpx时，由于支付宝、百度小程序中Page和Component是闭包变量，需要手动传递：
+## 支付宝小程序特异性
+
+在使用mpx时，由于支付宝小程序中Page和Component是闭包变量，需要手动传递：
 
 ```js
 // 微信小程序
 mpx.createPage(options)
 mpx.createComponent(options)
-// 支付宝、百度小程序
+// 支付宝小程序
 mpx.createPage(options, Page)
 mpx.createComponent(options, Component)
 ```
