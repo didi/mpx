@@ -1125,6 +1125,8 @@ function processStyle (el, meta, root) {
 function processElement (el, options, meta, root) {
   processIf(el)
   processFor(el)
+  processClass(el, meta, root)
+  processStyle(el, meta, root)
   processRef(el, options, meta)
   processBindEvent(el)
   processComponentDepth(el, options)
@@ -1134,8 +1136,6 @@ function processElement (el, options, meta, root) {
     processPageStatus(el, options)
   }
   processComponentIs(el, options)
-  processClass(el, meta, root)
-  processStyle(el, meta, root)
   processAttrs(el, meta)
 }
 
