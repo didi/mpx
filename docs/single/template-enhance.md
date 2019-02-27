@@ -232,3 +232,27 @@ wx:model默认监听`input`事件使用`value`属性传值，如果我们希望�
 如示例，当子组件被点击时，父组件的checked数据会发生变化
 
 > 注意：由于微信的限制，如果事件名使用横线链接分割（如: 'checked-change'），将不可以使用该feature。
+
+## NodesRef
+
+提供了 `wx:ref="xxx"` 来更方便获取 WXML 节点信息的对象。在JS里只需要通过this.$refs.xxx 即可获取节点。
+
+示例：
+```html
+<template>
+  <view wx:ref="tref">
+    123
+  </view>
+</template>
+
+<script>
+import {createComponent} from '@mpxjs/core'
+  createComponent({
+    onReady () {
+      this.$refs.tref.fields({size: true}, function (res) {
+        console.log(res)
+      }).exec()
+    }
+  })
+</script>
+```
