@@ -1093,13 +1093,14 @@ function injectWxs (meta, module, src, root) {
 const injectHelperWxsPath = normalize.lib('runtime/injectHelper.wxs')
 
 function processClass (el, meta, root) {
-  let type = 'class'
+  const type = 'class'
+  const needEx = el.tag.startsWith('th-')
   let dynamicClass = getAndRemoveAttr(el, config[mode].directive.dynamicClass)
   if (dynamicClass) {
     let staticClassExp = parseMustache(getAndRemoveAttr(el, type)).result
     let dynamicClassExp = parseMustache(dynamicClass).result
     addAttrs(el, [{
-      name: type,
+      name: needEx ? 'ex-' + type : type,
       value: `{{__injectHelper.transformClass(${staticClassExp}, ${dynamicClassExp})}}`
     }])
     injectWxs(meta, '__injectHelper', injectHelperWxsPath, root)
@@ -1107,13 +1108,14 @@ function processClass (el, meta, root) {
 }
 
 function processStyle (el, meta, root) {
-  let type = 'style'
+  const type = 'style'
+  const needEx = el.tag.startsWith('th-')
   let dynamicStyle = getAndRemoveAttr(el, config[mode].directive.dynamicStyle)
   if (dynamicStyle) {
     let staticStyleExp = parseMustache(getAndRemoveAttr(el, type)).result
     let dynamicStyleExp = parseMustache(dynamicStyle).result
     addAttrs(el, [{
-      name: type,
+      name: needEx ? 'ex-' + type : type,
       value: `{{__injectHelper.transformStyle(${staticStyleExp}, ${dynamicStyleExp})}}`
     }])
     injectWxs(meta, '__injectHelper', injectHelperWxsPath, root)
