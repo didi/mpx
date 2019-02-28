@@ -23,6 +23,7 @@ module.exports = function (raw) {
 
   const pagesMap = this._compilation.__mpx__.pagesMap
   const componentsMap = this._compilation.__mpx__.componentsMap
+  const subPackagesMap = this._compilation.__mpx__.subPackagesMap
   const mode = this._compilation.__mpx__.mode
   const resource = stripExtension(this.resource)
   const isApp = !(pagesMap[resource] || componentsMap[resource])
@@ -122,16 +123,24 @@ module.exports = function (raw) {
       result = stripExtension(result)
       if (ext === '.mpx' || ext === '.js' || ext === '.th') {
         let componentPath
+        let subPackageRoot = ''
+        for (let src in subPackagesMap) {
+          if (result.startsWith(src)) {
+            subPackageRoot = subPackagesMap[src]
+            break
+          }
+        }
+
         if (ext === '.js') {
           let root = info.descriptionFileRoot
           if (info.descriptionFileData && info.descriptionFileData.miniprogram) {
             root = path.join(root, info.descriptionFileData.miniprogram)
           }
           let relativePath = path.relative(root, result)
-          componentPath = path.join('components', hash(root), relativePath)
+          componentPath = path.join(subPackageRoot, 'components', hash(root), relativePath)
         } else {
           let componentName = parsed.name
-          componentPath = path.join('components', componentName + hash(result), componentName)
+          componentPath = path.join(subPackageRoot, 'components', componentName + hash(result), componentName)
         }
         componentPath = toPosix(componentPath)
         rewritePath(publicPath + componentPath)
@@ -151,7 +160,7 @@ module.exports = function (raw) {
   if (isApp) {
     // app.json
 
-    const subPackagesMap = {}
+    const subPackagesCfg = {}
     const localPages = []
     // 确保首页不变
     const firstPage = json.pages && json.pages[0]
@@ -223,6 +232,9 @@ module.exports = function (raw) {
         async.forEach(subPackages, (packageItem, callback) => {
           let tarRoot = packageItem.tarRoot || packageItem.root
           let srcRoot = packageItem.srcRoot || packageItem.root
+          let resource = path.join(context, srcRoot)
+          if (subPackagesMap[resource] === tarRoot) return callback()
+          subPackagesMap[resource] = tarRoot
           processPages(packageItem.pages, srcRoot, tarRoot, context, callback)
         }, callback)
       } else {
@@ -263,10 +275,10 @@ module.exports = function (raw) {
               if (pagesMap[resource] === name) return callback()
               pagesMap[resource] = name
               if (tarRoot) {
-                if (!subPackagesMap[tarRoot]) {
-                  subPackagesMap[tarRoot] = []
+                if (!subPackagesCfg[tarRoot]) {
+                  subPackagesCfg[tarRoot] = []
                 }
-                subPackagesMap[tarRoot].push(toPosix(path.join('', page)))
+                subPackagesCfg[tarRoot].push(toPosix(path.join('', page)))
               } else {
                 // 确保首页不变
                 if (page === firstPage) {
@@ -377,10 +389,10 @@ module.exports = function (raw) {
       delete json.subpackages
       json.pages = localPages
       json.subPackages = []
-      for (let root in subPackagesMap) {
+      for (let root in subPackagesCfg) {
         let subPackage = {
           root,
-          pages: subPackagesMap[root]
+          pages: subPackagesCfg[root]
         }
         json.subPackages.push(subPackage)
       }
