@@ -48,18 +48,17 @@ function transformApiForProxy (context, currentInject) {
 
 function filterOptions (options, type) {
   const newOptions = {}
-  const ignoreProps = customeKey.concat(['data', 'didMount', 'onReady'])
+  const ignoreProps = customeKey.concat(['data'])
   Object.keys(options).forEach(key => {
     if (ignoreProps.indexOf(key) !== -1) {
-
+      return
+    }
+    if (key === 'properties' || key === 'props') {
+      newOptions['props'] = Object.assign({}, options['properties'], options['props'])
+    } else if (key === 'methods' && type === 'page') {
+      Object.assign(newOptions, options[key])
     } else {
-      if (key === 'properties' || key === 'props') {
-        newOptions['props'] = Object.assign({}, options['properties'], options['props'])
-      } else if (key === 'methods' && type === 'page') {
-        Object.assign(newOptions, options[key])
-      } else {
-        newOptions[key] = options[key]
-      }
+      newOptions[key] = options[key]
     }
   })
   return newOptions
@@ -100,5 +99,5 @@ export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
       this.$mpxProxy.destroyed()
     }
   }]
-  return mergeOptions(options, type)
+  return mergeOptions(options, type, false)
 }

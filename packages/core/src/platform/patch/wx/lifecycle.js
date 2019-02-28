@@ -1,3 +1,4 @@
+import { CREATED, MOUNTED } from '../../../core/innerLifecycle'
 const APP_HOOKS = [
   'onLaunch',
   'onShow',
@@ -30,6 +31,11 @@ const COMPONENT_HOOKS = [
   'pageHide',
   'updated'
 ]
+
+export const lifecycleProxyMap = {
+  [CREATED]: ['created'],
+  [MOUNTED]: ['ready', 'onReady']
+}
 
 export {
   APP_HOOKS,
