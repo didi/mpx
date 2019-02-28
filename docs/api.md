@@ -45,6 +45,12 @@ createComponent(object)
   - this.$forceUpdate(callback)
   - this.$forceUpdate(params, callback)
 
+- this.$set (用于动态新增响应式属性，会触发订阅者更新)
+  - this.$set(obj, key, value)
+
+- this.$remove (用于动态删除响应式属性，会触发订阅者更新)
+  - this.$remove(obj, key)
+
 ### createStore
 
 ``` js
@@ -164,7 +170,7 @@ const a = observable(object)
 
 ### extendObservable
 
-用于扩展响应式数据，属于mobx提供的能力, 主要用于添加新的可观察数据
+用于扩展响应式数据，属于mobx提供的能力, 主要用于添加新的可观察数据, `并不会触发订阅者更新`
 
 ```js
 import {observable, extendObservable} from '@mpxjs/core'
@@ -192,6 +198,17 @@ watch(null, () => {
   console.log('update a.name', val)
 })
 a.name = 10
+```
+
+### mpx.set & mpx.remove
+
+用于对一个响应式对象新增或删除属性，会`触发订阅者更新操作`
+
+```js
+import mpx, {observable} from '@mpxjs/core'
+const a = observable({name: 1})
+mpx.set(a, 'age', 'test')
+mpx.remove(a, 'age')
 ```
 
 ### mpx.use
