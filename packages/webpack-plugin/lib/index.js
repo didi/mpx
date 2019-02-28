@@ -45,6 +45,7 @@ class MpxWebpackPlugin {
           pagesMap: {},
           componentsMap: {},
           subPackagesMap: {},
+          processingSubPackages: false,
           wxsMap: {},
           mode: this.options.mode,
           extract: (content, type, resourcePath, index) => {

@@ -24,6 +24,7 @@ module.exports = function (raw) {
   const pagesMap = this._compilation.__mpx__.pagesMap
   const componentsMap = this._compilation.__mpx__.componentsMap
   const subPackagesMap = this._compilation.__mpx__.subPackagesMap
+  const compilationMpx = this._compilation.__mpx__
   const mode = this._compilation.__mpx__.mode
   const resource = stripExtension(this.resource)
   const isApp = !(pagesMap[resource] || componentsMap[resource])
@@ -118,19 +119,24 @@ module.exports = function (raw) {
     }
     this.resolve(context, component, (err, result, info) => {
       if (err) return callback(err)
+      const queryIndex = result.indexOf('?')
+      if (queryIndex >= 0) {
+        result = result.substr(0, queryIndex)
+      }
       let parsed = path.parse(result)
       let ext = parsed.ext
       result = stripExtension(result)
       if (ext === '.mpx' || ext === '.js' || ext === '.th') {
         let componentPath
         let subPackageRoot = ''
-        for (let src in subPackagesMap) {
-          if (result.startsWith(src)) {
-            subPackageRoot = subPackagesMap[src]
-            break
+        if (compilationMpx.processingSubPackages) {
+          for (let src in subPackagesMap) {
+            if (result.startsWith(src)) {
+              subPackageRoot = subPackagesMap[src]
+              break
+            }
           }
         }
-
         if (ext === '.js') {
           let root = info.descriptionFileRoot
           if (info.descriptionFileData && info.descriptionFileData.miniprogram) {
@@ -230,8 +236,8 @@ module.exports = function (raw) {
     const processSubPackages = (subPackages, context, callback) => {
       if (subPackages) {
         async.forEach(subPackages, (packageItem, callback) => {
-          let tarRoot = packageItem.tarRoot || packageItem.root
-          let srcRoot = packageItem.srcRoot || packageItem.root
+          let tarRoot = packageItem.tarRoot || packageItem.root || ''
+          let srcRoot = packageItem.srcRoot || packageItem.root || ''
           let resource = path.join(context, srcRoot)
           if (subPackagesMap[resource] === tarRoot) return callback()
           subPackagesMap[resource] = tarRoot
@@ -242,10 +248,8 @@ module.exports = function (raw) {
       }
     }
 
-    const processPages = (pages, srcRoot, tarRoot, context, callback) => {
+    const processPages = (pages, srcRoot = '', tarRoot = '', context, callback) => {
       if (pages) {
-        srcRoot = srcRoot || ''
-        tarRoot = tarRoot || ''
         async.forEach(pages, (page, callback) => {
           let name = getName(path.join(tarRoot, page))
           name = toPosix(name)
@@ -367,22 +371,32 @@ module.exports = function (raw) {
       }
     }
 
-    async.parallel([
+    // 串行处理，先处理主包代码，再处理分包代码，为了正确识别出分包中定义的组件属于主包还是分包
+    async.series([
+      async.applyEach([
+        (callback) => {
+          processPages(json.pages, '', '', this.context, callback)
+        },
+        (callback) => {
+          processComponents(json.usingComponents, this.context, callback)
+        },
+        (callback) => {
+          processWorkers(json.workers, this.context, callback)
+        }
+      ]),
       (callback) => {
-        processPackages(json.packages, this.context, callback)
+        compilationMpx.processingSubPackages = true
+        callback()
       },
-      (callback) => {
-        processSubPackages(json.subPackages || json.subpackages, this.context, callback)
-      },
-      (callback) => {
-        processPages(json.pages, '', '', this.context, callback)
-      },
-      (callback) => {
-        processComponents(json.usingComponents, this.context, callback)
-      },
-      (callback) => {
-        processWorkers(json.workers, this.context, callback)
-      }
+      async.applyEach([
+        (callback) => {
+          // package中可能也包含主包代码，理论上需要将处理主包和分包的步骤分开，但是实际情况中很少出现问题
+          processPackages(json.packages, this.context, callback)
+        },
+        (callback) => {
+          processSubPackages(json.subPackages || json.subpackages, this.context, callback)
+        }
+      ])
     ], (err) => {
       if (err) return callback(err)
       delete json.packages
