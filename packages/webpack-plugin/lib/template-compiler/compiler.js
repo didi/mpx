@@ -847,7 +847,7 @@ function processBindEvent (el) {
       if (!result[modelEvent]) {
         result[modelEvent] = []
       }
-      result[modelEvent].push(`[${stringify('__model')},${stringify(modelValue)},${stringify('$event')}]`)
+      result[modelEvent].unshift(`[${stringify('__model')},${stringify(modelValue)},${stringify('$event')}]`)
       addAttrs(el, [
         {
           name: modelProp,
