@@ -1,4 +1,3 @@
-import { CREATED, MOUNTED } from '../../core/innerLifecycle'
 import { is } from '../../helper/env'
 
 export default function lifecycleMixin (type) {
@@ -7,10 +6,6 @@ export default function lifecycleMixin (type) {
     options = {
       data: {
         mpxLifecycleHack: true
-      },
-      [MOUNTED] () {
-        typeof this.$rawOptions.didMount === 'function' && this.$rawOptions.didMount.call(this)
-        typeof this.$rawOptions.onReady === 'function' && this.$rawOptions.onReady.call(this)
       }
     }
     if (type === 'page') {
@@ -21,18 +16,17 @@ export default function lifecycleMixin (type) {
       }
     }
   } else if (is('wx') || is('swan')) {
-    options = {
-      [CREATED] () {
-        typeof this.$rawOptions.created === 'function' && this.$rawOptions.created.call(this)
-      }
-    }
     if (type === 'page') {
-      options.data = {
-        mpxDepth: 0
+      options = {
+        data: {
+          mpxDepth: 0
+        }
       }
     } else {
-      options.properties = {
-        mpxDepth: Number
+      options = {
+        properties: {
+          mpxDepth: Number
+        }
       }
     }
   }

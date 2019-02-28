@@ -679,7 +679,7 @@ function getTempNode () {
   return createASTElement('temp-node', [])
 }
 
-function getAndRemoveAttr (el, name, removeFromMap) {
+function getAndRemoveAttr (el, name, removeFromMap = true) {
   let val
   if ((val = el.attrsMap[name]) != null) {
     let list = el.attrsList
@@ -847,7 +847,7 @@ function processBindEvent (el) {
       if (!result[modelEvent]) {
         result[modelEvent] = []
       }
-      result[modelEvent].push(`[${stringify('__model')},${stringify(modelValue)},${stringify('$event')}]`)
+      result[modelEvent].unshift(`[${stringify('__model')},${stringify(modelValue)},${stringify('$event')}]`)
       addAttrs(el, [
         {
           name: modelProp,
@@ -1093,36 +1093,52 @@ function injectWxs (meta, module, src, root) {
 const injectHelperWxsPath = normalize.lib('runtime/injectHelper.wxs')
 
 function processClass (el, meta, root) {
-  let type = 'class'
+  const type = 'class'
+  const targetType = el.tag.startsWith('th-') ? 'ex-' + type : type
   let dynamicClass = getAndRemoveAttr(el, config[mode].directive.dynamicClass)
+  let staticClass = getAndRemoveAttr(el, type)
   if (dynamicClass) {
-    let staticClassExp = parseMustache(getAndRemoveAttr(el, type)).result
+    let staticClassExp = parseMustache(staticClass).result
     let dynamicClassExp = parseMustache(dynamicClass).result
     addAttrs(el, [{
-      name: type,
+      name: targetType,
       value: `{{__injectHelper.transformClass(${staticClassExp}, ${dynamicClassExp})}}`
     }])
     injectWxs(meta, '__injectHelper', injectHelperWxsPath, root)
+  } else if (staticClass) {
+    addAttrs(el, [{
+      name: targetType,
+      value: staticClass
+    }])
   }
 }
 
 function processStyle (el, meta, root) {
-  let type = 'style'
+  const type = 'style'
+  const targetType = el.tag.startsWith('th-') ? 'ex-' + type : type
   let dynamicStyle = getAndRemoveAttr(el, config[mode].directive.dynamicStyle)
+  let staticStyle = getAndRemoveAttr(el, type)
   if (dynamicStyle) {
-    let staticStyleExp = parseMustache(getAndRemoveAttr(el, type)).result
+    let staticStyleExp = parseMustache(staticStyle).result
     let dynamicStyleExp = parseMustache(dynamicStyle).result
     addAttrs(el, [{
-      name: type,
+      name: targetType,
       value: `{{__injectHelper.transformStyle(${staticStyleExp}, ${dynamicStyleExp})}}`
     }])
     injectWxs(meta, '__injectHelper', injectHelperWxsPath, root)
+  } else if (staticStyle) {
+    addAttrs(el, [{
+      name: targetType,
+      value: staticStyle
+    }])
   }
 }
 
 function processElement (el, options, meta, root) {
   processIf(el)
   processFor(el)
+  processClass(el, meta, root)
+  processStyle(el, meta, root)
   processRef(el, options, meta)
   processBindEvent(el)
   processComponentDepth(el, options)
@@ -1132,8 +1148,6 @@ function processElement (el, options, meta, root) {
     processPageStatus(el, options)
   }
   processComponentIs(el, options)
-  processClass(el, meta, root)
-  processStyle(el, meta, root)
   processAttrs(el, meta)
 }
 

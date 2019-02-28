@@ -15,13 +15,14 @@ const HOOKS_MAP = {
 let CURRENT_HOOKS = []
 let curType
 
-export default function mergeOptions (options = {}, type) {
+export default function mergeOptions (options = {}, type, needProxyLifecycle = true) {
   if (!options.mixins || !options.mixins.length) return options
   // 微信小程序使用Component创建page
   curType = options.blend ? 'blend' : type
   CURRENT_HOOKS = HOOKS_MAP[curType]
   const newOptions = {}
   extractMixins(newOptions, options)
+  needProxyLifecycle && proxyHooks(newOptions)
   return transformHOOKS(newOptions)
 }
 
@@ -166,6 +167,21 @@ function composeHooks (target, includes) {
         return result
       })
     }
+  })
+}
+
+function proxyHooks (options) {
+  const lifecycleProxyMap = LifeCycle.lifecycleProxyMap
+  lifecycleProxyMap && Object.keys(lifecycleProxyMap).forEach(key => {
+    const newHooks = (options[key] || []).slice()
+    const proxyArr = lifecycleProxyMap[key]
+    proxyArr && proxyArr.forEach(lifecycle => {
+      if (CURRENT_HOOKS.indexOf(lifecycle) !== -1) {
+        newHooks.push.apply(newHooks, options[lifecycle])
+        delete options[lifecycle]
+      }
+    })
+    newHooks.length && (options[key] = newHooks)
   })
 }
 

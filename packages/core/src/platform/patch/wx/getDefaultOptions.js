@@ -86,15 +86,15 @@ function transformApiForProxy (context, currentInject) {
 
 function filterOptions (options) {
   const newOptions = {}
+  const ignoreProps = customeKey
   Object.keys(options).forEach(key => {
-    if (customeKey.indexOf(key) !== -1 || (key === 'data' && typeof options[key] === 'function') || key === 'created') {
-
+    if (ignoreProps.indexOf(key) !== -1 || (key === 'data' && typeof options[key] === 'function')) {
+      return
+    }
+    if (key === 'properties' || key === 'props') {
+      newOptions['properties'] = transformProperties(Object.assign({}, options['properties'], options['props']))
     } else {
-      if (key === 'properties' || key === 'props') {
-        newOptions['properties'] = transformProperties(Object.assign({}, options['properties'], options['props']))
-      } else {
-        newOptions[key] = options[key]
-      }
+      newOptions[key] = options[key]
     }
   })
   return newOptions
@@ -118,5 +118,5 @@ export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
       this.$mpxProxy.destroyed()
     }
   }]
-  return mergeOptions(options, type)
+  return mergeOptions(options, type, false)
 }
