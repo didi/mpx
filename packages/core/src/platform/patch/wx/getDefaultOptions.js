@@ -93,8 +93,6 @@ function filterOptions (options) {
     }
     if (key === 'properties' || key === 'props') {
       newOptions['properties'] = transformProperties(Object.assign({}, options['properties'], options['props']))
-    } else if (key === 'methods') {
-      newOptions[key] = filterOptions(options[key])
     } else {
       newOptions[key] = options[key]
     }
