@@ -187,7 +187,6 @@ function normalizeDynamicStyle (value) {
   return value
 }
 
-
 export default {
   transformClass: function (staticClass, dynamicClass) {
     if (typeof staticClass !== 'string') {
@@ -196,7 +195,6 @@ export default {
     return concat(staticClass, stringifyClass(dynamicClass))
   },
   transformStyle: function (staticStyle, dynamicStyle) {
-    console.log('123123123')
     if (typeof staticStyle !== 'string') {
       return console.log('Template attr style must be a string!')
     }
