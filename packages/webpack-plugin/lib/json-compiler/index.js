@@ -126,40 +126,42 @@ module.exports = function (raw) {
       let parsed = path.parse(result)
       let ext = parsed.ext
       result = stripExtension(result)
-      if (ext === '.mpx' || ext === '.js' || ext === '.th') {
-        let componentPath
-        let subPackageRoot = ''
-        if (compilationMpx.processingSubPackages) {
-          for (let src in subPackagesMap) {
-            if (result.startsWith(src)) {
-              subPackageRoot = subPackagesMap[src]
-              break
-            }
+      let componentPath
+      let subPackageRoot = ''
+      if (compilationMpx.processingSubPackages) {
+        for (let src in subPackagesMap) {
+          if (result.startsWith(src)) {
+            subPackageRoot = subPackagesMap[src]
+            break
           }
         }
-        if (ext === '.js') {
-          let root = info.descriptionFileRoot
-          if (info.descriptionFileData && info.descriptionFileData.miniprogram) {
+      }
+      if (ext === '.js') {
+        let root = info.descriptionFileRoot
+        let name = 'nativeComponent'
+        if (info.descriptionFileData) {
+          if (info.descriptionFileData.miniprogram) {
             root = path.join(root, info.descriptionFileData.miniprogram)
           }
-          let relativePath = path.relative(root, result)
-          componentPath = path.join(subPackageRoot, 'components', hash(root), relativePath)
-        } else {
-          let componentName = parsed.name
-          componentPath = path.join(subPackageRoot, 'components', componentName + hash(result), componentName)
+          if (info.descriptionFileData.name) {
+            name = info.descriptionFileData.name
+          }
         }
-        componentPath = toPosix(componentPath)
-        rewritePath(publicPath + componentPath)
-        // 如果之前已经创建了入口，直接return
-        if (componentsMap[result] === componentPath) return callback()
-        componentsMap[result] = componentPath
-        if (ext === '.js') {
-          result = nativeLoaderPath + '!' + result
-        }
-        addEntrySafely(result, componentPath, callback)
+        let relativePath = path.relative(root, result)
+        componentPath = path.join(subPackageRoot, 'components', name + hash(root), relativePath)
       } else {
-        callback(new Error('Component\'s extension must be .mpx, .js or .th'))
+        let componentName = parsed.name
+        componentPath = path.join(subPackageRoot, 'components', componentName + hash(result), componentName)
       }
+      componentPath = toPosix(componentPath)
+      rewritePath(publicPath + componentPath)
+      // 如果之前已经创建了入口，直接return
+      if (componentsMap[result] === componentPath) return callback()
+      componentsMap[result] = componentPath
+      if (ext === '.js') {
+        result = '!!' + nativeLoaderPath + '!' + result
+      }
+      addEntrySafely(result, componentPath, callback)
     })
   }
 
@@ -259,25 +261,29 @@ module.exports = function (raw) {
           async.waterfall([
             (callback) => {
               if (srcRoot) {
-                callback(null, path.join(context, srcRoot, page))
-              } else {
-                this.resolve(context, page, (err, result) => {
-                  if (err) return callback(err)
-                  result = stripExtension(result)
-                  callback(err, result)
-                })
+                context = path.join(context, srcRoot)
               }
+              this.resolve(context, page, (err, result) => {
+                callback(err, result)
+              })
             },
-            (resource, callback) => {
+            (result, callback) => {
+              const queryIndex = result.indexOf('?')
+              if (queryIndex >= 0) {
+                result = result.substr(0, queryIndex)
+              }
+              let parsed = path.parse(result)
+              let ext = parsed.ext
+              result = stripExtension(result)
               // 如果存在page命名冲突，return err
               for (let key in pagesMap) {
-                if (pagesMap[key] === name && key !== resource) {
-                  return callback(new Error(`Resources in ${resource} and ${key} are registered with same page path ${name}, which is not allowed!`))
+                if (pagesMap[key] === name && key !== result) {
+                  return callback(new Error(`Resources in ${result} and ${key} are registered with same page path ${name}, which is not allowed!`))
                 }
               }
               // 如果之前已经创建了入口，直接return
-              if (pagesMap[resource] === name) return callback()
-              pagesMap[resource] = name
+              if (pagesMap[result] === name) return callback()
+              pagesMap[result] = name
               if (tarRoot) {
                 if (!subPackagesCfg[tarRoot]) {
                   subPackagesCfg[tarRoot] = []
@@ -291,7 +297,10 @@ module.exports = function (raw) {
                   localPages.push(name)
                 }
               }
-              addEntrySafely(resource, name, callback)
+              if (ext === '.js') {
+                result = '!!' + nativeLoaderPath + '!' + result
+              }
+              addEntrySafely(result, name, callback)
             }
           ], callback)
         }, callback)

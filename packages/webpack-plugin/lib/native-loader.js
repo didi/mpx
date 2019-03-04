@@ -1,57 +1,91 @@
+const hash = require('hash-sum')
+const path = require('path')
 const normalize = require('./utils/normalize')
 const extractorPath = normalize.lib('extractor')
 const stripExtension = require('./utils/strip-extention')
 const jsonCompilerPath = normalize.lib('json-compiler/index')
 const loaderUtils = require('loader-utils')
 const config = require('./config')
+const createHelpers = require('./helpers')
 
 module.exports = function (content) {
   this.cacheable()
+
+  if (!this._compilation.__mpx__) {
+    return content
+  }
+
+  const loaderContext = this
   const isProduction = this.minimize || process.env.NODE_ENV === 'production'
+  const options = loaderUtils.getOptions(this) || {}
+
+  const filePath = this.resourcePath
+
+  const context = (
+    this.rootContext ||
+    (this.options && this.options.context) ||
+    process.cwd()
+  )
+  const shortFilePath = path.relative(context, filePath).replace(/^(\.\.[\\/])+/, '')
+  const moduleId = hash(isProduction ? (shortFilePath + '\n' + content) : shortFilePath)
+
+  const needCssSourceMap = (
+    !isProduction &&
+    this.sourceMap &&
+    options.cssSourceMap !== false
+  )
+
+  const hasScoped = false
+  const hasComment = false
+  const isNative = true
+
+  const usingComponents = []
+
   const mode = this._compilation.__mpx__.mode
-  let cssLoaderOptions = ''
-  if (isProduction) {
-    cssLoaderOptions += (cssLoaderOptions ? '&' : '?') + 'minimize'
-  }
+  const pagesMap = this._compilation.__mpx__.pagesMap
+  const componentsMap = this._compilation.__mpx__.componentsMap
+  const resource = stripExtension(this.resource)
+  const isApp = !pagesMap[resource] && !componentsMap[resource]
 
-  const defaultLoaders = {
-    template: `html-loader?attrs=audio:src image:src video:src cover-image:src ${config[mode].wxs.tag}:${config[mode].wxs.src}`,
-    styles: 'css-loader' + cssLoaderOptions,
-    json: jsonCompilerPath
-  }
 
-  const relativeFiles = Object.assign({}, config[mode].typeExtMap)
-  delete relativeFiles.script
+  const {
+    getRequireForSrc,
+    getNamedExportsForSrc
+  } = createHelpers(
+    loaderContext,
+    options,
+    moduleId,
+    isProduction,
+    hasScoped,
+    hasComment,
+    usingComponents,
+    needCssSourceMap,
+    mode,
+    isNative
+  )
 
-  const baseRequest = stripExtension(this.resourcePath)
+  const typeExtMap = config[mode].typeExtMap
 
-  function getExtractorString (type, index) {
-    return (
-      extractorPath +
-      '?type=' +
-      (type === 'script' || type === 'template' || type === 'styles' || type === 'json'
-        ? type
-        : 'customBlocks') +
-      '&index=' + index +
-      '!'
-    )
-  }
-
-  function getRelativeRequire (type) {
-    let requestString = baseRequest + relativeFiles[type]
+  function getRequire (type) {
+    let src = resource + typeExtMap[type]
+    if (type === 'template' && isApp) {
+      return ''
+    }
     if (type === 'json') {
-      requestString = requestString + '?__component'
+      src = src + '?__component'
     }
-    if (defaultLoaders[type]) {
-      requestString = defaultLoaders[type] + '!' + requestString
+    if (type === 'script') {
+      return getNamedExportsForSrc(type, { src })
+    } else {
+      return getRequireForSrc(type, { src })
     }
-    requestString = '!!' + getExtractorString(type, 0) + '!' + requestString
-    return `require(${loaderUtils.stringifyRequest(this, requestString)})\n`
   }
 
-  for (let type in relativeFiles) {
-    content = getRelativeRequire(type) + '\n' + content
+  let output = ''
+
+  for (let type in typeExtMap) {
+    output += `/* ${type} */\n${getRequire(type)}\n\n`
   }
 
-  return content
+  return output
 }
