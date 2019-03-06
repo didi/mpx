@@ -73,8 +73,8 @@ export default class MPXProxy {
           // 用于处理refs等前置工作
           this.callUserHook(BEFOREMOUNT)
           this.callUserHook(MOUNTED)
-          this.mounting = false
         }
+        this.mounting = false
       })
     }
   }
