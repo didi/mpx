@@ -37,7 +37,8 @@ export default class MPXProxy {
     }
     this.uid = uid++
     this.options = options
-    this.state = 'initial' // initial -> created -> mounted -> destroyed
+    // initial -> created -> [beforeMount -> mounted -> updated] -> destroyed
+    this.state = 'initial'
     this.watchers = [] // 保存所有观察者
     this.renderReaction = null
     this.updatedCallbacks = [] // 保存设置的更新回调
@@ -57,25 +58,32 @@ export default class MPXProxy {
   }
 
   beforeMount () {
+    this.state = BEFOREMOUNT
     mountedQueue.enter()
   }
 
   mounted () {
-    if (this.state === CREATED) {
+    if (!this.mounting) {
+      // 等待mounted
+      this.mounting = true
       mountedQueue.exit(this.depth, this.uid, () => {
-        this.state = MOUNTED
-        // 用于处理refs等前置工作
-        this.callUserHook(BEFOREMOUNT)
-        this.callUserHook(MOUNTED)
+        // 由于异步，因此需要检查当前状态是否符合预期
+        if (this.state === BEFOREMOUNT) {
+          this.state = MOUNTED
+          // 用于处理refs等前置工作
+          this.callUserHook(BEFOREMOUNT)
+          this.callUserHook(MOUNTED)
+        }
+        this.mounting = false
       })
     }
   }
 
   updated (fromCallback) {
-    if (this.state === CREATED && fromCallback) {
+    if (this.state === BEFOREMOUNT && fromCallback) {
       // 首次setData
       this.mounted()
-    } else if (!this.updating && this.state === MOUNTED) {
+    } else if (this.state === MOUNTED && !this.updating) {
       this.updating = true
       this.nextTick(() => {
         // 由于异步，需要确认 this.state
