@@ -37,7 +37,7 @@ export const lifecycleProxyMap = {
   [MOUNTED]: ['ready', 'onReady']
 }
 
-export {
+export const LIFECYCLE = {
   APP_HOOKS,
   PAGE_HOOKS,
   COMPONENT_HOOKS

@@ -10,8 +10,6 @@ export default function createFactory (type) {
     if (is('wx') || is('swan')) {
       constructor = Component
       getDefaultOptions = getWXDefaultOptions
-      // 微信小程序使用组件创建页面，走混合merge
-      type === 'page' && (options.blend = true)
     } else if (is('ali')) {
       getDefaultOptions = getALIDefaultOptions
     } else {
