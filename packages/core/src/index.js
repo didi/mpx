@@ -4,7 +4,7 @@ import createStore from './core/createStore'
 import { injectMixins } from './core/injectMixins'
 import { watch } from './core/watcher'
 import { extend } from './helper/utils'
-import { setTransformRule } from './core/transformer/transformer'
+import { setConvertRule } from './convertor/convertor'
 
 export function createApp (config, ...rest) {
   const mpx = new EXPORT_MPX()
@@ -81,7 +81,7 @@ const APIs = {
   set,
   get,
   remove,
-  setTransformRule
+  setConvertRule
 }
 
 // 实例属性
