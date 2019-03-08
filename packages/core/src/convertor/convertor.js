@@ -2,6 +2,7 @@ import * as wxLifecycle from '../platform/patch/wx/lifecycle'
 import * as aliLifecycle from '../platform/patch/ali/lifecycle'
 import { INNER_LIFECYCLES } from '../core/innerLifecycle'
 import { is } from '../helper/env'
+import { type } from '../helper/utils'
 
 function mergeLifecycle (lifecycle) {
   const pageHooks = (lifecycle.PAGE_HOOKS || []).concat(INNER_LIFECYCLES)
@@ -50,7 +51,7 @@ export function setConvertRule (rule) {
   }
   Object.keys(convertRule).forEach(key => {
     if (rule.hasOwnProperty(key)) {
-      if (typeof convertRule[key] === 'object') {
+      if (type(convertRule[key]) === 'Object') {
         Object.assign(convertRule[key], rule[key])
       } else {
         convertRule[key] = rule[key]
