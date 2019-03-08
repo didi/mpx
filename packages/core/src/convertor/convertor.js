@@ -29,12 +29,14 @@ const mode = is('wx') || is('swan') ? 'blend' : ''
  * lifecycleProxyMap [object] 代理规则
  * mode [string] 生命周期合并模式, 目前仅支持[blend]
  * support [boolean]当前平台是否支持当前mode
+ * convert [function] 自定义转换函数, 接收一个options
  */
 export const convertRule = {
   lifecycle: mergeLifecycle(lifecycleInfo.LIFECYCLE),
   lifecycleProxyMap: lifecycleInfo.lifecycleProxyMap,
   mode,
-  support: !!mode
+  support: !!mode,
+  convert: null
 }
 
 // 外部控制规则
