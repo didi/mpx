@@ -1,4 +1,5 @@
-import promisifyList from './promisify'
-export default function install (proxyMPX) {
-  Object.assign(proxyMPX, promisifyList)
+import getPromisifyList from './promisify'
+
+export default function install (proxyMPX, whiteList) {
+  Object.assign(proxyMPX, getPromisifyList(whiteList))
 }
