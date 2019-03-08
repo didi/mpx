@@ -416,12 +416,14 @@ module.exports = function (raw) {
         compilationMpx.processingSubPackages = true
         callback()
       },
-      async.applyEach([
-        ...processSubPackagesQueue,
-        (callback) => {
-          processSubPackages(json.subPackages || json.subpackages, this.context, callback)
-        }
-      ])
+      (callback) => {
+        async.parallel([
+          ...processSubPackagesQueue,
+          (callback) => {
+            processSubPackages(json.subPackages || json.subpackages, this.context, callback)
+          }
+        ], callback)
+      }
     ], (err) => {
       if (err) return callback(err)
       delete json.packages
