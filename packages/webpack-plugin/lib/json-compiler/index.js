@@ -167,9 +167,9 @@ module.exports = function (raw) {
 
   if (isApp) {
     // app.json
-
     const subPackagesCfg = {}
     const localPages = []
+    const processSubPackagesQueue = []
     // 确保首页不变
     const firstPage = json.pages && json.pages[0]
 
@@ -212,8 +212,11 @@ module.exports = function (raw) {
               } catch (err) {
                 return callback(err)
               }
+
+              const processSelfQueue = []
+              const context = path.dirname(result)
+
               if (content.pages) {
-                let context = path.dirname(result)
                 if (queryObj.root && typeof queryObj.root === 'string') {
                   let subPackages = [
                     {
@@ -221,12 +224,25 @@ module.exports = function (raw) {
                       pages: content.pages
                     }
                   ]
-                  processSubPackages(subPackages, context, callback)
+                  processSubPackagesQueue.push((callback) => {
+                    processSubPackages(subPackages, context, callback)
+                  })
                 } else {
-                  processPages(content.pages, '', '', context, callback)
+                  processSelfQueue.push((callback) => {
+                    processPages(content.pages, '', '', context, callback)
+                  })
                 }
               }
-              // 目前只支持单层解析packages，为了兼容subPackages
+              if (content.packages) {
+                processSelfQueue.push((callback) => {
+                  processPackages(content.packages, context, callback)
+                })
+              }
+              if (processSelfQueue.length) {
+                async.parallel(processSelfQueue, callback)
+              } else {
+                callback()
+              }
             }
           ], callback)
         }, callback)
@@ -391,17 +407,17 @@ module.exports = function (raw) {
         },
         (callback) => {
           processWorkers(json.workers, this.context, callback)
-        }
+        },
+        (callback) => {
+          processPackages(json.packages, this.context, callback)
+        },
       ]),
       (callback) => {
         compilationMpx.processingSubPackages = true
         callback()
       },
       async.applyEach([
-        (callback) => {
-          // package中可能也包含主包代码，理论上需要将处理主包和分包的步骤分开，但是实际情况中很少出现问题
-          processPackages(json.packages, this.context, callback)
-        },
+        ...processSubPackagesQueue,
         (callback) => {
           processSubPackages(json.subPackages || json.subpackages, this.context, callback)
         }
