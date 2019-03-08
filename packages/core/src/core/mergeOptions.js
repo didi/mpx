@@ -12,6 +12,8 @@ export default function mergeOptions (options = {}, type, needProxyLifecycle = t
   const newOptions = {}
   extractMixins(newOptions, options)
   needProxyLifecycle && proxyHooks(newOptions)
+  // 自定义补充转换函数
+  typeof convertRule.convert === 'function' && convertRule.convert(newOptions)
   return transformHOOKS(newOptions)
 }
 
