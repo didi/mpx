@@ -36,6 +36,7 @@ export default class MPXProxy {
       return
     }
     this.uid = uid++
+    this.name = options.name || ''
     this.options = options
     // initial -> created -> [beforeMount -> mounted -> updated] -> destroyed
     this.state = 'initial'
