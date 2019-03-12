@@ -827,7 +827,10 @@ function processBindEvent (el) {
           result[type] = []
         }
         result[type].push(parsed.result)
-        modifyAttr(el, attr.name, '__invoke')
+        const shouldNotProxyEvent = config[mode].eventProxyIgnoreTagArr && config[mode].eventProxyIgnoreTagArr.includes(el.tag)
+        if (!shouldNotProxyEvent) {
+          modifyAttr(el, attr.name, '__invoke')
+        }
       }
     }
   })
