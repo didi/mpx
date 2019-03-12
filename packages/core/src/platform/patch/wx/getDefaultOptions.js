@@ -44,7 +44,7 @@ function transformApiForProxy (context, currentInject) {
           console.error(`【setData】is invalid when using mpx to create pages or components !! instead，you can use this way【this.xx = 1】to modify data directly`)
         }
       },
-      configurable: false
+      configurable: true
     },
     __getInitialData: {
       get () {
