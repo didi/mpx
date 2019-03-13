@@ -120,7 +120,8 @@ module.exports = {
       dynamicClass: 'a:class',
       dynamicStyle: 'a:style',
       ref: 'a:ref'
-    }
+    },
+    eventProxyIgnoreTagArr: ['map']
   },
   swan: {
     typeExtMap: {

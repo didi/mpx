@@ -827,7 +827,10 @@ function processBindEvent (el) {
           result[type] = []
         }
         result[type].push(parsed.result)
-        modifyAttr(el, attr.name, '__invoke')
+        const shouldNotProxyEvent = config[mode].eventProxyIgnoreTagArr && config[mode].eventProxyIgnoreTagArr.includes(el.tag)
+        if (!shouldNotProxyEvent) {
+          modifyAttr(el, attr.name, '__invoke')
+        }
       }
     }
   })
@@ -863,7 +866,7 @@ function processBindEvent (el) {
 
   if (hasBind || modelValue) {
     addAttrs(el, [{
-      name: 'data-event-configs',
+      name: 'data-eventconfigs',
       value: `{{${config[mode].event.shallowStringify(result)}}}`
     }])
   }
