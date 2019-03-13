@@ -3,6 +3,7 @@ const he = require('he')
 const config = require('../config')
 const normalize = require('../utils/normalize')
 const isValidIdentifierStr = require('../utils/is-valid-identifier-str')
+const isEmptyObject = require('../utils/is-empty-object')
 
 /**
  * Make a map and return a function for checking if a key
@@ -801,42 +802,32 @@ function parseFuncStr2 (str) {
     args = args.replace('$event', stringify('$event'))
     return {
       args,
-      result: `[${funcName + args}]`
+      expStr: `[${funcName + args}]`
     }
   }
 }
 
 function processBindEvent (el) {
-  let bindRE = config[mode].event.bindReg
-  let result = {}
-  let hasBind = false
+  const eventConfigMap = {}
   el.attrsList.forEach(function (attr) {
-    let match = bindRE.exec(attr.name)
-    if (match) {
-      let type = config[mode].event.getType(match)
-      let parsed = parseFuncStr2(attr.value)
-      if (parsed) {
-        if (!isValidIdentifierStr(type)) {
-          if (parsed.args) {
-            warn$1(`EventName ${type} which need inline args processing must be a valid identifier!`)
+    let parsedEvent = config[mode].event.parseEvent(attr)
+
+    if (parsedEvent) {
+      let type = parsedEvent.eventName
+      let parsedFunc = parseFuncStr2(attr.value)
+      if (parsedFunc) {
+        if (!eventConfigMap[type]) {
+          eventConfigMap[type] = {
+            rawName: attr.name,
+            configs: []
           }
-          return
         }
-        hasBind = true
-        if (!result[type]) {
-          result[type] = []
-        }
-        result[type].push(parsed.result)
-        const shouldNotProxyEvent = config[mode].eventProxyIgnoreTagArr && config[mode].eventProxyIgnoreTagArr.includes(el.tag)
-        if (!shouldNotProxyEvent) {
-          modifyAttr(el, attr.name, '__invoke')
-        }
+        eventConfigMap[type].configs.push(parsedFunc)
       }
     }
   })
 
   let modelExp = getAndRemoveAttr(el, config[mode].directive.model)
-  let modelValue
   if (modelExp) {
     let match = tagRE.exec(modelExp)
     if (match) {
@@ -846,28 +837,61 @@ function processBindEvent (el) {
         warn$1(`EventName ${modelEvent} which is used in ${config[mode].directive.model} must be a valid identifier!`)
         return
       }
-      modelValue = match[1].trim()
-      if (!result[modelEvent]) {
-        result[modelEvent] = []
+      let modelValue = match[1].trim()
+      if (!eventConfigMap[modelEvent]) {
+        eventConfigMap[modelEvent] = {
+          configs: []
+        }
       }
-      result[modelEvent].unshift(`[${stringify('__model')},${stringify(modelValue)},${stringify('$event')}]`)
+      eventConfigMap[modelEvent].configs.unshift({
+        args: `,${stringify(modelValue)},${stringify('$event')}`,
+        expStr: `[${stringify('__model')},${stringify(modelValue)},${stringify('$event')}]`
+      })
       addAttrs(el, [
         {
           name: modelProp,
           value: modelExp
-        },
-        {
-          name: config[mode].event.getBind(modelEvent),
-          value: '__invoke'
         }
       ])
     }
   }
 
-  if (hasBind || modelValue) {
+  for (let type in eventConfigMap) {
+    let needBind = false
+    let { configs, rawName } = eventConfigMap[type]
+    if (configs.length > 1) {
+      needBind = true
+    } else if (configs.length === 1) {
+      needBind = !!value[0].args
+    }
+    // 排除特殊情况
+    if (needBind && !isValidIdentifierStr(type)) {
+      warn$1(`EventName ${type} which need be framework proxy processed must be a valid identifier!`)
+      needBind = false
+    }
+    if (needBind) {
+      if (rawName) {
+        modifyAttr(el, rawName, '__invoke')
+      } else {
+        addAttrs(el, [
+          {
+            name: config[mode].event.getEvent(type),
+            value: '__invoke'
+          }
+        ])
+      }
+      eventConfigMap[type] = configs.map((item) => {
+        return item.expStr
+      })
+    } else {
+      delete eventConfigMap[type]
+    }
+  }
+
+  if (!isEmptyObject(eventConfigMap)) {
     addAttrs(el, [{
       name: 'data-eventconfigs',
-      value: `{{${config[mode].event.shallowStringify(result)}}}`
+      value: `{{${config[mode].event.shallowStringify(eventConfigMap)}}}`
     }])
   }
 }
