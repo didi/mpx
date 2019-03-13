@@ -410,7 +410,7 @@ module.exports = function (raw) {
         },
         (callback) => {
           processPackages(json.packages, this.context, callback)
-        },
+        }
       ]),
       (callback) => {
         compilationMpx.processingSubPackages = true

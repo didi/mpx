@@ -86,7 +86,7 @@ function resolveLoaders (options, moduleId, isProduction, hasScoped, hasComment,
     js: hasBabel ? 'babel-loader' : '',
     json: jsonCompilerPath
   }
-  
+
   function getCSSLoaderString (lang) {
     const langLoader = lang ? ensureBang(ensureLoader(lang)) : ''
     return 'css-loader' + cssLoaderOptions + '!' + langLoader
