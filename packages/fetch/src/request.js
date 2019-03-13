@@ -44,11 +44,21 @@ export default function request (config) {
     if (typeof wx !== 'undefined' && typeof wx.request === 'function') {
       // weixin
       requestTask = wx.request(config)
-    } else if (typeof my !== 'undefined' && typeof my.httpRequest === 'function') {
-      // alipay
-      requestTask = my.httpRequest(config)
-    } else {
-      console.error('need provide a adapter for request')
+      return
     }
+    if (typeof my !== 'undefined') {
+      // alipay
+      const request = my.httpRequest || my.request
+      if (typeof request === 'function') {
+        requestTask = request.call(my, config)
+        return
+      }
+    }
+    if (typeof swan !== 'undefined' && typeof swan.request === 'function') {
+      // baidu
+      requestTask = swan.request(config)
+      return
+    }
+    console.log('no available request adapter for current platform')
   })
 }

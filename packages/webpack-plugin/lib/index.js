@@ -44,6 +44,8 @@ class MpxWebpackPlugin {
         compilation.__mpx__ = {
           pagesMap: {},
           componentsMap: {},
+          subPackagesMap: {},
+          processingSubPackages: false,
           wxsMap: {},
           mode: this.options.mode,
           extract: (content, type, resourcePath, index) => {
@@ -136,42 +138,76 @@ class MpxWebpackPlugin {
 
       const processedChunk = new Set()
 
-      compilation.chunkGroups.forEach((chunkGroup) => {
-        let runtimeChunk = chunkGroup.runtimeChunk
-        if (!runtimeChunk || !runtimeChunk.files[0]) {
+      function processChunk (chunk, isRuntime, relativeChunks) {
+        if (!chunk.files[0] || processedChunk.has(chunk)) {
           return
         }
 
-        chunkGroup.chunks.forEach((chunk) => {
-          if (!chunk.files[0] || processedChunk.has(chunk)) {
-            return
+        let originalSource = compilation.assets[chunk.files[0]]
+        const source = new ConcatSource()
+        source.add('var window = window || {};\n\n')
+
+        relativeChunks.forEach((relativeChunk, index) => {
+          let chunkPath = getTargetFile(chunk.files[0])
+          let relativePath = getTargetFile(relativeChunk.files[0])
+          relativePath = path.relative(path.dirname(chunkPath), relativePath)
+          if (!/^\./.test(relativePath)) {
+            relativePath = `.${path.sep}${relativePath}`
           }
-          let originalSource = compilation.assets[chunk.files[0]]
-          const source = new ConcatSource()
-          if (chunk === runtimeChunk) {
-            source.add('/******/ var window = window || {};\n')
-            source.add('/******/ \n')
-            source.add(originalSource)
-            source.add('\n/******/ \n')
-            source.add(`module.exports = window[${JSON.stringify(jsonpFunction)}];`)
-          } else {
-            let selfPath = getTargetFile(chunk.files[0])
-            let runtimePath = getTargetFile(runtimeChunk.files[0])
-            let relativePath = path.relative(path.dirname(selfPath), runtimePath)
-            if (!/^\./.test(relativePath)) {
-              relativePath = `.${path.sep}${relativePath}`
-            }
-            relativePath = toPoisx(relativePath)
-            source.add('var window = window || {};\n')
+          relativePath = toPoisx(relativePath)
+          if (index === 0) {
             source.add(`window[${JSON.stringify(jsonpFunction)}] = require("${relativePath}");\n`)
-            if (compilation.__mpx__.pluginMain === chunk.name) {
-              source.add('module.exports =\n')
-            }
-            source.add(originalSource)
+          } else {
+            source.add(`require("${relativePath}");\n`)
           }
-          compilation.assets[chunk.files[0]] = source
-          processedChunk.add(chunk)
         })
+
+        if (isRuntime) {
+          source.add(originalSource)
+          source.add(`\nmodule.exports = window[${JSON.stringify(jsonpFunction)}];\n`)
+        } else {
+          if (compilation.__mpx__.pluginMain === chunk.name) {
+            source.add('module.exports =\n')
+          }
+          source.add(originalSource)
+        }
+
+        compilation.assets[chunk.files[0]] = source
+        processedChunk.add(chunk)
+      }
+
+      compilation.chunkGroups.forEach((chunkGroup) => {
+        if (!chunkGroup.isInitial()) {
+          return
+        }
+
+        let runtimeChunk, entryChunk
+        let middleChunks = []
+
+        let chunksLength = chunkGroup.chunks.length
+
+        chunkGroup.chunks.forEach((chunk, index) => {
+          if (index === 0) {
+            runtimeChunk = chunk
+          } else if (index === chunksLength - 1) {
+            entryChunk = chunk
+          } else {
+            middleChunks.push(chunk)
+          }
+        })
+
+        if (runtimeChunk) {
+          processChunk(runtimeChunk, true, [])
+          if (middleChunks.length) {
+            middleChunks.forEach((middleChunk) => {
+              processChunk(middleChunk, false, [runtimeChunk])
+            })
+          }
+          if (entryChunk) {
+            middleChunks.unshift(runtimeChunk)
+            processChunk(entryChunk, false, middleChunks)
+          }
+        }
       })
       callback()
     })

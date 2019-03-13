@@ -43,6 +43,7 @@ module.exports = function (content) {
   const hasScoped = parts.styles.some(({ scoped }) => scoped)
   const templateAttrs = parts.template && parts.template.attrs && parts.template.attrs
   const hasComment = templateAttrs && templateAttrs.comments
+  const isNative = false
 
   let usingComponents = []
   try {
@@ -62,13 +63,13 @@ module.exports = function (content) {
     loaderContext,
     options,
     moduleId,
-    parts,
     isProduction,
     hasScoped,
     hasComment,
     usingComponents,
     needCssSourceMap,
-    mode
+    mode,
+    isNative
   )
 
   // 注入模块id

@@ -60,7 +60,7 @@ function ensureBang (loader) {
   }
 }
 
-function resolveLoaders (options, moduleId, isProduction, hasScoped, hasComment, usingComponents, needCssSourceMap, mode) {
+function resolveLoaders (options, moduleId, isProduction, hasScoped, hasComment, usingComponents, needCssSourceMap, mode, isNative) {
   let cssLoaderOptions = ''
   if (needCssSourceMap) {
     cssLoaderOptions += '?sourceMap'
@@ -73,13 +73,15 @@ function resolveLoaders (options, moduleId, isProduction, hasScoped, hasComment,
     '?' +
     JSON.stringify({
       usingComponents,
+      hasScoped,
       hasComment,
+      isNative,
       moduleId,
       compileBindEvent: options.compileBindEvent
     })
 
   const defaultLoaders = {
-    html: `html-loader?root=/&attrs=audio:src image:src video:src cover-image:src ${config[mode].wxs.tag}:${config[mode].wxs.src}` + '!' + templateCompilerPath + templateCompilerOptions,
+    html: `html-loader?root=/&attrs=audio:src image:src video:src cover-image:src ${config[mode].wxs.tag}:${config[mode].wxs.src}!${templateCompilerPath + templateCompilerOptions}`,
     css: getCSSLoaderString(),
     js: hasBabel ? 'babel-loader' : '',
     json: jsonCompilerPath
@@ -99,7 +101,7 @@ function resolveLoaders (options, moduleId, isProduction, hasScoped, hasComment,
   }
 }
 
-module.exports = function createHelpers (loaderContext, options, moduleId, parts, isProduction, hasScoped, hasComment, usingComponents, needCssSourceMap, mode) {
+module.exports = function createHelpers (loaderContext, options, moduleId, isProduction, hasScoped, hasComment, usingComponents, needCssSourceMap, mode, isNative) {
   const rawRequest = getRawRequest(loaderContext, options.excludedPreLoaders)
   const {
     defaultLoaders,
@@ -115,7 +117,8 @@ module.exports = function createHelpers (loaderContext, options, moduleId, parts
     hasComment,
     usingComponents,
     needCssSourceMap,
-    mode
+    mode,
+    isNative
   )
 
   function getRequire (type, part, index, scoped) {
@@ -241,7 +244,7 @@ module.exports = function createHelpers (loaderContext, options, moduleId, parts
   }
 
   function getRawLoaderString (type, part, index, scoped) {
-    let lang = (part.lang && part.lang !== 'wxml') ? part.lang : defaultLang[type]
+    let lang = (part.lang && part.lang !== 'wxml' && part.lang !== 'axml' && part.lang !== 'swan') ? part.lang : defaultLang[type]
 
     let styleCompiler = ''
     if (type === 'styles') {
@@ -309,6 +312,7 @@ module.exports = function createHelpers (loaderContext, options, moduleId, parts
           loader = addCssModulesToLoader(defaultLoaders.css, part, index)
           return loader + '!' + styleCompiler + ensureBang(ensureLoader(lang))
         case 'script':
+        case 'json':
           return ensureBang(ensureLoader(lang))
         default:
           loader = loaders[type]

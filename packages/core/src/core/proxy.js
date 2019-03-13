@@ -36,6 +36,7 @@ export default class MPXProxy {
       return
     }
     this.uid = uid++
+    this.name = options.name || ''
     this.options = options
     // initial -> created -> [beforeMount -> mounted -> updated] -> destroyed
     this.state = 'initial'
@@ -97,6 +98,10 @@ export default class MPXProxy {
   }
 
   destroyed () {
+    if (this.state === BEFOREMOUNT) {
+      // 如果销毁时还未mounted回调，则执行清栈操作
+      mountedQueue.exit(this.depth, this.uid)
+    }
     this.clearWatchers()
     this.state = DESTROYED
     this.callUserHook(DESTROYED)

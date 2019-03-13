@@ -356,9 +356,9 @@ export function diffAndCloneA (a, b) {
             setDiff(true)
           }
           clone = []
-          while (length--) {
-            curPath.push(length)
-            clone[length] = deepDiffAndCloneA(a[length], sameClass ? b[length] : undefined, currentDiff)
+          for (let i = 0; i < length; i++) {
+            curPath.push(i)
+            clone[i] = deepDiffAndCloneA(a[i], sameClass ? b[i] : undefined, currentDiff)
             curPath.pop()
           }
           break
@@ -370,8 +370,8 @@ export function diffAndCloneA (a, b) {
             setDiff(true)
           }
           clone = {}
-          while (length--) {
-            key = keys[length]
+          for (let i = 0; i < length; i++) {
+            key = keys[i]
             curPath.push(key)
             clone[key] = deepDiffAndCloneA(a[key], sameClass ? b[key] : undefined, currentDiff)
             curPath.pop()

@@ -1,16 +1,5 @@
 import { type, merge, extend } from '../helper/utils'
-import LifeCycle from '../platform/lifecycle'
-import { INNER_LIFECYCLES } from './innerLifecycle'
-
-const PAGE_HOOKS = LifeCycle.PAGE_HOOKS.concat(INNER_LIFECYCLES)
-const COMPONENT_HOOKS = LifeCycle.COMPONENT_HOOKS.concat(INNER_LIFECYCLES)
-
-const HOOKS_MAP = {
-  'app': LifeCycle.APP_HOOKS,
-  'page': PAGE_HOOKS,
-  'component': COMPONENT_HOOKS,
-  'blend': PAGE_HOOKS.concat(COMPONENT_HOOKS)
-}
+import { convertRule } from '../convertor/convertor'
 
 let CURRENT_HOOKS = []
 let curType
@@ -18,11 +7,13 @@ let curType
 export default function mergeOptions (options = {}, type, needProxyLifecycle = true) {
   if (!options.mixins || !options.mixins.length) return options
   // 微信小程序使用Component创建page
-  curType = options.blend ? 'blend' : type
-  CURRENT_HOOKS = HOOKS_MAP[curType]
+  curType = convertRule.mode === 'blend' ? 'blend' : type
+  CURRENT_HOOKS = convertRule.lifecycle[curType]
   const newOptions = {}
   extractMixins(newOptions, options)
   needProxyLifecycle && proxyHooks(newOptions)
+  // 自定义补充转换函数
+  typeof convertRule.convert === 'function' && convertRule.convert(newOptions)
   return transformHOOKS(newOptions)
 }
 
@@ -51,6 +42,7 @@ function extractPageHooks (options) {
   if (curType === 'blend') {
     const newOptions = extend({}, options)
     const methods = newOptions.methods
+    const PAGE_HOOKS = convertRule.lifecycle.page
     methods && Object.keys(methods).forEach(key => {
       if (PAGE_HOOKS.indexOf(key) > -1) {
         if (newOptions[key]) {
@@ -171,7 +163,7 @@ function composeHooks (target, includes) {
 }
 
 function proxyHooks (options) {
-  const lifecycleProxyMap = LifeCycle.lifecycleProxyMap
+  const lifecycleProxyMap = convertRule.lifecycleProxyMap
   lifecycleProxyMap && Object.keys(lifecycleProxyMap).forEach(key => {
     const newHooks = (options[key] || []).slice()
     const proxyArr = lifecycleProxyMap[key]
@@ -188,7 +180,8 @@ function proxyHooks (options) {
 function transformHOOKS (options) {
   composeHooks(options, CURRENT_HOOKS)
   options.pageLifetimes && composeHooks(options.pageLifetimes)
-  if (curType === 'blend') {
+  if (curType === 'blend' && convertRule.support) {
+    const COMPONENT_HOOKS = convertRule.lifecycle.component
     for (const key in options) {
       // 使用Component创建page实例，页面专属生命周期&自定义方法需写在methods内部
       if (typeof options[key] === 'function' && key !== 'data' && COMPONENT_HOOKS.indexOf(key) === -1) {

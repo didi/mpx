@@ -4,6 +4,7 @@ import createStore from './core/createStore'
 import { injectMixins } from './core/injectMixins'
 import { watch } from './core/watcher'
 import { extend } from './helper/utils'
+import { setConvertRule } from './convertor/convertor'
 
 export function createApp (config, ...rest) {
   const mpx = new EXPORT_MPX()
@@ -32,7 +33,7 @@ function extendProps (target, proxyObj, rawProps, option) {
         ? option.prefix + '_' + key
         : key + '_' + option.postfix
       target[transformKey] = proxyObj[key]
-    } else if (!(key in target)) {
+    } else if (!target.hasOwnProperty(key)) {
       target[key] = proxyObj[key]
     } else {
       console.error(new Error(`the new property: "${key}" from installing plugin conflicts with already exists，please use prefix/postfix, such as "use('plugin', {prefix: 'mm'})"`))
@@ -79,7 +80,8 @@ const APIs = {
   use,
   set,
   get,
-  remove
+  remove,
+  setConvertRule
 }
 
 // 实例属性

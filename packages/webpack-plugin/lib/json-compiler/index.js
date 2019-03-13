@@ -23,6 +23,8 @@ module.exports = function (raw) {
 
   const pagesMap = this._compilation.__mpx__.pagesMap
   const componentsMap = this._compilation.__mpx__.componentsMap
+  const subPackagesMap = this._compilation.__mpx__.subPackagesMap
+  const compilationMpx = this._compilation.__mpx__
   const mode = this._compilation.__mpx__.mode
   const resource = stripExtension(this.resource)
   const isApp = !(pagesMap[resource] || componentsMap[resource])
@@ -117,42 +119,57 @@ module.exports = function (raw) {
     }
     this.resolve(context, component, (err, result, info) => {
       if (err) return callback(err)
+      const queryIndex = result.indexOf('?')
+      if (queryIndex >= 0) {
+        result = result.substr(0, queryIndex)
+      }
       let parsed = path.parse(result)
       let ext = parsed.ext
       result = stripExtension(result)
-      if (ext === '.mpx' || ext === '.js' || ext === '.th') {
-        let componentPath
-        if (ext === '.js') {
-          let root = info.descriptionFileRoot
-          if (info.descriptionFileData && info.descriptionFileData.miniprogram) {
+      let componentPath
+      let subPackageRoot = ''
+      if (compilationMpx.processingSubPackages) {
+        for (let src in subPackagesMap) {
+          if (result.startsWith(src)) {
+            subPackageRoot = subPackagesMap[src]
+            break
+          }
+        }
+      }
+      if (ext === '.js') {
+        let root = info.descriptionFileRoot
+        let name = 'nativeComponent'
+        if (info.descriptionFileData) {
+          if (info.descriptionFileData.miniprogram) {
             root = path.join(root, info.descriptionFileData.miniprogram)
           }
-          let relativePath = path.relative(root, result)
-          componentPath = path.join('components', hash(root), relativePath)
-        } else {
-          let componentName = parsed.name
-          componentPath = path.join('components', componentName + hash(result), componentName)
+          if (info.descriptionFileData.name) {
+            name = info.descriptionFileData.name
+          }
         }
-        componentPath = toPosix(componentPath)
-        rewritePath(publicPath + componentPath)
-        // 如果之前已经创建了入口，直接return
-        if (componentsMap[result] === componentPath) return callback()
-        componentsMap[result] = componentPath
-        if (ext === '.js') {
-          result = nativeLoaderPath + '!' + result
-        }
-        addEntrySafely(result, componentPath, callback)
+        let relativePath = path.relative(root, result)
+        componentPath = path.join(subPackageRoot, 'components', name + hash(root), relativePath)
       } else {
-        callback(new Error('Component\'s extension must be .mpx, .js or .th'))
+        let componentName = parsed.name
+        componentPath = path.join(subPackageRoot, 'components', componentName + hash(result), componentName)
       }
+      componentPath = toPosix(componentPath)
+      rewritePath(publicPath + componentPath)
+      // 如果之前已经创建了入口，直接return
+      if (componentsMap[result] === componentPath) return callback()
+      componentsMap[result] = componentPath
+      if (ext === '.js') {
+        result = '!!' + nativeLoaderPath + '!' + result
+      }
+      addEntrySafely(result, componentPath, callback)
     })
   }
 
   if (isApp) {
     // app.json
-
-    const subPackagesMap = {}
+    const subPackagesCfg = {}
     const localPages = []
+    const processSubPackagesQueue = []
     // 确保首页不变
     const firstPage = json.pages && json.pages[0]
 
@@ -195,8 +212,11 @@ module.exports = function (raw) {
               } catch (err) {
                 return callback(err)
               }
+
+              const processSelfQueue = []
+              const context = path.dirname(result)
+
               if (content.pages) {
-                let context = path.dirname(result)
                 if (queryObj.root && typeof queryObj.root === 'string') {
                   let subPackages = [
                     {
@@ -204,12 +224,25 @@ module.exports = function (raw) {
                       pages: content.pages
                     }
                   ]
-                  processSubPackages(subPackages, context, callback)
+                  processSubPackagesQueue.push((callback) => {
+                    processSubPackages(subPackages, context, callback)
+                  })
                 } else {
-                  processPages(content.pages, '', '', context, callback)
+                  processSelfQueue.push((callback) => {
+                    processPages(content.pages, '', '', context, callback)
+                  })
                 }
               }
-              // 目前只支持单层解析packages，为了兼容subPackages
+              if (content.packages) {
+                processSelfQueue.push((callback) => {
+                  processPackages(content.packages, context, callback)
+                })
+              }
+              if (processSelfQueue.length) {
+                async.parallel(processSelfQueue, callback)
+              } else {
+                callback()
+              }
             }
           ], callback)
         }, callback)
@@ -221,8 +254,11 @@ module.exports = function (raw) {
     const processSubPackages = (subPackages, context, callback) => {
       if (subPackages) {
         async.forEach(subPackages, (packageItem, callback) => {
-          let tarRoot = packageItem.tarRoot || packageItem.root
-          let srcRoot = packageItem.srcRoot || packageItem.root
+          let tarRoot = packageItem.tarRoot || packageItem.root || ''
+          let srcRoot = packageItem.srcRoot || packageItem.root || ''
+          let resource = path.join(context, srcRoot)
+          if (subPackagesMap[resource] === tarRoot) return callback()
+          subPackagesMap[resource] = tarRoot
           processPages(packageItem.pages, srcRoot, tarRoot, context, callback)
         }, callback)
       } else {
@@ -230,10 +266,8 @@ module.exports = function (raw) {
       }
     }
 
-    const processPages = (pages, srcRoot, tarRoot, context, callback) => {
+    const processPages = (pages, srcRoot = '', tarRoot = '', context, callback) => {
       if (pages) {
-        srcRoot = srcRoot || ''
-        tarRoot = tarRoot || ''
         async.forEach(pages, (page, callback) => {
           let name = getName(path.join(tarRoot, page))
           name = toPosix(name)
@@ -243,30 +277,34 @@ module.exports = function (raw) {
           async.waterfall([
             (callback) => {
               if (srcRoot) {
-                callback(null, path.join(context, srcRoot, page))
-              } else {
-                this.resolve(context, page, (err, result) => {
-                  if (err) return callback(err)
-                  result = stripExtension(result)
-                  callback(err, result)
-                })
+                context = path.join(context, srcRoot)
               }
+              this.resolve(context, page, (err, result) => {
+                callback(err, result)
+              })
             },
-            (resource, callback) => {
+            (result, callback) => {
+              const queryIndex = result.indexOf('?')
+              if (queryIndex >= 0) {
+                result = result.substr(0, queryIndex)
+              }
+              let parsed = path.parse(result)
+              let ext = parsed.ext
+              result = stripExtension(result)
               // 如果存在page命名冲突，return err
               for (let key in pagesMap) {
-                if (pagesMap[key] === name && key !== resource) {
-                  return callback(new Error(`Resources in ${resource} and ${key} are registered with same page path ${name}, which is not allowed!`))
+                if (pagesMap[key] === name && key !== result) {
+                  return callback(new Error(`Resources in ${result} and ${key} are registered with same page path ${name}, which is not allowed!`))
                 }
               }
               // 如果之前已经创建了入口，直接return
-              if (pagesMap[resource] === name) return callback()
-              pagesMap[resource] = name
+              if (pagesMap[result] === name) return callback()
+              pagesMap[result] = name
               if (tarRoot) {
-                if (!subPackagesMap[tarRoot]) {
-                  subPackagesMap[tarRoot] = []
+                if (!subPackagesCfg[tarRoot]) {
+                  subPackagesCfg[tarRoot] = []
                 }
-                subPackagesMap[tarRoot].push(toPosix(path.join('', page)))
+                subPackagesCfg[tarRoot].push(toPosix(path.join('', page)))
               } else {
                 // 确保首页不变
                 if (page === firstPage) {
@@ -275,7 +313,10 @@ module.exports = function (raw) {
                   localPages.push(name)
                 }
               }
-              addEntrySafely(resource, name, callback)
+              if (ext === '.js') {
+                result = '!!' + nativeLoaderPath + '!' + result
+              }
+              addEntrySafely(result, name, callback)
             }
           ], callback)
         }, callback)
@@ -355,21 +396,33 @@ module.exports = function (raw) {
       }
     }
 
-    async.parallel([
+    // 串行处理，先处理主包代码，再处理分包代码，为了正确识别出分包中定义的组件属于主包还是分包
+    async.series([
+      async.applyEach([
+        (callback) => {
+          processPages(json.pages, '', '', this.context, callback)
+        },
+        (callback) => {
+          processComponents(json.usingComponents, this.context, callback)
+        },
+        (callback) => {
+          processWorkers(json.workers, this.context, callback)
+        },
+        (callback) => {
+          processPackages(json.packages, this.context, callback)
+        }
+      ]),
       (callback) => {
-        processPackages(json.packages, this.context, callback)
+        compilationMpx.processingSubPackages = true
+        callback()
       },
       (callback) => {
-        processSubPackages(json.subPackages || json.subpackages, this.context, callback)
-      },
-      (callback) => {
-        processPages(json.pages, '', '', this.context, callback)
-      },
-      (callback) => {
-        processComponents(json.usingComponents, this.context, callback)
-      },
-      (callback) => {
-        processWorkers(json.workers, this.context, callback)
+        async.parallel([
+          ...processSubPackagesQueue,
+          (callback) => {
+            processSubPackages(json.subPackages || json.subpackages, this.context, callback)
+          }
+        ], callback)
       }
     ], (err) => {
       if (err) return callback(err)
@@ -377,10 +430,10 @@ module.exports = function (raw) {
       delete json.subpackages
       json.pages = localPages
       json.subPackages = []
-      for (let root in subPackagesMap) {
+      for (let root in subPackagesCfg) {
         let subPackage = {
           root,
-          pages: subPackagesMap[root]
+          pages: subPackagesCfg[root]
         }
         json.subPackages.push(subPackage)
       }

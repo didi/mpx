@@ -7,6 +7,10 @@ module.exports = function (raw) {
   this.cacheable()
   const mode = this._compilation.__mpx__.mode
   const options = loaderUtils.getOptions(this) || {}
+  // 对于原生组件中的模板暂不做处理
+  if (options.isNative) {
+    return raw
+  }
   let parsed = compiler.parse(raw, Object.assign(options, {
     warn: (msg) => {
       this.emitWarning(
