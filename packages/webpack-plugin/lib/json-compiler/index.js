@@ -130,7 +130,8 @@ module.exports = function (raw) {
       let subPackageRoot = ''
       if (compilationMpx.processingSubPackages) {
         for (let src in subPackagesMap) {
-          if (result.startsWith(src)) {
+          // 分包引用且主包为引用的组件，需打入分包目录中
+          if (result.startsWith(src) && !componentsMap[result]) {
             subPackageRoot = subPackagesMap[src]
             break
           }
