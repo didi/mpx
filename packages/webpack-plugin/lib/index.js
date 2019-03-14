@@ -198,10 +198,11 @@ class MpxWebpackPlugin {
 
         if (runtimeChunk) {
           processChunk(runtimeChunk, true, [])
-          if (middleChunks.length)
+          if (middleChunks.length) {
             middleChunks.forEach((middleChunk) => {
               processChunk(middleChunk, false, [runtimeChunk])
             })
+          }
           if (entryChunk) {
             middleChunks.unshift(runtimeChunk)
             processChunk(entryChunk, false, middleChunks)

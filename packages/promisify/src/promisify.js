@@ -20,7 +20,7 @@ const blackList = [
   'stopPullDownRefresh',
   'createWorker',
   'pageScrollTo',
-  'reportAnalytics',
+  'reportAnalytics'
 ]
 
 function getMapFromList (list) {
@@ -78,7 +78,3 @@ export default function getPromisifyList (whiteList) {
 
   return promisifyList
 }
-
-
-
-

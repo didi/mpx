@@ -1,9 +1,6 @@
 const hash = require('hash-sum')
 const path = require('path')
-const normalize = require('./utils/normalize')
-const extractorPath = normalize.lib('extractor')
 const stripExtension = require('./utils/strip-extention')
-const jsonCompilerPath = normalize.lib('json-compiler/index')
 const loaderUtils = require('loader-utils')
 const config = require('./config')
 const createHelpers = require('./helpers')
@@ -46,7 +43,6 @@ module.exports = function (content) {
   const componentsMap = this._compilation.__mpx__.componentsMap
   const resource = stripExtension(this.resource)
   const isApp = !pagesMap[resource] && !componentsMap[resource]
-
 
   const {
     getRequireForSrc,
