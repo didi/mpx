@@ -682,16 +682,15 @@ function getTempNode () {
 
 function getAndRemoveAttr (el, name, removeFromMap = true) {
   let val
-  if ((val = el.attrsMap[name]) != null) {
-    let list = el.attrsList
-    for (let i = 0, l = list.length; i < l; i++) {
-      if (list[i].name === name) {
-        list.splice(i, 1)
-        break
-      }
+  let list = el.attrsList
+  for (let i = 0, l = list.length; i < l; i++) {
+    if (list[i].name === name) {
+      val = list[i].value
+      list.splice(i, 1)
+      break
     }
   }
-  if (removeFromMap) {
+  if (removeFromMap && val === el.attrsMap[name]) {
     delete el.attrsMap[name]
   }
   return val
@@ -810,7 +809,7 @@ function parseFuncStr2 (str) {
 function processBindEvent (el) {
   const eventConfigMap = {}
   el.attrsList.forEach(function (attr) {
-    let parsedEvent = config[mode].event.parseEvent(attr)
+    let parsedEvent = config[mode].event.parseEvent(attr.name)
 
     if (parsedEvent) {
       let type = parsedEvent.eventName
@@ -871,15 +870,18 @@ function processBindEvent (el) {
     }
     if (needBind) {
       if (rawName) {
-        modifyAttr(el, rawName, '__invoke')
-      } else {
-        addAttrs(el, [
-          {
-            name: config[mode].event.getEvent(type),
-            value: '__invoke'
-          }
-        ])
+        // 清空原始事件绑定
+        let val
+        do {
+          val = getAndRemoveAttr(el, rawName)
+        } while (val)
       }
+      addAttrs(el, [
+        {
+          name: rawName || config[mode].event.getEvent(type),
+          value: '__invoke'
+        }
+      ])
       eventConfigMap[type] = configs.map((item) => {
         return item.expStr
       })
