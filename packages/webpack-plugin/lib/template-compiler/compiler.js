@@ -862,7 +862,7 @@ function processBindEvent (el) {
     if (configs.length > 1) {
       needBind = true
     } else if (configs.length === 1) {
-      needBind = !!value[0].args
+      needBind = !!configs[0].args
     }
     // 排除特殊情况
     if (needBind && !isValidIdentifierStr(type)) {
