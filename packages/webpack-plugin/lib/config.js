@@ -13,15 +13,20 @@ module.exports = {
     },
     stringify: JSON.stringify,
     event: {
-      bindReg: /^(?:bind|catch):?(.*)$/,
-      getType (match) {
-        return match[1]
+      parseEvent (attr) {
+        let match = /^(bind|catch|capture-bind|capture-catch):?(.*)$/.exec(attr)
+        if (match) {
+          return {
+            prefix: match[1],
+            eventName: match[2]
+          }
+        }
+      },
+      getEvent (eventName, prefix = 'bind') {
+        return prefix + eventName
       },
       defaultModelProp: 'value',
       defaultModelEvent: 'input',
-      getBind (eventName) {
-        return 'bind' + eventName
-      },
       shallowStringify (obj) {
         let arr = []
         for (let key in obj) {
@@ -74,19 +79,24 @@ module.exports = {
     },
     stringify: JSON.stringify,
     event: {
-      bindReg: /^(?:on|catch)([A-Z].*)$/,
-      getType (match) {
-        return match[1].replace(/^./, function (match) {
-          return match.toLowerCase()
+      parseEvent (attr) {
+        let match = /^(on|catch)([A-Z].*)$/.exec(attr)
+        if (match) {
+          return {
+            prefix: match[1],
+            eventName: match[2].replace(/^./, function (match) {
+              return match.toLowerCase()
+            })
+          }
+        }
+      },
+      getEvent (eventName, prefix = 'on') {
+        return prefix + +eventName.replace(/^./, (matched) => {
+          return matched.toUpperCase()
         })
       },
       defaultModelProp: 'value',
       defaultModelEvent: 'input',
-      getBind (eventName) {
-        return 'on' + eventName.replace(/^./, (matched) => {
-          return matched.toUpperCase()
-        })
-      },
       shallowStringify (obj) {
         let arr = []
         for (let key in obj) {
@@ -137,15 +147,20 @@ module.exports = {
     },
     stringify: JSON.stringify,
     event: {
-      bindReg: /^bind(.*)$/,
-      getType (match) {
-        return match[1]
+      parseEvent (attr) {
+        let match = /^(bind|catch|capture-bind|capture-catch):?(.*)$/.exec(attr)
+        if (match) {
+          return {
+            prefix: match[1],
+            eventName: match[2]
+          }
+        }
+      },
+      getEvent (eventName, prefix = 'bind') {
+        return prefix + eventName
       },
       defaultModelProp: 'value',
       defaultModelEvent: 'input',
-      getBind (eventName) {
-        return 'bind' + eventName
-      },
       shallowStringify (obj) {
         let arr = []
         for (let key in obj) {

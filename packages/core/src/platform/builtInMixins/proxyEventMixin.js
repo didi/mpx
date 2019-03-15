@@ -5,12 +5,18 @@ export default function proxyEventMixin () {
   const methods = {
     __invoke ($event) {
       const type = $event.type
+      if (!type) {
+        throw new Error('Event object must have [type] property!')
+      }
       let fallbackType = ''
       if (type === 'begin' || type === 'end') {
         // 地图的 regionchange 事件会派发 e.type 为 begin 和 end 的事件
         fallbackType = 'regionchange'
       }
       const target = $event.currentTarget || $event.target
+      if (!target) {
+        throw new Error(`[${type}] event object must have [currentTarget/target] property!`)
+      }
       const eventConfigs = target.dataset.eventconfigs || {}
       const curEventConfig = eventConfigs[type] || eventConfigs[fallbackType] || []
       let returnedValue

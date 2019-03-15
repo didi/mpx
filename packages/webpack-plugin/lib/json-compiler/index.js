@@ -130,7 +130,8 @@ module.exports = function (raw) {
       let subPackageRoot = ''
       if (compilationMpx.processingSubPackages) {
         for (let src in subPackagesMap) {
-          if (result.startsWith(src)) {
+          // 分包引用且主包为引用的组件，需打入分包目录中
+          if (result.startsWith(src) && !componentsMap[result]) {
             subPackageRoot = subPackagesMap[src]
             break
           }
@@ -217,11 +218,14 @@ module.exports = function (raw) {
               const context = path.dirname(result)
 
               if (content.pages) {
-                if (queryObj.root && typeof queryObj.root === 'string') {
+                let tarRoot = queryObj.root
+                if (tarRoot) {
+                  delete queryObj.root
                   let subPackages = [
                     {
-                      tarRoot: queryObj.root,
-                      pages: content.pages
+                      tarRoot,
+                      pages: content.pages,
+                      ...queryObj
                     }
                   ]
                   processSubPackagesQueue.push((callback) => {
@@ -252,13 +256,36 @@ module.exports = function (raw) {
     }
 
     const processSubPackages = (subPackages, context, callback) => {
+      function getOtherConfig (raw) {
+        let result = {}
+        let blackListMap = {
+          tarRoot: true,
+          srcRoot: true,
+          root: true,
+          pages: true
+        }
+        for (let key in raw) {
+          if (!blackListMap[key]) {
+            result[key] = raw[key]
+          }
+        }
+        return result
+      }
+
       if (subPackages) {
         async.forEach(subPackages, (packageItem, callback) => {
           let tarRoot = packageItem.tarRoot || packageItem.root || ''
           let srcRoot = packageItem.srcRoot || packageItem.root || ''
           let resource = path.join(context, srcRoot)
-          if (subPackagesMap[resource] === tarRoot) return callback()
+          if (!tarRoot || subPackagesMap[resource] === tarRoot) return callback()
+
           subPackagesMap[resource] = tarRoot
+          subPackagesCfg[tarRoot] = {
+            root: tarRoot,
+            pages: [],
+            ...getOtherConfig(packageItem)
+          }
+
           processPages(packageItem.pages, srcRoot, tarRoot, context, callback)
         }, callback)
       } else {
@@ -276,10 +303,7 @@ module.exports = function (raw) {
           }
           async.waterfall([
             (callback) => {
-              if (srcRoot) {
-                context = path.join(context, srcRoot)
-              }
-              this.resolve(context, page, (err, result) => {
+              this.resolve(path.join(context, srcRoot), page, (err, result) => {
                 callback(err, result)
               })
             },
@@ -300,11 +324,8 @@ module.exports = function (raw) {
               // 如果之前已经创建了入口，直接return
               if (pagesMap[result] === name) return callback()
               pagesMap[result] = name
-              if (tarRoot) {
-                if (!subPackagesCfg[tarRoot]) {
-                  subPackagesCfg[tarRoot] = []
-                }
-                subPackagesCfg[tarRoot].push(toPosix(path.join('', page)))
+              if (tarRoot && subPackagesCfg[tarRoot]) {
+                subPackagesCfg[tarRoot].pages.push(toPosix(path.join('', page)))
               } else {
                 // 确保首页不变
                 if (page === firstPage) {
@@ -431,11 +452,7 @@ module.exports = function (raw) {
       json.pages = localPages
       json.subPackages = []
       for (let root in subPackagesCfg) {
-        let subPackage = {
-          root,
-          pages: subPackagesCfg[root]
-        }
-        json.subPackages.push(subPackage)
+        json.subPackages.push(subPackagesCfg[root])
       }
       const processOutput = (output) => {
         output = processTabBar(output)
