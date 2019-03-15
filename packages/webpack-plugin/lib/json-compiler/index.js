@@ -256,23 +256,23 @@ module.exports = function (raw) {
     }
 
     const processSubPackages = (subPackages, context, callback) => {
-      if (subPackages) {
-        function getOtherConfig (raw) {
-          let result = {}
-          let blackListMap = {
-            tarRoot: true,
-            srcRoot: true,
-            root: true,
-            pages: true
-          }
-          for (let key in raw) {
-            if (!blackListMap[key]) {
-              result[key] = raw[key]
-            }
-          }
-          return result
+      function getOtherConfig (raw) {
+        let result = {}
+        let blackListMap = {
+          tarRoot: true,
+          srcRoot: true,
+          root: true,
+          pages: true
         }
+        for (let key in raw) {
+          if (!blackListMap[key]) {
+            result[key] = raw[key]
+          }
+        }
+        return result
+      }
 
+      if (subPackages) {
         async.forEach(subPackages, (packageItem, callback) => {
           let tarRoot = packageItem.tarRoot || packageItem.root || ''
           let srcRoot = packageItem.srcRoot || packageItem.root || ''

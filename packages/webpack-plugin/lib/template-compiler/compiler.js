@@ -701,17 +701,6 @@ function addAttrs (el, attrs) {
   Object.assign(el.attrsMap, makeAttrsMap(attrs))
 }
 
-function modifyAttr (el, name, val) {
-  el.attrsMap[name] = val
-  let list = el.attrsList
-  for (let i = 0, l = list.length; i < l; i++) {
-    if (list[i].name === name) {
-      list[i].value = val
-      break
-    }
-  }
-}
-
 function stringify (str) {
   return config[mode].stringify(str)
 }
