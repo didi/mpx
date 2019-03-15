@@ -1,7 +1,7 @@
 {
   "name": "@mpxjs/convertor",
   "version": "1.1.6",
-  "description": "the runtime convert config",
+  "description": "The runtime convert config",
   "author": "pkingwa",
   "license": "ISC",
   "main": "src/index.js",
