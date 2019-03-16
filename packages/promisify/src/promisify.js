@@ -56,6 +56,9 @@ export default function getPromisifyList (whiteList) {
 
     promisifyList[key] = function (...args) {
       if (promisifyFilter(key)) {
+        if (!args[0]) {
+          args[0] = { success: () => {}, fail: () => {} }
+        }
         const obj = args[0]
         return new Promise((resolve, reject) => {
           const originSuccess = obj.success
