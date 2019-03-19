@@ -1,7 +1,7 @@
 {
   "name": "@mpxjs/convertor",
-  "version": "1.0.0-beta",
-  "description": "the runtime convert config",
+  "version": "1.1.7",
+  "description": "The runtime convert config",
   "author": "pkingwa",
   "license": "ISC",
   "main": "src/index.js",
@@ -12,7 +12,8 @@
     "src"
   ],
   "publishConfig": {
-    "registry": "https://registry.npmjs.org"
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
   },
   "repository": {
     "type": "git",
