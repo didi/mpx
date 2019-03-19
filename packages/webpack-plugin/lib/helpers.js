@@ -224,7 +224,7 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
     let loader = getRawLoaderString(type, part, index, scoped)
     const lang = getLangString(type, part)
     if (type !== 'script') {
-      loader = getExtractorString(type, index || 0) + loader
+      loader = getExtractorString(type, index) + loader
     }
     if (preLoaders[lang]) {
       loader = loader + ensureBang(preLoaders[lang])
@@ -336,7 +336,7 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
     )
   }
 
-  function getExtractorString (type, index) {
+  function getExtractorString (type, index = 0) {
     return (
       extractorPath +
       '?type=' +
@@ -344,6 +344,7 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
         ? type
         : 'customBlocks') +
       '&index=' + index +
+      '&resource=' + loaderContext.resource +
       '!'
     )
   }

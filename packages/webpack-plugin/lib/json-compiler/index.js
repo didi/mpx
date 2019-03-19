@@ -257,7 +257,7 @@ module.exports = function (raw) {
 
     const processSubPackages = (subPackages, context, callback) => {
       if (subPackages) {
-        function getOtherConfig (raw) {
+        const getOtherConfig = (raw) => {
           let result = {}
           let blackListMap = {
             tarRoot: true,

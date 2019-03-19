@@ -23,7 +23,8 @@ module.exports = function (content) {
   const extract = this._compilation.__mpx__.extract
   const rootName = this._compilation._preparedEntrypoints[0].name
 
-  const resource = stripExtension(this.resource)
+  const resource = stripExtension(options.resource || this.resource)
+  const selfResource = stripExtension(this.resource)
   const resourcePath = pagesMap[resource] || componentsMap[resource] || rootName
 
   // 使用子编译器生成需要抽离的json，styles和template
@@ -92,7 +93,8 @@ module.exports = function (content) {
           return item[1]
         }).join('\n')
       }
-      extract(text, options.type, resourcePath, options.index)
+
+      extract(text, options.type, resourcePath, +options.index, selfResource)
       if (text.locals && typeof resultSource !== 'undefined') {
         resultSource += `\nmodule.exports = ${JSON.stringify(text.locals)};`
       }
