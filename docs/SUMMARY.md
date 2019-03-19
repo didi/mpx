@@ -21,6 +21,8 @@
     * [rpx转换](single/style-enhance.md#rpx转换)
 * [JSON扩展特性](single/json-enhance.md#json域扩展)
     * [packages](single/json-enhance.md#packages)
+    * [分包](single/json-enhance.md#分包)
+    * [体积优化指南](single/json-enhance.md#体积优化指南)
 * [数据管理](store/index.md#数据管理)
     * [开始](store/index.md#开始)
     * [state](store/index.md#state)
