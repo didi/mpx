@@ -7,7 +7,7 @@ let curType
 export default function mergeOptions (options = {}, type, needProxyLifecycle = true) {
   if (!options.mixins || !options.mixins.length) return options
   // 微信小程序使用Component创建page
-  curType = convertRule.mode === 'blend' ? 'blend' : type
+  curType = type === 'app' || !convertRule.mode ? type : convertRule.mode
   CURRENT_HOOKS = convertRule.lifecycle[curType]
   const newOptions = {}
   extractMixins(newOptions, options)
