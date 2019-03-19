@@ -270,9 +270,11 @@ module.exports = function (raw) {
               result[key] = raw[key]
             }
           }
-          return result
         }
+        return result
+      }
 
+      if (subPackages) {
         async.forEach(subPackages, (packageItem, callback) => {
           let tarRoot = packageItem.tarRoot || packageItem.root || ''
           let srcRoot = packageItem.srcRoot || packageItem.root || ''

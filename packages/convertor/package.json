@@ -1,8 +1,8 @@
 {
-  "name": "@mpxjs/fetch",
-  "version": "1.1.5",
-  "description": "mpx fetch lib",
-  "author": "donghongping",
+  "name": "@mpxjs/convertor",
+  "version": "1.0.0-beta",
+  "description": "the runtime convert config",
+  "author": "pkingwa",
   "license": "ISC",
   "main": "src/index.js",
   "directories": {
@@ -24,5 +24,6 @@
   },
   "scripts": {
     "test": "echo \"Error: run tests from root\" && exit 1"
-  }
+  },
+  "sideEffects": false
 }
