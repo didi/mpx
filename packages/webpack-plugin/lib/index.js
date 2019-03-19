@@ -9,8 +9,9 @@ const NullFactory = require('webpack/lib/NullFactory')
 const config = require('./config')
 const normalize = require('./utils/normalize')
 const stripExtension = require('./utils/strip-extention')
-const toPoisx = require('./utils/to-posix')
+const toPosix = require('./utils/to-posix')
 const DefinePlugin = require('webpack/lib/DefinePlugin')
+const hash = require('hash-sum')
 
 class MpxWebpackPlugin {
   constructor (options = { mode: 'wx' }) {
@@ -48,10 +49,27 @@ class MpxWebpackPlugin {
           processingSubPackages: false,
           wxsMap: {},
           mode: this.options.mode,
-          extract: (content, type, resourcePath, index) => {
-            let file = resourcePath + typeExtMap[type]
-            additionalAssets[file] = additionalAssets[file] || []
-            additionalAssets[file][index] = (additionalAssets[file][index] || '') + content
+          extract: (content, type, resourcePath, index, selfResource) => {
+            if (index === -1 && type === 'styles') {
+              // 针对src引入的styles进行特殊处理，处理为@import形式便于样式复用
+              const file1 = resourcePath + typeExtMap[type]
+              const file2 = toPosix(path.join('wxss', path.basename(selfResource) + hash(selfResource) + typeExtMap[type]))
+              const relativePath = toPosix(path.relative(path.dirname(file1), file2))
+              additionalAssets[file1] = additionalAssets[file1] || []
+              additionalAssets[file2] = additionalAssets[file2] || []
+              additionalAssets[file1][0] = `@import "${relativePath}";\n` + (additionalAssets[file1][0] || '')
+              if (!additionalAssets[file2][0]) {
+                additionalAssets[file2][0] = content
+              }
+            } else {
+              const file = resourcePath + typeExtMap[type]
+              additionalAssets[file] = additionalAssets[file] || []
+              if (index === -1) {
+                additionalAssets[file][0] = content + (additionalAssets[file][0] || '')
+              } else {
+                additionalAssets[file][index] = (additionalAssets[file][index] || '') + content
+              }
+            }
           }
         }
       }
@@ -59,9 +77,6 @@ class MpxWebpackPlugin {
       compilation.hooks.additionalAssets.tapAsync('MpxWebpackPlugin', (callback) => {
         for (let file in additionalAssets) {
           let content = new ConcatSource()
-          if (additionalAssets[file][-1]) {
-            content.add(additionalAssets[file][-1])
-          }
           additionalAssets[file].forEach((item) => {
             content.add(item)
           })
@@ -154,7 +169,7 @@ class MpxWebpackPlugin {
           if (!/^\./.test(relativePath)) {
             relativePath = `.${path.sep}${relativePath}`
           }
-          relativePath = toPoisx(relativePath)
+          relativePath = toPosix(relativePath)
           if (index === 0) {
             source.add(`window[${JSON.stringify(jsonpFunction)}] = require("${relativePath}");\n`)
           } else {
