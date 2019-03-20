@@ -5,19 +5,26 @@ const InjectDependency = require('../dependency/InjectDependency')
 
 module.exports = function (raw) {
   this.cacheable()
-  const mode = this._compilation.__mpx__.mode
   const options = loaderUtils.getOptions(this) || {}
   // 对于原生组件中的模板暂不做处理
   if (options.isNative) {
     return raw
   }
+  const mode = this._compilation.__mpx__.mode
+  const srcMode = this._compilation.__mpx__.srcMode
   let parsed = compiler.parse(raw, Object.assign(options, {
     warn: (msg) => {
       this.emitWarning(
         new Error('[template compiler][' + this.resource + ']: ' + msg)
       )
     },
-    mode
+    error: (msg) => {
+      this.emitError(
+        new Error('[template compiler][' + this.resource + ']: ' + msg)
+      )
+    },
+    mode,
+    srcMode
   }))
   let ast = parsed.root
   let meta = parsed.meta
