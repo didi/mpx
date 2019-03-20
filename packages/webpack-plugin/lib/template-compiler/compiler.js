@@ -1340,14 +1340,14 @@ function genNode (node) {
   }
   if (node.type === 1) {
     if (node.tag !== 'temp-node') {
-      if (node.if && !node.ifProcessed) {
+      if (node.for && !node.forProcessed) {
+        exp += genFor(node)
+      } else if (node.if && !node.ifProcessed) {
         exp += genIf(node)
       } else if (node.elseif && !node.elseifProcessed) {
         exp += genElseif(node)
       } else if (node.else && !node.elseProcessed) {
         exp += genElse(node)
-      } else if (node.for && !node.forProcessed) {
-        exp += genFor(node)
       } else {
         if (node.exps) {
           exp += genExps(node)
