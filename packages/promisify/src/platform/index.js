@@ -1,12 +1,12 @@
-import { proxyMyApi, wxToMyApis } from './wxToMy'
+import { proxyWxToAliApi, wxToAliApi } from './wxToAli'
 
 function proxyApi (target, platform = {}) {
-  if (platform.from === 'wx' && platform.to === 'my') {
-    proxyMyApi(target)
+  if (platform.from === 'wx' && platform.to === 'ali') {
+    proxyWxToAliApi(target)
   }
 }
 
 export {
-  wxToMyApis,
+  wxToAliApi,
   proxyApi
 }

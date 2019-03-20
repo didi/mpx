@@ -1,5 +1,5 @@
 /**
- * 
+ *
  * @param {Object} options 原参数
  * @param {Object} updateOrRemoveOpt 要修改或者删除的参数
  * @param {Object} extraOpt 额外增加的参数
@@ -51,11 +51,16 @@ function info (msg) {
   console.log(`mpx-promisify info: ${msg}`)
 }
 
+function error (msg) {
+  console.error(`mpx-promisify error: ${msg}`)
+}
+
 function noop () {}
 
 export {
   changeOpts,
   handleSuccess,
+  error,
   warn,
   info,
   noop
