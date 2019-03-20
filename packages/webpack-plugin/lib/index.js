@@ -14,7 +14,9 @@ const DefinePlugin = require('webpack/lib/DefinePlugin')
 const hash = require('hash-sum')
 
 class MpxWebpackPlugin {
-  constructor (options = { mode: 'wx' }) {
+  constructor (options = {}) {
+    options.mode = options.mode || 'wx'
+    options.srcMode = options.srcMode || options.mode
     this.options = options
   }
 
@@ -49,6 +51,7 @@ class MpxWebpackPlugin {
           processingSubPackages: false,
           wxsMap: {},
           mode: this.options.mode,
+          srcMode: this.options.srcMode,
           extract: (content, type, resourcePath, index, selfResource) => {
             if (index === -1 && type === 'styles') {
               // 针对src引入的styles进行特殊处理，处理为@import形式便于样式复用
