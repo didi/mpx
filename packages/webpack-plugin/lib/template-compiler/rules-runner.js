@@ -85,20 +85,16 @@ module.exports = function getTargetElRulesRunner ({ target, warn, error }) {
       case 'Function':
         return rawTest.bind(context)
       case 'RegExp':
-        return (input) => {
-          return rawTest.test(input)
-        }
+        return input => rawTest.test(input)
       case 'String':
-        return (input) => {
-          return rawTest === input
-        }
+        return input => rawTest === input
       default:
         return () => true
     }
   }
 
   function normalizeComponentRules (cfgs) {
-    const temp = cfgs.map((cfg) => {
+    return cfgs.map((cfg) => {
       const result = {}
       if (cfg.test) {
         result.test = cfg.test
@@ -121,7 +117,6 @@ module.exports = function getTargetElRulesRunner ({ target, warn, error }) {
       }
       return result
     })
-    return temp
   }
 
   function runRules (rules = [], input, testKey, options) {
