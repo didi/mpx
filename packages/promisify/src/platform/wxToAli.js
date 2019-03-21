@@ -1,7 +1,12 @@
 import { changeOpts, handleSuccess, error, warn, info, noop } from '../utils'
 
 const ALI_NAME = my
+const ALI_NAME_CACHE = {}
 const ALI_NAME_STRING = 'my'
+
+Object.keys(ALI_NAME).forEach((key) => {
+  ALI_NAME_CACHE[key] = ALI_NAME[key]
+})
 
 const wxToAliApi = {
   getSystemInfo (options) {
@@ -18,11 +23,11 @@ const wxToAliApi = {
       return res
     })
 
-    ALI_NAME.getSystemInfo(opts)
+    ALI_NAME_CACHE.getSystemInfo.call(ALI_NAME, opts)
   },
 
   getSystemInfoSync () {
-    let res = ALI_NAME.getSystemInfoSync()
+    let res = ALI_NAME_CACHE.getSystemInfoSync.call(ALI_NAME)
 
     res.system = `${res.platform} ${res.system}`
 
@@ -39,14 +44,14 @@ const wxToAliApi = {
       title: 'content',
       icon: 'type'
     })
-    ALI_NAME.showToast(opts)
+    ALI_NAME_CACHE.showToast.call(ALI_NAME, opts)
   },
 
   hideToast (options) {
     if (options.success || options.fail || options.complete) {
-      warn(`${ALI_NAME_STRING}.hideToast 不支持 success/fail/complete 参数`)
+      error(`${ALI_NAME_STRING}.hideToast 不支持 success/fail/complete 参数`)
     }
-    ALI_NAME.hideToast(options)
+    ALI_NAME_CACHE.hideToast.call(ALI_NAME, options)
   },
 
   showModal (options) {
@@ -62,13 +67,13 @@ const wxToAliApi = {
         return changeOpts(res, undefined, { 'cancel': !res.confirm })
       })
 
-      ALI_NAME.confirm(opts)
+      ALI_NAME_CACHE.confirm.call(ALI_NAME, opts)
     } else {
       opts = changeOpts(options, {
         confirmText: 'buttonText'
       })
 
-      ALI_NAME.alert(opts)
+      ALI_NAME_CACHE.alert.call(ALI_NAME, opts)
     }
   },
 
@@ -76,14 +81,14 @@ const wxToAliApi = {
     const opts = changeOpts(options, {
       title: 'content'
     })
-    ALI_NAME.showLoading(opts)
+    ALI_NAME_CACHE.showLoading.call(ALI_NAME, opts)
   },
 
   hideLoading (options) {
     if (options.success || options.fail || options.complete) {
-      warn(`${ALI_NAME_STRING}.hideLoading 不支持 success/fail/complete 参数`)
+      error(`${ALI_NAME_STRING}.hideLoading 不支持 success/fail/complete 参数`)
     }
-    ALI_NAME.hideLoading(options)
+    ALI_NAME_CACHE.hideLoading.call(ALI_NAME, options)
   },
 
   showActionSheet (options) {
@@ -95,38 +100,41 @@ const wxToAliApi = {
     const cacheFail = opts.fail || noop
 
     opts.success = res => {
-      if (res.index === -1) {
-        cacheFail({
+      let sucRes = changeOpts(res, {
+        index: 'tapIndex'
+      })
+      if (sucRes.tapIndex === -1) {
+        cacheFail.call(this, {
           errMsg: 'showActionSheet:fail cancel'
         })
       } else {
-        cacheSuc(res)
+        cacheSuc.call(this, sucRes)
       }
     }
 
-    ALI_NAME.showActionSheet(opts)
+    ALI_NAME_CACHE.showActionSheet.call(ALI_NAME, opts)
   },
 
   showNavigationBarLoading (options) {
     if (options.success || options.fail || options.complete) {
-      warn(`${ALI_NAME_STRING}.showNavigationBarLoading 不支持 success/fail/complete 参数`)
+      error(`${ALI_NAME_STRING}.showNavigationBarLoading 不支持 success/fail/complete 参数`)
     }
-    ALI_NAME.showNavigationBarLoading(options)
+    ALI_NAME_CACHE.showNavigationBarLoading.call(ALI_NAME, options)
   },
 
   hideNavigationBarLoading (options) {
     if (options.success || options.fail || options.complete) {
-      warn(`${ALI_NAME_STRING}.hideNavigationBarLoading 不支持 success/fail/complete 参数`)
+      error(`${ALI_NAME_STRING}.hideNavigationBarLoading 不支持 success/fail/complete 参数`)
     }
-    ALI_NAME.hideNavigationBarLoading(options)
+    ALI_NAME_CACHE.hideNavigationBarLoading.call(ALI_NAME, options)
   },
 
   setNavigationBarTitle (options) {
-    ALI_NAME.setNavigationBar(options)
+    ALI_NAME_CACHE.setNavigationBar.call(ALI_NAME, options)
   },
 
   setNavigationBarColor (options) {
-    ALI_NAME.setNavigationBar(options)
+    ALI_NAME_CACHE.setNavigationBar.call(ALI_NAME, options)
   },
 
   request (options) {
@@ -142,24 +150,24 @@ const wxToAliApi = {
     })
 
     // 钉钉端需要使用 httpRequest
-    ALI_NAME.request(opts)
+    ALI_NAME_CACHE.request.call(ALI_NAME, opts)
   },
 
   setStorageSync (key, data) {
-    ALI_NAME.setStorageSync({
+    ALI_NAME_CACHE.setStorageSync.call(ALI_NAME, {
       key,
       data
     })
   },
 
   removeStorageSync (key) {
-    ALI_NAME.removeStorageSync({
+    ALI_NAME_CACHE.removeStorageSync.call(ALI_NAME, {
       key
     })
   },
 
   getStorageSync (key) {
-    return ALI_NAME.getStorageSync({
+    return ALI_NAME_CACHE.getStorageSync.call(ALI_NAME, {
       key
     }).data
   },
@@ -176,7 +184,7 @@ const wxToAliApi = {
       opts.current = idx !== -1 ? idx : 0
     }
 
-    ALI_NAME.previewImage(opts)
+    ALI_NAME_CACHE.previewImage.call(ALI_NAME, opts)
   },
 
   compressImage (options) {
@@ -195,7 +203,7 @@ const wxToAliApi = {
       )
     })
 
-    ALI_NAME.compressImage(opts)
+    ALI_NAME_CACHE.compressImage.call(ALI_NAME, opts)
   },
 
   chooseImage (options) {
@@ -205,7 +213,7 @@ const wxToAliApi = {
       return changeOpts(res, { apFilePaths: 'tempFilePaths' })
     })
 
-    ALI_NAME.chooseImage(opts)
+    ALI_NAME_CACHE.chooseImage.call(ALI_NAME, opts)
   },
 
   getLocation (options) {
@@ -221,7 +229,7 @@ const wxToAliApi = {
       aliType: 'type'
     })
 
-    ALI_NAME.getLocation(opts)
+    ALI_NAME_CACHE.getLocation.call(ALI_NAME, opts)
   },
 
   saveFile (options) {
@@ -233,7 +241,7 @@ const wxToAliApi = {
       return changeOpts(res, { apFilePath: 'savedFilePath' })
     })
 
-    ALI_NAME.saveFile(opts)
+    ALI_NAME_CACHE.saveFile.call(ALI_NAME, opts)
   },
 
   removeSavedFile (options) {
@@ -245,7 +253,7 @@ const wxToAliApi = {
       return changeOpts(res, { apFilePath: 'savedFilePath' })
     })
 
-    ALI_NAME.removeSavedFile(opts)
+    ALI_NAME_CACHE.removeSavedFile.call(ALI_NAME, opts)
   },
 
   getSavedFileList (options) {
@@ -265,7 +273,7 @@ const wxToAliApi = {
       return res
     })
 
-    ALI_NAME.getSavedFileList(opts)
+    ALI_NAME_CACHE.getSavedFileList.call(ALI_NAME, opts)
   },
 
   getSavedFileInfo (options) {
@@ -273,7 +281,7 @@ const wxToAliApi = {
       filePath: 'apFilePath'
     })
 
-    ALI_NAME.getSavedFileInfo(opts)
+    ALI_NAME_CACHE.getSavedFileInfo.call(ALI_NAME, opts)
   },
 
   getFileInfo (options) {
@@ -281,7 +289,7 @@ const wxToAliApi = {
       filePath: 'apFilePath'
     })
 
-    ALI_NAME.getFileInfo(opts)
+    ALI_NAME_CACHE.getFileInfo.call(ALI_NAME, opts)
   },
 
   addPhoneContact (options) {
@@ -289,7 +297,7 @@ const wxToAliApi = {
       weChatNumber: 'alipayAccount'
     })
 
-    ALI_NAME.addPhoneContact(opts)
+    ALI_NAME_CACHE.addPhoneContact.call(ALI_NAME, opts)
   },
 
   setClipboardData (options) {
@@ -297,7 +305,7 @@ const wxToAliApi = {
       data: 'text'
     })
 
-    ALI_NAME.setClipboard(opts)
+    ALI_NAME_CACHE.setClipboard.call(ALI_NAME, opts)
   },
 
   getClipboardData (options) {
@@ -307,7 +315,7 @@ const wxToAliApi = {
       return changeOpts(res, { text: 'data' })
     })
 
-    ALI_NAME.getClipboard(opts)
+    ALI_NAME_CACHE.getClipboard.call(ALI_NAME, opts)
   },
 
   setScreenBrightness (options) {
@@ -315,7 +323,7 @@ const wxToAliApi = {
       value: 'brightness'
     })
 
-    ALI_NAME.setScreenBrightness(opts)
+    ALI_NAME_CACHE.setScreenBrightness.call(ALI_NAME, opts)
   },
 
   getScreenBrightness (options) {
@@ -325,7 +333,7 @@ const wxToAliApi = {
       return changeOpts(res, { brightness: 'value' })
     })
 
-    ALI_NAME.getScreenBrightness(opts)
+    ALI_NAME_CACHE.getScreenBrightness.call(ALI_NAME, opts)
   },
 
   makePhoneCall (options) {
@@ -333,11 +341,11 @@ const wxToAliApi = {
       phoneNumber: 'number'
     })
 
-    ALI_NAME.makePhoneCall(opts)
+    ALI_NAME_CACHE.makePhoneCall.call(ALI_NAME, opts)
   },
 
   stopAccelerometer (options) {
-    ALI_NAME.offAccelerometerChange(options)
+    ALI_NAME_CACHE.offAccelerometerChange.call(ALI_NAME, options)
   },
 
   startAccelerometer () {
@@ -345,7 +353,7 @@ const wxToAliApi = {
   },
 
   stopCompass (options) {
-    ALI_NAME.offCompassChange(options)
+    ALI_NAME_CACHE.offCompassChange.call(ALI_NAME, options)
   },
 
   startCompass () {
@@ -353,7 +361,7 @@ const wxToAliApi = {
   },
 
   stopGyroscope (options) {
-    ALI_NAME.offGyroscopeChange(options)
+    ALI_NAME_CACHE.offGyroscopeChange.call(ALI_NAME, options)
   },
 
   startGyroscope () {
@@ -384,7 +392,7 @@ const wxToAliApi = {
       return changeOpts(res, { code: 'result' })
     })
 
-    ALI_NAME.scan(opts)
+    ALI_NAME_CACHE.scan.call(ALI_NAME, opts)
   },
 
   login (options) {
@@ -400,7 +408,7 @@ const wxToAliApi = {
       return changeOpts(res, { authCode: 'code' })
     })
 
-    ALI_NAME.getAuthCode(opts)
+    ALI_NAME_CACHE.getAuthCode.call(ALI_NAME, opts)
   },
 
   checkSession () {
@@ -435,7 +443,7 @@ const wxToAliApi = {
       }
     })
 
-    ALI_NAME.getAuthUserInfo(opts)
+    ALI_NAME_CACHE.getAuthUserInfo.call(ALI_NAME, opts)
   },
 
   requestPayment (options) {
@@ -456,22 +464,22 @@ const wxToAliApi = {
 
     opts.success = res => {
       if (res.resultCode === 9000) {
-        cacheSuc(res)
+        cacheSuc.call(this, res)
       } else {
-        cacheFail(res)
+        cacheFail.call(this, res)
       }
     }
 
-    ALI_NAME.tradePay(opts)
+    ALI_NAME_CACHE.tradePay.call(ALI_NAME, opts)
   }
 }
 
 /**
  * @param {Object} target 要代理的对象
  */
-const proxyWxToAliApi = target => {
+const proxyWxToAliApi = () => {
   Object.keys(wxToAliApi).forEach(api => {
-    target[api] = wxToAliApi[api]
+    ALI_NAME[api] = wxToAliApi[api]
   })
 }
 

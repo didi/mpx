@@ -1,8 +1,8 @@
 import { proxyWxToAliApi, wxToAliApi } from './wxToAli'
 
-function proxyApi (target, platform = {}) {
+function proxyApi (platform = {}) {
   if (platform.from === 'wx' && platform.to === 'ali') {
-    proxyWxToAliApi(target)
+    proxyWxToAliApi()
   }
 }
 

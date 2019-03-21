@@ -39,20 +39,20 @@ const handleSuccess = (opts, getOptions) => {
   const cacheSuc = opts.success
   opts.success = res => {
     const changedRes = getOptions(res)
-    cacheSuc(changedRes)
+    cacheSuc.call(this, changedRes)
   }
 }
 
 function warn (msg) {
-  console.warn(`mpx-promisify warn: ${msg}`)
+  console.warn && console.warn(`mpx-promisify warn: ${msg}`)
 }
 
 function info (msg) {
-  console.log(`mpx-promisify info: ${msg}`)
+  console.log && console.log(`mpx-promisify info: ${msg}`)
 }
 
 function error (msg) {
-  console.error(`mpx-promisify error: ${msg}`)
+  console.error && console.error(`mpx-promisify error: ${msg}`)
 }
 
 function noop () {}
