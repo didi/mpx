@@ -1,11 +1,11 @@
-const TAG_NAME = 'movable-view'
+const TAG_NAME = 'cover-image'
 
 module.exports = function ({ warn, error }) {
   return {
     test: TAG_NAME,
     props: [
       {
-        test: /^(inertia|out-of-bounds|damping|friction|scale|scale-min|scale-max|scale-value|animation|htouchmove|vtouchmove)$/,
+        test: /^(scroll-top|aria-label|aria-role)$/,
         ali ({ name }) {
           warn(`<${TAG_NAME}> component does not support ${name} property in ali environment!`)
         }
@@ -13,12 +13,9 @@ module.exports = function ({ warn, error }) {
     ],
     event: [
       {
-        test: /^(change)$/,
+        test: /^(load|error)$/,
         ali (eventName) {
-          const eventMap = {
-            'change': 'onchange'
-          }
-          return eventMap[eventName]
+          warn(`<${TAG_NAME}> component does not support bind${eventName} property in ali environment!`)
         }
       }
     ]
