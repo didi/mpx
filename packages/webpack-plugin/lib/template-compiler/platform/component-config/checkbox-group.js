@@ -1,6 +1,6 @@
 const TAG_NAME = 'checkbox-group'
 
-module.exports = function ({ warn, error }) {
+module.exports = function () {
   return {
     test: TAG_NAME,
     event: [
