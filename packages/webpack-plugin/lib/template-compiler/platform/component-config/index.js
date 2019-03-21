@@ -16,15 +16,18 @@ const form = require('./form')
 const input = require('./input')
 
 const map = require('./map')
+const aliNonsupport = require('./aliunsupport')
 
 module.exports = function getComponentConfigs ({ warn, error }) {
   /**
    * universal print for detail component warn or error
    * @param {string} platform
    * @param {string} tagName
+   * @param {boolean} isTagLevel 是否是标签级别的log
    * @return {function(*): Function}
    */
-  const print = (platform, tagName) => (isError) => (arg) => {
+  const print = (platform, tagName, isTagLevel = false) => (isError) => (arg) => {
+    if (isTagLevel) return error(`<${tagName}> not supported in ${platform} environment!!`)
     const name = typeof arg === 'string' ? arg : arg.name
     const type = typeof arg === 'string' ? 'event' : 'property'
     const msg = `<${tagName}> component does not support '${name}' ${type} in ${platform} environment!`
@@ -33,6 +36,7 @@ module.exports = function getComponentConfigs ({ warn, error }) {
 
   // 转换规则只需以微信为基准配置微信和支付宝的差异部分，比如微信和支付宝都支持但是写法不一致，或者微信支持而支付宝不支持的部分(抛出错误或警告)
   return [
+    aliNonsupport({ print }),
     view({ print }),
     scrollView({ print }),
     swiper({ print }),
