@@ -1,7 +1,14 @@
-module.exports = function ({ warn, error }) {
+const TAG_NAME = 'view'
+
+module.exports = function ({ print }) {
+  /**
+   * @type {function(isError: (number|boolean|string)?): void} aliLog
+   * @desc - 无法转换时告知用户的通用方法，接受0个或1个参数，意为是否error级别
+   */
+  const aliLog = print('ali', TAG_NAME)
   return {
     // 匹配标签名，可传递正则
-    test: 'view',
+    test: TAG_NAME,
     // 支付宝标签名转换函数，如无差异可忽略
     // ali () {
     //   return 'a:view'
@@ -11,9 +18,7 @@ module.exports = function ({ warn, error }) {
       {
         test: /^aria-(role|label)$/,
         // 当遇到微信支持而支付宝不支持的特性时，转换函数可以只抛出错误或警告而不返回值
-        ali ({ name }) {
-          warn(`View component does not support ${name} property in ali environment!`)
-        }
+        ali: aliLog(1)
       }
     ],
     // 组件事件中的差异部分
