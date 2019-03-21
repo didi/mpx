@@ -26,7 +26,7 @@ module.exports = function ({ print }) {
           obj.name = propsMap[obj.name]
           return obj
         }
-      },
+      }
     ],
     event: [
       {

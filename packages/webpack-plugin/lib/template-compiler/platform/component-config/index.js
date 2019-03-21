@@ -20,7 +20,7 @@ const radio = require('./radio')
 const slider = require('./slider')
 const switchComponent = require('./switch')
 const textarea = require('./textarea')
-
+const image = require('./image')
 const map = require('./map')
 const aliNonsupport = require('./aliunsupport')
 
@@ -65,6 +65,7 @@ module.exports = function getComponentConfigs ({ warn, error }) {
     slider({ print }),
     switchComponent({ print }),
     textarea({ print }),
+    image({ print }),
     map({ print })
   ]
 }
