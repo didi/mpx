@@ -17,6 +17,7 @@ const input = require('./input')
 const picker = require('./picker')
 const pickerView = require('./picker-view')
 const radio = require('./radio')
+const slider = require('./slider')
 
 const map = require('./map')
 
@@ -28,7 +29,7 @@ module.exports = function getComponentConfigs ({ warn, error }) {
    * @return {function(*): Function}
    */
   const print = (platform, tagName) => (isError) => (arg) => {
-    const name = typeof arg === 'string' ? arg : arg.name
+    const name = typeof arg === 'string' ? `bind${arg}` : arg.name
     const type = typeof arg === 'string' ? 'event' : 'property'
     const msg = `<${tagName}> component does not support '${name}' ${type} in ${platform} environment!`
     isError ? error(msg) : warn(msg)
@@ -55,6 +56,7 @@ module.exports = function getComponentConfigs ({ warn, error }) {
     picker({ print }),
     pickerView({ print }),
     radio({ print }),
+    slider({ print }),
     map({ print })
   ]
 }

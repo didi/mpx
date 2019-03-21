@@ -1,4 +1,4 @@
-const TAG_NAME = 'input'
+const TAG_NAME = 'slider'
 
 module.exports = function ({ print }) {
   /**
@@ -10,16 +10,31 @@ module.exports = function ({ print }) {
     test: TAG_NAME,
     props: [
       {
-        test: /^(cursor-spacing|auto-focus|adjust-position|aria-label)$/,
+        test: /^(color|aria-label)$/,
         ali: aliLog()
-      }
+      },
+      {
+        test: /^(selected-color|activeColor|backgroundColor|block-size|block-color)$/,
+        ali (obj) {
+          const propsMap = {
+            'selected-color': 'active-color',
+            'activeColor': 'active-color',
+            'backgroundColor': 'background-color',
+            'block-size': 'handle-size',
+            'block-color': 'handle-color'
+          }
+          obj.name = propsMap[obj.name]
+          return obj
+        }
+      },
     ],
     event: [
       {
         test: /^(change)$/,
         ali (eventName) {
           const eventMap = {
-            'change': 'change'
+            'change': 'change',
+            'changing': 'changing'
           }
           return eventMap[eventName]
         }
