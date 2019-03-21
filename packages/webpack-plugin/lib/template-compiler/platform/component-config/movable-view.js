@@ -1,11 +1,11 @@
-const TAG_NAME = 'swiper'
+const TAG_NAME = 'movable-view'
 
 module.exports = function ({ warn, error }) {
   return {
     test: TAG_NAME,
     props: [
       {
-        test: /^(current-item-id|display-multiple-items|skip-hidden-item-layout)$/,
+        test: /^(inertia|out-of-bounds|damping|friction|scale|scale-min|scale-max|scale-value|animation|)$/,
         ali ({ name }) {
           warn(`${TAG_NAME} component does not support ${name} property in ali environment!`)
         }
@@ -22,7 +22,7 @@ module.exports = function ({ warn, error }) {
         }
       },
       {
-        test: /^(transition|animationfinish)$/,
+        test: /^(htouchmove|vtouchmove)$/,
         ali (eventName) {
           warn(`${TAG_NAME} component does not support ${'bind' + eventName} property in ali environment!`)
         }

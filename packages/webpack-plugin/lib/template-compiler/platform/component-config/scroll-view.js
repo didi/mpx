@@ -1,11 +1,13 @@
+const TAG_NAME = 'scroll-view'
+
 module.exports = function ({ warn, error }) {
   return {
-    test: 'scroll-view',
+    test: TAG_NAME,
     props: [
       {
         test: /^(aria-label)$/,
         ali ({ name }) {
-          warn(`View component does not support ${name} property in ali environment!`)
+          warn(`${TAG_NAME} component does not support ${name} property in ali environment!`)
         }
       }
     ],
