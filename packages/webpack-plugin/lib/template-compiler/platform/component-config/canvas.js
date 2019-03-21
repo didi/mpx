@@ -1,6 +1,11 @@
 const TAG_NAME = 'canvas'
 
-module.exports = function ({ warn, error }) {
+module.exports = function ({ print }) {
+  /**
+   * @type {function(isError: (number|boolean|string)?): void} aliLog
+   * @desc - 无法转换时告知用户的通用方法，接受0个或1个参数，意为是否error级别
+   */
+  const aliLog = print('ali', TAG_NAME)
   return {
     // 匹配标签名，可传递正则
     test: TAG_NAME,
@@ -14,9 +19,7 @@ module.exports = function ({ warn, error }) {
       },
       {
         test: /^(disable-scroll)$/,
-        ali ({ name }) {
-          warn(`<${TAG_NAME}> component does not support '${name}' property in ali environment!`)
-        }
+        ali: aliLog()
       }
     ],
     // 组件事件中的差异部分
@@ -25,9 +28,7 @@ module.exports = function ({ warn, error }) {
     event: [
       {
         test: /^(error)$/,
-        ali (eventName) {
-          warn(`${TAG_NAME} not support ${eventName} event in ali environment!`)
-        }
+        ali: aliLog()
       }
     ]
   }

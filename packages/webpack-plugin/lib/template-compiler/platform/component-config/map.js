@@ -1,12 +1,11 @@
 const TAG_NAME = 'map'
 
-module.exports = function ({ warn, error }) {
-  const ali = (isError) => (arg) => {
-    const name = typeof arg === 'string' ? arg : arg.name
-    const type = typeof arg === 'string' ? 'event' : 'property'
-    const msg = `<${TAG_NAME}> component does not support '${name}' ${type} in ali environment!`
-    isError ? error(msg) : warn(msg)
-  }
+module.exports = function ({ print }) {
+  /**
+   * @type {function(isError: (number|boolean|string)?): void} aliLog
+   * @desc - 无法转换时告知用户的通用方法，接受0个或1个参数，意为是否error级别
+   */
+  const aliLog = print('ali', TAG_NAME)
 
   return {
     // 匹配标签名，可传递正则
@@ -15,7 +14,7 @@ module.exports = function ({ warn, error }) {
     props: [
       {
         test: /^(subkey|enable-3D|enable-overlooking|enable-zoom|disable-scroll|enable-rotate)$/,
-        ali: ali()
+        ali: aliLog()
       },
       {
         // todo: 支付宝平台待验证此处是否可以多次传setting参数
@@ -40,7 +39,7 @@ module.exports = function ({ warn, error }) {
       },
       {
         test: /^(updated|poitap)$/,
-        ali: ali(1)
+        ali: aliLog(1)
       }
     ]
   }
