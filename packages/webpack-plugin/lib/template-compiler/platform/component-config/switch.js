@@ -1,4 +1,4 @@
-const TAG_NAME = 'input'
+const TAG_NAME = 'switch'
 
 module.exports = function ({ print }) {
   /**
@@ -10,22 +10,24 @@ module.exports = function ({ print }) {
     test: TAG_NAME,
     props: [
       {
-        test: /^(cursor-spacing|auto-focus|adjust-position|aria-label)$/,
+        test: /^(type|aria-label)$/,
         ali: aliLog()
       }
     ],
     event: [
       {
-        test: /^(change)$/,
+        test: /^(change|input|confirm)$/,
         ali (eventName) {
           const eventMap = {
-            'change': 'change'
+            'change': 'change',
+            'input': 'input',
+            'confirm': 'confirm'
           }
           return eventMap[eventName]
         }
       },
       {
-        test: /^(transition|animationfinish)$/,
+        test: /^(linechange|animationfinish)$/,
         ali: aliLog()
       }
     ]

@@ -1,4 +1,4 @@
-const TAG_NAME = 'checkbox-group'
+const TAG_NAME = 'checkbox'
 
 module.exports = function ({ print }) {
   /**

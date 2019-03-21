@@ -1,4 +1,4 @@
-const TAG_NAME = 'input'
+const TAG_NAME = 'picker'
 
 module.exports = function ({ print }) {
   /**
@@ -8,12 +8,6 @@ module.exports = function ({ print }) {
   const aliLog = print('ali', TAG_NAME)
   return {
     test: TAG_NAME,
-    props: [
-      {
-        test: /^(cursor-spacing|auto-focus|adjust-position|aria-label)$/,
-        ali: aliLog()
-      }
-    ],
     event: [
       {
         test: /^(change)$/,
@@ -25,7 +19,7 @@ module.exports = function ({ print }) {
         }
       },
       {
-        test: /^(transition|animationfinish)$/,
+        test: /^(cancel)$/,
         ali: aliLog()
       }
     ]

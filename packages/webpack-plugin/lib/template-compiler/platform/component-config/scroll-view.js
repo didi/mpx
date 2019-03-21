@@ -19,9 +19,9 @@ module.exports = function ({ print }) {
         test: /^(scrolltoupper|scrolltolower|scroll)$/,
         ali (eventName) {
           const eventMap = {
-            'scrolltoupper': 'onScrollToUpper',
-            'scrolltolower': 'onScrollToLower',
-            'scroll': 'onScroll'
+            'scrolltoupper': 'ScrollToUpper',
+            'scrolltolower': 'ScrollToLower',
+            'scroll': 'Scroll'
           }
           return eventMap[eventName]
         }

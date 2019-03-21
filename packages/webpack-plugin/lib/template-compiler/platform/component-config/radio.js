@@ -1,4 +1,4 @@
-const TAG_NAME = 'form'
+const TAG_NAME = 'radio'
 
 module.exports = function ({ print }) {
   /**
@@ -10,20 +10,8 @@ module.exports = function ({ print }) {
     test: TAG_NAME,
     props: [
       {
-        test: /^(report-submit-timeout)$/,
+        test: /^(aria-label)$/,
         ali: aliLog()
-      }
-    ],
-    event: [
-      {
-        test: /^(submit|reset)$/,
-        ali (eventName) {
-          const eventMap = {
-            'submit': 'Submit',
-            'reset': 'Reset'
-          }
-          return eventMap[eventName]
-        }
       }
     ]
   }

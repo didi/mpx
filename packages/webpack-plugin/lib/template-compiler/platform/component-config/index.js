@@ -14,6 +14,12 @@ const checkbox = require('./checkbox')
 const checkboxGroup = require('./checkbox-group')
 const form = require('./form')
 const input = require('./input')
+const picker = require('./picker')
+const pickerView = require('./picker-view')
+const radio = require('./radio')
+const slider = require('./slider')
+const switchComponent = require('./switch')
+const textarea = require('./textarea')
 
 const map = require('./map')
 const aliNonsupport = require('./aliunsupport')
@@ -28,7 +34,7 @@ module.exports = function getComponentConfigs ({ warn, error }) {
    */
   const print = (platform, tagName, isTagLevel = false) => (isError) => (arg) => {
     if (isTagLevel) return error(`<${tagName}> not supported in ${platform} environment!!`)
-    const name = typeof arg === 'string' ? arg : arg.name
+    const name = typeof arg === 'string' ? `bind${arg}` : arg.name
     const type = typeof arg === 'string' ? 'event' : 'property'
     const msg = `<${tagName}> component does not support '${name}' ${type} in ${platform} environment!`
     isError ? error(msg) : warn(msg)
@@ -53,6 +59,12 @@ module.exports = function getComponentConfigs ({ warn, error }) {
     checkboxGroup({ print }),
     form({ print }),
     input({ print }),
+    picker({ print }),
+    pickerView({ print }),
+    radio({ print }),
+    slider({ print }),
+    switchComponent({ print }),
+    textarea({ print }),
     map({ print })
   ]
 }

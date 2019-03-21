@@ -11,9 +11,7 @@ module.exports = function ({ print }) {
     props: [
       {
         test: /^(border-radius|font-size|color|active-mode|aria-label)$/,
-        ali ({ name }) {
-          warn(`<${TAG_NAME}> component does not support ${name} property in ali environment!`)
-        }
+        ali: aliLog()
       }
     ],
     event: [

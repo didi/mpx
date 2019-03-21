@@ -1,4 +1,4 @@
-const TAG_NAME = 'input'
+const TAG_NAME = 'picker-view'
 
 module.exports = function ({ print }) {
   /**
@@ -10,7 +10,7 @@ module.exports = function ({ print }) {
     test: TAG_NAME,
     props: [
       {
-        test: /^(cursor-spacing|auto-focus|adjust-position|aria-label)$/,
+        test: /^(aria-label)$/,
         ali: aliLog()
       }
     ],
@@ -25,7 +25,7 @@ module.exports = function ({ print }) {
         }
       },
       {
-        test: /^(transition|animationfinish)$/,
+        test: /^(pickstart|pickend)$/,
         ali: aliLog()
       }
     ]
