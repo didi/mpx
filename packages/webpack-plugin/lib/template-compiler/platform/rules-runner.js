@@ -1,7 +1,7 @@
 const type = require('../../utils/type')
 
 module.exports = function getTargetElRulesRunner ({ target, warn, error }) {
-  const componentConfigs = require('./component-config/component-configs')({
+  const componentConfigs = require('./component-config')({
     warn,
     error
   })
