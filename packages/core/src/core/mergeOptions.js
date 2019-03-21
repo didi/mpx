@@ -1,11 +1,12 @@
 import { type, merge, extend } from '../helper/utils'
-import { convertRule } from '../convertor/convertor'
+import { getConvertRule } from '../convertor/convertor'
 
 let CURRENT_HOOKS = []
 let curType
+let convertRule
 
 export default function mergeOptions (options = {}, type, needProxyLifecycle = true) {
-  if (!options.mixins || !options.mixins.length) return options
+  convertRule = getConvertRule(options.mpxConvertMode || 'default')
   // 微信小程序使用Component创建page
   curType = type === 'app' || !convertRule.mode ? type : convertRule.mode
   CURRENT_HOOKS = convertRule.lifecycle[curType]
