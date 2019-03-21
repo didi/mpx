@@ -1,6 +1,14 @@
 const compiler = require('./compiler')
 // const bindThis = require('./bind-this').transform
-var input = '<view bindtap="handler">{{a.b.c["aaa"].e}}</view>'
+// var input = '<view bindtap="handler" transitionend="xxx">{{a.b.c["aaa"].e}}</view>'
+var input = `<swiper bindchange="handler">{{a.b.c["aaa"].e}}</swiper>
+<scroll-view  bindscrolltoupper="dd"></scroll-view>
+<movable-view></movable-view>
+<movable-area></movable-area>
+<button bindlaunchapp></button>
+<form bindsubmit></form>
+<input cursor-spacing></input>
+<cover-image bindload aria-role></cover-image>`
 
 let parsed = compiler.parse(input, {
   usingComponents: ['com1', 'com2', 'com3'],
