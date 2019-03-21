@@ -10,6 +10,8 @@ const text = require('./text')
 const richText = require('./rich-text')
 const progress = require('./progress')
 
+const map = require('./map')
+
 module.exports = function getComponentConfigs ({ warn, error }) {
   /**
    * universal print for detail component warn or error
