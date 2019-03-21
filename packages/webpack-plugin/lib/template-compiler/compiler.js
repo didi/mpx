@@ -4,7 +4,7 @@ const config = require('../config')
 const normalize = require('../utils/normalize')
 const isValidIdentifierStr = require('../utils/is-valid-identifier-str')
 const isEmptyObject = require('../utils/is-empty-object')
-const getRulesRunner = require('./rules-runner')
+const getRulesRunner = require('./platform/rules-runner')
 
 /**
  * Make a map and return a function for checking if a key
