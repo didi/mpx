@@ -38,10 +38,6 @@ module.exports = function ({ print }) {
           }
           return eventMap[eventName]
         }
-      },
-      {
-        test: /^(transition|animationfinish)$/,
-        ali: aliLog()
       }
     ]
   }

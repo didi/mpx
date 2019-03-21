@@ -18,6 +18,8 @@ const picker = require('./picker')
 const pickerView = require('./picker-view')
 const radio = require('./radio')
 const slider = require('./slider')
+const switchComponent = require('./switch')
+const textarea = require('./textarea')
 
 const map = require('./map')
 
@@ -57,6 +59,8 @@ module.exports = function getComponentConfigs ({ warn, error }) {
     pickerView({ print }),
     radio({ print }),
     slider({ print }),
+    switchComponent({ print }),
+    textarea({ print }),
     map({ print })
   ]
 }

@@ -1,4 +1,4 @@
-const TAG_NAME = 'swiper'
+const TAG_NAME = 'textarea'
 
 module.exports = function ({ print }) {
   /**
@@ -10,22 +10,25 @@ module.exports = function ({ print }) {
     test: TAG_NAME,
     props: [
       {
-        test: /^(current-item-id|display-multiple-items|skip-hidden-item-layout)$/,
+        test: /^(auto-focus|fixed|cursor-spacing|cursor|show-confirm-bar|selection-start|selection-end|adjust-position|aria-label)$/,
         ali: aliLog()
       }
     ],
     event: [
       {
-        test: /^(change)$/,
+        test: /^(focus|blur|input|confirm)$/,
         ali (eventName) {
           const eventMap = {
-            'change': 'change'
+            'blur': 'blur',
+            'focus': 'focus',
+            'input': 'input',
+            'confirm': 'confirm'
           }
           return eventMap[eventName]
         }
       },
       {
-        test: /^(transition|animationfinish)$/,
+        test: /^(linechange)$/,
         ali: aliLog()
       }
     ]
