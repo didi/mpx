@@ -1,19 +1,23 @@
 import { type, merge, extend } from '../helper/utils'
-import { convertRule } from '../convertor/convertor'
+import { getConvertRule } from '../convertor/convertor'
 
 let CURRENT_HOOKS = []
 let curType
+let convertRule
 
-export default function mergeOptions (options = {}, type, needProxyLifecycle = true) {
-  if (!options.mixins || !options.mixins.length) return options
+export default function mergeOptions (options = {}, type, needConvert = true) {
+  // needConvert为false，表示衔接原生的root配置，那么此时的配置都是当前原生环境支持的配置，不需要转换
+  convertRule = getConvertRule(needConvert ? options.mpxConvertMode || 'default' : 'local')
   // 微信小程序使用Component创建page
   curType = type === 'app' || !convertRule.mode ? type : convertRule.mode
   CURRENT_HOOKS = convertRule.lifecycle[curType]
   const newOptions = {}
   extractMixins(newOptions, options)
-  needProxyLifecycle && proxyHooks(newOptions)
-  // 自定义补充转换函数
-  typeof convertRule.convert === 'function' && convertRule.convert(newOptions)
+  if (needConvert) {
+    proxyHooks(newOptions)
+    // 自定义补充转换函数
+    typeof convertRule.convert === 'function' && convertRule.convert(newOptions)
+  }
   return transformHOOKS(newOptions)
 }
 
