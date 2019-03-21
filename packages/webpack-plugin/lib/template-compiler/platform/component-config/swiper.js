@@ -7,7 +7,7 @@ module.exports = function ({ warn, error }) {
       {
         test: /^(current-item-id|display-multiple-items|skip-hidden-item-layout)$/,
         ali ({ name }) {
-          warn(`${TAG_NAME} component does not support ${name} property in ali environment!`)
+          warn(`<${TAG_NAME}> component does not support ${name} property in ali environment!`)
         }
       }
     ],
@@ -24,7 +24,7 @@ module.exports = function ({ warn, error }) {
       {
         test: /^(transition|animationfinish)$/,
         ali (eventName) {
-          warn(`${TAG_NAME} component does not support ${'bind' + eventName} property in ali environment!`)
+          warn(`<${TAG_NAME}> component does not support bind${eventName} property in ali environment!`)
         }
       }
     ]

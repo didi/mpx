@@ -7,7 +7,7 @@ module.exports = function ({ warn, error }) {
       {
         test: /^(aria-label)$/,
         ali ({ name }) {
-          warn(`${TAG_NAME} component does not support ${name} property in ali environment!`)
+          warn(`<${TAG_NAME}> component does not support ${name} property in ali environment!`)
         }
       }
     ],

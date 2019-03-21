@@ -5,9 +5,9 @@ module.exports = function ({ warn, error }) {
     test: TAG_NAME,
     props: [
       {
-        test: /^(inertia|out-of-bounds|damping|friction|scale|scale-min|scale-max|scale-value|animation|)$/,
+        test: /^(inertia|out-of-bounds|damping|friction|scale|scale-min|scale-max|scale-value|animation)$/,
         ali ({ name }) {
-          warn(`${TAG_NAME} component does not support ${name} property in ali environment!`)
+          warn(`<${TAG_NAME}> component does not support ${name} property in ali environment!`)
         }
       }
     ],
@@ -24,7 +24,7 @@ module.exports = function ({ warn, error }) {
       {
         test: /^(htouchmove|vtouchmove)$/,
         ali (eventName) {
-          warn(`${TAG_NAME} component does not support ${'bind' + eventName} property in ali environment!`)
+          warn(`<${TAG_NAME}> component does not support bind${eventName} property in ali environment!`)
         }
       }
     ]
