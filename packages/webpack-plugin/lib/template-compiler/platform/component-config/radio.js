@@ -1,4 +1,4 @@
-const TAG_NAME = 'checkbox'
+const TAG_NAME = 'radio'
 
 module.exports = function ({ print }) {
   /**

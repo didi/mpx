@@ -1,4 +1,4 @@
-const TAG_NAME = 'checkbox'
+const TAG_NAME = 'picker-view'
 
 module.exports = function ({ print }) {
   /**
@@ -11,6 +11,21 @@ module.exports = function ({ print }) {
     props: [
       {
         test: /^(aria-label)$/,
+        ali: aliLog()
+      }
+    ],
+    event: [
+      {
+        test: /^(change)$/,
+        ali (eventName) {
+          const eventMap = {
+            'change': 'onchange'
+          }
+          return eventMap[eventName]
+        }
+      },
+      {
+        test: /^(pickstart|pickend)$/,
         ali: aliLog()
       }
     ]

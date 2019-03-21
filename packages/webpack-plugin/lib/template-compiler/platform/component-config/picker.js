@@ -1,4 +1,4 @@
-const TAG_NAME = 'checkbox'
+const TAG_NAME = 'picker'
 
 module.exports = function ({ print }) {
   /**
@@ -8,9 +8,18 @@ module.exports = function ({ print }) {
   const aliLog = print('ali', TAG_NAME)
   return {
     test: TAG_NAME,
-    props: [
+    event: [
       {
-        test: /^(aria-label)$/,
+        test: /^(change)$/,
+        ali (eventName) {
+          const eventMap = {
+            'change': 'onchange'
+          }
+          return eventMap[eventName]
+        }
+      },
+      {
+        test: /^(cancel)$/,
         ali: aliLog()
       }
     ]

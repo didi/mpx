@@ -14,6 +14,9 @@ const checkbox = require('./checkbox')
 const checkboxGroup = require('./checkbox-group')
 const form = require('./form')
 const input = require('./input')
+const picker = require('./picker')
+const pickerView = require('./picker-view')
+const radio = require('./radio')
 
 const map = require('./map')
 
@@ -49,6 +52,9 @@ module.exports = function getComponentConfigs ({ warn, error }) {
     checkboxGroup({ print }),
     form({ print }),
     input({ print }),
+    picker({ print }),
+    pickerView({ print }),
+    radio({ print }),
     map({ print })
   ]
 }
