@@ -10,7 +10,7 @@ export default {
     '__destroyed__': ['detached'],
     '__updated__': ['updated']
   },
-  convert(options) {
+  convert (options) {
     if (options.properties) {
       const newProps = {}
       Object.keys(options.properties).forEach(key => {
@@ -19,6 +19,8 @@ export default {
           newProps[key] = prop.value
         }
       })
-      options.properties = newProps
+      options.props = newProps
+      delete options.properties
     }
   }
+}

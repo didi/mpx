@@ -32,6 +32,7 @@ const defaultConvertRule = {
 }
 
 const RULEMAPS = {
+  local: { ...defaultConvertRule },
   default: defaultConvertRule,
   wxToAli: wxToAliRule // 微信转支付宝rule
 }
@@ -48,7 +49,7 @@ export function setConvertRule (rule) {
   Object.keys(defaultConvertRule).forEach(key => {
     if (rule.hasOwnProperty(key)) {
       if (type(defaultConvertRule[key]) === 'Object') {
-        Object.assign(defaultConvertRule[key], rule[key])
+        defaultConvertRule[key] = Object.assign({}, defaultConvertRule[key], rule[key])
       } else {
         defaultConvertRule[key] = rule[key]
       }
