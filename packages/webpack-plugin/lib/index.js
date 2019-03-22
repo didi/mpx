@@ -17,6 +17,9 @@ class MpxWebpackPlugin {
   constructor (options = {}) {
     options.mode = options.mode || 'wx'
     options.srcMode = options.srcMode || options.mode
+    if (options.srcMode !== 'wx') {
+      throw new Error('MpxWebpackPlugin supports srcMode to be "wx" only temporarily!')
+    }
     this.options = options
   }
 
@@ -37,7 +40,8 @@ class MpxWebpackPlugin {
     compiler.options.output.publicPath = '/'
     // define mode
     new DefinePlugin({
-      '__mpx_mode__': JSON.stringify(this.options.mode)
+      '__mpx_mode__': JSON.stringify(this.options.mode),
+      '__mpx_src_mode__': JSON.stringify(this.options.srcMode),
     }).apply(compiler)
 
     compiler.hooks.thisCompilation.tap('MpxWebpackPlugin', (compilation, params) => {

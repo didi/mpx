@@ -17,6 +17,29 @@ module.exports = function (content) {
   const mode = this._compilation.__mpx__.mode
   const resource = stripExtension(this.resource)
 
+  const resourceQueryObj = loaderUtils.parseQuery(this.resourceQuery)
+
+  // 支持资源query传入page或component支持页面/组件单独编译
+
+  if ((resourceQueryObj.component && !componentsMap[resource]) || (resourceQueryObj.page && !pagesMap[resource])) {
+    let entryChunkName
+    const rawRequest = this.__module.rawRequest
+    const _preparedEntrypoints = this._compilation._preparedEntrypoints
+    for (let i = 0; i < _preparedEntrypoints.length; i++) {
+      if (rawRequest === _preparedEntrypoints[i].request) {
+        entryChunkName = _preparedEntrypoints[i].name
+        break
+      }
+    }
+    if (entryChunkName) {
+      if (resourceQueryObj.component) {
+        componentsMap[resource] = entryChunkName
+      } else {
+        pagesMap[resource] = entryChunkName
+      }
+    }
+  }
+
   const loaderContext = this
   const isProduction = this.minimize || process.env.NODE_ENV === 'production'
   const options = loaderUtils.getOptions(this) || {}
