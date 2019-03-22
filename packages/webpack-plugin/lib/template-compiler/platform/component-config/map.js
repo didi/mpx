@@ -13,12 +13,8 @@ module.exports = function ({ print }) {
     // 组件属性中的差异部分
     props: [
       {
-        test: /^(subkey|enable-3D|enable-overlooking|enable-zoom|disable-scroll|enable-rotate)$/,
+        test: /^(subkey|enable-3D|enable-overlooking|enable-zoom|disable-scroll|enable-rotate|show-compass)$/,
         ali: aliLog()
-      },
-      {
-        // todo: 支付宝平台待验证此处是否可以多次传setting参数
-        test: 'show-compass'
       }
     ],
     // 组件事件中的差异部分
