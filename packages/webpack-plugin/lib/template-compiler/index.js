@@ -2,6 +2,7 @@ const compiler = require('./compiler')
 const loaderUtils = require('loader-utils')
 const bindThis = require('./bind-this').transform
 const InjectDependency = require('../dependency/InjectDependency')
+const stripExtension = require('../utils/strip-extention')
 
 module.exports = function (raw) {
   this.cacheable()
@@ -12,6 +13,10 @@ module.exports = function (raw) {
   }
   const mode = this._compilation.__mpx__.mode
   const srcMode = this._compilation.__mpx__.srcMode
+  const pagesMap = this._compilation.__mpx__.pagesMap
+  const componentsMap = this._compilation.__mpx__.componentsMap
+  const resource = stripExtension(this.resource)
+
   let parsed = compiler.parse(raw, Object.assign(options, {
     warn: (msg) => {
       this.emitWarning(
@@ -35,13 +40,26 @@ module.exports = function (raw) {
       var renderData = {};
       ${compiler.genNode(ast)}
       return renderData
-    }
+    },
+    mode:${JSON.stringify(mode)},
+    srcMode:${JSON.stringify(srcMode)}
 };\n`, {
     needCollect: true,
     ignoreMap: meta.wxsModuleMap
   })
 
   let globalInjectCode = renderResult.code + '\n'
+
+  if (mode === 'ali') {
+    let constructor = 'App'
+    if (pagesMap[resource]) {
+      constructor = 'Page'
+    } else if (componentsMap[resource]) {
+      constructor = 'Component'
+    }
+
+    globalInjectCode += `global.currentInject.constructor = ${constructor};\n`
+  }
 
   if (meta.computed) {
     globalInjectCode += bindThis(`global.currentInject.injectComputed = {
