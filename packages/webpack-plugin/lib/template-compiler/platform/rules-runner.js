@@ -1,7 +1,7 @@
-const type = require('../utils/type')
+const type = require('../../utils/type')
 
 module.exports = function getTargetElRulesRunner ({ target, warn, error }) {
-  const componentConfigs = require('./component-configs')({
+  const componentConfigs = require('./component-config')({
     warn,
     error
   })
@@ -112,7 +112,7 @@ module.exports = function getTargetElRulesRunner ({ target, warn, error }) {
           rAttrsList.push(rAttr || attr)
         })
         el.attrsList = rAttrsList
-        el.attrsMap = require('./compiler').makeAttrsMap(rAttrsList)
+        el.attrsMap = require('../compiler').makeAttrsMap(rAttrsList)
         return el
       }
       return result

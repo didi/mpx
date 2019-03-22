@@ -17,7 +17,11 @@ export default function createFactory (type) {
     }
     // 获取内建的mixins
     const builtInMixins = getBuiltInMixins(options, type)
-    const defaultOptions = getDefaultOptions(type, transferOptions(options, type, builtInMixins))
+    const { rawOptions, currentInject } = transferOptions(options, type, builtInMixins)
+    const defaultOptions = getDefaultOptions(type, { rawOptions, currentInject })
+    if (!constructor) {
+      constructor = currentInject.constructor
+    }
     constructor(defaultOptions)
   }
 }

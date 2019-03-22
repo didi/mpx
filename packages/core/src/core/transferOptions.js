@@ -1,5 +1,6 @@
 import { mergeInjectedMixins } from './injectMixins'
 import mergeOptions from './mergeOptions'
+import { getConvertMode } from '../convertor/getConvertMode'
 
 export default function transferOptions (options, type, builtInMixins = []) {
   let currentInject
@@ -17,7 +18,7 @@ export default function transferOptions (options, type, builtInMixins = []) {
       options.computed = Object.assign({}, options.computed, currentInject.injectComputed)
     }
     // 转换mode
-    options.mpxConvertMode = currentInject.mpxConvertMode
+    options.mpxConvertMode = options.mpxConvertMode || getConvertMode(currentInject.srcMode, currentInject.mode)
   }
   const rawOptions = mergeOptions(options, type)
   return {
