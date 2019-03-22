@@ -57,11 +57,19 @@ export function setConvertRule (rule) {
   })
 }
 
-export function getConvertRule (type) {
-  const rule = RULEMAPS[type]
-  if (!rule) {
-    console.error(`no convert rule for ${type}`)
+export function getConvertRule (convertMode) {
+  let rule
+  if (typeof convertMode === 'function') {
+    rule = convertMode() || {}
+    const lifecycle = lifecycleTemplates[rule.lifecycleTemplate] || rule.lifecycle
+    // 混入内部钩子
+    rule.lifecycle = mergeLifecycle(lifecycle)
   } else {
-    return RULEMAPS[type]
+    rule = RULEMAPS[convertMode]
+  }
+  if (!rule || !rule.lifecycle) {
+    console.error(`no convert rule for ${convertMode}`)
+  } else {
+    return rule
   }
 }
