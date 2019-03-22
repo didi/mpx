@@ -51,14 +51,14 @@ module.exports = function (raw) {
   let globalInjectCode = renderResult.code + '\n'
 
   if (mode === 'ali') {
-    let constructor = 'App'
+    let ctor = 'App'
     if (pagesMap[resource]) {
-      constructor = 'Page'
+      ctor = 'Page'
     } else if (componentsMap[resource]) {
-      constructor = 'Component'
+      ctor = 'Component'
     }
 
-    globalInjectCode += `global.currentInject.constructor = ${constructor};\n`
+    globalInjectCode += `global.currentInject.ctor = ${ctor};\n`
   }
 
   if (meta.computed) {
