@@ -1,5 +1,5 @@
 import { is } from '../../helper/env'
-import { collectDataset, setByPath } from '../../helper/utils'
+import { collectDataset, setByPath, getByPath } from '../../helper/utils'
 
 export default function proxyEventMixin () {
   const methods = {
@@ -24,8 +24,8 @@ export default function proxyEventMixin () {
         const callbackName = item[0]
         if (callbackName) {
           const params = item.length > 1 ? item.slice(1).map(item => {
-            if (item === '$event') {
-              return $event
+            if (/^\$event/.test(item)) {
+              return getByPath({ $event }, item)
             } else {
               return item
             }
