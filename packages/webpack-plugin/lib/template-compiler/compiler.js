@@ -815,7 +815,7 @@ function parseFuncStr2 (str) {
   if (match) {
     let funcName = stringify(match[1])
     let args = match[3] ? `,${match[3]}` : ''
-    args = args.replace('$event', stringify('$event'))
+    args = args.replace(/(\$event([^,\s])*)/, (match, p1) => stringify(p1))
     return {
       args,
       expStr: `[${funcName + args}]`

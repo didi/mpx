@@ -9,8 +9,7 @@ const normalize = require('../utils/normalize')
 const nativeLoaderPath = normalize.lib('native-loader')
 const stripExtension = require('../utils/strip-extention')
 const toPosix = require('../utils/to-posix')
-const parseQuery = require('../utils/query').parseQuery
-const stringifyQuery = require('../utils/query').stringifyQuery
+const stringifyQuery = require('../utils/stringify-query')
 
 module.exports = function (raw) {
   // 该loader中会在每次编译中动态添加entry，不能缓存，否则watch不好使
@@ -365,7 +364,7 @@ module.exports = function (raw) {
           return str
         }
         const queryStr = tempArr[1]
-        const parsedQuery = parseQuery('?' + queryStr)
+        const parsedQuery = loaderUtils.parseQuery('?' + queryStr)
         if (parsedQuery.fallback) {
           return str
         } else {
