@@ -439,7 +439,7 @@ function parseHTML (html, options) {
 }
 
 function parseComponent (content, options) {
-  if (options === void 0) options = {}
+  mode = options.mode || 'wx'
 
   var sfc = {
     template: null,
@@ -467,12 +467,14 @@ function parseComponent (content, options) {
       }
       if (isSpecialTag(tag)) {
         checkAttrs(currentBlock, attrs)
-        if (tag === 'style') {
-          sfc.styles.push(currentBlock)
-        } else if (tag === 'script' && currentBlock.type === 'application/json') {
-          sfc.json = currentBlock
-        } else {
-          sfc[tag] = currentBlock
+        if (!currentBlock.mode || currentBlock.mode === mode) {
+          if (tag === 'style') {
+            sfc.styles.push(currentBlock)
+          } else if (tag === 'script' && currentBlock.type === 'application/json') {
+            sfc.json = currentBlock
+          } else {
+            sfc[tag] = currentBlock
+          }
         }
       } else { // custom blocks
         sfc.customBlocks.push(currentBlock)
@@ -500,6 +502,9 @@ function parseComponent (content, options) {
       }
       if (attr.name === 'src') {
         block.src = attr.value
+      }
+      if (attr.name === 'mode') {
+        block.mode = attr.value
       }
     }
   }
@@ -728,8 +733,8 @@ function stringify (str) {
   return config[mode].stringify(str)
 }
 
-let tagRE = /\{\{((?:.|\n)+?)\}\}/
-let tagREG = /\{\{((?:.|\n)+?)\}\}/g
+let tagRE = /\{\{((?:.|\n)+?)\}\}(?!})/
+let tagREG = /\{\{((?:.|\n)+?)\}\}(?!})/g
 
 function processLifecycleHack (el, options) {
   if (options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component') {

@@ -17,7 +17,7 @@ module.exports = function (content) {
   const mode = this._compilation.__mpx__.mode
   const resource = stripExtension(this.resource)
 
-  const resourceQueryObj = loaderUtils.parseQuery(this.resourceQuery)
+  const resourceQueryObj = loaderUtils.parseQuery(this.resourceQuery || '?')
 
   // 支持资源query传入page或component支持页面/组件单独编译
 
@@ -61,7 +61,7 @@ module.exports = function (content) {
     options.cssSourceMap !== false
   )
 
-  const parts = parse(content, fileName, this.sourceMap)
+  const parts = parse(content, fileName, this.sourceMap, mode)
   //
   const hasScoped = parts.styles.some(({ scoped }) => scoped)
   const templateAttrs = parts.template && parts.template.attrs && parts.template.attrs
@@ -102,15 +102,18 @@ module.exports = function (content) {
   })
   this._module.addDependency(dep)
   // 触发webpack global var 注入
-  let output = ''
+  let output = 'global.currentModuleId;\n'
 
   if (!pagesMap[resource] && !componentsMap[resource] && mode === 'swan') {
-    output += 'if (!global.navigator) {\n'
-    output += '  global.navigator = {};\n'
-    output += '}\n'
-    output += 'global.navigator.standalone = true;\n'
-  } else {
-    output = 'global.currentModuleId;\n'
+    // 注入swan runtime fix
+    const dep = new InjectDependency({
+      content: 'if (!global.navigator) {\n' +
+      '  global.navigator = {};\n' +
+      '}\n' +
+      'global.navigator.standalone = true;\n',
+      index: -4
+    })
+    this._module.addDependency(dep)
   }
 
   //
@@ -118,6 +121,13 @@ module.exports = function (content) {
   output += '/* script */\n'
   const script = parts.script
   if (script) {
+    if (script.mode) {
+      const dep = new InjectDependency({
+        content: `global.currentInject.srcMode = ${JSON.stringify(script.mode)};\n`,
+        index: -1
+      })
+      this._module.addDependency(dep)
+    }
     output += script.src
       ? (getNamedExportsForSrc('script', script) + '\n')
       : (getNamedExports('script', script) + '\n') + '\n'

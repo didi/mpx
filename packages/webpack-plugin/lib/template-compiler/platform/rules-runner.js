@@ -22,7 +22,7 @@ module.exports = function getTargetElRulesRunner ({ target, warn, error }) {
       // 事件
       {
         test: /^(bind|catch|capture-bind|capture-catch):?(.*)$/,
-        ali ({ name, value }, eventRules) {
+        ali ({ name, value }, { eventRules }) {
           const match = this.test.exec(name)
           const prefix = match[1]
           const eventName = match[2]
@@ -108,8 +108,17 @@ module.exports = function getTargetElRulesRunner ({ target, warn, error }) {
         const eventRules = (cfg.event || []).concat(root.event.rules)
         el.attrsList.forEach((attr) => {
           const key = 'name'
-          const rAttr = runRules(root.directive, attr, key, eventRules) || runRules(cfg.props, attr, key)
-          rAttrsList.push(rAttr || attr)
+          const rAttr = runRules(root.directive, attr, key, {
+            eventRules,
+            attrsList: rAttrsList
+          }) || runRules(cfg.props, attr, key, { attrsList: rAttrsList })
+          if (Array.isArray(rAttr)) {
+            rAttrsList.push(...rAttr)
+          } else if (rAttr === false) {
+            // delete original attr
+          } else {
+            rAttrsList.push(rAttr || attr)
+          }
         })
         el.attrsList = rAttrsList
         el.attrsMap = require('../compiler').makeAttrsMap(rAttrsList)

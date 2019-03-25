@@ -202,7 +202,9 @@ module.exports = function (raw) {
               if (extName === '.mpx') {
                 const parts = parse(
                   content,
-                  fileName
+                  fileName,
+                  this.sourceMap,
+                  mode
                 )
                 if (parts.json) {
                   content = parts.json.content
