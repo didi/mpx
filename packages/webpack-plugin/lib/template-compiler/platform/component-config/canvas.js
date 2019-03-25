@@ -13,8 +13,9 @@ module.exports = function ({ print }) {
     props: [
       {
         test: /^canvas-id$/,
-        ali () {
-          return 'id'
+        ali (obj) {
+          obj.name = 'id'
+          return obj
         }
       },
       {
