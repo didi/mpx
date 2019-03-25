@@ -35,40 +35,4 @@ function stringifyQuery (obj) {
   return res ? `?${res}` : ''
 }
 
-/**
- * parse query string to Object. Query string must started with '?'
- * @param {string} query
- * @return {Object} parsed queryObj
- */
-function parseQuery (query) {
-  const res = {}
-
-  query = query.trim().replace(/^(\?|#|&)/, '')
-
-  if (!query) {
-    return res
-  }
-  query.split('&').forEach(param => {
-    const parts = param.replace(/\+/g, ' ').split('=')
-    const key = parts.shift()
-    const val = parts.length > 0 ? parts.join('=') : ''
-
-    if (key === '') {
-      return {}
-    }
-    if (res[key] === undefined) {
-      res[key] = val
-    } else if (Array.isArray(res[key])) {
-      res[key].push(val)
-    } else {
-      res[key] = val
-    }
-  })
-
-  return res
-}
-
-module.exports = {
-  stringifyQuery,
-  parseQuery
-}
+module.exports = stringifyQuery
