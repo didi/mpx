@@ -4,6 +4,9 @@ const ALI_NAME = my
 const ALI_NAME_CACHE = {}
 const ALI_NAME_STRING = 'my'
 
+// canvas api 用
+const CANVAS_MAP = {}
+
 Object.keys(ALI_NAME).forEach((key) => {
   ALI_NAME_CACHE[key] = ALI_NAME[key]
 })
@@ -150,7 +153,23 @@ const wxToAliApi = {
     })
 
     // 钉钉端需要使用 httpRequest
-    ALI_NAME_CACHE.request.call(ALI_NAME, opts)
+    return ALI_NAME_CACHE.request.call(ALI_NAME, opts)
+  },
+
+  downloadFile (options) {
+    const opts = changeOpts(options)
+
+    handleSuccess(opts, res => {
+      return changeOpts(res, { apFilePath: 'tempFilePath' })
+    })
+
+    return ALI_NAME_CACHE.downloadFile.call(ALI_NAME, opts)
+  },
+
+  uploadFile (options) {
+    const opts = changeOpts(options, { name: 'fileName' })
+
+    return ALI_NAME_CACHE.uploadFile.call(ALI_NAME, opts)
   },
 
   setStorageSync (key, data) {
@@ -471,6 +490,50 @@ const wxToAliApi = {
     }
 
     ALI_NAME_CACHE.tradePay.call(ALI_NAME, opts)
+  },
+
+  createCanvasContext (canvasId) {
+    let Cxt = ALI_NAME_CACHE.createCanvasContext.call(ALI_NAME, canvasId)
+
+    CANVAS_MAP[canvasId] = Cxt
+
+    return Cxt
+  },
+
+  canvasToTempFilePath (options) {
+    if (!CANVAS_MAP[options.canvasId]) {
+      error('支付宝调用 toTempFilePath 方法之前需要先调用 createCanvasContext 创建 context')
+      return
+    }
+
+    const opts = changeOpts(options, { canvasId: '' })
+    const cxt = CANVAS_MAP[options.canvasId]
+
+    cxt.toTempFilePath(opts)
+  },
+
+  canvasPutImageData (options) {
+    if (!CANVAS_MAP[options.canvasId]) {
+      error('支付宝调用 putImageData 方法之前需要先调用 createCanvasContext 创建 context')
+      return
+    }
+
+    const opts = changeOpts(options, { canvasId: '' })
+    const cxt = CANVAS_MAP[options.canvasId]
+
+    cxt.putImageData(opts)
+  },
+
+  canvasGetImageData (options) {
+    if (!CANVAS_MAP[options.canvasId]) {
+      error('支付宝调用 getImageData 方法之前需要先调用 createCanvasContext 创建 context')
+      return
+    }
+
+    const opts = changeOpts(options, { canvasId: '' })
+    const cxt = CANVAS_MAP[options.canvasId]
+
+    cxt.getImageData(opts)
   }
 }
 
