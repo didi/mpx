@@ -147,34 +147,34 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
       // get loader string for pre-processors
       getLoaderString(type, part, index, scoped) +
       // select the corresponding part from the mpx file
-      getSelectorString(type, index || 0) +
+      getSelectorString(type, index) +
       // the url to the actual mpx file, including remaining requests
       rawRequest
     )
   }
 
-  function getRequireForSrc (type, impt, scoped) {
-    return 'require(' + getSrcRequestString(type, impt, scoped) + ')'
+  function getRequireForSrc (type, impt, index, scoped) {
+    return 'require(' + getSrcRequestString(type, impt, index, scoped) + ')'
   }
 
-  function getImportForSrc (type, impt, scoped) {
+  function getImportForSrc (type, impt, index, scoped) {
     return (
       'import __' + type + '__ from ' +
-      getSrcRequestString(type, impt, scoped)
+      getSrcRequestString(type, impt, index, scoped)
     )
   }
 
-  function getNamedExportsForSrc (type, impt, scoped) {
+  function getNamedExportsForSrc (type, impt, index, scoped) {
     return (
       'export * from ' +
-      getSrcRequestString(type, impt, scoped)
+      getSrcRequestString(type, impt, index, scoped)
     )
   }
 
-  function getSrcRequestString (type, impt, scoped) {
+  function getSrcRequestString (type, impt, index, scoped) {
     return loaderUtils.stringifyRequest(
       loaderContext,
-      '!!' + getLoaderString(type, impt, -1, scoped) + impt.src
+      '!!' + getLoaderString(type, impt, index, scoped) + impt.src
     )
   }
 
@@ -224,7 +224,7 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
     let loader = getRawLoaderString(type, part, index, scoped)
     const lang = getLangString(type, part)
     if (type !== 'script') {
-      loader = getExtractorString(type, index || 0) + loader
+      loader = getExtractorString(type, index) + loader
     }
     if (preLoaders[lang]) {
       loader = loader + ensureBang(preLoaders[lang])
@@ -324,7 +324,7 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
     }
   }
 
-  function getSelectorString (type, index) {
+  function getSelectorString (type, index = 0) {
     return (
       selectorPath +
       '?type=' +
@@ -336,7 +336,7 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
     )
   }
 
-  function getExtractorString (type, index) {
+  function getExtractorString (type, index = 0) {
     return (
       extractorPath +
       '?type=' +
@@ -344,6 +344,7 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
         ? type
         : 'customBlocks') +
       '&index=' + index +
+      '&resource=' + loaderContext.resource +
       '!'
     )
   }

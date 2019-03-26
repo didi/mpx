@@ -4,6 +4,7 @@ const config = require('../config')
 const normalize = require('../utils/normalize')
 const isValidIdentifierStr = require('../utils/is-valid-identifier-str')
 const isEmptyObject = require('../utils/is-empty-object')
+const getRulesRunner = require('./rules-runner')
 
 /**
  * Make a map and return a function for checking if a key
@@ -112,10 +113,7 @@ function guardIESVGBug (attrs) {
 function makeAttrsMap (attrs) {
   var map = {}
   for (var i = 0, l = attrs.length; i < l; i++) {
-    if (
-      process.env.NODE_ENV !== 'production' &&
-      map[attrs[i].name] && !isIE && !isEdge
-    ) {
+    if (map[attrs[i].name] && !isIE && !isEdge) {
       warn$1('duplicate attribute: ' + attrs[i].name)
     }
     map[attrs[i].name] = attrs[i].value
@@ -166,10 +164,17 @@ var isEdge = UA && UA.indexOf('edge/') > 0
 
 // configurable state
 var warn$1
+var error$1
 var mode
+var srcMode
+var rulesRunner
 var platformGetTagNamespace
 
 function baseWarn (msg) {
+  console.warn(('[template compiler]: ' + msg))
+}
+
+function baseError (msg) {
   console.error(('[template compiler]: ' + msg))
 }
 
@@ -288,7 +293,7 @@ function parseHTML (html, options) {
 
     if (html === last) {
       options.chars && options.chars(html)
-      if (process.env.NODE_ENV !== 'production' && !stack.length && options.warn) {
+      if (!stack.length && options.warn) {
         options.warn(('Mal-formatted tag at end of template: "' + html + '"'))
       }
       break
@@ -405,10 +410,7 @@ function parseHTML (html, options) {
     if (pos >= 0) {
       // Close all the open elements, up the stack
       for (var i = stack.length - 1; i >= pos; i--) {
-        if (process.env.NODE_ENV !== 'production' &&
-          (i > pos || !tagName) &&
-          options.warn
-        ) {
+        if ((i > pos || !tagName) && options.warn) {
           options.warn(
             ('tag <' + (stack[i].tag) + '> has no matching end tag.')
           )
@@ -539,8 +541,18 @@ function parseComponent (content, options) {
 
 function parse (template, options) {
   warn$1 = options.warn || baseWarn
+  error$1 = options.error || baseError
 
   mode = options.mode || 'wx'
+  srcMode = options.srcMode || 'wx'
+
+  if (srcMode === 'wx' && mode !== 'wx') {
+    rulesRunner = getRulesRunner({
+      target: mode,
+      warn: warn$1,
+      error: error$1
+    })
+  }
 
   platformGetTagNamespace = options.getTagNamespace || no
 
@@ -576,7 +588,7 @@ function parse (template, options) {
 
       if (isForbiddenTag(element)) {
         element.forbidden = true
-        process.env.NODE_ENV !== 'production' && warn$1(
+        warn$1(
           'Templates should only be responsible for mapping the state to the ' +
           'UI. Avoid placing tags with side-effects in your templates, such as ' +
           '<' + tag + '>' + ', as they will not be parsed.'
@@ -701,6 +713,17 @@ function addAttrs (el, attrs) {
   Object.assign(el.attrsMap, makeAttrsMap(attrs))
 }
 
+// function modifyAttr (el, name, val) {
+//   el.attrsMap[name] = val
+//   let list = el.attrsList
+//   for (let i = 0, l = list.length; i < l; i++) {
+//     if (list[i].name === name) {
+//       list[i].value = val
+//       break
+//     }
+//   }
+// }
+
 function stringify (str) {
   return config[mode].stringify(str)
 }
@@ -751,18 +774,18 @@ function processComponentIs (el, options) {
 
   options = options || {}
   el.components = options.usingComponents
-  if (process.env.NODE_ENV !== 'production' && !el.components) {
+  if (!el.components) {
     warn$1('Component in which <component> tag is used must have a nonblank usingComponents field')
   }
 
   let is = getAndRemoveAttr(el, 'is')
-  if (process.env.NODE_ENV !== 'production' && !is) {
+  if (!is) {
     warn$1('<component> tag should have attrs[is].')
   }
   if (is) {
     let match = tagRE.exec(is)
     if (match) {
-      if (process.env.NODE_ENV !== 'production' && match[0] !== is) {
+      if (match[0] !== is) {
         warn$1('only first mustache expression is valid in <component> attrs[is].')
       }
       el.is = match[1].trim()
@@ -1153,6 +1176,9 @@ function processStyle (el, meta, root) {
 }
 
 function processElement (el, options, meta, root) {
+  if (rulesRunner) {
+    rulesRunner(el)
+  }
   processIf(el)
   processFor(el)
   processClass(el, meta, root)
@@ -1314,14 +1340,14 @@ function genNode (node) {
   }
   if (node.type === 1) {
     if (node.tag !== 'temp-node') {
-      if (node.if && !node.ifProcessed) {
+      if (node.for && !node.forProcessed) {
+        exp += genFor(node)
+      } else if (node.if && !node.ifProcessed) {
         exp += genIf(node)
       } else if (node.elseif && !node.elseifProcessed) {
         exp += genElseif(node)
       } else if (node.else && !node.elseProcessed) {
         exp += genElse(node)
-      } else if (node.for && !node.forProcessed) {
-        exp += genFor(node)
       } else {
         if (node.exps) {
           exp += genExps(node)
@@ -1345,5 +1371,6 @@ module.exports = {
   parseComponent,
   parse,
   serialize,
-  genNode
+  genNode,
+  makeAttrsMap
 }
