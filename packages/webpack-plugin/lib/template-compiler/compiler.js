@@ -557,6 +557,8 @@ function parse (template, options) {
       warn: warn$1,
       error: error$1
     })
+  } else {
+    rulesRunner = undefined
   }
 
   platformGetTagNamespace = options.getTagNamespace || no
@@ -830,6 +832,7 @@ function processBindEvent (el) {
 
     if (parsedEvent) {
       let type = parsedEvent.eventName
+      let modifiers = (parsedEvent.modifier || '').split('.')
       let parsedFunc = parseFuncStr2(attr.value)
       if (parsedFunc) {
         if (!eventConfigMap[type]) {
@@ -839,6 +842,9 @@ function processBindEvent (el) {
           }
         }
         eventConfigMap[type].configs.push(parsedFunc)
+        if (modifiers.indexOf('proxy') > -1) {
+          eventConfigMap[type].proxy = true
+        }
       }
     }
   })
@@ -874,8 +880,10 @@ function processBindEvent (el) {
 
   for (let type in eventConfigMap) {
     let needBind = false
-    let { configs, rawName } = eventConfigMap[type]
-    if (configs.length > 1) {
+    let { configs, rawName, proxy } = eventConfigMap[type]
+    if (proxy) {
+      needBind = true
+    } else if (configs.length > 1) {
       needBind = true
     } else if (configs.length === 1) {
       needBind = !!configs[0].args

@@ -13,9 +13,13 @@ module.exports = function (raw) {
   }
   const mode = this._compilation.__mpx__.mode
   const srcMode = this._compilation.__mpx__.srcMode
+  const fieldSrcMode = options.mode
   const pagesMap = this._compilation.__mpx__.pagesMap
   const componentsMap = this._compilation.__mpx__.componentsMap
   const resource = stripExtension(this.resource)
+
+  const modeReg = /(?:\.(ali|wx|swan))?$/
+  const fileSrcMode = modeReg.exec(resource)[1]
 
   let parsed = compiler.parse(raw, Object.assign(options, {
     warn: (msg) => {
@@ -29,7 +33,7 @@ module.exports = function (raw) {
       )
     },
     mode,
-    srcMode
+    srcMode: fieldSrcMode || fileSrcMode || srcMode
   }))
   let ast = parsed.root
   let meta = parsed.meta
@@ -42,7 +46,7 @@ module.exports = function (raw) {
       return renderData
     },
     mode:${JSON.stringify(mode)},
-    srcMode:${JSON.stringify(srcMode)}
+    srcMode:${JSON.stringify(fileSrcMode || srcMode)}
 };\n`, {
     needCollect: true,
     ignoreMap: meta.wxsModuleMap

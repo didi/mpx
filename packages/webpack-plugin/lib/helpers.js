@@ -270,6 +270,10 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
         compileBindEvent: options.compileBindEvent
       }
 
+      if (part.mode) {
+        templateCompilerOptions.mode = part.mode
+      }
+
       templateCompiler = templateCompilerPath + '?' + JSON.stringify(templateCompilerOptions)
     }
 

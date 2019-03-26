@@ -83,7 +83,7 @@ function isObject (obj) {
 }
 
 function likeArray (arr) {
-  return arr.constructor === 'Array'
+  return arr && arr.constructor === 'Array'
 }
 
 function isDef (v) {

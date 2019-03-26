@@ -21,17 +21,18 @@ module.exports = function getTargetElRulesRunner ({ target, warn, error }) {
       },
       // 事件
       {
-        test: /^(bind|catch|capture-bind|capture-catch):?(.*)$/,
+        test: /^(bind|catch|capture-bind|capture-catch):?(.*?)(\..*)?$/,
         ali ({ name, value }, { eventRules }) {
           const match = this.test.exec(name)
           const prefix = match[1]
           const eventName = match[2]
+          const modifier = match[3] || ''
           const rPrefix = runRules(root.event.prefix, prefix)
           const rEventName = runRules(eventRules, eventName)
           return {
             name: (rPrefix && rEventName) ? rPrefix + rEventName.replace(/^./, (matched) => {
               return matched.toUpperCase()
-            }) : name,
+            }) + modifier : name,
             value
           }
         }

@@ -14,11 +14,12 @@ module.exports = {
     stringify: JSON.stringify,
     event: {
       parseEvent (attr) {
-        let match = /^(bind|catch|capture-bind|capture-catch):?(.*)$/.exec(attr)
+        let match = /^(bind|catch|capture-bind|capture-catch):?(.*?)(?:\.(.*))?$/.exec(attr)
         if (match) {
           return {
             prefix: match[1],
-            eventName: match[2]
+            eventName: match[2],
+            modifier: match[3]
           }
         }
       },
@@ -80,13 +81,14 @@ module.exports = {
     stringify: JSON.stringify,
     event: {
       parseEvent (attr) {
-        let match = /^(on|catch)([A-Z].*)$/.exec(attr)
+        let match = /^(on|catch)([A-Z].*?)(?:\.(.*))?$/.exec(attr)
         if (match) {
           return {
             prefix: match[1],
             eventName: match[2].replace(/^./, function (match) {
               return match.toLowerCase()
-            })
+            }),
+            modifier: match[3]
           }
         }
       },
@@ -148,11 +150,12 @@ module.exports = {
     stringify: JSON.stringify,
     event: {
       parseEvent (attr) {
-        let match = /^(bind|catch|capture-bind|capture-catch):?(.*)$/.exec(attr)
+        let match = /^(bind|catch|capture-bind|capture-catch):?(.*?)(?:\.(.*))?$/.exec(attr)
         if (match) {
           return {
             prefix: match[1],
-            eventName: match[2]
+            eventName: match[2],
+            modifier: match[3]
           }
         }
       },

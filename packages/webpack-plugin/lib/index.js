@@ -12,12 +12,13 @@ const stripExtension = require('./utils/strip-extention')
 const toPosix = require('./utils/to-posix')
 const DefinePlugin = require('webpack/lib/DefinePlugin')
 const hash = require('hash-sum')
+const ModeFileExistsPlugin = require('./resolver/ModeFileExistsPlugin')
 
 class MpxWebpackPlugin {
   constructor (options = {}) {
     options.mode = options.mode || 'wx'
     options.srcMode = options.srcMode || options.mode
-    if (options.srcMode !== 'wx') {
+    if (options.mode !== options.srcMode && options.srcMode !== 'wx') {
       throw new Error('MpxWebpackPlugin supports srcMode to be "wx" only temporarily!')
     }
     this.options = options
@@ -38,6 +39,14 @@ class MpxWebpackPlugin {
   apply (compiler) {
     // 强制设置publicPath为'/'
     compiler.options.output.publicPath = '/'
+
+    const resolvePlugin = new ModeFileExistsPlugin('after-file', this.options.mode, 'existing-file')
+
+    if (Array.isArray(compiler.options.resolve.plugins)) {
+      compiler.options.resolve.plugins.push(resolvePlugin)
+    } else {
+      compiler.options.resolve.plugins = [resolvePlugin]
+    }
     // define mode
     new DefinePlugin({
       '__mpx_mode__': JSON.stringify(this.options.mode),
