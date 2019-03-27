@@ -69,6 +69,7 @@ npm run prod
 |@mpxjs/fetch|[![npm version](https://badge.fury.io/js/%40mpxjs%2Ffetch.svg)](https://badge.fury.io/js/%40mpxjs%2Ffetch)|mpx网络请求库，处理wx并发请求限制|
 |@mpxjs/promisify|[![npm version](https://badge.fury.io/js/%40mpxjs%2Fpromisify.svg)](https://badge.fury.io/js/%40mpxjs%2Fpromisify)|api promisify|
 |@mpxjs/url-loader|[![npm version](https://badge.fury.io/js/%40mpxjs%2Furl-loader.svg)](https://badge.fury.io/js/%40mpxjs%2Furl-loader)|处理wxss中图像资源只能用base64引用|
+|@mpxjs/api|[![npm version](https://badge.fury.io/js/%40mpxjs%2api.svg)](https://badge.fury.io/js/%40mpxjs%2api)|将各个平台的小程序 api 进行转换|
 
 
 ## 交流
