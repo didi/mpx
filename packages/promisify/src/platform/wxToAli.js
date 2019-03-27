@@ -493,11 +493,11 @@ const wxToAliApi = {
   },
 
   createCanvasContext (canvasId) {
-    let Cxt = ALI_NAME_CACHE.createCanvasContext.call(ALI_NAME, canvasId)
+    let ctx = ALI_NAME_CACHE.createCanvasContext.call(ALI_NAME, canvasId)
 
-    CANVAS_MAP[canvasId] = Cxt
+    CANVAS_MAP[canvasId] = ctx
 
-    return Cxt
+    return ctx
   },
 
   canvasToTempFilePath (options) {
@@ -507,9 +507,17 @@ const wxToAliApi = {
     }
 
     const opts = changeOpts(options, { canvasId: '' })
-    const cxt = CANVAS_MAP[options.canvasId]
+    const ctx = CANVAS_MAP[options.canvasId]
 
-    cxt.toTempFilePath(opts)
+    handleSuccess(opts, res => {
+      return changeOpts(
+        res,
+        { apFilePath: 'tempFilePath' },
+        { errMsg: 'canvasToTempFilePath:ok' }
+      )
+    })
+
+    ctx.toTempFilePath(opts)
   },
 
   canvasPutImageData (options) {
@@ -519,9 +527,15 @@ const wxToAliApi = {
     }
 
     const opts = changeOpts(options, { canvasId: '' })
-    const cxt = CANVAS_MAP[options.canvasId]
+    const ctx = CANVAS_MAP[options.canvasId]
 
-    cxt.putImageData(opts)
+    // success 里面的 this 指向参数 options
+    handleSuccess(opts, res => {
+      return changeOpts(res, undefined, { errMsg: 'canvasPutImageData:ok' }
+      )
+    }, options)
+
+    ctx.putImageData(opts)
   },
 
   canvasGetImageData (options) {
@@ -531,9 +545,12 @@ const wxToAliApi = {
     }
 
     const opts = changeOpts(options, { canvasId: '' })
-    const cxt = CANVAS_MAP[options.canvasId]
+    const ctx = CANVAS_MAP[options.canvasId]
 
-    cxt.getImageData(opts)
+    // success 里面的 this 指向参数 options
+    handleSuccess(opts, undefined, options)
+
+    ctx.getImageData(opts)
   }
 }
 
