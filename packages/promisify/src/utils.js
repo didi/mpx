@@ -32,14 +32,15 @@ function changeOpts (options, updateOrRemoveOpt = {}, extraOpt = {}) {
  * @param {Object} opts 原参数
  * @param {Function} getOptions 获取 success 回调修改后的参数
  */
-const handleSuccess = (opts, getOptions) => {
+const handleSuccess = (opts, getOptions = noop, thisObj) => {
   if (!opts.success) {
     return
   }
+  const _this = thisObj || this
   const cacheSuc = opts.success
   opts.success = res => {
-    const changedRes = getOptions(res)
-    cacheSuc.call(this, changedRes)
+    const changedRes = getOptions(res) || res
+    cacheSuc.call(_this, changedRes)
   }
 }
 
