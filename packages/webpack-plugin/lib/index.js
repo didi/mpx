@@ -50,7 +50,7 @@ class MpxWebpackPlugin {
     // define mode
     new DefinePlugin({
       '__mpx_mode__': JSON.stringify(this.options.mode),
-      '__mpx_src_mode__': JSON.stringify(this.options.srcMode),
+      '__mpx_src_mode__': JSON.stringify(this.options.srcMode)
     }).apply(compiler)
 
     compiler.hooks.thisCompilation.tap('MpxWebpackPlugin', (compilation, params) => {
