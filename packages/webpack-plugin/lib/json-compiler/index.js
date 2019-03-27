@@ -441,7 +441,6 @@ module.exports = function (raw) {
         },
         (callback) => {
           processCustomTabBar(json.tabBar, this.context, callback)
-
         }
       ]),
       (callback) => {
