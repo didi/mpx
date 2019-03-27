@@ -1,0 +1,22 @@
+{
+  "name": "@mpxjs/api",
+  "version": "1.0.0",
+  "description": "mpx api for converting miniprogram API at each end",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:didi/mpx.git"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org"
+  },
+  "author": "httpsxiao",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/didi/mpx/issues"
+  },
+  "homepage": "https://github.com/didi/mpx#readme"
+}
