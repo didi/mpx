@@ -34,7 +34,7 @@ module.exports = function getComponentConfigs ({ warn, error }) {
    * @return {function(*): Function}
    */
   const print = (platform, tagName, isTagLevel = false) => (isError) => (arg) => {
-    if (isTagLevel) return error(`<${tagName}> is not supported in ${platform} environment!!`)
+    if (isTagLevel) return error(`<${tagName}> is not supported in ${platform} environment!`)
     const name = typeof arg === 'string' ? `bind${arg}` : arg.name
     const type = typeof arg === 'string' ? 'event' : 'property'
     const msg = `<${tagName}> does not support '${name}' ${type} in ${platform} environment!`

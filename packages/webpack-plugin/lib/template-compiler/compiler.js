@@ -4,7 +4,7 @@ const config = require('../config')
 const normalize = require('../utils/normalize')
 const isValidIdentifierStr = require('../utils/is-valid-identifier-str')
 const isEmptyObject = require('../utils/is-empty-object')
-const getRulesRunner = require('./platform/rules-runner')
+const getRulesRunner = require('../platform/index')
 
 /**
  * Make a map and return a function for checking if a key
@@ -551,15 +551,14 @@ function parse (template, options) {
   mode = options.mode || 'wx'
   srcMode = options.srcMode || 'wx'
 
-  if (srcMode === 'wx' && mode !== 'wx') {
-    rulesRunner = getRulesRunner({
-      target: mode,
-      warn: warn$1,
-      error: error$1
-    })
-  } else {
-    rulesRunner = undefined
-  }
+  rulesRunner = getRulesRunner({
+    mode,
+    srcMode,
+    type: 'template',
+    testKey: 'tag',
+    warn: warn$1,
+    error: error$1
+  })
 
   platformGetTagNamespace = options.getTagNamespace || no
 

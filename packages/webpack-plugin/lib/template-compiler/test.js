@@ -1,7 +1,7 @@
 const compiler = require('./compiler')
 // const bindThis = require('./bind-this').transform
 // var input = '<view bindtap="handler" transitionend="xxx">{{a.b.c["aaa"].e}}</view>'
-var input = `<swiper bindchange="handler">{{a.b.c["aaa"].e}}</swiper>
+var input = `<swiper wx:if="aaa" bindchange="handler">{{a.b.c["aaa"].e}}</swiper>
 <view bindtransitionend></view>
 <scroll-view  bindscrolltoupper="dd"></scroll-view>
 <movable-view></movable-view>
