@@ -426,24 +426,33 @@ module.exports = function (raw) {
     }
 
     // 串行处理，先处理主包代码，再处理分包代码，为了正确识别出分包中定义的组件属于主包还是分包
+    let errors = []
+    // 外部收集errors，确保整个series流程能够执行完
     async.series([
-      async.applyEach([
-        (callback) => {
-          processPages(json.pages, '', '', this.context, callback)
-        },
-        (callback) => {
-          processComponents(json.usingComponents, this.context, callback)
-        },
-        (callback) => {
-          processWorkers(json.workers, this.context, callback)
-        },
-        (callback) => {
-          processPackages(json.packages, this.context, callback)
-        },
-        (callback) => {
-          processCustomTabBar(json.tabBar, this.context, callback)
-        }
-      ]),
+      (callback) => {
+        async.parallel([
+          (callback) => {
+            processPages(json.pages, '', '', this.context, callback)
+          },
+          (callback) => {
+            processComponents(json.usingComponents, this.context, callback)
+          },
+          (callback) => {
+            processWorkers(json.workers, this.context, callback)
+          },
+          (callback) => {
+            processPackages(json.packages, this.context, callback)
+          },
+          (callback) => {
+            processCustomTabBar(json.tabBar, this.context, callback)
+          }
+        ], (err) => {
+          if (err) {
+            errors.push(err)
+          }
+          callback()
+        })
+      },
       (callback) => {
         compilationMpx.processingSubPackages = true
         callback()
@@ -454,10 +463,15 @@ module.exports = function (raw) {
           (callback) => {
             processSubPackages(json.subPackages || json.subpackages, this.context, callback)
           }
-        ], callback)
+        ], (err) => {
+          if (err) {
+            errors.push(err)
+          }
+          callback()
+        })
       }
-    ], (err) => {
-      if (err) return callback(err)
+    ], () => {
+      if (errors.length) return callback(errors[0])
       delete json.packages
       delete json.subpackages
       json.pages = localPages
