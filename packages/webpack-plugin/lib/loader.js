@@ -23,7 +23,7 @@ module.exports = function (content) {
 
   if ((resourceQueryObj.component && !componentsMap[resource]) || (resourceQueryObj.page && !pagesMap[resource])) {
     let entryChunkName
-    const rawRequest = this.__module.rawRequest
+    const rawRequest = this._module.rawRequest
     const _preparedEntrypoints = this._compilation._preparedEntrypoints
     for (let i = 0; i < _preparedEntrypoints.length; i++) {
       if (rawRequest === _preparedEntrypoints[i].request) {
