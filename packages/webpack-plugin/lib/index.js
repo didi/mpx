@@ -179,6 +179,7 @@ class MpxWebpackPlugin {
         source.add('var window = window || {};\n\n')
 
         relativeChunks.forEach((relativeChunk, index) => {
+          if (!relativeChunk.files[0]) return
           let chunkPath = getTargetFile(chunk.files[0])
           let relativePath = getTargetFile(relativeChunk.files[0])
           relativePath = path.relative(path.dirname(chunkPath), relativePath)
