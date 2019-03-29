@@ -899,7 +899,10 @@ function processBindEvent (el) {
         do {
           val = getAndRemoveAttr(el, rawName)
         } while (val)
+        // 清除修饰符
+        rawName = rawName.replace(/\..*/, '')
       }
+
       addAttrs(el, [
         {
           name: rawName || config[mode].event.getEvent(type),

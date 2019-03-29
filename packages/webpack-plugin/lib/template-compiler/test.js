@@ -2,7 +2,7 @@ const compiler = require('./compiler')
 // const bindThis = require('./bind-this').transform
 // var input = '<view bindtap="handler" transitionend="xxx">{{a.b.c["aaa"].e}}</view>'
 var input = `<swiper wx:if="aaa" bindchange="handler">{{a.b.c["aaa"].e}}</swiper>
-<view bindtransitionend></view>
+<view  bindtransitionend="aaa"></view>
 <scroll-view  bindscrolltoupper="dd"></scroll-view>
 <movable-view></movable-view>
 <movable-area></movable-area>
@@ -16,8 +16,7 @@ var input = `<swiper wx:if="aaa" bindchange="handler">{{a.b.c["aaa"].e}}</swiper
 let parsed = compiler.parse(input, {
   usingComponents: ['com1', 'com2', 'com3'],
   compileBindEvent: true,
-  srcMode: 'wx',
-  mode: 'ali'
+  mode: 'wx'
 })
 let ast = parsed.root
 // let meta = parsed.meta
