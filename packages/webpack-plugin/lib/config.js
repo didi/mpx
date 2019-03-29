@@ -27,6 +27,7 @@ module.exports = {
       },
       defaultModelProp: 'value',
       defaultModelEvent: 'input',
+      defaultModelValuePath: 'value',
       shallowStringify (obj) {
         let arr = []
         for (let key in obj) {
@@ -53,6 +54,7 @@ module.exports = {
       model: 'wx:model',
       modelProp: 'wx:model-prop',
       modelEvent: 'wx:model-event',
+      modelValuePath: 'wx:model-value-path',
       for: 'wx:for',
       forIndex: 'wx:for-index',
       forItem: 'wx:for-item',
@@ -97,6 +99,7 @@ module.exports = {
       },
       defaultModelProp: 'value',
       defaultModelEvent: 'input',
+      defaultModelValuePath: 'value',
       shallowStringify (obj) {
         let arr = []
         for (let key in obj) {
@@ -123,6 +126,7 @@ module.exports = {
       model: 'a:model',
       modelProp: 'a:model-prop',
       modelEvent: 'a:model-event',
+      modelValuePath: 'a:model-value-path',
       for: 'a:for',
       forIndex: 'a:for-index',
       forItem: 'a:for-item',
@@ -161,6 +165,7 @@ module.exports = {
       },
       defaultModelProp: 'value',
       defaultModelEvent: 'input',
+      defaultModelValuePath: 'value',
       shallowStringify (obj) {
         let arr = []
         for (let key in obj) {
@@ -187,6 +192,7 @@ module.exports = {
       model: 's-model',
       modelProp: 's-model-prop',
       modelEvent: 's-model-event',
+      modelValuePath: 's-model-value-path',
       for: 's-for',
       forIndex: 's-for-index',
       forItem: 's-for-item',

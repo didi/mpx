@@ -39,8 +39,9 @@ export default function proxyEventMixin () {
       })
       return returnedValue
     },
-    __model (expr, $event) {
-      setByPath(this, expr, $event.detail.value)
+    __model (expr, $event, valuePath = ['value']) {
+      const value = valuePath.reduce((acc, cur) => acc[cur], $event.detail)
+      setByPath(this, expr, value)
     }
   }
   if (is('ali')) {
