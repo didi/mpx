@@ -8,7 +8,6 @@ module.exports = function getSpec ({ warn, error }) {
     isError ? error(msg) : warn(msg)
   }
 
-
   const spec = {
     supportedTargets: ['ali'],
     normalizeTest,
@@ -92,12 +91,11 @@ module.exports = function getSpec ({ warn, error }) {
             delete input.list
             input.items = runRules(spec.tabBar.list, value, 'ali', undefined, normalizeTest, ['tabBar'])
             return input
-
           }
         },
         {
           test: 'borderStyle|position|custom',
-          ali (input) {
+          ali (input, option, meta) {
             print(meta.paths.join('|'), true)
             meta.paths.forEach((path) => {
               delete input[path]
