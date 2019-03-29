@@ -277,6 +277,12 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
       templateCompiler = templateCompilerPath + '?' + JSON.stringify(templateCompilerOptions)
     }
 
+    let jsonCompilerOptions = ''
+
+    if (type === 'json' && part.mode) {
+      jsonCompilerOptions = `?mode=${part.mode}`
+    }
+
     let loader = type === 'styles'
       ? loaders[lang] || getCSSLoaderString(lang)
       : loaders[lang]
@@ -304,6 +310,10 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
       if (type === 'template') {
         loader = ensureBang(loader) + ensureBang(templateCompiler)
       }
+
+      if (type === 'json') {
+        loader = loader + jsonCompilerOptions
+      }
       return ensureBang(loader)
     } else {
       // unknown lang, infer the loader to be used
@@ -318,7 +328,7 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
           return ensureBang(loader) + ensureBang(styleCompiler) + ensureBang(ensureLoader(lang))
         case 'script':
         case 'json':
-          return ensureBang(ensureLoader(lang))
+          return ensureBang(defaultLoaders.json + jsonCompilerOptions) + ensureBang(ensureLoader(lang))
         default:
           loader = loaders[type]
           if (Array.isArray(loader)) {

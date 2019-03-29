@@ -10,11 +10,13 @@ const nativeLoaderPath = normalize.lib('native-loader')
 const stripExtension = require('../utils/strip-extention')
 const toPosix = require('../utils/to-posix')
 const stringifyQuery = require('../utils/stringify-query')
+const getRulesRunner = require('../platform/index')
 
 module.exports = function (raw) {
   // 该loader中会在每次编译中动态添加entry，不能缓存，否则watch不好使
   this.cacheable(false)
   const nativeCallback = this.async()
+  const options = loaderUtils.getOptions(this) || {}
 
   if (!this._compilation.__mpx__) {
     return nativeCallback(null, raw)
@@ -25,10 +27,15 @@ module.exports = function (raw) {
   const subPackagesMap = this._compilation.__mpx__.subPackagesMap
   const compilationMpx = this._compilation.__mpx__
   const mode = this._compilation.__mpx__.mode
+  const srcMode = this._compilation.__mpx__.srcMode
+  const fieldSrcMode = options.mode
   const resource = stripExtension(this.resource)
   const isApp = !(pagesMap[resource] || componentsMap[resource])
   const publicPath = this._compilation.outputOptions.publicPath || ''
   const fs = this._compiler.inputFileSystem
+
+  const modeReg = /(?:\.(ali|wx|swan))?$/
+  const fileSrcMode = modeReg.exec(resource)[1]
 
   const copydir = (dir, context, callback) => {
     fs.readdir(dir, (err, files) => {
@@ -105,6 +112,32 @@ module.exports = function (raw) {
     json = JSON.parse(raw)
   } catch (err) {
     return callback(err)
+  }
+
+  const rulesRunnerOptions = {
+    mode,
+    srcMode: fieldSrcMode || fileSrcMode || srcMode,
+    type: 'json',
+    waterfall: true,
+    warn: (msg) => {
+      this.emitWarning(
+        new Error('[json compiler][' + this.resource + ']: ' + msg)
+      )
+    },
+    error: (msg) => {
+      this.emitError(
+        new Error('[json compiler][' + this.resource + ']: ' + msg)
+      )
+    }
+  }
+  if (!isApp) {
+    rulesRunnerOptions.mainKey = pagesMap[resource] ? 'page' : 'component'
+  }
+
+  const rulesRunner = getRulesRunner(rulesRunnerOptions)
+
+  if (rulesRunner) {
+    rulesRunner(json)
   }
 
   function getName (raw) {
@@ -474,9 +507,12 @@ module.exports = function (raw) {
       if (errors.length) return callback(errors[0])
       delete json.packages
       delete json.subpackages
+      delete json.subPackages
       json.pages = localPages
-      json.subPackages = []
       for (let root in subPackagesCfg) {
+        if (!json.subPackages) {
+          json.subPackages = []
+        }
         json.subPackages.push(subPackagesCfg[root])
       }
       const processOutput = (output) => {

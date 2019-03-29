@@ -12,7 +12,7 @@ const stripExtension = require('./utils/strip-extention')
 const toPosix = require('./utils/to-posix')
 const DefinePlugin = require('webpack/lib/DefinePlugin')
 const hash = require('hash-sum')
-const ModeFileExistsPlugin = require('./resolver/ModeFileExistsPlugin')
+const AddModePlugin = require('./resolver/AddModePlugin')
 
 class MpxWebpackPlugin {
   constructor (options = {}) {
@@ -40,7 +40,7 @@ class MpxWebpackPlugin {
     // 强制设置publicPath为'/'
     compiler.options.output.publicPath = '/'
 
-    const resolvePlugin = new ModeFileExistsPlugin('after-file', this.options.mode, 'existing-file')
+    const resolvePlugin = new AddModePlugin('before-file', this.options.mode, 'file')
 
     if (Array.isArray(compiler.options.resolve.plugins)) {
       compiler.options.resolve.plugins.push(resolvePlugin)

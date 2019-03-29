@@ -14,7 +14,8 @@ function defaultNormalizeTest (rawTest, context) {
   }
 }
 
-module.exports = function runRules (rules = [], input, target, testKey, normalizeTest, options) {
+module.exports = function runRules (rules = [], input, options = {}) {
+  const { target, testKey, normalizeTest, data, waterfall } = options
   rules = rules.rules || rules
   for (let i = 0; i < rules.length; i++) {
     const rule = rules[i]
@@ -23,7 +24,9 @@ module.exports = function runRules (rules = [], input, target, testKey, normaliz
     const processor = rule[target]
     const meta = {}
     if (tester(testInput, meta) && processor) {
-      return processor.call(rule, input, options, meta)
+      input = processor.call(rule, input, data, meta) || input
+      if (!waterfall) return input
     }
   }
+  return input
 }

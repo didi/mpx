@@ -11,7 +11,7 @@ module.exports = function getSpec ({ warn, error }) {
   const spec = {
     supportedTargets: ['ali'],
     normalizeTest,
-    window: [
+    page: [
       {
         test: 'navigationBarTitleText',
         ali (input) {
@@ -36,9 +36,9 @@ module.exports = function getSpec ({ warn, error }) {
       },
       {
         test: 'navigationBarTextStyle|navigationStyle|backgroundColor|backgroundTextStyle|backgroundColorTop|backgroundColorBottom|onReachBottomDistance|pageOrientation',
-        ali (input, paths = [], meta) {
+        ali (input, data = [], meta) {
           const currPath = meta.paths.join('|')
-          print(paths.concat(currPath).join('.'), true)
+          print(data.concat(currPath).join('.'), true)
           meta.paths.forEach((path) => {
             delete input[path]
           })
@@ -46,7 +46,7 @@ module.exports = function getSpec ({ warn, error }) {
         }
       }
     ],
-    generics: [
+    component: [
       {
         test: 'componentGenerics',
         ali (input) {
@@ -89,13 +89,18 @@ module.exports = function getSpec ({ warn, error }) {
           ali (input) {
             const value = input.list
             delete input.list
-            input.items = runRules(spec.tabBar.list, value, 'ali', undefined, normalizeTest, ['tabBar'])
+            input.items = runRules(spec.tabBar.list, value, {
+              target: 'ali',
+              normalizeTest,
+              waterfall: true,
+              data: ['tabBar', 'list']
+            })
             return input
           }
         },
         {
           test: 'borderStyle|position|custom',
-          ali (input, option, meta) {
+          ali (input, data, meta) {
             print(meta.paths.join('|'), true)
             meta.paths.forEach((path) => {
               delete input[path]
@@ -107,8 +112,8 @@ module.exports = function getSpec ({ warn, error }) {
     },
     rules: [
       {
-        test: 'networkTimeout|debug|functionalPages|subpackages|workers|requiredBackgroundModes|plugins|preloadRule|resizable|navigateToMiniProgramAppIdList|usingComponents|permission',
-        ali (input, options, meta) {
+        test: 'networkTimeout|debug|functionalPages|subpackages|subPackages|workers|requiredBackgroundModes|plugins|preloadRule|resizable|navigateToMiniProgramAppIdList|usingComponents|permission',
+        ali (input, data, meta) {
           print(meta.paths.join('|'), true)
           meta.paths.forEach((path) => {
             delete input[path]
@@ -117,9 +122,33 @@ module.exports = function getSpec ({ warn, error }) {
         }
       },
       {
+        test: 'packages',
+        ali (input) {
+          input.packages = input.packages.map((packageItem) => {
+            return packageItem.replace(/\?.*/, '')
+          })
+        }
+      },
+      {
+        test: 'tabBar',
+        ali (input) {
+          input.tabBar = runRules(spec.tabBar, input.tabBar, {
+            target: 'ali',
+            normalizeTest,
+            waterfall: true,
+            data: ['tabBar']
+          })
+        }
+      },
+      {
         test: 'window',
         ali (input) {
-          input.window = runRules(spec.window, input.window, 'ali', undefined, normalizeTest, ['window'])
+          input.window = runRules(spec.page, input.window, {
+            target: 'ali',
+            normalizeTest,
+            waterfall: true,
+            data: ['window']
+          })
           return input
         }
       }

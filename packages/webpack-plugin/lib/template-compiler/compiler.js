@@ -467,11 +467,34 @@ function parseComponent (content, options) {
       }
       if (isSpecialTag(tag)) {
         checkAttrs(currentBlock, attrs)
-        if (!currentBlock.mode || currentBlock.mode === mode) {
-          if (tag === 'style') {
+        // 优先取带有正确mode的fields
+        if (tag === 'style') {
+          if (sfc.styles[0]) {
+            if (currentBlock.mode && currentBlock.mode === mode) {
+              if (sfc.styles[0].mode !== mode) {
+                sfc.styles = []
+              }
+              sfc.styles.push(currentBlock)
+            } else {
+              if (!sfc.styles[0].mode) {
+                sfc.styles.push(currentBlock)
+              }
+            }
+          } else {
             sfc.styles.push(currentBlock)
-          } else if (tag === 'script' && currentBlock.type === 'application/json') {
-            sfc.json = currentBlock
+          }
+        } else {
+          if (tag === 'script' && currentBlock.type === 'application/json') {
+            tag = 'json'
+          }
+          if (sfc[tag]) {
+            if (currentBlock.mode && currentBlock.mode === mode) {
+              sfc[tag] = currentBlock
+            } else {
+              if (!sfc[tag].mode) {
+                sfc[tag] = currentBlock
+              }
+            }
           } else {
             sfc[tag] = currentBlock
           }
