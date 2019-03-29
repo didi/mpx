@@ -854,6 +854,7 @@ function processBindEvent (el) {
     if (match) {
       let modelProp = getAndRemoveAttr(el, config[mode].directive.modelProp) || config[mode].event.defaultModelProp
       let modelEvent = getAndRemoveAttr(el, config[mode].directive.modelEvent) || config[mode].event.defaultModelEvent
+      const modelValuePath = getAndRemoveAttr(el, config[mode].directive.modelValuePath) || config[mode].event.defaultModelValuePath
       if (!isValidIdentifierStr(modelEvent)) {
         warn$1(`EventName ${modelEvent} which is used in ${config[mode].directive.model} must be a valid identifier!`)
         return
@@ -866,7 +867,7 @@ function processBindEvent (el) {
       }
       eventConfigMap[modelEvent].configs.unshift({
         args: `,${stringify(modelValue)},${stringify('$event')}`,
-        expStr: `[${stringify('__model')},${stringify(modelValue)},${stringify('$event')}]`
+        expStr: `[${stringify('__model')},${stringify(modelValue)},${stringify('$event')},${stringify(modelValuePath)}]`
       })
       addAttrs(el, [
         {

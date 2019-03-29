@@ -1,6 +1,5 @@
 const type = require('../utils/type')
 
-
 function defaultNormalizeTest (rawTest, context) {
   let testType = type(rawTest)
   switch (testType) {
@@ -14,7 +13,6 @@ function defaultNormalizeTest (rawTest, context) {
       return () => true
   }
 }
-
 
 module.exports = function runRules (rules = [], input, target, testKey, normalizeTest, options) {
   rules = rules.rules || rules
