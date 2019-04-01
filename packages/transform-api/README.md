@@ -6,7 +6,7 @@
 
 ```js
 import mpx from '@mpxjs/core'
-import api from '@mpxjs/api'
+import api from '@mpxjs/transform-api'
 
 mpx.use(api)
 ```
