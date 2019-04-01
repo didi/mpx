@@ -1,4 +1,4 @@
-# `mpx-api`
+# `mpx-transform-api`
 
 > convert miniprogram API at each end
 
@@ -11,4 +11,4 @@ import api from '@mpxjs/transform-api'
 mpx.use(api)
 ```
 
-**如果同时使用 `@mpxjs/promisify`，请在其前面引入 `@mpxjs/api`**
+**如果同时使用 `@mpxjs/promisify`，请在其前面引入 `@mpxjs/transform-api`**

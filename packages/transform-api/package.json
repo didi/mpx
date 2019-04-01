@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/transform-api",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "transform-api for converting miniprogram API at each end",
   "main": "src/index.js",
   "scripts": {
