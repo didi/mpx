@@ -1069,7 +1069,6 @@ function addWxsModule (meta, module) {
 
 function processAttrs (el, meta) {
   el.attrsList.forEach((attr) => {
-
     if (el.tag === config[mode].wxs.tag && attr.name === config[mode].wxs.module) {
       return addWxsModule(meta, attr.value)
     }
