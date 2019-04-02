@@ -1069,10 +1069,7 @@ function addWxsModule (meta, module) {
 
 function processAttrs (el, meta) {
   el.attrsList.forEach((attr) => {
-    if (mode === 'ali') {
-      let processed = attr.value.replace(/["']/g, '\'')
-      attr.value = el.attrsMap[attr.name] = processed
-    }
+
     if (el.tag === config[mode].wxs.tag && attr.name === config[mode].wxs.module) {
       return addWxsModule(meta, attr.value)
     }
@@ -1300,8 +1297,12 @@ function serialize (root) {
         result += '<' + node.tag
         node.attrsList.forEach(function (attr) {
           result += ' ' + attr.name
-          if (attr.value != null && attr.value !== '') {
-            result += '=' + stringify(attr.value)
+          let value = attr.value
+          if (mode === 'ali') {
+            value = value.replace(/["']/g, '\'')
+          }
+          if (value != null && value !== '') {
+            result += '=' + stringify(value)
           }
         })
         if (node.unary) {
