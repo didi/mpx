@@ -44,16 +44,22 @@ const handleSuccess = (opts, getOptions = noop, thisObj) => {
   }
 }
 
-function warn (msg) {
-  console.warn && console.warn(`mpx-promisify warn: ${msg}`)
+function getEnvObj () {
+  if (typeof wx !== 'undefined' && typeof wx.getSystemInfo === 'function') {
+    return wx
+  } else if (typeof my !== 'undefined' && typeof my.getSystemInfo === 'function') {
+    return my
+  } else if (typeof swan !== 'undefined' && typeof swan.getSystemInfo === 'function') {
+    return swan
+  }
 }
 
-function info (msg) {
-  console.log && console.log(`mpx-promisify info: ${msg}`)
+function warn (msg) {
+  console.warn && console.warn(`[@mpxjs/transform-api warn]:\n ${msg}`)
 }
 
 function error (msg) {
-  console.error && console.error(`mpx-promisify error: ${msg}`)
+  console.error && console.error(`[@mpxjs/transform-api error]:\n ${msg}`)
 }
 
 function noop () {}
@@ -61,8 +67,8 @@ function noop () {}
 export {
   changeOpts,
   handleSuccess,
+  getEnvObj,
   error,
   warn,
-  info,
   noop
 }
