@@ -1,19 +1,23 @@
 {
-  "name": "@mpxjs/transform-api",
-  "version": "1.0.1",
-  "description": "transform-api for converting miniprogram API at each end",
-  "main": "src/index.js",
+  "name": "@mpxjs/api-proxy",
+  "version": "1.0.0",
+  "description": "convert miniprogram API at each end",
+  "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "git@github.com:didi/mpx.git"
+    "url": "git@github.com/didi/mpx.git"
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org",
     "access": "public"
   },
+  "keywords": [
+    "api-proxy",
+    "promisify"
+  ],
   "author": "httpsxiao",
   "license": "ISC",
   "bugs": {

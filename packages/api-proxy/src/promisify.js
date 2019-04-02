@@ -1,4 +1,7 @@
-import envObj from './envObj'
+import { wxToAliApi } from './platform'
+import { getEnvObj, noop } from './utils'
+
+const envObj = getEnvObj()
 
 // 特别指定的不进行Promise封装的方法
 const blackList = [
@@ -33,32 +36,31 @@ function getMapFromList (list) {
   }
 }
 
-export default function getPromisifyList (proxyMPX, whiteList) {
+function promisifyFilter (key, whiteList) {
   const whiteListMap = getMapFromList(whiteList)
   const blackListMap = getMapFromList(blackList)
 
-  function promisifyFilter (key) {
-    if (whiteListMap) {
-      return !!whiteListMap[key]
-    } else {
-      return !(blackListMap[key] || // 特别指定的方法
-        /^get\w*Manager$/.test(key) || // 获取manager的api
-        /^create\w*Context$/.test(key) || // 创建上下文相关api
-        /^(on|off)/.test(key) || // 以 on* 或 off开头的方法
-        /\w+Sync$/.test(key))
-    }
+  if (whiteListMap) {
+    return !!whiteListMap[key]
+  } else {
+    return !(blackListMap[key] || // 特别指定的方法
+      /^get\w*Manager$/.test(key) || // 获取manager的api
+      /^create\w*Context$/.test(key) || // 创建上下文相关api
+      /^(on|off)/.test(key) || // 以 on* 或 off开头的方法
+      /\w+Sync$/.test(key))
   }
+}
 
+function promisify (listObj, whiteList) {
   const promisifyList = {}
-  let assignObj = Object.assign({}, envObj, proxyMPX)
 
-  Object.keys(assignObj).forEach((key) => {
-    if (typeof assignObj[key] !== 'function') return
+  Object.keys(listObj).forEach(key => {
+    if (typeof listObj[key] !== 'function') return
 
     promisifyList[key] = function (...args) {
-      if (promisifyFilter(key)) {
+      if (promisifyFilter(key, whiteList)) {
         if (!args[0]) {
-          args[0] = { success: () => {}, fail: () => {} }
+          args[0] = { success: noop, fail: noop }
         }
         const obj = args[0]
         return new Promise((resolve, reject) => {
@@ -72,13 +74,23 @@ export default function getPromisifyList (proxyMPX, whiteList) {
             originFail && originFail.call(this, e)
             reject(e)
           }
-          assignObj[key].apply(assignObj, args)
+          listObj[key].apply(envObj, args)
         })
       } else {
-        return assignObj[key].apply(assignObj, args)
+        return listObj[key].apply(envObj, args)
       }
     }
   })
 
   return promisifyList
+}
+
+export default function getPromisifyList (whiteList, from, to) {
+  const promisifyObj = promisify(envObj, whiteList)
+  let promisifyTrans = {}
+
+  if (from === 'wx' && to === 'ali') {
+    promisifyTrans = promisify(wxToAliApi, whiteList)
+  }
+  return Object.assign({}, promisifyObj, promisifyTrans)
 }

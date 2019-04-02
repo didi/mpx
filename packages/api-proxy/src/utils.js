@@ -44,6 +44,16 @@ const handleSuccess = (opts, getOptions = noop, thisObj) => {
   }
 }
 
+function getEnvObj () {
+  if (typeof wx !== 'undefined' && typeof wx.getSystemInfo === 'function') {
+    return wx
+  } else if (typeof my !== 'undefined' && typeof my.getSystemInfo === 'function') {
+    return my
+  } else if (typeof swan !== 'undefined' && typeof swan.getSystemInfo === 'function') {
+    return swan
+  }
+}
+
 function warn (msg) {
   console.warn && console.warn(`[@mpxjs/transform-api warn]:\n ${msg}`)
 }
@@ -57,6 +67,7 @@ function noop () {}
 export {
   changeOpts,
   handleSuccess,
+  getEnvObj,
   error,
   warn,
   noop

@@ -97,7 +97,7 @@ const wxToAliApi = {
     const cacheSuc = opts.success || noop
     const cacheFail = opts.fail || noop
 
-    opts.success = res => {
+    opts.success = function (res) {
       let sucRes = changeOpts(res, {
         index: 'tapIndex'
       })
@@ -483,7 +483,7 @@ const wxToAliApi = {
     const cacheSuc = opts.success || noop
     const cacheFail = opts.fail || noop
 
-    opts.success = res => {
+    opts.success = function (res) {
       if (res.resultCode === 9000) {
         cacheSuc.call(this, res)
       } else {
