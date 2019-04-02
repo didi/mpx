@@ -45,15 +45,11 @@ const handleSuccess = (opts, getOptions = noop, thisObj) => {
 }
 
 function warn (msg) {
-  console.warn && console.warn(`mpx-promisify warn: ${msg}`)
-}
-
-function info (msg) {
-  console.log && console.log(`mpx-promisify info: ${msg}`)
+  console.warn && console.warn(`[@mpxjs/transform-api warn]:\n ${msg}`)
 }
 
 function error (msg) {
-  console.error && console.error(`mpx-promisify error: ${msg}`)
+  console.error && console.error(`[@mpxjs/transform-api error]:\n ${msg}`)
 }
 
 function noop () {}
@@ -63,6 +59,5 @@ export {
   handleSuccess,
   error,
   warn,
-  info,
   noop
 }

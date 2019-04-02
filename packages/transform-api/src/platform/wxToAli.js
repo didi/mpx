@@ -1,15 +1,10 @@
-import { changeOpts, handleSuccess, error, warn, info, noop } from '../utils'
+import { changeOpts, handleSuccess, error, warn, noop } from '../utils'
 
-const ALI_NAME = my
-const ALI_NAME_CACHE = {}
-const ALI_NAME_STRING = 'my'
+const ALI_OBJ = my
+const TIPS_NAME = 'mpx'
 
 // canvas api 用
 const CANVAS_MAP = {}
-
-Object.keys(ALI_NAME).forEach((key) => {
-  ALI_NAME_CACHE[key] = ALI_NAME[key]
-})
 
 const wxToAliApi = {
   getSystemInfo (options) {
@@ -26,11 +21,11 @@ const wxToAliApi = {
       return res
     })
 
-    ALI_NAME_CACHE.getSystemInfo.call(ALI_NAME, opts)
+    ALI_OBJ.getSystemInfo(opts)
   },
 
   getSystemInfoSync () {
-    let res = ALI_NAME_CACHE.getSystemInfoSync.call(ALI_NAME)
+    let res = ALI_OBJ.getSystemInfoSync()
 
     res.system = `${res.platform} ${res.system}`
 
@@ -47,14 +42,14 @@ const wxToAliApi = {
       title: 'content',
       icon: 'type'
     })
-    ALI_NAME_CACHE.showToast.call(ALI_NAME, opts)
+    ALI_OBJ.showToast(opts)
   },
 
   hideToast (options) {
     if (options.success || options.fail || options.complete) {
-      error(`${ALI_NAME_STRING}.hideToast 不支持 success/fail/complete 参数`)
+      warn(`${TIPS_NAME}.hideToast 不支持 success/fail/complete 参数`)
     }
-    ALI_NAME_CACHE.hideToast.call(ALI_NAME, options)
+    ALI_OBJ.hideToast(options)
   },
 
   showModal (options) {
@@ -70,13 +65,13 @@ const wxToAliApi = {
         return changeOpts(res, undefined, { 'cancel': !res.confirm })
       })
 
-      ALI_NAME_CACHE.confirm.call(ALI_NAME, opts)
+      ALI_OBJ.confirm(opts)
     } else {
       opts = changeOpts(options, {
         confirmText: 'buttonText'
       })
 
-      ALI_NAME_CACHE.alert.call(ALI_NAME, opts)
+      ALI_OBJ.alert(opts)
     }
   },
 
@@ -84,14 +79,14 @@ const wxToAliApi = {
     const opts = changeOpts(options, {
       title: 'content'
     })
-    ALI_NAME_CACHE.showLoading.call(ALI_NAME, opts)
+    ALI_OBJ.showLoading(opts)
   },
 
   hideLoading (options) {
     if (options.success || options.fail || options.complete) {
-      error(`${ALI_NAME_STRING}.hideLoading 不支持 success/fail/complete 参数`)
+      warn(`${TIPS_NAME}.hideLoading 不支持 success/fail/complete 参数`)
     }
-    ALI_NAME_CACHE.hideLoading.call(ALI_NAME, options)
+    ALI_OBJ.hideLoading(options)
   },
 
   showActionSheet (options) {
@@ -115,29 +110,29 @@ const wxToAliApi = {
       }
     }
 
-    ALI_NAME_CACHE.showActionSheet.call(ALI_NAME, opts)
+    ALI_OBJ.showActionSheet(opts)
   },
 
   showNavigationBarLoading (options) {
     if (options.success || options.fail || options.complete) {
-      error(`${ALI_NAME_STRING}.showNavigationBarLoading 不支持 success/fail/complete 参数`)
+      warn(`${TIPS_NAME}.showNavigationBarLoading 不支持 success/fail/complete 参数`)
     }
-    ALI_NAME_CACHE.showNavigationBarLoading.call(ALI_NAME, options)
+    ALI_OBJ.showNavigationBarLoading(options)
   },
 
   hideNavigationBarLoading (options) {
     if (options.success || options.fail || options.complete) {
-      error(`${ALI_NAME_STRING}.hideNavigationBarLoading 不支持 success/fail/complete 参数`)
+      warn(`${TIPS_NAME}.hideNavigationBarLoading 不支持 success/fail/complete 参数`)
     }
-    ALI_NAME_CACHE.hideNavigationBarLoading.call(ALI_NAME, options)
+    ALI_OBJ.hideNavigationBarLoading(options)
   },
 
   setNavigationBarTitle (options) {
-    ALI_NAME_CACHE.setNavigationBar.call(ALI_NAME, options)
+    ALI_OBJ.setNavigationBar(options)
   },
 
   setNavigationBarColor (options) {
-    ALI_NAME_CACHE.setNavigationBar.call(ALI_NAME, options)
+    ALI_OBJ.setNavigationBar(options)
   },
 
   request (options) {
@@ -154,10 +149,10 @@ const wxToAliApi = {
 
     // request 在 1.11.0 以上版本才支持
     // httpRequest 即将被废弃，钉钉端仍需要使用
-    if (ALI_NAME_CACHE.canIUse.call(ALI_NAME, 'request')) {
-      return ALI_NAME_CACHE.request.call(ALI_NAME, opts)
+    if (ALI_OBJ.canIUse('request')) {
+      return ALI_OBJ.request(opts)
     } else {
-      return ALI_NAME_CACHE.httpRequest.call(ALI_NAME, opts)
+      return ALI_OBJ.httpRequest(opts)
     }
   },
 
@@ -168,36 +163,36 @@ const wxToAliApi = {
       return changeOpts(res, { apFilePath: 'tempFilePath' })
     })
 
-    return ALI_NAME_CACHE.downloadFile.call(ALI_NAME, opts)
+    return ALI_OBJ.downloadFile(opts)
   },
 
   uploadFile (options) {
     const opts = changeOpts(options, { name: 'fileName' })
 
-    return ALI_NAME_CACHE.uploadFile.call(ALI_NAME, opts)
+    return ALI_OBJ.uploadFile(opts)
   },
 
   setStorageSync (key, data) {
-    ALI_NAME_CACHE.setStorageSync.call(ALI_NAME, {
+    ALI_OBJ.setStorageSync({
       key,
       data
     })
   },
 
   removeStorageSync (key) {
-    ALI_NAME_CACHE.removeStorageSync.call(ALI_NAME, {
+    ALI_OBJ.removeStorageSync({
       key
     })
   },
 
   getStorageSync (key) {
-    return ALI_NAME_CACHE.getStorageSync.call(ALI_NAME, {
+    return ALI_OBJ.getStorageSync({
       key
     }).data
   },
 
   saveImageToPhotosAlbum (key) {
-    warn('如果想要保存在线图片链接，可以直接使用 saveImage')
+    warn(`如果想要保存在线图片链接，可以直接使用 ${TIPS_NAME}.saveImage`)
   },
 
   previewImage (options) {
@@ -208,7 +203,7 @@ const wxToAliApi = {
       opts.current = idx !== -1 ? idx : 0
     }
 
-    ALI_NAME_CACHE.previewImage.call(ALI_NAME, opts)
+    ALI_OBJ.previewImage(opts)
   },
 
   compressImage (options) {
@@ -227,7 +222,7 @@ const wxToAliApi = {
       )
     })
 
-    ALI_NAME_CACHE.compressImage.call(ALI_NAME, opts)
+    ALI_OBJ.compressImage(opts)
   },
 
   chooseImage (options) {
@@ -237,15 +232,16 @@ const wxToAliApi = {
       return changeOpts(res, { apFilePaths: 'tempFilePaths' })
     })
 
-    ALI_NAME_CACHE.chooseImage.call(ALI_NAME, opts)
+    ALI_OBJ.chooseImage(opts)
   },
 
   getLocation (options) {
-    if (options.aliType === undefined) {
-      info(`如果要设置支付宝 ${ALI_NAME_STRING}.getLocation 中的 type 参数，请使用 aliType, 取值为 0~3`)
+    if (options.aliType === undefined && options.type) {
+      warn(`如果要针对支付宝设置 ${TIPS_NAME}.getLocation 中的 type 参数，请使用 aliType, 取值为 0~3`)
+      options.aliType = 0
     }
     if (options.altitude) {
-      warn(`支付宝 ${ALI_NAME_STRING}.getLocation 不支持获取高度信息`)
+      error(`支付宝 ${TIPS_NAME}.getLocation 不支持获取高度信息`)
     }
 
     const opts = changeOpts(options, {
@@ -253,7 +249,7 @@ const wxToAliApi = {
       aliType: 'type'
     })
 
-    ALI_NAME_CACHE.getLocation.call(ALI_NAME, opts)
+    ALI_OBJ.getLocation(opts)
   },
 
   saveFile (options) {
@@ -265,7 +261,7 @@ const wxToAliApi = {
       return changeOpts(res, { apFilePath: 'savedFilePath' })
     })
 
-    ALI_NAME_CACHE.saveFile.call(ALI_NAME, opts)
+    ALI_OBJ.saveFile(opts)
   },
 
   removeSavedFile (options) {
@@ -277,7 +273,7 @@ const wxToAliApi = {
       return changeOpts(res, { apFilePath: 'savedFilePath' })
     })
 
-    ALI_NAME_CACHE.removeSavedFile.call(ALI_NAME, opts)
+    ALI_OBJ.removeSavedFile(opts)
   },
 
   getSavedFileList (options) {
@@ -297,7 +293,7 @@ const wxToAliApi = {
       return res
     })
 
-    ALI_NAME_CACHE.getSavedFileList.call(ALI_NAME, opts)
+    ALI_OBJ.getSavedFileList(opts)
   },
 
   getSavedFileInfo (options) {
@@ -305,7 +301,7 @@ const wxToAliApi = {
       filePath: 'apFilePath'
     })
 
-    ALI_NAME_CACHE.getSavedFileInfo.call(ALI_NAME, opts)
+    ALI_OBJ.getSavedFileInfo(opts)
   },
 
   getFileInfo (options) {
@@ -313,7 +309,7 @@ const wxToAliApi = {
       filePath: 'apFilePath'
     })
 
-    ALI_NAME_CACHE.getFileInfo.call(ALI_NAME, opts)
+    ALI_OBJ.getFileInfo(opts)
   },
 
   addPhoneContact (options) {
@@ -321,7 +317,7 @@ const wxToAliApi = {
       weChatNumber: 'alipayAccount'
     })
 
-    ALI_NAME_CACHE.addPhoneContact.call(ALI_NAME, opts)
+    ALI_OBJ.addPhoneContact(opts)
   },
 
   setClipboardData (options) {
@@ -329,7 +325,7 @@ const wxToAliApi = {
       data: 'text'
     })
 
-    ALI_NAME_CACHE.setClipboard.call(ALI_NAME, opts)
+    ALI_OBJ.setClipboard(opts)
   },
 
   getClipboardData (options) {
@@ -339,7 +335,7 @@ const wxToAliApi = {
       return changeOpts(res, { text: 'data' })
     })
 
-    ALI_NAME_CACHE.getClipboard.call(ALI_NAME, opts)
+    ALI_OBJ.getClipboard(opts)
   },
 
   setScreenBrightness (options) {
@@ -347,7 +343,7 @@ const wxToAliApi = {
       value: 'brightness'
     })
 
-    ALI_NAME_CACHE.setScreenBrightness.call(ALI_NAME, opts)
+    ALI_OBJ.setScreenBrightness(opts)
   },
 
   getScreenBrightness (options) {
@@ -357,7 +353,7 @@ const wxToAliApi = {
       return changeOpts(res, { brightness: 'value' })
     })
 
-    ALI_NAME_CACHE.getScreenBrightness.call(ALI_NAME, opts)
+    ALI_OBJ.getScreenBrightness(opts)
   },
 
   makePhoneCall (options) {
@@ -365,31 +361,31 @@ const wxToAliApi = {
       phoneNumber: 'number'
     })
 
-    ALI_NAME_CACHE.makePhoneCall.call(ALI_NAME, opts)
+    ALI_OBJ.makePhoneCall(opts)
   },
 
   stopAccelerometer (options) {
-    ALI_NAME_CACHE.offAccelerometerChange.call(ALI_NAME, options)
+    ALI_OBJ.offAccelerometerChange(options)
   },
 
   startAccelerometer () {
-    info(`支付宝加速计不需要使用 ${ALI_NAME_STRING}.startAccelerometer 开始，可以直接在 ${ALI_NAME_STRING}.onAccelerometerChange 中监听`)
+    warn(`支付宝加速计不需要使用 ${TIPS_NAME}.startAccelerometer 开始，可以直接在 ${TIPS_NAME}.onAccelerometerChange 中监听`)
   },
 
   stopCompass (options) {
-    ALI_NAME_CACHE.offCompassChange.call(ALI_NAME, options)
+    ALI_OBJ.offCompassChange(options)
   },
 
   startCompass () {
-    info(`支付宝罗盘不需要使用 ${ALI_NAME_STRING}.startCompass 开始，可以直接在 ${ALI_NAME_STRING}.onCompassChange 中监听`)
+    warn(`支付宝罗盘不需要使用 ${TIPS_NAME}.startCompass 开始，可以直接在 ${TIPS_NAME}.onCompassChange 中监听`)
   },
 
   stopGyroscope (options) {
-    ALI_NAME_CACHE.offGyroscopeChange.call(ALI_NAME, options)
+    ALI_OBJ.offGyroscopeChange(options)
   },
 
   startGyroscope () {
-    info(`支付宝陀螺仪不需要使用 ${ALI_NAME_STRING}.startGyroscope 开始，可以直接在 ${ALI_NAME_STRING}.onGyroscopeChange 中监听`)
+    warn(`支付宝陀螺仪不需要使用 ${TIPS_NAME}.startGyroscope 开始，可以直接在 ${TIPS_NAME}.onGyroscopeChange 中监听`)
   },
 
   scanCode (options) {
@@ -407,7 +403,8 @@ const wxToAliApi = {
           opts.type = 'qr'
           break
         default:
-          warn(`${ALI_NAME_STRING}.scanCode 只支持扫描条形码和二维码，请将 type 设置为 barCode/qrCode`)
+          error(`${TIPS_NAME}.scanCode 只支持扫描条形码和二维码，请将 type 设置为 barCode/qrCode`)
+          opts.type = 'qr'
           break
       }
     }
@@ -416,7 +413,7 @@ const wxToAliApi = {
       return changeOpts(res, { code: 'result' })
     })
 
-    ALI_NAME_CACHE.scan.call(ALI_NAME, opts)
+    ALI_OBJ.scan(opts)
   },
 
   login (options) {
@@ -432,19 +429,19 @@ const wxToAliApi = {
       return changeOpts(res, { authCode: 'code' })
     })
 
-    ALI_NAME_CACHE.getAuthCode.call(ALI_NAME, opts)
+    ALI_OBJ.getAuthCode(opts)
   },
 
   checkSession () {
-    warn(`支付宝不支持检查登录过期函数 checkSession`)
+    warn(`支付宝不支持 ${TIPS_NAME}.checkSession 检查登录过期`)
   },
 
   getUserInfo (options) {
     if (options.withCredentials === true) {
-      warn(`支付宝不支持在 getUserInfo 使用 withCredentials 参数中获取等敏感信息`)
+      warn(`支付宝不支持在 ${TIPS_NAME}.getUserInfo 使用 withCredentials 参数中获取等敏感信息`)
     }
     if (options.lang) {
-      info(`支付宝不支持在 getUserInfo 中使用 lang 参数`)
+      warn(`支付宝不支持在 ${TIPS_NAME}.getUserInfo 中使用 lang 参数`)
     }
 
     let opts = changeOpts(options)
@@ -456,7 +453,7 @@ const wxToAliApi = {
       params.forEach(key => {
         Object.defineProperty(userInfo, key, {
           get () {
-            warn(`支付宝 getUserInfo 不能获取 ${key}`)
+            warn(`支付宝 ${TIPS_NAME}.getUserInfo 不能获取 ${key}`)
             return ''
           }
         })
@@ -467,12 +464,12 @@ const wxToAliApi = {
       }
     })
 
-    ALI_NAME_CACHE.getAuthUserInfo.call(ALI_NAME, opts)
+    ALI_OBJ.getAuthUserInfo(opts)
   },
 
   requestPayment (options) {
     if (!options.tradeNO) {
-      error('请在支付函数 requestPayment 中添加 tradeNO 参数用于支付宝支付')
+      error(`请在支付函数 ${TIPS_NAME}.requestPayment 中添加 tradeNO 参数用于支付宝支付`)
     }
 
     let opts = changeOpts(options, {
@@ -494,11 +491,11 @@ const wxToAliApi = {
       }
     }
 
-    ALI_NAME_CACHE.tradePay.call(ALI_NAME, opts)
+    ALI_OBJ.tradePay(opts)
   },
 
   createCanvasContext (canvasId) {
-    let ctx = ALI_NAME_CACHE.createCanvasContext.call(ALI_NAME, canvasId)
+    let ctx = ALI_OBJ.createCanvasContext(canvasId)
 
     CANVAS_MAP[canvasId] = ctx
 
@@ -507,7 +504,7 @@ const wxToAliApi = {
 
   canvasToTempFilePath (options) {
     if (!CANVAS_MAP[options.canvasId]) {
-      error('支付宝调用 toTempFilePath 方法之前需要先调用 createCanvasContext 创建 context')
+      error(`支付宝调用 ${TIPS_NAME}.toTempFilePath 方法之前需要先调用 ${TIPS_NAME}.createCanvasContext 创建 context`)
       return
     }
 
@@ -527,7 +524,7 @@ const wxToAliApi = {
 
   canvasPutImageData (options) {
     if (!CANVAS_MAP[options.canvasId]) {
-      error('支付宝调用 putImageData 方法之前需要先调用 createCanvasContext 创建 context')
+      error(`支付宝调用 ${TIPS_NAME}.putImageData 方法之前需要先调用 ${TIPS_NAME}.createCanvasContext 创建 context`)
       return
     }
 
@@ -545,7 +542,7 @@ const wxToAliApi = {
 
   canvasGetImageData (options) {
     if (!CANVAS_MAP[options.canvasId]) {
-      error('支付宝调用 getImageData 方法之前需要先调用 createCanvasContext 创建 context')
+      error(`支付宝调用 ${TIPS_NAME}.getImageData 方法之前需要先调用 ${TIPS_NAME}.createCanvasContext 创建 context`)
       return
     }
 
@@ -562,9 +559,9 @@ const wxToAliApi = {
 /**
  * @param {Object} target 要代理的对象
  */
-const proxyWxToAliApi = () => {
+const proxyWxToAliApi = target => {
   Object.keys(wxToAliApi).forEach(api => {
-    ALI_NAME[api] = wxToAliApi[api]
+    target[api] = wxToAliApi[api]
   })
 }
 

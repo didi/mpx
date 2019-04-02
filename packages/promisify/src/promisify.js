@@ -33,7 +33,7 @@ function getMapFromList (list) {
   }
 }
 
-export default function getPromisifyList (whiteList) {
+export default function getPromisifyList (proxyMPX, whiteList) {
   const whiteListMap = getMapFromList(whiteList)
   const blackListMap = getMapFromList(blackList)
 
@@ -50,9 +50,10 @@ export default function getPromisifyList (whiteList) {
   }
 
   const promisifyList = {}
+  let assignObj = Object.assign({}, envObj, proxyMPX)
 
-  Object.keys(envObj).forEach((key) => {
-    if (typeof envObj[key] !== 'function') return
+  Object.keys(assignObj).forEach((key) => {
+    if (typeof assignObj[key] !== 'function') return
 
     promisifyList[key] = function (...args) {
       if (promisifyFilter(key)) {
@@ -71,10 +72,10 @@ export default function getPromisifyList (whiteList) {
             originFail && originFail.call(this, e)
             reject(e)
           }
-          envObj[key].apply(envObj, args)
+          assignObj[key].apply(assignObj, args)
         })
       } else {
-        return envObj[key].apply(envObj, args)
+        return assignObj[key].apply(assignObj, args)
       }
     }
   })
