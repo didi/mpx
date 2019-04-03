@@ -16,7 +16,7 @@ function mapFactory (type, store) {
         } else {
           const getterVal = getByPath(store.getters, value, '__NOTFOUND__')
           if (getterVal === '__NOTFOUND__') {
-            console.warn(new Error(`not found getter named [${value}]`))
+            console.warn('【MPX ERROR】', new Error(`not found getter named [${value}]`))
             return ''
           } else {
             return getterVal === undefined ? '' : getterVal

@@ -8,6 +8,17 @@ module.exports = function ({ print }) {
   const aliLog = print('ali', TAG_NAME)
   return {
     test: TAG_NAME,
+    props: [
+      {
+        test: 'mode',
+        ali (attr) {
+          if (attr.value !== 'selector') {
+            aliLog(1)(attr)
+          }
+          return false
+        }
+      }
+    ],
     event: [
       {
         test: /^(change)$/,

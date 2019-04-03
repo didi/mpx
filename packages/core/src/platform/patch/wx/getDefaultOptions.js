@@ -15,6 +15,9 @@ function transformProperties (properties) {
   enumerableKeys(properties).forEach(key => {
     const rawFiled = properties[key]
     const rawObserver = rawFiled.observer
+    if (rawObserver) {
+      console.warn('【MPX ERROR】', 'please use watch instead of observer')
+    }
     let newFiled = null
     if (typeof rawFiled === 'function') {
       newFiled = {
@@ -27,8 +30,8 @@ function transformProperties (properties) {
       if (this.$mpxProxy) {
         this[key] = value
         this.$mpxProxy.updated()
+        typeof rawObserver === 'function' && rawObserver.call(this, value, oldValue)
       }
-      typeof rawObserver === 'function' && rawObserver.call(this, value, oldValue)
     }
     newProps[key] = newFiled
   })

@@ -8,12 +8,6 @@ module.exports = function ({ print }) {
   const aliLog = print('ali', TAG_NAME)
   return {
     test: TAG_NAME,
-    props: [
-      {
-        test: /^(aria-label)$/,
-        ali: aliLog()
-      }
-    ],
     event: [
       {
         test: /^(change)$/,

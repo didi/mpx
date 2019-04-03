@@ -79,7 +79,8 @@ export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
       this.$mpxProxy.created()
     },
     didUpdate (prevProps) {
-      if (this.$mpxProxy.state === '__created__') {
+      // mounted之前的变更不需要触发updated
+      if (!this.$mpxProxy || !this.$mpxProxy.isMounted()) {
         return '__abort__'
       }
       if (prevProps && prevProps !== this.props) {

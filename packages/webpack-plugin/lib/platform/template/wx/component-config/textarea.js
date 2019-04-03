@@ -10,7 +10,7 @@ module.exports = function ({ print }) {
     test: TAG_NAME,
     props: [
       {
-        test: /^(auto-focus|fixed|cursor-spacing|cursor|show-confirm-bar|selection-start|selection-end|adjust-position|aria-label)$/,
+        test: /^(auto-focus|fixed|cursor-spacing|cursor|show-confirm-bar|selection-start|selection-end|adjust-position)$/,
         ali: aliLog()
       }
     ],

@@ -10,7 +10,7 @@ module.exports = function ({ print }) {
     test: TAG_NAME,
     props: [
       {
-        test: /^(border-radius|font-size|color|active-mode|aria-label)$/,
+        test: /^(border-radius|font-size|color|active-mode)$/,
         ali: aliLog()
       }
     ],

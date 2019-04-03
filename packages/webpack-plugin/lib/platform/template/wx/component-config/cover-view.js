@@ -10,7 +10,7 @@ module.exports = function ({ print }) {
     test: TAG_NAME,
     props: [
       {
-        test: /^(scroll-top|aria-label|aria-role)$/,
+        test: /^scroll-top$/,
         ali: aliLog()
       }
     ]
