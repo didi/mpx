@@ -67,6 +67,7 @@ module.exports = function (raw) {
   let entryDeps = new Set()
 
   let cacheCallback
+  let mainComponentsMap = {}
 
   const checkEntryDeps = (callback) => {
     callback = callback || cacheCallback
@@ -130,7 +131,7 @@ module.exports = function (raw) {
       if (compilationMpx.processingSubPackages) {
         for (let src in subPackagesMap) {
           // 分包引用且主包为引用的组件，需打入分包目录中
-          if (result.startsWith(src) && !componentsMap[result]) {
+          if (result.startsWith(src) && !mainComponentsMap[result]) {
             subPackageRoot = subPackagesMap[src]
             break
           }
@@ -444,6 +445,7 @@ module.exports = function (raw) {
         }
       ]),
       (callback) => {
+        mainComponentsMap = Object.assign({}, componentsMap)
         compilationMpx.processingSubPackages = true
         callback()
       },
