@@ -5,18 +5,15 @@ const movableView = require('./movable-view')
 const movableArea = require('./movable-area')
 const coverView = require('./cover-view')
 const coverImage = require('./cover-image')
-const icon = require('./icon')
 const text = require('./text')
 const richText = require('./rich-text')
 const progress = require('./progress')
 const button = require('./button')
-const checkbox = require('./checkbox')
 const checkboxGroup = require('./checkbox-group')
 const form = require('./form')
 const input = require('./input')
 const picker = require('./picker')
 const pickerView = require('./picker-view')
-const radio = require('./radio')
 const slider = require('./slider')
 const switchComponent = require('./switch')
 const textarea = require('./textarea')
@@ -51,18 +48,15 @@ module.exports = function getComponentConfigs ({ warn, error }) {
     movableArea({ print }),
     coverView({ print }),
     coverImage({ print }),
-    icon({ print }),
     text({ print }),
     richText({ print }),
     progress({ print }),
     button({ print }),
-    checkbox({ print }),
     checkboxGroup({ print }),
     form({ print }),
     input({ print }),
     picker({ print }),
     pickerView({ print }),
-    radio({ print }),
     slider({ print }),
     switchComponent({ print }),
     textarea({ print }),

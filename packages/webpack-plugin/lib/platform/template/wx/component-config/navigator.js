@@ -15,7 +15,7 @@ module.exports = function ({ print }) {
         ali: aliLog(1)
       },
       {
-        test: /^(hover-stop-propagation|aria-label)$/,
+        test: /^(hover-stop-propagation)$/,
         ali: aliLog()
       }
     ],

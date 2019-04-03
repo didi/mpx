@@ -9,12 +9,6 @@ module.exports = function ({ print }) {
 
   return {
     test: TAG_NAME,
-    props: [
-      {
-        test: 'aria-label',
-        ali: aliLog()
-      }
-    ],
     event: [
       {
         test: /^(error|load)$/,

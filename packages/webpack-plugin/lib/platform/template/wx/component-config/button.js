@@ -10,7 +10,7 @@ module.exports = function ({ print }) {
     test: TAG_NAME,
     props: [
       {
-        test: /^(lang|session-from|send-message-title|send-message-path|send-message-img|show-message-card|app-parameter|aria-label)$/,
+        test: /^(lang|session-from|send-message-title|send-message-path|send-message-img|show-message-card|app-parameter)$/,
         ali: aliLog()
       }
     ],

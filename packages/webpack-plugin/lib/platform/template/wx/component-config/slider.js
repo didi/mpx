@@ -10,7 +10,7 @@ module.exports = function ({ print }) {
     test: TAG_NAME,
     props: [
       {
-        test: /^(color|aria-label)$/,
+        test: /^color$/,
         ali: aliLog()
       },
       {

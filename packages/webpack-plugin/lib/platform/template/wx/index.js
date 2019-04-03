@@ -34,7 +34,14 @@ module.exports = function getSpec ({ warn, error }) {
             value
           }
         }
-      }
+      },
+      // 无障碍
+      {
+        test: /^aria-(role|label)$/,
+        ali () {
+          warn(`Ali environment does not support aria-role|label props!`)
+        }
+      },
     ],
     event: {
       prefix: [
