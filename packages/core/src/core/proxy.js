@@ -38,7 +38,7 @@ export default class MPXProxy {
     this.uid = uid++
     this.name = options.name || ''
     this.options = options
-    // initial -> created -> [beforeMount -> mounted -> updated] -> destroyed
+    // initial -> created -> [beforeMount -> mounted] -> destroyed
     this.state = 'initial'
     this.watchers = [] // 保存所有观察者
     this.renderReaction = null
@@ -56,6 +56,10 @@ export default class MPXProxy {
     this.state = CREATED
     this.callUserHook(CREATED)
     this.initRender()
+  }
+
+  isMounted () {
+    return this.state === MOUNTED
   }
 
   beforeMount () {
@@ -299,9 +303,9 @@ export default class MPXProxy {
           try {
             return this.target.__injectedRender()
           } catch (e) {
-            console.warn(`Failed to execute render function, degrade to full-set-data mode!`)
-            console.warn(e)
-            console.warn('If the render function execution failed because of "__wxs_placeholder", ignore this warning.')
+            console.warn('【MPX ERROR】', `Failed to execute render function, degrade to full-set-data mode!`)
+            console.warn('【MPX ERROR】', e)
+            console.warn('【MPX ERROR】', 'If the render function execution failed because of "__wxs_placeholder", ignore this warning.')
             renderExecutionFailed = true
             this.render()
           }
