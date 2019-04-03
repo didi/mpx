@@ -7,6 +7,10 @@ const TIPS_NAME = 'mpx'
 const CANVAS_MAP = {}
 
 const wxToAliApi = {
+  /**
+   * 基础
+   */
+
   getSystemInfo (options) {
     const opts = changeOpts(options)
 
@@ -36,6 +40,10 @@ const wxToAliApi = {
 
     return res
   },
+
+  /**
+   * 界面
+   */
 
   showToast (options) {
     const opts = changeOpts(options, {
@@ -135,6 +143,10 @@ const wxToAliApi = {
     ALI_OBJ.setNavigationBar(options)
   },
 
+  /**
+   * 网络
+   */
+
   request (options) {
     const opts = changeOpts(options, {
       header: 'headers'
@@ -172,6 +184,10 @@ const wxToAliApi = {
     return ALI_OBJ.uploadFile(opts)
   },
 
+  /**
+   * 数据缓存
+   */
+
   setStorageSync (key, data) {
     ALI_OBJ.setStorageSync({
       key,
@@ -190,6 +206,10 @@ const wxToAliApi = {
       key
     }).data
   },
+
+  /**
+   * 媒体
+   */
 
   saveImageToPhotosAlbum (key) {
     warn(`如果想要保存在线图片链接，可以直接使用 ${TIPS_NAME}.saveImage`)
@@ -235,6 +255,10 @@ const wxToAliApi = {
     ALI_OBJ.chooseImage(opts)
   },
 
+  /**
+   * 位置
+   */
+
   getLocation (options) {
     if (options.aliType === undefined && options.type) {
       warn(`如果要针对支付宝设置 ${TIPS_NAME}.getLocation 中的 type 参数，请使用 aliType, 取值为 0~3`)
@@ -251,6 +275,10 @@ const wxToAliApi = {
 
     ALI_OBJ.getLocation(opts)
   },
+
+  /**
+   * 文件
+   */
 
   saveFile (options) {
     const opts = changeOpts(options, {
@@ -311,6 +339,10 @@ const wxToAliApi = {
 
     ALI_OBJ.getFileInfo(opts)
   },
+
+  /**
+   * 设备
+   */
 
   addPhoneContact (options) {
     const opts = changeOpts(options, {
@@ -416,6 +448,10 @@ const wxToAliApi = {
     ALI_OBJ.scan(opts)
   },
 
+  /**
+   * 开放接口
+   */
+
   login (options) {
     let opts
 
@@ -494,6 +530,10 @@ const wxToAliApi = {
     ALI_OBJ.tradePay(opts)
   },
 
+  /**
+   * 画布
+   */
+
   createCanvasContext (canvasId) {
     let ctx = ALI_OBJ.createCanvasContext(canvasId)
 
@@ -553,6 +593,50 @@ const wxToAliApi = {
     handleSuccess(opts, undefined, options)
 
     ctx.getImageData(opts)
+  },
+
+  /**
+   * WXML
+   */
+
+  createSelectorQuery (options) {
+    let query = ALI_OBJ.createSelectorQuery(options)
+    let cbs = []
+
+    if (query) {
+      const apiArr = ['select', 'selectAll', 'selectViewport']
+      const cacheExec = query.exec || noop
+
+      apiArr.forEach(key => {
+        const cacheKey = query[key] || noop
+
+        query[key] = dom => {
+          const selected = cacheKey.call(query, dom)
+          const cacheBoundingClientRect = selected.boundingClientRect
+          selected.boundingClientRect = (...args) => {
+            if (typeof args[0] === 'function') {
+              cbs.push(args[0])
+              // error('请将 boundingClientRect 中的回调函数放入 exec 中使用')
+            }
+            return cacheBoundingClientRect.call(selected)
+          }
+          return selected
+        }
+      })
+
+      query.exec = (fn = noop) => {
+        return cacheExec.call(query, res => {
+          cbs.forEach((cb, idx) => {
+            cb.call(this, res[idx])
+          })
+          cbs = []
+          fn.call(this, res)
+        })
+      }
+
+      query.in = () => query
+    }
+    return query
   }
 }
 

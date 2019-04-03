@@ -1,4 +1,5 @@
 import { proxyWxToAliApi } from './platform'
+import proxyAll from './proxy'
 import getPromisifyList from './promisify'
 
 export default function install (target, options = {}) {
@@ -10,16 +11,22 @@ export default function install (target, options = {}) {
 
   /* eslint-disable camelcase, no-undef */
   if (typeof __mpx_src_mode__ !== 'undefined') {
-    fromMode = __mpx_src_mode__
+    from = __mpx_src_mode__
   }
   if (typeof __mpx_mode__ !== 'undefined') {
-    toMode = __mpx_mode__
+    to = __mpx_mode__
   }
   /* eslint-enable */
 
+  // 代理所有 api
+  proxyAll()
+
+  // 转换各端 api
   if (from === 'wx' && to === 'ali') {
     proxyWxToAliApi(target)
   }
+
+  // 变为 promise 格式
   if (usePromise) {
     Object.assign(target, getPromisifyList(whiteList, from, to))
   }
