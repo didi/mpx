@@ -6,10 +6,19 @@
 ## Usage
 
 ```js
+// 使用 mpx 生态
+
 import mpx from '@mpxjs/core'
 import apiProxy from '@mpxjs/api-proxy'
 
 mpx.use(apiProxy, options)
+```
+
+```js
+// 单独使用
+import apiProxy from '@mpxjs/api-proxy'
+
+apiProxy(target, options) // target 为要抹平的对象
 ```
 
 ## Options
