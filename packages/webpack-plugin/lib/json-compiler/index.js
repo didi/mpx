@@ -458,6 +458,11 @@ module.exports = function (raw) {
       }
     }
 
+    // 保存全局注册组件
+    if (json.usingComponents) {
+      this._compilation.__mpx__.usingComponents = Object.keys(json.usingComponents)
+    }
+
     // 串行处理，先处理主包代码，再处理分包代码，为了正确识别出分包中定义的组件属于主包还是分包
     let errors = []
     // 外部收集errors，确保整个series流程能够执行完

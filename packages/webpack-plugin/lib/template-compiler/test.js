@@ -1,22 +1,15 @@
 const compiler = require('./compiler')
 // const bindThis = require('./bind-this').transform
 // var input = '<view bindtap="handler" transitionend="xxx">{{a.b.c["aaa"].e}}</view>'
-var input = `<swiper wx:if="aaa" bindchange="handler">{{a.b.c["aaa"].e}}</swiper>
-<view  bindtransitionend="aaa"></view>
-<scroll-view  bindscrolltoupper="dd"></scroll-view>
-<movable-view></movable-view>
-<movable-area></movable-area>
-<button bindlaunchapp></button>
-<form bindsubmit></form>
-<input cursor-spacing></input>
-<slider selected-color color bindchange block-color></slider>
-<map bindmarkertap></map>
-<cover-image bindload aria-role></cover-image>`
+var input =
+  '<view><component wx:show="bbb" is="aaa"></component>' +
+  '</view>'
 
 let parsed = compiler.parse(input, {
   usingComponents: ['com1', 'com2', 'com3'],
   compileBindEvent: true,
-  mode: 'wx'
+  mode: 'wx',
+  isComponent: true
 })
 let ast = parsed.root
 // let meta = parsed.meta

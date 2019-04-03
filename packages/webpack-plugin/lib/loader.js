@@ -67,11 +67,11 @@ module.exports = function (content) {
   const hasComment = templateAttrs && templateAttrs.comments
   const isNative = false
 
-  let usingComponents = []
+  let usingComponents = [].concat(this._compilation.__mpx__.usingComponents)
   try {
     let ret = JSON.parse(parts.json.content)
     if (ret.usingComponents) {
-      usingComponents = Object.keys(ret.usingComponents)
+      usingComponents = usingComponents.concat(Object.keys(ret.usingComponents))
     }
   } catch (e) {
   }

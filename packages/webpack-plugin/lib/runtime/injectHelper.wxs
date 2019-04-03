@@ -194,12 +194,13 @@ export default {
     }
     return concat(staticClass, stringifyClass(dynamicClass))
   },
-  transformStyle: function (staticStyle, dynamicStyle) {
+  transformStyle: function (staticStyle, dynamicStyle, show) {
     if (typeof staticStyle !== 'string') {
       return console.log('Template attr style must be a string!')
     }
     var normalizedDynamicStyle = normalizeDynamicStyle(dynamicStyle)
     var parsedStaticStyle = parseStyleText(staticStyle)
-    return genStyleText(extend(parsedStaticStyle, normalizedDynamicStyle))
+    var showStyle = show ? {} : { display: 'none !important' }
+    return genStyleText(extend(parsedStaticStyle, extend(normalizedDynamicStyle, showStyle)))
   }
 }

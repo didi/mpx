@@ -32,6 +32,7 @@ module.exports = function (raw) {
         new Error('[template compiler][' + this.resource + ']: ' + msg)
       )
     },
+    isComponent: !!componentsMap[resource],
     mode,
     srcMode: fieldSrcMode || fileSrcMode || srcMode
   }))

@@ -590,6 +590,7 @@ function parse (template, options) {
   let root
   let meta = {}
   let currentParent
+  let multiRootError
 
   parseHTML(template, {
     warn: warn$1,
@@ -626,28 +627,18 @@ function parse (template, options) {
 
       // gen root
       if (!root) {
-        root = currentParent = getTempNode()
-        stack.unshift(root)
-      }
-
-      processElement(element, options, meta, root)
-
-      // mount element
-      if (currentParent) {
-        if (!element.forbidden) {
+        root = element
+      } else {
+        // mount element
+        if (currentParent) {
           currentParent.children.push(element)
           element.parent = currentParent
+        } else {
+          multiRootError = true
+          return
         }
-      } else {
-        // fix mutiple root case
-        let temp = root
-        root = currentParent = getTempNode()
-        currentParent.children.push(temp, element)
-        temp.parent = currentParent
-        element.parent = currentParent
-        stack.unshift(root)
       }
-
+      processElement(element, options, meta, root)
       if (!unary) {
         currentParent = element
         stack.push(element)
@@ -660,20 +651,22 @@ function parse (template, options) {
     end: function end () {
       // remove trailing whitespace
       let element = stack[stack.length - 1]
-      let lastNode = element.children[element.children.length - 1]
-      if (lastNode && lastNode.type === 3 && lastNode.text === ' ') {
-        element.children.pop()
+      if (element) {
+        let lastNode = element.children[element.children.length - 1]
+        if (lastNode && lastNode.type === 3 && lastNode.text === ' ') {
+          element.children.pop()
+        }
+        // pop stack
+        stack.pop()
+        currentParent = stack[stack.length - 1]
+        root = closeElement(element, root)
       }
-      // pop stack
-      stack.pop()
-      currentParent = stack[stack.length - 1]
-      root = closeElement(element, root)
     },
 
     chars: function chars (text) {
       if (!currentParent) {
-        root = currentParent = getTempNode()
-        stack.unshift(root)
+        multiRootError = true
+        return
       }
       // IE textarea placeholder bug
       /* istanbul ignore if */
@@ -701,8 +694,8 @@ function parse (template, options) {
     },
     comment: function comment (text) {
       if (!currentParent) {
-        root = currentParent = getTempNode()
-        stack.unshift(root)
+        multiRootError = true
+        return
       }
       currentParent.children.push({
         type: 3,
@@ -711,6 +704,11 @@ function parse (template, options) {
       })
     }
   })
+
+  if (multiRootError) {
+    error$1('Template fields should has one single root, considering wrapping your template content with <view> or <text> tag!')
+  }
+
   return {
     root,
     meta
@@ -739,7 +737,7 @@ function getAndRemoveAttr (el, name, removeFromMap = true) {
 
 function addAttrs (el, attrs) {
   el.attrsList = el.attrsList.concat(attrs)
-  Object.assign(el.attrsMap, makeAttrsMap(attrs))
+  el.attrsMap = makeAttrsMap(el.attrsList)
 }
 
 // function modifyAttr (el, name, val) {
@@ -1200,12 +1198,13 @@ function processStyle (el, meta, root) {
   const targetType = el.tag.startsWith('th-') ? 'ex-' + type : type
   let dynamicStyle = getAndRemoveAttr(el, config[mode].directive.dynamicStyle)
   let staticStyle = getAndRemoveAttr(el, type)
-  if (dynamicStyle) {
+  if (dynamicStyle || el.show) {
+    let showExp = el.show ? parseMustache(el.show).result : 'true'
     let staticStyleExp = parseMustache(staticStyle).result
     let dynamicStyleExp = parseMustache(dynamicStyle).result
     addAttrs(el, [{
       name: targetType,
-      value: `{{__injectHelper.transformStyle(${staticStyleExp}, ${dynamicStyleExp})}}`
+      value: `{{__injectHelper.transformStyle(${staticStyleExp}, ${dynamicStyleExp}, ${showExp})}}`
     }])
     injectWxs(meta, '__injectHelper', injectHelperWxsPath, root)
   } else if (staticStyle) {
@@ -1216,12 +1215,33 @@ function processStyle (el, meta, root) {
   }
 }
 
+function processShow (el, options, root) {
+  if (options.isComponent && el === root) {
+    addAttrs(el, [{
+      name: config[mode].directive.show,
+      value: '{{mpxShow}}'
+    }])
+  }
+  let show = getAndRemoveAttr(el, config[mode].directive.show)
+  if (show) {
+    if (options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component') {
+      addAttrs(el, [{
+        name: 'mpxShow',
+        value: show
+      }])
+    } else {
+      el.show = show
+    }
+  }
+}
+
 function processElement (el, options, meta, root) {
   if (rulesRunner) {
     rulesRunner(el)
   }
   processIf(el)
   processFor(el)
+  processShow(el, options, root)
   processClass(el, meta, root)
   processStyle(el, meta, root)
   processRef(el, options, meta)
@@ -1237,15 +1257,13 @@ function processElement (el, options, meta, root) {
 }
 
 function closeElement (el, root) {
-  const result = postProcessComponentIs(el, root)
-  el = result.el
-  root = result.root
+  el = postProcessComponentIs(el)
   postProcessFor(el)
   postProcessIf(el)
   return root
 }
 
-function postProcessComponentIs (el, root) {
+function postProcessComponentIs (el) {
   if (el.is && el.components) {
     let tempNode
     if (el.for || el.if || el.elseif || el.else) {
@@ -1269,8 +1287,8 @@ function postProcessComponentIs (el, root) {
       postProcessIf(newChild)
       return newChild
     })
-    if (el === root) {
-      root = tempNode
+    if (!el.parent) {
+      error$1('Dynamic component can not be the template root, considering wrapping it with <view> or <text> tag!')
     } else {
       tempNode.parent = el.parent
       el.parent.children.pop()
@@ -1278,7 +1296,7 @@ function postProcessComponentIs (el, root) {
     }
     el = tempNode
   }
-  return { el, root }
+  return el
 }
 
 function serialize (root) {

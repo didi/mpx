@@ -62,7 +62,8 @@ module.exports = {
       key: 'wx:key',
       dynamicClass: 'wx:class',
       dynamicStyle: 'wx:style',
-      ref: 'wx:ref'
+      ref: 'wx:ref',
+      show: 'wx:show'
     }
   },
   ali: {
@@ -135,7 +136,8 @@ module.exports = {
       key: 'a:key',
       dynamicClass: 'a:class',
       dynamicStyle: 'a:style',
-      ref: 'a:ref'
+      ref: 'a:ref',
+      show: 'a:show'
     },
     eventProxyIgnoreTagArr: ['map']
   },
@@ -202,7 +204,8 @@ module.exports = {
       key: 's-key',
       dynamicClass: 's-class',
       dynamicStyle: 's-style',
-      ref: 's-ref'
+      ref: 's-ref',
+      show: 's-show'
     }
   }
 }
