@@ -50,7 +50,7 @@ function extractPageHooks (options) {
     methods && Object.keys(methods).forEach(key => {
       if (PAGE_HOOKS.indexOf(key) > -1) {
         if (newOptions[key]) {
-          console.warn(`Don't redefine the lifecycle [${key}]， it will use the methods's lifecycle if redefined`)
+          console.warn('【MPX ERROR】', `Don't redefine the lifecycle [${key}]， it will use the methods's lifecycle if redefined`)
         }
         newOptions[key] = methods[key]
       }

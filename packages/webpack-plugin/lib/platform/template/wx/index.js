@@ -41,7 +41,7 @@ module.exports = function getSpec ({ warn, error }) {
         ali () {
           warn(`Ali environment does not support aria-role|label props!`)
         }
-      },
+      }
     ],
     event: {
       prefix: [
