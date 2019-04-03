@@ -4,7 +4,7 @@ export default function pageStatusMixin (mixinType) {
       properties: {
         'mpxShow': {
           type: Boolean,
-          value: false
+          value: true
         }
       }
     }

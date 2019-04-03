@@ -589,6 +589,7 @@ function parse (template, options) {
   let preserveWhitespace = options.preserveWhitespace !== false
   let root
   let meta = {}
+  let injectNodes = []
   let currentParent
   let multiRootError
 
@@ -638,7 +639,7 @@ function parse (template, options) {
           return
         }
       }
-      processElement(element, options, meta, root)
+      processElement(element, options, meta, root, injectNodes)
       if (!unary) {
         currentParent = element
         stack.push(element)
@@ -705,6 +706,12 @@ function parse (template, options) {
 
   if (multiRootError) {
     error$1('Template fields should has one single root, considering wrapping your template content with <view> or <text> tag!')
+  }
+
+  if (injectNodes.length) {
+    let tempNode = getTempNode()
+    tempNode.children = injectNodes.concat(root)
+    root = tempNode
   }
 
   return {
@@ -1151,7 +1158,7 @@ function processText (el) {
 //   }])
 // }
 
-function injectWxs (meta, module, src, root) {
+function injectWxs (meta, module, src, injectNodes) {
   if (addWxsModule(meta, module)) {
     return
   }
@@ -1165,12 +1172,12 @@ function injectWxs (meta, module, src, root) {
       value: src
     }
   ])
-  root.children.unshift(wxsNode)
+  injectNodes.push(wxsNode)
 }
 
 const injectHelperWxsPath = normalize.lib('runtime/injectHelper.wxs')
 
-function processClass (el, meta, root) {
+function processClass (el, meta, injectNodes) {
   const type = 'class'
   const targetType = el.tag.startsWith('th-') ? 'ex-' + type : type
   let dynamicClass = getAndRemoveAttr(el, config[mode].directive.dynamicClass)
@@ -1182,7 +1189,7 @@ function processClass (el, meta, root) {
       name: targetType,
       value: `{{__injectHelper.transformClass(${staticClassExp}, ${dynamicClassExp})}}`
     }])
-    injectWxs(meta, '__injectHelper', injectHelperWxsPath, root)
+    injectWxs(meta, '__injectHelper', injectHelperWxsPath, injectNodes)
   } else if (staticClass) {
     addAttrs(el, [{
       name: targetType,
@@ -1191,7 +1198,7 @@ function processClass (el, meta, root) {
   }
 }
 
-function processStyle (el, meta, root) {
+function processStyle (el, meta, injectNodes) {
   const type = 'style'
   const targetType = el.tag.startsWith('th-') ? 'ex-' + type : type
   let dynamicStyle = getAndRemoveAttr(el, config[mode].directive.dynamicStyle)
@@ -1204,7 +1211,7 @@ function processStyle (el, meta, root) {
       name: targetType,
       value: `{{__injectHelper.transformStyle(${staticStyleExp}, ${dynamicStyleExp}, ${showExp})}}`
     }])
-    injectWxs(meta, '__injectHelper', injectHelperWxsPath, root)
+    injectWxs(meta, '__injectHelper', injectHelperWxsPath, injectNodes)
   } else if (staticStyle) {
     addAttrs(el, [{
       name: targetType,
@@ -1236,15 +1243,15 @@ function processShow (el, options, root) {
   }
 }
 
-function processElement (el, options, meta, root) {
+function processElement (el, options, meta, root, injectNodes) {
   if (rulesRunner) {
     rulesRunner(el)
   }
   processIf(el)
   processFor(el)
   processShow(el, options, root)
-  processClass(el, meta, root)
-  processStyle(el, meta, root)
+  processClass(el, meta, injectNodes)
+  processStyle(el, meta, injectNodes)
   processRef(el, options, meta)
   processBindEvent(el)
   processComponentDepth(el, options)
