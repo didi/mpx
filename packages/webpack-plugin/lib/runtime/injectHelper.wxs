@@ -200,7 +200,7 @@ export default {
     }
     var normalizedDynamicStyle = normalizeDynamicStyle(dynamicStyle)
     var parsedStaticStyle = parseStyleText(staticStyle)
-    var showStyle = show ? {} : { display: 'none !important' }
+    var showStyle = (show || show === undefined) ? {} : { display: 'none !important' }
     return genStyleText(extend(parsedStaticStyle, extend(normalizedDynamicStyle, showStyle)))
   }
 }

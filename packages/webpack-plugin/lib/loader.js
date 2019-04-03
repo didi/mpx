@@ -133,13 +133,16 @@ module.exports = function (content) {
   } else {
     if (pagesMap[resource]) {
       // page
-      output += 'Page({})' + '\n'
+      output += 'import {createPage} from "@mpxjs/core"\n' +
+        'createPage({})\n'
     } else if (componentsMap[resource]) {
       // component
-      output += 'Component({})' + '\n'
+      output += 'import {createComponent} from "@mpxjs/core"\n' +
+        'createComponent({})\n'
     } else {
       // app
-      output += 'App({})' + '\n'
+      output += 'import {createApp} from "@mpxjs/core"\n' +
+        'createApp({})\n'
     }
     output += '\n'
   }

@@ -665,7 +665,6 @@ function parse (template, options) {
 
     chars: function chars (text) {
       if (!currentParent) {
-        multiRootError = true
         return
       }
       // IE textarea placeholder bug
@@ -694,7 +693,6 @@ function parse (template, options) {
     },
     comment: function comment (text) {
       if (!currentParent) {
-        multiRootError = true
         return
       }
       currentParent.children.push({
@@ -1198,8 +1196,8 @@ function processStyle (el, meta, root) {
   const targetType = el.tag.startsWith('th-') ? 'ex-' + type : type
   let dynamicStyle = getAndRemoveAttr(el, config[mode].directive.dynamicStyle)
   let staticStyle = getAndRemoveAttr(el, type)
-  if (dynamicStyle || el.show) {
-    let showExp = el.show ? parseMustache(el.show).result : 'true'
+  if (dynamicStyle || el.hasOwnProperty('show')) {
+    let showExp = el.hasOwnProperty('show') ? parseMustache(el.show).result : 'undefined'
     let staticStyleExp = parseMustache(staticStyle).result
     let dynamicStyleExp = parseMustache(dynamicStyle).result
     addAttrs(el, [{
@@ -1223,8 +1221,11 @@ function processShow (el, options, root) {
     }])
   }
   let show = getAndRemoveAttr(el, config[mode].directive.show)
-  if (show) {
+  if (show !== undefined) {
     if (options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component') {
+      if (show === '') {
+        show = '{{false}}'
+      }
       addAttrs(el, [{
         name: 'mpxShow',
         value: show
