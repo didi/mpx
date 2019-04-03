@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/api-proxy",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "convert miniprogram API at each end",
   "main": "index.js",
   "scripts": {
