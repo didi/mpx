@@ -1241,7 +1241,7 @@ function processShow (el, options, root) {
       const oldStyle = getAndRemoveAttr(el, 'style') || ''
       addAttrs(el, [{
         name: 'style',
-        value: `${oldStyle};{{${showExp}||${showExp}===undefined?'':'display:none !important;'}}`
+        value: `${oldStyle};{{${showExp}||${showExp}===undefined?'':'display:none;'}}`
       }])
     }
   }
