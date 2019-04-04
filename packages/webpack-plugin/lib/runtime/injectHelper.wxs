@@ -194,10 +194,9 @@ export default {
     }
     return concat(staticClass, stringifyClass(dynamicClass))
   },
-  transformStyle: function (staticStyle, dynamicStyle, show) {
+  transformStyle: function (staticStyle, dynamicStyle) {
     var normalizedDynamicStyle = normalizeDynamicStyle(dynamicStyle)
     var parsedStaticStyle = typeof staticStyle === 'string' ? parseStyleText(staticStyle) : {}
-    var showStyle = (show || show === undefined) ? {} : { display: 'none !important' }
-    return genStyleText(extend(parsedStaticStyle, extend(normalizedDynamicStyle, showStyle)))
+    return genStyleText(extend(parsedStaticStyle, normalizedDynamicStyle))
   }
 }

@@ -1203,13 +1203,12 @@ function processStyle (el, meta, injectNodes) {
   const targetType = el.tag.startsWith('th-') ? 'ex-' + type : type
   let dynamicStyle = getAndRemoveAttr(el, config[mode].directive.dynamicStyle)
   let staticStyle = getAndRemoveAttr(el, type)
-  if (dynamicStyle || el.hasOwnProperty('show')) {
-    let showExp = el.hasOwnProperty('show') ? parseMustache(el.show).result : 'undefined'
+  if (dynamicStyle) {
     let staticStyleExp = parseMustache(staticStyle).result
     let dynamicStyleExp = parseMustache(dynamicStyle).result
     addAttrs(el, [{
       name: targetType,
-      value: `{{__injectHelper.transformStyle(${staticStyleExp}, ${dynamicStyleExp}, ${showExp})}}`
+      value: `{{__injectHelper.transformStyle(${staticStyleExp}, ${dynamicStyleExp})}}`
     }])
     injectWxs(meta, '__injectHelper', injectHelperWxsPath, injectNodes)
   } else if (staticStyle) {
@@ -1238,7 +1237,12 @@ function processShow (el, options, root) {
         value: show
       }])
     } else {
-      el.show = show
+      const showExp = parseMustache(show).result
+      const oldStyle = getAndRemoveAttr(el, 'style') || ''
+      addAttrs(el, [{
+        name: 'style',
+        value: `${oldStyle};{{${showExp}||${showExp}===undefined?'':'display:none !important;'}}`
+      }])
     }
   }
 }
@@ -1249,9 +1253,9 @@ function processElement (el, options, meta, root, injectNodes) {
   }
   processIf(el)
   processFor(el)
-  processShow(el, options, root)
   processClass(el, meta, injectNodes)
   processStyle(el, meta, injectNodes)
+  processShow(el, options, root)
   processRef(el, options, meta)
   processBindEvent(el)
   processComponentDepth(el, options)
