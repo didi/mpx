@@ -1260,7 +1260,7 @@ function processElement (el, options, meta, root, injectNodes) {
   processBindEvent(el)
   processComponentDepth(el, options)
   if (mode === 'ali') {
-    processLifecycleHack(el, options)
+    // processLifecycleHack(el, options)
   } else {
     processPageStatus(el, options)
   }
