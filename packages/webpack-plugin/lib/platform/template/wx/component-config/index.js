@@ -20,6 +20,7 @@ const textarea = require('./textarea')
 const navigator = require('./navigator')
 const image = require('./image')
 const map = require('./map')
+const canvas = require('./canvas')
 const aliNonsupport = require('./aliunsupport')
 
 module.exports = function getComponentConfigs ({ warn, error }) {
@@ -62,6 +63,7 @@ module.exports = function getComponentConfigs ({ warn, error }) {
     textarea({ print }),
     navigator({ print }),
     image({ print }),
-    map({ print })
+    map({ print }),
+    canvas({ print })
   ]
 }

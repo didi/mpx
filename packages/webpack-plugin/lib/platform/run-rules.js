@@ -28,5 +28,5 @@ module.exports = function runRules (rules = [], input, options = {}) {
       if (!waterfall) return input
     }
   }
-  return input
+  if (waterfall) return input
 }

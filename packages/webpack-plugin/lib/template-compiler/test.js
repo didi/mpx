@@ -2,13 +2,16 @@ const compiler = require('./compiler')
 // const bindThis = require('./bind-this').transform
 // var input = '<view bindtap="handler" transitionend="xxx">{{a.b.c["aaa"].e}}</view>'
 var input =
-  '<view><component wx:show="bbb" is="aaa"></component>' +
+  '<view>' +
+  '<canvas canvas-id="aaa"></canvas>' +
+  '<component wx:show="bbb" is="aaa"></component>' +
   '</view>'
 
 let parsed = compiler.parse(input, {
   usingComponents: ['com1', 'com2', 'com3'],
   compileBindEvent: true,
-  mode: 'wx',
+  mode: 'ali',
+  srcMode: 'wx',
   isComponent: true
 })
 let ast = parsed.root
