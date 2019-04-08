@@ -26,9 +26,9 @@ module.exports = function getSpec ({ warn, error }) {
           const eventName = match[2]
           const modifier = match[3] || ''
           const rPrefix = runRules(spec.event.prefix, prefix, { target: 'ali' })
-          const rEventName = runRules(eventRules, eventName, { target: 'ali' })
+          const rEventName = runRules(eventRules, eventName, { target: 'ali' }) || eventName
           return {
-            name: (rPrefix && rEventName) ? rPrefix + rEventName.replace(/^./, (matched) => {
+            name: rPrefix ? rPrefix + rEventName.replace(/^./, (matched) => {
               return matched.toUpperCase()
             }) + modifier : name,
             value

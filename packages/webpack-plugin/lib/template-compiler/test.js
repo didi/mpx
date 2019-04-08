@@ -3,7 +3,7 @@ const compiler = require('./compiler')
 // var input = '<view bindtap="handler" transitionend="xxx">{{a.b.c["aaa"].e}}</view>'
 var input =
   '<view>' +
-  '<canvas canvas-id="aaa"></canvas>' +
+  '<canvas bind:aaa="aaaaa" canvas-id="aaa"></canvas>' +
   '<component wx:show="bbb" is="aaa"></component>' +
   '</view>'
 
