@@ -22,6 +22,8 @@ const PAGE_HOOKS = [
 ]
 
 const COMPONENT_HOOKS = [
+  'onInit',
+  'deriveDataFromProps',
   'didMount',
   'didUpdate',
   'didUnmount',

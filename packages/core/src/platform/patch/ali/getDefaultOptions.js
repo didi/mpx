@@ -65,7 +65,7 @@ function filterOptions (options, type) {
 }
 
 export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
-  const hookNames = type === 'component' ? ['didMount', 'didUnmount'] : ['onLoad', 'onUnload']
+  const hookNames = type === 'component' ? ['onInit', 'didUnmount'] : ['onLoad', 'onUnload']
   const options = filterOptions(rawOptions, type)
   options.mixins = [{
     [hookNames[0]] () {
