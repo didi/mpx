@@ -117,6 +117,9 @@ export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
       // 组件监听视图数据更新, attached之后才能拿到properties
       this.$mpxProxy.created()
     },
+    ready () {
+      this.$mpxProxy.mounted()
+    },
     detached () {
       this.$mpxProxy.destroyed()
     }

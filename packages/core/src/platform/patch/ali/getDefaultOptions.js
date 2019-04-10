@@ -65,7 +65,7 @@ function filterOptions (options, type) {
 }
 
 export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
-  const hookNames = type === 'component' ? ['onInit', 'didUnmount'] : ['onLoad', 'onUnload']
+  const hookNames = type === 'component' ? ['onInit', 'didMount', 'didUnmount'] : ['onLoad', 'onReady', 'onUnload']
   const options = filterOptions(rawOptions, type)
   options.mixins = [{
     [hookNames[0]] () {
@@ -78,25 +78,13 @@ export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
       this.$mpxProxy = mpxProxy
       this.$mpxProxy.created()
     },
-    didUpdate (prevProps) {
-      // mounted之前的变更不需要触发updated
-      if (!this.$mpxProxy || !this.$mpxProxy.isMounted()) {
-        return '__abort__'
-      }
-      if (prevProps && prevProps !== this.props) {
-        let isChanged = false
-        Object.keys(prevProps).forEach(key => {
-          if (!comparer.structural(this.props[key], prevProps[key])) {
-            this[key] = this.props[key]
-            isChanged = true
-          }
-        })
-        if (isChanged) {
-          this.$mpxProxy.updated()
-        }
-      }
+    didUpdate () {
+      this.$mpxProxy.updated()
     },
     [hookNames[1]] () {
+      this.$mpxProxy.mounted()
+    },
+    [hookNames[2]] () {
       this.$mpxProxy.destroyed()
     }
   }]

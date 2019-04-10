@@ -17,7 +17,7 @@ import {
 } from '../helper/utils'
 
 import { watch } from './watcher'
-import { mountedQueue } from './lifecycleQueue'
+import { getRenderCallBack } from '../platform/patch'
 import {
   CREATED,
   BEFOREMOUNT,
@@ -38,7 +38,7 @@ export default class MPXProxy {
     this.uid = uid++
     this.name = options.name || ''
     this.options = options
-    // initial -> created -> [beforeMount -> mounted] -> destroyed
+    // initial -> created -> mounted -> destroyed
     this.state = 'initial'
     this.watchers = [] // 保存所有观察者
     this.renderReaction = null
@@ -62,33 +62,17 @@ export default class MPXProxy {
     return this.state === MOUNTED
   }
 
-  beforeMount () {
-    this.state = BEFOREMOUNT
-    mountedQueue.enter()
-  }
-
   mounted () {
-    if (!this.mounting) {
-      // 等待mounted
-      this.mounting = true
-      mountedQueue.exit(this.depth, this.uid, () => {
-        // 由于异步，因此需要检查当前状态是否符合预期
-        if (this.state === BEFOREMOUNT) {
-          this.state = MOUNTED
-          // 用于处理refs等前置工作
-          this.callUserHook(BEFOREMOUNT)
-          this.callUserHook(MOUNTED)
-        }
-        this.mounting = false
-      })
+    if (this.state === CREATED) {
+      this.state = MOUNTED
+      // 用于处理refs等前置工作
+      this.callUserHook(BEFOREMOUNT)
+      this.callUserHook(MOUNTED)
     }
   }
 
-  updated (fromCallback) {
-    if (this.state === BEFOREMOUNT && fromCallback) {
-      // 首次setData
-      this.mounted()
-    } else if (this.state === MOUNTED && !this.updating) {
+  updated () {
+    if (this.state === MOUNTED && !this.updating) {
       this.updating = true
       this.nextTick(() => {
         // 由于异步，需要确认 this.state
@@ -102,10 +86,6 @@ export default class MPXProxy {
   }
 
   destroyed () {
-    if (this.state === BEFOREMOUNT) {
-      // 如果销毁时还未mounted回调，则执行清栈操作
-      mountedQueue.exit(this.depth, this.uid)
-    }
     this.clearWatchers()
     this.state = DESTROYED
     this.callUserHook(DESTROYED)
@@ -279,16 +259,10 @@ export default class MPXProxy {
       console.error('please specify a 【__render】 function to render view')
       return
     }
-    // 空对象在state 为 CREATED 阶段也要执行，用于正常触发mounted
-    if (isEmptyObject(data) && this.state !== CREATED) {
+    if (isEmptyObject(data)) {
       return
     }
-    if (this.state === CREATED) {
-      this.beforeMount()
-    }
-    this.target.__render(processUndefined(data), () => {
-      this.updated(true)
-    })
+    this.target.__render(processUndefined(data), getRenderCallBack(this))
     this.forceUpdateKeys = [] // 仅用于当次的render
   }
 

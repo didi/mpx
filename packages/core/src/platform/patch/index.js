@@ -25,3 +25,11 @@ export default function createFactory (type) {
     constructor(defaultOptions)
   }
 }
+
+export function getRenderCallBack (context) {
+  return () => {
+    if (!is('ali')) {
+      context.updated()
+    }
+  }
+}
