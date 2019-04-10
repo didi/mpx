@@ -1,4 +1,4 @@
-import { CREATED, BEFOREMOUNT, UPDATED, DESTROYED } from '../../core/innerLifecycle'
+import { BEFORECREATE, BEFOREMOUNT, UPDATED, DESTROYED } from '../../core/innerLifecycle'
 import { is } from '../../helper/env'
 
 export default function getRefsMixin () {
@@ -38,7 +38,7 @@ export default function getRefsMixin () {
     }
   }
   return {
-    [CREATED] () {
+    [BEFORECREATE] () {
       this.$refs = {}
     },
     [BEFOREMOUNT] () {

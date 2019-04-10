@@ -19,6 +19,7 @@ import {
 import { watch } from './watcher'
 import { getRenderCallBack } from '../platform/patch'
 import {
+  BEFORECREATE,
   CREATED,
   BEFOREMOUNT,
   MOUNTED,
@@ -52,6 +53,7 @@ export default class MPXProxy {
     this.initApi()
     this.initialData = this.target.__getInitialData()
     this.cacheData = extend({}, this.initialData) // 缓存数据，用于diff
+    this.callUserHook(BEFORECREATE)
     this.initState(this.options)
     this.state = CREATED
     this.callUserHook(CREATED)
@@ -72,11 +74,11 @@ export default class MPXProxy {
   }
 
   updated () {
-    if (this.state === MOUNTED && !this.updating) {
+    if (this.isMounted() && !this.updating) {
       this.updating = true
       this.nextTick(() => {
         // 由于异步，需要确认 this.state
-        if (this.state === MOUNTED) {
+        if (this.isMounted()) {
           this.handleUpdatedCallbacks()
           this.callUserHook(UPDATED)
         }
@@ -262,7 +264,10 @@ export default class MPXProxy {
     if (isEmptyObject(data)) {
       return
     }
-    this.target.__render(processUndefined(data), getRenderCallBack(this))
+    /**
+     * mounted之后才接收回调来触发updated钩子，换言之mounted之前修改数据是不会触发updated的
+     */
+    this.target.__render(processUndefined(data), this.isMounted() && getRenderCallBack(this))
     this.forceUpdateKeys = [] // 仅用于当次的render
   }
 
