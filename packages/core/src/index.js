@@ -1,4 +1,4 @@
-import { toJS as toPureObject, extendObservable, observable, set, get, remove } from 'mobx'
+import { toJS as toPureObject, extendObservable, observable, set, get, remove, action as createAction } from 'mobx'
 import * as platform from './platform'
 import createStore from './core/createStore'
 import { injectMixins } from './core/injectMixins'
@@ -21,7 +21,7 @@ export function createComponent (config, ...rest) {
   platform.createComponent(extend({ proto: mpx.proto }, config), ...rest)
 }
 
-export { createStore, toPureObject, observable, extendObservable, watch }
+export { createStore, toPureObject, observable, extendObservable, watch, createAction }
 
 function extendProps (target, proxyObj, rawProps, option) {
   const keys = Object.getOwnPropertyNames(proxyObj)
@@ -81,7 +81,8 @@ const APIs = {
   set,
   get,
   remove,
-  setConvertRule
+  setConvertRule,
+  createAction
 }
 
 // 实例属性
