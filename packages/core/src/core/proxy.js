@@ -111,7 +111,6 @@ export default class MPXProxy {
     const proxyData = extend({}, this.initialData, data)
     this.initComputed(options.computed, proxyData)
     this.data = observable(proxyData)
-    this.depth = this.data['mpxDepth']
     /* target的数据访问代理到将proxy的data */
     proxy(this.target, this.data, enumerableKeys(this.data).concat(this.computedKeys))
     // 初始化watch
