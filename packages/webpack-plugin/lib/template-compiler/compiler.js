@@ -842,9 +842,10 @@ function parseFuncStr2 (str) {
   if (match) {
     let funcName = stringify(match[1])
     let args = match[3] ? `,${match[3]}` : ''
+    let hasArgs = !!match[2]
     args = args.replace(/(\$event([^,\s])*)/, (match, p1) => stringify(p1))
     return {
-      args,
+      hasArgs,
       expStr: `[${funcName + args}]`
     }
   }
@@ -918,7 +919,7 @@ function processBindEvent (el) {
     } else if (configs.length > 1) {
       needBind = true
     } else if (configs.length === 1) {
-      needBind = !!configs[0].args
+      needBind = !!configs[0].hasArgs
     }
     // 排除特殊情况
     if (needBind && !isValidIdentifierStr(type)) {
