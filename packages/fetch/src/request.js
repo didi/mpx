@@ -54,7 +54,7 @@ export default function request (config) {
     }
     if (typeof my !== 'undefined') {
       // alipay
-      const request = my.httpRequest || my.request
+      const request = my.request || my.httpRequest
       if (typeof request === 'function') {
         requestTask = request.call(my, config)
         return
