@@ -1,5 +1,11 @@
 /* eslint-disable no-undef */
 import { buildUrl, filterUndefined } from './util'
+function transformRes (res) {
+  // 抹平wx & ali 响应数据
+  res.status = res.statusCode = res.status || res.statusCode
+  res.header = res.headers = res.header || res.headers
+  return res
+}
 export default function request (config) {
   return new Promise((resolve, reject) => {
     if (!config.url) {
@@ -31,12 +37,12 @@ export default function request (config) {
       })
     }
     config.success = function (res) {
-      res = Object.assign({ requestConfig: config }, res)
+      res = Object.assign({ requestConfig: config }, transformRes(res))
       typeof rawSuccess === 'function' && rawSuccess.call(this, res)
       resolve(res)
     }
     config.fail = function (res) {
-      res = Object.assign({ requestConfig: config }, res)
+      res = Object.assign({ requestConfig: config }, transformRes(res))
       const err = cancelMsg !== undefined ? cancelMsg : res
       typeof rawFail === 'function' && rawFail.call(this, err)
       reject(err)
@@ -48,7 +54,7 @@ export default function request (config) {
     }
     if (typeof my !== 'undefined') {
       // alipay
-      const request = my.httpRequest || my.request
+      const request = my.request || my.httpRequest
       if (typeof request === 'function') {
         requestTask = request.call(my, config)
         return
