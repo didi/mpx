@@ -19,7 +19,7 @@ export default function install (target, options = {}) {
   /* eslint-enable */
 
   // 代理所有 api
-  proxyAll()
+  proxyAll(target)
 
   // 转换各端 api
   if (from === 'wx' && to === 'ali') {
