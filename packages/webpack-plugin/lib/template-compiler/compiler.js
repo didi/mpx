@@ -827,14 +827,14 @@ function processComponentIs (el, options) {
   }
 }
 
-function processComponentDepth (el, options) {
-  if (options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component') {
-    addAttrs(el, [{
-      name: 'mpxDepth',
-      value: '{{mpxDepth + 1}}'
-    }])
-  }
-}
+// function processComponentDepth (el, options) {
+//   if (options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component') {
+//     addAttrs(el, [{
+//       name: 'mpxDepth',
+//       value: '{{mpxDepth + 1}}'
+//     }])
+//   }
+// }
 
 function parseFuncStr2 (str) {
   let funcRE = /^([^()]+)(\((.*)\))?/
@@ -1221,13 +1221,14 @@ function processStyle (el, meta, injectNodes) {
 }
 
 function processShow (el, options, root) {
-  if (options.isComponent && el === root) {
-    addAttrs(el, [{
-      name: config[mode].directive.show,
-      value: '{{mpxShow}}'
-    }])
-  }
   let show = getAndRemoveAttr(el, config[mode].directive.show)
+  if (options.isComponent && el === root) {
+    if (show !== undefined) {
+      show = `{{${parseMustache(show).result}&&mpxShow}}`
+    } else {
+      show = '{{mpxShow}}'
+    }
+  }
   if (show !== undefined) {
     if (options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component') {
       if (show === '') {
@@ -1259,7 +1260,7 @@ function processElement (el, options, meta, root, injectNodes) {
   processShow(el, options, root)
   processRef(el, options, meta)
   processBindEvent(el)
-  processComponentDepth(el, options)
+  // processComponentDepth(el, options)
   if (mode === 'ali') {
     // processLifecycleHack(el, options)
   } else {

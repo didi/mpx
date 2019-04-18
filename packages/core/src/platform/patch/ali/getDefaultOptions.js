@@ -78,7 +78,14 @@ export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
       this.$mpxProxy = mpxProxy
       this.$mpxProxy.created()
     },
-    didUpdate () {
+    didUpdate (prevProps) {
+      if (prevProps && prevProps !== this.props) {
+        Object.keys(prevProps).forEach(key => {
+          if (!comparer.structural(this.props[key], prevProps[key])) {
+            this[key] = this.props[key]
+          }
+        })
+      }
       this.$mpxProxy.updated()
     },
     [hookNames[1]] () {

@@ -54,7 +54,7 @@ const wxToAliApi = {
   },
 
   hideToast (options) {
-    if (options.success || options.fail || options.complete) {
+    if (options && (options.success || options.fail || options.complete)) {
       warn(`${TIPS_NAME}.hideToast 不支持 success/fail/complete 参数`)
     }
     ALI_OBJ.hideToast(options)
