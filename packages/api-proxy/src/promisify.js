@@ -51,11 +51,13 @@ function promisifyFilter (key, whiteList) {
   }
 }
 
-function promisify (listObj, whiteList) {
+function promisify (listObj, whiteList, exclude = []) {
   const promisifyList = {}
 
   Object.keys(listObj).forEach(key => {
-    if (typeof listObj[key] !== 'function') return
+    if (typeof listObj[key] !== 'function' || ~exclude.indexOf(key)) {
+      return
+    }
 
     promisifyList[key] = function (...args) {
       if (promisifyFilter(key, whiteList)) {
@@ -85,12 +87,12 @@ function promisify (listObj, whiteList) {
   return promisifyList
 }
 
-export default function getPromisifyList (whiteList, from, to) {
+export default function getPromisifyList (whiteList, from, to, exclude) {
   const promisifyObj = promisify(envObj, whiteList)
   let promisifyTrans = {}
 
   if (from === 'wx' && to === 'ali') {
-    promisifyTrans = promisify(wxToAliApi, whiteList)
+    promisifyTrans = promisify(wxToAliApi, whiteList, exclude)
   }
   return Object.assign({}, promisifyObj, promisifyTrans)
 }
