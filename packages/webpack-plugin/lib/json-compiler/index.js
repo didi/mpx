@@ -67,6 +67,7 @@ module.exports = function (raw) {
   let entryDeps = new Set()
 
   let cacheCallback
+  let mainComponentsMap = {}
 
   const checkEntryDeps = (callback) => {
     callback = callback || cacheCallback
@@ -113,7 +114,7 @@ module.exports = function (raw) {
     return match[1]
   }
 
-  const processComponent = (component, context, rewritePath, callback) => {
+  const processComponent = (component, context, rewritePath, componentPath, callback) => {
     if (/^plugin:\/\//.test(component)) {
       return callback()
     }
@@ -126,12 +127,11 @@ module.exports = function (raw) {
       let parsed = path.parse(result)
       let ext = parsed.ext
       result = stripExtension(result)
-      let componentPath
       let subPackageRoot = ''
       if (compilationMpx.processingSubPackages) {
         for (let src in subPackagesMap) {
           // 分包引用且主包为引用的组件，需打入分包目录中
-          if (result.startsWith(src) && !componentsMap[result]) {
+          if (result.startsWith(src) && !mainComponentsMap[result]) {
             subPackageRoot = subPackagesMap[src]
             break
           }
@@ -149,13 +149,13 @@ module.exports = function (raw) {
           }
         }
         let relativePath = path.relative(root, result)
-        componentPath = path.join(subPackageRoot, 'components', name + hash(root), relativePath)
+        componentPath = componentPath || path.join(subPackageRoot, 'components', name + hash(root), relativePath)
       } else {
         let componentName = parsed.name
-        componentPath = path.join(subPackageRoot, 'components', componentName + hash(result), componentName)
+        componentPath = componentPath || path.join(subPackageRoot, 'components', componentName + hash(result), componentName)
       }
       componentPath = toPosix(componentPath)
-      rewritePath(publicPath + componentPath)
+      rewritePath && rewritePath(publicPath + componentPath)
       // 如果之前已经创建了入口，直接return
       if (componentsMap[result] === componentPath) return callback()
       componentsMap[result] = componentPath
@@ -400,7 +400,7 @@ module.exports = function (raw) {
         async.forEachOf(components, (component, name, callback) => {
           processComponent(component, context, (path) => {
             json.usingComponents[name] = path
-          }, callback)
+          }, undefined, callback)
         }, callback)
       } else {
         callback()
@@ -412,6 +412,14 @@ module.exports = function (raw) {
         let workersPath = path.join(context, workers)
         this.addContextDependency(workersPath)
         copydir(workersPath, context, callback)
+      } else {
+        callback()
+      }
+    }
+
+    const processCustomTabBar = (tabBar, context, callback) => {
+      if (tabBar && tabBar.custom) {
+        processComponent('./custom-tab-bar/index', context, undefined, 'custom-tab-bar/index', callback)
       } else {
         callback()
       }
@@ -431,9 +439,13 @@ module.exports = function (raw) {
         },
         (callback) => {
           processPackages(json.packages, this.context, callback)
+        },
+        (callback) => {
+          processCustomTabBar(json.tabBar, this.context, callback)
         }
       ]),
       (callback) => {
+        mainComponentsMap = Object.assign({}, componentsMap)
         compilationMpx.processingSubPackages = true
         callback()
       },
@@ -467,7 +479,7 @@ module.exports = function (raw) {
       async.forEachOf(json.usingComponents, (component, name, callback) => {
         processComponent(component, this.context, (path) => {
           json.usingComponents[name] = path
-        }, callback)
+        }, undefined, callback)
       }, callback)
     } else if (json.componentGenerics) {
       // 处理抽象节点
@@ -475,7 +487,7 @@ module.exports = function (raw) {
         if (genericCfg && genericCfg.default) {
           processComponent(genericCfg.default, this.context, (path) => {
             json.componentGenerics[name].default = path
-          }, callback)
+          }, undefined, callback)
         } else {
           callback()
         }

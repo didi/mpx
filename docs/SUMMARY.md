@@ -23,6 +23,7 @@
 * [JSON扩展特性](single/json-enhance.md#json域扩展)
     * [packages](single/json-enhance.md#packages)
     * [分包](single/json-enhance.md#分包)
+    * [自定义tabbar](single/json-enhance.md#自定义tabbar)
 * [数据管理](store/index.md#数据管理)
     * [开始](store/index.md#开始)
     * [state](store/index.md#state)

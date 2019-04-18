@@ -207,6 +207,14 @@ mpx中会将 app.mpx（入口文件，也不一定非要叫app.mpx） 中package
 
 建议使用第一种。
 
+## 自定义tabbar
+
+什么是自定义tabbar参见微信文档。https://developers.weixin.qq.com/miniprogram/dev/framework/ability/custom-tabbar.html
+
+app.mpx的json部分的tabBar里custom一项为true时，需要在 src 目录下存在 custom-tab-bar 目录且里面有index.mpx，这个index.mpx里就编写自定义tabbar的模板、js、样式和json部分即可。
+
+**注意事项**：使用该feature时候要认真阅读官方例子，在页面的show钩子上要再手工设置一遍tabbar的selected值。
+
 ## 体积优化指南
 
 体积优化的主力还是依靠分包来做的，但主包、分包的代码还是webpack输出的，如果输出打包结果的时候，如果不少代码被同时打包输出到主包和分包里，就是一个可以优化的点。
