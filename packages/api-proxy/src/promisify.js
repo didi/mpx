@@ -1,4 +1,4 @@
-import { wxToAliApi } from './platform'
+import { wxToAliApi } from './platform/index'
 import { getEnvObj, noop } from './utils'
 
 const envObj = getEnvObj()

@@ -1,4 +1,4 @@
-import { proxyWxToAliApi } from './platform'
+import { proxyWxToAliApi } from './platform/index'
 import proxyAll from './proxy'
 import getPromisifyList from './promisify'
 

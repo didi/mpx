@@ -21,6 +21,7 @@ const navigator = require('./navigator')
 const image = require('./image')
 const map = require('./map')
 const canvas = require('./canvas')
+const wxs = require('./wxs')
 const aliNonsupport = require('./aliunsupport')
 
 module.exports = function getComponentConfigs ({ warn, error }) {
@@ -64,6 +65,7 @@ module.exports = function getComponentConfigs ({ warn, error }) {
     navigator({ print }),
     image({ print }),
     map({ print }),
-    canvas({ print })
+    canvas({ print }),
+    wxs()
   ]
 }

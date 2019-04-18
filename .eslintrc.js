@@ -12,6 +12,7 @@ module.exports = {
     'wx': false,
     'my': false,
     'swan': false,
+    'qq': false,
     'Component': false,
     'Page': false,
     'App': false

@@ -1,6 +1,6 @@
-import { changeOpts, handleSuccess, error, warn, noop } from '../utils'
+import { changeOpts, handleSuccess, getEnvObj, error, warn, noop } from '../utils'
 
-const ALI_OBJ = my
+const ALI_OBJ = getEnvObj()
 const TIPS_NAME = 'mpx'
 
 // canvas api 用
