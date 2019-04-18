@@ -643,8 +643,11 @@ const wxToAliApi = {
 /**
  * @param {Object} target 要代理的对象
  */
-const proxyWxToAliApi = target => {
+const proxyWxToAliApi = (target, exclude) => {
   Object.keys(wxToAliApi).forEach(api => {
+    if (~exclude.indexOf(api)) {
+      return
+    }
     target[api] = wxToAliApi[api]
   })
 }

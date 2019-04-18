@@ -3,11 +3,14 @@ import proxyAll from './proxy'
 import getPromisifyList from './promisify'
 
 export default function install (target, options = {}) {
-  const usePromise = !!options.usePromise
-  const whiteList = options.whiteList || []
-  const platform = options.platform || {}
-  let from = platform.from
-  let to = platform.to
+  const {
+    platform = {}, // 转换的平台
+    exclude = [], // 转换平台时不转换的 Api
+    usePromise = false, // 是否转为 promise 格式
+    whiteList = [] // 不变成 promise 格式的 api
+  } = options
+
+  let { from = '', to = '' } = platform
 
   /* eslint-disable camelcase, no-undef */
   if (typeof __mpx_src_mode__ !== 'undefined') {
@@ -23,11 +26,11 @@ export default function install (target, options = {}) {
 
   // 转换各端 api
   if (from === 'wx' && to === 'ali') {
-    proxyWxToAliApi(target)
+    proxyWxToAliApi(target, exclude)
   }
 
   // 变为 promise 格式
   if (usePromise) {
-    Object.assign(target, getPromisifyList(whiteList, from, to))
+    Object.assign(target, getPromisifyList(whiteList, from, to, exclude))
   }
 }
