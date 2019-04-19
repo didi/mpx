@@ -1,5 +1,24 @@
 /* eslint-disable no-undef */
 import { buildUrl, filterUndefined } from './util'
+
+function transformReq (config) {
+  // 抹平wx & ali 请求参数
+  let header = config.header || config.headers
+  const descriptor = {
+    get () {
+      return header
+    },
+    set (val) {
+      header = val
+    },
+    enumerable: true
+  }
+  Object.defineProperties(config, {
+    header: descriptor,
+    headers: descriptor
+  })
+}
+
 function transformRes (res) {
   // 抹平wx & ali 响应数据
   res.status = res.statusCode = res.status || res.statusCode
@@ -12,6 +31,7 @@ export default function request (config) {
       reject(new Error('no url'))
       return
     }
+    transformReq(config)
     if (!config.method) {
       config.method = 'GET'
     } else {
