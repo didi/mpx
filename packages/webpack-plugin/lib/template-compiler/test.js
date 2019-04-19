@@ -1,11 +1,12 @@
 const compiler = require('./compiler')
-// const bindThis = require('./bind-this').transform
-// var input = '<view bindtap="handler" transitionend="xxx">{{a.b.c["aaa"].e}}</view>'
+const bindThis = require('./bind-this').transform
 var input =
-  '<view>' +
-  '<canvas bind:aaa="aaaaa" canvas-id="aaa"></canvas>' +
-  '<component wx:show="bbb" is="aaa"></component>' +
-  '</view>'
+  '<view>{{aaaaaa.bbb}}<view wx:for="{{aaa}}">' +
+  '<view wx:for="{{bbb}}" wx:for-item="item2">' +
+  '<view>{{item.aaa}}</view>' +
+  '<view>{{item2.bbb}}</view>' +
+  '</view>' +
+  '</view></view>'
 
 let parsed = compiler.parse(input, {
   usingComponents: ['com1', 'com2', 'com3'],
@@ -15,31 +16,21 @@ let parsed = compiler.parse(input, {
   isComponent: true
 })
 let ast = parsed.root
-// let meta = parsed.meta
-console.log(compiler.serialize(ast))
+let meta = parsed.meta
 
-// const temp = `global.currentInject = {
-//     render: function () {
-//       var __seen = [];
-//       var renderData = {};
-//       ${compiler.genNode(ast)}
-//       var renderDataFinalKey = this.__processKeyPathMap(renderData)
-//       for (var key in renderData) {
-//         if (renderDataFinalKey.indexOf(key) === -1) {
-//           delete renderData[key]
-//         }
-//       }
-//       return renderData;
-//     }
-// };\n`
+let renderResult = bindThis(`global.currentInject = {
+    render: function () {
+      var __seen = [];
+      var renderData = {};
+      ${compiler.genNode(ast)}
+      return renderData
+    }
+};\n`, {
+  needCollect: true,
+  ignoreMap: meta.wxsModuleMap
+})
 
-//
-// const bindConfig = {
-//   needCollect: true,
-//   ignoreMap: meta.wxsModuleMap
-// }
-//
-// let renderResult = bindThis(temp, bindConfig)
+console.log(renderResult)
 //
 // let globalInjectCode = renderResult.code + '\n'
 //
