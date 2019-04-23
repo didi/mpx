@@ -10,7 +10,7 @@ module.exports = function ({ print }) {
     test: TAG_NAME,
     props: [
       {
-        test: /^(current-item-id|display-multiple-items|skip-hidden-item-layout)$/,
+        test: /^(display-multiple-items|skip-hidden-item-layout|easing-function)$/,
         ali: aliLog()
       }
     ],
