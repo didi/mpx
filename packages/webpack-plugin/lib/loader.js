@@ -96,25 +96,29 @@ module.exports = function (content) {
     isNative
   )
 
-  // 注入模块id
-  const dep = new InjectDependency({
-    content: `global.currentModuleId = ${JSON.stringify(moduleId)};\n`,
-    index: -3
-  })
-  this._module.addDependency(dep)
   // 触发webpack global var 注入
   let output = 'global.currentModuleId;\n'
 
+  // 注入模块id
+  let globalInjectCode = `global.currentModuleId = ${JSON.stringify(moduleId)};\n`
+
+  // 注入支付宝构造函数
+  if (mode === 'ali') {
+    let ctor = 'App'
+    if (pagesMap[resource]) {
+      ctor = 'Page'
+    } else if (componentsMap[resource]) {
+      ctor = 'Component'
+    }
+    globalInjectCode += `global.currentCtor = ${ctor};\n`
+  }
+
   if (!pagesMap[resource] && !componentsMap[resource] && mode === 'swan') {
     // 注入swan runtime fix
-    const dep = new InjectDependency({
-      content: 'if (!global.navigator) {\n' +
+    globalInjectCode += 'if (!global.navigator) {\n' +
       '  global.navigator = {};\n' +
       '}\n' +
-      'global.navigator.standalone = true;\n',
-      index: -4
-    })
-    this._module.addDependency(dep)
+      'global.navigator.standalone = true;\n'
   }
 
   //
@@ -145,11 +149,7 @@ module.exports = function (content) {
   }
 
   if (scriptSrcMode) {
-    const dep = new InjectDependency({
-      content: `global.currentInject.srcMode = ${JSON.stringify(scriptSrcMode)};\n`,
-      index: -1
-    })
-    this._module.addDependency(dep)
+    globalInjectCode += `global.currentSrcMode = ${JSON.stringify(scriptSrcMode)};\n`
   }
 
   //
@@ -215,6 +215,13 @@ module.exports = function (content) {
       ? (getRequireForSrc('template', template) + '\n')
       : (getRequire('template', template) + '\n') + '\n'
   }
+
+
+  const dep = new InjectDependency({
+    content: globalInjectCode,
+    index: -3
+  })
+  this._module.addDependency(dep)
 
   return output
 }

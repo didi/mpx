@@ -19,7 +19,7 @@ export default function createFactory (type) {
     const { rawOptions, currentInject } = transferOptions(options, type, builtInMixins)
     const defaultOptions = getDefaultOptions(type, { rawOptions, currentInject })
     if (!constructor) {
-      constructor = currentInject.ctor
+      constructor = global.currentCtor
     }
     constructor(defaultOptions)
   }

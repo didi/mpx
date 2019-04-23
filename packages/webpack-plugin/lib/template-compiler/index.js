@@ -42,25 +42,13 @@ module.exports = function (raw) {
       var renderData = {};
       ${compiler.genNode(ast)}
       return renderData
-    },
-    mode:${JSON.stringify(mode)}
+    }
 };\n`, {
     needCollect: true,
     ignoreMap: meta.wxsModuleMap
   })
 
   let globalInjectCode = renderResult.code + '\n'
-
-  if (mode === 'ali') {
-    let ctor = 'App'
-    if (pagesMap[resource]) {
-      ctor = 'Page'
-    } else if (componentsMap[resource]) {
-      ctor = 'Component'
-    }
-
-    globalInjectCode += `global.currentInject.ctor = ${ctor};\n`
-  }
 
   if (meta.computed) {
     globalInjectCode += bindThis(`global.currentInject.injectComputed = {
@@ -78,6 +66,7 @@ module.exports = function (raw) {
     content: globalInjectCode,
     index: -2
   })
+
   this._module.issuer.addDependency(dep)
   return compiler.serialize(ast)
 }

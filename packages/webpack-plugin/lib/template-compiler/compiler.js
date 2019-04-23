@@ -1073,7 +1073,7 @@ function addWxsModule (meta, module) {
 
 function processAttrs (el, meta) {
   el.attrsList.forEach((attr) => {
-    if (el.tag === config[mode].wxs.tag && attr.name === config[mode].wxs.module) {
+    if (config[mode].wxs && el.tag === config[mode].wxs.tag && attr.name === config[mode].wxs.module) {
       return addWxsModule(meta, attr.value)
     }
     let parsed = parseMustache(attr.value)
@@ -1255,8 +1255,10 @@ function processElement (el, options, meta, root, injectNodes) {
   }
   processIf(el)
   processFor(el)
-  processClass(el, meta, injectNodes)
-  processStyle(el, meta, injectNodes)
+  if (mode !== 'qq' && mode !== 'tt') {
+    processClass(el, meta, injectNodes)
+    processStyle(el, meta, injectNodes)
+  }
   processShow(el, options, root)
   processRef(el, options, meta)
   processBindEvent(el)
