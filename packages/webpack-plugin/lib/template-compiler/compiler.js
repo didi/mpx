@@ -572,7 +572,7 @@ function parse (template, options) {
   error$1 = options.error || baseError
 
   mode = options.mode || 'wx'
-  srcMode = options.srcMode || 'wx'
+  srcMode = options.srcMode || mode
 
   rulesRunner = getRulesRunner({
     mode,
@@ -757,7 +757,7 @@ function addAttrs (el, attrs) {
 // }
 
 function stringify (str) {
-  return config[mode].stringify(str)
+  return JSON.stringify(str)
 }
 
 let tagRE = /\{\{((?:.|\n)+?)\}\}(?!})/
@@ -1260,10 +1260,7 @@ function processElement (el, options, meta, root, injectNodes) {
   processShow(el, options, root)
   processRef(el, options, meta)
   processBindEvent(el)
-  // processComponentDepth(el, options)
-  if (mode === 'ali') {
-    // processLifecycleHack(el, options)
-  } else {
+  if (mode !== 'ali') {
     processPageStatus(el, options)
   }
   processComponentIs(el, options)
