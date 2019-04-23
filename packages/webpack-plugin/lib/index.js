@@ -5,7 +5,6 @@ const ConcatSource = require('webpack-sources').ConcatSource
 const loaderUtils = require('loader-utils')
 const ResolveDependency = require('./dependency/ResolveDependency')
 const InjectDependency = require('./dependency/InjectDependency')
-const CallModeDependency = require('./dependency/CallModeDependency')
 const NullFactory = require('webpack/lib/NullFactory')
 const config = require('./config')
 const normalize = require('./utils/normalize')
@@ -108,9 +107,6 @@ class MpxWebpackPlugin {
       compilation.dependencyFactories.set(InjectDependency, new NullFactory())
       compilation.dependencyTemplates.set(InjectDependency, new InjectDependency.Template())
 
-      compilation.dependencyFactories.set(CallModeDependency, new NullFactory())
-      compilation.dependencyTemplates.set(CallModeDependency, new CallModeDependency.Template())
-
       params.normalModuleFactory.hooks.parser.for('javascript/auto').tap('MpxWebpackPlugin', (parser) => {
         parser.hooks.call.for('__mpx_resolve_path__').tap('MpxWebpackPlugin', (expr) => {
           if (expr.arguments[0]) {
@@ -150,6 +146,7 @@ class MpxWebpackPlugin {
 
         parser.hooks.callAnyMember.for('mpx').tap('MpxWebpackPlugin', (expr) => {
           const callee = expr.callee
+          const args = expr.arguments
           if (apiBlackListMap[callee.property.name || callee.property.value]) {
             return
           }
@@ -161,8 +158,9 @@ class MpxWebpackPlugin {
           }
           const localSrcMode = loaderUtils.parseQuery(resourceQuery).mode
           const globalSrcMode = compilation.__mpx__.srcMode
-          const dep = new CallModeDependency({
-            mode: localSrcMode || globalSrcMode,
+          const mode = localSrcMode || globalSrcMode
+          const dep = new InjectDependency({
+            content: args.length ? `, ${JSON.stringify(mode)}` : JSON.stringify(mode),
             index: expr.end - 1
           })
           parser.state.current.addDependency(dep)
