@@ -12,6 +12,12 @@ module.exports = function ({ print }) {
       {
         test: /^(lang|session-from|send-message-title|send-message-path|send-message-img|show-message-card|app-parameter|aria-label)$/,
         ali: aliLog()
+      },
+      {
+        test: /^(open-type)$/,
+        ali ({ name }) {
+          error(`<${TAG_NAME}> component support ${name} property in different way in ali environment!`)
+        }
       }
     ],
     event: [
