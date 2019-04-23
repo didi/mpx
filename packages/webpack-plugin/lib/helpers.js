@@ -60,7 +60,7 @@ function ensureBang (loader) {
   }
 }
 
-function resolveLoaders (options, moduleId, isProduction, hasScoped, hasComment, usingComponents, needCssSourceMap, mode, isNative) {
+function resolveLoaders (options, moduleId, isProduction, hasScoped, hasComment, usingComponents, needCssSourceMap, mode) {
   let cssLoaderOptions = ''
   if (needCssSourceMap) {
     cssLoaderOptions += '?sourceMap'
@@ -69,19 +69,8 @@ function resolveLoaders (options, moduleId, isProduction, hasScoped, hasComment,
     cssLoaderOptions += (cssLoaderOptions ? '&' : '?') + 'minimize'
   }
 
-  const templateCompilerOptions =
-    '?' +
-    JSON.stringify({
-      usingComponents,
-      hasScoped,
-      hasComment,
-      isNative,
-      moduleId,
-      compileBindEvent: options.compileBindEvent
-    })
-
   const defaultLoaders = {
-    html: `html-loader?root=/&attrs=audio:src image:src video:src cover-image:src ${config[mode].wxs.tag}:${config[mode].wxs.src}!${templateCompilerPath + templateCompilerOptions}`,
+    html: `html-loader?root=/&attrs=audio:src image:src video:src cover-image:src ${config[mode].wxs.tag}:${config[mode].wxs.src}`,
     css: getCSSLoaderString(),
     js: hasBabel ? 'babel-loader' : '',
     json: jsonCompilerPath
@@ -89,7 +78,7 @@ function resolveLoaders (options, moduleId, isProduction, hasScoped, hasComment,
 
   function getCSSLoaderString (lang) {
     const langLoader = lang ? ensureBang(ensureLoader(lang)) : ''
-    return 'css-loader' + cssLoaderOptions + '!' + langLoader
+    return ensureBang('css-loader' + cssLoaderOptions) + langLoader
   }
 
   return {
@@ -117,8 +106,7 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
     hasComment,
     usingComponents,
     needCssSourceMap,
-    mode,
-    isNative
+    mode
   )
 
   function getRequire (type, part, index, scoped) {
@@ -249,9 +237,7 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
     let styleCompiler = ''
     if (type === 'styles') {
       // style compiler that needs to be applied for all styles
-      styleCompiler =
-        styleCompilerPath +
-        '?' +
+      styleCompiler = styleCompilerPath + '?' +
         JSON.stringify({
           id: moduleId,
           scoped: !!scoped,
@@ -259,8 +245,7 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
           transRpx: options.transRpx,
           comment: options.comment,
           designWidth: options.designWidth
-        }) +
-        '!'
+        })
       // normalize scss/sass/postcss if no specific loaders have been provided
       if (!loaders[lang]) {
         if (postcssExtensions.indexOf(lang) !== -1) {
@@ -271,6 +256,31 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
           lang = 'sass'
         }
       }
+    }
+
+    let templateCompiler = ''
+
+    if (type === 'template') {
+      const templateCompilerOptions = {
+        usingComponents,
+        hasScoped,
+        hasComment,
+        isNative,
+        moduleId,
+        compileBindEvent: options.compileBindEvent
+      }
+
+      if (part.mode) {
+        templateCompilerOptions.mode = part.mode
+      }
+
+      templateCompiler = templateCompilerPath + '?' + JSON.stringify(templateCompilerOptions)
+    }
+
+    let jsonCompilerOptions = ''
+
+    if (type === 'json' && part.mode) {
+      jsonCompilerOptions = `?mode=${part.mode}`
     }
 
     let loader = type === 'styles'
@@ -290,15 +300,19 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
         if (rewriterInjectRE.test(loader)) {
           loader = loader.replace(
             rewriterInjectRE,
-            (m, $1) => ensureBang($1) + styleCompiler
+            (m, $1) => ensureBang($1) + ensureBang(styleCompiler)
           )
         } else {
-          loader = ensureBang(loader) + styleCompiler
+          loader = ensureBang(loader) + ensureBang(styleCompiler)
         }
       }
-      // if user defines custom loaders for html, add template compiler to it
-      if (type === 'template' && loader.indexOf(defaultLoaders.html) < 0) {
-        loader = defaultLoaders.html + '!' + loader
+
+      if (type === 'template') {
+        loader = ensureBang(loader) + ensureBang(templateCompiler)
+      }
+
+      if (type === 'json') {
+        loader = loader + jsonCompilerOptions
       }
       return ensureBang(loader)
     } else {
@@ -307,13 +321,14 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
         case 'template':
           // allow passing options to the template preprocessor via `templateOption` option
           const preprocessorOption = { engine: lang, templateOption: options.templateOption || {} }
-          return defaultLoaders.html + '!' + templatePreprocessorPath + '?' + JSON.stringify(preprocessorOption) + '!'
+          const templatePreprocessor = templatePreprocessorPath + '?' + JSON.stringify(preprocessorOption)
+          return ensureBang(defaultLoaders.html) + ensureBang(templateCompiler) + ensureBang(templatePreprocessor)
         case 'styles':
           loader = addCssModulesToLoader(defaultLoaders.css, part, index)
-          return loader + '!' + styleCompiler + ensureBang(ensureLoader(lang))
+          return ensureBang(loader) + ensureBang(styleCompiler) + ensureBang(ensureLoader(lang))
         case 'script':
         case 'json':
-          return ensureBang(ensureLoader(lang))
+          return ensureBang(defaultLoaders.json + jsonCompilerOptions) + ensureBang(ensureLoader(lang))
         default:
           loader = loaders[type]
           if (Array.isArray(loader)) {
@@ -325,27 +340,25 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
   }
 
   function getSelectorString (type, index = 0) {
-    return (
+    return ensureBang(
       selectorPath +
       '?type=' +
       (type === 'script' || type === 'template' || type === 'styles' || type === 'json'
         ? type
         : 'customBlocks') +
-      '&index=' + index +
-      '!'
+      '&index=' + index
     )
   }
 
   function getExtractorString (type, index = 0) {
-    return (
+    return ensureBang(
       extractorPath +
       '?type=' +
       (type === 'script' || type === 'template' || type === 'styles' || type === 'json'
         ? type
         : 'customBlocks') +
       '&index=' + index +
-      '&resource=' + loaderContext.resource +
-      '!'
+      '&resource=' + loaderContext.resource
     )
   }
 

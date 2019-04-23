@@ -10,11 +10,13 @@ const nativeLoaderPath = normalize.lib('native-loader')
 const stripExtension = require('../utils/strip-extention')
 const toPosix = require('../utils/to-posix')
 const stringifyQuery = require('../utils/stringify-query')
+const getRulesRunner = require('../platform/index')
 
 module.exports = function (raw) {
   // 该loader中会在每次编译中动态添加entry，不能缓存，否则watch不好使
   this.cacheable(false)
   const nativeCallback = this.async()
+  const options = loaderUtils.getOptions(this) || {}
 
   if (!this._compilation.__mpx__) {
     return nativeCallback(null, raw)
@@ -25,10 +27,15 @@ module.exports = function (raw) {
   const subPackagesMap = this._compilation.__mpx__.subPackagesMap
   const compilationMpx = this._compilation.__mpx__
   const mode = this._compilation.__mpx__.mode
+  const srcMode = this._compilation.__mpx__.srcMode
+  const fieldSrcMode = options.mode
   const resource = stripExtension(this.resource)
   const isApp = !(pagesMap[resource] || componentsMap[resource])
   const publicPath = this._compilation.outputOptions.publicPath || ''
   const fs = this._compiler.inputFileSystem
+
+  const modeReg = /(?:\.(ali|wx|swan))?$/
+  const fileSrcMode = modeReg.exec(resource)[1]
 
   const copydir = (dir, context, callback) => {
     fs.readdir(dir, (err, files) => {
@@ -66,6 +73,7 @@ module.exports = function (raw) {
   let entryDeps = new Set()
 
   let cacheCallback
+  let mainComponentsMap = {}
 
   const checkEntryDeps = (callback) => {
     callback = callback || cacheCallback
@@ -107,12 +115,38 @@ module.exports = function (raw) {
     return callback(err)
   }
 
+  const rulesRunnerOptions = {
+    mode,
+    srcMode: fieldSrcMode || fileSrcMode || srcMode,
+    type: 'json',
+    waterfall: true,
+    warn: (msg) => {
+      this.emitWarning(
+        new Error('[json compiler][' + this.resource + ']: ' + msg)
+      )
+    },
+    error: (msg) => {
+      this.emitError(
+        new Error('[json compiler][' + this.resource + ']: ' + msg)
+      )
+    }
+  }
+  if (!isApp) {
+    rulesRunnerOptions.mainKey = pagesMap[resource] ? 'page' : 'component'
+  }
+
+  const rulesRunner = getRulesRunner(rulesRunnerOptions)
+
+  if (rulesRunner) {
+    rulesRunner(json)
+  }
+
   function getName (raw) {
     const match = /^(.*?)(\.[^.]*)?$/.exec(raw)
     return match[1]
   }
 
-  const processComponent = (component, context, rewritePath, callback) => {
+  const processComponent = (component, context, rewritePath, componentPath, callback) => {
     if (/^plugin:\/\//.test(component)) {
       return callback()
     }
@@ -125,12 +159,11 @@ module.exports = function (raw) {
       let parsed = path.parse(result)
       let ext = parsed.ext
       result = stripExtension(result)
-      let componentPath
       let subPackageRoot = ''
       if (compilationMpx.processingSubPackages) {
         for (let src in subPackagesMap) {
           // 分包引用且主包为引用的组件，需打入分包目录中
-          if (result.startsWith(src) && !componentsMap[result]) {
+          if (result.startsWith(src) && !mainComponentsMap[result]) {
             subPackageRoot = subPackagesMap[src]
             break
           }
@@ -148,13 +181,13 @@ module.exports = function (raw) {
           }
         }
         let relativePath = path.relative(root, result)
-        componentPath = path.join(subPackageRoot, 'components', name + hash(root), relativePath)
+        componentPath = componentPath || path.join(subPackageRoot, 'components', name + hash(root), relativePath)
       } else {
         let componentName = parsed.name
-        componentPath = path.join(subPackageRoot, 'components', componentName + hash(result), componentName)
+        componentPath = componentPath || path.join(subPackageRoot, 'components', componentName + hash(result), componentName)
       }
       componentPath = toPosix(componentPath)
-      rewritePath(publicPath + componentPath)
+      rewritePath && rewritePath(publicPath + componentPath)
       // 如果之前已经创建了入口，直接return
       if (componentsMap[result] === componentPath) return callback()
       componentsMap[result] = componentPath
@@ -201,7 +234,9 @@ module.exports = function (raw) {
               if (extName === '.mpx') {
                 const parts = parse(
                   content,
-                  fileName
+                  fileName,
+                  this.sourceMap,
+                  mode
                 )
                 if (parts.json) {
                   content = parts.json.content
@@ -399,7 +434,7 @@ module.exports = function (raw) {
         async.forEachOf(components, (component, name, callback) => {
           processComponent(component, context, (path) => {
             json.usingComponents[name] = path
-          }, callback)
+          }, undefined, callback)
         }, callback)
       } else {
         callback()
@@ -416,23 +451,49 @@ module.exports = function (raw) {
       }
     }
 
+    const processCustomTabBar = (tabBar, context, callback) => {
+      if (tabBar && tabBar.custom) {
+        processComponent('./custom-tab-bar/index', context, undefined, 'custom-tab-bar/index', callback)
+      } else {
+        callback()
+      }
+    }
+
+    // 保存全局注册组件
+    if (json.usingComponents) {
+      this._compilation.__mpx__.usingComponents = Object.keys(json.usingComponents)
+    }
+
     // 串行处理，先处理主包代码，再处理分包代码，为了正确识别出分包中定义的组件属于主包还是分包
+    let errors = []
+    // 外部收集errors，确保整个series流程能够执行完
     async.series([
-      async.applyEach([
-        (callback) => {
-          processPages(json.pages, '', '', this.context, callback)
-        },
-        (callback) => {
-          processComponents(json.usingComponents, this.context, callback)
-        },
-        (callback) => {
-          processWorkers(json.workers, this.context, callback)
-        },
-        (callback) => {
-          processPackages(json.packages, this.context, callback)
-        }
-      ]),
       (callback) => {
+        async.parallel([
+          (callback) => {
+            processPages(json.pages, '', '', this.context, callback)
+          },
+          (callback) => {
+            processComponents(json.usingComponents, this.context, callback)
+          },
+          (callback) => {
+            processWorkers(json.workers, this.context, callback)
+          },
+          (callback) => {
+            processPackages(json.packages, this.context, callback)
+          },
+          (callback) => {
+            processCustomTabBar(json.tabBar, this.context, callback)
+          }
+        ], (err) => {
+          if (err) {
+            errors.push(err)
+          }
+          callback()
+        })
+      },
+      (callback) => {
+        mainComponentsMap = Object.assign({}, componentsMap)
         compilationMpx.processingSubPackages = true
         callback()
       },
@@ -442,15 +503,23 @@ module.exports = function (raw) {
           (callback) => {
             processSubPackages(json.subPackages || json.subpackages, this.context, callback)
           }
-        ], callback)
+        ], (err) => {
+          if (err) {
+            errors.push(err)
+          }
+          callback()
+        })
       }
-    ], (err) => {
-      if (err) return callback(err)
+    ], () => {
+      if (errors.length) return callback(errors[0])
       delete json.packages
       delete json.subpackages
+      delete json.subPackages
       json.pages = localPages
-      json.subPackages = []
       for (let root in subPackagesCfg) {
+        if (!json.subPackages) {
+          json.subPackages = []
+        }
         json.subPackages.push(subPackagesCfg[root])
       }
       const processOutput = (output) => {
@@ -466,7 +535,7 @@ module.exports = function (raw) {
       async.forEachOf(json.usingComponents, (component, name, callback) => {
         processComponent(component, this.context, (path) => {
           json.usingComponents[name] = path
-        }, callback)
+        }, undefined, callback)
       }, callback)
     } else if (json.componentGenerics) {
       // 处理抽象节点
@@ -474,7 +543,7 @@ module.exports = function (raw) {
         if (genericCfg && genericCfg.default) {
           processComponent(genericCfg.default, this.context, (path) => {
             json.componentGenerics[name].default = path
-          }, callback)
+          }, undefined, callback)
         } else {
           callback()
         }

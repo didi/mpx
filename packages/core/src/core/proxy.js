@@ -17,8 +17,9 @@ import {
 } from '../helper/utils'
 
 import { watch } from './watcher'
-import { mountedQueue } from './lifecycleQueue'
+import { getRenderCallBack } from '../platform/patch'
 import {
+  BEFORECREATE,
   CREATED,
   BEFOREMOUNT,
   MOUNTED,
@@ -38,7 +39,7 @@ export default class MPXProxy {
     this.uid = uid++
     this.name = options.name || ''
     this.options = options
-    // initial -> created -> [beforeMount -> mounted -> updated] -> destroyed
+    // initial -> created -> mounted -> destroyed
     this.state = 'initial'
     this.watchers = [] // 保存所有观察者
     this.renderReaction = null
@@ -52,43 +53,32 @@ export default class MPXProxy {
     this.initApi()
     this.initialData = this.target.__getInitialData()
     this.cacheData = extend({}, this.initialData) // 缓存数据，用于diff
+    this.callUserHook(BEFORECREATE)
     this.initState(this.options)
     this.state = CREATED
     this.callUserHook(CREATED)
     this.initRender()
   }
 
-  beforeMount () {
-    this.state = BEFOREMOUNT
-    mountedQueue.enter()
+  isMounted () {
+    return this.state === MOUNTED
   }
 
   mounted () {
-    if (!this.mounting) {
-      // 等待mounted
-      this.mounting = true
-      mountedQueue.exit(this.depth, this.uid, () => {
-        // 由于异步，因此需要检查当前状态是否符合预期
-        if (this.state === BEFOREMOUNT) {
-          this.state = MOUNTED
-          // 用于处理refs等前置工作
-          this.callUserHook(BEFOREMOUNT)
-          this.callUserHook(MOUNTED)
-        }
-        this.mounting = false
-      })
+    if (this.state === CREATED) {
+      this.state = MOUNTED
+      // 用于处理refs等前置工作
+      this.callUserHook(BEFOREMOUNT)
+      this.callUserHook(MOUNTED)
     }
   }
 
-  updated (fromCallback) {
-    if (this.state === BEFOREMOUNT && fromCallback) {
-      // 首次setData
-      this.mounted()
-    } else if (this.state === MOUNTED && !this.updating) {
+  updated () {
+    if (this.isMounted() && !this.updating) {
       this.updating = true
       this.nextTick(() => {
         // 由于异步，需要确认 this.state
-        if (this.state === MOUNTED) {
+        if (this.isMounted()) {
           this.handleUpdatedCallbacks()
           this.callUserHook(UPDATED)
         }
@@ -98,10 +88,6 @@ export default class MPXProxy {
   }
 
   destroyed () {
-    if (this.state === BEFOREMOUNT) {
-      // 如果销毁时还未mounted回调，则执行清栈操作
-      mountedQueue.exit(this.depth, this.uid)
-    }
     this.clearWatchers()
     this.state = DESTROYED
     this.callUserHook(DESTROYED)
@@ -125,7 +111,6 @@ export default class MPXProxy {
     const proxyData = extend({}, this.initialData, data)
     this.initComputed(options.computed, proxyData)
     this.data = observable(proxyData)
-    this.depth = this.data['mpxDepth']
     /* target的数据访问代理到将proxy的data */
     proxy(this.target, this.data, enumerableKeys(this.data).concat(this.computedKeys))
     // 初始化watch
@@ -275,16 +260,13 @@ export default class MPXProxy {
       console.error('please specify a 【__render】 function to render view')
       return
     }
-    // 空对象在state 为 CREATED 阶段也要执行，用于正常触发mounted
-    if (isEmptyObject(data) && this.state !== CREATED) {
+    if (isEmptyObject(data)) {
       return
     }
-    if (this.state === CREATED) {
-      this.beforeMount()
-    }
-    this.target.__render(processUndefined(data), () => {
-      this.updated(true)
-    })
+    /**
+     * mounted之后才接收回调来触发updated钩子，换言之mounted之前修改数据是不会触发updated的
+     */
+    this.target.__render(processUndefined(data), this.isMounted() && getRenderCallBack(this))
     this.forceUpdateKeys = [] // 仅用于当次的render
   }
 
@@ -299,9 +281,9 @@ export default class MPXProxy {
           try {
             return this.target.__injectedRender()
           } catch (e) {
-            console.warn(`Failed to execute render function, degrade to full-set-data mode!`)
-            console.warn(e)
-            console.warn('If the render function execution failed because of "__wxs_placeholder", ignore this warning.')
+            console.warn('【MPX ERROR】', `Failed to execute render function, degrade to full-set-data mode!`)
+            console.warn('【MPX ERROR】', e)
+            console.warn('【MPX ERROR】', 'If the render function execution failed because of "__wxs_placeholder", ignore this warning.')
             renderExecutionFailed = true
             this.render()
           }

@@ -15,6 +15,9 @@ function transformProperties (properties) {
   enumerableKeys(properties).forEach(key => {
     const rawFiled = properties[key]
     const rawObserver = rawFiled.observer
+    if (rawObserver) {
+      console.warn('【MPX ERROR】', 'please use watch instead of observer')
+    }
     let newFiled = null
     if (typeof rawFiled === 'function') {
       newFiled = {
@@ -27,8 +30,8 @@ function transformProperties (properties) {
       if (this.$mpxProxy) {
         this[key] = value
         this.$mpxProxy.updated()
+        typeof rawObserver === 'function' && rawObserver.call(this, value, oldValue)
       }
-      typeof rawObserver === 'function' && rawObserver.call(this, value, oldValue)
     }
     newProps[key] = newFiled
   })
@@ -113,6 +116,9 @@ export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
       this.$mpxProxy = mpxProxy
       // 组件监听视图数据更新, attached之后才能拿到properties
       this.$mpxProxy.created()
+    },
+    ready () {
+      this.$mpxProxy.mounted()
     },
     detached () {
       this.$mpxProxy.destroyed()

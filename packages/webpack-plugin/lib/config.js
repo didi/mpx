@@ -14,11 +14,12 @@ module.exports = {
     stringify: JSON.stringify,
     event: {
       parseEvent (attr) {
-        let match = /^(bind|catch|capture-bind|capture-catch):?(.*)$/.exec(attr)
+        let match = /^(bind|catch|capture-bind|capture-catch):?(.*?)(?:\.(.*))?$/.exec(attr)
         if (match) {
           return {
             prefix: match[1],
-            eventName: match[2]
+            eventName: match[2],
+            modifier: match[3]
           }
         }
       },
@@ -27,6 +28,7 @@ module.exports = {
       },
       defaultModelProp: 'value',
       defaultModelEvent: 'input',
+      defaultModelValuePath: 'value',
       shallowStringify (obj) {
         let arr = []
         for (let key in obj) {
@@ -53,13 +55,15 @@ module.exports = {
       model: 'wx:model',
       modelProp: 'wx:model-prop',
       modelEvent: 'wx:model-event',
+      modelValuePath: 'wx:model-value-path',
       for: 'wx:for',
       forIndex: 'wx:for-index',
       forItem: 'wx:for-item',
       key: 'wx:key',
       dynamicClass: 'wx:class',
       dynamicStyle: 'wx:style',
-      ref: 'wx:ref'
+      ref: 'wx:ref',
+      show: 'wx:show'
     }
   },
   ali: {
@@ -80,13 +84,14 @@ module.exports = {
     stringify: JSON.stringify,
     event: {
       parseEvent (attr) {
-        let match = /^(on|catch)([A-Z].*)$/.exec(attr)
+        let match = /^(on|catch)([A-Z].*?)(?:\.(.*))?$/.exec(attr)
         if (match) {
           return {
             prefix: match[1],
             eventName: match[2].replace(/^./, function (match) {
               return match.toLowerCase()
-            })
+            }),
+            modifier: match[3]
           }
         }
       },
@@ -97,6 +102,7 @@ module.exports = {
       },
       defaultModelProp: 'value',
       defaultModelEvent: 'input',
+      defaultModelValuePath: 'value',
       shallowStringify (obj) {
         let arr = []
         for (let key in obj) {
@@ -123,13 +129,15 @@ module.exports = {
       model: 'a:model',
       modelProp: 'a:model-prop',
       modelEvent: 'a:model-event',
+      modelValuePath: 'a:model-value-path',
       for: 'a:for',
       forIndex: 'a:for-index',
       forItem: 'a:for-item',
       key: 'a:key',
       dynamicClass: 'a:class',
       dynamicStyle: 'a:style',
-      ref: 'a:ref'
+      ref: 'a:ref',
+      show: 'a:show'
     },
     eventProxyIgnoreTagArr: ['map']
   },
@@ -148,11 +156,12 @@ module.exports = {
     stringify: JSON.stringify,
     event: {
       parseEvent (attr) {
-        let match = /^(bind|catch|capture-bind|capture-catch):?(.*)$/.exec(attr)
+        let match = /^(bind|catch|capture-bind|capture-catch):?(.*?)(?:\.(.*))?$/.exec(attr)
         if (match) {
           return {
             prefix: match[1],
-            eventName: match[2]
+            eventName: match[2],
+            modifier: match[3]
           }
         }
       },
@@ -161,6 +170,7 @@ module.exports = {
       },
       defaultModelProp: 'value',
       defaultModelEvent: 'input',
+      defaultModelValuePath: 'value',
       shallowStringify (obj) {
         let arr = []
         for (let key in obj) {
@@ -187,13 +197,15 @@ module.exports = {
       model: 's-model',
       modelProp: 's-model-prop',
       modelEvent: 's-model-event',
+      modelValuePath: 's-model-value-path',
       for: 's-for',
       forIndex: 's-for-index',
       forItem: 's-for-item',
       key: 's-key',
       dynamicClass: 's-class',
       dynamicStyle: 's-style',
-      ref: 's-ref'
+      ref: 's-ref',
+      show: 's-show'
     }
   }
 }

@@ -12,12 +12,13 @@ const stripExtension = require('./utils/strip-extention')
 const toPosix = require('./utils/to-posix')
 const DefinePlugin = require('webpack/lib/DefinePlugin')
 const hash = require('hash-sum')
+const AddModePlugin = require('./resolver/AddModePlugin')
 
 class MpxWebpackPlugin {
   constructor (options = {}) {
     options.mode = options.mode || 'wx'
     options.srcMode = options.srcMode || options.mode
-    if (options.srcMode !== 'wx') {
+    if (options.mode !== options.srcMode && options.srcMode !== 'wx') {
       throw new Error('MpxWebpackPlugin supports srcMode to be "wx" only temporarily!')
     }
     this.options = options
@@ -38,10 +39,18 @@ class MpxWebpackPlugin {
   apply (compiler) {
     // 强制设置publicPath为'/'
     compiler.options.output.publicPath = '/'
+
+    const resolvePlugin = new AddModePlugin('before-file', this.options.mode, 'file')
+
+    if (Array.isArray(compiler.options.resolve.plugins)) {
+      compiler.options.resolve.plugins.push(resolvePlugin)
+    } else {
+      compiler.options.resolve.plugins = [resolvePlugin]
+    }
     // define mode
     new DefinePlugin({
       '__mpx_mode__': JSON.stringify(this.options.mode),
-      '__mpx_src_mode__': JSON.stringify(this.options.srcMode),
+      '__mpx_src_mode__': JSON.stringify(this.options.srcMode)
     }).apply(compiler)
 
     compiler.hooks.thisCompilation.tap('MpxWebpackPlugin', (compilation, params) => {
@@ -52,6 +61,7 @@ class MpxWebpackPlugin {
           pagesMap: {},
           componentsMap: {},
           subPackagesMap: {},
+          usingComponents: [],
           processingSubPackages: false,
           wxsMap: {},
           mode: this.options.mode,
@@ -170,6 +180,7 @@ class MpxWebpackPlugin {
         source.add('var window = window || {};\n\n')
 
         relativeChunks.forEach((relativeChunk, index) => {
+          if (!relativeChunk.files[0]) return
           let chunkPath = getTargetFile(chunk.files[0])
           let relativePath = getTargetFile(relativeChunk.files[0])
           relativePath = path.relative(path.dirname(chunkPath), relativePath)

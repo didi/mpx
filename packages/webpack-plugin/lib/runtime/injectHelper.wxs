@@ -83,7 +83,7 @@ function isObject (obj) {
 }
 
 function likeArray (arr) {
-  return arr.constructor === 'Array'
+  return arr && arr.constructor === 'Array'
 }
 
 function isDef (v) {
@@ -195,11 +195,8 @@ export default {
     return concat(staticClass, stringifyClass(dynamicClass))
   },
   transformStyle: function (staticStyle, dynamicStyle) {
-    if (typeof staticStyle !== 'string') {
-      return console.log('Template attr style must be a string!')
-    }
     var normalizedDynamicStyle = normalizeDynamicStyle(dynamicStyle)
-    var parsedStaticStyle = parseStyleText(staticStyle)
+    var parsedStaticStyle = typeof staticStyle === 'string' ? parseStyleText(staticStyle) : {}
     return genStyleText(extend(parsedStaticStyle, normalizedDynamicStyle))
   }
 }

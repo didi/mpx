@@ -139,3 +139,11 @@ packages域下的路径带root为key的query则被解析认为是使用分包加
 - 使用相对路径跳转。
 
 建议使用第一种。
+
+## 自定义tabbar
+
+什么是自定义tabbar参见微信文档。https://developers.weixin.qq.com/miniprogram/dev/framework/ability/custom-tabbar.html
+
+app.mpx的json部分的tabBar里custom一项为true时，需要在 src 目录下存在 custom-tab-bar 目录且里面有index.mpx，这个index.mpx里就编写自定义tabbar的模板、js、样式和json部分即可。
+
+**注意事项**：使用该feature时候要认真阅读官方例子，在页面的show钩子上要再手工设置一遍tabbar的selected值。

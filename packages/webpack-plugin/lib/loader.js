@@ -17,13 +17,12 @@ module.exports = function (content) {
   const mode = this._compilation.__mpx__.mode
   const resource = stripExtension(this.resource)
 
-  const resourceQueryObj = loaderUtils.parseQuery(this.resourceQuery)
+  const resourceQueryObj = loaderUtils.parseQuery(this.resourceQuery || '?')
 
   // 支持资源query传入page或component支持页面/组件单独编译
-
   if ((resourceQueryObj.component && !componentsMap[resource]) || (resourceQueryObj.page && !pagesMap[resource])) {
     let entryChunkName
-    const rawRequest = this.__module.rawRequest
+    const rawRequest = this._module.rawRequest
     const _preparedEntrypoints = this._compilation._preparedEntrypoints
     for (let i = 0; i < _preparedEntrypoints.length; i++) {
       if (rawRequest === _preparedEntrypoints[i].request) {
@@ -61,18 +60,18 @@ module.exports = function (content) {
     options.cssSourceMap !== false
   )
 
-  const parts = parse(content, fileName, this.sourceMap)
+  const parts = parse(content, fileName, this.sourceMap, mode)
   //
   const hasScoped = parts.styles.some(({ scoped }) => scoped)
   const templateAttrs = parts.template && parts.template.attrs && parts.template.attrs
   const hasComment = templateAttrs && templateAttrs.comments
   const isNative = false
 
-  let usingComponents = []
+  let usingComponents = [].concat(this._compilation.__mpx__.usingComponents)
   try {
     let ret = JSON.parse(parts.json.content)
     if (ret.usingComponents) {
-      usingComponents = Object.keys(ret.usingComponents)
+      usingComponents = usingComponents.concat(Object.keys(ret.usingComponents))
     }
   } catch (e) {
   }
@@ -102,15 +101,18 @@ module.exports = function (content) {
   })
   this._module.addDependency(dep)
   // 触发webpack global var 注入
-  let output = ''
+  let output = 'global.currentModuleId;\n'
 
   if (!pagesMap[resource] && !componentsMap[resource] && mode === 'swan') {
-    output += 'if (!global.navigator) {\n'
-    output += '  global.navigator = {};\n'
-    output += '}\n'
-    output += 'global.navigator.standalone = true;\n'
-  } else {
-    output = 'global.currentModuleId;\n'
+    // 注入swan runtime fix
+    const dep = new InjectDependency({
+      content: 'if (!global.navigator) {\n' +
+      '  global.navigator = {};\n' +
+      '}\n' +
+      'global.navigator.standalone = true;\n',
+      index: -4
+    })
+    this._module.addDependency(dep)
   }
 
   //
@@ -118,19 +120,29 @@ module.exports = function (content) {
   output += '/* script */\n'
   const script = parts.script
   if (script) {
+    if (script.mode) {
+      const dep = new InjectDependency({
+        content: `global.currentInject.srcMode = ${JSON.stringify(script.mode)};\n`,
+        index: -1
+      })
+      this._module.addDependency(dep)
+    }
     output += script.src
       ? (getNamedExportsForSrc('script', script) + '\n')
       : (getNamedExports('script', script) + '\n') + '\n'
   } else {
     if (pagesMap[resource]) {
       // page
-      output += 'Page({})' + '\n'
+      output += 'import {createPage} from "@mpxjs/core"\n' +
+        'createPage({})\n'
     } else if (componentsMap[resource]) {
       // component
-      output += 'Component({})' + '\n'
+      output += 'import {createComponent} from "@mpxjs/core"\n' +
+        'createComponent({})\n'
     } else {
       // app
-      output += 'App({})' + '\n'
+      output += 'import {createApp} from "@mpxjs/core"\n' +
+        'createApp({})\n'
     }
     output += '\n'
   }
