@@ -12,6 +12,17 @@ module.exports = function ({ print }) {
       {
         test: /^(border-radius|font-size|color|active-mode)$/,
         ali: aliLog()
+      },
+      {
+        test: /^(activeColor|backgroundColor)$/,
+        ali (obj) {
+          const propsMap = {
+            'activeColor': 'active-color',
+            'backgroundColor': 'background-color'
+          }
+          obj.name = propsMap[obj.name]
+          return obj
+        }
       }
     ],
     event: [
