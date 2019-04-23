@@ -15,6 +15,8 @@ module.exports = function (content) {
   const pagesMap = this._compilation.__mpx__.pagesMap
   const componentsMap = this._compilation.__mpx__.componentsMap
   const mode = this._compilation.__mpx__.mode
+  const globalSrcMode = this._compilation.__mpx__.srcMode
+  const localSrcMode = loaderUtils.parseQuery(this.resourceQuery || '?').mode
   const resource = stripExtension(this.resource)
 
   const resourceQueryObj = loaderUtils.parseQuery(this.resourceQuery || '?')
@@ -118,15 +120,10 @@ module.exports = function (content) {
   //
   // <script>
   output += '/* script */\n'
+  let scriptSrcMode = localSrcMode || globalSrcMode
   const script = parts.script
   if (script) {
-    if (script.mode) {
-      const dep = new InjectDependency({
-        content: `global.currentInject.srcMode = ${JSON.stringify(script.mode)};\n`,
-        index: -1
-      })
-      this._module.addDependency(dep)
-    }
+    scriptSrcMode = script.mode || scriptSrcMode
     output += script.src
       ? (getNamedExportsForSrc('script', script) + '\n')
       : (getNamedExports('script', script) + '\n') + '\n'
@@ -145,6 +142,14 @@ module.exports = function (content) {
         'createApp({})\n'
     }
     output += '\n'
+  }
+
+  if (scriptSrcMode) {
+    const dep = new InjectDependency({
+      content: `global.currentInject.srcMode = ${JSON.stringify(scriptSrcMode)};\n`,
+      index: -1
+    })
+    this._module.addDependency(dep)
   }
 
   //

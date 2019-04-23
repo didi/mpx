@@ -5,6 +5,7 @@ const ConcatSource = require('webpack-sources').ConcatSource
 const loaderUtils = require('loader-utils')
 const ResolveDependency = require('./dependency/ResolveDependency')
 const InjectDependency = require('./dependency/InjectDependency')
+const CallModeDependency = require('./dependency/CallModeDependency')
 const NullFactory = require('webpack/lib/NullFactory')
 const config = require('./config')
 const normalize = require('./utils/normalize')
@@ -49,8 +50,7 @@ class MpxWebpackPlugin {
     }
     // define mode
     new DefinePlugin({
-      '__mpx_mode__': JSON.stringify(this.options.mode),
-      '__mpx_src_mode__': JSON.stringify(this.options.srcMode)
+      '__mpx_mode__': JSON.stringify(this.options.mode)
     }).apply(compiler)
 
     compiler.hooks.thisCompilation.tap('MpxWebpackPlugin', (compilation, params) => {
@@ -108,6 +108,9 @@ class MpxWebpackPlugin {
       compilation.dependencyFactories.set(InjectDependency, new NullFactory())
       compilation.dependencyTemplates.set(InjectDependency, new InjectDependency.Template())
 
+      compilation.dependencyFactories.set(CallModeDependency, new NullFactory())
+      compilation.dependencyTemplates.set(CallModeDependency, new CallModeDependency.Template())
+
       params.normalModuleFactory.hooks.parser.for('javascript/auto').tap('MpxWebpackPlugin', (parser) => {
         parser.hooks.call.for('__mpx_resolve_path__').tap('MpxWebpackPlugin', (expr) => {
           if (expr.arguments[0]) {
@@ -120,6 +123,49 @@ class MpxWebpackPlugin {
             parser.state.current.addDependency(dep)
             return true
           }
+        })
+
+
+        const apiBlackListMap = [
+          'createApp',
+          'createPage',
+          'createComponent',
+          'createStore',
+          'toPureObject',
+          'mixin: injectMixins',
+          'injectMixins',
+          'observable',
+          'extendObservable',
+          'watch',
+          'use',
+          'set',
+          'get',
+          'remove',
+          'setConvertRule',
+          'createAction'
+        ].reduce((map, api) => {
+          map[api] = true
+          return map
+        }, {})
+
+        parser.hooks.callAnyMember.for('mpx').tap('MpxWebpackPlugin', (expr) => {
+          const callee = expr.callee
+          if (apiBlackListMap[callee.property.name || callee.property.value]) {
+            return
+          }
+          const resource = parser.state.module.resource
+          const queryIndex = resource.indexOf('?')
+          let resourceQuery = '?'
+          if (queryIndex > -1) {
+            resourceQuery = resource.substr(queryIndex)
+          }
+          const localSrcMode = loaderUtils.parseQuery(resourceQuery).mode
+          const globalSrcMode = compilation.__mpx__.srcMode
+          const dep = new CallModeDependency({
+            mode: localSrcMode || globalSrcMode,
+            index: expr.end - 1
+          })
+          parser.state.current.addDependency(dep)
         })
       })
     })
