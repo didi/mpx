@@ -23,6 +23,10 @@ module.exports = function ({ print }) {
           }
           return eventMap[eventName]
         }
+      },
+      {
+        test: /^(scale)$/,
+        ali: aliLog()
       }
     ]
   }
