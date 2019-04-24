@@ -33,7 +33,7 @@ function transformApi (target, options) {
         let from = args.splice(args.length - 1)[0]
 
         if (typeof from !== 'string' || !platforms.includes(from)) {
-          args.concat(from)
+          args.push(from)
           from = options.from
         }
 
