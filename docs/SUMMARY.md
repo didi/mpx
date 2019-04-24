@@ -10,7 +10,7 @@
     * [内联事件绑定](single/template-enhance.md#内联事件绑定)
     * [动态组件](single/template-enhance.md#动态组件)
     * [双向绑定](single/template-enhance.md#双向绑定)
-    * [获取节点](single/template-enhance.md#nodesref)
+    * [获取节点](single/template-enhance.md#refs)
 * [script扩展特性](single/script-enhance.md#script域扩展)
     * [computed](single/script-enhance.md#computed)
     * [watch](single/script-enhance.md#watch)

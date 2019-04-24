@@ -246,13 +246,13 @@ module.exports = {
         return ` {${arr.join(',')}} `
       }
     },
-    // wxs: {
-    //   tag: 'qs',
-    //   module: 'module',
-    //   src: 'src',
-    //   ext: '.qs',
-    //   templatePrefix: 'module.exports = \n'
-    // },
+    wxs: {
+      tag: 'qs',
+      module: 'module',
+      src: 'src',
+      ext: '.qs',
+      templatePrefix: 'module.exports = \n'
+    },
     directive: {
       if: 'qq:if',
       elseif: 'qq:elif',
@@ -265,8 +265,8 @@ module.exports = {
       forIndex: 'qq:for-index',
       forItem: 'qq:for-item',
       key: 'qq:key',
-      // dynamicClass: 'qq:class',
-      // dynamicStyle: 'qq:style',
+      dynamicClass: 'qq:class',
+      dynamicStyle: 'qq:style',
       ref: 'qq:ref',
       show: 'qq:show'
     }
@@ -312,13 +312,13 @@ module.exports = {
         return ` {${arr.join(',')}} `
       }
     },
-    // wxs: {
-    //   tag: 'ts',
-    //   module: 'module',
-    //   src: 'src',
-    //   ext: '.ts',
-    //   templatePrefix: 'module.exports = \n'
-    // },
+    wxs: {
+      tag: 'ts',
+      module: 'module',
+      src: 'src',
+      ext: '.ts',
+      templatePrefix: 'module.exports = \n'
+    },
     directive: {
       if: 'tt:if',
       elseif: 'tt:elif',
@@ -331,8 +331,8 @@ module.exports = {
       forIndex: 'tt:for-index',
       forItem: 'tt:for-item',
       key: 'tt:key',
-      // dynamicClass: 'tt:class',
-      // dynamicStyle: 'tt:style',
+      dynamicClass: 'tt:class',
+      dynamicStyle: 'tt:style',
       ref: 'tt:ref',
       show: 'tt:show'
     }
