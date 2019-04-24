@@ -1,15 +1,11 @@
 import { getEnvObj } from './utils'
-import { promisify } from './promisify'
+import promisify from './promisify'
 
-export default function proxyAll (target, usePromise) {
-  let envObj = getEnvObj()
+function proxyAll (target, usePromise, whiteList) {
+  const envObj = getEnvObj()
+  const list = promisify(envObj, usePromise, whiteList)
 
-  Object.keys(envObj).forEach(key => {
-    if (typeof envObj[key] === 'function') {
-      const
-      target[key] = function (...args) {
-        envObj[key].apply(envObj, args)
-      }
-    }
-  })
+  Object.assign(target, list)
 }
+
+export default proxyAll

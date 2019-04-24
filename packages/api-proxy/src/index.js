@@ -1,6 +1,5 @@
-import { transformApi } from './platform/index'
 import proxyAll from './proxy-all'
-import getPromisifyList from './promisify'
+import transformApi from './platform/index'
 
 export default function install (target, options = {}) {
   const {
@@ -12,19 +11,23 @@ export default function install (target, options = {}) {
 
   let { from = '', to = '' } = platform
   /* eslint-disable camelcase, no-undef */
+  if (typeof __mpx_src_mode__ !== 'undefined') {
+    from = __mpx_src_mode__
+  }
   if (typeof __mpx_mode__ !== 'undefined') {
     to = __mpx_mode__
   }
   /* eslint-enable */
 
   // 代理所有 api
-  proxyAll(target)
+  proxyAll(target, usePromise, whiteList)
 
   // 转换各端 api
-  transformApi(target, exclude, from, to)
-
-  // 变为 promise 格式
-  if (usePromise) {
-    Object.assign(target, getPromisifyList(whiteList, from, exclude))
-  }
+  transformApi(target, {
+    usePromise,
+    whiteList,
+    exclude,
+    from,
+    to
+  })
 }

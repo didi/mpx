@@ -1,23 +1,26 @@
-import { wxToAliApi } from './wxToAli'
+import { error } from '../utils'
+import wxToAliApi from './wxToAli'
+import promisify from '../promisify'
 
-const transedApi = []
-
-function transformApi (target, exclude, fromGlobal, to) {
+function transformApi (target, options) {
   const platformMap = {
     'wx_ali': wxToAliApi
   }
   const platforms = ['wx', 'ali', 'swan', 'qq', 'tt']
+  const cacheTarget = {}
+
+  Object.keys(target).forEach(key => {
+    cacheTarget[key] = target[key]
+  })
 
   function joinName (from = '', to = '') {
     return `${from}_${to}`
   }
 
   Object.keys(wxToAliApi).forEach(api => {
-    if (exclude.includes(api)) {
+    if (options.exclude.includes(api)) {
       return
     }
-
-    transedApi.push(api)
 
     const descriptor = {
       enumerable: true,
@@ -26,18 +29,27 @@ function transformApi (target, exclude, fromGlobal, to) {
 
     descriptor.get = () => {
       return (...args) => {
+        const to = options.to
         let from = args.splice(args.length - 1)[0]
 
         if (typeof from !== 'string' || !platforms.includes(from)) {
           args.concat(from)
-          from = fromGlobal
+          from = options.from
         }
 
         if (platformMap[joinName(from, to)] && platformMap[joinName(from, to)][api]) {
-          return platformMap[joinName(from, to)][api].apply(target, args)
+          const result = promisify({
+            [api]: platformMap[joinName(from, to)][api]
+          }, options.usePromise, options.whiteList)
+
+          return result[api].apply(target, args)
         }
 
-        return target[api].apply(target, args)
+        if (cacheTarget[api]) {
+          return cacheTarget[api].apply(target, args)
+        } else {
+          error(`当前环境不存在 ${api} 方法`)
+        }
       }
     }
 
@@ -45,7 +57,4 @@ function transformApi (target, exclude, fromGlobal, to) {
   })
 }
 
-export {
-  transformApi,
-  transedApi
-}
+export default transformApi

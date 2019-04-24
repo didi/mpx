@@ -1,7 +1,7 @@
 import { changeOpts, handleSuccess, getEnvObj, error, warn, noop } from '../utils'
 
 const ALI_OBJ = getEnvObj()
-const TIPS_NAME = 'mpx'
+const TIPS_NAME = '支付宝环境 mpx'
 
 // canvas api 用
 const CANVAS_MAP = {}
@@ -640,19 +640,4 @@ const wxToAliApi = {
   }
 }
 
-/**
- * @param {Object} target 要代理的对象
- */
-const proxyWxToAliApi = (target, exclude) => {
-  Object.keys(wxToAliApi).forEach(api => {
-    if (~exclude.indexOf(api)) {
-      return
-    }
-    target[api] = wxToAliApi[api]
-  })
-}
-
-export {
-  wxToAliApi,
-  proxyWxToAliApi
-}
+export default wxToAliApi
