@@ -14,9 +14,10 @@ module.exports = function ({ print }) {
         ali: aliLog()
       },
       {
-        test: /^(selected-color|activeColor|backgroundColor|block-size|block-color)$/,
+        test: /^(color|selected-color|activeColor|backgroundColor|block-size|block-color)$/,
         ali (obj) {
           const propsMap = {
+            'color': 'background-color',
             'selected-color': 'active-color',
             'activeColor': 'active-color',
             'backgroundColor': 'background-color',
