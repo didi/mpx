@@ -24,7 +24,7 @@ module.exports = function ({ print }) {
         test: /^(change)$/,
         ali (eventName) {
           const eventMap = {
-            'change': 'change'
+            'change': 'Change'
           }
           return eventMap[eventName]
         }
