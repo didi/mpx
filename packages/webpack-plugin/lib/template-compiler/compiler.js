@@ -572,7 +572,7 @@ function parse (template, options) {
   error$1 = options.error || baseError
 
   mode = options.mode || 'wx'
-  srcMode = options.srcMode || 'wx'
+  srcMode = options.srcMode || mode
 
   rulesRunner = getRulesRunner({
     mode,
@@ -757,7 +757,7 @@ function addAttrs (el, attrs) {
 // }
 
 function stringify (str) {
-  return config[mode].stringify(str)
+  return JSON.stringify(str)
 }
 
 let tagRE = /\{\{((?:.|\n)+?)\}\}(?!})/
@@ -1073,7 +1073,7 @@ function addWxsModule (meta, module) {
 
 function processAttrs (el, meta) {
   el.attrsList.forEach((attr) => {
-    if (el.tag === config[mode].wxs.tag && attr.name === config[mode].wxs.module) {
+    if (config[mode].wxs && el.tag === config[mode].wxs.tag && attr.name === config[mode].wxs.module) {
       return addWxsModule(meta, attr.value)
     }
     let parsed = parseMustache(attr.value)
@@ -1255,15 +1255,14 @@ function processElement (el, options, meta, root, injectNodes) {
   }
   processIf(el)
   processFor(el)
-  processClass(el, meta, injectNodes)
-  processStyle(el, meta, injectNodes)
+  if (mode !== 'qq' && mode !== 'tt') {
+    processClass(el, meta, injectNodes)
+    processStyle(el, meta, injectNodes)
+  }
   processShow(el, options, root)
   processRef(el, options, meta)
   processBindEvent(el)
-  // processComponentDepth(el, options)
-  if (mode === 'ali') {
-    // processLifecycleHack(el, options)
-  } else {
+  if (mode !== 'ali') {
     processPageStatus(el, options)
   }
   processComponentIs(el, options)

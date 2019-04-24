@@ -11,7 +11,6 @@ module.exports = {
       iconKey: 'iconPath',
       activeIconKey: 'selectedIconPath'
     },
-    stringify: JSON.stringify,
     event: {
       parseEvent (attr) {
         let match = /^(bind|catch|capture-bind|capture-catch):?(.*?)(?:\.(.*))?$/.exec(attr)
@@ -81,7 +80,6 @@ module.exports = {
     optionMenu: {
       iconKey: 'icon'
     },
-    stringify: JSON.stringify,
     event: {
       parseEvent (attr) {
         let match = /^(on|catch)([A-Z].*?)(?:\.(.*))?$/.exec(attr)
@@ -153,7 +151,6 @@ module.exports = {
       iconKey: 'iconPath',
       activeIconKey: 'selectedIconPath'
     },
-    stringify: JSON.stringify,
     event: {
       parseEvent (attr) {
         let match = /^(bind|catch|capture-bind|capture-catch):?(.*?)(?:\.(.*))?$/.exec(attr)
@@ -206,6 +203,138 @@ module.exports = {
       dynamicStyle: 's-style',
       ref: 's-ref',
       show: 's-show'
+    }
+  },
+  qq: {
+    typeExtMap: {
+      json: '.json',
+      script: '.js',
+      template: '.qml',
+      styles: '.qss'
+    },
+    tabBar: {
+      itemKey: 'list',
+      iconKey: 'iconPath',
+      activeIconKey: 'selectedIconPath'
+    },
+    event: {
+      parseEvent (attr) {
+        let match = /^(bind|catch|capture-bind|capture-catch):?(.*?)(?:\.(.*))?$/.exec(attr)
+        if (match) {
+          return {
+            prefix: match[1],
+            eventName: match[2],
+            modifier: match[3]
+          }
+        }
+      },
+      getEvent (eventName, prefix = 'bind') {
+        return prefix + eventName
+      },
+      defaultModelProp: 'value',
+      defaultModelEvent: 'input',
+      defaultModelValuePath: 'value',
+      shallowStringify (obj) {
+        let arr = []
+        for (let key in obj) {
+          let value = obj[key]
+          if (Array.isArray(value)) {
+            value = `[${value.join(',')}]`
+          }
+          arr.push(`${key}:${value}`)
+        }
+        return ` {${arr.join(',')}} `
+      }
+    },
+    // wxs: {
+    //   tag: 'qs',
+    //   module: 'module',
+    //   src: 'src',
+    //   ext: '.qs',
+    //   templatePrefix: 'module.exports = \n'
+    // },
+    directive: {
+      if: 'qq:if',
+      elseif: 'qq:elif',
+      else: 'qq:else',
+      model: 'qq:model',
+      modelProp: 'qq:model-prop',
+      modelEvent: 'qq:model-event',
+      modelValuePath: 'qq:model-value-path',
+      for: 'qq:for',
+      forIndex: 'qq:for-index',
+      forItem: 'qq:for-item',
+      key: 'qq:key',
+      // dynamicClass: 'qq:class',
+      // dynamicStyle: 'qq:style',
+      ref: 'qq:ref',
+      show: 'qq:show'
+    }
+  },
+  tt: {
+    typeExtMap: {
+      json: '.json',
+      script: '.js',
+      template: '.ttml',
+      styles: '.ttss'
+    },
+    tabBar: {
+      itemKey: 'list',
+      iconKey: 'iconPath',
+      activeIconKey: 'selectedIconPath'
+    },
+    event: {
+      parseEvent (attr) {
+        let match = /^(bind)(.*?)(?:\.(.*))?$/.exec(attr)
+        if (match) {
+          return {
+            prefix: match[1],
+            eventName: match[2],
+            modifier: match[3]
+          }
+        }
+      },
+      getEvent (eventName, prefix = 'bind') {
+        return prefix + eventName
+      },
+      defaultModelProp: 'value',
+      defaultModelEvent: 'input',
+      defaultModelValuePath: 'value',
+      shallowStringify (obj) {
+        let arr = []
+        for (let key in obj) {
+          let value = obj[key]
+          if (Array.isArray(value)) {
+            value = `[${value.join(',')}]`
+          }
+          arr.push(`${key}:${value}`)
+        }
+        return ` {${arr.join(',')}} `
+      }
+    },
+    // wxs: {
+    //   tag: 'ts',
+    //   module: 'module',
+    //   src: 'src',
+    //   ext: '.ts',
+    //   templatePrefix: 'module.exports = \n'
+    // },
+    directive: {
+      if: 'tt:if',
+      elseif: 'tt:elif',
+      else: 'tt:else',
+      model: 'tt:model',
+      modelProp: 'tt:model-prop',
+      modelEvent: 'tt:model-event',
+      modelValuePath: 'tt:model-value-path',
+      for: 'tt:for',
+      forIndex: 'tt:for-index',
+      forItem: 'tt:for-item',
+      key: 'tt:key',
+      // dynamicClass: 'tt:class',
+      // dynamicStyle: 'tt:style',
+      ref: 'tt:ref',
+      show: 'tt:show'
     }
   }
 }

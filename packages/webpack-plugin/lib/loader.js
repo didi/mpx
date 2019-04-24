@@ -15,6 +15,8 @@ module.exports = function (content) {
   const pagesMap = this._compilation.__mpx__.pagesMap
   const componentsMap = this._compilation.__mpx__.componentsMap
   const mode = this._compilation.__mpx__.mode
+  const globalSrcMode = this._compilation.__mpx__.srcMode
+  const localSrcMode = loaderUtils.parseQuery(this.resourceQuery || '?').mode
   const resource = stripExtension(this.resource)
 
   const resourceQueryObj = loaderUtils.parseQuery(this.resourceQuery || '?')
@@ -94,39 +96,38 @@ module.exports = function (content) {
     isNative
   )
 
-  // 注入模块id
-  const dep = new InjectDependency({
-    content: `global.currentModuleId = ${JSON.stringify(moduleId)};\n`,
-    index: -3
-  })
-  this._module.addDependency(dep)
   // 触发webpack global var 注入
   let output = 'global.currentModuleId;\n'
 
+  // 注入模块id
+  let globalInjectCode = `global.currentModuleId = ${JSON.stringify(moduleId)};\n`
+
+  // 注入支付宝构造函数
+  if (mode === 'ali') {
+    let ctor = 'App'
+    if (pagesMap[resource]) {
+      ctor = 'Page'
+    } else if (componentsMap[resource]) {
+      ctor = 'Component'
+    }
+    globalInjectCode += `global.currentCtor = ${ctor};\n`
+  }
+
   if (!pagesMap[resource] && !componentsMap[resource] && mode === 'swan') {
     // 注入swan runtime fix
-    const dep = new InjectDependency({
-      content: 'if (!global.navigator) {\n' +
+    globalInjectCode += 'if (!global.navigator) {\n' +
       '  global.navigator = {};\n' +
       '}\n' +
-      'global.navigator.standalone = true;\n',
-      index: -4
-    })
-    this._module.addDependency(dep)
+      'global.navigator.standalone = true;\n'
   }
 
   //
   // <script>
   output += '/* script */\n'
+  let scriptSrcMode = localSrcMode || globalSrcMode
   const script = parts.script
   if (script) {
-    if (script.mode) {
-      const dep = new InjectDependency({
-        content: `global.currentInject.srcMode = ${JSON.stringify(script.mode)};\n`,
-        index: -1
-      })
-      this._module.addDependency(dep)
-    }
+    scriptSrcMode = script.mode || scriptSrcMode
     output += script.src
       ? (getNamedExportsForSrc('script', script) + '\n')
       : (getNamedExports('script', script) + '\n') + '\n'
@@ -145,6 +146,10 @@ module.exports = function (content) {
         'createApp({})\n'
     }
     output += '\n'
+  }
+
+  if (scriptSrcMode) {
+    globalInjectCode += `global.currentSrcMode = ${JSON.stringify(scriptSrcMode)};\n`
   }
 
   //
@@ -210,6 +215,13 @@ module.exports = function (content) {
       ? (getRequireForSrc('template', template) + '\n')
       : (getRequire('template', template) + '\n') + '\n'
   }
+
+
+  const dep = new InjectDependency({
+    content: globalInjectCode,
+    index: -3
+  })
+  this._module.addDependency(dep)
 
   return output
 }
