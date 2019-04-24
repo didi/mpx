@@ -1,5 +1,5 @@
 import { transformApi } from './platform/index'
-import proxyAll from './proxy'
+import proxyAll from './proxy-all'
 import getPromisifyList from './promisify'
 
 export default function install (target, options = {}) {

@@ -87,6 +87,10 @@ function promisify (listObj, whiteList, exclude = []) {
   return promisifyList
 }
 
+export {
+  promisify
+}
+
 export default function getPromisifyList (whiteList, from, to, exclude) {
   const promisifyObj = promisify(envObj, whiteList)
   let promisifyTrans = {}
