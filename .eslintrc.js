@@ -13,6 +13,7 @@ module.exports = {
     'my': false,
     'swan': false,
     'qq': false,
+    'tt': false,
     'Component': false,
     'Page': false,
     'App': false
