@@ -19,8 +19,8 @@ module.exports = function ({ print }) {
         test: /^(submit|reset)$/,
         ali (eventName) {
           const eventMap = {
-            'submit': 'Submit',
-            'reset': 'Reset'
+            'submit': 'submit',
+            'reset': 'reset'
           }
           return eventMap[eventName]
         }

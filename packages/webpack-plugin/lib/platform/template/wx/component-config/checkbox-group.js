@@ -8,7 +8,7 @@ module.exports = function () {
         test: /^(change)$/,
         ali (eventName) {
           const eventMap = {
-            'change': 'Change'
+            'change': 'change'
           }
           return eventMap[eventName]
         }

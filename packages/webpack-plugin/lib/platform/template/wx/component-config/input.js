@@ -19,10 +19,10 @@ module.exports = function ({ print }) {
         test: /^(input|focus|blur|confirm)$/,
         ali (eventName) {
           const eventMap = {
-            'input': 'Input',
-            'focus': 'Focus',
-            'blur': 'Blur',
-            'confirm': 'Confirm'
+            'input': 'input',
+            'focus': 'focus',
+            'blur': 'blur',
+            'confirm': 'confirm'
           }
           return eventMap[eventName]
         }
