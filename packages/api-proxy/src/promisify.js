@@ -1,4 +1,4 @@
-import { wxToAliApi } from './platform/index'
+import { transedApi } from './platform/index'
 import { getEnvObj, noop } from './utils'
 
 const envObj = getEnvObj()
@@ -92,7 +92,7 @@ export default function getPromisifyList (whiteList, from, to, exclude) {
   let promisifyTrans = {}
 
   if (from === 'wx' && to === 'ali') {
-    promisifyTrans = promisify(wxToAliApi, whiteList, exclude)
+    promisifyTrans = promisify(transedApi, whiteList, exclude)
   }
   return Object.assign({}, promisifyObj, promisifyTrans)
 }
