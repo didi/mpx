@@ -1,0 +1,31 @@
+{
+  "name": "@mpxjs/webview-bridge",
+  "version": "1.0.0",
+  "description": "a bridge for mpx webview",
+  "author": "skyadmin",
+  "license": "ISC",
+  "main": "src/index.js",
+  "module": "src/index.js",
+  "directories": {
+    "src": "src"
+  },
+  "files": [
+    "src"
+  ],
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:didi/mpx.git"
+  },
+  "homepage": "https://didi.github.io/mpx/",
+  "bugs": {
+    "url": "https://github.com/didi/mpx/issues"
+  },
+  "scripts": {
+    "test": "echo \"Error: run tests from root\" && exit 1"
+  },
+  "sideEffects": true
+}
