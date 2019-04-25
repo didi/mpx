@@ -1,4 +1,3 @@
-import { wxToAliApi } from './platform/index'
 import { getEnvObj, noop } from './utils'
 
 const envObj = getEnvObj()
@@ -51,16 +50,16 @@ function promisifyFilter (key, whiteList) {
   }
 }
 
-function promisify (listObj, whiteList, exclude = []) {
-  const promisifyList = {}
+function promisify (listObj, usePromise, whiteList) {
+  const result = {}
 
   Object.keys(listObj).forEach(key => {
-    if (typeof listObj[key] !== 'function' || ~exclude.indexOf(key)) {
+    if (typeof listObj[key] !== 'function') {
       return
     }
 
-    promisifyList[key] = function (...args) {
-      if (promisifyFilter(key, whiteList)) {
+    result[key] = function (...args) {
+      if (usePromise && promisifyFilter(key, whiteList)) {
         if (!args[0]) {
           args[0] = { success: noop, fail: noop }
         }
@@ -84,15 +83,7 @@ function promisify (listObj, whiteList, exclude = []) {
     }
   })
 
-  return promisifyList
+  return result
 }
 
-export default function getPromisifyList (whiteList, from, to, exclude) {
-  const promisifyObj = promisify(envObj, whiteList)
-  let promisifyTrans = {}
-
-  if (from === 'wx' && to === 'ali') {
-    promisifyTrans = promisify(wxToAliApi, whiteList, exclude)
-  }
-  return Object.assign({}, promisifyObj, promisifyTrans)
-}
+export default promisify

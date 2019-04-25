@@ -53,6 +53,8 @@ function getEnvObj () {
     return swan
   } else if (typeof qq !== 'undefined' && typeof qq.getSystemInfo === 'function') {
     return qq
+  } else if (typeof tt !== 'undefined' && typeof tt.getSystemInfo === 'function') {
+    return tt
   }
 }
 
