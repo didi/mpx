@@ -36,7 +36,7 @@ module.exports = function getComponentConfigs ({ warn, error }) {
     if (isTagLevel) return error(`<${tagName}> is not supported in ${platform} environment!`)
     const name = typeof arg === 'string' ? `bind${arg}` : arg.name
     const type = typeof arg === 'string' ? 'event' : 'property'
-    const msg = `<${tagName}> does not support '${name}' ${type} in ${platform} environment!`
+    const msg = `<${tagName}> does not support [${name}] ${type} in ${platform} environment!`
     isError ? error(msg) : warn(msg)
   }
 
@@ -53,7 +53,7 @@ module.exports = function getComponentConfigs ({ warn, error }) {
     text({ print }),
     richText({ print }),
     progress({ print }),
-    button({ print }),
+    button({ print, error }),
     checkboxGroup({ print }),
     form({ print }),
     input({ print }),
