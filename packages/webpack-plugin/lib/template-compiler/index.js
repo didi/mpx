@@ -14,7 +14,7 @@ module.exports = function (raw) {
   const mode = this._compilation.__mpx__.mode
   const globalSrcMode = this._compilation.__mpx__.srcMode
   const localSrcMode = loaderUtils.parseQuery(this.resourceQuery || '?').mode
-  const pagesMap = this._compilation.__mpx__.pagesMap
+  // const pagesMap = this._compilation.__mpx__.pagesMap
   const componentsMap = this._compilation.__mpx__.componentsMap
   const resource = stripExtension(this.resource)
 

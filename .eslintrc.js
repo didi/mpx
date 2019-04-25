@@ -16,7 +16,8 @@ module.exports = {
     'tt': false,
     'Component': false,
     'Page': false,
-    'App': false
+    'App': false,
+    '__mpx_mode__': false
   },
   rules: {
     'no-cond-assign': 0

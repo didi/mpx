@@ -11,9 +11,9 @@ module.exports = function ({ print, error }) {
     props: [
       {
         test: 'open-type',
-        ali ({ name, value }) {
+        ali ({ value }) {
           if (value === 'share' || value === 'launchApp') {
-            return
+            // do nothing
           } else if (value === 'getPhoneNumber') {
             return [
               {

@@ -216,7 +216,6 @@ module.exports = function (content) {
       : (getRequire('template', template) + '\n') + '\n'
   }
 
-
   const dep = new InjectDependency({
     content: globalInjectCode,
     index: -3

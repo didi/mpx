@@ -1,5 +1,5 @@
 const compiler = require('./compiler')
-const bindThis = require('./bind-this').transform
+// const bindThis = require('./bind-this').transform
 var input =
   '<view mode="__mpx_mode__">' +
   '{{__mpx_mode__ === "wx"}}' +
@@ -13,7 +13,7 @@ let parsed = compiler.parse(input, {
   isComponent: true
 })
 let ast = parsed.root
-let meta = parsed.meta
+// let meta = parsed.meta
 
 console.log(compiler.serialize(ast))
 
