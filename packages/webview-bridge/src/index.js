@@ -24,7 +24,7 @@ if (navigator.userAgent.indexOf('AlipayClient') > -1) {
 }
 
 if (env === null) {
-  console.error('mpxjs/webview: 未识别的环境')
+  console.error('mpxjs/webview: 未识别的环境，当前仅支持 微信、支付宝、百度 小程序')
 }
 const sdkReady = SDK_URL_MAP[env] ? loadScript(SDK_URL_MAP[env]) : Promise.reject(new Error('未找到对应的sdk'))
 
@@ -177,85 +177,49 @@ for (let item in ApiList) {
   }
 }
 
-const navigateTo = (...args) => {
-  sdkReady.then(() => {
-    getEnvWebviewVariable().navigateTo(args)
-  }, (res) => {
-    console.error(res)
-  })
+const webviewApiNameList = {
+  navigateTo: 'navigateTo',
+  navigateBack: 'navigateBack',
+  switchTab: 'switchTab',
+  reLaunch: 'reLaunch',
+  redirectTo: 'redirectTo',
+  getEnv: 'getEnv',
+  postMessage: 'postMessage',
+  onMessage: {
+    ali: true
+  }
 }
 
-const navigateBack = (...args) => {
-  sdkReady.then(() => {
-    getEnvWebviewVariable().navigateTo(args)
-  }, (res) => {
-    console.error(res)
-  })
-}
+const webviewApiList = {}
 
-const switchTab = (...args) => {
-  sdkReady.then(() => {
-    getEnvWebviewVariable().switchTab(args)
-  }, (res) => {
-    console.error(res)
-  })
-}
+for (let item in webviewApiNameList) {
+  const apiName = typeof webviewApiNameList[item] === 'string' ? webviewApiNameList[item] : !webviewApiNameList[item][env] ? false : typeof webviewApiNameList[item][env] === 'string' ? webviewApiNameList[item][env] : item
 
-const reLaunch = (...args) => {
-  sdkReady.then(() => {
-    getEnvWebviewVariable().reLaunch(args)
-  }, (res) => {
-    console.error(res)
-  })
-}
+  if (!apiName) {
+    console.log(`${env}小程序不支持 ${item} 方法`)
+    return
+  }
 
-const redirectTo = (...args) => {
-  sdkReady.then(() => {
-    getEnvWebviewVariable().redirectTo(args)
-  }, (res) => {
-    console.error(res)
-  })
-}
-
-const getEnv = (...args) => {
-  sdkReady.then(() => {
-    getEnvWebviewVariable().getEnv(args)
-  }, (res) => {
-    console.error(res)
-  })
-}
-
-const postMessage = (...args) => {
-  sdkReady.then(() => {
-    getEnvWebviewVariable().postMessage(args)
-  }, (res) => {
-    console.error(res)
-  })
+  webviewApiList[item] = (...args) => {
+    sdkReady.then(() => {
+      getEnvWebviewVariable()[apiName](...args)
+    }, (res) => {
+      console.error(res)
+    })
+  }
 }
 
 const bridgeFunction = {
-  navigateTo,
-  navigateBack,
-  switchTab,
-  reLaunch,
-  redirectTo,
-  getEnv,
-  postMessage,
+  ...webviewApiList,
   ...exportApiList
 }
 
 export default bridgeFunction
 
+const { navigateTo, navigateBack, switchTab, reLaunch, redirectTo, getEnv, postMessage } = webviewApiList
 const { getLocation, chooseImage, openLocation, getNetworkType, previewImage } = exportApiList
 
 export {
-  navigateTo,
-  navigateBack,
-  switchTab,
-  reLaunch,
-  redirectTo,
-  getEnv,
-  postMessage,
-
+  navigateTo, navigateBack, switchTab, reLaunch, redirectTo, getEnv, postMessage,
   getLocation, chooseImage, openLocation, getNetworkType, previewImage
 }
