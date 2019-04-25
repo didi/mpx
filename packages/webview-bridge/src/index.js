@@ -197,15 +197,14 @@ for (let item in webviewApiNameList) {
 
   if (!apiName) {
     console.log(`${env}小程序不支持 ${item} 方法`)
-    return
-  }
-
-  webviewApiList[item] = (...args) => {
-    sdkReady.then(() => {
-      getEnvWebviewVariable()[apiName](...args)
-    }, (res) => {
-      console.error(res)
-    })
+  } else {
+    webviewApiList[item] = (...args) => {
+      sdkReady.then(() => {
+        getEnvWebviewVariable()[apiName](...args)
+      }, (res) => {
+        console.error(res)
+      })
+    }
   }
 }
 
@@ -214,11 +213,13 @@ const bridgeFunction = {
   ...exportApiList
 }
 
-export default bridgeFunction
-
 const { navigateTo, navigateBack, switchTab, reLaunch, redirectTo, getEnv, postMessage } = webviewApiList
 const { getLocation, chooseImage, openLocation, getNetworkType, previewImage } = exportApiList
 
+// 此处导出的对象包含所有的api
+export default bridgeFunction
+
+// 此处导出的为3个平台均可使用的api
 export {
   navigateTo, navigateBack, switchTab, reLaunch, redirectTo, getEnv, postMessage,
   getLocation, chooseImage, openLocation, getNetworkType, previewImage
