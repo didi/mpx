@@ -26,7 +26,35 @@ if (navigator.userAgent.indexOf('AlipayClient') > -1) {
 if (env === null) {
   console.error('mpxjs/webview: 未识别的环境，当前仅支持 微信、支付宝、百度 小程序')
 }
-const sdkReady = SDK_URL_MAP[env] ? loadScript(SDK_URL_MAP[env]) : Promise.reject(new Error('未找到对应的sdk'))
+const sdkReady = !window[env] ? SDK_URL_MAP[env] ? loadScript(SDK_URL_MAP[env]) : Promise.reject(new Error('未找到对应的sdk')) : Promise.resolve()
+
+let wxConfig = null
+
+// 微信的非小程序相关api需要config配置
+const sdkConfigReady = (env !== 'wx') ? sdkReady : new Promise((resolve, reject) => {
+  sdkReady.then(() => {
+    if (!window.wx) {
+      reject(new Error('sdk未就绪'))
+    }
+
+    if (wxConfig === null) {
+      reject(new Error('wxSDK 未配置'))
+    }
+
+    window.wx.config(wxConfig)
+    window.wx.ready(() => {
+      resolve()
+    })
+
+    window.wx.error((res) => {
+      reject(res)
+    })
+  })
+})
+
+const wxsdkConfig = (config) => {
+  wxConfig = config
+}
 
 function getEnvWebviewVariable () {
   return ENV_PATH_MAP[env].reduce((acc, cur) => acc[cur], window)
@@ -168,8 +196,8 @@ for (let item in ApiList) {
     if (!ApiList[item][env]) {
       console.error(`此环境不支持${item}方法`)
     } else {
-      sdkReady.then(() => {
-        getEnvVariable()[ApiList[item][env]](args)
+      sdkConfigReady.then(() => {
+        getEnvVariable()[ApiList[item][env]](...args)
       }, (res) => {
         console.error(res)
       })
@@ -195,10 +223,10 @@ const webviewApiList = {}
 for (let item in webviewApiNameList) {
   const apiName = typeof webviewApiNameList[item] === 'string' ? webviewApiNameList[item] : !webviewApiNameList[item][env] ? false : typeof webviewApiNameList[item][env] === 'string' ? webviewApiNameList[item][env] : item
 
-  if (!apiName) {
-    console.log(`${env}小程序不支持 ${item} 方法`)
-  } else {
-    webviewApiList[item] = (...args) => {
+  webviewApiList[item] = (...args) => {
+    if (!apiName) {
+      console.log(`${env}小程序不支持 ${item} 方法`)
+    } else {
       sdkReady.then(() => {
         getEnvWebviewVariable()[apiName](...args)
       }, (res) => {
@@ -210,7 +238,8 @@ for (let item in webviewApiNameList) {
 
 const bridgeFunction = {
   ...webviewApiList,
-  ...exportApiList
+  ...exportApiList,
+  wxsdkConfig
 }
 
 const { navigateTo, navigateBack, switchTab, reLaunch, redirectTo, getEnv, postMessage } = webviewApiList
@@ -219,8 +248,10 @@ const { getLocation, chooseImage, openLocation, getNetworkType, previewImage } =
 // 此处导出的对象包含所有的api
 export default bridgeFunction
 
-// 此处导出的为3个平台均可使用的api
 export {
+  // 此处导出的为3个平台均可使用的api
   navigateTo, navigateBack, switchTab, reLaunch, redirectTo, getEnv, postMessage,
-  getLocation, chooseImage, openLocation, getNetworkType, previewImage
+  getLocation, chooseImage, openLocation, getNetworkType, previewImage,
+  // 微信特有的一个配置sdk的方法
+  wxsdkConfig
 }
