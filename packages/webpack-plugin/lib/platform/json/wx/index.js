@@ -38,7 +38,7 @@ module.exports = function getSpec ({ warn, error }) {
         test: 'navigationBarTextStyle|navigationStyle|backgroundColor|backgroundTextStyle|backgroundColorTop|backgroundColorBottom|onReachBottomDistance|pageOrientation',
         ali (input, data = [], meta) {
           const currPath = meta.paths.join('|')
-          print(data.concat(currPath).join('.'), true)
+          print(data.concat(currPath).join('.'))
           meta.paths.forEach((path) => {
             delete input[path]
           })
@@ -101,7 +101,7 @@ module.exports = function getSpec ({ warn, error }) {
         {
           test: 'borderStyle|position|custom',
           ali (input, data, meta) {
-            print(meta.paths.join('|'), true)
+            print(meta.paths.join('|'))
             meta.paths.forEach((path) => {
               delete input[path]
             })
@@ -112,7 +112,17 @@ module.exports = function getSpec ({ warn, error }) {
     },
     rules: [
       {
-        test: 'networkTimeout|debug|functionalPages|subpackages|subPackages|workers|requiredBackgroundModes|plugins|preloadRule|resizable|navigateToMiniProgramAppIdList|usingComponents|permission',
+        test: 'networkTimeout|debug|workers|functionalPages|requiredBackgroundModes|resizable|navigateToMiniProgramAppIdList|permission',
+        ali (input, data, meta) {
+          print(meta.paths.join('|'))
+          meta.paths.forEach((path) => {
+            delete input[path]
+          })
+          return input
+        }
+      },
+      {
+        test: 'subpackages|subPackages|plugins|preloadRule|usingComponents',
         ali (input, data, meta) {
           print(meta.paths.join('|'), true)
           meta.paths.forEach((path) => {
