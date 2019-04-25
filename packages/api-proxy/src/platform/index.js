@@ -18,7 +18,7 @@ function transformApi (target, options) {
   }
 
   Object.keys(wxToAliApi).forEach(api => {
-    if (options.exclude.includes(api)) {
+    if (~options.exclude.indexOf(api)) {
       return
     }
 
@@ -32,7 +32,7 @@ function transformApi (target, options) {
         const to = options.to
         let from = args.splice(args.length - 1)[0]
 
-        if (typeof from !== 'string' || !platforms.includes(from)) {
+        if (typeof from !== 'string' || !~platforms.indexOf(from)) {
           args.push(from)
           from = options.from
         }
