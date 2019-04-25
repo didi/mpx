@@ -121,7 +121,6 @@ class MpxWebpackPlugin {
           }
         })
 
-
         const apiBlackListMap = [
           'createApp',
           'createPage',

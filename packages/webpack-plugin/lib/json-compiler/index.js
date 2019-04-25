@@ -16,7 +16,7 @@ module.exports = function (raw) {
   // 该loader中会在每次编译中动态添加entry，不能缓存，否则watch不好使
   this.cacheable(false)
   const nativeCallback = this.async()
-  const options = loaderUtils.getOptions(this) || {}
+  // const options = loaderUtils.getOptions(this) || {}
 
   if (!this._compilation.__mpx__) {
     return nativeCallback(null, raw)
@@ -334,6 +334,8 @@ module.exports = function (raw) {
             return callback(new Error(`Page's path ${page} which is referenced in ${context} must be a subdirectory of ${context}!`))
           }
           this.resolve(path.join(context, srcRoot), page, (err, rawResult) => {
+            // todo: error handler
+            console.error(err)
             let result = rawResult
             const queryIndex = result.indexOf('?')
             if (queryIndex >= 0) {

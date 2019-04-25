@@ -763,32 +763,32 @@ function stringify (str) {
 let tagRE = /\{\{((?:.|\n)+?)\}\}(?!})/
 let tagREG = /\{\{((?:.|\n)+?)\}\}(?!})/g
 
-function processLifecycleHack (el, options) {
-  if (options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component') {
-    if (el.if) {
-      el.if = {
-        raw: `{{${el.if.exp} && mpxLifecycleHack}}`,
-        exp: `${el.if.exp} && mpxLifecycleHack`
-      }
-    } else if (el.elseif) {
-      el.elseif = {
-        raw: `{{${el.elseif.exp} && mpxLifecycleHack}}`,
-        exp: `${el.elseif.exp} && mpxLifecycleHack`
-      }
-    } else if (el.else) {
-      el.elseif = {
-        raw: '{{mpxLifecycleHack}}',
-        exp: 'mpxLifecycleHack'
-      }
-      delete el.else
-    } else {
-      el.if = {
-        raw: '{{mpxLifecycleHack}}',
-        exp: 'mpxLifecycleHack'
-      }
-    }
-  }
-}
+// function processLifecycleHack (el, options) {
+//   if (options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component') {
+//     if (el.if) {
+//       el.if = {
+//         raw: `{{${el.if.exp} && mpxLifecycleHack}}`,
+//         exp: `${el.if.exp} && mpxLifecycleHack`
+//       }
+//     } else if (el.elseif) {
+//       el.elseif = {
+//         raw: `{{${el.elseif.exp} && mpxLifecycleHack}}`,
+//         exp: `${el.elseif.exp} && mpxLifecycleHack`
+//       }
+//     } else if (el.else) {
+//       el.elseif = {
+//         raw: '{{mpxLifecycleHack}}',
+//         exp: 'mpxLifecycleHack'
+//       }
+//       delete el.else
+//     } else {
+//       el.if = {
+//         raw: '{{mpxLifecycleHack}}',
+//         exp: 'mpxLifecycleHack'
+//       }
+//     }
+//   }
+// }
 
 function processPageStatus (el, options) {
   if (options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component') {
