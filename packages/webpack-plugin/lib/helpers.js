@@ -7,6 +7,7 @@ const templateCompilerPath = normalize.lib('template-compiler/index')
 const jsonCompilerPath = normalize.lib('json-compiler/index')
 const templatePreprocessorPath = normalize.lib('template-compiler/preprocessor')
 const config = require('./config')
+const stringifyQuery = require('./utils/stringify-query')
 
 // internal lib loaders
 const selectorPath = normalize.lib('selector')
@@ -53,7 +54,7 @@ function ensureLoader (lang) {
 }
 
 function ensureBang (loader) {
-  if (loader.charAt(loader.length - 1) !== '!') {
+  if (loader && loader.charAt(loader.length - 1) !== '!') {
     return loader + '!'
   } else {
     return loader
@@ -127,6 +128,22 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
     )
   }
 
+  function addQueryMode (request, mode) {
+    if (!mode) {
+      return request
+    }
+    const queryIndex = request.indexOf('?')
+    let query
+    let resource = request
+    if (queryIndex >= 0) {
+      query = request.substr(queryIndex)
+      resource = request.substr(0, queryIndex)
+    }
+    let queryObj = loaderUtils.parseQuery(query || '?')
+    queryObj.mode = mode
+    return resource + stringifyQuery(queryObj)
+  }
+
   function getRequestString (type, part, index, scoped) {
     return loaderUtils.stringifyRequest(
       loaderContext,
@@ -137,7 +154,7 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
       // select the corresponding part from the mpx file
       getSelectorString(type, index) +
       // the url to the actual mpx file, including remaining requests
-      rawRequest
+      addQueryMode(rawRequest, part.mode)
     )
   }
 
@@ -162,7 +179,7 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
   function getSrcRequestString (type, impt, index, scoped) {
     return loaderUtils.stringifyRequest(
       loaderContext,
-      '!!' + getLoaderString(type, impt, index, scoped) + impt.src
+      '!!' + getLoaderString(type, impt, index, scoped) + addQueryMode(impt.src, impt.mode)
     )
   }
 
@@ -269,18 +286,7 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
         moduleId,
         compileBindEvent: options.compileBindEvent
       }
-
-      if (part.mode) {
-        templateCompilerOptions.mode = part.mode
-      }
-
       templateCompiler = templateCompilerPath + '?' + JSON.stringify(templateCompilerOptions)
-    }
-
-    let jsonCompilerOptions = ''
-
-    if (type === 'json' && part.mode) {
-      jsonCompilerOptions = `?mode=${part.mode}`
     }
 
     let loader = type === 'styles'
@@ -311,9 +317,6 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
         loader = ensureBang(loader) + ensureBang(templateCompiler)
       }
 
-      if (type === 'json') {
-        loader = loader + jsonCompilerOptions
-      }
       return ensureBang(loader)
     } else {
       // unknown lang, infer the loader to be used
@@ -327,8 +330,9 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
           loader = addCssModulesToLoader(defaultLoaders.css, part, index)
           return ensureBang(loader) + ensureBang(styleCompiler) + ensureBang(ensureLoader(lang))
         case 'script':
+          return ensureBang(defaultLoaders.js) + ensureBang(ensureLoader(lang))
         case 'json':
-          return ensureBang(defaultLoaders.json + jsonCompilerOptions) + ensureBang(ensureLoader(lang))
+          return ensureBang(defaultLoaders.json) + ensureBang(ensureLoader(lang))
         default:
           loader = loaders[type]
           if (Array.isArray(loader)) {

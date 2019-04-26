@@ -9,11 +9,13 @@ import wxToAliRule from './wxToAli'
 const lifecycleTemplates = {
   wx: wxLifecycle.LIFECYCLE,
   ali: aliLifecycle.LIFECYCLE,
-  swan: wxLifecycle.LIFECYCLE
+  swan: wxLifecycle.LIFECYCLE,
+  qq: wxLifecycle.LIFECYCLE,
+  tt: wxLifecycle.LIFECYCLE
 }
 // 根据当前环境获取的默认生命周期信息
 const lifecycleInfo = is('ali') ? aliLifecycle : wxLifecycle
-const mode = is('wx') || is('swan') ? 'blend' : ''
+const mode = is('ali') ? '' : 'blend'
 
 /**
  * 转换规则包含四点

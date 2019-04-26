@@ -48,9 +48,9 @@ function transformApiForProxy (context, currentInject) {
 
 function filterOptions (options, type) {
   const newOptions = {}
-  const ignoreProps = customeKey.concat(['data'])
+  const ignoreProps = customeKey
   Object.keys(options).forEach(key => {
-    if (ignoreProps.indexOf(key) !== -1) {
+    if (ignoreProps.indexOf(key) !== -1 || (key === 'data' && typeof options[key] === 'function')) {
       return
     }
     if (key === 'properties' || key === 'props') {

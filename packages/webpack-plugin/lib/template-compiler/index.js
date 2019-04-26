@@ -12,14 +12,11 @@ module.exports = function (raw) {
     return raw
   }
   const mode = this._compilation.__mpx__.mode
-  const srcMode = this._compilation.__mpx__.srcMode
-  const fieldSrcMode = options.mode
-  const pagesMap = this._compilation.__mpx__.pagesMap
+  const globalSrcMode = this._compilation.__mpx__.srcMode
+  const localSrcMode = loaderUtils.parseQuery(this.resourceQuery || '?').mode
+  // const pagesMap = this._compilation.__mpx__.pagesMap
   const componentsMap = this._compilation.__mpx__.componentsMap
   const resource = stripExtension(this.resource)
-
-  const modeReg = /(?:\.(ali|wx|swan))?$/
-  const fileSrcMode = modeReg.exec(resource)[1]
 
   let parsed = compiler.parse(raw, Object.assign(options, {
     warn: (msg) => {
@@ -34,7 +31,7 @@ module.exports = function (raw) {
     },
     isComponent: !!componentsMap[resource],
     mode,
-    srcMode: fieldSrcMode || fileSrcMode || srcMode
+    srcMode: localSrcMode || globalSrcMode
   }))
   let ast = parsed.root
   let meta = parsed.meta
@@ -45,26 +42,13 @@ module.exports = function (raw) {
       var renderData = {};
       ${compiler.genNode(ast)}
       return renderData
-    },
-    mode:${JSON.stringify(mode)},
-    srcMode:${JSON.stringify(fileSrcMode || srcMode)}
+    }
 };\n`, {
     needCollect: true,
     ignoreMap: meta.wxsModuleMap
   })
 
   let globalInjectCode = renderResult.code + '\n'
-
-  if (mode === 'ali') {
-    let ctor = 'App'
-    if (pagesMap[resource]) {
-      ctor = 'Page'
-    } else if (componentsMap[resource]) {
-      ctor = 'Component'
-    }
-
-    globalInjectCode += `global.currentInject.ctor = ${ctor};\n`
-  }
 
   if (meta.computed) {
     globalInjectCode += bindThis(`global.currentInject.injectComputed = {
@@ -82,6 +66,7 @@ module.exports = function (raw) {
     content: globalInjectCode,
     index: -2
   })
+
   this._module.issuer.addDependency(dep)
   return compiler.serialize(ast)
 }

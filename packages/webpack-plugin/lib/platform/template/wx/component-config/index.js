@@ -32,11 +32,13 @@ module.exports = function getComponentConfigs ({ warn, error }) {
    * @param {boolean} isTagLevel 是否是标签级别的log
    * @return {function(*): Function}
    */
-  const print = (platform, tagName, isTagLevel = false) => (isError) => (arg) => {
+  const print = (platform, tagName, isTagLevel = false) => (isError = 0, { property } = {}) => (arg) => {
     if (isTagLevel) return error(`<${tagName}> is not supported in ${platform} environment!`)
     const name = typeof arg === 'string' ? `bind${arg}` : arg.name
     const type = typeof arg === 'string' ? 'event' : 'property'
-    const msg = `<${tagName}> does not support '${name}' ${type} in ${platform} environment!`
+    const msg1 = `<${tagName}> does not support [${name}] ${type} in ${platform} environment!`
+    const msg2 = `<${tagName}>'s property '${name}' does not support '[${arg.value}]' value in ali environment!`
+    const msg = property ? msg2 : msg1
     isError ? error(msg) : warn(msg)
   }
 
