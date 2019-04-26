@@ -8,6 +8,17 @@ module.exports = function getSpec ({ warn, error }) {
     isError ? error(msg) : warn(msg)
   }
 
+  function deletePath (isError) {
+    return function (input, data = [], meta) {
+      const currPath = meta.paths.join('|')
+      print(data.concat(currPath).join('.'), isError)
+      meta.paths.forEach((path) => {
+        delete input[path]
+      })
+      return input
+    }
+  }
+
   const spec = {
     supportedTargets: ['ali'],
     normalizeTest,
@@ -35,25 +46,31 @@ module.exports = function getSpec ({ warn, error }) {
         }
       },
       {
-        test: 'navigationBarTextStyle|navigationStyle|backgroundColor|backgroundTextStyle|backgroundColorTop|backgroundColorBottom|onReachBottomDistance|pageOrientation',
-        ali (input, data = [], meta) {
-          const currPath = meta.paths.join('|')
-          print(data.concat(currPath).join('.'))
-          meta.paths.forEach((path) => {
-            delete input[path]
-          })
-          return input
-        }
+        test: 'disableSwipeBack',
+        ali: deletePath(),
+        qq: deletePath(),
+        swan: deletePath()
+      },
+      {
+        test: 'onReachBottomDistance|disableScroll',
+        ali: deletePath(),
+        qq: deletePath()
+      },
+      {
+        test: 'backgroundColorTop|backgroundColorBottom|pageOrientation',
+        ali: deletePath(),
+        swan: deletePath()
+      },
+      {
+        test: 'navigationBarTextStyle|navigationStyle|backgroundColor|backgroundTextStyle',
+        ali: deletePath()
       }
     ],
     component: [
       {
         test: 'componentGenerics',
-        ali (input) {
-          print(this.test, true)
-          delete input.componentGenerics
-          return input
-        }
+        ali: deletePath(true),
+        swan: deletePath(true)
       }
     ],
     tabBar: {
@@ -99,37 +116,42 @@ module.exports = function getSpec ({ warn, error }) {
           }
         },
         {
-          test: 'borderStyle|position|custom',
-          ali (input, data, meta) {
-            print(meta.paths.join('|'))
-            meta.paths.forEach((path) => {
-              delete input[path]
-            })
-            return input
-          }
+          test: 'position|custom',
+          ali: deletePath(),
+          swan: deletePath()
+        },
+        {
+          test: 'borderStyle',
+          ali: deletePath()
         }
       ]
     },
     rules: [
       {
-        test: 'networkTimeout|debug|workers|functionalPages|requiredBackgroundModes|resizable|navigateToMiniProgramAppIdList|permission',
-        ali (input, data, meta) {
-          print(meta.paths.join('|'))
-          meta.paths.forEach((path) => {
-            delete input[path]
-          })
-          return input
-        }
+        test: 'resizable',
+        ali: deletePath(),
+        qq: deletePath(),
+        swan: deletePath()
       },
       {
-        test: 'subpackages|subPackages|plugins|preloadRule|usingComponents',
-        ali (input, data, meta) {
-          print(meta.paths.join('|'), true)
-          meta.paths.forEach((path) => {
-            delete input[path]
-          })
-          return input
-        }
+        test: 'preloadRule',
+        ali: deletePath(),
+        qq: deletePath()
+      },
+      {
+        test: 'functionalPages|plugins|usingComponents',
+        ali: deletePath(true),
+        qq: deletePath(true),
+        swan: deletePath(true)
+      },
+      {
+        test: 'networkTimeout|debug|workers|requiredBackgroundModes|navigateToMiniProgramAppIdList|permission',
+        ali: deletePath(),
+        swan: deletePath()
+      },
+      {
+        test: 'subpackages|subPackages',
+        ali: deletePath(true)
       },
       {
         test: 'packages',
