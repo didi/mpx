@@ -1,8 +1,8 @@
 const TAG_NAME = 'button'
 
-module.exports = function ({ print, error }) {
+module.exports = function ({ print }) {
   /**
-   * @type {function(isError: (number|boolean|string)?): void} aliLog
+   * @type {function(isError: (number|boolean|string)?, configOption: Object?): void} aliLog
    * @desc - 无法转换时告知用户的通用方法，接受0个或1个参数，意为是否error级别
    */
   const aliLog = print('ali', TAG_NAME)
@@ -11,7 +11,7 @@ module.exports = function ({ print, error }) {
     props: [
       {
         test: 'open-type',
-        ali ({ value }) {
+        ali ({ name, value }) {
           if (value === 'share' || value === 'launchApp') {
             // do nothing
           } else if (value === 'getPhoneNumber') {
@@ -26,7 +26,7 @@ module.exports = function ({ print, error }) {
               }
             ]
           } else {
-            error(`<button>'s attribute [open-type] does not support [${value}] value in ali environment!`)
+            aliLog(1, { property: true })({ name, value })
           }
         }
       },
