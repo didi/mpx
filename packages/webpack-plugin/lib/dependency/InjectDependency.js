@@ -9,7 +9,7 @@ class InjectDependency extends NullDependency {
   }
 
   get type () {
-    return 'navigator'
+    return 'mpx inject'
   }
 
   updateHash (hash) {
@@ -20,7 +20,7 @@ class InjectDependency extends NullDependency {
 
 InjectDependency.Template = class InjectDependencyTemplate {
   apply (dep, source) {
-    source.insert(dep.index, '/* mpx global inject */ ' + dep.content)
+    source.insert(dep.index, '/* mpx inject */ ' + dep.content)
   }
 }
 

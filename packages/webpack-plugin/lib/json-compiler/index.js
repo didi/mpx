@@ -16,7 +16,7 @@ module.exports = function (raw) {
   // 该loader中会在每次编译中动态添加entry，不能缓存，否则watch不好使
   this.cacheable(false)
   const nativeCallback = this.async()
-  const options = loaderUtils.getOptions(this) || {}
+  // const options = loaderUtils.getOptions(this) || {}
 
   if (!this._compilation.__mpx__) {
     return nativeCallback(null, raw)
@@ -27,15 +27,12 @@ module.exports = function (raw) {
   const subPackagesMap = this._compilation.__mpx__.subPackagesMap
   const compilationMpx = this._compilation.__mpx__
   const mode = this._compilation.__mpx__.mode
-  const srcMode = this._compilation.__mpx__.srcMode
-  const fieldSrcMode = options.mode
+  const globalSrcMode = this._compilation.__mpx__.srcMode
+  const localSrcMode = loaderUtils.parseQuery(this.resourceQuery || '?').mode
   const resource = stripExtension(this.resource)
   const isApp = !(pagesMap[resource] || componentsMap[resource])
   const publicPath = this._compilation.outputOptions.publicPath || ''
   const fs = this._compiler.inputFileSystem
-
-  const modeReg = /(?:\.(ali|wx|swan))?$/
-  const fileSrcMode = modeReg.exec(resource)[1]
 
   const copydir = (dir, context, callback) => {
     fs.readdir(dir, (err, files) => {
@@ -117,7 +114,7 @@ module.exports = function (raw) {
 
   const rulesRunnerOptions = {
     mode,
-    srcMode: fieldSrcMode || fileSrcMode || srcMode,
+    srcMode: localSrcMode || globalSrcMode,
     type: 'json',
     waterfall: true,
     warn: (msg) => {
@@ -150,8 +147,9 @@ module.exports = function (raw) {
     if (/^plugin:\/\//.test(component)) {
       return callback()
     }
-    this.resolve(context, component, (err, result, info) => {
+    this.resolve(context, component, (err, rawResult, info) => {
       if (err) return callback(err)
+      let result = rawResult
       const queryIndex = result.indexOf('?')
       if (queryIndex >= 0) {
         result = result.substr(0, queryIndex)
@@ -192,9 +190,9 @@ module.exports = function (raw) {
       if (componentsMap[result] === componentPath) return callback()
       componentsMap[result] = componentPath
       if (ext === '.js') {
-        result = '!!' + nativeLoaderPath + '!' + result
+        rawResult = '!!' + nativeLoaderPath + '!' + rawResult
       }
-      addEntrySafely(result, componentPath, callback)
+      addEntrySafely(rawResult, componentPath, callback)
     })
   }
 
@@ -335,45 +333,41 @@ module.exports = function (raw) {
           if (/^\./.test(name)) {
             return callback(new Error(`Page's path ${page} which is referenced in ${context} must be a subdirectory of ${context}!`))
           }
-          async.waterfall([
-            (callback) => {
-              this.resolve(path.join(context, srcRoot), page, (err, result) => {
-                callback(err, result)
-              })
-            },
-            (result, callback) => {
-              const queryIndex = result.indexOf('?')
-              if (queryIndex >= 0) {
-                result = result.substr(0, queryIndex)
-              }
-              let parsed = path.parse(result)
-              let ext = parsed.ext
-              result = stripExtension(result)
-              // 如果存在page命名冲突，return err
-              for (let key in pagesMap) {
-                if (pagesMap[key] === name && key !== result) {
-                  return callback(new Error(`Resources in ${result} and ${key} are registered with same page path ${name}, which is not allowed!`))
-                }
-              }
-              // 如果之前已经创建了入口，直接return
-              if (pagesMap[result] === name) return callback()
-              pagesMap[result] = name
-              if (tarRoot && subPackagesCfg[tarRoot]) {
-                subPackagesCfg[tarRoot].pages.push(toPosix(path.join('', page)))
-              } else {
-                // 确保首页不变
-                if (page === firstPage) {
-                  localPages.unshift(name)
-                } else {
-                  localPages.push(name)
-                }
-              }
-              if (ext === '.js') {
-                result = '!!' + nativeLoaderPath + '!' + result
-              }
-              addEntrySafely(result, name, callback)
+          this.resolve(path.join(context, srcRoot), page, (err, rawResult) => {
+            // todo: error handler
+            console.error(err)
+            let result = rawResult
+            const queryIndex = result.indexOf('?')
+            if (queryIndex >= 0) {
+              result = result.substr(0, queryIndex)
             }
-          ], callback)
+            let parsed = path.parse(result)
+            let ext = parsed.ext
+            result = stripExtension(result)
+            // 如果存在page命名冲突，return err
+            for (let key in pagesMap) {
+              if (pagesMap[key] === name && key !== result) {
+                return callback(new Error(`Resources in ${result} and ${key} are registered with same page path ${name}, which is not allowed!`))
+              }
+            }
+            // 如果之前已经创建了入口，直接return
+            if (pagesMap[result] === name) return callback()
+            pagesMap[result] = name
+            if (tarRoot && subPackagesCfg[tarRoot]) {
+              subPackagesCfg[tarRoot].pages.push(toPosix(path.join('', page)))
+            } else {
+              // 确保首页不变
+              if (page === firstPage) {
+                localPages.unshift(name)
+              } else {
+                localPages.push(name)
+              }
+            }
+            if (ext === '.js') {
+              rawResult = '!!' + nativeLoaderPath + '!' + rawResult
+            }
+            addEntrySafely(rawResult, name, callback)
+          })
         }, callback)
       } else {
         callback()

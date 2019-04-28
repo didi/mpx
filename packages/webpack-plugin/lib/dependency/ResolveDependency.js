@@ -12,7 +12,7 @@ class ResolveDependency extends NullDependency {
   }
 
   get type () {
-    return 'navigator'
+    return 'mpx resolve'
   }
 
   updateHash (hash) {

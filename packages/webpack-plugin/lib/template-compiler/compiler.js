@@ -572,7 +572,7 @@ function parse (template, options) {
   error$1 = options.error || baseError
 
   mode = options.mode || 'wx'
-  srcMode = options.srcMode || 'wx'
+  srcMode = options.srcMode || mode
 
   rulesRunner = getRulesRunner({
     mode,
@@ -745,50 +745,50 @@ function addAttrs (el, attrs) {
   el.attrsMap = makeAttrsMap(el.attrsList)
 }
 
-// function modifyAttr (el, name, val) {
-//   el.attrsMap[name] = val
-//   let list = el.attrsList
-//   for (let i = 0, l = list.length; i < l; i++) {
-//     if (list[i].name === name) {
-//       list[i].value = val
-//       break
-//     }
-//   }
-// }
+function modifyAttr (el, name, val) {
+  el.attrsMap[name] = val
+  let list = el.attrsList
+  for (let i = 0, l = list.length; i < l; i++) {
+    if (list[i].name === name) {
+      list[i].value = val
+      break
+    }
+  }
+}
 
 function stringify (str) {
-  return config[mode].stringify(str)
+  return JSON.stringify(str)
 }
 
 let tagRE = /\{\{((?:.|\n)+?)\}\}(?!})/
 let tagREG = /\{\{((?:.|\n)+?)\}\}(?!})/g
 
-function processLifecycleHack (el, options) {
-  if (options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component') {
-    if (el.if) {
-      el.if = {
-        raw: `{{${el.if.exp} && mpxLifecycleHack}}`,
-        exp: `${el.if.exp} && mpxLifecycleHack`
-      }
-    } else if (el.elseif) {
-      el.elseif = {
-        raw: `{{${el.elseif.exp} && mpxLifecycleHack}}`,
-        exp: `${el.elseif.exp} && mpxLifecycleHack`
-      }
-    } else if (el.else) {
-      el.elseif = {
-        raw: '{{mpxLifecycleHack}}',
-        exp: 'mpxLifecycleHack'
-      }
-      delete el.else
-    } else {
-      el.if = {
-        raw: '{{mpxLifecycleHack}}',
-        exp: 'mpxLifecycleHack'
-      }
-    }
-  }
-}
+// function processLifecycleHack (el, options) {
+//   if (options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component') {
+//     if (el.if) {
+//       el.if = {
+//         raw: `{{${el.if.exp} && mpxLifecycleHack}}`,
+//         exp: `${el.if.exp} && mpxLifecycleHack`
+//       }
+//     } else if (el.elseif) {
+//       el.elseif = {
+//         raw: `{{${el.elseif.exp} && mpxLifecycleHack}}`,
+//         exp: `${el.elseif.exp} && mpxLifecycleHack`
+//       }
+//     } else if (el.else) {
+//       el.elseif = {
+//         raw: '{{mpxLifecycleHack}}',
+//         exp: 'mpxLifecycleHack'
+//       }
+//       delete el.else
+//     } else {
+//       el.if = {
+//         raw: '{{mpxLifecycleHack}}',
+//         exp: 'mpxLifecycleHack'
+//       }
+//     }
+//   }
+// }
 
 function processPageStatus (el, options) {
   if (options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component') {
@@ -961,26 +961,38 @@ function processBindEvent (el) {
 
 function parseMustache (raw) {
   raw = (raw || '').trim()
+  let val = raw
   if (tagRE.test(raw)) {
     let ret = []
     let lastLastIndex = 0
     let match
+    val = ''
     while (match = tagREG.exec(raw)) {
       let pre = raw.substring(lastLastIndex, match.index)
-      if (pre) ret.push(stringify(pre))
-      ret.push(`(${match[1].trim()})`)
+      if (pre) {
+        ret.push(stringify(pre))
+        val += pre
+      }
+      let exp = match[1].trim().replace(/\b__mpx_mode__\b/, stringify(mode))
+      ret.push(`(${exp})`)
+      val += `{{${exp}}}`
       lastLastIndex = tagREG.lastIndex
     }
     let post = raw.substring(lastLastIndex)
-    if (post) ret.push(stringify(post))
+    if (post) {
+      ret.push(stringify(post))
+      val += post
+    }
     return {
       result: ret.join('+'),
-      hasBinding: true
+      hasBinding: true,
+      val
     }
   }
   return {
     result: stringify(raw),
-    hasBinding: false
+    hasBinding: false,
+    val
   }
 }
 
@@ -996,14 +1008,16 @@ function addExp (el, exp) {
 function processIf (el) {
   let val = getAndRemoveAttr(el, config[mode].directive.if)
   if (val) {
+    let parsed = parseMustache(val)
     el.if = {
-      raw: val,
-      exp: parseMustache(val).result
+      raw: parsed.val,
+      exp: parsed.result
     }
   } else if (val = getAndRemoveAttr(el, config[mode].directive.elseif)) {
+    let parsed = parseMustache(val)
     el.elseif = {
-      raw: val,
-      exp: parseMustache(val).result
+      raw: parsed.val,
+      exp: parsed.result
     }
   } else if (getAndRemoveAttr(el, config[mode].directive.else) != null) {
     el.else = true
@@ -1013,9 +1027,10 @@ function processIf (el) {
 function processFor (el) {
   let val = getAndRemoveAttr(el, config[mode].directive.for)
   if (val) {
+    let parsed = parseMustache(val)
     el.for = {
-      raw: val,
-      exp: parseMustache(val).result
+      raw: parsed.val,
+      exp: parsed.result
     }
     if (val = getAndRemoveAttr(el, config[mode].directive.forIndex)) {
       el.for.index = val
@@ -1079,6 +1094,9 @@ function processAttrs (el, meta) {
     let parsed = parseMustache(attr.value)
     if (parsed.hasBinding) {
       addExp(el, parsed.result)
+    }
+    if (parsed.val !== attr.value) {
+      modifyAttr(el, attr.name, parsed.val)
     }
   })
 }
@@ -1144,6 +1162,7 @@ function processText (el) {
   if (parsed.hasBinding) {
     addExp(el, parsed.result)
   }
+  el.text = parsed.val
 }
 
 // function injectComputed (el, meta, type, body) {
@@ -1255,15 +1274,14 @@ function processElement (el, options, meta, root, injectNodes) {
   }
   processIf(el)
   processFor(el)
-  processClass(el, meta, injectNodes)
-  processStyle(el, meta, injectNodes)
+  if (mode !== 'qq' && mode !== 'tt') {
+    processClass(el, meta, injectNodes)
+    processStyle(el, meta, injectNodes)
+  }
   processShow(el, options, root)
   processRef(el, options, meta)
   processBindEvent(el)
-  // processComponentDepth(el, options)
-  if (mode === 'ali') {
-    // processLifecycleHack(el, options)
-  } else {
+  if (mode !== 'ali') {
     processPageStatus(el, options)
   }
   processComponentIs(el, options)

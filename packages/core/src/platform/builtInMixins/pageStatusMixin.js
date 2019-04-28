@@ -14,15 +14,10 @@ export default function pageStatusMixin (mixinType) {
       }
     }
   } else {
-    if (is('wx') || is('swan')) {
+    if (is('ali')) {
       return {
-        properties: {
-          mpxPageStatus: {
-            type: String
-          }
-        },
         watch: {
-          mpxPageStatus: {
+          '$page.mpxPageStatus': {
             handler (val) {
               if (val) {
                 const rawOptions = this.$rawOptions
@@ -36,10 +31,15 @@ export default function pageStatusMixin (mixinType) {
           }
         }
       }
-    } else if (is('ali')) {
+    } else {
       return {
+        properties: {
+          mpxPageStatus: {
+            type: String
+          }
+        },
         watch: {
-          '$page.mpxPageStatus': {
+          mpxPageStatus: {
             handler (val) {
               if (val) {
                 const rawOptions = this.$rawOptions

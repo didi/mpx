@@ -1,12 +1,9 @@
 const compiler = require('./compiler')
-const bindThis = require('./bind-this').transform
+// const bindThis = require('./bind-this').transform
 var input =
-  '<view>{{aaaaaa.bbb}}<view wx:for="{{aaa}}">' +
-  '<view wx:for="{{bbb}}" wx:for-item="item2">' +
-  '<view>{{item.aaa}}</view>' +
-  '<view>{{item2.bbb}}</view>' +
-  '</view>' +
-  '</view></view>'
+  '<view mode="__mpx_mode__">' +
+  '{{__mpx_mode__ === "wx"}}' +
+  '<button open-type="getPhoneNumber" bindgetphonenumber="handlePhone">test</button></view>'
 
 let parsed = compiler.parse(input, {
   usingComponents: ['com1', 'com2', 'com3'],
@@ -16,21 +13,23 @@ let parsed = compiler.parse(input, {
   isComponent: true
 })
 let ast = parsed.root
-let meta = parsed.meta
+// let meta = parsed.meta
 
-let renderResult = bindThis(`global.currentInject = {
-    render: function () {
-      var __seen = [];
-      var renderData = {};
-      ${compiler.genNode(ast)}
-      return renderData
-    }
-};\n`, {
-  needCollect: true,
-  ignoreMap: meta.wxsModuleMap
-})
+console.log(compiler.serialize(ast))
 
-console.log(renderResult)
+// let renderResult = bindThis(`global.currentInject = {
+//     render: function () {
+//       var __seen = [];
+//       var renderData = {};
+//       ${compiler.genNode(ast)}
+//       return renderData
+//     }
+// };\n`, {
+//   needCollect: true,
+//   ignoreMap: meta.wxsModuleMap
+// })
+
+// console.log(renderResult)
 //
 // let globalInjectCode = renderResult.code + '\n'
 //

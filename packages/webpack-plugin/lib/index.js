@@ -49,8 +49,7 @@ class MpxWebpackPlugin {
     }
     // define mode
     new DefinePlugin({
-      '__mpx_mode__': JSON.stringify(this.options.mode),
-      '__mpx_src_mode__': JSON.stringify(this.options.srcMode)
+      '__mpx_mode__': JSON.stringify(this.options.mode)
     }).apply(compiler)
 
     compiler.hooks.thisCompilation.tap('MpxWebpackPlugin', (compilation, params) => {
@@ -120,6 +119,50 @@ class MpxWebpackPlugin {
             parser.state.current.addDependency(dep)
             return true
           }
+        })
+
+        const apiBlackListMap = [
+          'createApp',
+          'createPage',
+          'createComponent',
+          'createStore',
+          'toPureObject',
+          'mixin: injectMixins',
+          'injectMixins',
+          'observable',
+          'extendObservable',
+          'watch',
+          'use',
+          'set',
+          'get',
+          'remove',
+          'setConvertRule',
+          'createAction'
+        ].reduce((map, api) => {
+          map[api] = true
+          return map
+        }, {})
+
+        parser.hooks.callAnyMember.for('mpx').tap('MpxWebpackPlugin', (expr) => {
+          const callee = expr.callee
+          const args = expr.arguments
+          if (apiBlackListMap[callee.property.name || callee.property.value]) {
+            return
+          }
+          const resource = parser.state.module.resource
+          const queryIndex = resource.indexOf('?')
+          let resourceQuery = '?'
+          if (queryIndex > -1) {
+            resourceQuery = resource.substr(queryIndex)
+          }
+          const localSrcMode = loaderUtils.parseQuery(resourceQuery).mode
+          const globalSrcMode = compilation.__mpx__.srcMode
+          const mode = localSrcMode || globalSrcMode
+          const dep = new InjectDependency({
+            content: args.length ? `, ${JSON.stringify(mode)}` : JSON.stringify(mode),
+            index: expr.end - 1
+          })
+          parser.state.current.addDependency(dep)
         })
       })
     })

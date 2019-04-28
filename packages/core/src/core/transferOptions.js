@@ -18,7 +18,7 @@ export default function transferOptions (options, type, builtInMixins = []) {
       options.computed = Object.assign({}, options.computed, currentInject.injectComputed)
     }
     // 转换mode
-    options.mpxConvertMode = options.mpxConvertMode || getConvertMode(currentInject.srcMode, currentInject.mode)
+    options.mpxConvertMode = options.mpxConvertMode || getConvertMode(global.currentSrcMode, __mpx_mode__)
   }
   const rawOptions = mergeOptions(options, type)
   return {
