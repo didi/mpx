@@ -6,12 +6,18 @@ module.exports = function ({ print }) {
    * @desc - 无法转换时告知用户的通用方法，接受0个或1个参数，意为是否error级别
    */
   const aliLog = print('ali', TAG_NAME)
+  const baiduLog = print('baidu', TAG_NAME)
+
   return {
     test: TAG_NAME,
     props: [
       {
         test: /^(display-multiple-items|skip-hidden-item-layout|easing-function)$/,
         ali: aliLog()
+      },
+      {
+        test: /^(skip-hidden-item-layout|easing-function)$/,
+        swan: baiduLog()
       }
     ],
     event: [
@@ -27,6 +33,10 @@ module.exports = function ({ print }) {
       {
         test: /^(transition|animationfinish)$/,
         ali: aliLog()
+      },
+      {
+        test: /^(transition)$/,
+        swan: baiduLog()
       }
     ]
   }
