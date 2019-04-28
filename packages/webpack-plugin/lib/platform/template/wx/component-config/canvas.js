@@ -7,9 +7,7 @@ module.exports = function ({ print }) {
    */
   const aliLog = print('ali', TAG_NAME)
   return {
-    // 匹配标签名，可传递正则
     test: TAG_NAME,
-    // 组件属性中的差异部分
     props: [
       {
         test: /^canvas-id$/,
