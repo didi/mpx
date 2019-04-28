@@ -15,6 +15,16 @@ module.exports = function ({ print }) {
         ali: aliLog(1)
       },
       {
+        test: 'open-type',
+        ali (attr) {
+          console.log(attr)
+          let unSupportList = ['reLaunch', 'exit']
+          if (unSupportList.indexOf(attr.value) > -1) {
+            aliLog(1)(attr)
+          }
+        }
+      },
+      {
         test: /^(hover-stop-propagation)$/,
         ali: aliLog()
       }
