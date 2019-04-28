@@ -31,7 +31,7 @@ const sdkReady = !window[env] ? SDK_URL_MAP[env] ? loadScript(SDK_URL_MAP[env]) 
 let wxConfig = null
 
 // 微信的非小程序相关api需要config配置
-const sdkConfigReady = (env !== 'wx') ? sdkReady : new Promise((resolve, reject) => {
+const sdkConfigReady = () => (env !== 'wx') ? sdkReady : new Promise((resolve, reject) => {
   sdkReady.then(() => {
     if (!window.wx) {
       reject(new Error('sdk未就绪'))
@@ -196,11 +196,11 @@ for (let item in ApiList) {
     if (!ApiList[item][env]) {
       console.error(`此环境不支持${item}方法`)
     } else {
-      sdkConfigReady.then(() => {
+      sdkConfigReady().then(() => {
         getEnvVariable()[ApiList[item][env]](...args)
       }, (res) => {
         console.error(res)
-      })
+      }).catch(e => console.error(e))
     }
   }
 }
@@ -231,7 +231,7 @@ for (let item in webviewApiNameList) {
         getEnvWebviewVariable()[apiName](...args)
       }, (res) => {
         console.error(res)
-      })
+      }).catch(e => console.log(e))
     }
   }
 }
