@@ -4,7 +4,9 @@ import promisify from '../promisify'
 
 function transformApi (target, options) {
   const platformMap = {
-    'wx_ali': wxToAliApi
+    'wx_ali': wxToAliApi,
+    'qq_ali': wxToAliApi,
+    'swan_ali': wxToAliApi
   }
   const platforms = ['wx', 'ali', 'swan', 'qq', 'tt']
   const cacheTarget = {}
@@ -30,7 +32,7 @@ function transformApi (target, options) {
     descriptor.get = () => {
       return (...args) => {
         const to = options.to
-        let from = args.splice(args.length - 1)[0]
+        let from = args.pop()
 
         if (typeof from !== 'string' || !~platforms.indexOf(from)) {
           args.push(from)
