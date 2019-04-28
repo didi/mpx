@@ -18,9 +18,9 @@ module.exports = function ({ print }) {
         test: 'open-type',
         ali (attr) {
           console.log(attr)
-          let unSupportList = ['reLaunch', 'exit']
-          if (unSupportList.indexOf(attr.value) > -1) {
-            aliLog(1)(attr)
+          let supportedList = ['navigate', 'redirect', 'switchTab', 'navigateBack']
+          if (supportedList.indexOf(attr.value) === -1) {
+            aliLog(1, {property: 1})(attr)
           }
         }
       },

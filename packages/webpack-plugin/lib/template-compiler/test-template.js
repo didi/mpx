@@ -3,6 +3,7 @@ const bindThis = require('./bind-this').transform
 var input =
   '<view>{{aaaaaa.bbb}}<view wx:for="{{aaa}}">' +
   '<slider bindchange bindchanging>{{aaaaaa.bbb}}</slider wx:for="{{aaa}}">' +
+  '<navigator open-type="aaa" bindchanging>{{aaaaaa.bbb}}</navigator wx:for="{{aaa}}">' +
   '<view wx:for="{{bbb}}" wx:for-item="item2">' +
   '<view>{{item.aaa}}</view>' +
   '<view>{{item2.bbb}}</view>' +
