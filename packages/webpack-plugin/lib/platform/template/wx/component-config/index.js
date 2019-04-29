@@ -29,22 +29,22 @@ module.exports = function getComponentConfigs ({ warn, error }) {
    * universal print for detail component warn or error
    * @param {object} config
    *  @param {string} config.platform
-   *  @param {string} config.tagName
+   *  @param {string} config.tag
    *  @param {string} config.type 可填tag/property/value/event
    * @return {function(*): Function}
    */
-  const print = ({ platform, tagName, type = 'property', isError = false }) => (arg) => {
+  const print = ({ platform, tag, type = 'property', isError = false }) => (arg) => {
     if (type === 'tag') return error(`<${arg}> is not supported in ${platform} environment!`)
     let msg
     switch (type) {
       case 'event':
-        msg = `<${tagName}> does not support [bind${arg}] event in ${platform} environment!`
+        msg = `<${tag}> does not support [bind${arg}] event in ${platform} environment!`
         break
       case 'property':
-        msg = `<${tagName}> does not support [${arg && arg.name}] property in ${platform} environment!`
+        msg = `<${tag}> does not support [${arg && arg.name}] property in ${platform} environment!`
         break
       case 'value':
-        msg = `<${tagName}>'s property '${arg && arg.name}' does not support '[${arg && arg.value}]' value in ali environment!`
+        msg = `<${tag}>'s property '${arg && arg.name}' does not support '[${arg && arg.value}]' value in ali environment!`
         break
     }
     isError ? error(msg) : warn(msg)

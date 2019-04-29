@@ -8,8 +8,6 @@ module.exports = function ({ print }) {
   const baiduPropLog = print({ platform: 'baidu', tag: TAG_NAME, isError: false })
   const baiduEventLog = print({ platform: 'baidu', tag: TAG_NAME, isError: false })
 
-  // const baiduLog = print('baidu', TAG_NAME)
-
   return {
     test: TAG_NAME,
     props: [
