@@ -10,7 +10,7 @@ module.exports = function ({ print }) {
     test: TAG_NAME,
     props: [
       {
-        test: /^(target|delta|app-id|path|extra-data|version)$/,
+        test: /^(target|delta|app-id|path|extra-data|version|hover-stop-propagation)$/,
         ali: aliPropLogError
       },
       {
