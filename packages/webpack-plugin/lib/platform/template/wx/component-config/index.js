@@ -27,18 +27,26 @@ const aliNonsupport = require('./aliunsupport')
 module.exports = function getComponentConfigs ({ warn, error }) {
   /**
    * universal print for detail component warn or error
-   * @param {string} platform
-   * @param {string} tagName
-   * @param {boolean} isTagLevel 是否是标签级别的log
+   * @param {object} config
+   *  @param {string} config.platform
+   *  @param {string} config.tagName
+   *  @param {string} config.type 可填tag/property/value/event
    * @return {function(*): Function}
    */
-  const print = (platform, tagName, isTagLevel = false) => (isError = 0, { property } = {}) => (arg) => {
-    if (isTagLevel) return error(`<${tagName}> is not supported in ${platform} environment!`)
-    const name = typeof arg === 'string' ? `bind${arg}` : arg.name
-    const type = typeof arg === 'string' ? 'event' : 'property'
-    const msg1 = `<${tagName}> does not support [${name}] ${type} in ${platform} environment!`
-    const msg2 = `<${tagName}>'s property '${name}' does not support '[${arg.value}]' value in ali environment!`
-    const msg = property ? msg2 : msg1
+  const print = ({ platform, tagName, type = 'property', isError = false }) => (arg) => {
+    if (type === 'tag') return error(`<${arg}> is not supported in ${platform} environment!`)
+    let msg
+    switch (type) {
+      case 'event':
+        msg = `<${tagName}> does not support [bind${arg}] event in ${platform} environment!`
+        break
+      case 'property':
+        msg = `<${tagName}> does not support [${arg.name}] event in ${platform} environment!`
+        break
+      case 'value':
+        msg = `<${tagName}>'s property '${arg.name}' does not support '[${arg.value}]' value in ali environment!`
+        break
+    }
     isError ? error(msg) : warn(msg)
   }
 
