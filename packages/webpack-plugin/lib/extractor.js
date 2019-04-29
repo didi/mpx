@@ -6,6 +6,7 @@ const SingleEntryPlugin = require('webpack/lib/SingleEntryPlugin')
 const LimitChunkCountPlugin = require('webpack/lib/optimize/LimitChunkCountPlugin')
 const normalize = require('./utils/normalize')
 const stripExtension = require('./utils/strip-extention')
+const getMainCompilation = require('./utils/get-main-compilation')
 
 const defaultResultSource = '// removed by extractor'
 
@@ -14,14 +15,12 @@ module.exports = function (content) {
   const options = loaderUtils.getOptions(this) || {}
   const nativeCallback = this.async()
 
-  if (!this._compilation.__mpx__) {
-    return nativeCallback(null, content)
-  }
+  const mainCompilation = getMainCompilation(this._compilation)
 
-  const pagesMap = this._compilation.__mpx__.pagesMap
-  const componentsMap = this._compilation.__mpx__.componentsMap
-  const extract = this._compilation.__mpx__.extract
-  const rootName = this._compilation._preparedEntrypoints[0].name
+  const pagesMap = mainCompilation.__mpx__.pagesMap
+  const componentsMap = mainCompilation.__mpx__.componentsMap
+  const extract = mainCompilation.__mpx__.extract
+  const rootName = mainCompilation._preparedEntrypoints[0].name
 
   const resource = stripExtension(options.resource || this.resource)
   const selfResource = stripExtension(this.resource)
@@ -35,7 +34,7 @@ module.exports = function (content) {
   const outputOptions = {
     filename: childFilename
   }
-  const childCompiler = this._compilation.createChildCompiler(request, outputOptions, [
+  const childCompiler = mainCompilation.createChildCompiler(request, outputOptions, [
     new NodeTemplatePlugin(outputOptions),
     new LibraryTemplatePlugin(null, 'commonjs2'),
     new NodeTargetPlugin(),
@@ -43,7 +42,7 @@ module.exports = function (content) {
     new LimitChunkCountPlugin({ maxChunks: 1 })
   ])
 
-  childCompiler.hooks.thisCompilation.tap('MpxWebpackPlugin', (compilation) => {
+  childCompiler.hooks.thisCompilation.tap('MpxWebpackPlugin ', (compilation) => {
     compilation.hooks.normalModuleLoader.tap('MpxWebpackPlugin', (loaderContext, module) => {
       // 传递编译结果，子编译器进入content-loader后直接输出
       loaderContext.__mpx__ = {
@@ -94,9 +93,9 @@ module.exports = function (content) {
         }).join('\n')
       }
 
-      extract(text, options.type, resourcePath, +options.index, selfResource)
-      if (text.locals && typeof resultSource !== 'undefined') {
-        resultSource += `\nmodule.exports = ${JSON.stringify(text.locals)};`
+      let extracted = extract(text, options.type, resourcePath, +options.index, selfResource)
+      if (extracted) {
+        resultSource = `module.exports = __webpack_public_path__ + ${JSON.stringify(extracted)};`
       }
     } catch (err) {
       return nativeCallback(err)

@@ -167,6 +167,7 @@ var warn$1
 var error$1
 var mode
 var srcMode
+var processingTemplate
 var rulesRunner
 var platformGetTagNamespace
 
@@ -959,8 +960,7 @@ function processBindEvent (el) {
   }
 }
 
-function parseMustache (raw) {
-  raw = (raw || '').trim()
+function parseMustache (raw = '') {
   let val = raw
   if (tagRE.test(raw)) {
     let ret = []
@@ -973,7 +973,7 @@ function parseMustache (raw) {
         ret.push(stringify(pre))
         val += pre
       }
-      let exp = match[1].trim().replace(/\b__mpx_mode__\b/, stringify(mode))
+      let exp = match[1].replace(/\b__mpx_mode__\b/, stringify(mode))
       ret.push(`(${exp})`)
       val += `{{${exp}}}`
       lastLastIndex = tagREG.lastIndex
@@ -982,6 +982,10 @@ function parseMustache (raw) {
     if (post) {
       ret.push(stringify(post))
       val += post
+    }
+    // 去除无意义的括号
+    if (ret.length === 1) {
+      ret[0] = ret[0].slice(1, ret[0].length - 1)
     }
     return {
       result: ret.join('+'),
@@ -1093,7 +1097,11 @@ function processAttrs (el, meta) {
     }
     let parsed = parseMustache(attr.value)
     if (parsed.hasBinding) {
-      addExp(el, parsed.result)
+      if (el.tag === 'template' && attr.name === 'data') {
+        addExp(el, `{${parsed.result}}`)
+      } else {
+        addExp(el, parsed.result)
+      }
     }
     if (parsed.val !== attr.value) {
       modifyAttr(el, attr.name, parsed.val)
@@ -1268,10 +1276,26 @@ function processShow (el, options, root) {
   }
 }
 
+function processTemplate (el) {
+  if (el.tag === 'template' && el.attrsMap['name']) {
+    el.isTemplate = true
+    processingTemplate = true
+    return true
+  }
+}
+
+function postProcessTemplate (el) {
+  if (el.isTemplate) {
+    processingTemplate = false
+    return true
+  }
+}
+
 function processElement (el, options, meta, root, injectNodes) {
   if (rulesRunner) {
     rulesRunner(el)
   }
+  if (processTemplate(el) || processingTemplate) return
   processIf(el)
   processFor(el)
   if (mode !== 'qq' && mode !== 'tt') {
@@ -1289,6 +1313,7 @@ function processElement (el, options, meta, root, injectNodes) {
 }
 
 function closeElement (el, root) {
+  if (postProcessTemplate(el) || processingTemplate) return root
   el = postProcessComponentIs(el)
   postProcessFor(el)
   postProcessIf(el)

@@ -21,13 +21,13 @@ module.exports = function normalizeComponentRules (cfgs, spec) {
             testKey,
             data: {
               eventRules,
-              attrsList: rAttrsList
+              attrsMap: el.attrsMap
             }
           }) || runRules(cfg.props, attr, {
             target,
             testKey,
             data: {
-              attrsList: rAttrsList
+              attrsMap: el.attrsMap
             }
           })
           if (Array.isArray(rAttr)) {

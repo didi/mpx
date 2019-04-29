@@ -36,6 +36,10 @@ class MpxWebpackPlugin {
     return { loader: normalize.lib('wxs/wxs-loader'), options }
   }
 
+  static urlLoader (options) {
+    return { loader: normalize.lib('url-loader'), options }
+  }
+
   apply (compiler) {
     // 强制设置publicPath为'/'
     compiler.options.output.publicPath = '/'
@@ -66,18 +70,28 @@ class MpxWebpackPlugin {
           mode: this.options.mode,
           srcMode: this.options.srcMode,
           extract: (content, type, resourcePath, index, selfResource) => {
-            if (index === -1 && type === 'styles') {
+            if (index === -1) {
               // 针对src引入的styles进行特殊处理，处理为@import形式便于样式复用
-              const file1 = resourcePath + typeExtMap[type]
-              const file2 = toPosix(path.join('wxss', path.basename(selfResource) + hash(selfResource) + typeExtMap[type]))
-              const relativePath = toPosix(path.relative(path.dirname(file1), file2))
-              additionalAssets[file1] = additionalAssets[file1] || []
-              additionalAssets[file2] = additionalAssets[file2] || []
-              additionalAssets[file1][0] = `@import "${relativePath}";\n` + (additionalAssets[file1][0] || '')
-              if (!additionalAssets[file2][0]) {
-                additionalAssets[file2][0] = content
+              if (type === 'styles') {
+                const file1 = resourcePath + typeExtMap[type]
+                const file2 = toPosix(path.join('wxss', path.basename(selfResource) + hash(selfResource) + typeExtMap[type]))
+                const relativePath = toPosix(path.relative(path.dirname(file1), file2))
+                additionalAssets[file1] = additionalAssets[file1] || []
+                additionalAssets[file2] = additionalAssets[file2] || []
+                additionalAssets[file1][0] = `@import "${relativePath}";\n` + (additionalAssets[file1][0] || '')
+                if (!additionalAssets[file2][0]) {
+                  additionalAssets[file2][0] = content
+                }
               }
-            } else {
+              // 针对import src引入的template进行特殊处理
+              if (type === 'template') {
+                const file = toPosix(path.join('wxml', path.basename(selfResource) + hash(selfResource) + typeExtMap[type]))
+                additionalAssets[file] = additionalAssets[file] || []
+                additionalAssets[file][0] = content + (additionalAssets[file][0] || '')
+                return file
+              }
+            }
+            else {
               const file = resourcePath + typeExtMap[type]
               additionalAssets[file] = additionalAssets[file] || []
               if (index === -1) {

@@ -7,7 +7,7 @@ const stripExtension = require('../utils/strip-extention')
 module.exports = function (raw) {
   this.cacheable()
   const options = loaderUtils.getOptions(this) || {}
-  // 对于原生组件中的模板暂不做处理
+  // 对于原生模板暂不做处理
   if (options.isNative) {
     return raw
   }
