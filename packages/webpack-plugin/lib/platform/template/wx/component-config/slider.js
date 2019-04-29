@@ -23,6 +23,17 @@ module.exports = function ({ print }) {
           obj.name = propsMap[obj.name]
           return obj
         }
+      },
+      {
+        test: /^(color|selected-color)$/,
+        swan (obj) {
+          const propsMap = {
+            'color': 'backgroundColor',
+            'selected-color': 'activeColor'
+          }
+          obj.name = propsMap[obj.name]
+          return obj
+        }
       }
     ],
     event: [
