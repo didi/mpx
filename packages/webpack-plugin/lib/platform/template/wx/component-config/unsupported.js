@@ -6,13 +6,13 @@ const TAG_NAME_ARR = ['live-pusher', 'live-player', 'camera', 'video', 'audio', 
  * @return {{test: RegExp, ali(*=): void}}
  */
 module.exports = function ({ print }) {
-  const aliUnsupportTagError = print({ platform: 'ali', isError: true, type: 'tag' })
+  const aliUnsupportedTagError = print({ platform: 'ali', isError: true, type: 'tag' })
 
   const exp = new RegExp('^(' + TAG_NAME_ARR.join('|') + ')$')
 
   return {
     // 匹配标签名，可传递正则
     test: exp,
-    ali: aliUnsupportTagError
+    ali: aliUnsupportedTagError
   }
 }
