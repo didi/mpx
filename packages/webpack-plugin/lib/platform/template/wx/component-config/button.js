@@ -6,6 +6,8 @@ module.exports = function ({ print }) {
    * @desc - 无法转换时告知用户的通用方法，接受0个或1个参数，意为是否error级别
    */
   const aliLog = print('ali', TAG_NAME)
+  const baiduLog = print('baidu', TAG_NAME)
+
   return {
     test: TAG_NAME,
     props: [
@@ -28,11 +30,22 @@ module.exports = function ({ print }) {
           } else {
             aliLog(1, { property: true })({ name, value })
           }
+        },
+        swan ({ name, value }) {
+          let supportList = ['contact', 'share', 'getUserInfo', 'getPhoneNumber', 'openSetting']
+          if (supportList.indexOf(value) === -1) {
+            baiduLog(1, { property: true })({ name, value })
+          }
         }
       },
       {
         test: /^(lang|session-from|send-message-title|send-message-path|send-message-img|show-message-card)$/,
-        ali: aliLog()
+        ali: aliLog(),
+        swan: baiduLog()
+      },
+      {
+        test: /^(app-parameter)$/,
+        swan: baiduLog()
       }
     ],
     event: [
@@ -45,6 +58,10 @@ module.exports = function ({ print }) {
       {
         test: /^(getuserinfo|contact|error|launchapp|opensetting)$/,
         ali: aliLog()
+      },
+      {
+        test: /^(contact|error|launchapp)$/,
+        swan: baiduLog()
       }
     ]
   }
