@@ -19,5 +19,7 @@ module.exports = function getRulesRunner ({ type, mode, srcMode, testKey, mainKe
         return runRules(mainRules, input, { target: mode, testKey, waterfall, normalizeTest })
       }
     }
+  } else {
+    error(`Nonsupport mode <${mode}>`)
   }
 }
