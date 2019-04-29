@@ -44,7 +44,7 @@ module.exports = function getComponentConfigs ({ warn, error }) {
         msg = `<${tag}> does not support [${arg && arg.name}] property in ${platform} environment!`
         break
       case 'value':
-        msg = `<${tag}>'s property '${arg && arg.name}' does not support '[${arg && arg.value}]' value in ali environment!`
+        msg = `<${tag}>'s property '${arg && arg.name}' does not support '[${arg && arg.value}]' value in ${platform} environment!`
         break
     }
     isError ? error(msg) : warn(msg)
