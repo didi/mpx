@@ -2,6 +2,8 @@ const TAG_NAME = 'picker-view'
 
 module.exports = function ({ print }) {
   const aliEventLog = print({ platform: 'ali', tag: TAG_NAME, isError: false, type: 'event' })
+  const baiduEventLog = print({ platform: 'baidu', tag: TAG_NAME, isError: false })
+
   return {
     test: TAG_NAME,
     event: [
@@ -16,7 +18,8 @@ module.exports = function ({ print }) {
       },
       {
         test: /^(pickstart|pickend)$/,
-        ali: aliEventLog
+        ali: aliEventLog,
+        swan: baiduEventLog
       }
     ]
   }
