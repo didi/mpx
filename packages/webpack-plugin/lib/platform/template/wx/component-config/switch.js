@@ -13,12 +13,10 @@ module.exports = function ({ print }) {
     ],
     event: [
       {
-        test: /^(change|input|confirm)$/,
+        test: /^(change)$/,
         ali (eventName) {
           const eventMap = {
-            'change': 'change',
-            'input': 'input',
-            'confirm': 'confirm'
+            'change': 'change'
           }
           return eventMap[eventName]
         }

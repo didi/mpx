@@ -12,7 +12,7 @@ module.exports = function ({ print }) {
     // 组件属性中的差异部分
     props: [
       {
-        test: /^(subkey|enable-3D|enable-overlooking|enable-zoom|disable-scroll|enable-rotate|show-compass)$/,
+        test: /^(covers|subkey|enable-3D|show-compass|enable-overlooking|enable-zoom|disable-scroll|enable-rotate)$/,
         ali: aliPropLog
       },
       {
@@ -25,9 +25,10 @@ module.exports = function ({ print }) {
     // 支付宝中的基础事件有touchStart|touchMove|touchEnd|touchCancel|tap|longTap
     event: [
       {
-        test: /^(markertap|callouttap|controltap|regionchange|)$/,
+        test: /^(tap|markertap|callouttap|controltap|regionchange|)$/,
         ali (eventName) {
           const eventMap = {
+            'tap': 'tap',
             'markertap': 'markerTap',
             'callouttap': 'calloutTap',
             'controltap': 'controlTap',
