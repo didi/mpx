@@ -1,11 +1,7 @@
 const TAG_NAME = 'picker-view'
 
 module.exports = function ({ print }) {
-  /**
-   * @type {function(isError: (number|boolean|string)?): void} aliLog
-   * @desc - 无法转换时告知用户的通用方法，接受0个或1个参数，意为是否error级别
-   */
-  const aliLog = print('ali', TAG_NAME)
+  const aliEventLog = print({ platform: 'ali', tag: TAG_NAME, isError: false, type: 'event' })
   return {
     test: TAG_NAME,
     event: [
@@ -20,7 +16,7 @@ module.exports = function ({ print }) {
       },
       {
         test: /^(pickstart|pickend)$/,
-        ali: aliLog()
+        ali: aliEventLog
       }
     ]
   }

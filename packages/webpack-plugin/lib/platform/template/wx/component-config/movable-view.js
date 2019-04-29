@@ -1,17 +1,14 @@
 const TAG_NAME = 'movable-view'
 
 module.exports = function ({ print }) {
-  /**
-   * @type {function(isError: (number|boolean|string)?): void} aliLog
-   * @desc - 无法转换时告知用户的通用方法，接受0个或1个参数，意为是否error级别
-   */
-  const aliLog = print('ali', TAG_NAME)
+  const aliPropLog = print({ platform: 'ali', tag: TAG_NAME, isError: false })
+  const aliEventLog = print({ platform: 'ali', tag: TAG_NAME, isError: false, type: 'event' })
   return {
     test: TAG_NAME,
     props: [
       {
         test: /^(inertia|out-of-bounds|damping|friction|scale|scale-min|scale-max|scale-value|animation|htouchmove|vtouchmove)$/,
-        ali: aliLog()
+        ali: aliPropLog
       }
     ],
     event: [
@@ -26,7 +23,7 @@ module.exports = function ({ print }) {
       },
       {
         test: /^(scale)$/,
-        ali: aliLog()
+        ali: aliEventLog
       }
     ]
   }

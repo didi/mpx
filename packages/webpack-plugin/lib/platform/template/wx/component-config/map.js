@@ -1,12 +1,10 @@
 const TAG_NAME = 'map'
 
 module.exports = function ({ print }) {
-  /**
-   * @type {function(isError: (number|boolean|string)?): void} aliLog
-   * @desc - 无法转换时告知用户的通用方法，接受0个或1个参数，意为是否error级别
-   */
-  const aliLog = print('ali', TAG_NAME)
-  const baiduLog = print('baidu', TAG_NAME)
+  const aliPropLog = print({ platform: 'ali', tag: TAG_NAME, isError: false })
+  const aliEventLogError = print({ platform: 'ali', tag: TAG_NAME, isError: true, type: 'event' })
+  const baiduPropLog = print({ platform: 'baidu', tag: TAG_NAME, isError: false })
+  const baiduEventLogError = print({ platform: 'baidu', tag: TAG_NAME, isError: true, type: 'event' })
 
   return {
     // 匹配标签名，可传递正则
@@ -15,11 +13,11 @@ module.exports = function ({ print }) {
     props: [
       {
         test: /^(subkey|enable-3D|enable-overlooking|enable-zoom|disable-scroll|enable-rotate|show-compass)$/,
-        ali: aliLog()
+        ali: aliPropLog
       },
       {
         test: 'subkey',
-        swan: baiduLog()
+        swan: baiduPropLog
       }
     ],
     // 组件事件中的差异部分
@@ -40,11 +38,11 @@ module.exports = function ({ print }) {
       },
       {
         test: /^(updated|poitap)$/,
-        ali: aliLog(1)
+        ali: aliEventLogError
       },
       {
         test: 'poitap',
-        swan: baiduLog(1)
+        swan: baiduEventLogError
       }
     ]
   }

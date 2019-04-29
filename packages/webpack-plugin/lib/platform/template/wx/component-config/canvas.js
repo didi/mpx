@@ -1,11 +1,8 @@
 const TAG_NAME = 'canvas'
 
 module.exports = function ({ print }) {
-  /**
-   * @type {function(isError: (number|boolean|string)?): void} aliLog
-   * @desc - 无法转换时告知用户的通用方法，接受0个或1个参数，意为是否error级别
-   */
-  const aliLog = print('ali', TAG_NAME)
+  const aliPropLog = print({ platform: 'ali', tag: TAG_NAME, isError: false })
+  const aliEventLog = print({ platform: 'ali', tag: TAG_NAME, isError: false, type: 'event' })
   return {
     test: TAG_NAME,
     props: [
@@ -20,7 +17,7 @@ module.exports = function ({ print }) {
       },
       {
         test: /^(disable-scroll)$/,
-        ali: aliLog()
+        ali: aliPropLog
       }
     ],
     // 组件事件中的差异部分
@@ -29,7 +26,7 @@ module.exports = function ({ print }) {
     event: [
       {
         test: /^(error)$/,
-        ali: aliLog()
+        ali: aliEventLog
       }
     ]
   }

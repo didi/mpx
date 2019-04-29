@@ -8,7 +8,7 @@ var input =
 let parsed = compiler.parse(input, {
   usingComponents: ['com1', 'com2', 'com3'],
   compileBindEvent: true,
-  mode: 'ali',
+  mode: 'swan',
   srcMode: 'wx',
   isComponent: true
 })
