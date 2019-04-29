@@ -6,6 +6,8 @@ const styleCompilerPath = normalize.lib('style-compiler/index')
 const templateCompilerPath = normalize.lib('template-compiler/index')
 const jsonCompilerPath = normalize.lib('json-compiler/index')
 const templatePreprocessorPath = normalize.lib('template-compiler/preprocessor')
+const wxsLoaderPath = normalize.lib('wxs/wxs-loader')
+const wxmlLoaderPath = normalize.lib('wxml/wxml-loader')
 const config = require('./config')
 const stringifyQuery = require('./utils/stringify-query')
 
@@ -21,8 +23,7 @@ const rewriterInjectRE = /\b(css(?:-loader)?(?:\?[^!]+)?)(?:!|$)/
 const defaultLang = {
   template: 'html',
   styles: 'css',
-  script: 'js',
-  json: 'json'
+  script: 'js'
 }
 
 const postcssExtensions = [
@@ -71,10 +72,11 @@ function resolveLoaders (options, moduleId, isProduction, hasScoped, hasComment,
   }
 
   const defaultLoaders = {
-    html: `html-loader?root=/&attrs=audio:src image:src video:src cover-image:src ${config[mode].wxs.tag}:${config[mode].wxs.src}`,
+    html: wxmlLoaderPath,
     css: getCSSLoaderString(),
     js: hasBabel ? 'babel-loader' : '',
-    json: jsonCompilerPath
+    json: jsonCompilerPath,
+    wxs: wxsLoaderPath
   }
 
   function getCSSLoaderString (lang) {
@@ -228,7 +230,7 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
   function getLoaderString (type, part, index, scoped) {
     let loader = getRawLoaderString(type, part, index, scoped)
     const lang = getLangString(type, part)
-    if (type !== 'script') {
+    if (type !== 'script' && type !== 'wxs') {
       loader = getExtractorString(type, index) + loader
     }
     if (preLoaders[lang]) {
@@ -249,7 +251,7 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
   }
 
   function getRawLoaderString (type, part, index, scoped) {
-    let lang = (part.lang && part.lang !== 'wxml' && part.lang !== 'axml' && part.lang !== 'swan') ? part.lang : defaultLang[type]
+    let lang = (part.lang && part.lang !== config[mode].typeExtMap.template.slice(1)) ? part.lang : defaultLang[type]
 
     let styleCompiler = ''
     if (type === 'styles') {
@@ -331,8 +333,6 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
           return ensureBang(loader) + ensureBang(styleCompiler) + ensureBang(ensureLoader(lang))
         case 'script':
           return ensureBang(defaultLoaders.js) + ensureBang(ensureLoader(lang))
-        case 'json':
-          return ensureBang(defaultLoaders.json) + ensureBang(ensureLoader(lang))
         default:
           loader = loaders[type]
           if (Array.isArray(loader)) {
