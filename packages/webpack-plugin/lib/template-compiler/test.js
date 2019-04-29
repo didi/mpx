@@ -1,8 +1,10 @@
 const compiler = require('./compiler')
 // const bindThis = require('./bind-this').transform
 var input =
-  '<view mode="__mpx_mode__">' +
+  '<view><view mode="__mpx_mode__">' +
   '{{__mpx_mode__ === "wx"}}' +
+  '</view>' +
+  'aaaa' +
   '<button open-type="getPhoneNumber" bindgetphonenumber="handlePhone">test</button></view>'
 
 let parsed = compiler.parse(input, {

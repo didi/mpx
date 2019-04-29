@@ -594,6 +594,12 @@ function parse (template, options) {
   let currentParent
   let multiRootError
 
+  function genTempRoot () {
+    // 使用临时节点作为root，处理multi root的情况
+    root = currentParent = getTempNode()
+    stack.push(root)
+  }
+
   parseHTML(template, {
     warn: warn$1,
     expectHTML: options.expectHTML,
@@ -627,19 +633,27 @@ function parse (template, options) {
         )
       }
 
-      // gen root
-      if (!root) {
-        root = element
-      } else {
-        // mount element
-        if (currentParent) {
-          currentParent.children.push(element)
-          element.parent = currentParent
-        } else {
-          multiRootError = true
-          return
-        }
-      }
+      // single root
+      // // gen root
+      // if (!root) {
+      //   root = element
+      // } else {
+      //   // mount element
+      //   if (currentParent) {
+      //     currentParent.children.push(element)
+      //     element.parent = currentParent
+      //   } else {
+      //     multiRootError = true
+      //     return
+      //   }
+      // }
+
+      // multi root
+      if (!currentParent) genTempRoot()
+
+      currentParent.children.push(element)
+      element.parent = currentParent
+
       processElement(element, options, meta, root, injectNodes)
       if (!unary) {
         currentParent = element
@@ -666,9 +680,7 @@ function parse (template, options) {
     },
 
     chars: function chars (text) {
-      if (!currentParent) {
-        return
-      }
+      if (!currentParent) genTempRoot()
       // IE textarea placeholder bug
       /* istanbul ignore if */
       if (isIE &&
@@ -694,9 +706,7 @@ function parse (template, options) {
       }
     },
     comment: function comment (text) {
-      if (!currentParent) {
-        return
-      }
+      if (!currentParent) genTempRoot()
       currentParent.children.push({
         type: 3,
         text: text,
@@ -710,9 +720,7 @@ function parse (template, options) {
   }
 
   if (injectNodes.length) {
-    let tempNode = getTempNode()
-    tempNode.children = injectNodes.concat(root)
-    root = tempNode
+    root.children = injectNodes.concat(root.children)
   }
 
   return {
@@ -1247,9 +1255,17 @@ function processStyle (el, meta, injectNodes) {
   }
 }
 
+function isRealNode (el) {
+  const virtualNodeTagMap = ['block', 'template', 'import', 'wxs'].reduce((map, item) => {
+    map[item] = true
+    return map
+  }, {})
+  return !virtualNodeTagMap[el.tag]
+}
+
 function processShow (el, options, root) {
   let show = getAndRemoveAttr(el, config[mode].directive.show)
-  if (options.isComponent && el === root) {
+  if (options.isComponent && el.parent === root && isRealNode(el)) {
     if (show !== undefined) {
       show = `{{${parseMustache(show).result}&&mpxShow}}`
     } else {

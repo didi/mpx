@@ -6,7 +6,8 @@ module.exports = function normalizeComponentRules (cfgs, spec) {
     if (cfg.test) {
       result.test = cfg.test
     }
-    spec.supportedTargets.forEach((target) => {
+    const supportedTargets = cfg.supportedTargets || spec.supportedTargets
+    supportedTargets.forEach((target) => {
       result[target] = function (el) {
         const rTag = cfg[target] && cfg[target].call(this, el.tag)
         if (rTag) {
