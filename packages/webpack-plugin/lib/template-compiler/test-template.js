@@ -4,6 +4,7 @@ var input =
   '<view>{{aaaaaa.bbb}}<view wx:for="{{aaa}}">' +
   '<slider bindchange bindchanging>{{aaaaaa.bbb}}</slider wx:for="{{aaa}}">' +
   '<map subkey></map>' +
+  '<functional-page-navigator></functional-page-navigator>' + 
   '<navigator open-type="aaa" bindchanging>{{aaaaaa.bbb}}</navigator wx:for="{{aaa}}">' +
   '<button open-type="aaa" lang>{{aaaaaa.bbb}}</button>' +
   '<view wx:for="{{bbb}}" wx:for-item="item2">' +
@@ -16,7 +17,7 @@ let parsed = compiler.parse(input, {
   usingComponents: ['com1', 'com2', 'com3'],
   compileBindEvent: true,
   srcMode: 'wx',
-  mode: 'swan'
+  mode: 'ali'
 })
 let ast = parsed.root
 console.log(compiler.serialize(ast))
