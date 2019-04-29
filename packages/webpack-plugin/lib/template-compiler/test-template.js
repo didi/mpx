@@ -17,7 +17,7 @@ let parsed = compiler.parse(input, {
   usingComponents: ['com1', 'com2', 'com3'],
   compileBindEvent: true,
   srcMode: 'wx',
-  mode: 'ali'
+  mode: 'swan'
 })
 let ast = parsed.root
 console.log(compiler.serialize(ast))

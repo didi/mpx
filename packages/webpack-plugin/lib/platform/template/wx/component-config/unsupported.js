@@ -16,11 +16,13 @@ module.exports = function ({ print }) {
 
   return [
     {
+      supportedTargets: ['swan'],
       test: baiduUnsupportedExp,
       swan: baiduUnsupportedTagError
     },
     {
       // 匹配标签名，可传递正则
+      supportedTargets: ['ali'],
       test: aliUnsupportedExp,
       ali: aliUnsupportedTagError
     }
