@@ -334,8 +334,7 @@ module.exports = function (raw) {
             return callback(new Error(`Page's path ${page} which is referenced in ${context} must be a subdirectory of ${context}!`))
           }
           this.resolve(path.join(context, srcRoot), page, (err, rawResult) => {
-            // todo: error handler
-            console.error(err)
+            if (err) return callback(err)
             let result = rawResult
             const queryIndex = result.indexOf('?')
             if (queryIndex >= 0) {

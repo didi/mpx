@@ -32,7 +32,6 @@ module.exports = function ({ print }) {
           }
         },
         swan ({ name, value }) {
-          console.log('name:', name, value)
           let supportList = ['contact', 'share', 'getUserInfo', 'getPhoneNumber', 'openSetting']
           if (supportList.indexOf(value) === -1) {
             baiduValueLogError({ name, value })
