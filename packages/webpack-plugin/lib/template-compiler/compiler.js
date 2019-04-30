@@ -1256,7 +1256,7 @@ function processStyle (el, meta, injectNodes) {
 }
 
 function isRealNode (el) {
-  const virtualNodeTagMap = ['block', 'template', 'import', 'wxs'].reduce((map, item) => {
+  const virtualNodeTagMap = ['block', 'template', 'import', config[mode].wxs.tag].reduce((map, item) => {
     map[item] = true
     return map
   }, {})
