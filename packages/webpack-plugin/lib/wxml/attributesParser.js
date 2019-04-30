@@ -16,7 +16,7 @@ const parser = new Parser({
     '<!--.*?-->': true,
     '<![CDATA[.*?]]>': true,
     '<[!\\?].*?>': true,
-    '<\/[^>]+>': true,
+    '</[^>]+>': true,
     '<([a-zA-Z\\-:]+)\\s*': function (match, tagName) {
       this.currentTag = tagName
       return 'inside'

@@ -1,7 +1,6 @@
 const htmlMinifier = require('html-minifier')
 const attrParse = require('./attributesParser')
 const loaderUtils = require('loader-utils')
-const url = require('url')
 const path = require('path')
 const hash = require('hash-sum')
 const config = require('../config')
@@ -77,7 +76,7 @@ module.exports = function (content) {
 
     if (link.value.indexOf('mailto:') > -1) return
 
-    let uri = url.parse(link.value)
+    let uri = new URL(link.value)
     if (uri.hash !== null && uri.hash !== undefined) {
       uri.hash = null
       link.value = uri.format()
@@ -97,7 +96,6 @@ module.exports = function (content) {
   content.reverse()
   content = content.join('')
 
-
   if (typeof options.minimize === 'boolean' ? options.minimize : this.minimize) {
     const minimizeOptions = Object.assign({}, options);
     [
@@ -112,7 +110,7 @@ module.exports = function (content) {
       'minifyJS',
       'minifyCSS',
       'removeScriptTypeAttributes',
-      'removeStyleTypeAttributes',
+      'removeStyleTypeAttributes'
     ].forEach(function (name) {
       if (typeof minimizeOptions[name] === 'undefined') {
         minimizeOptions[name] = true
@@ -125,7 +123,7 @@ module.exports = function (content) {
 
   const exportsString = 'module.exports = '
 
-  return exportsString + content.replace(/xxxHTMLLINKxxx[0-9\.]+xxx/g, function (match) {
+  return exportsString + content.replace(/xxxHTMLLINKxxx[0-9.]+xxx/g, function (match) {
     if (!data[match]) return match
 
     const link = data[match]
@@ -145,8 +143,6 @@ module.exports = function (content) {
         requestString = JSON.stringify(src)
     }
 
-
     return '" + require(' + requestString + ') + "'
   }) + ';'
-
 }

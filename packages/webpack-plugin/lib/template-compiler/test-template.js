@@ -1,10 +1,10 @@
 const compiler = require('./compiler')
-const bindThis = require('./bind-this').transform
+// const bindThis = require('./bind-this').transform
 var input =
   '<view>{{aaaaaa.bbb}}<view wx:for="{{aaa}}">' +
   '<slider bindchange bindchanging>{{aaaaaa.bbb}}</slider wx:for="{{aaa}}">' +
   '<map subkey></map>' +
-  '<functional-page-navigator></functional-page-navigator>' + 
+  '<functional-page-navigator></functional-page-navigator>' +
   '<navigator open-type="aaa" bindchanging>{{aaaaaa.bbb}}</navigator wx:for="{{aaa}}">' +
   '<button open-type="aaa" lang>{{aaaaaa.bbb}}</button>' +
   '<view wx:for="{{bbb}}" wx:for-item="item2">' +

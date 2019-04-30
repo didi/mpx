@@ -90,8 +90,7 @@ class MpxWebpackPlugin {
                 additionalAssets[file][0] = content + (additionalAssets[file][0] || '')
                 return file
               }
-            }
-            else {
+            } else {
               const file = resourcePath + typeExtMap[type]
               additionalAssets[file] = additionalAssets[file] || []
               if (index === -1) {

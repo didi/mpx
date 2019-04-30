@@ -18,7 +18,6 @@ function getResourceExt (resource) {
 }
 
 module.exports = function (content) {
-
   const nativeCallback = this.async()
 
   const mainCompilation = getMainCompilation(this._compilation)
