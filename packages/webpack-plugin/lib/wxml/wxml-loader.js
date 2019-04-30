@@ -1,6 +1,7 @@
 const htmlMinifier = require('html-minifier')
 const attrParse = require('./attributesParser')
 const loaderUtils = require('loader-utils')
+const url = require('url')
 const path = require('path')
 const hash = require('hash-sum')
 const config = require('../config')
@@ -76,7 +77,8 @@ module.exports = function (content) {
 
     if (link.value.indexOf('mailto:') > -1) return
 
-    let uri = new URL(link.value)
+    // eslint-disable-next-line node/no-deprecated-api
+    let uri = url.parse(link.value)
     if (uri.hash !== null && uri.hash !== undefined) {
       uri.hash = null
       link.value = uri.format()
