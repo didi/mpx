@@ -520,7 +520,7 @@ const wxToAliApi = {
     const cacheFail = opts.fail || noop
 
     opts.success = function (res) {
-      if (res.resultCode === 9000) {
+      if (+res.resultCode === 9000) {
         cacheSuc.call(this, res)
       } else {
         cacheFail.call(this, res)
