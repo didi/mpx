@@ -13,18 +13,18 @@
   "author": "donghongping",
   "license": "ISC",
   "dependencies": {
-    "@mpxjs/core": "^1.0.1",
+    "@mpxjs/core": "^1.1.14-8",
     "todomvc-app-css": "^2.1.0"
   },
   "devDependencies": {
-    "@mpxjs/webpack-plugin": "^1.0.2",
     "@mpxjs/url-loader": "^1.0.0",
+    "@mpxjs/webpack-plugin": "^1.1.14-8",
     "babel-core": "^6.26.0",
     "babel-loader": "^7.1.4",
-    "babel-runtime": "^6.26.0",
     "babel-plugin-transform-runtime": "^6.23.0",
     "babel-preset-env": "^1.6.1",
     "babel-preset-stage-2": "^6.24.1",
+    "babel-runtime": "^6.26.0",
     "chalk": "^2.3.2",
     "copy-webpack-plugin": "^4.5.1",
     "css-loader": "^0.28.10",
@@ -37,8 +37,8 @@
     "stylus-loader": "^3.0.2",
     "url-loader": "^1.0.1",
     "webpack": "^4.16.1",
+    "webpack-bundle-analyzer": "^2.11.1",
     "webpack-cli": "^3.1.0",
-    "webpack-merge": "^4.1.2",
-    "webpack-bundle-analyzer": "^2.11.1"
+    "webpack-merge": "^4.1.2"
   }
 }
