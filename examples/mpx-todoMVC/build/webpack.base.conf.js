@@ -5,6 +5,8 @@ function resolve (dir) {
   return path.join(__dirname, '..', dir)
 }
 
+const mode = process.env.npm_config_ali ? 'ali' : 'wx'
+
 // 配置分包内抽取公共jsBundle，进一步降低主包体积
 // 抽取规则如下
 // 1. 模块被同一分包内2个或以上的chunk所引用
@@ -91,7 +93,8 @@ var webpackConf = {
   mode: 'none',
   plugins: [
     new MpxWebpackPlugin({
-      mode: 'wx'
+      mode: mode,
+      srcMode: 'wx'
     })
   ],
   resolve: {

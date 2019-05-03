@@ -7,7 +7,9 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "node ./build/build.js",
     "watch": "node ./build/build.js -w",
+    "watch:ali": "npm run watch --ali",
     "prod": "node ./build/build.js -p",
+    "prod:ali": "npm run prod --ali",
     "help": "node ./build/build.js --help"
   },
   "author": "donghongping",
