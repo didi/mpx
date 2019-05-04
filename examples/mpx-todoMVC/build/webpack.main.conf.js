@@ -8,7 +8,8 @@ function resolveSrc (file) {
 }
 
 function resolveDist (file) {
-  return path.resolve(__dirname, '../dist', mainSubDir, file || '')
+  const distSrc = process.env.npm_config_ali ? '../alidist' : '../dist'
+  return path.resolve(__dirname, distSrc, mainSubDir, file || '')
 }
 
 module.exports = merge(baseWebpackConfig, {

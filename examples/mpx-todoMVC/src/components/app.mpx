@@ -22,9 +22,9 @@
         <view class="strong">{{remaining}}</view>items left
       </view>
 
-      <view class="filters" bindtap="setVisibility">
+      <view class="filters">
         <view wx:for="{{filters}}" wx:key="{{index}}" class="li">
-          <view data-item="{{item}}" class="{{visibility === item?'a selected':'a'}}">{{item}}</view>
+          <view bindtap="setVisibility(item)" data-item="{{item}}" class="{{visibility === item?'a selected':'a'}}">{{item}}</view>
         </view>
       </view>
 
@@ -79,9 +79,8 @@
       ...store.mapMutations([
         'clearCompleted'
       ]),
-      setVisibility (e) {
-        console.log(e.target.dataset.item)
-        this.visibility = e.target.dataset.item
+      setVisibility (filterName) {
+        this.visibility = filterName
       }
     }
   })
