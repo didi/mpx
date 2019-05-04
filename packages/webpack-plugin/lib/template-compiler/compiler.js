@@ -908,6 +908,7 @@ function processBindEvent (el) {
         }
       }
       eventConfigMap[modelEvent].configs.unshift({
+        hasArgs: true,
         args: `,${stringify(modelValue)},${stringify('$event')}`,
         expStr: `[${stringify('__model')},${stringify(modelValue)},${stringify('$event')},${stringify(modelValuePathArr)}]`
       })

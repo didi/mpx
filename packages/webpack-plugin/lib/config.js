@@ -94,7 +94,7 @@ module.exports = {
         }
       },
       getEvent (eventName, prefix = 'on') {
-        return prefix + +eventName.replace(/^./, (matched) => {
+        return prefix + eventName.replace(/^./, (matched) => {
           return matched.toUpperCase()
         })
       },
