@@ -66,8 +66,8 @@
       console.log(this.filteredTodos)
     },
     methods: {
-      addTodo (e) {
-        var text = this.inputVal
+      addTodo () {
+        const text = this.inputVal
         if (text.trim()) {
           store.commit('addTodo', {text})
         }

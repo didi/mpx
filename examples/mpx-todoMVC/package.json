@@ -6,6 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "node ./build/build.js",
+    "build:ali": "npm run build --ali",
     "watch": "node ./build/build.js -w",
     "watch:ali": "npm run watch --ali",
     "prod": "node ./build/build.js -p",
