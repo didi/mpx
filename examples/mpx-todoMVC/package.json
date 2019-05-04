@@ -16,12 +16,12 @@
   "author": "donghongping",
   "license": "ISC",
   "dependencies": {
-    "@mpxjs/core": "^1.1.14-8",
+    "@mpxjs/core": "1.1.14-9",
     "todomvc-app-css": "^2.1.0"
   },
   "devDependencies": {
     "@mpxjs/url-loader": "^1.0.0",
-    "@mpxjs/webpack-plugin": "^1.1.14-8",
+    "@mpxjs/webpack-plugin": "1.1.14-9",
     "babel-core": "^6.26.0",
     "babel-loader": "^7.1.4",
     "babel-plugin-transform-runtime": "^6.23.0",
