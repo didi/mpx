@@ -1,6 +1,5 @@
 var path = require('path')
 var merge = require('webpack-merge')
-var CopyWebpackPlugin = require('copy-webpack-plugin')
 var baseWebpackConfig = require('./webpack.base.conf')
 var mainSubDir = ''
 
@@ -9,10 +8,12 @@ function resolveSrc (file) {
 }
 
 function resolveDist (file) {
-  return path.resolve(__dirname, '../dist', mainSubDir, file || '')
+  const distSrc = process.env.npm_config_ali ? '../alidist' : '../dist'
+  return path.resolve(__dirname, distSrc, mainSubDir, file || '')
 }
 
 module.exports = merge(baseWebpackConfig, {
+  name: 'main-compile',
   // entry point of our application
   entry: {
     app: resolveSrc('app.mpx')
@@ -20,14 +21,6 @@ module.exports = merge(baseWebpackConfig, {
   output: {
     path: resolveDist()
   },
-  plugins: [
-    new CopyWebpackPlugin([
-      {
-        from: path.resolve(__dirname, '../static/project.config.json'),
-        to: path.resolve(__dirname, '../dist/project.config.json')
-      }
-    ])
-  ],
   resolve: {
     modules: [resolveSrc()]
   }
