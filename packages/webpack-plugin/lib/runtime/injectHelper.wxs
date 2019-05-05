@@ -77,13 +77,12 @@ function concat (a, b) {
   return a ? b ? (a + ' ' + b) : a : (b || '')
 }
 
-
 function isObject (obj) {
   return obj !== null && typeof obj === 'object'
 }
 
 function likeArray (arr) {
-  return arr.constructor === 'Array'
+  return arr && arr.constructor === 'Array'
 }
 
 function isDef (v) {
