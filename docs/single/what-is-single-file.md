@@ -90,7 +90,7 @@
 ##### vscode代码片段
 
 此功能主要是为了新建文件后快速生成一些代码，只要在设置里，选择`用户代码片段`，在选择`vue.json`，将以下代码复制进去。之后只要输出写好的`prefix`，就能自动提示生成。
-如此你也可以对`javascript.josn`做一些自定义的代码片段
+如此你也可以对`javascript.json`做一些自定义的代码片段
 ```
 "Print to weapp page": {
  "prefix": "page",
