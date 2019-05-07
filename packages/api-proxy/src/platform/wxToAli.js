@@ -519,6 +519,17 @@ const wxToAliApi = {
     const cacheSuc = opts.success || noop
     const cacheFail = opts.fail || noop
 
+    // 抹平用微信的 complete
+    if (typeof opts.complete === 'function') {
+      const cacheComplete = opts.complete
+      opts.complete = function (res) {
+        if (+res.resultCode === 9000) {
+          res.errMsg = 'requestPayment:ok'
+          cacheComplete.call(this, res)
+        }
+      }
+    }
+
     opts.success = function (res) {
       if (+res.resultCode === 9000) {
         cacheSuc.call(this, res)
