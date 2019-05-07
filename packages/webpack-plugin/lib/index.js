@@ -80,8 +80,12 @@ class MpxWebpackPlugin {
           srcMode: this.options.srcMode,
           extract: (content, type, resourcePath, index, selfResourcePath) => {
             if (index === -1) {
+              const compilationMpx = compilation.__mpx__
+              const subPackagesMap = compilationMpx.subPackagesMap
+              const mainResourceMap = compilationMpx.mainResourceMap
+
               let subPackageRoot = ''
-              if (compilation.__mpx__.processingSubPackages) {
+              if (compilationMpx.processingSubPackages) {
                 for (let src in subPackagesMap) {
                   // 分包引用且主包未引用的资源，需打入分包目录中
                   if (selfResourcePath.startsWith(src) && !mainResourceMap[selfResourcePath]) {
