@@ -32,10 +32,6 @@ module.exports = function (content) {
 
   const issuerResourceExt = getResourceExt(this._module.issuer.resource)
   const resouceExt = getResourceExt(this.resource)
-  // 处理wxs内引用其他wxs的情况，对于这种情况直接返回原始的wxs内容，否则返回文件路径并进行编译处理
-  if (issuerResourceExt === resouceExt) {
-    return nativeCallback(null, content)
-  }
 
   const callback = (err) => {
     if (err) return nativeCallback(err)
@@ -59,7 +55,7 @@ module.exports = function (content) {
     const outputOptions = {
       filename
     }
-    const request = `!!${this.resource}`
+    const request = this.resource
     const plugins = [
       new WxsPlugin({ mode }),
       new NodeTargetPlugin(),

@@ -57,7 +57,7 @@ module.exports = function (src) {
       `data:${mimetype || ''};base64,${src.toString('base64')}`
     )}`
   } else {
-    const fallback = require(options.fallback ? options.fallback : 'file-loader')
+    const fallback = require(options.fallback ? options.fallback : './file-loader')
     return fallback.call(this, src)
   }
 }

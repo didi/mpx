@@ -5,6 +5,7 @@ const ConcatSource = require('webpack-sources').ConcatSource
 const loaderUtils = require('loader-utils')
 const ResolveDependency = require('./dependency/ResolveDependency')
 const InjectDependency = require('./dependency/InjectDependency')
+const ReplaceDependency = require('./dependency/ReplaceDependency')
 const NullFactory = require('webpack/lib/NullFactory')
 const config = require('./config')
 const normalize = require('./utils/normalize')
@@ -32,12 +33,16 @@ class MpxWebpackPlugin {
     return { loader: normalize.lib('plugin-loader'), options }
   }
 
-  static wxsLoader (options) {
-    return { loader: normalize.lib('wxs/wxs-loader'), options }
+  static wxsPreLoader (options) {
+    return { loader: normalize.lib('wxs/wxs-pre-loader'), options }
   }
 
   static urlLoader (options) {
     return { loader: normalize.lib('url-loader'), options }
+  }
+
+  static fileLoader (options) {
+    return { loader: normalize.lib('file-loader'), options }
   }
 
   apply (compiler) {
@@ -53,7 +58,10 @@ class MpxWebpackPlugin {
     }
     // define mode
     new DefinePlugin({
-      '__mpx_mode__': JSON.stringify(this.options.mode)
+      '__mpx_mode__': JSON.stringify(this.options.mode),
+      '__mpx_wxs__': DefinePlugin.runtimeValue(({ module }) => {
+        return JSON.stringify(!!module.wxs)
+      })
     }).apply(compiler)
 
     compiler.hooks.thisCompilation.tap('MpxWebpackPlugin', (compilation, params) => {
@@ -66,15 +74,28 @@ class MpxWebpackPlugin {
           subPackagesMap: {},
           usingComponents: [],
           processingSubPackages: false,
+          mainResourceMap: {},
           wxsMap: {},
           mode: this.options.mode,
           srcMode: this.options.srcMode,
-          extract: (content, type, resourcePath, index, selfResource) => {
+          extract: (content, type, resourcePath, index, selfResourcePath) => {
             if (index === -1) {
+              let subPackageRoot = ''
+              if (compilation.__mpx__.processingSubPackages) {
+                for (let src in subPackagesMap) {
+                  // 分包引用且主包未引用的资源，需打入分包目录中
+                  if (selfResourcePath.startsWith(src) && !mainResourceMap[selfResourcePath]) {
+                    subPackageRoot = subPackagesMap[src]
+                    break
+                  }
+                }
+              } else {
+                mainResourceMap[selfResourcePath] = true
+              }
               // 针对src引入的styles进行特殊处理，处理为@import形式便于样式复用
               if (type === 'styles') {
                 const file1 = resourcePath + typeExtMap[type]
-                const file2 = toPosix(path.join('wxss', path.basename(selfResource) + hash(selfResource) + typeExtMap[type]))
+                const file2 = toPosix(path.join(subPackageRoot, 'wxss', path.basename(selfResourcePath) + hash(selfResourcePath) + typeExtMap[type]))
                 const relativePath = toPosix(path.relative(path.dirname(file1), file2))
                 additionalAssets[file1] = additionalAssets[file1] || []
                 additionalAssets[file2] = additionalAssets[file2] || []
@@ -85,7 +106,7 @@ class MpxWebpackPlugin {
               }
               // 针对import src引入的template进行特殊处理
               if (type === 'template') {
-                const file = toPosix(path.join('wxml', path.basename(selfResource) + hash(selfResource) + typeExtMap[type]))
+                const file = toPosix(path.join(subPackageRoot, 'wxml', path.basename(selfResourcePath) + hash(selfResourcePath) + typeExtMap[type]))
                 additionalAssets[file] = additionalAssets[file] || []
                 additionalAssets[file][0] = content + (additionalAssets[file][0] || '')
                 return file
@@ -119,6 +140,9 @@ class MpxWebpackPlugin {
 
       compilation.dependencyFactories.set(InjectDependency, new NullFactory())
       compilation.dependencyTemplates.set(InjectDependency, new InjectDependency.Template())
+
+      compilation.dependencyFactories.set(ReplaceDependency, new NullFactory())
+      compilation.dependencyTemplates.set(ReplaceDependency, new ReplaceDependency.Template())
 
       params.normalModuleFactory.hooks.parser.for('javascript/auto').tap('MpxWebpackPlugin', (parser) => {
         parser.hooks.call.for('__mpx_resolve_path__').tap('MpxWebpackPlugin', (expr) => {

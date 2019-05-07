@@ -1090,19 +1090,22 @@ function processRef (el, options, meta) {
   }
 }
 
-function addWxsModule (meta, module) {
+function addWxsModule (meta, module, src) {
   if (!meta.wxsModuleMap) {
     meta.wxsModuleMap = {}
   }
   if (meta.wxsModuleMap[module]) return true
-  meta.wxsModuleMap[module] = true
+  meta.wxsModuleMap[module] = src
 }
 
-function processAttrs (el, meta) {
+function processWxs (el, meta) {
+  if (el.tag === config[mode].wxs.tag) {
+    addWxsModule(meta, el.attrsMap[config[mode].wxs.module], el.attrsMap[config[mode].wxs.src])
+  }
+}
+
+function processAttrs (el) {
   el.attrsList.forEach((attr) => {
-    if (el.tag === config[mode].wxs.tag && attr.name === config[mode].wxs.module) {
-      return addWxsModule(meta, attr.value)
-    }
     let parsed = parseMustache(attr.value)
     if (parsed.hasBinding) {
       if (el.tag === 'template' && attr.name === 'data') {
@@ -1195,7 +1198,7 @@ function processText (el) {
 // }
 
 function injectWxs (meta, module, src, injectNodes) {
-  if (addWxsModule(meta, module)) {
+  if (addWxsModule(meta, module, src)) {
     return
   }
   let wxsNode = createASTElement(config[mode].wxs.tag, [
@@ -1325,7 +1328,8 @@ function processElement (el, options, meta, root, injectNodes) {
     processPageStatus(el, options)
   }
   processComponentIs(el, options)
-  processAttrs(el, meta)
+  processWxs(el, meta)
+  processAttrs(el)
 }
 
 function closeElement (el, root) {
@@ -1431,14 +1435,14 @@ function findPrevNode (node) {
 
 function genIf (node) {
   node.ifProcessed = true
-  return `if(this.__checkIgnore(${node.if.exp})){\n${genNode(node)}}\n`
+  return `if(${node.if.exp}){\n${genNode(node)}}\n`
 }
 
 function genElseif (node) {
   node.elseifProcessed = true
   let preNode = findPrevNode(node)
   if (preNode && (preNode.if || preNode.elseif)) {
-    return `else if(this.__checkIgnore(${node.elseif.exp})){\n${genNode(node)}}\n`
+    return `else if(${node.elseif.exp}){\n${genNode(node)}}\n`
   } else {
     warn$1(`wx:elif (wx:elif="${node.elseif.raw}") used on element <"${node.tag}"> without corresponding wx:if or wx:elif.`)
   }
@@ -1464,7 +1468,7 @@ function genFor (node) {
   node.forProcessed = true
   let index = node.for.index || 'index'
   let item = node.for.item || 'item'
-  return `this.__iterate(this.__checkIgnore(${node.for.exp}), function(${item},${index}){\n${genNode(node)}}.bind(this));\n`
+  return `this.__iterate(${node.for.exp}, function(${item},${index}){\n${genNode(node)}}.bind(this));\n`
 }
 
 function genNode (node) {
