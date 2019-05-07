@@ -3,6 +3,7 @@ const TAG_NAME = 'form'
 module.exports = function ({ print }) {
   const aliPropLog = print({ platform: 'ali', tag: TAG_NAME, isError: false })
   const baiduPropLog = print({ platform: 'baidu', tag: TAG_NAME, isError: false })
+  const qqPropLog = print({ platform: 'qq', tag: TAG_NAME, isError: false })
 
   return {
     test: TAG_NAME,
@@ -10,7 +11,8 @@ module.exports = function ({ print }) {
       {
         test: /^(report-submit-timeout)$/,
         ali: aliPropLog,
-        swan: baiduPropLog
+        swan: baiduPropLog,
+        qq: qqPropLog
       }
     ],
     event: [

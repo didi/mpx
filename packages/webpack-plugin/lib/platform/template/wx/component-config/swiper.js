@@ -5,6 +5,7 @@ module.exports = function ({ print }) {
   const aliEventLog = print({ platform: 'ali', tag: TAG_NAME, isError: false, type: 'event' })
   const baiduPropLog = print({ platform: 'baidu', tag: TAG_NAME, isError: false })
   const baiduEventLog = print({ platform: 'baidu', tag: TAG_NAME, isError: false, type: 'event' })
+  const qqPropLog = print({ platform: 'qq', tag: TAG_NAME, isError: false })
 
   return {
     test: TAG_NAME,
@@ -16,6 +17,10 @@ module.exports = function ({ print }) {
       {
         test: /^(skip-hidden-item-layout|easing-function)$/,
         swan: baiduPropLog
+      },
+      {
+        test: /^(easing-function)$/,
+        qq: qqPropLog
       }
     ],
     event: [

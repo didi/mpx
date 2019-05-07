@@ -7,6 +7,9 @@ module.exports = function ({ print }) {
   const baiduValueLogError = print({ platform: 'baidu', tag: TAG_NAME, isError: true, type: 'value' })
   const baiduPropLog = print({ platform: 'baidu', tag: TAG_NAME, isError: false })
   const baiduEventLog = print({ platform: 'baidu', tag: TAG_NAME, isError: false })
+  const qqPropLog = print({ platform: 'qq', tag: TAG_NAME, isError: false })
+  const qqEventLog = print({ platform: 'qq', tag: TAG_NAME, isError: false, type: 'event' })
+  const qqValueLogError = print({ platform: 'qq', tag: TAG_NAME, isError: true, type: 'value' })
 
   return {
     test: TAG_NAME,
@@ -36,6 +39,12 @@ module.exports = function ({ print }) {
           if (supportList.indexOf(value) === -1) {
             baiduValueLogError({ name, value })
           }
+        },
+        qq ({ name, value }) {
+          let supportList = ['share', 'getUserInfo', 'launchApp', 'feedback', 'openSetting']
+          if (supportList.indexOf(value) === -1) {
+            qqValueLogError({ name, value })
+          }
         }
       },
       {
@@ -46,6 +55,10 @@ module.exports = function ({ print }) {
       {
         test: /^(app-parameter)$/,
         swan: baiduPropLog
+      },
+      {
+        test: /^(session-from|send-message-title|send-message-path|send-message-img|show-message-card)$/,
+        qq: qqPropLog
       }
     ],
     event: [
@@ -62,6 +75,10 @@ module.exports = function ({ print }) {
       {
         test: /^(contact|error|launchapp)$/,
         swan: baiduEventLog
+      },
+      {
+        test: /^(contact)$/,
+        qq: qqEventLog
       }
     ]
   }

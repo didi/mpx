@@ -3,6 +3,7 @@ const TAG_NAME = 'video'
 module.exports = function ({ print }) {
   const baiduPropLog = print({ platform: 'baidu', tag: TAG_NAME, isError: false })
   const baiduEventLogError = print({ platform: 'baidu', tag: TAG_NAME, isError: false, type: 'event' })
+  const qqPropLog = print({ platform: 'qq', tag: TAG_NAME, isError: false })
 
   const qqPropLog = print({ platform: 'qq', tag: TAG_NAME, isError: false })
 
@@ -14,7 +15,17 @@ module.exports = function ({ print }) {
         swan: baiduPropLog
       },
       {
-        test: /^(vslide-gesture|vslide-gesture-in-fullscreen)$/,
+        test: /^(vslide-gesture)$/,
+        qq (obj) {
+          const propsMap = {
+            'vslide-gesture': 'page-gesture'
+          }
+          obj.name = propsMap[obj.name]
+          return obj
+        }
+      },
+      {
+        test: /^(vslide-gesture-in-fullscreen)$/,
         qq: qqPropLog
       }
     ],

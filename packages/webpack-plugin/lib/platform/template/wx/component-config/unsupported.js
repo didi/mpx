@@ -3,7 +3,7 @@ const ALI_UNSUPPORTED_AG_NAME_ARR = ['live-pusher', 'live-player', 'camera', 'vi
 // 百度小程序不支持的标签集合
 const BAIDU_UNSUPPORTED_AG_NAME_ARR = ['functional-page-navigator', 'live-pusher']
 // QQ小程序不支持的标签集合
-const QQ_UNSUPPORTED_AG_NAME_ARR = ['official-account', 'map', 'live-pusher', 'live-player', 'audio', 'functional-page-navigator', 'picker-view-column']
+const QQ_UNSUPPORTED_AG_NAME_ARR = ['functional-page-navigator', 'live-player', 'live-pusher', 'map', 'official-account']
 
 /**
  * @param {function(object): function} print
