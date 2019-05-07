@@ -77,7 +77,6 @@ function concat (a, b) {
   return a ? b ? (a + ' ' + b) : a : (b || '')
 }
 
-
 function isObject (obj) {
   return obj !== null && typeof obj === 'object'
 }
@@ -91,7 +90,7 @@ function isDef (v) {
 }
 
 function stringifyClass (value) {
-  if (value === undefined) return ''
+  if (!value) return ''
   if (likeArray(value)) {
     return stringifyArray(value)
   }
@@ -179,7 +178,7 @@ function mergeObjectArray (arr) {
 }
 
 function normalizeDynamicStyle (value) {
-  if (value === undefined) return {}
+  if (!value) return {}
   if (likeArray(value)) {
     return mergeObjectArray(value)
   }
