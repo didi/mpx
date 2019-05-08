@@ -184,10 +184,12 @@ class MpxWebpackPlugin {
           return map
         }, {})
 
-        parser.hooks.callAnyMember.for('mpx').tap('MpxWebpackPlugin', (expr) => {
+        const handler = (expr) => {
           const callee = expr.callee
           const args = expr.arguments
-          if (apiBlackListMap[callee.property.name || callee.property.value]) {
+          const name = callee.object.name
+
+          if (apiBlackListMap[callee.property.name || callee.property.value] || name !== 'mpx') {
             return
           }
           const resource = parser.state.module.resource
@@ -204,7 +206,10 @@ class MpxWebpackPlugin {
             index: expr.end - 1
           })
           parser.state.current.addDependency(dep)
-        })
+        }
+
+        parser.hooks.callAnyMember.for('imported var').tap('MpxWebpackPlugin', handler)
+        parser.hooks.callAnyMember.for('mpx').tap('MpxWebpackPlugin', handler)
       })
     })
 
