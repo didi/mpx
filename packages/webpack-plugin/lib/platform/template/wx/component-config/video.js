@@ -5,8 +5,6 @@ module.exports = function ({ print }) {
   const baiduEventLogError = print({ platform: 'baidu', tag: TAG_NAME, isError: false, type: 'event' })
   const qqPropLog = print({ platform: 'qq', tag: TAG_NAME, isError: false })
 
-  const qqPropLog = print({ platform: 'qq', tag: TAG_NAME, isError: false })
-
   return {
     test: TAG_NAME,
     props: [

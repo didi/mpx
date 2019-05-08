@@ -9,15 +9,7 @@ const stripExtension = require('../utils/strip-extention')
 const toPosix = require('../utils/to-posix')
 const config = require('../config')
 
-function getResourceExt (resource) {
-  const queryIndex = resource.indexOf('?')
-  if (queryIndex > -1) {
-    resource = resource.slice(0, queryIndex)
-  }
-  return path.extname(resource)
-}
-
-module.exports = function (content) {
+module.exports = function () {
   const nativeCallback = this.async()
 
   const mainCompilation = getMainCompilation(this._compilation)
@@ -29,9 +21,6 @@ module.exports = function (content) {
   const issuerResource = stripExtension(this._module.issuer.resource)
   const issuerName = pagesMap[issuerResource] || componentsMap[issuerResource] || rootName
   const issuerDir = path.dirname(issuerName)
-
-  const issuerResourceExt = getResourceExt(this._module.issuer.resource)
-  const resouceExt = getResourceExt(this.resource)
 
   const callback = (err) => {
     if (err) return nativeCallback(err)

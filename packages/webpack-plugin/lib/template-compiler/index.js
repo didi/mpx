@@ -93,7 +93,7 @@ module.exports = function (raw) {
         throw new Error(
           `No module factory available for dependency type: ${
             dep.constructor.name
-            }`
+          }`
         )
       }
       let innerMap = dependencies.get(factory)
