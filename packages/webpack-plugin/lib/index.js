@@ -162,6 +162,50 @@ class MpxWebpackPlugin {
           }
         })
 
+        const transHandler = (expr) => {
+          const module = parser.state.module
+          const current = parser.state.current
+          const name = 'mpxTransCtor'
+          const resource = module.resource
+          const queryIndex = resource.indexOf('?')
+          let resourceQuery = '?'
+          if (queryIndex > -1) {
+            resourceQuery = resource.substr(queryIndex)
+          }
+          const localSrcMode = loaderUtils.parseQuery(resourceQuery).mode
+          const globalSrcMode = compilation.__mpx__.srcMode
+          const mode = localSrcMode || globalSrcMode
+          const type = expr.name
+
+          const dep = new ReplaceDependency(`${name}(${type}, {srcMode: ${JSON.stringify(mode)}, type: ${JSON.stringify(type)}})`, expr.range)
+          current.addDependency(dep)
+
+          let needInject = true
+          for (let v of module.variables) {
+            if (v.name === name) {
+              needInject = false
+              break
+            }
+          }
+          if (needInject) {
+            const expression = `require(${JSON.stringify('@mpxjs/core/src/helper/env')})`
+            const deps = []
+            parser.parse(expression, {
+              current: {
+                addDependency: dep => {
+                  dep.userRequest = name
+                  deps.push(dep)
+                }
+              },
+              module
+            })
+            current.addVariable(name, expression, deps)
+          }
+        }
+
+        parser.hooks.expression.for('Page').tap('MpxWebpackPlugin', transHandler)
+        parser.hooks.expression.for('Component').tap('MpxWebpackPlugin', transHandler)
+
         const apiBlackListMap = [
           'createApp',
           'createPage',

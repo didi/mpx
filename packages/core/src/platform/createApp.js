@@ -7,5 +7,6 @@ export default function createApp (option) {
       extend(this, option.proto)
     }
   }])
-  App(dissolveAttrs(rawOptions, 'methods')) /* eslint-disable-line */
+  global.currentCtor(dissolveAttrs(rawOptions, 'methods'))
+  /* eslint-disable-line */
 }

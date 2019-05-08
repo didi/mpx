@@ -168,6 +168,7 @@ var error$1
 var mode
 var srcMode
 var processingTemplate
+var isNative
 var rulesRunner
 var platformGetTagNamespace
 
@@ -574,6 +575,7 @@ function parse (template, options) {
 
   mode = options.mode || 'wx'
   srcMode = options.srcMode || mode
+  isNative = options.isNative
 
   rulesRunner = getRulesRunner({
     mode,
@@ -1314,7 +1316,7 @@ function processElement (el, options, meta, root, injectNodes) {
   if (rulesRunner) {
     rulesRunner(el)
   }
-  if (processTemplate(el) || processingTemplate) return
+  if (isNative || processTemplate(el) || processingTemplate) return
   processIf(el)
   processFor(el)
   if (mode !== 'qq' && mode !== 'tt') {

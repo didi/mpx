@@ -102,16 +102,14 @@ module.exports = function (content) {
   // 注入模块id
   let globalInjectCode = `global.currentModuleId = ${JSON.stringify(moduleId)};\n`
 
-  // 注入支付宝构造函数
-  if (mode === 'ali') {
-    let ctor = 'App'
-    if (pagesMap[resource]) {
-      ctor = 'Page'
-    } else if (componentsMap[resource]) {
-      ctor = 'Component'
-    }
-    globalInjectCode += `global.currentCtor = ${ctor};\n`
+  // 注入构造函数
+  let ctor = 'App'
+  if (pagesMap[resource]) {
+    ctor = mode === 'ali' ? 'Page' : 'Component'
+  } else if (componentsMap[resource]) {
+    ctor = 'Component'
   }
+  globalInjectCode += `global.currentCtor = ${ctor};\n`
 
   if (!pagesMap[resource] && !componentsMap[resource] && mode === 'swan') {
     // 注入swan runtime fix

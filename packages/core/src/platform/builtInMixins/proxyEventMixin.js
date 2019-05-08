@@ -56,7 +56,7 @@ export default function proxyEventMixin () {
     Object.assign(methods, {
       triggerEvent (eventName, eventDetail) {
         const handlerName = eventName.replace(/^./, matched => matched.toUpperCase())
-        const handler = this['on' + handlerName] || this['catch' + handlerName]
+        const handler = this.props && (this.props['on' + handlerName] || this.props['catch' + handlerName])
         if (handler && typeof handler === 'function') {
           const dataset = collectDataset(this.props)
           const id = this.props.id || ''

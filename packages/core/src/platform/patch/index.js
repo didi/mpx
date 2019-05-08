@@ -5,23 +5,18 @@ import { getDefaultOptions as getALIDefaultOptions } from './ali/getDefaultOptio
 import { is } from '../../helper/env'
 
 export default function createFactory (type) {
-  return (options, constructor) => {
+  return (options) => {
     let getDefaultOptions
-
     if (is('ali')) {
       getDefaultOptions = getALIDefaultOptions
     } else {
-      constructor = Component
       getDefaultOptions = getWXDefaultOptions
     }
     // 获取内建的mixins
     const builtInMixins = getBuiltInMixins(options, type)
     const { rawOptions, currentInject } = transferOptions(options, type, builtInMixins)
     const defaultOptions = getDefaultOptions(type, { rawOptions, currentInject })
-    if (!constructor) {
-      constructor = global.currentCtor
-    }
-    constructor(defaultOptions)
+    global.currentCtor(defaultOptions)
   }
 }
 

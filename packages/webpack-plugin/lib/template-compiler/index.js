@@ -7,15 +7,12 @@ const stripExtension = require('../utils/strip-extention')
 module.exports = function (raw) {
   this.cacheable()
   const options = loaderUtils.getOptions(this) || {}
-  // 对于原生模板暂不做处理
-  if (options.isNative) {
-    return raw
-  }
+
+  const isNative = options.isNative
   const compilation = this._compilation
   const mode = compilation.__mpx__.mode
   const globalSrcMode = compilation.__mpx__.srcMode
   const localSrcMode = loaderUtils.parseQuery(this.resourceQuery || '?').mode
-  // const pagesMap = compilation.__mpx__.pagesMap
   const componentsMap = compilation.__mpx__.componentsMap
   const resource = stripExtension(this.resource)
 
@@ -32,11 +29,16 @@ module.exports = function (raw) {
     },
     isComponent: !!componentsMap[resource],
     mode,
-    srcMode: localSrcMode || globalSrcMode
+    srcMode: localSrcMode || globalSrcMode,
+    isNative
   }))
   let ast = parsed.root
   let meta = parsed.meta
   let result = compiler.serialize(ast)
+
+  if (isNative) {
+    return result
+  }
 
   let renderResult = bindThis(`global.currentInject = {
     moduleId: ${JSON.stringify(options.moduleId)},
@@ -93,7 +95,7 @@ module.exports = function (raw) {
         throw new Error(
           `No module factory available for dependency type: ${
             dep.constructor.name
-          }`
+            }`
         )
       }
       let innerMap = dependencies.get(factory)
