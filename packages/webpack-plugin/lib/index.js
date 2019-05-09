@@ -59,6 +59,7 @@ class MpxWebpackPlugin {
     // define mode
     new DefinePlugin({
       '__mpx_mode__': JSON.stringify(this.options.mode),
+      '__mpx_src_mode__': JSON.stringify(this.options.srcMode),
       '__mpx_wxs__': DefinePlugin.runtimeValue(({ module }) => {
         return JSON.stringify(!!module.wxs)
       })
@@ -165,19 +166,16 @@ class MpxWebpackPlugin {
         const transHandler = (expr) => {
           const module = parser.state.module
           const current = parser.state.current
-          const name = 'mpxTransCtor'
-          const resource = module.resource
-          const queryIndex = resource.indexOf('?')
-          let resourceQuery = '?'
-          if (queryIndex > -1) {
-            resourceQuery = resource.substr(queryIndex)
-          }
-          const localSrcMode = loaderUtils.parseQuery(resourceQuery).mode
-          const globalSrcMode = compilation.__mpx__.srcMode
-          const mode = localSrcMode || globalSrcMode
-          const type = expr.name
 
-          const dep = new ReplaceDependency(`${name}(${type}, {srcMode: ${JSON.stringify(mode)}, type: ${JSON.stringify(type)}})`, expr.range)
+          if (/[/\\]@mpxjs[/\\]/.test(module.resource)) {
+            return
+          }
+
+          const type = expr.name
+          const name = type === 'wx' ? 'mpx' : 'createFactory'
+          const replaceContent = type === 'wx' ? 'mpx' : `${name}(${JSON.stringify(type)})`
+
+          const dep = new ReplaceDependency(replaceContent, expr.range)
           current.addDependency(dep)
 
           let needInject = true
@@ -188,7 +186,7 @@ class MpxWebpackPlugin {
             }
           }
           if (needInject) {
-            const expression = `require(${JSON.stringify('@mpxjs/core/src/helper/env')})`
+            const expression = `require(${JSON.stringify(`@mpxjs/core/src/runtime/${name}`)})`
             const deps = []
             parser.parse(expression, {
               current: {
@@ -203,8 +201,15 @@ class MpxWebpackPlugin {
           }
         }
 
-        parser.hooks.expression.for('Page').tap('MpxWebpackPlugin', transHandler)
-        parser.hooks.expression.for('Component').tap('MpxWebpackPlugin', transHandler)
+        if (this.options.srcMode !== this.options.mode) {
+          parser.hooks.expression.for('Page').tap('MpxWebpackPlugin', transHandler)
+          parser.hooks.expression.for('Component').tap('MpxWebpackPlugin', transHandler)
+          parser.hooks.expression.for('App').tap('MpxWebpackPlugin', transHandler)
+          if (this.options.srcMode === 'wx') {
+            parser.hooks.expression.for('wx').tap('MpxWebpackPlugin', transHandler)
+          }
+        }
+
 
         const apiBlackListMap = [
           'createApp',

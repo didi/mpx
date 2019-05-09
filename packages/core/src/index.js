@@ -40,8 +40,10 @@ function extendProps (target, proxyObj, rawProps, option) {
     }
   }
 }
+
 // 安装插件进行扩展API
 const installedPlugins = []
+
 function use (plugin, ...rest) {
   if (installedPlugins.indexOf(plugin) > -1) {
     return this
@@ -97,6 +99,7 @@ function factory () {
   function MPX () {
     this.proto = extend({}, this)
   }
+
   extend(MPX, APIs)
   extend(MPX.prototype, InstanceAPIs)
   return MPX

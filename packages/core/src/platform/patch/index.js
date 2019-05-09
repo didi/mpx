@@ -5,7 +5,7 @@ import { getDefaultOptions as getALIDefaultOptions } from './ali/getDefaultOptio
 import { is } from '../../helper/env'
 
 export default function createFactory (type) {
-  return (options) => {
+  return (options, { isNative } = {}) => {
     let getDefaultOptions
     if (is('ali')) {
       getDefaultOptions = getALIDefaultOptions
