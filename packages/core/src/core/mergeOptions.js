@@ -1,4 +1,4 @@
-import { type, merge, extend } from '../helper/utils'
+import { type, merge, extend, aliasReplace } from '../helper/utils'
 import { getConvertRule } from '../convertor/convertor'
 
 let CURRENT_HOOKS = []
@@ -22,6 +22,7 @@ export default function mergeOptions (options = {}, type, needConvert = true) {
 }
 
 function extractMixins (mergeOptions, options) {
+  aliasReplace(options, 'behaviors', 'mixins')
   if (options.mixins) {
     for (const mix of options.mixins) {
       extractMixins(mergeOptions, mix)

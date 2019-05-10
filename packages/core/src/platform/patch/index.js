@@ -6,6 +6,7 @@ import { is } from '../../helper/env'
 
 export default function createFactory (type) {
   return (options, { isNative } = {}) => {
+    options.__nativeRender__ = !!isNative
     let getDefaultOptions
     if (is('ali')) {
       getDefaultOptions = getALIDefaultOptions

@@ -43,8 +43,12 @@ function transformApiForProxy (context, currentInject) {
   Object.defineProperties(context, {
     setData: {
       get () {
-        return () => {
-          console.error(`【setData】is invalid when using mpx to create pages or components !! instead，you can use this way【this.xx = 1】to modify data directly`)
+        return (data, callback) => {
+          // 同步数据到proxy
+          this.$mpxProxy.forceUpdate(data)
+          if (this.__nativeRender__) {
+            return rawSetData(data, callback)
+          }
         }
       },
       configurable: true
@@ -111,6 +115,7 @@ export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
       transformApiForProxy(this, currentInject)
       // 缓存options
       this.$rawOptions = rawOptions
+      this.__nativeRender__ = rawOptions.__nativeRender__
       // 创建proxy对象
       const mpxProxy = new MPXProxy(rawOptions, this)
       this.$mpxProxy = mpxProxy

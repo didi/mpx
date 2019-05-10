@@ -12,6 +12,25 @@ export function type (n) {
   return Object.prototype.toString.call(n).slice(8, -1)
 }
 
+export function aliasReplace (options = {}, alias, target) {
+  if (options[alias]) {
+    const dataType = type(options[alias])
+    switch (dataType) {
+      case 'Object':
+        options[target] = Object.assign({}, options[alias], options[target])
+        break
+      case 'Array':
+        options[target] = options[alias].concat(options[target] || [])
+        break
+      default:
+        options[target] = options[alias]
+        break
+    }
+    delete options[alias]
+  }
+  return options
+}
+
 export function normalizeMap (arr) {
   if (type(arr) === 'Array') {
     const map = {}
