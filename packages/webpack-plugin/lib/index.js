@@ -49,7 +49,7 @@ class MpxWebpackPlugin {
     // 强制设置publicPath为'/'
     compiler.options.output.publicPath = '/'
 
-    const resolvePlugin = new AddModePlugin('before-file', this.options.mode, 'file')
+    const resolvePlugin = new AddModePlugin('before-resolve', this.options.mode, 'resolve')
 
     if (Array.isArray(compiler.options.resolve.plugins)) {
       compiler.options.resolve.plugins.push(resolvePlugin)

@@ -5,6 +5,7 @@ const loaderUtils = require('loader-utils')
 const config = require('./config')
 const createHelpers = require('./helpers')
 const InjectDependency = require('./dependency/InjectDependency')
+const stringifyQuery = require('./utils/stringify-query')
 
 module.exports = function (content) {
   this.cacheable()
@@ -41,11 +42,13 @@ module.exports = function (content) {
 
   const mode = this._compilation.__mpx__.mode
   const globalSrcMode = this._compilation.__mpx__.srcMode
-  const localSrcMode = loaderUtils.parseQuery(this.resourceQuery || '?').mode
+  const queryObj = loaderUtils.parseQuery(this.resourceQuery || '?')
+  const localSrcMode = queryObj.mode
   const pagesMap = this._compilation.__mpx__.pagesMap
   const componentsMap = this._compilation.__mpx__.componentsMap
   const resource = stripExtension(this.resource)
   const isApp = !pagesMap[resource] && !componentsMap[resource]
+  const srcMode = localSrcMode || globalSrcMode
 
   const {
     getRequireForSrc,
@@ -59,20 +62,23 @@ module.exports = function (content) {
     hasComment,
     usingComponents,
     needCssSourceMap,
-    mode,
+    srcMode,
     isNative
   )
 
-  const typeExtMap = config[mode].typeExtMap
+  const typeExtMap = config[srcMode].typeExtMap
 
   function getRequire (type) {
+    let localQuery = Object.assign({}, queryObj)
     let src = resource + typeExtMap[type]
     if (type === 'template' && isApp) {
       return ''
     }
     if (type === 'json') {
-      src = src + '?__component'
+      localQuery.__component = true
     }
+    src += stringifyQuery(localQuery)
+
     if (type === 'script') {
       return getNamedExportsForSrc(type, { src })
     } else {
@@ -100,7 +106,6 @@ module.exports = function (content) {
       'global.navigator.standalone = true;\n'
   }
 
-  let srcMode = localSrcMode || globalSrcMode
   if (srcMode) {
     globalInjectCode += `global.currentSrcMode = ${JSON.stringify(srcMode)};\n`
   }

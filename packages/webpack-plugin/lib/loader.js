@@ -18,6 +18,7 @@ module.exports = function (content) {
   const globalSrcMode = this._compilation.__mpx__.srcMode
   const localSrcMode = loaderUtils.parseQuery(this.resourceQuery || '?').mode
   const resource = stripExtension(this.resource)
+  const srcMode = localSrcMode || globalSrcMode
 
   const resourceQueryObj = loaderUtils.parseQuery(this.resourceQuery || '?')
 
@@ -92,7 +93,7 @@ module.exports = function (content) {
     hasComment,
     usingComponents,
     needCssSourceMap,
-    mode,
+    srcMode,
     isNative
   )
 
@@ -122,7 +123,7 @@ module.exports = function (content) {
   //
   // <script>
   output += '/* script */\n'
-  let scriptSrcMode = localSrcMode || globalSrcMode
+  let scriptSrcMode = srcMode
   const script = parts.script
   if (script) {
     scriptSrcMode = script.mode || scriptSrcMode
