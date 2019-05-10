@@ -92,11 +92,7 @@ module.exports = function (raw) {
     if (resourceIdent) {
       const factory = compilation.dependencyFactories.get(dep.constructor)
       if (factory === undefined) {
-        throw new Error(
-          `No module factory available for dependency type: ${
-            dep.constructor.name
-            }`
-        )
+        throw new Error(`No module factory available for dependency type: ${dep.constructor.name}`)
       }
       let innerMap = dependencies.get(factory)
       if (innerMap === undefined) {

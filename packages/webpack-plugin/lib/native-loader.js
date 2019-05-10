@@ -102,7 +102,7 @@ module.exports = function (content) {
 
   let srcMode = localSrcMode || globalSrcMode
   if (srcMode) {
-    globalInjectCode += `global.currentSrcMode = ${JSON.stringify(scriptSrcMode)};\n`
+    globalInjectCode += `global.currentSrcMode = ${JSON.stringify(srcMode)};\n`
   }
 
   const dep = new InjectDependency({
