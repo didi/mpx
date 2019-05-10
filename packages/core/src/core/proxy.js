@@ -14,7 +14,8 @@ import {
   diffAndCloneA,
   defineGetter,
   preprocessRenderData,
-  setByPath
+  setByPath,
+  findItem
 } from '../helper/utils'
 
 import { watch } from './watcher'
@@ -336,13 +337,7 @@ export default class MPXProxy {
   }
 
   checkInForceUpdateKeys (key) {
-    for (const keyPath of this.forceUpdateKeys) {
-      // 以key开头的path
-      if (keyPath.indexOf(key) === 0) {
-        return true
-      }
-    }
-    return false
+    return findItem(this.forceUpdateKeys, new RegExp(`^${key}`))
   }
 
   nextTick (fn) {
