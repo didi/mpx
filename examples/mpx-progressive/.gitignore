@@ -4,5 +4,5 @@ npm-debug.log
 .idea/
 deploy/
 output/
-dist/
+/dist/
 .vscode/
