@@ -1,0 +1,18 @@
+{
+	"miniprogramRoot": "dist/",
+	"compileType": "miniprogram",
+	"setting": {
+		"newFeature": true,
+		"urlCheck": true,
+		"es6": false,
+		"postcss": true,
+		"minified": false,
+		"autoAudits": false
+	},
+	"appid": "touristappid",
+	"projectname": "mpx-progressive",
+	"description": "A mpx project",
+	"simulatorType": "wechat",
+	"simulatorPluginLibVersion": {},
+	"condition": {}
+}

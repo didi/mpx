@@ -1,0 +1,1 @@
+<view class="i-class i-icon {{ type === '' ? '' : 'i-icon-' +  type }} {{ custom }}" style="font-size: {{ size }}px; {{ color ? 'color:' + color : '' }}"></view>
