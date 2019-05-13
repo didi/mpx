@@ -3,6 +3,7 @@ const TAG_NAME = 'rich-text'
 module.exports = function ({ print }) {
   const aliPropLog = print({ platform: 'ali', tag: TAG_NAME, isError: false })
   const baiduPropLog = print({ platform: 'baidu', tag: TAG_NAME, isError: false })
+  const ttPropsLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false })
 
   return {
     test: TAG_NAME,
@@ -10,7 +11,8 @@ module.exports = function ({ print }) {
       {
         test: /^(space)$/,
         ali: aliPropLog,
-        swan: baiduPropLog
+        swan: baiduPropLog,
+        tt: ttPropsLog
       }
     ]
   }
