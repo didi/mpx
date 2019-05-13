@@ -54,7 +54,7 @@ module.exports = function (raw) {
 
   let globalInjectCode = renderResult.code + '\n'
 
-  if (renderResult.propKeys) {
+  if (mode === 'tt' && renderResult.propKeys) {
     globalInjectCode += `global.currentInject.propKeys = ${JSON.stringify(renderResult.propKeys)};\n`
   }
 
