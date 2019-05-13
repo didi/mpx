@@ -4,6 +4,7 @@ module.exports = function ({ print }) {
   const aliPropLog = print({ platform: 'ali', tag: TAG_NAME, isError: false })
   const baiduPropLog = print({ platform: 'baidu', tag: TAG_NAME, isError: false })
   const qqPropLog = print({ platform: 'qq', tag: TAG_NAME, isError: false })
+  const ttPropsLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false })
 
   return {
     test: TAG_NAME,
@@ -13,6 +14,10 @@ module.exports = function ({ print }) {
         ali: aliPropLog,
         swan: baiduPropLog,
         qq: qqPropLog
+      },
+      {
+        test: /^(report-submit|report-submit-timeout)$/,
+        tt: ttPropsLog
       }
     ],
     event: [
