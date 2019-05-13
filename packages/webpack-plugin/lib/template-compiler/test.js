@@ -35,7 +35,6 @@ let renderResult = bindThis(`global.currentInject = {
 
 let globalInjectCode = renderResult.code + '\n'
 
-
 if (renderResult.propKeys) {
   globalInjectCode += `global.currentInject.propKeys = ${JSON.stringify(renderResult.propKeys)};\n`
 }

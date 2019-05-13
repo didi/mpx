@@ -40,7 +40,7 @@ module.exports = function ({ print }) {
         tt (obj) {
           const propsMap = {
             'activeColor': 'active-color',
-            'backgroundColor': 'background-color',
+            'backgroundColor': 'background-color'
           }
           obj.name = propsMap[obj.name]
           return obj

@@ -31,7 +31,7 @@ module.exports = function ({ print }) {
       {
         test: /^(target|app-id|path|extra-data|version)$/,
         tt: ttPropLog
-      },
+      }
     ],
     event: [
       {

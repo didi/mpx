@@ -6,7 +6,7 @@ module.exports = function ({ print }) {
   const qqPropLog = print({ platform: 'qq', tag: TAG_NAME, isError: false })
   const ttPropLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false })
   const ttEventLogError = print({ platform: 'bytedance', tag: TAG_NAME, isError: false, type: 'event' })
-  
+
   return {
     test: TAG_NAME,
     props: [
