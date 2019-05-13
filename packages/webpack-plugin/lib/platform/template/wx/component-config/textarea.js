@@ -3,7 +3,7 @@ const TAG_NAME = 'textarea'
 module.exports = function ({ print }) {
   const aliPropLog = print({ platform: 'ali', tag: TAG_NAME, isError: false })
   const aliEventLog = print({ platform: 'ali', tag: TAG_NAME, isError: false, type: 'event' })
-  const ttPropsLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false })
+  const ttPropLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false })
   const ttEventLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false, type: 'event' })
 
   return {
@@ -15,7 +15,7 @@ module.exports = function ({ print }) {
       },
       {
         test: /^(placeholder-class|auto-focus|show-confirm-bar|adjust-position)$/,
-        tt: ttPropsLog
+        tt: ttPropLog
       }
     ],
     event: [

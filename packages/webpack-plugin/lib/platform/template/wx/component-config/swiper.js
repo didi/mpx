@@ -6,7 +6,7 @@ module.exports = function ({ print }) {
   const baiduPropLog = print({ platform: 'baidu', tag: TAG_NAME, isError: false })
   const baiduEventLog = print({ platform: 'baidu', tag: TAG_NAME, isError: false, type: 'event' })
   const qqPropLog = print({ platform: 'qq', tag: TAG_NAME, isError: false })
-  const ttPropsLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false })
+  const ttPropLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false })
   const ttEventLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false, type: 'event' })
 
   return {
@@ -26,7 +26,7 @@ module.exports = function ({ print }) {
       },
       {
         test: /^(previous-margin|next-margin|skip-hidden-item-layout|easing-function)$/,
-        tt: ttPropsLog
+        tt: ttPropLog
       }
     ],
     event: [

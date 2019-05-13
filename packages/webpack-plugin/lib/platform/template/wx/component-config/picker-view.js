@@ -3,7 +3,7 @@ const TAG_NAME = 'picker-view'
 module.exports = function ({ print }) {
   const aliEventLog = print({ platform: 'ali', tag: TAG_NAME, isError: false, type: 'event' })
   const baiduEventLog = print({ platform: 'baidu', tag: TAG_NAME, isError: false })
-  const ttPropsLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false })
+  const ttPropLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false })
   const ttEventLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false, type: 'event' })
 
   return {
@@ -11,7 +11,7 @@ module.exports = function ({ print }) {
     props: [
       {
         test: /^(indicator-class|mask-class)$/,
-        tt: ttPropsLog
+        tt: ttPropLog
       }
     ],
     event: [

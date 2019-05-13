@@ -2,7 +2,7 @@ const TAG_NAME = 'scroll-view'
 
 module.exports = function ({ print }) {
   const baiduPropLog = print({ platform: 'baidu', tag: TAG_NAME, isError: false })
-  const ttPropsLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false })
+  const ttPropLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false })
 
   return {
     test: TAG_NAME,
@@ -10,7 +10,7 @@ module.exports = function ({ print }) {
       {
         test: /^(enable-back-to-top)$/,
         swan: baiduPropLog,
-        tt: ttPropsLog
+        tt: ttPropLog
       }
     ],
     event: [

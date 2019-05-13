@@ -5,7 +5,7 @@ module.exports = function ({ print }) {
   const aliPropLog = print({ platform: 'ali', tag: TAG_NAME, isError: false })
   const aliPropLogError = print({ platform: 'ali', tag: TAG_NAME, isError: true })
   const aliEventLog = print({ platform: 'ali', tag: TAG_NAME, isError: false, type: 'event' })
-  const ttPropsLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false })
+  const ttPropLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false })
   const ttEventLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false, type: 'event' })
 
   return {
@@ -30,7 +30,7 @@ module.exports = function ({ print }) {
       },
       {
         test: /^(target|app-id|path|extra-data|version)$/,
-        tt: ttPropsLog
+        tt: ttPropLog
       },
     ],
     event: [
