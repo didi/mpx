@@ -1,11 +1,11 @@
 // 支付宝小程序不支持的标签集合
-const ALI_UNSUPPORTED_TAG_NAME_ARR = ['live-pusher', 'live-player', 'camera', 'video', 'audio', 'functional-page-navigator']
+const ALI_UNSUPPORTED_TAG_NAME_ARR = ['live-pusher', 'live-player', 'camera', 'video', 'audio', 'functional-page-navigator', 'editor']
 // 百度小程序不支持的标签集合
-const BAIDU_UNSUPPORTED_TAG_NAME_ARR = ['functional-page-navigator', 'live-pusher']
+const BAIDU_UNSUPPORTED_TAG_NAME_ARR = ['functional-page-navigator', 'live-pusher', 'editor']
 // QQ小程序不支持的标签集合
-const QQ_UNSUPPORTED_TAG_NAME_ARR = ['functional-page-navigator', 'live-player', 'live-pusher', 'map', 'official-account']
+const QQ_UNSUPPORTED_TAG_NAME_ARR = ['functional-page-navigator', 'live-player', 'live-pusher', 'map', 'official-account', 'editor']
 // 头条小程序不支持的标签集合
-const TT_UNSUPPORTED_TAG_NAME_ARR = ['movable-view', 'cover-image', 'cover-view', 'movable-area', 'open-data', 'official-account', 'ad']
+const TT_UNSUPPORTED_TAG_NAME_ARR = ['movable-view', 'cover-image', 'cover-view', 'movable-area', 'open-data', 'official-account', 'ad', 'editor']
 
 /**
  * @param {function(object): function} print
