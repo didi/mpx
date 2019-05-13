@@ -8,6 +8,21 @@ import mergeOptions from '../../../core/mergeOptions'
 
 function transformApiForProxy (context, currentInject) {
   const rawSetData = context.setData.bind(context)
+  if (Object.getOwnPropertyDescriptor(context, 'setData').configurable) {
+    Object.defineProperty(context, 'setData', {
+      get () {
+        return (data, cb) => {
+          // 同步数据到proxy
+          this.$mpxProxy.forceUpdate(data, this.__nativeRender__ || cb)
+          if (this.__nativeRender__) {
+            // 走原生渲染
+            return rawSetData(data, cb)
+          }
+        }
+      },
+      configurable: true
+    })
+  }
   Object.defineProperties(context, {
     __getInitialData: {
       get () {
