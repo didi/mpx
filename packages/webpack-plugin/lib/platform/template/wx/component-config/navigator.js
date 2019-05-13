@@ -5,6 +5,8 @@ module.exports = function ({ print }) {
   const aliPropLog = print({ platform: 'ali', tag: TAG_NAME, isError: false })
   const aliPropLogError = print({ platform: 'ali', tag: TAG_NAME, isError: true })
   const aliEventLog = print({ platform: 'ali', tag: TAG_NAME, isError: false, type: 'event' })
+  const ttPropsLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false })
+  const ttEventLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false, type: 'event' })
 
   return {
     test: TAG_NAME,
@@ -25,12 +27,17 @@ module.exports = function ({ print }) {
       {
         test: /^(hover-stop-propagation)$/,
         ali: aliPropLog
-      }
+      },
+      {
+        test: /^(target|app-id|path|extra-data|version)$/,
+        tt: ttPropsLog
+      },
     ],
     event: [
       {
         test: /^(success|fail|complete)$/,
-        ali: aliEventLog
+        ali: aliEventLog,
+        tt: ttEventLog
       }
     ]
   }
