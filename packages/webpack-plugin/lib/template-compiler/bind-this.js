@@ -31,7 +31,28 @@ module.exports = {
       ]
     })
 
+    const propKeys = []
+    let inTravel = false
+
     let bindThisVisitor = {
+      CallExpression: {
+        enter (path) {
+          const callee = path.node.callee
+          if (
+            t.isMemberExpression(callee) &&
+            t.isThisExpression(callee.object) &&
+            (callee.property.name === '__travel' || callee.property.value === '__travel')
+          ) {
+            inTravel = true
+            path.isTravel = true
+          }
+        },
+        exit (path) {
+          if (path.isTravel) {
+            inTravel = false
+          }
+        }
+      },
       Identifier (path) {
         if (
           !(t.isDeclaration(path.parent) && path.parentKey === 'id') &&
@@ -48,6 +69,10 @@ module.exports = {
           if (!path.scope.hasBinding(path.node.name) && !ignoreMap[path.node.name]) {
             // bind this
             path.replaceWith(t.memberExpression(t.thisExpression(), path.node))
+
+            if (inTravel) {
+              propKeys.push(path.node.property.name)
+            }
 
             if (needCollect) {
               // 找到访问路径
@@ -123,7 +148,8 @@ module.exports = {
     traverse(ast, bindThisVisitor)
 
     return {
-      code: generate(ast).code
+      code: generate(ast).code,
+      propKeys
     }
   }
 }

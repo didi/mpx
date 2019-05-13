@@ -1010,12 +1010,12 @@ function parseMustache (raw = '') {
   }
 }
 
-function addExp (el, exp) {
+function addExp (el, exp, needTravel) {
   if (exp) {
     if (!el.exps) {
       el.exps = []
     }
-    el.exps.push(exp)
+    el.exps.push({ exp, needTravel })
   }
 }
 
@@ -1106,14 +1106,14 @@ function processWxs (el, meta) {
   }
 }
 
-function processAttrs (el) {
+function processAttrs (el, options) {
   el.attrsList.forEach((attr) => {
     let parsed = parseMustache(attr.value)
     if (parsed.hasBinding) {
       if (el.tag === 'template' && attr.name === 'data') {
         addExp(el, `{${parsed.result}}`)
       } else {
-        addExp(el, parsed.result)
+        addExp(el, parsed.result, options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component')
       }
     }
     if (parsed.val !== attr.value) {
@@ -1288,10 +1288,11 @@ function processShow (el, options, root) {
       }])
     } else {
       const showExp = parseMustache(show).result
-      const oldStyle = getAndRemoveAttr(el, 'style') || ''
+      let oldStyle = getAndRemoveAttr(el, 'style')
+      oldStyle = oldStyle ? oldStyle + ';' : ''
       addAttrs(el, [{
         name: 'style',
-        value: `${oldStyle};{{${showExp}||${showExp}===undefined?'':'display:none;'}}`
+        value: `${oldStyle}{{${showExp}||${showExp}===undefined?'':'display:none;'}}`
       }])
     }
   }
@@ -1331,7 +1332,7 @@ function processElement (el, options, meta, root, injectNodes) {
   }
   processComponentIs(el, options)
   processWxs(el, meta)
-  processAttrs(el)
+  processAttrs(el, options)
 }
 
 function closeElement (el, root) {
@@ -1461,8 +1462,8 @@ function genElse (node) {
 }
 
 function genExps (node) {
-  return `${node.exps.map((exp) => {
-    return `this.__travel(${exp}, __seen);\n`
+  return `${node.exps.map(({ exp, needTravel }) => {
+    return needTravel ? `this.__travel(${exp}, __seen);\n` : `${exp};\n`
   }).join('')}`
 }
 

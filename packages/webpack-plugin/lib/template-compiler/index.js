@@ -45,8 +45,7 @@ module.exports = function (raw) {
     render: function () {
       var __seen = [];
       var renderData = {};
-      ${compiler.genNode(ast)}
-      return renderData
+      ${compiler.genNode(ast)}return renderData;
     }
 };\n`, {
     needCollect: true,
@@ -54,6 +53,10 @@ module.exports = function (raw) {
   })
 
   let globalInjectCode = renderResult.code + '\n'
+
+  if (renderResult.propKeys) {
+    globalInjectCode += `global.currentInject.propKeys = ${JSON.stringify(renderResult.propKeys)};\n`
+  }
 
   if (meta.computed) {
     globalInjectCode += bindThis(`global.currentInject.injectComputed = {
