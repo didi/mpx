@@ -15,7 +15,7 @@ module.exports = function ({ print }) {
   const aliUnsupportedTagError = print({ platform: 'ali', isError: true, type: 'tag' })
   const baiduUnsupportedTagError = print({ platform: 'baidu', isError: true, type: 'tag' })
   const qqUnsupportedTagError = print({ platform: 'qq', isError: true, type: 'tag' })
-  const ttUnsupportedTagError = print({ platform: 'tt', isError: true, type: 'tag' })
+  const ttUnsupportedTagError = print({ platform: 'bytedance', isError: true, type: 'tag' })
 
   const aliUnsupportedExp = new RegExp('^(' + ALI_UNSUPPORTED_TAG_NAME_ARR.join('|') + ')$')
   const baiduUnsupportedExp = new RegExp('^(' + BAIDU_UNSUPPORTED_TAG_NAME_ARR.join('|') + ')$')

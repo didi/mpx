@@ -2,7 +2,7 @@ const TAG_NAME = 'canvas'
 
 module.exports = function ({ print }) {
   const aliEventLog = print({ platform: 'ali', tag: TAG_NAME, isError: false, type: 'event' })
-  const ttPropsLog = print({ platform: 'tt', tag: TAG_NAME, isError: false })
+  const ttPropsLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false })
   return {
     test: TAG_NAME,
     props: [
