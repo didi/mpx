@@ -23,8 +23,8 @@ module.exports = function (content) {
   const rootName = mainCompilation._preparedEntrypoints[0].name
 
   const resource = stripExtension(options.resource || this.resource)
-  const selfResource = stripExtension(this.resource)
   const resourcePath = pagesMap[resource] || componentsMap[resource] || rootName
+  const selfResourcePath = this.resourcePath
 
   // 使用子编译器生成需要抽离的json，styles和template
   const contentLoader = normalize.lib('content-loader')
@@ -93,7 +93,7 @@ module.exports = function (content) {
         }).join('\n')
       }
 
-      let extracted = extract(text, options.type, resourcePath, +options.index, selfResource)
+      let extracted = extract(text, options.type, resourcePath, +options.index, selfResourcePath)
       if (extracted) {
         resultSource = `module.exports = __webpack_public_path__ + ${JSON.stringify(extracted)};`
       }

@@ -4,7 +4,8 @@ import {
   toJS,
   isObservableArray,
   isObservableObject,
-  keys
+  keys,
+  isObservable
 } from 'mobx'
 import {
   getByPath,
@@ -41,7 +42,21 @@ export default class Watcher {
     this.reaction.track(() => {
       value = this.get()
       if (this.options.deep) {
-        value = toJS(value, false)
+        const valueType = type(value)
+        // 某些情况下，最外层是非isObservable 对象，比如同时观察多个属性时
+        if (!isObservable(value) && (valueType === 'Array' || valueType === 'Object')) {
+          if (valueType === 'Array') {
+            value = value.map(item => toJS(item, false))
+          } else {
+            const newValue = {}
+            Object.keys(value).forEach(key => {
+              newValue[key] = toJS(value[key], false)
+            })
+            value = newValue
+          }
+        } else {
+          value = toJS(value, false)
+        }
       } else if (isObservableArray(value)) {
         value.peek()
       } else if (isObservableObject(value)) {

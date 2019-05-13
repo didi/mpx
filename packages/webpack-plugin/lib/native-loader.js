@@ -4,6 +4,8 @@ const stripExtension = require('./utils/strip-extention')
 const loaderUtils = require('loader-utils')
 const config = require('./config')
 const createHelpers = require('./helpers')
+const InjectDependency = require('./dependency/InjectDependency')
+const stringifyQuery = require('./utils/stringify-query')
 
 module.exports = function (content) {
   this.cacheable()
@@ -39,10 +41,14 @@ module.exports = function (content) {
   const usingComponents = []
 
   const mode = this._compilation.__mpx__.mode
+  const globalSrcMode = this._compilation.__mpx__.srcMode
+  const queryObj = loaderUtils.parseQuery(this.resourceQuery || '?')
+  const localSrcMode = queryObj.mode
   const pagesMap = this._compilation.__mpx__.pagesMap
   const componentsMap = this._compilation.__mpx__.componentsMap
   const resource = stripExtension(this.resource)
   const isApp = !pagesMap[resource] && !componentsMap[resource]
+  const srcMode = localSrcMode || globalSrcMode
 
   const {
     getRequireForSrc,
@@ -56,20 +62,23 @@ module.exports = function (content) {
     hasComment,
     usingComponents,
     needCssSourceMap,
-    mode,
+    srcMode,
     isNative
   )
 
-  const typeExtMap = config[mode].typeExtMap
+  const typeExtMap = config[srcMode].typeExtMap
 
   function getRequire (type) {
+    let localQuery = Object.assign({}, queryObj)
     let src = resource + typeExtMap[type]
     if (type === 'template' && isApp) {
       return ''
     }
     if (type === 'json') {
-      src = src + '?__component'
+      localQuery.__component = true
     }
+    src += stringifyQuery(localQuery)
+
     if (type === 'script') {
       return getNamedExportsForSrc(type, { src })
     } else {
@@ -77,7 +86,38 @@ module.exports = function (content) {
     }
   }
 
-  let output = ''
+  // 注入模块id
+  let globalInjectCode = `global.currentModuleId = ${JSON.stringify(moduleId)};\n`
+
+  // 注入构造函数
+  let ctor = 'App'
+  if (pagesMap[resource]) {
+    ctor = mode === 'ali' ? 'Page' : 'Component'
+  } else if (componentsMap[resource]) {
+    ctor = 'Component'
+  }
+  globalInjectCode += `global.currentCtor = ${ctor};\n`
+
+  if (isApp && mode === 'swan') {
+    // 注入swan runtime fix
+    globalInjectCode += 'if (!global.navigator) {\n' +
+      '  global.navigator = {};\n' +
+      '}\n' +
+      'global.navigator.standalone = true;\n'
+  }
+
+  if (srcMode) {
+    globalInjectCode += `global.currentSrcMode = ${JSON.stringify(srcMode)};\n`
+  }
+
+  const dep = new InjectDependency({
+    content: globalInjectCode,
+    index: -3
+  })
+  this._module.addDependency(dep)
+
+  // 触发webpack global var 注入
+  let output = 'global.currentModuleId;\n'
 
   for (let type in typeExtMap) {
     output += `/* ${type} */\n${getRequire(type)}\n\n`

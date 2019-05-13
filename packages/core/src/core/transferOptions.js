@@ -12,14 +12,12 @@ export default function transferOptions (options, type, builtInMixins = []) {
   // 注入内建的mixins
   options.mixins = options.mixins ? builtInMixins.concat(options.mixins) : builtInMixins
 
-  if (currentInject) {
-    if (currentInject.injectComputed) {
-      // 编译计算属性注入
-      options.computed = Object.assign({}, options.computed, currentInject.injectComputed)
-    }
-    // 转换mode
-    options.mpxConvertMode = options.mpxConvertMode || getConvertMode(global.currentSrcMode, __mpx_mode__)
+  if (currentInject && currentInject.injectComputed) {
+    // 编译计算属性注入
+    options.computed = Object.assign({}, options.computed, currentInject.injectComputed)
   }
+  // 转换mode
+  options.mpxConvertMode = options.mpxConvertMode || getConvertMode(global.currentSrcMode, __mpx_mode__)
   const rawOptions = mergeOptions(options, type)
   return {
     rawOptions,

@@ -1,0 +1,80 @@
+const babylon = require('babylon')
+const traverse = require('babel-traverse').default
+const t = require('babel-types')
+const generate = require('babel-generator').default
+const getMainCompilation = require('../utils/get-main-compilation')
+
+module.exports = function (content) {
+  this.cacheable()
+  const mainCompilation = getMainCompilation(this._compilation)
+  const selfCompilation = this._compilation
+  const module = this._module
+  const mode = mainCompilation.__mpx__.mode
+  if (module.wxs && mode !== 'swan') {
+    return content
+  } else {
+    // 对于编译进render函数中和swan中的wxs模块进行处理，抹平差异
+    const ast = babylon.parse(content, {
+      sourceType: 'module'
+    })
+    let wxsVisitor = {
+      MemberExpression (path) {
+        const property = path.node.property
+        if (
+          (property.name === 'constructor' || property.value === 'constructor') &&
+          !(t.isMemberExpression(path.parent) && path.parentKey === 'object')
+        ) {
+          path.replaceWith(t.memberExpression(path.node, t.identifier('name')))
+        }
+      },
+      CallExpression (path) {
+        const callee = path.node.callee
+        const transMap = {
+          getDate: 'Date',
+          getRegExp: 'RegExp'
+        }
+        if (t.isIdentifier(callee) && transMap[callee.name]) {
+          path.replaceWith(t.newExpression(t.identifier(transMap[callee.name]), path.node.arguments))
+        }
+      }
+    }
+
+    if (mode === 'swan' && module.wxs && selfCompilation.entries.indexOf(module) > -1) {
+      if (!selfCompilation.__swan_exports_map__) {
+        selfCompilation.__swan_exports_map__ = {}
+      }
+      Object.assign(wxsVisitor, {
+        AssignmentExpression (path) {
+          const left = path.node.left
+          const right = path.node.right
+          if (t.isMemberExpression(left) && left.object.name === 'module' && left.property.name === 'exports') {
+            if (t.isObjectExpression(right)) {
+              right.properties.forEach((property) => {
+                if (
+                  (
+                    t.isObjectProperty(property) &&
+                      (
+                        t.isFunctionExpression(property.value) ||
+                        t.isArrowFunctionExpression(property.value)
+                      )
+                  ) ||
+                    t.isObjectMethod(property)
+                ) {
+                  const params = t.isObjectMethod(property) ? property.params : property.value.params
+                  selfCompilation.__swan_exports_map__[property.key.name] = params.length
+                } else {
+                  throw new Error('Swan filter module exports value must be Functions!')
+                }
+              })
+            } else {
+              throw new Error('Swan filter module exports declaration must be an ObjectExpression!')
+            }
+          }
+        }
+      }
+      )
+    }
+    traverse(ast, wxsVisitor)
+    return generate(ast).code
+  }
+}

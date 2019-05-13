@@ -1,4 +1,4 @@
-import { type, merge, extend } from '../helper/utils'
+import { type, merge, extend, aliasReplace, findItem } from '../helper/utils'
 import { getConvertRule } from '../convertor/convertor'
 
 let CURRENT_HOOKS = []
@@ -22,13 +22,19 @@ export default function mergeOptions (options = {}, type, needConvert = true) {
 }
 
 function extractMixins (mergeOptions, options) {
+  aliasReplace(options, 'behaviors', 'mixins')
   if (options.mixins) {
     for (const mix of options.mixins) {
-      extractMixins(mergeOptions, mix)
+      if (typeof mix === 'string') {
+        console.error('暂不支持对字符串协议的【behavior】进行转换')
+      } else {
+        extractMixins(mergeOptions, mix)
+      }
     }
   }
   options = extractLifetimes(options)
   options = extractPageHooks(options)
+  options = extractObservers(options)
   mergeMixins(mergeOptions, options)
 }
 
@@ -40,6 +46,77 @@ function extractLifetimes (options) {
   } else {
     return options
   }
+}
+
+function extractObservers (options) {
+  const observers = options.observers
+  const props = Object.assign({}, options.properties, options.props)
+  const watch = Object.assign({}, options.watch)
+  let extract = false
+  function mergeWatch (key, config) {
+    if (watch[key]) {
+      type(watch[key]) !== 'Array' && (watch[key] = [watch[key]])
+    } else {
+      watch[key] = []
+    }
+    watch[key].push(config)
+    extract = true
+  }
+  Object.keys(props).forEach(key => {
+    const prop = props[key]
+    if (typeof prop.observer === 'function') {
+      mergeWatch(key, {
+        handler (...rest) {
+          prop.observer.call(this, ...rest)
+        },
+        deep: true,
+        immediate: true
+      })
+    }
+  })
+  if (observers) {
+    Object.keys(observers).forEach(key => {
+      const callback = observers[key]
+      if (typeof callback === 'function') {
+        let deep = false
+        const propsArr = Object.keys(props)
+        const keyPathArr = []
+        key.split(',').forEach(item => {
+          const result = item.trim()
+          result && keyPathArr.push(result)
+        })
+        // 针对prop的watch都需要立刻执行一次
+        let watchProp = false
+        for (const prop of propsArr) {
+          if (findItem(keyPathArr, prop)) {
+            watchProp = true
+            break
+          }
+        }
+        if (key.indexOf('.**')) {
+          deep = true
+          key = key.replace('.**', '')
+        }
+        mergeWatch(key, {
+          handler (val, old) {
+            if (keyPathArr.length < 2) {
+              val = [val]
+            }
+            callback.call(this, ...val)
+          },
+          deep,
+          immediate: watchProp
+        })
+      }
+    })
+  }
+  if (extract) {
+    const newOptions = extend({}, options)
+    newOptions.watch = watch
+    delete newOptions.observers
+    return newOptions
+  }
+  return options
 }
 
 function extractPageHooks (options) {
@@ -69,7 +146,7 @@ function mergeMixins (parent, child) {
       mergeDataFn(parent, child, key)
     } else if (/computed|properties|props|methods|proto/.test(key)) {
       mergeSimpleProps(parent, child, key)
-    } else if (/watch|pageLifetimes/.test(key)) {
+    } else if (/watch|pageLifetimes|observers/.test(key)) {
       mergeToArray(parent, child, key)
     } else if (key !== 'mixins') {
       mergeDefault(parent, child, key)
@@ -136,11 +213,17 @@ function mergeToArray (parent, child, key) {
   }
   Object.keys(childVal).forEach(key => {
     if (key in parentVal) {
-      parentVal[key] = type(parentVal[key]) !== 'Array'
-        ? [parentVal[key], childVal[key]]
-        : parentVal[key].concat([childVal[key]])
+      let parent = parentVal[key]
+      let child = childVal[key]
+      if (type(parent) !== 'Array') {
+        parent = [parent]
+      }
+      if (type(child) !== 'Array') {
+        child = [child]
+      }
+      parentVal[key] = parent.concat(child)
     } else {
-      parentVal[key] = [childVal[key]]
+      parentVal[key] = type(childVal[key]) === 'Array' ? childVal[key] : [childVal[key]]
     }
   })
 }

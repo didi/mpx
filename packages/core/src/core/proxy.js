@@ -13,7 +13,9 @@ import {
   processUndefined,
   diffAndCloneA,
   defineGetter,
-  preprocessRenderData
+  preprocessRenderData,
+  setByPath,
+  findItem
 } from '../helper/utils'
 
 import { watch } from './watcher'
@@ -45,7 +47,7 @@ export default class MPXProxy {
     this.renderReaction = null
     this.updatedCallbacks = [] // 保存设置的更新回调
     this.computedKeys = options.computed ? enumerableKeys(options.computed) : []
-    this.localKeys = this.computedKeys.slice()
+    this.localKeys = this.computedKeys.slice() // 非props key
     this.forceUpdateKeys = [] // 强制更新的key，无论是否发生change
   }
 
@@ -57,7 +59,8 @@ export default class MPXProxy {
     this.initState(this.options)
     this.state = CREATED
     this.callUserHook(CREATED)
-    this.initRender()
+    // 强制走小程序原生渲染逻辑
+    this.target.__nativeRender__ || this.initRender()
   }
 
   isMounted () {
@@ -205,11 +208,9 @@ export default class MPXProxy {
   }
 
   render () {
-    const forceUpdateKeys = this.forceUpdateKeys
     const newData = filterProperties(this.data, this.localKeys)
     Object.keys(newData).forEach(key => {
-      const isForceUpdateKey = forceUpdateKeys.indexOf(key) > -1
-      if (!isForceUpdateKey && comparer.structural(this.cacheData[key], newData[key])) {
+      if (!this.checkInForceUpdateKeys(key) && comparer.structural(this.cacheData[key], newData[key])) {
         // 强制更新的key，无论是否变化，都要进行最终的setData
         delete newData[key]
       } else {
@@ -247,7 +248,7 @@ export default class MPXProxy {
         let data = item[0]
         let firstKey = item[1]
         let { clone, diff } = diffAndCloneA(data, this.miniRenderData[key])
-        if (this.localKeys.indexOf(firstKey) > -1 && (this.forceUpdateKeys.indexOf(firstKey) > -1 || diff)) {
+        if (this.localKeys.indexOf(firstKey) > -1 && (this.checkInForceUpdateKeys(key) || diff)) {
           this.miniRenderData[key] = result[key] = clone
         }
       }
@@ -260,6 +261,7 @@ export default class MPXProxy {
       console.error('please specify a 【__render】 function to render view')
       return
     }
+    this.forceUpdateKeys = [] // 仅用于当次的render
     if (isEmptyObject(data)) {
       return
     }
@@ -267,7 +269,6 @@ export default class MPXProxy {
      * mounted之后才接收回调来触发updated钩子，换言之mounted之前修改数据是不会触发updated的
      */
     this.target.__render(processUndefined(data), this.isMounted() && getRenderCallBack(this))
-    this.forceUpdateKeys = [] // 仅用于当次的render
   }
 
   initRender () {
@@ -308,13 +309,17 @@ export default class MPXProxy {
 
   forceUpdate (params, callback) {
     const paramsType = type(params)
+    let forceUpdateKeys = this.localKeys
     if (paramsType === 'Function') {
       callback = params
       params = null
     } else if (paramsType === 'Object') {
-      extend(this.data, params)
+      forceUpdateKeys = Object.keys(params)
+      forceUpdateKeys.forEach(key => {
+        setByPath(this.data, key, params[key])
+      })
     }
-    this.setForceUpdateKeys(params ? Object.keys(params) : this.localKeys)
+    this.setForceUpdateKeys(forceUpdateKeys)
     type(callback) === 'Function' && this.onUpdated(callback)
     // 无论是否改变，强制将状态置为stale，从而触发render
     if (this.renderReaction) {
@@ -329,6 +334,10 @@ export default class MPXProxy {
         this.forceUpdateKeys.push(key)
       }
     })
+  }
+
+  checkInForceUpdateKeys (key) {
+    return findItem(this.forceUpdateKeys, new RegExp(`^${key}`))
   }
 
   nextTick (fn) {

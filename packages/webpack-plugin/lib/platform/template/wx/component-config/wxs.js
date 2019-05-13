@@ -11,6 +11,9 @@ module.exports = function () {
     ali () {
       return 'import-sjs'
     },
+    swan () {
+      return 'filter'
+    },
     // 组件属性中的差异部分
     props: [
       {

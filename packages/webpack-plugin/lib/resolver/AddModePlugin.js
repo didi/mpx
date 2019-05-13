@@ -20,18 +20,20 @@ module.exports = class AddModePlugin {
         mode
       }
 
-      let temp = request.path
-      let ext = path.extname(temp)
-      obj.path = temp.substring(0, temp.length - ext.length) + '.' + mode + ext
-
-      let queryObj = parseQuery(request.query || '?')
-      queryObj.mode = mode
-      obj.query = stringifyQuery(queryObj)
-
-      if (request.relativePath) {
-        temp = request.relativePath
-        obj.relativePath = temp.substring(0, temp.length - ext.length) + '.' + mode + ext
+      let resource = request.request
+      const queryIndex = resource.indexOf('?')
+      let resourceQuery = '?'
+      if (queryIndex > -1) {
+        resourceQuery = resource.substr(queryIndex)
+        resource = resource.substr(0, queryIndex)
       }
+      const resourceExt = path.extname(resource)
+
+      const resourceQueryObj = parseQuery(resourceQuery)
+      resourceQueryObj.mode = mode
+      resourceQuery = stringifyQuery(resourceQueryObj)
+
+      obj.request = resource.substring(0, resource.length - resourceExt.length) + '.' + mode + resourceExt + resourceQuery
 
       resolver.doResolve(target, Object.assign({}, request, obj), 'add mode: ' + mode, resolveContext, callback)
     })

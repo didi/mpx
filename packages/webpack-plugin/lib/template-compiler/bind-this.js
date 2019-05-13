@@ -31,20 +31,25 @@ module.exports = {
       ]
     })
 
-    let hasIgnore = false
+    const propKeys = []
+    let inTravel = false
 
     let bindThisVisitor = {
       CallExpression: {
         enter (path) {
-          let callee = path.node.callee
-          if (t.isMemberExpression(callee) && t.isThisExpression(callee.object) && callee.property.name === '__checkIgnore') {
-            hasIgnore = false
+          const callee = path.node.callee
+          if (
+            t.isMemberExpression(callee) &&
+            t.isThisExpression(callee.object) &&
+            (callee.property.name === '__travel' || callee.property.value === '__travel')
+          ) {
+            inTravel = true
+            path.isTravel = true
           }
         },
         exit (path) {
-          let callee = path.node.callee
-          if (t.isMemberExpression(callee) && t.isThisExpression(callee.object) && callee.property.name === '__checkIgnore') {
-            path.pushContainer('arguments', t.booleanLiteral(hasIgnore))
+          if (path.isTravel) {
+            inTravel = false
           }
         }
       },
@@ -61,44 +66,13 @@ module.exports = {
         ) {
           let current
           let last
-          if (!path.scope.hasBinding(path.node.name)) {
-            if (ignoreMap[path.node.name]) {
-              hasIgnore = true
-              last = path
-              current = path.parentPath
-              let exps = []
-              while (current.isMemberExpression() && last.parentKey !== 'property') {
-                if (current.node.computed) {
-                  exps.push(current.node.property)
-                }
-                last.stop()
-                last = current
-                current = current.parentPath
-              }
-              // m1 in ignoreMap
-              // someData[m1.someKey] => this.__travel(this.someData, __seen)["__wxs__"];
-              if (current.isMemberExpression() && last.parentKey === 'property') {
-                let objectPath = current.get('object')
-                let targetNode = t.callExpression(t.memberExpression(t.thisExpression(), t.identifier('__travel')), [objectPath.node, t.identifier('__seen')])
-                objectPath.replaceWith(targetNode)
-              }
-              if (current.isCallExpression() && last.parentKey === 'callee') {
-                exps.push(t.functionExpression(null, [], t.blockStatement([])))
-              } else if (current.isSpreadProperty()) {
-                exps.push(t.objectExpression([]))
-              } else if (current.isSpreadElement()) {
-                exps.push(t.arrayExpression([]))
-              } else {
-                if (!exps.length) {
-                  exps.push(t.stringLiteral('__wxs__'))
-                }
-              }
-              last.replaceWith(exps.length > 1 ? t.sequenceExpression(exps) : exps[0])
-              return
-            }
-
+          if (!path.scope.hasBinding(path.node.name) && !ignoreMap[path.node.name]) {
             // bind this
             path.replaceWith(t.memberExpression(t.thisExpression(), path.node))
+
+            if (inTravel) {
+              propKeys.push(path.node.property.name)
+            }
 
             if (needCollect) {
               // 找到访问路径
@@ -174,7 +148,8 @@ module.exports = {
     traverse(ast, bindThisVisitor)
 
     return {
-      code: generate(ast).code
+      code: generate(ast).code,
+      propKeys
     }
   }
 }

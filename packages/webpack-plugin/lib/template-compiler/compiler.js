@@ -168,6 +168,7 @@ var error$1
 var mode
 var srcMode
 var processingTemplate
+var isNative
 var rulesRunner
 var platformGetTagNamespace
 
@@ -574,6 +575,7 @@ function parse (template, options) {
 
   mode = options.mode || 'wx'
   srcMode = options.srcMode || mode
+  isNative = options.isNative
 
   rulesRunner = getRulesRunner({
     mode,
@@ -1008,12 +1010,12 @@ function parseMustache (raw = '') {
   }
 }
 
-function addExp (el, exp) {
+function addExp (el, exp, needTravel) {
   if (exp) {
     if (!el.exps) {
       el.exps = []
     }
-    el.exps.push(exp)
+    el.exps.push({ exp, needTravel })
   }
 }
 
@@ -1090,25 +1092,28 @@ function processRef (el, options, meta) {
   }
 }
 
-function addWxsModule (meta, module) {
+function addWxsModule (meta, module, src) {
   if (!meta.wxsModuleMap) {
     meta.wxsModuleMap = {}
   }
   if (meta.wxsModuleMap[module]) return true
-  meta.wxsModuleMap[module] = true
+  meta.wxsModuleMap[module] = src
 }
 
-function processAttrs (el, meta) {
+function processWxs (el, meta) {
+  if (el.tag === config[mode].wxs.tag) {
+    addWxsModule(meta, el.attrsMap[config[mode].wxs.module], el.attrsMap[config[mode].wxs.src])
+  }
+}
+
+function processAttrs (el, options) {
   el.attrsList.forEach((attr) => {
-    if (el.tag === config[mode].wxs.tag && attr.name === config[mode].wxs.module) {
-      return addWxsModule(meta, attr.value)
-    }
     let parsed = parseMustache(attr.value)
     if (parsed.hasBinding) {
       if (el.tag === 'template' && attr.name === 'data') {
         addExp(el, `{${parsed.result}}`)
       } else {
-        addExp(el, parsed.result)
+        addExp(el, parsed.result, options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component')
       }
     }
     if (parsed.val !== attr.value) {
@@ -1195,7 +1200,7 @@ function processText (el) {
 // }
 
 function injectWxs (meta, module, src, injectNodes) {
-  if (addWxsModule(meta, module)) {
+  if (addWxsModule(meta, module, src)) {
     return
   }
   let wxsNode = createASTElement(config[mode].wxs.tag, [
@@ -1283,10 +1288,11 @@ function processShow (el, options, root) {
       }])
     } else {
       const showExp = parseMustache(show).result
-      const oldStyle = getAndRemoveAttr(el, 'style') || ''
+      let oldStyle = getAndRemoveAttr(el, 'style')
+      oldStyle = oldStyle ? oldStyle + ';' : ''
       addAttrs(el, [{
         name: 'style',
-        value: `${oldStyle};{{${showExp}||${showExp}===undefined?'':'display:none;'}}`
+        value: `${oldStyle}{{${showExp}||${showExp}===undefined?'':'display:none;'}}`
       }])
     }
   }
@@ -1311,7 +1317,7 @@ function processElement (el, options, meta, root, injectNodes) {
   if (rulesRunner) {
     rulesRunner(el)
   }
-  if (processTemplate(el) || processingTemplate) return
+  if (isNative || processTemplate(el) || processingTemplate) return
   processIf(el)
   processFor(el)
   if (mode !== 'qq' && mode !== 'tt') {
@@ -1325,7 +1331,8 @@ function processElement (el, options, meta, root, injectNodes) {
     processPageStatus(el, options)
   }
   processComponentIs(el, options)
-  processAttrs(el, meta)
+  processWxs(el, meta)
+  processAttrs(el, options)
 }
 
 function closeElement (el, root) {
@@ -1431,14 +1438,14 @@ function findPrevNode (node) {
 
 function genIf (node) {
   node.ifProcessed = true
-  return `if(this.__checkIgnore(${node.if.exp})){\n${genNode(node)}}\n`
+  return `if(${node.if.exp}){\n${genNode(node)}}\n`
 }
 
 function genElseif (node) {
   node.elseifProcessed = true
   let preNode = findPrevNode(node)
   if (preNode && (preNode.if || preNode.elseif)) {
-    return `else if(this.__checkIgnore(${node.elseif.exp})){\n${genNode(node)}}\n`
+    return `else if(${node.elseif.exp}){\n${genNode(node)}}\n`
   } else {
     warn$1(`wx:elif (wx:elif="${node.elseif.raw}") used on element <"${node.tag}"> without corresponding wx:if or wx:elif.`)
   }
@@ -1455,8 +1462,8 @@ function genElse (node) {
 }
 
 function genExps (node) {
-  return `${node.exps.map((exp) => {
-    return `this.__travel(${exp}, __seen);\n`
+  return `${node.exps.map(({ exp, needTravel }) => {
+    return needTravel ? `this.__travel(${exp}, __seen);\n` : `${exp};\n`
   }).join('')}`
 }
 
@@ -1464,7 +1471,7 @@ function genFor (node) {
   node.forProcessed = true
   let index = node.for.index || 'index'
   let item = node.for.item || 'item'
-  return `this.__iterate(this.__checkIgnore(${node.for.exp}), function(${item},${index}){\n${genNode(node)}}.bind(this));\n`
+  return `this.__iterate(${node.for.exp}, function(${item},${index}){\n${genNode(node)}}.bind(this));\n`
 }
 
 function genNode (node) {
