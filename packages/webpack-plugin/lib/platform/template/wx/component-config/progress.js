@@ -5,6 +5,8 @@ module.exports = function ({ print }) {
   const aliEventLog = print({ platform: 'ali', tag: TAG_NAME, isError: false, type: 'event' })
   const baiduPropLog = print({ platform: 'baidu', tag: TAG_NAME, isError: false })
   const baiduEventLog = print({ platform: 'baidu', tag: TAG_NAME, isError: false, type: 'event' })
+  const ttPropsLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false })
+  const ttEventLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false, type: 'event' })
 
   return {
     test: TAG_NAME,
@@ -26,14 +28,27 @@ module.exports = function ({ print }) {
           }
           obj.name = propsMap[obj.name]
           return obj
+        },
+        tt (obj) {
+          const propsMap = {
+            'activeColor': 'active-color',
+            'backgroundColor': 'background-color'
+          }
+          obj.name = propsMap[obj.name]
+          return obj
         }
+      },
+      {
+        test: /^(show-info|border-radius|font-size|)$/,
+        tt: ttPropsLog
       }
     ],
     event: [
       {
         test: /^(activeend)$/,
         ali: aliEventLog,
-        swan: baiduEventLog
+        swan: baiduEventLog,
+        tt: ttEventLog
       }
     ]
   }
