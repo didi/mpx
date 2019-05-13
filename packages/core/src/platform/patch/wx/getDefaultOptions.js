@@ -14,10 +14,6 @@ function transformProperties (properties) {
   const newProps = {}
   enumerableKeys(properties).forEach(key => {
     const rawFiled = properties[key]
-    const rawObserver = rawFiled.observer
-    if (rawObserver) {
-      console.warn('【MPX ERROR】', 'please use watch instead of observer')
-    }
     let newFiled = null
     if (typeof rawFiled === 'function') {
       newFiled = {
@@ -30,7 +26,6 @@ function transformProperties (properties) {
       if (this.$mpxProxy) {
         this[key] = value
         this.$mpxProxy.updated()
-        typeof rawObserver === 'function' && rawObserver.call(this, value, oldValue)
       }
     }
     newProps[key] = newFiled
@@ -43,10 +38,19 @@ function transformApiForProxy (context, currentInject) {
   Object.defineProperties(context, {
     setData: {
       get () {
-        return (data, callback) => {
+        return (data, cb) => {
           // 同步数据到proxy
           this.$mpxProxy.forceUpdate(data)
           if (this.__nativeRender__) {
+            // 走原生渲染
+            let callback = cb
+            if (this.$mpxProxy.isMounted()) {
+              // mounted 之后才监听updated
+              callback = (...rest) => {
+                this.$mpxProxy.updated()
+                typeof cb === 'function' && cb(...rest)
+              }
+            }
             return rawSetData(data, callback)
           }
         }

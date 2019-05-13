@@ -31,6 +31,15 @@ export function aliasReplace (options = {}, alias, target) {
   return options
 }
 
+export function findItem (arr = [], key) {
+  for (const item of arr) {
+    if (type(key) === 'RegExp' && key.test(item) || item === key) {
+      return true
+    }
+  }
+  return false
+}
+
 export function normalizeMap (arr) {
   if (type(arr) === 'Array') {
     const map = {}
@@ -70,8 +79,11 @@ export function setByPath (data, pathStr, value) {
 }
 
 export function getByPath (data, pathStr, defaultVal = '') {
-  const results = pathStr.replace(/^\s*,|,\s*$/g, '').split(',').map(item => {
-    const result = _getByPath(data, item.trim(), (value, key) => {
+  const results = []
+  pathStr.split(',').forEach(item => {
+    const path = item.trim()
+    if (!path) return
+    const result = _getByPath(data, path, (value, key) => {
       let newValue
       if (isObservable(value)) {
         // key可能不是一个响应式属性，那么get将无法返回正确值
@@ -82,7 +94,7 @@ export function getByPath (data, pathStr, defaultVal = '') {
       return newValue
     })
     // 小程序setData时不允许undefined数据
-    return result === undefined ? defaultVal : result
+    results.push(result === undefined ? defaultVal : result)
   })
   return results.length > 1 ? results : results[0]
 }
