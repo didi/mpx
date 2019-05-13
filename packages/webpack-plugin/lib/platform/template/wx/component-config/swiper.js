@@ -6,6 +6,8 @@ module.exports = function ({ print }) {
   const baiduPropLog = print({ platform: 'baidu', tag: TAG_NAME, isError: false })
   const baiduEventLog = print({ platform: 'baidu', tag: TAG_NAME, isError: false, type: 'event' })
   const qqPropLog = print({ platform: 'qq', tag: TAG_NAME, isError: false })
+  const ttPropsLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false })
+  const ttEventLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false, type: 'event' })
 
   return {
     test: TAG_NAME,
@@ -21,6 +23,10 @@ module.exports = function ({ print }) {
       {
         test: /^(easing-function)$/,
         qq: qqPropLog
+      },
+      {
+        test: /^(previous-margin|next-margin|skip-hidden-item-layout|easing-function)$/,
+        tt: ttPropsLog
       }
     ],
     event: [
@@ -35,7 +41,8 @@ module.exports = function ({ print }) {
       },
       {
         test: /^(transition|animationfinish)$/,
-        ali: aliEventLog
+        ali: aliEventLog,
+        tt: ttEventLog
       },
       {
         test: /^(transition)$/,
