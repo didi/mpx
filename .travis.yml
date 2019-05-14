@@ -3,8 +3,10 @@ node_js:
   - 11.3.0
 install:
   - npm i
+  - lerna bootstrap --ignore-prepublish --no-ci
 script:
   - npm run lint
+  - npm t
 before_deploy:
   - cd docs
   - npx gitbook-cli install

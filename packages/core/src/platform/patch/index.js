@@ -7,6 +7,7 @@ import { is } from '../../helper/env'
 export default function createFactory (type) {
   return (options, { isNative } = {}) => {
     options.__nativeRender__ = !!isNative
+    options.__type__ = type
     let getDefaultOptions
     if (is('ali')) {
       getDefaultOptions = getALIDefaultOptions
@@ -23,7 +24,7 @@ export default function createFactory (type) {
 
 export function getRenderCallBack (context) {
   return () => {
-    if (!is('ali')) {
+    if (!is('ali') || context.options.__type__ === 'page') {
       context.updated()
     }
   }

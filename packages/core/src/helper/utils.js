@@ -33,7 +33,7 @@ export function aliasReplace (options = {}, alias, target) {
 
 export function findItem (arr = [], key) {
   for (const item of arr) {
-    if (type(key) === 'RegExp' && key.test(item) || item === key) {
+    if ((type(key) === 'RegExp' && key.test(item)) || item === key) {
       return true
     }
   }
