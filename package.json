@@ -4,7 +4,8 @@
   "scripts": {
     "lerna:publish": "lerna publish from-package --yes",
     "lint": "eslint --ext .js packages/",
-    "fix": "eslint --fix --ext .js packages/"
+    "fix": "eslint --fix --ext .js packages/",
+    "test": "jest"
   },
   "devDependencies": {
     "babel-eslint": "^10.0.1",

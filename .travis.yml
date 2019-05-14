@@ -5,6 +5,7 @@ install:
   - npm i
 script:
   - npm run lint
+  - npm t
 before_deploy:
   - cd docs
   - npx gitbook-cli install
