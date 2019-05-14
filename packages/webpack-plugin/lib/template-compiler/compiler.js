@@ -1113,7 +1113,8 @@ function processAttrs (el, options) {
       if (el.tag === 'template' && attr.name === 'data') {
         addExp(el, `{${parsed.result}}`)
       } else {
-        addExp(el, parsed.result, options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component')
+        let needTravel = (options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component') && !(attr.name === 'class' || attr.name === 'style')
+        addExp(el, parsed.result, needTravel)
       }
     }
     if (parsed.val !== attr.value) {
@@ -1348,25 +1349,30 @@ function processElement (el, options, meta, root, injectNodes) {
   if (rulesRunner) {
     rulesRunner(el)
   }
+
+  let pass = isNative || processTemplate(el) || processingTemplate
+  if (!pass) {
+    processIf(el)
+    processFor(el)
+    if (mode !== 'qq' && mode !== 'tt') {
+      processClass(el, meta, injectNodes)
+      processStyle(el, meta, injectNodes)
+    }
+    processShow(el, options, root)
+    processRef(el, options, meta)
+    processBindEvent(el)
+    if (mode !== 'ali') {
+      processPageStatus(el, options)
+    }
+    processComponentIs(el, options)
+    processWxs(el, meta)
+  }
+
   if (mode === 'ali') {
     processAliStyleClassHack(el, options, root)
   }
-  if (isNative || processTemplate(el) || processingTemplate) return
-  processIf(el)
-  processFor(el)
-  if (mode !== 'qq' && mode !== 'tt') {
-    processClass(el, meta, injectNodes)
-    processStyle(el, meta, injectNodes)
-  }
-  processShow(el, options, root)
-  processRef(el, options, meta)
-  processBindEvent(el)
-  if (mode !== 'ali') {
-    processPageStatus(el, options)
-  }
-  processComponentIs(el, options)
-  processWxs(el, meta)
-  processAttrs(el, options)
+
+  if (!pass) processAttrs(el, options)
 }
 
 function closeElement (el, root) {
