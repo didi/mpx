@@ -64,10 +64,14 @@ function extractObservers (options) {
   }
   Object.keys(props).forEach(key => {
     const prop = props[key]
-    if (prop && typeof prop.observer === 'function') {
+    if (prop && typeof prop.observer) {
       mergeWatch(key, {
         handler (...rest) {
-          prop.observer.call(this, ...rest)
+          let callback = prop.observer
+          if (typeof callback === 'string') {
+            callback = this[callback]
+          }
+          typeof callback === 'function' && callback.call(this, ...rest)
         },
         deep: true,
         immediate: true
@@ -77,7 +81,7 @@ function extractObservers (options) {
   if (observers) {
     Object.keys(observers).forEach(key => {
       const callback = observers[key]
-      if (typeof callback === 'function') {
+      if (callback) {
         let deep = false
         const propsArr = Object.keys(props)
         const keyPathArr = []
@@ -99,10 +103,17 @@ function extractObservers (options) {
         }
         mergeWatch(key, {
           handler (val, old) {
-            if (keyPathArr.length < 2) {
-              val = [val]
+            let cb = callback
+            if (typeof cb === 'string') {
+              cb = this[cb]
             }
-            callback.call(this, ...val)
+            if (typeof cb === 'function') {
+              if (keyPathArr.length < 2) {
+                val = [val]
+                old = [old]
+              }
+              cb.call(this, ...val, ...old)
+            }
           },
           deep,
           immediate: watchProp

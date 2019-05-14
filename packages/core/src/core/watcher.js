@@ -21,9 +21,12 @@ export default class Watcher {
     this.get = () => {
       return type(expr) === 'String' ? getByPath(context, expr) : expr()
     }
-    if (type(callback) === 'Object') {
+    const callbackType = type(callback)
+    if (callbackType === 'Object') {
       options = callback
       callback = null
+    } else if (callbackType === 'String') {
+      callback = context[callback]
     }
     this.callback = typeof callback === 'function' ? action(callback.bind(context)) : null
     this.options = options || {}
@@ -90,14 +93,14 @@ export default class Watcher {
 
 export function watch (context, expr, handler, options) {
   let callback
-  if (typeof handler === 'function') {
-    callback = handler
-  } else if (type(handler) === 'Object') {
+  if (type(handler) === 'Object') {
     callback = handler.handler
     options = {
       ...handler
     }
     delete options.handler
+  } else {
+    callback = handler
   }
   return new Watcher(context, expr, callback, options)
 }
