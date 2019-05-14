@@ -26,7 +26,7 @@ function extractMixins (mergeOptions, options) {
   if (options.mixins) {
     for (const mix of options.mixins) {
       if (typeof mix === 'string') {
-        console.error('暂不支持对字符串协议的【behavior】进行转换')
+        console.error(`Don't support for convert the string-formatted【behavior】into mixin`)
       } else {
         extractMixins(mergeOptions, mix)
       }
@@ -64,7 +64,7 @@ function extractObservers (options) {
   }
   Object.keys(props).forEach(key => {
     const prop = props[key]
-    if (typeof prop.observer === 'function') {
+    if (prop && typeof prop.observer === 'function') {
       mergeWatch(key, {
         handler (...rest) {
           prop.observer.call(this, ...rest)
