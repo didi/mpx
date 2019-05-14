@@ -6,7 +6,6 @@ module.exports = function ({ print }) {
     // 匹配标签名，可传递正则
     test: TAG_NAME,
     ali (tagName, { attrsMap }) {
-      console.log(tagName)
       if (!attrsMap.src) {
         return aliTagLogError('src')
       }
