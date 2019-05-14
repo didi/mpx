@@ -88,6 +88,7 @@ export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
       transformApiForProxy(this, currentInject)
       // 缓存options
       this.$rawOptions = rawOptions
+      this.__nativeRender__ = rawOptions.__nativeRender__
       // 创建proxy对象
       const mpxProxy = new MPXProxy(rawOptions, this)
       this.$mpxProxy = mpxProxy
