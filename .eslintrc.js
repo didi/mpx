@@ -6,7 +6,8 @@ module.exports = {
   },
   extends: 'standard',
   plugins: [
-    'html'
+    'html',
+    'jest'
   ],
   'globals': {
     'wx': false,
@@ -22,6 +23,9 @@ module.exports = {
   },
   rules: {
     'no-cond-assign': 0,
-    "camelcase": ['error', {'allow': ['__mpx_mode__', '__swan_exports_map__']}]
+    'camelcase': ['error', {'allow': ['__mpx_mode__', '__swan_exports_map__']}]
+  },
+  env: {
+    'jest/globals': true
   }
 }
