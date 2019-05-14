@@ -5,35 +5,47 @@ export default function getRefsMixin () {
   let aliMethods
   if (is('ali')) {
     aliMethods = {
+      selectComponent (selector, all) {
+        const children = this.__children__ || []
+        const result = []
+        for (const child of children) {
+          if (child.cid.indexOf(selector) > -1) {
+            result.push(child.component)
+            if (!all) {
+              break
+            }
+          }
+        }
+        return all ? result : result[0]
+      },
+      selectAllComponents (selector) {
+        return this.selectComponent(selector, true)
+      },
       __updateRef (destroyed) {
         this.triggerEvent && this.triggerEvent('updateRef', {
           component: this,
           destroyed
         })
       },
-      __handleUpdateRef (ref, e) {
-        if (!this.$componentRefs) {
-          this.$componentRefs = {}
+      __handleUpdateRef (e) {
+        if (!this.__children__) {
+          this.__children__ = []
         }
         const component = e.detail.component
         const destroyed = e.detail.destroyed
-        let refs = this.$componentRefs[ref.key]
-        if (ref.all) {
-          if (refs) {
-            if (destroyed) {
-              const index = refs.indexOf(component)
-              index > -1 && refs.splice(index, 1)
-            } else {
-              refs.push(component)
-            }
-          } else {
-            !destroyed && (refs = [component])
-          }
-        } else {
-          destroyed ? (refs = null) : (refs = component)
+        let cid = '.' + component.mpxClass.trim().replace(/\s+/g, '.')
+        const id = component.id
+        if (id) {
+          cid += `#${id}`
         }
-        this.$componentRefs[ref.key] = refs
-        this.$refs && (this.$refs[ref.key] = refs)
+        if (destroyed) {
+          this.__children__ = this.__children__.filter(item => item.component !== component)
+        } else {
+          this.__children__.push({
+            component,
+            cid
+          })
+        }
       }
     }
   }
@@ -72,11 +84,7 @@ export default function getRefsMixin () {
           }
           return query && (ref.all ? query.selectAll(ref.selector) : query.select(ref.selector))
         } else if (ref.type === 'component') {
-          if (is('ali')) {
-            return this.$componentRefs ? this.$componentRefs[ref.key] : null
-          } else {
-            return ref.all ? this.selectAllComponents(ref.selector) : this.selectComponent(ref.selector)
-          }
+          return ref.all ? this.selectAllComponents(ref.selector) : this.selectComponent(ref.selector)
         }
       }
     }
