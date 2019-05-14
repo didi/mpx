@@ -46,6 +46,11 @@ module.exports = function getComponentConfigs ({ warn, error }) {
       case 'value':
         msg = `<${tag}>'s property '${arg && arg.name}' does not support '[${arg && arg.value}]' value in ${platform} environment!`
         break
+      case 'tagRequiredProps':
+        msg = `<${tag}> should have '${arg}' attr in ali environment!`
+        break
+      default:
+        msg = `<${tag}>'s transform has some error happened!`
     }
     isError ? error(msg) : warn(msg)
   }
@@ -76,6 +81,6 @@ module.exports = function getComponentConfigs ({ warn, error }) {
     image({ print }),
     map({ print }),
     canvas({ print }),
-    wxs()
+    wxs({ print })
   ]
 }
