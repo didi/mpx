@@ -53,6 +53,7 @@ function transformApiForProxy (context, currentInject) {
               // mounted 之后才监听updated
               callback = (...rest) => {
                 this.$mpxProxy.updated()
+                // eslint-disable-next-line standard/no-callback-literal
                 typeof cb === 'function' && cb(...rest)
               }
             }
