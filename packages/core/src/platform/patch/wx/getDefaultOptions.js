@@ -13,8 +13,13 @@ function transformProperties (properties) {
   }
   const newProps = {}
   enumerableKeys(properties).forEach(key => {
-    const rawFiled = properties[key]
+    let rawFiled = properties[key]
     let newFiled = null
+    if (rawFiled === null) {
+      rawFiled = {
+        type: null
+      }
+    }
     if (typeof rawFiled === 'function') {
       newFiled = {
         type: rawFiled
@@ -40,7 +45,7 @@ function transformApiForProxy (context, currentInject) {
       get () {
         return (data, cb) => {
           // 同步数据到proxy
-          this.$mpxProxy.forceUpdate(data)
+          this.$mpxProxy.forceUpdate(data, this.__nativeRender__ || cb)
           if (this.__nativeRender__) {
             // 走原生渲染
             let callback = cb

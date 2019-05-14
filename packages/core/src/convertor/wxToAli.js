@@ -4,7 +4,7 @@ const NOTSUPPORTS = ['moved', 'relations']
 function notSupportTip (options) {
   NOTSUPPORTS.forEach(key => {
     if (options[key]) {
-      console.error(`不支持将微信组件属性${key}转换至支付宝小程序`)
+      console.error(`Don't support for convert the option【${key}】 of the wx-component into the ali-component`)
       delete options[key]
     }
   })
@@ -24,10 +24,10 @@ export default {
       const newProps = {}
       Object.keys(options.properties).forEach(key => {
         const prop = options.properties[key]
-        if (prop.hasOwnProperty('value')) {
+        if (prop && prop.hasOwnProperty('value')) {
           newProps[key] = prop.value
         } else {
-          newProps[key] = prop()
+          newProps[key] = typeof prop === 'function' ? prop() : ''
         }
       })
       options.props = newProps
