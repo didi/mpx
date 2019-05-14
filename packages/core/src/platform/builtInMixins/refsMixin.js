@@ -5,16 +5,22 @@ export default function getRefsMixin () {
   let aliMethods
   if (is('ali')) {
     aliMethods = {
+      createSelectorQuery (...rest) {
+        return my.createSelectorQuery(...rest)
+      },
       selectComponent (selector, all) {
         const children = this.__children__ || []
         const result = []
         for (const child of children) {
-          if (child.cid.indexOf(selector) > -1) {
+          if (child.identifiers.indexOf(selector) > -1) {
             result.push(child.component)
             if (!all) {
               break
             }
           }
+        }
+        if (selector.lastIndexOf('.') > 0) {
+          console.error('the selectComponent or selectAllComponents only supports the single selector, so the compound selector may be failed')
         }
         return all ? result : result[0]
       },
@@ -33,17 +39,18 @@ export default function getRefsMixin () {
         }
         const component = e.detail.component
         const destroyed = e.detail.destroyed
-        let cid = '.' + component.mpxClass.trim().replace(/\s+/g, '.')
-        const id = component.id
-        if (id) {
-          cid += `#${id}`
+        const identifiers = component.mpxClass ? component.mpxClass.trim().split(/\s+/).map(item => {
+          return `.${item}`
+        }) : []
+        if (component.id) {
+          identifiers.push(`#${component.id}`)
         }
         if (destroyed) {
           this.__children__ = this.__children__.filter(item => item.component !== component)
         } else {
           this.__children__.push({
             component,
-            cid
+            identifiers
           })
         }
       }
@@ -76,12 +83,7 @@ export default function getRefsMixin () {
       },
       __getRefNode (ref) {
         if (ref.type === 'node') {
-          let query
-          if (is('ali')) {
-            query = my.createSelectorQuery()
-          } else {
-            query = this.createSelectorQuery()
-          }
+          const query = this.createSelectorQuery()
           return query && (ref.all ? query.selectAll(ref.selector) : query.select(ref.selector))
         } else if (ref.type === 'component') {
           return ref.all ? this.selectAllComponents(ref.selector) : this.selectComponent(ref.selector)
