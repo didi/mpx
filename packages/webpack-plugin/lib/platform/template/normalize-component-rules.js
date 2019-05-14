@@ -9,7 +9,7 @@ module.exports = function normalizeComponentRules (cfgs, spec) {
     const supportedTargets = cfg.supportedTargets || spec.supportedTargets
     supportedTargets.forEach((target) => {
       result[target] = function (el) {
-        const rTag = cfg[target] && cfg[target].call(this, el.tag)
+        const rTag = cfg[target] && cfg[target].call(this, el.tag, { attrsMap: el.attrsMap })
         if (rTag) {
           el.tag = rTag
         }
