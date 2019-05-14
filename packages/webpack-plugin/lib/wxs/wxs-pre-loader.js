@@ -11,12 +11,40 @@ module.exports = function (content) {
   const module = this._module
   const mode = mainCompilation.__mpx__.mode
   if (module.wxs && mode !== 'swan') {
-    return content
+    if (mode === 'ali') {
+      let insertNodes = babylon.parse(
+        'var __mpx_args__ = [];\n' +
+        'for (var i = 0; i < arguments.length; i++) {\n' +
+        '  __mpx_args__[i] = arguments[i];\n' +
+        '}'
+      ).program.body
+
+      let argumentsVisitor = {
+        Identifier (path) {
+          if (path.node.name === 'arguments') {
+            path.node.name = '__mpx_args__'
+            const targetPath = path.getFunctionParent().get('body')
+            if (!targetPath.inserted) {
+              let results = targetPath.unshiftContainer('body', insertNodes) || []
+              targetPath.inserted = true
+              results.forEach((item) => {
+                item.stop()
+              })
+            }
+          }
+        }
+      }
+      const ast = babylon.parse(content, {
+        sourceType: 'module'
+      })
+      traverse(ast, argumentsVisitor)
+      return generate(ast).code
+    } else {
+      return content
+    }
   } else {
     // 对于编译进render函数中和swan中的wxs模块进行处理，抹平差异
-    const ast = babylon.parse(content, {
-      sourceType: 'module'
-    })
+
     let wxsVisitor = {
       MemberExpression (path) {
         const property = path.node.property
@@ -39,41 +67,45 @@ module.exports = function (content) {
       }
     }
 
+
     if (mode === 'swan' && module.wxs && selfCompilation.entries.indexOf(module) > -1) {
       if (!selfCompilation.__swan_exports_map__) {
         selfCompilation.__swan_exports_map__ = {}
       }
       Object.assign(wxsVisitor, {
-        AssignmentExpression (path) {
-          const left = path.node.left
-          const right = path.node.right
-          if (t.isMemberExpression(left) && left.object.name === 'module' && left.property.name === 'exports') {
-            if (t.isObjectExpression(right)) {
-              right.properties.forEach((property) => {
-                if (
-                  (
-                    t.isObjectProperty(property) &&
+          AssignmentExpression (path) {
+            const left = path.node.left
+            const right = path.node.right
+            if (t.isMemberExpression(left) && left.object.name === 'module' && left.property.name === 'exports') {
+              if (t.isObjectExpression(right)) {
+                right.properties.forEach((property) => {
+                  if (
+                    (
+                      t.isObjectProperty(property) &&
                       (
                         t.isFunctionExpression(property.value) ||
                         t.isArrowFunctionExpression(property.value)
                       )
-                  ) ||
+                    ) ||
                     t.isObjectMethod(property)
-                ) {
-                  const params = t.isObjectMethod(property) ? property.params : property.value.params
-                  selfCompilation.__swan_exports_map__[property.key.name] = params.length
-                } else {
-                  throw new Error('Swan filter module exports value must be Functions!')
-                }
-              })
-            } else {
-              throw new Error('Swan filter module exports declaration must be an ObjectExpression!')
+                  ) {
+                    const params = t.isObjectMethod(property) ? property.params : property.value.params
+                    selfCompilation.__swan_exports_map__[property.key.name] = params.length
+                  } else {
+                    throw new Error('Swan filter module exports value must be Functions!')
+                  }
+                })
+              } else {
+                throw new Error('Swan filter module exports declaration must be an ObjectExpression!')
+              }
             }
           }
         }
-      }
       )
     }
+    const ast = babylon.parse(content, {
+      sourceType: 'module'
+    })
     traverse(ast, wxsVisitor)
     return generate(ast).code
   }

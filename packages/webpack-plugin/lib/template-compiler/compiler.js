@@ -1060,12 +1060,12 @@ function processFor (el) {
 
 function processRef (el, options, meta) {
   let val = getAndRemoveAttr(el, config[mode].directive.ref)
+  let type = options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component' ? 'component' : 'node'
   if (val) {
     if (!meta.refs) {
       meta.refs = []
       meta.refId = 0
     }
-    let type = options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component' ? 'component' : 'node'
     let all = !!el.for
     let refClassName = `__ref_${val}_${++meta.refId}`
     let className = getAndRemoveAttr(el, 'class')
@@ -1080,15 +1080,15 @@ function processRef (el, options, meta) {
       type,
       all
     })
+  }
 
-    if (type === 'component' && mode === 'ali') {
-      addAttrs(el, [
-        {
-          name: 'onUpdateRef',
-          value: `__handleUpdateRef({key:${stringify(val)}, all:${stringify(all)}}, $event)`
-        }
-      ])
-    }
+  if (type === 'component' && mode === 'ali') {
+    addAttrs(el, [
+      {
+        name: 'onUpdateRef',
+        value: '__handleUpdateRef'
+      }
+    ])
   }
 }
 
@@ -1268,6 +1268,37 @@ function isRealNode (el) {
   return !virtualNodeTagMap[el.tag]
 }
 
+function processAliStyleClassHack (el, options, root) {
+  ['style', 'class'].forEach((type) => {
+    let exp = getAndRemoveAttr(el, type)
+    let typeName = 'mpx' + type.replace(/^./, (matched) => {
+      return matched.toUpperCase()
+    })
+    let sep = type === 'style' ? ';' : ' '
+
+    if (options.isComponent && el.parent === root && isRealNode(el)) {
+      if (exp !== undefined) {
+        exp = `{{${typeName}}}` + sep + exp
+      } else {
+        exp = `{{${typeName}}}`
+      }
+    }
+    if (exp !== undefined) {
+      if (options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component') {
+        addAttrs(el, [{
+          name: typeName,
+          value: exp
+        }])
+      } else {
+        addAttrs(el, [{
+          name: type,
+          value: exp
+        }])
+      }
+    }
+  })
+}
+
 function processShow (el, options, root) {
   let show = getAndRemoveAttr(el, config[mode].directive.show)
   if (options.isComponent && el.parent === root && isRealNode(el)) {
@@ -1316,6 +1347,9 @@ function postProcessTemplate (el) {
 function processElement (el, options, meta, root, injectNodes) {
   if (rulesRunner) {
     rulesRunner(el)
+  }
+  if (mode === 'ali') {
+    processAliStyleClassHack(el, options, root)
   }
   if (isNative || processTemplate(el) || processingTemplate) return
   processIf(el)
