@@ -3,6 +3,7 @@ node_js:
   - 11.3.0
 install:
   - npm i
+  - lerna bootstrap --ignore-prepublish
 script:
   - npm run lint
   - npm t
