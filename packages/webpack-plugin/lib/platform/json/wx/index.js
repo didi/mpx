@@ -20,7 +20,7 @@ module.exports = function getSpec ({ warn, error }) {
   }
 
   const spec = {
-    supportedTargets: ['ali', 'swan'],
+    supportedTargets: ['ali', 'swan', 'tt'],
     normalizeTest,
     page: [
       {
@@ -64,6 +64,10 @@ module.exports = function getSpec ({ warn, error }) {
       {
         test: 'navigationBarTextStyle|navigationStyle|backgroundColor|backgroundTextStyle',
         ali: deletePath()
+      },
+      {
+        test: 'pageOrientation',
+        tt: deletePath()
       }
     ],
     component: [
@@ -123,6 +127,10 @@ module.exports = function getSpec ({ warn, error }) {
         {
           test: 'borderStyle',
           ali: deletePath()
+        },
+        {
+          test: 'custom',
+          tt: deletePath()
         }
       ]
     },
