@@ -10,6 +10,9 @@ module.exports = function ({ print }) {
   const qqPropLog = print({ platform: 'qq', tag: TAG_NAME, isError: false })
   const qqEventLog = print({ platform: 'qq', tag: TAG_NAME, isError: false, type: 'event' })
   const qqValueLogError = print({ platform: 'qq', tag: TAG_NAME, isError: true, type: 'value' })
+  const ttPropLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false })
+  const ttValueLogError = print({ platform: 'bytedance', tag: TAG_NAME, isError: true, type: 'value' })
+  const ttEventLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false, type: 'event' })
 
   return {
     test: TAG_NAME,
@@ -45,6 +48,12 @@ module.exports = function ({ print }) {
           if (supportList.indexOf(value) === -1) {
             qqValueLogError({ name, value })
           }
+        },
+        tt ({ name, value }) {
+          let supportList = ['share']
+          if (supportList.indexOf(value) === -1) {
+            ttValueLogError({ name, value })
+          }
         }
       },
       {
@@ -59,6 +68,10 @@ module.exports = function ({ print }) {
       {
         test: /^(session-from|send-message-title|send-message-path|send-message-img|show-message-card)$/,
         qq: qqPropLog
+      },
+      {
+        test: /^(plain|lang|session-from|send-message-title|send-message-path|send-message-img|app-parameter|show-message-card)$/,
+        tt: ttPropLog
       }
     ],
     event: [
@@ -79,6 +92,10 @@ module.exports = function ({ print }) {
       {
         test: /^(contact)$/,
         qq: qqEventLog
+      },
+      {
+        test: /^(getuserinfo|contact|getphonenumbe|error|launchapp|opensetting)$/,
+        tt: ttEventLog
       }
     ]
   }
