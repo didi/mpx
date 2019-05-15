@@ -41,7 +41,7 @@ module.exports = function (content) {
 
   const mainCompilation = getMainCompilation(this._compilation)
   const mode = mainCompilation.__mpx__.mode
-  const globalSrcMode = compilation.__mpx__.srcMode
+  const globalSrcMode = mainCompilation.__mpx__.srcMode
   const localSrcMode = loaderUtils.parseQuery(this.resourceQuery || '?').mode
   const srcMode = localSrcMode || globalSrcMode
 
@@ -61,7 +61,7 @@ module.exports = function (content) {
   )
 
   const attributes = ['image:src', 'audio:src', 'video:src', 'cover-image:src', 'import:src', `${config[mode].wxs.tag}:${config[mode].wxs.src}`]
-  const root = '/'
+  const root = ''
   const links = attrParse(content, function (tag, attr) {
     const res = attributes.find(function (a) {
       if (a.charAt(0) === ':') {

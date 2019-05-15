@@ -23,7 +23,9 @@ const rewriterInjectRE = /\b(css(?:-loader)?(?:\?[^!]+)?)(?:!|$)/
 const defaultLang = {
   template: 'html',
   styles: 'css',
-  script: 'js'
+  script: 'js',
+  json: 'json',
+  wxs: 'wxs'
 }
 
 const postcssExtensions = [

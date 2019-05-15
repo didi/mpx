@@ -85,6 +85,7 @@ class MpxWebpackPlugin {
               const compilationMpx = compilation.__mpx__
               const subPackagesMap = compilationMpx.subPackagesMap
               const mainResourceMap = compilationMpx.mainResourceMap
+              const selfResourceName = path.parse(selfResourcePath).name
 
               let subPackageRoot = ''
               if (compilationMpx.processingSubPackages) {
@@ -101,7 +102,7 @@ class MpxWebpackPlugin {
               // 针对src引入的styles进行特殊处理，处理为@import形式便于样式复用
               if (type === 'styles') {
                 const file1 = resourcePath + typeExtMap[type]
-                const file2 = toPosix(path.join(subPackageRoot, 'wxss', path.basename(selfResourcePath) + hash(selfResourcePath) + typeExtMap[type]))
+                const file2 = toPosix(path.join(subPackageRoot, 'wxss', selfResourceName + hash(selfResourcePath) + typeExtMap[type]))
                 const relativePath = toPosix(path.relative(path.dirname(file1), file2))
                 additionalAssets[file1] = additionalAssets[file1] || []
                 additionalAssets[file2] = additionalAssets[file2] || []
@@ -112,7 +113,7 @@ class MpxWebpackPlugin {
               }
               // 针对import src引入的template进行特殊处理
               if (type === 'template') {
-                const file = toPosix(path.join(subPackageRoot, 'wxml', path.basename(selfResourcePath) + hash(selfResourcePath) + typeExtMap[type]))
+                const file = toPosix(path.join(subPackageRoot, 'wxml', selfResourceName + hash(selfResourcePath) + typeExtMap[type]))
                 additionalAssets[file] = additionalAssets[file] || []
                 additionalAssets[file][0] = content + (additionalAssets[file][0] || '')
                 return file
@@ -292,9 +293,8 @@ class MpxWebpackPlugin {
           data.request = `!!${pathLoader}!${resource}`
         }
         if (queryObj.wxsModule) {
-          let wxsLoader = normalize.lib('wxs/wxs-loader')
           let wxsPreLoader = normalize.lib('wxs/wxs-pre-loader')
-          if (!request.includes(wxsLoader)) {
+          if (!/wxs-loader/.test(request)) {
             data.request = `!!${wxsPreLoader}!${resource}`
           }
         }

@@ -974,42 +974,41 @@ function processBindEvent (el) {
 }
 
 function parseMustache (raw = '') {
-  let val = raw
+  let replaced = false
   if (tagRE.test(raw)) {
     let ret = []
     let lastLastIndex = 0
     let match
-    val = ''
     while (match = tagREG.exec(raw)) {
       let pre = raw.substring(lastLastIndex, match.index)
       if (pre) {
         ret.push(stringify(pre))
-        val += pre
       }
-      let exp = match[1].replace(/\b__mpx_mode__\b/, stringify(mode))
+      let exp = match[1]
+      if (/\b__mpx_mode__\b/.test(exp)) {
+        exp = exp.replace(/\b__mpx_mode__\b/g, stringify(mode))
+        replaced = true
+      }
       ret.push(`(${exp})`)
-      val += `{{${exp}}}`
       lastLastIndex = tagREG.lastIndex
     }
     let post = raw.substring(lastLastIndex)
     if (post) {
       ret.push(stringify(post))
-      val += post
     }
-    // 去除无意义的括号
-    if (ret.length === 1) {
-      ret[0] = ret[0].slice(1, ret[0].length - 1)
-    }
+    let result = ret.join('+')
     return {
-      result: ret.join('+'),
+      result,
       hasBinding: true,
-      val
+      val: replaced ? `{{${result}}}` : raw,
+      replaced
     }
   }
   return {
     result: stringify(raw),
     hasBinding: false,
-    val
+    val: raw,
+    replaced
   }
 }
 
@@ -1127,6 +1126,7 @@ function postProcessWxs (el, meta) {
           name: config[mode].wxs.src,
           value: src
         }])
+        el.children = []
       }
       src && addWxsModule(meta, module, src)
       content && addWxsContent(meta, module, content)
@@ -1136,17 +1136,15 @@ function postProcessWxs (el, meta) {
 
 function processAttrs (el, options) {
   el.attrsList.forEach((attr) => {
-    let parsed = parseMustache(attr.value)
+    const isTemplateData = el.tag === 'template' && attr.name === 'data'
+    let value = isTemplateData ? `{${attr.value}}` : attr.value
+    let parsed = parseMustache(value)
     if (parsed.hasBinding) {
-      if (el.tag === 'template' && attr.name === 'data') {
-        addExp(el, `{${parsed.result}}`)
-      } else {
-        let needTravel = (options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component') && !(attr.name === 'class' || attr.name === 'style')
-        addExp(el, parsed.result, needTravel)
-      }
+      let needTravel = (options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component') && !(attr.name === 'class' || attr.name === 'style')
+      addExp(el, parsed.result, needTravel)
     }
-    if (parsed.val !== attr.value) {
-      modifyAttr(el, attr.name, parsed.val)
+    if (parsed.replaced) {
+      modifyAttr(el, attr.name, isTemplateData ? attr.value.replace(/\b__mpx_mode__\b/g, stringify(mode)) : parsed.val)
     }
   })
 }
