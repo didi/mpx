@@ -3,12 +3,16 @@ import {
   getByPath
 } from '../helper/utils'
 function mapFactory (type, store) {
-  return function (maps) {
+  return function (depPath, maps) {
+    if (typeof depPath !== 'string') {
+      maps = depPath
+      depPath = ''
+    }
     maps = normalizeMap(maps)
     const result = {}
     for (let key in maps) {
       result[key] = function (payload) {
-        const value = maps[key]
+        const value = depPath ? `${depPath}.${maps[key]}` : maps[key]
         if (type === 'mutations') {
           return store.commit(value, payload)
         } else if (type === 'actions') {
