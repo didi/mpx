@@ -114,6 +114,14 @@ export default class MPXProxy {
     const proxyData = extend({}, this.initialData, data)
     this.initComputed(options.computed, proxyData)
     this.data = observable(proxyData)
+    if (this.target.__nativeRender__) {
+      // 原生渲染模式下，将实例的data属性的访问代理到proxy.data上
+      if (this.data.data) {
+        console.error(`The key named【data】is forbidden in data field or properties field`)
+      } else {
+        defineGetter(this.target, 'data', () => this.data)
+      }
+    }
     /* target的数据访问代理到将proxy的data */
     proxy(this.target, this.data, enumerableKeys(this.data).concat(this.computedKeys))
     // 初始化watch
