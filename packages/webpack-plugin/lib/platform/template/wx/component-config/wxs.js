@@ -1,14 +1,10 @@
 const TAG_NAME = 'wxs'
 
 module.exports = function ({ print }) {
-  const aliTagLogError = print({ tag: TAG_NAME, platform: 'ali', isError: true, type: 'tagRequiredProps' })
   return {
     // 匹配标签名，可传递正则
     test: TAG_NAME,
     ali () {
-      // if (!attrsMap.src) {
-      //   return aliTagLogError('src')
-      // }
       return 'import-sjs'
     },
     swan () {

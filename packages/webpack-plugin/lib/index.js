@@ -65,7 +65,7 @@ class MpxWebpackPlugin {
       })
     }).apply(compiler)
 
-    compiler.hooks.thisCompilation.tap('MpxWebpackPlugin', (compilation) => {
+    compiler.hooks.thisCompilation.tap('MpxWebpackPlugin', (compilation, { normalModuleFactory }) => {
       const typeExtMap = config[this.options.mode].typeExtMap
       const additionalAssets = {}
       if (!compilation.__mpx__) {
@@ -151,9 +151,6 @@ class MpxWebpackPlugin {
       compilation.dependencyFactories.set(ReplaceDependency, new NullFactory())
       compilation.dependencyTemplates.set(ReplaceDependency, new ReplaceDependency.Template())
 
-    })
-
-    compiler.hooks.normalModuleFactory.tap('MpxWebpackPlugin', (normalModuleFactory) => {
       normalModuleFactory.hooks.parser.for('javascript/auto').tap('MpxWebpackPlugin', (parser) => {
         parser.hooks.call.for('__mpx_resolve_path__').tap('MpxWebpackPlugin', (expr) => {
           if (expr.arguments[0]) {
@@ -277,7 +274,9 @@ class MpxWebpackPlugin {
         parser.hooks.callAnyMember.for('imported var').tap('MpxWebpackPlugin', handler)
         parser.hooks.callAnyMember.for('mpx').tap('MpxWebpackPlugin', handler)
       })
+    })
 
+    compiler.hooks.normalModuleFactory.tap('MpxWebpackPlugin', (normalModuleFactory) => {
       normalModuleFactory.hooks.beforeResolve.tapAsync('MpxWebpackPlugin', (data, callback) => {
         let request = data.request
         let elements = request.replace(/^-?!+/, '').replace(/!!+/g, '!').split('!')
