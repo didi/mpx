@@ -5,6 +5,7 @@ const normalize = require('../utils/normalize')
 const isValidIdentifierStr = require('../utils/is-valid-identifier-str')
 const isEmptyObject = require('../utils/is-empty-object')
 const getRulesRunner = require('../platform/index')
+const addQuery = require('../utils/add-query')
 
 /**
  * Make a map and return a function for checking if a key
@@ -171,6 +172,7 @@ var processingTemplate
 var isNative
 var rulesRunner
 var platformGetTagNamespace
+var resource
 
 function baseWarn (msg) {
   console.warn(('[template compiler]: ' + msg))
@@ -576,6 +578,7 @@ function parse (template, options) {
   mode = options.mode || 'wx'
   srcMode = options.srcMode || mode
   isNative = options.isNative
+  resource = options.resource
 
   rulesRunner = getRulesRunner({
     mode,
@@ -656,13 +659,13 @@ function parse (template, options) {
       currentParent.children.push(element)
       element.parent = currentParent
 
-      processElement(element, options, meta, root, injectNodes)
+      processElement(element, root, options, meta, injectNodes)
       if (!unary) {
         currentParent = element
         stack.push(element)
       } else {
         element.unary = true
-        root = closeElement(element, root)
+        root = closeElement(element, root, meta)
       }
     },
 
@@ -677,7 +680,7 @@ function parse (template, options) {
         // pop stack
         stack.pop()
         currentParent = stack[stack.length - 1]
-        root = closeElement(element, root)
+        root = closeElement(element, root, meta)
       }
     },
 
@@ -1083,12 +1086,10 @@ function processRef (el, options, meta) {
   }
 
   if (type === 'component' && mode === 'ali') {
-    addAttrs(el, [
-      {
-        name: 'onUpdateRef',
-        value: '__handleUpdateRef'
-      }
-    ])
+    addAttrs(el, [{
+      name: 'onUpdateRef',
+      value: '__handleUpdateRef'
+    }])
   }
 }
 
@@ -1100,9 +1101,36 @@ function addWxsModule (meta, module, src) {
   meta.wxsModuleMap[module] = src
 }
 
-function processWxs (el, meta) {
+function addWxsContent (meta, module, content) {
+  if (!meta.wxsConentMap) {
+    meta.wxsConentMap = {}
+  }
+  if (meta.wxsConentMap[module]) return true
+  meta.wxsConentMap[module] = content
+}
+
+function postProcessWxs (el, meta) {
   if (el.tag === config[mode].wxs.tag) {
-    addWxsModule(meta, el.attrsMap[config[mode].wxs.module], el.attrsMap[config[mode].wxs.src])
+    let module = el.attrsMap[config[mode].wxs.module]
+    if (module) {
+      let src, content
+      if (el.attrsMap[config[mode].wxs.src]) {
+        src = el.attrsMap[config[mode].wxs.src]
+      } else {
+        content = el.children.filter((child) => {
+          return child.type === 3 && !child.isComment
+        }).map(child => child.text).join('\n')
+        src = addQuery(resource, {
+          wxsModule: module
+        })
+        addAttrs(el, [{
+          name: config[mode].wxs.src,
+          value: src
+        }])
+      }
+      src && addWxsModule(meta, module, src)
+      content && addWxsContent(meta, module, content)
+    }
   }
 }
 
@@ -1345,7 +1373,7 @@ function postProcessTemplate (el) {
   }
 }
 
-function processElement (el, options, meta, root, injectNodes) {
+function processElement (el, root, options, meta, injectNodes) {
   if (rulesRunner) {
     rulesRunner(el)
   }
@@ -1365,7 +1393,6 @@ function processElement (el, options, meta, root, injectNodes) {
       processPageStatus(el, options)
     }
     processComponentIs(el, options)
-    processWxs(el, meta)
   }
 
   if (mode === 'ali') {
@@ -1375,8 +1402,9 @@ function processElement (el, options, meta, root, injectNodes) {
   if (!pass) processAttrs(el, options)
 }
 
-function closeElement (el, root) {
+function closeElement (el, root, meta) {
   if (postProcessTemplate(el) || processingTemplate) return root
+  postProcessWxs(el, meta)
   el = postProcessComponentIs(el)
   postProcessFor(el)
   postProcessIf(el)

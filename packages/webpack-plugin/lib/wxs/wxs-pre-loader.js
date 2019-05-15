@@ -3,6 +3,8 @@ const traverse = require('babel-traverse').default
 const t = require('babel-types')
 const generate = require('babel-generator').default
 const getMainCompilation = require('../utils/get-main-compilation')
+const stripExtension = require('../utils/strip-extention')
+const parseQuery = require('loader-utils').parseQuery
 
 module.exports = function (content) {
   this.cacheable()
@@ -10,6 +12,15 @@ module.exports = function (content) {
   const selfCompilation = this._compilation
   const module = this._module
   const mode = mainCompilation.__mpx__.mode
+  const wxsModule = parseQuery(this.resourceQuery || '?').wxsModule
+
+  // 处理内联wxs
+  if (wxsModule) {
+    const wxsContentMap = mainCompilation.__mpx__.wxsConentMap
+    const resource = stripExtension(this.resource)
+    content = wxsContentMap[`${resource}~${wxsModule}`] || content
+  }
+
   if (module.wxs && mode !== 'swan') {
     if (mode === 'ali') {
       let insertNodes = babylon.parse(
@@ -72,34 +83,34 @@ module.exports = function (content) {
         selfCompilation.__swan_exports_map__ = {}
       }
       Object.assign(wxsVisitor, {
-        AssignmentExpression (path) {
-          const left = path.node.left
-          const right = path.node.right
-          if (t.isMemberExpression(left) && left.object.name === 'module' && left.property.name === 'exports') {
-            if (t.isObjectExpression(right)) {
-              right.properties.forEach((property) => {
-                if (
-                  (
-                    t.isObjectProperty(property) &&
+          AssignmentExpression (path) {
+            const left = path.node.left
+            const right = path.node.right
+            if (t.isMemberExpression(left) && left.object.name === 'module' && left.property.name === 'exports') {
+              if (t.isObjectExpression(right)) {
+                right.properties.forEach((property) => {
+                  if (
                     (
-                      t.isFunctionExpression(property.value) ||
-                      t.isArrowFunctionExpression(property.value)
-                    )
-                  ) ||
-                  t.isObjectMethod(property)
-                ) {
-                  const params = t.isObjectMethod(property) ? property.params : property.value.params
-                  selfCompilation.__swan_exports_map__[property.key.name] = params.length
-                } else {
-                  throw new Error('Swan filter module exports value must be Functions!')
-                }
-              })
-            } else {
-              throw new Error('Swan filter module exports declaration must be an ObjectExpression!')
+                      t.isObjectProperty(property) &&
+                      (
+                        t.isFunctionExpression(property.value) ||
+                        t.isArrowFunctionExpression(property.value)
+                      )
+                    ) ||
+                    t.isObjectMethod(property)
+                  ) {
+                    const params = t.isObjectMethod(property) ? property.params : property.value.params
+                    selfCompilation.__swan_exports_map__[property.key.name] = params.length
+                  } else {
+                    throw new Error('Swan filter module exports value must be Functions!')
+                  }
+                })
+              } else {
+                throw new Error('Swan filter module exports declaration must be an ObjectExpression!')
+              }
             }
           }
         }
-      }
       )
     }
     const ast = babylon.parse(content, {

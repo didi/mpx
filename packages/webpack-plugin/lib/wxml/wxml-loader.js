@@ -41,6 +41,9 @@ module.exports = function (content) {
 
   const mainCompilation = getMainCompilation(this._compilation)
   const mode = mainCompilation.__mpx__.mode
+  const globalSrcMode = compilation.__mpx__.srcMode
+  const localSrcMode = loaderUtils.parseQuery(this.resourceQuery || '?').mode
+  const srcMode = localSrcMode || globalSrcMode
 
   const {
     getSrcRequestString
@@ -53,7 +56,7 @@ module.exports = function (content) {
     hasComment,
     usingComponents,
     needCssSourceMap,
-    mode,
+    srcMode,
     isNative
   )
 
@@ -136,10 +139,10 @@ module.exports = function (content) {
 
     switch (link.tag) {
       case 'import':
-        requestString = getSrcRequestString('template', { src }, -1)
+        requestString = getSrcRequestString('template', { src, mode: srcMode }, -1)
         break
       case config[mode].wxs.tag:
-        requestString = getSrcRequestString('wxs', { src }, -1)
+        requestString = getSrcRequestString('wxs', { src, mode: srcMode }, -1)
         break
       default:
         requestString = JSON.stringify(src)

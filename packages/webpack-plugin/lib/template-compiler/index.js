@@ -3,6 +3,7 @@ const loaderUtils = require('loader-utils')
 const bindThis = require('./bind-this').transform
 const InjectDependency = require('../dependency/InjectDependency')
 const stripExtension = require('../utils/strip-extention')
+const getMainCompilation = require('../utils/get-main-compilation')
 
 module.exports = function (raw) {
   this.cacheable()
@@ -10,10 +11,12 @@ module.exports = function (raw) {
 
   const isNative = options.isNative
   const compilation = this._compilation
-  const mode = compilation.__mpx__.mode
-  const globalSrcMode = compilation.__mpx__.srcMode
+  const mainCompilation = getMainCompilation(compilation)
+  const mode = mainCompilation.__mpx__.mode
+  const globalSrcMode = mainCompilation.__mpx__.srcMode
   const localSrcMode = loaderUtils.parseQuery(this.resourceQuery || '?').mode
-  const componentsMap = compilation.__mpx__.componentsMap
+  const componentsMap = mainCompilation.__mpx__.componentsMap
+  const wxsContentMap = mainCompilation.__mpx__.wxsConentMap
   const resource = stripExtension(this.resource)
 
   let parsed = compiler.parse(raw, Object.assign(options, {
@@ -27,13 +30,22 @@ module.exports = function (raw) {
         new Error('[template compiler][' + this.resource + ']: ' + msg)
       )
     },
+    resource: this.resource,
     isComponent: !!componentsMap[resource],
     mode,
     srcMode: localSrcMode || globalSrcMode,
     isNative
   }))
+
   let ast = parsed.root
   let meta = parsed.meta
+
+  if (meta.wxsConentMap) {
+    for (let module in meta.wxsConentMap) {
+      wxsContentMap[`${resource}~${module}`] = meta.wxsConentMap[module]
+    }
+  }
+
   let result = compiler.serialize(ast)
 
   if (isNative) {
@@ -109,7 +121,7 @@ module.exports = function (raw) {
 
   for (let module in meta.wxsModuleMap) {
     isSync = false
-    const src = meta.wxsModuleMap[module]
+    let src = meta.wxsModuleMap[module]
     const expression = `require(${JSON.stringify(src)})`
     const deps = []
     parser.parse(expression, {

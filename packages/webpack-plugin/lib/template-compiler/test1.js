@@ -1,7 +1,11 @@
 const compiler = require('./compiler')
 const bindThis = require('./bind-this').transform
 var input =
-  '<wxs></wxs>' +
+  '<wxs module="aaa">\n' +
+  'asdaaaasssasd\n' +
+  '\n' +
+  'cxccasd\n' +
+  '</wxs>' +
   '<view><com2 pro="{{ccc[122]}}">{{aaa}}</com2>' +
   '<view mode="__mpx_mode__">' +
   '{{__mpx_mode__ === "wx"}}' +

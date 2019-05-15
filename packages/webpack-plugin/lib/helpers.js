@@ -62,7 +62,7 @@ function ensureBang (loader) {
   }
 }
 
-function resolveLoaders (options, moduleId, isProduction, hasScoped, hasComment, usingComponents, needCssSourceMap, mode) {
+function resolveLoaders (options, moduleId, isProduction, hasScoped, hasComment, usingComponents, needCssSourceMap) {
   let cssLoaderOptions = ''
   if (needCssSourceMap) {
     cssLoaderOptions += '?sourceMap'
@@ -93,7 +93,7 @@ function resolveLoaders (options, moduleId, isProduction, hasScoped, hasComment,
   }
 }
 
-module.exports = function createHelpers (loaderContext, options, moduleId, isProduction, hasScoped, hasComment, usingComponents, needCssSourceMap, mode, isNative) {
+module.exports = function createHelpers (loaderContext, options, moduleId, isProduction, hasScoped, hasComment, usingComponents, needCssSourceMap, srcMode, isNative) {
   const rawRequest = getRawRequest(loaderContext, options.excludedPreLoaders)
   const {
     defaultLoaders,
@@ -108,8 +108,7 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
     hasScoped,
     hasComment,
     usingComponents,
-    needCssSourceMap,
-    mode
+    needCssSourceMap
   )
 
   function getRequire (type, part, index, scoped) {
@@ -251,7 +250,7 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
   }
 
   function getRawLoaderString (type, part, index, scoped) {
-    let lang = (part.lang && part.lang !== config[mode].typeExtMap.template.slice(1)) ? part.lang : defaultLang[type]
+    let lang = (part.lang && part.lang !== config[srcMode].typeExtMap.template.slice(1)) ? part.lang : defaultLang[type]
 
     let styleCompiler = ''
     if (type === 'styles') {

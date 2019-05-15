@@ -65,7 +65,7 @@ class MpxWebpackPlugin {
       })
     }).apply(compiler)
 
-    compiler.hooks.thisCompilation.tap('MpxWebpackPlugin', (compilation, params) => {
+    compiler.hooks.thisCompilation.tap('MpxWebpackPlugin', (compilation) => {
       const typeExtMap = config[this.options.mode].typeExtMap
       const additionalAssets = {}
       if (!compilation.__mpx__) {
@@ -77,6 +77,7 @@ class MpxWebpackPlugin {
           processingSubPackages: false,
           mainResourceMap: {},
           wxsMap: {},
+          wxsConentMap: {},
           mode: this.options.mode,
           srcMode: this.options.srcMode,
           extract: (content, type, resourcePath, index, selfResourcePath) => {
@@ -149,7 +150,10 @@ class MpxWebpackPlugin {
       compilation.dependencyFactories.set(ReplaceDependency, new NullFactory())
       compilation.dependencyTemplates.set(ReplaceDependency, new ReplaceDependency.Template())
 
-      params.normalModuleFactory.hooks.parser.for('javascript/auto').tap('MpxWebpackPlugin', (parser) => {
+    })
+
+    compiler.hooks.normalModuleFactory.tap('MpxWebpackPlugin', (normalModuleFactory) => {
+      normalModuleFactory.hooks.parser.for('javascript/auto').tap('MpxWebpackPlugin', (parser) => {
         parser.hooks.call.for('__mpx_resolve_path__').tap('MpxWebpackPlugin', (expr) => {
           if (expr.arguments[0]) {
             const resource = stripExtension(expr.arguments[0].value)
@@ -272,23 +276,27 @@ class MpxWebpackPlugin {
         parser.hooks.callAnyMember.for('imported var').tap('MpxWebpackPlugin', handler)
         parser.hooks.callAnyMember.for('mpx').tap('MpxWebpackPlugin', handler)
       })
-    })
 
-    compiler.hooks.normalModuleFactory.tap('MpxWebpackPlugin', (normalModuleFactory) => {
       normalModuleFactory.hooks.beforeResolve.tapAsync('MpxWebpackPlugin', (data, callback) => {
         let request = data.request
         let elements = request.replace(/^-?!+/, '').replace(/!!+/g, '!').split('!')
-        let resourcePath = elements.pop()
+        let resource = elements.pop()
         let resourceQuery = '?'
-        const queryIndex = resourcePath.indexOf('?')
+        const queryIndex = resource.indexOf('?')
         if (queryIndex >= 0) {
-          resourceQuery = resourcePath.substr(queryIndex)
-          resourcePath = resourcePath.substr(0, queryIndex)
+          resourceQuery = resource.substr(queryIndex)
         }
         let queryObj = loaderUtils.parseQuery(resourceQuery)
         if (queryObj.resolve) {
           let pathLoader = normalize.lib('path-loader')
-          data.request = `!!${pathLoader}!${resourcePath}`
+          data.request = `!!${pathLoader}!${resource}`
+        }
+        if (queryObj.wxsModule) {
+          let wxsLoader = normalize.lib('wxs/wxs-loader')
+          let wxsPreLoader = normalize.lib('wxs/wxs-pre-loader')
+          if (!request.includes(wxsLoader)) {
+            data.request = `!!${wxsPreLoader}!${resource}`
+          }
         }
         callback(null, data)
       })
