@@ -80,12 +80,12 @@ export default class MPXProxy {
     if (this.isMounted() && !this.updating) {
       this.updating = true
       this.nextTick(() => {
+        this.updating = false
         // 由于异步，需要确认 this.state
         if (this.isMounted()) {
-          this.handleUpdatedCallbacks()
           this.callUserHook(UPDATED)
+          this.handleUpdatedCallbacks()
         }
-        this.updating = false
       })
     }
   }
@@ -349,6 +349,9 @@ export default class MPXProxy {
   }
 
   nextTick (fn) {
-    return Promise.resolve().then(fn)
+    return Promise.resolve().then(fn).catch(e => {
+      // 开发工具默认不会报promise里面的错误，所以手动输出error
+      console.error(e)
+    })
   }
 }
