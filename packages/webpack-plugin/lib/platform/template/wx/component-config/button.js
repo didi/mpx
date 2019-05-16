@@ -2,6 +2,7 @@ const TAG_NAME = 'button'
 
 module.exports = function ({ print }) {
   const aliValueLogError = print({ platform: 'ali', tag: TAG_NAME, isError: true, type: 'value' })
+  const aliValueLog = print({ platform: 'ali', tag: TAG_NAME, isError: false, type: 'value' })
   const aliPropLog = print({ platform: 'ali', tag: TAG_NAME, isError: false })
   const aliEventLog = print({ platform: 'ali', tag: TAG_NAME, isError: false, type: 'event' })
   const baiduValueLogError = print({ platform: 'baidu', tag: TAG_NAME, isError: true, type: 'value' })
@@ -33,6 +34,9 @@ module.exports = function ({ print }) {
                 value: 'phoneNumber'
               }
             ]
+          } else if (/\{\{((?:.|\n)+?)\}\}(?!})/.test(value)) {
+            // 如果是个变量，报warning
+            aliValueLog({ name, value })
           } else {
             aliValueLogError({ name, value })
           }
