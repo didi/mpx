@@ -85,10 +85,16 @@ module.exports = function (raw) {
   const issuer = this._module.issuer
   const parser = issuer.parser
 
+  issuer.dependencies = issuer.dependencies.filter((dep) => {
+    return !dep.templateInject
+  })
+
   const dep = new InjectDependency({
     content: globalInjectCode,
     index: -2
   })
+
+  dep.templateInject = true
 
   issuer.addDependency(dep)
 

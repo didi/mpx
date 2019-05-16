@@ -85,9 +85,12 @@ module.exports = function (content) {
 
       const typeExtMap = config[srcMode].typeExtMap
 
-      function getRequire (type) {
+      const getRequire = (type) => {
         let localQuery = Object.assign({}, queryObj)
         let src = resource + typeExtMap[type]
+        if (type !== 'script') {
+          this.addDependency(src)
+        }
         if (type === 'template' && isApp) {
           return ''
         }

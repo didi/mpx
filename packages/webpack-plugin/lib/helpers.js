@@ -20,6 +20,8 @@ const hasBabel = !!tryRequire('babel-loader')
 
 const rewriterInjectRE = /\b(css(?:-loader)?(?:\?[^!]+)?)(?:!|$)/
 
+let count = 0
+
 const defaultLang = {
   template: 'html',
   styles: 'css',
@@ -287,7 +289,8 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
         hasComment,
         isNative,
         moduleId,
-        compileBindEvent: options.compileBindEvent
+        compileBindEvent: options.compileBindEvent,
+        count: ++count
       }
       templateCompiler = templateCompilerPath + '?' + JSON.stringify(templateCompilerOptions)
     }

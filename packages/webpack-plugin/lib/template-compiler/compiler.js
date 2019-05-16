@@ -665,7 +665,7 @@ function parse (template, options) {
         stack.push(element)
       } else {
         element.unary = true
-        root = closeElement(element, root, meta)
+        closeElement(element, meta)
       }
     },
 
@@ -680,7 +680,7 @@ function parse (template, options) {
         // pop stack
         stack.pop()
         currentParent = stack[stack.length - 1]
-        root = closeElement(element, root, meta)
+        closeElement(element, meta)
       }
     },
 
@@ -1179,23 +1179,75 @@ function postProcessFor (el) {
   }
 }
 
+function evalExp (exp) {
+  const fn = new Function(`return ${exp};`)
+  let result = { success: false }
+  try {
+    result = {
+      success: true,
+      result: fn()
+    }
+  } catch (e) {
+  }
+  return result
+}
+
 function postProcessIf (el) {
-  let attrs
+  let attrs, result, prevNode
   if (el.if) {
-    attrs = [{
-      name: config[mode].directive.if,
-      value: el.if.raw
-    }]
+    result = evalExp(el.if.exp)
+    if (result.success) {
+      if (result.result) {
+        delete el.if
+        el._if = true
+      } else {
+        replaceNode(el, getTempNode())._if = false
+      }
+    } else {
+      attrs = [{
+        name: config[mode].directive.if,
+        value: el.if.raw
+      }]
+    }
   } else if (el.elseif) {
-    attrs = [{
-      name: config[mode].directive.elseif,
-      value: el.elseif.raw
-    }]
+    prevNode = findPrevNode(el)
+    if (prevNode._if === true) {
+      removeNode(el)
+    } else if (prevNode._if === false) {
+      // 当做if处理
+      el.if = el.elseif
+      delete el.elseif
+      postProcessIf(el)
+    } else {
+      result = evalExp(el.elseif.exp)
+      if (result.success) {
+        if (result.result) {
+          // 当做else处理
+          delete el.elseif
+          el._if = el.else = true
+          postProcessIf(el)
+        } else {
+          removeNode(el)
+        }
+      } else {
+        attrs = [{
+          name: config[mode].directive.elseif,
+          value: el.elseif.raw
+        }]
+      }
+    }
   } else if (el.else) {
-    attrs = [{
-      name: config[mode].directive.else,
-      value: ''
-    }]
+    prevNode = findPrevNode(el)
+    if (prevNode._if === true) {
+      removeNode(el)
+    } else if (prevNode._if === false) {
+      delete el.else
+    } else {
+      attrs = [{
+        name: config[mode].directive.else,
+        value: ''
+      }]
+    }
   }
   if (attrs) {
     addAttrs(el, attrs)
@@ -1400,13 +1452,12 @@ function processElement (el, root, options, meta, injectNodes) {
   if (!pass) processAttrs(el, options)
 }
 
-function closeElement (el, root, meta) {
-  if (postProcessTemplate(el) || processingTemplate) return root
+function closeElement (el, meta) {
+  if (postProcessTemplate(el) || processingTemplate) return
   postProcessWxs(el, meta)
   el = postProcessComponentIs(el)
   postProcessFor(el)
   postProcessIf(el)
-  return root
 }
 
 function postProcessComponentIs (el) {
@@ -1436,11 +1487,8 @@ function postProcessComponentIs (el) {
     if (!el.parent) {
       error$1('Dynamic component can not be the template root, considering wrapping it with <view> or <text> tag!')
     } else {
-      tempNode.parent = el.parent
-      el.parent.children.pop()
-      el.parent.children.push(tempNode)
+      el = replaceNode(el, tempNode) || el
     }
-    el = tempNode
   }
   return el
 }
@@ -1498,6 +1546,29 @@ function findPrevNode (node) {
       if (preNode.type === 1) {
         return preNode
       }
+    }
+  }
+}
+
+function replaceNode (node, newNode) {
+  let parent = node.parent
+  if (parent) {
+    let index = parent.children.indexOf(node)
+    if (index !== -1) {
+      parent.children.splice(index, 1, newNode)
+      newNode.parent = parent
+      return newNode
+    }
+  }
+}
+
+function removeNode (node) {
+  let parent = node.parent
+  if (parent) {
+    let index = parent.children.indexOf(node)
+    if (index !== -1) {
+      parent.children.splice(index, 1)
+      return true
     }
   }
 }
