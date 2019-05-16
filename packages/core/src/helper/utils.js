@@ -12,6 +12,23 @@ export function type (n) {
   return Object.prototype.toString.call(n).slice(8, -1)
 }
 
+export function asyncLock () {
+  let lock = false
+  return (fn, onerror) => {
+    if (!lock) {
+      lock = true
+      Promise.resolve().then(() => {
+        lock = false
+        typeof fn === 'function' && fn()
+      }).catch(e => {
+        lock = false
+        console.error(e)
+        typeof onerror === 'function' && onerror()
+      })
+    }
+  }
+}
+
 export function aliasReplace (options = {}, alias, target) {
   if (options[alias]) {
     const dataType = type(options[alias])

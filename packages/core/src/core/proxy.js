@@ -15,9 +15,10 @@ import {
   defineGetter,
   preprocessRenderData,
   setByPath,
-  findItem
+  findItem,
+  asyncLock
 } from '../helper/utils'
-
+import queueWatcher from './queueWatcher'
 import { watch } from './watcher'
 import { getRenderCallBack } from '../platform/patch'
 import {
@@ -30,12 +31,13 @@ import {
 } from './innerLifecycle'
 
 let uid = 0
+const lockTask = asyncLock()
 
 export default class MPXProxy {
   constructor (options, target) {
     this.target = target
     if (typeof target.__getInitialData !== 'function') {
-      console.error(`please specify a 【__getInitialData】function to get miniprogram's initial data`)
+      console.error('【MPX ERROR】', `please specify a 【__getInitialData】function to get miniprogram's initial data`)
       return
     }
     this.uid = uid++
@@ -45,10 +47,10 @@ export default class MPXProxy {
     this.state = 'initial'
     this.watchers = [] // 保存所有观察者
     this.renderReaction = null
-    this.updatedCallbacks = [] // 保存设置的更新回调
     this.computedKeys = options.computed ? enumerableKeys(options.computed) : []
     this.localKeys = this.computedKeys.slice() // 非props key
     this.forceUpdateKeys = [] // 强制更新的key，无论是否发生change
+    this.curRenderTask = null
   }
 
   created () {
@@ -60,7 +62,23 @@ export default class MPXProxy {
     this.state = CREATED
     this.callUserHook(CREATED)
     // 强制走小程序原生渲染逻辑
-    this.target.__nativeRender__ || this.initRender()
+    this.options.__nativeRender__ ? this.setData() : this.initRender()
+  }
+
+  renderTaskExecutor(isEmptyRender) {
+    if (!this.isMounted() && this.curRenderTask || this.isMounted() && isEmptyRender) {
+      return
+    }
+    let promiseResolve
+    const promise = new Promise(resolve => {
+      promiseResolve = resolve
+    })
+    this.curRenderTask = {
+      promise,
+      resolve: promiseResolve
+    }
+    // isMounted之前基于mounted触发，isMounted之后基于setData回调触发
+    return this.isMounted() && promiseResolve
   }
 
   isMounted () {
@@ -73,18 +91,16 @@ export default class MPXProxy {
       // 用于处理refs等前置工作
       this.callUserHook(BEFOREMOUNT)
       this.callUserHook(MOUNTED)
+      this.curRenderTask && this.curRenderTask.resolve()
     }
   }
 
   updated () {
-    if (this.isMounted() && !this.updating) {
-      this.updating = true
-      this.nextTick(() => {
-        this.updating = false
+    if (this.isMounted()) {
+      lockTask(() => {
         // 由于异步，需要确认 this.state
         if (this.isMounted()) {
           this.callUserHook(UPDATED)
-          this.handleUpdatedCallbacks()
         }
       })
     }
@@ -104,7 +120,11 @@ export default class MPXProxy {
     // 强制执行render
     this.target.$forceUpdate = (...rest) => this.forceUpdate(...rest)
     // 监听单次回调
-    this.target.$updated = (...rest) => this.onUpdated(...rest)
+    this.target.$updated = fn => {
+      console.warn('【MPX WARN】', '【this.$updated】 has be deprecated，please use 【this.$nextTick】 ')
+      this.nextTick(fn)
+    }
+    this.target.$nextTick = fn => this.nextTick(fn)
   }
 
   initState () {
@@ -114,14 +134,6 @@ export default class MPXProxy {
     const proxyData = extend({}, this.initialData, data)
     this.initComputed(options.computed, proxyData)
     this.data = observable(proxyData)
-    if (this.target.__nativeRender__) {
-      // 原生渲染模式下，将实例的data属性的访问代理到proxy.data上
-      if (this.data.data) {
-        console.error(`The key named【data】is forbidden in data field or properties field`)
-      } else {
-        defineGetter(this.target, 'data', () => this.data)
-      }
-    }
     /* target的数据访问代理到将proxy的data */
     proxy(this.target, this.data, enumerableKeys(this.data).concat(this.computedKeys))
     // 初始化watch
@@ -141,7 +153,7 @@ export default class MPXProxy {
   initComputed (computedConfig, proxyData) {
     this.computedKeys.forEach(key => {
       if (key in proxyData) {
-        console.error(`the computed key 【${key}】 is duplicated, please check`)
+        console.error('【MPX ERROR】', `the computed key 【${key}】 is duplicated, please check`)
       }
       defineGetter(proxyData, key, computedConfig[key], this.target)
     })
@@ -166,18 +178,11 @@ export default class MPXProxy {
     this.localKeys.push.apply(this.localKeys, enumerableKeys(data))
   }
 
-  onUpdated (fn) {
-    this.updatedCallbacks.push(fn)
-  }
-
-  handleUpdatedCallbacks () {
-    const pendingList = this.updatedCallbacks.slice(0)
-    this.updatedCallbacks.length = 0
-    let callback = pendingList.shift()
-    while (callback) {
-      typeof callback === 'function' && callback.apply(this.target)
-      callback = pendingList.shift()
-    }
+  nextTick (fn) {
+    queueWatcher(() => {
+      const task = this.curRenderTask ? this.curRenderTask.promise : Promise.resolve()
+      task.then(fn)
+    })
   }
 
   callUserHook (hookName) {
@@ -264,19 +269,44 @@ export default class MPXProxy {
     return result
   }
 
-  doRender (data) {
+  doRender (data, cb) {
     if (typeof this.target.__render !== 'function') {
-      console.error('please specify a 【__render】 function to render view')
+      console.error('【MPX ERROR】', 'please specify a 【__render】 function to render view')
       return
     }
+    if (typeof cb !== 'function') {
+      cb = undefined
+    }
+    const isEmpty = isEmptyObject(data)
+    const resolve = this.renderTaskExecutor(isEmpty)
     this.forceUpdateKeys = [] // 仅用于当次的render
-    if (isEmptyObject(data)) {
+    if (isEmpty) {
+      cb && cb()
       return
     }
     /**
      * mounted之后才接收回调来触发updated钩子，换言之mounted之前修改数据是不会触发updated的
      */
-    this.target.__render(processUndefined(data), this.isMounted() && getRenderCallBack(this))
+    let callback = cb
+    if (this.isMounted()) {
+      callback = () => {
+        getRenderCallBack(this)()
+        cb && cb()
+        resolve && resolve()
+      }
+    }
+    this.target.__render(processUndefined(data), callback)
+  }
+
+  setData (data, callback) {
+    // 同步数据到proxy
+    data && this.forceUpdate(data)
+    if (this.options.__nativeRender__) {
+      // 走原生渲染
+      return this.doRender(data, callback)
+    } else if (typeof callback === 'function') {
+      this.nextTick(callback)
+    }
   }
 
   initRender () {
@@ -290,9 +320,9 @@ export default class MPXProxy {
           try {
             return this.target.__injectedRender()
           } catch (e) {
-            console.warn('【MPX ERROR】', `Failed to execute render function, degrade to full-set-data mode!`)
-            console.warn('【MPX ERROR】', e)
-            console.warn('【MPX ERROR】', 'If the render function execution failed because of "__wxs_placeholder", ignore this warning.')
+            console.warn('【MPX WARN】', `Failed to execute render function, degrade to full-set-data mode!`)
+            console.warn('【MPX WARN】', e)
+            console.warn('【MPX WARN】', 'If the render function execution failed because of "__wxs_placeholder", ignore this warning.')
             renderExecutionFailed = true
             this.render()
           }
@@ -328,7 +358,7 @@ export default class MPXProxy {
       })
     }
     this.setForceUpdateKeys(forceUpdateKeys)
-    type(callback) === 'Function' && this.onUpdated(callback)
+    type(callback) === 'Function' && this.nextTick(callback)
     // 无论是否改变，强制将状态置为stale，从而触发render
     if (this.renderReaction) {
       this.renderReaction.dependenciesState = 2
@@ -346,12 +376,5 @@ export default class MPXProxy {
 
   checkInForceUpdateKeys (key) {
     return findItem(this.forceUpdateKeys, new RegExp(`^${key}`))
-  }
-
-  nextTick (fn) {
-    return Promise.resolve().then(fn).catch(e => {
-      // 开发工具默认不会报promise里面的错误，所以手动输出error
-      console.error(e)
-    })
   }
 }

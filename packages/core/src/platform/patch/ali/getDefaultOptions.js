@@ -11,14 +11,7 @@ function transformApiForProxy (context, currentInject) {
   if (Object.getOwnPropertyDescriptor(context, 'setData').configurable) {
     Object.defineProperty(context, 'setData', {
       get () {
-        return (data, cb) => {
-          // 同步数据到proxy
-          this.$mpxProxy.forceUpdate(data, this.__nativeRender__ || cb)
-          if (this.__nativeRender__) {
-            // 走原生渲染
-            return rawSetData(data, cb)
-          }
-        }
+        return this.$mpxProxy.setData.bind(this.$mpxProxy)
       },
       configurable: true
     })
@@ -88,7 +81,6 @@ export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
       transformApiForProxy(this, currentInject)
       // 缓存options
       this.$rawOptions = rawOptions
-      this.__nativeRender__ = rawOptions.__nativeRender__
       // 创建proxy对象
       const mpxProxy = new MPXProxy(rawOptions, this)
       this.$mpxProxy = mpxProxy
