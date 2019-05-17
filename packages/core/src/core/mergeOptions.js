@@ -12,7 +12,7 @@ export default function mergeOptions (options = {}, type, needConvert = true) {
   curType = type === 'app' || !convertRule.mode ? type : convertRule.mode
   CURRENT_HOOKS = convertRule.lifecycle[curType]
   const newOptions = {}
-  extractMixins(newOptions, options)
+  extractMixins(newOptions, options, needConvert)
   if (needConvert) {
     proxyHooks(newOptions)
     // 自定义补充转换函数
@@ -21,20 +21,22 @@ export default function mergeOptions (options = {}, type, needConvert = true) {
   return transformHOOKS(newOptions)
 }
 
-function extractMixins (mergeOptions, options) {
+function extractMixins(mergeOptions, options, needConvert) {
   aliasReplace(options, 'behaviors', 'mixins')
   if (options.mixins) {
     for (const mix of options.mixins) {
       if (typeof mix === 'string') {
         console.error(`Don't support for convert the string-formatted【behavior】into mixin`)
       } else {
-        extractMixins(mergeOptions, mix)
+        extractMixins(mergeOptions, mix, needConvert)
       }
     }
   }
   options = extractLifetimes(options)
   options = extractPageHooks(options)
-  options = extractObservers(options)
+  if (needConvert) {
+    options = extractObservers(options)
+  }
   mergeMixins(mergeOptions, options)
 }
 
@@ -64,7 +66,7 @@ function extractObservers (options) {
   }
   Object.keys(props).forEach(key => {
     const prop = props[key]
-    if (prop && typeof prop.observer) {
+    if (prop && prop.observer) {
       mergeWatch(key, {
         handler (...rest) {
           let callback = prop.observer
