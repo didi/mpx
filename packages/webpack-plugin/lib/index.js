@@ -209,18 +209,14 @@ class MpxWebpackPlugin {
           parser.hooks.expression.for('App').tap('MpxWebpackPlugin', transHandler)
           if (this.options.srcMode === 'wx') {
             parser.hooks.expression.for('wx').tap('MpxWebpackPlugin', transHandler)
-            parser.hooks.call.for('Behavior').tap('MpxWebpackPlugin', (expr) => {
+            parser.hooks.expression.for('Behavior').tap('MpxWebpackPlugin', (expr) => {
               const module = parser.state.module
               const current = parser.state.current
-              const obj = expr.arguments[0]
-
               if (/[/\\]@mpxjs[/\\]/.test(module.resource)) {
                 return
               }
-              const depA = new ReplaceDependency('', [expr.range[0], obj.range[0]])
-              const depB = new ReplaceDependency('', [obj.range[1], expr.range[1]])
-              current.addDependency(depA)
-              current.addDependency(depB)
+              const dep = new ReplaceDependency('', expr.range)
+              current.addDependency(dep)
             })
           }
         }

@@ -1437,19 +1437,21 @@ function processElement (el, root, options, meta, injectNodes) {
       processStyle(el, meta, injectNodes)
     }
     processShow(el, options, root)
+  }
+
+  if (mode === 'ali') {
+    processAliStyleClassHack(el, options, root)
     processRef(el, options, meta)
+  }
+
+  if (!pass) {
     processBindEvent(el)
     if (mode !== 'ali') {
       processPageStatus(el, options)
     }
     processComponentIs(el, options)
+    processAttrs(el, options)
   }
-
-  if (mode === 'ali') {
-    processAliStyleClassHack(el, options, root)
-  }
-
-  if (!pass) processAttrs(el, options)
 }
 
 function closeElement (el, meta) {

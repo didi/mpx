@@ -19,7 +19,25 @@ function transformApiForProxy (context, currentInject) {
   Object.defineProperties(context, {
     __getInitialData: {
       get () {
-        return () => Object.assign({}, context.props, context.data)
+        return () => {
+          const props = context.props
+          if (props) {
+            Object.keys(props).forEach((key) => {
+              if (!key.startsWith('$')) {
+                Object.defineProperty(context.data, key, {
+                  get () {
+                    return props[key]
+                  },
+                  set (val) {
+                    props[key] = val
+                  },
+                  enumerable: true
+                })
+              }
+            })
+          }
+          return context.data
+        }
       },
       configurable: false
     },
