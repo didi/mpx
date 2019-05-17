@@ -95,7 +95,7 @@ export function setByPath (data, pathStr, value) {
   }
 }
 
-export function getByPath (data, pathStr, defaultVal = '') {
+export function getByPath (data, pathStr, defaultVal = '', errTip) {
   const results = []
   pathStr.split(',').forEach(item => {
     const path = item.trim()
@@ -107,6 +107,8 @@ export function getByPath (data, pathStr, defaultVal = '') {
         newValue = get(value, key) || value[key]
       } else if (isExistAttr(value, key)) {
         newValue = value[key]
+      } else {
+        newValue = errTip
       }
       return newValue
     })

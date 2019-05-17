@@ -18,13 +18,12 @@ function mapFactory (type, store) {
         } else if (type === 'actions') {
           return store.dispatch(value, payload)
         } else {
-          const getterVal = getByPath(store.getters, value, '__NOTFOUND__')
+          let getterVal = getByPath(store.getters, value, '', '__NOTFOUND__')
           if (getterVal === '__NOTFOUND__') {
-            console.warn('【MPX ERROR】', new Error(`not found getter named [${value}]`))
-            return ''
-          } else {
-            return getterVal === undefined ? '' : getterVal
+            console.warn('【MPX ERROR】', new Error(`unknown getter named [${value}]`))
+            getterVal = ''
           }
+          return getterVal
         }
       }
     }
