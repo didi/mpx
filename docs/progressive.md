@@ -1,5 +1,7 @@
 # 渐进接入
 
+可参考此demo：[mpx渐进接入demo](https://github.com/didi/mpx/tree/master/examples/mpx-progressive)
+
 mpx并不一定要求用户一定要一次性用上框架的所有东西。
 
 若是 **已有项目** 期望接入mpx，**`不需要对原有代码做全局重写`**。
@@ -109,5 +111,3 @@ mpx并不一定要求用户一定要一次性用上框架的所有东西。
 于是我们提供了对原生页面的支持，允许项目中存在原生小程序文件（wxml,js,json,wxss）和mpx文件，两者可以混合使用，通过webpack的构建将两者完美混合在一起生成最终的dist。
 
 使用方式和组件相似。
-
-此处应有demo链接。
