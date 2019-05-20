@@ -179,10 +179,11 @@ export default class MPXProxy {
   }
 
   nextTick (fn) {
-    queueWatcher(() => {
-      const task = this.curRenderTask ? this.curRenderTask.promise : Promise.resolve()
-      task.then(fn)
-    })
+    if (typeof fn === 'function') {
+      queueWatcher(() => {
+        this.curRenderTask ? this.curRenderTask.promise.then(fn) : fn()
+      })
+    }
   }
 
   callUserHook (hookName) {
