@@ -31,7 +31,6 @@ import {
 } from './innerLifecycle'
 
 let uid = 0
-const lockTask = asyncLock()
 
 export default class MPXProxy {
   constructor (options, target) {
@@ -51,6 +50,7 @@ export default class MPXProxy {
     this.localKeys = this.computedKeys.slice() // 非props key
     this.forceUpdateKeys = [] // 强制更新的key，无论是否发生change
     this.curRenderTask = null
+    this.lockTask = asyncLock()
   }
 
   created () {
@@ -97,7 +97,7 @@ export default class MPXProxy {
 
   updated () {
     if (this.isMounted()) {
-      lockTask(() => {
+      this.lockTask(() => {
         // 由于异步，需要确认 this.state
         if (this.isMounted()) {
           this.callUserHook(UPDATED)
