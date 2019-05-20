@@ -34,12 +34,14 @@ export default class Watcher {
     this.reaction = new Reaction(`mpx-watcher-${this.id}`, () => {
       this.update()
     })
-    this.value = this.getValue()
-    if (this.callback) {
-      this.options.immediate && this.callback(this.value)
-      this.options.immediateAsync && Promise.resolve().then(() => {
-        this.callback(this.value)
-      })
+    const value = this.getValue()
+    if (this.options.immediateAsync) {
+      queueWatcher(this)
+    } else {
+      this.value = value
+      if (this.options.immediate) {
+        this.callback && this.callback(this.value)
+      }
     }
   }
 
@@ -81,10 +83,13 @@ export default class Watcher {
   }
 
   run () {
+    const immediateAsync = !Object.hasOwnProperty('value')
     const oldValue = this.value
     this.value = this.getValue()
-    if (this.value !== oldValue || isObject(this.value) || this.options.forceCallback) {
-      this.callback && this.callback(this.value, oldValue)
+    if (immediateAsync || this.value !== oldValue || isObject(this.value) || this.options.forceCallback) {
+      if (this.callback) {
+        immediateAsync ? this.callback(this.value) : this.callback(this.value, oldValue)
+      }
     }
   }
 
