@@ -83,7 +83,7 @@ export default class Watcher {
   }
 
   run () {
-    const immediateAsync = !Object.hasOwnProperty('value')
+    const immediateAsync = !this.hasOwnProperty('value')
     const oldValue = this.value
     this.value = this.getValue()
     if (immediateAsync || this.value !== oldValue || isObject(this.value) || this.options.forceCallback) {

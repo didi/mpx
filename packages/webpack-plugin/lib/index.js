@@ -168,38 +168,54 @@ class MpxWebpackPlugin {
         const transHandler = (expr) => {
           const module = parser.state.module
           const current = parser.state.current
+          const resource = module.resource
+          const queryIndex = resource.indexOf('?')
+          let resourceQuery = '?'
+          if (queryIndex > -1) {
+            resourceQuery = resource.substr(queryIndex)
+          }
+          const localSrcMode = loaderUtils.parseQuery(resourceQuery).mode
+          const globalSrcMode = this.options.srcMode
+          const srcMode = localSrcMode || globalSrcMode
+          const mode = this.options.mode
 
-          if (/[/\\]@mpxjs[/\\]/.test(module.resource)) {
+          if (/[/\\]@mpxjs[/\\]/.test(module.resource) || mode === srcMode) {
             return
           }
 
           const type = expr.name
-          const name = type === 'wx' ? 'mpx' : 'createFactory'
-          const replaceContent = type === 'wx' ? 'mpx' : `${name}(${JSON.stringify(type)})`
 
-          const dep = new ReplaceDependency(replaceContent, expr.range)
-          current.addDependency(dep)
+          if (type === 'Behavior') {
+            const dep = new ReplaceDependency('', expr.range)
+            current.addDependency(dep)
+          } else {
+            const name = type === 'wx' ? 'mpx' : 'createFactory'
+            const replaceContent = type === 'wx' ? 'mpx' : `${name}(${JSON.stringify(type)})`
 
-          let needInject = true
-          for (let v of module.variables) {
-            if (v.name === name) {
-              needInject = false
-              break
+            const dep = new ReplaceDependency(replaceContent, expr.range)
+            current.addDependency(dep)
+
+            let needInject = true
+            for (let v of module.variables) {
+              if (v.name === name) {
+                needInject = false
+                break
+              }
             }
-          }
-          if (needInject) {
-            const expression = `require(${JSON.stringify(`@mpxjs/core/src/runtime/${name}`)})`
-            const deps = []
-            parser.parse(expression, {
-              current: {
-                addDependency: dep => {
-                  dep.userRequest = name
-                  deps.push(dep)
-                }
-              },
-              module
-            })
-            current.addVariable(name, expression, deps)
+            if (needInject) {
+              const expression = `require(${JSON.stringify(`@mpxjs/core/src/runtime/${name}`)})`
+              const deps = []
+              parser.parse(expression, {
+                current: {
+                  addDependency: dep => {
+                    dep.userRequest = name
+                    deps.push(dep)
+                  }
+                },
+                module
+              })
+              current.addVariable(name, expression, deps)
+            }
           }
         }
 
@@ -209,15 +225,7 @@ class MpxWebpackPlugin {
           parser.hooks.expression.for('App').tap('MpxWebpackPlugin', transHandler)
           if (this.options.srcMode === 'wx') {
             parser.hooks.expression.for('wx').tap('MpxWebpackPlugin', transHandler)
-            parser.hooks.expression.for('Behavior').tap('MpxWebpackPlugin', (expr) => {
-              const module = parser.state.module
-              const current = parser.state.current
-              if (/[/\\]@mpxjs[/\\]/.test(module.resource)) {
-                return
-              }
-              const dep = new ReplaceDependency('', expr.range)
-              current.addDependency(dep)
-            })
+            parser.hooks.expression.for('Behavior').tap('MpxWebpackPlugin', transHandler)
           }
         }
 
@@ -258,7 +266,7 @@ class MpxWebpackPlugin {
             resourceQuery = resource.substr(queryIndex)
           }
           const localSrcMode = loaderUtils.parseQuery(resourceQuery).mode
-          const globalSrcMode = compilation.__mpx__.srcMode
+          const globalSrcMode = this.options.srcMode
           const mode = localSrcMode || globalSrcMode
           const dep = new InjectDependency({
             content: args.length ? `, ${JSON.stringify(mode)}` : JSON.stringify(mode),

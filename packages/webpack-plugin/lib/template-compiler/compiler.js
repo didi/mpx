@@ -471,18 +471,11 @@ function parseComponent (content, options) {
       }
       if (isSpecialTag(tag)) {
         checkAttrs(currentBlock, attrs)
-        // 优先取带有正确mode的fields
+        // 带mode的fields只有匹配当前编译mode才会编译
         if (tag === 'style') {
-          if (sfc.styles[0]) {
-            if (currentBlock.mode && currentBlock.mode === mode) {
-              if (sfc.styles[0].mode !== mode) {
-                sfc.styles = []
-              }
+          if (currentBlock.mode) {
+            if (currentBlock.mode === mode) {
               sfc.styles.push(currentBlock)
-            } else {
-              if (!sfc.styles[0].mode) {
-                sfc.styles.push(currentBlock)
-              }
             }
           } else {
             sfc.styles.push(currentBlock)
@@ -491,16 +484,14 @@ function parseComponent (content, options) {
           if (tag === 'script' && currentBlock.type === 'application/json') {
             tag = 'json'
           }
-          if (sfc[tag]) {
-            if (currentBlock.mode && currentBlock.mode === mode) {
+          if (currentBlock.mode) {
+            if (currentBlock.mode === mode) {
               sfc[tag] = currentBlock
-            } else {
-              if (!sfc[tag].mode) {
-                sfc[tag] = currentBlock
-              }
             }
           } else {
-            sfc[tag] = currentBlock
+            if (!(sfc[tag] && sfc[tag].mode)) {
+              sfc[tag] = currentBlock
+            }
           }
         }
       } else { // custom blocks
