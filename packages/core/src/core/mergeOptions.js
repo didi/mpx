@@ -76,7 +76,7 @@ function extractObservers (options) {
           typeof callback === 'function' && callback.call(this, ...rest)
         },
         deep: true,
-        immediate: true
+        immediateAsync: true
       })
     }
   })
@@ -118,7 +118,7 @@ function extractObservers (options) {
             }
           },
           deep,
-          immediate: watchProp
+          immediateAsync: watchProp
         })
       }
     })

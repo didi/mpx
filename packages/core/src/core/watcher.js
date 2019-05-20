@@ -35,8 +35,11 @@ export default class Watcher {
       this.update()
     })
     this.value = this.getValue()
-    if (this.options.immediate && this.callback) {
-      this.callback(this.value)
+    if (this.callback) {
+      this.options.immediate && this.callback(this.value)
+      this.options.immediateAsync && Promise.resolve().then(() => {
+        this.callback(this.value)
+      })
     }
   }
 
