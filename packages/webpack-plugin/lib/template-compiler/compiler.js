@@ -1431,9 +1431,9 @@ function processElement (el, root, options, meta, injectNodes) {
     processShow(el, options, root)
   }
 
+  processRef(el, options, meta)
   if (mode === 'ali') {
     processAliStyleClassHack(el, options, root)
-    processRef(el, options, meta)
   }
 
   if (!pass) {

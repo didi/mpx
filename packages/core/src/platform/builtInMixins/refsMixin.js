@@ -20,11 +20,14 @@ export default function getRefsMixin () {
         })
 
         const originalExec = selectorQuery.exec
-        selectorQuery.exec = function (results) {
-          results.forEach((item, index) => {
-            cbs[index](item)
-          })
-          return originalExec.call(this, results)
+        selectorQuery.exec = function (originalCb = noop) {
+          const cb = function (results) {
+            results.forEach((item, index) => {
+              cbs[index](item)
+            })
+            originalCb(results)
+          }
+          return originalExec.call(this, cb)
         }
         return selectorQuery
       },
