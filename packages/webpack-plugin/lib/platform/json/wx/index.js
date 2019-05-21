@@ -197,6 +197,30 @@ module.exports = function getSpec ({ warn, error }) {
             waterfall: true,
             data: ['tabBar']
           })
+        },
+        qq (input) {
+          input.tabBar = runRules(spec.tabBar, input.tabBar, {
+            target: 'qq',
+            normalizeTest,
+            waterfall: true,
+            data: ['tabBar']
+          })
+        },
+        swan (input) {
+          input.tabBar = runRules(spec.tabBar, input.tabBar, {
+            target: 'swan',
+            normalizeTest,
+            waterfall: true,
+            data: ['tabBar']
+          })
+        },
+        tt (input) {
+          input.tabBar = runRules(spec.tabBar, input.tabBar, {
+            target: 'tt',
+            normalizeTest,
+            waterfall: true,
+            data: ['tabBar']
+          })
         }
       },
       {
@@ -204,6 +228,33 @@ module.exports = function getSpec ({ warn, error }) {
         ali (input) {
           input.window = runRules(spec.page, input.window, {
             target: 'ali',
+            normalizeTest,
+            waterfall: true,
+            data: ['window']
+          })
+          return input
+        },
+        qq (input) {
+          input.window = runRules(spec.page, input.window, {
+            target: 'qq',
+            normalizeTest,
+            waterfall: true,
+            data: ['window']
+          })
+          return input
+        },
+        swan (input) {
+          input.window = runRules(spec.page, input.window, {
+            target: 'swan',
+            normalizeTest,
+            waterfall: true,
+            data: ['window']
+          })
+          return input
+        },
+        tt (input) {
+          input.window = runRules(spec.page, input.window, {
+            target: 'tt',
             normalizeTest,
             waterfall: true,
             data: ['window']
