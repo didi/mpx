@@ -611,43 +611,33 @@ const wxToAliApi = {
    */
 
   createSelectorQuery (options = {}) {
-    let query = ALI_OBJ.createSelectorQuery(options)
-    let cbs = []
-
-    if (query) {
-      const apiArr = ['select', 'selectAll', 'selectViewport']
-      const cacheExec = query.exec || noop
-
-      apiArr.forEach(key => {
-        const cacheKey = query[key] || noop
-
-        query[key] = dom => {
-          const selected = cacheKey.call(query, dom)
-          const cacheBoundingClientRect = selected.boundingClientRect
-          selected.boundingClientRect = (...args) => {
-            if (typeof args[0] === 'function') {
-              cbs.push(args[0])
-              // error('请将 boundingClientRect 中的回调函数放入 exec 中使用')
-            }
-            return cacheBoundingClientRect.call(selected)
-          }
-          return selected
-        }
-      })
-
-      query.exec = (fn = noop) => {
-        return cacheExec.call(query, res => {
-          cbs.forEach((cb, idx) => {
-            cb.call(this, res[idx])
-          })
-          cbs = []
-          fn.call(this, res)
-        })
+    const selectorQuery = ALI_OBJ.createSelectorQuery(options)
+    const proxyMethods = ['boundingClientRect', 'scrollOffset']
+    const cbs = []
+    proxyMethods.forEach((name) => {
+      const originalMethod = selectorQuery[name]
+      selectorQuery[name] = function (cb = noop) {
+        cbs.push(cb)
+        return originalMethod.call(this)
       }
+    })
 
-      query.in = () => query
+    const originalExec = selectorQuery.exec
+    selectorQuery.exec = function (originalCb = noop) {
+      const cb = function (results) {
+        results.forEach((item, index) => {
+          cbs[index](item)
+        })
+        originalCb(results)
+      }
+      return originalExec.call(this, cb)
     }
-    return query
+
+    selectorQuery.in = function () {
+      return this
+    }
+
+    return selectorQuery
   }
 }
 
