@@ -181,6 +181,11 @@ module.exports = function getSpec ({ warn, error }) {
           input.packages = input.packages.map((packageItem) => {
             return packageItem.replace(/\?.*/, '')
           })
+        },
+        tt (input) {
+          input.packages = input.packages.map((packageItem) => {
+            return packageItem.replace(/\?.*/, '')
+          })
         }
       },
       {
