@@ -1,12 +1,32 @@
 import { BEFORECREATE, CREATED, BEFOREMOUNT, UPDATED, DESTROYED } from '../../core/innerLifecycle'
 import { is } from '../../helper/env'
+import { noop } from '../../helper/utils'
 
 export default function getRefsMixin () {
   let aliMethods
   if (is('ali')) {
+    const proxyMethods = ['boundingClientRect', 'scrollOffset']
+
     aliMethods = {
       createSelectorQuery (...rest) {
-        return my.createSelectorQuery(...rest)
+        const selectorQuery = my.createSelectorQuery(...rest)
+        const cbs = []
+        proxyMethods.forEach((name) => {
+          const originalMethod = selectorQuery[name]
+          selectorQuery[name] = function (cb = noop) {
+            cbs.push(cb)
+            return originalMethod.call(this)
+          }
+        })
+
+        const originalExec = selectorQuery.exec
+        selectorQuery.exec = function (results) {
+          results.forEach((item, index) => {
+            cbs[index](item)
+          })
+          return originalExec.call(this, results)
+        }
+        return selectorQuery
       },
       selectComponent (selector, all) {
         const children = this.__children__ || []

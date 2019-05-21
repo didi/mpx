@@ -359,6 +359,10 @@ function unwrap (a) {
   return a
 }
 
+export function noop () {
+  
+}
+
 export function diffAndCloneA (a, b) {
   const diffPaths = []
   const curPath = []
