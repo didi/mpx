@@ -41,6 +41,9 @@ module.exports = function (content) {
 
   const mainCompilation = getMainCompilation(this._compilation)
   const mode = mainCompilation.__mpx__.mode
+  const globalSrcMode = mainCompilation.__mpx__.srcMode
+  const localSrcMode = loaderUtils.parseQuery(this.resourceQuery || '?').mode
+  const srcMode = localSrcMode || globalSrcMode
 
   const {
     getSrcRequestString
@@ -53,12 +56,12 @@ module.exports = function (content) {
     hasComment,
     usingComponents,
     needCssSourceMap,
-    mode,
+    srcMode,
     isNative
   )
 
   const attributes = ['image:src', 'audio:src', 'video:src', 'cover-image:src', 'import:src', `${config[mode].wxs.tag}:${config[mode].wxs.src}`]
-  const root = '/'
+  const root = ''
   const links = attrParse(content, function (tag, attr) {
     const res = attributes.find(function (a) {
       if (a.charAt(0) === ':') {
@@ -136,10 +139,10 @@ module.exports = function (content) {
 
     switch (link.tag) {
       case 'import':
-        requestString = getSrcRequestString('template', { src }, -1)
+        requestString = getSrcRequestString('template', { src, mode: srcMode }, -1)
         break
       case config[mode].wxs.tag:
-        requestString = getSrcRequestString('wxs', { src }, -1)
+        requestString = getSrcRequestString('wxs', { src, mode: srcMode }, -1)
         break
       default:
         requestString = JSON.stringify(src)

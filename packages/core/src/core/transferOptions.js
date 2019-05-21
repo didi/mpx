@@ -19,19 +19,6 @@ export default function transferOptions (options, type, builtInMixins = []) {
   }
   // 转换mode
   options.mpxConvertMode = options.mpxConvertMode || getConvertMode(global.currentSrcMode, __mpx_mode__)
-  if (options.mpxConvertMode === 'wxToAli' && type === 'component') {
-    // ali组件标签无法透传style和class属性
-    options.properties = Object.assign({}, options.properties, {
-      mpxClass: {
-        type: String,
-        value: ''
-      },
-      mpxStyle: {
-        type: String,
-        value: ''
-      }
-    })
-  }
   const rawOptions = mergeOptions(options, type)
   if (currentInject && currentInject.propKeys) {
     const computedKeys = Object.keys(options.computed || {})

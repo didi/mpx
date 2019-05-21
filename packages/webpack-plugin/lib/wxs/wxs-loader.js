@@ -8,6 +8,7 @@ const getMainCompilation = require('../utils/get-main-compilation')
 const stripExtension = require('../utils/strip-extention')
 const toPosix = require('../utils/to-posix')
 const config = require('../config')
+const parseQuery = require('loader-utils').parseQuery
 
 module.exports = function () {
   const nativeCallback = this.async()
@@ -33,7 +34,13 @@ module.exports = function () {
     return match[1]
   }
 
-  const resource = stripExtension(this.resource)
+  let resource = stripExtension(this.resource)
+  const wxsModule = parseQuery(this.resourceQuery || '?').wxsModule
+
+  if (wxsModule) {
+    resource = `${resource}~${wxsModule}`
+  }
+
   if (wxsMap[resource]) {
     callback()
   } else {

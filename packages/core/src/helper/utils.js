@@ -12,6 +12,23 @@ export function type (n) {
   return Object.prototype.toString.call(n).slice(8, -1)
 }
 
+export function asyncLock () {
+  let lock = false
+  return (fn, onerror) => {
+    if (!lock) {
+      lock = true
+      Promise.resolve().then(() => {
+        lock = false
+        typeof fn === 'function' && fn()
+      }).catch(e => {
+        lock = false
+        console.error(e)
+        typeof onerror === 'function' && onerror()
+      })
+    }
+  }
+}
+
 export function aliasReplace (options = {}, alias, target) {
   if (options[alias]) {
     const dataType = type(options[alias])
@@ -78,7 +95,7 @@ export function setByPath (data, pathStr, value) {
   }
 }
 
-export function getByPath (data, pathStr, defaultVal = '') {
+export function getByPath (data, pathStr, defaultVal = '', errTip) {
   const results = []
   pathStr.split(',').forEach(item => {
     const path = item.trim()
@@ -90,6 +107,8 @@ export function getByPath (data, pathStr, defaultVal = '') {
         newValue = get(value, key) || value[key]
       } else if (isExistAttr(value, key)) {
         newValue = value[key]
+      } else {
+        newValue = errTip
       }
       return newValue
     })

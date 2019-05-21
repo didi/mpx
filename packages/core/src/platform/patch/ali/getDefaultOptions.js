@@ -11,14 +11,7 @@ function transformApiForProxy (context, currentInject) {
   if (Object.getOwnPropertyDescriptor(context, 'setData').configurable) {
     Object.defineProperty(context, 'setData', {
       get () {
-        return (data, cb) => {
-          // 同步数据到proxy
-          this.$mpxProxy.forceUpdate(data, this.__nativeRender__ || cb)
-          if (this.__nativeRender__) {
-            // 走原生渲染
-            return rawSetData(data, cb)
-          }
-        }
+        return context.$mpxProxy.setData.bind(context.$mpxProxy)
       },
       configurable: true
     })
@@ -26,7 +19,18 @@ function transformApiForProxy (context, currentInject) {
   Object.defineProperties(context, {
     __getInitialData: {
       get () {
-        return () => Object.assign({}, context.props, context.data)
+        return () => {
+          if (context.props) {
+            const newData = context.$rawOptions.__nativeRender__ ? context.data : Object.assign({}, context.data)
+            Object.keys(context.props).forEach((key) => {
+              if (!key.startsWith('$') && typeof context.props[key] !== 'function') {
+                newData[key] = context.props[key]
+              }
+            })
+            return newData
+          }
+          return context.data
+        }
       },
       configurable: false
     },
@@ -93,14 +97,26 @@ export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
       this.$mpxProxy = mpxProxy
       this.$mpxProxy.created()
     },
-    didUpdate (prevProps) {
-      if (prevProps && prevProps !== this.props) {
-        Object.keys(prevProps).forEach(key => {
-          if (!comparer.structural(this.props[key], prevProps[key])) {
-            this[key] = this.props[key]
-          }
-        })
+    deriveDataFromProps (nextProps) {
+      if (this.$mpxProxy && this.$mpxProxy.isMounted() && nextProps && nextProps !== this.props) {
+        if (this.$rawOptions.__nativeRender__) {
+          const newData = {}
+          Object.keys(nextProps).forEach((key) => {
+            if (!key.startsWith('$') && typeof nextProps[key] !== 'function' && !comparer.structural(this.props[key], nextProps[key])) {
+              newData[key] = nextProps[key]
+            }
+          })
+          this.$mpxProxy.setData(newData)
+        } else {
+          Object.keys(nextProps).forEach(key => {
+            if (!key.startsWith('$') && typeof nextProps[key] !== 'function' && !comparer.structural(this.props[key], nextProps[key])) {
+              this[key] = nextProps[key]
+            }
+          })
+        }
       }
+    },
+    didUpdate () {
       this.$mpxProxy.updated()
     },
     [hookNames[1]] () {

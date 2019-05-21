@@ -65,7 +65,7 @@ class MpxWebpackPlugin {
       })
     }).apply(compiler)
 
-    compiler.hooks.thisCompilation.tap('MpxWebpackPlugin', (compilation, params) => {
+    compiler.hooks.thisCompilation.tap('MpxWebpackPlugin', (compilation, { normalModuleFactory }) => {
       const typeExtMap = config[this.options.mode].typeExtMap
       const additionalAssets = {}
       if (!compilation.__mpx__) {
@@ -77,6 +77,7 @@ class MpxWebpackPlugin {
           processingSubPackages: false,
           mainResourceMap: {},
           wxsMap: {},
+          wxsConentMap: {},
           mode: this.options.mode,
           srcMode: this.options.srcMode,
           extract: (content, type, resourcePath, index, selfResourcePath) => {
@@ -84,6 +85,7 @@ class MpxWebpackPlugin {
               const compilationMpx = compilation.__mpx__
               const subPackagesMap = compilationMpx.subPackagesMap
               const mainResourceMap = compilationMpx.mainResourceMap
+              const selfResourceName = path.parse(selfResourcePath).name
 
               let subPackageRoot = ''
               if (compilationMpx.processingSubPackages) {
@@ -100,7 +102,7 @@ class MpxWebpackPlugin {
               // 针对src引入的styles进行特殊处理，处理为@import形式便于样式复用
               if (type === 'styles') {
                 const file1 = resourcePath + typeExtMap[type]
-                const file2 = toPosix(path.join(subPackageRoot, 'wxss', path.basename(selfResourcePath) + hash(selfResourcePath) + typeExtMap[type]))
+                const file2 = toPosix(path.join(subPackageRoot, 'wxss', selfResourceName + hash(selfResourcePath) + typeExtMap[type]))
                 const relativePath = toPosix(path.relative(path.dirname(file1), file2))
                 additionalAssets[file1] = additionalAssets[file1] || []
                 additionalAssets[file2] = additionalAssets[file2] || []
@@ -111,7 +113,7 @@ class MpxWebpackPlugin {
               }
               // 针对import src引入的template进行特殊处理
               if (type === 'template') {
-                const file = toPosix(path.join(subPackageRoot, 'wxml', path.basename(selfResourcePath) + hash(selfResourcePath) + typeExtMap[type]))
+                const file = toPosix(path.join(subPackageRoot, 'wxml', selfResourceName + hash(selfResourcePath) + typeExtMap[type]))
                 additionalAssets[file] = additionalAssets[file] || []
                 additionalAssets[file][0] = content + (additionalAssets[file][0] || '')
                 return file
@@ -149,7 +151,7 @@ class MpxWebpackPlugin {
       compilation.dependencyFactories.set(ReplaceDependency, new NullFactory())
       compilation.dependencyTemplates.set(ReplaceDependency, new ReplaceDependency.Template())
 
-      params.normalModuleFactory.hooks.parser.for('javascript/auto').tap('MpxWebpackPlugin', (parser) => {
+      normalModuleFactory.hooks.parser.for('javascript/auto').tap('MpxWebpackPlugin', (parser) => {
         parser.hooks.call.for('__mpx_resolve_path__').tap('MpxWebpackPlugin', (expr) => {
           if (expr.arguments[0]) {
             const resource = stripExtension(expr.arguments[0].value)
@@ -166,38 +168,54 @@ class MpxWebpackPlugin {
         const transHandler = (expr) => {
           const module = parser.state.module
           const current = parser.state.current
+          const resource = module.resource
+          const queryIndex = resource.indexOf('?')
+          let resourceQuery = '?'
+          if (queryIndex > -1) {
+            resourceQuery = resource.substr(queryIndex)
+          }
+          const localSrcMode = loaderUtils.parseQuery(resourceQuery).mode
+          const globalSrcMode = this.options.srcMode
+          const srcMode = localSrcMode || globalSrcMode
+          const mode = this.options.mode
 
-          if (/[/\\]@mpxjs[/\\]/.test(module.resource)) {
+          if (/[/\\]@mpxjs[/\\]/.test(module.resource) || mode === srcMode) {
             return
           }
 
           const type = expr.name
-          const name = type === 'wx' ? 'mpx' : 'createFactory'
-          const replaceContent = type === 'wx' ? 'mpx' : `${name}(${JSON.stringify(type)})`
 
-          const dep = new ReplaceDependency(replaceContent, expr.range)
-          current.addDependency(dep)
+          if (type === 'Behavior') {
+            const dep = new ReplaceDependency('', expr.range)
+            current.addDependency(dep)
+          } else {
+            const name = type === 'wx' ? 'mpx' : 'createFactory'
+            const replaceContent = type === 'wx' ? 'mpx' : `${name}(${JSON.stringify(type)})`
 
-          let needInject = true
-          for (let v of module.variables) {
-            if (v.name === name) {
-              needInject = false
-              break
+            const dep = new ReplaceDependency(replaceContent, expr.range)
+            current.addDependency(dep)
+
+            let needInject = true
+            for (let v of module.variables) {
+              if (v.name === name) {
+                needInject = false
+                break
+              }
             }
-          }
-          if (needInject) {
-            const expression = `require(${JSON.stringify(`@mpxjs/core/src/runtime/${name}`)})`
-            const deps = []
-            parser.parse(expression, {
-              current: {
-                addDependency: dep => {
-                  dep.userRequest = name
-                  deps.push(dep)
-                }
-              },
-              module
-            })
-            current.addVariable(name, expression, deps)
+            if (needInject) {
+              const expression = `require(${JSON.stringify(`@mpxjs/core/src/runtime/${name}`)})`
+              const deps = []
+              parser.parse(expression, {
+                current: {
+                  addDependency: dep => {
+                    dep.userRequest = name
+                    deps.push(dep)
+                  }
+                },
+                module
+              })
+              current.addVariable(name, expression, deps)
+            }
           }
         }
 
@@ -207,19 +225,7 @@ class MpxWebpackPlugin {
           parser.hooks.expression.for('App').tap('MpxWebpackPlugin', transHandler)
           if (this.options.srcMode === 'wx') {
             parser.hooks.expression.for('wx').tap('MpxWebpackPlugin', transHandler)
-            parser.hooks.call.for('Behavior').tap('MpxWebpackPlugin', (expr) => {
-              const module = parser.state.module
-              const current = parser.state.current
-              const obj = expr.arguments[0]
-
-              if (/[/\\]@mpxjs[/\\]/.test(module.resource)) {
-                return
-              }
-              const depA = new ReplaceDependency('', [expr.range[0], obj.range[0]])
-              const depB = new ReplaceDependency('', [obj.range[1], expr.range[1]])
-              current.addDependency(depA)
-              current.addDependency(depB)
-            })
+            parser.hooks.expression.for('Behavior').tap('MpxWebpackPlugin', transHandler)
           }
         }
 
@@ -260,7 +266,7 @@ class MpxWebpackPlugin {
             resourceQuery = resource.substr(queryIndex)
           }
           const localSrcMode = loaderUtils.parseQuery(resourceQuery).mode
-          const globalSrcMode = compilation.__mpx__.srcMode
+          const globalSrcMode = this.options.srcMode
           const mode = localSrcMode || globalSrcMode
           const dep = new InjectDependency({
             content: args.length ? `, ${JSON.stringify(mode)}` : JSON.stringify(mode),
@@ -278,17 +284,22 @@ class MpxWebpackPlugin {
       normalModuleFactory.hooks.beforeResolve.tapAsync('MpxWebpackPlugin', (data, callback) => {
         let request = data.request
         let elements = request.replace(/^-?!+/, '').replace(/!!+/g, '!').split('!')
-        let resourcePath = elements.pop()
+        let resource = elements.pop()
         let resourceQuery = '?'
-        const queryIndex = resourcePath.indexOf('?')
+        const queryIndex = resource.indexOf('?')
         if (queryIndex >= 0) {
-          resourceQuery = resourcePath.substr(queryIndex)
-          resourcePath = resourcePath.substr(0, queryIndex)
+          resourceQuery = resource.substr(queryIndex)
         }
         let queryObj = loaderUtils.parseQuery(resourceQuery)
         if (queryObj.resolve) {
           let pathLoader = normalize.lib('path-loader')
-          data.request = `!!${pathLoader}!${resourcePath}`
+          data.request = `!!${pathLoader}!${resource}`
+        }
+        if (queryObj.wxsModule) {
+          let wxsPreLoader = normalize.lib('wxs/wxs-pre-loader')
+          if (!/wxs-loader/.test(request)) {
+            data.request = `!!${wxsPreLoader}!${resource}`
+          }
         }
         callback(null, data)
       })

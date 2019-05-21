@@ -5,6 +5,7 @@ const normalize = require('../utils/normalize')
 const isValidIdentifierStr = require('../utils/is-valid-identifier-str')
 const isEmptyObject = require('../utils/is-empty-object')
 const getRulesRunner = require('../platform/index')
+const addQuery = require('../utils/add-query')
 
 /**
  * Make a map and return a function for checking if a key
@@ -171,6 +172,7 @@ var processingTemplate
 var isNative
 var rulesRunner
 var platformGetTagNamespace
+var resource
 
 function baseWarn (msg) {
   console.warn(('[template compiler]: ' + msg))
@@ -469,18 +471,11 @@ function parseComponent (content, options) {
       }
       if (isSpecialTag(tag)) {
         checkAttrs(currentBlock, attrs)
-        // 优先取带有正确mode的fields
+        // 带mode的fields只有匹配当前编译mode才会编译
         if (tag === 'style') {
-          if (sfc.styles[0]) {
-            if (currentBlock.mode && currentBlock.mode === mode) {
-              if (sfc.styles[0].mode !== mode) {
-                sfc.styles = []
-              }
+          if (currentBlock.mode) {
+            if (currentBlock.mode === mode) {
               sfc.styles.push(currentBlock)
-            } else {
-              if (!sfc.styles[0].mode) {
-                sfc.styles.push(currentBlock)
-              }
             }
           } else {
             sfc.styles.push(currentBlock)
@@ -489,16 +484,14 @@ function parseComponent (content, options) {
           if (tag === 'script' && currentBlock.type === 'application/json') {
             tag = 'json'
           }
-          if (sfc[tag]) {
-            if (currentBlock.mode && currentBlock.mode === mode) {
+          if (currentBlock.mode) {
+            if (currentBlock.mode === mode) {
               sfc[tag] = currentBlock
-            } else {
-              if (!sfc[tag].mode) {
-                sfc[tag] = currentBlock
-              }
             }
           } else {
-            sfc[tag] = currentBlock
+            if (!(sfc[tag] && sfc[tag].mode)) {
+              sfc[tag] = currentBlock
+            }
           }
         }
       } else { // custom blocks
@@ -576,6 +569,7 @@ function parse (template, options) {
   mode = options.mode || 'wx'
   srcMode = options.srcMode || mode
   isNative = options.isNative
+  resource = options.resource
 
   rulesRunner = getRulesRunner({
     mode,
@@ -656,13 +650,13 @@ function parse (template, options) {
       currentParent.children.push(element)
       element.parent = currentParent
 
-      processElement(element, options, meta, root, injectNodes)
+      processElement(element, root, options, meta, injectNodes)
       if (!unary) {
         currentParent = element
         stack.push(element)
       } else {
         element.unary = true
-        root = closeElement(element, root)
+        closeElement(element, meta)
       }
     },
 
@@ -677,7 +671,7 @@ function parse (template, options) {
         // pop stack
         stack.pop()
         currentParent = stack[stack.length - 1]
-        root = closeElement(element, root)
+        closeElement(element, meta)
       }
     },
 
@@ -971,42 +965,41 @@ function processBindEvent (el) {
 }
 
 function parseMustache (raw = '') {
-  let val = raw
+  let replaced = false
   if (tagRE.test(raw)) {
     let ret = []
     let lastLastIndex = 0
     let match
-    val = ''
     while (match = tagREG.exec(raw)) {
       let pre = raw.substring(lastLastIndex, match.index)
       if (pre) {
         ret.push(stringify(pre))
-        val += pre
       }
-      let exp = match[1].replace(/\b__mpx_mode__\b/, stringify(mode))
+      let exp = match[1]
+      if (/\b__mpx_mode__\b/.test(exp)) {
+        exp = exp.replace(/\b__mpx_mode__\b/g, stringify(mode))
+        replaced = true
+      }
       ret.push(`(${exp})`)
-      val += `{{${exp}}}`
       lastLastIndex = tagREG.lastIndex
     }
     let post = raw.substring(lastLastIndex)
     if (post) {
       ret.push(stringify(post))
-      val += post
     }
-    // 去除无意义的括号
-    if (ret.length === 1) {
-      ret[0] = ret[0].slice(1, ret[0].length - 1)
-    }
+    let result = ret.join('+')
     return {
-      result: ret.join('+'),
+      result,
       hasBinding: true,
-      val
+      val: replaced ? `{{${result}}}` : raw,
+      replaced
     }
   }
   return {
     result: stringify(raw),
     hasBinding: false,
-    val
+    val: raw,
+    replaced
   }
 }
 
@@ -1083,12 +1076,10 @@ function processRef (el, options, meta) {
   }
 
   if (type === 'component' && mode === 'ali') {
-    addAttrs(el, [
-      {
-        name: 'onUpdateRef',
-        value: '__handleUpdateRef'
-      }
-    ])
+    addAttrs(el, [{
+      name: 'onUpdateRef',
+      value: '__handleUpdateRef'
+    }])
   }
 }
 
@@ -1100,25 +1091,51 @@ function addWxsModule (meta, module, src) {
   meta.wxsModuleMap[module] = src
 }
 
-function processWxs (el, meta) {
+function addWxsContent (meta, module, content) {
+  if (!meta.wxsConentMap) {
+    meta.wxsConentMap = {}
+  }
+  if (meta.wxsConentMap[module]) return true
+  meta.wxsConentMap[module] = content
+}
+
+function postProcessWxs (el, meta) {
   if (el.tag === config[mode].wxs.tag) {
-    addWxsModule(meta, el.attrsMap[config[mode].wxs.module], el.attrsMap[config[mode].wxs.src])
+    let module = el.attrsMap[config[mode].wxs.module]
+    if (module) {
+      let src, content
+      if (el.attrsMap[config[mode].wxs.src]) {
+        src = el.attrsMap[config[mode].wxs.src]
+      } else {
+        content = el.children.filter((child) => {
+          return child.type === 3 && !child.isComment
+        }).map(child => child.text).join('\n')
+        src = addQuery(resource, {
+          wxsModule: module
+        })
+        addAttrs(el, [{
+          name: config[mode].wxs.src,
+          value: src
+        }])
+        el.children = []
+      }
+      src && addWxsModule(meta, module, src)
+      content && addWxsContent(meta, module, content)
+    }
   }
 }
 
 function processAttrs (el, options) {
   el.attrsList.forEach((attr) => {
-    let parsed = parseMustache(attr.value)
+    const isTemplateData = el.tag === 'template' && attr.name === 'data'
+    let value = isTemplateData ? `{${attr.value}}` : attr.value
+    let parsed = parseMustache(value)
     if (parsed.hasBinding) {
-      if (el.tag === 'template' && attr.name === 'data') {
-        addExp(el, `{${parsed.result}}`)
-      } else {
-        let needTravel = (options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component') && !(attr.name === 'class' || attr.name === 'style')
-        addExp(el, parsed.result, needTravel)
-      }
+      let needTravel = (options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component') && !(attr.name === 'class' || attr.name === 'style')
+      addExp(el, parsed.result, needTravel)
     }
-    if (parsed.val !== attr.value) {
-      modifyAttr(el, attr.name, parsed.val)
+    if (parsed.replaced) {
+      modifyAttr(el, attr.name, isTemplateData ? attr.value.replace(/\b__mpx_mode__\b/g, stringify(mode)) : parsed.val)
     }
   })
 }
@@ -1153,23 +1170,76 @@ function postProcessFor (el) {
   }
 }
 
+function evalExp (exp) {
+  // eslint-disable-next-line no-new-func
+  const fn = new Function(`return ${exp};`)
+  let result = { success: false }
+  try {
+    result = {
+      success: true,
+      result: fn()
+    }
+  } catch (e) {
+  }
+  return result
+}
+
 function postProcessIf (el) {
-  let attrs
+  let attrs, result, prevNode
   if (el.if) {
-    attrs = [{
-      name: config[mode].directive.if,
-      value: el.if.raw
-    }]
+    result = evalExp(el.if.exp)
+    if (result.success) {
+      if (result.result) {
+        delete el.if
+        el._if = true
+      } else {
+        replaceNode(el, getTempNode())._if = false
+      }
+    } else {
+      attrs = [{
+        name: config[mode].directive.if,
+        value: el.if.raw
+      }]
+    }
   } else if (el.elseif) {
-    attrs = [{
-      name: config[mode].directive.elseif,
-      value: el.elseif.raw
-    }]
+    prevNode = findPrevNode(el)
+    if (prevNode._if === true) {
+      removeNode(el)
+    } else if (prevNode._if === false) {
+      // 当做if处理
+      el.if = el.elseif
+      delete el.elseif
+      postProcessIf(el)
+    } else {
+      result = evalExp(el.elseif.exp)
+      if (result.success) {
+        if (result.result) {
+          // 当做else处理
+          delete el.elseif
+          el._if = el.else = true
+          postProcessIf(el)
+        } else {
+          removeNode(el)
+        }
+      } else {
+        attrs = [{
+          name: config[mode].directive.elseif,
+          value: el.elseif.raw
+        }]
+      }
+    }
   } else if (el.else) {
-    attrs = [{
-      name: config[mode].directive.else,
-      value: ''
-    }]
+    prevNode = findPrevNode(el)
+    if (prevNode._if === true) {
+      removeNode(el)
+    } else if (prevNode._if === false) {
+      delete el.else
+    } else {
+      attrs = [{
+        name: config[mode].directive.else,
+        value: ''
+      }]
+    }
   }
   if (attrs) {
     addAttrs(el, attrs)
@@ -1345,7 +1415,7 @@ function postProcessTemplate (el) {
   }
 }
 
-function processElement (el, options, meta, root, injectNodes) {
+function processElement (el, root, options, meta, injectNodes) {
   if (rulesRunner) {
     rulesRunner(el)
   }
@@ -1359,28 +1429,29 @@ function processElement (el, options, meta, root, injectNodes) {
       processStyle(el, meta, injectNodes)
     }
     processShow(el, options, root)
+  }
+
+  if (mode === 'ali') {
+    processAliStyleClassHack(el, options, root)
     processRef(el, options, meta)
+  }
+
+  if (!pass) {
     processBindEvent(el)
     if (mode !== 'ali') {
       processPageStatus(el, options)
     }
     processComponentIs(el, options)
-    processWxs(el, meta)
+    processAttrs(el, options)
   }
-
-  if (mode === 'ali') {
-    processAliStyleClassHack(el, options, root)
-  }
-
-  if (!pass) processAttrs(el, options)
 }
 
-function closeElement (el, root) {
-  if (postProcessTemplate(el) || processingTemplate) return root
+function closeElement (el, meta) {
+  if (postProcessTemplate(el) || processingTemplate) return
+  postProcessWxs(el, meta)
   el = postProcessComponentIs(el)
   postProcessFor(el)
   postProcessIf(el)
-  return root
 }
 
 function postProcessComponentIs (el) {
@@ -1410,11 +1481,8 @@ function postProcessComponentIs (el) {
     if (!el.parent) {
       error$1('Dynamic component can not be the template root, considering wrapping it with <view> or <text> tag!')
     } else {
-      tempNode.parent = el.parent
-      el.parent.children.pop()
-      el.parent.children.push(tempNode)
+      el = replaceNode(el, tempNode) || el
     }
-    el = tempNode
   }
   return el
 }
@@ -1472,6 +1540,29 @@ function findPrevNode (node) {
       if (preNode.type === 1) {
         return preNode
       }
+    }
+  }
+}
+
+function replaceNode (node, newNode) {
+  let parent = node.parent
+  if (parent) {
+    let index = parent.children.indexOf(node)
+    if (index !== -1) {
+      parent.children.splice(index, 1, newNode)
+      newNode.parent = parent
+      return newNode
+    }
+  }
+}
+
+function removeNode (node) {
+  let parent = node.parent
+  if (parent) {
+    let index = parent.children.indexOf(node)
+    if (index !== -1) {
+      parent.children.splice(index, 1)
+      return true
     }
   }
 }

@@ -12,7 +12,7 @@ export default function mergeOptions (options = {}, type, needConvert = true) {
   curType = type === 'app' || !convertRule.mode ? type : convertRule.mode
   CURRENT_HOOKS = convertRule.lifecycle[curType]
   const newOptions = {}
-  extractMixins(newOptions, options)
+  extractMixins(newOptions, options, needConvert)
   if (needConvert) {
     proxyHooks(newOptions)
     // 自定义补充转换函数
@@ -21,20 +21,22 @@ export default function mergeOptions (options = {}, type, needConvert = true) {
   return transformHOOKS(newOptions)
 }
 
-function extractMixins (mergeOptions, options) {
+function extractMixins (mergeOptions, options, needConvert) {
   aliasReplace(options, 'behaviors', 'mixins')
   if (options.mixins) {
     for (const mix of options.mixins) {
       if (typeof mix === 'string') {
         console.error(`Don't support for convert the string-formatted【behavior】into mixin`)
       } else {
-        extractMixins(mergeOptions, mix)
+        extractMixins(mergeOptions, mix, needConvert)
       }
     }
   }
   options = extractLifetimes(options)
   options = extractPageHooks(options)
-  options = extractObservers(options)
+  if (needConvert) {
+    options = extractObservers(options)
+  }
   mergeMixins(mergeOptions, options)
 }
 
@@ -64,20 +66,24 @@ function extractObservers (options) {
   }
   Object.keys(props).forEach(key => {
     const prop = props[key]
-    if (prop && typeof prop.observer === 'function') {
+    if (prop && prop.observer) {
       mergeWatch(key, {
         handler (...rest) {
-          prop.observer.call(this, ...rest)
+          let callback = prop.observer
+          if (typeof callback === 'string') {
+            callback = this[callback]
+          }
+          typeof callback === 'function' && callback.call(this, ...rest)
         },
         deep: true,
-        immediate: true
+        immediateAsync: true
       })
     }
   })
   if (observers) {
     Object.keys(observers).forEach(key => {
       const callback = observers[key]
-      if (typeof callback === 'function') {
+      if (callback) {
         let deep = false
         const propsArr = Object.keys(props)
         const keyPathArr = []
@@ -99,13 +105,20 @@ function extractObservers (options) {
         }
         mergeWatch(key, {
           handler (val, old) {
-            if (keyPathArr.length < 2) {
-              val = [val]
+            let cb = callback
+            if (typeof cb === 'string') {
+              cb = this[cb]
             }
-            callback.call(this, ...val)
+            if (typeof cb === 'function') {
+              if (keyPathArr.length < 2) {
+                val = [val]
+                old = [old]
+              }
+              cb.call(this, ...val, ...old)
+            }
           },
           deep,
-          immediate: watchProp
+          immediateAsync: watchProp
         })
       }
     })
