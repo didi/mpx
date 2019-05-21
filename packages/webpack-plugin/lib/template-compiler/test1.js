@@ -1,5 +1,5 @@
 const compiler = require('./compiler')
-const bindThis = require('./bind-this').transform
+// const bindThis = require('./bind-this').transform
 var input =
   '<view wx:if="{{bb}}">aaa</view>' +
   '<view wx:elif="{{aaa}}">bbb</view>' +
@@ -15,7 +15,7 @@ let parsed = compiler.parse(input, {
 })
 let ast = parsed.root
 
-let meta = parsed.meta
+// let meta = parsed.meta
 
 console.log(compiler.serialize(ast))
 

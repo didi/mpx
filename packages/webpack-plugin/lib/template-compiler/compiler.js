@@ -1171,6 +1171,7 @@ function postProcessFor (el) {
 }
 
 function evalExp (exp) {
+  // eslint-disable-next-line no-new-func
   const fn = new Function(`return ${exp};`)
   let result = { success: false }
   try {

@@ -65,8 +65,8 @@ export default class MPXProxy {
     this.options.__nativeRender__ ? this.setData() : this.initRender()
   }
 
-  renderTaskExecutor(isEmptyRender) {
-    if (!this.isMounted() && this.curRenderTask || this.isMounted() && isEmptyRender) {
+  renderTaskExecutor (isEmptyRender) {
+    if ((!this.isMounted() && this.curRenderTask) || (this.isMounted() && isEmptyRender)) {
       return
     }
     let promiseResolve

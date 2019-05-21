@@ -1,8 +1,8 @@
+import { asyncLock } from '../helper/utils'
 const queue = []
 const idsMap = {}
 let flushing = false
 let curIndex = 0
-import { asyncLock } from '../helper/utils'
 const lockTask = asyncLock()
 export default function queueWatcher (watcher) {
   if (!watcher.id && typeof watcher === 'function') {

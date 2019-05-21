@@ -21,7 +21,7 @@ export default function mergeOptions (options = {}, type, needConvert = true) {
   return transformHOOKS(newOptions)
 }
 
-function extractMixins(mergeOptions, options, needConvert) {
+function extractMixins (mergeOptions, options, needConvert) {
   aliasReplace(options, 'behaviors', 'mixins')
   if (options.mixins) {
     for (const mix of options.mixins) {
