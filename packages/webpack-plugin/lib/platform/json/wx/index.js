@@ -57,7 +57,7 @@ module.exports = function getSpec ({ warn, error }) {
         qq: deletePath()
       },
       {
-        test: 'backgroundColorTop|backgroundColorBottom|pageOrientation',
+        test: 'backgroundColorTop|backgroundColorBottom',
         ali: deletePath(),
         swan: deletePath()
       },
@@ -67,6 +67,8 @@ module.exports = function getSpec ({ warn, error }) {
       },
       {
         test: 'pageOrientation',
+        ali: deletePath(),
+        swan: deletePath(),
         tt: deletePath()
       }
     ],
@@ -120,7 +122,7 @@ module.exports = function getSpec ({ warn, error }) {
           }
         },
         {
-          test: 'position|custom',
+          test: 'position',
           ali: deletePath(),
           swan: deletePath()
         },
@@ -130,6 +132,8 @@ module.exports = function getSpec ({ warn, error }) {
         },
         {
           test: 'custom',
+          ali: deletePath(),
+          swan: deletePath(),
           tt: deletePath()
         }
       ]
@@ -139,18 +143,21 @@ module.exports = function getSpec ({ warn, error }) {
         test: 'resizable',
         ali: deletePath(),
         qq: deletePath(),
-        swan: deletePath()
+        swan: deletePath(),
+        tt: deletePath()
       },
       {
         test: 'preloadRule',
         ali: deletePath(),
-        qq: deletePath()
+        qq: deletePath(),
+        tt: deletePath()
       },
       {
         test: 'functionalPages|plugins|usingComponents',
         ali: deletePath(true),
         qq: deletePath(true),
-        swan: deletePath(true)
+        swan: deletePath(true),
+        tt: deletePath()
       },
       {
         test: 'networkTimeout|debug|workers|requiredBackgroundModes|navigateToMiniProgramAppIdList|permission',
@@ -158,8 +165,15 @@ module.exports = function getSpec ({ warn, error }) {
         swan: deletePath()
       },
       {
+        test: 'networkTimeout|workers|requiredBackgroundModes|navigateToMiniProgramAppIdList|permission',
+        ali: deletePath(),
+        swan: deletePath(),
+        tt: deletePath()
+      },
+      {
         test: 'subpackages|subPackages',
-        ali: deletePath(true)
+        ali: deletePath(true),
+        tt: deletePath()
       },
       {
         test: 'packages',
