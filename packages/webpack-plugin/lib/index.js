@@ -275,8 +275,10 @@ class MpxWebpackPlugin {
           parser.state.current.addDependency(dep)
         }
 
-        parser.hooks.callAnyMember.for('imported var').tap('MpxWebpackPlugin', handler)
-        parser.hooks.callAnyMember.for('mpx').tap('MpxWebpackPlugin', handler)
+        if (this.options.srcMode !== this.options.mode) {
+          parser.hooks.callAnyMember.for('imported var').tap('MpxWebpackPlugin', handler)
+          parser.hooks.callAnyMember.for('mpx').tap('MpxWebpackPlugin', handler)
+        }
       })
     })
 
