@@ -4,7 +4,7 @@ const normalizeComponentRules = require('../normalize-component-rules')
 
 module.exports = function getSpec ({ warn, error }) {
   const spec = {
-    supportedTargets: ['ali', 'swan'],
+    supportedTargets: ['ali', 'swan', 'qq', 'tt'],
     directive: [
       // 通用指令
       {
@@ -13,6 +13,27 @@ module.exports = function getSpec ({ warn, error }) {
           const dir = this.test.exec(name)[1]
           return {
             name: 'a:' + dir,
+            value
+          }
+        },
+        swan ({ name, value }) {
+          const dir = this.test.exec(name)[1]
+          return {
+            name: 's-' + dir,
+            value
+          }
+        },
+        qq ({ name, value }) {
+          const dir = this.test.exec(name)[1]
+          return {
+            name: 'qq:' + dir,
+            value
+          }
+        },
+        tt ({ name, value }) {
+          const dir = this.test.exec(name)[1]
+          return {
+            name: 'tt:' + dir,
             value
           }
         }
@@ -77,6 +98,14 @@ module.exports = function getSpec ({ warn, error }) {
               return eventMap[eventName]
             } else {
               error(`Ali environment does not support [${eventName}] event!`)
+            }
+          },
+          swan (eventName) {
+            const eventArr = ['tap', 'longtap', 'longpress', 'touchstart', 'touchmove', 'touchcancel', 'touchend', 'touchforcechange']
+            if (eventArr.includes(eventName)) {
+              return eventName
+            } else {
+              error(`Baidu environment does not support [${eventName}] event!`)
             }
           }
         }
