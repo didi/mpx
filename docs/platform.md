@@ -1,6 +1,46 @@
+# 多平台支持
+
+目前mpx支持了微信、支付宝、百度、qq、头条小程序平台。
+
+## template增强特性
+
+不同平台上的模板增强指令按照平台的指令风格进行设计，文档和代码示例为了方便统一采用微信小程序下的书写方式。
+
+模板增强指令对应表：
+
+增强指令|微信|支付宝|百度|qq|头条
+----|----|----|----|----|----
+双向绑定|wx:model|a:model|s-model|qq:model|tt:model
+双向绑定辅助属性|wx:model-prop|a:model-prop|s-model-prop|qq:model-prop|tt:model-prop
+双向绑定辅助属性|wx:model-event|a:model-event|s-model-event|qq:model-event|tt:model-event
+双向绑定辅助属性|wx:model-value-path|a:model-value-path|s-model-value-path|qq:model-value-path|tt:model-value-path
+动态样式绑定|wx:class|a:class|s-class|暂不支持|暂不支持
+动态样式绑定|wx:style|a:style|s-style|暂不支持|暂不支持
+获取节点/组件实例|wx:ref|a:ref|s-ref|qq:ref|tt:ref
+显示/隐藏|wx:show|a:show|s-show|qq:show|tt:show
+
+## script增强特性
+
+增强字段|微信|支付宝|百度|qq|头条
+----|----|----|----|----|----
+computed|支持|支持|支持|支持|部分支持，无法作为props传递(待头条修复生命周期执行顺序可完全支持)
+watch|支持|支持|支持|支持|支持
+mixins|支持|支持|支持|支持|支持
+
+## style增强特性
+
+无平台差异
+
+## json增强特性
+
+增强字段|微信|支付宝|百度|qq|头条
+----|----|----|----|----|----
+packages|支持|部分支持，无法分包|支持|支持|部分支持，无法分包
+
+
 # 跨平台编译
 
-自2.0版本开始，mpx开始支持跨小程序平台编译，不同于常规跨平台框架重新定义一套DSL的方式，mpx支持基于现有平台的源码编译为其他已支持平台的目标代码，例如，你可以将当前已有的mpx微信小程序项目直接编译为支付宝小程序在支付宝中运行。
+自2.0版本开始，mpx开始支持跨小程序平台编译，不同于常规跨平台框架重新定义一套DSL的方式，mpx支持基于现有平台的源码编译为其他已支持平台的目标代码。跨平台编译能力依赖于mpx的多平台支持，目前mpx支持将微信小程序跨平台编译为支付宝、百度、qq和头条小程序。
 
 ## 使用方法
 
@@ -84,39 +124,30 @@ createApp({
 })
 ```
 
-## 其他跨平台差异
+## 跨平台源码编写注意事项
+
+目前各大厂商提供的小程序技术规范各不相同，mpx框架在
+
+### 组件自定义事件
+
+支付宝小程序没有组件自定义事件的api，为了抹平平台差异性，我们在支付宝小程序组件实例中新增了triggerEvent方法，使用方式和微信保持一致，跨平台代码中可以安全地使用组件自定义事件。
 
 ### 获取节点/组件实例
 
-支付宝和微信等其他平台中获取节点/组件实例的方式并不对齐，我们在模板增强中提供了统一的refs封装，具有跨平台能力，在编写跨平台代码时请通过refs获取节点/组件实例，具体使用方法参考[获取节点](single/template-enhance.md#refs)
+支付宝和类微信平台中获取节点/组件实例的方式并不对齐，我们在模板增强中提供了统一的refs封装，具有跨平台能力，在编写跨平台代码时请通过refs获取节点/组件实例，具体使用方法参考[获取节点](single/template-enhance.md#refs)。
+
+为了兼容原生小程序组件的跨平台编译，我们在支付宝小程序的组件实例中新增了selectComponent/selectAllComponents/createSelectorQuery方法，跨平台代码中也可以安全地使用这三个方法获取节点/组件实例。
 
 ### 样式/类名绑定
 
-mpx中的样式/类名绑定使用类wxs的渲染层脚本进行实现，由于qq小程序暂未开放类wxs支持，qq小程序中暂时无法使用样式/类名绑定能力
+mpx中的样式/类名绑定使用类wxs的渲染层脚本进行实现，由于qq和头条小程序暂未开放类wxs支持，qq和头条小程序中暂时无法使用样式/类名绑定能力。
 
 ### wxs export
 
-各平台中类wxs渲染层脚本的模块输出方式各不相同，在编写跨平台代码时统一使用wxs中的`module.exports`语法对类wxs模块进行导出
+各平台中类wxs渲染层脚本的模块输出方式各不相同，在编写跨平台代码时统一使用wxs中的`module.exports`语法对类wxs模块进行导出，目前微信、支付宝、百度小程序中提供了类wxs支持，
 
 ## 已支持的跨平台编译能力
 
-目前mpx已经支持了微信->支付宝/百度/qq的跨平台编译，未来我们会将跨平台编译的转换规则开发进行完善的文档说明并开放出来，便于社区贡献更多的跨平台编译能力
+目前mpx已经支持了微信->支付宝/百度/qq的跨平台编译，未来我们会将跨平台编译的转换规则开发进行完善的文档说明并开放出来，便于社区贡献更多的跨平台编译能力。
 
-## 已支持的小程序平台
 
-目前mpx支持了微信、支付宝、百度、qq小程序平台，头条小程序因生命周期问题暂未开放支持。
-
-不同平台上的增强指令按照平台的指令风格进行设计，文档和代码示例为了方便统一采用微信小程序下的书写方式。
-
-模板增强指令对应表：
-
-指令|微信|支付宝|百度|qq
-----|----|----|----|----
-双向绑定|wx:model|a:model|s-model|qq:model
-双向绑定辅助属性|wx:model-prop|a:model-prop|s-model-prop|qq:model-prop
-双向绑定辅助属性|wx:model-event|a:model-event|s-model-event|qq:model-event
-双向绑定辅助属性|wx:model-value-path|a:model-value-path|s-model-value-path|qq:model-value-path
-动态样式绑定|wx:class|a:class|s-class|暂未支持
-动态样式绑定|wx:style|a:style|s-style|暂未支持
-获取节点/组件实例|wx:ref|a:ref|s-ref|qq:ref
-显示/隐藏|wx:show|a:show|s-show|qq:show
