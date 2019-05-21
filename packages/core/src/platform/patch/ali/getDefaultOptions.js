@@ -21,17 +21,13 @@ function transformApiForProxy (context, currentInject) {
       get () {
         return () => {
           if (context.props) {
-            const newData = {}
+            const newData = context.$rawOptions.__nativeRender__ ? context.data : Object.assign({}, context.data)
             Object.keys(context.props).forEach((key) => {
               if (!key.startsWith('$') && typeof context.props[key] !== 'function') {
                 newData[key] = context.props[key]
               }
             })
-            if (context.$rawOptions.__nativeRender__) {
-              context.$mpxProxy.setData(newData)
-            } else {
-              return Object.assign({}, context.data, newData)
-            }
+            return newData
           }
           return context.data
         }
