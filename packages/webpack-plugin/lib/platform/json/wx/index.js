@@ -160,7 +160,7 @@ module.exports = function getSpec ({ warn, error }) {
         tt: deletePath()
       },
       {
-        test: 'networkTimeout|debug|workers|requiredBackgroundModes|navigateToMiniProgramAppIdList|permission',
+        test: 'debug',
         ali: deletePath(),
         swan: deletePath()
       },
