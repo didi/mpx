@@ -116,10 +116,10 @@ export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
       this.$mpxProxy.created()
     },
     ready () {
-      this.$mpxProxy.mounted()
+      this.$mpxProxy && this.$mpxProxy.mounted()
     },
     detached () {
-      this.$mpxProxy.destroyed()
+      this.$mpxProxy && this.$mpxProxy.destroyed()
     }
   }]
   return mergeOptions(options, type, false)
