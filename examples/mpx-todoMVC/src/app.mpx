@@ -11,3 +11,15 @@
     }
   }
 </script>
+
+<script type="application/json" mode="ali">
+  {
+    "pages": [
+      "pages/index"
+    ],
+    "window": {
+      "navigationBarBackgroundColor": "#fff",
+      "navigationBarTitleText": "mpx备忘清单-ali"
+    }
+  }
+</script>
