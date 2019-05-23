@@ -57,7 +57,7 @@ module.exports = function getSpec ({ warn, error }) {
         qq: deletePath()
       },
       {
-        test: 'backgroundColorTop|backgroundColorBottom|pageOrientation',
+        test: 'backgroundColorTop|backgroundColorBottom',
         ali: deletePath(),
         swan: deletePath()
       },
@@ -67,6 +67,8 @@ module.exports = function getSpec ({ warn, error }) {
       },
       {
         test: 'pageOrientation',
+        ali: deletePath(),
+        swan: deletePath(),
         tt: deletePath()
       }
     ],
@@ -120,7 +122,7 @@ module.exports = function getSpec ({ warn, error }) {
           }
         },
         {
-          test: 'position|custom',
+          test: 'position',
           ali: deletePath(),
           swan: deletePath()
         },
@@ -130,6 +132,8 @@ module.exports = function getSpec ({ warn, error }) {
         },
         {
           test: 'custom',
+          ali: deletePath(),
+          swan: deletePath(),
           tt: deletePath()
         }
       ]
@@ -139,31 +143,46 @@ module.exports = function getSpec ({ warn, error }) {
         test: 'resizable',
         ali: deletePath(),
         qq: deletePath(),
-        swan: deletePath()
+        swan: deletePath(),
+        tt: deletePath()
       },
       {
         test: 'preloadRule',
         ali: deletePath(),
-        qq: deletePath()
+        qq: deletePath(),
+        tt: deletePath()
       },
       {
         test: 'functionalPages|plugins|usingComponents',
         ali: deletePath(true),
         qq: deletePath(true),
-        swan: deletePath(true)
+        swan: deletePath(true),
+        tt: deletePath()
       },
       {
-        test: 'networkTimeout|debug|workers|requiredBackgroundModes|navigateToMiniProgramAppIdList|permission',
+        test: 'debug',
         ali: deletePath(),
         swan: deletePath()
       },
       {
+        test: 'networkTimeout|workers|requiredBackgroundModes|navigateToMiniProgramAppIdList|permission',
+        ali: deletePath(),
+        swan: deletePath(),
+        tt: deletePath()
+      },
+      {
         test: 'subpackages|subPackages',
-        ali: deletePath(true)
+        ali: deletePath(true),
+        tt: deletePath()
       },
       {
         test: 'packages',
         ali (input) {
+          input.packages = input.packages.map((packageItem) => {
+            return packageItem.replace(/\?.*/, '')
+          })
+        },
+        tt (input) {
           input.packages = input.packages.map((packageItem) => {
             return packageItem.replace(/\?.*/, '')
           })
@@ -178,6 +197,30 @@ module.exports = function getSpec ({ warn, error }) {
             waterfall: true,
             data: ['tabBar']
           })
+        },
+        qq (input) {
+          input.tabBar = runRules(spec.tabBar, input.tabBar, {
+            target: 'qq',
+            normalizeTest,
+            waterfall: true,
+            data: ['tabBar']
+          })
+        },
+        swan (input) {
+          input.tabBar = runRules(spec.tabBar, input.tabBar, {
+            target: 'swan',
+            normalizeTest,
+            waterfall: true,
+            data: ['tabBar']
+          })
+        },
+        tt (input) {
+          input.tabBar = runRules(spec.tabBar, input.tabBar, {
+            target: 'tt',
+            normalizeTest,
+            waterfall: true,
+            data: ['tabBar']
+          })
         }
       },
       {
@@ -185,6 +228,33 @@ module.exports = function getSpec ({ warn, error }) {
         ali (input) {
           input.window = runRules(spec.page, input.window, {
             target: 'ali',
+            normalizeTest,
+            waterfall: true,
+            data: ['window']
+          })
+          return input
+        },
+        qq (input) {
+          input.window = runRules(spec.page, input.window, {
+            target: 'qq',
+            normalizeTest,
+            waterfall: true,
+            data: ['window']
+          })
+          return input
+        },
+        swan (input) {
+          input.window = runRules(spec.page, input.window, {
+            target: 'swan',
+            normalizeTest,
+            waterfall: true,
+            data: ['window']
+          })
+          return input
+        },
+        tt (input) {
+          input.window = runRules(spec.page, input.window, {
+            target: 'tt',
             normalizeTest,
             waterfall: true,
             data: ['window']
