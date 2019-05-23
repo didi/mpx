@@ -360,7 +360,7 @@ function unwrap (a) {
 }
 
 export function noop () {
-  
+
 }
 
 export function diffAndCloneA (a, b) {
