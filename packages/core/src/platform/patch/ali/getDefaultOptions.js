@@ -117,13 +117,13 @@ export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
       }
     },
     didUpdate () {
-      this.$mpxProxy.updated()
+      this.$mpxProxy && this.$mpxProxy.updated()
     },
     [hookNames[1]] () {
-      this.$mpxProxy.mounted()
+      this.$mpxProxy && this.$mpxProxy.mounted()
     },
     [hookNames[2]] () {
-      this.$mpxProxy.destroyed()
+      this.$mpxProxy && this.$mpxProxy.destroyed()
     }
   }]
   return mergeOptions(options, type, false)
