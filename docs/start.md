@@ -37,7 +37,7 @@ mpx编译完成后，会将小程序代码放置在dist目录
 
 参考小程序官方的[开发指南](https://developers.weixin.qq.com/miniprogram/dev/)进行预览、调试
 
-## 扩展
+## 创建App/Page/Component
 
 我们通过createApp、createPage、createComponent（分别对应小程序原生的App、Page、Component方法）来创建小程序、页面、组件。
 
@@ -142,14 +142,14 @@ npm run watch
 ```html
 <template xmlns="">
   <view class="list">
-    <!--扩展指令 wx:style-->
+    <!--增强指令 wx:style-->
     <view wx:style="{{listStyle}}" wx:for="{{listData}}">{{item}}</view>
-    <!--扩展指令 wx:class-->
+    <!--增强指令 wx:class-->
     <view wx:class="{{isViewClass ? viewClass : ''}}">{{testData}}</view>
     <!--watch question改变answer-->
     <view>{{question}}</view>
     <view>{{answer}}</view>
-    <!--扩展指令 wx:model，用于双向绑定-->
+    <!--增强指令 wx:model，用于双向绑定-->
     <input wx:model="{{model}}"/>
     <input wx:model="{{testModel.model}}"/>
     <input wx:model="{{testModel['model']}}"/>
