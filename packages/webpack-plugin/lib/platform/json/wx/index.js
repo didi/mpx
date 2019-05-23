@@ -20,7 +20,7 @@ module.exports = function getSpec ({ warn, error }) {
   }
 
   const spec = {
-    supportedTargets: ['ali', 'swan', 'tt'],
+    supportedTargets: ['ali', 'swan', 'qq', 'tt'],
     normalizeTest,
     page: [
       {
