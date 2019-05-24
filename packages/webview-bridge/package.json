@@ -1,0 +1,42 @@
+{
+  "name": "@mpxjs/webview-bridge",
+  "version": "1.0.0",
+  "description": "a bridge for mpx webview",
+  "author": "skyadmin",
+  "license": "ISC",
+  "main": "dist/webviewbridge.min.js",
+  "module": "dist/webviewbridge.esm.js",
+  "directories": {
+    "src": "src"
+  },
+  "files": [
+    "src",
+    "dist"
+  ],
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:didi/mpx.git"
+  },
+  "homepage": "https://didi.github.io/mpx/",
+  "bugs": {
+    "url": "https://github.com/didi/mpx/issues"
+  },
+  "scripts": {
+    "test": "echo \"Error: run tests from root\" && exit 1",
+    "build": "node build/build.js"
+  },
+  "sideEffects": true,
+  "devDependencies": {
+    "@babel/core": "^7.4.5",
+    "@babel/preset-env": "^7.4.5",
+    "rollup": "^1.12.3",
+    "rollup-plugin-babel": "^4.3.2",
+    "rollup-plugin-node-resolve": "^5.0.0",
+    "rollup-plugin-replace": "^2.2.0",
+    "terser": "^4.0.0"
+  }
+}

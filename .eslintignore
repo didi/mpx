@@ -1,2 +1,4 @@
 node_modules
 examples/mpx-progressive
+build
+dist
