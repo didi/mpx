@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/cli",
-  "version": "1.1.0",
+  "version": "2.0.0",
   "description": "mpx脚手架",
   "bin": {
     "mpx": "bin/mpx.js",

@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/webpack-plugin",
-  "version": "1.1.18",
+  "version": "2.0.0",
   "description": "mpx compile core",
   "keywords": [
     "mpx"
@@ -23,10 +23,13 @@
     "consolidate": "^0.15.1",
     "css": "^2.2.1",
     "de-indent": "^1.0.2",
+    "fastparse": "^1.1.1",
     "hash-sum": "^1.0.2",
     "he": "^1.1.1",
+    "html-minifier": "^3.5.8",
     "loader-utils": "1.1.0",
     "lru-cache": "^4.1.2",
+    "mime": "^2.2.2",
     "postcss": "^6.0.19",
     "postcss-load-config": "^1.2.0",
     "postcss-selector-parser": "^2.0.0",
@@ -35,7 +38,6 @@
   },
   "peerDependencies": {
     "css-loader": "^0.28.10",
-    "html-loader": "^0.5.5",
     "webpack": "^4.0.0",
     "webpack-cli": "^3.0.0"
   },

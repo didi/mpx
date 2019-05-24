@@ -1,4 +1,4 @@
-# script域扩展
+# script增强特性
 
 在原生自定义组件config的基础上，`mpx`新增支持了watch、computed、mixins、pageShow & pageHide等字段提高开发体验，同时`mpx`提供一个深度优化的机制来接管小程序的`setData`调用，用户在组件/页面当中可以使用`this.someData = 'abc'`的方式来设置数据，永远不应该直接调用`setData`去设置数据，这有可能导致数据不一致的问题。
 
@@ -138,7 +138,7 @@ component ready: 电视
 
 ## 页面生命周期
 
-除了小程序自定义组件本身的生命周期外，`mpx`扩展了两个页面生命周期钩子，`pageShow`和`pageHide`，用于监听当前所属页面的显示或隐藏状态。
+除了小程序自定义组件本身的生命周期外，`mpx`提供了两个页面生命周期钩子，`pageShow`和`pageHide`，用于监听当前所属页面的显示或隐藏状态。
 
 > 适用于【组件】
 

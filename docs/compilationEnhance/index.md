@@ -1,9 +1,9 @@
 # 构建配置
 
-`mpx`利用`webpack`进行构建打包。通过`webpack插件`进行能力扩展
+mpx深度定制开发了一个webpack插件`@mpxjs/webpack-plugin`，基于该插件使用webpack进行小程序的编译构建工作。
 
 ## 自动配置
-如果你并不熟悉webpack，可以通过脚手架进行[快速配置](../start.md)。
+如果你不熟悉webpack，可以通过脚手架进行[快速配置](../start.md)。
 
 ----
 

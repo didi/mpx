@@ -15,7 +15,10 @@ module.exports = function (content) {
   const pagesMap = this._compilation.__mpx__.pagesMap
   const componentsMap = this._compilation.__mpx__.componentsMap
   const mode = this._compilation.__mpx__.mode
+  const globalSrcMode = this._compilation.__mpx__.srcMode
+  const localSrcMode = loaderUtils.parseQuery(this.resourceQuery || '?').mode
   const resource = stripExtension(this.resource)
+  const srcMode = localSrcMode || globalSrcMode
 
   const resourceQueryObj = loaderUtils.parseQuery(this.resourceQuery || '?')
 
@@ -60,18 +63,18 @@ module.exports = function (content) {
     options.cssSourceMap !== false
   )
 
-  const parts = parse(content, fileName, this.sourceMap)
+  const parts = parse(content, fileName, this.sourceMap, mode)
   //
   const hasScoped = parts.styles.some(({ scoped }) => scoped)
   const templateAttrs = parts.template && parts.template.attrs && parts.template.attrs
   const hasComment = templateAttrs && templateAttrs.comments
   const isNative = false
 
-  let usingComponents = []
+  let usingComponents = [].concat(this._compilation.__mpx__.usingComponents)
   try {
     let ret = JSON.parse(parts.json.content)
     if (ret.usingComponents) {
-      usingComponents = Object.keys(ret.usingComponents)
+      usingComponents = usingComponents.concat(Object.keys(ret.usingComponents))
     }
   } catch (e) {
   }
@@ -90,48 +93,62 @@ module.exports = function (content) {
     hasComment,
     usingComponents,
     needCssSourceMap,
-    mode,
+    srcMode,
     isNative
   )
 
-  // 注入模块id
-  const dep = new InjectDependency({
-    content: `global.currentModuleId = ${JSON.stringify(moduleId)};\n`,
-    index: -3
-  })
-  this._module.addDependency(dep)
   // 触发webpack global var 注入
-  let output = ''
+  let output = 'global.currentModuleId;\n'
+
+  // 注入模块id
+  let globalInjectCode = `global.currentModuleId = ${JSON.stringify(moduleId)};\n`
+
+  // 注入构造函数
+  let ctor = 'App'
+  if (pagesMap[resource]) {
+    ctor = mode === 'ali' ? 'Page' : 'Component'
+  } else if (componentsMap[resource]) {
+    ctor = 'Component'
+  }
+  globalInjectCode += `global.currentCtor = ${ctor};\n`
 
   if (!pagesMap[resource] && !componentsMap[resource] && mode === 'swan') {
-    output += 'if (!global.navigator) {\n'
-    output += '  global.navigator = {};\n'
-    output += '}\n'
-    output += 'global.navigator.standalone = true;\n'
-  } else {
-    output = 'global.currentModuleId;\n'
+    // 注入swan runtime fix
+    globalInjectCode += 'if (!global.navigator) {\n' +
+      '  global.navigator = {};\n' +
+      '}\n' +
+      'global.navigator.standalone = true;\n'
   }
 
   //
   // <script>
   output += '/* script */\n'
+  let scriptSrcMode = srcMode
   const script = parts.script
   if (script) {
+    scriptSrcMode = script.mode || scriptSrcMode
     output += script.src
       ? (getNamedExportsForSrc('script', script) + '\n')
       : (getNamedExports('script', script) + '\n') + '\n'
   } else {
     if (pagesMap[resource]) {
       // page
-      output += 'Page({})' + '\n'
+      output += 'import {createPage} from "@mpxjs/core"\n' +
+        'createPage({})\n'
     } else if (componentsMap[resource]) {
       // component
-      output += 'Component({})' + '\n'
+      output += 'import {createComponent} from "@mpxjs/core"\n' +
+        'createComponent({})\n'
     } else {
       // app
-      output += 'App({})' + '\n'
+      output += 'import {createApp} from "@mpxjs/core"\n' +
+        'createApp({})\n'
     }
     output += '\n'
+  }
+
+  if (scriptSrcMode) {
+    globalInjectCode += `global.currentSrcMode = ${JSON.stringify(scriptSrcMode)};\n`
   }
 
   //
@@ -197,6 +214,12 @@ module.exports = function (content) {
       ? (getRequireForSrc('template', template) + '\n')
       : (getRequire('template', template) + '\n') + '\n'
   }
+
+  const dep = new InjectDependency({
+    content: globalInjectCode,
+    index: -3
+  })
+  this._module.addDependency(dep)
 
   return output
 }

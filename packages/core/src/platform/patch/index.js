@@ -5,19 +5,27 @@ import { getDefaultOptions as getALIDefaultOptions } from './ali/getDefaultOptio
 import { is } from '../../helper/env'
 
 export default function createFactory (type) {
-  return (options, constructor) => {
+  return (options, { isNative } = {}) => {
+    options.__nativeRender__ = !!isNative
+    options.__type__ = type
     let getDefaultOptions
-    if (is('wx') || is('swan')) {
-      constructor = Component
-      getDefaultOptions = getWXDefaultOptions
-    } else if (is('ali')) {
+    if (is('ali')) {
       getDefaultOptions = getALIDefaultOptions
     } else {
-      console.error('not support current env')
+      getDefaultOptions = getWXDefaultOptions
     }
     // 获取内建的mixins
     const builtInMixins = getBuiltInMixins(options, type)
-    const defaultOptions = getDefaultOptions(type, transferOptions(options, type, builtInMixins))
-    constructor(defaultOptions)
+    const { rawOptions, currentInject } = transferOptions(options, type, builtInMixins)
+    const defaultOptions = getDefaultOptions(type, { rawOptions, currentInject })
+    global.currentCtor(defaultOptions)
+  }
+}
+
+export function getRenderCallBack (context) {
+  return () => {
+    if (!is('ali') || context.options.__type__ === 'page') {
+      context.updated()
+    }
   }
 }

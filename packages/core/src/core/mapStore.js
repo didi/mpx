@@ -3,24 +3,27 @@ import {
   getByPath
 } from '../helper/utils'
 function mapFactory (type, store) {
-  return function (maps) {
+  return function (depPath, maps) {
+    if (typeof depPath !== 'string') {
+      maps = depPath
+      depPath = ''
+    }
     maps = normalizeMap(maps)
     const result = {}
     for (let key in maps) {
       result[key] = function (payload) {
-        const value = maps[key]
+        const value = depPath ? `${depPath}.${maps[key]}` : maps[key]
         if (type === 'mutations') {
           return store.commit(value, payload)
         } else if (type === 'actions') {
           return store.dispatch(value, payload)
         } else {
-          const getterVal = getByPath(store.getters, value, '__NOTFOUND__')
+          let getterVal = getByPath(store.getters, value, '', '__NOTFOUND__')
           if (getterVal === '__NOTFOUND__') {
-            console.warn(new Error(`not found getter named [${value}]`))
-            return ''
-          } else {
-            return getterVal === undefined ? '' : getterVal
+            console.warn('【MPX ERROR】', new Error(`unknown getter named [${value}]`))
+            getterVal = ''
           }
+          return getterVal
         }
       }
     }

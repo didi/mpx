@@ -1,6 +1,6 @@
-# style域扩展
+# style增强特性
 
-## 自动检测loader
+## css预处理器
  
 `mpx`支持所有主流的`css预编译处理`，只需要在`<style>`的`lang`中设置使用的预编译语言`（stylus/less/sass等）`并且安装对应的`webpack-loader`即可正常使用。
  

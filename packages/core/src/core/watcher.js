@@ -4,7 +4,8 @@ import {
   toJS,
   isObservableArray,
   isObservableObject,
-  keys
+  keys,
+  isObservable
 } from 'mobx'
 import {
   getByPath,
@@ -20,9 +21,12 @@ export default class Watcher {
     this.get = () => {
       return type(expr) === 'String' ? getByPath(context, expr) : expr()
     }
-    if (type(callback) === 'Object') {
+    const callbackType = type(callback)
+    if (callbackType === 'Object') {
       options = callback
       callback = null
+    } else if (callbackType === 'String') {
+      callback = context[callback]
     }
     this.callback = typeof callback === 'function' ? action(callback.bind(context)) : null
     this.options = options || {}
@@ -30,9 +34,14 @@ export default class Watcher {
     this.reaction = new Reaction(`mpx-watcher-${this.id}`, () => {
       this.update()
     })
-    this.value = this.getValue()
-    if (this.options.immediate && this.callback) {
-      this.callback(this.value)
+    const value = this.getValue()
+    if (this.options.immediateAsync) {
+      queueWatcher(this)
+    } else {
+      this.value = value
+      if (this.options.immediate) {
+        this.callback && this.callback(this.value)
+      }
     }
   }
 
@@ -41,7 +50,21 @@ export default class Watcher {
     this.reaction.track(() => {
       value = this.get()
       if (this.options.deep) {
-        value = toJS(value, false)
+        const valueType = type(value)
+        // 某些情况下，最外层是非isObservable 对象，比如同时观察多个属性时
+        if (!isObservable(value) && (valueType === 'Array' || valueType === 'Object')) {
+          if (valueType === 'Array') {
+            value = value.map(item => toJS(item, false))
+          } else {
+            const newValue = {}
+            Object.keys(value).forEach(key => {
+              newValue[key] = toJS(value[key], false)
+            })
+            value = newValue
+          }
+        } else {
+          value = toJS(value, false)
+        }
       } else if (isObservableArray(value)) {
         value.peek()
       } else if (isObservableObject(value)) {
@@ -60,10 +83,13 @@ export default class Watcher {
   }
 
   run () {
+    const immediateAsync = !this.hasOwnProperty('value')
     const oldValue = this.value
     this.value = this.getValue()
-    if (this.value !== oldValue || isObject(this.value) || this.options.forceCallback) {
-      this.callback && this.callback(this.value, oldValue)
+    if (immediateAsync || this.value !== oldValue || isObject(this.value) || this.options.forceCallback) {
+      if (this.callback) {
+        immediateAsync ? this.callback(this.value) : this.callback(this.value, oldValue)
+      }
     }
   }
 
@@ -75,14 +101,14 @@ export default class Watcher {
 
 export function watch (context, expr, handler, options) {
   let callback
-  if (typeof handler === 'function') {
-    callback = handler
-  } else if (type(handler) === 'Object') {
+  if (type(handler) === 'Object') {
     callback = handler.handler
     options = {
       ...handler
     }
     delete options.handler
+  } else {
+    callback = handler
   }
   return new Watcher(context, expr, callback, options)
 }

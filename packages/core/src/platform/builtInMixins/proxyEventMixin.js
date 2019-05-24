@@ -1,10 +1,11 @@
 import { is } from '../../helper/env'
-import { collectDataset, setByPath } from '../../helper/utils'
+import { collectDataset, setByPath, getByPath } from '../../helper/utils'
 
 export default function proxyEventMixin () {
   const methods = {
     __invoke ($event) {
       const type = $event.type
+      const emitMode = $event.detail && $event.detail.mpxEmit
       if (!type) {
         throw new Error('Event object must have [type] property!')
       }
@@ -22,10 +23,17 @@ export default function proxyEventMixin () {
       let returnedValue
       curEventConfig.forEach((item) => {
         const callbackName = item[0]
+        if (emitMode) {
+          $event = $event.detail.data
+        }
         if (callbackName) {
           const params = item.length > 1 ? item.slice(1).map(item => {
-            if (item === '$event') {
-              return $event
+            if (/^\$event/.test(item)) {
+              this.__mpxTempEvent = $event
+              const value = getByPath(this, item.replace('$event', '__mpxTempEvent'))
+              // 删除临时变量
+              delete this.__mpxTempEvent
+              return value
             } else {
               return item
             }
@@ -33,7 +41,7 @@ export default function proxyEventMixin () {
           if (typeof this[callbackName] === 'function') {
             returnedValue = this[callbackName].apply(this, params)
           } else {
-            console.warn(`[${callbackName}] is not function`)
+            console.warn('【MPX ERROR】', `[${callbackName}] is not function`)
           }
         }
       })
@@ -48,7 +56,7 @@ export default function proxyEventMixin () {
     Object.assign(methods, {
       triggerEvent (eventName, eventDetail) {
         const handlerName = eventName.replace(/^./, matched => matched.toUpperCase())
-        const handler = this['on' + handlerName] || this['catch' + handlerName]
+        const handler = this.props && (this.props['on' + handlerName] || this.props['catch' + handlerName])
         if (handler && typeof handler === 'function') {
           const dataset = collectDataset(this.props)
           const id = this.props.id || ''
