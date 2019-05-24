@@ -3,7 +3,7 @@
 ## Features
 
 * 完整支持了目前业内已发布的所有小程序平台（微信，支付宝，百度，qq，头条）
-* mpx小程序跨平台编译，目前已支持将微信mpx源码编译输出为其余已支持小程序平台目标代码，[点击查看详情]()
+* mpx小程序跨平台编译，目前已支持将微信mpx源码编译输出为其余已支持小程序平台目标代码，[点击查看详情](https://didi.github.io/mpx/platform.html#%E8%B7%A8%E5%B9%B3%E5%8F%B0%E7%BC%96%E8%AF%91)
 * 小程序原生组件跨平台编译，目前已支持将微信原生组件编译输出为其余已支持小程序平台组件
 * api调用跨平台差异抹平`@mpxjs/api-proxy`
 * webview bridge跨平台差异抹平`@mpxjs/webview-bridge`
