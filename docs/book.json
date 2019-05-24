@@ -5,8 +5,9 @@
   "structure": {
     "readme": "intro"
   },
-  "plugins": ["github", "edit-link", "anchors", "copy-code-button", "github-buttons", "expandable-chapters-small", "insert-logo"],
+  "plugins": ["github", "edit-link", "anchors", "copy-code-button", "github-buttons", "expandable-chapters-small", "insert-logo", "custom-favicon"],
   "pluginsConfig": {
+    "favicon": "favicon.ico",
     "github": {
       "url": "https://github.com/didi/mpx"
     },
