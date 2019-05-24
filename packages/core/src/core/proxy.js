@@ -13,12 +13,16 @@ import {
   processUndefined,
   diffAndCloneA,
   defineGetter,
-  preprocessRenderData
+  preprocessRenderData,
+  setByPath,
+  findItem,
+  asyncLock
 } from '../helper/utils'
-
+import queueWatcher from './queueWatcher'
 import { watch } from './watcher'
-import { mountedQueue } from './lifecycleQueue'
+import { getRenderCallBack } from '../platform/patch'
 import {
+  BEFORECREATE,
   CREATED,
   BEFOREMOUNT,
   MOUNTED,
@@ -32,76 +36,77 @@ export default class MPXProxy {
   constructor (options, target) {
     this.target = target
     if (typeof target.__getInitialData !== 'function') {
-      console.error(`please specify a 【__getInitialData】function to get miniprogram's initial data`)
+      console.error('【MPX ERROR】', `please specify a 【__getInitialData】function to get miniprogram's initial data`)
       return
     }
     this.uid = uid++
     this.name = options.name || ''
     this.options = options
-    // initial -> created -> [beforeMount -> mounted -> updated] -> destroyed
+    // initial -> created -> mounted -> destroyed
     this.state = 'initial'
     this.watchers = [] // 保存所有观察者
     this.renderReaction = null
-    this.updatedCallbacks = [] // 保存设置的更新回调
     this.computedKeys = options.computed ? enumerableKeys(options.computed) : []
-    this.localKeys = this.computedKeys.slice()
+    this.localKeys = this.computedKeys.slice() // 非props key
     this.forceUpdateKeys = [] // 强制更新的key，无论是否发生change
+    this.curRenderTask = null
+    this.lockTask = asyncLock()
   }
 
   created () {
     this.initApi()
     this.initialData = this.target.__getInitialData()
     this.cacheData = extend({}, this.initialData) // 缓存数据，用于diff
+    this.callUserHook(BEFORECREATE)
     this.initState(this.options)
     this.state = CREATED
     this.callUserHook(CREATED)
-    this.initRender()
+    // 强制走小程序原生渲染逻辑
+    this.options.__nativeRender__ ? this.setData() : this.initRender()
   }
 
-  beforeMount () {
-    this.state = BEFOREMOUNT
-    mountedQueue.enter()
+  renderTaskExecutor (isEmptyRender) {
+    if ((!this.isMounted() && this.curRenderTask) || (this.isMounted() && isEmptyRender)) {
+      return
+    }
+    let promiseResolve
+    const promise = new Promise(resolve => {
+      promiseResolve = resolve
+    })
+    this.curRenderTask = {
+      promise,
+      resolve: promiseResolve
+    }
+    // isMounted之前基于mounted触发，isMounted之后基于setData回调触发
+    return this.isMounted() && promiseResolve
+  }
+
+  isMounted () {
+    return this.state === MOUNTED
   }
 
   mounted () {
-    if (!this.mounting) {
-      // 等待mounted
-      this.mounting = true
-      mountedQueue.exit(this.depth, this.uid, () => {
-        // 由于异步，因此需要检查当前状态是否符合预期
-        if (this.state === BEFOREMOUNT) {
-          this.state = MOUNTED
-          // 用于处理refs等前置工作
-          this.callUserHook(BEFOREMOUNT)
-          this.callUserHook(MOUNTED)
-        }
-        this.mounting = false
-      })
+    if (this.state === CREATED) {
+      this.state = MOUNTED
+      // 用于处理refs等前置工作
+      this.callUserHook(BEFOREMOUNT)
+      this.callUserHook(MOUNTED)
+      this.curRenderTask && this.curRenderTask.resolve()
     }
   }
 
-  updated (fromCallback) {
-    if (this.state === BEFOREMOUNT && fromCallback) {
-      // 首次setData
-      this.mounted()
-    } else if (this.state === MOUNTED && !this.updating) {
-      this.updating = true
-      this.nextTick(() => {
+  updated () {
+    if (this.isMounted()) {
+      this.lockTask(() => {
         // 由于异步，需要确认 this.state
-        if (this.state === MOUNTED) {
-          this.handleUpdatedCallbacks()
+        if (this.isMounted()) {
           this.callUserHook(UPDATED)
         }
-        this.updating = false
       })
     }
   }
 
   destroyed () {
-    if (this.state === BEFOREMOUNT) {
-      // 如果销毁时还未mounted回调，则执行清栈操作
-      mountedQueue.exit(this.depth, this.uid)
-    }
     this.clearWatchers()
     this.state = DESTROYED
     this.callUserHook(DESTROYED)
@@ -115,7 +120,11 @@ export default class MPXProxy {
     // 强制执行render
     this.target.$forceUpdate = (...rest) => this.forceUpdate(...rest)
     // 监听单次回调
-    this.target.$updated = (...rest) => this.onUpdated(...rest)
+    this.target.$updated = fn => {
+      console.warn('【MPX WARN】', '【this.$updated】 has be deprecated，please use 【this.$nextTick】 ')
+      this.nextTick(fn)
+    }
+    this.target.$nextTick = fn => this.nextTick(fn)
   }
 
   initState () {
@@ -125,7 +134,6 @@ export default class MPXProxy {
     const proxyData = extend({}, this.initialData, data)
     this.initComputed(options.computed, proxyData)
     this.data = observable(proxyData)
-    this.depth = this.data['mpxDepth']
     /* target的数据访问代理到将proxy的data */
     proxy(this.target, this.data, enumerableKeys(this.data).concat(this.computedKeys))
     // 初始化watch
@@ -145,7 +153,7 @@ export default class MPXProxy {
   initComputed (computedConfig, proxyData) {
     this.computedKeys.forEach(key => {
       if (key in proxyData) {
-        console.error(`the computed key 【${key}】 is duplicated, please check`)
+        console.error('【MPX ERROR】', `the computed key 【${key}】 is duplicated, please check`)
       }
       defineGetter(proxyData, key, computedConfig[key], this.target)
     })
@@ -170,17 +178,11 @@ export default class MPXProxy {
     this.localKeys.push.apply(this.localKeys, enumerableKeys(data))
   }
 
-  onUpdated (fn) {
-    this.updatedCallbacks.push(fn)
-  }
-
-  handleUpdatedCallbacks () {
-    const pendingList = this.updatedCallbacks.slice(0)
-    this.updatedCallbacks.length = 0
-    let callback = pendingList.shift()
-    while (callback) {
-      typeof callback === 'function' && callback.apply(this.target)
-      callback = pendingList.shift()
+  nextTick (fn) {
+    if (typeof fn === 'function') {
+      queueWatcher(() => {
+        this.curRenderTask ? this.curRenderTask.promise.then(fn) : fn()
+      })
     }
   }
 
@@ -220,11 +222,9 @@ export default class MPXProxy {
   }
 
   render () {
-    const forceUpdateKeys = this.forceUpdateKeys
     const newData = filterProperties(this.data, this.localKeys)
     Object.keys(newData).forEach(key => {
-      const isForceUpdateKey = forceUpdateKeys.indexOf(key) > -1
-      if (!isForceUpdateKey && comparer.structural(this.cacheData[key], newData[key])) {
+      if (!this.checkInForceUpdateKeys(key) && comparer.structural(this.cacheData[key], newData[key])) {
         // 强制更新的key，无论是否变化，都要进行最终的setData
         delete newData[key]
       } else {
@@ -262,7 +262,7 @@ export default class MPXProxy {
         let data = item[0]
         let firstKey = item[1]
         let { clone, diff } = diffAndCloneA(data, this.miniRenderData[key])
-        if (this.localKeys.indexOf(firstKey) > -1 && (this.forceUpdateKeys.indexOf(firstKey) > -1 || diff)) {
+        if (this.localKeys.indexOf(firstKey) > -1 && (this.checkInForceUpdateKeys(key) || diff)) {
           this.miniRenderData[key] = result[key] = clone
         }
       }
@@ -270,22 +270,44 @@ export default class MPXProxy {
     return result
   }
 
-  doRender (data) {
+  doRender (data, cb) {
     if (typeof this.target.__render !== 'function') {
-      console.error('please specify a 【__render】 function to render view')
+      console.error('【MPX ERROR】', 'please specify a 【__render】 function to render view')
       return
     }
-    // 空对象在state 为 CREATED 阶段也要执行，用于正常触发mounted
-    if (isEmptyObject(data) && this.state !== CREATED) {
-      return
+    if (typeof cb !== 'function') {
+      cb = undefined
     }
-    if (this.state === CREATED) {
-      this.beforeMount()
-    }
-    this.target.__render(processUndefined(data), () => {
-      this.updated(true)
-    })
+    const isEmpty = isEmptyObject(data)
+    const resolve = this.renderTaskExecutor(isEmpty)
     this.forceUpdateKeys = [] // 仅用于当次的render
+    if (isEmpty) {
+      cb && cb()
+      return
+    }
+    /**
+     * mounted之后才接收回调来触发updated钩子，换言之mounted之前修改数据是不会触发updated的
+     */
+    let callback = cb
+    if (this.isMounted()) {
+      callback = () => {
+        getRenderCallBack(this)()
+        cb && cb()
+        resolve && resolve()
+      }
+    }
+    this.target.__render(processUndefined(data), callback)
+  }
+
+  setData (data, callback) {
+    // 同步数据到proxy
+    data && this.forceUpdate(data)
+    if (this.options.__nativeRender__) {
+      // 走原生渲染
+      return this.doRender(data, callback)
+    } else if (typeof callback === 'function') {
+      this.nextTick(callback)
+    }
   }
 
   initRender () {
@@ -299,9 +321,9 @@ export default class MPXProxy {
           try {
             return this.target.__injectedRender()
           } catch (e) {
-            console.warn(`Failed to execute render function, degrade to full-set-data mode!`)
-            console.warn(e)
-            console.warn('If the render function execution failed because of "__wxs_placeholder", ignore this warning.')
+            console.warn('【MPX WARN】', `Failed to execute render function, degrade to full-set-data mode!`)
+            console.warn('【MPX WARN】', e)
+            console.warn('【MPX WARN】', 'If the render function execution failed because of "__wxs_placeholder", ignore this warning.')
             renderExecutionFailed = true
             this.render()
           }
@@ -326,14 +348,18 @@ export default class MPXProxy {
 
   forceUpdate (params, callback) {
     const paramsType = type(params)
+    let forceUpdateKeys = this.localKeys
     if (paramsType === 'Function') {
       callback = params
       params = null
     } else if (paramsType === 'Object') {
-      extend(this.data, params)
+      forceUpdateKeys = Object.keys(params)
+      forceUpdateKeys.forEach(key => {
+        setByPath(this.data, key, params[key])
+      })
     }
-    this.setForceUpdateKeys(params ? Object.keys(params) : this.localKeys)
-    type(callback) === 'Function' && this.onUpdated(callback)
+    this.setForceUpdateKeys(forceUpdateKeys)
+    type(callback) === 'Function' && this.nextTick(callback)
     // 无论是否改变，强制将状态置为stale，从而触发render
     if (this.renderReaction) {
       this.renderReaction.dependenciesState = 2
@@ -349,7 +375,7 @@ export default class MPXProxy {
     })
   }
 
-  nextTick (fn) {
-    return Promise.resolve().then(fn)
+  checkInForceUpdateKeys (key) {
+    return findItem(this.forceUpdateKeys, new RegExp(`^${key}`))
   }
 }

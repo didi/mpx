@@ -43,6 +43,10 @@ function init () {
 }
 
 function parse (str) {
+  if (/^[^[\]]+$/.test(str)) {
+    // 对于仅“点”属性访问，直接分割，避免无意义的解析
+    return str.split('.')
+  }
   // 重置全局数据
   init()
   for (const char of str) {

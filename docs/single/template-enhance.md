@@ -1,4 +1,4 @@
-# template扩展特性
+# template增强特性
 
 对于模板部分，我们提供了class与style的绑定，`wx:model`指令，动态组件等特性
 
@@ -154,7 +154,7 @@
 
 ## 双向绑定
 
-除了小程序原生指令之外，mpx 基于`input`事件扩展了一个指令 `wx:model`, 用于双向绑定。
+除了小程序原生指令之外，mpx 基于`input`事件提供了一个指令 `wx:model`, 用于双向绑定。
 
 例子：
 ```html
@@ -233,7 +233,7 @@ wx:model默认监听`input`事件使用`value`属性传值，如果我们希望�
 
 > 注意：由于微信的限制，如果事件名使用横线链接分割（如: 'checked-change'），将不可以使用该feature。
 
-## NodesRef
+## Refs
 
 提供了 `wx:ref="xxx"` 来更方便获取 WXML 节点信息的对象。在JS里只需要通过this.$refs.xxx 即可获取节点。
 

@@ -1,10 +1,17 @@
+import { asyncLock } from '../helper/utils'
 const queue = []
 const idsMap = {}
-let waiting = false
 let flushing = false
 let curIndex = 0
+const lockTask = asyncLock()
 export default function queueWatcher (watcher) {
-  if (!idsMap[watcher.id]) {
+  if (!watcher.id && typeof watcher === 'function') {
+    watcher = {
+      id: Infinity,
+      run: watcher
+    }
+  }
+  if (!idsMap[watcher.id] || watcher.id === Infinity) {
     idsMap[watcher.id] = true
     if (!flushing) {
       queue.push(watcher)
@@ -15,26 +22,13 @@ export default function queueWatcher (watcher) {
       }
       queue.splice(i + 1, 0, watcher)
     }
-    if (!waiting) {
-      waiting = true
-      Promise.resolve().then(() => {
-        flushQueue()
-      }).catch(e => {
-        console.error(e)
-      })
-    }
+    lockTask(flushQueue, resetQueue)
   }
 }
 
 function flushQueue () {
   flushing = true
-  queue.sort((a, b) => {
-    if (a.id > b.id) {
-      return 1
-    } else {
-      return -1
-    }
-  })
+  queue.sort((a, b) => a.id - b.id)
   for (curIndex = 0; curIndex < queue.length; curIndex++) {
     const watcher = queue[curIndex]
     idsMap[watcher.id] = null
@@ -45,6 +39,6 @@ function flushQueue () {
 }
 
 function resetQueue () {
-  flushing = waiting = false
+  flushing = false
   curIndex = queue.length = 0
 }

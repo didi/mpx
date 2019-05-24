@@ -13,9 +13,13 @@ function transformProperties (properties) {
   }
   const newProps = {}
   enumerableKeys(properties).forEach(key => {
-    const rawFiled = properties[key]
-    const rawObserver = rawFiled.observer
+    let rawFiled = properties[key]
     let newFiled = null
+    if (rawFiled === null) {
+      rawFiled = {
+        type: null
+      }
+    }
     if (typeof rawFiled === 'function') {
       newFiled = {
         type: rawFiled
@@ -28,7 +32,6 @@ function transformProperties (properties) {
         this[key] = value
         this.$mpxProxy.updated()
       }
-      typeof rawObserver === 'function' && rawObserver.call(this, value, oldValue)
     }
     newProps[key] = newFiled
   })
@@ -40,9 +43,7 @@ function transformApiForProxy (context, currentInject) {
   Object.defineProperties(context, {
     setData: {
       get () {
-        return () => {
-          console.error(`【setData】is invalid when using mpx to create pages or components !! instead，you can use this way【this.xx = 1】to modify data directly`)
-        }
+        return this.$mpxProxy.setData.bind(this.$mpxProxy)
       },
       configurable: true
     },
@@ -114,8 +115,11 @@ export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
       // 组件监听视图数据更新, attached之后才能拿到properties
       this.$mpxProxy.created()
     },
+    ready () {
+      this.$mpxProxy && this.$mpxProxy.mounted()
+    },
     detached () {
-      this.$mpxProxy.destroyed()
+      this.$mpxProxy && this.$mpxProxy.destroyed()
     }
   }]
   return mergeOptions(options, type, false)

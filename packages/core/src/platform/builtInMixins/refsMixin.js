@@ -1,47 +1,93 @@
-import { BEFOREMOUNT, UPDATED, DESTROYED } from '../../core/innerLifecycle'
+import { BEFORECREATE, CREATED, BEFOREMOUNT, UPDATED, DESTROYED } from '../../core/innerLifecycle'
 import { is } from '../../helper/env'
+import { noop } from '../../helper/utils'
 
 export default function getRefsMixin () {
   let aliMethods
   if (is('ali')) {
+    const proxyMethods = ['boundingClientRect', 'scrollOffset']
+
     aliMethods = {
+      createSelectorQuery (...rest) {
+        const selectorQuery = my.createSelectorQuery(...rest)
+        const cbs = []
+        proxyMethods.forEach((name) => {
+          const originalMethod = selectorQuery[name]
+          selectorQuery[name] = function (cb = noop) {
+            cbs.push(cb)
+            return originalMethod.call(this)
+          }
+        })
+
+        const originalExec = selectorQuery.exec
+        selectorQuery.exec = function (originalCb = noop) {
+          const cb = function (results) {
+            results.forEach((item, index) => {
+              cbs[index](item)
+            })
+            originalCb(results)
+          }
+          return originalExec.call(this, cb)
+        }
+        return selectorQuery
+      },
+      selectComponent (selector, all) {
+        const children = this.__children__ || []
+        const result = []
+        for (const child of children) {
+          if (child.identifiers.indexOf(selector) > -1) {
+            result.push(child.component)
+            if (!all) {
+              break
+            }
+          }
+        }
+        if (selector.lastIndexOf('.') > 0) {
+          console.error('the selectComponent or selectAllComponents only supports the single selector, so the compound selector may be failed')
+        }
+        return all ? result : result[0]
+      },
+      selectAllComponents (selector) {
+        return this.selectComponent(selector, true)
+      },
       __updateRef (destroyed) {
         this.triggerEvent && this.triggerEvent('updateRef', {
           component: this,
           destroyed
         })
       },
-      __handleUpdateRef (ref, e) {
-        if (!this.$componentRefs) {
-          this.$componentRefs = {}
+      __handleUpdateRef (e) {
+        if (!this.__children__) {
+          this.__children__ = []
         }
         const component = e.detail.component
         const destroyed = e.detail.destroyed
-        let refs = this.$componentRefs[ref.key]
-        if (ref.all) {
-          if (refs) {
-            if (destroyed) {
-              const index = refs.indexOf(component)
-              index > -1 && refs.splice(index, 1)
-            } else {
-              refs.push(component)
-            }
-          } else {
-            !destroyed && (refs = [component])
-          }
-        } else {
-          destroyed ? (refs = null) : (refs = component)
+        const identifiers = component.mpxClass ? component.mpxClass.trim().split(/\s+/).map(item => {
+          return `.${item}`
+        }) : []
+        if (component.id) {
+          identifiers.push(`#${component.id}`)
         }
-        this.$componentRefs[ref.key] = refs
-        this.$refs && (this.$refs[ref.key] = refs)
+        if (destroyed) {
+          this.__children__ = this.__children__.filter(item => item.component !== component)
+        } else {
+          this.__children__.push({
+            component,
+            identifiers
+          })
+        }
       }
     }
   }
   return {
-    [BEFOREMOUNT] () {
+    [BEFORECREATE] () {
       this.$refs = {}
-      this.__getRefs()
+    },
+    [CREATED] () {
       this.__updateRef && this.__updateRef()
+    },
+    [BEFOREMOUNT] () {
+      this.__getRefs()
     },
     [UPDATED] () {
       this.__getRefs()
@@ -62,21 +108,10 @@ export default function getRefsMixin () {
       },
       __getRefNode (ref) {
         if (ref.type === 'node') {
-          let query
-          if (is('wx')) {
-            query = wx.createSelectorQuery().in(this)
-          } else if (is('ali')) {
-            query = my.createSelectorQuery()
-          } else if (is('swan')) {
-            query = swan.createSelectorQuery().in(this)
-          }
+          const query = this.createSelectorQuery()
           return query && (ref.all ? query.selectAll(ref.selector) : query.select(ref.selector))
         } else if (ref.type === 'component') {
-          if (is('wx') || is('swan')) {
-            return ref.all ? this.selectAllComponents(ref.selector) : this.selectComponent(ref.selector)
-          } else if (is('ali')) {
-            return this.$componentRefs ? this.$componentRefs[ref.key] : null
-          }
+          return ref.all ? this.selectAllComponents(ref.selector) : this.selectComponent(ref.selector)
         }
       }
     }
