@@ -4,13 +4,14 @@
   "description": "a bridge for mpx webview",
   "author": "skyadmin",
   "license": "ISC",
-  "main": "src/index.js",
-  "module": "src/index.js",
+  "main": "dist/webviewbridge.min.js",
+  "module": "dist/webviewbridge.esm.js",
   "directories": {
     "src": "src"
   },
   "files": [
-    "src"
+    "src",
+    "dist"
   ],
   "publishConfig": {
     "registry": "https://registry.npmjs.org",
