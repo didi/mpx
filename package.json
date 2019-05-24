@@ -4,7 +4,8 @@
   "scripts": {
     "lerna:publish": "lerna publish from-package --yes",
     "lint": "eslint --ext .js packages/",
-    "fix": "eslint --fix --ext .js packages/"
+    "fix": "eslint --fix --ext .js packages/",
+    "test": "jest"
   },
   "devDependencies": {
     "babel-eslint": "^10.0.1",
@@ -14,11 +15,13 @@
     "eslint-friendly-formatter": "^4.0.1",
     "eslint-plugin-html": "^5.0.0",
     "eslint-plugin-import": "^2.14.0",
+    "eslint-plugin-jest": "^22.5.1",
     "eslint-plugin-local-rules": "^0.1.0",
     "eslint-plugin-node": "^8.0.0",
     "eslint-plugin-prettier": "^2.6.2",
     "eslint-plugin-promise": "^4.0.1",
     "eslint-plugin-standard": "^4.0.0",
+    "jest": "^24.8.0",
     "lerna": "^3.4.3"
   }
 }

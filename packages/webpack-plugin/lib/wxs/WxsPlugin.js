@@ -13,6 +13,10 @@ class WxsPlugin {
         compilation
       )
 
+      compilation.hooks.buildModule.tap('WxsPlugin', (module) => {
+        module.wxs = true
+      })
+
       const handler = (parser) => {
         new WxsParserPlugin(this.options).apply(
           parser,

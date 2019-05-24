@@ -1,30 +1,42 @@
-import { type, merge, extend } from '../helper/utils'
-import { convertRule } from '../convertor/convertor'
+import { type, merge, extend, aliasReplace, findItem } from '../helper/utils'
+import { getConvertRule } from '../convertor/convertor'
 
 let CURRENT_HOOKS = []
 let curType
+let convertRule
 
-export default function mergeOptions (options = {}, type, needProxyLifecycle = true) {
-  if (!options.mixins || !options.mixins.length) return options
+export default function mergeOptions (options = {}, type, needConvert = true) {
+  // needConvert为false，表示衔接原生的root配置，那么此时的配置都是当前原生环境支持的配置，不需要转换
+  convertRule = getConvertRule(needConvert ? options.mpxConvertMode || 'default' : 'local')
   // 微信小程序使用Component创建page
   curType = type === 'app' || !convertRule.mode ? type : convertRule.mode
   CURRENT_HOOKS = convertRule.lifecycle[curType]
   const newOptions = {}
-  extractMixins(newOptions, options)
-  needProxyLifecycle && proxyHooks(newOptions)
-  // 自定义补充转换函数
-  typeof convertRule.convert === 'function' && convertRule.convert(newOptions)
+  extractMixins(newOptions, options, needConvert)
+  if (needConvert) {
+    proxyHooks(newOptions)
+    // 自定义补充转换函数
+    typeof convertRule.convert === 'function' && convertRule.convert(newOptions)
+  }
   return transformHOOKS(newOptions)
 }
 
-function extractMixins (mergeOptions, options) {
+function extractMixins (mergeOptions, options, needConvert) {
+  aliasReplace(options, 'behaviors', 'mixins')
   if (options.mixins) {
     for (const mix of options.mixins) {
-      extractMixins(mergeOptions, mix)
+      if (typeof mix === 'string') {
+        console.error(`Don't support for convert the string-formatted【behavior】into mixin`)
+      } else {
+        extractMixins(mergeOptions, mix, needConvert)
+      }
     }
   }
   options = extractLifetimes(options)
   options = extractPageHooks(options)
+  if (needConvert) {
+    options = extractObservers(options)
+  }
   mergeMixins(mergeOptions, options)
 }
 
@@ -38,6 +50,88 @@ function extractLifetimes (options) {
   }
 }
 
+function extractObservers (options) {
+  const observers = options.observers
+  const props = Object.assign({}, options.properties, options.props)
+  const watch = Object.assign({}, options.watch)
+  let extract = false
+  function mergeWatch (key, config) {
+    if (watch[key]) {
+      type(watch[key]) !== 'Array' && (watch[key] = [watch[key]])
+    } else {
+      watch[key] = []
+    }
+    watch[key].push(config)
+    extract = true
+  }
+  Object.keys(props).forEach(key => {
+    const prop = props[key]
+    if (prop && prop.observer) {
+      mergeWatch(key, {
+        handler (...rest) {
+          let callback = prop.observer
+          if (typeof callback === 'string') {
+            callback = this[callback]
+          }
+          typeof callback === 'function' && callback.call(this, ...rest)
+        },
+        deep: true,
+        immediateAsync: true
+      })
+    }
+  })
+  if (observers) {
+    Object.keys(observers).forEach(key => {
+      const callback = observers[key]
+      if (callback) {
+        let deep = false
+        const propsArr = Object.keys(props)
+        const keyPathArr = []
+        key.split(',').forEach(item => {
+          const result = item.trim()
+          result && keyPathArr.push(result)
+        })
+        // 针对prop的watch都需要立刻执行一次
+        let watchProp = false
+        for (const prop of propsArr) {
+          if (findItem(keyPathArr, prop)) {
+            watchProp = true
+            break
+          }
+        }
+        if (key.indexOf('.**')) {
+          deep = true
+          key = key.replace('.**', '')
+        }
+        mergeWatch(key, {
+          handler (val, old) {
+            let cb = callback
+            if (typeof cb === 'string') {
+              cb = this[cb]
+            }
+            if (typeof cb === 'function') {
+              if (keyPathArr.length < 2) {
+                val = [val]
+                old = [old]
+              }
+              cb.call(this, ...val, ...old)
+            }
+          },
+          deep,
+          immediateAsync: watchProp
+        })
+      }
+    })
+  }
+  if (extract) {
+    const newOptions = extend({}, options)
+    newOptions.watch = watch
+    delete newOptions.observers
+    return newOptions
+  }
+  return options
+}
+
 function extractPageHooks (options) {
   if (curType === 'blend') {
     const newOptions = extend({}, options)
@@ -46,7 +140,7 @@ function extractPageHooks (options) {
     methods && Object.keys(methods).forEach(key => {
       if (PAGE_HOOKS.indexOf(key) > -1) {
         if (newOptions[key]) {
-          console.warn(`Don't redefine the lifecycle [${key}]， it will use the methods's lifecycle if redefined`)
+          console.warn('【MPX ERROR】', `Don't redefine the lifecycle [${key}]， it will use the methods's lifecycle if redefined`)
         }
         newOptions[key] = methods[key]
       }
@@ -65,7 +159,7 @@ function mergeMixins (parent, child) {
       mergeDataFn(parent, child, key)
     } else if (/computed|properties|props|methods|proto/.test(key)) {
       mergeSimpleProps(parent, child, key)
-    } else if (/watch|pageLifetimes/.test(key)) {
+    } else if (/watch|pageLifetimes|observers/.test(key)) {
       mergeToArray(parent, child, key)
     } else if (key !== 'mixins') {
       mergeDefault(parent, child, key)
@@ -132,11 +226,17 @@ function mergeToArray (parent, child, key) {
   }
   Object.keys(childVal).forEach(key => {
     if (key in parentVal) {
-      parentVal[key] = type(parentVal[key]) !== 'Array'
-        ? [parentVal[key], childVal[key]]
-        : parentVal[key].concat([childVal[key]])
+      let parent = parentVal[key]
+      let child = childVal[key]
+      if (type(parent) !== 'Array') {
+        parent = [parent]
+      }
+      if (type(child) !== 'Array') {
+        child = [child]
+      }
+      parentVal[key] = parent.concat(child)
     } else {
-      parentVal[key] = [childVal[key]]
+      parentVal[key] = type(childVal[key]) === 'Array' ? childVal[key] : [childVal[key]]
     }
   })
 }

@@ -12,6 +12,51 @@ export function type (n) {
   return Object.prototype.toString.call(n).slice(8, -1)
 }
 
+export function asyncLock () {
+  let lock = false
+  return (fn, onerror) => {
+    if (!lock) {
+      lock = true
+      Promise.resolve().then(() => {
+        lock = false
+        typeof fn === 'function' && fn()
+      }).catch(e => {
+        lock = false
+        console.error(e)
+        typeof onerror === 'function' && onerror()
+      })
+    }
+  }
+}
+
+export function aliasReplace (options = {}, alias, target) {
+  if (options[alias]) {
+    const dataType = type(options[alias])
+    switch (dataType) {
+      case 'Object':
+        options[target] = Object.assign({}, options[alias], options[target])
+        break
+      case 'Array':
+        options[target] = options[alias].concat(options[target] || [])
+        break
+      default:
+        options[target] = options[alias]
+        break
+    }
+    delete options[alias]
+  }
+  return options
+}
+
+export function findItem (arr = [], key) {
+  for (const item of arr) {
+    if ((type(key) === 'RegExp' && key.test(item)) || item === key) {
+      return true
+    }
+  }
+  return false
+}
+
 export function normalizeMap (arr) {
   if (type(arr) === 'Array') {
     const map = {}
@@ -50,19 +95,27 @@ export function setByPath (data, pathStr, value) {
   }
 }
 
-export function getByPath (data, pathStr, defaultVal = '') {
-  const result = _getByPath(data, pathStr, (value, key) => {
-    let newValue
-    if (isObservable(value)) {
-      // key可能不是一个响应式属性，那么get将无法返回正确值
-      newValue = get(value, key) || value[key]
-    } else if (isExistAttr(value, key)) {
-      newValue = value[key]
-    }
-    return newValue
+export function getByPath (data, pathStr, defaultVal = '', errTip) {
+  const results = []
+  pathStr.split(',').forEach(item => {
+    const path = item.trim()
+    if (!path) return
+    const result = _getByPath(data, path, (value, key) => {
+      let newValue
+      if (isObservable(value)) {
+        // key可能不是一个响应式属性，那么get将无法返回正确值
+        newValue = get(value, key) || value[key]
+      } else if (isExistAttr(value, key)) {
+        newValue = value[key]
+      } else {
+        newValue = errTip
+      }
+      return newValue
+    })
+    // 小程序setData时不允许undefined数据
+    results.push(result === undefined ? defaultVal : result)
   })
-  // 小程序setData时不允许undefined数据
-  return result === undefined ? defaultVal : result
+  return results.length > 1 ? results : results[0]
 }
 
 export function defineGetter (target, key, value, context) {
@@ -304,6 +357,10 @@ function unwrap (a) {
     return a.entries()
   }
   return a
+}
+
+export function noop () {
+
 }
 
 export function diffAndCloneA (a, b) {

@@ -1,5 +1,5 @@
 function objectKeys (obj) {
-  if (__mpx_mode__ === 'swan') {
+  if (!__mpx_wxs__ || __mpx_mode__ === 'swan') {
     return Object.keys(obj)
   } else {
     var keys = []
@@ -57,7 +57,7 @@ function objectKeys (obj) {
 }
 
 function genRegExp (str, flags) {
-  if (__mpx_mode__ === 'swan') {
+  if (!__mpx_wxs__ || __mpx_mode__ === 'swan') {
     return new RegExp(str, flags)
   } else {
     return getRegExp(str, flags)
@@ -82,7 +82,11 @@ function isObject (obj) {
 }
 
 function likeArray (arr) {
-  return arr && arr.constructor === 'Array'
+  if (!__mpx_wxs__ || __mpx_mode__ === 'swan') {
+    return Array.isArray(arr)
+  } else {
+    return arr && arr.constructor === 'Array'
+  }
 }
 
 function isDef (v) {
@@ -188,7 +192,7 @@ function normalizeDynamicStyle (value) {
   return value
 }
 
-export default {
+module.exports = {
   transformClass: function (staticClass, dynamicClass) {
     if (typeof staticClass !== 'string') {
       return console.log('Template attr class must be a string!')
@@ -196,11 +200,8 @@ export default {
     return concat(staticClass, stringifyClass(dynamicClass))
   },
   transformStyle: function (staticStyle, dynamicStyle) {
-    if (typeof staticStyle !== 'string') {
-      return console.log('Template attr style must be a string!')
-    }
     var normalizedDynamicStyle = normalizeDynamicStyle(dynamicStyle)
-    var parsedStaticStyle = parseStyleText(staticStyle)
+    var parsedStaticStyle = typeof staticStyle === 'string' ? parseStyleText(staticStyle) : {}
     return genStyleText(extend(parsedStaticStyle, normalizedDynamicStyle))
   }
 }
