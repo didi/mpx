@@ -56,18 +56,16 @@ var webpackConf = {
         type: 'javascript/auto'
       },
       {
-        test: /(\.wxs|\.sjs|\.filter\.js)$/,
-        use: MpxWebpackPlugin.wxsLoader(),
-        type: 'javascript/auto',
-        issuer: /(\.wxml|\.axml|\.swan|\.mpx|\.th)$/
+        test: /\.(wxs|sjs|filter\.js)$/,
+        loader: MpxWebpackPlugin.wxsPreLoader(),
+        enforce: 'pre'
       },
       {
         test: /\.(png|jpe?g|gif|svg)$/,
-        loader: '@mpxjs/url-loader',
-        options: {
+        loader: MpxWebpackPlugin.urlLoader({
           name: 'img/[name].[ext]',
           limit: 10000
-        }
+        })
       }
     ]
   },
