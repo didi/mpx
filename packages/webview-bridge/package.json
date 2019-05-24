@@ -25,7 +25,17 @@
     "url": "https://github.com/didi/mpx/issues"
   },
   "scripts": {
-    "test": "echo \"Error: run tests from root\" && exit 1"
+    "test": "echo \"Error: run tests from root\" && exit 1",
+    "build": "node build/build.js"
   },
-  "sideEffects": true
+  "sideEffects": true,
+  "devDependencies": {
+    "@babel/core": "^7.4.5",
+    "@babel/preset-env": "^7.4.5",
+    "rollup": "^1.12.3",
+    "rollup-plugin-babel": "^4.3.2",
+    "rollup-plugin-node-resolve": "^5.0.0",
+    "rollup-plugin-replace": "^2.2.0",
+    "terser": "^4.0.0"
+  }
 }
