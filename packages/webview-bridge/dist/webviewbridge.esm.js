@@ -1,5 +1,5 @@
 /**
- * mpxjs webview bridge v1.0.0
+ * mpxjs webview bridge v2.0.0
  * (c) 2019 @mpxjs team
  * @license Apache
  */
@@ -91,7 +91,8 @@ var SDK_URL_MAP = {
 var ENV_PATH_MAP = {
   wx: ['wx', 'miniProgram'],
   ali: ['my'],
-  baidu: ['swan', 'webView']
+  baidu: ['swan', 'webView'],
+  tt: ['tt', 'miniProgram']
 };
 var env = null; // 环境判断
 
@@ -101,10 +102,12 @@ if (navigator.userAgent.indexOf('AlipayClient') > -1) {
   env = 'wx';
 } else if (navigator.userAgent.indexOf('swan') > -1) {
   env = 'baidu';
+} else if (navigator.userAgent.indexOf('toutiao') > -1) {
+  env = 'tt';
 }
 
 if (env === null) {
-  console.error('mpxjs/webview: 未识别的环境，当前仅支持 微信、支付宝、百度 小程序');
+  console.error('mpxjs/webview: 未识别的环境，当前仅支持 微信、支付宝、百度、头条 小程序');
 }
 
 var sdkReady = !window[env] ? SDK_URL_MAP[env] ? loadScript(SDK_URL_MAP[env]) : Promise.reject(new Error('未找到对应的sdk')) : Promise.resolve();
