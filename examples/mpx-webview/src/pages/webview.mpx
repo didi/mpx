@@ -1,0 +1,18 @@
+<template>
+  <web-view src="http://127.0.0.1:8080/index.html"></web-view>
+</template>
+
+<script>
+  import { createPage } from '@mpxjs/core'
+
+  createPage({
+    onLoad () {}
+  })
+</script>
+
+<script type="application/json">
+  {
+    "usingComponents": {
+    }
+  }
+</script>
