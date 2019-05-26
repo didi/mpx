@@ -6,6 +6,7 @@
 
 1. todoMVC 通过本项目可以了解mpx的基本特性和store的使用
 2. progressive 渐进接入mpx，适用于已有项目如何接入mpx
+3. webview 展示@mpxjs/webview包在跨平台场景里H5中的使用
 3. 未完待续，欢迎有问题的同学在issue中提出想了解的方面，合适我们将提供对应的demo
 
 ## 使用方式
