@@ -8,7 +8,7 @@
     <view class="main" hidden="{{todos.length===0}}">
       <checkbox-group bindchange="toggleAll">
         <checkbox class="toggle-all" id="toggle-all" checked="{{allChecked}}"/>
-        <label class=".label" for="toggle-all"></label>
+        <label class="label" for="toggle-all"></label>
       </checkbox-group>
       <view class="todo-list">
         <view class="todo-wrap" wx:for="{{filteredTodos}}" wx:key="{{index}}">
@@ -135,6 +135,7 @@
   }
 
   .toggle-all + .label {
+    margin-left: 10px;
     width: 60px;
     height: 34px;
     font-size: 0;

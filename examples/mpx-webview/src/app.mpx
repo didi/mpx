@@ -1,0 +1,20 @@
+<script>
+  import mpx from '@mpxjs/core'
+  import apiProxy from '@mpxjs/api-proxy'
+  // app.js
+  mpx.use(apiProxy, { usePromise: true })
+  App({})
+</script>
+
+<style>
+
+</style>
+
+<script type="application/json">
+  {
+    "pages": [
+      "./pages/index",
+      "./pages/webview"
+    ]
+  }
+</script>

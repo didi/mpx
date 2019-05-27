@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="cn">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>mpx webview bridge</title>
+</head>
+<body>
+<h1>这里是webview里的页面</h1>
+<button onclick="back()">点此回到小程序</button>
+
+<script src="https://cdn.bootcss.com/vConsole/3.3.0/vconsole.min.js"></script>
+<script>
+  var vConsole = new VConsole()
+  console.log('vconsole ready')
+</script>
+<script src="./webviewbridge.min.js"></script>
+
+<script>
+  function back () {
+    console.log('click back btn')
+    mpx.navigateBack()
+  }
+</script>
+</body>
+</html>
