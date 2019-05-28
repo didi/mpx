@@ -1,6 +1,6 @@
 import * as wxLifecycle from '../platform/patch/wx/lifecycle'
 import { mergeLifecycle } from './mergeLifecycle'
-const NOTSUPPORTS = ['moved', 'relations']
+const NOTSUPPORTS = ['moved']
 function notSupportTip (options) {
   NOTSUPPORTS.forEach(key => {
     if (options[key]) {
