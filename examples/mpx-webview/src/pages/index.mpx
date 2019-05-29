@@ -1,0 +1,26 @@
+<template>
+  <view>
+    这是index页面
+  </view>
+  <button bindtap="handleTap">跳转去webview页面</button>
+</template>
+
+<script>
+  import mpx, { createPage } from '@mpxjs/core'
+
+  createPage({
+    onLoad () {},
+    methods: {
+      handleTap () {
+        mpx.navigateTo({ url: '/pages/webview' })
+      }
+    }
+  })
+</script>
+
+<script type="application/json">
+  {
+    "usingComponents": {
+    }
+  }
+</script>

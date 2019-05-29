@@ -6,8 +6,7 @@
 
 <script>
   Page({
-    onLoad: function () {
-    }
+    onLoad () {}
   })
 </script>
 

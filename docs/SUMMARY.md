@@ -41,6 +41,8 @@
         * [output.filename](compilationEnhance/index.md#outputfilename)
         * [optimization](compilationEnhance/index.md#optimization)
 * [多平台支持](platform.md)
+    * [多平台支持](platform.md#多平台支持)
+    * [跨平台编译](platform.md#跨平台编译)
 * [渐进接入](progressive.md)
     - [原生组件支持](progressive.md#原生自定义组件支持)
     - [原生page支持](progressive.md#原生page支持)
@@ -63,3 +65,4 @@
     * [编译构建](understanding/understanding.md#编译构建)
     * [图像资源处理](understanding/resource.md#图像资源处理)
 * [更新记录](https://github.com/didi/mpx/releases)
+* [2.0迁移指南](migrate.md)

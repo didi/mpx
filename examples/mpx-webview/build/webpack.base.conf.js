@@ -1,11 +1,9 @@
-var path = require('path')
-var MpxWebpackPlugin = require('@mpxjs/webpack-plugin')
+const path = require('path')
+const MpxWebpackPlugin = require('@mpxjs/webpack-plugin')
 
 function resolve (dir) {
   return path.join(__dirname, '..', dir)
 }
-
-const mode = process.env.npm_config_ali ? 'ali' : 'wx'
 
 // 配置分包内抽取公共jsBundle，进一步降低主包体积
 // 抽取规则如下
@@ -32,7 +30,7 @@ function getSubPackagesCacheGroups (packages) {
   return result
 }
 
-var webpackConf = {
+const webpackConf = {
   module: {
     rules: [
       {
@@ -89,12 +87,6 @@ var webpackConf = {
     }
   },
   mode: 'none',
-  plugins: [
-    new MpxWebpackPlugin({
-      mode: mode,
-      srcMode: 'wx'
-    })
-  ],
   resolve: {
     extensions: ['.js', '.mpx'],
     modules: ['node_modules']

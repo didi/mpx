@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://didi.github.io/mpx/">
-    <img alt="babel" src="https://dpubstatic.udache.com/static/dpubimg/34b5079c-0399-406d-8d2e-b8624678f7ff.png" width="546">
+    <img alt="MPX" src="https://dpubstatic.udache.com/static/dpubimg/34b5079c-0399-406d-8d2e-b8624678f7ff.png" width="546">
   </a>
 </p>
 
@@ -12,19 +12,22 @@
 
 ## 简介
 
-Mpx是一款致力于提高小程序开发体验的增强型小程序框架，通过Mpx，我们能够以最先进的web开发体验(Vue + Webpack)来开发生产性能深度优化的小程序，Mpx具有以下一些优秀特性：
-* 数据响应特性(watch/computed)
-* 增强的模板语法(动态组件/样式绑定/类名绑定/内联事件函数/双向绑定等)
-* 深度性能优化(原生自定义组件/基于依赖收集和数据变化的setData)
+Mpx是一款致力于提高小程序开发体验的增强型小程序框架，通过Mpx，我们能够最先进的web开发体验(Vue + Webpack)来开发生产性能深度优化的小程序，Mpx具有以下一些优秀特性：
+* 数据响应特性([watch](https://didi.github.io/mpx/single/script-enhance.html#watch) / [computed](https://didi.github.io/mpx/single/script-enhance.html#computed))
+* 增强的模板语法([动态组件](https://didi.github.io/mpx/single/template-enhance.html#%E5%8A%A8%E6%80%81%E7%BB%84%E4%BB%B6) / [样式绑定 / 类名绑定 ](https://didi.github.io/mpx/single/template-enhance.html#class%E4%B8%8Estyle%E7%BB%91%E5%AE%9A) / [内联事件函数](https://didi.github.io/mpx/single/template-enhance.html#%E5%86%85%E8%81%94%E4%BA%8B%E4%BB%B6%E7%BB%91%E5%AE%9A) / [双向绑定](https://didi.github.io/mpx/single/template-enhance.html#%E5%8F%8C%E5%90%91%E7%BB%91%E5%AE%9A) 等)
+* [深度性能优化](https://didi.github.io/mpx/understanding/understanding.html#%E6%95%B0%E6%8D%AE%E5%93%8D%E5%BA%94%E4%B8%8E%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96)(原生自定义组件/基于依赖收集和数据变化的setData)
 * Webpack编译(npm/循环依赖/Babel/ESLint/css预编译/代码优化等)
-* 单文件组件开发
-* 原生组件支持
-* 状态管理(Vuex规范/多实例/可合并)
-* 跨团队合作(packages)
-* 逻辑复用能力(mixins)
+* [单文件组件开发](https://didi.github.io/mpx/single/what-is-single-file.html#%E5%8D%95%E6%96%87%E4%BB%B6)
+* [渐进接入 / 原生组件支持](https://didi.github.io/mpx/progressive.html)
+* [状态管理](https://didi.github.io/mpx/store/#%E6%95%B0%E6%8D%AE%E7%AE%A1%E7%90%86)(Vuex规范/多实例/可合并)
+* 跨团队合作([packages](https://didi.github.io/mpx/single/json-enhance.html#packages))
+* 逻辑复用能力([mixins](https://didi.github.io/mpx/single/script-enhance.html#mixins))
 * 脚手架支持
 * 小程序自身规范的完全支持
-* 支付宝小程序的支持
+* [多平台支持](https://didi.github.io/mpx/platform.html#%E5%A4%9A%E5%B9%B3%E5%8F%B0%E6%94%AF%E6%8C%81)(微信、支付宝、百度、qq、头条)
+* [跨平台编译](https://didi.github.io/mpx/platform.html#%E8%B7%A8%E5%B9%B3%E5%8F%B0%E7%BC%96%E8%AF%91)(支持将微信小程序转换为支付宝、百度、qq、头条小程序)
+
+Mpx2.0正式发布！支持目前业内全部小程序平台及跨小程序平台编译，[点此查看详情](https://github.com/didi/mpx/releases/tag/v2.0.0)，[点此查看迁移指南](https://didi.github.io/mpx/migrate.html)
 
 ## 使用
 
@@ -69,7 +72,7 @@ https://didi.github.io/mpx
 |@mpxjs/webpack-plugin|[![npm version](https://badge.fury.io/js/%40mpxjs%2Fwebpack-plugin.svg)](https://badge.fury.io/js/%40mpxjs%2Fwebpack-plugin)|mpx编译核心|
 |@mpxjs/cli|[![npm version](https://badge.fury.io/js/%40mpxjs%2Fcli.svg)](https://badge.fury.io/js/%40mpxjs%2Fcli)|mpx脚手架命令行工具|
 |@mpxjs/fetch|[![npm version](https://badge.fury.io/js/%40mpxjs%2Ffetch.svg)](https://badge.fury.io/js/%40mpxjs%2Ffetch)|mpx网络请求库，处理wx并发请求限制|
-|@mpxjs/url-loader|[![npm version](https://badge.fury.io/js/%40mpxjs%2Furl-loader.svg)](https://badge.fury.io/js/%40mpxjs%2Furl-loader)|处理wxss中图像资源只能用base64引用|
+|@mpxjs/webview-bridge|[![npm version](https://badge.fury.io/js/%40mpxjs%2Fwebview-bridge.svg)](https://badge.fury.io/js/%40mpxjs%2Fwebview-bridge)|为跨小程序平台的H5项目提供通用的webview-bridge|
 |@mpxjs/api-proxy|[![npm version](https://badge.fury.io/js/%40mpxjs%2Fapi-proxy.svg)](https://badge.fury.io/js/%40mpxjs%2Fapi-proxy)|将各个平台的 api 进行转换，也可以将 api 转为 promise 格式|
 
 ## 交流
