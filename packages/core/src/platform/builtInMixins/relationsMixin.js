@@ -43,24 +43,25 @@ export default function relationsMixin () {
       methods: {
         getRelationNodes (path) {
           const realPath = parsePath(path, this.is)
-          return this.$relationNodesMap && this.$relationNodesMap[realPath]
+          return (this.$relationNodesMap && this.$relationNodesMap[realPath]) || []
         },
-        mpxCollectComponentSlot (children, list) {
+        mpxCollectChildComponent (children, list) {
           children.forEach(child => {
             if (child && child.props) {
               if (child.props.$isCustomComponent) {
+                child.props.$mpxIsSlot = true
                 list.push(child)
               } else {
                 const childrenType = type(child.props.children)
                 if (childrenType === 'Object' || childrenType === 'Array') {
                   const slotChildren = childrenType !== 'Array' ? [child.props.children] : child.props.children
-                  this.mpxCollectComponentSlot(slotChildren, list)
+                  this.mpxCollectChildComponent(slotChildren, list)
                 }
               }
             }
           })
         },
-        mpxNotifyParent () {
+        mpxSlotNotify () {
           if (this.mpxSlotLinkNum < this.mpxSlotChildren.length) {
             this.mpxSlotLinkNum++
             if (this.mpxSlotLinkNum === this.mpxSlotChildren.length) {
@@ -129,7 +130,7 @@ export default function relationsMixin () {
           this.$mpxRelations = transferPath(this.$rawOptions.relations, this.is)
           this.$relationNodesMap = {}
         }
-        if (curTarget) {
+        if (curTarget && this.props.$mpxIsSlot) {
           this.mpxSlotParent = curTarget // slot 父级
           if (this.$mpxRelations) {
             const contexts = curTarget.mpxPropagateFindRelation(this) // relation 父级|祖先
@@ -141,13 +142,14 @@ export default function relationsMixin () {
         }
       },
       deriveDataFromProps (nextProps) {
-        this.mpxSlotParent && this.mpxSlotParent.mpxNotifyParent() // 通知slot父级，确保父级能执行popTarget
-        if (this.$mpxRelations) {
-          const slots = nextProps.$slots || {}
+        this.mpxSlotParent && this.mpxSlotParent.mpxSlotNotify() // 通知slot父级，确保父级能执行popTarget
+        const slots = nextProps.$slots || {}
+        const slotKeys = Object.keys(slots)
+        if (slotKeys.length) {
           this.mpxSlotChildren = []
           this.mpxSlotLinkNum = 0
-          Object.keys(slots).forEach(key => {
-            this.mpxCollectComponentSlot(slots[key], this.mpxSlotChildren)
+          slotKeys.forEach(key => {
+            this.mpxCollectChildComponent(slots[key], this.mpxSlotChildren)
           })
           if (this.mpxSlotChildren.length) {
             pushTarget(this)
