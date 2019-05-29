@@ -45,7 +45,7 @@ export default function relationsMixin () {
           const realPath = parsePath(path, this.is)
           return this.$relationNodesMap && this.$relationNodesMap[realPath]
         },
-        mpxCollectChildComponent (children, list) {
+        mpxCollectComponentSlot (children, list) {
           children.forEach(child => {
             if (child && child.props) {
               if (child.props.$isCustomComponent) {
@@ -54,7 +54,7 @@ export default function relationsMixin () {
                 const childrenType = type(child.props.children)
                 if (childrenType === 'Object' || childrenType === 'Array') {
                   const slotChildren = childrenType !== 'Array' ? [child.props.children] : child.props.children
-                  this.mpxCollectChildComponent(slotChildren, list)
+                  this.mpxCollectComponentSlot(slotChildren, list)
                 }
               }
             }
@@ -147,7 +147,7 @@ export default function relationsMixin () {
           this.mpxSlotChildren = []
           this.mpxSlotLinkNum = 0
           Object.keys(slots).forEach(key => {
-            this.mpxCollectChildComponent(slots[key], this.mpxSlotChildren)
+            this.mpxCollectComponentSlot(slots[key], this.mpxSlotChildren)
           })
           if (this.mpxSlotChildren.length) {
             pushTarget(this)
