@@ -144,10 +144,10 @@ export default function relationsMixin () {
       deriveDataFromProps (nextProps) {
         this.mpxSlotParent && this.mpxSlotParent.mpxSlotNotify() // 通知slot父级，确保父级能执行popTarget
         const slots = nextProps.$slots || {}
-        this.mpxSlotChildren = []
-        this.mpxSlotLinkNum = 0
         const slotKeys = Object.keys(slots)
         if (slotKeys.length) {
+          this.mpxSlotChildren = []
+          this.mpxSlotLinkNum = 0
           slotKeys.forEach(key => {
             this.mpxCollectChildComponent(slots[key], this.mpxSlotChildren)
           })
