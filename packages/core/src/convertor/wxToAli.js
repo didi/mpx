@@ -6,7 +6,7 @@ const NOTSUPPORTS = ['moved', 'externalClasses', 'pageLifetimes', 'definitionFil
 function notSupportTip (options) {
   NOTSUPPORTS.forEach(key => {
     if (options[key]) {
-      console.error(`【MPX CONVERT ERROR】at ${global.currentResource || ''}: Don't support for convert the option【${key}】 of the wx-component into the ali-component`)
+      console.error(`【MPX CONVERT ERROR】at ${global.currentResource || ''} : Don't support for convert the option【${key}】 of the wx-component into the ali-component`)
       delete options[key]
     }
   })

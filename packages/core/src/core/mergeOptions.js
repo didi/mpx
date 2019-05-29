@@ -26,7 +26,7 @@ function extractMixins (mergeOptions, options, needConvert) {
   if (options.mixins) {
     for (const mix of options.mixins) {
       if (typeof mix === 'string') {
-        console.error(`Don't support for convert the string-formatted【behavior】into mixin`)
+        console.error(`【MPX CONVERT ERROR】at ${global.currentResource || ''} : Don't support for convert the string-formatted【behavior】into mixin`)
       } else {
         extractMixins(mergeOptions, mix, needConvert)
       }
