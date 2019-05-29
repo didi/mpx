@@ -41,7 +41,11 @@ export default function relationsMixin () {
   if (is('ali')) {
     return {
       methods: {
-        collectChildComponent (children, list) {
+        getRelationNodes (path) {
+          const realPath = parsePath(path, this.is)
+          return this.$relationNodesMap && this.$relationNodesMap[realPath]
+        },
+        mpxCollectComponentSlot (children, list) {
           children.forEach(child => {
             if (child && child.props) {
               if (child.props.$isCustomComponent) {
@@ -50,13 +54,13 @@ export default function relationsMixin () {
                 const childrenType = type(child.props.children)
                 if (childrenType === 'Object' || childrenType === 'Array') {
                   const slotChildren = childrenType !== 'Array' ? [child.props.children] : child.props.children
-                  this.collectChildComponent(slotChildren, list)
+                  this.mpxCollectComponentSlot(slotChildren, list)
                 }
               }
             }
           })
         },
-        notify () {
+        mpxNotifyParent () {
           if (this.mpxSlotLinkNum < this.mpxSlotChildren.length) {
             this.mpxSlotLinkNum++
             if (this.mpxSlotLinkNum === this.mpxSlotChildren.length) {
@@ -64,20 +68,32 @@ export default function relationsMixin () {
             }
           }
         },
-        execAllRelations (type) {
+        mpxExecAllRelations (type) {
           this.mpxRelationContexts.forEach(context => {
-            context.execRelation(this, type)
-            this.execRelation(context, type)
+            context.mpxExecRelation(this, type)
+            this.mpxExecRelation(context, type)
           })
         },
-        execRelation (target, type) {
+        mpxExecRelation (target, type) {
+          this.mpxCacheRelationNode(target, type)
           const relations = this.$mpxRelations || {}
           const path = target.is
           if (relations[path]) {
             typeof relations[path][type] === 'function' && relations[path][type].call(this, target)
           }
         },
-        getRelation (child) {
+        mpxCacheRelationNode (target, type) {
+          const path = target.is
+          const nodes = this.$relationNodesMap[path] || []
+          if (type === 'linked') {
+            nodes.push(target)
+          } else {
+            const index = nodes.indexOf(target)
+            index > -1 && nodes.splice(index, 1)
+          }
+          this.$relationNodesMap[path] = nodes
+        },
+        mpxGetRelation (child) {
           const parentRelations = this.$mpxRelations || {}
           const childRelations = child.$mpxRelations || {}
           if (parentRelations[child.is] && childRelations[this.is]) {
@@ -89,13 +105,13 @@ export default function relationsMixin () {
             }
           }
         },
-        propagateFind (child) {
+        mpxPropagateFindRelation (child) {
           let cur = this
           let contexts = []
           let depth = 1
           // 向上查找所有可能匹配的父级relation上下文
           while (cur) {
-            const relations = cur.getRelation(child)
+            const relations = cur.mpxGetRelation(child)
             if (relations) {
               if ((relations.parentType === 'child' && relations.childType === 'parent' && depth === 1) ||
                 (relations.parentType === 'descendant' && relations.childType === 'ancestor')) {
@@ -111,26 +127,27 @@ export default function relationsMixin () {
       onInit () {
         if (this.$rawOptions.relations) {
           this.$mpxRelations = transferPath(this.$rawOptions.relations, this.is)
+          this.$relationNodesMap = {}
         }
         if (curTarget) {
           this.mpxSlotParent = curTarget // slot 父级
           if (this.$mpxRelations) {
-            const contexts = curTarget.propagateFind(this) // relation 父级|祖先
+            const contexts = curTarget.mpxPropagateFindRelation(this) // relation 父级|祖先
             if (contexts) {
               this.mpxRelationContexts = contexts
-              this.execAllRelations('linked')
+              this.mpxExecAllRelations('linked')
             }
           }
         }
       },
       deriveDataFromProps (nextProps) {
-        this.mpxSlotParent && this.mpxSlotParent.notify() // 通知slot父级，确保父级能执行popTarget
+        this.mpxSlotParent && this.mpxSlotParent.mpxNotifyParent() // 通知slot父级，确保父级能执行popTarget
         if (this.$mpxRelations) {
           const slots = nextProps.$slots || {}
           this.mpxSlotChildren = []
           this.mpxSlotLinkNum = 0
           Object.keys(slots).forEach(key => {
-            this.collectChildComponent(slots[key], this.mpxSlotChildren)
+            this.mpxCollectComponentSlot(slots[key], this.mpxSlotChildren)
           })
           if (this.mpxSlotChildren.length) {
             pushTarget(this)
@@ -139,7 +156,7 @@ export default function relationsMixin () {
       },
       didUnmount () {
         if (this.mpxRelationContexts) {
-          this.execAllRelations('unlinked')
+          this.mpxExecAllRelations('unlinked')
         }
       }
     }
