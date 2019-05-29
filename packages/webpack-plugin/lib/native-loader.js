@@ -106,8 +106,9 @@ module.exports = function (content) {
         }
       }
 
-      // 注入模块id
+      // 注入模块id及资源路径
       let globalInjectCode = `global.currentModuleId = ${JSON.stringify(moduleId)};\n`
+      globalInjectCode += `global.currentResource = ${JSON.stringify(filePath)};\n`
 
       // 注入构造函数
       let ctor = 'App'
