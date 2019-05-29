@@ -1,6 +1,8 @@
 import * as wxLifecycle from '../platform/patch/wx/lifecycle'
 import { mergeLifecycle } from './mergeLifecycle'
+
 const NOTSUPPORTS = ['moved', 'externalClasses', 'pageLifetimes', 'definitionFilter']
+
 function notSupportTip (options) {
   NOTSUPPORTS.forEach(key => {
     if (options[key]) {
@@ -9,6 +11,7 @@ function notSupportTip (options) {
     }
   })
 }
+
 export default {
   lifecycle: mergeLifecycle(wxLifecycle.LIFECYCLE),
   mode: 'blend',
@@ -30,7 +33,7 @@ export default {
           newProps[key] = typeof prop === 'function' ? prop() : ''
         }
       })
-      options.props = newProps
+      options.props = Object.assign(newProps, options.props)
       delete options.properties
     }
     notSupportTip(options)
