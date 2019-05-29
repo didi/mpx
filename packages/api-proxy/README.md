@@ -28,7 +28,7 @@ apiProxy(target, options) // target 为要抹平的对象
 |platform|Object|各平台之间的转换|否|{ from:'', to:'' }|使用 mpx 脚手架配置会自动进行转换，无需配置|
 |exclude|Array(String)|跨平台时不需要转换的 api|-|
 |usePromise|Boolean|是否将 api 转化为 promise 格式使用|否|false|-|
-|whiteList|Array(String)|不需要转化 promise 格式的 api|否|[]|需要 usePromise 设为 true|
+|whiteList|Array(String)|强行转化为 promise 格式的 api|否|[]|需要 usePromise 设为 true|
 
 ## example
 

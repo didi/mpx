@@ -35,23 +35,22 @@ function getMapFromList (list) {
   }
 }
 
-function promisifyFilter (key, whiteList) {
+function promisify (listObj, usePromise, whiteList) {
+  const result = {}
   const whiteListMap = getMapFromList(whiteList)
   const blackListMap = getMapFromList(blackList)
 
-  if (whiteListMap) {
-    return !!whiteListMap[key]
-  } else {
-    return !(blackListMap[key] || // 特别指定的方法
-      /^get\w*Manager$/.test(key) || // 获取manager的api
-      /^create\w*Context$/.test(key) || // 创建上下文相关api
-      /^(on|off)/.test(key) || // 以 on* 或 off开头的方法
-      /\w+Sync$/.test(key))
+  function promisifyFilter (key) {
+    if (whiteListMap) {
+      return !!whiteListMap[key]
+    } else {
+      return !(blackListMap[key] || // 特别指定的方法
+        /^get\w*Manager$/.test(key) || // 获取manager的api
+        /^create\w*Context$/.test(key) || // 创建上下文相关api
+        /^(on|off)/.test(key) || // 以 on* 或 off开头的方法
+        /\w+Sync$/.test(key))
+    }
   }
-}
-
-function promisify (listObj, usePromise, whiteList) {
-  const result = {}
 
   Object.keys(listObj).forEach(key => {
     if (typeof listObj[key] !== 'function') {
@@ -59,7 +58,7 @@ function promisify (listObj, usePromise, whiteList) {
     }
 
     result[key] = function (...args) {
-      if (usePromise && promisifyFilter(key, whiteList)) {
+      if (usePromise && promisifyFilter(key)) {
         if (!args[0]) {
           args[0] = { success: noop, fail: noop }
         }
