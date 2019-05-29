@@ -43,7 +43,7 @@ export default function relationsMixin () {
       methods: {
         getRelationNodes (path) {
           const realPath = parsePath(path, this.is)
-          return this.$relationNodesMap && this.$relationNodesMap[realPath]
+          return (this.$relationNodesMap && this.$relationNodesMap[realPath]) || []
         },
         mpxCollectChildComponent (children, list) {
           children.forEach(child => {
