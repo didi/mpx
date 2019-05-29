@@ -1342,10 +1342,17 @@ function isRealNode (el) {
 function processAliStyleClassHack (el, options, root) {
   ['style', 'class'].forEach((type) => {
     let exp = getAndRemoveAttr(el, type)
+    let sep = type === 'style' ? ';' : ' '
+
+    let alias = 'custom-' + type
+    let aliasExp = getAndRemoveAttr(el, alias)
+    if (aliasExp !== undefined) {
+      exp = exp !== undefined ? exp + sep + aliasExp : aliasExp
+    }
+
     let typeName = 'mpx' + type.replace(/^./, (matched) => {
       return matched.toUpperCase()
     })
-    let sep = type === 'style' ? ';' : ' '
 
     if (options.isComponent && el.parent === root && isRealNode(el)) {
       if (exp !== undefined) {
