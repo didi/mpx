@@ -3,11 +3,28 @@ import { mergeLifecycle } from './mergeLifecycle'
 
 const NOTSUPPORTS = ['moved', 'externalClasses', 'pageLifetimes', 'definitionFilter']
 
+function convertErrorDesc (key) {
+  console.error(`【MPX CONVERT ERROR】at ${global.currentResource || ''} : Don't support for convert the option【${key}】 of the wx-component into the ali-component`)
+}
+
 function notSupportTip (options) {
   NOTSUPPORTS.forEach(key => {
     if (options[key]) {
-      console.error(`【MPX CONVERT ERROR】at ${global.currentResource || ''} : Don't support for convert the option【${key}】 of the wx-component into the ali-component`)
+      convertErrorDesc(key)
       delete options[key]
+    }
+    // relations部分支持
+    const relations = options['relations']
+    if (relations) {
+      Object.keys(relations).forEach(path => {
+        const item = relations[path]
+        if (item.target) {
+          convertErrorDesc('relations > target')
+        }
+        if (item.linkChanged) {
+          convertErrorDesc('relations > linkChanged')
+        }
+      })
     }
   })
 }
