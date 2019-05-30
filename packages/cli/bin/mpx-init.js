@@ -27,7 +27,7 @@ const getTemplatePath = localPath.getTemplatePath
 program
   .usage('[project-name]')
   .option('-c, --clone', 'use git clone')
-  .option('--offline', 'use cached template')
+  .option('--offline [value]', 'use cached template or specific a local path to mpx-template')
   .on('--help', () => {
     console.log()
     console.log('  Examples:')
@@ -54,8 +54,13 @@ const clone = program.clone || false
 
 const tmp = path.join(home, '.mpx-templates', template)
 if (program.offline) {
-  console.log(`> Use cached template at ${chalk.yellow(tildify(tmp))}`)
-  template = tmp
+  if (typeof program.offline === 'boolean') {
+    console.log(`> Use cached template at ${chalk.yellow(tildify(tmp))}`)
+    template = tmp
+  } else if (typeof program.offline === 'string') {
+    console.log(`> Use local template at ${chalk.yellow(tildify(program.offline))}`)
+    template = program.offline
+  }
 }
 
 updateNotifier({ pkg, updateCheckInterval: 0 }).notify({ isGlobal: true })
