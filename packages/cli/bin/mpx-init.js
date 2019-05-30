@@ -58,7 +58,7 @@ if (program.offline) {
   template = tmp
 }
 
-updateNotifier({ pkg }).notify({ isGlobal: true })
+updateNotifier({ pkg, updateCheckInterval: 0 }).notify({ isGlobal: true })
 
 /**
  * Padding.
