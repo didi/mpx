@@ -102,8 +102,7 @@ function filterOptions (options) {
 }
 
 export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
-  const options = filterOptions(rawOptions)
-  options.mixins = [{
+  const rootMixins = [{
     attached () {
       // 提供代理对象需要的api
       transformApiForProxy(this, currentInject)
@@ -122,5 +121,7 @@ export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
       this.$mpxProxy && this.$mpxProxy.destroyed()
     }
   }]
-  return mergeOptions(options, type, false)
+  rawOptions.mixins = rawOptions.mixins ? rootMixins.concat(rawOptions.mixins) : rootMixins
+  rawOptions = mergeOptions(rawOptions, type, false)
+  return filterOptions(rawOptions)
 }

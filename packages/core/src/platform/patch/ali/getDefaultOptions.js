@@ -85,8 +85,7 @@ function filterOptions (options, type) {
 
 export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
   const hookNames = type === 'component' ? ['onInit', 'didMount', 'didUnmount'] : ['onLoad', 'onReady', 'onUnload']
-  const options = filterOptions(rawOptions, type)
-  options.mixins = [{
+  const rootMixins = [{
     [hookNames[0]] () {
       // 提供代理对象需要的api
       transformApiForProxy(this, currentInject)
@@ -126,5 +125,7 @@ export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
       this.$mpxProxy && this.$mpxProxy.destroyed()
     }
   }]
-  return mergeOptions(options, type, false)
+  rawOptions.mixins = rawOptions.mixins ? rootMixins.concat(rawOptions.mixins) : rootMixins
+  rawOptions = mergeOptions(rawOptions, type, false)
+  return filterOptions(rawOptions, type)
 }
