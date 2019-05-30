@@ -13,20 +13,20 @@ function notSupportTip (options) {
       convertErrorDesc(key)
       delete options[key]
     }
-    // relations部分支持
-    const relations = options['relations']
-    if (relations) {
-      Object.keys(relations).forEach(path => {
-        const item = relations[path]
-        if (item.target) {
-          convertErrorDesc('relations > target')
-        }
-        if (item.linkChanged) {
-          convertErrorDesc('relations > linkChanged')
-        }
-      })
-    }
   })
+  // relations部分支持
+  const relations = options['relations']
+  if (relations) {
+    Object.keys(relations).forEach(path => {
+      const item = relations[path]
+      if (item.target) {
+        convertErrorDesc('relations > target')
+      }
+      if (item.linkChanged) {
+        convertErrorDesc('relations > linkChanged')
+      }
+    })
+  }
 }
 
 export default {
