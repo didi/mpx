@@ -60,7 +60,7 @@ module.exports = function (content) {
     isNative
   )
 
-  const attributes = ['image:src', 'audio:src', 'video:src', 'cover-image:src', 'import:src', `${config[mode].wxs.tag}:${config[mode].wxs.src}`]
+  const attributes = ['image:src', 'audio:src', 'video:src', 'cover-image:src', 'import:src', 'include:src', `${config[mode].wxs.tag}:${config[mode].wxs.src}`]
   const root = ''
   const links = attrParse(content, function (tag, attr) {
     const res = attributes.find(function (a) {
@@ -139,6 +139,7 @@ module.exports = function (content) {
 
     switch (link.tag) {
       case 'import':
+      case 'include':
         requestString = getSrcRequestString('template', { src, mode: srcMode }, -1)
         break
       case config[mode].wxs.tag:

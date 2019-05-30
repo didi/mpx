@@ -6,7 +6,8 @@ function transformApi (target, options) {
   const platformMap = {
     'wx_ali': wxToAliApi,
     'qq_ali': wxToAliApi,
-    'swan_ali': wxToAliApi
+    'swan_ali': wxToAliApi,
+    'tt_ali': wxToAliApi
   }
   const platforms = ['wx', 'ali', 'swan', 'qq', 'tt']
   const cacheTarget = {}
