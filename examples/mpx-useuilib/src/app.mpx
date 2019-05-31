@@ -1,0 +1,16 @@
+<script>
+  // app.js
+  App({})
+</script>
+
+<style>
+
+</style>
+
+<script type="application/json">
+  {
+    "pages": [
+      "./pages/index"
+    ]
+  }
+</script>
