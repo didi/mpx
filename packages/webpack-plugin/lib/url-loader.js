@@ -35,10 +35,10 @@ module.exports = function (src) {
   const file = this.resourcePath
   const mimetype = options.mimetype || mime.getType(file)
 
-  const limit = options.limit
-  if (!limit || src.length < limit) {
-    transBase64 = true
-  }
+  // const limit = options.limit
+  // if (!limit || src.length < limit) {
+  //   transBase64 = true
+  // }
 
   const queryOption = parseQuery(this.resourceQuery || '?')
   if (queryOption.fallback) {

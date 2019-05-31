@@ -1339,16 +1339,24 @@ function isRealNode (el) {
   return !virtualNodeTagMap[el.tag]
 }
 
+function processAliExternalClassesHack (el, options) {
+  let staticClass = getAndRemoveAttr(el, 'class')
+  if (staticClass) {
+    options.externalClasses.forEach(({ className, replacement }) => {
+      const reg = new RegExp('\\b' + className + '\\b', 'g')
+      staticClass = staticClass.replace(reg, `{{${replacement}}}`)
+    })
+    addAttrs(el, [{
+      name: 'class',
+      value: staticClass
+    }])
+  }
+}
+
 function processAliStyleClassHack (el, options, root) {
   ['style', 'class'].forEach((type) => {
     let exp = getAndRemoveAttr(el, type)
     let sep = type === 'style' ? ';' : ' '
-
-    let alias = 'custom-' + type
-    let aliasExp = getAndRemoveAttr(el, alias)
-    if (aliasExp !== undefined) {
-      exp = exp !== undefined ? exp + sep + aliasExp : aliasExp
-    }
 
     let typeName = 'mpx' + type.replace(/^./, (matched) => {
       return matched.toUpperCase()
@@ -1427,6 +1435,11 @@ function processElement (el, root, options, meta, injectNodes) {
     rulesRunner(el)
   }
 
+  if (mode === 'ali' && srcMode === 'wx') {
+    processAliExternalClassesHack(el, options)
+    processAliStyleClassHack(el, options, root)
+  }
+
   let pass = isNative || processTemplate(el) || processingTemplate
   if (!pass) {
     processIf(el)
@@ -1439,9 +1452,6 @@ function processElement (el, root, options, meta, injectNodes) {
   }
 
   processRef(el, options, meta)
-  if (mode === 'ali') {
-    processAliStyleClassHack(el, options, root)
-  }
 
   if (!pass) {
     processBindEvent(el)

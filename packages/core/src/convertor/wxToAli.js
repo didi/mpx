@@ -1,7 +1,7 @@
 import * as wxLifecycle from '../platform/patch/wx/lifecycle'
 import { mergeLifecycle } from './mergeLifecycle'
 
-const NOTSUPPORTS = ['moved', 'externalClasses', 'pageLifetimes', 'definitionFilter']
+const NOTSUPPORTS = ['moved', 'pageLifetimes', 'definitionFilter']
 
 function notSupportTip (options) {
   NOTSUPPORTS.forEach(key => {

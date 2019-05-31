@@ -13,6 +13,7 @@ module.exports = function (raw) {
   const compilation = this._compilation
   const mainCompilation = getMainCompilation(compilation)
   const mode = mainCompilation.__mpx__.mode
+  const externalClasses = mainCompilation.__mpx__.externalClasses
   const globalSrcMode = mainCompilation.__mpx__.srcMode
   const localSrcMode = loaderUtils.parseQuery(this.resourceQuery || '?').mode
   const componentsMap = mainCompilation.__mpx__.componentsMap
@@ -33,6 +34,7 @@ module.exports = function (raw) {
     resource: this.resource,
     isComponent: !!componentsMap[resource],
     mode,
+    externalClasses,
     srcMode: localSrcMode || globalSrcMode,
     isNative
   }))
