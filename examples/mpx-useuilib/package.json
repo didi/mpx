@@ -17,7 +17,9 @@
   "author": "sky-admin <546485299@qq.com>",
   "license": "ISC",
   "dependencies": {
-    "@mpxjs/core": "^2.0.0"
+    "@mpxjs/core": "^2.0.0",
+    "iview-weapp": "^2.0.0",
+    "vant-weapp": "^0.5.14"
   },
   "devDependencies": {
     "copy-webpack-plugin": "^5.0.3",

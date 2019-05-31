@@ -1,5 +1,12 @@
 <template>
-  <list></list>
+  <view class="logo">
+    <image src="./images/logo.png" mode="aspectFit"></image>
+  </view>
+  <view>该项目将展示mpx项目中如何引入第三方组件库</view>
+
+  <i-panel title="iview布局">
+
+  </i-panel>
 </template>
 
 <script>
@@ -13,7 +20,9 @@
 <script type="application/json">
   {
     "usingComponents": {
-      "list": "../components/list"
+      "i-panel": "iview-webapp/dist/panel/index",
+      "i-cell-group": "iview-weapp/dist/cell-group/index",
+      "i-cell": "iview-weapp/dist/cell/index"
     }
   }
 </script>
