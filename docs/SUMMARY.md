@@ -67,3 +67,5 @@
 * [更新记录](https://github.com/didi/mpx/releases)
 * [2.0迁移指南](migrate.md)
 * [相关文章](articles/index.md)
+    * [1.0](articles/1.0.md)
+    * [2.0](articles/2.0.md)
