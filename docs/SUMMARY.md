@@ -66,3 +66,4 @@
     * [图像资源处理](understanding/resource.md#图像资源处理)
 * [更新记录](https://github.com/didi/mpx/releases)
 * [2.0迁移指南](migrate.md)
+* [相关文章](articles/index.md)
