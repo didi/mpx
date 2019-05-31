@@ -8,7 +8,6 @@ const getMainCompilation = require('../utils/get-main-compilation')
 module.exports = function (raw) {
   this.cacheable()
   const options = loaderUtils.getOptions(this) || {}
-
   const isNative = options.isNative
   const compilation = this._compilation
   const mainCompilation = getMainCompilation(compilation)
