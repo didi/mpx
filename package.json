@@ -5,7 +5,8 @@
     "lerna:publish": "lerna publish from-package --yes",
     "lint": "eslint --ext .js packages/",
     "fix": "eslint --fix --ext .js packages/",
-    "test": "jest"
+    "test": "jest",
+    "release": "npm run lint && npm run test && npx lerna version"
   },
   "devDependencies": {
     "babel-eslint": "^10.0.1",
