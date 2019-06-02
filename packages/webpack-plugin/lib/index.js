@@ -22,6 +22,17 @@ class MpxWebpackPlugin {
     if (options.mode !== options.srcMode && options.srcMode !== 'wx') {
       throw new Error('MpxWebpackPlugin supports srcMode to be "wx" only temporarily!')
     }
+    if (!Array.isArray(options.externalClasses)) {
+      options.externalClasses = ['custom-class', 'i-class']
+    }
+    options.externalClasses = options.externalClasses.map((className) => {
+      return {
+        className,
+        replacement: className.replace(/-(.)/g, (matched, $1) => {
+          return $1.toUpperCase()
+        })
+      }
+    })
     this.options = options
   }
 
@@ -80,6 +91,7 @@ class MpxWebpackPlugin {
           wxsConentMap: {},
           mode: this.options.mode,
           srcMode: this.options.srcMode,
+          externalClasses: this.options.externalClasses,
           extract: (content, type, resourcePath, index, selfResourcePath) => {
             if (index === -1) {
               const compilationMpx = compilation.__mpx__

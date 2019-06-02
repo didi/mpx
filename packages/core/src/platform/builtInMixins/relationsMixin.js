@@ -3,6 +3,7 @@ import { is } from '../../helper/env'
 
 const targets = []
 let curTarget = null
+
 function pushTarget (cur) {
   targets.push(curTarget)
   curTarget = cur
@@ -46,20 +47,26 @@ export default function relationsMixin () {
           return (this.$relationNodesMap && this.$relationNodesMap[realPath]) || []
         },
         mpxCollectChildComponent (children, list) {
-          children.forEach(child => {
-            if (child && child.props) {
-              if (child.props.$isCustomComponent) {
-                child.props.$mpxIsSlot = true
-                list.push(child)
-              } else {
-                const childrenType = type(child.props.children)
-                if (childrenType === 'Object' || childrenType === 'Array') {
-                  const slotChildren = childrenType !== 'Array' ? [child.props.children] : child.props.children
-                  this.mpxCollectChildComponent(slotChildren, list)
+          if (this.$mpxRelations) {
+            children.forEach(child => {
+              if (child && child.props) {
+                if (child.props.$isCustomComponent) {
+                  // 只有relations中声明为后代的节点才能被作为有效子节点
+                  let relation = this.$mpxRelations[child.type.displayName]
+                  if (relation && (relation.type === 'child' || relation.type === 'descendant')) {
+                    child.props.$mpxIsSlot = true
+                    list.push(child)
+                  }
+                } else {
+                  const childrenType = type(child.props.children)
+                  if (childrenType === 'Object' || childrenType === 'Array') {
+                    const slotChildren = childrenType !== 'Array' ? [child.props.children] : child.props.children
+                    this.mpxCollectChildComponent(slotChildren, list)
+                  }
                 }
               }
-            }
-          })
+            })
+          }
         },
         mpxSlotNotify () {
           if (this.mpxSlotLinkNum < this.mpxSlotChildren.length) {
