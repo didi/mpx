@@ -4,7 +4,9 @@
 </script>
 
 <style>
-
+  page {
+    background: #f9f9f9;
+  }
 </style>
 
 <script type="application/json">

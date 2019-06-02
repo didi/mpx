@@ -1,12 +1,26 @@
 <template>
   <view class="logo">
-    <image src="./images/logo.png" mode="aspectFit"></image>
+    <image src="../images/logo.png" mode="aspectFit"></image>
   </view>
-  <view>该项目将展示mpx项目中如何引入第三方组件库</view>
+  <view class="sub-title">该项目将展示mpx项目中如何引入第三方组件库</view>
 
-  <i-panel title="iview布局">
-
+  <i-panel title="这是一个iview的panel">
+    <i-cell-group>
+      <i-cell title="这是一个iview的cell"></i-cell>
+      <v-cell title="这是一个vant的cell"></v-cell>
+    </i-cell-group>
   </i-panel>
+
+  <i-card title="这是一张iview卡片" extra="额外内容">
+    <view slot="content">内容不错</view>
+    <view slot="footer">尾部内容</view>
+  </i-card>
+
+  <v-notice-bar
+    scrollable="false"
+    text="这是一个vant的notice-bar"
+  />
+
 </template>
 
 <script>
@@ -17,12 +31,31 @@
   })
 </script>
 
+<style>
+  .logo{
+    text-align: center;
+  }
+  .logo image{
+    height: 120px;
+    display: block;
+    margin: 0 auto;
+  }
+  .sub-title{
+    text-align: center;
+    font-size: 12px;
+    color: #666;
+  }
+</style>
+
 <script type="application/json">
   {
     "usingComponents": {
-      "i-panel": "iview-webapp/dist/panel/index",
+      "i-panel": "iview-weapp/dist/panel/index",
       "i-cell-group": "iview-weapp/dist/cell-group/index",
-      "i-cell": "iview-weapp/dist/cell/index"
+      "i-cell": "iview-weapp/dist/cell/index",
+      "i-card": "iview-weapp/dist/card/index",
+      "v-cell": "vant-weapp/dist/cell/index",
+      "v-notice-bar": "vant-weapp/dist/notice-bar/index"
     }
   }
 </script>
