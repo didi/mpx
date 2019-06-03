@@ -79,7 +79,7 @@ module.exports = class WxsMainTemplatePlugin {
                     'var args = Array.prototype.slice.call(arguments, 1);',
                     `return __swan_exports__.${key}.apply(this, args);`
                   ]),
-                  '},',
+                  '},'
                 ])
               }
             }
