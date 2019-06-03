@@ -21,13 +21,18 @@
     text="这是一个vant的notice-bar"
   />
 
+  <v-input wx:model="{{testInput}}" wx:model-value-path='[]'></v-input>
+  <view>{{testInput}}</view>
+
 </template>
 
 <script>
   import { createPage } from '@mpxjs/core'
 
   createPage({
-    onLoad () {}
+    data: {
+      testInput: '这是一个vant输入框并有双向数据绑定'
+    }
   })
 </script>
 
@@ -55,7 +60,8 @@
       "i-cell": "iview-weapp/dist/cell/index",
       "i-card": "iview-weapp/dist/card/index",
       "v-cell": "vant-weapp/dist/cell/index",
-      "v-notice-bar": "vant-weapp/dist/notice-bar/index"
+      "v-notice-bar": "vant-weapp/dist/notice-bar/index",
+      "v-input": "vant-weapp/dist/field"
     }
   }
 </script>
