@@ -48,7 +48,6 @@ if(__mpx_mode__ === 'ali') {
 }
 ```
 template插值中使用
-
 ```html
 <!--此处的__mpx_mode__不需要在组件中数据中声明-->
 <view wx:if="{{__mpx_mode__ === 'ali'}}">支付宝环境</view>
