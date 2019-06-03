@@ -57,6 +57,8 @@ npm run build -p
 
 https://didi.github.io/mpx
 
+[官方示例项目](https://github.com/didi/mpx/tree/master/examples)
+
 ## 设计思路
 
 目前业界主流的小程序框架主要有WePY，mpvue和Taro，这三者都是将其他的语法规范转译为小程序语法规范，我们称其为转译型框架。不同于上述三者，Mpx是一款基于小程序语法规范的增强型框架，我们使用Vue中优秀的语法特性增强了小程序，而不是让用户直接使用vue语法来开发小程序，之所以采用这种设计主要是基于如下考虑：
