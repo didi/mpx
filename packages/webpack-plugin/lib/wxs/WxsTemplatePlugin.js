@@ -77,7 +77,7 @@ module.exports = class WxsMainTemplatePlugin {
                   `${key}: function(){`,
                   Template.indent([
                     'var args = Array.prototype.slice(arguments, 1);',
-                    'return __swan_exports__.${key}.apply(this, args);'
+                    `return __swan_exports__.${key}.apply(this, args);`
                   ]),
                   '},',
                 ])
