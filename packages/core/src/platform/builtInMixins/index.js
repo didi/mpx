@@ -14,6 +14,6 @@ export default function getBuiltInMixins (options, type) {
     injectHelperMixin(),
     refsMixin(),
     showMixin(type),
-    relationsMixin()
+    relationsMixin(type)
   ].filter(item => item)
 }
