@@ -11,6 +11,7 @@ const config = require('./config')
 const normalize = require('./utils/normalize')
 const stripExtension = require('./utils/strip-extention')
 const toPosix = require('./utils/to-posix')
+const fixSwanRelative = require('./utils/fix-swan-relative')
 const DefinePlugin = require('webpack/lib/DefinePlugin')
 const hash = require('hash-sum')
 const AddModePlugin = require('./resolver/AddModePlugin')
@@ -22,6 +23,17 @@ class MpxWebpackPlugin {
     if (options.mode !== options.srcMode && options.srcMode !== 'wx') {
       throw new Error('MpxWebpackPlugin supports srcMode to be "wx" only temporarily!')
     }
+    if (!Array.isArray(options.externalClasses)) {
+      options.externalClasses = ['custom-class', 'i-class']
+    }
+    options.externalClasses = options.externalClasses.map((className) => {
+      return {
+        className,
+        replacement: className.replace(/-(.)/g, (matched, $1) => {
+          return $1.toUpperCase()
+        })
+      }
+    })
     this.options = options
   }
 
@@ -80,6 +92,7 @@ class MpxWebpackPlugin {
           wxsConentMap: {},
           mode: this.options.mode,
           srcMode: this.options.srcMode,
+          externalClasses: this.options.externalClasses,
           extract: (content, type, resourcePath, index, selfResourcePath) => {
             if (index === -1) {
               const compilationMpx = compilation.__mpx__
@@ -103,7 +116,10 @@ class MpxWebpackPlugin {
               if (type === 'styles') {
                 const file1 = resourcePath + typeExtMap[type]
                 const file2 = toPosix(path.join(subPackageRoot, 'wxss', selfResourceName + hash(selfResourcePath) + typeExtMap[type]))
-                const relativePath = toPosix(path.relative(path.dirname(file1), file2))
+                let relativePath = toPosix(path.relative(path.dirname(file1), file2))
+                if (this.options.mode === 'swan') {
+                  relativePath = fixSwanRelative(relativePath)
+                }
                 additionalAssets[file1] = additionalAssets[file1] || []
                 additionalAssets[file2] = additionalAssets[file2] || []
                 additionalAssets[file1][0] = `@import "${relativePath}";\n` + (additionalAssets[file1][0] || '')

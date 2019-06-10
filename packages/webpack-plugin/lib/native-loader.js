@@ -51,11 +51,20 @@ module.exports = function (content) {
   const isApp = !pagesMap[resource] && !componentsMap[resource]
   const srcMode = localSrcMode || globalSrcMode
   const fs = this._compiler.inputFileSystem
+  const typeExtMap = Object.assign({}, config[srcMode].typeExtMap)
 
   // 先读取json获取usingComponents信息
   async.waterfall([
     (callback) => {
-      fs.readFile(resource + '.json', (err, raw) => {
+      async.forEachOf(typeExtMap, (ext, key, callback) => {
+        fs.stat(resource + ext, (err) => {
+          if (err) delete typeExtMap[key]
+          callback()
+        })
+      }, callback)
+    },
+    (callback) => {
+      fs.readFile(resource + typeExtMap['json'], (err, raw) => {
         callback(err, raw.toString('utf-8'))
       })
     }, (content, callback) => {
@@ -82,8 +91,6 @@ module.exports = function (content) {
         srcMode,
         isNative
       )
-
-      const typeExtMap = config[srcMode].typeExtMap
 
       const getRequire = (type) => {
         let localQuery = Object.assign({}, queryObj)

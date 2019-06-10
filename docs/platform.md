@@ -49,7 +49,7 @@ packages|支持|部分支持，无法分包|支持|支持|部分支持，无法�
 ```js
 // 下面的示例配置能够将mpx微信小程序源码编译为支付宝小程序
 new MpxWebpackPlugin({
-  // mode为mpx编译的目标平台，可选值有(wx|ali|swan|qq)
+  // mode为mpx编译的目标平台，可选值有(wx|ali|swan|qq|tt)
   mode: 'ali',
   // srcMode为mpx编译的源码平台，目前仅支持wx   
   srcMode: 'wx' 
@@ -73,13 +73,14 @@ new MpxWebpackPlugin({
 * 提供了this.selectComponent/this.selectAllComponents方法模拟微信中获取子组件实例的能力；
 * 重写了createSelectorQuery方法抹平了微信/支付宝平台间的使用差异；
 * 转换抹平了微信/支付宝中properties定义的差异；
-* 利用mpx本身的数据响应能力模拟了微信中的observers/property observer能力等。
+* 利用mpx本身的数据响应能力模拟了微信中的observers/property observer能力等;
+* 提供了this.getRelationNodes方法并支持了微信中组件间关系relations的能力
 
 对于原生小程序组件的转换，还会进行一些额外的抹平，已兼容一些已有的原生组件库，例如：
 * 将支付宝组件中的props数据挂载到this.data中以模拟微信平台中的表现；
 * 利用mpx本身的mixins能力模拟微信中的behaviors能力。
 
-对于一些无法进行模拟的跨平台差异，会在运行时进行检测并报错指出，例如微信转支付宝时使用relations或moved生命周期等。
+对于一些无法进行模拟的跨平台差异，会在运行时进行检测并报错指出，例如微信转支付宝时使用moved生命周期等。
 
 ### json配置差异抹平
 
@@ -123,13 +124,29 @@ mpx.navigateBack()
 
 ## 跨平台条件编译
 
-mpx跨平台编译的原则在于，`能转则转，转不了则报错提示`，对于无法抹平差异的部分，我们提供了完善的跨平台条件编译机制便于用户处理因平台差异而无法相互转换的部分，也能够用于实现具有平台差异性的业务逻辑。
+Mpx跨平台编译的原则在于，`能转则转，转不了则报错提示`，对于无法抹平差异的部分，我们提供了完善的跨平台条件编译机制便于用户处理因平台差异而无法相互转换的部分，也能够用于实现具有平台差异性的业务逻辑。
 
 mpx中我们支持了三种维度的条件编译，分别是文件维度，区块维度和代码维度，其中，文件维度和区块维度主要用于处理一些大块的平台差异性逻辑，而代码维度主要用于处理一些局部简单的平台差异。
 
 ### 文件维度条件编译
 
 文件维度条件编译简单的来说就是文件为维度进行跨平台差异代码的编写，例如在微信->支付宝的项目中存在一个业务地图组件map.mpx，由于微信和支付宝中的原生地图组件标准差异非常大，无法通过框架转译方式直接进行跨平台输出，这时你可以在相同的位置新建一个map.ali.mpx，在其中使用支付宝的技术标准进行开发，编译系统会根据当前编译的mode来加载对应模块，当mode为ali时，会优先加载map.ali.mpx，反之则会加载map.mpx。
+
+文件维度条件编译能够与webpack alias结合使用，对于npm包的文件我们并不方便在原本的文件位置创建.ali的条件编译文件，但我们可以通过webpack alias在相同位置创建一个`虚拟的`.ali文件，并将其指向项目中的其他文件位置。
+
+```js
+  // 对于npm包中的文件依赖
+  import npmModule from 'somePackage/lib/index'
+  
+  // 配置以下alias后，当mode为ali时，会优先加载项目目录中定义的projectRoot/somePackage/lib/index文件
+  const webpackConf = {
+    resolve: {
+      alias: {
+        'somePackage/lib/index.ali': 'projectRoot/somePackage/lib/index'
+      }
+    }
+  }
+```
 
 ### 区块维度条件编译
 

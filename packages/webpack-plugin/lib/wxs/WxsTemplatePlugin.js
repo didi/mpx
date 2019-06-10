@@ -73,13 +73,14 @@ module.exports = class WxsMainTemplatePlugin {
             const exportsItems = []
             for (let key in compilation.__swan_exports_map__) {
               if (compilation.__swan_exports_map__.hasOwnProperty(key)) {
-                let argsNum = compilation.__swan_exports_map__[key]
-                let args = []
-                for (let i = 0; i < argsNum; i++) {
-                  args.push(`__arg_${i}`)
-                }
-                args = args.join(', ')
-                exportsItems.push(`${key}: function(${args}){ return __swan_exports__.${key}(${args});},`)
+                exportsItems.push([
+                  `${key}: function(){`,
+                  Template.indent([
+                    'var args = Array.prototype.slice.call(arguments, 1);',
+                    `return __swan_exports__.${key}.apply(this, args);`
+                  ]),
+                  '},'
+                ])
               }
             }
 

@@ -1,0 +1,22 @@
+<script>
+  import mpx from '@mpxjs/core'
+  import apiProxy from '@mpxjs/api-proxy'
+
+  mpx.use(apiProxy)
+  // app.js
+  App({})
+</script>
+
+<style>
+  page {
+    background: #f9f9f9;
+  }
+</style>
+
+<script type="application/json">
+  {
+    "pages": [
+      "./pages/index"
+    ]
+  }
+</script>

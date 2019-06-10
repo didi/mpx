@@ -89,29 +89,14 @@ module.exports = function (content) {
           if (t.isMemberExpression(left) && left.object.name === 'module' && left.property.name === 'exports') {
             if (t.isObjectExpression(right)) {
               right.properties.forEach((property) => {
-                if (
-                  (
-                    t.isObjectProperty(property) &&
-                      (
-                        t.isFunctionExpression(property.value) ||
-                        t.isArrowFunctionExpression(property.value)
-                      )
-                  ) ||
-                    t.isObjectMethod(property)
-                ) {
-                  const params = t.isObjectMethod(property) ? property.params : property.value.params
-                  selfCompilation.__swan_exports_map__[property.key.name] = params.length
-                } else {
-                  throw new Error('Swan filter module exports value must be Functions!')
-                }
+                selfCompilation.__swan_exports_map__[property.key.name] = true
               })
             } else {
               throw new Error('Swan filter module exports declaration must be an ObjectExpression!')
             }
           }
         }
-      }
-      )
+      })
     }
     const ast = babylon.parse(content, {
       sourceType: 'module'
