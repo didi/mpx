@@ -105,6 +105,7 @@ function getRootMixin (mixin) {
   const supportBehavior = typeof Behavior !== 'undefined'
   if (supportBehavior) {
     return {
+      // eslint-disable-next-line no-undef
       behaviors: [Behavior(mixin)]
     }
   } else {

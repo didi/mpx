@@ -4,12 +4,10 @@ import { getConvertRule } from '../convertor/convertor'
 let CURRENT_HOOKS = []
 let curType
 let convertRule
-let convertMode
 
 export default function mergeOptions (options = {}, type, needConvert = true) {
-  convertMode = options.mpxConvertMode
   // needConvert为false，表示衔接原生的root配置，那么此时的配置都是当前原生环境支持的配置，不需要转换
-  convertRule = getConvertRule(needConvert ? convertMode || 'default' : 'local')
+  convertRule = getConvertRule(needConvert ? options.mpxConvertMode || 'default' : 'local')
   // 微信小程序使用Component创建page
   curType = type === 'app' || !convertRule.mode ? type : convertRule.mode
   CURRENT_HOOKS = convertRule.lifecycle[curType]
@@ -24,7 +22,10 @@ export default function mergeOptions (options = {}, type, needConvert = true) {
 }
 
 function extractMixins (mergeOptions, options, needConvert) {
-  convertMode && aliasReplace(options, 'behaviors', 'mixins')
+  // 如果编译阶段behaviors都被当做mixins处理，那么进行别名替换
+  if (options.behaviors && type(options.behaviors[0]) === 'Object') {
+    aliasReplace(options, 'behaviors', 'mixins')
+  }
   if (options.mixins) {
     for (const mix of options.mixins) {
       if (typeof mix === 'string') {
@@ -159,11 +160,11 @@ function mergeMixins (parent, child) {
       mergeHooks(parent, child, key)
     } else if (key === 'data') {
       mergeDataFn(parent, child, key)
-    } else if (/computed|properties|props|methods|proto/.test(key)) {
+    } else if (/^(computed|properties|props|methods|proto)$/.test(key)) {
       mergeSimpleProps(parent, child, key)
-    } else if (/watch|pageLifetimes|observers/.test(key)) {
+    } else if (/^(watch|pageLifetimes|observers)$/.test(key)) {
       mergeToArray(parent, child, key)
-    } else if (type(child[key]) === 'Array') {
+    } else if (/^behaviors$/.test(key)) {
       mergeArray(parent, child, key)
     } else if (key !== 'mixins') {
       mergeDefault(parent, child, key)
