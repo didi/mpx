@@ -4,10 +4,12 @@ import { getConvertRule } from '../convertor/convertor'
 let CURRENT_HOOKS = []
 let curType
 let convertRule
+let convertMode
 
 export default function mergeOptions (options = {}, type, needConvert = true) {
+  convertMode = options.mpxConvertMode
   // needConvert为false，表示衔接原生的root配置，那么此时的配置都是当前原生环境支持的配置，不需要转换
-  convertRule = getConvertRule(needConvert ? options.mpxConvertMode || 'default' : 'local')
+  convertRule = getConvertRule(needConvert ? convertMode || 'default' : 'local')
   // 微信小程序使用Component创建page
   curType = type === 'app' || !convertRule.mode ? type : convertRule.mode
   CURRENT_HOOKS = convertRule.lifecycle[curType]
@@ -22,7 +24,7 @@ export default function mergeOptions (options = {}, type, needConvert = true) {
 }
 
 function extractMixins (mergeOptions, options, needConvert) {
-  aliasReplace(options, 'behaviors', 'mixins')
+  convertMode && aliasReplace(options, 'behaviors', 'mixins')
   if (options.mixins) {
     for (const mix of options.mixins) {
       if (typeof mix === 'string') {
@@ -161,6 +163,8 @@ function mergeMixins (parent, child) {
       mergeSimpleProps(parent, child, key)
     } else if (/watch|pageLifetimes|observers/.test(key)) {
       mergeToArray(parent, child, key)
+    } else if (type(child[key]) === 'Array') {
+      mergeArray(parent, child, key)
     } else if (key !== 'mixins') {
       mergeDefault(parent, child, key)
     }
@@ -216,6 +220,14 @@ function mergeData (parent, child, key) {
     parent[key] = {}
   }
   merge(parent[key], childVal)
+}
+
+function mergeArray (parent, child, key) {
+  const childVal = child[key]
+  if (!parent[key]) {
+    parent[key] = []
+  }
+  parent[key] = parent[key].concat(childVal)
 }
 
 function mergeToArray (parent, child, key) {
