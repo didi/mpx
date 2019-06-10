@@ -22,11 +22,14 @@ export default function mergeOptions (options = {}, type, needConvert = true) {
 }
 
 function extractMixins (mergeOptions, options, needConvert) {
-  aliasReplace(options, 'behaviors', 'mixins')
+  // 如果编译阶段behaviors都被当做mixins处理，那么进行别名替换
+  if (options.behaviors && type(options.behaviors[0]) === 'Object') {
+    aliasReplace(options, 'behaviors', 'mixins')
+  }
   if (options.mixins) {
     for (const mix of options.mixins) {
       if (typeof mix === 'string') {
-        console.error(`Don't support for convert the string-formatted【behavior】into mixin`)
+        console.error(`【MPX CONVERT ERROR】at ${global.currentResource || ''} : Don't support for convert the string-formatted【behavior】into mixin`)
       } else {
         extractMixins(mergeOptions, mix, needConvert)
       }
@@ -157,10 +160,12 @@ function mergeMixins (parent, child) {
       mergeHooks(parent, child, key)
     } else if (key === 'data') {
       mergeDataFn(parent, child, key)
-    } else if (/computed|properties|props|methods|proto/.test(key)) {
+    } else if (/^(computed|properties|props|methods|proto)$/.test(key)) {
       mergeSimpleProps(parent, child, key)
-    } else if (/watch|pageLifetimes|observers/.test(key)) {
+    } else if (/^(watch|pageLifetimes|observers)$/.test(key)) {
       mergeToArray(parent, child, key)
+    } else if (/^behaviors$/.test(key)) {
+      mergeArray(parent, child, key)
     } else if (key !== 'mixins') {
       mergeDefault(parent, child, key)
     }
@@ -216,6 +221,14 @@ function mergeData (parent, child, key) {
     parent[key] = {}
   }
   merge(parent[key], childVal)
+}
+
+function mergeArray (parent, child, key) {
+  const childVal = child[key]
+  if (!parent[key]) {
+    parent[key] = []
+  }
+  parent[key] = parent[key].concat(childVal)
 }
 
 function mergeToArray (parent, child, key) {

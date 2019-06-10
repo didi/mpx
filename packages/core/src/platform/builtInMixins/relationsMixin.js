@@ -38,8 +38,8 @@ function transferPath (relations, base) {
   return newRelations
 }
 
-export default function relationsMixin () {
-  if (is('ali')) {
+export default function relationsMixin (mixinType) {
+  if (is('ali') && mixinType === 'component') {
     return {
       methods: {
         getRelationNodes (path) {
