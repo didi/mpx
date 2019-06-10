@@ -235,12 +235,12 @@ class MpxWebpackPlugin {
           }
         }
 
-        if (this.options.srcMode !== this.options.mode) {
+        if (this.options.srcMode !== this.options.mode && this.options.srcMode === 'wx') {
           parser.hooks.expression.for('Page').tap('MpxWebpackPlugin', transHandler)
           parser.hooks.expression.for('Component').tap('MpxWebpackPlugin', transHandler)
           parser.hooks.expression.for('App').tap('MpxWebpackPlugin', transHandler)
-          if (this.options.srcMode === 'wx') {
-            parser.hooks.expression.for('wx').tap('MpxWebpackPlugin', transHandler)
+          parser.hooks.expression.for('wx').tap('MpxWebpackPlugin', transHandler)
+          if (this.options.mode === 'ali') {
             parser.hooks.expression.for('Behavior').tap('MpxWebpackPlugin', transHandler)
           }
         }
