@@ -101,8 +101,19 @@ function filterOptions (options) {
   return newOptions
 }
 
+function getRootMixin (mixin) {
+  const supportBehavior = typeof Behavior !== 'undefined'
+  if (supportBehavior) {
+    return {
+      behaviors: [Behavior(mixin)]
+    }
+  } else {
+    return mixin
+  }
+}
+
 export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
-  const rootMixins = [{
+  const rootMixins = [getRootMixin({
     attached () {
       // 提供代理对象需要的api
       transformApiForProxy(this, currentInject)
@@ -120,7 +131,7 @@ export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
     detached () {
       this.$mpxProxy && this.$mpxProxy.destroyed()
     }
-  }]
+  })]
   rawOptions.mixins = rawOptions.mixins ? rootMixins.concat(rawOptions.mixins) : rootMixins
   rawOptions = mergeOptions(rawOptions, type, false)
   return filterOptions(rawOptions)
