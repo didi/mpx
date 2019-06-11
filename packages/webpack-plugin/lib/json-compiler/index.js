@@ -402,10 +402,10 @@ module.exports = function (raw) {
 
       if (json.tabBar && json.tabBar[itemKey]) {
         json.tabBar[itemKey].forEach((item, index) => {
-          if (item.iconPath) {
+          if (item[iconKey]) {
             output += `json.tabBar.${itemKey}[${index}].${iconKey} = require("${tabBarIconPathAddFallback(item[iconKey])}");\n`
           }
-          if (item.selectedIconPath) {
+          if (item[activeIconKey]) {
             output += `json.tabBar.${itemKey}[${index}].${activeIconKey} = require("${tabBarIconPathAddFallback(item[activeIconKey])}");\n`
           }
         })
