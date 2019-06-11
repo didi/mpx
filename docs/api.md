@@ -28,29 +28,6 @@ mpx.createComponent(object)
 createComponent(object)
 ```
 
-### Page & Component 新增的实例方法
-
-- this.$watch (添加watch)
-  - this.$watch('a.b', (val, old) => {})
-  - this.$watch(function() {return this.a + this.b}, (val, old) => {})
-
-
-- this.$updated (用于添加当前视图更新之后的回调函数)
-  - this.$updated(callback)
-
-
-- this.$forceUpdate (用于强制进行setData，无论数据是否发生改变)
-  - this.$forceUpdate()
-  - this.$forceUpdate(params) // params的数据会merge到this上已挂载的数据
-  - this.$forceUpdate(callback)
-  - this.$forceUpdate(params, callback)
-
-- this.$set (用于动态新增响应式属性，会触发订阅者更新)
-  - this.$set(obj, key, value)
-
-- this.$remove (用于动态删除响应式属性，会触发订阅者更新)
-  - this.$remove(obj, key)
-
 ### createStore
 
 ``` js
@@ -149,6 +126,48 @@ const store2 = createStore({ ...options })
 
     [详细介绍](store/index.md#多实例)
 
+
+### Store 实例属性
+
+- **state**
+
+  - 类型: `Object`
+
+    根状态。
+
+- **getters**
+
+  - 类型: `Object`
+
+    暴露出注册的 getter。
+
+### Store 实例方法
+
+- **`commit(type: string, payload?: any, options?: Object) | commit(mutation: Object, options?: Object)`**
+
+  提交 mutation。[详细介绍](store/index.md#mutation)
+
+- **`dispatch(type: string, payload?: any, options?: Object) | dispatch(action: Object, options?: Object)`**
+
+  分发 action。返回一个Promise。[详细介绍](store/index.md#action)
+
+- **`mapState(map: Array<string> | Object): Object`**
+
+  为组件创建计算属性以返回 store 中的状态。[详细介绍](store/index.md#mapstate-辅助函数)
+
+- **`mapGetters(map: Array<string> | Object): Object`**
+
+  为组件创建计算属性以返回 getter 的返回值。[详细介绍](store/index.md#mapgetters-辅助函数)
+
+- **`mapActions(map: Array<string> | Object): Object`**
+
+  创建组件方法分发 action。[详细介绍](store/index.md#在组件中分发-action)
+
+- **`mapMutations(map: Array<string> | Object): Object`**
+
+  创建组件方法提交 mutation。[详细介绍](store/index.md#在组件中提交-mutation)
+
+
 ### toPureObject
 
 由于使用的mobx的响应式数据，所以业务拿到的数据可能是mobx响应式数据实例（包含了些其他属性），使用toPureObject可以将响应式的数据转化成纯js对象
@@ -241,46 +260,7 @@ mpx.mixin({
 ##### types选项
 types决定了mixin会注入到哪种实例上，app | page | component
 
-- String, 'app', 'page', 'component'
+- String, 'app' | 'page' | 'component'
 - Array, ['app', 'page', 'component']
 - 如果不传，默认为['app', 'page', 'component']
 
-### Store 实例属性
-
-- **state**
-
-  - 类型: `Object`
-
-    根状态。
-
-- **getters**
-
-  - 类型: `Object`
-
-    暴露出注册的 getter。
-
-### Store 实例方法
-
-- **`commit(type: string, payload?: any, options?: Object) | commit(mutation: Object, options?: Object)`**
-
-  提交 mutation。[详细介绍](store/index.md#mutation)
-
-- **`dispatch(type: string, payload?: any, options?: Object) | dispatch(action: Object, options?: Object)`**
-
-  分发 action。返回一个Promise。[详细介绍](store/index.md#action)
-
-- **`mapState(map: Array<string> | Object): Object`**
-
-  为组件创建计算属性以返回 store 中的状态。[详细介绍](store/index.md#mapstate-辅助函数)
-
-- **`mapGetters(map: Array<string> | Object): Object`**
-
-  为组件创建计算属性以返回 getter 的返回值。[详细介绍](store/index.md#mapgetters-辅助函数)
-
-- **`mapActions(map: Array<string> | Object): Object`**
-
-  创建组件方法分发 action。[详细介绍](store/index.md#在组件中分发-action)
-
-- **`mapMutations(map: Array<string> | Object): Object`**
-
-  创建组件方法提交 mutation。[详细介绍](store/index.md#在组件中提交-mutation)

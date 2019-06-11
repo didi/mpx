@@ -59,13 +59,40 @@ import {createComponent} from '@mpxjs/core'
 createComponent({
   data: {
     question: 'old',
-    answer: 'I cannot give you an answer until you ask a question!'
+    answer: 'I cannot give you an answer until you ask a question!',
+    info: {
+      name: 'a'
+    },
+    arr: [{
+      age: 1
+    }]
   },
   watch: {
     // 如果 `question` 发生改变，这个函数就会运行
     question: function (newval, oldval) {
       console.log(newval, ':',  oldval) // test:old
       this.answer = 'Waiting for you to stop typing...'
+    },
+    question: {
+      handler (newval, oldval) {
+        console.log(newval, ':',  oldval) // test:old
+        this.answer = 'Waiting for you to stop typing...'
+      },
+      imeediate: true // 立即执行一次
+      // deep: true // 是否深度观察
+      // sync: true // 数据变化之后是否同步执行，默认是进行异步队列
+    },
+    'info.name' (val) {
+      // 支持路径表达式
+      console.log(val) // b
+    },
+    'arr[0].age' (val) {
+      // 支持路径表达式
+      console.log(val) // 100
+    },
+    'question, answer' (val, old) {
+      // 同时观察多个值, val为数组个数, question变化时
+      console.log(val) // ['test', 'I cannot give you an answer until you ask a question!']
     }
   },
   attached () {
@@ -77,6 +104,8 @@ createComponent({
   methods: {
     changeData() {
       this.question = 'test'
+      this.info.name = 'b'
+      this.arr[0].age = 100
     }
   }
 })
@@ -129,9 +158,9 @@ export default {
 </script>
 ```
 
-输出结果为  
+输出结果为
 ```
-mixins ready: 手机 
+mixins ready: 手机
 component ready: 电视
 ```
 

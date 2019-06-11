@@ -20,12 +20,12 @@ mpx支持使用mpx.use使用插件来进行扩展。插件本身需要提供一�
 export default function install(proxyMPX) {
   proxyMPX.newApi = () => console.log('is new api')
   proxyMPX
-    .injectMixins({
+    .mixin({
       onLaunch() {
         console.log('app onLaunch')
       }
     }, 'app')
-    .injectMixins({
+    .mixin({
       onShow() {
         console.log('page onShow')
       }
