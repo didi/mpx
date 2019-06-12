@@ -28,12 +28,12 @@ export default class XMock {
         }
       })
       if (isMock) {
+        if (!mockItem.rule) {
+          console.error('please provide a mock rule')
+          return
+        }
         return new Promise((resolve, reject) => {
           xfetch.queue.adapter(config).then(res => {
-            if (!mockItem.rule) {
-              console.error('please provide a mock rule')
-              return
-            }
             res.data = mock.mock(mockItem.rule)
             resolve(res)
           }).catch(e => {
