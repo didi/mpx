@@ -10,7 +10,6 @@
   "author": "tangminmintang@didichuxing.com",
   "license": "ISC",
   "dependencies": {
-    "@mpxjs/fetch": "^2.0.4",
     "mockjs": "^1.0.0"
   }
 }
