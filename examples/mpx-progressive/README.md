@@ -23,7 +23,7 @@ https://github.com/TalkingData/iview-weapp/tree/master/examples
 
 整个过程要不了5分钟，迁移你的项目成为一个mpx项目也是一样的高效！
 
-> 此项目不代表在mpx中使用ui组件库的方式，仅是使用一个现有项目证明迁移mpx很方便。使用ui组件库的example正在制作。
+> 此项目不代表在mpx中使用ui组件库的方式，仅是使用一个现有项目证明迁移mpx很方便，ui库的使用请看[这个示例](../mpx-useuilib)
 
 ## 使用mpx
 

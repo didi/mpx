@@ -1,6 +1,16 @@
 # 扩展mpx
 
-mpx支持使用mpx.use来进行扩展。扩展本身需要提供一个install方法或本身是一个function，该函数接收一个proxyMPX。扩展的形式采用直接在proxyMPX挂载新api属性或在prototype上挂属性。需要注意的是，一定要在app创建之前进行mpx.use
+## 目前已有插件
+
+- 网络请求库fetch: @mpxjs/fetch [详细介绍](#fetch) [源码地址](https://github.com/didi/mpx/tree/master/packages/fetch)
+
+- ~~小程序api promisify：@mpxjs/promisify~~ (已废弃，推荐使用新的[api-proxy](#使用promise形式))
+
+- 小程序API转换及promisify：@mpxjs/api-proxy [详细介绍](#api-proxy) [源码地址](https://github.com/didi/mpx/tree/master/packages/api-proxy)
+
+## 开发插件
+
+mpx支持使用mpx.use使用插件来进行扩展。插件本身需要提供一个install方法或本身是一个function，该函数接收一个proxyMPX。插件将采用直接在proxyMPX挂载新api属性或在prototype上挂属性。需要注意的是，一定要在app创建之前进行mpx.use
 
 ### 基础例子
 
@@ -10,12 +20,12 @@ mpx支持使用mpx.use来进行扩展。扩展本身需要提供一个install方
 export default function install(proxyMPX) {
   proxyMPX.newApi = () => console.log('is new api')
   proxyMPX
-    .injectMixins({
+    .mixin({
       onLaunch() {
         console.log('app onLaunch')
       }
     }, 'app')
-    .injectMixins({
+    .mixin({
       onShow() {
         console.log('page onShow')
       }
@@ -28,7 +38,7 @@ export default function install(proxyMPX) {
 }
 ```
 
-在app.js内注入扩展
+在app.js内使用插件
 
 ```js
 import mpx from '@mpxjs/core'
@@ -41,16 +51,6 @@ mpx.createApp({
   }
 })
 ```
-
-### [目前已有扩展](https://git.xiaojukeji.com/webapp/mpx-extension)
-
-使用 npm 安装
-
-- fetch: @mpxjs/fetch [详细介绍](extend/index.md#fetch)
-
-- 小程序api promisify：@mpxjs/promisify，[详细介绍](extend/index.md#promisify)
-
-
 
 ## Fetch
 
@@ -166,19 +166,78 @@ mpx.xfetch.fetch({
 ```
 ### 自动过滤值为undefined和null的属性，其中null未转换成空字符串
 
-## Promisify
+## API-PROXY
 
-小程序api的异步操作主要是采用回调进行，mpx-promisify主要是将小程序（支持success，fail）的api转换成promise形式的调用，并不是全部转换，具体可参考小程序api
+> convert API at each end 各个平台之间 api 进行转换
 
-### 使用说明
+## Usage
+
+```js
+// 使用 mpx 生态
+
+import mpx from '@mpxjs/core'
+import apiProxy from '@mpxjs/api-proxy'
+
+mpx.use(apiProxy, options)
+```
+
+```js
+// 单独使用
+import apiProxy from '@mpxjs/api-proxy'
+
+apiProxy(target, options) // target 为要抹平的对象
+```
+
+## Options
+
+|参数名称|类型|含义|是否必填|默认值|备注|
+|---|---|---|---|---|---|
+|platform|Object|各平台之间的转换|否|{ from:'', to:'' }|使用 mpx 脚手架配置会自动进行转换，无需配置|
+|exclude|Array(String)|跨平台时不需要转换的 api|-|
+|usePromise|Boolean|是否将 api 转化为 promise 格式使用|否|false|-|
+|whiteList|Array(String)|强行转化为 promise 格式的 api|否|[]|需要 usePromise 设为 true|
+
+## example
+
+#### 普通形式
 
 ```js
 import mpx from '@mpxjs/core'
-import promisify from '@mpxjs/promisify'
-mpx.use(promisify)
-mpx.request({
-	url: 'http://xxx.com'
-}).then(res => {
-	console.log(res.data)
+import apiProxy from '@mpxjs/api-proxy'
+
+mpx.use(apiProxy, {
+  exclude: ['showToast'] // showToast 将不会被转换为目标平台
+})
+
+mpx.showModal({
+  title: '标题',
+  content: '这是一个弹窗',
+  success (res) {
+    if (res.cancel) {
+      console.log('用户点击取消')
+    }
+  }
+})
+```
+
+#### 使用promise形式
+
+```js
+import mpx from '@mpxjs/core'
+import apiProxy from '@mpxjs/api-proxy'
+
+mpx.use(apiProxy, {
+  usePromise: true,
+  whiteList: ['showToast'] // showToast 将不能使用 promise 形式
+})
+
+wx.showActionSheet({
+  itemList: ['A', 'B', 'C']
+})
+.then(res => {
+  console.log(res.tapIndex)
+})
+.catch(err => {
+  console.log(err)
 })
 ```

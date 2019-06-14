@@ -47,6 +47,8 @@
 然后通过[配置vscode扩展语言](https://code.visualstudio.com/docs/languages/overview#_adding-a-file-extension-to-a-language)
 ，将`.mpx`绑定到`.vue`语法的支持
 
+> 下方的方案为社区同学贡献，通过更多的插件使用，可能在某些功能上有所增强，但也可能遇到一些其他问题，请个人判断是否需要
+
 ##### vscode插件
 
 **更新**: `minapp`最新版已经支持了mpx，所以对`minapp`的使用加以修改
@@ -179,5 +181,3 @@
  "description": "weapp components"
 }
 ```
-
-
