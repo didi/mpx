@@ -1435,6 +1435,8 @@ function processElement (el, root, options, meta, injectNodes) {
     rulesRunner(el)
   }
 
+  processRef(el, options, meta)
+
   if (mode === 'ali' && srcMode === 'wx') {
     processAliExternalClassesHack(el, options)
     processAliStyleClassHack(el, options, root)
@@ -1449,11 +1451,6 @@ function processElement (el, root, options, meta, injectNodes) {
       processStyle(el, meta, injectNodes)
     }
     processShow(el, options, root)
-  }
-
-  processRef(el, options, meta)
-
-  if (!pass) {
     processBindEvent(el)
     if (mode !== 'ali') {
       processPageStatus(el, options)

@@ -53,7 +53,7 @@
     "url": "https://github.com/didi/mpx/issues"
   },
   "engines": {
-    "node": ">=6.0.0"
+    "node": ">=8.0.0"
   },
   "scripts": {
     "test": "echo \"Error: run tests from root\" && exit 1"

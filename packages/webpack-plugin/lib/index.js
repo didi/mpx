@@ -202,7 +202,12 @@ class MpxWebpackPlugin {
           const type = expr.name
 
           if (type === 'Behavior') {
-            const dep = new ReplaceDependency('', expr.range)
+            const dep = new InjectDependency({
+              content: 'function Behavior(a) {\n' +
+              '  return a;\n' +
+              '}\n',
+              index: -4
+            })
             current.addDependency(dep)
           } else {
             const name = type === 'wx' ? 'mpx' : 'createFactory'
