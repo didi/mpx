@@ -278,7 +278,7 @@ class MpxWebpackPlugin {
           const args = expr.arguments
           const name = callee.object.name
 
-          if (apiBlackListMap[callee.property.name || callee.property.value] || name !== 'mpx') {
+          if (apiBlackListMap[callee.property.name || callee.property.value] || (name !== 'mpx' && name !== 'wx')) {
             return
           }
           const resource = parser.state.module.resource
@@ -300,6 +300,7 @@ class MpxWebpackPlugin {
         if (this.options.srcMode !== this.options.mode) {
           parser.hooks.callAnyMember.for('imported var').tap('MpxWebpackPlugin', handler)
           parser.hooks.callAnyMember.for('mpx').tap('MpxWebpackPlugin', handler)
+          parser.hooks.callAnyMember.for('wx').tap('MpxWebpackPlugin', handler)
         }
       })
     })
