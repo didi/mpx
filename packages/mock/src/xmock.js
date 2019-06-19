@@ -38,24 +38,18 @@ export default function xmock (mockRequstList) {
             return
           }
           const url = parseUrl(config.url).url
-          if (match(url, item.url)) {
+          if (match(url, item.url) && item.rule) {
             isMock = true
             mockItem = item
           }
         })
         if (isMock) {
-          if (!mockItem.rule) {
-            console.error('please provide a mock rule')
-            return
-          }
           const rawSuccess = config.success
           config.success = function (res) {
-            res = Object.assign({ requestConfig: config }, transformRes(res))
             res.data = mock.mock(mockItem.rule)
             typeof rawSuccess === 'function' && rawSuccess.call(this, res)
           }
           config.fail = function (res) {
-            res = Object.assign({ requestConfig: config }, transformRes(res))
             res.data = mock.mock(mockItem.rule)
             typeof rawSuccess === 'function' && rawSuccess.call(this, res)
           }
@@ -83,13 +77,6 @@ function match (expected, actual) {
 
 function type (obj) {
   return (obj === null || obj === undefined) ? String(obj) : Object.prototype.toString.call(obj).match(/\[object (\w+)\]/)[1].toLowerCase()
-}
-
-function transformRes (res) {
-  // 抹平wx & ali 响应数据
-  res.status = res.statusCode = res.status || res.statusCode
-  res.header = res.headers = res.header || res.headers
-  return res
 }
 
 function getProcessType () {
