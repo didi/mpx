@@ -2,12 +2,20 @@ import mock from 'mockjs'
 
 const processType = getProcessType()
 let rawRequest = null
+let process = null
+let request = ''
 if (processType === 'wx') {
   rawRequest = wx.request.bind(wx)
+  process = wx
+  request = 'request'
 } else if (processType === 'ali') {
   rawRequest = my.request || my.httpRequest
+  process = my
+  request = my.request ? 'request' : 'httpRequest'
 } else if (processType === 'swan') {
   rawRequest = swan.request.bind(swan)
+  process = swan
+  request = 'request'
 } else {
   console.error('a unknow process')
 }
@@ -17,7 +25,7 @@ export default function xmock (mockRequstList) {
     console.error('please provide a mock mockRequstList')
     return
   }
-  Object.defineProperty(wx, 'request', {
+  Object.defineProperty(process, request, {
     configurable: true,
     enumerable: true,
     get () {

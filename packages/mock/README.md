@@ -5,13 +5,10 @@
 ## Usage
 
 ```js
-import mpx from '@mpxjs/core'
-import fetch from '@mpxjs/fetch'
 import mock from '@mpxjs/mock'
 
-mpx.use(fetch).use(mock)
 
-mpx.xmock(mpx.xfetch, [{
+mock.xmock([{
   url,
   rule
 }])
