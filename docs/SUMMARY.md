@@ -61,6 +61,7 @@
 * [周边工具](extend/index.md)
     * [fetch](extend/index.md#fetch)
     * [api-proxy](extend/index.md#api-proxy)
+    * [mock](extend/index.md#mock)
 * [mpx运行机制](understanding/understanding.md)
     * [数据响应与性能优化](understanding/understanding.md#数据响应与性能优化)
     * [编译构建](understanding/understanding.md#编译构建)

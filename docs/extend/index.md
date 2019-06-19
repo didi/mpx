@@ -8,6 +8,8 @@
 
 - 小程序API转换及promisify：@mpxjs/api-proxy [详细介绍](#api-proxy) [源码地址](https://github.com/didi/mpx/tree/master/packages/api-proxy)
 
+- mock数据：@mpxjs/mock [详细介绍](#mock) [源码地址](https://github.com/didi/mpx/tree/master/packages/mock)
+
 ## 开发插件
 
 mpx支持使用mpx.use使用插件来进行扩展。插件本身需要提供一个install方法或本身是一个function，该函数接收一个proxyMPX。插件将采用直接在proxyMPX挂载新api属性或在prototype上挂属性。需要注意的是，一定要在app创建之前进行mpx.use
@@ -240,4 +242,23 @@ wx.showActionSheet({
 .catch(err => {
   console.log(err)
 })
+```
+
+## Mock
+
+mock数据生成规则同[mockjs](https://github.com/nuysoft/Mock/wiki)
+
+### 使用说明
+
+```js
+import mock from '@mpxjs/mock'
+// rule 为字符串或正则表达式
+mock([{
+  url: 'http://xxx.com',
+  rule: {
+		'list|1-10': [{
+			'id|+1': 1
+		}]
+	}
+}])
 ```
