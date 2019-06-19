@@ -8,7 +8,7 @@
 import mock from '@mpxjs/mock'
 
 
-mock.xmock([{
+mock([{
   url,
   rule
 }])
