@@ -21,8 +21,17 @@ function transformReq (config) {
 
 function transformRes (res) {
   // 抹平wx & ali 响应数据
-  res.status = res.statusCode = res.status || res.statusCode
-  res.header = res.headers = res.header || res.headers
+  if (res.status === undefined) {
+    res.status = res.statusCode
+  } else {
+    res.statusCode = res.status
+  }
+
+  if (res.header === undefined) {
+    res.header = res.headers
+  } else {
+    res.headers = res.header
+  }
   return res
 }
 export default function request (config) {

@@ -62,7 +62,8 @@ export default function getRefsMixin () {
         }
         const component = e.detail.component
         const destroyed = e.detail.destroyed
-        const identifiers = component.mpxClass ? component.mpxClass.trim().split(/\s+/).map(item => {
+        const className = component.mpxClass || component.className
+        const identifiers = className ? className.trim().split(/\s+/).map(item => {
           return `.${item}`
         }) : []
         if (component.id) {
