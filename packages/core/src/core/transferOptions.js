@@ -8,6 +8,8 @@ export default function transferOptions (options, type, builtInMixins = []) {
   if (global.currentInject && global.currentInject.moduleId === global.currentModuleId) {
     currentInject = global.currentInject
   }
+  // 文件编译路径
+  options.mpxFileResource = global.currentResource
   // 注入全局写入的mixins
   options = mergeInjectedMixins(options, type)
 

@@ -53,7 +53,7 @@ npm run watch
 npm run prod
 ```
 
-使用微信开发者工具打开项目文件夹即可进行预览调试和发布。
+使用微信开发者工具打开 项目目录下生成的dist文件夹 即可进行预览调试和发布。
 
 也可以查看 [官方示例项目](https://github.com/didi/mpx/tree/master/examples) 做进一步了解
 

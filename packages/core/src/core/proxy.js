@@ -321,8 +321,7 @@ export default class MPXProxy {
           try {
             return this.target.__injectedRender()
           } catch (e) {
-            console.warn('【MPX WARN】', `Failed to execute render function, degrade to full-set-data mode!`)
-            console.warn('【MPX WARN】', e)
+            console.warn(`【MPX WARN】at [${this.options.mpxFileResource}]`, `Failed to execute render function, degrade to full-set-data mode!`, e)
             console.warn('【MPX WARN】', 'If the render function execution failed because of "__wxs_placeholder", ignore this warning.')
             renderExecutionFailed = true
             this.render()
