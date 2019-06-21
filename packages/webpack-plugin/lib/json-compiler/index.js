@@ -318,7 +318,7 @@ module.exports = function (raw) {
             ...getOtherConfig(packageItem)
           }
 
-          processPages(packageItem.pages, srcRoot, tarRoot, context, callback)
+          processPages(packageItem.pages.map(p => './' + p), srcRoot, tarRoot, context, callback)
         }, callback)
       } else {
         callback()
