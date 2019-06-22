@@ -41,7 +41,7 @@ function promisify (listObj, usePromise, whiteList) {
   const blackListMap = getMapFromList(blackList)
 
   function promisifyFilter (key) {
-    if (whiteListMap) {
+    if (whiteListMap && whiteListMap[key] !== undefined) {
       return !!whiteListMap[key]
     } else {
       return !(blackListMap[key] || // 特别指定的方法
