@@ -78,7 +78,7 @@ module.exports = function (content) {
       }
     }
 
-    if (mode === 'swan' && module.wxs && selfCompilation.entries.indexOf(module) > -1) {
+    if (mode === 'swan' && module.filter && selfCompilation.entries.indexOf(module) > -1) {
       if (!selfCompilation.__swan_exports_map__) {
         selfCompilation.__swan_exports_map__ = {}
       }
