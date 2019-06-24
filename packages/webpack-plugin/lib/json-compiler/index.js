@@ -318,7 +318,7 @@ module.exports = function (raw) {
             ...getOtherConfig(packageItem)
           }
 
-          processPages(packageItem.pages.map(p => './' + p), srcRoot, tarRoot, context, callback)
+          processPages(packageItem.pages, srcRoot, tarRoot, context, callback)
         }, callback)
       } else {
         callback()
@@ -328,6 +328,7 @@ module.exports = function (raw) {
     const processPages = (pages, srcRoot = '', tarRoot = '', context, callback) => {
       if (pages) {
         async.forEach(pages, (page, callback) => {
+          page = loaderUtils.urlToRequest(page, '')
           let name = getName(path.join(tarRoot, page))
           name = toPosix(name)
           if (/^\./.test(name)) {
