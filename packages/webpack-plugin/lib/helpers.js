@@ -82,7 +82,6 @@ function resolveLoaders (options, moduleId, isProduction, hasScoped, hasComment,
     jsonCompilerOptions += '?root=' + projectRoot
   }
 
-
   const defaultLoaders = {
     html: wxmlLoaderPath + wxmlLoaderOptions,
     css: getCSSLoaderString(),

@@ -9,7 +9,6 @@ const normalize = require('../utils/normalize')
 const nativeLoaderPath = normalize.lib('native-loader')
 const stripExtension = require('../utils/strip-extention')
 const toPosix = require('../utils/to-posix')
-const stringifyQuery = require('../utils/stringify-query')
 const getRulesRunner = require('../platform/index')
 
 module.exports = function (raw) {
