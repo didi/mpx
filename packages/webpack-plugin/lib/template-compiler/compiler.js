@@ -1504,39 +1504,41 @@ function postProcessComponentIs (el) {
 function serialize (root) {
   function walk (node) {
     let result = ''
-    if (node.type === 3) {
-      if (node.isComment) {
-        result += '<!--' + node.text + '-->'
-      } else {
-        result += node.text
-      }
-    }
-    if (node.type === 1) {
-      if (node.tag !== 'temp-node') {
-        result += '<' + node.tag
-        node.attrsList.forEach(function (attr) {
-          result += ' ' + attr.name
-          let value = attr.value
-          if (mode === 'ali') {
-            value = value.replace(/["']/g, '\'')
-          }
-          if (value != null && value !== '') {
-            result += '=' + stringify(value)
-          }
-        })
-        if (node.unary) {
-          result += '/>'
+    if (node) {
+      if (node.type === 3) {
+        if (node.isComment) {
+          result += '<!--' + node.text + '-->'
         } else {
-          result += '>'
+          result += node.text
+        }
+      }
+      if (node.type === 1) {
+        if (node.tag !== 'temp-node') {
+          result += '<' + node.tag
+          node.attrsList.forEach(function (attr) {
+            result += ' ' + attr.name
+            let value = attr.value
+            if (mode === 'ali') {
+              value = value.replace(/["']/g, '\'')
+            }
+            if (value != null && value !== '') {
+              result += '=' + stringify(value)
+            }
+          })
+          if (node.unary) {
+            result += '/>'
+          } else {
+            result += '>'
+            node.children.forEach(function (child) {
+              result += walk(child)
+            })
+            result += '</' + node.tag + '>'
+          }
+        } else {
           node.children.forEach(function (child) {
             result += walk(child)
           })
-          result += '</' + node.tag + '>'
         }
-      } else {
-        node.children.forEach(function (child) {
-          result += walk(child)
-        })
       }
     }
     return result
