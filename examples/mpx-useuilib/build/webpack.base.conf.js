@@ -91,8 +91,8 @@ const webpackConf = {
     extensions: ['.js', '.mpx'],
     modules: ['node_modules'],
     alias: {
-      'vant-weapp/dist/picker.swan': resolve('src/cross/swan/picker.mpx'),
-      'vant-weapp/dist/picker-column.swan': resolve('src/cross/swan/picker-column.mpx')
+      [resolve('node_modules/vant-weapp/dist/picker/index.swan.wxml')]: resolve('src/cross/swan/picker.swan'),
+      [resolve('node_modules/vant-weapp/dist/picker-column/index.swan.wxml')]: resolve('src/cross/swan/picker-column.swan')
     }
   }
 }

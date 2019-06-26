@@ -1,0 +1,33 @@
+<view
+  class="van-picker-column custom-class"
+  style="height: {{ itemHeight * visibleItemCount }}px"
+  bind:touchstart="onTouchStart"
+  catch:touchmove="onTouchMove"
+  bind:touchend="onTouchEnd"
+  bind:touchcancel="onTouchEnd"
+>
+  <view style="{{ wrapperStyle }}">
+    <view
+      s-for="{{ options }}"
+      s-for-item="option"
+      s-key="index"
+      data-index="{{ index }}"
+      style="height: {{ itemHeight }}px"
+      class="van-ellipsis van-picker-column__item {{ option && option.disabled ? 'van-picker-column__item--disabled' : '' }} {{ index === currentIndex ? 'van-picker-column__item--selected active-class' : '' }}"
+      bindtap="onClickItem"
+    >{{ m1.getOptionText(option, valueKey) }}</view>
+  </view>
+</view>
+
+<filter module="m1">
+  function isObj(x) {
+    var type = typeof x;
+    return x !== null && (type === 'object' || type === 'function');
+  }
+
+  function getOptionText(option, valueKey) {
+    return isObj(option) && option[valueKey] ? option[valueKey] : option;
+  }
+
+  export default { getOptionText }
+</filter>
