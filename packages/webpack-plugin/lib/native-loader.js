@@ -95,6 +95,7 @@ module.exports = function (content) {
       const getRequire = (type) => {
         let localQuery = Object.assign({}, queryObj)
         let src = resource + typeExtMap[type]
+        localQuery.__resource = resource
         if (type !== 'script') {
           this.addDependency(src)
         }

@@ -229,11 +229,10 @@ import mpx from '@mpxjs/core'
 import apiProxy from '@mpxjs/api-proxy'
 
 mpx.use(apiProxy, {
-  usePromise: true,
-  whiteList: ['showToast'] // showToast 将不能使用 promise 形式
+  usePromise: true
 })
 
-wx.showActionSheet({
+mpx.showActionSheet({
   itemList: ['A', 'B', 'C']
 })
 .then(res => {
@@ -254,7 +253,7 @@ mock数据生成规则同[mockjs](https://github.com/nuysoft/Mock/wiki)
 import mock from '@mpxjs/mock'
 // rule 为字符串或正则表达式
 mock([{
-  url: 'http://xxx.com',
+  url: 'http://api.example.com',
   rule: {
 		'list|1-10': [{
 			'id|+1': 1

@@ -16,6 +16,10 @@ const DefinePlugin = require('webpack/lib/DefinePlugin')
 const hash = require('hash-sum')
 const AddModePlugin = require('./resolver/AddModePlugin')
 
+const isProductionLikeMode = options => {
+  return options.mode === 'production' || !options.mode
+}
+
 class MpxWebpackPlugin {
   constructor (options = {}) {
     options.mode = options.mode || 'wx'
@@ -76,6 +80,15 @@ class MpxWebpackPlugin {
         return JSON.stringify(!!module.wxs)
       })
     }).apply(compiler)
+
+    compiler.hooks.compilation.tap('MpxWebpackPlugin ', (compilation) => {
+      compilation.hooks.normalModuleLoader.tap('MpxWebpackPlugin', (loaderContext, module) => {
+        // 设置loaderContext的minimize
+        if (isProductionLikeMode(compiler.options)) {
+          loaderContext.minimize = true
+        }
+      })
+    })
 
     compiler.hooks.thisCompilation.tap('MpxWebpackPlugin', (compilation, { normalModuleFactory }) => {
       const typeExtMap = config[this.options.mode].typeExtMap
@@ -363,7 +376,7 @@ class MpxWebpackPlugin {
 
         let originalSource = compilation.assets[chunk.files[0]]
         const source = new ConcatSource()
-        source.add('var window = window || {};\n\n')
+        source.add('var window = (function(){return this;})() || {};\n\n')
 
         relativeChunks.forEach((relativeChunk, index) => {
           if (!relativeChunk.files[0]) return

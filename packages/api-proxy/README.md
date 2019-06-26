@@ -60,11 +60,10 @@ import mpx from '@mpxjs/core'
 import apiProxy from '@mpxjs/api-proxy'
 
 mpx.use(apiProxy, {
-  usePromise: true,
-  whiteList: ['showToast'] // showToast 将不能使用 promise 形式
+  usePromise: true
 })
 
-wx.showActionSheet({
+mpx.showActionSheet({
   itemList: ['A', 'B', 'C']
 })
 .then(res => {

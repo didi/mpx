@@ -101,7 +101,7 @@ module.exports = function (content) {
   content.reverse()
   content = content.join('')
 
-  if (typeof options.minimize === 'boolean' ? options.minimize : this.minimize) {
+  if (isProduction) {
     const minimizeOptions = Object.assign({}, options);
     [
       'removeComments',

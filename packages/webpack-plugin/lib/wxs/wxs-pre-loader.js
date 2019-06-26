@@ -95,6 +95,16 @@ module.exports = function (content) {
               throw new Error('Swan filter module exports declaration must be an ObjectExpression!')
             }
           }
+        },
+        ExportDefaultDeclaration (path) {
+          const declaration = path.node.declaration
+          if (t.isObjectExpression(declaration)) {
+            declaration.properties.forEach((property) => {
+              selfCompilation.__swan_exports_map__[property.key.name] = true
+            })
+          } else {
+            throw new Error('Swan filter module exports declaration must be an ObjectExpression!')
+          }
         }
       })
     }
