@@ -66,20 +66,28 @@ function ensureBang (loader) {
   }
 }
 
-function resolveLoaders (options, moduleId, isProduction, hasScoped, hasComment, usingComponents, needCssSourceMap) {
+function resolveLoaders (options, moduleId, isProduction, hasScoped, hasComment, usingComponents, needCssSourceMap, projectRoot) {
   let cssLoaderOptions = ''
+  let wxmlLoaderOptions = ''
+  let jsonCompilerOptions = ''
   if (needCssSourceMap) {
     cssLoaderOptions += '?sourceMap'
   }
   if (isProduction) {
     cssLoaderOptions += (cssLoaderOptions ? '&' : '?') + 'minimize'
   }
+  if (projectRoot) {
+    cssLoaderOptions += (cssLoaderOptions ? '&' : '?') + 'root=' + projectRoot
+    wxmlLoaderOptions += '?root=' + projectRoot
+    jsonCompilerOptions += '?root=' + projectRoot
+  }
+
 
   const defaultLoaders = {
-    html: wxmlLoaderPath,
+    html: wxmlLoaderPath + wxmlLoaderOptions,
     css: getCSSLoaderString(),
     js: hasBabel ? 'babel-loader' : '',
-    json: jsonCompilerPath,
+    json: jsonCompilerPath + jsonCompilerOptions,
     wxs: wxsLoaderPath
   }
 
@@ -97,7 +105,7 @@ function resolveLoaders (options, moduleId, isProduction, hasScoped, hasComment,
   }
 }
 
-module.exports = function createHelpers (loaderContext, options, moduleId, isProduction, hasScoped, hasComment, usingComponents, needCssSourceMap, srcMode, isNative) {
+module.exports = function createHelpers (loaderContext, options, moduleId, isProduction, hasScoped, hasComment, usingComponents, needCssSourceMap, srcMode, isNative, projectRoot) {
   const rawRequest = getRawRequest(loaderContext, options.excludedPreLoaders)
   const {
     defaultLoaders,
@@ -112,7 +120,8 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
     hasScoped,
     hasComment,
     usingComponents,
-    needCssSourceMap
+    needCssSourceMap,
+    projectRoot
   )
 
   function getRequire (type, part, index, scoped) {

@@ -16,7 +16,7 @@ module.exports = function (raw) {
   // 该loader中会在每次编译中动态添加entry，不能缓存，否则watch不好使
   this.cacheable(false)
   const nativeCallback = this.async()
-  // const options = loaderUtils.getOptions(this) || {}
+  const options = loaderUtils.getOptions(this) || {}
 
   if (!this._compilation.__mpx__) {
     return nativeCallback(null, raw)
@@ -380,34 +380,13 @@ module.exports = function (raw) {
       let iconKey = tabBarCfg.iconKey
       let activeIconKey = tabBarCfg.activeIconKey
 
-      // tabBarIcon只支持路径，为了避免用户困扰，用此方法补上?fallback避免base64转换
-      const tabBarIconPathAddFallback = str => {
-        const tempArr = str.split('?')
-        if (tempArr.length === 1) {
-          return str + '?fallback'
-        }
-        if (tempArr.length > 2) {
-          // illegal query string, do not process
-          return str
-        }
-        const queryStr = tempArr[1]
-        const parsedQuery = loaderUtils.parseQuery('?' + queryStr)
-        if (parsedQuery.fallback) {
-          return str
-        } else {
-          parsedQuery.fallback = true
-          tempArr[1] = stringifyQuery(parsedQuery).slice(1)
-          return tempArr.join('?')
-        }
-      }
-
       if (json.tabBar && json.tabBar[itemKey]) {
         json.tabBar[itemKey].forEach((item, index) => {
-          if (item[iconKey]) {
-            output += `json.tabBar.${itemKey}[${index}].${iconKey} = require("${tabBarIconPathAddFallback(item[iconKey])}");\n`
+          if (item[iconKey] && loaderUtils.isUrlRequest(item[iconKey], options.root)) {
+            output += `json.tabBar.${itemKey}[${index}].${iconKey} = require("${loaderUtils.urlToRequest(item[iconKey], options.root)}");\n`
           }
-          if (item[activeIconKey]) {
-            output += `json.tabBar.${itemKey}[${index}].${activeIconKey} = require("${tabBarIconPathAddFallback(item[activeIconKey])}");\n`
+          if (item[activeIconKey] && loaderUtils.isUrlRequest(item[activeIconKey], options.root)) {
+            output += `json.tabBar.${itemKey}[${index}].${activeIconKey} = require("${loaderUtils.urlToRequest(item[activeIconKey], options.root)}");\n`
           }
         })
       }
@@ -418,7 +397,9 @@ module.exports = function (raw) {
       let optionMenuCfg = config[mode].optionMenu
       if (optionMenuCfg && json.optionMenu) {
         let iconKey = optionMenuCfg.iconKey
-        output += `json.optionMenu.${iconKey} = require("${json.optionMenu[iconKey]}");\n`
+        if (json.optionMenu[iconKey] && loaderUtils.isUrlRequest(json.optionMenu[iconKey], options.root)) {
+          output += `json.optionMenu.${iconKey} = require("${loaderUtils.urlToRequest(json.optionMenu[iconKey], options.root)}");\n`
+        }
       }
       return output
     }

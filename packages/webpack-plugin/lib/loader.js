@@ -14,6 +14,7 @@ module.exports = function (content) {
 
   const pagesMap = this._compilation.__mpx__.pagesMap
   const componentsMap = this._compilation.__mpx__.componentsMap
+  const projectRoot = this._compilation.__mpx__.projectRoot
   const mode = this._compilation.__mpx__.mode
   const globalSrcMode = this._compilation.__mpx__.srcMode
   const localSrcMode = loaderUtils.parseQuery(this.resourceQuery || '?').mode
@@ -94,7 +95,8 @@ module.exports = function (content) {
     usingComponents,
     needCssSourceMap,
     srcMode,
-    isNative
+    isNative,
+    projectRoot
   )
 
   // 触发webpack global var 注入

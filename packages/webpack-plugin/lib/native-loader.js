@@ -41,6 +41,7 @@ module.exports = function (content) {
   const hasComment = false
   const isNative = true
 
+  const projectRoot = this._compilation.__mpx__.projectRoot
   const mode = this._compilation.__mpx__.mode
   const globalSrcMode = this._compilation.__mpx__.srcMode
   const queryObj = loaderUtils.parseQuery(this.resourceQuery || '?')
@@ -89,7 +90,8 @@ module.exports = function (content) {
         usingComponents,
         needCssSourceMap,
         srcMode,
-        isNative
+        isNative,
+        projectRoot
       )
 
       const getRequire = (type) => {

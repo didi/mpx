@@ -40,9 +40,8 @@ module.exports = function (content) {
   const usingComponents = []
 
   const mainCompilation = getMainCompilation(this._compilation)
-  const __mpx__ = mainCompilation.__mpx__
-  const mode = __mpx__.mode
-  const globalSrcMode = __mpx__.srcMode
+  const mode = mainCompilation.__mpx__.mode
+  const globalSrcMode = mainCompilation.__mpx__.srcMode
   const localSrcMode = loaderUtils.parseQuery(this.resourceQuery || '?').mode
   const srcMode = localSrcMode || globalSrcMode
 
@@ -58,16 +57,11 @@ module.exports = function (content) {
     usingComponents,
     needCssSourceMap,
     srcMode,
-    isNative
+    isNative,
+    options.root
   )
 
   const attributes = ['image:src', 'audio:src', 'video:src', 'cover-image:src', 'import:src', 'include:src', `${config[mode].wxs.tag}:${config[mode].wxs.src}`]
-  let root = ''
-
-  if (__mpx__.projectRoot) {
-    // 如果有设置项目根路径，可以将src引用的文件由绝对引用改为相对引用，以便可以找到以“/”开头的路径引用文件
-    root = __mpx__.projectRoot
-  }
 
   const links = attrParse(content, function (tag, attr) {
     const res = attributes.find(function (a) {
@@ -83,7 +77,7 @@ module.exports = function (content) {
   const data = {}
   content = [content]
   links.forEach(function (link) {
-    if (!loaderUtils.isUrlRequest(link.value, root)) return
+    if (!loaderUtils.isUrlRequest(link.value, options.root)) return
 
     if (link.value.indexOf('mailto:') > -1) return
 
@@ -140,7 +134,7 @@ module.exports = function (content) {
 
     const link = data[match]
 
-    let src = loaderUtils.urlToRequest(link.value, root)
+    let src = loaderUtils.urlToRequest(link.value, options.root)
 
     let requestString
 
