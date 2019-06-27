@@ -77,7 +77,6 @@ function resolveLoaders (options, moduleId, isProduction, hasScoped, hasComment,
     cssLoaderOptions += (cssLoaderOptions ? '&' : '?') + 'minimize'
   }
   if (projectRoot) {
-    cssLoaderOptions += (cssLoaderOptions ? '&' : '?') + 'root=' + projectRoot
     wxmlLoaderOptions += '?root=' + projectRoot
     jsonCompilerOptions += '?root=' + projectRoot
   }
@@ -297,7 +296,6 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
         hasComment,
         isNative,
         moduleId,
-        compileBindEvent: options.compileBindEvent,
         count: ++count
       }
       templateCompiler = templateCompilerPath + '?' + JSON.stringify(templateCompilerOptions)

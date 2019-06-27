@@ -8,15 +8,16 @@ const stripExtension = require('./utils/strip-extention')
 
 module.exports = function (content) {
   this.cacheable()
-  if (!this._compilation.__mpx__) {
+
+  const mpx = this._compilation.__mpx__
+  if (!mpx) {
     return content
   }
-
-  const pagesMap = this._compilation.__mpx__.pagesMap
-  const componentsMap = this._compilation.__mpx__.componentsMap
-  const projectRoot = this._compilation.__mpx__.projectRoot
-  const mode = this._compilation.__mpx__.mode
-  const globalSrcMode = this._compilation.__mpx__.srcMode
+  const pagesMap = mpx.pagesMap
+  const componentsMap = mpx.componentsMap
+  const projectRoot = mpx.projectRoot
+  const mode = mpx.mode
+  const globalSrcMode = mpx.srcMode
   const localSrcMode = loaderUtils.parseQuery(this.resourceQuery || '?').mode
   const resource = stripExtension(this.resource)
   const srcMode = localSrcMode || globalSrcMode
@@ -47,6 +48,11 @@ module.exports = function (content) {
   const isProduction = this.minimize || process.env.NODE_ENV === 'production'
   const options = loaderUtils.getOptions(this) || {}
 
+  if (!mpx.loaderOptions) {
+    // 传递给nativeLoader复用
+    mpx.loaderOptions = options
+  }
+
   const filePath = this.resourcePath
   const fileName = path.basename(filePath)
 
@@ -71,7 +77,7 @@ module.exports = function (content) {
   const hasComment = templateAttrs && templateAttrs.comments
   const isNative = false
 
-  let usingComponents = [].concat(this._compilation.__mpx__.usingComponents)
+  let usingComponents = [].concat(mpx.usingComponents)
   try {
     let ret = JSON.parse(parts.json.content)
     if (ret.usingComponents) {
