@@ -77,7 +77,6 @@ function resolveLoaders (options, moduleId, isProduction, hasScoped, hasComment,
     cssLoaderOptions += (cssLoaderOptions ? '&' : '?') + 'minimize'
   }
   if (projectRoot) {
-    cssLoaderOptions += (cssLoaderOptions ? '&' : '?') + 'root=' + projectRoot
     wxmlLoaderOptions += '?root=' + projectRoot
     jsonCompilerOptions += '?root=' + projectRoot
   }
