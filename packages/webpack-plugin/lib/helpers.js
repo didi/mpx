@@ -73,12 +73,11 @@ function resolveLoaders (options, moduleId, isProduction, hasScoped, hasComment,
   if (needCssSourceMap) {
     cssLoaderOptions += '?sourceMap'
   }
-  if (isProduction) {
-    cssLoaderOptions += (cssLoaderOptions ? '&' : '?') + 'minimize'
-  }
   if (projectRoot) {
     wxmlLoaderOptions += '?root=' + projectRoot
     jsonCompilerOptions += '?root=' + projectRoot
+    // 由于css-loader@1.0之后不再支持root，暂时不允许在css中使用/开头的路径，后续迁移至postcss-loader再进行支持
+    // cssLoaderOptions += (cssLoaderOptions ? '&' : '?') + 'root=' + projectRoot
   }
 
   const defaultLoaders = {

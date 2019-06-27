@@ -5,9 +5,7 @@ export default function pageStatusMixin (mixinType) {
     if (is('ali')) {
       return {
         props: {
-          mpxShow: true,
-          mpxClass: '',
-          mpxStyle: ''
+          mpxShow: true
         }
       }
     } else {
