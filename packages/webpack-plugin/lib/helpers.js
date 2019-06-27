@@ -296,7 +296,6 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
         hasComment,
         isNative,
         moduleId,
-        compileBindEvent: options.compileBindEvent,
         count: ++count
       }
       templateCompiler = templateCompilerPath + '?' + JSON.stringify(templateCompilerOptions)
