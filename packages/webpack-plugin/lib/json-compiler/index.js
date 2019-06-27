@@ -9,7 +9,6 @@ const normalize = require('../utils/normalize')
 const nativeLoaderPath = normalize.lib('native-loader')
 const stripExtension = require('../utils/strip-extention')
 const toPosix = require('../utils/to-posix')
-const stringifyQuery = require('../utils/stringify-query')
 const getRulesRunner = require('../platform/index')
 
 module.exports = function (raw) {
@@ -17,17 +16,18 @@ module.exports = function (raw) {
   this.cacheable(false)
   const nativeCallback = this.async()
   const options = loaderUtils.getOptions(this) || {}
+  const mpx = this._compilation.__mpx__
 
-  if (!this._compilation.__mpx__) {
+  if (!mpx) {
     return nativeCallback(null, raw)
   }
 
-  const pagesMap = this._compilation.__mpx__.pagesMap
-  const componentsMap = this._compilation.__mpx__.componentsMap
-  const subPackagesMap = this._compilation.__mpx__.subPackagesMap
-  const compilationMpx = this._compilation.__mpx__
-  const mode = this._compilation.__mpx__.mode
-  const globalSrcMode = this._compilation.__mpx__.srcMode
+  const pagesMap = mpx.pagesMap
+  const componentsMap = mpx.componentsMap
+  const subPackagesMap = mpx.subPackagesMap
+  const compilationMpx = mpx
+  const mode = mpx.mode
+  const globalSrcMode = mpx.srcMode
   const localSrcMode = loaderUtils.parseQuery(this.resourceQuery || '?').mode
   const resource = stripExtension(this.resource)
   const isApp = !(pagesMap[resource] || componentsMap[resource])
@@ -190,7 +190,8 @@ module.exports = function (raw) {
       if (componentsMap[result] === componentPath) return callback()
       componentsMap[result] = componentPath
       if (ext === '.js') {
-        rawResult = '!!' + nativeLoaderPath + '!' + rawResult
+        const nativeLoaderOptions = mpx.loaderOptions ? '?' + JSON.stringify(mpx.loaderOptions) : ''
+        rawResult = '!!' + nativeLoaderPath + nativeLoaderOptions + '!' + rawResult
       }
       addEntrySafely(rawResult, componentPath, callback)
     })
@@ -436,7 +437,7 @@ module.exports = function (raw) {
 
     // 保存全局注册组件
     if (json.usingComponents) {
-      this._compilation.__mpx__.usingComponents = Object.keys(json.usingComponents)
+      mpx.usingComponents = Object.keys(json.usingComponents)
     }
 
     // 串行处理，先处理主包代码，再处理分包代码，为了正确识别出分包中定义的组件属于主包还是分包

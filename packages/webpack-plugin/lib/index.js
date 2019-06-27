@@ -97,6 +97,7 @@ class MpxWebpackPlugin {
         compilation.__mpx__ = {
           pagesMap: {},
           componentsMap: {},
+          loaderOptions: null,
           subPackagesMap: {},
           usingComponents: [],
           processingSubPackages: false,
