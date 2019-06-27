@@ -1623,35 +1623,37 @@ function genFor (node) {
 
 function genNode (node) {
   let exp = ''
-  if (node.type === 3) {
-    if (node.exps && !node.isComment) {
-      exp += genExps(node)
-    }
-  }
-  if (node.type === 1) {
-    if (node.tag !== 'temp-node') {
-      if (node.for && !node.forProcessed) {
-        exp += genFor(node)
-      } else if (node.if && !node.ifProcessed) {
-        exp += genIf(node)
-      } else if (node.elseif && !node.elseifProcessed) {
-        exp += genElseif(node)
-      } else if (node.else && !node.elseProcessed) {
-        exp += genElse(node)
-      } else {
-        if (node.exps) {
-          exp += genExps(node)
-        }
-        if (!node.unary) {
-          node.children.forEach(function (child) {
-            exp += genNode(child)
-          })
-        }
+  if (node) {
+    if (node.type === 3) {
+      if (node.exps && !node.isComment) {
+        exp += genExps(node)
       }
-    } else {
-      node.children.forEach(function (child) {
-        exp += genNode(child)
-      })
+    }
+    if (node.type === 1) {
+      if (node.tag !== 'temp-node') {
+        if (node.for && !node.forProcessed) {
+          exp += genFor(node)
+        } else if (node.if && !node.ifProcessed) {
+          exp += genIf(node)
+        } else if (node.elseif && !node.elseifProcessed) {
+          exp += genElseif(node)
+        } else if (node.else && !node.elseProcessed) {
+          exp += genElse(node)
+        } else {
+          if (node.exps) {
+            exp += genExps(node)
+          }
+          if (!node.unary) {
+            node.children.forEach(function (child) {
+              exp += genNode(child)
+            })
+          }
+        }
+      } else {
+        node.children.forEach(function (child) {
+          exp += genNode(child)
+        })
+      }
     }
   }
   return exp
