@@ -110,7 +110,6 @@ module.exports = function (content) {
       'removeCDATASectionsFromCDATA',
       'collapseWhitespace',
       'conservativeCollapse',
-      'removeAttributeQuotes',
       'useShortDoctype',
       'keepClosingSlash',
       'minifyJS',
