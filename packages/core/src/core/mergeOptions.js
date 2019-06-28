@@ -4,12 +4,19 @@ import { getConvertRule } from '../convertor/convertor'
 let CURRENT_HOOKS = []
 let curType
 let convertRule
+let mpxCustomKeysForBlend
 
 export default function mergeOptions (options = {}, type, needConvert = true) {
+  // 缓存混合模式下的自定义属性列表
+  mpxCustomKeysForBlend = options.mpxCustomKeysForBlend || []
   // needConvert为false，表示衔接原生的root配置，那么此时的配置都是当前原生环境支持的配置，不需要转换
   convertRule = getConvertRule(needConvert ? options.mpxConvertMode || 'default' : 'local')
   // 微信小程序使用Component创建page
-  curType = type === 'app' || !convertRule.mode ? type : convertRule.mode
+  if (type === 'page' && convertRule.pageMode) {
+    curType = convertRule.pageMode
+  } else {
+    curType = type
+  }
   CURRENT_HOOKS = convertRule.lifecycle[curType]
   const newOptions = {}
   extractMixins(newOptions, options, needConvert)
@@ -18,6 +25,7 @@ export default function mergeOptions (options = {}, type, needConvert = true) {
     // 自定义补充转换函数
     typeof convertRule.convert === 'function' && convertRule.convert(newOptions)
   }
+  newOptions.mpxCustomKeysForBlend = mpxCustomKeysForBlend
   return transformHOOKS(newOptions)
 }
 
@@ -166,7 +174,10 @@ function mergeMixins (parent, child) {
       mergeToArray(parent, child, key)
     } else if (/^behaviors$/.test(key)) {
       mergeArray(parent, child, key)
-    } else if (key !== 'mixins') {
+    } else if (key !== 'mixins' && key !== 'mpxCustomKeysForBlend') {
+      if (curType === 'blend' && mpxCustomKeysForBlend.indexOf(key) === -1) {
+        mpxCustomKeysForBlend.push(key)
+      }
       mergeDefault(parent, child, key)
     }
   }

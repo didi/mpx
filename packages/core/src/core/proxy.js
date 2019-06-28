@@ -115,6 +115,8 @@ export default class MPXProxy {
   initApi () {
     // 挂载扩展属性到实例上
     proxy(this.target, this.options.proto, enumerableKeys(this.options.proto), true)
+    // 挂载混合模式下的自定义属性
+    proxy(this.target, this.options, this.options.mpxCustomKeysForBlend)
     // 挂载$watch
     this.target.$watch = (...rest) => this.watch(...rest)
     // 强制执行render

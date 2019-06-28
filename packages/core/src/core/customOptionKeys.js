@@ -3,5 +3,6 @@ export default [
   'proto',
   'mixins',
   'watch',
-  'computed'
+  'computed',
+  'mpxCustomKeysForBlend'
 ].concat(INNER_LIFECYCLES)

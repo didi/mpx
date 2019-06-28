@@ -7,7 +7,7 @@ export function mergeLifecycle (lifecycle) {
       'app': lifecycle.APP_HOOKS || [],
       'page': pageHooks,
       'component': componentHooks,
-      'blend': pageHooks.concat(componentHooks)
+      'blend': pageHooks.concat(lifecycle.COMPONENT_HOOKS || [])
     }
   }
 }

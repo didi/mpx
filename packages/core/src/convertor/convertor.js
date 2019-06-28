@@ -15,21 +15,21 @@ const lifecycleTemplates = {
 }
 // 根据当前环境获取的默认生命周期信息
 const lifecycleInfo = is('ali') ? aliLifecycle : wxLifecycle
-const mode = is('ali') ? '' : 'blend'
+const pageMode = is('ali') ? '' : 'blend'
 
 /**
  * 转换规则包含四点
  * lifecycle [object] 生命周期
  * lifecycleProxyMap [object] 代理规则
- * mode [string] 生命周期合并模式, 目前仅支持[blend]
- * support [boolean]当前平台是否支持当前mode
+ * pageMode [string] 页面生命周期合并模式, 目前仅wx支持[blend]
+ * support [boolean]当前平台是否支持当前pageMode
  * convert [function] 自定义转换函数, 接收一个options
  */
 const defaultConvertRule = {
   lifecycle: mergeLifecycle(lifecycleInfo.LIFECYCLE),
   lifecycleProxyMap: lifecycleInfo.lifecycleProxyMap,
-  mode,
-  support: !!mode,
+  pageMode,
+  support: !!pageMode,
   convert: null
 }
 

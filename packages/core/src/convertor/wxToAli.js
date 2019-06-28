@@ -31,7 +31,7 @@ function notSupportTip (options) {
 
 export default {
   lifecycle: mergeLifecycle(wxLifecycle.LIFECYCLE),
-  mode: 'blend',
+  pageMode: 'blend',
   support: false,
   lifecycleProxyMap: {
     '__created__': ['created', 'attached'],
