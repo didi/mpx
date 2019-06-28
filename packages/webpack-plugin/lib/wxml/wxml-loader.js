@@ -108,9 +108,9 @@ module.exports = function (content) {
       'removeComments',
       'removeCommentsFromCDATA',
       'removeCDATASectionsFromCDATA',
+      'caseSensitive',
       'collapseWhitespace',
       'conservativeCollapse',
-      'removeAttributeQuotes',
       'useShortDoctype',
       'keepClosingSlash',
       'minifyJS',
@@ -122,6 +122,12 @@ module.exports = function (content) {
         minimizeOptions[name] = true
       }
     })
+
+    const KEY_IGNORECUSTOM_FRAGMENTS = 'ignoreCustomFragments'
+    if (typeof minimizeOptions[KEY_IGNORECUSTOM_FRAGMENTS] === 'undefined') {
+      minimizeOptions[KEY_IGNORECUSTOM_FRAGMENTS] = [/{{[\s\S]*?}}/]
+    }
+
     content = htmlMinifier.minify(content, minimizeOptions)
   }
 
