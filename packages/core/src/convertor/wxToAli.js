@@ -47,7 +47,7 @@ export default {
         if (prop && prop.hasOwnProperty('value')) {
           newProps[key] = prop.value
         } else {
-          newProps[key] = typeof prop === 'function' ? prop() : ''
+          newProps[key] = typeof prop === 'function' ? prop() : null
         }
       })
       options.props = Object.assign(newProps, options.props)

@@ -57,11 +57,12 @@ module.exports = function (content) {
     usingComponents,
     needCssSourceMap,
     srcMode,
-    isNative
+    isNative,
+    options.root
   )
 
   const attributes = ['image:src', 'audio:src', 'video:src', 'cover-image:src', 'import:src', 'include:src', `${config[mode].wxs.tag}:${config[mode].wxs.src}`]
-  const root = ''
+
   const links = attrParse(content, function (tag, attr) {
     const res = attributes.find(function (a) {
       if (a.charAt(0) === ':') {
@@ -76,7 +77,7 @@ module.exports = function (content) {
   const data = {}
   content = [content]
   links.forEach(function (link) {
-    if (!loaderUtils.isUrlRequest(link.value, root)) return
+    if (!loaderUtils.isUrlRequest(link.value, options.root)) return
 
     if (link.value.indexOf('mailto:') > -1) return
 
@@ -107,9 +108,9 @@ module.exports = function (content) {
       'removeComments',
       'removeCommentsFromCDATA',
       'removeCDATASectionsFromCDATA',
+      'caseSensitive',
       'collapseWhitespace',
       'conservativeCollapse',
-      'removeAttributeQuotes',
       'useShortDoctype',
       'keepClosingSlash',
       'minifyJS',
@@ -121,6 +122,12 @@ module.exports = function (content) {
         minimizeOptions[name] = true
       }
     })
+
+    const KEY_IGNORECUSTOM_FRAGMENTS = 'ignoreCustomFragments'
+    if (typeof minimizeOptions[KEY_IGNORECUSTOM_FRAGMENTS] === 'undefined') {
+      minimizeOptions[KEY_IGNORECUSTOM_FRAGMENTS] = [/{{[\s\S]*?}}/]
+    }
+
     content = htmlMinifier.minify(content, minimizeOptions)
   }
 
@@ -133,7 +140,7 @@ module.exports = function (content) {
 
     const link = data[match]
 
-    let src = loaderUtils.urlToRequest(link.value, root)
+    let src = loaderUtils.urlToRequest(link.value, options.root)
 
     let requestString
 

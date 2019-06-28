@@ -97,6 +97,7 @@ class MpxWebpackPlugin {
         compilation.__mpx__ = {
           pagesMap: {},
           componentsMap: {},
+          loaderOptions: null,
           subPackagesMap: {},
           usingComponents: [],
           processingSubPackages: false,
@@ -106,6 +107,7 @@ class MpxWebpackPlugin {
           mode: this.options.mode,
           srcMode: this.options.srcMode,
           externalClasses: this.options.externalClasses,
+          projectRoot: this.options.projectRoot,
           extract: (content, type, resourcePath, index, selfResourcePath) => {
             if (index === -1) {
               const compilationMpx = compilation.__mpx__

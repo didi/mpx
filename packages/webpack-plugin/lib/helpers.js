@@ -20,8 +20,6 @@ const hasBabel = !!tryRequire('babel-loader')
 
 const rewriterInjectRE = /\b(css(?:-loader)?(?:\?[^!]+)?)(?:!|$)/
 
-let count = 0
-
 const defaultLang = {
   template: 'html',
   styles: 'css',
@@ -66,20 +64,24 @@ function ensureBang (loader) {
   }
 }
 
-function resolveLoaders (options, moduleId, isProduction, hasScoped, hasComment, usingComponents, needCssSourceMap) {
+function resolveLoaders (options, moduleId, isProduction, hasScoped, hasComment, usingComponents, needCssSourceMap, projectRoot = '') {
   let cssLoaderOptions = ''
+  let wxmlLoaderOptions = ''
+  let jsonCompilerOptions = ''
   if (needCssSourceMap) {
     cssLoaderOptions += '?sourceMap'
   }
-  if (isProduction) {
-    cssLoaderOptions += (cssLoaderOptions ? '&' : '?') + 'minimize'
-  }
+
+  wxmlLoaderOptions += '?root=' + projectRoot
+  jsonCompilerOptions += '?root=' + projectRoot
+  // 由于css-loader@1.0之后不再支持root，暂时不允许在css中使用/开头的路径，后续迁移至postcss-loader再进行支持
+  // cssLoaderOptions += (cssLoaderOptions ? '&' : '?') + 'root=' + projectRoot
 
   const defaultLoaders = {
-    html: wxmlLoaderPath,
+    html: wxmlLoaderPath + wxmlLoaderOptions,
     css: getCSSLoaderString(),
     js: hasBabel ? 'babel-loader' : '',
-    json: jsonCompilerPath,
+    json: jsonCompilerPath + jsonCompilerOptions,
     wxs: wxsLoaderPath
   }
 
@@ -97,7 +99,7 @@ function resolveLoaders (options, moduleId, isProduction, hasScoped, hasComment,
   }
 }
 
-module.exports = function createHelpers (loaderContext, options, moduleId, isProduction, hasScoped, hasComment, usingComponents, needCssSourceMap, srcMode, isNative) {
+module.exports = function createHelpers (loaderContext, options, moduleId, isProduction, hasScoped, hasComment, usingComponents, needCssSourceMap, srcMode, isNative, projectRoot) {
   const rawRequest = getRawRequest(loaderContext, options.excludedPreLoaders)
   const {
     defaultLoaders,
@@ -112,7 +114,8 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
     hasScoped,
     hasComment,
     usingComponents,
-    needCssSourceMap
+    needCssSourceMap,
+    projectRoot
   )
 
   function getRequire (type, part, index, scoped) {
@@ -288,9 +291,7 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
         hasScoped,
         hasComment,
         isNative,
-        moduleId,
-        compileBindEvent: options.compileBindEvent,
-        count: ++count
+        moduleId
       }
       templateCompiler = templateCompilerPath + '?' + JSON.stringify(templateCompilerOptions)
     }
