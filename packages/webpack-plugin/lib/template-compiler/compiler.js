@@ -1344,7 +1344,7 @@ function processAliExternalClassesHack (el, options) {
   if (staticClass) {
     options.externalClasses.forEach(({ className, replacement }) => {
       const reg = new RegExp('\\b' + className + '\\b', 'g')
-      staticClass = staticClass.replace(reg, `{{${replacement}}}`)
+      staticClass = staticClass.replace(reg, `{{${replacement}||''}}`)
     })
     addAttrs(el, [{
       name: 'class',
@@ -1364,9 +1364,9 @@ function processAliStyleClassHack (el, options, root) {
 
     if (options.isComponent && el.parent === root && isRealNode(el)) {
       if (exp !== undefined) {
-        exp = `{{${typeName}}}` + sep + exp
+        exp = `{{${typeName}||''}}` + sep + exp
       } else {
-        exp = `{{${typeName}}}`
+        exp = `{{${typeName}||''}}`
       }
     }
     if (exp !== undefined) {
