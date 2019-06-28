@@ -18,12 +18,12 @@
   "license": "ISC",
   "dependencies": {
     "@mpxjs/api-proxy": "^2.0.4",
-    "@mpxjs/core": "^2.0.12",
+    "@mpxjs/core": "^2.0.17",
     "iview-weapp": "^2.0.0",
     "vant-weapp": "^0.5.14"
   },
   "devDependencies": {
-    "@mpxjs/webpack-plugin": "^2.0.15",
+    "@mpxjs/webpack-plugin": "^2.0.17",
     "babel-core": "^6.26.0",
     "babel-eslint": "^10.0.1",
     "babel-loader": "^7.1.4",

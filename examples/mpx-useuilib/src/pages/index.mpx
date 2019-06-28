@@ -16,6 +16,13 @@
     <view slot="footer">尾部内容</view>
   </i-card>
 
+  <view>
+    <view>这是一个iview的rate组件</view>
+    <i-rate wx:model="{{starIndex1}}" wx:model-value-path="index" wx:model-event="change"></i-rate>
+    <view>不使用双向绑定（源码才能看出差异）</view>
+    <i-rate bind:change="onChange1" value="{{starIndex1}}"></i-rate>
+  </view>
+
   <v-notice-bar
     scrollable="false"
     text="这是一个vant的notice-bar"
@@ -35,7 +42,14 @@
   createPage({
     data: {
       testInput: '这是一个vant输入框并有双向数据绑定',
+      starIndex1: 0,
       pickerColumns: [{ reasonId: '95', reasonInfo: 'MPX效果好' }, { reasonId: '96', reasonInfo: 'MPX非常棒' }, { reasonId: '97', reasonInfo: 'MPX使用爽' }]
+    },
+    methods: {
+      onChange1 (e) {
+        const index = e.detail.index
+        this.starIndex1 = index
+      }
     }
   })
 </script>
@@ -68,7 +82,8 @@
       "v-cell": "vant-weapp/dist/cell/index",
       "v-notice-bar": "vant-weapp/dist/notice-bar/index",
       "v-input": "vant-weapp/dist/field",
-      "v-picker": "vant-weapp/dist/picker"
+      "v-picker": "vant-weapp/dist/picker",
+      "i-rate": "iview-weapp/dist/rate"
     }
   }
 </script>
