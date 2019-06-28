@@ -43,6 +43,8 @@ const store = createStore({
     }
   }
 })
+
+export default store
 ```
 
 现在，你可以通过 store.state 来获取状态对象，以及通过 store.commit 方法触发状态变更：
@@ -77,6 +79,8 @@ const store = createStore({
     }
   }
 })
+
+export default store
 ```
 
 ``` js
@@ -384,6 +388,7 @@ Action 类似于 mutation，不同在于：
 
 ``` js
 import {createStore} from '@mpxjs/core'
+
 const store = createStore({
   state: {
     count: 0
@@ -401,6 +406,8 @@ const store = createStore({
     }
   }
 })
+
+export default store
 ```
 
 Action 函数接受一个 context 对象，因此你可以调用 `context.commit` 提交一个 mutation，或者通过 `context.rootState`、`context.state` 和 `context.getters` 来获取全局state、局部state 和 全局 getters。
@@ -557,6 +564,7 @@ actions: {
 
 ``` js
 import {createStore} from '@mpxjs/core'
+
 const moduleA = {
   state: { ... },
   mutations: { ... },
@@ -579,6 +587,8 @@ const store = createStore({
 
 store.state.a // -> moduleA 的状态
 store.state.b // -> moduleB 的状态
+
+export default store
 ```
 
 ### 模块的局部状态
@@ -644,6 +654,8 @@ const moduleA = {
 例子：
 
 ```js
+import {createStore} from '@mpxjs/core'
+
 const store1 = createStore({
   state: {
     a: 1
@@ -691,6 +703,8 @@ const store2 = createStore({
     store1
   }
 })
+
+export {store1, store2}
 ```
 
 ### 多store注入下的'store.mapGetters、store.mapMuations、store.mapActions'
