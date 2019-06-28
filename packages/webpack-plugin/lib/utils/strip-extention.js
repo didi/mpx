@@ -14,12 +14,15 @@ function stripExtension (request) {
     }
     const queryObj = parseQuery(query)
 
+    let result
+
     if (queryObj.__resource) {
-      seen[request] = queryObj.__resource
+      result = queryObj.__resource
     } else {
       const parsed = path.parse(resource)
-      seen[request] = path.join(parsed.dir, parsed.name)
+      result = path.join(parsed.dir, parsed.name)
     }
+    seen[request] = result.replace(/\\/g, '/')
   }
   return seen[request]
 }
