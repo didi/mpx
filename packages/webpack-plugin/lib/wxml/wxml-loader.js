@@ -108,6 +108,7 @@ module.exports = function (content) {
       'removeComments',
       'removeCommentsFromCDATA',
       'removeCDATASectionsFromCDATA',
+      'caseSensitive',
       'collapseWhitespace',
       'conservativeCollapse',
       'useShortDoctype',
