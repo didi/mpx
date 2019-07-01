@@ -30,7 +30,7 @@
     "babel-runtime": "^6.26.0",
     "chalk": "^2.3.2",
     "copy-webpack-plugin": "^4.5.1",
-    "css-loader": "^2.1.1",
+    "css-loader": "^0.28.11",
     "file-loader": "^1.1.11",
     "html-loader": "^0.5.5",
     "ora": "^2.0.0",
