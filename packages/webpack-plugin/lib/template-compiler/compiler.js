@@ -91,6 +91,20 @@ function decodeAttr (value, shouldDecodeNewlines) {
   })
 }
 
+var encodeingMap = Object.keys(decodingMap)
+  .reduce((acc, k) => {
+    var v = decodingMap[k]
+    acc[v] = k
+    return acc
+  }, {})
+var regAttrToBeEncoded = /["<>]/g
+
+function encodeAttr (value) {
+  return value.replace(regAttrToBeEncoded, function (match) {
+    return encodeingMap[match]
+  })
+}
+
 var splitRE = /\r?\n/g
 var replaceRE = /./g
 var isSpecialTag = makeMap('script,style,template', true)
@@ -1522,7 +1536,7 @@ function serialize (root) {
               value = value.replace(/["']/g, '\'')
             }
             if (value != null && value !== '') {
-              result += '=' + stringify(value)
+              result += '=' + stringify(encodeAttr(value))
             }
           })
           if (node.unary) {
