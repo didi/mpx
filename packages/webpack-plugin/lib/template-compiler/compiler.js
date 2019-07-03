@@ -12,9 +12,9 @@ const addQuery = require('../utils/add-query')
  * is in that map.
  */
 function makeMap (str, expectsLowerCase) {
-  var map = Object.create(null)
-  var list = str.split(',')
-  for (var i = 0; i < list.length; i++) {
+  let map = Object.create(null)
+  let list = str.split(',')
+  for (let i = 0; i < list.length; i++) {
     map[list[i]] = true
   }
   return expectsLowerCase
@@ -26,13 +26,13 @@ function makeMap (str, expectsLowerCase) {
     }
 }
 
-var no = function (a, b, c) {
+let no = function (a, b, c) {
   return false
 }
 
 // HTML5 tags https://html.spec.whatwg.org/multipage/indices.html#elements-3
 // Phrasing Content https://html.spec.whatwg.org/multipage/dom.html#phrasing-content
-var isNonPhrasingTag = makeMap(
+let isNonPhrasingTag = makeMap(
   'address,article,aside,base,blockquote,body,caption,col,colgroup,dd,' +
   'details,dialog,div,dl,dt,fieldset,figcaption,figure,footer,form,' +
   'h1,h2,h3,h4,h5,h6,head,header,hgroup,hr,html,legend,li,menuitem,meta,' +
@@ -48,26 +48,26 @@ var isNonPhrasingTag = makeMap(
  */
 
 // Regular Expressions for parsing tags and attributes
-var attribute = /^\s*([^\s"'<>/=]+)(?:\s*(=)\s*(?:"([^"]*)"+|'([^']*)'+|([^\s"'=<>`]+)))?/
-var ncname = '[a-zA-Z_][\\w\\-\\.]*'
-var qnameCapture = '((?:' + ncname + '\\:)?' + ncname + ')'
-var startTagOpen = new RegExp(('^<' + qnameCapture))
-var startTagClose = /^\s*(\/?)>/
-var endTag = new RegExp(('^<\\/' + qnameCapture + '[^>]*>'))
-var doctype = /^<!DOCTYPE [^>]+>/i
-var comment = /^<!--/
-var conditionalComment = /^<!\[/
+let attribute = /^\s*([^\s"'<>/=]+)(?:\s*(=)\s*(?:"([^"]*)"+|'([^']*)'+|([^\s"'=<>`]+)))?/
+let ncname = '[a-zA-Z_][\\w\\-\\.]*'
+let qnameCapture = '((?:' + ncname + '\\:)?' + ncname + ')'
+let startTagOpen = new RegExp(('^<' + qnameCapture))
+let startTagClose = /^\s*(\/?)>/
+let endTag = new RegExp(('^<\\/' + qnameCapture + '[^>]*>'))
+let doctype = /^<!DOCTYPE [^>]+>/i
+let comment = /^<!--/
+let conditionalComment = /^<!\[/
 
-var IS_REGEX_CAPTURING_BROKEN = false
+let IS_REGEX_CAPTURING_BROKEN = false
 'x'.replace(/x(.)?/g, function (m, g) {
   IS_REGEX_CAPTURING_BROKEN = g === ''
 })
 
 // Special Elements (can contain anything)
-var isPlainTextElement = makeMap('script,style,textarea', true)
-var reCache = {}
+let isPlainTextElement = makeMap('script,style,textarea', true)
+let reCache = {}
 
-var decodingMap = {
+let decodingMap = {
   '&lt;': '<',
   '&gt;': '>',
   '&quot;': '"',
@@ -75,34 +75,34 @@ var decodingMap = {
   '&#10;': '\n',
   '&#9;': '\t'
 }
-var encodedAttr = /&(?:lt|gt|quot|amp);/g
-var encodedAttrWithNewLines = /&(?:lt|gt|quot|amp|#10|#9);/g
+let encodedAttr = /&(?:lt|gt|quot|amp);/g
+let encodedAttrWithNewLines = /&(?:lt|gt|quot|amp|#10|#9);/g
 
 // #5992
-var isIgnoreNewlineTag = makeMap('pre,textarea', true)
-var shouldIgnoreFirstNewline = function (tag, html) {
+let isIgnoreNewlineTag = makeMap('pre,textarea', true)
+let shouldIgnoreFirstNewline = function (tag, html) {
   return tag && isIgnoreNewlineTag(tag) && html[0] === '\n'
 }
 
 function decodeAttr (value, shouldDecodeNewlines) {
-  var re = shouldDecodeNewlines ? encodedAttrWithNewLines : encodedAttr
+  let re = shouldDecodeNewlines ? encodedAttrWithNewLines : encodedAttr
   return value.replace(re, function (match) {
     return decodingMap[match]
   })
 }
 
-var splitRE = /\r?\n/g
-var replaceRE = /./g
-var isSpecialTag = makeMap('script,style,template', true)
+let splitRE = /\r?\n/g
+let replaceRE = /./g
+let isSpecialTag = makeMap('script,style,template', true)
 
-var ieNSBug = /^xmlns:NS\d+/
-var ieNSPrefix = /^NS\d+:/
+let ieNSBug = /^xmlns:NS\d+/
+let ieNSPrefix = /^NS\d+:/
 
 /* istanbul ignore next */
 function guardIESVGBug (attrs) {
-  var res = []
-  for (var i = 0; i < attrs.length; i++) {
-    var attr = attrs[i]
+  let res = []
+  for (let i = 0; i < attrs.length; i++) {
+    let attr = attrs[i]
     if (!ieNSBug.test(attr.name)) {
       attr.name = attr.name.replace(ieNSPrefix, '')
       res.push(attr)
@@ -112,8 +112,8 @@ function guardIESVGBug (attrs) {
 }
 
 function makeAttrsMap (attrs) {
-  var map = {}
-  for (var i = 0, l = attrs.length; i < l; i++) {
+  let map = {}
+  for (let i = 0, l = attrs.length; i < l; i++) {
     if (map[attrs[i].name] && !isIE && !isEdge) {
       warn$1('duplicate attribute: ' + attrs[i].name)
     }
@@ -148,31 +148,32 @@ function isForbiddenTag (el) {
 }
 
 function cached (fn) {
-  var cache = Object.create(null)
+  let cache = Object.create(null)
   return function cachedFn (str) {
-    var hit = cache[str]
+    let hit = cache[str]
     return hit || (cache[str] = fn(str))
   }
 }
 
-var decodeHTMLCached = cached(he.decode)
+let decodeHTMLCached = cached(he.decode)
 
 // Browser environment sniffing
-var inBrowser = typeof window !== 'undefined'
-var UA = inBrowser && window.navigator.userAgent.toLowerCase()
-var isIE = UA && /msie|trident/.test(UA)
-var isEdge = UA && UA.indexOf('edge/') > 0
+let inBrowser = typeof window !== 'undefined'
+let UA = inBrowser && window.navigator.userAgent.toLowerCase()
+let isIE = UA && /msie|trident/.test(UA)
+let isEdge = UA && UA.indexOf('edge/') > 0
 
 // configurable state
-var warn$1
-var error$1
-var mode
-var srcMode
-var processingTemplate
-var isNative
-var rulesRunner
-var platformGetTagNamespace
-var resource
+let warn$1
+let error$1
+let mode
+let srcMode
+let processingTemplate
+let isNative
+let rulesRunner
+let platformGetTagNamespace
+let resource
+let refId = 0
 
 function baseWarn (msg) {
   console.warn(('[template compiler]: ' + msg))
@@ -183,21 +184,21 @@ function baseError (msg) {
 }
 
 function parseHTML (html, options) {
-  var stack = []
-  var expectHTML = options.expectHTML
-  var isUnaryTag$$1 = options.isUnaryTag || no
-  var canBeLeftOpenTag$$1 = options.canBeLeftOpenTag || no
-  var index = 0
-  var last, lastTag
+  let stack = []
+  let expectHTML = options.expectHTML
+  let isUnaryTag$$1 = options.isUnaryTag || no
+  let canBeLeftOpenTag$$1 = options.canBeLeftOpenTag || no
+  let index = 0
+  let last, lastTag
   while (html) {
     last = html
     // Make sure we're not in a plaintext content element like script/style
     if (!lastTag || !isPlainTextElement(lastTag)) {
-      var textEnd = html.indexOf('<')
+      let textEnd = html.indexOf('<')
       if (textEnd === 0) {
         // Comment:
         if (comment.test(html)) {
-          var commentEnd = html.indexOf('-->')
+          let commentEnd = html.indexOf('-->')
 
           if (commentEnd >= 0) {
             if (options.shouldKeepComment) {
@@ -210,7 +211,7 @@ function parseHTML (html, options) {
 
         // http://en.wikipedia.org/wiki/Conditional_comment#Downlevel-revealed_conditional_comment
         if (conditionalComment.test(html)) {
-          var conditionalEnd = html.indexOf(']>')
+          let conditionalEnd = html.indexOf(']>')
 
           if (conditionalEnd >= 0) {
             advance(conditionalEnd + 2)
@@ -219,23 +220,23 @@ function parseHTML (html, options) {
         }
 
         // Doctype:
-        var doctypeMatch = html.match(doctype)
+        let doctypeMatch = html.match(doctype)
         if (doctypeMatch) {
           advance(doctypeMatch[0].length)
           continue
         }
 
         // End tag:
-        var endTagMatch = html.match(endTag)
+        let endTagMatch = html.match(endTag)
         if (endTagMatch) {
-          var curIndex = index
+          let curIndex = index
           advance(endTagMatch[0].length)
           parseEndTag(endTagMatch[1], curIndex, index)
           continue
         }
 
         // Start tag:
-        var startTagMatch = parseStartTag()
+        let startTagMatch = parseStartTag()
         if (startTagMatch) {
           handleStartTag(startTagMatch)
           if (shouldIgnoreFirstNewline(lastTag, html)) {
@@ -245,9 +246,9 @@ function parseHTML (html, options) {
         }
       }
 
-      var text = (void 0)
-      var rest = (void 0)
-      var next = (void 0)
+      let text = (void 0)
+      let rest = (void 0)
+      let next = (void 0)
       if (textEnd >= 0) {
         rest = html.slice(textEnd)
         while (!endTag.test(rest) && !startTagOpen.test(rest) && !comment.test(rest) && !conditionalComment.test(rest)) {
@@ -272,10 +273,10 @@ function parseHTML (html, options) {
         options.chars(text)
       }
     } else {
-      var endTagLength = 0
-      var stackedTag = lastTag.toLowerCase()
-      var reStackedTag = reCache[stackedTag] || (reCache[stackedTag] = new RegExp('([\\s\\S]*?)(</' + stackedTag + '[^>]*>)', 'i'))
-      var rest$1 = html.replace(reStackedTag, function (all, text, endTag) {
+      let endTagLength = 0
+      let stackedTag = lastTag.toLowerCase()
+      let reStackedTag = reCache[stackedTag] || (reCache[stackedTag] = new RegExp('([\\s\\S]*?)(</' + stackedTag + '[^>]*>)', 'i'))
+      let rest$1 = html.replace(reStackedTag, function (all, text, endTag) {
         endTagLength = endTag.length
         if (!isPlainTextElement(stackedTag) && stackedTag !== 'noscript') {
           text = text
@@ -313,15 +314,15 @@ function parseHTML (html, options) {
   }
 
   function parseStartTag () {
-    var start = html.match(startTagOpen)
+    let start = html.match(startTagOpen)
     if (start) {
-      var match = {
+      let match = {
         tagName: start[1],
         attrs: [],
         start: index
       }
       advance(start[0].length)
-      var end, attr
+      let end, attr
       while (!(end = html.match(startTagClose)) && (attr = html.match(attribute))) {
         advance(attr[0].length)
         match.attrs.push(attr)
@@ -336,8 +337,8 @@ function parseHTML (html, options) {
   }
 
   function handleStartTag (match) {
-    var tagName = match.tagName
-    var unarySlash = match.unarySlash
+    let tagName = match.tagName
+    let unarySlash = match.unarySlash
 
     if (expectHTML) {
       if (lastTag === 'p' && isNonPhrasingTag(tagName)) {
@@ -348,12 +349,12 @@ function parseHTML (html, options) {
       }
     }
 
-    var unary = isUnaryTag$$1(tagName) || !!unarySlash
+    let unary = isUnaryTag$$1(tagName) || !!unarySlash
 
-    var l = match.attrs.length
-    var attrs = new Array(l)
-    for (var i = 0; i < l; i++) {
-      var args = match.attrs[i]
+    let l = match.attrs.length
+    let attrs = new Array(l)
+    for (let i = 0; i < l; i++) {
+      let args = match.attrs[i]
       // hackish work around FF bug https://bugzilla.mozilla.org/show_bug.cgi?id=369778
       if (IS_REGEX_CAPTURING_BROKEN && args[0].indexOf('""') === -1) {
         if (args[3] === '') {
@@ -366,8 +367,8 @@ function parseHTML (html, options) {
           delete args[5]
         }
       }
-      var value = args[3] || args[4] || args[5] || ''
-      var shouldDecodeNewlines = tagName === 'a' && args[1] === 'href'
+      let value = args[3] || args[4] || args[5] || ''
+      let shouldDecodeNewlines = tagName === 'a' && args[1] === 'href'
         ? options.shouldDecodeNewlinesForHref
         : options.shouldDecodeNewlines
       attrs[i] = {
@@ -387,7 +388,7 @@ function parseHTML (html, options) {
   }
 
   function parseEndTag (tagName, start, end) {
-    var pos, lowerCasedTagName
+    let pos, lowerCasedTagName
     if (start == null) {
       start = index
     }
@@ -413,7 +414,7 @@ function parseHTML (html, options) {
 
     if (pos >= 0) {
       // Close all the open elements, up the stack
-      for (var i = stack.length - 1; i >= pos; i--) {
+      for (let i = stack.length - 1; i >= pos; i--) {
         if ((i > pos || !tagName) && options.warn) {
           options.warn(
             ('tag <' + (stack[i].tag) + '> has no matching end tag.')
@@ -445,15 +446,15 @@ function parseHTML (html, options) {
 function parseComponent (content, options) {
   mode = options.mode || 'wx'
 
-  var sfc = {
+  let sfc = {
     template: null,
     script: null,
     json: null,
     styles: [],
     customBlocks: []
   }
-  var depth = 0
-  var currentBlock = null
+  let depth = 0
+  let currentBlock = null
 
   function start (tag, attrs, unary, start, end) {
     if (depth === 0) {
@@ -462,8 +463,8 @@ function parseComponent (content, options) {
         content: '',
         start: end,
         attrs: attrs.reduce(function (cumulated, ref) {
-          var name = ref.name
-          var value = ref.value
+          let name = ref.name
+          let value = ref.value
 
           cumulated[name] = value || true
           return cumulated
@@ -504,8 +505,8 @@ function parseComponent (content, options) {
   }
 
   function checkAttrs (block, attrs) {
-    for (var i = 0; i < attrs.length; i++) {
-      var attr = attrs[i]
+    for (let i = 0; i < attrs.length; i++) {
+      let attr = attrs[i]
       if (attr.name === 'lang') {
         block.lang = attr.value
       }
@@ -530,7 +531,7 @@ function parseComponent (content, options) {
   function end (tag, start, end) {
     if (depth === 1 && currentBlock) {
       currentBlock.end = start
-      var text = deindent(content.slice(currentBlock.start, currentBlock.end))
+      let text = deindent(content.slice(currentBlock.start, currentBlock.end))
       // pad content so that linters and pre-processors can output correct
       // line numbers in errors and warnings
       if (currentBlock.type !== 'template' && options.pad) {
@@ -546,8 +547,8 @@ function parseComponent (content, options) {
     if (pad === 'space') {
       return content.slice(0, block.start).replace(replaceRE, ' ')
     } else {
-      var offset = content.slice(0, block.start).split(splitRE).length
-      var padChar = block.type === 'script' && !block.lang
+      let offset = content.slice(0, block.start).split(splitRE).length
+      let padChar = block.type === 'script' && !block.lang
         ? '//\n'
         : '\n'
       return Array(offset).join(padChar)
@@ -1057,10 +1058,9 @@ function processRef (el, options, meta) {
   if (val) {
     if (!meta.refs) {
       meta.refs = []
-      meta.refId = 0
     }
     let all = !!el.for
-    let refClassName = `__ref_${val}_${++meta.refId}`
+    let refClassName = `__ref_${val}_${++refId}`
     let className = getAndRemoveAttr(el, 'class')
     className = className ? className + ' ' + refClassName : refClassName
     addAttrs(el, [{
