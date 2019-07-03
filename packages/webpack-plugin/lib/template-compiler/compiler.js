@@ -91,7 +91,7 @@ function decodeAttr (value, shouldDecodeNewlines) {
   })
 }
 
-var encodeingMap = Object.keys(decodingMap)
+var encodingMap = Object.keys(decodingMap)
   .reduce((acc, k) => {
     var v = decodingMap[k]
     acc[v] = k
@@ -99,10 +99,19 @@ var encodeingMap = Object.keys(decodingMap)
   }, {})
 var regAttrToBeEncoded = /["<>]/g
 
+const regAttrMustache = /(\{\{.*?\}\})/
 function encodeAttr (value) {
-  return value.replace(regAttrToBeEncoded, function (match) {
-    return encodeingMap[match]
-  })
+  const sArr = value.split(regAttrMustache)
+  for (let i = 0, len = sArr.length; i < len; i++) {
+    const s = sArr[i]
+    // 对于属性值且Mustache模板外的值需要escape，否则序列化时会破坏模板合法性
+    if (!regAttrMustache.test(s)) {
+      sArr[i] = s.replace(regAttrToBeEncoded, function (match) {
+        return encodingMap[match]
+      })
+    }
+  }
+  return sArr.join('')
 }
 
 var splitRE = /\r?\n/g
