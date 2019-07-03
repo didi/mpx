@@ -1060,7 +1060,7 @@ function processRef (el, options, meta) {
       meta.refs = []
     }
     let all = !!el.for
-    let refClassName = `__ref_${val}_${++refId}`
+    let refClassName = `__ref_${val}_${++refId}_{{mpxCid}}`
     let className = getAndRemoveAttr(el, 'class')
     className = className ? className + ' ' + refClassName : refClassName
     addAttrs(el, [{
