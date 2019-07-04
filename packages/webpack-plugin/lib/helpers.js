@@ -75,7 +75,8 @@ function resolveLoaders (options, moduleId, isProduction, hasScoped, hasComment,
   wxmlLoaderOptions += '?root=' + projectRoot
   jsonCompilerOptions += '?root=' + projectRoot
   // 由于css-loader@1.0之后不再支持root，暂时不允许在css中使用/开头的路径，后续迁移至postcss-loader再进行支持
-  // cssLoaderOptions += (cssLoaderOptions ? '&' : '?') + 'root=' + projectRoot
+  // 现在切回css-loader@0.28.11了，先加回来和原生小程序保持一致
+  cssLoaderOptions += (cssLoaderOptions ? '&' : '?') + 'root=' + projectRoot
 
   const defaultLoaders = {
     html: wxmlLoaderPath + wxmlLoaderOptions,

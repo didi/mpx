@@ -329,7 +329,7 @@ module.exports = function (raw) {
     const processPages = (pages, srcRoot = '', tarRoot = '', context, callback) => {
       if (pages) {
         async.forEach(pages, (page, callback) => {
-          page = loaderUtils.urlToRequest(page, '')
+          page = loaderUtils.urlToRequest(page, options.root)
           let name = getName(path.join(tarRoot, page))
           name = toPosix(name)
           if (/^\./.test(name)) {
