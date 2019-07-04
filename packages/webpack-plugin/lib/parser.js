@@ -7,7 +7,7 @@ const splitRE = /\r?\n/g
 const emptyRE = /^(?:\/\/)?\s*$/
 
 module.exports = (content, filename, needMap, mode) => {
-  const cacheKey = hash(filename + content)
+  const cacheKey = hash(filename + content + mode)
   let output = cache.get(cacheKey)
   if (output) return output
   output = compiler.parseComponent(content, {

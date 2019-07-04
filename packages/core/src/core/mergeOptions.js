@@ -175,7 +175,7 @@ function mergeMixins (parent, child) {
     } else if (/^behaviors$/.test(key)) {
       mergeArray(parent, child, key)
     } else if (key !== 'mixins' && key !== 'mpxCustomKeysForBlend') {
-      if (curType === 'blend' && mpxCustomKeysForBlend.indexOf(key) === -1) {
+      if (curType === 'blend' && typeof child[key] !== 'function' && mpxCustomKeysForBlend.indexOf(key) === -1) {
         mpxCustomKeysForBlend.push(key)
       }
       mergeDefault(parent, child, key)

@@ -174,12 +174,14 @@ webpackconfig = {
 
 <script>
   import {createPage} from '@mpxjs/core'
+  // 如果是有限张图片
   import dark from './dark.png'
   import light from './light.png'
 
   createPage({
     data: {
-      count: 0
+      count: 0,
+      imageId: '1'
     },
     computed: {
       dynamicSrc() {
@@ -188,6 +190,10 @@ webpackconfig = {
       dynamicStyle() {
         let url = (this.count % 2 !== 0) ? dark : light
         return `background-image: url(${url})`
+      },
+      background () {
+        // 如果期望整个bgs文件夹里的图片都被纳入
+        return require('./bgs/' + this.imageId + '.jpg')
       }
     },
     methods: {

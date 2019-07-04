@@ -108,11 +108,13 @@ export default function getRefsMixin () {
         }
       },
       __getRefNode (ref) {
+        if (!ref) return
+        let selector = ref.selector.replace(/{{mpxCid}}/g, this.$mpxProxy.uid)
         if (ref.type === 'node') {
           const query = this.createSelectorQuery()
-          return query && (ref.all ? query.selectAll(ref.selector) : query.select(ref.selector))
+          return query && (ref.all ? query.selectAll(selector) : query.select(selector))
         } else if (ref.type === 'component') {
-          return ref.all ? this.selectAllComponents(ref.selector) : this.selectComponent(ref.selector)
+          return ref.all ? this.selectAllComponents(selector) : this.selectComponent(selector)
         }
       }
     }
