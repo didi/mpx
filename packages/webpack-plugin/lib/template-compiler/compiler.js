@@ -91,9 +91,32 @@ function decodeAttr (value, shouldDecodeNewlines) {
   })
 }
 
-let splitRE = /\r?\n/g
-let replaceRE = /./g
-let isSpecialTag = makeMap('script,style,template', true)
+var encodingMap = Object.keys(decodingMap)
+  .reduce((acc, k) => {
+    var v = decodingMap[k]
+    acc[v] = k
+    return acc
+  }, {})
+var regAttrToBeEncoded = /["<>]/g
+
+const regAttrMustache = /(\{\{.*?\}\})/
+function encodeAttr (value) {
+  const sArr = value.split(regAttrMustache)
+  for (let i = 0, len = sArr.length; i < len; i++) {
+    const s = sArr[i]
+    // 对于属性值且Mustache模板外的值需要escape，否则序列化时会破坏模板合法性
+    if (!regAttrMustache.test(s)) {
+      sArr[i] = s.replace(regAttrToBeEncoded, function (match) {
+        return encodingMap[match]
+      })
+    }
+  }
+  return sArr.join('')
+}
+
+var splitRE = /\r?\n/g
+var replaceRE = /./g
+var isSpecialTag = makeMap('script,style,template', true)
 
 let ieNSBug = /^xmlns:NS\d+/
 let ieNSPrefix = /^NS\d+:/
@@ -1522,7 +1545,7 @@ function serialize (root) {
               value = value.replace(/["']/g, '\'')
             }
             if (value != null && value !== '') {
-              result += '=' + stringify(value)
+              result += '=' + stringify(encodeAttr(value))
             }
           })
           if (node.unary) {
