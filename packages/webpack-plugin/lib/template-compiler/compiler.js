@@ -1100,12 +1100,12 @@ function addWxsContent (meta, module, content) {
 }
 
 function postProcessWxs (el, meta) {
-  if (el.tag === config[mode].wxs.tag) {
-    let module = el.attrsMap[config[mode].wxs.module]
+  if (el.tag === config[srcMode].wxs.tag) {
+    let module = getAndRemoveAttr(el, config[srcMode].wxs.module)
     if (module) {
       let src, content
-      if (el.attrsMap[config[mode].wxs.src]) {
-        src = el.attrsMap[config[mode].wxs.src]
+      if (el.attrsMap[config[srcMode].wxs.src]) {
+        src = getAndRemoveAttr(el, config[srcMode].wxs.src)
       } else {
         content = el.children.filter((child) => {
           return child.type === 3 && !child.isComment
@@ -1113,12 +1113,23 @@ function postProcessWxs (el, meta) {
         src = addQuery(resource, {
           wxsModule: module
         })
-        addAttrs(el, [{
-          name: config[mode].wxs.src,
-          value: src
-        }])
         el.children = []
       }
+
+      // 替换tag、对应属性
+      addAttrs(el, [
+        {
+          name: config[mode].wxs.src,
+          value: src
+        },
+        {
+          name: config[mode].wxs.module,
+          value: module
+        }
+      ])
+
+      el.tag = config[mode].wxs.tag
+
       src && addWxsModule(meta, module, src)
       content && addWxsContent(meta, module, content)
     }
