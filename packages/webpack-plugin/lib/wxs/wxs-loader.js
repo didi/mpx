@@ -16,6 +16,7 @@ module.exports = function () {
 
   const mainCompilation = getMainCompilation(this._compilation)
   const mode = mainCompilation.__mpx__.mode
+  const srcMode = mainCompilation.__mpx__.srcMode
   const wxsMap = mainCompilation.__mpx__.wxsMap
   const componentsMap = mainCompilation.__mpx__.componentsMap
   const pagesMap = mainCompilation.__mpx__.pagesMap
@@ -49,7 +50,7 @@ module.exports = function () {
     callback()
   } else {
     const name = path.parse(resource).name + hash(resource)
-    let filename = path.join(/^\.([^.]+)/.exec(config[mode].wxs.ext)[1], `${name}${config[mode].wxs.ext}`)
+    let filename = path.join(/^\.([^.]+)/.exec(config[srcMode].wxs.ext)[1], `${name}${config[mode].wxs.ext}`)
     filename = toPosix(filename)
     wxsMap[resource] = filename
     const outputOptions = {

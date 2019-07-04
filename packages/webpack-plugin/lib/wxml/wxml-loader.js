@@ -61,7 +61,7 @@ module.exports = function (content) {
     options.root
   )
 
-  const attributes = ['image:src', 'audio:src', 'video:src', 'cover-image:src', 'import:src', 'include:src', `${config[srcMode].wxs.tag}:${config[srcMode].wxs.src}`]
+  const attributes = ['image:src', 'audio:src', 'video:src', 'cover-image:src', 'import:src', 'include:src', `${config[mode].wxs.tag}:${config[mode].wxs.src}`]
 
   const links = attrParse(content, function (tag, attr) {
     const res = attributes.find(function (a) {
@@ -149,7 +149,7 @@ module.exports = function (content) {
       case 'include':
         requestString = getSrcRequestString('template', { src, mode: srcMode }, -1)
         break
-      case config[srcMode].wxs.tag:
+      case config[mode].wxs.tag:
         requestString = getSrcRequestString('wxs', { src, mode: srcMode }, -1)
         break
       default:
