@@ -281,7 +281,6 @@ export default class MPXProxy {
       cb = undefined
     }
 
-
     const isEmpty = isEmptyObject(data)
     const resolve = this.renderTaskExecutor(isEmpty)
     this.forceUpdateKeys = [] // 仅用于当次的render
