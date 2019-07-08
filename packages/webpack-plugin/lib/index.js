@@ -215,10 +215,8 @@ class MpxWebpackPlugin {
 
           if (callee.type === 'Identifier') {
             target = callee
-
           } else if (callee.type === 'MemberExpression') {
             target = callee.object
-
           }
           if (!target || mode === srcMode) {
             return
@@ -256,7 +254,6 @@ class MpxWebpackPlugin {
         }
 
         if (this.options.srcMode !== this.options.mode) {
-
           parser.hooks.call.for('Page').tap('MpxWebpackPlugin', transHandler)
           parser.hooks.call.for('Component').tap('MpxWebpackPlugin', transHandler)
           parser.hooks.call.for('App').tap('MpxWebpackPlugin', transHandler)
