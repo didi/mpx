@@ -1687,6 +1687,5 @@ module.exports = {
   parse,
   serialize,
   genNode,
-  makeAttrsMap,
-  parseMustache
+  makeAttrsMap
 }
