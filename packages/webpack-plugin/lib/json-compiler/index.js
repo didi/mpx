@@ -29,6 +29,7 @@ module.exports = function (raw) {
   const mode = mpx.mode
   const globalSrcMode = mpx.srcMode
   const localSrcMode = loaderUtils.parseQuery(this.resourceQuery || '?').mode
+  const resolveMode = mpx.resolveMode
   const resource = stripExtension(this.resource)
   const isApp = !(pagesMap[resource] || componentsMap[resource])
   const publicPath = this._compilation.outputOptions.publicPath || ''
@@ -147,7 +148,11 @@ module.exports = function (raw) {
     if (/^plugin:\/\//.test(component)) {
       return callback()
     }
-    component = loaderUtils.urlToRequest(component, options.root)
+
+    if (resolveMode === 'native') {
+      component = loaderUtils.urlToRequest(component, options.root)
+    }
+
     this.resolve(context, component, (err, rawResult, info) => {
       if (err) return callback(err)
       let result = rawResult
@@ -330,7 +335,10 @@ module.exports = function (raw) {
     const processPages = (pages, srcRoot = '', tarRoot = '', context, callback) => {
       if (pages) {
         async.forEach(pages, (page, callback) => {
-          page = loaderUtils.urlToRequest(page, options.root)
+          if (resolveMode === 'native') {
+            page = loaderUtils.urlToRequest(page, options.root)
+          }
+
           let name = getName(path.join(tarRoot, page))
           name = toPosix(name)
           if (/^\./.test(name)) {

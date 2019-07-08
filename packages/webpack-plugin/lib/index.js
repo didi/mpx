@@ -38,6 +38,7 @@ class MpxWebpackPlugin {
         })
       }
     })
+    options.resolveMode = options.resolveMode || 'webpack'
     this.options = options
   }
 
@@ -104,6 +105,7 @@ class MpxWebpackPlugin {
           mainResourceMap: {},
           wxsMap: {},
           wxsConentMap: {},
+          resolveMode: this.options.resolveMode,
           mode: this.options.mode,
           srcMode: this.options.srcMode,
           externalClasses: this.options.externalClasses,
