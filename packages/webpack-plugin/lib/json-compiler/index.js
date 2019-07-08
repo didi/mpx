@@ -147,6 +147,7 @@ module.exports = function (raw) {
     if (/^plugin:\/\//.test(component)) {
       return callback()
     }
+    component = loaderUtils.urlToRequest(component, options.root)
     this.resolve(context, component, (err, rawResult, info) => {
       if (err) return callback(err)
       let result = rawResult
