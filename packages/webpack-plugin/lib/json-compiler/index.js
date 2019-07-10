@@ -335,6 +335,7 @@ module.exports = function (raw) {
     const processPages = (pages, srcRoot = '', tarRoot = '', context, callback) => {
       if (pages) {
         async.forEach(pages, (page, callback) => {
+          const rawPage = page
           if (resolveMode === 'native') {
             page = loaderUtils.urlToRequest(page, options.root)
           }
@@ -367,7 +368,7 @@ module.exports = function (raw) {
               subPackagesCfg[tarRoot].pages.push(toPosix(path.join('', page)))
             } else {
               // 确保首页不变
-              if (page === firstPage) {
+              if (rawPage === firstPage) {
                 localPages.unshift(name)
               } else {
                 localPages.push(name)
