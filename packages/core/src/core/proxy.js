@@ -147,7 +147,9 @@ export default class MPXProxy {
   }
 
   initData (dataFn) {
-    const data = typeof dataFn === 'function' ? dataFn.call(this.target) : dataFn
+    const data = Object.assign({
+      mpxCid: this.uid
+    }, typeof dataFn === 'function' ? dataFn.call(this.target) : dataFn)
     this.collectLocalKeys(data)
     return data
   }
