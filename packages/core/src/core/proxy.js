@@ -147,6 +147,7 @@ export default class MPXProxy {
   }
 
   initData (dataFn) {
+    // mpxCid 解决支付宝环境selector为全局问题
     const data = Object.assign({
       mpxCid: this.uid
     }, typeof dataFn === 'function' ? dataFn.call(this.target) : dataFn)
@@ -286,13 +287,6 @@ export default class MPXProxy {
     const isEmpty = isEmptyObject(data)
     const resolve = this.renderTaskExecutor(isEmpty)
     this.forceUpdateKeys = [] // 仅用于当次的render
-
-    // 首次渲染时向模板中注入mpxCid
-    if (!this.isMounted()) {
-      data = Object.assign({
-        mpxCid: this.uid
-      }, data)
-    }
 
     if (isEmpty) {
       cb && cb()
