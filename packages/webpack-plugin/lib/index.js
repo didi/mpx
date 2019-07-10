@@ -256,11 +256,11 @@ class MpxWebpackPlugin {
         }
 
         if (this.options.srcMode !== this.options.mode) {
-          parser.hooks.call.for('Page').tap('MpxWebpackPlugin', transHandler)
-          parser.hooks.call.for('Component').tap('MpxWebpackPlugin', transHandler)
-          parser.hooks.call.for('App').tap('MpxWebpackPlugin', transHandler)
           parser.hooks.callAnyMember.for('wx').tap('MpxWebpackPlugin', transHandler)
           if (this.options.mode === 'ali') {
+            parser.hooks.call.for('Page').tap('MpxWebpackPlugin', transHandler)
+            parser.hooks.call.for('Component').tap('MpxWebpackPlugin', transHandler)
+            parser.hooks.call.for('App').tap('MpxWebpackPlugin', transHandler)
             // 支付宝不支持Behaviors
             parser.hooks.call.for('Behavior').tap('MpxWebpackPlugin', transHandler)
           }
