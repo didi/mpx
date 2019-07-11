@@ -53,14 +53,14 @@ export default class MPXProxy {
     this.lockTask = asyncLock()
   }
 
-  created () {
+  created (...params) {
     this.initApi()
     this.initialData = this.target.__getInitialData()
     this.cacheData = extend({}, this.initialData) // 缓存数据，用于diff
     this.callUserHook(BEFORECREATE)
     this.initState(this.options)
     this.state = CREATED
-    this.callUserHook(CREATED)
+    this.callUserHook(CREATED, ...params)
     // 强制走小程序原生渲染逻辑
     this.options.__nativeRender__ ? this.setData() : this.initRender()
   }
@@ -191,10 +191,10 @@ export default class MPXProxy {
     }
   }
 
-  callUserHook (hookName) {
+  callUserHook (hookName, ...params) {
     const hook = this.options[hookName]
     if (typeof hook === 'function') {
-      hook.call(this.target)
+      hook.call(this.target, ...params)
     }
   }
 
