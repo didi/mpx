@@ -24,9 +24,17 @@
     "@mpxjs/webview-bridge": "^2.0.0"
   },
   "devDependencies": {
-    "copy-webpack-plugin": "^5.0.3",
     "@mpxjs/webpack-plugin": "^2.0.0",
+    "babel-core": "^6.26.0",
     "babel-eslint": "^10.0.1",
+    "babel-loader": "^7.1.4",
+    "babel-plugin-transform-runtime": "^6.23.0",
+    "babel-preset-env": "^1.6.1",
+    "babel-preset-stage-2": "^6.24.1",
+    "babel-runtime": "^6.26.0",
+    "chalk": "^2.3.2",
+    "copy-webpack-plugin": "^5.0.3",
+    "css-loader": "^0.28.11",
     "eslint": "^5.10.0",
     "eslint-config-babel": "^8.0.2",
     "eslint-config-standard": "^12.0.0",
@@ -38,14 +46,6 @@
     "eslint-plugin-prettier": "^2.6.2",
     "eslint-plugin-promise": "^4.0.1",
     "eslint-plugin-standard": "^4.0.0",
-    "babel-core": "^6.26.0",
-    "babel-loader": "^7.1.4",
-    "babel-runtime": "^6.26.0",
-    "babel-plugin-transform-runtime": "^6.23.0",
-    "babel-preset-env": "^1.6.1",
-    "babel-preset-stage-2": "^6.24.1",
-    "chalk": "^2.3.2",
-    "css-loader": "^2.1.1",
     "file-loader": "^1.1.11",
     "html-loader": "^0.5.5",
     "ora": "^2.0.0",
@@ -55,8 +55,8 @@
     "stylus-loader": "^3.0.2",
     "url-loader": "^1.0.1",
     "webpack": "^4.16.1",
+    "webpack-bundle-analyzer": "^3.3.2",
     "webpack-cli": "^3.1.0",
-    "webpack-merge": "^4.1.2",
-    "webpack-bundle-analyzer": "^3.3.2"
+    "webpack-merge": "^4.1.2"
   }
 }
