@@ -2,6 +2,7 @@ import loadScript from './loadscript'
 
 const SDK_URL_MAP = {
   wx: 'https://res.wx.qq.com/open/js/jweixin-1.3.2.js',
+  qq: 'https://qqq.gtimg.cn/miniprogram/webview_jssdk/qqjssdk-1.0.0.js',
   ali: 'https://appx/web-view.min.js',
   baidu: 'https://b.bdstatic.com/searchbox/icms/searchbox/js/swan-2.0.4.js',
   tt: 'https://s3.pstatp.com/toutiao/tmajssdk/jssdk.js'
@@ -9,6 +10,7 @@ const SDK_URL_MAP = {
 
 const ENV_PATH_MAP = {
   wx: ['wx', 'miniProgram'],
+  qq: ['qq', 'miniProgram'],
   ali: ['my'],
   baidu: ['swan', 'webView'],
   tt: ['tt', 'miniProgram']
@@ -16,13 +18,14 @@ const ENV_PATH_MAP = {
 
 let env = null
 // 环境判断
-if (navigator.userAgent.indexOf('AlipayClient') > -1) {
+let systemUA = navigator.userAgent
+if (systemUA.indexOf('AlipayClient') > -1) {
   env = 'ali'
-} else if (navigator.userAgent.indexOf('miniProgram') > -1) {
-  env = 'wx'
-} else if (navigator.userAgent.indexOf('swan') > -1) {
+} else if (systemUA.indexOf('miniProgram') > -1 || systemUA.indexOf('miniprogram') > -1) {
+  env = systemUA.indexOf('QQ') > -1 ? 'qq' : 'wx'
+} else if (systemUA.indexOf('swan') > -1) {
   env = 'baidu'
-} else if (navigator.userAgent.indexOf('toutiao') > -1) {
+} else if (systemUA.indexOf('toutiao') > -1) {
   env = 'tt'
 }
 
