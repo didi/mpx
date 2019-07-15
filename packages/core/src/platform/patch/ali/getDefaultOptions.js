@@ -86,7 +86,7 @@ function filterOptions (options, type) {
 export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
   const hookNames = type === 'component' ? ['onInit', 'didMount', 'didUnmount'] : ['onLoad', 'onReady', 'onUnload']
   const rootMixins = [{
-    [hookNames[0]] () {
+    [hookNames[0]] (...params) {
       // 提供代理对象需要的api
       transformApiForProxy(this, currentInject)
       // 缓存options
@@ -94,7 +94,7 @@ export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
       // 创建proxy对象
       const mpxProxy = new MPXProxy(rawOptions, this)
       this.$mpxProxy = mpxProxy
-      this.$mpxProxy.created()
+      this.$mpxProxy.created(...params)
     },
     deriveDataFromProps (nextProps) {
       if (this.$mpxProxy && this.$mpxProxy.isMounted() && nextProps && nextProps !== this.props) {

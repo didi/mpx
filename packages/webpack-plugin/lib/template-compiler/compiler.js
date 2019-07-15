@@ -1165,6 +1165,8 @@ function processAttrs (el, options) {
 
 function postProcessFor (el) {
   if (el.for) {
+    let targetEl = el
+
     let attrs = [
       {
         name: config[mode].directive.for,
@@ -1189,7 +1191,22 @@ function postProcessFor (el) {
         value: el.for.key
       })
     }
-    addAttrs(el, attrs)
+
+    /*
+      对百度小程序同时带有if和for的指令外套一层block，并将for放到外层
+      这个操作主要是因为百度小程序不支持这两个directive在同级使用
+     */
+    if (el.if && mode === 'swan') {
+      targetEl = createASTElement('block', [])
+      targetEl.for = el.for
+      targetEl.children = [el]
+      replaceNode(el, targetEl)
+
+      el.parent = targetEl
+      delete el.for
+    }
+
+    addAttrs(targetEl, attrs)
   }
 }
 
@@ -1466,9 +1483,11 @@ function processElement (el, root, options, meta, injectNodes) {
   }
 
   let pass = isNative || processTemplate(el) || processingTemplate
+
+  processIf(el)
+  processFor(el)
+
   if (!pass) {
-    processIf(el)
-    processFor(el)
     if (mode !== 'qq' && mode !== 'tt') {
       processClass(el, meta, injectNodes)
       processStyle(el, meta, injectNodes)
@@ -1479,8 +1498,9 @@ function processElement (el, root, options, meta, injectNodes) {
       processPageStatus(el, options)
     }
     processComponentIs(el, options)
-    processAttrs(el, options)
   }
+
+  processAttrs(el, options)
 }
 
 function closeElement (el, meta) {
@@ -1687,6 +1707,5 @@ module.exports = {
   parse,
   serialize,
   genNode,
-  makeAttrsMap,
-  parseMustache
+  makeAttrsMap
 }

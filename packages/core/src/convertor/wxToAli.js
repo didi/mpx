@@ -34,7 +34,7 @@ export default {
   pageMode: 'blend',
   support: false,
   lifecycleProxyMap: {
-    '__created__': ['created', 'attached'],
+    '__created__': ['onLoad', 'created', 'attached'],
     '__mounted__': ['ready', 'onReady'],
     '__destroyed__': ['detached'],
     '__updated__': ['updated']

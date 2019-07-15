@@ -1,0 +1,22 @@
+{
+  "plugins": [
+    "transform-runtime"
+  ],
+  "presets": [
+    [
+      "env",
+      {
+        "modules": false,
+        "useBuiltIns": true,
+        "targets": {
+          "browsers": [
+            "> 0.01%",
+            "last 2 versions",
+            "not ie <= 8"
+          ]
+        }
+      }
+    ],
+    "stage-2"
+  ]
+}

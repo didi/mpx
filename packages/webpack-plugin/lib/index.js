@@ -38,6 +38,7 @@ class MpxWebpackPlugin {
         })
       }
     })
+    options.resolveMode = options.resolveMode || 'webpack'
     this.options = options
   }
 
@@ -104,6 +105,7 @@ class MpxWebpackPlugin {
           mainResourceMap: {},
           wxsMap: {},
           wxsConentMap: {},
+          resolveMode: this.options.resolveMode,
           mode: this.options.mode,
           srcMode: this.options.srcMode,
           externalClasses: this.options.externalClasses,
@@ -210,59 +212,57 @@ class MpxWebpackPlugin {
           const srcMode = localSrcMode || globalSrcMode
           const mode = this.options.mode
 
-          if (/[/\\]@mpxjs[/\\]/.test(module.resource) || mode === srcMode) {
+          const callee = expr.callee
+          let target
+
+          if (callee.type === 'Identifier') {
+            target = callee
+          } else if (callee.type === 'MemberExpression') {
+            target = callee.object
+          }
+          if (!target || mode === srcMode) {
             return
           }
 
-          const type = expr.name
+          const type = target.name
 
-          if (type === 'Behavior') {
-            const dep = new InjectDependency({
-              content: 'function Behavior(a) {\n' +
-              '  return a;\n' +
-              '}\n',
-              index: -4
+          const name = type === 'wx' ? 'mpx' : 'createFactory'
+          const replaceContent = type === 'wx' ? 'mpx' : `${name}(${JSON.stringify(type)})`
+
+          const dep = new ReplaceDependency(replaceContent, target.range)
+          current.addDependency(dep)
+
+          let needInject = true
+          for (let v of module.variables) {
+            if (v.name === name) {
+              needInject = false
+              break
+            }
+          }
+          if (needInject) {
+            const expression = `require(${JSON.stringify(`@mpxjs/core/src/runtime/${name}`)})`
+            const deps = []
+            parser.parse(expression, {
+              current: {
+                addDependency: dep => {
+                  dep.userRequest = name
+                  deps.push(dep)
+                }
+              },
+              module
             })
-            current.addDependency(dep)
-          } else {
-            const name = type === 'wx' ? 'mpx' : 'createFactory'
-            const replaceContent = type === 'wx' ? 'mpx' : `${name}(${JSON.stringify(type)})`
-
-            const dep = new ReplaceDependency(replaceContent, expr.range)
-            current.addDependency(dep)
-
-            let needInject = true
-            for (let v of module.variables) {
-              if (v.name === name) {
-                needInject = false
-                break
-              }
-            }
-            if (needInject) {
-              const expression = `require(${JSON.stringify(`@mpxjs/core/src/runtime/${name}`)})`
-              const deps = []
-              parser.parse(expression, {
-                current: {
-                  addDependency: dep => {
-                    dep.userRequest = name
-                    deps.push(dep)
-                  }
-                },
-                module
-              })
-              current.addVariable(name, expression, deps)
-            }
+            current.addVariable(name, expression, deps)
           }
         }
 
         if (this.options.srcMode !== this.options.mode) {
-          parser.hooks.expression.for('Page').tap('MpxWebpackPlugin', transHandler)
-          parser.hooks.expression.for('Component').tap('MpxWebpackPlugin', transHandler)
-          parser.hooks.expression.for('App').tap('MpxWebpackPlugin', transHandler)
-          parser.hooks.expression.for('wx').tap('MpxWebpackPlugin', transHandler)
+          parser.hooks.callAnyMember.for('wx').tap('MpxWebpackPlugin', transHandler)
           if (this.options.mode === 'ali') {
+            parser.hooks.call.for('Page').tap('MpxWebpackPlugin', transHandler)
+            parser.hooks.call.for('Component').tap('MpxWebpackPlugin', transHandler)
+            parser.hooks.call.for('App').tap('MpxWebpackPlugin', transHandler)
             // 支付宝不支持Behaviors
-            parser.hooks.expression.for('Behavior').tap('MpxWebpackPlugin', transHandler)
+            parser.hooks.call.for('Behavior').tap('MpxWebpackPlugin', transHandler)
           }
         }
 

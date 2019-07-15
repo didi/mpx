@@ -1,0 +1,28 @@
+<template>
+  <list></list>
+  <button bind:tap="handleTap">点击</button>
+</template>
+
+<script>
+  import { createPage } from '@mpxjs/core'
+  import subPackageIndexPage from '../subpackage/pages/index.mpx?resolve'
+
+  createPage({
+    onLoad () {},
+    methods: {
+      handleTap () {
+        wx.navigateTo({
+          url: subPackageIndexPage
+        })
+      }
+    }
+  })
+</script>
+
+<script type="application/json">
+  {
+    "usingComponents": {
+      "list": "../components/list"
+    }
+  }
+</script>
