@@ -220,7 +220,7 @@ class MpxWebpackPlugin {
           } else if (callee.type === 'MemberExpression') {
             target = callee.object
           }
-          if (!target || mode === srcMode) {
+          if (/[/\\]@mpxjs[/\\]/.test(resource) || !target || mode === srcMode) {
             return
           }
 

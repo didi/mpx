@@ -100,6 +100,7 @@ var encodingMap = Object.keys(decodingMap)
 var regAttrToBeEncoded = /["<>]/g
 
 const regAttrMustache = /(\{\{.*?\}\})/
+
 function encodeAttr (value) {
   const sArr = value.split(regAttrMustache)
   for (let i = 0, len = sArr.length; i < len; i++) {
@@ -1458,22 +1459,30 @@ function processElement (el, root, options, meta, injectNodes) {
     rulesRunner(el)
   }
 
-  processRef(el, options, meta)
+  let tranAli = mode === 'ali' && srcMode === 'wx'
 
-  if (mode === 'ali' && srcMode === 'wx') {
+  processRef(el, options, meta)
+  let pass = isNative || processTemplate(el) || processingTemplate
+
+  if (tranAli) {
     processAliExternalClassesHack(el, options)
-    processAliStyleClassHack(el, options, root)
   }
 
-  let pass = isNative || processTemplate(el) || processingTemplate
   if (!pass) {
     processIf(el)
     processFor(el)
-    if (mode !== 'qq' && mode !== 'tt') {
+    if (mode !== 'tt') {
       processClass(el, meta, injectNodes)
       processStyle(el, meta, injectNodes)
     }
     processShow(el, options, root)
+  }
+
+  if (tranAli) {
+    processAliStyleClassHack(el, options, root)
+  }
+
+  if (!pass) {
     processBindEvent(el)
     if (mode !== 'ali') {
       processPageStatus(el, options)
