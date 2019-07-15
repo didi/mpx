@@ -212,7 +212,7 @@ class MpxWebpackPlugin {
           const srcMode = localSrcMode || globalSrcMode
           const mode = this.options.mode
 
-          const callee = expr.callee
+          const callee = expr.callee || expr
           let target
 
           if (callee.type === 'Identifier') {
@@ -255,8 +255,17 @@ class MpxWebpackPlugin {
           }
         }
 
-        if (this.options.srcMode !== this.options.mode) {
-          parser.hooks.callAnyMember.for('wx').tap('MpxWebpackPlugin', transHandler)
+        const srcMode = this.options.srcMode
+        if (srcMode !== this.options.mode) {
+          parser.hooks.expressionAnyMember.for('wx').tap('MpxWebpackPlugin', (expr) => {
+            const module = parser.state.module
+            const resource = module.resource
+            // 不转mpx自己的调用
+            if (resource.indexOf('@mpxjs') === -1 && expr.object.name === srcMode) {
+              transHandler(expr)
+            }
+          })
+
           if (this.options.mode === 'ali') {
             parser.hooks.call.for('Page').tap('MpxWebpackPlugin', transHandler)
             parser.hooks.call.for('Component').tap('MpxWebpackPlugin', transHandler)
