@@ -5,12 +5,33 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <title>mpx webview bridge</title>
+  <style>
+      .button{
+        width: 100px;
+        height: 40px;
+        background: #ffffce;
+        border: 1px solid #f1f100;
+        border-radius: 5px;
+        color: #4e4e00;
+        margin-bottom: 10px;
+      }
+      .env-text{
+        color: #4e4e00;
+      }
+  </style>
 </head>
 <body>
 <h1>这里是webview里的页面</h1>
-<button onclick="back()">点此回到小程序</button>
-<button onclick="getEnv()">获取当前环境</button>
-
+<button class="button" onclick="back()">点此回到小程序</button>
+<br />
+<button class="button" onclick="getEnv()">获取当前环境</button>
+<span id="envText" class="env-text"></span>
+<br />
+<button class="button" onclick="navigateToBack()">通过navigateTo跳回小程序</button>
+<br />
+<button class="button" onclick="redirectToBack()">通过redirectTo跳回小程序</button>
+<br />
+<button class="button" onclick="postMessageHandle()">调用postMessage</button>
 <script src="https://cdn.bootcss.com/vConsole/3.3.0/vconsole.min.js"></script>
 <script>
   var vConsole = new VConsole()
@@ -26,8 +47,28 @@
   // console.log(mpx, 'mpxmpx')
   function getEnv () {
     mpx.getEnv((res) => {
+      document.querySelector('#envText').textContent = JSON.stringify(res)
       console.log(res)
     })
+  }
+
+  function navigateToBack () {
+    mpx.navigateTo({
+      url: '/pages/index'
+    })
+  }
+
+  function redirectToBack () {
+    mpx.redirectTo({
+      url: '/pages/index'
+    })
+  }
+
+  function postMessageHandle () {
+    mpx.postMessage({
+      msg: '这是来自h5的消息'
+    })
+    mpx.navigateBack()
   }
 </script>
 </body>

@@ -1,12 +1,21 @@
 <template>
   <web-view src="http://127.0.0.1:8080/index.html"></web-view>
+  <view>{{msg}}</view>
 </template>
 
 <script>
   import { createPage } from '@mpxjs/core'
 
   createPage({
-    onLoad () {}
+    onLoad () {},
+    data: {
+      msg: ''
+    },
+    methods: {
+      onmessage(e) {
+        this.msg = e.msg
+      }
+    }
   })
 </script>
 
