@@ -1,5 +1,5 @@
 <template>
-  <web-view src="http://127.0.0.1:8080/index.html"></web-view>
+  <web-view src="http://172.25.142.72:8080/index.html?12dd1dffda"></web-view>
 </template>
 
 <script>
