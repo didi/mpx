@@ -1,5 +1,5 @@
 /**
- * mpxjs webview bridge v2.0.0
+ * mpxjs webview bridge v2.0.11
  * (c) 2019 @mpxjs team
  * @license Apache
  */
@@ -24,20 +24,34 @@
     return obj;
   }
 
-  function _objectSpread(target) {
+  function ownKeys(object, enumerableOnly) {
+    var keys = Object.keys(object);
+
+    if (Object.getOwnPropertySymbols) {
+      keys.push.apply(keys, Object.getOwnPropertySymbols(object));
+    }
+
+    if (enumerableOnly) keys = keys.filter(function (sym) {
+      return Object.getOwnPropertyDescriptor(object, sym).enumerable;
+    });
+    return keys;
+  }
+
+  function _objectSpread2(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i] != null ? arguments[i] : {};
-      var ownKeys = Object.keys(source);
 
-      if (typeof Object.getOwnPropertySymbols === 'function') {
-        ownKeys = ownKeys.concat(Object.getOwnPropertySymbols(source).filter(function (sym) {
-          return Object.getOwnPropertyDescriptor(source, sym).enumerable;
-        }));
+      if (i % 2) {
+        ownKeys(source, true).forEach(function (key) {
+          _defineProperty(target, key, source[key]);
+        });
+      } else if (Object.getOwnPropertyDescriptors) {
+        Object.defineProperties(target, Object.getOwnPropertyDescriptors(source));
+      } else {
+        ownKeys(source).forEach(function (key) {
+          Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key));
+        });
       }
-
-      ownKeys.forEach(function (key) {
-        _defineProperty(target, key, source[key]);
-      });
     }
 
     return target;
@@ -90,25 +104,29 @@
 
   var SDK_URL_MAP = {
     wx: 'https://res.wx.qq.com/open/js/jweixin-1.3.2.js',
+    qq: 'https://qqq.gtimg.cn/miniprogram/webview_jssdk/qqjssdk-1.0.0.js',
     ali: 'https://appx/web-view.min.js',
     baidu: 'https://b.bdstatic.com/searchbox/icms/searchbox/js/swan-2.0.4.js',
     tt: 'https://s3.pstatp.com/toutiao/tmajssdk/jssdk.js'
   };
   var ENV_PATH_MAP = {
     wx: ['wx', 'miniProgram'],
+    qq: ['qq', 'miniProgram'],
     ali: ['my'],
     baidu: ['swan', 'webView'],
     tt: ['tt', 'miniProgram']
   };
   var env = null; // 环境判断
 
-  if (navigator.userAgent.indexOf('AlipayClient') > -1) {
+  var systemUA = navigator.userAgent;
+
+  if (systemUA.indexOf('AlipayClient') > -1) {
     env = 'ali';
-  } else if (navigator.userAgent.indexOf('miniProgram') > -1) {
-    env = 'wx';
-  } else if (navigator.userAgent.indexOf('swan') > -1) {
+  } else if (systemUA.indexOf('miniProgram') > -1 || systemUA.indexOf('miniprogram') > -1) {
+    env = systemUA.indexOf('QQ') > -1 ? 'qq' : 'wx';
+  } else if (systemUA.indexOf('swan') > -1) {
     env = 'baidu';
-  } else if (navigator.userAgent.indexOf('toutiao') > -1) {
+  } else if (systemUA.indexOf('toutiao') > -1) {
     env = 'tt';
   }
 
@@ -349,7 +367,7 @@
     _loop2(item);
   }
 
-  var bridgeFunction = _objectSpread({}, webviewApiList, exportApiList, {
+  var bridgeFunction = _objectSpread2({}, webviewApiList, {}, exportApiList, {
     wxsdkConfig: wxsdkConfig // 此处导出的对象包含所有的api
 
   });

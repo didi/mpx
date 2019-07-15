@@ -1,0 +1,23 @@
+<script>
+  import mpx from '@mpxjs/core'
+  import apiProxy from '@mpxjs/api-proxy'
+
+  mpx.use(apiProxy, {usePromise: true})
+  // app.js
+  App({})
+</script>
+
+<style>
+
+</style>
+
+<script type="application/json">
+  {
+    "pages": [
+      "./pages/index"
+    ],
+    "packages": [
+      "./subpackage/app.mpx?root=sub1"
+    ]
+  }
+</script>
