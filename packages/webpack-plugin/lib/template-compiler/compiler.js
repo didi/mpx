@@ -1152,20 +1152,23 @@ function postProcessWxs (el, meta) {
 function processAttrs (el, options) {
   el.attrsList.forEach((attr) => {
     const isTemplateData = el.tag === 'template' && attr.name === 'data'
-    let value = isTemplateData ? `{${attr.value}}` : attr.value
+    const needWrap = isTemplateData && mode !== 'swan'
+    let value = needWrap ? `{${attr.value}}` : attr.value
     let parsed = parseMustache(value)
     if (parsed.hasBinding) {
       let needTravel = (options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component') && !(attr.name === 'class' || attr.name === 'style')
       addExp(el, parsed.result, needTravel)
     }
     if (parsed.replaced) {
-      modifyAttr(el, attr.name, isTemplateData ? attr.value.replace(/\b__mpx_mode__\b/g, stringify(mode)) : parsed.val)
+      modifyAttr(el, attr.name, needWrap ? attr.value.replace(/\b__mpx_mode__\b/g, stringify(mode)) : parsed.val)
     }
   })
 }
 
 function postProcessFor (el) {
   if (el.for) {
+    let targetEl = el
+
     let attrs = [
       {
         name: config[mode].directive.for,
@@ -1190,7 +1193,22 @@ function postProcessFor (el) {
         value: el.for.key
       })
     }
-    addAttrs(el, attrs)
+
+    /*
+      对百度小程序同时带有if和for的指令外套一层block，并将for放到外层
+      这个操作主要是因为百度小程序不支持这两个directive在同级使用
+     */
+    if (el.if && mode === 'swan') {
+      targetEl = createASTElement('block', [])
+      targetEl.for = el.for
+      targetEl.children = [el]
+      replaceNode(el, targetEl)
+
+      el.parent = targetEl
+      delete el.for
+    }
+
+    addAttrs(targetEl, attrs)
   }
 }
 
@@ -1488,8 +1506,9 @@ function processElement (el, root, options, meta, injectNodes) {
       processPageStatus(el, options)
     }
     processComponentIs(el, options)
-    processAttrs(el, options)
   }
+
+  processAttrs(el, options)
 }
 
 function closeElement (el, meta) {

@@ -9,6 +9,7 @@
 <body>
 <h1>这里是webview里的页面</h1>
 <button onclick="back()">点此回到小程序</button>
+<button onclick="getEnv()">获取当前环境</button>
 
 <script src="https://cdn.bootcss.com/vConsole/3.3.0/vconsole.min.js"></script>
 <script>
@@ -21,6 +22,12 @@
   function back () {
     console.log('click back btn')
     mpx.navigateBack()
+  }
+  // console.log(mpx, 'mpxmpx')
+  function getEnv () {
+    mpx.getEnv((res) => {
+      console.log(res)
+    })
   }
 </script>
 </body>

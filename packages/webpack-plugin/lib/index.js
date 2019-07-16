@@ -212,13 +212,12 @@ class MpxWebpackPlugin {
           const srcMode = localSrcMode || globalSrcMode
           const mode = this.options.mode
 
-          const callee = expr.callee
           let target
 
-          if (callee.type === 'Identifier') {
-            target = callee
-          } else if (callee.type === 'MemberExpression') {
-            target = callee.object
+          if (expr.type === 'Identifier') {
+            target = expr
+          } else if (expr.type === 'MemberExpression') {
+            target = expr.object
           }
           if (/[/\\]@mpxjs[/\\]/.test(resource) || !target || mode === srcMode) {
             return
@@ -255,14 +254,23 @@ class MpxWebpackPlugin {
           }
         }
 
-        if (this.options.srcMode !== this.options.mode) {
-          parser.hooks.callAnyMember.for('wx').tap('MpxWebpackPlugin', transHandler)
+        const srcMode = this.options.srcMode
+        if (srcMode !== this.options.mode) {
+          parser.hooks.expressionAnyMember.for('wx').tap('MpxWebpackPlugin', transHandler)
           if (this.options.mode === 'ali') {
-            parser.hooks.call.for('Page').tap('MpxWebpackPlugin', transHandler)
-            parser.hooks.call.for('Component').tap('MpxWebpackPlugin', transHandler)
-            parser.hooks.call.for('App').tap('MpxWebpackPlugin', transHandler)
+            parser.hooks.call.for('Page').tap('MpxWebpackPlugin', (expr) => {
+              transHandler(expr.callee)
+            })
+            parser.hooks.call.for('Component').tap('MpxWebpackPlugin', (expr) => {
+              transHandler(expr.callee)
+            })
+            parser.hooks.call.for('App').tap('MpxWebpackPlugin', (expr) => {
+              transHandler(expr.callee)
+            })
             // 支付宝不支持Behaviors
-            parser.hooks.call.for('Behavior').tap('MpxWebpackPlugin', transHandler)
+            parser.hooks.call.for('Behavior').tap('MpxWebpackPlugin', (expr) => {
+              transHandler(expr.callee)
+            })
           }
         }
 

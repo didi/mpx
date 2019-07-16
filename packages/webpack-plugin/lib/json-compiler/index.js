@@ -192,8 +192,11 @@ module.exports = function (raw) {
       }
       componentPath = toPosix(componentPath)
       rewritePath && rewritePath(publicPath + componentPath)
-      // 如果之前已经创建了入口，直接return
-      if (componentsMap[result] === componentPath) return callback()
+      // 如果之前已经创建了入口，rewritePath后直接return
+      if (componentsMap[result]) {
+        rewritePath && rewritePath(publicPath + componentsMap[result])
+        return callback()
+      }
       componentsMap[result] = componentPath
       if (ext === '.js') {
         const nativeLoaderOptions = mpx.loaderOptions ? '?' + JSON.stringify(mpx.loaderOptions) : ''
@@ -362,7 +365,7 @@ module.exports = function (raw) {
               }
             }
             // 如果之前已经创建了入口，直接return
-            if (pagesMap[result] === name) return callback()
+            if (pagesMap[result]) return callback()
             pagesMap[result] = name
             if (tarRoot && subPackagesCfg[tarRoot]) {
               subPackagesCfg[tarRoot].pages.push(toPosix(path.join('', page)))
