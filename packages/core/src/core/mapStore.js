@@ -4,15 +4,11 @@ import {
 } from '../helper/utils'
 function mapFactory (type, store) {
   return function (depPath, maps) {
-    if (typeof depPath !== 'string') {
-      maps = depPath
-      depPath = ''
-    }
-    maps = normalizeMap(maps)
+    maps = normalizeMap(depPath, maps)
     const result = {}
     for (let key in maps) {
       result[key] = function (payload) {
-        const value = depPath ? `${depPath}.${maps[key]}` : maps[key]
+        const value = maps[key]
         if (type === 'mutations') {
           return store.commit(value, payload)
         } else if (type === 'actions') {
@@ -35,8 +31,8 @@ export default function (store) {
     mapGetters: mapFactory('getters', store),
     mapMutations: mapFactory('mutations', store),
     mapActions: mapFactory('actions', store),
-    mapState: (maps) => {
-      maps = normalizeMap(maps)
+    mapState: (depPath, maps) => {
+      maps = normalizeMap(depPath, maps)
       const result = {}
       Object.keys(maps).forEach(key => {
         const value = maps[key]
