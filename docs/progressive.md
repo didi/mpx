@@ -134,8 +134,10 @@ module.exports = merge(baseWebpackConfig, {
     // app: resolveSrc('app.mpx')
     
     // after
-    index: resolveSrc('./pages/index.mpx?page'),
-    list: resolveSrc('./components/list.mpx?component')
+    'pages/dindex': resolveSrc('./pages/index.mpx?page'),
+    'components/dlist': resolveSrc('./components/list.mpx?component')
   }
 })
 ```
+
+拷贝dist里所有文件到原生微信小程序项目根目录即可正常工作。
