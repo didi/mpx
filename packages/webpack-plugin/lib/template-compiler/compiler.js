@@ -91,33 +91,40 @@ function decodeAttr (value, shouldDecodeNewlines) {
   })
 }
 
-var encodingMap = Object.keys(decodingMap)
+const encodingMap = Object.keys(decodingMap)
   .reduce((acc, k) => {
-    var v = decodingMap[k]
+    const v = decodingMap[k]
     acc[v] = k
     return acc
   }, {})
-var regAttrToBeEncoded = /["<>]/g
 
-const regAttrMustache = /(\{\{.*?\}\})/
+const decodedAttr = /[<>"&]/g
+const decodedAttrWithNewLines = /[<>"&\n\t]/g
 
-function encodeAttr (value) {
-  const sArr = value.split(regAttrMustache)
-  for (let i = 0, len = sArr.length; i < len; i++) {
-    const s = sArr[i]
-    // 对于属性值且Mustache模板外的值需要escape，否则序列化时会破坏模板合法性
-    if (!regAttrMustache.test(s)) {
-      sArr[i] = s.replace(regAttrToBeEncoded, function (match) {
+const tagRES = /(\{\{(?:.|\n)+?\}\})(?!})/
+
+function encodeAttr (value, shouldDecodeNewlines) {
+  const sArr = value.split(tagRES)
+  const re = shouldDecodeNewlines ? decodedAttrWithNewLines : decodedAttr
+  const ret = sArr.map((s) => {
+    if (!tagRES.test(s)) {
+      // 对于属性值且Mustache外的值需要encode，否则序列化时会破坏模板合法性
+      return s.replace(re, (match) => {
         return encodingMap[match]
       })
+    } else if (mode === 'ali' || mode === 'qq') {
+      // fix支付宝和qq
+      return s.replace(/["']/g, '\'')
+    } else {
+      return s
     }
-  }
-  return sArr.join('')
+  })
+  return ret.join('')
 }
 
-var splitRE = /\r?\n/g
-var replaceRE = /./g
-var isSpecialTag = makeMap('script,style,template', true)
+const splitRE = /\r?\n/g
+const replaceRE = /./g
+const isSpecialTag = makeMap('script,style,template', true)
 
 let ieNSBug = /^xmlns:NS\d+/
 let ieNSPrefix = /^NS\d+:/
@@ -1569,11 +1576,8 @@ function serialize (root) {
           node.attrsList.forEach(function (attr) {
             result += ' ' + attr.name
             let value = attr.value
-            if (mode === 'ali') {
-              value = value.replace(/["']/g, '\'')
-            }
             if (value != null && value !== '') {
-              result += '=' + stringify(encodeAttr(value))
+              result += '=' + stringify(encodeAttr(value, false))
             }
           })
           if (node.unary) {
