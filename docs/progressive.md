@@ -8,6 +8,8 @@ mpx并不一定要求用户一定要一次性用上框架的所有东西。
 
 可以保持原有代码不变，新的组件、页面期望使用mpx的某些特性才引入mpx。
 
+甚至我们允许用户用mpx框架编写新的页面/组件再局部导出相应的页面/组件反用到现有的小程序项目中。见[局部导出](#局部导出)一节。（当然还是建议大家优先考虑老项目渐进改为mpx，而不是这种反过来的模式）
+
 ## 原生自定义组件支持
 
 有些时候，我们需要在`mpx`工程中使用原生小程序组件:
@@ -111,3 +113,31 @@ mpx并不一定要求用户一定要一次性用上框架的所有东西。
 于是我们提供了对原生页面的支持，允许项目中存在原生小程序文件（wxml,js,json,wxss）和mpx文件，两者可以混合使用，通过webpack的构建将两者完美混合在一起生成最终的dist。
 
 使用方式和组件相似。
+
+## 局部导出
+
+使用mpx开发的页面/组件也可以局部导出为纯粹的普通的原生小程序页面/组件，整合到已有的原生小程序中。
+
+仅需修改webpack config中entry一项，将app改为对应的页面/组件即可
+
+例子：
+
+```js
+// 
+module.exports = merge(baseWebpackConfig, {
+  name: 'main-compile',
+  // entry point of our application
+  entry: {
+    // 此处以mpx脚手架生成的项目为例
+    
+    // before
+    // app: resolveSrc('app.mpx')
+    
+    // after
+    'pages/dindex': resolveSrc('./pages/index.mpx?page'),
+    'components/dlist': resolveSrc('./components/list.mpx?component')
+  }
+})
+```
+
+拷贝dist里所有文件到原生微信小程序项目根目录即可正常工作。
