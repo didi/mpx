@@ -113,8 +113,6 @@ module.exports = function (content) {
       'conservativeCollapse',
       'useShortDoctype',
       'keepClosingSlash',
-      'minifyJS',
-      'minifyCSS',
       'removeScriptTypeAttributes',
       'removeStyleTypeAttributes'
     ].forEach(function (name) {

@@ -641,6 +641,35 @@ const moduleA = {
 }
 ```
 
+### 模块在组件中的引入方式
+
+``` js
+const store = createStore({
+  modules: {
+    a: {
+      state: {
+        name: 1
+      },
+      getters: {
+        getName: s => s.name
+      }
+    },
+    b: moduleB
+  }
+})
+
+createComponent({
+  computed: {
+    // mapState引入module方式有两种
+    ...store.mapState({
+      test: 'a.name'
+    }),
+    ...store.mapState('a', ['name']),
+    ...store.mapGetters('getName') // 由于没有提供namespace概念，所以getters都是全局的，类似的还有mutations & actions
+  }
+})
+```
+
 # 多实例
 
 允许创建多实例，各store实例彼此互相独立，状态互不干扰，不需要考虑命名空间的问题，而且可以随时动态创建一个新的store，更灵活且移植性更高。相对较于[modules](#module)，更推荐多实例模式
@@ -762,11 +791,12 @@ const store2 = createStore({
 // 组件内部使用store
 createComponent({
   computed: {
-    ...store2.mapGetters(['getB', 'store1.getA'])
-  },
-  methods: {
-    ...store2.mapMutations(['setB', 'store1.setA']),
-    ...store2.mapActions(['actionB', 'store1.actionA'])
+    ...store2.mapGetters(['getB']),
+    // 对于依赖store1的引入，可以使用以下两种方式，类似的mapMutations、mapActions, mapState
+    ...store2.mapgetters({
+      getA: 'store1.getA'
+    }),
+    ...store2.mapGetters('store1', ['getA'])
   }
 })
 ```

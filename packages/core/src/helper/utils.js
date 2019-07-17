@@ -57,13 +57,26 @@ export function findItem (arr = [], key) {
   return false
 }
 
-export function normalizeMap (arr) {
-  if (type(arr) === 'Array') {
+export function normalizeMap (prefix, arr) {
+  if (typeof prefix !== 'string') {
+    arr = prefix
+    prefix = ''
+  }
+  const objType = type(arr)
+  if (objType === 'Array') {
     const map = {}
     arr.forEach(value => {
-      map[value] = value
+      map[value] = prefix ? `${prefix}.${value}` : value
     })
     return map
+  }
+  if (prefix && objType === 'Object') {
+    arr = Object.assign({}, arr)
+    Object.keys(arr).forEach(key => {
+      if (typeof arr[key] === 'string') {
+        arr[key] = `${prefix}.${arr[key]}`
+      }
+    })
   }
   return arr
 }
