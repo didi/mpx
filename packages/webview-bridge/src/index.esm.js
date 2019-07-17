@@ -1,4 +1,4 @@
-import {bridgeFunction, webviewApiList, exportApiList} from './common'
+import { bridgeFunction, webviewApiList, exportApiList } from './common'
 
 const { navigateTo, navigateBack, switchTab, reLaunch, redirectTo, getEnv, postMessage } = webviewApiList
 const { getLocation, chooseImage, openLocation, getNetworkType, previewImage } = exportApiList
