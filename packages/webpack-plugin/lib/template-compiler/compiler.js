@@ -580,10 +580,10 @@ function parseComponent (content, options) {
       if (currentBlock.type === 'script') {
         if (currentBlock.name === 'json') {
           // eslint-disable-next-line no-new-func
-          const func = new Function('module', text)
+          const func = new Function('module', 'require', text)
           // 模拟commonJS执行
           const m = {}
-          func(m)
+          func(m, require)
           text = JSON.stringify(m.exports({
             __mpx_mode__: mode
           }), null, '  ')
