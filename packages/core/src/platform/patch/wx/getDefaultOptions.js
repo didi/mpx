@@ -113,29 +113,29 @@ function getRootMixin (mixin) {
   }
 }
 
-export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
-  const initProxy = function (context) {
-    // 提供代理对象需要的api
-    transformApiForProxy(context, currentInject)
-    // 缓存options
-    context.$rawOptions = rawOptions
-    // 创建proxy对象
-    const mpxProxy = new MPXProxy(rawOptions, context)
-    context.$mpxProxy = mpxProxy
-    // 组件监听视图数据更新, attached之后才能拿到properties
-    context.$mpxProxy.created()
-  }
+function initProxy (context, rawOptions, currentInject) {
+  // 提供代理对象需要的api
+  transformApiForProxy(context, currentInject)
+  // 缓存options
+  context.$rawOptions = rawOptions
+  // 创建proxy对象
+  const mpxProxy = new MPXProxy(rawOptions, context)
+  context.$mpxProxy = mpxProxy
+  // 组件监听视图数据更新, attached之后才能拿到properties
+  context.$mpxProxy.created()
+}
 
+export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
   const rootMixins = [getRootMixin({
     onLoad () {
       // 百度小程序page onLoad > attached
       if (!this.$mpxProxy) {
-        initProxy(this)
+        initProxy(this, rawOptions, currentInject)
       }
     },
     attached () {
       if (!this.$mpxProxy) {
-        initProxy(this)
+        initProxy(this, rawOptions, currentInject)
       }
     },
     ready () {
