@@ -102,32 +102,32 @@ module.exports = function (content) {
   content.reverse()
   content = content.join('')
 
-  if (isProduction) {
-    const minimizeOptions = Object.assign({}, options);
-    [
-      'removeComments',
-      'removeCommentsFromCDATA',
-      'removeCDATASectionsFromCDATA',
-      'caseSensitive',
-      'collapseWhitespace',
-      'conservativeCollapse',
-      'useShortDoctype',
-      'keepClosingSlash',
-      'removeScriptTypeAttributes',
-      'removeStyleTypeAttributes'
-    ].forEach(function (name) {
-      if (typeof minimizeOptions[name] === 'undefined') {
-        minimizeOptions[name] = true
-      }
-    })
-
-    const KEY_IGNORECUSTOM_FRAGMENTS = 'ignoreCustomFragments'
-    if (typeof minimizeOptions[KEY_IGNORECUSTOM_FRAGMENTS] === 'undefined') {
-      minimizeOptions[KEY_IGNORECUSTOM_FRAGMENTS] = [/{{[\s\S]*?}}/]
-    }
-
-    content = htmlMinifier.minify(content, minimizeOptions)
-  }
+  // if (isProduction) {
+  //   const minimizeOptions = Object.assign({}, options);
+  //   [
+  //     'removeComments',
+  //     'removeCommentsFromCDATA',
+  //     'removeCDATASectionsFromCDATA',
+  //     'caseSensitive',
+  //     'collapseWhitespace',
+  //     'conservativeCollapse',
+  //     'useShortDoctype',
+  //     'keepClosingSlash',
+  //     'removeScriptTypeAttributes',
+  //     'removeStyleTypeAttributes'
+  //   ].forEach(function (name) {
+  //     if (typeof minimizeOptions[name] === 'undefined') {
+  //       minimizeOptions[name] = true
+  //     }
+  //   })
+  //
+  //   const KEY_IGNORECUSTOM_FRAGMENTS = 'ignoreCustomFragments'
+  //   if (typeof minimizeOptions[KEY_IGNORECUSTOM_FRAGMENTS] === 'undefined') {
+  //     minimizeOptions[KEY_IGNORECUSTOM_FRAGMENTS] = [/{{[\s\S]*?}}/]
+  //   }
+  //
+  //   content = htmlMinifier.minify(content, minimizeOptions)
+  // }
 
   content = JSON.stringify(content)
 
