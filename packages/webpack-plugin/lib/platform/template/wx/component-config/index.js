@@ -22,6 +22,7 @@ const image = require('./image')
 const map = require('./map')
 const canvas = require('./canvas')
 const wxs = require('./wxs')
+const template = require('./template')
 const Nonsupport = require('./unsupported')
 
 module.exports = function getComponentConfigs ({ warn, error }) {
@@ -81,6 +82,7 @@ module.exports = function getComponentConfigs ({ warn, error }) {
     image({ print }),
     map({ print }),
     canvas({ print }),
-    wxs({ print })
+    wxs({ print }),
+    template()
   ]
 }

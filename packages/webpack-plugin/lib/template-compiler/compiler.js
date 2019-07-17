@@ -91,32 +91,40 @@ function decodeAttr (value, shouldDecodeNewlines) {
   })
 }
 
-var encodingMap = Object.keys(decodingMap)
+const encodingMap = Object.keys(decodingMap)
   .reduce((acc, k) => {
-    var v = decodingMap[k]
+    const v = decodingMap[k]
     acc[v] = k
     return acc
   }, {})
-var regAttrToBeEncoded = /["<>]/g
 
-const regAttrMustache = /(\{\{.*?\}\})/
-function encodeAttr (value) {
-  const sArr = value.split(regAttrMustache)
-  for (let i = 0, len = sArr.length; i < len; i++) {
-    const s = sArr[i]
-    // 对于属性值且Mustache模板外的值需要escape，否则序列化时会破坏模板合法性
-    if (!regAttrMustache.test(s)) {
-      sArr[i] = s.replace(regAttrToBeEncoded, function (match) {
+const decodedAttr = /[<>"&]/g
+const decodedAttrWithNewLines = /[<>"&\n\t]/g
+
+const tagRES = /(\{\{(?:.|\n)+?\}\})(?!})/
+
+function encodeAttr (value, shouldDecodeNewlines) {
+  const sArr = value.split(tagRES)
+  const re = shouldDecodeNewlines ? decodedAttrWithNewLines : decodedAttr
+  const ret = sArr.map((s) => {
+    if (!tagRES.test(s)) {
+      // 对于属性值且Mustache外的值需要encode，否则序列化时会破坏模板合法性
+      return s.replace(re, (match) => {
         return encodingMap[match]
       })
+    } else if (mode === 'ali' || mode === 'qq') {
+      // fix支付宝和qq
+      return s.replace(/["']/g, '\'')
+    } else {
+      return s
     }
-  }
-  return sArr.join('')
+  })
+  return ret.join('')
 }
 
-var splitRE = /\r?\n/g
-var replaceRE = /./g
-var isSpecialTag = makeMap('script,style,template', true)
+const splitRE = /\r?\n/g
+const replaceRE = /./g
+const isSpecialTag = makeMap('script,style,template', true)
 
 let ieNSBug = /^xmlns:NS\d+/
 let ieNSPrefix = /^NS\d+:/
@@ -1151,14 +1159,15 @@ function postProcessWxs (el, meta) {
 function processAttrs (el, options) {
   el.attrsList.forEach((attr) => {
     const isTemplateData = el.tag === 'template' && attr.name === 'data'
-    let value = isTemplateData ? `{${attr.value}}` : attr.value
+    const needWrap = isTemplateData && mode !== 'swan'
+    let value = needWrap ? `{${attr.value}}` : attr.value
     let parsed = parseMustache(value)
     if (parsed.hasBinding) {
       let needTravel = (options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component') && !(attr.name === 'class' || attr.name === 'style')
       addExp(el, parsed.result, needTravel)
     }
     if (parsed.replaced) {
-      modifyAttr(el, attr.name, isTemplateData ? attr.value.replace(/\b__mpx_mode__\b/g, stringify(mode)) : parsed.val)
+      modifyAttr(el, attr.name, needWrap ? attr.value.replace(/\b__mpx_mode__\b/g, stringify(mode)) : parsed.val)
     }
   })
 }
@@ -1475,24 +1484,30 @@ function processElement (el, root, options, meta, injectNodes) {
     rulesRunner(el)
   }
 
+  let tranAli = mode === 'ali' && srcMode === 'wx'
+
   processRef(el, options, meta)
-
-  if (mode === 'ali' && srcMode === 'wx') {
-    processAliExternalClassesHack(el, options)
-    processAliStyleClassHack(el, options, root)
-  }
-
   let pass = isNative || processTemplate(el) || processingTemplate
 
-  processIf(el)
-  processFor(el)
+  if (tranAli) {
+    processAliExternalClassesHack(el, options)
+  }
 
   if (!pass) {
-    if (mode !== 'qq' && mode !== 'tt') {
+    processIf(el)
+    processFor(el)
+    if (mode !== 'tt') {
       processClass(el, meta, injectNodes)
       processStyle(el, meta, injectNodes)
     }
     processShow(el, options, root)
+  }
+
+  if (tranAli) {
+    processAliStyleClassHack(el, options, root)
+  }
+
+  if (!pass) {
     processBindEvent(el)
     if (mode !== 'ali') {
       processPageStatus(el, options)
@@ -1561,11 +1576,8 @@ function serialize (root) {
           node.attrsList.forEach(function (attr) {
             result += ' ' + attr.name
             let value = attr.value
-            if (mode === 'ali') {
-              value = value.replace(/["']/g, '\'')
-            }
             if (value != null && value !== '') {
-              result += '=' + stringify(encodeAttr(value))
+              result += '=' + stringify(encodeAttr(value, false))
             }
           })
           if (node.unary) {
