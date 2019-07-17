@@ -1,12 +1,20 @@
 <template>
-  <web-view src="http://127.0.0.1:8080/index.html"></web-view>
+  <web-view src="http://127.0.0.1:8080/index.html" bindmessage="onmessage"></web-view>
 </template>
 
 <script>
   import { createPage } from '@mpxjs/core'
 
   createPage({
-    onLoad () {}
+    onLoad () {},
+    data: {
+      msg: ''
+    },
+    methods: {
+      onmessage(e) {
+        console.log(e.detail.data)
+      }
+    }
   })
 </script>
 
