@@ -1,4 +1,4 @@
-const htmlMinifier = require('html-minifier')
+// const htmlMinifier = require('html-minifier')
 const attrParse = require('./attributesParser')
 const loaderUtils = require('loader-utils')
 const url = require('url')
