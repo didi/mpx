@@ -131,7 +131,7 @@
   }
 
   if (env === null) {
-    console.error('mpxjs/webview: 未识别的环境，当前仅支持 微信、支付宝、百度、头条 小程序');
+    console.log('mpxjs/webview: 未识别的环境，当前仅支持 微信、支付宝、百度、头条 QQ 小程序');
   }
 
   var sdkReady = !window[env] ? SDK_URL_MAP[env] ? loadScript(SDK_URL_MAP[env]) : Promise.reject(new Error('未找到对应的sdk')) : Promise.resolve();
@@ -355,7 +355,7 @@
 
           (_getEnvWebviewVariabl = getEnvWebviewVariable())[apiName].apply(_getEnvWebviewVariabl, args);
         }, function (res) {
-          console.error(res);
+          console.log(res);
         })["catch"](function (e) {
           return console.log(e);
         });
@@ -368,8 +368,7 @@
   }
 
   var bridgeFunction = _objectSpread2({}, webviewApiList, {}, exportApiList, {
-    wxsdkConfig: wxsdkConfig // 此处导出的对象包含所有的api
-
+    wxsdkConfig: wxsdkConfig
   });
 
   return bridgeFunction;
