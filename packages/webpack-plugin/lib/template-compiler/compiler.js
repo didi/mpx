@@ -1493,9 +1493,10 @@ function processElement (el, root, options, meta, injectNodes) {
     processAliExternalClassesHack(el, options)
   }
 
+  processIf(el)
+  processFor(el)
+
   if (!pass) {
-    processIf(el)
-    processFor(el)
     if (mode !== 'tt') {
       processClass(el, meta, injectNodes)
       processStyle(el, meta, injectNodes)
