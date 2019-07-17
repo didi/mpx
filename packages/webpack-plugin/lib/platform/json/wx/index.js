@@ -148,8 +148,6 @@ module.exports = function getSpec ({ warn, error }) {
       },
       {
         test: 'preloadRule',
-        ali: deletePath(),
-        qq: deletePath(),
         tt: deletePath()
       },
       {
@@ -172,16 +170,10 @@ module.exports = function getSpec ({ warn, error }) {
       },
       {
         test: 'subpackages|subPackages',
-        ali: deletePath(true),
-        tt: deletePath()
+        tt: deletePath(true)
       },
       {
         test: 'packages',
-        ali (input) {
-          input.packages = input.packages.map((packageItem) => {
-            return packageItem.replace(/\?.*/, '')
-          })
-        },
         tt (input) {
           input.packages = input.packages.map((packageItem) => {
             return packageItem.replace(/\?.*/, '')
