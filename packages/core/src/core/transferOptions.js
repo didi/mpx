@@ -24,10 +24,10 @@ export default function transferOptions (options, type, builtInMixins = []) {
   rawOptions.mixins = builtInMixins
   if (currentInject && currentInject.propKeys) {
     const computedKeys = Object.keys(options.computed || {})
-    // 头条小程序受限父子组件生命周期顺序的问题，向子组件传递computed属性，子组件初始挂载时是拿不到对应数据的，在此做出提示
+    // 头条/百度小程序受限父子组件生命周期顺序的问题，向子组件传递computed属性，子组件初始挂载时是拿不到对应数据的，在此做出提示
     currentInject.propKeys.forEach(key => {
       if (findItem(computedKeys, key)) {
-        console.error(`The child component can't achieve the value of computed prop【${key}】when attached, which is governed by the order of current miniprogram's lifecycles `)
+        console.error(`The child component can't achieve the value of computed prop【${key}】when attached, which is governed by the order of tt/swan miniprogram's lifecycles `)
       }
     })
   }

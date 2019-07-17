@@ -67,7 +67,7 @@ module.exports = function (raw) {
 
   let globalInjectCode = renderResult.code + '\n'
 
-  if (mode === 'tt' && renderResult.propKeys) {
+  if ((mode === 'tt' || mode === 'swan') && renderResult.propKeys) {
     globalInjectCode += `global.currentInject.propKeys = ${JSON.stringify(renderResult.propKeys)};\n`
   }
 
@@ -85,6 +85,14 @@ module.exports = function (raw) {
 
   const issuer = this._module.issuer
   const parser = issuer.parser
+
+  // 同步issuer的dependencies，确保watch中issuer rebuild时template也进行rebuild，使该loader中往issuer中注入的依赖持续有效
+  issuer.buildInfo.fileDependencies.forEach((dep) => {
+    this.addDependency(dep)
+  })
+  issuer.buildInfo.contextDependencies.forEach((dep) => {
+    this.addContextDependency(dep)
+  })
 
   issuer.dependencies = issuer.dependencies.filter((dep) => {
     return !dep.templateInject
