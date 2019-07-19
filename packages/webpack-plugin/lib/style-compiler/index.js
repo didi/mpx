@@ -72,7 +72,7 @@ module.exports = function (css, map) {
       )
 
       if (transRpxs.length) {
-        transRpxs.forEach(item => {
+        for (let item of transRpxs) {
           const {
             mode = (typeof loaderOptions.transRpx === 'string' && loaderOptions.transRpx) || (typeof loaderOptions.transRpx === 'boolean' && loaderOptions.transRpx && 'all'),
             comment = loaderOptions.comment,
@@ -81,8 +81,12 @@ module.exports = function (css, map) {
             designWidth = loaderOptions.designWidth
           } = item || {}
 
-          testResolveRange(include, exclude) && plugins.push(rpx({ mode, comment, designWidth }))
-        })
+          if (testResolveRange(include, exclude)) {
+            // 对同一个资源一旦匹配到，推入一个rpx插件后就不再继续推了
+            plugins.push(rpx({ mode, comment, designWidth }))
+            break
+          }
+        }
       }
 
       // source map
