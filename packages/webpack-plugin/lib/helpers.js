@@ -269,6 +269,7 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
           scoped: !!scoped,
           sourceMap: needCssSourceMap,
           transRpx: options.transRpx,
+          transRpxs: options.transRpxs,
           comment: options.comment,
           designWidth: options.designWidth
         })

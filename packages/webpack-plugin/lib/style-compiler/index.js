@@ -19,6 +19,8 @@ module.exports = function (css, map) {
   const cb = this.async()
   const loaderOptions = loaderUtils.getOptions(this) || {}
 
+  const transRpxs = loaderOptions.transRpxs || []
+
   const {
     mode = (typeof loaderOptions.transRpx === 'string' && loaderOptions.transRpx) || (typeof loaderOptions.transRpx === 'boolean' && loaderOptions.transRpx && 'all'),
     comment = loaderOptions.comment,
@@ -51,6 +53,20 @@ module.exports = function (css, map) {
     )
   }
 
+  const testResolveRange = (include, exclude) => {
+    const matchInclude = include && normalizeCondition(include)
+    const matchExclude = exclude && normalizeCondition(exclude)
+
+    let useRpxPlugin = true
+    if (matchInclude && !matchInclude(this.resourcePath)) {
+      useRpxPlugin = false
+    }
+    if (matchExclude && matchExclude(this.resourcePath)) {
+      useRpxPlugin = false
+    }
+    return useRpxPlugin
+  }
+
   loadPostcssConfig(this)
     .then(config => {
       const plugins = config.plugins.concat(trim)
@@ -63,19 +79,14 @@ module.exports = function (css, map) {
         config.options
       )
 
-      const matchInclude = include && normalizeCondition(include)
-      const matchExclude = exclude && normalizeCondition(exclude)
-
-      let useRpxPlugin = true
-      if (matchInclude && !matchInclude(this.resourcePath)) {
-        useRpxPlugin = false
-      }
-      if (matchExclude && matchExclude(this.resourcePath)) {
-        useRpxPlugin = false
-      }
-
-      if (loaderOptions.transRpx && useRpxPlugin) {
+      if (loaderOptions.transRpx && testResolveRange(include, exclude)) {
         plugins.push(rpx({ mode, comment, designWidth }))
+      }
+
+      if (transRpxs.length) {
+        transRpxs.forEach(item => {
+          testResolveRange(item.include, item.exclude) && plugins.push(rpx({ mode: item.mode, comment: item.comment, designWidth: item.designWidth }))
+        })
       }
 
       // source map
