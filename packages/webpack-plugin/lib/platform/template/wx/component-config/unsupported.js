@@ -36,12 +36,12 @@ module.exports = function ({ print }) {
     {
       supportedTargets: ['qq'],
       test: qqUnsupportedExp,
-      ali: qqUnsupportedTagError
+      qq: qqUnsupportedTagError
     },
     {
       supportedTargets: ['tt'],
       test: ttUnsupportedExp,
-      ali: ttUnsupportedTagError
+      tt: ttUnsupportedTagError
     }
   ]
 }
