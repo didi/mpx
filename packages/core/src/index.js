@@ -5,6 +5,7 @@ import { injectMixins } from './core/injectMixins'
 import { watch } from './core/watcher'
 import { extend } from './helper/utils'
 import { setConvertRule } from './convertor/convertor'
+import { getMixin } from './core/mergeOptions'
 
 export function createApp (config, ...rest) {
   const mpx = new EXPORT_MPX()
@@ -21,7 +22,7 @@ export function createComponent (config, ...rest) {
   platform.createComponent(extend({ proto: mpx.proto }, config), ...rest)
 }
 
-export { createStore, toPureObject, observable, extendObservable, watch, createAction }
+export { createStore, toPureObject, observable, extendObservable, watch, createAction, getMixin }
 
 function extendProps (target, proxyObj, rawProps, option) {
   const keys = Object.getOwnPropertyNames(proxyObj)
@@ -84,7 +85,8 @@ const APIs = {
   get,
   remove,
   setConvertRule,
-  createAction
+  createAction,
+  getMixin
 }
 
 // 实例属性
