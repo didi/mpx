@@ -19,15 +19,7 @@ module.exports = function (css, map) {
   const cb = this.async()
   const loaderOptions = loaderUtils.getOptions(this) || {}
 
-  const transRpxs = loaderOptions.transRpxs || []
-
-  const {
-    mode = (typeof loaderOptions.transRpx === 'string' && loaderOptions.transRpx) || (typeof loaderOptions.transRpx === 'boolean' && loaderOptions.transRpx && 'all'),
-    comment = loaderOptions.comment,
-    include,
-    exclude,
-    designWidth = loaderOptions.designWidth
-  } = loaderOptions.transRpx || {}
+  const transRpxs = Array.isArray(loaderOptions.transRpx) ? loaderOptions.transRpx : [loaderOptions.transRpx]
 
   const normalizeCondition = (condition) => {
     if (!condition) throw new Error('Expected condition but got falsy value')
@@ -79,13 +71,17 @@ module.exports = function (css, map) {
         config.options
       )
 
-      if (loaderOptions.transRpx && testResolveRange(include, exclude)) {
-        plugins.push(rpx({ mode, comment, designWidth }))
-      }
-
       if (transRpxs.length) {
         transRpxs.forEach(item => {
-          testResolveRange(item.include, item.exclude) && plugins.push(rpx({ mode: item.mode, comment: item.comment, designWidth: item.designWidth }))
+          const {
+            mode = (typeof loaderOptions.transRpx === 'string' && loaderOptions.transRpx) || (typeof loaderOptions.transRpx === 'boolean' && loaderOptions.transRpx && 'all'),
+            comment = loaderOptions.comment,
+            include,
+            exclude,
+            designWidth = loaderOptions.designWidth
+          } = item || {}
+
+          testResolveRange(include, exclude) && plugins.push(rpx({ mode, comment, designWidth }))
         })
       }
 
