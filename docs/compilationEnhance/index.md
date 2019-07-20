@@ -20,9 +20,21 @@ var webpackConfig = {
       {
         test: /\.mpx$/,
         use: MpxWebpackPlugin.loader({
-          // `only`模式下，样式前加上注释/* use rpx */可将该段样式中所有的px转换为rpx
-          transRpx: 'only',
-          comment: 'use rpx'
+          transRpx: [
+            // 可以是对象也可以是数组，数组可以通过include/exclude对不同资源配置不同的转换
+            {
+              // `only`模式下，样式前加上注释/* use rpx */可将该段样式中所有的px转换为rpx
+              transRpx: 'only',
+              comment: 'use rpx',
+              include: resolve('src')
+            },
+            {
+              // 对某些第三方组件库另设转换规则
+              transRpx: 'all',
+              designWidth: 375,
+              include: resolve('node_modules/vant-weapp')
+            }
+          ]
         })
       },
       // 对本地图片资源提供增强，编译成小程序支持的格式 
@@ -83,13 +95,9 @@ webpackconfig = {
 ```
 #### options
 
-- **mode**
-
-  `String`
-
-    - `wx`代表编译微信小程序 
-
-    - `ali`代表编译支付宝程序 
+- **mode** `String` 目前支持的有微信小程序(wx)\支付宝小程序(ali)\百度小程序(swan)\头条小程序(tt)\QQ小程序(qq)
+- **srcMode** `String` 跨平台编译场景下使用，详情请看 [跨平台编译](../platform.md#跨平台编译) 一节
+  
 ----
 ### MpxWebpackPlugin.loader
 
@@ -114,14 +122,11 @@ webpackconfig = {
 
 - **transRpx**
 
-  `Object | boolean | string`
+  `Object | Array | boolean | string`
   
     - `false`关闭转换rpx
-
     - `'all'`普通样式中的px全部转换为rpx，`rpx注释样式`不转换
-
     - `'only'`普通样式中的px全部**不转换**为rpx，`rpx注释样式`转换
-    
     - Object包含属性：mode/comment/designWidth/include/exclude
         > include/exclude属性的用法和webpack对module.rules里的规则是一样的，参考[webpack文档-exclude](https://webpack.js.org/configuration/module/#rule-exclude)
     
