@@ -453,13 +453,7 @@ const wxToAliApi = {
    */
 
   login (options = {}) {
-    let opts
-
-    if (!options.scopes) {
-      opts = changeOpts(options, undefined, { scopes: 'auth_user' })
-    } else {
-      opts = changeOpts(options)
-    }
+    const opts = changeOpts(options)
 
     handleSuccess(opts, res => {
       return changeOpts(res, { authCode: 'code' })
