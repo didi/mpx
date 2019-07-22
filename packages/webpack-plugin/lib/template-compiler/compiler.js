@@ -1523,7 +1523,7 @@ function processElement (el, root, options, meta, injectNodes) {
     processShow(el, options, root)
   }
 
-  if (tranAli) {
+  if (mode === 'ali') {
     processAliStyleClassHack(el, options, root)
   }
 

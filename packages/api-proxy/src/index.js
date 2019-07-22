@@ -6,7 +6,8 @@ export default function install (target, options = {}) {
     usePromise = false, // 是否转为 promise 格式
     whiteList = [], // 不变成 promise 格式的 api
     platform = {},
-    exclude = [] // 转换平台时不转换的 Api
+    exclude = [], // 转换平台时不转换的 Api
+    fallbackMap = {} // 对于不支持的API，允许配置一个映射表，接管不存在的API
   } = options
 
   let { from = '', to = '' } = platform
@@ -30,4 +31,12 @@ export default function install (target, options = {}) {
     from,
     to
   })
+
+  // Fallback Map option
+  Object.keys(fallbackMap)
+    .forEach(k => {
+      if (!target[k]) {
+        target[k] = fallbackMap[k]
+      }
+    })
 }

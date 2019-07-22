@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/core",
-  "version": "2.1.10",
+  "version": "2.1.13",
   "description": "mpx runtime core",
   "keywords": [
     "miniprogram",
@@ -9,7 +9,7 @@
   "author": "donghongping",
   "license": "Apache",
   "module": "src/index.js",
-  "typings": "types/index.d.ts",
+  "types": "@types/index.d.ts",
   "directories": {
     "src": "src"
   },
