@@ -513,8 +513,12 @@ function parseComponent (content, options) {
             sfc.styles.push(currentBlock)
           }
         } else {
-          if (tag === 'script' && currentBlock.type === 'application/json') {
-            tag = 'json'
+          if (tag === 'script') {
+            if (currentBlock.type === 'application/json') {
+              tag = 'json'
+            } else if (currentBlock.name === 'json') {
+              tag = 'json'
+            }
           }
           if (currentBlock.mode) {
             if (currentBlock.mode === mode) {
@@ -556,6 +560,9 @@ function parseComponent (content, options) {
       if (attr.name === 'mode') {
         block.mode = attr.value
       }
+      if (attr.name === 'name') {
+        block.name = attr.value
+      }
     }
   }
 
@@ -567,6 +574,18 @@ function parseComponent (content, options) {
       // line numbers in errors and warnings
       if (currentBlock.type !== 'template' && options.pad) {
         text = padContent(currentBlock, options.pad) + text
+      }
+
+      // 对于<script name="json">的标签，传参调用函数，其返回结果作为json的内容
+      if (currentBlock.type === 'script') {
+        if (currentBlock.name === 'json') {
+          // eslint-disable-next-line no-new-func
+          const func = new Function('module', 'require', '__mpx_mode__', text)
+          // 模拟commonJS执行
+          const m = {}
+          func(m, require, mode)
+          text = JSON.stringify(m.exports, null, '  ')
+        }
       }
       currentBlock.content = text
       currentBlock = null
