@@ -514,9 +514,7 @@ function parseComponent (content, options) {
           }
         } else {
           if (tag === 'script') {
-            if (currentBlock.type === 'application/json') {
-              tag = 'json'
-            } else if (currentBlock.name === 'json') {
+            if (currentBlock.type === 'application/json' || currentBlock.name === 'json') {
               tag = 'json'
             }
           }
@@ -577,15 +575,17 @@ function parseComponent (content, options) {
       }
 
       // 对于<script name="json">的标签，传参调用函数，其返回结果作为json的内容
-      if (currentBlock.type === 'script') {
-        if (currentBlock.name === 'json') {
-          // eslint-disable-next-line no-new-func
-          const func = new Function('module', 'require', '__mpx_mode__', text)
-          // 模拟commonJS执行
-          const m = {}
-          func(m, require, mode)
-          text = JSON.stringify(m.exports, null, '  ')
+      if (currentBlock.type === 'script' && currentBlock.name === 'json') {
+        // eslint-disable-next-line no-new-func
+        // support exports
+        const func = new Function('exports', 'require', 'module', '__mpx_mode__', text)
+        // 模拟commonJS执行
+        const e = {}
+        const m = {
+          exports: e
         }
+        func(e, require, m, mode)
+        text = JSON.stringify(m.exports, null, 2)
       }
       currentBlock.content = text
       currentBlock = null
