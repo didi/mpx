@@ -36,4 +36,24 @@ describe('template should transform correct', function () {
     compiler.serialize(ast)
     expect(warnFn).toHaveBeenCalledWith(`<button>'s property 'open-type' does not support '[{{ aaa }}]' value in ali environment!`)
   })
+
+  it('should not report error about transform if node removed', () => {
+    const input = `
+    <view>test</view>
+    <live-pusher wx:if="{{__mpx_mode__ === 'wx'}}"></live-pusher>
+    `
+    const errorFn = jest.fn(console.error)
+    const warnFn = jest.fn(console.warn)
+
+    const parsed = compiler.parse(input, {
+      usingComponents: [],
+      srcMode: 'wx',
+      mode: 'ali',
+      warn: warnFn,
+      error: errorFn
+    })
+    const ast = parsed.root
+    compiler.serialize(ast)
+    expect(errorFn).not.toHaveBeenCalled()
+  })
 })
