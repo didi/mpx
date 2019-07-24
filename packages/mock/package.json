@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/mock",
-  "version": "2.1.14",
+  "version": "2.1.15",
   "description": "",
   "main": "src/index.js",
   "module": "src/index.js",
