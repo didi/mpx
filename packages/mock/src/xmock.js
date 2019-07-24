@@ -67,11 +67,11 @@ export default function xmock (mockRequstList) {
 }
 
 function match (expected, actual) {
-  if (type(expected) === 'string') {
+  if (type(actual) === 'string') {
     return expected === actual
   }
-  if (type(expected) === 'regexp') {
-    return expected.test(actual)
+  if (type(actual) === 'regexp') {
+    return actual.test(expected)
   }
 }
 

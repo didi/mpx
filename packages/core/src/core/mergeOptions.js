@@ -29,6 +29,11 @@ export default function mergeOptions (options = {}, type, needConvert = true) {
   return transformHOOKS(newOptions)
 }
 
+export function getMixin (mixin = {}) {
+  // 用于ts反向推导mixin类型
+  return mixin.mixins ? extractMixins({}, mixin, true) : mixin
+}
+
 function extractMixins (mergeOptions, options, needConvert) {
   // 如果编译阶段behaviors都被当做mixins处理，那么进行别名替换
   if (options.behaviors && type(options.behaviors[0]) === 'Object') {
@@ -49,6 +54,7 @@ function extractMixins (mergeOptions, options, needConvert) {
     options = extractObservers(options)
   }
   mergeMixins(mergeOptions, options)
+  return mergeOptions
 }
 
 function extractLifetimes (options) {
