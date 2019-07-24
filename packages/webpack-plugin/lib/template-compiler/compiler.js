@@ -103,6 +103,7 @@ const decodedAttrWithNewLines = /[<>"&\n\t]/g
 
 const tagRES = /(\{\{(?:.|\n)+?\}\})(?!})/
 
+// eslint-disable-next-line no-unused-vars
 function encodeAttr (value, shouldDecodeNewlines) {
   const sArr = value.split(tagRES)
   const re = shouldDecodeNewlines ? decodedAttrWithNewLines : decodedAttr
