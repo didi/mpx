@@ -1579,6 +1579,23 @@ function postProcessComponentIs (el) {
   return el
 }
 
+function stringifyAttr (val) {
+  if (val) {
+    const hasSingle = val.indexOf('\'') > -1
+    const hasDouble = val.indexOf('"') > -1
+
+    if (hasSingle && hasDouble) {
+      val = val.replace(/'/g, '"')
+    }
+    if (hasDouble) {
+      return `'${val}'`
+    } else {
+      return `"${val}"`
+    }
+  }
+  return val
+}
+
 function serialize (root) {
   function walk (node) {
     let result = ''
@@ -1597,7 +1614,7 @@ function serialize (root) {
             result += ' ' + attr.name
             let value = attr.value
             if (value != null && value !== '') {
-              result += '=' + stringify(encodeAttr(value, false))
+              result += '=' + stringifyAttr(value)
             }
           })
           if (node.unary) {
