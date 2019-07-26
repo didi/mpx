@@ -12,7 +12,8 @@ createApp(object)
 
 ### createPage(options)
 
-> 类微信小程序（微信、百度、头条等）内部使用[Component的方式创建页面](https://developers.weixin.qq.com/miniprogram/dev/framework/custom-component/component.html)，所以除了支持页面的生命周期之外还同时`支持组件的一切特性`。当使用Component创建页面时，`页面生命周期`需要写在`methods内部`（微信小程序原生规则），mpx进行了统一封装转换，页面生命周期都写在最外层即可
+> 类微信小程序（微信、百度、头条等）内部使用[Component的方式创建页面](https://developers.weixin.qq.com/miniprogram/dev/framework/custom-component/component.html)，所以除了支持页面的生命周期之外还同时`支持组件的一切特性`。当使用Component创建页面时，`页面生命周期`需要写在`methods内部`（微信小程序原生规则），mpx进行了统一封装转换，`页面生命周期都写在最外层`即可
+
 > options的具体形式，除了computed、watch这类mpx扩展特性之外，其他的属性都参照原生小程序的官方文档即可。
 
 ``` js
