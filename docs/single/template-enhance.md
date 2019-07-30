@@ -248,7 +248,7 @@ wx:model默认监听`input`事件使用`value`属性传值，如果我们希望�
 <script>
 import {createComponent} from '@mpxjs/core'
   createComponent({
-    onReady () {
+    ready () {
       this.$refs.tref.fields({size: true}, function (res) {
         console.log(res)
       }).exec()
