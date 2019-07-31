@@ -1,8 +1,9 @@
 import { error } from '../utils'
-import wxToAliApi from './wxToAli'
+import getWxToAliApi from './wxToAli'
 import promisify from '../promisify'
 
 function transformApi (target, options) {
+  const wxToAliApi = getWxToAliApi({ optimize: options.optimize })
   const platformMap = {
     'wx_ali': wxToAliApi,
     'qq_ali': wxToAliApi,
