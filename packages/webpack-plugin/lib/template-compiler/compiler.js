@@ -1001,7 +1001,7 @@ function processBindEvent (el) {
         }
       ])
       eventConfigMap[type] = configs.map((item) => {
-        return item.expStr
+        return item.expStr.replace(/"/g, '\'')
       })
     } else {
       delete eventConfigMap[type]
