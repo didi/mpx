@@ -35,8 +35,6 @@ const getWxToAliApi = ({ optimize = false }) => {
     getSystemInfoSync () {
       if (optimize) {
         if (systemInfo) return systemInfo
-        else systemInfo = ALI_OBJ.getSystemInfoSync()
-        return systemInfo
       }
 
       let res = ALI_OBJ.getSystemInfoSync() || {}
@@ -47,6 +45,8 @@ const getWxToAliApi = ({ optimize = false }) => {
       if (!res.windowHeight) {
         res.windowHeight = Math.floor(res.screenHeight * res.windowWidth / res.screenWidth) - 50
       }
+
+      if (optimize) systemInfo = res
 
       return res
     },
