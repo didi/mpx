@@ -66,9 +66,6 @@ mpx.createComponent({
       },
       immediate: true // 是否首次执行一次
     }
-  },
-  onLoad () {
-    this.test++
   }
 })
 createComponent(object)
