@@ -1,5 +1,6 @@
 const hash = require('hash-sum')
 const path = require('path')
+const ConcatSource = require('webpack-sources').ConcatSource
 const stripExtension = require('./utils/strip-extention')
 const loaderUtils = require('loader-utils')
 const config = require('./config')
@@ -7,6 +8,8 @@ const createHelpers = require('./helpers')
 const InjectDependency = require('./dependency/InjectDependency')
 const stringifyQuery = require('./utils/stringify-query')
 const async = require('async')
+
+const EXT_MPX_JSON = '.mpxjson.js';
 
 module.exports = function (content) {
   this.cacheable()
@@ -41,6 +44,7 @@ module.exports = function (content) {
   const hasComment = false
   const isNative = true
 
+  const compilation = this._compilation
   const projectRoot = this._compilation.__mpx__.projectRoot
   const mode = this._compilation.__mpx__.mode
   const globalSrcMode = this._compilation.__mpx__.srcMode
@@ -54,21 +58,67 @@ module.exports = function (content) {
   const fs = this._compiler.inputFileSystem
   const typeExtMap = Object.assign({}, config[srcMode].typeExtMap)
 
+  function compileMPXJSON(callback) {
+    fs.readFile(resource + EXT_MPX_JSON, (err, raw) => {
+      if (err) {
+        callback(err)
+      } else {
+        try {
+          const source = raw.toString('utf-8');
+          // eslint-disable-next-line no-new-func
+          const func = new Function('exports', 'require', 'module', '__mpx_mode__', source)
+          // 模拟commonJS执行
+          // support exports
+          const e = {}
+          const m = {
+            exports: e
+          }
+          func(e, require, m, mode)
+          const text = JSON.stringify(m.exports, null, 2)
+          callback(null, { content: text, useMPXJSON: true })
+        } catch (e) {
+          callback(e)
+        }
+      }
+    })
+  }
+
   // 先读取json获取usingComponents信息
   async.waterfall([
     (callback) => {
       async.forEachOf(typeExtMap, (ext, key, callback) => {
         fs.stat(resource + ext, (err) => {
-          if (err) delete typeExtMap[key]
-          callback()
+          if (err) {
+            if (ext === typeExtMap['json']) {
+              // .mpxjson.js也没有才删除
+              fs.stat(resource + EXT_MPX_JSON, (err) => {
+                if (err) {
+                  delete typeExtMap[key]
+                }
+                callback()
+              });
+            } else {
+              delete typeExtMap[key]
+              callback()
+            }
+          } else {
+            callback()
+          }
         })
       }, callback)
     },
     (callback) => {
-      fs.readFile(resource + typeExtMap['json'], (err, raw) => {
-        callback(err, raw.toString('utf-8'))
-      })
-    }, (content, callback) => {
+      // 对原生写法增强json写法，可以用js来写json，尝试找.mpxjson.js文件，找不到用回json的内容
+      fs.stat(resource + EXT_MPX_JSON, (err) => {
+        if (err) {
+          fs.readFile(resource + typeExtMap['json'], (err, raw) => {
+            callback(err, { content: raw.toString('utf-8') })
+          })
+        } else {
+          compileMPXJSON(callback)
+        }
+      });
+    }, ({ content, useMPXJSON }, callback) => {
       let usingComponents = [].concat(this._compilation.__mpx__.usingComponents)
       try {
         let ret = JSON.parse(content)
@@ -151,7 +201,27 @@ module.exports = function (content) {
       let output = 'global.currentModuleId;\n'
 
       for (let type in typeExtMap) {
-        output += `/* ${type} */\n${getRequire(type)}\n\n`
+        if (type === 'json') {
+          if (useMPXJSON) {
+            // 用了MPXJSON的话，强制生成目标json
+            compilation.hooks.additionalAssets.tapAsync('MpxWebpackPlugin', (callback) => {
+              const resourcePath = pagesMap[resource] || componentsMap[resource]
+              const s = new ConcatSource()
+              s.add(content)
+              // delete compilation.assets[resourcePath + EXT_MPX_JSON]
+              compilation.assets[resourcePath + config[mode].typeExtMap['json']] = s
+              callback()
+            })
+
+            let _src = resource + EXT_MPX_JSON
+            this.addDependency(_src)
+            // 否则走原来的流程
+          } else {
+            output += `/* ${type} */\n${getRequire(type)}\n\n`
+          }
+        } else {
+          output += `/* ${type} */\n${getRequire(type)}\n\n`
+        }
       }
       callback(null, output)
     }
