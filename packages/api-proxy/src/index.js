@@ -7,7 +7,8 @@ export default function install (target, options = {}) {
     whiteList = [], // 不变成 promise 格式的 api
     platform = {},
     exclude = [], // 转换平台时不转换的 Api
-    fallbackMap = {} // 对于不支持的API，允许配置一个映射表，接管不存在的API
+    fallbackMap = {}, // 对于不支持的API，允许配置一个映射表，接管不存在的API
+    optimize = false // 内部一些实验优化的开关，外部用户慎用
   } = options
 
   let { from = '', to = '' } = platform
@@ -29,7 +30,8 @@ export default function install (target, options = {}) {
     whiteList,
     exclude,
     from,
-    to
+    to,
+    optimize
   })
 
   // Fallback Map option
