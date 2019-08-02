@@ -80,7 +80,7 @@ module.exports = function (content) {
         try {
           const source = raw.toString('utf-8')
           const text = compileMPXJSON(source)
-          callback(null, { content: text, useMPXJSON: true })
+          callback(null, text)
         } catch (e) {
           callback(e)
         }
@@ -88,20 +88,27 @@ module.exports = function (content) {
     })
   }
 
+  let useMPXJSON = false
+
   // 先读取json获取usingComponents信息
   async.waterfall([
+    (callback) => {
+      fs.stat(resource + EXT_MPX_JSON, (err) => {
+        if (!err) {
+          useMPXJSON = true
+        }
+        callback()
+      })
+    },
     (callback) => {
       async.forEachOf(typeExtMap, (ext, key, callback) => {
         fs.stat(resource + ext, (err) => {
           if (err) {
             if (ext === typeExtMap['json']) {
               // .mpxjson.js也没有才删除
-              fs.stat(resource + EXT_MPX_JSON, (err) => {
-                if (err) {
-                  delete typeExtMap[key]
-                }
-                callback()
-              });
+              if (!useMPXJSON) {
+                delete typeExtMap[key]
+              }
             } else {
               delete typeExtMap[key]
               callback()
@@ -114,16 +121,14 @@ module.exports = function (content) {
     },
     (callback) => {
       // 对原生写法增强json写法，可以用js来写json，尝试找.mpxjson.js文件，找不到用回json的内容
-      fs.stat(resource + EXT_MPX_JSON, (err) => {
-        if (err) {
-          fs.readFile(resource + typeExtMap['json'], (err, raw) => {
-            callback(err, { content: raw.toString('utf-8') })
-          })
-        } else {
-          tryEvalMPXJSON(callback)
-        }
-      });
-    }, ({ content, useMPXJSON }, callback) => {
+      if (useMPXJSON) {
+        tryEvalMPXJSON(callback)
+      } else {
+        fs.readFile(resource + typeExtMap['json'], (err, raw) => {
+          callback(err, { content: raw.toString('utf-8') })
+        })
+      }
+    }, (content, callback) => {
       let usingComponents = [].concat(this._compilation.__mpx__.usingComponents)
       try {
         let ret = JSON.parse(content)
