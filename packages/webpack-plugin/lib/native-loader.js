@@ -210,7 +210,7 @@ module.exports = function (content) {
             localQuery.__component = true
             _src += stringifyQuery(localQuery)
 
-            output += `/* MPX JSON *\n${getRequireForSrc('json', { src: _src })}\n\n/`
+            output += `/* MPX JSON */\n${getRequireForSrc('json', { src: _src })}\n\n`
             // 否则走原来的流程
           } else {
             output += `/* ${type} */\n${getRequire(type)}\n\n`
