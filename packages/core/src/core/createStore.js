@@ -19,11 +19,13 @@ function transformGetters (getters, module, store) {
       console.warn('【MPX ERROR】', new Error(`duplicate getter type: ${key}`))
     }
     defineGetter(newGetters, key, function () {
-      if (store.withThis) return getters[key].call({
-        state: module.state,
-        getters: module.getters,
-        rootState: store.state
-      })
+      if (store.withThis) {
+        return getters[key].call({
+          state: module.state,
+          getters: module.getters,
+          rootState: store.state
+        })
+      }
       return getters[key](module.state, store.getters, store.state)
     })
   }

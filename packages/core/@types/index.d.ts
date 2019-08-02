@@ -294,7 +294,9 @@ declare class Store<S = {}, G = {}, M = {}, A = {}, D extends Deps = {}> {
 
   commit: GetCommit<M, D>
 
-  mapState<K extends keyof S>(maps: K[]): Pick<S, K>
+  mapState<K extends keyof S>(maps: K[]): {
+    [I in K]: () => S[I]
+  }
   mapState(depPath: string, maps: string[]): object
 
   mapGetters<K extends keyof G>(maps: K[]): {
@@ -358,8 +360,12 @@ declare class StoreWithThis<S = {}, G = {}, M = {}, A = {}, D extends Deps = {}>
 
   commit: GetDispatchAndCommitWithThis<M, D>
 
-  mapState<K extends keyof S>(maps: K[]): Pick<S, K>
-  mapState(depPath: string, maps: string[]): object
+  mapState<K extends keyof S>(maps: K[]): {
+    [I in K]: () => S[I]
+  }
+  mapState(depPath: string, maps: string[]): {
+    [key: string]: () => any
+  }
 
   mapGetters<K extends keyof G>(maps: K[]): Pick<G, K>
   mapGetters(depPath: string, maps: string[]): {
