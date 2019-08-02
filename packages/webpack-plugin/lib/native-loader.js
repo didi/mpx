@@ -6,9 +6,10 @@ const config = require('./config')
 const createHelpers = require('./helpers')
 const InjectDependency = require('./dependency/InjectDependency')
 const stringifyQuery = require('./utils/stringify-query')
+const mpxJSON = require('./utils/mpx-json')
 const async = require('async')
 
-const EXT_MPX_JSON = '.mpxjson.js';
+const EXT_MPX_JSON = '.json.js'
 
 module.exports = function (content) {
   this.cacheable()
@@ -56,21 +57,8 @@ module.exports = function (content) {
   const fs = this._compiler.inputFileSystem
   const typeExtMap = Object.assign({}, config[srcMode].typeExtMap)
 
-  function compileMPXJSON(source) {
-    // eslint-disable-next-line no-new-func
-    const func = new Function('exports', 'require', 'module', '__mpx_mode__', source)
-    // 模拟commonJS执行
-    // support exports
-    const e = {}
-    const m = {
-      exports: e
-    }
-    func(e, require, m, mode)
-    return JSON.stringify(m.exports, null, 2)
-  }
-
-  function tryEvalMPXJSON(callback) {
-    let _src = resource + EXT_MPX_JSON
+  function tryEvalMPXJSON (callback) {
+    const _src = resource + EXT_MPX_JSON
     loaderContext.addDependency(_src)
 
     fs.readFile(_src, (err, raw) => {
@@ -79,7 +67,7 @@ module.exports = function (content) {
       } else {
         try {
           const source = raw.toString('utf-8')
-          const text = compileMPXJSON(source)
+          const text = mpxJSON.compileMPXJSONText({ source, mode })
           callback(null, text)
         } catch (e) {
           callback(e)
@@ -105,7 +93,7 @@ module.exports = function (content) {
         fs.stat(resource + ext, (err) => {
           if (err) {
             if (ext === typeExtMap['json']) {
-              // .mpxjson.js也没有才删除
+              // .json.js也没有才删除
               if (!useMPXJSON) {
                 delete typeExtMap[key]
               }
@@ -214,9 +202,15 @@ module.exports = function (content) {
         if (type === 'json') {
           if (useMPXJSON) {
             // 用了MPXJSON的话，强制生成目标json
-            const resourcePath = pagesMap[resource] || componentsMap[resource]
-            const url = resourcePath + config[mode].typeExtMap['json']
-            this.emitFile(url, content)
+            let _src = resource + EXT_MPX_JSON
+            this.addDependency(_src)
+
+            let localQuery = Object.assign({}, queryObj)
+            localQuery.__resource = resource
+            localQuery.__component = true
+            _src += stringifyQuery(localQuery)
+
+            output += `/* MPX JSON *\n${getRequireForSrc('json', { src: _src })}\n\n/`
             // 否则走原来的流程
           } else {
             output += `/* ${type} */\n${getRequire(type)}\n\n`
