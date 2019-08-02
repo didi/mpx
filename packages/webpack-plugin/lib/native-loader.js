@@ -1,11 +1,5 @@
-const NodeTemplatePlugin = require('webpack/lib/node/NodeTemplatePlugin')
-const NodeTargetPlugin = require('webpack/lib/node/NodeTargetPlugin')
-const LibraryTemplatePlugin = require('webpack/lib/LibraryTemplatePlugin')
-const SingleEntryPlugin = require('webpack/lib/SingleEntryPlugin')
-
 const hash = require('hash-sum')
 const path = require('path')
-const ConcatSource = require('webpack-sources').ConcatSource
 const stripExtension = require('./utils/strip-extention')
 const loaderUtils = require('loader-utils')
 const config = require('./config')
@@ -49,7 +43,6 @@ module.exports = function (content) {
   const hasComment = false
   const isNative = true
 
-  const mainCompilation = this._compilation
   const projectRoot = this._compilation.__mpx__.projectRoot
   const mode = this._compilation.__mpx__.mode
   const globalSrcMode = this._compilation.__mpx__.srcMode
@@ -77,7 +70,10 @@ module.exports = function (content) {
   }
 
   function tryEvalMPXJSON(callback) {
-    fs.readFile(resource + EXT_MPX_JSON, (err, raw) => {
+    let _src = resource + EXT_MPX_JSON
+    loaderContext.addDependency(_src)
+
+    fs.readFile(_src, (err, raw) => {
       if (err) {
         callback(err)
       } else {
@@ -209,61 +205,13 @@ module.exports = function (content) {
       // 触发webpack global var 注入
       let output = 'global.currentModuleId;\n'
 
-      let _promise
-
       for (let type in typeExtMap) {
         if (type === 'json') {
           if (useMPXJSON) {
-            _promise = new Promise((resolve, reject) => {
-              let _src = resource + EXT_MPX_JSON
-              const resourcePath = pagesMap[resource] || componentsMap[resource]
-
-              const childFilename = 'mpx-json-filename'
-              const outputOptions = {
-                filename: childFilename
-              }
-              const childCompiler = mainCompilation.createChildCompiler(_src, outputOptions, [
-                new NodeTemplatePlugin(outputOptions),
-                new NodeTargetPlugin(),
-                new LibraryTemplatePlugin(null, 'commonjs2'),
-                new SingleEntryPlugin(this.context, _src, resourcePath),
-              ])
-
-              let compiledMPXJSON
-              childCompiler.hooks.afterCompile.tapAsync('MpxWebpackPlugin', (compilation, callback) => {
-                const source = compilation.assets[childFilename] && compilation.assets[childFilename].source()
-
-                // Remove all chunk assets
-                compilation.chunks.forEach((chunk) => {
-                  chunk.files.forEach((file) => {
-                    delete compilation.assets[file]
-                  })
-                })
-
-                compiledMPXJSON = compileMPXJSON(source)
-
-                // 用了MPXJSON的话，强制生成目标json
-                const s = new ConcatSource()
-                s.add(compiledMPXJSON)
-                compilation.assets[resourcePath + config[mode].typeExtMap['json']] = s
-
-                callback()
-              })
-
-              childCompiler.runAsChild((err, entries, childCompilation) => {
-                if (err) {
-                  reject(err)
-                } else {
-                  childCompilation.fileDependencies.forEach((dep) => {
-                    this.addDependency(dep)
-                  }, this)
-                  childCompilation.contextDependencies.forEach((dep) => {
-                    this.addContextDependency(dep)
-                  }, this)
-                  resolve()
-                }
-              });
-            })
+            // 用了MPXJSON的话，强制生成目标json
+            const resourcePath = pagesMap[resource] || componentsMap[resource]
+            const url = resourcePath + config[mode].typeExtMap['json']
+            this.emitFile(url, content)
             // 否则走原来的流程
           } else {
             output += `/* ${type} */\n${getRequire(type)}\n\n`
@@ -273,14 +221,7 @@ module.exports = function (content) {
         }
       }
 
-      if (_promise) {
-        _promise
-          .then(() => {
-            callback(null, output)
-          }, callback)
-      } else {
-        callback(null, output)
-      }
+      callback(null, output)
     }
   ], nativeCallback)
 }
