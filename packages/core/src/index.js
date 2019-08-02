@@ -24,6 +24,11 @@ export function createComponent (config, ...rest) {
 
 export { createStore, toPureObject, observable, extendObservable, watch, createAction, getMixin }
 
+export function getComputed (computed) {
+  // ts computed类型推导辅助函数
+  return computed
+}
+
 function extendProps (target, proxyObj, rawProps, option) {
   const keys = Object.getOwnPropertyNames(proxyObj)
   for (const key of keys) {
@@ -86,7 +91,8 @@ const APIs = {
   remove,
   setConvertRule,
   createAction,
-  getMixin
+  getMixin,
+  getComputed
 }
 
 // 实例属性

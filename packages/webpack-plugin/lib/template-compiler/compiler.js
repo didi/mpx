@@ -1584,6 +1584,8 @@ function stringifyAttr (val) {
   if (val) {
     const hasSingle = val.indexOf('\'') > -1
     const hasDouble = val.indexOf('"') > -1
+    // 移除属性中换行
+    val = val.replace(/\n/g, '')
 
     if (hasSingle && hasDouble) {
       val = val.replace(/'/g, '"')
