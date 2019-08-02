@@ -1,6 +1,6 @@
 import { toJS as toPureObject, extendObservable, observable, set, get, remove, action as createAction } from 'mobx'
 import * as platform from './platform'
-import createStore from './core/createStore'
+import createStore, { createStoreWithThis } from './core/createStore'
 import { injectMixins } from './core/injectMixins'
 import { watch } from './core/watcher'
 import { extend } from './helper/utils'
@@ -22,7 +22,7 @@ export function createComponent (config, ...rest) {
   platform.createComponent(extend({ proto: mpx.proto }, config), ...rest)
 }
 
-export { createStore, toPureObject, observable, extendObservable, watch, createAction, getMixin }
+export { createStore, createStoreWithThis, toPureObject, observable, extendObservable, watch, createAction, getMixin }
 
 export function getComputed (computed) {
   // ts computed类型推导辅助函数
@@ -79,6 +79,7 @@ const APIs = {
   createPage,
   createComponent,
   createStore,
+  createStoreWithThis,
   toPureObject,
   mixin: injectMixins,
   injectMixins,

@@ -11,6 +11,7 @@ import {
 } from '../helper/utils'
 
 import mapStore from './mapStore'
+
 function transformGetters (getters, module, store) {
   const newGetters = {}
   for (let key in getters) {
@@ -18,6 +19,11 @@ function transformGetters (getters, module, store) {
       console.warn('【MPX ERROR】', new Error(`duplicate getter type: ${key}`))
     }
     defineGetter(newGetters, key, function () {
+      if (store.withThis) return getters[key].call({
+        state: module.state,
+        getters: module.getters,
+        rootState: store.state
+      })
       return getters[key](module.state, store.getters, store.state)
     })
   }
@@ -31,6 +37,7 @@ function transformMutations (mutations, module, store) {
       console.warn('【MPX ERROR】', new Error(`duplicate mutation type: ${key}`))
     }
     newMutations[key] = action(function (...payload) {
+      if (store.withThis) return mutations[key].apply({ state: module.state }, payload)
       return mutations[key](module.state, ...payload)
     })
   }
@@ -44,13 +51,20 @@ function transformActions (actions, module, store) {
       console.warn('【MPX ERROR】', new Error(`duplicate action type: ${key}`))
     }
     newActions[key] = function (...payload) {
-      const result = actions[key]({
+      const context = {
         rootState: store.state,
         state: module.state,
         getters: store.getters,
         dispatch: store.dispatch.bind(store),
         commit: store.commit.bind(store)
-      }, ...payload)
+      }
+
+      let result
+      if (store.withThis) {
+        result = actions[key].apply(context, payload)
+      } else {
+        result = actions[key](context, ...payload)
+      }
       // action一定返回一个promise
       if (result && typeof result.then === 'function' && typeof result.catch === 'function') {
         return result
@@ -82,6 +96,7 @@ function mergeDeps (module, deps, getterKeys) {
 
 class Store {
   constructor (options) {
+    this.withThis = options.withThis
     this.getters = {}
     this.mutations = {}
     this.actions = {}
@@ -146,5 +161,10 @@ class Store {
 }
 
 export default function createStore (options) {
+  return new Store(options)
+}
+
+export function createStoreWithThis (options) {
+  options.withThis = true
   return new Store(options)
 }
