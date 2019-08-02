@@ -11,7 +11,7 @@ function transformApiForProxy (context, currentInject) {
   if (Object.getOwnPropertyDescriptor(context, 'setData').configurable) {
     Object.defineProperty(context, 'setData', {
       get () {
-        return context.$mpxProxy.setData.bind(context.$mpxProxy)
+        return context.__mpxProxy.setData.bind(context.__mpxProxy)
       },
       configurable: true
     })
@@ -93,11 +93,11 @@ export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
       this.$rawOptions = rawOptions
       // 创建proxy对象
       const mpxProxy = new MPXProxy(rawOptions, this)
-      this.$mpxProxy = mpxProxy
-      this.$mpxProxy.created(...params)
+      this.__mpxProxy = mpxProxy
+      this.__mpxProxy.created(...params)
     },
     deriveDataFromProps (nextProps) {
-      if (this.$mpxProxy && this.$mpxProxy.isMounted() && nextProps && nextProps !== this.props) {
+      if (this.__mpxProxy && this.__mpxProxy.isMounted() && nextProps && nextProps !== this.props) {
         if (this.$rawOptions.__nativeRender__) {
           const newData = {}
           Object.keys(nextProps).forEach((key) => {
@@ -105,7 +105,7 @@ export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
               newData[key] = nextProps[key]
             }
           })
-          this.$mpxProxy.setData(newData)
+          this.__mpxProxy.setData(newData)
         } else {
           Object.keys(nextProps).forEach(key => {
             if (!key.startsWith('$') && typeof nextProps[key] !== 'function' && !comparer.structural(this.props[key], nextProps[key])) {
@@ -116,17 +116,17 @@ export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
       }
     },
     didUpdate () {
-      this.$mpxProxy && this.$mpxProxy.updated()
+      this.__mpxProxy && this.__mpxProxy.updated()
     },
     [hookNames[1]] () {
-      if (this.$mpxProxy) {
-        this.$mpxProxy.mounted()
+      if (this.__mpxProxy) {
+        this.__mpxProxy.mounted()
       } else {
         console.error('请在支付宝开发工具的详情设置里面，启用component2编译。依赖基础库版本 >=1.14.0')
       }
     },
     [hookNames[2]] () {
-      this.$mpxProxy && this.$mpxProxy.destroyed()
+      this.__mpxProxy && this.__mpxProxy.destroyed()
     }
   }]
   rawOptions.mixins = rawOptions.mixins ? rootMixins.concat(rawOptions.mixins) : rootMixins

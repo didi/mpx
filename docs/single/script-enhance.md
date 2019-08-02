@@ -165,9 +165,40 @@ component ready: 电视
 ```
 
 
-## 页面生命周期
+## 页面生命周期转换
 
-除了小程序自定义组件本身的生命周期外，`mpx`提供了两个页面生命周期钩子，`pageShow`和`pageHide`，用于监听当前所属页面的显示或隐藏状态。
+除了类支付宝小程序之外，其他平台都能以组件的方式创建页面，因此mpx内部默认是以Component来创建页面的（微信小程序、百度小程序、头条小程序等类微信小程序）。`[按官方标准](https://developers.weixin.qq.com/miniprogram/dev/framework/custom-component/component.html)`，以Component创建页面时，页面特有的生命周期（onLoad、onReady、onShow等等）都必须`定义在methods内部`。为了进行统一处理，使用`mpx.createPage创建页面`时，可以统一使用标准页面的格式，`所有生命周期都定义在最外层即可`，mpx内部会根据普通进行`自动转换`到methods里面
+
+```html
+<script>
+import {createPage} from '@mpxjs/core'
+// 类微信小程序
+createPage({
+  onLoad () {
+    // 页面加载
+    console.log('page onload')
+  },
+  onShow () {
+    // 页面显示
+    console.log('page onload')
+  },
+  onPullDownRefresh () {
+    // 需在json域开启enablePullDownRefresh
+    console.log('page onPullDownRefresh')
+  },
+  attached () {
+    // 以Component创建页面，那么页面也将具体组件的生命周期
+  },
+  detached () {
+    // 以Component创建页面，那么页面也将具体组件的生命周期
+  }
+})
+</script>
+```
+
+
+## 组件生命周期扩展
+除了小程序自定义组件本身的生命周期外，`mpx`为组件本身提供了两个生命周期钩子，`pageShow`和`pageHide`，用于监听当前组件所属页面的显示或隐藏状态。
 
 > 适用于【组件】
 

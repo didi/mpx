@@ -243,7 +243,7 @@ module.exports = {
           }
           arr.push(`${key}:${value}`)
         }
-        return ` {${arr.join(',')}} `
+        return `({${arr.join(',')}})`
       }
     },
     wxs: {

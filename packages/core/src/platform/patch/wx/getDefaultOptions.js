@@ -28,9 +28,9 @@ function transformProperties (properties) {
       newFiled = extend({}, rawFiled)
     }
     newFiled.observer = function (value, oldValue) {
-      if (this.$mpxProxy) {
+      if (this.__mpxProxy) {
         this[key] = value
-        this.$mpxProxy.updated()
+        this.__mpxProxy.updated()
       }
     }
     newProps[key] = newFiled
@@ -43,7 +43,7 @@ function transformApiForProxy (context, currentInject) {
   Object.defineProperties(context, {
     setData: {
       get () {
-        return this.$mpxProxy.setData.bind(this.$mpxProxy)
+        return this.__mpxProxy.setData.bind(this.__mpxProxy)
       },
       configurable: true
     },
@@ -120,29 +120,29 @@ function initProxy (context, rawOptions, currentInject) {
   context.$rawOptions = rawOptions
   // 创建proxy对象
   const mpxProxy = new MPXProxy(rawOptions, context)
-  context.$mpxProxy = mpxProxy
+  context.__mpxProxy = mpxProxy
   // 组件监听视图数据更新, attached之后才能拿到properties
-  context.$mpxProxy.created()
+  context.__mpxProxy.created()
 }
 
 export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
   const rootMixins = [getRootMixin({
     onLoad () {
       // 百度小程序page onLoad > attached
-      if (!this.$mpxProxy) {
+      if (!this.__mpxProxy) {
         initProxy(this, rawOptions, currentInject)
       }
     },
     attached () {
-      if (!this.$mpxProxy) {
+      if (!this.__mpxProxy) {
         initProxy(this, rawOptions, currentInject)
       }
     },
     ready () {
-      this.$mpxProxy && this.$mpxProxy.mounted()
+      this.__mpxProxy && this.__mpxProxy.mounted()
     },
     detached () {
-      this.$mpxProxy && this.$mpxProxy.destroyed()
+      this.__mpxProxy && this.__mpxProxy.destroyed()
     }
   })]
   rawOptions.mixins = rawOptions.mixins ? rootMixins.concat(rawOptions.mixins) : rootMixins
