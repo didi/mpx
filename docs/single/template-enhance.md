@@ -37,12 +37,7 @@
 父组件
 ```html
 <template>
-  <view>
-  <!--直接将for中的item/index传入wx:style和wx:class中无法正常运行-->
   <view wx:for="{{list}}" wx:style="{{item.style}}">{{item.name}}</view>
-  <!--将item/index传入包装组件中，再在包装组件内使用wx:style和wx:class进行样式和类名绑定-->
-  <wrap wx:for="{{list}}" item="{{item}}"></wrap>
-  </view>
 </template>
 
 <script>
@@ -63,22 +58,6 @@
           }
         }         
       ]
-    }
-  })
-</script>
-```
-
-子组件
-```html
-<template>
-  <view wx:style="{{item.style}}">{{item.name}}</view>
-</template>
-
-<script>
-  import {createComponent} from '@mpxjs/core'
-  createComponent({
-    properties: {
-      item: Object
     }
   })
 </script>
