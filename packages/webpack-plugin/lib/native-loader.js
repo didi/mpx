@@ -59,8 +59,6 @@ module.exports = function (content) {
 
   function tryEvalMPXJSON (callback) {
     const _src = resource + EXT_MPX_JSON
-    loaderContext.addDependency(_src)
-
     fs.readFile(_src, (err, raw) => {
       if (err) {
         callback(err)
@@ -90,17 +88,13 @@ module.exports = function (content) {
     },
     (callback) => {
       async.forEachOf(typeExtMap, (ext, key, callback) => {
+        if (key === 'json' && useMPXJSON) {
+          return callback()
+        }
         fs.stat(resource + ext, (err) => {
           if (err) {
-            if (ext === typeExtMap['json']) {
-              // .json.js也没有才删除
-              if (!useMPXJSON) {
-                delete typeExtMap[key]
-              }
-            } else {
-              delete typeExtMap[key]
-              callback()
-            }
+            delete typeExtMap[key]
+            callback()
           } else {
             callback()
           }
@@ -198,23 +192,20 @@ module.exports = function (content) {
       // 触发webpack global var 注入
       let output = 'global.currentModuleId;\n'
 
+
       for (let type in typeExtMap) {
-        if (type === 'json') {
-          if (useMPXJSON) {
-            // 用了MPXJSON的话，强制生成目标json
-            let _src = resource + EXT_MPX_JSON
-            this.addDependency(_src)
+        if (type === 'json' && useMPXJSON) {
+          // 用了MPXJSON的话，强制生成目标json
+          let _src = resource + EXT_MPX_JSON
+          this.addDependency(_src)
 
-            let localQuery = Object.assign({}, queryObj)
-            localQuery.__resource = resource
-            localQuery.__component = true
-            _src += stringifyQuery(localQuery)
+          let localQuery = Object.assign({}, queryObj)
+          localQuery.__resource = resource
+          localQuery.__component = true
+          _src += stringifyQuery(localQuery)
 
-            output += `/* MPX JSON */\n${getRequireForSrc('json', { src: _src })}\n\n`
-            // 否则走原来的流程
-          } else {
-            output += `/* ${type} */\n${getRequire(type)}\n\n`
-          }
+          output += `/* MPX JSON */\n${getRequireForSrc('json', { src: _src })}\n\n`
+          // 否则走原来的流程
         } else {
           output += `/* ${type} */\n${getRequire(type)}\n\n`
         }
