@@ -4,10 +4,11 @@
 
 ## class与style绑定
 
+#### 绑定HTML Class
+
 类似vue的class绑定
 
 例子：
-
 ```html
 <template>
   <view wx:class="{{ {active: isActive} }}">
@@ -33,8 +34,9 @@
 
 当该组件接受一个参数isActive为true时，就会为view加上class:active。
 
+#### 绑定内联样式
+
 例子：
-父组件
 ```html
 <template>
   <view wx:for="{{list}}" wx:style="{{item.style}}">{{item.name}}</view>
