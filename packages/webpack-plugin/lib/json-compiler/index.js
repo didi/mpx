@@ -245,7 +245,7 @@ module.exports = function (raw) {
               const filePath = result
               const fileName = path.basename(filePath)
               const extName = path.extname(filePath)
-              if (extName === '.mpx') {
+              if (extName === '.mpx' || extName === '.vue') {
                 const parts = parse(
                   content,
                   fileName,

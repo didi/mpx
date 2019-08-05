@@ -126,7 +126,7 @@ function encodeAttr (value, shouldDecodeNewlines) {
 
 const splitRE = /\r?\n/g
 const replaceRE = /./g
-const isSpecialTag = makeMap('script,style,template', true)
+const isSpecialTag = makeMap('script,style,template,json', true)
 
 let ieNSBug = /^xmlns:NS\d+/
 let ieNSPrefix = /^NS\d+:/

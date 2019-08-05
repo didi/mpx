@@ -192,7 +192,6 @@ module.exports = function (content) {
       // 触发webpack global var 注入
       let output = 'global.currentModuleId;\n'
 
-
       for (let type in typeExtMap) {
         if (type === 'json' && useMPXJSON) {
           // 用了MPXJSON的话，强制生成目标json
