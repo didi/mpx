@@ -111,7 +111,7 @@ module.exports = function (raw) {
   try {
     // 使用了MPXJSON的话先编译
     if (this.resourcePath.endsWith('.json.js')) {
-      json = mpxJSON.compileMPXJSON({ source: raw, mode })
+      json = mpxJSON.compileMPXJSON({ source: raw, mode, filePath: this.resourcePath })
     } else {
       json = JSON.parse(raw)
     }
@@ -243,12 +243,11 @@ module.exports = function (raw) {
             },
             (result, content, callback) => {
               const filePath = result
-              const fileName = path.basename(filePath)
               const extName = path.extname(filePath)
               if (extName === '.mpx' || extName === '.vue') {
                 const parts = parse(
                   content,
-                  fileName,
+                  filePath,
                   this.sourceMap,
                   mode
                 )

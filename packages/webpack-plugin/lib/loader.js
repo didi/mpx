@@ -70,7 +70,7 @@ module.exports = function (content) {
     options.cssSourceMap !== false
   )
 
-  const parts = parse(content, fileName, this.sourceMap, mode)
+  const parts = parse(content, filePath, this.sourceMap, mode)
   //
   const hasScoped = parts.styles.some(({ scoped }) => scoped)
   const templateAttrs = parts.template && parts.template.attrs && parts.template.attrs

@@ -1,3 +1,4 @@
+const path = require('path');
 const cache = require('lru-cache')(100)
 const hash = require('hash-sum')
 const compiler = require('./template-compiler/compiler')
@@ -6,13 +7,15 @@ const SourceMapGenerator = require('source-map').SourceMapGenerator
 const splitRE = /\r?\n/g
 const emptyRE = /^(?:\/\/)?\s*$/
 
-module.exports = (content, filename, needMap, mode) => {
+module.exports = (content, filePath, needMap, mode) => {
+  const filename = path.basename(filePath)
   const cacheKey = hash(filename + content + mode)
   let output = cache.get(cacheKey)
   if (output) return output
   output = compiler.parseComponent(content, {
     pad: 'line',
-    mode
+    mode,
+    filePath
   })
   if (needMap) {
     // source-map cache busting for hot-reloadded modules
