@@ -204,6 +204,10 @@ let srcMode
 let processingTemplate
 let isNative
 let rulesRunner
+const finalNotify = {
+  warnArray: [],
+  errorArray: []
+}
 const rulesResultMap = new Map()
 let platformGetTagNamespace
 let resource
@@ -611,6 +615,9 @@ function parse (template, options) {
   warn$1 = options.warn || baseWarn
   error$1 = options.error || baseError
 
+  const _warn = content => finalNotify.warnArray.push(content)
+  const _error = content => finalNotify.warnArray.push(content)
+
   mode = options.mode || 'wx'
   srcMode = options.srcMode || mode
   isNative = options.isNative
@@ -621,9 +628,8 @@ function parse (template, options) {
     srcMode,
     type: 'template',
     testKey: 'tag',
-    warn: warn$1,
-    error: error$1,
-    defer: true
+    warn: _warn,
+    error: _error
   })
 
   platformGetTagNamespace = options.getTagNamespace || no
@@ -1500,9 +1506,11 @@ function postProcessTemplate (el) {
 
 function processElement (el, root, options, meta, injectNodes) {
   if (rulesRunner) {
-    const result = rulesRunner(el)
-    if (result.errorArray || result.warnArray) {
-      rulesResultMap.set(el, { warnArray: [...result.warnArray], errorArray: [...result.errorArray] })
+    rulesRunner(el)
+    if (finalNotify.errorArray || finalNotify.warnArray) {
+      rulesResultMap.set(el, { warnArray: [...finalNotify.warnArray], errorArray: [...finalNotify.errorArray] })
+      finalNotify.warnArray = []
+      finalNotify.errorArray = []
     }
   }
 
