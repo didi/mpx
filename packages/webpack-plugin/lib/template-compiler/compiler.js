@@ -4,6 +4,7 @@ const config = require('../config')
 const normalize = require('../utils/normalize')
 const isValidIdentifierStr = require('../utils/is-valid-identifier-str')
 const isEmptyObject = require('../utils/is-empty-object')
+const mpxJSON = require('../utils/mpx-json')
 const getRulesRunner = require('../platform/index')
 const addQuery = require('../utils/add-query')
 
@@ -103,6 +104,7 @@ const decodedAttrWithNewLines = /[<>"&\n\t]/g
 
 const tagRES = /(\{\{(?:.|\n)+?\}\})(?!})/
 
+// eslint-disable-next-line no-unused-vars
 function encodeAttr (value, shouldDecodeNewlines) {
   const sArr = value.split(tagRES)
   const re = shouldDecodeNewlines ? decodedAttrWithNewLines : decodedAttr
@@ -124,7 +126,7 @@ function encodeAttr (value, shouldDecodeNewlines) {
 
 const splitRE = /\r?\n/g
 const replaceRE = /./g
-const isSpecialTag = makeMap('script,style,template', true)
+const isSpecialTag = makeMap('script,style,template,json', true)
 
 let ieNSBug = /^xmlns:NS\d+/
 let ieNSPrefix = /^NS\d+:/
@@ -576,16 +578,7 @@ function parseComponent (content, options) {
 
       // 对于<script name="json">的标签，传参调用函数，其返回结果作为json的内容
       if (currentBlock.type === 'script' && currentBlock.name === 'json') {
-        // eslint-disable-next-line no-new-func
-        const func = new Function('exports', 'require', 'module', '__mpx_mode__', text)
-        // 模拟commonJS执行
-        // support exports
-        const e = {}
-        const m = {
-          exports: e
-        }
-        func(e, require, m, mode)
-        text = JSON.stringify(m.exports, null, 2)
+        text = mpxJSON.compileMPXJSONText({ source: text, mode })
       }
       currentBlock.content = text
       currentBlock = null
@@ -1579,6 +1572,25 @@ function postProcessComponentIs (el) {
   return el
 }
 
+function stringifyAttr (val) {
+  if (val) {
+    const hasSingle = val.indexOf('\'') > -1
+    const hasDouble = val.indexOf('"') > -1
+    // 移除属性中换行
+    val = val.replace(/\n/g, '')
+
+    if (hasSingle && hasDouble) {
+      val = val.replace(/'/g, '"')
+    }
+    if (hasDouble) {
+      return `'${val}'`
+    } else {
+      return `"${val}"`
+    }
+  }
+  return val
+}
+
 function serialize (root) {
   function walk (node) {
     let result = ''
@@ -1597,7 +1609,7 @@ function serialize (root) {
             result += ' ' + attr.name
             let value = attr.value
             if (value != null && value !== '') {
-              result += '=' + stringify(encodeAttr(value, false))
+              result += '=' + stringifyAttr(value)
             }
           })
           if (node.unary) {

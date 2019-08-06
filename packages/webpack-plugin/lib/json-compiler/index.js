@@ -8,6 +8,7 @@ const config = require('../config')
 const normalize = require('../utils/normalize')
 const nativeLoaderPath = normalize.lib('native-loader')
 const stripExtension = require('../utils/strip-extention')
+const mpxJSON = require('../utils/mpx-json')
 const toPosix = require('../utils/to-posix')
 const getRulesRunner = require('../platform/index')
 
@@ -108,7 +109,12 @@ module.exports = function (raw) {
 
   let json
   try {
-    json = JSON.parse(raw)
+    // 使用了MPXJSON的话先编译
+    if (this.resourcePath.endsWith('.json.js')) {
+      json = mpxJSON.compileMPXJSON({ source: raw, mode })
+    } else {
+      json = JSON.parse(raw)
+    }
   } catch (err) {
     return callback(err)
   }
@@ -239,7 +245,7 @@ module.exports = function (raw) {
               const filePath = result
               const fileName = path.basename(filePath)
               const extName = path.extname(filePath)
-              if (extName === '.mpx') {
+              if (extName === '.mpx' || extName === '.vue') {
                 const parts = parse(
                   content,
                   fileName,

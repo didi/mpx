@@ -45,7 +45,9 @@ module.exports = function (src) {
     transBase64 = false
   }
 
-  if (this._module.issuer && isStyle(this._module.issuer.request)) {
+  const issuer = this._module.issuer
+
+  if (issuer && issuer.request && isStyle(issuer.request)) {
     transBase64 = true
   }
 

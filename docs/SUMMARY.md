@@ -43,6 +43,7 @@
 * [多平台支持](platform.md)
     * [多平台支持](platform.md#多平台支持)
     * [跨平台编译](platform.md#跨平台编译)
+* [TS支持](ts.md)
 * [渐进接入](progressive.md)
     - [原生组件支持](progressive.md#原生自定义组件支持)
     - [原生page支持](progressive.md#原生page支持)

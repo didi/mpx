@@ -14,8 +14,8 @@
 双向绑定辅助属性|wx:model-prop|a:model-prop|s-model-prop|qq:model-prop|tt:model-prop
 双向绑定辅助属性|wx:model-event|a:model-event|s-model-event|qq:model-event|tt:model-event
 双向绑定辅助属性|wx:model-value-path|a:model-value-path|s-model-value-path|qq:model-value-path|tt:model-value-path
-动态样式绑定|wx:class|a:class|s-class|暂不支持|暂不支持
-动态样式绑定|wx:style|a:style|s-style|暂不支持|暂不支持
+动态样式绑定|wx:class|a:class|s-class|qq:class|暂不支持
+动态样式绑定|wx:style|a:style|s-style|qq:style|暂不支持
 获取节点/组件实例|wx:ref|a:ref|s-ref|qq:ref|tt:ref
 显示/隐藏|wx:show|a:show|s-show|qq:show|tt:show
 
