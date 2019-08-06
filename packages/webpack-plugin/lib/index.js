@@ -353,11 +353,11 @@ class MpxWebpackPlugin {
       })
 
       normalModuleFactory.hooks.afterResolve.tapAsync('MpxWebpackPlugin', (data, callback) => {
-        const isFromMpx = typeof data.resource === 'string' && data.resource.includes('.mpx')
+        const isFromMpx = /\.(mpx|vue)/.test(data.resource)
         if (data.loaders) {
           data.loaders.forEach((loader) => {
             if (/ts-loader/.test(loader.loader) && isFromMpx) {
-              loader.options = Object.assign({}, { appendTsSuffixTo: [/\.mpx$/] })
+              loader.options = Object.assign({}, { appendTsSuffixTo: [/\.(mpx|vue)$/] })
             }
           })
         }
@@ -386,7 +386,7 @@ class MpxWebpackPlugin {
 
         let originalSource = compilation.assets[chunk.files[0]]
         const source = new ConcatSource()
-        source.add('var window = (function(){return this;})() || {};\n\n')
+        source.add('\nvar window = window || {};\n\n')
 
         relativeChunks.forEach((relativeChunk, index) => {
           if (!relativeChunk.files[0]) return
@@ -405,6 +405,9 @@ class MpxWebpackPlugin {
         })
 
         if (isRuntime) {
+          source.add('// hack promise polyfill\n' +
+            'var context = Function("return this")();\n' +
+            'context.console = console;\n\n')
           source.add(originalSource)
           source.add(`\nmodule.exports = window[${JSON.stringify(jsonpFunction)}];\n`)
         } else {

@@ -24,7 +24,9 @@ module.exports = function runRules (rules = [], input, options = {}) {
     const processor = rule[target]
     const meta = {}
     if (tester(testInput, meta) && processor) {
-      let result = processor.call(rule, input, data, meta)
+      let result = processor.call(rule, input, data, Object.assign({
+        $targetMode: target
+      }, meta))
       if (waterfall) {
         input = result || input
       } else {
