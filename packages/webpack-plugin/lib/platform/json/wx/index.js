@@ -3,15 +3,15 @@ const normalizeTest = require('../normalize-test')
 const changeKey = require('../change-key')
 
 module.exports = function getSpec ({ warn, error }) {
-  function print (path, isError) {
-    const msg = `Json path <${path}> is not supported in ali environment!`
+  function print (targetMode, path, isError) {
+    const msg = `Json path <${path}> is not supported in ${targetMode} environment!`
     isError ? error(msg) : warn(msg)
   }
 
   function deletePath (isError) {
     return function (input, data = [], meta) {
       const currPath = meta.paths.join('|')
-      print(data.concat(currPath).join('.'), isError)
+      print(meta.$targetMode, data.concat(currPath).join('.'), isError)
       meta.paths.forEach((path) => {
         delete input[path]
       })

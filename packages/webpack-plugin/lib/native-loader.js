@@ -6,7 +6,10 @@ const config = require('./config')
 const createHelpers = require('./helpers')
 const InjectDependency = require('./dependency/InjectDependency')
 const stringifyQuery = require('./utils/stringify-query')
+const mpxJSON = require('./utils/mpx-json')
 const async = require('async')
+
+const EXT_MPX_JSON = '.json.js'
 
 module.exports = function (content) {
   this.cacheable()
@@ -54,20 +57,59 @@ module.exports = function (content) {
   const fs = this._compiler.inputFileSystem
   const typeExtMap = Object.assign({}, config[srcMode].typeExtMap)
 
+  function tryEvalMPXJSON (callback) {
+    const _src = resource + EXT_MPX_JSON
+    fs.readFile(_src, (err, raw) => {
+      if (err) {
+        callback(err)
+      } else {
+        try {
+          const source = raw.toString('utf-8')
+          const text = mpxJSON.compileMPXJSONText({ source, mode, filePath: _src })
+          callback(null, text)
+        } catch (e) {
+          callback(e)
+        }
+      }
+    })
+  }
+
+  let useMPXJSON = false
+
   // 先读取json获取usingComponents信息
   async.waterfall([
     (callback) => {
+      fs.stat(resource + EXT_MPX_JSON, (err) => {
+        if (!err) {
+          useMPXJSON = true
+        }
+        callback()
+      })
+    },
+    (callback) => {
       async.forEachOf(typeExtMap, (ext, key, callback) => {
+        if (key === 'json' && useMPXJSON) {
+          return callback()
+        }
         fs.stat(resource + ext, (err) => {
-          if (err) delete typeExtMap[key]
-          callback()
+          if (err) {
+            delete typeExtMap[key]
+            callback()
+          } else {
+            callback()
+          }
         })
       }, callback)
     },
     (callback) => {
-      fs.readFile(resource + typeExtMap['json'], (err, raw) => {
-        callback(err, raw.toString('utf-8'))
-      })
+      // 对原生写法增强json写法，可以用js来写json，尝试找.mpxjson.js文件，找不到用回json的内容
+      if (useMPXJSON) {
+        tryEvalMPXJSON(callback)
+      } else {
+        fs.readFile(resource + typeExtMap['json'], (err, raw) => {
+          callback(err, { content: raw.toString('utf-8') })
+        })
+      }
     }, (content, callback) => {
       let usingComponents = [].concat(this._compilation.__mpx__.usingComponents)
       try {
@@ -151,8 +193,23 @@ module.exports = function (content) {
       let output = 'global.currentModuleId;\n'
 
       for (let type in typeExtMap) {
-        output += `/* ${type} */\n${getRequire(type)}\n\n`
+        if (type === 'json' && useMPXJSON) {
+          // 用了MPXJSON的话，强制生成目标json
+          let _src = resource + EXT_MPX_JSON
+          this.addDependency(_src)
+
+          let localQuery = Object.assign({}, queryObj)
+          localQuery.__resource = resource
+          localQuery.__component = true
+          _src += stringifyQuery(localQuery)
+
+          output += `/* MPX JSON */\n${getRequireForSrc('json', { src: _src })}\n\n`
+          // 否则走原来的流程
+        } else {
+          output += `/* ${type} */\n${getRequire(type)}\n\n`
+        }
       }
+
       callback(null, output)
     }
   ], nativeCallback)
