@@ -1,6 +1,6 @@
 const runRules = require('./run-rules')
 
-module.exports = function getRulesRunner ({ type, mode, srcMode, testKey, mainKey, waterfall, warn, error }) {
+module.exports = function getRulesRunner ({ type, mode, srcMode, testKey, mainKey, waterfall, warn, error, defer }) {
   const finalNotify = {
     warnArray: [],
     errorArray: []
@@ -15,7 +15,7 @@ module.exports = function getRulesRunner ({ type, mode, srcMode, testKey, mainKe
 
   const specMap = {
     template: {
-      wx: require('./template/wx')({ warn: _warn, error: _error })
+      wx: require('./template/wx')(defer ? { warn: _warn, error: _error } : { warn, error })
     },
     json: {
       wx: require('./json/wx')({ warn, error })
@@ -28,9 +28,8 @@ module.exports = function getRulesRunner ({ type, mode, srcMode, testKey, mainKe
     const mainRules = mainKey ? spec[mainKey] : spec
     if (mainRules) {
       return function (input) {
-        runRules(mainRules, input, { target: mode, testKey, waterfall, normalizeTest })
-        finalNotify.key = mode + (input && input.tag)
-        return finalNotify
+        const rs = runRules(mainRules, input, { target: mode, testKey, waterfall, normalizeTest })
+        return defer ? finalNotify : rs
       }
     }
   }
