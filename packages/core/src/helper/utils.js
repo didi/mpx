@@ -131,20 +131,26 @@ export function getByPath (data, pathStr, defaultVal = '', errTip) {
   return results.length > 1 ? results : results[0]
 }
 
-export function defineGetter (target, key, value, context) {
+export function defineGetterSetter (target, key, getValue, setValue, context) {
   let get
-  if (typeof value === 'function') {
-    get = context ? value.bind(context) : value
+  let set
+  if (typeof getValue === 'function') {
+    get = context ? getValue.bind(context) : getValue
   } else {
     get = function () {
-      return value
+      return getValue
     }
   }
-  Object.defineProperty(target, key, {
+  if (typeof setValue === 'function') {
+    set = context ? setValue.bind(context) : setValue
+  }
+  let descriptor = {
     get,
     configurable: true,
     enumerable: true
-  })
+  }
+  if (set) descriptor.set = set
+  Object.defineProperty(target, key, descriptor)
 }
 
 export function proxy (target, source, keys, mapKeys, readonly) {

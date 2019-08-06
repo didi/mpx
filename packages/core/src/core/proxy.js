@@ -12,7 +12,7 @@ import {
   isEmptyObject,
   processUndefined,
   diffAndCloneA,
-  defineGetter,
+  defineGetterSetter,
   preprocessRenderData,
   setByPath,
   findItem,
@@ -160,7 +160,9 @@ export default class MPXProxy {
       if (key in proxyData) {
         console.error('【MPX ERROR】', `the computed key 【${key}】 is duplicated, please check`)
       }
-      defineGetter(proxyData, key, computedConfig[key], this.target)
+      const getValue = computedConfig[key].get || computedConfig[key]
+      const setValue = computedConfig[key].set
+      defineGetterSetter(proxyData, key, getValue, setValue, this.target)
     })
   }
 
