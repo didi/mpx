@@ -35,7 +35,10 @@ module.exports = function getComponentConfigs ({ warn, error }) {
    * @return {function(*): Function}
    */
   const print = ({ platform, tag, type = 'property', isError = false }) => (arg) => {
-    if (type === 'tag') return error(`<${arg}> is not supported in ${platform} environment!`)
+    if (type === 'tag') {
+      error(`<${arg}> is not supported in ${platform} environment!`)
+      return
+    }
     let msg
     switch (type) {
       case 'event':
