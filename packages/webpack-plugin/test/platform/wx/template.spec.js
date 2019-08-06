@@ -55,5 +55,19 @@ describe('template should transform correct', function () {
     const ast = parsed.root
     compiler.serialize(ast)
     expect(errorFn).not.toHaveBeenCalled()
+
+    const normalInput = `
+    <map covers="123">test</map>
+    `
+    const normalParsed = compiler.parse(normalInput, {
+      usingComponents: [],
+      srcMode: 'wx',
+      mode: 'ali',
+      warn: warnFn,
+      error: errorFn
+    })
+    const normalAst = normalParsed.root
+    compiler.serialize(normalAst)
+    expect(warnFn).toHaveBeenCalled()
   })
 })
