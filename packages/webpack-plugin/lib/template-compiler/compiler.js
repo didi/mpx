@@ -204,10 +204,7 @@ let srcMode
 let processingTemplate
 let isNative
 let rulesRunner
-const finalNotify = {
-  warnArray: [],
-  errorArray: []
-}
+let currentEl
 const rulesResultMap = new Map()
 let platformGetTagNamespace
 let resource
@@ -615,8 +612,14 @@ function parse (template, options) {
   warn$1 = options.warn || baseWarn
   error$1 = options.error || baseError
 
-  const _warn = content => finalNotify.warnArray.push(content)
-  const _error = content => finalNotify.warnArray.push(content)
+  const _warn = content => {
+    const currentElementRuleResult = rulesResultMap.get(currentEl) || rulesResultMap.set(currentEl, { warnArray: [], errorArray: [] }).get(currentEl)
+    currentElementRuleResult.warnArray.push(content)
+  }
+  const _error = content => {
+    const currentElementRuleResult = rulesResultMap.get(currentEl) || rulesResultMap.set(currentEl, { warnArray: [], errorArray: [] }).get(currentEl)
+    currentElementRuleResult.errorArray.push(content)
+  }
 
   mode = options.mode || 'wx'
   srcMode = options.srcMode || mode
@@ -1506,12 +1509,8 @@ function postProcessTemplate (el) {
 
 function processElement (el, root, options, meta, injectNodes) {
   if (rulesRunner) {
+    currentEl = el
     rulesRunner(el)
-    if (finalNotify.errorArray || finalNotify.warnArray) {
-      rulesResultMap.set(el, { warnArray: finalNotify.warnArray, errorArray: finalNotify.errorArray })
-      finalNotify.warnArray = []
-      finalNotify.errorArray = []
-    }
   }
 
   let tranAli = mode === 'ali' && srcMode === 'wx'
