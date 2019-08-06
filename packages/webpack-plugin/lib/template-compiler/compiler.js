@@ -204,6 +204,7 @@ let srcMode
 let processingTemplate
 let isNative
 let rulesRunner
+let rulesRunnerRes
 let platformGetTagNamespace
 let resource
 let refId = 0
@@ -1255,6 +1256,7 @@ function postProcessIf (el) {
         el._if = true
       } else {
         replaceNode(el, getTempNode())._if = false
+        rulesRunnerRes = null
       }
     } else {
       attrs = [{
@@ -1266,6 +1268,7 @@ function postProcessIf (el) {
     prevNode = findPrevNode(el)
     if (prevNode._if === true) {
       removeNode(el)
+      rulesRunnerRes = null
     } else if (prevNode._if === false) {
       // 当做if处理
       el.if = el.elseif
@@ -1281,6 +1284,7 @@ function postProcessIf (el) {
           postProcessIf(el)
         } else {
           removeNode(el)
+          rulesRunnerRes = null
         }
       } else {
         attrs = [{
@@ -1293,6 +1297,7 @@ function postProcessIf (el) {
     prevNode = findPrevNode(el)
     if (prevNode._if === true) {
       removeNode(el)
+      rulesRunnerRes = null
     } else if (prevNode._if === false) {
       delete el.else
     } else {
@@ -1304,6 +1309,11 @@ function postProcessIf (el) {
   }
   if (attrs) {
     addAttrs(el, attrs)
+  }
+
+  if (rulesRunnerRes) {
+    Array.isArray(rulesRunnerRes.warnArray) && rulesRunnerRes.warnArray.forEach(item => warn$1(item))
+    Array.isArray(rulesRunnerRes.errorArray) && rulesRunnerRes.errorArray.forEach(item => warn$1(item))
   }
 }
 
@@ -1493,7 +1503,7 @@ function postProcessTemplate (el) {
 
 function processElement (el, root, options, meta, injectNodes) {
   if (rulesRunner) {
-    rulesRunner(el)
+    rulesRunnerRes = rulesRunner(el)
   }
 
   let tranAli = mode === 'ali' && srcMode === 'wx'
