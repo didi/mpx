@@ -1508,7 +1508,7 @@ function processElement (el, root, options, meta, injectNodes) {
   if (rulesRunner) {
     rulesRunner(el)
     if (finalNotify.errorArray || finalNotify.warnArray) {
-      rulesResultMap.set(el, { warnArray: [...finalNotify.warnArray], errorArray: [...finalNotify.errorArray] })
+      rulesResultMap.set(el, { warnArray: finalNotify.warnArray, errorArray: finalNotify.errorArray })
       finalNotify.warnArray = []
       finalNotify.errorArray = []
     }
