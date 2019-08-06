@@ -1,7 +1,7 @@
 // Type definitions for @mpxjs/core
 // Project: https://github.com/didi/mpx
 // Definitions by: hiyuki <https://github.com/hiyuki>
-// TypeScript Version: 3.1
+// TypeScript Version: 3.5
 
 /// <reference types="@types/weixin-app" />
 
@@ -23,10 +23,6 @@ interface PropOpt {
 
 interface Properties {
   [key: string]: PropType | PropOpt
-}
-
-interface Computed {
-  [key: string]: () => any
 }
 
 interface Methods {
@@ -58,10 +54,23 @@ interface ObserversDefs {
 
 type GetDataType<T> = T extends () => any ? ReturnType<T> : T
 
+type GetComputedSetKeys<T> = {
+  [K in keyof T]: T[K] extends {
+    get(): any,
+    set(val: any): void
+  } ? K : never
+}[keyof T]
+
 
 type GetComputedType<T> = {
-  readonly [K in keyof T]: T[K] extends () => infer R ? R : T[K]
+  readonly [K in Exclude<keyof T, GetComputedSetKeys<T>>]: T[K] extends () => infer R ? R : T[K]
+} & {
+  [K in GetComputedSetKeys<T>]: T[K] extends {
+    get(): infer R,
+    set(val: any): void
+  } ? R : T[K]
 }
+
 
 type GetPropsType<T> = {
   readonly [K in keyof T]: wx.PropValueType<T[K]>
@@ -326,10 +335,6 @@ export function createStore<S, G extends Getters<S>, M extends Mutations<S>, A e
 
 interface MutationsAndActionsWithThis {
   [key: string]: (...payload: any[]) => any
-}
-
-interface GettersWithThis {
-  [key: string]: () => any
 }
 
 type GetDispatchAndCommitWithThis<A, D> = keyof D extends never ? (<T extends keyof A>(type: T, ...payload: A[T] extends (...payload: infer P) => any ? P : never) => A[T] extends (...payload: any[]) => infer R ? R : never) : ((type: string, ...payload: any[]) => any)
