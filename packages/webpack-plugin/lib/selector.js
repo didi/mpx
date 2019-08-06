@@ -13,8 +13,8 @@ module.exports = function (content) {
   const mode = this._compilation.__mpx__.mode
   const resource = stripExtension(this.resource)
   const query = loaderUtils.getOptions(this) || {}
-  const filename = path.basename(this.resourcePath)
-  const parts = parse(content, filename, this.sourceMap, mode)
+  const filePath = path.basename(this.resourcePath)
+  const parts = parse(content, filePath, this.sourceMap, mode)
   let part = parts[query.type]
   if (Array.isArray(part)) {
     part = part[query.index]
