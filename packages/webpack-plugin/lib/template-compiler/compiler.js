@@ -204,6 +204,8 @@ let srcMode
 let processingTemplate
 let isNative
 let rulesRunner
+let currentEl
+const rulesResultMap = new Map()
 let platformGetTagNamespace
 let resource
 let refId = 0
@@ -610,6 +612,15 @@ function parse (template, options) {
   warn$1 = options.warn || baseWarn
   error$1 = options.error || baseError
 
+  const _warn = content => {
+    const currentElementRuleResult = rulesResultMap.get(currentEl) || rulesResultMap.set(currentEl, { warnArray: [], errorArray: [] }).get(currentEl)
+    currentElementRuleResult.warnArray.push(content)
+  }
+  const _error = content => {
+    const currentElementRuleResult = rulesResultMap.get(currentEl) || rulesResultMap.set(currentEl, { warnArray: [], errorArray: [] }).get(currentEl)
+    currentElementRuleResult.errorArray.push(content)
+  }
+
   mode = options.mode || 'wx'
   srcMode = options.srcMode || mode
   isNative = options.isNative
@@ -620,8 +631,8 @@ function parse (template, options) {
     srcMode,
     type: 'template',
     testKey: 'tag',
-    warn: warn$1,
-    error: error$1
+    warn: _warn,
+    error: _error
   })
 
   platformGetTagNamespace = options.getTagNamespace || no
@@ -762,6 +773,11 @@ function parse (template, options) {
   if (injectNodes.length) {
     root.children = injectNodes.concat(root.children)
   }
+
+  rulesResultMap.forEach((val) => {
+    Array.isArray(val.warnArray) && val.warnArray.forEach(item => warn$1(item))
+    Array.isArray(val.errorArray) && val.errorArray.forEach(item => error$1(item))
+  })
 
   return {
     root,
@@ -1493,6 +1509,7 @@ function postProcessTemplate (el) {
 
 function processElement (el, root, options, meta, injectNodes) {
   if (rulesRunner) {
+    currentEl = el
     rulesRunner(el)
   }
 
@@ -1648,6 +1665,7 @@ function findPrevNode (node) {
 }
 
 function replaceNode (node, newNode) {
+  rulesResultMap.delete(node)
   let parent = node.parent
   if (parent) {
     let index = parent.children.indexOf(node)
@@ -1660,6 +1678,7 @@ function replaceNode (node, newNode) {
 }
 
 function removeNode (node) {
+  rulesResultMap.delete(node)
   let parent = node.parent
   if (parent) {
     let index = parent.children.indexOf(node)
