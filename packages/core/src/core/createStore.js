@@ -7,7 +7,7 @@ import {
 import {
   proxy,
   getByPath,
-  defineGetter
+  defineGetterSetter
 } from '../helper/utils'
 
 import mapStore from './mapStore'
@@ -17,7 +17,7 @@ function transformGetters (getters, module, store) {
     if (key in store.getters) {
       console.warn('【MPX ERROR】', new Error(`duplicate getter type: ${key}`))
     }
-    defineGetter(newGetters, key, function () {
+    defineGetterSetter(newGetters, key, function () {
       return getters[key](module.state, store.getters, store.state)
     })
   }
