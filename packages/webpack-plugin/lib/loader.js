@@ -54,7 +54,6 @@ module.exports = function (content) {
   }
 
   const filePath = this.resourcePath
-  const fileName = path.basename(filePath)
 
   const context = (
     this.rootContext ||
