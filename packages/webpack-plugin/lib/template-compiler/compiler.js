@@ -609,6 +609,7 @@ function parseComponent (content, options) {
 }
 
 function parse (template, options) {
+  rulesResultMap.clear()
   warn$1 = options.warn || baseWarn
   error$1 = options.error || baseError
 
