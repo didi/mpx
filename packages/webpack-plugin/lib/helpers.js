@@ -167,28 +167,28 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
     )
   }
 
-  function getRequireForSrc (type, impt, index, scoped) {
-    return 'require(' + getSrcRequestString(type, impt, index, scoped) + ')'
+  function getRequireForSrc (type, impt, index, scoped, prefix) {
+    return 'require(' + getSrcRequestString(type, impt, index, scoped, prefix) + ')'
   }
 
-  function getImportForSrc (type, impt, index, scoped) {
+  function getImportForSrc (type, impt, index, scoped, prefix) {
     return (
       'import __' + type + '__ from ' +
-      getSrcRequestString(type, impt, index, scoped)
+      getSrcRequestString(type, impt, index, scoped, prefix)
     )
   }
 
-  function getNamedExportsForSrc (type, impt, index, scoped) {
+  function getNamedExportsForSrc (type, impt, index, scoped, prefix) {
     return (
       'export * from ' +
-      getSrcRequestString(type, impt, index, scoped)
+      getSrcRequestString(type, impt, index, scoped, prefix)
     )
   }
 
-  function getSrcRequestString (type, impt, index, scoped) {
+  function getSrcRequestString (type, impt, index, scoped, prefix = '!') {
     return loaderUtils.stringifyRequest(
       loaderContext,
-      '!!' + getLoaderString(type, impt, index, scoped) + addQueryMode(impt.src, impt.mode)
+      prefix + getLoaderString(type, impt, index, scoped) + addQueryMode(impt.src, impt.mode)
     )
   }
 
@@ -368,7 +368,7 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
         ? type
         : 'customBlocks') +
       '&index=' + index +
-      '&resource=' + loaderContext.resource
+      '&resource=' + loaderContext.resourcePath
     )
   }
 

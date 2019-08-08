@@ -148,7 +148,7 @@ module.exports = function (content) {
         requestString = getSrcRequestString('template', { src, mode: srcMode }, -1)
         break
       case config[mode].wxs.tag:
-        requestString = getSrcRequestString('wxs', { src, mode: srcMode }, -1)
+        requestString = getSrcRequestString('wxs', { src, mode: srcMode }, -1, undefined, '!!')
         break
       default:
         requestString = JSON.stringify(src)

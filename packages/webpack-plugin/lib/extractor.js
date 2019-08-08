@@ -71,7 +71,7 @@ module.exports = function (content) {
   childCompiler.runAsChild((err, entries, compilation) => {
     if (err) return nativeCallback(err)
     if (compilation.errors.length > 0) {
-      return nativeCallback(compilation.errors[0])
+      mainCompilation.errors.push(...compilation.errors)
     }
 
     compilation.fileDependencies.forEach((dep) => {
