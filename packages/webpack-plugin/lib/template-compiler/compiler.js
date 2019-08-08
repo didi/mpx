@@ -614,11 +614,17 @@ function parse (template, options) {
   error$1 = options.error || baseError
 
   const _warn = content => {
-    const currentElementRuleResult = rulesResultMap.get(currentEl) || rulesResultMap.set(currentEl, { warnArray: [], errorArray: [] }).get(currentEl)
+    const currentElementRuleResult = rulesResultMap.get(currentEl) || rulesResultMap.set(currentEl, {
+      warnArray: [],
+      errorArray: []
+    }).get(currentEl)
     currentElementRuleResult.warnArray.push(content)
   }
   const _error = content => {
-    const currentElementRuleResult = rulesResultMap.get(currentEl) || rulesResultMap.set(currentEl, { warnArray: [], errorArray: [] }).get(currentEl)
+    const currentElementRuleResult = rulesResultMap.get(currentEl) || rulesResultMap.set(currentEl, {
+      warnArray: [],
+      errorArray: []
+    }).get(currentEl)
     currentElementRuleResult.errorArray.push(content)
   }
 
@@ -1517,7 +1523,7 @@ function processElement (el, root, options, meta, injectNodes) {
   let tranAli = mode === 'ali' && srcMode === 'wx'
 
   processRef(el, options, meta)
-  let pass = isNative || processTemplate(el) || processingTemplate
+  const pass = isNative || processTemplate(el) || processingTemplate
 
   if (tranAli) {
     processAliExternalClassesHack(el, options)
@@ -1550,9 +1556,11 @@ function processElement (el, root, options, meta, injectNodes) {
 }
 
 function closeElement (el, meta) {
-  if (postProcessTemplate(el) || processingTemplate) return
-  postProcessWxs(el, meta)
-  el = postProcessComponentIs(el)
+  const pass = isNative || postProcessTemplate(el) || processingTemplate
+  if (!pass) {
+    postProcessWxs(el, meta)
+    el = postProcessComponentIs(el)
+  }
   postProcessFor(el)
   postProcessIf(el)
 }

@@ -4,8 +4,8 @@
 
 ## computed
 
-计算属性是一个纯函数，利用组合其它数据的方式返回一个新的数据，你可以像绑定普通数据一样在模板中绑定计算属性。
-
+计算属性是一个函数/带setter和getter的对象，利用组合其它数据的方式返回一个新的数据，你可以像绑定普通数据一样在模板中绑定计算属性。
+> 类型：{ [key: string]: Function | { get: Function, set: Function } }
 > 适用于【页面 | 组件】
 
 示例：
@@ -22,17 +22,30 @@
 import {createComponent} from '@mpxjs/core'
 createComponent({
   data: {
-    message: 'Hello'
+    message: 'Hello',
+    num: 5
   },
   computed: {
     // 计算属性
     reversedMessage: function () {
       return this.message.split('').reverse().join('')
+    },
+    // 读取和设置
+    computeNum: {
+      get: function () {
+        return this.num - 1
+      },
+      set: function (val) {
+        this.num = val + 1
+      }
     }
   },
   ready() {
     // 改变message后reversedMessage会同步更新，模板也会重新渲染
     this.message = 'Hello world!'
+    this.computeNum // 4
+    this.computeNum = 10 
+    this.num // 11
   }
 })
 </script>
