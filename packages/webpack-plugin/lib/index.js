@@ -148,16 +148,16 @@ class MpxWebpackPlugin {
               if (type === 'template') {
                 const file = toPosix(path.join(subPackageRoot, 'wxml', selfResourceName + hash(selfResourcePath) + typeExtMap[type]))
                 additionalAssets[file] = additionalAssets[file] || []
-                additionalAssets[file][0] = content + (additionalAssets[file][0] || '')
+                if (!additionalAssets[file][0]) {
+                  additionalAssets[file][0] = content
+                }
                 return file
               }
             } else {
               const file = resourcePath + typeExtMap[type]
               additionalAssets[file] = additionalAssets[file] || []
-              if (index === -1) {
-                additionalAssets[file][0] = content + (additionalAssets[file][0] || '')
-              } else {
-                additionalAssets[file][index] = (additionalAssets[file][index] || '') + content
+              if (!additionalAssets[file][index]) {
+                additionalAssets[file][index] = content
               }
             }
           }
