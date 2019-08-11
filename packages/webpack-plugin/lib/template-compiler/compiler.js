@@ -954,6 +954,7 @@ function processBindEvent (el) {
       let modelProp = getAndRemoveAttr(el, config[mode].directive.modelProp) || config[mode].event.defaultModelProp
       let modelEvent = getAndRemoveAttr(el, config[mode].directive.modelEvent) || config[mode].event.defaultModelEvent
       const modelValuePath = getAndRemoveAttr(el, config[mode].directive.modelValuePath) || config[mode].event.defaultModelValuePath
+      const modelFilter = getAndRemoveAttr(el, config[mode].directive.modelFilter) || config[mode].event.modelFilter
       let modelValuePathArr
       try {
         modelValuePathArr = JSON.parse(modelValuePath)
@@ -972,7 +973,7 @@ function processBindEvent (el) {
       }
       eventConfigMap[modelEvent].configs.unshift({
         hasArgs: true,
-        expStr: `[${stringify('__model')},${stringify(modelValue)},${stringify('$event')},${stringify(modelValuePathArr)}]`
+        expStr: `[${stringify('__model')},${stringify(modelValue)},${stringify('$event')},${stringify(modelValuePathArr)},${modelFilter}]`
       })
       addAttrs(el, [
         {
