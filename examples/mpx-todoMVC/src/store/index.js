@@ -13,22 +13,22 @@ const store = createStore({
     ]
   },
   mutations: {
-    addTodo (state, {text}) {
+    addTodo (state, { text }) {
       state.todos.push({
         text,
         done: false
       })
     },
-    deleteTodo (state, {index}) {
+    deleteTodo (state, { index }) {
       state.todos.splice(index, 1)
     },
-    toggleTodo (state, {index}) {
+    toggleTodo (state, { index }) {
       state.todos[index].done = !state.todos[index].done
     },
-    editTodo (state, {index, value}) {
+    editTodo (state, { index, value }) {
       state.todos[index].text = value
     },
-    toggleAll (state, {done}) {
+    toggleAll (state, { done }) {
       state.todos.forEach((todo) => {
         todo.done = done
       })

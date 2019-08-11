@@ -36,7 +36,7 @@
 </template>
 
 <script>
-  import {createComponent} from '@mpxjs/core'
+  import { createComponent } from '@mpxjs/core'
   import store from '../store/index'
 
   const filters = {
@@ -69,12 +69,12 @@
       addTodo () {
         const text = this.inputVal
         if (text.trim()) {
-          store.commit('addTodo', {text})
+          store.commit('addTodo', { text })
         }
         this.inputVal = ''
       },
       toggleAll () {
-        store.commit('toggleAll', {done: !this.allChecked})
+        store.commit('toggleAll', { done: !this.allChecked })
       },
       ...store.mapMutations([
         'clearCompleted'

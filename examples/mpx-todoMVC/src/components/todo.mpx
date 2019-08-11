@@ -16,7 +16,7 @@
 </template>
 
 <script>
-  import {createComponent} from '@mpxjs/core'
+  import { createComponent } from '@mpxjs/core'
   import store from '../store/index'
 
   createComponent({
@@ -42,13 +42,13 @@
     methods: {
       ...store.mapMutations(['editTodo']),
       toggleTodo () {
-        store.commit('toggleTodo', {index: this.index})
+        store.commit('toggleTodo', { index: this.index })
       },
       setEditing () {
         this.editing = true
       },
       deleteTodo () {
-        store.commit('deleteTodo', {index: this.index})
+        store.commit('deleteTodo', { index: this.index })
       },
       doneEdit (e) {
         const value = e.detail.value.trim()
