@@ -5,4 +5,4 @@ npm-debug.log
 deploy/
 output/
 dist/
-alidist/
+.vscode/

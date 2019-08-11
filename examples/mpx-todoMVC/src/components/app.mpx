@@ -6,10 +6,14 @@
     </view>
 
     <view class="main" hidden="{{todos.length===0}}">
-      <checkbox-group bindchange="toggleAll">
+      <checkbox-group wx:if="{{__mpx_mode__ !== 'swan'}}" bindchange="toggleAll">
         <checkbox class="toggle-all" id="toggle-all" checked="{{allChecked}}"/>
         <label class="label" for="toggle-all"></label>
       </checkbox-group>
+      <view wx:if="{{__mpx_mode__ === 'swan'}}" bindtap="toggleAll">
+        <checkbox class="toggle-all" id="toggle-all" checked="{{allChecked}}"/>
+        <label class="label" for="toggle-all"></label>
+      </view>
       <view class="todo-list">
         <view class="todo-wrap" wx:for="{{filteredTodos}}" wx:key="{{index}}">
           <todo todo="{{item}}" index="{{index}}"></todo>
@@ -36,7 +40,7 @@
 </template>
 
 <script>
-  import {createComponent} from '@mpxjs/core'
+  import { createComponent } from '@mpxjs/core'
   import store from '../store/index'
 
   const filters = {
@@ -69,12 +73,12 @@
       addTodo () {
         const text = this.inputVal
         if (text.trim()) {
-          store.commit('addTodo', {text})
+          store.commit('addTodo', { text })
         }
         this.inputVal = ''
       },
       toggleAll () {
-        store.commit('toggleAll', {done: !this.allChecked})
+        store.commit('toggleAll', { done: !this.allChecked })
       },
       ...store.mapMutations([
         'clearCompleted'

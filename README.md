@@ -26,6 +26,7 @@ Mpx是一款致力于提高小程序开发体验的增强型小程序框架，�
 * 小程序自身规范的完全支持
 * [多平台支持](https://didi.github.io/mpx/platform.html#%E5%A4%9A%E5%B9%B3%E5%8F%B0%E6%94%AF%E6%8C%81)(微信、支付宝、百度、qq、头条)
 * [跨平台编译](https://didi.github.io/mpx/platform.html#%E8%B7%A8%E5%B9%B3%E5%8F%B0%E7%BC%96%E8%AF%91)(支持将微信小程序转换为支付宝、百度、qq、头条小程序)
+* [TypeScript支持](https://didi.github.io/mpx/ts.html)(完善的类型推导)
 
 Mpx2.0正式发布！支持目前业内全部小程序平台及跨小程序平台编译，[点此查看详情](https://github.com/didi/mpx/releases/tag/v2.0.0)，[点此查看迁移指南](https://didi.github.io/mpx/migrate.html)
 
