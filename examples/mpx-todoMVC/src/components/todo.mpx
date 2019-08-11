@@ -1,10 +1,14 @@
 <template>
   <view class="{{todoCls}}">
     <view class="view">
-      <checkbox-group class="toggle-wrap" bindchange="toggleTodo">
+      <checkbox-group wx:if="{{__mpx_mode__ !== 'swan'}}" class="toggle-wrap" bindchange="toggleTodo">
         <checkbox class="{{todo.done ? 'toggle checked' : 'toggle'}}" id="toggle" checked="{{todo.done}}"/>
         <label for="toggle" class="label"></label>
       </checkbox-group>
+      <view wx:if="{{__mpx_mode__ === 'swan'}}" class="toggle-wrap" bindtap="toggleTodo">
+        <checkbox class="{{todo.done ? 'toggle checked' : 'toggle'}}" id="toggle"/>
+        <label for="toggle" class="label"></label>
+      </view>
       <view class="label-wrap" bindlongpress="setEditing">
         <view class="label">{{todo.text}}</view>
       </view>
