@@ -5,6 +5,24 @@
 ## Learning MPX
 The [mpx website](https://didi.github.io/mpx/) is a great resource to get started.
 
+## Usage
+
+使用本项目
+
+```bash
+# install deps
+npm i
+
+# dev
+npm run watch:cross
+```
+
+若只想看某一平台的，npm run watch --wx
+
+目前支持的平台有 微信、支付宝、百度
+
+若运行失败，请提issue反馈，以及可以尝试使用 npm ci 使依赖和本示例提交时完全一致。
+
 ## Intro
 
 本项目是一个采用mpx框架实现的简单的MVC-todo，样式及逻辑参照 http://todomvc.com/ 实现。
