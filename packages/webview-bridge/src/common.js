@@ -245,7 +245,8 @@ for (let item in webviewApiNameList) {
 const bridgeFunction = {
   ...webviewApiList,
   ...exportApiList,
-  wxsdkConfig
+  wxsdkConfig,
+  mpxEnv: env
 }
 
 export {

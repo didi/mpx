@@ -1,5 +1,5 @@
 /**
- * mpxjs webview bridge v2.0.11
+ * mpxjs webview bridge v2.1.11
  * (c) 2019 @mpxjs team
  * @license Apache
  */
@@ -288,7 +288,8 @@ for (let item in webviewApiNameList) {
 const bridgeFunction = {
   ...webviewApiList,
   ...exportApiList,
-  wxsdkConfig
+  wxsdkConfig,
+  mpxEnv: env
 };
 
 const { navigateTo, navigateBack, switchTab, reLaunch, redirectTo, getEnv, postMessage } = webviewApiList;
