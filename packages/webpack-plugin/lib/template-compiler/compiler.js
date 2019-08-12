@@ -973,7 +973,7 @@ function processBindEvent (el) {
       }
       eventConfigMap[modelEvent].configs.unshift({
         hasArgs: true,
-        expStr: `[${stringify('__model')},${stringify(modelValue)},${stringify('$event')},${stringify(modelValuePathArr)},${modelFilter}]`
+        expStr: `[${stringify('__model')},${stringify(modelValue)},${stringify('$event')},${stringify(modelValuePathArr)},${stringify(modelFilter)}]`
       })
       addAttrs(el, [
         {
