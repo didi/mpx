@@ -20,6 +20,15 @@ const isProductionLikeMode = options => {
   return options.mode === 'production' || !options.mode
 }
 
+class SetMap extends Map {
+  set(key, value) {
+    return super.set(
+      key,
+      this.has(key) ? this.get(key).add(value) : new Set([value])
+    );
+  }
+}
+
 class MpxWebpackPlugin {
   constructor (options = {}) {
     options.mode = options.mode || 'wx'
@@ -87,6 +96,29 @@ class MpxWebpackPlugin {
         // 设置loaderContext的minimize
         if (isProductionLikeMode(compiler.options)) {
           loaderContext.minimize = true
+        }
+      })
+
+      compilation.hooks.optimizeChunks.tap('MpxWebpackPlugin', (chunks) => {
+        const toRemoveMap = new SetMap()
+        for (const chunk of chunks) {
+          for (const module of chunk.modulesIterable) {
+            if (module._source._value === '// removed by extractor') {
+              for (const reason of module.reasons) {
+                toRemoveMap.set(reason.module, reason.dependency)
+              }
+              chunk.removeModule(module)
+            }
+          }
+        }
+        for (const [module, set] of toRemoveMap) {
+          module.dependencies = module.dependencies.filter((d) => {
+            if (set.has(d)) {
+              d.disconnect();
+              return false;
+            }
+            return true;
+          });
         }
       })
     })
