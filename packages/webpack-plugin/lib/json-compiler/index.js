@@ -147,7 +147,7 @@ module.exports = function (raw) {
 
   function getPageName (root, page) {
     const match = /^[.~/]*(.*?)(\.[^.]*)?$/.exec(page)
-    return path.join(root, match[1])
+    return `${root}/${match[1]}`
   }
 
   const processComponent = (component, context, rewritePath, componentPath, callback) => {
@@ -347,8 +347,7 @@ module.exports = function (raw) {
           if (resolveMode === 'native') {
             page = loaderUtils.urlToRequest(page, options.root)
           }
-
-          let name = getPageName(tarRoot, page)
+          let name = getPageName(tarRoot, rawPage)
           name = toPosix(name)
           this.resolve(path.join(context, srcRoot), page, (err, rawResult) => {
             if (err) return callback(err)
