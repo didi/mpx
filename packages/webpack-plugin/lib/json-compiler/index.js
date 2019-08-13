@@ -147,7 +147,7 @@ module.exports = function (raw) {
 
   function getPageName (root, page) {
     const match = /^[.~/]*(.*?)(\.[^.]*)?$/.exec(page)
-    return `${root}/${match[1]}`
+    return path.join(root, match[1])
   }
 
   const processComponent = (component, context, rewritePath, componentPath, callback) => {
