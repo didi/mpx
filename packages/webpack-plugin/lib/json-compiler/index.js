@@ -145,9 +145,9 @@ module.exports = function (raw) {
     rulesRunner(json)
   }
 
-  function getName (raw) {
-    const match = /^(.*?)(\.[^.]*)?$/.exec(raw)
-    return match[1]
+  function getPageName (root, page) {
+    const match = /^[.~/]*(.*?)(\.[^.]*)?$/.exec(page)
+    return path.join(root, match[1])
   }
 
   const processComponent = (component, context, rewritePath, componentPath, callback) => {
@@ -348,11 +348,8 @@ module.exports = function (raw) {
             page = loaderUtils.urlToRequest(page, options.root)
           }
 
-          let name = getName(path.join(tarRoot, page))
+          let name = getPageName(tarRoot, page)
           name = toPosix(name)
-          if (/^\./.test(name)) {
-            return callback(new Error(`Page's path ${page} which is referenced in ${context} must be a subdirectory of ${context}!`))
-          }
           this.resolve(path.join(context, srcRoot), page, (err, rawResult) => {
             if (err) return callback(err)
             let result = rawResult

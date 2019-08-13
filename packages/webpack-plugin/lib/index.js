@@ -105,6 +105,7 @@ class MpxWebpackPlugin {
           mainResourceMap: {},
           wxsMap: {},
           wxsConentMap: {},
+          forceDisableInject: this.options.forceDisableInject,
           resolveMode: this.options.resolveMode,
           mode: this.options.mode,
           srcMode: this.options.srcMode,
