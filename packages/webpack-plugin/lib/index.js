@@ -1,7 +1,9 @@
 'use strict'
 
 const path = require('path')
+const acornWalk = require('acorn-walk')
 const ConcatSource = require('webpack-sources').ConcatSource
+const Parser = require('webpack/lib/parser')
 const loaderUtils = require('loader-utils')
 const ResolveDependency = require('./dependency/ResolveDependency')
 const InjectDependency = require('./dependency/InjectDependency')
@@ -21,11 +23,11 @@ const isProductionLikeMode = options => {
 }
 
 class SetMap extends Map {
-  set(key, value) {
+  set (key, value) {
     return super.set(
       key,
       this.has(key) ? this.get(key).add(value) : new Set([value])
-    );
+    )
   }
 }
 
@@ -100,13 +102,16 @@ class MpxWebpackPlugin {
       })
 
       compilation.hooks.optimizeChunks.tap('MpxWebpackPlugin', (chunks) => {
+        // 删除所有被抽取出空的样式、模板、json依赖
         const toRemoveMap = new SetMap()
+        const toRemoveRequestSet = new Set()
         for (const chunk of chunks) {
           for (const module of chunk.modulesIterable) {
             if (module._source._value === '// removed by extractor') {
               for (const reason of module.reasons) {
                 toRemoveMap.set(reason.module, reason.dependency)
               }
+              toRemoveRequestSet.add(module.rawRequest)
               chunk.removeModule(module)
             }
           }
@@ -114,12 +119,30 @@ class MpxWebpackPlugin {
         for (const [module, set] of toRemoveMap) {
           module.dependencies = module.dependencies.filter((d) => {
             if (set.has(d)) {
-              d.disconnect();
-              return false;
+              d.disconnect()
+              return false
             }
-            return true;
-          });
+            return true
+          })
         }
+
+        for (const [module] of toRemoveMap) {
+          const source = module._source.source()
+          const ast = Parser.parse(source, {
+            sourceType: 'auto'
+          })
+          acornWalk.simple(ast, {
+            CallExpression (node) {
+              if (node.callee.name === 'require') {
+                const moduleName = node.arguments[0] && node.arguments[0].value
+                if (toRemoveRequestSet.has(moduleName)) {
+                  module.addDependency(new ReplaceDependency('', node.range))
+                }
+              }
+            }
+          })
+        }
+        // TODO clean RequireHeaderDependency
       })
     })
 

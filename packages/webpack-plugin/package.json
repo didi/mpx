@@ -15,6 +15,7 @@
     "lib"
   ],
   "dependencies": {
+    "acorn-walk": "^7.0.0",
     "async": "^2.6.0",
     "babel-generator": "^6.26.1",
     "babel-traverse": "^6.26.0",
