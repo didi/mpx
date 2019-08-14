@@ -14,7 +14,8 @@ const EXT_MPX_JSON = '.json.js'
 module.exports = function (content) {
   this.cacheable()
 
-  if (!this._compilation.__mpx__) {
+  const mpx = this._compilation.__mpx__
+  if (!mpx) {
     return content
   }
 
@@ -44,13 +45,13 @@ module.exports = function (content) {
   const hasComment = false
   const isNative = true
 
-  const projectRoot = this._compilation.__mpx__.projectRoot
-  const mode = this._compilation.__mpx__.mode
-  const globalSrcMode = this._compilation.__mpx__.srcMode
+  const projectRoot = mpx.projectRoot
+  const mode = mpx.mode
+  const globalSrcMode = mpx.srcMode
   const queryObj = loaderUtils.parseQuery(this.resourceQuery || '?')
   const localSrcMode = queryObj.mode
-  const pagesMap = this._compilation.__mpx__.pagesMap
-  const componentsMap = this._compilation.__mpx__.componentsMap
+  const pagesMap = mpx.pagesMap
+  const componentsMap = mpx.componentsMap
   const resource = stripExtension(this.resource)
   const isApp = !pagesMap[resource] && !componentsMap[resource]
   const srcMode = localSrcMode || globalSrcMode
@@ -111,7 +112,7 @@ module.exports = function (content) {
         })
       }
     }, (content, callback) => {
-      let usingComponents = [].concat(this._compilation.__mpx__.usingComponents)
+      let usingComponents = [].concat(mpx.usingComponents)
       try {
         let ret = JSON.parse(content)
         if (ret.usingComponents) {
@@ -183,11 +184,13 @@ module.exports = function (content) {
         globalInjectCode += `global.currentSrcMode = ${JSON.stringify(srcMode)};\n`
       }
 
-      const dep = new InjectDependency({
-        content: globalInjectCode,
-        index: -3
-      })
-      this._module.addDependency(dep)
+      if (!mpx.forceDisableInject) {
+        const dep = new InjectDependency({
+          content: globalInjectCode,
+          index: -3
+        })
+        this._module.addDependency(dep)
+      }
 
       // 触发webpack global var 注入
       let output = 'global.currentModuleId;\n'
