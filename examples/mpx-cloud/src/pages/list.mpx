@@ -1,0 +1,93 @@
+<template>
+  <view class="container">
+    <view class="idcard-item" wx:for="{{list}}" wx:key="*this" ontap="getDetail" data-blogid="{{item._id}}">
+      <view class="idcard-image">
+        <image src="{{item.cover}}"></image>
+      </view>
+      <view class="idcard-detail">
+        <view class="title">标题: {{item.title}}</view>
+        <view class="content">内容： {{item.content}}</view>
+      </view>
+    </view>
+  </view>
+</template>
+
+<script>
+  import { createPage } from '@mpxjs/core'
+
+  //获取应用实例
+  const app = getApp()
+
+  Page({
+    /**
+     * 获取文章列表数据
+     */
+    getData () {
+      const db = wx.cloud.database({})
+      db.collection('blog').get().then((res) => {
+        console.log(res)
+        let data = res.data
+        data = data.map((item) => {
+          let appendix = (item.content.length > 20) ? '...' : ''
+          item.content = item.content.slice(0, 20) + appendix
+          return item
+        })
+
+        this.setData({
+          list: data
+        })
+      }).catch(e => {
+        wx.showToast({
+          title: 'db读取失败',
+          icon: 'none'
+        })
+      })
+    },
+
+    /**
+     * 生命周期函数--监听页面显示
+     */
+    onShow: function () {
+      this.getData()
+    },
+
+    /**
+     * 跳转至文章详情
+     */
+    getDetail (e) {
+      app.globalData.blog.detailId = e.currentTarget.dataset.blogid
+      wx.navigateTo({ url: './detail' })
+    }
+
+  })
+</script>
+
+<style>
+  .idcard-item {
+    display: flex;
+    width: 100%;
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+  }
+
+  .idcard-image > image {
+    width: 150px;
+    height: 100px;
+    border: 1px solid #eee;
+  }
+
+  .idcard-image {
+    padding-left: 10px;
+  }
+
+  .idcard-detail {
+    font-size: 14px;
+    margin-left: 10px;
+  }
+</style>
+
+<script type="application/json">
+  {
+    "navigationBarTitleText": "文章列表"
+  }
+</script>
