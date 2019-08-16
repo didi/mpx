@@ -173,7 +173,7 @@ module.exports = function (raw) {
       if (compilationMpx.processingSubPackages) {
         for (let src in subPackagesMap) {
           // 分包引用且主包未引用的组件，需打入分包目录中
-          if (result.startsWith(src) && !mainComponentsMap[result]) {
+          if (!path.relative(src, result).startsWith('..') && !mainComponentsMap[result]) {
             subPackageRoot = subPackagesMap[src]
             break
           }
