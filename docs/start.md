@@ -72,10 +72,6 @@ npm run watch
 <script>
   import { createApp } from '@mpxjs/core'
   createApp({
-    computed: {
-    },
-    methods: {
-    },
     onShow(options) {
       console.log(options)
     }
@@ -90,7 +86,7 @@ npm run watch
 <script type="application/json">
   {
     "pages": [
-      "pages/index/index"
+      "./pages/index/index"
     ],
     "window": {
       "backgroundTextStyle": "light",
@@ -116,7 +112,7 @@ npm run watch
   import {createPage} from '@mpxjs/core'
 
   createPage({
-    onLoad: function () {
+    onLoad () {
     }
   })
 </script>
