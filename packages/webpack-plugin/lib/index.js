@@ -169,7 +169,6 @@ class MpxWebpackPlugin {
         }
       }
 
-
       compilation.hooks.optimizeModules.tap('MpxWebpackPlugin', (modules) => {
         modules.forEach((module) => {
           if (module.needRemove) {
