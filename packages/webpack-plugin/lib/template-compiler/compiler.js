@@ -206,6 +206,10 @@ let isNative
 let rulesRunner
 let currentEl
 const rulesResultMap = new Map()
+const deleteErrorInResultMap = (node) => {
+  rulesResultMap.delete(node)
+  Array.isArray(node.children) && node.children.forEach(item => deleteErrorInResultMap(item))
+}
 let platformGetTagNamespace
 let basename
 let refId = 0
@@ -1675,7 +1679,7 @@ function findPrevNode (node) {
 }
 
 function replaceNode (node, newNode) {
-  rulesResultMap.delete(node)
+  deleteErrorInResultMap(node)
   let parent = node.parent
   if (parent) {
     let index = parent.children.indexOf(node)
@@ -1688,7 +1692,7 @@ function replaceNode (node, newNode) {
 }
 
 function removeNode (node) {
-  rulesResultMap.delete(node)
+  deleteErrorInResultMap(node)
   let parent = node.parent
   if (parent) {
     let index = parent.children.indexOf(node)
