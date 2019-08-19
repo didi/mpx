@@ -15,6 +15,10 @@ const fixSwanRelative = require('./utils/fix-swan-relative')
 const DefinePlugin = require('webpack/lib/DefinePlugin')
 const hash = require('hash-sum')
 const AddModePlugin = require('./resolver/AddModePlugin')
+const CommonJsRequireDependency = require('webpack/lib/dependencies/CommonJsRequireDependency')
+const HarmonyImportSideEffectDependency = require('webpack/lib/dependencies/HarmonyImportSideEffectDependency')
+const RequireHeaderDependency = require('webpack/lib/dependencies/RequireHeaderDependency')
+const RemovedModuleDependency = require('./dependency/RemovedModuleDependency')
 
 const isProductionLikeMode = options => {
   return options.mode === 'production' || !options.mode
@@ -122,7 +126,7 @@ class MpxWebpackPlugin {
               if (compilationMpx.processingSubPackages) {
                 for (let src in subPackagesMap) {
                   // 分包引用且主包未引用的资源，需打入分包目录中
-                  if (selfResourcePath.startsWith(src) && !mainResourceMap[selfResourcePath]) {
+                  if (!path.relative(src, selfResourcePath).startsWith('..') && !mainResourceMap[selfResourcePath]) {
                     subPackageRoot = subPackagesMap[src]
                     break
                   }
@@ -165,6 +169,36 @@ class MpxWebpackPlugin {
         }
       }
 
+      compilation.hooks.optimizeModules.tap('MpxWebpackPlugin', (modules) => {
+        modules.forEach((module) => {
+          if (module.needRemove) {
+            let removed = false
+            module.reasons.forEach((reason) => {
+              if (reason.module) {
+                if (reason.dependency instanceof HarmonyImportSideEffectDependency) {
+                  reason.module.removeDependency(reason.dependency)
+                  reason.module.addDependency(new RemovedModuleDependency(reason.dependency.request))
+                  removed = true
+                } else if (reason.dependency instanceof CommonJsRequireDependency && reason.dependency.loc.range) {
+                  let index = reason.module.dependencies.indexOf(reason.dependency)
+                  if (index > -1 && reason.module.dependencies[index + 1] instanceof RequireHeaderDependency) {
+                    reason.module.dependencies.splice(index, 2)
+                    reason.module.addDependency(new RemovedModuleDependency(reason.dependency.request, reason.dependency.loc.range))
+                    removed = true
+                  }
+                }
+              }
+            })
+            if (removed) {
+              module.chunksIterable.forEach((chunk) => {
+                module.removeChunk(chunk)
+              })
+              module.disconnect()
+            }
+          }
+        })
+      })
+
       compilation.hooks.additionalAssets.tapAsync('MpxWebpackPlugin', (callback) => {
         for (let file in additionalAssets) {
           let content = new ConcatSource()
@@ -185,7 +219,15 @@ class MpxWebpackPlugin {
       compilation.dependencyFactories.set(ReplaceDependency, new NullFactory())
       compilation.dependencyTemplates.set(ReplaceDependency, new ReplaceDependency.Template())
 
+      compilation.dependencyFactories.set(RemovedModuleDependency, normalModuleFactory)
+      compilation.dependencyTemplates.set(RemovedModuleDependency, new RemovedModuleDependency.Template())
+
       normalModuleFactory.hooks.parser.for('javascript/auto').tap('MpxWebpackPlugin', (parser) => {
+        // hack预处理，将expr.range写入loc中便于在CommonJsRequireDependency中获取，移除无效require
+        parser.hooks.call.for('require').tap({ name: 'MpxWebpackPlugin', stage: -100 }, (expr) => {
+          expr.loc.range = expr.range
+        })
+
         parser.hooks.call.for('__mpx_resolve_path__').tap('MpxWebpackPlugin', (expr) => {
           if (expr.arguments[0]) {
             const resource = stripExtension(expr.arguments[0].value)

@@ -96,6 +96,8 @@ module.exports = function (content) {
       let extracted = extract(text, options.type, resourcePath, +options.index, selfResourcePath)
       if (extracted) {
         resultSource = `module.exports = __webpack_public_path__ + ${JSON.stringify(extracted)};`
+      } else {
+        this._module.needRemove = true
       }
     } catch (err) {
       return nativeCallback(err)

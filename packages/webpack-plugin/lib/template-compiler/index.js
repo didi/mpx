@@ -4,6 +4,7 @@ const bindThis = require('./bind-this').transform
 const InjectDependency = require('../dependency/InjectDependency')
 const stripExtension = require('../utils/strip-extention')
 const getMainCompilation = require('../utils/get-main-compilation')
+const path = require('path')
 
 module.exports = function (raw) {
   this.cacheable()
@@ -30,7 +31,7 @@ module.exports = function (raw) {
         new Error('[template compiler][' + this.resource + ']: ' + msg)
       )
     },
-    resource: this.resource,
+    basename: path.basename(this.resource),
     isComponent: !!componentsMap[resource],
     mode,
     externalClasses,

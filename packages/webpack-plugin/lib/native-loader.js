@@ -108,7 +108,7 @@ module.exports = function (content) {
         tryEvalMPXJSON(callback)
       } else {
         fs.readFile(resource + typeExtMap['json'], (err, raw) => {
-          callback(err, { content: raw.toString('utf-8') })
+          callback(err, raw.toString('utf-8'))
         })
       }
     }, (content, callback) => {

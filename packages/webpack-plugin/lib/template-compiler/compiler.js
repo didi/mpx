@@ -207,7 +207,7 @@ let rulesRunner
 let currentEl
 const rulesResultMap = new Map()
 let platformGetTagNamespace
-let resource
+let basename
 let refId = 0
 
 function baseWarn (msg) {
@@ -631,7 +631,7 @@ function parse (template, options) {
   mode = options.mode || 'wx'
   srcMode = options.srcMode || mode
   isNative = options.isNative
-  resource = options.resource
+  basename = options.basename
 
   rulesRunner = getRulesRunner({
     mode,
@@ -1177,7 +1177,7 @@ function postProcessWxs (el, meta) {
         content = el.children.filter((child) => {
           return child.type === 3 && !child.isComment
         }).map(child => child.text).join('\n')
-        src = addQuery(resource, {
+        src = addQuery('./' + basename, {
           wxsModule: module
         })
         addAttrs(el, [{
@@ -1558,8 +1558,8 @@ function processElement (el, root, options, meta, injectNodes) {
 
 function closeElement (el, meta) {
   const pass = isNative || postProcessTemplate(el) || processingTemplate
+  postProcessWxs(el, meta)
   if (!pass) {
-    postProcessWxs(el, meta)
     el = postProcessComponentIs(el)
   }
   postProcessFor(el)
