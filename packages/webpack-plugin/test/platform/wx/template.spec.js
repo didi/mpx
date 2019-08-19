@@ -53,7 +53,6 @@ describe('template should transform correct', function () {
         <live-pusher></live-pusher>
     </view>
     `
-
     compileAndParse(input)
     expect(errorFn).not.toHaveBeenCalled()
   })
