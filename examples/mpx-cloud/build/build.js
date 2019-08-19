@@ -34,7 +34,7 @@ const webpackWxConfig = merge(webpackMainConfig, {
         from: path.resolve(__dirname, '../functions'),
         to: path.resolve(__dirname, '../dist/functions')
       }
-])
+    ])
   ]
 })
 
