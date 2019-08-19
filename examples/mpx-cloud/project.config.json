@@ -1,0 +1,17 @@
+{
+  "miniprogramRoot": "miniprogram",
+  "cloudfunctionRoot": "functions",
+  "compileType": "miniprogram",
+  "setting": {
+    "newFeature": true,
+    "urlCheck": true,
+    "es6": false,
+    "postcss": true,
+    "minified": false,
+    "autoAudits": false
+  },
+  "appid": "touristappid",
+  "projectname": "mpx-cloud",
+  "description": "A mpx project",
+  "condition": {}
+}
