@@ -1,6 +1,7 @@
 /*
   MIT License http://www.opensource.org/licenses/mit-license.php
   Author Tobias Koppers @sokra
+  Modified by @hiyuki
 */
 var loaderUtils = require('loader-utils')
 var processCss = require('./processCss')

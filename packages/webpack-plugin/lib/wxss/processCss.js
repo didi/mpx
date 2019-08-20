@@ -1,6 +1,7 @@
 /*
   MIT License http://www.opensource.org/licenses/mit-license.php
   Author Tobias Koppers @sokra
+  Modified by @hiyuki
 */
 var formatCodeFrame = require('babel-code-frame')
 var Tokenizer = require('css-selector-tokenizer')

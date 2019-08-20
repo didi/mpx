@@ -1,6 +1,7 @@
 /*
   MIT License http://www.opensource.org/licenses/mit-license.php
   Author Tobias Koppers @sokra
+  Modified by @hiyuki
 */
 // css base code, injected by the css-loader
 module.exports = function (useSourceMap) {
