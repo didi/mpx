@@ -206,8 +206,12 @@ let isNative
 let rulesRunner
 let currentEl
 const rulesResultMap = new Map()
+const deleteErrorInResultMap = (node) => {
+  rulesResultMap.delete(node)
+  Array.isArray(node.children) && node.children.forEach(item => deleteErrorInResultMap(item))
+}
 let platformGetTagNamespace
-let resource
+let basename
 let refId = 0
 
 function baseWarn (msg) {
@@ -631,7 +635,7 @@ function parse (template, options) {
   mode = options.mode || 'wx'
   srcMode = options.srcMode || mode
   isNative = options.isNative
-  resource = options.resource
+  basename = options.basename
 
   rulesRunner = getRulesRunner({
     mode,
@@ -1177,7 +1181,7 @@ function postProcessWxs (el, meta) {
         content = el.children.filter((child) => {
           return child.type === 3 && !child.isComment
         }).map(child => child.text).join('\n')
-        src = addQuery(resource, {
+        src = addQuery('./' + basename, {
           wxsModule: module
         })
         addAttrs(el, [{
@@ -1558,8 +1562,8 @@ function processElement (el, root, options, meta, injectNodes) {
 
 function closeElement (el, meta) {
   const pass = isNative || postProcessTemplate(el) || processingTemplate
+  postProcessWxs(el, meta)
   if (!pass) {
-    postProcessWxs(el, meta)
     el = postProcessComponentIs(el)
   }
   postProcessFor(el)
@@ -1675,7 +1679,7 @@ function findPrevNode (node) {
 }
 
 function replaceNode (node, newNode) {
-  rulesResultMap.delete(node)
+  deleteErrorInResultMap(node)
   let parent = node.parent
   if (parent) {
     let index = parent.children.indexOf(node)
@@ -1688,7 +1692,7 @@ function replaceNode (node, newNode) {
 }
 
 function removeNode (node) {
-  rulesResultMap.delete(node)
+  deleteErrorInResultMap(node)
   let parent = node.parent
   if (parent) {
     let index = parent.children.indexOf(node)

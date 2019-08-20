@@ -18,7 +18,7 @@ interface PropOpt {
   optionalTypes?: Array<PropType>
   value?: any
 
-  observer?(value: any, old: any, changedPath: string): void
+  observer? (value: any, old: any, changedPath: string): void
 }
 
 interface Properties {
@@ -56,8 +56,8 @@ type GetDataType<T> = T extends () => any ? ReturnType<T> : T
 
 type GetComputedSetKeys<T> = {
   [K in keyof T]: T[K] extends {
-    get(): any,
-    set(val: any): void
+    get (): any,
+    set (val: any): void
   } ? K : never
 }[keyof T]
 
@@ -66,8 +66,8 @@ type GetComputedType<T> = {
   readonly [K in Exclude<keyof T, GetComputedSetKeys<T>>]: T[K] extends () => infer R ? R : T[K]
 } & {
   [K in GetComputedSetKeys<T>]: T[K] extends {
-    get(): infer R,
-    set(val: any): void
+    get (): infer R,
+    set (val: any): void
   } ? R : T[K]
 }
 
@@ -155,14 +155,14 @@ interface WxComponentIns {
 
   dataset: string
 
-  setData(
+  setData (
     data: object,
     callback?: () => void
   ): void
 
-  hasBehavior(behavior: any): boolean
+  hasBehavior (behavior: any): boolean
 
-  triggerEvent(
+  triggerEvent (
     name: string,
     details?: any,
     options?: Partial<{
@@ -172,24 +172,24 @@ interface WxComponentIns {
     }>
   ): void
 
-  createSelectorQuery(): wx.SelectorQuery
+  createSelectorQuery (): wx.SelectorQuery
 
-  createIntersectionObserver(
+  createIntersectionObserver (
     options?: wx.CreateIntersectionObserverOption
   ): wx.IntersectionObserver
 
-  selectComponent(selector: string): ComponentIns<{}, {}, {}, {}, []>
+  selectComponent (selector: string): ComponentIns<{}, {}, {}, {}, []>
 
-  selectAllComponents(selector: string): Array<ComponentIns<{}, {}, {}, {}, []>>
+  selectAllComponents (selector: string): Array<ComponentIns<{}, {}, {}, {}, []>>
 
-  getRelationNodes(relationKey: string): wx.ComponentRelation[]
+  getRelationNodes (relationKey: string): wx.ComponentRelation[]
 }
 
-declare function get(obj: object, key: string): any
+declare function get (obj: object, key: string): any
 
-declare function set(obj: object, key: string, value: any): any
+declare function set (obj: object, key: string, value: any): any
 
-declare function remove(obj: object, key: string): any
+declare function remove (obj: object, key: string): any
 
 interface MpxComponentIns {
   $set: typeof set
@@ -198,11 +198,11 @@ interface MpxComponentIns {
 
   $remove: typeof remove
 
-  $watch(expr: string | (() => any), handler: WatchHandler | WatchOptWithHandler, options?: WatchOpt): () => void
+  $watch (expr: string | (() => any), handler: WatchHandler | WatchOptWithHandler, options?: WatchOpt): () => void
 
-  $forceUpdate(params: object, callback: () => void): void
+  $forceUpdate (params: object, callback: () => void): void
 
-  $nextTick(fn: () => void): void
+  $nextTick (fn: () => void): void
 }
 
 type ComponentInsInComputed<D, P, C, M, Mi extends Array<any>> =
@@ -217,9 +217,9 @@ type ComponentIns<D, P, C, M, Mi extends Array<any>> =
   GetPropsType<P & UnboxMixinsField<Mi, 'properties'>> &
   GetComputedType<C & UnboxMixinsField<Mi, 'computed'>> & WxComponentIns & MpxComponentIns
 
-export function createComponent<D extends Data = {}, P extends Properties = {}, C = {}, M extends Methods = {}, Mi extends Array<any> = []>(opt: ThisTypedComponentOpt<D, P, C, M, Mi>): void
+export function createComponent<D extends Data = {}, P extends Properties = {}, C = {}, M extends Methods = {}, Mi extends Array<any> = []> (opt: ThisTypedComponentOpt<D, P, C, M, Mi>): void
 
-export function getMixin<D extends Data = {}, P extends Properties = {}, C = {}, M extends Methods = {}, Mi extends Array<any> = []>(opt: ThisTypedComponentOpt<D, P, C, M, Mi>): {
+export function getMixin<D extends Data = {}, P extends Properties = {}, C = {}, M extends Methods = {}, Mi extends Array<any> = []> (opt: ThisTypedComponentOpt<D, P, C, M, Mi>): {
   data: GetDataType<D> & UnboxMixinsField<Mi, 'data'>
   properties: P & UnboxMixinsField<Mi, 'properties'>
   computed: C & UnboxMixinsField<Mi, 'computed'>
@@ -227,9 +227,9 @@ export function getMixin<D extends Data = {}, P extends Properties = {}, C = {},
   [index: string]: any
 }
 
-export function getComputed<C>(computed: C): C extends (...args: any[]) => any ? ReturnType<C> : C
+export function getComputed<C> (computed: C): C extends (...args: any[]) => any ? ReturnType<C> : C
 
-export function createPage<D extends Data = {}, P extends Properties = {}, C = {}, M extends Methods = {}, Mi extends Array<any> = []>(opt: ThisTypedPageOpt<D, P, C, M, Mi>): void
+export function createPage<D extends Data = {}, P extends Properties = {}, C = {}, M extends Methods = {}, Mi extends Array<any> = []> (opt: ThisTypedPageOpt<D, P, C, M, Mi>): void
 
 
 type Mutations<S> = {
@@ -268,13 +268,17 @@ type GetActions<A> = {
   [K in keyof A]: getAction<A[K]>
 }
 
+type ObjectOf<T> = {
+  [key: string]: T
+}
+
 interface StoreOpt<S, G, M, A, D extends Deps> {
   state?: S,
   getters?: G
   mutations?: M,
   actions?: A,
   deps?: D
-  modules?: Array<StoreOpt<{}, {}, {}, {}, {}>>
+  modules?: ObjectOf<StoreOpt<{}, {}, {}, {}, {}>>
 }
 
 interface Deps {
@@ -303,34 +307,32 @@ declare class Store<S = {}, G = {}, M = {}, A = {}, D extends Deps = {}> {
 
   commit: GetCommit<M, D>
 
-  mapState<K extends keyof S>(maps: K[]): {
+  mapState<K extends keyof S> (maps: K[]): {
     [I in K]: () => S[I]
   }
-  mapState(depPath: string, maps: string[]): object
+  mapState (depPath: string, maps: string[]): object
 
-  mapGetters<K extends keyof G>(maps: K[]): {
+  mapGetters<K extends keyof G> (maps: K[]): {
     [I in K]: () => GetGetters<G>[I]
   }
-  mapGetters(depPath: string, maps: string[]): {
+  mapGetters (depPath: string, maps: string[]): {
     [key: string]: () => any
   }
 
 
-  mapMutations<K extends keyof M>(maps: K[]): Pick<GetMutations<M>, K>
-  mapMutations(depPath: string, maps: string[]): {
+  mapMutations<K extends keyof M> (maps: K[]): Pick<GetMutations<M>, K>
+  mapMutations (depPath: string, maps: string[]): {
     [key: string]: (...payloads: any[]) => any
   }
 
-  mapActions<K extends keyof A>(maps: K[]): Pick<GetActions<A>, K>
-  mapActions(depPath: string, maps: string[]): {
+  mapActions<K extends keyof A> (maps: K[]): Pick<GetActions<A>, K>
+  mapActions (depPath: string, maps: string[]): {
     [key: string]: (...payloads: any[]) => any
   }
-
-  registerModule(module: StoreOpt<{}, {}, {}, {}, {}>): Store<{}, {}, {}, {}, {}>
 
 }
 
-export function createStore<S, G extends Getters<S>, M extends Mutations<S>, A extends Actions<S, G>, D extends Deps = {}>(option: StoreOpt<S, G, M, A, D>): Store<S, G, M, A, D>
+export function createStore<S, G extends Getters<S>, M extends Mutations<S>, A extends Actions<S, G>, D extends Deps = {}> (option: StoreOpt<S, G, M, A, D>): Store<S, G, M, A, D>
 
 
 interface MutationsAndActionsWithThis {
@@ -351,7 +353,7 @@ interface StoreOptWithThis<S, G, M, A, D extends Deps> {
     commit: GetDispatchAndCommitWithThis<M, D>
   }>
   deps?: D
-  modules?: Array<StoreOptWithThis<{}, {}, {}, {}, {}>>
+  modules?: ObjectOf<StoreOptWithThis<{}, {}, {}, {}, {}>>
 }
 
 declare class StoreWithThis<S = {}, G = {}, M = {}, A = {}, D extends Deps = {}> {
@@ -365,53 +367,51 @@ declare class StoreWithThis<S = {}, G = {}, M = {}, A = {}, D extends Deps = {}>
 
   commit: GetDispatchAndCommitWithThis<M, D>
 
-  mapState<K extends keyof S>(maps: K[]): {
+  mapState<K extends keyof S> (maps: K[]): {
     [I in K]: () => S[I]
   }
-  mapState(depPath: string, maps: string[]): {
+  mapState (depPath: string, maps: string[]): {
     [key: string]: () => any
   }
 
-  mapGetters<K extends keyof G>(maps: K[]): Pick<G, K>
-  mapGetters(depPath: string, maps: string[]): {
+  mapGetters<K extends keyof G> (maps: K[]): Pick<G, K>
+  mapGetters (depPath: string, maps: string[]): {
     [key: string]: () => any
   }
 
 
-  mapMutations<K extends keyof M>(maps: K[]): Pick<M, K>
-  mapMutations(depPath: string, maps: string[]): {
+  mapMutations<K extends keyof M> (maps: K[]): Pick<M, K>
+  mapMutations (depPath: string, maps: string[]): {
     [key: string]: (...payloads: any[]) => any
   }
 
-  mapActions<K extends keyof A>(maps: K[]): Pick<A, K>
-  mapActions(depPath: string, maps: string[]): {
+  mapActions<K extends keyof A> (maps: K[]): Pick<A, K>
+  mapActions (depPath: string, maps: string[]): {
     [key: string]: (...payloads: any[]) => any
   }
-
-  registerModule(module: StoreOptWithThis<{}, {}, {}, {}, {}>): StoreWithThis<{}, {}, {}, {}, {}>
 
 }
 
 
-export function createStoreWithThis<S = {}, G = {}, M extends MutationsAndActionsWithThis = {}, A extends MutationsAndActionsWithThis = {}, D extends Deps = {}>(option: StoreOptWithThis<S, G, M, A, D>): StoreWithThis<S, G, M, A, D>
+export function createStoreWithThis<S = {}, G = {}, M extends MutationsAndActionsWithThis = {}, A extends MutationsAndActionsWithThis = {}, D extends Deps = {}> (option: StoreOptWithThis<S, G, M, A, D>): StoreWithThis<S, G, M, A, D>
 
 
-export function injectMixins(mixins: object | Array<object>, type?: 'app' | 'page' | 'component'): void
+export function injectMixins (mixins: object | Array<object>, type?: 'app' | 'page' | 'component'): void
 
 
 declare class Watcher {
-  constructor(context: any, expr: string | (() => any), handler: WatchHandler | WatchOptWithHandler, options?: WatchOpt)
+  constructor (context: any, expr: string | (() => any), handler: WatchHandler | WatchOptWithHandler, options?: WatchOpt)
 
-  getValue(): any
+  getValue (): any
 
-  update(): void
+  update (): void
 
-  run(): void
+  run (): void
 
-  destroy(): void
+  destroy (): void
 }
 
-export function watch(context: any, expr: string | (() => any), handler: WatchHandler | WatchOptWithHandler, options?: WatchOpt): Watcher
+export function watch (context: any, expr: string | (() => any), handler: WatchHandler | WatchOptWithHandler, options?: WatchOpt): Watcher
 
 type SupportedPlantforms = 'wx' | 'ali' | 'qq' | 'tt' | 'swan'
 
@@ -424,14 +424,13 @@ interface ConvertRule {
   convert?: (...args: any[]) => any
 }
 
-export function setConvertRule(rule: ConvertRule): void
+export function setConvertRule (rule: ConvertRule): void
 
 export const toPureObject: typeof toJS
 
 export const createAction: typeof action
 
 export {observable, extendObservable}
-
 
 interface Mpx {
   createComponent: typeof createComponent
@@ -449,7 +448,7 @@ interface Mpx {
 
   watch: typeof watch
 
-  use(plugin: ((...args: any) => any) | { install: (...args: any) => any, [key: string]: any }, ...rest: any): Mpx
+  use (plugin: ((...args: any) => any) | { install: (...args: any) => any, [key: string]: any }, ...rest: any): Mpx
 
   get: typeof get
 
@@ -462,4 +461,14 @@ interface Mpx {
   createAction: typeof action
 }
 
-export default Mpx
+type GetFunctionKey<T> = {
+  [K in keyof T]: T[K] extends (...args: any) => any ? K : never
+}[keyof T]
+
+type Promisify<T> = {
+  [K in keyof T]: T[K] extends (...args: infer A) => any ? (...args: A) => Promise<any> : T[K]
+}
+
+declare let mpx: Mpx & Promisify<Pick<typeof wx, GetFunctionKey<typeof wx>>>
+
+export default mpx

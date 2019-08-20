@@ -1,0 +1,101 @@
+<template>
+  <!--index.wxml-->
+  <view class="container">
+    <view class="title">{{title}}</view>
+    <view class="previewimg">
+      <image src="{{cover}}" data-src="{{cover}}" bindtap="previewImage"></image>
+    </view>
+    <view class="content">
+      {{content}}
+    </view>
+  </view>
+</template>
+
+<script>
+  import { createPage } from '@mpxjs/core'
+
+  // 获取应用实例
+  const app = getApp()
+
+  Page({
+    data: {
+      cover: '',
+      title: '',
+      content: ''
+    },
+
+    onLoad: function () {
+      this.getBlogDetail()
+    },
+
+    /**
+     * 获取文章详情
+     */
+    getBlogDetail () {
+      // 初始化db todo: env填写
+      const db = wx.cloud.database({ env: 'blog-demo-46b1v' })
+      let blogId = app.globalData.blog.detailId
+      db.collection('blog').doc(blogId).get().then(res => {
+        console.log('db读取成功', res.data)
+        let data = res.data
+        this.setData({
+          cover: data.cover,
+          title: data.title,
+          content: data.content
+        })
+      }).catch(e => {
+        console.log(e)
+        wx.showToast({
+          title: 'db读取失败',
+          icon: 'none'
+        })
+      })
+    },
+
+    /**
+     * 预览图片
+     */
+    previewImage: function (e) {
+      var current = e.target.dataset.src
+      wx.previewImage({
+        current: current, // 当前显示图片的http链接
+        urls: [this.data.cover] // 需要预览的图片http链接列表
+      })
+    }
+  })
+</script>
+
+<style>
+  /**index.wxss**/
+
+  .container {
+    box-sizing: border-box;
+    padding: 20px;
+  }
+
+  .previewimg {
+    float: left;
+    width: 100%;
+    height: 200px;
+    margin: 2%;
+  }
+
+  .previewimg image {
+    width: 100%;
+    height: 100%;
+  }
+
+  view.content {
+    width: 100%;
+    margin: 10px 20px;
+    margin-left: 35px;
+    text-align: left;
+    word-wrap: break-word;
+  }
+</style>
+
+<script type="application/json">
+  {
+    "navigationBarTitleText": "文章详情"
+  }
+</script>

@@ -223,11 +223,13 @@ module.exports = function (content) {
       : (getRequire('template', template) + '\n') + '\n'
   }
 
-  const dep = new InjectDependency({
-    content: globalInjectCode,
-    index: -3
-  })
-  this._module.addDependency(dep)
+  if (!mpx.forceDisableInject) {
+    const dep = new InjectDependency({
+      content: globalInjectCode,
+      index: -3
+    })
+    this._module.addDependency(dep)
+  }
 
   return output
 }

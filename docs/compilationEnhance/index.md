@@ -24,13 +24,13 @@ var webpackConfig = {
             // 可以是对象也可以是数组，数组可以通过include/exclude对不同资源配置不同的转换
             {
               // `only`模式下，样式前加上注释/* use rpx */可将该段样式中所有的px转换为rpx
-              transRpx: 'only',
+              mode: 'only',
               comment: 'use rpx',
               include: resolve('src')
             },
             {
               // 对某些第三方组件库另设转换规则
-              transRpx: 'all',
+              mode: 'all',
               designWidth: 375,
               include: resolve('node_modules/vant-weapp')
             }

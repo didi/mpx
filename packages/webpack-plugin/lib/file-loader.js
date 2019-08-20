@@ -22,7 +22,7 @@ module.exports = function loader (content) {
   if (compilationMpx.processingSubPackages) {
     for (let src in subPackagesMap) {
       // 分包引用且主包未引用的资源，需打入分包目录中
-      if (resourcePath.startsWith(src) && !mainResourceMap[resourcePath]) {
+      if (!path.relative(src, resourcePath).startsWith('..') && !mainResourceMap[resourcePath]) {
         subPackageRoot = subPackagesMap[src]
         break
       }

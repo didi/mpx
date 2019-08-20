@@ -145,9 +145,9 @@ module.exports = function (raw) {
     rulesRunner(json)
   }
 
-  function getName (raw) {
-    const match = /^(.*?)(\.[^.]*)?$/.exec(raw)
-    return match[1]
+  function getPageName (root, page) {
+    const match = /^[.~/]*(.*?)(\.[^.]*)?$/.exec(page)
+    return path.join(root, match[1])
   }
 
   const processComponent = (component, context, rewritePath, componentPath, callback) => {
@@ -173,7 +173,7 @@ module.exports = function (raw) {
       if (compilationMpx.processingSubPackages) {
         for (let src in subPackagesMap) {
           // 分包引用且主包未引用的组件，需打入分包目录中
-          if (result.startsWith(src) && !mainComponentsMap[result]) {
+          if (!path.relative(src, result).startsWith('..') && !mainComponentsMap[result]) {
             subPackageRoot = subPackagesMap[src]
             break
           }
@@ -347,12 +347,8 @@ module.exports = function (raw) {
           if (resolveMode === 'native') {
             page = loaderUtils.urlToRequest(page, options.root)
           }
-
-          let name = getName(path.join(tarRoot, page))
+          let name = getPageName(tarRoot, rawPage)
           name = toPosix(name)
-          if (/^\./.test(name)) {
-            return callback(new Error(`Page's path ${page} which is referenced in ${context} must be a subdirectory of ${context}!`))
-          }
           this.resolve(path.join(context, srcRoot), page, (err, rawResult) => {
             if (err) return callback(err)
             let result = rawResult

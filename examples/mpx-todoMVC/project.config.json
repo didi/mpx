@@ -1,5 +1,4 @@
 {
-	"miniprogramRoot": "dist/",
 	"compileType": "miniprogram",
 	"setting": {
 		"newFeature": true,

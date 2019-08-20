@@ -180,7 +180,7 @@ component ready: 电视
 
 ## 页面生命周期转换
 
-除了类支付宝小程序之外，其他平台都能以组件的方式创建页面，因此mpx内部默认是以Component来创建页面的（微信小程序、百度小程序、头条小程序等类微信小程序）。`[按官方标准](https://developers.weixin.qq.com/miniprogram/dev/framework/custom-component/component.html)`，以Component创建页面时，页面特有的生命周期（onLoad、onReady、onShow等等）都必须`定义在methods内部`。为了进行统一处理，使用`mpx.createPage创建页面`时，可以统一使用标准页面的格式，`所有生命周期都定义在最外层即可`，mpx内部会根据普通进行`自动转换`到methods里面
+除了类支付宝小程序之外，其他平台都能以组件的方式创建页面，因此mpx内部默认是以Component来创建页面的（微信小程序、百度小程序、头条小程序等类微信小程序）。[按官方标准](https://developers.weixin.qq.com/miniprogram/dev/framework/custom-component/component.html)，以Component创建页面时，页面特有的生命周期（onLoad、onReady、onShow等等）都必须`定义在methods内部`。为了进行统一处理，使用`mpx.createPage创建页面`时，可以统一使用标准页面的格式，`所有生命周期都定义在最外层即可`，mpx内部会根据普通进行`自动转换`到methods里面
 
 ```html
 <script>
