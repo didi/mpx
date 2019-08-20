@@ -206,6 +206,10 @@ let isNative
 let rulesRunner
 let currentEl
 const rulesResultMap = new Map()
+const deleteErrorInResultMap = (node) => {
+  rulesResultMap.delete(node)
+  Array.isArray(node.children) && node.children.forEach(item => deleteErrorInResultMap(item))
+}
 let platformGetTagNamespace
 let basename
 let refId = 0
@@ -1523,7 +1527,6 @@ function processElement (el, root, options, meta, injectNodes) {
 
   let tranAli = mode === 'ali' && srcMode === 'wx'
 
-  processRef(el, options, meta)
   const pass = isNative || processTemplate(el) || processingTemplate
 
   if (tranAli) {
@@ -1532,6 +1535,7 @@ function processElement (el, root, options, meta, injectNodes) {
 
   processIf(el)
   processFor(el)
+  processRef(el, options, meta)
 
   if (!pass) {
     if (mode !== 'tt') {
@@ -1675,7 +1679,7 @@ function findPrevNode (node) {
 }
 
 function replaceNode (node, newNode) {
-  rulesResultMap.delete(node)
+  deleteErrorInResultMap(node)
   let parent = node.parent
   if (parent) {
     let index = parent.children.indexOf(node)
@@ -1688,7 +1692,7 @@ function replaceNode (node, newNode) {
 }
 
 function removeNode (node) {
-  rulesResultMap.delete(node)
+  deleteErrorInResultMap(node)
   let parent = node.parent
   if (parent) {
     let index = parent.children.indexOf(node)
