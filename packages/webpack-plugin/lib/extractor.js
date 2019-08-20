@@ -32,7 +32,6 @@ module.exports = function (content) {
   const selfResourcePath = this.resourcePath
   const issuerResourcePath = options.resourcePath
 
-
   // 使用子编译器生成需要抽离的json，styles和template
   const contentLoader = normalize.lib('content-loader')
   let request = `!!${contentLoader}?${JSON.stringify(options)}!${this.resource}`

@@ -95,7 +95,6 @@ class MpxWebpackPlugin {
       })
     })
 
-
     compiler.hooks.thisCompilation.tap('MpxWebpackPlugin', (compilation, { normalModuleFactory }) => {
       const typeExtMap = config[this.options.mode].typeExtMap
       const additionalAssets = {}

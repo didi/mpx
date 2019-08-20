@@ -11,8 +11,6 @@ const wxmlLoaderPath = normalize.lib('wxml/wxml-loader')
 const wxssLoaderPath = normalize.lib('wxss/loader')
 const config = require('./config')
 const stringifyQuery = require('./utils/stringify-query')
-
-// internal lib loaders
 const selectorPath = normalize.lib('selector')
 const extractorPath = normalize.lib('extractor')
 
@@ -329,7 +327,6 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
       if (type === 'template') {
         loader = ensureBang(loader) + ensureBang(templateCompiler)
       }
-
 
       return ensureBang(loader)
     } else {
