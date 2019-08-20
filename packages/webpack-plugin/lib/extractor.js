@@ -21,10 +21,17 @@ module.exports = function (content) {
   const componentsMap = mainCompilation.__mpx__.componentsMap
   const extract = mainCompilation.__mpx__.extract
   const rootName = mainCompilation._preparedEntrypoints[0].name
+  const rootResource = stripExtension(mainCompilation._preparedEntrypoints[0].request.split('!').pop())
+  const resource = stripExtension(options.resourcePath || this.resource)
 
-  const resource = stripExtension(options.resource || this.resource)
-  const resourcePath = pagesMap[resource] || componentsMap[resource] || rootName
+  let resourcePath = pagesMap[resource] || componentsMap[resource]
+  if (!resourcePath && resource === rootResource) {
+    resourcePath = rootName
+  }
+
   const selfResourcePath = this.resourcePath
+  const issuerResourcePath = options.resourcePath
+
 
   // 使用子编译器生成需要抽离的json，styles和template
   const contentLoader = normalize.lib('content-loader')
@@ -93,7 +100,7 @@ module.exports = function (content) {
         }).join('\n')
       }
 
-      let extracted = extract(text, options.type, resourcePath, +options.index, selfResourcePath)
+      let extracted = extract(text, options.type, resourcePath, +options.index, selfResourcePath, issuerResourcePath)
       if (extracted) {
         resultSource = `module.exports = __webpack_public_path__ + ${JSON.stringify(extracted)};`
       } else {

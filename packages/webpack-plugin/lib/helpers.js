@@ -8,6 +8,7 @@ const jsonCompilerPath = normalize.lib('json-compiler/index')
 const templatePreprocessorPath = normalize.lib('template-compiler/preprocessor')
 const wxsLoaderPath = normalize.lib('wxs/wxs-loader')
 const wxmlLoaderPath = normalize.lib('wxml/wxml-loader')
+const wxssLoaderPath = normalize.lib('wxss/loader')
 const config = require('./config')
 const stringifyQuery = require('./utils/stringify-query')
 
@@ -76,7 +77,7 @@ function resolveLoaders (options, moduleId, isProduction, hasScoped, hasComment,
   jsonCompilerOptions += '?root=' + projectRoot
   // 由于css-loader@1.0之后不再支持root，暂时不允许在css中使用/开头的路径，后续迁移至postcss-loader再进行支持
   // 现在切回css-loader@0.28.11了，先加回来和原生小程序保持一致
-  cssLoaderOptions += (cssLoaderOptions ? '&' : '?') + 'root=' + projectRoot + '&importLoaders=1'
+  cssLoaderOptions += (cssLoaderOptions ? '&' : '?') + 'root=' + projectRoot + '&importLoaders=1&extract=true'
 
   const defaultLoaders = {
     html: wxmlLoaderPath + wxmlLoaderOptions,
@@ -199,8 +200,7 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
       modules: true
     }
     const OPTIONS = {
-      localIdentName: '[hash:base64]',
-      importLoaders: 1
+      localIdentName: '[hash:base64]'
     }
     return loader.replace(/((?:^|!)css(?:-loader)?)(\?[^!]*)?/, (m, $1, $2) => {
       // $1: !css-loader
@@ -255,6 +255,10 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
     } else {
       return type
     }
+  }
+
+  function replaceCssLoader (rawLoader) {
+    return rawLoader.replace(/css(?:-loader)?/, wxssLoaderPath)
   }
 
   function getRawLoaderString (type, part, index, scoped) {
@@ -319,11 +323,13 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
         } else {
           loader = ensureBang(loader) + ensureBang(styleCompiler)
         }
+        loader = replaceCssLoader(loader)
       }
 
       if (type === 'template') {
         loader = ensureBang(loader) + ensureBang(templateCompiler)
       }
+
 
       return ensureBang(loader)
     } else {
@@ -336,6 +342,7 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
           return ensureBang(defaultLoaders.html) + ensureBang(templateCompiler) + ensureBang(templatePreprocessor)
         case 'styles':
           loader = addCssModulesToLoader(defaultLoaders.css, part, index)
+          loader = replaceCssLoader(loader)
           return ensureBang(loader) + ensureBang(styleCompiler) + ensureBang(ensureLoader(lang))
         case 'script':
           return ensureBang(defaultLoaders.js) + ensureBang(ensureLoader(lang))
@@ -368,7 +375,7 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
         ? type
         : 'customBlocks') +
       '&index=' + index +
-      '&resource=' + loaderContext.resourcePath
+      '&resourcePath=' + loaderContext.resourcePath
     )
   }
 

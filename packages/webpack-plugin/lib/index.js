@@ -95,9 +95,38 @@ class MpxWebpackPlugin {
       })
     })
 
+
     compiler.hooks.thisCompilation.tap('MpxWebpackPlugin', (compilation, { normalModuleFactory }) => {
       const typeExtMap = config[this.options.mode].typeExtMap
       const additionalAssets = {}
+
+      const seenFile = {}
+
+      function getFile (resource, type) {
+        let id = `${type}:${resource}`
+        if (!seenFile[id]) {
+          const compilationMpx = compilation.__mpx__
+          const subPackagesMap = compilationMpx.subPackagesMap
+          const mainResourceMap = compilationMpx.mainResourceMap
+          const resourceName = path.parse(resource).name
+
+          let subPackageRoot = ''
+          if (compilationMpx.processingSubPackages) {
+            for (let src in subPackagesMap) {
+              // 分包引用且主包未引用的资源，需打入分包目录中
+              if (!path.relative(src, resource).startsWith('..') && !mainResourceMap[resource]) {
+                subPackageRoot = subPackagesMap[src]
+                break
+              }
+            }
+          } else {
+            mainResourceMap[resource] = true
+          }
+          seenFile[id] = toPosix(path.join(subPackageRoot, type, resourceName + hash(resource) + typeExtMap[type]))
+        }
+        return seenFile[id]
+      }
+
       if (!compilation.__mpx__) {
         compilation.__mpx__ = {
           pagesMap: {},
@@ -115,43 +144,36 @@ class MpxWebpackPlugin {
           srcMode: this.options.srcMode,
           externalClasses: this.options.externalClasses,
           projectRoot: this.options.projectRoot,
-          extract: (content, type, resourcePath, index, selfResourcePath) => {
+          extract: (content, type, resourcePath, index, selfResourcePath, issuerResourcePath) => {
             if (index === -1) {
-              const compilationMpx = compilation.__mpx__
-              const subPackagesMap = compilationMpx.subPackagesMap
-              const mainResourceMap = compilationMpx.mainResourceMap
-              const selfResourceName = path.parse(selfResourcePath).name
-
-              let subPackageRoot = ''
-              if (compilationMpx.processingSubPackages) {
-                for (let src in subPackagesMap) {
-                  // 分包引用且主包未引用的资源，需打入分包目录中
-                  if (!path.relative(src, selfResourcePath).startsWith('..') && !mainResourceMap[selfResourcePath]) {
-                    subPackageRoot = subPackagesMap[src]
-                    break
-                  }
-                }
-              } else {
-                mainResourceMap[selfResourcePath] = true
-              }
               // 针对src引入的styles进行特殊处理，处理为@import形式便于样式复用
               if (type === 'styles') {
-                const file1 = resourcePath + typeExtMap[type]
-                const file2 = toPosix(path.join(subPackageRoot, 'wxss', selfResourceName + hash(selfResourcePath) + typeExtMap[type]))
-                let relativePath = toPosix(path.relative(path.dirname(file1), file2))
-                if (this.options.mode === 'swan') {
-                  relativePath = fixSwanRelative(relativePath)
+                let file1
+                if (resourcePath) {
+                  file1 = resourcePath + typeExtMap[type]
+                } else if (issuerResourcePath) {
+                  file1 = getFile(issuerResourcePath, type)
                 }
-                additionalAssets[file1] = additionalAssets[file1] || []
+                const file2 = getFile(selfResourcePath, type)
+
+                if (file1) {
+                  let relativePath = toPosix(path.relative(path.dirname(file1), file2))
+                  if (this.options.mode === 'swan') {
+                    relativePath = fixSwanRelative(relativePath)
+                  }
+                  additionalAssets[file1] = additionalAssets[file1] || []
+                  additionalAssets[file1].prefix = additionalAssets[file1].prefix || []
+                  additionalAssets[file1].prefix.push(`@import "${relativePath}";\n`)
+                }
+
                 additionalAssets[file2] = additionalAssets[file2] || []
-                additionalAssets[file1][0] = `@import "${relativePath}";\n` + (additionalAssets[file1][0] || '')
                 if (!additionalAssets[file2][0]) {
                   additionalAssets[file2][0] = content
                 }
               }
               // 针对import src引入的template进行特殊处理
               if (type === 'template') {
-                const file = toPosix(path.join(subPackageRoot, 'wxml', selfResourceName + hash(selfResourcePath) + typeExtMap[type]))
+                const file = getFile(selfResourcePath, type)
                 additionalAssets[file] = additionalAssets[file] || []
                 if (!additionalAssets[file][0]) {
                   additionalAssets[file][0] = content
@@ -202,6 +224,11 @@ class MpxWebpackPlugin {
       compilation.hooks.additionalAssets.tapAsync('MpxWebpackPlugin', (callback) => {
         for (let file in additionalAssets) {
           let content = new ConcatSource()
+          if (additionalAssets[file].prefix) {
+            additionalAssets[file].prefix.forEach((item) => {
+              content.add(item)
+            })
+          }
           additionalAssets[file].forEach((item) => {
             content.add(item)
           })
