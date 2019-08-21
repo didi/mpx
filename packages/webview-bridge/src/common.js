@@ -30,11 +30,6 @@ if (systemUA.indexOf('AlipayClient') > -1) {
 }
 
 const webviewApiList = {}
-const exportApiList = {}
-let wxConfig = null
-const wxsdkConfig = (config) => {
-  wxConfig = config
-}
 
 function getEnvWebviewVariable () {
   return ENV_PATH_MAP[env].reduce((acc, cur) => acc[cur], window)
@@ -240,7 +235,6 @@ initWebviewBridge()
 const bridgeFunction = {
   ...webviewApiList,
   getAdvancedApi,
-  wxsdkConfig,
   mpxEnv: env
 }
 
