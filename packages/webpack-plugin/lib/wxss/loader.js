@@ -135,7 +135,7 @@ module.exports = function (content, map) {
     // embed runtime
     callback(null, urlEscapeHelper +
       'exports = module.exports = require(' +
-      loaderUtils.stringifyRequest(this, require.resolve('./css-base.js')) +
+      loaderUtils.stringifyRequest(this, '!!' + require.resolve('./css-base.js')) +
       ')(' + sourceMap + ');\n' +
       '// imports\n' +
       importJs + '\n\n' +
