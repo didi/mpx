@@ -18,34 +18,20 @@ function _defineProperty(obj, key, value) {
   return obj;
 }
 
-function ownKeys(object, enumerableOnly) {
-  var keys = Object.keys(object);
-
-  if (Object.getOwnPropertySymbols) {
-    keys.push.apply(keys, Object.getOwnPropertySymbols(object));
-  }
-
-  if (enumerableOnly) keys = keys.filter(function (sym) {
-    return Object.getOwnPropertyDescriptor(object, sym).enumerable;
-  });
-  return keys;
-}
-
-function _objectSpread2(target) {
+function _objectSpread(target) {
   for (var i = 1; i < arguments.length; i++) {
     var source = arguments[i] != null ? arguments[i] : {};
+    var ownKeys = Object.keys(source);
 
-    if (i % 2) {
-      ownKeys(source, true).forEach(function (key) {
-        _defineProperty(target, key, source[key]);
-      });
-    } else if (Object.getOwnPropertyDescriptors) {
-      Object.defineProperties(target, Object.getOwnPropertyDescriptors(source));
-    } else {
-      ownKeys(source).forEach(function (key) {
-        Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key));
-      });
+    if (typeof Object.getOwnPropertySymbols === 'function') {
+      ownKeys = ownKeys.concat(Object.getOwnPropertySymbols(source).filter(function (sym) {
+        return Object.getOwnPropertyDescriptor(source, sym).enumerable;
+      }));
     }
+
+    ownKeys.forEach(function (key) {
+      _defineProperty(target, key, source[key]);
+    });
   }
 
   return target;
@@ -125,9 +111,6 @@ if (systemUA.indexOf('AlipayClient') > -1) {
 }
 
 var webviewApiList = {};
-
-var wxsdkConfig = function wxsdkConfig(config) {
-};
 
 function getEnvWebviewVariable() {
   return ENV_PATH_MAP[env].reduce(function (acc, cur) {
@@ -354,9 +337,8 @@ var getAdvancedApi = function getAdvancedApi(config, mpx) {
 
 initWebviewBridge();
 
-var bridgeFunction = _objectSpread2({}, webviewApiList, {
+var bridgeFunction = _objectSpread({}, webviewApiList, {
   getAdvancedApi: getAdvancedApi,
-  wxsdkConfig: wxsdkConfig,
   mpxEnv: env
 });
 
@@ -366,9 +348,8 @@ var navigateTo = webviewApiList.navigateTo,
     reLaunch = webviewApiList.reLaunch,
     redirectTo = webviewApiList.redirectTo,
     getEnv = webviewApiList.getEnv,
-    postMessage = webviewApiList.postMessage; // const { getLocation, chooseImage, openLocation, getNetworkType, previewImage } = exportApiList
-
-var wxsdkConfig$1 = bridgeFunction.wxsdkConfig; // 此处导出的对象包含所有的api
+    postMessage = webviewApiList.postMessage;
+var getAdvancedApi$1 = bridgeFunction.getAdvancedApi; // 此处导出的对象包含所有的api
 
 export default bridgeFunction;
-export { getEnv, navigateBack, navigateTo, postMessage, reLaunch, redirectTo, switchTab, wxsdkConfig$1 as wxsdkConfig };
+export { getAdvancedApi$1 as getAdvancedApi, getEnv, navigateBack, navigateTo, postMessage, reLaunch, redirectTo, switchTab };

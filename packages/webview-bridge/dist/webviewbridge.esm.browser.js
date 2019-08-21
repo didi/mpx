@@ -73,8 +73,6 @@ if (systemUA.indexOf('AlipayClient') > -1) {
 }
 
 const webviewApiList = {};
-const wxsdkConfig = (config) => {
-};
 
 function getEnvWebviewVariable () {
   return ENV_PATH_MAP[env].reduce((acc, cur) => acc[cur], window)
@@ -280,13 +278,11 @@ initWebviewBridge();
 const bridgeFunction = {
   ...webviewApiList,
   getAdvancedApi,
-  wxsdkConfig,
   mpxEnv: env
 };
 
 const { navigateTo, navigateBack, switchTab, reLaunch, redirectTo, getEnv, postMessage } = webviewApiList;
-// const { getLocation, chooseImage, openLocation, getNetworkType, previewImage } = exportApiList
-const { wxsdkConfig: wxsdkConfig$1 } = bridgeFunction;
+const { getAdvancedApi: getAdvancedApi$1 } = bridgeFunction;
 
 export default bridgeFunction;
-export { getEnv, navigateBack, navigateTo, postMessage, reLaunch, redirectTo, switchTab, wxsdkConfig$1 as wxsdkConfig };
+export { getAdvancedApi$1 as getAdvancedApi, getEnv, navigateBack, navigateTo, postMessage, reLaunch, redirectTo, switchTab };
