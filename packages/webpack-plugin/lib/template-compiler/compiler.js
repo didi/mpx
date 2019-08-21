@@ -1527,7 +1527,6 @@ function processElement (el, root, options, meta, injectNodes) {
 
   let tranAli = mode === 'ali' && srcMode === 'wx'
 
-  processRef(el, options, meta)
   const pass = isNative || processTemplate(el) || processingTemplate
 
   if (tranAli) {
@@ -1536,6 +1535,7 @@ function processElement (el, root, options, meta, injectNodes) {
 
   processIf(el)
   processFor(el)
+  processRef(el, options, meta)
 
   if (!pass) {
     if (mode !== 'tt') {

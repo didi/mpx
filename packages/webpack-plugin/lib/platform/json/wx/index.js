@@ -112,11 +112,13 @@ module.exports = function getSpec ({ warn, error }) {
           ali (input) {
             const value = input.list
             delete input.list
-            input.items = runRules(spec.tabBar.list, value, {
-              target: 'ali',
-              normalizeTest,
-              waterfall: true,
-              data: ['tabBar', 'list']
+            input.items = value.map(item => {
+              return runRules(spec.tabBar.list, item, {
+                target: 'ali',
+                normalizeTest,
+                waterfall: true,
+                data: ['tabBar', 'list']
+              })
             })
             return input
           }
