@@ -24,20 +24,34 @@
     return obj;
   }
 
-  function _objectSpread(target) {
+  function ownKeys(object, enumerableOnly) {
+    var keys = Object.keys(object);
+
+    if (Object.getOwnPropertySymbols) {
+      keys.push.apply(keys, Object.getOwnPropertySymbols(object));
+    }
+
+    if (enumerableOnly) keys = keys.filter(function (sym) {
+      return Object.getOwnPropertyDescriptor(object, sym).enumerable;
+    });
+    return keys;
+  }
+
+  function _objectSpread2(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i] != null ? arguments[i] : {};
-      var ownKeys = Object.keys(source);
 
-      if (typeof Object.getOwnPropertySymbols === 'function') {
-        ownKeys = ownKeys.concat(Object.getOwnPropertySymbols(source).filter(function (sym) {
-          return Object.getOwnPropertyDescriptor(source, sym).enumerable;
-        }));
+      if (i % 2) {
+        ownKeys(source, true).forEach(function (key) {
+          _defineProperty(target, key, source[key]);
+        });
+      } else if (Object.getOwnPropertyDescriptors) {
+        Object.defineProperties(target, Object.getOwnPropertyDescriptors(source));
+      } else {
+        ownKeys(source).forEach(function (key) {
+          Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key));
+        });
       }
-
-      ownKeys.forEach(function (key) {
-        _defineProperty(target, key, source[key]);
-      });
     }
 
     return target;
@@ -127,6 +141,10 @@
     }, window);
   }
 
+  function getEnvVariable() {
+    return window[ENV_PATH_MAP[env][0]];
+  }
+
   var initWebviewBridge = function initWebviewBridge() {
     if (env === null) {
       console.log('mpxjs/webview: 未识别的环境，当前仅支持 微信、支付宝、百度、头条 QQ 小程序');
@@ -180,10 +198,170 @@
     }
   };
 
+  var getAdvancedApi = function getAdvancedApi(config, mpx) {
+    // 微信的非小程序相关api需要config配置
+    if (!mpx) {
+      console.log('需要提供挂载方法的mpx对象');
+      return;
+    }
+
+    if (window.wx) {
+      if (config) {
+        console.log('微信环境下需要配置wx.config才能挂载方法');
+        return;
+      }
+
+      window.wx.config(config);
+    } // key为导出的标准名，对应平台不支持的话为undefined
+
+
+    var ApiList = {
+      'checkJSApi': {
+        wx: 'checkJSApi'
+      },
+      'chooseImage': {
+        wx: 'chooseImage',
+        baidu: 'chooseImage',
+        ali: 'chooseImage'
+      },
+      'previewImage': {
+        wx: 'previewImage',
+        baidu: 'previewImage',
+        ali: 'previewImage'
+      },
+      'uploadImage': {
+        wx: 'uploadImage'
+      },
+      'downloadImage': {
+        wx: 'downloadImage'
+      },
+      'getLocalImgData': {
+        wx: 'getLocalImgData'
+      },
+      'startRecord': {
+        wx: 'startRecord'
+      },
+      'stopRecord': {
+        wx: 'stopRecord'
+      },
+      'onVoiceRecordEnd': {
+        wx: 'onVoiceRecordEnd'
+      },
+      'playVoice': {
+        wx: 'playVoice'
+      },
+      'pauseVoice': {
+        wx: 'pauseVoice'
+      },
+      'stopVoice': {
+        wx: 'stopVoice'
+      },
+      'onVoicePlayEnd': {
+        wx: 'onVoicePlayEnd'
+      },
+      'uploadVoice': {
+        wx: 'uploadVoice'
+      },
+      'downloadVoice': {
+        wx: 'downloadVoice'
+      },
+      'translateVoice': {
+        wx: 'translateVoice'
+      },
+      'getNetworkType': {
+        wx: 'getNetworkType',
+        baidu: 'getNetworkType',
+        ali: 'getNetworkType'
+      },
+      'openLocation': {
+        wx: 'openLocation',
+        baidu: 'openLocation',
+        ali: 'openLocation'
+      },
+      'getLocation': {
+        wx: 'getLocation',
+        baidu: 'getLocation',
+        ali: 'getLocation'
+      },
+      'startSearchBeacons': {
+        wx: 'startSearchBeacons'
+      },
+      'stopSearchBeacons': {
+        wx: 'stopSearchBeacons'
+      },
+      'onSearchBeacons': {
+        wx: 'onSearchBeacons'
+      },
+      'scanQRCode': {
+        wx: 'scanQRCode'
+      },
+      'chooseCard': {
+        wx: 'chooseCard'
+      },
+      'addCard': {
+        wx: 'addCard'
+      },
+      'openCard': {
+        wx: 'openCard'
+      },
+      'alert': {
+        ali: 'alert'
+      },
+      'showLoading': {
+        ali: 'showLoading'
+      },
+      'hideLoading': {
+        ali: 'hideLoading'
+      },
+      'setStorage': {
+        ali: 'setStorage'
+      },
+      'getStorage': {
+        ali: 'getStorage'
+      },
+      'removeStorage': {
+        ali: 'removeStorage'
+      },
+      'clearStorage': {
+        ali: 'clearStorage'
+      },
+      'getStorageInfo': {
+        ali: 'getStorageInfo'
+      },
+      'startShare': {
+        ali: 'startShare'
+      },
+      'tradePay': {
+        ali: 'tradePay'
+      },
+      'onMessage': {
+        ali: 'onMessage'
+      }
+    };
+
+    var _loop2 = function _loop2(item) {
+      mpx[item] = function () {
+        if (!ApiList[item][env]) {
+          console.error("\u6B64\u73AF\u5883\u4E0D\u652F\u6301".concat(item, "\u65B9\u6CD5"));
+        } else {
+          var _getEnvVariable;
+
+          console.log(ApiList[item][env], 'ApiList[item][env]');
+
+          (_getEnvVariable = getEnvVariable())[ApiList[item][env]].apply(_getEnvVariable, arguments);
+        }
+      };
+    };
+
+    for (var item in ApiList) {
+      _loop2(item);
+    }
+  };
+
   initWebviewBridge();
 
-  var bridgeFunction = _objectSpread({}, webviewApiList, {
-    // ...exportApiList,
+  var bridgeFunction = _objectSpread2({}, webviewApiList, {
+    getAdvancedApi: getAdvancedApi,
     wxsdkConfig: wxsdkConfig,
     mpxEnv: env
   });

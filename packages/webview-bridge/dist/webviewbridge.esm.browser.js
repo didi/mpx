@@ -80,6 +80,10 @@ function getEnvWebviewVariable () {
   return ENV_PATH_MAP[env].reduce((acc, cur) => acc[cur], window)
 }
 
+function getEnvVariable () {
+  return window[ENV_PATH_MAP[env][0]]
+}
+
 const initWebviewBridge = () => {
   if (env === null) {
     console.log('mpxjs/webview: 未识别的环境，当前仅支持 微信、支付宝、百度、头条 QQ 小程序');
@@ -120,11 +124,162 @@ const getWebviewApi = (sdkReady) => {
   }
 };
 
+const getAdvancedApi = (config, mpx) => {
+  // 微信的非小程序相关api需要config配置
+  if (!mpx) {
+    console.log('需要提供挂载方法的mpx对象');
+    return
+  }
+  if (window.wx) {
+    if (config) {
+      console.log('微信环境下需要配置wx.config才能挂载方法');
+      return
+    }
+    window.wx.config(config);
+  }
+
+  // key为导出的标准名，对应平台不支持的话为undefined
+  const ApiList = {
+    'checkJSApi': {
+      wx: 'checkJSApi'
+    },
+    'chooseImage': {
+      wx: 'chooseImage',
+      baidu: 'chooseImage',
+      ali: 'chooseImage'
+    },
+    'previewImage': {
+      wx: 'previewImage',
+      baidu: 'previewImage',
+      ali: 'previewImage'
+    },
+    'uploadImage': {
+      wx: 'uploadImage'
+    },
+    'downloadImage': {
+      wx: 'downloadImage'
+    },
+    'getLocalImgData': {
+      wx: 'getLocalImgData'
+    },
+    'startRecord': {
+      wx: 'startRecord'
+    },
+    'stopRecord': {
+      wx: 'stopRecord'
+    },
+    'onVoiceRecordEnd': {
+      wx: 'onVoiceRecordEnd'
+    },
+    'playVoice': {
+      wx: 'playVoice'
+    },
+    'pauseVoice': {
+      wx: 'pauseVoice'
+    },
+    'stopVoice': {
+      wx: 'stopVoice'
+    },
+    'onVoicePlayEnd': {
+      wx: 'onVoicePlayEnd'
+    },
+    'uploadVoice': {
+      wx: 'uploadVoice'
+    },
+    'downloadVoice': {
+      wx: 'downloadVoice'
+    },
+    'translateVoice': {
+      wx: 'translateVoice'
+    },
+    'getNetworkType': {
+      wx: 'getNetworkType',
+      baidu: 'getNetworkType',
+      ali: 'getNetworkType'
+    },
+    'openLocation': {
+      wx: 'openLocation',
+      baidu: 'openLocation',
+      ali: 'openLocation'
+    },
+    'getLocation': {
+      wx: 'getLocation',
+      baidu: 'getLocation',
+      ali: 'getLocation'
+    },
+    'startSearchBeacons': {
+      wx: 'startSearchBeacons'
+    },
+    'stopSearchBeacons': {
+      wx: 'stopSearchBeacons'
+    },
+    'onSearchBeacons': {
+      wx: 'onSearchBeacons'
+    },
+    'scanQRCode': {
+      wx: 'scanQRCode'
+    },
+    'chooseCard': {
+      wx: 'chooseCard'
+    },
+    'addCard': {
+      wx: 'addCard'
+    },
+    'openCard': {
+      wx: 'openCard'
+    },
+    'alert': {
+      ali: 'alert'
+    },
+    'showLoading': {
+      ali: 'showLoading'
+    },
+    'hideLoading': {
+      ali: 'hideLoading'
+    },
+    'setStorage': {
+      ali: 'setStorage'
+    },
+    'getStorage': {
+      ali: 'getStorage'
+    },
+    'removeStorage': {
+      ali: 'removeStorage'
+    },
+    'clearStorage': {
+      ali: 'clearStorage'
+    },
+    'getStorageInfo': {
+      ali: 'getStorageInfo'
+    },
+    'startShare': {
+      ali: 'startShare'
+    },
+    'tradePay': {
+      ali: 'tradePay'
+    },
+    'onMessage': {
+      ali: 'onMessage'
+    }
+  };
+
+  for (let item in ApiList) {
+    mpx[item] = (...args) => {
+      if (!ApiList[item][env]) {
+        console.error(`此环境不支持${item}方法`);
+      } else {
+        console.log(ApiList[item][env], 'ApiList[item][env]');
+        getEnvVariable()[ApiList[item][env]](...args);
+      }
+    };
+  }
+};
+
 initWebviewBridge();
 
 const bridgeFunction = {
   ...webviewApiList,
-  // ...exportApiList,
+  getAdvancedApi,
   wxsdkConfig,
   mpxEnv: env
 };

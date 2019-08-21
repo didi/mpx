@@ -84,28 +84,19 @@ const getWebviewApi = (sdkReady) => {
   }
 }
 
-const getApi = (sdkReady) => {
+const getAdvancedApi = (config, mpx) => {
   // 微信的非小程序相关api需要config配置
-  const sdkConfigReady = () => (env !== 'wx') ? sdkReady : new Promise((resolve, reject) => {
-    sdkReady.then(() => {
-      if (!window.wx) {
-        reject(new Error('sdk未就绪'))
-      }
-
-      if (wxConfig === null) {
-        reject(new Error('wxSDK 未配置'))
-      }
-
-      window.wx.config(wxConfig)
-      window.wx.ready(() => {
-        resolve()
-      })
-
-      window.wx.error((res) => {
-        reject(res)
-      })
-    })
-  })
+  if (!mpx) {
+    console.log('需要提供挂载方法的mpx对象')
+    return
+  }
+  if (window.wx) {
+    if (config) {
+      console.log('微信环境下需要配置wx.config才能挂载方法')
+      return
+    }
+    window.wx.config(config)
+  }
 
   // key为导出的标准名，对应平台不支持的话为undefined
   const ApiList = {
@@ -233,13 +224,12 @@ const getApi = (sdkReady) => {
   }
 
   for (let item in ApiList) {
-    exportApiList[item] = (...args) => {
+    mpx[item] = (...args) => {
       if (!ApiList[item][env]) {
         console.error(`此环境不支持${item}方法`)
       } else {
-        sdkConfigReady().then(() => {
-          getEnvVariable()[ApiList[item][env]](...args)
-        }).catch(e => console.error(e))
+        console.log(ApiList[item][env], 'ApiList[item][env]')
+        getEnvVariable()[ApiList[item][env]](...args)
       }
     }
   }
@@ -249,13 +239,13 @@ initWebviewBridge()
 
 const bridgeFunction = {
   ...webviewApiList,
-  // ...exportApiList,
+  getAdvancedApi,
   wxsdkConfig,
   mpxEnv: env
 }
 
 export {
   webviewApiList,
-  // exportApiList,
+  getAdvancedApi,
   bridgeFunction
 }
