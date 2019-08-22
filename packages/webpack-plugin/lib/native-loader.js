@@ -107,9 +107,17 @@ module.exports = function (content) {
       if (useMPXJSON) {
         tryEvalMPXJSON(callback)
       } else {
-        fs.readFile(resource + typeExtMap['json'], (err, raw) => {
-          callback(err, raw.toString('utf-8'))
-        })
+        if (typeExtMap['json']) {
+          fs.readFile(resource + typeExtMap['json'], (err, raw) => {
+            if (err) {
+              callback(err)
+            } else {
+              callback(null, raw.toString('utf-8'))
+            }
+          })
+        } else {
+          callback(null, '{}')
+        }
       }
     }, (content, callback) => {
       let usingComponents = [].concat(mpx.usingComponents)
