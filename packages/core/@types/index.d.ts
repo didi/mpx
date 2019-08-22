@@ -465,10 +465,6 @@ type GetFunctionKey<T> = {
   [K in keyof T]: T[K] extends (...args: any) => any ? K : never
 }[keyof T]
 
-type Promisify<T> = {
-  [K in keyof T]: T[K] extends (...args: infer A) => any ? (...args: A) => Promise<any> : T[K]
-}
-
-declare let mpx: Mpx & Promisify<Pick<typeof wx, GetFunctionKey<typeof wx>>>
+declare let mpx: Mpx & Pick<typeof wx, GetFunctionKey<typeof wx>>
 
 export default mpx
