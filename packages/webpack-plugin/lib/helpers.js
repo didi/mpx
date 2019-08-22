@@ -13,7 +13,6 @@ const config = require('./config')
 const stringifyQuery = require('./utils/stringify-query')
 const selectorPath = normalize.lib('selector')
 const extractorPath = normalize.lib('extractor')
-const stripExtention = require('./utils/strip-extention')
 
 // check whether default js loader exists
 const hasBabel = !!tryRequire('babel-loader')

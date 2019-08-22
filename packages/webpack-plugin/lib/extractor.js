@@ -45,14 +45,12 @@ module.exports = function (content) {
 
   let resultSource = defaultResultSource
 
-
   const seenFile = {}
 
   function getFile (resourceRaw, type) {
     const resourcePath = getResourcePath(resourceRaw)
     const id = `${type}:${resourcePath}`
     if (!seenFile[id]) {
-
       const resource = stripExtension(resourceRaw)
       let filename = pagesMap[resource] || componentsMap[resource]
       if (!filename && resource === rootResource) {
