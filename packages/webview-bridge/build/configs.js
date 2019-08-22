@@ -21,6 +21,7 @@ const configs = {
   umdProd: {
     input: resolve('src/index.js'),
     file: resolve('dist/webviewbridge.min.js'),
+    fileName: resolve('../../examples/mpx-webview/H5/webviewbridge.min.js'),
     format: 'umd',
     env: 'production'
   },
@@ -58,6 +59,7 @@ function genConfig (opts) {
     output: {
       banner,
       file: opts.file,
+      fileName: opts.fileName,
       format: opts.format,
       name: 'mpx'
     }
