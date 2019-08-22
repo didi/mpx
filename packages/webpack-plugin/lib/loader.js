@@ -168,7 +168,7 @@ module.exports = function (content) {
     parts.styles.forEach((style, i) => {
       // require style
       let requireString = style.src
-        ? getRequireForSrc('styles', style, -1, style.scoped)
+        ? getRequireForSrc('styles', style, -1, style.scoped, undefined, true)
         : getRequire('styles', style, i, style.scoped)
 
       const hasStyleLoader = requireString.indexOf('style-loader') > -1

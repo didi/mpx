@@ -43,7 +43,7 @@ module.exports = function (content) {
   const rootResource = stripExtension(getResource(mainCompilation._preparedEntrypoints[0].request))
 
   const resourceRaw = this.resource
-  const issuerResourceRaw = options.resource
+  const issuerResourceRaw = options.issuerResource
 
   let resultSource = defaultResultSource
 

@@ -166,8 +166,8 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
     )
   }
 
-  function getRequireForSrc (type, impt, index, scoped, prefix) {
-    return 'require(' + getSrcRequestString(type, impt, index, scoped, prefix) + ')'
+  function getRequireForSrc (type, impt, index, scoped, prefix, withIssuer) {
+    return 'require(' + getSrcRequestString(type, impt, index, scoped, prefix, withIssuer) + ')'
   }
 
   function getImportForSrc (type, impt, index, scoped, prefix) {
@@ -184,10 +184,10 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
     )
   }
 
-  function getSrcRequestString (type, impt, index, scoped, prefix = '!') {
+  function getSrcRequestString (type, impt, index, scoped, prefix = '!', withIssuer) {
     return loaderUtils.stringifyRequest(
       loaderContext,
-      prefix + getLoaderString(type, impt, index, scoped, true) + addQueryMode(impt.src, impt.mode)
+      prefix + getLoaderString(type, impt, index, scoped, withIssuer) + addQueryMode(impt.src, impt.mode)
     )
   }
 
@@ -232,11 +232,11 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
       .join('!')
   }
 
-  function getLoaderString (type, part, index, scoped, isSrc) {
+  function getLoaderString (type, part, index, scoped, withIssuer) {
     let loader = getRawLoaderString(type, part, index, scoped)
     const lang = getLangString(type, part)
     if (type !== 'script' && type !== 'wxs') {
-      loader = getExtractorString(type, index, isSrc) + loader
+      loader = getExtractorString(type, index, withIssuer) + loader
     }
     if (preLoaders[lang]) {
       loader = loader + ensureBang(preLoaders[lang])
@@ -364,7 +364,7 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
     )
   }
 
-  function getExtractorString (type, index = 0, isSrc) {
+  function getExtractorString (type, index = 0, withIssuer) {
     return ensureBang(
       extractorPath +
       '?type=' +
@@ -372,7 +372,7 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
         ? type
         : 'customBlocks') +
       '&index=' + index +
-      (isSrc ? '&resource=' + loaderContext.resource : '')
+      (withIssuer ? '&issuerResource=' + loaderContext.resource : '')
     )
   }
 
