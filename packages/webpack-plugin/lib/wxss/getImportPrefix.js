@@ -19,8 +19,8 @@ module.exports = function getImportPrefix (loaderContext, query) {
   }).join('!')
   if (query.extract) {
     loadersRequest = extractorPath +
-      '?type=styles&index=-1&resourcePath=' +
-      loaderContext.resourcePath + '!' +
+      '?type=styles&index=-1&fromImport&resource=' +
+      loaderContext.resource + '!' +
       loadersRequest
   }
   return '-!' + loadersRequest + '!'

@@ -13,6 +13,7 @@ const config = require('./config')
 const stringifyQuery = require('./utils/stringify-query')
 const selectorPath = normalize.lib('selector')
 const extractorPath = normalize.lib('extractor')
+const stripExtention = require('./utils/strip-extention')
 
 // check whether default js loader exists
 const hasBabel = !!tryRequire('babel-loader')
@@ -187,7 +188,7 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
   function getSrcRequestString (type, impt, index, scoped, prefix = '!') {
     return loaderUtils.stringifyRequest(
       loaderContext,
-      prefix + getLoaderString(type, impt, index, scoped) + addQueryMode(impt.src, impt.mode)
+      prefix + getLoaderString(type, impt, index, scoped, true) + addQueryMode(impt.src, impt.mode)
     )
   }
 
@@ -232,11 +233,11 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
       .join('!')
   }
 
-  function getLoaderString (type, part, index, scoped) {
+  function getLoaderString (type, part, index, scoped, isSrc) {
     let loader = getRawLoaderString(type, part, index, scoped)
     const lang = getLangString(type, part)
     if (type !== 'script' && type !== 'wxs') {
-      loader = getExtractorString(type, index) + loader
+      loader = getExtractorString(type, index, isSrc) + loader
     }
     if (preLoaders[lang]) {
       loader = loader + ensureBang(preLoaders[lang])
@@ -364,7 +365,7 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
     )
   }
 
-  function getExtractorString (type, index = 0) {
+  function getExtractorString (type, index = 0, isSrc) {
     return ensureBang(
       extractorPath +
       '?type=' +
@@ -372,7 +373,7 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
         ? type
         : 'customBlocks') +
       '&index=' + index +
-      '&resourcePath=' + loaderContext.resourcePath
+      (isSrc ? '&resource=' + loaderContext.resource : '')
     )
   }
 

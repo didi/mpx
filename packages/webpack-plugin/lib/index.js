@@ -7,13 +7,10 @@ const ResolveDependency = require('./dependency/ResolveDependency')
 const InjectDependency = require('./dependency/InjectDependency')
 const ReplaceDependency = require('./dependency/ReplaceDependency')
 const NullFactory = require('webpack/lib/NullFactory')
-const config = require('./config')
 const normalize = require('./utils/normalize')
 const stripExtension = require('./utils/strip-extention')
 const toPosix = require('./utils/to-posix')
-const fixSwanRelative = require('./utils/fix-swan-relative')
 const DefinePlugin = require('webpack/lib/DefinePlugin')
-const hash = require('hash-sum')
 const AddModePlugin = require('./resolver/AddModePlugin')
 const CommonJsRequireDependency = require('webpack/lib/dependencies/CommonJsRequireDependency')
 const HarmonyImportSideEffectDependency = require('webpack/lib/dependencies/HarmonyImportSideEffectDependency')
@@ -96,42 +93,14 @@ class MpxWebpackPlugin {
     })
 
     compiler.hooks.thisCompilation.tap('MpxWebpackPlugin', (compilation, { normalModuleFactory }) => {
-      const typeExtMap = config[this.options.mode].typeExtMap
       const additionalAssets = {}
-
-      const seenFile = {}
-
-      function getFile (resource, type) {
-        let id = `${type}:${resource}`
-        if (!seenFile[id]) {
-          const compilationMpx = compilation.__mpx__
-          const subPackagesMap = compilationMpx.subPackagesMap
-          const mainResourceMap = compilationMpx.mainResourceMap
-          const resourceName = path.parse(resource).name
-
-          let subPackageRoot = ''
-          if (compilationMpx.processingSubPackages) {
-            for (let src in subPackagesMap) {
-              // 分包引用且主包未引用的资源，需打入分包目录中
-              if (!path.relative(src, resource).startsWith('..') && !mainResourceMap[resource]) {
-                subPackageRoot = subPackagesMap[src]
-                break
-              }
-            }
-          } else {
-            mainResourceMap[resource] = true
-          }
-          seenFile[id] = toPosix(path.join(subPackageRoot, type, resourceName + hash(resource) + typeExtMap[type]))
-        }
-        return seenFile[id]
-      }
-
       if (!compilation.__mpx__) {
         compilation.__mpx__ = {
           pagesMap: {},
           componentsMap: {},
           loaderOptions: null,
           subPackagesMap: {},
+          extractedMap: {},
           usingComponents: [],
           processingSubPackages: false,
           mainResourceMap: {},
@@ -143,49 +112,12 @@ class MpxWebpackPlugin {
           srcMode: this.options.srcMode,
           externalClasses: this.options.externalClasses,
           projectRoot: this.options.projectRoot,
-          extract: (content, type, resourcePath, index, selfResourcePath, issuerResourcePath) => {
-            if (index === -1) {
-              // 针对src引入的styles进行特殊处理，处理为@import形式便于样式复用
-              if (type === 'styles') {
-                let file1
-                if (resourcePath) {
-                  file1 = resourcePath + typeExtMap[type]
-                } else if (issuerResourcePath) {
-                  file1 = getFile(issuerResourcePath, type)
-                }
-                const file2 = getFile(selfResourcePath, type)
-
-                if (file1) {
-                  let relativePath = toPosix(path.relative(path.dirname(file1), file2))
-                  if (this.options.mode === 'swan') {
-                    relativePath = fixSwanRelative(relativePath)
-                  }
-                  additionalAssets[file1] = additionalAssets[file1] || []
-                  additionalAssets[file1].prefix = additionalAssets[file1].prefix || []
-                  additionalAssets[file1].prefix.push(`@import "${relativePath}";\n`)
-                }
-
-                additionalAssets[file2] = additionalAssets[file2] || []
-                if (!additionalAssets[file2][0]) {
-                  additionalAssets[file2][0] = content
-                }
-              }
-              // 针对import src引入的template进行特殊处理
-              if (type === 'template') {
-                const file = getFile(selfResourcePath, type)
-                additionalAssets[file] = additionalAssets[file] || []
-                if (!additionalAssets[file][0]) {
-                  additionalAssets[file][0] = content
-                }
-                return file
-              }
-            } else {
-              const file = resourcePath + typeExtMap[type]
-              additionalAssets[file] = additionalAssets[file] || []
-              if (!additionalAssets[file][index]) {
-                additionalAssets[file][index] = content
-              }
+          extract: (content, file, index, sideEffects) => {
+            additionalAssets[file] = additionalAssets[file] || []
+            if (!additionalAssets[file][index]) {
+              additionalAssets[file][index] = content
             }
+            sideEffects && sideEffects(additionalAssets)
           }
         }
       }
