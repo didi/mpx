@@ -70,6 +70,13 @@ module.exports = function (content, map) {
           JSON.stringify(imp.mediaQuery) + ']);'
       } else {
         var importUrl = importUrlPrefix + imp.url
+        if (query.extract) {
+          return 'exports.push([module.id, ' +
+            JSON.stringify('@import "') +
+            '+ require(' + loaderUtils.stringifyRequest(this, importUrl) + ') +' +
+            JSON.stringify('";') + ', ' +
+            JSON.stringify(imp.mediaQuery) + ']);'
+        }
         return 'exports.i(require(' + loaderUtils.stringifyRequest(this, importUrl) + '), ' + JSON.stringify(imp.mediaQuery) + ');'
       }
     }, this).join('\n')
