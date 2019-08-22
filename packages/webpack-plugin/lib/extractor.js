@@ -16,12 +16,14 @@ const fixSwanRelative = require('./utils/fix-swan-relative')
 const defaultResultSource = '// removed by extractor'
 
 function getResourcePath (resource) {
-  return resource.split('?').pop()
+  return resource.split('?').shift()
 }
 
 function getResource (request) {
   return request.split('!').pop()
 }
+
+const seenFile = {}
 
 module.exports = function (content) {
   this.cacheable()
@@ -45,16 +47,20 @@ module.exports = function (content) {
 
   let resultSource = defaultResultSource
 
-  const seenFile = {}
-
-  function getFile (resourceRaw, type) {
+  function getFile (resourceRaw, type, hasIssuer) {
     const resourcePath = getResourcePath(resourceRaw)
+    // 为了确保父编译中确定的输出路径不再改变，此处特意没有在id中加入hasIssuer
     const id = `${type}:${resourcePath}`
     if (!seenFile[id]) {
       const resource = stripExtension(resourceRaw)
-      let filename = pagesMap[resource] || componentsMap[resource]
-      if (!filename && resource === rootResource) {
-        filename = rootName
+      let filename
+      // import进来的资源不应该是app/page/component，避免app.mpx引用app.wxss这样的case出现问题
+      // 由于父编译的getFile在子编译之前执行，因为有seenFile的存在，一旦在父编译中确认了输出路径就不会改变
+      if (!hasIssuer) {
+        filename = pagesMap[resource] || componentsMap[resource]
+        if (!filename && resource === rootResource) {
+          filename = rootName
+        }
       }
 
       if (filename) {
@@ -85,13 +91,15 @@ module.exports = function (content) {
   const type = options.type
   const fromImport = options.fromImport
   let index = +options.index
+
   let issuerFile
   if (issuerResourceRaw) {
     issuerFile = getFile(issuerResourceRaw, type)
   }
 
-  const file = getFile(resourceRaw, type)
+  const file = getFile(resourceRaw, type, !!issuerFile)
   const filename = /(.*)\..*/.exec(file)[1]
+
   let sideEffects = () => {
   }
 
