@@ -145,10 +145,10 @@ module.exports = function (content) {
     switch (link.tag) {
       case 'import':
       case 'include':
-        requestString = getSrcRequestString('template', { src, mode: srcMode }, -1)
+        requestString = getSrcRequestString('template', { src, mode: localSrcMode }, -1)
         break
       case config[mode].wxs.tag:
-        requestString = getSrcRequestString('wxs', { src, mode: srcMode }, -1, undefined, '!!')
+        requestString = getSrcRequestString('wxs', { src, mode: localSrcMode }, -1, undefined, '!!')
         break
       default:
         requestString = JSON.stringify(src)

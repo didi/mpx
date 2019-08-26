@@ -18,6 +18,7 @@ module.exports = function (content) {
   const projectRoot = mpx.projectRoot
   const mode = mpx.mode
   const globalSrcMode = mpx.srcMode
+  const resolveMode = mpx.resolveMode
   const localSrcMode = loaderUtils.parseQuery(this.resourceQuery || '?').mode
   const resource = stripExtension(this.resource)
   const srcMode = localSrcMode || globalSrcMode
@@ -85,6 +86,13 @@ module.exports = function (content) {
   } catch (e) {
   }
 
+  function processSrc (part) {
+    if (resolveMode === 'native' && part.src) {
+      part.src = loaderUtils.urlToRequest(part.src, projectRoot)
+    }
+    return part
+  }
+
   const {
     getRequire,
     getNamedExports,
@@ -134,6 +142,7 @@ module.exports = function (content) {
   let scriptSrcMode = srcMode
   const script = parts.script
   if (script) {
+    processSrc(script)
     scriptSrcMode = script.mode || scriptSrcMode
     output += script.src
       ? (getNamedExportsForSrc('script', script) + '\n')
@@ -166,6 +175,7 @@ module.exports = function (content) {
   if (parts.styles.length) {
     let styleInjectionCode = ''
     parts.styles.forEach((style, i) => {
+      processSrc(style)
       // require style
       let requireString = style.src
         ? getRequireForSrc('styles', style, -1, style.scoped, undefined, true)
@@ -208,6 +218,10 @@ module.exports = function (content) {
   output += '/* json */\n'
   let json = parts.json || {}
   if (json) {
+    processSrc(json)
+    if (json.src) {
+      this.emitError(new Error('[mpx loader][' + this.resource + ']: ' + 'json content must be inline in .mpx files!'))
+    }
     output += json.src
       ? (getRequireForSrc('json', json) + '\n')
       : (getRequire('json', json) + '\n') + '\n'
@@ -218,6 +232,7 @@ module.exports = function (content) {
   output += '/* template */\n'
   const template = parts.template
   if (template) {
+    processSrc(template)
     output += template.src
       ? (getRequireForSrc('template', template) + '\n')
       : (getRequire('template', template) + '\n') + '\n'

@@ -101,6 +101,7 @@ class MpxWebpackPlugin {
           loaderOptions: null,
           subPackagesMap: {},
           extractedMap: {},
+          extractSeenFile: {},
           usingComponents: [],
           processingSubPackages: false,
           mainResourceMap: {},

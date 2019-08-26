@@ -23,8 +23,6 @@ function getResource (request) {
   return request.split('!').pop()
 }
 
-const seenFile = {}
-
 module.exports = function (content) {
   this.cacheable()
   const options = loaderUtils.getOptions(this) || {}
@@ -37,6 +35,7 @@ module.exports = function (content) {
   const extract = mpx.extract
   const extractedMap = mpx.extractedMap
   const mode = mpx.mode
+  const seenFile = mpx.extractSeenFile
   const typeExtMap = config[mode].typeExtMap
 
   const rootName = mainCompilation._preparedEntrypoints[0].name
