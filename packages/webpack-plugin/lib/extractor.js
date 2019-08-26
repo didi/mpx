@@ -49,7 +49,7 @@ module.exports = function (content) {
   function getFile (resourceRaw, type, hasIssuer) {
     const resourcePath = getResourcePath(resourceRaw)
     // 为了确保父编译中确定的输出路径不再改变，此处特意没有在id中加入hasIssuer
-    const id = `${type}:${resourcePath}`
+    const id = `${mode}:${type}:${resourcePath}`
     if (!seenFile[id]) {
       const resource = stripExtension(resourceRaw)
       let filename
