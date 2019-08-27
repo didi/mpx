@@ -17,20 +17,23 @@ module.exports = function normalizeComponentRules (cfgs, spec) {
         const eventRules = (cfg.event || []).concat(spec.event.rules)
         el.attrsList.forEach((attr) => {
           const testKey = 'name'
-          const rAttr = runRules(spec.directive, attr, {
+          let rAttr = runRules(spec.directive, attr, {
             target,
             testKey,
             data: {
               eventRules,
               attrsMap: el.attrsMap
             }
-          }) || runRules(cfg.props, attr, {
-            target,
-            testKey,
-            data: {
-              attrsMap: el.attrsMap
-            }
           })
+          if (rAttr === undefined) {
+            rAttr = runRules(cfg.props, attr, {
+              target,
+              testKey,
+              data: {
+                attrsMap: el.attrsMap
+              }
+            })
+          }
           if (Array.isArray(rAttr)) {
             rAttrsList.push(...rAttr)
           } else if (rAttr === false) {
