@@ -973,7 +973,7 @@ function stringifyWithResolveComputed (modelValue) {
     } else if (char === '[') {
       computedStack.push(char)
       if (computedStack.length === 1) {
-        fragment += '["'
+        fragment += '.'
         result.push(JSON.stringify(fragment))
         fragment = ''
         continue
@@ -983,14 +983,16 @@ function stringifyWithResolveComputed (modelValue) {
         computedStack.pop()
         if (computedStack.length === 0) {
           result.push(fragment)
-          fragment = '"]'
+          fragment = '.'
           continue
         }
       }
     }
     fragment += char
   }
-  result.push(JSON.stringify(fragment))
+  if (fragment !== '.') {
+    result.push(JSON.stringify(fragment))
+  }
   return result.join('+')
 }
 
