@@ -453,7 +453,6 @@ module.exports = function (raw) {
       }
     }
 
-
     // 保存全局注册组件
     if (json.usingComponents) {
       mpx.usingComponents = Object.keys(json.usingComponents)

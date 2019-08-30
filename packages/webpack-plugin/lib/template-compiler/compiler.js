@@ -961,7 +961,6 @@ function stringifyWithResolveComputed (modelValue) {
   let computedStack = []
   let fragment = ''
 
-
   for (let i = 0; i < modelValue.length; i++) {
     const char = modelValue[i]
     if (inString) {
@@ -995,7 +994,6 @@ function stringifyWithResolveComputed (modelValue) {
   }
   return result.join('+')
 }
-
 
 function processBindEvent (el) {
   const eventConfigMap = {}
