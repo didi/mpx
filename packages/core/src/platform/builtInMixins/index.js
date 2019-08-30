@@ -1,5 +1,4 @@
 import pageStatusMixin from './pageStatusMixin'
-import pageLifetimesMixin from './pageLifetimesMixin'
 import proxyEventMixin from './proxyEventMixin'
 import renderHelperMixin from './renderHelperMixin'
 import refsMixin from './refsMixin'
@@ -9,7 +8,6 @@ import relationsMixin from './relationsMixin'
 export default function getBuiltInMixins (options, type) {
   return [
     pageStatusMixin(type, options),
-    pageLifetimesMixin(type),
     proxyEventMixin(),
     renderHelperMixin(),
     refsMixin(),
