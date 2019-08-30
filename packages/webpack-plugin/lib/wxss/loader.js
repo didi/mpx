@@ -8,6 +8,7 @@ var processCss = require('./processCss')
 var getImportPrefix = require('./getImportPrefix')
 var compileExports = require('./compile-exports')
 var createResolver = require('./createResolver')
+var isUrlRequest = require('../utils/is-url-request')
 
 module.exports = function (content, map) {
   if (this.cacheable) this.cacheable()
@@ -64,7 +65,7 @@ module.exports = function (content, map) {
       }
       return true
     }).map(function (imp) {
-      if (!loaderUtils.isUrlRequest(imp.url, root)) {
+      if (!isUrlRequest(imp.url, root)) {
         return 'exports.push([module.id, ' +
           JSON.stringify('@import url(' + imp.url + ');') + ', ' +
           JSON.stringify(imp.mediaQuery) + ']);'

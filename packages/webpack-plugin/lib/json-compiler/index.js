@@ -11,6 +11,7 @@ const stripExtension = require('../utils/strip-extention')
 const mpxJSON = require('../utils/mpx-json')
 const toPosix = require('../utils/to-posix')
 const getRulesRunner = require('../platform/index')
+const isUrlRequest = require('../utils/is-url-request')
 
 module.exports = function (raw) {
   // 该loader中会在每次编译中动态添加entry，不能缓存，否则watch不好使
@@ -401,10 +402,10 @@ module.exports = function (raw) {
 
       if (json.tabBar && json.tabBar[itemKey]) {
         json.tabBar[itemKey].forEach((item, index) => {
-          if (item[iconKey] && loaderUtils.isUrlRequest(item[iconKey], options.root)) {
+          if (item[iconKey] && isUrlRequest(item[iconKey], options.root)) {
             output += `json.tabBar.${itemKey}[${index}].${iconKey} = require("${loaderUtils.urlToRequest(item[iconKey], options.root)}");\n`
           }
-          if (item[activeIconKey] && loaderUtils.isUrlRequest(item[activeIconKey], options.root)) {
+          if (item[activeIconKey] && isUrlRequest(item[activeIconKey], options.root)) {
             output += `json.tabBar.${itemKey}[${index}].${activeIconKey} = require("${loaderUtils.urlToRequest(item[activeIconKey], options.root)}");\n`
           }
         })
@@ -416,7 +417,7 @@ module.exports = function (raw) {
       let optionMenuCfg = config[mode].optionMenu
       if (optionMenuCfg && json.optionMenu) {
         let iconKey = optionMenuCfg.iconKey
-        if (json.optionMenu[iconKey] && loaderUtils.isUrlRequest(json.optionMenu[iconKey], options.root)) {
+        if (json.optionMenu[iconKey] && isUrlRequest(json.optionMenu[iconKey], options.root)) {
           output += `json.optionMenu.${iconKey} = require("${loaderUtils.urlToRequest(json.optionMenu[iconKey], options.root)}");\n`
         }
       }
