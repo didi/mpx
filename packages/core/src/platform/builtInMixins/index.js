@@ -8,7 +8,7 @@ import relationsMixin from './relationsMixin'
 
 export default function getBuiltInMixins (options, type) {
   return [
-    pageStatusMixin(type),
+    pageStatusMixin(type, options),
     pageLifetimesMixin(type),
     proxyEventMixin(),
     renderHelperMixin(),
