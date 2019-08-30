@@ -1,6 +1,6 @@
 import { is } from '../../helper/env'
 
-export default function pageStatusMixin (mixinType, options) {
+export default function pageStatusMixin (mixinType) {
   if (mixinType === 'page') {
     let pageMixin = {
       data: {
