@@ -14,13 +14,14 @@ export default function pageStatusMixin (mixinType, options) {
       }
     }
     if (is('ali')) {
-      // 因为支付宝并不支持events的mixin，直接改写options
-      options.events = Object.assign({
-        onResize(e) {
-          this.__mpxWindowSizeEvent = e
-          this.mpxPageStatus = 'resize'
+      Object.assign(pageMixin, {
+        events: {
+          onResize(e) {
+            this.__mpxWindowSizeEvent = e
+            this.mpxPageStatus = 'resize'
+          }
         }
-      }, options.events)
+      })
     }
     return pageMixin
   } else {
