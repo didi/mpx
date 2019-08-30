@@ -173,6 +173,10 @@ module.exports = function (raw) {
       if (compilationMpx.processingSubPackages) {
         for (let src in subPackagesMap) {
           // 分包引用且主包未引用的组件，需打入分包目录中
+          // 此处只会将分包源目录下的资源视为分包资源，有一定改进空间，改进方案如下：
+          // 串行处理各个分包（或并行通过层层传递分包参数），精确识别当前资源由哪个分包引入，当多个分包引用同一个资源的时候有两种选择：
+          // 1. 保持一份打入主包，总体积最优（由于资源输出路径在此时已经决定，可能需要回朔修改已经确定了的资源路径和各类resourceMap和相对路径等等，成本无比巨大，或许需要大规模更改架构，类似webpack先收集全部资源再统筹确定输出路径，前置输出路径->后置输出路径）
+          // 2. 复制多份分别打入分包，主包体积最优 （无需回朔修改，可保持前置输出路径架构，各类resourceMap的key值需要改动，记录分包信息，成本相对可接受）
           if (!path.relative(src, result).startsWith('..') && !mainComponentsMap[result]) {
             subPackageRoot = subPackagesMap[src]
             break
@@ -448,6 +452,7 @@ module.exports = function (raw) {
         callback()
       }
     }
+
 
     // 保存全局注册组件
     if (json.usingComponents) {

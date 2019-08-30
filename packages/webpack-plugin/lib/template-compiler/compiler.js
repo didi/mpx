@@ -197,6 +197,7 @@ let isIE = UA && /msie|trident/.test(UA)
 let isEdge = UA && UA.indexOf('edge/') > 0
 
 // configurable state
+// 由于template处理为纯同步过程，采用闭包变量存储各种状态方便全局访问
 let warn$1
 let error$1
 let mode
@@ -205,6 +206,30 @@ let processingTemplate
 let isNative
 let rulesRunner
 let currentEl
+let injectNodes = []
+let forScopes = []
+let forScopesMap = {}
+
+function updateForScopesMap () {
+  forScopes.forEach((scope) => {
+    forScopesMap[scope.index] = 'index'
+    forScopesMap[scope.item] = 'item'
+  })
+  return forScopesMap
+}
+
+function pushForScopes (scope) {
+  forScopes.push(scope)
+  updateForScopesMap()
+  return scope
+}
+
+function popForScopes () {
+  let scope = forScopes.pop()
+  updateForScopesMap()
+  return scope
+}
+
 const rulesResultMap = new Map()
 const deleteErrorInResultMap = (node) => {
   rulesResultMap.delete(node)
@@ -646,13 +671,16 @@ function parse (template, options) {
     error: _error
   })
 
+  injectNodes = []
+  forScopes = []
+  forScopesMap = {}
+
   platformGetTagNamespace = options.getTagNamespace || no
 
   let stack = []
   let preserveWhitespace = options.preserveWhitespace !== false
   let root
   let meta = {}
-  let injectNodes = []
   let currentParent
   let multiRootError
 
@@ -716,7 +744,7 @@ function parse (template, options) {
       currentParent.children.push(element)
       element.parent = currentParent
 
-      processElement(element, root, options, meta, injectNodes)
+      processElement(element, root, options, meta)
       if (!unary) {
         currentParent = element
         stack.push(element)
@@ -927,6 +955,46 @@ function parseFuncStr2 (str) {
   }
 }
 
+function stringifyWithResolveComputed (modelValue) {
+  let result = []
+  let inString = false
+  let computedStack = []
+  let fragment = ''
+
+
+  for (let i = 0; i < modelValue.length; i++) {
+    const char = modelValue[i]
+    if (inString) {
+      if (char === inString) {
+        inString = false
+      }
+    } else if (char === '"' || char === '\'') {
+      inString = char
+    } else if (char === '[') {
+      computedStack.push(char)
+      if (computedStack.length === 1) {
+        fragment += '["'
+        result.push(JSON.stringify(fragment))
+        fragment = ''
+        continue
+      }
+    } else if (computedStack.length) {
+      if (char === ']') {
+        computedStack.pop()
+        if (computedStack.length === 0) {
+          result.push(fragment)
+          fragment = '"]'
+          continue
+        }
+      }
+    }
+    fragment += char
+  }
+  result.push(JSON.stringify(fragment))
+  return result.join('+')
+}
+
+
 function processBindEvent (el) {
   const eventConfigMap = {}
   el.attrsList.forEach(function (attr) {
@@ -970,6 +1038,13 @@ function processBindEvent (el) {
         return
       }
       let modelValue = match[1].trim()
+      let stringifiedModelValue = stringifyWithResolveComputed(modelValue)
+      // if (forScopes.length) {
+      //   stringifiedModelValue = stringifyWithResolveComputed(modelValue)
+      // } else {
+      //   stringifiedModelValue = stringify(modelValue)
+      // }
+
       if (!eventConfigMap[modelEvent]) {
         eventConfigMap[modelEvent] = {
           configs: []
@@ -977,7 +1052,7 @@ function processBindEvent (el) {
       }
       eventConfigMap[modelEvent].configs.unshift({
         hasArgs: true,
-        expStr: `[${stringify('__model')},${stringify(modelValue)},${stringify('$event')},${stringify(modelValuePathArr)},${stringify(modelFilter)}]`
+        expStr: `[${stringify('__model')},${stringifiedModelValue},${stringify('$event')},${stringify(modelValuePathArr)},${stringify(modelFilter)}]`
       })
       addAttrs(el, [
         {
@@ -1120,6 +1195,10 @@ function processFor (el) {
     if (val = getAndRemoveAttr(el, config[mode].directive.key)) {
       el.for.key = val
     }
+    pushForScopes({
+      index: el.for.index || 'index',
+      item: el.for.item || 'item'
+    })
   }
 }
 
@@ -1130,7 +1209,7 @@ function processRef (el, options, meta) {
     if (!meta.refs) {
       meta.refs = []
     }
-    let all = !!el.for
+    let all = !!forScopes.length
     let refClassName = `__ref_${val}_${++refId}_{{mpxCid}}`
     let className = getAndRemoveAttr(el, 'class')
     className = className ? className + ' ' + refClassName : refClassName
@@ -1256,6 +1335,7 @@ function postProcessFor (el) {
     }
 
     addAttrs(targetEl, attrs)
+    popForScopes()
   }
 }
 
@@ -1359,7 +1439,7 @@ function processText (el) {
 //   }])
 // }
 
-function injectWxs (meta, module, src, injectNodes) {
+function injectWxs (meta, module, src) {
   if (addWxsModule(meta, module, src)) {
     return
   }
@@ -1378,7 +1458,7 @@ function injectWxs (meta, module, src, injectNodes) {
 
 const injectHelperWxsPath = normalize.lib('runtime/injectHelper.wxs')
 
-function processClass (el, meta, injectNodes) {
+function processClass (el, meta) {
   const type = 'class'
   const targetType = el.tag.startsWith('th-') ? 'ex-' + type : type
   let dynamicClass = getAndRemoveAttr(el, config[mode].directive.dynamicClass)
@@ -1390,7 +1470,7 @@ function processClass (el, meta, injectNodes) {
       name: targetType,
       value: `{{__injectHelper.transformClass(${staticClassExp}, ${dynamicClassExp})}}`
     }])
-    injectWxs(meta, '__injectHelper', injectHelperWxsPath, injectNodes)
+    injectWxs(meta, '__injectHelper', injectHelperWxsPath)
   } else if (staticClass) {
     addAttrs(el, [{
       name: targetType,
@@ -1399,7 +1479,7 @@ function processClass (el, meta, injectNodes) {
   }
 }
 
-function processStyle (el, meta, injectNodes) {
+function processStyle (el, meta) {
   const type = 'style'
   const targetType = el.tag.startsWith('th-') ? 'ex-' + type : type
   let dynamicStyle = getAndRemoveAttr(el, config[mode].directive.dynamicStyle)
@@ -1411,7 +1491,7 @@ function processStyle (el, meta, injectNodes) {
       name: targetType,
       value: `{{__injectHelper.transformStyle(${staticStyleExp}, ${dynamicStyleExp})}}`
     }])
-    injectWxs(meta, '__injectHelper', injectHelperWxsPath, injectNodes)
+    injectWxs(meta, '__injectHelper', injectHelperWxsPath)
   } else if (staticStyle) {
     addAttrs(el, [{
       name: targetType,
@@ -1519,7 +1599,7 @@ function postProcessTemplate (el) {
   }
 }
 
-function processElement (el, root, options, meta, injectNodes) {
+function processElement (el, root, options, meta) {
   if (rulesRunner) {
     currentEl = el
     rulesRunner(el)
@@ -1539,8 +1619,8 @@ function processElement (el, root, options, meta, injectNodes) {
 
   if (!pass) {
     if (mode !== 'tt') {
-      processClass(el, meta, injectNodes)
-      processStyle(el, meta, injectNodes)
+      processClass(el, meta)
+      processStyle(el, meta)
     }
     processShow(el, options, root)
   }
