@@ -80,7 +80,6 @@ describe('template should transform correct', function () {
     expect(output4).toBe('<view s-for="item, t1 in list">123</view>')
     expect(output5).toBe('<view s-for="t1, t2 in list">123</view>')
     expect(output6).toBe('<view s-for="t1, t2 in list trackBy t1.u1">123</view>')
-    expect(output6).toBe('<view s-for="t1, t2 in list trackBy t1.u1">123</view>')
-    expect(output7).toBe('<view s-for="item, index in [1,2,3]">123</view>')
+    expect(output7).toBe(`<view s-for='item, index in ["1","2","3"]'>123</view>`)
   })
 })

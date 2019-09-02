@@ -11,7 +11,7 @@ module.exports = function getSpec ({ warn, error }) {
         test: /^wx:for$/,
         swan (obj, data) {
           const attrsMap = data.attrsMap
-          const listName = /{{(.*)}}/.exec(obj.value)[1]
+          const listName = /{{(.*)}}/.test(obj.value) ? /{{(.*)}}/.exec(obj.value)[1] : JSON.stringify(obj.value.split(''))
           const itemName = attrsMap['wx:for-item'] || 'item'
           const indexName = attrsMap['wx:for-index'] || 'index'
           const keyName = attrsMap['wx:key'] || null
