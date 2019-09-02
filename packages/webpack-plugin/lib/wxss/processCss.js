@@ -16,6 +16,7 @@ var extractImports = require('postcss-modules-extract-imports')
 var modulesScope = require('postcss-modules-scope')
 var modulesValues = require('postcss-modules-values')
 var valueParser = require('postcss-value-parser')
+var isUrlRequest = require('../utils/is-url-request')
 
 var parserPlugin = postcss.plugin('css-loader-parser', function (options) {
   return function (css) {
@@ -57,7 +58,7 @@ var parserPlugin = postcss.plugin('css-loader-parser', function (options) {
         values.nodes[0].nodes.shift()
         var mediaQuery = Tokenizer.stringifyValues(values)
 
-        if (loaderUtils.isUrlRequest(url, options.root)) {
+        if (isUrlRequest(url, options.root)) {
           url = loaderUtils.urlToRequest(url, options.root)
         }
 
@@ -106,7 +107,7 @@ var parserPlugin = postcss.plugin('css-loader-parser', function (options) {
           }
           break
         case 'url':
-          if (options.url && item.url.replace(/\s/g, '').length && !/^#/.test(item.url) && (isAlias(item.url) || loaderUtils.isUrlRequest(item.url, options.root))) {
+          if (options.url && item.url.replace(/\s/g, '').length && !/^#/.test(item.url) && (isAlias(item.url) || isUrlRequest(item.url, options.root))) {
             // Strip quotes, they will be re-added if the module needs them
             item.stringType = ''
             delete item.innerSpacingBefore
@@ -167,7 +168,7 @@ module.exports = function processCss (inputSource, inputMap, options, callback) 
         if (parserOptions.url) {
           url = url.trim()
 
-          if (!url.replace(/\s/g, '').length || !loaderUtils.isUrlRequest(url, root)) {
+          if (!url.replace(/\s/g, '').length || !isUrlRequest(url, root)) {
             return url
           }
           if (global) {

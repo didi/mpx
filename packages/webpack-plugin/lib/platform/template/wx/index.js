@@ -6,6 +6,29 @@ module.exports = function getSpec ({ warn, error }) {
   const spec = {
     supportedTargets: ['ali', 'swan', 'qq', 'tt'],
     directive: [
+      // 特殊指令
+      {
+        test: /^wx:for$/,
+        swan (obj, data) {
+          const attrsMap = data.attrsMap
+          const listName = /{{(.*)}}/.exec(obj.value)[1]
+          const itemName = attrsMap['wx:for-item'] || 'item'
+          const indexName = attrsMap['wx:for-index'] || 'index'
+          const keyName = attrsMap['wx:key'] || null
+          const keyStr = keyName ? ` trackBy ${itemName}.${keyName}` : ''
+          return {
+            name: 's-for',
+            value: `${itemName}, ${indexName} in ${listName}${keyStr}`
+          }
+        }
+      },
+      {
+        // 在swan模式下删除key/for-index/for-item
+        test: /^wx:(key|for-item|for-index)$/,
+        swan () {
+          return false
+        }
+      },
       // 通用指令
       {
         test: /^wx:(.*)$/,
