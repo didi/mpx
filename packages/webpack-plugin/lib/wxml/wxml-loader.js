@@ -7,6 +7,7 @@ const hash = require('hash-sum')
 const config = require('../config')
 const getMainCompilation = require('../utils/get-main-compilation')
 const createHelpers = require('../helpers')
+const isUrlRequest = require('../utils/is-url-request')
 
 function randomIdent () {
   return 'xxxHTMLLINKxxx' + Math.random() + Math.random() + 'xxx'
@@ -77,7 +78,7 @@ module.exports = function (content) {
   const data = {}
   content = [content]
   links.forEach(function (link) {
-    if (!loaderUtils.isUrlRequest(link.value, options.root)) return
+    if (!isUrlRequest(link.value, options.root)) return
 
     if (link.value.indexOf('mailto:') > -1) return
 

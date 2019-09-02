@@ -3,11 +3,11 @@ const compiler = require('../../../lib/template-compiler/compiler')
 const errorFn = jest.fn(console.error)
 const warnFn = jest.fn(console.warn)
 
-function compileAndParse (input) {
+function compileAndParse (input, { srcMode, mode } = { srcMode: 'wx', mode: 'ali' }) {
   const parsed = compiler.parse(input, {
     usingComponents: [],
-    srcMode: 'wx',
-    mode: 'ali',
+    srcMode,
+    mode,
     warn: warnFn,
     error: errorFn
   })
@@ -55,5 +55,28 @@ describe('template should transform correct', function () {
     `
     compileAndParse(input)
     expect(errorFn).not.toHaveBeenCalled()
+  })
+
+  it('should optimize key of for in swan', function () {
+    const input1 = `<view wx:for="{{list}}" wx:key="unique">123</view>`
+    const input2 = `<view wx:for="{{list}}">123</view>`
+    const input3 = `<view wx:for="{{list}}" wx:for-item="t1">123</view>`
+    const input4 = `<view wx:for="{{list}}" wx:for-index="t1">123</view>`
+    const input5 = `<view wx:for="{{list}}" wx:for-item="t1" wx:for-index="t2">123</view>`
+    const input6 = `<view wx:for="{{list}}" wx:for-item="t1" wx:for-index="t2" wx:key="u1">123</view>`
+
+    const output1 = compileAndParse(input1, { srcMode: 'wx', mode: 'swan' })
+    const output2 = compileAndParse(input2, { srcMode: 'wx', mode: 'swan' })
+    const output3 = compileAndParse(input3, { srcMode: 'wx', mode: 'swan' })
+    const output4 = compileAndParse(input4, { srcMode: 'wx', mode: 'swan' })
+    const output5 = compileAndParse(input5, { srcMode: 'wx', mode: 'swan' })
+    const output6 = compileAndParse(input6, { srcMode: 'wx', mode: 'swan' })
+
+    expect(output1).toBe('<view s-for="item, index in list trackBy item.unique">123</view>')
+    expect(output2).toBe('<view s-for="item, index in list">123</view>')
+    expect(output3).toBe('<view s-for="t1, index in list">123</view>')
+    expect(output4).toBe('<view s-for="item, t1 in list">123</view>')
+    expect(output5).toBe('<view s-for="t1, t2 in list">123</view>')
+    expect(output6).toBe('<view s-for="t1, t2 in list trackBy t1.u1">123</view>')
   })
 })

@@ -11,6 +11,7 @@ const stripExtension = require('../utils/strip-extention')
 const mpxJSON = require('../utils/mpx-json')
 const toPosix = require('../utils/to-posix')
 const getRulesRunner = require('../platform/index')
+const isUrlRequest = require('../utils/is-url-request')
 
 module.exports = function (raw) {
   // 该loader中会在每次编译中动态添加entry，不能缓存，否则watch不好使
@@ -173,6 +174,10 @@ module.exports = function (raw) {
       if (compilationMpx.processingSubPackages) {
         for (let src in subPackagesMap) {
           // 分包引用且主包未引用的组件，需打入分包目录中
+          // 此处只会将分包源目录下的资源视为分包资源，有一定改进空间，改进方案如下：
+          // 串行处理各个分包（或并行通过层层传递分包参数），精确识别当前资源由哪个分包引入，当多个分包引用同一个资源的时候有两种选择：
+          // 1. 保持一份打入主包，总体积最优（由于资源输出路径在此时已经决定，可能需要回朔修改已经确定了的资源路径和各类resourceMap和相对路径等等，成本无比巨大，或许需要大规模更改架构，类似webpack先收集全部资源再统筹确定输出路径，前置输出路径->后置输出路径）
+          // 2. 复制多份分别打入分包，主包体积最优 （无需回朔修改，可保持前置输出路径架构，各类resourceMap的key值需要改动，记录分包信息，成本相对可接受）
           if (!path.relative(src, result).startsWith('..') && !mainComponentsMap[result]) {
             subPackageRoot = subPackagesMap[src]
             break
@@ -397,10 +402,10 @@ module.exports = function (raw) {
 
       if (json.tabBar && json.tabBar[itemKey]) {
         json.tabBar[itemKey].forEach((item, index) => {
-          if (item[iconKey] && loaderUtils.isUrlRequest(item[iconKey], options.root)) {
+          if (item[iconKey] && isUrlRequest(item[iconKey], options.root)) {
             output += `json.tabBar.${itemKey}[${index}].${iconKey} = require("${loaderUtils.urlToRequest(item[iconKey], options.root)}");\n`
           }
-          if (item[activeIconKey] && loaderUtils.isUrlRequest(item[activeIconKey], options.root)) {
+          if (item[activeIconKey] && isUrlRequest(item[activeIconKey], options.root)) {
             output += `json.tabBar.${itemKey}[${index}].${activeIconKey} = require("${loaderUtils.urlToRequest(item[activeIconKey], options.root)}");\n`
           }
         })
@@ -412,7 +417,7 @@ module.exports = function (raw) {
       let optionMenuCfg = config[mode].optionMenu
       if (optionMenuCfg && json.optionMenu) {
         let iconKey = optionMenuCfg.iconKey
-        if (json.optionMenu[iconKey] && loaderUtils.isUrlRequest(json.optionMenu[iconKey], options.root)) {
+        if (json.optionMenu[iconKey] && isUrlRequest(json.optionMenu[iconKey], options.root)) {
           output += `json.optionMenu.${iconKey} = require("${loaderUtils.urlToRequest(json.optionMenu[iconKey], options.root)}");\n`
         }
       }
