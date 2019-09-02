@@ -16,7 +16,7 @@ export default function pageStatusMixin (mixinType) {
     if (is('ali')) {
       Object.assign(pageMixin, {
         events: {
-          onResize(e) {
+          onResize (e) {
             this.__mpxWindowSizeEvent = e
             this.mpxPageStatus = 'resize'
           }
