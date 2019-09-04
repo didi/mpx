@@ -1,7 +1,7 @@
 import * as wxLifecycle from '../platform/patch/wx/lifecycle'
 import { mergeLifecycle } from './mergeLifecycle'
 
-const NOTSUPPORTS = ['moved', 'pageLifetimes', 'definitionFilter']
+const NOTSUPPORTS = ['moved', 'definitionFilter']
 
 function convertErrorDesc (key) {
   console.error(`【MPX CONVERT ERROR】at ${global.currentResource || ''} : Don't support for convert the option【${key}】 of the wx-component into the ali-component`)

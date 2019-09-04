@@ -176,7 +176,7 @@ function mergeMixins (parent, child) {
       mergeDataFn(parent, child, key)
     } else if (/^(computed|properties|props|methods|proto)$/.test(key)) {
       mergeSimpleProps(parent, child, key)
-    } else if (/^(watch|pageLifetimes|observers)$/.test(key)) {
+    } else if (/^(watch|pageLifetimes|observers|events)$/.test(key)) {
       mergeToArray(parent, child, key)
     } else if (/^behaviors$/.test(key)) {
       mergeArray(parent, child, key)
@@ -310,6 +310,7 @@ function proxyHooks (options) {
 function transformHOOKS (options) {
   composeHooks(options, CURRENT_HOOKS)
   options.pageLifetimes && composeHooks(options.pageLifetimes)
+  options.events && composeHooks(options.events)
   if (curType === 'blend' && convertRule.support) {
     const COMPONENT_HOOKS = convertRule.lifecycle.component
     for (const key in options) {
