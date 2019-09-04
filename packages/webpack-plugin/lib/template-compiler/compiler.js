@@ -1864,5 +1864,6 @@ module.exports = {
   parse,
   serialize,
   genNode,
-  makeAttrsMap
+  makeAttrsMap,
+  stringifyAttr
 }

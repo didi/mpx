@@ -5,6 +5,11 @@ const createHelpers = require('./helpers')
 const loaderUtils = require('loader-utils')
 const InjectDependency = require('./dependency/InjectDependency')
 const stripExtension = require('./utils/strip-extention')
+const type = require('./utils/type')
+const stringifyAttr = require('./template-compiler/compiler').stringifyAttr
+const optionProcessorPath = require.resolve('./runtime/optionProcessor')
+const getPageName = require('./utils/get-page-name')
+const toPosix = require('./utils/to-posix')
 
 module.exports = function (content) {
   this.cacheable()
@@ -45,9 +50,19 @@ module.exports = function (content) {
     }
   }
 
+  let ctorType = 'app'
+  if (pagesMap[resource]) {
+    // page
+    ctorType = 'page'
+  } else if (componentsMap[resource]) {
+    // component
+    ctorType = 'component'
+  }
+
   const loaderContext = this
   const isProduction = this.minimize || process.env.NODE_ENV === 'production'
   const options = loaderUtils.getOptions(this) || {}
+  const stringifyRequest = r => loaderUtils.stringifyRequest(loaderContext, r)
 
   if (!mpx.loaderOptions) {
     // 传递给nativeLoader复用
@@ -71,7 +86,10 @@ module.exports = function (content) {
   )
 
   const parts = parse(content, filePath, this.sourceMap, mode)
-  //
+
+  // 触发webpack global var 注入
+  let output = 'global.currentModuleId;\n'
+
   const hasScoped = parts.styles.some(({ scoped }) => scoped)
   const templateAttrs = parts.template && parts.template.attrs && parts.template.attrs
   const hasComment = templateAttrs && templateAttrs.comments
@@ -88,7 +106,7 @@ module.exports = function (content) {
 
   function processSrc (part) {
     if (resolveMode === 'native' && part.src) {
-      part.src = loaderUtils.urlToRequest(part.src, projectRoot)
+      part.src = part.attrs.src = loaderUtils.urlToRequest(part.src, projectRoot)
     }
     return part
   }
@@ -112,8 +130,173 @@ module.exports = function (content) {
     projectRoot
   )
 
-  // 触发webpack global var 注入
-  let output = 'global.currentModuleId;\n'
+  if (mode === 'web') {
+    // 处理mode为web时输出vue格式文件
+    function stringifyAttrs (attrs) {
+      let result = ''
+      Object.keys(attrs).forEach(function (name) {
+        result += ' ' + name
+        let value = attrs[name]
+        if (value != null && value !== '' && value !== true) {
+          result += '=' + stringifyAttr(value)
+        }
+      })
+      return result
+    }
+
+    function genComponentTag (part, processor = {}) {
+      // normalize
+      if (type(processor) === 'Function') {
+        processor = {
+          content: processor
+        }
+      }
+      const tag = processor.tag ? processor.tag(part) : part.type
+      const attrs = processor.attrs ? processor.attrs(part) : part.attrs
+      const content = processor.content ? processor.content(part) : part.content
+      let result = ''
+      if (tag) {
+        result += `<${tag}`
+        if (attrs) {
+          result += stringifyAttrs(attrs)
+        }
+        if (content) {
+          result += `>${content}</${tag}>`
+        } else {
+          result += '/>'
+        }
+      }
+      return result
+    }
+
+    // template
+    output += '/* template */\n'
+    const template = parts.template
+    if (template) {
+      processSrc(template)
+      output += genComponentTag(template, (template) => {
+        if (template.content) {
+          // todo
+          return template.content
+        }
+      })
+      output += '\n\n'
+
+    }
+
+    // styles
+    output += '/* styles */\n'
+    if (parts.styles.length) {
+      parts.styles.forEach((style) => {
+        processSrc(style)
+        output += genComponentTag(style)
+        output += '\n'
+      })
+      output += '\n'
+    }
+
+    // json
+    output += '/* json */\n'
+    let jsonObj
+    let json = parts.json
+    if (json) {
+      if (json.src) {
+        this.emitError(new Error('[mpx loader][' + this.resource + ']: ' + 'json content must be inline in .mpx files!'))
+      }
+
+      try {
+        jsonObj = JSON.parse(json.content)
+      } catch (e) {
+      }
+    }
+
+    // script
+    output += '/* script */\n'
+    let scriptSrcMode = srcMode
+    let script = parts.script
+    if (script) {
+      scriptSrcMode = script.mode || scriptSrcMode
+      processSrc(script)
+    } else {
+      script = {
+        type: 'script',
+        content: ''
+      }
+      switch (ctorType) {
+        case 'app':
+          script.content = 'import {createApp} from "@mpxjs/core"\n' +
+            'createApp({})\n'
+          break
+        case 'page':
+          script.content = 'import {createPage} from "@mpxjs/core"\n' +
+            'createPage({})\n'
+          break
+        case 'component':
+          script.content = 'import {createComponent} from "@mpxjs/core"\n' +
+            'createComponent({})\n'
+      }
+
+    }
+    output += genComponentTag(script, (script) => {
+      let content = `import processOption from ${stringifyRequest(`!!${optionProcessorPath}`)}\n`
+      // add import
+      if (ctorType === 'app') {
+        content += `import Vue from 'vue'
+        import VueRouter from 'vue-router'\n`
+      }
+      let importedPagesMap = {}
+      if (jsonObj.pages) {
+        jsonObj.pages.forEach((page, index) => {
+          if (resolveMode === 'native') {
+            page = loaderUtils.urlToRequest(page, projectRoot)
+          }
+          const pageName = toPosix(getPageName('', page))
+          const pageVar = `__mpx_page_${index}__`
+
+          content += `import ${pageVar} from ${stringifyRequest(page)}`
+          importedPagesMap[pageName] = pageVar
+        })
+      }
+
+      let importedComponentsMap = {}
+      if (jsonObj.usingComponents) {
+        Object.keys(jsonObj.usingComponents).forEach((componentName, index) => {
+          let component = jsonObj.usingComponents[componentName]
+
+          if (resolveMode === 'native') {
+            component = loaderUtils.urlToRequest(component, projectRoot)
+          }
+          const componentVar = `__mpx_component_${index}__`
+
+          content += `import ${componentVar} from ${stringifyRequest(component)}`
+          importedComponentsMap[componentName] = componentVar
+        })
+      }
+
+      content += `global.currentSrcMode = ${JSON.stringify(scriptSrcMode)};\n`
+      // 为了正确获取currentSrcMode便于运行时进行转换，对于src引入的组件script采用require方式引入(由于webpack会将import的执行顺序上升至最顶),这意味着对于src引入脚本中的named export将不会生效，不过鉴于mpx和小程序中本身也没有在组件script中声明export的用法，所以应该没有影响
+      content += script.src
+        ? (getRequireForSrc('script', script) + '\n')
+        : (script.content + '\n') + '\n'
+      // 配置平台转换通过createFactory在core中convertor中定义和进行
+      // 通过processOption进行组件注册和路由注入
+      content += `export default processOption(
+        global.currentOption,
+        ${ctorType},
+        ${importedPagesMap},
+        ${importedComponentsMap}`
+
+      content += ctorType === 'app' ? `,
+            Vue,
+            VueRouter
+          )\n` : `
+          )\n`
+      return content
+    })
+    output += '\n'
+    return output
+  }
+
 
   // 注入模块id及资源路径
   let globalInjectCode = `global.currentModuleId = ${JSON.stringify(moduleId)};\n`
@@ -121,14 +304,14 @@ module.exports = function (content) {
 
   // 注入构造函数
   let ctor = 'App'
-  if (pagesMap[resource]) {
+  if (ctorType === 'page') {
     ctor = mode === 'ali' ? 'Page' : 'Component'
-  } else if (componentsMap[resource]) {
+  } else if (ctorType === 'component') {
     ctor = 'Component'
   }
   globalInjectCode += `global.currentCtor = ${ctor};\n`
 
-  if (!pagesMap[resource] && !componentsMap[resource] && mode === 'swan') {
+  if (ctorType === 'app' && mode === 'swan') {
     // 注入swan runtime fix
     globalInjectCode += 'if (!global.navigator) {\n' +
       '  global.navigator = {};\n' +
@@ -136,8 +319,7 @@ module.exports = function (content) {
       'global.navigator.standalone = true;\n'
   }
 
-  //
-  // <script>
+  // script
   output += '/* script */\n'
   let scriptSrcMode = srcMode
   const script = parts.script
@@ -148,18 +330,18 @@ module.exports = function (content) {
       ? (getNamedExportsForSrc('script', script) + '\n')
       : (getNamedExports('script', script) + '\n') + '\n'
   } else {
-    if (pagesMap[resource]) {
-      // page
-      output += 'import {createPage} from "@mpxjs/core"\n' +
-        'createPage({})\n'
-    } else if (componentsMap[resource]) {
-      // component
-      output += 'import {createComponent} from "@mpxjs/core"\n' +
-        'createComponent({})\n'
-    } else {
-      // app
-      output += 'import {createApp} from "@mpxjs/core"\n' +
-        'createApp({})\n'
+    switch (ctorType) {
+      case 'app':
+        output += 'import {createApp} from "@mpxjs/core"\n' +
+          'createApp({})\n'
+        break
+      case 'page':
+        output += 'import {createPage} from "@mpxjs/core"\n' +
+          'createPage({})\n'
+        break
+      case 'component':
+        output += 'import {createComponent} from "@mpxjs/core"\n' +
+          'createComponent({})\n'
     }
     output += '\n'
   }
@@ -168,8 +350,7 @@ module.exports = function (content) {
     globalInjectCode += `global.currentSrcMode = ${JSON.stringify(scriptSrcMode)};\n`
   }
 
-  //
-  // <styles>
+  // styles
   output += '/* styles */\n'
   let cssModules
   if (parts.styles.length) {
@@ -213,22 +394,17 @@ module.exports = function (content) {
     output += styleInjectionCode + '\n'
   }
 
-  //
-  // <json>
+  // json
   output += '/* json */\n'
-  let json = parts.json || {}
+  let json = parts.json
   if (json) {
-    processSrc(json)
     if (json.src) {
       this.emitError(new Error('[mpx loader][' + this.resource + ']: ' + 'json content must be inline in .mpx files!'))
     }
-    output += json.src
-      ? (getRequireForSrc('json', json) + '\n')
-      : (getRequire('json', json) + '\n') + '\n'
+    output += getRequire('json', json) + '\n\n'
   }
 
-  //
-  // <template>
+  // template
   output += '/* template */\n'
   const template = parts.template
   if (template) {

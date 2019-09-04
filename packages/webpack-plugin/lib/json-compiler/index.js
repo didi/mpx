@@ -12,6 +12,7 @@ const mpxJSON = require('../utils/mpx-json')
 const toPosix = require('../utils/to-posix')
 const getRulesRunner = require('../platform/index')
 const isUrlRequest = require('../utils/is-url-request')
+const getPageName = require('../utils/get-page-name')
 
 module.exports = function (raw) {
   // 该loader中会在每次编译中动态添加entry，不能缓存，否则watch不好使
@@ -144,11 +145,6 @@ module.exports = function (raw) {
 
   if (rulesRunner) {
     rulesRunner(json)
-  }
-
-  function getPageName (root, page) {
-    const match = /^[.~/]*(.*?)(\.[^.]*)?$/.exec(page)
-    return path.join(root, match[1])
   }
 
   const processComponent = (component, context, rewritePath, componentPath, callback) => {
