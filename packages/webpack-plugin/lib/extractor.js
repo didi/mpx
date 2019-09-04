@@ -19,9 +19,9 @@ function getResourcePath (resource) {
   return resource.split('?').shift()
 }
 
-function getResource (request) {
-  return request.split('!').pop()
-}
+// function getResource (request) {
+//   return request.split('!').pop()
+// }
 
 module.exports = function (content) {
   this.cacheable()
