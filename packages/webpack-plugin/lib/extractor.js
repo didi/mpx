@@ -39,7 +39,11 @@ module.exports = function (content) {
   const typeExtMap = config[mode].typeExtMap
 
   const rootName = mainCompilation._preparedEntrypoints[0].name
-  const rootResource = stripExtension(getResource(mainCompilation._preparedEntrypoints[0].request))
+  const rootRequest = mainCompilation._preparedEntrypoints[0].request
+  const rootModule = mainCompilation.entries.find((module) => {
+    return module.rawRequest === rootRequest
+  })
+  const rootResource = stripExtension(rootModule.resource)
 
   const resourceRaw = this.resource
   const issuerResourceRaw = options.issuerResource
