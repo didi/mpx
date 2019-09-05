@@ -61,8 +61,8 @@ Mpx基于泛型函数提供了非常方便用户使用的反向类型推导能�
 ```typescript
 import {createComponent, getComputed, getMixin, createStoreWithThis} from '@mpxjs/core'
 
+// createStoreWithThis作为createStore的变种方法，主要变化在于定义getters，mutations和actions时，获取自身的state，getters等属性不再通过参数传入，而是通过this.state或者this.getters等属性进行访问，由于TS的能力限制，getters/mutations/actions只有使用对象字面量的方式直接传入createStoreWithThis时才能正确推导出this的类型，当需要将getters/mutations/actions拆解为对象编写时，需要用户显式地声明this类型，无法直接推导得出。
 
-// createStoreWithThis作为createStore的变种方法，主要变化在于定义getters，mutations和actions时，获取自身的state，getters等属性不再通过参数传入，而是通过this.state或者this.getters等属性进行访问
 const store = createStoreWithThis({
   state: {
     aa: 1,
