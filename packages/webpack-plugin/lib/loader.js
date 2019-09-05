@@ -144,6 +144,18 @@ module.exports = function (content) {
       return result
     }
 
+    function shallowStringify (obj) {
+      let arr = []
+      for (let key in obj) {
+        let value = obj[key]
+        if (Array.isArray(value)) {
+          value = `[${value.join(',')}]`
+        }
+        arr.push(`'${key}':${value}`)
+      }
+      return `{${arr.join(',')}}`
+    }
+
     function genComponentTag (part, processor = {}) {
       // normalize
       if (type(processor) === 'Function') {
@@ -283,8 +295,8 @@ module.exports = function (content) {
       content += `export default processOption(
         global.currentOption,
         ${ctorType},
-        ${importedPagesMap},
-        ${importedComponentsMap}`
+        ${shallowStringify(importedPagesMap)},
+        ${shallowStringify(importedComponentsMap)}`
 
       content += ctorType === 'app' ? `,
             Vue,

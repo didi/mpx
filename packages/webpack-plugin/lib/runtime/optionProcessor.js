@@ -8,19 +8,43 @@ export default function processOption (
 ) {
 
   if (ctorType === 'app') {
+    // 对于app中的组件需要全局注册
     for (var componentName in importedComponentsMap) {
-      if(importedComponentsMap.hasOwnProperty(componentName)){
-        var componentVar = importedComponentsMap[componentName]
-
+      if (importedComponentsMap.hasOwnProperty(componentName)) {
+        var component = importedComponentsMap[componentName]
+        Vue.component(componentName, component)
       }
-
-
     }
 
+    var routes = []
 
+    for (var pagePath in importedPagesMap) {
+      if (importedPagesMap.hasOwnProperty(pagePath)) {
+        var page = importedPagesMap[pagePath]
+        routes.push({
+          path: pagePath,
+          component: page
+        })
+      }
+    }
+
+    if (routes.length) {
+      option.router = new VueRouter({
+        routes: routes
+      })
+    }
   } else {
-    if (jsonConfig.usingComponents) {
-
+    // 局部注册页面和组件中依赖的组件
+    for (var componentName in importedComponentsMap) {
+      if (importedComponentsMap.hasOwnProperty(componentName)) {
+        var component = importedComponentsMap[componentName]
+        if (!option.components) {
+          option.components = {}
+        }
+        option.components[componentName] = component
+      }
     }
   }
+
+  return option
 }
