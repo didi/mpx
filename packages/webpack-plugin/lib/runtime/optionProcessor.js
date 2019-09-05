@@ -6,7 +6,6 @@ export default function processOption (
   Vue,
   VueRouter
 ) {
-
   if (ctorType === 'app') {
     // 对于app中的组件需要全局注册
     for (var componentName in importedComponentsMap) {
@@ -35,9 +34,9 @@ export default function processOption (
     }
   } else {
     // 局部注册页面和组件中依赖的组件
-    for (var componentName in importedComponentsMap) {
+    for (componentName in importedComponentsMap) {
       if (importedComponentsMap.hasOwnProperty(componentName)) {
-        var component = importedComponentsMap[componentName]
+        component = importedComponentsMap[componentName]
         if (!option.components) {
           option.components = {}
         }

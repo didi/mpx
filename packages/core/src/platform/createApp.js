@@ -8,6 +8,12 @@ export default function createApp (option) {
       extend(this, option.proto)
     }
   }])
-  global.currentCtor(dissolveAttrs(mergeOptions(rawOptions, 'app', false), 'methods'))
-  /* eslint-disable-line */
+
+  const defaultOptions = mergeOptions(rawOptions, 'app', false)
+
+  if (__mpx_mode__) {
+    global.currentOption = defaultOptions
+  } else {
+    global.currentCtor(dissolveAttrs(defaultOptions, 'methods'))
+  }
 }

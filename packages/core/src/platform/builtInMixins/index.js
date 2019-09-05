@@ -6,6 +6,9 @@ import showMixin from './showMixin'
 import relationsMixin from './relationsMixin'
 
 export default function getBuiltInMixins (options, type) {
+  if (__mpx_mode__ === 'web') {
+    return []
+  }
   return [
     pageStatusMixin(type),
     proxyEventMixin(),

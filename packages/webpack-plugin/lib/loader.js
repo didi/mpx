@@ -130,57 +130,57 @@ module.exports = function (content) {
     projectRoot
   )
 
+  function stringifyAttrs (attrs) {
+    let result = ''
+    Object.keys(attrs).forEach(function (name) {
+      result += ' ' + name
+      let value = attrs[name]
+      if (value != null && value !== '' && value !== true) {
+        result += '=' + stringifyAttr(value)
+      }
+    })
+    return result
+  }
+
+  function shallowStringify (obj) {
+    let arr = []
+    for (let key in obj) {
+      let value = obj[key]
+      if (Array.isArray(value)) {
+        value = `[${value.join(',')}]`
+      }
+      arr.push(`'${key}':${value}`)
+    }
+    return `{${arr.join(',')}}`
+  }
+
+  function genComponentTag (part, processor = {}) {
+    // normalize
+    if (type(processor) === 'Function') {
+      processor = {
+        content: processor
+      }
+    }
+    const tag = processor.tag ? processor.tag(part) : part.type
+    const attrs = processor.attrs ? processor.attrs(part) : part.attrs
+    const content = processor.content ? processor.content(part) : part.content
+    let result = ''
+    if (tag) {
+      result += `<${tag}`
+      if (attrs) {
+        result += stringifyAttrs(attrs)
+      }
+      if (content) {
+        result += `>${content}</${tag}>`
+      } else {
+        result += '/>'
+      }
+    }
+    return result
+  }
+
+  // 处理mode为web时输出vue格式文件
   if (mode === 'web') {
-    // 处理mode为web时输出vue格式文件
-    function stringifyAttrs (attrs) {
-      let result = ''
-      Object.keys(attrs).forEach(function (name) {
-        result += ' ' + name
-        let value = attrs[name]
-        if (value != null && value !== '' && value !== true) {
-          result += '=' + stringifyAttr(value)
-        }
-      })
-      return result
-    }
-
-    function shallowStringify (obj) {
-      let arr = []
-      for (let key in obj) {
-        let value = obj[key]
-        if (Array.isArray(value)) {
-          value = `[${value.join(',')}]`
-        }
-        arr.push(`'${key}':${value}`)
-      }
-      return `{${arr.join(',')}}`
-    }
-
-    function genComponentTag (part, processor = {}) {
-      // normalize
-      if (type(processor) === 'Function') {
-        processor = {
-          content: processor
-        }
-      }
-      const tag = processor.tag ? processor.tag(part) : part.type
-      const attrs = processor.attrs ? processor.attrs(part) : part.attrs
-      const content = processor.content ? processor.content(part) : part.content
-      let result = ''
-      if (tag) {
-        result += `<${tag}`
-        if (attrs) {
-          result += stringifyAttrs(attrs)
-        }
-        if (content) {
-          result += `>${content}</${tag}>`
-        } else {
-          result += '/>'
-        }
-      }
-      return result
-    }
-
     // template
     output += '/* template */\n'
     const template = parts.template
@@ -193,7 +193,6 @@ module.exports = function (content) {
         }
       })
       output += '\n\n'
-
     }
 
     // styles
@@ -247,7 +246,6 @@ module.exports = function (content) {
           script.content = 'import {createComponent} from "@mpxjs/core"\n' +
             'createComponent({})\n'
       }
-
     }
     output += genComponentTag(script, (script) => {
       let content = `import processOption from ${stringifyRequest(`!!${optionProcessorPath}`)}\n`
@@ -308,7 +306,6 @@ module.exports = function (content) {
     output += '\n'
     return output
   }
-
 
   // 注入模块id及资源路径
   let globalInjectCode = `global.currentModuleId = ${JSON.stringify(moduleId)};\n`

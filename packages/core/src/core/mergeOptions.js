@@ -25,7 +25,10 @@ export default function mergeOptions (options = {}, type, needConvert = true) {
     // 自定义补充转换函数
     typeof convertRule.convert === 'function' && convertRule.convert(newOptions)
   }
-  newOptions.mpxCustomKeysForBlend = mpxCustomKeysForBlend
+
+  if (mpxCustomKeysForBlend.length) {
+    newOptions.mpxCustomKeysForBlend = mpxCustomKeysForBlend
+  }
   return transformHOOKS(newOptions)
 }
 
@@ -72,6 +75,7 @@ function extractObservers (options) {
   const props = Object.assign({}, options.properties, options.props)
   const watch = Object.assign({}, options.watch)
   let extract = false
+
   function mergeWatch (key, config) {
     if (watch[key]) {
       type(watch[key]) !== 'Array' && (watch[key] = [watch[key]])
@@ -81,6 +85,7 @@ function extractObservers (options) {
     watch[key].push(config)
     extract = true
   }
+
   Object.keys(props).forEach(key => {
     const prop = props[key]
     if (prop && prop.observer) {

@@ -4,7 +4,7 @@ import {
 } from '../../../helper/utils'
 
 import MPXProxy from '../../../core/proxy'
-import customeKey from '../../../core/customOptionKeys'
+import customKey from '../customOptionKeys'
 import mergeOptions from '../../../core/mergeOptions'
 
 function transformProperties (properties) {
@@ -87,7 +87,7 @@ function transformApiForProxy (context, currentInject) {
 
 function filterOptions (options) {
   const newOptions = {}
-  const ignoreProps = customeKey
+  const ignoreProps = customKey
   Object.keys(options).forEach(key => {
     if (ignoreProps.indexOf(key) !== -1 || (key === 'data' && typeof options[key] === 'function')) {
       return

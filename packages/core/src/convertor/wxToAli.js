@@ -36,7 +36,7 @@ export default {
   lifecycleProxyMap: {
     '__created__': ['onLoad', 'created', 'attached'],
     '__mounted__': ['ready', 'onReady'],
-    '__destroyed__': ['detached'],
+    '__destroyed__': ['detached', 'onUnload'],
     '__updated__': ['updated']
   },
   convert (options) {

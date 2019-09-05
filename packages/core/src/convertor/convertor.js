@@ -1,9 +1,10 @@
 import * as wxLifecycle from '../platform/patch/wx/lifecycle'
 import * as aliLifecycle from '../platform/patch/ali/lifecycle'
+import * as webLifecycle from '../platform/patch/web/lifecycle'
 import { mergeLifecycle } from './mergeLifecycle'
-import { is } from '../helper/env'
 import { type } from '../helper/utils'
 import wxToAliRule from './wxToAli'
+import wxToWebRule from './wxToWeb'
 
 // 生命周期模板
 const lifecycleTemplates = {
@@ -14,8 +15,22 @@ const lifecycleTemplates = {
   tt: wxLifecycle.LIFECYCLE
 }
 // 根据当前环境获取的默认生命周期信息
-const lifecycleInfo = is('ali') ? aliLifecycle : wxLifecycle
-const pageMode = is('ali') ? '' : 'blend'
+let lifecycleInfo
+let pageMode
+
+switch (__mpx_mode__) {
+  case 'web':
+    lifecycleInfo = webLifecycle
+    pageMode = ''
+    break
+  case 'ali':
+    lifecycleInfo = aliLifecycle
+    pageMode = ''
+    break
+  default:
+    lifecycleInfo = wxLifecycle
+    pageMode = 'blend'
+}
 
 /**
  * 转换规则包含四点
@@ -36,7 +51,8 @@ const defaultConvertRule = {
 const RULEMAPS = {
   local: { ...defaultConvertRule },
   default: defaultConvertRule,
-  wxToAli: wxToAliRule // 微信转支付宝rule
+  wxToAli: wxToAliRule, // 微信转支付宝rule
+  wxToWeb: wxToWebRule // 微信转web rule
 }
 
 // 外部控制默认转换规则

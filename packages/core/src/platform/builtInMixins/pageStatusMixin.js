@@ -1,4 +1,3 @@
-import { is } from '../../helper/env'
 
 export default function pageStatusMixin (mixinType) {
   if (mixinType === 'page') {
@@ -14,7 +13,7 @@ export default function pageStatusMixin (mixinType) {
       }
     }
   } else {
-    if (is('ali')) {
+    if (__mpx_mode__ === 'ali') {
       return {
         watch: {
           '$page.mpxPageStatus': {

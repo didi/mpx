@@ -3,7 +3,7 @@ import {
 } from 'mobx'
 
 import MPXProxy from '../../../core/proxy'
-import customeKey from '../../../core/customOptionKeys'
+import customKey from '../customOptionKeys'
 import mergeOptions from '../../../core/mergeOptions'
 
 function transformApiForProxy (context, currentInject) {
@@ -67,7 +67,7 @@ function transformApiForProxy (context, currentInject) {
 
 function filterOptions (options, type) {
   const newOptions = {}
-  const ignoreProps = customeKey
+  const ignoreProps = customKey
   Object.keys(options).forEach(key => {
     if (ignoreProps.indexOf(key) !== -1 || (key === 'data' && typeof options[key] === 'function')) {
       return
