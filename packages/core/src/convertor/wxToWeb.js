@@ -1,5 +1,6 @@
 import * as wxLifecycle from '../platform/patch/wx/lifecycle'
 import { mergeLifecycle } from './mergeLifecycle'
+import { type } from '../helper/utils'
 
 const NOTSUPPORTS = ['moved', 'relations', 'pageLifetimes', 'definitionFilter']
 
@@ -53,6 +54,12 @@ export default {
     'errorCaptured': ['onError']
   },
   convert (options) {
+    if (options.data && type(options.data) !== 'Function') {
+      const rawData = options.data
+      options.data = function () {
+        return rawData
+      }
+    }
     if (options.properties) {
       const newProps = {}
       Object.keys(options.properties).forEach(key => {

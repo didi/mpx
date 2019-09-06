@@ -11,6 +11,7 @@ const stringifyAttr = templateCompiler.stringifyAttr
 const optionProcessorPath = require.resolve('./runtime/optionProcessor')
 const getPageName = require('./utils/get-page-name')
 const toPosix = require('./utils/to-posix')
+const stringifyQuery = require('./utils/stringify-query')
 
 module.exports = function (content) {
   this.cacheable()
@@ -42,12 +43,10 @@ module.exports = function (content) {
         break
       }
     }
-    if (entryChunkName) {
-      if (resourceQueryObj.component) {
-        componentsMap[resource] = entryChunkName
-      } else {
-        pagesMap[resource] = entryChunkName
-      }
+    if (resourceQueryObj.component) {
+      componentsMap[resource] = entryChunkName || 'noEntryComponent'
+    } else {
+      pagesMap[resource] = entryChunkName || 'noEntryPage'
     }
   }
 
@@ -143,6 +142,22 @@ module.exports = function (content) {
     return result
   }
 
+  function addQuery (request, queryObj) {
+    if (!queryObj) {
+      return request
+    }
+    const queryIndex = request.indexOf('?')
+    let query
+    let resource = request
+    if (queryIndex >= 0) {
+      query = request.substr(queryIndex)
+      resource = request.substr(0, queryIndex)
+    }
+    let rawQueryObj = loaderUtils.parseQuery(query || '?')
+    queryObj = Object.assign({}, rawQueryObj, queryObj)
+    return resource + stringifyQuery(queryObj)
+  }
+
   function shallowStringify (obj) {
     let arr = []
     for (let key in obj) {
@@ -184,7 +199,13 @@ module.exports = function (content) {
   if (mode === 'web') {
     // template
     output += '/* template */\n'
-    const template = parts.template
+    let template = parts.template
+    if (ctorType === 'app') {
+      template = {
+        type: 'template',
+        content: '<router-view></router-view>'
+      }
+    }
     if (template) {
       processSrc(template)
       output += genComponentTag(template, (template) => {
@@ -205,7 +226,7 @@ module.exports = function (content) {
             srcMode: templateSrcMode
           })
 
-          return compiler.serialize(parsed.root)
+          return templateCompiler.serialize(parsed.root)
         }
       })
       output += '\n\n'
@@ -267,8 +288,11 @@ module.exports = function (content) {
       let content = `import processOption from ${stringifyRequest(`!!${optionProcessorPath}`)}\n`
       // add import
       if (ctorType === 'app') {
-        content += `import Vue from 'vue'
-        import VueRouter from 'vue-router'\n`
+        content += `
+        import Vue from 'vue'
+        import VueRouter from 'vue-router'
+        Vue.use(VueRouter)\n
+        `
       }
       let importedPagesMap = {}
       if (jsonObj.pages) {
@@ -276,10 +300,12 @@ module.exports = function (content) {
           if (resolveMode === 'native') {
             page = loaderUtils.urlToRequest(page, projectRoot)
           }
-          const pageName = toPosix(getPageName('', page))
+          const pageName = '/' + toPosix(getPageName('', page))
           const pageVar = `__mpx_page_${index}__`
 
-          content += `import ${pageVar} from ${stringifyRequest(page)}`
+          page = addQuery(page, { page: true })
+
+          content += `import ${pageVar} from ${stringifyRequest(page)}\n`
           importedPagesMap[pageName] = pageVar
         })
       }
@@ -294,7 +320,9 @@ module.exports = function (content) {
           }
           const componentVar = `__mpx_component_${index}__`
 
-          content += `import ${componentVar} from ${stringifyRequest(component)}`
+          component = addQuery(component, { component: true })
+
+          content += `import ${componentVar} from ${stringifyRequest(component)}\n`
           importedComponentsMap[componentName] = componentVar
         })
       }
@@ -308,7 +336,7 @@ module.exports = function (content) {
       // 通过processOption进行组件注册和路由注入
       content += `export default processOption(
         global.currentOption,
-        ${ctorType},
+        ${JSON.stringify(ctorType)},
         ${shallowStringify(importedPagesMap)},
         ${shallowStringify(importedComponentsMap)}`
 
@@ -317,6 +345,7 @@ module.exports = function (content) {
             VueRouter
           )\n` : `
           )\n`
+
       return content
     })
     output += '\n'

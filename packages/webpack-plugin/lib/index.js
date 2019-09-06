@@ -371,6 +371,7 @@ class MpxWebpackPlugin {
     })
 
     compiler.hooks.emit.tapAsync('MpxWebpackPlugin', (compilation, callback) => {
+      if (this.options.mode === 'web') return callback()
       const jsonpFunction = compilation.outputOptions.jsonpFunction
 
       function getTargetFile (file) {
