@@ -41,7 +41,7 @@ export default function proxyEventMixin () {
           if (typeof this[callbackName] === 'function') {
             returnedValue = this[callbackName].apply(this, params)
           } else {
-            console.warn('【MPX ERROR】', `[${callbackName}] is not function`)
+            process.env.NODE_ENV !== 'production' && console.warn('【MPX ERROR】', `[${callbackName}] is not function`)
           }
         }
       })

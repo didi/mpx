@@ -123,7 +123,7 @@ export default class MPXProxy {
     this.target.$forceUpdate = (...rest) => this.forceUpdate(...rest)
     // 监听单次回调
     this.target.$updated = fn => {
-      console.warn('【MPX WARN】', '【this.$updated】 has be deprecated，please use 【this.$nextTick】 ')
+      process.env.NODE_ENV !== 'production' && console.warn('【MPX WARN】', '【this.$updated】 has be deprecated，please use 【this.$nextTick】 ')
       this.nextTick(fn)
     }
     this.target.$nextTick = fn => this.nextTick(fn)
@@ -330,8 +330,10 @@ export default class MPXProxy {
           try {
             return this.target.__injectedRender()
           } catch (e) {
-            console.warn(`【MPX WARN】at [${this.options.mpxFileResource}]`, `Failed to execute render function, degrade to full-set-data mode!`, e)
-            console.warn('【MPX WARN】', 'If the render function execution failed because of "__wxs_placeholder", ignore this warning.')
+            if (process.env.NODE_ENV !== 'production') {
+              console.warn(`【MPX WARN】at [${this.options.mpxFileResource}]`, `Failed to execute render function, degrade to full-set-data mode!`, e)
+              console.warn('【MPX WARN】', 'If the render function execution failed because of "__wxs_placeholder", ignore this warning.')
+            }
             renderExecutionFailed = true
             this.render()
           }
