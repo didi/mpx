@@ -1605,6 +1605,11 @@ function processElement (el, root, options, meta) {
     rulesRunner(el)
   }
 
+  // web暂时只跑规则转换
+  if (mode === 'web') {
+    return
+  }
+
   let tranAli = mode === 'ali' && srcMode === 'wx'
 
   const pass = isNative || processTemplate(el) || processingTemplate
@@ -1641,6 +1646,10 @@ function processElement (el, root, options, meta) {
 }
 
 function closeElement (el, meta) {
+  // web暂时无后处理
+  if (mode === 'web') {
+    return
+  }
   const pass = isNative || postProcessTemplate(el) || processingTemplate
   postProcessWxs(el, meta)
   if (!pass) {

@@ -6,7 +6,8 @@ const loaderUtils = require('loader-utils')
 const InjectDependency = require('./dependency/InjectDependency')
 const stripExtension = require('./utils/strip-extention')
 const type = require('./utils/type')
-const stringifyAttr = require('./template-compiler/compiler').stringifyAttr
+const templateCompiler = require('./template-compiler/compiler')
+const stringifyAttr = templateCompiler.stringifyAttr
 const optionProcessorPath = require.resolve('./runtime/optionProcessor')
 const getPageName = require('./utils/get-page-name')
 const toPosix = require('./utils/to-posix')
@@ -188,8 +189,23 @@ module.exports = function (content) {
       processSrc(template)
       output += genComponentTag(template, (template) => {
         if (template.content) {
-          // todo
-          return template.content
+          const templateSrcMode = template.mode || srcMode
+          const parsed = templateCompiler.parse(template.content, {
+            warn: (msg) => {
+              this.emitWarning(
+                new Error('[template compiler][' + this.resource + ']: ' + msg)
+              )
+            },
+            error: (msg) => {
+              this.emitError(
+                new Error('[template compiler][' + this.resource + ']: ' + msg)
+              )
+            },
+            mode,
+            srcMode: templateSrcMode
+          })
+
+          return compiler.serialize(parsed.root)
         }
       })
       output += '\n\n'

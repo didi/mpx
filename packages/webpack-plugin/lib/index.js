@@ -28,6 +28,9 @@ class MpxWebpackPlugin {
     if (options.mode !== options.srcMode && options.srcMode !== 'wx') {
       throw new Error('MpxWebpackPlugin supports srcMode to be "wx" only temporarily!')
     }
+    if (options.mode === 'web' && options.srcMode !== 'wx') {
+      throw new Error('MpxWebpackPlugin supports mode to be "web" only when srcMode is set to "wx"!')
+    }
     if (!Array.isArray(options.externalClasses)) {
       options.externalClasses = ['custom-class', 'i-class']
     }

@@ -20,7 +20,7 @@ module.exports = function (raw) {
   const wxsContentMap = mainCompilation.__mpx__.wxsConentMap
   const resource = stripExtension(this.resource)
 
-  let parsed = compiler.parse(raw, Object.assign(options, {
+  const parsed = compiler.parse(raw, Object.assign(options, {
     warn: (msg) => {
       this.emitWarning(
         new Error('[template compiler][' + this.resource + ']: ' + msg)

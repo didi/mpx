@@ -8,6 +8,9 @@ module.exports = function ({ print }) {
   return {
     // 匹配标签名，可传递正则
     test: TAG_NAME,
+    web () {
+      return 'div'
+    },
     // 支付宝标签名转换函数，如无差异可忽略
     // ali () {
     //   return 'a:view'

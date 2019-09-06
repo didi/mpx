@@ -4,7 +4,7 @@ const normalizeComponentRules = require('../normalize-component-rules')
 
 module.exports = function getSpec ({ warn, error }) {
   const spec = {
-    supportedTargets: ['ali', 'swan', 'qq', 'tt'],
+    supportedTargets: ['ali', 'swan', 'qq', 'tt', 'web'],
     directive: [
       // 特殊指令
       {
