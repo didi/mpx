@@ -240,15 +240,11 @@ let basename
 let refId = 0
 
 function baseWarn (msg) {
-  if (process.env.NODE_ENV !== 'production') {
-    console.warn(('[template compiler]: ' + msg))
-  }
+  console.warn(('[template compiler]: ' + msg))
 }
 
 function baseError (msg) {
-  if (process.env.NODE_ENV !== 'production') {
-    console.error(('[template compiler]: ' + msg))
-  }
+  console.error(('[template compiler]: ' + msg))
 }
 
 function parseHTML (html, options) {
