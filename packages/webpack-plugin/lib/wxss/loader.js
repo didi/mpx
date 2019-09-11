@@ -3,6 +3,7 @@
   Author Tobias Koppers @sokra
   Modified by @hiyuki
 */
+const getMainCompilation = require('../utils/get-main-compilation')
 var loaderUtils = require('loader-utils')
 var processCss = require('./processCss')
 var getImportPrefix = require('./getImportPrefix')
@@ -12,6 +13,10 @@ var isUrlRequest = require('../utils/is-url-request')
 
 module.exports = function (content, map) {
   if (this.cacheable) this.cacheable()
+
+  const mainCompilation = getMainCompilation(this._compilation)
+  const compilationMpx = mainCompilation.__mpx__
+
   var callback = this.async()
   var query = loaderUtils.getOptions(this) || {}
   var root = query.root
@@ -46,7 +51,8 @@ module.exports = function (content, map) {
     resolve: resolve,
     minimize: this.minimize,
     loaderContext: this,
-    sourceMap: sourceMap
+    sourceMap: sourceMap,
+    __mpx_mode__: compilationMpx.mode
   }, function (err, result) {
     if (err) return callback(err)
 

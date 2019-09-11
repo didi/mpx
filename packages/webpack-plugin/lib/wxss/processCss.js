@@ -17,6 +17,7 @@ var modulesScope = require('postcss-modules-scope')
 var modulesValues = require('postcss-modules-values')
 var valueParser = require('postcss-value-parser')
 var isUrlRequest = require('../utils/is-url-request')
+const pluginCondStrip = require('./plugins/conditional-strip')
 
 var parserPlugin = postcss.plugin('css-loader-parser', function (options) {
   return function (css) {
@@ -161,6 +162,9 @@ module.exports = function processCss (inputSource, inputMap, options, callback) 
   }
 
   var pipeline = postcss([
+    pluginCondStrip({
+      __mpx_mode__: options.__mpx_mode__
+    }),
     modulesValues,
     localByDefault({
       mode: options.mode,
