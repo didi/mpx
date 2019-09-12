@@ -1,9 +1,11 @@
+const getMainCompilation = require('../utils/get-main-compilation')
 const postcss = require('postcss')
 const loaderUtils = require('loader-utils')
 const loadPostcssConfig = require('./load-postcss-config')
 
 const trim = require('./plugins/trim')
 const rpx = require('./plugins/rpx')
+const pluginCondStrip = require('./plugins/conditional-strip')
 
 const orMatcher = items => {
   return str => {
@@ -18,6 +20,9 @@ module.exports = function (css, map) {
   this.cacheable()
   const cb = this.async()
   const loaderOptions = loaderUtils.getOptions(this) || {}
+
+  const mainCompilation = getMainCompilation(this._compilation)
+  const compilationMpx = mainCompilation.__mpx__
 
   const transRpxs = Array.isArray(loaderOptions.transRpx) ? loaderOptions.transRpx : [loaderOptions.transRpx]
 
@@ -70,6 +75,10 @@ module.exports = function (css, map) {
         },
         config.options
       )
+
+      plugins.push(pluginCondStrip({
+        __mpx_mode__: compilationMpx.mode
+      }))
 
       if (transRpxs.length) {
         for (let item of transRpxs) {

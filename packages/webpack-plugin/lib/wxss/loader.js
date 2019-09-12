@@ -12,6 +12,7 @@ var isUrlRequest = require('../utils/is-url-request')
 
 module.exports = function (content, map) {
   if (this.cacheable) this.cacheable()
+
   var callback = this.async()
   var query = loaderUtils.getOptions(this) || {}
   var root = query.root
