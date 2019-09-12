@@ -24,14 +24,17 @@ module.exports = function (raw) {
     return nativeCallback(null, raw)
   }
   const packageName = mpx.processingSubPackageRoot || 'main'
-  const pagesMap = mpx.pagesMap[packageName]
-  const componentsMap = mpx.componentsMap[packageName]
+  const pagesMap = mpx.pagesMap
+  const componentsMap = mpx.componentsMap
+  const resourceMap = mpx.resourceMap
+  const currentPagesMap = pagesMap[packageName]
+  const currentComponentsMap = componentsMap[packageName]
   const mode = mpx.mode
   const globalSrcMode = mpx.srcMode
   const localSrcMode = loaderUtils.parseQuery(this.resourceQuery || '?').mode
   const resolveMode = mpx.resolveMode
   const resourcePath = getResourcePath(this.resource)
-  const isApp = !(pagesMap[resourcePath] || componentsMap[resourcePath])
+  const isApp = !(currentPagesMap[resourcePath] || currentComponentsMap[resourcePath])
   const publicPath = this._compilation.outputOptions.publicPath || ''
   const fs = this._compiler.inputFileSystem
 
@@ -93,6 +96,13 @@ module.exports = function (raw) {
     })
   }
 
+  // const deleteEntry = (name) => {
+  //   const index = this._compilation._preparedEntrypoints.findIndex(slot => slot.name === name)
+  //   if (index >= 0) {
+  //     this._compilation._preparedEntrypoints.splice(index, 1)
+  //   }
+  // }
+
   let callbacked = false
   const callback = (err, processOutput) => {
     checkEntryDeps(() => {
@@ -135,7 +145,7 @@ module.exports = function (raw) {
     }
   }
   if (!isApp) {
-    rulesRunnerOptions.mainKey = pagesMap[resource] ? 'page' : 'component'
+    rulesRunnerOptions.mainKey = pagesMap[resourcePath] ? 'page' : 'component'
   }
 
   const rulesRunner = getRulesRunner(rulesRunnerOptions)
@@ -155,9 +165,6 @@ module.exports = function (raw) {
     }
 
     const packageName = mpx.processingSubPackageRoot || 'main'
-    if (!componentsMap[packageName]) {
-      componentsMap[packageName] = {}
-    }
     const currentComponentsMap = componentsMap[packageName]
 
     if (resolveMode === 'native') {
@@ -174,6 +181,8 @@ module.exports = function (raw) {
       if (mpx.processingSubPackageRoot) {
         if (!componentsMap.main[resourcePath]) {
           subPackageRoot = mpx.processingSubPackageRoot
+        } else {
+          currentComponentsMap[resourcePath] = componentsMap.main[resourcePath]
         }
       }
       if (ext === '.js') {
@@ -328,6 +337,9 @@ module.exports = function (raw) {
           ...getOtherConfig(subPackage)
         }
         mpx.processingSubPackageRoot = tarRoot
+        pagesMap[tarRoot] = {}
+        componentsMap[tarRoot] = {}
+        resourceMap[tarRoot] = {}
         processPages(subPackage.pages, srcRoot, tarRoot, context, callback)
       } else {
         callback()
@@ -349,9 +361,6 @@ module.exports = function (raw) {
     const processPages = (pages, srcRoot = '', tarRoot = '', context, callback) => {
       if (pages) {
         const packageName = mpx.processingSubPackageRoot || 'main'
-        if (!pagesMap[packageName]) {
-          pagesMap[packageName] = {}
-        }
         const currentPagesMap = pagesMap[packageName]
         async.forEach(pages, (page, callback) => {
           const rawPage = page
@@ -371,6 +380,7 @@ module.exports = function (raw) {
                 return callback(new Error(`Resources in ${resourcePath} and ${key} are registered with same page path ${name}, which is not allowed!`))
               }
             }
+            // 目前暂时不支持多个分包复用同一个页面
             // 如果之前已经创建了入口，直接return
             if (currentPagesMap[resourcePath]) return callback()
             currentPagesMap[resourcePath] = name

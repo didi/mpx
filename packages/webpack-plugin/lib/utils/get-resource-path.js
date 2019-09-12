@@ -1,12 +1,12 @@
 const parseQuery = require('loader-utils').parseQuery
 
 module.exports = function getResourceId (resource) {
-  let queryIndex = request.indexOf('?')
+  let queryIndex = resource.indexOf('?')
   let query = '?'
   let resourcePath = resource
   if (queryIndex > -1) {
-    resourcePath = request.slice(0, queryIndex)
-    query = request.slice(queryIndex)
+    resourcePath = resource.slice(0, queryIndex)
+    query = resource.slice(queryIndex)
   }
   const queryObj = parseQuery(query)
 

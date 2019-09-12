@@ -9,6 +9,8 @@ const ReplaceDependency = require('./dependency/ReplaceDependency')
 const NullFactory = require('webpack/lib/NullFactory')
 const normalize = require('./utils/normalize')
 const toPosix = require('./utils/to-posix')
+const getResource = require('./utils/get-resource-path')
+const addQuery = require('./utils/add-query')
 const stringifyQuery = require('./utils/stringify-query')
 const DefinePlugin = require('webpack/lib/DefinePlugin')
 const AddModePlugin = require('./resolver/AddModePlugin')
@@ -102,6 +104,7 @@ class MpxWebpackPlugin {
       resourceMap: {
         main: {}
       },
+      resourceHit: {},
       loaderOptions: null,
       extractedMap: {},
       extractSeenFile: {},
@@ -346,7 +349,7 @@ class MpxWebpackPlugin {
     compiler.hooks.normalModuleFactory.tap('MpxWebpackPlugin', (normalModuleFactory) => {
       normalModuleFactory.hooks.beforeResolve.tapAsync('MpxWebpackPlugin', (data, callback) => {
         let request = data.request
-        let elements = request.replace(/^-?!+/, '').replace(/!!+/g, '!').split('!')
+        let elements = request.split('!')
         let resource = elements.pop()
         let resourceQuery = '?'
         let resourcePath = resource
@@ -356,10 +359,12 @@ class MpxWebpackPlugin {
           resourceQuery = resource.substr(queryIndex)
         }
         let queryObj = loaderUtils.parseQuery(resourceQuery)
+
         if (queryObj.resolve) {
           let pathLoader = normalize.lib('path-loader')
-          queryObj.subPackageRoot = mpx.processingSubPackageRoot
-          data.request = `!!${pathLoader}!${resourcePath}${stringifyQuery(queryObj)}`
+          data.request = `!!${pathLoader}!${addQuery(resource, {
+            subPackageRoot: mpx.processingSubPackageRoot
+          })}`
         } else if (queryObj.wxsModule) {
           let wxsPreLoader = normalize.lib('wxs/wxs-pre-loader')
           if (!/wxs-loader/.test(request)) {
@@ -377,6 +382,32 @@ class MpxWebpackPlugin {
               loader.options = Object.assign({}, { appendTsSuffixTo: [/\.(mpx|vue)$/] })
             }
           })
+        }
+
+        if (mpx.processingSubPackageRoot) {
+          const resourcPath = getResource(data.resource)
+
+          const currentComponentsMap = mpx.componentsMap[mpx.processingSubPackageRoot]
+          const mainComponentsMap = mpx.componentsMap.main
+          const resourceHit = mpx.resourceHit
+          const mainResourceMap = mpx.resourceMap.main
+
+          let needAddQuery = false
+
+          if (currentComponentsMap[resourcPath]) {
+            if (!mainComponentsMap[resourcPath]) {
+              needAddQuery = true
+            }
+          } else if (resourceHit[resourcPath]) {
+            if (!mainResourceMap[resourcPath]) {
+              needAddQuery = true
+            }
+          }
+          if (needAddQuery) {
+            data.request = addQuery(data.request, {
+              subPackageRoot: mpx.processingSubPackageRoot
+            })
+          }
         }
         callback(null, data)
       })

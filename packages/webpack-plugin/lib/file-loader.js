@@ -11,9 +11,7 @@ module.exports = function loader (content) {
   const mpx = mainCompilation.__mpx__
   const packageName = mpx.processingSubPackageRoot || 'main'
   const resourceMap = mpx.resourceMap
-  if (!resourceMap[packageName]) {
-    resourceMap[packageName] = {}
-  }
+  const resourceHit = mpx.resourceHit
   const currentResourceMap = resourceMap[packageName]
   const resourcePath = getResourcePath(this.resource)
 
@@ -33,6 +31,7 @@ module.exports = function loader (content) {
   url = toPosix(path.join(subPackageRoot, url))
 
   currentResourceMap[resourcePath] = url
+  resourceHit[resourceMap] = true
 
   let outputPath = url
 

@@ -6,7 +6,7 @@ const LibraryTemplatePlugin = require('webpack/lib/LibraryTemplatePlugin')
 const SingleEntryPlugin = require('webpack/lib/SingleEntryPlugin')
 const LimitChunkCountPlugin = require('webpack/lib/optimize/LimitChunkCountPlugin')
 const normalize = require('./utils/normalize')
-const getResourcePath = require('../utils/get-resource-path')
+const getResourcePath = require('./utils/get-resource-path')
 const getMainCompilation = require('./utils/get-main-compilation')
 const toPosix = require('./utils/to-posix')
 const config = require('./config')
@@ -26,9 +26,7 @@ module.exports = function (content) {
   const pagesMap = mpx.pagesMap[packageName]
   const componentsMap = mpx.componentsMap[packageName]
   const resourceMap = mpx.resourceMap
-  if (!resourceMap[packageName]) {
-    resourceMap[packageName] = {}
-  }
+  const resourceHit = mpx.resourceHit
   const currentResourceMap = resourceMap[packageName]
 
   const extract = mpx.extract
@@ -70,6 +68,7 @@ module.exports = function (content) {
           }
         }
         currentResourceMap[resourcePath] = seenFile[id] = toPosix(path.join(subPackageRoot, type, resourceName + hash(resourcePath) + typeExtMap[type]))
+        resourceHit[resourcePath] = true
       }
     }
     return seenFile[id]
