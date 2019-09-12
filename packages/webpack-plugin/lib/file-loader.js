@@ -2,15 +2,20 @@ const path = require('path')
 const loaderUtils = require('loader-utils')
 const getMainCompilation = require('./utils/get-main-compilation')
 const toPosix = require('./utils/to-posix')
+const getResourcePath = require('./utils/get-resource-path')
 
 module.exports = function loader (content) {
   const options = loaderUtils.getOptions(this) || {}
   const context = options.context || this.rootContext
   const mainCompilation = getMainCompilation(this._compilation)
-  const compilationMpx = mainCompilation.__mpx__
-  const subPackagesMap = compilationMpx.subPackagesMap
-  const mainResourceMap = compilationMpx.mainResourceMap
-  const resourcePath = this.resourcePath
+  const mpx = mainCompilation.__mpx__
+  const packageName = mpx.processingSubPackageRoot || 'main'
+  const resourceMap = mpx.resourceMap
+  if (!resourceMap[packageName]) {
+    resourceMap[packageName] = {}
+  }
+  const currentResourceMap = resourceMap[packageName]
+  const resourcePath = getResourcePath(this.resource)
 
   let url = loaderUtils.interpolateName(this, options.name, {
     context,
@@ -19,19 +24,15 @@ module.exports = function loader (content) {
   })
 
   let subPackageRoot = ''
-  if (compilationMpx.processingSubPackages) {
-    for (let src in subPackagesMap) {
-      // 分包引用且主包未引用的资源，需打入分包目录中
-      if (!path.relative(src, resourcePath).startsWith('..') && !mainResourceMap[resourcePath]) {
-        subPackageRoot = subPackagesMap[src]
-        break
-      }
+  if (mpx.processingSubPackageRoot) {
+    if (!resourceMap.main[resourcePath]) {
+      subPackageRoot = mpx.processingSubPackageRoot
     }
-  } else {
-    mainResourceMap[resourcePath] = true
   }
 
   url = toPosix(path.join(subPackageRoot, url))
+
+  currentResourceMap[resourcePath] = url
 
   let outputPath = url
 
@@ -53,7 +54,7 @@ module.exports = function loader (content) {
         options.publicPath.endsWith('/')
           ? options.publicPath
           : `${options.publicPath}/`
-      }${url}`
+        }${url}`
     }
 
     publicPath = JSON.stringify(publicPath)

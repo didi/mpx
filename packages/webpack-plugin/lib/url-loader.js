@@ -32,8 +32,8 @@ module.exports = function (src) {
   let transBase64 = false
   const options = getOptions(this) || {}
 
-  const file = this.resourcePath
-  const mimetype = options.mimetype || mime.getType(file)
+  const filePath = this.resourcePath
+  const mimetype = options.mimetype || mime.getType(filePath)
 
   // const limit = options.limit
   // if (!limit || src.length < limit) {

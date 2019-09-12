@@ -8,8 +8,8 @@ const InjectDependency = require('./dependency/InjectDependency')
 const ReplaceDependency = require('./dependency/ReplaceDependency')
 const NullFactory = require('webpack/lib/NullFactory')
 const normalize = require('./utils/normalize')
-const stripExtension = require('./utils/strip-extention')
 const toPosix = require('./utils/to-posix')
+const stringifyQuery = require('./utils/stringify-query')
 const DefinePlugin = require('webpack/lib/DefinePlugin')
 const AddModePlugin = require('./resolver/AddModePlugin')
 const CommonJsRequireDependency = require('webpack/lib/dependencies/CommonJsRequireDependency')
@@ -91,36 +91,42 @@ class MpxWebpackPlugin {
         }
       })
     })
+    const additionalAssets = {}
+    const mpx = {
+      pagesMap: {
+        main: {}
+      },
+      componentsMap: {
+        main: {}
+      },
+      resourceMap: {
+        main: {}
+      },
+      loaderOptions: null,
+      extractedMap: {},
+      extractSeenFile: {},
+      usingComponents: [],
+      processingSubPackageRoot: '',
+      wxsMap: {},
+      wxsConentMap: {},
+      forceDisableInject: this.options.forceDisableInject,
+      resolveMode: this.options.resolveMode,
+      mode: this.options.mode,
+      srcMode: this.options.srcMode,
+      externalClasses: this.options.externalClasses,
+      projectRoot: this.options.projectRoot,
+      extract: (content, file, index, sideEffects) => {
+        additionalAssets[file] = additionalAssets[file] || []
+        if (!additionalAssets[file][index]) {
+          additionalAssets[file][index] = content
+        }
+        sideEffects && sideEffects(additionalAssets)
+      }
+    }
 
     compiler.hooks.thisCompilation.tap('MpxWebpackPlugin', (compilation, { normalModuleFactory }) => {
-      const additionalAssets = {}
       if (!compilation.__mpx__) {
-        compilation.__mpx__ = {
-          pagesMap: {},
-          componentsMap: {},
-          loaderOptions: null,
-          subPackagesMap: {},
-          extractedMap: {},
-          extractSeenFile: {},
-          usingComponents: [],
-          processingSubPackages: false,
-          mainResourceMap: {},
-          wxsMap: {},
-          wxsConentMap: {},
-          forceDisableInject: this.options.forceDisableInject,
-          resolveMode: this.options.resolveMode,
-          mode: this.options.mode,
-          srcMode: this.options.srcMode,
-          externalClasses: this.options.externalClasses,
-          projectRoot: this.options.projectRoot,
-          extract: (content, file, index, sideEffects) => {
-            additionalAssets[file] = additionalAssets[file] || []
-            if (!additionalAssets[file][index]) {
-              additionalAssets[file][index] = content
-            }
-            sideEffects && sideEffects(additionalAssets)
-          }
-        }
+        compilation.__mpx__ = mpx
       }
 
       compilation.hooks.optimizeModules.tap('MpxWebpackPlugin', (modules) => {
@@ -189,12 +195,19 @@ class MpxWebpackPlugin {
 
         parser.hooks.call.for('__mpx_resolve_path__').tap('MpxWebpackPlugin', (expr) => {
           if (expr.arguments[0]) {
-            const resource = stripExtension(expr.arguments[0].value)
-            const pagesMap = compilation.__mpx__.pagesMap
-            const componentsMap = compilation.__mpx__.componentsMap
+            const resource = expr.arguments[0].value
+            let resourceQuery = '?'
+            const queryIndex = resource.indexOf('?')
+            if (queryIndex >= 0) {
+              resourceQuery = resource.substr(queryIndex)
+            }
+            const packageName = loaderUtils.parseQuery(resourceQuery).subPackageRoot || 'main'
+            const pagesMap = mpx.pagesMap
+            const componentsMap = mpx.componentsMap
+            const resourceMap = mpx.resourceMap
             const publicPath = compilation.outputOptions.publicPath || ''
             const range = expr.range
-            const dep = new ResolveDependency(resource, pagesMap, componentsMap, publicPath, range)
+            const dep = new ResolveDependency(resource, packageName, pagesMap, componentsMap, resourceMap, publicPath, range)
             parser.state.current.addDependency(dep)
             return true
           }
@@ -336,16 +349,18 @@ class MpxWebpackPlugin {
         let elements = request.replace(/^-?!+/, '').replace(/!!+/g, '!').split('!')
         let resource = elements.pop()
         let resourceQuery = '?'
+        let resourcePath = resource
         const queryIndex = resource.indexOf('?')
         if (queryIndex >= 0) {
+          resourcePath = resource.substr(0, queryIndex)
           resourceQuery = resource.substr(queryIndex)
         }
         let queryObj = loaderUtils.parseQuery(resourceQuery)
         if (queryObj.resolve) {
           let pathLoader = normalize.lib('path-loader')
-          data.request = `!!${pathLoader}!${resource}`
-        }
-        if (queryObj.wxsModule) {
+          queryObj.subPackageRoot = mpx.processingSubPackageRoot
+          data.request = `!!${pathLoader}!${resourcePath}${stringifyQuery(queryObj)}`
+        } else if (queryObj.wxsModule) {
           let wxsPreLoader = normalize.lib('wxs/wxs-pre-loader')
           if (!/wxs-loader/.test(request)) {
             data.request = `!!${wxsPreLoader}!${resource}`
@@ -413,7 +428,7 @@ class MpxWebpackPlugin {
           source.add(originalSource)
           source.add(`\nmodule.exports = window[${JSON.stringify(jsonpFunction)}];\n`)
         } else {
-          if (compilation.__mpx__.pluginMain === chunk.name) {
+          if (mpx.pluginMain === chunk.name) {
             source.add('module.exports =\n')
           }
           source.add(originalSource)

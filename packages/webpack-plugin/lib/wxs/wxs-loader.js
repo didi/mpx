@@ -5,7 +5,7 @@ const hash = require('hash-sum')
 const path = require('path')
 const WxsPlugin = require('./WxsPlugin')
 const getMainCompilation = require('../utils/get-main-compilation')
-const stripExtension = require('../utils/strip-extention')
+const getResourcePath = require('../utils/get-resource-path')
 const toPosix = require('../utils/to-posix')
 const fixSwanRelative = require('../utils/fix-swan-relative')
 const config = require('../config')
@@ -15,18 +15,20 @@ module.exports = function () {
   const nativeCallback = this.async()
 
   const mainCompilation = getMainCompilation(this._compilation)
-  const mode = mainCompilation.__mpx__.mode
-  const wxsMap = mainCompilation.__mpx__.wxsMap
-  const componentsMap = mainCompilation.__mpx__.componentsMap
-  const pagesMap = mainCompilation.__mpx__.pagesMap
+  const mpx = mainCompilation.__mpx__
+  const mode = mpx.mode
+  const wxsMap = mpx.wxsMap
+  const packageName = mpx.processingSubPackageRoot||'main'
+  const componentsMap = mpx.componentsMap[packageName]
+  const pagesMap = mpx.pagesMap[packageName]
   const rootName = mainCompilation._preparedEntrypoints[0].name
-  const issuerResource = stripExtension(this._module.issuer.resource)
-  const issuerName = pagesMap[issuerResource] || componentsMap[issuerResource] || rootName
+  const issuerResourcePath = getResourcePath(this._module.issuer.resource)
+  const issuerName = pagesMap[issuerResourcePath] || componentsMap[issuerResourcePath] || rootName
   const issuerDir = path.dirname(issuerName)
 
   const callback = (err) => {
     if (err) return nativeCallback(err)
-    let relativePath = toPosix(path.relative(issuerDir, wxsMap[resource]))
+    let relativePath = toPosix(path.relative(issuerDir, wxsMap[resourcePath]))
     if (mode === 'swan') {
       relativePath = fixSwanRelative(relativePath)
     }
@@ -38,20 +40,20 @@ module.exports = function () {
     return match[1]
   }
 
-  let resource = stripExtension(this.resource)
+  let resourcePath = getResourcePath(this.resource)
   const wxsModule = parseQuery(this.resourceQuery || '?').wxsModule
 
   if (wxsModule) {
-    resource = `${resource}~${wxsModule}`
+    resourcePath = `${resourcePath}~${wxsModule}`
   }
 
-  if (wxsMap[resource]) {
+  if (wxsMap[resourcePath]) {
     callback()
   } else {
-    const name = path.parse(resource).name + hash(resource)
+    const name = path.parse(resourcePath).name + hash(resourcePath)
     let filename = path.join(/^\.([^.]+)/.exec(config[mode].wxs.ext)[1], `${name}${config[mode].wxs.ext}`)
     filename = toPosix(filename)
-    wxsMap[resource] = filename
+    wxsMap[resourcePath] = filename
     const outputOptions = {
       filename
     }
