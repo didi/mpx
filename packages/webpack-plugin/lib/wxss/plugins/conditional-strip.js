@@ -5,32 +5,43 @@ const postcss = require('postcss')
  * @type {postcss.Plugin<any>}
  */
 // `
-//     /*
-//       @mpx-if (__mpx_mode__ === 'wx' || __mpx_mode__ === 'qq')
+//   /*
+//     @mpx-if (
+//     __mpx_mode__ === 'wx' ||
+//     __mpx_mode__ === 'qq'
+//     )
 //     */
-//       /* @mpx-if (__mpx_mode__ === 'wx') */
-//       wx {
-//         background: green;
-//       }
-//       /* @mpx-endif */
+//     /* @mpx-if (__mpx_mode__ === 'wx') */
+//     wx {
+//     background: green;
+//     }
 //     /*
-//       @mpx-elif (__mpx_mode__ === 'qq')
+//     @mpx-elif (__mpx_mode__ === 'qq')
 //     */
 //     qq {
-//       background: black;
+//     background: black;
+//     }
+//     /* @mpx-endif */
+//     /* @mpx-if (__mpx_mode__ === 'swan') */
+//     swan {
+//     background: cyan;
+//     }
+//     /* @mpx-endif */
+//     always {
+//     background: white;
 //     }
 //     /*
-//       @mpx-else
+//     @mpx-else
 //     */
 //     other {
-//       /* @mpx-if (__mpx_mode__ === 'swan') */
-//       background: blue;
-//       /* @mpx-else */
-//       background: red;
-//       /* @mpx-endif */
+//     /* @mpx-if (__mpx_mode__ === 'swan') */
+//     background: blue;
+//     /* @mpx-else */
+//     background: red;
+//     /* @mpx-endif */
 //     }
 //     /*
-//       @mpx-endif
+//     @mpx-endif
 //     */
 // `
 module.exports = postcss.plugin('MPX-Conditional-Strip', (options = {}) => {
@@ -60,7 +71,7 @@ module.exports = postcss.plugin('MPX-Conditional-Strip', (options = {}) => {
   }
 
   function parseCondition (regex, content) {
-    const exp = regex.exec(content)[1]
+    const exp = regex.exec(content)[1].trim()
     const shouldRemove = !evalExp(exp)
     return {
       shouldRemove,
@@ -69,11 +80,11 @@ module.exports = postcss.plugin('MPX-Conditional-Strip', (options = {}) => {
   }
 
   function parseIf (content) {
-    return parseCondition(/@mpx-if\s*\((.*)\)/, content)
+    return parseCondition(/@mpx-if[^(]*?\(([\s\S]*)\)/, content)
   }
 
   function parseElseIf (content) {
-    return parseCondition(/@mpx-elif\s*\((.*)\)/, content)
+    return parseCondition(/@mpx-elif[^(]*?\(([\s\S]*)\)/, content)
   }
 
   return function (root, result) {
