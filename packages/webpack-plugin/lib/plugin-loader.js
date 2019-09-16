@@ -13,16 +13,17 @@ module.exports = function (source) {
   this.cacheable(false)
 
   const nativeCallback = this.async()
+  const mpx = this._compilation.__mpx__
 
-  if (!this._compilation.__mpx__) {
+  if (!mpx) {
     return nativeCallback(null, source)
   }
 
 
   const packageName = 'main'
-  const componentsMap = this._compilation.__mpx__.componentsMap[packageName]
-  const pagesMap = this._compilation.__mpx__.pagesMap[packageName]
-  const extract = this._compilation.__mpx__.extract
+  const pagesMap = mpx.pagesMap
+  const componentsMap = mpx.componentsMap[packageName]
+  const extract = mpx.extract
   const resourcePath = this._compilation._preparedEntrypoints[0].name
   this._compilation._preparedEntrypoints.pop()
 
@@ -87,7 +88,7 @@ module.exports = function (source) {
         }
         pluginEntry.main = mainPath + '.js'
         addEntrySafely(result, mainPath, callback)
-        this._compilation.__mpx__.pluginMain = mainPath
+        mpx.pluginMain = mainPath
       })
     }.bind(this, pluginEntry.main)
   }

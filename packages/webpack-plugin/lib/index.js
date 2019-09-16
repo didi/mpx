@@ -95,9 +95,8 @@ class MpxWebpackPlugin {
     })
     const additionalAssets = {}
     const mpx = {
-      pagesMap: {
-        main: {}
-      },
+      // pages全局记录，无需区分主包分包
+      pagesMap: {},
       componentsMap: {
         main: {}
       },
@@ -358,15 +357,17 @@ class MpxWebpackPlugin {
           resourcePath = resource.substr(0, queryIndex)
           resourceQuery = resource.substr(queryIndex)
         }
-        let queryObj = loaderUtils.parseQuery(resourceQuery)
+        const queryObj = loaderUtils.parseQuery(resourceQuery)
 
         if (queryObj.resolve) {
-          let pathLoader = normalize.lib('path-loader')
-          data.request = `!!${pathLoader}!${addQuery(resource, {
-            subPackageRoot: mpx.processingSubPackageRoot
-          })}`
+          const pathLoader = normalize.lib('path-loader')
+          const subPackageRoot = mpx.processingSubPackageRoot
+          if (subPackageRoot) {
+            resource = addQuery(resource, { subPackageRoot })
+          }
+          data.request = `!!${pathLoader}!${resource}`
         } else if (queryObj.wxsModule) {
-          let wxsPreLoader = normalize.lib('wxs/wxs-pre-loader')
+          const wxsPreLoader = normalize.lib('wxs/wxs-pre-loader')
           if (!/wxs-loader/.test(request)) {
             data.request = `!!${wxsPreLoader}!${resource}`
           }
@@ -394,11 +395,7 @@ class MpxWebpackPlugin {
 
           let needAddQuery = false
 
-          if (currentComponentsMap[resourcPath]) {
-            // if (!mainComponentsMap[resourcPath]) {
-            //   needAddQuery = true
-            // }
-          } else if (resourceHit[resourcPath]) {
+          if (resourceHit[resourcPath]) {
             if (!mainResourceMap[resourcPath]) {
               needAddQuery = true
             }

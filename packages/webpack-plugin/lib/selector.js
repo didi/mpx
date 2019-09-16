@@ -10,7 +10,7 @@ module.exports = function (content) {
     return content
   }
   const packageName = mpx.processingSubPackageRoot || 'main'
-  const pagesMap = mpx.pagesMap[packageName]
+  const pagesMap = mpx.pagesMap
   const componentsMap = mpx.componentsMap[packageName]
   const mode = mpx.mode
   const resourcePath = getResourcePath(this.resource)

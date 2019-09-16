@@ -23,7 +23,7 @@ module.exports = function (content) {
   const mpx = mainCompilation.__mpx__
 
   const packageName = mpx.processingSubPackageRoot || 'main'
-  const pagesMap = mpx.pagesMap[packageName]
+  const pagesMap = mpx.pagesMap
   const componentsMap = mpx.componentsMap[packageName]
   const resourceMap = mpx.resourceMap
   const resourceHit = mpx.resourceHit

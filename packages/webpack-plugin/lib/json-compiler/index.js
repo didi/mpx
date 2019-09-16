@@ -28,14 +28,13 @@ module.exports = function (raw) {
   const pagesMap = mpx.pagesMap
   const componentsMap = mpx.componentsMap
   const resourceMap = mpx.resourceMap
-  const currentPagesMap = pagesMap[packageName]
   const currentComponentsMap = componentsMap[packageName]
   const mode = mpx.mode
   const globalSrcMode = mpx.srcMode
   const localSrcMode = loaderUtils.parseQuery(this.resourceQuery || '?').mode
   const resolveMode = mpx.resolveMode
   const resourcePath = getResourcePath(this.resource)
-  const isApp = !(currentPagesMap[resourcePath] || currentComponentsMap[resourcePath])
+  const isApp = !(pagesMap[resourcePath] || currentComponentsMap[resourcePath])
   const publicPath = this._compilation.outputOptions.publicPath || ''
   const fs = this._compiler.inputFileSystem
 
@@ -343,7 +342,6 @@ module.exports = function (raw) {
           ...getOtherConfig(subPackage)
         }
         mpx.processingSubPackageRoot = tarRoot
-        pagesMap[tarRoot] = {}
         componentsMap[tarRoot] = {}
         resourceMap[tarRoot] = {}
         processPages(subPackage.pages, srcRoot, tarRoot, context, callback)
@@ -367,7 +365,6 @@ module.exports = function (raw) {
     const processPages = (pages, srcRoot = '', tarRoot = '', context, callback) => {
       if (pages) {
         const packageName = mpx.processingSubPackageRoot || 'main'
-        const currentPagesMap = pagesMap[packageName]
         async.forEach(pages, (page, callback) => {
           const rawPage = page
           if (resolveMode === 'native') {
@@ -381,15 +378,15 @@ module.exports = function (raw) {
             const parsed = path.parse(resourcePath)
             const ext = parsed.ext
             // 如果存在page命名冲突，return err
-            for (let key in currentPagesMap) {
-              if (currentPagesMap[key] === name && key !== resourcePath) {
+            for (let key in pagesMap) {
+              if (pagesMap[key] === name && key !== resourcePath) {
                 return callback(new Error(`Resources in ${resourcePath} and ${key} are registered with same page path ${name}, which is not allowed!`))
               }
             }
             // 目前暂时不支持多个分包复用同一个页面
             // 如果之前已经创建了入口，直接return
-            if (currentPagesMap[resourcePath]) return callback()
-            currentPagesMap[resourcePath] = name
+            if (pagesMap[resourcePath]) return callback()
+            pagesMap[resourcePath] = name
             if (tarRoot && subPackagesCfg[tarRoot]) {
               subPackagesCfg[tarRoot].pages.push(toPosix(path.join('', page)))
             } else {

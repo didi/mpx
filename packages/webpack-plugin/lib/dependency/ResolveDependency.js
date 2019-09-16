@@ -32,7 +32,7 @@ ResolveDependency.Template = class ResolveDependencyTemplate {
 
   getContent (dep) {
     const resourcePath = getResourcePath(dep.resource)
-    const pagesMap = dep.pagesMap[dep.packageName]
+    const pagesMap = dep.pagesMap
     const componentsMap = dep.componentsMap[dep.packageName]
     const resourceMap = dep.resourceMap[dep.packageName]
     const resolved = pagesMap[resourcePath] || componentsMap[resourcePath] || resourceMap[resourcePath]

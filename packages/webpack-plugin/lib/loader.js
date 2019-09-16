@@ -14,7 +14,7 @@ module.exports = function (content) {
     return content
   }
   const packageName = mpx.processingSubPackageRoot || 'main'
-  const pagesMap = mpx.pagesMap[packageName]
+  const pagesMap = mpx.pagesMap
   const componentsMap = mpx.componentsMap[packageName]
   const projectRoot = mpx.projectRoot
   const mode = mpx.mode
