@@ -20,8 +20,7 @@ export default class XFetch {
   addLowPriorityWhiteList (rules) {
     this.queue.addLowPriorityWhiteList(rules)
   }
-  fetch (rawConfig, priority) {
-    const config = JSON.parse(JSON.stringify(rawConfig))
+  fetch (config, priority) {
     const request = () => this.queue.request(config, priority)
     // middleware chain
     const chain = []
