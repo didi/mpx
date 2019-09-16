@@ -12,6 +12,7 @@ const mpxJSON = require('../utils/mpx-json')
 const toPosix = require('../utils/to-posix')
 const getRulesRunner = require('../platform/index')
 const isUrlRequest = require('../utils/is-url-request')
+const addQuery = require('../utils/add-query')
 
 module.exports = function (raw) {
   // 该loader中会在每次编译中动态添加entry，不能缓存，否则watch不好使
@@ -213,6 +214,11 @@ module.exports = function (raw) {
       if (ext === '.js') {
         const nativeLoaderOptions = mpx.loaderOptions ? '?' + JSON.stringify(mpx.loaderOptions) : ''
         resource = '!!' + nativeLoaderPath + nativeLoaderOptions + '!' + resource
+      }
+      if (subPackageRoot) {
+        resource = addQuery(resource, {
+          subPackageRoot
+        })
       }
       addEntrySafely(resource, componentPath, callback)
     })

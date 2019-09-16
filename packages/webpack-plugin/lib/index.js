@@ -395,9 +395,9 @@ class MpxWebpackPlugin {
           let needAddQuery = false
 
           if (currentComponentsMap[resourcPath]) {
-            if (!mainComponentsMap[resourcPath]) {
-              needAddQuery = true
-            }
+            // if (!mainComponentsMap[resourcPath]) {
+            //   needAddQuery = true
+            // }
           } else if (resourceHit[resourcPath]) {
             if (!mainResourceMap[resourcPath]) {
               needAddQuery = true

@@ -1,7 +1,8 @@
 const parseQuery = require('loader-utils').parseQuery
 const stringifyQuery = require('./stringify-query')
+const type = require('./type')
 
-module.exports = function (request, data) {
+module.exports = function (request, data, removeKeys) {
   const elements = request.split('!')
   const resource = elements.pop()
   const loaderString = elements.join('!')
@@ -14,5 +15,14 @@ module.exports = function (request, data) {
   }
   let queryObj = parseQuery(query)
   Object.assign(queryObj, data)
+  if (removeKeys) {
+    if (type(removeKeys) === 'String') {
+      removeKeys = [removeKeys]
+    }
+    removeKeys.forEach((key) => {
+      delete queryObj[key]
+    })
+  }
+
   return (loaderString ? `${loaderString}!` : '') + resourcePath + stringifyQuery(queryObj)
 }
