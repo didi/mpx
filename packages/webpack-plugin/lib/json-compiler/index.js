@@ -328,7 +328,6 @@ module.exports = function (raw) {
       return result
     }
 
-
     // 为了获取资源的所属子包，该函数需串行执行
     const processSubPackage = (subPackage, context, callback) => {
       if (subPackage) {
@@ -361,10 +360,8 @@ module.exports = function (raw) {
       callback()
     }
 
-
     const processPages = (pages, srcRoot = '', tarRoot = '', context, callback) => {
       if (pages) {
-        const packageName = mpx.processingSubPackageRoot || 'main'
         async.forEach(pages, (page, callback) => {
           const rawPage = page
           if (resolveMode === 'native') {

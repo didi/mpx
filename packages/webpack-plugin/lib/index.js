@@ -11,7 +11,6 @@ const normalize = require('./utils/normalize')
 const toPosix = require('./utils/to-posix')
 const getResource = require('./utils/get-resource-path')
 const addQuery = require('./utils/add-query')
-const stringifyQuery = require('./utils/stringify-query')
 const DefinePlugin = require('webpack/lib/DefinePlugin')
 const AddModePlugin = require('./resolver/AddModePlugin')
 const CommonJsRequireDependency = require('webpack/lib/dependencies/CommonJsRequireDependency')
@@ -351,10 +350,8 @@ class MpxWebpackPlugin {
         let elements = request.split('!')
         let resource = elements.pop()
         let resourceQuery = '?'
-        let resourcePath = resource
         const queryIndex = resource.indexOf('?')
         if (queryIndex >= 0) {
-          resourcePath = resource.substr(0, queryIndex)
           resourceQuery = resource.substr(queryIndex)
         }
         const queryObj = loaderUtils.parseQuery(resourceQuery)
@@ -388,8 +385,6 @@ class MpxWebpackPlugin {
         if (mpx.processingSubPackageRoot) {
           const resourcPath = getResource(data.resource)
 
-          const currentComponentsMap = mpx.componentsMap[mpx.processingSubPackageRoot]
-          const mainComponentsMap = mpx.componentsMap.main
           const resourceHit = mpx.resourceHit
           const mainResourceMap = mpx.resourceMap.main
 

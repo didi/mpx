@@ -1,4 +1,3 @@
-const path = require('path')
 const parse = require('./parser')
 const loaderUtils = require('loader-utils')
 const getResourcePath = require('./utils/get-resource-path')

@@ -19,7 +19,6 @@ module.exports = function (source) {
     return nativeCallback(null, source)
   }
 
-
   const packageName = 'main'
   const pagesMap = mpx.pagesMap
   const componentsMap = mpx.componentsMap[packageName]

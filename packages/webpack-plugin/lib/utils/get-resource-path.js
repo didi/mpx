@@ -10,7 +10,6 @@ module.exports = function getResourceId (resource) {
   }
   const queryObj = parseQuery(query)
 
-
   if (queryObj.resourcePath) {
     return queryObj.resourcePath
   }
