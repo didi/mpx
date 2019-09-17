@@ -4,7 +4,7 @@ const parse = require('./parser')
 const createHelpers = require('./helpers')
 const loaderUtils = require('loader-utils')
 const InjectDependency = require('./dependency/InjectDependency')
-const stripExtension = require('./utils/strip-extention')
+const getResourcePath = require('./utils/get-resource-path')
 
 module.exports = function (content) {
   this.cacheable()
@@ -13,20 +13,21 @@ module.exports = function (content) {
   if (!mpx) {
     return content
   }
+  const packageName = mpx.processingSubPackageRoot || 'main'
   const pagesMap = mpx.pagesMap
-  const componentsMap = mpx.componentsMap
+  const componentsMap = mpx.componentsMap[packageName]
   const projectRoot = mpx.projectRoot
   const mode = mpx.mode
   const globalSrcMode = mpx.srcMode
   const resolveMode = mpx.resolveMode
   const localSrcMode = loaderUtils.parseQuery(this.resourceQuery || '?').mode
-  const resource = stripExtension(this.resource)
+  const resourcePath = getResourcePath(this.resource)
   const srcMode = localSrcMode || globalSrcMode
 
   const resourceQueryObj = loaderUtils.parseQuery(this.resourceQuery || '?')
 
   // 支持资源query传入page或component支持页面/组件单独编译
-  if ((resourceQueryObj.component && !componentsMap[resource]) || (resourceQueryObj.page && !pagesMap[resource])) {
+  if ((resourceQueryObj.component && !componentsMap[resourcePath]) || (resourceQueryObj.page && !pagesMap[resourcePath])) {
     let entryChunkName
     const rawRequest = this._module.rawRequest
     const _preparedEntrypoints = this._compilation._preparedEntrypoints
@@ -38,9 +39,9 @@ module.exports = function (content) {
     }
     if (entryChunkName) {
       if (resourceQueryObj.component) {
-        componentsMap[resource] = entryChunkName
+        componentsMap[resourcePath] = entryChunkName
       } else {
-        pagesMap[resource] = entryChunkName
+        pagesMap[resourcePath] = entryChunkName
       }
     }
   }
@@ -123,14 +124,14 @@ module.exports = function (content) {
 
   // 注入构造函数
   let ctor = 'App'
-  if (pagesMap[resource]) {
+  if (pagesMap[resourcePath]) {
     ctor = mode === 'ali' ? 'Page' : 'Component'
-  } else if (componentsMap[resource]) {
+  } else if (componentsMap[resourcePath]) {
     ctor = 'Component'
   }
   globalInjectCode += `global.currentCtor = ${ctor};\n`
 
-  if (!pagesMap[resource] && !componentsMap[resource] && mode === 'swan') {
+  if (!pagesMap[resourcePath] && !componentsMap[resourcePath] && mode === 'swan') {
     // 注入swan runtime fix
     globalInjectCode += 'if (!global.navigator) {\n' +
       '  global.navigator = {};\n' +
@@ -150,11 +151,11 @@ module.exports = function (content) {
       ? (getNamedExportsForSrc('script', script) + '\n')
       : (getNamedExports('script', script) + '\n') + '\n'
   } else {
-    if (pagesMap[resource]) {
+    if (pagesMap[resourcePath]) {
       // page
       output += 'import {createPage} from "@mpxjs/core"\n' +
         'createPage({})\n'
-    } else if (componentsMap[resource]) {
+    } else if (componentsMap[resourcePath]) {
       // component
       output += 'import {createComponent} from "@mpxjs/core"\n' +
         'createComponent({})\n'

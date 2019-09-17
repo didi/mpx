@@ -3,7 +3,7 @@ const traverse = require('babel-traverse').default
 const t = require('babel-types')
 const generate = require('babel-generator').default
 const getMainCompilation = require('../utils/get-main-compilation')
-const stripExtension = require('../utils/strip-extention')
+const getResourcePath = require('../utils/get-resource-path')
 const parseQuery = require('loader-utils').parseQuery
 
 module.exports = function (content) {
@@ -17,8 +17,8 @@ module.exports = function (content) {
   // 处理内联wxs
   if (wxsModule) {
     const wxsContentMap = mainCompilation.__mpx__.wxsConentMap
-    const resource = stripExtension(this.resource)
-    content = wxsContentMap[`${resource}~${wxsModule}`] || content
+    const resourcePath = getResourcePath(this.resource)
+    content = wxsContentMap[`${resourcePath}~${wxsModule}`] || content
   }
 
   if (module.wxs && mode !== 'swan') {

@@ -2,7 +2,7 @@ const compiler = require('./compiler')
 const loaderUtils = require('loader-utils')
 const bindThis = require('./bind-this').transform
 const InjectDependency = require('../dependency/InjectDependency')
-const stripExtension = require('../utils/strip-extention')
+const getResourcePath = require('../utils/get-resource-path')
 const getMainCompilation = require('../utils/get-main-compilation')
 const path = require('path')
 
@@ -12,13 +12,15 @@ module.exports = function (raw) {
   const isNative = options.isNative
   const compilation = this._compilation
   const mainCompilation = getMainCompilation(compilation)
-  const mode = mainCompilation.__mpx__.mode
-  const externalClasses = mainCompilation.__mpx__.externalClasses
-  const globalSrcMode = mainCompilation.__mpx__.srcMode
+  const mpx = mainCompilation.__mpx__
+  const mode = mpx.mode
+  const externalClasses = mpx.externalClasses
+  const globalSrcMode = mpx.srcMode
   const localSrcMode = loaderUtils.parseQuery(this.resourceQuery || '?').mode
-  const componentsMap = mainCompilation.__mpx__.componentsMap
-  const wxsContentMap = mainCompilation.__mpx__.wxsConentMap
-  const resource = stripExtension(this.resource)
+  const packageName = mpx.processingSubPackageRoot || 'main'
+  const componentsMap = mpx.componentsMap[packageName]
+  const wxsContentMap = mpx.wxsConentMap
+  const resourcePath = getResourcePath(this.resource)
 
   let parsed = compiler.parse(raw, Object.assign(options, {
     warn: (msg) => {
@@ -32,7 +34,7 @@ module.exports = function (raw) {
       )
     },
     basename: path.basename(this.resource),
-    isComponent: !!componentsMap[resource],
+    isComponent: !!componentsMap[resourcePath],
     mode,
     externalClasses,
     srcMode: localSrcMode || globalSrcMode,
@@ -44,7 +46,7 @@ module.exports = function (raw) {
 
   if (meta.wxsConentMap) {
     for (let module in meta.wxsConentMap) {
-      wxsContentMap[`${resource}~${module}`] = meta.wxsConentMap[module]
+      wxsContentMap[`${resourcePath}~${module}`] = meta.wxsConentMap[module]
     }
   }
 

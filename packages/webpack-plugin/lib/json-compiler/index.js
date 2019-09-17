@@ -7,11 +7,12 @@ const parse = require('../parser')
 const config = require('../config')
 const normalize = require('../utils/normalize')
 const nativeLoaderPath = normalize.lib('native-loader')
-const stripExtension = require('../utils/strip-extention')
+const getResourcePath = require('../utils/get-resource-path')
 const mpxJSON = require('../utils/mpx-json')
 const toPosix = require('../utils/to-posix')
 const getRulesRunner = require('../platform/index')
 const isUrlRequest = require('../utils/is-url-request')
+const addQuery = require('../utils/add-query')
 
 module.exports = function (raw) {
   // 该loader中会在每次编译中动态添加entry，不能缓存，否则watch不好使
@@ -23,17 +24,17 @@ module.exports = function (raw) {
   if (!mpx) {
     return nativeCallback(null, raw)
   }
-
+  const packageName = mpx.processingSubPackageRoot || 'main'
   const pagesMap = mpx.pagesMap
   const componentsMap = mpx.componentsMap
-  const subPackagesMap = mpx.subPackagesMap
-  const compilationMpx = mpx
+  const resourceMap = mpx.resourceMap
+  const currentComponentsMap = componentsMap[packageName]
   const mode = mpx.mode
   const globalSrcMode = mpx.srcMode
   const localSrcMode = loaderUtils.parseQuery(this.resourceQuery || '?').mode
   const resolveMode = mpx.resolveMode
-  const resource = stripExtension(this.resource)
-  const isApp = !(pagesMap[resource] || componentsMap[resource])
+  const resourcePath = getResourcePath(this.resource)
+  const isApp = !(pagesMap[resourcePath] || currentComponentsMap[resourcePath])
   const publicPath = this._compilation.outputOptions.publicPath || ''
   const fs = this._compiler.inputFileSystem
 
@@ -73,7 +74,6 @@ module.exports = function (raw) {
   let entryDeps = new Set()
 
   let cacheCallback
-  let mainComponentsMap = {}
 
   const checkEntryDeps = (callback) => {
     callback = callback || cacheCallback
@@ -96,6 +96,13 @@ module.exports = function (raw) {
     })
   }
 
+  // const deleteEntry = (name) => {
+  //   const index = this._compilation._preparedEntrypoints.findIndex(slot => slot.name === name)
+  //   if (index >= 0) {
+  //     this._compilation._preparedEntrypoints.splice(index, 1)
+  //   }
+  // }
+
   let callbacked = false
   const callback = (err, processOutput) => {
     checkEntryDeps(() => {
@@ -111,6 +118,7 @@ module.exports = function (raw) {
   let json
   try {
     // 使用了MPXJSON的话先编译
+    // 此处需要使用真实的resourcePath
     if (this.resourcePath.endsWith('.json.js')) {
       json = mpxJSON.compileMPXJSON({ source: raw, mode, filePath: this.resourcePath })
     } else {
@@ -137,7 +145,7 @@ module.exports = function (raw) {
     }
   }
   if (!isApp) {
-    rulesRunnerOptions.mainKey = pagesMap[resource] ? 'page' : 'component'
+    rulesRunnerOptions.mainKey = pagesMap[resourcePath] ? 'page' : 'component'
   }
 
   const rulesRunner = getRulesRunner(rulesRunnerOptions)
@@ -156,32 +164,25 @@ module.exports = function (raw) {
       return callback()
     }
 
+    const packageName = mpx.processingSubPackageRoot || 'main'
+    const currentComponentsMap = componentsMap[packageName]
+
     if (resolveMode === 'native') {
       component = loaderUtils.urlToRequest(component, options.root)
     }
 
-    this.resolve(context, component, (err, rawResult, info) => {
+    this.resolve(context, component, (err, resource, info) => {
       if (err) return callback(err)
-      let result = rawResult
-      const queryIndex = result.indexOf('?')
-      if (queryIndex >= 0) {
-        result = result.substr(0, queryIndex)
-      }
-      let parsed = path.parse(result)
-      let ext = parsed.ext
-      result = stripExtension(result)
+      const resourcePath = getResourcePath(resource)
+      const parsed = path.parse(resourcePath)
+      const ext = parsed.ext
+      const resourceName = path.join(parsed.dir, parsed.name)
       let subPackageRoot = ''
-      if (compilationMpx.processingSubPackages) {
-        for (let src in subPackagesMap) {
-          // 分包引用且主包未引用的组件，需打入分包目录中
-          // 此处只会将分包源目录下的资源视为分包资源，有一定改进空间，改进方案如下：
-          // 串行处理各个分包（或并行通过层层传递分包参数），精确识别当前资源由哪个分包引入，当多个分包引用同一个资源的时候有两种选择：
-          // 1. 保持一份打入主包，总体积最优（由于资源输出路径在此时已经决定，可能需要回朔修改已经确定了的资源路径和各类resourceMap和相对路径等等，成本无比巨大，或许需要大规模更改架构，类似webpack先收集全部资源再统筹确定输出路径，前置输出路径->后置输出路径）
-          // 2. 复制多份分别打入分包，主包体积最优 （无需回朔修改，可保持前置输出路径架构，各类resourceMap的key值需要改动，记录分包信息，成本相对可接受）
-          if (!path.relative(src, result).startsWith('..') && !mainComponentsMap[result]) {
-            subPackageRoot = subPackagesMap[src]
-            break
-          }
+      if (mpx.processingSubPackageRoot) {
+        if (!componentsMap.main[resourcePath]) {
+          subPackageRoot = mpx.processingSubPackageRoot
+        } else {
+          currentComponentsMap[resourcePath] = componentsMap.main[resourcePath]
         }
       }
       if (ext === '.js') {
@@ -195,25 +196,30 @@ module.exports = function (raw) {
             name = info.descriptionFileData.name
           }
         }
-        let relativePath = path.relative(root, result)
+        let relativePath = path.relative(root, resourceName)
         componentPath = componentPath || path.join(subPackageRoot, 'components', name + hash(root), relativePath)
       } else {
         let componentName = parsed.name
-        componentPath = componentPath || path.join(subPackageRoot, 'components', componentName + hash(result), componentName)
+        componentPath = componentPath || path.join(subPackageRoot, 'components', componentName + hash(resourcePath), componentName)
       }
       componentPath = toPosix(componentPath)
       rewritePath && rewritePath(publicPath + componentPath)
       // 如果之前已经创建了入口，rewritePath后直接return
-      if (componentsMap[result]) {
-        rewritePath && rewritePath(publicPath + componentsMap[result])
+      if (currentComponentsMap[resourcePath]) {
+        rewritePath && rewritePath(publicPath + currentComponentsMap[resourcePath])
         return callback()
       }
-      componentsMap[result] = componentPath
+      currentComponentsMap[resourcePath] = componentPath
       if (ext === '.js') {
         const nativeLoaderOptions = mpx.loaderOptions ? '?' + JSON.stringify(mpx.loaderOptions) : ''
-        rawResult = '!!' + nativeLoaderPath + nativeLoaderOptions + '!' + rawResult
+        resource = '!!' + nativeLoaderPath + nativeLoaderOptions + '!' + resource
       }
-      addEntrySafely(rawResult, componentPath, callback)
+      if (subPackageRoot) {
+        resource = addQuery(resource, {
+          subPackageRoot
+        })
+      }
+      addEntrySafely(resource, componentPath, callback)
     })
   }
 
@@ -273,15 +279,14 @@ module.exports = function (raw) {
                 let tarRoot = queryObj.root
                 if (tarRoot) {
                   delete queryObj.root
-                  let subPackages = [
-                    {
-                      tarRoot,
-                      pages: content.pages,
-                      ...queryObj
-                    }
-                  ]
+                  let subPackage = {
+                    tarRoot,
+                    pages: content.pages,
+                    ...queryObj
+                  }
+
                   processSubPackagesQueue.push((callback) => {
-                    processSubPackages(subPackages, context, callback)
+                    processSubPackage(subPackage, context, callback)
                   })
                 } else {
                   processSelfQueue.push((callback) => {
@@ -323,26 +328,36 @@ module.exports = function (raw) {
       return result
     }
 
-    const processSubPackages = (subPackages, context, callback) => {
-      if (subPackages) {
-        async.forEach(subPackages, (packageItem, callback) => {
-          let tarRoot = packageItem.tarRoot || packageItem.root || ''
-          let srcRoot = packageItem.srcRoot || packageItem.root || ''
-          let resource = path.join(context, srcRoot)
-          if (!tarRoot || subPackagesMap[resource] === tarRoot) return callback()
+    // 为了获取资源的所属子包，该函数需串行执行
+    const processSubPackage = (subPackage, context, callback) => {
+      if (subPackage) {
+        let tarRoot = subPackage.tarRoot || subPackage.root || ''
+        let srcRoot = subPackage.srcRoot || subPackage.root || ''
+        if (!tarRoot || subPackagesCfg[tarRoot]) return callback()
 
-          subPackagesMap[resource] = tarRoot
-          subPackagesCfg[tarRoot] = {
-            root: tarRoot,
-            pages: [],
-            ...getOtherConfig(packageItem)
-          }
-
-          processPages(packageItem.pages, srcRoot, tarRoot, context, callback)
-        }, callback)
+        subPackagesCfg[tarRoot] = {
+          root: tarRoot,
+          pages: [],
+          ...getOtherConfig(subPackage)
+        }
+        mpx.processingSubPackageRoot = tarRoot
+        componentsMap[tarRoot] = {}
+        resourceMap[tarRoot] = {}
+        processPages(subPackage.pages, srcRoot, tarRoot, context, callback)
       } else {
         callback()
       }
+    }
+
+    const processSubPackages = (subPackages, context, callback) => {
+      if (subPackages) {
+        subPackages.forEach((subPackage) => {
+          processSubPackagesQueue.push((callback) => {
+            processSubPackage(subPackage, context, callback)
+          })
+        })
+      }
+      callback()
     }
 
     const processPages = (pages, srcRoot = '', tarRoot = '', context, callback) => {
@@ -354,25 +369,21 @@ module.exports = function (raw) {
           }
           let name = getPageName(tarRoot, rawPage)
           name = toPosix(name)
-          this.resolve(path.join(context, srcRoot), page, (err, rawResult) => {
+          this.resolve(path.join(context, srcRoot), page, (err, resource) => {
             if (err) return callback(err)
-            let result = rawResult
-            const queryIndex = result.indexOf('?')
-            if (queryIndex >= 0) {
-              result = result.substr(0, queryIndex)
-            }
-            let parsed = path.parse(result)
-            let ext = parsed.ext
-            result = stripExtension(result)
+            let resourcePath = getResourcePath(resource)
+            const parsed = path.parse(resourcePath)
+            const ext = parsed.ext
             // 如果存在page命名冲突，return err
             for (let key in pagesMap) {
-              if (pagesMap[key] === name && key !== result) {
-                return callback(new Error(`Resources in ${result} and ${key} are registered with same page path ${name}, which is not allowed!`))
+              if (pagesMap[key] === name && key !== resourcePath) {
+                return callback(new Error(`Resources in ${resourcePath} and ${key} are registered with same page path ${name}, which is not allowed!`))
               }
             }
+            // 目前暂时不支持多个分包复用同一个页面
             // 如果之前已经创建了入口，直接return
-            if (pagesMap[result]) return callback()
-            pagesMap[result] = name
+            if (pagesMap[resourcePath]) return callback()
+            pagesMap[resourcePath] = name
             if (tarRoot && subPackagesCfg[tarRoot]) {
               subPackagesCfg[tarRoot].pages.push(toPosix(path.join('', page)))
             } else {
@@ -384,9 +395,9 @@ module.exports = function (raw) {
               }
             }
             if (ext === '.js') {
-              rawResult = '!!' + nativeLoaderPath + '!' + rawResult
+              resource = '!!' + nativeLoaderPath + '!' + resource
             }
-            addEntrySafely(rawResult, name, callback)
+            addEntrySafely(resource, name, callback)
           })
         }, callback)
       } else {
@@ -479,6 +490,9 @@ module.exports = function (raw) {
           },
           (callback) => {
             processCustomTabBar(json.tabBar, this.context, callback)
+          },
+          (callback) => {
+            processSubPackages(json.subPackages || json.subpackages, this.context, callback)
           }
         ], (err) => {
           if (err) {
@@ -488,17 +502,7 @@ module.exports = function (raw) {
         })
       },
       (callback) => {
-        mainComponentsMap = Object.assign({}, componentsMap)
-        compilationMpx.processingSubPackages = true
-        callback()
-      },
-      (callback) => {
-        async.parallel([
-          ...processSubPackagesQueue,
-          (callback) => {
-            processSubPackages(json.subPackages || json.subpackages, this.context, callback)
-          }
-        ], (err) => {
+        async.series(processSubPackagesQueue, (err) => {
           if (err) {
             errors.push(err)
           }

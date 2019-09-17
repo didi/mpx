@@ -1,19 +1,20 @@
-const path = require('path')
 const parse = require('./parser')
 const loaderUtils = require('loader-utils')
-const stripExtension = require('./utils/strip-extention')
+const getResourcePath = require('./utils/get-resource-path')
 
 module.exports = function (content) {
   this.cacheable()
-  if (!this._compilation.__mpx__) {
+  const mpx = this._compilation.__mpx__
+  if (!mpx) {
     return content
   }
-  const pagesMap = this._compilation.__mpx__.pagesMap
-  const componentsMap = this._compilation.__mpx__.componentsMap
-  const mode = this._compilation.__mpx__.mode
-  const resource = stripExtension(this.resource)
+  const packageName = mpx.processingSubPackageRoot || 'main'
+  const pagesMap = mpx.pagesMap
+  const componentsMap = mpx.componentsMap[packageName]
+  const mode = mpx.mode
+  const resourcePath = getResourcePath(this.resource)
   const query = loaderUtils.getOptions(this) || {}
-  const filePath = path.basename(this.resourcePath)
+  const filePath = this.resourcePath
   const parts = parse(content, filePath, this.sourceMap, mode)
   let part = parts[query.type]
   if (Array.isArray(part)) {
@@ -26,7 +27,7 @@ module.exports = function (content) {
       jsonObj = JSON.parse(part.content)
     }
 
-    if (pagesMap[resource]) {
+    if (pagesMap[resourcePath]) {
       // page
       if (!jsonObj.usingComponents) {
         jsonObj.usingComponents = {}
@@ -34,7 +35,7 @@ module.exports = function (content) {
       if (!jsonObj.component && mode === 'swan') {
         jsonObj.component = true
       }
-    } else if (componentsMap[resource]) {
+    } else if (componentsMap[resourcePath]) {
       // component
       if (jsonObj.component !== true) {
         jsonObj.component = true

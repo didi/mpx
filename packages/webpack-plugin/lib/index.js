@@ -8,17 +8,45 @@ const InjectDependency = require('./dependency/InjectDependency')
 const ReplaceDependency = require('./dependency/ReplaceDependency')
 const NullFactory = require('webpack/lib/NullFactory')
 const normalize = require('./utils/normalize')
-const stripExtension = require('./utils/strip-extention')
 const toPosix = require('./utils/to-posix')
+const getResource = require('./utils/get-resource-path')
+const addQuery = require('./utils/add-query')
 const DefinePlugin = require('webpack/lib/DefinePlugin')
 const AddModePlugin = require('./resolver/AddModePlugin')
 const CommonJsRequireDependency = require('webpack/lib/dependencies/CommonJsRequireDependency')
 const HarmonyImportSideEffectDependency = require('webpack/lib/dependencies/HarmonyImportSideEffectDependency')
 const RequireHeaderDependency = require('webpack/lib/dependencies/RequireHeaderDependency')
 const RemovedModuleDependency = require('./dependency/RemovedModuleDependency')
+const SplitChunksPlugin = require('webpack/lib/optimize/SplitChunksPlugin')
 
 const isProductionLikeMode = options => {
   return options.mode === 'production' || !options.mode
+}
+
+const outputFilename = '[name].js'
+const publicPath = '/'
+
+function getPackageCacheGroup (packageName) {
+  if (packageName === 'main') {
+    return {
+      name: 'bundle',
+      minChunks: 2,
+      chunks: 'initial'
+    }
+  } else {
+    return {
+      test: (module, chunks) => {
+        return chunks.every((chunk) => {
+          return (new RegExp(`^${packageName}\\/`)).test(chunk.name)
+        })
+      },
+      name: `${packageName}/bundle`,
+      minChunks: 2,
+      minSize: 1000,
+      priority: 100,
+      chunks: 'initial'
+    }
+  }
 }
 
 class MpxWebpackPlugin {
@@ -31,6 +59,7 @@ class MpxWebpackPlugin {
     if (!Array.isArray(options.externalClasses)) {
       options.externalClasses = ['custom-class', 'i-class']
     }
+
     options.externalClasses = options.externalClasses.map((className) => {
       return {
         className,
@@ -40,6 +69,9 @@ class MpxWebpackPlugin {
       }
     })
     options.resolveMode = options.resolveMode || 'webpack'
+    if (options.autoSplit === undefined) {
+      options.autoSplit = true
+    }
     this.options = options
   }
 
@@ -65,7 +97,14 @@ class MpxWebpackPlugin {
 
   apply (compiler) {
     // 强制设置publicPath为'/'
-    compiler.options.output.publicPath = '/'
+    if (compiler.options.output.publicPath && compiler.options.output.publicPath !== publicPath) {
+      console.warn(`MpxWebpackPlugin accept output publicPath to be ${publicPath} only, custom output publicPath will be ignored!`)
+    }
+    compiler.options.output.publicPath = publicPath
+    if (compiler.options.output.filename && compiler.options.output.filename !== outputFilename) {
+      console.warn(`MpxWebpackPlugin accept output filename to be ${outputFilename} only, custom output filename will be ignored!`)
+    }
+    compiler.options.output.filename = outputFilename
 
     const resolvePlugin = new AddModePlugin('before-resolve', this.options.mode, 'resolve')
 
@@ -74,6 +113,31 @@ class MpxWebpackPlugin {
     } else {
       compiler.options.resolve.plugins = [resolvePlugin]
     }
+
+    compiler.options.optimization.runtimeChunk = {
+      name: 'bundle'
+    }
+
+    let splitChunksPlugin
+    let splitChunksOptions = {
+      cacheGroups: {
+        main: {
+          name: 'bundle',
+          minChunks: 2,
+          chunks: 'initial'
+        }
+      }
+    }
+
+    if (this.options.autoSplit) {
+      if (compiler.options.optimization.splitChunks) {
+        splitChunksOptions = compiler.options.optimization.splitChunks
+        delete compiler.options.optimization.splitChunks
+      }
+      splitChunksPlugin = new SplitChunksPlugin(splitChunksOptions)
+      splitChunksPlugin.apply(compiler)
+    }
+
     // define mode
     new DefinePlugin({
       '__mpx_mode__': JSON.stringify(this.options.mode),
@@ -91,36 +155,58 @@ class MpxWebpackPlugin {
         }
       })
     })
+    const additionalAssets = {}
+    const mpx = {
+      // pages全局记录，无需区分主包分包
+      pagesMap: {},
+      componentsMap: {
+        main: {}
+      },
+      resourceMap: {
+        main: {}
+      },
+      resourceHit: {},
+      loaderOptions: null,
+      extractedMap: {},
+      extractSeenFile: {},
+      usingComponents: [],
+      processingSubPackageRoot: '',
+      wxsMap: {},
+      wxsConentMap: {},
+      forceDisableInject: this.options.forceDisableInject,
+      resolveMode: this.options.resolveMode,
+      mode: this.options.mode,
+      srcMode: this.options.srcMode,
+      externalClasses: this.options.externalClasses,
+      projectRoot: this.options.projectRoot,
+      extract: (content, file, index, sideEffects) => {
+        additionalAssets[file] = additionalAssets[file] || []
+        if (!additionalAssets[file][index]) {
+          additionalAssets[file][index] = content
+        }
+        sideEffects && sideEffects(additionalAssets)
+      }
+    }
 
     compiler.hooks.thisCompilation.tap('MpxWebpackPlugin', (compilation, { normalModuleFactory }) => {
-      const additionalAssets = {}
       if (!compilation.__mpx__) {
-        compilation.__mpx__ = {
-          pagesMap: {},
-          componentsMap: {},
-          loaderOptions: null,
-          subPackagesMap: {},
-          extractedMap: {},
-          extractSeenFile: {},
-          usingComponents: [],
-          processingSubPackages: false,
-          mainResourceMap: {},
-          wxsMap: {},
-          wxsConentMap: {},
-          forceDisableInject: this.options.forceDisableInject,
-          resolveMode: this.options.resolveMode,
-          mode: this.options.mode,
-          srcMode: this.options.srcMode,
-          externalClasses: this.options.externalClasses,
-          projectRoot: this.options.projectRoot,
-          extract: (content, file, index, sideEffects) => {
-            additionalAssets[file] = additionalAssets[file] || []
-            if (!additionalAssets[file][index]) {
-              additionalAssets[file][index] = content
+        compilation.__mpx__ = mpx
+      }
+
+      if (splitChunksPlugin) {
+        // 自动跟进分包配置修改splitChunksPlugin配置
+        compilation.hooks.finishModules.tap('MpxWebpackPlugin', (modules) => {
+          let needInit = false
+          Object.keys(mpx.componentsMap).forEach((packageName) => {
+            if (!splitChunksOptions.cacheGroups.hasOwnProperty(packageName)) {
+              needInit = true
+              splitChunksOptions.cacheGroups[packageName] = getPackageCacheGroup(packageName)
             }
-            sideEffects && sideEffects(additionalAssets)
+          })
+          if (needInit) {
+            splitChunksPlugin.options = SplitChunksPlugin.normalizeOptions(splitChunksOptions)
           }
-        }
+        })
       }
 
       compilation.hooks.optimizeModules.tap('MpxWebpackPlugin', (modules) => {
@@ -189,12 +275,19 @@ class MpxWebpackPlugin {
 
         parser.hooks.call.for('__mpx_resolve_path__').tap('MpxWebpackPlugin', (expr) => {
           if (expr.arguments[0]) {
-            const resource = stripExtension(expr.arguments[0].value)
-            const pagesMap = compilation.__mpx__.pagesMap
-            const componentsMap = compilation.__mpx__.componentsMap
+            const resource = expr.arguments[0].value
+            let resourceQuery = '?'
+            const queryIndex = resource.indexOf('?')
+            if (queryIndex >= 0) {
+              resourceQuery = resource.substr(queryIndex)
+            }
+            const packageName = loaderUtils.parseQuery(resourceQuery).subPackageRoot || 'main'
+            const pagesMap = mpx.pagesMap
+            const componentsMap = mpx.componentsMap
+            const resourceMap = mpx.resourceMap
             const publicPath = compilation.outputOptions.publicPath || ''
             const range = expr.range
-            const dep = new ResolveDependency(resource, pagesMap, componentsMap, publicPath, range)
+            const dep = new ResolveDependency(resource, packageName, pagesMap, componentsMap, resourceMap, publicPath, range)
             parser.state.current.addDependency(dep)
             return true
           }
@@ -333,20 +426,24 @@ class MpxWebpackPlugin {
     compiler.hooks.normalModuleFactory.tap('MpxWebpackPlugin', (normalModuleFactory) => {
       normalModuleFactory.hooks.beforeResolve.tapAsync('MpxWebpackPlugin', (data, callback) => {
         let request = data.request
-        let elements = request.replace(/^-?!+/, '').replace(/!!+/g, '!').split('!')
+        let elements = request.split('!')
         let resource = elements.pop()
         let resourceQuery = '?'
         const queryIndex = resource.indexOf('?')
         if (queryIndex >= 0) {
           resourceQuery = resource.substr(queryIndex)
         }
-        let queryObj = loaderUtils.parseQuery(resourceQuery)
+        const queryObj = loaderUtils.parseQuery(resourceQuery)
+
         if (queryObj.resolve) {
-          let pathLoader = normalize.lib('path-loader')
+          const pathLoader = normalize.lib('path-loader')
+          const subPackageRoot = mpx.processingSubPackageRoot
+          if (subPackageRoot) {
+            resource = addQuery(resource, { subPackageRoot })
+          }
           data.request = `!!${pathLoader}!${resource}`
-        }
-        if (queryObj.wxsModule) {
-          let wxsPreLoader = normalize.lib('wxs/wxs-pre-loader')
+        } else if (queryObj.wxsModule) {
+          const wxsPreLoader = normalize.lib('wxs/wxs-pre-loader')
           if (!/wxs-loader/.test(request)) {
             data.request = `!!${wxsPreLoader}!${resource}`
           }
@@ -362,6 +459,26 @@ class MpxWebpackPlugin {
               loader.options = Object.assign({}, { appendTsSuffixTo: [/\.(mpx|vue)$/] })
             }
           })
+        }
+
+        if (mpx.processingSubPackageRoot) {
+          const resourcPath = getResource(data.resource)
+
+          const resourceHit = mpx.resourceHit
+          const mainResourceMap = mpx.resourceMap.main
+
+          let needAddQuery = false
+
+          if (resourceHit[resourcPath]) {
+            if (!mainResourceMap[resourcPath]) {
+              needAddQuery = true
+            }
+          }
+          if (needAddQuery) {
+            data.request = addQuery(data.request, {
+              subPackageRoot: mpx.processingSubPackageRoot
+            })
+          }
         }
         callback(null, data)
       })
@@ -413,7 +530,7 @@ class MpxWebpackPlugin {
           source.add(originalSource)
           source.add(`\nmodule.exports = window[${JSON.stringify(jsonpFunction)}];\n`)
         } else {
-          if (compilation.__mpx__.pluginMain === chunk.name) {
+          if (mpx.pluginMain === chunk.name) {
             source.add('module.exports =\n')
           }
           source.add(originalSource)

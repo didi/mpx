@@ -2,7 +2,7 @@ const path = require('path')
 const async = require('async')
 const hash = require('hash-sum')
 const SingleEntryPlugin = require('webpack/lib/SingleEntryPlugin')
-const stripExtension = require('./utils/strip-extention')
+const getResourcePath = require('./utils/get-resource-path')
 const toPosix = require('./utils/to-posix')
 
 // webpack4中.json文件会走json parser，抽取内容的占位内容必须为合法json，否则会在parse阶段报错
@@ -13,14 +13,16 @@ module.exports = function (source) {
   this.cacheable(false)
 
   const nativeCallback = this.async()
+  const mpx = this._compilation.__mpx__
 
-  if (!this._compilation.__mpx__) {
+  if (!mpx) {
     return nativeCallback(null, source)
   }
 
-  const componentsMap = this._compilation.__mpx__.componentsMap
-  const pagesMap = this._compilation.__mpx__.pagesMap
-  const extract = this._compilation.__mpx__.extract
+  const packageName = 'main'
+  const pagesMap = mpx.pagesMap
+  const componentsMap = mpx.componentsMap[packageName]
+  const extract = mpx.extract
   const resourcePath = this._compilation._preparedEntrypoints[0].name
   this._compilation._preparedEntrypoints.pop()
 
@@ -85,7 +87,7 @@ module.exports = function (source) {
         }
         pluginEntry.main = mainPath + '.js'
         addEntrySafely(result, mainPath, callback)
-        this._compilation.__mpx__.pluginMain = mainPath
+        mpx.pluginMain = mainPath
       })
     }.bind(this, pluginEntry.main)
   }
@@ -95,7 +97,7 @@ module.exports = function (source) {
       async.forEachOf(components, (component, name, callback) => {
         this.resolve(this.context, component, (err, result) => {
           if (err) return callback(err)
-          result = stripExtension(result)
+          result = getResourcePath(result)
           let parsed = path.parse(result)
           let componentName = parsed.name
           let dirName = componentName + hash(result)
@@ -116,7 +118,7 @@ module.exports = function (source) {
       async.forEachOf(pages, (page, name, callback) => {
         this.resolve(this.context, page, (err, result) => {
           if (err) return callback(err)
-          result = stripExtension(result)
+          result = getResourcePath(result)
           let pagePath = getName(path.join('', page))
           pagePath = toPosix(pagePath)
           if (/^\./.test(pagePath)) {
