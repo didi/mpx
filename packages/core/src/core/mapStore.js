@@ -16,7 +16,7 @@ function mapFactory (type, store) {
         } else {
           let getterVal = getByPath(store.getters, value, '', '__NOTFOUND__')
           if (getterVal === '__NOTFOUND__') {
-            console.warn('【MPX ERROR】', new Error(`unknown getter named [${value}]`))
+            process.env.NODE_ENV !== 'production' && console.warn('【MPX ERROR】', new Error(`unknown getter named [${value}]`))
             getterVal = ''
           }
           return getterVal
