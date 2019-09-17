@@ -117,7 +117,7 @@ module.exports = function (content) {
 
   // 注入模块id及资源路径
   let globalInjectCode = `global.currentModuleId = ${JSON.stringify(moduleId)};\n`
-  if (this.minimize || process.env.NODE_ENV !== 'production') {
+  if (!isProduction) {
     globalInjectCode += `global.currentResource = ${JSON.stringify(filePath)};\n`
   }
 

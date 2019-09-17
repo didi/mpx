@@ -157,7 +157,7 @@ export default class MPXProxy {
 
   initComputed (computedConfig, proxyData) {
     this.computedKeys.forEach(key => {
-      if (key in proxyData) {
+      if (key in proxyData && process.env.NODE_ENV !== 'production') {
         console.error('【MPX ERROR】', `the computed key 【${key}】 is duplicated, please check`)
       }
       const getValue = computedConfig[key].get || computedConfig[key]

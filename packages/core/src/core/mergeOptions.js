@@ -41,7 +41,7 @@ function extractMixins (mergeOptions, options, needConvert) {
   }
   if (options.mixins) {
     for (const mix of options.mixins) {
-      if (typeof mix === 'string' && process.env.NODE_ENV === 'production') {
+      if (typeof mix === 'string' && process.env.NODE_ENV !== 'production') {
         console.error(`【MPX CONVERT ERROR】at ${global.currentResource || ''} : Don't support for convert the string-formatted【behavior】into mixin`)
       } else {
         extractMixins(mergeOptions, mix, needConvert)
