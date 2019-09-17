@@ -114,6 +114,10 @@ class MpxWebpackPlugin {
       compiler.options.resolve.plugins = [resolvePlugin]
     }
 
+    compiler.options.optimization.runtimeChunk = {
+      name: 'bundle'
+    }
+
     let splitChunksPlugin
     let splitChunksOptions = {
       cacheGroups: {
