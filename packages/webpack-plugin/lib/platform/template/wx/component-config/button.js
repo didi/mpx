@@ -54,7 +54,7 @@ module.exports = function ({ print }) {
           }
         },
         tt ({ name, value }) {
-          let supportList = ['share']
+          let supportList = ['share', 'getPhoneNumber']
           if (supportList.indexOf(value) === -1) {
             ttValueLogError({ name, value })
           }
