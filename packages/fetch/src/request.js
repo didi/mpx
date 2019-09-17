@@ -11,7 +11,8 @@ function transformReq (config) {
     set (val) {
       header = val
     },
-    enumerable: true
+    enumerable: true,
+    configurable: true
   }
   Object.defineProperties(config, {
     header: descriptor,
