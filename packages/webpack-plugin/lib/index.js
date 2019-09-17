@@ -17,9 +17,36 @@ const CommonJsRequireDependency = require('webpack/lib/dependencies/CommonJsRequ
 const HarmonyImportSideEffectDependency = require('webpack/lib/dependencies/HarmonyImportSideEffectDependency')
 const RequireHeaderDependency = require('webpack/lib/dependencies/RequireHeaderDependency')
 const RemovedModuleDependency = require('./dependency/RemovedModuleDependency')
+const SplitChunksPlugin = require('webpack/lib/optimize/SplitChunksPlugin')
 
 const isProductionLikeMode = options => {
   return options.mode === 'production' || !options.mode
+}
+
+const outputFilename = '[name].js'
+const publicPath = '/'
+
+function getPackageCacheGroup (packageName) {
+  if (packageName === 'main') {
+    return {
+      name: 'bundle',
+      minChunks: 2,
+      chunks: 'initial'
+    }
+  } else {
+    return {
+      test: (module, chunks) => {
+        return chunks.every((chunk) => {
+          return (new RegExp(`^${packageName}\\/`)).test(chunk.name)
+        })
+      },
+      name: `${packageName}/bundle`,
+      minChunks: 2,
+      minSize: 1000,
+      priority: 100,
+      chunks: 'initial'
+    }
+  }
 }
 
 class MpxWebpackPlugin {
@@ -32,6 +59,7 @@ class MpxWebpackPlugin {
     if (!Array.isArray(options.externalClasses)) {
       options.externalClasses = ['custom-class', 'i-class']
     }
+
     options.externalClasses = options.externalClasses.map((className) => {
       return {
         className,
@@ -41,6 +69,9 @@ class MpxWebpackPlugin {
       }
     })
     options.resolveMode = options.resolveMode || 'webpack'
+    if (options.autoSplit === undefined) {
+      options.autoSplit = true
+    }
     this.options = options
   }
 
@@ -66,7 +97,14 @@ class MpxWebpackPlugin {
 
   apply (compiler) {
     // 强制设置publicPath为'/'
-    compiler.options.output.publicPath = '/'
+    if (compiler.options.output.publicPath && compiler.options.output.publicPath !== publicPath) {
+      console.warn(`MpxWebpackPlugin accept output publicPath to be ${publicPath} only, custom output publicPath will be ignored!`)
+    }
+    compiler.options.output.publicPath = publicPath
+    if (compiler.options.output.filename && compiler.options.output.filename !== outputFilename) {
+      console.warn(`MpxWebpackPlugin accept output filename to be ${outputFilename} only, custom output filename will be ignored!`)
+    }
+    compiler.options.output.filename = outputFilename
 
     const resolvePlugin = new AddModePlugin('before-resolve', this.options.mode, 'resolve')
 
@@ -75,6 +113,27 @@ class MpxWebpackPlugin {
     } else {
       compiler.options.resolve.plugins = [resolvePlugin]
     }
+
+    let splitChunksPlugin
+    let splitChunksOptions = {
+      cacheGroups: {
+        main: {
+          name: 'bundle',
+          minChunks: 2,
+          chunks: 'initial'
+        }
+      }
+    }
+
+    if (this.options.autoSplit) {
+      if (compiler.options.optimization.splitChunks) {
+        splitChunksOptions = compiler.options.optimization.splitChunks
+        delete compiler.options.optimization.splitChunks
+      }
+      splitChunksPlugin = new SplitChunksPlugin(splitChunksOptions)
+      splitChunksPlugin.apply(compiler)
+    }
+
     // define mode
     new DefinePlugin({
       '__mpx_mode__': JSON.stringify(this.options.mode),
@@ -128,6 +187,22 @@ class MpxWebpackPlugin {
     compiler.hooks.thisCompilation.tap('MpxWebpackPlugin', (compilation, { normalModuleFactory }) => {
       if (!compilation.__mpx__) {
         compilation.__mpx__ = mpx
+      }
+
+      if (splitChunksPlugin) {
+        // 自动跟进分包配置修改splitChunksPlugin配置
+        compilation.hooks.finishModules.tap('MpxWebpackPlugin', (modules) => {
+          let needInit = false
+          Object.keys(mpx.componentsMap).forEach((packageName) => {
+            if (!splitChunksOptions.cacheGroups.hasOwnProperty(packageName)) {
+              needInit = true
+              splitChunksOptions.cacheGroups[packageName] = getPackageCacheGroup(packageName)
+            }
+          })
+          if (needInit) {
+            splitChunksPlugin.options = SplitChunksPlugin.normalizeOptions(splitChunksOptions)
+          }
+        })
       }
 
       compilation.hooks.optimizeModules.tap('MpxWebpackPlugin', (modules) => {
