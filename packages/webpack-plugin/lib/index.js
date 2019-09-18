@@ -18,6 +18,7 @@ const HarmonyImportSideEffectDependency = require('webpack/lib/dependencies/Harm
 const RequireHeaderDependency = require('webpack/lib/dependencies/RequireHeaderDependency')
 const RemovedModuleDependency = require('./dependency/RemovedModuleDependency')
 const SplitChunksPlugin = require('webpack/lib/optimize/SplitChunksPlugin')
+const createContentReplacer = require('./utils/content-replacer')
 
 const isProductionLikeMode = options => {
   return options.mode === 'production' || !options.mode
@@ -159,6 +160,7 @@ class MpxWebpackPlugin {
     const mpx = {
       // pages全局记录，无需区分主包分包
       pagesMap: {},
+      options: this.options,
       componentsMap: {
         main: {}
       },
@@ -187,6 +189,8 @@ class MpxWebpackPlugin {
         sideEffects && sideEffects(additionalAssets)
       }
     }
+
+    mpx.contentReplacer = createContentReplacer(mpx)
 
     compiler.hooks.thisCompilation.tap('MpxWebpackPlugin', (compilation, { normalModuleFactory }) => {
       if (!compilation.__mpx__) {
