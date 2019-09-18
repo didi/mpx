@@ -180,6 +180,95 @@ function isForbiddenTag (el) {
   )
 }
 
+// mpx special comments
+// example
+/*
+{
+  'tt,swan': {
+    remove: [
+      'open-type',
+      // src mode attr
+      'wx:if'
+    ],
+    add: {
+      type: 'primary',
+      // attr name only
+      foo: null,
+    }
+  }
+}
+*/
+let curMpxComment = null
+
+function evalMpxCommentExp (exp) {
+  /* eslint-disable no-new-func */
+  const f = new Function(`return ${exp};`)
+  return f()
+}
+
+function isMpxCommentAttrs (content) {
+  return /@mpx-attrs/.test(content)
+}
+function produceMpxCommentAttrs (content) {
+  const exp = /@mpx-attrs[^(]*?\(([\s\S]*)\)/.exec(content)[1].trim()
+  const tmpOpts = evalMpxCommentExp(exp)
+  // normalize
+  Object.keys(tmpOpts).forEach(k => {
+    // Array to map for removing attributes
+    tmpOpts[k].remove = (tmpOpts[k].remove || []).reduce((acc, val) => {
+      acc[val] = true
+      return acc
+    }, {})
+    // Default adding map
+    tmpOpts[k].add = tmpOpts[k].add || {}
+
+    if (k.indexOf(',') > -1) {
+      const modes = k.split(',')
+      modes.forEach(mode => {
+        tmpOpts[mode] = tmpOpts[k]
+      })
+      delete tmpOpts[k]
+    }
+  })
+  curMpxComment = tmpOpts
+}
+function consumeMpxCommentAttrs (attrs, mode) {
+  let ret = attrs
+  if (curMpxComment) {
+    const curModeMpxComment = curMpxComment[mode]
+    if (curModeMpxComment) {
+      const removeMap = curModeMpxComment.remove
+      const addMap = curModeMpxComment.add
+
+      const newAttrs = []
+      attrs.forEach(attr => {
+        if (!removeMap[attr.name]) {
+          newAttrs.push(attr)
+        }
+      })
+
+      Object.keys(addMap).forEach(name => {
+        newAttrs.push({
+          name,
+          value: addMap[name]
+        })
+      })
+
+      ret = newAttrs
+    }
+
+    // reset
+    curMpxComment = null
+  }
+  return ret
+}
+function assertMpxCommentAttrsEnd() {
+  if (curMpxComment) {
+    throw new Error('No target for @mpx-attrs!')
+  }
+}
+// mpx special comments
+
 function cached (fn) {
   let cache = Object.create(null)
   return function cachedFn (str) {
@@ -697,7 +786,7 @@ function parse (template, options) {
     canBeLeftOpenTag: options.canBeLeftOpenTag,
     shouldDecodeNewlines: options.shouldDecodeNewlines,
     shouldDecodeNewlinesForHref: options.shouldDecodeNewlinesForHref,
-    shouldKeepComment: options.hasComment,
+    shouldKeepComment: true,
     start: function start (tag, attrs, unary) {
       // check namespace.
       // inherit parent ns if there is one
@@ -708,6 +797,8 @@ function parse (template, options) {
       if (isIE && ns === 'svg') {
         attrs = guardIESVGBug(attrs)
       }
+
+      attrs = consumeMpxCommentAttrs(attrs, mode)
 
       let element = createASTElement(tag, attrs, currentParent)
       if (ns) {
@@ -797,13 +888,20 @@ function parse (template, options) {
     },
     comment: function comment (text) {
       if (!currentParent) genTempRoot()
-      currentParent.children.push({
-        type: 3,
-        text: text,
-        isComment: true
-      })
+      // special comments should not be output
+      if (isMpxCommentAttrs(text)) {
+        produceMpxCommentAttrs(text)
+      } else if (options.hasComment) {
+        currentParent.children.push({
+          type: 3,
+          text: text,
+          isComment: true
+        })
+      }
     }
   })
+
+  assertMpxCommentAttrsEnd()
 
   if (multiRootError) {
     error$1('Template fields should has one single root, considering wrapping your template content with <view> or <text> tag!')
