@@ -52,6 +52,7 @@ function getPackageCacheGroup (packageName) {
 class MpxWebpackPlugin {
   constructor (options = {}) {
     options.mode = options.mode || 'wx'
+
     options.srcMode = options.srcMode || options.mode
     if (options.mode !== options.srcMode && options.srcMode !== 'wx') {
       throw new Error('MpxWebpackPlugin supports srcMode to be "wx" only temporarily!')
@@ -69,6 +70,7 @@ class MpxWebpackPlugin {
       }
     })
     options.resolveMode = options.resolveMode || 'webpack'
+    options.writeMode = options.writeMode || 'full'
     if (options.autoSplit === undefined) {
       options.autoSplit = true
     }
@@ -104,7 +106,7 @@ class MpxWebpackPlugin {
     if (compiler.options.output.filename && compiler.options.output.filename !== outputFilename) {
       console.warn(`MpxWebpackPlugin accept output filename to be ${outputFilename} only, custom output filename will be ignored!`)
     }
-    compiler.options.output.filename = outputFilename
+    compiler.options.output.filename = compiler.options.output.chunkFilename = outputFilename
 
     const resolvePlugin = new AddModePlugin('before-resolve', this.options.mode, 'resolve')
 
@@ -138,6 +140,20 @@ class MpxWebpackPlugin {
       splitChunksPlugin.apply(compiler)
     }
 
+    // 代理writeFile
+    if (this.options.writeMode === 'changed') {
+      const writedFileHashMap = {}
+      const originalWriteFile = compiler.outputFileSystem.writeFile
+      compiler.outputFileSystem.writeFile = (filePath, content, callback) => {
+        const contentHash = content.toString('utf8')
+        if (writedFileHashMap[filePath] && writedFileHashMap[filePath] === contentHash) {
+          return callback()
+        }
+        writedFileHashMap[filePath] = contentHash
+        originalWriteFile(filePath, content, callback)
+      }
+    }
+
     // define mode
     new DefinePlugin({
       '__mpx_mode__': JSON.stringify(this.options.mode),
@@ -155,42 +171,46 @@ class MpxWebpackPlugin {
         }
       })
     })
-    const additionalAssets = {}
-    const mpx = {
-      // pages全局记录，无需区分主包分包
-      pagesMap: {},
-      componentsMap: {
-        main: {}
-      },
-      resourceMap: {
-        main: {}
-      },
-      resourceHit: {},
-      loaderOptions: null,
-      extractedMap: {},
-      extractSeenFile: {},
-      usingComponents: [],
-      processingSubPackageRoot: '',
-      wxsMap: {},
-      wxsConentMap: {},
-      forceDisableInject: this.options.forceDisableInject,
-      resolveMode: this.options.resolveMode,
-      mode: this.options.mode,
-      srcMode: this.options.srcMode,
-      externalClasses: this.options.externalClasses,
-      projectRoot: this.options.projectRoot,
-      extract: (content, file, index, sideEffects) => {
-        additionalAssets[file] = additionalAssets[file] || []
-        if (!additionalAssets[file][index]) {
-          additionalAssets[file][index] = content
-        }
-        sideEffects && sideEffects(additionalAssets)
-      }
-    }
+
+
+    let mpx
 
     compiler.hooks.thisCompilation.tap('MpxWebpackPlugin', (compilation, { normalModuleFactory }) => {
+      // additionalAssets和mpx由于包含缓存机制，必须在每次compilation时重新初始化
+      const additionalAssets = {}
       if (!compilation.__mpx__) {
-        compilation.__mpx__ = mpx
+        // init mpx
+        mpx = compilation.__mpx__ = {
+          // pages全局记录，无需区分主包分包
+          pagesMap: {},
+          componentsMap: {
+            main: {}
+          },
+          resourceMap: {
+            main: {}
+          },
+          resourceHit: {},
+          loaderOptions: null,
+          extractedMap: {},
+          extractSeenFile: {},
+          usingComponents: [],
+          processingSubPackageRoot: '',
+          wxsMap: {},
+          wxsConentMap: {},
+          forceDisableInject: this.options.forceDisableInject,
+          resolveMode: this.options.resolveMode,
+          mode: this.options.mode,
+          srcMode: this.options.srcMode,
+          externalClasses: this.options.externalClasses,
+          projectRoot: this.options.projectRoot,
+          extract: (content, file, index, sideEffects) => {
+            additionalAssets[file] = additionalAssets[file] || []
+            if (!additionalAssets[file][index]) {
+              additionalAssets[file][index] = content
+            }
+            sideEffects && sideEffects(additionalAssets)
+          }
+        }
       }
 
       if (splitChunksPlugin) {

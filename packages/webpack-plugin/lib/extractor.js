@@ -196,7 +196,8 @@ module.exports = function (content) {
 
       extract(text, file, index, sideEffects)
 
-      if (resultSource === defaultResultSource) {
+      // 在production模式下移除extract残留空模块
+      if (resultSource === defaultResultSource && this.minimize) {
         this._module.needRemove = true
       }
     } catch (err) {
