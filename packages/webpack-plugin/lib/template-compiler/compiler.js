@@ -262,7 +262,7 @@ function consumeMpxCommentAttrs (attrs, mode) {
   }
   return ret
 }
-function assertMpxCommentAttrsEnd() {
+function assertMpxCommentAttrsEnd () {
   if (curMpxComment) {
     throw new Error('No target for @mpx-attrs!')
   }
