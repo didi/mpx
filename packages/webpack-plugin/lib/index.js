@@ -175,7 +175,6 @@ class MpxWebpackPlugin {
       })
     })
 
-
     let mpx
 
     compiler.hooks.thisCompilation.tap('MpxWebpackPlugin', (compilation, { normalModuleFactory }) => {
