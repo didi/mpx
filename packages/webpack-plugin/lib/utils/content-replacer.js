@@ -1,46 +1,58 @@
 const fs = require('fs')
+const path = require('path')
 
+const helper = {
+  extname (filePath) {
+    let ret
+    if (/\.json\.js$/.test(filePath)) {
+      ret = '.json.js'
+    } else {
+      ret = path.extname(filePath)
+    }
+    return ret
+  }
+}
+
+// TODO MPX单文件未处理，在replacer需要自行过滤
 function createContentReplacer (mpx) {
-  async function replace (opts) {
+  function replace (opts) {
     const mode = mpx.mode
     const srcMode = mpx.srcMode
     const contentReplacer = mpx.options.contentReplacer
 
     const { resourcePath, content } = opts
-    let ret
+    let newContent
+    let newFilePath
     // return original content
     if (!contentReplacer) {
-      ret = content
+      newContent = content
     } else {
-      const replaceResult = await contentReplacer({
+      const replaceResult = contentReplacer({
         resourcePath,
         content,
         mode,
-        srcMode
+        srcMode,
+        helper
       })
 
       if (replaceResult) {
-        if (replaceResult.content) {
-          ret = replaceResult.content
+        if (replaceResult.content || replaceResult.content === '') {
+          newContent = replaceResult.content
         } else if (replaceResult.filePath) {
-          ret = await new Promise((resolve, reject) => {
-            fs.readFile(replaceResult.filePath, (err, raw) => {
-              if (err) {
-                reject(err)
-              } else {
-                resolve(raw.toString('utf-8'))
-              }
-            })
-          })
+          newContent = fs.readFileSync(replaceResult.filePath, { encoding: 'utf-8' })
+          newFilePath = replaceResult.filePath
         } else {
           throw new Error('No replace result is found!')
         }
       } else {
         // Nothing changed
-        ret = content
+        newContent = content
       }
     }
-    return ret
+    return {
+      content: newContent,
+      filePath: newFilePath || resourcePath
+    }
   }
 
   return {

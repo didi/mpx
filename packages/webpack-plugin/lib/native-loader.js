@@ -111,11 +111,16 @@ module.exports = function (content) {
         tryEvalMPXJSON(callback)
       } else {
         if (typeExtMap['json']) {
-          fs.readFile(resourceName + typeExtMap['json'], (err, raw) => {
+          const resourcePath = resourceName + typeExtMap['json']
+          fs.readFile(resourcePath, (err, raw) => {
             if (err) {
               callback(err)
             } else {
-              callback(null, raw.toString('utf-8'))
+              const contentReplacer = mpx.contentReplacer
+              callback(null, contentReplacer.replace({
+                content: raw.toString('utf-8'),
+                resourcePath
+              }).content)
             }
           })
         } else {

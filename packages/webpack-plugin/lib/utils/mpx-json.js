@@ -1,7 +1,19 @@
 const path = require('path')
 
+let _mpx
+
+function setMpx (mpx) {
+  _mpx = mpx
+}
+
 // 将JS生成JSON
+// TODO webpack alias support
 function compileMPXJSON ({ source, mode, filePath }) {
+  const contentReplacer = _mpx.contentReplacer
+  source = contentReplacer.replace({
+    resourcePath: filePath,
+    content: source
+  }).content
   // eslint-disable-next-line no-new-func
   const func = new Function('exports', 'require', 'module', '__filename', '__dirname', '__mpx_mode__', source)
   // 模拟commonJS执行
@@ -28,5 +40,6 @@ function compileMPXJSONText (opts) {
 
 module.exports = {
   compileMPXJSON,
-  compileMPXJSONText
+  compileMPXJSONText,
+  setMpx
 }

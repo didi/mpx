@@ -7,6 +7,7 @@ const parse = require('../parser')
 const config = require('../config')
 const normalize = require('../utils/normalize')
 const nativeLoaderPath = normalize.lib('native-loader')
+const contentReplaceLoaderPath = normalize.lib('content-replace-loader')
 const getResourcePath = require('../utils/get-resource-path')
 const mpxJSON = require('../utils/mpx-json')
 const toPosix = require('../utils/to-posix')
@@ -212,7 +213,7 @@ module.exports = function (raw) {
       currentComponentsMap[resourcePath] = componentPath
       if (ext === '.js') {
         const nativeLoaderOptions = mpx.loaderOptions ? '?' + JSON.stringify(mpx.loaderOptions) : ''
-        resource = '!!' + nativeLoaderPath + nativeLoaderOptions + '!' + resource
+        resource = '!!' + nativeLoaderPath + nativeLoaderOptions + '!' + contentReplaceLoaderPath + '!' + resource
       }
       if (subPackageRoot) {
         resource = addQuery(resource, {
@@ -395,7 +396,7 @@ module.exports = function (raw) {
               }
             }
             if (ext === '.js') {
-              resource = '!!' + nativeLoaderPath + '!' + resource
+              resource = '!!' + nativeLoaderPath + '!' + contentReplaceLoaderPath + '!' + resource
             }
             addEntrySafely(resource, name, callback)
           })

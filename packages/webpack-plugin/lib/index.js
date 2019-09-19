@@ -19,6 +19,7 @@ const RequireHeaderDependency = require('webpack/lib/dependencies/RequireHeaderD
 const RemovedModuleDependency = require('./dependency/RemovedModuleDependency')
 const SplitChunksPlugin = require('webpack/lib/optimize/SplitChunksPlugin')
 const createContentReplacer = require('./utils/content-replacer')
+const mpxJson = require('./utils/mpx-json')
 
 const isProductionLikeMode = options => {
   return options.mode === 'production' || !options.mode
@@ -191,6 +192,8 @@ class MpxWebpackPlugin {
     }
 
     mpx.contentReplacer = createContentReplacer(mpx)
+
+    mpxJson.setMpx(mpx)
 
     compiler.hooks.thisCompilation.tap('MpxWebpackPlugin', (compilation, { normalModuleFactory }) => {
       if (!compilation.__mpx__) {

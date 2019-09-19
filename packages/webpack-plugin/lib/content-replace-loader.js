@@ -1,13 +1,14 @@
+const getMainCompilation = require('./utils/get-main-compilation')
+
 module.exports = function (content) {
   const loaderContext = this
   loaderContext.cacheable()
 
-  const mpx = loaderContext._compilation.__mpx__
-  const callback = loaderContext.async()
+  const mpx = getMainCompilation(loaderContext._compilation).__mpx__
   const contentReplacer = mpx.contentReplacer
-  contentReplacer.replace({
+  const { content: newContent } = contentReplacer.replace({
     content,
     resourcePath: loaderContext.resourcePath
   })
-    .then(newContent => callback(null, newContent), callback)
+  return newContent
 }

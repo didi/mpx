@@ -2,6 +2,7 @@ const querystring = require('querystring')
 const loaderUtils = require('loader-utils')
 const normalize = require('./utils/normalize')
 const tryRequire = require('./utils/try-require')
+const contentReplaceLoaderPath = normalize.lib('content-replace-loader')
 const styleCompilerPath = normalize.lib('style-compiler/index')
 const templateCompilerPath = normalize.lib('template-compiler/index')
 const jsonCompilerPath = normalize.lib('json-compiler/index')
@@ -231,7 +232,7 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
   }
 
   function getLoaderString (type, part, index, scoped, withIssuer) {
-    let loader = getRawLoaderString(type, part, index, scoped)
+    let loader = getRawLoaderString(type, part, index, scoped) + ensureBang(contentReplaceLoaderPath)
     const lang = getLangString(type, part)
     if (type !== 'script' && type !== 'wxs') {
       loader = getExtractorString(type, index, withIssuer) + loader
