@@ -237,7 +237,7 @@ const deleteErrorInResultMap = (node) => {
 }
 let platformGetTagNamespace
 let basename
-let refId = 0
+let refId
 
 function baseWarn (msg) {
   console.warn(('[template compiler]: ' + msg))
@@ -661,6 +661,7 @@ function parse (template, options) {
   srcMode = options.srcMode || mode
   isNative = options.isNative
   basename = options.basename
+  refId = 0
 
   rulesRunner = getRulesRunner({
     mode,
@@ -1201,6 +1202,8 @@ function processFor (el) {
     })
   }
 }
+
+// todo bugfix refid避免全局自增
 
 function processRef (el, options, meta) {
   let val = getAndRemoveAttr(el, config[mode].directive.ref)

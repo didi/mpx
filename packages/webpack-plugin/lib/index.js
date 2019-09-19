@@ -49,6 +49,8 @@ function getPackageCacheGroup (packageName) {
   }
 }
 
+let loaderOptions
+
 class MpxWebpackPlugin {
   constructor (options = {}) {
     options.mode = options.mode || 'wx'
@@ -78,6 +80,7 @@ class MpxWebpackPlugin {
   }
 
   static loader (options) {
+    loaderOptions = options
     return { loader: normalize.lib('loader'), options }
   }
 
@@ -145,11 +148,11 @@ class MpxWebpackPlugin {
       const writedFileHashMap = {}
       const originalWriteFile = compiler.outputFileSystem.writeFile
       compiler.outputFileSystem.writeFile = (filePath, content, callback) => {
-        const contentHash = content.toString('utf8')
-        if (writedFileHashMap[filePath] && writedFileHashMap[filePath] === contentHash) {
+        const contentString = content.toString('utf8')
+        if (writedFileHashMap[filePath] && writedFileHashMap[filePath] === contentString) {
           return callback()
         }
-        writedFileHashMap[filePath] = contentHash
+        writedFileHashMap[filePath] = contentString
         originalWriteFile(filePath, content, callback)
       }
     }
@@ -190,7 +193,7 @@ class MpxWebpackPlugin {
             main: {}
           },
           resourceHit: {},
-          loaderOptions: null,
+          loaderOptions,
           extractedMap: {},
           extractSeenFile: {},
           usingComponents: [],
