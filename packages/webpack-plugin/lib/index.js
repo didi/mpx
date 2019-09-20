@@ -431,7 +431,9 @@ class MpxWebpackPlugin {
           const globalSrcMode = this.options.srcMode
           const srcMode = localSrcMode || globalSrcMode
           const dep = new InjectDependency({
-            content: args.length ? `, ${JSON.stringify(srcMode)}` : JSON.stringify(srcMode),
+            content: args.length
+              ? `, ${JSON.stringify('__mpx_srcMode_' + srcMode)}`
+              : JSON.stringify('__mpx_srcMode_' + srcMode),
             index: expr.end - 1
           })
           parser.state.current.addDependency(dep)

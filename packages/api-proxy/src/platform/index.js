@@ -1,4 +1,4 @@
-import { error } from '../utils'
+import { error, getEnvObj } from '../utils'
 import getWxToAliApi from './wxToAli'
 import promisify from '../promisify'
 
@@ -10,15 +10,18 @@ function transformApi (target, options) {
     'swan_ali': wxToAliApi,
     'tt_ali': wxToAliApi
   }
-  const platforms = ['wx', 'ali', 'swan', 'qq', 'tt']
-  const cacheTarget = {}
+  const platforms = [
+    '__mpx_srcMode_wx',
+    '__mpx_srcMode_ali',
+    '__mpx_srcMode_swan',
+    '__mpx_srcMode_qq',
+    '__mpx_srcMode_tt'
+  ]
 
-  Object.keys(target).forEach(key => {
-    cacheTarget[key] = target[key]
-  })
+  const envObj = getEnvObj()
 
   function joinName (from = '', to = '') {
-    return `${from}_${to}`
+    return `${from.replace(/^__mpx_srcMode_/, '')}_${to}`
   }
 
   Object.keys(wxToAliApi).forEach(api => {
@@ -49,8 +52,8 @@ function transformApi (target, options) {
           return result[api].apply(target, args)
         }
 
-        if (cacheTarget[api]) {
-          return cacheTarget[api].apply(target, args)
+        if (envObj[api]) {
+          return envObj[api].apply(target, args)
         } else {
           error(`当前环境不存在 ${api} 方法`)
         }
