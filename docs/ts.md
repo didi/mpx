@@ -56,16 +56,32 @@
 
 ### 增强类型
 
-```js
-// 在声明补充的类型之前导入 'mpx'
-import mpx from '@mpxjs/core'
+如果需要增加 Mpx 的属性和选项，可以自定义声明 TypeScript 补充现有的类型。
 
-declare module '@mpxjs/core/@types' {
-  // 声明为 Mpx 补充的东西
+例如，首先创建一个 types.d.ts 文件
+
+```ts
+// types.d.ts
+
+import { Mpx } from '@mpxjs/core'
+
+declare module '@mpxjs/core' {
+  // 声明为 Mpx 补充的属性
   interface Mpx {
     $myProperty: string
   }
 }
+```
+
+之后在任意文件只需引用一次 types.d.ts 声明文件即可，例如在 app.mpx 中引用
+
+```ts
+// app.mpx
+
+/// <reference path="./types.d.ts" />
+import mpx from '@mpxjs/core'
+
+mpx.$myProperty = 'my-property'
 ```
 
 ## 类型推导及注意事项
