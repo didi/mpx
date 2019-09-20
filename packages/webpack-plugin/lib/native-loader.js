@@ -27,23 +27,8 @@ module.exports = function (content) {
 
   const filePath = this.resourcePath
 
-  const context = (
-    this.rootContext ||
-    (this.options && this.options.context) ||
-    process.cwd()
-  )
-  const shortFilePath = path.relative(context, filePath).replace(/^(\.\.[\\/])+/, '')
-  const moduleId = hash(isProduction ? (shortFilePath + '\n' + content) : shortFilePath)
+  const moduleId = hash(this._module.identifier())
 
-  const needCssSourceMap = (
-    !isProduction &&
-    this.sourceMap &&
-    options.cssSourceMap !== false
-  )
-
-  const hasScoped = false
-  const hasComment = false
-  const isNative = true
 
   const projectRoot = mpx.projectRoot
   const mode = mpx.mode
@@ -60,6 +45,15 @@ module.exports = function (content) {
   const srcMode = localSrcMode || globalSrcMode
   const fs = this._compiler.inputFileSystem
   const typeExtMap = Object.assign({}, config[srcMode].typeExtMap)
+
+  const needCssSourceMap = (
+    !isProduction &&
+    this.sourceMap &&
+    options.cssSourceMap !== false
+  )
+  const hasScoped = queryObj.scoped && mode === 'ali'
+  const hasComment = false
+  const isNative = true
 
   function tryEvalMPXJSON (callback) {
     const _src = resourceName + EXT_MPX_JSON
@@ -165,6 +159,8 @@ module.exports = function (content) {
 
         if (type === 'script') {
           return getNamedExportsForSrc(type, { src })
+        } else if (type === 'styles' && hasScoped) {
+          return getRequireForSrc(type, { src }, 0, true)
         } else {
           return getRequireForSrc(type, { src })
         }

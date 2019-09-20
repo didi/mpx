@@ -57,13 +57,7 @@ module.exports = function (content) {
 
   const filePath = this.resourcePath
 
-  const context = (
-    this.rootContext ||
-    (this.options && this.options.context) ||
-    process.cwd()
-  )
-  const shortFilePath = path.relative(context, filePath).replace(/^(\.\.[\\/])+/, '')
-  const moduleId = hash(isProduction ? (shortFilePath + '\n' + content) : shortFilePath)
+  const moduleId = hash(this._module.identifier())
 
   const needCssSourceMap = (
     !isProduction &&
@@ -72,8 +66,8 @@ module.exports = function (content) {
   )
 
   const parts = parse(content, filePath, this.sourceMap, mode)
-  //
-  const hasScoped = parts.styles.some(({ scoped }) => scoped)
+  // 只有ali才可能需要scoped
+  const hasScoped = parts.styles.some(({ scoped }) => scoped) && mode === 'ali'
   const templateAttrs = parts.template && parts.template.attrs && parts.template.attrs
   const hasComment = templateAttrs && templateAttrs.comments
   const isNative = false
@@ -179,10 +173,11 @@ module.exports = function (content) {
     let styleInjectionCode = ''
     parts.styles.forEach((style, i) => {
       processSrc(style)
+      let scoped = hasScoped ? style.scoped : false
       // require style
       let requireString = style.src
-        ? getRequireForSrc('styles', style, -1, style.scoped, undefined, true)
-        : getRequire('styles', style, i, style.scoped)
+        ? getRequireForSrc('styles', style, -1, scoped, undefined, true)
+        : getRequire('styles', style, i, scoped)
 
       const hasStyleLoader = requireString.indexOf('style-loader') > -1
       const invokeStyle = code => `${code}\n`

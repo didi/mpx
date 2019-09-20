@@ -6,6 +6,7 @@ const loadPostcssConfig = require('./load-postcss-config')
 const trim = require('./plugins/trim')
 const rpx = require('./plugins/rpx')
 const pluginCondStrip = require('./plugins/conditional-strip')
+const scopeId = require('./plugins/scope-id')
 
 const orMatcher = items => {
   return str => {
@@ -75,6 +76,10 @@ module.exports = function (css, map) {
         },
         config.options
       )
+
+      if (loaderOptions.scoped) {
+        plugins.push(scopeId({ id: loaderOptions.moduleId }))
+      }
 
       plugins.push(pluginCondStrip({
         __mpx_mode__: compilationMpx.mode

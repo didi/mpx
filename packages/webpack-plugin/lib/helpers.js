@@ -150,7 +150,7 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
     return addQuery(request, addQueryObj, removeKeys)
   }
 
-  function getRequestString (type, part, index, scoped) {
+  function getRequestString (type, part, index = 0, scoped) {
     return loaderUtils.stringifyRequest(
       loaderContext,
       // disable all configuration loaders
@@ -182,7 +182,7 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
     )
   }
 
-  function getSrcRequestString (type, impt, index, scoped, prefix = '!', withIssuer) {
+  function getSrcRequestString (type, impt, index = 0, scoped, prefix = '!', withIssuer) {
     return loaderUtils.stringifyRequest(
       loaderContext,
       prefix + getLoaderString(type, impt, index, scoped, withIssuer) + processQuery(impt.src, impt.mode, type)
@@ -265,7 +265,7 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
       // style compiler that needs to be applied for all styles
       styleCompiler = styleCompilerPath + '?' +
         JSON.stringify({
-          id: moduleId,
+          moduleId,
           scoped: !!scoped,
           sourceMap: needCssSourceMap,
           transRpx: options.transRpx,
@@ -351,7 +351,7 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
     }
   }
 
-  function getSelectorString (type, index = 0) {
+  function getSelectorString (type, index) {
     return ensureBang(
       selectorPath +
       '?type=' +
@@ -362,7 +362,7 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
     )
   }
 
-  function getExtractorString (type, index = 0, withIssuer) {
+  function getExtractorString (type, index, withIssuer) {
     return ensureBang(
       extractorPath +
       '?type=' +

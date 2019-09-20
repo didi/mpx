@@ -44,7 +44,7 @@ const postcss = require('postcss')
 //     @mpx-endif
 //     */
 // `
-module.exports = postcss.plugin('MPX-Conditional-Strip', (options = {}) => {
+module.exports = postcss.plugin('conditional-strip', (options = {}) => {
   if (!options.__mpx_mode__) {
     throw new Error('mode is required!')
   }

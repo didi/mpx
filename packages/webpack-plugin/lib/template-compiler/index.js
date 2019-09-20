@@ -21,6 +21,11 @@ module.exports = function (raw) {
   const componentsMap = mpx.componentsMap[packageName]
   const wxsContentMap = mpx.wxsConentMap
   const resourcePath = getResourcePath(this.resource)
+  let scopedId
+
+  if (options.hasScoped) {
+    scopedId = options.moduleId
+  }
 
   let parsed = compiler.parse(raw, Object.assign(options, {
     warn: (msg) => {
@@ -38,7 +43,8 @@ module.exports = function (raw) {
     mode,
     externalClasses,
     srcMode: localSrcMode || globalSrcMode,
-    isNative
+    isNative,
+    scopedId
   }))
 
   let ast = parsed.root

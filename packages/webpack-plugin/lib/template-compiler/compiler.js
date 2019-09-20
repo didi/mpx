@@ -209,6 +209,7 @@ function evalMpxCommentExp (exp) {
 function isMpxCommentAttrs (content) {
   return /@mpx-attrs/.test(content)
 }
+
 function produceMpxCommentAttrs (content) {
   const exp = /@mpx-attrs[^(]*?\(([\s\S]*)\)/.exec(content)[1].trim()
   const tmpOpts = evalMpxCommentExp(exp)
@@ -232,6 +233,7 @@ function produceMpxCommentAttrs (content) {
   })
   curMpxComment = tmpOpts
 }
+
 function consumeMpxCommentAttrs (attrs, mode) {
   let ret = attrs
   if (curMpxComment) {
@@ -262,11 +264,13 @@ function consumeMpxCommentAttrs (attrs, mode) {
   }
   return ret
 }
+
 function assertMpxCommentAttrsEnd () {
   if (curMpxComment) {
     throw new Error('No target for @mpx-attrs!')
   }
 }
+
 // mpx special comments
 
 function cached (fn) {
@@ -1623,6 +1627,17 @@ function processAliExternalClassesHack (el, options) {
   }
 }
 
+function processScoped (el, options) {
+  const scopedId = options.scopedId
+  if (scopedId && isRealNode(el)) {
+    const staticClass = getAndRemoveAttr(el, 'class')
+    addAttrs(el, [{
+      name: 'class',
+      value: staticClass ? `${staticClass} ${scopedId}` : scopedId
+    }])
+  }
+}
+
 function processAliStyleClassHack (el, options, root) {
   ['style', 'class'].forEach((type) => {
     let exp = getAndRemoveAttr(el, type)
@@ -1709,6 +1724,8 @@ function processElement (el, root, options, meta) {
   let tranAli = mode === 'ali' && srcMode === 'wx'
 
   const pass = isNative || processTemplate(el) || processingTemplate
+
+  processScoped(el, options)
 
   if (tranAli) {
     processAliExternalClassesHack(el, options)

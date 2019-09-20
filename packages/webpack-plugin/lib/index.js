@@ -72,7 +72,7 @@ class MpxWebpackPlugin {
       }
     })
     options.resolveMode = options.resolveMode || 'webpack'
-    options.writeMode = options.writeMode || 'full'
+    options.writeMode = options.writeMode || 'changed'
     if (options.autoSplit === undefined) {
       options.autoSplit = true
     }
@@ -145,14 +145,13 @@ class MpxWebpackPlugin {
 
     // 代理writeFile
     if (this.options.writeMode === 'changed') {
-      const writedFileHashMap = {}
+      const writedFileContentMap = new Map()
       const originalWriteFile = compiler.outputFileSystem.writeFile
       compiler.outputFileSystem.writeFile = (filePath, content, callback) => {
-        const contentString = content.toString('utf8')
-        if (writedFileHashMap[filePath] && writedFileHashMap[filePath] === contentString) {
+        if (writedFileContentMap.has(filePath) && writedFileContentMap.get(filePath).equals(content)) {
           return callback()
         }
-        writedFileHashMap[filePath] = contentString
+        writedFileContentMap.set(filePath, content)
         originalWriteFile(filePath, content, callback)
       }
     }
