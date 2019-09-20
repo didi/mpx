@@ -2,6 +2,15 @@ import { error, getEnvObj } from '../utils'
 import getWxToAliApi from './wxToAli'
 import promisify from '../promisify'
 
+function genFromMap (platforms = []) {
+  const result = {}
+  platforms.forEach((platform) => {
+    result[`__mpx_src_mode_${platform}__`] = platform
+  })
+  return result
+
+}
+
 function transformApi (target, options) {
   const wxToAliApi = getWxToAliApi({ optimize: options.optimize })
   const platformMap = {
@@ -10,18 +19,12 @@ function transformApi (target, options) {
     'swan_ali': wxToAliApi,
     'tt_ali': wxToAliApi
   }
-  const platforms = [
-    '__mpx_srcMode_wx',
-    '__mpx_srcMode_ali',
-    '__mpx_srcMode_swan',
-    '__mpx_srcMode_qq',
-    '__mpx_srcMode_tt'
-  ]
+  const fromMap = genFromMap(['wx', 'ali', 'swan', 'qq', 'tt'])
 
   const envObj = getEnvObj()
 
   function joinName (from = '', to = '') {
-    return `${from.replace(/^__mpx_srcMode_/, '')}_${to}`
+    return `${fromMap[from]}_${to}`
   }
 
   Object.keys(wxToAliApi).forEach(api => {
@@ -39,7 +42,7 @@ function transformApi (target, options) {
         const to = options.to
         let from = args.pop()
 
-        if (typeof from !== 'string' || !~platforms.indexOf(from)) {
+        if (typeof from !== 'string' || !fromMap[from]) {
           args.push(from)
           from = options.from
         }
