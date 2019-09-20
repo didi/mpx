@@ -193,7 +193,8 @@ module.exports = function (raw) {
             root = path.join(root, info.descriptionFileData.miniprogram)
           }
           if (info.descriptionFileData.name) {
-            name = info.descriptionFileData.name
+            // 去掉name里面的@符号，因为支付宝不支持文件路径上有@
+            name = info.descriptionFileData.name.split('@').join('')
           }
         }
         let relativePath = path.relative(root, resourceName)
