@@ -44,7 +44,7 @@ function extractMixins (mergeOptions, options, needConvert) {
   }
   if (options.mixins) {
     for (const mix of options.mixins) {
-      if (typeof mix === 'string') {
+      if (typeof mix === 'string' && process.env.NODE_ENV !== 'production') {
         console.error(`【MPX CONVERT ERROR】at ${global.currentResource || ''} : Don't support for convert the string-formatted【behavior】into mixin`)
       } else {
         extractMixins(mergeOptions, mix, needConvert)
@@ -161,7 +161,7 @@ function extractPageHooks (options) {
     const PAGE_HOOKS = convertRule.lifecycle.page
     methods && Object.keys(methods).forEach(key => {
       if (PAGE_HOOKS.indexOf(key) > -1) {
-        if (newOptions[key]) {
+        if (newOptions[key] && process.env.NODE_ENV !== 'production') {
           console.warn('【MPX ERROR】', `Don't redefine the lifecycle [${key}]， it will use the methods's lifecycle if redefined`)
         }
         newOptions[key] = methods[key]
@@ -181,7 +181,7 @@ function mergeMixins (parent, child) {
       mergeDataFn(parent, child, key)
     } else if (/^(computed|properties|props|methods|proto)$/.test(key)) {
       mergeSimpleProps(parent, child, key)
-    } else if (/^(watch|pageLifetimes|observers)$/.test(key)) {
+    } else if (/^(watch|pageLifetimes|observers|events)$/.test(key)) {
       mergeToArray(parent, child, key)
     } else if (/^behaviors$/.test(key)) {
       mergeArray(parent, child, key)
@@ -315,6 +315,7 @@ function proxyHooks (options) {
 function transformHOOKS (options) {
   composeHooks(options, CURRENT_HOOKS)
   options.pageLifetimes && composeHooks(options.pageLifetimes)
+  options.events && composeHooks(options.events)
   if (curType === 'blend' && convertRule.support) {
     const COMPONENT_HOOKS = convertRule.lifecycle.component
     for (const key in options) {

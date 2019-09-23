@@ -1,7 +1,7 @@
 
 export default function pageStatusMixin (mixinType) {
   if (mixinType === 'page') {
-    return {
+    let pageMixin = {
       data: {
         mpxPageStatus: 'show'
       },
@@ -12,6 +12,17 @@ export default function pageStatusMixin (mixinType) {
         this.mpxPageStatus = 'hide'
       }
     }
+    if (is('ali')) {
+      Object.assign(pageMixin, {
+        events: {
+          onResize (e) {
+            this.__mpxWindowSizeEvent = e
+            this.mpxPageStatus = 'resize'
+          }
+        }
+      })
+    }
+    return pageMixin
   } else {
     if (__mpx_mode__ === 'ali') {
       return {
@@ -20,10 +31,17 @@ export default function pageStatusMixin (mixinType) {
             handler (val) {
               if (val) {
                 const rawOptions = this.$rawOptions
-                const callback = val === 'show'
-                  ? rawOptions.pageShow
-                  : rawOptions.pageHide
+                let callback = () => {}
+                if (val === 'show') callback = rawOptions.pageShow
+                if (val === 'hide') callback = rawOptions.pageHide
                 typeof callback === 'function' && callback.call(this)
+              }
+              // 让支付宝支持pageLifetimes
+              const pageLifetimes = this.$rawOptions.pageLifetimes
+              if (pageLifetimes) {
+                if (val === 'show' && typeof pageLifetimes.show === 'function') pageLifetimes.show.call(this)
+                if (val === 'hide' && typeof pageLifetimes.hide === 'function') pageLifetimes.hide.call(this)
+                if (val === 'resize' && typeof pageLifetimes.resize === 'function') pageLifetimes.resize.call(this, this.__mpxWindowSizeEvent)
               }
             },
             immediate: true
@@ -42,9 +60,9 @@ export default function pageStatusMixin (mixinType) {
             handler (val) {
               if (val) {
                 const rawOptions = this.$rawOptions
-                const callback = val === 'show'
-                  ? rawOptions.pageShow
-                  : rawOptions.pageHide
+                let callback = () => {}
+                if (val === 'show') callback = rawOptions.pageShow
+                if (val === 'hide') callback = rawOptions.pageHide
                 typeof callback === 'function' && callback.call(this)
               }
             },

@@ -1,16 +1,18 @@
 import * as wxLifecycle from '../platform/patch/wx/lifecycle'
 import { mergeLifecycle } from './mergeLifecycle'
 
-const NOTSUPPORTS = ['moved', 'pageLifetimes', 'definitionFilter']
+const NOTSUPPORTS = ['moved', 'definitionFilter']
 
 function convertErrorDesc (key) {
-  console.error(`【MPX CONVERT ERROR】at ${global.currentResource || ''} : Don't support for convert the option【${key}】 of the wx-component into the ali-component`)
+  if (process.env.NODE_ENV !== 'production') {
+    console.error(`【MPX CONVERT ERROR】at ${global.currentResource || ''} : Don't support for convert the option【${key}】 of the wx-component into the ali-component`)
+  }
 }
 
 function notSupportTip (options) {
   NOTSUPPORTS.forEach(key => {
     if (options[key]) {
-      convertErrorDesc(key)
+      process.env.NODE_ENV !== 'production' && convertErrorDesc(key)
       delete options[key]
     }
   })

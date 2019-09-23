@@ -6,7 +6,7 @@ const LibraryTemplatePlugin = require('webpack/lib/LibraryTemplatePlugin')
 const SingleEntryPlugin = require('webpack/lib/SingleEntryPlugin')
 const LimitChunkCountPlugin = require('webpack/lib/optimize/LimitChunkCountPlugin')
 const normalize = require('./utils/normalize')
-const stripExtension = require('./utils/strip-extention')
+const getResourcePath = require('./utils/get-resource-path')
 const getMainCompilation = require('./utils/get-main-compilation')
 const toPosix = require('./utils/to-posix')
 const config = require('./config')
@@ -15,14 +15,6 @@ const fixSwanRelative = require('./utils/fix-swan-relative')
 
 const defaultResultSource = '// removed by extractor'
 
-function getResourcePath (resource) {
-  return resource.split('?').shift()
-}
-
-function getResource (request) {
-  return request.split('!').pop()
-}
-
 module.exports = function (content) {
   this.cacheable()
   const options = loaderUtils.getOptions(this) || {}
@@ -30,8 +22,13 @@ module.exports = function (content) {
   const mainCompilation = getMainCompilation(this._compilation)
   const mpx = mainCompilation.__mpx__
 
+  const packageName = mpx.processingSubPackageRoot || 'main'
   const pagesMap = mpx.pagesMap
-  const componentsMap = mpx.componentsMap
+  const componentsMap = mpx.componentsMap[packageName]
+  const resourceMap = mpx.resourceMap
+  const resourceHit = mpx.resourceHit
+  const currentResourceMap = resourceMap[packageName]
+
   const extract = mpx.extract
   const extractedMap = mpx.extractedMap
   const mode = mpx.mode
@@ -39,49 +36,39 @@ module.exports = function (content) {
   const typeExtMap = config[mode].typeExtMap
 
   const rootName = mainCompilation._preparedEntrypoints[0].name
-  const rootResource = stripExtension(getResource(mainCompilation._preparedEntrypoints[0].request))
+  const rootRequest = mainCompilation._preparedEntrypoints[0].request
+  const rootModule = mainCompilation.entries.find((module) => {
+    return module.rawRequest === rootRequest
+  })
+  const rootResourcePath = getResourcePath(rootModule.resource)
 
   const resourceRaw = this.resource
   const issuerResourceRaw = options.issuerResource
 
   let resultSource = defaultResultSource
 
-  function getFile (resourceRaw, type, hasIssuer) {
+  function getFile (resourceRaw, type) {
     const resourcePath = getResourcePath(resourceRaw)
-    // 为了确保父编译中确定的输出路径不再改变，此处特意没有在id中加入hasIssuer
-    const id = `${mode}:${type}:${resourcePath}`
+    const id = `${mode}:${packageName}:${type}:${resourcePath}`
     if (!seenFile[id]) {
-      const resource = stripExtension(resourceRaw)
-      let filename
-      // import进来的资源不应该是app/page/component，避免app.mpx引用app.wxss这样的case出现问题
-      // 由于父编译的getFile在子编译之前执行，因为有seenFile的存在，一旦在父编译中确认了输出路径就不会改变
-      if (!hasIssuer) {
-        filename = pagesMap[resource] || componentsMap[resource]
-        if (!filename && resource === rootResource) {
-          filename = rootName
-        }
+      const resourcePath = getResourcePath(resourceRaw)
+      let filename = pagesMap[resourcePath] || componentsMap[resourcePath]
+      if (!filename && resourcePath === rootResourcePath) {
+        filename = rootName
       }
 
       if (filename) {
         seenFile[id] = filename + typeExtMap[type]
       } else {
-        const subPackagesMap = mpx.subPackagesMap
-        const mainResourceMap = mpx.mainResourceMap
         const resourceName = path.parse(resourcePath).name
-
         let subPackageRoot = ''
-        if (mpx.processingSubPackages) {
-          for (let src in subPackagesMap) {
-            // 分包引用且主包未引用的资源，需打入分包目录中
-            if (!path.relative(src, resourcePath).startsWith('..') && !mainResourceMap[resourcePath]) {
-              subPackageRoot = subPackagesMap[src]
-              break
-            }
+        if (mpx.processingSubPackageRoot) {
+          if (!resourceMap.main[resourcePath]) {
+            subPackageRoot = mpx.processingSubPackageRoot
           }
-        } else {
-          mainResourceMap[resourcePath] = true
         }
-        seenFile[id] = toPosix(path.join(subPackageRoot, type, resourceName + hash(resourcePath) + typeExtMap[type]))
+        currentResourceMap[resourcePath] = seenFile[id] = toPosix(path.join(subPackageRoot, type, resourceName + hash(resourcePath) + typeExtMap[type]))
+        resourceHit[resourcePath] = true
       }
     }
     return seenFile[id]
@@ -96,7 +83,7 @@ module.exports = function (content) {
     issuerFile = getFile(issuerResourceRaw, type)
   }
 
-  const file = getFile(resourceRaw, type, !!issuerFile)
+  const file = getFile(resourceRaw, type)
   const filename = /(.*)\..*/.exec(file)[1]
 
   let sideEffects = () => {
@@ -209,7 +196,8 @@ module.exports = function (content) {
 
       extract(text, file, index, sideEffects)
 
-      if (resultSource === defaultResultSource) {
+      // 在production模式下移除extract残留空模块
+      if (resultSource === defaultResultSource && this.minimize) {
         this._module.needRemove = true
       }
     } catch (err) {

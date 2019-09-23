@@ -54,6 +54,36 @@
 }
 ```
 
+### 增强类型
+
+如果需要增加 Mpx 的属性和选项，可以自定义声明 TypeScript 补充现有的类型。
+
+例如，首先创建一个 types.d.ts 文件
+
+```ts
+// types.d.ts
+
+import { Mpx } from '@mpxjs/core'
+
+declare module '@mpxjs/core' {
+  // 声明为 Mpx 补充的属性
+  interface Mpx {
+    $myProperty: string
+  }
+}
+```
+
+之后在任意文件只需引用一次 types.d.ts 声明文件即可，例如在 app.mpx 中引用
+
+```ts
+// app.mpx
+
+/// <reference path="./types.d.ts" />
+import mpx from '@mpxjs/core'
+
+mpx.$myProperty = 'my-property'
+```
+
 ## 类型推导及注意事项
 
 Mpx基于泛型函数提供了非常方便用户使用的反向类型推导能力，简单来说，就是用户可以用非常接近于js的方式调用Mpx提供的api，就能够获得大量基于用户输入参数反向推导得到的类型提示及检查。但是由于ts本身的能力限制，我们在mpx的运行时中添加了少量辅助函数和变种api，便于用户最大程度地享受反向类型推导带来的便利性，具体的注意事项和使用方法如下述demo
@@ -61,8 +91,8 @@ Mpx基于泛型函数提供了非常方便用户使用的反向类型推导能�
 ```typescript
 import {createComponent, getComputed, getMixin, createStoreWithThis} from '@mpxjs/core'
 
+// createStoreWithThis作为createStore的变种方法，主要变化在于定义getters，mutations和actions时，获取自身的state，getters等属性不再通过参数传入，而是通过this.state或者this.getters等属性进行访问，由于TS的能力限制，getters/mutations/actions只有使用对象字面量的方式直接传入createStoreWithThis时才能正确推导出this的类型，当需要将getters/mutations/actions拆解为对象编写时，需要用户显式地声明this类型，无法直接推导得出。
 
-// createStoreWithThis作为createStore的变种方法，主要变化在于定义getters，mutations和actions时，获取自身的state，getters等属性不再通过参数传入，而是通过this.state或者this.getters等属性进行访问
 const store = createStoreWithThis({
   state: {
     aa: 1,

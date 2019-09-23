@@ -1,6 +1,15 @@
-import { error } from '../utils'
+import { error, getEnvObj } from '../utils'
 import getWxToAliApi from './wxToAli'
 import promisify from '../promisify'
+
+function genFromMap (platforms = []) {
+  const result = {}
+  platforms.forEach((platform) => {
+    result[`__mpx_src_mode_${platform}__`] = platform
+  })
+  return result
+
+}
 
 function transformApi (target, options) {
   const wxToAliApi = getWxToAliApi({ optimize: options.optimize })
@@ -10,15 +19,12 @@ function transformApi (target, options) {
     'swan_ali': wxToAliApi,
     'tt_ali': wxToAliApi
   }
-  const platforms = ['wx', 'ali', 'swan', 'qq', 'tt']
-  const cacheTarget = {}
+  const fromMap = genFromMap(['wx', 'ali', 'swan', 'qq', 'tt'])
 
-  Object.keys(target).forEach(key => {
-    cacheTarget[key] = target[key]
-  })
+  const envObj = getEnvObj()
 
   function joinName (from = '', to = '') {
-    return `${from}_${to}`
+    return `${fromMap[from]}_${to}`
   }
 
   Object.keys(wxToAliApi).forEach(api => {
@@ -36,7 +42,7 @@ function transformApi (target, options) {
         const to = options.to
         let from = args.pop()
 
-        if (typeof from !== 'string' || !~platforms.indexOf(from)) {
+        if (typeof from !== 'string' || !fromMap[from]) {
           args.push(from)
           from = options.from
         }
@@ -49,8 +55,8 @@ function transformApi (target, options) {
           return result[api].apply(target, args)
         }
 
-        if (cacheTarget[api]) {
-          return cacheTarget[api].apply(target, args)
+        if (envObj[api]) {
+          return envObj[api].apply(target, args)
         } else {
           error(`当前环境不存在 ${api} 方法`)
         }

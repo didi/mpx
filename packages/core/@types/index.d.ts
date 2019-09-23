@@ -432,7 +432,7 @@ export const createAction: typeof action
 
 export {observable, extendObservable}
 
-interface Mpx {
+export interface Mpx {
   createComponent: typeof createComponent
   createPage: typeof createPage
   createApp: typeof createApp

@@ -1,6 +1,6 @@
 const hash = require('hash-sum')
 const path = require('path')
-const stripExtension = require('./utils/strip-extention')
+const getResourcePath = require('./utils/get-resource-path')
 const loaderUtils = require('loader-utils')
 const config = require('./config')
 const createHelpers = require('./helpers')
@@ -27,39 +27,36 @@ module.exports = function (content) {
 
   const filePath = this.resourcePath
 
-  const context = (
-    this.rootContext ||
-    (this.options && this.options.context) ||
-    process.cwd()
-  )
-  const shortFilePath = path.relative(context, filePath).replace(/^(\.\.[\\/])+/, '')
-  const moduleId = hash(isProduction ? (shortFilePath + '\n' + content) : shortFilePath)
+  const moduleId = hash(this._module.identifier())
 
-  const needCssSourceMap = (
-    !isProduction &&
-    this.sourceMap &&
-    options.cssSourceMap !== false
-  )
-
-  const hasScoped = false
-  const hasComment = false
-  const isNative = true
 
   const projectRoot = mpx.projectRoot
   const mode = mpx.mode
   const globalSrcMode = mpx.srcMode
   const queryObj = loaderUtils.parseQuery(this.resourceQuery || '?')
   const localSrcMode = queryObj.mode
+  const packageName = mpx.processingSubPackageRoot || 'main'
   const pagesMap = mpx.pagesMap
-  const componentsMap = mpx.componentsMap
-  const resource = stripExtension(this.resource)
-  const isApp = !pagesMap[resource] && !componentsMap[resource]
+  const componentsMap = mpx.componentsMap[packageName]
+  const resourcePath = getResourcePath(this.resource)
+  const parsed = path.parse(resourcePath)
+  const resourceName = path.join(parsed.dir, parsed.name)
+  const isApp = !pagesMap[resourcePath] && !componentsMap[resourcePath]
   const srcMode = localSrcMode || globalSrcMode
   const fs = this._compiler.inputFileSystem
   const typeExtMap = Object.assign({}, config[srcMode].typeExtMap)
 
+  const needCssSourceMap = (
+    !isProduction &&
+    this.sourceMap &&
+    options.cssSourceMap !== false
+  )
+  const hasScoped = queryObj.scoped && mode === 'ali'
+  const hasComment = false
+  const isNative = true
+
   function tryEvalMPXJSON (callback) {
-    const _src = resource + EXT_MPX_JSON
+    const _src = resourceName + EXT_MPX_JSON
     fs.readFile(_src, (err, raw) => {
       if (err) {
         callback(err)
@@ -80,7 +77,7 @@ module.exports = function (content) {
   // 先读取json获取usingComponents信息
   async.waterfall([
     (callback) => {
-      fs.stat(resource + EXT_MPX_JSON, (err) => {
+      fs.stat(resourceName + EXT_MPX_JSON, (err) => {
         if (!err) {
           useMPXJSON = true
         }
@@ -92,7 +89,7 @@ module.exports = function (content) {
         if (key === 'json' && useMPXJSON) {
           return callback()
         }
-        fs.stat(resource + ext, (err) => {
+        fs.stat(resourceName + ext, (err) => {
           if (err) {
             delete typeExtMap[key]
             callback()
@@ -108,7 +105,7 @@ module.exports = function (content) {
         tryEvalMPXJSON(callback)
       } else {
         if (typeExtMap['json']) {
-          fs.readFile(resource + typeExtMap['json'], (err, raw) => {
+          fs.readFile(resourceName + typeExtMap['json'], (err, raw) => {
             if (err) {
               callback(err)
             } else {
@@ -147,8 +144,8 @@ module.exports = function (content) {
 
       const getRequire = (type) => {
         let localQuery = Object.assign({}, queryObj)
-        let src = resource + typeExtMap[type]
-        localQuery.__resource = resource
+        let src = resourceName + typeExtMap[type]
+        localQuery.resourcePath = resourcePath
         if (type !== 'script') {
           this.addDependency(src)
         }
@@ -162,6 +159,8 @@ module.exports = function (content) {
 
         if (type === 'script') {
           return getNamedExportsForSrc(type, { src })
+        } else if (type === 'styles' && hasScoped) {
+          return getRequireForSrc(type, { src }, 0, true)
         } else {
           return getRequireForSrc(type, { src })
         }
@@ -169,13 +168,15 @@ module.exports = function (content) {
 
       // 注入模块id及资源路径
       let globalInjectCode = `global.currentModuleId = ${JSON.stringify(moduleId)};\n`
-      globalInjectCode += `global.currentResource = ${JSON.stringify(filePath)};\n`
+      if (!isProduction) {
+        globalInjectCode += `global.currentResource = ${JSON.stringify(filePath)};\n`
+      }
 
       // 注入构造函数
       let ctor = 'App'
-      if (pagesMap[resource]) {
+      if (pagesMap[resourcePath]) {
         ctor = mode === 'ali' ? 'Page' : 'Component'
-      } else if (componentsMap[resource]) {
+      } else if (componentsMap[resourcePath]) {
         ctor = 'Component'
       }
       globalInjectCode += `global.currentCtor = ${ctor};\n`
@@ -206,11 +207,11 @@ module.exports = function (content) {
       for (let type in typeExtMap) {
         if (type === 'json' && useMPXJSON) {
           // 用了MPXJSON的话，强制生成目标json
-          let _src = resource + EXT_MPX_JSON
+          let _src = resourceName + EXT_MPX_JSON
           this.addDependency(_src)
 
           let localQuery = Object.assign({}, queryObj)
-          localQuery.__resource = resource
+          localQuery.resourcePath = resourcePath
           localQuery.__component = true
           _src += stringifyQuery(localQuery)
 

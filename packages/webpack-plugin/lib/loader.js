@@ -12,6 +12,7 @@ const optionProcessorPath = require.resolve('./runtime/optionProcessor')
 const getPageName = require('./utils/get-page-name')
 const toPosix = require('./utils/to-posix')
 const stringifyQuery = require('./utils/stringify-query')
+const getResourcePath = require('./utils/get-resource-path')
 
 module.exports = function (content) {
   this.cacheable()
@@ -20,20 +21,21 @@ module.exports = function (content) {
   if (!mpx) {
     return content
   }
+  const packageName = mpx.processingSubPackageRoot || 'main'
   const pagesMap = mpx.pagesMap
-  const componentsMap = mpx.componentsMap
+  const componentsMap = mpx.componentsMap[packageName]
   const projectRoot = mpx.projectRoot
   const mode = mpx.mode
   const globalSrcMode = mpx.srcMode
   const resolveMode = mpx.resolveMode
   const localSrcMode = loaderUtils.parseQuery(this.resourceQuery || '?').mode
-  const resource = stripExtension(this.resource)
+  const resourcePath = getResourcePath(this.resource)
   const srcMode = localSrcMode || globalSrcMode
 
   const resourceQueryObj = loaderUtils.parseQuery(this.resourceQuery || '?')
 
   // 支持资源query传入page或component支持页面/组件单独编译
-  if ((resourceQueryObj.component && !componentsMap[resource]) || (resourceQueryObj.page && !pagesMap[resource])) {
+  if ((resourceQueryObj.component && !componentsMap[resourcePath]) || (resourceQueryObj.page && !pagesMap[resourcePath])) {
     let entryChunkName
     const rawRequest = this._module.rawRequest
     const _preparedEntrypoints = this._compilation._preparedEntrypoints
@@ -71,13 +73,7 @@ module.exports = function (content) {
 
   const filePath = this.resourcePath
 
-  const context = (
-    this.rootContext ||
-    (this.options && this.options.context) ||
-    process.cwd()
-  )
-  const shortFilePath = path.relative(context, filePath).replace(/^(\.\.[\\/])+/, '')
-  const moduleId = hash(isProduction ? (shortFilePath + '\n' + content) : shortFilePath)
+  const moduleId = hash(this._module.identifier())
 
   const needCssSourceMap = (
     !isProduction &&
@@ -90,7 +86,8 @@ module.exports = function (content) {
   // 触发webpack global var 注入
   let output = 'global.currentModuleId;\n'
 
-  const hasScoped = parts.styles.some(({ scoped }) => scoped)
+  // 只有ali才可能需要scoped
+  const hasScoped = parts.styles.some(({ scoped }) => scoped) && mode === 'ali'
   const templateAttrs = parts.template && parts.template.attrs && parts.template.attrs
   const hasComment = templateAttrs && templateAttrs.comments
   const isNative = false
@@ -354,7 +351,9 @@ module.exports = function (content) {
 
   // 注入模块id及资源路径
   let globalInjectCode = `global.currentModuleId = ${JSON.stringify(moduleId)};\n`
-  globalInjectCode += `global.currentResource = ${JSON.stringify(filePath)};\n`
+  if (!isProduction) {
+    globalInjectCode += `global.currentResource = ${JSON.stringify(filePath)};\n`
+  }
 
   // 注入构造函数
   let ctor = 'App'
@@ -411,10 +410,11 @@ module.exports = function (content) {
     let styleInjectionCode = ''
     parts.styles.forEach((style, i) => {
       processSrc(style)
+      let scoped = hasScoped ? style.scoped : false
       // require style
       let requireString = style.src
-        ? getRequireForSrc('styles', style, -1, style.scoped, undefined, true)
-        : getRequire('styles', style, i, style.scoped)
+        ? getRequireForSrc('styles', style, -1, scoped, undefined, true)
+        : getRequire('styles', style, i, scoped)
 
       const hasStyleLoader = requireString.indexOf('style-loader') > -1
       const invokeStyle = code => `${code}\n`

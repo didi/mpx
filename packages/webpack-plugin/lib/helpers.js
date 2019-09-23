@@ -10,9 +10,9 @@ const wxsLoaderPath = normalize.lib('wxs/wxs-loader')
 const wxmlLoaderPath = normalize.lib('wxml/wxml-loader')
 const wxssLoaderPath = normalize.lib('wxss/loader')
 const config = require('./config')
-const stringifyQuery = require('./utils/stringify-query')
 const selectorPath = normalize.lib('selector')
 const extractorPath = normalize.lib('extractor')
+const addQuery = require('./utils/add-query')
 
 // check whether default js loader exists
 const hasBabel = !!tryRequire('babel-loader')
@@ -136,23 +136,21 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
     )
   }
 
-  function addQueryMode (request, mode) {
-    if (!mode) {
-      return request
+  function processQuery (request, mode, type) {
+    let addQueryObj = {}
+    let removeKeys
+    if (mode) {
+      addQueryObj.mode = mode
     }
-    const queryIndex = request.indexOf('?')
-    let query
-    let resource = request
-    if (queryIndex >= 0) {
-      query = request.substr(queryIndex)
-      resource = request.substr(0, queryIndex)
-    }
-    let queryObj = loaderUtils.parseQuery(query || '?')
-    queryObj.mode = mode
-    return resource + stringifyQuery(queryObj)
+    // 为了使js模块全局唯一，避免闭包变量存在多份，删除js模块的分包标记
+    // 该逻辑有问题，模块复用后后续分包不会再执行component初始化函数，导致wx找不到组件
+    // if (type === 'script') {
+    //   removeKeys = 'subPackageRoot'
+    // }
+    return addQuery(request, addQueryObj, removeKeys)
   }
 
-  function getRequestString (type, part, index, scoped) {
+  function getRequestString (type, part, index = 0, scoped) {
     return loaderUtils.stringifyRequest(
       loaderContext,
       // disable all configuration loaders
@@ -162,7 +160,7 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
       // select the corresponding part from the mpx file
       getSelectorString(type, index) +
       // the url to the actual mpx file, including remaining requests
-      addQueryMode(rawRequest, part.mode)
+      processQuery(rawRequest, part.mode, type)
     )
   }
 
@@ -184,10 +182,10 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
     )
   }
 
-  function getSrcRequestString (type, impt, index, scoped, prefix = '!', withIssuer) {
+  function getSrcRequestString (type, impt, index = 0, scoped, prefix = '!', withIssuer) {
     return loaderUtils.stringifyRequest(
       loaderContext,
-      prefix + getLoaderString(type, impt, index, scoped, withIssuer) + addQueryMode(impt.src, impt.mode)
+      prefix + getLoaderString(type, impt, index, scoped, withIssuer) + processQuery(impt.src, impt.mode, type)
     )
   }
 
@@ -267,7 +265,7 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
       // style compiler that needs to be applied for all styles
       styleCompiler = styleCompilerPath + '?' +
         JSON.stringify({
-          id: moduleId,
+          moduleId,
           scoped: !!scoped,
           sourceMap: needCssSourceMap,
           transRpx: options.transRpx,
@@ -353,7 +351,7 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
     }
   }
 
-  function getSelectorString (type, index = 0) {
+  function getSelectorString (type, index) {
     return ensureBang(
       selectorPath +
       '?type=' +
@@ -364,7 +362,7 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
     )
   }
 
-  function getExtractorString (type, index = 0, withIssuer) {
+  function getExtractorString (type, index, withIssuer) {
     return ensureBang(
       extractorPath +
       '?type=' +
