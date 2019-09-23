@@ -1305,8 +1305,6 @@ function processFor (el) {
   }
 }
 
-// todo bugfix refid避免全局自增
-
 function processRef (el, options, meta) {
   let val = getAndRemoveAttr(el, config[mode].directive.ref)
   let type = options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component' ? 'component' : 'node'
