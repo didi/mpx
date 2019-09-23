@@ -19,7 +19,9 @@ function compileMPXJSON ({ source, mode, filePath }) {
     }
     return require(modulePath)
   }, m, filePath, dirname, mode)
-  return m.exports
+  // mpx-json借了nodejs的require实现，会有缓存，而外面引用这个json的时候对usingComponents做了side effect，从而导致在watch时会多了一些不存在的组件路径，从而resolve错误
+  // 这里做了一个深复制绕过这个问题
+  return JSON.parse(JSON.stringify(m.exports))
 }
 
 function compileMPXJSONText (opts) {
