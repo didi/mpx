@@ -201,6 +201,7 @@ module.exports = function (content) {
         content: '<router-view></router-view>'
       }
     }
+    let builtInComponents = {}
     if (template) {
       processSrc(template)
       output += genComponentTag(template, (template) => {
@@ -220,6 +221,8 @@ module.exports = function (content) {
             mode,
             srcMode: templateSrcMode
           })
+
+          Object.assign(builtInComponents, parsed.meta.builtInComponentsMap)
 
           return templateCompiler.serialize(parsed.root)
         }
@@ -306,6 +309,7 @@ module.exports = function (content) {
       }
 
       let importedComponentsMap = {}
+      // 处理用户注册组件
       if (jsonObj.usingComponents) {
         Object.keys(jsonObj.usingComponents).forEach((componentName, index) => {
           let component = jsonObj.usingComponents[componentName]
@@ -314,9 +318,17 @@ module.exports = function (content) {
             component = loaderUtils.urlToRequest(component, projectRoot)
           }
           const componentVar = `__mpx_component_${index}__`
-
           component = addQuery(component, { component: true })
-
+          content += `import ${componentVar} from ${stringifyRequest(component)}\n`
+          importedComponentsMap[componentName] = componentVar
+        })
+      }
+      // 处理内置注入组件
+      if (builtInComponents) {
+        Object.keys(builtInComponents).forEach((componentName, index) => {
+          let component = builtInComponents[index]
+          const componentVar = `__mpx_built_in_component_${index}__`
+          component = addQuery(component, { component: true })
           content += `import ${componentVar} from ${stringifyRequest(component)}\n`
           importedComponentsMap[componentName] = componentVar
         })

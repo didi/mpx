@@ -1636,6 +1636,19 @@ function processScoped (el, options) {
   }
 }
 
+
+const builtInComponentsPrefix = '@mpxjs/webpack-plugin/lib/runtime/components'
+
+function processBuiltInComponents (el, meta) {
+  const builtInComponentsMap = config[mode].components
+  if (!meta.builtInComponentsMap) {
+    meta.builtInComponentsMap = {}
+  }
+  if (builtInComponentsMap[el.tag] && !meta.builtInComponentsMap[el.tag]) {
+    meta.builtInComponentsMap[el.tag] = `${builtInComponentsPrefix}/${mode}/${el.tag}/.vue`
+  }
+}
+
 function processAliStyleClassHack (el, options, root) {
   ['style', 'class'].forEach((type) => {
     let exp = getAndRemoveAttr(el, type)
@@ -1719,18 +1732,19 @@ function processElement (el, root, options, meta) {
     rulesRunner(el)
   }
 
-  // web暂时只跑规则转换
-  if (mode === 'web') {
+  const transAli = mode === 'ali' && srcMode === 'wx'
+  const transWeb = mode === 'web' && srcMode === 'wx'
+
+  if (transWeb) {
+    processBuiltInComponents(el, options, meta)
     return
   }
-
-  let tranAli = mode === 'ali' && srcMode === 'wx'
 
   const pass = isNative || processTemplate(el) || processingTemplate
 
   processScoped(el, options)
 
-  if (tranAli) {
+  if (transAli) {
     processAliExternalClassesHack(el, options)
   }
 
