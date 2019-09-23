@@ -4,7 +4,6 @@ const parse = require('./parser')
 const createHelpers = require('./helpers')
 const loaderUtils = require('loader-utils')
 const InjectDependency = require('./dependency/InjectDependency')
-const stripExtension = require('./utils/strip-extention')
 const type = require('./utils/type')
 const templateCompiler = require('./template-compiler/compiler')
 const stringifyAttr = templateCompiler.stringifyAttr
