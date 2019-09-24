@@ -49,6 +49,8 @@ function getPackageCacheGroup (packageName) {
   }
 }
 
+// todo 输出web模式下自动对.mpx文件插入vue-loader
+
 let loaderOptions
 
 class MpxWebpackPlugin {
@@ -198,6 +200,8 @@ class MpxWebpackPlugin {
           extractedMap: {},
           extractSeenFile: {},
           usingComponents: [],
+          // todo es6 map读写性能高于object，之后会逐步替换
+          vueContentCache: new Map(),
           processingSubPackageRoot: '',
           wxsMap: {},
           wxsConentMap: {},

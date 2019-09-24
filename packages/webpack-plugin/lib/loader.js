@@ -29,6 +29,7 @@ module.exports = function (content) {
   const localSrcMode = loaderUtils.parseQuery(this.resourceQuery || '?').mode
   const resourcePath = getResourcePath(this.resource)
   const srcMode = localSrcMode || globalSrcMode
+  const vueContentCache = mpx.vueContentCache
 
   const resourceQueryObj = loaderUtils.parseQuery(this.resourceQuery || '?')
 
@@ -44,17 +45,17 @@ module.exports = function (content) {
       }
     }
     if (resourceQueryObj.component) {
-      componentsMap[resource] = entryChunkName || 'noEntryComponent'
+      componentsMap[resourcePath] = entryChunkName || 'noEntryComponent'
     } else {
-      pagesMap[resource] = entryChunkName || 'noEntryPage'
+      pagesMap[resourcePath] = entryChunkName || 'noEntryPage'
     }
   }
 
   let ctorType = 'app'
-  if (pagesMap[resource]) {
+  if (pagesMap[resourcePath]) {
     // page
     ctorType = 'page'
-  } else if (componentsMap[resource]) {
+  } else if (componentsMap[resourcePath]) {
     // component
     ctorType = 'component'
   }
@@ -64,12 +65,13 @@ module.exports = function (content) {
   const options = loaderUtils.getOptions(this) || {}
   const stringifyRequest = r => loaderUtils.stringifyRequest(loaderContext, r)
 
-  if (!mpx.loaderOptions) {
-    // 传递给nativeLoader复用
-    mpx.loaderOptions = options
-  }
-
   const filePath = this.resourcePath
+
+
+  // web输出模式下没有任何inject，可以通过cache直接返回
+  if (vueContentCache.has(filePath)) {
+    return vueContentCache.get(filePath)
+  }
 
   const moduleId = hash(this._module.identifier())
 
@@ -192,6 +194,7 @@ module.exports = function (content) {
 
   // 处理mode为web时输出vue格式文件
   if (mode === 'web') {
+
     // template
     output += '/* template */\n'
     let template = parts.template
@@ -312,6 +315,7 @@ module.exports = function (content) {
       // 处理用户注册组件
       if (jsonObj.usingComponents) {
         Object.keys(jsonObj.usingComponents).forEach((componentName, index) => {
+          // todo 对componentName进行横杠转驼峰
           let component = jsonObj.usingComponents[componentName]
 
           if (resolveMode === 'native') {
@@ -326,7 +330,7 @@ module.exports = function (content) {
       // 处理内置注入组件
       if (builtInComponents) {
         Object.keys(builtInComponents).forEach((componentName, index) => {
-          let component = builtInComponents[index]
+          let component = builtInComponents[componentName]
           const componentVar = `__mpx_built_in_component_${index}__`
           component = addQuery(component, { component: true })
           content += `import ${componentVar} from ${stringifyRequest(component)}\n`
@@ -335,6 +339,9 @@ module.exports = function (content) {
       }
 
       content += `global.currentSrcMode = ${JSON.stringify(scriptSrcMode)};\n`
+      if (!isProduction) {
+        content += `global.currentResource = ${JSON.stringify(filePath)};\n`
+      }
       // 为了正确获取currentSrcMode便于运行时进行转换，对于src引入的组件script采用require方式引入(由于webpack会将import的执行顺序上升至最顶),这意味着对于src引入脚本中的named export将不会生效，不过鉴于mpx和小程序中本身也没有在组件script中声明export的用法，所以应该没有影响
       content += script.src
         ? (getRequireForSrc('script', script) + '\n')
@@ -356,9 +363,13 @@ module.exports = function (content) {
       return content
     })
     output += '\n'
+    vueContentCache.set(filePath, output)
+    console.log(output)
     return output
   }
 
+
+  // todo loader中inject dep比较危险，watch模式下不一定靠谱，可考虑将import改为require然后通过修改loader内容注入
   // 注入模块id及资源路径
   let globalInjectCode = `global.currentModuleId = ${JSON.stringify(moduleId)};\n`
   if (!isProduction) {

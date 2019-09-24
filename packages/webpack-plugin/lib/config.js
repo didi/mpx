@@ -344,7 +344,7 @@ module.exports = {
   },
   web: {
     components: {
-      view: true
+      view: 'mpx-view'
     }
   }
 }

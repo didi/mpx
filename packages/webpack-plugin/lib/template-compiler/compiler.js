@@ -1644,8 +1644,13 @@ function processBuiltInComponents (el, meta) {
   if (!meta.builtInComponentsMap) {
     meta.builtInComponentsMap = {}
   }
-  if (builtInComponentsMap[el.tag] && !meta.builtInComponentsMap[el.tag]) {
-    meta.builtInComponentsMap[el.tag] = `${builtInComponentsPrefix}/${mode}/${el.tag}/.vue`
+  const srcTag = el.tag
+  const tarTag = builtInComponentsMap[srcTag]
+  if (tarTag) {
+    if (!meta.builtInComponentsMap[tarTag]) {
+      meta.builtInComponentsMap[tarTag] = `${builtInComponentsPrefix}/${mode}/${srcTag}.vue`
+    }
+    el.tag = tarTag
   }
 }
 
@@ -1736,7 +1741,7 @@ function processElement (el, root, options, meta) {
   const transWeb = mode === 'web' && srcMode === 'wx'
 
   if (transWeb) {
-    processBuiltInComponents(el, options, meta)
+    processBuiltInComponents(el, meta)
     return
   }
 
