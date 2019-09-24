@@ -1,4 +1,3 @@
-const path = require('path')
 const hash = require('hash-sum')
 const parse = require('./parser')
 const createHelpers = require('./helpers')

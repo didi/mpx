@@ -8,7 +8,6 @@ function genFromMap (platforms = []) {
     result[`__mpx_src_mode_${platform}__`] = platform
   })
   return result
-
 }
 
 function transformApi (target, options) {
