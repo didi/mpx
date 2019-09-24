@@ -26,9 +26,7 @@ export default function mergeOptions (options = {}, type, needConvert = true) {
     typeof convertRule.convert === 'function' && convertRule.convert(newOptions)
   }
 
-  if (mpxCustomKeysForBlend.length) {
-    newOptions.mpxCustomKeysForBlend = mpxCustomKeysForBlend
-  }
+  newOptions.mpxCustomKeysForBlend = mpxCustomKeysForBlend
   return transformHOOKS(newOptions)
 }
 

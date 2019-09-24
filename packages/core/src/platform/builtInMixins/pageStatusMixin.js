@@ -12,7 +12,7 @@ export default function pageStatusMixin (mixinType) {
         this.mpxPageStatus = 'hide'
       }
     }
-    if (is('ali')) {
+    if (__mpx_mode__ === 'ali') {
       Object.assign(pageMixin, {
         events: {
           onResize (e) {
