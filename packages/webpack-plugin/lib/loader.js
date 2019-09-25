@@ -129,7 +129,11 @@ module.exports = function (content) {
     globalInjectCode += 'if (!global.navigator) {\n' +
       '  global.navigator = {};\n' +
       '}\n' +
-      'global.navigator.standalone = true;\n'
+      'Object.defineProperty(global.navigator, "standalone",{\n' +
+      '  get () {\n' +
+      '    return true;\n' +
+      '  }\n' +
+      '});\n'
   }
 
   //

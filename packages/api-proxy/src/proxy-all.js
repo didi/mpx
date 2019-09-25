@@ -4,7 +4,7 @@ import promisify from './promisify'
 function proxyAll (target, usePromise, whiteList) {
   const envObj = getEnvObj()
   const list = promisify(envObj, usePromise, whiteList)
-  const platforms = ['wx', 'ali', 'swan', 'qq', 'tt']
+  const platforms = ['wx', 'ali', 'swan', 'qq', 'tt'].map(p => `__mpx_src_mode_${p}__`)
 
   Object.keys(list).forEach(api => {
     try {
