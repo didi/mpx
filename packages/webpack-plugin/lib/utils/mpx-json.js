@@ -27,6 +27,6 @@ function compileMPXJSONText (opts) {
 }
 
 module.exports = {
-  compileMPXJSON,
+  // compileMPXJSON,
   compileMPXJSONText
 }
