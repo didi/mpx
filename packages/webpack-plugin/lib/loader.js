@@ -130,6 +130,8 @@ module.exports = function (content) {
       '  global.navigator = {};\n' +
       '}\n' +
       'Object.defineProperty(global.navigator, "standalone",{\n' +
+      '  configurable: true,' +
+      '  enumerable: true,' +
       '  get () {\n' +
       '    return true;\n' +
       '  }\n' +
