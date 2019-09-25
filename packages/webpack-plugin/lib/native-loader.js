@@ -29,7 +29,6 @@ module.exports = function (content) {
 
   const moduleId = hash(this._module.identifier())
 
-
   const projectRoot = mpx.projectRoot
   const mode = mpx.mode
   const globalSrcMode = mpx.srcMode
