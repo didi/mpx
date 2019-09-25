@@ -56,7 +56,7 @@ module.exports = function (content) {
 
   const filePath = this.resourcePath
 
-  const moduleId = hash(this._module.identifier())
+  const moduleId = 'm' + hash(this._module.identifier())
 
   const needCssSourceMap = (
     !isProduction &&
