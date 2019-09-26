@@ -22,6 +22,7 @@ module.exports = function (content) {
   const localSrcMode = loaderUtils.parseQuery(this.resourceQuery || '?').mode
   const resourcePath = getResourcePath(this.resource)
   const srcMode = localSrcMode || globalSrcMode
+  const enableAutoScope = mpx.enableAutoScope
 
   const resourceQueryObj = loaderUtils.parseQuery(this.resourceQuery || '?')
 
@@ -66,7 +67,7 @@ module.exports = function (content) {
 
   const parts = parse(content, filePath, this.sourceMap, mode)
   // 只有ali才可能需要scoped
-  const hasScoped = parts.styles.some(({ scoped }) => scoped) && mode === 'ali'
+  const hasScoped = (parts.styles.some(({ scoped }) => scoped) || enableAutoScope) && mode === 'ali'
   const templateAttrs = parts.template && parts.template.attrs && parts.template.attrs
   const hasComment = templateAttrs && templateAttrs.comments
   const isNative = false
@@ -178,7 +179,7 @@ module.exports = function (content) {
     let styleInjectionCode = ''
     parts.styles.forEach((style, i) => {
       processSrc(style)
-      let scoped = hasScoped ? style.scoped : false
+      let scoped = hasScoped ? (style.scoped || enableAutoScope) : false
       // require style
       let requireString = style.src
         ? getRequireForSrc('styles', style, -1, scoped, undefined, true)
