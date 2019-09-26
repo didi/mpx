@@ -8,8 +8,8 @@ module.exports = function normalizeComponentRules (cfgs, spec) {
     }
     const supportedTargets = cfg.supportedTargets || spec.supportedTargets
     supportedTargets.forEach((target) => {
-      result[target] = function (el) {
-        const rTag = cfg[target] && cfg[target].call(this, el.tag, { attrsMap: el.attrsMap })
+      result[target] = function (el, data) {
+        const rTag = cfg[target] && cfg[target].call(this, el.tag, Object.assign({}, data, { attrsMap: el.attrsMap }))
         if (rTag) {
           el.tag = rTag
         }
@@ -20,18 +20,18 @@ module.exports = function normalizeComponentRules (cfgs, spec) {
           let rAttr = runRules(spec.directive, attr, {
             target,
             testKey,
-            data: {
+            data: Object.assign({}, data, {
               eventRules,
               attrsMap: el.attrsMap
-            }
+            })
           })
           if (rAttr === undefined) {
             rAttr = runRules(cfg.props, attr, {
               target,
               testKey,
-              data: {
+              data: Object.assign({}, data, {
                 attrsMap: el.attrsMap
-              }
+              })
             })
           }
           if (Array.isArray(rAttr)) {

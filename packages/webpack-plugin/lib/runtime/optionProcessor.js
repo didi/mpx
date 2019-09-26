@@ -27,9 +27,11 @@ export default function processOption (
       }
     }
 
-    // todo 将路由第一项设为默认路由
-
     if (routes.length) {
+      routes.push({
+        path: '*',
+        redirect: routes[0].path
+      })
       option.router = new VueRouter({
         routes: routes
       })

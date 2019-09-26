@@ -78,6 +78,7 @@ class MpxWebpackPlugin {
     })
     options.resolveMode = options.resolveMode || 'webpack'
     options.writeMode = options.writeMode || 'changed'
+    options.transWebMode = options.transWebMode || 'simple'
     if (options.autoSplit === undefined) {
       options.autoSplit = true
     }
@@ -205,6 +206,7 @@ class MpxWebpackPlugin {
           processingSubPackageRoot: '',
           wxsMap: {},
           wxsConentMap: {},
+          transWebMode: this.options.transWebMode,
           forceDisableInject: this.options.forceDisableInject,
           resolveMode: this.options.resolveMode,
           mode: this.options.mode,

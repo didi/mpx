@@ -12,6 +12,11 @@ module.exports = function ({ print }) {
     // ali () {
     //   return 'a:view'
     // },
+    web (tag, { transWebMode }) {
+      if (transWebMode === 'simple') {
+        return 'div'
+      }
+    },
     // 组件属性中的差异部分
     // props: [
     //   {

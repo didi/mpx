@@ -749,6 +749,7 @@ function parse (template, options) {
     }).get(currentEl)
     currentElementRuleResult.errorArray.push(content)
   }
+  const transWebMode = options.transWebMode
 
   mode = options.mode || 'wx'
   srcMode = options.srcMode || mode
@@ -759,6 +760,9 @@ function parse (template, options) {
   rulesRunner = getRulesRunner({
     mode,
     srcMode,
+    data: {
+      transWebMode
+    },
     type: 'template',
     testKey: 'tag',
     warn: _warn,
