@@ -6,6 +6,7 @@ module.exports = function ({ print }) {
   const aliPropLog = print({ platform: 'ali', tag: TAG_NAME, isError: false })
   const aliEventLog = print({ platform: 'ali', tag: TAG_NAME, isError: false, type: 'event' })
   const baiduValueLogError = print({ platform: 'baidu', tag: TAG_NAME, isError: true, type: 'value' })
+  const baiduValueLog = print({ platform: 'baidu', tag: TAG_NAME, isError: false, type: 'value' })
   const baiduPropLog = print({ platform: 'baidu', tag: TAG_NAME, isError: false })
   const baiduEventLog = print({ platform: 'baidu', tag: TAG_NAME, isError: false })
   const qqPropLog = print({ platform: 'qq', tag: TAG_NAME, isError: false })
@@ -43,7 +44,10 @@ module.exports = function ({ print }) {
         },
         swan ({ name, value }) {
           let supportList = ['contact', 'share', 'getUserInfo', 'getPhoneNumber', 'openSetting']
-          if (supportList.indexOf(value) === -1) {
+          if (/\{\{((?:.|\n)+?)\}\}(?!})/.test(value)) {
+            // 如果是个变量，报warning
+            baiduValueLog({ name, value })
+          } else if (supportList.indexOf(value) === -1) {
             baiduValueLogError({ name, value })
           }
         },
