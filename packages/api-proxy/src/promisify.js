@@ -35,7 +35,7 @@ function getMapFromList (list) {
   }
 }
 
-function promisify (listObj, usePromise, whiteList) {
+function promisify (listObj, whiteList) {
   const result = {}
   const whiteListMap = getMapFromList(whiteList)
   const blackListMap = getMapFromList(blackList)
@@ -58,7 +58,7 @@ function promisify (listObj, usePromise, whiteList) {
     }
 
     result[key] = function (...args) {
-      if (usePromise && promisifyFilter(key)) {
+      if (promisifyFilter(key)) {
         if (!args[0]) {
           args[0] = { success: noop, fail: noop }
         }

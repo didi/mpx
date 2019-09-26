@@ -1,5 +1,4 @@
 import proxyAll from './proxy-all'
-import transformApi from './platform/index'
 
 export default function install (target, options = {}) {
   const {
@@ -21,11 +20,7 @@ export default function install (target, options = {}) {
   }
   /* eslint-enable */
 
-  // 代理所有 api
-  proxyAll(target, usePromise, whiteList)
-
-  // 转换各端 api
-  transformApi(target, {
+  proxyAll(target, {
     usePromise,
     whiteList,
     exclude,
