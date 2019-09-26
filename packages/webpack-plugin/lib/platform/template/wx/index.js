@@ -11,7 +11,9 @@ module.exports = function getSpec ({ warn, error }) {
         test: /^wx:for$/,
         swan (obj, data) {
           const attrsMap = data.attrsMap
-          const listName = /{{(.*)}}/.exec(obj.value)[1]
+          const varListName = /{{(.*)}}/.exec(obj.value)
+          // 在wx:for="abcd"值为字符串时varListName为null,按照小程序循环规则将字符串转换为 ["a", "b", "c", "d"]
+          const listName = varListName ? varListName[1] : JSON.stringify(obj.value.split(''))
           const itemName = attrsMap['wx:for-item'] || 'item'
           const indexName = attrsMap['wx:for-index'] || 'index'
           const keyName = attrsMap['wx:key'] || null
