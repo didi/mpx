@@ -30,6 +30,7 @@ module.exports = function (content) {
   const resourcePath = getResourcePath(this.resource)
   const srcMode = localSrcMode || globalSrcMode
   const vueContentCache = mpx.vueContentCache
+  const enableAutoScope = mpx.enableAutoScope
 
   const resourceQueryObj = loaderUtils.parseQuery(this.resourceQuery || '?')
 
@@ -73,7 +74,7 @@ module.exports = function (content) {
     return vueContentCache.get(filePath)
   }
 
-  const moduleId = hash(this._module.identifier())
+  const moduleId = 'm' + hash(this._module.identifier())
 
   const needCssSourceMap = (
     !isProduction &&
@@ -87,7 +88,7 @@ module.exports = function (content) {
   let output = 'global.currentModuleId;\n'
 
   // 只有ali才可能需要scoped
-  const hasScoped = parts.styles.some(({ scoped }) => scoped) && mode === 'ali'
+  const hasScoped = (parts.styles.some(({ scoped }) => scoped) || enableAutoScope) && mode === 'ali'
   const templateAttrs = parts.template && parts.template.attrs && parts.template.attrs
   const hasComment = templateAttrs && templateAttrs.comments
   const isNative = false
@@ -391,7 +392,13 @@ module.exports = function (content) {
     globalInjectCode += 'if (!global.navigator) {\n' +
       '  global.navigator = {};\n' +
       '}\n' +
-      'global.navigator.standalone = true;\n'
+      'Object.defineProperty(global.navigator, "standalone",{\n' +
+      '  configurable: true,' +
+      '  enumerable: true,' +
+      '  get () {\n' +
+      '    return true;\n' +
+      '  }\n' +
+      '});\n'
   }
 
   // script
@@ -432,7 +439,7 @@ module.exports = function (content) {
     let styleInjectionCode = ''
     parts.styles.forEach((style, i) => {
       processSrc(style)
-      let scoped = hasScoped ? style.scoped : false
+      let scoped = hasScoped ? (style.scoped || enableAutoScope) : false
       // require style
       let requireString = style.src
         ? getRequireForSrc('styles', style, -1, scoped, undefined, true)

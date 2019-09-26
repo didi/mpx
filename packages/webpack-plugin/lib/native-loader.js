@@ -27,7 +27,7 @@ module.exports = function (content) {
 
   const filePath = this.resourcePath
 
-  const moduleId = hash(this._module.identifier())
+  const moduleId = 'm' + hash(this._module.identifier())
 
   const projectRoot = mpx.projectRoot
   const mode = mpx.mode
@@ -44,13 +44,14 @@ module.exports = function (content) {
   const srcMode = localSrcMode || globalSrcMode
   const fs = this._compiler.inputFileSystem
   const typeExtMap = Object.assign({}, config[srcMode].typeExtMap)
+  const enableAutoScope = mpx.enableAutoScope
 
   const needCssSourceMap = (
     !isProduction &&
     this.sourceMap &&
     options.cssSourceMap !== false
   )
-  const hasScoped = queryObj.scoped && mode === 'ali'
+  const hasScoped = (queryObj.scoped || enableAutoScope) && mode === 'ali'
   const hasComment = false
   const isNative = true
 

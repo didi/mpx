@@ -79,6 +79,7 @@ class MpxWebpackPlugin {
     options.resolveMode = options.resolveMode || 'webpack'
     options.writeMode = options.writeMode || 'changed'
     options.transWebMode = options.transWebMode || 'simple'
+    options.enableAutoScope = options.enableAutoScope || false
     if (options.autoSplit === undefined) {
       options.autoSplit = true
     }
@@ -213,6 +214,7 @@ class MpxWebpackPlugin {
           srcMode: this.options.srcMode,
           externalClasses: this.options.externalClasses,
           projectRoot: this.options.projectRoot,
+          enableAutoScope: this.options.enableAutoScope,
           extract: (content, file, index, sideEffects) => {
             additionalAssets[file] = additionalAssets[file] || []
             if (!additionalAssets[file][index]) {
