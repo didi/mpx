@@ -1,4 +1,4 @@
-import { error, getEnvObj } from '../utils'
+import { error } from '../utils'
 import getWxToAliApi from './wxToAli'
 import promisify from '../promisify'
 
@@ -20,7 +20,10 @@ function transformApi (target, options) {
   }
   const fromMap = genFromMap(['wx', 'ali', 'swan', 'qq', 'tt'])
 
-  const envObj = getEnvObj()
+  const cacheTarget = {}
+  Object.keys(target).forEach(key => {
+    cacheTarget[key] = target[key]
+  })
 
   function joinName (from = '', to = '') {
     return `${fromMap[from]}_${to}`
@@ -54,8 +57,8 @@ function transformApi (target, options) {
           return result[api].apply(target, args)
         }
 
-        if (envObj[api]) {
-          return envObj[api].apply(target, args)
+        if (cacheTarget[api]) {
+          return cacheTarget[api].apply(target, args)
         } else {
           error(`当前环境不存在 ${api} 方法`)
         }
