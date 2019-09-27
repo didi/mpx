@@ -528,19 +528,7 @@ class MpxWebpackPlugin {
       }
 
       const processedChunk = new Set()
-      const subPackages = Object.keys(mpx.componentsMap).filter((packageName) => {
-        return packageName !== 'main'
-      })
       const rootName = compilation._preparedEntrypoints[0].name
-
-      function isChunkInSubPackages (chunkName, subPackages = []) {
-        for (let i = 0; i < subPackages.length; i++) {
-          if (isChunkInPackage(chunkName, subPackages[i])) {
-            return true
-          }
-        }
-        return false
-      }
 
       function processChunk (chunk, isRuntime, relativeChunks) {
         if (!chunk.files[0] || processedChunk.has(chunk)) {
