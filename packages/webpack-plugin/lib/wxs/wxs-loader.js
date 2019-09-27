@@ -7,7 +7,7 @@ const WxsPlugin = require('./WxsPlugin')
 const getMainCompilation = require('../utils/get-main-compilation')
 const getResourcePath = require('../utils/get-resource-path')
 const toPosix = require('../utils/to-posix')
-const fixSwanRelative = require('../utils/fix-swan-relative')
+const fixRelative = require('../utils/fix-relative')
 const config = require('../config')
 const parseQuery = require('loader-utils').parseQuery
 
@@ -30,9 +30,7 @@ module.exports = function () {
   const callback = (err) => {
     if (err) return nativeCallback(err)
     let relativePath = toPosix(path.relative(issuerDir, wxsMap[resourcePath]))
-    if (mode === 'swan') {
-      relativePath = fixSwanRelative(relativePath)
-    }
+    relativePath = fixRelative(relativePath, mode)
     nativeCallback(null, `module.exports = ${JSON.stringify(relativePath)};`)
   }
 

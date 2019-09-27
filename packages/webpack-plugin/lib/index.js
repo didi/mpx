@@ -18,6 +18,7 @@ const HarmonyImportSideEffectDependency = require('webpack/lib/dependencies/Harm
 const RequireHeaderDependency = require('webpack/lib/dependencies/RequireHeaderDependency')
 const RemovedModuleDependency = require('./dependency/RemovedModuleDependency')
 const SplitChunksPlugin = require('webpack/lib/optimize/SplitChunksPlugin')
+const fixRelative = require('./utils/fix-relative')
 
 const isProductionLikeMode = options => {
   return options.mode === 'production' || !options.mode
@@ -25,6 +26,10 @@ const isProductionLikeMode = options => {
 
 const outputFilename = '[name].js'
 const publicPath = '/'
+
+function isChunkInPackage (chunkName, packageName) {
+  return (new RegExp(`^${packageName}\\/`)).test(chunkName)
+}
 
 function getPackageCacheGroup (packageName) {
   if (packageName === 'main') {
@@ -37,7 +42,7 @@ function getPackageCacheGroup (packageName) {
     return {
       test: (module, chunks) => {
         return chunks.every((chunk) => {
-          return (new RegExp(`^${packageName}\\/`)).test(chunk.name)
+          return isChunkInPackage(chunk.name, packageName)
         })
       },
       name: `${packageName}/bundle`,
@@ -523,6 +528,18 @@ class MpxWebpackPlugin {
       }
 
       const processedChunk = new Set()
+      const subPackages = Object.keys(mpx.componentsMap).filter((packageName) => {
+        return packageName !== 'main'
+      })
+
+      function isChunkInSubPackages (chunkName, subPackages = []) {
+        for (let i = 0; i < subPackages.length; i++) {
+          if (isChunkInPackage(chunkName, subPackages[i])) {
+            return true
+          }
+        }
+        return false
+      }
 
       function processChunk (chunk, isRuntime, relativeChunks) {
         if (!chunk.files[0] || processedChunk.has(chunk)) {
@@ -538,12 +555,27 @@ class MpxWebpackPlugin {
           let chunkPath = getTargetFile(chunk.files[0])
           let relativePath = getTargetFile(relativeChunk.files[0])
           relativePath = path.relative(path.dirname(chunkPath), relativePath)
-          if (!/^\./.test(relativePath)) {
-            relativePath = `.${path.sep}${relativePath}`
-          }
+          relativePath = fixRelative(relativePath, mpx.mode)
           relativePath = toPosix(relativePath)
           if (index === 0) {
-            source.add(`window[${JSON.stringify(jsonpFunction)}] = require("${relativePath}");\n`)
+            // 引用runtime
+            // 支付宝分包独立打包，通过全局context获取webpackJSONP
+            if (mpx.mode === 'ali') {
+              if (isChunkInSubPackages(chunk.name, subPackages)) {
+                // 支付宝分包中需要通过context全局传递runtime
+                source.add('// process ali subpackages runtime in sub chunk\n' +
+                  'var context = Function("return this")();\n\n')
+                source.add(`window[${JSON.stringify(jsonpFunction)}] = context[${JSON.stringify(jsonpFunction)}];\n`)
+              } else {
+                // 在主包中依然通过require引用runtime，确保runtime能够提前执行
+                source.add('// process ali subpackages runtime in main chunk\n' +
+                  'var context = Function("return this")();\n\n')
+                source.add(`context[${JSON.stringify(jsonpFunction)}] = window[${JSON.stringify(jsonpFunction)}] = require("${relativePath}");\n`)
+              }
+
+            } else {
+              source.add(`window[${JSON.stringify(jsonpFunction)}] = require("${relativePath}");\n`)
+            }
           } else {
             source.add(`require("${relativePath}");\n`)
           }
