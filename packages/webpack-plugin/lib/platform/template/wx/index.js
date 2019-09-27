@@ -12,12 +12,53 @@ module.exports = function getSpec ({ warn, error }) {
         swan (obj, data) {
           const attrsMap = data.attrsMap
           const varListName = /{{(.*)}}/.exec(obj.value)
+          let listName = ''
+          let varIsNumber = false
+          let KEY_TYPES = {
+            PROPERTY: 0,
+            INDEX: 1
+          }
+          let keyType = KEY_TYPES.PROPERTY
           // 在wx:for="abcd"值为字符串时varListName为null,按照小程序循环规则将字符串转换为 ["a", "b", "c", "d"]
-          const listName = varListName ? varListName[1] : JSON.stringify(obj.value.split(''))
+          if (varListName) {
+            const variableName = varListName[1]
+            varIsNumber = variableName.match(/^\d+$/)
+            // 如果为{{}}中为数字字面量
+            if (varIsNumber) {
+              keyType = KEY_TYPES.INDEX
+              // 创建循环数组
+              const loopNum = Math.ceil(Number(variableName))
+              // 定义一个建议值,因为会增加template文件大小,
+              if (loopNum > 300) warn(`It's not recommended to exceed 300 in baidu environment`)
+              let list = []
+              for (let i = 0; i < loopNum; i++) {
+                list[i] = i
+              }
+              listName = JSON.stringify(list)
+            } else {
+              warn(`Number type loop variable is not support in baidu environment, please check variable: ${variableName}`)
+              listName = varListName[1]
+            }
+          } else {
+            keyType = KEY_TYPES.INDEX
+            // for值为字符串,转成字符数组
+            listName = JSON.stringify(obj.value.split(''))
+          }
           const itemName = attrsMap['wx:for-item'] || 'item'
           const indexName = attrsMap['wx:for-index'] || 'index'
           const keyName = attrsMap['wx:key'] || null
-          const keyStr = keyName ? ` trackBy ${itemName}.${keyName}` : ''
+          let keyStr = ''
+          if (keyName) {
+            // 定义key索引
+            if (keyType === KEY_TYPES.INDEX) {
+              warn(`The numeric type loop variable does not support custom keys. Automatically set to the index value.`)
+              keyStr = ` trackBy ${itemName}[${indexName}]`
+            } else if (keyType === KEY_TYPES.PROPERTY) {
+              keyStr = ` trackBy ${itemName}.${keyName}`
+            } else {
+              // 以后增加其他key类型
+            }
+          }
           return {
             name: 's-for',
             value: `${itemName}, ${indexName} in ${listName}${keyStr}`
