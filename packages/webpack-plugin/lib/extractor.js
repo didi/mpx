@@ -11,7 +11,7 @@ const getMainCompilation = require('./utils/get-main-compilation')
 const toPosix = require('./utils/to-posix')
 const config = require('./config')
 const hash = require('hash-sum')
-const fixSwanRelative = require('./utils/fix-swan-relative')
+const fixRelative = require('./utils/fix-relative')
 
 const defaultResultSource = '// removed by extractor'
 
@@ -95,9 +95,7 @@ module.exports = function (content) {
       case 'styles':
         if (issuerFile) {
           let relativePath = toPosix(path.relative(path.dirname(issuerFile), file))
-          if (mode === 'swan') {
-            relativePath = fixSwanRelative(relativePath)
-          }
+          relativePath = fixRelative(relativePath, mode)
           if (fromImport) {
             resultSource = `module.exports = ${JSON.stringify(relativePath)};`
           } else {
