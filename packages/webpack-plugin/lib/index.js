@@ -572,7 +572,6 @@ class MpxWebpackPlugin {
                   'var context = Function("return this")();\n\n')
                 source.add(`context[${JSON.stringify(jsonpFunction)}] = window[${JSON.stringify(jsonpFunction)}] = require("${relativePath}");\n`)
               }
-
             } else {
               source.add(`window[${JSON.stringify(jsonpFunction)}] = require("${relativePath}");\n`)
             }
