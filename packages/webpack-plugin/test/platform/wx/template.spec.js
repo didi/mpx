@@ -109,6 +109,12 @@ it('should transform button correct', function () {
 
 it('should trans event binding for tt miniapp', function () {
   const input1 = `<test-comp1 bind:click="clickHandler">123</test-comp1>`
+  const input2 = `<test-comp1 catch:click="clickHandler">123</test-comp1>`
+
   const output1 = compileAndParse(input1, { srcMode: 'wx', mode: 'tt' })
+  const output2 = compileAndParse(input2, { srcMode: 'wx', mode: 'tt' })
+
   expect(output1).toBe('<test-comp1 bindclick="clickHandler">123</test-comp1>')
+  expect(output2).toBe('<test-comp1 catch:click="clickHandler">123</test-comp1>')
+  expect(warnFn).toHaveBeenCalledWith(`bytedance miniapp only support use 'bind' to bind event`)
 })

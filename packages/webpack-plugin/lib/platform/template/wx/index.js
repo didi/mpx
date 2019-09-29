@@ -126,6 +126,7 @@ module.exports = function getSpec ({ warn, error }) {
           if (resArr[1] === 'bind') {
             return { name: resArr[1] + resArr[2], value }
           }
+          warn(`bytedance miniapp only support use 'bind' to bind event`)
           return { name, value }
         }
       },
