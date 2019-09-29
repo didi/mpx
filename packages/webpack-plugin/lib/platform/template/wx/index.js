@@ -120,6 +120,13 @@ module.exports = function getSpec ({ warn, error }) {
             }) + modifier : name,
             value
           }
+        },
+        tt ({ name, value }) {
+          const resArr = /^(bind|catch|capture-bind|capture-catch):?(.*?)(\..*)?$/.exec(name)
+          if (resArr[1] === 'bind') {
+            return { name: resArr[1] + resArr[2], value }
+          }
+          return { name, value }
         }
       },
       // 无障碍

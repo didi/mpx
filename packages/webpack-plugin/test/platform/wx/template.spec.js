@@ -94,12 +94,21 @@ it('should transform button correct', function () {
   const input1 = `<button open-type="getUserInfo">获取用户信息</button>`
   const input2 = `<button open-type="getPhoneNumber">获取手机号</button>`
   const input3 = `<button open-type="openSetting">打开设置面板</button>`
+  const input4 = `<button open-type="{{aaa}}">{{name}}</button>`
 
   const output1 = compileAndParse(input1, { srcMode: 'wx', mode: 'ali' })
   const output2 = compileAndParse(input2, { srcMode: 'wx', mode: 'ali' })
   compileAndParse(input3, { srcMode: 'wx', mode: 'ali' })
+  const output4 = compileAndParse(input4, { srcMode: 'wx', mode: 'tt' })
 
   expect(output1).toBe('<button open-type="getAuthorize" scope="userInfo">获取用户信息</button>')
   expect(output2).toBe('<button open-type="getAuthorize" scope="phoneNumber">获取手机号</button>')
   expect(errorFn).toHaveBeenCalledWith(`<button>'s property 'open-type' does not support '[openSetting]' value in ali environment!`)
+  expect(output4).toBe('<button open-type="{{aaa}}">{{name}}</button>')
+})
+
+it('should trans event binding for tt miniapp', function () {
+  const input1 = `<test-comp1 bind:click="clickHandler">123</test-comp1>`
+  const output1 = compileAndParse(input1, { srcMode: 'wx', mode: 'tt' })
+  expect(output1).toBe('<test-comp1 bindclick="clickHandler">123</test-comp1>')
 })
