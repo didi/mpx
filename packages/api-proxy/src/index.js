@@ -1,5 +1,5 @@
-import proxyAll from './proxy-all'
-import transformApi from './platform/index'
+import transformApi from './transform'
+import promisify from './promisify'
 
 export default function install (target, options = {}) {
   const {
@@ -21,17 +21,22 @@ export default function install (target, options = {}) {
   }
   /* eslint-enable */
 
-  // 代理所有 api
-  proxyAll(target, usePromise, whiteList)
-
-  // 转换各端 api
-  transformApi(target, {
-    usePromise,
-    whiteList,
+  const transedApi = transformApi({
     exclude,
     from,
     to,
     optimize
+  })
+
+  const promisedApi = usePromise ? promisify(transedApi, whiteList) : {}
+  const allApi = Object.assign({}, transedApi, promisedApi)
+
+  Object.keys(allApi).forEach(api => {
+    try {
+      target[api] = (...args) => {
+        return allApi[api].apply(target, args)
+      }
+    } catch (e) {} // 支付宝不支持重写 call 方法
   })
 
   // Fallback Map option

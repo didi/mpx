@@ -528,18 +528,7 @@ class MpxWebpackPlugin {
       }
 
       const processedChunk = new Set()
-      const subPackages = Object.keys(mpx.componentsMap).filter((packageName) => {
-        return packageName !== 'main'
-      })
-
-      function isChunkInSubPackages (chunkName, subPackages = []) {
-        for (let i = 0; i < subPackages.length; i++) {
-          if (isChunkInPackage(chunkName, subPackages[i])) {
-            return true
-          }
-        }
-        return false
-      }
+      const rootName = compilation._preparedEntrypoints[0].name
 
       function processChunk (chunk, isRuntime, relativeChunks) {
         if (!chunk.files[0] || processedChunk.has(chunk)) {
@@ -561,16 +550,16 @@ class MpxWebpackPlugin {
             // 引用runtime
             // 支付宝分包独立打包，通过全局context获取webpackJSONP
             if (mpx.mode === 'ali') {
-              if (isChunkInSubPackages(chunk.name, subPackages)) {
-                // 支付宝分包中需要通过context全局传递runtime
-                source.add('// process ali subpackages runtime in sub chunk\n' +
-                  'var context = Function("return this")();\n\n')
-                source.add(`window[${JSON.stringify(jsonpFunction)}] = context[${JSON.stringify(jsonpFunction)}];\n`)
-              } else {
-                // 在主包中依然通过require引用runtime，确保runtime能够提前执行
-                source.add('// process ali subpackages runtime in main chunk\n' +
+              if (chunk.name === rootName) {
+                // 在rootChunk中挂载jsonpFunction
+                source.add('// process ali subpackages runtime in root chunk\n' +
                   'var context = Function("return this")();\n\n')
                 source.add(`context[${JSON.stringify(jsonpFunction)}] = window[${JSON.stringify(jsonpFunction)}] = require("${relativePath}");\n`)
+              } else {
+                // 其余chunk中通过context全局传递runtime
+                source.add('// process ali subpackages runtime in other chunk\n' +
+                  'var context = Function("return this")();\n\n')
+                source.add(`window[${JSON.stringify(jsonpFunction)}] = context[${JSON.stringify(jsonpFunction)}];\n`)
               }
             } else {
               source.add(`window[${JSON.stringify(jsonpFunction)}] = require("${relativePath}");\n`)
