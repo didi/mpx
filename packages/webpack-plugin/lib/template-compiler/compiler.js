@@ -1004,6 +1004,8 @@ function processComponentIs (el, options) {
 //   }
 // }
 
+const eventIdentifier = '__mpx_event__'
+
 function parseFuncStr2 (str) {
   let funcRE = /^([^()]+)(\((.*)\))?/
   let match = funcRE.exec(str)
@@ -1011,7 +1013,15 @@ function parseFuncStr2 (str) {
     let funcName = stringify(match[1])
     let args = match[3] ? `,${match[3]}` : ''
     let hasArgs = !!match[2]
-    args = args.replace(/(\$event([^,\s])*)/, (match, p1) => stringify(p1))
+    const ret = /(,|^)\s*(\$event)\s*(,|$)/.exec(args)
+    if (ret) {
+      const subIndex = ret[0].indexOf('$event')
+      if (subIndex) {
+        const index1 = ret.index + subIndex
+        const index2 = index1 + 6
+        args = args.substring(0, index1) + JSON.stringify(eventIdentifier) + args.substring(index2)
+      }
+    }
     return {
       hasArgs,
       expStr: `[${funcName + args}]`
@@ -1116,7 +1126,7 @@ function processBindEvent (el) {
       }
       eventConfigMap[modelEvent].configs.unshift({
         hasArgs: true,
-        expStr: `[${stringify('__model')},${stringifiedModelValue},${stringify('$event')},${stringify(modelValuePathArr)},${stringify(modelFilter)}]`
+        expStr: `[${stringify('__model')},${stringifiedModelValue},${stringify(eventIdentifier)},${stringify(modelValuePathArr)},${stringify(modelFilter)}]`
       })
       addAttrs(el, [
         {
