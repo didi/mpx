@@ -1,4 +1,4 @@
-import { getEnvObj, noop } from './utils'
+import { genFromMap, getEnvObj, noop } from './utils'
 
 const envObj = getEnvObj()
 
@@ -35,10 +35,11 @@ function getMapFromList (list) {
   }
 }
 
-function promisify (listObj, usePromise, whiteList) {
+function promisify (listObj, whiteList) {
   const result = {}
   const whiteListMap = getMapFromList(whiteList)
   const blackListMap = getMapFromList(blackList)
+  const fromMap = genFromMap()
 
   function promisifyFilter (key) {
     if (whiteListMap && whiteListMap[key] !== undefined) {
@@ -58,9 +59,9 @@ function promisify (listObj, usePromise, whiteList) {
     }
 
     result[key] = function (...args) {
-      if (usePromise && promisifyFilter(key)) {
-        if (!args[0]) {
-          args[0] = { success: noop, fail: noop }
+      if (promisifyFilter(key)) {
+        if (!args[0] || fromMap[args[0]]) {
+          args.unshift({ success: noop, fail: noop })
         }
         const obj = args[0]
         return new Promise((resolve, reject) => {

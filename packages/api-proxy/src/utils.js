@@ -44,6 +44,15 @@ const handleSuccess = (opts, getOptions = noop, thisObj) => {
   }
 }
 
+function genFromMap () {
+  const result = {}
+  const platforms = ['wx', 'ali', 'swan', 'qq', 'tt']
+  platforms.forEach((platform) => {
+    result[`__mpx_src_mode_${platform}__`] = platform
+  })
+  return result
+}
+
 function getEnvObj () {
   if (typeof wx !== 'undefined' && typeof wx.getSystemInfo === 'function') {
     return wx
@@ -59,11 +68,11 @@ function getEnvObj () {
 }
 
 function warn (msg) {
-  console.warn && console.warn(`[@mpxjs/transform-api warn]:\n ${msg}`)
+  console.warn && console.warn(`[@mpxjs/api-proxy warn]:\n ${msg}`)
 }
 
 function error (msg) {
-  console.error && console.error(`[@mpxjs/transform-api error]:\n ${msg}`)
+  console.error && console.error(`[@mpxjs/api-proxy error]:\n ${msg}`)
 }
 
 function noop () {}
@@ -71,6 +80,7 @@ function noop () {}
 export {
   changeOpts,
   handleSuccess,
+  genFromMap,
   getEnvObj,
   error,
   warn,
