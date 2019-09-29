@@ -118,7 +118,7 @@ it('should trans event binding for tt miniapp', function () {
   const output4 = compileAndParse(input3, { srcMode: 'wx', mode: 'wx' })
 
   expect(output1).toBe('<test-comp1 bindclick="clickHandler">123</test-comp1>')
-  expect(output2).toBe('<test-comp1 catch:click="clickHandler">123</test-comp1>')
+  expect(output2).toBe('<test-comp1 bindclick="clickHandler">123</test-comp1>')
   expect(warnFn).toHaveBeenCalledWith(`bytedance miniapp only support use 'bind' to bind event`)
   expect(output3).toBe('<test-comp1 bindclick.trim="clickHandler">123</test-comp1>')
   expect(output4).toBe('<test-comp1 bind:click.trim="clickHandler">123</test-comp1>')
