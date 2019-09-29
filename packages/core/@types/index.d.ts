@@ -469,6 +469,13 @@ export interface Mpx {
   createAction: typeof action
 }
 
-declare let mpx: Mpx & WechatMiniprogram.Wx
+type ReturnType<T> = T extends (...args: any[]) => infer R ? R : any
+type ParamType<T> = T extends (...param: infer P) => any ? P : any[]
+
+type AddPromise<W> = {
+  [K in keyof W]: (...args: ParamType<W[K]>) => ReturnType<W[K]> & Promise<any>
+}
+
+declare let mpx: Mpx & AddPromise<WechatMiniprogram.Wx>
 
 export default mpx
