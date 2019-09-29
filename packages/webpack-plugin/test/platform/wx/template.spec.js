@@ -89,3 +89,17 @@ describe('template should transform correct', function () {
     expect(output9).toBe('<view s-for="t1, t2 in [0,1,2,3,4,5,6,7] trackBy t1[t2]">123</view>')
   })
 })
+
+it('should transform button correct', function () {
+  const input1 = `<button open-type="getUserInfo">获取用户信息</button>`
+  const input2 = `<button open-type="getPhoneNumber">获取手机号</button>`
+  const input3 = `<button open-type="openSetting">打开设置面板</button>`
+
+  const output1 = compileAndParse(input1, { srcMode: 'wx', mode: 'ali' })
+  const output2 = compileAndParse(input2, { srcMode: 'wx', mode: 'ali' })
+  compileAndParse(input3, { srcMode: 'wx', mode: 'ali' })
+
+  expect(output1).toBe('<button open-type="getAuthorize" scope="userInfo">获取用户信息</button>')
+  expect(output2).toBe('<button open-type="getAuthorize" scope="phoneNumber">获取手机号</button>')
+  expect(errorFn).toHaveBeenCalledWith(`<button>'s property 'open-type' does not support '[openSetting]' value in ali environment!`)
+})
