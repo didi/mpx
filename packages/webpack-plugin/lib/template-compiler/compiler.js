@@ -1185,6 +1185,8 @@ function processBindEvent (el) {
   }
 }
 
+
+// todo 暂时未考虑swan中不用{{}}包裹控制属性的情况
 function parseMustache (raw = '') {
   let replaced = false
   if (tagRE.test(raw)) {
@@ -1252,22 +1254,34 @@ function processIf (el) {
   }
 }
 
+const swanForInRe = /^\s*(\w+)(?:\s*,\s*(\w+))?\s+in\s+(\w+)(?:\s+trackBy\s+(\w+))?\s*$/
+
 function processFor (el) {
   let val = getAndRemoveAttr(el, config[mode].directive.for)
   if (val) {
-    let parsed = parseMustache(val)
-    el.for = {
-      raw: parsed.val,
-      exp: parsed.result
-    }
-    if (val = getAndRemoveAttr(el, config[mode].directive.forIndex)) {
-      el.for.index = val
-    }
-    if (val = getAndRemoveAttr(el, config[mode].directive.forItem)) {
-      el.for.item = val
-    }
-    if (val = getAndRemoveAttr(el, config[mode].directive.key)) {
-      el.for.key = val
+    let matched
+    if (mode === 'swan' && (matched = swanForInRe.exec(val))) {
+      el.for = {
+        raw: val,
+        exp: matched[3],
+        item: matched[1] || 'item',
+        index: matched[2] || 'index'
+      }
+    } else {
+      let parsed = parseMustache(val)
+      el.for = {
+        raw: parsed.val,
+        exp: parsed.result
+      }
+      if (val = getAndRemoveAttr(el, config[mode].directive.forIndex)) {
+        el.for.index = val
+      }
+      if (val = getAndRemoveAttr(el, config[mode].directive.forItem)) {
+        el.for.item = val
+      }
+      if (val = getAndRemoveAttr(el, config[mode].directive.key)) {
+        el.for.key = val
+      }
     }
     pushForScopes({
       index: el.for.index || 'index',
@@ -1275,8 +1289,6 @@ function processFor (el) {
     })
   }
 }
-
-// todo bugfix refid避免全局自增
 
 function processRef (el, options, meta) {
   let val = getAndRemoveAttr(el, config[mode].directive.ref)
@@ -1369,7 +1381,19 @@ function processAttrs (el, options) {
 
 function postProcessFor (el) {
   if (el.for) {
-    let targetEl = el
+    /*
+      对百度小程序同时带有if和for的指令外套一层block，并将for放到外层
+      这个操作主要是因为百度小程序不支持这两个directive在同级使用
+     */
+    if (el.if && mode === 'swan') {
+      let tempEl = createASTElement('block', [])
+      replaceNode(el, tempEl, true)
+      tempEl.for = el.for
+      delete el.for
+      tempEl.children = [el]
+      el.parent = tempEl
+      el = tempEl
+    }
 
     let attrs = [
       {
@@ -1377,40 +1401,28 @@ function postProcessFor (el) {
         value: el.for.raw
       }
     ]
-    if (el.for.index) {
-      attrs.push({
-        name: config[mode].directive.forIndex,
-        value: el.for.index
-      })
+    // 对于swan的for in进行特殊处理
+    if (!mode === 'swan' || !swanForInRe.test(el.for.raw)) {
+      if (el.for.index) {
+        attrs.push({
+          name: config[mode].directive.forIndex,
+          value: el.for.index
+        })
+      }
+      if (el.for.item) {
+        attrs.push({
+          name: config[mode].directive.forItem,
+          value: el.for.item
+        })
+      }
+      if (el.for.key) {
+        attrs.push({
+          name: config[mode].directive.key,
+          value: el.for.key
+        })
+      }
     }
-    if (el.for.item) {
-      attrs.push({
-        name: config[mode].directive.forItem,
-        value: el.for.item
-      })
-    }
-    if (el.for.key) {
-      attrs.push({
-        name: config[mode].directive.key,
-        value: el.for.key
-      })
-    }
-
-    /*
-      对百度小程序同时带有if和for的指令外套一层block，并将for放到外层
-      这个操作主要是因为百度小程序不支持这两个directive在同级使用
-     */
-    if (el.if && mode === 'swan') {
-      targetEl = createASTElement('block', [])
-      targetEl.for = el.for
-      targetEl.children = [el]
-      replaceNode(el, targetEl)
-
-      el.parent = targetEl
-      delete el.for
-    }
-
-    addAttrs(targetEl, attrs)
+    addAttrs(el, attrs)
     popForScopes()
   }
 }
@@ -1847,8 +1859,8 @@ function findPrevNode (node) {
   }
 }
 
-function replaceNode (node, newNode) {
-  deleteErrorInResultMap(node)
+function replaceNode (node, newNode, reserveNode) {
+  if (!reserveNode) deleteErrorInResultMap(node)
   let parent = node.parent
   if (parent) {
     let index = parent.children.indexOf(node)
@@ -1860,8 +1872,8 @@ function replaceNode (node, newNode) {
   }
 }
 
-function removeNode (node) {
-  deleteErrorInResultMap(node)
+function removeNode (node, reserveNode) {
+  if (!reserveNode) deleteErrorInResultMap(node)
   let parent = node.parent
   if (parent) {
     let index = parent.children.indexOf(node)
