@@ -35,8 +35,8 @@ module.exports = function getSpec ({ warn, error }) {
                 list[i] = i
               }
               listName = JSON.stringify(list)
-            } else {
               warn(`Number type loop variable is not support in baidu environment, please check variable: ${variableName}`)
+            } else {
               listName = varListName[1]
             }
           } else {
@@ -54,7 +54,11 @@ module.exports = function getSpec ({ warn, error }) {
               warn(`The numeric type loop variable does not support custom keys. Automatically set to the index value.`)
               keyStr = ` trackBy ${itemName}[${indexName}]`
             } else if (keyType === KEY_TYPES.PROPERTY) {
-              keyStr = ` trackBy ${itemName}.${keyName}`
+              if (keyName !== '*this') {
+                keyStr = ` trackBy ${itemName}.${keyName}`
+              } else {
+                warn('Loop key "*this" is not supported in swan Environment!')
+              }
             } else {
               // 以后增加其他key类型
             }
