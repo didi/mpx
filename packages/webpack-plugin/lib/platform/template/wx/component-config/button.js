@@ -14,6 +14,7 @@ module.exports = function ({ print }) {
   const qqValueLogError = print({ platform: 'qq', tag: TAG_NAME, isError: true, type: 'value' })
   const ttPropLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false })
   const ttValueLogError = print({ platform: 'bytedance', tag: TAG_NAME, isError: true, type: 'value' })
+  const ttValueLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false, type: 'value' })
   const ttEventLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false, type: 'event' })
 
   return {
@@ -69,9 +70,13 @@ module.exports = function ({ print }) {
           }
         },
         tt ({ name, value }) {
-          let supportList = ['share', 'getPhoneNumber']
-          if (supportList.indexOf(value) === -1) {
-            ttValueLogError({ name, value })
+          if (/\{\{((?:.|\n)+?)\}\}(?!})/.test(value)) {
+            ttValueLog({ name, value })
+          } else {
+            let supportList = ['share', 'getPhoneNumber']
+            if (supportList.indexOf(value) === -1) {
+              ttValueLogError({ name, value })
+            }
           }
         }
       },
