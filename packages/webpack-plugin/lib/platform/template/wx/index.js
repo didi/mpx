@@ -49,14 +49,18 @@ module.exports = function getSpec ({ warn, error }) {
           const keyName = attrsMap['wx:key'] || null
           let keyStr = ''
           if (keyName) {
-            // 定义key索引
-            if (keyType === KEY_TYPES.INDEX) {
-              warn(`The numeric type loop variable does not support custom keys. Automatically set to the index value.`)
-              keyStr = ` trackBy ${itemName}[${indexName}]`
-            } else if (keyType === KEY_TYPES.PROPERTY) {
-              keyStr = ` trackBy ${itemName}.${keyName}`
+            if (keyName === '*this') {
+              keyStr = ` trackBy ${itemName}`
             } else {
-              // 以后增加其他key类型
+              // 定义key索引
+              if (keyType === KEY_TYPES.INDEX) {
+                warn(`The numeric type loop variable does not support custom keys. Automatically set to the index value.`)
+                keyStr = ` trackBy ${itemName}[${indexName}]`
+              } else if (keyType === KEY_TYPES.PROPERTY) {
+                keyStr = ` trackBy ${itemName}.${keyName}`
+              } else {
+                // 以后增加其他key类型
+              }
             }
           }
           return {
