@@ -1,6 +1,7 @@
 const runRules = require('../../run-rules')
 const getComponentConfigs = require('./component-config')
 const normalizeComponentRules = require('../normalize-component-rules')
+const isValidIdentifierStr = require('../../../utils/is-valid-identifier-str')
 
 module.exports = function getSpec ({ warn, error }) {
   const spec = {
@@ -56,6 +57,8 @@ module.exports = function getSpec ({ warn, error }) {
               if (keyType === KEY_TYPES.INDEX) {
                 warn(`The numeric type loop variable does not support custom keys. Automatically set to the index value.`)
                 keyStr = ` trackBy ${itemName}[${indexName}]`
+              } else if (keyType === KEY_TYPES.PROPERTY && !isValidIdentifierStr(keyName)) {
+                keyStr = ` trackBy ${itemName}['${keyName}']`
               } else if (keyType === KEY_TYPES.PROPERTY) {
                 keyStr = ` trackBy ${itemName}.${keyName}`
               } else {
