@@ -120,6 +120,14 @@ module.exports = function getSpec ({ warn, error }) {
             }) + modifier : name,
             value
           }
+        },
+        tt ({ name, value }) {
+          const match = this.test.exec(name)
+          const modifier = match[3] || ''
+          if (match[1] !== 'bind') {
+            warn(`bytedance miniapp only support use 'bind' to bind event`)
+          }
+          return { name: 'bind' + match[2] + modifier, value }
         }
       },
       // 无障碍
