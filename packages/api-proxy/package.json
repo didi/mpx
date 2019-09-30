@@ -3,11 +3,13 @@
   "version": "2.2.27",
   "description": "convert miniprogram API at each end",
   "module": "src/index.js",
+  "types": "@types/index.d.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "files": [
-    "src"
+    "src",
+    "@types"
   ],
   "repository": {
     "type": "git",
@@ -26,5 +28,8 @@
   "bugs": {
     "url": "https://github.com/didi/mpx/issues"
   },
-  "homepage": "https://github.com/didi/mpx#readme"
+  "homepage": "https://github.com/didi/mpx#readme",
+  "peerDependencies": {
+    "@mpxjs/core": "^2.2.26"
+  }
 }
