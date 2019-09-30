@@ -1185,7 +1185,6 @@ function processBindEvent (el) {
   }
 }
 
-
 // todo 暂时未考虑swan中不用{{}}包裹控制属性的情况
 function parseMustache (raw = '') {
   let replaced = false
