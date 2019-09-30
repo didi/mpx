@@ -135,6 +135,11 @@ module.exports = function getSpec ({ warn, error }) {
             warn(`bytedance miniapp only support use 'bind' to bind event`)
           }
           return { name: 'bind' + match[2] + modifier, value }
+        },
+        swan ({ name, value }, { eventRules }) {
+          const match = this.test.exec(name)
+          const eventName = match[2]
+          runRules(eventRules, eventName, { target: 'swan' })
         }
       },
       // 无障碍
