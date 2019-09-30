@@ -1,7 +1,7 @@
 const compiler = require('./compiler')
 // const bindThis = require('./bind-this').transform
 var input =
-  '<view>{{aaaaaa.bbb}}<view wx:for="{{aaa}}">' +
+  '<view data-index="aaa &gt; bbb">A &lt; B<<view wx:for="{{aaa}}">' +
   '<slider bindchange bindchanging>{{aaaaaa.bbb}}</slider wx:for="{{aaa}}">' +
   '<map subkey></map>' +
   '<functional-page-navigator></functional-page-navigator>' +
@@ -15,9 +15,7 @@ var input =
 
 let parsed = compiler.parse(input, {
   usingComponents: ['com1', 'com2', 'com3'],
-  compileBindEvent: true,
-  srcMode: 'wx',
-  mode: 'swan'
+  compileBindEvent: true
 })
 let ast = parsed.root
 console.log(compiler.serialize(ast))

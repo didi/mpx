@@ -1,5 +1,4 @@
 const deindent = require('de-indent')
-const he = require('he')
 const config = require('../config')
 const normalize = require('../utils/normalize')
 const isValidIdentifierStr = require('../utils/is-valid-identifier-str')
@@ -68,61 +67,42 @@ let IS_REGEX_CAPTURING_BROKEN = false
 let isPlainTextElement = makeMap('script,style,textarea', true)
 let reCache = {}
 
-let decodingMap = {
-  '&lt;': '<',
-  '&gt;': '>',
-  '&quot;': '"',
-  '&amp;': '&',
-  '&#10;': '\n',
-  '&#9;': '\t'
-}
-let encodedAttr = /&(?:lt|gt|quot|amp);/g
-let encodedAttrWithNewLines = /&(?:lt|gt|quot|amp|#10|#9);/g
-
 // #5992
 let isIgnoreNewlineTag = makeMap('pre,textarea', true)
 let shouldIgnoreFirstNewline = function (tag, html) {
   return tag && isIgnoreNewlineTag(tag) && html[0] === '\n'
 }
 
-function decodeAttr (value, shouldDecodeNewlines) {
-  let re = shouldDecodeNewlines ? encodedAttrWithNewLines : encodedAttr
-  return value.replace(re, function (match) {
-    return decodingMap[match]
-  })
-}
+// const encodingMap = Object.keys(decodingMap)
+//   .reduce((acc, k) => {
+//     const v = decodingMap[k]
+//     acc[v] = k
+//     return acc
+//   }, {})
 
-const encodingMap = Object.keys(decodingMap)
-  .reduce((acc, k) => {
-    const v = decodingMap[k]
-    acc[v] = k
-    return acc
-  }, {})
+// const decodedAttr = /[<>"&]/g
+// const decodedAttrWithNewLines = /[<>"&\n\t]/g
+//
+// const tagRES = /(\{\{(?:.|\n)+?\}\})(?!})/
 
-const decodedAttr = /[<>"&]/g
-const decodedAttrWithNewLines = /[<>"&\n\t]/g
-
-const tagRES = /(\{\{(?:.|\n)+?\}\})(?!})/
-
-// eslint-disable-next-line no-unused-vars
-function encodeAttr (value, shouldDecodeNewlines) {
-  const sArr = value.split(tagRES)
-  const re = shouldDecodeNewlines ? decodedAttrWithNewLines : decodedAttr
-  const ret = sArr.map((s) => {
-    if (!tagRES.test(s)) {
-      // 对于属性值且Mustache外的值需要encode，否则序列化时会破坏模板合法性
-      return s.replace(re, (match) => {
-        return encodingMap[match]
-      })
-    } else if (mode === 'ali' || mode === 'qq') {
-      // fix支付宝和qq
-      return s.replace(/["']/g, '\'')
-    } else {
-      return s
-    }
-  })
-  return ret.join('')
-}
+// function encodeAttr (value, shouldDecodeNewlines) {
+//   const sArr = value.split(tagRES)
+//   const re = shouldDecodeNewlines ? decodedAttrWithNewLines : decodedAttr
+//   const ret = sArr.map((s) => {
+//     if (!tagRES.test(s)) {
+//       // 对于属性值且Mustache外的值需要encode，否则序列化时会破坏模板合法性
+//       return s.replace(re, (match) => {
+//         return encodingMap[match]
+//       })
+//     } else if (mode === 'ali' || mode === 'qq') {
+//       // fix支付宝和qq
+//       return s.replace(/["']/g, '\'')
+//     } else {
+//       return s
+//     }
+//   })
+//   return ret.join('')
+// }
 
 const splitRE = /\r?\n/g
 const replaceRE = /./g
@@ -164,10 +144,6 @@ function createASTElement (tag, attrs, parent) {
     parent: parent,
     children: []
   }
-}
-
-function isTextTag (el) {
-  return el.tag === 'script' || el.tag === 'style'
 }
 
 function isForbiddenTag (el) {
@@ -270,18 +246,6 @@ function assertMpxCommentAttrsEnd () {
     throw new Error('No target for @mpx-attrs!')
   }
 }
-
-// mpx special comments
-
-function cached (fn) {
-  let cache = Object.create(null)
-  return function cachedFn (str) {
-    let hit = cache[str]
-    return hit || (cache[str] = fn(str))
-  }
-}
-
-let decodeHTMLCached = cached(he.decode)
 
 // Browser environment sniffing
 let inBrowser = typeof window !== 'undefined'
@@ -525,12 +489,9 @@ function parseHTML (html, options) {
         }
       }
       let value = args[3] || args[4] || args[5] || ''
-      let shouldDecodeNewlines = tagName === 'a' && args[1] === 'href'
-        ? options.shouldDecodeNewlinesForHref
-        : options.shouldDecodeNewlines
       attrs[i] = {
         name: args[1],
-        value: decodeAttr(value, shouldDecodeNewlines)
+        value: value
       }
     }
 
@@ -877,7 +838,7 @@ function parse (template, options) {
       }
       let children = currentParent.children
       text = text.trim()
-        ? isTextTag(currentParent) ? text : decodeHTMLCached(text)
+        ? text
         // only preserve whitespace if its not right after a starting tag
         : preserveWhitespace && children.length ? ' ' : ''
       if (text) {
@@ -1043,6 +1004,8 @@ function processComponentIs (el, options) {
 //   }
 // }
 
+const eventIdentifier = '__mpx_event__'
+
 function parseFuncStr2 (str) {
   let funcRE = /^([^()]+)(\((.*)\))?/
   let match = funcRE.exec(str)
@@ -1050,7 +1013,15 @@ function parseFuncStr2 (str) {
     let funcName = stringify(match[1])
     let args = match[3] ? `,${match[3]}` : ''
     let hasArgs = !!match[2]
-    args = args.replace(/(\$event([^,\s])*)/, (match, p1) => stringify(p1))
+    const ret = /(,|^)\s*(\$event)\s*(,|$)/.exec(args)
+    if (ret) {
+      const subIndex = ret[0].indexOf('$event')
+      if (subIndex) {
+        const index1 = ret.index + subIndex
+        const index2 = index1 + 6
+        args = args.substring(0, index1) + JSON.stringify(eventIdentifier) + args.substring(index2)
+      }
+    }
     return {
       hasArgs,
       expStr: `[${funcName + args}]`
@@ -1155,7 +1126,7 @@ function processBindEvent (el) {
       }
       eventConfigMap[modelEvent].configs.unshift({
         hasArgs: true,
-        expStr: `[${stringify('__model')},${stringifiedModelValue},${stringify('$event')},${stringify(modelValuePathArr)},${stringify(modelFilter)}]`
+        expStr: `[${stringify('__model')},${stringifiedModelValue},${stringify(eventIdentifier)},${stringify(modelValuePathArr)},${stringify(modelFilter)}]`
       })
       addAttrs(el, [
         {

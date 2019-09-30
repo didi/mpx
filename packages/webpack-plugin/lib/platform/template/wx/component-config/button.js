@@ -35,6 +35,17 @@ module.exports = function ({ print }) {
                 value: 'phoneNumber'
               }
             ]
+          } else if (value === 'getUserInfo') {
+            return [
+              {
+                name: 'open-type',
+                value: 'getAuthorize'
+              },
+              {
+                name: 'scope',
+                value: 'userInfo'
+              }
+            ]
           } else if (/\{\{((?:.|\n)+?)\}\}(?!})/.test(value)) {
             // 如果是个变量，报warning
             aliValueLog({ name, value })

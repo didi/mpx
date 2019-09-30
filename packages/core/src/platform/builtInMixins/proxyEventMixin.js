@@ -1,5 +1,5 @@
 import { is } from '../../helper/env'
-import { collectDataset, setByPath, getByPath } from '../../helper/utils'
+import { collectDataset, setByPath } from '../../helper/utils'
 
 export default function proxyEventMixin () {
   const methods = {
@@ -28,12 +28,15 @@ export default function proxyEventMixin () {
         }
         if (callbackName) {
           const params = item.length > 1 ? item.slice(1).map(item => {
-            if (/^\$event/.test(item)) {
-              this.__mpxTempEvent = $event
-              const value = getByPath(this, item.replace('$event', '__mpxTempEvent'))
-              // 删除临时变量
-              delete this.__mpxTempEvent
-              return value
+            // 暂不支持$event.xxx的写法
+            // if (/^\$event/.test(item)) {
+            //   this.__mpxTempEvent = $event
+            //   const value = getByPath(this, item.replace('$event', '__mpxTempEvent'))
+            //   // 删除临时变量
+            //   delete this.__mpxTempEvent
+            //   return value
+            if (item === '__mpx_event__') {
+              return $event
             } else {
               return item
             }
