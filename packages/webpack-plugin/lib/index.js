@@ -18,6 +18,7 @@ const HarmonyImportSideEffectDependency = require('webpack/lib/dependencies/Harm
 const RequireHeaderDependency = require('webpack/lib/dependencies/RequireHeaderDependency')
 const RemovedModuleDependency = require('./dependency/RemovedModuleDependency')
 const SplitChunksPlugin = require('webpack/lib/optimize/SplitChunksPlugin')
+const fixRelative = require('./utils/fix-relative')
 
 const isProductionLikeMode = options => {
   return options.mode === 'production' || !options.mode
@@ -25,6 +26,10 @@ const isProductionLikeMode = options => {
 
 const outputFilename = '[name].js'
 const publicPath = '/'
+
+function isChunkInPackage (chunkName, packageName) {
+  return (new RegExp(`^${packageName}\\/`)).test(chunkName)
+}
 
 function getPackageCacheGroup (packageName) {
   if (packageName === 'main') {
@@ -37,7 +42,7 @@ function getPackageCacheGroup (packageName) {
     return {
       test: (module, chunks) => {
         return chunks.every((chunk) => {
-          return (new RegExp(`^${packageName}\\/`)).test(chunk.name)
+          return isChunkInPackage(chunk.name, packageName)
         })
       },
       name: `${packageName}/bundle`,
@@ -533,6 +538,7 @@ class MpxWebpackPlugin {
       }
 
       const processedChunk = new Set()
+      const rootName = compilation._preparedEntrypoints[0].name
 
       function processChunk (chunk, isRuntime, relativeChunks) {
         if (!chunk.files[0] || processedChunk.has(chunk)) {
@@ -548,12 +554,26 @@ class MpxWebpackPlugin {
           let chunkPath = getTargetFile(chunk.files[0])
           let relativePath = getTargetFile(relativeChunk.files[0])
           relativePath = path.relative(path.dirname(chunkPath), relativePath)
-          if (!/^\./.test(relativePath)) {
-            relativePath = `.${path.sep}${relativePath}`
-          }
+          relativePath = fixRelative(relativePath, mpx.mode)
           relativePath = toPosix(relativePath)
           if (index === 0) {
-            source.add(`window[${JSON.stringify(jsonpFunction)}] = require("${relativePath}");\n`)
+            // 引用runtime
+            // 支付宝分包独立打包，通过全局context获取webpackJSONP
+            if (mpx.mode === 'ali') {
+              if (chunk.name === rootName) {
+                // 在rootChunk中挂载jsonpFunction
+                source.add('// process ali subpackages runtime in root chunk\n' +
+                  'var context = Function("return this")();\n\n')
+                source.add(`context[${JSON.stringify(jsonpFunction)}] = window[${JSON.stringify(jsonpFunction)}] = require("${relativePath}");\n`)
+              } else {
+                // 其余chunk中通过context全局传递runtime
+                source.add('// process ali subpackages runtime in other chunk\n' +
+                  'var context = Function("return this")();\n\n')
+                source.add(`window[${JSON.stringify(jsonpFunction)}] = context[${JSON.stringify(jsonpFunction)}];\n`)
+              }
+            } else {
+              source.add(`window[${JSON.stringify(jsonpFunction)}] = require("${relativePath}");\n`)
+            }
           } else {
             source.add(`require("${relativePath}");\n`)
           }

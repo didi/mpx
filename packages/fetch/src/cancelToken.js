@@ -5,6 +5,9 @@ export default class CancelToken {
     })
   }
   exec (msg) {
-    this.resolve && this.resolve(msg)
+    return new Promise(resolve => {
+      this.resolve && this.resolve(msg)
+      resolve()
+    })
   }
 }

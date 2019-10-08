@@ -6,6 +6,7 @@ module.exports = function ({ print }) {
   const aliPropLog = print({ platform: 'ali', tag: TAG_NAME, isError: false })
   const aliEventLog = print({ platform: 'ali', tag: TAG_NAME, isError: false, type: 'event' })
   const baiduValueLogError = print({ platform: 'baidu', tag: TAG_NAME, isError: true, type: 'value' })
+  const baiduValueLog = print({ platform: 'baidu', tag: TAG_NAME, isError: false, type: 'value' })
   const baiduPropLog = print({ platform: 'baidu', tag: TAG_NAME, isError: false })
   const baiduEventLog = print({ platform: 'baidu', tag: TAG_NAME, isError: false })
   const qqPropLog = print({ platform: 'qq', tag: TAG_NAME, isError: false })
@@ -13,6 +14,7 @@ module.exports = function ({ print }) {
   const qqValueLogError = print({ platform: 'qq', tag: TAG_NAME, isError: true, type: 'value' })
   const ttPropLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false })
   const ttValueLogError = print({ platform: 'bytedance', tag: TAG_NAME, isError: true, type: 'value' })
+  const ttValueLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false, type: 'value' })
   const ttEventLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false, type: 'event' })
 
   return {
@@ -34,6 +36,17 @@ module.exports = function ({ print }) {
                 value: 'phoneNumber'
               }
             ]
+          } else if (value === 'getUserInfo') {
+            return [
+              {
+                name: 'open-type',
+                value: 'getAuthorize'
+              },
+              {
+                name: 'scope',
+                value: 'userInfo'
+              }
+            ]
           } else if (/\{\{((?:.|\n)+?)\}\}(?!})/.test(value)) {
             // 如果是个变量，报warning
             aliValueLog({ name, value })
@@ -43,7 +56,10 @@ module.exports = function ({ print }) {
         },
         swan ({ name, value }) {
           let supportList = ['contact', 'share', 'getUserInfo', 'getPhoneNumber', 'openSetting']
-          if (supportList.indexOf(value) === -1) {
+          if (/\{\{((?:.|\n)+?)\}\}(?!})/.test(value)) {
+            // 如果是个变量，报warning
+            baiduValueLog({ name, value })
+          } else if (supportList.indexOf(value) === -1) {
             baiduValueLogError({ name, value })
           }
         },
@@ -54,9 +70,13 @@ module.exports = function ({ print }) {
           }
         },
         tt ({ name, value }) {
-          let supportList = ['share', 'getPhoneNumber']
-          if (supportList.indexOf(value) === -1) {
-            ttValueLogError({ name, value })
+          if (/\{\{((?:.|\n)+?)\}\}(?!})/.test(value)) {
+            ttValueLog({ name, value })
+          } else {
+            let supportList = ['share', 'getPhoneNumber']
+            if (supportList.indexOf(value) === -1) {
+              ttValueLogError({ name, value })
+            }
           }
         }
       },
