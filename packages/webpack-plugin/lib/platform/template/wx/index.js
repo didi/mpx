@@ -1,6 +1,7 @@
 const runRules = require('../../run-rules')
 const getComponentConfigs = require('./component-config')
 const normalizeComponentRules = require('../normalize-component-rules')
+const isValidIdentifierStr = require('../../../utils/is-valid-identifier-str')
 
 module.exports = function getSpec ({ warn, error }) {
   const spec = {
@@ -49,14 +50,20 @@ module.exports = function getSpec ({ warn, error }) {
           const keyName = attrsMap['wx:key'] || null
           let keyStr = ''
           if (keyName) {
-            // 定义key索引
-            if (keyType === KEY_TYPES.INDEX) {
-              warn(`The numeric type loop variable does not support custom keys. Automatically set to the index value.`)
-              keyStr = ` trackBy ${itemName}[${indexName}]`
-            } else if (keyType === KEY_TYPES.PROPERTY) {
-              keyStr = ` trackBy ${itemName}.${keyName}`
+            if (keyName === '*this') {
+              keyStr = ` trackBy ${itemName}`
             } else {
-              // 以后增加其他key类型
+              // 定义key索引
+              if (keyType === KEY_TYPES.INDEX) {
+                warn(`The numeric type loop variable does not support custom keys. Automatically set to the index value.`)
+                keyStr = ` trackBy ${itemName}[${indexName}]`
+              } else if (keyType === KEY_TYPES.PROPERTY && !isValidIdentifierStr(keyName)) {
+                keyStr = ` trackBy ${itemName}['${keyName}']`
+              } else if (keyType === KEY_TYPES.PROPERTY) {
+                keyStr = ` trackBy ${itemName}.${keyName}`
+              } else {
+                // 以后增加其他key类型
+              }
             }
           }
           return {
@@ -120,6 +127,19 @@ module.exports = function getSpec ({ warn, error }) {
             }) + modifier : name,
             value
           }
+        },
+        tt ({ name, value }) {
+          const match = this.test.exec(name)
+          const modifier = match[3] || ''
+          if (match[1] !== 'bind') {
+            warn(`bytedance miniapp only support use 'bind' to bind event`)
+          }
+          return { name: 'bind' + match[2] + modifier, value }
+        },
+        swan ({ name, value }, { eventRules }) {
+          const match = this.test.exec(name)
+          const eventName = match[2]
+          runRules(eventRules, eventName, { target: 'swan' })
         }
       },
       // 无障碍
