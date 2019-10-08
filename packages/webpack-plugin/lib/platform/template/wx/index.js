@@ -36,8 +36,8 @@ module.exports = function getSpec ({ warn, error }) {
                 list[i] = i
               }
               listName = JSON.stringify(list)
-            } else {
               warn(`Number type loop variable is not support in baidu environment, please check variable: ${variableName}`)
+            } else {
               listName = varListName[1]
             }
           } else {
@@ -49,7 +49,10 @@ module.exports = function getSpec ({ warn, error }) {
           const indexName = attrsMap['wx:for-index'] || 'index'
           const keyName = attrsMap['wx:key'] || null
           let keyStr = ''
-          if (keyName) {
+          if (keyName &&
+            // 百度不支持在trackBy使用mustache语法
+            !/{{[^}]*}}/.test(keyName)
+          ) {
             if (keyName === '*this') {
               keyStr = ` trackBy ${itemName}`
             } else {
