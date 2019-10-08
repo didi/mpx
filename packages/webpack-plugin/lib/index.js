@@ -379,6 +379,14 @@ class MpxWebpackPlugin {
 
         const srcMode = this.options.srcMode
         if (srcMode !== this.options.mode) {
+          parser.hooks.evaluate.for('MemberExpression').tap('MpxWebpackPlugin', (expr) => {
+            // Undeclared varible for wx[identifier]()
+            // TODO Unable to handle wx[identifier]
+            if (expr.object.name === 'wx' && !parser.scope.definitions.has('wx')) {
+              transHandler(expr)
+            }
+          })
+          // Trans for wx.xx, wx['xx'], wx.xx(), wx['xx']()
           parser.hooks.expressionAnyMember.for('wx').tap('MpxWebpackPlugin', transHandler)
           if (this.options.mode === 'ali') {
             parser.hooks.call.for('Page').tap('MpxWebpackPlugin', (expr) => {
