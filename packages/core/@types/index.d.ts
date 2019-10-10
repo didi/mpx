@@ -364,6 +364,9 @@ interface StoreOptWithThis<S, G, M, A, D extends Deps> {
   modules?: ObjectOf<StoreOptWithThis<{}, {}, {}, {}, {}>>
 }
 
+interface mapStateFunctionType<S, G> {
+  [key: string]: (state: S, getter: G) =>  any
+}
 declare class StoreWithThis<S = {}, G = {}, M = {}, A = {}, D extends Deps = {}> {
 
   state: S & UnboxDepsField<D, 'state'>
@@ -381,21 +384,47 @@ declare class StoreWithThis<S = {}, G = {}, M = {}, A = {}, D extends Deps = {}>
   mapState (depPath: string, maps: string[]): {
     [key: string]: () => any
   }
+  mapState<T extends mapStateFunctionType<S & UnboxDepsField<D, 'state'>, GetComputedType<G> & UnboxDepsField<D, 'getters'>>> (obj: ThisType<any> & T ): {
+    [I in keyof T]: () => T[I]
+  }
+  mapState<T extends { [key:string]: keyof S }> (obj: T): {
+    [I in keyof T]: () =>  S[T[I]]
+  }
+  mapState<T extends { [key:string]: string}> (obj: T): {
+    [I in keyof T]: () => any
+  }
 
   mapGetters<K extends keyof G> (maps: K[]): Pick<G, K>
   mapGetters (depPath: string, maps: string[]): {
     [key: string]: () => any
   }
-
+  mapGetters<T extends { [key:string]: keyof G }> (obj: T): {
+    [I in keyof T]: () => G[T[I]]
+  }
+  mapGetters<T extends { [key:string]: string }> (obj: T): {
+    [I in keyof T]: () => any
+  }
 
   mapMutations<K extends keyof M> (maps: K[]): Pick<M, K>
   mapMutations (depPath: string, maps: string[]): {
     [key: string]: (...payloads: any[]) => any
   }
+  mapMutations<T extends { [key:string]: keyof M }> (obj: T): {
+    [I in keyof T]: () =>  M[T[I]]
+  }
+  mapMutations<T extends { [key:string]: string}> (obj: T): {
+    [I in keyof T]: () => any
+  }
 
   mapActions<K extends keyof A> (maps: K[]): Pick<A, K>
   mapActions (depPath: string, maps: string[]): {
     [key: string]: (...payloads: any[]) => any
+  }
+  mapActions<T extends { [key:string]: keyof A }> (obj: T): {
+    [I in keyof T]: () =>  A[T[I]]
+  }
+  mapActions<T extends { [key:string]: string}> (obj: T): {
+    [I in keyof T]: () => any
   }
 
 }
