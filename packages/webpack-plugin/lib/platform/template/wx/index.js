@@ -136,9 +136,9 @@ module.exports = function getSpec ({ warn, error }) {
           const modifier = match[3] || ''
           let ret
           if (match[1] === 'capture-catch' || match[1] === 'capture-bind') {
-            const convertedName = match[1].split('-')[1]
-            warn(`bytedance miniapp doens't support '${match[1]}' and will be translated into '${convertedName}' automatically!`)
-            ret = { name: convertedName + match[2] + modifier, value }
+            const convertName = 'bind'
+            warn(`bytedance miniapp doens't support '${match[1]}' and will be translated into '${convertName}' automatically!`)
+            ret = { name: convertName + match[2] + modifier, value }
           } else {
             ret = { name, value }
           }
