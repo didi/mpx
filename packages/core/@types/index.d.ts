@@ -385,13 +385,13 @@ declare class StoreWithThis<S = {}, G = {}, M = {}, A = {}, D extends Deps = {}>
     [key: string]: () => any
   }
   mapState<T extends mapStateFunctionType<S & UnboxDepsField<D, 'state'>, GetComputedType<G> & UnboxDepsField<D, 'getters'>>> (obj: ThisType<any> & T ): {
-    [I in keyof T]: () => T[I]
+    [I in keyof T]: T[I]
   }
   mapState<T extends { [key:string]: keyof S }> (obj: T): {
     [I in keyof T]: () =>  S[T[I]]
   }
   mapState<T extends { [key:string]: string}> (obj: T): {
-    [I in keyof T]: () => any
+    [I in keyof T]: (...payloads: any[]) => any
   }
 
   mapGetters<K extends keyof G> (maps: K[]): Pick<G, K>
@@ -399,10 +399,10 @@ declare class StoreWithThis<S = {}, G = {}, M = {}, A = {}, D extends Deps = {}>
     [key: string]: () => any
   }
   mapGetters<T extends { [key:string]: keyof G }> (obj: T): {
-    [I in keyof T]: () => G[T[I]]
+    [I in keyof T]: G[T[I]]
   }
   mapGetters<T extends { [key:string]: string }> (obj: T): {
-    [I in keyof T]: () => any
+    [I in keyof T]: (...payloads: any[]) => any
   }
 
   mapMutations<K extends keyof M> (maps: K[]): Pick<M, K>
@@ -410,10 +410,10 @@ declare class StoreWithThis<S = {}, G = {}, M = {}, A = {}, D extends Deps = {}>
     [key: string]: (...payloads: any[]) => any
   }
   mapMutations<T extends { [key:string]: keyof M }> (obj: T): {
-    [I in keyof T]: () =>  M[T[I]]
+    [I in keyof T]: M[T[I]]
   }
   mapMutations<T extends { [key:string]: string}> (obj: T): {
-    [I in keyof T]: () => any
+    [I in keyof T]: (...payloads: any[]) => any
   }
 
   mapActions<K extends keyof A> (maps: K[]): Pick<A, K>
@@ -421,10 +421,10 @@ declare class StoreWithThis<S = {}, G = {}, M = {}, A = {}, D extends Deps = {}>
     [key: string]: (...payloads: any[]) => any
   }
   mapActions<T extends { [key:string]: keyof A }> (obj: T): {
-    [I in keyof T]: () =>  A[T[I]]
+    [I in keyof T]: A[T[I]]
   }
   mapActions<T extends { [key:string]: string}> (obj: T): {
-    [I in keyof T]: () => any
+    [I in keyof T]: (...payloads: any[]) => any
   }
 
 }
