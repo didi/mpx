@@ -195,7 +195,7 @@ module.exports = function getSpec ({ warn, error }) {
             }
           },
           swan (eventName) {
-            const eventArr = ['tap', 'longtap', 'longpress', 'touchstart', 'touchmove', 'touchcancel', 'touchend', 'touchforcechange']
+            const eventArr = ['tap', 'longtap', 'longpress', 'touchstart', 'touchmove', 'touchcancel', 'touchend', 'touchforcechange', 'transitionend', 'animationstart', 'animationiteration', 'animationend']
             if (eventArr.includes(eventName)) {
               return eventName
             } else {
