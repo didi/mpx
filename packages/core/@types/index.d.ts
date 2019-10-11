@@ -241,7 +241,7 @@ export function getComputed<C> (computed: C): C extends (...args: any[]) => any 
 
 export function createPage<D extends Data = {}, P extends Properties = {}, C = {}, M extends Methods = {}, Mi extends Array<any> = []> (opt: ThisTypedPageOpt<D, P, C, M, Mi>, config?: createConfig): void
 
-export function createApp(opt: any, config?: createConfig): typeof App
+export function createApp<T extends WechatMiniprogram.IAnyObject>(opt: WechatMiniprogram.App.Options<T>, config?: createConfig): void
 
 type Mutations<S> = {
   [key: string]: (this: void, state: S, ...payload: any[]) => any
