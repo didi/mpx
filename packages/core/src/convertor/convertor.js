@@ -18,18 +18,15 @@ const lifecycleTemplates = {
 let lifecycleInfo
 let pageMode
 
-switch (__mpx_mode__) {
-  case 'web':
-    lifecycleInfo = webLifecycle
-    pageMode = ''
-    break
-  case 'ali':
-    lifecycleInfo = aliLifecycle
-    pageMode = ''
-    break
-  default:
-    lifecycleInfo = wxLifecycle
-    pageMode = 'blend'
+if (__mpx_mode__ === 'web') {
+  lifecycleInfo = webLifecycle
+  pageMode = ''
+} else if (__mpx_mode__ === 'ali') {
+  lifecycleInfo = aliLifecycle
+  pageMode = ''
+} else {
+  lifecycleInfo = wxLifecycle
+  pageMode = 'blend'
 }
 
 /**

@@ -4,7 +4,7 @@ import {
   isObservable,
   get,
   toJS
-} from 'mobx'
+} from '../mobx'
 
 import _getByPath from './getByPath'
 
@@ -115,7 +115,7 @@ export function getByPath (data, pathStr, defaultVal = '', errTip) {
     if (!path) return
     const result = _getByPath(data, path, (value, key) => {
       let newValue
-      if (isObservable(value)) {
+      if (__mpx_mode__ !== 'web' && isObservable(value)) {
         // key可能不是一个响应式属性，那么get将无法返回正确值
         newValue = get(value, key) || value[key]
       } else if (isExistAttr(value, key)) {
@@ -179,7 +179,7 @@ export function filterProperties (source, props = []) {
   props.forEach(prop => {
     if (prop in source) {
       const result = source[prop]
-      newData[prop] = isObservable(result) ? toJS(result) : result
+      newData[prop] = __mpx_mode__ !== 'web' && isObservable(result) ? toJS(result) : result
     }
   })
   return newData
@@ -241,7 +241,11 @@ export function isObject (obj) {
 }
 
 export function likeArray (arr) {
-  return Array.isArray(arr) || isObservableArray(arr)
+  if (__mpx_mode__ === 'web') {
+    return Array.isArray(arr)
+  } else {
+    return Array.isArray(arr) || isObservableArray(arr)
+  }
 }
 
 export function isDef (v) {
@@ -369,10 +373,10 @@ export function processUndefined (obj) {
 }
 
 function unwrap (a) {
-  if (isObservableArray(a)) {
+  if (__mpx_mode__ !== 'web' && isObservableArray(a)) {
     return a.peek()
   }
-  if (isObservableMap(a)) {
+  if (__mpx_mode__ !== 'web' && isObservableMap(a)) {
     return a.entries()
   }
   return a

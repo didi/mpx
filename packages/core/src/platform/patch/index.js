@@ -9,16 +9,15 @@ export default function createFactory (type) {
     options.__nativeRender__ = !!isNative
     options.__type__ = type
     let getDefaultOptions
-    switch (__mpx_mode__) {
-      case 'web':
-        getDefaultOptions = getWebDefaultOptions
-        break
-      case 'ali':
-        getDefaultOptions = getAliDefaultOptions
-        break
-      default:
-        getDefaultOptions = getWxDefaultOptions
+
+    if (__mpx_mode__ === 'web') {
+      getDefaultOptions = getWebDefaultOptions
+    } else if (__mpx_mode__ === 'ali') {
+      getDefaultOptions = getAliDefaultOptions
+    } else {
+      getDefaultOptions = getWxDefaultOptions
     }
+
     // 获取内建的mixins
     const builtInMixins = getBuiltInMixins(options, type)
     const { rawOptions, currentInject } = transferOptions(options, type, builtInMixins)

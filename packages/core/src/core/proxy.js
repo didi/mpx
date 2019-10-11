@@ -1,23 +1,25 @@
 import {
   observable,
   comparer
-} from 'mobx'
+} from '../mobx'
 
 import {
-  filterProperties,
   type,
   enumerableKeys,
   extend,
   proxy,
   isEmptyObject,
   processUndefined,
-  diffAndCloneA,
   defineGetterSetter,
-  preprocessRenderData,
   setByPath,
   findItem,
-  asyncLock
+  asyncLock,
+  diffAndCloneA,
+  preprocessRenderData,
+  filterProperties
 } from '../helper/utils'
+
+
 import queueWatcher from './queueWatcher'
 import { watch } from './watcher'
 import { getRenderCallBack } from '../platform/patch'

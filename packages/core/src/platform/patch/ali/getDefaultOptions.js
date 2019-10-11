@@ -1,6 +1,6 @@
 import {
   comparer
-} from 'mobx'
+} from '../../../mobx'
 
 import MPXProxy from '../../../core/proxy'
 import customKey from '../customOptionKeys'

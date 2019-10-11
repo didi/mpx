@@ -34,5 +34,6 @@
   "homepage": "https://didi.github.io/mpx/",
   "bugs": {
     "url": "https://github.com/didi/mpx/issues"
-  }
+  },
+  "sideEffects": false
 }

@@ -2,13 +2,17 @@ import {
   observable,
   action,
   extendObservable
-} from 'mobx'
+} from '../mobx'
+
+import Vue from '../vue'
 
 import {
   proxy,
   getByPath,
   defineGetterSetter
 } from '../helper/utils'
+
+// 兼容在web和小程序平台中创建表现一致的store
 
 import mapStore from './mapStore'
 
@@ -18,7 +22,7 @@ function transformGetters (getters, module, store) {
     if (key in store.getters && process.env.NODE_ENV !== 'production') {
       console.warn('【MPX ERROR】', new Error(`duplicate getter type: ${key}`))
     }
-    defineGetterSetter(newGetters, key, function () {
+    const getter = function () {
       if (store.withThis) {
         return getters[key].call({
           state: module.state,
@@ -27,7 +31,13 @@ function transformGetters (getters, module, store) {
         })
       }
       return getters[key](module.state, store.getters, store.state)
-    })
+    }
+    if (__mpx_mode__ === 'web') {
+      newGetters[key] = getter
+    } else {
+      defineGetterSetter(newGetters, key, getter)
+    }
+
   }
   return newGetters
 }
@@ -38,10 +48,16 @@ function transformMutations (mutations, module, store) {
     if (store.mutations[key] && process.env.NODE_ENV !== 'production') {
       console.warn('【MPX ERROR】', new Error(`duplicate mutation type: ${key}`))
     }
-    newMutations[key] = action(function (...payload) {
+
+    const mutation = function (...payload) {
       if (store.withThis) return mutations[key].apply({ state: module.state }, payload)
       return mutations[key](module.state, ...payload)
-    })
+    }
+    if (__mpx_mode__ === 'web') {
+      newMutations[key] = mutation
+    } else {
+      newMutations[key] = action(mutation)
+    }
   }
   return newMutations
 }
@@ -87,10 +103,24 @@ function mergeDeps (module, deps, getterKeys) {
         console.warn('【MPX ERROR】', new Error(`deps's name: [${key}] conflicts with ${prop}'s key in current options`))
       } else {
         module[prop] = module[prop] || {}
-        prop === 'getters' && getterKeys.push(key)
-        prop === 'state' ? extendObservable(module[prop], {
-          [key]: store[prop]
-        }) : (module[prop][key] = store[prop])
+        if (prop === 'getters') {
+          getterKeys.push(key)
+        }
+        if (__mpx_mode__ === 'web') {
+          if (prop === 'getters') {
+            module[prop][key] = () => store[prop]
+          } else {
+            module[prop][key] = store[prop]
+          }
+        } else {
+          if (prop === 'state') {
+            extendObservable(module[prop], {
+              [key]: store[prop]
+            })
+          } else {
+            module[prop][key] = store[prop]
+          }
+        }
       }
     })
   })
@@ -99,10 +129,13 @@ function mergeDeps (module, deps, getterKeys) {
 class Store {
   constructor (options) {
     this.withThis = options.withThis
+    this.__wrappedGetters = {}
+    this.__getterKeys = []
     this.getters = {}
     this.mutations = {}
     this.actions = {}
     this.state = this.registerModule(options).state
+    this.resetStoreVM()
     Object.assign(this, mapStore(this))
   }
 
@@ -126,13 +159,15 @@ class Store {
 
   registerModule (module) {
     const getterKeys = []
+    const state = module.state || {}
     const reactiveModule = {
-      state: observable(module.state || {})
+      state: __mpx_mode__ !== 'web' ? observable(state) : state
     }
     if (module.getters) {
       // mobx计算属性是不可枚举的，所以单独收集
       getterKeys.push.apply(getterKeys, Object.keys(module.getters))
-      reactiveModule.getters = observable(transformGetters(module.getters, reactiveModule, this))
+      const getters = transformGetters(module.getters, reactiveModule, this)
+      reactiveModule.getters = __mpx_mode__ !== 'web' ? observable(getters) : getters
     }
     if (module.mutations) {
       reactiveModule.mutations = transformMutations(module.mutations, reactiveModule, this)
@@ -144,7 +179,8 @@ class Store {
       mergeDeps(reactiveModule, module.deps, getterKeys)
     }
     // merge getters, 不能用Object.assign，会导致直接执行一次getter函数
-    reactiveModule.getters && proxy(this.getters, reactiveModule.getters, getterKeys, true)
+    const thisGetters = __mpx_mode__ !== 'web' ? this.getters : this.__wrappedGetters
+    reactiveModule.getters && proxy(thisGetters, reactiveModule.getters, getterKeys, true)
     // merge mutations
     Object.assign(this.mutations, reactiveModule.mutations)
     // merge actions
@@ -153,12 +189,29 @@ class Store {
     if (module.modules) {
       const childs = module.modules
       Object.keys(childs).forEach(key => {
-        extendObservable(reactiveModule.state, {
-          [key]: this.registerModule(childs[key]).state
-        })
+        if (__mpx_mode__ === 'web') {
+          reactiveModule.state[key] = this.registerModule(childs[key]).state
+        } else {
+          extendObservable(reactiveModule.state, {
+            [key]: this.registerModule(childs[key]).state
+          })
+        }
       })
     }
+    this.__getterKeys = this.__getterKeys.concat(getterKeys)
     return reactiveModule
+  }
+
+  resetStoreVM () {
+    if (__mpx_mode__ === 'web') {
+      this._vm = new Vue({
+        data: {
+          __mpxState: this.state
+        },
+        computed: this.__wrappedGetters
+      })
+      proxy(this.getters, this._vm, this.__getterKeys, true)
+    }
   }
 }
 

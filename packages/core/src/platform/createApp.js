@@ -11,7 +11,7 @@ export default function createApp (option) {
 
   const defaultOptions = mergeOptions(rawOptions, 'app', false)
 
-  if (__mpx_mode__) {
+  if (__mpx_mode__ === 'web') {
     global.currentOption = defaultOptions
   } else {
     global.currentCtor(dissolveAttrs(defaultOptions, 'methods'))

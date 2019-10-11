@@ -1,17 +1,5 @@
-import {
-  Reaction,
-  action,
-  toJS,
-  isObservableArray,
-  isObservableObject,
-  keys,
-  isObservable
-} from 'mobx'
-import {
-  getByPath,
-  type,
-  isObject
-} from '../helper/utils'
+import { Reaction, action, toJS, isObservableArray, isObservableObject, keys, isObservable } from '../mobx'
+import { getByPath, isObject, type } from '../helper/utils'
 import queueWatcher from './queueWatcher'
 
 let uid = 0

@@ -1,4 +1,4 @@
-import { collectDataset, setByPath } from '../../helper/utils'
+import { setByPath, collectDataset } from '../../helper/utils'
 
 export default function proxyEventMixin () {
   const methods = {

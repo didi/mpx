@@ -8,13 +8,14 @@ import relationsMixin from './relationsMixin'
 export default function getBuiltInMixins (options, type) {
   if (__mpx_mode__ === 'web') {
     return []
+  } else {
+    return [
+      pageStatusMixin(type),
+      proxyEventMixin(),
+      renderHelperMixin(),
+      refsMixin(),
+      showMixin(type),
+      relationsMixin(type)
+    ].filter(item => item)
   }
-  return [
-    pageStatusMixin(type),
-    proxyEventMixin(),
-    renderHelperMixin(),
-    refsMixin(),
-    showMixin(type),
-    relationsMixin(type)
-  ].filter(item => item)
 }
