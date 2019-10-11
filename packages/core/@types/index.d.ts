@@ -7,7 +7,7 @@
 
 import {toJS, observable, extendObservable, action} from 'mobx'
 
-type Data = (object | (() => object))
+type Data = object | (() => object)
 
 type PropType = StringConstructor | NumberConstructor | BooleanConstructor | ObjectConstructor | ArrayConstructor | null
 

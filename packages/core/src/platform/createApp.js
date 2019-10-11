@@ -9,5 +9,5 @@ export default function createApp (option, config = {}) {
     }
   }])
   const finalAppOption = dissolveAttrs(mergeOptions(rawOptions, 'app', false), 'methods')
-  config.costomCtor ? config.costomCtor(finalAppOption) : global.currentCtor(finalAppOption)
+  config.customCtor ? config.customCtor(finalAppOption) : global.currentCtor(finalAppOption)
 }
