@@ -1624,7 +1624,6 @@ function processScoped (el, options) {
   }
 }
 
-
 const builtInComponentsPrefix = '@mpxjs/webpack-plugin/lib/runtime/components'
 
 function processBuiltInComponents (el, meta) {

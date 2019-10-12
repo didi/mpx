@@ -3,7 +3,6 @@ import {
   getByPath
 } from '../helper/utils'
 
-
 function mapFactory (type, store) {
   return function (depPath, maps) {
     maps = normalizeMap(depPath, maps)

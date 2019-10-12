@@ -19,7 +19,6 @@ import {
   filterProperties
 } from '../helper/utils'
 
-
 import queueWatcher from './queueWatcher'
 import { watch } from './watcher'
 import { getRenderCallBack } from '../platform/patch'

@@ -37,7 +37,6 @@ function transformGetters (getters, module, store) {
     } else {
       defineGetterSetter(newGetters, key, getter)
     }
-
   }
   return newGetters
 }

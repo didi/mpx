@@ -68,7 +68,6 @@ module.exports = function (content) {
 
   const filePath = this.resourcePath
 
-
   // web输出模式下没有任何inject，可以通过cache直接返回
   if (vueContentCache.has(filePath)) {
     return vueContentCache.get(filePath)
@@ -195,7 +194,6 @@ module.exports = function (content) {
 
   // 处理mode为web时输出vue格式文件
   if (mode === 'web') {
-
     // template
     output += '/* template */\n'
     let template = parts.template
@@ -369,7 +367,6 @@ module.exports = function (content) {
     console.log(output)
     return output
   }
-
 
   // todo loader中inject dep比较危险，watch模式下不一定靠谱，可考虑将import改为require然后通过修改loader内容注入
   // 注入模块id及资源路径
