@@ -1373,7 +1373,9 @@ function processAttrs (el, options) {
     let value = needWrap ? `{${attr.value}}` : attr.value
     let parsed = parseMustache(value)
     if (parsed.hasBinding) {
-      let needTravel = (options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component') && !(attr.name === 'class' || attr.name === 'style')
+      // let needTravel = (options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component') && !(attr.name === 'class' || attr.name === 'style')
+      // 之前只对组件传递props的场景下才对数据做travel，该处理方式存在漏洞，因为某些原生组件也会深度遍历传入属性作为视图依赖，如multiColumnPicker，由于travel对于非深度对象的性能消耗很低，此处全量开启表达式travel
+      let needTravel = true
       addExp(el, parsed.result, needTravel)
     }
     if (parsed.replaced) {

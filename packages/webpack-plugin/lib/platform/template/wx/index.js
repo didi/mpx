@@ -36,8 +36,8 @@ module.exports = function getSpec ({ warn, error }) {
                 list[i] = i
               }
               listName = JSON.stringify(list)
-            } else {
               warn(`Number type loop variable is not support in baidu environment, please check variable: ${variableName}`)
+            } else {
               listName = varListName[1]
             }
           } else {
@@ -49,7 +49,10 @@ module.exports = function getSpec ({ warn, error }) {
           const indexName = attrsMap['wx:for-index'] || 'index'
           const keyName = attrsMap['wx:key'] || null
           let keyStr = ''
-          if (keyName) {
+          if (keyName &&
+            // 百度不支持在trackBy使用mustache语法
+            !/{{[^}]*}}/.test(keyName)
+          ) {
             if (keyName === '*this') {
               keyStr = ` trackBy ${itemName}`
             } else {
@@ -131,10 +134,15 @@ module.exports = function getSpec ({ warn, error }) {
         tt ({ name, value }) {
           const match = this.test.exec(name)
           const modifier = match[3] || ''
-          if (match[1] !== 'bind') {
-            warn(`bytedance miniapp only support use 'bind' to bind event`)
+          let ret
+          if (match[1] === 'capture-catch' || match[1] === 'capture-bind') {
+            const convertName = 'bind'
+            warn(`bytedance miniapp doens't support '${match[1]}' and will be translated into '${convertName}' automatically!`)
+            ret = { name: convertName + match[2] + modifier, value }
+          } else {
+            ret = { name, value }
           }
-          return { name: 'bind' + match[2] + modifier, value }
+          return ret
         },
         swan ({ name, value }, { eventRules }) {
           const match = this.test.exec(name)
@@ -187,7 +195,7 @@ module.exports = function getSpec ({ warn, error }) {
             }
           },
           swan (eventName) {
-            const eventArr = ['tap', 'longtap', 'longpress', 'touchstart', 'touchmove', 'touchcancel', 'touchend', 'touchforcechange']
+            const eventArr = ['tap', 'longtap', 'longpress', 'touchstart', 'touchmove', 'touchcancel', 'touchend', 'touchforcechange', 'transitionend', 'animationstart', 'animationiteration', 'animationend']
             if (eventArr.includes(eventName)) {
               return eventName
             } else {

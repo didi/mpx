@@ -7,8 +7,6 @@
 
 import {toJS, observable, extendObservable, action} from 'mobx'
 
-export const createApp: typeof App
-
 type Data = object | (() => object)
 
 type PropType = StringConstructor | NumberConstructor | BooleanConstructor | ObjectConstructor | ArrayConstructor | null
@@ -225,7 +223,11 @@ type ComponentIns<D, P, C, M, Mi extends Array<any>> =
   GetPropsType<P & UnboxMixinsField<Mi, 'properties'>> &
   GetComputedType<C & UnboxMixinsField<Mi, 'computed'>> & WxComponentIns & MpxComponentIns
 
-export function createComponent<D extends Data = {}, P extends Properties = {}, C = {}, M extends Methods = {}, Mi extends Array<any> = []> (opt: ThisTypedComponentOpt<D, P, C, M, Mi>): void
+interface createConfig {
+  customCtor: any
+}
+
+export function createComponent<D extends Data = {}, P extends Properties = {}, C = {}, M extends Methods = {}, Mi extends Array<any> = []> (opt: ThisTypedComponentOpt<D, P, C, M, Mi>, config?: createConfig): void
 
 export function getMixin<D extends Data = {}, P extends Properties = {}, C = {}, M extends Methods = {}, Mi extends Array<any> = []> (opt: ThisTypedComponentOpt<D, P, C, M, Mi>): {
   data: GetDataType<D> & UnboxMixinsField<Mi, 'data'>
@@ -237,8 +239,9 @@ export function getMixin<D extends Data = {}, P extends Properties = {}, C = {},
 
 export function getComputed<C> (computed: C): C extends (...args: any[]) => any ? ReturnType<C> : C
 
-export function createPage<D extends Data = {}, P extends Properties = {}, C = {}, M extends Methods = {}, Mi extends Array<any> = []> (opt: ThisTypedPageOpt<D, P, C, M, Mi>): void
+export function createPage<D extends Data = {}, P extends Properties = {}, C = {}, M extends Methods = {}, Mi extends Array<any> = []> (opt: ThisTypedPageOpt<D, P, C, M, Mi>, config?: createConfig): void
 
+export function createApp<T extends WechatMiniprogram.IAnyObject>(opt: WechatMiniprogram.App.Options<T>, config?: createConfig): void
 
 type Mutations<S> = {
   [key: string]: (this: void, state: S, ...payload: any[]) => any
@@ -364,6 +367,9 @@ interface StoreOptWithThis<S, G, M, A, D extends Deps> {
   modules?: ObjectOf<StoreOptWithThis<{}, {}, {}, {}, {}>>
 }
 
+interface mapStateFunctionType<S, G> {
+  [key: string]: (state: S, getter: G) =>  any
+}
 declare class StoreWithThis<S = {}, G = {}, M = {}, A = {}, D extends Deps = {}> {
 
   state: S & UnboxDepsField<D, 'state'>
@@ -381,21 +387,47 @@ declare class StoreWithThis<S = {}, G = {}, M = {}, A = {}, D extends Deps = {}>
   mapState (depPath: string, maps: string[]): {
     [key: string]: () => any
   }
+  mapState<T extends mapStateFunctionType<S & UnboxDepsField<D, 'state'>, GetComputedType<G> & UnboxDepsField<D, 'getters'>>> (obj: ThisType<any> & T ): {
+    [I in keyof T]: T[I]
+  }
+  mapState<T extends { [key:string]: keyof S }> (obj: T): {
+    [I in keyof T]: () =>  S[T[I]]
+  }
+  mapState<T extends { [key:string]: string}> (obj: T): {
+    [I in keyof T]: (...payloads: any[]) => any
+  }
 
   mapGetters<K extends keyof G> (maps: K[]): Pick<G, K>
   mapGetters (depPath: string, maps: string[]): {
     [key: string]: () => any
   }
-
+  mapGetters<T extends { [key:string]: keyof G }> (obj: T): {
+    [I in keyof T]: G[T[I]]
+  }
+  mapGetters<T extends { [key:string]: string }> (obj: T): {
+    [I in keyof T]: (...payloads: any[]) => any
+  }
 
   mapMutations<K extends keyof M> (maps: K[]): Pick<M, K>
   mapMutations (depPath: string, maps: string[]): {
     [key: string]: (...payloads: any[]) => any
   }
+  mapMutations<T extends { [key:string]: keyof M }> (obj: T): {
+    [I in keyof T]: M[T[I]]
+  }
+  mapMutations<T extends { [key:string]: string}> (obj: T): {
+    [I in keyof T]: (...payloads: any[]) => any
+  }
 
   mapActions<K extends keyof A> (maps: K[]): Pick<A, K>
   mapActions (depPath: string, maps: string[]): {
     [key: string]: (...payloads: any[]) => any
+  }
+  mapActions<T extends { [key:string]: keyof A }> (obj: T): {
+    [I in keyof T]: A[T[I]]
+  }
+  mapActions<T extends { [key:string]: string}> (obj: T): {
+    [I in keyof T]: (...payloads: any[]) => any
   }
 
 }

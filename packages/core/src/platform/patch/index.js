@@ -5,7 +5,7 @@ import { getDefaultOptions as getAliDefaultOptions } from './ali/getDefaultOptio
 import { getDefaultOptions as getWebDefaultOptions } from './web/getDefaultOptions'
 
 export default function createFactory (type) {
-  return (options, { isNative } = {}) => {
+  return (options, { isNative, customCtor } = {}) => {
     options.__nativeRender__ = !!isNative
     options.__type__ = type
     let getDefaultOptions
@@ -25,7 +25,7 @@ export default function createFactory (type) {
     if (__mpx_mode__ === 'web') {
       global.currentOption = defaultOptions
     } else {
-      global.currentCtor(defaultOptions)
+      customCtor ? customCtor(defaultOptions) : global.currentCtor(defaultOptions)
     }
   }
 }
