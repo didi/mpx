@@ -1,6 +1,7 @@
 const runRules = require('../../run-rules')
 const getComponentConfigs = require('./component-config')
 const normalizeComponentRules = require('../normalize-component-rules')
+const isValidIdentifierStr = require('../../../utils/is-valid-identifier-str')
 
 module.exports = function getSpec ({ warn, error }) {
   const spec = {
@@ -35,8 +36,8 @@ module.exports = function getSpec ({ warn, error }) {
                 list[i] = i
               }
               listName = JSON.stringify(list)
-            } else {
               warn(`Number type loop variable is not support in baidu environment, please check variable: ${variableName}`)
+            } else {
               listName = varListName[1]
             }
           } else {
@@ -48,15 +49,24 @@ module.exports = function getSpec ({ warn, error }) {
           const indexName = attrsMap['wx:for-index'] || 'index'
           const keyName = attrsMap['wx:key'] || null
           let keyStr = ''
-          if (keyName) {
-            // 定义key索引
-            if (keyType === KEY_TYPES.INDEX) {
-              warn(`The numeric type loop variable does not support custom keys. Automatically set to the index value.`)
-              keyStr = ` trackBy ${itemName}[${indexName}]`
-            } else if (keyType === KEY_TYPES.PROPERTY) {
-              keyStr = ` trackBy ${itemName}.${keyName}`
+          if (keyName &&
+            // 百度不支持在trackBy使用mustache语法
+            !/{{[^}]*}}/.test(keyName)
+          ) {
+            if (keyName === '*this') {
+              keyStr = ` trackBy ${itemName}`
             } else {
-              // 以后增加其他key类型
+              // 定义key索引
+              if (keyType === KEY_TYPES.INDEX) {
+                warn(`The numeric type loop variable does not support custom keys. Automatically set to the index value.`)
+                keyStr = ` trackBy ${itemName}[${indexName}]`
+              } else if (keyType === KEY_TYPES.PROPERTY && !isValidIdentifierStr(keyName)) {
+                keyStr = ` trackBy ${itemName}['${keyName}']`
+              } else if (keyType === KEY_TYPES.PROPERTY) {
+                keyStr = ` trackBy ${itemName}.${keyName}`
+              } else {
+                // 以后增加其他key类型
+              }
             }
           }
           return {
@@ -120,6 +130,24 @@ module.exports = function getSpec ({ warn, error }) {
             }) + modifier : name,
             value
           }
+        },
+        tt ({ name, value }) {
+          const match = this.test.exec(name)
+          const modifier = match[3] || ''
+          let ret
+          if (match[1] === 'capture-catch' || match[1] === 'capture-bind') {
+            const convertName = 'bind'
+            warn(`bytedance miniapp doens't support '${match[1]}' and will be translated into '${convertName}' automatically!`)
+            ret = { name: convertName + match[2] + modifier, value }
+          } else {
+            ret = { name, value }
+          }
+          return ret
+        },
+        swan ({ name, value }, { eventRules }) {
+          const match = this.test.exec(name)
+          const eventName = match[2]
+          runRules(eventRules, eventName, { target: 'swan' })
         }
       },
       // 无障碍
@@ -167,7 +195,7 @@ module.exports = function getSpec ({ warn, error }) {
             }
           },
           swan (eventName) {
-            const eventArr = ['tap', 'longtap', 'longpress', 'touchstart', 'touchmove', 'touchcancel', 'touchend', 'touchforcechange']
+            const eventArr = ['tap', 'longtap', 'longpress', 'touchstart', 'touchmove', 'touchcancel', 'touchend', 'touchforcechange', 'transitionend', 'animationstart', 'animationiteration', 'animationend']
             if (eventArr.includes(eventName)) {
               return eventName
             } else {

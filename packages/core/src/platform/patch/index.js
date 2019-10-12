@@ -5,7 +5,7 @@ import { getDefaultOptions as getALIDefaultOptions } from './ali/getDefaultOptio
 import { is } from '../../helper/env'
 
 export default function createFactory (type) {
-  return (options, { isNative } = {}) => {
+  return (options, { isNative, customCtor } = {}) => {
     options.__nativeRender__ = !!isNative
     options.__type__ = type
     let getDefaultOptions
@@ -18,7 +18,7 @@ export default function createFactory (type) {
     const builtInMixins = getBuiltInMixins(options, type)
     const { rawOptions, currentInject } = transferOptions(options, type, builtInMixins)
     const defaultOptions = getDefaultOptions(type, { rawOptions, currentInject })
-    global.currentCtor(defaultOptions)
+    customCtor ? customCtor(defaultOptions) : global.currentCtor(defaultOptions)
   }
 }
 

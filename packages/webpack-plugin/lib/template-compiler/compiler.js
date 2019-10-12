@@ -1,5 +1,4 @@
 const deindent = require('de-indent')
-const he = require('he')
 const config = require('../config')
 const normalize = require('../utils/normalize')
 const isValidIdentifierStr = require('../utils/is-valid-identifier-str')
@@ -68,61 +67,42 @@ let IS_REGEX_CAPTURING_BROKEN = false
 let isPlainTextElement = makeMap('script,style,textarea', true)
 let reCache = {}
 
-let decodingMap = {
-  '&lt;': '<',
-  '&gt;': '>',
-  '&quot;': '"',
-  '&amp;': '&',
-  '&#10;': '\n',
-  '&#9;': '\t'
-}
-let encodedAttr = /&(?:lt|gt|quot|amp);/g
-let encodedAttrWithNewLines = /&(?:lt|gt|quot|amp|#10|#9);/g
-
 // #5992
 let isIgnoreNewlineTag = makeMap('pre,textarea', true)
 let shouldIgnoreFirstNewline = function (tag, html) {
   return tag && isIgnoreNewlineTag(tag) && html[0] === '\n'
 }
 
-function decodeAttr (value, shouldDecodeNewlines) {
-  let re = shouldDecodeNewlines ? encodedAttrWithNewLines : encodedAttr
-  return value.replace(re, function (match) {
-    return decodingMap[match]
-  })
-}
+// const encodingMap = Object.keys(decodingMap)
+//   .reduce((acc, k) => {
+//     const v = decodingMap[k]
+//     acc[v] = k
+//     return acc
+//   }, {})
 
-const encodingMap = Object.keys(decodingMap)
-  .reduce((acc, k) => {
-    const v = decodingMap[k]
-    acc[v] = k
-    return acc
-  }, {})
+// const decodedAttr = /[<>"&]/g
+// const decodedAttrWithNewLines = /[<>"&\n\t]/g
+//
+// const tagRES = /(\{\{(?:.|\n)+?\}\})(?!})/
 
-const decodedAttr = /[<>"&]/g
-const decodedAttrWithNewLines = /[<>"&\n\t]/g
-
-const tagRES = /(\{\{(?:.|\n)+?\}\})(?!})/
-
-// eslint-disable-next-line no-unused-vars
-function encodeAttr (value, shouldDecodeNewlines) {
-  const sArr = value.split(tagRES)
-  const re = shouldDecodeNewlines ? decodedAttrWithNewLines : decodedAttr
-  const ret = sArr.map((s) => {
-    if (!tagRES.test(s)) {
-      // 对于属性值且Mustache外的值需要encode，否则序列化时会破坏模板合法性
-      return s.replace(re, (match) => {
-        return encodingMap[match]
-      })
-    } else if (mode === 'ali' || mode === 'qq') {
-      // fix支付宝和qq
-      return s.replace(/["']/g, '\'')
-    } else {
-      return s
-    }
-  })
-  return ret.join('')
-}
+// function encodeAttr (value, shouldDecodeNewlines) {
+//   const sArr = value.split(tagRES)
+//   const re = shouldDecodeNewlines ? decodedAttrWithNewLines : decodedAttr
+//   const ret = sArr.map((s) => {
+//     if (!tagRES.test(s)) {
+//       // 对于属性值且Mustache外的值需要encode，否则序列化时会破坏模板合法性
+//       return s.replace(re, (match) => {
+//         return encodingMap[match]
+//       })
+//     } else if (mode === 'ali' || mode === 'qq') {
+//       // fix支付宝和qq
+//       return s.replace(/["']/g, '\'')
+//     } else {
+//       return s
+//     }
+//   })
+//   return ret.join('')
+// }
 
 const splitRE = /\r?\n/g
 const replaceRE = /./g
@@ -164,10 +144,6 @@ function createASTElement (tag, attrs, parent) {
     parent: parent,
     children: []
   }
-}
-
-function isTextTag (el) {
-  return el.tag === 'script' || el.tag === 'style'
 }
 
 function isForbiddenTag (el) {
@@ -270,18 +246,6 @@ function assertMpxCommentAttrsEnd () {
     throw new Error('No target for @mpx-attrs!')
   }
 }
-
-// mpx special comments
-
-function cached (fn) {
-  let cache = Object.create(null)
-  return function cachedFn (str) {
-    let hit = cache[str]
-    return hit || (cache[str] = fn(str))
-  }
-}
-
-let decodeHTMLCached = cached(he.decode)
 
 // Browser environment sniffing
 let inBrowser = typeof window !== 'undefined'
@@ -525,12 +489,9 @@ function parseHTML (html, options) {
         }
       }
       let value = args[3] || args[4] || args[5] || ''
-      let shouldDecodeNewlines = tagName === 'a' && args[1] === 'href'
-        ? options.shouldDecodeNewlinesForHref
-        : options.shouldDecodeNewlines
       attrs[i] = {
         name: args[1],
-        value: decodeAttr(value, shouldDecodeNewlines)
+        value: value
       }
     }
 
@@ -877,7 +838,7 @@ function parse (template, options) {
       }
       let children = currentParent.children
       text = text.trim()
-        ? isTextTag(currentParent) ? text : decodeHTMLCached(text)
+        ? text
         // only preserve whitespace if its not right after a starting tag
         : preserveWhitespace && children.length ? ' ' : ''
       if (text) {
@@ -1043,6 +1004,8 @@ function processComponentIs (el, options) {
 //   }
 // }
 
+const eventIdentifier = '__mpx_event__'
+
 function parseFuncStr2 (str) {
   let funcRE = /^([^()]+)(\((.*)\))?/
   let match = funcRE.exec(str)
@@ -1050,7 +1013,15 @@ function parseFuncStr2 (str) {
     let funcName = stringify(match[1])
     let args = match[3] ? `,${match[3]}` : ''
     let hasArgs = !!match[2]
-    args = args.replace(/(\$event([^,\s])*)/, (match, p1) => stringify(p1))
+    const ret = /(,|^)\s*(\$event)\s*(,|$)/.exec(args)
+    if (ret) {
+      const subIndex = ret[0].indexOf('$event')
+      if (subIndex) {
+        const index1 = ret.index + subIndex
+        const index2 = index1 + 6
+        args = args.substring(0, index1) + JSON.stringify(eventIdentifier) + args.substring(index2)
+      }
+    }
     return {
       hasArgs,
       expStr: `[${funcName + args}]`
@@ -1155,7 +1126,7 @@ function processBindEvent (el) {
       }
       eventConfigMap[modelEvent].configs.unshift({
         hasArgs: true,
-        expStr: `[${stringify('__model')},${stringifiedModelValue},${stringify('$event')},${stringify(modelValuePathArr)},${stringify(modelFilter)}]`
+        expStr: `[${stringify('__model')},${stringifiedModelValue},${stringify(eventIdentifier)},${stringify(modelValuePathArr)},${stringify(modelFilter)}]`
       })
       addAttrs(el, [
         {
@@ -1214,6 +1185,7 @@ function processBindEvent (el) {
   }
 }
 
+// todo 暂时未考虑swan中不用{{}}包裹控制属性的情况
 function parseMustache (raw = '') {
   let replaced = false
   if (tagRE.test(raw)) {
@@ -1281,22 +1253,34 @@ function processIf (el) {
   }
 }
 
+const swanForInRe = /^\s*(\w+)(?:\s*,\s*(\w+))?\s+in\s+(\w+)(?:\s+trackBy\s+(\w+))?\s*$/
+
 function processFor (el) {
   let val = getAndRemoveAttr(el, config[mode].directive.for)
   if (val) {
-    let parsed = parseMustache(val)
-    el.for = {
-      raw: parsed.val,
-      exp: parsed.result
-    }
-    if (val = getAndRemoveAttr(el, config[mode].directive.forIndex)) {
-      el.for.index = val
-    }
-    if (val = getAndRemoveAttr(el, config[mode].directive.forItem)) {
-      el.for.item = val
-    }
-    if (val = getAndRemoveAttr(el, config[mode].directive.key)) {
-      el.for.key = val
+    let matched
+    if (mode === 'swan' && (matched = swanForInRe.exec(val))) {
+      el.for = {
+        raw: val,
+        exp: matched[3],
+        item: matched[1] || 'item',
+        index: matched[2] || 'index'
+      }
+    } else {
+      let parsed = parseMustache(val)
+      el.for = {
+        raw: parsed.val,
+        exp: parsed.result
+      }
+      if (val = getAndRemoveAttr(el, config[mode].directive.forIndex)) {
+        el.for.index = val
+      }
+      if (val = getAndRemoveAttr(el, config[mode].directive.forItem)) {
+        el.for.item = val
+      }
+      if (val = getAndRemoveAttr(el, config[mode].directive.key)) {
+        el.for.key = val
+      }
     }
     pushForScopes({
       index: el.for.index || 'index',
@@ -1304,8 +1288,6 @@ function processFor (el) {
     })
   }
 }
-
-// todo bugfix refid避免全局自增
 
 function processRef (el, options, meta) {
   let val = getAndRemoveAttr(el, config[mode].directive.ref)
@@ -1387,7 +1369,9 @@ function processAttrs (el, options) {
     let value = needWrap ? `{${attr.value}}` : attr.value
     let parsed = parseMustache(value)
     if (parsed.hasBinding) {
-      let needTravel = (options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component') && !(attr.name === 'class' || attr.name === 'style')
+      // let needTravel = (options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component') && !(attr.name === 'class' || attr.name === 'style')
+      // 之前只对组件传递props的场景下才对数据做travel，该处理方式存在漏洞，因为某些原生组件也会深度遍历传入属性作为视图依赖，如multiColumnPicker，由于travel对于非深度对象的性能消耗很低，此处全量开启表达式travel
+      let needTravel = true
       addExp(el, parsed.result, needTravel)
     }
     if (parsed.replaced) {
@@ -1398,7 +1382,19 @@ function processAttrs (el, options) {
 
 function postProcessFor (el) {
   if (el.for) {
-    let targetEl = el
+    /*
+      对百度小程序同时带有if和for的指令外套一层block，并将for放到外层
+      这个操作主要是因为百度小程序不支持这两个directive在同级使用
+     */
+    if (el.if && mode === 'swan') {
+      let tempEl = createASTElement('block', [])
+      replaceNode(el, tempEl, true)
+      tempEl.for = el.for
+      delete el.for
+      tempEl.children = [el]
+      el.parent = tempEl
+      el = tempEl
+    }
 
     let attrs = [
       {
@@ -1406,40 +1402,28 @@ function postProcessFor (el) {
         value: el.for.raw
       }
     ]
-    if (el.for.index) {
-      attrs.push({
-        name: config[mode].directive.forIndex,
-        value: el.for.index
-      })
+    // 对于swan的for in进行特殊处理
+    if (!mode === 'swan' || !swanForInRe.test(el.for.raw)) {
+      if (el.for.index) {
+        attrs.push({
+          name: config[mode].directive.forIndex,
+          value: el.for.index
+        })
+      }
+      if (el.for.item) {
+        attrs.push({
+          name: config[mode].directive.forItem,
+          value: el.for.item
+        })
+      }
+      if (el.for.key) {
+        attrs.push({
+          name: config[mode].directive.key,
+          value: el.for.key
+        })
+      }
     }
-    if (el.for.item) {
-      attrs.push({
-        name: config[mode].directive.forItem,
-        value: el.for.item
-      })
-    }
-    if (el.for.key) {
-      attrs.push({
-        name: config[mode].directive.key,
-        value: el.for.key
-      })
-    }
-
-    /*
-      对百度小程序同时带有if和for的指令外套一层block，并将for放到外层
-      这个操作主要是因为百度小程序不支持这两个directive在同级使用
-     */
-    if (el.if && mode === 'swan') {
-      targetEl = createASTElement('block', [])
-      targetEl.for = el.for
-      targetEl.children = [el]
-      replaceNode(el, targetEl)
-
-      el.parent = targetEl
-      delete el.for
-    }
-
-    addAttrs(targetEl, attrs)
+    addAttrs(el, attrs)
     popForScopes()
   }
 }
@@ -1876,8 +1860,8 @@ function findPrevNode (node) {
   }
 }
 
-function replaceNode (node, newNode) {
-  deleteErrorInResultMap(node)
+function replaceNode (node, newNode, reserveNode) {
+  if (!reserveNode) deleteErrorInResultMap(node)
   let parent = node.parent
   if (parent) {
     let index = parent.children.indexOf(node)
@@ -1889,8 +1873,8 @@ function replaceNode (node, newNode) {
   }
 }
 
-function removeNode (node) {
-  deleteErrorInResultMap(node)
+function removeNode (node, reserveNode) {
+  if (!reserveNode) deleteErrorInResultMap(node)
   let parent = node.parent
   if (parent) {
     let index = parent.children.indexOf(node)

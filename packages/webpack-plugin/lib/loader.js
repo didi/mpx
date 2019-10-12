@@ -125,20 +125,6 @@ module.exports = function (content) {
   }
   globalInjectCode += `global.currentCtor = ${ctor};\n`
 
-  if (!pagesMap[resourcePath] && !componentsMap[resourcePath] && mode === 'swan') {
-    // 注入swan runtime fix
-    globalInjectCode += 'if (!global.navigator) {\n' +
-      '  global.navigator = {};\n' +
-      '}\n' +
-      'Object.defineProperty(global.navigator, "standalone",{\n' +
-      '  configurable: true,' +
-      '  enumerable: true,' +
-      '  get () {\n' +
-      '    return true;\n' +
-      '  }\n' +
-      '});\n'
-  }
-
   //
   // <script>
   output += '/* script */\n'

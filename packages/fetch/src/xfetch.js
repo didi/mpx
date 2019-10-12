@@ -17,6 +17,12 @@ export default class XFetch {
   create (options) {
     return new XFetch(options)
   }
+  lock () {
+    this.queue.lock()
+  }
+  unlock () {
+    this.queue.unlock()
+  }
   addLowPriorityWhiteList (rules) {
     this.queue.addLowPriorityWhiteList(rules)
   }
