@@ -36,7 +36,7 @@ export function getMixin (mixin = {}) {
 
 function extractMixins (mergeOptions, options, needConvert) {
   // 如果编译阶段behaviors都被当做mixins处理，那么进行别名替换
-  if (options.behaviors && type(options.behaviors[0]) === 'Object') {
+  if (options.behaviors && options.behaviors[0] && options.behaviors[0].__mpx_behaviors_to_mixins__) {
     aliasReplace(options, 'behaviors', 'mixins')
   }
   if (options.mixins) {

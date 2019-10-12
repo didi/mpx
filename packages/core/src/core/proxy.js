@@ -309,6 +309,10 @@ export default class MPXProxy {
   }
 
   setData (data, callback) {
+    // 绑定回调中的 this 为当前组件
+    if (typeof callback === 'function') {
+      callback = callback.bind(this.target)
+    }
     // 同步数据到proxy
     data && this.forceUpdate(data)
     if (this.options.__nativeRender__) {

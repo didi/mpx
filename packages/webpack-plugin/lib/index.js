@@ -388,16 +388,16 @@ class MpxWebpackPlugin {
           })
           // Trans for wx.xx, wx['xx'], wx.xx(), wx['xx']()
           parser.hooks.expressionAnyMember.for('wx').tap('MpxWebpackPlugin', transHandler)
+          parser.hooks.call.for('Page').tap('MpxWebpackPlugin', (expr) => {
+            transHandler(expr.callee)
+          })
+          parser.hooks.call.for('Component').tap('MpxWebpackPlugin', (expr) => {
+            transHandler(expr.callee)
+          })
+          parser.hooks.call.for('App').tap('MpxWebpackPlugin', (expr) => {
+            transHandler(expr.callee)
+          })
           if (this.options.mode === 'ali') {
-            parser.hooks.call.for('Page').tap('MpxWebpackPlugin', (expr) => {
-              transHandler(expr.callee)
-            })
-            parser.hooks.call.for('Component').tap('MpxWebpackPlugin', (expr) => {
-              transHandler(expr.callee)
-            })
-            parser.hooks.call.for('App').tap('MpxWebpackPlugin', (expr) => {
-              transHandler(expr.callee)
-            })
             // 支付宝不支持Behaviors
             parser.hooks.call.for('Behavior').tap('MpxWebpackPlugin', (expr) => {
               transHandler(expr.callee)
