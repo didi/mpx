@@ -7,8 +7,6 @@
 
 import {toJS, observable, extendObservable, action} from 'mobx'
 
-export const createApp: typeof App
-
 type Data = object | (() => object)
 
 type PropType = StringConstructor | NumberConstructor | BooleanConstructor | ObjectConstructor | ArrayConstructor | null
@@ -225,7 +223,11 @@ type ComponentIns<D, P, C, M, Mi extends Array<any>> =
   GetPropsType<P & UnboxMixinsField<Mi, 'properties'>> &
   GetComputedType<C & UnboxMixinsField<Mi, 'computed'>> & WxComponentIns & MpxComponentIns
 
-export function createComponent<D extends Data = {}, P extends Properties = {}, C = {}, M extends Methods = {}, Mi extends Array<any> = []> (opt: ThisTypedComponentOpt<D, P, C, M, Mi>): void
+interface createConfig {
+  customCtor: any
+}
+
+export function createComponent<D extends Data = {}, P extends Properties = {}, C = {}, M extends Methods = {}, Mi extends Array<any> = []> (opt: ThisTypedComponentOpt<D, P, C, M, Mi>, config?: createConfig): void
 
 export function getMixin<D extends Data = {}, P extends Properties = {}, C = {}, M extends Methods = {}, Mi extends Array<any> = []> (opt: ThisTypedComponentOpt<D, P, C, M, Mi>): {
   data: GetDataType<D> & UnboxMixinsField<Mi, 'data'>
@@ -237,8 +239,9 @@ export function getMixin<D extends Data = {}, P extends Properties = {}, C = {},
 
 export function getComputed<C> (computed: C): C extends (...args: any[]) => any ? ReturnType<C> : C
 
-export function createPage<D extends Data = {}, P extends Properties = {}, C = {}, M extends Methods = {}, Mi extends Array<any> = []> (opt: ThisTypedPageOpt<D, P, C, M, Mi>): void
+export function createPage<D extends Data = {}, P extends Properties = {}, C = {}, M extends Methods = {}, Mi extends Array<any> = []> (opt: ThisTypedPageOpt<D, P, C, M, Mi>, config?: createConfig): void
 
+export function createApp<T extends WechatMiniprogram.IAnyObject>(opt: WechatMiniprogram.App.Options<T>, config?: createConfig): void
 
 type Mutations<S> = {
   [key: string]: (this: void, state: S, ...payload: any[]) => any
