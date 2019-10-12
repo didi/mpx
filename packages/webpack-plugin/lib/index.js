@@ -397,10 +397,12 @@ class MpxWebpackPlugin {
           parser.hooks.call.for('App').tap('MpxWebpackPlugin', (expr) => {
             transHandler(expr.callee)
           })
-          // 支付宝不支持Behaviors
-          parser.hooks.call.for('Behavior').tap('MpxWebpackPlugin', (expr) => {
-            transHandler(expr.callee)
-          })
+          if (this.options.mode === 'ali') {
+            // 支付宝不支持Behaviors
+            parser.hooks.call.for('Behavior').tap('MpxWebpackPlugin', (expr) => {
+              transHandler(expr.callee)
+            })
+          }
         }
 
         const apiBlackListMap = [

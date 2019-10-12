@@ -5,12 +5,6 @@ let CURRENT_HOOKS = []
 let curType
 let convertRule
 let mpxCustomKeysForBlend
-const BEHAVIORS_MAPS = {
-  'wx_swan': {
-    'wx://form-field': 'swan://form-field',
-    'wx://component-export': 'swan://component-export'
-  }
-}
 
 export default function mergeOptions (options = {}, type, needConvert = true) {
   // 缓存混合模式下的自定义属性列表
@@ -42,16 +36,12 @@ export function getMixin (mixin = {}) {
 
 function extractMixins (mergeOptions, options, needConvert) {
   // 如果编译阶段behaviors都被当做mixins处理，那么进行别名替换
-  if (options.behaviors && type(options.behaviors[0]) === 'Object') {
+  if (options.behaviors && options.behaviors[0] && options.behaviors[0].__mpx_behaviors_to_mixins__) {
     aliasReplace(options, 'behaviors', 'mixins')
   }
   if (options.mixins) {
     for (const mix of options.mixins) {
-      const behaviorsMap = BEHAVIORS_MAPS[`${global.currentSrcMode}_${__mpx_mode__}`]
-      if (typeof mix === 'string' && behaviorsMap && behaviorsMap[mix]) {
-        const idx = options.mixins.indexOf(mix)
-        options.mixins.splice(idx, 1, behaviorsMap[mix])
-      } else if (typeof mix === 'string' && process.env.NODE_ENV !== 'production') {
+      if (typeof mix === 'string' && process.env.NODE_ENV !== 'production') {
         console.error(`【MPX CONVERT ERROR】at ${global.currentResource || ''} : Don't support for convert the string-formatted【behavior】into mixin`)
       } else {
         extractMixins(mergeOptions, mix, needConvert)
