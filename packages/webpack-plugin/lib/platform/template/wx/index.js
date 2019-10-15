@@ -22,7 +22,7 @@ module.exports = function getSpec ({ warn, error }) {
           let keyType = KEY_TYPES.PROPERTY
           // 在wx:for="abcd"值为字符串时varListName为null,按照小程序循环规则将字符串转换为 ["a", "b", "c", "d"]
           if (varListName) {
-            const variableName = varListName[1]
+            const variableName = varListName[1].trim()
             varIsNumber = variableName.match(/^\d+$/)
             // 如果为{{}}中为数字字面量
             if (varIsNumber) {
@@ -50,8 +50,8 @@ module.exports = function getSpec ({ warn, error }) {
           const keyName = attrsMap['wx:key'] || null
           let keyStr = ''
           if (keyName &&
-            // 百度不支持在trackBy使用mustache语法
-            !/{{[^}]*}}/.test(keyName)
+                        // 百度不支持在trackBy使用mustache语法
+                        !/{{[^}]*}}/.test(keyName)
           ) {
             if (keyName === '*this') {
               keyStr = ` trackBy ${itemName}`

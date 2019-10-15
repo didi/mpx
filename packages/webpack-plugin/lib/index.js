@@ -386,6 +386,19 @@ class MpxWebpackPlugin {
           }
         }
 
+        // hack babel polyfill global
+        parser.hooks.evaluate.for('CallExpression').tap('MpxWebpackPlugin', (expr) => {
+          const current = parser.state.current
+          const arg0 = expr.arguments[0]
+          const callee = expr.callee
+          if (arg0 && arg0.value === 'return this' && callee.name === 'Function' && current.rawRequest === './_global') {
+            current.addDependency(new InjectDependency({
+              content: '(function() { return this })() || ',
+              index: expr.range[0]
+            }))
+          }
+        })
+
         const srcMode = this.options.srcMode
         if (srcMode !== this.options.mode) {
           parser.hooks.evaluate.for('MemberExpression').tap('MpxWebpackPlugin', (expr) => {
@@ -571,12 +584,12 @@ class MpxWebpackPlugin {
               if (chunk.name === rootName) {
                 // 在rootChunk中挂载jsonpFunction
                 source.add('// process ali subpackages runtime in root chunk\n' +
-                  'var context = Function("return this")();\n\n')
+                  'var context = (function() { return this })() || Function("return this")();\n\n')
                 source.add(`context[${JSON.stringify(jsonpFunction)}] = window[${JSON.stringify(jsonpFunction)}] = require("${relativePath}");\n`)
               } else {
                 // 其余chunk中通过context全局传递runtime
                 source.add('// process ali subpackages runtime in other chunk\n' +
-                  'var context = Function("return this")();\n\n')
+                  'var context = (function() { return this })() || Function("return this")();\n\n')
                 source.add(`window[${JSON.stringify(jsonpFunction)}] = context[${JSON.stringify(jsonpFunction)}];\n`)
               }
             } else {
@@ -588,9 +601,8 @@ class MpxWebpackPlugin {
         })
 
         if (isRuntime) {
-          source.add('// hack promise polyfill\n' +
-            'var context = Function("return this")();\n' +
-            'context.console = console;\n\n')
+          source.add('var context = (function() { return this })() || Function("return this")();\n' +
+            'if(!context.console) context.console = console;\n\n')
           if (mpx.mode === 'swan') {
             source.add('// swan runtime fix\n' +
               'if (!context.navigator) {\n' +
@@ -602,7 +614,7 @@ class MpxWebpackPlugin {
               '  get () {\n' +
               '    return true;\n' +
               '  }\n' +
-              '});\n')
+              '});\n\n')
           }
           source.add(originalSource)
           source.add(`\nmodule.exports = window[${JSON.stringify(jsonpFunction)}];\n`)
