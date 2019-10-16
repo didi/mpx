@@ -102,7 +102,7 @@ function filterOptions (options) {
 }
 
 function getRootMixin (mixin) {
-  const supportBehavior = typeof Behavior !== 'undefined'
+  const supportBehavior = typeof Behavior !== 'undefined' && __mpx_mode__ !== 'swan'
   if (supportBehavior) {
     return {
       // eslint-disable-next-line no-undef
