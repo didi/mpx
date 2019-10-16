@@ -5,9 +5,12 @@ import { getDefaultOptions as getALIDefaultOptions } from './ali/getDefaultOptio
 import { is } from '../../helper/env'
 
 export default function createFactory (type) {
-  return (options, { isNative, customCtor } = {}) => {
+  return (options, { isNative, customCtor, customCtorType = type } = {}) => {
     options.__nativeRender__ = !!isNative
     options.__type__ = type
+    if (type === 'page' && customCtorType === 'page') {
+      options.__forceDisableBlend__ = true
+    }
     let getDefaultOptions
     if (is('ali')) {
       getDefaultOptions = getALIDefaultOptions

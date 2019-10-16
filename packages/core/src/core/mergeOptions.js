@@ -72,6 +72,7 @@ function extractObservers (options) {
   const props = Object.assign({}, options.properties, options.props)
   const watch = Object.assign({}, options.watch)
   let extract = false
+
   function mergeWatch (key, config) {
     if (watch[key]) {
       type(watch[key]) !== 'Array' && (watch[key] = [watch[key]])
@@ -81,6 +82,7 @@ function extractObservers (options) {
     watch[key].push(config)
     extract = true
   }
+
   Object.keys(props).forEach(key => {
     const prop = props[key]
     if (prop && prop.observer) {
@@ -311,7 +313,7 @@ function transformHOOKS (options) {
   composeHooks(options, CURRENT_HOOKS)
   options.pageLifetimes && composeHooks(options.pageLifetimes)
   options.events && composeHooks(options.events)
-  if (curType === 'blend' && convertRule.support) {
+  if (curType === 'blend' && !options.__forceDisableBlend__ && convertRule.support) {
     const COMPONENT_HOOKS = convertRule.lifecycle.component
     for (const key in options) {
       // 使用Component创建page实例，页面专属生命周期&自定义方法需写在methods内部
