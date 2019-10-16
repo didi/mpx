@@ -5,9 +5,12 @@ import { getDefaultOptions as getAliDefaultOptions } from './ali/getDefaultOptio
 import { getDefaultOptions as getWebDefaultOptions } from './web/getDefaultOptions'
 
 export default function createFactory (type) {
-  return (options, { isNative, customCtor } = {}) => {
+  return (options, { isNative, customCtor, customCtorType = type } = {}) => {
     options.__nativeRender__ = !!isNative
     options.__type__ = type
+    if (type === 'page' && customCtorType === 'page') {
+      options.__pageCtor__ = true
+    }
     let getDefaultOptions
 
     if (__mpx_mode__ === 'web') {
