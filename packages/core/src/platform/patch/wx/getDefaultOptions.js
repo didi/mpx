@@ -126,22 +126,25 @@ function initProxy (context, rawOptions, currentInject) {
 }
 
 export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
+  const hookNames = ['attached', 'ready', 'detached']
+  if (__mpx_mode__ === 'swan') {
+    hookNames[0] = 'onLoad'
+  }
+  if (type === 'page' && rawOptions.__forceDisableBlend__) {
+    hookNames[0] = 'onLoad'
+    hookNames[1] = 'onReady'
+    hookNames[2] = 'onUnload'
+  }
   const rootMixins = [getRootMixin({
-    onLoad () {
-      // 百度小程序page onLoad > attached
+    [hookNames[0]] () {
       if (!this.__mpxProxy) {
         initProxy(this, rawOptions, currentInject)
       }
     },
-    attached () {
-      if (!this.__mpxProxy) {
-        initProxy(this, rawOptions, currentInject)
-      }
-    },
-    ready () {
+    [hookNames[1]] () {
       this.__mpxProxy && this.__mpxProxy.mounted()
     },
-    detached () {
+    [hookNames[2]] () {
       this.__mpxProxy && this.__mpxProxy.destroyed()
     }
   })]
