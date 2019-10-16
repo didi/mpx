@@ -1,11 +1,13 @@
 import {
   enumerableKeys,
-  extend
+  extend,
+  isEmptyObject
 } from '../../../helper/utils'
 
 import MPXProxy from '../../../core/proxy'
 import customeKey from '../../../core/customOptionKeys'
 import mergeOptions from '../../../core/mergeOptions'
+import { LIFECYCLE } from './lifecycle'
 
 function transformProperties (properties) {
   if (!properties) {
@@ -94,6 +96,9 @@ function filterOptions (options) {
     }
     if (key === 'properties' || key === 'props') {
       newOptions['properties'] = transformProperties(Object.assign({}, options['properties'], options['props']))
+    } else if (key === 'methods' && options.__pageCtor__) {
+      // 构造器为Page时抽取所有methods方法到顶层
+      Object.assign(newOptions, options[key])
     } else {
       newOptions[key] = options[key]
     }
@@ -101,16 +106,27 @@ function filterOptions (options) {
   return newOptions
 }
 
-function getRootMixin (mixin) {
-  const supportBehavior = typeof Behavior !== 'undefined' && __mpx_mode__ !== 'swan'
+function getRootMixins (mixin) {
+  const supportBehavior = typeof Behavior !== 'undefined'
+  const rootMixins = []
   if (supportBehavior) {
-    return {
-      // eslint-disable-next-line no-undef
-      behaviors: [Behavior(mixin)]
+    const behavior = {}
+    Object.keys(mixin).forEach((key) => {
+      // 除页面生命周期之外使用behaviors进行mixin
+      if (LIFECYCLE.PAGE_HOOKS.indexOf(key) === -1) {
+        behavior[key] = mixin[key]
+        delete mixin[key]
+      }
+    })
+    if (!isEmptyObject(behavior)) {
+      rootMixins.push({
+        // eslint-disable-next-line no-undef
+        behaviors: [Behavior(behavior)]
+      })
     }
-  } else {
-    return mixin
   }
+  rootMixins.push(mixin)
+  return rootMixins
 }
 
 function initProxy (context, rawOptions, currentInject) {
@@ -130,12 +146,12 @@ export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
   if (__mpx_mode__ === 'swan') {
     hookNames[0] = 'onLoad'
   }
-  if (type === 'page' && rawOptions.__forceDisableBlend__) {
+  if (rawOptions.__pageCtor__) {
     hookNames[0] = 'onLoad'
     hookNames[1] = 'onReady'
     hookNames[2] = 'onUnload'
   }
-  const rootMixins = [getRootMixin({
+  const rootMixins = getRootMixins({
     [hookNames[0]] () {
       if (!this.__mpxProxy) {
         initProxy(this, rawOptions, currentInject)
@@ -147,7 +163,8 @@ export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
     [hookNames[2]] () {
       this.__mpxProxy && this.__mpxProxy.destroyed()
     }
-  })]
+  })
+
   rawOptions.mixins = rawOptions.mixins ? rootMixins.concat(rawOptions.mixins) : rootMixins
   rawOptions = mergeOptions(rawOptions, type, false)
   return filterOptions(rawOptions)

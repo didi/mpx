@@ -313,7 +313,7 @@ function transformHOOKS (options) {
   composeHooks(options, CURRENT_HOOKS)
   options.pageLifetimes && composeHooks(options.pageLifetimes)
   options.events && composeHooks(options.events)
-  if (curType === 'blend' && !options.__forceDisableBlend__ && convertRule.support) {
+  if (curType === 'blend' && convertRule.support) {
     const COMPONENT_HOOKS = convertRule.lifecycle.component
     for (const key in options) {
       // 使用Component创建page实例，页面专属生命周期&自定义方法需写在methods内部

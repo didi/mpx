@@ -9,7 +9,7 @@ export default function createFactory (type) {
     options.__nativeRender__ = !!isNative
     options.__type__ = type
     if (type === 'page' && customCtorType === 'page') {
-      options.__forceDisableBlend__ = true
+      options.__pageCtor__ = true
     }
     let getDefaultOptions
     if (is('ali')) {
