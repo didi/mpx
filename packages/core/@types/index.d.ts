@@ -388,7 +388,7 @@ declare class StoreWithThis<S = {}, G = {}, M = {}, A = {}, D extends Deps = {}>
     [key: string]: () => any
   }
   mapState<T extends mapStateFunctionType<S & UnboxDepsField<D, 'state'>, GetComputedType<G> & UnboxDepsField<D, 'getters'>>> (obj: ThisType<any> & T ): {
-    [I in keyof T]: T[I]
+    [I in keyof T]: ReturnType<T[I]>
   }
   mapState<T extends { [key:string]: keyof S }> (obj: T): {
     [I in keyof T]: () =>  S[T[I]]
