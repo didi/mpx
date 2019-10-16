@@ -1,11 +1,12 @@
 <template>
-  <div :class="className" @touchstart="handleTouchstart" @touchend="handleTouchend">
+  <div :class="className" class="mpx-view" @touchstart="handleTouchstart" @touchend="handleTouchend">
     <slot/>
   </div>
 </template>
 
 <script>
   export default {
+    name: 'mpx-view',
     data () {
       return {
         hover: false

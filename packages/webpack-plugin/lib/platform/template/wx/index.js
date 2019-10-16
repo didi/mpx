@@ -11,7 +11,7 @@ module.exports = function getSpec ({ warn, error }) {
       {
         test: /^wx:for$/,
         swan (obj, data) {
-          const attrsMap = data.attrsMap
+          const attrsMap = data.el.attrsMap
           const varListName = /{{(.*)}}/.exec(obj.value)
           let listName = ''
           let varIsNumber = false

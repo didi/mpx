@@ -1629,17 +1629,14 @@ function processScoped (el, options) {
 const builtInComponentsPrefix = '@mpxjs/webpack-plugin/lib/runtime/components'
 
 function processBuiltInComponents (el, meta) {
-  const builtInComponentsMap = config[mode].components
-  if (!meta.builtInComponentsMap) {
-    meta.builtInComponentsMap = {}
-  }
-  const srcTag = el.tag
-  const tarTag = builtInComponentsMap[srcTag]
-  if (tarTag) {
-    if (!meta.builtInComponentsMap[tarTag]) {
-      meta.builtInComponentsMap[tarTag] = `${builtInComponentsPrefix}/${mode}/${srcTag}.vue`
+  if (el.isBuiltIn) {
+    if (!meta.builtInComponentsMap) {
+      meta.builtInComponentsMap = {}
     }
-    el.tag = tarTag
+    const tag = el.tag
+    if (!meta.builtInComponentsMap[tag]) {
+      meta.builtInComponentsMap[tag] = `${builtInComponentsPrefix}/${mode}/${tag}.vue`
+    }
   }
 }
 

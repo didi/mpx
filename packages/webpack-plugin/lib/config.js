@@ -341,10 +341,5 @@ module.exports = {
       ref: 'tt:ref',
       show: 'tt:show'
     }
-  },
-  web: {
-    components: {
-      view: 'mpx-view'
-    }
   }
 }
