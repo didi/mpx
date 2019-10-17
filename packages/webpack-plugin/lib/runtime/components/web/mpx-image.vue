@@ -18,7 +18,7 @@
         default: false
       }
     },
-    created () {
+    beforeCreate () {
       this.image = new Image()
       this.image.onload = (e) => {
         this.$emit('load', e)
@@ -77,4 +77,11 @@
     }
   }
 </script>
+
+<style lang="stylus">
+  .mpx-image
+    width 300px
+    height 225px
+    display inline-block
+</style>
 

@@ -1,7 +1,23 @@
 <script>
+  const encodeMap = {
+    ' ': '&nbsp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '&': '&amp;',
+    '"': '&quot;',
+    '\'': '&apos;'
+  }
+
+  const encodeRe = /[ <>"'&]/g
+
+  function encodeText (text) {
+    return text.replace(encodeRe, (match) => {
+      return encodeMap[match]
+    })
+  }
+
   export default {
     name: 'mpx-text',
-    functional: true,
     props: {
       selectable: {
         type: Boolean,
@@ -15,27 +31,28 @@
         default: false
       }
     },
-    render (createElement, context) {
+    render (createElement) {
       let text = ''
       let classNames = ['mpx-text']
       let decode = false
-      context.children.forEach((item) => {
-        if (typeof item === 'string') {
-          text += item
+      this.$slots.default.forEach((item) => {
+        if (item.text) {
+          item.text = encodeText(item.text)
+          text += item.text
         }
       })
-      if (context.props.selectable) {
+      if (this.selectable) {
         classNames.push('selectable')
       }
-      switch (context.props.space) {
+      switch (this.space) {
         case 'ensp':
         case 'emsp':
         case 'nbsp':
           decode = true
-          text = text.replace(/ /g, `&${context.props.space};`)
+          text = text.replace(/ /g, `&${this.space};`)
           break
       }
-      if (context.props.decode) {
+      if (this.decode) {
         decode = true
       }
       const data = {
@@ -46,7 +63,7 @@
           innerHTML: text
         }
       }
-      return createElement('span', data, text)
+      return createElement('div', data, this.$slots.default)
     }
   }
 </script>

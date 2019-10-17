@@ -83,8 +83,8 @@ module.exports = function (content) {
 
   const parts = parse(content, filePath, this.sourceMap, mode)
 
-  // 触发webpack global var 注入
-  let output = 'global.currentModuleId;\n'
+  let output = ''
+
 
   // 只有ali才可能需要scoped
   const hasScoped = (parts.styles.some(({ scoped }) => scoped) || enableAutoScope) && mode === 'ali'
@@ -367,6 +367,9 @@ module.exports = function (content) {
     console.log(output)
     return output
   }
+
+  // 触发webpack global var 注入
+  output += 'global.currentModuleId;\n'
 
   // todo loader中inject dep比较危险，watch模式下不一定靠谱，可考虑将import改为require然后通过修改loader内容注入
   // 注入模块id及资源路径
