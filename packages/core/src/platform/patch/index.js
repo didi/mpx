@@ -5,11 +5,14 @@ import { getDefaultOptions as getALIDefaultOptions } from './ali/getDefaultOptio
 import { is } from '../../helper/env'
 
 export default function createFactory (type) {
-  return (options, { isNative, customCtor, customCtorType = type } = {}) => {
+  return (options, { isNative, customCtor, customCtorType } = {}) => {
     options.__nativeRender__ = !!isNative
     options.__type__ = type
-    if (type === 'page' && customCtorType === 'page') {
-      options.__pageCtor__ = true
+    if (customCtor) {
+      customCtorType = customCtorType || type
+      if (type === 'page' && customCtorType === 'page') {
+        options.__pageCtor__ = true
+      }
     }
     let getDefaultOptions
     if (is('ali')) {
