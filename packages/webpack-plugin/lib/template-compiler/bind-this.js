@@ -32,24 +32,27 @@ module.exports = {
     })
 
     const propKeys = []
-    let inTravel = false
+    let isProps = false
 
     let bindThisVisitor = {
       CallExpression: {
         enter (path) {
           const callee = path.node.callee
+          const args = path.node.arguments
           if (
             t.isMemberExpression(callee) &&
             t.isThisExpression(callee.object) &&
-            (callee.property.name === '__travel' || callee.property.value === '__travel')
+            (callee.property.name === '__travel' || callee.property.value === '__travel') &&
+            t.isBooleanLiteral(args[2]) &&
+            args[2].value === true
           ) {
-            inTravel = true
-            path.isTravel = true
+            isProps = true
+            path.isProps = true
           }
         },
         exit (path) {
-          if (path.isTravel) {
-            inTravel = false
+          if (path.isProps) {
+            isProps = false
           }
         }
       },
@@ -70,7 +73,7 @@ module.exports = {
             // bind this
             path.replaceWith(t.memberExpression(t.thisExpression(), path.node))
 
-            if (inTravel) {
+            if (isProps) {
               propKeys.push(path.node.property.name)
             }
 

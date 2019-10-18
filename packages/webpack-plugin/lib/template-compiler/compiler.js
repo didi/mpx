@@ -1225,12 +1225,12 @@ function parseMustache (raw = '') {
   }
 }
 
-function addExp (el, exp, needTravel) {
+function addExp (el, exp, needTravel, isProps) {
   if (exp) {
     if (!el.exps) {
       el.exps = []
     }
-    el.exps.push({ exp, needTravel })
+    el.exps.push({ exp, needTravel, isProps })
   }
 }
 
@@ -1369,10 +1369,11 @@ function processAttrs (el, options) {
     let value = needWrap ? `{${attr.value}}` : attr.value
     let parsed = parseMustache(value)
     if (parsed.hasBinding) {
-      // let needTravel = (options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component') && !(attr.name === 'class' || attr.name === 'style')
+      // 该属性判断用于提供给运行时对于计算属性作为props传递时提出警告，与needTravel的作用进行分离
+      const isProps = (options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component') && !(attr.name === 'class' || attr.name === 'style')
       // 之前只对组件传递props的场景下才对数据做travel，该处理方式存在漏洞，因为某些原生组件也会深度遍历传入属性作为视图依赖，如multiColumnPicker，由于travel对于非深度对象的性能消耗很低，此处全量开启表达式travel
-      let needTravel = true
-      addExp(el, parsed.result, needTravel)
+      const needTravel = true
+      addExp(el, parsed.result, needTravel, isProps)
     }
     if (parsed.replaced) {
       modifyAttr(el, attr.name, needWrap ? attr.value.replace(/\b__mpx_mode__\b/g, stringify(mode)) : parsed.val)
@@ -1911,8 +1912,8 @@ function genElse (node) {
 }
 
 function genExps (node) {
-  return `${node.exps.map(({ exp, needTravel }) => {
-    return needTravel ? `this.__travel(${exp}, __seen);\n` : `${exp};\n`
+  return `${node.exps.map(({ exp, needTravel, isProps }) => {
+    return needTravel ? `this.__travel(${exp}, __seen${isProps ? ', true' : ''});\n` : `${exp};\n`
   }).join('')}`
 }
 
