@@ -1,5 +1,5 @@
 const getMainCompilation = require('../utils/get-main-compilation')
-const { normalizeCondition } = require('../utils/match-condition')
+const normalizeCondition = require('../utils/match-condition')
 const postcss = require('postcss')
 const loaderUtils = require('loader-utils')
 const loadPostcssConfig = require('./load-postcss-config')
