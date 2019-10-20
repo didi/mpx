@@ -6,6 +6,7 @@ const config = require('./config')
 const createHelpers = require('./helpers')
 const InjectDependency = require('./dependency/InjectDependency')
 const stringifyQuery = require('./utils/stringify-query')
+const normalizeCondition = require('./utils/match-condition')
 const mpxJSON = require('./utils/mpx-json')
 const async = require('async')
 
@@ -38,10 +39,16 @@ module.exports = function (content) {
   const pagesMap = mpx.pagesMap
   const componentsMap = mpx.componentsMap[packageName]
   const resourcePath = getResourcePath(this.resource)
+
+  // 获取options上的markSrcMode在当前mode下的condition并尝试匹配是否存在,若存在，srcMode应直接为mode
+  const markSrcMode = options.markSrcMode && options.markSrcMode[mode]
+  const markSrcModeMatch = markSrcMode && normalizeCondition(markSrcMode)
+  const isMarkedSrcMode = !!markSrcModeMatch && markSrcModeMatch(resourcePath)
+  const srcMode = isMarkedSrcMode ? mode : (localSrcMode || globalSrcMode)
+
   const parsed = path.parse(resourcePath)
   const resourceName = path.join(parsed.dir, parsed.name)
   const isApp = !pagesMap[resourcePath] && !componentsMap[resourcePath]
-  const srcMode = localSrcMode || globalSrcMode
   const fs = this._compiler.inputFileSystem
   const typeExtMap = Object.assign({}, config[srcMode].typeExtMap)
   const enableAutoScope = mpx.enableAutoScope

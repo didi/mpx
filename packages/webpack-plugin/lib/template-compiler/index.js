@@ -4,6 +4,7 @@ const bindThis = require('./bind-this').transform
 const InjectDependency = require('../dependency/InjectDependency')
 const getResourcePath = require('../utils/get-resource-path')
 const getMainCompilation = require('../utils/get-main-compilation')
+const normalizeCondition = require('../utils/match-condition')
 const path = require('path')
 
 module.exports = function (raw) {
@@ -12,15 +13,22 @@ module.exports = function (raw) {
   const isNative = options.isNative
   const compilation = this._compilation
   const mainCompilation = getMainCompilation(compilation)
+  const resourcePath = getResourcePath(this.resource)
   const mpx = mainCompilation.__mpx__
   const mode = mpx.mode
   const externalClasses = mpx.externalClasses
   const globalSrcMode = mpx.srcMode
   const localSrcMode = loaderUtils.parseQuery(this.resourceQuery || '?').mode
+
+  // 获取options上的markSrcMode在当前mode下的condition并尝试匹配是否存在,若存在，srcMode应直接为mode
+  const markSrcMode = options.markSrcMode && options.markSrcMode[mode]
+  const markSrcModeMatch = markSrcMode && normalizeCondition(markSrcMode)
+  const isMarkedSrcMode = !!markSrcModeMatch && markSrcModeMatch(resourcePath)
+  const srcMode = isMarkedSrcMode ? mode : (localSrcMode || globalSrcMode)
+
   const packageName = mpx.processingSubPackageRoot || 'main'
   const componentsMap = mpx.componentsMap[packageName]
   const wxsContentMap = mpx.wxsConentMap
-  const resourcePath = getResourcePath(this.resource)
   let scopedId
 
   if (options.hasScoped) {
@@ -42,7 +50,7 @@ module.exports = function (raw) {
     isComponent: !!componentsMap[resourcePath],
     mode,
     externalClasses,
-    srcMode: localSrcMode || globalSrcMode,
+    srcMode,
     isNative,
     scopedId
   }))
