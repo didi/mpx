@@ -2,14 +2,13 @@
 
 const path = require('path')
 const ConcatSource = require('webpack-sources').ConcatSource
-const loaderUtils = require('loader-utils')
 const ResolveDependency = require('./dependency/ResolveDependency')
 const InjectDependency = require('./dependency/InjectDependency')
 const ReplaceDependency = require('./dependency/ReplaceDependency')
 const NullFactory = require('webpack/lib/NullFactory')
 const normalize = require('./utils/normalize')
 const toPosix = require('./utils/to-posix')
-const getResource = require('./utils/get-resource-path')
+const getResource = require('./utils/parse-request')
 const addQuery = require('./utils/add-query')
 const DefinePlugin = require('webpack/lib/DefinePlugin')
 const AddModePlugin = require('./resolver/AddModePlugin')
@@ -19,6 +18,7 @@ const RequireHeaderDependency = require('webpack/lib/dependencies/RequireHeaderD
 const RemovedModuleDependency = require('./dependency/RemovedModuleDependency')
 const SplitChunksPlugin = require('webpack/lib/optimize/SplitChunksPlugin')
 const fixRelative = require('./utils/fix-relative')
+const parseRequest = require('./utils/parse-request')
 
 const isProductionLikeMode = options => {
   return options.mode === 'production' || !options.mode
@@ -190,18 +190,21 @@ class MpxWebpackPlugin {
         mpx = compilation.__mpx__ = {
           // pages全局记录，无需区分主包分包
           pagesMap: {},
+          // 组件资源记录，依照所属包进行记录，冗余存储，只要某个包有引用会添加对应记录，不管其会不会在当前包输出，这样设计主要是为了在resolve时能够以较低成本找到特定资源的输出路径
           componentsMap: {
             main: {}
           },
-          resourceMap: {
+          // 静态资源(图片，字体，独立样式)等，依照所属包进行记录，冗余存储，同上
+          staticResourceMap: {
             main: {}
           },
-          resourceHit: {},
+          // 记录静态资源首次命中的分包，当有其他分包再次引用了同样的静态资源时，对其request添加packageName query以避免模块缓存导致loader不再执行
+          staticResourceHit: {},
           loaderOptions,
           extractedMap: {},
           extractSeenFile: {},
           usingComponents: [],
-          processingSubPackageRoot: '',
+          currentPackageRoot: '',
           wxsMap: {},
           wxsConentMap: {},
           forceDisableInject: this.options.forceDisableInject,
@@ -217,6 +220,58 @@ class MpxWebpackPlugin {
               additionalAssets[file][index] = content
             }
             sideEffects && sideEffects(additionalAssets)
+          },
+          // 组件和静态资源的输出规则如下：
+          // 1. 主包引用的资源输出至主包
+          // 2. 分包引用且主包引用过的资源输出至主包，不在当前分包重复输出
+          // 3. 分包引用且无其他包引用的资源输出至当前分包
+          // 4. 分包引用且其他分包也引用过的资源，重复输出至当前分包
+          // 5. 当用户通过packageName query显式指定了资源的所属包时，输出至指定的包
+          getPackageInfo (resource, outputPath, isStatic) {
+            let packageRoot = ''
+            let packageName = 'main'
+            const currentPackageRoot = mpx.currentPackageRoot
+            const currentPackageName = currentPackageRoot || 'main'
+            const { resourcePath, queryObj } = parseRequest(resource)
+            const resourceMap = isStatic ? mpx.staticResourceMap : mpx.componentsMap
+            if (queryObj.packageName) {
+              packageName = queryObj.packageName
+              packageRoot = packageName === 'main' ? '' : packageName
+              if (packageName !== currentPackageName && packageName !== 'main') {
+                throw new Error('根据小程序分包资源引用规则，资源只支持声明为当前分包或者主包，否则可能会导致资源无法引用的问题！')
+              }
+            } else if (currentPackageRoot) {
+              if (!resourceMap.main[resourcePath]) {
+                packageName = packageRoot = mpx.currentPackageRoot
+              }
+            }
+
+            outputPath = toPosix(path.join(packageRoot, outputPath))
+
+            const currentResourceMap = resourceMap[currentPackageName]
+            const actualResourceMap = resourceMap[packageName]
+
+            let alreadyOutputed = false
+            // 如果之前已经进行过输出，则不需要重复进行
+            if (actualResourceMap[resourcePath]) {
+              outputPath = actualResourceMap[resourcePath]
+              alreadyOutputed = true
+            }
+            // 将当前的currentResourceMap和实际进行输出的actualResourceMap都填充上，便于resolve时使用
+            currentResourceMap[resourcePath] = actualResourceMap[resourcePath] = outputPath
+
+            if (isStatic && packageName !== 'main' && !mpx.staticResourceHit[resourcePath]) {
+              mpx.staticResourceHit[resourcePath] = packageName
+            }
+
+            return {
+              packageName,
+              packageRoot,
+              resourcePath,
+              queryObj,
+              outputPath,
+              alreadyOutputed
+            }
           }
         }
       }
@@ -304,18 +359,14 @@ class MpxWebpackPlugin {
         parser.hooks.call.for('__mpx_resolve_path__').tap('MpxWebpackPlugin', (expr) => {
           if (expr.arguments[0]) {
             const resource = expr.arguments[0].value
-            let resourceQuery = '?'
-            const queryIndex = resource.indexOf('?')
-            if (queryIndex >= 0) {
-              resourceQuery = resource.substr(queryIndex)
-            }
-            const packageName = loaderUtils.parseQuery(resourceQuery).subPackageRoot || 'main'
+            const { queryObj } = parseRequest(resource)
+            const packageName = queryObj.packageName
             const pagesMap = mpx.pagesMap
             const componentsMap = mpx.componentsMap
-            const resourceMap = mpx.resourceMap
+            const staticResourceMap = mpx.staticResourceMap
             const publicPath = compilation.outputOptions.publicPath || ''
             const range = expr.range
-            const dep = new ResolveDependency(resource, packageName, pagesMap, componentsMap, resourceMap, publicPath, range)
+            const dep = new ResolveDependency(resource, packageName, pagesMap, componentsMap, staticResourceMap, publicPath, range)
             parser.state.current.addDependency(dep)
             return true
           }
@@ -325,12 +376,8 @@ class MpxWebpackPlugin {
           const module = parser.state.module
           const current = parser.state.current
           const resource = module.resource
-          const queryIndex = resource.indexOf('?')
-          let resourceQuery = '?'
-          if (queryIndex > -1) {
-            resourceQuery = resource.substr(queryIndex)
-          }
-          const localSrcMode = loaderUtils.parseQuery(resourceQuery).mode
+          const { queryObj } = parseRequest(resource)
+          const localSrcMode = queryObj.mode
           const globalSrcMode = this.options.srcMode
           const srcMode = localSrcMode || globalSrcMode
           const mode = this.options.mode
@@ -449,12 +496,8 @@ class MpxWebpackPlugin {
             return
           }
           const resource = parser.state.module.resource
-          const queryIndex = resource.indexOf('?')
-          let resourceQuery = '?'
-          if (queryIndex > -1) {
-            resourceQuery = resource.substr(queryIndex)
-          }
-          const localSrcMode = loaderUtils.parseQuery(resourceQuery).mode
+          const { queryObj } = parseRequest(resource)
+          const localSrcMode = queryObj.mode
           const globalSrcMode = this.options.srcMode
           const srcMode = localSrcMode || globalSrcMode
           const srcModeString = `__mpx_src_mode_${srcMode}__`
@@ -478,21 +521,14 @@ class MpxWebpackPlugin {
     compiler.hooks.normalModuleFactory.tap('MpxWebpackPlugin', (normalModuleFactory) => {
       normalModuleFactory.hooks.beforeResolve.tapAsync('MpxWebpackPlugin', (data, callback) => {
         let request = data.request
-        let elements = request.split('!')
-        let resource = elements.pop()
-        let resourceQuery = '?'
-        const queryIndex = resource.indexOf('?')
-        if (queryIndex >= 0) {
-          resourceQuery = resource.substr(queryIndex)
-        }
-        const queryObj = loaderUtils.parseQuery(resourceQuery)
-
+        let { queryObj, resource } = parseRequest(request)
         if (queryObj.resolve) {
+          // 此处的query用于将资源引用的当前包信息传递给resolveDependency
           const pathLoader = normalize.lib('path-loader')
-          const subPackageRoot = mpx.processingSubPackageRoot
-          if (subPackageRoot) {
-            resource = addQuery(resource, { subPackageRoot })
-          }
+          const packageName = mpx.currentPackageRoot || 'main'
+          resource = addQuery(resource, {
+            packageName
+          })
           data.request = `!!${pathLoader}!${resource}`
         } else if (queryObj.wxsModule) {
           const wxsPreLoader = normalize.lib('wxs/wxs-pre-loader')
@@ -513,22 +549,22 @@ class MpxWebpackPlugin {
           })
         }
 
-        if (mpx.processingSubPackageRoot) {
+        if (mpx.currentPackageRoot) {
           const resourcPath = getResource(data.resource)
 
-          const resourceHit = mpx.resourceHit
-          const mainResourceMap = mpx.resourceMap.main
+          const staticResourceHit = mpx.staticResourceHit
+          const packageName = mpx.currentPackageRoot || 'main'
 
           let needAddQuery = false
 
-          if (resourceHit[resourcPath]) {
-            if (!mainResourceMap[resourcPath]) {
-              needAddQuery = true
-            }
+          if (staticResourceHit[resourcPath] && staticResourceHit[resourcPath] !== packageName) {
+            needAddQuery = true
           }
+
           if (needAddQuery) {
+            // 此处的query用于避免模块缓存
             data.request = addQuery(data.request, {
-              subPackageRoot: mpx.processingSubPackageRoot
+              packageName
             })
           }
         }

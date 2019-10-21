@@ -1,6 +1,6 @@
 const path = require('path')
-const parseQuery = require('loader-utils').parseQuery
 const stringifyQuery = require('../utils/stringify-query')
+const parseRequest = require('../utils/parse-request')
 
 module.exports = class AddModePlugin {
   constructor (source, mode, target) {
@@ -19,19 +19,12 @@ module.exports = class AddModePlugin {
       let obj = {
         mode
       }
-
-      let resource = request.request
-      const queryIndex = resource.indexOf('?')
-      let resourceQuery = '?'
-      if (queryIndex > -1) {
-        resourceQuery = resource.substr(queryIndex)
-        resource = resource.substr(0, queryIndex)
-      }
-      const resourceExt = path.extname(resource)
-
-      const resourceQueryObj = parseQuery(resourceQuery)
-      resourceQueryObj.mode = mode
-      resourceQuery = stringifyQuery(resourceQueryObj)
+      const parsed = parseRequest(request.request)
+      const resource = parsed.resourcePath
+      const queryObj = parsed.queryObj
+      queryObj.mode = mode
+      const resourceQuery = stringifyQuery(queryObj)
+      const resourceExt = path.extname(request.request)
 
       obj.request = resource.substring(0, resource.length - resourceExt.length) + '.' + mode + resourceExt + resourceQuery
 

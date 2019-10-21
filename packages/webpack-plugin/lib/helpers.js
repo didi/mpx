@@ -145,7 +145,7 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
     // 为了使js模块全局唯一，避免闭包变量存在多份，删除js模块的分包标记
     // 该逻辑有问题，模块复用后后续分包不会再执行component初始化函数，导致wx找不到组件
     // if (type === 'script') {
-    //   removeKeys = 'subPackageRoot'
+    //   removeKeys = 'packageName'
     // }
     return addQuery(request, addQueryObj, removeKeys)
   }

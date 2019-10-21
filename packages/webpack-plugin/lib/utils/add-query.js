@@ -1,20 +1,11 @@
-const parseQuery = require('loader-utils').parseQuery
+const parseRequest = require('./parse-request')
 const stringifyQuery = require('./stringify-query')
 const type = require('./type')
 
 // 默认为非强行覆盖原query，如需强行覆盖传递force为false
 module.exports = function (request, data, removeKeys, force) {
-  const elements = request.split('!')
-  const resource = elements.pop()
-  const loaderString = elements.join('!')
-  const queryIndex = resource.indexOf('?')
-  let query = '?'
-  let resourcePath = resource
-  if (queryIndex >= 0) {
-    query = resource.substr(queryIndex)
-    resourcePath = resource.substr(0, queryIndex)
-  }
-  let queryObj = parseQuery(query)
+  const { rawResourcePath: resourcePath, loaderString, queryObj: queryObjRaw } = parseRequest(request)
+  const queryObj = Object.assign({}, queryObjRaw)
   if (force) {
     Object.assign(queryObj, data)
   } else {

@@ -2,7 +2,7 @@ const path = require('path')
 const async = require('async')
 const hash = require('hash-sum')
 const SingleEntryPlugin = require('webpack/lib/SingleEntryPlugin')
-const getResourcePath = require('./utils/get-resource-path')
+const parseRequest = require('./utils/parse-request')
 const toPosix = require('./utils/to-posix')
 
 // webpack4中.json文件会走json parser，抽取内容的占位内容必须为合法json，否则会在parse阶段报错
@@ -97,7 +97,7 @@ module.exports = function (source) {
       async.forEachOf(components, (component, name, callback) => {
         this.resolve(this.context, component, (err, result) => {
           if (err) return callback(err)
-          result = getResourcePath(result)
+          result = parseRequest(result).resourcePath
           let parsed = path.parse(result)
           let componentName = parsed.name
           let dirName = componentName + hash(result)
@@ -118,7 +118,7 @@ module.exports = function (source) {
       async.forEachOf(pages, (page, name, callback) => {
         this.resolve(this.context, page, (err, result) => {
           if (err) return callback(err)
-          result = getResourcePath(result)
+          result = parseRequest(result).resourcePath
           let pagePath = getName(path.join('', page))
           pagePath = toPosix(pagePath)
           if (/^\./.test(pagePath)) {

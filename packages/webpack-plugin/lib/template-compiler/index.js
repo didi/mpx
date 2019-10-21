@@ -2,7 +2,7 @@ const compiler = require('./compiler')
 const loaderUtils = require('loader-utils')
 const bindThis = require('./bind-this').transform
 const InjectDependency = require('../dependency/InjectDependency')
-const getResourcePath = require('../utils/get-resource-path')
+const parseRequest = require('../utils/parse-request')
 const getMainCompilation = require('../utils/get-main-compilation')
 const path = require('path')
 
@@ -17,10 +17,10 @@ module.exports = function (raw) {
   const externalClasses = mpx.externalClasses
   const globalSrcMode = mpx.srcMode
   const localSrcMode = loaderUtils.parseQuery(this.resourceQuery || '?').mode
-  const packageName = mpx.processingSubPackageRoot || 'main'
+  const packageName = mpx.currentPackageRoot || 'main'
   const componentsMap = mpx.componentsMap[packageName]
   const wxsContentMap = mpx.wxsConentMap
-  const resourcePath = getResourcePath(this.resource)
+  const resourcePath = parseRequest(this.resource).resourcePath
   let scopedId
 
   if (options.hasScoped) {

@@ -3,7 +3,7 @@ const parse = require('./parser')
 const createHelpers = require('./helpers')
 const loaderUtils = require('loader-utils')
 const InjectDependency = require('./dependency/InjectDependency')
-const getResourcePath = require('./utils/get-resource-path')
+const parseRequest = require('./utils/parse-request')
 
 module.exports = function (content) {
   this.cacheable()
@@ -12,7 +12,7 @@ module.exports = function (content) {
   if (!mpx) {
     return content
   }
-  const packageName = mpx.processingSubPackageRoot || 'main'
+  const packageName = mpx.currentPackageRoot || 'main'
   const pagesMap = mpx.pagesMap
   const componentsMap = mpx.componentsMap[packageName]
   const projectRoot = mpx.projectRoot
@@ -20,7 +20,7 @@ module.exports = function (content) {
   const globalSrcMode = mpx.srcMode
   const resolveMode = mpx.resolveMode
   const localSrcMode = loaderUtils.parseQuery(this.resourceQuery || '?').mode
-  const resourcePath = getResourcePath(this.resource)
+  const resourcePath = parseRequest(this.resource).resourcePath
   const srcMode = localSrcMode || globalSrcMode
   const enableAutoScope = mpx.enableAutoScope
 
