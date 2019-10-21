@@ -1,5 +1,5 @@
 /**
- * mpxjs webview bridge v2.1.12
+ * mpxjs webview bridge v2.2.17
  * (c) 2019 @mpxjs team
  * @license Apache
  */
@@ -112,11 +112,9 @@ const getWebviewApi = (sdkReady) => {
       if (!apiName) {
         console.log(`${env}小程序不支持 ${item} 方法`);
       } else {
-        sdkReady.then(() => {
+        return sdkReady.then(() => {
           getEnvWebviewVariable()[apiName](...args);
-        }, (res) => {
-          console.log(res);
-        }).catch(e => console.log(e));
+        })
       }
     };
   }
