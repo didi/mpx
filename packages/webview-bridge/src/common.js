@@ -69,11 +69,9 @@ const getWebviewApi = (sdkReady) => {
       if (!apiName) {
         console.log(`${env}小程序不支持 ${item} 方法`)
       } else {
-        sdkReady.then(() => {
+        return sdkReady.then(() => {
           getEnvWebviewVariable()[apiName](...args)
-        }, (res) => {
-          console.log(res)
-        }).catch(e => console.log(e))
+        })
       }
     }
   }

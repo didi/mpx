@@ -37,6 +37,8 @@
   var vConsole = new VConsole()
   console.log('vconsole ready')
 </script>
+
+<!--有缓存，调试需要加query给webviewbridge-->
 <script src="./webviewbridge.min.js"></script>
 
 <script>
@@ -49,6 +51,9 @@
     mpx.getEnv((res) => {
       document.querySelector('#envText').textContent = JSON.stringify(res)
       console.log(res)
+    }).catch(e => {
+      // could catch error like this
+      console.error(e, 6666)
     })
   }
 

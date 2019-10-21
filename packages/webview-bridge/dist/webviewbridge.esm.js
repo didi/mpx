@@ -1,5 +1,5 @@
 /**
- * mpxjs webview bridge v2.1.12
+ * mpxjs webview bridge v2.2.17
  * (c) 2019 @mpxjs team
  * @license Apache
  */
@@ -157,14 +157,10 @@ var getWebviewApi = function getWebviewApi(sdkReady) {
       if (!apiName) {
         console.log("".concat(env, "\u5C0F\u7A0B\u5E8F\u4E0D\u652F\u6301 ").concat(item, " \u65B9\u6CD5"));
       } else {
-        sdkReady.then(function () {
+        return sdkReady.then(function () {
           var _getEnvWebviewVariabl;
 
           (_getEnvWebviewVariabl = getEnvWebviewVariable())[apiName].apply(_getEnvWebviewVariabl, args);
-        }, function (res) {
-          console.log(res);
-        })["catch"](function (e) {
-          return console.log(e);
         });
       }
     };
