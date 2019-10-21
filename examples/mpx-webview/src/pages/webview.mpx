@@ -1,4 +1,5 @@
 <template>
+  <!--有缓存，调试需要加query-->
   <web-view src="http://127.0.0.1:8080/index.html" bindmessage="onmessage"></web-view>
 </template>
 
@@ -11,7 +12,7 @@
       msg: ''
     },
     methods: {
-      onmessage(e) {
+      onmessage (e) {
         console.log(e.detail.data)
       }
     }
