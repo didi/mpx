@@ -29,12 +29,15 @@ function transformApi (options) {
         from = options.from
       }
 
+      const fromTo = joinName(from, to)
       if (
-        platformMap[joinName(from, to)] &&
-        platformMap[joinName(from, to)][api] &&
+        platformMap[fromTo] &&
+        platformMap[fromTo][api] &&
         options.exclude.indexOf(api) < 0
       ) {
-        return platformMap[joinName(from, to)][api].apply(this, args)
+        return platformMap[fromTo][api].apply(this, args)
+      } else if (options.custom[fromTo] && options.custom[fromTo][api]) {
+        return options.custom[fromTo][api].apply(this, args)
       } else if (envObj[api]) {
         return envObj[api].apply(this, args)
       } else {
