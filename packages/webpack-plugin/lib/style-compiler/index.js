@@ -19,7 +19,6 @@ module.exports = function (css, map) {
 
   const transRpxs = Array.isArray(loaderOptions.transRpx) ? loaderOptions.transRpx : [loaderOptions.transRpx]
 
-
   const testResolveRange = (include, exclude) => {
     const matchInclude = include && normalizeCondition(include)
     const matchExclude = exclude && normalizeCondition(exclude)

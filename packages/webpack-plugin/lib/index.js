@@ -55,7 +55,6 @@ function getPackageCacheGroup (packageName) {
   }
 }
 
-
 let loaderOptions
 
 class MpxWebpackPlugin {
