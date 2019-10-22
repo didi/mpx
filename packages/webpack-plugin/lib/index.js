@@ -19,6 +19,7 @@ const RemovedModuleDependency = require('./dependency/RemovedModuleDependency')
 const SplitChunksPlugin = require('webpack/lib/optimize/SplitChunksPlugin')
 const fixRelative = require('./utils/fix-relative')
 const parseRequest = require('./utils/parse-request')
+const normalizeCondition = require('./utils/normalize-condition')
 
 const isProductionLikeMode = options => {
   return options.mode === 'production' || !options.mode
@@ -54,6 +55,7 @@ function getPackageCacheGroup (packageName) {
   }
 }
 
+
 let loaderOptions
 
 class MpxWebpackPlugin {
@@ -82,6 +84,8 @@ class MpxWebpackPlugin {
     if (options.autoSplit === undefined) {
       options.autoSplit = true
     }
+    // 批量指定源码mode
+    options.modeRules = options.modeRules || {}
     this.options = options
   }
 
@@ -104,6 +108,35 @@ class MpxWebpackPlugin {
 
   static fileLoader (options) {
     return { loader: normalize.lib('file-loader'), options }
+  }
+
+  runModeRules (request) {
+    const { resourcePath, queryObj } = parseRequest(request)
+    if (queryObj.mode) {
+      return request
+    }
+    const mode = this.options.mode
+    const modeRule = this.options.modeRules[mode]
+    if (!modeRule) {
+      return request
+    }
+    const include = modeRule.include
+    const exclude = modeRule.exclude
+
+    const matchInclude = include && normalizeCondition(include)
+    const matchExclude = exclude && normalizeCondition(exclude)
+
+    let needAddMode = false
+    if (matchInclude && !matchInclude(resourcePath)) {
+      needAddMode = true
+    }
+    if (matchExclude && matchExclude(resourcePath)) {
+      needAddMode = false
+    }
+    if (needAddMode) {
+      return addQuery(request, { mode })
+    }
+    return request
   }
 
   apply (compiler) {
@@ -519,6 +552,7 @@ class MpxWebpackPlugin {
     })
 
     compiler.hooks.normalModuleFactory.tap('MpxWebpackPlugin', (normalModuleFactory) => {
+      // resolve前修改原始request
       normalModuleFactory.hooks.beforeResolve.tapAsync('MpxWebpackPlugin', (data, callback) => {
         let request = data.request
         let { queryObj, resource } = parseRequest(request)
@@ -539,6 +573,7 @@ class MpxWebpackPlugin {
         callback(null, data)
       })
 
+      // resolve完成后修改loaders或者resource/request
       normalModuleFactory.hooks.afterResolve.tapAsync('MpxWebpackPlugin', (data, callback) => {
         const isFromMpx = /\.(mpx|vue)/.test(data.resource)
         if (data.loaders) {
@@ -548,6 +583,8 @@ class MpxWebpackPlugin {
             }
           })
         }
+        // 根据用户传入的modeRules对特定资源添加mode query
+        data.resource = this.runModeRules(data.resource)
 
         if (mpx.currentPackageRoot) {
           const resourcPath = getResource(data.resource)

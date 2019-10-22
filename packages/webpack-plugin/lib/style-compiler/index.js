@@ -7,15 +7,7 @@ const trim = require('./plugins/trim')
 const rpx = require('./plugins/rpx')
 const pluginCondStrip = require('./plugins/conditional-strip')
 const scopeId = require('./plugins/scope-id')
-
-const orMatcher = items => {
-  return str => {
-    for (let i = 0; i < items.length; i++) {
-      if (items[i](str)) return true
-    }
-    return false
-  }
-}
+const normalizeCondition = require('../utils/normalize-condition')
 
 module.exports = function (css, map) {
   this.cacheable()
@@ -27,29 +19,6 @@ module.exports = function (css, map) {
 
   const transRpxs = Array.isArray(loaderOptions.transRpx) ? loaderOptions.transRpx : [loaderOptions.transRpx]
 
-  const normalizeCondition = (condition) => {
-    if (!condition) throw new Error('Expected condition but got falsy value')
-    if (typeof condition === 'string') {
-      return str => str.indexOf(condition) === 0
-    }
-    if (typeof condition === 'function') {
-      return condition
-    }
-    if (condition instanceof RegExp) {
-      return condition.test.bind(condition)
-    }
-    if (Array.isArray(condition)) {
-      const items = condition.map(c => normalizeCondition(c))
-      return orMatcher(items)
-    }
-    throw Error(
-      'Unexcepted ' +
-      typeof condition +
-      ' when condition was expected (' +
-      condition +
-      ')'
-    )
-  }
 
   const testResolveRange = (include, exclude) => {
     const matchInclude = include && normalizeCondition(include)
