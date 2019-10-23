@@ -30,14 +30,14 @@ function transformApi (options) {
       }
 
       const fromTo = joinName(from, to)
-      if (
+      if (options.custom[fromTo] && options.custom[fromTo][api]) {
+        return options.custom[fromTo][api].apply(this, args)
+      } else if (
         platformMap[fromTo] &&
         platformMap[fromTo][api] &&
         options.exclude.indexOf(api) < 0
       ) {
         return platformMap[fromTo][api].apply(this, args)
-      } else if (options.custom[fromTo] && options.custom[fromTo][api]) {
-        return options.custom[fromTo][api].apply(this, args)
       } else if (envObj[api]) {
         return envObj[api].apply(this, args)
       } else {
