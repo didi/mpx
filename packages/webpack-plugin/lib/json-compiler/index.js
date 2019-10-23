@@ -191,7 +191,13 @@ module.exports = function (raw) {
         let componentName = parsed.name
         outputPath = path.join('components', componentName + hash(resourcePath), componentName)
       }
-      const packageInfo = mpx.getPackageInfo(resource, outputPath, false)
+      const packageInfo = mpx.getPackageInfo(resource, {
+        outputPath,
+        isStatic: false,
+        error: (err) => {
+          this.emitError(err)
+        }
+      })
       componentPath = toPosix(componentPath || packageInfo.outputPath)
       rewritePath && rewritePath(publicPath + componentPath)
       // 如果之前已经创建了入口，直接return
@@ -210,7 +216,29 @@ module.exports = function (raw) {
     })
   }
 
+  // 由于json模块都是由mpx/js文件引入的，需要向上找两层issuer获取真实的引用源
+  function getJsonIssuer (module) {
+    if (module.issuer) {
+      return module.issuer.issuer
+    }
+  }
+
   if (isApp) {
+    if (!mpx.hasApp) {
+      mpx.hasApp = true
+    } else {
+      const issuer = getJsonIssuer(this._module)
+      if (issuer) {
+        this.emitError(
+          new Error(`[json compiler]:Mpx单次构建中只能存在一个App，当前组件/页面[${this.resource}]通过[${issuer.resource}]非法引入，引用的资源将被忽略，请确保组件/页面资源通过usingComponents/pages配置引入！`)
+        )
+      } else {
+        this.emitError(
+          new Error(`[json compiler]:Mpx单次构建中只能存在一个App，请检查当前entry中的资源[${this.resource}]是否为组件/页面，通过添加?component/page查询字符串显式声明该资源是组件/页面！`)
+        )
+      }
+      return callback()
+    }
     // app.json
     const subPackagesCfg = {}
     const localPages = []

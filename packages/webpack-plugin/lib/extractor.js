@@ -44,7 +44,7 @@ module.exports = function (content) {
 
   let resultSource = defaultResultSource
 
-  function getFile (resourceRaw, type) {
+  const getFile = (resourceRaw, type) => {
     const resourcePath = parseRequest(resourceRaw).resourcePath
     const id = `${mode}:${packageName}:${type}:${resourcePath}`
     if (!seenFile[id]) {
@@ -59,7 +59,13 @@ module.exports = function (content) {
       } else {
         const resourceName = path.parse(resourcePath).name
         const outputPath = path.join(type, resourceName + hash(resourcePath) + typeExtMap[type])
-        seenFile[id] = mpx.getPackageInfo(resourceRaw, outputPath, true).outputPath
+        seenFile[id] = mpx.getPackageInfo(resourceRaw, {
+          outputPath,
+          isStatic: true,
+          error: (err) => {
+            this.emitError(err)
+          }
+        }).outputPath
       }
     }
     return seenFile[id]

@@ -230,6 +230,7 @@ class MpxWebpackPlugin {
           staticResourceMap: {
             main: {}
           },
+          hasApp: false,
           // 记录静态资源首次命中的分包，当有其他分包再次引用了同样的静态资源时，对其request添加packageName query以避免模块缓存导致loader不再执行
           staticResourceHit: {},
           loaderOptions,
@@ -259,7 +260,7 @@ class MpxWebpackPlugin {
           // 3. 分包引用且无其他包引用的资源输出至当前分包
           // 4. 分包引用且其他分包也引用过的资源，重复输出至当前分包
           // 5. 当用户通过packageName query显式指定了资源的所属包时，输出至指定的包
-          getPackageInfo (resource, outputPath, isStatic) {
+          getPackageInfo (resource, { outputPath, isStatic, error }) {
             let packageRoot = ''
             let packageName = 'main'
             const currentPackageRoot = mpx.currentPackageRoot
@@ -270,7 +271,7 @@ class MpxWebpackPlugin {
               packageName = queryObj.packageName
               packageRoot = packageName === 'main' ? '' : packageName
               if (packageName !== currentPackageName && packageName !== 'main') {
-                throw new Error('根据小程序分包资源引用规则，资源只支持声明为当前分包或者主包，否则可能会导致资源无法引用的问题！')
+                error && error(new Error(`根据小程序分包资源引用规则，资源只支持声明为当前分包或者主包，否则可能会导致资源无法引用的问题，当前资源的当前分包为${currentPackageName}，资源查询字符串声明的分包为${packageName}，请检查！`))
               }
             } else if (currentPackageRoot) {
               if (!resourceMap.main[resourcePath]) {

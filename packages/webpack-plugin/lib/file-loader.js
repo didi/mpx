@@ -15,7 +15,13 @@ module.exports = function loader (content) {
     regExp: options.regExp
   })
 
-  let { outputPath } = mpx.getPackageInfo(this.resource, url, true)
+  let { outputPath } = mpx.getPackageInfo(this.resource, {
+    outputPath: url,
+    isStatic: true,
+    error: (err) => {
+      this.emitError(err)
+    }
+  })
 
   if (options.outputPath) {
     if (typeof options.outputPath === 'function') {
@@ -35,7 +41,7 @@ module.exports = function loader (content) {
         options.publicPath.endsWith('/')
           ? options.publicPath
           : `${options.publicPath}/`
-      }${url}`
+        }${url}`
     }
 
     publicPath = JSON.stringify(publicPath)
