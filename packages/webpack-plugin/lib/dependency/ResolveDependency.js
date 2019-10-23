@@ -1,15 +1,15 @@
 'use strict'
 const NullDependency = require('webpack/lib/dependencies/NullDependency')
-const getResourcePath = require('../utils/get-resource-path')
+const parseRequest = require('../utils/parse-request')
 
 class ResolveDependency extends NullDependency {
-  constructor (resource, packageName, pagesMap, componentsMap, resourceMap, publicPath, range) {
+  constructor (resource, packageName, pagesMap, componentsMap, staticResourceMap, publicPath, range) {
     super()
     this.resource = resource
     this.packageName = packageName
     this.pagesMap = pagesMap
     this.componentsMap = componentsMap
-    this.resourceMap = resourceMap
+    this.staticResourceMap = staticResourceMap
     this.publicPath = publicPath
     this.range = range
   }
@@ -31,11 +31,11 @@ ResolveDependency.Template = class ResolveDependencyTemplate {
   }
 
   getContent (dep) {
-    const resourcePath = getResourcePath(dep.resource)
+    const resourcePath = parseRequest(dep.resource).resourcePath
     const pagesMap = dep.pagesMap
     const componentsMap = dep.componentsMap[dep.packageName]
-    const resourceMap = dep.resourceMap[dep.packageName]
-    const resolved = pagesMap[resourcePath] || componentsMap[resourcePath] || resourceMap[resourcePath]
+    const staticResourceMap = dep.staticResourceMap[dep.packageName]
+    const resolved = pagesMap[resourcePath] || componentsMap[resourcePath] || staticResourceMap[resourcePath]
     if (!resolved) {
       throw new Error(`Path ${dep.resource} is not a page/component/static resource, can not be resolved!`)
     }

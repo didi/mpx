@@ -10,7 +10,7 @@ const optionProcessorPath = require.resolve('./runtime/optionProcessor')
 const getPageName = require('./utils/get-page-name')
 const toPosix = require('./utils/to-posix')
 const stringifyQuery = require('./utils/stringify-query')
-const getResourcePath = require('./utils/get-resource-path')
+const parseRequest = require('./utils/parse-request')
 
 module.exports = function (content) {
   this.cacheable()
@@ -19,7 +19,7 @@ module.exports = function (content) {
   if (!mpx) {
     return content
   }
-  const packageName = mpx.processingSubPackageRoot || 'main'
+  const packageName = mpx.currentPackageRoot || 'main'
   const pagesMap = mpx.pagesMap
   const componentsMap = mpx.componentsMap[packageName]
   const projectRoot = mpx.projectRoot
@@ -27,7 +27,7 @@ module.exports = function (content) {
   const globalSrcMode = mpx.srcMode
   const resolveMode = mpx.resolveMode
   const localSrcMode = loaderUtils.parseQuery(this.resourceQuery || '?').mode
-  const resourcePath = getResourcePath(this.resource)
+  const resourcePath = parseRequest(this.resource).resourcePath
   const srcMode = localSrcMode || globalSrcMode
   const vueContentCache = mpx.vueContentCache
   const enableAutoScope = mpx.enableAutoScope

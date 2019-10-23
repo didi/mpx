@@ -1,6 +1,6 @@
 const parse = require('./parser')
 const loaderUtils = require('loader-utils')
-const getResourcePath = require('./utils/get-resource-path')
+const parseRequest = require('./utils/parse-request')
 
 module.exports = function (content) {
   this.cacheable()
@@ -8,11 +8,11 @@ module.exports = function (content) {
   if (!mpx) {
     return content
   }
-  const packageName = mpx.processingSubPackageRoot || 'main'
+  const packageName = mpx.currentPackageRoot || 'main'
   const pagesMap = mpx.pagesMap
   const componentsMap = mpx.componentsMap[packageName]
   const mode = mpx.mode
-  const resourcePath = getResourcePath(this.resource)
+  const resourcePath = parseRequest(this.resource).resourcePath
   const query = loaderUtils.getOptions(this) || {}
   const filePath = this.resourcePath
   const parts = parse(content, filePath, this.sourceMap, mode)

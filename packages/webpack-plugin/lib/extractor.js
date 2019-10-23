@@ -6,7 +6,7 @@ const LibraryTemplatePlugin = require('webpack/lib/LibraryTemplatePlugin')
 const SingleEntryPlugin = require('webpack/lib/SingleEntryPlugin')
 const LimitChunkCountPlugin = require('webpack/lib/optimize/LimitChunkCountPlugin')
 const normalize = require('./utils/normalize')
-const getResourcePath = require('./utils/get-resource-path')
+const parseRequest = require('./utils/parse-request')
 const getMainCompilation = require('./utils/get-main-compilation')
 const toPosix = require('./utils/to-posix')
 const config = require('./config')
@@ -22,12 +22,9 @@ module.exports = function (content) {
   const mainCompilation = getMainCompilation(this._compilation)
   const mpx = mainCompilation.__mpx__
 
-  const packageName = mpx.processingSubPackageRoot || 'main'
+  const packageName = mpx.currentPackageRoot || 'main'
   const pagesMap = mpx.pagesMap
   const componentsMap = mpx.componentsMap[packageName]
-  const resourceMap = mpx.resourceMap
-  const resourceHit = mpx.resourceHit
-  const currentResourceMap = resourceMap[packageName]
 
   const extract = mpx.extract
   const extractedMap = mpx.extractedMap
@@ -40,7 +37,7 @@ module.exports = function (content) {
   const rootModule = mainCompilation.entries.find((module) => {
     return module.rawRequest === rootRequest
   })
-  const rootResourcePath = getResourcePath(rootModule.resource)
+  const rootResourcePath = parseRequest(rootModule.resource).resourcePath
 
   const resourceRaw = this.resource
   const issuerResourceRaw = options.issuerResource
@@ -48,10 +45,10 @@ module.exports = function (content) {
   let resultSource = defaultResultSource
 
   function getFile (resourceRaw, type) {
-    const resourcePath = getResourcePath(resourceRaw)
+    const resourcePath = parseRequest(resourceRaw).resourcePath
     const id = `${mode}:${packageName}:${type}:${resourcePath}`
     if (!seenFile[id]) {
-      const resourcePath = getResourcePath(resourceRaw)
+      const resourcePath = parseRequest(resourceRaw).resourcePath
       let filename = pagesMap[resourcePath] || componentsMap[resourcePath]
       if (!filename && resourcePath === rootResourcePath) {
         filename = rootName
@@ -61,14 +58,8 @@ module.exports = function (content) {
         seenFile[id] = filename + typeExtMap[type]
       } else {
         const resourceName = path.parse(resourcePath).name
-        let subPackageRoot = ''
-        if (mpx.processingSubPackageRoot) {
-          if (!resourceMap.main[resourcePath]) {
-            subPackageRoot = mpx.processingSubPackageRoot
-          }
-        }
-        currentResourceMap[resourcePath] = seenFile[id] = toPosix(path.join(subPackageRoot, type, resourceName + hash(resourcePath) + typeExtMap[type]))
-        resourceHit[resourcePath] = true
+        const outputPath = path.join(type, resourceName + hash(resourcePath) + typeExtMap[type])
+        seenFile[id] = mpx.getPackageInfo(resourceRaw, outputPath, true).outputPath
       }
     }
     return seenFile[id]

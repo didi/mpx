@@ -5,7 +5,7 @@ const hash = require('hash-sum')
 const path = require('path')
 const WxsPlugin = require('./WxsPlugin')
 const getMainCompilation = require('../utils/get-main-compilation')
-const getResourcePath = require('../utils/get-resource-path')
+const parseRequest = require('../utils/parse-request')
 const toPosix = require('../utils/to-posix')
 const fixRelative = require('../utils/fix-relative')
 const config = require('../config')
@@ -18,12 +18,12 @@ module.exports = function () {
   const mpx = mainCompilation.__mpx__
   const mode = mpx.mode
   const wxsMap = mpx.wxsMap
-  const packageName = mpx.processingSubPackageRoot || 'main'
+  const packageName = mpx.currentPackageRoot || 'main'
   const pagesMap = mpx.pagesMap
   const componentsMap = mpx.componentsMap[packageName]
   const rootName = mainCompilation._preparedEntrypoints[0].name
   // 可能存在问题，issuer不可靠，但是目前由于每一个组件模板都是在独立的子编译中输出的，所以此处issuer没有遇到问题，可以考虑通过query传递issuerResource
-  const issuerResourcePath = getResourcePath(this._module.issuer.resource)
+  const issuerResourcePath = parseRequest(this._module.issuer.resource).resourcePath
   const issuerName = pagesMap[issuerResourcePath] || componentsMap[issuerResourcePath] || rootName
   const issuerDir = path.dirname(issuerName)
 
@@ -39,7 +39,7 @@ module.exports = function () {
     return match[1]
   }
 
-  let resourcePath = getResourcePath(this.resource)
+  let resourcePath = parseRequest(this.resource).resourcePath
   const wxsModule = parseQuery(this.resourceQuery || '?').wxsModule
 
   if (wxsModule) {

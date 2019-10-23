@@ -34,6 +34,8 @@
 
 当该组件接受一个参数isActive为true时，就会为view加上class:active。
 
+> 注意：由于微信的限制，wx:class 中的 key 值不能使用引号（如: { 'my-class-name': xx }）。
+
 #### 绑定内联样式
 
 例子：

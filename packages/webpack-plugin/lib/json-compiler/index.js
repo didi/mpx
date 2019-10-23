@@ -7,7 +7,7 @@ const parse = require('../parser')
 const config = require('../config')
 const normalize = require('../utils/normalize')
 const nativeLoaderPath = normalize.lib('native-loader')
-const getResourcePath = require('../utils/get-resource-path')
+const parseRequest = require('../utils/parse-request')
 const mpxJSON = require('../utils/mpx-json')
 const toPosix = require('../utils/to-posix')
 const getRulesRunner = require('../platform/index')
@@ -25,17 +25,15 @@ module.exports = function (raw) {
   if (!mpx) {
     return nativeCallback(null, raw)
   }
-  const packageName = mpx.processingSubPackageRoot || 'main'
+  const packageName = mpx.currentPackageRoot || 'main'
   const pagesMap = mpx.pagesMap
-  const componentsMap = mpx.componentsMap
-  const resourceMap = mpx.resourceMap
-  const currentComponentsMap = componentsMap[packageName]
+  const componentsMap = mpx.componentsMap[packageName]
   const mode = mpx.mode
   const globalSrcMode = mpx.srcMode
   const localSrcMode = loaderUtils.parseQuery(this.resourceQuery || '?').mode
   const resolveMode = mpx.resolveMode
-  const resourcePath = getResourcePath(this.resource)
-  const isApp = !(pagesMap[resourcePath] || currentComponentsMap[resourcePath])
+  const resourcePath = parseRequest(this.resource).resourcePath
+  const isApp = !(pagesMap[resourcePath] || componentsMap[resourcePath])
   const publicPath = this._compilation.outputOptions.publicPath || ''
   const fs = this._compiler.inputFileSystem
 
@@ -159,28 +157,18 @@ module.exports = function (raw) {
     if (/^plugin:\/\//.test(component)) {
       return callback()
     }
-
-    const packageName = mpx.processingSubPackageRoot || 'main'
-    const currentComponentsMap = componentsMap[packageName]
-
     if (resolveMode === 'native') {
       component = loaderUtils.urlToRequest(component, options.root)
     }
 
     this.resolve(context, component, (err, resource, info) => {
       if (err) return callback(err)
-      const resourcePath = getResourcePath(resource)
+      const resourcePath = parseRequest(resource).resourcePath
       const parsed = path.parse(resourcePath)
       const ext = parsed.ext
       const resourceName = path.join(parsed.dir, parsed.name)
-      let subPackageRoot = ''
-      if (mpx.processingSubPackageRoot) {
-        if (!componentsMap.main[resourcePath]) {
-          subPackageRoot = mpx.processingSubPackageRoot
-        } else {
-          currentComponentsMap[resourcePath] = componentsMap.main[resourcePath]
-        }
-      }
+
+      let outputPath
       if (ext === '.js') {
         let root = info.descriptionFileRoot
         let name = 'nativeComponent'
@@ -194,28 +182,26 @@ module.exports = function (raw) {
           }
         }
         let relativePath = path.relative(root, resourceName)
-        componentPath = componentPath || path.join(subPackageRoot, 'components', name + hash(root), relativePath)
+        outputPath = path.join('components', name + hash(root), relativePath)
       } else {
         let componentName = parsed.name
-        componentPath = componentPath || path.join(subPackageRoot, 'components', componentName + hash(resourcePath), componentName)
+        outputPath = path.join('components', componentName + hash(resourcePath), componentName)
       }
-      componentPath = toPosix(componentPath)
+      const packageInfo = mpx.getPackageInfo(resource, outputPath, false)
+      componentPath = toPosix(componentPath || packageInfo.outputPath)
       rewritePath && rewritePath(publicPath + componentPath)
-      // 如果之前已经创建了入口，rewritePath后直接return
-      if (currentComponentsMap[resourcePath]) {
-        rewritePath && rewritePath(publicPath + currentComponentsMap[resourcePath])
+      // 如果之前已经创建了入口，直接return
+      if (packageInfo.alreadyOutputed) {
         return callback()
       }
-      currentComponentsMap[resourcePath] = componentPath
       if (ext === '.js') {
         const nativeLoaderOptions = mpx.loaderOptions ? '?' + JSON.stringify(mpx.loaderOptions) : ''
         resource = '!!' + nativeLoaderPath + nativeLoaderOptions + '!' + resource
       }
-      if (subPackageRoot) {
-        resource = addQuery(resource, {
-          subPackageRoot
-        })
-      }
+      // 此处query为了实现消除分包间模块缓存，以实现不同分包中引用的组件在不同分包中都能输出
+      resource = addQuery(resource, {
+        packageName: packageInfo.packageName
+      })
       addEntrySafely(resource, componentPath, callback)
     })
   }
@@ -231,13 +217,10 @@ module.exports = function (raw) {
     const processPackages = (packages, context, callback) => {
       if (packages) {
         async.forEach(packages, (packagePath, callback) => {
-          let queryIndex = packagePath.indexOf('?')
-          let packageQuery = '?'
-          if (queryIndex >= 0) {
-            packageQuery = packagePath.substr(queryIndex)
-            packagePath = packagePath.substr(0, queryIndex)
-          }
-          let queryObj = loaderUtils.parseQuery(packageQuery)
+          const parsed = parseRequest(packagePath)
+          const queryObj = parsed.queryObj
+          // readFile无法处理query
+          packagePath = parsed.resourcePath
           async.waterfall([
             (callback) => {
               this.resolve(context, packagePath, (err, result) => {
@@ -246,6 +229,7 @@ module.exports = function (raw) {
             },
             (result, callback) => {
               fs.readFile(result, (err, content) => {
+                if (err) return callback(err)
                 callback(err, result, content.toString('utf-8'))
               })
             },
@@ -337,9 +321,9 @@ module.exports = function (raw) {
           pages: [],
           ...getOtherConfig(subPackage)
         }
-        mpx.processingSubPackageRoot = tarRoot
-        componentsMap[tarRoot] = {}
-        resourceMap[tarRoot] = {}
+        mpx.currentPackageRoot = tarRoot
+        mpx.componentsMap[tarRoot] = {}
+        mpx.staticResourceMap[tarRoot] = {}
         processPages(subPackage.pages, srcRoot, tarRoot, context, callback)
       } else {
         callback()
@@ -368,7 +352,7 @@ module.exports = function (raw) {
           name = toPosix(name)
           this.resolve(path.join(context, srcRoot), page, (err, resource) => {
             if (err) return callback(err)
-            let resourcePath = getResourcePath(resource)
+            let resourcePath = parseRequest(resource).resourcePath
             const parsed = path.parse(resourcePath)
             const ext = parsed.ext
             // 如果存在page命名冲突，return err
@@ -503,6 +487,8 @@ module.exports = function (raw) {
           if (err) {
             errors.push(err)
           }
+          // 处理完分包后重置currentPackageRoot以确保app中的资源输出到主包
+          mpx.currentPackageRoot = ''
           callback()
         })
       }

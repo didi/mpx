@@ -7,7 +7,7 @@ const isValidIdentifierStr = require('../utils/is-valid-identifier-str')
 let names = 'Infinity,undefined,NaN,isFinite,isNaN,' +
   'parseFloat,parseInt,decodeURI,decodeURIComponent,encodeURI,encodeURIComponent,' +
   'Math,Number,Date,Array,Object,Boolean,String,RegExp,Map,Set,JSON,Intl,' +
-  'require,global,__seen,renderData'
+  'require,global,__seen,__renderData'
 
 let hash = {}
 names.split(',').forEach(function (name) {
@@ -32,24 +32,27 @@ module.exports = {
     })
 
     const propKeys = []
-    let inTravel = false
+    let isProps = false
 
     let bindThisVisitor = {
       CallExpression: {
         enter (path) {
           const callee = path.node.callee
+          const args = path.node.arguments
           if (
             t.isMemberExpression(callee) &&
             t.isThisExpression(callee.object) &&
-            (callee.property.name === '__travel' || callee.property.value === '__travel')
+            (callee.property.name === '__travel' || callee.property.value === '__travel') &&
+            t.isBooleanLiteral(args[2]) &&
+            args[2].value === true
           ) {
-            inTravel = true
-            path.isTravel = true
+            isProps = true
+            path.isProps = true
           }
         },
         exit (path) {
-          if (path.isTravel) {
-            inTravel = false
+          if (path.isProps) {
+            isProps = false
           }
         }
       },
@@ -70,7 +73,7 @@ module.exports = {
             // bind this
             path.replaceWith(t.memberExpression(t.thisExpression(), path.node))
 
-            if (inTravel) {
+            if (isProps) {
               propKeys.push(path.node.property.name)
             }
 
@@ -110,7 +113,7 @@ module.exports = {
 
               rightExpression = t.arrayExpression([rightExpression, t.stringLiteral(firstKey)])
               // 构造赋值语句并挂到要改的path下，等对memberExpression访问exit时处理
-              last.assignment = t.assignmentExpression('=', t.memberExpression(t.identifier('renderData'), t.stringLiteral(keyPath.toString()), true), rightExpression)
+              last.assignment = t.assignmentExpression('=', t.memberExpression(t.identifier('__renderData'), t.stringLiteral(keyPath.toString()), true), rightExpression)
             }
           }
           // flag get

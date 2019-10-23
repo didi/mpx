@@ -2,18 +2,12 @@ const path = require('path')
 const loaderUtils = require('loader-utils')
 const getMainCompilation = require('./utils/get-main-compilation')
 const toPosix = require('./utils/to-posix')
-const getResourcePath = require('./utils/get-resource-path')
 
 module.exports = function loader (content) {
   const options = loaderUtils.getOptions(this) || {}
   const context = options.context || this.rootContext
   const mainCompilation = getMainCompilation(this._compilation)
   const mpx = mainCompilation.__mpx__
-  const packageName = mpx.processingSubPackageRoot || 'main'
-  const resourceMap = mpx.resourceMap
-  const resourceHit = mpx.resourceHit
-  const currentResourceMap = resourceMap[packageName]
-  const resourcePath = getResourcePath(this.resource)
 
   let url = loaderUtils.interpolateName(this, options.name, {
     context,
@@ -21,25 +15,13 @@ module.exports = function loader (content) {
     regExp: options.regExp
   })
 
-  let subPackageRoot = ''
-  if (mpx.processingSubPackageRoot) {
-    if (!resourceMap.main[resourcePath]) {
-      subPackageRoot = mpx.processingSubPackageRoot
-    }
-  }
-
-  url = toPosix(path.join(subPackageRoot, url))
-
-  currentResourceMap[resourcePath] = url
-  resourceHit[resourceMap] = true
-
-  let outputPath = url
+  let { outputPath } = mpx.getPackageInfo(this.resource, url, true)
 
   if (options.outputPath) {
     if (typeof options.outputPath === 'function') {
-      outputPath = options.outputPath(url, this.resourcePath, context)
+      outputPath = options.outputPath(outputPath, this.resourcePath, context)
     } else {
-      outputPath = path.posix.join(options.outputPath, url)
+      outputPath = toPosix(path.join(options.outputPath, outputPath))
     }
   }
 
