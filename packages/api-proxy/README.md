@@ -61,7 +61,16 @@ import mpx from '@mpxjs/core'
 import apiProxy from '@mpxjs/api-proxy'
 
 mpx.use(apiProxy, {
-  usePromise: true
+  usePromise: true,
+  custom: { // 自定义微信到百度的 compressImage 转换规则，支持 wx、ali、swan、qq、tt
+    'wx_swan': {
+      compressImage (options = {}) {
+        const res = {}
+        // TODO
+        options.success && options.success(res)
+      }
+    }
+  }
 })
 
 mpx.showActionSheet({
