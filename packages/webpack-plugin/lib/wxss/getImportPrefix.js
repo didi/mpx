@@ -18,8 +18,6 @@ module.exports = function getImportPrefix (loaderContext, query) {
     return x.request
   }).join('!')
   if (query.extract) {
-
-
     loadersRequest = extractorPath + '?' +
       JSON.stringify({
         type: 'styles',
