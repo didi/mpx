@@ -7,7 +7,7 @@ const trim = require('./plugins/trim')
 const rpx = require('./plugins/rpx')
 const pluginCondStrip = require('./plugins/conditional-strip')
 const scopeId = require('./plugins/scope-id')
-const normalizeCondition = require('../utils/normalize-condition')
+const matchCondition = require('../utils/match-condition')
 
 module.exports = function (css, map) {
   this.cacheable()
@@ -19,18 +19,8 @@ module.exports = function (css, map) {
 
   const transRpxs = Array.isArray(loaderOptions.transRpx) ? loaderOptions.transRpx : [loaderOptions.transRpx]
 
-  const testResolveRange = (include, exclude) => {
-    const matchInclude = include && normalizeCondition(include)
-    const matchExclude = exclude && normalizeCondition(exclude)
-
-    let useRpxPlugin = true
-    if (matchInclude && !matchInclude(this.resourcePath)) {
-      useRpxPlugin = false
-    }
-    if (matchExclude && matchExclude(this.resourcePath)) {
-      useRpxPlugin = false
-    }
-    return useRpxPlugin
+  const testResolveRange = (include = () => true, exclude) => {
+    return matchCondition(this.resourcePath, { include, exclude })
   }
 
   loadPostcssConfig(this)
