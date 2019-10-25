@@ -174,8 +174,8 @@ module.exports = function (raw) {
     // 保存全局注册组件
     if (json.usingComponents) {
       mpx.usingComponents = Object.keys(json.usingComponents)
-      mpx.globalUsingComponents = json.usingComponents
     }
+    mpx.globalUsingComponents = json.usingComponents || {}
     // 保存推测的项目根目录
     mpx.guessProjectRoot = path.dirname(resourcePath)
   }
