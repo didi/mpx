@@ -1,12 +1,12 @@
 const runRules = require('./run-rules')
 
-module.exports = function getRulesRunner ({ type, mode, srcMode, testKey, mainKey, waterfall, warn, error }) {
+module.exports = function getRulesRunner ({ type, mode, srcMode, testKey, mainKey, waterfall, warn, error, mpx }) {
   const specMap = {
     template: {
       wx: require('./template/wx')({ warn, error })
     },
     json: {
-      wx: require('./json/wx')({ warn, error })
+      wx: require('./json/wx')({ warn, error, mpx })
     }
   }
   const spec = specMap[type] && specMap[type][srcMode]

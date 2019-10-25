@@ -153,10 +153,17 @@ module.exports = function getSpec ({ warn, error }) {
         tt: deletePath()
       },
       {
-        test: 'functionalPages|plugins|usingComponents',
+        test: 'functionalPages|plugins',
         ali: deletePath(true),
         qq: deletePath(true),
         swan: deletePath(true),
+        tt: deletePath()
+      },
+      {
+        test: 'usingComponents',
+        ali: deletePath(),
+        qq: deletePath(),
+        swan: deletePath(),
         tt: deletePath()
       },
       {
