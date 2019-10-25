@@ -19,7 +19,7 @@ const RemovedModuleDependency = require('./dependency/RemovedModuleDependency')
 const SplitChunksPlugin = require('webpack/lib/optimize/SplitChunksPlugin')
 const fixRelative = require('./utils/fix-relative')
 const parseRequest = require('./utils/parse-request')
-const normalizeCondition = require('./utils/normalize-condition')
+const matchCondition = require('./utils/match-condition')
 
 const isProductionLikeMode = options => {
   return options.mode === 'production' || !options.mode
@@ -79,7 +79,7 @@ class MpxWebpackPlugin {
     })
     options.resolveMode = options.resolveMode || 'webpack'
     options.writeMode = options.writeMode || 'changed'
-    options.enableAutoScope = options.enableAutoScope || false
+    options.autoScopeRules = options.autoScopeRules || {}
     if (options.autoSplit === undefined) {
       options.autoSplit = true
     }
@@ -119,20 +119,7 @@ class MpxWebpackPlugin {
     if (!modeRule) {
       return request
     }
-    const include = modeRule.include
-    const exclude = modeRule.exclude
-
-    const matchInclude = include && normalizeCondition(include)
-    const matchExclude = exclude && normalizeCondition(exclude)
-
-    let needAddMode = false
-    if (matchInclude && !matchInclude(resourcePath)) {
-      needAddMode = true
-    }
-    if (matchExclude && matchExclude(resourcePath)) {
-      needAddMode = false
-    }
-    if (needAddMode) {
+    if (matchCondition(resourcePath, modeRule)) {
       return addQuery(request, { mode })
     }
     return request
@@ -246,7 +233,7 @@ class MpxWebpackPlugin {
           srcMode: this.options.srcMode,
           externalClasses: this.options.externalClasses,
           projectRoot: this.options.projectRoot,
-          enableAutoScope: this.options.enableAutoScope,
+          autoScopeRules: this.options.autoScopeRules,
           extract: (content, file, index, sideEffects) => {
             additionalAssets[file] = additionalAssets[file] || []
             if (!additionalAssets[file][index]) {
