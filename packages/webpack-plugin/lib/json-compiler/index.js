@@ -145,8 +145,8 @@ module.exports = function (raw) {
   }
   if (!isApp) {
     rulesRunnerOptions.mainKey = pagesMap[resourcePath] ? 'page' : 'component'
-    const stripExtenstions = function (v) {
-      return v.replace(/(.*)\.(.*?)$/, '$1')
+    const stripExtensions = function (v) {
+      return path.resolve(path.dirname(v), path.basename(v).replace(/(.*)\.(.*?)$/, '$1'))
     }
 
     const resolvedGlobalUsingComponents = function () {
@@ -161,7 +161,7 @@ module.exports = function (raw) {
         const projectRoot = mpx.projectRoot || mpx.guessProjectRoot
         const compAbsPath = path.resolve(projectRoot, componentPath)
         // Self reference guard
-        if (stripExtenstions(resourcePath) !== stripExtenstions(compAbsPath)) {
+        if (stripExtensions(resourcePath) !== stripExtensions(compAbsPath)) {
           const resolvedAbsPath = path.relative(path.dirname(resourcePath), compAbsPath).replace(/\\/g, '/')
           ret[k] = resolvedAbsPath
         }
