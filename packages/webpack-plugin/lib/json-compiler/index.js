@@ -169,6 +169,7 @@ module.exports = function (raw) {
       return ret
     }
     // polyfill global usingComponents
+    // TODO feat: unused component reference deletion for smaller bundle size
     json.usingComponents = Object.assign({}, resolvedGlobalUsingComponents(), json.usingComponents)
   } else {
     // 保存全局注册组件
