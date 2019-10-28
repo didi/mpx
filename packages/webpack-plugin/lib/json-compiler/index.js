@@ -128,6 +128,7 @@ module.exports = function (raw) {
 
   const rulesRunnerOptions = {
     mode,
+    mpx,
     srcMode: localSrcMode || globalSrcMode,
     type: 'json',
     waterfall: true,
@@ -144,6 +145,40 @@ module.exports = function (raw) {
   }
   if (!isApp) {
     rulesRunnerOptions.mainKey = pagesMap[resourcePath] ? 'page' : 'component'
+    const stripExtensions = function (v) {
+      return path.resolve(path.dirname(v), path.basename(v).replace(/(.*)\.(.*?)$/, '$1'))
+    }
+
+    const resolvedGlobalUsingComponents = function () {
+      const ret = {}
+      const globalUsingComponents = mpx.globalUsingComponents
+      Object.keys(globalUsingComponents).forEach(k => {
+        let componentPath = globalUsingComponents[k]
+        if (componentPath.startsWith('/')) {
+          componentPath = '.' + componentPath
+        }
+
+        const projectRoot = mpx.projectRoot || mpx.guessProjectRoot
+        const compAbsPath = path.resolve(projectRoot, componentPath)
+        // Self reference guard
+        if (stripExtensions(resourcePath) !== stripExtensions(compAbsPath)) {
+          const resolvedAbsPath = path.relative(path.dirname(resourcePath), compAbsPath).replace(/\\/g, '/')
+          ret[k] = resolvedAbsPath
+        }
+      })
+      return ret
+    }
+    // polyfill global usingComponents
+    // TODO feat: unused component reference deletion for smaller bundle size
+    json.usingComponents = Object.assign({}, resolvedGlobalUsingComponents(), json.usingComponents)
+  } else {
+    // 保存全局注册组件
+    if (json.usingComponents) {
+      mpx.usingComponents = Object.keys(json.usingComponents)
+    }
+    mpx.globalUsingComponents = json.usingComponents || {}
+    // 保存推测的项目根目录
+    mpx.guessProjectRoot = path.dirname(resourcePath)
   }
 
   const rulesRunner = getRulesRunner(rulesRunnerOptions)
@@ -476,11 +511,6 @@ module.exports = function (raw) {
       } else {
         callback()
       }
-    }
-
-    // 保存全局注册组件
-    if (json.usingComponents) {
-      mpx.usingComponents = Object.keys(json.usingComponents)
     }
 
     // 串行处理，先处理主包代码，再处理分包代码，为了正确识别出分包中定义的组件属于主包还是分包

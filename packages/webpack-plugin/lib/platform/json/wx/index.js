@@ -8,10 +8,19 @@ module.exports = function getSpec ({ warn, error }) {
     isError ? error(msg) : warn(msg)
   }
 
-  function deletePath (isError) {
+  function deletePath (opts) {
+    let isError = opts
+    let shouldLog = true
+    if (typeof opts === 'object') {
+      shouldLog = !opts.noLog
+      isError = opts.isError
+    }
+
     return function (input, data = [], meta) {
       const currPath = meta.paths.join('|')
-      print(meta.$targetMode, data.concat(currPath).join('.'), isError)
+      if (shouldLog) {
+        print(meta.$targetMode, data.concat(currPath).join('.'), isError)
+      }
       meta.paths.forEach((path) => {
         delete input[path]
       })
@@ -153,11 +162,18 @@ module.exports = function getSpec ({ warn, error }) {
         tt: deletePath()
       },
       {
-        test: 'functionalPages|plugins|usingComponents',
+        test: 'functionalPages|plugins',
         ali: deletePath(true),
         qq: deletePath(true),
         swan: deletePath(true),
         tt: deletePath()
+      },
+      {
+        test: 'usingComponents',
+        ali: deletePath({ noLog: true }),
+        qq: deletePath({ noLog: true }),
+        swan: deletePath({ noLog: true }),
+        tt: deletePath({ noLog: true })
       },
       {
         test: 'debug',
