@@ -1297,7 +1297,11 @@ function processRef (el, options, meta) {
       meta.refs = []
     }
     let all = !!forScopes.length
-    let refClassName = `__ref_${val}_${++refId}_{{mpxCid}}`
+    let refClassName = `__ref_${val}_${++refId}`
+    // 支付宝中对于node进行的my.createSelectorQuery是在全局范围内进行的，需添加运行时组件id确保selector唯一
+    if (type === 'node' && mode === 'ali') {
+      refClassName += '_{{mpxCid}}'
+    }
     let className = getAndRemoveAttr(el, 'class')
     className = className ? className + ' ' + refClassName : refClassName
     addAttrs(el, [{

@@ -154,7 +154,7 @@ module.exports = function (raw) {
     // 保存全局注册组件
     if (json.usingComponents) {
       mpx.usingComponents = {}
-      object.keys(json.usingComponents).forEach((key) => {
+      Object.keys(json.usingComponents).forEach((key) => {
         const request = json.usingComponents[key]
         mpx.usingComponents[key] = addQuery(request, {
           context: this.context
