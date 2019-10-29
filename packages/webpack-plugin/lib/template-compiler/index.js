@@ -41,7 +41,7 @@ module.exports = function (raw) {
     basename: path.basename(this.resource),
     isComponent: !!componentsMap[resourcePath],
     mode,
-    globalMpxAttrsFilter: mpx.options.globalMpxAttrsFilter,
+    globalMpxAttrsFilter: mpx.globalMpxAttrsFilter,
     externalClasses,
     srcMode: localSrcMode || globalSrcMode,
     isNative,
