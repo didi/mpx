@@ -143,10 +143,6 @@ function initProxy (context, rawOptions, currentInject) {
 
 export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
   const hookNames = ['attached', 'ready', 'detached']
-  // swan当中component构造的page中onload执行时机早于attached
-  if (__mpx_mode__ === 'swan' && type === 'page') {
-    hookNames[0] = 'onLoad'
-  }
   // 当用户传入page作为构造器构造页面时，修改所有关键hooks
   if (rawOptions.__pageCtor__) {
     hookNames[0] = 'onLoad'

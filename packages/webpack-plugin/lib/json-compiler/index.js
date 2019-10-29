@@ -145,40 +145,22 @@ module.exports = function (raw) {
   }
   if (!isApp) {
     rulesRunnerOptions.mainKey = pagesMap[resourcePath] ? 'page' : 'component'
-    const stripExtensions = function (v) {
-      return path.resolve(path.dirname(v), path.basename(v).replace(/(.*)\.(.*?)$/, '$1'))
-    }
-
-    const resolvedGlobalUsingComponents = function () {
-      const ret = {}
-      const globalUsingComponents = mpx.globalUsingComponents
-      Object.keys(globalUsingComponents).forEach(k => {
-        let componentPath = globalUsingComponents[k]
-        if (componentPath.startsWith('/')) {
-          componentPath = '.' + componentPath
-        }
-
-        const projectRoot = mpx.projectRoot || mpx.guessProjectRoot
-        const compAbsPath = path.resolve(projectRoot, componentPath)
-        // Self reference guard
-        if (stripExtensions(resourcePath) !== stripExtensions(compAbsPath)) {
-          const resolvedAbsPath = path.relative(path.dirname(resourcePath), compAbsPath).replace(/\\/g, '/')
-          ret[k] = resolvedAbsPath
-        }
-      })
-      return ret
-    }
     // polyfill global usingComponents
-    // TODO feat: unused component reference deletion for smaller bundle size
-    json.usingComponents = Object.assign({}, resolvedGlobalUsingComponents(), json.usingComponents)
+    // todo 传入rulesRunner中进行按平台转换
+    rulesRunnerOptions.data = {
+      globalComponents: mpx.usingComponents
+    }
   } else {
     // 保存全局注册组件
     if (json.usingComponents) {
-      mpx.usingComponents = Object.keys(json.usingComponents)
+      mpx.usingComponents = {}
+      object.keys(json.usingComponents).forEach((key) => {
+        const request = json.usingComponents[key]
+        mpx.usingComponents[key] = addQuery(request, {
+          context: this.context
+        })
+      })
     }
-    mpx.globalUsingComponents = json.usingComponents || {}
-    // 保存推测的项目根目录
-    mpx.guessProjectRoot = path.dirname(resourcePath)
   }
 
   const rulesRunner = getRulesRunner(rulesRunnerOptions)
@@ -192,6 +174,12 @@ module.exports = function (raw) {
     return path.join(root, match[1])
   }
 
+  const resolve = (context, request, callback) => {
+    const { queryObj } = parseRequest(request)
+    context = queryObj.context || context
+    return this.resolve(context, request, callback)
+  }
+
   const processComponent = (component, context, rewritePath, componentPath, callback) => {
     if (/^plugin:\/\//.test(component)) {
       return callback()
@@ -200,7 +188,7 @@ module.exports = function (raw) {
       component = loaderUtils.urlToRequest(component, options.root)
     }
 
-    this.resolve(context, component, (err, resource, info) => {
+    resolve(context, component, (err, resource, info) => {
       if (err) return callback(err)
       const resourcePath = parseRequest(resource).resourcePath
       const parsed = path.parse(resourcePath)
@@ -290,7 +278,7 @@ module.exports = function (raw) {
           packagePath = parsed.resourcePath
           async.waterfall([
             (callback) => {
-              this.resolve(context, packagePath, (err, result) => {
+              resolve(context, packagePath, (err, result) => {
                 callback(err, result)
               })
             },
@@ -417,7 +405,7 @@ module.exports = function (raw) {
           }
           let name = getPageName(tarRoot, rawPage)
           name = toPosix(name)
-          this.resolve(path.join(context, srcRoot), page, (err, resource) => {
+          resolve(path.join(context, srcRoot), page, (err, resource) => {
             if (err) return callback(err)
             let resourcePath = parseRequest(resource).resourcePath
             const parsed = path.parse(resourcePath)

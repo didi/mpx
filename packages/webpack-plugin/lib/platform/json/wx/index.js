@@ -28,6 +28,13 @@ module.exports = function getSpec ({ warn, error }) {
     }
   }
 
+  function addGlobalComponents (input, { globalComponents }) {
+    if (globalComponents) {
+      input.usingComponents = Object.assign({}, globalComponents, input.usingComponents)
+    }
+    return input
+  }
+
   const spec = {
     supportedTargets: ['ali', 'swan', 'qq', 'tt'],
     normalizeTest,
@@ -79,6 +86,12 @@ module.exports = function getSpec ({ warn, error }) {
         ali: deletePath(),
         swan: deletePath(),
         tt: deletePath()
+      },
+      {
+        ali: addGlobalComponents,
+        swan: addGlobalComponents,
+        qq: addGlobalComponents,
+        tt: addGlobalComponents
       }
     ],
     component: [
@@ -86,6 +99,12 @@ module.exports = function getSpec ({ warn, error }) {
         test: 'componentGenerics',
         ali: deletePath(true),
         swan: deletePath(true)
+      },
+      {
+        ali: addGlobalComponents,
+        swan: addGlobalComponents,
+        qq: addGlobalComponents,
+        tt: addGlobalComponents
       }
     ],
     tabBar: {

@@ -73,7 +73,7 @@ module.exports = function (content) {
   const hasComment = templateAttrs && templateAttrs.comments
   const isNative = false
 
-  let usingComponents = [].concat(mpx.usingComponents)
+  let usingComponents = [].concat(Object.keys(mpx.usingComponents))
   try {
     let ret = JSON.parse(parts.json.content)
     if (ret.usingComponents) {
