@@ -1,4 +1,4 @@
-import { BEFORECREATE, CREATED, MOUNTED, UPDATED } from '../../../core/innerLifecycle'
+import { BEFORECREATE, CREATED, UPDATED } from '../../../core/innerLifecycle'
 
 const APP_HOOKS = [
   'onLaunch',
