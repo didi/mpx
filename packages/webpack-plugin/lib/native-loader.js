@@ -118,7 +118,7 @@ module.exports = function (content) {
         }
       }
     }, (content, callback) => {
-      let usingComponents = [].concat(mpx.usingComponents)
+      let usingComponents = [].concat(Object.keys(mpx.usingComponents))
       try {
         let ret = JSON.parse(content)
         if (ret.usingComponents) {
