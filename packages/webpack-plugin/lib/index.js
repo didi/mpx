@@ -233,6 +233,7 @@ class MpxWebpackPlugin {
           resolveMode: this.options.resolveMode,
           mode: this.options.mode,
           srcMode: this.options.srcMode,
+          globalMpxAttrsFilter: this.options.globalMpxAttrsFilter,
           externalClasses: this.options.externalClasses,
           projectRoot: this.options.projectRoot,
           autoScopeRules: this.options.autoScopeRules,
