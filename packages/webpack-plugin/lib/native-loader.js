@@ -8,6 +8,7 @@ const InjectDependency = require('./dependency/InjectDependency')
 const stringifyQuery = require('./utils/stringify-query')
 const mpxJSON = require('./utils/mpx-json')
 const async = require('async')
+const matchCondition = require('./utils/match-condition')
 
 const EXT_MPX_JSON = '.json.js'
 
@@ -44,14 +45,14 @@ module.exports = function (content) {
   const srcMode = localSrcMode || globalSrcMode
   const fs = this._compiler.inputFileSystem
   const typeExtMap = Object.assign({}, config[srcMode].typeExtMap)
-  const enableAutoScope = mpx.enableAutoScope
+  const autoScope = matchCondition(resourcePath, mpx.autoScopeRules)
 
   const needCssSourceMap = (
     !isProduction &&
     this.sourceMap &&
     options.cssSourceMap !== false
   )
-  const hasScoped = (queryObj.scoped || enableAutoScope) && mode === 'ali'
+  const hasScoped = (queryObj.scoped || autoScope) && mode === 'ali'
   const hasComment = false
   const isNative = true
 
@@ -117,7 +118,7 @@ module.exports = function (content) {
         }
       }
     }, (content, callback) => {
-      let usingComponents = [].concat(mpx.usingComponents)
+      let usingComponents = [].concat(Object.keys(mpx.usingComponents))
       try {
         let ret = JSON.parse(content)
         if (ret.usingComponents) {

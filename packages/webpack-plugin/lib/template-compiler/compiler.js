@@ -186,18 +186,24 @@ function isMpxCommentAttrs (content) {
   return /@mpx-attrs/.test(content)
 }
 
+function normalizePlatformMpxAttrsOpts (opts) {
+  const ret = {}
+  // Array to map for removing attributes
+  ret.remove = (opts.remove || []).reduce((acc, val) => {
+    acc[val] = true
+    return acc
+  }, {})
+  // Default adding map
+  ret.add = opts.add || {}
+  return ret
+}
+
 function produceMpxCommentAttrs (content) {
   const exp = /@mpx-attrs[^(]*?\(([\s\S]*)\)/.exec(content)[1].trim()
   const tmpOpts = evalMpxCommentExp(exp)
   // normalize
   Object.keys(tmpOpts).forEach(k => {
-    // Array to map for removing attributes
-    tmpOpts[k].remove = (tmpOpts[k].remove || []).reduce((acc, val) => {
-      acc[val] = true
-      return acc
-    }, {})
-    // Default adding map
-    tmpOpts[k].add = tmpOpts[k].add || {}
+    Object.assign(tmpOpts[k], normalizePlatformMpxAttrsOpts(tmpOpts[k]))
 
     if (k.indexOf(',') > -1) {
       const modes = k.split(',')
@@ -210,29 +216,33 @@ function produceMpxCommentAttrs (content) {
   curMpxComment = tmpOpts
 }
 
+function modifyAttrsFromCurMpxAttrOptions (attrs, curModeMpxComment) {
+  const removeMap = curModeMpxComment.remove
+  const addMap = curModeMpxComment.add
+
+  const newAttrs = []
+  attrs.forEach(attr => {
+    if (!removeMap[attr.name]) {
+      newAttrs.push(attr)
+    }
+  })
+
+  Object.keys(addMap).forEach(name => {
+    newAttrs.push({
+      name,
+      value: addMap[name]
+    })
+  })
+
+  return newAttrs
+}
+
 function consumeMpxCommentAttrs (attrs, mode) {
   let ret = attrs
   if (curMpxComment) {
     const curModeMpxComment = curMpxComment[mode]
     if (curModeMpxComment) {
-      const removeMap = curModeMpxComment.remove
-      const addMap = curModeMpxComment.add
-
-      const newAttrs = []
-      attrs.forEach(attr => {
-        if (!removeMap[attr.name]) {
-          newAttrs.push(attr)
-        }
-      })
-
-      Object.keys(addMap).forEach(name => {
-        newAttrs.push({
-          name,
-          value: addMap[name]
-        })
-      })
-
-      ret = newAttrs
+      ret = modifyAttrsFromCurMpxAttrOptions(attrs, curModeMpxComment)
     }
 
     // reset
@@ -764,6 +774,9 @@ function parse (template, options) {
         attrs = guardIESVGBug(attrs)
       }
 
+      if (options.globalMpxAttrsFilter) {
+        attrs = modifyAttrsFromCurMpxAttrOptions(attrs, normalizePlatformMpxAttrsOpts(options.globalMpxAttrsFilter({ tagName: tag, attrs, __mpx_mode__: mode }) || {}))
+      }
       attrs = consumeMpxCommentAttrs(attrs, mode)
 
       let element = createASTElement(tag, attrs, currentParent)
@@ -1297,7 +1310,11 @@ function processRef (el, options, meta) {
       meta.refs = []
     }
     let all = !!forScopes.length
-    let refClassName = `__ref_${val}_${++refId}_{{mpxCid}}`
+    let refClassName = `__ref_${val}_${++refId}`
+    // 支付宝中对于node进行的my.createSelectorQuery是在全局范围内进行的，需添加运行时组件id确保selector唯一
+    if (type === 'node' && mode === 'ali') {
+      refClassName += '_{{mpxCid}}'
+    }
     let className = getAndRemoveAttr(el, 'class')
     className = className ? className + ' ' + refClassName : refClassName
     addAttrs(el, [{

@@ -37,7 +37,7 @@ const COMPONENT_HOOKS = [
 
 export const lifecycleProxyMap = {
   [BEFORECREATE]: ['beforeCreate', 'onBeforeCreate'],
-  [CREATED]: ['onLoad'],
+  [CREATED]: ['onLoad', 'onInit'],
   [UPDATED]: ['updated', 'onUpdated']
 }
 

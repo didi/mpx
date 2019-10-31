@@ -1,6 +1,6 @@
 const runRules = require('./run-rules')
 
-module.exports = function getRulesRunner ({ type, mode, srcMode, testKey, mainKey, waterfall, warn, error }) {
+module.exports = function getRulesRunner ({ type, mode, srcMode, testKey, mainKey, waterfall, warn, error, data }) {
   const specMap = {
     template: {
       wx: require('./template/wx')({ warn, error })
@@ -16,7 +16,7 @@ module.exports = function getRulesRunner ({ type, mode, srcMode, testKey, mainKe
     const mainRules = mainKey ? spec[mainKey] : spec
     if (mainRules) {
       return function (input) {
-        return runRules(mainRules, input, { target: mode, testKey, waterfall, normalizeTest })
+        return runRules(mainRules, input, { target: mode, testKey, waterfall, normalizeTest, data })
       }
     }
   }

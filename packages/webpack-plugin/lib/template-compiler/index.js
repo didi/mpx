@@ -41,6 +41,7 @@ module.exports = function (raw) {
     basename: path.basename(this.resource),
     isComponent: !!componentsMap[resourcePath],
     mode,
+    globalMpxAttrsFilter: mpx.globalMpxAttrsFilter,
     externalClasses,
     srcMode: localSrcMode || globalSrcMode,
     isNative,
@@ -66,8 +67,8 @@ module.exports = function (raw) {
     moduleId: ${JSON.stringify(options.moduleId)},
     render: function () {
       var __seen = [];
-      var renderData = {};
-      ${compiler.genNode(ast)}return renderData;
+      var __renderData = {};
+      ${compiler.genNode(ast)}return __renderData;
     }
 };\n`, {
     needCollect: true,

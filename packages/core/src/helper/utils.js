@@ -179,7 +179,7 @@ export function filterProperties (source, props = []) {
   props.forEach(prop => {
     if (prop in source) {
       const result = source[prop]
-      newData[prop] = isObservable(result) ? toJS(result) : result
+      newData[prop] = isObservable(result) ? toJS(result) : diffAndCloneA(result).clone
     }
   })
   return newData

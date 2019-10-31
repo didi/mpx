@@ -19,6 +19,7 @@ const RemovedModuleDependency = require('./dependency/RemovedModuleDependency')
 const SplitChunksPlugin = require('webpack/lib/optimize/SplitChunksPlugin')
 const fixRelative = require('./utils/fix-relative')
 const parseRequest = require('./utils/parse-request')
+const matchCondition = require('./utils/match-condition')
 
 const isProductionLikeMode = options => {
   return options.mode === 'production' || !options.mode
@@ -78,10 +79,14 @@ class MpxWebpackPlugin {
     })
     options.resolveMode = options.resolveMode || 'webpack'
     options.writeMode = options.writeMode || 'changed'
-    options.enableAutoScope = options.enableAutoScope || false
+    options.autoScopeRules = options.autoScopeRules || {}
+    options.forceDisableInject = options.forceDisableInject || false
+    options.forceDisableProxyCtor = options.forceDisableProxyCtor || false
     if (options.autoSplit === undefined) {
       options.autoSplit = true
     }
+    // 批量指定源码mode
+    options.modeRules = options.modeRules || {}
     this.options = options
   }
 
@@ -104,6 +109,22 @@ class MpxWebpackPlugin {
 
   static fileLoader (options) {
     return { loader: normalize.lib('file-loader'), options }
+  }
+
+  runModeRules (request) {
+    const { resourcePath, queryObj } = parseRequest(request)
+    if (queryObj.mode) {
+      return request
+    }
+    const mode = this.options.mode
+    const modeRule = this.options.modeRules[mode]
+    if (!modeRule) {
+      return request
+    }
+    if (matchCondition(resourcePath, modeRule)) {
+      return addQuery(request, { mode })
+    }
+    return request
   }
 
   apply (compiler) {
@@ -198,6 +219,7 @@ class MpxWebpackPlugin {
           staticResourceMap: {
             main: {}
           },
+          hasApp: false,
           // 记录静态资源首次命中的分包，当有其他分包再次引用了同样的静态资源时，对其request添加packageName query以避免模块缓存导致loader不再执行
           staticResourceHit: {},
           loaderOptions,
@@ -211,9 +233,10 @@ class MpxWebpackPlugin {
           resolveMode: this.options.resolveMode,
           mode: this.options.mode,
           srcMode: this.options.srcMode,
+          globalMpxAttrsFilter: this.options.globalMpxAttrsFilter,
           externalClasses: this.options.externalClasses,
           projectRoot: this.options.projectRoot,
-          enableAutoScope: this.options.enableAutoScope,
+          autoScopeRules: this.options.autoScopeRules,
           extract: (content, file, index, sideEffects) => {
             additionalAssets[file] = additionalAssets[file] || []
             if (!additionalAssets[file][index]) {
@@ -227,7 +250,7 @@ class MpxWebpackPlugin {
           // 3. 分包引用且无其他包引用的资源输出至当前分包
           // 4. 分包引用且其他分包也引用过的资源，重复输出至当前分包
           // 5. 当用户通过packageName query显式指定了资源的所属包时，输出至指定的包
-          getPackageInfo (resource, outputPath, isStatic) {
+          getPackageInfo (resource, { outputPath, isStatic, error }) {
             let packageRoot = ''
             let packageName = 'main'
             const currentPackageRoot = mpx.currentPackageRoot
@@ -238,7 +261,7 @@ class MpxWebpackPlugin {
               packageName = queryObj.packageName
               packageRoot = packageName === 'main' ? '' : packageName
               if (packageName !== currentPackageName && packageName !== 'main') {
-                throw new Error('根据小程序分包资源引用规则，资源只支持声明为当前分包或者主包，否则可能会导致资源无法引用的问题！')
+                error && error(new Error(`根据小程序分包资源引用规则，资源只支持声明为当前分包或者主包，否则可能会导致资源无法引用的问题，当前资源的当前分包为${currentPackageName}，资源查询字符串声明的分包为${packageName}，请检查！`))
               }
             } else if (currentPackageRoot) {
               if (!resourceMap.main[resourcePath]) {
@@ -448,20 +471,23 @@ class MpxWebpackPlugin {
           })
           // Trans for wx.xx, wx['xx'], wx.xx(), wx['xx']()
           parser.hooks.expressionAnyMember.for('wx').tap('MpxWebpackPlugin', transHandler)
-          parser.hooks.call.for('Page').tap('MpxWebpackPlugin', (expr) => {
-            transHandler(expr.callee)
-          })
-          parser.hooks.call.for('Component').tap('MpxWebpackPlugin', (expr) => {
-            transHandler(expr.callee)
-          })
-          parser.hooks.call.for('App').tap('MpxWebpackPlugin', (expr) => {
-            transHandler(expr.callee)
-          })
-          if (this.options.mode === 'ali') {
-            // 支付宝不支持Behaviors
-            parser.hooks.call.for('Behavior').tap('MpxWebpackPlugin', (expr) => {
+          // Proxy ctor for transMode
+          if (!this.options.forceDisableProxyCtor) {
+            parser.hooks.call.for('Page').tap('MpxWebpackPlugin', (expr) => {
               transHandler(expr.callee)
             })
+            parser.hooks.call.for('Component').tap('MpxWebpackPlugin', (expr) => {
+              transHandler(expr.callee)
+            })
+            parser.hooks.call.for('App').tap('MpxWebpackPlugin', (expr) => {
+              transHandler(expr.callee)
+            })
+            if (this.options.mode === 'ali') {
+              // 支付宝不支持Behaviors
+              parser.hooks.call.for('Behavior').tap('MpxWebpackPlugin', (expr) => {
+                transHandler(expr.callee)
+              })
+            }
           }
         }
 
@@ -519,6 +545,7 @@ class MpxWebpackPlugin {
     })
 
     compiler.hooks.normalModuleFactory.tap('MpxWebpackPlugin', (normalModuleFactory) => {
+      // resolve前修改原始request
       normalModuleFactory.hooks.beforeResolve.tapAsync('MpxWebpackPlugin', (data, callback) => {
         let request = data.request
         let { queryObj, resource } = parseRequest(request)
@@ -539,6 +566,7 @@ class MpxWebpackPlugin {
         callback(null, data)
       })
 
+      // resolve完成后修改loaders或者resource/request
       normalModuleFactory.hooks.afterResolve.tapAsync('MpxWebpackPlugin', (data, callback) => {
         const isFromMpx = /\.(mpx|vue)/.test(data.resource)
         if (data.loaders) {
@@ -548,6 +576,8 @@ class MpxWebpackPlugin {
             }
           })
         }
+        // 根据用户传入的modeRules对特定资源添加mode query
+        data.resource = this.runModeRules(data.resource)
 
         if (mpx.currentPackageRoot) {
           const resourcPath = getResource(data.resource)
