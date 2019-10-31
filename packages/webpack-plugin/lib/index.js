@@ -257,15 +257,16 @@ class MpxWebpackPlugin {
             const currentPackageName = currentPackageRoot || 'main'
             const { resourcePath, queryObj } = parseRequest(resource)
             const resourceMap = isStatic ? mpx.staticResourceMap : mpx.componentsMap
-            if (queryObj.packageName) {
-              packageName = queryObj.packageName
-              packageRoot = packageName === 'main' ? '' : packageName
-              if (packageName !== currentPackageName && packageName !== 'main') {
-                error && error(new Error(`根据小程序分包资源引用规则，资源只支持声明为当前分包或者主包，否则可能会导致资源无法引用的问题，当前资源的当前分包为${currentPackageName}，资源查询字符串声明的分包为${packageName}，请检查！`))
-              }
-            } else if (currentPackageRoot) {
-              if (!resourceMap.main[resourcePath]) {
-                packageName = packageRoot = mpx.currentPackageRoot
+            // 主包中有引用一律使用主包中资源，不再额外输出
+            if (!resourceMap.main[resourcePath]) {
+              if (queryObj.packageName) {
+                packageName = queryObj.packageName
+                packageRoot = packageName === 'main' ? '' : packageName
+                if (packageName !== currentPackageName && packageName !== 'main') {
+                  error && error(new Error(`根据小程序分包资源引用规则，资源只支持声明为当前分包或者主包，否则可能会导致资源无法引用的问题，当前资源的当前分包为${currentPackageName}，资源查询字符串声明的分包为${packageName}，请检查！`))
+                }
+              } else if (currentPackageRoot) {
+                packageName = packageRoot = currentPackageRoot
               }
             }
 
