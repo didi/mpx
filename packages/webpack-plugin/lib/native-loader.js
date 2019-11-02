@@ -56,8 +56,9 @@ module.exports = function (content) {
   const hasComment = false
   const isNative = true
 
-  function tryEvalMPXJSON (callback) {
+  const tryEvalMPXJSON = (callback) => {
     const _src = resourceName + EXT_MPX_JSON
+    this.addDependency(_src)
     fs.readFile(_src, (err, raw) => {
       if (err) {
         callback(err)
@@ -106,7 +107,9 @@ module.exports = function (content) {
         tryEvalMPXJSON(callback)
       } else {
         if (typeExtMap['json']) {
-          fs.readFile(resourceName + typeExtMap['json'], (err, raw) => {
+          const jsonSrc = resourceName + typeExtMap['json']
+          this.addDependency(jsonSrc)
+          fs.readFile(jsonSrc, (err, raw) => {
             if (err) {
               callback(err)
             } else {
@@ -209,13 +212,10 @@ module.exports = function (content) {
         if (type === 'json' && useMPXJSON) {
           // 用了MPXJSON的话，强制生成目标json
           let _src = resourceName + EXT_MPX_JSON
-          this.addDependency(_src)
-
           let localQuery = Object.assign({}, queryObj)
           localQuery.resourcePath = resourcePath
           localQuery.__component = true
           _src += stringifyQuery(localQuery)
-
           output += `/* MPX JSON */\n${getRequireForSrc('json', { src: _src })}\n\n`
           // 否则走原来的流程
         } else {

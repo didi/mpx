@@ -180,7 +180,7 @@ module.exports = function (raw) {
     return this.resolve(context, request, callback)
   }
 
-  const processComponent = (component, context, rewritePath, componentPath, callback) => {
+  const processComponent = (component, context, rewritePath, outputPath, callback) => {
     if (/^plugin:\/\//.test(component)) {
       return callback()
     }
@@ -195,24 +195,25 @@ module.exports = function (raw) {
       const ext = parsed.ext
       const resourceName = path.join(parsed.dir, parsed.name)
 
-      let outputPath
-      if (ext === '.js') {
-        let root = info.descriptionFileRoot
-        let name = 'nativeComponent'
-        if (info.descriptionFileData) {
-          if (info.descriptionFileData.miniprogram) {
-            root = path.join(root, info.descriptionFileData.miniprogram)
+      if (!outputPath) {
+        if (ext === '.js') {
+          let root = info.descriptionFileRoot
+          let name = 'nativeComponent'
+          if (info.descriptionFileData) {
+            if (info.descriptionFileData.miniprogram) {
+              root = path.join(root, info.descriptionFileData.miniprogram)
+            }
+            if (info.descriptionFileData.name) {
+              // 去掉name里面的@符号，因为支付宝不支持文件路径上有@
+              name = info.descriptionFileData.name.split('@').join('')
+            }
           }
-          if (info.descriptionFileData.name) {
-            // 去掉name里面的@符号，因为支付宝不支持文件路径上有@
-            name = info.descriptionFileData.name.split('@').join('')
-          }
+          let relativePath = path.relative(root, resourceName)
+          outputPath = path.join('components', name + hash(root), relativePath)
+        } else {
+          let componentName = parsed.name
+          outputPath = path.join('components', componentName + hash(resourcePath), componentName)
         }
-        let relativePath = path.relative(root, resourceName)
-        outputPath = path.join('components', name + hash(root), relativePath)
-      } else {
-        let componentName = parsed.name
-        outputPath = path.join('components', componentName + hash(resourcePath), componentName)
       }
       const packageInfo = mpx.getPackageInfo(resource, {
         outputPath,
@@ -221,7 +222,7 @@ module.exports = function (raw) {
           this.emitError(err)
         }
       })
-      componentPath = toPosix(componentPath || packageInfo.outputPath)
+      const componentPath = packageInfo.outputPath
       rewritePath && rewritePath(publicPath + componentPath)
       // 如果之前已经创建了入口，直接return
       if (packageInfo.alreadyOutputed) {
@@ -283,6 +284,7 @@ module.exports = function (raw) {
               })
             },
             (result, callback) => {
+              this.addDependency(result)
               fs.readFile(result, (err, content) => {
                 if (err) return callback(err)
                 callback(err, result, content.toString('utf-8'))
