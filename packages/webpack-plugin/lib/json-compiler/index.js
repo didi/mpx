@@ -129,6 +129,7 @@ module.exports = function (raw) {
 
   const rulesRunnerOptions = {
     mode,
+    mpx,
     srcMode: localSrcMode || globalSrcMode,
     type: 'json',
     waterfall: true,
@@ -145,6 +146,22 @@ module.exports = function (raw) {
   }
   if (!isApp) {
     rulesRunnerOptions.mainKey = pagesMap[resourcePath] ? 'page' : 'component'
+    // polyfill global usingComponents
+    // todo 传入rulesRunner中进行按平台转换
+    rulesRunnerOptions.data = {
+      globalComponents: mpx.usingComponents
+    }
+  } else {
+    // 保存全局注册组件
+    if (json.usingComponents) {
+      mpx.usingComponents = {}
+      Object.keys(json.usingComponents).forEach((key) => {
+        const request = json.usingComponents[key]
+        mpx.usingComponents[key] = addQuery(request, {
+          context: this.context
+        })
+      })
+    }
   }
 
   const rulesRunner = getRulesRunner(rulesRunnerOptions)
@@ -153,7 +170,18 @@ module.exports = function (raw) {
     rulesRunner(json)
   }
 
-  const processComponent = (component, context, rewritePath, componentPath, callback) => {
+  function getPageName (root, page) {
+    const match = /^[.~/]*(.*?)(\.[^.]*)?$/.exec(page)
+    return path.join(root, match[1])
+  }
+
+  const resolve = (context, request, callback) => {
+    const { queryObj } = parseRequest(request)
+    context = queryObj.context || context
+    return this.resolve(context, request, callback)
+  }
+
+  const processComponent = (component, context, rewritePath, outputPath, callback) => {
     if (/^plugin:\/\//.test(component)) {
       return callback()
     }
@@ -161,31 +189,32 @@ module.exports = function (raw) {
       component = loaderUtils.urlToRequest(component, options.root)
     }
 
-    this.resolve(context, component, (err, resource, info) => {
+    resolve(context, component, (err, resource, info) => {
       if (err) return callback(err)
       const resourcePath = parseRequest(resource).resourcePath
       const parsed = path.parse(resourcePath)
       const ext = parsed.ext
       const resourceName = path.join(parsed.dir, parsed.name)
 
-      let outputPath
-      if (ext === '.js') {
-        let root = info.descriptionFileRoot
-        let name = 'nativeComponent'
-        if (info.descriptionFileData) {
-          if (info.descriptionFileData.miniprogram) {
-            root = path.join(root, info.descriptionFileData.miniprogram)
+      if (!outputPath) {
+        if (ext === '.js') {
+          let root = info.descriptionFileRoot
+          let name = 'nativeComponent'
+          if (info.descriptionFileData) {
+            if (info.descriptionFileData.miniprogram) {
+              root = path.join(root, info.descriptionFileData.miniprogram)
+            }
+            if (info.descriptionFileData.name) {
+              // 去掉name里面的@符号，因为支付宝不支持文件路径上有@
+              name = info.descriptionFileData.name.split('@').join('')
+            }
           }
-          if (info.descriptionFileData.name) {
-            // 去掉name里面的@符号，因为支付宝不支持文件路径上有@
-            name = info.descriptionFileData.name.split('@').join('')
-          }
+          let relativePath = path.relative(root, resourceName)
+          outputPath = path.join('components', name + hash(root), relativePath)
+        } else {
+          let componentName = parsed.name
+          outputPath = path.join('components', componentName + hash(resourcePath), componentName)
         }
-        let relativePath = path.relative(root, resourceName)
-        outputPath = path.join('components', name + hash(root), relativePath)
-      } else {
-        let componentName = parsed.name
-        outputPath = path.join('components', componentName + hash(resourcePath), componentName)
       }
       const packageInfo = mpx.getPackageInfo(resource, {
         outputPath,
@@ -194,7 +223,7 @@ module.exports = function (raw) {
           this.emitError(err)
         }
       })
-      componentPath = toPosix(componentPath || packageInfo.outputPath)
+      const componentPath = packageInfo.outputPath
       rewritePath && rewritePath(publicPath + componentPath)
       // 如果之前已经创建了入口，直接return
       if (packageInfo.alreadyOutputed) {
@@ -251,11 +280,12 @@ module.exports = function (raw) {
           packagePath = parsed.resourcePath
           async.waterfall([
             (callback) => {
-              this.resolve(context, packagePath, (err, result) => {
+              resolve(context, packagePath, (err, result) => {
                 callback(err, result)
               })
             },
             (result, callback) => {
+              this.addDependency(result)
               fs.readFile(result, (err, content) => {
                 if (err) return callback(err)
                 callback(err, result, content.toString('utf-8'))
@@ -378,7 +408,7 @@ module.exports = function (raw) {
           }
           let name = getPageName(tarRoot, rawPage)
           name = toPosix(name)
-          this.resolve(path.join(context, srcRoot), page, (err, resource) => {
+          resolve(path.join(context, srcRoot), page, (err, resource) => {
             if (err) return callback(err)
             let resourcePath = parseRequest(resource).resourcePath
             const parsed = path.parse(resourcePath)
@@ -472,11 +502,6 @@ module.exports = function (raw) {
       } else {
         callback()
       }
-    }
-
-    // 保存全局注册组件
-    if (json.usingComponents) {
-      mpx.usingComponents = Object.keys(json.usingComponents)
     }
 
     // 串行处理，先处理主包代码，再处理分包代码，为了正确识别出分包中定义的组件属于主包还是分包

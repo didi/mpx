@@ -318,7 +318,7 @@ export default class MPXProxy {
     data && this.forceUpdate(data)
     if (this.options.__nativeRender__) {
       // 走原生渲染
-      return this.doRender(data, callback)
+      return this.doRender(diffAndCloneA(data).clone, callback)
     } else if (typeof callback === 'function') {
       this.nextTick(callback)
     }

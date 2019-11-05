@@ -11,6 +11,7 @@ const getPageName = require('./utils/get-page-name')
 const toPosix = require('./utils/to-posix')
 const stringifyQuery = require('./utils/stringify-query')
 const parseRequest = require('./utils/parse-request')
+const matchCondition = require('./utils/match-condition')
 
 module.exports = function (content) {
   this.cacheable()
@@ -30,7 +31,7 @@ module.exports = function (content) {
   const resourcePath = parseRequest(this.resource).resourcePath
   const srcMode = localSrcMode || globalSrcMode
   const vueContentCache = mpx.vueContentCache
-  const enableAutoScope = mpx.enableAutoScope
+  const autoScope = matchCondition(resourcePath, mpx.autoScopeRules)
 
   const resourceQueryObj = loaderUtils.parseQuery(this.resourceQuery || '?')
 
@@ -87,12 +88,12 @@ module.exports = function (content) {
 
 
   // 只有ali才可能需要scoped
-  const hasScoped = (parts.styles.some(({ scoped }) => scoped) || enableAutoScope) && mode === 'ali'
+  const hasScoped = (parts.styles.some(({ scoped }) => scoped) || autoScope) && mode === 'ali'
   const templateAttrs = parts.template && parts.template.attrs && parts.template.attrs
   const hasComment = templateAttrs && templateAttrs.comments
   const isNative = false
 
-  let usingComponents = [].concat(mpx.usingComponents)
+  let usingComponents = [].concat(Object.keys(mpx.usingComponents))
   try {
     let ret = JSON.parse(parts.json.content)
     if (ret.usingComponents) {
@@ -426,7 +427,7 @@ module.exports = function (content) {
     let styleInjectionCode = ''
     parts.styles.forEach((style, i) => {
       processSrc(style)
-      let scoped = hasScoped ? (style.scoped || enableAutoScope) : false
+      let scoped = hasScoped ? (style.scoped || autoScope) : false
       // require style
       let requireString = style.src
         ? getRequireForSrc('styles', style, -1, scoped, undefined, true)

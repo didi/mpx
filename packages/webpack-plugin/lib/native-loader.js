@@ -8,6 +8,7 @@ const InjectDependency = require('./dependency/InjectDependency')
 const stringifyQuery = require('./utils/stringify-query')
 const mpxJSON = require('./utils/mpx-json')
 const async = require('async')
+const matchCondition = require('./utils/match-condition')
 
 const EXT_MPX_JSON = '.json.js'
 
@@ -44,19 +45,20 @@ module.exports = function (content) {
   const srcMode = localSrcMode || globalSrcMode
   const fs = this._compiler.inputFileSystem
   const typeExtMap = Object.assign({}, config[srcMode].typeExtMap)
-  const enableAutoScope = mpx.enableAutoScope
+  const autoScope = matchCondition(resourcePath, mpx.autoScopeRules)
 
   const needCssSourceMap = (
     !isProduction &&
     this.sourceMap &&
     options.cssSourceMap !== false
   )
-  const hasScoped = (queryObj.scoped || enableAutoScope) && mode === 'ali'
+  const hasScoped = (queryObj.scoped || autoScope) && mode === 'ali'
   const hasComment = false
   const isNative = true
 
-  function tryEvalMPXJSON (callback) {
+  const tryEvalMPXJSON = (callback) => {
     const _src = resourceName + EXT_MPX_JSON
+    this.addDependency(_src)
     fs.readFile(_src, (err, raw) => {
       if (err) {
         callback(err)
@@ -105,7 +107,9 @@ module.exports = function (content) {
         tryEvalMPXJSON(callback)
       } else {
         if (typeExtMap['json']) {
-          fs.readFile(resourceName + typeExtMap['json'], (err, raw) => {
+          const jsonSrc = resourceName + typeExtMap['json']
+          this.addDependency(jsonSrc)
+          fs.readFile(jsonSrc, (err, raw) => {
             if (err) {
               callback(err)
             } else {
@@ -117,7 +121,7 @@ module.exports = function (content) {
         }
       }
     }, (content, callback) => {
-      let usingComponents = [].concat(mpx.usingComponents)
+      let usingComponents = [].concat(Object.keys(mpx.usingComponents))
       try {
         let ret = JSON.parse(content)
         if (ret.usingComponents) {
@@ -208,13 +212,10 @@ module.exports = function (content) {
         if (type === 'json' && useMPXJSON) {
           // 用了MPXJSON的话，强制生成目标json
           let _src = resourceName + EXT_MPX_JSON
-          this.addDependency(_src)
-
           let localQuery = Object.assign({}, queryObj)
           localQuery.resourcePath = resourcePath
           localQuery.__component = true
           _src += stringifyQuery(localQuery)
-
           output += `/* MPX JSON */\n${getRequireForSrc('json', { src: _src })}\n\n`
           // 否则走原来的流程
         } else {

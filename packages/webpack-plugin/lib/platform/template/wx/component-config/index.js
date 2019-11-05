@@ -10,6 +10,7 @@ const richText = require('./rich-text')
 const progress = require('./progress')
 const button = require('./button')
 const checkboxGroup = require('./checkbox-group')
+const checkbox = require('./checkbox')
 const form = require('./form')
 const input = require('./input')
 const picker = require('./picker')
@@ -74,6 +75,7 @@ module.exports = function getComponentConfigs ({ warn, error }) {
     progress({ print }),
     button({ print }),
     checkboxGroup({ print }),
+    checkbox({ print }),
     form({ print }),
     input({ print }),
     picker({ print }),

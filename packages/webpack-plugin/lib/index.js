@@ -19,7 +19,7 @@ const RemovedModuleDependency = require('./dependency/RemovedModuleDependency')
 const SplitChunksPlugin = require('webpack/lib/optimize/SplitChunksPlugin')
 const fixRelative = require('./utils/fix-relative')
 const parseRequest = require('./utils/parse-request')
-const normalizeCondition = require('./utils/normalize-condition')
+const matchCondition = require('./utils/match-condition')
 
 const isProductionLikeMode = options => {
   return options.mode === 'production' || !options.mode
@@ -85,7 +85,9 @@ class MpxWebpackPlugin {
     options.resolveMode = options.resolveMode || 'webpack'
     options.writeMode = options.writeMode || 'changed'
     options.transWebMode = options.transWebMode || 'simple'
-    options.enableAutoScope = options.enableAutoScope || false
+    options.autoScopeRules = options.autoScopeRules || {}
+    options.forceDisableInject = options.forceDisableInject || false
+    options.forceDisableProxyCtor = options.forceDisableProxyCtor || false
     if (options.autoSplit === undefined) {
       options.autoSplit = true
     }
@@ -125,20 +127,7 @@ class MpxWebpackPlugin {
     if (!modeRule) {
       return request
     }
-    const include = modeRule.include
-    const exclude = modeRule.exclude
-
-    const matchInclude = include && normalizeCondition(include)
-    const matchExclude = exclude && normalizeCondition(exclude)
-
-    let needAddMode = false
-    if (matchInclude && !matchInclude(resourcePath)) {
-      needAddMode = true
-    }
-    if (matchExclude && matchExclude(resourcePath)) {
-      needAddMode = false
-    }
-    if (needAddMode) {
+    if (matchCondition(resourcePath, modeRule)) {
       return addQuery(request, { mode })
     }
     return request
@@ -253,9 +242,10 @@ class MpxWebpackPlugin {
           resolveMode: this.options.resolveMode,
           mode: this.options.mode,
           srcMode: this.options.srcMode,
+          globalMpxAttrsFilter: this.options.globalMpxAttrsFilter,
           externalClasses: this.options.externalClasses,
           projectRoot: this.options.projectRoot,
-          enableAutoScope: this.options.enableAutoScope,
+          autoScopeRules: this.options.autoScopeRules,
           extract: (content, file, index, sideEffects) => {
             additionalAssets[file] = additionalAssets[file] || []
             if (!additionalAssets[file][index]) {
@@ -276,15 +266,16 @@ class MpxWebpackPlugin {
             const currentPackageName = currentPackageRoot || 'main'
             const { resourcePath, queryObj } = parseRequest(resource)
             const resourceMap = isStatic ? mpx.staticResourceMap : mpx.componentsMap
-            if (queryObj.packageName) {
-              packageName = queryObj.packageName
-              packageRoot = packageName === 'main' ? '' : packageName
-              if (packageName !== currentPackageName && packageName !== 'main') {
-                error && error(new Error(`根据小程序分包资源引用规则，资源只支持声明为当前分包或者主包，否则可能会导致资源无法引用的问题，当前资源的当前分包为${currentPackageName}，资源查询字符串声明的分包为${packageName}，请检查！`))
-              }
-            } else if (currentPackageRoot) {
-              if (!resourceMap.main[resourcePath]) {
-                packageName = packageRoot = mpx.currentPackageRoot
+            // 主包中有引用一律使用主包中资源，不再额外输出
+            if (!resourceMap.main[resourcePath]) {
+              if (queryObj.packageName) {
+                packageName = queryObj.packageName
+                packageRoot = packageName === 'main' ? '' : packageName
+                if (packageName !== currentPackageName && packageName !== 'main') {
+                  error && error(new Error(`根据小程序分包资源引用规则，资源只支持声明为当前分包或者主包，否则可能会导致资源无法引用的问题，当前资源的当前分包为${currentPackageName}，资源查询字符串声明的分包为${packageName}，请检查！`))
+                }
+              } else if (currentPackageRoot) {
+                packageName = packageRoot = currentPackageRoot
               }
             }
 
@@ -490,20 +481,23 @@ class MpxWebpackPlugin {
           })
           // Trans for wx.xx, wx['xx'], wx.xx(), wx['xx']()
           parser.hooks.expressionAnyMember.for('wx').tap('MpxWebpackPlugin', transHandler)
-          parser.hooks.call.for('Page').tap('MpxWebpackPlugin', (expr) => {
-            transHandler(expr.callee)
-          })
-          parser.hooks.call.for('Component').tap('MpxWebpackPlugin', (expr) => {
-            transHandler(expr.callee)
-          })
-          parser.hooks.call.for('App').tap('MpxWebpackPlugin', (expr) => {
-            transHandler(expr.callee)
-          })
-          if (this.options.mode === 'ali') {
-            // 支付宝不支持Behaviors
-            parser.hooks.call.for('Behavior').tap('MpxWebpackPlugin', (expr) => {
+          // Proxy ctor for transMode
+          if (!this.options.forceDisableProxyCtor) {
+            parser.hooks.call.for('Page').tap('MpxWebpackPlugin', (expr) => {
               transHandler(expr.callee)
             })
+            parser.hooks.call.for('Component').tap('MpxWebpackPlugin', (expr) => {
+              transHandler(expr.callee)
+            })
+            parser.hooks.call.for('App').tap('MpxWebpackPlugin', (expr) => {
+              transHandler(expr.callee)
+            })
+            if (this.options.mode === 'ali') {
+              // 支付宝不支持Behaviors
+              parser.hooks.call.for('Behavior').tap('MpxWebpackPlugin', (expr) => {
+                transHandler(expr.callee)
+              })
+            }
           }
         }
 
