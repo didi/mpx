@@ -1,0 +1,45 @@
+{
+  "name": "@mpxjs/api-h5",
+  "version": "0.0.1",
+  "description": "convert miniprogram API to html",
+  "module": "src/index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "files": [
+    "src",
+    "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git@github.com/didi/mpx.git"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
+  },
+  "keywords": [
+    "mpx",
+    "api-h5",
+    "api",
+    "h5"
+  ],
+  "author": "httpsxiao",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/didi/mpx/issues"
+  },
+  "homepage": "https://github.com/didi/mpx#readme",
+  "peerDependencies": {
+    "@mpxjs/core": "^2.2.27"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.6.4",
+    "@babel/preset-env": "^7.6.3",
+    "babel-cli": "^6.26.0",
+    "babel-jest": "^24.9.0",
+    "jest": "^24.9.0",
+    "webpack": "^4.41.2",
+    "webpack-cli": "^3.3.10"
+  }
+}
