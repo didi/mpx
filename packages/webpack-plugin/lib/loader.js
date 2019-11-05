@@ -222,8 +222,7 @@ module.exports = function (content) {
               )
             },
             mode,
-            srcMode: templateSrcMode,
-            transWebMode: mpx.transWebMode
+            srcMode: templateSrcMode
           })
 
           Object.assign(builtInComponents, parsed.meta.builtInComponentsMap)

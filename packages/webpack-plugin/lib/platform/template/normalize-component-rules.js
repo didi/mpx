@@ -7,31 +7,27 @@ module.exports = function normalizeComponentRules (cfgs, spec) {
       result.test = cfg.test
     }
     const supportedTargets = cfg.supportedTargets || spec.supportedTargets
+    const eventRules = (cfg.event || []).concat(spec.event.rules)
     supportedTargets.forEach((target) => {
       result[target] = function (el, data) {
-        const rTag = cfg[target] && cfg[target].call(this, el.tag, Object.assign({}, data, { el }))
+        data = Object.assign({}, data, { el, eventRules })
+        const rTag = cfg[target] && cfg[target].call(this, el.tag, data)
         if (rTag) {
           el.tag = rTag
         }
         const rAttrsList = []
-        const eventRules = (cfg.event || []).concat(spec.event.rules)
         el.attrsList.forEach((attr) => {
           const testKey = 'name'
           let rAttr = runRules(spec.directive, attr, {
             target,
             testKey,
-            data: Object.assign({}, data, {
-              eventRules,
-              el
-            })
+            data
           })
           if (rAttr === undefined) {
             rAttr = runRules(cfg.props, attr, {
               target,
               testKey,
-              data: Object.assign({}, data, {
-                el
-              })
+              data
             })
           }
           if (Array.isArray(rAttr)) {
