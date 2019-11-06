@@ -1,6 +1,8 @@
 import Toast from './Toast'
+import Modal from './Modal'
 
 let toast = null
+let modal = null
 
 function showToast (options = {}) {
   if (!toast) { toast = new Toast() }
@@ -28,9 +30,15 @@ function hideLoading (options = {}) {
   }, options), 'loading')
 }
 
+function showModal (options = {}) {
+  if (!modal) { modal = new Modal() }
+  modal.show(options)
+}
+
 export {
   showToast,
   hideToast,
   showLoading,
-  hideLoading
+  hideLoading,
+  showModal
 }
