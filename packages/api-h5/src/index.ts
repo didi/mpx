@@ -1,4 +1,4 @@
-import * as allApi from './api/apis'
+import * as allApi from './api'
 
 export default function install (target) {
   Object.keys(allApi).forEach(api => {

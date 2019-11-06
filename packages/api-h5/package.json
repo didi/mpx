@@ -2,7 +2,7 @@
   "name": "@mpxjs/api-h5",
   "version": "0.0.1",
   "description": "convert miniprogram API to html",
-  "module": "src/index.js",
+  "module": "src/index.ts",
   "scripts": {
     "test": "jest"
   },
@@ -32,14 +32,13 @@
   "devDependencies": {
     "@babel/core": "^7.6.4",
     "@babel/preset-env": "^7.6.3",
-    "babel-cli": "^6.26.0",
     "babel-jest": "^24.9.0",
-    "css-loader": "^3.2.0",
+    "identity-obj-proxy": "^3.0.0",
     "jest": "^24.9.0",
-    "style-loader": "^1.0.0",
-    "stylus": "^0.54.7",
-    "stylus-loader": "^3.0.2",
-    "webpack": "^4.41.2",
-    "webpack-cli": "^3.3.10"
+    "ts-jest": "^24.1.0",
+    "typescript": "^3.7.2"
+  },
+  "dependencies": {
+    "miniprogram-api-typings": "^2.9.0"
   }
 }
