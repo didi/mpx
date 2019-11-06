@@ -2,10 +2,28 @@ const runRules = require('../../run-rules')
 const getComponentConfigs = require('./component-config')
 const normalizeComponentRules = require('../normalize-component-rules')
 const isValidIdentifierStr = require('../../../utils/is-valid-identifier-str')
+const parseMustache = require('../../../template-compiler/compiler').parseMustache
 
 module.exports = function getSpec ({ warn, error }) {
   const spec = {
-    supportedTargets: ['ali', 'swan', 'qq', 'tt', 'web'],
+    supportedModes: ['ali', 'swan', 'qq', 'tt', 'web'],
+    // attrs预处理
+    preAttrs: [],
+    // attrs后处理
+    postAttrs: [
+      {
+        web ({ name, value }) {
+          const parsed = parseMustache(value)
+          if (parsed.hasBinding) {
+            return {
+              name: ':' + name,
+              value: parsed.result
+            }
+          }
+        }
+      }
+    ],
+    // 指令处理
     directive: [
       // 特殊指令
       {
@@ -50,8 +68,8 @@ module.exports = function getSpec ({ warn, error }) {
           const keyName = attrsMap['wx:key'] || null
           let keyStr = ''
           if (keyName &&
-                        // 百度不支持在trackBy使用mustache语法
-                        !/{{[^}]*}}/.test(keyName)
+            // 百度不支持在trackBy使用mustache语法
+            !/{{[^}]*}}/.test(keyName)
           ) {
             if (keyName === '*this') {
               keyStr = ` trackBy ${itemName}`
@@ -122,12 +140,12 @@ module.exports = function getSpec ({ warn, error }) {
           const prefix = match[1]
           const eventName = match[2]
           const modifier = match[3] || ''
-          const rPrefix = runRules(spec.event.prefix, prefix, { target: 'ali' })
-          const rEventName = runRules(eventRules, eventName, { target: 'ali' }) || eventName
+          const rPrefix = runRules(spec.event.prefix, prefix, { mode: 'ali' })
+          const rEventName = runRules(eventRules, eventName, { mode: 'ali' })
           return {
-            name: rPrefix ? rPrefix + rEventName.replace(/^./, (matched) => {
+            name: rPrefix + rEventName.replace(/^./, (matched) => {
               return matched.toUpperCase()
-            }) + modifier : name,
+            }) + modifier,
             value
           }
         },
@@ -147,7 +165,7 @@ module.exports = function getSpec ({ warn, error }) {
         swan ({ name, value }, { eventRules }) {
           const match = this.test.exec(name)
           const eventName = match[2]
-          runRules(eventRules, eventName, { target: 'swan' })
+          runRules(eventRules, eventName, { mode: 'swan' })
         }
       },
       // 无障碍

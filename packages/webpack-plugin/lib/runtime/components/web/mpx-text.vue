@@ -63,7 +63,7 @@
           innerHTML: text
         }
       }
-      return createElement('div', data, this.$slots.default)
+      return createElement('span', data, this.$slots.default)
     }
   }
 </script>

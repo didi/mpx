@@ -2009,5 +2009,6 @@ module.exports = {
   serialize,
   genNode,
   makeAttrsMap,
-  stringifyAttr
+  stringifyAttr,
+  parseMustache
 }

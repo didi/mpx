@@ -1,7 +1,6 @@
 const TAG_NAME = 'view'
 
 module.exports = function ({ print }) {
-  const webPropLog = print({ platform: 'web', tag: TAG_NAME, isError: false })
   /**
    * @type {function(isError: (number|boolean|string)?): void} aliLog
    * @desc - 无法转换时告知用户的通用方法，接受0个或1个参数，意为是否error级别
@@ -13,12 +12,11 @@ module.exports = function ({ print }) {
     // ali () {
     //   return 'a:view'
     // },
-    web (tag, { transWebMode, el }) {
-      if (transWebMode === 'simple') {
-        return 'div'
-      } else {
-        el.isBuiltIn = true
+    web (tag, { el }) {
+      if (el.isBuiltIn) {
         return 'mpx-view'
+      } else {
+        return 'div'
       }
     },
     // 组件属性中的差异部分
@@ -26,10 +24,8 @@ module.exports = function ({ print }) {
       {
         test: /^hover-(class|stop-propagation|start-time|stay-time)$/,
         // 当遇到微信支持而支付宝不支持的特性时，转换函数可以只抛出错误或警告而不返回值
-        web (prop, { transWebMode }) {
-          if (transWebMode === 'simple') {
-            webPropLog(prop)
-          }
+        web (prop, { el }) {
+          el.isBuiltIn = true
         }
       }
     ],

@@ -84,7 +84,6 @@ class MpxWebpackPlugin {
     })
     options.resolveMode = options.resolveMode || 'webpack'
     options.writeMode = options.writeMode || 'changed'
-    options.transWebMode = options.transWebMode || 'simple'
     options.autoScopeRules = options.autoScopeRules || {}
     options.forceDisableInject = options.forceDisableInject || false
     options.forceDisableProxyCtor = options.forceDisableProxyCtor || false
@@ -237,7 +236,6 @@ class MpxWebpackPlugin {
           currentPackageRoot: '',
           wxsMap: {},
           wxsConentMap: {},
-          transWebMode: this.options.transWebMode,
           forceDisableInject: this.options.forceDisableInject,
           resolveMode: this.options.resolveMode,
           mode: this.options.mode,

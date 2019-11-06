@@ -6,40 +6,55 @@ module.exports = function normalizeComponentRules (cfgs, spec) {
     if (cfg.test) {
       result.test = cfg.test
     }
-    const supportedTargets = cfg.supportedTargets || spec.supportedTargets
+    const supportedModes = cfg.supportedModes || spec.supportedModes
     const eventRules = (cfg.event || []).concat(spec.event.rules)
-    supportedTargets.forEach((target) => {
-      result[target] = function (el, data) {
+    supportedModes.forEach((mode) => {
+      result[mode] = function (el, data) {
         data = Object.assign({}, data, { el, eventRules })
-        const rTag = cfg[target] && cfg[target].call(this, el.tag, data)
-        if (rTag) {
-          el.tag = rTag
-        }
-        const rAttrsList = []
+        const testKey = 'name'
+        let rAttrsList = []
         el.attrsList.forEach((attr) => {
-          const testKey = 'name'
-          let rAttr = runRules(spec.directive, attr, {
-            target,
+          const meta = {}
+          let rAttr = runRules(spec.preAttrs, attr, {
+            mode,
             testKey,
             data
           })
-          if (rAttr === undefined) {
-            rAttr = runRules(cfg.props, attr, {
-              target,
+          rAttr = runRules(spec.directive, rAttr, {
+            mode,
+            testKey,
+            data,
+            meta
+          })
+          if (!meta.processed) {
+            rAttr = runRules(cfg.props, rAttr, {
+              mode,
               testKey,
               data
             })
           }
           if (Array.isArray(rAttr)) {
-            rAttrsList.push(...rAttr)
+            rAttrsList = rAttrsList.concat(rAttr)
           } else if (rAttr === false) {
             // delete original attr
           } else {
-            rAttrsList.push(rAttr || attr)
+            rAttrsList.push(rAttr)
           }
+        })
+        rAttrsList = rAttrsList.map((attr) => {
+          return runRules(spec.postAttrs, attr, {
+            mode,
+            testKey,
+            data
+          })
         })
         el.attrsList = rAttrsList
         el.attrsMap = require('../../template-compiler/compiler').makeAttrsMap(rAttrsList)
+        // 前置处理attrs,便于携带信息用于tag的处理
+        const rTag = cfg[mode] && cfg[mode].call(this, el.tag, data)
+        if (rTag) {
+          el.tag = rTag
+        }
         return el
       }
     })
