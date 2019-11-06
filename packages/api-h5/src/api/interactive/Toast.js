@@ -48,7 +48,7 @@ export default class Toast {
       this.hideTimer = null
     }
 
-    const opts = { ...this.defaultOpts, ...options }
+    const opts = Object.assign({}, this.defaultOpts, options)
 
     this.type = type
 
@@ -79,21 +79,25 @@ export default class Toast {
     this.title.textContent = opts.title || ''
     this.toast.classList.add('show')
 
-    opts.duration >= 0 && this.hide(null, opts.duration, type)
+    opts.duration >= 0 && this.hide({ duration: opts.duration }, type)
 
     const errMsg = type === 'loading' ? 'showLoading:ok' : 'showToast:ok'
     opts.success && opts.success({ errMsg })
     opts.complete && opts.complete({ errMsg })
   }
 
-  hide (options, duration = 0, type) {
+  hide (options, type) {
     if (this.type !== type) return
 
+    const duration = options.duration || 0
     const errMsg = type === 'loading' ? 'hideLoading:ok' : 'hideToast:ok'
     options && options.success && options.success({ errMsg })
     options && options.complete && options.complete({ errMsg })
 
-    if (this.hideTimer) { return }
+    if (this.hideTimer) {
+      clearTimeout(this.hideTimer)
+      this.hideTimer = null
+    }
 
     this.hideTimer = setTimeout(() => { this.toast.classList.remove('show') }, duration)
   }
