@@ -1,0 +1,61 @@
+
+.__mpx_toast__
+  display none
+  &.show
+    display block
+  .__mpx_mask__
+    position fixed
+    z-index 1000
+    top 0
+    right 0
+    left 0
+    bottom 0
+    display none
+    &.show
+      display block
+  .__mpx_toast_box__
+    position fixed
+    top 50%
+    left 50%
+    z-index 2000
+    box-sizing border-box
+    display flex
+    flex-direction column
+    justify-content center
+    min-width 120px
+    max-width 200px
+    min-height 120px
+    text-align center
+    line-height 1.6
+    color #fff
+    padding 15px
+    border-radius 5px
+    background rgba(20, 20, 20, 0.7)
+    transform translate(-50%, -50%)
+    &.no-icon
+      min-height 0
+      padding 10px 15px
+    .__mpx_toast_icon__
+      width 40px
+      height 40px
+      background-size 100%
+      background-color transparent
+      background-repeat no-repeat
+      margin 6px auto
+      &.hide
+        display none
+      &.success
+        background-image url("data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBzdGFuZGFsb25lPSJubyI/PjwhRE9DVFlQRSBzdmcgUFVCTElDICItLy9XM0MvL0RURCBTVkcgMS4xLy9FTiIgImh0dHA6Ly93d3cudzMub3JnL0dyYXBoaWNzL1NWRy8xLjEvRFREL3N2ZzExLmR0ZCI+PHN2ZyB0PSIxNTczMDE0ODkyMTM3IiBjbGFzcz0iaWNvbiIgdmlld0JveD0iMCAwIDEwMjQgMTAyNCIgdmVyc2lvbj0iMS4xIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHAtaWQ9IjY1OTAiIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB3aWR0aD0iNjQiIGhlaWdodD0iNjQiPjxkZWZzPjxzdHlsZSB0eXBlPSJ0ZXh0L2NzcyI+PC9zdHlsZT48L2RlZnM+PHBhdGggZD0iTTEyMi4yODA5NiA1MzYuNjIzMTA0Yy05Ljk0MDk5Mi05LjkyNTYzMi0xMS41NDg2NzItMjUuMzYwMzg0LTIuNzg1MjgtMzYuNDA3Mjk2bDIwLjQ4NzE2OC0yNS44MjgzNTJjOC4zOTc4MjQtMTAuNTg4MTYgMjQuMTA4MDMyLTEzLjI0NjQ2NCAzNS4yMTEyNjQtNS44MzU3NzZsMTc3LjMzMTIgMTE4LjM1OTA0YzkuMzUzMjE2IDYuMjQzMzI4IDI1LjQ1MjU0NCA1LjQzMDI3MiAzNC4xODUyMTYtMS42NTQ3ODRsNDY4LjU4MjQtMzgwLjE2YzEwLjUzMjg2NC04LjU0NTI4IDI3LjAzMDUyOC03LjgxNzIxNiAzNi4yNjE4ODggMS40MDA4MzJsMTEuNTQyNTI4IDExLjUyNTEyYzEwLjA0NTQ0IDEwLjAzMDA4IDkuMzE0MzA0IDI1Ljk1MTIzMi0xLjIxNTQ4OCAzNi40NjU2NjRsLTUwMi45MjczNiA1MDIuMTgzOTM2Yy0xNS42NDY3MiAxNS42MjQxOTItNDEuMzM3ODU2IDE0Ljk0MDE2LTU3LjQ0NTM3Ni0xLjE0Mjc4NGwtMjE5LjIyODE2LTIxOC45MDU2eiIgZmlsbD0iI2ZmZmZmZiIgcC1pZD0iNjU5MSI+PC9wYXRoPjwvc3ZnPg==")
+      &.loading
+        background-image url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMjAiIGhlaWdodD0iMTIwIiB2aWV3Qm94PSIwIDAgMTAwIDEwMCI+PHBhdGggZmlsbD0ibm9uZSIgZD0iTTAgMGgxMDB2MTAwSDB6Ii8+PHJlY3Qgd2lkdGg9IjciIGhlaWdodD0iMjAiIHg9IjQ2LjUiIHk9IjQwIiBmaWxsPSIjRTlFOUU5IiByeD0iNSIgcnk9IjUiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDAgLTMwKSIvPjxyZWN0IHdpZHRoPSI3IiBoZWlnaHQ9IjIwIiB4PSI0Ni41IiB5PSI0MCIgZmlsbD0iIzk4OTY5NyIgcng9IjUiIHJ5PSI1IiB0cmFuc2Zvcm09InJvdGF0ZSgzMCAxMDUuOTggNjUpIi8+PHJlY3Qgd2lkdGg9IjciIGhlaWdodD0iMjAiIHg9IjQ2LjUiIHk9IjQwIiBmaWxsPSIjOUI5OTlBIiByeD0iNSIgcnk9IjUiIHRyYW5zZm9ybT0icm90YXRlKDYwIDc1Ljk4IDY1KSIvPjxyZWN0IHdpZHRoPSI3IiBoZWlnaHQ9IjIwIiB4PSI0Ni41IiB5PSI0MCIgZmlsbD0iI0EzQTFBMiIgcng9IjUiIHJ5PSI1IiB0cmFuc2Zvcm09InJvdGF0ZSg5MCA2NSA2NSkiLz48cmVjdCB3aWR0aD0iNyIgaGVpZ2h0PSIyMCIgeD0iNDYuNSIgeT0iNDAiIGZpbGw9IiNBQkE5QUEiIHJ4PSI1IiByeT0iNSIgdHJhbnNmb3JtPSJyb3RhdGUoMTIwIDU4LjY2IDY1KSIvPjxyZWN0IHdpZHRoPSI3IiBoZWlnaHQ9IjIwIiB4PSI0Ni41IiB5PSI0MCIgZmlsbD0iI0IyQjJCMiIgcng9IjUiIHJ5PSI1IiB0cmFuc2Zvcm09InJvdGF0ZSgxNTAgNTQuMDIgNjUpIi8+PHJlY3Qgd2lkdGg9IjciIGhlaWdodD0iMjAiIHg9IjQ2LjUiIHk9IjQwIiBmaWxsPSIjQkFCOEI5IiByeD0iNSIgcnk9IjUiIHRyYW5zZm9ybT0icm90YXRlKDE4MCA1MCA2NSkiLz48cmVjdCB3aWR0aD0iNyIgaGVpZ2h0PSIyMCIgeD0iNDYuNSIgeT0iNDAiIGZpbGw9IiNDMkMwQzEiIHJ4PSI1IiByeT0iNSIgdHJhbnNmb3JtPSJyb3RhdGUoLTE1MCA0NS45OCA2NSkiLz48cmVjdCB3aWR0aD0iNyIgaGVpZ2h0PSIyMCIgeD0iNDYuNSIgeT0iNDAiIGZpbGw9IiNDQkNCQ0IiIHJ4PSI1IiByeT0iNSIgdHJhbnNmb3JtPSJyb3RhdGUoLTEyMCA0MS4zNCA2NSkiLz48cmVjdCB3aWR0aD0iNyIgaGVpZ2h0PSIyMCIgeD0iNDYuNSIgeT0iNDAiIGZpbGw9IiNEMkQyRDIiIHJ4PSI1IiByeT0iNSIgdHJhbnNmb3JtPSJyb3RhdGUoLTkwIDM1IDY1KSIvPjxyZWN0IHdpZHRoPSI3IiBoZWlnaHQ9IjIwIiB4PSI0Ni41IiB5PSI0MCIgZmlsbD0iI0RBREFEQSIgcng9IjUiIHJ5PSI1IiB0cmFuc2Zvcm09InJvdGF0ZSgtNjAgMjQuMDIgNjUpIi8+PHJlY3Qgd2lkdGg9IjciIGhlaWdodD0iMjAiIHg9IjQ2LjUiIHk9IjQwIiBmaWxsPSIjRTJFMkUyIiByeD0iNSIgcnk9IjUiIHRyYW5zZm9ybT0icm90YXRlKC0zMCAtNS45OCA2NSkiLz48L3N2Zz4=")
+        animation loading-ani 1s steps(12, end) infinite
+
+    .__mpx_toast_title__
+      font-size 16px
+      margin 0
+  
+  @keyframes loading-ani
+    0%
+      transform rotate(0deg)
+    100%
+      transform rotate(360deg)
