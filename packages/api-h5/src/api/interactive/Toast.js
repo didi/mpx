@@ -1,4 +1,4 @@
-import '../../common/stylus/interactive.styl'
+import '../../common/stylus/Toast.styl'
 
 const noop = () => {}
 export default class Toast {
