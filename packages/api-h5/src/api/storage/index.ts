@@ -1,4 +1,4 @@
-function setStorage (options = {}) {
+function setStorage (options: WechatMiniprogram.SetStorageOption) {
   const { key, data, success, fail, complete } = options
   let res = { errMsg: 'setStorage:ok' }
   try {
@@ -12,7 +12,7 @@ function setStorage (options = {}) {
   typeof complete === 'function' && complete(res)
 }
 
-function setStorageSync (key, data = '') {
+function setStorageSync (key: string, data: any = '') {
   let obj = {}
 
   if (typeof data === 'symbol') {
@@ -23,10 +23,10 @@ function setStorageSync (key, data = '') {
   window.localStorage.setItem(key, JSON.stringify(obj))
 }
 
-function getStorage (options = {}) {
+function getStorage (options: WechatMiniprogram.GetStorageOption) {
   const { key, success, fail, complete } = options
   const { result, data } = getItem(key)
-  const res = { errMsg: 'getStorage:ok' }
+  const res = { errMsg: 'getStorage:ok', data: null }
   if (result) {
     res.data = data
     typeof success === 'function' && success(res)
@@ -37,14 +37,14 @@ function getStorage (options = {}) {
   typeof complete === 'function' && complete(res)
 }
 
-function getStorageSync (key) {
+function getStorageSync (key: string) {
   let res = getItem(key)
   if (res.result) return res.data
 
   return ''
 }
 
-function getItem (key) {
+function getItem (key: string) {
   let item
   try {
     item = JSON.parse(window.localStorage.getItem(key))
@@ -57,14 +57,13 @@ function getItem (key) {
   }
 }
 
-function getStorageInfo (options = {}) {
+function getStorageInfo (options: WechatMiniprogram.GetStorageInfoOption) {
   const { success, fail, complete } = options
-  let res = { errMsg: 'getStorageInfo:ok' }
-
+  let res = null
   try {
     const info = getStorageInfoSync()
 
-    Object.assign(res, info)
+    res = Object.assign({}, { errMsg: 'getStorageInfo:ok' }, info)
     typeof success === 'function' && success(res)
   } catch (err) {
     res = err
@@ -75,14 +74,14 @@ function getStorageInfo (options = {}) {
 }
 
 function getStorageInfoSync () {
-  const res = {}
-  res.keys = Object.keys(window.localStorage)
-  res.limitSize = null
-  res.currentSize = null
-  return res
+  return {
+    keys: Object.keys(window.localStorage),
+    limitSize: null,
+    currentSize: null
+  }
 }
 
-function removeStorage (options = {}) {
+function removeStorage (options: WechatMiniprogram.RemoveStorageOption) {
   const { key, success, fail, complete } = options
   let res = { errMsg: 'removeStorage:ok' }
 
@@ -101,7 +100,7 @@ function removeStorageSync (key) {
   window.localStorage.removeItem(key)
 }
 
-function clearStorage (options = {}) {
+function clearStorage (options: WechatMiniprogram.ClearStorageOption) {
   const { success, fail, complete } = options
   let res = { errMsg: 'clearStorage:ok' }
   try {

@@ -1,19 +1,30 @@
 import '../../common/stylus/Toast.styl'
 
-const noop = () => {}
-export default class Toast {
-  constructor () {
-    this.defaultOpts = {
-      title: '',
-      icon: 'none',
-      image: '',
-      duration: 2000,
-      mask: false,
-      success: noop,
-      fail: noop,
-      complete: noop
-    }
+type typeOpt = 'loading' | 'toast'
+interface hideToastOptions extends WechatMiniprogram.HideToastOption {
+  duration?: number
+}
 
+export default class Toast {
+  defaultOpts = {
+    title: '',
+    icon: 'none',
+    image: '',
+    duration: 2000,
+    mask: false,
+    success: (...args) => {},
+    fail: (...args) => {},
+    complete: (...args) => {}
+  }
+  toast: HTMLDivElement
+  mask: HTMLDivElement
+  box: HTMLDivElement
+  icon: HTMLDivElement
+  title: HTMLDivElement
+  hideTimer: any
+  type: typeOpt
+
+  constructor () {
     const toast = document.createElement('div')
     toast.setAttribute('class', '__mpx_toast__')
 
@@ -42,7 +53,7 @@ export default class Toast {
     this.title = title
   }
 
-  show (options = {}, type) {
+  show (options: WechatMiniprogram.ShowToastOption, type: typeOpt) {
     if (this.hideTimer) {
       clearTimeout(this.hideTimer)
       this.hideTimer = null
@@ -86,7 +97,7 @@ export default class Toast {
     opts.complete({ errMsg })
   }
 
-  hide (options = {}, type) {
+  hide (options: hideToastOptions = {}, type) {
     if (this.type !== type) return
 
     const duration = options.duration || 0

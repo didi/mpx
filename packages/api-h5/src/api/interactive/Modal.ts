@@ -1,22 +1,29 @@
 import '../../common/stylus/Modal.styl'
 
-const noop = () => {}
-
 export default class Modal {
-  constructor () {
-    this.defaultOpts = {
-      title: '',
-      content: '',
-      showCancel: true,
-      cancelText: '取消',
-      cancelColor: '#000000',
-      confirmText: '确定',
-      confirmColor: '#576B95',
-      success: noop,
-      fail: noop,
-      complete: noop
-    }
+  defaultOpts = {
+    title: '',
+    content: '',
+    showCancel: true,
+    cancelText: '取消',
+    cancelColor: '#000000',
+    confirmText: '确定',
+    confirmColor: '#576B95',
+    success: (...args) => {},
+    fail: (...args) => {},
+    complete: (...args) => {}
+  }
+  modal: HTMLDivElement
+  mask: HTMLDivElement
+  box: HTMLDivElement
+  title: HTMLDivElement
+  content: HTMLDivElement
+  btns: HTMLDivElement
+  cancelBtn: HTMLDivElement
+  confirmBtn: HTMLDivElement
+  hideTimer: any
 
+  constructor () {
     const modal = document.createElement('div')
     modal.setAttribute('class', '__mpx_modal__')
 
@@ -59,7 +66,7 @@ export default class Modal {
     this.cancelBtn = cancelBtn
     this.confirmBtn = confirmBtn
   }
-  show (options = {}) {
+  show (options: WechatMiniprogram.ShowModalOption = {}) {
     if (this.hideTimer) {
       clearTimeout(this.hideTimer)
       this.hideTimer = null
