@@ -82,17 +82,17 @@ export default class Toast {
     opts.duration >= 0 && this.hide({ duration: opts.duration }, type)
 
     const errMsg = type === 'loading' ? 'showLoading:ok' : 'showToast:ok'
-    opts.success && opts.success({ errMsg })
-    opts.complete && opts.complete({ errMsg })
+    opts.success({ errMsg })
+    opts.complete({ errMsg })
   }
 
-  hide (options, type) {
+  hide (options = {}, type) {
     if (this.type !== type) return
 
     const duration = options.duration || 0
     const errMsg = type === 'loading' ? 'hideLoading:ok' : 'hideToast:ok'
-    options && options.success && options.success({ errMsg })
-    options && options.complete && options.complete({ errMsg })
+    options.success && options.success({ errMsg })
+    options.complete && options.complete({ errMsg })
 
     if (this.hideTimer) {
       clearTimeout(this.hideTimer)
