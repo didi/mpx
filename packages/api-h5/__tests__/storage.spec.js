@@ -1,4 +1,14 @@
-import mpx from './global'
+import {
+  setStorage,
+  setStorageSync,
+  getStorage,
+  getStorageSync,
+  getStorageInfo,
+  getStorageInfoSync,
+  removeStorage,
+  clearStorage,
+  clearStorageSync
+} from '../src/api/storage'
 
 const storageKey = 'storage key'
 const storageValue = 'storage value'
@@ -13,8 +23,8 @@ describe('test storage', () => {
   })
 
   test('setStorageSync & getStorageSync', () => {
-    mpx.setStorageSync(storageKey, storageValue)
-    const getValue = mpx.getStorageSync(storageKey)
+    setStorageSync(storageKey, storageValue)
+    const getValue = getStorageSync(storageKey)
     expect(getValue).toBe(storageValue)
   })
 
@@ -23,7 +33,7 @@ describe('test storage', () => {
     const fail = jest.fn()
     const complete = jest.fn()
 
-    mpx.setStorage({
+    setStorage({
       key: storageSyncKey,
       data: storageSyncValue,
       success,
@@ -41,7 +51,7 @@ describe('test storage', () => {
     const fail = jest.fn()
     const complete = jest.fn()
 
-    mpx.getStorage({
+    getStorage({
       key: storageSyncKey,
       success,
       fail,
@@ -59,7 +69,7 @@ describe('test storage', () => {
     const fail = jest.fn()
     const complete = jest.fn()
 
-    mpx.getStorageInfo({
+    getStorageInfo({
       success,
       fail,
       complete
@@ -76,7 +86,7 @@ describe('test storage', () => {
     const fail = jest.fn()
     const complete = jest.fn()
 
-    mpx.removeStorage({
+    removeStorage({
       key: storageKey,
       success,
       fail,
@@ -86,7 +96,7 @@ describe('test storage', () => {
     expect(success.mock.calls.length).toBe(1)
     expect(fail.mock.calls.length).toBe(0)
     expect(complete.mock.calls.length).toBe(1)
-    expect(mpx.getStorageInfoSync()).toEqual({ keys: [storageSyncKey], limitSize: null, currentSize: null })
+    expect(getStorageInfoSync()).toEqual({ keys: [storageSyncKey], limitSize: null, currentSize: null })
   })
 
   test('clearStorage', () => {
@@ -94,7 +104,7 @@ describe('test storage', () => {
     const fail = jest.fn()
     const complete = jest.fn()
 
-    mpx.clearStorage({
+    clearStorage({
       success,
       fail,
       complete
@@ -107,9 +117,9 @@ describe('test storage', () => {
   })
 
   test('clearStorageSync', () => {
-    mpx.setStorageSync(storageKey, storageValue)
+    setStorageSync(storageKey, storageValue)
     expect(Object.keys(window.localStorage)).toEqual([storageKey])
-    mpx.clearStorageSync()
+    clearStorageSync()
     expect(Object.keys(window.localStorage)).toEqual([])
   })
 })
