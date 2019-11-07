@@ -61,7 +61,10 @@ describe('test toast', () => {
     const icon = toast.lastChild.firstChild
 
     expect(icon).toHaveAttribute('class', expect.not.stringContaining('hide'))
-    expect(icon).toHaveAttribute('style', expect.stringContaining(`background-image: url(${'img.png'})`))
+    expect(icon).toHaveAttribute(
+      'style',
+      expect.stringContaining(`background-image: url(${'img.png'})`)
+    )
     done()
   })
 
