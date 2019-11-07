@@ -1,8 +1,10 @@
 import Toast from './Toast'
 import Modal from './Modal'
+import ActionSheet from './ActionSheet'
 
 let toast = null
 let modal = null
+let actionSheet = null
 
 function showToast (options = {}) {
   if (!toast) { toast = new Toast() }
@@ -35,10 +37,16 @@ function showModal (options = {}) {
   modal.show(options)
 }
 
+function showActionSheet (options = {}) {
+  if (!actionSheet) { actionSheet = new ActionSheet() }
+  actionSheet.show(options)
+}
+
 export {
   showToast,
   hideToast,
   showLoading,
   hideLoading,
-  showModal
+  showModal,
+  showActionSheet
 }
