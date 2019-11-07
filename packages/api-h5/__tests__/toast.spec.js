@@ -20,6 +20,8 @@ describe('test toast', () => {
     const icon = toast.lastChild.firstChild
     const title = toast.lastChild.lastChild
     expect(success.mock.calls.length).toBe(1)
+    expect(success.mock.calls[0][0]['errMsg']).toBe('showToast:ok')
+    expect(complete.mock.calls.length).toBe(1)
 
     setTimeout(() => {
       expect(toast).toHaveAttribute('class', expect.stringContaining('show'))
