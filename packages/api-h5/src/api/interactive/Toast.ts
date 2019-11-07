@@ -8,7 +8,7 @@ interface hideToastOptions extends WechatMiniprogram.HideToastOption {
 export default class Toast {
   defaultOpts = {
     title: '',
-    icon: 'none',
+    icon: 'success',
     image: '',
     duration: 2000,
     mask: false,
@@ -34,10 +34,10 @@ export default class Toast {
     const box = document.createElement('div')
     box.setAttribute('class', '__mpx_toast_box__')
 
-    const icon = document.createElement('p')
+    const icon = document.createElement('div')
     icon.setAttribute('class', '__mpx_toast_icon__')
 
-    const title = document.createElement('p')
+    const title = document.createElement('div')
     title.setAttribute('class', '__mpx_toast_title__')
 
     box.appendChild(icon)
@@ -69,22 +69,17 @@ export default class Toast {
       this.mask.classList.remove('show')
     }
 
-    if (opts.icon === 'none') {
-      this.box.classList.add('no-icon')
-    } else {
-      this.box.classList.remove('no-icon')
-    }
-
     if (opts.image) {
+      this.icon.style.backgroundImage = `url(${opts.image})`
       this.icon.classList.remove('success', 'loading')
     } else if (opts.icon === 'loading') {
       this.icon.classList.add('loading')
       this.icon.classList.remove('success')
-    } else if (opts.icon === 'success') {
-      this.icon.classList.add('success')
-      this.icon.classList.remove('loading')
     } else if (opts.icon === 'none') {
       this.icon.classList.add('hide')
+    } else {
+      this.icon.classList.add('success')
+      this.icon.classList.remove('loading')
     }
 
     this.title.textContent = opts.title || ''
