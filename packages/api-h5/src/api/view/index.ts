@@ -2,21 +2,21 @@ import Toast from './Toast'
 import Modal from './Modal'
 import ActionSheet from './ActionSheet'
 
-let toast = null
-let modal = null
-let actionSheet = null
+let toast: Toast
+let modal: Modal
+let actionSheet: ActionSheet
 
-function showToast (options = {}) {
+function showToast (options: WechatMiniprogram.ShowToastOption) {
   if (!toast) { toast = new Toast() }
   toast.show(options, 'toast')
 }
 
-function hideToast (options = {}) {
+function hideToast (options: WechatMiniprogram.HideToastOption = {}) {
   if (!toast) { return }
   toast.hide(Object.assign({ duration: 0 }, options), 'toast')
 }
 
-function showLoading (options = {}) {
+function showLoading (options: WechatMiniprogram.ShowLoadingOption) {
   if (!toast) { toast = new Toast() }
   toast.show(Object.assign({
     icon: 'loading',
@@ -24,7 +24,7 @@ function showLoading (options = {}) {
   }, options), 'loading')
 }
 
-function hideLoading (options = {}) {
+function hideLoading (options: WechatMiniprogram.HideLoadingOption = {}) {
   if (!toast) { return }
   toast.hide(Object.assign({
     icon: 'loading',
@@ -32,12 +32,12 @@ function hideLoading (options = {}) {
   }, options), 'loading')
 }
 
-function showModal (options = {}) {
+function showModal (options: WechatMiniprogram.ShowModalOption = {}) {
   if (!modal) { modal = new Modal() }
   modal.show(options)
 }
 
-function showActionSheet (options = {}) {
+function showActionSheet (options: WechatMiniprogram.ShowActionSheetOption) {
   if (!actionSheet) { actionSheet = new ActionSheet() }
   actionSheet.show(options)
 }
