@@ -45,7 +45,7 @@ describe('test toast', () => {
     expect(setTimeout).toHaveBeenCalledTimes(3)
   })
 
-  test('should show image', done => {
+  test('should show image', () => {
     const text = 'title'
     const success = jest.fn()
     const complete = jest.fn()
@@ -61,11 +61,33 @@ describe('test toast', () => {
     const icon = toast.lastChild.firstChild
 
     expect(icon).toHaveAttribute('class', expect.not.stringContaining('hide'))
+    expect(icon).toHaveAttribute('class', expect.not.stringContaining('success'))
+    expect(icon).toHaveAttribute('class', expect.not.stringContaining('loading'))
     expect(icon).toHaveAttribute(
       'style',
       expect.stringContaining(`background-image: url(${'img.png'})`)
     )
-    done()
+  })
+
+  test('should show loading', () => {
+    const text = 'title'
+    const success = jest.fn()
+    const complete = jest.fn()
+
+    showToast({
+      title: text,
+      icon: 'loading',
+      success,
+      complete
+    })
+
+    const toast = document.body.lastChild
+    const icon = toast.lastChild.firstChild
+
+    expect(icon).toHaveAttribute('class', expect.not.stringContaining('hide'))
+    expect(icon).toHaveAttribute('class', expect.not.stringContaining('success'))
+    expect(icon).toHaveAttribute('class', expect.stringContaining('loading'))
+    expect(icon).not.toHaveAttribute('style')
   })
 
   test('should show mask', done => {

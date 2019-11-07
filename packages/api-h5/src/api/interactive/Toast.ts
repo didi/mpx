@@ -73,11 +73,13 @@ export default class Toast {
       this.icon.style.backgroundImage = `url(${opts.image})`
       this.icon.classList.remove('success', 'loading')
     } else if (opts.icon === 'loading') {
+      this.icon.removeAttribute('style')
       this.icon.classList.add('loading')
       this.icon.classList.remove('success')
     } else if (opts.icon === 'none') {
       this.icon.classList.add('hide')
     } else {
+      this.icon.removeAttribute('style')
       this.icon.classList.add('success')
       this.icon.classList.remove('loading')
     }
