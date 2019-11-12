@@ -1,5 +1,5 @@
 /**
- * mpxjs webview bridge v2.2.17
+ * mpxjs webview bridge v2.2.34
  * (c) 2019 @mpxjs team
  * @license Apache
  */
@@ -18,20 +18,34 @@ function _defineProperty(obj, key, value) {
   return obj;
 }
 
-function _objectSpread(target) {
+function ownKeys(object, enumerableOnly) {
+  var keys = Object.keys(object);
+
+  if (Object.getOwnPropertySymbols) {
+    keys.push.apply(keys, Object.getOwnPropertySymbols(object));
+  }
+
+  if (enumerableOnly) keys = keys.filter(function (sym) {
+    return Object.getOwnPropertyDescriptor(object, sym).enumerable;
+  });
+  return keys;
+}
+
+function _objectSpread2(target) {
   for (var i = 1; i < arguments.length; i++) {
     var source = arguments[i] != null ? arguments[i] : {};
-    var ownKeys = Object.keys(source);
 
-    if (typeof Object.getOwnPropertySymbols === 'function') {
-      ownKeys = ownKeys.concat(Object.getOwnPropertySymbols(source).filter(function (sym) {
-        return Object.getOwnPropertyDescriptor(source, sym).enumerable;
-      }));
+    if (i % 2) {
+      ownKeys(source, true).forEach(function (key) {
+        _defineProperty(target, key, source[key]);
+      });
+    } else if (Object.getOwnPropertyDescriptors) {
+      Object.defineProperties(target, Object.getOwnPropertyDescriptors(source));
+    } else {
+      ownKeys(source).forEach(function (key) {
+        Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key));
+      });
     }
-
-    ownKeys.forEach(function (key) {
-      _defineProperty(target, key, source[key]);
-    });
   }
 
   return target;
@@ -141,6 +155,7 @@ var getWebviewApi = function getWebviewApi(sdkReady) {
     redirectTo: 'redirectTo',
     getEnv: 'getEnv',
     postMessage: 'postMessage',
+    getLoadError: 'getLoadError',
     onMessage: {
       ali: true
     }
@@ -159,6 +174,10 @@ var getWebviewApi = function getWebviewApi(sdkReady) {
       } else {
         return sdkReady.then(function () {
           var _getEnvWebviewVariabl;
+
+          if (apiName === 'getLoadError') {
+            return Promise.resolve('js加载完成');
+          }
 
           (_getEnvWebviewVariabl = getEnvWebviewVariable())[apiName].apply(_getEnvWebviewVariabl, args);
         });
@@ -333,7 +352,7 @@ var getAdvancedApi = function getAdvancedApi(config, mpx) {
 
 initWebviewBridge();
 
-var bridgeFunction = _objectSpread({}, webviewApiList, {
+var bridgeFunction = _objectSpread2({}, webviewApiList, {
   getAdvancedApi: getAdvancedApi,
   mpxEnv: env
 });
