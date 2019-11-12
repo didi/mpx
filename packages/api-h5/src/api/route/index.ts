@@ -16,6 +16,7 @@ function redirectTo (options: WechatMiniprogram.RedirectToOption) {
     })
   }
 }
+
 function navigateTo (options: WechatMiniprogram.NavigateToOption) {
   const router = this.$router
   if (router) {
@@ -42,4 +43,50 @@ function navigateBack (options: WechatMiniprogram.NavigateBackOption) {
   router.go(-delta)
   typeof options.success === 'function' && options.success(res)
   typeof options.complete === 'function' && options.complete(res)
+}
+
+function reLaunch (options: WechatMiniprogram.ReLaunchOption) {
+  const router = this.$router
+  if (router) {
+    router.replace({
+      path: options.url,
+      onComplete: () => {
+        const errMsg = { errMsg: 'reLaunch:ok' }
+        typeof options.success === 'function' && options.success(errMsg)
+        typeof options.complete === 'function' && options.complete(errMsg)
+      },
+      onAbort: (err) => {
+        const errMsg = { errMsg: err }
+        typeof options.fail === 'function' && options.fail(errMsg)
+        typeof options.complete === 'function' && options.complete(errMsg)
+      }
+    })
+  }
+}
+
+function switchTab (options: WechatMiniprogram.SwitchTabOption) {
+  const router = this.$router
+  if (router) {
+    router.replace({
+      path: options.url,
+      onComplete: () => {
+        const errMsg = { errMsg: 'switchTab:ok' }
+        typeof options.success === 'function' && options.success(errMsg)
+        typeof options.complete === 'function' && options.complete(errMsg)
+      },
+      onAbort: (err) => {
+        const errMsg = { errMsg: err }
+        typeof options.fail === 'function' && options.fail(errMsg)
+        typeof options.complete === 'function' && options.complete(errMsg)
+      }
+    })
+  }
+}
+
+export {
+  redirectTo,
+  navigateTo,
+  navigateBack,
+  reLaunch,
+  switchTab
 }
