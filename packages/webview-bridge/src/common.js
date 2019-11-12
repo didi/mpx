@@ -65,7 +65,7 @@ const getWebviewApi = (sdkReady) => {
 
   for (let item in webviewApiNameList) {
     const apiName = typeof webviewApiNameList[item] === 'string' ? webviewApiNameList[item] : !webviewApiNameList[item][env] ? false : typeof webviewApiNameList[item][env] === 'string' ? webviewApiNameList[item][env] : item
-    
+
     webviewApiList[item] = (...args) => {
       if (!apiName) {
         console.log(`${env}小程序不支持 ${item} 方法`)
