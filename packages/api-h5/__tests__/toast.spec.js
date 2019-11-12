@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom/extend-expect'
 import {
   showToast, hideToast
-} from '../src/api/view/index'
+} from '../src/api/toast/index'
 
 describe('test toast', () => {
   afterAll(() => {
