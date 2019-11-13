@@ -363,8 +363,9 @@ var navigateTo = webviewApiList.navigateTo,
     reLaunch = webviewApiList.reLaunch,
     redirectTo = webviewApiList.redirectTo,
     getEnv = webviewApiList.getEnv,
-    postMessage = webviewApiList.postMessage;
+    postMessage = webviewApiList.postMessage,
+    getLoadError = webviewApiList.getLoadError;
 var getAdvancedApi$1 = bridgeFunction.getAdvancedApi; // 此处导出的对象包含所有的api
 
 export default bridgeFunction;
-export { getAdvancedApi$1 as getAdvancedApi, getEnv, navigateBack, navigateTo, postMessage, reLaunch, redirectTo, switchTab };
+export { getAdvancedApi$1 as getAdvancedApi, getEnv, getLoadError, navigateBack, navigateTo, postMessage, reLaunch, redirectTo, switchTab };
