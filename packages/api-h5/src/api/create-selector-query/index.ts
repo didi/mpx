@@ -17,17 +17,18 @@ class NodesRef {
   _selectorQuery: any
   _component: any
   _single: boolean
+
   constructor (selector, selectorQuery, single) {
     this._selector = selector
     this._selectorQuery = selectorQuery
     this._component = selectorQuery._component
     this._single = single
   }
+
   boundingClientRect (callback) {
     this._selectorQuery._push(
       this._selector,
       this._component,
-      this._selectorQuery,
       this._single,
       {
         id: true,
@@ -39,11 +40,11 @@ class NodesRef {
     )
     return this._selectorQuery
   }
+
   scrollOffset (callback) {
-    this._selectorQuery.push(
+    this._selectorQuery._push(
       this._selector,
       this._component,
-      this._selectorQuery,
       this._single,
       {
         id: true,
@@ -54,11 +55,11 @@ class NodesRef {
     )
     return this._selectorQuery
   }
+
   fields (fields, callback) {
     this._selectorQuery._push(
       this._selector,
       this._component,
-      this._selectorQuery,
       this._single,
       fields,
       callback
@@ -72,25 +73,30 @@ class SelectQuery {
   _queue: any[] = []
   _queueCb: any[] = []
   constructor () {}
+
   in (component) {
     this._component = component
     return this
   }
+
   select (selector) {
     if (typeof selector === 'string') {
       selector = selector.replace('>>>', '>')
     }
     return new NodesRef(selector, this, true)
   }
+
   selectAll (selector) {
     if (typeof selector === 'string') {
       selector = selector.replace('>>>', '>')
     }
     return new NodesRef(selector, this, false)
   }
+
   selectViewport () {
     return new NodesRef('html', this, true)
   }
+
   exec (callback) {
     const res = []
     const handleFields = this._handleFields
@@ -108,12 +114,12 @@ class SelectQuery {
         res.push(elsArr)
       }
     })
-
     res.forEach((item, idx) => {
       typeof queueCb[idx] === 'function' && queueCb[idx].call(this, item)
     })
     typeof callback === 'function' && callback.call(this, res)
   }
+
   _handleFields (fields, el: HTMLDivElement, selector) {
     const { id, dataset, rect, size, scrollOffset, properties = [], computedStyle = [] } = fields
     const { left, right, top, bottom, width, height } = el.getBoundingClientRect()
@@ -170,7 +176,8 @@ class SelectQuery {
     if (computedStyle.length) {
       const styles = window.getComputedStyle(el)
       computedStyle.forEach(style => {
-        const value = styles.getPropertyValue(style)
+        const midLineStyle = style.replace(/(?<!^)[A-Z]/g, m => `-${m.toLowerCase()}`)
+        const value = styles.getPropertyValue(midLineStyle)
         if (value) {
           res[style] = value
         }
@@ -178,6 +185,7 @@ class SelectQuery {
     }
     return res
   }
+
   _push (selector, component, single, fields, callback) {
     this._queue.push({
       component,
