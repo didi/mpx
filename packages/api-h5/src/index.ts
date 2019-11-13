@@ -1,8 +1,13 @@
-import * as allApi from './api'
+/// <reference path="./@types/index.d.ts" />
 
-export default function install (target) {
+import * as allApi from './api'
+import { EventChannel } from './api/event-channel'
+
+export default function install (target: any) {
+  window.EventChannel = new EventChannel()
+
   Object.keys(allApi).forEach(api => {
-    target[api] = function (...args) {
+    target[api] = function (...args: any[]) {
       return allApi[api].apply(this, args)
     }
   })
