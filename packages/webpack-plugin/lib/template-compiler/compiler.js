@@ -73,37 +73,6 @@ let shouldIgnoreFirstNewline = function (tag, html) {
   return tag && isIgnoreNewlineTag(tag) && html[0] === '\n'
 }
 
-// const encodingMap = Object.keys(decodingMap)
-//   .reduce((acc, k) => {
-//     const v = decodingMap[k]
-//     acc[v] = k
-//     return acc
-//   }, {})
-
-// const decodedAttr = /[<>"&]/g
-// const decodedAttrWithNewLines = /[<>"&\n\t]/g
-//
-// const tagRES = /(\{\{(?:.|\n)+?\}\})(?!})/
-
-// function encodeAttr (value, shouldDecodeNewlines) {
-//   const sArr = value.split(tagRES)
-//   const re = shouldDecodeNewlines ? decodedAttrWithNewLines : decodedAttr
-//   const ret = sArr.map((s) => {
-//     if (!tagRES.test(s)) {
-//       // 对于属性值且Mustache外的值需要encode，否则序列化时会破坏模板合法性
-//       return s.replace(re, (match) => {
-//         return encodingMap[match]
-//       })
-//     } else if (mode === 'ali' || mode === 'qq') {
-//       // fix支付宝和qq
-//       return s.replace(/["']/g, '\'')
-//     } else {
-//       return s
-//     }
-//   })
-//   return ret.join('')
-// }
-
 const splitRE = /\r?\n/g
 const replaceRE = /./g
 const isSpecialTag = makeMap('script,style,template,json', true)
@@ -314,6 +283,21 @@ function baseError (msg) {
   console.error(('[template compiler]: ' + msg))
 }
 
+const decodeMap = {
+  '&lt;': '<',
+  '&gt;': '>',
+  '&quot;': '"',
+  '&amp;': '&',
+  '&#39;': '\''
+}
+const encodedRe = /&(?:lt|gt|quot|amp|#39);/g
+
+function decode (value) {
+  return value.replace(encodedRe, function (match) {
+    return decodeMap[match]
+  })
+}
+
 function parseHTML (html, options) {
   let stack = []
   let expectHTML = options.expectHTML
@@ -501,7 +485,7 @@ function parseHTML (html, options) {
       let value = args[3] || args[4] || args[5] || ''
       attrs[i] = {
         name: args[1],
-        value: value
+        value: decode(value)
       }
     }
 
@@ -760,8 +744,6 @@ function parse (template, options) {
     expectHTML: options.expectHTML,
     isUnaryTag: options.isUnaryTag,
     canBeLeftOpenTag: options.canBeLeftOpenTag,
-    shouldDecodeNewlines: options.shouldDecodeNewlines,
-    shouldDecodeNewlinesForHref: options.shouldDecodeNewlinesForHref,
     shouldKeepComment: true,
     start: function start (tag, attrs, unary) {
       // check namespace.
@@ -1450,26 +1432,11 @@ function postProcessFor (el) {
   }
 }
 
-const decodeMap = {
-  '&lt;': '<',
-  '&gt;': '>',
-  '&quot;': '"',
-  '&amp;': '&',
-  '&#39;': '\''
-}
-const encodedRe = /&(?:lt|gt|quot|amp|#39);/g
-
-function decode (value) {
-  return value.replace(encodedRe, function (match) {
-    return decodeMap[match]
-  })
-}
-
 function evalExp (exp) {
   // eslint-disable-next-line no-new-func
   let result = { success: false }
   try {
-    const fn = new Function(`return ${decode(exp)};`)
+    const fn = new Function(`return ${exp};`)
     result = {
       success: true,
       result: fn()
