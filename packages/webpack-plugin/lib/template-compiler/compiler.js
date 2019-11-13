@@ -298,6 +298,19 @@ function decode (value) {
   })
 }
 
+const tagRES = /(\{\{(?:.|\n)+?\}\})(?!})/
+
+function decodeInMustache (value) {
+  const sArr = value.split(tagRES)
+  const ret = sArr.map((s) => {
+    if (tagRES.test(s)) {
+      return decode(s)
+    }
+    return s
+  })
+  return ret.join('')
+}
+
 function parseHTML (html, options) {
   let stack = []
   let expectHTML = options.expectHTML
@@ -844,7 +857,7 @@ function parse (template, options) {
         if (text !== ' ' || !children.length || children[children.length - 1].text !== ' ') {
           let el = {
             type: 3,
-            text
+            text: decodeInMustache(text)
           }
           processText(el)
           children.push(el)
@@ -927,8 +940,8 @@ function stringify (str) {
   return JSON.stringify(str)
 }
 
-let tagRE = /\{\{((?:.|\n)+?)\}\}(?!})/
-let tagREG = /\{\{((?:.|\n)+?)\}\}(?!})/g
+const tagRE = /\{\{((?:.|\n)+?)\}\}(?!})/
+const tagREG = /\{\{((?:.|\n)+?)\}\}(?!})/g
 
 // function processLifecycleHack (el, options) {
 //   if (options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component') {
