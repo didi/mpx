@@ -1,5 +1,5 @@
 /**
- * mpxjs webview bridge v2.2.17
+ * mpxjs webview bridge v2.2.34
  * (c) 2019 @mpxjs team
  * @license Apache
  */
@@ -100,6 +100,7 @@ const getWebviewApi = (sdkReady) => {
     redirectTo: 'redirectTo',
     getEnv: 'getEnv',
     postMessage: 'postMessage',
+    getLoadError: 'getLoadError',
     onMessage: {
       ali: true
     }
@@ -107,12 +108,15 @@ const getWebviewApi = (sdkReady) => {
 
   for (let item in webviewApiNameList) {
     const apiName = typeof webviewApiNameList[item] === 'string' ? webviewApiNameList[item] : !webviewApiNameList[item][env] ? false : typeof webviewApiNameList[item][env] === 'string' ? webviewApiNameList[item][env] : item;
-
+    
     webviewApiList[item] = (...args) => {
       if (!apiName) {
         console.log(`${env}小程序不支持 ${item} 方法`);
       } else {
         return sdkReady.then(() => {
+          if (apiName === 'getLoadError') {
+            return Promise.resolve('js加载完成')
+          }
           getEnvWebviewVariable()[apiName](...args);
         })
       }
