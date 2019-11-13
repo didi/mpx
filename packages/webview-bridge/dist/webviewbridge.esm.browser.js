@@ -108,7 +108,7 @@ const getWebviewApi = (sdkReady) => {
 
   for (let item in webviewApiNameList) {
     const apiName = typeof webviewApiNameList[item] === 'string' ? webviewApiNameList[item] : !webviewApiNameList[item][env] ? false : typeof webviewApiNameList[item][env] === 'string' ? webviewApiNameList[item][env] : item;
-    
+
     webviewApiList[item] = (...args) => {
       if (!apiName) {
         console.log(`${env}小程序不支持 ${item} 方法`);
@@ -283,8 +283,8 @@ const bridgeFunction = {
   mpxEnv: env
 };
 
-const { navigateTo, navigateBack, switchTab, reLaunch, redirectTo, getEnv, postMessage } = webviewApiList;
+const { navigateTo, navigateBack, switchTab, reLaunch, redirectTo, getEnv, postMessage, getLoadError } = webviewApiList;
 const { getAdvancedApi: getAdvancedApi$1 } = bridgeFunction;
 
 export default bridgeFunction;
-export { getAdvancedApi$1 as getAdvancedApi, getEnv, navigateBack, navigateTo, postMessage, reLaunch, redirectTo, switchTab };
+export { getAdvancedApi$1 as getAdvancedApi, getEnv, getLoadError, navigateBack, navigateTo, postMessage, reLaunch, redirectTo, switchTab };
