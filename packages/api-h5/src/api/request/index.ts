@@ -1,16 +1,5 @@
 import axios from 'axios'
-
-class RequestTask {
-  abortCb: (...args: any[]) => any
-  constructor (abortCb) {
-    this.abortCb = abortCb
-  }
-  abort () {
-    if (typeof this.abortCb === 'function') {
-      this.abortCb()
-    }
-  }
-}
+import RequestTask from './RequestTask'
 
 function request (options: WechatMiniprogram.RequestOption) {
   const timeout = 60 * 1000
