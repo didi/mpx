@@ -775,7 +775,11 @@ function parse (template, options) {
       }
 
       if (options.globalMpxAttrsFilter) {
-        attrs = modifyAttrsFromCurMpxAttrOptions(attrs, normalizePlatformMpxAttrsOpts(options.globalMpxAttrsFilter({ tagName: tag, attrs, __mpx_mode__: mode }) || {}))
+        attrs = modifyAttrsFromCurMpxAttrOptions(attrs, normalizePlatformMpxAttrsOpts(options.globalMpxAttrsFilter({
+          tagName: tag,
+          attrs,
+          __mpx_mode__: mode
+        }) || {}))
       }
       attrs = consumeMpxCommentAttrs(attrs, mode)
 
@@ -1446,11 +1450,26 @@ function postProcessFor (el) {
   }
 }
 
+const decodeMap = {
+  '&lt;': '<',
+  '&gt;': '>',
+  '&quot;': '"',
+  '&amp;': '&',
+  '&#39;': '\''
+}
+const encodedRe = /&(?:lt|gt|quot|amp|#39);/g
+
+function decode (value) {
+  return value.replace(encodedRe, function (match) {
+    return decodeMap[match]
+  })
+}
+
 function evalExp (exp) {
   // eslint-disable-next-line no-new-func
-  const fn = new Function(`return ${exp};`)
   let result = { success: false }
   try {
+    const fn = new Function(`return ${decode(exp)};`)
     result = {
       success: true,
       result: fn()
