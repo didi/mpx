@@ -49,7 +49,5 @@ export default function processOption (
     }
   }
 
-  console.log(option)
-
   return option
 }

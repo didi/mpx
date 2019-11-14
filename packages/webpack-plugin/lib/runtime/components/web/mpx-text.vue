@@ -1,4 +1,6 @@
 <script>
+  import getInnerListeners from '@mpxjs/webpack-plugin/lib/runtime/components/web/getInnerListeners'
+
   const encodeMap = {
     ' ': '&nbsp;',
     '<': '&lt;',
@@ -37,7 +39,7 @@
       let decode = false
       this.$slots.default.forEach((item) => {
         if (item.text) {
-          item.text = encodeText(item.text)
+          // item.text = encodeText(item.text)
           text += item.text
         }
       })
@@ -56,7 +58,8 @@
         decode = true
       }
       const data = {
-        class: classNames
+        class: classNames,
+        on: getInnerListeners(this)
       }
       if (decode) {
         data.domProps = {

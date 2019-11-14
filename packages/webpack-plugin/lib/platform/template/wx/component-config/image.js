@@ -8,6 +8,9 @@ module.exports = function ({ print }) {
   return {
     test: TAG_NAME,
     web (tag, { el }) {
+      if (el.hasEvent) {
+        el.isBuiltIn = true
+      }
       if (el.isBuiltIn) {
         return 'mpx-image'
       } else {
@@ -23,7 +26,7 @@ module.exports = function ({ print }) {
         tt: ttPropLog
       },
       {
-        test: /^(mode|lazy-load|show-menu-by-longpress|webp)$/,
+        test: /^(mode|lazy-load|show-menu-by-longpress|webp|use-built-in)$/,
         web (prop, { el }) {
           el.isBuiltIn = true
         }

@@ -1,4 +1,6 @@
 <script>
+  import getInnerListeners from '@mpxjs/webpack-plugin/lib/runtime/components/web/getInnerListeners'
+
   export default {
     name: 'mpx-image',
     props: {
@@ -70,9 +72,11 @@
       if (backgroundPosition) {
         style.backgroundPosition = backgroundPosition
       }
+
       return createElement('div', {
         style,
-        class: ['mpx-image']
+        class: ['mpx-image'],
+        on: getInnerListeners(this)
       })
     }
   }

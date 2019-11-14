@@ -13,6 +13,9 @@ module.exports = function ({ print }) {
     //   return 'a:view'
     // },
     web (tag, { el }) {
+      if (el.hasEvent) {
+        el.isBuiltIn = true
+      }
       if (el.isBuiltIn) {
         return 'mpx-view'
       } else {
@@ -22,7 +25,7 @@ module.exports = function ({ print }) {
     // 组件属性中的差异部分
     props: [
       {
-        test: /^hover-(class|stop-propagation|start-time|stay-time)$/,
+        test: /^(hover-(class|stop-propagation|start-time|stay-time)|use-built-in)$/,
         // 当遇到微信支持而支付宝不支持的特性时，转换函数可以只抛出错误或警告而不返回值
         web (prop, { el }) {
           el.isBuiltIn = true

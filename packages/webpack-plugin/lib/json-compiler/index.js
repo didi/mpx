@@ -170,11 +170,6 @@ module.exports = function (raw) {
     rulesRunner(json)
   }
 
-  function getPageName (root, page) {
-    const match = /^[.~/]*(.*?)(\.[^.]*)?$/.exec(page)
-    return path.join(root, match[1])
-  }
-
   const resolve = (context, request, callback) => {
     const { queryObj } = parseRequest(request)
     context = queryObj.context || context

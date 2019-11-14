@@ -27,7 +27,7 @@ module.exports = function getSpec ({ warn, error }) {
     directive: [
       // 特殊指令
       {
-        test: /^wx:for$/,
+        test: 'wx:for',
         swan (obj, data) {
           const attrsMap = data.el.attrsMap
           const varListName = /{{(.*)}}/.exec(obj.value)
@@ -77,7 +77,7 @@ module.exports = function getSpec ({ warn, error }) {
               // 定义key索引
               if (keyType === KEY_TYPES.INDEX) {
                 warn(`The numeric type loop variable does not support custom keys. Automatically set to the index value.`)
-                keyStr = ` trackBy ${itemName}[${indexName}]`
+                keyStr = ` trackBy ${itemName}`
               } else if (keyType === KEY_TYPES.PROPERTY && !isValidIdentifierStr(keyName)) {
                 keyStr = ` trackBy ${itemName}['${keyName}']`
               } else if (keyType === KEY_TYPES.PROPERTY) {
@@ -91,13 +91,94 @@ module.exports = function getSpec ({ warn, error }) {
             name: 's-for',
             value: `${itemName}, ${indexName} in ${listName}${keyStr}`
           }
+        },
+        web ({ value }, { el }) {
+          const parsed = parseMustache(value)
+          const attrsMap = el.attrsMap
+          const itemName = attrsMap['wx:for-item'] || 'item'
+          const indexName = attrsMap['wx:for-index'] || 'index'
+          return {
+            name: 'v-for',
+            value: `(${itemName}, ${indexName}) in ${parsed.result}`
+          }
         }
       },
       {
-        // 在swan模式下删除key/for-index/for-item
-        test: /^wx:(key|for-item|for-index)$/,
+        test: 'wx:key',
         swan () {
           return false
+        },
+        web ({ value }, { el }) {
+          const itemName = el.attrsMap['wx:for-item'] || 'item'
+          const keyName = value
+          if (value === '*this') {
+            value = itemName
+          } else {
+            if (isValidIdentifierStr(keyName)) {
+              value = `${itemName}.${keyName}`
+            } else {
+              value = `${itemName}['${keyName}']`
+            }
+          }
+          return {
+            name: ':key',
+            value
+          }
+        }
+      },
+      {
+        // 在swan/web模式下删除for-index/for-item，转换为v/s-for表达式
+        test: /^wx:(for-item|for-index)$/,
+        swan () {
+          return false
+        },
+        web () {
+          return false
+        }
+      },
+      {
+        test: 'wx:model',
+        web ({ value }) {
+          return [
+            {
+              name: 'v-model',
+              value
+            },
+            {
+              name: '__model',
+              value: 'true'
+            }
+          ]
+        }
+      },
+      // todo支持wx:model的相关参数
+      {
+        test: /^wx:(model-prop|model-event|model-value-path|model-filter)$/,
+        web () {
+          error('Sorry, wx:(model-prop|model-event|model-value-path|model-filter) directives are not supported temporarily, we will fix it at a recent time.')
+          return false
+        }
+      },
+      {
+        // ref只支持字符串字面量
+        test: 'wx:ref',
+        web ({ value }) {
+          return {
+            name: 'ref',
+            value
+          }
+        }
+      },
+      {
+        // 样式类名绑定
+        test: /^wx:(class|style)$/,
+        web ({ name, value }) {
+          const dir = this.test.exec(name)[1]
+          const parsed = parseMustache(value)
+          return {
+            name: ':' + dir,
+            value: parsed.result
+          }
         }
       },
       // 通用指令
@@ -130,6 +211,17 @@ module.exports = function getSpec ({ warn, error }) {
             name: 'tt:' + dir,
             value
           }
+        },
+        web ({ name, value }) {
+          let dir = this.test.exec(name)[1]
+          const parsed = parseMustache(value)
+          if (dir === 'elif') {
+            dir = 'else-if'
+          }
+          return {
+            name: 'v-' + dir,
+            value: parsed.result
+          }
         }
       },
       // 事件
@@ -139,24 +231,24 @@ module.exports = function getSpec ({ warn, error }) {
           const match = this.test.exec(name)
           const prefix = match[1]
           const eventName = match[2]
-          const modifier = match[3] || ''
+          const modifierStr = match[3] || ''
           const rPrefix = runRules(spec.event.prefix, prefix, { mode: 'ali' })
           const rEventName = runRules(eventRules, eventName, { mode: 'ali' })
           return {
             name: rPrefix + rEventName.replace(/^./, (matched) => {
               return matched.toUpperCase()
-            }) + modifier,
+            }) + modifierStr,
             value
           }
         },
         tt ({ name, value }) {
           const match = this.test.exec(name)
-          const modifier = match[3] || ''
+          const modifierStr = match[3] || ''
           let ret
           if (match[1] === 'capture-catch' || match[1] === 'capture-bind') {
             const convertName = 'bind'
             warn(`bytedance miniapp doens't support '${match[1]}' and will be translated into '${convertName}' automatically!`)
-            ret = { name: convertName + match[2] + modifier, value }
+            ret = { name: convertName + match[2] + modifierStr, value }
           } else {
             ret = { name, value }
           }
@@ -166,6 +258,23 @@ module.exports = function getSpec ({ warn, error }) {
           const match = this.test.exec(name)
           const eventName = match[2]
           runRules(eventRules, eventName, { mode: 'swan' })
+        },
+        web ({ name, value }, { eventRules, el }) {
+          const match = this.test.exec(name)
+          const prefix = match[1]
+          const eventName = match[2]
+          const modifierStr = match[3] || ''
+          const meta = {
+            modifierStr
+          }
+          // 记录event监听信息用于后续判断是否需要使用内置基础组件
+          el.hasEvent = true
+          const rPrefix = runRules(spec.event.prefix, prefix, { mode: 'web', meta })
+          const rEventName = runRules(eventRules, eventName, { mode: 'web' })
+          return {
+            name: rPrefix + rEventName + meta.modifierStr,
+            value
+          }
         }
       },
       // 无障碍
@@ -189,6 +298,33 @@ module.exports = function getSpec ({ warn, error }) {
               return
             }
             return prefixMap[prefix]
+          },
+          // 通过meta将prefix转化为modifier
+          web (prefix, data, meta) {
+            const modifierStr = meta.modifierStr
+            const modifierMap = modifierStr.split('.').reduce((map, key) => {
+              if (key) {
+                map[key] = true
+              }
+              return map
+            }, {})
+            switch (prefix) {
+              case 'catch':
+                modifierMap.stop = true
+                break
+              case 'capture-bind':
+                modifierMap.capture = true
+                break
+              case 'capture-catch':
+                modifierMap.stop = true
+                modifierMap.capture = true
+                break
+            }
+            // web中不支持proxy modifier
+            delete modifierMap.proxy
+            const tempModifierStr = Object.keys(modifierMap).join('.')
+            meta.modifierStr = tempModifierStr ? '.' + tempModifierStr : ''
+            return '@'
           }
         }
       ],
@@ -212,12 +348,9 @@ module.exports = function getSpec ({ warn, error }) {
               error(`Ali environment does not support [${eventName}] event!`)
             }
           },
-          swan (eventName) {
-            const eventArr = ['tap', 'longtap', 'longpress', 'touchstart', 'touchmove', 'touchcancel', 'touchend', 'touchforcechange', 'transitionend', 'animationstart', 'animationiteration', 'animationend']
-            if (eventArr.includes(eventName)) {
-              return eventName
-            } else {
-              error(`Baidu environment does not support [${eventName}] event!`)
+          web (eventName) {
+            if (eventName === 'touchforcechange') {
+              error(`Web environment does not support [${eventName}] event!`)
             }
           }
         }

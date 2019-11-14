@@ -1,10 +1,6 @@
-<template>
-  <div :class="className" class="mpx-view" @touchstart="handleTouchstart" @touchend="handleTouchend">
-    <slot/>
-  </div>
-</template>
-
 <script>
+  import getInnerListeners from '@mpxjs/webpack-plugin/lib/runtime/components/web/getInnerListeners'
+
   export default {
     name: 'mpx-view',
     data () {
@@ -29,6 +25,23 @@
         type: Number,
         default: 400
       }
+    },
+    render (createElement) {
+      let mergeAfter
+      if (this.hoverClass && this.hoverClass !== 'none') {
+        mergeAfter = {
+          listeners: {
+            touchstart: this.handleTouchstart,
+            touchend: this.handleTouchend
+          },
+          force: true
+        }
+      }
+      const data = {
+        class: ['mpx-view', this.className],
+        on: getInnerListeners(this, undefined, mergeAfter)
+      }
+      return createElement('div', data, this.$slots.default)
     },
     computed: {
       className () {
