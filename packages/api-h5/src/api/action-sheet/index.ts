@@ -4,7 +4,7 @@ let actionSheet: ActionSheet
 
 function showActionSheet (options: WechatMiniprogram.ShowActionSheetOption) {
   if (!actionSheet) { actionSheet = new ActionSheet() }
-  actionSheet.show(options)
+  return actionSheet.show(options)
 }
 
 export {

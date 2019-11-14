@@ -1,12 +1,14 @@
+import { handleSuccess, handleFail } from '../../common/ts/utils'
+import Base from '../../common/ts/BaseClass'
 import '../../common/stylus/ActionSheet.styl'
 
-export default class ActionSheet {
+export default class ActionSheet extends Base {
   defaultOpts = {
     itemList: [],
     itemColor: '#000000',
-    success: (...args) => {},
-    fail: (...args) => {},
-    complete: (...args) => {}
+    success: null,
+    fail: null,
+    complete: null
   }
 
   actionSheet: HTMLDivElement
@@ -17,6 +19,8 @@ export default class ActionSheet {
   hideTimer: any
 
   constructor () {
+    super()
+
     const actionSheet = document.createElement('div')
     actionSheet.setAttribute('class', '__mpx_actionsheet__')
 
@@ -67,8 +71,8 @@ export default class ActionSheet {
           errMsg: 'showActionSheet:ok',
           tapIndex: index
         }
-        opts.success(res)
-        opts.complete(res)
+        handleSuccess(res, opts.success, opts.complete)
+        this.resolvePromise(res, opts.success)
       })
       list.appendChild(sheet)
     })
@@ -80,12 +84,14 @@ export default class ActionSheet {
     this.cancelBtn.addEventListener('click', () => {
       this.hide()
       const err = { errMsg: 'showActionSheet:fail cancel' }
-      opts.fail(err)
-      opts.complete(err)
+      handleFail(err, opts.fail, opts.complete)
+      this.rejectPromise(err, opts.fail)
     })
 
     this.box.classList.add('show')
     this.actionSheet.classList.add('show')
+
+    return this.initPromise()
   }
 
   hide () {

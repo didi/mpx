@@ -1,46 +1,39 @@
+import { warn, handleSuccess, handleFail } from '../../common/ts/utils'
 import SocketTask from './SocketTask'
-
-let SocketTasks = []
 
 function connectSocket (options: WechatMiniprogram.ConnectSocketOption) {
   const { url, protocols, success, fail, complete } = options
-  
+
   try {
     const socketTask = new SocketTask(url, protocols)
-    SocketTasks.push(socketTask)
-
-    const res = { errMsg: 'connectSocket:ok' }
-    typeof success === 'function' && success(res)
-    typeof complete === 'function' && complete(res)
+    handleSuccess({ errMsg: 'connectSocket:ok' }, success, complete)
   } catch (e) {
-    const res = { errMsg: `connectSocket:fail ${e}` }
-    typeof fail === 'function' && fail(res)
-    typeof complete === 'function' && complete(res)
+    handleFail({ errMsg: `connectSocket:fail ${e}` }, fail, complete)
   }
 }
 
 function sendSocketMessage () {
-  console.warn('sendSocketMessage 请使用 socketTask.send')
+  warn('sendSocketMessage 请使用 socketTask.send')
 }
 
 function closeSocket () {
-  console.warn('closeSocket 请使用 socketTask.close')
+  warn('closeSocket 请使用 socketTask.close')
 }
 
 function onSocketOpen () {
-  console.warn('onSocketOpen 请使用 socketTask.onOpen')
+  warn('onSocketOpen 请使用 socketTask.onOpen')
 }
 
 function onSocketError () {
-  console.warn('onSocketError 请使用 socketTask.onError')
+  warn('onSocketError 请使用 socketTask.onError')
 }
 
 function onSocketMessage () {
-  console.warn('onSocketMessage 请使用 socketTask.onMessage')
+  warn('onSocketMessage 请使用 socketTask.onMessage')
 }
 
 function onSocketClose () {
-  console.warn('onSocketClose 请使用 socketTask.onClose')
+  warn('onSocketClose 请使用 socketTask.onClose')
 }
 
 export {
