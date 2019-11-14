@@ -1,8 +1,7 @@
 import { handleSuccess, handleFail } from '../../common/ts/utils'
-import Base from '../../common/ts/BaseClass'
 import '../../common/stylus/ActionSheet.styl'
 
-export default class ActionSheet extends Base {
+export default class ActionSheet {
   defaultOpts = {
     itemList: [],
     itemColor: '#000000',
@@ -19,8 +18,6 @@ export default class ActionSheet extends Base {
   hideTimer: any
 
   constructor () {
-    super()
-
     const actionSheet = document.createElement('div')
     actionSheet.setAttribute('class', '__mpx_actionsheet__')
 
@@ -72,7 +69,7 @@ export default class ActionSheet extends Base {
           tapIndex: index
         }
         handleSuccess(res, opts.success, opts.complete)
-        this.resolvePromise(res, opts.success)
+        return Promise.resolve(res)
       })
       list.appendChild(sheet)
     })
@@ -85,13 +82,13 @@ export default class ActionSheet extends Base {
       this.hide()
       const err = { errMsg: 'showActionSheet:fail cancel' }
       handleFail(err, opts.fail, opts.complete)
-      this.rejectPromise(err, opts.fail)
+      if (!opts.fail) {
+        return Promise.reject(err)
+      }
     })
 
     this.box.classList.add('show')
     this.actionSheet.classList.add('show')
-
-    return this.initPromise()
   }
 
   hide () {
