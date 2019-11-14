@@ -29,5 +29,6 @@ export * from './request'
 // redirectTo, navigateTo, navigateBack, reLaunch, switchTab
 export * from './route'
 
-// connectSocket
+// connectSocket, sendSocketMessage, closeSocket
+// onSocketOpen, onSocketError, onSocketMessage, onSocketClose
 export * from './socket'
