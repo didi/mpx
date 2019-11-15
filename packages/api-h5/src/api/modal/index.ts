@@ -4,7 +4,7 @@ let modal: Modal
 
 function showModal (options: WechatMiniprogram.ShowModalOption = {}) {
   if (!modal) { modal = new Modal() }
-  modal.show(options)
+  return modal.show(options)
 }
 
 export {
