@@ -1,15 +1,19 @@
+import { handleSuccess, handleFail } from '../../common/ts/utils'
+
 function setStorage (options: WechatMiniprogram.SetStorageOption) {
   const { key, data, success, fail, complete } = options
-  let res = { errMsg: 'setStorage:ok' }
+
   try {
     setStorageSync(key, data)
-    typeof success === 'function' && success(res)
-  } catch (err) {
-    res = err
-    typeof fail === 'function' && fail(err)
-  }
 
-  typeof complete === 'function' && complete(res)
+    const res = { errMsg: 'setStorage:ok' }
+    handleSuccess(res, success, complete)
+    return Promise.resolve(res)
+  } catch (err) {
+    const res = { errMsg: `setStorage:fail ${err}` }
+    handleFail(res, fail, complete)
+    return Promise.reject(res)
+  }
 }
 
 function setStorageSync (key: string, data: any = '') {
@@ -26,15 +30,16 @@ function setStorageSync (key: string, data: any = '') {
 function getStorage (options: WechatMiniprogram.GetStorageOption) {
   const { key, success, fail, complete } = options
   const { result, data } = getItem(key)
-  const res = { errMsg: 'getStorage:ok', data: null }
+
   if (result) {
-    res.data = data
-    typeof success === 'function' && success(res)
+    const res = { errMsg: 'getStorage:ok', data: data }
+    handleSuccess(res, success, complete)
+    return Promise.resolve(res)
   } else {
-    res.errMsg = 'getStorage:fail'
-    typeof fail === 'function' && fail(res)
+    const res = { errMsg: 'getStorage:fail', data: null }
+    handleFail(res, fail, complete)
+    return Promise.reject(res)
   }
-  typeof complete === 'function' && complete(res)
 }
 
 function getStorageSync (key: string) {
@@ -59,18 +64,18 @@ function getItem (key: string) {
 
 function getStorageInfo (options: WechatMiniprogram.GetStorageInfoOption) {
   const { success, fail, complete } = options
-  let res = null
+
   try {
     const info = getStorageInfoSync()
 
-    res = Object.assign({}, { errMsg: 'getStorageInfo:ok' }, info)
-    typeof success === 'function' && success(res)
+    const res = Object.assign({}, { errMsg: 'getStorageInfo:ok' }, info)
+    handleSuccess(res, success, complete)
+    return Promise.resolve(res)
   } catch (err) {
-    res = err
-    typeof fail === 'function' && fail(err)
+    const res = { errMsg: `getStorageInfo:fail ${err}` }
+    handleFail(res, fail, complete)
+    return Promise.reject(res)
   }
-
-  typeof complete === 'function' && complete(res)
 }
 
 function getStorageInfoSync () {
@@ -83,17 +88,18 @@ function getStorageInfoSync () {
 
 function removeStorage (options: WechatMiniprogram.RemoveStorageOption) {
   const { key, success, fail, complete } = options
-  let res = { errMsg: 'removeStorage:ok' }
 
   try {
     removeStorageSync(key)
-    typeof success === 'function' && success(res)
-  } catch (err) {
-    res = err
-    typeof fail === 'function' && fail(err)
-  }
 
-  typeof complete === 'function' && complete(res)
+    const res = { errMsg: 'removeStorage:ok' }
+    handleSuccess(res, success, complete)
+    return Promise.resolve(res)
+  } catch (err) {
+    const res = { errMsg: `removeStorage:fail ${err}` }
+    handleFail(res, fail, complete)
+    return Promise.reject(res)
+  }
 }
 
 function removeStorageSync (key) {
@@ -102,16 +108,18 @@ function removeStorageSync (key) {
 
 function clearStorage (options: WechatMiniprogram.ClearStorageOption) {
   const { success, fail, complete } = options
-  let res = { errMsg: 'clearStorage:ok' }
+
   try {
     clearStorageSync()
-    typeof success === 'function' && success(res)
-  } catch (err) {
-    res = err
-    typeof fail === 'function' && fail(err)
-  }
 
-  typeof complete === 'function' && complete(res)
+    const res = { errMsg: 'clearStorage:ok' }
+    handleSuccess(res, success, complete)
+    return Promise.resolve(res)
+  } catch (err) {
+    const res = { errMsg: `clearStorage:fail ${err}` }
+    handleFail(res, fail, complete)
+    return Promise.reject(res)
+  }
 }
 
 function clearStorageSync () {

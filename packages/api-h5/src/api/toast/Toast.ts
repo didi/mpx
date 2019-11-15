@@ -1,3 +1,4 @@
+import { handleSuccess } from '../../common/ts/utils'
 import '../../common/stylus/Toast.styl'
 
 type typeOpt = 'loading' | 'toast'
@@ -90,8 +91,8 @@ export default class Toast {
     opts.duration >= 0 && this.hide({ duration: opts.duration }, type)
 
     const errMsg = type === 'loading' ? 'showLoading:ok' : 'showToast:ok'
-    opts.success({ errMsg })
-    opts.complete({ errMsg })
+    handleSuccess({ errMsg }, opts.success, opts.complete)
+    return Promise.resolve({ errMsg })
   }
 
   hide (options: hideToastOptions = {}, type) {
@@ -99,8 +100,7 @@ export default class Toast {
 
     const duration = options.duration || 0
     const errMsg = type === 'loading' ? 'hideLoading:ok' : 'hideToast:ok'
-    options.success && options.success({ errMsg })
-    options.complete && options.complete({ errMsg })
+    handleSuccess({ errMsg }, options.success, options.complete)
 
     if (this.hideTimer) {
       clearTimeout(this.hideTimer)
@@ -108,5 +108,6 @@ export default class Toast {
     }
 
     this.hideTimer = setTimeout(() => { this.toast.classList.remove('show') }, duration)
+    return Promise.resolve({ errMsg })
   }
 }

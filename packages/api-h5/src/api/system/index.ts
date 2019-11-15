@@ -1,3 +1,5 @@
+import { handleSuccess } from '../../common/ts/utils'
+
 function getSystemInfoSync ():WechatMiniprogram.GetSystemInfoSyncResult {
   const ua = navigator.userAgent.split("(")[1].split(")")[0]
   const phones = new Map([
@@ -66,8 +68,8 @@ function getSystemInfoSync ():WechatMiniprogram.GetSystemInfoSyncResult {
 function getSystemInfo (options: WechatMiniprogram.GetSystemInfoOption = {}) {
   const info = getSystemInfoSync()
   const res = Object.assign({ errMsg: 'getSystemInfo:ok' }, info)
-  options.success && options.success(res)
-  options.complete && options.complete(res)
+  handleSuccess(res, options.success, options.complete)
+  return Promise.resolve(res)
 }
 
 export {
