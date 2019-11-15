@@ -1,7 +1,7 @@
 import axios from 'axios'
 import { handleSuccess, handleFail } from '../../common/ts/utils'
 
-function request (options: WechatMiniprogram.RequestOption) {
+function request (options: WechatMiniprogram.RequestOption = { url: '' }) {
   const timeout = 60 * 1000
   const CancelToken = axios.CancelToken
   const source = CancelToken.source()

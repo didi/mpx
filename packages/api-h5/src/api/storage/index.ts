@@ -1,6 +1,6 @@
 import { handleSuccess, handleFail } from '../../common/ts/utils'
 
-function setStorage (options: WechatMiniprogram.SetStorageOption) {
+function setStorage (options: WechatMiniprogram.SetStorageOption = { key: '', data: ''}) {
   const { key, data, success, fail, complete } = options
 
   try {
@@ -16,7 +16,7 @@ function setStorage (options: WechatMiniprogram.SetStorageOption) {
   }
 }
 
-function setStorageSync (key: string, data: any = '') {
+function setStorageSync (key: string = '', data: any = '') {
   let obj = {}
 
   if (typeof data === 'symbol') {
@@ -27,7 +27,7 @@ function setStorageSync (key: string, data: any = '') {
   window.localStorage.setItem(key, JSON.stringify(obj))
 }
 
-function getStorage (options: WechatMiniprogram.GetStorageOption) {
+function getStorage (options: WechatMiniprogram.GetStorageOption = { key: '' }) {
   const { key, success, fail, complete } = options
   const { result, data } = getItem(key)
 
@@ -62,7 +62,7 @@ function getItem (key: string) {
   }
 }
 
-function getStorageInfo (options: WechatMiniprogram.GetStorageInfoOption) {
+function getStorageInfo (options: WechatMiniprogram.GetStorageInfoOption = {}) {
   const { success, fail, complete } = options
 
   try {
@@ -86,7 +86,7 @@ function getStorageInfoSync () {
   }
 }
 
-function removeStorage (options: WechatMiniprogram.RemoveStorageOption) {
+function removeStorage (options: WechatMiniprogram.RemoveStorageOption = { key: '' }) {
   const { key, success, fail, complete } = options
 
   try {
@@ -106,7 +106,7 @@ function removeStorageSync (key) {
   window.localStorage.removeItem(key)
 }
 
-function clearStorage (options: WechatMiniprogram.ClearStorageOption) {
+function clearStorage (options: WechatMiniprogram.ClearStorageOption = {}) {
   const { success, fail, complete } = options
 
   try {

@@ -3,7 +3,7 @@ import Toast from './Toast'
 let toast: Toast
 
 
-function showToast (options: WechatMiniprogram.ShowToastOption) {
+function showToast (options: WechatMiniprogram.ShowToastOption = { title: '' }) {
   if (!toast) { toast = new Toast() }
   return toast.show(options, 'toast')
 }
@@ -13,7 +13,7 @@ function hideToast (options: WechatMiniprogram.HideToastOption = {}) {
   return toast.hide(Object.assign({ duration: 0 }, options), 'toast')
 }
 
-function showLoading (options: WechatMiniprogram.ShowLoadingOption) {
+function showLoading (options: WechatMiniprogram.ShowLoadingOption = { title: '' } ) {
   if (!toast) { toast = new Toast() }
   return toast.show(Object.assign({
     icon: 'loading',
