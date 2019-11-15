@@ -1,3 +1,5 @@
+import { handleSuccess, handleFail } from '../../common/ts/utils'
+
 const socketTasks: Set<WebSocket> = new Set()
 
 class SocketTask {
@@ -43,12 +45,14 @@ class SocketTask {
     if (this._socket.readyState === 1) {
       this._socket.send(data)
       const res = { errMsg: 'sendSocketMessage:ok' }
-      typeof success === 'function' && success(res)
-      typeof complete === 'function' && complete(res)
+      handleSuccess(res, success, complete)
+      return Promise.resolve(res)
     } else {
       const res = { errMsg: 'sendSocketMessage:fail' }
-      typeof fail === 'function' && fail(res)
-      typeof complete === 'function' && complete(res)
+      handleFail(res, fail, complete)
+      if (!fail) {
+        return Promise.reject(res)
+      }
     }
   }
 
@@ -61,12 +65,14 @@ class SocketTask {
     try {
       this._socket.close()
       const res = { errMsg: 'closeSocket:ok' }
-      typeof success === 'function' && success(res)
-      typeof complete === 'function' && complete(res)
+      handleSuccess(res, success, complete)
+      return Promise.resolve(res)
     } catch (err) {
       const res = { errMsg: `closeSocket:fail ${err}` }
-      typeof fail === 'function' && fail(res)
-      typeof complete === 'function' && complete(res)
+      handleFail(res, fail, complete)
+      if (!fail) {
+        return Promise.reject(res)
+      }
     }
   }
 

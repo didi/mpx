@@ -1,5 +1,5 @@
 import axios from 'axios'
-import RequestTask from './RequestTask'
+import { handleSuccess, handleFail } from '../../common/ts/utils'
 
 function request (options: WechatMiniprogram.RequestOption) {
   const timeout = 60 * 1000
@@ -12,9 +12,9 @@ function request (options: WechatMiniprogram.RequestOption) {
     dataType = 'json',
     responseType = 'text',
     header = {},
-    success = () => {},
-    fail = () => {},
-    complete = () => {}
+    success = null,
+    fail = null,
+    complete = null
   } = options
 
   const params = method === 'GET' ? data : {}
@@ -30,7 +30,7 @@ function request (options: WechatMiniprogram.RequestOption) {
   }
 
   // @ts-ignore
-  axios({
+  return axios({
     method,
     url: options.url,
     params,
@@ -44,21 +44,21 @@ function request (options: WechatMiniprogram.RequestOption) {
     if (responseType === 'text' && dataType === 'json') {
       try { data = JSON.parse(data) } catch (e) {}
     }
-    success({
+    const result = {
       errMsg: 'request:ok',
       data,
       statusCode: res.status,
       header: res.headers
-    })
-    complete({ errMsg: 'request:ok' })
+    }
+    handleSuccess(result, success, complete)
+    return result
   }).catch(err => {
-    fail({ errMsg: 'request:fail' })
-    complete({ errMsg: 'request:fail' })
+    const res = { errMsg: `request:fail ${err}` }
+    handleFail(res, fail, complete)
+    if (!fail) {
+      return Promise.reject(res)
+    }
   })
-
-  return new RequestTask(
-    () => source.cancel()
-  )
 }
 
 export {

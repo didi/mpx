@@ -1,18 +1,22 @@
+import { handleSuccess, handleFail } from '../../common/ts/utils'
+
 function redirectTo (options: WechatMiniprogram.RedirectToOption) {
   const router = this.$router
   if (router) {
-    router.replace({
-      path: options.url,
-      onComplete: () => {
-        const errMsg = { errMsg: 'redirectTo:ok' }
-        typeof options.success === 'function' && options.success(errMsg)
-        typeof options.complete === 'function' && options.complete(errMsg)
-      },
-      onAbort: (err) => {
-        const errMsg = { errMsg: err }
-        typeof options.fail === 'function' && options.fail(errMsg)
-        typeof options.complete === 'function' && options.complete(errMsg)
-      }
+    return new Promise((resolve, reject) => {
+      router.replace({
+        path: options.url,
+        onComplete: () => {
+          const res = { errMsg: 'redirectTo:ok' }
+          handleSuccess(res, options.success, options.complete)
+          resolve(res)
+        },
+        onAbort: err => {
+          const res = { errMsg: `redirectTo:fail ${err}` }
+          handleFail(res, options.fail, options.complete)
+          !options.fail && reject(res)
+        }
+      })
     })
   }
 }
@@ -20,18 +24,20 @@ function redirectTo (options: WechatMiniprogram.RedirectToOption) {
 function navigateTo (options: WechatMiniprogram.NavigateToOption) {
   const router = this.$router
   if (router) {
-    router.push({
-      path: options.url,
-      onComplete: () => {
-        const res = { errMsg: 'navigateTo:ok', eventChannel: null }
-        typeof options.success === 'function' && options.success(res)
-        typeof options.complete === 'function' && options.complete(res)
-      },
-      onAbort: (err) => {
-        const res = { errMsg: err }
-        typeof options.fail === 'function' && options.fail(res)
-        typeof options.complete === 'function' && options.complete(res)
-      }
+    return new Promise((resolve, reject) => {
+      router.push({
+        path: options.url,
+        onComplete: () => {
+          const res = { errMsg: 'navigateTo:ok', eventChannel: null }
+          handleSuccess(res, options.success, options.complete)
+          resolve(res)
+        },
+        onAbort: err => {
+          const res = { errMsg: err }
+          handleFail(res, options.fail, options.complete)
+          !options.fail && reject(res)
+        }
+      })
     })
   }
 }
@@ -41,25 +47,27 @@ function navigateBack (options: WechatMiniprogram.NavigateBackOption) {
   const delta = options.delta || 1
   const res = { errMsg: 'navigateBack:ok' }
   router.go(-delta)
-  typeof options.success === 'function' && options.success(res)
-  typeof options.complete === 'function' && options.complete(res)
+  handleSuccess(res, options.success, options.complete)
+  return Promise.resolve(res)
 }
 
 function reLaunch (options: WechatMiniprogram.ReLaunchOption) {
   const router = this.$router
   if (router) {
-    router.replace({
-      path: options.url,
-      onComplete: () => {
-        const errMsg = { errMsg: 'reLaunch:ok' }
-        typeof options.success === 'function' && options.success(errMsg)
-        typeof options.complete === 'function' && options.complete(errMsg)
-      },
-      onAbort: (err) => {
-        const errMsg = { errMsg: err }
-        typeof options.fail === 'function' && options.fail(errMsg)
-        typeof options.complete === 'function' && options.complete(errMsg)
-      }
+    return new Promise((resolve, reject) => {
+      router.replace({
+        path: options.url,
+        onComplete: () => {
+          const res = { errMsg: 'reLaunch:ok' }
+          handleSuccess(res, options.success, options.complete)
+          resolve(res)
+        },
+        onAbort: err => {
+          const res = { errMsg: err }
+          handleFail(res, options.fail, options.complete)
+          !options.fail && reject(res)
+        }
+      })
     })
   }
 }
@@ -67,18 +75,20 @@ function reLaunch (options: WechatMiniprogram.ReLaunchOption) {
 function switchTab (options: WechatMiniprogram.SwitchTabOption) {
   const router = this.$router
   if (router) {
-    router.replace({
-      path: options.url,
-      onComplete: () => {
-        const errMsg = { errMsg: 'switchTab:ok' }
-        typeof options.success === 'function' && options.success(errMsg)
-        typeof options.complete === 'function' && options.complete(errMsg)
-      },
-      onAbort: (err) => {
-        const errMsg = { errMsg: err }
-        typeof options.fail === 'function' && options.fail(errMsg)
-        typeof options.complete === 'function' && options.complete(errMsg)
-      }
+    return new Promise((resolve, reject) => {
+      router.replace({
+        path: options.url,
+        onComplete: () => {
+          const res = { errMsg: 'switchTab:ok' }
+          handleSuccess(res, options.success, options.complete)
+          resolve(res)
+        },
+        onAbort: err => {
+          const res = { errMsg: err }
+          handleFail(res, options.fail, options.complete)
+          !options.fail && reject(res)
+        }
+      })
     })
   }
 }
