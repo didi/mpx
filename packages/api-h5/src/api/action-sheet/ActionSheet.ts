@@ -1,7 +1,8 @@
+import ToPromise from '../../common/ts/ToPromise'
 import { handleSuccess, handleFail } from '../../common/ts/utils'
 import '../../common/stylus/ActionSheet.styl'
 
-export default class ActionSheet {
+export default class ActionSheet extends ToPromise {
   defaultOpts = {
     itemList: [],
     itemColor: '#000000',
@@ -18,6 +19,7 @@ export default class ActionSheet {
   hideTimer: any
 
   constructor () {
+    super()
     const actionSheet = document.createElement('div')
     actionSheet.setAttribute('class', '__mpx_actionsheet__')
 
@@ -62,15 +64,15 @@ export default class ActionSheet {
       const sheet = document.createElement('div')
       sheet.setAttribute('class', '__mpx_actionsheet_sheet__')
       sheet.textContent = item
-      sheet.addEventListener('click', () => {
+      sheet.onclick = () => {
         this.hide()
         const res = {
           errMsg: 'showActionSheet:ok',
           tapIndex: index
         }
         handleSuccess(res, opts.success, opts.complete)
-        return Promise.resolve(res)
-      })
+        this.toPromiseResolve(res)
+      }
       list.appendChild(sheet)
     })
 
@@ -78,17 +80,17 @@ export default class ActionSheet {
     this.list = list
     this.list.style.color = opts.itemColor
 
-    this.cancelBtn.addEventListener('click', () => {
+    this.cancelBtn.onclick = () => {
       this.hide()
       const err = { errMsg: 'showActionSheet:fail cancel' }
       handleFail(err, opts.fail, opts.complete)
-      if (!opts.fail) {
-        return Promise.reject(err)
-      }
-    })
+      !opts.fail && this.toPromiseReject(err)
+    }
 
     this.box.classList.add('show')
     this.actionSheet.classList.add('show')
+
+    return this.toPromiseInitPromise()
   }
 
   hide () {

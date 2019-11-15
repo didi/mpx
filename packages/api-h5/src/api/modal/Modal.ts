@@ -1,6 +1,8 @@
+import ToPromise from '../../common/ts/ToPromise'
+import { handleSuccess } from '../../common/ts/utils'
 import '../../common/stylus/Modal.styl'
 
-export default class Modal {
+export default class Modal extends ToPromise {
   defaultOpts = {
     title: '',
     content: '',
@@ -24,6 +26,7 @@ export default class Modal {
   hideTimer: any
 
   constructor () {
+    super()
     const modal = document.createElement('div')
     modal.setAttribute('class', '__mpx_modal__')
 
@@ -88,28 +91,30 @@ export default class Modal {
     this.confirmBtn.style.color = opts.confirmColor
     this.confirmBtn.textContent = opts.confirmText
 
-    this.cancelBtn.addEventListener('click', () => {
+    this.cancelBtn.onclick = () => {
       this.hide()
       const result = {
         errMsg: 'showModal:ok',
         cancel: true,
         confirm: false
       }
-      opts.success(result)
-      opts.complete(result)
-    })
-    this.confirmBtn.addEventListener('click', () => {
+      handleSuccess(result, opts.success, opts.complete)
+      this.toPromiseResolve(result)
+    }
+    this.confirmBtn.onclick = () => {
       this.hide()
       const result = {
         errMsg: 'showModal:ok',
         cancel: false,
         confirm: true
       }
-      opts.success(result)
-      opts.complete(result)
-    })
+      handleSuccess(result, opts.success, opts.complete)
+      this.toPromiseResolve(result)
+    }
 
     this.modal.classList.add('show')
+
+    return this.toPromiseInitPromise()
   }
   hide () {
     if (this.hideTimer) {
