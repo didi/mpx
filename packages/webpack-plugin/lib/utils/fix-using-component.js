@@ -7,8 +7,8 @@ module.exports = function ({ usingComponents, mode, log }) {
       Object.keys(usingComponents).forEach(k => {
         const newK = capitalToHyphen(k)
         if (newK !== k) {
-          if (log && usingComponents[newK]) {
-            log(`Component name "${newK}" already exists, so component "${k}" can't be converted automatically and it isn't supported in swan environment!`)
+          if (usingComponents[newK]) {
+            log && log(`Component name "${newK}" already exists, so component "${k}" can't be converted automatically and it isn't supported in swan environment!`)
           } else {
             const pathValue = usingComponents[k]
             usingComponents[newK] = pathValue
