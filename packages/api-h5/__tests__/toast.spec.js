@@ -128,4 +128,25 @@ describe('test toast', () => {
     expect(success.mock.calls[0][0]['errMsg']).toBe('hideToast:ok')
     expect(complete.mock.calls.length).toBe(1)
   })
+
+  test('should exec showToast promise then', () => {
+    return showToast({
+      title: 'show'
+    }).then(res => {
+      expect(res).toEqual({
+        errMsg: 'showToast:ok'
+      })
+    })
+  })
+
+  test('should exec hideToast promise then', () => {
+    showToast({
+      title: 'hide'
+    })
+    return hideToast().then(res => {
+      expect(res).toEqual({
+        errMsg: 'hideToast:ok'
+      })
+    })
+  })
 })
