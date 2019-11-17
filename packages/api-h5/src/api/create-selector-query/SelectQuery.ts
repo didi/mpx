@@ -36,10 +36,11 @@ class SelectQuery {
     const queueCb = this._queueCb
     this._queue.forEach(item => {
       const { selector, component, single, fields } = item
+
       let curComponent: HTMLDivElement | Document  = document
 
-      if (component && component._node && component._node.elm) {
-        curComponent = component._node.elm
+      if (component && component._vnode && component._vnode.elm) {
+        curComponent = component._vnode.elm
       } else if (component && component.nodeType === 1) {
         curComponent = component
       }
