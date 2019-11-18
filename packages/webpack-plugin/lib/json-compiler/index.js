@@ -126,7 +126,7 @@ module.exports = function (raw) {
     })
   }
 
-  let json
+  let json = {}
   try {
     // 使用了MPXJSON的话先编译
     // 此处需要使用真实的resourcePath
@@ -139,11 +139,9 @@ module.exports = function (raw) {
     return callback(err)
   }
 
-  if (!json) {
-    json = {}
+  if (json.usingComponents) {
+    fixUsingComponent({ usingComponents: json.usingComponents, mode, log: emitWarning })
   }
-
-  fixUsingComponent({ usingComponents: json.usingComponents, mode, log: emitWarning })
 
   const rulesRunnerOptions = {
     mode,

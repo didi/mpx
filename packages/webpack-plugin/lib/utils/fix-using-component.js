@@ -8,7 +8,7 @@ module.exports = function ({ usingComponents, mode, log }) {
         const newK = capitalToHyphen(k)
         if (newK !== k) {
           if (usingComponents[newK]) {
-            log && log(`Component name "${newK}" already exists, so component "${k}" can't be converted automatically and it isn't supported in swan environment!`)
+            log && log(`Component name "${newK}" already exists, so component "${k}" can't be converted automatically and it isn't supported in ali/swan environment!`)
           } else {
             const pathValue = usingComponents[k]
             usingComponents[newK] = pathValue
