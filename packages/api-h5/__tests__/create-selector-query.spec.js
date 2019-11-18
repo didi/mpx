@@ -50,8 +50,9 @@ describe('test create-selector-query', () => {
     }, cb)
     query.exec(res => {
       expect(res[0].length).toBe(1)
-      expect(res[0]).toBe(1)
       expect(res[1].scrollTop).toBe(0)
+      expect(res[2].length).toBe(2)
+      expect(res[2][0].backgroundColor).toBe('red')
     })
     expect(cb.mock.calls.length).toBe(1)
   })
