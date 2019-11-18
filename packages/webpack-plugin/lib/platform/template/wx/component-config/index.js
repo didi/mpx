@@ -25,6 +25,7 @@ const canvas = require('./canvas')
 const wxs = require('./wxs')
 const template = require('./template')
 const Nonsupport = require('./unsupported')
+const HyphenTagName = require('./hypen-tag-name')
 
 module.exports = function getComponentConfigs ({ warn, error }) {
   /**
@@ -88,6 +89,7 @@ module.exports = function getComponentConfigs ({ warn, error }) {
     map({ print }),
     canvas({ print }),
     wxs({ print }),
-    template()
+    template(),
+    HyphenTagName({ print })
   ]
 }

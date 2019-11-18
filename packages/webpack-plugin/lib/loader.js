@@ -5,6 +5,7 @@ const loaderUtils = require('loader-utils')
 const InjectDependency = require('./dependency/InjectDependency')
 const parseRequest = require('./utils/parse-request')
 const matchCondition = require('./utils/match-condition')
+const fixUsingComponent = require('./utils/fix-using-component')
 
 module.exports = function (content) {
   this.cacheable()
@@ -77,6 +78,7 @@ module.exports = function (content) {
   try {
     let ret = JSON.parse(parts.json.content)
     if (ret.usingComponents) {
+      fixUsingComponent({ usingComponents: ret.usingComponents, mode })
       usingComponents = usingComponents.concat(Object.keys(ret.usingComponents))
     }
   } catch (e) {
