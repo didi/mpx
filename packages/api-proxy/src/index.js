@@ -35,7 +35,7 @@ export default function install (target, options = {}) {
 
   Object.keys(allApi).forEach(api => {
     try {
-      if (allApi[api] !== 'function') {
+      if (typeof allApi[api] !== 'function') {
         target[api] = allApi[api]
         return
       }
