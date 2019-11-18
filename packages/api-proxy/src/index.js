@@ -35,6 +35,11 @@ export default function install (target, options = {}) {
 
   Object.keys(allApi).forEach(api => {
     try {
+      if (allApi[api] !== 'function') {
+        target[api] = allApi[api]
+        return
+      }
+
       target[api] = (...args) => {
         return allApi[api].apply(target, args)
       }
