@@ -32,3 +32,6 @@ export * from './route'
 // connectSocket, sendSocketMessage, closeSocket
 // onSocketOpen, onSocketError, onSocketMessage, onSocketClose
 export * from './socket'
+
+// setNavigationBarTitle setNavigationBarColor
+export * from './set-navigation-bar'
