@@ -35,3 +35,6 @@ export * from './socket'
 
 // setNavigationBarTitle setNavigationBarColor
 export * from './set-navigation-bar'
+
+// nextTick
+export * from './next-tick'
