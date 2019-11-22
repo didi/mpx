@@ -13,40 +13,36 @@ module.exports = function normalizeComponentRules (cfgs, spec) {
         data = Object.assign({}, data, { el, eventRules })
         const testKey = 'name'
         let rAttrsList = []
+        const options = {
+          mode,
+          testKey,
+          data
+        }
         el.attrsList.forEach((attr) => {
           const meta = {}
-          let rAttr = runRules(spec.preAttrs, attr, {
-            mode,
-            testKey,
-            data
-          })
+          let rAttr = runRules(spec.preAttrs, attr, options)
           rAttr = runRules(spec.directive, rAttr, {
-            mode,
-            testKey,
-            data,
+            ...options,
             meta
           })
+          // 指令未匹配到时说明为props，因为目前所有的指令都需要转换
           if (!meta.processed) {
-            rAttr = runRules(cfg.props, rAttr, {
-              mode,
-              testKey,
-              data
-            })
+            rAttr = runRules(spec.preProps, rAttr, options)
+            rAttr = runRules(cfg.props, rAttr, options)
+            if (Array.isArray(rAttr)) {
+              rAttr = rAttr.map((attr) => {
+                return runRules(spec.postProps, attr, options)
+              })
+            } else if (rAttr !== false) {
+              rAttr = runRules(spec.postProps, rAttr, options)
+            }
           }
+          // 生成目标attrsList
           if (Array.isArray(rAttr)) {
             rAttrsList = rAttrsList.concat(rAttr)
-          } else if (rAttr === false) {
-            // delete original attr
-          } else {
+          } else if (rAttr !== false) {
             rAttrsList.push(rAttr)
           }
-        })
-        rAttrsList = rAttrsList.map((attr) => {
-          return runRules(spec.postAttrs, attr, {
-            mode,
-            testKey,
-            data
-          })
         })
         el.attrsList = rAttrsList
         el.attrsMap = require('../../template-compiler/compiler').makeAttrsMap(rAttrsList)

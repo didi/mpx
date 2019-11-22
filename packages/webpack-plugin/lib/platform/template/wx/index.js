@@ -7,10 +7,10 @@ const parseMustache = require('../../../template-compiler/compiler').parseMustac
 module.exports = function getSpec ({ warn, error }) {
   const spec = {
     supportedModes: ['ali', 'swan', 'qq', 'tt', 'web'],
-    // attrs预处理
-    preAttrs: [],
-    // attrs后处理
-    postAttrs: [
+    // props预处理
+    preProps: [],
+    // props后处理
+    postProps: [
       {
         web ({ name, value }) {
           const parsed = parseMustache(value)
@@ -138,11 +138,13 @@ module.exports = function getSpec ({ warn, error }) {
       },
       {
         test: 'wx:model',
-        web ({ value }) {
+        web ({ value }, { el }) {
+          el.hasEvent = true
+          const parsed = parseMustache(value)
           return [
             {
               name: 'v-model',
-              value
+              value: parsed.result
             },
             {
               name: '__model',

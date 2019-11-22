@@ -51,24 +51,25 @@ function processTap (listeners, context) {
   }
   let startTimer
   let needTap = true
+  let detail = {}
   mergeListeners(listeners, {
     touchstart (e) {
+      detail = {
+        x: e.touches[0].pageX,
+        y: e.touches[0].pageY
+      }
       if (listeners.longpress || listeners.longtap) {
-        const detail = {
-          x: e.touches[0].pageX,
-          y: e.touches[0].pageY
-        }
         startTimer = setTimeout(() => {
           needTap = false
           if (listeners.longpress) {
-            const re = Object.assign({}, e, {
+            const re = inheritEvent(e, {
               type: 'longpress',
               detail
             })
             context.$emit('longpress', re)
           }
           if (listeners.longtap) {
-            const re = Object.assign({}, e, {
+            const re = inheritEvent(e, {
               type: 'longtap',
               detail
             })
@@ -78,36 +79,49 @@ function processTap (listeners, context) {
       }
     },
     touchend (e) {
+      // debugger
       startTimer && clearTimeout(startTimer)
-      if (needTap) {
-        if (listeners.tap && needTap) {
-          const detail = {
-            x: e.touches[0].pageX,
-            y: e.touches[0].pageY
-          }
-          const re = Object.assign({}, e, {
-            type: 'tap',
-            detail
-          })
-          context.$emit('tap', re)
-        }
+      if (listeners.tap && needTap) {
+        const re = inheritEvent(e, {
+          type: 'tap',
+          detail
+        })
+        context.$emit('tap', re)
       }
     }
+  }, {
+    force: true
   })
 }
 
-export function extendDetail (e, detail) {
-  // 为了让冒泡事件同样能访问到e.detail，这里直接对e进行修改而不采用新的事件对象
-  Object.defineProperty(e, 'detail', {
-    value: detail,
-    enumerable: true,
-    configurable: true,
-    writable: true
+export function extendEvent (e, extendObj = {}) {
+  Object.keys(extendObj).forEach((key) => {
+    Object.defineProperty(e, key, {
+      value: extendObj[key],
+      enumerable: true,
+      configurable: true,
+      writable: true
+    })
   })
 }
 
-export default function getInnerListeners (context, mergeBefore = {}, mergeAfter = {}) {
-  const listeners = Object.assign({}, context.$listeners)
+export function inheritEvent (e, extendObj = {}) {
+  const ne = Object.create(e)
+  extendEvent(ne, extendObj)
+  return ne
+}
+
+export function getCustomEvent (type, detail) {
+  const ce = new CustomEvent(type)
+  if (detail !== undefined) {
+    ce.detail = detail
+  }
+  return ce
+}
+
+export default function getInnerListeners (context, options = {}) {
+  let { mergeBefore = {}, mergeAfter = {}, defaultListeners = {} } = options
+  const listeners = Object.assign({}, defaultListeners, context.$listeners)
   const mergeBeforeOptions = {
     before: true
   }

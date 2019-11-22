@@ -133,6 +133,11 @@ class MpxWebpackPlugin {
   }
 
   apply (compiler) {
+    if (!compiler.__mpx__) {
+      compiler.__mpx__ = true
+    } else {
+      throw new Error('Multiple MpxWebpackPlugin instances exist in webpack compiler, please check webpack plugins config!')
+    }
     // 强制设置publicPath为'/'
     if (compiler.options.output.publicPath && compiler.options.output.publicPath !== publicPath) {
       console.warn(`MpxWebpackPlugin accept output publicPath to be ${publicPath} only, custom output publicPath will be ignored!`)

@@ -13,7 +13,7 @@ module.exports = function ({ print }) {
 
   return {
     test: TAG_NAME,
-    web (prop, { el }) {
+    web (tag, { el }) {
       if (el.hasEvent) {
         el.isBuiltIn = true
       }

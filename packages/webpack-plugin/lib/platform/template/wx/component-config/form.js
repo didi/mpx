@@ -5,9 +5,14 @@ module.exports = function ({ print }) {
   const baiduPropLog = print({ platform: 'baidu', tag: TAG_NAME, isError: false })
   const qqPropLog = print({ platform: 'qq', tag: TAG_NAME, isError: false })
   const ttPropLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false })
+  const webPropLog = print({ platform: 'web', tag: TAG_NAME, isError: false })
 
   return {
     test: TAG_NAME,
+    web (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-form'
+    },
     props: [
       {
         test: /^(report-submit-timeout)$/,
@@ -17,19 +22,8 @@ module.exports = function ({ print }) {
       },
       {
         test: /^(report-submit|report-submit-timeout)$/,
-        tt: ttPropLog
-      }
-    ],
-    event: [
-      {
-        test: /^(submit|reset)$/,
-        ali (eventName) {
-          const eventMap = {
-            'submit': 'submit',
-            'reset': 'reset'
-          }
-          return eventMap[eventName]
-        }
+        tt: ttPropLog,
+        web: webPropLog
       }
     ]
   }

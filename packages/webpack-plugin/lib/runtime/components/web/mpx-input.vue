@@ -1,10 +1,16 @@
 <script>
-  import getInnerListeners, { extendDetail } from '@mpxjs/webpack-plugin/lib/runtime/components/web/getInnerListeners'
+  import getInnerListeners, {
+    extendEvent,
+    getCustomEvent
+  } from '@mpxjs/webpack-plugin/lib/runtime/components/web/getInnerListeners'
 
   export default {
     name: 'mpx-input',
     props: {
-      value: String,
+      value: {
+        type: String,
+        default: ''
+      },
       type: {
         type: String,
         default: 'text'
@@ -66,19 +72,25 @@
     render (createElement) {
       const mergeBefore = {
         input (e) {
-          extendDetail(e, {
-            value: e.target.value
+          extendEvent(e, {
+            detail: {
+              value: e.target.value
+            }
           })
         },
         focus (e) {
           debugger
-          extendDetail(e, {
-            value: e.target.value
+          extendEvent(e, {
+            detail: {
+              value: e.target.value
+            }
           })
         },
         blur (e) {
-          extendDetail(e, {
-            value: e.target.value
+          extendEvent(e, {
+            detail: {
+              value: e.target.value
+            }
           })
         }
       }
@@ -95,13 +107,19 @@
 
       const data = {
         class: 'mpx-input',
-        on: getInnerListeners(this, mergeBefore),
+        on: getInnerListeners(this, { mergeBefore }),
         attrs,
         ref: 'input'
       }
       return createElement('input', data, this.$slots.default)
     },
     methods: {
+      notifyChange () {
+        const e = getCustomEvent('input')
+        const target = this.$refs.input
+        // 通过原生input派发事件
+        target && target.dispatchEvent(e)
+      },
       setFocus () {
         this.$nextTick(() => {
           this.$refs.input.focus()

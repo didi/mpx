@@ -39,7 +39,7 @@
       }
       const data = {
         class: ['mpx-view', this.className],
-        on: getInnerListeners(this, undefined, mergeAfter)
+        on: getInnerListeners(this, { mergeAfter})
       }
       return createElement('div', data, this.$slots.default)
     },
