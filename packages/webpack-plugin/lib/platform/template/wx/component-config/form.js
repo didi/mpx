@@ -10,6 +10,7 @@ module.exports = function ({ print }) {
   return {
     test: TAG_NAME,
     web (tag, { el }) {
+      // form全量使用内建组件
       el.isBuiltIn = true
       return 'mpx-form'
     },

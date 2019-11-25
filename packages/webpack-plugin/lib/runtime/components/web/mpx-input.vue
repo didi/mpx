@@ -38,18 +38,6 @@
       }
     },
     watch: {
-      focus: {
-        handler (val) {
-          if (val) this.setFocus()
-        },
-        immediate: true
-      },
-      autoFocus: {
-        handler (val) {
-          if (val) this.setFocus()
-        },
-        immediate: true
-      },
       cursor: {
         handler (val) {
           if (val !== -1) this.setSelectionRange(val, val)
@@ -79,7 +67,6 @@
           })
         },
         focus (e) {
-          debugger
           extendEvent(e, {
             detail: {
               value: e.target.value
@@ -99,6 +86,7 @@
         type: this.password ? 'password' : this.type,
         placeholder: this.placeholder,
         disabled: this.disabled,
+        autofocus: this.focus || this.autoFocus
       }
 
       if (this.maxlength !== -1) {
@@ -119,11 +107,6 @@
         const target = this.$refs.input
         // 通过原生input派发事件
         target && target.dispatchEvent(e)
-      },
-      setFocus () {
-        this.$nextTick(() => {
-          this.$refs.input.focus()
-        })
       },
       setSelectionRange (start, end) {
         if (!this.__selectionRange) this.__selectionRange = {

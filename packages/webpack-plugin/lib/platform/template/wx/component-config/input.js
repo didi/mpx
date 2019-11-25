@@ -51,7 +51,7 @@ module.exports = function ({ print }) {
         }
       },
       {
-        test: /^(password|auto-focus|focus|cursor|selection-start|selection-end)$/,
+        test: /^(password|auto-focus|focus|cursor|selection-start|selection-end|use-built-in)$/,
         web (prop, { el }) {
           el.isBuiltIn = true
         }

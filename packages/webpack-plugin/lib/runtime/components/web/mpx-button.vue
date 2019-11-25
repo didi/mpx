@@ -9,6 +9,7 @@
       }
     },
     props: {
+      // todo 封装支持相关props
       size: {
         type: String,
         default: 'default'
