@@ -22,7 +22,7 @@ module.exports = function runRules (rules = [], input, options = {}) {
     const tester = (normalizeTest || defaultNormalizeTest)(rule.test, rule)
     const testInput = testKey ? input[testKey] : input
     const processor = rule[mode]
-    // target传入data中供processor使用
+    // mode传入data中供processor使用
     Object.assign(data, {
       mode
     })
