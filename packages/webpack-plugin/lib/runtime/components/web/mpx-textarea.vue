@@ -19,7 +19,6 @@
       },
       autoFocus: Boolean,
       focus: Boolean,
-      autoHeight: Boolean,
       cursor: {
         type: Number,
         default: -1
@@ -87,7 +86,9 @@
         attrs.maxlength = this.maxlength
       }
 
-      const children = this.$slots.default.concat(this.value)
+      const slots = this.$slots.default || []
+
+      const children = slots.concat(this.value)
 
       const data = {
         class: 'mpx-textarea',

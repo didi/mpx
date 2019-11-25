@@ -37,7 +37,8 @@
       let text = ''
       let classNames = ['mpx-text']
       let decode = false
-      this.$slots.default.forEach((item) => {
+      const slots = this.$slots.default || []
+      slots.forEach((item) => {
         if (item.text) {
           // item.text = encodeText(item.text)
           text += item.text
@@ -66,7 +67,7 @@
           innerHTML: text
         }
       }
-      return createElement('span', data, this.$slots.default)
+      return createElement('span', data, slots)
     }
   }
 </script>

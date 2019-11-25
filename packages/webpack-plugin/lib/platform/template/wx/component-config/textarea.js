@@ -25,7 +25,7 @@ module.exports = function ({ print }) {
         tt: ttPropLog
       },
       {
-        test: /^(placeholder-style|placeholder-class|fixed|cursor-spacing|show-confirm-bar|adjust-position|hold-keyboard)$/,
+        test: /^(placeholder-style|placeholder-class|fixed|cursor-spacing|show-confirm-bar|adjust-position|hold-keyboard|auto-height)$/,
         web: webPropLog
       }
     ],
