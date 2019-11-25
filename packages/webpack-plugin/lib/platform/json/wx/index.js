@@ -16,10 +16,11 @@ module.exports = function getSpec ({ warn, error }) {
       isError = opts.isError
     }
 
-    return function (input, data = [], meta) {
+    return function (input, data, meta) {
       const currPath = meta.paths.join('|')
+      const pathArr = Array.isArray(data) ? data : []
       if (shouldLog) {
-        print(meta.$targetMode, data.concat(currPath).join('.'), isError)
+        print(meta.$targetMode, pathArr.concat(currPath).join('.'), isError)
       }
       meta.paths.forEach((path) => {
         delete input[path]
