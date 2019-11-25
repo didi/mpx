@@ -11,11 +11,6 @@
         type: String,
         default: ''
       },
-      type: {
-        type: String,
-        default: 'text'
-      },
-      password: Boolean,
       placeholder: String,
       disabled: Boolean,
       maxlength: {
@@ -24,6 +19,7 @@
       },
       autoFocus: Boolean,
       focus: Boolean,
+      autoHeight: Boolean,
       cursor: {
         type: Number,
         default: -1
@@ -67,7 +63,6 @@
           })
         },
         focus (e) {
-          debugger
           extendEvent(e, {
             detail: {
               value: e.target.value
@@ -83,8 +78,6 @@
         }
       }
       const attrs = {
-        value: this.value,
-        type: this.password ? 'password' : this.type,
         placeholder: this.placeholder,
         disabled: this.disabled,
         autofocus: this.focus || this.autoFocus
@@ -94,18 +87,20 @@
         attrs.maxlength = this.maxlength
       }
 
+      const children = this.$slots.default.concat(this.value)
+
       const data = {
-        class: 'mpx-input',
+        class: 'mpx-textarea',
         on: getInnerListeners(this, { mergeBefore }),
         attrs,
-        ref: 'input'
+        ref: 'textarea'
       }
-      return createElement('input', data, this.$slots.default)
+      return createElement('textarea', data, children)
     },
     methods: {
       notifyChange () {
         const e = getCustomEvent('input')
-        const target = this.$refs.input
+        const target = this.$refs.textarea
         // 通过原生input派发事件
         target && target.dispatchEvent(e)
       },
@@ -122,7 +117,7 @@
           this.$nextTick(() => {
             this.__selectionRange.setting = false
             if (this.__selectionRange.start !== -1 && this.__selectionRange.end !== -1) {
-              this.$refs.input.setSelectionRange(this.__selectionRange.start, this.__selectionRange.end)
+              this.$refs.textarea.setSelectionRange(this.__selectionRange.start, this.__selectionRange.end)
             }
           })
         }

@@ -6,6 +6,7 @@ module.exports = function ({ print }) {
   const ttPropLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false })
   const ttEventLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false, type: 'event' })
   const webPropLog = print({ platform: 'web', tag: TAG_NAME, isError: false })
+  const webEventLog = print({ platform: 'web', tag: TAG_NAME, isError: false, type: 'event' })
 
   return {
     test: TAG_NAME,
@@ -24,7 +25,7 @@ module.exports = function ({ print }) {
         tt: ttPropLog
       },
       {
-        test: /^(placeholder-style|placeholder-class|cursor-spacing|confirm-type|confirm-hold|adjust-position|hold-keyboard)$/,
+        test: /^(placeholder-style|placeholder-class|fixed|cursor-spacing|show-confirm-bar|adjust-position|hold-keyboard)$/,
         web: webPropLog
       }
     ],
@@ -42,9 +43,14 @@ module.exports = function ({ print }) {
         }
       },
       {
-        test: /^(linechange)$/,
+        test: 'linechange',
         ali: aliEventLog,
-        tt: ttEventLog
+        tt: ttEventLog,
+        web: webEventLog
+      },
+      {
+        test: 'confirm',
+        web: webEventLog
       }
     ]
   }
