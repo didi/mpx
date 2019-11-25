@@ -20,6 +20,12 @@ function transformApi (options) {
   const transedApi = Object.create(null)
 
   Object.keys(needProxy).forEach(api => {
+    // 非函数不做转换
+    if (typeof needProxy[api] !== 'function') {
+      transedApi[api] = needProxy[api]
+      return
+    }
+
     transedApi[api] = (...args) => {
       const to = options.to
       let from = args.pop()

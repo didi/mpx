@@ -1,5 +1,5 @@
 /**
- * mpxjs webview bridge v2.2.17
+ * mpxjs webview bridge v2.2.34
  * (c) 2019 @mpxjs team
  * @license Apache
  */
@@ -100,6 +100,7 @@ const getWebviewApi = (sdkReady) => {
     redirectTo: 'redirectTo',
     getEnv: 'getEnv',
     postMessage: 'postMessage',
+    getLoadError: 'getLoadError',
     onMessage: {
       ali: true
     }
@@ -113,6 +114,9 @@ const getWebviewApi = (sdkReady) => {
         console.log(`${env}小程序不支持 ${item} 方法`);
       } else {
         return sdkReady.then(() => {
+          if (apiName === 'getLoadError') {
+            return Promise.resolve('js加载完成')
+          }
           getEnvWebviewVariable()[apiName](...args);
         })
       }
@@ -279,8 +283,8 @@ const bridgeFunction = {
   mpxEnv: env
 };
 
-const { navigateTo, navigateBack, switchTab, reLaunch, redirectTo, getEnv, postMessage } = webviewApiList;
+const { navigateTo, navigateBack, switchTab, reLaunch, redirectTo, getEnv, postMessage, getLoadError } = webviewApiList;
 const { getAdvancedApi: getAdvancedApi$1 } = bridgeFunction;
 
 export default bridgeFunction;
-export { getAdvancedApi$1 as getAdvancedApi, getEnv, navigateBack, navigateTo, postMessage, reLaunch, redirectTo, switchTab };
+export { getAdvancedApi$1 as getAdvancedApi, getEnv, getLoadError, navigateBack, navigateTo, postMessage, reLaunch, redirectTo, switchTab };

@@ -10,6 +10,7 @@ const nativeLoaderPath = normalize.lib('native-loader')
 const parseRequest = require('../utils/parse-request')
 const mpxJSON = require('../utils/mpx-json')
 const toPosix = require('../utils/to-posix')
+const fixUsingComponent = require('../utils/fix-using-component')
 const getRulesRunner = require('../platform/index')
 const isUrlRequest = require('../utils/is-url-request')
 const getPageName = require('../utils/get-page-name')
@@ -21,6 +22,18 @@ module.exports = function (raw) {
   const nativeCallback = this.async()
   const options = loaderUtils.getOptions(this) || {}
   const mpx = this._compilation.__mpx__
+
+  const emitWarning = (msg) => {
+    this.emitWarning(
+      new Error('[json compiler][' + this.resource + ']: ' + msg)
+    )
+  }
+
+  const emitError = (msg) => {
+    this.emitError(
+      new Error('[json compiler][' + this.resource + ']: ' + msg)
+    )
+  }
 
   if (!mpx) {
     return nativeCallback(null, raw)
@@ -114,7 +127,7 @@ module.exports = function (raw) {
     })
   }
 
-  let json
+  let json = {}
   try {
     // 使用了MPXJSON的话先编译
     // 此处需要使用真实的resourcePath
@@ -127,22 +140,18 @@ module.exports = function (raw) {
     return callback(err)
   }
 
+  if (json.usingComponents) {
+    fixUsingComponent({ usingComponents: json.usingComponents, mode, log: emitWarning })
+  }
+
   const rulesRunnerOptions = {
     mode,
     mpx,
     srcMode: localSrcMode || globalSrcMode,
     type: 'json',
     waterfall: true,
-    warn: (msg) => {
-      this.emitWarning(
-        new Error('[json compiler][' + this.resource + ']: ' + msg)
-      )
-    },
-    error: (msg) => {
-      this.emitError(
-        new Error('[json compiler][' + this.resource + ']: ' + msg)
-      )
-    }
+    warn: emitWarning,
+    error: emitError
   }
   if (!isApp) {
     rulesRunnerOptions.mainKey = pagesMap[resourcePath] ? 'page' : 'component'

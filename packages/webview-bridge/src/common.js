@@ -57,6 +57,7 @@ const getWebviewApi = (sdkReady) => {
     redirectTo: 'redirectTo',
     getEnv: 'getEnv',
     postMessage: 'postMessage',
+    getLoadError: 'getLoadError',
     onMessage: {
       ali: true
     }
@@ -70,6 +71,9 @@ const getWebviewApi = (sdkReady) => {
         console.log(`${env}小程序不支持 ${item} 方法`)
       } else {
         return sdkReady.then(() => {
+          if (apiName === 'getLoadError') {
+            return Promise.resolve('js加载完成')
+          }
           getEnvWebviewVariable()[apiName](...args)
         })
       }

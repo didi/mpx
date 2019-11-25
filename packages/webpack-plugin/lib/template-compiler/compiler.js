@@ -73,37 +73,6 @@ let shouldIgnoreFirstNewline = function (tag, html) {
   return tag && isIgnoreNewlineTag(tag) && html[0] === '\n'
 }
 
-// const encodingMap = Object.keys(decodingMap)
-//   .reduce((acc, k) => {
-//     const v = decodingMap[k]
-//     acc[v] = k
-//     return acc
-//   }, {})
-
-// const decodedAttr = /[<>"&]/g
-// const decodedAttrWithNewLines = /[<>"&\n\t]/g
-//
-// const tagRES = /(\{\{(?:.|\n)+?\}\})(?!})/
-
-// function encodeAttr (value, shouldDecodeNewlines) {
-//   const sArr = value.split(tagRES)
-//   const re = shouldDecodeNewlines ? decodedAttrWithNewLines : decodedAttr
-//   const ret = sArr.map((s) => {
-//     if (!tagRES.test(s)) {
-//       // 对于属性值且Mustache外的值需要encode，否则序列化时会破坏模板合法性
-//       return s.replace(re, (match) => {
-//         return encodingMap[match]
-//       })
-//     } else if (mode === 'ali' || mode === 'qq') {
-//       // fix支付宝和qq
-//       return s.replace(/["']/g, '\'')
-//     } else {
-//       return s
-//     }
-//   })
-//   return ret.join('')
-// }
-
 const splitRE = /\r?\n/g
 const replaceRE = /./g
 const isSpecialTag = makeMap('script,style,template,json', true)
@@ -314,6 +283,34 @@ function baseError (msg) {
   console.error(('[template compiler]: ' + msg))
 }
 
+const decodeMap = {
+  '&lt;': '<',
+  '&gt;': '>',
+  '&quot;': '"',
+  '&amp;': '&',
+  '&#39;': '\''
+}
+const encodedRe = /&(?:lt|gt|quot|amp|#39);/g
+
+function decode (value) {
+  return value.replace(encodedRe, function (match) {
+    return decodeMap[match]
+  })
+}
+
+const tagRES = /(\{\{(?:.|\n)+?\}\})(?!})/
+
+function decodeInMustache (value) {
+  const sArr = value.split(tagRES)
+  const ret = sArr.map((s) => {
+    if (tagRES.test(s)) {
+      return decode(s)
+    }
+    return s
+  })
+  return ret.join('')
+}
+
 function parseHTML (html, options) {
   let stack = []
   let expectHTML = options.expectHTML
@@ -501,7 +498,7 @@ function parseHTML (html, options) {
       let value = args[3] || args[4] || args[5] || ''
       attrs[i] = {
         name: args[1],
-        value: value
+        value: decode(value)
       }
     }
 
@@ -760,8 +757,6 @@ function parse (template, options) {
     expectHTML: options.expectHTML,
     isUnaryTag: options.isUnaryTag,
     canBeLeftOpenTag: options.canBeLeftOpenTag,
-    shouldDecodeNewlines: options.shouldDecodeNewlines,
-    shouldDecodeNewlinesForHref: options.shouldDecodeNewlinesForHref,
     shouldKeepComment: true,
     start: function start (tag, attrs, unary) {
       // check namespace.
@@ -775,7 +770,11 @@ function parse (template, options) {
       }
 
       if (options.globalMpxAttrsFilter) {
-        attrs = modifyAttrsFromCurMpxAttrOptions(attrs, normalizePlatformMpxAttrsOpts(options.globalMpxAttrsFilter({ tagName: tag, attrs, __mpx_mode__: mode }) || {}))
+        attrs = modifyAttrsFromCurMpxAttrOptions(attrs, normalizePlatformMpxAttrsOpts(options.globalMpxAttrsFilter({
+          tagName: tag,
+          attrs,
+          __mpx_mode__: mode
+        }) || {}))
       }
       attrs = consumeMpxCommentAttrs(attrs, mode)
 
@@ -858,7 +857,8 @@ function parse (template, options) {
         if (text !== ' ' || !children.length || children[children.length - 1].text !== ' ') {
           let el = {
             type: 3,
-            text
+            // 支付宝小程序模板解析中未对Mustache进行特殊处理，无论是否decode都会解析失败，无解，只能支付宝侧进行修复
+            text: decodeInMustache(text)
           }
           processText(el)
           children.push(el)
@@ -941,8 +941,8 @@ function stringify (str) {
   return JSON.stringify(str)
 }
 
-let tagRE = /\{\{((?:.|\n)+?)\}\}(?!})/
-let tagREG = /\{\{((?:.|\n)+?)\}\}(?!})/g
+const tagRE = /\{\{((?:.|\n)+?)\}\}(?!})/
+const tagREG = /\{\{((?:.|\n)+?)\}\}(?!})/g
 
 // function processLifecycleHack (el, options) {
 //   if (options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component') {
@@ -1448,9 +1448,9 @@ function postProcessFor (el) {
 
 function evalExp (exp) {
   // eslint-disable-next-line no-new-func
-  const fn = new Function(`return ${exp};`)
   let result = { success: false }
   try {
+    const fn = new Function(`return ${exp};`)
     result = {
       success: true,
       result: fn()

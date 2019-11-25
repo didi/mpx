@@ -9,6 +9,7 @@ const stringifyQuery = require('./utils/stringify-query')
 const mpxJSON = require('./utils/mpx-json')
 const async = require('async')
 const matchCondition = require('./utils/match-condition')
+const fixUsingComponent = require('./utils/fix-using-component')
 
 const EXT_MPX_JSON = '.json.js'
 
@@ -125,6 +126,7 @@ module.exports = function (content) {
       try {
         let ret = JSON.parse(content)
         if (ret.usingComponents) {
+          fixUsingComponent({ usingComponents: ret.usingComponents, mode })
           usingComponents = usingComponents.concat(Object.keys(ret.usingComponents))
         }
       } catch (e) {
