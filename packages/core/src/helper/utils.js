@@ -187,16 +187,16 @@ export function filterProperties (source, props = []) {
 
 export function merge (to, from) {
   if (!from) return to
-  let key, toVal, fromVal
-  let keys = Object.keys(from)
+  const keys = Object.keys(from)
   for (let i = 0; i < keys.length; i++) {
-    key = keys[i]
-    toVal = to[key]
-    fromVal = from[key]
-    if (type(toVal) === 'Object' && type(fromVal) === 'Object') {
-      merge(toVal, fromVal)
+    let key = keys[i]
+    if (type(from[key]) === 'Object') {
+      if (type(to[key]) !== 'Object') {
+        to[key] = {}
+      }
+      merge(to[key], from[key])
     } else {
-      to[key] = fromVal
+      to[key] = from[key]
     }
   }
   return to
