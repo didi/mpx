@@ -1,14 +1,10 @@
 import { Mpx } from '@mpxjs/core'
 
-type OptionalParameter<T> = T extends [(infer R | undefined)?] ? R : never
-
 type AddPromise<W> = {
   [K in keyof W]: W[K] extends (...args: any) => any
-    ? Parameters<W[K]> extends [{ success?: (res: infer R) => any }, ...any[]]
+    ? Parameters<W[K]> extends [{ success?: (res: infer R) => any }?, ...any[]]
       ? (...args: Parameters<W[K]>) => ReturnType<W[K]> & Promise<R>
-      : OptionalParameter<Parameters<W[K]>> extends { success?: (res: infer R2) => any }
-        ? (...args: Parameters<W[K]>) => ReturnType<W[K]> & Promise<R2>
-        : W[K]
+      : W[K]
     : W[K]
 }
 
