@@ -172,17 +172,25 @@ interface MpxComponentIns {
   $nextTick (fn: () => void): void
 }
 
+interface ReplaceWxComponentIns {
+  selectComponent (selector: string): ComponentIns<{}, {}, {}, {}, []>
+
+  selectAllComponents (selector: string): Array<ComponentIns<{}, {}, {}, {}, []>>
+}
+
+type WxComponentIns<D> = ReplaceWxComponentIns & WechatMiniprogram.Component.InstanceProperties & WechatMiniprogram.Component.InstanceMethods<D>
+
 type ComponentInsInComputed<D, P, C, M, Mi extends Array<any>> =
   GetDataType<D> & UnboxMixinsField<Mi, 'data'> &
   M & UnboxMixinsField<Mi, 'methods'> &
   GetPropsType<P & UnboxMixinsField<Mi, 'properties'>> &
-  C & UnboxMixinsField<Mi, 'computed'> & WechatMiniprogram.Component.InstanceProperties & WechatMiniprogram.Component.InstanceMethods<D> & MpxComponentIns
+  C & UnboxMixinsField<Mi, 'computed'> & WxComponentIns<D> & MpxComponentIns
 
 type ComponentIns<D, P, C, M, Mi extends Array<any>> =
   GetDataType<D> & UnboxMixinsField<Mi, 'data'> &
   M & UnboxMixinsField<Mi, 'methods'> &
   GetPropsType<P & UnboxMixinsField<Mi, 'properties'>> &
-  GetComputedType<C & UnboxMixinsField<Mi, 'computed'>> & WechatMiniprogram.Component.InstanceProperties & WechatMiniprogram.Component.InstanceMethods<D> & MpxComponentIns
+  GetComputedType<C & UnboxMixinsField<Mi, 'computed'>> & WxComponentIns<D> & MpxComponentIns
 
 interface createConfig {
   customCtor: any
