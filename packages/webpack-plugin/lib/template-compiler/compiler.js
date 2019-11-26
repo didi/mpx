@@ -721,6 +721,7 @@ function parse (template, options) {
   }
 
   mode = options.mode || 'wx'
+  defs = options.defs || {}
   srcMode = options.srcMode || mode
   isNative = options.isNative
   basename = options.basename

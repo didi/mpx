@@ -1,5 +1,5 @@
 const hash = require('hash-sum')
-const parse = require('./parser')
+const parseComponent = require('./parser')
 const createHelpers = require('./helpers')
 const loaderUtils = require('loader-utils')
 const InjectDependency = require('./dependency/InjectDependency')
@@ -19,6 +19,7 @@ module.exports = function (content) {
   const componentsMap = mpx.componentsMap[packageName]
   const projectRoot = mpx.projectRoot
   const mode = mpx.mode
+  const defs = mpx.defs
   const globalSrcMode = mpx.srcMode
   const resolveMode = mpx.resolveMode
   const localSrcMode = loaderUtils.parseQuery(this.resourceQuery || '?').mode
@@ -67,7 +68,7 @@ module.exports = function (content) {
     options.cssSourceMap !== false
   )
 
-  const parts = parse(content, filePath, this.sourceMap, mode)
+  const parts = parseComponent(content, filePath, this.sourceMap, mode, defs)
   // 只有ali才可能需要scoped
   const hasScoped = (parts.styles.some(({ scoped }) => scoped) || autoScope) && mode === 'ali'
   const templateAttrs = parts.template && parts.template.attrs && parts.template.attrs
