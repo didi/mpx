@@ -1113,15 +1113,20 @@ function processBindEvent (el) {
   if (modelExp) {
     let match = tagRE.exec(modelExp)
     if (match) {
-      let modelProp = getAndRemoveAttr(el, config[mode].directive.modelProp) || config[mode].event.defaultModelProp
-      let modelEvent = getAndRemoveAttr(el, config[mode].directive.modelEvent) || config[mode].event.defaultModelEvent
-      const modelValuePath = getAndRemoveAttr(el, config[mode].directive.modelValuePath) || config[mode].event.defaultModelValuePath
+      const modelProp = getAndRemoveAttr(el, config[mode].directive.modelProp) || config[mode].event.defaultModelProp
+      const modelEvent = getAndRemoveAttr(el, config[mode].directive.modelEvent) || config[mode].event.defaultModelEvent
+      const modelValuePathRaw = getAndRemoveAttr(el, config[mode].directive.modelValuePath)
+      const modelValuePath = modelValuePathRaw === undefined ? config[mode].event.defaultModelValuePath : modelValuePathRaw
       const modelFilter = getAndRemoveAttr(el, config[mode].directive.modelFilter) || config[mode].event.modelFilter
       let modelValuePathArr
       try {
         modelValuePathArr = JSON.parse(modelValuePath)
       } catch (e) {
-        modelValuePathArr = modelValuePath.split('.')
+        if (modelValuePath === '') {
+          modelValuePathArr = []
+        } else {
+          modelValuePathArr = modelValuePath.split('.')
+        }
       }
       if (!isValidIdentifierStr(modelEvent)) {
         warn$1(`EventName ${modelEvent} which is used in ${config[mode].directive.model} must be a valid identifier!`)
