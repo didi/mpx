@@ -41,6 +41,7 @@ module.exports = function (raw) {
   const pagesMap = mpx.pagesMap
   const componentsMap = mpx.componentsMap[packageName]
   const mode = mpx.mode
+  const defs = mpx.defs
   const globalSrcMode = mpx.srcMode
   const localSrcMode = loaderUtils.parseQuery(this.resourceQuery || '?').mode
   const resolveMode = mpx.resolveMode
@@ -131,7 +132,7 @@ module.exports = function (raw) {
     // 使用了MPXJSON的话先编译
     // 此处需要使用真实的resourcePath
     if (this.resourcePath.endsWith('.json.js')) {
-      json = JSON.parse(mpxJSON.compileMPXJSONText({ source: raw, mode, filePath: this.resourcePath }))
+      json = JSON.parse(mpxJSON.compileMPXJSONText({ source: raw, mode,defs, filePath: this.resourcePath }))
     } else {
       json = JSON.parse(raw)
     }

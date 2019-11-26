@@ -237,6 +237,7 @@ let isEdge = UA && UA.indexOf('edge/') > 0
 let warn$1
 let error$1
 let mode
+let defs
 let srcMode
 let processingTemplate
 let isNative
@@ -570,6 +571,7 @@ function parseHTML (html, options) {
 
 function parseComponent (content, options) {
   mode = options.mode || 'wx'
+  defs = options.defs || {}
 
   let sfc = {
     template: null,
@@ -670,7 +672,7 @@ function parseComponent (content, options) {
 
       // 对于<script name="json">的标签，传参调用函数，其返回结果作为json的内容
       if (currentBlock.type === 'script' && currentBlock.name === 'json') {
-        text = mpxJSON.compileMPXJSONText({ source: text, mode, filePath: options.filePath })
+        text = mpxJSON.compileMPXJSONText({ source: text, mode, defs, filePath: options.filePath })
       }
       currentBlock.content = text
       currentBlock = null
@@ -1215,6 +1217,16 @@ function parseMustache (raw = '') {
         exp = exp.replace(/\b__mpx_mode__\b/g, stringify(mode))
         replaced = true
       }
+      const defKeys = Object.keys(defs)
+      defKeys.forEach((defKey) => {
+        const defRE = new RegExp(`\\b${defKey}\\b`)
+        const defREG = new RegExp(`\\b${defKey}\\b`, 'g')
+        if (defRE.test(exp)) {
+          exp = exp.replace(defREG, stringify(defs[defKey]))
+          replaced = true
+        }
+      })
+
       ret.push(`(${exp})`)
       lastLastIndex = tagREG.lastIndex
     }
@@ -1393,7 +1405,7 @@ function processAttrs (el, options) {
       addExp(el, parsed.result, needTravel, isProps)
     }
     if (parsed.replaced) {
-      modifyAttr(el, attr.name, needWrap ? attr.value.replace(/\b__mpx_mode__\b/g, stringify(mode)) : parsed.val)
+      modifyAttr(el, attr.name, needWrap ? parsed.val.slice(1, -1) : parsed.val)
     }
   })
 }
