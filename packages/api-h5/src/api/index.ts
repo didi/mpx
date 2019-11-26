@@ -38,3 +38,6 @@ export * from './set-navigation-bar'
 
 // nextTick
 export * from './next-tick'
+
+// onWindowResize offWindowResize
+export * from './window'
