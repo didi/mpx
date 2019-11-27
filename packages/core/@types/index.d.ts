@@ -197,7 +197,9 @@ declare function set (obj: object, key: string, value: any): any
 
 declare function remove (obj: object, key: string): any
 
-interface MpxComponentIns {
+export interface MpxComponentIns {
+  $refs: ObjectOf<any>
+  
   $set: typeof set
 
   $get: typeof get
