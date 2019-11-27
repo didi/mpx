@@ -1,4 +1,4 @@
-import { warn, webHandleSuccess, webHandleFail } from '../../common/js'
+import { warn, webHandleSuccess, webHandleFail } from '../../../common/js'
 import SocketTask from './SocketTask'
 
 function connectSocket (options = { url: '' }) {

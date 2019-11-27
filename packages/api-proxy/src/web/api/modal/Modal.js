@@ -1,4 +1,4 @@
-import { ToPromise, webHandleSuccess } from '../../common/js'
+import { ToPromise, webHandleSuccess } from '../../../common/js'
 import '../../common/stylus/Modal.styl'
 
 export default class Modal extends ToPromise {
@@ -60,7 +60,7 @@ export default class Modal extends ToPromise {
     this.cancelBtn = cancelBtn
     this.confirmBtn = confirmBtn
   }
-  show (options: WechatMiniprogram.ShowModalOption = {}) {
+  show (options = {}) {
     if (this.hideTimer) {
       clearTimeout(this.hideTimer)
       this.hideTimer = null

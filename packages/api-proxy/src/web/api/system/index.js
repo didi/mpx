@@ -1,4 +1,4 @@
-import { webHandleSuccess } from '../../common/js'
+import { webHandleSuccess } from '../../../common/js'
 
 function getSystemInfoSync () {
   const ua = navigator.userAgent.split('(')[1].split(')')[0]

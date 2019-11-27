@@ -1,4 +1,4 @@
-import { webHandleSuccess, webHandleFail } from '../../common/js'
+import { webHandleSuccess, webHandleFail } from '../../../common/js'
 
 function redirectTo (options = {}) {
   const router = this.$router

@@ -1,4 +1,4 @@
-import { webHandleSuccess } from '../../common/js'
+import { webHandleSuccess } from '../../../common/js'
 
 function setNavigationBarTitle (options = {}) {
   const { title, success, complete } = options

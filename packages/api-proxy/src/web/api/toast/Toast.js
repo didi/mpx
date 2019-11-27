@@ -1,4 +1,4 @@
-import { webHandleSuccess } from '../../common/js'
+import { webHandleSuccess } from '../../../common/js'
 import '../../common/stylus/Toast.styl'
 
 export default class Toast {

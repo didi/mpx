@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { webHandleSuccess, webHandleFail } from '../../common/js'
+import { webHandleSuccess, webHandleFail } from '../../../common/js'
 
 function request (options = { url: '' }) {
   const timeout = 60 * 1000

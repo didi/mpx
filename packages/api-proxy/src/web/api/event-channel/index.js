@@ -1,5 +1,7 @@
 class EventChannel {
-  _events = new Map()
+  constructor () {
+    this._events = new Map()
+  }
   on (event, fn) {
     const events = this._events
     if (!events.has(event)) {

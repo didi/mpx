@@ -1,4 +1,4 @@
-import { webHandleSuccess, webHandleFail } from '../../common/js'
+import { webHandleSuccess, webHandleFail } from '../../../common/js'
 
 function setStorage (options = {}) {
   const { key, data, success, fail, complete } = options
