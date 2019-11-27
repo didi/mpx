@@ -1,15 +1,13 @@
 const callbacks = []
 
 window.addEventListener('resize', () => {
-  const size = {
-    windowWidth: window.screen.width,
-    windowHeight: window.screen.height
+  const result = {
+    size: {
+      windowWidth: window.screen.width,
+      windowHeight: window.screen.height
+    }
   }
-  callbacks.forEach(callback => {
-    callback({
-      size
-    })
-  })
+  callbacks.forEach(cb => cb(result))
 })
 
 function onWindowResize (callback) {
