@@ -7,6 +7,7 @@
   export default {
     name: 'mpx-textarea',
     props: {
+      name: String,
       value: {
         type: String,
         default: ''
@@ -77,6 +78,7 @@
         }
       }
       const attrs = {
+        name: this.name,
         placeholder: this.placeholder,
         disabled: this.disabled,
         autofocus: this.focus || this.autoFocus

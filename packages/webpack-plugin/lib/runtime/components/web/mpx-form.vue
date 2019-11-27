@@ -19,10 +19,10 @@
       if (VNode.tag) {
         const el = VNode.elm
         const component = VNode.componentInstance
-        if (el && el.name && el.value !== undefined) {
+        if (component && component.name && component.getValue) {
+          value[component.name] = component.getValue()
+        } else if (el && el.name && el.value !== undefined) {
           value[el.name] = el.value
-        } else if (component && component.name && component.value !== undefined) {
-          value[component.name] = component.value
         }
       }
     })
@@ -34,13 +34,10 @@
       if (VNode.tag) {
         const el = VNode.elm
         const component = VNode.componentInstance
-        if (el && el.name && el.value !== undefined) {
+        if (component && component.name && component.notifyChange) {
+          component.notifyChange(value[component.name])
+        } else if (el && el.name && el.value !== undefined) {
           el.value = value[el.name]
-        } else if (component && component.name && component.value !== undefined) {
-          component.value = value[component.name]
-        }
-        if (component && component.notifyChange) {
-          component.notifyChange()
         }
       }
     })

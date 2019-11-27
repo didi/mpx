@@ -7,6 +7,7 @@
   export default {
     name: 'mpx-input',
     props: {
+      name: String,
       value: {
         type: String,
         default: ''
@@ -82,6 +83,7 @@
         }
       }
       const attrs = {
+        name: this.name,
         value: this.value,
         type: this.password ? 'password' : this.type,
         placeholder: this.placeholder,
@@ -102,11 +104,18 @@
       return createElement('input', data, this.$slots.default)
     },
     methods: {
-      notifyChange () {
-        const e = getCustomEvent('input')
-        const target = this.$refs.input
+      getValue () {
+        return this.$refs.input.value
+      },
+      setValue (value) {
+        this.$refs.input.value = value
+      },
+      notifyChange (value) {
+        if (value) {
+          this.setValue(value)
+        }
         // 通过原生input派发事件
-        target && target.dispatchEvent(e)
+        this.$refs.input.dispatchEvent(getCustomEvent('input'))
       },
       setSelectionRange (start, end) {
         if (!this.__selectionRange) this.__selectionRange = {

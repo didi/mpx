@@ -10,6 +10,7 @@
     },
     props: {
       // todo 封装支持相关props
+      name: String,
       size: {
         type: String,
         default: 'default'
@@ -67,10 +68,15 @@
           force: true
         }
       }
+      const attrs = {
+        name: this.name
+      }
       const data = {
         class: ['mpx-button', this.className],
+        attrs,
         on: getInnerListeners(this, {
           mergeAfter,
+          // 由于当前机制下tap事件只有存在tap监听才会触发，为了确保该组件能够触发tap，传递一个包含tap的defaultListeners用于模拟存在tap监听
           defaultListeners: {
             tap () {
             }
