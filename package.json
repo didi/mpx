@@ -6,12 +6,12 @@
     "lint": "eslint --ext .js packages/",
     "fix": "eslint --fix --ext .js packages/",
     "test": "jest",
-    "test-api-h5": "cd packages/api-h5 && npm i && npm run test && cd ../..",
+    "test-api": "cd packages/api-proxy && npm i && npm run test && cd ../..",
     "release": "npm run lint && npm run test && npx lerna version"
   },
   "jest": {
     "modulePathIgnorePatterns": [
-      "<rootDir>/packages/api-h5/"
+      "<rootDir>/packages/api-proxy/"
     ]
   },
   "devDependencies": {

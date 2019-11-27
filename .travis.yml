@@ -7,7 +7,7 @@ install:
 script:
   - npm run lint
   - npm t
-  - npm run test-api-h5
+  - npm run test-api
 before_deploy:
   - cd docs
   - npx gitbook-cli install
