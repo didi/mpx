@@ -2,11 +2,11 @@ const path = require('path')
 
 // 将JS生成JSON
 function compileMPXJSON ({ source, mode, defs, filePath }) {
-  // eslint-disable-next-line no-new-func
   const defKeys = Object.keys(defs)
   const defValues = defKeys.map((key) => {
     return defs[key]
   })
+  // eslint-disable-next-line no-new-func
   const func = new Function('exports', 'require', 'module', '__filename', '__dirname', '__mpx_mode__', ...defKeys, source)
   // 模拟commonJS执行
   // support exports
