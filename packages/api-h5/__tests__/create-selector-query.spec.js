@@ -1,4 +1,4 @@
-import { createSelectorQuery } from '../src/api/create-selector-query'
+import { createSelectorQuery } from '../../api-proxy/src/web/api/create-selector-query'
 import Vue from 'vue/dist/vue.common.prod'
 
 describe('test create-selector-query', () => {

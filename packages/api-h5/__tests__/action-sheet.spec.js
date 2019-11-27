@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom/extend-expect'
 import {
   showActionSheet
-} from '../src/api/action-sheet/index'
+} from '../../api-proxy/src/web/api/action-sheet/index'
 
 function manualPromise (promise, execResolve, execReject) {
   return new Promise((resolve, reject) => {
