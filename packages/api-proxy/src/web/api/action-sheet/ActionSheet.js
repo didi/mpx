@@ -1,5 +1,5 @@
 import { ToPromise, webHandleSuccess, webHandleFail } from '../../../common/js'
-import '../../common/stylus/ActionSheet.styl'
+import '../../../common/stylus/ActionSheet.styl'
 
 export default class ActionSheet extends ToPromise {
   constructor () {

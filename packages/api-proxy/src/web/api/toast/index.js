@@ -12,7 +12,7 @@ function hideToast (options = {}) {
   return toast.hide(Object.assign({ duration: 0 }, options), 'toast')
 }
 
-function showLoading (options = { title: '' } ) {
+function showLoading (options = { title: '' }) {
   if (!toast) { toast = new Toast() }
   return toast.show(Object.assign({
     icon: 'loading',

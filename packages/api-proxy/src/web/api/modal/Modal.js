@@ -1,5 +1,5 @@
 import { ToPromise, webHandleSuccess } from '../../../common/js'
-import '../../common/stylus/Modal.styl'
+import '../../../common/stylus/Modal.styl'
 
 export default class Modal extends ToPromise {
   constructor () {
