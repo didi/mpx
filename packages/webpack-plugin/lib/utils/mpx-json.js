@@ -1,9 +1,13 @@
 const path = require('path')
 
 // 将JS生成JSON
-function compileMPXJSON ({ source, mode, filePath }) {
+function compileMPXJSON ({ source, mode, defs, filePath }) {
+  const defKeys = Object.keys(defs)
+  const defValues = defKeys.map((key) => {
+    return defs[key]
+  })
   // eslint-disable-next-line no-new-func
-  const func = new Function('exports', 'require', 'module', '__filename', '__dirname', '__mpx_mode__', source)
+  const func = new Function('exports', 'require', 'module', '__filename', '__dirname', '__mpx_mode__', ...defKeys, source)
   // 模拟commonJS执行
   // support exports
   const e = {}
@@ -18,7 +22,7 @@ function compileMPXJSON ({ source, mode, filePath }) {
       }
     }
     return require(modulePath)
-  }, m, filePath, dirname, mode)
+  }, m, filePath, dirname, mode, ...defValues)
   return m.exports
 }
 

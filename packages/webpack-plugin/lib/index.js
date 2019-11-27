@@ -85,6 +85,7 @@ class MpxWebpackPlugin {
     if (options.autoSplit === undefined) {
       options.autoSplit = true
     }
+    options.defs = options.defs || {}
     // 批量指定源码mode
     options.modeRules = options.modeRules || {}
     this.options = options
@@ -182,15 +183,22 @@ class MpxWebpackPlugin {
         originalWriteFile(filePath, content, callback)
       }
     }
+    const defs = this.options.defs
 
-    // define mode
-    new DefinePlugin({
+    const defsOpt = {
       '__mpx_mode__': JSON.stringify(this.options.mode),
       '__mpx_src_mode__': JSON.stringify(this.options.srcMode),
       '__mpx_wxs__': DefinePlugin.runtimeValue(({ module }) => {
         return JSON.stringify(!!module.wxs)
       })
-    }).apply(compiler)
+    }
+
+    Object.keys(defs).forEach((key) => {
+      defsOpt[key] = JSON.stringify(defs[key])
+    })
+
+    // define mode & defs
+    new DefinePlugin(defsOpt).apply(compiler)
 
     compiler.hooks.compilation.tap('MpxWebpackPlugin ', (compilation) => {
       compilation.hooks.normalModuleLoader.tap('MpxWebpackPlugin', (loaderContext, module) => {
@@ -237,6 +245,7 @@ class MpxWebpackPlugin {
           externalClasses: this.options.externalClasses,
           projectRoot: this.options.projectRoot,
           autoScopeRules: this.options.autoScopeRules,
+          defs: this.options.defs,
           extract: (content, file, index, sideEffects) => {
             additionalAssets[file] = additionalAssets[file] || []
             if (!additionalAssets[file][index]) {

@@ -1,4 +1,4 @@
-const parse = require('./parser')
+const parseComponent = require('./parser')
 const loaderUtils = require('loader-utils')
 const parseRequest = require('./utils/parse-request')
 
@@ -12,10 +12,11 @@ module.exports = function (content) {
   const pagesMap = mpx.pagesMap
   const componentsMap = mpx.componentsMap[packageName]
   const mode = mpx.mode
+  const defs = mpx.defs
   const resourcePath = parseRequest(this.resource).resourcePath
   const query = loaderUtils.getOptions(this) || {}
   const filePath = this.resourcePath
-  const parts = parse(content, filePath, this.sourceMap, mode)
+  const parts = parseComponent(content, filePath, this.sourceMap, mode, defs)
   let part = parts[query.type]
   if (Array.isArray(part)) {
     part = part[query.index]
