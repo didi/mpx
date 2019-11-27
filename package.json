@@ -6,13 +6,7 @@
     "lint": "eslint --ext .js packages/",
     "fix": "eslint --fix --ext .js packages/",
     "test": "jest",
-    "test-api": "cd packages/api-proxy && npm i && npm run test && cd ../..",
     "release": "npm run lint && npm run test && npx lerna version"
-  },
-  "jest": {
-    "modulePathIgnorePatterns": [
-      "<rootDir>/packages/api-proxy/"
-    ]
   },
   "devDependencies": {
     "babel-eslint": "^10.0.1",
@@ -29,6 +23,12 @@
     "eslint-plugin-promise": "^4.0.1",
     "eslint-plugin-standard": "^4.0.0",
     "jest": "^24.8.0",
-    "lerna": "^3.4.3"
+    "lerna": "^3.4.3",
+    "@babel/core": "^7.6.4",
+    "@babel/preset-env": "^7.6.3",
+    "@testing-library/jest-dom": "^4.2.3",
+    "babel-jest": "^24.9.0",
+    "identity-obj-proxy": "^3.0.0",
+    "vue": "^2.6.10"
   }
 }
