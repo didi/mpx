@@ -1,6 +1,8 @@
 class ToPromise {
-  _resolve: (value?: unknown) => void = null
-  _reject: (reason?: any) => void = null
+  constructor () {
+    this._resolve = null
+    this._reject = null
+  }
   toPromiseInitPromise () {
     return new Promise((resolve, reject) => {
       this._resolve = resolve
@@ -15,4 +17,6 @@ class ToPromise {
   }
 }
 
-export default ToPromise
+export {
+  ToPromise
+}
