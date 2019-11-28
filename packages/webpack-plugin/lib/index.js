@@ -582,9 +582,9 @@ class MpxWebpackPlugin {
       // resolve完成后修改loaders或者resource/request
       normalModuleFactory.hooks.afterResolve.tapAsync('MpxWebpackPlugin', (data, callback) => {
         const isFromMpx = /\.(mpx|vue)/.test(data.resource)
-        if (data.loaders) {
+        if (data.loaders && isFromMpx) {
           data.loaders.forEach((loader) => {
-            if (/ts-loader/.test(loader.loader) && isFromMpx) {
+            if (/ts-loader/.test(loader.loader)) {
               loader.options = Object.assign({}, { appendTsSuffixTo: [/\.(mpx|vue)$/] })
             }
           })

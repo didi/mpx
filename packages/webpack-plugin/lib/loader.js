@@ -9,10 +9,10 @@ const stringifyAttr = templateCompiler.stringifyAttr
 const optionProcessorPath = require.resolve('./runtime/optionProcessor')
 const getPageName = require('./utils/get-page-name')
 const toPosix = require('./utils/to-posix')
-const stringifyQuery = require('./utils/stringify-query')
 const parseRequest = require('./utils/parse-request')
 const matchCondition = require('./utils/match-condition')
 const fixUsingComponent = require('./utils/fix-using-component')
+const addQuery = require('./utils/add-query')
 
 module.exports = function (content) {
   this.cacheable()
@@ -142,21 +142,6 @@ module.exports = function (content) {
     return result
   }
 
-  function addQuery (request, queryObj) {
-    if (!queryObj) {
-      return request
-    }
-    const queryIndex = request.indexOf('?')
-    let query
-    let resource = request
-    if (queryIndex >= 0) {
-      query = request.substr(queryIndex)
-      resource = request.substr(0, queryIndex)
-    }
-    let rawQueryObj = loaderUtils.parseQuery(query || '?')
-    queryObj = Object.assign({}, rawQueryObj, queryObj)
-    return resource + stringifyQuery(queryObj)
-  }
 
   function shallowStringify (obj) {
     let arr = []
@@ -197,6 +182,23 @@ module.exports = function (content) {
 
   // 处理mode为web时输出vue格式文件
   if (mode === 'web') {
+    if (!resourceQueryObj.app && !resourceQueryObj.page && !resourceQueryObj.component) {
+      const request = addQuery(this.resource, { app: true })
+      output += `
+      import App from '${request}'
+      import Vue from 'vue'
+      new Vue({
+        el: '#app',
+        render: function(h){
+          return h(App)
+        }
+      })\n
+      `
+      // 直接结束loader进入parse
+      this.loaderIndex = -1
+      return output
+    }
+
     // template
     output += '/* template */\n'
     let template = parts.template
