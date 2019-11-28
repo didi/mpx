@@ -111,7 +111,7 @@
         this.$refs.input.value = value
       },
       notifyChange (value) {
-        if (value) {
+        if (value!==undefined) {
           this.setValue(value)
         }
         // 通过原生input派发事件

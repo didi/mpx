@@ -101,11 +101,18 @@
       return createElement('textarea', data, children)
     },
     methods: {
-      notifyChange () {
-        const e = getCustomEvent('input')
-        const target = this.$refs.textarea
+      getValue () {
+        return this.$refs.textarea.value
+      },
+      setValue (value) {
+        this.$refs.textarea.value = value
+      },
+      notifyChange (value) {
+        if (value !== undefined) {
+          this.setValue(value)
+        }
         // 通过原生input派发事件
-        target && target.dispatchEvent(e)
+        this.$refs.textarea.dispatchEvent(getCustomEvent('input'))
       },
       setSelectionRange (start, end) {
         if (!this.__selectionRange) this.__selectionRange = {

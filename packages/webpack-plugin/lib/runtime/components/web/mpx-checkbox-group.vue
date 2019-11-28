@@ -74,7 +74,7 @@
         })
       },
       notifyChange (value) {
-        if (value) {
+        if (value!==undefined) {
           this.setValue(value)
         } else {
           value = this.getValue()

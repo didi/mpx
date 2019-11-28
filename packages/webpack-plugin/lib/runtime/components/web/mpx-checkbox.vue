@@ -38,8 +38,7 @@
       const data = {
         class: 'mpx-checkbox',
         on: getInnerListeners(this, { mergeAfter }),
-        attrs,
-        ref: 'checkbox'
+        attrs
       }
       return createElement('input', data, this.$slots.default)
     }
