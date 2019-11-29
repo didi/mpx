@@ -90,7 +90,7 @@ module.exports = function (content) {
 
   // 只有ali才可能需要scoped
   const hasScoped = (parts.styles.some(({ scoped }) => scoped) || autoScope) && mode === 'ali'
-  const templateAttrs = parts.template && parts.template.attrs && parts.template.attrs
+  const templateAttrs = parts.template && parts.template.attrs
   const hasComment = templateAttrs && templateAttrs.comments
   const isNative = false
 
