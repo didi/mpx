@@ -255,11 +255,10 @@ module.exports = function (content) {
     if (json) {
       if (json.src) {
         this.emitError(new Error('[mpx loader][' + this.resource + ']: ' + 'json content must be inline in .mpx files!'))
-      }
-
-      try {
+      } else {
         jsonObj = JSON.parse(json.content)
-      } catch (e) {
+        // todo process json
+
       }
     }
 
@@ -474,8 +473,9 @@ module.exports = function (content) {
   if (json) {
     if (json.src) {
       this.emitError(new Error('[mpx loader][' + this.resource + ']: ' + 'json content must be inline in .mpx files!'))
+    } else {
+      output += getRequire('json', json) + '\n\n'
     }
-    output += getRequire('json', json) + '\n\n'
   }
 
   // template
