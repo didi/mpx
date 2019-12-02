@@ -3,16 +3,15 @@ const parse = require('./parser')
 const createHelpers = require('./helpers')
 const loaderUtils = require('loader-utils')
 const InjectDependency = require('./dependency/InjectDependency')
-const type = require('./utils/type')
-const templateCompiler = require('./template-compiler/compiler')
-const stringifyAttr = templateCompiler.stringifyAttr
-const optionProcessorPath = require.resolve('./runtime/optionProcessor')
-const getPageName = require('./utils/get-page-name')
-const toPosix = require('./utils/to-posix')
 const parseRequest = require('./utils/parse-request')
 const matchCondition = require('./utils/match-condition')
 const fixUsingComponent = require('./utils/fix-using-component')
 const addQuery = require('./utils/add-query')
+const async = require('async')
+const processJSON = require('./web/processJSON')
+const processScript = require('./web/processScript')
+const processStyles = require('./web/processStyles')
+const processTemplate = require('./web/processTemplate')
 
 module.exports = function (content) {
   this.cacheable()
@@ -24,10 +23,10 @@ module.exports = function (content) {
   const packageName = mpx.currentPackageRoot || 'main'
   const pagesMap = mpx.pagesMap
   const componentsMap = mpx.componentsMap[packageName]
+  const resolveMode = mpx.resolveMode
   const projectRoot = mpx.projectRoot
   const mode = mpx.mode
   const globalSrcMode = mpx.srcMode
-  const resolveMode = mpx.resolveMode
   const localSrcMode = loaderUtils.parseQuery(this.resourceQuery || '?').mode
   const resourcePath = parseRequest(this.resource).resourcePath
   const srcMode = localSrcMode || globalSrcMode
@@ -104,13 +103,6 @@ module.exports = function (content) {
   } catch (e) {
   }
 
-  function processSrc (part) {
-    if (resolveMode === 'native' && part.src) {
-      part.src = part.attrs.src = loaderUtils.urlToRequest(part.src, projectRoot)
-    }
-    return part
-  }
-
   const {
     getRequire,
     getNamedExports,
@@ -127,62 +119,13 @@ module.exports = function (content) {
     needCssSourceMap,
     srcMode,
     isNative,
-    projectRoot
+    projectRoot,
+    resolveMode
   )
-
-  function stringifyAttrs (attrs) {
-    let result = ''
-    Object.keys(attrs).forEach(function (name) {
-      result += ' ' + name
-      let value = attrs[name]
-      if (value != null && value !== '' && value !== true) {
-        result += '=' + stringifyAttr(value)
-      }
-    })
-    return result
-  }
-
-
-  function shallowStringify (obj) {
-    let arr = []
-    for (let key in obj) {
-      let value = obj[key]
-      if (Array.isArray(value)) {
-        value = `[${value.join(',')}]`
-      }
-      arr.push(`'${key}':${value}`)
-    }
-    return `{${arr.join(',')}}`
-  }
-
-  function genComponentTag (part, processor = {}) {
-    // normalize
-    if (type(processor) === 'Function') {
-      processor = {
-        content: processor
-      }
-    }
-    const tag = processor.tag ? processor.tag(part) : part.type
-    const attrs = processor.attrs ? processor.attrs(part) : part.attrs
-    const content = processor.content ? processor.content(part) : part.content
-    let result = ''
-    if (tag) {
-      result += `<${tag}`
-      if (attrs) {
-        result += stringifyAttrs(attrs)
-      }
-      if (content) {
-        result += `>${content}</${tag}>`
-      } else {
-        result += '/>'
-      }
-    }
-    return result
-  }
 
   // 处理mode为web时输出vue格式文件
   if (mode === 'web') {
-    if (!resourceQueryObj.app && !resourceQueryObj.page && !resourceQueryObj.component) {
+    if (ctorType === 'app' && !resourceQueryObj.app) {
       const request = addQuery(this.resource, { app: true })
       output += `
       import App from '${request}'
@@ -199,176 +142,52 @@ module.exports = function (content) {
       return output
     }
 
-    // template
-    output += '/* template */\n'
-    let template = parts.template
-    if (ctorType === 'app') {
-      template = {
-        type: 'template',
-        content: '<router-view></router-view>'
-      }
-    }
-    let builtInComponents = {}
-    if (template) {
-      processSrc(template)
-      output += genComponentTag(template, (template) => {
-        if (template.content) {
-          const templateSrcMode = template.mode || srcMode
-          const parsed = templateCompiler.parse(template.content, {
-            warn: (msg) => {
-              this.emitWarning(
-                new Error('[template compiler][' + this.resource + ']: ' + msg)
-              )
-            },
-            error: (msg) => {
-              this.emitError(
-                new Error('[template compiler][' + this.resource + ']: ' + msg)
-              )
-            },
-            mode,
-            srcMode: templateSrcMode
-          })
+    const callback = this.async()
 
-          Object.assign(builtInComponents, parsed.meta.builtInComponentsMap)
-
-          return templateCompiler.serialize(parsed.root)
+    return async.waterfall([
+      async.parallel([
+        (callback) => {
+          processTemplate(parts.template, {
+            srcMode,
+            loaderContext,
+            ctorType
+          }, callback)
+        },
+        (callback) => {
+          processStyles(parts.styles, callback)
+        },
+        (callback) => {
+          processJSON(parts.json, {
+            resolveMode,
+            loaderContext,
+            pagesMap,
+            componentsMap,
+            projectRoot
+          }, callback)
         }
-      })
-      output += '\n\n'
-    }
-
-    // styles
-    output += '/* styles */\n'
-    if (parts.styles.length) {
-      parts.styles.forEach((style) => {
-        processSrc(style)
-        output += genComponentTag(style)
-        output += '\n'
-      })
-      output += '\n'
-    }
-
-    // json
-    output += '/* json */\n'
-    let jsonObj
-    let json = parts.json
-    if (json) {
-      if (json.src) {
-        this.emitError(new Error('[mpx loader][' + this.resource + ']: ' + 'json content must be inline in .mpx files!'))
-      } else {
-        jsonObj = JSON.parse(json.content)
-        // todo process json
-
+      ]),
+      ([templateRes, stylesRes, jsonRes], callback) => {
+        output += templateRes.output
+        output += stylesRes.output
+        output += jsonRes.output
+        processScript(parts.script, {
+          ctorType,
+          srcMode,
+          loaderContext,
+          isProduction,
+          getRequireForSrc,
+          builtInComponentsMap: templateRes.builtInComponentsMap,
+          localComponentsMap: jsonRes.localComponentsMap,
+          localPagesMap: jsonRes.localPagesMap
+        }, callback)
       }
-    }
-
-    // script
-    output += '/* script */\n'
-    let scriptSrcMode = srcMode
-    let script = parts.script
-    if (script) {
-      scriptSrcMode = script.mode || scriptSrcMode
-      processSrc(script)
-    } else {
-      script = {
-        type: 'script',
-        content: ''
-      }
-      switch (ctorType) {
-        case 'app':
-          script.content = 'import {createApp} from "@mpxjs/core"\n' +
-            'createApp({})\n'
-          break
-        case 'page':
-          script.content = 'import {createPage} from "@mpxjs/core"\n' +
-            'createPage({})\n'
-          break
-        case 'component':
-          script.content = 'import {createComponent} from "@mpxjs/core"\n' +
-            'createComponent({})\n'
-      }
-    }
-    output += genComponentTag(script, (script) => {
-      let content = `import processOption from ${stringifyRequest(`!!${optionProcessorPath}`)}\n`
-      // add import
-      if (ctorType === 'app') {
-        content += `
-        import Vue from 'vue'
-        import VueRouter from 'vue-router'
-        Vue.use(VueRouter)\n
-        `
-      }
-      let importedPagesMap = {}
-      if (jsonObj.pages) {
-        jsonObj.pages.forEach((page, index) => {
-          if (resolveMode === 'native') {
-            page = loaderUtils.urlToRequest(page, projectRoot)
-          }
-          const pageName = '/' + toPosix(getPageName('', page))
-          const pageVar = `__mpx_page_${index}__`
-
-          page = addQuery(page, { page: true })
-
-          content += `import ${pageVar} from ${stringifyRequest(page)}\n`
-          importedPagesMap[pageName] = pageVar
-        })
-      }
-
-      let importedComponentsMap = {}
-      // 处理用户注册组件
-      if (jsonObj.usingComponents) {
-        Object.keys(jsonObj.usingComponents).forEach((componentName, index) => {
-          // todo 对componentName进行横杠转驼峰
-          let component = jsonObj.usingComponents[componentName]
-
-          if (resolveMode === 'native') {
-            component = loaderUtils.urlToRequest(component, projectRoot)
-          }
-          const componentVar = `__mpx_component_${index}__`
-          component = addQuery(component, { component: true })
-          content += `import ${componentVar} from ${stringifyRequest(component)}\n`
-          importedComponentsMap[componentName] = componentVar
-        })
-      }
-      // 处理内置注入组件
-      if (builtInComponents) {
-        Object.keys(builtInComponents).forEach((componentName, index) => {
-          let component = builtInComponents[componentName]
-          const componentVar = `__mpx_built_in_component_${index}__`
-          component = addQuery(component, { component: true })
-          content += `import ${componentVar} from ${stringifyRequest(component)}\n`
-          importedComponentsMap[componentName] = componentVar
-        })
-      }
-
-      content += `global.currentSrcMode = ${JSON.stringify(scriptSrcMode)};\n`
-      if (!isProduction) {
-        content += `global.currentResource = ${JSON.stringify(filePath)};\n`
-      }
-      // 为了正确获取currentSrcMode便于运行时进行转换，对于src引入的组件script采用require方式引入(由于webpack会将import的执行顺序上升至最顶),这意味着对于src引入脚本中的named export将不会生效，不过鉴于mpx和小程序中本身也没有在组件script中声明export的用法，所以应该没有影响
-      content += script.src
-        ? (getRequireForSrc('script', script) + '\n')
-        : (script.content + '\n') + '\n'
-      // 配置平台转换通过createFactory在core中convertor中定义和进行
-      // 通过processOption进行组件注册和路由注入
-      content += `export default processOption(
-        global.currentOption,
-        ${JSON.stringify(ctorType)},
-        ${shallowStringify(importedPagesMap)},
-        ${shallowStringify(importedComponentsMap)}`
-
-      content += ctorType === 'app' ? `,
-            Vue,
-            VueRouter
-          )\n` : `
-          )\n`
-
-      return content
+    ], (err, scriptRes) => {
+      if (err) return callback(err)
+      output += scriptRes.output
+      vueContentCache.set(filePath, output)
+      console.log(output)
+      callback(null, output)
     })
-    output += '\n'
-    vueContentCache.set(filePath, output)
-    console.log(output)
-    return output
   }
 
   // 触发webpack global var 注入
@@ -396,7 +215,6 @@ module.exports = function (content) {
   let scriptSrcMode = srcMode
   const script = parts.script
   if (script) {
-    processSrc(script)
     scriptSrcMode = script.mode || scriptSrcMode
     output += script.src
       ? (getNamedExportsForSrc('script', script) + '\n')
@@ -428,7 +246,6 @@ module.exports = function (content) {
   if (parts.styles.length) {
     let styleInjectionCode = ''
     parts.styles.forEach((style, i) => {
-      processSrc(style)
       let scoped = hasScoped ? (style.scoped || autoScope) : false
       // require style
       let requireString = style.src
@@ -482,7 +299,6 @@ module.exports = function (content) {
   output += '/* template */\n'
   const template = parts.template
   if (template) {
-    processSrc(template)
     output += template.src
       ? (getRequireForSrc('template', template) + '\n')
       : (getRequire('template', template) + '\n') + '\n'
