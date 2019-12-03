@@ -112,6 +112,7 @@ export function inheritEvent (e, extendObj = {}) {
 }
 
 export function getCustomEvent (type, detail) {
+  /* eslint-disable no-undef */
   const ce = new CustomEvent(type)
   if (detail !== undefined) {
     ce.detail = detail

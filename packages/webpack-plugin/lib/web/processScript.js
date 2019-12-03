@@ -30,7 +30,6 @@ module.exports = function (script, options, callback) {
 
   let output = '/* script */\n'
 
-
   let scriptSrcMode = srcMode
   if (script) {
     scriptSrcMode = script.mode || scriptSrcMode
@@ -74,7 +73,6 @@ module.exports = function (script, options, callback) {
         content += `const ${pageVar} = ()=>import(${pageRequest})\n`
       } else {
         content += `import ${pageVar} from ${pageRequest}\n`
-
       }
       if (pageCfg.isFirst) {
         firstPage = pageName

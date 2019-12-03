@@ -6,9 +6,10 @@ const parseRequest = require('../utils/parse-request')
 const getPageName = require('../utils/get-page-name')
 const toPosix = require('../utils/to-posix')
 const addQuery = require('../utils/add-query')
+const parse = require('../parser')
 
 module.exports = function (json, options, rawCallback) {
-
+  const mode = options.mode
   const loaderContext = options.loaderContext
   const resolveMode = options.resolveMode
   const pagesMap = options.pagesMap
@@ -129,7 +130,6 @@ module.exports = function (json, options, rawCallback) {
     }
   }
 
-
   const processPages = (pages, srcRoot = '', tarRoot = '', context, callback) => {
     if (pages) {
       async.forEach(pages, (page, callback) => {
@@ -220,7 +220,6 @@ module.exports = function (json, options, rawCallback) {
       callback()
     })
   }
-
 
   async.parallel([
     (callback) => {

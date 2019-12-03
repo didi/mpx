@@ -65,7 +65,6 @@ module.exports = function (content) {
   const loaderContext = this
   const isProduction = this.minimize || process.env.NODE_ENV === 'production'
   const options = loaderUtils.getOptions(this) || {}
-  const stringifyRequest = r => loaderUtils.stringifyRequest(loaderContext, r)
 
   const filePath = this.resourcePath
 
@@ -85,7 +84,6 @@ module.exports = function (content) {
   const parts = parse(content, filePath, this.sourceMap, mode)
 
   let output = ''
-
 
   // 只有ali才可能需要scoped
   const hasScoped = (parts.styles.some(({ scoped }) => scoped) || autoScope) && mode === 'ali'
@@ -160,6 +158,7 @@ module.exports = function (content) {
           },
           (callback) => {
             processJSON(parts.json, {
+              mode,
               resolveMode,
               loaderContext,
               pagesMap,
