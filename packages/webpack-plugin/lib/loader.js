@@ -145,27 +145,30 @@ module.exports = function (content) {
     const callback = this.async()
 
     return async.waterfall([
-      async.parallel([
-        (callback) => {
-          processTemplate(parts.template, {
-            srcMode,
-            loaderContext,
-            ctorType
-          }, callback)
-        },
-        (callback) => {
-          processStyles(parts.styles, callback)
-        },
-        (callback) => {
-          processJSON(parts.json, {
-            resolveMode,
-            loaderContext,
-            pagesMap,
-            componentsMap,
-            projectRoot
-          }, callback)
-        }
-      ]),
+      (callback) => {
+        async.parallel([
+          (callback) => {
+            processTemplate(parts.template, {
+              mode,
+              srcMode,
+              loaderContext,
+              ctorType
+            }, callback)
+          },
+          (callback) => {
+            processStyles(parts.styles, callback)
+          },
+          (callback) => {
+            processJSON(parts.json, {
+              resolveMode,
+              loaderContext,
+              pagesMap,
+              componentsMap,
+              projectRoot
+            }, callback)
+          }
+        ], callback)
+      },
       ([templateRes, stylesRes, jsonRes], callback) => {
         output += templateRes.output
         output += stylesRes.output

@@ -37,7 +37,7 @@ function getPackageCacheGroup (packageName) {
     return {
       name: 'bundle',
       minChunks: 2,
-      chunks: 'initial'
+      chunks: 'all'
     }
   } else {
     return {
@@ -50,7 +50,7 @@ function getPackageCacheGroup (packageName) {
       minChunks: 2,
       minSize: 1000,
       priority: 100,
-      chunks: 'initial'
+      chunks: 'all'
     }
   }
 }
@@ -166,14 +166,15 @@ class MpxWebpackPlugin {
         main: {
           name: 'bundle',
           minChunks: 2,
-          chunks: 'initial'
+          chunks: 'all'
         }
       }
     }
 
     if (this.options.autoSplit) {
       if (compiler.options.optimization.splitChunks) {
-        splitChunksOptions = compiler.options.optimization.splitChunks
+        // 即使用户没有设置splitChunks此处也会存在默认配置，故直接删除原配置，如果用户需要自行配置splitChunks需要将autoSplit设置为false
+        // splitChunksOptions = compiler.options.optimization.splitChunks
         delete compiler.options.optimization.splitChunks
       }
       splitChunksPlugin = new SplitChunksPlugin(splitChunksOptions)
@@ -312,7 +313,7 @@ class MpxWebpackPlugin {
         }
       }
 
-      if (splitChunksPlugin) {
+      if (splitChunksPlugin && this.options.mode !== 'web') {
         // 自动跟进分包配置修改splitChunksPlugin配置
         compilation.hooks.finishModules.tap('MpxWebpackPlugin', (modules) => {
           let needInit = false

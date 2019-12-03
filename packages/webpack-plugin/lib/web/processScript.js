@@ -1,5 +1,20 @@
 const genComponentTag = require('../utils/gen-component-tag')
-const optionProcessorPath = require.resolve('./runtime/optionProcessor')
+const loaderUtils = require('loader-utils')
+const optionProcessorPath = require.resolve('../runtime/optionProcessor')
+
+function shallowStringify (obj) {
+  let arr = []
+  for (let key in obj) {
+    if (obj.hasOwnProperty(key)) {
+      let value = obj[key]
+      if (Array.isArray(value)) {
+        value = `[${value.join(',')}]`
+      }
+      arr.push(`'${key}':${value}`)
+    }
+  }
+  return `{${arr.join(',')}}`
+}
 
 module.exports = function (script, options, callback) {
   const ctorType = options.ctorType
@@ -85,7 +100,7 @@ module.exports = function (script, options, callback) {
     })
 
     Object.keys(builtInComponentsMap).forEach((componentName, index) => {
-      const componentCfg = localComponentsMap[componentName]
+      const componentCfg = builtInComponentsMap[componentName]
       const componentVar = `__mpx_built_in_component_${index}__`
       const componentRequest = stringifyRequest(componentCfg.resource)
       content += `import ${componentVar} from ${componentRequest}\n`
@@ -94,7 +109,7 @@ module.exports = function (script, options, callback) {
 
     content += `global.currentSrcMode = ${JSON.stringify(scriptSrcMode)};\n`
     if (!isProduction) {
-      content += `global.currentResource = ${JSON.stringify(filePath)};\n`
+      content += `global.currentResource = ${JSON.stringify(loaderContext.resourcePath)};\n`
     }
     // 为了正确获取currentSrcMode便于运行时进行转换，对于src引入的组件script采用require方式引入(由于webpack会将import的执行顺序上升至最顶),这意味着对于src引入脚本中的named export将不会生效，不过鉴于mpx和小程序中本身也没有在组件script中声明export的用法，所以应该没有影响
     content += script.src
@@ -106,8 +121,8 @@ module.exports = function (script, options, callback) {
         global.currentOption,
         ${JSON.stringify(ctorType)},
         ${JSON.stringify(firstPage)},
-        ${JSON.stringify(pagesMap)},
-        ${JSON.stringify(componentsMap)}`
+        ${shallowStringify(pagesMap)},
+        ${shallowStringify(componentsMap)}`
 
     content += ctorType === 'app' ? `,
             Vue,

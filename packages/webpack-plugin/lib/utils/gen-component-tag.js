@@ -1,4 +1,4 @@
-const stringifyAttr = require('./template-compiler/compiler').stringifyAttr
+const stringifyAttr = require('../template-compiler/compiler').stringifyAttr
 const type = require('./type')
 
 function stringifyAttrs (attrs) {

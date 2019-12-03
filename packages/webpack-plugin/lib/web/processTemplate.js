@@ -1,8 +1,9 @@
-const templateCompiler = require('./template-compiler/compiler')
+const templateCompiler = require('../template-compiler/compiler')
 const genComponentTag = require('../utils/gen-component-tag')
 const addQuery = require('../utils/add-query')
 
 module.exports = function (template, options, callback) {
+  const mode = options.mode
   const srcMode = options.srcMode
   const loaderContext = options.loaderContext
   const ctorType = options.ctorType

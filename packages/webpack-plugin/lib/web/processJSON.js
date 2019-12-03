@@ -1,6 +1,7 @@
 const async = require('async')
 const path = require('path')
 const loaderUtils = require('loader-utils')
+const hash = require('hash-sum')
 const parseRequest = require('../utils/parse-request')
 const getPageName = require('../utils/get-page-name')
 const toPosix = require('../utils/to-posix')
@@ -154,6 +155,7 @@ module.exports = function (json, options, rawCallback) {
             async: tarRoot || queryObj.async,
             isFirst: rawPage === firstPage
           }
+          callback()
         })
       }, callback)
     } else {
@@ -215,6 +217,7 @@ module.exports = function (json, options, rawCallback) {
         resource: addQuery(resource, { component: true }),
         async: queryObj.async
       }
+      callback()
     })
   }
 

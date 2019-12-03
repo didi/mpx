@@ -1,25 +1,26 @@
 export default function processOption (
   option,
   ctorType,
-  importedPagesMap,
-  importedComponentsMap,
+  firstPage,
+  pagesMap,
+  componentsMap,
   Vue,
   VueRouter
 ) {
   if (ctorType === 'app') {
     // 对于app中的组件需要全局注册
-    for (var componentName in importedComponentsMap) {
-      if (importedComponentsMap.hasOwnProperty(componentName)) {
-        var component = importedComponentsMap[componentName]
+    for (var componentName in componentsMap) {
+      if (componentsMap.hasOwnProperty(componentName)) {
+        var component = componentsMap[componentName]
         Vue.component(componentName, component)
       }
     }
 
     var routes = []
 
-    for (var pagePath in importedPagesMap) {
-      if (importedPagesMap.hasOwnProperty(pagePath)) {
-        var page = importedPagesMap[pagePath]
+    for (var pagePath in pagesMap) {
+      if (pagesMap.hasOwnProperty(pagePath)) {
+        var page = pagesMap[pagePath]
         routes.push({
           path: pagePath,
           component: page
@@ -28,19 +29,21 @@ export default function processOption (
     }
 
     if (routes.length) {
-      routes.push({
-        path: '*',
-        redirect: routes[0].path
-      })
+      if (firstPage) {
+        routes.push({
+          path: '*',
+          redirect: firstPage
+        })
+      }
       option.router = new VueRouter({
         routes: routes
       })
     }
   } else {
     // 局部注册页面和组件中依赖的组件
-    for (componentName in importedComponentsMap) {
-      if (importedComponentsMap.hasOwnProperty(componentName)) {
-        component = importedComponentsMap[componentName]
+    for (componentName in componentsMap) {
+      if (componentsMap.hasOwnProperty(componentName)) {
+        component = componentsMap[componentName]
         if (!option.components) {
           option.components = {}
         }
