@@ -3,7 +3,6 @@ import * as webLifecycle from '../platform/patch/web/lifecycle'
 import { mergeLifecycle } from './mergeLifecycle'
 import { type } from '../helper/utils'
 
-
 const NOTSUPPORTS = ['moved', 'relations', 'pageLifetimes', 'definitionFilter']
 
 // relations和pageLifetimes后续估计可以花式支持
