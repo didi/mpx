@@ -154,7 +154,9 @@ module.exports = function (content) {
             }, callback)
           },
           (callback) => {
-            processStyles(parts.styles, callback)
+            processStyles(parts.styles, {
+              ctorType
+            }, callback)
           },
           (callback) => {
             processJSON(parts.json, {
@@ -166,7 +168,9 @@ module.exports = function (content) {
               projectRoot
             }, callback)
           }
-        ], callback)
+        ], (err, res) => {
+          callback(err, res)
+        })
       },
       ([templateRes, stylesRes, jsonRes], callback) => {
         output += templateRes.output
@@ -178,6 +182,7 @@ module.exports = function (content) {
           loaderContext,
           isProduction,
           getRequireForSrc,
+          mpxCid: resourceQueryObj.mpxCid,
           builtInComponentsMap: templateRes.builtInComponentsMap,
           localComponentsMap: jsonRes.localComponentsMap,
           localPagesMap: jsonRes.localPagesMap

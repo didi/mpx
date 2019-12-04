@@ -35,7 +35,7 @@ module.exports = function (json, options, rawCallback) {
   }
 
   if (json.src) {
-    return callback(new Error('[mpx loader][' + this.resource + ']: ' + 'json content must be inline in .mpx files!'))
+    return callback(new Error('[mpx loader][' + loaderContext.resource + ']: ' + 'json content must be inline in .mpx files!'))
   }
 
   try {
@@ -66,7 +66,7 @@ module.exports = function (json, options, rawCallback) {
             })
           },
           (result, callback) => {
-            this.addDependency(result)
+            loaderContext.addDependency(result)
             fs.readFile(result, (err, content) => {
               if (err) return callback(err)
               callback(err, result, content.toString('utf-8'))
@@ -79,7 +79,7 @@ module.exports = function (json, options, rawCallback) {
               const parts = parse(
                 content,
                 filePath,
-                this.sourceMap,
+                loaderContext.sourceMap,
                 mode
               )
               if (parts.json) {
@@ -104,8 +104,9 @@ module.exports = function (json, options, rawCallback) {
                   pages: content.pages,
                   ...queryObj
                 }
-
-                processSubPackage(subPackage, context, callback)
+                processSelfQueue.push((callback) => {
+                  processSubPackage(subPackage, context, callback)
+                })
               } else {
                 processSelfQueue.push((callback) => {
                   processPages(content.pages, '', '', context, callback)
@@ -213,8 +214,7 @@ module.exports = function (json, options, rawCallback) {
       componentsMap[resourcePath] = componentId
 
       localComponentsMap[name] = {
-        id: componentId,
-        resource: addQuery(resource, { component: true }),
+        resource: addQuery(resource, { component: true, mpxCid: componentId }),
         async: queryObj.async
       }
       callback()

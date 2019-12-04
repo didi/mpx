@@ -24,6 +24,7 @@ module.exports = function (script, options, callback) {
   const srcMode = options.srcMode
   const loaderContext = options.loaderContext
   const isProduction = options.isProduction
+  const mpxCid = options.mpxCid
   const getRequireForSrc = options.getRequireForSrc
 
   const stringifyRequest = r => loaderUtils.stringifyRequest(loaderContext, r)
@@ -84,15 +85,10 @@ module.exports = function (script, options, callback) {
       const componentCfg = localComponentsMap[componentName]
       const componentVar = `__mpx_component_${index}__`
       const componentRequest = stringifyRequest(componentCfg.resource)
-      const componentId = componentCfg.id
       if (componentCfg.async) {
-        content += `const ${componentVar} = ()=>import(${componentRequest}).then((options)=>{
-          options.mpxCid = ${JSON.stringify(componentId)}
-          return options
-        })\n`
+        content += `const ${componentVar} = ()=>import(${componentRequest})\n`
       } else {
         content += `import ${componentVar} from ${componentRequest}\n`
-        content += `${componentVar}.mpxCid = ${JSON.stringify(componentId)}\n`
       }
       componentsMap[componentName] = componentVar
     })
@@ -119,6 +115,7 @@ module.exports = function (script, options, callback) {
         global.currentOption,
         ${JSON.stringify(ctorType)},
         ${JSON.stringify(firstPage)},
+        ${JSON.stringify(mpxCid)},
         ${shallowStringify(pagesMap)},
         ${shallowStringify(componentsMap)}`
 

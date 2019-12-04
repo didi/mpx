@@ -2,6 +2,7 @@ export default function processOption (
   option,
   ctorType,
   firstPage,
+  mpxCid,
   pagesMap,
   componentsMap,
   Vue,
@@ -50,6 +51,10 @@ export default function processOption (
         option.components[componentName] = component
       }
     }
+  }
+
+  if (mpxCid) {
+    option.mpxCid = mpxCid
   }
 
   return option

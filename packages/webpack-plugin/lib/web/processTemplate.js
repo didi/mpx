@@ -19,10 +19,10 @@ module.exports = function (template, options, callback) {
 
   if (template) {
     if (template.src) {
-      return callback(new Error('[mpx loader][' + this.resource + ']: ' + 'template content must be inline in .mpx files!'))
+      return callback(new Error('[mpx loader][' + loaderContext.resource + ']: ' + 'template content must be inline in .mpx files!'))
     }
     if (template.lang) {
-      return callback(new Error('[mpx loader][' + this.resource + ']: ' + 'template lang is not supported in trans web mode temporarily, we will support it in the future!'))
+      return callback(new Error('[mpx loader][' + loaderContext.resource + ']: ' + 'template lang is not supported in trans web mode temporarily, we will support it in the future!'))
     }
 
     output += genComponentTag(template, (template) => {
@@ -30,12 +30,12 @@ module.exports = function (template, options, callback) {
         const templateSrcMode = template.mode || srcMode
         const parsed = templateCompiler.parse(template.content, {
           warn: (msg) => {
-            this.emitWarning(
+            loaderContext.emitWarning(
               new Error('[template compiler][' + loaderContext.resource + ']: ' + msg)
             )
           },
           error: (msg) => {
-            this.emitError(
+            loaderContext.emitError(
               new Error('[template compiler][' + loaderContext.resource + ']: ' + msg)
             )
           },
