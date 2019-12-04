@@ -36,7 +36,7 @@ export default function processOption (
           redirect: firstPage
         })
       }
-      option.router = new VueRouter({
+      window.$router = option.router = new VueRouter({
         routes: routes
       })
     }
