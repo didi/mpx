@@ -1,6 +1,8 @@
 import * as wxLifecycle from '../platform/patch/wx/lifecycle'
+import * as webLifecycle from '../platform/patch/web/lifecycle'
 import { mergeLifecycle } from './mergeLifecycle'
 import { type } from '../helper/utils'
+
 
 const NOTSUPPORTS = ['moved', 'relations', 'pageLifetimes', 'definitionFilter']
 
@@ -45,6 +47,7 @@ function notSupportTip (options) {
 
 export default {
   lifecycle: mergeLifecycle(wxLifecycle.LIFECYCLE),
+  lifecycle2: mergeLifecycle(webLifecycle.LIFECYCLE),
   pageMode: 'blend',
   support: false,
   lifecycleProxyMap: {
