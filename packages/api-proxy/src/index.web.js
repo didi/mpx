@@ -14,7 +14,7 @@ export default function install (target) {
         args.push(from)
       }
 
-      return allApi[api].apply(this, args)
+      return allApi[api].apply(target, args)
     }
   })
 }
