@@ -34,6 +34,7 @@ module.exports = function (content) {
   const resolveMode = mpx.resolveMode
   const projectRoot = mpx.projectRoot
   const mode = mpx.mode
+  const defs = mpx.defs
   const globalSrcMode = mpx.srcMode
   const queryObj = loaderUtils.parseQuery(this.resourceQuery || '?')
   const localSrcMode = queryObj.mode
@@ -67,7 +68,7 @@ module.exports = function (content) {
       } else {
         try {
           const source = raw.toString('utf-8')
-          const text = mpxJSON.compileMPXJSONText({ source, mode, filePath: _src })
+          const text = mpxJSON.compileMPXJSONText({ source, mode, defs, filePath: _src })
           callback(null, text)
         } catch (e) {
           callback(e)

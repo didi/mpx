@@ -3,7 +3,7 @@ const path = require('path')
 const hash = require('hash-sum')
 const SingleEntryPlugin = require('webpack/lib/SingleEntryPlugin')
 const loaderUtils = require('loader-utils')
-const parse = require('../parser')
+const parseComponent = require('../parser')
 const config = require('../config')
 const normalize = require('../utils/normalize')
 const nativeLoaderPath = normalize.lib('native-loader')
@@ -42,6 +42,7 @@ module.exports = function (raw) {
   const pagesMap = mpx.pagesMap
   const componentsMap = mpx.componentsMap[packageName]
   const mode = mpx.mode
+  const defs = mpx.defs
   const globalSrcMode = mpx.srcMode
   const localSrcMode = loaderUtils.parseQuery(this.resourceQuery || '?').mode
   const resolveMode = mpx.resolveMode
@@ -132,7 +133,7 @@ module.exports = function (raw) {
     // 使用了MPXJSON的话先编译
     // 此处需要使用真实的resourcePath
     if (this.resourcePath.endsWith('.json.js')) {
-      json = JSON.parse(mpxJSON.compileMPXJSONText({ source: raw, mode, filePath: this.resourcePath }))
+      json = JSON.parse(mpxJSON.compileMPXJSONText({ source: raw, mode, defs, filePath: this.resourcePath }))
     } else {
       json = JSON.parse(raw)
     }
@@ -299,11 +300,12 @@ module.exports = function (raw) {
               const filePath = result
               const extName = path.extname(filePath)
               if (extName === '.mpx' || extName === '.vue') {
-                const parts = parse(
+                const parts = parseComponent(
                   content,
                   filePath,
                   this.sourceMap,
-                  mode
+                  mode,
+                  defs
                 )
                 if (parts.json) {
                   content = parts.json.content

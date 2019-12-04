@@ -14,6 +14,7 @@ module.exports = function (raw) {
   const mainCompilation = getMainCompilation(compilation)
   const mpx = mainCompilation.__mpx__
   const mode = mpx.mode
+  const defs = mpx.defs
   const externalClasses = mpx.externalClasses
   const globalSrcMode = mpx.srcMode
   const localSrcMode = loaderUtils.parseQuery(this.resourceQuery || '?').mode
@@ -41,6 +42,7 @@ module.exports = function (raw) {
     basename: path.basename(this.resource),
     isComponent: !!componentsMap[resourcePath],
     mode,
+    defs,
     globalMpxAttrsFilter: mpx.globalMpxAttrsFilter,
     externalClasses,
     srcMode: localSrcMode || globalSrcMode,
