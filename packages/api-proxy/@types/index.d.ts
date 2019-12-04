@@ -2,7 +2,7 @@ import { Mpx } from '@mpxjs/core'
 
 type AddPromise<W> = {
   [K in keyof W]: W[K] extends (...args: any) => any
-    ? Parameters<W[K]> extends [{ success?: (res: infer R) => any }, ...any[]]
+    ? Parameters<W[K]> extends [{ success?: (res: infer R) => any }?, ...any[]]
       ? (...args: Parameters<W[K]>) => ReturnType<W[K]> & Promise<R>
       : W[K]
     : W[K]

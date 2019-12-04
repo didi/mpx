@@ -152,52 +152,15 @@ type ThisTypedComponentOpt<D, P, C, M, Mi extends Array<any>> =
   ComponentOpt<D, P, C, M, Mi>
   & ThisType<ComponentIns<D, P, C, M, Mi>>
 
-
-interface WxComponentIns {
-
-  is: string
-
-  id: string
-
-  dataset: string
-
-  setData (
-    data: object,
-    callback?: () => void
-  ): void
-
-  hasBehavior (behavior: any): boolean
-
-  triggerEvent (
-    name: string,
-    details?: any,
-    options?: Partial<{
-      bubbles: boolean
-      composed: boolean
-      capturePhase: boolean
-    }>
-  ): void
-
-  createSelectorQuery (): WechatMiniprogram.SelectorQuery
-
-  createIntersectionObserver (
-    options?: WechatMiniprogram.CreateIntersectionObserverOption
-  ): WechatMiniprogram.IntersectionObserver
-
-  selectComponent (selector: string): ComponentIns<{}, {}, {}, {}, []>
-
-  selectAllComponents (selector: string): Array<ComponentIns<{}, {}, {}, {}, []>>
-
-  getRelationNodes (relationKey: string): WechatMiniprogram.Component.RelationOption[]
-}
-
 declare function get (obj: object, key: string): any
 
 declare function set (obj: object, key: string, value: any): any
 
 declare function remove (obj: object, key: string): any
 
-interface MpxComponentIns {
+export interface MpxComponentIns {
+  $refs: ObjectOf<any>
+  
   $set: typeof set
 
   $get: typeof get
@@ -211,17 +174,25 @@ interface MpxComponentIns {
   $nextTick (fn: () => void): void
 }
 
+interface ReplaceWxComponentIns {
+  selectComponent (selector: string): ComponentIns<{}, {}, {}, {}, []>
+
+  selectAllComponents (selector: string): Array<ComponentIns<{}, {}, {}, {}, []>>
+}
+
+type WxComponentIns<D> = ReplaceWxComponentIns & WechatMiniprogram.Component.InstanceProperties & WechatMiniprogram.Component.InstanceMethods<D>
+
 type ComponentInsInComputed<D, P, C, M, Mi extends Array<any>> =
   GetDataType<D> & UnboxMixinsField<Mi, 'data'> &
   M & UnboxMixinsField<Mi, 'methods'> &
   GetPropsType<P & UnboxMixinsField<Mi, 'properties'>> &
-  C & UnboxMixinsField<Mi, 'computed'> & WxComponentIns & MpxComponentIns
+  C & UnboxMixinsField<Mi, 'computed'> & WxComponentIns<D> & MpxComponentIns
 
 type ComponentIns<D, P, C, M, Mi extends Array<any>> =
   GetDataType<D> & UnboxMixinsField<Mi, 'data'> &
   M & UnboxMixinsField<Mi, 'methods'> &
   GetPropsType<P & UnboxMixinsField<Mi, 'properties'>> &
-  GetComputedType<C & UnboxMixinsField<Mi, 'computed'>> & WxComponentIns & MpxComponentIns
+  GetComputedType<C & UnboxMixinsField<Mi, 'computed'>> & WxComponentIns<D> & MpxComponentIns
 
 interface createConfig {
   customCtor: any

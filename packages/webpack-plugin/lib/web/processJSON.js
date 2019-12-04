@@ -6,10 +6,11 @@ const parseRequest = require('../utils/parse-request')
 const getPageName = require('../utils/get-page-name')
 const toPosix = require('../utils/to-posix')
 const addQuery = require('../utils/add-query')
-const parse = require('../parser')
+const parseComponent = require('../parser')
 
 module.exports = function (json, options, rawCallback) {
   const mode = options.mode
+  const defs = options.defs
   const loaderContext = options.loaderContext
   const resolveMode = options.resolveMode
   const pagesMap = options.pagesMap
@@ -76,11 +77,12 @@ module.exports = function (json, options, rawCallback) {
             const filePath = result
             const extName = path.extname(filePath)
             if (extName === '.mpx' || extName === '.vue') {
-              const parts = parse(
+              const parts = parseComponent(
                 content,
                 filePath,
                 loaderContext.sourceMap,
-                mode
+                mode,
+                defs
               )
               if (parts.json) {
                 content = parts.json.content

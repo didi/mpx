@@ -45,14 +45,18 @@ const postcss = require('postcss')
 //     */
 // `
 module.exports = postcss.plugin('conditional-strip', (options = {}) => {
-  if (!options.__mpx_mode__) {
-    throw new Error('mode is required!')
-  }
+
+  const { mode, defs } = options
+
+  const defKeys = Object.keys(defs)
+  const defValues = defKeys.map((key) => {
+    return defs[key]
+  })
 
   function evalExp (exp) {
     /* eslint-disable no-new-func */
-    const f = new Function('__mpx_mode__', `return ${exp};`)
-    return f(options.__mpx_mode__)
+    const f = new Function('__mpx_mode__', ...defKeys, `return ${exp};`)
+    return f(mode, ...defValues)
   }
 
   function isIfStart (content) {

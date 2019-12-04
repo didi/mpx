@@ -15,7 +15,9 @@ module.exports = function (css, map) {
   const loaderOptions = loaderUtils.getOptions(this) || {}
 
   const mainCompilation = getMainCompilation(this._compilation)
-  const compilationMpx = mainCompilation.__mpx__
+  const mpx = mainCompilation.__mpx__
+  const mode = mpx.mode
+  const defs = mpx.defs
 
   const transRpxs = Array.isArray(loaderOptions.transRpx) ? loaderOptions.transRpx : [loaderOptions.transRpx]
 
@@ -40,7 +42,8 @@ module.exports = function (css, map) {
       }
 
       plugins.push(pluginCondStrip({
-        __mpx_mode__: compilationMpx.mode
+        mode,
+        defs
       }))
 
       if (transRpxs.length) {
