@@ -147,6 +147,7 @@ function fromByteArray (uint8) {
 }
 
 export {
+  byteLength,
   toByteArray,
   fromByteArray
 }

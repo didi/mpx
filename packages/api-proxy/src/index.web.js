@@ -9,9 +9,11 @@ export default function install (target) {
 
   Object.keys(allApi).forEach(api => {
     target[api] = function (...args) {
-      const from = args.pop()
-      if (typeof from !== 'string' || !fromMap[from]) {
-        args.push(from)
+      if (args.length > 0) {
+        const from = args.pop()
+        if (typeof from !== 'string' || !fromMap[from]) {
+          args.push(from)
+        }
       }
 
       return allApi[api].apply(target, args)
