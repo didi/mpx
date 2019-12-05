@@ -140,23 +140,23 @@ module.exports = function (json, options, rawCallback) {
         if (resolveMode === 'native') {
           page = loaderUtils.urlToRequest(page, projectRoot)
         }
-        let name = getPageName(tarRoot, rawPage)
-        name = '/' + toPosix(name)
+        const name = getPageName(tarRoot, rawPage)
+        const pagePath = '/' + toPosix(name)
         resolve(path.join(context, srcRoot), page, (err, resource) => {
           if (err) return callback(err)
           const { resourcePath, queryObj } = parseRequest(resource)
           // 如果存在page命名冲突，return err
           for (let key in pagesMap) {
-            if (pagesMap[key] === name && key !== resourcePath) {
-              return callback(new Error(`Resources in ${resourcePath} and ${key} are registered with same page path ${name}, which is not allowed!`))
+            if (pagesMap[key] === pagePath && key !== resourcePath) {
+              return callback(new Error(`Resources in ${resourcePath} and ${key} are registered with same page path ${pagePath}, which is not allowed!`))
             }
           }
           if (pagesMap[resourcePath]) return callback()
-          pagesMap[resourcePath] = name
-          localPagesMap[name] = {
+          pagesMap[resourcePath] = pagePath
+          localPagesMap[pagePath] = {
             resource: addQuery(resource, { page: true }),
             async: tarRoot || queryObj.async,
-            isFirst: rawPage === firstPage
+            isFirst: !tarRoot && rawPage === firstPage
           }
           callback()
         })

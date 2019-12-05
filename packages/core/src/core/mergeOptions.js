@@ -305,7 +305,7 @@ function proxyHooks (options) {
     const newHooks = (options[key] || []).slice()
     const proxyArr = lifecycleProxyMap[key]
     proxyArr && proxyArr.forEach(lifecycle => {
-      if (options[lifecycle]) {
+      if (options[lifecycle] && CURRENT_HOOKS.indexOf(lifecycle) !== -1) {
         newHooks.push.apply(newHooks, options[lifecycle])
         delete options[lifecycle]
       }

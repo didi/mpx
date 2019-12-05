@@ -66,8 +66,8 @@ module.exports = function (script, options, callback) {
     let firstPage = ''
     const pagesMap = {}
     const componentsMap = {}
-    Object.keys(localPagesMap).forEach((pageName, index) => {
-      const pageCfg = localPagesMap[pageName]
+    Object.keys(localPagesMap).forEach((pagePath, index) => {
+      const pageCfg = localPagesMap[pagePath]
       const pageVar = `__mpx_page_${index}__`
       const pageRequest = stringifyRequest(pageCfg.resource)
       if (pageCfg.async) {
@@ -76,9 +76,9 @@ module.exports = function (script, options, callback) {
         content += `import ${pageVar} from ${pageRequest}\n`
       }
       if (pageCfg.isFirst) {
-        firstPage = pageName
+        firstPage = pagePath
       }
-      pagesMap[pageName] = pageVar
+      pagesMap[pagePath] = pageVar
     })
 
     Object.keys(localComponentsMap).forEach((componentName, index) => {

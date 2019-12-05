@@ -139,15 +139,17 @@ class MpxWebpackPlugin {
     } else {
       throw new Error('Multiple MpxWebpackPlugin instances exist in webpack compiler, please check webpack plugins config!')
     }
-    // 强制设置publicPath为'/'
-    if (compiler.options.output.publicPath && compiler.options.output.publicPath !== publicPath) {
-      console.warn(`MpxWebpackPlugin accept output publicPath to be ${publicPath} only, custom output publicPath will be ignored!`)
+    if (this.options.mode !== 'web') {
+      // 强制设置publicPath为'/'
+      if (compiler.options.output.publicPath && compiler.options.output.publicPath !== publicPath) {
+        console.warn(`MpxWebpackPlugin accept output publicPath to be ${publicPath} only, custom output publicPath will be ignored!`)
+      }
+      compiler.options.output.publicPath = publicPath
+      if (compiler.options.output.filename && compiler.options.output.filename !== outputFilename) {
+        console.warn(`MpxWebpackPlugin accept output filename to be ${outputFilename} only, custom output filename will be ignored!`)
+      }
+      compiler.options.output.filename = compiler.options.output.chunkFilename = outputFilename
     }
-    compiler.options.output.publicPath = publicPath
-    if (compiler.options.output.filename && compiler.options.output.filename !== outputFilename) {
-      console.warn(`MpxWebpackPlugin accept output filename to be ${outputFilename} only, custom output filename will be ignored!`)
-    }
-    compiler.options.output.filename = compiler.options.output.chunkFilename = outputFilename
 
     const resolvePlugin = new AddModePlugin('before-resolve', this.options.mode, 'resolve')
 
@@ -410,7 +412,7 @@ class MpxWebpackPlugin {
             const pagesMap = mpx.pagesMap
             const componentsMap = mpx.componentsMap
             const staticResourceMap = mpx.staticResourceMap
-            const publicPath = compilation.outputOptions.publicPath || ''
+            const publicPath = mpx.mode === 'web' ? '' : compilation.outputOptions.publicPath
             const range = expr.range
             const dep = new ResolveDependency(resource, packageName, pagesMap, componentsMap, staticResourceMap, publicPath, range)
             parser.state.current.addDependency(dep)
