@@ -4,7 +4,9 @@
   "description": "convert miniprogram API at each end",
   "module": "src/index.js",
   "types": "@types/index.d.ts",
-  "sideEffects": false,
+  "sideEffects": [
+    "*.styl"
+  ],
   "scripts": {
     "test": "jest"
   },
