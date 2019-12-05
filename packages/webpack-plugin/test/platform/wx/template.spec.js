@@ -99,14 +99,14 @@ describe('template should transform correct', function () {
     expect(output4).toBe('<view s-for="item, t1 in list">123</view>')
     expect(output5).toBe('<view s-for="t1, t2 in list">123</view>')
     expect(output6).toBe('<view s-for="t1, t2 in list trackBy t1.u1">123</view>')
-    expect(output7).toBe(`<view s-for='t1, t2 in ["s","t","r","i","n","g","s"] trackBy t1[t2]'>123</view>`)
-    expect(output8).toBe(`<view s-for='t1, t2 in ["1","2","3"] trackBy t1[t2]'>123</view>`)
-    expect(output9).toBe('<view s-for="t1, t2 in [0,1,2,3,4,5,6,7] trackBy t1[t2]">123</view>')
+    expect(output7).toBe(`<view s-for='t1, t2 in ["s","t","r","i","n","g","s"] trackBy t1'>123</view>`)
+    expect(output8).toBe(`<view s-for='t1, t2 in ["1","2","3"] trackBy t1'>123</view>`)
+    expect(output9).toBe('<view s-for="t1, t2 in [0,1,2,3,4,5,6,7] trackBy t1">123</view>')
     expect(output10).toBe('<view s-for="item, index in list trackBy item">123</view>')
     expect(output11).toBe(`<view s-for="item, index in list trackBy item['a-b']">123</view>`)
     expect(output12).toBe(`<view s-for="item, index in list">123</view>`)
     expect(output13).toBe(`<view s-for="item, index in list">123</view>`)
-    expect(output14).toBe('<view s-for="t1, t2 in [0,1,2,3,4,5,6,7] trackBy t1[t2]">123</view>')
+    expect(output14).toBe('<view s-for="t1, t2 in [0,1,2,3,4,5,6,7] trackBy t1">123</view>')
   })
 
   it('should transform button correct', function () {
