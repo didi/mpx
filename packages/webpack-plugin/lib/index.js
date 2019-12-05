@@ -164,22 +164,11 @@ class MpxWebpackPlugin {
     }
 
     let splitChunksPlugin
-    let splitChunksOptions = {
-      cacheGroups: {
-        main: {
-          name: 'bundle',
-          minChunks: 2,
-          chunks: 'all'
-        }
-      }
-    }
+    let splitChunksOptions
 
     if (this.options.autoSplit) {
-      if (compiler.options.optimization.splitChunks) {
-        // 即使用户没有设置splitChunks此处也会存在默认配置，故直接删除原配置，如果用户需要自行配置splitChunks需要将autoSplit设置为false
-        // splitChunksOptions = compiler.options.optimization.splitChunks
-        delete compiler.options.optimization.splitChunks
-      }
+      splitChunksOptions = compiler.options.optimization.splitChunks
+      delete compiler.options.optimization.splitChunks
       splitChunksPlugin = new SplitChunksPlugin(splitChunksOptions)
       splitChunksPlugin.apply(compiler)
     }
@@ -324,7 +313,7 @@ class MpxWebpackPlugin {
         }
       }
 
-      if (splitChunksPlugin && this.options.mode !== 'web') {
+      if (splitChunksPlugin) {
         // 自动跟进分包配置修改splitChunksPlugin配置
         compilation.hooks.finishModules.tap('MpxWebpackPlugin', (modules) => {
           let needInit = false
