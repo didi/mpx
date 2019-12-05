@@ -45,7 +45,6 @@ const postcss = require('postcss')
 //     */
 // `
 module.exports = postcss.plugin('conditional-strip', (options = {}) => {
-
   const { mode, defs } = options
 
   const defKeys = Object.keys(defs)
