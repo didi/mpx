@@ -68,6 +68,7 @@
       submit () {
         const value = getFormValue(this.$slots.default)
         this.$emit('submit', {
+          type:'submit',
           detail: {
             value
           },
@@ -77,6 +78,7 @@
       reset () {
         setFormValue(this.$slots.default, this.initialValue)
         this.$emit('reset', {
+          type:'reset',
           detail: {
             value: this.initialValue
           },

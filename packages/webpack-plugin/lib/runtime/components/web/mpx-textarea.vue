@@ -135,3 +135,14 @@
     }
   }
 </script>
+
+<style lang="stylus">
+  .mpx-textarea
+    font inherit
+    cursor auto
+    width 300px
+    height 150px
+    display block
+    position relative
+    resize none
+</style>

@@ -44,3 +44,8 @@
     }
   }
 </script>
+
+<style lang="stylus">
+  .mpx-radio
+    margin 3px 3px 3px 4px
+</style>

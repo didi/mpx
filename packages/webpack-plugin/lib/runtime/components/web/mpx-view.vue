@@ -39,7 +39,7 @@
       }
       const data = {
         class: ['mpx-view', this.className],
-        on: getInnerListeners(this, { mergeAfter})
+        on: getInnerListeners(this, { mergeAfter })
       }
       return createElement('div', data, this.$slots.default)
     },
@@ -60,14 +60,12 @@
         clearTimeout(this.startTimer)
         this.startTimer = setTimeout(() => {
           this.hover = true
-          clearTimeout(this.endTimer)
         }, this.hoverStartTime)
       },
       handleTouchend () {
         clearTimeout(this.endTimer)
         this.endTimer = setTimeout(() => {
           this.hover = false
-          clearTimeout(this.startTimer)
         }, this.hoverStayTime)
       }
     }

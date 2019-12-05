@@ -111,7 +111,7 @@
         this.$refs.input.value = value
       },
       notifyChange (value) {
-        if (value!==undefined) {
+        if (value !== undefined) {
           this.setValue(value)
         }
         // 通过原生input派发事件
@@ -138,3 +138,20 @@
     }
   }
 </script>
+
+<style lang="stylus">
+  .mpx-input
+    cursor auto
+    width 100%
+    padding 0
+    border 0
+    font inherit
+    display block
+    height 1.4rem
+    text-overflow clip
+    overflow hidden
+    white-space nowrap
+    font-family UICTFontTextStyleBody
+    min-height 1.4rem
+
+</style>

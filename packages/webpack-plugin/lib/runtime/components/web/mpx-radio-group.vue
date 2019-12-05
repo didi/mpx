@@ -78,6 +78,7 @@
           value = this.getValue()
         }
         this.$emit('change', {
+          type: 'change',
           detail: {
             value: value
           }

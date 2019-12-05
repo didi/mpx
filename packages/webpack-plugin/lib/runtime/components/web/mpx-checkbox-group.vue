@@ -74,12 +74,13 @@
         })
       },
       notifyChange (value) {
-        if (value!==undefined) {
+        if (value !== undefined) {
           this.setValue(value)
         } else {
           value = this.getValue()
         }
         this.$emit('change', {
+          type: 'change',
           detail: {
             value: value
           }
