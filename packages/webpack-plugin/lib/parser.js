@@ -13,7 +13,6 @@ module.exports = (content, filePath, needMap, mode, defs) => {
   let output = cache.get(cacheKey)
   if (output) return output
   output = compiler.parseComponent(content, {
-    pad: 'line',
     mode,
     defs,
     filePath

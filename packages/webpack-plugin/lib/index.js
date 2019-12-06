@@ -37,7 +37,7 @@ function getPackageCacheGroup (packageName) {
     return {
       name: 'bundle',
       minChunks: 2,
-      chunks: 'initial'
+      chunks: 'all'
     }
   } else {
     return {
@@ -50,10 +50,12 @@ function getPackageCacheGroup (packageName) {
       minChunks: 2,
       minSize: 1000,
       priority: 100,
-      chunks: 'initial'
+      chunks: 'all'
     }
   }
 }
+
+// todo 输出web模式下自动对.mpx文件插入vue-loader
 
 let loaderOptions
 
@@ -64,6 +66,9 @@ class MpxWebpackPlugin {
     options.srcMode = options.srcMode || options.mode
     if (options.mode !== options.srcMode && options.srcMode !== 'wx') {
       throw new Error('MpxWebpackPlugin supports srcMode to be "wx" only temporarily!')
+    }
+    if (options.mode === 'web' && options.srcMode !== 'wx') {
+      throw new Error('MpxWebpackPlugin supports mode to be "web" only when srcMode is set to "wx"!')
     }
     if (!Array.isArray(options.externalClasses)) {
       options.externalClasses = ['custom-class', 'i-class']
@@ -129,15 +134,22 @@ class MpxWebpackPlugin {
   }
 
   apply (compiler) {
-    // 强制设置publicPath为'/'
-    if (compiler.options.output.publicPath && compiler.options.output.publicPath !== publicPath) {
-      console.warn(`MpxWebpackPlugin accept output publicPath to be ${publicPath} only, custom output publicPath will be ignored!`)
+    if (!compiler.__mpx__) {
+      compiler.__mpx__ = true
+    } else {
+      throw new Error('Multiple MpxWebpackPlugin instances exist in webpack compiler, please check webpack plugins config!')
     }
-    compiler.options.output.publicPath = publicPath
-    if (compiler.options.output.filename && compiler.options.output.filename !== outputFilename) {
-      console.warn(`MpxWebpackPlugin accept output filename to be ${outputFilename} only, custom output filename will be ignored!`)
+    if (this.options.mode !== 'web') {
+      // 强制设置publicPath为'/'
+      if (compiler.options.output.publicPath && compiler.options.output.publicPath !== publicPath) {
+        console.warn(`MpxWebpackPlugin accept output publicPath to be ${publicPath} only, custom output publicPath will be ignored!`)
+      }
+      compiler.options.output.publicPath = publicPath
+      if (compiler.options.output.filename && compiler.options.output.filename !== outputFilename) {
+        console.warn(`MpxWebpackPlugin accept output filename to be ${outputFilename} only, custom output filename will be ignored!`)
+      }
+      compiler.options.output.filename = compiler.options.output.chunkFilename = outputFilename
     }
-    compiler.options.output.filename = compiler.options.output.chunkFilename = outputFilename
 
     const resolvePlugin = new AddModePlugin('before-resolve', this.options.mode, 'resolve')
 
@@ -152,21 +164,11 @@ class MpxWebpackPlugin {
     }
 
     let splitChunksPlugin
-    let splitChunksOptions = {
-      cacheGroups: {
-        main: {
-          name: 'bundle',
-          minChunks: 2,
-          chunks: 'initial'
-        }
-      }
-    }
+    let splitChunksOptions
 
     if (this.options.autoSplit) {
-      if (compiler.options.optimization.splitChunks) {
-        splitChunksOptions = compiler.options.optimization.splitChunks
-        delete compiler.options.optimization.splitChunks
-      }
+      splitChunksOptions = compiler.options.optimization.splitChunks
+      delete compiler.options.optimization.splitChunks
       splitChunksPlugin = new SplitChunksPlugin(splitChunksOptions)
       splitChunksPlugin.apply(compiler)
     }
@@ -234,6 +236,8 @@ class MpxWebpackPlugin {
           extractedMap: {},
           extractSeenFile: {},
           usingComponents: [],
+          // todo es6 map读写性能高于object，之后会逐步替换
+          vueContentCache: new Map(),
           currentPackageRoot: '',
           wxsMap: {},
           wxsConentMap: {},
@@ -397,7 +401,7 @@ class MpxWebpackPlugin {
             const pagesMap = mpx.pagesMap
             const componentsMap = mpx.componentsMap
             const staticResourceMap = mpx.staticResourceMap
-            const publicPath = compilation.outputOptions.publicPath || ''
+            const publicPath = mpx.mode === 'web' ? '' : compilation.outputOptions.publicPath
             const range = expr.range
             const dep = new ResolveDependency(resource, packageName, pagesMap, componentsMap, staticResourceMap, publicPath, range)
             parser.state.current.addDependency(dep)
@@ -579,9 +583,9 @@ class MpxWebpackPlugin {
       // resolve完成后修改loaders或者resource/request
       normalModuleFactory.hooks.afterResolve.tapAsync('MpxWebpackPlugin', (data, callback) => {
         const isFromMpx = /\.(mpx|vue)/.test(data.resource)
-        if (data.loaders) {
+        if (data.loaders && isFromMpx) {
           data.loaders.forEach((loader) => {
-            if (/ts-loader/.test(loader.loader) && isFromMpx) {
+            if (/ts-loader/.test(loader.loader)) {
               loader.options = Object.assign({}, { appendTsSuffixTo: [/\.(mpx|vue)$/] })
             }
           })
@@ -613,6 +617,7 @@ class MpxWebpackPlugin {
     })
 
     compiler.hooks.emit.tapAsync('MpxWebpackPlugin', (compilation, callback) => {
+      if (this.options.mode === 'web') return callback()
       const jsonpFunction = compilation.outputOptions.jsonpFunction
 
       function getTargetFile (file) {

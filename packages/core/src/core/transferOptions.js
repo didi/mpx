@@ -20,7 +20,7 @@ export default function transferOptions (options, type, builtInMixins = []) {
     options.computed = Object.assign({}, options.computed, currentInject.injectComputed)
   }
   // 转换mode
-  options.mpxConvertMode = options.mpxConvertMode || getConvertMode(global.currentSrcMode, __mpx_mode__)
+  options.mpxConvertMode = options.mpxConvertMode || getConvertMode(global.currentSrcMode)
   const rawOptions = mergeOptions(options, type)
   // 注入内建的mixins, 内建mixin是按原始平台编写的，所以合并规则和rootMixins保持一致
   rawOptions.mixins = builtInMixins

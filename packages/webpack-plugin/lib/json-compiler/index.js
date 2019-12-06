@@ -13,6 +13,7 @@ const toPosix = require('../utils/to-posix')
 const fixUsingComponent = require('../utils/fix-using-component')
 const getRulesRunner = require('../platform/index')
 const isUrlRequest = require('../utils/is-url-request')
+const getPageName = require('../utils/get-page-name')
 const addQuery = require('../utils/add-query')
 
 module.exports = function (raw) {
@@ -177,11 +178,6 @@ module.exports = function (raw) {
 
   if (rulesRunner) {
     rulesRunner(json)
-  }
-
-  function getPageName (root, page) {
-    const match = /^[.~/]*(.*?)(\.[^.]*)?$/.exec(page)
-    return path.join(root, match[1])
   }
 
   const resolve = (context, request, callback) => {

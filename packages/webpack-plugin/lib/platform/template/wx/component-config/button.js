@@ -16,9 +16,14 @@ module.exports = function ({ print }) {
   const ttValueLogError = print({ platform: 'bytedance', tag: TAG_NAME, isError: true, type: 'value' })
   const ttValueLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false, type: 'value' })
   const ttEventLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false, type: 'event' })
-
+  const webPropLog = print({ platform: 'web', tag: TAG_NAME, isError: false })
+  const webEventLog = print({ platform: 'web', tag: TAG_NAME, isError: false, type: 'event' })
   return {
     test: TAG_NAME,
+    web (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-button'
+    },
     props: [
       {
         test: 'open-type',
@@ -82,11 +87,10 @@ module.exports = function ({ print }) {
       },
       {
         test: /^(lang|session-from|send-message-title|send-message-path|send-message-img|show-message-card)$/,
-        ali: aliPropLog,
-        swan: baiduPropLog
+        ali: aliPropLog
       },
       {
-        test: /^(app-parameter)$/,
+        test: /^(lang|session-from|send-message-title|send-message-path|send-message-img|show-message-card|app-parameter)$/,
         swan: baiduPropLog
       },
       {
@@ -96,6 +100,17 @@ module.exports = function ({ print }) {
       {
         test: /^(plain|lang|session-from|send-message-title|send-message-path|send-message-img|app-parameter|show-message-card)$/,
         tt: ttPropLog
+      },
+      {
+        test: /^(open-type|lang|session-from|send-message-title|send-message-path|send-message-img|show-message-card|app-parameter)$/,
+        web: webPropLog
+      },
+      {
+        test: /^(size|type|plain|loading|form-type|hover-class|hover-stop-propagation|hover-start-time|hover-stay-time|use-built-in)$/,
+        web (prop, { el }) {
+          // todo 这部分能力基于内部封装实现
+          el.isBuiltIn = true
+        }
       }
     ],
     event: [
@@ -119,7 +134,8 @@ module.exports = function ({ print }) {
       },
       {
         test: /^(getuserinfo|contact|getphonenumbe|error|launchapp|opensetting)$/,
-        tt: ttEventLog
+        tt: ttEventLog,
+        web: webEventLog
       }
     ]
   }

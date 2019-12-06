@@ -24,7 +24,12 @@ export default function mergeOptions (options = {}, type, needConvert = true) {
     proxyHooks(newOptions)
     // 自定义补充转换函数
     typeof convertRule.convert === 'function' && convertRule.convert(newOptions)
+    // 当存在lifecycle2时，在转换后将CURRENT_HOOKS替换，以确保后续合并hooks时转换后的hooks能够被正确处理
+    if (convertRule.lifecycle2) {
+      CURRENT_HOOKS = convertRule.lifecycle2[curType]
+    }
   }
+
   newOptions.mpxCustomKeysForBlend = mpxCustomKeysForBlend
   return transformHOOKS(newOptions)
 }
@@ -300,7 +305,7 @@ function proxyHooks (options) {
     const newHooks = (options[key] || []).slice()
     const proxyArr = lifecycleProxyMap[key]
     proxyArr && proxyArr.forEach(lifecycle => {
-      if (CURRENT_HOOKS.indexOf(lifecycle) !== -1) {
+      if (options[lifecycle] && CURRENT_HOOKS.indexOf(lifecycle) !== -1) {
         newHooks.push.apply(newHooks, options[lifecycle])
         delete options[lifecycle]
       }

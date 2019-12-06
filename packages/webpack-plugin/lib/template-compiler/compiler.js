@@ -1659,6 +1659,20 @@ function processScoped (el, options) {
   }
 }
 
+const builtInComponentsPrefix = '@mpxjs/webpack-plugin/lib/runtime/components'
+
+function processBuiltInComponents (el, meta) {
+  if (el.isBuiltIn) {
+    if (!meta.builtInComponentsMap) {
+      meta.builtInComponentsMap = {}
+    }
+    const tag = el.tag
+    if (!meta.builtInComponentsMap[tag]) {
+      meta.builtInComponentsMap[tag] = `${builtInComponentsPrefix}/${mode}/${tag}.vue`
+    }
+  }
+}
+
 function processAliStyleClassHack (el, options, root) {
   ['style', 'class'].forEach((type) => {
     let exp = getAndRemoveAttr(el, type)
@@ -1742,13 +1756,19 @@ function processElement (el, root, options, meta) {
     rulesRunner(el)
   }
 
-  let tranAli = mode === 'ali' && srcMode === 'wx'
+  const transAli = mode === 'ali' && srcMode === 'wx'
+  const transWeb = mode === 'web' && srcMode === 'wx'
+
+  if (transWeb) {
+    processBuiltInComponents(el, meta)
+    return
+  }
 
   const pass = isNative || processTemplate(el) || processingTemplate
 
   processScoped(el, options)
 
-  if (tranAli) {
+  if (transAli) {
     processAliExternalClassesHack(el, options)
   }
 
@@ -1780,6 +1800,10 @@ function processElement (el, root, options, meta) {
 }
 
 function closeElement (el, meta) {
+  // web暂时无后处理
+  if (mode === 'web') {
+    return
+  }
   const pass = isNative || postProcessTemplate(el) || processingTemplate
   postProcessWxs(el, meta)
   if (!pass) {
@@ -2003,5 +2027,7 @@ module.exports = {
   parse,
   serialize,
   genNode,
-  makeAttrsMap
+  makeAttrsMap,
+  stringifyAttr,
+  parseMustache
 }

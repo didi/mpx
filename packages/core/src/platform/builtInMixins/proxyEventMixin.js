@@ -1,5 +1,4 @@
-import { is } from '../../helper/env'
-import { collectDataset, setByPath } from '../../helper/utils'
+import { setByPath, collectDataset } from '../../helper/utils'
 
 export default function proxyEventMixin () {
   const methods = {
@@ -59,7 +58,7 @@ export default function proxyEventMixin () {
       setByPath(this, expr, value)
     }
   }
-  if (is('ali')) {
+  if (__mpx_mode__ === 'ali') {
     Object.assign(methods, {
       triggerEvent (eventName, eventDetail) {
         const handlerName = eventName.replace(/^./, matched => matched.toUpperCase())

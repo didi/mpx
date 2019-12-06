@@ -1,5 +1,4 @@
 import { type } from '../../helper/utils'
-import { is } from '../../helper/env'
 
 const targets = []
 let curTarget = null
@@ -39,7 +38,7 @@ function transferPath (relations, base) {
 }
 
 export default function relationsMixin (mixinType) {
-  if (is('ali') && mixinType === 'component') {
+  if (__mpx_mode__ === 'ali' && mixinType === 'component') {
     return {
       methods: {
         getRelationNodes (path) {

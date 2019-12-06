@@ -1,4 +1,4 @@
-import { error, getEnvObj, genFromMap } from './utils'
+import { error, getEnvObj, genFromMap } from '../common/js'
 import getWxToAliApi from './platform/wxToAli'
 
 const fromMap = genFromMap()
@@ -28,11 +28,14 @@ function transformApi (options) {
 
     transedApi[api] = (...args) => {
       const to = options.to
-      let from = args.pop()
+      let from = options.from
 
-      if (typeof from !== 'string' || !fromMap[from]) {
-        args.push(from)
-        from = options.from
+      if (args.length > 0) {
+        from = args.pop()
+        if (typeof from !== 'string' || !fromMap[from]) {
+          args.push(from)
+          from = options.from
+        }
       }
 
       const fromTo = joinName(from, to)

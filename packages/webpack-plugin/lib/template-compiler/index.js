@@ -28,7 +28,7 @@ module.exports = function (raw) {
     scopedId = options.moduleId
   }
 
-  let parsed = compiler.parse(raw, Object.assign(options, {
+  const parsed = compiler.parse(raw, Object.assign(options, {
     warn: (msg) => {
       this.emitWarning(
         new Error('[template compiler][' + this.resource + ']: ' + msg)
@@ -78,6 +78,7 @@ module.exports = function (raw) {
     ignoreMap: meta.wxsModuleMap
   })
 
+  // todo 此处在loader中往其他模块addDep更加危险，考虑修改为通过抽取后的空模块的module.exports来传递信息
   let globalInjectCode = renderResult.code + '\n'
 
   if ((mode === 'tt' || mode === 'swan') && renderResult.propKeys) {

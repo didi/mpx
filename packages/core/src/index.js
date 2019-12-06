@@ -1,4 +1,4 @@
-import { toJS as toPureObject, extendObservable, observable, set, get, remove, action as createAction } from 'mobx'
+import { toJS as toPureObject, extendObservable, observable, set, get, remove, action as createAction } from './mobx'
 import * as platform from './platform'
 import createStore, { createStoreWithThis } from './core/createStore'
 import { injectMixins } from './core/injectMixins'
@@ -74,33 +74,46 @@ function use (plugin, ...rest) {
   return this
 }
 
-const APIs = {
-  createApp,
-  createPage,
-  createComponent,
-  createStore,
-  createStoreWithThis,
-  toPureObject,
-  mixin: injectMixins,
-  injectMixins,
-  observable,
-  extendObservable,
-  watch,
-  use,
-  set,
-  get,
-  remove,
-  setConvertRule,
-  createAction,
-  getMixin,
-  getComputed
-}
+let APIs = {}
 
 // 实例属性
-const InstanceAPIs = {
-  $set: set,
-  $get: get,
-  $remove: remove
+let InstanceAPIs = {}
+
+if (__mpx_mode__ === 'web') {
+  // todo 补齐web必要api
+  APIs = {
+    use,
+    mixin: injectMixins,
+    injectMixins
+  }
+} else {
+  APIs = {
+    createApp,
+    createPage,
+    createComponent,
+    createStore,
+    createStoreWithThis,
+    toPureObject,
+    mixin: injectMixins,
+    injectMixins,
+    observable,
+    extendObservable,
+    watch,
+    use,
+    set,
+    get,
+    remove,
+    setConvertRule,
+    createAction,
+    getMixin,
+    getComputed
+  }
+
+  InstanceAPIs = {
+    $set: set,
+    $get: get,
+    $remove: remove
+  }
 }
 
 function factory () {

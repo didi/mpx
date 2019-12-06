@@ -1,10 +1,9 @@
 import { BEFORECREATE, CREATED, BEFOREMOUNT, UPDATED, DESTROYED } from '../../core/innerLifecycle'
-import { is } from '../../helper/env'
 import { noop } from '../../helper/utils'
 
 export default function getRefsMixin () {
   let aliMethods
-  if (is('ali')) {
+  if (__mpx_mode__ === 'ali') {
     const proxyMethods = ['boundingClientRect', 'scrollOffset']
 
     aliMethods = {

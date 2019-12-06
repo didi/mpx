@@ -24,22 +24,22 @@ module.exports = function ({ print }) {
 
   return [
     {
-      supportedTargets: ['swan'],
+      supportedModes: ['swan'],
       test: baiduUnsupportedExp,
       swan: baiduUnsupportedTagError
     },
     {
-      supportedTargets: ['ali'],
+      supportedModes: ['ali'],
       test: aliUnsupportedExp,
       ali: aliUnsupportedTagError
     },
     {
-      supportedTargets: ['qq'],
+      supportedModes: ['qq'],
       test: qqUnsupportedExp,
       qq: qqUnsupportedTagError
     },
     {
-      supportedTargets: ['tt'],
+      supportedModes: ['tt'],
       test: ttUnsupportedExp,
       tt: ttUnsupportedTagError
     }

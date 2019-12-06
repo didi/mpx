@@ -4,12 +4,16 @@
   "description": "convert miniprogram API at each end",
   "module": "src/index.js",
   "types": "@types/index.d.ts",
+  "sideEffects": [
+    "*.styl"
+  ],
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest"
   },
   "files": [
     "src",
-    "@types"
+    "@types",
+    "README.md"
   ],
   "repository": {
     "type": "git",
@@ -20,8 +24,10 @@
     "access": "public"
   },
   "keywords": [
-    "api-proxy",
-    "promisify"
+    "api",
+    "proxy",
+    "web",
+    "promise"
   ],
   "author": "httpsxiao",
   "license": "ISC",
@@ -30,6 +36,10 @@
   },
   "homepage": "https://github.com/didi/mpx#readme",
   "peerDependencies": {
-    "@mpxjs/core": "^2.2.27"
+    "@mpxjs/core": "^2.2.27",
+    "miniprogram-api-typings": "^2.9.0"
+  },
+  "dependencies": {
+    "axios": "^0.19.0"
   }
 }

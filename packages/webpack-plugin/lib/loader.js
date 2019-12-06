@@ -6,6 +6,12 @@ const InjectDependency = require('./dependency/InjectDependency')
 const parseRequest = require('./utils/parse-request')
 const matchCondition = require('./utils/match-condition')
 const fixUsingComponent = require('./utils/fix-using-component')
+const addQuery = require('./utils/add-query')
+const async = require('async')
+const processJSON = require('./web/processJSON')
+const processScript = require('./web/processScript')
+const processStyles = require('./web/processStyles')
+const processTemplate = require('./web/processTemplate')
 
 module.exports = function (content) {
   this.cacheable()
@@ -17,14 +23,15 @@ module.exports = function (content) {
   const packageName = mpx.currentPackageRoot || 'main'
   const pagesMap = mpx.pagesMap
   const componentsMap = mpx.componentsMap[packageName]
+  const resolveMode = mpx.resolveMode
   const projectRoot = mpx.projectRoot
   const mode = mpx.mode
   const defs = mpx.defs
   const globalSrcMode = mpx.srcMode
-  const resolveMode = mpx.resolveMode
   const localSrcMode = loaderUtils.parseQuery(this.resourceQuery || '?').mode
   const resourcePath = parseRequest(this.resource).resourcePath
   const srcMode = localSrcMode || globalSrcMode
+  const vueContentCache = mpx.vueContentCache
   const autoScope = matchCondition(resourcePath, mpx.autoScopeRules)
 
   const resourceQueryObj = loaderUtils.parseQuery(this.resourceQuery || '?')
@@ -40,25 +47,32 @@ module.exports = function (content) {
         break
       }
     }
-    if (entryChunkName) {
-      if (resourceQueryObj.component) {
-        componentsMap[resourcePath] = entryChunkName
-      } else {
-        pagesMap[resourcePath] = entryChunkName
-      }
+    if (resourceQueryObj.component) {
+      componentsMap[resourcePath] = entryChunkName || 'noEntryComponent'
+    } else {
+      pagesMap[resourcePath] = entryChunkName || 'noEntryPage'
     }
+  }
+
+  let ctorType = 'app'
+  if (pagesMap[resourcePath]) {
+    // page
+    ctorType = 'page'
+  } else if (componentsMap[resourcePath]) {
+    // component
+    ctorType = 'component'
   }
 
   const loaderContext = this
   const isProduction = this.minimize || process.env.NODE_ENV === 'production'
   const options = loaderUtils.getOptions(this) || {}
 
-  if (!mpx.loaderOptions) {
-    // 传递给nativeLoader复用
-    mpx.loaderOptions = options
-  }
-
   const filePath = this.resourcePath
+
+  // web输出模式下没有任何inject，可以通过cache直接返回
+  if (vueContentCache.has(filePath)) {
+    return vueContentCache.get(filePath)
+  }
 
   const moduleId = 'm' + hash(this._module.identifier())
 
@@ -69,9 +83,11 @@ module.exports = function (content) {
   )
 
   const parts = parseComponent(content, filePath, this.sourceMap, mode, defs)
+
+  let output = ''
   // 只有ali才可能需要scoped
   const hasScoped = (parts.styles.some(({ scoped }) => scoped) || autoScope) && mode === 'ali'
-  const templateAttrs = parts.template && parts.template.attrs && parts.template.attrs
+  const templateAttrs = parts.template && parts.template.attrs
   const hasComment = templateAttrs && templateAttrs.comments
   const isNative = false
 
@@ -83,13 +99,6 @@ module.exports = function (content) {
       usingComponents = usingComponents.concat(Object.keys(ret.usingComponents))
     }
   } catch (e) {
-  }
-
-  function processSrc (part) {
-    if (resolveMode === 'native' && part.src) {
-      part.src = loaderUtils.urlToRequest(part.src, projectRoot)
-    }
-    return part
   }
 
   const {
@@ -108,12 +117,91 @@ module.exports = function (content) {
     needCssSourceMap,
     srcMode,
     isNative,
-    projectRoot
+    projectRoot,
+    resolveMode
   )
 
-  // 触发webpack global var 注入
-  let output = 'global.currentModuleId;\n'
+  // 处理mode为web时输出vue格式文件
+  if (mode === 'web') {
+    if (ctorType === 'app' && !resourceQueryObj.app) {
+      const request = addQuery(this.resource, { app: true })
+      output += `
+      import App from '${request}'
+      import Vue from 'vue'
+      new Vue({
+        el: '#app',
+        render: function(h){
+          return h(App)
+        }
+      })\n
+      `
+      // 直接结束loader进入parse
+      this.loaderIndex = -1
+      return output
+    }
 
+    const callback = this.async()
+
+    return async.waterfall([
+      (callback) => {
+        async.parallel([
+          (callback) => {
+            processTemplate(parts.template, {
+              mode,
+              srcMode,
+              loaderContext,
+              ctorType
+            }, callback)
+          },
+          (callback) => {
+            processStyles(parts.styles, {
+              ctorType
+            }, callback)
+          },
+          (callback) => {
+            processJSON(parts.json, {
+              mode,
+              defs,
+              resolveMode,
+              loaderContext,
+              pagesMap,
+              componentsMap,
+              projectRoot
+            }, callback)
+          }
+        ], (err, res) => {
+          callback(err, res)
+        })
+      },
+      ([templateRes, stylesRes, jsonRes], callback) => {
+        output += templateRes.output
+        output += stylesRes.output
+        output += jsonRes.output
+        processScript(parts.script, {
+          ctorType,
+          srcMode,
+          loaderContext,
+          isProduction,
+          getRequireForSrc,
+          mpxCid: resourceQueryObj.mpxCid,
+          builtInComponentsMap: templateRes.builtInComponentsMap,
+          localComponentsMap: jsonRes.localComponentsMap,
+          localPagesMap: jsonRes.localPagesMap
+        }, callback)
+      }
+    ], (err, scriptRes) => {
+      if (err) return callback(err)
+      output += scriptRes.output
+      vueContentCache.set(filePath, output)
+      console.log(output)
+      callback(null, output)
+    })
+  }
+
+  // 触发webpack global var 注入
+  output += 'global.currentModuleId;\n'
+
+  // todo loader中inject dep比较危险，watch模式下不一定靠谱，可考虑将import改为require然后通过修改loader内容注入
   // 注入模块id及资源路径
   let globalInjectCode = `global.currentModuleId = ${JSON.stringify(moduleId)};\n`
   if (!isProduction) {
@@ -122,9 +210,9 @@ module.exports = function (content) {
 
   // 注入构造函数
   let ctor = 'App'
-  if (pagesMap[resourcePath]) {
+  if (ctorType === 'page') {
     ctor = mode === 'ali' ? 'Page' : 'Component'
-  } else if (componentsMap[resourcePath]) {
+  } else if (ctorType === 'component') {
     ctor = 'Component'
   }
   globalInjectCode += `global.currentCtor = ${ctor};\n`
@@ -135,24 +223,23 @@ module.exports = function (content) {
   let scriptSrcMode = srcMode
   const script = parts.script
   if (script) {
-    processSrc(script)
     scriptSrcMode = script.mode || scriptSrcMode
     output += script.src
       ? (getNamedExportsForSrc('script', script) + '\n')
       : (getNamedExports('script', script) + '\n') + '\n'
   } else {
-    if (pagesMap[resourcePath]) {
-      // page
-      output += 'import {createPage} from "@mpxjs/core"\n' +
-        'createPage({})\n'
-    } else if (componentsMap[resourcePath]) {
-      // component
-      output += 'import {createComponent} from "@mpxjs/core"\n' +
-        'createComponent({})\n'
-    } else {
-      // app
-      output += 'import {createApp} from "@mpxjs/core"\n' +
-        'createApp({})\n'
+    switch (ctorType) {
+      case 'app':
+        output += 'import {createApp} from "@mpxjs/core"\n' +
+          'createApp({})\n'
+        break
+      case 'page':
+        output += 'import {createPage} from "@mpxjs/core"\n' +
+          'createPage({})\n'
+        break
+      case 'component':
+        output += 'import {createComponent} from "@mpxjs/core"\n' +
+          'createComponent({})\n'
     }
     output += '\n'
   }
@@ -161,14 +248,12 @@ module.exports = function (content) {
     globalInjectCode += `global.currentSrcMode = ${JSON.stringify(scriptSrcMode)};\n`
   }
 
-  //
-  // <styles>
+  // styles
   output += '/* styles */\n'
   let cssModules
   if (parts.styles.length) {
     let styleInjectionCode = ''
     parts.styles.forEach((style, i) => {
-      processSrc(style)
       let scoped = hasScoped ? (style.scoped || autoScope) : false
       // require style
       let requireString = style.src
@@ -207,26 +292,21 @@ module.exports = function (content) {
     output += styleInjectionCode + '\n'
   }
 
-  //
-  // <json>
+  // json
   output += '/* json */\n'
   let json = parts.json || {}
   if (json) {
-    processSrc(json)
     if (json.src) {
       this.emitError(new Error('[mpx loader][' + this.resource + ']: ' + 'json content must be inline in .mpx files!'))
+    } else {
+      output += getRequire('json', json) + '\n\n'
     }
-    output += json.src
-      ? (getRequireForSrc('json', json) + '\n')
-      : (getRequire('json', json) + '\n') + '\n'
   }
 
-  //
-  // <template>
+  // template
   output += '/* template */\n'
   const template = parts.template
   if (template) {
-    processSrc(template)
     output += template.src
       ? (getRequireForSrc('template', template) + '\n')
       : (getRequire('template', template) + '\n') + '\n'

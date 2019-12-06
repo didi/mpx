@@ -3,8 +3,8 @@ const normalizeTest = require('../normalize-test')
 const changeKey = require('../change-key')
 
 module.exports = function getSpec ({ warn, error }) {
-  function print (targetMode, path, isError) {
-    const msg = `Json path <${path}> is not supported in ${targetMode} environment!`
+  function print (mode, path, isError) {
+    const msg = `Json path <${path}> is not supported in ${mode} environment!`
     isError ? error(msg) : warn(msg)
   }
 
@@ -16,11 +16,10 @@ module.exports = function getSpec ({ warn, error }) {
       isError = opts.isError
     }
 
-    return function (input, data, meta) {
+    return function (input, { mode, pathArr = [] }, meta) {
       const currPath = meta.paths.join('|')
-      const pathArr = Array.isArray(data) ? data : []
       if (shouldLog) {
-        print(meta.$targetMode, pathArr.concat(currPath).join('.'), isError)
+        print(mode, pathArr.concat(currPath).join('.'), isError)
       }
       meta.paths.forEach((path) => {
         delete input[path]
@@ -37,7 +36,7 @@ module.exports = function getSpec ({ warn, error }) {
   }
 
   const spec = {
-    supportedTargets: ['ali', 'swan', 'qq', 'tt'],
+    supportedModes: ['ali', 'swan', 'qq', 'tt'],
     normalizeTest,
     page: [
       {
@@ -143,10 +142,12 @@ module.exports = function getSpec ({ warn, error }) {
             delete input.list
             input.items = value.map(item => {
               return runRules(spec.tabBar.list, item, {
-                target: 'ali',
+                mode: 'ali',
                 normalizeTest,
                 waterfall: true,
-                data: ['tabBar', 'list']
+                data: {
+                  pathArr: ['tabBar', 'list']
+                }
               })
             })
             return input
@@ -222,34 +223,42 @@ module.exports = function getSpec ({ warn, error }) {
         test: 'tabBar',
         ali (input) {
           input.tabBar = runRules(spec.tabBar, input.tabBar, {
-            target: 'ali',
+            mode: 'ali',
             normalizeTest,
             waterfall: true,
-            data: ['tabBar']
+            data: {
+              pathArr: ['tabBar']
+            }
           })
         },
         qq (input) {
           input.tabBar = runRules(spec.tabBar, input.tabBar, {
-            target: 'qq',
+            mode: 'qq',
             normalizeTest,
             waterfall: true,
-            data: ['tabBar']
+            data: {
+              pathArr: ['tabBar']
+            }
           })
         },
         swan (input) {
           input.tabBar = runRules(spec.tabBar, input.tabBar, {
-            target: 'swan',
+            mode: 'swan',
             normalizeTest,
             waterfall: true,
-            data: ['tabBar']
+            data: {
+              pathArr: ['tabBar']
+            }
           })
         },
         tt (input) {
           input.tabBar = runRules(spec.tabBar, input.tabBar, {
-            target: 'tt',
+            mode: 'tt',
             normalizeTest,
             waterfall: true,
-            data: ['tabBar']
+            data: {
+              pathArr: ['tabBar']
+            }
           })
         }
       },
@@ -257,37 +266,45 @@ module.exports = function getSpec ({ warn, error }) {
         test: 'window',
         ali (input) {
           input.window = runRules(spec.page, input.window, {
-            target: 'ali',
+            mode: 'ali',
             normalizeTest,
             waterfall: true,
-            data: ['window']
+            data: {
+              pathArr: ['window']
+            }
           })
           return input
         },
         qq (input) {
           input.window = runRules(spec.page, input.window, {
-            target: 'qq',
+            mode: 'qq',
             normalizeTest,
             waterfall: true,
-            data: ['window']
+            data: {
+              pathArr: ['window']
+            }
           })
           return input
         },
         swan (input) {
           input.window = runRules(spec.page, input.window, {
-            target: 'swan',
+            mode: 'swan',
             normalizeTest,
             waterfall: true,
-            data: ['window']
+            data: {
+              pathArr: ['window']
+            }
           })
           return input
         },
         tt (input) {
           input.window = runRules(spec.page, input.window, {
-            target: 'tt',
+            mode: 'tt',
             normalizeTest,
             waterfall: true,
-            data: ['window']
+            data: {
+              pathArr: ['window']
+            }
           })
           return input
         }

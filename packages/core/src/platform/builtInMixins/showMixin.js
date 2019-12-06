@@ -1,8 +1,6 @@
-import { is } from '../../helper/env'
-
 export default function pageStatusMixin (mixinType) {
   if (mixinType === 'component') {
-    if (is('ali')) {
+    if (__mpx_mode__ === 'ali') {
       return {
         props: {
           mpxShow: true

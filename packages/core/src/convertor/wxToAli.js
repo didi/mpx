@@ -1,4 +1,5 @@
 import * as wxLifecycle from '../platform/patch/wx/lifecycle'
+import * as aliLifecycle from '../platform/patch/ali/lifecycle'
 import { mergeLifecycle } from './mergeLifecycle'
 
 const NOTSUPPORTS = ['moved', 'definitionFilter']
@@ -33,12 +34,13 @@ function notSupportTip (options) {
 
 export default {
   lifecycle: mergeLifecycle(wxLifecycle.LIFECYCLE),
+  lifecycle2: mergeLifecycle(aliLifecycle.LIFECYCLE),
   pageMode: 'blend',
   support: false,
   lifecycleProxyMap: {
     '__created__': ['onLoad', 'created', 'attached'],
     '__mounted__': ['ready', 'onReady'],
-    '__destroyed__': ['detached'],
+    '__destroyed__': ['detached', 'onUnload'],
     '__updated__': ['updated']
   },
   convert (options) {

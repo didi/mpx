@@ -99,7 +99,7 @@ function resolveLoaders (options, moduleId, isProduction, hasScoped, hasComment,
   }
 }
 
-module.exports = function createHelpers (loaderContext, options, moduleId, isProduction, hasScoped, hasComment, usingComponents, needCssSourceMap, srcMode, isNative, projectRoot) {
+module.exports = function createHelpers (loaderContext, options, moduleId, isProduction, hasScoped, hasComment, usingComponents, needCssSourceMap, srcMode, isNative, projectRoot, resolveMode) {
   const rawRequest = getRawRequest(loaderContext, options.excludedPreLoaders)
   const {
     defaultLoaders,
@@ -184,9 +184,13 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
 
   function getSrcRequestString (type, impt, index = 0, scoped, prefix = '!', withIssuer) {
     let loaderString = type === 'script' ? '' : prefix + getLoaderString(type, impt, index, scoped, withIssuer)
+    let src = impt.src
+    if (resolveMode === 'native') {
+      src = loaderUtils.urlToRequest(src, projectRoot)
+    }
     return loaderUtils.stringifyRequest(
       loaderContext,
-      loaderString + processQuery(impt.src, impt.mode, type)
+      loaderString + processQuery(src, impt.mode, type)
     )
   }
 
