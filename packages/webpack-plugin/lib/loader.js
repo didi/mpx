@@ -294,7 +294,7 @@ module.exports = function (content) {
 
   // json
   output += '/* json */\n'
-  let json = parts.json
+  let json = parts.json || {}
   if (json) {
     if (json.src) {
       this.emitError(new Error('[mpx loader][' + this.resource + ']: ' + 'json content must be inline in .mpx files!'))
