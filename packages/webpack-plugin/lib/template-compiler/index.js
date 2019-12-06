@@ -47,7 +47,8 @@ module.exports = function (raw) {
     externalClasses,
     srcMode: localSrcMode || globalSrcMode,
     isNative,
-    scopedId
+    scopedId,
+    filePath: this.resourcePath
   }))
 
   let ast = parsed.root

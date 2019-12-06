@@ -776,7 +776,8 @@ function parse (template, options) {
         attrs = modifyAttrsFromCurMpxAttrOptions(attrs, normalizePlatformMpxAttrsOpts(options.globalMpxAttrsFilter({
           tagName: tag,
           attrs,
-          __mpx_mode__: mode
+          __mpx_mode__: mode,
+          filePath: options.filePath
         }) || {}))
       }
       attrs = consumeMpxCommentAttrs(attrs, mode)
