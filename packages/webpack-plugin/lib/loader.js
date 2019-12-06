@@ -193,7 +193,6 @@ module.exports = function (content) {
       if (err) return callback(err)
       output += scriptRes.output
       vueContentCache.set(filePath, output)
-      console.log(output)
       callback(null, output)
     })
   }
