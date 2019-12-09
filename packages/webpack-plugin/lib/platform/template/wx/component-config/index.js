@@ -26,7 +26,7 @@ const map = require('./map')
 const canvas = require('./canvas')
 const wxs = require('./wxs')
 const template = require('./template')
-const block =require('./block')
+const block = require('./block')
 const Nonsupport = require('./unsupported')
 const HyphenTagName = require('./hypen-tag-name')
 
