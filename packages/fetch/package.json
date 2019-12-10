@@ -9,8 +9,10 @@
     "src": "src"
   },
   "files": [
-    "src"
+    "src",
+    "@types"
   ],
+  "types": "@types/index.d.ts",
   "publishConfig": {
     "registry": "https://registry.npmjs.org"
   },
