@@ -1,7 +1,6 @@
 <script>
   import getInnerListeners from '@mpxjs/webpack-plugin/lib/runtime/components/web/getInnerListeners'
 
-  const router = window.__mpxRouter
 
   export default {
     name: 'mpx-navigator',
@@ -39,6 +38,7 @@
     },
     mounted () {
       this.$on('tap', () => {
+        const router = window.__mpxRouter
         switch (this.openType) {
           case 'navigateBack':
             router && router.go && router.go(-this.delta)
@@ -60,18 +60,22 @@
           force: true
         }
       }
-      let tagName = 'div'
+      let tagName = 'a'
       const props = {}
+      const attrs = {}
       if (this.openType === 'navigate' || this.openType === 'redirect') {
         tagName = 'router-link'
         props.to = this.url
         if (this.openType === 'redirect') {
           props.replace = true
         }
+      } else {
+        attrs.href = 'javascript:void(0);'
       }
       const data = {
         class: ['mpx-navigator', this.className],
         props,
+        attrs,
         on: getInnerListeners(this, {
           mergeAfter,
           // 由于当前机制下tap事件只有存在tap监听才会触发，为了确保该组件能够触发tap，传递一个包含tap的defaultListeners用于模拟存在tap监听
