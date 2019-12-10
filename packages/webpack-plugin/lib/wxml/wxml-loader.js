@@ -58,7 +58,8 @@ module.exports = function (content) {
     usingComponents,
     needCssSourceMap,
     srcMode,
-    isNative
+    isNative,
+    options.root || ''
   )
 
   const attributes = ['image:src', 'audio:src', 'video:src', 'cover-image:src', 'import:src', 'include:src', `${config[mode].wxs.tag}:${config[mode].wxs.src}`]
