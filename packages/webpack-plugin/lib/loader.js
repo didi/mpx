@@ -117,8 +117,7 @@ module.exports = function (content) {
     needCssSourceMap,
     srcMode,
     isNative,
-    projectRoot,
-    resolveMode
+    projectRoot
   )
 
   // 处理mode为web时输出vue格式文件

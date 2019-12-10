@@ -31,7 +31,6 @@ module.exports = function (content) {
 
   const moduleId = 'm' + hash(this._module.identifier())
 
-  const resolveMode = mpx.resolveMode
   const projectRoot = mpx.projectRoot
   const mode = mpx.mode
   const defs = mpx.defs
@@ -147,8 +146,7 @@ module.exports = function (content) {
         needCssSourceMap,
         srcMode,
         isNative,
-        projectRoot,
-        resolveMode
+        projectRoot
       )
 
       const getRequire = (type) => {
