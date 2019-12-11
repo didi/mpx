@@ -57,7 +57,8 @@ async function reLaunch (options = {}) {
   const backLength = window.history.length - initHistoryLength
   const res = { errMsg: 'reLaunch:ok' }
 
-  await navigateBack({ delta: -backLength })
+  await navigateBack({ delta: backLength })
+  await new Promise(resolve => setTimeout(() => resolve(), 100))
   await redirectTo({ url: options.url })
 
   webHandleSuccess(res, options.success, options.complete)
