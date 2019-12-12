@@ -31,18 +31,20 @@ import {
   DESTROYED
 } from './innerLifecycle'
 
+import { warn, error } from '../helper/log'
+
 let uid = 0
 
 export default class MPXProxy {
   constructor (options, target) {
     this.target = target
-    if (typeof target.__getInitialData !== 'function') {
-      console.error('【MPX ERROR】', `please specify a 【__getInitialData】function to get miniprogram's initial data`)
-      return
-    }
     this.uid = uid++
     this.name = options.name || ''
     this.options = options
+    if (typeof target.__getInitialData !== 'function') {
+      error('Please specify a [__getInitialData] function to get component\'s initial data.', this.options.mpxFileResource)
+      return
+    }
     // initial -> created -> mounted -> destroyed
     this.state = 'initial'
     this.watchers = [] // 保存所有观察者
@@ -124,7 +126,7 @@ export default class MPXProxy {
     this.target.$forceUpdate = (...rest) => this.forceUpdate(...rest)
     // 监听单次回调
     this.target.$updated = fn => {
-      process.env.NODE_ENV !== 'production' && console.warn('【MPX WARN】', '【this.$updated】 has be deprecated，please use 【this.$nextTick】 ')
+      warn('Instance api [this.$updated] will be deprecated，please use [this.$nextTick] instead.', this.options.mpxFileResource)
       this.nextTick(fn)
     }
     this.target.$nextTick = fn => this.nextTick(fn)
@@ -158,8 +160,8 @@ export default class MPXProxy {
 
   initComputed (computedConfig, proxyData) {
     this.computedKeys.forEach(key => {
-      if (key in proxyData && process.env.NODE_ENV !== 'production') {
-        console.error('【MPX ERROR】', `the computed key 【${key}】 is duplicated, please check`)
+      if (key in proxyData) {
+        error(`The computed key [${key}] is duplicated, please check.`, this.options.mpxFileResource)
       }
       const getValue = computedConfig[key].get || computedConfig[key]
       const setValue = computedConfig[key].set
@@ -280,7 +282,7 @@ export default class MPXProxy {
 
   doRender (data, cb) {
     if (typeof this.target.__render !== 'function') {
-      console.error('【MPX ERROR】', 'please specify a 【__render】 function to render view')
+      error('Please specify a [__render] function to render view.', this.options.mpxFileResource)
       return
     }
     if (typeof cb !== 'function') {
@@ -335,10 +337,7 @@ export default class MPXProxy {
           try {
             return this.target.__injectedRender()
           } catch (e) {
-            if (process.env.NODE_ENV !== 'production') {
-              console.warn(`【MPX WARN】at [${this.options.mpxFileResource}]`, `Failed to execute render function, degrade to full-set-data mode!`, e)
-              console.warn('【MPX WARN】', 'If the render function execution failed because of "__wxs_placeholder", ignore this warning.')
-            }
+            warn(`Failed to execute render function, degrade to full-set-data mode.`, this.options.mpxFileResource, e)
             renderExecutionFailed = true
             this.render()
           }

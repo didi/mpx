@@ -3,6 +3,8 @@ import {
   getByPath
 } from '../helper/utils'
 
+import { warn } from '../helper/log'
+
 function mapFactory (type, store) {
   return function (depPath, maps) {
     maps = normalizeMap(depPath, maps)
@@ -17,7 +19,7 @@ function mapFactory (type, store) {
         } else {
           let getterVal = getByPath(store.getters, value, '', '__NOTFOUND__')
           if (getterVal === '__NOTFOUND__') {
-            process.env.NODE_ENV !== 'production' && console.warn('【MPX ERROR】', new Error(`unknown getter named [${value}]`))
+            warn(`Unknown getter named [${value}].`)
             getterVal = ''
           }
           return getterVal
@@ -27,6 +29,7 @@ function mapFactory (type, store) {
     return result
   }
 }
+
 export default function (store) {
   return {
     mapGetters: mapFactory('getters', store),

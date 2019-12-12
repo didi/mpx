@@ -1,9 +1,9 @@
 function processModel (listeners, context) {
   // 该函数只有wx:model的情况下才调用，而且默认e.detail.value有值
   // 该函数必须在产生merge前执行
-
-  const attrs = context.$attrs
-  if (!attrs.__model || !listeners.input) {
+  // todo 此处对于$attrs的访问会导致父组件更新时子组件必然更新，暂时用短路效应避免影响，待优化
+  // todo 此处的__model对于特定组件声明为props传递能够规避上述问题
+  if (!listeners.input || !context.$attrs.__model) {
     return
   }
   const isArr = Array.isArray(listeners.input.fns)

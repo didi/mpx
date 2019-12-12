@@ -2,13 +2,14 @@ import * as wxLifecycle from '../platform/patch/wx/lifecycle'
 import * as webLifecycle from '../platform/patch/web/lifecycle'
 import { mergeLifecycle } from './mergeLifecycle'
 import { type } from '../helper/utils'
+import { error } from '../helper/log'
 
 const NOTSUPPORTS = ['moved', 'relations', 'pageLifetimes', 'definitionFilter']
 
 // relations和pageLifetimes后续估计可以花式支持
 
 function convertErrorDesc (key) {
-  console.error(`【MPX CONVERT ERROR】at ${global.currentResource || ''} : Don't support for convert the option【${key}】 of the wx-component into the web-component`)
+  error(`Option[${key}] is not supported in runtime conversion from wx to web.`, global.currentResource)
 }
 
 function notSupportTip (options) {

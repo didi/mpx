@@ -1,4 +1,5 @@
 import { setByPath, collectDataset } from '../../helper/utils'
+import { error } from '../../helper/log'
 
 export default function proxyEventMixin () {
   const methods = {
@@ -43,7 +44,8 @@ export default function proxyEventMixin () {
           if (typeof this[callbackName] === 'function') {
             returnedValue = this[callbackName].apply(this, params)
           } else {
-            process.env.NODE_ENV !== 'production' && console.warn('【MPX ERROR】', `[${callbackName}] is not function`)
+            const location = this.__mpxProxy && this.__mpxProxy.options.mpxFileResource
+            error(`Instance property [${callbackName}] is not function, please check.`, location)
           }
         }
       })

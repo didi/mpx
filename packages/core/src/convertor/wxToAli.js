@@ -1,13 +1,12 @@
 import * as wxLifecycle from '../platform/patch/wx/lifecycle'
 import * as aliLifecycle from '../platform/patch/ali/lifecycle'
 import { mergeLifecycle } from './mergeLifecycle'
+import { error } from '../helper/log'
 
 const NOTSUPPORTS = ['moved', 'definitionFilter']
 
 function convertErrorDesc (key) {
-  if (process.env.NODE_ENV !== 'production') {
-    console.error(`【MPX CONVERT ERROR】at ${global.currentResource || ''} : Don't support for convert the option【${key}】 of the wx-component into the ali-component`)
-  }
+  error(`Option[${key}] is not supported in runtime conversion from wx to ali.`, global.currentResource)
 }
 
 function notSupportTip (options) {

@@ -5,6 +5,7 @@ import {
 import MPXProxy from '../../../core/proxy'
 import customKey from '../customOptionKeys'
 import mergeOptions from '../../../core/mergeOptions'
+import { error } from '../../../helper/log'
 
 function transformApiForProxy (context, currentInject) {
   const rawSetData = context.setData.bind(context)
@@ -122,7 +123,7 @@ export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
       if (this.__mpxProxy) {
         this.__mpxProxy.mounted()
       } else {
-        console.error('请在支付宝开发工具的详情设置里面，启用component2编译。依赖基础库版本 >=1.14.0')
+        error('请在支付宝开发工具的详情设置里面，启用component2编译。依赖基础库版本 >=1.14.0')
       }
     },
     [hookNames[2]] () {

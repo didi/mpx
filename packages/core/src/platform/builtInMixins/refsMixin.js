@@ -1,5 +1,6 @@
 import { BEFORECREATE, CREATED, BEFOREMOUNT, UPDATED, DESTROYED } from '../../core/innerLifecycle'
 import { noop } from '../../helper/utils'
+import { error } from '../../helper/log'
 
 export default function getRefsMixin () {
   let aliMethods
@@ -42,7 +43,8 @@ export default function getRefsMixin () {
           }
         }
         if (selector.lastIndexOf('.') > 0) {
-          console.error('the selectComponent or selectAllComponents only supports the single selector, so the compound selector may be failed')
+          const location = this.__mpxProxy && this.__mpxProxy.options.mpxFileResource
+          error('The selectComponent or selectAllComponents only supports the single selector, a composed selector is not supported.', location)
         }
         return all ? result : result[0]
       },

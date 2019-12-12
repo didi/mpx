@@ -1,5 +1,6 @@
 import { type, merge, extend, aliasReplace, findItem } from '../helper/utils'
 import { getConvertRule } from '../convertor/convertor'
+import { error, warn } from '../helper/log'
 
 let CURRENT_HOOKS = []
 let curType
@@ -46,8 +47,8 @@ function extractMixins (mergeOptions, options, needConvert) {
   }
   if (options.mixins) {
     for (const mix of options.mixins) {
-      if (typeof mix === 'string' && process.env.NODE_ENV !== 'production') {
-        console.error(`【MPX CONVERT ERROR】at ${global.currentResource || ''} : Don't support for convert the string-formatted【behavior】into mixin`)
+      if (typeof mix === 'string') {
+        error('String-formatted builtin behaviors is not supported to be converted to mixins.', options.mpxFileResource)
       } else {
         extractMixins(mergeOptions, mix, needConvert)
       }
@@ -163,8 +164,8 @@ function extractPageHooks (options) {
     const PAGE_HOOKS = convertRule.lifecycle.page
     methods && Object.keys(methods).forEach(key => {
       if (PAGE_HOOKS.indexOf(key) > -1) {
-        if (newOptions[key] && process.env.NODE_ENV !== 'production') {
-          console.warn('【MPX ERROR】', `Don't redefine the lifecycle [${key}]， it will use the methods's lifecycle if redefined`)
+        if (newOptions[key]) {
+          warn(`Duplicate lifecycle [${key}] is defined in root options and methods, please check.`, options.mpxFileResource)
         }
         newOptions[key] = methods[key]
       }

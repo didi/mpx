@@ -1,4 +1,3 @@
-
 import NodesRef from './NodesRef'
 
 class SelectQuery {
@@ -113,7 +112,7 @@ class SelectQuery {
     if (computedStyle.length) {
       const styles = window.getComputedStyle(el)
       computedStyle.forEach(style => {
-        const midLineStyle = style.replace(/(?<!^)[A-Z]/g, m => `-${m.toLowerCase()}`)
+        const midLineStyle = style.replace(/[A-Z]/g, m => `-${m.toLowerCase()}`)
         const value = styles.getPropertyValue(midLineStyle)
         if (value) {
           res[style] = value

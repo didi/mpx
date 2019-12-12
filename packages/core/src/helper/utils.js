@@ -8,6 +8,8 @@ import {
 
 import _getByPath from './getByPath'
 
+import { error } from './log'
+
 export function type (n) {
   return Object.prototype.toString.call(n).slice(8, -1)
 }
@@ -22,7 +24,7 @@ export function asyncLock () {
         typeof fn === 'function' && fn()
       }).catch(e => {
         lock = false
-        console.error(e)
+        error('Something wrong in mpx asyncLock func execution, please check.', undefined, e)
         typeof onerror === 'function' && onerror()
       })
     }

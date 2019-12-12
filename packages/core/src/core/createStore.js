@@ -12,6 +12,8 @@ import {
   defineGetterSetter
 } from '../helper/utils'
 
+import { warn } from '../helper/log'
+
 // 兼容在web和小程序平台中创建表现一致的store
 
 import mapStore from './mapStore'
@@ -19,8 +21,8 @@ import mapStore from './mapStore'
 function transformGetters (getters, module, store) {
   const newGetters = {}
   for (let key in getters) {
-    if (key in store.getters && process.env.NODE_ENV !== 'production') {
-      console.warn('【MPX ERROR】', new Error(`duplicate getter type: ${key}`))
+    if (key in store.getters) {
+      warn(`Duplicate getter type: ${key}.`)
     }
     const getter = function () {
       if (store.withThis) {
@@ -44,8 +46,8 @@ function transformGetters (getters, module, store) {
 function transformMutations (mutations, module, store) {
   const newMutations = {}
   for (let key in mutations) {
-    if (store.mutations[key] && process.env.NODE_ENV !== 'production') {
-      console.warn('【MPX ERROR】', new Error(`duplicate mutation type: ${key}`))
+    if (store.mutations[key]) {
+      warn(`Duplicate mutation type: ${key}.`)
     }
 
     const mutation = function (...payload) {
@@ -64,8 +66,8 @@ function transformMutations (mutations, module, store) {
 function transformActions (actions, module, store) {
   const newActions = {}
   for (let key in actions) {
-    if (store.actions[key] && process.env.NODE_ENV !== 'production') {
-      console.warn('【MPX ERROR】', new Error(`duplicate action type: ${key}`))
+    if (store.actions[key]) {
+      warn(`Duplicate action type: ${key}.`)
     }
     newActions[key] = function (...payload) {
       const context = {
@@ -98,8 +100,8 @@ function mergeDeps (module, deps, getterKeys) {
   Object.keys(deps).forEach(key => {
     const store = deps[key]
     mergeProps.forEach(prop => {
-      if (module[prop] && (key in module[prop]) && process.env.NODE_ENV !== 'production') {
-        console.warn('【MPX ERROR】', new Error(`deps's name: [${key}] conflicts with ${prop}'s key in current options`))
+      if (module[prop] && (key in module[prop])) {
+        warn(`Deps's name [${key}] conflicts with ${prop}'s key in current options.`)
       } else {
         module[prop] = module[prop] || {}
         if (prop === 'getters') {
@@ -149,8 +151,8 @@ class Store {
 
   commit (type, ...payload) {
     const mutation = getByPath(this.mutations, type)
-    if (!mutation && process.env.NODE_ENV !== 'production') {
-      console.warn('【MPX ERROR】', new Error(`unknown mutation type: ${type}`))
+    if (!mutation) {
+      warn(`Unknown mutation type: ${type}.`)
     } else {
       return mutation(...payload)
     }

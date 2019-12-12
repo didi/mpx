@@ -2,6 +2,7 @@ import { mergeInjectedMixins } from './injectMixins'
 import mergeOptions from './mergeOptions'
 import { getConvertMode } from '../convertor/getConvertMode'
 import { findItem } from '../helper/utils'
+import { warn } from '../helper/log'
 
 export default function transferOptions (options, type, builtInMixins = []) {
   let currentInject
@@ -9,9 +10,7 @@ export default function transferOptions (options, type, builtInMixins = []) {
     currentInject = global.currentInject
   }
   // 文件编译路径
-  if (process.env.NODE_ENV !== 'production') {
-    options.mpxFileResource = global.currentResource
-  }
+  options.mpxFileResource = global.currentResource
   // 注入全局写入的mixins
   options = mergeInjectedMixins(options, type)
 
@@ -29,7 +28,7 @@ export default function transferOptions (options, type, builtInMixins = []) {
     // 头条/百度小程序受限父子组件生命周期顺序的问题，向子组件传递computed属性，子组件初始挂载时是拿不到对应数据的，在此做出提示
     currentInject.propKeys.forEach(key => {
       if (findItem(computedKeys, key)) {
-        console.error(`The child component can't achieve the value of computed prop【${key}】when attached, which is governed by the order of tt/swan miniprogram's lifecycles `)
+        warn(`The child component can't achieve the value of computed prop【${key}】when attached, which is governed by the order of tt/swan miniprogram's lifecycles.`, global.currentResource)
       }
     })
   }

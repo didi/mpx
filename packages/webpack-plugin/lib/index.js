@@ -88,7 +88,8 @@ class MpxWebpackPlugin {
     options.forceDisableInject = options.forceDisableInject || false
     options.forceDisableProxyCtor = options.forceDisableProxyCtor || false
     if (options.autoSplit === undefined) {
-      options.autoSplit = true
+      // web模式下默认不开启autoSplit
+      options.autoSplit = options.mode !== 'web'
     }
     options.defs = options.defs || {}
     // 批量指定源码mode
@@ -159,14 +160,13 @@ class MpxWebpackPlugin {
       compiler.options.resolve.plugins = [resolvePlugin]
     }
 
-    compiler.options.optimization.runtimeChunk = {
-      name: 'bundle'
-    }
-
     let splitChunksPlugin
     let splitChunksOptions
 
     if (this.options.autoSplit) {
+      compiler.options.optimization.runtimeChunk = {
+        name: 'bundle'
+      }
       splitChunksOptions = compiler.options.optimization.splitChunks
       delete compiler.options.optimization.splitChunks
       splitChunksPlugin = new SplitChunksPlugin(splitChunksOptions)

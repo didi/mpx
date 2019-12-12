@@ -6,6 +6,8 @@ import { watch } from './core/watcher'
 import { extend } from './helper/utils'
 import { setConvertRule } from './convertor/convertor'
 import { getMixin } from './core/mergeOptions'
+import { error } from './helper/log'
+
 
 export function createApp (config, ...rest) {
   const mpx = new EXPORT_MPX()
@@ -42,7 +44,7 @@ function extendProps (target, proxyObj, rawProps, option) {
     } else if (!target.hasOwnProperty(key)) {
       target[key] = proxyObj[key]
     } else {
-      console.error(new Error(`the new property: "${key}" from installing plugin conflicts with already exists，please use prefix/postfix, such as "use('plugin', {prefix: 'mm'})"`))
+      error(`Mpx property [${key}] from installing plugin conflicts with already exists，please pass prefix/postfix options to avoid property conflict, for example: "use('plugin', {prefix: 'mm'})"`)
     }
   }
 }

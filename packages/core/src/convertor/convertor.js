@@ -3,6 +3,7 @@ import * as aliLifecycle from '../platform/patch/ali/lifecycle'
 import * as webLifecycle from '../platform/patch/web/lifecycle'
 import { mergeLifecycle } from './mergeLifecycle'
 import { type } from '../helper/utils'
+import { error } from '../helper/log'
 import wxToAliRule from './wxToAli'
 import wxToWebRule from './wxToWeb'
 import wxToSwanRule from './wxToSwan'
@@ -87,7 +88,7 @@ export function getConvertRule (convertMode) {
     rule = RULEMAPS[convertMode]
   }
   if (!rule || !rule.lifecycle) {
-    console.error(`no convert rule for ${convertMode}`)
+    error(`Absence of convert rule for ${convertMode}, please check.`)
   } else {
     return rule
   }
