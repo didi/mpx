@@ -5,11 +5,13 @@
   "author": "donghongping",
   "license": "ISC",
   "main": "src/index.js",
+  "types": "@types/index.d.ts",
   "directories": {
     "src": "src"
   },
   "files": [
-    "src"
+    "src",
+    "@types"
   ],
   "publishConfig": {
     "registry": "https://registry.npmjs.org"
@@ -24,5 +26,8 @@
   },
   "scripts": {
     "test": "echo \"Error: run tests from root\" && exit 1"
+  },
+  "peerDependencies": {
+    "@mpxjs/core": "^2.2.0"
   }
 }

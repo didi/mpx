@@ -1,5 +1,14 @@
 import { webHandleSuccess, webHandleFail } from '../../../common/js'
 
+const initHistoryLength = window.history.length
+
+// 用于 navigator 组件
+if (window.__mpxRouter) {
+  Object.defineProperty(window.__mpxRouter, 'reLaunch', {
+    get () { return reLaunch }
+  })
+}
+
 function redirectTo (options = {}) {
   const router = window.__mpxRouter
   if (router) {
@@ -51,52 +60,21 @@ function navigateBack (options = {}) {
   return Promise.resolve(res)
 }
 
-function reLaunch (options = {}) {
-  const router = window.__mpxRouter
-  if (router) {
-    return new Promise((resolve, reject) => {
-      router.replace({
-        path: options.url,
-        onComplete: () => {
-          const res = { errMsg: 'reLaunch:ok' }
-          webHandleSuccess(res, options.success, options.complete)
-          resolve(res)
-        },
-        onAbort: err => {
-          const res = { errMsg: err }
-          webHandleFail(res, options.fail, options.complete)
-          !options.fail && reject(res)
-        }
-      })
-    })
-  }
-}
+async function reLaunch (options = {}) {
+  const backLength = window.history.length - initHistoryLength
+  const res = { errMsg: 'reLaunch:ok' }
 
-function switchTab (options = {}) {
-  const router = window.__mpxRouter
-  if (router) {
-    return new Promise((resolve, reject) => {
-      router.replace({
-        path: options.url,
-        onComplete: () => {
-          const res = { errMsg: 'switchTab:ok' }
-          webHandleSuccess(res, options.success, options.complete)
-          resolve(res)
-        },
-        onAbort: err => {
-          const res = { errMsg: err }
-          webHandleFail(res, options.fail, options.complete)
-          !options.fail && reject(res)
-        }
-      })
-    })
-  }
+  await navigateBack({ delta: backLength })
+  await new Promise(resolve => setTimeout(() => resolve(), 100))
+  await redirectTo({ url: options.url })
+
+  webHandleSuccess(res, options.success, options.complete)
+  return Promise.resolve(res)
 }
 
 export {
   redirectTo,
   navigateTo,
   navigateBack,
-  reLaunch,
-  switchTab
+  reLaunch
 }

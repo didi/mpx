@@ -11,7 +11,6 @@ module.exports = function ({ print }) {
   const webEventLog = print({ platform: 'web', tag: TAG_NAME, isError: false })
   const webValueLogError = print({ platform: 'web', tag: TAG_NAME, isError: true, type: 'value' })
 
-
   return {
     test: TAG_NAME,
     web (tag, { el }) {
