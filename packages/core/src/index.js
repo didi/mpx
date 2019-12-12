@@ -8,7 +8,6 @@ import { setConvertRule } from './convertor/convertor'
 import { getMixin } from './core/mergeOptions'
 import { error } from './helper/log'
 
-
 export function createApp (config, ...rest) {
   const mpx = new EXPORT_MPX()
   platform.createApp(extend({ proto: mpx.proto }, config), ...rest)
