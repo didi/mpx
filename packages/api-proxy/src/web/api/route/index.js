@@ -2,6 +2,13 @@ import { webHandleSuccess, webHandleFail } from '../../../common/js'
 
 const initHistoryLength = window.history.length
 
+// 用于 navigator 组件
+if (window.__mpxRouter) {
+  Object.defineProperty(window.__mpxRouter, 'reLaunch', {
+    get () { return reLaunch }
+  })
+}
+
 function redirectTo (options = {}) {
   const router = window.__mpxRouter
   if (router) {
