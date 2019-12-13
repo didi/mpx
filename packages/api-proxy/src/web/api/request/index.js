@@ -2,7 +2,6 @@ import axios from 'axios'
 import { webHandleSuccess, webHandleFail } from '../../../common/js'
 import RequestTask from './RequestTask'
 
-
 function request (options = { url: '' }) {
   const timeout = 60 * 1000
   const CancelToken = axios.CancelToken

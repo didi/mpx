@@ -64,7 +64,7 @@ function promisify (listObj, whiteList) {
           args.unshift({ success: noop, fail: noop })
         }
         const obj = args[0]
-        let returned = undefined
+        let returned
         const promise = new Promise((resolve, reject) => {
           const originSuccess = obj.success
           const originFail = obj.fail

@@ -14,7 +14,6 @@ function filterOptions (options) {
   return newOptions
 }
 
-
 function initProxy (context, rawOptions) {
   // 缓存options
   context.$rawOptions = rawOptions
