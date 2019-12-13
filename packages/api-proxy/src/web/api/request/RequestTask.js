@@ -1,10 +1,10 @@
-
 class RequestTask {
   constructor (abortCb) {
     this._abortCb = abortCb
   }
+
   abort () {
-    if (typeof this.abortCb === 'function') {
+    if (typeof this._abortCb === 'function') {
       this._abortCb()
     }
   }
