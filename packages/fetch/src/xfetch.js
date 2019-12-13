@@ -1,33 +1,41 @@
 import requestAdapter from './request'
 import CancelToken from './cancelToken'
-import RequestQueue from './queue'
+// import RequestQueue from './queue'
 import InterceptorManager from './interceptorManager'
+
 export default class XFetch {
-  constructor (options) {
+  constructor (options, MPX) {
     this.CancelToken = CancelToken
-    this.queue = new RequestQueue({
-      adapter: (config) => requestAdapter(config),
-      ...options
-    })
+    // this.queue = new RequestQueue({
+    //   adapter: (config) => requestAdapter(config),
+    //   ...options
+    // })
+    this.adapter = (config) => requestAdapter(config, MPX)
     this.interceptors = {
       request: new InterceptorManager(),
       response: new InterceptorManager()
     }
   }
+
   create (options) {
     return new XFetch(options)
   }
+
   lock () {
-    this.queue.lock()
+    // this.queue.lock()
   }
+
   unlock () {
-    this.queue.unlock()
+    // this.queue.unlock()
   }
+
   addLowPriorityWhiteList (rules) {
-    this.queue.addLowPriorityWhiteList(rules)
+    // this.queue.addLowPriorityWhiteList(rules)
   }
+
   fetch (config, priority) {
-    const request = () => this.queue.request(config, priority)
+    // const request = () => this.queue.request(config, priority)
+    const request = () => this.adapter(config)
     // middleware chain
     const chain = []
     let promise = Promise.resolve(config)

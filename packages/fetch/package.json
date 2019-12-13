@@ -28,6 +28,6 @@
     "test": "echo \"Error: run tests from root\" && exit 1"
   },
   "peerDependencies": {
-    "@mpxjs/core": "^2.2.0"
+    "@mpxjs/core": "^2.3.0"
   }
 }

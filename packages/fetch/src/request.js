@@ -35,7 +35,8 @@ function transformRes (res) {
   }
   return res
 }
-export default function request (config) {
+
+export default function request (config, mpx) {
   return new Promise((resolve, reject) => {
     if (!config.url) {
       reject(new Error('no url'))
@@ -76,6 +77,12 @@ export default function request (config) {
       const err = cancelMsg !== undefined ? cancelMsg : res
       typeof rawFail === 'function' && rawFail.call(this, err)
       reject(err)
+    }
+    if (typeof mpx !== 'undefined' && typeof mpx.request === 'function') {
+      // mpx
+      const res = mpx.request(config)
+      requestTask = res.__returned || res
+      return
     }
     if (typeof wx !== 'undefined' && typeof wx.request === 'function') {
       // weixin

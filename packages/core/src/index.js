@@ -7,6 +7,7 @@ import { extend } from './helper/utils'
 import { setConvertRule } from './convertor/convertor'
 import { getMixin } from './core/mergeOptions'
 import { error } from './helper/log'
+import Vue from './vue'
 
 export function createApp (config, ...rest) {
   const mpx = new EXPORT_MPX()
@@ -64,6 +65,8 @@ function use (plugin, ...rest) {
     rest.shift()
   }
   rest.unshift(proxyMPX)
+  // 传入真正的mpx对象供插件访问
+  rest.push(EXPORT_MPX)
   if (typeof plugin.install === 'function') {
     plugin.install.apply(plugin, rest)
   } else if (typeof plugin === 'function') {
@@ -81,11 +84,38 @@ let APIs = {}
 let InstanceAPIs = {}
 
 if (__mpx_mode__ === 'web') {
+  const vm = new Vue()
+  const observable = Vue.observable.bind(Vue)
+  const watch = vm.$watch.bind(vm)
+  const set = Vue.set.bind(Vue)
+  const remove = Vue.delete.bind(Vue)
+  const get = function (target, key) {
+    return target[key]
+  }
   // todo 补齐web必要api
   APIs = {
-    use,
+    createApp,
+    createPage,
+    createComponent,
+    createStore,
+    createStoreWithThis,
     mixin: injectMixins,
-    injectMixins
+    injectMixins,
+    observable,
+    watch,
+    use,
+    set,
+    get,
+    remove,
+    setConvertRule,
+    getMixin,
+    getComputed
+  }
+
+  InstanceAPIs = {
+    $set: set,
+    $get: get,
+    $remove: remove
   }
 } else {
   APIs = {

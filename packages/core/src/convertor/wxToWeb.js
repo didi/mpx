@@ -50,10 +50,12 @@ export default {
   lifecycle2: mergeLifecycle(webLifecycle.LIFECYCLE),
   pageMode: 'blend',
   support: false,
+  // todo 支持onshow/onhide/onpagenotfound
   lifecycleProxyMap: {
-    'created': ['onLaunch', 'onLoad', 'attached'],
-    'mounted': ['ready', 'onReady'],
-    'destroyed': ['detached', 'onUnload'],
+    '__created__': ['onLaunch', 'onLoad', 'created', 'attached'],
+    '__mounted__': ['ready', 'onReady'],
+    '__destroyed__': ['detached', 'onUnload'],
+    '__updated__': ['updated'],
     'errorCaptured': ['onError']
   },
   convert (options) {

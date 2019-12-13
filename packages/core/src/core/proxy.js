@@ -41,31 +41,39 @@ export default class MPXProxy {
     this.uid = uid++
     this.name = options.name || ''
     this.options = options
-    if (typeof target.__getInitialData !== 'function') {
-      error('Please specify a [__getInitialData] function to get component\'s initial data.', this.options.mpxFileResource)
-      return
-    }
     // initial -> created -> mounted -> destroyed
     this.state = 'initial'
-    this.watchers = [] // 保存所有观察者
-    this.renderReaction = null
-    this.computedKeys = options.computed ? enumerableKeys(options.computed) : []
-    this.localKeys = this.computedKeys.slice() // 非props key
-    this.forceUpdateKeys = [] // 强制更新的key，无论是否发生change
-    this.curRenderTask = null
+    if (__mpx_mode__ !== 'web') {
+      if (typeof target.__getInitialData !== 'function') {
+        error('Please specify a [__getInitialData] function to get component\'s initial data.', this.options.mpxFileResource)
+        return
+      }
+      this.watchers = [] // 保存所有观察者
+      this.renderReaction = null
+      this.computedKeys = options.computed ? enumerableKeys(options.computed) : []
+      this.localKeys = this.computedKeys.slice() // 非props key
+      this.forceUpdateKeys = [] // 强制更新的key，无论是否发生change
+      this.curRenderTask = null
+    }
     this.lockTask = asyncLock()
   }
 
   created (...params) {
     this.initApi()
-    this.initialData = this.target.__getInitialData()
-    this.cacheData = extend({}, this.initialData) // 缓存数据，用于diff
+    if (__mpx_mode__ !== 'web') {
+      this.initialData = this.target.__getInitialData()
+      this.cacheData = extend({}, this.initialData) // 缓存数据，用于diff
+    }
     this.callUserHook(BEFORECREATE)
-    this.initState(this.options)
+    if (__mpx_mode__ !== 'web') {
+      this.initState(this.options)
+    }
     this.state = CREATED
     this.callUserHook(CREATED, ...params)
-    // 强制走小程序原生渲染逻辑
-    this.options.__nativeRender__ ? this.setData() : this.initRender()
+    if (__mpx_mode__ !== 'web') {
+      // 强制走小程序原生渲染逻辑
+      this.options.__nativeRender__ ? this.setData() : this.initRender()
+    }
   }
 
   renderTaskExecutor (isEmptyRender) {
@@ -120,16 +128,18 @@ export default class MPXProxy {
     proxy(this.target, this.options.proto, enumerableKeys(this.options.proto), true)
     // 挂载混合模式下的自定义属性
     proxy(this.target, this.options, this.options.mpxCustomKeysForBlend)
-    // 挂载$watch
-    this.target.$watch = (...rest) => this.watch(...rest)
-    // 强制执行render
-    this.target.$forceUpdate = (...rest) => this.forceUpdate(...rest)
-    // 监听单次回调
-    this.target.$updated = fn => {
-      warn('Instance api [this.$updated] will be deprecated，please use [this.$nextTick] instead.', this.options.mpxFileResource)
-      this.nextTick(fn)
+    if (__mpx_mode__ !== 'web') {
+      // 挂载$watch
+      this.target.$watch = (...rest) => this.watch(...rest)
+      // 强制执行render
+      this.target.$forceUpdate = (...rest) => this.forceUpdate(...rest)
+      // 监听单次回调
+      this.target.$updated = fn => {
+        warn('Instance api [this.$updated] will be deprecated，please use [this.$nextTick] instead.', this.options.mpxFileResource)
+        this.nextTick(fn)
+      }
+      this.target.$nextTick = fn => this.nextTick(fn)
     }
-    this.target.$nextTick = fn => this.nextTick(fn)
   }
 
   initState () {

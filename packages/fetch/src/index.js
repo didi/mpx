@@ -1,8 +1,10 @@
 import XFetch from './xfetch'
+
 let installed = false
-function install (proxyMPX, options) {
+
+function install (proxyMPX, options, MPX) {
   if (installed) return
-  const xfetch = new XFetch(options)
+  const xfetch = new XFetch(options, MPX)
   installed = true
   proxyMPX.xfetch = xfetch
   Object.defineProperty(proxyMPX.prototype, '$xfetch', {
@@ -11,6 +13,7 @@ function install (proxyMPX, options) {
     }
   })
 }
+
 export default {
   install,
   XFetch

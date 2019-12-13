@@ -1,10 +1,13 @@
 import axios from 'axios'
 import { webHandleSuccess, webHandleFail } from '../../../common/js'
+import RequestTask from './RequestTask'
+
 
 function request (options = { url: '' }) {
   const timeout = 60 * 1000
   const CancelToken = axios.CancelToken
   const source = CancelToken.source()
+  const requestTask = new RequestTask(source.cancel)
 
   let {
     data = {},
@@ -22,15 +25,14 @@ function request (options = { url: '' }) {
   if (
     method === 'POST' &&
     (header['Content-Type'] === 'application/x-www-form-urlencoded' ||
-    header['content-type'] === 'application/x-www-form-urlencoded')
+      header['content-type'] === 'application/x-www-form-urlencoded')
   ) {
     data = Object.keys(data).reduce((pre, curKey) => {
       return `${pre}&${encodeURIComponent(curKey)}=${encodeURIComponent(data[curKey])}`
     }, '').slice(1)
   }
 
-  // @ts-ignore
-  return axios({
+  const promise = axios({
     method,
     url: options.url,
     params,
@@ -42,7 +44,10 @@ function request (options = { url: '' }) {
   }).then(res => {
     let data = res.data
     if (responseType === 'text' && dataType === 'json') {
-      try { data = JSON.parse(data) } catch (e) {}
+      try {
+        data = JSON.parse(data)
+      } catch (e) {
+      }
     }
     const result = {
       errMsg: 'request:ok',
@@ -59,6 +64,9 @@ function request (options = { url: '' }) {
       return Promise.reject(res)
     }
   })
+
+  promise.__returned = requestTask
+  return promise
 }
 
 export {
