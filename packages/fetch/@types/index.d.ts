@@ -59,7 +59,7 @@ interface XFetchClass {
 
 declare const mpxFetch: {
   install: (...args: any) => any,
-  Xfetch: XFetchClass
+  XFetch: XFetchClass
 }
 
 export default mpxFetch
