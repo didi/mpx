@@ -50,7 +50,8 @@ export default {
         if (prop && prop.hasOwnProperty('value')) {
           newProps[key] = prop.value
         } else {
-          newProps[key] = typeof prop === 'function' ? prop() : null
+          const type = prop.hasOwnProperty('type') ? prop.type : prop
+          newProps[key] = typeof type === 'function' ? type() : null
         }
       })
       options.props = Object.assign(newProps, options.props)
