@@ -19,7 +19,7 @@ function request (options = { url: '' }) {
     complete = null
   } = options
 
-  const params = method === 'GET' ? data : {}
+  method = method.toUpperCase()
 
   if (
     method === 'POST' &&
@@ -31,16 +31,22 @@ function request (options = { url: '' }) {
     }, '').slice(1)
   }
 
-  const promise = axios({
+  const rOptions = {
     method,
     url: options.url,
-    params,
     data,
     headers: header,
     responseType,
     timeout,
     cancelToken: source.token
-  }).then(res => {
+  }
+
+  if (method === 'GET') {
+    rOptions.params = rOptions.data || {}
+    delete rOptions.data
+  }
+
+  const promise = axios(rOptions).then(res => {
     let data = res.data
     if (responseType === 'text' && dataType === 'json') {
       try {

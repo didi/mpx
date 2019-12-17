@@ -52,28 +52,25 @@ function extendProps (target, proxyObj, rawProps, option) {
 // 安装插件进行扩展API
 const installedPlugins = []
 
-function use (plugin, ...rest) {
+function use (plugin, options = {}) {
   if (installedPlugins.indexOf(plugin) > -1) {
     return this
   }
-  const option = rest[0]
+
+  const args = [options]
   const proxyMPX = factory()
   const rawProps = Object.getOwnPropertyNames(proxyMPX)
   const rawPrototypeProps = Object.getOwnPropertyNames(proxyMPX.prototype)
-  if (option && (option.prefix || option.postfix)) {
-    // 设置前后缀的参数，不需传递给plugin
-    rest.shift()
-  }
-  rest.unshift(proxyMPX)
+  args.unshift(proxyMPX)
   // 传入真正的mpx对象供插件访问
-  rest.push(EXPORT_MPX)
+  args.push(EXPORT_MPX)
   if (typeof plugin.install === 'function') {
-    plugin.install.apply(plugin, rest)
+    plugin.install.apply(plugin, args)
   } else if (typeof plugin === 'function') {
-    plugin.apply(null, rest)
+    plugin.apply(null, args)
   }
-  extendProps(EXPORT_MPX, proxyMPX, rawProps, option)
-  extendProps(EXPORT_MPX.prototype, proxyMPX.prototype, rawPrototypeProps, option)
+  extendProps(EXPORT_MPX, proxyMPX, rawProps, options)
+  extendProps(EXPORT_MPX.prototype, proxyMPX.prototype, rawPrototypeProps, options)
   installedPlugins.push(plugin)
   return this
 }
@@ -159,5 +156,9 @@ function factory () {
 }
 
 const EXPORT_MPX = factory()
+
+if (__mpx_mode__ === 'web') {
+  window.__mpx = EXPORT_MPX
+}
 
 export default EXPORT_MPX

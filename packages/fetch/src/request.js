@@ -78,6 +78,9 @@ export default function request (config, mpx) {
       typeof rawFail === 'function' && rawFail.call(this, err)
       reject(err)
     }
+
+    mpx = mpx || window.__mpx
+
     if (typeof mpx !== 'undefined' && typeof mpx.request === 'function') {
       // mpx
       const res = mpx.request(config)
@@ -102,6 +105,6 @@ export default function request (config, mpx) {
       requestTask = swan.request(config)
       return
     }
-    console.log('no available request adapter for current platform')
+    console.error('no available request adapter for current platform')
   })
 }
