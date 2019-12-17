@@ -3,7 +3,7 @@ const NullDependency = require('webpack/lib/dependencies/NullDependency')
 const parseRequest = require('../utils/parse-request')
 
 class ResolveDependency extends NullDependency {
-  constructor (resource, packageName, pagesMap, componentsMap, staticResourceMap, publicPath, range) {
+  constructor (resource, packageName, pagesMap, componentsMap, staticResourceMap, publicPath, range, issuerResource) {
     super()
     this.resource = resource
     this.packageName = packageName
@@ -12,6 +12,7 @@ class ResolveDependency extends NullDependency {
     this.staticResourceMap = staticResourceMap
     this.publicPath = publicPath
     this.range = range
+    this.issuerResource = issuerResource
   }
 
   get type () {
@@ -37,7 +38,7 @@ ResolveDependency.Template = class ResolveDependencyTemplate {
     const staticResourceMap = dep.staticResourceMap[dep.packageName]
     const resolved = pagesMap[resourcePath] || componentsMap[resourcePath] || staticResourceMap[resourcePath]
     if (!resolved) {
-      throw new Error(`Path ${dep.resource} is not a page/component/static resource, can not be resolved!`)
+      throw new Error(`Path ${dep.resource} is not a page/component/static resource, which is resolved from ${dep.issuerResource}!`)
     }
     return JSON.stringify(dep.publicPath + resolved)
   }

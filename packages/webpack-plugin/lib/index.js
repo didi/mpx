@@ -403,7 +403,8 @@ class MpxWebpackPlugin {
             const staticResourceMap = mpx.staticResourceMap
             const publicPath = mpx.mode === 'web' ? '' : compilation.outputOptions.publicPath
             const range = expr.range
-            const dep = new ResolveDependency(resource, packageName, pagesMap, componentsMap, staticResourceMap, publicPath, range)
+            const issuerResource = parser.state.current.issuer.resource
+            const dep = new ResolveDependency(resource, packageName, pagesMap, componentsMap, staticResourceMap, publicPath, range, issuerResource)
             parser.state.current.addDependency(dep)
             return true
           }
