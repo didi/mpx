@@ -10,7 +10,7 @@ const orMatcher = items => {
 const normalizeCondition = (condition) => {
   if (!condition) throw new Error('Expected condition but got falsy value')
   if (typeof condition === 'string') {
-    return str => str.indexOf(condition) === 0
+    return str => str.indexOf(condition) !== -1
   }
   if (typeof condition === 'function') {
     return condition
