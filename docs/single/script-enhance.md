@@ -91,7 +91,7 @@ createComponent({
         console.log(newval, ':',  oldval) // test:old
         this.answer = 'Waiting for you to stop typing...'
       },
-      imeediate: true // 立即执行一次
+      immediate: true // 立即执行一次
       // deep: true // 是否深度观察
       // sync: true // 数据变化之后是否同步执行，默认是进行异步队列
     },
