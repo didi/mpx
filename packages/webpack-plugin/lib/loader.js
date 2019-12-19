@@ -36,6 +36,7 @@ module.exports = function (content) {
 
   const resourceQueryObj = loaderUtils.parseQuery(this.resourceQuery || '?')
 
+
   // 支持资源query传入page或component支持页面/组件单独编译
   if ((resourceQueryObj.component && !componentsMap[resourcePath]) || (resourceQueryObj.page && !pagesMap[resourcePath])) {
     let entryChunkName
@@ -64,6 +65,7 @@ module.exports = function (content) {
   }
 
   const loaderContext = this
+  const stringifyRequest = r => loaderUtils.stringifyRequest(loaderContext, r)
   const isProduction = this.minimize || process.env.NODE_ENV === 'production'
   const options = loaderUtils.getOptions(this) || {}
 
@@ -125,7 +127,7 @@ module.exports = function (content) {
     if (ctorType === 'app' && !resourceQueryObj.app) {
       const request = addQuery(this.resource, { app: true })
       output += `
-      import App from '${request}'
+      import App from ${stringifyRequest(request)}
       import Vue from 'vue'
       new Vue({
         el: '#app',
