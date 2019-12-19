@@ -87,6 +87,10 @@ class MpxWebpackPlugin {
     options.autoScopeRules = options.autoScopeRules || {}
     options.forceDisableInject = options.forceDisableInject || false
     options.forceDisableProxyCtor = options.forceDisableProxyCtor || false
+    options.transMpxRules = options.transMpxRules || {
+      include: () => true,
+      exclude: ['@mpxjs', '@didi']
+    }
     if (options.autoSplit === undefined) {
       // web模式下默认不开启autoSplit
       options.autoSplit = options.mode !== 'web'
@@ -413,8 +417,7 @@ class MpxWebpackPlugin {
         const transHandler = (expr) => {
           const module = parser.state.module
           const current = parser.state.current
-          const resource = module.resource
-          const { queryObj } = parseRequest(resource)
+          const { queryObj, resourcePath } = parseRequest(module.resource)
           const localSrcMode = queryObj.mode
           const globalSrcMode = this.options.srcMode
           const srcMode = localSrcMode || globalSrcMode
@@ -427,7 +430,7 @@ class MpxWebpackPlugin {
           } else if (expr.type === 'MemberExpression') {
             target = expr.object
           }
-          if (/[/\\]@mpxjs[/\\]/.test(resource) || !target || mode === srcMode) {
+          if (!matchCondition(resourcePath, this.options.transMpxRules) || !target || mode === srcMode) {
             return
           }
 
@@ -475,17 +478,19 @@ class MpxWebpackPlugin {
           }
         })
 
-        const srcMode = this.options.srcMode
-        if (srcMode !== this.options.mode) {
-          parser.hooks.evaluate.for('MemberExpression').tap('MpxWebpackPlugin', (expr) => {
-            // Undeclared varible for wx[identifier]()
-            // TODO Unable to handle wx[identifier]
-            if (expr.object.name === 'wx' && !parser.scope.definitions.has('wx')) {
-              transHandler(expr)
-            }
-          })
-          // Trans for wx.xx, wx['xx'], wx.xx(), wx['xx']()
-          parser.hooks.expressionAnyMember.for('wx').tap('MpxWebpackPlugin', transHandler)
+        if (this.options.srcMode !== this.options.mode) {
+          // 全量替换未声明的wx identifier
+          parser.hooks.expression.for('wx').tap('MpxWebpackPlugin', transHandler)
+
+          // parser.hooks.evaluate.for('MemberExpression').tap('MpxWebpackPlugin', (expr) => {
+          //   // Undeclared varible for wx[identifier]()
+          //   // TODO Unable to handle wx[identifier]
+          //   if (expr.object.name === 'wx' && !parser.scope.definitions.has('wx')) {
+          //     transHandler(expr)
+          //   }
+          // })
+          // // Trans for wx.xx, wx['xx'], wx.xx(), wx['xx']()
+          // parser.hooks.expressionAnyMember.for('wx').tap('MpxWebpackPlugin', transHandler)
           // Proxy ctor for transMode
           if (!this.options.forceDisableProxyCtor) {
             parser.hooks.call.for('Page').tap('MpxWebpackPlugin', (expr) => {
@@ -532,12 +537,12 @@ class MpxWebpackPlugin {
           const callee = expr.callee
           const args = expr.arguments
           const name = callee.object.name
+          const { queryObj, resourcePath } = parseRequest(parser.state.module.resource)
 
-          if (apiBlackListMap[callee.property.name || callee.property.value] || (name !== 'mpx' && name !== 'wx')) {
+          if (apiBlackListMap[callee.property.name || callee.property.value] || (name !== 'mpx' && name !== 'wx') || (name === 'wx' && !matchCondition(resourcePath, this.options.transMpxRules))) {
             return
           }
-          const resource = parser.state.module.resource
-          const { queryObj } = parseRequest(resource)
+
           const localSrcMode = queryObj.mode
           const globalSrcMode = this.options.srcMode
           const srcMode = localSrcMode || globalSrcMode
