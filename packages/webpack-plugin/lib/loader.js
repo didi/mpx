@@ -36,7 +36,6 @@ module.exports = function (content) {
 
   const resourceQueryObj = loaderUtils.parseQuery(this.resourceQuery || '?')
 
-
   // 支持资源query传入page或component支持页面/组件单独编译
   if ((resourceQueryObj.component && !componentsMap[resourcePath]) || (resourceQueryObj.page && !pagesMap[resourcePath])) {
     let entryChunkName
