@@ -23,6 +23,7 @@ function request (options = { url: '' }) {
 
   if (
     method === 'POST' &&
+    typeof data !== 'string' && // string 不做处理
     (header['Content-Type'] === 'application/x-www-form-urlencoded' ||
       header['content-type'] === 'application/x-www-form-urlencoded')
   ) {
