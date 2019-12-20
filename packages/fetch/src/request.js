@@ -51,6 +51,9 @@ export default function request (config, mpx) {
     if (config.params) {
       config.url = buildUrl(config.url, filterUndefined(config.params))
     }
+    if (config.data) {
+      config.data = filterUndefined(config.data)
+    }
     if (config.emulateJSON && /^post|put$/i.test(config.method)) {
       config.header = Object.assign({}, config.header, {
         'content-type': 'application/x-www-form-urlencoded'
