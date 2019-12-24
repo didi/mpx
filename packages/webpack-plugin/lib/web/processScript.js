@@ -98,6 +98,7 @@ module.exports = function (script, options, callback) {
       const componentVar = `__mpx_built_in_component_${index}__`
       const componentRequest = stringifyRequest(componentCfg.resource)
       content += `import ${componentVar} from ${componentRequest}\n`
+      content += `${componentVar}.__mpx_built_in__ = true\n`
       componentsMap[componentName] = componentVar
     })
 

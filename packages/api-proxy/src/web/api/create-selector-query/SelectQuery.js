@@ -39,8 +39,8 @@ class SelectQuery {
 
       let curComponent = document
 
-      if (component && component._vnode && component._vnode.elm) {
-        curComponent = component._vnode.elm
+      if (component && component.$el) {
+        curComponent = component.$el
       } else if (component && component.nodeType === 1) {
         curComponent = component
       }

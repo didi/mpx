@@ -78,15 +78,6 @@ export default function request (config, mpx) {
       typeof rawFail === 'function' && rawFail.call(this, err)
       reject(err)
     }
-
-    mpx = mpx || window.__mpx
-
-    if (typeof mpx !== 'undefined' && typeof mpx.request === 'function') {
-      // mpx
-      const res = mpx.request(config)
-      requestTask = res.__returned || res
-      return
-    }
     if (typeof wx !== 'undefined' && typeof wx.request === 'function') {
       // weixin
       requestTask = wx.request(config)
@@ -103,6 +94,14 @@ export default function request (config, mpx) {
     if (typeof swan !== 'undefined' && typeof swan.request === 'function') {
       // baidu
       requestTask = swan.request(config)
+      return
+    }
+
+    mpx = mpx || window.__mpx
+    if (typeof mpx !== 'undefined' && typeof mpx.request === 'function') {
+      // mpx
+      const res = mpx.request(config)
+      requestTask = res.__returned || res
       return
     }
     console.error('no available request adapter for current platform')

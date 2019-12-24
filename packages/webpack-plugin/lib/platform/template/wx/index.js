@@ -167,7 +167,7 @@ module.exports = function getSpec ({ warn, error }) {
         web ({ value }) {
           return {
             name: 'ref',
-            value
+            value: `__mpx_ref_${value}__`
           }
         }
       },
