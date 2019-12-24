@@ -202,10 +202,15 @@ module.exports = function getSpec ({ warn, error }) {
         swan: deletePath()
       },
       {
-        test: 'networkTimeout|workers|requiredBackgroundModes|navigateToMiniProgramAppIdList|permission',
+        test: 'networkTimeout|workers|requiredBackgroundModes',
         ali: deletePath(),
         swan: deletePath(),
         tt: deletePath()
+      },
+      {
+        test: 'navigateToMiniProgramAppIdList|permission',
+        ali: deletePath(),
+        swan: deletePath()
       },
       {
         test: 'subpackages|subPackages',
