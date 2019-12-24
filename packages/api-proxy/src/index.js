@@ -15,7 +15,7 @@ export default function install (target, options = {}) {
   let { from = '', to = '' } = platform
   /* eslint-disable camelcase, no-undef */
   if (typeof __mpx_src_mode__ !== 'undefined') {
-    from = __mpx_src_mode__
+    from = `__mpx_src_mode_${__mpx_src_mode__}__`
   }
   if (typeof __mpx_mode__ !== 'undefined') {
     to = __mpx_mode__
