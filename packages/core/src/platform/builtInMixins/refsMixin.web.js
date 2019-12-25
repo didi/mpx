@@ -200,11 +200,11 @@ class NodesRef {
   }
 }
 
-function getIdentifier (el) {
+function getIdentifier (vnode) {
   let identifier = ''
-  if (el) {
-    if (el.id) identifier += `#${el.id}`
-    if (el.className) identifier += `.${el.className.split(' ').join('.')}`
+  if (vnode && vnode.data) {
+    if (vnode.data.attrs.id) identifier += `#${vnode.data.attrs.id}`
+    if (vnode.data.staticClass) identifier += `.${vnode.data.staticClass.split(' ').join('.')}`
   }
   return identifier
 }
@@ -214,16 +214,14 @@ function walkChildren (vm, selector, context, result, all) {
     for (let i = 0; i < vm.$children.length; i++) {
       const child = vm.$children[i]
       if (child.$vnode.context === context && !child.$options.__mpx_built_in__) {
-        const identifier = getIdentifier(child.$el)
+        const identifier = getIdentifier(child.$vnode)
+        // todo 这里暂时只支持静态类，且只支持单个选择器，更复杂的需求建议用refs实现
         if (identifier.indexOf(selector) > -1) {
           result.push(child)
-          if (all) {
-            walkChildren(child, selector, context, result, all)
-          } else {
-            return
-          }
+          if (!all) return
         }
       }
+      walkChildren(child, selector, context, result, all)
     }
   }
 }
@@ -247,11 +245,12 @@ function processRefs (refs) {
         }
       } else {
         if (getEl(ref)) {
-          return new SelectQuery().in(this).select(getEl(ref))
+          refs[rKey] = new SelectQuery().in(this).select(getEl(ref))
         } else {
           refs[rKey] = ref
         }
       }
+      delete refs[key]
     }
   })
 }
