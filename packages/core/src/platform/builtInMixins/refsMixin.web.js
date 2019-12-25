@@ -1,5 +1,4 @@
-import { BEFORECREATE, CREATED, BEFOREMOUNT, UPDATED, DESTROYED } from '../../core/innerLifecycle'
-import { noop } from '../../helper/utils'
+import { BEFOREMOUNT, UPDATED } from '../../core/innerLifecycle'
 import { error } from '../../helper/log'
 
 class SelectQuery {
@@ -147,7 +146,6 @@ class SelectQuery {
     return selector && selector.nodeType === 1
   }
 }
-
 
 class NodesRef {
   constructor (selector, selectorQuery, single) {
