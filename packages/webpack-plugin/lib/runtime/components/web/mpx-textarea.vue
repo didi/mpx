@@ -88,17 +88,16 @@
         attrs.maxlength = this.maxlength
       }
 
-      const slots = this.$slots.default || []
-
-      const children = slots.concat(this.value)
-
       const data = {
         class: 'mpx-textarea',
         on: getInnerListeners(this, { mergeBefore }),
+        domProps: {
+          value: this.value
+        },
         attrs,
         ref: 'textarea'
       }
-      return createElement('textarea', data, children)
+      return createElement('textarea', data, this.$slots.default)
     },
     methods: {
       getValue () {
