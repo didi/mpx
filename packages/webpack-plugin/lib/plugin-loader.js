@@ -53,7 +53,7 @@ module.exports = function (source) {
   const callback = (err) => {
     checkEntryDeps(() => {
       if (err) return nativeCallback(err)
-      extract(JSON.stringify(pluginEntry), 'json', resourcePath, 0)
+      extract(JSON.stringify(pluginEntry), resourcePath + '.json', 0)
       nativeCallback(null, defaultResultSource)
     })
   }
