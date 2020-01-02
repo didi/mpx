@@ -251,6 +251,9 @@ web同名事件默认全部支持，已支持组件的特殊事件默认为支�
 :----|----
 view|是
 cover-view|是
+scroll-view|是
+progress|是
+navigator|是
 text|是
 image|是
 block|是
@@ -298,7 +301,7 @@ api名称|支持度
 :----|----
 triggerEvent|支持
 $nextTick|支持
-createSelectorQuery/selectComponent|不支持，请使用refs代替
+createSelectorQuery/selectComponent|支持
 
 
 ### 全局API
