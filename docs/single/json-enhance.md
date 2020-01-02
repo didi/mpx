@@ -1,5 +1,27 @@
 # JSON增强特性
 
+## 动态与注释
+
+作为配置文件，json最大的缺陷是不支持注释，然后是不够灵活。此处感谢社区同学贡献的解决方案：支持js。
+
+json块我们除了可以写`<script type="application/json"> …… </script>`，还可以这样：
+
+```html
+<script name="json">
+const pages = __mpx_mode__ === 'wx' ? [
+  'main/xxx',
+  'sub/xxx'
+] : [
+  'test/xxx'
+] // 可以为不同环境动态书写配置
+module.exports = {
+  usingComponents: {
+    aComponents: '../xxxxx' // 可以打注释 xxx组件
+  }
+}
+</script>
+```
+
 ## packages
 
 ### 背景
