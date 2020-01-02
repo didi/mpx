@@ -72,7 +72,8 @@
           detail: {
             value
           },
-          formId: ''
+          formId: '',
+          timeStamp: +new Date()
         })
       },
       reset () {
@@ -82,7 +83,8 @@
           detail: {
             value: this.initialValue
           },
-          formId: ''
+          formId: '',
+          timeStamp: +new Date()
         })
       }
     }

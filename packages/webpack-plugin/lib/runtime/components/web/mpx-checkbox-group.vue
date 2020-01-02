@@ -83,7 +83,8 @@
           type: 'change',
           detail: {
             value: value
-          }
+          },
+          timeStamp: +new Date()
         })
       }
     }

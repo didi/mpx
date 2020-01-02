@@ -104,7 +104,8 @@
           transitionend: () => {
             this.$emit('activeend', {
               type: 'activeend',
-              detail: {}
+              detail: {},
+              timeStamp: +new Date()
             })
           }
         }

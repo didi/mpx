@@ -6,6 +6,10 @@ module.exports = function ({ print }) {
 
   return {
     test: TAG_NAME,
+    web (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-scroll-view'
+    },
     props: [
       {
         test: /^(enable-back-to-top)$/,
