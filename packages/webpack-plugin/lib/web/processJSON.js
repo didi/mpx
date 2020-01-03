@@ -151,7 +151,6 @@ module.exports = function (json, options, rawCallback) {
               return callback(new Error(`Resources in ${resourcePath} and ${key} are registered with same page path ${pagePath}, which is not allowed!`))
             }
           }
-          if (pagesMap[resourcePath]) return callback()
           pagesMap[resourcePath] = pagePath
           localPagesMap[pagePath] = {
             resource: addQuery(resource, { page: true }),
@@ -210,8 +209,6 @@ module.exports = function (json, options, rawCallback) {
       const { resourcePath, queryObj } = parseRequest(resource)
       const parsed = path.parse(resourcePath)
       const componentId = parsed.name + hash(resourcePath)
-
-      if (componentsMap[resourcePath]) return callback()
 
       componentsMap[resourcePath] = componentId
 
