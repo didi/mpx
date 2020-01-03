@@ -48,7 +48,7 @@
           left: false,
           right: false
         },
-        observeDom: this.autoRefresh
+        observeDOM: this.autoRefresh
       })
       this.lastX = -this.scrollLeft
       this.lastY = -this.scrollTop
