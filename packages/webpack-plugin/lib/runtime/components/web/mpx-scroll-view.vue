@@ -1,8 +1,10 @@
 <script>
   import getInnerListeners from '@mpxjs/webpack-plugin/lib/runtime/components/web/getInnerListeners'
   import BScroll from '@better-scroll/core'
+  import ObserveDom from '@better-scroll/observe-dom'
   import throttle from 'lodash/throttle'
 
+  BScroll.use(ObserveDom)
 
   export default {
     name: 'mpx-scroll-view',
@@ -25,6 +27,10 @@
         type: Number,
         default: 0
       },
+      autoRefresh: {
+        type: Boolean,
+        default: true
+      },
       scrollIntoView: String,
       scrollWithAnimation: Boolean,
       enableFlex: Boolean
@@ -41,7 +47,8 @@
           bottom: false,
           left: false,
           right: false
-        }
+        },
+        observeDom: this.autoRefresh
       })
       this.lastX = -this.scrollLeft
       this.lastY = -this.scrollTop
@@ -82,6 +89,9 @@
         this.bs.scrollToElement('#' + this.scrollIntoView)
       }
     },
+    beforeDestroy () {
+      this.bs && this.bs.destroy()
+    },
     watch: {
       scrollIntoView (val) {
         this.bs && this.bs.scrollToElement('#' + val, this.scrollWithAnimation ? 200 : 0)
@@ -94,6 +104,9 @@
       }
     },
     methods: {
+      refresh () {
+        this.bs && this.bs.refresh()
+      },
       dispatchScrollTo: throttle(function (direction) {
         let eventName = 'scrolltoupper'
         if (direction === 'bottom' || direction === 'right') eventName = 'scrolltolower'

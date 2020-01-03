@@ -23,7 +23,7 @@ module.exports = function (source) {
   const pagesMap = mpx.pagesMap
   const componentsMap = mpx.componentsMap[packageName]
   const extract = mpx.extract
-  const resourcePath = this._compilation._preparedEntrypoints[0].name
+  const resourceName = this._compilation._preparedEntrypoints[0].name
   this._compilation._preparedEntrypoints.pop()
 
   let entryDeps = new Set()
@@ -53,7 +53,7 @@ module.exports = function (source) {
   const callback = (err) => {
     checkEntryDeps(() => {
       if (err) return nativeCallback(err)
-      extract(JSON.stringify(pluginEntry), resourcePath + '.json', 0)
+      extract(JSON.stringify(pluginEntry), resourceName + '.json', 0)
       nativeCallback(null, defaultResultSource)
     })
   }
