@@ -27,10 +27,7 @@
         type: Number,
         default: 0
       },
-      autoRefresh: {
-        type: Boolean,
-        default: true
-      },
+      observeDOM: Boolean,
       scrollIntoView: String,
       scrollWithAnimation: Boolean,
       enableFlex: Boolean
@@ -48,7 +45,7 @@
           left: false,
           right: false
         },
-        observeDOM: this.autoRefresh
+        observeDOM: this.observeDOM
       })
       this.lastX = -this.scrollLeft
       this.lastY = -this.scrollTop
@@ -92,6 +89,11 @@
     beforeDestroy () {
       this.bs && this.bs.destroy()
     },
+    updated () {
+      this.$nextTick(() => {
+        this.refresh()
+      })
+    },
     watch: {
       scrollIntoView (val) {
         this.bs && this.bs.scrollToElement('#' + val, this.scrollWithAnimation ? 200 : 0)
@@ -103,6 +105,7 @@
         this.bs && this.bs.scrollTo(-val, this.bs.y, this.scrollWithAnimation ? 200 : 0)
       }
     },
+
     methods: {
       refresh () {
         this.bs && this.bs.refresh()
