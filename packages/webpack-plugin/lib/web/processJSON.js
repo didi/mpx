@@ -35,10 +35,6 @@ module.exports = function (json, options, rawCallback) {
     return callback()
   }
 
-  if (json.src) {
-    return callback(new Error('[mpx loader][' + loaderContext.resource + ']: ' + 'json content must be inline in .mpx files!'))
-  }
-
   try {
     jsonObj = JSON.parse(json.content)
   } catch (e) {

@@ -71,10 +71,6 @@ module.exports = function (content) {
 
   const filePath = this.resourcePath
 
-  // web输出模式下没有任何inject，可以通过cache直接返回
-  if (vueContentCache.has(filePath)) {
-    return vueContentCache.get(filePath)
-  }
 
   const moduleId = 'm' + hash(this._module.identifier())
 
@@ -96,7 +92,6 @@ module.exports = function (content) {
         readJsonForSrc(json.src, loaderContext, (err, result) => {
           if (err) return callback(err)
           json.content = result
-          delete json.src
           callback()
         })
       } else {
@@ -104,6 +99,10 @@ module.exports = function (content) {
       }
     },
     (callback) => {
+      // web输出模式下没有任何inject，可以通过cache直接返回，由于读取src json可能会新增模块依赖，需要在之后返回缓存内容
+      if (vueContentCache.has(filePath)) {
+        return callback(null, vueContentCache.get(filePath))
+      }
       // 只有ali才可能需要scoped
       const hasScoped = (parts.styles.some(({ scoped }) => scoped) || autoScope) && mode === 'ali'
       const templateAttrs = parts.template && parts.template.attrs
@@ -159,7 +158,7 @@ module.exports = function (content) {
       `
           // 直接结束loader进入parse
           this.loaderIndex = -1
-          return output
+          return callback(null, output)
         }
 
         return async.waterfall([
@@ -314,11 +313,7 @@ module.exports = function (content) {
       // json
       output += '/* json */\n'
       const json = parts.json || {}
-      if (json.src) {
-        this.emitError(new Error('[mpx loader][' + this.resource + ']: ' + 'json content must be inline in .mpx files!'))
-      } else {
-        output += getRequire('json', json) + '\n\n'
-      }
+      output += getRequire('json', json) + '\n\n'
 
       // template
       output += '/* template */\n'

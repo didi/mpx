@@ -16,6 +16,7 @@ module.exports = function readJsonForSrc (src, loaderContext, callback) {
   resolve(loaderContext.context, src, (err, result) => {
     if (err) return callback(err)
     const { rawResourcePath: resourcePath } = parseRequest(result)
+    loaderContext.addDependency(resourcePath)
     fs.readFile(resourcePath, (err, content) => {
       if (err) {
         return callback(err)
@@ -23,7 +24,7 @@ module.exports = function readJsonForSrc (src, loaderContext, callback) {
       content = content.toString('utf-8')
       if (resourcePath.endsWith('.json.js')) {
         try {
-          content = mpxJSON.compileMPXJSONText({ content, mode, defs, filePath: resourcePath })
+          content = mpxJSON.compileMPXJSONText({ source: content, mode, defs, filePath: resourcePath })
         } catch (e) {
           return callback(e)
         }
