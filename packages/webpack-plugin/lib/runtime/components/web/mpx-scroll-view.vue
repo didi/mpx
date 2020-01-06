@@ -90,9 +90,7 @@
       this.bs && this.bs.destroy()
     },
     updated () {
-      this.$nextTick(() => {
-        this.refresh()
-      })
+      this.refresh()
     },
     watch: {
       scrollIntoView (val) {
@@ -105,7 +103,6 @@
         this.bs && this.bs.scrollTo(-val, this.bs.y, this.scrollWithAnimation ? 200 : 0)
       }
     },
-
     methods: {
       refresh () {
         this.bs && this.bs.refresh()

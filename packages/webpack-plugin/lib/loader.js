@@ -12,6 +12,7 @@ const processJSON = require('./web/processJSON')
 const processScript = require('./web/processScript')
 const processStyles = require('./web/processStyles')
 const processTemplate = require('./web/processTemplate')
+const readJsonForSrc = require('./utils/read-json-for-src')
 
 module.exports = function (content) {
   this.cacheable()
@@ -86,46 +87,67 @@ module.exports = function (content) {
   const parts = parseComponent(content, filePath, this.sourceMap, mode, defs)
 
   let output = ''
-  // 只有ali才可能需要scoped
-  const hasScoped = (parts.styles.some(({ scoped }) => scoped) || autoScope) && mode === 'ali'
-  const templateAttrs = parts.template && parts.template.attrs
-  const hasComment = templateAttrs && templateAttrs.comments
-  const isNative = false
+  const callback = this.async()
 
-  let usingComponents = [].concat(Object.keys(mpx.usingComponents))
-  try {
-    let ret = JSON.parse(parts.json.content)
-    if (ret.usingComponents) {
-      fixUsingComponent({ usingComponents: ret.usingComponents, mode })
-      usingComponents = usingComponents.concat(Object.keys(ret.usingComponents))
-    }
-  } catch (e) {
-  }
+  async.waterfall([
+    (callback) => {
+      const json = parts.json
+      if (json && json.src) {
+        readJsonForSrc(json.src, loaderContext, (err, result) => {
+          if (err) return callback(err)
+          json.content = result
+          delete json.src
+          callback()
+        })
+      } else {
+        callback()
+      }
+    },
+    (callback) => {
+      // 只有ali才可能需要scoped
+      const hasScoped = (parts.styles.some(({ scoped }) => scoped) || autoScope) && mode === 'ali'
+      const templateAttrs = parts.template && parts.template.attrs
+      const hasComment = templateAttrs && templateAttrs.comments
+      const isNative = false
 
-  const {
-    getRequire,
-    getNamedExports,
-    getRequireForSrc,
-    getNamedExportsForSrc
-  } = createHelpers(
-    loaderContext,
-    options,
-    moduleId,
-    isProduction,
-    hasScoped,
-    hasComment,
-    usingComponents,
-    needCssSourceMap,
-    srcMode,
-    isNative,
-    projectRoot
-  )
+      let usingComponents = [].concat(Object.keys(mpx.usingComponents))
 
-  // 处理mode为web时输出vue格式文件
-  if (mode === 'web') {
-    if (ctorType === 'app' && !resourceQueryObj.app) {
-      const request = addQuery(this.resource, { app: true })
-      output += `
+      if (parts.json && parts.json.content) {
+        try {
+          let ret = JSON.parse(parts.json.content)
+          if (ret.usingComponents) {
+            fixUsingComponent({ usingComponents: ret.usingComponents, mode })
+            usingComponents = usingComponents.concat(Object.keys(ret.usingComponents))
+          }
+        } catch (e) {
+          return callback(e)
+        }
+      }
+
+      const {
+        getRequire,
+        getNamedExports,
+        getRequireForSrc,
+        getNamedExportsForSrc
+      } = createHelpers(
+        loaderContext,
+        options,
+        moduleId,
+        isProduction,
+        hasScoped,
+        hasComment,
+        usingComponents,
+        needCssSourceMap,
+        srcMode,
+        isNative,
+        projectRoot
+      )
+
+      // 处理mode为web时输出vue格式文件
+      if (mode === 'web') {
+        if (ctorType === 'app' && !resourceQueryObj.app) {
+          const request = addQuery(this.resource, { app: true })
+          output += `
       import App from ${stringifyRequest(request)}
       import Vue from 'vue'
       new Vue({
@@ -135,189 +157,187 @@ module.exports = function (content) {
         }
       })\n
       `
-      // 直接结束loader进入parse
-      this.loaderIndex = -1
-      return output
-    }
+          // 直接结束loader进入parse
+          this.loaderIndex = -1
+          return output
+        }
 
-    const callback = this.async()
-
-    return async.waterfall([
-      (callback) => {
-        async.parallel([
+        return async.waterfall([
           (callback) => {
-            processTemplate(parts.template, {
-              mode,
+            async.parallel([
+              (callback) => {
+                processTemplate(parts.template, {
+                  mode,
+                  srcMode,
+                  loaderContext,
+                  ctorType
+                }, callback)
+              },
+              (callback) => {
+                processStyles(parts.styles, {
+                  ctorType
+                }, callback)
+              },
+              (callback) => {
+                processJSON(parts.json, {
+                  mode,
+                  defs,
+                  resolveMode,
+                  loaderContext,
+                  pagesMap,
+                  componentsMap,
+                  projectRoot
+                }, callback)
+              }
+            ], (err, res) => {
+              callback(err, res)
+            })
+          },
+          ([templateRes, stylesRes, jsonRes], callback) => {
+            output += templateRes.output
+            output += stylesRes.output
+            output += jsonRes.output
+            processScript(parts.script, {
+              ctorType,
               srcMode,
               loaderContext,
-              ctorType
-            }, callback)
-          },
-          (callback) => {
-            processStyles(parts.styles, {
-              ctorType
-            }, callback)
-          },
-          (callback) => {
-            processJSON(parts.json, {
-              mode,
-              defs,
-              resolveMode,
-              loaderContext,
-              pagesMap,
-              componentsMap,
-              projectRoot
+              isProduction,
+              getRequireForSrc,
+              mpxCid: resourceQueryObj.mpxCid,
+              builtInComponentsMap: templateRes.builtInComponentsMap,
+              localComponentsMap: jsonRes.localComponentsMap,
+              localPagesMap: jsonRes.localPagesMap
             }, callback)
           }
-        ], (err, res) => {
-          callback(err, res)
+        ], (err, scriptRes) => {
+          if (err) return callback(err)
+          output += scriptRes.output
+          vueContentCache.set(filePath, output)
+          callback(null, output)
         })
-      },
-      ([templateRes, stylesRes, jsonRes], callback) => {
-        output += templateRes.output
-        output += stylesRes.output
-        output += jsonRes.output
-        processScript(parts.script, {
-          ctorType,
-          srcMode,
-          loaderContext,
-          isProduction,
-          getRequireForSrc,
-          mpxCid: resourceQueryObj.mpxCid,
-          builtInComponentsMap: templateRes.builtInComponentsMap,
-          localComponentsMap: jsonRes.localComponentsMap,
-          localPagesMap: jsonRes.localPagesMap
-        }, callback)
       }
-    ], (err, scriptRes) => {
-      if (err) return callback(err)
-      output += scriptRes.output
-      vueContentCache.set(filePath, output)
-      callback(null, output)
-    })
-  }
 
-  // 触发webpack global var 注入
-  output += 'global.currentModuleId;\n'
+      // 触发webpack global var 注入
+      output += 'global.currentModuleId;\n'
 
-  // todo loader中inject dep比较危险，watch模式下不一定靠谱，可考虑将import改为require然后通过修改loader内容注入
-  // 注入模块id及资源路径
-  let globalInjectCode = `global.currentModuleId = ${JSON.stringify(moduleId)};\n`
-  if (!isProduction) {
-    globalInjectCode += `global.currentResource = ${JSON.stringify(filePath)};\n`
-  }
+      // todo loader中inject dep比较危险，watch模式下不一定靠谱，可考虑将import改为require然后通过修改loader内容注入
+      // 注入模块id及资源路径
+      let globalInjectCode = `global.currentModuleId = ${JSON.stringify(moduleId)};\n`
+      if (!isProduction) {
+        globalInjectCode += `global.currentResource = ${JSON.stringify(filePath)};\n`
+      }
 
-  // 注入构造函数
-  let ctor = 'App'
-  if (ctorType === 'page') {
-    ctor = mode === 'ali' ? 'Page' : 'Component'
-  } else if (ctorType === 'component') {
-    ctor = 'Component'
-  }
-  globalInjectCode += `global.currentCtor = ${ctor};\n`
+      // 注入构造函数
+      let ctor = 'App'
+      if (ctorType === 'page') {
+        ctor = mode === 'ali' ? 'Page' : 'Component'
+      } else if (ctorType === 'component') {
+        ctor = 'Component'
+      }
+      globalInjectCode += `global.currentCtor = ${ctor};\n`
 
-  //
-  // <script>
-  output += '/* script */\n'
-  let scriptSrcMode = srcMode
-  const script = parts.script
-  if (script) {
-    scriptSrcMode = script.mode || scriptSrcMode
-    output += script.src
-      ? (getNamedExportsForSrc('script', script) + '\n')
-      : (getNamedExports('script', script) + '\n') + '\n'
-  } else {
-    switch (ctorType) {
-      case 'app':
-        output += 'import {createApp} from "@mpxjs/core"\n' +
-          'createApp({})\n'
-        break
-      case 'page':
-        output += 'import {createPage} from "@mpxjs/core"\n' +
-          'createPage({})\n'
-        break
-      case 'component':
-        output += 'import {createComponent} from "@mpxjs/core"\n' +
-          'createComponent({})\n'
-    }
-    output += '\n'
-  }
-
-  if (scriptSrcMode) {
-    globalInjectCode += `global.currentSrcMode = ${JSON.stringify(scriptSrcMode)};\n`
-  }
-
-  // styles
-  output += '/* styles */\n'
-  let cssModules
-  if (parts.styles.length) {
-    let styleInjectionCode = ''
-    parts.styles.forEach((style, i) => {
-      let scoped = hasScoped ? (style.scoped || autoScope) : false
-      // require style
-      let requireString = style.src
-        ? getRequireForSrc('styles', style, -1, scoped, undefined, true)
-        : getRequire('styles', style, i, scoped)
-
-      const hasStyleLoader = requireString.indexOf('style-loader') > -1
-      const invokeStyle = code => `${code}\n`
-
-      const moduleName = style.module === true ? '$style' : style.module
-      // setCssModule
-      if (moduleName) {
-        if (!cssModules) {
-          cssModules = {}
-        }
-        if (moduleName in cssModules) {
-          loaderContext.emitError(
-            'CSS module name "' + moduleName + '" is not unique!'
-          )
-          styleInjectionCode += invokeStyle(requireString)
-        } else {
-          cssModules[moduleName] = true
-
-          if (!hasStyleLoader) {
-            requireString += '.locals'
-          }
-
-          styleInjectionCode += invokeStyle(
-            'this["' + moduleName + '"] = ' + requireString
-          )
-        }
+      //
+      // <script>
+      output += '/* script */\n'
+      let scriptSrcMode = srcMode
+      const script = parts.script
+      if (script) {
+        scriptSrcMode = script.mode || scriptSrcMode
+        output += script.src
+          ? (getNamedExportsForSrc('script', script) + '\n')
+          : (getNamedExports('script', script) + '\n') + '\n'
       } else {
-        styleInjectionCode += invokeStyle(requireString)
+        switch (ctorType) {
+          case 'app':
+            output += 'import {createApp} from "@mpxjs/core"\n' +
+              'createApp({})\n'
+            break
+          case 'page':
+            output += 'import {createPage} from "@mpxjs/core"\n' +
+              'createPage({})\n'
+            break
+          case 'component':
+            output += 'import {createComponent} from "@mpxjs/core"\n' +
+              'createComponent({})\n'
+        }
+        output += '\n'
       }
-    })
-    output += styleInjectionCode + '\n'
-  }
 
-  // json
-  output += '/* json */\n'
-  let json = parts.json || {}
-  if (json) {
-    if (json.src) {
-      this.emitError(new Error('[mpx loader][' + this.resource + ']: ' + 'json content must be inline in .mpx files!'))
-    } else {
-      output += getRequire('json', json) + '\n\n'
+      if (scriptSrcMode) {
+        globalInjectCode += `global.currentSrcMode = ${JSON.stringify(scriptSrcMode)};\n`
+      }
+
+      // styles
+      output += '/* styles */\n'
+      let cssModules
+      if (parts.styles.length) {
+        let styleInjectionCode = ''
+        parts.styles.forEach((style, i) => {
+          let scoped = hasScoped ? (style.scoped || autoScope) : false
+          // require style
+          let requireString = style.src
+            ? getRequireForSrc('styles', style, -1, scoped, undefined, true)
+            : getRequire('styles', style, i, scoped)
+
+          const hasStyleLoader = requireString.indexOf('style-loader') > -1
+          const invokeStyle = code => `${code}\n`
+
+          const moduleName = style.module === true ? '$style' : style.module
+          // setCssModule
+          if (moduleName) {
+            if (!cssModules) {
+              cssModules = {}
+            }
+            if (moduleName in cssModules) {
+              loaderContext.emitError(
+                'CSS module name "' + moduleName + '" is not unique!'
+              )
+              styleInjectionCode += invokeStyle(requireString)
+            } else {
+              cssModules[moduleName] = true
+
+              if (!hasStyleLoader) {
+                requireString += '.locals'
+              }
+
+              styleInjectionCode += invokeStyle(
+                'this["' + moduleName + '"] = ' + requireString
+              )
+            }
+          } else {
+            styleInjectionCode += invokeStyle(requireString)
+          }
+        })
+        output += styleInjectionCode + '\n'
+      }
+
+      // json
+      output += '/* json */\n'
+      const json = parts.json || {}
+      if (json.src) {
+        this.emitError(new Error('[mpx loader][' + this.resource + ']: ' + 'json content must be inline in .mpx files!'))
+      } else {
+        output += getRequire('json', json) + '\n\n'
+      }
+
+      // template
+      output += '/* template */\n'
+      const template = parts.template
+      if (template) {
+        output += template.src
+          ? (getRequireForSrc('template', template) + '\n')
+          : (getRequire('template', template) + '\n') + '\n'
+      }
+
+      if (!mpx.forceDisableInject) {
+        const dep = new InjectDependency({
+          content: globalInjectCode,
+          index: -3
+        })
+        this._module.addDependency(dep)
+      }
+
+      callback(null, output)
     }
-  }
-
-  // template
-  output += '/* template */\n'
-  const template = parts.template
-  if (template) {
-    output += template.src
-      ? (getRequireForSrc('template', template) + '\n')
-      : (getRequire('template', template) + '\n') + '\n'
-  }
-
-  if (!mpx.forceDisableInject) {
-    const dep = new InjectDependency({
-      content: globalInjectCode,
-      index: -3
-    })
-    this._module.addDependency(dep)
-  }
-
-  return output
+  ], callback)
 }
