@@ -62,7 +62,7 @@
       }
       let tagName = 'a'
       const props = {}
-      const attrs = {}
+      const domProps = {}
       if (this.openType === 'navigate' || this.openType === 'redirect') {
         tagName = 'router-link'
         props.to = this.url
@@ -70,12 +70,12 @@
           props.replace = true
         }
       } else {
-        attrs.href = 'javascript:void(0);'
+        domProps.href = 'javascript:void(0);'
       }
       const data = {
         class: ['mpx-navigator', this.className],
         props,
-        attrs,
+        domProps,
         on: getInnerListeners(this, {
           mergeAfter,
           // 由于当前机制下tap事件只有存在tap监听才会触发，为了确保该组件能够触发tap，传递一个包含tap的defaultListeners用于模拟存在tap监听

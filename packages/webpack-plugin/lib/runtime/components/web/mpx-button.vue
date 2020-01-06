@@ -68,12 +68,12 @@
           force: true
         }
       }
-      const attrs = {
+      const domProps = {
         name: this.name
       }
       const data = {
         class: ['mpx-button', this.className],
-        attrs,
+        domProps,
         on: getInnerListeners(this, {
           mergeAfter,
           // 由于当前机制下tap事件只有存在tap监听才会触发，为了确保该组件能够触发tap，传递一个包含tap的defaultListeners用于模拟存在tap监听

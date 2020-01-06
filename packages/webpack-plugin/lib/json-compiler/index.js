@@ -15,6 +15,7 @@ const getRulesRunner = require('../platform/index')
 const isUrlRequest = require('../utils/is-url-request')
 const getPageName = require('../utils/get-page-name')
 const addQuery = require('../utils/add-query')
+const readJsonForSrc = require('../utils/read-json-for-src')
 
 module.exports = function (raw) {
   // 该loader中会在每次编译中动态添加entry，不能缓存，否则watch不好使
@@ -307,10 +308,18 @@ module.exports = function (raw) {
                   mode,
                   defs
                 )
-                if (parts.json) {
-                  content = parts.json.content
+                const json = parts.json || {}
+                if (json.content) {
+                  content = json.content
+                } else if (json.src) {
+                  return readJsonForSrc(json.src, this, (content) => {
+                    callback(null, result, content)
+                  })
                 }
               }
+              callback(null, result, content)
+            },
+            (result, content, callback) => {
               try {
                 content = JSON.parse(content)
               } catch (err) {

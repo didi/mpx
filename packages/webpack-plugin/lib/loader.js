@@ -87,8 +87,8 @@ module.exports = function (content) {
 
   async.waterfall([
     (callback) => {
-      const json = parts.json
-      if (json && json.src) {
+      const json = parts.json || {}
+      if (json.src) {
         readJsonForSrc(json.src, loaderContext, (err, result) => {
           if (err) return callback(err)
           json.content = result
@@ -274,6 +274,7 @@ module.exports = function (content) {
         parts.styles.forEach((style, i) => {
           let scoped = hasScoped ? (style.scoped || autoScope) : false
           // require style
+          // style src存在特殊处理，暂不添加resourcePath query
           let requireString = style.src
             ? getRequireForSrc('styles', style, -1, scoped, undefined, true)
             : getRequire('styles', style, i, scoped)
@@ -312,16 +313,28 @@ module.exports = function (content) {
 
       // json
       output += '/* json */\n'
+      // 给予json默认值, 确保生成json request以自动补全json
       const json = parts.json || {}
-      output += getRequire('json', json) + '\n\n'
+      if (json.src) {
+        json.src = addQuery(json.src, { resourcePath })
+        output += getRequireForSrc('json', json) + '\n\n'
+      } else {
+        output += getRequire('json', json) + '\n\n'
+      }
+
 
       // template
       output += '/* template */\n'
       const template = parts.template
+
+
       if (template) {
-        output += template.src
-          ? (getRequireForSrc('template', template) + '\n')
-          : (getRequire('template', template) + '\n') + '\n'
+        if (template.src) {
+          template.src = addQuery(template.src, { resourcePath })
+          output += getRequireForSrc('template', template) + '\n\n'
+        } else {
+          output += getRequire('template', template) + '\n\n'
+        }
       }
 
       if (!mpx.forceDisableInject) {

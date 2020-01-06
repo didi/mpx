@@ -27,7 +27,7 @@
         force: true
       }
 
-      const attrs = {
+      const domProps = {
         value: this.value,
         type: 'checkbox',
         checked: this.checked,
@@ -38,7 +38,7 @@
       const data = {
         class: 'mpx-checkbox',
         on: getInnerListeners(this, { mergeAfter }),
-        attrs
+        domProps
       }
       return createElement('input', data, this.$slots.default)
     }

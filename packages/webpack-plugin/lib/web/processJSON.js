@@ -7,6 +7,7 @@ const getPageName = require('../utils/get-page-name')
 const toPosix = require('../utils/to-posix')
 const addQuery = require('../utils/add-query')
 const parseComponent = require('../parser')
+const readJsonForSrc = require('../utils/read-json-for-src')
 
 module.exports = function (json, options, rawCallback) {
   const mode = options.mode
@@ -80,10 +81,18 @@ module.exports = function (json, options, rawCallback) {
                 mode,
                 defs
               )
-              if (parts.json) {
-                content = parts.json.content
+              const json = parts.json || {}
+              if (json.content) {
+                content = json.content
+              } else if (json.src) {
+                return readJsonForSrc(json.src, loaderContext, (content) => {
+                  callback(null, result, content)
+                })
               }
             }
+            callback(null, result, content)
+          },
+          (result, content, callback) => {
             try {
               content = JSON.parse(content)
             } catch (err) {

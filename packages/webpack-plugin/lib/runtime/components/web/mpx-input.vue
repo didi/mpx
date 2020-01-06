@@ -82,7 +82,7 @@
           })
         }
       }
-      const attrs = {
+      const domProps = {
         name: this.name,
         value: this.value,
         type: this.password ? 'password' : this.type,
@@ -92,13 +92,13 @@
       }
 
       if (this.maxlength !== -1) {
-        attrs.maxlength = this.maxlength
+        domProps.maxLength = this.maxlength
       }
 
       const data = {
         class: 'mpx-input',
         on: getInnerListeners(this, { mergeBefore }),
-        attrs,
+        domProps,
         ref: 'input'
       }
       return createElement('input', data, this.$slots.default)

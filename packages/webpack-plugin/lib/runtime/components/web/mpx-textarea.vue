@@ -77,24 +77,22 @@
           })
         }
       }
-      const attrs = {
+      const domProps = {
         name: this.name,
+        value: this.value,
         placeholder: this.placeholder,
         disabled: this.disabled,
         autofocus: this.focus || this.autoFocus
       }
 
       if (this.maxlength !== -1) {
-        attrs.maxlength = this.maxlength
+        domProps.maxlength = this.maxlength
       }
 
       const data = {
         class: 'mpx-textarea',
         on: getInnerListeners(this, { mergeBefore }),
-        domProps: {
-          value: this.value
-        },
-        attrs,
+        domProps,
         ref: 'textarea'
       }
       return createElement('textarea', data, this.$slots.default)
