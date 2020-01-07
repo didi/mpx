@@ -1,5 +1,5 @@
 <script>
-  import getInnerListeners from '@mpxjs/webpack-plugin/lib/runtime/components/web/getInnerListeners'
+  import getInnerListeners, { getCustomEvent } from '@mpxjs/webpack-plugin/lib/runtime/components/web/getInnerListeners'
   import BScroll from '@better-scroll/core'
   import ObserveDom from '@better-scroll/observe-dom'
   import throttle from 'lodash/throttle'
@@ -52,18 +52,14 @@
       this.bs.on('scroll', throttle(({ x, y }) => {
         const deltaX = x - this.lastX
         const deltaY = y - this.lastY
-        this.$emit('scroll', {
-          type: 'scroll',
-          detail: {
-            scrollLeft: -x,
-            scrollTop: -y,
-            scrollWidth: this.bs.scrollerWidth,
-            scrollHeight: this.bs.scrollerHeight,
-            deltaX,
-            deltaY
-          },
-          timeStamp: +new Date()
-        })
+        this.$emit('scroll', getCustomEvent('scroll', {
+          scrollLeft: -x,
+          scrollTop: -y,
+          scrollWidth: this.bs.scrollerWidth,
+          scrollHeight: this.bs.scrollerHeight,
+          deltaX,
+          deltaY
+        }))
         if (this.bs.minScrollX - x < this.upperThreshold && deltaX > 0) {
           this.dispatchScrollTo('left')
         }
@@ -110,13 +106,7 @@
       dispatchScrollTo: throttle(function (direction) {
         let eventName = 'scrolltoupper'
         if (direction === 'bottom' || direction === 'right') eventName = 'scrolltolower'
-        this.$emit(eventName, {
-          type: eventName,
-          detail: {
-            direction
-          },
-          timeStamp: +new Date()
-        })
+        this.$emit(eventName, getCustomEvent(eventName, { direction }))
       }, 200, {
         leading: true,
         trailing: false
