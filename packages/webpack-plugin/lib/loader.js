@@ -71,7 +71,6 @@ module.exports = function (content) {
 
   const filePath = this.resourcePath
 
-
   const moduleId = 'm' + hash(this._module.identifier())
 
   const needCssSourceMap = (
@@ -322,11 +321,9 @@ module.exports = function (content) {
         output += getRequire('json', json) + '\n\n'
       }
 
-
       // template
       output += '/* template */\n'
       const template = parts.template
-
 
       if (template) {
         if (template.src) {
