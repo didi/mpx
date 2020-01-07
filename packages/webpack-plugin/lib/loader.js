@@ -320,7 +320,7 @@ module.exports = function (content) {
       const json = parts.json || {}
       if (json.src) {
         // json和template传入
-        json.src = addQuery(json.src, { resourcePath })
+        json.src = addQuery(json.src, { resourcePath, __component: true })
         output += getRequireForSrc('json', json) + '\n\n'
       } else {
         output += getRequire('json', json) + '\n\n'
