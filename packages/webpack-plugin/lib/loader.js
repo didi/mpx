@@ -241,9 +241,13 @@ module.exports = function (content) {
       const script = parts.script
       if (script) {
         scriptSrcMode = script.mode || scriptSrcMode
-        output += script.src
-          ? (getNamedExportsForSrc('script', script) + '\n')
-          : (getNamedExports('script', script) + '\n') + '\n'
+        if (script.src) {
+          // 传入resourcePath以确保后续处理中能够识别src引入的资源为组件主资源
+          script.src = addQuery(script.src, { resourcePath })
+          output += getNamedExportsForSrc('script', script) + '\n\n'
+        } else {
+          output += getNamedExports('script', script) + '\n\n'
+        }
       } else {
         switch (ctorType) {
           case 'app':
@@ -273,7 +277,7 @@ module.exports = function (content) {
         parts.styles.forEach((style, i) => {
           let scoped = hasScoped ? (style.scoped || autoScope) : false
           // require style
-          // style src存在特殊处理，暂不添加resourcePath query
+          // todo style src会被特殊处理为全局复用样式，暂时不添加resourcePath，理论上在当前支持了@import样式复用后这里是可以添加resourcePath视为组件主资源的，后续待优化
           let requireString = style.src
             ? getRequireForSrc('styles', style, -1, scoped, undefined, true)
             : getRequire('styles', style, i, scoped)
@@ -315,6 +319,7 @@ module.exports = function (content) {
       // 给予json默认值, 确保生成json request以自动补全json
       const json = parts.json || {}
       if (json.src) {
+        // json和template传入
         json.src = addQuery(json.src, { resourcePath })
         output += getRequireForSrc('json', json) + '\n\n'
       } else {
