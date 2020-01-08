@@ -1,5 +1,5 @@
 <script>
-  import getInnerListeners from '@mpxjs/webpack-plugin/lib/runtime/components/web/getInnerListeners'
+  import getInnerListeners, { getCustomEvent } from '@mpxjs/webpack-plugin/lib/runtime/components/web/getInnerListeners'
 
   function travelSlot (slot, effect) {
     if (slot) {
@@ -67,25 +67,11 @@
     methods: {
       submit () {
         const value = getFormValue(this.$slots.default)
-        this.$emit('submit', {
-          type:'submit',
-          detail: {
-            value
-          },
-          formId: '',
-          timeStamp: +new Date()
-        })
+        this.$emit('submit', getCustomEvent('submit', { value }))
       },
       reset () {
         setFormValue(this.$slots.default, this.initialValue)
-        this.$emit('reset', {
-          type:'reset',
-          detail: {
-            value: this.initialValue
-          },
-          formId: '',
-          timeStamp: +new Date()
-        })
+        this.$emit('reset', getCustomEvent('reset', { value: this.initialValue }))
       }
     }
   }

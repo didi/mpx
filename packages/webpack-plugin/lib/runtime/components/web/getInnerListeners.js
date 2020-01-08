@@ -63,17 +63,11 @@ function processTap (listeners, context) {
         startTimer = setTimeout(() => {
           needTap = false
           if (listeners.longpress) {
-            const re = inheritEvent(e, {
-              type: 'longpress',
-              detail
-            })
+            const re = inheritEvent('longpress', e, detail)
             context.$emit('longpress', re)
           }
           if (listeners.longtap) {
-            const re = inheritEvent(e, {
-              type: 'longtap',
-              detail
-            })
+            const re = inheritEvent('longtap', e, detail)
             context.$emit('longtap', re)
           }
         }, 350)
@@ -83,10 +77,7 @@ function processTap (listeners, context) {
       // debugger
       startTimer && clearTimeout(startTimer)
       if (listeners.tap && needTap) {
-        const re = inheritEvent(e, {
-          type: 'tap',
-          detail
-        })
+        const re = inheritEvent('tap', e, detail)
         context.$emit('tap', re)
       }
     }
@@ -106,18 +97,17 @@ export function extendEvent (e, extendObj = {}) {
   })
 }
 
-export function inheritEvent (e, extendObj = {}) {
-  const ne = Object.create(e)
-  extendEvent(ne, extendObj)
+export function inheritEvent (type, oe, detail = {}) {
+  detail = Object.assign({}, oe.detail, detail)
+  const ne = getCustomEvent(type, detail)
+  ne.stopPropagation = oe.stopPropagation.bind(oe)
+  ne.preventDefault = oe.preventDefault.bind(oe)
   return ne
 }
 
-export function getCustomEvent (type, detail) {
+export function getCustomEvent (type, detail = {}) {
   /* eslint-disable no-undef */
-  const ce = new CustomEvent(type)
-  if (detail !== undefined) {
-    ce.detail = detail
-  }
+  const ce = new CustomEvent(type, { detail })
   return ce
 }
 

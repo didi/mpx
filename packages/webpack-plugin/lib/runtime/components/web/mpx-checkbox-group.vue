@@ -1,5 +1,5 @@
 <script>
-  import getInnerListeners from '@mpxjs/webpack-plugin/lib/runtime/components/web/getInnerListeners'
+  import getInnerListeners, { getCustomEvent } from '@mpxjs/webpack-plugin/lib/runtime/components/web/getInnerListeners'
 
   function travelSlot (slot, effect) {
     if (slot) {
@@ -79,13 +79,9 @@
         } else {
           value = this.getValue()
         }
-        this.$emit('change', {
-          type: 'change',
-          detail: {
-            value: value
-          },
-          timeStamp: +new Date()
-        })
+
+
+        this.$emit('change', getCustomEvent('change', { value: value }))
       }
     }
   }

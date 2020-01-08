@@ -1,5 +1,5 @@
 <script>
-  import getInnerListeners from '@mpxjs/webpack-plugin/lib/runtime/components/web/getInnerListeners'
+  import getInnerListeners, { getCustomEvent } from '@mpxjs/webpack-plugin/lib/runtime/components/web/getInnerListeners'
 
 
   export default {
@@ -102,11 +102,7 @@
         ref: 'progress',
         on: {
           transitionend: () => {
-            this.$emit('activeend', {
-              type: 'activeend',
-              detail: {},
-              timeStamp: +new Date()
-            })
+            this.$emit('activeend', getCustomEvent('activeend'))
           }
         }
       })
@@ -159,6 +155,7 @@
       left 0
       width 100%
       transform-origin 0 0
+
     .info
       padding-left 20px
 </style>
