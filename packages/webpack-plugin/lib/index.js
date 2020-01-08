@@ -253,6 +253,13 @@ class MpxWebpackPlugin {
           externalClasses: this.options.externalClasses,
           projectRoot: this.options.projectRoot,
           autoScopeRules: this.options.autoScopeRules,
+          // native文件专用相关配置
+          nativeOptions: Object.assign({
+            // 用于优先搜索其他预编译器后缀的文件，按声明顺序查找
+            // string, available languages: less => .less, stlyus => .styl, sass => .sass
+            // 故意默认空数组，允许用户关闭
+            cssLangs: []
+          }, this.options.nativeOptions),
           defs: this.options.defs,
           extract: (content, file, index, sideEffects) => {
             additionalAssets[file] = additionalAssets[file] || []
