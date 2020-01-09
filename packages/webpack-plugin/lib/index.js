@@ -254,6 +254,7 @@ class MpxWebpackPlugin {
           projectRoot: this.options.projectRoot,
           autoScopeRules: this.options.autoScopeRules,
           defs: this.options.defs,
+          i18n: this.options.i18n,
           extract: (content, file, index, sideEffects) => {
             additionalAssets[file] = additionalAssets[file] || []
             if (!additionalAssets[file][index]) {

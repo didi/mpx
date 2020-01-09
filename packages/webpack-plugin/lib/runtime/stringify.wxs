@@ -193,13 +193,13 @@ function normalizeDynamicStyle (value) {
 }
 
 module.exports = {
-  transformClass: function (staticClass, dynamicClass) {
+  stringifyClass: function (staticClass, dynamicClass) {
     if (typeof staticClass !== 'string') {
       return console.log('Template attr class must be a string!')
     }
     return concat(staticClass, stringifyClass(dynamicClass))
   },
-  transformStyle: function (staticStyle, dynamicStyle) {
+  stringifyStyle: function (staticStyle, dynamicStyle) {
     var normalizedDynamicStyle = normalizeDynamicStyle(dynamicStyle)
     var parsedStaticStyle = typeof staticStyle === 'string' ? parseStyleText(staticStyle) : {}
     return genStyleText(extend(parsedStaticStyle, normalizedDynamicStyle))

@@ -4,13 +4,14 @@ import renderHelperMixin from './renderHelperMixin'
 import refsMixin from './refsMixin'
 import showMixin from './showMixin'
 import relationsMixin from './relationsMixin'
+import i18nMixin from './i18nMixin'
 
 export default function getBuiltInMixins (options, type) {
   if (__mpx_mode__ === 'web') {
     return [
       proxyEventMixin(),
       refsMixin()
-    ]
+    ].filter(item => item)
   } else {
     return [
       pageStatusMixin(type),
@@ -18,7 +19,8 @@ export default function getBuiltInMixins (options, type) {
       renderHelperMixin(),
       refsMixin(),
       showMixin(type),
-      relationsMixin(type)
+      relationsMixin(type),
+      i18nMixin()
     ].filter(item => item)
   }
 }

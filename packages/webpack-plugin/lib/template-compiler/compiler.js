@@ -238,6 +238,7 @@ let warn$1
 let error$1
 let mode
 let defs
+let i18n
 let srcMode
 let processingTemplate
 let isNative
@@ -246,6 +247,7 @@ let currentEl
 let injectNodes = []
 let forScopes = []
 let forScopesMap = {}
+let hasI18n = false
 
 function updateForScopesMap () {
   forScopes.forEach((scope) => {
@@ -299,7 +301,17 @@ function decode (value) {
   })
 }
 
+const i18nFuncNames = ['$t', '$tc', '$d', '$n']
+const i18nWxsPath = normalize.lib('runtime/i18n.wxs')
+const i18nWxsLoaderPath = normalize.lib('wxs/wxs-18n-loader.js')
+const i18nWxsRequest = i18nWxsLoaderPath + '!' + i18nWxsPath
+const i18nModuleName = '__i18n__'
+const stringifyWxsPath = normalize.lib('runtime/stringify.wxs')
+const stringifyModuleName = '__stringify__'
+
 const tagRES = /(\{\{(?:.|\n)+?\}\})(?!})/
+const tagRE = /\{\{((?:.|\n)+?)\}\}(?!})/
+const tagREG = /\{\{((?:.|\n)+?)\}\}(?!})/g
 
 function decodeInMustache (value) {
   const sArr = value.split(tagRES)
@@ -725,6 +737,7 @@ function parse (template, options) {
   srcMode = options.srcMode || mode
   isNative = options.isNative
   basename = options.basename
+  i18n = options.i18n
   refId = 0
 
   rulesRunner = getRulesRunner({
@@ -739,6 +752,7 @@ function parse (template, options) {
   injectNodes = []
   forScopes = []
   forScopesMap = {}
+  hasI18n = false
 
   platformGetTagNamespace = options.getTagNamespace || no
 
@@ -890,6 +904,10 @@ function parse (template, options) {
     error$1('Template fields should has one single root, considering wrapping your template content with <view> or <text> tag!')
   }
 
+  if (hasI18n) {
+    injectWxs(meta, i18nModuleName, i18nWxsRequest)
+  }
+
   if (injectNodes.length) {
     root.children = injectNodes.concat(root.children)
   }
@@ -945,8 +963,6 @@ function stringify (str) {
   return JSON.stringify(str)
 }
 
-const tagRE = /\{\{((?:.|\n)+?)\}\}(?!})/
-const tagREG = /\{\{((?:.|\n)+?)\}\}(?!})/g
 
 // function processLifecycleHack (el, options) {
 //   if (options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component') {
@@ -1207,8 +1223,9 @@ function processBindEvent (el) {
   }
 }
 
+
 // todo 暂时未考虑swan中不用{{}}包裹控制属性的情况
-function parseMustache (raw = '') {
+function parseMustache (raw = '', options = {}) {
   let replaced = false
   if (tagRE.test(raw)) {
     let ret = []
@@ -1220,19 +1237,30 @@ function parseMustache (raw = '') {
         ret.push(stringify(pre))
       }
       let exp = match[1]
-      if (/\b__mpx_mode__\b/.test(exp)) {
-        exp = exp.replace(/\b__mpx_mode__\b/g, stringify(mode))
-        replaced = true
+
+
+      if (options.defs && defs) {
+        const defKeys = Object.keys(defs)
+        defKeys.forEach((defKey) => {
+          const defRE = new RegExp(`\\b${defKey}\\b`)
+          const defREG = new RegExp(`\\b${defKey}\\b`, 'g')
+          if (defRE.test(exp)) {
+            exp = exp.replace(defREG, stringify(defs[defKey]))
+            replaced = true
+          }
+        })
       }
-      const defKeys = Object.keys(defs)
-      defKeys.forEach((defKey) => {
-        const defRE = new RegExp(`\\b${defKey}\\b`)
-        const defREG = new RegExp(`\\b${defKey}\\b`, 'g')
-        if (defRE.test(exp)) {
-          exp = exp.replace(defREG, stringify(defs[defKey]))
-          replaced = true
-        }
-      })
+
+      if (options.i18n && i18n) {
+        i18nFuncNames.forEach((i18nFuncName) => {
+          const funcNameRE = new RegExp(`\\b${i18nFuncName}\\(`)
+          const funcNameREG = new RegExp(`\\b${i18nFuncName}\\(`, 'g')
+          if (funcNameRE.test(exp)) {
+            exp = exp.replace(funcNameREG, `${i18nModuleName}.${i18nFuncName}(mpxLocale, `)
+            replaced = true
+          }
+        })
+      }
 
       ret.push(`(${exp})`)
       lastLastIndex = tagREG.lastIndex
@@ -1269,13 +1297,19 @@ function addExp (el, exp, needTravel, isProps) {
 function processIf (el) {
   let val = getAndRemoveAttr(el, config[mode].directive.if)
   if (val) {
-    let parsed = parseMustache(val)
+    let parsed = parseMustache(val, {
+      i18n: true,
+      defs: true
+    })
     el.if = {
       raw: parsed.val,
       exp: parsed.result
     }
   } else if (val = getAndRemoveAttr(el, config[mode].directive.elseif)) {
-    let parsed = parseMustache(val)
+    let parsed = parseMustache(val, {
+      i18n: true,
+      defs: true
+    })
     el.elseif = {
       raw: parsed.val,
       exp: parsed.result
@@ -1299,7 +1333,10 @@ function processFor (el) {
         index: matched[2] || 'index'
       }
     } else {
-      let parsed = parseMustache(val)
+      let parsed = parseMustache(val, {
+        i18n: true,
+        defs: true
+      })
       el.for = {
         raw: parsed.val,
         exp: parsed.result
@@ -1403,7 +1440,10 @@ function processAttrs (el, options) {
     const isTemplateData = el.tag === 'template' && attr.name === 'data'
     const needWrap = isTemplateData && mode !== 'swan'
     let value = needWrap ? `{${attr.value}}` : attr.value
-    let parsed = parseMustache(value)
+    let parsed = parseMustache(value, {
+      i18n: true,
+      defs: true
+    })
     if (parsed.hasBinding) {
       // 该属性判断用于提供给运行时对于计算属性作为props传递时提出警告，与needTravel的作用进行分离
       const isProps = (options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component') && !(attr.name === 'class' || attr.name === 'style')
@@ -1545,7 +1585,10 @@ function processText (el) {
   if (el.type !== 3 || el.isComment) {
     return
   }
-  let parsed = parseMustache(el.text)
+  let parsed = parseMustache(el.text, {
+    i18n: true,
+    defs: true
+  })
   if (parsed.hasBinding) {
     addExp(el, parsed.result)
   }
@@ -1582,7 +1625,6 @@ function injectWxs (meta, module, src) {
   injectNodes.push(wxsNode)
 }
 
-const injectHelperWxsPath = normalize.lib('runtime/injectHelper.wxs')
 
 function processClass (el, meta) {
   const type = 'class'
@@ -1590,13 +1632,19 @@ function processClass (el, meta) {
   let dynamicClass = getAndRemoveAttr(el, config[mode].directive.dynamicClass)
   let staticClass = getAndRemoveAttr(el, type)
   if (dynamicClass) {
-    let staticClassExp = parseMustache(staticClass).result
-    let dynamicClassExp = parseMustache(dynamicClass).result
+    let staticClassExp = parseMustache(staticClass, {
+      i18n: true,
+      defs: true
+    }).result
+    let dynamicClassExp = parseMustache(dynamicClass, {
+      i18n: true,
+      defs: true
+    }).result
     addAttrs(el, [{
       name: targetType,
-      value: `{{__injectHelper.transformClass(${staticClassExp}, ${dynamicClassExp})}}`
+      value: `{{${stringifyModuleName}.stringifyClass(${staticClassExp}, ${dynamicClassExp})}}`
     }])
-    injectWxs(meta, '__injectHelper', injectHelperWxsPath)
+    injectWxs(meta, stringifyModuleName, stringifyWxsPath)
   } else if (staticClass) {
     addAttrs(el, [{
       name: targetType,
@@ -1611,13 +1659,19 @@ function processStyle (el, meta) {
   let dynamicStyle = getAndRemoveAttr(el, config[mode].directive.dynamicStyle)
   let staticStyle = getAndRemoveAttr(el, type)
   if (dynamicStyle) {
-    let staticStyleExp = parseMustache(staticStyle).result
-    let dynamicStyleExp = parseMustache(dynamicStyle).result
+    let staticStyleExp = parseMustache(staticStyle, {
+      i18n: true,
+      defs: true
+    }).result
+    let dynamicStyleExp = parseMustache(dynamicStyle, {
+      i18n: true,
+      defs: true
+    }).result
     addAttrs(el, [{
       name: targetType,
-      value: `{{__injectHelper.transformStyle(${staticStyleExp}, ${dynamicStyleExp})}}`
+      value: `{{${stringifyModuleName}.stringifyStyle(${staticStyleExp}, ${dynamicStyleExp})}}`
     }])
-    injectWxs(meta, '__injectHelper', injectHelperWxsPath)
+    injectWxs(meta, stringifyModuleName, stringifyWxsPath)
   } else if (staticStyle) {
     addAttrs(el, [{
       name: targetType,
@@ -1709,7 +1763,10 @@ function processShow (el, options, root) {
   let show = getAndRemoveAttr(el, config[mode].directive.show)
   if (options.isComponent && el.parent === root && isRealNode(el)) {
     if (show !== undefined) {
-      show = `{{${parseMustache(show).result}&&mpxShow}}`
+      show = `{{${parseMustache(show, {
+        i18n: true,
+        defs: true
+      }).result}&&mpxShow}}`
     } else {
       show = '{{mpxShow}}'
     }
@@ -1724,7 +1781,10 @@ function processShow (el, options, root) {
         value: show
       }])
     } else {
-      const showExp = parseMustache(show).result
+      const showExp = parseMustache(show, {
+        i18n: true,
+        defs: true
+      }).result
       let oldStyle = getAndRemoveAttr(el, 'style')
       oldStyle = oldStyle ? oldStyle + ';' : ''
       addAttrs(el, [{
