@@ -12,20 +12,9 @@ module.exports = function (content) {
   const query = loaderUtils.getOptions(this) || {}
   const filePath = this.resourcePath
   const parts = parseComponent(content, filePath, this.sourceMap, mode, defs)
-  let part = parts[query.type]
+  let part = parts[query.type] || {}
   if (Array.isArray(part)) {
     part = part[query.index]
-  }
-  // json自动补全
-  if (query.type === 'json') {
-    let jsonObj = {}
-    if (part && part.content) {
-      jsonObj = JSON.parse(part.content)
-    }
-
-    part = {
-      content: JSON.stringify(jsonObj, null, 2)
-    }
   }
   this.callback(null, part.content, part.map)
 }
