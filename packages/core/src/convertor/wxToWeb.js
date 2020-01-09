@@ -61,9 +61,7 @@ export default {
   convert (options) {
     if (options.data && type(options.data) !== 'Function') {
       const rawData = options.data
-      options.data = function () {
-        return rawData
-      }
+      options.data = new Function(`return ${JSON.stringify(rawData)};`)
     }
     if (options.properties) {
       const newProps = {}
