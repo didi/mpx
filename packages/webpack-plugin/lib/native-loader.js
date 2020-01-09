@@ -196,8 +196,8 @@ module.exports = function (content) {
           const partsOpts = { src }
 
           if (cssLang) {
-            // TODO 规则严谨性
-            partsOpts.src = src.replace(typeExtMap.styles, '.' + CSS_LANG_MAP[cssLang])
+            const R = new RegExp(`\\${typeExtMap.styles}((\\?.*)?$)`)
+            partsOpts.src = src.replace(R, `.${CSS_LANG_MAP[cssLang]}$2`)
             partsOpts.lang = cssLang
           }
 
