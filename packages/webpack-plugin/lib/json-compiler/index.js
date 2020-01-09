@@ -142,6 +142,21 @@ module.exports = function (raw) {
     return callback(err)
   }
 
+  if (pagesMap[resourcePath]) {
+    // page
+    if (!json.usingComponents) {
+      json.usingComponents = {}
+    }
+    if (!json.component && mode === 'swan') {
+      json.component = true
+    }
+  } else if (componentsMap[resourcePath]) {
+    // component
+    if (json.component !== true) {
+      json.component = true
+    }
+  }
+
   if (json.usingComponents) {
     fixUsingComponent({ usingComponents: json.usingComponents, mode, log: emitWarning })
   }
