@@ -61,6 +61,7 @@ export default {
   convert (options) {
     if (options.data && type(options.data) !== 'Function') {
       const rawData = options.data
+      /* eslint-disable no-new-func */
       options.data = new Function(`return ${JSON.stringify(rawData)};`)
     }
     if (options.properties) {
