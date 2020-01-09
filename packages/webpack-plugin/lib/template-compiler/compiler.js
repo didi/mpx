@@ -963,7 +963,6 @@ function stringify (str) {
   return JSON.stringify(str)
 }
 
-
 // function processLifecycleHack (el, options) {
 //   if (options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component') {
 //     if (el.if) {
@@ -1223,7 +1222,6 @@ function processBindEvent (el) {
   }
 }
 
-
 // todo 暂时未考虑swan中不用{{}}包裹控制属性的情况
 function parseMustache (raw = '', options = {}) {
   let replaced = false
@@ -1237,7 +1235,6 @@ function parseMustache (raw = '', options = {}) {
         ret.push(stringify(pre))
       }
       let exp = match[1]
-
 
       if (options.defs && defs) {
         const defKeys = Object.keys(defs)
@@ -1624,7 +1621,6 @@ function injectWxs (meta, module, src) {
   ])
   injectNodes.push(wxsNode)
 }
-
 
 function processClass (el, meta) {
   const type = 'class'
