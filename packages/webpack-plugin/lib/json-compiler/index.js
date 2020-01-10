@@ -136,10 +136,25 @@ module.exports = function (raw) {
     if (this.resourcePath.endsWith('.json.js')) {
       json = JSON.parse(mpxJSON.compileMPXJSONText({ source: raw, mode, defs, filePath: this.resourcePath }))
     } else {
-      json = JSON.parse(raw)
+      json = JSON.parse(raw || '{}')
     }
   } catch (err) {
     return callback(err)
+  }
+
+  if (pagesMap[resourcePath]) {
+    // page
+    if (!json.usingComponents) {
+      json.usingComponents = {}
+    }
+    if (!json.component && mode === 'swan') {
+      json.component = true
+    }
+  } else if (componentsMap[resourcePath]) {
+    // component
+    if (json.component !== true) {
+      json.component = true
+    }
   }
 
   if (json.usingComponents) {
