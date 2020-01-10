@@ -15,7 +15,10 @@ const EXT_MPX_JSON = '.json.js'
 const CSS_LANG_MAP = {
   less: 'less',
   stylus: 'stly',
-  sass: 'sass'
+  sass: 'sass',
+  scss: 'scss',
+  // 空串，默认行为走css-loader
+  css: ''
 }
 
 module.exports = function (content) {
@@ -93,11 +96,15 @@ module.exports = function (content) {
   }
 
   async function checkCSSLangFiles () {
+    // 空数组、false也是只走css
     const langs = mpx.nativeOptions.cssLangs || []
     for (let i = 0; i < langs.length; i++) {
-      if (await checkFileExists('.' + CSS_LANG_MAP[langs[i]])) {
-        cssLang = langs[i]
-        break
+      const lang = langs[i]
+      if (CSS_LANG_MAP.hasOwnProperty(lang)) {
+        if (await checkFileExists('.' + (CSS_LANG_MAP[lang] || typeExtMap.styles))) {
+          cssLang = langs[i]
+          break
+        }
       }
     }
   }
