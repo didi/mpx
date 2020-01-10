@@ -136,7 +136,7 @@ module.exports = function (raw) {
     if (this.resourcePath.endsWith('.json.js')) {
       json = JSON.parse(mpxJSON.compileMPXJSONText({ source: raw, mode, defs, filePath: this.resourcePath }))
     } else {
-      json = JSON.parse(raw)
+      json = JSON.parse(raw || '{}')
     }
   } catch (err) {
     return callback(err)
