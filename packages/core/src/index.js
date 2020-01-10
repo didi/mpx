@@ -75,7 +75,6 @@ function use (plugin, options = {}) {
   return this
 }
 
-
 let APIs = {}
 
 // 实例属性
