@@ -12,6 +12,14 @@ const matchCondition = require('./utils/match-condition')
 const fixUsingComponent = require('./utils/fix-using-component')
 
 const EXT_MPX_JSON = '.json.js'
+const CSS_LANG_MAP = {
+  less: 'less',
+  stylus: 'stly',
+  sass: 'sass',
+  scss: 'scss',
+  // 空串，默认行为走css-loader
+  css: ''
+}
 
 module.exports = function (content) {
   this.cacheable()
@@ -77,6 +85,29 @@ module.exports = function (content) {
   }
 
   let useMPXJSON = false
+  let cssLang = ''
+
+  function checkFileExists (extName) {
+    return new Promise((resolve, reject) => {
+      fs.stat(resourceName + extName, (err) => {
+        resolve(!err)
+      })
+    })
+  }
+
+  async function checkCSSLangFiles () {
+    // 空数组、false也是只走css
+    const langs = mpx.nativeOptions.cssLangs || []
+    for (let i = 0; i < langs.length; i++) {
+      const lang = langs[i]
+      if (CSS_LANG_MAP.hasOwnProperty(lang)) {
+        if (await checkFileExists('.' + (CSS_LANG_MAP[lang] || typeExtMap.styles))) {
+          cssLang = langs[i]
+          break
+        }
+      }
+    }
+  }
 
   // 先读取json获取usingComponents信息
   async.waterfall([
@@ -88,6 +119,8 @@ module.exports = function (content) {
         callback()
       })
     },
+    // 尝试先找其他后缀的css文件
+    (callback) => checkCSSLangFiles().then(callback),
     (callback) => {
       async.forEachOf(typeExtMap, (ext, key, callback) => {
         if (key === 'json' && useMPXJSON) {
@@ -166,8 +199,20 @@ module.exports = function (content) {
 
         if (type === 'script') {
           return getNamedExportsForSrc(type, { src })
-        } else if (type === 'styles' && hasScoped) {
-          return getRequireForSrc(type, { src }, 0, true)
+        } else if (type === 'styles') {
+          const partsOpts = { src }
+
+          if (cssLang) {
+            const R = new RegExp(`\\${typeExtMap.styles}((\\?.*)?$)`)
+            partsOpts.src = src.replace(R, `.${CSS_LANG_MAP[cssLang]}$2`)
+            partsOpts.lang = cssLang
+          }
+
+          if (hasScoped) {
+            return getRequireForSrc(type, partsOpts, 0, true)
+          } else {
+            return getRequireForSrc(type, partsOpts)
+          }
         } else {
           return getRequireForSrc(type, { src })
         }
