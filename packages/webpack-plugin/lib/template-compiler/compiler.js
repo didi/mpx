@@ -301,9 +301,9 @@ function decode (value) {
   })
 }
 
-const i18nFuncNames = ['$t', '$tc', '$d', '$n']
+const i18nFuncNames = ['\\$(t)', '\\$(tc)', '\\$(d)', '\\$(n)']
 const i18nWxsPath = normalize.lib('runtime/i18n.wxs')
-const i18nWxsLoaderPath = normalize.lib('wxs/wxs-18n-loader.js')
+const i18nWxsLoaderPath = normalize.lib('wxs/wxs-i18n-loader.js')
 const i18nWxsRequest = i18nWxsLoaderPath + '!' + i18nWxsPath
 const i18nModuleName = '__i18n__'
 const stringifyWxsPath = normalize.lib('runtime/stringify.wxs')
@@ -1250,10 +1250,11 @@ function parseMustache (raw = '', options = {}) {
 
       if (options.i18n && i18n) {
         i18nFuncNames.forEach((i18nFuncName) => {
-          const funcNameRE = new RegExp(`\\b${i18nFuncName}\\(`)
-          const funcNameREG = new RegExp(`\\b${i18nFuncName}\\(`, 'g')
+          const funcNameRE = new RegExp(`${i18nFuncName}\\(`)
+          const funcNameREG = new RegExp(`${i18nFuncName}\\(`, 'g')
           if (funcNameRE.test(exp)) {
-            exp = exp.replace(funcNameREG, `${i18nModuleName}.${i18nFuncName}(mpxLocale, `)
+            exp = exp.replace(funcNameREG, `${i18nModuleName}.$1(mpxLocale, `)
+            hasI18n = true
             replaced = true
           }
         })

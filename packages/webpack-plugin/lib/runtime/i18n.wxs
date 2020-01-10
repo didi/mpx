@@ -1,6 +1,9 @@
 // messages会在编译时通过lib/wxs/wxs-i18n-loader注入
 module.exports = {
-  $t: function (locale, key) {
-    return messages[locale][key]
+  t: function (locale, key) {
+    if (messages && messages[locale]) {
+      return messages[locale][key]
+    }
+    return ''
   }
 }

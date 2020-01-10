@@ -75,6 +75,7 @@ function use (plugin, options = {}) {
   return this
 }
 
+
 let APIs = {}
 
 // 实例属性
@@ -159,6 +160,10 @@ const EXPORT_MPX = factory()
 
 if (__mpx_mode__ === 'web') {
   window.__mpx = EXPORT_MPX
+} else {
+  if (global.i18n) {
+    EXPORT_MPX.i18n = global.i18n = observable(global.i18n)
+  }
 }
 
 export default EXPORT_MPX

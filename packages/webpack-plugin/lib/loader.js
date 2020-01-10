@@ -13,6 +13,7 @@ const processScript = require('./web/processScript')
 const processStyles = require('./web/processStyles')
 const processTemplate = require('./web/processTemplate')
 const readJsonForSrc = require('./utils/read-json-for-src')
+const normalize = require('./utils/normalize')
 
 module.exports = function (content) {
   this.cacheable()
@@ -224,11 +225,13 @@ module.exports = function (content) {
       if (!isProduction) {
         globalInjectCode += `global.currentResource = ${JSON.stringify(filePath)}\n`
       }
-
       if (ctorType === 'app' && mpx.i18n) {
         globalInjectCode += `global.i18n = ${JSON.stringify({ locale: mpx.i18n.locale })}\n`
+        const i18nWxsPath = normalize.lib('runtime/i18n.wxs')
+        const i18nWxsLoaderPath = normalize.lib('wxs/wxs-i18n-loader.js')
+        const i18nWxsRequest = i18nWxsLoaderPath + '!' + i18nWxsPath
+        output += `global.i18n.methods = require(${loaderUtils.stringifyRequest(loaderContext, i18nWxsRequest)})\n`
       }
-
       // 注入构造函数
       let ctor = 'App'
       if (ctorType === 'page') {

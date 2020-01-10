@@ -680,7 +680,7 @@ class MpxWebpackPlugin {
 
         if (isRuntime) {
           source.add('var context = (function() { return this })() || Function("return this")();\n' +
-            'if(!context.console) context.console = console;\n\n')
+            'if(!context.console) context.console = console;\n')
           if (mpx.mode === 'swan') {
             source.add('// swan runtime fix\n' +
               'if (!context.navigator) {\n' +
