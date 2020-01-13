@@ -17,6 +17,7 @@ var webpackConfig = {
   module: {
     rules: [
       // mpx文件必须设置正确的loader，参考下文详细的loader设置options
+      // 注意，在最新的脚手架生成的模板中，这个loader的配置在build/build.js中
       {
         test: /\.mpx$/,
         use: MpxWebpackPlugin.loader({
@@ -97,7 +98,8 @@ webpackconfig = {
 
 - **mode** `String` 目前支持的有微信小程序(wx)\支付宝小程序(ali)\百度小程序(swan)\头条小程序(tt)\QQ小程序(qq)
 - **srcMode** `String` 跨平台编译场景下使用，详情请看 [跨平台编译](../platform.md#跨平台编译) 一节
-  
+- **resolveMode** `String` 默认值为webpack，可选值有webpack/native，这是解析依赖路径时为了解决小程序特色绝对路径所添加的，推荐使用webpack模式，更舒服一些，json中的pages/usingComponents等需要写相对路径，但是可以直接写npm包路径。如果希望使用类似小程序原始那种"绝对路径"，就可以声明为native，但是npm路径就需要在前面加一个~，类似webpack的样式引入规范，同时必须配合projectRoot参数提供项目根目录地址。
+- **projectRoot** `String` 如果指定resolveMode为native，则必须提供此项配置为项目根目录地址。
 ----
 
 ### MpxWebpackPlugin.loader
