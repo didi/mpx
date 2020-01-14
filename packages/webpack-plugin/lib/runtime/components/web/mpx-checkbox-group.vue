@@ -1,5 +1,5 @@
 <script>
-  import getInnerListeners, { getCustomEvent } from '@mpxjs/webpack-plugin/lib/runtime/components/web/getInnerListeners'
+  import getInnerListeners, { getCustomEvent } from './getInnerListeners'
 
   function travelSlot (slot, effect) {
     if (slot) {
@@ -26,7 +26,7 @@
     render (createElement) {
       const data = {
         class: 'mpx-checkbox-group',
-        on: getInnerListeners(this),
+        on: getInnerListeners(this,{ignoredListeners:['change']}),
       }
       return createElement('div', data, this.$slots.default)
     },

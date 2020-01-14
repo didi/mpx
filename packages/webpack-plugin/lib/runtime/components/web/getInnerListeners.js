@@ -111,9 +111,16 @@ export function getCustomEvent (type, detail = {}) {
   return ce
 }
 
+function noop () {
+
+}
+
 export default function getInnerListeners (context, options = {}) {
-  let { mergeBefore = {}, mergeAfter = {}, defaultListeners = {} } = options
-  const listeners = Object.assign({}, defaultListeners, context.$listeners)
+  let { mergeBefore = {}, mergeAfter = {}, defaultListeners = [], ignoredListeners = [] } = options
+  const listeners = Object.assign({}, context.$listeners)
+  defaultListeners.forEach((key) => {
+    if (!listeners[key]) listeners[key] = noop
+  })
   const mergeBeforeOptions = {
     before: true
   }
@@ -135,5 +142,8 @@ export default function getInnerListeners (context, options = {}) {
   processTap(listeners, context)
   mergeListeners(listeners, mergeBefore, mergeBeforeOptions)
   mergeListeners(listeners, mergeAfter, mergeAfterOptions)
+  ignoredListeners.forEach((key) => {
+    delete listeners[key]
+  })
   return listeners
 }

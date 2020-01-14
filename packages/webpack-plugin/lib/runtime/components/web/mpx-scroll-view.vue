@@ -1,5 +1,5 @@
 <script>
-  import getInnerListeners, { getCustomEvent } from '@mpxjs/webpack-plugin/lib/runtime/components/web/getInnerListeners'
+  import getInnerListeners, { getCustomEvent } from './getInnerListeners'
   import BScroll from '@better-scroll/core'
   import ObserveDom from '@better-scroll/observe-dom'
   import throttle from 'lodash/throttle'
@@ -115,7 +115,7 @@
     render (createElement) {
       const data = {
         class: 'mpx-scroll-view',
-        on: getInnerListeners(this),
+        on: getInnerListeners(this, { ignoredListeners: ['scroll'] }),
         ref: 'wrapper'
       }
       const content = createElement('div', {

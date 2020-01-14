@@ -15,6 +15,7 @@ module.exports = function (raw) {
   const mpx = mainCompilation.__mpx__
   const mode = mpx.mode
   const defs = mpx.defs
+  const i18n = mpx.i18n
   const externalClasses = mpx.externalClasses
   const globalSrcMode = mpx.srcMode
   const localSrcMode = loaderUtils.parseQuery(this.resourceQuery || '?').mode
@@ -48,7 +49,8 @@ module.exports = function (raw) {
     srcMode: localSrcMode || globalSrcMode,
     isNative,
     scopedId,
-    filePath: this.resourcePath
+    filePath: this.resourcePath,
+    i18n
   }))
 
   let ast = parsed.root

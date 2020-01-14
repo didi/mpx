@@ -260,6 +260,7 @@ class MpxWebpackPlugin {
             cssLangs: ['css', 'less', 'stylus', 'scss', 'sass']
           }, this.options.nativeOptions),
           defs: this.options.defs,
+          i18n: this.options.i18n,
           extract: (content, file, index, sideEffects) => {
             additionalAssets[file] = additionalAssets[file] || []
             if (!additionalAssets[file][index]) {
@@ -685,7 +686,7 @@ class MpxWebpackPlugin {
 
         if (isRuntime) {
           source.add('var context = (function() { return this })() || Function("return this")();\n' +
-            'if(!context.console) context.console = console;\n\n')
+            'if(!context.console) context.console = console;\n')
           if (mpx.mode === 'swan') {
             source.add('// swan runtime fix\n' +
               'if (!context.navigator) {\n' +

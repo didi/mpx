@@ -1,5 +1,5 @@
 <script>
-  import getInnerListeners from '@mpxjs/webpack-plugin/lib/runtime/components/web/getInnerListeners'
+  import getInnerListeners from './getInnerListeners'
 
 
   export default {
@@ -79,10 +79,7 @@
         on: getInnerListeners(this, {
           mergeAfter,
           // 由于当前机制下tap事件只有存在tap监听才会触发，为了确保该组件能够触发tap，传递一个包含tap的defaultListeners用于模拟存在tap监听
-          defaultListeners: {
-            tap () {
-            }
-          }
+          defaultListeners: ['tap']
         })
       }
       return createElement(tagName, data, this.$slots.default)

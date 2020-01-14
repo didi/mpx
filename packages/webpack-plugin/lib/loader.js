@@ -13,6 +13,7 @@ const processScript = require('./web/processScript')
 const processStyles = require('./web/processStyles')
 const processTemplate = require('./web/processTemplate')
 const readJsonForSrc = require('./utils/read-json-for-src')
+const normalize = require('./utils/normalize')
 
 module.exports = function (content) {
   this.cacheable()
@@ -216,15 +217,21 @@ module.exports = function (content) {
       }
 
       // 触发webpack global var 注入
-      output += 'global.currentModuleId;\n'
+      output += 'global.currentModuleId\n'
 
       // todo loader中inject dep比较危险，watch模式下不一定靠谱，可考虑将import改为require然后通过修改loader内容注入
       // 注入模块id及资源路径
-      let globalInjectCode = `global.currentModuleId = ${JSON.stringify(moduleId)};\n`
+      let globalInjectCode = `global.currentModuleId = ${JSON.stringify(moduleId)}\n`
       if (!isProduction) {
-        globalInjectCode += `global.currentResource = ${JSON.stringify(filePath)};\n`
+        globalInjectCode += `global.currentResource = ${JSON.stringify(filePath)}\n`
       }
-
+      if (ctorType === 'app' && mpx.i18n) {
+        globalInjectCode += `global.i18n = ${JSON.stringify({ locale: mpx.i18n.locale })}\n`
+        const i18nWxsPath = normalize.lib('runtime/i18n.wxs')
+        const i18nWxsLoaderPath = normalize.lib('wxs/wxs-i18n-loader.js')
+        const i18nWxsRequest = i18nWxsLoaderPath + '!' + i18nWxsPath
+        output += `global.i18n.methods = require(${loaderUtils.stringifyRequest(loaderContext, i18nWxsRequest)})\n`
+      }
       // 注入构造函数
       let ctor = 'App'
       if (ctorType === 'page') {
@@ -232,7 +239,7 @@ module.exports = function (content) {
       } else if (ctorType === 'component') {
         ctor = 'Component'
       }
-      globalInjectCode += `global.currentCtor = ${ctor};\n`
+      globalInjectCode += `global.currentCtor = ${ctor}\n`
 
       //
       // <script>
@@ -266,7 +273,7 @@ module.exports = function (content) {
       }
 
       if (scriptSrcMode) {
-        globalInjectCode += `global.currentSrcMode = ${JSON.stringify(scriptSrcMode)};\n`
+        globalInjectCode += `global.currentSrcMode = ${JSON.stringify(scriptSrcMode)}\n`
       }
 
       // styles
@@ -319,7 +326,6 @@ module.exports = function (content) {
       // 给予json默认值, 确保生成json request以自动补全json
       const json = parts.json || {}
       if (json.src) {
-        // json和template传入
         json.src = addQuery(json.src, { resourcePath, __component: true })
         output += getRequireForSrc('json', json) + '\n\n'
       } else {

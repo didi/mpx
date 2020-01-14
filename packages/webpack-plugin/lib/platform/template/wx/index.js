@@ -13,7 +13,9 @@ module.exports = function getSpec ({ warn, error }) {
     postProps: [
       {
         web ({ name, value }) {
-          const parsed = parseMustache(value)
+          const parsed = parseMustache(value, {
+            defs: true
+          })
           if (parsed.hasBinding) {
             return {
               name: ':' + name,
@@ -93,7 +95,9 @@ module.exports = function getSpec ({ warn, error }) {
           }
         },
         web ({ value }, { el }) {
-          const parsed = parseMustache(value)
+          const parsed = parseMustache(value, {
+            defs: true
+          })
           const attrsMap = el.attrsMap
           const itemName = attrsMap['wx:for-item'] || 'item'
           const indexName = attrsMap['wx:for-index'] || 'index'
@@ -109,6 +113,8 @@ module.exports = function getSpec ({ warn, error }) {
           return false
         },
         web ({ value }, { el }) {
+          // vue的template中不能包含key，对应于小程序中的block
+          if (el.tag === 'block') return false
           const itemName = el.attrsMap['wx:for-item'] || 'item'
           const keyName = value
           if (value === '*this') {
@@ -140,7 +146,9 @@ module.exports = function getSpec ({ warn, error }) {
         test: 'wx:model',
         web ({ value }, { el }) {
           el.hasEvent = true
-          const parsed = parseMustache(value)
+          const parsed = parseMustache(value, {
+            defs: true
+          })
           return [
             {
               name: 'v-model',
@@ -176,7 +184,9 @@ module.exports = function getSpec ({ warn, error }) {
         test: /^wx:(class|style)$/,
         web ({ name, value }) {
           const dir = this.test.exec(name)[1]
-          const parsed = parseMustache(value)
+          const parsed = parseMustache(value, {
+            defs: true
+          })
           return {
             name: ':' + dir,
             value: parsed.result
@@ -216,7 +226,9 @@ module.exports = function getSpec ({ warn, error }) {
         },
         web ({ name, value }) {
           let dir = this.test.exec(name)[1]
-          const parsed = parseMustache(value)
+          const parsed = parseMustache(value, {
+            defs: true
+          })
           if (dir === 'elif') {
             dir = 'else-if'
           }
