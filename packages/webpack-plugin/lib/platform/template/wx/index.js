@@ -113,6 +113,8 @@ module.exports = function getSpec ({ warn, error }) {
           return false
         },
         web ({ value }, { el }) {
+          // vue的template中不能包含key，对应于小程序中的block
+          if (el.tag === 'block') return false
           const itemName = el.attrsMap['wx:for-item'] || 'item'
           const keyName = value
           if (value === '*this') {

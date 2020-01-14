@@ -1,5 +1,5 @@
 <script>
-  import getInnerListeners from '@mpxjs/webpack-plugin/lib/runtime/components/web/getInnerListeners'
+  import getInnerListeners from './getInnerListeners'
 
   export default {
     name: 'mpx-image',
@@ -76,7 +76,7 @@
       return createElement('div', {
         style,
         class: ['mpx-image'],
-        on: getInnerListeners(this)
+        on: getInnerListeners(this, { ignoredListeners: ['load', 'error'] })
       })
     }
   }

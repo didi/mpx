@@ -2,7 +2,7 @@
   import getInnerListeners, {
     extendEvent,
     getCustomEvent
-  } from '@mpxjs/webpack-plugin/lib/runtime/components/web/getInnerListeners'
+  } from './getInnerListeners'
 
   export default {
     name: 'mpx-textarea',

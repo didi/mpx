@@ -301,7 +301,7 @@ function decode (value) {
   })
 }
 
-const i18nFuncNames = ['\\$(t)', '\\$(tc)', '\\$(d)', '\\$(n)']
+const i18nFuncNames = ['\\$(t)', '\\$(tc)', '\\$(te)', '\\$(d)', '\\$(n)']
 const i18nWxsPath = normalize.lib('runtime/i18n.wxs')
 const i18nWxsLoaderPath = normalize.lib('wxs/wxs-i18n-loader.js')
 const i18nWxsRequest = i18nWxsLoaderPath + '!' + i18nWxsPath

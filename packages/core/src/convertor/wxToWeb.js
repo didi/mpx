@@ -49,7 +49,7 @@ export default {
   lifecycle: mergeLifecycle(wxLifecycle.LIFECYCLE),
   lifecycle2: mergeLifecycle(webLifecycle.LIFECYCLE),
   pageMode: 'blend',
-  support: false,
+  support: true,
   // todo 支持onshow/onhide/onpagenotfound
   lifecycleProxyMap: {
     '__created__': ['onLaunch', 'onLoad', 'created', 'attached'],
