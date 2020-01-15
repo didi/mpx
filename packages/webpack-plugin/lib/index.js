@@ -95,7 +95,11 @@ class MpxWebpackPlugin {
       // web模式下默认不开启autoSplit
       options.autoSplit = options.mode !== 'web'
     }
-    options.defs = options.defs || {}
+    // defs当中默认带有mode及srcMode
+    options.defs = Object.assign({}, options.defs, {
+      '__mpx_mode__': options.mode,
+      '__mpx_src_mode__': options.srcMode
+    })
     // 批量指定源码mode
     options.modeRules = options.modeRules || {}
     this.options = options
@@ -192,8 +196,6 @@ class MpxWebpackPlugin {
     const defs = this.options.defs
 
     const defsOpt = {
-      '__mpx_mode__': JSON.stringify(this.options.mode),
-      '__mpx_src_mode__': JSON.stringify(this.options.srcMode),
       '__mpx_wxs__': DefinePlugin.runtimeValue(({ module }) => {
         return JSON.stringify(!!module.wxs)
       })

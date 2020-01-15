@@ -11,8 +11,8 @@ function compileAndParse (input, { srcMode, mode } = { srcMode: 'wx', mode: 'ali
     warn: warnFn,
     error: errorFn,
     defs: {
-      '__mpx_mode__': JSON.stringify(mode),
-      '__mpx_src_mode__': JSON.stringify(srcMode)
+      '__mpx_mode__': mode,
+      '__mpx_src_mode__': srcMode
     }
   })
   const ast = parsed.root
