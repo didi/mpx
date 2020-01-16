@@ -95,7 +95,7 @@ class MpxWebpackPlugin {
       // web模式下默认不开启autoSplit
       options.autoSplit = options.mode !== 'web'
     }
-    // defs当中默认带有mode及srcMode
+    // 通过默认defs配置实现mode及srcMode的注入，简化内部处理逻辑
     options.defs = Object.assign({}, options.defs, {
       '__mpx_mode__': options.mode,
       '__mpx_src_mode__': options.srcMode

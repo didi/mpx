@@ -6,7 +6,9 @@ export default function processOption (
   pagesMap,
   componentsMap,
   Vue,
-  VueRouter
+  VueRouter,
+  VueI18n,
+  i18n
 ) {
   if (ctorType === 'app') {
     // 对于app中的组件需要全局注册
@@ -39,6 +41,10 @@ export default function processOption (
       window.__mpxRouter = option.router = new VueRouter({
         routes: routes
       })
+    }
+
+    if (i18n) {
+      window.__mpxI18n = option.i18n = new VueI18n(i18n)
     }
   } else {
     // 局部注册页面和组件中依赖的组件
