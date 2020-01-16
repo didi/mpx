@@ -56,8 +56,8 @@ function processTap (listeners, context) {
   mergeListeners(listeners, {
     touchstart (e) {
       detail = {
-        x: e.touches[0].pageX,
-        y: e.touches[0].pageY
+        x: e.changedTouches[0].pageX,
+        y: e.changedTouches[0].pageY
       }
       if (listeners.longpress || listeners.longtap) {
         startTimer = setTimeout(() => {
@@ -74,11 +74,14 @@ function processTap (listeners, context) {
       }
     },
     touchend (e) {
-      // debugger
       startTimer && clearTimeout(startTimer)
       if (listeners.tap && needTap) {
-        const re = inheritEvent('tap', e, detail)
-        context.$emit('tap', re)
+        const xDis = Math.abs(e.changedTouches[0].pageX - detail.x)
+        const yDis = Math.abs(e.changedTouches[0].pageY - detail.y)
+        if (Math.max(xDis, yDis) <= 15) {
+          const re = inheritEvent('tap', e, detail)
+          context.$emit('tap', re)
+        }
       }
     }
   }, {

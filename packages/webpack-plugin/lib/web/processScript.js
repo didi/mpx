@@ -63,18 +63,19 @@ module.exports = function (script, options, callback) {
       import VueRouter from 'vue-router'
       Vue.use(VueRouter)\n`
       if (i18n) {
+        const i18nObj = Object.assign({}, i18n)
         content += `
         import VueI18n from 'vue-i18n'
         Vue.use(VueI18n)\n`
         const requestObj = {}
         const i18nKeys = ['messages', 'dateTimeFormats', 'numberFormats']
         i18nKeys.forEach((key) => {
-          if (i18n[`${key}Path`]) {
-            requestObj[key] = stringifyRequest(i18n[`${key}Path`])
-            delete i18n[`${key}Path`]
+          if (i18nObj[`${key}Path`]) {
+            requestObj[key] = stringifyRequest(i18nObj[`${key}Path`])
+            delete i18nObj[`${key}Path`]
           }
         })
-        content += `const i18n = ${JSON.stringify(i18n)}\n`
+        content += `const i18n = ${JSON.stringify(i18nObj)}\n`
         Object.keys(requestObj).forEach((key) => {
           content += `i18n.${key} = require(${requestObj[key]})\n`
         })
