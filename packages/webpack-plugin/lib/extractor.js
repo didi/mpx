@@ -124,7 +124,7 @@ module.exports = function (content) {
 
   // 使用子编译器生成需要抽离的json，styles和template
   const contentLoader = normalize.lib('content-loader')
-  const request = `!!${contentLoader}!${this.resource}`
+  const request = `!!${contentLoader}?${JSON.stringify(options)}!${this.resource}`
 
   const childFilename = 'extractor-filename'
   const outputOptions = {

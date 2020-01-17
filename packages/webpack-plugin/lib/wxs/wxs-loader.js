@@ -15,6 +15,7 @@ const parseQuery = require('loader-utils').parseQuery
 module.exports = function (content) {
   const nativeCallback = this.async()
 
+  const options = loaderUtils.getOptions(this) || {}
   const mainCompilation = getMainCompilation(this._compilation)
   const mpx = mainCompilation.__mpx__
   const mode = mpx.mode
@@ -58,7 +59,7 @@ module.exports = function (content) {
       filename
     }
     const contentLoader = normalize.lib('content-loader')
-    const request = `!!${contentLoader}!${this.resource}`
+    const request = `!!${contentLoader}?${JSON.stringify(options)}!${this.resource}`
     const plugins = [
       new WxsPlugin({ mode }),
       new NodeTargetPlugin(),
