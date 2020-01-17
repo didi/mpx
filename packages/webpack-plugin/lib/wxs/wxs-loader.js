@@ -10,7 +10,7 @@ const toPosix = require('../utils/to-posix')
 const fixRelative = require('../utils/fix-relative')
 const normalize = require('../utils/normalize')
 const config = require('../config')
-const parseQuery = require('loader-utils').parseQuery
+const loaderUtils = require('loader-utils')
 
 module.exports = function (content) {
   const nativeCallback = this.async()
@@ -42,7 +42,7 @@ module.exports = function (content) {
   }
 
   let resourcePath = parseRequest(this.resource).resourcePath
-  const wxsModule = parseQuery(this.resourceQuery || '?').wxsModule
+  const wxsModule = loaderUtils.parseQuery(this.resourceQuery || '?').wxsModule
 
   if (wxsModule) {
     resourcePath = `${resourcePath}~${wxsModule}`
