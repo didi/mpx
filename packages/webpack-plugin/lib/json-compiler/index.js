@@ -147,7 +147,9 @@ module.exports = function (raw = '{}') {
     if (!json.usingComponents) {
       json.usingComponents = {}
     }
-    if (!json.component && mode === 'swan') {
+    if (!json.component && mode === 'swan' &&
+      // 强制关闭inject后，没需要设component为true
+      !mpx.forceDisableInject) {
       json.component = true
     }
   } else if (componentsMap[resourcePath]) {
