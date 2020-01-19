@@ -86,7 +86,6 @@ class MpxWebpackPlugin {
     options.writeMode = options.writeMode || 'changed'
     options.autoScopeRules = options.autoScopeRules || {}
     options.forceDisableInject = options.forceDisableInject || false
-    options.forceDisableProxyCtor = options.forceDisableProxyCtor || false
     options.transMpxRules = options.transMpxRules || {
       include: () => true,
       exclude: ['@mpxjs', '@didi']
@@ -501,7 +500,7 @@ class MpxWebpackPlugin {
           // // Trans for wx.xx, wx['xx'], wx.xx(), wx['xx']()
           // parser.hooks.expressionAnyMember.for('wx').tap('MpxWebpackPlugin', transHandler)
           // Proxy ctor for transMode
-          if (!this.options.forceDisableProxyCtor) {
+          if (!this.options.forceDisableInject) {
             parser.hooks.call.for('Page').tap('MpxWebpackPlugin', (expr) => {
               transHandler(expr.callee)
             })

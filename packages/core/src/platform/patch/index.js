@@ -23,7 +23,7 @@ export default function createFactory (type) {
     } else {
       getDefaultOptions = getWxDefaultOptions
     }
-
+    const ctor = global.currentCtor || (type === 'page' ? Page : Component)
     // 获取内建的mixins
     const builtInMixins = getBuiltInMixins(options, type)
     const { rawOptions, currentInject } = transferOptions(options, type, builtInMixins)
@@ -31,7 +31,7 @@ export default function createFactory (type) {
     if (__mpx_mode__ === 'web') {
       global.currentOption = defaultOptions
     } else {
-      customCtor ? customCtor(defaultOptions) : global.currentCtor(defaultOptions)
+      customCtor ? customCtor(defaultOptions) : ctor(defaultOptions)
     }
   }
 }

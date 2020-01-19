@@ -142,20 +142,20 @@ module.exports = function (raw = '{}') {
     return callback(err)
   }
 
-  if (pagesMap[resourcePath]) {
-    // page
-    if (!json.usingComponents) {
-      json.usingComponents = {}
-    }
-    if (!json.component && mode === 'swan' &&
-      // 强制关闭inject后，没需要设component为true
-      !mpx.forceDisableInject) {
-      json.component = true
-    }
-  } else if (componentsMap[resourcePath]) {
-    // component
-    if (json.component !== true) {
-      json.component = true
+  if (!mpx.forceDisableInject) {
+    if (pagesMap[resourcePath]) {
+      // page
+      if (!json.usingComponents) {
+        json.usingComponents = {}
+      }
+      if (!json.component && mode === 'swan') {
+        json.component = true
+      }
+    } else if (componentsMap[resourcePath]) {
+      // component
+      if (json.component !== true) {
+        json.component = true
+      }
     }
   }
 

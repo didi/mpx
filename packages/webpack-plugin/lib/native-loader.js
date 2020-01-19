@@ -233,14 +233,6 @@ module.exports = function (content) {
       }
       globalInjectCode += `global.currentCtor = ${ctor};\n`
 
-      if (isApp && mode === 'swan') {
-        // 注入swan runtime fix
-        globalInjectCode += 'if (!global.navigator) {\n' +
-          '  global.navigator = {};\n' +
-          '}\n' +
-          'global.navigator.standalone = true;\n'
-      }
-
       if (srcMode) {
         globalInjectCode += `global.currentSrcMode = ${JSON.stringify(srcMode)};\n`
       }
