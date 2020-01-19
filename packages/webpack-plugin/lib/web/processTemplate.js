@@ -13,7 +13,10 @@ module.exports = function (template, options, callback) {
   if (ctorType === 'app') {
     template = {
       type: 'template',
-      content: '<router-view></router-view>'
+      content: '<mpx-keep-alive><router-view></router-view></mpx-keep-alive>'
+    }
+    builtInComponentsMap['mpx-keep-alive'] = {
+      resource: addQuery('@mpxjs/webpack-plugin/lib/runtime/components/web/mpx-keep-alive.vue', { component: true })
     }
   }
 

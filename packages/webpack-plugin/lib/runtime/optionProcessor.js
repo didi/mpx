@@ -41,6 +41,8 @@ export default function processOption (
       window.__mpxRouter = option.router = new VueRouter({
         routes: routes
       })
+      // 初始化length
+      window.__mpxRouter.__mpxHistoryLength = window.history.length
     }
 
     if (i18n) {

@@ -49,6 +49,7 @@ export default {
   lifecycle: mergeLifecycle(wxLifecycle.LIFECYCLE),
   lifecycle2: mergeLifecycle(webLifecycle.LIFECYCLE),
   pageMode: 'blend',
+  // support传递为true以将methods外层的方法函数合入methods中
   support: true,
   // todo 支持onshow/onhide/onpagenotfound
   lifecycleProxyMap: {
@@ -56,6 +57,8 @@ export default {
     '__mounted__': ['ready', 'onReady'],
     '__destroyed__': ['detached', 'onUnload'],
     '__updated__': ['updated'],
+    '__show__': ['onShow'],
+    '__hide__': ['onHide'],
     'errorCaptured': ['onError']
   },
   convert (options) {
