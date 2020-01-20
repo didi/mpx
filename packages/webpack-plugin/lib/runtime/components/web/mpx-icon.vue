@@ -1,25 +1,36 @@
 <script>
   import getInnerListeners from './getInnerListeners'
 
+  const defaultColor = {
+    success: '#09BB07',
+    'success_no_circle': '#09BB07',
+    info: '#10AEFF',
+    warn: '#F76260',
+    waiting: '#10AEFF',
+    cancel: '#F43530',
+    download: '#09BB07',
+    search: '#B2B2B2',
+    clear: '#B2B2B2'
+  }
+
   export default {
     name: 'mpx-icon',
     props: {
       type: String,
-      color: {
-        type: String,
-        default: '#09BB07'
-      },
+      color: String,
       size: {
         type: [Number, String],
         default: 23
       }
     },
     render (createElement) {
+      const type = this.type || 'success'
       const sizeStr = isNaN(+this.size) ? this.size : this.size + 'px'
+      const color = this.color || defaultColor[type]
       const data = {
-        class: ['mpx-icon', `mpx-icon-${this.type}`],
+        class: ['mpx-icon', `mpx-icon-${type}`],
         style: {
-          color: this.color,
+          color: color,
           fontSize: sizeStr
         },
         on: getInnerListeners(this)
