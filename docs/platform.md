@@ -268,11 +268,13 @@ radio-group|是
 
 ### 生命周期
 
-组件名称|是否支持
+声明周期名称|是否支持
 :----|----
 onLaunch|是
 onLoad|是
 onReady|是
+onShow|是
+onHide|是
 onUnload|是
 onError|是
 created|是
