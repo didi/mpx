@@ -59,9 +59,11 @@ function navigateBack (options = {}) {
   const router = window.__mpxRouter
   if (router) {
     const delta = options.delta || 1
-    router.__mpxAction = {
-      type: 'back',
-      delta
+    if (!options.reLaunch) {
+      router.__mpxAction = {
+        type: 'back',
+        delta
+      }
     }
     router.go(-delta)
     const res = { errMsg: 'navigateBack:ok' }
@@ -73,15 +75,12 @@ function navigateBack (options = {}) {
 async function reLaunch (options = {}) {
   const router = window.__mpxRouter
   if (router) {
-    router.__mpxAction = { type: 'reLaunch' }
     const backLength = window.history.length - initHistoryLength
-    const res = { errMsg: 'reLaunch:ok' }
-
-    await navigateBack({ delta: backLength })
+    // 通过__mpxAction标识当前是个reLaunch操作，在全局的beforeEnter钩子中决定back之后是否需要进行replace操作
+    router.__mpxAction = { type: 'reLaunch', path: options.url }
+    await navigateBack({ delta: backLength, reLaunch: true })
     await new Promise(resolve => setTimeout(() => resolve(), 100))
-    await redirectTo({ url: options.url })
-
-
+    const res = { errMsg: 'reLaunch:ok' }
     webHandleSuccess(res, options.success, options.complete)
     return Promise.resolve(res)
   }

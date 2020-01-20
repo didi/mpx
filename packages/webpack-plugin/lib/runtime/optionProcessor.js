@@ -1,3 +1,5 @@
+import { SHOW, HIDE } from '@mpxjs/core/src/core/innerLifecycle'
+
 export default function processOption (
   option,
   ctorType,
@@ -40,6 +42,30 @@ export default function processOption (
       }
       window.__mpxRouter = option.router = new VueRouter({
         routes: routes
+      })
+      // 处理reLaunch中传递的url并非首页时的replace逻辑
+      window.__mpxRouter.beforeEach(function (to, from, next) {
+        var action = window.__mpxRouter.__mpxAction
+        if (action && action.type === 'reLaunch') {
+          if (to.path !== action.path) {
+            return next({
+              path: action.path,
+              replace: true
+            })
+          }
+        }
+        next()
+      })
+      // 处理visibilitychange时触发当前活跃页面组件的onshow/onhide
+      document.addEventListener('visibilitychange', function () {
+        var vnode = window.__mpxRouter.__mpxActiveVnode
+        if (vnode && vnode.componentInstance) {
+          if (document.hidden) {
+            vnode.componentInstance.__mpxProxy && vnode.componentInstance.__mpxProxy.callUserHook(HIDE)
+          } else {
+            vnode.componentInstance.__mpxProxy && vnode.componentInstance.__mpxProxy.callUserHook(SHOW)
+          }
+        }
       })
       // 初始化length
       window.__mpxRouter.__mpxHistoryLength = window.history.length

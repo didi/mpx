@@ -50,36 +50,37 @@ function processTap (listeners, context) {
   if (!(listeners.tap || listeners.longpress || listeners.longtap)) {
     return
   }
-  let startTimer
-  let needTap = true
-  let detail = {}
+  context.__mpxTapInfo = context.__mpxTapInfo || {}
   mergeListeners(listeners, {
     touchstart (e) {
-      detail = {
+      context.__mpxTapInfo.detail = {
         x: e.changedTouches[0].pageX,
         y: e.changedTouches[0].pageY
       }
+      context.__mpxTapInfo.startTimer = null
+      context.__mpxTapInfo.needTap = true
       if (listeners.longpress || listeners.longtap) {
-        startTimer = setTimeout(() => {
-          needTap = false
+        context.__mpxTapInfo.startTimer = setTimeout(() => {
+          context.__mpxTapInfo.needTap = false
           if (listeners.longpress) {
-            const re = inheritEvent('longpress', e, detail)
+            const re = inheritEvent('longpress', e, context.__mpxTapInfo.detail)
             context.$emit('longpress', re)
           }
           if (listeners.longtap) {
-            const re = inheritEvent('longtap', e, detail)
+            const re = inheritEvent('longtap', e, context.__mpxTapInfo.detail)
             context.$emit('longtap', re)
           }
         }, 350)
       }
     },
     touchend (e) {
-      startTimer && clearTimeout(startTimer)
-      if (listeners.tap && needTap) {
-        const xDis = Math.abs(e.changedTouches[0].pageX - detail.x)
-        const yDis = Math.abs(e.changedTouches[0].pageY - detail.y)
+      context.__mpxTapInfo.startTimer && clearTimeout(context.__mpxTapInfo.startTimer)
+      if (listeners.tap && context.__mpxTapInfo.needTap) {
+        const xDis = Math.abs(e.changedTouches[0].pageX - context.__mpxTapInfo.detail.x)
+        const yDis = Math.abs(e.changedTouches[0].pageY - context.__mpxTapInfo.detail.y)
+
         if (Math.max(xDis, yDis) <= 15) {
-          const re = inheritEvent('tap', e, detail)
+          const re = inheritEvent('tap', e, context.__mpxTapInfo.detail)
           context.$emit('tap', re)
         }
       }

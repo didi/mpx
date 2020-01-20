@@ -44,7 +44,7 @@
   }
 
   export default {
-    name: 'keep-alive',
+    name: 'mpx-keep-alive',
     abstract: true,
     created: function created () {
       this.cache = {}
@@ -54,7 +54,6 @@
       pruneCacheEntry(cache, keys, keys.length)
     },
     render: function render () {
-      // console.log('keep-alive')
       const slot = this.$slots.default
       const vnode = getFirstComponentChild(slot)
       const componentOptions = vnode && vnode.componentOptions
@@ -79,7 +78,6 @@
           }
           router.__mpxAction = null
         } else {
-          // 没有action发生变更且历史栈长度未增加时，为用户点击后退
           if (window.history.length === router.__mpxHistoryLength) {
             pruneCacheEntry(cache, keys)
           }
@@ -97,6 +95,7 @@
         }
 
         vnode.data.keepAlive = true
+        router.__mpxActiveVnode = vnode
       }
       return vnode || (slot && slot[0])
     }
