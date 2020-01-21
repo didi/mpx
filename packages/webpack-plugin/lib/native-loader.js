@@ -54,7 +54,8 @@ module.exports = function (content) {
   const isApp = !pagesMap[resourcePath] && !componentsMap[resourcePath]
   const srcMode = localSrcMode || globalSrcMode
   const fs = this._compiler.inputFileSystem
-  const typeExtMap = Object.assign({}, config[srcMode].typeExtMap)
+  const originTypeExtMap = config[srcMode].typeExtMap
+  const typeExtMap = Object.assign({}, originTypeExtMap)
   const autoScope = matchCondition(resourcePath, mpx.autoScopeRules)
 
   const needCssSourceMap = (
@@ -101,8 +102,11 @@ module.exports = function (content) {
     for (let i = 0; i < langs.length; i++) {
       const lang = langs[i]
       if (CSS_LANG_MAP.hasOwnProperty(lang)) {
-        if (await checkFileExists('.' + (CSS_LANG_MAP[lang] || typeExtMap.styles))) {
-          cssLang = langs[i]
+        if (await checkFileExists('.' + (CSS_LANG_MAP[lang] || originTypeExtMap.styles.substring(1)))) {
+          if (CSS_LANG_MAP[lang]) {
+            cssLang = langs[i]
+            typeExtMap.styles = '.' + CSS_LANG_MAP[lang]
+          }
           break
         }
       }
@@ -120,7 +124,7 @@ module.exports = function (content) {
       })
     },
     // 尝试先找其他后缀的css文件
-    (callback) => checkCSSLangFiles().then(callback),
+    (callback) => checkCSSLangFiles().then(() => callback()),
     (callback) => {
       async.forEachOf(typeExtMap, (ext, key, callback) => {
         if (key === 'json' && useMPXJSON) {
@@ -203,8 +207,6 @@ module.exports = function (content) {
           const partsOpts = { src }
 
           if (cssLang) {
-            const R = new RegExp(`\\${typeExtMap.styles}((\\?.*)?$)`)
-            partsOpts.src = src.replace(R, `.${CSS_LANG_MAP[cssLang]}$2`)
             partsOpts.lang = cssLang
           }
 
