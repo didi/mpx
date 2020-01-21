@@ -11,7 +11,6 @@ const async = require('async')
 const matchCondition = require('./utils/match-condition')
 const fixUsingComponent = require('./utils/fix-using-component')
 
-
 module.exports = function (content) {
   this.cacheable()
 
@@ -89,7 +88,6 @@ module.exports = function (content) {
     })
   }
 
-
   function checkFileExists (extName, callback) {
     fs.stat(resourceName + extName, (err) => {
       callback(null, !err)
@@ -104,9 +102,10 @@ module.exports = function (content) {
         return callback()
       }
       checkFileExists(CSS_LANG_EXT_MAP[lang], (err, result) => {
-        if (result) {
+        if (!err && result) {
           results[i] = true
         }
+        callback()
       })
     }, function () {
       for (let i = 0; i < langs.length; i++) {
@@ -120,18 +119,16 @@ module.exports = function (content) {
     })
   }
 
-
   function checkMPXJSONFile (callback) {
     // checkFileExists(EXT_MPX_JSON, (err, result) => {
     checkFileExists(EXT_MPX_JSON, (err, result) => {
-      if (result) {
+      if (!err && result) {
         useMPXJSON = true
         typeExtMap.json = EXT_MPX_JSON
       }
       callback()
     })
   }
-
 
   // 先读取json获取usingComponents信息
   async.waterfall([
