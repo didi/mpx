@@ -11,15 +11,6 @@ const async = require('async')
 const matchCondition = require('./utils/match-condition')
 const fixUsingComponent = require('./utils/fix-using-component')
 
-const EXT_MPX_JSON = '.json.js'
-const CSS_LANG_MAP = {
-  less: 'less',
-  stylus: 'stly',
-  sass: 'sass',
-  scss: 'scss',
-  // 空串，默认行为走css-loader
-  css: ''
-}
 
 module.exports = function (content) {
   this.cacheable()
@@ -58,6 +49,19 @@ module.exports = function (content) {
   const typeExtMap = Object.assign({}, originTypeExtMap)
   const autoScope = matchCondition(resourcePath, mpx.autoScopeRules)
 
+  const EXT_MPX_JSON = '.json.js'
+  const CSS_LANG_EXT_MAP = {
+    less: '.less',
+    stylus: '.stly',
+    sass: '.sass',
+    scss: '.scss',
+    // 空串，默认行为走css-loader
+    css: originTypeExtMap.styles
+  }
+
+  let useMPXJSON = false
+  let cssLang = ''
+
   const needCssSourceMap = (
     !isProduction &&
     this.sourceMap &&
@@ -85,49 +89,60 @@ module.exports = function (content) {
     })
   }
 
-  let useMPXJSON = false
-  let cssLang = ''
 
-  function checkFileExists (extName) {
-    return new Promise((resolve, reject) => {
-      fs.stat(resourceName + extName, (err) => {
-        resolve(!err)
-      })
+  function checkFileExists (extName, callback) {
+    fs.stat(resourceName + extName, (err) => {
+      callback(null, !err)
     })
   }
 
-  async function checkCSSLangFiles () {
-    // 空数组、false也是只走css
-    const langs = mpx.nativeOptions.cssLangs || []
-    for (let i = 0; i < langs.length; i++) {
-      const lang = langs[i]
-      if (CSS_LANG_MAP.hasOwnProperty(lang)) {
-        if (await checkFileExists('.' + (CSS_LANG_MAP[lang] || originTypeExtMap.styles.substring(1)))) {
-          if (CSS_LANG_MAP[lang]) {
-            cssLang = langs[i]
-            typeExtMap.styles = '.' + CSS_LANG_MAP[lang]
-          }
+  function checkCSSLangFiles (callback) {
+    const langs = mpx.nativeOptions.cssLangs || ['stylus', 'less', 'sass', 'scss', 'css']
+    const results = []
+    async.eachOf(langs, function (lang, i, callback) {
+      if (!CSS_LANG_EXT_MAP[lang]) {
+        return callback()
+      }
+      checkFileExists(CSS_LANG_EXT_MAP[lang], (err, result) => {
+        if (result) {
+          results[i] = true
+        }
+      })
+    }, function () {
+      for (let i = 0; i < langs.length; i++) {
+        if (results[i]) {
+          cssLang = langs[i]
+          typeExtMap.styles = CSS_LANG_EXT_MAP[cssLang]
           break
         }
       }
-    }
+      callback()
+    })
   }
+
+
+  function checkMPXJSONFile (callback) {
+    // checkFileExists(EXT_MPX_JSON, (err, result) => {
+    checkFileExists(EXT_MPX_JSON, (err, result) => {
+      if (result) {
+        useMPXJSON = true
+        typeExtMap.json = EXT_MPX_JSON
+      }
+      callback()
+    })
+  }
+
 
   // 先读取json获取usingComponents信息
   async.waterfall([
-    (callback) => {
-      fs.stat(resourceName + EXT_MPX_JSON, (err) => {
-        if (!err) {
-          useMPXJSON = true
-        }
-        callback()
-      })
-    },
-    // 尝试先找其他后缀的css文件
-    (callback) => checkCSSLangFiles().then(() => callback()),
+    async.applyEach([
+      checkMPXJSONFile,
+      checkCSSLangFiles
+    ]),
     (callback) => {
       async.forEachOf(typeExtMap, (ext, key, callback) => {
-        if (key === 'json' && useMPXJSON) {
+        // 检测到mpxjson或cssLang时跳过文件检测
+        if ((key === 'json' && useMPXJSON) || (key === 'styles' && cssLang)) {
           return callback()
         }
         fs.stat(resourceName + ext, (err) => {
@@ -141,7 +156,7 @@ module.exports = function (content) {
       }, callback)
     },
     (callback) => {
-      // 对原生写法增强json写法，可以用js来写json，尝试找.mpxjson.js文件，找不到用回json的内容
+      // 对原生写法增强json写法，可以用js来写json，尝试找.json.js文件，找不到用回json的内容
       if (useMPXJSON) {
         tryEvalMPXJSON(callback)
       } else {
@@ -196,28 +211,25 @@ module.exports = function (content) {
         if (type === 'template' && isApp) {
           return ''
         }
-        if (type === 'json') {
+        if (type === 'json' && !useMPXJSON) {
           localQuery.__component = true
         }
         src += stringifyQuery(localQuery)
 
-        if (type === 'script') {
-          return getNamedExportsForSrc(type, { src })
-        } else if (type === 'styles') {
-          const partsOpts = { src }
+        const partsOpts = { src }
 
-          if (cssLang) {
+        if (type === 'script') {
+          return getNamedExportsForSrc(type, partsOpts)
+        }
+        if (type === 'styles') {
+          if (cssLang !== 'css') {
             partsOpts.lang = cssLang
           }
-
           if (hasScoped) {
             return getRequireForSrc(type, partsOpts, 0, true)
-          } else {
-            return getRequireForSrc(type, partsOpts)
           }
-        } else {
-          return getRequireForSrc(type, { src })
         }
+        return getRequireForSrc(type, partsOpts)
       }
 
       // 注入模块id及资源路径
@@ -251,18 +263,7 @@ module.exports = function (content) {
       let output = 'global.currentModuleId;\n'
 
       for (let type in typeExtMap) {
-        if (type === 'json' && useMPXJSON) {
-          // 用了MPXJSON的话，强制生成目标json
-          let _src = resourceName + EXT_MPX_JSON
-          let localQuery = Object.assign({}, queryObj)
-          localQuery.resourcePath = resourcePath
-          localQuery.__component = true
-          _src += stringifyQuery(localQuery)
-          output += `/* MPX JSON */\n${getRequireForSrc('json', { src: _src })}\n\n`
-          // 否则走原来的流程
-        } else {
-          output += `/* ${type} */\n${getRequire(type)}\n\n`
-        }
+        output += `/* ${type} */\n${getRequire(type)}\n\n`
       }
 
       callback(null, output)
