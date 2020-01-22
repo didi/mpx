@@ -95,27 +95,34 @@ module.exports = function (content) {
 
   function checkCSSLangFiles (callback) {
     const langs = mpx.nativeOptions.cssLangs || ['css', 'less', 'stylus', 'scss', 'sass']
-    const results = []
-    async.eachOf(langs, function (lang, i, callback) {
-      if (!CSS_LANG_EXT_MAP[lang]) {
-        return callback()
-      }
-      checkFileExists(CSS_LANG_EXT_MAP[lang], (err, result) => {
-        if (!err && result) {
-          results[i] = true
+    let resultLang = ''
+    let i = 0
+    // Quick bail
+    async.until(
+      () => (resultLang !== '' || i >= langs.length),
+      (next) => {
+        const lang = langs[i]
+        if (!CSS_LANG_EXT_MAP[lang]) {
+          i++
+          return next()
+        }
+
+        checkFileExists(CSS_LANG_EXT_MAP[lang], (err, result) => {
+          if (!err && result) {
+            resultLang = lang
+          }
+          i++
+          next(err)
+        })
+      },
+      (err) => {
+        if (resultLang) {
+          cssLang = resultLang
+          typeExtMap.styles = CSS_LANG_EXT_MAP[cssLang]
         }
         callback(err)
-      })
-    }, function (err) {
-      for (let i = 0; i < langs.length; i++) {
-        if (results[i]) {
-          cssLang = langs[i]
-          typeExtMap.styles = CSS_LANG_EXT_MAP[cssLang]
-          break
-        }
       }
-      callback(err)
-    })
+    )
   }
 
   function checkMPXJSONFile (callback) {
