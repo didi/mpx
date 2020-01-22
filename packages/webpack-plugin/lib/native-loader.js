@@ -51,10 +51,9 @@ module.exports = function (content) {
   const EXT_MPX_JSON = '.json.js'
   const CSS_LANG_EXT_MAP = {
     less: '.less',
-    stylus: '.stly',
+    stylus: '.styl',
     sass: '.sass',
     scss: '.scss',
-    // 空串，默认行为走css-loader
     css: originTypeExtMap.styles
   }
 
@@ -95,7 +94,7 @@ module.exports = function (content) {
   }
 
   function checkCSSLangFiles (callback) {
-    const langs = mpx.nativeOptions.cssLangs || ['stylus', 'less', 'sass', 'scss', 'css']
+    const langs = mpx.nativeOptions.cssLangs || ['css', 'less', 'stylus', 'scss', 'sass']
     const results = []
     async.eachOf(langs, function (lang, i, callback) {
       if (!CSS_LANG_EXT_MAP[lang]) {
@@ -105,9 +104,9 @@ module.exports = function (content) {
         if (!err && result) {
           results[i] = true
         }
-        callback()
+        callback(err)
       })
-    }, function () {
+    }, function (err) {
       for (let i = 0; i < langs.length; i++) {
         if (results[i]) {
           cssLang = langs[i]
@@ -115,7 +114,7 @@ module.exports = function (content) {
           break
         }
       }
-      callback()
+      callback(err)
     })
   }
 
@@ -126,29 +125,31 @@ module.exports = function (content) {
         useMPXJSON = true
         typeExtMap.json = EXT_MPX_JSON
       }
-      callback()
+      callback(err)
     })
   }
 
   // 先读取json获取usingComponents信息
   async.waterfall([
-    async.applyEach([
-      checkMPXJSONFile,
-      checkCSSLangFiles
-    ]),
+    (callback) => {
+      async.parallel([
+        checkCSSLangFiles,
+        checkMPXJSONFile
+      ], (err) => {
+        callback(err)
+      })
+    },
     (callback) => {
       async.forEachOf(typeExtMap, (ext, key, callback) => {
-        // 检测到mpxjson或cssLang时跳过文件检测
+        // 检测到mpxJson或cssLang时跳过对应类型文件检测
         if ((key === 'json' && useMPXJSON) || (key === 'styles' && cssLang)) {
           return callback()
         }
-        fs.stat(resourceName + ext, (err) => {
-          if (err) {
+        checkFileExists(ext, (err, result) => {
+          if (!err && !result) {
             delete typeExtMap[key]
-            callback()
-          } else {
-            callback()
           }
+          callback(err)
         })
       }, callback)
     },
