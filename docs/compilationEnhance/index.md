@@ -39,17 +39,12 @@ var webpackConfig = {
         })
       },
       // 对本地图片资源提供增强，编译成小程序支持的格式 
-      // <style>中的图片会被强制转为base64，
-      // 其他地方引用的资源小于limit的会被转base64，否则会被打包到dist/img目录下通过小程序路径引用
-      // 由于微信小程序中<cover-image>不支持传base64，可以在图像资源链接后加上`?fallback`查询字符串强制跳过转base64步骤
-      // 参考下文详细的设置@mpxjs/url-loader的方法
+      // 参考下文详细的设置
       {
         test: /\.(png|jpe?g|gif|svg)(\?.*)?$/,
-        loader: '@mpxjs/url-loader',
-        options: {
-          limit: 10000,
-          name: 'img/[name].[ext]'
-        }
+        loader: MpxWebpackPlugin.urlLoader({
+          name: 'img/[name][hash].[ext]'
+        })
       }
     ]
   },
