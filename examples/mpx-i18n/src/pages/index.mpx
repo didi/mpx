@@ -1,12 +1,20 @@
 <template>
-  <list></list>
+  <view>{{ $t('message.hello', { msg: 'hello' }) }}</view>
+  <button bindtap="handleTap">切换语言</button>
 </template>
 
 <script>
   import { createPage } from '@mpxjs/core'
 
   createPage({
-    onLoad () {}
+    onLoad () {
+      // this.$i18n.locale = 'en-US'
+    },
+    methods: {
+      handleTap () {
+        this.$i18n.locale = this.$i18n.locale === 'en-US' ? 'zh-CN' : 'en-US'
+      }
+    }
   })
 </script>
 

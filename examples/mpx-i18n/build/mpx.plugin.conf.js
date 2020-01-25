@@ -18,5 +18,22 @@ module.exports = {
   modeRules: {},
 
   // 给模板和json中定义一些全局环境变量
-  defs: {}
+  defs: {},
+
+  i18n: {
+    locale: 'en-US',
+    // messages既可以通过对象字面量传入，也可以通过messagesPath指定一个js模块路径，在该模块中定义配置并导出，dateTimeFormats/dateTimeFormatsPath和numberFormats/numberFormatsPath同理
+    messages: {
+      'en-US': {
+        message: {
+          hello: '{msg} world'
+        }
+      },
+      'zh-CN': {
+        message: {
+          hello: '{msg} 世界'
+        }
+      }
+    }
+  }
 }
