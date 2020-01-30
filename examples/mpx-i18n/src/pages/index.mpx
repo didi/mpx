@@ -1,14 +1,19 @@
 <template>
+  <view>{{ $t('welcome.intro') }}</view>
   <view>{{ $t('message.hello', { msg: 'hello' }) }}</view>
   <button bindtap="handleTap">切换语言</button>
 </template>
 
 <script>
-  import { createPage } from '@mpxjs/core'
+  import mpx, { createPage } from '@mpxjs/core'
 
   createPage({
     onLoad () {
       // this.$i18n.locale = 'en-US'
+      // 获取系统语言并设置
+      mpx.getSystemInfo().then(res => {
+        console.log(res.language)
+      })
     },
     methods: {
       handleTap () {
@@ -21,7 +26,6 @@
 <script type="application/json">
   {
     "usingComponents": {
-      "list": "../components/list"
     }
   }
 </script>

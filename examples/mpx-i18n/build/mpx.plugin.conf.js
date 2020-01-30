@@ -1,4 +1,6 @@
 const path = require('path')
+const enUSLang = require('../i18n/en-US')
+const zhCNLang = require('../i18n/zh-CN')
 
 // 可以在此配置mpx webpack plugin，会assign进build.js里new创建plugin的config里
 module.exports = {
@@ -21,19 +23,17 @@ module.exports = {
   defs: {},
 
   i18n: {
+    // 默认语言
     locale: 'en-US',
     // messages既可以通过对象字面量传入，也可以通过messagesPath指定一个js模块路径，在该模块中定义配置并导出，dateTimeFormats/dateTimeFormatsPath和numberFormats/numberFormatsPath同理
     messages: {
       'en-US': {
+        ...enUSLang,
         message: {
           hello: '{msg} world'
         }
       },
-      'zh-CN': {
-        message: {
-          hello: '{msg} 世界'
-        }
-      }
+      'zh-CN': zhCNLang
     }
   }
 }
