@@ -1,6 +1,7 @@
 const path = require('path')
 const enUSLang = require('../i18n/en-US')
 const zhCNLang = require('../i18n/zh-CN')
+const dateTimeFormats = require('../i18n/dateTimeFormats')
 
 // 可以在此配置mpx webpack plugin，会assign进build.js里new创建plugin的config里
 module.exports = {
@@ -23,17 +24,33 @@ module.exports = {
   defs: {},
 
   i18n: {
+    // 可配置项包括 locale / message / dateTimeFormats / numberFormats
     // 默认语言
     locale: 'en-US',
+    //
+    // 时间本地化格式
+    dateTimeFormats: dateTimeFormats,
+    //
     // messages既可以通过对象字面量传入，也可以通过messagesPath指定一个js模块路径，在该模块中定义配置并导出，dateTimeFormats/dateTimeFormatsPath和numberFormats/numberFormatsPath同理
+    //
+    // ***********
+    // 内联使用    内联/外部仅可使用其中一种
+    // ***********
     messages: {
       'en-US': {
         ...enUSLang,
+        // 内联直接写在mpx.plugin.conf.js中
         message: {
           hello: '{msg} world'
         }
       },
+      // 整个作为文件单独引入配置
       'zh-CN': zhCNLang
     }
+    //
+    // ***********
+    // 外部文件    内联/外部仅可使用其中一种
+    // ***********
+    // messagesPath: path.resolve(__dirname, '../i18n/index.js')
   }
 }

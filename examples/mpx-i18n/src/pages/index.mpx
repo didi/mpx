@@ -1,19 +1,46 @@
 <template>
-  <view>{{ $t('welcome.intro') }}</view>
-  <view>{{ $t('message.hello', { msg: 'hello' }) }}</view>
-  <button bindtap="handleTap">切换语言</button>
+  <view class="app">
+    <view class="title">基本使用</view>
+
+    <view class="text">{{ $t('welcome.intro') }}</view>
+    <view class="text">{{ $t('message.hello', { msg: 'hello' }) }}</view>
+
+    <view class="title">时间</view>
+
+    <view class="text">{{ formattedDatetime }}</view>
+
+    <button class="btn" bindtap="handleTap">切换语言</button>
+  </view>
 </template>
 
 <script>
   import mpx, { createPage } from '@mpxjs/core'
 
+  const languageMap = {
+    'zh_CN': 'zh-CN',
+    'zh': 'zh-CN',
+    'en_US': 'en-US'
+  }
+
   createPage({
     onLoad () {
-      // this.$i18n.locale = 'en-US'
       // 获取系统语言并设置
       mpx.getSystemInfo().then(res => {
+        // 微信返回的值并没有明确说明会有哪些，开发者工具和真机上还不一致，建议尝试在列表中匹配一下
+        if (languageMap[res.language]) {
+          this.$i18n.locale = languageMap[res.language]
+        }
         console.log(res.language)
       })
+
+      // js中获取
+      console.log(this.$t('message.hello', { msg: 'hello' }))
+    },
+    computed: {
+      formattedDatetime () {
+        // $d依赖的Intl方法在wxs里不支持，所以只能使用computed中转一次
+        return this.$d(new Date(), 'long')
+      }
     },
     methods: {
       handleTap () {
@@ -22,6 +49,23 @@
     }
   })
 </script>
+
+<style lang="stylus">
+  .app
+    padding 10px
+    font-size 16px
+    line-height 18px
+
+    .text
+      margin 10px 0
+
+    .title
+      margin-bottom 10px
+      font-size 20px
+
+    .btn
+      margin-top 20px
+</style>
 
 <script type="application/json">
   {
