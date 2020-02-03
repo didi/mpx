@@ -169,6 +169,7 @@ module.exports = function (content) {
                 processTemplate(parts.template, {
                   mode,
                   srcMode,
+                  defs,
                   loaderContext,
                   ctorType
                 }, callback)

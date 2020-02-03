@@ -2,7 +2,9 @@ const runRules = require('../../run-rules')
 const getComponentConfigs = require('./component-config')
 const normalizeComponentRules = require('../normalize-component-rules')
 const isValidIdentifierStr = require('../../../utils/is-valid-identifier-str')
-const parseMustache = require('../../../template-compiler/compiler').parseMustache
+const templateCompiler = require('../../../template-compiler/compiler')
+const parseMustache = templateCompiler.parseMustache
+const stringifyWithResolveComputed = templateCompiler.stringifyWithResolveComputed
 
 module.exports = function getSpec ({ warn, error }) {
   const spec = {
@@ -13,9 +15,7 @@ module.exports = function getSpec ({ warn, error }) {
     postProps: [
       {
         web ({ name, value }) {
-          const parsed = parseMustache(value, {
-            defs: true
-          })
+          const parsed = parseMustache(value)
           if (parsed.hasBinding) {
             return {
               name: ':' + name,
@@ -95,9 +95,7 @@ module.exports = function getSpec ({ warn, error }) {
           }
         },
         web ({ value }, { el }) {
-          const parsed = parseMustache(value, {
-            defs: true
-          })
+          const parsed = parseMustache(value)
           const attrsMap = el.attrsMap
           const itemName = attrsMap['wx:for-item'] || 'item'
           const indexName = attrsMap['wx:for-index'] || 'index'
@@ -146,26 +144,47 @@ module.exports = function getSpec ({ warn, error }) {
         test: 'wx:model',
         web ({ value }, { el }) {
           el.hasEvent = true
-          const parsed = parseMustache(value, {
-            defs: true
-          })
-          return [
-            {
-              name: 'v-model',
-              value: parsed.result
-            },
-            {
-              name: '__model',
-              value: 'true'
+          const attrsMap = el.attrsMap
+          const tagRE = /\{\{((?:.|\n)+?)\}\}(?!})/
+          const stringify = JSON.stringify
+          const match = tagRE.exec(value)
+          if (match) {
+            const modelProp = attrsMap['wx:model-prop'] || 'value'
+            const modelEvent = attrsMap['wx:model-event'] || 'input'
+            const modelValuePathRaw = attrsMap['wx:model-value-path']
+            const modelValuePath = modelValuePathRaw === undefined ? 'value' : modelValuePathRaw
+            const modelFilter = attrsMap['wx:model-filter']
+            let modelValuePathArr
+            try {
+              modelValuePathArr = JSON.parse(modelValuePath)
+            } catch (e) {
+              if (modelValuePath === '') {
+                modelValuePathArr = []
+              } else {
+                modelValuePathArr = modelValuePath.split('.')
+              }
             }
-          ]
+            let modelValue = match[1].trim()
+            return [
+              {
+                name: ':' + modelProp,
+                value: modelValue
+              },
+              {
+                name: 'mpxModelEvent',
+                value: modelEvent
+              },
+              {
+                name: '@mpxModel',
+                value: `__model(${stringifyWithResolveComputed(modelValue)}, $event, ${stringify(modelValuePathArr)}, ${stringify(modelFilter)})`
+              }
+            ]
+          }
         }
       },
-      // todo支持wx:model的相关参数
       {
         test: /^wx:(model-prop|model-event|model-value-path|model-filter)$/,
         web () {
-          error('Sorry, wx:(model-prop|model-event|model-value-path|model-filter) directives are not supported temporarily, we will fix it at a recent time.')
           return false
         }
       },
@@ -184,9 +203,7 @@ module.exports = function getSpec ({ warn, error }) {
         test: /^wx:(class|style)$/,
         web ({ name, value }) {
           const dir = this.test.exec(name)[1]
-          const parsed = parseMustache(value, {
-            defs: true
-          })
+          const parsed = parseMustache(value)
           return {
             name: ':' + dir,
             value: parsed.result
@@ -226,9 +243,7 @@ module.exports = function getSpec ({ warn, error }) {
         },
         web ({ name, value }) {
           let dir = this.test.exec(name)[1]
-          const parsed = parseMustache(value, {
-            defs: true
-          })
+          const parsed = parseMustache(value)
           if (dir === 'elif') {
             dir = 'else-if'
           }
