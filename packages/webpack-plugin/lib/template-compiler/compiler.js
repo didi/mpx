@@ -1814,9 +1814,8 @@ function processElement (el, root, options, meta) {
   }
 
   const transAli = mode === 'ali' && srcMode === 'wx'
-  const transWeb = mode === 'web' && srcMode === 'wx'
 
-  if (transWeb) {
+  if (mode === 'web') {
     processBuiltInComponents(el, meta)
     return
   }
