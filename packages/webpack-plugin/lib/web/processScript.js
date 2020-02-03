@@ -26,6 +26,7 @@ module.exports = function (script, options, callback) {
   const isProduction = options.isProduction
   const mpxCid = options.mpxCid
   const getRequireForSrc = options.getRequireForSrc
+  const i18n = options.i18n
 
   const stringifyRequest = r => loaderUtils.stringifyRequest(loaderContext, r)
 
@@ -58,10 +59,27 @@ module.exports = function (script, options, callback) {
     // add import
     if (ctorType === 'app') {
       content += `
-        import Vue from 'vue'
-        import VueRouter from 'vue-router'
-        Vue.use(VueRouter)\n
-        `
+      import Vue from 'vue'
+      import VueRouter from 'vue-router'
+      Vue.use(VueRouter)\n`
+      if (i18n) {
+        const i18nObj = Object.assign({}, i18n)
+        content += `
+        import VueI18n from 'vue-i18n'
+        Vue.use(VueI18n)\n`
+        const requestObj = {}
+        const i18nKeys = ['messages', 'dateTimeFormats', 'numberFormats']
+        i18nKeys.forEach((key) => {
+          if (i18nObj[`${key}Path`]) {
+            requestObj[key] = stringifyRequest(i18nObj[`${key}Path`])
+            delete i18nObj[`${key}Path`]
+          }
+        })
+        content += `const i18n = ${JSON.stringify(i18nObj)}\n`
+        Object.keys(requestObj).forEach((key) => {
+          content += `i18n.${key} = require(${requestObj[key]})\n`
+        })
+      }
     }
     let firstPage = ''
     const pagesMap = {}
@@ -120,12 +138,18 @@ module.exports = function (script, options, callback) {
         ${shallowStringify(pagesMap)},
         ${shallowStringify(componentsMap)}`
 
-    content += ctorType === 'app' ? `,
+    if (ctorType === 'app') {
+      content += `,
             Vue,
-            VueRouter
-          )\n` : `
+            VueRouter`
+      if (i18n) {
+        content += `,
+            VueI18n,
+            i18n`
+      }
+    }
+    content += `
           )\n`
-
     return content
   })
   output += '\n'

@@ -67,12 +67,8 @@ webpackconfig = {
   ```
   > 编译后变成base64
 
-* `<image>`组件src属性使用本地资源
-
-  小程序既可以用路径方式引用本地图片资源，也可以用base64进行内联
+* `<image> / <cover-image>`组件src属性使用本地资源，@mpxjs/webpack-plugin提供了urlLoader来处理本地图片资源。
   
-  设置`@mpxjs/url-loader`的`limit`，资源体积超过`limit`的做打包处理
-
   **webpack.config.js**
   ```js
   webpackconfig = {
@@ -80,11 +76,9 @@ webpackconfig = {
       rules: [
         {
           test: /\.(png|jpe?g|gif|svg)(\?.*)?$/,
-          loader: '@mpxjs/url-loader',
-          options: {
-            limit: 10000,
+          loader: MpxWebpackPlugin.urlLoader({
             name: 'img/[name].[ext]'
-          } 
+          })
         }
       ]
     }
@@ -96,39 +90,6 @@ webpackconfig = {
   <template>
     <view>
       <image src='./bg2.png'/>
-    <view>
-  </template>
-  ```
-
-* `<cover-image>`组件src属性使用本地资源
-
-  `<cover-image>`只能引入线上资源或者通过路径引入本地资源，无法base64。
-  
-  可以在资源地址后面加上查询字符串`?fallback`禁止base64
-  
-  **webpack.config.js**
-  ```js
-  webpackconfig = {
-    module: {
-      rules: [
-        {
-          test: /\.(png|jpe?g|gif|svg)(\?.*)?$/,
-          loader: '@mpxjs/url-loader',
-          options: {
-            limit: 10000,
-            name: 'img/[name].[ext]'
-          } 
-        }
-      ]
-    }
-  }
-  ```
-
-   **index.mpx**
-  ```html
-  <template>
-    <view>
-      <cover-image src='./bg2.png?fallback'/>
     <view>
   </template>
   ```
@@ -151,11 +112,9 @@ webpackconfig = {
     rules: [
       {
         test: /\.(png|jpe?g|gif|svg)(\?.*)?$/,
-        loader: '@mpxjs/url-loader',
-        otions: {
-          limit: 10000,
+        loader: MpxWebpackPlugin.urlLoader({
           name: 'img/[name].[ext]'
-        } 
+        })
       }
     ]
   }

@@ -1,6 +1,6 @@
-module.exports = function () {
+module.exports = function (content) {
   if (!this.__mpx__) {
-    throw new Error('Content loader need __mpx__ property in loader context!')
+    return content
   }
   this.__mpx__.fileDependencies.forEach(file => {
     this.addDependency(file)

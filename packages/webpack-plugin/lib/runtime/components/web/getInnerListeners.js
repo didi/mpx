@@ -50,35 +50,39 @@ function processTap (listeners, context) {
   if (!(listeners.tap || listeners.longpress || listeners.longtap)) {
     return
   }
-  let startTimer
-  let needTap = true
-  let detail = {}
+  context.__mpxTapInfo = context.__mpxTapInfo || {}
   mergeListeners(listeners, {
     touchstart (e) {
-      detail = {
-        x: e.touches[0].pageX,
-        y: e.touches[0].pageY
+      context.__mpxTapInfo.detail = {
+        x: e.changedTouches[0].pageX,
+        y: e.changedTouches[0].pageY
       }
+      context.__mpxTapInfo.startTimer = null
+      context.__mpxTapInfo.needTap = true
       if (listeners.longpress || listeners.longtap) {
-        startTimer = setTimeout(() => {
-          needTap = false
+        context.__mpxTapInfo.startTimer = setTimeout(() => {
+          context.__mpxTapInfo.needTap = false
           if (listeners.longpress) {
-            const re = inheritEvent('longpress', e, detail)
+            const re = inheritEvent('longpress', e, context.__mpxTapInfo.detail)
             context.$emit('longpress', re)
           }
           if (listeners.longtap) {
-            const re = inheritEvent('longtap', e, detail)
+            const re = inheritEvent('longtap', e, context.__mpxTapInfo.detail)
             context.$emit('longtap', re)
           }
         }, 350)
       }
     },
     touchend (e) {
-      // debugger
-      startTimer && clearTimeout(startTimer)
-      if (listeners.tap && needTap) {
-        const re = inheritEvent('tap', e, detail)
-        context.$emit('tap', re)
+      context.__mpxTapInfo.startTimer && clearTimeout(context.__mpxTapInfo.startTimer)
+      if (listeners.tap && context.__mpxTapInfo.needTap) {
+        const xDis = Math.abs(e.changedTouches[0].pageX - context.__mpxTapInfo.detail.x)
+        const yDis = Math.abs(e.changedTouches[0].pageY - context.__mpxTapInfo.detail.y)
+
+        if (Math.max(xDis, yDis) <= 15) {
+          const re = inheritEvent('tap', e, context.__mpxTapInfo.detail)
+          context.$emit('tap', re)
+        }
       }
     }
   }, {
@@ -111,9 +115,16 @@ export function getCustomEvent (type, detail = {}) {
   return ce
 }
 
+function noop () {
+
+}
+
 export default function getInnerListeners (context, options = {}) {
-  let { mergeBefore = {}, mergeAfter = {}, defaultListeners = {} } = options
-  const listeners = Object.assign({}, defaultListeners, context.$listeners)
+  let { mergeBefore = {}, mergeAfter = {}, defaultListeners = [], ignoredListeners = [] } = options
+  const listeners = Object.assign({}, context.$listeners)
+  defaultListeners.forEach((key) => {
+    if (!listeners[key]) listeners[key] = noop
+  })
   const mergeBeforeOptions = {
     before: true
   }
@@ -135,5 +146,8 @@ export default function getInnerListeners (context, options = {}) {
   processTap(listeners, context)
   mergeListeners(listeners, mergeBefore, mergeBeforeOptions)
   mergeListeners(listeners, mergeAfter, mergeAfterOptions)
+  ignoredListeners.forEach((key) => {
+    delete listeners[key]
+  })
   return listeners
 }

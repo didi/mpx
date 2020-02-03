@@ -31,7 +31,8 @@ export default function createFactory (type) {
     if (__mpx_mode__ === 'web') {
       global.currentOption = defaultOptions
     } else {
-      customCtor ? customCtor(defaultOptions) : global.currentCtor(defaultOptions)
+      const ctor = global.currentCtor || (type === 'page' ? Page : Component)
+      customCtor ? customCtor(defaultOptions) : ctor(defaultOptions)
     }
   }
 }

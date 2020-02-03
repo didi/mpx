@@ -124,7 +124,7 @@ module.exports = function (content) {
 
   // 使用子编译器生成需要抽离的json，styles和template
   const contentLoader = normalize.lib('content-loader')
-  let request = `!!${contentLoader}?${JSON.stringify(options)}!${this.resource}`
+  const request = `!!${contentLoader}?${JSON.stringify(options)}!${this.resource}`
 
   const childFilename = 'extractor-filename'
   const outputOptions = {
@@ -139,7 +139,7 @@ module.exports = function (content) {
   ])
 
   childCompiler.hooks.thisCompilation.tap('MpxWebpackPlugin ', (compilation) => {
-    compilation.hooks.normalModuleLoader.tap('MpxWebpackPlugin', (loaderContext, module) => {
+    compilation.hooks.normalModuleLoader.tap('MpxWebpackPlugin', (loaderContext) => {
       // 传递编译结果，子编译器进入content-loader后直接输出
       loaderContext.__mpx__ = {
         content,

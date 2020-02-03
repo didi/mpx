@@ -86,7 +86,6 @@ class MpxWebpackPlugin {
     options.writeMode = options.writeMode || 'changed'
     options.autoScopeRules = options.autoScopeRules || {}
     options.forceDisableInject = options.forceDisableInject || false
-    options.forceDisableProxyCtor = options.forceDisableProxyCtor || false
     options.transMpxRules = options.transMpxRules || {
       include: () => true,
       exclude: ['@mpxjs', '@didi']
@@ -95,7 +94,11 @@ class MpxWebpackPlugin {
       // web模式下默认不开启autoSplit
       options.autoSplit = options.mode !== 'web'
     }
-    options.defs = options.defs || {}
+    // 通过默认defs配置实现mode及srcMode的注入，简化内部处理逻辑
+    options.defs = Object.assign({}, options.defs, {
+      '__mpx_mode__': options.mode,
+      '__mpx_src_mode__': options.srcMode
+    })
     // 批量指定源码mode
     options.modeRules = options.modeRules || {}
     this.options = options
@@ -192,8 +195,6 @@ class MpxWebpackPlugin {
     const defs = this.options.defs
 
     const defsOpt = {
-      '__mpx_mode__': JSON.stringify(this.options.mode),
-      '__mpx_src_mode__': JSON.stringify(this.options.srcMode),
       '__mpx_wxs__': DefinePlugin.runtimeValue(({ module }) => {
         return JSON.stringify(!!module.wxs)
       })
@@ -255,11 +256,10 @@ class MpxWebpackPlugin {
           autoScopeRules: this.options.autoScopeRules,
           // native文件专用相关配置
           nativeOptions: Object.assign({
-            // 用于优先搜索预编译器后缀的文件，按声明顺序查找，如有wxss的话则wxss优先
-            // string, available languages: less => .less, stlyus => .styl, sass => .sass
             cssLangs: ['css', 'less', 'stylus', 'scss', 'sass']
           }, this.options.nativeOptions),
           defs: this.options.defs,
+          i18n: this.options.i18n,
           extract: (content, file, index, sideEffects) => {
             additionalAssets[file] = additionalAssets[file] || []
             if (!additionalAssets[file][index]) {
@@ -498,7 +498,7 @@ class MpxWebpackPlugin {
           // // Trans for wx.xx, wx['xx'], wx.xx(), wx['xx']()
           // parser.hooks.expressionAnyMember.for('wx').tap('MpxWebpackPlugin', transHandler)
           // Proxy ctor for transMode
-          if (!this.options.forceDisableProxyCtor) {
+          if (!this.options.forceDisableInject) {
             parser.hooks.call.for('Page').tap('MpxWebpackPlugin', (expr) => {
               transHandler(expr.callee)
             })
@@ -685,7 +685,7 @@ class MpxWebpackPlugin {
 
         if (isRuntime) {
           source.add('var context = (function() { return this })() || Function("return this")();\n' +
-            'if(!context.console) context.console = console;\n\n')
+            'if(!context.console) context.console = console;\n')
           if (mpx.mode === 'swan') {
             source.add('// swan runtime fix\n' +
               'if (!context.navigator) {\n' +

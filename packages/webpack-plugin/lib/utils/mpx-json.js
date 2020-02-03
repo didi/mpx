@@ -7,7 +7,7 @@ function compileMPXJSON ({ source, mode, defs, filePath }) {
     return defs[key]
   })
   // eslint-disable-next-line no-new-func
-  const func = new Function('exports', 'require', 'module', '__filename', '__dirname', '__mpx_mode__', ...defKeys, source)
+  const func = new Function('exports', 'require', 'module', '__filename', '__dirname', ...defKeys, source)
   // 模拟commonJS执行
   // support exports
   const e = {}
@@ -22,7 +22,7 @@ function compileMPXJSON ({ source, mode, defs, filePath }) {
       }
     }
     return require(modulePath)
-  }, m, filePath, dirname, mode, ...defValues)
+  }, m, filePath, dirname, ...defValues)
   return m.exports
 }
 

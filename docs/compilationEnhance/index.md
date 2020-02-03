@@ -17,6 +17,7 @@ var webpackConfig = {
   module: {
     rules: [
       // mpx文件必须设置正确的loader，参考下文详细的loader设置options
+      // 注意，在最新的脚手架生成的模板中，这个loader的配置在build/build.js中
       {
         test: /\.mpx$/,
         use: MpxWebpackPlugin.loader({
@@ -38,17 +39,12 @@ var webpackConfig = {
         })
       },
       // 对本地图片资源提供增强，编译成小程序支持的格式 
-      // <style>中的图片会被强制转为base64，
-      // 其他地方引用的资源小于limit的会被转base64，否则会被打包到dist/img目录下通过小程序路径引用
-      // 由于微信小程序中<cover-image>不支持传base64，可以在图像资源链接后加上`?fallback`查询字符串强制跳过转base64步骤
-      // 参考下文详细的设置@mpxjs/url-loader的方法
+      // 参考下文详细的设置
       {
         test: /\.(png|jpe?g|gif|svg)(\?.*)?$/,
-        loader: '@mpxjs/url-loader',
-        options: {
-          limit: 10000,
-          name: 'img/[name].[ext]'
-        }
+        loader: MpxWebpackPlugin.urlLoader({
+          name: 'img/[name][hash].[ext]'
+        })
       }
     ]
   },
@@ -89,15 +85,19 @@ var MpxWebpackPlugin = require('@mpxjs/webpack-plugin')
 
 webpackconfig = {
   plugins: [
+    // 在脚手架生成的项目中，mpx-webpack-plugin是在在build/build.js里插入的，但是配置项可以在build/mpx.plugin.conf.js中填写，有简单的注释说明
     new MpxWebpackPlugin(options)
   ],
 }
 ```
 #### options
 
-- **mode** `String` 目前支持的有微信小程序(wx)\支付宝小程序(ali)\百度小程序(swan)\头条小程序(tt)\QQ小程序(qq)
+- **mode** `String` 目前支持的有微信小程序(wx)\支付宝小程序(ali)\百度小程序(swan)\头条小程序(tt)\QQ小程序(qq)\H5页面(web)
 - **srcMode** `String` 跨平台编译场景下使用，详情请看 [跨平台编译](../platform.md#跨平台编译) 一节
-  
+- **resolveMode** `String` 默认值为webpack，可选值有webpack/native，这是解析依赖路径时为了解决小程序特色绝对路径所添加的，推荐使用webpack模式，更舒服一些，json中的pages/usingComponents等需要写相对路径，但是可以直接写npm包路径。如果希望使用类似小程序原始那种"绝对路径"，就可以声明为native，但是npm路径就需要在前面加一个~，类似webpack的样式引入规范，同时必须配合projectRoot参数提供项目根目录地址。
+- **projectRoot** `String` 如果指定resolveMode为native，则必须提供此项配置为项目根目录地址。
+- **writeMode** `String` 小程序开发者工具检测到文件'变化'就会重新编译，并不会关系文件内容是否真正变化，而webpack每次输出都是全量的，会导致项目大了后每次重编译都较慢，为了解决这个问题，在输出前在内存中对比一次剔除未变化的文件，仅输出变化的文件以提升小程序开发者工具的编译速度。建议开启。
+- **modeRules** `Object` mpx在应用条件编译时，可能会遇到这种场景，假设同时开发微信/支付宝两个平台，用户是以微信小程序为基准来编写代码的，但是又有一个平台差异较大的地方，在支付宝平台上期望用一份支付宝原生代码来实现，这份支付宝原生代码可能在一个npm包内或者在某个文件夹下，依照mpx默认的识别方式，需要对这些文件都加中缀.ali才可以正确识别，而通过modeRules我们可以直接声明某个路径下的文件全是某种mode。
 ----
 
 ### MpxWebpackPlugin.loader

@@ -1,5 +1,5 @@
 <script>
-  import getInnerListeners from '@mpxjs/webpack-plugin/lib/runtime/components/web/getInnerListeners'
+  import getInnerListeners from './getInnerListeners'
 
   export default {
     name: 'mpx-checkbox',

@@ -8,12 +8,14 @@ const getMainCompilation = require('../utils/get-main-compilation')
 const parseRequest = require('../utils/parse-request')
 const toPosix = require('../utils/to-posix')
 const fixRelative = require('../utils/fix-relative')
+const normalize = require('../utils/normalize')
 const config = require('../config')
-const parseQuery = require('loader-utils').parseQuery
+const loaderUtils = require('loader-utils')
 
-module.exports = function () {
+module.exports = function (content) {
   const nativeCallback = this.async()
 
+  const options = loaderUtils.getOptions(this) || {}
   const mainCompilation = getMainCompilation(this._compilation)
   const mpx = mainCompilation.__mpx__
   const mode = mpx.mode
@@ -40,7 +42,7 @@ module.exports = function () {
   }
 
   let resourcePath = parseRequest(this.resource).resourcePath
-  const wxsModule = parseQuery(this.resourceQuery || '?').wxsModule
+  const wxsModule = loaderUtils.parseQuery(this.resourceQuery || '?').wxsModule
 
   if (wxsModule) {
     resourcePath = `${resourcePath}~${wxsModule}`
@@ -56,7 +58,8 @@ module.exports = function () {
     const outputOptions = {
       filename
     }
-    const request = this.resource
+    const contentLoader = normalize.lib('content-loader')
+    const request = `!!${contentLoader}?${JSON.stringify(options)}!${this.resource}`
     const plugins = [
       new WxsPlugin({ mode }),
       new NodeTargetPlugin(),
@@ -65,6 +68,17 @@ module.exports = function () {
     ]
 
     const childCompiler = mainCompilation.createChildCompiler(request, outputOptions, plugins)
+
+    childCompiler.hooks.thisCompilation.tap('MpxWebpackPlugin ', (compilation) => {
+      compilation.hooks.normalModuleLoader.tap('MpxWebpackPlugin', (loaderContext) => {
+        // 传递编译结果，子编译器进入content-loader后直接输出
+        loaderContext.__mpx__ = {
+          content,
+          fileDependencies: this.getDependencies(),
+          contextDependencies: this.getContextDependencies()
+        }
+      })
+    })
 
     childCompiler.runAsChild((err, entries, compilation) => {
       if (err) return callback(err)
