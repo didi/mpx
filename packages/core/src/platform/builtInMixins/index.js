@@ -5,12 +5,14 @@ import refsMixin from './refsMixin'
 import showMixin from './showMixin'
 import relationsMixin from './relationsMixin'
 import i18nMixin from './i18nMixin'
+import pageTitleMixin from './pageTitleMixin'
 
 export default function getBuiltInMixins (options, type) {
   if (__mpx_mode__ === 'web') {
     return [
       proxyEventMixin(),
-      refsMixin()
+      refsMixin(),
+      pageTitleMixin(type)
     ].filter(item => item)
   } else {
     return [

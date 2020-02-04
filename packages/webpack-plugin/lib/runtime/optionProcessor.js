@@ -5,6 +5,7 @@ export default function processOption (
   ctorType,
   firstPage,
   mpxCid,
+  pageTitle,
   pagesMap,
   componentsMap,
   Vue,
@@ -89,6 +90,10 @@ export default function processOption (
 
   if (mpxCid) {
     option.mpxCid = mpxCid
+  }
+
+  if (pageTitle) {
+    option.pageTitle = pageTitle
   }
 
   return option

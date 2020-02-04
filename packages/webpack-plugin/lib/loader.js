@@ -198,6 +198,15 @@ module.exports = function (content) {
             output += templateRes.output
             output += stylesRes.output
             output += jsonRes.output
+            if (ctorType === 'app' && jsonRes.jsonObj.window && jsonRes.jsonObj.window.navigationBarTitleText) {
+              mpx.appTitle = jsonRes.jsonObj.window.navigationBarTitleText
+            }
+
+            let pageTitle = ''
+            if (ctorType === 'page' && jsonRes.jsonObj.navigationBarTitleText) {
+              pageTitle = jsonRes.jsonObj.navigationBarTitleText
+            }
+
             processScript(parts.script, {
               ctorType,
               srcMode,
@@ -205,6 +214,7 @@ module.exports = function (content) {
               isProduction,
               getRequireForSrc,
               i18n,
+              pageTitle,
               mpxCid: resourceQueryObj.mpxCid,
               builtInComponentsMap: templateRes.builtInComponentsMap,
               localComponentsMap: jsonRes.localComponentsMap,
