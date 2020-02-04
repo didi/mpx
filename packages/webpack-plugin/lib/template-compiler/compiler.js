@@ -1309,6 +1309,23 @@ function processIf (el) {
   }
 }
 
+function processIfForWeb (el) {
+  let val = getAndRemoveAttr(el, config[mode].directive.if)
+  if (val) {
+    el.if = {
+      raw: val,
+      exp: val
+    }
+  } else if (val = getAndRemoveAttr(el, config[mode].directive.elseif)) {
+    el.elseif = {
+      raw: val,
+      exp: val
+    }
+  } else if (getAndRemoveAttr(el, config[mode].directive.else) != null) {
+    el.else = true
+  }
+}
+
 const swanForInRe = /^\s*(\w+)(?:\s*,\s*(\w+))?\s+in\s+(\w+)(?:\s+trackBy\s+(\w+))?\s*$/
 
 function processFor (el) {
@@ -1781,7 +1798,10 @@ function processElement (el, root, options, meta) {
   const transAli = mode === 'ali' && srcMode === 'wx'
 
   if (mode === 'web') {
+    // 收集内建组件
     processBuiltInComponents(el, meta)
+    // 预处理代码维度条件编译
+    processIfForWeb(el)
     return
   }
 
@@ -1821,8 +1841,9 @@ function processElement (el, root, options, meta) {
 }
 
 function closeElement (el, meta) {
-  // web暂时无后处理
   if (mode === 'web') {
+    // 处理代码维度条件编译移除死分支
+    postProcessIf(el)
     return
   }
   const pass = isNative || postProcessTemplate(el) || processingTemplate
