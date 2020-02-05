@@ -509,7 +509,7 @@ export function collectDataset (props) {
  * @param {Object} renderData
  * @return {Object} processedRenderData
  */
-export function preprocessRenderData (renderData) {
+export function preProcessRenderData (renderData) {
   // method for get key path array
   const processKeyPathMap = (keyPathMap) => {
     let keyPath = Object.keys(keyPathMap)
