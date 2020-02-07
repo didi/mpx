@@ -282,35 +282,35 @@ module.exports = {
     return exist(getMessages(), locale, key)
   },
   d: function (locale, value, key) {
-    if (__mpx_wxs__) {
-      console.log('Datetime localization is not supported in template temporarily, please use instance method this.$d() in logic thread instead!')
-      return value
-    } else {
-      if (!key) {
-        return new Intl.DateTimeFormat(locale).format(value)
-      }
-      var formats = getDateTimeFormats()[locale]
-      if (isDef(formats)) {
-        var format = formats[key]
-        return new Intl.DateTimeFormat(locale, format).format(value)
-      }
-      return value
-    }
+    // if (__mpx_wxs__) {
+    console.log('Datetime localization is not supported in template temporarily!')
+    return value
+    // } else {
+    //   if (!key) {
+    //     return new Intl.DateTimeFormat(locale).format(value)
+    //   }
+    //   var formats = getDateTimeFormats()[locale]
+    //   if (isDef(formats)) {
+    //     var format = formats[key]
+    //     return new Intl.DateTimeFormat(locale, format).format(value)
+    //   }
+    //   return value
+    // }
   },
   n: function (locale, value, key, options) {
-    if (__mpx_wxs__) {
-      console.log('Number localization is not supported in template temporarily, please use instance method this.$n() in logic thread instead!')
-      return value
-    } else {
-      if (!key) {
-        return new Intl.NumberFormat(locale, options).format(value)
-      }
-      var formats = getNumberFormats()[locale]
-      if (isDef(formats)) {
-        var format = formats[key]
-        return new Intl.NumberFormat(locale, Object.assign({}, format, options)).format(value)
-      }
-      return value
-    }
+    // if (__mpx_wxs__) {
+    console.log('Number localization is not supported in template temporarily!')
+    return value
+    // } else {
+    //   if (!key) {
+    //     return new Intl.NumberFormat(locale, options).format(value)
+    //   }
+    //   var formats = getNumberFormats()[locale]
+    //   if (isDef(formats)) {
+    //     var format = formats[key]
+    //     return new Intl.NumberFormat(locale, Object.assign({}, format, options)).format(value)
+    //   }
+    //   return value
+    // }
   }
 }

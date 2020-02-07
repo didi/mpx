@@ -27,6 +27,7 @@ module.exports = function (json, options, rawCallback) {
   const callback = (err) => {
     return rawCallback(err, {
       output,
+      jsonObj,
       localPagesMap,
       localComponentsMap
     })

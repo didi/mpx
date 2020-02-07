@@ -15,7 +15,7 @@ import {
   findItem,
   asyncLock,
   diffAndCloneA,
-  preprocessRenderData,
+  preProcessRenderData,
   filterProperties
 } from '../helper/utils'
 
@@ -257,7 +257,7 @@ export default class MPXProxy {
   }
 
   renderWithData (rawRenderData) {
-    const renderData = preprocessRenderData(rawRenderData)
+    const renderData = preProcessRenderData(rawRenderData)
     if (!this.miniRenderData) {
       this.miniRenderData = {}
       for (let key in renderData) {
@@ -277,7 +277,11 @@ export default class MPXProxy {
   }
 
   processRenderData (renderData) {
-    let result = {}
+    const result = {}
+    const missedKeyMap = Object.keys(this.miniRenderData).reduce((map, key) => {
+      map[key] = true
+      return map
+    }, {})
     for (let key in renderData) {
       if (renderData.hasOwnProperty(key)) {
         let item = renderData[key]
@@ -287,6 +291,13 @@ export default class MPXProxy {
         if (this.localKeys.indexOf(firstKey) > -1 && (this.checkInForceUpdateKeys(key) || diff)) {
           this.miniRenderData[key] = result[key] = clone
         }
+        delete missedKeyMap[key]
+      }
+    }
+    // 清理当次renderData中从未出现的key，避免出现历史脏数据导致diff失败
+    for (let key in missedKeyMap) {
+      if (missedKeyMap.hasOwnProperty(key)) {
+        delete this.miniRenderData[key]
       }
     }
     return result

@@ -3,21 +3,19 @@ function processModel (listeners, context) {
   // 该函数必须在产生merge前执行
   // todo 此处对于$attrs的访问会导致父组件更新时子组件必然更新，暂时用短路效应避免影响，待优化
   // todo 访问$listeners也会导致上述现象，但是为了事件代理还必须访问$listeners，待后续思考处理
-  // todo 此处的__model对于特定组件声明为props传递能够规避上述问题
-  if (!listeners.input || !context.$attrs.__model) {
-    return
-  }
-  const isArr = Array.isArray(listeners.input.fns)
-  if (isArr) {
-    const rawModelListener = listeners.input.fns[0]
-    listeners.input.fns[0] = function (e) {
-      rawModelListener.call(this, e.detail.value)
+
+  const modelEvent = context.$attrs.mpxModelEvent
+  if (modelEvent) {
+    const rawListener = listeners[modelEvent]
+    const modelListener = function (e) {
+      context.$emit('mpxModel', e)
     }
-  } else {
-    const rawModelListener = listeners.input.fns
-    listeners.input.fns = function (e) {
-      rawModelListener.call(this, e.detail.value)
+    if (rawListener && rawListener.fns) {
+      rawListener.fns = [modelListener].concat(rawListener.fns)
+    } else {
+      listeners[modelEvent] = modelListener
     }
+    delete listeners.mpxModel
   }
 }
 

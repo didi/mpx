@@ -5,6 +5,7 @@ const addQuery = require('../utils/add-query')
 module.exports = function (template, options, callback) {
   const mode = options.mode
   const srcMode = options.srcMode
+  const defs = options.defs
   const loaderContext = options.loaderContext
   const ctorType = options.ctorType
   const builtInComponentsMap = {}
@@ -43,7 +44,8 @@ module.exports = function (template, options, callback) {
             )
           },
           mode,
-          srcMode: templateSrcMode
+          srcMode: templateSrcMode,
+          defs
         })
         if (parsed.meta.builtInComponentsMap) {
           Object.keys(parsed.meta.builtInComponentsMap).forEach((name) => {

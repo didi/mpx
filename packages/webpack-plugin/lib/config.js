@@ -341,5 +341,12 @@ module.exports = {
       ref: 'tt:ref',
       show: 'tt:show'
     }
+  },
+  web: {
+    directive: {
+      if: 'v-if',
+      elseif: 'v-else-if',
+      else: 'v-else'
+    }
   }
 }

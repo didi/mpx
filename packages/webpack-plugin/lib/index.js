@@ -260,6 +260,7 @@ class MpxWebpackPlugin {
           }, this.options.nativeOptions),
           defs: this.options.defs,
           i18n: this.options.i18n,
+          appTitle: 'Mpx homepage',
           extract: (content, file, index, sideEffects) => {
             additionalAssets[file] = additionalAssets[file] || []
             if (!additionalAssets[file][index]) {

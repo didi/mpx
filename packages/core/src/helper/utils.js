@@ -6,6 +6,8 @@ import {
   toJS
 } from '../mobx'
 
+import Vue from '../vue'
+
 import _getByPath from './getByPath'
 
 import { error } from './log'
@@ -106,7 +108,11 @@ export function setByPath (data, pathStr, value) {
     return value[key]
   })
   if (parent) {
-    parent[variable] = value
+    if (__mpx_mode__ === 'web') {
+      Vue.set(parent, variable, value)
+    } else {
+      parent[variable] = value
+    }
   }
 }
 
@@ -503,7 +509,7 @@ export function collectDataset (props) {
  * @param {Object} renderData
  * @return {Object} processedRenderData
  */
-export function preprocessRenderData (renderData) {
+export function preProcessRenderData (renderData) {
   // method for get key path array
   const processKeyPathMap = (keyPathMap) => {
     let keyPath = Object.keys(keyPathMap)
