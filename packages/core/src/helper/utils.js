@@ -98,22 +98,18 @@ export function isExistAttr (obj, attr) {
 }
 
 export function setByPath (data, pathStrOrArr, value) {
-  let parent
-  let variable
-  _getByPath(data, pathStrOrArr, (value, key, meta) => {
+  _getByPath(data, pathStrOrArr, (current, key, meta) => {
     if (meta.isEnd) {
-      parent = value
-      variable = key
+      if (__mpx_mode__ === 'web') {
+        Vue.set(current, key, value)
+      } else {
+        current[key] = value
+      }
+    } else if (!current[key]) {
+      current[key] = {}
     }
-    return value[key]
+    return current[key]
   })
-  if (parent && variable) {
-    if (__mpx_mode__ === 'web') {
-      Vue.set(parent, variable, value)
-    } else {
-      parent[variable] = value
-    }
-  }
 }
 
 export function getByPath (data, pathStrOrArr, defaultVal = '', errTip) {

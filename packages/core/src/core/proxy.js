@@ -287,9 +287,12 @@ export default class MPXProxy {
         let item = renderData[key]
         let data = item[0]
         let firstKey = item[1]
+        if (this.localKeys.indexOf(firstKey) === -1) {
+          continue
+        }
         const { clone, diff, diffPaths } = diffAndCloneA(data, this.miniRenderData[key])
         if (this.miniRenderData.hasOwnProperty(key)) {
-          if (this.localKeys.indexOf(firstKey) > -1 && diff) {
+          if (diff) {
             this.miniRenderData[key] = clone
             if (diffPaths.length) {
               const temp = {}
@@ -339,21 +342,31 @@ export default class MPXProxy {
             const tarKey = miniRenderDataKeys[i]
             if (aIsSubPathOfB(tarKey, key)) {
               delete this.miniRenderData[tarKey]
-              this.miniRenderData[key] = clone
+              this.miniRenderData[key] = result[key] = clone
               processed = true
               continue
             }
             const subPath = aIsSubPathOfB(key, tarKey)
             if (subPath) {
-              setByPath(this.miniRenderData[tarKey], subPath, clone)
+              // setByPath
+              _getByPath(this.miniRenderData[tarKey], subPath, (current, skey, meta) => {
+                if (meta.isEnd) {
+                  // todo 子项diff可以基于diffPaths进行更加精细的数据设置
+                  if (diffAndCloneA(clone, current[skey]).diff) {
+                    current[skey] = result[key] = clone
+                  }
+                } else if (!current[skey]) {
+                  current[skey] = {}
+                }
+                return current[skey]
+              })
               processed = true
               break
             }
           }
           if (!processed) {
-            this.miniRenderData[key] = clone
+            this.miniRenderData[key] = result[key] = clone
           }
-          result[key] = clone
         }
       }
     }
