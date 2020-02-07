@@ -88,6 +88,7 @@ module.exports = {
                 if (current.node.computed) {
                   if (t.isLiteral(current.node.property)) {
                     if (t.isStringLiteral(current.node.property)) {
+                      // wx setData时keyPath中只允许数字被[]包裹，a['a-b']这种形式是不被允许的，遇到这种形式只能跳过并直接以a作为keyPath进行设置
                       if (!isValidIdentifierStr(current.node.property.value) || dangerousKeyMap[current.node.property.value]) {
                         break
                       }

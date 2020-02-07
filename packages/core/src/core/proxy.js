@@ -3,6 +3,8 @@ import {
   comparer
 } from '../mobx'
 
+import EXPORT_MPX from '../index'
+
 import {
   type,
   enumerableKeys,
@@ -12,12 +14,14 @@ import {
   processUndefined,
   defineGetterSetter,
   setByPath,
-  findItem,
   asyncLock,
   diffAndCloneA,
   preProcessRenderData,
-  filterProperties
+  filterProperties,
+  mergeData, isValidIdentifierStr, aIsSubPathOfB
 } from '../helper/utils'
+
+import _getByPath from '../helper/getByPath'
 
 import queueWatcher from './queueWatcher'
 import { watch } from './watcher'
@@ -52,7 +56,7 @@ export default class MPXProxy {
       this.renderReaction = null
       this.computedKeys = options.computed ? enumerableKeys(options.computed) : []
       this.localKeys = this.computedKeys.slice() // 非props key
-      this.forceUpdateKeys = [] // 强制更新的key，无论是否发生change
+      this.forceUpdateData = {}// 强制更新的数据
       this.curRenderTask = null
     }
     this.lockTask = asyncLock()
@@ -163,7 +167,7 @@ export default class MPXProxy {
 
   initData (dataFn) {
     // mpxCid 解决支付宝环境selector为全局问题
-    const data = Object.assign({
+    const data = extend({
       mpxCid: this.uid
     }, typeof dataFn === 'function' ? dataFn.call(this.target) : dataFn)
     this.collectLocalKeys(data)
@@ -246,7 +250,7 @@ export default class MPXProxy {
   render () {
     const newData = filterProperties(this.data, this.localKeys)
     Object.keys(newData).forEach(key => {
-      if (!this.checkInForceUpdateKeys(key) && comparer.structural(this.cacheData[key], newData[key])) {
+      if (comparer.structural(this.cacheData[key], newData[key])) {
         // 强制更新的key，无论是否变化，都要进行最终的setData
         delete newData[key]
       } else {
@@ -272,8 +276,89 @@ export default class MPXProxy {
       }
       this.doRender(this.miniRenderData)
     } else {
-      this.doRender(this.processRenderData(renderData))
+      this.doRender(EXPORT_MPX.config.useStrictDiff ? this.processRenderDataWithStrictDiff(renderData) : this.processRenderData(renderData))
     }
+  }
+
+  processRenderDataWithStrictDiff (renderData) {
+    const result = {}
+    const miniRenderDataKeys = Object.keys(this.miniRenderData)
+    for (let key in renderData) {
+      if (renderData.hasOwnProperty(key)) {
+        let item = renderData[key]
+        let data = item[0]
+        let firstKey = item[1]
+        const { clone, diff, diffPaths } = diffAndCloneA(data, this.miniRenderData[key])
+        if (this.miniRenderData.hasOwnProperty(key)) {
+          if (this.localKeys.indexOf(firstKey) > -1 && diff) {
+            this.miniRenderData[key] = clone
+            if (diffPaths.length) {
+              const temp = {}
+              let useTemp = true
+              for (let i = 0; i < diffPaths.length; i++) {
+                const pathArr = diffPaths[i]
+                let keyStr = ''
+                let value
+                _getByPath(clone, pathArr, (current, key, meta) => {
+                  if (type(key) === 'Number') {
+                    keyStr += `[${key}]`
+                  } else if (type(key) === 'String') {
+                    // setData中的key值不能包含非法标识符，遇到则提前结束
+                    if (isValidIdentifierStr(key)) {
+                      keyStr += `.${key}`
+                    } else {
+                      meta.stop = true
+                    }
+                  }
+                  if (meta.stop) {
+                    value = current
+                  } else if (meta.isEnd) {
+                    value = current[key]
+                  }
+                  return current[key]
+                })
+                if (keyStr) {
+                  temp[keyStr] = value
+                } else {
+                  useTemp = false
+                  break
+                }
+              }
+              if (useTemp) {
+                extend(result, temp)
+              } else {
+                result[key] = clone
+              }
+            } else {
+              result[key] = clone
+            }
+          }
+        } else {
+          let processed = false
+          for (let i = 0; i < miniRenderDataKeys.length; i++) {
+            const tarKey = miniRenderDataKeys[i]
+            if (aIsSubPathOfB(tarKey, key)) {
+              delete this.miniRenderData[tarKey]
+              this.miniRenderData[key] = clone
+              miniRenderDataKeys.splice(i, 1, key)
+              processed = true
+              break
+            }
+            const subPath = aIsSubPathOfB(key, tarKey)
+            if (subPath) {
+              setByPath(this.miniRenderData[tarKey], subPath, clone)
+              processed = true
+              break
+            }
+          }
+          if (!processed) {
+            this.miniRenderData[key] = clone
+          }
+          result[key] = clone
+        }
+      }
+    }
+    return result
   }
 
   processRenderData (renderData) {
@@ -288,7 +373,7 @@ export default class MPXProxy {
         let data = item[0]
         let firstKey = item[1]
         let { clone, diff } = diffAndCloneA(data, this.miniRenderData[key])
-        if (this.localKeys.indexOf(firstKey) > -1 && (this.checkInForceUpdateKeys(key) || diff)) {
+        if (this.localKeys.indexOf(firstKey) > -1 && diff) {
           this.miniRenderData[key] = result[key] = clone
         }
         delete missedKeyMap[key]
@@ -312,14 +397,20 @@ export default class MPXProxy {
       cb = undefined
     }
 
-    const isEmpty = isEmptyObject(data)
+    const isEmpty = isEmptyObject(data) && isEmptyObject(this.forceUpdateData)
     const resolve = this.renderTaskExecutor(isEmpty)
-    this.forceUpdateKeys = [] // 仅用于当次的render
 
     if (isEmpty) {
       cb && cb()
       return
     }
+
+    // 使用forceUpdateData后清空
+    if (!isEmptyObject(this.forceUpdateData)) {
+      data = mergeData({}, this.forceUpdateData, data)
+      this.forceUpdateData = {}
+    }
+
     /**
      * mounted之后才接收回调来触发updated钩子，换言之mounted之前修改数据是不会触发updated的
      */
@@ -340,12 +431,10 @@ export default class MPXProxy {
       callback = callback.bind(this.target)
     }
     // 同步数据到proxy
-    data && this.forceUpdate(data)
+    this.forceUpdate(data, callback)
     if (this.options.__nativeRender__) {
       // 走原生渲染
-      return this.doRender(diffAndCloneA(data).clone, callback)
-    } else if (typeof callback === 'function') {
-      this.nextTick(callback)
+      return this.doRender(diffAndCloneA(data).clone)
     }
   }
 
@@ -383,20 +472,17 @@ export default class MPXProxy {
     this.watchers.push(renderWatcher)
   }
 
-  forceUpdate (params, callback) {
-    const paramsType = type(params)
-    let forceUpdateKeys = this.localKeys
-    if (paramsType === 'Function') {
-      callback = params
-      params = null
-    } else if (paramsType === 'Object') {
-      forceUpdateKeys = Object.keys(params)
-      forceUpdateKeys.forEach(key => {
-        setByPath(this.data, key, params[key])
+  forceUpdate (data, callback) {
+    const dataType = type(data)
+    if (dataType === 'Function') {
+      callback = data
+    } else if (dataType === 'Object') {
+      this.forceUpdateData = data
+      Object.keys(data).forEach(key => {
+        setByPath(this.data, key, data[key])
       })
     }
-    this.setForceUpdateKeys(forceUpdateKeys)
-    type(callback) === 'Function' && this.nextTick(callback)
+    callback && this.nextTick(callback)
     // 无论是否改变，强制将状态置为stale，从而触发render
     if (this.renderReaction) {
       this.renderReaction.dependenciesState = 2
@@ -404,15 +490,5 @@ export default class MPXProxy {
     }
   }
 
-  setForceUpdateKeys (keys = []) {
-    keys.forEach(key => {
-      if (this.forceUpdateKeys.indexOf(key) === -1) {
-        this.forceUpdateKeys.push(key)
-      }
-    })
-  }
 
-  checkInForceUpdateKeys (key) {
-    return findItem(this.forceUpdateKeys, new RegExp(`^${key}`))
-  }
 }

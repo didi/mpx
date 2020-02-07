@@ -97,17 +97,17 @@ export function isExistAttr (obj, attr) {
   }
 }
 
-export function setByPath (data, pathStr, value) {
+export function setByPath (data, pathStrOrArr, value) {
   let parent
   let variable
-  _getByPath(data, pathStr, (value, key, end) => {
-    if (end) {
+  _getByPath(data, pathStrOrArr, (value, key, meta) => {
+    if (meta.isEnd) {
       parent = value
       variable = key
     }
     return value[key]
   })
-  if (parent) {
+  if (parent && variable) {
     if (__mpx_mode__ === 'web') {
       Vue.set(parent, variable, value)
     } else {
@@ -116,10 +116,16 @@ export function setByPath (data, pathStr, value) {
   }
 }
 
-export function getByPath (data, pathStr, defaultVal = '', errTip) {
+export function getByPath (data, pathStrOrArr, defaultVal = '', errTip) {
   const results = []
-  pathStr.split(',').forEach(item => {
-    const path = item.trim()
+  let normalizedArr = []
+  if (Array.isArray(pathStrOrArr)) {
+    normalizedArr = [pathStrOrArr]
+  } else if (type(pathStrOrArr) === 'String') {
+    normalizedArr = pathStrOrArr.split(',').map(str => str.trim())
+  }
+
+  normalizedArr.forEach(path => {
     if (!path) return
     const result = _getByPath(data, path, (value, key) => {
       let newValue
@@ -366,6 +372,59 @@ export function isEmptyObject (obj) {
   return true
 }
 
+export function aIsSubPathOfB (a, b) {
+  if (a.startsWith(b) && a !== b) {
+    let nextChar = a[b.length]
+    if (nextChar === '.') {
+      return a.slice(b.length + 1)
+    } else if (nextChar === '[') {
+      return a.slice(b.length)
+    }
+  }
+}
+
+function doMergeData (target, source) {
+  const targetKeys = Object.keys(target)
+  Object.keys(source).forEach((srcKey) => {
+    if (target.hasOwnProperty(srcKey)) {
+      target[srcKey] = source[srcKey]
+    } else {
+      let processed = false
+      for (let i = 0; i < targetKeys.length; i++) {
+        const tarKey = targetKeys[i]
+        if (aIsSubPathOfB(tarKey, srcKey)) {
+          delete target[tarKey]
+          target[srcKey] = source[srcKey]
+          targetKeys.splice(i, 1, srcKey)
+          processed = true
+          break
+        }
+        const subPath = aIsSubPathOfB(srcKey, tarKey)
+        if (subPath) {
+          setByPath(target[tarKey], subPath, source[srcKey])
+          processed = true
+          break
+        }
+      }
+      if (!processed) {
+        target[srcKey] = source[srcKey]
+      }
+    }
+  })
+  return target
+}
+
+console.log(doMergeData({ a: { aa: 1, ab: 2 }, 'b.bb': 5 }, { 'a.ac': 3, b: { ba: 4, bb: 5, bc: 6 } }))
+
+export function mergeData (target, ...sources) {
+  if (target) {
+    sources.forEach((source) => {
+      if (source) doMergeData(target, source)
+    })
+  }
+  return target
+}
+
 export function processUndefined (obj) {
   let result = {}
   for (let key in obj) {
@@ -404,7 +463,9 @@ export function diffAndCloneA (a, b) {
       if (currentDiff) return
       if (val) {
         currentDiff = val
-        diffPaths.push(curPath.slice())
+        if (curPath.length) {
+          diffPaths.push(curPath.slice())
+        }
       }
     }
 

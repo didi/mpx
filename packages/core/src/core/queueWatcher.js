@@ -1,4 +1,5 @@
 import { asyncLock } from '../helper/utils'
+
 const queue = []
 const idsMap = {}
 let flushing = false
@@ -31,9 +32,9 @@ function flushQueue () {
   queue.sort((a, b) => a.id - b.id)
   for (curIndex = 0; curIndex < queue.length; curIndex++) {
     const watcher = queue[curIndex]
-    idsMap[watcher.id] = null
+    delete idsMap[watcher.id]
     // 如果已经销毁，就不再执行
-    watcher.destroyed || watcher.run()
+    if (!watcher.destroyed) watcher.run()
   }
   resetQueue()
 }
