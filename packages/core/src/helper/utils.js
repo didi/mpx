@@ -384,20 +384,19 @@ export function aIsSubPathOfB (a, b) {
 }
 
 function doMergeData (target, source) {
-  const targetKeys = Object.keys(target)
   Object.keys(source).forEach((srcKey) => {
     if (target.hasOwnProperty(srcKey)) {
       target[srcKey] = source[srcKey]
     } else {
       let processed = false
-      for (let i = 0; i < targetKeys.length; i++) {
-        const tarKey = targetKeys[i]
+      const tarKeys = Object.keys(target)
+      for (let i = 0; i < tarKeys.length; i++) {
+        const tarKey = tarKeys[i]
         if (aIsSubPathOfB(tarKey, srcKey)) {
           delete target[tarKey]
           target[srcKey] = source[srcKey]
-          targetKeys.splice(i, 1, srcKey)
           processed = true
-          break
+          continue
         }
         const subPath = aIsSubPathOfB(srcKey, tarKey)
         if (subPath) {
@@ -413,8 +412,6 @@ function doMergeData (target, source) {
   })
   return target
 }
-
-console.log(doMergeData({ a: { aa: 1, ab: 2 }, 'b.bb': 5 }, { 'a.ac': 3, b: { ba: 4, bb: 5, bc: 6 } }))
 
 export function mergeData (target, ...sources) {
   if (target) {

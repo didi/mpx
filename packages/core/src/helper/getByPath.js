@@ -107,7 +107,6 @@ function outPutByPath (context, path, isSimple, transfer) {
   return result
 }
 
-
 export default function getByPath (context, pathStrOrArr, transfer) {
   if (!pathStrOrArr) {
     return context
@@ -115,8 +114,7 @@ export default function getByPath (context, pathStrOrArr, transfer) {
   let isSimple = false
   if (Array.isArray(pathStrOrArr)) {
     isSimple = true
-
-  } else if (!/[\[\]]/.test(pathStrOrArr)) {
+  } else if (!/[[\]]/.test(pathStrOrArr)) {
     pathStrOrArr = pathStrOrArr.split('.')
     isSimple = true
   }
@@ -124,5 +122,4 @@ export default function getByPath (context, pathStrOrArr, transfer) {
   if (!isSimple) pathStrOrArr = parse(pathStrOrArr)
 
   return outPutByPath(context, pathStrOrArr, isSimple, transfer)
-
 }

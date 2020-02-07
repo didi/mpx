@@ -282,7 +282,6 @@ export default class MPXProxy {
 
   processRenderDataWithStrictDiff (renderData) {
     const result = {}
-    const miniRenderDataKeys = Object.keys(this.miniRenderData)
     for (let key in renderData) {
       if (renderData.hasOwnProperty(key)) {
         let item = renderData[key]
@@ -318,7 +317,7 @@ export default class MPXProxy {
                   return current[key]
                 })
                 if (keyStr) {
-                  temp[keyStr] = value
+                  temp[key + keyStr] = value
                 } else {
                   useTemp = false
                   break
@@ -335,14 +334,14 @@ export default class MPXProxy {
           }
         } else {
           let processed = false
+          const miniRenderDataKeys = Object.keys(this.miniRenderData)
           for (let i = 0; i < miniRenderDataKeys.length; i++) {
             const tarKey = miniRenderDataKeys[i]
             if (aIsSubPathOfB(tarKey, key)) {
               delete this.miniRenderData[tarKey]
               this.miniRenderData[key] = clone
-              miniRenderDataKeys.splice(i, 1, key)
               processed = true
-              break
+              continue
             }
             const subPath = aIsSubPathOfB(key, tarKey)
             if (subPath) {
@@ -489,6 +488,4 @@ export default class MPXProxy {
       this.renderReaction.schedule()
     }
   }
-
-
 }
