@@ -216,6 +216,13 @@ wx:model默认监听`input`事件使用`value`属性传值，如果我们希望�
 
 > 注意：由于微信的限制，如果事件名使用横线链接分割（如: 'checked-change'），将不可以使用该feature。
 
+以及并不是所有的组件都会按微信的标准格式event.detail.value来传值，比如vant的input组件，值的抛出是用event.detail本身来传递的，这时我们可以使用 `wx:model-value-path` 来指定双向绑定时的取值路径。
+
+例如：
+```html
+<vant-field wx:model-value-path="[]" wx:model="{{a}}"></vant-field>
+```
+
 ## Refs
 
 提供了 `wx:ref="xxx"` 来更方便获取 WXML 节点信息的对象。在JS里只需要通过this.$refs.xxx 即可获取节点。
