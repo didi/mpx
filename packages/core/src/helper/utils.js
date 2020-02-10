@@ -379,6 +379,10 @@ export function aIsSubPathOfB (a, b) {
   }
 }
 
+export function getFirstKey (path) {
+  return /^[^[.]*/.exec(path)[0]
+}
+
 function doMergeData (target, source) {
   Object.keys(source).forEach((srcKey) => {
     if (target.hasOwnProperty(srcKey)) {

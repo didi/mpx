@@ -18,7 +18,10 @@ import {
   diffAndCloneA,
   preProcessRenderData,
   filterProperties,
-  mergeData, isValidIdentifierStr, aIsSubPathOfB
+  mergeData,
+  isValidIdentifierStr,
+  aIsSubPathOfB,
+  getFirstKey
 } from '../helper/utils'
 
 import _getByPath from '../helper/getByPath'
@@ -150,7 +153,6 @@ export default class MPXProxy {
 
   initState () {
     const options = this.options
-    this.initProps()
     const data = this.initData(options.data)
     const proxyData = extend({}, this.initialData, data)
     this.initComputed(options.computed, proxyData)
@@ -161,11 +163,9 @@ export default class MPXProxy {
     this.initWatch(options.watch)
   }
 
-  initProps () {
-    proxy(this.target, this.initialData, enumerableKeys(this.initialData))
-  }
-
   initData (dataFn) {
+    // 预先将initialData代理到this.target中，便于dataFn中访问
+    proxy(this.target, this.initialData, enumerableKeys(this.initialData))
     // mpxCid 解决支付宝环境selector为全局问题
     const data = extend({
       mpxCid: this.uid
@@ -280,6 +280,46 @@ export default class MPXProxy {
     }
   }
 
+  processRenderDataWithDiffPaths (result, key, diffPaths, clone) {
+    const temp = {}
+    let useTemp = true
+    for (let i = 0; i < diffPaths.length; i++) {
+      const pathArr = diffPaths[i]
+      let keyStr = ''
+      let value
+      _getByPath(clone, pathArr, (current, key, meta) => {
+        if (type(key) === 'Number') {
+          keyStr += `[${key}]`
+        } else if (type(key) === 'String') {
+          // setData中的key值不能包含非法标识符，遇到则提前结束
+          if (isValidIdentifierStr(key)) {
+            keyStr += `.${key}`
+          } else {
+            meta.stop = true
+          }
+        }
+        if (meta.stop) {
+          value = current
+        } else if (meta.isEnd) {
+          value = current[key]
+        }
+        return current[key]
+      })
+      if (keyStr) {
+        temp[key + keyStr] = value
+      } else {
+        useTemp = false
+        break
+      }
+    }
+    if (useTemp) {
+      extend(result, temp)
+    } else {
+      result[key] = clone
+    }
+  }
+
+
   processRenderDataWithStrictDiff (renderData) {
     const result = {}
     for (let key in renderData) {
@@ -295,42 +335,7 @@ export default class MPXProxy {
           if (diff) {
             this.miniRenderData[key] = clone
             if (diffPaths.length) {
-              const temp = {}
-              let useTemp = true
-              for (let i = 0; i < diffPaths.length; i++) {
-                const pathArr = diffPaths[i]
-                let keyStr = ''
-                let value
-                _getByPath(clone, pathArr, (current, key, meta) => {
-                  if (type(key) === 'Number') {
-                    keyStr += `[${key}]`
-                  } else if (type(key) === 'String') {
-                    // setData中的key值不能包含非法标识符，遇到则提前结束
-                    if (isValidIdentifierStr(key)) {
-                      keyStr += `.${key}`
-                    } else {
-                      meta.stop = true
-                    }
-                  }
-                  if (meta.stop) {
-                    value = current
-                  } else if (meta.isEnd) {
-                    value = current[key]
-                  }
-                  return current[key]
-                })
-                if (keyStr) {
-                  temp[key + keyStr] = value
-                } else {
-                  useTemp = false
-                  break
-                }
-              }
-              if (useTemp) {
-                extend(result, temp)
-              } else {
-                result[key] = clone
-              }
+              this.processRenderDataWithDiffPaths(result, key, diffPaths, clone)
             } else {
               result[key] = clone
             }
@@ -351,9 +356,14 @@ export default class MPXProxy {
               // setByPath
               _getByPath(this.miniRenderData[tarKey], subPath, (current, skey, meta) => {
                 if (meta.isEnd) {
-                  // todo 子项diff可以基于diffPaths进行更加精细的数据设置
-                  if (diffAndCloneA(clone, current[skey]).diff) {
-                    current[skey] = result[key] = clone
+                  const { diff, diffPaths } = diffAndCloneA(clone, current[skey])
+                  if (diff) {
+                    current[skey] = clone
+                    if (diffPaths.length) {
+                      this.processRenderDataWithDiffPaths(result, key, diffPaths, clone)
+                    } else {
+                      result[key] = clone
+                    }
                   }
                 } else if (!current[skey]) {
                   current[skey] = {}
@@ -442,12 +452,8 @@ export default class MPXProxy {
     if (typeof callback === 'function') {
       callback = callback.bind(this.target)
     }
-    // 同步数据到proxy
+    // 同步数据到proxy并设置data
     this.forceUpdate(data, callback)
-    if (this.options.__nativeRender__) {
-      // 走原生渲染
-      return this.doRender(diffAndCloneA(data).clone)
-    }
   }
 
   initRender () {
@@ -489,16 +495,21 @@ export default class MPXProxy {
     if (dataType === 'Function') {
       callback = data
     } else if (dataType === 'Object') {
-      this.forceUpdateData = data
-      Object.keys(data).forEach(key => {
-        setByPath(this.data, key, data[key])
+      this.forceUpdateData = diffAndCloneA(data).clone
+      Object.keys(this.forceUpdateData).forEach(key => {
+        if (this.localKeys.indexOf(getFirstKey(key)) === -1) {
+          warn(`ForceUpdate data includes a props/computed key [${key}], which may yield a unexpected result!`, this.options.mpxFileResource)
+        }
+        setByPath(this.data, key, this.forceUpdateData[key])
       })
     }
     callback && this.nextTick(callback)
-    // 无论是否改变，强制将状态置为stale，从而触发render
     if (this.renderReaction) {
+      // 无论是否改变，强制将状态置为stale，从而触发render
       this.renderReaction.dependenciesState = 2
       this.renderReaction.schedule()
+    } else {
+      this.doRender(this.forceUpdateData)
     }
   }
 }
