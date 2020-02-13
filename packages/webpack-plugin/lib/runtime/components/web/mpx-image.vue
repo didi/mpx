@@ -39,12 +39,12 @@
     },
     render (createElement) {
       if (this.mode === 'widthFix') {
-        // 强行复写父级style中height为auto
-        this.$vnode.data.style = this.$vnode.data.style || {}
-        this.$vnode.data.style.height = 'auto'
         return createElement('img', {
           domProps: {
             src: this.src
+          },
+          style: {
+            height: 'auto'
           },
           class: ['mpx-image'],
           on: getInnerListeners(this, { ignoredListeners: ['load', 'error'] })

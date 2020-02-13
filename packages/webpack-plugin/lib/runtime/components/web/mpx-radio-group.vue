@@ -24,7 +24,7 @@
     render (createElement) {
       const data = {
         class: 'mpx-radio-group',
-        on: getInnerListeners(this,{ignoredListeners:['change']}),
+        on: getInnerListeners(this, { ignoredListeners: ['change'] })
       }
       return createElement('div', data, this.$slots.default)
     },

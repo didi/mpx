@@ -1,4 +1,4 @@
-const TAG_NAME = 'swiper'
+const TAG_NAME = 'swiper-item'
 
 module.exports = function ({ print }) {
   const aliPropLog = print({ platform: 'ali', tag: TAG_NAME, isError: false })

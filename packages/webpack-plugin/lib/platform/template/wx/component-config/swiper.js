@@ -8,6 +8,7 @@ module.exports = function ({ print }) {
   const qqPropLog = print({ platform: 'qq', tag: TAG_NAME, isError: false })
   const ttPropLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false })
   const ttEventLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false, type: 'event' })
+  const webPropLog = print({ platform: 'web', tag: TAG_NAME, isError: false })
 
   return {
     test: TAG_NAME,
@@ -31,6 +32,10 @@ module.exports = function ({ print }) {
       {
         test: /^(previous-margin|next-margin|skip-hidden-item-layout|easing-function)$/,
         tt: ttPropLog
+      },
+      {
+        test: /^(previous-margin|next-margin|display-multiple-items|skip-hidden-item-layout)$/,
+        web: webPropLog
       }
     ],
     event: [

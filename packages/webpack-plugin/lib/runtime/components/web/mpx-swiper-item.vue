@@ -3,6 +3,9 @@
 
   export default {
     name: 'mpx-swiper-item',
+    props: {
+      itemId: String
+    },
     render (createElement) {
       const data = {
         class: 'mpx-swiper-item',
@@ -14,7 +17,4 @@
 </script>
 
 <style lang="stylus">
-  .mpx-swiper-item
-    width 100%
-    height 100%
 </style>
