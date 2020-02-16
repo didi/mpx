@@ -319,7 +319,6 @@ export default class MPXProxy {
     }
   }
 
-
   processRenderDataWithStrictDiff (renderData) {
     const result = {}
     for (let key in renderData) {

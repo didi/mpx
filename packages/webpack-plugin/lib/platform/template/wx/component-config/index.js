@@ -1,6 +1,7 @@
 const view = require('./view')
 const scrollView = require('./scroll-view')
 const swiper = require('./swiper')
+const swiperItem = require('./swiper-item')
 const movableView = require('./movable-view')
 const movableArea = require('./movable-area')
 const coverView = require('./cover-view')
@@ -71,6 +72,7 @@ module.exports = function getComponentConfigs ({ warn, error }) {
     view({ print }),
     scrollView({ print }),
     swiper({ print }),
+    swiperItem({ print }),
     movableView({ print }),
     movableArea({ print }),
     coverView({ print }),

@@ -39,12 +39,7 @@
         scrollX: this.scrollX,
         scrollY: this.scrollY,
         probeType: 3,
-        bounce: {
-          top: false,
-          bottom: false,
-          left: false,
-          right: false
-        },
+        bounce: false,
         observeDOM: this.observeDOM
       })
       this.lastX = -this.scrollLeft
@@ -84,6 +79,7 @@
     },
     beforeDestroy () {
       this.bs && this.bs.destroy()
+      delete this.bs
     },
     updated () {
       this.refresh()
@@ -115,7 +111,7 @@
     render (createElement) {
       const data = {
         class: 'mpx-scroll-view',
-        on: getInnerListeners(this, { ignoredListeners: ['scroll'] }),
+        on: getInnerListeners(this, { ignoredListeners: ['scroll', 'scrolltoupper', 'scrolltolower'] }),
         ref: 'wrapper'
       }
       const content = createElement('div', {
