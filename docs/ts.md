@@ -91,7 +91,11 @@ Mpx基于泛型函数提供了非常方便用户使用的反向类型推导能�
 ```typescript
 import {createComponent, getComputed, getMixin, createStoreWithThis} from '@mpxjs/core'
 
-// createStoreWithThis作为createStore的变种方法，主要变化在于定义getters，mutations和actions时，获取自身的state，getters等属性不再通过参数传入，而是通过this.state或者this.getters等属性进行访问，由于TS的能力限制，getters/mutations/actions只有使用对象字面量的方式直接传入createStoreWithThis时才能正确推导出this的类型，当需要将getters/mutations/actions拆解为对象编写时，需要用户显式地声明this类型，无法直接推导得出。
+// createStoreWithThis作为createStore的变种方法，主要变化在于定义getters，mutations和actions时，
+// 获取自身的state，getters等属性不再通过参数传入，而是通过this.state或者this.getters等属性进行访问，
+// 由于TS的能力限制，getters/mutations/actions只有使用对象字面量的方式直接传入createStoreWithThis时
+// 才能正确推导出this的类型，当需要将getters/mutations/actions拆解为对象编写时，
+// 需要用户显式地声明this类型，无法直接推导得出。
 
 const store = createStoreWithThis({
   state: {
@@ -122,7 +126,8 @@ createComponent({
       return this.b
     },
     d() {
-      // 在computed中访问当前computed对象中的其他计算属性时，需要用getComputed辅助函数包裹，而除此以外的任何场景下都不需要使用，例如访问data或者mixins中定义的computed等数据
+      // 在computed中访问当前computed对象中的其他计算属性时，需要用getComputed辅助函数包裹，
+      // 而除此以外的任何场景下都不需要使用，例如访问data或者mixins中定义的computed等数据
       return getComputed(this.c) + this.a + this.aaa
     },
     // 从store上map过来的计算属性或者方法同样能够被推导到this中
