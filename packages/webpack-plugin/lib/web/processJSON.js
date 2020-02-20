@@ -15,6 +15,7 @@ module.exports = function (json, options, rawCallback) {
   const loaderContext = options.loaderContext
   const resolveMode = options.resolveMode
   const pagesMap = options.pagesMap
+  const pagesEntryMap = options.pagesEntryMap
   const componentsMap = options.componentsMap
   const projectRoot = options.projectRoot
   const localPagesMap = {}
@@ -153,11 +154,13 @@ module.exports = function (json, options, rawCallback) {
           const { resourcePath, queryObj } = parseRequest(resource)
           // 如果存在page命名冲突，return err
           for (let key in pagesMap) {
-            if (pagesMap[key] === pagePath && key !== resourcePath) {
+            // 此处引入pagesEntryMap确保相同entry下路由路径重复注册才报错，不同entry下的路由路径重复则无影响
+            if (pagesMap[key] === pagePath && key !== resourcePath && pagesEntryMap[key] === loaderContext.resourcePath) {
               return callback(new Error(`Resources in ${resourcePath} and ${key} are registered with same page path ${pagePath}, which is not allowed!`))
             }
           }
           pagesMap[resourcePath] = pagePath
+          pagesEntryMap[resourcePath] = loaderContext.resourcePath
           localPagesMap[pagePath] = {
             resource: addQuery(resource, { page: true }),
             async: tarRoot || queryObj.async,

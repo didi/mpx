@@ -186,6 +186,7 @@ module.exports = function (content) {
                   resolveMode,
                   loaderContext,
                   pagesMap,
+                  pagesEntryMap: mpx.pagesEntryMap,
                   componentsMap,
                   projectRoot
                 }, callback)

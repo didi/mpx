@@ -224,6 +224,8 @@ class MpxWebpackPlugin {
         mpx = compilation.__mpx__ = {
           // pages全局记录，无需区分主包分包
           pagesMap: {},
+          // 记录pages对应的entry，处理多appEntry输出web多页项目时可能出现的pagePath冲突的问题，多appEntry输出目前仅web模式支持
+          pagesEntryMap: {},
           // 组件资源记录，依照所属包进行记录，冗余存储，只要某个包有引用会添加对应记录，不管其会不会在当前包输出，这样设计主要是为了在resolve时能够以较低成本找到特定资源的输出路径
           componentsMap: {
             main: {}
