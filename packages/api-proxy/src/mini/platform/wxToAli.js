@@ -20,6 +20,7 @@ const getWxToAliApi = ({ optimize = false }) => {
 
       handleSuccess(opts, res => {
         res.system = `${res.platform} ${res.system}`
+        res.SDKVersion = ALI_OBJ.SDKVersion
 
         // 支付宝 windowHeight 可能为 0
         if (!res.windowHeight) {
@@ -40,6 +41,7 @@ const getWxToAliApi = ({ optimize = false }) => {
       let res = ALI_OBJ.getSystemInfoSync() || {}
 
       res.system = `${res.platform} ${res.system}`
+      res.SDKVersion = ALI_OBJ.SDKVersion
 
       // 支付宝 windowHeight 可能为 0
       if (!res.windowHeight) {

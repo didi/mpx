@@ -8,7 +8,6 @@ const ReplaceDependency = require('./dependency/ReplaceDependency')
 const NullFactory = require('webpack/lib/NullFactory')
 const normalize = require('./utils/normalize')
 const toPosix = require('./utils/to-posix')
-const getResource = require('./utils/parse-request')
 const addQuery = require('./utils/add-query')
 const DefinePlugin = require('webpack/lib/DefinePlugin')
 const AddModePlugin = require('./resolver/AddModePlugin')
@@ -87,8 +86,7 @@ class MpxWebpackPlugin {
     options.autoScopeRules = options.autoScopeRules || {}
     options.forceDisableInject = options.forceDisableInject || false
     options.transMpxRules = options.transMpxRules || {
-      include: () => true,
-      exclude: ['@mpxjs', '@didi']
+      include: () => true
     }
     if (options.autoSplit === undefined) {
       // web模式下默认不开启autoSplit
@@ -226,6 +224,8 @@ class MpxWebpackPlugin {
         mpx = compilation.__mpx__ = {
           // pages全局记录，无需区分主包分包
           pagesMap: {},
+          // 记录pages对应的entry，处理多appEntry输出web多页项目时可能出现的pagePath冲突的问题，多appEntry输出目前仅web模式支持
+          pagesEntryMap: {},
           // 组件资源记录，依照所属包进行记录，冗余存储，只要某个包有引用会添加对应记录，不管其会不会在当前包输出，这样设计主要是为了在resolve时能够以较低成本找到特定资源的输出路径
           componentsMap: {
             main: {}
@@ -437,7 +437,7 @@ class MpxWebpackPlugin {
           } else if (expr.type === 'MemberExpression') {
             target = expr.object
           }
-          if (!matchCondition(resourcePath, this.options.transMpxRules) || !target || mode === srcMode) {
+          if (!matchCondition(resourcePath, this.options.transMpxRules) || resourcePath.indexOf('@mpxjs') !== -1 || !target || mode === srcMode) {
             return
           }
 
@@ -607,19 +607,19 @@ class MpxWebpackPlugin {
         data.resource = this.runModeRules(data.resource)
 
         if (mpx.currentPackageRoot) {
-          const resourcPath = getResource(data.resource)
+          const resourcePath = parseRequest(data.resource).resourcePath
 
           const staticResourceHit = mpx.staticResourceHit
           const packageName = mpx.currentPackageRoot || 'main'
 
           let needAddQuery = false
 
-          if (staticResourceHit[resourcPath] && staticResourceHit[resourcPath] !== packageName) {
+          if (staticResourceHit[resourcePath] && staticResourceHit[resourcePath] !== packageName) {
             needAddQuery = true
           }
 
           if (needAddQuery) {
-            // 此处的query用于避免模块缓存
+            // 此处的query用于避免静态资源模块缓存，确保不同分包中引用的静态资源为不同模块
             data.request = addQuery(data.request, {
               packageName
             })
