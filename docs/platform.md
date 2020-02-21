@@ -122,7 +122,7 @@ import mpx from '@mpxjs/webview-bridge'
 mpx.navigateBack()
 ```
 
-对于无法转换抹平的bridge调用会在运行时阶段报错指出，详细使用指南请查看[webview-bridge](#webview-bridge)
+对于无法转换抹平的bridge调用会在运行时阶段报错指出，详细使用指南请查看[webview-bridge](/extend/index.md#webview-bridge)
 
 ## 跨平台条件编译
 
