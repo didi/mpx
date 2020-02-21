@@ -49,7 +49,7 @@
 * [渐进接入](progressive.md)
     - [原生组件支持](progressive.md#原生自定义组件支持)
     - [原生page支持](progressive.md#原生page支持)
-    - [局部导出](progressive.md#局部导出)
+    - [导出原生](progressive.md#导出原生)
 * [API参考](api.md)
     - [createApp](api.md#createapp)
     - [createPage](api.md#createpage)
