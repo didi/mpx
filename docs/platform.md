@@ -169,7 +169,9 @@ mpx中我们支持了三种维度的条件编译，分别是文件维度，区�
 
 ### 代码维度条件编译
 
-如果只有局部的代码存在跨平台差异，mpx同样支持在代码内使用if/else进行局部条件编译，用户可以在js代码和template插值中访问`__mpx_mode__`获取当前编译mode，进行平台差异逻辑编写，js代码中使用示例如下
+如果只有局部的代码存在跨平台差异，mpx同样支持在代码内使用if/else进行局部条件编译，用户可以在js代码和template插值中访问`__mpx_mode__`获取当前编译mode，进行平台差异逻辑编写，js代码中使用示例如下。
+
+除了 `__mpx_mode__` 这个默认插值以外，有别的环境变量需要的话可以在mpx.plugin.conf.js里通过defs进行配置。
 
 ```js
 if(__mpx_mode__ === 'ali') {
@@ -184,6 +186,66 @@ template代码中使用示例如下
 <!--此处的__mpx_mode__不需要在组件中声明数据，编译时会基于当前编译mode进行替换-->
 <view wx:if="{{__mpx_mode__ === 'ali'}}">支付宝环境</view>
 <view wx:else>其他环境</view>
+```
+
+JSON中的条件编译（注意，这个依赖JSON的动态方案，得通过name="json"这种方式来编写，其实写的是js代码，最终module.exports导出一个可json化的对象即可）：
+```html
+<script name="json">
+const pages = __mpx_mode__ === 'wx' ? [
+  'main/xxx',
+  'sub/xxx'
+] : [
+  'test/xxx'
+] // 可以为不同环境动态书写配置
+module.exports = {
+  usingComponents: {
+    aComponents: '../xxxxx' // 可以打注释 xxx组件
+  }
+}
+</script>
+```
+
+样式的条件编译：
+```css
+/*
+  @mpx-if (
+      __mpx_mode__ === 'wx' ||
+      __mpx_mode__ === 'qq'
+  )
+*/
+  /* @mpx-if (__mpx_mode__ === 'wx') */
+  wx {
+    background: green;
+  }
+  /*
+    @mpx-elif (__mpx_mode__ === 'qq')
+  */
+  qq {
+    background: black;
+  }
+  /* @mpx-endif */
+
+  /* @mpx-if (__mpx_mode__ === 'swan') */
+  swan {
+    background: cyan;
+  }
+  /* @mpx-endif */
+  always {
+    background: white;
+  }
+/*
+  @mpx-else
+*/
+other {
+  /* @mpx-if (__mpx_mode__ === 'swan') */
+  background: blue;
+  /* @mpx-else */
+  background: red;
+  /* @mpx-endif */
+}
+/*
+  @mpx-endif
+*/
 ```
 
 ## 其他注意事项
