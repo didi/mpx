@@ -10,6 +10,8 @@
 
 - mock数据：@mpxjs/mock [详细介绍](#mock) [源码地址](https://github.com/didi/mpx/tree/master/packages/mock)
 
+- 小程序中的webview的API抹平：webview-bridge [详细介绍](#webviewbridge) [源码地址](https://github.com/didi/mpx/tree/master/packages/webview-bridge)
+
 ## 开发插件
 
 mpx支持使用mpx.use使用插件来进行扩展。插件本身需要提供一个install方法或本身是一个function，该函数接收一个proxyMPX。插件将采用直接在proxyMPX挂载新api属性或在prototype上挂属性。需要注意的是，一定要在app创建之前进行mpx.use
@@ -261,3 +263,19 @@ mock([{
 	}
 }])
 ```
+
+## webview-bridge
+
+Mpx支持小程序跨平台后，多个平台的小程序里都有webview组件，webview打开的页面和小程序可以通过API来通信以及调用一些小程序能力，但是各方webview提供的API是不一样的。
+
+比如微信是用 wx.miniProgram.navigateTo 来跳转到别的小程序页面，而支付宝里是 my.navigateTo ，那么我们开发H5时候为了让H5能适应各家小程序平台就需要写多份对应逻辑。
+
+为解决这个问题，Mpx提供了用于运行在小程序的webview里的H5抹平平台差异的bridge库：@mpxjs/webview-bridge
+
+使用方式很简单，不过注意这个库是给H5用的，不是给小程序用的。在H5项目中引入。
+
+[使用示例](https://github.com/didi/mpx/tree/master/examples/mpx-webview)
+
+支持script标签引入和npm引入，标签引入的话，全局实例是mpx（npm模块使用下也鼓励import mpx from '@mpxjs/webview-birdge'），使用就例如 mpx.navigateTo ，能保持整个项目风格完全一致。
+
+提供的API如下：`navigateTo, navigateBack, switchTab, reLaunch, redirectTo, getEnv, postMessage, getLoadError`

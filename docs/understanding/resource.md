@@ -2,9 +2,9 @@
 
 小程序对于图片资源存在一些限制，使得习惯开发web应用的开发者面对小程序时无法理解差异性
 
-mpx提供了[@mpxjs/url-loader](/compilationEnhance.md/#mpxjsurl-loader)对小程序中各种资源加载方式进行处理。
+~~mpx提供了[@mpxjs/url-loader](/compilationEnhance/index.md#mpxjsurl-loader)对小程序中各种资源加载方式进行处理。~~ (该loader已被默认整合进 MpxWebpackPlugin.loader)
 
-本文会从使用的角度出发，介绍小程序既有的对图像资源的限制，以及`@mpxjs/url-loader`是如何解决这些问题。
+本文会从使用的角度出发，介绍小程序既有的对图像资源的限制，以及 MpxWebpackPlugin.loader 是如何解决这些问题。
 
 ----
 ## 引用线上资源
@@ -41,21 +41,6 @@ webpackconfig = {
 * 在`<style>`中使用本地资源
 
   小程序不支持在`.wxss`的样式中使用本地资源，因此`@mpxjs/url-loader`会对`<style>`中的图片做强制base64
-  
-  **webpack.config.js**
-  ```js
-  webpackconfig = {
-    module: {
-      rules: [
-        {
-          test: /\.(png|jpe?g|gif|svg)(\?.*)?$/,
-          loader: '@mpxjs/url-loader',
-          options: /* 强制转换，所以options不做限制 */
-        }
-      ]
-    }
-  }
-  ```
 
   **index.mpx**
   ```html
