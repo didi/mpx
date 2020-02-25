@@ -283,6 +283,10 @@ wx:if|是
 wx:elif|是
 wx:else|是
 wx:model|是
+wx:model-prop|是
+wx:model-event|是
+wx:model-value-path|是
+wx:model-filter|是
 wx:class|是
 wx:style|是
 wx:ref|是
@@ -316,6 +320,8 @@ cover-view|是
 scroll-view|是
 progress|是
 navigator|是
+swiper|是
+swiper-item|是
 text|是
 image|是
 block|是
@@ -327,6 +333,7 @@ checkbox|是
 checkbox-group|是
 radio|是
 radio-group|是
+picker|是
 
 ### 生命周期
 
@@ -413,6 +420,14 @@ pages|是
 usingComponents|是
 packages|是
 subpackages|是
+navigationBarTitleText|是
+
+### 拓展能力
+能力|是否支持
+:---|---
+fetch|是
+i18n|是
+
 
 
 

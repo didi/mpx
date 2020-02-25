@@ -62,7 +62,7 @@
     - [use](api.md#mpxuse)
     - [mixin](api.md#mpxmixin)
     - [实例API](instance-api.md)
-* [周边工具](extend/index.md)
+* [拓展能力](extend/index.md)
     * [fetch](extend/index.md#fetch)
     * [api-proxy](extend/index.md#api-proxy)
     * [mock](extend/index.md#mock)
