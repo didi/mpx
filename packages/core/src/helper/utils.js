@@ -451,8 +451,8 @@ export function noop () {
 }
 
 export function diffAndCloneA (a, b) {
-  const diffPaths = []
-  const curPath = []
+  let diffData = null
+  let curPath = ''
   let diff = false
 
   function deepDiffAndCloneA (a, b, currentDiff) {
@@ -460,67 +460,61 @@ export function diffAndCloneA (a, b) {
       if (currentDiff) return
       if (val) {
         currentDiff = val
-        if (curPath.length) {
-          diffPaths.push(curPath.slice())
+        if (curPath) {
+          diffData = diffData || {}
+          diffData[curPath] = clone
         }
       }
     }
-
-    const toString = Object.prototype.toString
-    const type = typeof a
     let clone = a
 
-    if (type !== 'object' || a === null) {
+    if (typeof a !== 'object' || a === null) {
       setDiff(a !== b)
     } else {
       a = unwrap(a)
       b = unwrap(b)
-      let sameClass = true
-
+      const toString = Object.prototype.toString
       const className = toString.call(a)
-      if (className !== toString.call(b)) {
-        setDiff(true)
-        sameClass = false
-      }
+      const sameClass = className === toString.call(b)
       let length
+      let lastPath
       switch (className) {
         case '[object RegExp]':
         case '[object String]':
-          if (sameClass) setDiff('' + a !== '' + b)
+          setDiff(!sameClass || '' + a !== '' + b)
           break
         case '[object Number]':
         case '[object Date]':
         case '[object Boolean]':
-          if (sameClass) setDiff(+a !== +b)
+          setDiff(!sameClass || +a !== +b)
           break
         case '[object Symbol]':
-          if (sameClass) setDiff(a !== b)
+        case '[object Function]':
+          setDiff(!sameClass || a !== b)
           break
         case '[object Array]':
           length = a.length
-          if (sameClass && length !== b.length) {
-            setDiff(true)
-          }
           clone = []
+          setDiff(!sameClass || length < b.length)
+          lastPath = curPath
           for (let i = 0; i < length; i++) {
-            curPath.push(i)
+            curPath += `[${i}]`
             clone[i] = deepDiffAndCloneA(a[i], sameClass ? b[i] : undefined, currentDiff)
-            curPath.pop()
+            curPath = lastPath
           }
           break
         default:
           let keys = Object.keys(a)
           let key
           length = keys.length
-          if (sameClass && length !== Object.keys(b).length) {
-            setDiff(true)
-          }
           clone = {}
+          setDiff(!sameClass || length < Object.keys(b).length)
+          lastPath = curPath
           for (let i = 0; i < length; i++) {
             key = keys[i]
-            curPath.push(key)
+            curPath += `.${key}`
             clone[key] = deepDiffAndCloneA(a[key], sameClass ? b[key] : undefined, currentDiff)
-            curPath.pop()
+            curPath = lastPath
           }
       }
     }
@@ -530,12 +524,10 @@ export function diffAndCloneA (a, b) {
     return clone
   }
 
-  let clone = deepDiffAndCloneA(a, b, diff)
-
   return {
-    clone,
+    clone: deepDiffAndCloneA(a, b, diff),
     diff,
-    diffPaths
+    diffData
   }
 }
 

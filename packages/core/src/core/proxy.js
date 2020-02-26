@@ -19,7 +19,6 @@ import {
   preProcessRenderData,
   filterProperties,
   mergeData,
-  isValidIdentifierStr,
   aIsSubPathOfB,
   getFirstKey
 } from '../helper/utils'
@@ -280,43 +279,10 @@ export default class MPXProxy {
     }
   }
 
-  processRenderDataWithDiffPaths (result, key, diffPaths, clone) {
-    const temp = {}
-    let useTemp = true
-    for (let i = 0; i < diffPaths.length; i++) {
-      const pathArr = diffPaths[i]
-      let keyStr = ''
-      let value
-      _getByPath(clone, pathArr, (current, key, meta) => {
-        if (type(key) === 'Number') {
-          keyStr += `[${key}]`
-        } else if (type(key) === 'String') {
-          // setData中的key值不能包含非法标识符，遇到则提前结束
-          if (isValidIdentifierStr(key)) {
-            keyStr += `.${key}`
-          } else {
-            meta.stop = true
-          }
-        }
-        if (meta.stop) {
-          value = current
-        } else if (meta.isEnd) {
-          value = current[key]
-        }
-        return current[key]
-      })
-      if (keyStr) {
-        temp[key + keyStr] = value
-      } else {
-        useTemp = false
-        break
-      }
-    }
-    if (useTemp) {
-      extend(result, temp)
-    } else {
-      result[key] = clone
-    }
+  processRenderDataWithDiffData (result, key, diffData) {
+    Object.keys(diffData).forEach((subKey) => {
+      result[key + subKey] = diffData[subKey]
+    })
   }
 
   processRenderDataWithStrictDiff (renderData) {
@@ -329,12 +295,12 @@ export default class MPXProxy {
         if (this.localKeys.indexOf(firstKey) === -1) {
           continue
         }
-        const { clone, diff, diffPaths } = diffAndCloneA(data, this.miniRenderData[key])
+        const { clone, diff, diffData } = diffAndCloneA(data, this.miniRenderData[key])
         if (this.miniRenderData.hasOwnProperty(key)) {
           if (diff) {
             this.miniRenderData[key] = clone
-            if (diffPaths.length) {
-              this.processRenderDataWithDiffPaths(result, key, diffPaths, clone)
+            if (diffData) {
+              this.processRenderDataWithDiffData(result, key, diffData)
             } else {
               result[key] = clone
             }
@@ -353,21 +319,21 @@ export default class MPXProxy {
             const subPath = aIsSubPathOfB(key, tarKey)
             if (subPath) {
               // setByPath
-              _getByPath(this.miniRenderData[tarKey], subPath, (current, skey, meta) => {
+              _getByPath(this.miniRenderData[tarKey], subPath, (current, subKey, meta) => {
                 if (meta.isEnd) {
-                  const { diff, diffPaths } = diffAndCloneA(clone, current[skey])
+                  const { diff, diffData } = diffAndCloneA(clone, current[subKey])
                   if (diff) {
-                    current[skey] = clone
-                    if (diffPaths.length) {
-                      this.processRenderDataWithDiffPaths(result, key, diffPaths, clone)
+                    current[subKey] = clone
+                    if (diffData) {
+                      this.processRenderDataWithDiffData(result, key, diffData)
                     } else {
                       result[key] = clone
                     }
                   }
-                } else if (!current[skey]) {
-                  current[skey] = {}
+                } else if (!current[subKey]) {
+                  current[subKey] = {}
                 }
-                return current[skey]
+                return current[subKey]
               })
               processed = true
               break
