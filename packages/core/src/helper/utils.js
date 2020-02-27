@@ -504,14 +504,13 @@ export function diffAndCloneA (a, b) {
           }
           break
         default:
-          let keys = Object.keys(a)
-          let key
+          const keys = Object.keys(a)
           length = keys.length
           clone = {}
-          setDiff(!sameClass || length < Object.keys(b).length)
+          setDiff(!sameClass || length < Object.keys(b).length || !Object.keys(b).every((key) => a.hasOwnProperty(key)))
           lastPath = curPath
           for (let i = 0; i < length; i++) {
-            key = keys[i]
+            const key = keys[i]
             curPath += `.${key}`
             clone[key] = deepDiffAndCloneA(a[key], sameClass ? b[key] : undefined, currentDiff)
             curPath = lastPath
