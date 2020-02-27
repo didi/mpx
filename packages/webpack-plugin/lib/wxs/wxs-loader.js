@@ -23,10 +23,11 @@ module.exports = function (content) {
   const packageName = mpx.currentPackageRoot || 'main'
   const pagesMap = mpx.pagesMap
   const componentsMap = mpx.componentsMap[packageName]
+  const staticResourceMap = mpx.staticResourceMap[packageName]
   const rootName = mainCompilation._preparedEntrypoints[0].name
   // 可能存在问题，issuer不可靠，但是目前由于每一个组件模板都是在独立的子编译中输出的，所以此处issuer没有遇到问题，可以考虑通过query传递issuerResource
   const issuerResourcePath = parseRequest(this._module.issuer.resource).resourcePath
-  const issuerName = pagesMap[issuerResourcePath] || componentsMap[issuerResourcePath] || rootName
+  const issuerName = pagesMap[issuerResourcePath] || componentsMap[issuerResourcePath] || staticResourceMap[issuerResourcePath] || rootName
   const issuerDir = path.dirname(issuerName)
 
   const callback = (err) => {
