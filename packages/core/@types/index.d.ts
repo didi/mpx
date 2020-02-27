@@ -158,6 +158,14 @@ declare function set (obj: object, key: string, value: any): any
 
 declare function remove (obj: object, key: string): any
 
+declare function has (obj: object, key: string): boolean
+
+declare function keys (obj: object): Array<string>
+
+declare function values (obj: object, key: string): Array<any>
+
+declare function entries (obj: object, key: string): Array<[string, any]>
+
 export interface MpxComponentIns {
   $refs: ObjectOf<any>
 
@@ -166,6 +174,14 @@ export interface MpxComponentIns {
   $get: typeof get
 
   $remove: typeof remove
+
+  $has: typeof has
+
+  $keys: typeof keys
+
+  $values: typeof values
+
+  $entries: typeof entries
 
   $watch (expr: string | (() => any), handler: WatchHandler | WatchOptWithHandler, options?: WatchOpt): () => void
 
@@ -474,6 +490,14 @@ export interface Mpx {
   set: typeof set
 
   remove: typeof remove
+
+  has: typeof has
+
+  keys: typeof keys
+
+  values: typeof values
+
+  entries: typeof entries
 
   setConvertRule: typeof setConvertRule
 

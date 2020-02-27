@@ -1,4 +1,16 @@
-import { toJS as toPureObject, extendObservable, observable, set, get, remove, action as createAction } from './mobx'
+import {
+  toJS as toPureObject,
+  extendObservable,
+  observable,
+  set,
+  get,
+  remove,
+  has,
+  values,
+  keys,
+  entries,
+  action as createAction
+} from './mobx'
 import * as platform from './platform'
 import createStore, { createStoreWithThis } from './core/createStore'
 import { injectMixins } from './core/injectMixins'
@@ -89,6 +101,18 @@ if (__mpx_mode__ === 'web') {
   const get = function (target, key) {
     return target[key]
   }
+  const has = function (target, key) {
+    return target.hasOwnProperty(key)
+  }
+  const values = function (target) {
+    return Object.values(target)
+  }
+  const keys = function (target) {
+    return Object.keys(target)
+  }
+  const entries = function (target) {
+    return Object.entries(target)
+  }
   // todo 补齐web必要api
   APIs = {
     createApp,
@@ -104,6 +128,10 @@ if (__mpx_mode__ === 'web') {
     set,
     get,
     remove,
+    has,
+    keys,
+    values,
+    entries,
     setConvertRule,
     getMixin,
     getComputed
@@ -112,7 +140,11 @@ if (__mpx_mode__ === 'web') {
   InstanceAPIs = {
     $set: set,
     $get: get,
-    $remove: remove
+    $remove: remove,
+    $has: has,
+    $keys: keys,
+    $values: values,
+    $entries: entries
   }
 } else {
   APIs = {
@@ -131,6 +163,10 @@ if (__mpx_mode__ === 'web') {
     set,
     get,
     remove,
+    has,
+    keys,
+    values,
+    entries,
     setConvertRule,
     createAction,
     getMixin,
@@ -140,7 +176,11 @@ if (__mpx_mode__ === 'web') {
   InstanceAPIs = {
     $set: set,
     $get: get,
-    $remove: remove
+    $remove: remove,
+    $has: has,
+    $keys: keys,
+    $values: values,
+    $entries: entries
   }
 }
 
