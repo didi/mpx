@@ -14,6 +14,7 @@ import {
   processUndefined,
   defineGetterSetter,
   setByPath,
+  getByPath,
   asyncLock,
   diffAndCloneA,
   preProcessRenderData,
@@ -68,7 +69,6 @@ export default class MPXProxy {
     this.initApi()
     if (__mpx_mode__ !== 'web') {
       this.initialData = this.target.__getInitialData()
-      this.cacheData = extend({}, this.initialData) // 缓存数据，用于diff
     }
     this.callUserHook(BEFORECREATE)
     if (__mpx_mode__ !== 'web') {
@@ -247,10 +247,12 @@ export default class MPXProxy {
   }
 
   render () {
+    if (!this.cacheData) {
+      this.cacheData = extend({}, this.initialData) // 缓存数据，用于diff
+    }
     const newData = filterProperties(this.data, this.localKeys)
     Object.keys(newData).forEach(key => {
       if (comparer.structural(this.cacheData[key], newData[key])) {
-        // 强制更新的key，无论是否变化，都要进行最终的setData
         delete newData[key]
       } else {
         this.cacheData[key] = newData[key]
@@ -262,21 +264,55 @@ export default class MPXProxy {
   renderWithData (rawRenderData) {
     const renderData = preProcessRenderData(rawRenderData)
     if (!this.miniRenderData) {
-      this.miniRenderData = {}
-      for (let key in renderData) {
-        if (renderData.hasOwnProperty(key)) {
-          let item = renderData[key]
-          let data = item[0]
-          let firstKey = item[1]
-          if (this.localKeys.indexOf(firstKey) > -1) {
-            this.miniRenderData[key] = diffAndCloneA(data).clone
-          }
-        }
-      }
-      this.doRender(this.miniRenderData)
+      this.doRender(EXPORT_MPX.config.useStrictDiff ? this.processRenderDataFirstWithStrictDiff(renderData) : this.processRenderDataFirst(renderData))
     } else {
       this.doRender(EXPORT_MPX.config.useStrictDiff ? this.processRenderDataWithStrictDiff(renderData) : this.processRenderData(renderData))
     }
+  }
+
+  processRenderDataFirst (renderData) {
+    this.miniRenderData = {}
+    const result = {}
+    for (let key in renderData) {
+      if (renderData.hasOwnProperty(key)) {
+        let item = renderData[key]
+        let data = item[0]
+        let firstKey = item[1]
+        if (this.localKeys.indexOf(firstKey) > -1) {
+          this.miniRenderData[key] = result[key] = diffAndCloneA(data).clone
+        }
+      }
+    }
+    return result
+  }
+
+  processRenderDataFirstWithStrictDiff (renderData) {
+    this.miniRenderData = {}
+    const result = {}
+    for (let key in renderData) {
+      if (renderData.hasOwnProperty(key)) {
+        let item = renderData[key]
+        let data = item[0]
+        let firstKey = item[1]
+        if (this.localKeys.indexOf(firstKey) > -1) {
+          if (this.initialData.hasOwnProperty(firstKey)) {
+            const localInitialData = getByPath(this.initialData, key)
+            const { clone, diff, diffData } = diffAndCloneA(data, localInitialData)
+            this.miniRenderData[key] = clone
+            if (diff) {
+              if (diffData) {
+                this.processRenderDataWithDiffData(result, key, diffData)
+              } else {
+                result[key] = clone
+              }
+            }
+          } else {
+            this.miniRenderData[key] = result[key] = diffAndCloneA(data).clone
+          }
+        }
+      }
+    }
+    return result
   }
 
   processRenderDataWithDiffData (result, key, diffData) {

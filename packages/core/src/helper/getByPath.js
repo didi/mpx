@@ -102,6 +102,8 @@ function outPutByPath (context, path, isSimple, transfer) {
         result = transfer ? transfer(result, key, meta) : result[key]
         if (meta.stop) break
       }
+    } else {
+      break
     }
   }
   return result

@@ -112,7 +112,7 @@ export function setByPath (data, pathStrOrArr, value) {
   })
 }
 
-export function getByPath (data, pathStrOrArr, defaultVal = '', errTip) {
+export function getByPath (data, pathStrOrArr, defaultVal, errTip) {
   const results = []
   let normalizedArr = []
   if (Array.isArray(pathStrOrArr)) {
