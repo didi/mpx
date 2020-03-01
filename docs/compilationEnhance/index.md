@@ -98,6 +98,34 @@ webpackconfig = {
 - **projectRoot** `String` 如果指定resolveMode为native，则必须提供此项配置为项目根目录地址。
 - **writeMode** `String` 小程序开发者工具检测到文件'变化'就会重新编译，并不会关系文件内容是否真正变化，而webpack每次输出都是全量的，会导致项目大了后每次重编译都较慢，为了解决这个问题，在输出前在内存中对比一次剔除未变化的文件，仅输出变化的文件以提升小程序开发者工具的编译速度。建议开启。
 - **modeRules** `Object` mpx在应用条件编译时，可能会遇到这种场景，假设同时开发微信/支付宝两个平台，用户是以微信小程序为基准来编写代码的，但是又有一个平台差异较大的地方，在支付宝平台上期望用一份支付宝原生代码来实现，这份支付宝原生代码可能在一个npm包内或者在某个文件夹下，依照mpx默认的识别方式，需要对这些文件都加中缀.ali才可以正确识别，而通过modeRules我们可以直接声明某个路径下的文件全是某种mode。
+- **enableAutoScope** `Boolean` 支付宝小程序没有微信小程序类似的组件样式隔离机制，如果遇到样式问题，将本选项置为true将自动为支付宝添加scope，会带来略微的体积上涨
+- **defs** `Object` 给模板和json中定义一些全局环境变量，区别于webpack.DefinePlugin的是仅支持普通扁平对象，但支持小程序的4个文件。这样根据平台注入全局变量时能为4个文件都注入，而不仅仅是JS，以此来实现编译时去除多余的其他平台的代码。
+- **i18n** `Object` 多语言能力，提供多语言包，在编译时生成对应的wxs方法，以完善小程序的国际化能力。
+
+示例：
+
+```js
+new MpxWebpackPlugin({
+  mode: 'ali', // 可选值 wx/ali/swan/qq/tt/web
+  srcMode: 'wx', // 暂时只支持微信为源mode做跨平台，为其他时mode必须和srcMode一致
+  writeMode: 'changed', // 可选值changed / full，不建议修改
+  resolveMode: 'webpack', // 可选值 native / webpack
+  projectRoot: resolve('src'), // 若resolveMode为native才需要传这个以指定项目的“绝对路径”绝对于谁的
+  enableAutoScope: false, // 是否开启支付宝样式scope，会带来略微的体积上涨
+  defs: {
+    // 常量 仅支持扁平对象，内嵌的环境变量有__mpx_mode__和__mpx_src_mode__
+    apiHost: 'apitest.com' // 可以准备多个对象，在build.js里根据参数决定塞哪个以实现开发时用某一套，上线时用哪一套
+  },
+  i18n: {}, // 多语言 参考 https://didi.github.io/mpx/i18n.html
+  modeRules: {
+     // 批量指定文件mode，和webpack的rules相同
+    ali: {
+      include: [resolve('vant-aliapp')]
+    }
+   }
+})
+```
+
 ----
 
 ### MpxWebpackPlugin.loader
