@@ -131,4 +131,6 @@
       position absolute
       top 0
       left 0
+      div
+        -webkit-transform translateZ(0)
 </style>
