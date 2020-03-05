@@ -68,7 +68,7 @@ const transRpx = {
 }
 ```
 
-配置在 webpack.conf.js 的 MpxWebpackPlugin.loder 的参数中。关于如何配置详情请查看[mpx-loader选项](/compilationEnhance/index.md#mpxwebpackpluginloader)
+配置在 build.js / webpack.conf.js 中的 MpxWebpackPlugin.loader 的参数中（找已经存在的，勿新加）。关于如何配置详情请查看[mpx-loader选项](/compilationEnhance/index.md#mpxwebpackpluginloader)
 
 #### 应用场景及相应配置
 
