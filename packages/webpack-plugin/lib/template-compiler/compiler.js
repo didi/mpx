@@ -222,7 +222,7 @@ function consumeMpxCommentAttrs (attrs, mode) {
 
 function assertMpxCommentAttrsEnd () {
   if (curMpxComment) {
-    throw new Error('No target for @mpx-attrs!')
+    error$1('No target for @mpx-attrs!')
   }
 }
 
@@ -866,11 +866,15 @@ function parse (template, options) {
       ) {
         return
       }
+
       let children = currentParent.children
-      text = text.trim()
-        ? text
-        // only preserve whitespace if its not right after a starting tag
-        : preserveWhitespace && children.length ? ' ' : ''
+      if (currentParent.tag !== 'text') {
+        text = text.trim()
+          ? text.trim()
+          // only preserve whitespace if its not right after a starting tag
+          : preserveWhitespace && children.length ? ' ' : ''
+      }
+
       if (text) {
         if (text !== ' ' || !children.length || children[children.length - 1].text !== ' ') {
           let el = {
@@ -1995,21 +1999,29 @@ function genIf (node) {
 
 function genElseif (node) {
   node.elseifProcessed = true
+  if (node.for) {
+    error$1(`wx:elif (wx:elif="${node.elseif.raw}") invalidly used on the for-list <"${node.tag}"> which has a wx:for directive, please create a block element to wrap the for-list and move the if-directive to it`)
+    return
+  }
   let preNode = findPrevNode(node)
   if (preNode && (preNode.if || preNode.elseif)) {
     return `else if(${node.elseif.exp}){\n${genNode(node)}}\n`
   } else {
-    warn$1(`wx:elif (wx:elif="${node.elseif.raw}") used on element <"${node.tag}"> without corresponding wx:if or wx:elif.`)
+    error$1(`wx:elif (wx:elif="${node.elseif.raw}") invalidly used on the element <"${node.tag}"> without corresponding wx:if or wx:elif.`)
   }
 }
 
 function genElse (node) {
   node.elseProcessed = true
+  if (node.for) {
+    error$1(`wx:else invalidly used on the for-list <"${node.tag}"> which has a wx:for directive, please create a block element to wrap the for-list and move the if-directive to it`)
+    return
+  }
   let preNode = findPrevNode(node)
   if (preNode && (preNode.if || preNode.elseif)) {
     return `else{\n${genNode(node)}}\n`
   } else {
-    warn$1(`wx:else used on element <"${node.tag}"> without corresponding wx:if or wx:elif.`)
+    error$1(`wx:else invalidly used on the element <"${node.tag}"> without corresponding wx:if or wx:elif.`)
   }
 }
 

@@ -198,7 +198,8 @@ function factory () {
 const EXPORT_MPX = factory()
 
 EXPORT_MPX.config = {
-  useStrictDiff: false
+  useStrictDiff: false,
+  ignoreRenderError: false
 }
 
 if (__mpx_mode__ === 'web') {

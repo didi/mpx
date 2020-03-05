@@ -1,6 +1,5 @@
 import {
-  observable,
-  comparer
+  observable
 } from '../mobx'
 
 import EXPORT_MPX from '../index'
@@ -18,7 +17,6 @@ import {
   asyncLock,
   diffAndCloneA,
   preProcessRenderData,
-  filterProperties,
   mergeData,
   aIsSubPathOfB,
   getFirstKey
@@ -247,18 +245,12 @@ export default class MPXProxy {
   }
 
   render () {
-    if (!this.cacheData) {
-      this.cacheData = extend({}, this.initialData) // 缓存数据，用于diff
+    const renderData = this.data
+    if (!this.miniRenderData) {
+      this.doRender(EXPORT_MPX.config.useStrictDiff ? this.processRenderDataFirstWithStrictDiff(renderData) : this.processRenderDataFirst(renderData))
+    } else {
+      this.doRender(EXPORT_MPX.config.useStrictDiff ? this.processRenderDataWithStrictDiff(renderData) : this.processRenderData(renderData))
     }
-    const newData = filterProperties(this.data, this.localKeys)
-    Object.keys(newData).forEach(key => {
-      if (comparer.structural(this.cacheData[key], newData[key])) {
-        delete newData[key]
-      } else {
-        this.cacheData[key] = newData[key]
-      }
-    })
-    this.doRender(newData)
   }
 
   renderWithData (rawRenderData) {
@@ -275,9 +267,8 @@ export default class MPXProxy {
     const result = {}
     for (let key in renderData) {
       if (renderData.hasOwnProperty(key)) {
-        let item = renderData[key]
-        let data = item[0]
-        let firstKey = item[1]
+        const data = renderData[key]
+        const firstKey = getFirstKey(key)
         if (this.localKeys.indexOf(firstKey) > -1) {
           this.miniRenderData[key] = result[key] = diffAndCloneA(data).clone
         }
@@ -291,9 +282,8 @@ export default class MPXProxy {
     const result = {}
     for (let key in renderData) {
       if (renderData.hasOwnProperty(key)) {
-        let item = renderData[key]
-        let data = item[0]
-        let firstKey = item[1]
+        const data = renderData[key]
+        const firstKey = getFirstKey(key)
         if (this.localKeys.indexOf(firstKey) > -1) {
           if (this.initialData.hasOwnProperty(firstKey)) {
             const localInitialData = getByPath(this.initialData, key)
@@ -325,9 +315,8 @@ export default class MPXProxy {
     const result = {}
     for (let key in renderData) {
       if (renderData.hasOwnProperty(key)) {
-        let item = renderData[key]
-        let data = item[0]
-        let firstKey = item[1]
+        const data = renderData[key]
+        const firstKey = getFirstKey(key)
         if (this.localKeys.indexOf(firstKey) === -1) {
           continue
         }
@@ -392,9 +381,8 @@ export default class MPXProxy {
     }, {})
     for (let key in renderData) {
       if (renderData.hasOwnProperty(key)) {
-        let item = renderData[key]
-        let data = item[0]
-        let firstKey = item[1]
+        const data = renderData[key]
+        const firstKey = getFirstKey(key)
         let { clone, diff } = diffAndCloneA(data, this.miniRenderData[key])
         if (this.localKeys.indexOf(firstKey) > -1 && diff) {
           this.miniRenderData[key] = result[key] = clone
@@ -468,7 +456,9 @@ export default class MPXProxy {
           try {
             return this.target.__injectedRender()
           } catch (e) {
-            warn(`Failed to execute render function, degrade to full-set-data mode.`, this.options.mpxFileResource, e)
+            if (!EXPORT_MPX.config.ignoreRenderError) {
+              warn(`Failed to execute render function, degrade to full-set-data mode.`, this.options.mpxFileResource, e)
+            }
             renderExecutionFailed = true
             this.render()
           }

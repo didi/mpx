@@ -456,7 +456,8 @@ interface ConvertRule {
 }
 
 interface MpxConfig {
-  useStrictDiff: Boolean
+  useStrictDiff: Boolean,
+  ignoreRenderError: Boolean
 }
 
 export function setConvertRule (rule: ConvertRule): void

@@ -24,6 +24,7 @@ module.exports = {
     needCollect = false,
     ignoreMap = {}
   } = {}) {
+    const keyPathMap = {}
     const ast = babylon.parse(code, {
       plugins: [
         'objectRestSpread'
@@ -80,8 +81,7 @@ module.exports = {
               // 找到访问路径
               current = path.parentPath
               last = path
-              let firstKey
-              let keyPath = firstKey = path.node.property.name
+              let keyPath = '' + path.node.property.name
               let rightExpression = t.memberExpression(t.thisExpression(), t.identifier(keyPath))
               while (current.isMemberExpression() && last.parentKey !== 'property') {
                 if (current.node.computed) {
@@ -110,9 +110,11 @@ module.exports = {
                 current = current.parentPath
               }
 
-              rightExpression = t.arrayExpression([rightExpression, t.stringLiteral(firstKey)])
-              // 构造赋值语句并挂到要改的path下，等对memberExpression访问exit时处理
-              last.assignment = t.assignmentExpression('=', t.memberExpression(t.identifier('__renderData'), t.stringLiteral(keyPath.toString()), true), rightExpression)
+              if (!keyPathMap[keyPath]) {
+                keyPathMap[keyPath] = true
+                // 构造赋值语句并挂到要改的path下，等对memberExpression访问exit时处理
+                last.assignment = t.assignmentExpression('=', t.memberExpression(t.identifier('__renderData'), t.stringLiteral(keyPath), true), rightExpression)
+              }
             }
           }
           // flag get
