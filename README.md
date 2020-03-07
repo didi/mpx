@@ -81,4 +81,12 @@ https://didi.github.io/mpx
 
 ## 交流
 
-打开链接扫码进入微信群或QQ群：https://s.didi.cn/rod
+提供 微信群 / QQ群 两种交流方式
+
+#### 添加MPX入群客服等待受邀入群
+
+<img alt="Mpx-wx客服" src="https://dpubstatic.udache.com/static/dpubimg/3c2048fd-350d-406f-8a84-a3a7b8b9dcf3.jpg" width="300">
+
+#### 扫码进入QQ群
+
+<img alt="Mpx-QQ群" src="https://dpubstatic.udache.com/static/dpubimg/ArcgC_eEr/temp_qrcode_share_374632411.png" width="300">
