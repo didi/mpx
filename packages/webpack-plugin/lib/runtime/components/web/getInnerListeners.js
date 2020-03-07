@@ -6,15 +6,12 @@ function processModel (listeners, context) {
 
   const modelEvent = context.$attrs.mpxModelEvent
   if (modelEvent) {
-    const rawListener = listeners[modelEvent]
-    const modelListener = function (e) {
+    // 对于modelEvent，内部获得时间后向外部转发，触发外部listener的同时转发为mpxModel事件
+    listeners[modelEvent] = function (e) {
+      context.$emit(modelEvent, e)
       context.$emit('mpxModel', e)
     }
-    if (rawListener && rawListener.fns) {
-      rawListener.fns = [modelListener].concat(rawListener.fns)
-    } else {
-      listeners[modelEvent] = modelListener
-    }
+    // 内部listener不需要mpxModel
     delete listeners.mpxModel
   }
 }
