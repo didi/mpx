@@ -66,8 +66,8 @@ export default class MPXProxy {
         error('Please specify a [__getInitialData] function to get component\'s initial data.', this.options.mpxFileResource)
         return
       }
-      this.watchers = [] // 保存所有观察者
-      this.renderReaction = null
+      this._watchers = []
+      this._watcher = null
       this.computedKeys = options.computed ? enumerableKeys(options.computed) : []
       this.localKeys = this.computedKeys.slice() // 非props key
       this.forceUpdateData = {}// 强制更新的数据
@@ -169,7 +169,9 @@ export default class MPXProxy {
     /* target的数据访问代理到将proxy的data */
     proxy(this.target, this.data)
     // 初始化watch
-    this.initWatch(options.watch)
+    if (options.watch) {
+      this.initWatch(options.watch)
+    }
   }
 
   initData (dataFn) {
@@ -238,20 +240,28 @@ export default class MPXProxy {
     }
   }
 
-
-  initWatch (watches) {
-    if (type(watches) === 'Object') {
-      enumerableKeys(watches).forEach(key => {
-        const handler = watches[key]
-        if (type(handler) === 'Array') {
-          handler.forEach(item => {
-            this.watch(key, item)
-          })
-        } else {
-          this.watch(key, handler)
+  initWatch (watch) {
+    for (const key in watch) {
+      const handler = watch[key]
+      if (Array.isArray(handler)) {
+        for (let i = 0; i < handler.length; i++) {
+          this.createWatcher(key, handler[i])
         }
-      })
+      } else {
+        this.createWatcher(key, handler)
+      }
     }
+  }
+
+  createWatcher (keyOrFn, handler, options) {
+    if (type(handler) === 'Object') {
+      options = handler
+      handler = handler.handler
+    }
+    if (typeof handler === 'string') {
+      handler = this.target[handler]
+    }
+    return this.watch(keyOrFn, handler, options)
   }
 
   collectLocalKeys (data) {
@@ -273,32 +283,30 @@ export default class MPXProxy {
     }
   }
 
-  watch (expr, handler, options) {
-    const watcher = watch(this.target, expr, handler, options)
-    this.watchers.push(watcher)
-    return this.removeWatch(watcher)
-  }
 
-  removeWatch (watcher) {
-    return () => {
-      const watchers = this.watchers
-      if (watcher) {
-        const index = watchers.indexOf(watcher)
-        index > -1 && watchers.splice(index, 1)
-        watcher.destroy()
-      } else {
-        watcher = watchers.shift()
-        while (watcher) {
-          watcher.destroy()
-          watcher = watchers.shift()
-        }
-      }
+  watch (expOrFn, cb, options) {
+    if (type(cb) === 'Object') {
+      return this.createWatcher(expOrFn, cb, options)
+    }
+    options = options || {}
+    options.user = true
+    const watcher = new Watcher(this, expOrFn, cb, options)
+    if (options.immediate) {
+      cb.call(this.target, watcher.value)
+    }
+    return function unwatchFn () {
+      watcher.teardown()
     }
   }
 
   clearWatchers () {
-    this.renderReaction = null
-    this.removeWatch()()
+    if (this._watcher) {
+      this._watcher.teardown()
+    }
+    let i = this._watchers.length
+    while (i--) {
+      this._watchers[i].teardown()
+    }
   }
 
   render () {
@@ -504,35 +512,21 @@ export default class MPXProxy {
 
   initRender () {
     let renderWatcher
-    let renderExecutionFailed = false
     if (this.target.__injectedRender) {
-      renderWatcher = watch(this.target, () => {
-        if (renderExecutionFailed) {
+      renderWatcher = new Watcher(this, () => {
+        try {
+          return this.target.__injectedRender()
+        } catch (e) {
+          if (!EXPORT_MPX.config.ignoreRenderError) {
+            warn(`Failed to execute render function, degrade to full-set-data mode.`, this.options.mpxFileResource, e)
+          }
           this.render()
-        } else {
-          try {
-            return this.target.__injectedRender()
-          } catch (e) {
-            if (!EXPORT_MPX.config.ignoreRenderError) {
-              warn(`Failed to execute render function, degrade to full-set-data mode.`, this.options.mpxFileResource, e)
-            }
-            renderExecutionFailed = true
-            this.render()
-          }
         }
-      }, {
-        handler: (ret) => {
-          if (!renderExecutionFailed) {
-            this.renderWithData(ret)
-          }
-        },
-        immediate: true,
-        forceCallback: true
-      })
+      }, noop)
     } else {
-      renderWatcher = watch(this.target, () => {
+      renderWatcher = new Watcher(this, () => {
         this.render()
-      })
+      }, noop)
     }
     this.renderReaction = renderWatcher.reaction
     this.watchers.push(renderWatcher)
