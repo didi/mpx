@@ -163,12 +163,9 @@ export function defineGetterSetter (target, key, getValue, setValue, context) {
   Object.defineProperty(target, key, descriptor)
 }
 
-export function proxy (target, source, keys, mapKeys, readonly) {
-  if (typeof mapKeys === 'boolean') {
-    readonly = mapKeys
-    mapKeys = null
-  }
-  keys.forEach((key, index) => {
+export function proxy (target, source, keys, readonly) {
+  keys = keys || enumerableKeys(source)
+  keys.forEach((key) => {
     const descriptor = {
       get () {
         return source[key]
@@ -179,7 +176,7 @@ export function proxy (target, source, keys, mapKeys, readonly) {
     !readonly && (descriptor.set = function (val) {
       source[key] = val
     })
-    Object.defineProperty(target, mapKeys ? mapKeys[index] : key, descriptor)
+    Object.defineProperty(target, key, descriptor)
   })
   return target
 }

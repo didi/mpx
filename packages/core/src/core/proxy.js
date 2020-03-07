@@ -2,9 +2,14 @@ import {
   observable
 } from '../mobx'
 
+import { observe } from '../observer'
+import Watcher from '../observer/watcher'
+import Dep from '../observer/dep'
+
 import EXPORT_MPX from '../index'
 
 import {
+  noop,
   type,
   enumerableKeys,
   extend,
@@ -39,6 +44,14 @@ import {
 import { warn, error } from '../helper/log'
 
 let uid = 0
+
+
+const sharedPropertyDefinition = {
+  enumerable: true,
+  configurable: true,
+  get: noop,
+  set: noop
+}
 
 export default class MPXProxy {
   constructor (options, target) {
@@ -150,17 +163,17 @@ export default class MPXProxy {
 
   initState () {
     const options = this.options
-    const data = this.initData(options.data)
-    const proxyData = extend({}, this.initialData, data)
-    this.initComputed(options.computed, proxyData)
-    this.data = observable(proxyData)
+    this.initData(options.data)
+    this.initComputed(options.computed)
+
     /* target的数据访问代理到将proxy的data */
-    proxy(this.target, this.data, enumerableKeys(this.data).concat(this.computedKeys))
+    proxy(this.target, this.data)
     // 初始化watch
     this.initWatch(options.watch)
   }
 
   initData (dataFn) {
+    const methods = this.options.methods
     // 预先将initialData代理到this.target中，便于dataFn中访问
     proxy(this.target, this.initialData, enumerableKeys(this.initialData))
     // mpxCid 解决支付宝环境selector为全局问题
@@ -168,19 +181,63 @@ export default class MPXProxy {
       mpxCid: this.uid
     }, typeof dataFn === 'function' ? dataFn.call(this.target) : dataFn)
     this.collectLocalKeys(data)
-    return data
+    this.data = extend({}, this.initialData, data)
+    observe(this.data, true)
   }
 
-  initComputed (computedConfig, proxyData) {
-    this.computedKeys.forEach(key => {
-      if (key in proxyData) {
-        error(`The computed key [${key}] is duplicated, please check.`, this.options.mpxFileResource)
+  initComputed (computed) {
+    const watchers = this._computedWatchers = Object.create(null)
+    for (const key in computed) {
+      const userDef = computed[key]
+      const getter = typeof userDef === 'function' ? userDef : userDef.get
+      watchers[key] = new Watcher(this,
+        getter || noop,
+        noop,
+        { lazy: true }
+      )
+      if (!(key in this.data)) {
+        this.defineComputed(key, userDef)
+      } else {
+        error(`The computed key [${key}] is duplicated with data/props, please check.`, this.options.mpxFileResource)
       }
-      const getValue = computedConfig[key].get || computedConfig[key]
-      const setValue = computedConfig[key].set
-      defineGetterSetter(proxyData, key, getValue, setValue, this.target)
-    })
+    }
+
   }
+
+  defineComputed (
+    target,
+    key,
+    userDef
+  ) {
+    if (typeof userDef === 'function') {
+      sharedPropertyDefinition.get = this.createComputedGetter(key)
+      sharedPropertyDefinition.set = noop
+    } else {
+      sharedPropertyDefinition.get = userDef.get
+        ? this.createComputedGetter(key)
+        : noop
+      sharedPropertyDefinition.set = userDef.set
+        ? userDef.set.bind(this.target)
+        : noop
+    }
+    Object.defineProperty(target, key, sharedPropertyDefinition)
+  }
+
+  createComputedGetter (key) {
+    return () => {
+      const watcher = this._computedWatchers && this._computedWatchers[key]
+      if (watcher) {
+        if (watcher.dirty) {
+          watcher.evaluate()
+        }
+        if (Dep.target) {
+          watcher.depend()
+        }
+        return watcher.value
+      }
+    }
+  }
+
 
   initWatch (watches) {
     if (type(watches) === 'Object') {

@@ -82,7 +82,6 @@ module.exports = {
               current = path.parentPath
               last = path
               let keyPath = '' + path.node.property.name
-              let rightExpression = t.memberExpression(t.thisExpression(), t.identifier(keyPath))
               while (current.isMemberExpression() && last.parentKey !== 'property') {
                 if (current.node.computed) {
                   if (t.isLiteral(current.node.property)) {
@@ -91,10 +90,8 @@ module.exports = {
                         break
                       }
                       keyPath += `.${current.node.property.value}`
-                      rightExpression = t.memberExpression(rightExpression, t.stringLiteral(current.node.property.value), true)
                     } else {
                       keyPath += `[${current.node.property.value}]`
-                      rightExpression = t.memberExpression(rightExpression, t.numericLiteral(current.node.property.value), true)
                     }
                   } else {
                     break
@@ -104,7 +101,6 @@ module.exports = {
                     break
                   }
                   keyPath += `.${current.node.property.name}`
-                  rightExpression = t.memberExpression(rightExpression, t.identifier(current.node.property.name))
                 }
                 last = current
                 current = current.parentPath
@@ -112,38 +108,17 @@ module.exports = {
 
               if (!keyPathMap[keyPath]) {
                 keyPathMap[keyPath] = true
-                // 构造赋值语句并挂到要改的path下，等对memberExpression访问exit时处理
-                last.assignment = t.assignmentExpression('=', t.memberExpression(t.identifier('__renderData'), t.stringLiteral(keyPath), true), rightExpression)
+                // 构造赋值表达式左值节点并挂到要改的path下，右值因为可能存在后续变更，在对memberExpression访问exit时进行替换处理
+                last.assignment = t.memberExpression(t.identifier('__renderData'), t.stringLiteral(keyPath), true)
               }
             }
-          }
-          // flag get
-          last = path
-          current = path.parentPath
-          while (current.isMemberExpression() && last.parentKey !== 'property') {
-            if (!dangerousKeyMap[current.node.property.name || current.node.property.value]) {
-              current.shouldGet = true
-            }
-            last = current
-            current = current.parentPath
           }
         }
       },
       MemberExpression: {
         exit (path) {
-          if (path.shouldGet) {
-            delete path.shouldGet
-            let property
-            if (path.node.computed) {
-              property = path.node.property
-            } else {
-              property = t.stringLiteral(path.node.property.name)
-            }
-            let targetNode = t.callExpression(t.memberExpression(t.thisExpression(), t.identifier('__get')), [path.node.object, property])
-            path.replaceWith(targetNode)
-          }
           if (path.assignment) {
-            path.replaceWith(t.sequenceExpression([path.assignment, path.node]))
+            path.replaceWith(t.assignmentExpression('=', path.assignment, path.node))
           }
         }
       }
