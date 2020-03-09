@@ -3,9 +3,7 @@ import Watcher from '../observer/watcher'
 import { watch } from '../observer/watch'
 import { initComputed } from '../observer/computed'
 import { queueWatcher } from '../observer/scheduler'
-
 import EXPORT_MPX from '../index'
-
 import {
   noop,
   type,
@@ -23,10 +21,7 @@ import {
   aIsSubPathOfB,
   getFirstKey
 } from '../helper/utils'
-
 import _getByPath from '../helper/getByPath'
-
-import { queueWatcher } from '../observer/scheduler'
 import { getRenderCallBack } from '../platform/patch'
 import {
   BEFORECREATE,
@@ -36,11 +31,9 @@ import {
   UPDATED,
   DESTROYED
 } from './innerLifecycle'
-
 import { warn, error } from '../helper/log'
 
 let uid = 0
-
 
 export default class MPXProxy {
   constructor (options, target) {
@@ -208,7 +201,6 @@ export default class MPXProxy {
       hook.call(this.target, ...params)
     }
   }
-
 
   watch (expOrFn, cb, options) {
     return watch(this, expOrFn, cb, options)
@@ -412,7 +404,6 @@ export default class MPXProxy {
     }
     this.target.__render(processUndefined(data), callback)
   }
-
 
   initRender () {
     let renderWatcher

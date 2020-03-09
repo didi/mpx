@@ -8,7 +8,7 @@ export function watch (vm, expOrFn, cb, options) {
     cb = cb.handler
   }
   if (typeof cb === 'string') {
-    cb = vm.target[handler]
+    cb = vm.target[cb]
   }
 
   options = options || {}

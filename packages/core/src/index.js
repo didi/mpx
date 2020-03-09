@@ -141,7 +141,7 @@ if (__mpx_mode__ === 'web') {
 
   InstanceAPIs = {
     $set: set,
-    $remove: remove,
+    $remove: remove
   }
 }
 

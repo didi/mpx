@@ -26,7 +26,6 @@ export function initComputed (vm, target, computed) {
       error(`The computed key [${key}] is duplicated with data/props, please check.`, vm.options.mpxFileResource)
     }
   }
-
 }
 
 function defineComputed (
@@ -48,7 +47,6 @@ function defineComputed (
   }
   Object.defineProperty(target, key, sharedPropertyDefinition)
 }
-
 
 function createComputedGetter (vm, key) {
   return () => {
