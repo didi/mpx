@@ -19,6 +19,14 @@ export default function proxyEventMixin () {
   }
 
   return {
+    beforeCreate () {
+      const modelEvent = this.$attrs.mpxModelEvent
+      if (modelEvent) {
+        this.$on(modelEvent, (e) => {
+          this.$emit('mpxModel', e)
+        })
+      }
+    },
     methods
   }
 }

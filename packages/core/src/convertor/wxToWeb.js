@@ -51,7 +51,7 @@ export default {
   pageMode: 'blend',
   // support传递为true以将methods外层的方法函数合入methods中
   support: true,
-  // todo 支持onshow/onhide/onpagenotfound
+  // todo 支持onpagenotfound
   lifecycleProxyMap: {
     '__created__': ['onLaunch', 'onLoad', 'created', 'attached'],
     '__mounted__': ['ready', 'onReady'],
