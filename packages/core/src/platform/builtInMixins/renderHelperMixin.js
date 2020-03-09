@@ -1,5 +1,4 @@
 import { isObject, likeArray } from '../../helper/utils'
-import { toJS, isObservable, get, isObservableArray } from '../../mobx'
 
 export default function renderHelperMixin () {
   return {
@@ -23,18 +22,11 @@ export default function renderHelperMixin () {
         }
       },
       __travel (val, __seen = []) {
-        // render函数中深度遍历对象，处理props传递问题
-        if (isObservable(val) && __seen.indexOf(val) === -1) {
-          toJS(val, false)
-          __seen.push(val)
-        }
+        // render中deep diff，不需要再深度遍历属性
         return val
       },
-      __get (target, property) {
-        if (isObservable(target) && !isObservableArray(target)) {
-          return get(target, property)
-        }
-        return target[property]
+      __renderWithData (renderData) {
+        return this.__mpxProxy.renderWithData(renderData)
       }
     }
   }

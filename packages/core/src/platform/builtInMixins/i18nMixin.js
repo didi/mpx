@@ -1,5 +1,5 @@
 import { BEFORECREATE } from '../../core/innerLifecycle'
-import { observable } from '../../mobx'
+import { observe } from '../../observer/index'
 
 export default function i18nMixin () {
   if (global.i18n) {
@@ -8,7 +8,8 @@ export default function i18nMixin () {
         mpxLocale: global.i18n.locale || 'zh-CN'
       },
       [BEFORECREATE] () {
-        this.$i18n = observable({ locale: global.i18n.locale })
+        this.$i18n = { locale: global.i18n.locale }
+        observe(this.$i18n)
         this.$watch(() => {
           return global.i18n.locale
         }, (locale) => {

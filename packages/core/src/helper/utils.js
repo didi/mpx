@@ -1,11 +1,3 @@
-import {
-  isObservableArray,
-  isObservableMap,
-  isObservable,
-  get,
-  toJS
-} from '../mobx'
-
 import Vue from '../vue'
 
 import _getByPath from './getByPath'
@@ -125,10 +117,7 @@ export function getByPath (data, pathStrOrArr, defaultVal, errTip) {
     if (!path) return
     const result = _getByPath(data, path, (value, key) => {
       let newValue
-      if (__mpx_mode__ !== 'web' && isObservable(value)) {
-        // key可能不是一个响应式属性，那么get将无法返回正确值
-        newValue = get(value, key) || value[key]
-      } else if (isExistAttr(value, key)) {
+      if (isExistAttr(value, key)) {
         newValue = value[key]
       } else {
         newValue = errTip
@@ -181,17 +170,6 @@ export function proxy (target, source, keys, readonly) {
   return target
 }
 
-export function filterProperties (source, props = []) {
-  const newData = {}
-  props.forEach(prop => {
-    if (prop in source) {
-      const result = source[prop]
-      newData[prop] = __mpx_mode__ !== 'web' && isObservable(result) ? toJS(result) : diffAndCloneA(result).clone
-    }
-  })
-  return newData
-}
-
 export function merge (to, from) {
   if (!from) return to
   const keys = Object.keys(from)
@@ -210,23 +188,11 @@ export function merge (to, from) {
 }
 
 export function enumerableKeys (obj) {
-  const keys = []
-  for (let key in obj) {
-    keys.push(key)
-  }
-  return keys
+  return Object.keys(obj)
 }
 
-export function extend (target, ...froms) {
-  for (const from of froms) {
-    if (type(from) === 'Object') {
-      // for in 能遍历原型链上的属性
-      for (const key in from) {
-        target[key] = from[key]
-      }
-    }
-  }
-  return target
+export function extend (...args) {
+  return Object.assign.apply(null, args)
 }
 
 export function dissolveAttrs (target = {}, keys) {
@@ -247,12 +213,43 @@ export function isObject (obj) {
   return obj !== null && typeof obj === 'object'
 }
 
-export function likeArray (arr) {
-  if (__mpx_mode__ === 'web') {
-    return Array.isArray(arr)
-  } else {
-    return Array.isArray(arr) || isObservableArray(arr)
+export function isPlainObject (obj) {
+  return type(obj) === 'Object'
+}
+
+const hasOwnProperty = Object.prototype.hasOwnProperty
+
+export function hasOwn (obj, key) {
+  return hasOwnProperty.call(obj, key)
+}
+
+export const hasProto = '__proto__' in {}
+
+export function isValidArrayIndex (val) {
+  const n = parseFloat(String(val))
+  return n >= 0 && Math.floor(n) === n && isFinite(val)
+}
+
+export function remove (arr, item) {
+  if (arr.length) {
+    const index = arr.indexOf(item)
+    if (index > -1) {
+      return arr.splice(index, 1)
+    }
   }
+}
+
+export function def (obj, key, val, enumerable) {
+  Object.defineProperty(obj, key, {
+    value: val,
+    enumerable: !!enumerable,
+    writable: true,
+    configurable: true
+  })
+}
+
+export function likeArray (arr) {
+  return Array.isArray(arr)
 }
 
 export function isDef (v) {
@@ -433,16 +430,6 @@ export function processUndefined (obj) {
   return result
 }
 
-function unwrap (a) {
-  if (__mpx_mode__ !== 'web' && isObservableArray(a)) {
-    return a.peek()
-  }
-  if (__mpx_mode__ !== 'web' && isObservableMap(a)) {
-    return a.entries()
-  }
-  return a
-}
-
 export function noop () {
 
 }
@@ -468,8 +455,6 @@ export function diffAndCloneA (a, b) {
     if (typeof a !== 'object' || a === null) {
       setDiff(a !== b)
     } else {
-      a = unwrap(a)
-      b = unwrap(b)
       const toString = Object.prototype.toString
       const className = toString.call(a)
       const sameClass = className === toString.call(b)

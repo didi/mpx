@@ -1,16 +1,9 @@
 import Dep from './dep'
-import VNode from '../vdom/vnode'
 import { arrayMethods } from './array'
-import {
-  def,
-  warn,
-  hasOwn,
-  hasProto,
-  isObject,
-  isPlainObject,
-  isValidArrayIndex,
-  isServerRendering
-} from '../util/index'
+
+import { def, isPlainObject, isObject, hasProto, hasOwn, isValidArrayIndex } from '../helper/utils'
+
+import { warn } from '../helper/log'
 
 const arrayKeys = Object.getOwnPropertyNames(arrayMethods)
 
@@ -31,10 +24,6 @@ export const observerState = {
  * collect dependencies and dispatches updates.
  */
 export class Observer {
-  value
-  dep
-  vmCount
-
   constructor (value) {
     this.value = value
     this.dep = new Dep()
@@ -104,7 +93,7 @@ function copyAugment (target, src, keys) {
  * or the existing observer if the value already has one.
  */
 export function observe (value, asRootData) {
-  if (!isObject(value) || value instanceof VNode) {
+  if (!isObject(value)) {
     return
   }
   let ob
@@ -112,10 +101,8 @@ export function observe (value, asRootData) {
     ob = value.__ob__
   } else if (
     observerState.shouldConvert &&
-    !isServerRendering() &&
     (Array.isArray(value) || isPlainObject(value)) &&
-    Object.isExtensible(value) &&
-    !value._isVue
+    Object.isExtensible(value)
   ) {
     ob = new Observer(value)
   }
@@ -170,9 +157,7 @@ export function defineReactive (
         return
       }
       /* eslint-enable no-self-compare */
-      if (process.env.NODE_ENV !== 'production' && customSetter) {
-        customSetter()
-      }
+      customSetter && customSetter()
       if (setter) {
         setter.call(obj, newVal)
       } else {
@@ -200,11 +185,8 @@ export function set (target, key, val) {
     return val
   }
   const ob = target.__ob__
-  if (target._isVue || (ob && ob.vmCount)) {
-    process.env.NODE_ENV !== 'production' && warn(
-      'Avoid adding reactive properties to a Vue instance or its root $data ' +
-      'at runtime - declare it upfront in the data option.'
-    )
+  if (ob && ob.vmCount) {
+    warn('Avoid adding reactive properties to the root data at runtime, declare it upfront in the data option!')
     return val
   }
   if (!ob) {
@@ -225,11 +207,8 @@ export function del (target, key) {
     return
   }
   const ob = target.__ob__
-  if (target._isVue || (ob && ob.vmCount)) {
-    process.env.NODE_ENV !== 'production' && warn(
-      'Avoid deleting properties on a Vue instance or its root $data ' +
-      '- just set it to null.'
-    )
+  if (ob && ob.vmCount) {
+    warn('Avoid deleting properties on the root data, just set it to null!')
     return
   }
   if (!hasOwn(target, key)) {

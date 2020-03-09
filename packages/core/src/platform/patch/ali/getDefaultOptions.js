@@ -1,18 +1,15 @@
-import {
-  comparer
-} from '../../../mobx'
-
 import MPXProxy from '../../../core/proxy'
 import customKey from '../customOptionKeys'
 import mergeOptions from '../../../core/mergeOptions'
 import { error } from '../../../helper/log'
+import { diffAndCloneA } from '../../../helper/utils'
 
 function transformApiForProxy (context, currentInject) {
   const rawSetData = context.setData.bind(context)
   if (Object.getOwnPropertyDescriptor(context, 'setData').configurable) {
     Object.defineProperty(context, 'setData', {
       get () {
-        return context.__mpxProxy.setData.bind(context.__mpxProxy)
+        return context.__mpxProxy.forceUpdate.bind(context.__mpxProxy)
       },
       configurable: true
     })
@@ -102,14 +99,15 @@ export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
         if (this.$rawOptions.__nativeRender__) {
           const newData = {}
           Object.keys(nextProps).forEach((key) => {
-            if (!key.startsWith('$') && typeof nextProps[key] !== 'function' && !comparer.structural(this.props[key], nextProps[key])) {
+            // todo 验证原生vant转支付宝
+            if (!key.startsWith('$') && typeof nextProps[key] !== 'function' && diffAndCloneA(nextProps[key], this.props[key]).diff) {
               newData[key] = nextProps[key]
             }
           })
-          this.__mpxProxy.setData(newData)
+          this.__mpxProxy.forceUpdate(newData)
         } else {
           Object.keys(nextProps).forEach(key => {
-            if (!key.startsWith('$') && typeof nextProps[key] !== 'function' && !comparer.structural(this.props[key], nextProps[key])) {
+            if (!key.startsWith('$') && typeof nextProps[key] !== 'function' && diffAndCloneA(nextProps[key], this.props[key]).diff) {
               this[key] = nextProps[key]
             }
           })

@@ -1,14 +1,6 @@
 import { queueWatcher } from './scheduler'
 import { pushTarget, popTarget } from './dep'
-
-import {
-  warn,
-  remove,
-  isObject,
-  parsePath,
-  _Set as Set,
-  handleError
-} from '../util/index'
+import { getByPath, isObject, remove } from '../helper/utils'
 
 let uid = 0
 
@@ -29,37 +21,26 @@ export default class Watcher {
     // options
     if (options) {
       this.deep = !!options.deep
-      this.user = !!options.user
       this.lazy = !!options.lazy
       this.sync = !!options.sync
     } else {
-      this.deep = this.user = this.lazy = this.sync = false
+      this.deep = this.lazy = this.sync = false
     }
     this.cb = cb
     this.id = ++uid // uid for batching
     this.active = true
+    this.immediateAsync = false
     this.dirty = this.lazy // for lazy watchers
     this.deps = []
     this.newDeps = []
     this.depIds = new Set()
     this.newDepIds = new Set()
-    this.expression = process.env.NODE_ENV !== 'production'
-      ? expOrFn.toString()
-      : ''
     // parse expression for getter
     if (typeof expOrFn === 'function') {
       this.getter = expOrFn
     } else {
-      this.getter = parsePath(expOrFn)
-      if (!this.getter) {
-        this.getter = function () {
-        }
-        process.env.NODE_ENV !== 'production' && warn(
-          `Failed watching path: "${expOrFn}" ` +
-          'Watcher only accepts simple dot-delimited paths. ' +
-          'For full control, use a function instead.',
-          vm
-        )
+      this.getter = function () {
+        return getByPath(this, expOrFn)
       }
     }
     this.value = this.lazy
@@ -75,13 +56,9 @@ export default class Watcher {
     let value
     const vm = this.vm
     try {
-      value = this.getter.call(vm, vm)
+      value = this.getter.call(vm.target)
     } catch (e) {
-      if (this.user) {
-        handleError(e, vm, `getter for watcher "${this.expression}"`)
-      } else {
-        throw e
-      }
+      throw e
     } finally {
       // "touch" every property so they are all tracked as
       // dependencies for deep watching
@@ -151,6 +128,11 @@ export default class Watcher {
   run () {
     if (this.active) {
       const value = this.get()
+      if (this.immediateAsync) {
+        this.immediateAsync = false
+        this.value = value
+        this.cb.call(this.vm.target, value)
+      }
       if (
         value !== this.value ||
         // Deep watchers and watchers on Object/Arrays should fire even
@@ -162,15 +144,7 @@ export default class Watcher {
         // set new value
         const oldValue = this.value
         this.value = value
-        if (this.user) {
-          try {
-            this.cb.call(this.vm, value, oldValue)
-          } catch (e) {
-            handleError(e, this.vm, `callback for watcher "${this.expression}"`)
-          }
-        } else {
-          this.cb.call(this.vm, value, oldValue)
-        }
+        this.cb.call(this.vm.target, value, oldValue)
       }
     }
   }
@@ -199,10 +173,7 @@ export default class Watcher {
    */
   teardown () {
     if (this.active) {
-      // remove self from vm's watcher list
-      // this is a somewhat expensive operation so we skip it
-      // if the vm is being destroyed.
-      if (!this.vm._isBeingDestroyed) {
+      if (this.vm.state !== '__destroyed__') {
         remove(this.vm._watchers, this)
       }
       let i = this.deps.length

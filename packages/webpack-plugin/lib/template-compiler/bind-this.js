@@ -6,7 +6,7 @@ const generate = require('babel-generator').default
 let names = 'Infinity,undefined,NaN,isFinite,isNaN,' +
   'parseFloat,parseInt,decodeURI,decodeURIComponent,encodeURI,encodeURIComponent,' +
   'Math,Number,Date,Array,Object,Boolean,String,RegExp,Map,Set,JSON,Intl,' +
-  'require,global,__seen,__renderData'
+  'require,global,__renderData'
 
 let hash = {}
 names.split(',').forEach(function (name) {
@@ -38,13 +38,10 @@ module.exports = {
       CallExpression: {
         enter (path) {
           const callee = path.node.callee
-          const args = path.node.arguments
           if (
             t.isMemberExpression(callee) &&
             t.isThisExpression(callee.object) &&
-            (callee.property.name === '__travel' || callee.property.value === '__travel') &&
-            t.isBooleanLiteral(args[2]) &&
-            args[2].value === true
+            (callee.property.name === '__travel' || callee.property.value === '__travel')
           ) {
             isProps = true
             path.isProps = true

@@ -45,7 +45,7 @@ function transformApiForProxy (context, currentInject) {
   Object.defineProperties(context, {
     setData: {
       get () {
-        return this.__mpxProxy.setData.bind(this.__mpxProxy)
+        return this.__mpxProxy.forceUpdate.bind(this.__mpxProxy)
       },
       configurable: true
     },

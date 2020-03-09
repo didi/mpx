@@ -1,25 +1,13 @@
-import {
-  toJS as toPureObject,
-  extendObservable,
-  observable,
-  set,
-  get,
-  remove,
-  has,
-  values,
-  keys,
-  entries,
-  action as createAction
-} from './mobx'
 import * as platform from './platform'
 import createStore, { createStoreWithThis } from './core/createStore'
 import { injectMixins } from './core/injectMixins'
-import { watch } from './core/watcher'
 import { extend } from './helper/utils'
 import { setConvertRule } from './convertor/convertor'
 import { getMixin } from './core/mergeOptions'
 import { error } from './helper/log'
 import Vue from './vue'
+import { observe, set, del as remove } from './observer/index'
+import { watch as watchWithVm } from './observer/watch'
 
 export function createApp (config, ...rest) {
   const mpx = new EXPORT_MPX()
@@ -36,7 +24,7 @@ export function createComponent (config, ...rest) {
   platform.createComponent(extend({ proto: mpx.proto }, config), ...rest)
 }
 
-export { createStore, createStoreWithThis, toPureObject, observable, extendObservable, watch, createAction, getMixin }
+export { createStore, createStoreWithThis, getMixin }
 
 export function getComputed (computed) {
   // ts computed类型推导辅助函数
@@ -98,21 +86,6 @@ if (__mpx_mode__ === 'web') {
   const watch = vm.$watch.bind(vm)
   const set = Vue.set.bind(Vue)
   const remove = Vue.delete.bind(Vue)
-  const get = function (target, key) {
-    return target[key]
-  }
-  const has = function (target, key) {
-    return target.hasOwnProperty(key)
-  }
-  const values = function (target) {
-    return Object.values(target)
-  }
-  const keys = function (target) {
-    return Object.keys(target)
-  }
-  const entries = function (target) {
-    return Object.entries(target)
-  }
   // todo 补齐web必要api
   APIs = {
     createApp,
@@ -126,12 +99,7 @@ if (__mpx_mode__ === 'web') {
     watch,
     use,
     set,
-    get,
     remove,
-    has,
-    keys,
-    values,
-    entries,
     setConvertRule,
     getMixin,
     getComputed
@@ -139,48 +107,41 @@ if (__mpx_mode__ === 'web') {
 
   InstanceAPIs = {
     $set: set,
-    $get: get,
-    $remove: remove,
-    $has: has,
-    $keys: keys,
-    $values: values,
-    $entries: entries
+    $remove: remove
   }
 } else {
+  const observable = function (obj) {
+    observe(obj)
+    return obj
+  }
+
+  const vm = {}
+
+  const watch = function (expOrFn, cb, options) {
+    watchWithVm(vm, expOrFn, cb, options)
+  }
+
   APIs = {
     createApp,
     createPage,
     createComponent,
     createStore,
     createStoreWithThis,
-    toPureObject,
     mixin: injectMixins,
     injectMixins,
     observable,
-    extendObservable,
     watch,
     use,
     set,
-    get,
     remove,
-    has,
-    keys,
-    values,
-    entries,
     setConvertRule,
-    createAction,
     getMixin,
     getComputed
   }
 
   InstanceAPIs = {
     $set: set,
-    $get: get,
     $remove: remove,
-    $has: has,
-    $keys: keys,
-    $values: values,
-    $entries: entries
   }
 }
 
@@ -206,7 +167,8 @@ if (__mpx_mode__ === 'web') {
   window.__mpx = EXPORT_MPX
 } else {
   if (global.i18n) {
-    EXPORT_MPX.i18n = global.i18n = observable(global.i18n)
+    observe(global.i18n)
+    EXPORT_MPX.i18n = global.i18n
   }
 }
 

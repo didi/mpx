@@ -1,10 +1,8 @@
-import {
-  observable
-} from '../mobx'
-
 import { observe } from '../observer'
 import Watcher from '../observer/watcher'
-import Dep from '../observer/dep'
+import { watch } from '../observer/watch'
+import { initComputed } from '../observer/computed'
+import { queueWatcher } from '../observer/scheduler'
 
 import EXPORT_MPX from '../index'
 
@@ -16,7 +14,6 @@ import {
   proxy,
   isEmptyObject,
   processUndefined,
-  defineGetterSetter,
   setByPath,
   getByPath,
   asyncLock,
@@ -29,8 +26,7 @@ import {
 
 import _getByPath from '../helper/getByPath'
 
-import queueWatcher from './queueWatcher'
-import { watch } from './watcher'
+import { queueWatcher } from '../observer/scheduler'
 import { getRenderCallBack } from '../platform/patch'
 import {
   BEFORECREATE,
@@ -45,13 +41,6 @@ import { warn, error } from '../helper/log'
 
 let uid = 0
 
-
-const sharedPropertyDefinition = {
-  enumerable: true,
-  configurable: true,
-  get: noop,
-  set: noop
-}
 
 export default class MPXProxy {
   constructor (options, target) {
@@ -126,7 +115,6 @@ export default class MPXProxy {
   updated () {
     if (this.isMounted()) {
       this.lockTask(() => {
-        // 由于异步，需要确认 this.state
         if (this.isMounted()) {
           this.callUserHook(UPDATED)
         }
@@ -135,10 +123,10 @@ export default class MPXProxy {
   }
 
   destroyed () {
+    this.state = DESTROYED
     if (__mpx_mode__ !== 'web') {
       this.clearWatchers()
     }
-    this.state = DESTROYED
     this.callUserHook(DESTROYED)
   }
 
@@ -152,11 +140,6 @@ export default class MPXProxy {
       this.target.$watch = (...rest) => this.watch(...rest)
       // 强制执行render
       this.target.$forceUpdate = (...rest) => this.forceUpdate(...rest)
-      // 监听单次回调
-      this.target.$updated = fn => {
-        warn('Instance api [this.$updated] will be deprecated，please use [this.$nextTick] instead.', this.options.mpxFileResource)
-        this.nextTick(fn)
-      }
       this.target.$nextTick = fn => this.nextTick(fn)
     }
   }
@@ -164,9 +147,17 @@ export default class MPXProxy {
   initState () {
     const options = this.options
     this.initData(options.data)
-    this.initComputed(options.computed)
+    initComputed(this, this.data, options.computed)
 
-    /* target的数据访问代理到将proxy的data */
+    // 检测命名冲突
+    const methods = this.options.methods
+    if (methods) {
+      for (let key in this.data) {
+        if (key in methods) error(`The method key [${key}] is duplicated with data/props/computed, please check!`, this.options.mpxFileResource)
+      }
+    }
+
+    // target的数据访问代理到将proxy的data
     proxy(this.target, this.data)
     // 初始化watch
     if (options.watch) {
@@ -175,9 +166,8 @@ export default class MPXProxy {
   }
 
   initData (dataFn) {
-    const methods = this.options.methods
     // 预先将initialData代理到this.target中，便于dataFn中访问
-    proxy(this.target, this.initialData, enumerableKeys(this.initialData))
+    proxy(this.target, this.initialData)
     // mpxCid 解决支付宝环境selector为全局问题
     const data = extend({
       mpxCid: this.uid
@@ -187,81 +177,17 @@ export default class MPXProxy {
     observe(this.data, true)
   }
 
-  initComputed (computed) {
-    const watchers = this._computedWatchers = Object.create(null)
-    for (const key in computed) {
-      const userDef = computed[key]
-      const getter = typeof userDef === 'function' ? userDef : userDef.get
-      watchers[key] = new Watcher(this,
-        getter || noop,
-        noop,
-        { lazy: true }
-      )
-      if (!(key in this.data)) {
-        this.defineComputed(key, userDef)
-      } else {
-        error(`The computed key [${key}] is duplicated with data/props, please check.`, this.options.mpxFileResource)
-      }
-    }
-
-  }
-
-  defineComputed (
-    target,
-    key,
-    userDef
-  ) {
-    if (typeof userDef === 'function') {
-      sharedPropertyDefinition.get = this.createComputedGetter(key)
-      sharedPropertyDefinition.set = noop
-    } else {
-      sharedPropertyDefinition.get = userDef.get
-        ? this.createComputedGetter(key)
-        : noop
-      sharedPropertyDefinition.set = userDef.set
-        ? userDef.set.bind(this.target)
-        : noop
-    }
-    Object.defineProperty(target, key, sharedPropertyDefinition)
-  }
-
-  createComputedGetter (key) {
-    return () => {
-      const watcher = this._computedWatchers && this._computedWatchers[key]
-      if (watcher) {
-        if (watcher.dirty) {
-          watcher.evaluate()
-        }
-        if (Dep.target) {
-          watcher.depend()
-        }
-        return watcher.value
-      }
-    }
-  }
-
   initWatch (watch) {
     for (const key in watch) {
       const handler = watch[key]
       if (Array.isArray(handler)) {
         for (let i = 0; i < handler.length; i++) {
-          this.createWatcher(key, handler[i])
+          this.watch(key, handler[i])
         }
       } else {
-        this.createWatcher(key, handler)
+        this.watch(key, handler)
       }
     }
-  }
-
-  createWatcher (keyOrFn, handler, options) {
-    if (type(handler) === 'Object') {
-      options = handler
-      handler = handler.handler
-    }
-    if (typeof handler === 'string') {
-      handler = this.target[handler]
-    }
-    return this.watch(keyOrFn, handler, options)
   }
 
   collectLocalKeys (data) {
@@ -285,24 +211,10 @@ export default class MPXProxy {
 
 
   watch (expOrFn, cb, options) {
-    if (type(cb) === 'Object') {
-      return this.createWatcher(expOrFn, cb, options)
-    }
-    options = options || {}
-    options.user = true
-    const watcher = new Watcher(this, expOrFn, cb, options)
-    if (options.immediate) {
-      cb.call(this.target, watcher.value)
-    }
-    return function unwatchFn () {
-      watcher.teardown()
-    }
+    return watch(this, expOrFn, cb, options)
   }
 
   clearWatchers () {
-    if (this._watcher) {
-      this._watcher.teardown()
-    }
     let i = this._watchers.length
     while (i--) {
       this._watchers[i].teardown()
@@ -501,14 +413,6 @@ export default class MPXProxy {
     this.target.__render(processUndefined(data), callback)
   }
 
-  setData (data, callback) {
-    // 绑定回调中的 this 为当前组件
-    if (typeof callback === 'function') {
-      callback = callback.bind(this.target)
-    }
-    // 同步数据到proxy并设置data
-    this.forceUpdate(data, callback)
-  }
 
   initRender () {
     let renderWatcher
@@ -528,8 +432,7 @@ export default class MPXProxy {
         this.render()
       }, noop)
     }
-    this.renderReaction = renderWatcher.reaction
-    this.watchers.push(renderWatcher)
+    this._watcher = renderWatcher
   }
 
   forceUpdate (data, callback) {
@@ -545,13 +448,14 @@ export default class MPXProxy {
         setByPath(this.data, key, this.forceUpdateData[key])
       })
     }
-    callback && this.nextTick(callback)
-    if (this.renderReaction) {
-      // 无论是否改变，强制将状态置为stale，从而触发render
-      this.renderReaction.dependenciesState = 2
-      this.renderReaction.schedule()
+    if (callback) {
+      callback = callback.bind(this.target)
+      this.nextTick(callback)
+    }
+    if (this._watcher) {
+      this._watcher.update()
     } else {
-      this.doRender(this.forceUpdateData)
+      this.doRender()
     }
   }
 }

@@ -1,4 +1,4 @@
-import { remove } from '../util/index'
+import { remove } from '../helper/utils'
 
 let uid = 0
 
