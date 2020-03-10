@@ -461,18 +461,18 @@ export function diffAndCloneA (a, b) {
       let length
       let lastPath
       switch (className) {
-        case '[object RegExp]':
-        case '[object String]':
-          setDiff(!sameClass || '' + a !== '' + b)
-          break
-        case '[object Number]':
-        case '[object Date]':
-        case '[object Boolean]':
-          setDiff(!sameClass || +a !== +b)
-          break
-        case '[object Symbol]':
-        case '[object Function]':
-          setDiff(!sameClass || a !== b)
+        case '[object Object]':
+          const keys = Object.keys(a)
+          length = keys.length
+          clone = Object.create(null)
+          setDiff(!sameClass || length < Object.keys(b).length || !Object.keys(b).every((key) => a.hasOwnProperty(key)))
+          lastPath = curPath
+          for (let i = 0; i < length; i++) {
+            const key = keys[i]
+            curPath += `.${key}`
+            clone[key] = deepDiffAndCloneA(a[key], sameClass ? b[key] : undefined, currentDiff)
+            curPath = lastPath
+          }
           break
         case '[object Array]':
           length = a.length
@@ -485,18 +485,14 @@ export function diffAndCloneA (a, b) {
             curPath = lastPath
           }
           break
+        case '[object RegExp]':
+          setDiff(!sameClass || '' + a !== '' + b)
+          break
+        case '[object Date]':
+          setDiff(!sameClass || +a !== +b)
+          break
         default:
-          const keys = Object.keys(a)
-          length = keys.length
-          clone = {}
-          setDiff(!sameClass || length < Object.keys(b).length || !Object.keys(b).every((key) => a.hasOwnProperty(key)))
-          lastPath = curPath
-          for (let i = 0; i < length; i++) {
-            const key = keys[i]
-            curPath += `.${key}`
-            clone[key] = deepDiffAndCloneA(a[key], sameClass ? b[key] : undefined, currentDiff)
-            curPath = lastPath
-          }
+          setDiff(!sameClass || a !== b)
       }
     }
     if (currentDiff) {

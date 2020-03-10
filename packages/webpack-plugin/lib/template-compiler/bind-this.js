@@ -35,13 +35,14 @@ module.exports = {
     let isProps = false
 
     let bindThisVisitor = {
+      // 标记收集props数据
       CallExpression: {
         enter (path) {
           const callee = path.node.callee
           if (
             t.isMemberExpression(callee) &&
             t.isThisExpression(callee.object) &&
-            (callee.property.name === '__travel' || callee.property.value === '__travel')
+            (callee.property.name === '__props' || callee.property.value === '__props')
           ) {
             isProps = true
             path.isProps = true
@@ -50,6 +51,8 @@ module.exports = {
         exit (path) {
           if (path.isProps) {
             isProps = false
+            // 移除无意义的__props调用
+            path.replaceWith(path.node.arguments[0])
           }
         }
       },

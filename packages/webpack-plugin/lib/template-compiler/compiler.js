@@ -2025,7 +2025,7 @@ function genElse (node) {
 
 function genExps (node) {
   return `${node.exps.map(({ exp, isProps }) => {
-    return isProps ? `this.__travel(${exp});\n` : `${exp};\n`
+    return isProps ? `this.__props(${exp});\n` : `${exp};\n`
   }).join('')}`
 }
 

@@ -21,8 +21,7 @@ export default function renderHelperMixin () {
           }
         }
       },
-      __travel (val, __seen = []) {
-        // render中deep diff，不需要再深度遍历属性
+      __props (val) {
         return val
       },
       __renderWithData (renderData) {
