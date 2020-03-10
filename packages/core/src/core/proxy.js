@@ -71,7 +71,7 @@ export default class MPXProxy {
     this.callUserHook(CREATED, ...params)
     if (__mpx_mode__ !== 'web') {
       // 强制走小程序原生渲染逻辑
-      this.options.__nativeRender__ ? this.setData() : this.initRender()
+      this.options.__nativeRender__ ? this.forceUpdate() : this.initRender()
     }
   }
 
@@ -433,7 +433,7 @@ export default class MPXProxy {
     } else if (dataType === 'Object') {
       this.forceUpdateData = diffAndCloneA(data).clone
       Object.keys(this.forceUpdateData).forEach(key => {
-        if (this.localKeys.indexOf(getFirstKey(key)) === -1) {
+        if (!this.options.__nativeRender__ && this.localKeys.indexOf(getFirstKey(key)) === -1) {
           warn(`ForceUpdate data includes a props/computed key [${key}], which may yield a unexpected result!`, this.options.mpxFileResource)
         }
         setByPath(this.data, key, this.forceUpdateData[key])

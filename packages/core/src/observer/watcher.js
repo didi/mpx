@@ -17,6 +17,7 @@ export default class Watcher {
     options
   ) {
     this.vm = vm
+    vm._watchers = vm._watchers || []
     vm._watchers.push(this)
     // options
     if (options) {
@@ -132,8 +133,7 @@ export default class Watcher {
         this.immediateAsync = false
         this.value = value
         this.cb.call(this.vm.target, value)
-      }
-      if (
+      } else if (
         value !== this.value ||
         // Deep watchers and watchers on Object/Arrays should fire even
         // when the value is the same, because the value may

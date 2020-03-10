@@ -1,4 +1,4 @@
-import { isPlainObject } from '../helper/utils'
+import { isPlainObject, noop } from '../helper/utils'
 import Watcher from './watcher'
 import { queueWatcher } from './scheduler'
 
@@ -8,8 +8,14 @@ export function watch (vm, expOrFn, cb, options) {
     cb = cb.handler
   }
   if (typeof cb === 'string') {
-    cb = vm.target[cb]
+    if (vm.target && vm.target[cb]) {
+      cb = vm.target[cb]
+    } else {
+      cb = noop
+    }
   }
+
+  cb = cb || noop
 
   options = options || {}
   options.user = true

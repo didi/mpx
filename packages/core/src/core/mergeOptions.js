@@ -101,6 +101,7 @@ function extractObservers (options) {
           typeof callback === 'function' && callback.call(this, ...rest)
         },
         deep: true,
+        // 延迟触发首次回调，处理转换支付宝时在observer中查询组件的行为，如vant/picker中，如不考虑该特殊情形可用immediate代替
         immediateAsync: true
       })
     }
@@ -124,7 +125,7 @@ function extractObservers (options) {
             break
           }
         }
-        if (key.indexOf('.**')) {
+        if (key.indexOf('.**') > -1) {
           deep = true
           key = key.replace('.**', '')
         }

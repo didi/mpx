@@ -99,7 +99,6 @@ export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
         if (this.$rawOptions.__nativeRender__) {
           const newData = {}
           Object.keys(nextProps).forEach((key) => {
-            // todo 验证原生vant转支付宝
             if (!key.startsWith('$') && typeof nextProps[key] !== 'function' && diffAndCloneA(nextProps[key], this.props[key]).diff) {
               newData[key] = nextProps[key]
             }
