@@ -5,8 +5,6 @@
 
 /// <reference types="miniprogram-api-typings" />
 
-import {toJS, observable, extendObservable, action} from 'mobx'
-
 type Data = object | (() => object)
 
 type PropType = StringConstructor | NumberConstructor | BooleanConstructor | ObjectConstructor | ArrayConstructor | null
@@ -156,32 +154,16 @@ declare function get (obj: object, key: string): any
 
 declare function set (obj: object, key: string, value: any): any
 
+declare function observable<T extends object> (obj: T): T
+
 declare function remove (obj: object, key: string): any
-
-declare function has (obj: object, key: string): boolean
-
-declare function keys (obj: object): Array<string>
-
-declare function values (obj: object, key: string): Array<any>
-
-declare function entries (obj: object, key: string): Array<[string, any]>
 
 export interface MpxComponentIns {
   $refs: ObjectOf<any>
 
   $set: typeof set
 
-  $get: typeof get
-
   $remove: typeof remove
-
-  $has: typeof has
-
-  $keys: typeof keys
-
-  $values: typeof values
-
-  $entries: typeof entries
 
   $watch (expr: string | (() => any), handler: WatchHandler | WatchOptWithHandler, options?: WatchOpt): () => void
 
@@ -319,7 +301,6 @@ declare class Store<S = {}, G = {}, M = {}, A = {}, D extends Deps = {}> {
   mapGetters (depPath: string, maps: string[]): {
     [key: string]: () => any
   }
-
 
   mapMutations<K extends keyof M> (maps: K[]): Pick<GetMutations<M>, K>
   mapMutations (depPath: string, maps: string[]): {
@@ -462,11 +443,6 @@ interface MpxConfig {
 
 export function setConvertRule (rule: ConvertRule): void
 
-export const toPureObject: typeof toJS
-
-export const createAction: typeof action
-
-export {observable, extendObservable}
 
 export interface Mpx {
   createComponent: typeof createComponent
@@ -476,33 +452,19 @@ export interface Mpx {
   createStoreWithThis: typeof createStoreWithThis
   getMixin: typeof getMixin
   getComputed: typeof getComputed
-  toPureObject: typeof toJS
   mixin: typeof injectMixins
   injectMixins: typeof injectMixins
   observable: typeof observable
-  extendObservable: typeof extendObservable
 
   watch: typeof watch
 
   use (plugin: ((...args: any) => any) | { install: (...args: any) => any, [key: string]: any }, ...rest: any): Mpx
 
-  get: typeof get
-
   set: typeof set
 
   remove: typeof remove
 
-  has: typeof has
-
-  keys: typeof keys
-
-  values: typeof values
-
-  entries: typeof entries
-
   setConvertRule: typeof setConvertRule
-
-  createAction: typeof action
 
   config: MpxConfig
 }
