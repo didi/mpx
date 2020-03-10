@@ -356,6 +356,10 @@ module.exports = function (raw = '{}') {
                     ...queryObj
                   }
 
+                  if (content.plugins) {
+                    subPackage.plugins = content.plugins
+                  }
+
                   processSubPackagesQueue.push((callback) => {
                     processSubPackage(subPackage, context, callback)
                   })
