@@ -24,7 +24,6 @@ module.exports = {
     needCollect = false,
     ignoreMap = {}
   } = {}) {
-    const keyPathMap = {}
     const ast = babylon.parse(code, {
       plugins: [
         'objectRestSpread'
@@ -109,12 +108,8 @@ module.exports = {
                 last = current
                 current = current.parentPath
               }
-
-              if (!keyPathMap[keyPath]) {
-                keyPathMap[keyPath] = true
-                // 构造赋值语句并挂到要改的path下，等对memberExpression访问exit时处理
-                last.assignment = t.assignmentExpression('=', t.memberExpression(t.identifier('__renderData'), t.stringLiteral(keyPath), true), rightExpression)
-              }
+              // 构造赋值语句并挂到要改的path下，等对memberExpression访问exit时处理
+              last.assignment = t.assignmentExpression('=', t.memberExpression(t.identifier('__renderData'), t.stringLiteral(keyPath), true), rightExpression)
             }
           }
           // flag get
