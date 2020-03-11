@@ -49,9 +49,10 @@ module.exports = {
         },
         exit (path) {
           if (path.isProps) {
-            isProps = false
             // 移除无意义的__props调用
             path.replaceWith(path.node.arguments[0])
+            isProps = false
+            delete path.isProps
           }
         }
       },
@@ -113,6 +114,7 @@ module.exports = {
         exit (path) {
           if (path.collectPath) {
             path.replaceWith(t.callExpression(t.memberExpression(t.thisExpression(), t.identifier('_c')), [path.collectPath, path.node]))
+            delete path.collectPath
           }
         }
       }

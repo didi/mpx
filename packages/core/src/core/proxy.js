@@ -8,7 +8,6 @@ import {
   noop,
   type,
   enumerableKeys,
-  extend,
   proxy,
   isEmptyObject,
   processUndefined,
@@ -50,9 +49,9 @@ export default class MPXProxy {
       }
       this._watchers = []
       this._watcher = null
-      this.computedKeys = options.computed ? enumerableKeys(options.computed) : []
-      this.localKeys = this.computedKeys.slice() // 非props key
+      this.localKeys = [] // 非props key
       this.renderData = {} // 渲染函数中收集的数据
+      this.miniRenderData = {}
       this.forceUpdateData = {} // 强制更新的数据
       this.curRenderTask = null
     }
@@ -61,9 +60,6 @@ export default class MPXProxy {
 
   created (...params) {
     this.initApi()
-    if (__mpx_mode__ !== 'web') {
-      this.initialData = this.target.__getInitialData()
-    }
     this.callUserHook(BEFORECREATE)
     if (__mpx_mode__ !== 'web') {
       this.initState(this.options)
@@ -141,45 +137,65 @@ export default class MPXProxy {
   initState () {
     const options = this.options
     this.initData(options.data)
-    initComputed(this, this.data, options.computed)
+    this.initComputed(options.computed)
+    this.initMethods(options.methods)
+    // target的数据访问代理到将proxy的data
+    proxy(this.target, this.data)
+    this.initWatch(options.watch)
+  }
 
-    // 检测命名冲突
-    const methods = this.options.methods
+  initMethods (methods) {
     if (methods) {
       for (let key in this.data) {
         if (key in methods) error(`The method key [${key}] is duplicated with data/props/computed, please check!`, this.options.mpxFileResource)
       }
     }
+  }
 
-    // target的数据访问代理到将proxy的data
-    proxy(this.target, this.data)
-    // 初始化watch
-    if (options.watch) {
-      this.initWatch(options.watch)
+  initComputed (computedOpt) {
+    if (computedOpt) {
+      this.collectLocalKeys(computedOpt)
+      initComputed(this, this.data, computedOpt)
     }
   }
 
-  initData (dataFn) {
-    // 预先将initialData代理到this.target中，便于dataFn中访问
-    proxy(this.target, this.initialData)
+  // 构建响应式data
+  initData (dataOpt = {}) {
+    // 获取包含data/props在内的初始数据，包含初始原生微信转换支付宝时合并props进入data的逻辑
+    const initialData = this.target.__getInitialData() || {}
+    if (typeof dataOpt === 'function') {
+      // 预先将initialData代理到this.target中，便于data函数访问
+      proxy(this.target, initialData)
+      this.data = dataOpt.call(this.target) || {}
+      this.collectLocalKeys(this.data)
+    } else {
+      this.data = {}
+      this.collectLocalKeys(dataOpt)
+    }
+
+    Object.keys(initialData).forEach((key) => {
+      if (!this.data.hasOwnProperty(key)) {
+        // 除了data函数返回的数据外深拷贝切断引用关系，避免后续watch由于小程序内部对data赋值重复触发watch
+        this.data[key] = diffAndCloneA(initialData[key]).clone
+      }
+    })
     // mpxCid 解决支付宝环境selector为全局问题
-    const data = extend({
-      mpxCid: this.uid
-    }, typeof dataFn === 'function' ? dataFn.call(this.target) : dataFn)
-    this.collectLocalKeys(data)
-    this.data = extend({}, this.initialData, data)
+    this.data.mpxCid = this.uid
+    this.localKeys.push('mpxCid')
     observe(this.data, true)
   }
 
   initWatch (watch) {
-    for (const key in watch) {
-      const handler = watch[key]
-      if (Array.isArray(handler)) {
-        for (let i = 0; i < handler.length; i++) {
-          this.watch(key, handler[i])
+    if (watch) {
+      for (const key in watch) {
+        const handler = watch[key]
+        if (Array.isArray(handler)) {
+          for (let i = 0; i < handler.length; i++) {
+            this.watch(key, handler[i])
+          }
+        } else {
+          this.watch(key, handler)
         }
-      } else {
-        this.watch(key, handler)
       }
     }
   }
@@ -216,63 +232,14 @@ export default class MPXProxy {
 
   render () {
     const renderData = this.data
-    if (!this.miniRenderData) {
-      this.doRender(EXPORT_MPX.config.useStrictDiff ? this.processRenderDataFirstWithStrictDiff(renderData) : this.processRenderDataFirst(renderData))
-    } else {
-      this.doRender(EXPORT_MPX.config.useStrictDiff ? this.processRenderDataWithStrictDiff(renderData) : this.processRenderData(renderData))
-    }
+    this.doRender(EXPORT_MPX.config.useStrictDiff ? this.processRenderDataWithStrictDiff(renderData) : this.processRenderData(renderData))
   }
 
   renderWithData () {
     const renderData = preProcessRenderData(this.renderData)
-    if (!this.miniRenderData) {
-      this.doRender(EXPORT_MPX.config.useStrictDiff ? this.processRenderDataFirstWithStrictDiff(renderData) : this.processRenderDataFirst(renderData))
-    } else {
-      this.doRender(EXPORT_MPX.config.useStrictDiff ? this.processRenderDataWithStrictDiff(renderData) : this.processRenderData(renderData))
-    }
-  }
-
-  processRenderDataFirst (renderData) {
-    this.miniRenderData = {}
-    const result = {}
-    for (let key in renderData) {
-      if (renderData.hasOwnProperty(key)) {
-        const data = renderData[key]
-        const firstKey = getFirstKey(key)
-        if (this.localKeys.indexOf(firstKey) > -1) {
-          this.miniRenderData[key] = result[key] = diffAndCloneA(data).clone
-        }
-      }
-    }
-    return result
-  }
-
-  processRenderDataFirstWithStrictDiff (renderData) {
-    this.miniRenderData = {}
-    const result = {}
-    for (let key in renderData) {
-      if (renderData.hasOwnProperty(key)) {
-        const data = renderData[key]
-        const firstKey = getFirstKey(key)
-        if (this.localKeys.indexOf(firstKey) > -1) {
-          if (this.initialData.hasOwnProperty(firstKey)) {
-            const localInitialData = getByPath(this.initialData, key)
-            const { clone, diff, diffData } = diffAndCloneA(data, localInitialData)
-            this.miniRenderData[key] = clone
-            if (diff) {
-              if (diffData) {
-                this.processRenderDataWithDiffData(result, key, diffData)
-              } else {
-                result[key] = clone
-              }
-            }
-          } else {
-            this.miniRenderData[key] = result[key] = diffAndCloneA(data).clone
-          }
-        }
-      }
-    }
-    return result
+    this.doRender(EXPORT_MPX.config.useStrictDiff ? this.processRenderDataWithStrictDiff(renderData) : this.processRenderData(renderData))
+    // 重置renderData准备下次收集
+    this.renderData = {}
   }
 
   processRenderDataWithDiffData (result, key, diffData) {
@@ -290,12 +257,15 @@ export default class MPXProxy {
         if (this.localKeys.indexOf(firstKey) === -1) {
           continue
         }
-        const { clone, diff, diffData } = diffAndCloneA(data, this.miniRenderData[key])
+        // 外部clone，用于只需要clone的场景
+        let clone
         if (this.miniRenderData.hasOwnProperty(key)) {
-          if (diff) {
+          const result = diffAndCloneA(data, this.miniRenderData[key])
+          clone = result.clone
+          if (result.diff) {
             this.miniRenderData[key] = clone
-            if (diffData) {
-              this.processRenderDataWithDiffData(result, key, diffData)
+            if (result.diffData) {
+              this.processRenderDataWithDiffData(result, key, result.diffData)
             } else {
               result[key] = clone
             }
@@ -306,6 +276,7 @@ export default class MPXProxy {
           for (let i = 0; i < miniRenderDataKeys.length; i++) {
             const tarKey = miniRenderDataKeys[i]
             if (aIsSubPathOfB(tarKey, key)) {
+              if (!clone) clone = diffAndCloneA(data)
               delete this.miniRenderData[tarKey]
               this.miniRenderData[key] = result[key] = clone
               processed = true
@@ -313,10 +284,10 @@ export default class MPXProxy {
             }
             const subPath = aIsSubPathOfB(key, tarKey)
             if (subPath) {
-              // setByPath
+              // setByPath 更新miniRenderData中的子数据
               _getByPath(this.miniRenderData[tarKey], subPath, (current, subKey, meta) => {
                 if (meta.isEnd) {
-                  const { diff, diffData } = diffAndCloneA(clone, current[subKey])
+                  const { clone, diff, diffData } = diffAndCloneA(data, current[subKey])
                   if (diff) {
                     current[subKey] = clone
                     if (diffData) {
@@ -335,7 +306,22 @@ export default class MPXProxy {
             }
           }
           if (!processed) {
-            this.miniRenderData[key] = result[key] = clone
+            // 如果当前数据和上次的miniRenderData完全无关，但存在于组件的视图数据中，则与组件视图数据进行diff
+            if (this.target.data.hasOwnProperty(firstKey)) {
+              const localInitialData = getByPath(this.target.data, key)
+              const { clone, diff, diffData } = diffAndCloneA(data, localInitialData)
+              this.miniRenderData[key] = clone
+              if (diff) {
+                if (diffData) {
+                  this.processRenderDataWithDiffData(result, key, diffData)
+                } else {
+                  result[key] = clone
+                }
+              }
+            } else {
+              if (!clone) clone = diffAndCloneA(data)
+              this.miniRenderData[key] = result[key] = clone
+            }
           }
         }
       }
@@ -432,7 +418,7 @@ export default class MPXProxy {
     if (dataType === 'Function') {
       callback = data
     } else if (dataType === 'Object') {
-      this.forceUpdateData = diffAndCloneA(data).clone
+      this.forceUpdateData = data
       Object.keys(this.forceUpdateData).forEach(key => {
         if (!this.options.__nativeRender__ && this.localKeys.indexOf(getFirstKey(key)) === -1) {
           warn(`ForceUpdate data includes a props/computed key [${key}], which may yield a unexpected result!`, this.options.mpxFileResource)

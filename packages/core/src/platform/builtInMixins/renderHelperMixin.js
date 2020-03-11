@@ -23,6 +23,7 @@ export default function renderHelperMixin () {
       },
       _c (key, value) {
         this.__mpxProxy.renderData[key] = value
+        return value
       },
       _r () {
         this.__mpxProxy.renderWithData()

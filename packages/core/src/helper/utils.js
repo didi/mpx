@@ -464,7 +464,7 @@ export function diffAndCloneA (a, b) {
         case '[object Object]':
           const keys = Object.keys(a)
           length = keys.length
-          clone = Object.create(null)
+          clone = {}
           setDiff(!sameClass || length < Object.keys(b).length || !Object.keys(b).every((key) => a.hasOwnProperty(key)))
           lastPath = curPath
           for (let i = 0; i < length; i++) {

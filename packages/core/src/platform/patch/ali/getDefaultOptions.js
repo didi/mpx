@@ -2,7 +2,6 @@ import MPXProxy from '../../../core/proxy'
 import customKey from '../customOptionKeys'
 import mergeOptions from '../../../core/mergeOptions'
 import { error } from '../../../helper/log'
-import { diffAndCloneA } from '../../../helper/utils'
 
 function transformApiForProxy (context, currentInject) {
   const rawSetData = context.setData.bind(context)
@@ -98,15 +97,17 @@ export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
       if (this.__mpxProxy && this.__mpxProxy.isMounted() && nextProps && nextProps !== this.props) {
         if (this.$rawOptions.__nativeRender__) {
           const newData = {}
+          // 微信原生转换支付宝时，每次props更新将其设置进data模拟微信表现
           Object.keys(nextProps).forEach((key) => {
-            if (!key.startsWith('$') && typeof nextProps[key] !== 'function' && diffAndCloneA(nextProps[key], this.props[key]).diff) {
+            if (!key.startsWith('$') && typeof nextProps[key] !== 'function' && nextProps[key] !== this.props[key]) {
               newData[key] = nextProps[key]
             }
           })
           this.__mpxProxy.forceUpdate(newData)
         } else {
+          // 此处发生变化的属性实例一定不同，只需浅比较即可确定发生变化的属性
           Object.keys(nextProps).forEach(key => {
-            if (!key.startsWith('$') && typeof nextProps[key] !== 'function' && diffAndCloneA(nextProps[key], this.props[key]).diff) {
+            if (!key.startsWith('$') && typeof nextProps[key] !== 'function' && nextProps[key] !== this.props[key]) {
               this[key] = nextProps[key]
             }
           })
