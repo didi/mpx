@@ -71,8 +71,7 @@ module.exports = function (raw) {
   let renderResult = bindThis(`global.currentInject = {
     moduleId: ${JSON.stringify(options.moduleId)},
     render: function () {
-      var __renderData = {};
-      ${compiler.genNode(ast)}return this.__renderWithData(__renderData);
+      ${compiler.genNode(ast)}this._r();
     }
 };\n`, {
     needCollect: true,

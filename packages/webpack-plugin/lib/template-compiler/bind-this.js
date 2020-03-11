@@ -6,7 +6,7 @@ const generate = require('babel-generator').default
 let names = 'Infinity,undefined,NaN,isFinite,isNaN,' +
   'parseFloat,parseInt,decodeURI,decodeURIComponent,encodeURI,encodeURIComponent,' +
   'Math,Number,Date,Array,Object,Boolean,String,RegExp,Map,Set,JSON,Intl,' +
-  'require,global,__renderData'
+  'require,global'
 
 let hash = {}
 names.split(',').forEach(function (name) {
@@ -41,7 +41,7 @@ module.exports = {
           if (
             t.isMemberExpression(callee) &&
             t.isThisExpression(callee.object) &&
-            (callee.property.name === '__props' || callee.property.value === '__props')
+            (callee.property.name === '_p' || callee.property.value === '_p')
           ) {
             isProps = true
             path.isProps = true
@@ -104,16 +104,15 @@ module.exports = {
                 last = current
                 current = current.parentPath
               }
-              // 构造赋值表达式左值节点并挂到要改的path下，右值因为可能存在后续变更，在对memberExpression访问exit时进行替换处理
-              last.assignment = t.memberExpression(t.identifier('__renderData'), t.stringLiteral(keyPath), true)
+              last.collectPath = t.stringLiteral(keyPath)
             }
           }
         }
       },
       MemberExpression: {
         exit (path) {
-          if (path.assignment) {
-            path.replaceWith(t.assignmentExpression('=', path.assignment, path.node))
+          if (path.collectPath) {
+            path.replaceWith(t.callExpression(t.memberExpression(t.thisExpression(), t.identifier('_c')), [path.collectPath, path.node]))
           }
         }
       }

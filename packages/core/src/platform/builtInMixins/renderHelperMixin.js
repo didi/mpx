@@ -3,29 +3,29 @@ import { isObject, likeArray } from '../../helper/utils'
 export default function renderHelperMixin () {
   return {
     methods: {
-      __iterate (val, handler) {
+      _i (val, handler) {
         let i, l, keys, key
         if (likeArray(val) || typeof val === 'string') {
           for (i = 0, l = val.length; i < l; i++) {
-            handler(val[i], i)
+            handler.call(this, val[i], i)
           }
         } else if (typeof val === 'number') {
           for (i = 0; i < val; i++) {
-            handler(i + 1, i)
+            handler.call(this, i + 1, i)
           }
         } else if (isObject(val)) {
           keys = Object.keys(val)
           for (i = 0, l = keys.length; i < l; i++) {
             key = keys[i]
-            handler(val[key], key, i)
+            handler.call(this, val[key], key, i)
           }
         }
       },
-      __props (val) {
-        return val
+      _c (key, value) {
+        this.__mpxProxy.renderData[key] = value
       },
-      __renderWithData (renderData) {
-        return this.__mpxProxy.renderWithData(renderData)
+      _r () {
+        this.__mpxProxy.renderWithData()
       }
     }
   }

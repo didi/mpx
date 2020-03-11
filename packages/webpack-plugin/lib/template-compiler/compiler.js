@@ -2025,7 +2025,7 @@ function genElse (node) {
 
 function genExps (node) {
   return `${node.exps.map(({ exp, isProps }) => {
-    return isProps ? `this.__props(${exp});\n` : `${exp};\n`
+    return isProps ? `this._p(${exp});\n` : `${exp};\n`
   }).join('')}`
 }
 
@@ -2033,7 +2033,7 @@ function genFor (node) {
   node.forProcessed = true
   let index = node.for.index || 'index'
   let item = node.for.item || 'item'
-  return `this.__iterate(${node.for.exp}, function(${item},${index}){\n${genNode(node)}}.bind(this));\n`
+  return `this._i(${node.for.exp}, function(${item},${index}){\n${genNode(node)}});\n`
 }
 
 function genNode (node) {

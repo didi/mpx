@@ -52,7 +52,8 @@ export default class MPXProxy {
       this._watcher = null
       this.computedKeys = options.computed ? enumerableKeys(options.computed) : []
       this.localKeys = this.computedKeys.slice() // 非props key
-      this.forceUpdateData = {}// 强制更新的数据
+      this.renderData = {} // 渲染函数中收集的数据
+      this.forceUpdateData = {} // 强制更新的数据
       this.curRenderTask = null
     }
     this.lockTask = asyncLock()
@@ -222,8 +223,8 @@ export default class MPXProxy {
     }
   }
 
-  renderWithData (rawRenderData) {
-    const renderData = preProcessRenderData(rawRenderData)
+  renderWithData () {
+    const renderData = preProcessRenderData(this.renderData)
     if (!this.miniRenderData) {
       this.doRender(EXPORT_MPX.config.useStrictDiff ? this.processRenderDataFirstWithStrictDiff(renderData) : this.processRenderDataFirst(renderData))
     } else {
