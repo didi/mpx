@@ -441,7 +441,6 @@ export function diffAndCloneA (a, b) {
 
   function deepDiffAndCloneA (a, b, currentDiff) {
     const setDiff = (val) => {
-      if (currentDiff) return
       if (val) {
         currentDiff = val
         if (curPath) {
@@ -453,7 +452,7 @@ export function diffAndCloneA (a, b) {
     let clone = a
 
     if (typeof a !== 'object' || a === null) {
-      setDiff(a !== b)
+      if (!currentDiff) setDiff(a !== b)
     } else {
       const toString = Object.prototype.toString
       const className = toString.call(a)
@@ -465,7 +464,7 @@ export function diffAndCloneA (a, b) {
           const keys = Object.keys(a)
           length = keys.length
           clone = {}
-          setDiff(!sameClass || length < Object.keys(b).length || !Object.keys(b).every((key) => a.hasOwnProperty(key)))
+          if (!currentDiff) setDiff(!sameClass || length < Object.keys(b).length || !Object.keys(b).every((key) => a.hasOwnProperty(key)))
           lastPath = curPath
           for (let i = 0; i < length; i++) {
             const key = keys[i]
@@ -477,7 +476,7 @@ export function diffAndCloneA (a, b) {
         case '[object Array]':
           length = a.length
           clone = []
-          setDiff(!sameClass || length < b.length)
+          if (!currentDiff) setDiff(!sameClass || length < b.length)
           lastPath = curPath
           for (let i = 0; i < length; i++) {
             curPath += `[${i}]`
@@ -486,13 +485,13 @@ export function diffAndCloneA (a, b) {
           }
           break
         case '[object RegExp]':
-          setDiff(!sameClass || '' + a !== '' + b)
+          if (!currentDiff) setDiff(!sameClass || '' + a !== '' + b)
           break
         case '[object Date]':
-          setDiff(!sameClass || +a !== +b)
+          if (!currentDiff) setDiff(!sameClass || +a !== +b)
           break
         default:
-          setDiff(!sameClass || a !== b)
+          if (!currentDiff) setDiff(!sameClass || a !== b)
       }
     }
     if (currentDiff) {
