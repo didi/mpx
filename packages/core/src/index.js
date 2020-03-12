@@ -1,28 +1,27 @@
 import * as platform from './platform'
 import createStore, { createStoreWithThis } from './core/createStore'
 import { injectMixins } from './core/injectMixins'
-import { extend } from './helper/utils'
+import { extend, diffAndCloneA } from './helper/utils'
 import { setConvertRule } from './convertor/convertor'
 import { getMixin } from './core/mergeOptions'
 import { error } from './helper/log'
 import Vue from './vue'
 import { observe, set, del as remove } from './observer/index'
 import { watch as watchWithVm } from './observer/watch'
-import { diffAndCloneA } from './helper/utils'
 
 export function createApp (config, ...rest) {
   const mpx = new EXPORT_MPX()
-  platform.createApp(extend({ proto: mpx.proto }, config), ...rest)
+  platform.createApp(Object.assign({ proto: mpx.proto }, config), ...rest)
 }
 
 export function createPage (config, ...rest) {
   const mpx = new EXPORT_MPX()
-  platform.createPage(extend({ proto: mpx.proto }, config), ...rest)
+  platform.createPage(Object.assign({ proto: mpx.proto }, config), ...rest)
 }
 
 export function createComponent (config, ...rest) {
   const mpx = new EXPORT_MPX()
-  platform.createComponent(extend({ proto: mpx.proto }, config), ...rest)
+  platform.createComponent(Object.assign({ proto: mpx.proto }, config), ...rest)
 }
 
 export { createStore, createStoreWithThis, getMixin }
@@ -163,8 +162,8 @@ function factory () {
     this.proto = extend({}, this)
   }
 
-  extend(MPX, APIs)
-  extend(MPX.prototype, InstanceAPIs)
+  Object.assign(MPX, APIs)
+  Object.assign(MPX.prototype, InstanceAPIs)
   return MPX
 }
 

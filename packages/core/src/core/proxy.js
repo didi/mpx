@@ -7,7 +7,6 @@ import EXPORT_MPX from '../index'
 import {
   noop,
   type,
-  enumerableKeys,
   proxy,
   isEmptyObject,
   processUndefined,
@@ -122,7 +121,7 @@ export default class MPXProxy {
 
   initApi () {
     // 挂载扩展属性到实例上
-    proxy(this.target, this.options.proto, enumerableKeys(this.options.proto), true)
+    proxy(this.target, this.options.proto, Object.keys(this.options.proto), true)
     // 挂载混合模式下的自定义属性
     proxy(this.target, this.options, this.options.mpxCustomKeysForBlend)
     if (__mpx_mode__ !== 'web') {
@@ -202,7 +201,7 @@ export default class MPXProxy {
   }
 
   collectLocalKeys (data) {
-    this.localKeys.push.apply(this.localKeys, enumerableKeys(data))
+    this.localKeys.push.apply(this.localKeys, Object.keys(data))
   }
 
   nextTick (fn) {

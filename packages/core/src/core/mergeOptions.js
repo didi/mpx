@@ -1,4 +1,4 @@
-import { type, merge, extend, aliasReplace, findItem } from '../helper/utils'
+import { type, merge, aliasReplace, findItem } from '../helper/utils'
 import { getConvertRule } from '../convertor/convertor'
 import { error, warn } from '../helper/log'
 
@@ -65,7 +65,7 @@ function extractMixins (mergeOptions, options, needConvert) {
 
 function extractLifetimes (options) {
   if (type(options.lifetimes) === 'Object') {
-    const newOptions = extend({}, options, options.lifetimes)
+    const newOptions = Object.assign({}, options, options.lifetimes)
     delete newOptions.lifetimes
     return newOptions
   } else {
@@ -150,7 +150,7 @@ function extractObservers (options) {
     })
   }
   if (extract) {
-    const newOptions = extend({}, options)
+    const newOptions = Object.assign({}, options)
     newOptions.watch = watch
     delete newOptions.observers
     return newOptions
@@ -160,7 +160,7 @@ function extractObservers (options) {
 
 function extractPageHooks (options) {
   if (curType === 'blend') {
-    const newOptions = extend({}, options)
+    const newOptions = Object.assign({}, options)
     const methods = newOptions.methods
     const PAGE_HOOKS = convertRule.lifecycle.page
     methods && Object.keys(methods).forEach(key => {
@@ -216,7 +216,7 @@ function mergeSimpleProps (parent, child, key) {
   if (!parentVal) {
     parent[key] = parentVal = {}
   }
-  extend(parentVal, childVal)
+  Object.assign(parentVal, childVal)
 }
 
 function mergeDataFn (parent, child, key) {

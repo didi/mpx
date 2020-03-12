@@ -1,6 +1,4 @@
 import {
-  enumerableKeys,
-  extend,
   isEmptyObject
 } from '../../../helper/utils'
 
@@ -14,7 +12,7 @@ function transformProperties (properties) {
     return {}
   }
   const newProps = {}
-  enumerableKeys(properties).forEach(key => {
+  Object.keys(properties).forEach(key => {
     let rawFiled = properties[key]
     let newFiled = null
     if (rawFiled === null) {
@@ -27,7 +25,7 @@ function transformProperties (properties) {
         type: rawFiled
       }
     } else {
-      newFiled = extend({}, rawFiled)
+      newFiled = Object.assign({}, rawFiled)
     }
     newFiled.observer = function (value, oldValue) {
       if (this.__mpxProxy) {

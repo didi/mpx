@@ -423,7 +423,7 @@ declare class Watcher {
   destroy (): void
 }
 
-export function watch (context: any, expr: string | (() => any), handler: WatchHandler | WatchOptWithHandler, options?: WatchOpt): Watcher
+export function watch (expr: string | (() => any), handler: WatchHandler | WatchOptWithHandler, options?: WatchOpt): () => void
 
 type SupportedPlantforms = 'wx' | 'ali' | 'qq' | 'tt' | 'swan'
 

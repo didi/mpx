@@ -153,7 +153,7 @@ export function defineGetterSetter (target, key, getValue, setValue, context) {
 }
 
 export function proxy (target, source, keys, readonly) {
-  keys = keys || enumerableKeys(source)
+  keys = keys || Object.keys(source)
   keys.forEach((key) => {
     const descriptor = {
       get () {
@@ -187,24 +187,37 @@ export function merge (to, from) {
   return to
 }
 
+// 包含原型链上属性keys
 export function enumerableKeys (obj) {
-  return Object.keys(obj)
+  const keys = []
+  for (let key in obj) {
+    keys.push(key)
+  }
+  return keys
 }
 
-export function extend (...args) {
-  return Object.assign.apply(null, args)
+// 包含原型链属性的合并
+export function extend (target, ...sources) {
+  for (const source of sources) {
+    if (isPlainObject(source)) {
+      for (const key in source) {
+        target[key] = source[key]
+      }
+    }
+  }
+  return target
 }
 
 export function dissolveAttrs (target = {}, keys) {
   if (type(keys) === 'String') {
     keys = [keys]
   }
-  const newOptions = extend({}, target)
+  const newOptions = Object.assign({}, target)
   keys.forEach(key => {
     const value = target[key]
     if (type(value) !== 'Object') return
     delete newOptions[key]
-    extend(newOptions, value)
+    Object.assign(newOptions, value)
   })
   return newOptions
 }
@@ -336,7 +349,7 @@ export function mergeObjectArray (arr) {
   const res = {}
   for (let i = 0; i < arr.length; i++) {
     if (arr[i]) {
-      extend(res, arr[i])
+      Object.assign(res, arr[i])
     }
   }
   return res
