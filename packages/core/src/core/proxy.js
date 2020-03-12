@@ -1,4 +1,4 @@
-import { observe } from '../observer'
+import { observe } from '../observer/index'
 import Watcher from '../observer/watcher'
 import { watch } from '../observer/watch'
 import { initComputed } from '../observer/computed'
