@@ -8,6 +8,7 @@ import { error } from './helper/log'
 import Vue from './vue'
 import { observe, set, del as remove } from './observer/index'
 import { watch as watchWithVm } from './observer/watch'
+import { diffAndCloneA } from './helper/utils'
 
 export function createApp (config, ...rest) {
   const mpx = new EXPORT_MPX()
@@ -29,6 +30,10 @@ export { createStore, createStoreWithThis, getMixin }
 export function getComputed (computed) {
   // ts computed类型推导辅助函数
   return computed
+}
+
+export function toPureObject (obj) {
+  return diffAndCloneA(obj).clone
 }
 
 function extendProps (target, proxyObj, rawProps, option) {
@@ -80,10 +85,13 @@ let APIs = {}
 // 实例属性
 let InstanceAPIs = {}
 
+let observable
+let watch
+
 if (__mpx_mode__ === 'web') {
   const vm = new Vue()
-  const observable = Vue.observable.bind(Vue)
-  const watch = vm.$watch.bind(vm)
+  observable = Vue.observable.bind(Vue)
+  watch = vm.$watch.bind(vm)
   const set = Vue.set.bind(Vue)
   const remove = Vue.delete.bind(Vue)
   // todo 补齐web必要api
@@ -95,6 +103,7 @@ if (__mpx_mode__ === 'web') {
     createStoreWithThis,
     mixin: injectMixins,
     injectMixins,
+    toPureObject,
     observable,
     watch,
     use,
@@ -110,14 +119,14 @@ if (__mpx_mode__ === 'web') {
     $remove: remove
   }
 } else {
-  const observable = function (obj) {
+  observable = function (obj) {
     observe(obj)
     return obj
   }
 
   const vm = {}
 
-  const watch = function (expOrFn, cb, options) {
+  watch = function (expOrFn, cb, options) {
     watchWithVm(vm, expOrFn, cb, options)
   }
 
@@ -129,6 +138,7 @@ if (__mpx_mode__ === 'web') {
     createStoreWithThis,
     mixin: injectMixins,
     injectMixins,
+    toPureObject,
     observable,
     watch,
     use,
@@ -144,6 +154,8 @@ if (__mpx_mode__ === 'web') {
     $remove: remove
   }
 }
+
+export { watch, observable }
 
 function factory () {
   // 作为原型挂载属性的中间层
