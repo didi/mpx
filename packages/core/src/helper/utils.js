@@ -450,7 +450,6 @@ export function diffAndCloneA (a, b) {
       }
     }
     let clone = a
-
     if (typeof a !== 'object' || a === null) {
       if (!currentDiff) setDiff(a !== b)
     } else {

@@ -177,6 +177,7 @@ export default class MPXProxy {
       if (!this.data.hasOwnProperty(key)) {
         // 除了data函数返回的数据外深拷贝切断引用关系，避免后续watch由于小程序内部对data赋值重复触发watch
         this.data[key] = diffAndCloneA(initialData[key]).clone
+        // this.data[key] = initialData[key]
       }
     })
     // mpxCid 解决支付宝环境selector为全局问题
@@ -260,12 +261,12 @@ export default class MPXProxy {
         // 外部clone，用于只需要clone的场景
         let clone
         if (this.miniRenderData.hasOwnProperty(key)) {
-          const result = diffAndCloneA(data, this.miniRenderData[key])
-          clone = result.clone
-          if (result.diff) {
+          const { clone: localClone, diff, diffData } = diffAndCloneA(data, this.miniRenderData[key])
+          clone = localClone
+          if (diff) {
             this.miniRenderData[key] = clone
-            if (result.diffData) {
-              this.processRenderDataWithDiffData(result, key, result.diffData)
+            if (diffData) {
+              this.processRenderDataWithDiffData(result, key, diffData)
             } else {
               result[key] = clone
             }
@@ -276,7 +277,7 @@ export default class MPXProxy {
           for (let i = 0; i < miniRenderDataKeys.length; i++) {
             const tarKey = miniRenderDataKeys[i]
             if (aIsSubPathOfB(tarKey, key)) {
-              if (!clone) clone = diffAndCloneA(data)
+              if (!clone) clone = diffAndCloneA(data).clone
               delete this.miniRenderData[tarKey]
               this.miniRenderData[key] = result[key] = clone
               processed = true
@@ -319,7 +320,7 @@ export default class MPXProxy {
                 }
               }
             } else {
-              if (!clone) clone = diffAndCloneA(data)
+              if (!clone) clone = diffAndCloneA(data).clone
               this.miniRenderData[key] = result[key] = clone
             }
           }
