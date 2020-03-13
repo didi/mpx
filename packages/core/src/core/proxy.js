@@ -166,11 +166,11 @@ export default class MPXProxy {
       // 预先将initialData代理到this.target中，便于data函数访问
       proxy(this.target, initialData)
       this.data = dataOpt.call(this.target) || {}
-      this.collectLocalKeys(this.data)
     } else {
-      this.data = {}
-      this.collectLocalKeys(dataOpt)
+      // 通过原始dataOpt获取初始数据对象，避免小程序自身序列化时错误地转换数据对象，比如将promise转为普通object
+      this.data = diffAndCloneA(dataOpt).clone || {}
     }
+    this.collectLocalKeys(this.data)
 
     Object.keys(initialData).forEach((key) => {
       if (!this.data.hasOwnProperty(key)) {
