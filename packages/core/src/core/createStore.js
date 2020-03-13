@@ -25,7 +25,7 @@ function transformGetters (getters, module, store) {
       if (store.withThis) {
         return getters[key].call({
           state: module.state,
-          getters: module.getters,
+          getters: store.getters,
           rootState: store.state
         })
       }
@@ -94,7 +94,10 @@ function mergeDeps (module, deps) {
       } else {
         module[prop] = module[prop] || {}
         if (prop === 'getters') {
-          module[prop][key] = () => store[prop]
+          // depsGetters单独存放，不需要重新进行初始化
+          module.depsGetters = module.depsGetters || {}
+          module.depsGetters[key] = store.getters
+          // module[prop][key] = () => store[prop]
         } else {
           module[prop][key] = store[prop]
         }
@@ -107,6 +110,7 @@ class Store {
   constructor (options) {
     this.withThis = options.withThis
     this.__wrappedGetters = {}
+    this.__depsGetters = {}
     this.getters = {}
     this.mutations = {}
     this.actions = {}
@@ -150,6 +154,7 @@ class Store {
     if (module.deps) {
       mergeDeps(reactiveModule, module.deps)
     }
+    Object.assign(this.__depsGetters, reactiveModule.depsGetters)
     Object.assign(this.__wrappedGetters, reactiveModule.getters)
     // merge mutations
     Object.assign(this.mutations, reactiveModule.mutations)
@@ -174,11 +179,13 @@ class Store {
         computed: this.__wrappedGetters
       })
       const computedKeys = Object.keys(this.__wrappedGetters)
-      proxy(this.getters, this._vm, computedKeys, true)
+      proxy(this.getters, this._vm, computedKeys)
+      proxy(this.getters, this.__depsGetters)
     } else {
       this._vm = {}
       observe(this.state, true)
       initComputed(this._vm, this.getters, this.__wrappedGetters)
+      proxy(this.getters, this.__depsGetters)
     }
   }
 }
