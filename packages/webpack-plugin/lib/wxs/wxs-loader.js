@@ -60,7 +60,8 @@ module.exports = function (content) {
       filename
     }
     const contentLoader = normalize.lib('content-loader')
-    const request = `!!${contentLoader}?${JSON.stringify(options)}!${this.resource}`
+    // wxs文件必须经过pre-loader
+    const request = `!${contentLoader}?${JSON.stringify(options)}!${this.resource}`
     const plugins = [
       new WxsPlugin({ mode }),
       new NodeTargetPlugin(),
