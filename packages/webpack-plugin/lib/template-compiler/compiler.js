@@ -1340,7 +1340,7 @@ function processIfForWeb (el) {
   }
 }
 
-const swanForInRe = /^\s*(\w+)(?:\s*,\s*(\w+))?\s+in\s+(\w+)(?:\s+trackBy\s+(\w+))?\s*$/
+const swanForInRe = /^\s*(\w+)(?:\s*,\s*(\w+))?\s+in\s+(\S+)(?:\s+trackBy\s+(\S+))?\s*$/
 
 function processFor (el) {
   let val = getAndRemoveAttr(el, config[mode].directive.for)

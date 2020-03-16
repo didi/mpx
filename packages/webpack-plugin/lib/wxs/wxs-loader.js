@@ -8,14 +8,12 @@ const getMainCompilation = require('../utils/get-main-compilation')
 const parseRequest = require('../utils/parse-request')
 const toPosix = require('../utils/to-posix')
 const fixRelative = require('../utils/fix-relative')
-const normalize = require('../utils/normalize')
 const config = require('../config')
 const loaderUtils = require('loader-utils')
 
 module.exports = function (content) {
   const nativeCallback = this.async()
 
-  const options = loaderUtils.getOptions(this) || {}
   const mainCompilation = getMainCompilation(this._compilation)
   const mpx = mainCompilation.__mpx__
   const mode = mpx.mode
