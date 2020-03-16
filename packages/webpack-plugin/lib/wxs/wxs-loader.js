@@ -59,9 +59,8 @@ module.exports = function (content) {
     const outputOptions = {
       filename
     }
-    const contentLoader = normalize.lib('content-loader')
     // wxs文件必须经过pre-loader
-    const request = `!${contentLoader}?${JSON.stringify(options)}!${this.resource}`
+    const request = `!${this.remainingRequest}`
     const plugins = [
       new WxsPlugin({ mode }),
       new NodeTargetPlugin(),
@@ -70,17 +69,6 @@ module.exports = function (content) {
     ]
 
     const childCompiler = mainCompilation.createChildCompiler(request, outputOptions, plugins)
-
-    childCompiler.hooks.thisCompilation.tap('MpxWebpackPlugin ', (compilation) => {
-      compilation.hooks.normalModuleLoader.tap('MpxWebpackPlugin', (loaderContext) => {
-        // 传递编译结果，子编译器进入content-loader后直接输出
-        loaderContext.__mpx__ = {
-          content,
-          fileDependencies: this.getDependencies(),
-          contextDependencies: this.getContextDependencies()
-        }
-      })
-    })
 
     childCompiler.runAsChild((err, entries, compilation) => {
       if (err) return callback(err)
