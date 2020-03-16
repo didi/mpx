@@ -912,9 +912,9 @@ function parse (template, options) {
     injectWxs(meta, i18nModuleName, i18nWxsRequest)
   }
 
-  if (injectNodes.length) {
-    root.children = injectNodes.concat(root.children)
-  }
+  injectNodes.forEach((node) => {
+    addChild(root, node, true)
+  })
 
   rulesResultMap.forEach((val) => {
     Array.isArray(val.warnArray) && val.warnArray.forEach(item => warn$1(item))
@@ -929,6 +929,16 @@ function parse (template, options) {
 
 function getTempNode () {
   return createASTElement('temp-node', [])
+}
+
+function addChild (parent, newChild, before) {
+  parent.children = parent.children || []
+  if (before) {
+    parent.children.unshift(newChild)
+  } else {
+    parent.children.push(newChild)
+  }
+  newChild.parent = parent
 }
 
 function getAndRemoveAttr (el, name, removeFromMap = true) {
@@ -1469,13 +1479,12 @@ function postProcessFor (el) {
       这个操作主要是因为百度小程序不支持这两个directive在同级使用
      */
     if (el.if && mode === 'swan') {
-      let tempEl = createASTElement('block', [])
-      replaceNode(el, tempEl, true)
-      tempEl.for = el.for
+      const block = createASTElement('block', [])
+      replaceNode(el, block, true)
+      block.for = el.for
       delete el.for
-      tempEl.children = [el]
-      el.parent = tempEl
-      el = tempEl
+      addChild(block, el)
+      el = block
     }
 
     let attrs = [
@@ -1485,7 +1494,7 @@ function postProcessFor (el) {
       }
     ]
     // 对于swan的for in进行特殊处理
-    if (!mode === 'swan' || !swanForInRe.test(el.for.raw)) {
+    if (mode !== 'swan' || !swanForInRe.test(el.for.raw)) {
       if (el.for.index) {
         attrs.push({
           name: config[mode].directive.forIndex,
@@ -1871,18 +1880,19 @@ function postProcessComponentIs (el) {
     } else {
       tempNode = getTempNode()
     }
-    tempNode.children = el.components.map(function (component) {
+    el.components.forEach(function (component) {
       let newChild = createASTElement(component, el.attrsList, tempNode)
       newChild.if = {
         raw: `{{${el.is} === ${stringify(component)}}}`,
         exp: `${el.is} === ${stringify(component)}`
       }
+      // 此处直接指向原始children存在问题，但由于动态组件一般情况下很少有共用children故基本无法报出，完善处理需要每次clone原始children并分别更新parent
       newChild.children = el.children
       newChild.exps = el.exps
-      newChild.parent = tempNode
+      addChild(tempNode, newChild)
       postProcessIf(newChild)
-      return newChild
     })
+
     if (!el.parent) {
       error$1('Dynamic component can not be the template root, considering wrapping it with <view> or <text> tag!')
     } else {
