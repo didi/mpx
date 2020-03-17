@@ -51,7 +51,7 @@ npm i
 npm run watch
 
 # production
-npm run prod
+npm run build
 ```
 
 使用微信开发者工具打开 项目目录下生成的dist文件夹 即可进行预览调试和发布。
