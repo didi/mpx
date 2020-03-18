@@ -44,7 +44,7 @@ packages|支持|支持|支持|支持|部分支持，无法分包
 
 ## 使用方法
 
-如果你是使用`mpx init xxx`新生成的项目，package.json里script部分有`npm run build:cross`，直接执行`npm run build:cross`（watch/prod同理），如果仅需构建某几个平台的，可以修改该script，按已有的格式删除或增添某些某些平台
+如果你是使用`mpx init xxx`新生成的项目，package.json里script部分有`npm run build:cross`，直接执行`npm run build:cross`（watch同理），如果仅需构建某几个平台的，可以修改该script，按已有的格式删除或增添某些某些平台
 
 如果你是自行搭建的mpx项目，你只需要进行简单的配置修改，打开项目的webpack配置，找到@mpxjs/webpack-plugin的声明位置，传入mode和srcMode参数即可，示例如下
 
