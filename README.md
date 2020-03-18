@@ -90,3 +90,5 @@ https://didi.github.io/mpx
 #### 扫码进入QQ群
 
 <img alt="Mpx-QQ群" src="https://dpubstatic.udache.com/static/dpubimg/ArcgC_eEr/temp_qrcode_share_374632411.png" width="300">
+
+图片因github网络问题导致不可见的朋友可以点击该链接：https://s.didi.cn/rod
