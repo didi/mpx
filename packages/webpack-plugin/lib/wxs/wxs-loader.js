@@ -10,8 +10,10 @@ const toPosix = require('../utils/to-posix')
 const fixRelative = require('../utils/fix-relative')
 const config = require('../config')
 const loaderUtils = require('loader-utils')
+const normalize = require('../utils/normalize')
+const wxsPreLoader = normalize.lib('wxs/wxs-pre-loader')
 
-module.exports = function (content) {
+module.exports = function () {
   const nativeCallback = this.async()
 
   const mainCompilation = getMainCompilation(this._compilation)
@@ -57,8 +59,8 @@ module.exports = function (content) {
     const outputOptions = {
       filename
     }
-    // wxs文件必须经过pre-loader
-    const request = `!${this.remainingRequest}`
+    // wxsPreLoader在内部控制插入，只需在子编译输出wxs和render函数中addVariable时插入
+    const request = `!!${wxsPreLoader}!${this.remainingRequest}`
     const plugins = [
       new WxsPlugin({ mode }),
       new NodeTargetPlugin(),

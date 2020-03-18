@@ -5,6 +5,8 @@ const InjectDependency = require('../dependency/InjectDependency')
 const parseRequest = require('../utils/parse-request')
 const getMainCompilation = require('../utils/get-main-compilation')
 const path = require('path')
+const normalize = require('../utils/normalize')
+const wxsPreLoader = normalize.lib('wxs/wxs-pre-loader')
 
 module.exports = function (raw) {
   this.cacheable()
@@ -150,8 +152,10 @@ module.exports = function (raw) {
 
   for (let module in meta.wxsModuleMap) {
     isSync = false
-    let src = meta.wxsModuleMap[module]
-    const expression = `require(${JSON.stringify(src)})`
+    const src = meta.wxsModuleMap[module]
+    const request = `!!${wxsPreLoader}!${src}`
+    // 编译render函数只在mpx文件中运行，此处issuer的context一定等同于当前loader的context
+    const expression = `require(${loaderUtils.stringifyRequest(this, request)})`
     const deps = []
     parser.parse(expression, {
       current: {
