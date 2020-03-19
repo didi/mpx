@@ -66,17 +66,15 @@ function extractMixins (mergeOptions, options, needConvert) {
 
 function extractPageShow (options) {
   if (options.pageShow || options.pageHide) {
-    const mixin = {}
+    const mixin = {
+      pageLifetimes: {}
+    }
     if (options.pageShow) {
-      mixin.pageLifetimes = {
-        show: options.pageShow
-      }
+      mixin.pageLifetimes.show = options.pageShow
       delete options.pageShow
     }
     if (options.pageHide) {
-      mixin.pageLifetimes = {
-        hide: options.pageHide
-      }
+      mixin.pageLifetimes.hide = options.pageHide
       delete options.pageHide
     }
     mergeToArray(options, mixin, 'pageLifetimes')
