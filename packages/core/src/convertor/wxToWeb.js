@@ -4,12 +4,11 @@ import { mergeLifecycle } from './mergeLifecycle'
 import { type } from '../helper/utils'
 import { error } from '../helper/log'
 
-const NOTSUPPORTS = ['moved', 'relations', 'pageLifetimes', 'definitionFilter']
-
-// relations和pageLifetimes后续估计可以花式支持
+// 暂不支持的wx选项，后期需要各种花式支持
+const NOTSUPPORTS = ['moved', 'relations', 'pageLifetimes', 'definitionFilter', 'onPageNotFound', 'onPullDownRefresh', 'onReachBottom', 'onShareAppMessage', 'onPageScroll', 'onTabItemTap', 'onResize']
 
 function convertErrorDesc (key) {
-  error(`Option[${key}] is not supported in runtime conversion from wx to web.`, global.currentResource)
+  error(`Options.${key} is not supported in runtime conversion from wx to web.`, global.currentResource)
 }
 
 function notSupportTip (options) {
@@ -21,37 +20,12 @@ function notSupportTip (options) {
   })
 }
 
-// 暂不支持的wx生命周期，后期需要各种花式支持
-// const NOTSUPPORTED_APP_HOOKS = [
-//   'onShow',
-//   'onHide',
-//   'onPageNotFound'
-// ]
-//
-// const NOTSUPPORTED_PAGE_HOOKS = [
-//   'onShow',
-//   'onHide',
-//   'onPullDownRefresh',
-//   'onReachBottom',
-//   'onShareAppMessage',
-//   'onPageScroll',
-//   'onTabItemTap',
-//   'onResize'
-// ]
-//
-// const NOTSUPPORTED_COMPONENT_HOOKS = [
-//   'moved',
-//   'pageShow',
-//   'pageHide',
-// ]
-
 export default {
   lifecycle: mergeLifecycle(wxLifecycle.LIFECYCLE),
   lifecycle2: mergeLifecycle(webLifecycle.LIFECYCLE),
   pageMode: 'blend',
   // support传递为true以将methods外层的方法函数合入methods中
   support: true,
-  // todo 支持onpagenotfound
   lifecycleProxyMap: {
     '__created__': ['onLaunch', 'onLoad', 'created', 'attached'],
     '__mounted__': ['ready', 'onReady'],

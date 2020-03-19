@@ -1842,7 +1842,8 @@ function processElement (el, root, options, meta) {
 
   if (!pass) {
     processBindEvent(el)
-    if (mode !== 'ali') {
+    if (mode === 'tt') {
+      // 只有头条需要通过props传递mpxPageStatus以支持pageLifetimes
       processPageStatus(el, options)
     }
     processComponentIs(el, options)

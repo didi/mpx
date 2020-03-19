@@ -46,14 +46,15 @@ function extractMixins (mergeOptions, options, needConvert) {
     aliasReplace(options, 'behaviors', 'mixins')
   }
   if (options.mixins) {
-    for (const mix of options.mixins) {
-      if (typeof mix === 'string') {
+    for (const mixin of options.mixins) {
+      if (typeof mixin === 'string') {
         error('String-formatted builtin behaviors is not supported to be converted to mixins.', options.mpxFileResource)
       } else {
-        extractMixins(mergeOptions, mix, needConvert)
+        extractMixins(mergeOptions, mixin, needConvert)
       }
     }
   }
+  options = extractPageShow(options)
   options = extractLifetimes(options)
   options = extractPageHooks(options)
   if (needConvert) {
@@ -61,6 +62,26 @@ function extractMixins (mergeOptions, options, needConvert) {
   }
   mergeMixins(mergeOptions, options)
   return mergeOptions
+}
+
+function extractPageShow (options) {
+  if (options.pageShow || options.pageHide) {
+    const mixin = {}
+    if (options.pageShow) {
+      mixin.pageLifetimes = {
+        show: options.pageShow
+      }
+      delete options.pageShow
+    }
+    if (options.pageHide) {
+      mixin.pageLifetimes = {
+        hide: options.pageHide
+      }
+      delete options.pageHide
+    }
+    mergeToArray(options, mixin, 'pageLifetimes')
+  }
+  return options
 }
 
 function extractLifetimes (options) {
@@ -198,11 +219,11 @@ function mergeMixins (parent, child) {
   }
 }
 
-function mergeDefault (parent, child, key) {
+export function mergeDefault (parent, child, key) {
   parent[key] = child[key]
 }
 
-function mergeHooks (parent, child, key) {
+export function mergeHooks (parent, child, key) {
   if (parent[key]) {
     parent[key].push(child[key])
   } else {
@@ -210,7 +231,7 @@ function mergeHooks (parent, child, key) {
   }
 }
 
-function mergeSimpleProps (parent, child, key) {
+export function mergeSimpleProps (parent, child, key) {
   let parentVal = parent[key]
   const childVal = child[key]
   if (!parentVal) {
@@ -249,7 +270,7 @@ function mergeData (parent, child, key) {
   merge(parent[key], childVal)
 }
 
-function mergeArray (parent, child, key) {
+export function mergeArray (parent, child, key) {
   const childVal = child[key]
   if (!parent[key]) {
     parent[key] = []
@@ -257,7 +278,7 @@ function mergeArray (parent, child, key) {
   parent[key] = parent[key].concat(childVal)
 }
 
-function mergeToArray (parent, child, key) {
+export function mergeToArray (parent, child, key) {
   let parentVal = parent[key]
   const childVal = child[key]
   if (!parentVal) {

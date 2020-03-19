@@ -29,8 +29,6 @@ const COMPONENT_HOOKS = [
   'didMount',
   'didUpdate',
   'didUnmount',
-  'pageShow',
-  'pageHide',
   'updated',
   'beforeCreate'
 ]

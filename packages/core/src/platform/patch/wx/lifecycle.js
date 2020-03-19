@@ -29,8 +29,6 @@ const COMPONENT_HOOKS = [
   'ready',
   'moved',
   'detached',
-  'pageShow',
-  'pageHide',
   'updated'
 ]
 
