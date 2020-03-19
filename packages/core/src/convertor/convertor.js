@@ -56,7 +56,7 @@ const RULEMAPS = {
   wxToSwan: { ...defaultConvertRule, ...wxToSwanRule },
   wxToQq: { ...defaultConvertRule, ...wxToQqRule },
   wxToTt: { ...defaultConvertRule, ...wxToTtRule },
-  wxToAli: wxToAliRule, // 微信转支付宝rule
+  wxToAli: wxToAliRule // 微信转支付宝rule
 
 }
 
