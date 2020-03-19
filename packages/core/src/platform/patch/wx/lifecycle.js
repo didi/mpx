@@ -29,7 +29,9 @@ const COMPONENT_HOOKS = [
   'ready',
   'moved',
   'detached',
-  'updated'
+  'updated',
+  'pageShow',
+  'pageHide'
 ]
 
 export const lifecycleProxyMap = {

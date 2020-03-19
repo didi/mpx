@@ -66,18 +66,20 @@ function extractMixins (mergeOptions, options, needConvert) {
 
 function extractPageShow (options) {
   if (options.pageShow || options.pageHide) {
-    const mixin = {
-      pageLifetimes: {}
-    }
-    if (options.pageShow) {
-      mixin.pageLifetimes.show = options.pageShow
-      delete options.pageShow
-    }
-    if (options.pageHide) {
-      mixin.pageLifetimes.hide = options.pageHide
-      delete options.pageHide
-    }
-    mergeToArray(options, mixin, 'pageLifetimes')
+    error('出于性能考虑，pageShow/pageHide增强钩子将在下个版本被移除，请使用原生的pageLifetimes替代，此外请不要强依赖pageLifetimes.show进行初始化操作，因为pageLifetimes.show并不能保证在初始化时一定被调用！', global.currentResource)
+    // 出于业务兼容考虑暂时不移除pageShow/pageHide
+    // const mixin = {
+    //   pageLifetimes: {}
+    // }
+    // if (options.pageShow) {
+    //   mixin.pageLifetimes.show = options.pageShow
+    //   delete options.pageShow
+    // }
+    // if (options.pageHide) {
+    //   mixin.pageLifetimes.hide = options.pageHide
+    //   delete options.pageHide
+    // }
+    // mergeToArray(options, mixin, 'pageLifetimes')
   }
   return options
 }
