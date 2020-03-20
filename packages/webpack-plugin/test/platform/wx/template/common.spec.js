@@ -1,43 +1,9 @@
-const compiler = require('../../../lib/template-compiler/compiler')
+const { compileAndParse, warnFn, errorFn } = require('../util')
 
-const errorFn = jest.fn(console.error)
-const warnFn = jest.fn(console.warn)
-
-function compileAndParse (input, { srcMode, mode } = { srcMode: 'wx', mode: 'ali' }) {
-  const parsed = compiler.parse(input, {
-    usingComponents: [],
-    srcMode,
-    mode,
-    warn: warnFn,
-    error: errorFn,
-    defs: {
-      '__mpx_mode__': mode,
-      '__mpx_src_mode__': srcMode
-    }
-  })
-  const ast = parsed.root
-  return compiler.serialize(ast)
-}
-
-describe('template should transform correct', function () {
+describe('common spec case', function () {
   afterEach(() => {
     warnFn.mockClear()
     errorFn.mockClear()
-  })
-
-  it('should transform normally in ali env', function () {
-    const input = `<wxs module="m1" src="./test.wxs"></wxs>
-<view>123</view>
-    `
-
-    expect(compileAndParse(input)).toBe('<import-sjs name="m1" from="./test.wxs"></import-sjs> <view>123</view> ')
-    expect(errorFn).not.toHaveBeenCalled()
-  })
-
-  it('should warning if button\'s open-type is a variable', function () {
-    const input = `<button open-type="{{ aaa }}" bindTap="handleClick"></button>`
-    compileAndParse(input)
-    expect(warnFn).toHaveBeenCalledWith(`<button>'s property 'open-type' does not support '[{{ aaa }}]' value in ali environment!`)
   })
 
   it('should not report error about transform if node removed', () => {
@@ -53,17 +19,6 @@ describe('template should transform correct', function () {
     `
     compileAndParse(normalInput)
     expect(warnFn).toHaveBeenCalled()
-  })
-
-  it('should not report error when parent node removed', () => {
-    const input = `
-    <view>test</view>
-    <view wx:if="{{__mpx_mode__ === 'wx'}}">
-        <live-pusher></live-pusher>
-    </view>
-    `
-    compileAndParse(input)
-    expect(errorFn).not.toHaveBeenCalled()
   })
 
   it('should optimize key of for in swan', function () {
@@ -111,23 +66,6 @@ describe('template should transform correct', function () {
     expect(output12).toBe(`<view s-for="item, index in list">123</view>`)
     expect(output13).toBe(`<view s-for="item, index in list">123</view>`)
     expect(output14).toBe('<view s-for="t1, t2 in [0,1,2,3,4,5,6,7] trackBy t1">123</view>')
-  })
-
-  it('should transform button correct', function () {
-    const input1 = `<button open-type="getUserInfo">获取用户信息</button>`
-    const input2 = `<button open-type="getPhoneNumber">获取手机号</button>`
-    const input3 = `<button open-type="openSetting">打开设置面板</button>`
-    const input4 = `<button open-type="{{aaa}}">{{name}}</button>`
-
-    const output1 = compileAndParse(input1, { srcMode: 'wx', mode: 'ali' })
-    const output2 = compileAndParse(input2, { srcMode: 'wx', mode: 'ali' })
-    compileAndParse(input3, { srcMode: 'wx', mode: 'ali' })
-    const output4 = compileAndParse(input4, { srcMode: 'wx', mode: 'tt' })
-
-    expect(output1).toBe('<button open-type="getAuthorize" scope="userInfo">获取用户信息</button>')
-    expect(output2).toBe('<button open-type="getAuthorize" scope="phoneNumber">获取手机号</button>')
-    expect(errorFn).toHaveBeenCalledWith(`<button>'s property 'open-type' does not support '[openSetting]' value in ali environment!`)
-    expect(output4).toBe('<button open-type="{{aaa}}">{{name}}</button>')
   })
 
   it('should trans event binding for tt miniapp', function () {
