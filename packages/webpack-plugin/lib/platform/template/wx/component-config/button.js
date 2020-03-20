@@ -68,12 +68,6 @@ module.exports = function ({ print }) {
             baiduValueLogError({ name, value })
           }
         },
-        qq ({ name, value }) {
-          let supportList = ['share', 'getUserInfo', 'launchApp', 'feedback', 'openSetting']
-          if (supportList.indexOf(value) === -1) {
-            qqValueLogError({ name, value })
-          }
-        },
         tt ({ name, value }) {
           if (/\{\{((?:.|\n)+?)\}\}(?!})/.test(value)) {
             ttValueLog({ name, value })
