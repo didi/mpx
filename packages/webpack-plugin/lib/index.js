@@ -145,16 +145,24 @@ class MpxWebpackPlugin {
     } else {
       throw new Error('Multiple MpxWebpackPlugin instances exist in webpack compiler, please check webpack plugins config!')
     }
+    const warnings = []
+    const errors = []
     if (this.options.mode !== 'web') {
       // 强制设置publicPath为'/'
       if (compiler.options.output.publicPath && compiler.options.output.publicPath !== publicPath) {
-        console.warn(`MpxWebpackPlugin accept output publicPath to be ${publicPath} only, custom output publicPath will be ignored!`)
+        warnings.push(`webpack options: MpxWebpackPlugin accept options.output.publicPath to be ${publicPath} only, custom options.output.publicPath will be ignored!`)
       }
       compiler.options.output.publicPath = publicPath
       if (compiler.options.output.filename && compiler.options.output.filename !== outputFilename) {
-        console.warn(`MpxWebpackPlugin accept output filename to be ${outputFilename} only, custom output filename will be ignored!`)
+        warnings.push(`webpack options: MpxWebpackPlugin accept options.output.filename to be ${outputFilename} only, custom options.output.filename will be ignored!`)
       }
       compiler.options.output.filename = compiler.options.output.chunkFilename = outputFilename
+    }
+
+    if (!compiler.options.node || !compiler.options.node.global) {
+      compiler.options.node = compiler.options.node || {}
+      compiler.options.node.global = true
+      warnings.push(`webpack options: MpxWebpackPlugin strongly depends options.node.globel to be true, custom options.node will be ignored!`)
     }
 
     const resolvePlugin = new AddModePlugin('before-resolve', this.options.mode, 'resolve')
@@ -217,6 +225,8 @@ class MpxWebpackPlugin {
     let mpx
 
     compiler.hooks.thisCompilation.tap('MpxWebpackPlugin', (compilation, { normalModuleFactory }) => {
+      compilation.warnings = compilation.warnings.concat(warnings)
+      compilation.errors = compilation.errors.concat(errors)
       // additionalAssets和mpx由于包含缓存机制，必须在每次compilation时重新初始化
       const additionalAssets = {}
       if (!compilation.__mpx__) {
