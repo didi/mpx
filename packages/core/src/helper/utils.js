@@ -4,6 +4,8 @@ import _getByPath from './getByPath'
 
 import { error } from './log'
 
+import { set } from '../observer/index'
+
 export function type (n) {
   return Object.prototype.toString.call(n).slice(8, -1)
 }
@@ -95,7 +97,7 @@ export function setByPath (data, pathStrOrArr, value) {
       if (__mpx_mode__ === 'web') {
         Vue.set(current, key, value)
       } else {
-        current[key] = value
+        set(current, key, value)
       }
     } else if (!current[key]) {
       current[key] = {}

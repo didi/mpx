@@ -39,7 +39,7 @@ function defineComputed (
     sharedPropertyDefinition.set = noop
   } else {
     sharedPropertyDefinition.get = userDef.get
-      ? createComputedGetter(key)
+      ? createComputedGetter(vm, key)
       : noop
     sharedPropertyDefinition.set = userDef.set
       ? userDef.set.bind(vm.target)
