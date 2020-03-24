@@ -41,6 +41,8 @@ module.exports = function getSpec ({ warn, error }) {
           let keyType = KEY_TYPES.PROPERTY
           // 在wx:for="abcd"值为字符串时varListName为null,按照小程序循环规则将字符串转换为 ["a", "b", "c", "d"]
           if (parsed.hasBinding) {
+            // unwrap ()
+            listName = listName.slice(1, -1)
             // 处理数字循环
             if (/^\d+$/.test(listName)) {
               keyType = KEY_TYPES.INDEX
@@ -66,7 +68,7 @@ module.exports = function getSpec ({ warn, error }) {
           if (keyName) {
             const parsed = parseMustache(keyName)
             if (parsed.hasBinding) {
-              keyStr = ` trackBy ${parsed.result}`
+              // keyStr = ` trackBy ${parsed.result.slice(1, -1)}`
             } else if (keyName === '*this') {
               keyStr = ` trackBy ${itemName}`
             } else {

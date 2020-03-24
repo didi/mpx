@@ -1281,9 +1281,9 @@ function parseMustache (raw = '') {
     }
     let result
     if (ret.length === 1) {
-      result = ret[0].slice(1, -1)
+      result = ret[0]
     } else {
-      result = ret.join('+')
+      result = `(${ret.join('+')})`
     }
     return {
       result,
