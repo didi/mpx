@@ -1272,14 +1272,19 @@ function parseMustache (raw = '') {
         })
       }
 
-      ret.push(`(${exp})`)
+      ret.push(`(${exp.trim()})`)
       lastLastIndex = tagREG.lastIndex
     }
     let post = raw.substring(lastLastIndex)
     if (post) {
       ret.push(stringify(post))
     }
-    let result = ret.join('+')
+    let result
+    if (ret.length === 1) {
+      result = ret[0].slice(1, -1)
+    } else {
+      result = ret.join('+')
+    }
     return {
       result,
       hasBinding: true,
