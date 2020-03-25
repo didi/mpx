@@ -22,9 +22,14 @@ describe('custom rule spec case', function () {
     }
   }
 
+  it('should trans normal without custom rules', function () {
+    const rs = compileAndParse(`<view wx:if="{{show}}">123</view>`, { srcMode: 'wx', mode: 'swan' })
+    expect(rs).toBe('<view s-if="{{show}}">123</view>')
+  })
+
   it('should trans as custom rules expected', function () {
-    const rs = compileAndParse(`<view>123</view>`, { srcMode: 'wx', mode: 'swan', customTransSpec: baseCustomTransSpec })
-    expect(rs).toBe('<swan-view>123</swan-view>')
+    const rs = compileAndParse(`<view wx:if="{{show}}">123</view>`, { srcMode: 'wx', mode: 'swan', customTransSpec: baseCustomTransSpec })
+    expect(rs).toBe('<swan-view s-if="{{show}}">123</swan-view>')
   })
 
   it('should trans normal for web platform', function () {
