@@ -18,6 +18,7 @@ module.exports = function (raw) {
   const mode = mpx.mode
   const defs = mpx.defs
   const i18n = mpx.i18n
+  const customTransSpec = mpx.customTransSpec
   const externalClasses = mpx.externalClasses
   const globalSrcMode = mpx.srcMode
   const localSrcMode = loaderUtils.parseQuery(this.resourceQuery || '?').mode
@@ -46,6 +47,7 @@ module.exports = function (raw) {
     isComponent: !!componentsMap[resourcePath],
     mode,
     defs,
+    customTransSpec,
     globalMpxAttrsFilter: mpx.globalMpxAttrsFilter,
     externalClasses,
     srcMode: localSrcMode || globalSrcMode,

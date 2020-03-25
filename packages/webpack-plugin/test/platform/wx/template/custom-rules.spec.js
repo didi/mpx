@@ -29,8 +29,10 @@ describe('custom rule spec case', function () {
 
   it('should trans normal for web platform', function () {
     // web的处理是waterfall模式，命中一条规则后还会继续匹配
-    const rs = compileAndParse(`<view bindtap="handleClick">123</view>`, { srcMode: 'wx', mode: 'web', customTransSpec: baseCustomTransSpec })
-    expect(rs).toBe('<mpx-view @tap="handleClick">123</mpx-view>')
+    const rs1 = compileAndParse(`<view bindtap="handleClick">123</view>`, { srcMode: 'wx', mode: 'web', customTransSpec: baseCustomTransSpec })
+    expect(rs1).toBe('<mpx-view @tap="handleClick">123</mpx-view>')
+    const rs2 = compileAndParse(`<view bindtap="handleClick">123</view>`, { srcMode: 'wx', mode: 'web', customTransSpec: {} })
+    expect(rs2).toBe('<mpx-view @tap="handleClick">123</mpx-view>')
   })
 
   it('should trans normal for ali platform if custom trans rules only for swan', function () {
