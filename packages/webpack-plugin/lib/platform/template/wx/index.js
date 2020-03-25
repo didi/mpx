@@ -6,8 +6,32 @@ const templateCompiler = require('../../../template-compiler/compiler')
 const parseMustache = templateCompiler.parseMustache
 const stringifyWithResolveComputed = templateCompiler.stringifyWithResolveComputed
 
-module.exports = function getSpec ({ warn, error }) {
-  const spec = {
+/**
+ * 第一阶段先支持模板上的directive/event/rules外部传入
+ * @param {object} baseSpecMap 基准specMap
+ * @param {object} extendSpecMap 扩展specMap
+ * @return {object} 返回扩展后的specMap
+ */
+function mergeSpecMapRules (baseSpecMap, extendSpecMap) {
+  const extendWXTemplate = extendSpecMap && extendSpecMap.template && extendSpecMap.template.wx
+  if (extendWXTemplate) {
+    const { directive, event } = extendWXTemplate
+    // todo：更好的merge规则
+    // if (Array.isArray(rules)) {
+    //   baseSpecMap.rules.unshift(...rules)
+    // }
+    if (Array.isArray(directive)) {
+      baseSpecMap.directive.unshift(...directive)
+    }
+    if (Array.isArray(event)) {
+      baseSpecMap.event.unshift(...event)
+    }
+  }
+  return baseSpecMap
+}
+
+module.exports = function getSpec ({ warn, error, customTransSpec }) {
+  const baseSpec = {
     supportedModes: ['ali', 'swan', 'qq', 'tt', 'web'],
     // props预处理
     preProps: [],
@@ -382,6 +406,12 @@ module.exports = function getSpec ({ warn, error }) {
       ]
     }
   }
-  spec.rules = normalizeComponentRules(getComponentConfigs({ warn, error }).concat({}), spec)
+
+  const spec = mergeSpecMapRules(baseSpec, customTransSpec)
+  const rules = (customTransSpec && customTransSpec.template && customTransSpec.template.wx && customTransSpec.template.wx.rules) || []
+
+  const componentsRules = [...rules, ...getComponentConfigs({ warn, error })].concat({})
+
+  spec.rules = normalizeComponentRules(componentsRules, spec)
   return spec
 }

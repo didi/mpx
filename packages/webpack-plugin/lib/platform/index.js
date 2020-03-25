@@ -1,30 +1,6 @@
 const runRules = require('./run-rules')
 
 /**
- * 第一阶段先支持模板上的directive/event/rules外部传入
- * @param {object} baseSpecMap 基准specMap
- * @param {object} extendSpecMap 扩展specMap
- * @return {object} 返回扩展后的specMap
- */
-function mergeSpecMapRules (baseSpecMap, extendSpecMap) {
-  const extendWXTemplate = extendSpecMap && extendSpecMap.template && extendSpecMap.template.wx
-  if (extendWXTemplate) {
-    const { rules, directive, event } = extendWXTemplate
-    // todo：更好的merge规则
-    if (Array.isArray(rules)) {
-      baseSpecMap.template.wx.rules.unshift(...rules)
-    }
-    if (Array.isArray(directive)) {
-      baseSpecMap.template.wx.directive.unshift(...directive)
-    }
-    if (Array.isArray(event)) {
-      baseSpecMap.template.wx.event.unshift(...event)
-    }
-  }
-  return baseSpecMap
-}
-
-/**
  * 获取带内置规则的转换执行器，
  * @param type 转换类型 目前有模板template和json两种
  * @param {'wx'|'ali'|'swan'|'qq'|'tt'|'web'} mode 当前模式 可选值 wx/ali/swan/qq/tt/web
@@ -40,15 +16,14 @@ function mergeSpecMapRules (baseSpecMap, extendSpecMap) {
  * @return {function(*=): *} 转换执行器
  */
 module.exports = function getRulesRunner ({ type, mode, srcMode, data, meta, testKey, mainKey, waterfall, warn, error, customTransSpec }) {
-  const builtInSpecMap = {
+  const specMap = {
     template: {
-      wx: require('./template/wx')({ warn, error })
+      wx: require('./template/wx')({ warn, error, customTransSpec })
     },
     json: {
       wx: require('./json/wx')({ warn, error })
     }
   }
-  const specMap = mergeSpecMapRules(builtInSpecMap, customTransSpec)
   const spec = specMap[type] && specMap[type][srcMode]
   if (spec && spec.supportedModes.indexOf(mode) > -1) {
     const normalizeTest = spec.normalizeTest

@@ -12,9 +12,8 @@ describe('custom rule spec case', function () {
         rules: [
           {
             test: 'view',
-            swan (el, data) {
-              el.tag = 'swan-view'
-              return el
+            swan () {
+              return 'swan-view'
             }
           }
         ]
