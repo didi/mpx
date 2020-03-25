@@ -9,7 +9,7 @@ const warnFn = jest.fn(console.warn)
  * @param {object} option compiler parse的配置项
  * @param {string} option.srcMode 目前仅支持wx
  * @param {string} option.mode 目标模式，默认ali
- * @param {object} option.customTransSpec 自定义转换规则
+ * @param {object=} option.customTransSpec 自定义转换规则
  * @return {string} 转换结果
  */
 function compileAndParse (input, { srcMode, mode, customTransSpec } = { srcMode: 'wx', mode: 'ali' }) {
@@ -22,7 +22,8 @@ function compileAndParse (input, { srcMode, mode, customTransSpec } = { srcMode:
     defs: {
       '__mpx_mode__': mode,
       '__mpx_src_mode__': srcMode
-    }
+    },
+    customTransSpec
   })
   const ast = parsed.root
   return compiler.serialize(ast)

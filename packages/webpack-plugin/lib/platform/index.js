@@ -10,14 +10,15 @@ function mergeSpecMapRules (baseSpecMap, extendSpecMap) {
   const extendWXTemplate = extendSpecMap && extendSpecMap.template && extendSpecMap.template.wx
   if (extendWXTemplate) {
     const { rules, directive, event } = extendWXTemplate
+    // todo：更好的merge规则，因为命中一条后不会再走后续，所以目前这样会导致组件/指令/事件级别的规则彻底覆盖内建规则，而不是合并
     if (Array.isArray(rules)) {
-      baseSpecMap.template.wx.rules.unshift(rules)
+      baseSpecMap.template.wx.rules.unshift(...rules)
     }
     if (Array.isArray(directive)) {
-      baseSpecMap.template.wx.directive.unshift(directive)
+      baseSpecMap.template.wx.directive.unshift(...directive)
     }
     if (Array.isArray(event)) {
-      baseSpecMap.template.wx.event.unshift(event)
+      baseSpecMap.template.wx.event.unshift(...event)
     }
   }
   return baseSpecMap
