@@ -1,7 +1,7 @@
 const runRules = require('./run-rules')
 
 /**
- * 第一阶段先支持模板上的directive/event/rules外部传入，通过副作用直接修改
+ * 第一阶段先支持模板上的directive/event/rules外部传入
  * @param {object} baseSpecMap 基准specMap
  * @param {object} extendSpecMap 扩展specMap
  * @return {object} 返回扩展后的specMap
@@ -10,7 +10,7 @@ function mergeSpecMapRules (baseSpecMap, extendSpecMap) {
   const extendWXTemplate = extendSpecMap && extendSpecMap.template && extendSpecMap.template.wx
   if (extendWXTemplate) {
     const { rules, directive, event } = extendWXTemplate
-    // todo：更好的merge规则，因为命中一条后不会再走后续，所以目前这样会导致组件/指令/事件级别的规则彻底覆盖内建规则，而不是合并
+    // todo：更好的merge规则
     if (Array.isArray(rules)) {
       baseSpecMap.template.wx.rules.unshift(...rules)
     }

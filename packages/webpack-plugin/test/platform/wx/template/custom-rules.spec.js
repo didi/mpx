@@ -35,6 +35,6 @@ describe('custom rule spec case', function () {
 
   it('should trans normal for ali platform if custom trans rules only for swan', function () {
     const rs = compileAndParse(`<view bindtransitionend="handleClick">123</view>`, { srcMode: 'wx', mode: 'ali', customTransSpec: baseCustomTransSpec })
-    expect(rs).toBe('<view bindtransitionEnd="handleClick">123</view>')
+    expect(rs).toBe('<view onTransitionEnd="handleClick">123</view>')
   })
 })
