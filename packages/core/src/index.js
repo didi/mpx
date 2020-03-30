@@ -179,6 +179,15 @@ if (__mpx_mode__ === 'web') {
 } else {
   if (global.i18n) {
     observe(global.i18n)
+    // 挂载翻译方法
+    if (global.i18nMethods) {
+      Object.keys(global.i18nMethods).forEach((methodName) => {
+        global.i18n[methodName] = (...args) => {
+          args.unshift(global.i18n.locale)
+          return global.i18nMethods[methodName].apply(this, args)
+        }
+      })
+    }
     EXPORT_MPX.i18n = global.i18n
   }
 }
