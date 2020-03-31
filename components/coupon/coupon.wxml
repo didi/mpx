@@ -1,0 +1,18 @@
+<view bindtap="toggleSelect"
+      class="{{!info.valid?'invalid coupon':selected?'selected coupon':'coupon'}}">
+  <view class="desc">
+    <view class="main">{{info.type}}券</view>
+    <view class="sub">有效期至 {{info.date}}</view>
+    <view class="amount">
+      <view class="unit">¥</view>
+      <view class="num">{{info.amount}}</view>
+    </view>
+  </view>
+  <view class="bottom">
+    <view class="limit">
+      <view wx:if="{{info.valid}}">{{info.city}}, {{info.limit}}时段可用</view>
+      <view wx:else>目前不可用</view>
+    </view>
+    <view class="detail">查看详情</view>
+  </view>
+</view>
