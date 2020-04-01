@@ -424,7 +424,7 @@ class MpxWebpackPlugin {
             const staticResourceMap = mpx.staticResourceMap
             const publicPath = mpx.mode === 'web' ? '' : compilation.outputOptions.publicPath
             const range = expr.range
-            const issuerResource = parser.state.current.issuer.resource
+            const issuerResource = parser.state.module.issuer.resource
             const dep = new ResolveDependency(resource, packageName, pagesMap, componentsMap, staticResourceMap, publicPath, range, issuerResource)
             parser.state.current.addDependency(dep)
             return true
@@ -478,16 +478,17 @@ class MpxWebpackPlugin {
               },
               module
             })
-            current.addVariable(name, expression, deps)
+            module.addVariable(name, expression, deps)
           }
         }
 
         // hack babel polyfill global
         parser.hooks.evaluate.for('CallExpression').tap('MpxWebpackPlugin', (expr) => {
           const current = parser.state.current
+          const module = parser.state.module
           const arg0 = expr.arguments[0]
           const callee = expr.callee
-          if (arg0 && arg0.value === 'return this' && callee.name === 'Function' && current.rawRequest === './_global') {
+          if (arg0 && arg0.value === 'return this' && callee.name === 'Function' && module.rawRequest === './_global') {
             current.addDependency(new InjectDependency({
               content: '(function() { return this })() || ',
               index: expr.range[0]

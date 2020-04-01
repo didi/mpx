@@ -26,11 +26,11 @@ export default function i18nMixin () {
           sync: true
         })
         // 挂载翻译方法
-        if (global.i18n.methods) {
-          Object.keys(global.i18n.methods).forEach((methodName) => {
+        if (global.i18nMethods) {
+          Object.keys(global.i18nMethods).forEach((methodName) => {
             this['$' + methodName] = (...args) => {
               args.unshift(this.mpxLocale)
-              return global.i18n.methods[methodName].apply(this, args)
+              return global.i18nMethods[methodName].apply(this, args)
             }
           })
         }

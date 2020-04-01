@@ -52,10 +52,10 @@ npm i
 npm run watch
 
 # production
-npm run build -p
+npm run build
 ```
 
-使用微信开发者工具打开项目文件夹即可预览效果。
+使用小程序开发者工具打开项目文件夹下dist中对应平台的文件夹即可预览效果。
 
 ## 文档
 
