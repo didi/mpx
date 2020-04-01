@@ -59,6 +59,7 @@ const nav = [
 ]
 
 module.exports = {
+  base: '/mpx/new/',
   head: [
     ['link', { rel: 'icon', href: '/favicon.ico' }]
   ],
