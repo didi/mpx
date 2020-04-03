@@ -35,7 +35,6 @@ module.exports = function ({ print }) {
       {
         // 支付宝中的view组件额外支持了transitionEnd|animationStart|animationIteration|animationEnd，故在此声明了组件事件转换逻辑
         test: /^(transitionend|animationstart|animationiteration|animationend)$/,
-        //
         ali (eventName) {
           const eventMap = {
             'transitionend': 'transitionEnd',

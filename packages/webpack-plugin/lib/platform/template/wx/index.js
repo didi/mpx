@@ -6,8 +6,47 @@ const templateCompiler = require('../../../template-compiler/compiler')
 const parseMustache = templateCompiler.parseMustache
 const stringifyWithResolveComputed = templateCompiler.stringifyWithResolveComputed
 
-module.exports = function getSpec ({ warn, error }) {
-  const spec = {
+/**
+ * 第一阶段先支持模板上的directive/event/rules外部传入
+ * @param {object} baseSpecMap 基准specMap
+ * @param {object} extendSpecMap 扩展specMap
+ * @return {object} 返回扩展后的specMap
+ */
+function mergeSpecMapRules (baseSpecMap, extendSpecMap) {
+  const extendWXTemplate = extendSpecMap && extendSpecMap.wx
+  if (extendWXTemplate) {
+    const { directive, event } = extendWXTemplate
+    if (Array.isArray(directive)) {
+      baseSpecMap.directive.unshift(...directive)
+    }
+    if (Array.isArray(event)) {
+      baseSpecMap.event.unshift(...event)
+    }
+  }
+  return baseSpecMap
+}
+
+/**
+ * merge rules
+ * @param {Array<object>} highOrderRuleList 高优先级的规则列表
+ * @param {Array<object>} builtInRuleList 内建规则列表
+ * @return Array<object> 合并后的规则列表
+ */
+function mergeRules (highOrderRuleList, builtInRuleList) {
+  const result = builtInRuleList
+  highOrderRuleList.forEach(hItem => {
+    const item = result.find(rItem => rItem.test === hItem.test)
+    if (item) {
+      Object.assign(item, hItem)
+    } else {
+      result.unshift(hItem)
+    }
+  })
+  return result
+}
+
+module.exports = function getSpec ({ warn, error, customTemplateSpec }) {
+  const baseSpec = {
     supportedModes: ['ali', 'swan', 'qq', 'tt', 'web'],
     // props预处理
     preProps: [],
@@ -382,6 +421,12 @@ module.exports = function getSpec ({ warn, error }) {
       ]
     }
   }
-  spec.rules = normalizeComponentRules(getComponentConfigs({ warn, error }).concat({}), spec)
+
+  const spec = mergeSpecMapRules(baseSpec, customTemplateSpec)
+  const rules = (customTemplateSpec && customTemplateSpec.wx && customTemplateSpec.wx.rules) || []
+
+  const componentsRules = mergeRules(rules, getComponentConfigs({ warn, error })).concat({})
+
+  spec.rules = normalizeComponentRules(componentsRules, spec)
   return spec
 }

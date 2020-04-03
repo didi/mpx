@@ -239,6 +239,7 @@ let error$1
 let mode
 let defs
 let i18n
+let customTransSpec
 let srcMode
 let processingTemplate
 let isNative
@@ -738,6 +739,7 @@ function parse (template, options) {
   isNative = options.isNative
   basename = options.basename
   i18n = options.i18n
+  customTransSpec = options.customTransSpec
   refId = 0
 
   rulesRunner = getRulesRunner({
@@ -746,7 +748,8 @@ function parse (template, options) {
     type: 'template',
     testKey: 'tag',
     warn: _warn,
-    error: _error
+    error: _error,
+    customTransSpec
   })
 
   injectNodes = []

@@ -32,6 +32,13 @@ const icon = require('./icon')
 const Nonsupport = require('./unsupported')
 const HyphenTagName = require('./hypen-tag-name')
 
+/**
+ * 获取组件转换规则
+ * @param {object} option 配置
+ * @param {function} option.warn 警告方法
+ * @param {function} option.error 错误方法
+ * @return {*[]} 组件规则数组
+ */
 module.exports = function getComponentConfigs ({ warn, error }) {
   /**
    * universal print for detail component warn or error

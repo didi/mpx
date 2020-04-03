@@ -99,6 +99,9 @@ class MpxWebpackPlugin {
     })
     // 批量指定源码mode
     options.modeRules = options.modeRules || {}
+    // 自定义转换规则
+    options.customTransSpec = options.customTransSpec || {}
+
     this.options = options
   }
 
@@ -270,6 +273,7 @@ class MpxWebpackPlugin {
           }, this.options.nativeOptions),
           defs: this.options.defs,
           i18n: this.options.i18n,
+          customTransSpec: this.options.customTransSpec,
           appTitle: 'Mpx homepage',
           extract: (content, file, index, sideEffects) => {
             additionalAssets[file] = additionalAssets[file] || []
