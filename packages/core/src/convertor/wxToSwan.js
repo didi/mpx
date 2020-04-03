@@ -5,6 +5,7 @@ const BEHAVIORS_MAP = {
 
 export default {
   convert (options) {
+    // todo fix swan onshow onload执行顺序
     if (options.behaviors) {
       options.behaviors.forEach((behavior, idx) => {
         if (typeof behavior === 'string' && BEHAVIORS_MAP[behavior]) {

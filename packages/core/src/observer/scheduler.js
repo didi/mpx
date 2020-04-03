@@ -17,6 +17,7 @@ export function queueWatcher (watcher) {
     has[watcher.id] = true
     if (!flushing) {
       queue.push(watcher)
+      lockTask(flushQueue, resetQueue)
     } else {
       let i = queue.length - 1
       while (i > curIndex && watcher.id < queue[i].id) {
@@ -24,7 +25,6 @@ export function queueWatcher (watcher) {
       }
       queue.splice(i + 1, 0, watcher)
     }
-    lockTask(flushQueue, resetQueue)
   }
 }
 

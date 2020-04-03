@@ -8,8 +8,6 @@ let uid = 0
  */
 export default class Dep {
   static target
-  id
-  subs
 
   constructor () {
     this.id = uid++

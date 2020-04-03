@@ -5,30 +5,33 @@
 </p>
 
 <p align="center">
-    An enhanced miniprogram framework with data reactivity and deep optimizition.
+    一款具有优秀开发体验和深度性能优化的增强型小程序开发框架。
 </p>
 
 [![Build Status](https://travis-ci.org/didi/mpx.svg?branch=master)](https://travis-ci.org/didi/mpx)
 
 ## 简介
 
-Mpx是一款致力于提高小程序开发体验的增强型小程序框架，通过Mpx，我们能够以最先进的web开发体验来开发生产性能深度优化的小程序。Mpx具有以下一些优秀特性：
-* 数据响应特性([watch](https://didi.github.io/mpx/single/script-enhance.html#watch) / [computed](https://didi.github.io/mpx/single/script-enhance.html#computed))
-* 增强的模板语法([动态组件](https://didi.github.io/mpx/single/template-enhance.html#%E5%8A%A8%E6%80%81%E7%BB%84%E4%BB%B6) / [样式绑定 / 类名绑定 ](https://didi.github.io/mpx/single/template-enhance.html#class%E4%B8%8Estyle%E7%BB%91%E5%AE%9A) / [内联事件函数](https://didi.github.io/mpx/single/template-enhance.html#%E5%86%85%E8%81%94%E4%BA%8B%E4%BB%B6%E7%BB%91%E5%AE%9A) / [双向绑定](https://didi.github.io/mpx/single/template-enhance.html#%E5%8F%8C%E5%90%91%E7%BB%91%E5%AE%9A) 等)
-* [深度性能优化](https://didi.github.io/mpx/understanding/understanding.html#%E6%95%B0%E6%8D%AE%E5%93%8D%E5%BA%94%E4%B8%8E%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96)(原生自定义组件/基于依赖收集和数据变化的setData)
-* Webpack编译(npm/循环依赖/Babel/ESLint/css预编译/代码优化等)
+Mpx是一款致力于提高小程序开发体验和开发效率的增强型小程序框架，通过Mpx，我们能够高效优雅地开发出具有极致性能的优质小程序应用，并将其输出到各大小程序平台和web平台中运行。
+
+Mpx具有以下功能特性：
+* 数据响应 (赋值响应 / [watch](https://didi.github.io/mpx/single/script-enhance.html#watch) / [computed](https://didi.github.io/mpx/single/script-enhance.html#computed))
+* 增强模板语法 ([动态组件](https://didi.github.io/mpx/single/template-enhance.html#%E5%8A%A8%E6%80%81%E7%BB%84%E4%BB%B6) / [样式绑定 / 类名绑定 ](https://didi.github.io/mpx/single/template-enhance.html#class%E4%B8%8Estyle%E7%BB%91%E5%AE%9A) / [内联事件函数](https://didi.github.io/mpx/single/template-enhance.html#%E5%86%85%E8%81%94%E4%BA%8B%E4%BB%B6%E7%BB%91%E5%AE%9A) / [双向绑定](https://didi.github.io/mpx/single/template-enhance.html#%E5%8F%8C%E5%90%91%E7%BB%91%E5%AE%9A) / [refs](https://didi.github.io/mpx/single/template-enhance.html#refs))
+* 极致性能 ([运行时性能优化](https://didi.github.io/mpx/understanding/understanding.html#%E6%95%B0%E6%8D%AE%E5%93%8D%E5%BA%94%E4%B8%8E%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96) / [包体积优化](https://didi.github.io/mpx/understanding/understanding.html#%E5%88%86%E5%8C%85%E5%A4%84%E7%90%86%E7%BB%86%E8%8A%82) / 框架运行时体积14KB)
+* [高效强大的编译构建](https://didi.github.io/mpx/understanding/understanding.html#%E7%BC%96%E8%AF%91%E6%9E%84%E5%BB%BA) (基于webpack / 兼容webpack生态 / 兼容原生小程序 / 完善支持npm场景下的分包输出 / 高效调试)
 * [单文件组件开发](https://didi.github.io/mpx/single/what-is-single-file.html#%E5%8D%95%E6%96%87%E4%BB%B6)
 * [渐进接入 / 原生组件支持](https://didi.github.io/mpx/progressive.html)
-* [状态管理](https://didi.github.io/mpx/store/#%E6%95%B0%E6%8D%AE%E7%AE%A1%E7%90%86)(Vuex规范/多实例/可合并)
-* 跨团队合作([packages](https://didi.github.io/mpx/single/json-enhance.html#packages))
-* 逻辑复用能力([mixins](https://didi.github.io/mpx/single/script-enhance.html#mixins))
+* [状态管理](https://didi.github.io/mpx/store/#%E5%A4%9A%E5%AE%9E%E4%BE%8B) (Vuex规范 / 支持多实例Store)
+* 跨团队开发 ([packages](https://didi.github.io/mpx/single/json-enhance.html#packages))
+* 逻辑复用 ([mixins](https://didi.github.io/mpx/single/script-enhance.html#mixins))
+* [周边能力支持](https://didi.github.io/mpx/extend/) (fetch / api增强 / mock / webview-bridge)
 * 脚手架支持
-* 小程序自身规范的完全支持
-* [多平台支持](https://didi.github.io/mpx/platform.html#%E5%A4%9A%E5%B9%B3%E5%8F%B0%E6%94%AF%E6%8C%81)(微信、支付宝、百度、qq、头条)
-* [跨平台编译](https://didi.github.io/mpx/platform.html#%E8%B7%A8%E5%B9%B3%E5%8F%B0%E7%BC%96%E8%AF%91)(支持将微信小程序转换为支付宝、百度、qq、头条小程序)
-* [TypeScript支持](https://didi.github.io/mpx/ts.html)(完善的类型推导)
-
-Mpx2.0正式发布！支持目前业内全部小程序平台及跨小程序平台编译，[点此查看详情](https://github.com/didi/mpx/releases/tag/v2.0.0)，[点此查看迁移指南](https://didi.github.io/mpx/migrate.html)
+* [多平台增强](https://didi.github.io/mpx/platform.html#%E5%A4%9A%E5%B9%B3%E5%8F%B0%E6%94%AF%E6%8C%81) (支持在微信、支付宝、百度、qq、头条小程序平台中进行增强开发)
+* [跨平台编译](https://didi.github.io/mpx/platform.html#%E8%B7%A8%E5%B9%B3%E5%8F%B0%E7%BC%96%E8%AF%91) (支持以微信为base，将一套代码转换输出到支付宝、百度、qq、头条小程序平台和[web平台](https://didi.github.io/mpx/platform.html#%E8%B7%A8%E5%B9%B3%E5%8F%B0%E8%BE%93%E5%87%BAweb)中运行)
+* [TypeScript支持](https://didi.github.io/mpx/ts.html) (基于ThisType实现了完善的类型推导)
+* [I18n国际化](https://didi.github.io/mpx/i18n.html)
+* 单元测试支持 (即将到来)
+* 快应用输出 (即将到来)
 
 ## 使用
 
@@ -49,10 +52,10 @@ npm i
 npm run watch
 
 # production
-npm run build -p
+npm run build
 ```
 
-使用微信开发者工具打开项目文件夹即可预览效果。
+使用小程序开发者工具打开项目文件夹下dist中对应平台的文件夹即可预览效果。
 
 ## 文档
 
@@ -62,10 +65,11 @@ https://didi.github.io/mpx
 
 ## 设计思路
 
-目前业界主流的小程序框架主要有WePY，mpvue和Taro，这三者都是将其他的语法规范转译为小程序语法规范，我们称其为转译型框架。不同于上述三者，Mpx是一款基于小程序语法规范的增强型框架，我们使用Vue中优秀的语法特性增强了小程序，而不是让用户直接使用vue语法来开发小程序，之所以采用这种设计主要是基于如下考虑：
+Mpx的核心设计思路为增强，不同于业内大部分小程序框架将web MVVM框架迁移到小程序中运行的做法，Mpx以小程序原生的语法和技术能力为基础，借鉴参考了主流的web技术设计对其进行了扩展与增强，并在此技术上实现了以微信增强语法为base的同构跨平台输出，该设计带来的好处如下：
+* 良好的开发体验：在方便使用框架提供的便捷特性的同时，也能享受到媲美原生开发的确定性和稳定性，完全没有`框架太多坑，不如用原生`的顾虑；不管是增强输出还是跨平台输出，最终的dist代码可读性极强，便于调试排查；
+* 极致的性能：得益于增强的设计思路，Mpx框架在运行时不需要做太多封装抹平转换的工作，框架的运行时部分极为轻量简洁，压缩+gzip后仅占用14KB；配合编译构建进行的包体积优化和基于模板渲染函数进行的数据依赖跟踪，Mpx框架在性能方面做到了业内最优([小程序框架运行时性能评测报告](https://github.com/hiyuki/mp-framework-benchmark/blob/master/README.md))；
+* 完整的原生兼容：同样得益于增强的设计思路，Mpx框架能够完整地兼容小程序原生技术规范，并且做到实时跟进。在Mpx项目中开发者可以方便地使用业内已有的小程序生态，如组件库、统计工具等；原生开发者们可以方便地进行渐进迁移；甚至可以将框架的跨平台编译能力应用在微信的原生小程序组件当中进行跨平台输出。
 
-- 转译型框架无法支持源框架的所有语法特性(如Vue模板中的动态特性或React中动态生成的jsx)，用户在使用源框架语法进行开发时可能会遇到不可预期的错误，具有不确定性
-- 小程序本身的技术规范在不断地更新进步，许多新的技术规范在转译型框架中无法支持或需要很高的支持成本，而对于增强型框架来说只要新的技术规范不与增强特性冲突，就能够直接支持
 
 ## 生态周边
 
@@ -78,6 +82,26 @@ https://didi.github.io/mpx
 |@mpxjs/webview-bridge|[![npm version](https://badge.fury.io/js/%40mpxjs%2Fwebview-bridge.svg)](https://badge.fury.io/js/%40mpxjs%2Fwebview-bridge)|为跨小程序平台的H5项目提供通用的webview-bridge|
 |@mpxjs/api-proxy|[![npm version](https://badge.fury.io/js/%40mpxjs%2Fapi-proxy.svg)](https://badge.fury.io/js/%40mpxjs%2Fapi-proxy)|将各个平台的 api 进行转换，也可以将 api 转为 promise 格式|
 |@mpxjs/mock|[![npm version](https://badge.fury.io/js/%40mpxjs%2Fmock.svg)](https://badge.fury.io/js/%40mpxjs%2Fmock)|结合mockjs提供数据mock能力|
+
+## 成功案例
+
+微信小程序
+
+|<img src="https://user-images.githubusercontent.com/6292668/75111787-a30fb000-5678-11ea-9ef1-78b18973ee75.jpg" width="100" title="滴滴出行"/>|<img src="https://user-images.githubusercontent.com/6292668/75132678-db63cc80-5712-11ea-93ba-0b9f3201dbe3.jpg" width="100" title="滴滴出行营销小程序"/>|<img src="https://user-images.githubusercontent.com/6292668/75133566-44007880-5716-11ea-9090-6e8acb0d77f1.jpg" width="100" title="滴滴动态公交"/>|<img src="https://user-images.githubusercontent.com/18554963/75134630-d8b8a580-5719-11ea-86fb-c3fdb8fbc144.png" width="100" title="滴滴金融"/>|<img src="https://user-images.githubusercontent.com/6292668/75148361-67d5b580-573a-11ea-873b-dd4dcf438bec.png" width="100" title="滴滴外卖"/>|<img src="https://user-images.githubusercontent.com/9695264/75208528-ecfeb000-57b6-11ea-8c24-e9403df2a8a8.jpg" width="100" title="司机招募"/>|<img src="https://user-images.githubusercontent.com/6810697/75212655-87b0bc00-57c2-11ea-9e44-e1f62861feb8.png" width="100" title="小桔加油"/>|
+|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+|滴滴出行|出行广场|滴滴公交|滴滴金融|滴滴外卖|司机招募|小桔加油|
+|<img src="https://user-images.githubusercontent.com/7993339/75113972-5387af00-568d-11ea-96c9-fe8122ce1032.jpg" width="100" title="彗星英语"/>|<img src="https://user-images.githubusercontent.com/18588816/75115186-322bc080-5697-11ea-9036-46066a19b65b.jpg" width="100" title="番薯借阅"/>|<img src="https://user-images.githubusercontent.com/16451550/75129100-6c7e7780-5702-11ea-87c0-dd3faf7a7538.jpg" width="100" title="疫查查应用"/>|<img src="https://user-images.githubusercontent.com/6810697/75212604-69e35700-57c2-11ea-9190-d8a6cb77ba9d.jpg" width="100" title="小桔养车"/>|<img src="https://user-images.githubusercontent.com/6810697/75530109-a2976080-5a4e-11ea-97fa-01a433538ece.jpeg" width="100" title="学而思网校免费直播课"/>|<img src="https://user-images.githubusercontent.com/6810697/75531887-26514d00-5a4f-11ea-81c8-3df632531178.jpeg" width="100" title="小猴启蒙课"/>|<img src="https://user-images.githubusercontent.com/10382462/76416594-547f4700-63d6-11ea-9e9f-390a64e6b9c5.png" width="100" title="科创书店"/>|
+|彗星英语|番薯借阅|疫查查应用|小桔养车|学而思直播课|小猴启蒙课|科创书店|
+|<img src="https://user-images.githubusercontent.com/14816052/76678054-9fd06a00-660f-11ea-8631-be93fe3dc2c2.jpg" width="100" title="在武院"/>|<img src="https://user-images.githubusercontent.com/17399581/77496337-b7b4b300-6e85-11ea-99b8-0ce90844ec67.jpg" width="100" title="三股绳Lite - 群打卡"/>|<img src="https://user-images.githubusercontent.com/6810697/75530379-b80c8a80-5a4e-11ea-9962-add87d56a320.jpeg" width="100" title="学而思网校优选课"/>|<img src="https://camo.githubusercontent.com/8874e8affe1a73de24a94de7072df0d0ccaf2f99/68747470733a2f2f73686978682e636f6d2f73686571752f696d672f7172636f64655f322e37343664373562342e706e67" width="100" title="食享会"/>|<img src="https://user-images.githubusercontent.com/7945757/75128784-c4b47a00-5700-11ea-9a45-4ac0ccdad7ed.png" width="100" title="青铜安全医生"/>|<img src="https://user-images.githubusercontent.com/7945757/75128831-f9283600-5700-11ea-8f6b-50b0abb669fd.png" width="100" title="青铜安全培训"/>|<img src="https://user-images.githubusercontent.com/7945757/77252487-0ba97700-6c8f-11ea-9a0c-377aae60e49e.png" width="100" title="视穹云机械"/>|
+|在武院|三股绳Lite|学而思优选课|食享会|青铜安全医生|青铜安全培训|视穹云机械|
+
+其他平台小程序：
+
+|<img src="https://user-images.githubusercontent.com/6292668/75112173-2bdc1b00-567c-11ea-8c20-aee5472cd4eb.png" width="120" title="滴滴出行(支付宝)"/>|<img src="https://user-images.githubusercontent.com/6810697/75212688-a31bc700-57c2-11ea-9d75-57430cb32c8f.png" width="120" title="小桔充电(支付宝)"/>|<img src="https://user-images.githubusercontent.com/916567/75526665-27817a80-5a4d-11ea-9fec-05005f4ad99c.png" width="120" title="唯品会QQ"/>|<img src="https://user-images.githubusercontent.com/22525904/75538291-539ffa00-5a53-11ea-961d-23e7d849e5a1.png" width="120" title="口袋证件照"/>|<img src="https://user-images.githubusercontent.com/916567/75525961-cad19000-5a4b-11ea-90b2-9f284ce9e680.png" width="120" title="唯品会字节"/>|
+|:---:|:---:|:---:|:---:|:---:|
+|滴滴出行(支付宝)|小桔充电(支付宝)|唯品会(QQ)|口袋证件照(百度)|唯品会(百度)|
+
+[更多案例](https://github.com/didi/mpx/issues/385)，若你也在使用Mpx框架开发小程序，并想分享给大家，请填在此issue中。
 
 ## 交流
 
