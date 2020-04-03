@@ -30,6 +30,25 @@ function mergeSpecMapRules (baseSpecMap, extendSpecMap) {
   return baseSpecMap
 }
 
+/**
+ * merge rules
+ * @param {Array<object>} highOrderRuleList 高优先级的规则列表
+ * @param {Array<object>} builtInRuleList 内建规则列表
+ * @return Array<object> 合并后的规则列表
+ */
+function mergeRules (highOrderRuleList, builtInRuleList) {
+  const result = builtInRuleList
+  highOrderRuleList.forEach(hItem => {
+    const item = result.find(rItem => rItem.test === hItem.test)
+    if (item) {
+      Object.assign(item, hItem)
+    } else {
+      result.unshift(hItem)
+    }
+  })
+  return result
+}
+
 module.exports = function getSpec ({ warn, error, customTransSpec }) {
   const baseSpec = {
     supportedModes: ['ali', 'swan', 'qq', 'tt', 'web'],
@@ -410,7 +429,7 @@ module.exports = function getSpec ({ warn, error, customTransSpec }) {
   const spec = mergeSpecMapRules(baseSpec, customTransSpec)
   const rules = (customTransSpec && customTransSpec.template && customTransSpec.template.wx && customTransSpec.template.wx.rules) || []
 
-  const componentsRules = [...rules, ...getComponentConfigs({ warn, error })].concat({})
+  const componentsRules = mergeRules(rules, getComponentConfigs({ warn, error })).concat({})
 
   spec.rules = normalizeComponentRules(componentsRules, spec)
   return spec

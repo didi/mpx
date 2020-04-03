@@ -112,4 +112,9 @@ describe('common spec case', function () {
     expect(warnFn).toHaveBeenCalledWith(`bytedance miniapp doens't support 'capture-catch' and will be translated into 'bind' automatically!`)
     warnFn.mockClear()
   })
+
+  it('should trans event binding normal for ali platform', function () {
+    const rs = compileAndParse(`<view bindtransitionend="handleClick">123</view>`, { srcMode: 'wx', mode: 'ali' })
+    expect(rs).toBe('<view onTransitionEnd="handleClick">123</view>')
+  })
 })
