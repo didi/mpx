@@ -3,6 +3,7 @@ import getBuiltInMixins from '../builtInMixins/index'
 import { getDefaultOptions as getWxDefaultOptions } from './wx/getDefaultOptions'
 import { getDefaultOptions as getAliDefaultOptions } from './ali/getDefaultOptions'
 import { getDefaultOptions as getWebDefaultOptions } from './web/getDefaultOptions'
+import { error } from '../../helper/log'
 
 export default function createFactory (type) {
   return (options, { isNative, customCtor, customCtorType } = {}) => {
@@ -28,6 +29,9 @@ export default function createFactory (type) {
     const builtInMixins = getBuiltInMixins(options, type)
     const { rawOptions, currentInject } = transferOptions(options, type, builtInMixins)
     const defaultOptions = getDefaultOptions(type, { rawOptions, currentInject })
+    if (defaultOptions.pageShow || defaultOptions.pageHide) {
+      error('出于性能考虑，pageShow/pageHide增强钩子将在下个版本被移除，请使用原生的pageLifetimes替代，此外请不要强依赖pageLifetimes.show进行初始化操作，因为pageLifetimes.show并不能保证在初始化时一定被调用！', global.currentResource)
+    }
     if (__mpx_mode__ === 'web') {
       global.currentOption = defaultOptions
     } else {

@@ -1,7 +1,8 @@
-
 export default function pageStatusMixin (mixinType) {
+  // 只有tt和ali没有pageLifeTimes支持，需要框架实现，其余平台一律使用原生pageLifeTimes
+  // 由于业务上大量使用了pageShow进行初始化。。。下个版本再移除非必要的pageShow/Hide实现。。。
   if (mixinType === 'page') {
-    let pageMixin = {
+    const pageMixin = {
       data: {
         mpxPageStatus: 'show'
       },
@@ -16,7 +17,7 @@ export default function pageStatusMixin (mixinType) {
       Object.assign(pageMixin, {
         events: {
           onResize (e) {
-            this.__mpxWindowSizeEvent = e
+            this.__resizeEvent = e
             this.mpxPageStatus = 'resize'
           }
         }
@@ -30,18 +31,15 @@ export default function pageStatusMixin (mixinType) {
           '$page.mpxPageStatus': {
             handler (val) {
               if (val) {
-                const rawOptions = this.$rawOptions
-                let callback = () => {}
-                if (val === 'show') callback = rawOptions.pageShow
-                if (val === 'hide') callback = rawOptions.pageHide
-                typeof callback === 'function' && callback.call(this)
-              }
-              // 让支付宝支持pageLifetimes
-              const pageLifetimes = this.$rawOptions.pageLifetimes
-              if (pageLifetimes) {
-                if (val === 'show' && typeof pageLifetimes.show === 'function') pageLifetimes.show.call(this)
-                if (val === 'hide' && typeof pageLifetimes.hide === 'function') pageLifetimes.hide.call(this)
-                if (val === 'resize' && typeof pageLifetimes.resize === 'function') pageLifetimes.resize.call(this, this.__mpxWindowSizeEvent)
+                const options = this.$rawOptions
+                if (val === 'show' && typeof options.pageShow === 'function') options.pageShow.call(this)
+                if (val === 'hide' && typeof options.pageHide === 'function') options.pageHide.call(this)
+                const pageLifetimes = options.pageLifetimes
+                if (pageLifetimes) {
+                  if (val === 'show' && typeof pageLifetimes.show === 'function') pageLifetimes.show.call(this)
+                  if (val === 'hide' && typeof pageLifetimes.hide === 'function') pageLifetimes.hide.call(this)
+                  if (val === 'resize' && typeof pageLifetimes.resize === 'function') pageLifetimes.resize.call(this, this.__resizeEvent)
+                }
               }
             },
             immediate: true
@@ -59,11 +57,16 @@ export default function pageStatusMixin (mixinType) {
           mpxPageStatus: {
             handler (val) {
               if (val) {
-                const rawOptions = this.$rawOptions
-                let callback = () => {}
-                if (val === 'show') callback = rawOptions.pageShow
-                if (val === 'hide') callback = rawOptions.pageHide
-                typeof callback === 'function' && callback.call(this)
+                const options = this.$rawOptions
+                if (val === 'show' && typeof options.pageShow === 'function') options.pageShow.call(this)
+                if (val === 'hide' && typeof options.pageHide === 'function') options.pageHide.call(this)
+                if (__mpx_mode__ === 'tt') {
+                  const pageLifetimes = this.$rawOptions.pageLifetimes
+                  if (pageLifetimes) {
+                    if (val === 'show' && typeof pageLifetimes.show === 'function') pageLifetimes.show.call(this)
+                    if (val === 'hide' && typeof pageLifetimes.hide === 'function') pageLifetimes.hide.call(this)
+                  }
+                }
               }
             },
             immediate: true

@@ -1,4 +1,4 @@
-import { type, merge, extend, aliasReplace, findItem } from '../helper/utils'
+import { type, merge, aliasReplace, findItem } from '../helper/utils'
 import { getConvertRule } from '../convertor/convertor'
 import { error, warn } from '../helper/log'
 
@@ -46,14 +46,16 @@ function extractMixins (mergeOptions, options, needConvert) {
     aliasReplace(options, 'behaviors', 'mixins')
   }
   if (options.mixins) {
-    for (const mix of options.mixins) {
-      if (typeof mix === 'string') {
+    for (const mixin of options.mixins) {
+      if (typeof mixin === 'string') {
         error('String-formatted builtin behaviors is not supported to be converted to mixins.', options.mpxFileResource)
       } else {
-        extractMixins(mergeOptions, mix, needConvert)
+        extractMixins(mergeOptions, mixin, needConvert)
       }
     }
   }
+  // 出于业务兼容考虑暂时不移除pageShow/pageHide
+  // options = extractPageShow(options)
   options = extractLifetimes(options)
   options = extractPageHooks(options)
   if (needConvert) {
@@ -63,9 +65,27 @@ function extractMixins (mergeOptions, options, needConvert) {
   return mergeOptions
 }
 
+// function extractPageShow (options) {
+//   if (options.pageShow || options.pageHide) {
+//     const mixin = {
+//       pageLifetimes: {}
+//     }
+//     if (options.pageShow) {
+//       mixin.pageLifetimes.show = options.pageShow
+//       delete options.pageShow
+//     }
+//     if (options.pageHide) {
+//       mixin.pageLifetimes.hide = options.pageHide
+//       delete options.pageHide
+//     }
+//     mergeToArray(options, mixin, 'pageLifetimes')
+//   }
+//   return options
+// }
+
 function extractLifetimes (options) {
   if (type(options.lifetimes) === 'Object') {
-    const newOptions = extend({}, options, options.lifetimes)
+    const newOptions = Object.assign({}, options, options.lifetimes)
     delete newOptions.lifetimes
     return newOptions
   } else {
@@ -101,6 +121,7 @@ function extractObservers (options) {
           typeof callback === 'function' && callback.call(this, ...rest)
         },
         deep: true,
+        // 延迟触发首次回调，处理转换支付宝时在observer中查询组件的行为，如vant/picker中，如不考虑该特殊情形可用immediate代替
         immediateAsync: true
       })
     }
@@ -124,7 +145,7 @@ function extractObservers (options) {
             break
           }
         }
-        if (key.indexOf('.**')) {
+        if (key.indexOf('.**') > -1) {
           deep = true
           key = key.replace('.**', '')
         }
@@ -149,7 +170,7 @@ function extractObservers (options) {
     })
   }
   if (extract) {
-    const newOptions = extend({}, options)
+    const newOptions = Object.assign({}, options)
     newOptions.watch = watch
     delete newOptions.observers
     return newOptions
@@ -159,7 +180,7 @@ function extractObservers (options) {
 
 function extractPageHooks (options) {
   if (curType === 'blend') {
-    const newOptions = extend({}, options)
+    const newOptions = Object.assign({}, options)
     const methods = newOptions.methods
     const PAGE_HOOKS = convertRule.lifecycle.page
     methods && Object.keys(methods).forEach(key => {
@@ -197,11 +218,11 @@ function mergeMixins (parent, child) {
   }
 }
 
-function mergeDefault (parent, child, key) {
+export function mergeDefault (parent, child, key) {
   parent[key] = child[key]
 }
 
-function mergeHooks (parent, child, key) {
+export function mergeHooks (parent, child, key) {
   if (parent[key]) {
     parent[key].push(child[key])
   } else {
@@ -209,13 +230,13 @@ function mergeHooks (parent, child, key) {
   }
 }
 
-function mergeSimpleProps (parent, child, key) {
+export function mergeSimpleProps (parent, child, key) {
   let parentVal = parent[key]
   const childVal = child[key]
   if (!parentVal) {
     parent[key] = parentVal = {}
   }
-  extend(parentVal, childVal)
+  Object.assign(parentVal, childVal)
 }
 
 function mergeDataFn (parent, child, key) {
@@ -248,7 +269,7 @@ function mergeData (parent, child, key) {
   merge(parent[key], childVal)
 }
 
-function mergeArray (parent, child, key) {
+export function mergeArray (parent, child, key) {
   const childVal = child[key]
   if (!parent[key]) {
     parent[key] = []
@@ -256,7 +277,7 @@ function mergeArray (parent, child, key) {
   parent[key] = parent[key].concat(childVal)
 }
 
-function mergeToArray (parent, child, key) {
+export function mergeToArray (parent, child, key) {
   let parentVal = parent[key]
   const childVal = child[key]
   if (!parentVal) {

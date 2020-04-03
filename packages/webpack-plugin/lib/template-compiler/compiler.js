@@ -222,7 +222,7 @@ function consumeMpxCommentAttrs (attrs, mode) {
 
 function assertMpxCommentAttrsEnd () {
   if (curMpxComment) {
-    throw new Error('No target for @mpx-attrs!')
+    error$1('No target for @mpx-attrs!')
   }
 }
 
@@ -866,11 +866,15 @@ function parse (template, options) {
       ) {
         return
       }
+
       let children = currentParent.children
-      text = text.trim()
-        ? text
-        // only preserve whitespace if its not right after a starting tag
-        : preserveWhitespace && children.length ? ' ' : ''
+      if (currentParent.tag !== 'text') {
+        text = text.trim()
+          ? text.trim()
+          // only preserve whitespace if its not right after a starting tag
+          : preserveWhitespace && children.length ? ' ' : ''
+      }
+
       if (text) {
         if (text !== ' ' || !children.length || children[children.length - 1].text !== ' ') {
           let el = {
@@ -908,9 +912,9 @@ function parse (template, options) {
     injectWxs(meta, i18nModuleName, i18nWxsRequest)
   }
 
-  if (injectNodes.length) {
-    root.children = injectNodes.concat(root.children)
-  }
+  injectNodes.forEach((node) => {
+    addChild(root, node, true)
+  })
 
   rulesResultMap.forEach((val) => {
     Array.isArray(val.warnArray) && val.warnArray.forEach(item => warn$1(item))
@@ -925,6 +929,16 @@ function parse (template, options) {
 
 function getTempNode () {
   return createASTElement('temp-node', [])
+}
+
+function addChild (parent, newChild, before) {
+  parent.children = parent.children || []
+  if (before) {
+    parent.children.unshift(newChild)
+  } else {
+    parent.children.push(newChild)
+  }
+  newChild.parent = parent
 }
 
 function getAndRemoveAttr (el, name, removeFromMap = true) {
@@ -1258,14 +1272,19 @@ function parseMustache (raw = '') {
         })
       }
 
-      ret.push(`(${exp})`)
+      ret.push(`(${exp.trim()})`)
       lastLastIndex = tagREG.lastIndex
     }
     let post = raw.substring(lastLastIndex)
     if (post) {
       ret.push(stringify(post))
     }
-    let result = ret.join('+')
+    let result
+    if (ret.length === 1) {
+      result = ret[0]
+    } else {
+      result = `(${ret.join('+')})`
+    }
     return {
       result,
       hasBinding: true,
@@ -1281,12 +1300,12 @@ function parseMustache (raw = '') {
   }
 }
 
-function addExp (el, exp, needTravel, isProps) {
+function addExp (el, exp, isProps) {
   if (exp) {
     if (!el.exps) {
       el.exps = []
     }
-    el.exps.push({ exp, needTravel, isProps })
+    el.exps.push({ exp, isProps })
   }
 }
 
@@ -1326,7 +1345,7 @@ function processIfForWeb (el) {
   }
 }
 
-const swanForInRe = /^\s*(\w+)(?:\s*,\s*(\w+))?\s+in\s+(\w+)(?:\s+trackBy\s+(\w+))?\s*$/
+const swanForInRe = /^\s*(\w+)(?:\s*,\s*(\w+))?\s+in\s+(\S+)(?:\s+trackBy\s+(\S+))?\s*$/
 
 function processFor (el) {
   let val = getAndRemoveAttr(el, config[mode].directive.for)
@@ -1446,11 +1465,9 @@ function processAttrs (el, options) {
     let value = needWrap ? `{${attr.value}}` : attr.value
     let parsed = parseMustache(value)
     if (parsed.hasBinding) {
-      // 该属性判断用于提供给运行时对于计算属性作为props传递时提出警告，与needTravel的作用进行分离
+      // 该属性判断用于提供给运行时对于计算属性作为props传递时提出警告
       const isProps = (options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component') && !(attr.name === 'class' || attr.name === 'style')
-      // 之前只对组件传递props的场景下才对数据做travel，该处理方式存在漏洞，因为某些原生组件也会深度遍历传入属性作为视图依赖，如multiColumnPicker，由于travel对于非深度对象的性能消耗很低，此处全量开启表达式travel
-      const needTravel = true
-      addExp(el, parsed.result, needTravel, isProps)
+      addExp(el, parsed.result, isProps)
     }
     if (parsed.replaced) {
       modifyAttr(el, attr.name, needWrap ? parsed.val.slice(1, -1) : parsed.val)
@@ -1465,13 +1482,12 @@ function postProcessFor (el) {
       这个操作主要是因为百度小程序不支持这两个directive在同级使用
      */
     if (el.if && mode === 'swan') {
-      let tempEl = createASTElement('block', [])
-      replaceNode(el, tempEl, true)
-      tempEl.for = el.for
+      const block = createASTElement('block', [])
+      replaceNode(el, block, true)
+      block.for = el.for
       delete el.for
-      tempEl.children = [el]
-      el.parent = tempEl
-      el = tempEl
+      addChild(block, el)
+      el = block
     }
 
     let attrs = [
@@ -1481,7 +1497,7 @@ function postProcessFor (el) {
       }
     ]
     // 对于swan的for in进行特殊处理
-    if (!mode === 'swan' || !swanForInRe.test(el.for.raw)) {
+    if (mode !== 'swan' || !swanForInRe.test(el.for.raw)) {
       if (el.for.index) {
         attrs.push({
           name: config[mode].directive.forIndex,
@@ -1867,18 +1883,19 @@ function postProcessComponentIs (el) {
     } else {
       tempNode = getTempNode()
     }
-    tempNode.children = el.components.map(function (component) {
+    el.components.forEach(function (component) {
       let newChild = createASTElement(component, el.attrsList, tempNode)
       newChild.if = {
         raw: `{{${el.is} === ${stringify(component)}}}`,
         exp: `${el.is} === ${stringify(component)}`
       }
+      // 此处直接指向原始children存在问题，但由于动态组件一般情况下很少有共用children故基本无法报出，完善处理需要每次clone原始children并分别更新parent
       newChild.children = el.children
       newChild.exps = el.exps
-      newChild.parent = tempNode
+      addChild(tempNode, newChild)
       postProcessIf(newChild)
-      return newChild
     })
+
     if (!el.parent) {
       error$1('Dynamic component can not be the template root, considering wrapping it with <view> or <text> tag!')
     } else {
@@ -1995,27 +2012,35 @@ function genIf (node) {
 
 function genElseif (node) {
   node.elseifProcessed = true
+  if (node.for) {
+    error$1(`wx:elif (wx:elif="${node.elseif.raw}") invalidly used on the for-list <"${node.tag}"> which has a wx:for directive, please create a block element to wrap the for-list and move the if-directive to it`)
+    return
+  }
   let preNode = findPrevNode(node)
   if (preNode && (preNode.if || preNode.elseif)) {
     return `else if(${node.elseif.exp}){\n${genNode(node)}}\n`
   } else {
-    warn$1(`wx:elif (wx:elif="${node.elseif.raw}") used on element <"${node.tag}"> without corresponding wx:if or wx:elif.`)
+    error$1(`wx:elif (wx:elif="${node.elseif.raw}") invalidly used on the element <"${node.tag}"> without corresponding wx:if or wx:elif.`)
   }
 }
 
 function genElse (node) {
   node.elseProcessed = true
+  if (node.for) {
+    error$1(`wx:else invalidly used on the for-list <"${node.tag}"> which has a wx:for directive, please create a block element to wrap the for-list and move the if-directive to it`)
+    return
+  }
   let preNode = findPrevNode(node)
   if (preNode && (preNode.if || preNode.elseif)) {
     return `else{\n${genNode(node)}}\n`
   } else {
-    warn$1(`wx:else used on element <"${node.tag}"> without corresponding wx:if or wx:elif.`)
+    error$1(`wx:else invalidly used on the element <"${node.tag}"> without corresponding wx:if or wx:elif.`)
   }
 }
 
 function genExps (node) {
-  return `${node.exps.map(({ exp, needTravel, isProps }) => {
-    return needTravel ? `this.__travel(${exp}, __seen${isProps ? ', true' : ''});\n` : `${exp};\n`
+  return `${node.exps.map(({ exp, isProps }) => {
+    return isProps ? `this._p(${exp});\n` : `${exp};\n`
   }).join('')}`
 }
 
@@ -2023,7 +2048,7 @@ function genFor (node) {
   node.forProcessed = true
   let index = node.for.index || 'index'
   let item = node.for.item || 'item'
-  return `this.__iterate(${node.for.exp}, function(${item},${index}){\n${genNode(node)}}.bind(this));\n`
+  return `this._i(${node.for.exp}, function(${item},${index}){\n${genNode(node)}});\n`
 }
 
 function genNode (node) {

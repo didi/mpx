@@ -8,14 +8,14 @@ const getMainCompilation = require('../utils/get-main-compilation')
 const parseRequest = require('../utils/parse-request')
 const toPosix = require('../utils/to-posix')
 const fixRelative = require('../utils/fix-relative')
-const normalize = require('../utils/normalize')
 const config = require('../config')
 const loaderUtils = require('loader-utils')
+const normalize = require('../utils/normalize')
+const wxsPreLoader = normalize.lib('wxs/wxs-pre-loader')
 
-module.exports = function (content) {
+module.exports = function () {
   const nativeCallback = this.async()
 
-  const options = loaderUtils.getOptions(this) || {}
   const mainCompilation = getMainCompilation(this._compilation)
   const mpx = mainCompilation.__mpx__
   const mode = mpx.mode
@@ -23,10 +23,11 @@ module.exports = function (content) {
   const packageName = mpx.currentPackageRoot || 'main'
   const pagesMap = mpx.pagesMap
   const componentsMap = mpx.componentsMap[packageName]
+  const staticResourceMap = mpx.staticResourceMap[packageName]
   const rootName = mainCompilation._preparedEntrypoints[0].name
   // 可能存在问题，issuer不可靠，但是目前由于每一个组件模板都是在独立的子编译中输出的，所以此处issuer没有遇到问题，可以考虑通过query传递issuerResource
   const issuerResourcePath = parseRequest(this._module.issuer.resource).resourcePath
-  const issuerName = pagesMap[issuerResourcePath] || componentsMap[issuerResourcePath] || rootName
+  const issuerName = pagesMap[issuerResourcePath] || componentsMap[issuerResourcePath] || staticResourceMap[issuerResourcePath] || rootName
   const issuerDir = path.dirname(issuerName)
 
   const callback = (err) => {
@@ -58,8 +59,8 @@ module.exports = function (content) {
     const outputOptions = {
       filename
     }
-    const contentLoader = normalize.lib('content-loader')
-    const request = `!!${contentLoader}?${JSON.stringify(options)}!${this.resource}`
+    // wxsPreLoader在内部控制插入，只需在子编译输出wxs和render函数中addVariable时插入
+    const request = `!!${wxsPreLoader}!${this.remainingRequest}`
     const plugins = [
       new WxsPlugin({ mode }),
       new NodeTargetPlugin(),
@@ -68,17 +69,6 @@ module.exports = function (content) {
     ]
 
     const childCompiler = mainCompilation.createChildCompiler(request, outputOptions, plugins)
-
-    childCompiler.hooks.thisCompilation.tap('MpxWebpackPlugin ', (compilation) => {
-      compilation.hooks.normalModuleLoader.tap('MpxWebpackPlugin', (loaderContext) => {
-        // 传递编译结果，子编译器进入content-loader后直接输出
-        loaderContext.__mpx__ = {
-          content,
-          fileDependencies: this.getDependencies(),
-          contextDependencies: this.getContextDependencies()
-        }
-      })
-    })
 
     childCompiler.runAsChild((err, entries, compilation) => {
       if (err) return callback(err)

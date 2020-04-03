@@ -1,16 +1,10 @@
-import {
-  isObservableArray,
-  isObservableMap,
-  isObservable,
-  get,
-  toJS
-} from '../mobx'
-
 import Vue from '../vue'
 
 import _getByPath from './getByPath'
 
 import { error } from './log'
+
+import { set } from '../observer/index'
 
 export function type (n) {
   return Object.prototype.toString.call(n).slice(8, -1)
@@ -97,36 +91,35 @@ export function isExistAttr (obj, attr) {
   }
 }
 
-export function setByPath (data, pathStr, value) {
-  let parent
-  let variable
-  _getByPath(data, pathStr, (value, key, end) => {
-    if (end) {
-      parent = value
-      variable = key
+export function setByPath (data, pathStrOrArr, value) {
+  _getByPath(data, pathStrOrArr, (current, key, meta) => {
+    if (meta.isEnd) {
+      if (__mpx_mode__ === 'web') {
+        Vue.set(current, key, value)
+      } else {
+        set(current, key, value)
+      }
+    } else if (!current[key]) {
+      current[key] = {}
     }
-    return value[key]
+    return current[key]
   })
-  if (parent) {
-    if (__mpx_mode__ === 'web') {
-      Vue.set(parent, variable, value)
-    } else {
-      parent[variable] = value
-    }
-  }
 }
 
-export function getByPath (data, pathStr, defaultVal = '', errTip) {
+export function getByPath (data, pathStrOrArr, defaultVal, errTip) {
   const results = []
-  pathStr.split(',').forEach(item => {
-    const path = item.trim()
+  let normalizedArr = []
+  if (Array.isArray(pathStrOrArr)) {
+    normalizedArr = [pathStrOrArr]
+  } else if (type(pathStrOrArr) === 'String') {
+    normalizedArr = pathStrOrArr.split(',').map(str => str.trim())
+  }
+
+  normalizedArr.forEach(path => {
     if (!path) return
     const result = _getByPath(data, path, (value, key) => {
       let newValue
-      if (__mpx_mode__ !== 'web' && isObservable(value)) {
-        // key可能不是一个响应式属性，那么get将无法返回正确值
-        newValue = get(value, key) || value[key]
-      } else if (isExistAttr(value, key)) {
+      if (isExistAttr(value, key)) {
         newValue = value[key]
       } else {
         newValue = errTip
@@ -161,12 +154,9 @@ export function defineGetterSetter (target, key, getValue, setValue, context) {
   Object.defineProperty(target, key, descriptor)
 }
 
-export function proxy (target, source, keys, mapKeys, readonly) {
-  if (typeof mapKeys === 'boolean') {
-    readonly = mapKeys
-    mapKeys = null
-  }
-  keys.forEach((key, index) => {
+export function proxy (target, source, keys, readonly) {
+  keys = keys || Object.keys(source)
+  keys.forEach((key) => {
     const descriptor = {
       get () {
         return source[key]
@@ -177,20 +167,9 @@ export function proxy (target, source, keys, mapKeys, readonly) {
     !readonly && (descriptor.set = function (val) {
       source[key] = val
     })
-    Object.defineProperty(target, mapKeys ? mapKeys[index] : key, descriptor)
+    Object.defineProperty(target, key, descriptor)
   })
   return target
-}
-
-export function filterProperties (source, props = []) {
-  const newData = {}
-  props.forEach(prop => {
-    if (prop in source) {
-      const result = source[prop]
-      newData[prop] = __mpx_mode__ !== 'web' && isObservable(result) ? toJS(result) : diffAndCloneA(result).clone
-    }
-  })
-  return newData
 }
 
 export function merge (to, from) {
@@ -210,6 +189,7 @@ export function merge (to, from) {
   return to
 }
 
+// 包含原型链上属性keys
 export function enumerableKeys (obj) {
   const keys = []
   for (let key in obj) {
@@ -218,12 +198,12 @@ export function enumerableKeys (obj) {
   return keys
 }
 
-export function extend (target, ...froms) {
-  for (const from of froms) {
-    if (type(from) === 'Object') {
-      // for in 能遍历原型链上的属性
-      for (const key in from) {
-        target[key] = from[key]
+// 包含原型链属性的合并
+export function extend (target, ...sources) {
+  for (const source of sources) {
+    if (isPlainObject(source)) {
+      for (const key in source) {
+        target[key] = source[key]
       }
     }
   }
@@ -234,12 +214,12 @@ export function dissolveAttrs (target = {}, keys) {
   if (type(keys) === 'String') {
     keys = [keys]
   }
-  const newOptions = extend({}, target)
+  const newOptions = Object.assign({}, target)
   keys.forEach(key => {
     const value = target[key]
     if (type(value) !== 'Object') return
     delete newOptions[key]
-    extend(newOptions, value)
+    Object.assign(newOptions, value)
   })
   return newOptions
 }
@@ -248,12 +228,43 @@ export function isObject (obj) {
   return obj !== null && typeof obj === 'object'
 }
 
-export function likeArray (arr) {
-  if (__mpx_mode__ === 'web') {
-    return Array.isArray(arr)
-  } else {
-    return Array.isArray(arr) || isObservableArray(arr)
+export function isPlainObject (obj) {
+  return type(obj) === 'Object'
+}
+
+const hasOwnProperty = Object.prototype.hasOwnProperty
+
+export function hasOwn (obj, key) {
+  return hasOwnProperty.call(obj, key)
+}
+
+export const hasProto = '__proto__' in {}
+
+export function isValidArrayIndex (val) {
+  const n = parseFloat(String(val))
+  return n >= 0 && Math.floor(n) === n && isFinite(val)
+}
+
+export function remove (arr, item) {
+  if (arr.length) {
+    const index = arr.indexOf(item)
+    if (index > -1) {
+      return arr.splice(index, 1)
+    }
   }
+}
+
+export function def (obj, key, val, enumerable) {
+  Object.defineProperty(obj, key, {
+    value: val,
+    enumerable: !!enumerable,
+    writable: true,
+    configurable: true
+  })
+}
+
+export function likeArray (arr) {
+  return Array.isArray(arr)
 }
 
 export function isDef (v) {
@@ -340,7 +351,7 @@ export function mergeObjectArray (arr) {
   const res = {}
   for (let i = 0; i < arr.length; i++) {
     if (arr[i]) {
-      extend(res, arr[i])
+      Object.assign(res, arr[i])
     }
   }
   return res
@@ -366,6 +377,60 @@ export function isEmptyObject (obj) {
   return true
 }
 
+export function aIsSubPathOfB (a, b) {
+  if (a.startsWith(b) && a !== b) {
+    let nextChar = a[b.length]
+    if (nextChar === '.') {
+      return a.slice(b.length + 1)
+    } else if (nextChar === '[') {
+      return a.slice(b.length)
+    }
+  }
+}
+
+export function getFirstKey (path) {
+  return /^[^[.]*/.exec(path)[0]
+}
+
+function doMergeData (target, source) {
+  Object.keys(source).forEach((srcKey) => {
+    if (target.hasOwnProperty(srcKey)) {
+      target[srcKey] = source[srcKey]
+    } else {
+      let processed = false
+      const tarKeys = Object.keys(target)
+      for (let i = 0; i < tarKeys.length; i++) {
+        const tarKey = tarKeys[i]
+        if (aIsSubPathOfB(tarKey, srcKey)) {
+          delete target[tarKey]
+          target[srcKey] = source[srcKey]
+          processed = true
+          continue
+        }
+        const subPath = aIsSubPathOfB(srcKey, tarKey)
+        if (subPath) {
+          setByPath(target[tarKey], subPath, source[srcKey])
+          processed = true
+          break
+        }
+      }
+      if (!processed) {
+        target[srcKey] = source[srcKey]
+      }
+    }
+  })
+  return target
+}
+
+export function mergeData (target, ...sources) {
+  if (target) {
+    sources.forEach((source) => {
+      if (source) doMergeData(target, source)
+    })
+  }
+  return target
+}
+
 export function processUndefined (obj) {
   let result = {}
   for (let key in obj) {
@@ -380,90 +445,67 @@ export function processUndefined (obj) {
   return result
 }
 
-function unwrap (a) {
-  if (__mpx_mode__ !== 'web' && isObservableArray(a)) {
-    return a.peek()
-  }
-  if (__mpx_mode__ !== 'web' && isObservableMap(a)) {
-    return a.entries()
-  }
-  return a
-}
-
 export function noop () {
 
 }
 
 export function diffAndCloneA (a, b) {
-  const diffPaths = []
-  const curPath = []
+  let diffData = null
+  let curPath = ''
   let diff = false
 
   function deepDiffAndCloneA (a, b, currentDiff) {
     const setDiff = (val) => {
-      if (currentDiff) return
       if (val) {
         currentDiff = val
-        diffPaths.push(curPath.slice())
+        if (curPath) {
+          diffData = diffData || {}
+          diffData[curPath] = clone
+        }
       }
     }
-
-    const toString = Object.prototype.toString
-    const type = typeof a
     let clone = a
-
-    if (type !== 'object' || a === null) {
-      setDiff(a !== b)
+    if (typeof a !== 'object' || a === null) {
+      if (!currentDiff) setDiff(a !== b)
     } else {
-      a = unwrap(a)
-      b = unwrap(b)
-      let sameClass = true
-
+      const toString = Object.prototype.toString
       const className = toString.call(a)
-      if (className !== toString.call(b)) {
-        setDiff(true)
-        sameClass = false
-      }
+      const sameClass = className === toString.call(b)
       let length
+      let lastPath
       switch (className) {
-        case '[object RegExp]':
-        case '[object String]':
-          if (sameClass) setDiff('' + a !== '' + b)
-          break
-        case '[object Number]':
-        case '[object Date]':
-        case '[object Boolean]':
-          if (sameClass) setDiff(+a !== +b)
-          break
-        case '[object Symbol]':
-          if (sameClass) setDiff(a !== b)
+        case '[object Object]':
+          const keys = Object.keys(a)
+          length = keys.length
+          clone = {}
+          if (!currentDiff) setDiff(!sameClass || length < Object.keys(b).length || !Object.keys(b).every((key) => a.hasOwnProperty(key)))
+          lastPath = curPath
+          for (let i = 0; i < length; i++) {
+            const key = keys[i]
+            curPath += `.${key}`
+            clone[key] = deepDiffAndCloneA(a[key], sameClass ? b[key] : undefined, currentDiff)
+            curPath = lastPath
+          }
           break
         case '[object Array]':
           length = a.length
-          if (sameClass && length !== b.length) {
-            setDiff(true)
-          }
           clone = []
+          if (!currentDiff) setDiff(!sameClass || length < b.length)
+          lastPath = curPath
           for (let i = 0; i < length; i++) {
-            curPath.push(i)
+            curPath += `[${i}]`
             clone[i] = deepDiffAndCloneA(a[i], sameClass ? b[i] : undefined, currentDiff)
-            curPath.pop()
+            curPath = lastPath
           }
           break
+        case '[object RegExp]':
+          if (!currentDiff) setDiff(!sameClass || '' + a !== '' + b)
+          break
+        case '[object Date]':
+          if (!currentDiff) setDiff(!sameClass || +a !== +b)
+          break
         default:
-          let keys = Object.keys(a)
-          let key
-          length = keys.length
-          if (sameClass && length !== Object.keys(b).length) {
-            setDiff(true)
-          }
-          clone = {}
-          for (let i = 0; i < length; i++) {
-            key = keys[i]
-            curPath.push(key)
-            clone[key] = deepDiffAndCloneA(a[key], sameClass ? b[key] : undefined, currentDiff)
-            curPath.pop()
-          }
+          if (!currentDiff) setDiff(!sameClass || a !== b)
       }
     }
     if (currentDiff) {
@@ -472,12 +514,10 @@ export function diffAndCloneA (a, b) {
     return clone
   }
 
-  let clone = deepDiffAndCloneA(a, b, diff)
-
   return {
-    clone,
+    clone: deepDiffAndCloneA(a, b, diff),
     diff,
-    diffPaths
+    diffData
   }
 }
 

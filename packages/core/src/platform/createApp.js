@@ -1,11 +1,11 @@
 import transferOptions from '../core/transferOptions'
 import mergeOptions from '../core/mergeOptions'
-import { dissolveAttrs, extend } from '../helper/utils'
+import { dissolveAttrs } from '../helper/utils'
 
 export default function createApp (option, config = {}) {
   const { rawOptions } = transferOptions(option, 'app', [{
     onLaunch () {
-      extend(this, option.proto)
+      Object.assign(this, option.proto)
     }
   }])
   const defaultOptions = mergeOptions(rawOptions, 'app', false)

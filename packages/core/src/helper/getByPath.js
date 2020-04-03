@@ -1,6 +1,7 @@
 let curStack
 let targetStacks
 let property
+
 class Stack {
   constructor (mark) {
     this.mark = mark
@@ -8,6 +9,7 @@ class Stack {
     this.type = /['"]/.test(mark) ? 'string' : 'normal'
     this.value = []
   }
+
   push (data) {
     this.value.push(data)
   }
@@ -31,7 +33,8 @@ function endStack () {
 }
 
 function propertyJoinOver () {
-  property && curStack.push(property)
+  property = property.trim()
+  if (property) curStack.push(property)
   property = ''
 }
 
@@ -43,11 +46,6 @@ function init () {
 }
 
 function parse (str) {
-  if (/^[^[\]]+$/.test(str)) {
-    // 对于仅“点”属性访问，直接分割，避免无意义的解析
-    return str.split('.')
-  }
-  // 重置全局数据
   init()
   for (const char of str) {
     // 当前遍历引号内的字符串时
@@ -60,9 +58,9 @@ function parse (str) {
       endStack()
     } else if (char === '.' || char === '+') {
       propertyJoinOver()
-      char === '+' && curStack.push(char)
+      if (char === '+') curStack.push(char)
     } else {
-      property += char.trim()
+      property += char
     }
   }
   // 字符解析收尾
@@ -70,33 +68,60 @@ function parse (str) {
   return curStack.value
 }
 
-function outPutByPath (context, path, transfer) {
+function outPutByPath (context, path, isSimple, transfer) {
   let result = context
   const len = path.length
+  const meta = {
+    isEnd: false,
+    stop: false
+  }
   for (let index = 0; index < len; index++) {
+    if (index === len - 1) meta.isEnd = true
+    let key
     const item = path[index]
     if (result) {
-      if (Object.prototype.toString.call(item) === '[object Array]') {
-        // 数组最终得到一个key
-        const key = outPutByPath(context, item, transfer)
-        result = transfer ? transfer(result, key, index === len - 1) : result[key]
-      } else if (/^'.+'$/.test(item) || (/^\d+$/.test(item) && index === 0)) {
+      if (isSimple) {
+        key = item
+      } else if (Array.isArray(item)) {
+        // 获取子数组的输出结果作为当前key
+        key = outPutByPath(context, item, isSimple, transfer)
+      } else if (/^'.+'$/.test(item)) {
+        // 字符串一定会被[]包裹，一定在子数组中
         result = item.replace(/'/g, '')
+      } else if (/^\d+$/.test(item)) {
+        // 数字一定会被[]包裹，一定在子数组中
+        result = +item
       } else if (item === '+') {
         // 获取加号后面所有path最终的结果
-        result += outPutByPath(context, path.slice(index + 1), transfer)
+        result += outPutByPath(context, path.slice(index + 1), isSimple, transfer)
         break
       } else {
-        result = transfer ? transfer(result, item, index === len - 1) : result[item]
+        key = item
       }
+      if (key !== undefined) {
+        result = transfer ? transfer(result, key, meta) : result[key]
+        if (meta.stop) break
+      }
+    } else {
+      break
     }
   }
   return result
 }
 
-export default function getByPath (context, pathStr, transfer) {
-  if (!pathStr) {
+export default function getByPath (context, pathStrOrArr, transfer) {
+  if (!pathStrOrArr) {
     return context
   }
-  return outPutByPath(context, parse(pathStr), transfer)
+  let isSimple = false
+  if (Array.isArray(pathStrOrArr)) {
+    isSimple = true
+  } else if (!/[[\]]/.test(pathStrOrArr)) {
+    pathStrOrArr = pathStrOrArr.split('.')
+    isSimple = true
+  }
+
+  if (!isSimple) pathStrOrArr = parse(pathStrOrArr)
+
+  return outPutByPath(context, pathStrOrArr, isSimple, transfer)
 }

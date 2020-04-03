@@ -5,8 +5,6 @@
 
 /// <reference types="miniprogram-api-typings" />
 
-import {toJS, observable, extendObservable, action} from 'mobx'
-
 type Data = object | (() => object)
 
 type PropType = StringConstructor | NumberConstructor | BooleanConstructor | ObjectConstructor | ArrayConstructor | null
@@ -70,13 +68,13 @@ type GetComputedType<T> = {
 }
 
 type PropValueType<Def> = Def extends {
-  type: (...args: any[]) => infer T;
-  value?: infer T;
-}
+    type: (...args: any[]) => infer T;
+    value?: infer T;
+  }
   ? T
   : Def extends (...args: any[]) => infer T
-  ? T
-  : never;
+    ? T
+    : never;
 
 type GetPropsType<T> = {
   readonly [K in keyof T]: PropValueType<T[K]>
@@ -156,14 +154,14 @@ declare function get (obj: object, key: string): any
 
 declare function set (obj: object, key: string, value: any): any
 
+declare function observable<T extends object> (obj: T): T
+
 declare function remove (obj: object, key: string): any
 
 export interface MpxComponentIns {
   $refs: ObjectOf<any>
-  
-  $set: typeof set
 
-  $get: typeof get
+  $set: typeof set
 
   $remove: typeof remove
 
@@ -180,7 +178,10 @@ interface ReplaceWxComponentIns {
   selectAllComponents (selector: string): Array<ComponentIns<{}, {}, {}, {}, []>>
 }
 
-type WxComponentIns<D> = ReplaceWxComponentIns & WechatMiniprogram.Component.InstanceProperties & WechatMiniprogram.Component.InstanceMethods<D>
+type WxComponentIns<D> =
+  ReplaceWxComponentIns
+  & WechatMiniprogram.Component.InstanceProperties
+  & WechatMiniprogram.Component.InstanceMethods<D>
 
 type ComponentInsInComputed<D, P, C, M, Mi extends Array<any>> =
   GetDataType<D> & UnboxMixinsField<Mi, 'data'> &
@@ -212,7 +213,7 @@ export function getComputed<C> (computed: C): C extends (...args: any[]) => any 
 
 export function createPage<D extends Data = {}, P extends Properties = {}, C = {}, M extends Methods = {}, Mi extends Array<any> = []> (opt: ThisTypedPageOpt<D, P, C, M, Mi>, config?: createConfig): void
 
-export function createApp<T extends WechatMiniprogram.IAnyObject>(opt: WechatMiniprogram.App.Options<T>, config?: createConfig): void
+export function createApp<T extends WechatMiniprogram.IAnyObject> (opt: WechatMiniprogram.App.Options<T>, config?: createConfig): void
 
 type Mutations<S> = {
   [key: string]: (this: void, state: S, ...payload: any[]) => any
@@ -301,7 +302,6 @@ declare class Store<S = {}, G = {}, M = {}, A = {}, D extends Deps = {}> {
     [key: string]: () => any
   }
 
-
   mapMutations<K extends keyof M> (maps: K[]): Pick<GetMutations<M>, K>
   mapMutations (depPath: string, maps: string[]): {
     [key: string]: (...payloads: any[]) => any
@@ -339,8 +339,9 @@ interface StoreOptWithThis<S, G, M, A, D extends Deps> {
 }
 
 interface mapStateFunctionType<S, G> {
-  [key: string]: (state: S, getter: G) =>  any
+  [key: string]: (state: S, getter: G) => any
 }
+
 declare class StoreWithThis<S = {}, G = {}, M = {}, A = {}, D extends Deps = {}> {
 
   state: S & UnboxDepsField<D, 'state'>
@@ -358,13 +359,13 @@ declare class StoreWithThis<S = {}, G = {}, M = {}, A = {}, D extends Deps = {}>
   mapState (depPath: string, maps: string[]): {
     [key: string]: () => any
   }
-  mapState<T extends mapStateFunctionType<S & UnboxDepsField<D, 'state'>, GetComputedType<G> & UnboxDepsField<D, 'getters'>>> (obj: ThisType<any> & T ): {
+  mapState<T extends mapStateFunctionType<S & UnboxDepsField<D, 'state'>, GetComputedType<G> & UnboxDepsField<D, 'getters'>>> (obj: ThisType<any> & T): {
     [I in keyof T]: ReturnType<T[I]>
   }
-  mapState<T extends { [key:string]: keyof S }> (obj: T): {
-    [I in keyof T]: () =>  S[T[I]]
+  mapState<T extends { [key: string]: keyof S }> (obj: T): {
+    [I in keyof T]: () => S[T[I]]
   }
-  mapState<T extends { [key:string]: string}> (obj: T): {
+  mapState<T extends { [key: string]: string }> (obj: T): {
     [I in keyof T]: (...payloads: any[]) => any
   }
 
@@ -372,10 +373,10 @@ declare class StoreWithThis<S = {}, G = {}, M = {}, A = {}, D extends Deps = {}>
   mapGetters (depPath: string, maps: string[]): {
     [key: string]: () => any
   }
-  mapGetters<T extends { [key:string]: keyof G }> (obj: T): {
+  mapGetters<T extends { [key: string]: keyof G }> (obj: T): {
     [I in keyof T]: G[T[I]]
   }
-  mapGetters<T extends { [key:string]: string }> (obj: T): {
+  mapGetters<T extends { [key: string]: string }> (obj: T): {
     [I in keyof T]: (...payloads: any[]) => any
   }
 
@@ -383,10 +384,10 @@ declare class StoreWithThis<S = {}, G = {}, M = {}, A = {}, D extends Deps = {}>
   mapMutations (depPath: string, maps: string[]): {
     [key: string]: (...payloads: any[]) => any
   }
-  mapMutations<T extends { [key:string]: keyof M }> (obj: T): {
+  mapMutations<T extends { [key: string]: keyof M }> (obj: T): {
     [I in keyof T]: M[T[I]]
   }
-  mapMutations<T extends { [key:string]: string}> (obj: T): {
+  mapMutations<T extends { [key: string]: string }> (obj: T): {
     [I in keyof T]: (...payloads: any[]) => any
   }
 
@@ -394,10 +395,10 @@ declare class StoreWithThis<S = {}, G = {}, M = {}, A = {}, D extends Deps = {}>
   mapActions (depPath: string, maps: string[]): {
     [key: string]: (...payloads: any[]) => any
   }
-  mapActions<T extends { [key:string]: keyof A }> (obj: T): {
+  mapActions<T extends { [key: string]: keyof A }> (obj: T): {
     [I in keyof T]: A[T[I]]
   }
-  mapActions<T extends { [key:string]: string}> (obj: T): {
+  mapActions<T extends { [key: string]: string }> (obj: T): {
     [I in keyof T]: (...payloads: any[]) => any
   }
 
@@ -422,7 +423,7 @@ declare class Watcher {
   destroy (): void
 }
 
-export function watch (context: any, expr: string | (() => any), handler: WatchHandler | WatchOptWithHandler, options?: WatchOpt): Watcher
+export function watch (expr: string | (() => any), handler: WatchHandler | WatchOptWithHandler, options?: WatchOpt): () => void
 
 type SupportedPlantforms = 'wx' | 'ali' | 'qq' | 'tt' | 'swan'
 
@@ -435,13 +436,13 @@ interface ConvertRule {
   convert?: (...args: any[]) => any
 }
 
+interface MpxConfig {
+  useStrictDiff: Boolean,
+  ignoreRenderError: Boolean
+}
+
 export function setConvertRule (rule: ConvertRule): void
 
-export const toPureObject: typeof toJS
-
-export const createAction: typeof action
-
-export {observable, extendObservable}
 
 export interface Mpx {
   createComponent: typeof createComponent
@@ -451,17 +452,13 @@ export interface Mpx {
   createStoreWithThis: typeof createStoreWithThis
   getMixin: typeof getMixin
   getComputed: typeof getComputed
-  toPureObject: typeof toJS
   mixin: typeof injectMixins
   injectMixins: typeof injectMixins
   observable: typeof observable
-  extendObservable: typeof extendObservable
 
   watch: typeof watch
 
   use (plugin: ((...args: any) => any) | { install: (...args: any) => any, [key: string]: any }, ...rest: any): Mpx
-
-  get: typeof get
 
   set: typeof set
 
@@ -469,7 +466,7 @@ export interface Mpx {
 
   setConvertRule: typeof setConvertRule
 
-  createAction: typeof action
+  config: MpxConfig
 }
 
 type GetFunctionKey<T> = {

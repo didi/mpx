@@ -5,6 +5,10 @@ module.exports = function ({ print }) {
   const aliEventLog = print({ platform: 'ali', tag: TAG_NAME, isError: false, type: 'event' })
   return {
     test: TAG_NAME,
+    web (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-picker'
+    },
     props: [
       {
         test: 'mode',

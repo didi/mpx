@@ -1,34 +1,38 @@
-import { toJS as toPureObject, extendObservable, observable, set, get, remove, action as createAction } from './mobx'
 import * as platform from './platform'
 import createStore, { createStoreWithThis } from './core/createStore'
 import { injectMixins } from './core/injectMixins'
-import { watch } from './core/watcher'
-import { extend } from './helper/utils'
+import { extend, diffAndCloneA } from './helper/utils'
 import { setConvertRule } from './convertor/convertor'
 import { getMixin } from './core/mergeOptions'
 import { error } from './helper/log'
 import Vue from './vue'
+import { observe, set, del as remove } from './observer/index'
+import { watch as watchWithVm } from './observer/watch'
 
 export function createApp (config, ...rest) {
   const mpx = new EXPORT_MPX()
-  platform.createApp(extend({ proto: mpx.proto }, config), ...rest)
+  platform.createApp(Object.assign({ proto: mpx.proto }, config), ...rest)
 }
 
 export function createPage (config, ...rest) {
   const mpx = new EXPORT_MPX()
-  platform.createPage(extend({ proto: mpx.proto }, config), ...rest)
+  platform.createPage(Object.assign({ proto: mpx.proto }, config), ...rest)
 }
 
 export function createComponent (config, ...rest) {
   const mpx = new EXPORT_MPX()
-  platform.createComponent(extend({ proto: mpx.proto }, config), ...rest)
+  platform.createComponent(Object.assign({ proto: mpx.proto }, config), ...rest)
 }
 
-export { createStore, createStoreWithThis, toPureObject, observable, extendObservable, watch, createAction, getMixin }
+export { createStore, createStoreWithThis, getMixin }
 
 export function getComputed (computed) {
   // ts computed类型推导辅助函数
   return computed
+}
+
+export function toPureObject (obj) {
+  return diffAndCloneA(obj).clone
 }
 
 function extendProps (target, proxyObj, rawProps, option) {
@@ -80,15 +84,15 @@ let APIs = {}
 // 实例属性
 let InstanceAPIs = {}
 
+let observable
+let watch
+
 if (__mpx_mode__ === 'web') {
   const vm = new Vue()
-  const observable = Vue.observable.bind(Vue)
-  const watch = vm.$watch.bind(vm)
+  observable = Vue.observable.bind(Vue)
+  watch = vm.$watch.bind(vm)
   const set = Vue.set.bind(Vue)
   const remove = Vue.delete.bind(Vue)
-  const get = function (target, key) {
-    return target[key]
-  }
   // todo 补齐web必要api
   APIs = {
     createApp,
@@ -98,11 +102,11 @@ if (__mpx_mode__ === 'web') {
     createStoreWithThis,
     mixin: injectMixins,
     injectMixins,
+    toPureObject,
     observable,
     watch,
     use,
     set,
-    get,
     remove,
     setConvertRule,
     getMixin,
@@ -111,38 +115,46 @@ if (__mpx_mode__ === 'web') {
 
   InstanceAPIs = {
     $set: set,
-    $get: get,
     $remove: remove
   }
 } else {
+  observable = function (obj) {
+    observe(obj)
+    return obj
+  }
+
+  const vm = {}
+
+  watch = function (expOrFn, cb, options) {
+    watchWithVm(vm, expOrFn, cb, options)
+  }
+
   APIs = {
     createApp,
     createPage,
     createComponent,
     createStore,
     createStoreWithThis,
-    toPureObject,
     mixin: injectMixins,
     injectMixins,
+    toPureObject,
     observable,
-    extendObservable,
     watch,
     use,
     set,
-    get,
     remove,
     setConvertRule,
-    createAction,
     getMixin,
     getComputed
   }
 
   InstanceAPIs = {
     $set: set,
-    $get: get,
     $remove: remove
   }
 }
+
+export { watch, observable }
 
 function factory () {
   // 作为原型挂载属性的中间层
@@ -150,18 +162,33 @@ function factory () {
     this.proto = extend({}, this)
   }
 
-  extend(MPX, APIs)
-  extend(MPX.prototype, InstanceAPIs)
+  Object.assign(MPX, APIs)
+  Object.assign(MPX.prototype, InstanceAPIs)
   return MPX
 }
 
 const EXPORT_MPX = factory()
 
+EXPORT_MPX.config = {
+  useStrictDiff: true,
+  ignoreRenderError: false
+}
+
 if (__mpx_mode__ === 'web') {
   window.__mpx = EXPORT_MPX
 } else {
   if (global.i18n) {
-    EXPORT_MPX.i18n = global.i18n = observable(global.i18n)
+    observe(global.i18n)
+    // 挂载翻译方法
+    if (global.i18nMethods) {
+      Object.keys(global.i18nMethods).forEach((methodName) => {
+        global.i18n[methodName] = (...args) => {
+          args.unshift(global.i18n.locale)
+          return global.i18nMethods[methodName].apply(this, args)
+        }
+      })
+    }
+    EXPORT_MPX.i18n = global.i18n
   }
 }
 

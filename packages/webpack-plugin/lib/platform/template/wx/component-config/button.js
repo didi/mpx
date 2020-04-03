@@ -11,7 +11,6 @@ module.exports = function ({ print }) {
   const baiduEventLog = print({ platform: 'baidu', tag: TAG_NAME, isError: false })
   const qqPropLog = print({ platform: 'qq', tag: TAG_NAME, isError: false })
   const qqEventLog = print({ platform: 'qq', tag: TAG_NAME, isError: false, type: 'event' })
-  const qqValueLogError = print({ platform: 'qq', tag: TAG_NAME, isError: true, type: 'value' })
   const ttPropLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false })
   const ttValueLogError = print({ platform: 'bytedance', tag: TAG_NAME, isError: true, type: 'value' })
   const ttValueLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false, type: 'value' })
@@ -66,12 +65,6 @@ module.exports = function ({ print }) {
             baiduValueLog({ name, value })
           } else if (supportList.indexOf(value) === -1) {
             baiduValueLogError({ name, value })
-          }
-        },
-        qq ({ name, value }) {
-          let supportList = ['share', 'getUserInfo', 'launchApp', 'feedback', 'openSetting']
-          if (supportList.indexOf(value) === -1) {
-            qqValueLogError({ name, value })
           }
         },
         tt ({ name, value }) {

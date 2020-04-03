@@ -71,7 +71,7 @@ createComponent({
 
 ##### 参数选项
 
-- **`this.$forceUpdate(data?: Object, callback?: function)`**
+- **`this.$forceUpdate(data: Object, callback?: function)`**
 
 用于强制刷新视图，正常情况下```只有发生了变化的数据```才会被发送到视图层进行渲染。强制更新时，会将某些数据强制发送到视图层渲染，无论是否发生了变化
 
@@ -96,11 +96,6 @@ createComponent({
     this.$forceUpdate({
       'info.name': 'b'
     }, () => {
-      console.log('视图更新后执行')
-    })
-
-    // 如果不传入任何数据，那么默认情况下会将data & computed 所有数据都传入视图层进行渲染
-    this.$forceUpdate(() => {
       console.log('视图更新后执行')
     })
   }

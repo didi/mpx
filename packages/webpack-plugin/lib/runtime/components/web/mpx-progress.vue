@@ -131,7 +131,7 @@
 
       const data = {
         class: ['mpx-progress'],
-        on: getInnerListeners(this)
+        on: getInnerListeners(this, { ignoredListeners: ['activeend'] })
       }
       return createElement('div', data, children)
     }

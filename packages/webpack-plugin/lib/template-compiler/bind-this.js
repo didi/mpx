@@ -2,12 +2,11 @@ const babylon = require('babylon')
 const traverse = require('babel-traverse').default
 const t = require('babel-types')
 const generate = require('babel-generator').default
-const isValidIdentifierStr = require('../utils/is-valid-identifier-str')
 
 let names = 'Infinity,undefined,NaN,isFinite,isNaN,' +
   'parseFloat,parseInt,decodeURI,decodeURIComponent,encodeURI,encodeURIComponent,' +
   'Math,Number,Date,Array,Object,Boolean,String,RegExp,Map,Set,JSON,Intl,' +
-  'require,global,__seen,__renderData'
+  'require,global'
 
 let hash = {}
 names.split(',').forEach(function (name) {
@@ -35,16 +34,14 @@ module.exports = {
     let isProps = false
 
     let bindThisVisitor = {
+      // 标记收集props数据
       CallExpression: {
         enter (path) {
           const callee = path.node.callee
-          const args = path.node.arguments
           if (
             t.isMemberExpression(callee) &&
             t.isThisExpression(callee.object) &&
-            (callee.property.name === '__travel' || callee.property.value === '__travel') &&
-            t.isBooleanLiteral(args[2]) &&
-            args[2].value === true
+            (callee.property.name === '_p' || callee.property.value === '_p')
           ) {
             isProps = true
             path.isProps = true
@@ -52,7 +49,10 @@ module.exports = {
         },
         exit (path) {
           if (path.isProps) {
+            // 移除无意义的__props调用
+            path.replaceWith(path.node.arguments[0])
             isProps = false
+            delete path.isProps
           }
         }
       },
@@ -81,21 +81,17 @@ module.exports = {
               // 找到访问路径
               current = path.parentPath
               last = path
-              let firstKey
-              let keyPath = firstKey = path.node.property.name
-              let rightExpression = t.memberExpression(t.thisExpression(), t.identifier(keyPath))
+              let keyPath = '' + path.node.property.name
               while (current.isMemberExpression() && last.parentKey !== 'property') {
                 if (current.node.computed) {
                   if (t.isLiteral(current.node.property)) {
                     if (t.isStringLiteral(current.node.property)) {
-                      if (!isValidIdentifierStr(current.node.property.value) || dangerousKeyMap[current.node.property.value]) {
+                      if (dangerousKeyMap[current.node.property.value]) {
                         break
                       }
                       keyPath += `.${current.node.property.value}`
-                      rightExpression = t.memberExpression(rightExpression, t.stringLiteral(current.node.property.value), true)
                     } else {
                       keyPath += `[${current.node.property.value}]`
-                      rightExpression = t.memberExpression(rightExpression, t.numericLiteral(current.node.property.value), true)
                     }
                   } else {
                     break
@@ -105,44 +101,20 @@ module.exports = {
                     break
                   }
                   keyPath += `.${current.node.property.name}`
-                  rightExpression = t.memberExpression(rightExpression, t.identifier(current.node.property.name))
                 }
                 last = current
                 current = current.parentPath
               }
-
-              rightExpression = t.arrayExpression([rightExpression, t.stringLiteral(firstKey)])
-              // 构造赋值语句并挂到要改的path下，等对memberExpression访问exit时处理
-              last.assignment = t.assignmentExpression('=', t.memberExpression(t.identifier('__renderData'), t.stringLiteral(keyPath.toString()), true), rightExpression)
+              last.collectPath = t.stringLiteral(keyPath)
             }
-          }
-          // flag get
-          last = path
-          current = path.parentPath
-          while (current.isMemberExpression() && last.parentKey !== 'property') {
-            if (!dangerousKeyMap[current.node.property.name || current.node.property.value]) {
-              current.shouldGet = true
-            }
-            last = current
-            current = current.parentPath
           }
         }
       },
       MemberExpression: {
         exit (path) {
-          if (path.shouldGet) {
-            delete path.shouldGet
-            let property
-            if (path.node.computed) {
-              property = path.node.property
-            } else {
-              property = t.stringLiteral(path.node.property.name)
-            }
-            let targetNode = t.callExpression(t.memberExpression(t.thisExpression(), t.identifier('__get')), [path.node.object, property])
-            path.replaceWith(targetNode)
-          }
-          if (path.assignment) {
-            path.replaceWith(t.sequenceExpression([path.assignment, path.node]))
+          if (path.collectPath) {
+            path.replaceWith(t.callExpression(t.memberExpression(t.thisExpression(), t.identifier('_c')), [path.collectPath, path.node]))
+            delete path.collectPath
           }
         }
       }

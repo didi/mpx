@@ -1,0 +1,22 @@
+import { error } from '../helper/log'
+
+export default {
+  convert (options) {
+    if (options.behaviors) {
+      options.behaviors.forEach((behavior, idx) => {
+        if (typeof behavior === 'string') {
+          error(`Built-in behavior "${behavior}" is not supported in tt environment!`, global.currentResource)
+          options.behaviors.splice(idx, 1)
+        }
+      })
+    }
+    if (options.pageLifetimes && options.pageLifetimes.resize) {
+      error(`Options.pageLifetimes.resize is not supported in tt environment!`, global.currentResource)
+      delete options.pageLifetimes.resize
+    }
+    if (options.onResize) {
+      error(`Options.onResize is not supported in tt environment!`, global.currentResource)
+      delete options.onResize
+    }
+  }
+}

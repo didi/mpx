@@ -1,12 +1,13 @@
 import * as wxLifecycle from '../platform/patch/wx/lifecycle'
 import * as aliLifecycle from '../platform/patch/ali/lifecycle'
 import { mergeLifecycle } from './mergeLifecycle'
+import { mergeToArray } from '../core/mergeOptions'
 import { error } from '../helper/log'
 
 const NOTSUPPORTS = ['moved', 'definitionFilter']
 
 function convertErrorDesc (key) {
-  error(`Option[${key}] is not supported in runtime conversion from wx to ali.`, global.currentResource)
+  error(`Options.${key} is not supported in runtime conversion from wx to ali.`, global.currentResource)
 }
 
 function notSupportTip (options) {
@@ -49,13 +50,18 @@ export default {
         const prop = options.properties[key]
         if (prop && prop.hasOwnProperty('value')) {
           newProps[key] = prop.value
-        } else {
-          const type = prop.hasOwnProperty('type') ? prop.type : prop
-          newProps[key] = typeof type === 'function' ? type() : null
         }
       })
       options.props = Object.assign(newProps, options.props)
       delete options.properties
+    }
+    if (options.onResize) {
+      mergeToArray(options, {
+        events: {
+          onResize: options.onResize
+        }
+      }, 'events')
+      delete options.onResize
     }
     notSupportTip(options)
   }

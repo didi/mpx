@@ -29,10 +29,10 @@ const COMPONENT_HOOKS = [
   'didMount',
   'didUpdate',
   'didUnmount',
-  'pageShow',
-  'pageHide',
   'updated',
-  'beforeCreate'
+  'beforeCreate',
+  'pageShow',
+  'pageHide'
 ]
 
 export const lifecycleProxyMap = {

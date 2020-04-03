@@ -8,7 +8,6 @@ const ReplaceDependency = require('./dependency/ReplaceDependency')
 const NullFactory = require('webpack/lib/NullFactory')
 const normalize = require('./utils/normalize')
 const toPosix = require('./utils/to-posix')
-const getResource = require('./utils/parse-request')
 const addQuery = require('./utils/add-query')
 const DefinePlugin = require('webpack/lib/DefinePlugin')
 const AddModePlugin = require('./resolver/AddModePlugin')
@@ -87,8 +86,7 @@ class MpxWebpackPlugin {
     options.autoScopeRules = options.autoScopeRules || {}
     options.forceDisableInject = options.forceDisableInject || false
     options.transMpxRules = options.transMpxRules || {
-      include: () => true,
-      exclude: ['@mpxjs', '@didi']
+      include: () => true
     }
     if (options.autoSplit === undefined) {
       // web模式下默认不开启autoSplit
@@ -147,16 +145,24 @@ class MpxWebpackPlugin {
     } else {
       throw new Error('Multiple MpxWebpackPlugin instances exist in webpack compiler, please check webpack plugins config!')
     }
+    const warnings = []
+    const errors = []
     if (this.options.mode !== 'web') {
       // 强制设置publicPath为'/'
       if (compiler.options.output.publicPath && compiler.options.output.publicPath !== publicPath) {
-        console.warn(`MpxWebpackPlugin accept output publicPath to be ${publicPath} only, custom output publicPath will be ignored!`)
+        warnings.push(`webpack options: MpxWebpackPlugin accept options.output.publicPath to be ${publicPath} only, custom options.output.publicPath will be ignored!`)
       }
       compiler.options.output.publicPath = publicPath
       if (compiler.options.output.filename && compiler.options.output.filename !== outputFilename) {
-        console.warn(`MpxWebpackPlugin accept output filename to be ${outputFilename} only, custom output filename will be ignored!`)
+        warnings.push(`webpack options: MpxWebpackPlugin accept options.output.filename to be ${outputFilename} only, custom options.output.filename will be ignored!`)
       }
       compiler.options.output.filename = compiler.options.output.chunkFilename = outputFilename
+    }
+
+    if (!compiler.options.node || !compiler.options.node.global) {
+      compiler.options.node = compiler.options.node || {}
+      compiler.options.node.global = true
+      warnings.push(`webpack options: MpxWebpackPlugin strongly depends options.node.globel to be true, custom options.node will be ignored!`)
     }
 
     const resolvePlugin = new AddModePlugin('before-resolve', this.options.mode, 'resolve')
@@ -219,6 +225,8 @@ class MpxWebpackPlugin {
     let mpx
 
     compiler.hooks.thisCompilation.tap('MpxWebpackPlugin', (compilation, { normalModuleFactory }) => {
+      compilation.warnings = compilation.warnings.concat(warnings)
+      compilation.errors = compilation.errors.concat(errors)
       // additionalAssets和mpx由于包含缓存机制，必须在每次compilation时重新初始化
       const additionalAssets = {}
       if (!compilation.__mpx__) {
@@ -226,6 +234,8 @@ class MpxWebpackPlugin {
         mpx = compilation.__mpx__ = {
           // pages全局记录，无需区分主包分包
           pagesMap: {},
+          // 记录pages对应的entry，处理多appEntry输出web多页项目时可能出现的pagePath冲突的问题，多appEntry输出目前仅web模式支持
+          pagesEntryMap: {},
           // 组件资源记录，依照所属包进行记录，冗余存储，只要某个包有引用会添加对应记录，不管其会不会在当前包输出，这样设计主要是为了在resolve时能够以较低成本找到特定资源的输出路径
           componentsMap: {
             main: {}
@@ -414,7 +424,7 @@ class MpxWebpackPlugin {
             const staticResourceMap = mpx.staticResourceMap
             const publicPath = mpx.mode === 'web' ? '' : compilation.outputOptions.publicPath
             const range = expr.range
-            const issuerResource = parser.state.current.issuer.resource
+            const issuerResource = parser.state.module.issuer.resource
             const dep = new ResolveDependency(resource, packageName, pagesMap, componentsMap, staticResourceMap, publicPath, range, issuerResource)
             parser.state.current.addDependency(dep)
             return true
@@ -437,7 +447,7 @@ class MpxWebpackPlugin {
           } else if (expr.type === 'MemberExpression') {
             target = expr.object
           }
-          if (!matchCondition(resourcePath, this.options.transMpxRules) || !target || mode === srcMode) {
+          if (!matchCondition(resourcePath, this.options.transMpxRules) || resourcePath.indexOf('@mpxjs') !== -1 || !target || mode === srcMode) {
             return
           }
 
@@ -468,16 +478,17 @@ class MpxWebpackPlugin {
               },
               module
             })
-            current.addVariable(name, expression, deps)
+            module.addVariable(name, expression, deps)
           }
         }
 
         // hack babel polyfill global
         parser.hooks.evaluate.for('CallExpression').tap('MpxWebpackPlugin', (expr) => {
           const current = parser.state.current
+          const module = parser.state.module
           const arg0 = expr.arguments[0]
           const callee = expr.callee
-          if (arg0 && arg0.value === 'return this' && callee.name === 'Function' && current.rawRequest === './_global') {
+          if (arg0 && arg0.value === 'return this' && callee.name === 'Function' && module.rawRequest === './_global') {
             current.addDependency(new InjectDependency({
               content: '(function() { return this })() || ',
               index: expr.range[0]
@@ -584,11 +595,6 @@ class MpxWebpackPlugin {
             packageName
           })
           data.request = `!!${pathLoader}!${resource}`
-        } else if (queryObj.wxsModule) {
-          const wxsPreLoader = normalize.lib('wxs/wxs-pre-loader')
-          if (!/wxs-loader/.test(request)) {
-            data.request = `!!${wxsPreLoader}!${resource}`
-          }
         }
         callback(null, data)
       })
@@ -607,19 +613,19 @@ class MpxWebpackPlugin {
         data.resource = this.runModeRules(data.resource)
 
         if (mpx.currentPackageRoot) {
-          const resourcPath = getResource(data.resource)
+          const resourcePath = parseRequest(data.resource).resourcePath
 
           const staticResourceHit = mpx.staticResourceHit
           const packageName = mpx.currentPackageRoot || 'main'
 
           let needAddQuery = false
 
-          if (staticResourceHit[resourcPath] && staticResourceHit[resourcPath] !== packageName) {
+          if (staticResourceHit[resourcePath] && staticResourceHit[resourcePath] !== packageName) {
             needAddQuery = true
           }
 
           if (needAddQuery) {
-            // 此处的query用于避免模块缓存
+            // 此处的query用于避免静态资源模块缓存，确保不同分包中引用的静态资源为不同模块
             data.request = addQuery(data.request, {
               packageName
             })

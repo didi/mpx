@@ -1,7 +1,3 @@
-import {
-  comparer
-} from '../../../mobx'
-
 import MPXProxy from '../../../core/proxy'
 import customKey from '../customOptionKeys'
 import mergeOptions from '../../../core/mergeOptions'
@@ -12,7 +8,7 @@ function transformApiForProxy (context, currentInject) {
   if (Object.getOwnPropertyDescriptor(context, 'setData').configurable) {
     Object.defineProperty(context, 'setData', {
       get () {
-        return context.__mpxProxy.setData.bind(context.__mpxProxy)
+        return context.__mpxProxy.forceUpdate.bind(context.__mpxProxy)
       },
       configurable: true
     })
@@ -101,15 +97,17 @@ export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
       if (this.__mpxProxy && this.__mpxProxy.isMounted() && nextProps && nextProps !== this.props) {
         if (this.$rawOptions.__nativeRender__) {
           const newData = {}
+          // 微信原生转换支付宝时，每次props更新将其设置进data模拟微信表现
           Object.keys(nextProps).forEach((key) => {
-            if (!key.startsWith('$') && typeof nextProps[key] !== 'function' && !comparer.structural(this.props[key], nextProps[key])) {
+            if (!key.startsWith('$') && typeof nextProps[key] !== 'function' && nextProps[key] !== this.props[key]) {
               newData[key] = nextProps[key]
             }
           })
-          this.__mpxProxy.setData(newData)
+          this.__mpxProxy.forceUpdate(newData)
         } else {
+          // 此处发生变化的属性实例一定不同，只需浅比较即可确定发生变化的属性
           Object.keys(nextProps).forEach(key => {
-            if (!key.startsWith('$') && typeof nextProps[key] !== 'function' && !comparer.structural(this.props[key], nextProps[key])) {
+            if (!key.startsWith('$') && typeof nextProps[key] !== 'function' && nextProps[key] !== this.props[key]) {
               this[key] = nextProps[key]
             }
           })

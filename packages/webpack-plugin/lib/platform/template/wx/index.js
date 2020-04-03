@@ -32,23 +32,22 @@ module.exports = function getSpec ({ warn, error }) {
         test: 'wx:for',
         swan (obj, data) {
           const attrsMap = data.el.attrsMap
-          const varListName = /{{(.*)}}/.exec(obj.value)
-          let listName = ''
-          let varIsNumber = false
+          const parsed = parseMustache(obj.value)
+          let listName = parsed.result
           let KEY_TYPES = {
             PROPERTY: 0,
             INDEX: 1
           }
           let keyType = KEY_TYPES.PROPERTY
           // 在wx:for="abcd"值为字符串时varListName为null,按照小程序循环规则将字符串转换为 ["a", "b", "c", "d"]
-          if (varListName) {
-            const variableName = varListName[1].trim()
-            varIsNumber = variableName.match(/^\d+$/)
-            // 如果为{{}}中为数字字面量
-            if (varIsNumber) {
+          if (parsed.hasBinding) {
+            // unwrap ()
+            listName = listName.slice(1, -1)
+            // 处理数字循环
+            if (/^\d+$/.test(listName)) {
               keyType = KEY_TYPES.INDEX
               // 创建循环数组
-              const loopNum = Math.ceil(Number(variableName))
+              const loopNum = +listName
               // 定义一个建议值,因为会增加template文件大小,
               if (loopNum > 300) warn(`It's not recommended to exceed 300 in baidu environment`)
               let list = []
@@ -56,24 +55,21 @@ module.exports = function getSpec ({ warn, error }) {
                 list[i] = i
               }
               listName = JSON.stringify(list)
-              warn(`Number type loop variable is not support in baidu environment, please check variable: ${variableName}`)
-            } else {
-              listName = varListName[1]
             }
           } else {
             keyType = KEY_TYPES.INDEX
             // for值为字符串,转成字符数组
-            listName = JSON.stringify(obj.value.split(''))
+            listName = JSON.stringify(parsed.val.split(''))
           }
           const itemName = attrsMap['wx:for-item'] || 'item'
           const indexName = attrsMap['wx:for-index'] || 'index'
           const keyName = attrsMap['wx:key'] || null
           let keyStr = ''
-          if (keyName &&
-            // 百度不支持在trackBy使用mustache语法
-            !/{{[^}]*}}/.test(keyName)
-          ) {
-            if (keyName === '*this') {
+          if (keyName) {
+            const parsed = parseMustache(keyName)
+            if (parsed.hasBinding) {
+              // keyStr = ` trackBy ${parsed.result.slice(1, -1)}`
+            } else if (keyName === '*this') {
               keyStr = ` trackBy ${itemName}`
             } else {
               // 定义key索引
