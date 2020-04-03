@@ -13,13 +13,9 @@ const stringifyWithResolveComputed = templateCompiler.stringifyWithResolveComput
  * @return {object} 返回扩展后的specMap
  */
 function mergeSpecMapRules (baseSpecMap, extendSpecMap) {
-  const extendWXTemplate = extendSpecMap && extendSpecMap.template && extendSpecMap.template.wx
+  const extendWXTemplate = extendSpecMap && extendSpecMap.wx
   if (extendWXTemplate) {
     const { directive, event } = extendWXTemplate
-    // todo：更好的merge规则
-    // if (Array.isArray(rules)) {
-    //   baseSpecMap.rules.unshift(...rules)
-    // }
     if (Array.isArray(directive)) {
       baseSpecMap.directive.unshift(...directive)
     }
@@ -49,7 +45,7 @@ function mergeRules (highOrderRuleList, builtInRuleList) {
   return result
 }
 
-module.exports = function getSpec ({ warn, error, customTransSpec }) {
+module.exports = function getSpec ({ warn, error, customTemplateSpec }) {
   const baseSpec = {
     supportedModes: ['ali', 'swan', 'qq', 'tt', 'web'],
     // props预处理
@@ -426,8 +422,8 @@ module.exports = function getSpec ({ warn, error, customTransSpec }) {
     }
   }
 
-  const spec = mergeSpecMapRules(baseSpec, customTransSpec)
-  const rules = (customTransSpec && customTransSpec.template && customTransSpec.template.wx && customTransSpec.template.wx.rules) || []
+  const spec = mergeSpecMapRules(baseSpec, customTemplateSpec)
+  const rules = (customTemplateSpec && customTemplateSpec.wx && customTemplateSpec.wx.rules) || []
 
   const componentsRules = mergeRules(rules, getComponentConfigs({ warn, error })).concat({})
 

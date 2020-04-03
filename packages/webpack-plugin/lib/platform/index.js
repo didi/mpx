@@ -16,9 +16,10 @@ const runRules = require('./run-rules')
  * @return {function(*=): *} 转换执行器
  */
 module.exports = function getRulesRunner ({ type, mode, srcMode, data, meta, testKey, mainKey, waterfall, warn, error, customTransSpec }) {
+  const customTemplateSpec = (customTransSpec && customTransSpec.template) || {}
   const specMap = {
     template: {
-      wx: require('./template/wx')({ warn, error, customTransSpec })
+      wx: require('./template/wx')({ warn, error, customTemplateSpec })
     },
     json: {
       wx: require('./json/wx')({ warn, error })
