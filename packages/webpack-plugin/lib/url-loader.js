@@ -34,21 +34,23 @@ module.exports = function (src) {
 
   const filePath = this.resourcePath
   const mimetype = options.mimetype || mime.getType(filePath)
-
-  // const limit = options.limit
-  // if (!limit || src.length < limit) {
-  //   transBase64 = true
-  // }
-
-  const queryOption = parseQuery(this.resourceQuery || '?')
-  if (queryOption.fallback) {
-    transBase64 = false
-  }
+  const publicPath = options.publicPath
 
   const issuer = this._module.issuer
 
   if (issuer && issuer.request && isStyle(issuer.request)) {
-    transBase64 = true
+    if (publicPath && /^\w+:\/\//.test(publicPath)) {
+      const limit = options.limit
+      if (!limit || src.length < limit) {
+        transBase64 = true
+      }
+      const queryOption = parseQuery(this.resourceQuery || '?')
+      if (queryOption.fallback) {
+        transBase64 = false
+      }
+    } else {
+      transBase64 = true
+    }
   }
 
   if (transBase64) {
