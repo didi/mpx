@@ -9,6 +9,7 @@ var getImportPrefix = require('./getImportPrefix')
 var compileExports = require('./compile-exports')
 var createResolver = require('./createResolver')
 var isUrlRequest = require('../utils/is-url-request')
+var getMainCompilation = require('../utils/get-main-compilation')
 
 module.exports = function (content, map) {
   if (this.cacheable) this.cacheable()

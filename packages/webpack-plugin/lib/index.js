@@ -224,7 +224,6 @@ class MpxWebpackPlugin {
 
     new ExternalsPlugin('commonjs2', this.options.externals).apply(compiler)
 
-
     compiler.hooks.compilation.tap('MpxWebpackPlugin ', (compilation) => {
       compilation.hooks.normalModuleLoader.tap('MpxWebpackPlugin', (loaderContext, module) => {
         // 设置loaderContext的minimize

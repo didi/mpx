@@ -34,12 +34,10 @@ module.exports = function (src) {
 
   const filePath = this.resourcePath
   const mimetype = options.mimetype || mime.getType(filePath)
-  const publicPath = options.publicPath
-
   const issuer = this._module.issuer
 
   if (issuer && issuer.request && isStyle(issuer.request)) {
-    if (publicPath && /^\w+:\/\//.test(publicPath)) {
+    if (options.publicPath) {
       const limit = options.limit
       if (!limit || src.length < limit) {
         transBase64 = true

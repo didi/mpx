@@ -15,13 +15,19 @@ module.exports = function loader (content) {
     regExp: options.regExp
   })
 
-  let { outputPath } = mpx.getPackageInfo(this.resource, {
-    outputPath: url,
-    isStatic: true,
-    error: (err) => {
-      this.emitError(err)
-    }
-  })
+  let outputPath
+
+  if (options.publicPath) {
+    outputPath = url
+  } else {
+    outputPath = mpx.getPackageInfo(this.resource, {
+      outputPath: url,
+      isStatic: true,
+      error: (err) => {
+        this.emitError(err)
+      }
+    }).outputPath
+  }
 
   if (options.outputPath) {
     if (typeof options.outputPath === 'function') {
@@ -41,7 +47,7 @@ module.exports = function loader (content) {
         options.publicPath.endsWith('/')
           ? options.publicPath
           : `${options.publicPath}/`
-        }${outputPath}`
+      }${outputPath}`
     }
     publicPath = JSON.stringify(publicPath)
   }
