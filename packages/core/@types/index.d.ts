@@ -443,6 +443,9 @@ interface MpxConfig {
 
 export function setConvertRule (rule: ConvertRule): void
 
+export function toPureObject (source: any): any
+
+export function extendObservable<A extends Object, B extends Object> (target: A, properties: B): A & B
 
 export interface Mpx {
   createComponent: typeof createComponent
@@ -455,6 +458,8 @@ export interface Mpx {
   mixin: typeof injectMixins
   injectMixins: typeof injectMixins
   observable: typeof observable
+  toPureObject: typeof toPureObject
+  extendObservable: typeof extendObservable
 
   watch: typeof watch
 
