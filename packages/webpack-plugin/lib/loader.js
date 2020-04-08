@@ -264,11 +264,18 @@ module.exports = function (content) {
       // 注入构造函数
       let ctor = 'App'
       if (ctorType === 'page') {
-        ctor = mode === 'ali' ? 'Page' : 'Component'
+        if (mpx.forceUsePageCtor || mode === 'ali') {
+          ctor = 'Page'
+        } else {
+          ctor = 'Component'
+        }
       } else if (ctorType === 'component') {
         ctor = 'Component'
       }
       globalInjectCode += `global.currentCtor = ${ctor}\n`
+      globalInjectCode += `global.currentCtorType = ${JSON.stringify(ctor.replace(/^./, (match) => {
+        return match.toLowerCase()
+      }))}\n`
 
       //
       // <script>

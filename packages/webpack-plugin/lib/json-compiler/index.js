@@ -143,14 +143,17 @@ module.exports = function (raw = '{}') {
     return callback(err)
   }
 
+  // json补全
   if (!mpx.forceDisableInject) {
     if (pagesMap[resourcePath]) {
       // page
-      if (!json.usingComponents) {
-        json.usingComponents = {}
-      }
-      if (!json.component && mode === 'swan') {
-        json.component = true
+      if (!mpx.forceUsePageCtor) {
+        if (!json.usingComponents) {
+          json.usingComponents = {}
+        }
+        if (!json.component && mode === 'swan') {
+          json.component = true
+        }
       }
     } else if (componentsMap[resourcePath]) {
       // component

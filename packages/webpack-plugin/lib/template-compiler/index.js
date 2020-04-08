@@ -83,7 +83,7 @@ module.exports = function (raw) {
   // todo 此处在loader中往其他模块addDep更加危险，考虑修改为通过抽取后的空模块的module.exports来传递信息
   let globalInjectCode = renderResult.code + '\n'
 
-  if ((mode === 'tt' || mode === 'swan') && renderResult.propKeys) {
+  if (mode === 'tt' && renderResult.propKeys) {
     globalInjectCode += `global.currentInject.propKeys = ${JSON.stringify(renderResult.propKeys)};\n`
   }
 

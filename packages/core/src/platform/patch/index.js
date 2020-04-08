@@ -14,6 +14,8 @@ export default function createFactory (type) {
       if (type === 'page' && customCtorType === 'page') {
         options.__pageCtor__ = true
       }
+    } else if (global.currentCtorType === 'page') {
+      options.__pageCtor__ = true
     }
     let getDefaultOptions
 

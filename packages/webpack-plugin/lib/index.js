@@ -107,7 +107,7 @@ class MpxWebpackPlugin {
     options.externals = (options.externals || []).map((external) => {
       return externalsMap[external] || external
     })
-
+    options.forceUsePageCtor = options.forceUsePageCtor || false
     this.options = options
   }
 
@@ -268,6 +268,7 @@ class MpxWebpackPlugin {
           wxsMap: {},
           wxsConentMap: {},
           forceDisableInject: this.options.forceDisableInject,
+          forceUsePageCtor: this.options.forceUsePageCtor,
           resolveMode: this.options.resolveMode,
           mode: this.options.mode,
           srcMode: this.options.srcMode,
