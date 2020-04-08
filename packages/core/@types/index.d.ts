@@ -5,6 +5,8 @@
 
 /// <reference types="miniprogram-api-typings" />
 
+import exp = require("constants");
+
 type Data = object | (() => object)
 
 type PropType = StringConstructor | NumberConstructor | BooleanConstructor | ObjectConstructor | ArrayConstructor | null
@@ -443,6 +445,7 @@ interface MpxConfig {
 
 export function setConvertRule (rule: ConvertRule): void
 
+export function toPureObject<T extends object> (obj: T): T
 
 export interface Mpx {
   createComponent: typeof createComponent
@@ -454,6 +457,7 @@ export interface Mpx {
   getComputed: typeof getComputed
   mixin: typeof injectMixins
   injectMixins: typeof injectMixins
+  toPureObject: typeof toPureObject
   observable: typeof observable
 
   watch: typeof watch
