@@ -10,6 +10,7 @@ const normalize = require('./utils/normalize')
 const toPosix = require('./utils/to-posix')
 const addQuery = require('./utils/add-query')
 const DefinePlugin = require('webpack/lib/DefinePlugin')
+const ExternalsPlugin = require('webpack/lib/ExternalsPlugin')
 const AddModePlugin = require('./resolver/AddModePlugin')
 const CommonJsRequireDependency = require('webpack/lib/dependencies/CommonJsRequireDependency')
 const HarmonyImportSideEffectDependency = require('webpack/lib/dependencies/HarmonyImportSideEffectDependency')
@@ -54,9 +55,11 @@ function getPackageCacheGroup (packageName) {
   }
 }
 
-// todo 输出web模式下自动对.mpx文件插入vue-loader
-
 let loaderOptions
+
+const externalsMap = {
+  weui: /^weui-miniprogram/
+}
 
 class MpxWebpackPlugin {
   constructor (options = {}) {
@@ -85,6 +88,7 @@ class MpxWebpackPlugin {
     options.writeMode = options.writeMode || 'changed'
     options.autoScopeRules = options.autoScopeRules || {}
     options.forceDisableInject = options.forceDisableInject || false
+    options.forceDisableProxyCtor = options.forceDisableProxyCtor || false
     options.transMpxRules = options.transMpxRules || {
       include: () => true
     }
@@ -100,6 +104,11 @@ class MpxWebpackPlugin {
     // 批量指定源码mode
     options.modeRules = options.modeRules || {}
     options.generateBuildMap = options.generateBuildMap || false
+    options.attributes = options.attributes || []
+    options.externals = (options.externals || []).map((external) => {
+      return externalsMap[external] || external
+    })
+
     this.options = options
   }
 
@@ -214,6 +223,8 @@ class MpxWebpackPlugin {
     // define mode & defs
     new DefinePlugin(defsOpt).apply(compiler)
 
+    new ExternalsPlugin('commonjs2', this.options.externals).apply(compiler)
+
     compiler.hooks.compilation.tap('MpxWebpackPlugin ', (compilation) => {
       compilation.hooks.normalModuleLoader.tap('MpxWebpackPlugin', (loaderContext, module) => {
         // 设置loaderContext的minimize
@@ -272,6 +283,8 @@ class MpxWebpackPlugin {
           defs: this.options.defs,
           i18n: this.options.i18n,
           appTitle: 'Mpx homepage',
+          attributes: this.options.attributes,
+          externals: this.options.externals,
           extract: (content, file, index, sideEffects) => {
             additionalAssets[file] = additionalAssets[file] || []
             if (!additionalAssets[file][index]) {
@@ -511,7 +524,7 @@ class MpxWebpackPlugin {
           // // Trans for wx.xx, wx['xx'], wx.xx(), wx['xx']()
           // parser.hooks.expressionAnyMember.for('wx').tap('MpxWebpackPlugin', transHandler)
           // Proxy ctor for transMode
-          if (!this.options.forceDisableInject) {
+          if (!this.options.forceDisableProxyCtor) {
             parser.hooks.call.for('Page').tap('MpxWebpackPlugin', (expr) => {
               transHandler(expr.callee)
             })

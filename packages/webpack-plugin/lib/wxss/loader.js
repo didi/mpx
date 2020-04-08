@@ -9,6 +9,7 @@ var getImportPrefix = require('./getImportPrefix')
 var compileExports = require('./compile-exports')
 var createResolver = require('./createResolver')
 var isUrlRequest = require('../utils/is-url-request')
+var getMainCompilation = require('../utils/get-main-compilation')
 
 module.exports = function (content, map) {
   if (this.cacheable) this.cacheable()
@@ -20,6 +21,8 @@ module.exports = function (content, map) {
   var camelCaseKeys = query.camelCase || query.camelcase
   var sourceMap = query.sourceMap || false
   var resolve = createResolver(query.alias)
+  var mpx = getMainCompilation(this._compilation).__mpx__
+  var externals = mpx.externals
 
   if (sourceMap) {
     if (map) {
@@ -66,7 +69,14 @@ module.exports = function (content, map) {
       }
       return true
     }).map(function (imp) {
-      if (!isUrlRequest(imp.url, root)) {
+      if (!isUrlRequest(imp.url, root) || externals.some((external) => {
+        if (typeof external === 'string') {
+          return external === imp.url
+        } else if (external instanceof RegExp) {
+          return external.test(imp.url)
+        }
+        return false
+      })) {
         return 'exports.push([module.id, ' +
           JSON.stringify('@import url(' + imp.url + ');') + ', ' +
           JSON.stringify(imp.mediaQuery) + ']);'

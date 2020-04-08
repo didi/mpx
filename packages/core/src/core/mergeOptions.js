@@ -1,4 +1,4 @@
-import { type, merge, aliasReplace, findItem } from '../helper/utils'
+import { type, merge, aliasReplace, findItem, diffAndCloneA } from '../helper/utils'
 import { getConvertRule } from '../convertor/convertor'
 import { error, warn } from '../helper/log'
 
@@ -254,8 +254,8 @@ function mergeDataFn (parent, child, key) {
   } else {
     parent[key] = function mergeFn () {
       return merge(
-        typeof parentVal === 'function' ? parentVal.call(this, this) : parentVal,
-        typeof childVal === 'function' ? childVal.call(this, this) : childVal
+        typeof parentVal === 'function' ? parentVal.call(this) : diffAndCloneA(parentVal).clone,
+        typeof childVal === 'function' ? childVal.call(this) : diffAndCloneA(childVal).clone
       )
     }
   }
