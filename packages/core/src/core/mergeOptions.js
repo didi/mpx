@@ -1,4 +1,4 @@
-import { type, isPlainObject, merge, aliasReplace, findItem, diffAndCloneA } from '../helper/utils'
+import { isPlainObject, merge, aliasReplace, findItem, diffAndCloneA } from '../helper/utils'
 import { getConvertRule } from '../convertor/convertor'
 import { error, warn } from '../helper/log'
 
@@ -101,7 +101,7 @@ function extractObservers (options) {
 
   function mergeWatch (key, config) {
     if (watch[key]) {
-      type(watch[key]) !== 'Array' && (watch[key] = [watch[key]])
+      !Array.isArray(watch[key]) && (watch[key] = [watch[key]])
     } else {
       watch[key] = []
     }
@@ -287,15 +287,15 @@ export function mergeToArray (parent, child, key) {
     if (key in parentVal) {
       let parent = parentVal[key]
       let child = childVal[key]
-      if (type(parent) !== 'Array') {
+      if (!Array.isArray(parent)) {
         parent = [parent]
       }
-      if (type(child) !== 'Array') {
+      if (!Array.isArray(child)) {
         child = [child]
       }
       parentVal[key] = parent.concat(child)
     } else {
-      parentVal[key] = type(childVal[key]) === 'Array' ? childVal[key] : [childVal[key]]
+      parentVal[key] = Array.isArray(childVal[key]) ? childVal[key] : [childVal[key]]
     }
   })
 }
@@ -307,7 +307,7 @@ function composeHooks (target, includes) {
       hooksArr && (target[key] = function (...args) {
         let result
         for (let i = 0; i < hooksArr.length; i++) {
-          if (type(hooksArr[i]) === 'Function') {
+          if (typeof hooksArr[i] === 'function') {
             const data = hooksArr[i].apply(this, args)
             data !== undefined && (result = data)
           }

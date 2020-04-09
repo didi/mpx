@@ -1,4 +1,4 @@
-import { type } from '../../helper/utils'
+import { isPlainObject } from '../../helper/utils'
 
 const targets = []
 let curTarget = null
@@ -57,9 +57,9 @@ export default function relationsMixin (mixinType) {
                     list.push(child)
                   }
                 } else {
-                  const childrenType = type(child.props.children)
-                  if (childrenType === 'Object' || childrenType === 'Array') {
-                    const slotChildren = childrenType !== 'Array' ? [child.props.children] : child.props.children
+                  const children = child.props.children
+                  if (isPlainObject(children) || Array.isArray(children)) {
+                    const slotChildren = Array.isArray(children) ? children : [children]
                     this.mpxCollectChildComponent(slotChildren, list)
                   }
                 }

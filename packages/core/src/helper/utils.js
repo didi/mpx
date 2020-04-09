@@ -30,17 +30,12 @@ export function asyncLock () {
 
 export function aliasReplace (options = {}, alias, target) {
   if (options[alias]) {
-    const dataType = type(options[alias])
-    switch (dataType) {
-      case 'Object':
-        options[target] = Object.assign({}, options[alias], options[target])
-        break
-      case 'Array':
-        options[target] = options[alias].concat(options[target] || [])
-        break
-      default:
-        options[target] = options[alias]
-        break
+    if (isPlainObject(options[alias])) {
+      options[target] = Object.assign({}, options[alias], options[target])
+    } else if (Array.isArray(options[alias])) {
+      options[target] = options[alias].concat(options[target] || [])
+    } else {
+      options[target] = options[alias]
     }
     delete options[alias]
   }
@@ -49,7 +44,7 @@ export function aliasReplace (options = {}, alias, target) {
 
 export function findItem (arr = [], key) {
   for (const item of arr) {
-    if ((type(key) === 'RegExp' && key.test(item)) || item === key) {
+    if ((key instanceof RegExp && key.test(item)) || item === key) {
       return true
     }
   }
@@ -61,15 +56,14 @@ export function normalizeMap (prefix, arr) {
     arr = prefix
     prefix = ''
   }
-  const objType = type(arr)
-  if (objType === 'Array') {
+  if (Array.isArray(arr)) {
     const map = {}
     arr.forEach(value => {
       map[value] = prefix ? `${prefix}.${value}` : value
     })
     return map
   }
-  if (prefix && objType === 'Object') {
+  if (prefix && isPlainObject(arr)) {
     arr = Object.assign({}, arr)
     Object.keys(arr).forEach(key => {
       if (typeof arr[key] === 'string') {
@@ -112,7 +106,7 @@ export function getByPath (data, pathStrOrArr, defaultVal, errTip) {
   let normalizedArr = []
   if (Array.isArray(pathStrOrArr)) {
     normalizedArr = [pathStrOrArr]
-  } else if (type(pathStrOrArr) === 'String') {
+  } else if (typeof pathStrOrArr === 'string') {
     normalizedArr = pathStrOrArr.split(',').map(str => str.trim())
   }
 
@@ -477,43 +471,34 @@ export function diffAndCloneA (a, b) {
       const sameClass = className === toString.call(b)
       let length
       let lastPath
-      switch (className) {
-        case '[object Object]':
-          if (isPlainObject(a)) {
-            const keys = Object.keys(a)
-            length = keys.length
-            clone = {}
-            if (!currentDiff) setDiff(!sameClass || length < Object.keys(b).length || !Object.keys(b).every((key) => a.hasOwnProperty(key)))
-            lastPath = curPath
-            for (let i = 0; i < length; i++) {
-              const key = keys[i]
-              curPath += `.${key}`
-              clone[key] = deepDiffAndCloneA(a[key], sameClass ? b[key] : undefined, currentDiff)
-              curPath = lastPath
-            }
-          } else {
-            if (!currentDiff) setDiff(!sameClass || a !== b)
-          }
-          break
-        case '[object Array]':
-          length = a.length
-          clone = []
-          if (!currentDiff) setDiff(!sameClass || length < b.length)
-          lastPath = curPath
-          for (let i = 0; i < length; i++) {
-            curPath += `[${i}]`
-            clone[i] = deepDiffAndCloneA(a[i], sameClass ? b[i] : undefined, currentDiff)
-            curPath = lastPath
-          }
-          break
-        case '[object RegExp]':
-          if (!currentDiff) setDiff(!sameClass || '' + a !== '' + b)
-          break
-        case '[object Date]':
-          if (!currentDiff) setDiff(!sameClass || +a !== +b)
-          break
-        default:
-          if (!currentDiff) setDiff(!sameClass || a !== b)
+      if (isPlainObject(a)) {
+        const keys = Object.keys(a)
+        length = keys.length
+        clone = {}
+        if (!currentDiff) setDiff(!sameClass || length < Object.keys(b).length || !Object.keys(b).every((key) => a.hasOwnProperty(key)))
+        lastPath = curPath
+        for (let i = 0; i < length; i++) {
+          const key = keys[i]
+          curPath += `.${key}`
+          clone[key] = deepDiffAndCloneA(a[key], sameClass ? b[key] : undefined, currentDiff)
+          curPath = lastPath
+        }
+      } else if (Array.isArray(a)) {
+        length = a.length
+        clone = []
+        if (!currentDiff) setDiff(!sameClass || length < b.length)
+        lastPath = curPath
+        for (let i = 0; i < length; i++) {
+          curPath += `[${i}]`
+          clone[i] = deepDiffAndCloneA(a[i], sameClass ? b[i] : undefined, currentDiff)
+          curPath = lastPath
+        }
+      } else if (a instanceof RegExp) {
+        if (!currentDiff) setDiff(!sameClass || '' + a !== '' + b)
+      } else if (a instanceof Date) {
+        if (!currentDiff) setDiff(!sameClass || +a !== +b)
+      } else {
+        if (!currentDiff) setDiff(!sameClass || a !== b)
       }
     }
     if (currentDiff) {
