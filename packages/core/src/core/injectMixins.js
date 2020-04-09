@@ -1,18 +1,21 @@
 import {
-  type as obType
+  isPlainObject
 } from '../helper/utils'
+
 const MIXINS_MAPS = {
   app: [],
   page: [],
   component: []
 }
+
 export function injectMixins (mixins, type) {
-  if (!type) {
-    type = ['app', 'page', 'component']
-  } else if (obType(type) === 'String') {
+  if (typeof type === 'string') {
     type = [type]
+  } else {
+    type = ['app', 'page', 'component']
   }
-  if (obType(mixins) === 'Object') {
+
+  if (isPlainObject(mixins)) {
     mixins = [mixins]
   }
   type.forEach(key => {

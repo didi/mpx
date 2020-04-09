@@ -6,6 +6,7 @@ import { error } from './log'
 
 import { set } from '../observer/index'
 
+// type在支付宝环境下不一定准确，判断是普通对象优先使用isPlainObject
 export function type (n) {
   return Object.prototype.toString.call(n).slice(8, -1)
 }
@@ -172,13 +173,14 @@ export function proxy (target, source, keys, readonly) {
   return target
 }
 
+// todo 是否有深度merge的必要
 export function merge (to, from) {
   if (!from) return to
   const keys = Object.keys(from)
   for (let i = 0; i < keys.length; i++) {
     let key = keys[i]
-    if (type(from[key]) === 'Object') {
-      if (type(to[key]) !== 'Object') {
+    if (isPlainObject(from[key])) {
+      if (!isPlainObject(to[key])) {
         to[key] = {}
       }
       merge(to[key], from[key])
@@ -211,13 +213,13 @@ export function extend (target, ...sources) {
 }
 
 export function dissolveAttrs (target = {}, keys) {
-  if (type(keys) === 'String') {
+  if (typeof keys === 'string') {
     keys = [keys]
   }
   const newOptions = Object.assign({}, target)
   keys.forEach(key => {
     const value = target[key]
-    if (type(value) !== 'Object') return
+    if (!isPlainObject(value)) return
     delete newOptions[key]
     Object.assign(newOptions, value)
   })
@@ -228,8 +230,10 @@ export function isObject (obj) {
   return obj !== null && typeof obj === 'object'
 }
 
-export function isPlainObject (obj) {
-  return type(obj) === 'Object'
+export function isPlainObject (value) {
+  if (value === null || typeof value !== 'object') return false
+  const proto = Object.getPrototypeOf(value)
+  return proto === Object.prototype || proto === null
 }
 
 const hasOwnProperty = Object.prototype.hasOwnProperty
@@ -475,16 +479,20 @@ export function diffAndCloneA (a, b) {
       let lastPath
       switch (className) {
         case '[object Object]':
-          const keys = Object.keys(a)
-          length = keys.length
-          clone = {}
-          if (!currentDiff) setDiff(!sameClass || length < Object.keys(b).length || !Object.keys(b).every((key) => a.hasOwnProperty(key)))
-          lastPath = curPath
-          for (let i = 0; i < length; i++) {
-            const key = keys[i]
-            curPath += `.${key}`
-            clone[key] = deepDiffAndCloneA(a[key], sameClass ? b[key] : undefined, currentDiff)
-            curPath = lastPath
+          if (isPlainObject(a)) {
+            const keys = Object.keys(a)
+            length = keys.length
+            clone = {}
+            if (!currentDiff) setDiff(!sameClass || length < Object.keys(b).length || !Object.keys(b).every((key) => a.hasOwnProperty(key)))
+            lastPath = curPath
+            for (let i = 0; i < length; i++) {
+              const key = keys[i]
+              curPath += `.${key}`
+              clone[key] = deepDiffAndCloneA(a[key], sameClass ? b[key] : undefined, currentDiff)
+              curPath = lastPath
+            }
+          } else {
+            if (!currentDiff) setDiff(!sameClass || a !== b)
           }
           break
         case '[object Array]':

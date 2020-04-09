@@ -1,4 +1,4 @@
-import { type, merge, aliasReplace, findItem, diffAndCloneA } from '../helper/utils'
+import { type, isPlainObject, merge, aliasReplace, findItem, diffAndCloneA } from '../helper/utils'
 import { getConvertRule } from '../convertor/convertor'
 import { error, warn } from '../helper/log'
 
@@ -84,7 +84,7 @@ function extractMixins (mergeOptions, options, needConvert) {
 // }
 
 function extractLifetimes (options) {
-  if (type(options.lifetimes) === 'Object') {
+  if (isPlainObject(options.lifetimes)) {
     const newOptions = Object.assign({}, options, options.lifetimes)
     delete newOptions.lifetimes
     return newOptions

@@ -2,7 +2,7 @@ import * as wxLifecycle from '../platform/patch/wx/lifecycle'
 import * as aliLifecycle from '../platform/patch/ali/lifecycle'
 import * as webLifecycle from '../platform/patch/web/lifecycle'
 import { mergeLifecycle } from './mergeLifecycle'
-import { type } from '../helper/utils'
+import { isPlainObject } from '../helper/utils'
 import { error } from '../helper/log'
 import wxToAliRule from './wxToAli'
 import wxToWebRule from './wxToWeb'
@@ -71,7 +71,7 @@ export function setConvertRule (rule) {
   }
   Object.keys(defaultConvertRule).forEach(key => {
     if (rule.hasOwnProperty(key)) {
-      if (type(defaultConvertRule[key]) === 'Object') {
+      if (isPlainObject(defaultConvertRule[key])) {
         defaultConvertRule[key] = Object.assign({}, defaultConvertRule[key], rule[key])
       } else {
         defaultConvertRule[key] = rule[key]
