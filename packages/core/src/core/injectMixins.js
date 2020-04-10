@@ -1,7 +1,3 @@
-import {
-  isPlainObject
-} from '../helper/utils'
-
 const MIXINS_MAPS = {
   app: [],
   page: [],
@@ -15,7 +11,7 @@ export function injectMixins (mixins, type) {
     type = ['app', 'page', 'component']
   }
 
-  if (isPlainObject(mixins)) {
+  if (!Array.isArray(mixins)) {
     mixins = [mixins]
   }
   type.forEach(key => {

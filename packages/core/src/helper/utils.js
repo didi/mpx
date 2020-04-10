@@ -30,7 +30,7 @@ export function asyncLock () {
 
 export function aliasReplace (options = {}, alias, target) {
   if (options[alias]) {
-    if (isPlainObject(options[alias])) {
+    if (isObject(options[alias])) {
       options[target] = Object.assign({}, options[alias], options[target])
     } else if (Array.isArray(options[alias])) {
       options[target] = options[alias].concat(options[target] || [])
@@ -63,7 +63,7 @@ export function normalizeMap (prefix, arr) {
     })
     return map
   }
-  if (prefix && isPlainObject(arr)) {
+  if (prefix && isObject(arr)) {
     arr = Object.assign({}, arr)
     Object.keys(arr).forEach(key => {
       if (typeof arr[key] === 'string') {
@@ -167,7 +167,8 @@ export function proxy (target, source, keys, readonly) {
   return target
 }
 
-// todo 是否有深度merge的必要
+// todo 是否有深度merge的必要，考察vue中的做法
+// 此函数用于mergeMixins时对data进行深度merge
 export function merge (to, from) {
   if (!from) return to
   const keys = Object.keys(from)
@@ -194,10 +195,10 @@ export function enumerableKeys (obj) {
   return keys
 }
 
-// 包含原型链属性的合并
+// 此函数用于合并mpx插件挂载到mpx.prototype中的实例属性，因此需要进行原型链属性的合并
 export function extend (target, ...sources) {
   for (const source of sources) {
-    if (isPlainObject(source)) {
+    if (isObject(source)) {
       for (const key in source) {
         target[key] = source[key]
       }
@@ -213,7 +214,7 @@ export function dissolveAttrs (target = {}, keys) {
   const newOptions = Object.assign({}, target)
   keys.forEach(key => {
     const value = target[key]
-    if (!isPlainObject(value)) return
+    if (!isObject(value)) return
     delete newOptions[key]
     Object.assign(newOptions, value)
   })
