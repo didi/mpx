@@ -83,16 +83,26 @@ module.exports = function (content) {
         selfCompilation.__swan_exports_map__ = {}
       }
       Object.assign(wxsVisitor, {
-        AssignmentExpression (path) {
-          const left = path.node.left
-          const right = path.node.right
-          if (t.isMemberExpression(left) && left.object.name === 'module' && left.property.name === 'exports') {
-            if (t.isObjectExpression(right)) {
-              right.properties.forEach((property) => {
-                selfCompilation.__swan_exports_map__[property.key.name] = true
-              })
-            } else {
-              throw new Error('Swan filter module exports declaration must be an ObjectExpression!')
+        MemberExpression (path) {
+          if (path.node.object.name === 'module' && path.node.property.name === 'exports') {
+            const parentPath = path.parentPath
+            if (parentPath.isMemberExpression() && path.parentKey === 'object') {
+              if (parentPath.node.computed) {
+                if (t.isLiteral(parentPath.node.property)) {
+                  selfCompilation.__swan_exports_map__[parentPath.node.property.value] = true
+                }
+              } else if (t.isIdentifier(parentPath.node.property)) {
+                selfCompilation.__swan_exports_map__[parentPath.node.property.name] = true
+              }
+            } else if (parentPath.isAssignmentExpression() && path.parentKey === 'left') {
+              const right = parentPath.node.right
+              if (t.isObjectExpression(right)) {
+                right.properties.forEach((property) => {
+                  selfCompilation.__swan_exports_map__[property.key.name] = true
+                })
+              } else {
+                throw new Error('Swan filter module exports declaration must be an ObjectExpression!')
+              }
             }
           }
         },
