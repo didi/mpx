@@ -609,6 +609,11 @@ class MpxWebpackPlugin {
             packageName
           })
           data.request = `!!${pathLoader}!${resource}`
+        } else if (queryObj.wxsModule) {
+          const wxsPreLoader = normalize.lib('wxs/wxs-pre-loader')
+          if (!/wxs-loader/.test(request)) {
+            data.request = `!!${wxsPreLoader}!${resource}`
+          }
         }
         callback(null, data)
       })
