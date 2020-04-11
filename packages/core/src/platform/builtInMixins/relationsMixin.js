@@ -58,7 +58,7 @@ export default function relationsMixin (mixinType) {
                   }
                 } else {
                   const children = child.props.children
-                  if (isObject(children) || Array.isArray(children)) {
+                  if (isObject(children)) {
                     const slotChildren = Array.isArray(children) ? children : [children]
                     this.mpxCollectChildComponent(slotChildren, list)
                   }

@@ -30,10 +30,10 @@ export function asyncLock () {
 
 export function aliasReplace (options = {}, alias, target) {
   if (options[alias]) {
-    if (isObject(options[alias])) {
-      options[target] = Object.assign({}, options[alias], options[target])
-    } else if (Array.isArray(options[alias])) {
+    if (Array.isArray(options[alias])) {
       options[target] = options[alias].concat(options[target] || [])
+    } else if (isObject(options[alias])) {
+      options[target] = Object.assign({}, options[alias], options[target])
     } else {
       options[target] = options[alias]
     }
@@ -271,7 +271,7 @@ export function isDef (v) {
 }
 
 export function stringifyClass (value) {
-  if (likeArray(value)) {
+  if (Array.isArray(value)) {
     return stringifyArray(value)
   }
   if (isObject(value)) {
@@ -357,7 +357,7 @@ export function mergeObjectArray (arr) {
 }
 
 export function normalizeDynamicStyle (value) {
-  if (likeArray(value)) {
+  if (Array.isArray(value)) {
     return mergeObjectArray(value)
   }
   if (typeof value === 'string') {
