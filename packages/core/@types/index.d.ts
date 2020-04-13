@@ -141,7 +141,7 @@ interface ComponentOpt<D, P, C, M, Mi extends Array<any>> extends Partial<Wechat
 
 type PageOpt<D, P, C, M, Mi extends Array<any>> =
   ComponentOpt<D, P, C, M, Mi>
-  & Partial<WechatMiniprogram.Component.PageLifetimes>
+  & Partial<WechatMiniprogram.Page.ILifetime>
 
 type ThisTypedPageOpt<D, P, C, M, Mi extends Array<any>> =
   PageOpt<D, P, C, M, Mi>
