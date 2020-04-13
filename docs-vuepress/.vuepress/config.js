@@ -67,7 +67,6 @@ module.exports = {
   themeConfig: {
     logo: '/logo.png',
     sidebar,
-    nav,
-    displayAllHeaders: true
+    nav
   }
 }

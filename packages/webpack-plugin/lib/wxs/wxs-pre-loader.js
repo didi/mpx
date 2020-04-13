@@ -43,6 +43,17 @@ module.exports = function (content) {
               })
             }
           }
+        },
+        // 处理vant-aliapp中export var bem = bem;这种不被acorn支持的2b语法
+        ExportNamedDeclaration (path) {
+          if (
+            path.node.declaration &&
+            path.node.declaration.declarations.length === 1 &&
+            path.node.declaration.declarations[0].id.name === path.node.declaration.declarations[0].init.name
+          ) {
+            const name = path.node.declaration.declarations[0].id.name
+            path.replaceWith(t.exportNamedDeclaration(undefined, [t.exportSpecifier(t.identifier(name), t.identifier(name))]))
+          }
         }
       }
       const ast = babylon.parse(content, {
