@@ -6,6 +6,7 @@ import { error } from './log'
 
 import { set } from '../observer/index'
 
+// type在支付宝环境下不一定准确，判断是普通对象优先使用isPlainObject
 export function type (n) {
   return Object.prototype.toString.call(n).slice(8, -1)
 }
@@ -29,17 +30,12 @@ export function asyncLock () {
 
 export function aliasReplace (options = {}, alias, target) {
   if (options[alias]) {
-    const dataType = type(options[alias])
-    switch (dataType) {
-      case 'Object':
-        options[target] = Object.assign({}, options[alias], options[target])
-        break
-      case 'Array':
-        options[target] = options[alias].concat(options[target] || [])
-        break
-      default:
-        options[target] = options[alias]
-        break
+    if (Array.isArray(options[alias])) {
+      options[target] = options[alias].concat(options[target] || [])
+    } else if (isObject(options[alias])) {
+      options[target] = Object.assign({}, options[alias], options[target])
+    } else {
+      options[target] = options[alias]
     }
     delete options[alias]
   }
@@ -48,7 +44,7 @@ export function aliasReplace (options = {}, alias, target) {
 
 export function findItem (arr = [], key) {
   for (const item of arr) {
-    if ((type(key) === 'RegExp' && key.test(item)) || item === key) {
+    if ((key instanceof RegExp && key.test(item)) || item === key) {
       return true
     }
   }
@@ -60,15 +56,14 @@ export function normalizeMap (prefix, arr) {
     arr = prefix
     prefix = ''
   }
-  const objType = type(arr)
-  if (objType === 'Array') {
+  if (Array.isArray(arr)) {
     const map = {}
     arr.forEach(value => {
       map[value] = prefix ? `${prefix}.${value}` : value
     })
     return map
   }
-  if (prefix && objType === 'Object') {
+  if (prefix && isObject(arr)) {
     arr = Object.assign({}, arr)
     Object.keys(arr).forEach(key => {
       if (typeof arr[key] === 'string') {
@@ -111,7 +106,7 @@ export function getByPath (data, pathStrOrArr, defaultVal, errTip) {
   let normalizedArr = []
   if (Array.isArray(pathStrOrArr)) {
     normalizedArr = [pathStrOrArr]
-  } else if (type(pathStrOrArr) === 'String') {
+  } else if (typeof pathStrOrArr === 'string') {
     normalizedArr = pathStrOrArr.split(',').map(str => str.trim())
   }
 
@@ -172,13 +167,15 @@ export function proxy (target, source, keys, readonly) {
   return target
 }
 
+// todo 是否有深度merge的必要，考察vue中的做法
+// 此函数用于mergeMixins时对data进行深度merge
 export function merge (to, from) {
   if (!from) return to
   const keys = Object.keys(from)
   for (let i = 0; i < keys.length; i++) {
     let key = keys[i]
-    if (type(from[key]) === 'Object') {
-      if (type(to[key]) !== 'Object') {
+    if (isPlainObject(from[key])) {
+      if (!isPlainObject(to[key])) {
         to[key] = {}
       }
       merge(to[key], from[key])
@@ -198,10 +195,10 @@ export function enumerableKeys (obj) {
   return keys
 }
 
-// 包含原型链属性的合并
+// 此函数用于合并mpx插件挂载到mpx.prototype中的实例属性，因此需要进行原型链属性的合并
 export function extend (target, ...sources) {
   for (const source of sources) {
-    if (isPlainObject(source)) {
+    if (isObject(source)) {
       for (const key in source) {
         target[key] = source[key]
       }
@@ -211,13 +208,13 @@ export function extend (target, ...sources) {
 }
 
 export function dissolveAttrs (target = {}, keys) {
-  if (type(keys) === 'String') {
+  if (typeof keys === 'string') {
     keys = [keys]
   }
   const newOptions = Object.assign({}, target)
   keys.forEach(key => {
     const value = target[key]
-    if (type(value) !== 'Object') return
+    if (!isObject(value)) return
     delete newOptions[key]
     Object.assign(newOptions, value)
   })
@@ -228,8 +225,10 @@ export function isObject (obj) {
   return obj !== null && typeof obj === 'object'
 }
 
-export function isPlainObject (obj) {
-  return type(obj) === 'Object'
+export function isPlainObject (value) {
+  if (value === null || typeof value !== 'object') return false
+  const proto = Object.getPrototypeOf(value)
+  return proto === Object.prototype || proto === null
 }
 
 const hasOwnProperty = Object.prototype.hasOwnProperty
@@ -272,7 +271,7 @@ export function isDef (v) {
 }
 
 export function stringifyClass (value) {
-  if (likeArray(value)) {
+  if (Array.isArray(value)) {
     return stringifyArray(value)
   }
   if (isObject(value)) {
@@ -358,7 +357,7 @@ export function mergeObjectArray (arr) {
 }
 
 export function normalizeDynamicStyle (value) {
-  if (likeArray(value)) {
+  if (Array.isArray(value)) {
     return mergeObjectArray(value)
   }
   if (typeof value === 'string') {
@@ -473,39 +472,34 @@ export function diffAndCloneA (a, b) {
       const sameClass = className === toString.call(b)
       let length
       let lastPath
-      switch (className) {
-        case '[object Object]':
-          const keys = Object.keys(a)
-          length = keys.length
-          clone = {}
-          if (!currentDiff) setDiff(!sameClass || length < Object.keys(b).length || !Object.keys(b).every((key) => a.hasOwnProperty(key)))
-          lastPath = curPath
-          for (let i = 0; i < length; i++) {
-            const key = keys[i]
-            curPath += `.${key}`
-            clone[key] = deepDiffAndCloneA(a[key], sameClass ? b[key] : undefined, currentDiff)
-            curPath = lastPath
-          }
-          break
-        case '[object Array]':
-          length = a.length
-          clone = []
-          if (!currentDiff) setDiff(!sameClass || length < b.length)
-          lastPath = curPath
-          for (let i = 0; i < length; i++) {
-            curPath += `[${i}]`
-            clone[i] = deepDiffAndCloneA(a[i], sameClass ? b[i] : undefined, currentDiff)
-            curPath = lastPath
-          }
-          break
-        case '[object RegExp]':
-          if (!currentDiff) setDiff(!sameClass || '' + a !== '' + b)
-          break
-        case '[object Date]':
-          if (!currentDiff) setDiff(!sameClass || +a !== +b)
-          break
-        default:
-          if (!currentDiff) setDiff(!sameClass || a !== b)
+      if (isPlainObject(a)) {
+        const keys = Object.keys(a)
+        length = keys.length
+        clone = {}
+        if (!currentDiff) setDiff(!sameClass || length < Object.keys(b).length || !Object.keys(b).every((key) => a.hasOwnProperty(key)))
+        lastPath = curPath
+        for (let i = 0; i < length; i++) {
+          const key = keys[i]
+          curPath += `.${key}`
+          clone[key] = deepDiffAndCloneA(a[key], sameClass ? b[key] : undefined, currentDiff)
+          curPath = lastPath
+        }
+      } else if (Array.isArray(a)) {
+        length = a.length
+        clone = []
+        if (!currentDiff) setDiff(!sameClass || length < b.length)
+        lastPath = curPath
+        for (let i = 0; i < length; i++) {
+          curPath += `[${i}]`
+          clone[i] = deepDiffAndCloneA(a[i], sameClass ? b[i] : undefined, currentDiff)
+          curPath = lastPath
+        }
+      } else if (a instanceof RegExp) {
+        if (!currentDiff) setDiff(!sameClass || '' + a !== '' + b)
+      } else if (a instanceof Date) {
+        if (!currentDiff) setDiff(!sameClass || +a !== +b)
+      } else {
+        if (!currentDiff) setDiff(!sameClass || a !== b)
       }
     }
     if (currentDiff) {

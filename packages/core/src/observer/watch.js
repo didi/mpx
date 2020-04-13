@@ -1,9 +1,9 @@
-import { isPlainObject, noop } from '../helper/utils'
+import { isObject, noop } from '../helper/utils'
 import Watcher from './watcher'
 import { queueWatcher } from './scheduler'
 
 export function watch (vm, expOrFn, cb, options) {
-  if (isPlainObject(cb)) {
+  if (isObject(cb)) {
     options = cb
     cb = cb.handler
   }
