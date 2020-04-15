@@ -32,7 +32,7 @@ export default function createFactory (type) {
     if (defaultOptions.pageShow || defaultOptions.pageHide) {
       error('出于性能考虑，pageShow/pageHide增强钩子将在下个版本被移除，请使用原生的pageLifetimes替代，此外请不要强依赖pageLifetimes.show进行初始化操作，因为pageLifetimes.show并不能保证在初始化时一定被调用！', global.currentResource)
     }
-    if (__mpx_mode__ === 'web') {
+    if (__mpx_mode__ === 'web' || __mpx_mode__ === 'qa') {
       global.currentOption = defaultOptions
     } else {
       const ctor = global.currentCtor || (type === 'page' ? Page : Component)

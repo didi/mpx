@@ -656,7 +656,7 @@ class MpxWebpackPlugin {
       const processedChunk = new Set()
       const rootName = compilation._preparedEntrypoints[0].name
 
-      function processChunk (chunk, isRuntime, relativeChunks) {
+      function processChunk (chunk, isRuntime, isEntry, relativeChunks) {
         if (!chunk.files[0] || processedChunk.has(chunk)) {
           return
         }
@@ -674,16 +674,16 @@ class MpxWebpackPlugin {
           relativePath = toPosix(relativePath)
           if (index === 0) {
             // 引用runtime
-            // 支付宝分包独立打包，通过全局context获取webpackJSONP
-            if (mpx.mode === 'ali') {
+            // 支付宝分包/快应用独立打包，通过全局context获取webpackJSONP以传递模块
+            if (mpx.mode === 'ali' || mpx.mode === 'qa') {
               if (chunk.name === rootName) {
                 // 在rootChunk中挂载jsonpFunction
-                source.add('// process ali subpackages runtime in root chunk\n' +
+                source.add('// process ali/qa runtime in root chunk\n' +
                   'var context = (function() { return this })() || Function("return this")();\n\n')
                 source.add(`context[${JSON.stringify(jsonpFunction)}] = window[${JSON.stringify(jsonpFunction)}] = require("${relativePath}");\n`)
               } else {
                 // 其余chunk中通过context全局传递runtime
-                source.add('// process ali subpackages runtime in other chunk\n' +
+                source.add('// process ali/qa runtime in other chunk\n' +
                   'var context = (function() { return this })() || Function("return this")();\n\n')
                 source.add(`window[${JSON.stringify(jsonpFunction)}] = context[${JSON.stringify(jsonpFunction)}];\n`)
               }
@@ -691,13 +691,39 @@ class MpxWebpackPlugin {
               source.add(`window[${JSON.stringify(jsonpFunction)}] = require("${relativePath}");\n`)
             }
           } else {
+            // todo 快应用执行分包bundle时还是会发生模块重复，后续需要再进行特殊处理
             source.add(`require("${relativePath}");\n`)
           }
         })
 
         if (isRuntime) {
-          source.add('var context = (function() { return this })() || Function("return this")();\n' +
-            'if(!context.console) context.console = console;\n')
+          source.add('var context = (function() { return this })() || Function("return this")();\n')
+          source.add(`
+// Fix babel runtime in some quirky environment like ali & qq dev.
+if(!context.console) {
+  try {
+    context.console = console;
+    context.setInterval = setInterval;
+    context.setTimeout = setTimeout;
+    context.JSON = JSON;
+    context.Math = Math;
+    context.Infinity = Infinity;
+    context.isFinite = isFinite;
+    context.parseFloat = parseFloat;
+    context.parseInt = parseInt;
+    context.Promise = Promise;
+    context.WeakMap = WeakMap;
+    context.Reflect = Reflect;
+    context.RangeError = RangeError;
+    context.TypeError = TypeError;
+    context.Uint8Array = Uint8Array;
+    context.DataView = DataView;
+    context.ArrayBuffer = ArrayBuffer;
+    context.Symbol = Symbol;
+  } catch(e){
+  }
+}
+\n`)
           if (mpx.mode === 'swan') {
             source.add('// swan runtime fix\n' +
               'if (!context.navigator) {\n' +
@@ -718,6 +744,10 @@ class MpxWebpackPlugin {
             source.add('module.exports =\n')
           }
           source.add(originalSource)
+        }
+
+        if (isEntry && mpx.mode === 'qa') {
+          source.add('\nexport default context.currentOption')
         }
 
         compilation.assets[chunk.files[0]] = source
@@ -745,15 +775,15 @@ class MpxWebpackPlugin {
         })
 
         if (runtimeChunk) {
-          processChunk(runtimeChunk, true, [])
+          processChunk(runtimeChunk, true, false, [])
           if (middleChunks.length) {
             middleChunks.forEach((middleChunk) => {
-              processChunk(middleChunk, false, [runtimeChunk])
+              processChunk(middleChunk, false, false, [runtimeChunk])
             })
           }
           if (entryChunk) {
             middleChunks.unshift(runtimeChunk)
-            processChunk(entryChunk, false, middleChunks)
+            processChunk(entryChunk, false, true, middleChunks)
           }
         }
       })

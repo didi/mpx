@@ -262,13 +262,16 @@ module.exports = function (content) {
         globalInjectCode += `global.i18nMethods = ${i18nMethodsVar}\n`
       }
       // 注入构造函数
-      let ctor = 'App'
-      if (ctorType === 'page') {
-        ctor = mode === 'ali' ? 'Page' : 'Component'
-      } else if (ctorType === 'component') {
-        ctor = 'Component'
+      if (mode !== 'qa') {
+        let ctor = 'App'
+        if (ctorType === 'page') {
+          ctor = mode === 'ali' ? 'Page' : 'Component'
+        } else if (ctorType === 'component') {
+          ctor = 'Component'
+        }
+        globalInjectCode += `global.currentCtor = ${ctor}\n`
       }
-      globalInjectCode += `global.currentCtor = ${ctor}\n`
+
 
       //
       // <script>
@@ -299,9 +302,6 @@ module.exports = function (content) {
               'createComponent({})\n'
         }
         output += '\n'
-      }
-      if (mode === 'qa') {
-        output += `export default (global.currentOption) \n`
       }
 
       if (scriptSrcMode) {

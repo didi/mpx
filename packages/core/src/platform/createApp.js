@@ -10,7 +10,7 @@ export default function createApp (option, config = {}) {
   }])
   const defaultOptions = mergeOptions(rawOptions, 'app', false)
 
-  if (__mpx_mode__ === 'web') {
+  if (__mpx_mode__ === 'web' || __mpx_mode__ === 'qa') {
     global.currentOption = defaultOptions
   } else {
     const finalAppOption = dissolveAttrs(mergeOptions(rawOptions, 'app', false), 'methods')
