@@ -7,6 +7,10 @@ module.exports = function ({ print }) {
 
   return {
     test: TAG_NAME,
+    web (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-slider'
+    },
     props: [
       {
         test: /^type$/,
