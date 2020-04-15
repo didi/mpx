@@ -18,6 +18,9 @@ module.exports = function ({ print }) {
         return 'div'
       }
     },
+    qa () {
+      return 'div'
+    },
     // 组件属性中的差异部分
     props: [
       {

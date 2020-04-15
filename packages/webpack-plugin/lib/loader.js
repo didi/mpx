@@ -300,6 +300,9 @@ module.exports = function (content) {
         }
         output += '\n'
       }
+      if (mode === 'qa') {
+        output += `export default (global.currentOption) \n`
+      }
 
       if (scriptSrcMode) {
         globalInjectCode += `global.currentSrcMode = ${JSON.stringify(scriptSrcMode)}\n`

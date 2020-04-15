@@ -293,6 +293,7 @@ module.exports = function (raw = '{}') {
     const processSubPackagesQueue = []
     // 确保首页不变
     const firstPage = json.pages && json.pages[0]
+    mpx.projectEntry = firstPage.split('./')[1]
 
     const processPackages = (packages, context, callback) => {
       if (packages) {

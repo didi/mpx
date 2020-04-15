@@ -348,5 +348,63 @@ module.exports = {
       elseif: 'v-else-if',
       else: 'v-else'
     }
+  },
+  qa: {
+    typeExtMap: {
+      json: '.json',
+      script: '.js',
+      template: '.wxml',
+      styles: '.wxss'
+    },
+    tabBar: {
+      itemKey: 'list',
+      iconKey: 'iconPath',
+      activeIconKey: 'selectedIconPath'
+    },
+    event: {
+      parseEvent (attr) {
+        let match = /^(bind|catch|capture-bind|capture-catch):?(.*?)(?:\.(.*))?$/.exec(attr)
+        if (match) {
+          return {
+            prefix: match[1],
+            eventName: match[2],
+            modifier: match[3]
+          }
+        }
+      },
+      getEvent (eventName, prefix = 'bind') {
+        return prefix + eventName
+      },
+      defaultModelProp: 'value',
+      defaultModelEvent: 'input',
+      defaultModelValuePath: 'value',
+      shallowStringify (obj) {
+        let arr = []
+        for (let key in obj) {
+          let value = obj[key]
+          if (Array.isArray(value)) {
+            value = `[${value.join(',')}]`
+          }
+          arr.push(`${key}:${value}`)
+        }
+        return ` {${arr.join(',')}} `
+      }
+    },
+    wxs: {
+      tag: 'wxs',
+      module: 'module',
+      src: 'src',
+      ext: '.wxs',
+      templatePrefix: 'module.exports = \n'
+    },
+    directive: {
+      if: 'if',
+      elseif: 'elif',
+      else: 'else',
+      for: 'for',
+      forIndex: 'for-index',
+      forItem: 'for-item',
+      key: 'tid'
+    }
   }
 }
