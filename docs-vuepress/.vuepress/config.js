@@ -2,14 +2,20 @@ const sidebar = {
   '/guide/': [
     {
       title: '基础',
-      collapsable: false,
+      path:'/basic/',
       children: [
         'start',
-        'what-is-single-file',
-        'template-enhance',
-        'script-enhance',
-        'style-enhance',
-        'json-enhance'
+        'intro',
+        'single-file',
+        'component',
+        'template',
+        'reactive',
+        'class-style-binding',
+        'conditional-render',
+        'list-render',
+        'event',
+        'two-way-binding',
+        'refs'
       ]
     },
     {
