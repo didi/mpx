@@ -710,8 +710,33 @@ class MpxWebpackPlugin {
         })
 
         if (isRuntime) {
-          source.add('var context = (function() { return this })() || Function("return this")();\n' +
-            'if(!context.console) context.console = console;\n')
+          source.add('var context = (function() { return this })() || Function("return this")();\n')
+          source.add(`
+// Fix babel runtime in some quirky environment like ali & qq dev.
+if(!context.console) {
+  try {
+    context.console = console;
+    context.setInterval = setInterval;
+    context.setTimeout = setTimeout;
+    context.JSON = JSON;
+    context.Math = Math;
+    context.Infinity = Infinity;
+    context.isFinite = isFinite;
+    context.parseFloat = parseFloat;
+    context.parseInt = parseInt;
+    context.Promise = Promise;
+    context.WeakMap = WeakMap;
+    context.Reflect = Reflect;
+    context.RangeError = RangeError;
+    context.TypeError = TypeError;
+    context.Uint8Array = Uint8Array;
+    context.DataView = DataView;
+    context.ArrayBuffer = ArrayBuffer;
+    context.Symbol = Symbol;
+  } catch(e){
+  }
+}
+\n`)
           if (mpx.mode === 'swan') {
             source.add('// swan runtime fix\n' +
               'if (!context.navigator) {\n' +

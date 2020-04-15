@@ -279,7 +279,11 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
         if (postcssExtensions.indexOf(lang) !== -1) {
           lang = 'css'
         } else if (lang === 'sass') {
-          lang = 'sass?indentedSyntax'
+          lang = `sass?${JSON.stringify({
+            sassOptions: {
+              indentedSyntax: true
+            }
+          })}`
         } else if (lang === 'scss') {
           lang = 'sass'
         }
