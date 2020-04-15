@@ -6,9 +6,9 @@ import { queueWatcher } from '../observer/scheduler'
 import EXPORT_MPX from '../index'
 import {
   noop,
-  type,
   proxy,
   isEmptyObject,
+  isPlainObject,
   processUndefined,
   setByPath,
   getByPath,
@@ -414,10 +414,9 @@ export default class MPXProxy {
   }
 
   forceUpdate (data, callback) {
-    const dataType = type(data)
-    if (dataType === 'Function') {
+    if (typeof data === 'function') {
       callback = data
-    } else if (dataType === 'Object') {
+    } else if (isPlainObject(data)) {
       this.forceUpdateData = data
       Object.keys(this.forceUpdateData).forEach(key => {
         if (!this.options.__nativeRender__ && this.localKeys.indexOf(getFirstKey(key)) === -1) {

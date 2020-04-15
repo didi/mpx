@@ -63,7 +63,7 @@ export default function proxyEventMixin () {
   if (__mpx_mode__ === 'ali') {
     Object.assign(methods, {
       triggerEvent (eventName, eventDetail) {
-        const handlerName = eventName.replace(/^./, matched => matched.toUpperCase())
+        const handlerName = eventName.replace(/^./, matched => matched.toUpperCase()).replace(/-([a-z])/g, (match, p1) => p1.toUpperCase())
         const handler = this.props && (this.props['on' + handlerName] || this.props['catch' + handlerName])
         if (handler && typeof handler === 'function') {
           const dataset = collectDataset(this.props)

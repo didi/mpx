@@ -1,11 +1,11 @@
-import { isObject, likeArray } from '../../helper/utils'
+import { isObject } from '../../helper/utils'
 
 export default function renderHelperMixin () {
   return {
     methods: {
       _i (val, handler) {
         let i, l, keys, key
-        if (likeArray(val) || typeof val === 'string') {
+        if (Array.isArray(val) || typeof val === 'string') {
           for (i = 0, l = val.length; i < l; i++) {
             handler.call(this, val[i], i)
           }

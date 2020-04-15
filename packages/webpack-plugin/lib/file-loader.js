@@ -15,13 +15,19 @@ module.exports = function loader (content) {
     regExp: options.regExp
   })
 
-  let { outputPath } = mpx.getPackageInfo(this.resource, {
-    outputPath: url,
-    isStatic: true,
-    error: (err) => {
-      this.emitError(err)
-    }
-  })
+  let outputPath
+
+  if (options.publicPath) {
+    outputPath = url
+  } else {
+    outputPath = mpx.getPackageInfo(this.resource, {
+      outputPath: url,
+      isStatic: true,
+      error: (err) => {
+        this.emitError(err)
+      }
+    }).outputPath
+  }
 
   if (options.outputPath) {
     if (typeof options.outputPath === 'function') {
@@ -35,21 +41,18 @@ module.exports = function loader (content) {
 
   if (options.publicPath) {
     if (typeof options.publicPath === 'function') {
-      publicPath = options.publicPath(url, this.resourcePath, context)
+      publicPath = options.publicPath(outputPath, this.resourcePath, context)
     } else {
       publicPath = `${
         options.publicPath.endsWith('/')
           ? options.publicPath
           : `${options.publicPath}/`
-      }${url}`
+      }${outputPath}`
     }
-
     publicPath = JSON.stringify(publicPath)
   }
 
-  if (typeof options.emitFile === 'undefined' || options.emitFile) {
-    this.emitFile(outputPath, content)
-  }
+  this.emitFile(outputPath, content)
 
   // TODO revert to ES2015 Module export, when new CSS Pipeline is in place
   return `module.exports = ${publicPath};`

@@ -47,6 +47,7 @@ module.exports = function (raw = '{}') {
   const globalSrcMode = mpx.srcMode
   const localSrcMode = loaderUtils.parseQuery(this.resourceQuery || '?').mode
   const resolveMode = mpx.resolveMode
+  const externals = mpx.externals
   const resourcePath = parseRequest(this.resource).resourcePath
   const isApp = !(pagesMap[resourcePath] || componentsMap[resourcePath])
   const publicPath = this._compilation.outputOptions.publicPath || ''
@@ -142,14 +143,17 @@ module.exports = function (raw = '{}') {
     return callback(err)
   }
 
+  // json补全
   if (!mpx.forceDisableInject) {
     if (pagesMap[resourcePath]) {
       // page
-      if (!json.usingComponents) {
-        json.usingComponents = {}
-      }
-      if (!json.component && mode === 'swan') {
-        json.component = true
+      if (!mpx.forceUsePageCtor) {
+        if (!json.usingComponents) {
+          json.usingComponents = {}
+        }
+        if (!json.component && mode === 'swan') {
+          json.component = true
+        }
       }
     } else if (componentsMap[resourcePath]) {
       // component
@@ -208,8 +212,20 @@ module.exports = function (raw = '{}') {
     if (/^plugin:\/\//.test(component)) {
       return callback()
     }
+
     if (resolveMode === 'native') {
       component = loaderUtils.urlToRequest(component, options.root)
+    }
+
+    if (externals.some((external) => {
+      if (typeof external === 'string') {
+        return external === component
+      } else if (external instanceof RegExp) {
+        return external.test(component)
+      }
+      return false
+    })) {
+      return callback()
     }
 
     resolve(context, component, (err, resource, info) => {
