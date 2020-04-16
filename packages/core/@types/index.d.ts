@@ -5,8 +5,6 @@
 
 /// <reference types="miniprogram-api-typings" />
 
-import exp = require("constants");
-
 type Data = object | (() => object)
 
 type PropType = StringConstructor | NumberConstructor | BooleanConstructor | ObjectConstructor | ArrayConstructor | null
