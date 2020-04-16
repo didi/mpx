@@ -22,7 +22,8 @@ const blackList = [
   'stopPullDownRefresh',
   'createWorker',
   'pageScrollTo',
-  'reportAnalytics'
+  'reportAnalytics',
+  'getMenuButtonBoundingClientRect'
 ]
 
 function getMapFromList (list) {

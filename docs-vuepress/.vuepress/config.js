@@ -2,66 +2,85 @@ const sidebar = {
   '/guide/': [
     {
       title: '基础',
-      path:'/basic/',
+      collapsable: false,
       children: [
-        'start',
-        'intro',
-        'single-file',
-        'component',
-        'template',
-        'reactive',
-        'class-style-binding',
-        'conditional-render',
-        'list-render',
-        'event',
-        'two-way-binding',
-        'refs'
+        'basic/start',
+        'basic/intro',
+        'basic/single-file',
+        'basic/component',
+        'basic/template',
+        'basic/reactive',
+        'basic/class-style-binding',
+        'basic/conditional-render',
+        'basic/list-render',
+        'basic/event',
+        'basic/two-way-binding',
+        'basic/refs'
       ]
     },
     {
       title: '进阶',
       collapsable: false,
       children: [
-        'store',
-        'compilationEnhance',
-        'platform',
-        'ts',
-        'i18n',
-        'progressive',
-        'understanding',
-        'resource'
+        'advance/store',
+        'advance/mixin',
+        'advance/npm',
+        'advance/subpackage',
+        'advance/image-process',
+        'advance/progressive',
+        'advance/plugin',
+        'advance/platform'
       ]
+    },
+    {
+      title: '工具',
+      collapsable: false,
+      children: [
+        'tool/ts',
+        'tool/i18n',
+        'tool/unit-test',
+        'tool/webview-bridge'
+      ]
+    },
+    {
+      title: '拓展',
+      collapsable: false,
+      children: [
+        'extend/request',
+        'extend/mock',
+        'extend/api-proxy'
+      ]
+    },
+    {
+      title: '理解',
+      collapsable: false,
+      children: [
+        'understand/runtime',
+        'understand/compile'
+      ]
+
     }
   ],
   '/api/': [
-    'intro',
-    'instance-api'
-  ],
-  '/extends/': [
-    'intro'
+    'config',
+    'global-api',
+    'instance-api',
+    'compile',
+    'extend'
   ],
   '/articles/': [
-    {
-      title: '相关文章',
-      collapsable: false,
-      children: [
-        '1.0',
-        '2.0',
-        'mpx1'
-      ]
-    }
+    '1.0',
+    '2.0'
   ],
-  '/version/': [
-    'migrate'
-  ]
+
 }
 
 const nav = [
-  { text: '指南', link: '/guide/' },
-  { text: 'API', link: '/api/intro' },
-  { text: '拓展', link: '/extends/intro' },
-  { text: '2.0迁移', link: '/version/' },
-  { text: '相关文章', link: '/articles/' }
+  { text: '指南', link: '/guide/basic/start' },
+  { text: 'API', link: '/api/config' },
+  { text: '文章', link: '/articles/1.0' },
+  { text: '更新记录', link: 'https://github.com/didi/mpx/releases' },
+  { text: 'Github', link: 'https://github.com/didi/mpx' }
 ]
 
 module.exports = {
@@ -69,9 +88,10 @@ module.exports = {
   head: [
     ['link', { rel: 'icon', href: '/favicon.ico' }]
   ],
-  // title: 'MPX',
   themeConfig: {
+    sidebarDepth: 1,
     logo: '/logo.png',
+    displayAllHeaders: true,
     sidebar,
     nav
   }

@@ -2,7 +2,7 @@
 home: true
 heroImage: /logo.png
 heroText: null
-tagline: An enhanced miniprogram framework with data reactivity and deep optimizition.
+tagline: Mpx, 一款具有优秀开发体验和深度性能优化的增强型小程序开发框架
 actionText: 快速上手 →
 actionLink: /guide/start
 features:
@@ -96,4 +96,4 @@ Mpx的核心设计思路为增强，不同于业内大部分小程序框架将we
 
 <img alt="Mpx-QQ群" src="https://dpubstatic.udache.com/static/dpubimg/ArcgC_eEr/temp_qrcode_share_374632411.png" width="300">
 
-图片因github网络问题导致不可见的朋友可以点击该链接：https://s.didi.cn/rod
+图片因github网络问题导致不可见的朋友可以点击该链接：[https://s.didi.cn/rod](https://s.didi.cn/rod)
