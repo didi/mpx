@@ -880,10 +880,16 @@ function parse (template, options) {
           let el = {
             type: 3,
             // 支付宝小程序模板解析中未对Mustache进行特殊处理，无论是否decode都会解析失败，无解，只能支付宝侧进行修复
-            text: decodeInMustache(text)
+            text: decodeInMustache(text),
+            parent: currentParent
           }
           processText(el)
           children.push(el)
+          if (text !== ' ' && mode === 'qa' && currentParent.tag !== 'text') {
+            let node = createASTElement('text', [])
+            node.children.push(el)
+            replaceNode(el, node)
+          }
         }
       }
     },
@@ -930,7 +936,6 @@ function parse (template, options) {
 function getTempNode () {
   return createASTElement('temp-node', [])
 }
-
 function addChild (parent, newChild, before) {
   parent.children = parent.children || []
   if (before) {
