@@ -19,7 +19,7 @@ const SplitChunksPlugin = require('webpack/lib/optimize/SplitChunksPlugin')
 const fixRelative = require('./utils/fix-relative')
 const parseRequest = require('./utils/parse-request')
 const matchCondition = require('./utils/match-condition')
-const genQappAssets = require('./qappHelper')
+const integrateAssets = require('./qaHelper/integrateAssets')
 
 const isProductionLikeMode = options => {
   return options.mode === 'production' || !options.mode
@@ -61,6 +61,10 @@ let loaderOptions
 
 class MpxWebpackPlugin {
   constructor (options = {}) {
+    if (options.mode === 'qa') {
+      options.packageInfo = options.packageInfo || {}
+      options.iconPath = options.iconPath || ''
+    }
     options.mode = options.mode || 'wx'
 
     options.srcMode = options.srcMode || options.mode
@@ -383,7 +387,7 @@ class MpxWebpackPlugin {
 
       compilation.hooks.additionalAssets.tapAsync('MpxWebpackPlugin', (callback) => {
         if (this.options.mode === 'qa') {
-          genQappAssets(additionalAssets, compilation)
+          integrateAssets(additionalAssets, compilation, this.options, isProductionLikeMode(compiler.options))
         } else {
           for (let file in additionalAssets) {
             let content = new ConcatSource()
