@@ -39,8 +39,7 @@ function getMapFromList (list) {
 function promisify (listObj, whiteList, customBlackList) {
   const result = {}
   const whiteListMap = getMapFromList(whiteList)
-  const blackListMap = getMapFromList(blackList)
-  const customBlackListMap = getMapFromList(customBlackList)
+  const blackListMap = getMapFromList(blackList.concat(customBlackList))
   const fromMap = genFromMap()
 
   function promisifyFilter (key) {
@@ -48,11 +47,12 @@ function promisify (listObj, whiteList, customBlackList) {
       return !!whiteListMap[key]
     } else {
       return !(blackListMap[key] || // 特别指定的方法
-        customBlackListMap[key] || // 由用户特别指定的方法
         /^get\w*Manager$/.test(key) || // 获取manager的api
         /^create\w*Context$/.test(key) || // 创建上下文相关api
         /^(on|off)/.test(key) || // 以 on* 或 off开头的方法
-        /\w+Sync$/.test(key))
+        /\w+Sync$/.test(key) || // 以Sync结尾的方法
+        listObj[key].length === 0 // 形参个数为0的方法
+      )
     }
   }
 
