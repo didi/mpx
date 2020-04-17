@@ -4,7 +4,8 @@ import promisify from './mini/promisify'
 export default function install (target, options = {}) {
   const {
     usePromise = false, // 是否转为 promise 格式
-    whiteList = [], // 不变成 promise 格式的 api
+    whiteList = [], // 强制变成 promise 格式的 api
+    blackList = [], // 强制不变成 promise 格式的 api
     platform = {},
     exclude = [], // 转换平台时不转换的 Api
     custom = {}, // 自定义转化规则
@@ -30,7 +31,7 @@ export default function install (target, options = {}) {
     optimize
   })
 
-  const promisedApi = usePromise ? promisify(transedApi, whiteList) : {}
+  const promisedApi = usePromise ? promisify(transedApi, whiteList, blackList) : {}
   const allApi = Object.assign({}, transedApi, promisedApi)
 
   Object.keys(allApi).forEach(api => {
