@@ -247,7 +247,7 @@ function mergeDataFn (parent, child, key) {
       parent[key] = childVal
     } else {
       parent[key] = {}
-      merge(parent[key], childVal)
+      merge(parent[key], childVal, true)
     }
   } else if (typeof parentVal !== 'function' && typeof childVal !== 'function') {
     mergeData(parent, child, key)
@@ -255,7 +255,8 @@ function mergeDataFn (parent, child, key) {
     parent[key] = function mergeFn () {
       return merge(
         typeof parentVal === 'function' ? parentVal.call(this) : diffAndCloneA(parentVal).clone,
-        typeof childVal === 'function' ? childVal.call(this) : diffAndCloneA(childVal).clone
+        typeof childVal === 'function' ? childVal.call(this) : diffAndCloneA(childVal).clone,
+        true
       )
     }
   }
@@ -266,7 +267,7 @@ function mergeData (parent, child, key) {
   if (!parent[key]) {
     parent[key] = {}
   }
-  merge(parent[key], childVal)
+  merge(parent[key], childVal, true)
 }
 
 export function mergeArray (parent, child, key) {

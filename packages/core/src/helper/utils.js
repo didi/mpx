@@ -167,9 +167,20 @@ export function proxy (target, source, keys, readonly) {
   return target
 }
 
+// 用于merge data 对象时的描述克隆
+export function mergeDescriptor(to, from, key) {
+  const { writable = true, configurable = true, enumerable = true } =
+    Object.getOwnPropertyDescriptor(from, key) || {}
+  Object.defineProperty(to, key, {
+    writable,
+    configurable,
+    enumerable,
+  })
+}
+
 // todo 是否有深度merge的必要，考察vue中的做法
 // 此函数用于mergeMixins时对data进行深度merge
-export function merge (to, from) {
+export function merge (to, from, descriptor = false) {
   if (!from) return to
   const keys = Object.keys(from)
   for (let i = 0; i < keys.length; i++) {
@@ -177,8 +188,11 @@ export function merge (to, from) {
     if (isPlainObject(from[key])) {
       if (!isPlainObject(to[key])) {
         to[key] = {}
+        if (descriptor) {
+          mergeDescriptor(to, from, key)
+        }
       }
-      merge(to[key], from[key])
+      merge(to[key], from[key], descriptor)
     } else {
       to[key] = from[key]
     }
