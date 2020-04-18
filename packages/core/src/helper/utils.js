@@ -180,7 +180,7 @@ export function mergeDescriptor(to, from, key) {
 
 // todo 是否有深度merge的必要，考察vue中的做法
 // 此函数用于mergeMixins时对data进行深度merge
-export function merge (to, from, descriptor = false) {
+export function merge (to, from, descriptor) {
   if (!from) return to
   const keys = Object.keys(from)
   for (let i = 0; i < keys.length; i++) {
