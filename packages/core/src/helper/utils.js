@@ -168,13 +168,13 @@ export function proxy (target, source, keys, readonly) {
 }
 
 // 用于merge data 对象时的描述克隆
-export function mergeDescriptor(to, from, key) {
+export function mergeDescriptor (to, from, key) {
   const { writable = true, configurable = true, enumerable = true } =
     Object.getOwnPropertyDescriptor(from, key) || {}
   Object.defineProperty(to, key, {
     writable,
     configurable,
-    enumerable,
+    enumerable
   })
 }
 
