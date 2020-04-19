@@ -21,7 +21,7 @@ function notSupportTip (options) {
 }
 
 export default {
-  convert (options) {
+  convert (options, type) {
     // todo fix swan onshow onload执行顺序
     if (options.behaviors) {
       options.behaviors.forEach((behavior, idx) => {
@@ -29,6 +29,10 @@ export default {
           options.behaviors.splice(idx, 1, BEHAVIORS_MAP[behavior])
         }
       })
+    }
+    if (type === 'page' && !options.__pageCtor__) {
+      options.options = options.options || {}
+      options.options.addGlobalClass = true
     }
     notSupportTip(options)
   }

@@ -24,7 +24,7 @@ export default function mergeOptions (options = {}, type, needConvert = true) {
   if (needConvert) {
     proxyHooks(newOptions)
     // 自定义补充转换函数
-    typeof convertRule.convert === 'function' && convertRule.convert(newOptions)
+    typeof convertRule.convert === 'function' && convertRule.convert(newOptions, type)
     // 当存在lifecycle2时，在转换后将CURRENT_HOOKS替换，以确保后续合并hooks时转换后的hooks能够被正确处理
     if (convertRule.lifecycle2) {
       CURRENT_HOOKS = convertRule.lifecycle2[curType]

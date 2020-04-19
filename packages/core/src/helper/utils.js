@@ -465,6 +465,14 @@ export function diffAndCloneA (a, b) {
           clone[key] = deepDiffAndCloneA(a[key], sameClass ? b[key] : undefined, currentDiff)
           curPath = lastPath
         }
+        // 继承原始对象的freeze/seal/preventExtensions操作
+        if (Object.isFrozen(a)) {
+          Object.freeze(clone)
+        } else if (Object.isSealed(a)) {
+          Object.seal(clone)
+        } else if (!Object.isExtensible(a)) {
+          Object.preventExtensions(clone)
+        }
       } else if (Array.isArray(a)) {
         length = a.length
         clone = []
@@ -474,6 +482,14 @@ export function diffAndCloneA (a, b) {
           curPath += `[${i}]`
           clone[i] = deepDiffAndCloneA(a[i], sameClass ? b[i] : undefined, currentDiff)
           curPath = lastPath
+        }
+        // 继承原始数组的freeze/seal/preventExtensions操作
+        if (Object.isFrozen(a)) {
+          Object.freeze(clone)
+        } else if (Object.isSealed(a)) {
+          Object.seal(clone)
+        } else if (!Object.isExtensible(a)) {
+          Object.preventExtensions(clone)
         }
       } else if (a instanceof RegExp) {
         if (!currentDiff) setDiff(!sameClass || '' + a !== '' + b)
