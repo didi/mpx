@@ -167,7 +167,7 @@ export default class MPXProxy {
       proxy(this.target, initialData)
       this.data = dataOpt.call(this.target) || {}
     } else {
-      // 通过原始dataOpt获取初始数据对象，避免小程序自身序列化时错误地转换数据对象，比如将promise转为普通object
+      // 之所以没有直接使用initialData，而是通过对原始dataOpt进行深clone获取初始数据对象，主要是为了避免小程序自身序列化时错误地转换数据对象，比如将promise转为普通object
       this.data = diffAndCloneA(dataOpt).clone || {}
     }
     this.collectLocalKeys(this.data)

@@ -1,4 +1,4 @@
-import { isObject, merge, aliasReplace, findItem, diffAndCloneA } from '../helper/utils'
+import { isObject, aliasReplace, findItem, diffAndCloneA } from '../helper/utils'
 import { getConvertRule } from '../convertor/convertor'
 import { error, warn } from '../helper/log'
 
@@ -204,7 +204,7 @@ function mergeMixins (parent, child) {
     } else if (key === 'data') {
       mergeDataFn(parent, child, key)
     } else if (/^(computed|properties|props|methods|proto)$/.test(key)) {
-      mergeSimpleProps(parent, child, key)
+      mergeShallowObj(parent, child, key)
     } else if (/^(watch|pageLifetimes|observers|events)$/.test(key)) {
       mergeToArray(parent, child, key)
     } else if (/^behaviors$/.test(key)) {
@@ -230,7 +230,7 @@ export function mergeHooks (parent, child, key) {
   }
 }
 
-export function mergeSimpleProps (parent, child, key) {
+export function mergeShallowObj (parent, child, key) {
   let parentVal = parent[key]
   const childVal = child[key]
   if (!parentVal) {
@@ -242,31 +242,19 @@ export function mergeSimpleProps (parent, child, key) {
 function mergeDataFn (parent, child, key) {
   const parentVal = parent[key]
   const childVal = child[key]
-  if (!parentVal) {
-    if (typeof childVal === 'function') {
+  if (typeof parentVal !== 'function' && typeof childVal !== 'function') {
+    mergeShallowObj(parent, child, key)
+  } else {
+    if (!parentVal) {
       parent[key] = childVal
     } else {
-      parent[key] = {}
-      merge(parent[key], childVal)
-    }
-  } else if (typeof parentVal !== 'function' && typeof childVal !== 'function') {
-    mergeData(parent, child, key)
-  } else {
-    parent[key] = function mergeFn () {
-      return merge(
-        typeof parentVal === 'function' ? parentVal.call(this) : diffAndCloneA(parentVal).clone,
-        typeof childVal === 'function' ? childVal.call(this) : diffAndCloneA(childVal).clone
-      )
+      parent[key] = function mergeFn () {
+        const to = typeof parentVal === 'function' ? parentVal.call(this) : diffAndCloneA(parentVal).clone
+        const from = typeof childVal === 'function' ? childVal.call(this) : diffAndCloneA(childVal).clone
+        return Object.assign({}, to, from)
+      }
     }
   }
-}
-
-function mergeData (parent, child, key) {
-  const childVal = child[key]
-  if (!parent[key]) {
-    parent[key] = {}
-  }
-  merge(parent[key], childVal)
 }
 
 export function mergeArray (parent, child, key) {

@@ -167,25 +167,6 @@ export function proxy (target, source, keys, readonly) {
   return target
 }
 
-// todo 是否有深度merge的必要，考察vue中的做法
-// 此函数用于mergeMixins时对data进行深度merge
-export function merge (to, from) {
-  if (!from) return to
-  const keys = Object.keys(from)
-  for (let i = 0; i < keys.length; i++) {
-    let key = keys[i]
-    if (isPlainObject(from[key])) {
-      if (!isPlainObject(to[key])) {
-        to[key] = {}
-      }
-      merge(to[key], from[key])
-    } else {
-      to[key] = from[key]
-    }
-  }
-  return to
-}
-
 // 包含原型链上属性keys
 export function enumerableKeys (obj) {
   const keys = []
