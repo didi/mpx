@@ -42,6 +42,13 @@ module.exports = class WxsMainTemplatePlugin {
       'WxsMainTemplatePlugin',
       () => {
         return Template.asString([
+          '// define harmony function exports',
+          `${mainTemplate.requireFn}.d = function(exports, name, getter) {`,
+          Template.indent([
+            'exports[name] = getter();'
+          ]),
+          '};',
+          '',
           '// define __esModule on exports',
           `${mainTemplate.requireFn}.r = function(exports) {`,
           Template.indent([

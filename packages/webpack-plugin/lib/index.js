@@ -499,15 +499,16 @@ class MpxWebpackPlugin {
 
         // hack babel polyfill global
         parser.hooks.evaluate.for('CallExpression').tap('MpxWebpackPlugin', (expr) => {
-          const current = parser.state.current
-          const module = parser.state.module
-          const arg0 = expr.arguments[0]
-          const callee = expr.callee
-          if (arg0 && arg0.value === 'return this' && callee.name === 'Function' && module.rawRequest === './_global') {
-            current.addDependency(new InjectDependency({
-              content: '(function() { return this })() || ',
-              index: expr.range[0]
-            }))
+          if (/core-js/.test(parser.state.module.resource)) {
+            const current = parser.state.current
+            const arg0 = expr.arguments[0]
+            const callee = expr.callee
+            if (arg0 && arg0.value === 'return this' && callee.name === 'Function') {
+              current.addDependency(new InjectDependency({
+                content: '(function() { return this })() || ',
+                index: expr.range[0]
+              }))
+            }
           }
         })
 
@@ -711,8 +712,34 @@ class MpxWebpackPlugin {
         })
 
         if (isRuntime) {
-          source.add('var context = (function() { return this })() || Function("return this")();\n' +
-            'if(!context.console) context.console = console;\n')
+          source.add('var context = (function() { return this })() || Function("return this")();\n')
+          source.add(`
+// Fix babel runtime in some quirky environment like ali & qq dev.
+if(!context.console) {
+  try {
+    context.console = console;
+    context.setInterval = setInterval;
+    context.setTimeout = setTimeout;
+    context.JSON = JSON;
+    context.Math = Math;
+    context.RegExp = RegExp;
+    context.Infinity = Infinity;
+    context.isFinite = isFinite;
+    context.parseFloat = parseFloat;
+    context.parseInt = parseInt;
+    context.Promise = Promise;
+    context.WeakMap = WeakMap;
+    context.Reflect = Reflect;
+    context.RangeError = RangeError;
+    context.TypeError = TypeError;
+    context.Uint8Array = Uint8Array;
+    context.DataView = DataView;
+    context.ArrayBuffer = ArrayBuffer;
+    context.Symbol = Symbol;
+  } catch(e){
+  }
+}
+\n`)
           if (mpx.mode === 'swan') {
             source.add('// swan runtime fix\n' +
               'if (!context.navigator) {\n' +
