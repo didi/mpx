@@ -32,68 +32,46 @@ npm install
 npm run watch
 ```
 
-## 小程序编译
+## 预览调试小程序
 mpx编译完成后，会将小程序代码放置在dist目录
 
-参考小程序官方的[开发指南](https://developers.weixin.qq.com/miniprogram/dev/)进行预览、调试
+打开小程序开发者工具，打开生成的dist目录，进行小程序的预览和调试
 
 ## 创建App/Page/Component
 
 我们通过createApp、createPage、createComponent（分别对应小程序原生的App、Page、Component方法）来创建小程序、页面、组件。
 
-下面看一个例子：
+我们按照上面的步骤创建项目后，进入src/app.mpx，我们可以看到里面的结构和vue文件非常类似，三个区块分别对应了小程序中的js/wxss/json文件。
 
-## 例子
+其中js中createApp用于注册小程序，传入配置可以参考小程序开发文档，一般还在这里进行mpx插件的安装。
 
-开始一个demo项目的流程。
-
-初始化项目：
-![安装项目](../assets/images/start-install.png)
-
-接下来：
-```bash
-# 进入project
-cd mpx-demo
-
-# 安装依赖
-npm i
-
-# 进行开发
-npm run watch
-```
-
-![开启服务](../assets/images/start-start.png)
-
-用微信开发者工具打开目录 `~/testproject/mpx-test/dist`
-
-在src/app.mpx创建一个App
 
 ```html
 <script>
-  import { createApp } from '@mpxjs/core'
+  import mpx, { createApp } from '@mpxjs/core'
+  import apiProxy from '@mpxjs/api-proxy'
+
+  mpx.use(apiProxy, {
+    usePromise: true
+  })
+  
   createApp({
-    onShow(options) {
-      console.log(options)
+    onLaunch () {
+
     }
   })
 </script>
 
 <style lang="stylus">
-  page
-    font-family: PingFangSC-Regular, PingFang SC, STHeitiSC-Light, Helvetica-Light, arial, sans-serif
+  .red
+    color red
 </style>
 
 <script type="application/json">
   {
     "pages": [
-      "./pages/index/index"
-    ],
-    "window": {
-      "backgroundTextStyle": "light",
-      "navigationBarBackgroundColor": "#fff",
-      "navigationBarTitleText": "WeChat",
-      "navigationBarTextStyle": "black"
-    }
+      "./pages/index"
+    ]
   }
 </script>
 
