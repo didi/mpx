@@ -50,7 +50,6 @@ js区块中调用createApp用于注册小程序，传入的配置可以参考[�
 
 style区块对应app.wxss定义了全局样式，可以自由使用sass/less/stylus等css预编译语言
 
-
 json区块完全支持小程序原生的[app.json配置](https://developers.weixin.qq.com/miniprogram/dev/reference/configuration/app.html)，还额外支持了[packages多人合作](../advance/subpackage.md#todoHash)等增强特性。
 
 ```html
