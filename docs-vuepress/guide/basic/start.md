@@ -1,11 +1,11 @@
 # 快速开始
 
-## 全局安装脚手架工具
+## 安装脚手架
 ```shell
 npm i -g @mpxjs/cli
 ```
 
-## 创建项目并安装依赖
+## 创建项目安装依赖
 
 在当前目录下创建mpx项目。
 
@@ -35,12 +35,12 @@ npm install
 npm run dev
 ```
 
-## 在小程序开发者工具中预览调试
+## 预览调试
 使用小程序开发者工具打开dist下对应平台的目录，对你的小程序进行预览、调试，详情可参考[小程序开发指南](https://developers.weixin.qq.com/miniprogram/dev/framework/quickstart/getstart.html)
 
 > 开启小程序开发者工具的watch选项，配合mpx本身的watch，能够得到很好的开发调试体验。
 
-## 创建App/页面/组件
+## 开始code
 
 在Mpx中，我们使用`@mpxjs/core`提供的createApp、createPage和createComponent函数（分别对应原生小程序中的App、Page和Component）来创建App、页面和组件，我们下面根据脚手架创建出的初始项目目录，进行简单的介绍。
 
