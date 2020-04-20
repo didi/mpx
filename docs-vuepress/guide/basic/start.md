@@ -51,7 +51,7 @@ npm run dev
 开始一个demo项目的流程。
 
 初始化项目：
-![安装项目](../assets/images/start-install.png)
+![安装项目](../../assets/images/start-install.png)
 
 接下来：
 ```bash
@@ -65,7 +65,7 @@ npm i
 npm run watch
 ```
 
-![开启服务](../assets/images/start-start.png)
+![开启服务](../../assets/images/start-start.png)
 
 用微信开发者工具打开目录 `~/testproject/mpx-test/dist`
 
