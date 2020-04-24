@@ -108,7 +108,6 @@ mpx编译完成后，会将小程序代码放置在dist目录
     }
   }
 </script>
-
 ```
 
 修改src/component/list/list.mpx的代码：

@@ -14,7 +14,7 @@ features:
   details: 一份源码，多端运行，Mpx专注解决小程序跨端问题，以静态编译为主要手段，将业务源码输出到微信/支付宝/百度/头条/QQ小程序平台和web环境下运行。
 ---
 
-## 使用
+## 安装使用
 
 ```bash
 # 安装mpx命令行工具
@@ -37,6 +37,113 @@ npm run build
 ```
 
 使用小程序开发者工具打开项目文件夹下dist中对应平台的文件夹即可预览效果。
+
+## 简单示例
+
+```html
+<template>
+  <!--动态样式-->
+  <view class="container" wx:style="{{dynamicStyle}}">
+    <!--数据绑定-->
+    <view class="title">{{title}}</view>
+    <!--计算属性数据绑定-->
+    <view class="title">{{reversedTitle}}</view>
+    <view class="list">
+      <!--循环渲染，动态类名，事件处理内联传参-->
+      <view wx:for="{{list}}" wx:key="id" class="list-item" wx:class="{{ {active:item.active} }}"
+            bindtap="handleTap(index)">
+        <view>{{item.content}}</view>
+        <!--循环内部双向数据绑定-->
+        <input type="text" wx:model="{{list[index].content}}"/>
+      </view>
+    </view>
+    <!--自定义组件获取实例，双向绑定，自定义双向绑定属性及事件-->
+    <custom-input wx:ref="ci" wx:model="{{customInfo}}" wx:model-prop="info" wx:model-event="change"/>
+    <!--动态组件，is传入组件名字符串，可使用的组件需要在json中注册，全局注册也生效-->
+    <component is="{{current}}"></component>
+    <!--显示/隐藏dom-->
+    <view class="bottom" wx:show="{{showBottom}}">
+      <!--模板条件编译，__mpx_mode__为框架注入的环境变量，条件判断为false的模板不会生成到dist-->
+      <view wx:if="{{__mpx_mode__ === 'wx'}}">wx env</view>
+      <view wx:if="{{__mpx_mode__ === 'ali'}}">ali env</view>
+    </view>
+  </view>
+</template>
+
+<script>
+  import { createPage } from '@mpxjs/core'
+
+  createPage({
+    data: {
+      // 动态样式和类名也可以使用computed返回
+      dynamicStyle: {
+        fontSize: '16px',
+        color: 'red'
+      },
+      title: 'hello world',
+      list: [
+        {
+          content: '全军出击',
+          id: 0,
+          active: false
+        },
+        {
+          content: '猥琐发育，别浪',
+          id: 1,
+          active: false
+        }
+      ],
+      customInfo: {
+        title: 'test',
+        content: 'test content'
+      },
+      current: 'com-a',
+      showBottom: false
+    },
+    computed: {
+      reversedTitle () {
+        return this.title.split('').reverse().join('')
+      }
+    },
+    watch: {
+      title: {
+        handler (val, oldVal) {
+          console.log(val, oldVal)
+        },
+        immediate: true
+      }
+    },
+    handleTap (index) {
+      // 处理函数直接通过参数获取当前点击的index，清晰简洁
+      this.list[index].active = !this.list[index].active
+    },
+    onReady () {
+      setTimeout(() => {
+        // 更新数据，同时关联的计算属性reversedTitle也会更新
+        this.title = '你好，世界'
+        // 此时动态组件会从com-a切换为com-b
+        this.current = 'com-b'
+      }, 1000)
+    }
+  })
+</script>
+
+<script type="application/json">
+  {
+    "usingComponents": {
+      "custom-input": "../components/custom-input",
+      "com-a": "../components/com-a",
+      "com-b": "../components/com-b"
+    }
+  }
+</script>
+
+<style lang="stylus">
+  .container
+    position absolute
+    width 100%
+</style>
+```
 
 ## 文档
 

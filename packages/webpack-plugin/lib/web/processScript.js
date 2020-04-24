@@ -56,13 +56,14 @@ module.exports = function (script, options, callback) {
     }
   }
   output += genComponentTag(script, (script) => {
-    let content = `import processOption from ${stringifyRequest(`!!${optionProcessorPath}`)}\n`
+    let content = `import processOption, { getComponent } from ${stringifyRequest(`!!${optionProcessorPath}`)}\n`
     // add import
     if (ctorType === 'app') {
       content += `
       import Vue from 'vue'
       import VueRouter from 'vue-router'
-      Vue.use(VueRouter)\n`
+      Vue.use(VueRouter)
+      global.getApp = function(){}\n`
       if (i18n) {
         const i18nObj = Object.assign({}, i18n)
         content += `
@@ -85,40 +86,34 @@ module.exports = function (script, options, callback) {
     let firstPage = ''
     const pagesMap = {}
     const componentsMap = {}
-    Object.keys(localPagesMap).forEach((pagePath, index) => {
+    Object.keys(localPagesMap).forEach((pagePath) => {
       const pageCfg = localPagesMap[pagePath]
-      const pageVar = `__mpx_page_${index}__`
       const pageRequest = stringifyRequest(pageCfg.resource)
       if (pageCfg.async) {
-        content += `const ${pageVar} = ()=>import(${pageRequest})\n`
+        pagesMap[pagePath] = `()=>import(${pageRequest})`
       } else {
-        content += `import ${pageVar} from ${pageRequest}\n`
+        // 为了保持小程序中app->page->component的js执行顺序，所有的page和component都改为require引入
+        pagesMap[pagePath] = `getComponent(require(${pageRequest}))`
       }
       if (pageCfg.isFirst) {
         firstPage = pagePath
       }
-      pagesMap[pagePath] = pageVar
     })
 
-    Object.keys(localComponentsMap).forEach((componentName, index) => {
+    Object.keys(localComponentsMap).forEach((componentName) => {
       const componentCfg = localComponentsMap[componentName]
-      const componentVar = `__mpx_component_${index}__`
       const componentRequest = stringifyRequest(componentCfg.resource)
       if (componentCfg.async) {
-        content += `const ${componentVar} = ()=>import(${componentRequest})\n`
+        componentsMap[componentName] = `()=>import(${componentRequest})`
       } else {
-        content += `import ${componentVar} from ${componentRequest}\n`
+        componentsMap[componentName] = `getComponent(require(${componentRequest}))`
       }
-      componentsMap[componentName] = componentVar
     })
 
-    Object.keys(builtInComponentsMap).forEach((componentName, index) => {
+    Object.keys(builtInComponentsMap).forEach((componentName) => {
       const componentCfg = builtInComponentsMap[componentName]
-      const componentVar = `__mpx_built_in_component_${index}__`
       const componentRequest = stringifyRequest(componentCfg.resource)
-      content += `import ${componentVar} from ${componentRequest}\n`
-      content += `${componentVar}.__mpx_built_in__ = true\n`
-      componentsMap[componentName] = componentVar
+      componentsMap[componentName] = `getComponent(require(${componentRequest}), true)`
     })
 
     content += `global.currentSrcMode = ${JSON.stringify(scriptSrcMode)};\n`

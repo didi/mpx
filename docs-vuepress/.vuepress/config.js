@@ -7,7 +7,6 @@ const sidebar = {
         'basic/start',
         'basic/intro',
         'basic/single-file',
-        'basic/component',
         'basic/template',
         'basic/reactive',
         'basic/class-style-binding',
@@ -15,6 +14,7 @@ const sidebar = {
         'basic/list-render',
         'basic/event',
         'basic/two-way-binding',
+        'basic/component',
         'basic/refs'
       ]
     },

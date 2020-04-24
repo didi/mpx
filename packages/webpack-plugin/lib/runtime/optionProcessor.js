@@ -98,3 +98,10 @@ export default function processOption (
 
   return option
 }
+
+export function getComponent (component, isBulitIn) {
+  component = component.__esModule ? component.default : component
+  // eslint-disable-next-line
+  if (isBulitIn) component.__mpx_built_in__ = true
+  return component
+}
