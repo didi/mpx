@@ -66,20 +66,6 @@
       this.startX = sliderWrapEle.getBoundingClientRect().left || 18
     },
     render (createElement) {
-      let mergeAfter = {
-        listeners: {
-          click: this.sliderClick
-        },
-        force: true
-      }
-      let blockMergeAfter = {
-        listeners: {
-          touchstart: this.sliderTouchStart,
-          touchmove: this.sliderTouchMove,
-          touchend: this.sliderTouchEnd
-        },
-        force: true
-      }
       let wrapChildren = []
       let children = []
 
@@ -89,7 +75,9 @@
           backgroundColor: this.backgroundColor
         },
         ref: 'sliderWrap',
-        on: getInnerListeners(this, { mergeAfter })
+        on: {
+          click: this.sliderClick
+        }
       })
       wrapChildren.push(sliderBg)
 
@@ -110,7 +98,11 @@
           height: blockSize,
           backgroundColor: this.blockColor
         },
-        on: getInnerListeners(this, { mergeAfter: blockMergeAfter })
+        on: {
+          touchstart: this.sliderTouchStart,
+          touchmove: this.sliderTouchMove,
+          touchend: this.sliderTouchEnd
+        }
       })
       wrapChildren.push(sliderBlock)
       wrapChildren.push(...(this.$slots.default || []))
@@ -120,10 +112,15 @@
       }, wrapChildren)
       children.push(sliderWrap)
       if (this.showValue) {
+        let max = this.max.toString() || '100'
+        let width = max.length * 10 + 'px'
         const sliderValue = createElement('div', {
           class: 'mpx-slider-value',
           domProps:{
             innerHTML: this.sliderValue
+          },
+          style: {
+            width
           }
         })
         children.push(sliderValue)
@@ -215,4 +212,5 @@
     .mpx-slider-value
       padding: 0 10px 0 20px
       color: #666
+      text-align: center
 </style>

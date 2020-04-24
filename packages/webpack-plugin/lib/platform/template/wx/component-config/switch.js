@@ -9,7 +9,7 @@ module.exports = function ({ print }) {
     test: TAG_NAME,
     web (tag, { el }) {
       el.isBuiltIn = true
-      return 'mpx-slider'
+      return 'mpx-switch'
     },
     props: [
       {
