@@ -47,8 +47,7 @@ todo 完善更新
 如果使用IntelliJ系IDE开发，可将mpx后缀文件关联到vue类型，按vue解析。
 ![关联文件类型](../../assets/images/start-tips2.png)
 但会报一个warning提示有重复的script标签，关闭该警告即可。
-![关闭警告](../../assets/images/start-tips12.png)
-
+![关闭警告](../../assets/images/start-tips1.png)
 
 #### vscode
 
