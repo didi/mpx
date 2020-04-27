@@ -108,6 +108,7 @@ module.exports = function (raw) {
     this.addContextDependency(dep)
   })
 
+  // 删除issuer中上次注入的dependencies，避免issuer本身不需要更新时上次的注入代码残留
   issuer.dependencies = issuer.dependencies.filter((dep) => {
     return !dep.templateInject
   })

@@ -16,7 +16,6 @@ module.exports = function (css, map) {
 
   const mainCompilation = getMainCompilation(this._compilation)
   const mpx = mainCompilation.__mpx__
-  const mode = mpx.mode
   const defs = mpx.defs
 
   const transRpxs = Array.isArray(loaderOptions.transRpx) ? loaderOptions.transRpx : [loaderOptions.transRpx]
@@ -25,7 +24,7 @@ module.exports = function (css, map) {
     return matchCondition(this.resourcePath, { include, exclude })
   }
 
-  loadPostcssConfig(this)
+  loadPostcssConfig(this, { defs })
     .then(config => {
       const plugins = config.plugins.concat(trim)
       const options = Object.assign(
@@ -42,7 +41,6 @@ module.exports = function (css, map) {
       }
 
       plugins.push(pluginCondStrip({
-        mode,
         defs
       }))
 
