@@ -106,7 +106,7 @@ project
 > 分包是小程序平台提供的原生能力，mpx是对该能力做了部分加强，目前微信的分包机制是最全面的，百度其次，支付宝暂时无此能力，请根据平台决定如何使用。
 
 - [普通分包](#普通分包)
-- [独立分包 / 分包预下载](#独立分包/分包预下载)
+- [分包预下载](#分包预下载)
 
 #### 普通分包
 
@@ -158,13 +158,11 @@ mpx中会将 app.mpx（入口文件，也不一定非要叫app.mpx） 中package
 
 分包加载的好处详见微信的文档。路径冲突的概率也大大降低，只需要保证root不同即可。
 
-#### 独立分包/分包预下载
+#### 分包预下载
 
 > 仅微信小程序提供该部分能力
 
 分包预下载是在json中新增一个 preloadRule 字段，mpx打包时候会原封不动把这个部分放到app.json中，所以只需要按照 [微信小程序官方文档 - 分包预下载](https://developers.weixin.qq.com/miniprogram/dev/framework/subpackages/preload.html) 配置即可。
-
-独立分包则需要在subpackages的相应分包项中多一个字段 `independent` 为 true。
 
 前面的普通分包中提到了subpackages是根据用户在package中通过增加query，key为root来指定分包名。我们进一步扩展了这个能力，允许用户传递更多的query。
 
@@ -178,7 +176,7 @@ mpx中会将 app.mpx（入口文件，也不一定非要叫app.mpx） 中package
       "./pages/index/index"
     ],
     "packages": [
-      "{npmPackage || relativePathToPackage}/index?root=indep&independent=true"
+      "{npmPackage || relativePathToPackage}/index?root=xxx&name=subpack1"
     ]
   }
 </script>
@@ -202,12 +200,12 @@ mpx中会将 app.mpx（入口文件，也不一定非要叫app.mpx） 中package
   ],
   "subPackages": [
     {
-      "root": "indep",
+      "name": "subpack1",
+      "root": "xxx",
       "pages": [
         "pages/other/other",
         "pages/other/other2"
-      ],
-      "independent": true
+      ]
     }
   ]
 }
