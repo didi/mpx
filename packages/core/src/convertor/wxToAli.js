@@ -48,11 +48,13 @@ export default {
       const newProps = {}
       Object.keys(options.properties).forEach(key => {
         const prop = options.properties[key]
-        if (prop && prop.hasOwnProperty('value')) {
-          newProps[key] = prop.value
-        } else {
-          const type = prop.hasOwnProperty('type') ? prop.type : prop
-          newProps[key] = typeof type === 'function' ? type() : null
+        if (prop) {
+          if (prop.hasOwnProperty('value')) {
+            newProps[key] = prop.value
+          } else {
+            const type = prop.hasOwnProperty('type') ? prop.type : prop
+            if (typeof type === 'function') newProps[key] = type()
+          }
         }
       })
       options.props = Object.assign(newProps, options.props)
