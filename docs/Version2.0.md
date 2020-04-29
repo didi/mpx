@@ -9,7 +9,7 @@
 * webview bridge跨平台差异抹平`@mpxjs/webview-bridge`
 * 深度分包优化，编译过程中进行精准分包资源判断，所有分包only的资源(页面，组件，js module，wxs，template，媒体资源等)都会精确输出到分包目录中
 * render函数中完整支持wxs模块，[关于render函数点击查看详情](https://didi.github.io/mpx/understanding/understanding.html#%E6%95%B0%E6%8D%AE%E5%93%8D%E5%BA%94%E4%B8%8E%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96)
-* 支持模板引入，内联wxs，自定义tabbar，独立分包，workers，云开发等原生能力，进一步完善原生兼容性
+* 支持模板引入，内联wxs，自定义tabbar，workers，云开发等原生能力，进一步完善原生兼容性
 * 新增this.$nextTick替换this.updated
 * 增强watch能力，支持`a,b`表达式同时监听a和b的变化，回调函数支持方法名字符串
 * 优化多实例store中mapStore使用体验
