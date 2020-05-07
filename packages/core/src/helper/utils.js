@@ -149,7 +149,7 @@ export function defineGetterSetter (target, key, getValue, setValue, context) {
   Object.defineProperty(target, key, descriptor)
 }
 
-export function proxy (target, source, keys, readonly) {
+export function proxy (target, source, keys, readonly, onConflict) {
   keys = keys || Object.keys(source)
   keys.forEach((key) => {
     const descriptor = {
@@ -162,6 +162,11 @@ export function proxy (target, source, keys, readonly) {
     !readonly && (descriptor.set = function (val) {
       source[key] = val
     })
+    if (onConflict) {
+      if (key in target) {
+        if (onConflict(key) === false) return
+      }
+    }
     Object.defineProperty(target, key, descriptor)
   })
   return target

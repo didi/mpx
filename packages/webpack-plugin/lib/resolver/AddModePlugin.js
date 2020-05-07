@@ -20,13 +20,13 @@ module.exports = class AddModePlugin {
         mode
       }
       const parsed = parseRequest(request.request)
-      const resource = parsed.resourcePath
+      const resourcePath = parsed.rawResourcePath
       const queryObj = parsed.queryObj
       queryObj.mode = mode
       const resourceQuery = stringifyQuery(queryObj)
-      const resourceExt = path.extname(request.request)
+      const resourceExt = path.extname(resourcePath)
 
-      obj.request = resource.substring(0, resource.length - resourceExt.length) + '.' + mode + resourceExt + resourceQuery
+      obj.request = resourcePath.substring(0, resourcePath.length - resourceExt.length) + '.' + mode + resourceExt + resourceQuery
 
       resolver.doResolve(target, Object.assign({}, request, obj), 'add mode: ' + mode, resolveContext, callback)
     })

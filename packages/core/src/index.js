@@ -170,7 +170,7 @@ function factory () {
 const EXPORT_MPX = factory()
 
 EXPORT_MPX.config = {
-  useStrictDiff: true,
+  useStrictDiff: false,
   ignoreRenderError: false
 }
 

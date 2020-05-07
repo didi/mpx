@@ -137,18 +137,11 @@ export default class MPXProxy {
     const options = this.options
     this.initData(options.data)
     this.initComputed(options.computed)
-    this.initMethods(options.methods)
     // target的数据访问代理到将proxy的data
-    proxy(this.target, this.data)
+    proxy(this.target, this.data, undefined, undefined, () => {
+      error(`The data/props/computed key [${key}] exist in the component/page instance already, which is not allowed, please check and rename it!`, this.options.mpxFileResource)
+    })
     this.initWatch(options.watch)
-  }
-
-  initMethods (methods) {
-    if (methods) {
-      for (let key in this.data) {
-        if (key in methods) error(`The method key [${key}] is duplicated with data/props/computed, please check!`, this.options.mpxFileResource)
-      }
-    }
   }
 
   initComputed (computedOpt) {
@@ -232,12 +225,12 @@ export default class MPXProxy {
 
   render () {
     const renderData = this.data
-    this.doRender(EXPORT_MPX.config.useStrictDiff ? this.processRenderDataWithStrictDiff(renderData) : this.processRenderData(renderData))
+    this.doRender(this.processRenderDataWithStrictDiff(renderData))
   }
 
   renderWithData () {
     const renderData = preProcessRenderData(this.renderData)
-    this.doRender(EXPORT_MPX.config.useStrictDiff ? this.processRenderDataWithStrictDiff(renderData) : this.processRenderData(renderData))
+    this.doRender(this.processRenderDataWithStrictDiff(renderData))
     // 重置renderData准备下次收集
     this.renderData = {}
   }
@@ -264,7 +257,7 @@ export default class MPXProxy {
           clone = localClone
           if (diff) {
             this.miniRenderData[key] = clone
-            if (diffData) {
+            if (diffData && EXPORT_MPX.config.useStrictDiff) {
               this.processRenderDataWithDiffData(result, key, diffData)
             } else {
               result[key] = clone
@@ -290,7 +283,7 @@ export default class MPXProxy {
                   const { clone, diff, diffData } = diffAndCloneA(data, current[subKey])
                   if (diff) {
                     current[subKey] = clone
-                    if (diffData) {
+                    if (diffData && EXPORT_MPX.config.useStrictDiff) {
                       this.processRenderDataWithDiffData(result, key, diffData)
                     } else {
                       result[key] = clone
@@ -312,7 +305,7 @@ export default class MPXProxy {
               const { clone, diff, diffData } = diffAndCloneA(data, localInitialData)
               this.miniRenderData[key] = clone
               if (diff) {
-                if (diffData) {
+                if (diffData && EXPORT_MPX.config.useStrictDiff) {
                   this.processRenderDataWithDiffData(result, key, diffData)
                 } else {
                   result[key] = clone
@@ -324,32 +317,6 @@ export default class MPXProxy {
             }
           }
         }
-      }
-    }
-    return result
-  }
-
-  processRenderData (renderData) {
-    const result = {}
-    const missedKeyMap = Object.keys(this.miniRenderData).reduce((map, key) => {
-      map[key] = true
-      return map
-    }, {})
-    for (let key in renderData) {
-      if (renderData.hasOwnProperty(key)) {
-        const data = renderData[key]
-        const firstKey = getFirstKey(key)
-        let { clone, diff } = diffAndCloneA(data, this.miniRenderData[key])
-        if (this.localKeys.indexOf(firstKey) > -1 && diff) {
-          this.miniRenderData[key] = result[key] = clone
-        }
-        delete missedKeyMap[key]
-      }
-    }
-    // 清理当次renderData中从未出现的key，避免出现历史脏数据导致diff失败
-    for (let key in missedKeyMap) {
-      if (missedKeyMap.hasOwnProperty(key)) {
-        delete this.miniRenderData[key]
       }
     }
     return result
