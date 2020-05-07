@@ -138,7 +138,7 @@ export default class MPXProxy {
     this.initData(options.data)
     this.initComputed(options.computed)
     // target的数据访问代理到将proxy的data
-    proxy(this.target, this.data, undefined, undefined, () => {
+    proxy(this.target, this.data, undefined, undefined, (key) => {
       error(`The data/props/computed key [${key}] exist in the component/page instance already, which is not allowed, please check and rename it!`, this.options.mpxFileResource)
     })
     this.initWatch(options.watch)
