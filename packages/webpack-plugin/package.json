@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/webpack-plugin",
-  "version": "2.5.15",
+  "version": "2.5.16",
   "description": "mpx compile core",
   "keywords": [
     "mpx"
