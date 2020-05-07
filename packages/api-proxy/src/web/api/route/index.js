@@ -16,19 +16,21 @@ function redirectTo (options = {}) {
   if (router) {
     router.__mpxAction = { type: 'redirect' }
     return new Promise((resolve, reject) => {
-      router.replace({
-        path: options.url,
-        onComplete: () => {
+      router.replace(
+        {
+          path: options.url
+        },
+        () => {
           const res = { errMsg: 'redirectTo:ok' }
           webHandleSuccess(res, options.success, options.complete)
           resolve(res)
         },
-        onAbort: err => {
+        err => {
           const res = { errMsg: `redirectTo:fail ${err}` }
           webHandleFail(res, options.fail, options.complete)
           !options.fail && reject(res)
         }
-      })
+      )
     })
   }
 }
@@ -38,19 +40,21 @@ function navigateTo (options = {}) {
   if (router) {
     router.__mpxAction = { type: 'to' }
     return new Promise((resolve, reject) => {
-      router.push({
-        path: options.url,
-        onComplete: () => {
+      router.push(
+        {
+          path: options.url
+        },
+        () => {
           const res = { errMsg: 'navigateTo:ok', eventChannel: null }
           webHandleSuccess(res, options.success, options.complete)
           resolve(res)
         },
-        onAbort: err => {
+        err => {
           const res = { errMsg: err }
           webHandleFail(res, options.fail, options.complete)
           !options.fail && reject(res)
         }
-      })
+      )
     })
   }
 }
