@@ -571,3 +571,10 @@ export function preProcessRenderData (renderData) {
   })
   return processedRenderData
 }
+
+export function makeMap (arr) {
+  return arr.reduce((obj, item) => {
+    obj[item] = true
+    return obj
+  }, {})
+}

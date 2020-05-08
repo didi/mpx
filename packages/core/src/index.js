@@ -1,7 +1,7 @@
 import * as platform from './platform'
 import createStore, { createStoreWithThis } from './core/createStore'
 import { injectMixins } from './core/injectMixins'
-import { extend, diffAndCloneA } from './helper/utils'
+import { extend, diffAndCloneA, makeMap } from './helper/utils'
 import { setConvertRule } from './convertor/convertor'
 import { getMixin } from './core/mergeOptions'
 import { error } from './helper/log'
@@ -37,8 +37,10 @@ export function toPureObject (obj) {
 
 function extendProps (target, proxyObj, rawProps, option) {
   const keys = Object.getOwnPropertyNames(proxyObj)
+  const rawPropsMap = makeMap(rawProps)
+
   for (const key of keys) {
-    if (APIs[key] || rawProps.indexOf(key) > -1) {
+    if (APIs[key] || rawPropsMap[key]) {
       continue
     } else if (option && (option.prefix || option.postfix)) {
       const transformKey = option.prefix

@@ -48,7 +48,7 @@ export default class MPXProxy {
       }
       this._watchers = []
       this._watcher = null
-      this.localKeys = [] // 非props key
+      this.localKeysMap = {} // 非props key
       this.renderData = {} // 渲染函数中收集的数据
       this.miniRenderData = {}
       this.forceUpdateData = {} // 强制更新的数据
@@ -121,9 +121,15 @@ export default class MPXProxy {
 
   initApi () {
     // 挂载扩展属性到实例上
-    proxy(this.target, this.options.proto, Object.keys(this.options.proto), true)
-    // 挂载混合模式下的自定义属性
-    proxy(this.target, this.options, this.options.mpxCustomKeysForBlend)
+    proxy(this.target, this.options.proto, Object.keys(this.options.proto), true, (key) => {
+      error(`The key [${key}] of mpx.prototype exist in the component/page instance already, please check your plugins!`, this.options.mpxFileResource)
+    })
+    // 挂载混合模式下createPage中的自定义属性，模拟原生Page构造器的表现
+    if (this.options.__type__ === 'page' && !this.options.__pageCtor__) {
+      proxy(this.target, this.options, this.options.mpxCustomKeysForBlend, undefined, (key) => {
+        error(`The key [${key}] of page options exist in the page instance already, please check your page options!`, this.options.mpxFileResource)
+      })
+    }
     if (__mpx_mode__ !== 'web') {
       // 挂载$watch
       this.target.$watch = (...rest) => this.watch(...rest)
@@ -135,11 +141,13 @@ export default class MPXProxy {
 
   initState () {
     const options = this.options
-    this.initData(options.data)
+    const proxyedKeys = this.initData(options.data)
     this.initComputed(options.computed)
     // target的数据访问代理到将proxy的data
     proxy(this.target, this.data, undefined, undefined, (key) => {
-      error(`The data/props/computed key [${key}] exist in the component/page instance already, which is not allowed, please check and rename it!`, this.options.mpxFileResource)
+      if (proxyedKeys.indexOf(key) === -1) {
+        error(`The data/props/computed key [${key}] exist in the component/page instance already, which is not allowed, please check and rename it!`, this.options.mpxFileResource)
+      }
     })
     this.initWatch(options.watch)
   }
@@ -153,11 +161,15 @@ export default class MPXProxy {
 
   // 构建响应式data
   initData (dataOpt = {}) {
+    let proxyedKeys = []
     // 获取包含data/props在内的初始数据，包含初始原生微信转换支付宝时合并props进入data的逻辑
     const initialData = this.target.__getInitialData() || {}
     if (typeof dataOpt === 'function') {
+      proxyedKeys = Object.keys(initialData)
       // 预先将initialData代理到this.target中，便于data函数访问
-      proxy(this.target, initialData)
+      proxy(this.target, initialData, proxyedKeys, undefined, (key) => {
+        error(`The props key [${key}] exist in the component instance already, which is not allowed, please check and rename it!`, this.options.mpxFileResource)
+      })
       this.data = dataOpt.call(this.target) || {}
     } else {
       // 之所以没有直接使用initialData，而是通过对原始dataOpt进行深clone获取初始数据对象，主要是为了避免小程序自身序列化时错误地转换数据对象，比如将promise转为普通object
@@ -174,8 +186,9 @@ export default class MPXProxy {
     })
     // mpxCid 解决支付宝环境selector为全局问题
     this.data.mpxCid = this.uid
-    this.localKeys.push('mpxCid')
+    this.localKeysMap.mpxCid = true
     observe(this.data, true)
+    return proxyedKeys
   }
 
   initWatch (watch) {
@@ -194,7 +207,11 @@ export default class MPXProxy {
   }
 
   collectLocalKeys (data) {
-    this.localKeys.push.apply(this.localKeys, Object.keys(data))
+    for (let key in data) {
+      if (data.hasOwnProperty(key)) {
+        this.localKeysMap[key] = true
+      }
+    }
   }
 
   nextTick (fn) {
@@ -247,7 +264,7 @@ export default class MPXProxy {
       if (renderData.hasOwnProperty(key)) {
         const data = renderData[key]
         const firstKey = getFirstKey(key)
-        if (this.localKeys.indexOf(firstKey) === -1) {
+        if (!this.localKeysMap[firstKey]) {
           continue
         }
         // 外部clone，用于只需要clone的场景
@@ -386,7 +403,7 @@ export default class MPXProxy {
     } else if (isPlainObject(data)) {
       this.forceUpdateData = data
       Object.keys(this.forceUpdateData).forEach(key => {
-        if (!this.options.__nativeRender__ && this.localKeys.indexOf(getFirstKey(key)) === -1) {
+        if (!this.options.__nativeRender__ && !this.localKeysMap[getFirstKey(key)]) {
           warn(`ForceUpdate data includes a props/computed key [${key}], which may yield a unexpected result!`, this.options.mpxFileResource)
         }
         setByPath(this.data, key, this.forceUpdateData[key])

@@ -1,9 +1,8 @@
 import {
-  isEmptyObject
+  isEmptyObject, makeMap
 } from '../../../helper/utils'
-
 import MPXProxy from '../../../core/proxy'
-import customKey from '../customOptionKeys'
+import builtInKeysMap from '../builtInKeysMap'
 import mergeOptions from '../../../core/mergeOptions'
 import { LIFECYCLE } from './lifecycle'
 
@@ -87,9 +86,8 @@ function transformApiForProxy (context, currentInject) {
 
 function filterOptions (options) {
   const newOptions = {}
-  const ignoreProps = customKey
   Object.keys(options).forEach(key => {
-    if (ignoreProps.indexOf(key) !== -1 || (key === 'data' && typeof options[key] === 'function')) {
+    if (builtInKeysMap[key] || (key === 'data' && typeof options[key] === 'function')) {
       return
     }
     if (key === 'properties' || key === 'props') {
@@ -109,9 +107,10 @@ function getRootMixins (mixin) {
   const rootMixins = []
   if (supportBehavior) {
     const behavior = {}
+    const pageHooksMap = makeMap(LIFECYCLE.PAGE_HOOKS)
     Object.keys(mixin).forEach((key) => {
       // 除页面生命周期之外使用behaviors进行mixin
-      if (LIFECYCLE.PAGE_HOOKS.indexOf(key) === -1) {
+      if (!pageHooksMap[key]) {
         behavior[key] = mixin[key]
         delete mixin[key]
       }
