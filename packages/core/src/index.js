@@ -128,7 +128,7 @@ if (__mpx_mode__ === 'web') {
   const vm = {}
 
   watch = function (expOrFn, cb, options) {
-    watchWithVm(vm, expOrFn, cb, options)
+    return watchWithVm(vm, expOrFn, cb, options)
   }
 
   APIs = {
