@@ -189,6 +189,7 @@ function extractPageHooks (options) {
           warn(`Duplicate lifecycle [${key}] is defined in root options and methods, please check.`, options.mpxFileResource)
         }
         newOptions[key] = methods[key]
+        delete methods[key]
       }
     })
     return newOptions
