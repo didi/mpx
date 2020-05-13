@@ -41,7 +41,6 @@ export default class Watcher {
     if (typeof expOrFn === 'function') {
       this.getter = expOrFn
     } else {
-
       this.getter = function () {
         return getByPath(this, expOrFn)
       }
