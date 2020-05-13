@@ -44,8 +44,8 @@ function flushQueue () {
         if (circular[id] > MAX_UPDATE_COUNT) {
           let location = watcher.vm && watcher.vm.options && watcher.vm.options.mpxFileResource
           error(`You may have a dead circular update in watcher with expression [${watcher.expression}], please check!`, location)
+          break
         }
-        break
       }
     }
     // 如果已经销毁，就不再执行
