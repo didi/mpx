@@ -8,6 +8,7 @@ import { error } from './helper/log'
 import Vue from './vue'
 import { observe, set, del as remove } from './observer/index'
 import { watch as watchWithVm } from './observer/watch'
+import implement from './core/implement'
 
 export function createApp (config, ...rest) {
   const mpx = new EXPORT_MPX()
@@ -112,7 +113,8 @@ if (__mpx_mode__ === 'web') {
     remove,
     setConvertRule,
     getMixin,
-    getComputed
+    getComputed,
+    implement
   }
 
   InstanceAPIs = {
@@ -147,7 +149,8 @@ if (__mpx_mode__ === 'web') {
     remove,
     setConvertRule,
     getMixin,
-    getComputed
+    getComputed,
+    implement
   }
 
   InstanceAPIs = {

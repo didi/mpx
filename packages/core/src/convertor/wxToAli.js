@@ -3,6 +3,7 @@ import * as aliLifecycle from '../platform/patch/ali/lifecycle'
 import { mergeLifecycle } from './mergeLifecycle'
 import { mergeToArray } from '../core/mergeOptions'
 import { error } from '../helper/log'
+import { implemented } from '../core/implement'
 
 const NOTSUPPORTS = ['moved', 'definitionFilter']
 
@@ -13,8 +14,12 @@ function convertErrorDesc (key) {
 function notSupportTip (options) {
   NOTSUPPORTS.forEach(key => {
     if (options[key]) {
-      process.env.NODE_ENV !== 'production' && convertErrorDesc(key)
-      delete options[key]
+      if(!implemented[key]){
+        process.env.NODE_ENV !== 'production' && convertErrorDesc(key)
+        delete options[key]
+      } else if(implemented[key].remove){
+        delete options[key]
+      }
     }
   })
   // relations部分支持

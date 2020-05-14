@@ -127,29 +127,47 @@ function render (message, values) {
 }
 
 function getPathValue (message, path) {
-  if (!isObject(message)) return null
+  if (!isObject(message)) return
 
   var parsedPath = _pathCaches[path]
   if (!parsedPath) {
     parsedPath = parsePath(path)
     _pathCaches[path] = parsedPath
   }
+  return outPutByPath(message, parsedPath)
+}
 
-  if (parsedPath.length === 0) {
-    return null
-  } else {
-    var last = message
-    var index = 0
-    while (index < parsedPath.length) {
-      var value = last[parsedPath[index]]
-      if (value === undefined) {
-        return null
+function outPutByPath (context, path) {
+  var result = context
+  var len = path.length
+  for (var index = 0; index < len; index++) {
+    var key
+    var item = path[index]
+    if (result) {
+      if (likeArray(item)) {
+        // 获取子数组的输出结果作为当前key
+        key = outPutByPath(context, item)
+      } else if (genRegExp('^\'.+\'$').test(item)) {
+        // 字符串一定会被[]包裹，一定在子数组中
+        result = item.replace('\'', '')
+      } else if (genRegExp('^[0-9]+$').test(item)) {
+        // 数字一定会被[]包裹，一定在子数组中
+        result = +item
+      } else if (item === '+') {
+        // 获取加号后面所有path最终的结果
+        result += outPutByPath(context, path.slice(index + 1))
+        break
+      } else {
+        key = item
       }
-      last = value
-      index++
+      if (key !== undefined) {
+        result = result[key]
+      }
+    } else {
+      break
     }
-    return last
   }
+  return result
 }
 
 function genStack (mark) {
@@ -176,14 +194,15 @@ function parsePath (pathStr) {
     // 开启栈或关闭栈都意味着前面的字符拼接截止
     propertyJoinOver()
     // 字符串栈直接拼接
-    var result = curStack.type === 'string' ? curStack.value.join('') : curStack.value
+    var result = curStack.type === 'string' ? '\'' + curStack.value.join('') + '\'' : curStack.value
     curStack = targetStacks.pop()
     // 将当前stack结果保存到父级stack里
     curStack.push(result)
   }
 
   function propertyJoinOver () {
-    property && curStack.push(property)
+    property = property.trim()
+    if (property) curStack.push(property)
     property = ''
   }
 
@@ -193,7 +212,7 @@ function parsePath (pathStr) {
   var index = 0
 
   if (genRegExp('^[^[]]+$').test(pathStr)) {
-    // 对于仅“点”属性访问，直接分割，避免无意义的解析
+    // 对于简单数据路径，直接分割，避免无意义的解析
     return pathStr.split('.')
   }
   while (index < pathStr.length) {
@@ -208,9 +227,9 @@ function parsePath (pathStr) {
       endStack()
     } else if (char === '.' || char === '+') {
       propertyJoinOver()
-      char === '+' && curStack.push(char)
+      if (char === '+') curStack.push(char)
     } else {
-      property += char.trim()
+      property += char
     }
     index++
   }
