@@ -105,7 +105,7 @@ function extractObservers (options) {
 
   function mergeWatch (key, config) {
     if (watch[key]) {
-      !Array.isArray(watch[key]) && (watch[key] = [watch[key]])
+      if (!Array.isArray(watch[key])) watch[key] = [watch[key]]
     } else {
       watch[key] = []
     }
@@ -208,11 +208,11 @@ function mergeMixins (parent, child) {
       mergeHooks(parent, child, key)
     } else if (key === 'data') {
       mergeDataFn(parent, child, key)
-    } else if (/^(computed|properties|props|methods|proto)$/.test(key)) {
+    } else if (/^(computed|properties|props|methods|proto|options|relations)$/.test(key)) {
       mergeShallowObj(parent, child, key)
-    } else if (/^(watch|pageLifetimes|observers|events)$/.test(key)) {
+    } else if (/^(watch|observers|pageLifetimes|events)$/.test(key)) {
       mergeToArray(parent, child, key)
-    } else if (/^behaviors$/.test(key)) {
+    } else if (/^behaviors|externalClasses$/.test(key)) {
       mergeArray(parent, child, key)
     } else if (key !== 'mixins' && key !== 'mpxCustomKeysForBlend') {
       // 收集非函数的自定义属性，在Component创建的页面中挂载到this上，模拟Page创建页面的表现
@@ -339,7 +339,8 @@ function transformHOOKS (options) {
     for (const key in options) {
       // 使用Component创建page实例，页面专属生命周期&自定义方法需写在methods内部
       if (typeof options[key] === 'function' && key !== 'data' && !componentHooksMap[key]) {
-        (options.methods || (options.methods = {}))[key] = options[key]
+        if (!options.methods) options.methods = {}
+        options.methods[key] = options[key]
         delete options[key]
       }
     }

@@ -172,7 +172,7 @@ export default class MPXProxy {
       proxyedKeys = Object.keys(initialData)
       // 预先将initialData代理到this.target中，便于data函数访问
       proxy(this.target, initialData, proxyedKeys, undefined, (key) => {
-        error(`The props key [${key}] exist in the component instance already, please check and rename it!`, this.options.mpxFileResource)
+        if (!this.ignoreConflictMap[key]) error(`The props key [${key}] exist in the component instance already, please check and rename it!`, this.options.mpxFileResource)
       })
       this.data = dataOpt.call(this.target) || {}
     } else {
