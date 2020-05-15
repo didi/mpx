@@ -191,7 +191,8 @@ const EXPORT_MPX = factory()
 
 EXPORT_MPX.config = {
   useStrictDiff: false,
-  ignoreRenderError: false
+  ignoreRenderError: false,
+  ignoreConflictWhiteList: ['id']
 }
 
 if (__mpx_mode__ === 'web') {
