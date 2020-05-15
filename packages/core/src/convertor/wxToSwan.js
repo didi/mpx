@@ -15,10 +15,10 @@ function convertErrorDesc (key) {
 function notSupportTip (options) {
   NOTSUPPORTS.forEach(key => {
     if (options[key]) {
-      if(!implemented[key]){
+      if (!implemented[key]) {
         process.env.NODE_ENV !== 'production' && convertErrorDesc(key)
         delete options[key]
-      } else if(implemented[key].remove){
+      } else if (implemented[key].remove) {
         delete options[key]
       }
     }
