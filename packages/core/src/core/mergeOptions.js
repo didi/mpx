@@ -2,6 +2,7 @@ import { isObject, aliasReplace, findItem, diffAndCloneA, makeMap } from '../hel
 import { getConvertRule } from '../convertor/convertor'
 import { error, warn } from '../helper/log'
 import builtInKeysMap from '../platform/patch/builtInKeysMap'
+import { implemented } from './implement'
 
 let currentHooksMap = {}
 let curType
@@ -28,7 +29,10 @@ export default function mergeOptions (options = {}, type, needConvert = true) {
     typeof convertRule.convert === 'function' && convertRule.convert(newOptions, type)
     // 当存在lifecycle2时，在转换后将currentHooksMap替换，以确保后续合并hooks时转换后的hooks能够被正确处理
     if (convertRule.lifecycle2) {
-      currentHooksMap = makeMap(convertRule.lifecycle2[curType])
+      const implementedHooks = convertRule.lifecycle[curType].filter((hook) => {
+        return implemented[hook]
+      })
+      currentHooksMap = makeMap(convertRule.lifecycle2[curType].concat(implementedHooks))
     }
   }
   newOptions.mpxCustomKeysForBlend = Object.keys(mpxCustomKeysMap)
