@@ -52,6 +52,7 @@ export default class MPXProxy {
       this.renderData = {} // 渲染函数中收集的数据
       this.miniRenderData = {}
       this.forceUpdateData = {} // 强制更新的数据
+      this.forceUpdateAll = false // 下次是否需要强制更新全部渲染数据
       this.curRenderTask = null
     }
     this.lockTask = asyncLock()
@@ -67,7 +68,7 @@ export default class MPXProxy {
     this.callUserHook(CREATED, ...params)
     if (__mpx_mode__ !== 'web') {
       // 强制走小程序原生渲染逻辑
-      this.options.__nativeRender__ ? this.forceUpdate() : this.initRender()
+      this.options.__nativeRender__ ? this.doRender() : this.initRender()
     }
   }
 
@@ -334,6 +335,10 @@ export default class MPXProxy {
             }
           }
         }
+        if (this.forceUpdateAll) {
+          if (!clone) clone = diffAndCloneA(data).clone
+          this.forceUpdateData[key] = clone
+        }
       }
     }
     return result
@@ -358,8 +363,9 @@ export default class MPXProxy {
 
     // 使用forceUpdateData后清空
     if (!isEmptyObject(this.forceUpdateData)) {
-      data = mergeData({}, this.forceUpdateData, data)
+      data = mergeData(data, this.forceUpdateData)
       this.forceUpdateData = {}
+      this.forceUpdateAll = false
     }
 
     /**
@@ -400,7 +406,10 @@ export default class MPXProxy {
   forceUpdate (data, callback) {
     if (typeof data === 'function') {
       callback = data
-    } else if (isPlainObject(data)) {
+      data = undefined
+    }
+
+    if (isPlainObject(data)) {
       this.forceUpdateData = data
       Object.keys(this.forceUpdateData).forEach(key => {
         if (!this.options.__nativeRender__ && !this.localKeysMap[getFirstKey(key)]) {
@@ -408,7 +417,10 @@ export default class MPXProxy {
         }
         setByPath(this.data, key, this.forceUpdateData[key])
       })
+    } else {
+      this.forceUpdateAll = true
     }
+
     if (callback) {
       callback = callback.bind(this.target)
       this.nextTick(callback)
@@ -416,6 +428,13 @@ export default class MPXProxy {
     if (this._watcher) {
       this._watcher.update()
     } else {
+      if (this.forceUpdateAll) {
+        Object.keys(this.data).forEach((key) => {
+          if (this.localKeysMap[key]) {
+            this.forceUpdateData[key] = diffAndCloneA(this.data[key]).clone
+          }
+        })
+      }
       this.doRender()
     }
   }
