@@ -366,7 +366,7 @@ export default class MPXProxy {
 
     // 使用forceUpdateData后清空
     if (!isEmptyObject(this.forceUpdateData)) {
-      data = mergeData(data, this.forceUpdateData)
+      data = mergeData({}, data, this.forceUpdateData)
       this.forceUpdateData = {}
       this.forceUpdateAll = false
     }
