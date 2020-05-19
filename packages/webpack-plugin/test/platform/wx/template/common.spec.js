@@ -68,6 +68,20 @@ describe('common spec case', function () {
     expect(output14).toBe('<view s-for="t1, t2 in [0,1,2,3,4,5,6,7] trackBy t1">123</view>')
   })
 
+  it('should optimize key of for in ali', function () {
+    const input1 = `<view wx:for="{{list}}" wx:key="index" wx:for-index="index">123</view>`
+    const input2 = `<view wx:for="{{list}}" wx:key="k" wx:for-index="index">123</view>`
+    const input3 = `<view wx:for="{{list}}" wx:for-index="index">123</view>`
+
+    const output1 = compileAndParse(input1, { srcMode: 'wx', mode: 'ali' })
+    const output2 = compileAndParse(input2, { srcMode: 'wx', mode: 'ali' })
+    const output3 = compileAndParse(input3, { srcMode: 'wx', mode: 'ali' })
+
+    expect(output1).toBe('<view key="{{index}}" a:for="{{list}}" a:for-index="index">123</view>')
+    expect(output2).toBe('<view a:for="{{list}}" a:for-index="index" a:key="k">123</view>')
+    expect(output3).toBe('<view a:for="{{list}}" a:for-index="index">123</view>')
+  })
+
   it('should trans event binding for tt miniapp', function () {
     const input1 = `<test-comp1 bind:click="clickHandler">123</test-comp1>`
     const input1b = `<test-comp1 bindclick="clickHandler">123</test-comp1>`

@@ -106,6 +106,25 @@ module.exports = function getSpec ({ warn, error }) {
         swan () {
           return false
         },
+        ali (obj, data) {
+          const attrsMap = data.el.attrsMap
+          const indexName = attrsMap['wx:for-index'] || 'index'
+          const keyName = attrsMap['wx:key'] || null
+          if (!keyName) {
+            return false
+          }
+          if (indexName === keyName) {
+            return {
+              name: 'key',
+              value: `{{${keyName}}}`
+            }
+          } else {
+            return {
+              name: 'a:key',
+              value: keyName
+            }
+          }
+        },
         web ({ value }, { el }) {
           // vue的template中不能包含key，对应于小程序中的block
           if (el.tag === 'block') return false
