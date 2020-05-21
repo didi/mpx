@@ -99,6 +99,8 @@ export function extendEvent (e, extendObj = {}) {
 export function inheritEvent (type, oe, detail = {}) {
   detail = Object.assign({}, oe.detail, detail)
   const ne = getCustomEvent(type, detail)
+  ne.target = oe.target
+  ne.currentTarget = oe.currentTarget
   ne.stopPropagation = oe.stopPropagation.bind(oe)
   ne.preventDefault = oe.preventDefault.bind(oe)
   return ne
