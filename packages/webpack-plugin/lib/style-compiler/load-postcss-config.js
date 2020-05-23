@@ -20,6 +20,7 @@ module.exports = function loadPostcssConfig (loaderContext, inlineConfig = {}) {
     if (config.ctx) {
       ctx.options = config.ctx
     }
+    Object.assign(ctx, inlineConfig.defs)
     loaded = load(ctx, config.path, { argv: false }).catch(err => {
       // postcss-load-config throws error when no config file is found,
       // but for us it's optional. only emit other errors

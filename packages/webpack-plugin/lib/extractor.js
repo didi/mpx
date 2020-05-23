@@ -89,6 +89,7 @@ module.exports = function (content) {
   if (index === -1) {
     // 需要返回路径或产生副作用
     switch (type) {
+      // styles中index为-1就两种情况，一种是.mpx中使用src引用样式，第二种为css-loader中处理@import
       case 'styles':
         if (issuerFile) {
           let relativePath = toPosix(path.relative(path.dirname(issuerFile), file))
@@ -96,6 +97,19 @@ module.exports = function (content) {
           if (fromImport) {
             resultSource = `module.exports = ${JSON.stringify(relativePath)};`
           } else {
+            const issuer = this._module.issuer
+            // todo 此处只同步issuer模块的文件依赖不能保障完全正确，理想状态下还应该同步issuerFile对应的内联样式模块中的文件依赖，因为内联样式模块还可能通过url或者是@import引入新的文件依赖；
+            // todo 在当前架构设计下src样式模块和内联样式模块无法保障处理顺序，此时可能无法拿到内联样式模块的文件依赖；
+            // todo 当前做法能够保障大多数场景下的正确，先作为临时处理方式，待后续优化。
+            // todo 这种模块间在构建期相互影响的设计模式存在很大不可控制性，后续优化时考虑全面移除该类设计。
+            if (issuer) {
+              issuer.buildInfo.fileDependencies.forEach((dep) => {
+                this.addDependency(dep)
+              })
+              issuer.buildInfo.contextDependencies.forEach((dep) => {
+                this.addContextDependency(dep)
+              })
+            }
             sideEffects = (additionalAssets) => {
               additionalAssets[issuerFile] = additionalAssets[issuerFile] || []
               additionalAssets[issuerFile].prefix = additionalAssets[issuerFile].prefix || []

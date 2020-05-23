@@ -37,7 +37,7 @@ module.exports = function (json, options, rawCallback) {
   if (!json) {
     return callback()
   }
-
+  // 由于json需要提前读取在template处理中使用，src的场景已经在loader中处理了，此处无需考虑json.src的场景
   try {
     jsonObj = JSON.parse(json.content)
   } catch (e) {

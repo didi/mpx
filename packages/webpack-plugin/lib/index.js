@@ -550,18 +550,20 @@ class MpxWebpackPlugin {
           'createPage',
           'createComponent',
           'createStore',
-          'toPureObject',
-          'mixin: injectMixins',
+          'createStoreWithThis',
+          'mixin',
           'injectMixins',
+          'toPureObject',
           'observable',
-          'extendObservable',
           'watch',
           'use',
           'set',
-          'get',
           'remove',
+          'delete: del',
           'setConvertRule',
-          'createAction'
+          'getMixin',
+          'getComputed',
+          'implement'
         ].reduce((map, api) => {
           map[api] = true
           return map
@@ -803,7 +805,9 @@ if(!context.console) {
       if (this.options.generateBuildMap) {
         const pagesMap = compilation.__mpx__.pagesMap
         const componentsPackageMap = compilation.__mpx__.componentsMap
-        const componentsMap = Object.keys(componentsPackageMap).map(item => componentsPackageMap[item]).reduce((pre, cur) => { return { ...pre, ...cur } }, {})
+        const componentsMap = Object.keys(componentsPackageMap).map(item => componentsPackageMap[item]).reduce((pre, cur) => {
+          return { ...pre, ...cur }
+        }, {})
         const outputMap = JSON.stringify({ ...pagesMap, ...componentsMap })
         compilation.assets['../outputMap.json'] = {
           source: () => {

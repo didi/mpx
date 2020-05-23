@@ -78,7 +78,7 @@ module.exports = function (content) {
       } else {
         try {
           const source = raw.toString('utf-8')
-          const text = mpxJSON.compileMPXJSONText({ source, mode, defs, filePath: _src })
+          const text = mpxJSON.compileMPXJSONText({ source, defs, filePath: _src })
           callback(null, text)
         } catch (e) {
           callback(e)

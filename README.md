@@ -36,14 +36,14 @@ Mpx具有以下功能特性：
 ## 安装使用
 
 ```bash
-# 安装mpx命令行工具
+# 安装mpx脚手架工具
 npm i -g @mpxjs/cli
 
 # 初始化项目
-mpx init <project-name>
+mpx init mpx-project
 
 # 进入项目目录
-cd <project-name>
+cd mpx-project
 
 # 安装依赖
 npm i
@@ -164,12 +164,12 @@ npm run build
 </style>
 ```
 
+更多示例请查看[官方示例项目](https://github.com/didi/mpx/tree/master/examples)
+
 
 ## 文档
 
 https://didi.github.io/mpx
-
-[官方示例项目](https://github.com/didi/mpx/tree/master/examples)
 
 ## 设计思路
 
@@ -224,3 +224,9 @@ Mpx的核心设计思路为增强，不同于业内大部分小程序框架将we
 <img alt="Mpx-QQ群" src="https://dpubstatic.udache.com/static/dpubimg/ArcgC_eEr/temp_qrcode_share_374632411.png" width="300">
 
 图片因github网络问题导致不可见的朋友可以点击该链接：https://s.didi.cn/rod
+
+## 招聘
+
+滴滴出行小程序团队绝赞招人中，欢迎各位前端同学加入我们，开发日活过千万的头部小程序应用滴滴出行，并参与Mpx框架技术建设。
+
+感兴趣的同学请将简历投递至[donghongping@didiglobal.com](donghongping@didiglobal.com)，社招校招均可~
