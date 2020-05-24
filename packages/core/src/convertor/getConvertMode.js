@@ -3,7 +3,8 @@ const CONVERTMODES = {
   'wx-web': 'wxToWeb',
   'wx-swan': 'wxToSwan',
   'wx-qq': 'wxToQq',
-  'wx-tt': 'wxToTt'
+  'wx-tt': 'wxToTt',
+  'wx-qa': 'wxToQa'
 }
 
 export function getConvertMode (srcMode) {

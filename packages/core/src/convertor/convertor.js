@@ -9,6 +9,7 @@ import wxToWebRule from './wxToWeb'
 import wxToSwanRule from './wxToSwan'
 import wxToQqRule from './wxToQq'
 import wxToTtRule from './wxToTt'
+import wxToQaRule from './wxToQa'
 
 // 生命周期模板
 const lifecycleTemplates = {
@@ -56,8 +57,8 @@ const RULEMAPS = {
   wxToSwan: { ...defaultConvertRule, ...wxToSwanRule },
   wxToQq: { ...defaultConvertRule, ...wxToQqRule },
   wxToTt: { ...defaultConvertRule, ...wxToTtRule },
-  wxToAli: wxToAliRule // 微信转支付宝rule
-
+  wxToAli: wxToAliRule, // 微信转支付宝rule
+  wxToQa: wxToQaRule
 }
 
 // 外部控制默认转换规则
