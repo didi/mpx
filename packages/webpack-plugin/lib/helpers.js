@@ -270,9 +270,7 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
           moduleId,
           scoped: !!scoped,
           sourceMap: needCssSourceMap,
-          transRpx: options.transRpx,
-          comment: options.comment,
-          designWidth: options.designWidth
+          transRpx: options.transRpx
         })
       // normalize scss/sass/postcss if no specific loaders have been provided
       if (!loaders[lang]) {

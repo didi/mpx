@@ -109,6 +109,8 @@ class MpxWebpackPlugin {
       return externalsMap[external] || external
     })
     options.forceUsePageCtor = options.forceUsePageCtor || false
+    options.postcssInlineConfig = options.postcssInlineConfig || {}
+    options.transRpxRules = options.transRpxRules || []
     this.options = options
   }
 
