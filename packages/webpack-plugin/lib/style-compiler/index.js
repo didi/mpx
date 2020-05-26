@@ -17,15 +17,6 @@ module.exports = function (css, map) {
   const mainCompilation = getMainCompilation(this._compilation)
   const mpx = mainCompilation.__mpx__
   const defs = mpx.defs
-  const warn = (msg) => {
-    this.emitWarning(
-      new Error('[style compiler][' + this.resource + ']: ' + msg)
-    )
-  }
-
-  if (loaderOptions.transRpx) {
-    warn('Mpx loader option [transRpx] is deprecated now, please use mpx webpack plugin config [transRpxRules] instead!')
-  }
 
   const transRpxRulesRaw = mpx.transRpxRules || loaderOptions.transRpx
 

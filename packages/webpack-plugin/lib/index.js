@@ -61,16 +61,19 @@ const externalsMap = {
   weui: /^weui-miniprogram/
 }
 
+const warnings = []
+const errors = []
+
 class MpxWebpackPlugin {
   constructor (options = {}) {
     options.mode = options.mode || 'wx'
 
     options.srcMode = options.srcMode || options.mode
     if (options.mode !== options.srcMode && options.srcMode !== 'wx') {
-      throw new Error('MpxWebpackPlugin supports srcMode to be "wx" only temporarily!')
+      errors.push('MpxWebpackPlugin supports srcMode to be "wx" only temporarily!')
     }
     if (options.mode === 'web' && options.srcMode !== 'wx') {
-      throw new Error('MpxWebpackPlugin supports mode to be "web" only when srcMode is set to "wx"!')
+      errors.push('MpxWebpackPlugin supports mode to be "web" only when srcMode is set to "wx"!')
     }
     if (!Array.isArray(options.externalClasses)) {
       options.externalClasses = ['custom-class', 'i-class']
@@ -116,6 +119,9 @@ class MpxWebpackPlugin {
 
   static loader (options) {
     loaderOptions = options
+    if (loaderOptions.transRpx) {
+      warnings.push('Mpx loader option [transRpx] is deprecated now, please use mpx webpack plugin config [transRpxRules] instead!')
+    }
     return { loader: normalize.lib('loader'), options }
   }
 
@@ -155,10 +161,9 @@ class MpxWebpackPlugin {
     if (!compiler.__mpx__) {
       compiler.__mpx__ = true
     } else {
-      throw new Error('Multiple MpxWebpackPlugin instances exist in webpack compiler, please check webpack plugins config!')
+      errors.push('Multiple MpxWebpackPlugin instances exist in webpack compiler, please check webpack plugins config!')
     }
-    const warnings = []
-    const errors = []
+
     if (this.options.mode !== 'web') {
       // 强制设置publicPath为'/'
       if (compiler.options.output.publicPath && compiler.options.output.publicPath !== publicPath) {
@@ -279,6 +284,8 @@ class MpxWebpackPlugin {
           externalClasses: this.options.externalClasses,
           projectRoot: this.options.projectRoot,
           autoScopeRules: this.options.autoScopeRules,
+          transRpxRules: this.options.transRpxRules,
+          postcssInlineConfig: this.options.postcssInlineConfig,
           // native文件专用相关配置
           nativeOptions: Object.assign({
             cssLangs: ['css', 'less', 'stylus', 'scss', 'sass']

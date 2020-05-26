@@ -1,20 +1,4 @@
 <script>
-  function pruneCacheEntry (
-    cache,
-    keys,
-    count = 1
-  ) {
-    for (let i = keys.length - 1; --count >= 0 && i >= 0; i--) {
-      const key = keys[i]
-      const cached = cache[key]
-      if (cached) {
-        cached.componentInstance.$destroy()
-      }
-      delete cache[key]
-      remove(keys, key)
-    }
-  }
-
   function isDef (v) {
     return v !== undefined && v !== null
   }
@@ -43,60 +27,52 @@
     }
   }
 
+  function getVnodeKey (vnode) {
+    if (vnode && vnode.componentOptions) {
+      return vnode.key || vnode.componentOptions.Ctor.cid + (vnode.componentOptions.tag ? ('::' + (vnode.componentOptions.tag)) : '')
+    }
+  }
+
   export default {
     name: 'mpx-keep-alive',
     abstract: true,
-    created: function created () {
-      this.cache = {}
-      this.keys = []
-    },
-    destroyed: function destroyed () {
-      pruneCacheEntry(cache, keys, keys.length)
-    },
     render: function render () {
       const slot = this.$slots.default
       const vnode = getFirstComponentChild(slot)
-      const componentOptions = vnode && vnode.componentOptions
+      const vnodeKey = getVnodeKey(vnode)
       const router = window.__mpxRouter
-      if (componentOptions && router && vnode.data.routerView) {
-        const cache = this.cache
-        const keys = this.keys
-        const key = vnode.key == null
-          ? componentOptions.Ctor.cid + (componentOptions.tag ? ('::' + (componentOptions.tag)) : '')
-          : vnode.key
-        if (router.__mpxAction) {
-          switch (router.__mpxAction.type) {
-            case 'replace':
-              pruneCacheEntry(cache, keys)
-              break
-            case 'reLaunch':
-              pruneCacheEntry(cache, keys, keys.length)
-              break
-            case 'back':
-              pruneCacheEntry(cache, keys, router.__mpxAction.delta)
-              break
-          }
-          router.__mpxAction = null
-        } else {
-          if (window.history.length === router.__mpxHistoryLength) {
-            pruneCacheEntry(cache, keys)
-          }
-        }
-        router.__mpxHistoryLength = window.history.length
-
-        if (cache[key]) {
-          vnode.componentInstance = cache[key].componentInstance
-          // make current key freshest
-          remove(keys, key)
-          keys.push(key)
-        } else {
-          cache[key] = vnode
-          keys.push(key)
+      if (vnodeKey && router && vnode.data.routerView) {
+        if (router.needCache) {
+          router.needCache.vnode = vnode
+          router.needCache.vnodeKey = vnodeKey
+          router.needCache = null
         }
 
+        router.needRemove.forEach((removeItem) => {
+          if (
+            removeItem.vnode &&
+            removeItem.vnode.componentInstance &&
+            !removeItem.vnode.componentInstance._isDestroyed &&
+            router.stack.every((item) => {
+              return !(item.vnode && item.vnode.componentInstance === removeItem.vnode.componentInstance)
+            })
+          ) {
+            removeItem.vnode.componentInstance.$destroy()
+          }
+        })
+        router.needRemove.length = 0
+
+        const stack = router.stack
+        if (stack.length) {
+          const current = stack[stack.length - 1]
+          if (current.vnode && current.vnodeKey === vnodeKey && current.vnode.componentInstance) {
+            vnode.componentInstance = current.vnode.componentInstance
+          }
+        }
         vnode.data.keepAlive = true
-        router.__mpxActiveVnode = vnode
       }
+
+      router.__mpxActiveVnode = vnode
       return vnode || (slot && slot[0])
     }
   }
