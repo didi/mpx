@@ -69,6 +69,14 @@
             vnode.componentInstance = current.vnode.componentInstance
           }
         }
+
+        if (router.__mpxAction) {
+          if (router.__mpxAction.type === 'reLaunch') {
+            // reLaunch时修改新vnode的key, 确保任何情况下都新创建组件实例
+            vnode.key = (vnode.key || '') + router.__mpxAction.reLaunchCount
+          }
+          router.__mpxAction = null
+        }
         vnode.data.keepAlive = true
       }
 

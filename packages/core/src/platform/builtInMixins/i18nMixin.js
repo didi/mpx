@@ -4,8 +4,9 @@ import { observe } from '../../observer/index'
 export default function i18nMixin () {
   if (global.i18n) {
     return {
-      data: {
-        mpxLocale: global.i18n.locale || 'zh-CN'
+      // 替换为dataFn注入，再每次组件创建时重新执行获取，处理reLaunch后无法拿到更新后语言的问题
+      data () {
+        return { mpxLocale: global.i18n.locale || 'zh-CN' }
       },
       [BEFORECREATE] () {
         this.$i18n = { locale: global.i18n.locale }

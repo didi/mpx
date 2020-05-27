@@ -84,14 +84,7 @@ export default function processOption (
             window.__mpxRouter.needRemove = stack
             window.__mpxRouter.stack = [insertItem]
             window.__mpxRouter.needCache = insertItem
-            if (to.path !== action.path) {
-              return next({
-                path: action.path,
-                replace: true
-              })
-            }
         }
-        window.__mpxRouter.__mpxAction = null
         next()
       })
       // 处理visibilitychange时触发当前活跃页面组件的onshow/onhide

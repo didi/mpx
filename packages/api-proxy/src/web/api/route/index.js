@@ -76,18 +76,21 @@ function reLaunch (options = {}) {
   const router = window.__mpxRouter
   if (router) {
     const delta = router.stack.length - 1
-    // 通过__mpxAction标识当前是个reLaunch操作，在全局的beforeEnter钩子中决定back之后是否需要进行replace操作
+    let reLaunchCount = router.currentRoute.query.reLaunchCount || 0
     router.__mpxAction = {
       type: 'reLaunch',
-      path: options.url
+      path: options.url,
+      reLaunchCount
     }
     if (delta > 0) {
       router.go(-delta)
-    } else {
-      router.replace({
-        path: options.url
-      })
     }
+    router.replace({
+      path: options.url,
+      query: {
+        reLaunchCount: ++reLaunchCount
+      }
+    })
     const res = { errMsg: 'reLaunch:ok' }
     webHandleSuccess(res, options.success, options.complete)
     return Promise.resolve(res)
