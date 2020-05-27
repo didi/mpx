@@ -80,17 +80,22 @@ function reLaunch (options = {}) {
     router.__mpxAction = {
       type: 'reLaunch',
       path: options.url,
-      reLaunchCount
+      reLaunchCount: ++reLaunchCount,
+      replaced: false,
+      reLaunched: false
     }
+    // 在需要操作后退时，先操作后退，在beforeEach中基于当前action通过next()进行replace操作，避免部分浏览器的表现不一致
     if (delta > 0) {
       router.go(-delta)
+    } else {
+      router.__mpxAction.replaced = true
+      router.replace({
+        path: options.url,
+        query: {
+          reLaunchCount
+        }
+      })
     }
-    router.replace({
-      path: options.url,
-      query: {
-        reLaunchCount: ++reLaunchCount
-      }
-    })
     const res = { errMsg: 'reLaunch:ok' }
     webHandleSuccess(res, options.success, options.complete)
     return Promise.resolve(res)

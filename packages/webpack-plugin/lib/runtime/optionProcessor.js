@@ -81,9 +81,22 @@ export default function processOption (
             window.__mpxRouter.needCache = insertItem
             break
           case 'reLaunch':
-            window.__mpxRouter.needRemove = stack
-            window.__mpxRouter.stack = [insertItem]
-            window.__mpxRouter.needCache = insertItem
+            if (!action.reLaunched) {
+              action.reLaunched = true
+              window.__mpxRouter.needRemove = stack
+              window.__mpxRouter.stack = [insertItem]
+              window.__mpxRouter.needCache = insertItem
+            }
+            if (!action.replaced) {
+              action.replaced = true
+              return next({
+                path: action.path,
+                query: {
+                  reLaunchCount: action.reLaunchCount
+                },
+                replace: true
+              })
+            }
         }
         next()
       })

@@ -113,7 +113,7 @@ class MpxWebpackPlugin {
     })
     options.forceUsePageCtor = options.forceUsePageCtor || false
     options.postcssInlineConfig = options.postcssInlineConfig || {}
-    options.transRpxRules = options.transRpxRules || []
+    options.transRpxRules = options.transRpxRules || null
     this.options = options
   }
 
