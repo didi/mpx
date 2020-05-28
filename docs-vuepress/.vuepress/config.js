@@ -7,6 +7,7 @@ const sidebar = {
         'basic/start',
         'basic/intro',
         'basic/single-file',
+        'basic/ide',
         'basic/template',
         'basic/reactive',
         'basic/class-style-binding',
