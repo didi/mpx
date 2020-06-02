@@ -508,7 +508,7 @@ actions: {
 
 ## Modules
 
-> Mpx 虽然支持了 modules，但并不推荐使用。在 Mpx 中，我们更推荐使用[多实例模式](#多实例)进行对应用状态进行模块划分
+> Mpx 虽然支持了 modules，但并不推荐使用。在 Mpx 中，我们更推荐使用[多实例模式](#多实例 store)进行对应用状态进行模块划分
 
 在 Mpx 中，modules 的设计与 vuex 中基本保持一致，在 createStore 中将子模块配置传入 modules 配置项中即可使用：
 
@@ -614,11 +614,11 @@ createComponent({
   computed: {
     // 通过函数引入
     ...store.mapState({
-      aName: state => state.a.name
+      nameA: state => state.a.name
     }),
     // 通过路径字符串引入
     ...store.mapState({
-      aName2: 'a.name'
+      nameA2: 'a.name'
     }),
     // 通过传入模块路径引入
     ...store.mapState('a', ['name']),
@@ -630,134 +630,138 @@ createComponent({
 
 ## 多实例 store
 
-允许创建多实例，各store实例彼此互相独立，状态互不干扰，不需要考虑命名空间的问题，而且可以随时动态创建一个新的store，更灵活且移植性更高。相对较于[modules](#module)，更推荐多实例模式
+在 Mpx 中，我们允许在一个应用下创建多个 store 实例，进行模块化分布式的数据管理，同时提供了 deps 声明模块依赖的机制，让用户自由组合多个 store 实例并基于这些已有的 store 创建新的继承 store。在实际业务使用中，我们发现多实例模式的灵活性远高于 module，更加适合跨团队合作当中的数据管理。
 
-### 联合多个store实例
-
-如果需要使用外部store的数据，`mpx` 也提供的createStore支持传入`deps`参数，表示注入的外部store。在store内部访问外部store的资源使用如下方式（都是加namespace形式的`path访问`模式）。由于注入store的各部分（state, getters, mutations, actions）是 **以key作为namespace** merge在options对应属性内部的，所以deps的key要防止冲突
-
-### 基础例子
-
-例子：
+使用多实例 store 的方式非常简单，你只需要多次调用 `createStore` api 创建出多个 store 示例，并分别将其注入到组件中即可使用，简单示例如下：
 
 ```js
-import {createStore} from '@mpxjs/core'
+import { createComponent, createStore } from '@mpxjs/core'
 
-const store1 = createStore({
+const storeA = createStore({
   state: {
-    a: 1
-  },
-  getters: {
-    getA(state) {
-      return state.a
-    }
+    countA: 0
   },
   mutations: {
-    setA(state, payload) {
-      state.a = payload
-    }
-  },
-  actions: {
-    actionA({commit}, payload) {
-      commit('setA', payload)
+    incrementA (state) {
+      state.countA++
     }
   }
 })
-const store2 = createStore({
+
+const storeB = createStore({
   state: {
-    b: 1
-  },
-  getters: {
-    getB(state, getters) {
-      // 访问外部store1的数据，按路径访问
-      return state.b + state.store1.a + getters.store1.getA
-    }
+    countB: 0
   },
   mutations: {
-    setB(state, payload) {
-      state.b = payload
+    incrementB (state) {
+      state.countB++
     }
-  },
-  actions: {
-    actionB({dispatch, commit}, payload) {
-      // 同理，mutations、actions访问外部store1的方法时，也是按路径访问
-      commit('store1.setA', payload)
-      dispatch('store1.actionA', payload)
-      commit('setB', payload)
-    }
-  },
-  deps: {
-    store1
   }
 })
 
-export {store1, store2}
-```
-
-### 多store注入下的'store.mapGetters、store.mapMuations、store.mapActions'
-
-```js
-
-import {createStore, createComponent} from '@mpxjs/core'
-const store1 = createStore({
-  state: {
-    a: 1
-  },
-  getters: {
-    getA(state, getters) {
-      return state.b + state.store1.a + getters.store1.getA
-    }
-  },
-  mutations: {
-    setA(state, payload) {
-      state.a = payload
-    }
-  },
-  actions: {
-    actionA({commit}, payload) {
-      commit('setA', payload)
-    }
-  }
-})
-const store2 = createStore({
-  state: {
-    b: 1
-  },
-  getters: {
-    getB(state) {
-      return state.b + state.store1.a
-    }
-  },
-  mutations: {
-    setB(state, payload) {
-      state.b = payload
-    }
-  },
-  actions: {
-    actionB({dispatch, commit}, payload) {
-      commit('store1.setA', payload)
-      dispatch('store1.actionA', payload)
-      commit('setB', payload)
-    }
-  },
-  deps: {
-    // xx: store1
-    store1
-  }
-})
-
-// 组件内部使用store
 createComponent({
   computed: {
-    ...store2.mapGetters(['getB']),
-    // 对于依赖store1的引入，可以使用以下两种方式，类似的mapMutations、mapActions, mapState
-    ...store2.mapgetters({
-      getA: 'store1.getA'
-    }),
-    ...store2.mapGetters('store1', ['getA'])
+    // ...
+    ...storeA.mapState(['countA']),
+    ...storeB.mapState(['countB'])
+  },
+  methods: {
+    // ...
+    ...storeA.mapMutations(['incrementA']),
+    ...storeB.mapMutations(['incrementB'])
   }
 })
 ```
+
+> 可以看到 Mpx 中的 map 辅助方法都挂载在 store 实例上，正是为了支持多实例 store 的实现
+
+### 合并继承多实例 store
+
+在实际的跨团队业务当中，我们既希望不同团队间的数据管理尽量解耦，也希望一些共同的部分能够复用，这就要求我们的 store 实例可以以某种方式组合起来使用，我们提供了 deps 能来实现多实例 store 的合并与继承。
+
+承接上面的示例，我们基于 storeA 和 storeB 创建一个新的 storeC，在 storeC 当中可以定义自身的独立状态，也能基于 storeA 和 storeB 进行状态衍生：
+
+```js
+import { createComponent, createStore } from '@mpxjs/core'
+
+const storeA = createStore({
+  state: {
+    countA: 0
+  },
+  mutations: {
+    incrementA (state) {
+      state.countA++
+    }
+  }
+})
+
+const storeB = createStore({
+  state: {
+    countB: 0
+  },
+  mutations: {
+    incrementB (state) {
+      state.countB++
+    }
+  }
+})
+
+const storeC = createStore({
+  state: {
+    countC: 0
+  },
+  getters: {
+    abc (state) {
+      // 此处 state.storeA 指向了原始的 storeA.state
+      return state.storeA.countA + state.storeB.countB + state.countC
+    }
+  },
+  mutations: {
+    incrementC (state) {
+      state.countC++
+    }
+  },
+  actions: {
+    incrementB ({ commit }) {
+      // storeC内部也可以通过命名空间路径的方式提交 storeB 的 mutation
+      commit('storeB.incrementB')
+    }
+  },
+  // 此处 deps 声明了 storeC 的依赖，依赖中的 state / getters / mutations / actions 都会以 deps 中的 key 为命名空间存放在 storeC 对应的域下
+  deps: {
+    storeA,
+    storeB
+  }
+})
+
+// 通过继承合并得到的 storeC，我们可以完整访问其依赖 storeA / storeB
+createComponent({
+  computed: {
+    // ...
+    // 使用路径字符串或函数映射，可以看出和 modules 中 mapState 的方式非常类似
+    ...storeC.mapState({
+      countA: 'storeA.countA',
+      countA2: state => state.storeA.countA
+    }),
+    // 传入命名空间参数映射 storeB 中的 countB
+    ...storeC.mapState('storeB', ['countB']),
+    // 映射基于 storeA/B/C 衍生得到的 getters
+    ...storeC.mapGetters(['abc'])
+  },
+  methods: {
+    // ...
+    // mutation不支持函数映射
+    // 下面代码以三种方式分别映射了increment、incrementB和incrementC
+    ...storeC.mapMutations({
+      incrementA: 'storeA.incrementA'
+    }),
+    ...storeC.mapMutations('storeB', ['incrementB']),
+    ...storeC.mapMutations(['incrementC'])
+  }
+})
+```
+
+> 简单来讲，作为 deps 的 store 会以注册在 deps 中的 key 值作为命名空间，将其原始的 state / getters / mutations / actions 存放在新生成 store 对应的域下，便于新 store 对其进行访问并衍生出新的数据或操作，如上述示例中，storeA.state 会存放在 storeC.state.storeA 中，对于 getters / mutations / actions 亦然。
 
 ## 在 Typescript 中使用 store
 

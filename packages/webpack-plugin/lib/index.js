@@ -117,7 +117,7 @@ class MpxWebpackPlugin {
     this.options = options
   }
 
-  static loader (options) {
+  static loader (options = {}) {
     loaderOptions = options
     if (loaderOptions.transRpx) {
       warnings.push('Mpx loader option [transRpx] is deprecated now, please use mpx webpack plugin config [transRpxRules] instead!')
@@ -125,19 +125,19 @@ class MpxWebpackPlugin {
     return { loader: normalize.lib('loader'), options }
   }
 
-  static pluginLoader (options) {
+  static pluginLoader (options = {}) {
     return { loader: normalize.lib('plugin-loader'), options }
   }
 
-  static wxsPreLoader (options) {
+  static wxsPreLoader (options = {}) {
     return { loader: normalize.lib('wxs/wxs-pre-loader'), options }
   }
 
-  static urlLoader (options) {
+  static urlLoader (options = {}) {
     return { loader: normalize.lib('url-loader'), options }
   }
 
-  static fileLoader (options) {
+  static fileLoader (options = {}) {
     return { loader: normalize.lib('file-loader'), options }
   }
 
