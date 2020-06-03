@@ -114,6 +114,7 @@ class MpxWebpackPlugin {
     options.forceUsePageCtor = options.forceUsePageCtor || false
     options.postcssInlineConfig = options.postcssInlineConfig || {}
     options.transRpxRules = options.transRpxRules || null
+    options.auditResource = options.auditResource || false
     this.options = options
   }
 
@@ -243,6 +244,13 @@ class MpxWebpackPlugin {
 
     let mpx
 
+    // staticResourceHit需要长效保持记录哪些资源是静态资源，避免后续误用缓存
+    const staticResourceHit = {}
+    // staticResourceMap由于watch后存在大量遗漏，需要长效保持
+    const staticResourceMap = {
+      main: {}
+    }
+
     compiler.hooks.thisCompilation.tap('MpxWebpackPlugin', (compilation, { normalModuleFactory }) => {
       compilation.warnings = compilation.warnings.concat(warnings)
       compilation.errors = compilation.errors.concat(errors)
@@ -260,16 +268,14 @@ class MpxWebpackPlugin {
             main: {}
           },
           // 静态资源(图片，字体，独立样式)等，依照所属包进行记录，冗余存储，同上
-          staticResourceMap: {
-            main: {}
-          },
-          hasApp: false,
+          staticResourceMap,
           // 记录静态资源首次命中的分包，当有其他分包再次引用了同样的静态资源时，对其request添加packageName query以避免模块缓存导致loader不再执行
-          staticResourceHit: {},
+          staticResourceHit,
           loaderOptions,
           extractedMap: {},
           extractSeenFile: {},
           usingComponents: [],
+          hasApp: false,
           // todo es6 map读写性能高于object，之后会逐步替换
           vueContentCache: new Map(),
           currentPackageRoot: '',
@@ -308,7 +314,7 @@ class MpxWebpackPlugin {
           // 3. 分包引用且无其他包引用的资源输出至当前分包
           // 4. 分包引用且其他分包也引用过的资源，重复输出至当前分包
           // 5. 当用户通过packageName query显式指定了资源的所属包时，输出至指定的包
-          getPackageInfo (resource, { outputPath, isStatic, error }) {
+          getPackageInfo: (resource, { outputPath, isStatic, error, warn }) => {
             let packageRoot = ''
             let packageName = 'main'
             const currentPackageRoot = mpx.currentPackageRoot
@@ -325,6 +331,16 @@ class MpxWebpackPlugin {
                 }
               } else if (currentPackageRoot) {
                 packageName = packageRoot = currentPackageRoot
+              }
+
+              if (this.options.auditResource) {
+                if (this.options.auditResource !== 'component' || !isStatic) {
+                  Object.keys(resourceMap).filter(key => key !== 'main').forEach((key) => {
+                    if (resourceMap[key][resourcePath] && key !== packageName) {
+                      warn && warn(new Error(`当前${isStatic ? '静态' : '组件'}资源${resourcePath}在分包${key}和分包${packageName}中都有引用，会分别输出到两个分包中，为了总体积最优，可以在主包中建立引用声明以消除资源输出冗余！`))
+                    }
+                  })
+                }
               }
             }
 

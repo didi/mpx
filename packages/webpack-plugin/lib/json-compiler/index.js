@@ -260,6 +260,9 @@ module.exports = function (raw = '{}') {
         isStatic: false,
         error: (err) => {
           this.emitError(err)
+        },
+        warn: (err) => {
+          this.emitWarning(err)
         }
       })
       const componentPath = packageInfo.outputPath
