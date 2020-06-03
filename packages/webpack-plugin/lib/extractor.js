@@ -65,7 +65,7 @@ module.exports = function (content) {
           error: (err) => {
             this.emitError(err)
           },
-          warn:(err) => {
+          warn: (err) => {
             this.emitWarning(err)
           }
         }).outputPath
