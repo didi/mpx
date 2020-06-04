@@ -246,10 +246,6 @@ class MpxWebpackPlugin {
 
     // staticResourceHit需要长效保持记录哪些资源是静态资源，避免后续误用缓存
     const staticResourceHit = {}
-    // staticResourceMap由于watch后存在大量遗漏，需要长效保持
-    const staticResourceMap = {
-      main: {}
-    }
 
     compiler.hooks.thisCompilation.tap('MpxWebpackPlugin', (compilation, { normalModuleFactory }) => {
       compilation.warnings = compilation.warnings.concat(warnings)
@@ -268,7 +264,9 @@ class MpxWebpackPlugin {
             main: {}
           },
           // 静态资源(图片，字体，独立样式)等，依照所属包进行记录，冗余存储，同上
-          staticResourceMap,
+          staticResourceMap: {
+            main: {}
+          },
           // 记录静态资源首次命中的分包，当有其他分包再次引用了同样的静态资源时，对其request添加packageName query以避免模块缓存导致loader不再执行
           staticResourceHit,
           loaderOptions,
@@ -374,9 +372,10 @@ class MpxWebpackPlugin {
         }
       }
 
-      if (splitChunksPlugin) {
+
+      compilation.hooks.finishModules.tap('MpxWebpackPlugin', (modules) => {
         // 自动跟进分包配置修改splitChunksPlugin配置
-        compilation.hooks.finishModules.tap('MpxWebpackPlugin', (modules) => {
+        if (splitChunksPlugin) {
           let needInit = false
           Object.keys(mpx.componentsMap).forEach((packageName) => {
             if (!splitChunksOptions.cacheGroups.hasOwnProperty(packageName)) {
@@ -387,8 +386,19 @@ class MpxWebpackPlugin {
           if (needInit) {
             splitChunksPlugin.options = SplitChunksPlugin.normalizeOptions(splitChunksOptions)
           }
+        }
+        // 处理dll产生的external模块
+        modules.forEach((module) => {
+          if (module.external && module.userRequest.startsWith('dll-reference ')) {
+            const getSourceStringRaw = module.getSourceString
+            module.getSourceString = function (runtime) {
+              debugger
+              return getSourceStringRaw.call(this, runtime)
+            }
+          }
         })
-      }
+      })
+
 
       compilation.hooks.optimizeModules.tap('MpxWebpackPlugin', (modules) => {
         modules.forEach((module) => {

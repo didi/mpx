@@ -435,8 +435,8 @@ module.exports = function (raw = '{}') {
           ...getOtherConfig(subPackage)
         }
         mpx.currentPackageRoot = tarRoot
-        mpx.componentsMap[tarRoot] = mpx.componentsMap[tarRoot] || {}
-        mpx.staticResourceMap[tarRoot] = mpx.staticResourceMap[tarRoot] || {}
+        mpx.componentsMap[tarRoot] = {}
+        mpx.staticResourceMap[tarRoot] = {}
         processPages(subPackage.pages, srcRoot, tarRoot, context, callback)
       } else {
         callback()
