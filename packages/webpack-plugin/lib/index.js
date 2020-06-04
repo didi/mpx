@@ -392,7 +392,10 @@ class MpxWebpackPlugin {
           if (module.external && module.userRequest.startsWith('dll-reference ')) {
             const getSourceStringRaw = module.getSourceString
             module.getSourceString = function (runtime) {
-              debugger
+              const chunk = this.getChunks()[0]
+              if (chunk) {
+                this.request = path.relative(path.dirname(chunk.name), this.request)
+              }
               return getSourceStringRaw.call(this, runtime)
             }
           }
