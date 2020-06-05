@@ -372,7 +372,6 @@ class MpxWebpackPlugin {
         }
       }
 
-
       compilation.hooks.finishModules.tap('MpxWebpackPlugin', (modules) => {
         // 自动跟进分包配置修改splitChunksPlugin配置
         if (splitChunksPlugin) {
@@ -401,7 +400,6 @@ class MpxWebpackPlugin {
           }
         })
       })
-
 
       compilation.hooks.optimizeModules.tap('MpxWebpackPlugin', (modules) => {
         modules.forEach((module) => {
