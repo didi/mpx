@@ -2,6 +2,7 @@
 
 const path = require('path')
 const ConcatSource = require('webpack-sources').ConcatSource
+const RawSource = require('webpack-sources').RawSource
 const ResolveDependency = require('./dependency/ResolveDependency')
 const InjectDependency = require('./dependency/InjectDependency')
 const ReplaceDependency = require('./dependency/ReplaceDependency')
@@ -372,7 +373,6 @@ class MpxWebpackPlugin {
         }
       }
 
-
       compilation.hooks.finishModules.tap('MpxWebpackPlugin', (modules) => {
         // 自动跟进分包配置修改splitChunksPlugin配置
         if (splitChunksPlugin) {
@@ -387,21 +387,7 @@ class MpxWebpackPlugin {
             splitChunksPlugin.options = SplitChunksPlugin.normalizeOptions(splitChunksOptions)
           }
         }
-        // 处理dll产生的external模块
-        modules.forEach((module) => {
-          if (module.external && module.userRequest.startsWith('dll-reference ')) {
-            const getSourceStringRaw = module.getSourceString
-            module.getSourceString = function (runtime) {
-              const chunk = this.getChunks()[0]
-              if (chunk) {
-                this.request = path.relative(path.dirname(chunk.name), this.request)
-              }
-              return getSourceStringRaw.call(this, runtime)
-            }
-          }
-        })
       })
-
 
       compilation.hooks.optimizeModules.tap('MpxWebpackPlugin', (modules) => {
         modules.forEach((module) => {
@@ -431,6 +417,20 @@ class MpxWebpackPlugin {
             }
           }
         })
+      })
+
+      compilation.moduleTemplates.javascript.hooks.content.tap('MpxWebpackPlugin', (source, module, options) => {
+        // 处理dll产生的external模块
+        if (module.external && module.userRequest.startsWith('dll-reference ') && mpx.mode !== 'web') {
+          const chunk = options.chunk
+          const request = module.request
+          let relativePath = path.relative(path.dirname(chunk.name), request)
+          if (!/^\.\.?\//.test(relativePath)) relativePath = './' + relativePath
+          if (chunk) {
+            return new RawSource(`module.exports = require("${relativePath}");\n`)
+          }
+        }
+        return source
       })
 
       compilation.hooks.additionalAssets.tapAsync('MpxWebpackPlugin', (callback) => {
