@@ -1390,7 +1390,8 @@ function processRef (el, options, meta) {
       meta.refs = []
     }
     let all = !!forScopes.length
-    let refClassName = `__ref_${val}_${++refId}`
+    // swan的page中进行selectComponent匹配时会将类名前面的__去除掉，refClassName用__开头会导致swan在page中的组件refs失效
+    let refClassName = `ref_${val}_${++refId}`
     // 支付宝中对于node进行的my.createSelectorQuery是在全局范围内进行的，需添加运行时组件id确保selector唯一
     if (type === 'node' && mode === 'ali') {
       refClassName += '_{{mpxCid}}'
