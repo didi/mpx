@@ -296,7 +296,8 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
         hasScoped,
         hasComment,
         isNative,
-        moduleId
+        moduleId,
+        root: projectRoot
       }
       templateCompiler = templateCompilerPath + '?' + JSON.stringify(templateCompilerOptions)
     }

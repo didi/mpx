@@ -279,7 +279,7 @@ class MpxWebpackPlugin {
           vueContentCache: new Map(),
           currentPackageRoot: '',
           wxsMap: {},
-          wxsConentMap: {},
+          wxsContentMap: {},
           forceDisableInject: this.options.forceDisableInject,
           forceUsePageCtor: this.options.forceUsePageCtor,
           resolveMode: this.options.resolveMode,

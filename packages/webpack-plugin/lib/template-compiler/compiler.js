@@ -1427,11 +1427,11 @@ function addWxsModule (meta, module, src) {
 }
 
 function addWxsContent (meta, module, content) {
-  if (!meta.wxsConentMap) {
-    meta.wxsConentMap = {}
+  if (!meta.wxsContentMap) {
+    meta.wxsContentMap = {}
   }
-  if (meta.wxsConentMap[module]) return true
-  meta.wxsConentMap[module] = content
+  if (meta.wxsContentMap[module]) return true
+  meta.wxsContentMap[module] = content
 }
 
 function postProcessWxs (el, meta) {
