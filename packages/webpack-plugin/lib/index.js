@@ -116,6 +116,7 @@ class MpxWebpackPlugin {
     options.postcssInlineConfig = options.postcssInlineConfig || {}
     options.transRpxRules = options.transRpxRules || null
     options.auditResource = options.auditResource || false
+    options.decodeHTMLText = options.decodeHTMLText || false
     this.options = options
   }
 
@@ -291,6 +292,7 @@ class MpxWebpackPlugin {
           autoScopeRules: this.options.autoScopeRules,
           transRpxRules: this.options.transRpxRules,
           postcssInlineConfig: this.options.postcssInlineConfig,
+          decodeHTMLText: this.options.decodeHTMLText,
           // native文件专用相关配置
           nativeOptions: Object.assign({
             cssLangs: ['css', 'less', 'stylus', 'scss', 'sass']

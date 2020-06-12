@@ -168,7 +168,7 @@ mpx.xfetch.fetch({
 	emulateJSON: true // 等价于header = {'content-type': 'application/x-www-form-urlencoded'}
 })
 ```
-### 自动过滤值为undefined和null的属性，其中null未转换成空字符串
+
 
 ## API-PROXY
 
