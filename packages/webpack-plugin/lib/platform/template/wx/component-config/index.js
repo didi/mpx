@@ -18,6 +18,7 @@ const form = require('./form')
 const input = require('./input')
 const picker = require('./picker')
 const pickerView = require('./picker-view')
+const pickerViewColumn = require('./picker-view-column')
 const slider = require('./slider')
 const switchComponent = require('./switch')
 const textarea = require('./textarea')
@@ -89,6 +90,7 @@ module.exports = function getComponentConfigs ({ warn, error }) {
     input({ print }),
     picker({ print }),
     pickerView({ print }),
+    pickerViewColumn({ print }),
     slider({ print }),
     switchComponent({ print }),
     textarea({ print }),
