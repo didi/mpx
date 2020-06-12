@@ -45,6 +45,7 @@ module.exports = function (raw) {
     mode,
     defs,
     globalMpxAttrsFilter: mpx.globalMpxAttrsFilter,
+    decodeHTMLText: mpx.decodeHTMLText,
     externalClasses,
     srcMode: localSrcMode || globalSrcMode,
     isNative,
