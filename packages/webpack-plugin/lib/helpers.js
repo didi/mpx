@@ -63,7 +63,7 @@ function ensureBang (loader) {
   }
 }
 
-function resolveLoaders (options, moduleId, isProduction, hasScoped, hasComment, usingComponents, needCssSourceMap, projectRoot = '') {
+function resolveLoaders (options, moduleId, isProduction, hasScoped, hasComment, usingComponents, needCssSourceMap, projectRoot) {
   let cssLoaderOptions = ''
   let wxmlLoaderOptions = ''
   let jsonCompilerOptions = ''
