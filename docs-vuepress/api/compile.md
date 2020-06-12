@@ -8,10 +8,22 @@ sidebarDepth: 2
 
 ## mpx-webpack-plugin
 
-### aaa
+### mode
 
-### bbb
+### srcMode
 
 ## mpx-loader
 
 ## mpx-url-loader
+
+## request query
+
+### resolve
+
+### packageName
+
+### root
+
+### fallback
+
+### async
