@@ -118,6 +118,10 @@ class MpxWebpackPlugin {
     options.transRpxRules = options.transRpxRules || null
     options.auditResource = options.auditResource || false
     options.decodeHTMLText = options.decodeHTMLText || false
+    options.nativeOptions = Object.assign({
+      cssLangs: ['css', 'less', 'stylus', 'scss', 'sass']
+    }, options.nativeOptions)
+    options.i18n = options.i18n || null
     this.options = options
   }
 
@@ -295,9 +299,7 @@ class MpxWebpackPlugin {
           postcssInlineConfig: this.options.postcssInlineConfig,
           decodeHTMLText: this.options.decodeHTMLText,
           // native文件专用相关配置
-          nativeOptions: Object.assign({
-            cssLangs: ['css', 'less', 'stylus', 'scss', 'sass']
-          }, this.options.nativeOptions),
+          nativeOptions: this.options.nativeOptions,
           defs: this.options.defs,
           i18n: this.options.i18n,
           appTitle: 'Mpx homepage',
