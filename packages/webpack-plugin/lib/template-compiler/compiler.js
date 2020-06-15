@@ -875,8 +875,8 @@ function parse (template, options) {
           // only preserve whitespace if its not right after a starting tag
           : preserveWhitespace && children.length ? ' ' : ''
       }
-
-      if (currentParent.tag !== config[mode].wxs.tag && options.decodeHTMLText) {
+      
+      if ((!config[mode].wxs || currentParent.tag !== config[mode].wxs.tag) && options.decodeHTMLText) {
         text = he.decode(text)
       }
 
