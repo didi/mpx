@@ -1,5 +1,6 @@
 import * as wxLifecycle from '../platform/patch/wx/lifecycle'
 import * as aliLifecycle from '../platform/patch/ali/lifecycle'
+import * as qaLifecycle from '../platform/patch/qa/lifecycle'
 import * as webLifecycle from '../platform/patch/web/lifecycle'
 import { mergeLifecycle } from './mergeLifecycle'
 import { type } from '../helper/utils'
@@ -28,6 +29,9 @@ if (__mpx_mode__ === 'web') {
   pageMode = ''
 } else if (__mpx_mode__ === 'ali') {
   lifecycleInfo = aliLifecycle
+  pageMode = ''
+} else if (__mpx_mode__ === 'qa') {
+  lifecycleInfo = qaLifecycle
   pageMode = ''
 } else {
   lifecycleInfo = wxLifecycle

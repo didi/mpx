@@ -28,28 +28,28 @@ function transformApiForProxy (context, currentInject) {
       configurable: false
     }
   })
-  // if (currentInject) {
-  //   if (currentInject.render) {
-  //     Object.defineProperties(context, {
-  //       __injectedRender: {
-  //         get () {
-  //           return currentInject.render.bind(context)
-  //         },
-  //         configurable: false
-  //       }
-  //     })
-  //   }
-  //   if (currentInject.getRefsData) {
-  //     Object.defineProperties(context, {
-  //       __getRefsData: {
-  //         get () {
-  //           return currentInject.getRefsData
-  //         },
-  //         configurable: false
-  //       }
-  //     })
-  //   }
-  // }
+  if (currentInject) {
+    if (currentInject.render) {
+      Object.defineProperties(context, {
+        __injectedRender: {
+          get () {
+            return currentInject.render.bind(context)
+          },
+          configurable: false
+        }
+      })
+    }
+    if (currentInject.getRefsData) {
+      Object.defineProperties(context, {
+        __getRefsData: {
+          get () {
+            return currentInject.getRefsData
+          },
+          configurable: false
+        }
+      })
+    }
+  }
 }
 
 function filterOptions (options, type) {

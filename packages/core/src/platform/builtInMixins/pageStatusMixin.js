@@ -58,7 +58,6 @@ export default function pageStatusMixin (mixinType) {
             handler (val) {
               if (val) {
                 const options = this.$rawOptions
-                console.log(options, 'optionsoptions')
                 if (val === 'show' && typeof options.pageShow === 'function') options.pageShow.call(this)
                 if (val === 'hide' && typeof options.pageHide === 'function') options.pageHide.call(this)
                 const pageLifetimes = options.pageLifetimes
