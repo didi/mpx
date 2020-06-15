@@ -33,17 +33,17 @@ Mpx具有以下功能特性：
 * 单元测试支持 (即将到来)
 * 快应用输出 (即将到来)
 
-## 使用
+## 安装使用
 
 ```bash
-# 安装mpx命令行工具
+# 安装mpx脚手架工具
 npm i -g @mpxjs/cli
 
 # 初始化项目
-mpx init <project-name>
+mpx init mpx-project
 
 # 进入项目目录
-cd <project-name>
+cd mpx-project
 
 # 安装依赖
 npm i
@@ -57,11 +57,119 @@ npm run build
 
 使用小程序开发者工具打开项目文件夹下dist中对应平台的文件夹即可预览效果。
 
+## 简单示例
+
+```html
+<template>
+  <!--动态样式-->
+  <view class="container" wx:style="{{dynamicStyle}}">
+    <!--数据绑定-->
+    <view class="title">{{title}}</view>
+    <!--计算属性数据绑定-->
+    <view class="title">{{reversedTitle}}</view>
+    <view class="list">
+      <!--循环渲染，动态类名，事件处理内联传参-->
+      <view wx:for="{{list}}" wx:key="id" class="list-item" wx:class="{{ {active:item.active} }}"
+            bindtap="handleTap(index)">
+        <view>{{item.content}}</view>
+        <!--循环内部双向数据绑定-->
+        <input type="text" wx:model="{{list[index].content}}"/>
+      </view>
+    </view>
+    <!--自定义组件获取实例，双向绑定，自定义双向绑定属性及事件-->
+    <custom-input wx:ref="ci" wx:model="{{customInfo}}" wx:model-prop="info" wx:model-event="change"/>
+    <!--动态组件，is传入组件名字符串，可使用的组件需要在json中注册，全局注册也生效-->
+    <component is="{{current}}"></component>
+    <!--显示/隐藏dom-->
+    <view class="bottom" wx:show="{{showBottom}}">
+      <!--模板条件编译，__mpx_mode__为框架注入的环境变量，条件判断为false的模板不会生成到dist-->
+      <view wx:if="{{__mpx_mode__ === 'wx'}}">wx env</view>
+      <view wx:if="{{__mpx_mode__ === 'ali'}}">ali env</view>
+    </view>
+  </view>
+</template>
+
+<script>
+  import { createPage } from '@mpxjs/core'
+
+  createPage({
+    data: {
+      // 动态样式和类名也可以使用computed返回
+      dynamicStyle: {
+        fontSize: '16px',
+        color: 'red'
+      },
+      title: 'hello world',
+      list: [
+        {
+          content: '全军出击',
+          id: 0,
+          active: false
+        },
+        {
+          content: '猥琐发育，别浪',
+          id: 1,
+          active: false
+        }
+      ],
+      customInfo: {
+        title: 'test',
+        content: 'test content'
+      },
+      current: 'com-a',
+      showBottom: false
+    },
+    computed: {
+      reversedTitle () {
+        return this.title.split('').reverse().join('')
+      }
+    },
+    watch: {
+      title: {
+        handler (val, oldVal) {
+          console.log(val, oldVal)
+        },
+        immediate: true
+      }
+    },
+    handleTap (index) {
+      // 处理函数直接通过参数获取当前点击的index，清晰简洁
+      this.list[index].active = !this.list[index].active
+    },
+    onReady () {
+      setTimeout(() => {
+        // 更新数据，同时关联的计算属性reversedTitle也会更新
+        this.title = '你好，世界'
+        // 此时动态组件会从com-a切换为com-b
+        this.current = 'com-b'
+      }, 1000)
+    }
+  })
+</script>
+
+<script type="application/json">
+  {
+    "usingComponents": {
+      "custom-input": "../components/custom-input",
+      "com-a": "../components/com-a",
+      "com-b": "../components/com-b"
+    }
+  }
+</script>
+
+<style lang="stylus">
+  .container
+    position absolute
+    width 100%
+</style>
+```
+
+更多示例请查看[官方示例项目](https://github.com/didi/mpx/tree/master/examples)
+
+
 ## 文档
 
 https://didi.github.io/mpx
-
-[官方示例项目](https://github.com/didi/mpx/tree/master/examples)
 
 ## 设计思路
 
@@ -116,3 +224,9 @@ Mpx的核心设计思路为增强，不同于业内大部分小程序框架将we
 <img alt="Mpx-QQ群" src="https://dpubstatic.udache.com/static/dpubimg/ArcgC_eEr/temp_qrcode_share_374632411.png" width="300">
 
 图片因github网络问题导致不可见的朋友可以点击该链接：https://s.didi.cn/rod
+
+## 招聘
+
+滴滴出行小程序团队绝赞招人中，欢迎各位前端同学加入我们，开发日活过千万的头部小程序应用滴滴出行，并参与Mpx框架技术建设。
+
+感兴趣的同学请将简历投递至[donghongping@didiglobal.com](donghongping@didiglobal.com)，社招校招均可~

@@ -12,8 +12,11 @@ export default function createApp (option, config = {}) {
 
   if (__mpx_mode__ === 'web') {
     global.currentOption = defaultOptions
+    global.getApp = function () {
+      return defaultOptions
+    }
   } else {
-    const finalAppOption = dissolveAttrs(mergeOptions(rawOptions, 'app', false), 'methods')
+    const finalAppOption = dissolveAttrs(defaultOptions, 'methods')
     const ctor = global.currentCtor || App
     config.customCtor ? config.customCtor(finalAppOption) : ctor(finalAppOption)
   }

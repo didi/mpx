@@ -16,7 +16,7 @@ module.exports = function (content) {
 
   // 处理内联wxs
   if (wxsModule) {
-    const wxsContentMap = mainCompilation.__mpx__.wxsConentMap
+    const wxsContentMap = mainCompilation.__mpx__.wxsContentMap
     const resourcePath = parseRequest(this.resource).resourcePath
     content = wxsContentMap[`${resourcePath}~${wxsModule}`] || content
   }

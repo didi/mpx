@@ -31,7 +31,8 @@ const COMPONENT_HOOKS = [
   'detached',
   'updated',
   'pageShow',
-  'pageHide'
+  'pageHide',
+  'definitionFilter'
 ]
 
 export const lifecycleProxyMap = {

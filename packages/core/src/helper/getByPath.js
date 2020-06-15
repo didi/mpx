@@ -26,7 +26,7 @@ function endStack () {
   // 开启栈或关闭栈都意味着前面的字符拼接截止
   propertyJoinOver()
   // 字符串栈直接拼接
-  const result = curStack.type === 'string' ? `'${curStack.value.join('')}'` : curStack.value
+  const result = curStack.type === 'string' ? '__mpx_str_' + curStack.value.join('') : curStack.value
   curStack = targetStacks.pop()
   // 将当前stack结果保存到父级stack里
   curStack.push(result)
@@ -85,9 +85,9 @@ function outPutByPath (context, path, isSimple, transfer) {
       } else if (Array.isArray(item)) {
         // 获取子数组的输出结果作为当前key
         key = outPutByPath(context, item, isSimple, transfer)
-      } else if (/^'.+'$/.test(item)) {
+      } else if (/^__mpx_str_/.test(item)) {
         // 字符串一定会被[]包裹，一定在子数组中
-        result = item.replace(/'/g, '')
+        result = item.replace('__mpx_str_', '')
       } else if (/^\d+$/.test(item)) {
         // 数字一定会被[]包裹，一定在子数组中
         result = +item

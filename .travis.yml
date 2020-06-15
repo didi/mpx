@@ -12,8 +12,8 @@ before_deploy:
   - npx gitbook-cli install
   - npx gitbook-cli build
   - cd ..
-  - npm run docs:build
-  - mv docs-vuepress/.vuepress/dist docs/_book/new
+#  - npm run docs:build
+#  - mv docs-vuepress/.vuepress/dist docs/_book/new
   - echo "//registry.npmjs.org/:_authToken=\${NPM_TOKEN}" >> $HOME/.npmrc 2> /dev/null
 deploy:
   - provider: pages

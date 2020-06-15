@@ -21,7 +21,7 @@ module.exports = function (raw) {
   const localSrcMode = loaderUtils.parseQuery(this.resourceQuery || '?').mode
   const packageName = mpx.currentPackageRoot || 'main'
   const componentsMap = mpx.componentsMap[packageName]
-  const wxsContentMap = mpx.wxsConentMap
+  const wxsContentMap = mpx.wxsContentMap
   const resourcePath = parseRequest(this.resource).resourcePath
   let scopedId
 
@@ -45,6 +45,7 @@ module.exports = function (raw) {
     mode,
     defs,
     globalMpxAttrsFilter: mpx.globalMpxAttrsFilter,
+    decodeHTMLText: mpx.decodeHTMLText,
     externalClasses,
     srcMode: localSrcMode || globalSrcMode,
     isNative,
@@ -56,9 +57,9 @@ module.exports = function (raw) {
   let ast = parsed.root
   let meta = parsed.meta
 
-  if (meta.wxsConentMap) {
-    for (let module in meta.wxsConentMap) {
-      wxsContentMap[`${resourcePath}~${module}`] = meta.wxsConentMap[module]
+  if (meta.wxsContentMap) {
+    for (let module in meta.wxsContentMap) {
+      wxsContentMap[`${resourcePath}~${module}`] = meta.wxsContentMap[module]
     }
   }
 
@@ -108,6 +109,7 @@ module.exports = function (raw) {
     this.addContextDependency(dep)
   })
 
+  // 删除issuer中上次注入的dependencies，避免issuer本身不需要更新时上次的注入代码残留
   issuer.dependencies = issuer.dependencies.filter((dep) => {
     return !dep.templateInject
   })
@@ -150,7 +152,7 @@ module.exports = function (raw) {
 
   for (let module in meta.wxsModuleMap) {
     isSync = false
-    const src = meta.wxsModuleMap[module]
+    const src = loaderUtils.urlToRequest(meta.wxsModuleMap[module], options.root)
     // 编译render函数只在mpx文件中运行，此处issuer的context一定等同于当前loader的context
     const expression = `require(${loaderUtils.stringifyRequest(this, src)})`
     const deps = []

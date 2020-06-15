@@ -149,7 +149,7 @@ export function defineGetterSetter (target, key, getValue, setValue, context) {
   Object.defineProperty(target, key, descriptor)
 }
 
-export function proxy (target, source, keys, readonly) {
+export function proxy (target, source, keys, readonly, onConflict) {
   keys = keys || Object.keys(source)
   keys.forEach((key) => {
     const descriptor = {
@@ -162,28 +162,14 @@ export function proxy (target, source, keys, readonly) {
     !readonly && (descriptor.set = function (val) {
       source[key] = val
     })
+    if (onConflict) {
+      if (key in target) {
+        if (onConflict(key) === false) return
+      }
+    }
     Object.defineProperty(target, key, descriptor)
   })
   return target
-}
-
-// todo 是否有深度merge的必要，考察vue中的做法
-// 此函数用于mergeMixins时对data进行深度merge
-export function merge (to, from) {
-  if (!from) return to
-  const keys = Object.keys(from)
-  for (let i = 0; i < keys.length; i++) {
-    let key = keys[i]
-    if (isPlainObject(from[key])) {
-      if (!isPlainObject(to[key])) {
-        to[key] = {}
-      }
-      merge(to[key], from[key])
-    } else {
-      to[key] = from[key]
-    }
-  }
-  return to
 }
 
 // 包含原型链上属性keys
@@ -484,6 +470,14 @@ export function diffAndCloneA (a, b) {
           clone[key] = deepDiffAndCloneA(a[key], sameClass ? b[key] : undefined, currentDiff)
           curPath = lastPath
         }
+        // 继承原始对象的freeze/seal/preventExtensions操作
+        if (Object.isFrozen(a)) {
+          Object.freeze(clone)
+        } else if (Object.isSealed(a)) {
+          Object.seal(clone)
+        } else if (!Object.isExtensible(a)) {
+          Object.preventExtensions(clone)
+        }
       } else if (Array.isArray(a)) {
         length = a.length
         clone = []
@@ -493,6 +487,14 @@ export function diffAndCloneA (a, b) {
           curPath += `[${i}]`
           clone[i] = deepDiffAndCloneA(a[i], sameClass ? b[i] : undefined, currentDiff)
           curPath = lastPath
+        }
+        // 继承原始数组的freeze/seal/preventExtensions操作
+        if (Object.isFrozen(a)) {
+          Object.freeze(clone)
+        } else if (Object.isSealed(a)) {
+          Object.seal(clone)
+        } else if (!Object.isExtensible(a)) {
+          Object.preventExtensions(clone)
         }
       } else if (a instanceof RegExp) {
         if (!currentDiff) setDiff(!sameClass || '' + a !== '' + b)
@@ -568,4 +570,11 @@ export function preProcessRenderData (renderData) {
     }
   })
   return processedRenderData
+}
+
+export function makeMap (arr) {
+  return arr.reduce((obj, item) => {
+    obj[item] = true
+    return obj
+  }, {})
 }

@@ -5,8 +5,6 @@
 
 /// <reference types="miniprogram-api-typings" />
 
-import exp = require("constants");
-
 type Data = object | (() => object)
 
 type PropType = StringConstructor | NumberConstructor | BooleanConstructor | ObjectConstructor | ArrayConstructor | null
@@ -158,14 +156,16 @@ declare function set (obj: object, key: string, value: any): any
 
 declare function observable<T extends object> (obj: T): T
 
-declare function remove (obj: object, key: string): any
+declare function del (obj: object, key: string): any
 
 export interface MpxComponentIns {
   $refs: ObjectOf<any>
 
   $set: typeof set
 
-  $remove: typeof remove
+  $remove: typeof del
+
+  $delete: typeof del
 
   $watch (expr: string | (() => any), handler: WatchHandler | WatchOptWithHandler, options?: WatchOpt): () => void
 
@@ -439,8 +439,17 @@ interface ConvertRule {
 }
 
 interface MpxConfig {
-  useStrictDiff: Boolean,
+  useStrictDiff: Boolean
   ignoreRenderError: Boolean
+  ignoreConflictWhiteList: Array<string>
+}
+
+type SupportedMode = 'wx' | 'ali' | 'qq' | 'swan' | 'tt' | 'web' | 'qa'
+
+interface ImplementOptions {
+  modes?: Array<SupportedMode>
+  processor?: () => any
+  remove?: Boolean
 }
 
 export function setConvertRule (rule: ConvertRule): void
@@ -464,9 +473,13 @@ export interface Mpx {
 
   use (plugin: ((...args: any) => any) | { install: (...args: any) => any, [key: string]: any }, ...rest: any): Mpx
 
+  implement (name: string, options?: ImplementOptions): void
+
   set: typeof set
 
-  remove: typeof remove
+  remove: typeof del
+
+  delete: typeof del
 
   setConvertRule: typeof setConvertRule
 

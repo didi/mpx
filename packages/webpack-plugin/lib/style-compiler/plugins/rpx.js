@@ -3,7 +3,8 @@ const pxRegExp = /\b(\d+(\.\d+)?)px\b/
 const pxRegExpG = /\b(\d+(\.\d+)?)px\b/g
 
 module.exports = postcss.plugin('rpx', (options = {}) => root => {
-  let defaultIgnoreComment = options.mode === 'all' ? 'use px' : 'use rpx'
+  const mode = options.mode || 'only'
+  const defaultIgnoreComment = mode === 'all' ? 'use px' : 'use rpx'
   const baseWidth = 750
   const designWidth = options.designWidth || 750
   const ratio = +(baseWidth / designWidth).toFixed(2)
@@ -32,11 +33,11 @@ module.exports = postcss.plugin('rpx', (options = {}) => root => {
     }
     rule.walkDecls(declaration => {
       if (ignore || isIgnoreComment(declaration.prev())) {
-        if (options.mode === 'only') {
+        if (mode === 'only') {
           transRpx(declaration)
         }
       } else {
-        if (options.mode === 'all') {
+        if (mode === 'all') {
           transRpx(declaration)
         }
       }

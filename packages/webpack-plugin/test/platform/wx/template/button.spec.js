@@ -37,4 +37,13 @@ describe('template should transform correct', function () {
 
     expect(errorFn).not.toHaveBeenCalled()
   })
+
+  it('should remain button\'s open-type for ali', function () {
+    const input = `<button wx:if="{{__mpx_mode__ === 'ali'}}" open-type="getAuthorize" scope="phoneNumber" onGetAuthorize="alipayPhonenumberLogin" onError="onGetPhoneNumberError">手机号授权登录</button>`
+    const output = compileAndParse(input)
+
+    expect(output).toBe(`<button open-type="getAuthorize" scope="phoneNumber" onGetAuthorize="alipayPhonenumberLogin" onError="onGetPhoneNumberError">手机号授权登录</button>`)
+
+    expect(errorFn).not.toHaveBeenCalled()
+  })
 })

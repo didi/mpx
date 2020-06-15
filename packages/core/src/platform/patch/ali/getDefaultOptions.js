@@ -1,7 +1,8 @@
 import MPXProxy from '../../../core/proxy'
-import customKey from '../customOptionKeys'
+import builtInKeysMap from '../builtInKeysMap'
 import mergeOptions from '../../../core/mergeOptions'
 import { error } from '../../../helper/log'
+import { diffAndCloneA } from '../../../helper/utils'
 
 function transformApiForProxy (context, currentInject) {
   const rawSetData = context.setData.bind(context)
@@ -64,9 +65,8 @@ function transformApiForProxy (context, currentInject) {
 
 function filterOptions (options, type) {
   const newOptions = {}
-  const ignoreProps = customKey
   Object.keys(options).forEach(key => {
-    if (ignoreProps.indexOf(key) !== -1 || (key === 'data' && typeof options[key] === 'function')) {
+    if (builtInKeysMap[key] || (key === 'data' && typeof options[key] === 'function')) {
       return
     }
     if (key === 'properties' || key === 'props') {
@@ -105,10 +105,11 @@ export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
           })
           this.__mpxProxy.forceUpdate(newData)
         } else {
-          // 此处发生变化的属性实例一定不同，只需浅比较即可确定发生变化的属性
+          // 由于支付宝中props透传父级setData的值，此处发生变化的属性实例一定不同，只需浅比较即可确定发生变化的属性
           Object.keys(nextProps).forEach(key => {
             if (!key.startsWith('$') && typeof nextProps[key] !== 'function' && nextProps[key] !== this.props[key]) {
-              this[key] = nextProps[key]
+              // 由于支付宝中透传父级setData的值，此处进行深copy后赋值避免父级存储的miniRenderData部分数据在此处被响应化，在子组件对props赋值时触发父组件的render
+              this[key] = diffAndCloneA(nextProps[key]).clone
             }
           })
         }
