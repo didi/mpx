@@ -876,7 +876,7 @@ function parse (template, options) {
           : preserveWhitespace && children.length ? ' ' : ''
       }
 
-      if (currentParent.tag !== config[mode].wxs.tag && options.decodeHTMLText) {
+      if ((!config[mode].wxs || currentParent.tag !== config[mode].wxs.tag) && options.decodeHTMLText) {
         text = he.decode(text)
       }
 
