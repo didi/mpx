@@ -310,8 +310,10 @@ module.exports = function (raw = '{}') {
     const subPackagesCfg = {}
     const localPages = []
     const processSubPackagesQueue = []
-    // 确保首页不变
-    const firstPage = json.pages && json.pages[0]
+    // 添加首页标识
+    if (json.pages && json.pages[0]) {
+      json.pages[0] = addQuery(json.pages[0], { isFirst: true })
+    }
 
     const processPackages = (packages, context, callback) => {
       if (packages) {
@@ -457,14 +459,13 @@ module.exports = function (raw = '{}') {
     const processPages = (pages, srcRoot = '', tarRoot = '', context, callback) => {
       if (pages) {
         async.forEach(pages, (page, callback) => {
-          const rawPage = page
           if (resolveMode === 'native') {
             page = loaderUtils.urlToRequest(page, options.root)
           }
           context = path.join(context, srcRoot)
           resolve(context, page, (err, resource) => {
             if (err) return callback(err)
-            let resourcePath = parseRequest(resource).resourcePath
+            const { resourcePath, queryObj } = parseRequest(resource)
             const ext = path.extname(resourcePath)
             // 获取pageName
             let pageName
@@ -474,7 +475,7 @@ module.exports = function (raw = '{}') {
               pageName = toPosix(path.join(tarRoot, getPageName(resourcePath, ext)))
               emitWarning(`Current page ${resourcePath} is not in current pages directory ${context}, the page path will be replaced with ${pageName}, use ?resolve to get the page path and navigate to it!`)
             } else {
-              pageName = toPosix(path.join(tarRoot, /^(.*?)(\.[^.]*)?$/.exec(page)[1]))
+              pageName = toPosix(path.join(tarRoot, /^(.*?)(\.[^.]*)?$/.exec(relative)[1]))
               // 如果当前page与已有page存在命名冲突，也进行重命名
               for (let key in pagesMap) {
                 if (pagesMap[key] === pageName && key !== resourcePath) {
@@ -492,8 +493,8 @@ module.exports = function (raw = '{}') {
             if (tarRoot && subPackagesCfg[tarRoot]) {
               subPackagesCfg[tarRoot].pages.push(toPosix(path.relative(tarRoot, pageName)))
             } else {
-              // 确保首页不变
-              if (rawPage === firstPage) {
+              // 确保首页
+              if (queryObj.isFirst) {
                 localPages.unshift(pageName)
               } else {
                 localPages.push(pageName)

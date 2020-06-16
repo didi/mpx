@@ -20,7 +20,6 @@ module.exports = function (json, options, rawCallback) {
   const projectRoot = options.projectRoot
   const localPagesMap = {}
   const localComponentsMap = {}
-  let firstPage = ''
   let output = '/* json */\n'
   let jsonObj = {}
   const context = loaderContext.context
@@ -149,7 +148,6 @@ module.exports = function (json, options, rawCallback) {
   const processPages = (pages, srcRoot = '', tarRoot = '', context, callback) => {
     if (pages) {
       async.forEach(pages, (page, callback) => {
-        const rawPage = page
         if (resolveMode === 'native') {
           page = loaderUtils.urlToRequest(page, projectRoot)
         }
@@ -166,7 +164,7 @@ module.exports = function (json, options, rawCallback) {
             pageName = '/' + toPosix(path.join(tarRoot, getPageName(resourcePath, ext)))
             emitWarning(`Current page ${resourcePath} is not in current pages directory ${context}, the page path will be replaced with ${pageName}, use ?resolve to get the page path and navigate to it!`)
           } else {
-            pageName = '/' + toPosix(path.join(tarRoot, /^(.*?)(\.[^.]*)?$/.exec(page)[1]))
+            pageName = '/' + toPosix(path.join(tarRoot, /^(.*?)(\.[^.]*)?$/.exec(relative)[1]))
             // 如果当前page与已有page存在命名冲突，也进行重命名
             for (let key in pagesMap) {
               // 此处引入pagesEntryMap确保相同entry下路由路径重复注册才报错，不同entry下的路由路径重复则无影响
@@ -183,7 +181,7 @@ module.exports = function (json, options, rawCallback) {
           localPagesMap[pageName] = {
             resource: addQuery(resource, { page: true }),
             async: tarRoot || queryObj.async,
-            isFirst: !tarRoot && rawPage === firstPage
+            isFirst: queryObj.isFirst
           }
           callback()
         })
@@ -250,8 +248,8 @@ module.exports = function (json, options, rawCallback) {
 
   async.parallel([
     (callback) => {
-      if (jsonObj.pages) {
-        firstPage = jsonObj.pages[0]
+      if (jsonObj.pages && jsonObj.pages[0]) {
+        jsonObj.pages[0] = addQuery(jsonObj.pages[0], { isFirst: true })
       }
       processPages(jsonObj.pages, '', '', context, callback)
     },
