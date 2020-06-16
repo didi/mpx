@@ -32,6 +32,13 @@
 
 ## wx:show
 
-## 事件监听
+## bind
 
-todo bind catch capture-bind capture-catch 内联传参
+todo 在bind中说明事件内联传参能力，下面就不需要说了
+
+## catch
+
+## capture-bind
+
+## capture-catch
+
