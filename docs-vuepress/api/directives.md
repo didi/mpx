@@ -1,4 +1,4 @@
-# 指令
+# 模板指令
 
 ## wx:if
 
@@ -31,3 +31,7 @@
 ## wx:ref
 
 ## wx:show
+
+## 事件监听
+
+todo bind catch capture-bind capture-catch 内联传参
