@@ -4,7 +4,7 @@ heroImage: /logo.png
 heroText: null
 tagline: Mpx, 一款具有优秀开发体验和深度性能优化的增强型小程序开发框架
 actionText: 快速上手 →
-actionLink: /guide/start
+actionLink: /guide/basic/start
 features:
 - title: 高效稳定
   details: 以增强的方式将Vue中大量优良特性引入到小程序开发中，配合灵活强大的编译构建，大大提升了小程序开发体验和效率，同时提供了媲美原生开发的稳定性。
