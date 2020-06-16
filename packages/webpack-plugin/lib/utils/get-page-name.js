@@ -1,5 +1,6 @@
 const path = require('path')
-module.exports = function getPageName (root, page) {
-  const match = /^[.~/]*(.*?)(\.[^.]*)?$/.exec(page)
-  return path.join(root, match[1])
+const hash = require('hash-sum')
+module.exports = function getPageName (resourcePath, ext) {
+  const baseName = path.basename(resourcePath, ext)
+  return path.join('pages', baseName + hash(resourcePath), baseName)
 }

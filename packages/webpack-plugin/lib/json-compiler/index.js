@@ -461,37 +461,48 @@ module.exports = function (raw = '{}') {
           if (resolveMode === 'native') {
             page = loaderUtils.urlToRequest(page, options.root)
           }
-          let name = getPageName(tarRoot, rawPage)
-          name = toPosix(name)
-          resolve(path.join(context, srcRoot), page, (err, resource) => {
+          context = path.join(context, srcRoot)
+          resolve(context, page, (err, resource) => {
             if (err) return callback(err)
             let resourcePath = parseRequest(resource).resourcePath
-            const parsed = path.parse(resourcePath)
-            const ext = parsed.ext
-            // 如果存在page命名冲突，return err
-            for (let key in pagesMap) {
-              if (pagesMap[key] === name && key !== resourcePath) {
-                return callback(new Error(`Resources in ${resourcePath} and ${key} are registered with same page path ${name}, which is not allowed!`))
+            const ext = path.extname(resourcePath)
+            // 获取pageName
+            let pageName
+            const relative = path.relative(context, resourcePath)
+            if (/^\./.test(relative)) {
+              // 如果当前page不存在于context中，对其进行重命名
+              pageName = toPosix(path.join(tarRoot, getPageName(resourcePath, ext)))
+              emitWarning(`Current page ${resourcePath} is not in current pages directory ${context}, the page path will be replaced with ${pageName}, use ?resolve to get the page path and navigate to it!`)
+            } else {
+              pageName = toPosix(path.join(tarRoot, /^(.*?)(\.[^.]*)?$/.exec(page)[1]))
+              // 如果当前page与已有page存在命名冲突，也进行重命名
+              for (let key in pagesMap) {
+                if (pagesMap[key] === pageName && key !== resourcePath) {
+                  const pageNameRaw = pageName
+                  pageName = toPosix(path.join(tarRoot, getPageName(resourcePath, ext)))
+                  emitWarning(`Current page ${resourcePath} is registered with a conflict page path ${pageNameRaw} which is already existed in system, the page path will be replaced with ${pageName}, use ?resolve to get the page path and navigate to it!`)
+                  break
+                }
               }
             }
             // 目前暂时不支持多个分包复用同一个页面
             // 如果之前已经创建了入口，直接return
             if (pagesMap[resourcePath]) return callback()
-            pagesMap[resourcePath] = name
+            pagesMap[resourcePath] = pageName
             if (tarRoot && subPackagesCfg[tarRoot]) {
-              subPackagesCfg[tarRoot].pages.push(toPosix(path.join('', page)))
+              subPackagesCfg[tarRoot].pages.push(toPosix(path.relative(tarRoot, pageName)))
             } else {
               // 确保首页不变
               if (rawPage === firstPage) {
-                localPages.unshift(name)
+                localPages.unshift(pageName)
               } else {
-                localPages.push(name)
+                localPages.push(pageName)
               }
             }
             if (ext === '.js') {
               resource = '!!' + nativeLoaderPath + '!' + resource
             }
-            addEntrySafely(resource, name, callback)
+            addEntrySafely(resource, pageName, callback)
           })
         }, callback)
       } else {
