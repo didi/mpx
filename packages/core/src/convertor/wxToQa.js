@@ -45,14 +45,17 @@ export default {
   },
   convert (options) {
     if (options.properties) {
-      const newProps = {}
+      const newProps = Object.create(null)
       Object.keys(options.properties).forEach(key => {
         const prop = options.properties[key]
-        if (prop && prop.hasOwnProperty('value')) {
-          newProps[key] = prop.value
+        const type = prop.hasOwnProperty('type') && prop.type
+        
+        if (type[prop] === 'Object') {
+          if (prop.hasOwnProperty('value')) {
+            newProps[key] = (type && type === 'Function') ? Object.assign({}, { default: prop.value()}) : Object.assign({}, { default: prop.value})
+          }
         } else {
-          const type = prop.hasOwnProperty('type') ? prop.type : prop
-          newProps[key] = typeof type === 'function' ? type() : null
+          newProps[key] = prop
         }
       })
       options.props = Object.assign(newProps, options.props)
