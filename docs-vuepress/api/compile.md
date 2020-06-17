@@ -146,17 +146,18 @@ new MpxWebpackPlugin({
 
 ### autoScopeRules
 
-- **类型**：`'full' | 'change'`
+- **类型**：`{ [key: string]: any }`
 
-- **默认值**： `'change'`
-
-- **详细**：。
+- **详细**：是否需要对样式加 scope ，目前只有支付宝小程序平台没有样式隔离，因此该部分内容也只对支付宝小程序平台生效。提供 include 和 exclude 以精确控制对哪些文件进行样式隔离，哪些不隔离，和webpack的rules规则相同。也可以通过在 style 代码块上声明 scoped 进行。
 
 - **示例**：
 
 ```js
 new MpxWebpackPlugin({
-  writeMode: 'change'
+  autoScopeRules: {
+      include: [resolve('../src')],
+      exclude: [resolve('../node_modules/vant-aliapp')] // 比如一些组件库本来就是为支付宝小程序编写的，应该已经考虑过样式隔离，就不需要再添加
+    }
 })
 ```
 
@@ -166,9 +167,38 @@ new MpxWebpackPlugin({
 
 ### transMpxRules
 
+- **类型**：`{ [key: string]: any }`
+
+- **详细**：是否转换 wx / my 等全局对象为 Mpx 对象，
+
+- **示例**：
+
+```js
+new MpxWebpackPlugin({
+  transMpxRules: {
+      include: () => true,
+      exclude: ['@mpxjs']
+    },
+})
+```
+
 ### autoSplit
 
 ### defs
+
+- **类型**：`{ [key: string]: string }`
+
+- **详细**：给模板、js、json中定义一些全局常量。一般用于区分平台/环境。
+
+- **示例**：
+
+```js
+new MpxWebpackPlugin({
+  defs: {
+      __env__: 'mini'
+    }
+})
+```
 
 ### attributes
 
@@ -188,7 +218,36 @@ new MpxWebpackPlugin({
 
 ### auditResource
 
+
+- **类型**：`{ [key: string]: any }`
+
+- **详细**：如果代码中存在老代码，比如
+
+- **示例**：
+
+```js
+new MpxWebpackPlugin({
+  autoScopeRules: {
+      include: [resolve('../src')],
+      exclude: [resolve('../node_modules/vant-aliapp')] // 比如一些组件库本来就是为支付宝小程序编写的，应该已经考虑过样式隔离，就不需要再添加
+    }
+})
+```
+
 ### generateBuildMap
+
+
+- **类型**：`boolean`
+
+- **详细**：是否生成构建结果与源码之间的映射文件。用于单元测试等场景。
+
+- **示例**：
+
+```js
+new MpxWebpackPlugin({
+  generateBuildMap: true
+})
+```
 
 ## MpxWebpackPlugin static methods
 
