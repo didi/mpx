@@ -46,6 +46,31 @@ export default function pageStatusMixin (mixinType) {
           }
         }
       }
+    } else if (__mpx_mode__ === 'qa') {
+      return {
+        props: {
+          'mpxPageStatus': {
+            type: String
+          }
+        },
+        watch: {
+          'mpxPageStatus': {
+            handler (val) {
+              if (val) {
+                const options = this.$rawOptions
+                if (val === 'show' && typeof options.pageShow === 'function') options.pageShow.call(this)
+                if (val === 'hide' && typeof options.pageHide === 'function') options.pageHide.call(this)
+                const pageLifetimes = options.pageLifetimes
+                if (pageLifetimes) {
+                  if (val === 'show' && typeof pageLifetimes.show === 'function') pageLifetimes.show.call(this)
+                  if (val === 'hide' && typeof pageLifetimes.hide === 'function') pageLifetimes.hide.call(this)
+                }
+              }
+            },
+            immediate: true
+          }
+        }
+      }
     } else {
       return {
         properties: {
