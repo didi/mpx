@@ -67,21 +67,98 @@ module.exports = {
 
 MpxWebpackPlugin支持传入以下配置：
 
+> 若是通过官方脚手架生成的项目，可在 `build/mpx.plugin.conf.js` 中对这些项进行配置。
+
 ### mode
 
 ### srcMode
 
 ### modeRules
 
+- **类型**：`{ [key: string]: any }`
+
+- **详细**：
+
+批量指定文件mode，用于条件编译场景下使用某些单小程序平台的库时。
+
+- **示例**：
+
+```js
+new MpxWebpackPlugin({
+  modeRules: {
+    ali: {
+      include: [resolve('node_modules/vant-aliapp')]
+    }
+  }
+})
+```
+
 ### externalClasses
 
 ### resolveMode
 
+- **类型**：`'webpack' | 'native'`
+
+- **默认值**：`webpack`
+
+- **详细**：
+
+指定resolveMode，默认webpack，更便于引入npm包中的页面/组件等资源。若想编写时和原生保持一致或兼容已有原生项目，可设为native，此时需要提供[projectRoot](#projectroot)以指定项目根目录，且使用npm资源时需在前面加`~`。
+
+- **示例**：
+
+```js
+new MpxWebpackPlugin({
+  resolveMode: 'webpack'
+})
+```
+
 ### projectRoot
+
+- **类型**：`string`
+
+- **详细**：当resolveMode为native时需通过该字段指定项目根目录。
+
+- **示例**：
+
+```js
+new MpxWebpackPlugin({
+  resolveMode: 'native',
+  projectRoot: path.resolve(__dirname, '../src')
+})
+```
 
 ### writeMode
 
+- **类型**：`'full' | 'change'`
+
+- **默认值**： `'change'`
+
+- **详细**：webpack 的输出默认是全量输出，而小程序开发者工具不关心文件是否真正发生了变化。设置为 change 时，Mpx 在 watch 模式下将内部 diff 一次，只会对内容发生变化的文件进行写入，以提升小程序开发者工具编译性能。
+
+- **示例**：
+
+```js
+new MpxWebpackPlugin({
+  writeMode: 'change'
+})
+```
+
 ### autoScopeRules
+
+- **类型**：`'full' | 'change'`
+
+- **默认值**： `'change'`
+
+- **详细**：。
+
+- **示例**：
+
+```js
+new MpxWebpackPlugin({
+  writeMode: 'change'
+})
+```
 
 ### forceDisableInject
 
