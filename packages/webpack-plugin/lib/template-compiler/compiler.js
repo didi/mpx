@@ -6,6 +6,7 @@ const isEmptyObject = require('../utils/is-empty-object')
 const mpxJSON = require('../utils/mpx-json')
 const getRulesRunner = require('../platform/index')
 const addQuery = require('../utils/add-query')
+const qaUtil = require('../qaHelper/util')
 
 /**
  * Make a map and return a function for checking if a key
@@ -98,6 +99,9 @@ function makeAttrsMap (attrs) {
   for (let i = 0, l = attrs.length; i < l; i++) {
     if (map[attrs[i].name] && !isIE && !isEdge) {
       warn$1('duplicate attribute: ' + attrs[i].name)
+    }
+    if (mode === 'qa') {
+      attrs[i].name = qaUtil.camelToHyphen(attrs[i].name)
     }
     map[attrs[i].name] = attrs[i].value
   }
