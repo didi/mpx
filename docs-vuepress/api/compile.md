@@ -79,7 +79,7 @@ MpxWebpackPlugin支持传入以下配置：
 
 - **详细**：
 
-批量指定文件mode，用于条件编译场景下使用某些单小程序平台的库时。
+批量指定文件mode，用于条件编译场景下使用某些单小程序平台的库时批量标记这些文件的mode为对应平台，而不再走转换规则。
 
 - **示例**：
 
@@ -218,24 +218,19 @@ new MpxWebpackPlugin({
 
 ### auditResource
 
+- **类型**：`true | false | 'component'`
 
-- **类型**：`{ [key: string]: any }`
-
-- **详细**：如果代码中存在老代码，比如
+- **详细**：检查资源输出情况，如果置为true，则会提示有哪些资源被同时输出到了多个分包，可以检查是否应该放进主包以消减体积，设置为 `'component'` 的话，则只检查组件资源是否被输出到多个分包。
 
 - **示例**：
 
 ```js
 new MpxWebpackPlugin({
-  autoScopeRules: {
-      include: [resolve('../src')],
-      exclude: [resolve('../node_modules/vant-aliapp')] // 比如一些组件库本来就是为支付宝小程序编写的，应该已经考虑过样式隔离，就不需要再添加
-    }
+  auditResource: true
 })
 ```
 
 ### generateBuildMap
-
 
 - **类型**：`boolean`
 
@@ -248,6 +243,8 @@ new MpxWebpackPlugin({
   generateBuildMap: true
 })
 ```
+
+- **参考**：[单元测试](../guide/tool/unit-test.md)
 
 ## MpxWebpackPlugin static methods
 
