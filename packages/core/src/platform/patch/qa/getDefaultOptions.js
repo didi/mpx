@@ -1,7 +1,7 @@
 import MPXProxy from '../../../core/proxy'
 import customKey from '../customOptionKeys'
 import mergeOptions from '../../../core/mergeOptions'
-import { error } from '../../../helper/log'
+// import { error } from '../../../helper/log'
 
 function transformApiForProxy (context, currentInject) {
   context.setData = function () {}
@@ -73,7 +73,7 @@ function filterOptions (options, type) {
 export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
   // const hookNames = type === 'component' ? ['onInit', 'onReady', 'onDestroy'] : ['onInit', 'onReady', 'onUnload']
   const rootMixins = [{
-    onInit(...params) {
+    onInit (...params) {
       // 提供代理对象需要的api
       transformApiForProxy(this, currentInject)
       // 缓存options
