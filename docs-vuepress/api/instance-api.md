@@ -2,8 +2,6 @@
 
 ## $set
 
-## $get
-
 ## $watch
 
 ## $remove
