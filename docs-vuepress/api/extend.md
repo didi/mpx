@@ -13,18 +13,18 @@ Mpx 支持小程序跨平台后，多个平台的小程序里都提供了 webvie
 
 为解决这个问题，Mpx 提供了抹平平台差异的bridge库：@mpxjs/webview-bridge。
 
-安装
+**安装：**
 ```js
 npm install @mpxjs/webview-bridge
 ```
-使用
+**使用：**
 ```js
 import mpx from '@mpxjs/webview-bridge'
 mpx.navigateBack()
 mpx.env // 输出：wx/qq/ali/baidu/tt
 mpx.checkJSApi()
 ```
-基础方法提供
+**基础方法提供：**
 | 方法/平台      | wx            | qq    | ali    | baidu    | tt    |
 | ------------- |:-----:| :-----:| :-----: |:-----:| -----:|
 | navigateTo|:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
@@ -39,7 +39,7 @@ mpx.checkJSApi()
 
 
 
-扩展方法提供
+**扩展方法提供：**
 | 方法/平台      | wx            | qq    | ali    | baidu    | tt    |
 | ------------- |:-----:| :-----:| :-----: |:-----:| -----:|
 | checkJSApi|:white_check_mark:|:x:|:x:|:x:|:x:|
