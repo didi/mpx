@@ -8,4 +8,26 @@ Mpx中的列表渲染与原生小程序中完全一致，详情可以查看[这�
 
 todo 补充示例
 
+```html
+<template>
+  <!-- 使用数组中元素的 id属性/保留关键字*this 作为key值  -->
+  <view wx:for="{{titleList}}" wx:key="id">
+    <!-- item 默认代表数组的当前项 -->
+    <view>{{item.id}}: {{item.name}}</view>
+  </view>
+</template>
 
+<script>
+  import { createPage } from '@mpxjs/core'
+
+  createPage({
+    data: {
+      titleList: [
+        { id: 1, name: 'A' },
+        { id: 2, name: 'B' },
+        { id: 3, name: 'C' }
+      ]
+    }
+  })
+</script>
+```

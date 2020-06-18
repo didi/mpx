@@ -24,18 +24,18 @@ Mpx使用类似Vue的单文件开发模式，小程序原本的template/js/style
 ### 增强的模板语法
 
 同样受到Vue的启发，Mpx提供了很多增强模板语法便于开发者方便快捷地进行视图开发，主要包含以下：
-* [wx:style动态样式](todo link)
-* [wx:class动态类名](todo link)
-* [wx:model双向绑定](todo link)
-* [wx:model-prop双向绑定属性](todo link)
-* [wx:model-event双向绑定事件](todo link)
-* [wx:model-value-path双向绑定数据路径](todo link)
-* [wx:model-filter双向绑定过滤器](todo link)
-* [wx:ref获取实例](todo link)
-* [wx:show隐藏显示](todo link)
-* [component动态组件](todo link)
-* [事件处理内联传参](todo link)
-* [模板条件编译](todo link)
+* [wx:style动态样式](./class-style-binding.md#样式绑定)
+* [wx:class动态类名](./class-style-binding.md#类名绑定)
+* [wx:model双向绑定](./two-way-binding.md)
+* [wx:model-prop双向绑定属性](./two-way-binding.md#更改双向绑定的监听事件及数据属性)
+* [wx:model-event双向绑定事件](./two-way-binding.md#更改双向绑定的监听事件及数据属性)
+* [wx:model-value-path双向绑定数据路径](./two-way-binding.md#更改双向绑定事件数据路径)
+* [wx:model-filter双向绑定过滤器](./two-way-binding.md#双向绑定过滤器)
+* [wx:ref获取实例](./refs.md)
+* [wx:show隐藏显示](./conditional-render.md)
+* [component动态组件](./component.md#动态组件)
+* [事件处理内联传参](./event.md)
+* [模板条件编译](./template.md)
 
 ### 极致性能
 
@@ -57,13 +57,13 @@ Mpx的编译构建以webpack为基础，针对小程序项目结构深度定制�
 
 list todo link
 
-* npm构建
-* 分包构建
-* 包体积优化
-* 原生组件支持
-* 原生能力兼容(custom-tab-bar/workers/小程序插件/云开发等)
-* css/模板预编译
-* 静态资源处理
+* [npm构建](../advance/npm.md)
+* [分包构建](../advance/subpackage.md#分包)
+* [包体积优化](../advance/subpackage.md)
+* [原生组件支持](../advance/progressive.md)
+* [原生能力兼容(custom-tab-bar/workers/小程序插件/云开发等)](todo link)
+* [css/模板预编译](todo link)
+* [静态资源处理](../advance/image-process.md)
 
 
 ### 跨平台能力
@@ -76,13 +76,13 @@ Mpx支持全部小程序平台(微信，支付宝，百度，头条，qq)的增�
 
 list todo link
 
-* 网络请求
-* 数据mock
-* api增强抹平
-* webview抹平
-* Typescript支持
-* I18n国际化
-* 单元测试
+* [网络请求](../extend/request.md)
+* [数据mock](../extend/mock.md)
+* [api增强抹平](../extend/api-proxy.md)
+* [webview抹平](todo link)
+* [Typescript支持](../tool/ts.md)
+* [I18n国际化](../tool/i18n.md)
+* [单元测试](../tool/unit-test.md)
 
 
 Mpx具有以下功能特性：
