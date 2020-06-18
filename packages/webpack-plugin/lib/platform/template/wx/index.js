@@ -493,8 +493,7 @@ module.exports = function getSpec ({ warn, error }) {
               touchmove: 'touchmove',
               touchcancel: 'touchcancel',
               touchend: 'touchend',
-              longpress: 'longpress',
-              transitionend: 'transitionend'
+              longpress: 'longpress'
             }
             if (eventsMap[eventName]) {
               return eventsMap[eventName]
