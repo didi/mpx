@@ -320,7 +320,7 @@ module.exports = function getSpec ({ warn, error }) {
           let dir = this.test.exec(name)[1]
           const parsed = parseMustache(value)
           return {
-            name: 'qa:' + dir,
+            name: dir,
             value
           }
         }

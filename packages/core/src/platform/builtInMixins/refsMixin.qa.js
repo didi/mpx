@@ -1,6 +1,6 @@
 import { BEFORECREATE, CREATED, BEFOREMOUNT, UPDATED, DESTROYED } from '../../core/innerLifecycle'
 import { noop } from '../../helper/utils'
-// import { error } from '../../helper/log'
+import { error } from '../../helper/log'
 
 export default function getRefsMixin (type) {
   return {
@@ -25,19 +25,25 @@ export default function getRefsMixin (type) {
     createSelectorQuery () {
       return {
         selectAll () {
-
+          error('QuickApp not supports selectAll.')
+          return []
         },
         select (selector) {
           let dom = this.$element(selector)
-          const cbs = []
-          dom.boundingClientRect = (complete = noop) => {
-            cbs.push(() => this.getBoundingClientRect({ complete }))
+          if (!dom) return null
+          dom.cbs = []
+          dom.boundingClientRect = (success = noop) => {
+            dom.cbs.push(() => dom.getBoundingClientRect && dom.getBoundingClientRect({ success }))
+            return dom
           }
           dom.scrollOffset = () => {
-            // cbs.push(this.scrollOffset)
+            dom.cbs.push(() => error('QuickApp not supports scrollOffset.'))
+            return dom
           }
           dom.exec = () => {
-            cbs.forEach(item => item())
+            dom.cbs.forEach(item => item())
+            dom.cbs = []
+            return dom
           }
           return dom
         }
