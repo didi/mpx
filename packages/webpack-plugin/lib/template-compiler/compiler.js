@@ -1403,6 +1403,12 @@ function processRef (el, options, meta) {
     if (type === 'node' && mode === 'ali') {
       refClassName += '_{{mpxCid}}'
     }
+    if (type === 'node' && mode === 'qa') {
+      addAttrs(el, [{
+        name: 'id',
+        value: refClassName
+      }])
+    }
     let className = getAndRemoveAttr(el, 'class')
     className = className ? className + ' ' + refClassName : refClassName
     addAttrs(el, [{
