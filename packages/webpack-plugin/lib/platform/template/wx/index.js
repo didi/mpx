@@ -255,7 +255,7 @@ module.exports = function getSpec ({ warn, error }) {
         },
         qa ({ value }) {
           return {
-            name: 'qa:ref',
+            name: 'ref',
             value
           }
         }
