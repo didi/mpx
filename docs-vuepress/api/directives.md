@@ -191,15 +191,176 @@
 
 ## wx:ref
 
+* **预期：** `String`
+
+* **用法：**
+
+  Mpx提供了 `wx:ref=xxx` 来更方便获取 WXML 节点信息的对象。在JS里只需要通过this.$refs.xxx 即可获取节点。
+
+  ```html
+  <view wx:ref="tref">
+    123
+  </view>
+  ```
+
+  ```js
+  <script>
+    Page({
+      ready () {
+        this.$refs.tref.fields({size: true}, function (res) {
+          console.log(res)
+        }).exec()
+      }
+    })
+  </script>
+  ```
+
+* **参考：** [获取组件实例 - wx:ref](../guide/basic/refs.html)
+
 ## wx:show
+
+* **预期：** `Boolean`
+
+* **用法：**
+  与 `wx:if` 所不同的是**不会移除节点**，而是设置节点的 `style` 为 `display: none`。
+
+  ```html
+  <view wx:show="{{show}}">
+    123
+  </view>
+  ```
+
+  ```js
+  Page({
+    data: {
+      show: false
+    }
+  })
+  ```
 
 ## bind
 
-todo 在bind中说明事件内联传参能力，下面就不需要说了
+* **预期：** `String`
+
+* **用法：**
+
+  让 `bind + (:?) + eventType` 作为属性值
+
+  比如：`bindtap`
+
+  ```html
+  <view bindtap="tapTest"> Click me! </view>
+  <view bind:tap="tapTest1(testVal, $event)"> Click me! </view>
+  ```
+
+  ```js
+  Page({
+    methods: {
+      tapTest () {
+        // todo
+      },
+      tapTest1 (val, event) {
+        console.log(val, event)
+      }
+    }
+  })
+  ```
+
+  Mpx做了增强的**内联传参**能力以及具体有哪些事件**类型**参考下方
+* **参考：** [事件处理 - bind](../guide/basic/event.html)
 
 ## catch
 
+* **预期：** `String`
+
+* **用法：**
+
+  让 `catch + (:?) + eventType` 作为属性值
+
+  除 `bind` 外，也可以用 `catch` 来绑定事件。与 `bind` 不同，`catch` 会阻止事件向上冒泡。
+
+  ```html
+  <view id="outer" bindtap="handleTap1">
+    outer view
+    <view id="middle" catchtap="handleTap2">
+      middle view
+      <view id="inner" bindtap="handleTap3">
+        inner view
+      </view>
+    </view>
+  </view>
+  ```
+
+  ```js
+  Page({
+    methods: {
+      handleTap1 () {
+        console.log('outer')
+      },
+      handleTap2 () {
+        console.log('middle')
+      },
+      handleTap3 () {
+        console.log('inner')
+      }
+    }
+  })
+  // 通过几个操作看出被catchtap的middle view阻止了向上冒泡
+  // click outer
+  // outer
+
+  // click middle
+  // middle
+
+  // click inner
+  // inner
+  // outer
+  ```
+
+* **参考：** [事件处理 - catch](../guide/basic/event.html)
+
 ## capture-bind
+
+* **预期：** `String`
+
+* **用法：**
+
+  让 `capture-bind + (:?) + eventType` 作为属性值
+
+  capture-bind要在bind之前执行，是因为事件是先捕获后冒泡，**注意：仅触摸类事件支持捕获阶段**
+
+  ```html
+    <view id="outer" bind:touchstart="handleTap1" capture-bind:touchstart="handleTap2">
+      outer view
+      <view id="inner" bind:touchstart="handleTap3" capture-bind:touchstart="handleTap4">
+        inner view
+      </view>
+    </view>
+  ```
+
+  点击inner view的调用顺序是(handleTap)2、4、3、1
+
+* **参考：** [事件处理 - capture-bind](../guide/basic/event.html)
 
 ## capture-catch
 
+* **预期：** `String`
+
+* **用法：**
+
+  让 `capture-catch + (:?) + eventType` 作为属性值
+
+  capture-catch中断捕获阶段和取消冒泡阶段
+
+  ```html
+  <view id="outer" bind:touchstart="handleTap1" capture-catch:touchstart="handleTap2">
+    outer view
+    <view id="inner" bind:touchstart="handleTap3" capture-bind:touchstart="handleTap4">
+      inner view
+    </view>
+  </view>
+  ```
+
+  点击inner view仅执行handleTap2
+
+* **参考：** [事件处理 - capture-catch](../guide/basic/event.html)
