@@ -39,14 +39,14 @@ const sidebar = {
       children: [
         'tool/ts',
         'tool/i18n',
-        'tool/unit-test',
-        'tool/webview-bridge'
+        'tool/unit-test'
       ]
     },
     {
       title: '拓展',
       collapsable: false,
       children: [
+        'extend/index',
         'extend/request',
         'extend/mock',
         'extend/api-proxy'

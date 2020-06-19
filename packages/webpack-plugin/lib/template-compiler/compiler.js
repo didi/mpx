@@ -1,4 +1,5 @@
 const deindent = require('de-indent')
+const he = require('he')
 const config = require('../config')
 const normalize = require('../utils/normalize')
 const isValidIdentifierStr = require('../utils/is-valid-identifier-str')
@@ -26,13 +27,13 @@ function makeMap (str, expectsLowerCase) {
     }
 }
 
-let no = function (a, b, c) {
+const no = function () {
   return false
 }
 
 // HTML5 tags https://html.spec.whatwg.org/multipage/indices.html#elements-3
 // Phrasing Content https://html.spec.whatwg.org/multipage/dom.html#phrasing-content
-let isNonPhrasingTag = makeMap(
+const isNonPhrasingTag = makeMap(
   'address,article,aside,base,blockquote,body,caption,col,colgroup,dd,' +
   'details,dialog,div,dl,dt,fieldset,figcaption,figure,footer,form,' +
   'h1,h2,h3,h4,h5,h6,head,header,hgroup,hr,html,legend,li,menuitem,meta,' +
@@ -48,15 +49,15 @@ let isNonPhrasingTag = makeMap(
  */
 
 // Regular Expressions for parsing tags and attributes
-let attribute = /^\s*([^\s"'<>/=]+)(?:\s*(=)\s*(?:"([^"]*)"+|'([^']*)'+|([^\s"'=<>`]+)))?/
-let ncname = '[a-zA-Z_][\\w\\-\\.]*'
-let qnameCapture = '((?:' + ncname + '\\:)?' + ncname + ')'
-let startTagOpen = new RegExp(('^<' + qnameCapture))
-let startTagClose = /^\s*(\/?)>/
-let endTag = new RegExp(('^<\\/' + qnameCapture + '[^>]*>'))
-let doctype = /^<!DOCTYPE [^>]+>/i
-let comment = /^<!--/
-let conditionalComment = /^<!\[/
+const attribute = /^\s*([^\s"'<>/=]+)(?:\s*(=)\s*(?:"([^"]*)"+|'([^']*)'+|([^\s"'=<>`]+)))?/
+const ncname = '[a-zA-Z_][\\w\\-\\.]*'
+const qnameCapture = '((?:' + ncname + '\\:)?' + ncname + ')'
+const startTagOpen = new RegExp(('^<' + qnameCapture))
+const startTagClose = /^\s*(\/?)>/
+const endTag = new RegExp(('^<\\/' + qnameCapture + '[^>]*>'))
+const doctype = /^<!DOCTYPE [^>]+>/i
+const comment = /^<!--/
+const conditionalComment = /^<!\[/
 
 let IS_REGEX_CAPTURING_BROKEN = false
 'x'.replace(/x(.)?/g, function (m, g) {
@@ -64,12 +65,12 @@ let IS_REGEX_CAPTURING_BROKEN = false
 })
 
 // Special Elements (can contain anything)
-let isPlainTextElement = makeMap('script,style,textarea', true)
-let reCache = {}
+const isPlainTextElement = makeMap('script,style,textarea', true)
+const reCache = {}
 
 // #5992
-let isIgnoreNewlineTag = makeMap('pre,textarea', true)
-let shouldIgnoreFirstNewline = function (tag, html) {
+const isIgnoreNewlineTag = makeMap('pre,textarea', true)
+const shouldIgnoreFirstNewline = function (tag, html) {
   return tag && isIgnoreNewlineTag(tag) && html[0] === '\n'
 }
 
@@ -77,8 +78,8 @@ const splitRE = /\r?\n/g
 const replaceRE = /./g
 const isSpecialTag = makeMap('script,style,template,json', true)
 
-let ieNSBug = /^xmlns:NS\d+/
-let ieNSPrefix = /^NS\d+:/
+const ieNSBug = /^xmlns:NS\d+/
+const ieNSPrefix = /^NS\d+:/
 
 /* istanbul ignore next */
 function guardIESVGBug (attrs) {
@@ -227,10 +228,10 @@ function assertMpxCommentAttrsEnd () {
 }
 
 // Browser environment sniffing
-let inBrowser = typeof window !== 'undefined'
-let UA = inBrowser && window.navigator.userAgent.toLowerCase()
-let isIE = UA && /msie|trident/.test(UA)
-let isEdge = UA && UA.indexOf('edge/') > 0
+const inBrowser = typeof window !== 'undefined'
+const UA = inBrowser && window.navigator.userAgent.toLowerCase()
+const isIE = UA && /msie|trident/.test(UA)
+const isEdge = UA && UA.indexOf('edge/') > 0
 
 // configurable state
 // 由于template处理为纯同步过程，采用闭包变量存储各种状态方便全局访问
@@ -873,6 +874,10 @@ function parse (template, options) {
           ? text.trim()
           // only preserve whitespace if its not right after a starting tag
           : preserveWhitespace && children.length ? ' ' : ''
+      }
+
+      if (currentParent.tag !== config[mode].wxs.tag && options.decodeHTMLText) {
+        text = he.decode(text)
       }
 
       if (text) {
