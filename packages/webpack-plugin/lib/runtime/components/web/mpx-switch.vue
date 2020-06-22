@@ -1,5 +1,5 @@
 <script>
-  import getInnerListeners, { getCustomEvent } from './getInnerListeners'
+  import getInnerListeners, { extendEvent } from './getInnerListeners'
 
 
   export default {
@@ -28,21 +28,26 @@
       }
     },
     render (createElement) {
+      const mergeBefore = {
+        change: (e) => {
+          this.switchChecked = e.target.checked
+          extendEvent(e, {
+            detail: {
+              value: e.target.checked
+            }
+          })
+        }
+      }
       let children = []
       const domProps = {
         type: 'checkbox',
         checked: this.checked,
         disabled: this.disabled
       }
-      
+
       const checkbox = createElement('input', {
         class: 'mpx-switch-checkbox',
-        on: {
-          change: (event) => {
-            this.switchChecked = event.target.checked
-            this.$emit('change', getCustomEvent('change', { value: this.switchChecked }))
-          }
-        },
+        on: getInnerListeners(this, { mergeBefore }),
         domProps
       })
       children.push(checkbox)
@@ -56,12 +61,11 @@
         })
         children.push(switchElem)
       }
-      
+
       children.push(...(this.$slots.default || []))
 
       const data = {
-        class: [this.type === 'switch' ? 'mpx-switch-wrap' : 'mpx-checkbox-wrap'],
-        on: getInnerListeners(this, { ignoredListeners: ['change'] })
+        class: [this.type === 'switch' ? 'mpx-switch-wrap' : 'mpx-checkbox-wrap']
       }
       return createElement('div', data, children)
     }

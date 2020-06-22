@@ -129,7 +129,7 @@
 
       const data = {
         class: ['mpx-slider'],
-        on: getInnerListeners(this, { ignoredListeners: ['change'] })
+        on: getInnerListeners(this, { ignoredListeners: ['change', 'changing'] })
       }
       return createElement('div', data, children)
     },
