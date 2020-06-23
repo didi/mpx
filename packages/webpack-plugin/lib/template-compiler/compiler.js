@@ -984,7 +984,7 @@ function stringify (str) {
 }
 
 // function processLifecycleHack (el, options) {
-//   if (options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component') {
+//   if (isComponentNode(el,options)) {
 //     if (el.if) {
 //       el.if = {
 //         raw: `{{${el.if.exp} && mpxLifecycleHack}}`,
@@ -1011,7 +1011,7 @@ function stringify (str) {
 // }
 
 function processPageStatus (el, options) {
-  if (options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component') {
+  if (isComponentNode(el, options)) {
     addAttrs(el, [{
       name: 'mpxPageStatus',
       value: '{{mpxPageStatus}}'
@@ -1048,7 +1048,7 @@ function processComponentIs (el, options) {
 }
 
 // function processComponentDepth (el, options) {
-//   if (options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component') {
+//   if (isComponentNode(el,options)) {
 //     addAttrs(el, [{
 //       name: 'mpxDepth',
 //       value: '{{mpxDepth + 1}}'
@@ -1389,7 +1389,7 @@ function processFor (el) {
 
 function processRef (el, options, meta) {
   let val = getAndRemoveAttr(el, config[mode].directive.ref)
-  let type = options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component' ? 'component' : 'node'
+  let type = isComponentNode(el, options) ? 'component' : 'node'
   if (val) {
     if (!meta.refs) {
       meta.refs = []
@@ -1473,7 +1473,7 @@ function processAttrs (el, options) {
     let parsed = parseMustache(value)
     if (parsed.hasBinding) {
       // 该属性判断用于提供给运行时对于计算属性作为props传递时提出警告
-      const isProps = (options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component') && !(attr.name === 'class' || attr.name === 'style')
+      const isProps = isComponentNode(el, options) && !(attr.name === 'class' || attr.name === 'style')
       addExp(el, parsed.result, isProps)
     }
     if (parsed.replaced) {
@@ -1696,6 +1696,10 @@ function isRealNode (el) {
   return !virtualNodeTagMap[el.tag]
 }
 
+function isComponentNode (el, options) {
+  return options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component'
+}
+
 function processAliExternalClassesHack (el, options) {
   let staticClass = getAndRemoveAttr(el, 'class')
   if (staticClass) {
@@ -1707,6 +1711,18 @@ function processAliExternalClassesHack (el, options) {
       name: 'class',
       value: staticClass
     }])
+  }
+
+  if (options.scopedId && isComponentNode(el, options)) {
+    options.externalClasses.forEach(({ className }) => {
+      let externalClass = getAndRemoveAttr(el, className)
+      if (externalClass) {
+        addAttrs(el, [{
+          name: className,
+          value: `${externalClass} ${options.scopedId}`
+        }])
+      }
+    })
   }
 }
 
@@ -1752,7 +1768,7 @@ function processAliStyleClassHack (el, options, root) {
       }
     }
     if (exp !== undefined) {
-      if (options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component') {
+      if (isComponentNode(el, options)) {
         addAttrs(el, [{
           name: typeName,
           value: exp
@@ -1777,7 +1793,7 @@ function processShow (el, options, root) {
     }
   }
   if (show !== undefined) {
-    if (options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component') {
+    if (isComponentNode(el, options)) {
       if (show === '') {
         show = '{{false}}'
       }
