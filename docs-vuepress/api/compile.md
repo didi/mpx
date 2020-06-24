@@ -163,15 +163,15 @@ new MpxWebpackPlugin({
 
 ### forceDisableInject
 
-- **类型**：`Boolean, 默认为false`
+- **类型**：`Boolean`
 
-- **详细**：Mpx默认会在项目编译构建过程中对运行时进行代码注入，以实现部分增强能力，包括 refs、i18n 和 setData 性能优化等。在不需要这些增强能力时，可配置 forceDisableInject 为 true，以消除编译时注入，来进一步减少包体积，但是这部分增强能力也就不再可用。
+- **详细**：默认为false，Mpx会在项目编译构建过程中对运行时进行代码注入，以实现部分增强能力，包括 refs、i18n 和 setData 性能优化等。在不需要这些增强能力时，可配置 forceDisableInject 为 true，以消除编译时注入，来进一步减少包体积，但是这部分增强能力也就不再可用。
 
 ### forceDisableProxyCtor
 
-- **类型**：`Boolean, 默认为false`
+- **类型**：`Boolean`
 
-- **详细**：控制在跨平台输出时对实例构造函数（App | Page | Component | Behavior）进行代理替换以抹平平台差异。当配置 forceDisableProxyCtor 为 true 时，会强行取消平台差异抹平逻辑，开发时需针对输出到不同平台进行条件判断。
+- **详细**： 默认为false，用于控制在跨平台输出时对实例构造函数（App | Page | Component | Behavior）进行代理替换以抹平平台差异。当配置 forceDisableProxyCtor 为 true 时，会强行取消平台差异抹平逻辑，开发时需针对输出到不同平台进行条件判断。
 
 ### transMpxRules
 
@@ -223,25 +223,6 @@ new MpxWebpackPlugin({
 ### nativeOptions
 
 ### i18n
-- **类型**： `Object`
-
-- **详细**：Mpx 支持国际化，底层实现依赖类wxs能力，通过指定语言标识和语言包，可实现多语言之间的动态切换。可配置项包括locale、messages、messagesPath。
-
-#### i18n.locale
-
-`String`
-
-通过配置 locale 属性，可指定语言标识，默认值为 'zh-CN'
-
-#### i18n.messages | i18n.messagesPath
-
-`Object | String`
-
-通过配置 messages 属性或者 messagesPath 属性，可以指定项目国际化语言包，Mpx 会依据语言包定义进行语言转换。
-
-详细介绍及使用见[工具-国际化i18n](../guide/tool/i18n.md)一节。
-
-- **示例**：
 
 ```js
 new MpxWebpackPlugin({
@@ -263,6 +244,44 @@ new MpxWebpackPlugin({
   }
 })
 ```
+
+- **详细**：Mpx 支持国际化，底层实现依赖类wxs能力，通过指定语言标识和语言包，可实现多语言之间的动态切换。可配置项包括locale、messages、messagesPath。
+
+#### i18n.locale
+
+`String`
+
+通过配置 locale 属性，可指定语言标识，默认值为 'zh-CN'
+
+#### i18n.messages
+
+`Object`
+
+通过配置 messages 属性，可以指定项目语言包，Mpx 会依据语言包对象定义进行转换，示例如下：
+```js
+messages: {
+  'en-US': {
+    message: {
+      'title': 'DiDi Chuxing',
+      'subTitle': 'Make travel better'
+    }
+  },
+  'zh-CN': {
+    message: {
+      'title': '滴滴出行',
+      'subTitle': '让出行更美好'
+    }
+  }
+}
+```
+
+#### i18n.messagesPath
+
+`String`
+
+为便于开发，Mpx 还支持配置语言包资源路径 messagesPath 来代替 messages 属性，Mpx 会从该路径下的 js 文件导出语言包对象。
+
+详细介绍及使用见[工具-国际化i18n](../guide/tool/i18n.md)一节。
 
 ### auditResource
 
