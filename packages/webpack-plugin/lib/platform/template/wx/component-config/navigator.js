@@ -1,3 +1,5 @@
+const { isMustache } = require('../../../../utils/string')
+
 const TAG_NAME = 'navigator'
 
 module.exports = function ({ print }) {
@@ -25,7 +27,7 @@ module.exports = function ({ print }) {
       {
         test: 'open-type',
         ali (attr) {
-          if (/\{\{((?:.|\n)+?)\}\}(?!})/.test(attr.value)) {
+          if (isMustache(attr.value)) {
             // 如果是个变量，报warning
             aliPropLog(attr)
           } else {
