@@ -300,7 +300,73 @@ Mpx中允许用户在request中传递特定query执行特定逻辑，目前已�
 
 ### ?resolve
 
-### ?packageName
+### packageName
+
+- **类型**: `String`
+
+- **详细**: 指定当前 Page 或 Component 中引用的某个非 JS 静态资源被打包到对应的主包或分包目录下。
+
+- **示例**:
+
+``` javascript
+// 入口 app.mpx 的 json 配置部分
+module.exports = {
+  "pages": [
+    "./pages/index",
+    "./pages/list?root=list&name=listName"
+  ],
+  "packages": [
+    "./packageA/packageA.mpx?root=packageA",
+    "./packageB/packageB.mpx?root=packageB&name=packageSecond"
+  ]
+}
+```
+
+``` html
+<!-- packageA/cat.mpx -->
+<template>
+  <view>
+    <view>hello packageA cat.mpx</view>
+    <image src="{{catAvatar}}"></image>
+  </view>
+</template>
+
+<script>
+  import{ createPage } from '@mpxjs/core'
+  // 没有配置 packageName，默认打包到当前模块所在的分包目录下
+  import catAvatar from 'static/images/cat.jpg'
+
+  createPage({
+    data: {
+      catAvatar
+    },
+    onLoad () {}
+  })
+</script>
+```
+
+``` html
+<!-- packageB/dog.mpx -->
+<template>
+  <view>
+    <view>hello packageB dog.mpx</view>
+    <image src="{{dogAvatar}}"></image>
+  </view>
+</template>
+
+<script>
+  import{ createPage } from '@mpxjs/core'
+  // packageName=main 当前资源会被打包到主包目录下
+  import dogAvatar from 'static/images/dog.jpg?packageName=main'
+
+  createPage({
+    data: {
+      dogAvatar
+    },
+    onLoad () {}
+  })
+</script>
+```
 
 ### ?root
 
