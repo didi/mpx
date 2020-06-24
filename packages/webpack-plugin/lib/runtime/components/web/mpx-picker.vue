@@ -119,9 +119,9 @@
             case 'multiSelector':
               return []
             case 'time':
-              return []
+              return ''
             case 'date':
-              return []
+              return ''
             default:
               return ''
           }
@@ -179,14 +179,22 @@
               break
             case 'time':
               this.selectedIndex = []
-              valueTemp = this.value && this.value.split(':')
+              if (!this.value)  {
+                valueTemp = [new Date().getHours(), new Date().getMinutes()]
+              } else {
+                valueTemp = this.value && this.value.split(':')
+              }
               for (let i = 0; i < valueTemp.length; i++) {
                 this.selectedIndex[i] = valueTemp[i] || 0
               }
               break
             case 'date':
               this.selectedIndex = []
-              valueTemp = this.value && this.value.split('-')
+              if (!this.value)  {
+                valueTemp = [new Date().getFullYear(), new Date().getMonth() + 1, new Date().getDate()]
+              } else {
+                valueTemp = this.value && this.value.split('-')
+              }
               let result = Object.keys(this.pickerData[0]).filter(item => startYear + Number(item) === Number(valueTemp[0]))
               this.selectedIndex[0] = Number(result[0])
               for (let i = 1; i < valueTemp.length; i++) {
@@ -300,14 +308,6 @@
                   probeType: 3
                 })
                 if (this.mode === 'time' || this.mode === 'date') {
-                  if (this.start && this.selectedIndex[i] < this.startIndex[i]) {
-                    this.wheels[i].wheelTo([this.startIndex[i]])
-                    this.selectedIndex[i] = this.startIndex[i]
-                  }
-                  if (this.end && this.selectedIndex[i] > this.endIndex[i]) {
-                    this.wheels[i].wheelTo([this.endIndex[i]])
-                    this.selectedIndex[i] = this.endIndex[i]
-                  }
                   this.wheels[i].on('scrollStart', function (i) {
                     this.handleScrollStart()
                   }.bind(this, i))
@@ -329,6 +329,9 @@
                   }
                 }.bind(this, i))
               }
+            }
+            if (this.mode === 'time' || this.mode === 'date') {
+              this.initWheelPosition()
             }
             for (; i < this.wheels.length; i++) {
               if (this.wheels[i]) {
@@ -367,7 +370,6 @@
           this.wheels[i].minScrollY = 0
           this.wheels[i].maxScrollY = -(modeOptions[this.mode][i] * this.itemHeight)
         }
-
         //开始滚动 判断最多可滚动距离
         if (this.start) {
           this.wheels[0].minScrollY = -(this.startIndex[0] * this.itemHeight)
@@ -380,7 +382,6 @@
             this.wheels[i + 1].maxScrollY = -(modeOptions[this.mode][i + 1] * this.itemHeight)
           }
         }
-
         if (this.end) {
           this.wheels[0].maxScrollY = -(this.endIndex[0] * this.itemHeight)
 
@@ -401,6 +402,8 @@
               break
             }
             if (this.wheels[i + 1].getSelectedIndex() < this.startIndex[i + 1]) {
+              this.wheels[i + 1].minScrollY = 0
+              this.wheels[i + 1].maxScrollY = -(modeOptions[this.mode][i+1] * this.itemHeight)
               this.wheels[i + 1].wheelTo([this.startIndex[i + 1]])
             }
           }
@@ -411,6 +414,8 @@
               break
             }
             if (this.wheels[i + 1].getSelectedIndex() > this.endIndex[i + 1]) {
+              this.wheels[i + 1].minScrollY = 0
+              this.wheels[i + 1].maxScrollY = -(modeOptions[this.mode][i+1] * this.itemHeight)
               this.wheels[i + 1].wheelTo([this.endIndex[i + 1]])
             }
           }
@@ -422,6 +427,49 @@
           const isLeapYear = (currentYear % 4 === 0 && (currentYear % 100 !== 0)) || (currentYear % 400 === 0)
           const day = isFebruary && (isLeapYear ? 28 : 27) || 29
           this.wheels[2].getSelectedIndex() > day && this.wheels[2].wheelTo([0])
+        }
+
+      },
+      initWheelPosition () {
+        if (this.start) {
+          if (this.wheels[0].getSelectedIndex() < this.startIndex[0]) {
+            for (let i = 0; i < this.wheels.length; i++) {
+              this.wheels[i].wheelTo([this.startIndex[i]])
+              this.selectedIndex[i] = this.startIndex[i] || 0
+            }
+          } else {
+            for (let i = 0; i < this.wheels.length; i++) {
+              if (this.wheels[i].getSelectedIndex() !== this.startIndex[i]) {
+                break
+              }
+              if (this.wheels[i+1] && this.wheels[i+1].getSelectedIndex() < this.startIndex[i+1]) {
+                for (let j = i+1; j < this.wheels.length; j++) {
+                  this.wheels[j].wheelTo([this.startIndex[j]])
+                  this.selectedIndex[j] = this.startIndex[j] || 0
+                }
+              }
+            }
+          }
+        }
+        if (this.end) {
+          if (this.wheels[0].getSelectedIndex() > this.endIndex[0]) {
+            for (let i = 0; i < this.wheels.length; i++) {
+              this.wheels[i].wheelTo([this.endIndex[i]])
+              this.selectedIndex[i] = this.endIndex[i] || 0
+            }
+          } else {
+            for (let i = 0; i < this.wheels.length; i++) {
+              if (this.wheels[i].getSelectedIndex() !== this.endIndex[i]) {
+                break
+              }
+              if (this.wheels[i+1] && this.wheels[i+1].getSelectedIndex() > this.endIndex[i+1]) {
+                for (let j = i+1; j < this.wheels.length; j++) {
+                  this.wheels[j].wheelTo([this.endIndex[j]])
+                  this.selectedIndex[j] = this.endIndex[j] || 0
+                }
+              }
+            }
+          }
         }
       }
     }
