@@ -165,12 +165,13 @@ new MpxWebpackPlugin({
 
 - **类型**：`Boolean, 默认为false`
 
-- **详细**：是否禁止在项目编译构建过程中loader处理模块时注入逻辑，以实现基于原生规范（微信小程序开发规范）的能力增强，如 refs、i18n 等。当配置 forceDisableInject 为 true 时，不会注入增强能力，相应包体积会减少一些，但是开发者需严格基于原生规范进行开发。
+- **详细**：Mpx默认会在项目编译构建过程中对运行时进行代码注入，以实现部分增强能力，包括 refs、i18n 和 setData 性能优化等。在不需要这些增强能力时，可配置 forceDisableInject 为 true，以消除编译时注入，来进一步减少包体积，但是这部分增强能力也就不再可用。
+
 ### forceDisableProxyCtor
 
 - **类型**：`Boolean, 默认为false`
 
-- **详细**：跨平台开发时，是否禁止在项目编译构建过程中从源平台代码转换为目标平台代码时对实例构造函数（App | Page | Component ）进行代理，结合 transMpxRules 特性使用。如果目标平台是微信小程序，则全局替换 wx 为 Mpx 对象，否则替换目标平台全局对象为 createFactory。由于支付宝小程序不支持 Behavior，会将 Behavior 代理到 Mpx 对象下的 Bahavior 构造函数。当配置forceDisableProxyCtor 为 true 时，不会进行代理，用户在项目开发时需要条件针对输出到不同平台进行条件判断。
+- **详细**：控制在跨平台输出时对实例构造函数（App | Page | Component | Behavior）进行代理替换以抹平平台差异。当配置 forceDisableProxyCtor 为 true 时，会强行取消平台差异抹平逻辑，开发时需针对输出到不同平台进行条件判断。
 
 ### transMpxRules
 
@@ -222,10 +223,23 @@ new MpxWebpackPlugin({
 ### nativeOptions
 
 ### i18n
+- **类型**： `Object`
 
-- **类型**：`Object`
+- **详细**：Mpx 支持国际化，底层实现依赖类wxs能力，通过指定语言标识和语言包，可实现多语言之间的动态切换。可配置项包括locale、messages、messagesPath。
 
-- **详细**：Mpx支持国际化，底层实现依赖类wxs能力。可配置项包括 messages | messagesPath、dateTimeFormats | dateTimeFormatsPath、numberFormats | numberFormatsPath。其中 messages 既可以通过对象字面量传入，也可以通过 messagesPath 指定一个 js 模块路径，在该模块中定义配置并导出（dateTimeFormats | dateTimeFormatsPath 和 numberFormats | numberFormatsPath同理）。提供包括 t | tc | te | d | n 等方法供调用，由于wxs执行环境的限制，页面模板中仅支持调用 t | tc | te 方法，详细介绍及使用见[工具-国际化i18n](../guide/tool/i18n.md)一节。
+#### i18n.locale
+
+`String`
+
+通过配置 locale 属性，可指定语言标识，默认值为 'zh-CN'
+
+#### i18n.messages | i18n.messagesPath
+
+`Object | String`
+
+通过配置 messages 属性或者 messagesPath 属性，可以指定项目国际化语言包，Mpx 会依据语言包定义进行语言转换。
+
+详细介绍及使用见[工具-国际化i18n](../guide/tool/i18n.md)一节。
 
 - **示例**：
 
