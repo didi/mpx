@@ -239,7 +239,7 @@ module.exports = function (content) {
       if (!isProduction) {
         globalInjectCode += `global.currentResource = ${JSON.stringify(filePath)}\n`
       }
-      if (ctorType === 'app' && i18n) {
+      if (ctorType === 'app' && i18n && !mpx.forceDisableInject) {
         globalInjectCode += `global.i18n = ${JSON.stringify({ locale: i18n.locale })}\n`
 
         const i18nMethodsVar = 'i18nMethods'
