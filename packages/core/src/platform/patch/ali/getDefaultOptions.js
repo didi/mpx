@@ -100,7 +100,7 @@ export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
           // 微信原生转换支付宝时，每次props更新将其设置进data模拟微信表现
           Object.keys(nextProps).forEach((key) => {
             if (!key.startsWith('$') && typeof nextProps[key] !== 'function' && nextProps[key] !== this.props[key]) {
-              newData[key] = nextProps[key]
+              newData[key] = diffAndCloneA(nextProps[key]).clone
             }
           })
           this.__mpxProxy.forceUpdate(newData)

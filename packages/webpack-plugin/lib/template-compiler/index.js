@@ -114,14 +114,14 @@ module.exports = function (raw) {
     return !dep.templateInject
   })
 
-  const dep = new InjectDependency({
-    content: globalInjectCode,
-    index: -2
-  })
-
-  dep.templateInject = true
-
-  issuer.addDependency(dep)
+  if (!mpx.forceDisableInject) {
+    const dep = new InjectDependency({
+      content: globalInjectCode,
+      index: -2
+    })
+    dep.templateInject = true
+    issuer.addDependency(dep)
+  }
 
   let isSync = true
 
