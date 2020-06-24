@@ -65,7 +65,7 @@ module.exports = function (raw) {
 
   let result = compiler.serialize(ast)
 
-  if (isNative) {
+  if (isNative || mpx.forceDisableInject) {
     return result
   }
 
@@ -114,14 +114,13 @@ module.exports = function (raw) {
     return !dep.templateInject
   })
 
-  if (!mpx.forceDisableInject) {
-    const dep = new InjectDependency({
-      content: globalInjectCode,
-      index: -2
-    })
-    dep.templateInject = true
-    issuer.addDependency(dep)
-  }
+  const dep = new InjectDependency({
+    content: globalInjectCode,
+    index: -2
+  })
+
+  dep.templateInject = true
+  issuer.addDependency(dep)
 
   let isSync = true
 

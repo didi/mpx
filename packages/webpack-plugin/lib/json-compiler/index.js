@@ -144,22 +144,20 @@ module.exports = function (raw = '{}') {
   }
 
   // json补全
-  if (!mpx.forceDisableInject) {
-    if (pagesMap[resourcePath]) {
-      // page
-      if (!mpx.forceUsePageCtor) {
-        if (!json.usingComponents) {
-          json.usingComponents = {}
-        }
-        if (!json.component && mode === 'swan') {
-          json.component = true
-        }
+  if (pagesMap[resourcePath]) {
+    // page
+    if (!mpx.forceUsePageCtor) {
+      if (!json.usingComponents) {
+        json.usingComponents = {}
       }
-    } else if (componentsMap[resourcePath]) {
-      // component
-      if (json.component !== true) {
+      if (!json.component && mode === 'swan') {
         json.component = true
       }
+    }
+  } else if (componentsMap[resourcePath]) {
+    // component
+    if (json.component !== true) {
+      json.component = true
     }
   }
 
