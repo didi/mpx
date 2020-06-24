@@ -1461,6 +1461,9 @@ function postProcessWxs (el, meta) {
       }
       src && addWxsModule(meta, module, src)
       content && addWxsContent(meta, module, content)
+      // wxs hoist
+      removeNode(el, true)
+      injectNodes.push(el)
     }
   }
 }
