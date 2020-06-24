@@ -45,8 +45,8 @@ const sidebar = {
     {
       title: '拓展',
       collapsable: false,
+      path:'/guide/extend',
       children: [
-        'extend/index',
         'extend/request',
         'extend/mock',
         'extend/api-proxy'
@@ -66,14 +66,15 @@ const sidebar = {
     'config',
     'global-api',
     'instance-api',
+    'directives',
     'compile',
+    'builtIn',
     'extend'
   ],
   '/articles/': [
     '1.0',
     '2.0'
-  ],
-
+  ]
 }
 
 const nav = [
@@ -85,14 +86,14 @@ const nav = [
 ]
 
 module.exports = {
-  base: '/mpx/new/',
+  base: '/mpx/',
   head: [
     ['link', { rel: 'icon', href: '/favicon.ico' }]
   ],
   themeConfig: {
     sidebarDepth: 1,
     logo: '/logo.png',
-    displayAllHeaders: true,
+    displayAllHeaders: false,
     sidebar,
     nav
   }

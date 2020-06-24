@@ -20,10 +20,15 @@ module.exports = function (json, options, rawCallback) {
   const projectRoot = options.projectRoot
   const localPagesMap = {}
   const localComponentsMap = {}
-  let firstPage = ''
   let output = '/* json */\n'
   let jsonObj = {}
   const context = loaderContext.context
+
+  const emitWarning = (msg) => {
+    loaderContext.emitWarning(
+      new Error('[json processor][' + loaderContext.resource + ']: ' + msg)
+    )
+  }
 
   const callback = (err) => {
     return rawCallback(err, {
@@ -143,28 +148,40 @@ module.exports = function (json, options, rawCallback) {
   const processPages = (pages, srcRoot = '', tarRoot = '', context, callback) => {
     if (pages) {
       async.forEach(pages, (page, callback) => {
-        const rawPage = page
         if (resolveMode === 'native') {
           page = loaderUtils.urlToRequest(page, projectRoot)
         }
-        const name = getPageName(tarRoot, rawPage)
-        const pagePath = '/' + toPosix(name)
-        resolve(path.join(context, srcRoot), page, (err, resource) => {
+        context = path.join(context, srcRoot)
+        resolve(context, page, (err, resource) => {
           if (err) return callback(err)
           const { resourcePath, queryObj } = parseRequest(resource)
-          // 如果存在page命名冲突，return err
-          for (let key in pagesMap) {
-            // 此处引入pagesEntryMap确保相同entry下路由路径重复注册才报错，不同entry下的路由路径重复则无影响
-            if (pagesMap[key] === pagePath && key !== resourcePath && pagesEntryMap[key] === loaderContext.resourcePath) {
-              return callback(new Error(`Resources in ${resourcePath} and ${key} are registered with same page path ${pagePath}, which is not allowed!`))
+          const ext = path.extname(resourcePath)
+          // 获取pageName
+          let pageName
+          const relative = path.relative(context, resourcePath)
+          if (/^\./.test(relative)) {
+            // 如果当前page不存在于context中，对其进行重命名
+            pageName = '/' + toPosix(path.join(tarRoot, getPageName(resourcePath, ext)))
+            emitWarning(`Current page ${resourcePath} is not in current pages directory ${context}, the page path will be replaced with ${pageName}, use ?resolve to get the page path and navigate to it!`)
+          } else {
+            pageName = '/' + toPosix(path.join(tarRoot, /^(.*?)(\.[^.]*)?$/.exec(relative)[1]))
+            // 如果当前page与已有page存在命名冲突，也进行重命名
+            for (let key in pagesMap) {
+              // 此处引入pagesEntryMap确保相同entry下路由路径重复注册才报错，不同entry下的路由路径重复则无影响
+              if (pagesMap[key] === pageName && key !== resourcePath && pagesEntryMap[key] === loaderContext.resourcePath) {
+                const pageNameRaw = pageName
+                pageName = '/' + toPosix(path.join(tarRoot, getPageName(resourcePath, ext)))
+                emitWarning(`Current page ${resourcePath} is registered with a conflict page path ${pageNameRaw} which is already existed in system, the page path will be replaced with ${pageName}, use ?resolve to get the page path and navigate to it!`)
+                break
+              }
             }
           }
-          pagesMap[resourcePath] = pagePath
+          pagesMap[resourcePath] = pageName
           pagesEntryMap[resourcePath] = loaderContext.resourcePath
-          localPagesMap[pagePath] = {
+          localPagesMap[pageName] = {
             resource: addQuery(resource, { page: true }),
             async: tarRoot || queryObj.async,
-            isFirst: !tarRoot && rawPage === firstPage
+            isFirst: queryObj.isFirst
           }
           callback()
         })
@@ -231,8 +248,8 @@ module.exports = function (json, options, rawCallback) {
 
   async.parallel([
     (callback) => {
-      if (jsonObj.pages) {
-        firstPage = jsonObj.pages[0]
+      if (jsonObj.pages && jsonObj.pages[0]) {
+        jsonObj.pages[0] = addQuery(jsonObj.pages[0], { isFirst: true })
       }
       processPages(jsonObj.pages, '', '', context, callback)
     },
