@@ -27,19 +27,19 @@ mpx.checkJSApi()
 **cdn地址引用：**
 ```js
 <!-- 开发环境版本，方便调试 -->
-<script src="https://dpubstatic.udache.com/static/dpubimg/V_SmuAm-gX/webviewbridge.js"></script>
+<script src="https://dpubstatic.udache.com/static/dpubimg/D2JeLyT0_Y/2.2.43.webviewbridge.js"></script>
 
 <!-- 生产环境版本，压缩了体积 -->
-<script src="https://dpubstatic.udache.com/static/dpubimg/QZ-CmPDMTB/webviewbridge.min.js"></script>
+<script src="https://dpubstatic.udache.com/static/dpubimg/PRg145LZ-i/2.2.43.webviewbridge.min.js"></script>
 
 
 <!-- 同时支持 ES Module 引入的 -->
 // index.html
-<script type="module" src="https://dpubstatic.udache.com/static/dpubimg/FyjQ2-AZny/webviewbridge.esm.browser.min.js"></script>
+<script type="module" src="https://dpubstatic.udache.com/static/dpubimg/6MQOo-ocI4/2.2.43.webviewbridge.esm.browser.min.js"></script>
 // main.js
-import mpx from "https://dpubstatic.udache.com/static/dpubimg/FyjQ2-AZny/webviewbridge.esm.browser.min.js"
+import mpx from "https://dpubstatic.udache.com/static/dpubimg/6MQOo-ocI4/2.2.43.webviewbridge.esm.browser.min.js"
 
-//ES Module 开发版本地址： https://dpubstatic.udache.com/static/dpubimg/gJPx9LuMVE/webviewbridge.esm.browser.js
+//ES Module 开发版本地址： https://dpubstatic.udache.com/static/dpubimg/cdhpNhmWmJ/2.2.43.webviewbridge.esm.browser.js
 ```
 **基础方法提供：**
 | 方法/平台      | wx            | qq    | ali    | baidu    | tt    |
