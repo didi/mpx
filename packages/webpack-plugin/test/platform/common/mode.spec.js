@@ -6,6 +6,15 @@ describe('template should transform correct', function () {
     errorFn.mockClear()
   })
 
+  it('work correct in wx mode', function () {
+    const input1 = `<view @wx>123</view>`
+    const output1 = compileAndParse(input1)
+    expect(output1).toBe('')
+    const input2 = `<view t1@wx="ttt">123</view>`
+    const output2 = compileAndParse(input2, { mode: 'wx' })
+    expect(output2).toBe('<view t1="ttt">123</view>')
+  })
+
   it('only keep it when mode be ali', function () {
     const input = `<ali-view @ali test@ali="ttt">123</ali-view>`
     const output1 = compileAndParse(input)
