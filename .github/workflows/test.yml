@@ -3,6 +3,12 @@ name: test
 on: [push]
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: npm run lint
+
   unit:
     runs-on: ubuntu-18.04
     steps:
