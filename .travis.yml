@@ -1,27 +1,27 @@
-language: node_js
-node_js:
-  - 12.16.0
-install:
-  - npm i
-  - lerna bootstrap --ignore-prepublish --no-ci
-script:
-  - npm run lint
-  - npm t
-before_deploy:
-  - cd docs
-  - npx gitbook-cli install
-  - npx gitbook-cli build
-  - cd ..
-#  - npm run docs:build
-#  - mv docs-vuepress/.vuepress/dist docs/_book/new
-  - echo "//registry.npmjs.org/:_authToken=\${NPM_TOKEN}" >> $HOME/.npmrc 2> /dev/null
-deploy:
-  - provider: pages
-    skip_cleanup: true
-    github_token: $GH_TOKEN_LHY_MPX
-    local_dir: docs/_book
-    on:
-      branch: master
+#language: node_js
+#node_js:
+#  - 12.16.0
+#install:
+#  - npm i
+#  - lerna bootstrap --ignore-prepublish --no-ci
+#script:
+#  - npm run lint
+#  - npm t
+#before_deploy:
+#  - cd docs
+#  - npx gitbook-cli install
+#  - npx gitbook-cli build
+#  - cd ..
+##  - npm run docs:build
+##  - mv docs-vuepress/.vuepress/dist docs/_book/new
+#  - echo "//registry.npmjs.org/:_authToken=\${NPM_TOKEN}" >> $HOME/.npmrc 2> /dev/null
+#deploy:
+#  - provider: pages
+#    skip_cleanup: true
+#    github_token: $GH_TOKEN_LHY_MPX
+#    local_dir: docs/_book
+#    on:
+#      branch: master
 #    use github actions replace
 #  - provider: script
 #    skip_cleanup: true
