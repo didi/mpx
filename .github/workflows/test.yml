@@ -1,0 +1,12 @@
+name: test
+
+on: [push]
+
+jobs:
+  unit:
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: exec unit test
+        run: npm t
