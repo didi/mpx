@@ -22,10 +22,11 @@ deploy:
     local_dir: docs/_book
     on:
       branch: master
-  - provider: script
-    skip_cleanup: true
-    script:
-      - npm run lerna:publish
-    on:
-      branch: master
-      tags: true
+#    use github actions replace
+#  - provider: script
+#    skip_cleanup: true
+#    script:
+#      - npm run lerna:publish
+#    on:
+#      branch: master
+#      tags: true
