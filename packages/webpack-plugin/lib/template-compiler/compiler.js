@@ -112,7 +112,8 @@ function createASTElement (tag, attrs, parent) {
     attrsList: attrs,
     attrsMap: makeAttrsMap(attrs),
     parent: parent,
-    children: []
+    children: [],
+    needTrans: true // 是否需要转换平台
   }
 }
 
@@ -1832,9 +1833,45 @@ function postProcessTemplate (el) {
 }
 
 function processElement (el, root, options, meta) {
-  if (rulesRunner) {
+  if (el.parent && !el.parent.needTrans) {
+    el.needTrans = false
+  }
+
+  const elementAttrListCopy = Object.assign([], el.attrsList)
+  elementAttrListCopy.forEach(item => {
+    const arr = item.name.split(/[@,|]/)
+    if (arr.some(i => ['wx', 'ali', 'swan', 'tt', 'qq', 'web'].includes(i))) {
+      const tempVal = getAndRemoveAttr(el, item.name)
+      const replacedAttrName = item.name.replace(/@.*/, '')
+
+      const processedAttr = { name: replacedAttrName, value: tempVal }
+      if (arr.includes(mode)) {
+        if (!replacedAttrName) {
+          el.needTrans = false
+        } else {
+          // 如果命中了指定的mode，则先存在el上，等跑完转换后再挂回去
+          el.noTransAttr ? el.noTransAttr.push(processedAttr) : el.noTransAttr = [processedAttr]
+        }
+      } else if (!replacedAttrName) {
+        removeNode(el)
+      } else {
+        // 如果没命中指定的mode，则直接去掉@语法后挂回去
+        // todo: 挂不挂回去啊？
+        // addAttrs(el, processedAttr)
+      }
+    }
+  })
+
+  if (rulesRunner && el.needTrans) {
     currentEl = el
     rulesRunner(el)
+  }
+
+  // 转换完成，把不需要处理的attr挂回去
+  if (el.noTransAttr) {
+    el.noTransAttr.forEach(item => {
+      addAttrs(el, item)
+    })
   }
 
   const transAli = mode === 'ali' && srcMode === 'wx'
