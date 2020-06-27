@@ -63,4 +63,10 @@ describe('template should transform correct', function () {
     const output = compileAndParse(input)
     expect(output).toBe('<button open-type="getUserInfo">获取用户信息</button>')
   })
+
+  it('should work correct with web mode', function () {
+    const input = '<button @click@web="handleClick">获取用户信息</button>'
+    const output = compileAndParse(input, { mode: 'web' })
+    expect(output).toBe('<button @click="handleClick">获取用户信息</button>')
+  })
 })

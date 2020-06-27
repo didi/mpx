@@ -13,5 +13,9 @@ jobs:
     runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@v2
+
+      - name: install deps
+        run: npm i && npx lerna bootstrap
+
       - name: exec unit test
-        run: npm i && npm t
+        run: npm t
