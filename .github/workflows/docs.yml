@@ -1,9 +1,11 @@
 name: deploy-github-page
 
-on:
-  push:
-    branches:
-      - master
+#on:
+#  push:
+#    branches:
+#      - master
+
+on: [push]
 
 jobs:
   deploy:
