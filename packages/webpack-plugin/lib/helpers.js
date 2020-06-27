@@ -63,7 +63,7 @@ function ensureBang (loader) {
   }
 }
 
-function resolveLoaders (options, moduleId, isProduction, hasScoped, hasComment, usingComponents, needCssSourceMap, projectRoot = '') {
+function resolveLoaders (options, moduleId, isProduction, hasScoped, hasComment, usingComponents, needCssSourceMap, projectRoot) {
   let cssLoaderOptions = ''
   let wxmlLoaderOptions = ''
   let jsonCompilerOptions = ''
@@ -270,9 +270,7 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
           moduleId,
           scoped: !!scoped,
           sourceMap: needCssSourceMap,
-          transRpx: options.transRpx,
-          comment: options.comment,
-          designWidth: options.designWidth
+          transRpx: options.transRpx
         })
       // normalize scss/sass/postcss if no specific loaders have been provided
       if (!loaders[lang]) {
@@ -298,7 +296,8 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
         hasScoped,
         hasComment,
         isNative,
-        moduleId
+        moduleId,
+        root: projectRoot
       }
       templateCompiler = templateCompilerPath + '?' + JSON.stringify(templateCompilerOptions)
     }

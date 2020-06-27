@@ -27,7 +27,7 @@ module.exports = function ({ print }) {
       {
         test: 'open-type',
         ali ({ name, value }) {
-          if (value === 'share' || value === 'launchApp') {
+          if (value === 'share' || value === 'launchApp' || value === 'getAuthorize') {
             // do nothing
           } else if (value === 'getPhoneNumber') {
             return [

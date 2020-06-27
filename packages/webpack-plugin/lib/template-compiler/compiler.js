@@ -1,4 +1,5 @@
 const deindent = require('de-indent')
+const he = require('he')
 const config = require('../config')
 const normalize = require('../utils/normalize')
 const isValidIdentifierStr = require('../utils/is-valid-identifier-str')
@@ -26,13 +27,13 @@ function makeMap (str, expectsLowerCase) {
     }
 }
 
-let no = function (a, b, c) {
+const no = function () {
   return false
 }
 
 // HTML5 tags https://html.spec.whatwg.org/multipage/indices.html#elements-3
 // Phrasing Content https://html.spec.whatwg.org/multipage/dom.html#phrasing-content
-let isNonPhrasingTag = makeMap(
+const isNonPhrasingTag = makeMap(
   'address,article,aside,base,blockquote,body,caption,col,colgroup,dd,' +
   'details,dialog,div,dl,dt,fieldset,figcaption,figure,footer,form,' +
   'h1,h2,h3,h4,h5,h6,head,header,hgroup,hr,html,legend,li,menuitem,meta,' +
@@ -48,15 +49,15 @@ let isNonPhrasingTag = makeMap(
  */
 
 // Regular Expressions for parsing tags and attributes
-let attribute = /^\s*([^\s"'<>/=]+)(?:\s*(=)\s*(?:"([^"]*)"+|'([^']*)'+|([^\s"'=<>`]+)))?/
-let ncname = '[a-zA-Z_][\\w\\-\\.]*'
-let qnameCapture = '((?:' + ncname + '\\:)?' + ncname + ')'
-let startTagOpen = new RegExp(('^<' + qnameCapture))
-let startTagClose = /^\s*(\/?)>/
-let endTag = new RegExp(('^<\\/' + qnameCapture + '[^>]*>'))
-let doctype = /^<!DOCTYPE [^>]+>/i
-let comment = /^<!--/
-let conditionalComment = /^<!\[/
+const attribute = /^\s*([^\s"'<>/=]+)(?:\s*(=)\s*(?:"([^"]*)"+|'([^']*)'+|([^\s"'=<>`]+)))?/
+const ncname = '[a-zA-Z_][\\w\\-\\.]*'
+const qnameCapture = '((?:' + ncname + '\\:)?' + ncname + ')'
+const startTagOpen = new RegExp(('^<' + qnameCapture))
+const startTagClose = /^\s*(\/?)>/
+const endTag = new RegExp(('^<\\/' + qnameCapture + '[^>]*>'))
+const doctype = /^<!DOCTYPE [^>]+>/i
+const comment = /^<!--/
+const conditionalComment = /^<!\[/
 
 let IS_REGEX_CAPTURING_BROKEN = false
 'x'.replace(/x(.)?/g, function (m, g) {
@@ -64,12 +65,12 @@ let IS_REGEX_CAPTURING_BROKEN = false
 })
 
 // Special Elements (can contain anything)
-let isPlainTextElement = makeMap('script,style,textarea', true)
-let reCache = {}
+const isPlainTextElement = makeMap('script,style,textarea', true)
+const reCache = {}
 
 // #5992
-let isIgnoreNewlineTag = makeMap('pre,textarea', true)
-let shouldIgnoreFirstNewline = function (tag, html) {
+const isIgnoreNewlineTag = makeMap('pre,textarea', true)
+const shouldIgnoreFirstNewline = function (tag, html) {
   return tag && isIgnoreNewlineTag(tag) && html[0] === '\n'
 }
 
@@ -77,8 +78,8 @@ const splitRE = /\r?\n/g
 const replaceRE = /./g
 const isSpecialTag = makeMap('script,style,template,json', true)
 
-let ieNSBug = /^xmlns:NS\d+/
-let ieNSPrefix = /^NS\d+:/
+const ieNSBug = /^xmlns:NS\d+/
+const ieNSPrefix = /^NS\d+:/
 
 /* istanbul ignore next */
 function guardIESVGBug (attrs) {
@@ -227,10 +228,10 @@ function assertMpxCommentAttrsEnd () {
 }
 
 // Browser environment sniffing
-let inBrowser = typeof window !== 'undefined'
-let UA = inBrowser && window.navigator.userAgent.toLowerCase()
-let isIE = UA && /msie|trident/.test(UA)
-let isEdge = UA && UA.indexOf('edge/') > 0
+const inBrowser = typeof window !== 'undefined'
+const UA = inBrowser && window.navigator.userAgent.toLowerCase()
+const isIE = UA && /msie|trident/.test(UA)
+const isEdge = UA && UA.indexOf('edge/') > 0
 
 // configurable state
 // 由于template处理为纯同步过程，采用闭包变量存储各种状态方便全局访问
@@ -875,6 +876,10 @@ function parse (template, options) {
           : preserveWhitespace && children.length ? ' ' : ''
       }
 
+      if ((!config[mode].wxs || currentParent.tag !== config[mode].wxs.tag) && options.decodeHTMLText) {
+        text = he.decode(text)
+      }
+
       if (text) {
         if (text !== ' ' || !children.length || children[children.length - 1].text !== ' ') {
           let el = {
@@ -979,7 +984,7 @@ function stringify (str) {
 }
 
 // function processLifecycleHack (el, options) {
-//   if (options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component') {
+//   if (isComponentNode(el,options)) {
 //     if (el.if) {
 //       el.if = {
 //         raw: `{{${el.if.exp} && mpxLifecycleHack}}`,
@@ -1006,7 +1011,7 @@ function stringify (str) {
 // }
 
 function processPageStatus (el, options) {
-  if (options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component') {
+  if (isComponentNode(el, options)) {
     addAttrs(el, [{
       name: 'mpxPageStatus',
       value: '{{mpxPageStatus}}'
@@ -1043,7 +1048,7 @@ function processComponentIs (el, options) {
 }
 
 // function processComponentDepth (el, options) {
-//   if (options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component') {
+//   if (isComponentNode(el,options)) {
 //     addAttrs(el, [{
 //       name: 'mpxDepth',
 //       value: '{{mpxDepth + 1}}'
@@ -1384,13 +1389,14 @@ function processFor (el) {
 
 function processRef (el, options, meta) {
   let val = getAndRemoveAttr(el, config[mode].directive.ref)
-  let type = options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component' ? 'component' : 'node'
+  let type = isComponentNode(el, options) ? 'component' : 'node'
   if (val) {
     if (!meta.refs) {
       meta.refs = []
     }
     let all = !!forScopes.length
-    let refClassName = `__ref_${val}_${++refId}`
+    // swan的page中进行selectComponent匹配时会将类名前面的__去除掉，refClassName用__开头会导致swan在page中的组件refs失效
+    let refClassName = `ref_${val}_${++refId}`
     // 支付宝中对于node进行的my.createSelectorQuery是在全局范围内进行的，需添加运行时组件id确保selector唯一
     if (type === 'node' && mode === 'ali') {
       refClassName += '_{{mpxCid}}'
@@ -1426,11 +1432,11 @@ function addWxsModule (meta, module, src) {
 }
 
 function addWxsContent (meta, module, content) {
-  if (!meta.wxsConentMap) {
-    meta.wxsConentMap = {}
+  if (!meta.wxsContentMap) {
+    meta.wxsContentMap = {}
   }
-  if (meta.wxsConentMap[module]) return true
-  meta.wxsConentMap[module] = content
+  if (meta.wxsContentMap[module]) return true
+  meta.wxsContentMap[module] = content
 }
 
 function postProcessWxs (el, meta) {
@@ -1455,6 +1461,9 @@ function postProcessWxs (el, meta) {
       }
       src && addWxsModule(meta, module, src)
       content && addWxsContent(meta, module, content)
+      // wxs hoist
+      removeNode(el, true)
+      injectNodes.push(el)
     }
   }
 }
@@ -1467,7 +1476,7 @@ function processAttrs (el, options) {
     let parsed = parseMustache(value)
     if (parsed.hasBinding) {
       // 该属性判断用于提供给运行时对于计算属性作为props传递时提出警告
-      const isProps = (options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component') && !(attr.name === 'class' || attr.name === 'style')
+      const isProps = isComponentNode(el, options) && !(attr.name === 'class' || attr.name === 'style')
       addExp(el, parsed.result, isProps)
     }
     if (parsed.replaced) {
@@ -1690,6 +1699,10 @@ function isRealNode (el) {
   return !virtualNodeTagMap[el.tag]
 }
 
+function isComponentNode (el, options) {
+  return options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component'
+}
+
 function processAliExternalClassesHack (el, options) {
   let staticClass = getAndRemoveAttr(el, 'class')
   if (staticClass) {
@@ -1701,6 +1714,18 @@ function processAliExternalClassesHack (el, options) {
       name: 'class',
       value: staticClass
     }])
+  }
+
+  if (options.scopedId && isComponentNode(el, options)) {
+    options.externalClasses.forEach(({ className }) => {
+      let externalClass = getAndRemoveAttr(el, className)
+      if (externalClass) {
+        addAttrs(el, [{
+          name: className,
+          value: `${externalClass} ${options.scopedId}`
+        }])
+      }
+    })
   }
 }
 
@@ -1746,7 +1771,7 @@ function processAliStyleClassHack (el, options, root) {
       }
     }
     if (exp !== undefined) {
-      if (options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component') {
+      if (isComponentNode(el, options)) {
         addAttrs(el, [{
           name: typeName,
           value: exp
@@ -1771,7 +1796,7 @@ function processShow (el, options, root) {
     }
   }
   if (show !== undefined) {
-    if (options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component') {
+    if (isComponentNode(el, options)) {
       if (show === '') {
         show = '{{false}}'
       }

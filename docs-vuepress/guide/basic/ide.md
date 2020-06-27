@@ -1,47 +1,18 @@
-# 单文件
+# IDE高亮配置
 
-介绍单文件编译开发特性，包括单文件中有哪些部分以及如何进行ide配置等
+todo 完善更新
 
-## 介绍
+- [IntelliJ](single-file.md#IntelliJ)
+- [vscode](single-file.md#vscode)
 
-按照小程序的文件规范，app & page & component 的组成部分都是四个文件，js, wxss, wxml, json; 多文件的形式在开发上体验并不是特别友好，使用过`vue`的同学都知道，单文件的开发模式更内聚，更可维护。因此mpx也提供了单文件开发模式，文件扩展名为 `.mpx`
-
-通过 `webpack` 构建工具和 `mpx-loader` 可以将文件扩展名为 .mpx 的 `single file component` 转换成小程序所需要的四个文件。
-
-这四个文件对应于单文件中的四个区域
-
-### 基础例子
-
-```html
-<!--对应wxml文件-->
-<template>
-  <view>hello mpx</view>
-</template>
-<!--对应js文件-->
-<script>
-</script>
-<!--对应wxss文件-->
-<style lang="stylus">
-</style>
-<!--对应json文件-->
-<script type="application/json">
-</script>
-```
-
-## 编辑器/IDE高亮、提示
-
-- [IntelliJ](what-is-single-file.md#IntelliJ)
-- [vscode](what-is-single-file.md#vscode)
-
-#### IntelliJ
+## IntelliJ
 
 如果使用IntelliJ系IDE开发，可将mpx后缀文件关联到vue类型，按vue解析。
-![关联文件类型](../assets/images/start-tips2.png)
+![关联文件类型](../../assets/images/start-tips2.png)
 但会报一个warning提示有重复的script标签，关闭该警告即可。
-![关闭警告](../assets/images/start-tips1.png)
+![关闭警告](../../assets/images/start-tips1.png)
 
-
-#### vscode
+## vscode
 
 `.mpx`采用类似于`.vue`的单文件语法风格，在Visual Studio Marketplace中获取[vue语法高亮插件](https://marketplace.visualstudio.com/items?itemName=liuji-jim.vue)
 然后通过[配置vscode扩展语言](https://code.visualstudio.com/docs/languages/overview#_adding-a-file-extension-to-a-language)
@@ -49,7 +20,7 @@
 
 > 下方的方案为社区同学贡献，通过更多的插件使用，可能在某些功能上有所增强，但也可能遇到一些其他问题，请个人判断是否需要
 
-##### vscode插件
+### vscode插件
 
 **更新**: `minapp`最新版已经支持了mpx，所以对`minapp`的使用加以修改
 
@@ -89,7 +60,7 @@
 ```
 如上，需要在json的script中，加上`lang="json"`这样就不会对这个标签进行格式化
 
-##### vscode代码片段
+### vscode代码片段
 
 此功能主要是为了新建文件后快速生成一些代码，只要在设置里，选择`用户代码片段`，在选择`vue.json`，将以下代码复制进去。之后只要输出写好的`prefix`，就能自动提示生成。
 如此你也可以对`javascript.json`做一些自定义的代码片段

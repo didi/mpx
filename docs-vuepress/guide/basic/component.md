@@ -14,3 +14,7 @@ Mpx中提供了使用方法类似于Vue的动态组件能力，这是一个基�
   <component is="{{current}}"></component>
 </view>
 ```
+
+## slot
+
+todo 完善slot使用说明及示例

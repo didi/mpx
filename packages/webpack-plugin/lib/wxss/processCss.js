@@ -194,7 +194,7 @@ module.exports = function processCss (inputSource, inputMap, options, callback) 
   if (minimize) {
     var cssnano = require('cssnano')
     var minimizeOptions = assign({}, query.minimize);
-    ['zindex', 'normalizeUrl', 'discardUnused', 'mergeIdents', 'reduceIdents', 'autoprefixer'].forEach(function (name) {
+    ['zindex', 'normalizeUrl', 'discardUnused', 'mergeIdents', 'reduceIdents', 'autoprefixer', 'svgo'].forEach(function (name) {
       if (typeof minimizeOptions[name] === 'undefined') {
         minimizeOptions[name] = false
       }

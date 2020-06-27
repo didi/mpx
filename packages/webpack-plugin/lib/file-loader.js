@@ -25,6 +25,9 @@ module.exports = function loader (content) {
       isStatic: true,
       error: (err) => {
         this.emitError(err)
+      },
+      warn: (err) => {
+        this.emitWarning(err)
       }
     }).outputPath
   }

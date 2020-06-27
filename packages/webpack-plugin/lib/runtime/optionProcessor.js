@@ -44,16 +44,59 @@ export default function processOption (
       window.__mpxRouter = option.router = new VueRouter({
         routes: routes
       })
+      window.__mpxRouter.stack = []
+      window.__mpxRouter.needCache = null
+      window.__mpxRouter.needRemove = []
       // 处理reLaunch中传递的url并非首页时的replace逻辑
       window.__mpxRouter.beforeEach(function (to, from, next) {
         var action = window.__mpxRouter.__mpxAction
-        if (action && action.type === 'reLaunch') {
-          if (to.path !== action.path) {
-            return next({
-              path: action.path,
-              replace: true
-            })
+        var stack = window.__mpxRouter.stack
+        // 处理人为操作
+        if (!action) {
+          if (stack.length > 1 && stack[stack.length - 2].path === to.path) {
+            action = {
+              type: 'back',
+              delta: 1
+            }
+          } else {
+            action = {
+              type: 'to'
+            }
           }
+        }
+        var insertItem = {
+          path: to.path
+        }
+        // 构建历史栈
+        switch (action.type) {
+          case 'to':
+            stack.push(insertItem)
+            window.__mpxRouter.needCache = insertItem
+            break
+          case 'back':
+            window.__mpxRouter.needRemove = stack.splice(stack.length - action.delta, action.delta)
+            break
+          case 'redirect':
+            window.__mpxRouter.needRemove = stack.splice(stack.length - 1, 1, insertItem)
+            window.__mpxRouter.needCache = insertItem
+            break
+          case 'reLaunch':
+            if (!action.reLaunched) {
+              action.reLaunched = true
+              window.__mpxRouter.needRemove = stack
+              window.__mpxRouter.stack = [insertItem]
+              window.__mpxRouter.needCache = insertItem
+            }
+            if (!action.replaced) {
+              action.replaced = true
+              return next({
+                path: action.path,
+                query: {
+                  reLaunchCount: action.reLaunchCount
+                },
+                replace: true
+              })
+            }
         }
         next()
       })
