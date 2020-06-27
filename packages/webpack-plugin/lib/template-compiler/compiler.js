@@ -1839,7 +1839,7 @@ function processElement (el, root, options, meta) {
 
   const elementAttrListCopy = Object.assign([], el.attrsList)
   elementAttrListCopy.forEach(item => {
-    const arr = item.name.split(/[@,|]/)
+    const arr = item.name.split(/[@|]/)
     if (arr.some(i => ['wx', 'ali', 'swan', 'tt', 'qq', 'web'].includes(i))) {
       const tempVal = getAndRemoveAttr(el, item.name)
       const replacedAttrName = item.name.replace(/@.*/, '')
