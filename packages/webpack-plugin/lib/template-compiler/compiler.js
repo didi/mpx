@@ -1859,8 +1859,7 @@ function processElement (el, root, options, meta) {
       } else if (!replacedAttrName) {
         removeNode(el)
       } else {
-        // 如果没命中指定的mode，则直接去掉@语法后挂回去
-        // todo: 挂不挂回去啊？
+        // 如果没命中指定的mode，则该属性删除
         // addAttrs(el, processedAttr)
       }
     }
