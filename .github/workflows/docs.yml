@@ -1,0 +1,28 @@
+## This is a workflow for deploy github pages
+#name: pages
+#
+#on:
+#  push:
+#    branches:
+#      - master
+#
+#jobs:
+#  builddoc:
+#    runs-on: ubuntu-latest
+#    steps:
+#      - uses: actions/checkout@v2
+#      - run: echo hello
+#      - name: GitHub Pages
+#        uses: crazy-max/ghaction-github-pages@v1.4.0
+#        with:
+#          #      repo: # optional
+#          #      target_branch: # optional, default is gh-pages
+#          #      keep_history: # optional, default is false
+#          #      allow_empty_commit: # optional, default is true
+#          # Build directory to deploy
+#          build_dir: docs
+#        #      committer_name: # optional
+#        #      committer_email: # optional
+#        #      commit_message: # optional
+#        env:
+#          GITHUB_PAT: ${{ secrets.doc_pat }}
