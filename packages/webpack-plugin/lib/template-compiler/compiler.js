@@ -1836,7 +1836,7 @@ function processElement (el, root, options, meta) {
     el.passTrans = true
   }
 
-  const elementAttrListCopy = Object.assign([], el.attrsList)
+  const elementAttrListCopy = el.attrsList.slice(0)
   elementAttrListCopy.forEach(item => {
     const attrName = item.name || ''
     if (!attrName) return

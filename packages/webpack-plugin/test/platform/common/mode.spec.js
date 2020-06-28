@@ -69,4 +69,16 @@ describe('template should transform correct', function () {
     const output = compileAndParse(input, { mode: 'web' })
     expect(output).toBe('<button @click="handleClick">获取用户信息</button>')
   })
+
+  it('should work normal if no attr in tag', function () {
+    const input = '<button>获取用户信息</button>'
+    const output = compileAndParse(input)
+    expect(output).toBe('<button>获取用户信息</button>')
+  })
+
+  it('if attr name matched mode name should work correct', function () {
+    const input = '<button ali@swan="handleClick">获取用户信息</button>'
+    const output = compileAndParse(input)
+    expect(output).toBe('<button>获取用户信息</button>')
+  })
 })
