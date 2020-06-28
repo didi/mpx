@@ -832,6 +832,7 @@ function parse (template, options) {
       currentParent.children.push(element)
       element.parent = currentParent
 
+      processAtMode(element)
       processElement(element, root, options, meta)
       if (!unary) {
         currentParent = element
@@ -1831,13 +1832,9 @@ function postProcessTemplate (el) {
   }
 }
 
-function processElement (el, root, options, meta) {
-  if (el.parent && el.parent._needRemove) {
-    el._needRemove = true
-  }
-
-  if (el.parent && el.parent._passTrans) {
-    el._passTrans = true
+function processAtMode (el) {
+  if (el.parent && el.parent._atModeStatus) {
+    el._atModeStatus = el.parent._atModeStatus
   }
 
   const elementAttrListCopy = el.attrsList.slice(0)
@@ -1855,25 +1852,27 @@ function processElement (el, root, options, meta) {
       const processedAttr = { name: replacedAttrName, value: tempVal }
       if (modeArr.includes(mode)) {
         if (!replacedAttrName) {
-          el._passTrans = true
+          el._atModeStatus = 'match'
         } else {
           // 如果命中了指定的mode，则先存在el上，等跑完转换后再挂回去
           el.noTransAttr ? el.noTransAttr.push(processedAttr) : el.noTransAttr = [processedAttr]
         }
       } else if (!replacedAttrName) {
-        el._needRemove = true
+        el._atModeStatus = 'mismatch'
       } else {
         // 如果没命中指定的mode，则该属性删除
       }
     }
   })
+}
 
+function processElement (el, root, options, meta) {
   // 如果已经标记了这个元素要被清除，直接return跳过后续处理步骤
-  if (el._needRemove) {
+  if (el._atModeStatus === 'mismatch') {
     return
   }
 
-  if (rulesRunner && !el._passTrans) {
+  if (rulesRunner && el._atModeStatus !== 'match') {
     currentEl = el
     rulesRunner(el)
   }
@@ -1931,7 +1930,7 @@ function processElement (el, root, options, meta) {
 }
 
 function closeElement (el, meta) {
-  postProcessElement(el)
+  postProcessAtMode(el)
   if (mode === 'web') {
     // 处理代码维度条件编译移除死分支
     postProcessIf(el)
@@ -1946,8 +1945,8 @@ function closeElement (el, meta) {
   postProcessIf(el)
 }
 
-function postProcessElement (el) {
-  if (el._needRemove) {
+function postProcessAtMode (el) {
+  if (el._atModeStatus === 'mismatch') {
     removeNode(el, true)
   }
 }
