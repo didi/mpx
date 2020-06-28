@@ -404,7 +404,8 @@ module.exports = {
       for: 'for',
       forIndex: 'for-index',
       forItem: 'for-item',
-      key: 'tid'
+      key: 'tid',
+      ref: 'ref'
     }
   }
 }

@@ -1,6 +1,9 @@
 import { BEFORECREATE, CREATED, BEFOREMOUNT, UPDATED, DESTROYED } from '../../core/innerLifecycle'
 import { noop } from '../../helper/utils'
 import { error } from '../../helper/log'
+import { getEnvObj } from '../../helper/env'
+
+const envObj = getEnvObj()
 
 export default function getRefsMixin () {
   let aliMethods
@@ -112,7 +115,7 @@ export default function getRefsMixin () {
         if (!ref) return
         let selector = ref.selector.replace(/{{mpxCid}}/g, this.__mpxProxy.uid)
         if (ref.type === 'node') {
-          const query = this.createSelectorQuery()
+          const query = this.createSelectorQuery ? this.createSelectorQuery() : envObj.createSelectorQuery()
           return query && (ref.all ? query.selectAll(selector) : query.select(selector))
         } else if (ref.type === 'component') {
           return ref.all ? this.selectAllComponents(selector) : this.selectComponent(selector)

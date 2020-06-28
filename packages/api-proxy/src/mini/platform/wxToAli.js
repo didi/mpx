@@ -53,6 +53,10 @@ const getWxToAliApi = ({ optimize = false }) => {
       return res
     },
 
+    nextTick (fn) {
+      setTimeout(fn)
+    },
+
     /**
      * 界面
      */

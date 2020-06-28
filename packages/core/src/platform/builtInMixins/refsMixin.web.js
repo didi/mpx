@@ -248,9 +248,6 @@ function processRefs (refs) {
           refs[rKey] = ref
         }
       }
-      Object.defineProperty(refs, `_${rKey}`, {
-        value: refs[key]
-      })
       delete refs[key]
     }
   })

@@ -1,13 +1,14 @@
 import * as platform from './platform'
 import createStore, { createStoreWithThis } from './core/createStore'
 import { injectMixins } from './core/injectMixins'
-import { extend, diffAndCloneA } from './helper/utils'
+import { extend, diffAndCloneA, makeMap } from './helper/utils'
 import { setConvertRule } from './convertor/convertor'
 import { getMixin } from './core/mergeOptions'
 import { error } from './helper/log'
 import Vue from './vue'
-import { observe, set, del as remove } from './observer/index'
+import { observe, set, del } from './observer/index'
 import { watch as watchWithVm } from './observer/watch'
+import implement from './core/implement'
 
 export function createApp (config, ...rest) {
   const mpx = new EXPORT_MPX()
@@ -37,8 +38,10 @@ export function toPureObject (obj) {
 
 function extendProps (target, proxyObj, rawProps, option) {
   const keys = Object.getOwnPropertyNames(proxyObj)
+  const rawPropsMap = makeMap(rawProps)
+
   for (const key of keys) {
-    if (APIs[key] || rawProps.indexOf(key) > -1) {
+    if (APIs[key] || rawPropsMap[key]) {
       continue
     } else if (option && (option.prefix || option.postfix)) {
       const transformKey = option.prefix
@@ -92,7 +95,13 @@ if (__mpx_mode__ === 'web') {
   observable = Vue.observable.bind(Vue)
   watch = vm.$watch.bind(vm)
   const set = Vue.set.bind(Vue)
-  const remove = Vue.delete.bind(Vue)
+  const del = Vue.delete.bind(Vue)
+  const remove = function (...args) {
+    if (process.env.NODE_ENV !== 'production') {
+      error('$remove will be removed in next minor version, please use $delete instead!', this.$rawOptions && this.$rawOptions.mpxFileResource)
+    }
+    return del.apply(this, args)
+  }
   // todo 补齐web必要api
   APIs = {
     createApp,
@@ -108,13 +117,14 @@ if (__mpx_mode__ === 'web') {
     use,
     set,
     remove,
+    delete: del,
     setConvertRule,
     getMixin,
-    getComputed
+    getComputed,
+    implement
   }
 
   InstanceAPIs = {
-    $set: set,
     $remove: remove
   }
 } else {
@@ -126,7 +136,14 @@ if (__mpx_mode__ === 'web') {
   const vm = {}
 
   watch = function (expOrFn, cb, options) {
-    watchWithVm(vm, expOrFn, cb, options)
+    return watchWithVm(vm, expOrFn, cb, options)
+  }
+
+  const remove = function (...args) {
+    if (process.env.NODE_ENV !== 'production') {
+      error('$remove will be removed in next minor version, please use $delete instead!', this.$rawOptions && this.$rawOptions.mpxFileResource)
+    }
+    return del.apply(this, args)
   }
 
   APIs = {
@@ -143,14 +160,17 @@ if (__mpx_mode__ === 'web') {
     use,
     set,
     remove,
+    delete: del,
     setConvertRule,
     getMixin,
-    getComputed
+    getComputed,
+    implement
   }
 
   InstanceAPIs = {
     $set: set,
-    $remove: remove
+    $remove: remove,
+    $delete: del
   }
 }
 
@@ -170,8 +190,9 @@ function factory () {
 const EXPORT_MPX = factory()
 
 EXPORT_MPX.config = {
-  useStrictDiff: true,
-  ignoreRenderError: false
+  useStrictDiff: false,
+  ignoreRenderError: false,
+  ignoreProxyWhiteList: ['id', 'dataset']
 }
 
 if (__mpx_mode__ === 'web') {

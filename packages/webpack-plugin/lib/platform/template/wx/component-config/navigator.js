@@ -25,7 +25,7 @@ module.exports = function ({ print }) {
       {
         test: 'open-type',
         ali (attr) {
-          let supportedList = ['navigate', 'redirect', 'switchTab', 'navigateBack']
+          let supportedList = ['navigate', 'redirect', 'switchTab', 'navigateBack', 'reLaunch']
           if (supportedList.indexOf(attr.value) === -1) {
             aliValueLogError(attr)
           }

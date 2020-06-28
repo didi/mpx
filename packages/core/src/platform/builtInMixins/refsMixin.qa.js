@@ -25,23 +25,28 @@ export default function getRefsMixin (type) {
     createSelectorQuery () {
       return {
         selectAll () {
-
+          error('QuickApp not supports selectAll.')
+          return []
         },
         select (selector) {
           let dom = this.$element(selector)
-          const cbs = []
-          dom.boundingClientRect = (complete = noop) => {
-            cbs.push(() => this.getBoundingClientRect({ complete }))
+          if (!dom) return null
+          dom.cbs = []
+          dom.boundingClientRect = (success = noop) => {
+            dom.cbs.push(() => dom.getBoundingClientRect && dom.getBoundingClientRect({ success }))
+            return dom
           }
           dom.scrollOffset = () => {
-            // cbs.push(this.scrollOffset)
+            dom.cbs.push(() => error('QuickApp not supports scrollOffset.'))
+            return dom
           }
           dom.exec = () => {
-            cbs.forEach(item => item())
+            dom.cbs.forEach(item => item())
+            dom.cbs = []
+            return dom
           }
           return dom
-        },
-
+        }
       }
     },
     selectComponent (selector, all) {
@@ -60,7 +65,7 @@ export default function getRefsMixin (type) {
     selectAllComponents (selector) {
       return this.selectComponent(selector, true)
     },
-    __collectRef() {
+    __collectRef () {
       // 监听更新ref的事件
       this.$on('updateRef', e => {
         e.stop()
@@ -77,7 +82,7 @@ export default function getRefsMixin (type) {
         }
       })
     },
-    __updateRef(destroyed) {
+    __updateRef (destroyed) {
       if (!this.__children__) {
         this.__children__ = []
       }
@@ -90,7 +95,7 @@ export default function getRefsMixin (type) {
       if (this.__getRefsData) {
         const refs = this.__getRefsData()
         refs.forEach(ref => {
-        this.$refs[ref.key] = this.__getRefNode(ref)
+          this.$refs[ref.key] = this.__getRefNode(ref)
         })
       }
     },
@@ -99,7 +104,7 @@ export default function getRefsMixin (type) {
       let selector = ref.selector.replace(/\./g, '')
 
       if (ref.type === 'node') {
-        const query = this.createSelectorQuery.call(this)
+        const query = this.createSelectorQuery()
         return query && (ref.all ? query.selectAll.call(this, selector) : query.select.call(this, selector))
       } else if (ref.type === 'component') {
         return ref.all ? this.selectAllComponents(selector) : this.selectComponent(selector)

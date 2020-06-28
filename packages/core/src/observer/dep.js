@@ -7,8 +7,6 @@ let uid = 0
  * directives subscribing to it.
  */
 export default class Dep {
-  static target
-
   constructor () {
     this.id = uid++
     this.subs = []

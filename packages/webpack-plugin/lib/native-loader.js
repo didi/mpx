@@ -78,7 +78,7 @@ module.exports = function (content) {
       } else {
         try {
           const source = raw.toString('utf-8')
-          const text = mpxJSON.compileMPXJSONText({ source, mode, defs, filePath: _src })
+          const text = mpxJSON.compileMPXJSONText({ source, defs, filePath: _src })
           callback(null, text)
         } catch (e) {
           callback(e)
@@ -231,22 +231,29 @@ module.exports = function (content) {
       }
 
       // 注入模块id及资源路径
-      let globalInjectCode = `global.currentModuleId = ${JSON.stringify(moduleId)};\n`
+      let globalInjectCode = `global.currentModuleId = ${JSON.stringify(moduleId)}\n`
       if (!isProduction) {
-        globalInjectCode += `global.currentResource = ${JSON.stringify(filePath)};\n`
+        globalInjectCode += `global.currentResource = ${JSON.stringify(filePath)}\n`
       }
 
       // 注入构造函数
       let ctor = 'App'
       if (pagesMap[resourcePath]) {
-        ctor = mode === 'ali' ? 'Page' : 'Component'
+        if (mpx.forceUsePageCtor || mode === 'ali') {
+          ctor = 'Page'
+        } else {
+          ctor = 'Component'
+        }
       } else if (componentsMap[resourcePath]) {
         ctor = 'Component'
       }
-      globalInjectCode += `global.currentCtor = ${ctor};\n`
+      globalInjectCode += `global.currentCtor = ${ctor}\n`
+      globalInjectCode += `global.currentCtorType = ${JSON.stringify(ctor.replace(/^./, (match) => {
+        return match.toLowerCase()
+      }))}\n`
 
       if (srcMode) {
-        globalInjectCode += `global.currentSrcMode = ${JSON.stringify(srcMode)};\n`
+        globalInjectCode += `global.currentSrcMode = ${JSON.stringify(srcMode)}\n`
       }
 
       if (!mpx.forceDisableInject) {

@@ -5,8 +5,6 @@ const InjectDependency = require('../dependency/InjectDependency')
 const parseRequest = require('../utils/parse-request')
 const getMainCompilation = require('../utils/get-main-compilation')
 const path = require('path')
-const normalize = require('../utils/normalize')
-const wxsPreLoader = normalize.lib('wxs/wxs-pre-loader')
 
 module.exports = function (raw) {
   this.cacheable()
@@ -23,7 +21,7 @@ module.exports = function (raw) {
   const localSrcMode = loaderUtils.parseQuery(this.resourceQuery || '?').mode
   const packageName = mpx.currentPackageRoot || 'main'
   const componentsMap = mpx.componentsMap[packageName]
-  const wxsContentMap = mpx.wxsConentMap
+  const wxsContentMap = mpx.wxsContentMap
   const resourcePath = parseRequest(this.resource).resourcePath
   let scopedId
 
@@ -47,6 +45,7 @@ module.exports = function (raw) {
     mode,
     defs,
     globalMpxAttrsFilter: mpx.globalMpxAttrsFilter,
+    decodeHTMLText: mpx.decodeHTMLText,
     externalClasses,
     srcMode: localSrcMode || globalSrcMode,
     isNative,
@@ -58,15 +57,15 @@ module.exports = function (raw) {
   let ast = parsed.root
   let meta = parsed.meta
 
-  if (meta.wxsConentMap) {
-    for (let module in meta.wxsConentMap) {
-      wxsContentMap[`${resourcePath}~${module}`] = meta.wxsConentMap[module]
+  if (meta.wxsContentMap) {
+    for (let module in meta.wxsContentMap) {
+      wxsContentMap[`${resourcePath}~${module}`] = meta.wxsContentMap[module]
     }
   }
 
   let result = compiler.serialize(ast)
 
-  if (isNative) {
+  if (isNative || mpx.forceDisableInject) {
     return result
   }
 
@@ -83,7 +82,7 @@ module.exports = function (raw) {
   // todo 此处在loader中往其他模块addDep更加危险，考虑修改为通过抽取后的空模块的module.exports来传递信息
   let globalInjectCode = renderResult.code + '\n'
 
-  if ((mode === 'tt' || mode === 'swan') && renderResult.propKeys) {
+  if (mode === 'tt' && renderResult.propKeys) {
     globalInjectCode += `global.currentInject.propKeys = ${JSON.stringify(renderResult.propKeys)};\n`
   }
 
@@ -110,6 +109,7 @@ module.exports = function (raw) {
     this.addContextDependency(dep)
   })
 
+  // 删除issuer中上次注入的dependencies，避免issuer本身不需要更新时上次的注入代码残留
   issuer.dependencies = issuer.dependencies.filter((dep) => {
     return !dep.templateInject
   })
@@ -120,7 +120,6 @@ module.exports = function (raw) {
   })
 
   dep.templateInject = true
-
   issuer.addDependency(dep)
 
   let isSync = true
@@ -152,10 +151,9 @@ module.exports = function (raw) {
 
   for (let module in meta.wxsModuleMap) {
     isSync = false
-    const src = meta.wxsModuleMap[module]
-    const request = `!!${wxsPreLoader}!${src}`
+    const src = loaderUtils.urlToRequest(meta.wxsModuleMap[module], options.root)
     // 编译render函数只在mpx文件中运行，此处issuer的context一定等同于当前loader的context
-    const expression = `require(${loaderUtils.stringifyRequest(this, request)})`
+    const expression = `require(${loaderUtils.stringifyRequest(this, src)})`
     const deps = []
     parser.parse(expression, {
       current: {

@@ -1,8 +1,8 @@
 import * as wxLifecycle from '../platform/patch/wx/lifecycle'
 import * as webLifecycle from '../platform/patch/web/lifecycle'
 import { mergeLifecycle } from './mergeLifecycle'
-import { type } from '../helper/utils'
 import { error } from '../helper/log'
+import { implemented } from '../core/implement'
 
 // 暂不支持的wx选项，后期需要各种花式支持
 const NOTSUPPORTS = ['moved', 'relations', 'pageLifetimes', 'definitionFilter', 'onPageNotFound', 'onPullDownRefresh', 'onReachBottom', 'onShareAppMessage', 'onPageScroll', 'onTabItemTap', 'onResize', 'pageShow', 'pageHide']
@@ -14,8 +14,12 @@ function convertErrorDesc (key) {
 function notSupportTip (options) {
   NOTSUPPORTS.forEach(key => {
     if (options[key]) {
-      convertErrorDesc(key)
-      delete options[key]
+      if (!implemented[key]) {
+        process.env.NODE_ENV !== 'production' && convertErrorDesc(key)
+        delete options[key]
+      } else if (implemented[key].remove) {
+        delete options[key]
+      }
     }
   })
 }
@@ -36,7 +40,7 @@ export default {
     'errorCaptured': ['onError']
   },
   convert (options) {
-    if (options.data && type(options.data) !== 'Function') {
+    if (options.data && typeof options.data !== 'function') {
       const rawData = options.data
       /* eslint-disable no-new-func */
       options.data = new Function(`return ${JSON.stringify(rawData)};`)
