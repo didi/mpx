@@ -832,7 +832,6 @@ function parse (template, options) {
       currentParent.children.push(element)
       element.parent = currentParent
 
-      processAtMode(element)
       processElement(element, root, options, meta)
       if (!unary) {
         currentParent = element
@@ -1867,6 +1866,7 @@ function processAtMode (el) {
 }
 
 function processElement (el, root, options, meta) {
+  processAtMode(el)
   // 如果已经标记了这个元素要被清除，直接return跳过后续处理步骤
   if (el._atModeStatus === 'mismatch') {
     return
