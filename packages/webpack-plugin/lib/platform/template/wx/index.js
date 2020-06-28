@@ -204,8 +204,6 @@ module.exports = function getSpec ({ warn, error }) {
           const stringify = JSON.stringify
           const match = tagRE.exec(value)
           if (match) {
-            const modelProp = attrsMap['wx:model-prop'] || 'value'
-            const modelEvent = attrsMap['wx:model-event'] || 'change'
             const modelValuePathRaw = attrsMap['wx:model-value-path']
 
             const modelValuePath = modelValuePathRaw === undefined ? 'value' : modelValuePathRaw
@@ -215,7 +213,7 @@ module.exports = function getSpec ({ warn, error }) {
               modelValuePathArr = JSON.parse(modelValuePathRaw)
             } catch (e) {
               if (modelValuePath === '') {
-                modelValueArr = []
+                modelValuePathArr = []
               } else {
                 modelValuePathArr = modelValuePath.split('.')
               }
@@ -324,7 +322,6 @@ module.exports = function getSpec ({ warn, error }) {
         },
         qa ({ name, value }) {
           let dir = this.test.exec(name)[1]
-          const parsed = parseMustache(value)
           return {
             name: dir,
             value
@@ -387,7 +384,6 @@ module.exports = function getSpec ({ warn, error }) {
           const match = this.test.exec(name)
           const prefix = match[1]
           const eventName = match[2]
-          const modiffierStr = match[3] || ''
           el.hasEvent = true
           if (match[1] === 'capture-catch' || match[1] === 'capture-bind') {
             warn(`QuickApp doesn't support ${match[1]} event binding on capturing phrase!`)
