@@ -308,7 +308,7 @@ module.exports = function (raw = '{}') {
     const subPackagesCfg = {}
     const localPages = []
     const processSubPackagesQueue = []
-    
+
     // 添加首页标识
     const firstPage = json.pages && json.pages[0]
     if (firstPage) {

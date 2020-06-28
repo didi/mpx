@@ -231,7 +231,6 @@ module.exports = function getSpec ({ warn, error }) {
                 value: `__model(${stringifyWithResolveComputed(modelValue)}, $event, ${stringifyWithResolveComputed(modelValuePathArr)}, ${stringify(modelFilter)})`
               }
             ]
-
           }
         }
       },
