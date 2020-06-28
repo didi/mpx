@@ -63,6 +63,20 @@ module.exports = {
 
 ```
 
+## 类型定义
+
+为了便于对编译配置的数据类型进行准确地描述，我们在这里对一些常用的配置类型进行定义
+
+### Rules
+```ts
+type Condition = string | ((resourcePath: string) => boolean) | RegExp
+
+interface Rules {
+  include?: Condition | Array<Condition>
+  exclude?: Condition | Array<Condition>
+}
+```
+
 ## MpxWebpackPlugin options
 
 MpxWebpackPlugin支持传入以下配置：
@@ -146,7 +160,7 @@ new MpxWebpackPlugin({
 
 ### autoScopeRules
 
-- **类型**：`{ [key: string]: any }`
+- **类型**：[`Rules`](#rules)
 
 - **详细**：是否需要对样式加 scope ，目前只有支付宝小程序平台没有样式隔离，因此该部分内容也只对支付宝小程序平台生效。提供 include 和 exclude 以精确控制对哪些文件进行样式隔离，哪些不隔离，和webpack的rules规则相同。也可以通过在 style 代码块上声明 scoped 进行。
 
@@ -249,6 +263,14 @@ new MpxWebpackPlugin({
   }
 })
 ```
+
+#### i18n.locale
+
+`string`
+
+介绍这个是干啥的
+
+写示例啥的
 
 ### auditResource
 
