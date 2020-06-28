@@ -1843,16 +1843,17 @@ function processElement (el, root, options, meta) {
   const elementAttrListCopy = el.attrsList.slice(0)
   elementAttrListCopy.forEach(item => {
     const attrName = item.name || ''
-    if (!attrName) return
-    const arr = attrName.split(/[@|]/)
-    if (arr.some(i => ['wx', 'ali', 'swan', 'tt', 'qq', 'web'].includes(i))) {
+    if (!attrName || attrName.indexOf('@') === -1) return
+    const modeStr = attrName.split('@').pop()
+    const modeArr = modeStr.split('|')
+    if (modeArr.some(i => ['wx', 'ali', 'swan', 'tt', 'qq', 'web'].includes(i))) {
       const tempVal = getAndRemoveAttr(el, item.name)
       // web下vue有@click之类的简写，配上mode，假定最多只会出现2个@符号，且mode在后
       const attrArr = attrName.split('@')
       const replacedAttrName = attrArr.length === 2 ? attrName.replace(/@.*/, '') : attrArr.pop() && attrArr.join('@')
 
       const processedAttr = { name: replacedAttrName, value: tempVal }
-      if (arr.includes(mode)) {
+      if (modeArr.includes(mode)) {
         if (!replacedAttrName) {
           el._passTrans = true
         } else {
