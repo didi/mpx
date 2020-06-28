@@ -1831,10 +1831,57 @@ function postProcessTemplate (el) {
   }
 }
 
+function processAtMode (el) {
+  if (el.parent && el.parent._atModeStatus) {
+    el._atModeStatus = el.parent._atModeStatus
+  }
+
+  const elementAttrListCopy = el.attrsList.slice(0)
+  elementAttrListCopy.forEach(item => {
+    const attrName = item.name || ''
+    if (!attrName || attrName.indexOf('@') === -1) return
+    const modeStr = attrName.split('@').pop()
+    const modeArr = modeStr.split('|')
+    if (modeArr.some(i => ['wx', 'ali', 'swan', 'tt', 'qq', 'web'].includes(i))) {
+      const tempVal = getAndRemoveAttr(el, item.name)
+      // web下vue有@click之类的简写，配上mode，假定最多只会出现2个@符号，且mode在后
+      const attrArr = attrName.split('@')
+      const replacedAttrName = attrArr.length === 2 ? attrName.replace(/@.*/, '') : attrArr.pop() && attrArr.join('@')
+
+      const processedAttr = { name: replacedAttrName, value: tempVal }
+      if (modeArr.includes(mode)) {
+        if (!replacedAttrName) {
+          el._atModeStatus = 'match'
+        } else {
+          // 如果命中了指定的mode，则先存在el上，等跑完转换后再挂回去
+          el.noTransAttr ? el.noTransAttr.push(processedAttr) : el.noTransAttr = [processedAttr]
+        }
+      } else if (!replacedAttrName) {
+        el._atModeStatus = 'mismatch'
+      } else {
+        // 如果没命中指定的mode，则该属性删除
+      }
+    }
+  })
+}
+
 function processElement (el, root, options, meta) {
-  if (rulesRunner) {
+  processAtMode(el)
+  // 如果已经标记了这个元素要被清除，直接return跳过后续处理步骤
+  if (el._atModeStatus === 'mismatch') {
+    return
+  }
+
+  if (rulesRunner && el._atModeStatus !== 'match') {
     currentEl = el
     rulesRunner(el)
+  }
+
+  // 转换完成，把不需要处理的attr挂回去
+  if (el.noTransAttr) {
+    el.noTransAttr.forEach(item => {
+      addAttrs(el, item)
+    })
   }
 
   const transAli = mode === 'ali' && srcMode === 'wx'
@@ -1883,6 +1930,7 @@ function processElement (el, root, options, meta) {
 }
 
 function closeElement (el, meta) {
+  postProcessAtMode(el)
   if (mode === 'web') {
     // 处理代码维度条件编译移除死分支
     postProcessIf(el)
@@ -1895,6 +1943,12 @@ function closeElement (el, meta) {
   }
   postProcessFor(el)
   postProcessIf(el)
+}
+
+function postProcessAtMode (el) {
+  if (el._atModeStatus === 'mismatch') {
+    removeNode(el, true)
+  }
 }
 
 function postProcessComponentIs (el) {

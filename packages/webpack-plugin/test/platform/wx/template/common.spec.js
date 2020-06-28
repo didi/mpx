@@ -1,4 +1,4 @@
-const { compileAndParse, warnFn, errorFn } = require('../util')
+const { compileAndParse, warnFn, errorFn } = require('../../util')
 
 describe('common spec case', function () {
   afterEach(() => {
