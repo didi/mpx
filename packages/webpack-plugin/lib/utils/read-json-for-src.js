@@ -5,7 +5,6 @@ const getMainCompilation = require('./get-main-compilation')
 module.exports = function readJsonForSrc (src, loaderContext, callback) {
   const fs = loaderContext._compiler.inputFileSystem
   const mpx = getMainCompilation(loaderContext._compilation).__mpx__
-  const mode = mpx.mode
   const defs = mpx.defs
   const resolve = (context, request, callback) => {
     const { queryObj } = parseRequest(request)
@@ -24,7 +23,7 @@ module.exports = function readJsonForSrc (src, loaderContext, callback) {
       content = content.toString('utf-8')
       if (resourcePath.endsWith('.json.js')) {
         try {
-          content = mpxJSON.compileMPXJSONText({ source: content, mode, defs, filePath: resourcePath })
+          content = mpxJSON.compileMPXJSONText({ source: content, defs, filePath: resourcePath })
         } catch (e) {
           return callback(e)
         }

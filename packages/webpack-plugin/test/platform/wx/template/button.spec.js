@@ -1,4 +1,4 @@
-const { compileAndParse, warnFn, errorFn } = require('../util')
+const { compileAndParse, warnFn, errorFn } = require('../../util')
 
 describe('template should transform correct', function () {
   afterEach(() => {
@@ -34,6 +34,15 @@ describe('template should transform correct', function () {
     const output = compileAndParse(input, { srcMode: 'wx', mode: 'qq' })
 
     expect(output).toBe(`<button open-type="{{ cardLogin ? 'getUserInfo' : '' }}" bindgetuserinfo="onGetUserInfo" bindtap="onNextStep">按钮</button>`)
+
+    expect(errorFn).not.toHaveBeenCalled()
+  })
+
+  it('should remain button\'s open-type for ali', function () {
+    const input = `<button wx:if="{{__mpx_mode__ === 'ali'}}" open-type="getAuthorize" scope="phoneNumber" onGetAuthorize="alipayPhonenumberLogin" onError="onGetPhoneNumberError">手机号授权登录</button>`
+    const output = compileAndParse(input)
+
+    expect(output).toBe(`<button open-type="getAuthorize" scope="phoneNumber" onGetAuthorize="alipayPhonenumberLogin" onError="onGetPhoneNumberError">手机号授权登录</button>`)
 
     expect(errorFn).not.toHaveBeenCalled()
   })

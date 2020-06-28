@@ -1,7 +1,7 @@
 const path = require('path')
 
 // 将JS生成JSON
-function compileMPXJSON ({ source, mode, defs, filePath }) {
+function compileMPXJSON ({ source, defs, filePath }) {
   const defKeys = Object.keys(defs)
   const defValues = defKeys.map((key) => {
     return defs[key]

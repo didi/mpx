@@ -139,7 +139,7 @@ interface ComponentOpt<D, P, C, M, Mi extends Array<any>> extends Partial<Wechat
 
 type PageOpt<D, P, C, M, Mi extends Array<any>> =
   ComponentOpt<D, P, C, M, Mi>
-  & Partial<WechatMiniprogram.Component.PageLifetimes>
+  & Partial<WechatMiniprogram.Page.ILifetime>
 
 type ThisTypedPageOpt<D, P, C, M, Mi extends Array<any>> =
   PageOpt<D, P, C, M, Mi>
@@ -156,14 +156,16 @@ declare function set (obj: object, key: string, value: any): any
 
 declare function observable<T extends object> (obj: T): T
 
-declare function remove (obj: object, key: string): any
+declare function del (obj: object, key: string): any
 
 export interface MpxComponentIns {
   $refs: ObjectOf<any>
 
   $set: typeof set
 
-  $remove: typeof remove
+  $remove: typeof del
+
+  $delete: typeof del
 
   $watch (expr: string | (() => any), handler: WatchHandler | WatchOptWithHandler, options?: WatchOpt): () => void
 
@@ -437,12 +439,22 @@ interface ConvertRule {
 }
 
 interface MpxConfig {
-  useStrictDiff: Boolean,
+  useStrictDiff: Boolean
   ignoreRenderError: Boolean
+  ignoreConflictWhiteList: Array<string>
+}
+
+type SupportedMode = 'wx' | 'ali' | 'qq' | 'swan' | 'tt' | 'web' | 'qa'
+
+interface ImplementOptions {
+  modes?: Array<SupportedMode>
+  processor?: () => any
+  remove?: Boolean
 }
 
 export function setConvertRule (rule: ConvertRule): void
 
+export function toPureObject<T extends object> (obj: T): T
 
 export interface Mpx {
   createComponent: typeof createComponent
@@ -454,15 +466,20 @@ export interface Mpx {
   getComputed: typeof getComputed
   mixin: typeof injectMixins
   injectMixins: typeof injectMixins
+  toPureObject: typeof toPureObject
   observable: typeof observable
 
   watch: typeof watch
 
   use (plugin: ((...args: any) => any) | { install: (...args: any) => any, [key: string]: any }, ...rest: any): Mpx
 
+  implement (name: string, options?: ImplementOptions): void
+
   set: typeof set
 
-  remove: typeof remove
+  remove: typeof del
+
+  delete: typeof del
 
   setConvertRule: typeof setConvertRule
 

@@ -2,6 +2,7 @@
 
 const path = require('path')
 const ConcatSource = require('webpack-sources').ConcatSource
+const RawSource = require('webpack-sources').RawSource
 const ResolveDependency = require('./dependency/ResolveDependency')
 const InjectDependency = require('./dependency/InjectDependency')
 const ReplaceDependency = require('./dependency/ReplaceDependency')
@@ -10,6 +11,7 @@ const normalize = require('./utils/normalize')
 const toPosix = require('./utils/to-posix')
 const addQuery = require('./utils/add-query')
 const DefinePlugin = require('webpack/lib/DefinePlugin')
+const ExternalsPlugin = require('webpack/lib/ExternalsPlugin')
 const AddModePlugin = require('./resolver/AddModePlugin')
 const CommonJsRequireDependency = require('webpack/lib/dependencies/CommonJsRequireDependency')
 const HarmonyImportSideEffectDependency = require('webpack/lib/dependencies/HarmonyImportSideEffectDependency')
@@ -55,9 +57,14 @@ function getPackageCacheGroup (packageName) {
   }
 }
 
-// todo 输出web模式下自动对.mpx文件插入vue-loader
-
 let loaderOptions
+
+const externalsMap = {
+  weui: /^weui-miniprogram/
+}
+
+const warnings = []
+const errors = []
 
 class MpxWebpackPlugin {
   constructor (options = {}) {
@@ -69,10 +76,10 @@ class MpxWebpackPlugin {
 
     options.srcMode = options.srcMode || options.mode
     if (options.mode !== options.srcMode && options.srcMode !== 'wx') {
-      throw new Error('MpxWebpackPlugin supports srcMode to be "wx" only temporarily!')
+      errors.push('MpxWebpackPlugin supports srcMode to be "wx" only temporarily!')
     }
     if (options.mode === 'web' && options.srcMode !== 'wx') {
-      throw new Error('MpxWebpackPlugin supports mode to be "web" only when srcMode is set to "wx"!')
+      errors.push('MpxWebpackPlugin supports mode to be "web" only when srcMode is set to "wx"!')
     }
     if (!Array.isArray(options.externalClasses)) {
       options.externalClasses = ['custom-class', 'i-class']
@@ -90,6 +97,7 @@ class MpxWebpackPlugin {
     options.writeMode = options.writeMode || 'changed'
     options.autoScopeRules = options.autoScopeRules || {}
     options.forceDisableInject = options.forceDisableInject || false
+    options.forceDisableProxyCtor = options.forceDisableProxyCtor || false
     options.transMpxRules = options.transMpxRules || {
       include: () => true
     }
@@ -104,27 +112,45 @@ class MpxWebpackPlugin {
     })
     // 批量指定源码mode
     options.modeRules = options.modeRules || {}
+    options.generateBuildMap = options.generateBuildMap || false
+    options.attributes = options.attributes || []
+    options.externals = (options.externals || []).map((external) => {
+      return externalsMap[external] || external
+    })
+    options.projectRoot = options.projectRoot || ''
+    options.forceUsePageCtor = options.forceUsePageCtor || false
+    options.postcssInlineConfig = options.postcssInlineConfig || {}
+    options.transRpxRules = options.transRpxRules || null
+    options.auditResource = options.auditResource || false
+    options.decodeHTMLText = options.decodeHTMLText || false
+    options.nativeOptions = Object.assign({
+      cssLangs: ['css', 'less', 'stylus', 'scss', 'sass']
+    }, options.nativeOptions)
+    options.i18n = options.i18n || null
     this.options = options
   }
 
-  static loader (options) {
+  static loader (options = {}) {
     loaderOptions = options
+    if (loaderOptions.transRpx) {
+      warnings.push('Mpx loader option [transRpx] is deprecated now, please use mpx webpack plugin config [transRpxRules] instead!')
+    }
     return { loader: normalize.lib('loader'), options }
   }
 
-  static pluginLoader (options) {
+  static pluginLoader (options = {}) {
     return { loader: normalize.lib('plugin-loader'), options }
   }
 
-  static wxsPreLoader (options) {
+  static wxsPreLoader (options = {}) {
     return { loader: normalize.lib('wxs/wxs-pre-loader'), options }
   }
 
-  static urlLoader (options) {
+  static urlLoader (options = {}) {
     return { loader: normalize.lib('url-loader'), options }
   }
 
-  static fileLoader (options) {
+  static fileLoader (options = {}) {
     return { loader: normalize.lib('file-loader'), options }
   }
 
@@ -148,10 +174,9 @@ class MpxWebpackPlugin {
     if (!compiler.__mpx__) {
       compiler.__mpx__ = true
     } else {
-      throw new Error('Multiple MpxWebpackPlugin instances exist in webpack compiler, please check webpack plugins config!')
+      errors.push('Multiple MpxWebpackPlugin instances exist in webpack compiler, please check webpack plugins config!')
     }
-    const warnings = []
-    const errors = []
+
     if (this.options.mode !== 'web') {
       // 强制设置publicPath为'/'
       if (compiler.options.output.publicPath && compiler.options.output.publicPath !== publicPath) {
@@ -218,6 +243,8 @@ class MpxWebpackPlugin {
     // define mode & defs
     new DefinePlugin(defsOpt).apply(compiler)
 
+    new ExternalsPlugin('commonjs2', this.options.externals).apply(compiler)
+
     compiler.hooks.compilation.tap('MpxWebpackPlugin ', (compilation) => {
       compilation.hooks.normalModuleLoader.tap('MpxWebpackPlugin', (loaderContext, module) => {
         // 设置loaderContext的minimize
@@ -228,6 +255,9 @@ class MpxWebpackPlugin {
     })
 
     let mpx
+
+    // staticResourceHit需要长效保持记录哪些资源是静态资源，避免后续误用缓存
+    const staticResourceHit = {}
 
     compiler.hooks.thisCompilation.tap('MpxWebpackPlugin', (compilation, { normalModuleFactory }) => {
       compilation.warnings = compilation.warnings.concat(warnings)
@@ -249,19 +279,20 @@ class MpxWebpackPlugin {
           staticResourceMap: {
             main: {}
           },
-          hasApp: false,
           // 记录静态资源首次命中的分包，当有其他分包再次引用了同样的静态资源时，对其request添加packageName query以避免模块缓存导致loader不再执行
-          staticResourceHit: {},
+          staticResourceHit,
           loaderOptions,
           extractedMap: {},
           extractSeenFile: {},
           usingComponents: [],
+          hasApp: false,
           // todo es6 map读写性能高于object，之后会逐步替换
           vueContentCache: new Map(),
           currentPackageRoot: '',
           wxsMap: {},
-          wxsConentMap: {},
+          wxsContentMap: {},
           forceDisableInject: this.options.forceDisableInject,
+          forceUsePageCtor: this.options.forceUsePageCtor,
           resolveMode: this.options.resolveMode,
           mode: this.options.mode,
           srcMode: this.options.srcMode,
@@ -269,13 +300,16 @@ class MpxWebpackPlugin {
           externalClasses: this.options.externalClasses,
           projectRoot: this.options.projectRoot,
           autoScopeRules: this.options.autoScopeRules,
+          transRpxRules: this.options.transRpxRules,
+          postcssInlineConfig: this.options.postcssInlineConfig,
+          decodeHTMLText: this.options.decodeHTMLText,
           // native文件专用相关配置
-          nativeOptions: Object.assign({
-            cssLangs: ['css', 'less', 'stylus', 'scss', 'sass']
-          }, this.options.nativeOptions),
+          nativeOptions: this.options.nativeOptions,
           defs: this.options.defs,
           i18n: this.options.i18n,
           appTitle: 'Mpx homepage',
+          attributes: this.options.attributes,
+          externals: this.options.externals,
           extract: (content, file, index, sideEffects) => {
             additionalAssets[file] = additionalAssets[file] || []
             if (!additionalAssets[file][index]) {
@@ -289,7 +323,7 @@ class MpxWebpackPlugin {
           // 3. 分包引用且无其他包引用的资源输出至当前分包
           // 4. 分包引用且其他分包也引用过的资源，重复输出至当前分包
           // 5. 当用户通过packageName query显式指定了资源的所属包时，输出至指定的包
-          getPackageInfo (resource, { outputPath, isStatic, error }) {
+          getPackageInfo: (resource, { outputPath, isStatic, error, warn }) => {
             let packageRoot = ''
             let packageName = 'main'
             const currentPackageRoot = mpx.currentPackageRoot
@@ -306,6 +340,16 @@ class MpxWebpackPlugin {
                 }
               } else if (currentPackageRoot) {
                 packageName = packageRoot = currentPackageRoot
+              }
+
+              if (this.options.auditResource) {
+                if (this.options.auditResource !== 'component' || !isStatic) {
+                  Object.keys(resourceMap).filter(key => key !== 'main').forEach((key) => {
+                    if (resourceMap[key][resourcePath] && key !== packageName) {
+                      warn && warn(new Error(`当前${isStatic ? '静态' : '组件'}资源${resourcePath}在分包${key}和分包${packageName}中都有引用，会分别输出到两个分包中，为了总体积最优，可以在主包中建立引用声明以消除资源输出冗余！`))
+                    }
+                  })
+                }
               }
             }
 
@@ -339,9 +383,9 @@ class MpxWebpackPlugin {
         }
       }
 
-      if (splitChunksPlugin) {
+      compilation.hooks.finishModules.tap('MpxWebpackPlugin', (modules) => {
         // 自动跟进分包配置修改splitChunksPlugin配置
-        compilation.hooks.finishModules.tap('MpxWebpackPlugin', (modules) => {
+        if (splitChunksPlugin) {
           let needInit = false
           Object.keys(mpx.componentsMap).forEach((packageName) => {
             if (!splitChunksOptions.cacheGroups.hasOwnProperty(packageName)) {
@@ -352,8 +396,8 @@ class MpxWebpackPlugin {
           if (needInit) {
             splitChunksPlugin.options = SplitChunksPlugin.normalizeOptions(splitChunksOptions)
           }
-        })
-      }
+        }
+      })
 
       compilation.hooks.optimizeModules.tap('MpxWebpackPlugin', (modules) => {
         modules.forEach((module) => {
@@ -383,6 +427,20 @@ class MpxWebpackPlugin {
             }
           }
         })
+      })
+
+      compilation.moduleTemplates.javascript.hooks.content.tap('MpxWebpackPlugin', (source, module, options) => {
+        // 处理dll产生的external模块
+        if (module.external && module.userRequest.startsWith('dll-reference ') && mpx.mode !== 'web') {
+          const chunk = options.chunk
+          const request = module.request
+          let relativePath = path.relative(path.dirname(chunk.name), request)
+          if (!/^\.\.?\//.test(relativePath)) relativePath = './' + relativePath
+          if (chunk) {
+            return new RawSource(`module.exports = require("${relativePath}");\n`)
+          }
+        }
+        return source
       })
 
       compilation.hooks.additionalAssets.tapAsync('MpxWebpackPlugin', (callback) => {
@@ -493,15 +551,16 @@ class MpxWebpackPlugin {
 
         // hack babel polyfill global
         parser.hooks.evaluate.for('CallExpression').tap('MpxWebpackPlugin', (expr) => {
-          const current = parser.state.current
-          const module = parser.state.module
-          const arg0 = expr.arguments[0]
-          const callee = expr.callee
-          if (arg0 && arg0.value === 'return this' && callee.name === 'Function' && module.rawRequest === './_global') {
-            current.addDependency(new InjectDependency({
-              content: '(function() { return this })() || ',
-              index: expr.range[0]
-            }))
+          if (/core-js/.test(parser.state.module.resource)) {
+            const current = parser.state.current
+            const arg0 = expr.arguments[0]
+            const callee = expr.callee
+            if (arg0 && arg0.value === 'return this' && callee.name === 'Function') {
+              current.addDependency(new InjectDependency({
+                content: '(function() { return this })() || ',
+                index: expr.range[0]
+              }))
+            }
           }
         })
 
@@ -519,7 +578,7 @@ class MpxWebpackPlugin {
           // // Trans for wx.xx, wx['xx'], wx.xx(), wx['xx']()
           // parser.hooks.expressionAnyMember.for('wx').tap('MpxWebpackPlugin', transHandler)
           // Proxy ctor for transMode
-          if (!this.options.forceDisableInject) {
+          if (!this.options.forceDisableProxyCtor) {
             parser.hooks.call.for('Page').tap('MpxWebpackPlugin', (expr) => {
               transHandler(expr.callee)
             })
@@ -543,18 +602,20 @@ class MpxWebpackPlugin {
           'createPage',
           'createComponent',
           'createStore',
-          'toPureObject',
-          'mixin: injectMixins',
+          'createStoreWithThis',
+          'mixin',
           'injectMixins',
+          'toPureObject',
           'observable',
-          'extendObservable',
           'watch',
           'use',
           'set',
-          'get',
           'remove',
+          'delete: del',
           'setConvertRule',
-          'createAction'
+          'getMixin',
+          'getComputed',
+          'implement'
         ].reduce((map, api) => {
           map[api] = true
           return map
@@ -604,6 +665,11 @@ class MpxWebpackPlugin {
             packageName
           })
           data.request = `!!${pathLoader}!${resource}`
+        } else if (queryObj.wxsModule) {
+          const wxsPreLoader = normalize.lib('wxs/wxs-pre-loader')
+          if (!/wxs-loader/.test(request)) {
+            data.request = `!!${wxsPreLoader}!${resource}`
+          }
         }
         callback(null, data)
       })
@@ -711,6 +777,7 @@ if(!context.console) {
     context.setTimeout = setTimeout;
     context.JSON = JSON;
     context.Math = Math;
+    context.RegExp = RegExp;
     context.Infinity = Infinity;
     context.isFinite = isFinite;
     context.parseFloat = parseFloat;
@@ -791,6 +858,24 @@ if(!context.console) {
           }
         }
       })
+
+      if (this.options.generateBuildMap) {
+        const pagesMap = compilation.__mpx__.pagesMap
+        const componentsPackageMap = compilation.__mpx__.componentsMap
+        const componentsMap = Object.keys(componentsPackageMap).map(item => componentsPackageMap[item]).reduce((pre, cur) => {
+          return { ...pre, ...cur }
+        }, {})
+        const outputMap = JSON.stringify({ ...pagesMap, ...componentsMap })
+        compilation.assets['../outputMap.json'] = {
+          source: () => {
+            return outputMap
+          },
+          size: () => {
+            return Buffer.byteLength(outputMap, 'utf8')
+          }
+        }
+      }
+
       callback()
     })
   }

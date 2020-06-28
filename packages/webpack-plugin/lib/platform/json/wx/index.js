@@ -183,8 +183,14 @@ module.exports = function getSpec ({ warn, error }) {
         tt: deletePath()
       },
       {
-        test: 'functionalPages|plugins',
+        test: 'functionalPages',
         ali: deletePath(true),
+        qq: deletePath(true),
+        swan: deletePath(true),
+        tt: deletePath()
+      },
+      {
+        test: 'plugins',
         qq: deletePath(true),
         swan: deletePath(true),
         tt: deletePath()

@@ -10,14 +10,32 @@ export default function createFactory (type) {
   return (options, { isNative, customCtor, customCtorType } = {}) => {
     options.__nativeRender__ = !!isNative
     options.__type__ = type
-    if (customCtor) {
-      customCtorType = customCtorType || type
-      if (type === 'page' && customCtorType === 'page') {
-        options.__pageCtor__ = true
+    let ctor
+    if (__mpx_mode__ !== 'web') {
+      if (customCtor) {
+        ctor = customCtor
+        customCtorType = customCtorType || type
+        if (type === 'page' && customCtorType === 'page') {
+          options.__pageCtor__ = true
+        }
+      } else {
+        if (global.currentCtor) {
+          ctor = global.currentCtor
+          if (global.currentCtorType === 'page') {
+            options.__pageCtor__ = true
+          }
+        } else {
+          if (type === 'page') {
+            ctor = Page
+            options.__pageCtor__ = true
+          } else {
+            ctor = Component
+          }
+        }
       }
     }
-    let getDefaultOptions
 
+    let getDefaultOptions
     if (__mpx_mode__ === 'web') {
       getDefaultOptions = getWebDefaultOptions
     } else if (__mpx_mode__ === 'ali') {
@@ -37,9 +55,8 @@ export default function createFactory (type) {
     }
     if (__mpx_mode__ === 'web' || __mpx_mode__ === 'qa') {
       global.currentOption = defaultOptions
-    } else {
-      const ctor = global.currentCtor || (type === 'page' ? Page : Component)
-      customCtor ? customCtor(defaultOptions) : ctor(defaultOptions)
+    } else if (ctor) {
+      return ctor(defaultOptions)
     }
   }
 }

@@ -239,7 +239,7 @@ module.exports = function (content) {
       if (!isProduction) {
         globalInjectCode += `global.currentResource = ${JSON.stringify(filePath)}\n`
       }
-      if (ctorType === 'app' && i18n) {
+      if (ctorType === 'app' && i18n && !mpx.forceDisableInject) {
         globalInjectCode += `global.i18n = ${JSON.stringify({ locale: i18n.locale })}\n`
 
         const i18nMethodsVar = 'i18nMethods'
@@ -265,13 +265,19 @@ module.exports = function (content) {
       if (mode !== 'qa') {
         let ctor = 'App'
         if (ctorType === 'page') {
-          ctor = mode === 'ali' ? 'Page' : 'Component'
+          if (mpx.forceUsePageCtor || mode === 'ali') {
+            ctor = 'Page'
+          } else {
+            ctor = 'Component'
+          }
         } else if (ctorType === 'component') {
           ctor = 'Component'
         }
         globalInjectCode += `global.currentCtor = ${ctor}\n`
+        globalInjectCode += `global.currentCtorType = ${JSON.stringify(ctor.replace(/^./, (match) => {
+          return match.toLowerCase()
+        }))}\n`
       }
-
 
       //
       // <script>
