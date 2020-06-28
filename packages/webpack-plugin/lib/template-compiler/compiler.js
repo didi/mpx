@@ -112,8 +112,7 @@ function createASTElement (tag, attrs, parent) {
     attrsList: attrs,
     attrsMap: makeAttrsMap(attrs),
     parent: parent,
-    children: [],
-    needTrans: true // 是否需要转换平台
+    children: []
   }
 }
 
@@ -1833,8 +1832,8 @@ function postProcessTemplate (el) {
 }
 
 function processElement (el, root, options, meta) {
-  if (el.parent && !el.parent.needTrans) {
-    el.needTrans = false
+  if (el.parent && el.parent.passTrans) {
+    el.passTrans = true
   }
 
   const elementAttrListCopy = Object.assign([], el.attrsList)
@@ -1851,13 +1850,13 @@ function processElement (el, root, options, meta) {
       const processedAttr = { name: replacedAttrName, value: tempVal }
       if (arr.includes(mode)) {
         if (!replacedAttrName) {
-          el.needTrans = false
+          el.passTrans = true
         } else {
           // 如果命中了指定的mode，则先存在el上，等跑完转换后再挂回去
           el.noTransAttr ? el.noTransAttr.push(processedAttr) : el.noTransAttr = [processedAttr]
         }
       } else if (!replacedAttrName) {
-        removeNode(el)
+        el._needRemove = true
       } else {
         // 如果没命中指定的mode，则该属性删除
         // addAttrs(el, processedAttr)
@@ -1865,7 +1864,7 @@ function processElement (el, root, options, meta) {
     }
   })
 
-  if (rulesRunner && el.needTrans) {
+  if (rulesRunner && !el.passTrans) {
     currentEl = el
     rulesRunner(el)
   }
@@ -1923,6 +1922,7 @@ function processElement (el, root, options, meta) {
 }
 
 function closeElement (el, meta) {
+  postProcessElement(el)
   if (mode === 'web') {
     // 处理代码维度条件编译移除死分支
     postProcessIf(el)
@@ -1935,6 +1935,12 @@ function closeElement (el, meta) {
   }
   postProcessFor(el)
   postProcessIf(el)
+}
+
+function postProcessElement (el) {
+  if (el._needRemove) {
+    removeNode(el, true)
+  }
 }
 
 function postProcessComponentIs (el) {
