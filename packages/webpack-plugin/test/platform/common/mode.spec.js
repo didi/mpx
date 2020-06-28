@@ -71,14 +71,18 @@ describe('template should transform correct', function () {
   })
 
   it('should work normal if no attr in tag', function () {
-    const input = '<button wx="123">获取用户信息</button>'
+    const input = '<button>获取用户信息</button>'
     const output = compileAndParse(input)
-    expect(output).toBe('<button wx="123">获取用户信息</button>')
+    expect(output).toBe('<button>获取用户信息</button>')
   })
 
   it('if attr name matched mode name should work correct', function () {
     const input = '<button ali@swan="handleClick">获取用户信息</button>'
     const output = compileAndParse(input)
     expect(output).toBe('<button>获取用户信息</button>')
+
+    const input2 = '<button wx="123">获取用户信息</button>'
+    const output2 = compileAndParse(input2)
+    expect(output2).toBe('<button wx="123">获取用户信息</button>')
   })
 })
