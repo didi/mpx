@@ -1832,8 +1832,12 @@ function postProcessTemplate (el) {
 }
 
 function processElement (el, root, options, meta) {
-  if (el.parent && el.parent.passTrans) {
-    el.passTrans = true
+  if (el.parent && el.parent._needRemove) {
+    el._needRemove = true
+  }
+
+  if (el.parent && el.parent._passTrans) {
+    el._passTrans = true
   }
 
   const elementAttrListCopy = el.attrsList.slice(0)
@@ -1850,7 +1854,7 @@ function processElement (el, root, options, meta) {
       const processedAttr = { name: replacedAttrName, value: tempVal }
       if (arr.includes(mode)) {
         if (!replacedAttrName) {
-          el.passTrans = true
+          el._passTrans = true
         } else {
           // 如果命中了指定的mode，则先存在el上，等跑完转换后再挂回去
           el.noTransAttr ? el.noTransAttr.push(processedAttr) : el.noTransAttr = [processedAttr]
@@ -1859,12 +1863,16 @@ function processElement (el, root, options, meta) {
         el._needRemove = true
       } else {
         // 如果没命中指定的mode，则该属性删除
-        // addAttrs(el, processedAttr)
       }
     }
   })
 
-  if (rulesRunner && !el.passTrans) {
+  // 如果已经标记了这个元素要被清除，直接return跳过后续处理步骤
+  if (el._needRemove) {
+    return
+  }
+
+  if (rulesRunner && !el._passTrans) {
     currentEl = el
     rulesRunner(el)
   }
