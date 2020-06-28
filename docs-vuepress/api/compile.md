@@ -163,7 +163,15 @@ new MpxWebpackPlugin({
 
 ### forceDisableInject
 
+- **类型**：`Boolean`
+
+- **详细**：默认为false，Mpx会在项目编译构建过程中对运行时进行代码注入，以实现部分增强能力，包括 refs、i18n 和 setData 性能优化等。在不需要这些增强能力时，可配置 forceDisableInject 为 true，以消除编译时注入，来进一步减少包体积，但是这部分增强能力也就不再可用。
+
 ### forceDisableProxyCtor
+
+- **类型**：`Boolean`
+
+- **详细**： 默认为false，用于控制在跨平台输出时对实例构造函数（App | Page | Component | Behavior）进行代理替换以抹平平台差异。当配置 forceDisableProxyCtor 为 true 时，会强行取消平台差异抹平逻辑，开发时需针对输出到不同平台进行条件判断。
 
 ### transMpxRules
 
@@ -216,6 +224,65 @@ new MpxWebpackPlugin({
 
 ### i18n
 
+```js
+new MpxWebpackPlugin({
+  i18n: {
+    locale: 'en-US',
+    messages: {
+      'en-US': {
+        message: {
+          hello: '{msg} world'
+        }
+      },
+      'zh-CN': {
+        message: {
+          hello: '{msg} 世界'
+        }
+      }
+    },
+    // messagesPath: path.resolve(__dirname, '../src/i18n.js')
+  }
+})
+```
+
+- **详细**：Mpx 支持国际化，底层实现依赖类wxs能力，通过指定语言标识和语言包，可实现多语言之间的动态切换。可配置项包括locale、messages、messagesPath。
+
+#### i18n.locale
+
+`String`
+
+通过配置 locale 属性，可指定语言标识，默认值为 'zh-CN'
+
+#### i18n.messages
+
+`Object`
+
+通过配置 messages 属性，可以指定项目语言包，Mpx 会依据语言包对象定义进行转换，示例如下：
+```js
+messages: {
+  'en-US': {
+    message: {
+      'title': 'DiDi Chuxing',
+      'subTitle': 'Make travel better'
+    }
+  },
+  'zh-CN': {
+    message: {
+      'title': '滴滴出行',
+      'subTitle': '让出行更美好'
+    }
+  }
+}
+```
+
+#### i18n.messagesPath
+
+`String`
+
+为便于开发，Mpx 还支持配置语言包资源路径 messagesPath 来代替 messages 属性，Mpx 会从该路径下的 js 文件导出语言包对象。
+
+详细介绍及使用见[工具-国际化i18n](../guide/tool/i18n.md)一节。
+
 ### auditResource
 
 - **类型**：`true | false | 'component'`
@@ -266,10 +333,88 @@ Mpx中允许用户在request中传递特定query执行特定逻辑，目前已�
 
 ### ?resolve
 
-### ?packageName
+### packageName
+
+- **类型**: `String`
+
+- **详细**: 指定当前 Page 或 Component 中引用的某个非 JS 静态资源被打包到对应的主包或分包目录下。
+
+- **示例**:
+
+``` javascript
+// 入口 app.mpx 的 json 配置部分
+module.exports = {
+  "pages": [
+    "./pages/index",
+    "./pages/list?root=list&name=listName"
+  ],
+  "packages": [
+    "./packageA/packageA.mpx?root=packageA",
+    "./packageB/packageB.mpx?root=packageB&name=packageSecond"
+  ]
+}
+```
+
+``` html
+<!-- packageA/cat.mpx -->
+<template>
+  <view>
+    <view>hello packageA cat.mpx</view>
+    <image src="{{catAvatar}}"></image>
+  </view>
+</template>
+
+<script>
+  import{ createPage } from '@mpxjs/core'
+  // 没有配置 packageName，默认打包到当前模块所在的分包目录下
+  import catAvatar from 'static/images/cat.jpg'
+
+  createPage({
+    data: {
+      catAvatar
+    },
+    onLoad () {}
+  })
+</script>
+```
+
+``` html
+<!-- packageB/dog.mpx -->
+<template>
+  <view>
+    <view>hello packageB dog.mpx</view>
+    <image src="{{dogAvatar}}"></image>
+  </view>
+</template>
+
+<script>
+  import{ createPage } from '@mpxjs/core'
+  // packageName=main 当前资源会被打包到主包目录下
+  import dogAvatar from 'static/images/dog.jpg?packageName=main'
+
+  createPage({
+    data: {
+      dogAvatar
+    },
+    onLoad () {}
+  })
+</script>
+```
 
 ### ?root
 
-### ?fallback
+- **类型**：`String`
 
-### ?async
+- **详细**：指定分包别名，Mpx项目在编译构建后会输出该别名的分包，项目中可直接引用该分包路径进行开发。
+
+- **示例**：
+
+```js
+module.exports = {
+  packages: [
+    '@packageName/src/app.mpx?root=test',
+  ]
+}
+```
+
+### ?fallback
