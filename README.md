@@ -8,7 +8,8 @@
     一款具有优秀开发体验和深度性能优化的增强型小程序开发框架。
 </p>
 
-[![Build Status](https://travis-ci.org/didi/mpx.svg?branch=master)](https://travis-ci.org/didi/mpx)
+![test-status](https://github.com/didi/mpx/workflows/test/badge.svg)
+![docs-status](https://github.com/didi/mpx/workflows/docs/badge.svg)
 
 ## 简介
 
