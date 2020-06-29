@@ -59,7 +59,7 @@ function getPackageCacheGroup (packageName) {
 let loaderOptions
 
 const externalsMap = {
-  weui: /^weui-miniprogram/
+  weui: /weui-miniprogram/
 }
 
 const warnings = []
