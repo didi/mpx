@@ -7,42 +7,61 @@ sidebarDepth: 2
 ## webpack配置
 
 ```js
-// todo 分项说明配置意义
 module.exports = {
   entry: {
     app: resolveSrc('app.mpx')
   },
   output: {
+    // 和 webpack 配置一致,编译后文件输出的路径
     path: resolveDist(),
+    // 由于 Mpx 内部框架实现的原因，publicPath必须设置为'/'，默认为'/'
     publicPath: '/',
+    // 由于 Mpx 内部框架实现的原因，filename必须设置为'[name].js'，默认为'[name].js'
     filename: '[name].js'
   },
   node: {
+     // 在 Node 环境中 global 标识全局对象，Mpx中需要依赖 global 进行运行时注入，
     global: true
   },
   module: {
     rules: [
       {
         test: /\.mpx$/,
-        use: MpxWebpackPlugin.loader()
+        // 以 .mpx 结尾的文件需要使用 Mpx 提供的 loader 进行解析，处理 .mpx 文件包含的template，script, style, json等各个部分
+        use: MpxWebpackPlugin.loader({
+          // 自定义 loaders 
+          loaders: {
+            scss: [
+              {loader: 'css-loader'},
+              {loader: 'sass-loader', options: {sassOptions: {outputStyle: 'nested'}}}
+            ]
+          }
+        })
       },
       {
         test: /\.js$/,
+        // js 文件走正常的 babel 解析
         loader: 'babel-loader',
-        include: [resolve('src'), resolve('test'), resolve('node_modules/@mpxjs')]
+        // include 和 exclude 定义哪些 .js 文件走 babel 编译，哪些不走 babel 编译，配置include、exclude 可以提高查找效率
+        include: [resolve('src'), resolve('test'), resolve('node_modules/@mpxjs')],
+        exclude: [resolve('node_modules/**/src/third_party/')]
       },
       {
+        // 适用于<script type="application/json" src="../common.json">，Mpx内部会添加上__component，设置 type 以防止走 webpack 内建的 json 解析
+        // webpack json解析，抽取内容的占位内容必须为合法 json，否则会在 parse 阶段报错
         test: /\.json$/,
         resourceQuery: /__component/,
         type: 'javascript/auto'
       },
       {
+        // 各小程序平台自有脚本的差异抹平
         test: /\.(wxs|qs|sjs|filter\.js)$/,
         loader: MpxWebpackPlugin.wxsPreLoader(),
         enforce: 'pre'
       },
       {
         test: /\.(png|jpe?g|gif|svg)$/,
+        // Mpx 提供图像资源处理，支持 CDN 和 Base64 两种
         loader: MpxWebpackPlugin.urlLoader({
           name: 'img/[name][hash].[ext]'
         })
@@ -51,12 +70,13 @@ module.exports = {
   },
   mode: 'production',
   resolve: {
+    // 当通过 require, import引 入不带后缀的文件时，webpack 将自动带上后缀后去尝试访问文件是否存在
     extensions: ['.mpx', '.js']
   },
   plugins: [
     new MpxWebpackPlugin({
-      mode: 'wx',
-      srcMode: 'ali'
+      mode: 'wx', // 可选值 wx/ali/swan/qq/tt/web
+      srcMode: 'ali' // 暂时只支持微信为源mode做跨平台，为其他时mode必须和srcMode一致
     })
   ]
 }
@@ -191,6 +211,39 @@ new MpxWebpackPlugin({
 ```
 
 ### autoSplit
+
+- **类型**：`boolean` 
+
+- **详细**： 当编译目标平台为 web 时默认不开启autoSplit，其它平台默认开启为 true。为 true 时如果配置了optimization，将采用 optimization 配置进行 splitChunks 实现代码分离打包优化
+
+- **示例**：
+```js
+// webpack配置
+{
+  optimization: {
+    runtimeChunk: {
+      // 将包含 chunks 映射关系的 list 提取出到bundle.js文件中
+      name: 'bundle'
+    },
+    splitChunks: {
+      cacheGroups: {
+        main: {
+          name: 'bundle',
+          minChunks: 2,
+          chunks: 'initial'
+        }
+      }
+    }
+  },
+  plugins: [
+    new MpxWebpackPlugin(Object.assign({
+      mode: 'wx',
+      srcMode:'wx',
+      autoSpit: true
+    })
+  ]
+}
+```
 
 ### defs
 
