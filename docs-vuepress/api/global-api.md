@@ -103,7 +103,8 @@ const mixin = mpx.getMixin({
     })]
   })]
 })
-/* mixin输出传为
+/* 
+mixin值
 {
   data: {value2: 6, value1: 2},
   created: ƒ created(),
