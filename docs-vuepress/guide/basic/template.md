@@ -22,7 +22,6 @@ Mpx提供的增强指令语法如下：
 下面是使用了模板增强语法的一个简单实例，许多在原生小程序上很繁琐的模板描述在增强语法的帮助下变得清晰简洁：
 
 ```html
-```html
 <template>
   <!--动态样式-->
   <view class="container" wx:style="{{dynamicStyle}}">

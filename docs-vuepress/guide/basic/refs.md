@@ -6,8 +6,6 @@
 
 简单的使用示例如下：
 
-todo 组件和节点的简单示例，包含template和script
-
 ```html
   <template>
     <view class="container">
@@ -39,15 +37,13 @@ todo 组件和节点的简单示例，包含template和script
 
 使用示例如下：
 
-todo wx:for中的组件和节点的简单示例，包含template和script
-
 ```html
 <template>
   <view>
     <!-- list 组件 -->
     <list wx:ref="list" wx:for="{{listData}}" data="{{item.name}}" wx:key="id"></list>
-
-    <view wx:ref="test" wx:for="{{listData}}" wx:key="id">{{item.id}}</view>
+    <!-- view 节点 -->
+    <view wx:ref="test" wx:for="{{listData}}" wx:key="id">{{item.name}}</view>
   </view>
 </template>
 

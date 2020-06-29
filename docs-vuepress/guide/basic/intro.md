@@ -24,6 +24,7 @@ Mpx使用类似Vue的单文件开发模式，小程序原本的template/js/style
 ### 增强的模板语法
 
 同样受到Vue的启发，Mpx提供了很多增强模板语法便于开发者方便快捷地进行视图开发，主要包含以下：
+
 * [wx:style动态样式](./class-style-binding.md#样式绑定)
 * [wx:class动态类名](./class-style-binding.md#类名绑定)
 * [wx:model双向绑定](./two-way-binding.md)
@@ -55,8 +56,6 @@ Mpx借鉴Vuex的设计实现一套与框架搭配使用的状态管理(store)工
 
 Mpx的编译构建以webpack为基础，针对小程序项目结构深度定制开发了一个webpack插件和一系列loaders，整个构建过程完全基于依赖收集按需打包，兼容大部分webpack自身能力及生态，此外Mpx的编译构建还支持以下能力：
 
-list todo link
-
 * [npm构建](../advance/npm.md)
 * [分包构建](../advance/subpackage.md#分包)
 * [包体积优化](../advance/subpackage.md)
@@ -73,8 +72,6 @@ Mpx支持全部小程序平台(微信，支付宝，百度，头条，qq)的增�
 ### 完善的周边能力
 
 除了上述的核心能力外，Mpx还提供了丰富的周边能力支持，主要包括以下能力：
-
-list todo link
 
 * [网络请求](../extend/request.md)
 * [数据mock](../extend/mock.md)

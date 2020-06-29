@@ -4,8 +4,6 @@ Mpx中的条件渲染与原生小程序中完全一致，详情可以查看[这�
 
 简单示例如下:
 
-todo 添加示例
-
 ```html
 <template>
   <view class="container">
