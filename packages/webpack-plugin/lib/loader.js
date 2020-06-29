@@ -208,6 +208,16 @@ module.exports = function (content) {
               pageTitle = jsonRes.jsonObj.navigationBarTitleText
             }
 
+            let enablePullDownRefresh = false
+            if (ctorType === 'page' && jsonRes.jsonObj.enablePullDownRefresh) {
+              enablePullDownRefresh = jsonRes.jsonObj.enablePullDownRefresh
+            }
+
+            let onReachBottomDistance = ''
+            if (ctorType === 'page' && jsonRes.jsonObj.onReachBottomDistance) {
+              onReachBottomDistance = jsonRes.jsonObj.onReachBottomDistance
+            }
+
             processScript(parts.script, {
               ctorType,
               srcMode,
@@ -216,6 +226,8 @@ module.exports = function (content) {
               getRequireForSrc,
               i18n,
               pageTitle,
+              enablePullDownRefresh,
+              onReachBottomDistance,
               mpxCid: resourceQueryObj.mpxCid,
               builtInComponentsMap: templateRes.builtInComponentsMap,
               localComponentsMap: jsonRes.localComponentsMap,
