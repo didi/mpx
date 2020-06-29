@@ -6,6 +6,8 @@ export default function processOption (
   firstPage,
   mpxCid,
   pageTitle,
+  enablePullDownRefresh,
+  onReachBottomDistance,
   pagesMap,
   componentsMap,
   Vue,
@@ -137,6 +139,14 @@ export default function processOption (
 
   if (pageTitle) {
     option.pageTitle = pageTitle
+  }
+
+  if (enablePullDownRefresh) {
+    option.enablePullDownRefresh = enablePullDownRefresh
+  }
+
+  if (onReachBottomDistance) {
+    option.onReachBottomDistance = onReachBottomDistance
   }
 
   return option

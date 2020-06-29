@@ -28,6 +28,8 @@ module.exports = function (script, options, callback) {
   const getRequireForSrc = options.getRequireForSrc
   const i18n = options.i18n
   const pageTitle = options.pageTitle
+  const enablePullDownRefresh = options.enablePullDownRefresh
+  const onReachBottomDistance = options.onReachBottomDistance
 
   const stringifyRequest = r => loaderUtils.stringifyRequest(loaderContext, r)
 
@@ -141,6 +143,8 @@ module.exports = function (script, options, callback) {
         ${JSON.stringify(firstPage)},
         ${JSON.stringify(mpxCid)},
         ${JSON.stringify(pageTitle)},
+        ${JSON.stringify(enablePullDownRefresh)},
+        ${JSON.stringify(onReachBottomDistance)},
         ${shallowStringify(pagesMap)},
         ${shallowStringify(componentsMap)}`
 
