@@ -175,6 +175,25 @@
 
 ## wx:key
 
+* **预期：** `number | string`
+
+* **用法：**
+  
+  如果列表中项目的位置会动态改变或者有新的项目添加到列表中，并且希望列表中的项目保持自己的特征和状态，需要使用 wx:key 来指定列表中项目的唯一的标识符。
+  **注意：如不提供 wx:key，会报一个 warning， 如果明确知道该列表是静态，或者不必关注其顺序，可以选择忽略**。
+
+  有相同父元素的子元素必须有独特的 key。重复的 key 会造成渲染错误。
+
+  常见的用例是结合 `wx:for`：
+
+  ``` html
+  <view wx:for="{{array}}" wx:key="id">
+    {{ item.text }}
+  </view>
+  ```
+
+* **参考：** [列表渲染 - wx:for](../guide/basic/list-render.html)
+
 ## wx:class
 
 ## wx:style
