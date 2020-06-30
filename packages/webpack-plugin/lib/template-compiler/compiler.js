@@ -7,7 +7,7 @@ const isEmptyObject = require('../utils/is-empty-object')
 const mpxJSON = require('../utils/mpx-json')
 const getRulesRunner = require('../platform/index')
 const addQuery = require('../utils/add-query')
-const qaUtil = require('../qaHelper/util')
+const humpDash = require('../utils/hump-dash')
 
 /**
  * Make a map and return a function for checking if a key
@@ -102,7 +102,7 @@ function makeAttrsMap (attrs) {
       warn$1('duplicate attribute: ' + attrs[i].name)
     }
     if (mode === 'qa') {
-      attrs[i].name = qaUtil.camelToHyphen(attrs[i].name)
+      attrs[i].name = humpDash.hump2dash(attrs[i].name)
     }
     map[attrs[i].name] = attrs[i].value
   }
@@ -893,12 +893,7 @@ function parse (template, options) {
             parent: currentParent
           }
           children.push(el)
-          if (text !== ' ' && mode === 'qa' && currentParent.tag !== 'text') {
-            let node = createASTElement('text', [])
-            node.children.push(el)
-            replaceNode(el, node)
-          }
-          processText(el)
+          processText(el, text)
         }
       }
     },
@@ -1622,7 +1617,13 @@ function postProcessIf (el) {
   }
 }
 
-function processText (el) {
+function processText (el, text) {
+  // 快应用纯文本节点需text标签包裹
+  if (text !== ' ' && mode === 'qa' && currentParent.tag !== 'text') {
+    let node = createASTElement('text', [])
+    node.children.push(el)
+    replaceNode(el, node)
+  }
   if (el.type !== 3 || el.isComment) {
     return
   }
