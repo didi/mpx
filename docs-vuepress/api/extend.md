@@ -7,42 +7,34 @@ mpx-fetch提供了一个实例**xfetch** ，该实例包含以下api
 ### fetch(config)
 >  正常的promisify风格的请求方法
 - **参数：**
+    - `{Object} config`
 
-    - **config**
-    
-        - 预期：`Object`
-        
-        config可指定以下属性：
+        config 可指定以下属性：
         - **url**
         
-            预期：`string`
+            类型：`string`
         
-            请求Url
-        - header
+            设置请求url
+        - **method**
     
-            预期：`Object`
+            类型：`string`
         
-            请求头信息
-        - method
+            设置请求方式，默认为GET
+        - **data**
     
-            预期：`string`
+            类型：`Object`
         
-            请求方式
-        - data
+            设置请求参数
+        - **params**
     
-            预期：`Object`
+            类型：`Object`
         
-            请求数据
-        - params
-    
-            预期：`Object`
+            设置请求参数，参数会以 Query String 的形式进行传递
+        - **emulateJSON**
         
-            请求数据
-        - emulateJSON
+            类型：`Boolean`
         
-            预期：`Boolean`
-        
-            设置为true时，等价于header = {'content-type': 'application/x-www-form-urlencoded'}
+            设置为 true 时，等价于 header = {'content-type': 'application/x-www-form-urlencoded'}
 
 - **示例：**
 
@@ -52,7 +44,15 @@ import mpxFetch from '@mpxjs/fetch'
 mpx.use(mpxFetch)
 // 第一种访问形式
 mpx.xfetch.fetch({
-	url: 'http://xxx.com'
+	url: 'http://xxx.com',
+	method: 'POST',
+	params: {
+		age: 10
+	},
+	data: {
+		name: 'test'
+	},
+	emulateJSON: true 
 }).then(res => {
 	console.log(res.data)
 })
@@ -83,6 +83,7 @@ cancelToken.exec('手动取消请求') // 执行后请求中断，返回abort fa
 ### create()
 >用于创建一个新的mpx-fetch实例
 
+- **示例**:
 ```js
 const newFetch = new mpx.xfetch.create() // 生成新的mpx-fetch实例
 ```

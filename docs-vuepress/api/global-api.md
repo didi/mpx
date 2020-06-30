@@ -8,10 +8,9 @@ createApp(options)
 ```
 
 - **参数：**
-    - **options** 
-        - 预期：Object
+    - `{Object} options`
     
-           可指定小程序的生命周期回调，methods 方法，以及一些全局变量等 
+        可指定小程序的生命周期回调，methods 方法，以及一些全局变量等 
             
 
 - **示例：**
@@ -42,17 +41,15 @@ createApp(options)
     createPage(options, config?)
     ```
 - **参数：**
-    - **options** 
-        - 预期：Object
+    - `{Object} options`
     
-            具体形式除了 computed、watch 这类 mpx 扩展特性之外，其他的属性都参照原生小程序的官方文档即可。
-    - **config**（可选参数）         
-        - 预期：Object
-    
-            如果希望标识一个组件是最纯粹的原生组件，不用数据响应等能力，可通过 config.isNative 传 true 声明。
-            如果有需要复写/改写最终调用的创建页面的构造器，可以通过 config 对象的 customCtor 提供。  
-            **注意:**
-            mpx本身是用 component 来创建页面的，如果传page可能在初始化时候生命周期不正常导致取props有一点问题
+         具体形式除了 computed、watch 这类 mpx 扩展特性之外，其他的属性都参照原生小程序的官方文档即可。
+    - `{Object} config`（可选参数）   
+          
+         如果希望标识一个组件是最纯粹的原生组件，不用数据响应等能力，可通过 config.isNative 传 true 声明。
+         如果有需要复写/改写最终调用的创建页面的构造器，可以通过 config 对象的 customCtor 提供。  
+         **注意:**
+         mpx本身是用 component 来创建页面的，如果传page可能在初始化时候生命周期不正常导致取props有一点问题
 
 - **示例：**
 ```js
@@ -85,15 +82,13 @@ createPage(object)
     createComponent(options, config?)
     ```
 - **参数：**
-    - **options** 
-        - 预期：Object
+    - `{Object} options`
     
-            具体形式除了 computed、watch 这类 mpx 扩展特性之外，其他的属性都参照原生小程序的官方文档即可。
-    - **config**（可选参数）         
-        - 预期：Object
+        具体形式除了 computed、watch 这类 mpx 扩展特性之外，其他的属性都参照原生小程序的官方文档即可。
+    - `{Object} config`（可选参数）        
     
-            如果希望标识一个组件是最纯粹的原生组件，不用数据响应等能力，可通过 config.isNative 传 true 声明。
-            如果有需要复写/改写最终调用的创建组件的构造器，可以通过 config 对象的 customCtor 提供。  
+        如果希望标识一个组件是最纯粹的原生组件，不用数据响应等能力，可通过 config.isNative 传 true 声明。
+        如果有需要复写/改写最终调用的创建组件的构造器，可以通过 config 对象的 customCtor 提供。  
          
 
 - **示例：**
@@ -136,14 +131,12 @@ createComponent(object)
     createStore({ ...options })
     ```
 - **参数：**
-    - **options**
-     
-        预期：`Object`
+    - `{Object} options`
         
-        options可指定以下属性：
+        options 可指定以下属性：
         - **state**
 
-            预期：`Object`
+            类型：`Object`
 
             store的根 state 对象。
                 
@@ -151,7 +144,7 @@ createComponent(object)
 
         - **mutations**
 
-            预期：`{ [type: string]: Function }`
+            类型：`{ [type: string]: Function }`
 
             在 store 上注册 mutation，处理函数总是接受 state 作为第一个参数（如果定义在模块中，则为模块的局部状态），payload 作为第二个参数（可选）。
     
@@ -159,7 +152,7 @@ createComponent(object)
 
         - **actions**
 
-            预期：`{ [type: string]: Function }`
+            类型：`{ [type: string]: Function }`
 
              在 store 上注册 action。处理函数总是接受 context 作为第一个参数，payload 作为第二个参数（可选）。
     
@@ -178,7 +171,7 @@ createComponent(object)
 
         - **getters**
 
-            预期：`{[key: string]: Function }`
+            类型：`{[key: string]: Function }`
   
             在 store 上注册 getter，getter 方法接受以下参数：
             ```js
@@ -191,7 +184,7 @@ createComponent(object)
 
         - **modules**
 
-            预期：`Object`
+            类型：`Object`
 
             包含了子模块的对象，会被合并到 store，大概长这样：
             ```js
@@ -213,7 +206,7 @@ createComponent(object)
 
         - **deps**
 
-            预期：`Object`
+            类型：`Object`
 
             包含了当前store依赖的第三方store：
             ```js
@@ -250,13 +243,13 @@ const store2 = createStore({ ...options })
 - **Store 实例属性**
     - **state** 
 
-      - 预期：Object
+      - 类型：`Object`
 
         根状态。
 
     - **getters**
 
-      - 预期：Object
+      - 类型：`Object`
 
         暴露出注册的 getter。
 
@@ -296,7 +289,7 @@ const store2 = createStore({ ...options })
 
 ## createStoreWithThis
 
-> createStoreWithThis 为 createStore 的变种方法，主要为了在 Typescript 环境中，可以更好地支持 store 中的类型推导。<br>
+> createStoreWithThis 为 createStore 的变种方法，主要为了在 `Typescript` 环境中，可以更好地支持 store 中的类型推导。<br>
   其主要变化在于定义 getters， mutations 和 actions 时，
   自身的 state，getters 等属性不再通过参数传入，而是会挂载到函数的执行上下文 this 当中，通过 this.state 或 this.getters 的方式进行访问。
   由于TS的能力限制，getters/mutations/actions 只有使用对象字面量的方式直接传入 createStoreWithThis 时
@@ -374,54 +367,8 @@ createComponent({
 })
 ```
 ## mixin
-**全局注入mixin**
 
-方法接收两个参数：mpx.mixin(mixins, types)
-
-- 第一个参数是要混入的mixins，接收类型 `Array|Object`
-- 第二个参数是控制将mixins混入到哪个实例上，接收参数 `String`
->types参数仅支持 String 类型，如果传递的参数为非 String 类型或不传，则走兜底逻辑，值为 ['app', 'page', 'component']
-
-**使用**
-```js
-import mpx from '@mpxjs/core'
-// 指定实例混入
-mpx.mixin({
-  methods: {
-    getData: function(){}
-  }
-}, 'page')
-
-// 全部实例混入，在 `app|page|component` 都会混入mixins
-mpx.mixin([
-  {
-    methods: {
-      getData: function(){}
-    }
-  }, 
-  {
-    methods: {
-      setData: function(){}
-    }
-  }
-])
-
-// 混入结果同上
-mpx.mixin([
-  {
-    methods: {
-      getData: function(){}
-    }
-  }, 
-  {
-    methods: {
-      setData: function(){}
-    }
-  }
-], ['page'])
-```
 ## injectMixins
-该方法仅为 `mixin` 方法的一个别名，`mpx.injectMixins({})` 等同于 `mpx.mixin({})`
 
 ## toPureObject
 
@@ -440,53 +387,7 @@ mpx.mixin([
 ## setConvertRule
 
 ## getMixin
-专为ts项目提供的反向推导辅助方法，该函数接收类型为 `Object` ,会将传入的嵌套mixins对象拉平成一个扁平的mixin对象
 
-**使用**
-```js
-import mpx, { createComponent } from '@mpxjs/core'
-// 使用mixins，需要对每一个mixin子项进行getMixin辅助函数包裹，支持嵌套mixin
-const mixin = mpx.getMixin({
-  mixins: [mpx.getMixin({
-    data: {
-      value1: 2
-    },
-    lifetimes: {
-      attached () {
-        console.log(this.value1, 'attached')
-      }
-    },
-    mixins: [mpx.getMixin({
-      data: {
-        value2: 6
-      },
-      created () {
-        console.log(this.value1 + this.value2 + this.outsideVal)
-      }
-    })]
-  })]
-})
-/* 
-mixin值
-{
-  data: {value2: 6, value1: 2},
-  created: ƒ created(),
-  attached: ƒ attached()
-}
-*/
-createComponent({
-  data: {
-    outsideVal: 20
-  },
-  mixins: [mixin]
-})
-
-/* 
-以上执行输出：
-28
-2 "attached"
-*/
-```
 ## getComputed
 
 ## implement
