@@ -183,9 +183,72 @@
 
 ## wx:model-prop
 
+wx:model 默认使用 `value` 属性传值，使用 `wx:model-prop` 定义 wx:model 指令对应的属性；
+ 
 ## wx:model-event
 
+wx:model 默认监听 `input` 事件，可以使用 `wx:model-event` 定义 wx:model 指令对应的事件；
+
+父组件
+```html
+<template>
+  <customCheck wx:model="{{checked}}" wx:model-prop="checkedProp" wx:model-event="checkedChange"></customCheck>
+</template>
+
+<script>
+  import {createPage} from '@mpxjs/core'
+  createPage({
+    data: {
+      checked: true
+    }
+  })
+</script>
+```
+
+子组件：（customCheck.mpx）
+```html
+<template>
+  <view bindtap="handleTap" class="viewProps">{{checkedProp}}</view>
+</template>
+
+<style lang="stylus">
+  .viewProps {
+    width 100px
+    height 100px
+    color #000
+  }
+</style>
+
+<script>
+  import {createComponent} from '@mpxjs/core'
+  createComponent({
+    properties: {
+      checkedProp: Boolean
+    },
+    methods: {
+      handleTap () {
+        // 这里第二个参数为自定义事件的detail，需要以下面的形式传递值以保持与原生组件对齐
+        this.triggerEvent('checkedChange', {
+          value: !this.checkedProp
+        })
+      }
+    }
+  })
+</script>
+```
+
+如示例，当子组件被点击时，父组件的checked数据会发生变化
+
+> 注意：由于微信限制，如果事件名使用横线分割（'checked-change'）,将不可以再使用该特性
+
 ## wx:model-value-path
+
+指定 wx:model 双向绑定时的取值路径；
+并非所有的组件都会按微信的标注格式 `event.target.value` 来传值，例如 vant 的 input 组件，值是通过抛出 `event.target` 本身传递的，这时我们可以使用 `wx:model-value-path` 重新指定取值路径。
+
+```html
+<vant-field wx:model-value-path="[]" wx:model="{{a}}"></vant-field>
+```
 
 ## wx:model-filter
 
