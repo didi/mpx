@@ -226,6 +226,81 @@ new MpxWebpackPlugin({
 
 ### externals
 
+- **类型**: `Array<string>`
+
+- **详细**: 
+
+微信小程序的 weui 组件库 通过 useExtendedLib 扩展库的方式引入，这种方式引入的组件将不会计入代码包大小。配置 externals 选项，Mpx 将不会解析 weui 组件的路径并打包。
+
+- **示例**:
+
+在 Mpx 项目中使用 useExtendedLib 扩展库的方式如下：
+
+``` javascript
+// Mpx 配置文件中添加如下配置：
+{
+  externals: ['weui']
+}
+```
+
+``` html
+<script name="json">
+  // app.mpx json部分
+  module.exports = {
+    "useExtendedLib": {
+      "weui": true
+    }
+  }
+</script>
+```
+
+``` html
+<template>
+  <view wx:if="{{__mpx_mode__ === 'wx'}}">
+    <mp-icon icon="play" color="black" size="{{25}}" bindtap="showDialog"></mp-icon>
+    <mp-dialog title="test" show="{{dialogShow}}" bindbuttontap="tapDialogButton" buttons="{{buttons}}">
+      <view>test content</view>
+    </mp-dialog>
+  </view>
+</template>
+
+<script>
+  // 在 page 中使用 weui 组件
+  import{ createPage } from '@mpxjs/core'
+
+  createPage({
+    data: {
+      dialogShow: false,
+      showOneButtonDialog: false,
+      buttons: [{text: '取消'}, {text: '确定'}],
+    },
+    methods: {
+      tapDialogButton () {
+        this.dialogShow = false
+        this.showOneButtonDialog = false
+      },
+      showDialog () {
+        this.dialogShow = true
+      }
+    }
+  })
+</script>
+
+<script name="json">
+  const wxComponents = {
+    "mp-icon": "weui-miniprogram/icon/icon",
+    "mp-dialog": "weui-miniprogram/dialog/dialog"
+  }
+  module.exports = {
+    "usingComponents": __mpx_mode__ === 'wx' 
+      ? Object.assign({}, wxComponents)
+      : {}
+  }
+</script>
+```
+
+- **参考** [weui组件库](https://developers.weixin.qq.com/miniprogram/dev/extended/weui/quickstart.html)
+
 ### forceUsePageCtor
 
 ### postcssInlineConfig
@@ -403,7 +478,7 @@ module.exports = {
 
 <script>
   import{ createPage } from '@mpxjs/core'
-  // packageName=main 当前资源会被打包到主包目录下
+  // 指定 packageName=main 即使当前模块在分包 packageB 下，资源也会被打包到主包目录下
   import dogAvatar from 'static/images/dog.jpg?packageName=main'
 
   createPage({
