@@ -2,6 +2,108 @@
 
 ## mpx-fetch
 
+mpx-fetch提供了一个实例**xfetch** ，该实例包含以下api
+
+### fetch(config)
+>  正常的promisify风格的请求方法
+- **参数：**
+    - `{Object} config`
+
+        config 可指定以下属性：
+        - **url**
+        
+            类型：`string`
+        
+            设置请求url
+        - **method**
+    
+            类型：`string`
+        
+            设置请求方式，默认为GET
+        - **data**
+    
+            类型：`Object`
+        
+            设置请求参数
+        - **params**
+    
+            类型：`Object`
+        
+            设置请求参数，参数会以 Query String 的形式进行传递
+        - **emulateJSON**
+        
+            类型：`Boolean`
+        
+            设置为 true 时，等价于 header = {'content-type': 'application/x-www-form-urlencoded'}
+
+- **示例：**
+
+```js
+import mpx from '@mpxjs/core'
+import mpxFetch from '@mpxjs/fetch'
+mpx.use(mpxFetch)
+// 第一种访问形式
+mpx.xfetch.fetch({
+	url: 'http://xxx.com',
+	method: 'POST',
+	params: {
+		age: 10
+	},
+	data: {
+		name: 'test'
+	},
+	emulateJSON: true 
+}).then(res => {
+	console.log(res.data)
+})
+
+mpx.createApp({
+	onLaunch() {
+		// 第二种访问形式
+		this.$xfetch.fetch({url: 'http://test.com'})
+	}
+})
+```
+
+### CancelToken
+>实例属性，用于创建一个取消请求的凭证。
+
+- **示例**:
+```js
+const cancelToken = new mpx.xfetch.CancelToken()
+mpx.xfetch.fetch({
+	url: 'http://xxx.com',
+	data: {
+		name: 'test'
+	},
+	cancelToken: cancelToken.token
+})
+cancelToken.exec('手动取消请求') // 执行后请求中断，返回abort fail
+```
+### create()
+>用于创建一个新的mpx-fetch实例
+
+- **示例**:
+```js
+const newFetch = new mpx.xfetch.create() // 生成新的mpx-fetch实例
+```
+
+### interceptors
+>实例属性，用于添加拦截器，包含两个属性，request & response
+
+- **示例**:
+```js
+mpx.xfetch.interceptors.request.use(function(config) {
+    console.log(config)
+    // 也可以返回promise
+    return config
+})
+mpx.xfetch.interceptors.response.use(function(res) {
+    console.log(res)
+    // 也可以返回promise
+    return res
+})
+```
 ## mpx-mock
 
 ## api-proxy
