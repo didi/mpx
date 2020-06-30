@@ -73,3 +73,62 @@ describe('MyComponent', () => {
 })
 ```
 
+## 编写可被测试的组件
+
+很多组件的渲染输出由它的 props 决定。事实上，如果一个组件的渲染输出完全取决于它的 props，那么它会让测试变得简单，就好像断言不同参数的纯函数的返回值。看下面这个例子：
+
+```html
+<template>
+  <view>{{ msg }}</view>
+</template>
+
+<script>
+  import {createComponent} from '@mpxjs/core'
+  createComponent({
+    properties: { msg: String }
+  })
+</script>
+```
+
+你可以在不同的 properties 中，通过 simulate.render 的第二个参数控制组件的输出：
+
+```js
+const simulate = require('miniprogram-simulate')
+
+// 省略辅助方法
+describe('MyComponent', () => {
+  it('renders correctly with different props', () => {
+    const id = loadComponent('src/components/hello-world.mpx')
+    const comp1 = simulate.render(id, { msg: 'hello' })
+    const parent1 = document.createElement('parent-wrapper')
+    comp1.attach(parent1)
+    expect(comp1.dom.innerHTML).toBe('<wx-view>hello</wx-view>')
+    
+    const comp2 = simulate.render(id, { msg: 'bye' })
+    const parent2 = document.createElement('parent-wrapper')
+    comp2.attach(parent2)
+    expect(comp2.dom.innerHTML).toBe('<wx-view>bye</wx-view>')
+  })
+})
+```
+
+## 断言异步更新
+
+小程序视图层的更新是异步的，一些依赖视图更新结果的断言必须 await simulate.sleep() 后进行：
+
+```js
+const simulate = require('miniprogram-simulate')
+
+// 省略辅助方法
+it('updates the rendered message when vm.message updates', async () => {
+  const id = loadComponent('src/components/hello-world.mpx')
+  const comp = simulate.render(id)
+  const parent = document.createElement('parent-wrapper')
+  comp.attach(parent)
+  comp.instance.msg = 'foo'
+  await simulate.sleep(10)
+  expect(comp.dom.innerHTML).toBe('<wx-view>foo</wx-view>')
+})
+```
+
+更深入的 Mpx 单元测试的内容将在以后持续更新……
