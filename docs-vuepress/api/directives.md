@@ -353,15 +353,13 @@
   </script>
   ```
 
-  例子：
+  示例：
   
   ``` html
   <template>
     <view wx:for="{{list}}" wx:style="{{item.style}}">{{item.name}}</view>
   </template>
-  ```
 
-  ```js
   <script>
     import {createComponent} from '@mpxjs/core'
     createComponent({
@@ -398,6 +396,40 @@
 * **参考：** [类名样式绑定 - 样式绑定](../guide/basic/class-style-binding.html#样式绑定)
 
 ## wx:model
+
+  除了小程序原生指令之外，mpx 基于input事件提供了一个指令 wx:model, 用于双向绑定。
+
+  示例：
+
+  ``` html
+  <template>
+    <view>
+      <input wx:model="{{val}}"/>
+      <input wx:model="{{test.val}}"/>
+      <input wx:model="{{test['val']}}"/>
+    </view>
+  </template>
+
+  <script>
+    import {createComponent} from '@mpxjs/core'
+    createComponent({
+      data: {
+        val: 'test',
+        test: {
+          val: 'xxx'
+        }
+      }
+    })
+  </script>
+  ```
+
+  wx:model并不会影响相关的事件处理函数，比如像下面这样：
+
+  ``` html
+  <input wx:model="{{inputValue}}" bindinput="handleInput"/>
+  ```
+
+  * **参考：** [双向绑定](../guide/basic/two-way-binding.html)
 
 ## wx:model-prop
 
