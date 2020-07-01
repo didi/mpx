@@ -196,6 +196,115 @@
 
 ## wx:class
 
+* **用法：**
+  
+  绑定HTML Class: 类似vue的class绑定
+
+  #对象用法
+
+  我们可以传给 `wx:class` 一个对象，以动态地切换 class：
+
+  ``` html
+  <view wx:class="{{ {active: isActive} }}">
+    这是一段测试文字
+  </view>
+  ```
+
+  你可以在对象中传入更多字段来动态切换多个 class。此外，`wx:class` 指令也可以与普通的 class attribute 共存。
+
+  ``` html
+  <view class="static" wx:class="{{ {active: isActive, text-danger: hasError} }}">
+    这是一段测试文字
+  </view>
+  ```
+
+  ```js
+  <script>
+    import {createComponent} from '@mpxjs/core'
+
+    createComponent({
+      data: {
+       isActive: true,
+       hasError: false
+      }
+    })
+  </script>
+  ```
+
+  渲染为：
+
+  ``` html
+  <view class="static active">
+    这是一段测试文字
+  </view>
+  ```
+
+  **注意：由于微信的限制，`wx:class` 中的 key 值不能使用引号（如: { 'my-class-name': xx }）**
+
+  绑定的数据对象不必内联定义在模板里：
+
+  ``` html
+  <view wx:class="{{ classObject }}">
+    这是一段测试文字
+  </view>
+  ```
+
+  ```js
+  <script>
+    import {createComponent} from '@mpxjs/core'
+
+    createComponent({
+      data: {
+        classObject: {
+          active: true,
+          'text-danger': false
+        }
+      }
+    })
+  </script>
+  ```
+
+  我们也可以在这里绑定一个返回对象的计算属性。
+
+  如果你也想根据条件切换列表中的 class，可以用三元表达式：
+
+  ``` html
+  <view wx:class="{{ isActive ? 'active' : '' }}">
+    这是一段测试文字
+  </view>
+  ```
+
+  #数组用法
+
+  我们可以把一个数组传给 `wx:class`，以应用一个 class 列表：
+
+  ``` html
+  <view wx:class="[{{activeClass}},{{errorClass}}]">
+    这是一段测试文字
+  </view>
+  ```
+
+  ```js
+  <script>
+    import {createComponent} from '@mpxjs/core'
+
+    createComponent({
+      data: {
+        activeClass: 'active',
+        errorClass: 'text-danger'
+      }
+    })
+  </script>
+  ```
+  
+  渲染为：
+
+  ``` html
+  <view wx:class="active text-danger">
+    这是一段测试文字
+  </view>
+  ```
+
 ## wx:style
 
 ## wx:model
