@@ -419,10 +419,45 @@ mpx.mixin([
 ## watch
 
 ## use
+>用于安装外部扩展, 支持多参数
+方法接收两个参数：mpx.use(plugin, options)
+- 第一个参数是要安装的外部扩展
+- 第二个参数是对象，如果第二个参数是一个包含（prefix or postfix）的option， 那么将会对插件扩展的属性添加前缀或后缀
+
+**示例：**
+```js
+import mpx from '@mpxjs/core'
+import test from './test'
+mpx.use(test)
+mpx.use(test, {prefix: 'mpx'}, 'otherparams')
+```
+## injectMixins
 
 ## set
+用于对一个响应式对象新增属性，会`触发订阅者更新操作`
+- **参数**：
+  - `{Object | Array} target`
+  - `{string | number} propertyName/index`
+  - `{any} value`
+
+- **示例：**
+```js
+mport mpx, {observable} from '@mpxjs/core'
+const person = observable({name: 1})
+mpx.set(person, 'age', 17) // age 改变后会触发订阅者视图更新
+```
 
 ## remove
+用于对一个响应式对象删除属性，会`触发订阅者更新操作`
+- **参数**：
+  - `{Object | Array} target`
+  - `{string | number} propertyName/index`
+- **示例：**
+```js
+mport mpx, {observable} from '@mpxjs/core'
+const person = observable({name: 1})
+mpx.remove(person, 'age')
+```
 
 ## delete
 
