@@ -305,7 +305,97 @@
   </view>
   ```
 
+* **参考：** [类名样式绑定 - 类名绑定](../guide/basic/class-style-binding.html#类名绑定)
+
 ## wx:style
+
+* **用法：**
+
+  `wx:style` 的对象语法十分直观——看着非常像 CSS，但其实是一个 JavaScript 对象。CSS property 名可以用驼峰式 (camelCase) 或短横线分隔 (kebab-case) 来命名：
+
+  ``` html
+  <view wx:style="color: {{activeColor}}; font-size: {{fontSize}}px; fontWeight: bold">
+    这是一段测试文字
+  </view>
+  ```
+
+  ```js
+  <script>
+    import {createComponent} from '@mpxjs/core'
+
+    createComponent({
+      data: {
+        activeColor: 'red',
+        fontSize: 30
+      }
+    })
+  </script>
+  ```
+
+  直接绑定到一个样式对象通常更好，这会让模板更清晰：
+
+  ``` html
+  <view wx:style="{{styleObject}}">
+    这是一段测试文字
+  </view>
+  ```
+  
+  ```js
+  <script>
+    import {createComponent} from '@mpxjs/core'
+
+    createComponent({
+      styleObject: {
+        color: 'red',
+        fontWeight: 'bold'
+      },
+    })
+  </script>
+  ```
+
+  例子：
+  
+  ``` html
+  <template>
+    <view wx:for="{{list}}" wx:style="{{item.style}}">{{item.name}}</view>
+  </template>
+  ```
+
+  ```js
+  <script>
+    import {createComponent} from '@mpxjs/core'
+    createComponent({
+      data:{
+        list:[
+          {
+            name: 'red',
+            style: {
+              color: 'red'
+            }
+          },
+          {
+            name: 'blue',
+            style: {
+              color: 'blue'
+            }
+          }         
+        ]
+      }
+    })
+  </script>
+  ```
+
+  同样的，对象语法常常结合返回对象的计算属性使用。
+
+  `wx:style` 的数组语法可以将多个样式对象应用到同一个元素上
+
+  ``` html
+  <view wx:style="[baseStyles, overridingStyles]">
+    这是一段测试文字
+  </view>
+  ```
+
+* **参考：** [类名样式绑定 - 样式绑定](../guide/basic/class-style-binding.html#样式绑定)
 
 ## wx:model
 
