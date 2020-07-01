@@ -6,6 +6,23 @@ sidebarDepth: 2
 
 ## webpack配置
 
+### output.publicPath
+
+由于 Mpx 内部框架实现的原因(如分包路径)，publicPath 必须设置为'/'，默认为'/'。
+如是图像或文件需要设置 publicPath，可配置在 loader options中
+
+### output.filename
+
+小程序限定[描述页面的文件具有相同的路径和文件名](https://www.runoob.com)，仅以后缀名进行区分。
+
+因此 output.filename 中必须写为 [name].js，基于 chunk id 或者 hash name 的 filename 都会导致编译后的文件无法被小程序识别
+
+### node.global
+在 Node 环境中 global 标识全局对象，Mpx 中需要依赖 global 进行运行时注入
+
+### resolve.extensions
+当通过 require, import引 入不带后缀的文件时，webpack 将自动带上后缀后去尝试访问文件是否存在
+
 ```js
 module.exports = {
   entry: {
@@ -14,13 +31,10 @@ module.exports = {
   output: {
     // 和 webpack 配置一致,编译后文件输出的路径
     path: resolveDist(),
-    // 由于 Mpx 内部框架实现的原因，publicPath必须设置为'/'，默认为'/'
     publicPath: '/',
-    // 由于 Mpx 内部框架实现的原因，filename必须设置为'[name].js'，默认为'[name].js'
     filename: '[name].js'
   },
   node: {
-     // 在 Node 环境中 global 标识全局对象，Mpx中需要依赖 global 进行运行时注入，
     global: true
   },
   module: {
@@ -70,7 +84,6 @@ module.exports = {
   },
   mode: 'production',
   resolve: {
-    // 当通过 require, import引 入不带后缀的文件时，webpack 将自动带上后缀后去尝试访问文件是否存在
     extensions: ['.mpx', '.js']
   },
   plugins: [
@@ -236,7 +249,7 @@ new MpxWebpackPlugin({
 {
   optimization: {
     runtimeChunk: {
-      // 将包含 chunks 映射关系的 list 提取出到bundle.js文件中
+      // 将复用的模块抽取到一个外部的bundle中
       name: 'bundle'
     },
     splitChunks: {
