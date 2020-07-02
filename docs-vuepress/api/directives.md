@@ -175,11 +175,261 @@
 
 ## wx:key
 
+* **预期：** `number | string`
+
+* **用法：**
+  
+  如果列表中项目的位置会动态改变或者有新的项目添加到列表中，并且希望列表中的项目保持自己的特征和状态，需要使用 wx:key 来指定列表中项目的唯一的标识符。
+  **注意：如不提供 wx:key，会报一个 warning， 如果明确知道该列表是静态，或者不必关注其顺序，可以选择忽略**。
+
+  有相同父元素的子元素必须有独特的 key。重复的 key 会造成渲染错误。
+
+  常见的用例是结合 `wx:for`：
+
+  ``` html
+  <view wx:for="{{array}}" wx:key="id">
+    {{ item.text }}
+  </view>
+  ```
+
+* **参考：** [列表渲染 - wx:for](../guide/basic/list-render.html)
+
 ## wx:class
+
+* **用法：**
+  
+  绑定HTML Class: 类似vue的class绑定
+
+  #对象用法
+
+  我们可以传给 `wx:class` 一个对象，以动态地切换 class：
+
+  ``` html
+  <view wx:class="{{ {active: isActive} }}">
+    这是一段测试文字
+  </view>
+  ```
+
+  你可以在对象中传入更多字段来动态切换多个 class。此外，`wx:class` 指令也可以与普通的 class attribute 共存。
+
+  ``` html
+  <view class="static" wx:class="{{ {active: isActive, text-danger: hasError} }}">
+    这是一段测试文字
+  </view>
+  ```
+
+  ```js
+  <script>
+    import {createComponent} from '@mpxjs/core'
+
+    createComponent({
+      data: {
+       isActive: true,
+       hasError: false
+      }
+    })
+  </script>
+  ```
+
+  渲染为：
+
+  ``` html
+  <view class="static active">
+    这是一段测试文字
+  </view>
+  ```
+
+  **注意：由于微信的限制，`wx:class` 中的 key 值不能使用引号（如: { 'my-class-name': xx }）**
+
+  绑定的数据对象不必内联定义在模板里：
+
+  ``` html
+  <view wx:class="{{ classObject }}">
+    这是一段测试文字
+  </view>
+  ```
+
+  ```js
+  <script>
+    import {createComponent} from '@mpxjs/core'
+
+    createComponent({
+      data: {
+        classObject: {
+          active: true,
+          'text-danger': false
+        }
+      }
+    })
+  </script>
+  ```
+
+  我们也可以在这里绑定一个返回对象的计算属性。
+
+  如果你也想根据条件切换列表中的 class，可以用三元表达式：
+
+  ``` html
+  <view wx:class="{{ isActive ? 'active' : '' }}">
+    这是一段测试文字
+  </view>
+  ```
+
+  #数组用法
+
+  我们可以把一个数组传给 `wx:class`，以应用一个 class 列表：
+
+  ``` html
+  <view wx:class="[{{activeClass}},{{errorClass}}]">
+    这是一段测试文字
+  </view>
+  ```
+
+  ```js
+  <script>
+    import {createComponent} from '@mpxjs/core'
+
+    createComponent({
+      data: {
+        activeClass: 'active',
+        errorClass: 'text-danger'
+      }
+    })
+  </script>
+  ```
+  
+  渲染为：
+
+  ``` html
+  <view wx:class="active text-danger">
+    这是一段测试文字
+  </view>
+  ```
+
+* **参考：** [类名样式绑定 - 类名绑定](../guide/basic/class-style-binding.html#类名绑定)
 
 ## wx:style
 
+* **用法：**
+
+  `wx:style` 的对象语法十分直观——看着非常像 CSS，但其实是一个 JavaScript 对象。CSS property 名可以用驼峰式 (camelCase) 或短横线分隔 (kebab-case) 来命名：
+
+  ``` html
+  <view wx:style="color: {{activeColor}}; font-size: {{fontSize}}px; fontWeight: bold">
+    这是一段测试文字
+  </view>
+  ```
+
+  ```js
+  <script>
+    import {createComponent} from '@mpxjs/core'
+
+    createComponent({
+      data: {
+        activeColor: 'red',
+        fontSize: 30
+      }
+    })
+  </script>
+  ```
+
+  直接绑定到一个样式对象通常更好，这会让模板更清晰：
+
+  ``` html
+  <view wx:style="{{styleObject}}">
+    这是一段测试文字
+  </view>
+  ```
+  
+  ```js
+  <script>
+    import {createComponent} from '@mpxjs/core'
+
+    createComponent({
+      styleObject: {
+        color: 'red',
+        fontWeight: 'bold'
+      },
+    })
+  </script>
+  ```
+
+  示例：
+  
+  ``` html
+  <template>
+    <view wx:for="{{list}}" wx:style="{{item.style}}">{{item.name}}</view>
+  </template>
+
+  <script>
+    import {createComponent} from '@mpxjs/core'
+    createComponent({
+      data:{
+        list:[
+          {
+            name: 'red',
+            style: {
+              color: 'red'
+            }
+          },
+          {
+            name: 'blue',
+            style: {
+              color: 'blue'
+            }
+          }         
+        ]
+      }
+    })
+  </script>
+  ```
+
+  同样的，对象语法常常结合返回对象的计算属性使用。
+
+  `wx:style` 的数组语法可以将多个样式对象应用到同一个元素上
+
+  ``` html
+  <view wx:style="[baseStyles, overridingStyles]">
+    这是一段测试文字
+  </view>
+  ```
+
+* **参考：** [类名样式绑定 - 样式绑定](../guide/basic/class-style-binding.html#样式绑定)
+
 ## wx:model
+
+  除了小程序原生指令之外，mpx 基于input事件提供了一个指令 wx:model, 用于双向绑定。
+
+  示例：
+
+  ``` html
+  <template>
+    <view>
+      <input wx:model="{{val}}"/>
+      <input wx:model="{{test.val}}"/>
+      <input wx:model="{{test['val']}}"/>
+    </view>
+  </template>
+
+  <script>
+    import {createComponent} from '@mpxjs/core'
+    createComponent({
+      data: {
+        val: 'test',
+        test: {
+          val: 'xxx'
+        }
+      }
+    })
+  </script>
+  ```
+
+  wx:model并不会影响相关的事件处理函数，比如像下面这样：
+
+  ``` html
+  <input wx:model="{{inputValue}}" bindinput="handleInput"/>
+  ```
+
+  * **参考：** [双向绑定](../guide/basic/two-way-binding.html)
 
 ## wx:model-prop
 
