@@ -1,4 +1,12 @@
-# 数据 mock
+# 数据 Mock
+
+## 安装
+
+Mpx 提供了对请求响应数据进行拦截的 mock 插件,可通过如下命令进行安装:
+
+```sh
+npm i @mpxjs/mock
+```
 
 ## 使用说明
 
@@ -71,7 +79,29 @@ export default () => mock([
 </script>
 ```
 
-## mock 规则示例
+## Mock 入参
+
+`@mpxjs/mock` 所暴露的函数仅接收一个类型为 `mockRequstList` 的参数, 该类型定义如下:
+
+```ts
+type mockItem = {
+  url: string,
+  rule: object
+}
+type mockRequstList = Array<mockItem>
+
+//示例:
+let mockList: mockRequstList = [
+  {
+    url: "http://api.example.com", // 请求触发后匹配到该链接时其响应数据会被mock拦截
+    rule: { // mock生成返回数据的规则
+      'number|1-10': 1
+    }
+  }
+]
+```
+
+## Mock 规则示例
 
 - 基本类型数据生成
 

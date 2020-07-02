@@ -104,7 +104,6 @@ mpx.xfetch.interceptors.response.use(function(res) {
     return res
 })
 ```
-## mpx-mock
 
 ## api-proxy
  Mpx目前已经支持的API转换列表，供参考
@@ -259,3 +258,8 @@ import mpx from "https://dpubstatic.udache.com/static/dpubimg/6MQOo-ocI4/2.2.43.
 ::: warning
 这个库仅提供给 H5 使用，请勿在小程序环境引入
 :::
+
+## mpx-mock
+
+- 请参考 [数据 mock](/guide/extend/mock.md)
+
