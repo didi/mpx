@@ -1,12 +1,12 @@
 # Typescript支持
 
-### 什么是TypeScript
+## 什么是TypeScript
 
 >  `TypeScript` 是 `JavaScript` 的强类型版本，就然后在编译期去掉类型和特有语法，生成纯粹的 `JavaScript` 代码。由于最终在浏览器中运行的仍然是 `JavaScript`，所以 `TypeScript` 并不依赖于浏览器的支持，也并不会带来兼容性问题。
 
-> `TypeScript` 是 `JavaScript` 的超集，这意味着他支持所有的 `JavaScript` 语法。并在此之上对 `JavaScript` 添加了一些扩展，如 `class` / `interface` / `module` 等。这样会大大提升代码的可阅读性。
+> `TypeScript` 是 `JavaScript` 的超集，这意味着他支持所有的 `JavaScript` 语法。并在此之上对 `JavaScript` 添加了一些扩展，如 class / interface / module 等。这样会大大提升代码的可阅读性。
 
-### 总体上好处可以归纳成下面4点：
+## TypeScript优势
 
 1.  静态类型检查
 
@@ -17,7 +17,7 @@
 
 3. 代码重构
 
-    有时候的确需要修改一些变量/属性/方法名，牵涉到属性和方法的时候，很多改动是跨文件的，不像普通变量可以简单定位 `scope` ， 属性方法名的重命名对于 `JavaScript`来说异常痛苦， 一方面是修改本身就不方便, 另一方面是改了还不确定该改的是不是改了，不该改的是不是也改了。而 TypeScript 的静态类型系统就可以较为完美的解决这个问题。
+    有时候的确需要修改一些变量/属性/方法名，牵涉到属性和方法的时候，很多改动是跨文件的，不像普通变量可以简单定位 scope ， 属性方法名的重命名对于 `JavaScript`来说异常痛苦， 一方面是修改本身就不方便, 另一方面是改了还不确定该改的是不是改了，不该改的是不是也改了。而 `TypeScript` 的静态类型系统就可以较为完美的解决这个问题。
 
 4. 可读性
 
@@ -28,7 +28,7 @@
 
 ### .mpx中编写ts
 
-.mpx文件中script标签声明lang为ts，在编译时会自动这部分script中的内容进行ts类型检查
+.mpx文件中 script 标签声明 lang 为 ts ，在编译时会自动这部分 script 中的内容进行ts 类型检查
 
 ```html
 <script lang="ts">
@@ -36,7 +36,7 @@
 </script>
 ```
 
-由于大部分IDE对ts的语法提示支持都只对.ts和.d.ts文件生效，上述在.mpx文件中编写ts代码虽然能在编译时进行ts类型检查，但是无法享受IDE中编写ts时的代码提示和实时报错等优秀体验，所以，我们更建议大家创建一个.ts文件进行ts代码编写，通过src的方式引入到.mpx当中
+由于大部分 IDE 对 ts 的语法提示支持都只对 .ts 和 .d.ts 文件生效，上述在 .mpx 文件中编写ts代码虽然能在编译时进行 ts 类型检查，但是无法享受 IDE 中编写 ts 时的代码提示和实时报错等优秀体验，所以，我们更建议大家创建一个 .ts 文件进行 ts 代码编写，通过 src 的方式引入到 .mpx 当中
 
 ```html
 <script lang="ts" src="./index.ts"></script>
@@ -44,7 +44,7 @@
 
 ### 为.ts文件添加loader
 
-在webpack配置中添加如下rules以配置ts-loader
+在 Webpack 配置中添加如下 rules 以配置 ts-loader
 
 ```js
 {
@@ -58,7 +58,7 @@
 
 ### 编写tsconfig.json文件
 
-对相关配置不熟悉的同学可以直接采用下面配置，能够最大限度发挥mpx中强大的ts类型推导能力
+对相关配置不熟悉的同学可以直接采用下面配置，能够最大限度发挥 Mpx 中强大的 ts 类型推导能力
 
 ```json
 {
@@ -110,7 +110,7 @@ mpx.$myProperty = 'my-property'
 
 ## 类型推导及注意事项
 
-Mpx基于泛型函数提供了非常方便用户使用的反向类型推导能力，简单来说，就是用户可以用非常接近于js的方式调用Mpx提供的api，就能够获得大量基于用户输入参数反向推导得到的类型提示及检查。但是由于ts本身的能力限制，我们在mpx的运行时中添加了少量辅助函数和变种api，便于用户最大程度地享受反向类型推导带来的便利性，具体的注意事项和使用方法如下述demo
+Mpx 基于泛型函数提供了非常方便用户使用的反向类型推导能力，简单来说，就是用户可以用非常接近于 js 的方式调用 Mpx 提供的 api ，就能够获得大量基于用户输入参数反向推导得到的类型提示及检查。但是由于 ts 本身的能力限制，我们在 Mpx 的运行时中添加了少量辅助函数和变种api，便于用户最大程度地享受反向类型推导带来的便利性，具体的注意事项和使用方法如下述例子
 
 ```typescript
 import {createComponent, getComputed, getMixin, createStoreWithThis} from '@mpxjs/core'
