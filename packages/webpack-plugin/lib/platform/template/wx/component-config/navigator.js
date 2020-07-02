@@ -28,7 +28,7 @@ module.exports = function ({ print }) {
         test: 'open-type',
         ali (attr) {
           if (isMustache(attr.value)) {
-            // 如果是个变量，报warning
+            // 如果是个变量，报warning~
             aliPropLog(attr)
           } else {
             let supportedList = ['navigate', 'redirect', 'switchTab', 'navigateBack', 'reLaunch']
