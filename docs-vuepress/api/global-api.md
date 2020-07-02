@@ -447,7 +447,7 @@ const person = observable({name: 1})
 mpx.set(person, 'age', 17) // age 改变后会触发订阅者视图更新
 ```
 
-## remove
+## delete
 用于对一个响应式对象删除属性，会`触发订阅者更新操作`
 - **参数**：
   - `{Object | Array} target`
@@ -456,11 +456,8 @@ mpx.set(person, 'age', 17) // age 改变后会触发订阅者视图更新
 ```js
 mport mpx, {observable} from '@mpxjs/core'
 const person = observable({name: 1})
-mpx.remove(person, 'age')
+mpx.delete(person, 'age')
 ```
-
-## delete
-
 ## setConvertRule
 
 ## getMixin
