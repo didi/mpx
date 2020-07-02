@@ -2,6 +2,10 @@ function isCapital (c) {
   return /[A-Z]/.test(c)
 }
 
+function isMustache (str) {
+  return /\{\{((?:.|\n)+?)\}\}(?!})/.test(str)
+}
+
 // WordExample/wordExample -> word-example
 function capitalToHyphen (v) {
   let ret = ''
@@ -21,5 +25,6 @@ function capitalToHyphen (v) {
 
 module.exports = {
   isCapital,
+  isMustache,
   capitalToHyphen
 }
