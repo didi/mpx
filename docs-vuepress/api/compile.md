@@ -321,6 +321,7 @@ new MpxWebpackPlugin({
 ```
 
 ``` html
+<!-- 在 page 中使用 weui 组件 -->
 <template>
   <view wx:if="{{__mpx_mode__ === 'wx'}}">
     <mp-icon icon="play" color="black" size="{{25}}" bindtap="showDialog"></mp-icon>
@@ -331,7 +332,6 @@ new MpxWebpackPlugin({
 </template>
 
 <script>
-  // 在 page 中使用 weui 组件
   import{ createPage } from '@mpxjs/core'
 
   createPage({
