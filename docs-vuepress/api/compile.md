@@ -120,6 +120,24 @@ MpxWebpackPlugin支持传入以下配置：
 
 ### srcMode
 
+- **类型**：`'wx' | 'ali' | 'swan' | 'tt' | 'qq' | 'web'`
+
+- **默认值**：没有设置值时默认和 [mode](#mode) 一致
+
+- **详细**：当 srcMode 和 mode 不一致时，会读取相应的配置对项目进行编译和运行时转换
+
+- **示例**：
+
+```js
+// 微信转支付宝
+new MpxWebpackPlugin({
+  // 指定目标平台，可选值有 wx、ali、swan、qq、tt、web
+  mode: 'ali',
+  // 指定源码平台，默认值同目标平台一致 
+  srcMode: 'wx' 
+})
+```
+
 ### modeRules
 
 - **类型**：`{ [key: string]: any }`
@@ -141,6 +159,18 @@ new MpxWebpackPlugin({
 ```
 
 ### externalClasses
+
+- **类型**：`Array<string>`
+
+- **详细**：定义若干个外部样式类，这些将会覆盖元素原有的样式。
+
+- **示例**：
+
+```js
+new MpxWebpackPlugin({
+  externalClasses: ['custom-class', 'i-class']
+})
+```
 
 ### resolveMode
 
@@ -487,6 +517,16 @@ MpxWebpackPlugin通过静态方法暴露了以下五个内置loader，详情如�
 Mpx中允许用户在request中传递特定query执行特定逻辑，目前已支持的query如下：
 
 ### ?resolve
+
+- **类型**: `String`
+
+- **详细**: 在使用 import 引入包的时候在末尾加上 `?resolve`，编译时会被处理成正确的、完整的绝对路径。
+
+- **示例**:
+
+``` javascript
+import subPackageIndexPage from '../subpackage/pages/index.mpx?resolve'
+```
 
 ### packageName
 
