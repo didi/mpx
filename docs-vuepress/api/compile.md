@@ -344,15 +344,9 @@ new MpxWebpackPlugin({
 
 - **类型**: `Array<string>`
 
-- **详细**:
+- **详细**: 目前仅支持微信小程序 weui 组件库通过 useExtendedLib 扩展库的方式引入，这种方式引入的组件将不会计入代码包大小。配置 externals 选项，Mpx 将不会解析 weui 组件的路径并打包。
 
-externals 目前仅支持微信小程序。
-
-微信小程序的 weui 组件库 通过 useExtendedLib 扩展库的方式引入，这种方式引入的组件将不会计入代码包大小。配置 externals 选项，Mpx 将不会解析 weui 组件的路径并打包。
-
-- **示例**:
-
-在 Mpx 项目中使用 useExtendedLib 扩展库的方式如下：
+- **示例**: 在 Mpx 项目中使用 useExtendedLib 扩展库的方式如下：
 
 ``` javascript
 // Mpx 配置文件中添加如下配置：
