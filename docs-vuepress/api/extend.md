@@ -2,7 +2,108 @@
 
 ## mpx-fetch
 
-## mpx-mock
+mpx-fetch提供了一个实例**xfetch** ，该实例包含以下api
+
+### fetch(config)
+>  正常的promisify风格的请求方法
+- **参数：**
+    - `{Object} config`
+
+        config 可指定以下属性：
+        - **url**
+        
+            类型：`string`
+        
+            设置请求url
+        - **method**
+    
+            类型：`string`
+        
+            设置请求方式，默认为GET
+        - **data**
+    
+            类型：`Object`
+        
+            设置请求参数
+        - **params**
+    
+            类型：`Object`
+        
+            设置请求参数，参数会以 Query String 的形式进行传递
+        - **emulateJSON**
+        
+            类型：`Boolean`
+        
+            设置为 true 时，等价于 header = {'content-type': 'application/x-www-form-urlencoded'}
+
+- **示例：**
+
+```js
+import mpx from '@mpxjs/core'
+import mpxFetch from '@mpxjs/fetch'
+mpx.use(mpxFetch)
+// 第一种访问形式
+mpx.xfetch.fetch({
+	url: 'http://xxx.com',
+	method: 'POST',
+	params: {
+		age: 10
+	},
+	data: {
+		name: 'test'
+	},
+	emulateJSON: true 
+}).then(res => {
+	console.log(res.data)
+})
+
+mpx.createApp({
+	onLaunch() {
+		// 第二种访问形式
+		this.$xfetch.fetch({url: 'http://test.com'})
+	}
+})
+```
+
+### CancelToken
+>实例属性，用于创建一个取消请求的凭证。
+
+- **示例**:
+```js
+const cancelToken = new mpx.xfetch.CancelToken()
+mpx.xfetch.fetch({
+	url: 'http://xxx.com',
+	data: {
+		name: 'test'
+	},
+	cancelToken: cancelToken.token
+})
+cancelToken.exec('手动取消请求') // 执行后请求中断，返回abort fail
+```
+### create()
+>用于创建一个新的mpx-fetch实例
+
+- **示例**:
+```js
+const newFetch = new mpx.xfetch.create() // 生成新的mpx-fetch实例
+```
+
+### interceptors
+>实例属性，用于添加拦截器，包含两个属性，request & response
+
+- **示例**:
+```js
+mpx.xfetch.interceptors.request.use(function(config) {
+    console.log(config)
+    // 也可以返回promise
+    return config
+})
+mpx.xfetch.interceptors.response.use(function(res) {
+    console.log(res)
+    // 也可以返回promise
+    return res
+})
+```
 
 ## api-proxy
  Mpx目前已经支持的API转换列表，供参考
@@ -82,6 +183,23 @@ mpx.navigateBack()
 mpx.env // 输出：wx/qq/ali/baidu/tt
 mpx.checkJSApi()
 ```
+**cdn地址引用：**
+```js
+<!-- 开发环境版本，方便调试 -->
+<script src="https://dpubstatic.udache.com/static/dpubimg/D2JeLyT0_Y/2.2.43.webviewbridge.js"></script>
+
+<!-- 生产环境版本，压缩了体积 -->
+<script src="https://dpubstatic.udache.com/static/dpubimg/PRg145LZ-i/2.2.43.webviewbridge.min.js"></script>
+
+
+<!-- 同时支持 ES Module 引入的 -->
+// index.html
+<script type="module" src="https://dpubstatic.udache.com/static/dpubimg/6MQOo-ocI4/2.2.43.webviewbridge.esm.browser.min.js"></script>
+// main.js
+import mpx from "https://dpubstatic.udache.com/static/dpubimg/6MQOo-ocI4/2.2.43.webviewbridge.esm.browser.min.js"
+
+//ES Module 开发版本地址： https://dpubstatic.udache.com/static/dpubimg/cdhpNhmWmJ/2.2.43.webviewbridge.esm.browser.js
+```
 **基础方法提供：**
 | 方法/平台      | wx            | qq    | ali    | baidu    | tt    |
 | ------------- |:-----:| :-----:| :-----: |:-----:| -----:|
@@ -140,3 +258,8 @@ mpx.checkJSApi()
 ::: warning
 这个库仅提供给 H5 使用，请勿在小程序环境引入
 :::
+
+## mpx-mock
+
+- 请参考 [数据 mock](/guide/extend/mock.md)
+

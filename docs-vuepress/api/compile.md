@@ -6,13 +6,30 @@ sidebarDepth: 2
 
 ## webpack配置
 
+### output.publicPath
+
+由于 Mpx 内部框架实现的原因(如分包路径)，publicPath 必须设置为'/'，默认为'/'。
+如是图像或文件需要设置 publicPath，可配置在 loader options中
+
+### output.filename
+
+小程序限定[描述页面的文件具有相同的路径和文件名](https://www.runoob.com)，仅以后缀名进行区分。
+
+因此 output.filename 中必须写为 [name].js，基于 chunk id 或者 hash name 的 filename 都会导致编译后的文件无法被小程序识别
+
+### node.global
+在 Node 环境中 global 标识全局对象，Mpx 中需要依赖 global 进行运行时注入
+
+### resolve.extensions
+当通过 require, import引 入不带后缀的文件时，webpack 将自动带上后缀后去尝试访问文件是否存在
+
 ```js
-// todo 分项说明配置意义
 module.exports = {
   entry: {
     app: resolveSrc('app.mpx')
   },
   output: {
+    // 和 webpack 配置一致,编译后文件输出的路径
     path: resolveDist(),
     publicPath: '/',
     filename: '[name].js'
@@ -24,25 +41,41 @@ module.exports = {
     rules: [
       {
         test: /\.mpx$/,
-        use: MpxWebpackPlugin.loader()
+        // 以 .mpx 结尾的文件需要使用 Mpx 提供的 loader 进行解析，处理 .mpx 文件包含的template，script, style, json等各个部分
+        use: MpxWebpackPlugin.loader({
+          // 自定义 loaders 
+          loaders: {
+            scss: [
+              {loader: 'css-loader'},
+              {loader: 'sass-loader', options: {sassOptions: {outputStyle: 'nested'}}}
+            ]
+          }
+        })
       },
       {
         test: /\.js$/,
+        // js 文件走正常的 babel 解析
         loader: 'babel-loader',
-        include: [resolve('src'), resolve('test'), resolve('node_modules/@mpxjs')]
+        // include 和 exclude 定义哪些 .js 文件走 babel 编译，哪些不走 babel 编译，配置include、exclude 可以提高查找效率
+        include: [resolve('src'), resolve('test'), resolve('node_modules/@mpxjs')],
+        exclude: [resolve('node_modules/**/src/third_party/')]
       },
       {
+        // 适用于<script type="application/json" src="../common.json">，Mpx内部会添加上__component，设置 type 以防止走 webpack 内建的 json 解析
+        // webpack json解析，抽取内容的占位内容必须为合法 json，否则会在 parse 阶段报错
         test: /\.json$/,
         resourceQuery: /__component/,
         type: 'javascript/auto'
       },
       {
+        // 各小程序平台自有脚本的差异抹平
         test: /\.(wxs|qs|sjs|filter\.js)$/,
         loader: MpxWebpackPlugin.wxsPreLoader(),
         enforce: 'pre'
       },
       {
         test: /\.(png|jpe?g|gif|svg)$/,
+        // Mpx 提供图像资源处理，支持 CDN 和 Base64 两种
         loader: MpxWebpackPlugin.urlLoader({
           name: 'img/[name][hash].[ext]'
         })
@@ -55,8 +88,8 @@ module.exports = {
   },
   plugins: [
     new MpxWebpackPlugin({
-      mode: 'wx',
-      srcMode: 'ali'
+      mode: 'wx', // 可选值 wx/ali/swan/qq/tt/web
+      srcMode: 'ali' // 暂时只支持微信为源mode做跨平台，为其他时mode必须和srcMode一致
     })
   ]
 }
@@ -87,6 +120,28 @@ MpxWebpackPlugin支持传入以下配置：
 
 ### srcMode
 
+- **类型**：`'wx'`
+
+- **默认值**：没有设置值时默认和 [mode](#mode) 一致。
+
+- **详细**：
+
+当 srcMode 和 mode 不一致时，会读取相应的配置对项目进行编译和运行时的转换。
+
+**注**：暂时只支持微信为源 mode 做跨平台，为其他时，mode 必须和 srcMode 保持一致。
+
+- **示例**：
+
+```js
+// 微信转支付宝
+new MpxWebpackPlugin({
+  // 指定目标平台，可选值有 wx、ali、swan、qq、tt、web
+  mode: 'ali',
+  // 指定源码平台，默认值同目标平台一致 
+  srcMode: 'wx' 
+})
+```
+
 ### modeRules
 
 - **类型**：`{ [key: string]: any }`
@@ -108,6 +163,18 @@ new MpxWebpackPlugin({
 ```
 
 ### externalClasses
+
+- **类型**：`Array<string>`
+
+- **详细**：定义若干个外部样式类，这些将会覆盖元素原有的样式。
+
+- **示例**：
+
+```js
+new MpxWebpackPlugin({
+  externalClasses: ['custom-class', 'i-class']
+})
+```
 
 ### resolveMode
 
@@ -206,6 +273,39 @@ new MpxWebpackPlugin({
 
 ### autoSplit
 
+- **类型**：`boolean` 
+
+- **详细**： 当编译目标平台为 web 时默认不开启autoSplit，其它平台默认开启为 true。为 true 时如果配置了optimization，将采用 optimization 配置进行 splitChunks 实现代码分离打包优化
+
+- **示例**：
+```js
+// webpack配置
+{
+  optimization: {
+    runtimeChunk: {
+      // 将复用的模块抽取到一个外部的bundle中
+      name: 'bundle'
+    },
+    splitChunks: {
+      cacheGroups: {
+        main: {
+          name: 'bundle',
+          minChunks: 2,
+          chunks: 'initial'
+        }
+      }
+    }
+  },
+  plugins: [
+    new MpxWebpackPlugin(Object.assign({
+      mode: 'wx',
+      srcMode:'wx',
+      autoSpit: true
+    })
+  ]
+}
+```
+
 ### defs
 
 - **类型**：`{ [key: string]: string }`
@@ -225,6 +325,81 @@ new MpxWebpackPlugin({
 ### attributes
 
 ### externals
+
+- **类型**: `Array<string>`
+
+- **详细**: 
+
+微信小程序的 weui 组件库 通过 useExtendedLib 扩展库的方式引入，这种方式引入的组件将不会计入代码包大小。配置 externals 选项，Mpx 将不会解析 weui 组件的路径并打包。
+
+- **示例**:
+
+在 Mpx 项目中使用 useExtendedLib 扩展库的方式如下：
+
+``` javascript
+// Mpx 配置文件中添加如下配置：
+{
+  externals: ['weui']
+}
+```
+
+``` html
+<script name="json">
+  // app.mpx json部分
+  module.exports = {
+    "useExtendedLib": {
+      "weui": true
+    }
+  }
+</script>
+```
+
+``` html
+<!-- 在 page 中使用 weui 组件 -->
+<template>
+  <view wx:if="{{__mpx_mode__ === 'wx'}}">
+    <mp-icon icon="play" color="black" size="{{25}}" bindtap="showDialog"></mp-icon>
+    <mp-dialog title="test" show="{{dialogShow}}" bindbuttontap="tapDialogButton" buttons="{{buttons}}">
+      <view>test content</view>
+    </mp-dialog>
+  </view>
+</template>
+
+<script>
+  import{ createPage } from '@mpxjs/core'
+
+  createPage({
+    data: {
+      dialogShow: false,
+      showOneButtonDialog: false,
+      buttons: [{text: '取消'}, {text: '确定'}],
+    },
+    methods: {
+      tapDialogButton () {
+        this.dialogShow = false
+        this.showOneButtonDialog = false
+      },
+      showDialog () {
+        this.dialogShow = true
+      }
+    }
+  })
+</script>
+
+<script name="json">
+  const wxComponents = {
+    "mp-icon": "weui-miniprogram/icon/icon",
+    "mp-dialog": "weui-miniprogram/dialog/dialog"
+  }
+  module.exports = {
+    "usingComponents": __mpx_mode__ === 'wx' 
+      ? Object.assign({}, wxComponents)
+      : {}
+  }
+</script>
+```
+
+- **参考** [weui组件库](https://developers.weixin.qq.com/miniprogram/dev/extended/weui/quickstart.html)
 
 ### forceUsePageCtor
 
@@ -494,6 +669,16 @@ Mpx中允许用户在request中传递特定query执行特定逻辑，目前已�
 
 ### ?resolve
 
+- **类型**: `String`
+
+- **详细**: 在使用 import 引入包的时候在末尾加上 `?resolve`，编译时会被处理成正确的、完整的绝对路径。
+
+- **示例**:
+
+``` javascript
+import subPackageIndexPage from '../subpackage/pages/index.mpx?resolve'
+```
+
 ### packageName
 
 - **类型**: `String`
@@ -550,7 +735,7 @@ module.exports = {
 
 <script>
   import{ createPage } from '@mpxjs/core'
-  // packageName=main 当前资源会被打包到主包目录下
+  // 指定 packageName=main 即使当前模块在分包 packageB 下，资源也会被打包到主包目录下
   import dogAvatar from 'static/images/dog.jpg?packageName=main'
 
   createPage({

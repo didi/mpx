@@ -1,6 +1,6 @@
 # 实例api
 
-## this.$set( target, propertyName/index, value )
+## this.$set
 
 - **参数**：
   - `{Object | Array} target`
@@ -9,11 +9,13 @@
 
 - **返回值**：设置的值
 
-- **用法**：
+- **用法**
 
-这是全局 Mpx.set 的别名。向响应式对象中添加一个 property，并确保这个新 property 同样是响应式的，且触发视图更新。它必须用于向响应式对象上添加新 property，因为 Mpx 无法探测普通的新增 property (比如 this.myObject.newProperty = 'hi')
+这是全局 `Mpx.set` 的别名。向响应式对象中添加一个 property，并确保这个新 property 同样是响应式的，且触发视图更新。它必须用于向响应式对象上添加新 property，因为 Mpx 无法探测普通的新增 property (比如 this.myObject.newProperty = 'hi')
 
-## this.$watch( expOrFn, callback, [options] )
+- **参考**: [Mpx.set](global-api.html#set)
+
+## this.$watch
 
 - **参数**：
   - `{string | Function} expOrFn` 
