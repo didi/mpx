@@ -258,7 +258,7 @@ new MpxWebpackPlugin({
 
 - **默认值**： `false`
 
-- **详细**：Mpx会在项目编译构建过程中对运行时进行代码注入，以实现部分增强能力，包括 refs、i18n 和 setData 性能优化等。在不需要这些增强能力时，可配置 forceDisableInject 为 true，以消除编译时注入，来进一步减少包体积，但是这部分增强能力也就不再可用。
+- **详细**：Mpx会在项目编译构建过程中对运行时进行代码注入，以实现部分增强能力，包括 `refs`、`i18n` 和 `setData` 性能优化等。在不需要这些增强能力时，可配置 `forceDisableInject` 为 true，以消除编译时注入，来进一步减少包体积，但是这部分增强能力也就不再可用。
 
 ### forceDisableProxyCtor
 
@@ -266,7 +266,7 @@ new MpxWebpackPlugin({
 
 - **默认值**： `false`
 
-- **详细**： 用于控制在跨平台输出时对实例构造函数（App | Page | Component | Behavior）进行代理替换以抹平平台差异。当配置 forceDisableProxyCtor 为 true 时，会强行取消平台差异抹平逻辑，开发时需针对输出到不同平台进行条件判断。
+- **详细**： 用于控制在跨平台输出时对实例构造函数（`App` | `Page` | `Component` | `Behavior`）进行代理替换以抹平平台差异。当配置 `forceDisableProxyCtor` 为 true 时，会强行取消平台差异抹平逻辑，开发时需针对输出到不同平台进行条件判断。
 
 ### transMpxRules
 
@@ -608,7 +608,7 @@ new MpxWebpackPlugin({
 })
 ```
 
-- **详细**：Mpx 支持国际化，底层实现依赖类wxs能力，通过指定语言标识和语言包，可实现多语言之间的动态切换。可配置项包括locale、messages、messagesPath。
+- **详细**：Mpx 支持国际化，底层实现依赖类`wxs`能力，通过指定语言标识和语言包，可实现多语言之间的动态切换。可配置项包括locale、messages、messagesPath。
 
 #### i18n.locale   `String`
 
