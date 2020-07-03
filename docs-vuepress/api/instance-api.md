@@ -137,13 +137,33 @@ var unwatch = this.$watch(
     }
     })
   ```
+* **参考：** [Mpx.delete](global-api.html#delete)
 ## $refs
 * **类型：** `Object`
-* **只读**
 * **详细：**
 
 
-  一个对象，持有注册过 [ref directive](../api/directives.html#wx-ref)的所有 DOM 元素和组件实例。
+  一个对象，持有注册过 [ref directive](../api/directives.html#wx-ref)的所有 DOM 元素和组件实例，调用响应的组件方法或者获取视图节点信息。
+* **示例**
+
+模版中引用child子组件
+
+  ``` html
+ <child wx:ref="childDom"></child>
+  ```
+javascript 中可以调用组件的方法
+
+  ```javascript
+  import {createComponent} from '@mpxjs/core'
+  createComponent({
+  ready (){
+    // 调用child中childMethods方法
+    this.$refs.childDom.childMethods()
+    // 获取child中的data
+    this.$refs.childDom.data
+    },
+  })
+  ```
 * **参考：**
   * [组件 ref](../guide/basic/refs.html)
 ## $forceUpdate
@@ -217,6 +237,7 @@ var unwatch = this.$watch(
 ## $i18n
 
 * **用法：** 
- 组件中直接调用$i18n的方法，比如：$t，$tc，$te，$d，$n，具体可以参考
-  * [Vue I18n](http://kazupon.github.io/vue-i18n/api/#vue-constructor-options)
-  * [国际化i18n](../guide/tool/i18n.html)
+ 组件中直接调用$i18n的方法，比如：$t，$tc，$te，$d，$n
+ * **参考：** 
+   * [Vue I18n](http://kazupon.github.io/vue-i18n/api/#vue-constructor-options)
+   * [国际化i18n](../guide/tool/i18n.html)
