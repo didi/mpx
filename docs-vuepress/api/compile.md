@@ -122,13 +122,9 @@ MpxWebpackPlugin支持传入以下配置：
 
 - **类型**：`'wx'`
 
-- **默认值**：没有设置值时默认和 [mode](#mode) 一致。
+- **默认值**：默认和 [mode](#mode) 一致。
 
-- **详细**：
-
-当 srcMode 和 mode 不一致时，会读取相应的配置对项目进行编译和运行时的转换。
-
-**注**：暂时只支持微信为源 mode 做跨平台，为其他时，mode 必须和 srcMode 保持一致。
+- **详细**：当 srcMode 和 mode 不一致时，会读取相应的配置对项目进行编译和运行时的转换。
 
 - **示例**：
 
@@ -137,10 +133,14 @@ MpxWebpackPlugin支持传入以下配置：
 new MpxWebpackPlugin({
   // 指定目标平台，可选值有 wx、ali、swan、qq、tt、web
   mode: 'ali',
-  // 指定源码平台，默认值同目标平台一致
-  srcMode: 'wx'
+  // 指定源码平台，默认值同目标平台一致 
+  srcMode: 'wx' 
 })
 ```
+
+::: warning
+暂时只支持微信为源 mode 做跨平台，为其他时，mode 必须和 srcMode 保持一致。
+:::
 
 ### modeRules
 
@@ -175,6 +175,10 @@ new MpxWebpackPlugin({
   externalClasses: ['custom-class', 'i-class']
 })
 ```
+
+::: warning
+抹平支付宝和微信之间的差异，微信转支付宝时可以使用该功能。
+:::
 
 ### resolveMode
 
