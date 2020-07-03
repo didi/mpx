@@ -146,7 +146,7 @@ var unwatch = this.$watch(
   一个对象，持有注册过 [ref directive](../api/directives.html#wx-ref)的所有 DOM 元素和组件实例，调用响应的组件方法或者获取视图节点信息。
 * **示例**
 
-模版中引用child子组件
+以获取组件为例，模版中引用child子组件
 
   ``` html
  <child wx:ref="childDom"></child>
@@ -157,7 +157,7 @@ javascript 中可以调用组件的方法
   import {createComponent} from '@mpxjs/core'
   createComponent({
   ready (){
-    // 调用child中childMethods方法
+    // 调用child中的方法
     this.$refs.childDom.childMethods()
     // 获取child中的data
     this.$refs.childDom.data
@@ -221,6 +221,7 @@ javascript 中可以调用组件的方法
         // 修改数据
         this.info.name = 2
         // DOM 还没有更新
+
         // this.$nextTick(function() {
         //   // DOM 现在更新了
         //   console.log('会在由name变化引起的视图更新之后执行')
@@ -238,6 +239,49 @@ javascript 中可以调用组件的方法
 
 * **用法：** 
  组件中直接调用$i18n的方法，比如：$t，$tc，$te，$d，$n
- * **参考：** 
+* **示例：** 
+
+首先在`mpx.plugin.conf.js`中配置i18n
+  ``` js
+  module.exports = {
+
+    //...
+
+    i18n: {
+      locale: 'en-US',
+      // messages既可以通过对象字面量传入，也可以通过messagesPath指定一个js模块路径，在该模块中定义配置并导出，dateTimeFormats/dateTimeFormatsPath和numberFormats/numberFormatsPath同理
+      messages: {
+        'en-US': {
+          message: {
+            hello: '{msg} world'
+          }
+        },
+        'zh-CN': {
+          message: {
+            hello: '{msg} 世界'
+          }
+        }
+      }
+    }
+  }
+  ```
+  组件中直接使用
+   ``` js
+
+    <template>
+      <view>{{$t('message.hello')}}</view>
+    </template>
+    
+    import {createComponent} from '@mpxjs/core'
+    createComponent({
+
+    ready () {
+       console.log(this.$t('message.hello', { msg: 'hello' }))
+       console.log(this.$te('message.hello')) 
+       //...
+    }
+    })
+  ```
+* **参考：** 
    * [Vue I18n](http://kazupon.github.io/vue-i18n/api/#vue-constructor-options)
    * [国际化i18n](../guide/tool/i18n.html)
