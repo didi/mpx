@@ -93,7 +93,7 @@ module.exports = {
 在 Node 环境中 global 标识全局对象，Mpx 中需要依赖 global 进行运行时注入。
 
 ### rule.resourceQuery
-Mpx 内部会对通过 script src 引入的 json 文件，在解析的时候加上 __component 标识，同时设置 type 以防止走 webpack 内建的 json 解析。
+Mpx 内部会对通过 script src 引入的 json 文件，在解析的时候加上 `__component` 标识，同时设置 `type` 为 `javascript/auto` 以防止走 webpack 内建的 json 解析。
 
 因为 webpack json 解析时，抽取内容的占位内容必须为合法 json，否则会在 parse 阶段报错
 
