@@ -144,7 +144,7 @@ new MpxWebpackPlugin({
 
 ### modeRules
 
-- **类型**：`{ [key: string]: any }`
+- **类型**：`{ [key: string]: Rules }`
 
 - **详细**：
 
@@ -236,9 +236,9 @@ new MpxWebpackPlugin({
 ```js
 new MpxWebpackPlugin({
   autoScopeRules: {
-      include: [resolve('../src')],
-      exclude: [resolve('../node_modules/vant-aliapp')] // 比如一些组件库本来就是为支付宝小程序编写的，应该已经考虑过样式隔离，就不需要再添加
-    }
+    include: [resolve('../src')],
+    exclude: [resolve('../node_modules/vant-aliapp')] // 比如一些组件库本来就是为支付宝小程序编写的，应该已经考虑过样式隔离，就不需要再添加
+  }
 })
 ```
 
@@ -260,7 +260,7 @@ new MpxWebpackPlugin({
 
 ### transMpxRules
 
-- **类型**：`{ [key: string]: any }`
+- **类型**：`Rules`
 
 - **详细**：是否转换 wx / my 等全局对象为 Mpx 对象，
 
