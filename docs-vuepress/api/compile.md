@@ -878,7 +878,7 @@ module.exports = {
 
 - **类型**：`String`
 
-- **详细**：指定分包别名，Mpx项目在编译构建后会输出该别名的分包，项目中可直接引用该分包路径进行开发。
+- **详细**：指定分包别名，Mpx 项目在编译构建后会输出该别名的分包，外部小程序或 H5 页面跳转时，可直接配置该分包别名下的资源路径径。
 
 - **示例**：
 
@@ -886,9 +886,13 @@ module.exports = {
 // 可在项目app.mpx中进行配置
 module.exports = {
   packages: [
-    '@packageName/src/app.mpx?root=test',
+    '@packagePath/src/app.mpx?root=test',
   ]
 }
+
+// 使用
+wx.navigateTo({url : '/test/homepage/index'})
+
 ```
 
 ### ?fallback
