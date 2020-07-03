@@ -636,7 +636,7 @@ messages: {
 
 #### i18n.messagesPath   `String`
 
-为便于开发，Mpx 还支持配置语言包资源路径 messagesPath 来代替 messages 属性，Mpx 会从该路径下的 js 文件导出语言包对象。如果同时配置 messages 和 messagesPath 属性，优先取 messages 定义的语言包。
+为便于开发，Mpx 还支持配置语言包资源路径 messagesPath 来代替 messages 属性，Mpx 会从该路径下的 js 文件导出语言包对象。如果同时配置 messages 和 messagesPath 属性，Mpx 会优先设定 messages 为 i18n 语言包资源。
 
 详细介绍及使用见[工具-国际化i18n](../guide/tool/i18n.md)一节。
 
