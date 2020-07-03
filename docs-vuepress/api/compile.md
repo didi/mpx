@@ -668,11 +668,55 @@ new MpxWebpackPlugin({
 
 ## MpxWebpackPlugin static methods
 
-MpxWebpackPlugin通过静态方法暴露了以下五个内置loader，详情如下：
+MpxWebpackPlugin 通过静态方法暴露了以下五个内置 loader，详情如下：
 
 ### MpxWebpackPlugin.loader
 
+MpxWebpackPlugin 所提供的最主要 loader，用于处理 `.mpx` 文件，根据不同的[模式(mode)](/api/compile.html#mode)将 `.mpx` 文件输出为不同的结果。
+
+**webpack.conf.js**
+
+```js
+module.exports = {
+  module: {
+    rules: [
+      {
+        test: /\.mpx$/,
+        use: MpxWebpackPlugin.loader()
+      }
+    ]
+  }
+};
+```
+
+:::warning
+旧版 loader 配置属性 `transRpx` **即将移除**，请在统一配置文件 `build/mpx.plugin.conf.js` 中使用 `transRpxRules` 属性进行配置。
+:::
+
 ### MpxWebpackPlugin.pluginLoader
+
+:::tip
+该 loader 仅在开发**小程序插件**时使用，可在使用 Mpx 脚手架进行项目初始化时选择进行组件开发来生成对应的配置文件。
+:::
+
+`MpxWebpackPlugin.pluginLoader` 用于根据开发者编写的`plugin.json`文件内容，将特定的小程序组件、页面以及 js 文件进行构建，最终以小程序插件的形式输出。
+
+**webpack.plugin.conf.js**
+
+```js
+module.exports = {
+  module: {
+    rules: [
+      {
+        resource: path.resolve('src/plugin/plugin.json'), // 小程序插件的plugin.json的绝对路径
+        use: MpxWebpackPlugin.pluginLoader()
+      }
+    ]
+  }
+};
+```
+
+更多细节请查阅 [小程序插件开发](https://developers.weixin.qq.com/miniprogram/dev/framework/plugin/development.html)
 
 ### MpxWebpackPlugin.wxsPreLoader
 
