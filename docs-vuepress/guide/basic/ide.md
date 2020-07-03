@@ -120,7 +120,7 @@
    "    onShareAppMessage() {},"
    "  })",
    "</script>\n",
-   "<style lang='scss'>\n",
+   "<style lang='scss' scoped>\n",
    " .container {} ",
    "</style>",
    "<script  type='application/json' lang='json'>",
@@ -158,7 +158,7 @@
    "    }",
    "  })",
    "</script>\n",
-   "<style lang='scss'>\n",
+   "<style lang='scss' scoped>\n",
    " .container {} ",
    "</style>",
    "<script  type='application/json' lang='json'>",
