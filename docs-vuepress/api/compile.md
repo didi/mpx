@@ -793,7 +793,7 @@ Mpx中允许用户在request中传递特定query执行特定逻辑，目前已�
 import subPackageIndexPage from '../subpackage/pages/index.mpx?resolve'
 ```
 
-### packageName
+### ?packageName
 
 - **详细**：
 
