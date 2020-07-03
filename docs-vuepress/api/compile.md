@@ -5,24 +5,7 @@ sidebarDepth: 2
 # 编译构建
 
 ## webpack配置
-
-### output.publicPath
-
-由于 Mpx 内部框架实现的原因(如分包路径)，publicPath 必须设置为'/'，默认为'/'。
-如是图像或文件需要设置 publicPath，可配置在 loader options中
-
-### output.filename
-
-小程序限定[描述页面的文件具有相同的路径和文件名](https://www.runoob.com)，仅以后缀名进行区分。
-
-因此 output.filename 中必须写为 [name].js，基于 chunk id 或者 hash name 的 filename 都会导致编译后的文件无法被小程序识别
-
-### node.global
-在 Node 环境中 global 标识全局对象，Mpx 中需要依赖 global 进行运行时注入
-
-### resolve.extensions
-当通过 require, import引 入不带后缀的文件时，webpack 将自动带上后缀后去尝试访问文件是否存在
-
+下图是采用 Mpx 开发小程序时，一个简短的 webpack 配置。配置说明可参考图中注释以及子项说明。
 ```js
 module.exports = {
   entry: {
@@ -93,8 +76,31 @@ module.exports = {
     })
   ]
 }
-
 ```
+- 下面是对 webpack 自带的配置，在 Mpx 中特殊配置的具体说明。
+### output.publicPath
+
+由于 Mpx 内部框架实现的原因(如分包路径)，publicPath 必须设置为'/'，默认为'/'。
+如是图像或文件需要设置 publicPath，可配置在 loader options 中。
+
+### output.filename
+
+小程序限定[描述页面的文件具有相同的路径和文件名](https://developers.weixin.qq.com/miniprogram/dev/framework/structure.html)，仅以后缀名进行区分。
+
+因此 output.filename 中必须写为 [name].js，基于 chunk id 或者 hash name 的 filename 都会导致编译后的文件无法被小程序识别。
+
+### node.global
+在 Node 环境中 global 标识全局对象，Mpx 中需要依赖 global 进行运行时注入。
+
+### rule.resourceQuery
+Mpx 内部会对通过 script src 引入的 json 文件，在解析的时候加上 `__component` 标识，同时设置 `type` 为 `javascript/auto` 以防止走 webpack 内建的 json 解析。
+
+因为 webpack json 解析时，抽取内容的占位内容必须为合法 json，否则会在 parse 阶段报错
+
+### resolve.extensions
+当通过 require, import 引 入不带后缀的文件时，webpack 将自动带上后缀后去尝试访问文件是否存在。
+
+
 
 ## 类型定义
 
@@ -252,7 +258,7 @@ new MpxWebpackPlugin({
 
 - **默认值**： `false`
 
-- **详细**：Mpx会在项目编译构建过程中对运行时进行代码注入，以实现部分增强能力，包括 refs、i18n 和 setData 性能优化等。在不需要这些增强能力时，可配置 forceDisableInject 为 true，以消除编译时注入，来进一步减少包体积，但是这部分增强能力也就不再可用。
+- **详细**：Mpx会在项目编译构建过程中对运行时进行代码注入，以实现部分增强能力，包括 `refs`、`i18n` 和 `setData` 性能优化等。在不需要这些增强能力时，可配置 `forceDisableInject` 为 true，以消除编译时注入，来进一步减少包体积，但是这部分增强能力也就不再可用。
 
 ### forceDisableProxyCtor
 
@@ -260,7 +266,7 @@ new MpxWebpackPlugin({
 
 - **默认值**： `false`
 
-- **详细**： 用于控制在跨平台输出时对实例构造函数（App | Page | Component | Behavior）进行代理替换以抹平平台差异。当配置 forceDisableProxyCtor 为 true 时，会强行取消平台差异抹平逻辑，开发时需针对输出到不同平台进行条件判断。
+- **详细**： 用于控制在跨平台输出时对实例构造函数（`App` | `Page` | `Component` | `Behavior`）进行代理替换以抹平平台差异。当配置 `forceDisableProxyCtor` 为 true 时，会强行取消平台差异抹平逻辑，开发时需针对输出到不同平台进行条件判断。
 
 ### transMpxRules
 
@@ -283,7 +289,9 @@ new MpxWebpackPlugin({
 
 - **类型**：`boolean`
 
-- **详细**： 当编译目标平台为 web 时默认不开启autoSplit，其它平台默认开启为 true。为 true 时如果配置了optimization，将采用 optimization 配置进行 splitChunks 实现代码分离打包优化
+- **默认值**：Web平台为 false, 其它平台为 true
+
+- **详细**：autoSplit 设置为 true 时，如果配置了 optimization，将采用 optimization 配置的 splitChunks 实现代码分离合并打包优化。设置为 false 将不走代码打包优化。
 
 - **示例**：
 ```js
@@ -334,80 +342,78 @@ new MpxWebpackPlugin({
 
 ### externals
 
-- **类型**: `Array<string>`
+- **类型**：`Array<string>`
 
-- **详细**:
+- **详细**：
 
-微信小程序的 weui 组件库 通过 useExtendedLib 扩展库的方式引入，这种方式引入的组件将不会计入代码包大小。配置 externals 选项，Mpx 将不会解析 weui 组件的路径并打包。
+  目前仅支持微信小程序 weui 组件库通过 useExtendedLib 扩展库的方式引入，这种方式引入的组件将不会计入代码包大小。配置 externals 选项，Mpx 将不会解析 weui 组件的路径并打包。
 
-- **示例**:
+- **示例**：
 
-在 Mpx 项目中使用 useExtendedLib 扩展库的方式如下：
-
-``` javascript
-// Mpx 配置文件中添加如下配置：
-{
-  externals: ['weui']
-}
-```
-
-``` html
-<script name="json">
-  // app.mpx json部分
-  module.exports = {
-    "useExtendedLib": {
-      "weui": true
-    }
+  ``` javascript
+  // Mpx 配置文件中添加如下配置：
+  {
+    externals: ['weui']
   }
-</script>
-```
+  ```
 
-``` html
-<!-- 在 page 中使用 weui 组件 -->
-<template>
-  <view wx:if="{{__mpx_mode__ === 'wx'}}">
-    <mp-icon icon="play" color="black" size="{{25}}" bindtap="showDialog"></mp-icon>
-    <mp-dialog title="test" show="{{dialogShow}}" bindbuttontap="tapDialogButton" buttons="{{buttons}}">
-      <view>test content</view>
-    </mp-dialog>
-  </view>
-</template>
-
-<script>
-  import{ createPage } from '@mpxjs/core'
-
-  createPage({
-    data: {
-      dialogShow: false,
-      showOneButtonDialog: false,
-      buttons: [{text: '取消'}, {text: '确定'}],
-    },
-    methods: {
-      tapDialogButton () {
-        this.dialogShow = false
-        this.showOneButtonDialog = false
-      },
-      showDialog () {
-        this.dialogShow = true
+  ``` html
+  <script name="json">
+    // app.mpx json部分
+    module.exports = {
+      "useExtendedLib": {
+        "weui": true
       }
     }
-  })
-</script>
+  </script>
+  ```
 
-<script name="json">
-  const wxComponents = {
-    "mp-icon": "weui-miniprogram/icon/icon",
-    "mp-dialog": "weui-miniprogram/dialog/dialog"
-  }
-  module.exports = {
-    "usingComponents": __mpx_mode__ === 'wx'
-      ? Object.assign({}, wxComponents)
-      : {}
-  }
-</script>
-```
+  ``` html
+  <!-- 在 page 中使用 weui 组件 -->
+  <template>
+    <view wx:if="{{__mpx_mode__ === 'wx'}}">
+      <mp-icon icon="play" color="black" size="{{25}}" bindtap="showDialog"></mp-icon>
+      <mp-dialog title="test" show="{{dialogShow}}" bindbuttontap="tapDialogButton" buttons="{{buttons}}">
+        <view>test content</view>
+      </mp-dialog>
+    </view>
+  </template>
 
-- **参考** [weui组件库](https://developers.weixin.qq.com/miniprogram/dev/extended/weui/quickstart.html)
+  <script>
+    import{ createPage } from '@mpxjs/core'
+
+    createPage({
+      data: {
+        dialogShow: false,
+        showOneButtonDialog: false,
+        buttons: [{text: '取消'}, {text: '确定'}],
+      },
+      methods: {
+        tapDialogButton () {
+          this.dialogShow = false
+          this.showOneButtonDialog = false
+        },
+        showDialog () {
+          this.dialogShow = true
+        }
+      }
+    })
+  </script>
+
+  <script name="json">
+    const wxComponents = {
+      "mp-icon": "weui-miniprogram/icon/icon",
+      "mp-dialog": "weui-miniprogram/dialog/dialog"
+    }
+    module.exports = {
+      "usingComponents": __mpx_mode__ === 'wx' 
+        ? Object.assign({}, wxComponents)
+        : {}
+    }
+  </script>
+  ```
+
+- **参考**：<a href="https://developers.weixin.qq.com/miniprogram/dev/extended/weui/quickstart.html" target="_blank">weui组件库</a>
 
 ### forceUsePageCtor
 
@@ -602,17 +608,13 @@ new MpxWebpackPlugin({
 })
 ```
 
-- **详细**：Mpx 支持国际化，底层实现依赖类wxs能力，通过指定语言标识和语言包，可实现多语言之间的动态切换。可配置项包括locale、messages、messagesPath。
+- **详细**：Mpx 支持国际化，底层实现依赖类`wxs`能力，通过指定语言标识和语言包，可实现多语言之间的动态切换。可配置项包括locale、messages、messagesPath。
 
-#### i18n.locale
-
-`String`
+#### i18n.locale   `String`
 
 通过配置 locale 属性，可指定语言标识，默认值为 'zh-CN'
 
-#### i18n.messages
-
-`Object`
+#### i18n.messages   `Object`
 
 通过配置 messages 属性，可以指定项目语言包，Mpx 会依据语言包对象定义进行转换，示例如下：
 ```js
@@ -632,11 +634,9 @@ messages: {
 }
 ```
 
-#### i18n.messagesPath
+#### i18n.messagesPath   `String`
 
-`String`
-
-为便于开发，Mpx 还支持配置语言包资源路径 messagesPath 来代替 messages 属性，Mpx 会从该路径下的 js 文件导出语言包对象。如果同时配置 messages 和 messagesPath 属性，优先取 messages 定义的语言包。
+为便于开发，Mpx 还支持配置语言包资源路径 messagesPath 来代替 messages 属性，Mpx 会从该路径下的 js 文件导出语言包对象。如果同时配置 messages 和 messagesPath 属性，Mpx 会优先设定 messages 为 i18n 语言包资源。
 
 详细介绍及使用见[工具-国际化i18n](../guide/tool/i18n.md)一节。
 
@@ -785,8 +785,6 @@ Mpx中允许用户在request中传递特定query执行特定逻辑，目前已�
 
 ### ?resolve
 
-- **类型**: `String`
-
 - **详细**: 在使用 import 引入包的时候在末尾加上 `?resolve`，编译时会被处理成正确的、完整的绝对路径。
 
 - **示例**:
@@ -795,79 +793,78 @@ Mpx中允许用户在request中传递特定query执行特定逻辑，目前已�
 import subPackageIndexPage from '../subpackage/pages/index.mpx?resolve'
 ```
 
-### packageName
+### ?packageName
 
-- **类型**: `String`
+- **详细**：
 
-- **详细**: 指定当前 Page 或 Component 中引用的某个非 JS 静态资源被打包到对应的主包或分包目录下。
+  指定当前 Page 或 Component 中引用的某个非 JS 静态资源被打包到对应的主包或分包目录下。分包之间不能相互引用对方包中的资源（比如图片和 js 脚本等），分包可以引用主包和自己包内的资源。
 
-- **示例**:
+- **示例**：
 
-``` javascript
-// 入口 app.mpx 的 json 配置部分
-module.exports = {
-  "pages": [
-    "./pages/index",
-    "./pages/list?root=list&name=listName"
-  ],
-  "packages": [
-    "./packageA/packageA.mpx?root=packageA",
-    "./packageB/packageB.mpx?root=packageB&name=packageSecond"
-  ]
-}
-```
+  ``` javascript
+  // 入口 app.mpx 的 json 配置部分
+  module.exports = {
+    "pages": [
+      "./pages/index",
+      "./pages/list?root=list&name=listName"
+    ],
+    "packages": [
+      "./packageA/packageA.mpx?root=packageA",
+      "./packageB/packageB.mpx?root=packageB&name=packageSecond"
+    ]
+  }
+  ```
 
-``` html
-<!-- packageA/cat.mpx -->
-<template>
-  <view>
-    <view>hello packageA cat.mpx</view>
-    <image src="{{catAvatar}}"></image>
-  </view>
-</template>
+  ``` html
+  <!-- packageA/cat.mpx -->
+  <template>
+    <view>
+      <view>hello packageA cat.mpx</view>
+      <image src="{{catAvatar}}"></image>
+    </view>
+  </template>
 
-<script>
-  import{ createPage } from '@mpxjs/core'
-  // 没有配置 packageName，默认打包到当前模块所在的分包目录下
-  import catAvatar from 'static/images/cat.jpg'
+  <script>
+    import{ createPage } from '@mpxjs/core'
+    // 没有配置 packageName，默认打包到当前模块所在的分包目录下
+    import catAvatar from 'static/images/cat.jpg'
 
-  createPage({
-    data: {
-      catAvatar
-    },
-    onLoad () {}
-  })
-</script>
-```
+    createPage({
+      data: {
+        catAvatar
+      },
+      onLoad () {}
+    })
+  </script>
+  ```
 
-``` html
-<!-- packageB/dog.mpx -->
-<template>
-  <view>
-    <view>hello packageB dog.mpx</view>
-    <image src="{{dogAvatar}}"></image>
-  </view>
-</template>
+  ``` html
+  <!-- packageB/dog.mpx -->
+  <template>
+    <view>
+      <view>hello packageB dog.mpx</view>
+      <image src="{{dogAvatar}}"></image>
+    </view>
+  </template>
 
-<script>
-  import{ createPage } from '@mpxjs/core'
-  // 指定 packageName=main 即使当前模块在分包 packageB 下，资源也会被打包到主包目录下
-  import dogAvatar from 'static/images/dog.jpg?packageName=main'
+  <script>
+    import{ createPage } from '@mpxjs/core'
+    // 指定 packageName=main 即使当前模块在分包 packageB 下，资源也会被打包到主包目录下
+    // 当前分包是 packageB，所以不能指定 resourceName 为 packageA 或其他分包
+    import dogAvatar from 'static/images/dog.jpg?packageName=main'
 
-  createPage({
-    data: {
-      dogAvatar
-    },
-    onLoad () {}
-  })
-</script>
-```
+    createPage({
+      data: {
+        dogAvatar
+      },
+      onLoad () {}
+    })
+  </script>
+  ```
 
 ### ?root
 
-- **类型**：`String`
-
-- **详细**：指定分包别名，Mpx项目在编译构建后会输出该别名的分包，项目中可直接引用该分包路径进行开发。
+- **详细**：指定分包别名，Mpx 项目在编译构建后会输出该别名的分包，外部小程序或 H5 页面跳转时，可直接配置该分包别名下的资源路径径。
 
 - **示例**：
 
@@ -875,14 +872,16 @@ module.exports = {
 // 可在项目app.mpx中进行配置
 module.exports = {
   packages: [
-    '@packageName/src/app.mpx?root=test',
+    '@packagePath/src/app.mpx?root=test',
   ]
 }
+
+// 使用
+wx.navigateTo({url : '/test/homepage/index'})
+
 ```
 
 ### ?fallback
-
-- **类型**：`String`
 
 - **详细**：对于使用`MpxWebpackPlugin.urlLoader`的文件，如果配置`fallback=true`，则使用配置的自定义loader。
 

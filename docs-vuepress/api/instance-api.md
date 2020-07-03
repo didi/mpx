@@ -9,11 +9,12 @@
 
 - **返回值**：设置的值
 
-- **用法**
+- **用法**：
 
-这是全局 `Mpx.set` 的别名。向响应式对象中添加一个 property，并确保这个新 property 同样是响应式的，且触发视图更新。它必须用于向响应式对象上添加新 property，因为 Mpx 无法探测普通的新增 property (比如 this.myObject.newProperty = 'hi')
+  这是全局 `Mpx.set` 的别名。向响应式对象中添加一个 property，并确保这个新 property 同样是响应式的，且触发视图更新。
+它必须用于向响应式对象上添加新 property，因为 Mpx 无法探测普通的新增 property (比如 this.myObject.newProperty = 'hi')
 
-- **参考**: [Mpx.set](global-api.html#set)
+- **参考**：[Mpx.set](global-api.html#set)
 
 ## this.$watch
 
@@ -24,89 +25,89 @@
     - `{boolean} deep`
     - `{boolean} immediate`
 
-- **返回值**: {Function} unwatch
+- **返回值**：{Function} unwatch
 
-- **用法**:
+- **用法**：
 
-观察 Mpx 实例上的一个表达式或者一个函数计算结果的变化。回调函数得到的参数为新值和旧值。表达式只接受监督的键路径。对于更复杂的表达式，用一个函数取代。
+  观察 Mpx 实例上的一个表达式或者一个函数计算结果的变化。回调函数得到的参数为新值和旧值。表达式只接受监督的键路径。对于更复杂的表达式，用一个函数取代。
 
-- **示例**:
+- **示例**：
 
-``` javascript
-// 键路径
-this.$watch('a.b.c', function (newVal, oldVal) {
-  // 做点什么
-})
-
-// 函数
-this.$watch(
-  function () {
-    // 表达式 `this.a + this.b` 每次得出一个不同的结果时
-    // 处理函数都会被调用。
-    // 这就像监听一个未被定义的计算属性
-    return this.a + this.b
-  },
-  function (newVal, oldVal) {
+  ``` javascript
+  // 键路径
+  this.$watch('a.b.c', function (newVal, oldVal) {
     // 做点什么
-  }
-)
-```
+  })
 
-`this.$watch` 返回一个取消观察函数，用来停止触发回调：
-
-``` javascript
-var unwatch = this.$watch('a', cb)
-// 之后取消观察
-unwatch()
-```
-
-- **选项**: deep
-
-为了发现对象内部值的变化，可以在选项参数中指定 deep: true。注意监听数组的变更不需要这么做。
-
-``` javascript
-this.$watch('someObject', callback, {
-  deep: true
-})
-this.someObject.nestedValue = 123
-// callback is fired
-```
-
-- **选项**: immediate
-
-在选项参数中指定 `immediate: true` 将立即以表达式的当前值触发回调：
-
-``` javascript
-this.$watch('a', callback, {
-  immediate: true
-})
-// 立即以 `a` 的当前值触发回调
-```
-注意在带有 immediate 选项时，你不能在第一次回调时取消侦听给定的 property。
-``` javascript
-// 这会导致报错
-var unwatch = this.$watch(
-  'value',
-  function () {
-    doSomething()
-    unwatch()
-  },
-  { immediate: true }
-)
-```
-如果你仍然希望在回调内部调用一个取消侦听的函数，你应该先检查其函数的可用性：
-``` javascript
-var unwatch = this.$watch(
-  'value',
-  function () {
-    doSomething()
-    if (unwatch) {
-      unwatch()
+  // 函数
+  this.$watch(
+    function () {
+      // 表达式 `this.a + this.b` 每次得出一个不同的结果时
+      // 处理函数都会被调用。
+      // 这就像监听一个未被定义的计算属性
+      return this.a + this.b
+    },
+    function (newVal, oldVal) {
+      // 做点什么
     }
-  },
-  { immediate: true }
-)
-```
+  )
+  ```
+
+  `this.$watch` 返回一个取消观察函数，用来停止触发回调：
+
+  ``` javascript
+  var unwatch = this.$watch('a', cb)
+  // 之后取消观察
+  unwatch()
+  ```
+
+- **选项**：deep
+
+    为了发现对象内部值的变化，可以在选项参数中指定 deep: true。注意监听数组的变更不需要这么做。
+
+  ``` javascript
+  this.$watch('someObject', callback, {
+    deep: true
+  })
+  this.someObject.nestedValue = 123
+  // callback is fired
+  ```
+
+- **选项**：immediate
+
+  在选项参数中指定 `immediate: true` 将立即以表达式的当前值触发回调：
+
+  ``` javascript
+  this.$watch('a', callback, {
+    immediate: true
+  })
+  // 立即以 `a` 的当前值触发回调
+  ```
+  注意在带有 immediate 选项时，你不能在第一次回调时取消侦听给定的 property。
+  ``` javascript
+  // 这会导致报错
+  var unwatch = this.$watch(
+    'value',
+    function () {
+      doSomething()
+      unwatch()
+    },
+    { immediate: true }
+  )
+  ```
+  如果你仍然希望在回调内部调用一个取消侦听的函数，你应该先检查其函数的可用性：
+  ``` javascript
+  var unwatch = this.$watch(
+    'value',
+    function () {
+      doSomething()
+      if (unwatch) {
+        unwatch()
+      }
+    },
+    { immediate: true }
+  )
+  ```
 
 ## $delete
 * **参数：** 
@@ -115,7 +116,7 @@ var unwatch = this.$watch(
 * **用法：** 
 
 
- 删除对象属性，如果该对象是响应式的，那么该方法可以触发观察器更新（视图更新 | watch回调）
+  删除对象属性，如果该对象是响应式的，那么该方法可以触发观察器更新（视图更新 | watch回调）
 * **示例：** 
   ``` js
     import {createComponent} from '@mpxjs/core'
@@ -143,15 +144,15 @@ var unwatch = this.$watch(
 * **详细：**
 
 
-  一个对象，持有注册过 [ref directive](../api/directives.html#wx-ref)的所有 DOM 元素和组件实例，调用响应的组件方法或者获取视图节点信息。
+  一个对象，持有注册过 [ref](../api/directives.html#wx-ref)的所有 DOM 元素和组件实例，调用响应的组件方法或者获取视图节点信息。
 * **示例**
 
-以获取组件为例，模版中引用child子组件
+ 以获取组件为例，模版中引用child子组件
 
   ``` html
  <child wx:ref="childDom"></child>
   ```
-javascript 中可以调用组件的方法
+  javascript 中可以调用组件的方法
 
   ```javascript
   import {createComponent} from '@mpxjs/core'
@@ -165,7 +166,7 @@ javascript 中可以调用组件的方法
   })
   ```
 * **参考：**
-  * [组件 ref](../guide/basic/refs.html)
+  [组件 ref](../guide/basic/refs.html)
 ## $forceUpdate
 * **参数：** 
   * `{Object} target`
