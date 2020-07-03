@@ -5,24 +5,7 @@ sidebarDepth: 2
 # 编译构建
 
 ## webpack配置
-
-### output.publicPath
-
-由于 Mpx 内部框架实现的原因(如分包路径)，publicPath 必须设置为'/'，默认为'/'。
-如是图像或文件需要设置 publicPath，可配置在 loader options中
-
-### output.filename
-
-小程序限定[描述页面的文件具有相同的路径和文件名](https://www.runoob.com)，仅以后缀名进行区分。
-
-因此 output.filename 中必须写为 [name].js，基于 chunk id 或者 hash name 的 filename 都会导致编译后的文件无法被小程序识别
-
-### node.global
-在 Node 环境中 global 标识全局对象，Mpx 中需要依赖 global 进行运行时注入
-
-### resolve.extensions
-当通过 require, import引 入不带后缀的文件时，webpack 将自动带上后缀后去尝试访问文件是否存在
-
+下图是采用 Mpx 开发小程序时，一个简短的 webpack 配置。配置说明可参考图中注释以及子项说明。
 ```js
 module.exports = {
   entry: {
@@ -93,8 +76,31 @@ module.exports = {
     })
   ]
 }
-
 ```
+- 下面是对 webpack 自带的配置，在 Mpx 中特殊配置的具体说明。
+### output.publicPath
+
+由于 Mpx 内部框架实现的原因(如分包路径)，publicPath 必须设置为'/'，默认为'/'。
+如是图像或文件需要设置 publicPath，可配置在 loader options 中。
+
+### output.filename
+
+小程序限定[描述页面的文件具有相同的路径和文件名](https://developers.weixin.qq.com/miniprogram/dev/framework/structure.html)，仅以后缀名进行区分。
+
+因此 output.filename 中必须写为 [name].js，基于 chunk id 或者 hash name 的 filename 都会导致编译后的文件无法被小程序识别。
+
+### node.global
+在 Node 环境中 global 标识全局对象，Mpx 中需要依赖 global 进行运行时注入。
+
+### rule.resourceQuery
+Mpx 内部会对通过 script src 引入的 json 文件，在解析的时候加上 __component 标识，同时设置 type 以防止走 webpack 内建的 json 解析。
+
+因为 webpack json 解析时，抽取内容的占位内容必须为合法 json，否则会在 parse 阶段报错
+
+### resolve.extensions
+当通过 require, import 引 入不带后缀的文件时，webpack 将自动带上后缀后去尝试访问文件是否存在。
+
+
 
 ## 类型定义
 
@@ -275,7 +281,9 @@ new MpxWebpackPlugin({
 
 - **类型**：`boolean`
 
-- **详细**： 当编译目标平台为 web 时默认不开启autoSplit，其它平台默认开启为 true。为 true 时如果配置了optimization，将采用 optimization 配置进行 splitChunks 实现代码分离打包优化
+- **默认值**：Web平台为 false, 其它平台为 true
+
+- **详细**：autoSplit 设置为 true 时，如果配置了 optimization，将采用 optimization 配置的 splitChunks 实现代码分离合并打包优化。设置为 false 将不走代码打包优化。
 
 - **示例**：
 ```js
