@@ -342,76 +342,78 @@ new MpxWebpackPlugin({
 
 ### externals
 
-- **类型**: `Array<string>`
+- **类型**：`Array<string>`
 
-- **详细**: 目前仅支持微信小程序 weui 组件库通过 useExtendedLib 扩展库的方式引入，这种方式引入的组件将不会计入代码包大小。配置 externals 选项，Mpx 将不会解析 weui 组件的路径并打包。
+- **详细**：
 
-- **示例**: 在 Mpx 项目中使用 useExtendedLib 扩展库的方式如下：
+  目前仅支持微信小程序 weui 组件库通过 useExtendedLib 扩展库的方式引入，这种方式引入的组件将不会计入代码包大小。配置 externals 选项，Mpx 将不会解析 weui 组件的路径并打包。
 
-``` javascript
-// Mpx 配置文件中添加如下配置：
-{
-  externals: ['weui']
-}
-```
+- **示例**：
 
-``` html
-<script name="json">
-  // app.mpx json部分
-  module.exports = {
-    "useExtendedLib": {
-      "weui": true
-    }
+  ``` javascript
+  // Mpx 配置文件中添加如下配置：
+  {
+    externals: ['weui']
   }
-</script>
-```
+  ```
 
-``` html
-<!-- 在 page 中使用 weui 组件 -->
-<template>
-  <view wx:if="{{__mpx_mode__ === 'wx'}}">
-    <mp-icon icon="play" color="black" size="{{25}}" bindtap="showDialog"></mp-icon>
-    <mp-dialog title="test" show="{{dialogShow}}" bindbuttontap="tapDialogButton" buttons="{{buttons}}">
-      <view>test content</view>
-    </mp-dialog>
-  </view>
-</template>
-
-<script>
-  import{ createPage } from '@mpxjs/core'
-
-  createPage({
-    data: {
-      dialogShow: false,
-      showOneButtonDialog: false,
-      buttons: [{text: '取消'}, {text: '确定'}],
-    },
-    methods: {
-      tapDialogButton () {
-        this.dialogShow = false
-        this.showOneButtonDialog = false
-      },
-      showDialog () {
-        this.dialogShow = true
+  ``` html
+  <script name="json">
+    // app.mpx json部分
+    module.exports = {
+      "useExtendedLib": {
+        "weui": true
       }
     }
-  })
-</script>
+  </script>
+  ```
 
-<script name="json">
-  const wxComponents = {
-    "mp-icon": "weui-miniprogram/icon/icon",
-    "mp-dialog": "weui-miniprogram/dialog/dialog"
-  }
-  module.exports = {
-    "usingComponents": __mpx_mode__ === 'wx'
-      ? Object.assign({}, wxComponents)
-      : {}
-  }
-</script>
-```
+  ``` html
+  <!-- 在 page 中使用 weui 组件 -->
+  <template>
+    <view wx:if="{{__mpx_mode__ === 'wx'}}">
+      <mp-icon icon="play" color="black" size="{{25}}" bindtap="showDialog"></mp-icon>
+      <mp-dialog title="test" show="{{dialogShow}}" bindbuttontap="tapDialogButton" buttons="{{buttons}}">
+        <view>test content</view>
+      </mp-dialog>
+    </view>
+  </template>
 
-- **参考** [weui组件库](https://developers.weixin.qq.com/miniprogram/dev/extended/weui/quickstart.html)
+  <script>
+    import{ createPage } from '@mpxjs/core'
+
+    createPage({
+      data: {
+        dialogShow: false,
+        showOneButtonDialog: false,
+        buttons: [{text: '取消'}, {text: '确定'}],
+      },
+      methods: {
+        tapDialogButton () {
+          this.dialogShow = false
+          this.showOneButtonDialog = false
+        },
+        showDialog () {
+          this.dialogShow = true
+        }
+      }
+    })
+  </script>
+
+  <script name="json">
+    const wxComponents = {
+      "mp-icon": "weui-miniprogram/icon/icon",
+      "mp-dialog": "weui-miniprogram/dialog/dialog"
+    }
+    module.exports = {
+      "usingComponents": __mpx_mode__ === 'wx' 
+        ? Object.assign({}, wxComponents)
+        : {}
+    }
+  </script>
+  ```
+
+- **参考**：<a href="https://developers.weixin.qq.com/miniprogram/dev/extended/weui/quickstart.html" target="_blank">weui组件库</a>
 
 ### forceUsePageCtor
 
@@ -801,72 +803,74 @@ import subPackageIndexPage from '../subpackage/pages/index.mpx?resolve'
 
 ### packageName
 
-- **类型**: `String`
+- **类型**： `String`
 
-- **详细**: 指定当前 Page 或 Component 中引用的某个非 JS 静态资源被打包到对应的主包或分包目录下。分包之间不能相互引用对方包中的资源（比如图片和 js 脚本等），分包可以引用主包和自己包内的资源。
+- **详细**：
 
-- **示例**:
+  指定当前 Page 或 Component 中引用的某个非 JS 静态资源被打包到对应的主包或分包目录下。分包之间不能相互引用对方包中的资源（比如图片和 js 脚本等），分包可以引用主包和自己包内的资源。
 
-``` javascript
-// 入口 app.mpx 的 json 配置部分
-module.exports = {
-  "pages": [
-    "./pages/index",
-    "./pages/list?root=list&name=listName"
-  ],
-  "packages": [
-    "./packageA/packageA.mpx?root=packageA",
-    "./packageB/packageB.mpx?root=packageB&name=packageSecond"
-  ]
-}
-```
+- **示例**：
 
-``` html
-<!-- packageA/cat.mpx -->
-<template>
-  <view>
-    <view>hello packageA cat.mpx</view>
-    <image src="{{catAvatar}}"></image>
-  </view>
-</template>
+  ``` javascript
+  // 入口 app.mpx 的 json 配置部分
+  module.exports = {
+    "pages": [
+      "./pages/index",
+      "./pages/list?root=list&name=listName"
+    ],
+    "packages": [
+      "./packageA/packageA.mpx?root=packageA",
+      "./packageB/packageB.mpx?root=packageB&name=packageSecond"
+    ]
+  }
+  ```
 
-<script>
-  import{ createPage } from '@mpxjs/core'
-  // 没有配置 packageName，默认打包到当前模块所在的分包目录下
-  import catAvatar from 'static/images/cat.jpg'
+  ``` html
+  <!-- packageA/cat.mpx -->
+  <template>
+    <view>
+      <view>hello packageA cat.mpx</view>
+      <image src="{{catAvatar}}"></image>
+    </view>
+  </template>
 
-  createPage({
-    data: {
-      catAvatar
-    },
-    onLoad () {}
-  })
-</script>
-```
+  <script>
+    import{ createPage } from '@mpxjs/core'
+    // 没有配置 packageName，默认打包到当前模块所在的分包目录下
+    import catAvatar from 'static/images/cat.jpg'
 
-``` html
-<!-- packageB/dog.mpx -->
-<template>
-  <view>
-    <view>hello packageB dog.mpx</view>
-    <image src="{{dogAvatar}}"></image>
-  </view>
-</template>
+    createPage({
+      data: {
+        catAvatar
+      },
+      onLoad () {}
+    })
+  </script>
+  ```
 
-<script>
-  import{ createPage } from '@mpxjs/core'
-  // 指定 packageName=main 即使当前模块在分包 packageB 下，资源也会被打包到主包目录下
-  // 当前分包是 packageB，所以不能指定 resourceName 为 packageA 或其他分包
-  import dogAvatar from 'static/images/dog.jpg?packageName=main'
+  ``` html
+  <!-- packageB/dog.mpx -->
+  <template>
+    <view>
+      <view>hello packageB dog.mpx</view>
+      <image src="{{dogAvatar}}"></image>
+    </view>
+  </template>
 
-  createPage({
-    data: {
-      dogAvatar
-    },
-    onLoad () {}
-  })
-</script>
-```
+  <script>
+    import{ createPage } from '@mpxjs/core'
+    // 指定 packageName=main 即使当前模块在分包 packageB 下，资源也会被打包到主包目录下
+    // 当前分包是 packageB，所以不能指定 resourceName 为 packageA 或其他分包
+    import dogAvatar from 'static/images/dog.jpg?packageName=main'
+
+    createPage({
+      data: {
+        dogAvatar
+      },
+      onLoad () {}
+    })
+  </script>
+  ```
 
 ### ?root
 
