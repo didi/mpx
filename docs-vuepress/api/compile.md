@@ -296,6 +296,8 @@ new MpxWebpackPlugin({
 
 - **详细**: 
 
+externals 目前仅支持微信小程序。
+
 微信小程序的 weui 组件库 通过 useExtendedLib 扩展库的方式引入，这种方式引入的组件将不会计入代码包大小。配置 externals 选项，Mpx 将不会解析 weui 组件的路径并打包。
 
 - **示例**:
@@ -492,7 +494,7 @@ Mpx中允许用户在request中传递特定query执行特定逻辑，目前已�
 
 - **类型**: `String`
 
-- **详细**: 指定当前 Page 或 Component 中引用的某个非 JS 静态资源被打包到对应的主包或分包目录下。
+- **详细**: 指定当前 Page 或 Component 中引用的某个非 JS 静态资源被打包到对应的主包或分包目录下。分包之间不能相互引用对方包中的资源（比如图片和 js 脚本等），分包可以引用主包和自己包内的资源。
 
 - **示例**:
 
@@ -545,6 +547,7 @@ module.exports = {
 <script>
   import{ createPage } from '@mpxjs/core'
   // 指定 packageName=main 即使当前模块在分包 packageB 下，资源也会被打包到主包目录下
+  // 当前分包是 packageB，所以不能指定 resourceName 为 packageA 或其他分包
   import dogAvatar from 'static/images/dog.jpg?packageName=main'
 
   createPage({
