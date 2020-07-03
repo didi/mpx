@@ -99,6 +99,19 @@ MpxWebpackPlugin支持传入以下配置：
 
 ### forceUsePageCtor
 
+- **类型**: `Boolean`
+
+- **默认值**: `false`
+
+- **详情**: 一般小程序分为三层，`App`、`Page`、`Component`，`app` 用来描述整个应用，`page` 用来描述各个页面，`component` 用来描述各个组件。 但是支付宝小程序没有 `Component` 这一层，所以 `Mpx` 在框架层面抹平了这一差异；同时把 `Component` 强行转为 `Page` 的接口暴露出来，供开发者自由使用
+
+- **示例**: 
+```
+// TODO 用法演示
+
+```
+
+
 ### postcssInlineConfig
 
 ### transRpxRules
@@ -122,6 +135,22 @@ MpxWebpackPlugin通过静态方法暴露了以下五个内置loader，详情如�
 ### MpxWebpackPlugin.pluginLoader
 
 ### MpxWebpackPlugin.wxsPreLoader
+
+用于加载 `wxs` 等资源文件 （注: 该loader的实现是 wxs-pre-loader.js 文件，看了源码，还是不能深入理解）
+
+```js
+const webpackConf = {
+  module: {
+    rules: [
+      {
+        test: /\.(wxs|sjs|filter\.js)$/,
+        loader: MpxWebpackPlugin.wxsPreLoader(),
+        enforce: 'pre'
+      }
+    ]
+  }
+}
+```
 
 ### MpxWebpackPlugin.urlLoader
 
