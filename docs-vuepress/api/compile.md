@@ -139,8 +139,8 @@ MpxWebpackPlugin支持传入以下配置：
 new MpxWebpackPlugin({
   // 指定目标平台，可选值有 wx、ali、swan、qq、tt、web
   mode: 'ali',
-  // 指定源码平台，默认值同目标平台一致 
-  srcMode: 'wx' 
+  // 指定源码平台，默认值同目标平台一致
+  srcMode: 'wx'
 })
 ```
 
@@ -406,7 +406,7 @@ new MpxWebpackPlugin({
       "mp-dialog": "weui-miniprogram/dialog/dialog"
     }
     module.exports = {
-      "usingComponents": __mpx_mode__ === 'wx' 
+      "usingComponents": __mpx_mode__ === 'wx'
         ? Object.assign({}, wxComponents)
         : {}
     }
@@ -726,58 +726,59 @@ module.exports = {
 
 ### MpxWebpackPlugin.fileLoader
 
-- **参数**:
+提供图像资源的处理，生成对应图像文件，输出到输出目录并返回 public URL。如果是分包资源，则会输出到相应的分包资源文件目录中。
 
-  - `{ Object } options`
+- **用法**：
 
-- **用法**:
-
-  提供图像资源的处理，生成对应图像文件，输出到输出目录并返回 public URL。具体用法如下：
-  ```js
-    module.exports = {
-      // 其它配置
-      ...
-      module: {
-        rules: [
+```js
+  module.exports = {
+    module: {
+      rules: [
+        {
           test: /\.(png|jpe?g|gif|svg)$/,
           loader: MpxWebpackPlugin.fileLoader({
             name: 'img/[name][hash].[ext]'
           })
-        ]
-      },
-      // 其它配置
-      ...
+        }
+      ]
     }
-  ```
+  }
+```
+
+- **选项**：
+
+  - `name` : 自定义输出文件名模板
 
 ### MpxWebpackPlugin.urlLoader
 
-- **参数**:
-
-  - `{ Object } options`
+微信小程序对于图像资源存在一些限制，`MpxWebpackPlugin.urlLoader` 针对这些差异做了相关处理，开发者可以使用web应用开发的方式进行图资像源的引入，`MpxWebpackPlugin.urlLoader` 可根据图像资源的不同引入方式，对图像资源通过 CDN 或者 Base64 的方式进行处理。
 
 - **用法**:
 
-  功能同 [fileLoader](#mpxwebpackplugin-fileloader) 方法，支持 `CDN` 和 `Base64` 两种URL加载方式，具体用法如下所示：
-  ```js
-    module.exports = {
-      // 其它配置
-      ...
-      module: {
-        rules: [
-          {
-            test: /\.(png|jpe?g|gif|svg)$/,
-            loader: MpxWebpackPlugin.urlLoader({
-              name: 'img/[name][hash].[ext]',
-              limit: 2048
-            })
-          }
-        ]
-      },
-      // 其它配置
-      ...
+```js
+  module.exports = {
+    module: {
+      rules: [
+        {
+          test: /\.(png|jpe?g|gif|svg)$/,
+          loader: MpxWebpackPlugin.urlLoader({
+            name: 'img/[name][hash].[ext]',
+            limit: 2048,
+          })
+        }
+      ]
     }
-  ```
+  }
+```
+
+- **选项**:
+
+  - `name` :  自定义输出文件名模板
+  - `mimetype` : 指定文件的 MIME 类型
+  - `limit` : 对内联文件作为数据 URL 的字节数限制
+  - `publicPath` : 自定义 public 目录
+  - `fallback` : 文件字节数大于限制时，为文件指定加载程序
+
 
 ## Request query
 
