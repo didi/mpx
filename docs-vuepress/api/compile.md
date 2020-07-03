@@ -868,6 +868,7 @@ module.exports = {
 - **示例**：
 
 ```js
+// 可在项目app.mpx中进行配置
 module.exports = {
   packages: [
     '@packageName/src/app.mpx?root=test',
