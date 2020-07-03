@@ -123,9 +123,60 @@ MpxWebpackPlugin通过静态方法暴露了以下五个内置loader，详情如�
 
 ### MpxWebpackPlugin.wxsPreLoader
 
+### MpxWebpackPlugin.fileLoader
+
+- **参数**:
+
+  - `{ Object } options`
+
+- **用法**:
+
+  提供图像资源的处理，生成对应图像文件，输出到输出目录并返回 public URL。具体用法如下：
+  ```js
+    module.exports = {
+      // 其它配置
+      ...
+      module: {
+        rules: [
+          test: /\.(png|jpe?g|gif|svg)$/,
+          loader: MpxWebpackPlugin.fileLoader({
+            name: 'img/[name][hash].[ext]'
+          })
+        ]
+      },
+      // 其它配置
+      ...
+    }
+  ```
+
 ### MpxWebpackPlugin.urlLoader
 
-### MpxWebpackPlugin.fileLoader
+- **参数**:
+
+  - `{ Object } options`
+
+- **用法**:
+
+  功能同 [fileLoader](#mpxwebpackplugin-fileloader) 方法，支持 `CDN` 和 `Base64` 两种URL加载方式，具体用法如下所示：
+  ```js
+    module.exports = {
+      // 其它配置
+      ...
+      module: {
+        rules: [
+          {
+            test: /\.(png|jpe?g|gif|svg)$/,
+            loader: MpxWebpackPlugin.urlLoader({
+              name: 'img/[name][hash].[ext]',
+              limit: 2048
+            })
+          }
+        ]
+      },
+      // 其它配置
+      ...
+    }
+  ```
 
 ## Request query
 
