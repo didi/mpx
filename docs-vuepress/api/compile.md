@@ -43,7 +43,7 @@ module.exports = {
         test: /\.mpx$/,
         // 以 .mpx 结尾的文件需要使用 Mpx 提供的 loader 进行解析，处理 .mpx 文件包含的template，script, style, json等各个部分
         use: MpxWebpackPlugin.loader({
-          // 自定义 loaders 
+          // 自定义 loaders
           loaders: {
             scss: [
               {loader: 'css-loader'},
@@ -122,13 +122,9 @@ MpxWebpackPlugin支持传入以下配置：
 
 - **类型**：`'wx'`
 
-- **默认值**：没有设置值时默认和 [mode](#mode) 一致。
+- **默认值**：默认和 [mode](#mode) 一致。
 
-- **详细**：
-
-当 srcMode 和 mode 不一致时，会读取相应的配置对项目进行编译和运行时的转换。
-
-**注**：暂时只支持微信为源 mode 做跨平台，为其他时，mode 必须和 srcMode 保持一致。
+- **详细**：当 srcMode 和 mode 不一致时，会读取相应的配置对项目进行编译和运行时的转换。
 
 - **示例**：
 
@@ -142,9 +138,13 @@ new MpxWebpackPlugin({
 })
 ```
 
+::: warning
+暂时只支持微信为源 mode 做跨平台，为其他时，mode 必须和 srcMode 保持一致。
+:::
+
 ### modeRules
 
-- **类型**：`{ [key: string]: any }`
+- **类型**：`{ [key: string]: Rules }`
 
 - **详细**：
 
@@ -175,6 +175,10 @@ new MpxWebpackPlugin({
   externalClasses: ['custom-class', 'i-class']
 })
 ```
+
+::: warning
+抹平支付宝和微信之间的差异，微信转支付宝时可以使用该功能。
+:::
 
 ### resolveMode
 
@@ -236,9 +240,9 @@ new MpxWebpackPlugin({
 ```js
 new MpxWebpackPlugin({
   autoScopeRules: {
-      include: [resolve('../src')],
-      exclude: [resolve('../node_modules/vant-aliapp')] // 比如一些组件库本来就是为支付宝小程序编写的，应该已经考虑过样式隔离，就不需要再添加
-    }
+    include: [resolve('../src')],
+    exclude: [resolve('../node_modules/vant-aliapp')] // 比如一些组件库本来就是为支付宝小程序编写的，应该已经考虑过样式隔离，就不需要再添加
+  }
 })
 ```
 
@@ -246,17 +250,21 @@ new MpxWebpackPlugin({
 
 - **类型**：`Boolean`
 
-- **详细**：默认为false，Mpx会在项目编译构建过程中对运行时进行代码注入，以实现部分增强能力，包括 refs、i18n 和 setData 性能优化等。在不需要这些增强能力时，可配置 forceDisableInject 为 true，以消除编译时注入，来进一步减少包体积，但是这部分增强能力也就不再可用。
+- **默认值**： `false`
+
+- **详细**：Mpx会在项目编译构建过程中对运行时进行代码注入，以实现部分增强能力，包括 refs、i18n 和 setData 性能优化等。在不需要这些增强能力时，可配置 forceDisableInject 为 true，以消除编译时注入，来进一步减少包体积，但是这部分增强能力也就不再可用。
 
 ### forceDisableProxyCtor
 
 - **类型**：`Boolean`
 
-- **详细**： 默认为false，用于控制在跨平台输出时对实例构造函数（App | Page | Component | Behavior）进行代理替换以抹平平台差异。当配置 forceDisableProxyCtor 为 true 时，会强行取消平台差异抹平逻辑，开发时需针对输出到不同平台进行条件判断。
+- **默认值**： `false`
+
+- **详细**： 用于控制在跨平台输出时对实例构造函数（App | Page | Component | Behavior）进行代理替换以抹平平台差异。当配置 forceDisableProxyCtor 为 true 时，会强行取消平台差异抹平逻辑，开发时需针对输出到不同平台进行条件判断。
 
 ### transMpxRules
 
-- **类型**：`{ [key: string]: any }`
+- **类型**：`Rules`
 
 - **详细**：是否转换 wx / my 等全局对象为 Mpx 对象，
 
@@ -273,7 +281,7 @@ new MpxWebpackPlugin({
 
 ### autoSplit
 
-- **类型**：`boolean` 
+- **类型**：`boolean`
 
 - **详细**： 当编译目标平台为 web 时默认不开启autoSplit，其它平台默认开启为 true。为 true 时如果配置了optimization，将采用 optimization 配置进行 splitChunks 实现代码分离打包优化
 
@@ -328,7 +336,7 @@ new MpxWebpackPlugin({
 
 - **类型**: `Array<string>`
 
-- **详细**: 
+- **详细**:
 
 微信小程序的 weui 组件库 通过 useExtendedLib 扩展库的方式引入，这种方式引入的组件将不会计入代码包大小。配置 externals 选项，Mpx 将不会解析 weui 组件的路径并打包。
 
@@ -392,7 +400,7 @@ new MpxWebpackPlugin({
     "mp-dialog": "weui-miniprogram/dialog/dialog"
   }
   module.exports = {
-    "usingComponents": __mpx_mode__ === 'wx' 
+    "usingComponents": __mpx_mode__ === 'wx'
       ? Object.assign({}, wxComponents)
       : {}
   }
@@ -403,9 +411,169 @@ new MpxWebpackPlugin({
 
 ### forceUsePageCtor
 
+- **类型**: `Boolean`
+
+- **默认值**: `false`
+
+- **详情**: 一般小程序分为三层，`App`、`Page`、`Component`，`app` 用来描述整个应用，`page` 用来描述各个页面，`component` 用来描述各个组件。 但是支付宝小程序没有 `Component` 这一层，所以 `Mpx` 在框架层面抹平了这一差异；同时把 `Component` 强行转为 `Page` 的接口暴露出来，供开发者自由使用
+
+- **示例**:
+```
+// TODO 用法演示
+
+```
+
+
 ### postcssInlineConfig
 
 ### transRpxRules
+
+- **类型**：`Array<object>`
+
+- **详细**：为了处理某些IDE中不支持`rpx`单位的问题，`Mpx`提供了一个将px转换为rpx的功能。支持通过注释控制行级、块级的是否转换，支持局部使用，支持不同依赖分别使用不用的转换规则等灵活的能力。
+
+- **示例**：
+
+```js
+new MpxWebpackPlugin({
+  transRpxRules: [
+    {
+      mode: 'only', // 可选值有none/only/all，分别是不启用，只对注释内容启用，只对非注释内容启用
+      comment: 'use rpx', // rpx注释，建议使用 'use px' / 'use rpx'，当mode为all时默认值为use px，mode为only时默认值为use rpx
+      include: resolve('src'), // 同webpack的include规则
+      exclude: resolve('lib'), // 同webpack的exclude规则
+      designWidth: 750 // 设计稿宽度，默认值就是750，可根据需要修改
+    },
+    {
+      mode: 'all',
+      comment: 'use px',
+      include: resolve('node_modules/@didi/mpx-sec-guard')
+    }
+  ]
+})
+```
+
+#### 应用场景及相应配置
+
+接下来我们来看下一些应用场景及如何配置。如果是用脚手架生成的项目，在`mpx.plugin.conf.js`里找到`transRpxRules`，应该已经有预设的`transRpxRules`选项，按例修改即可。
+
+三种场景分别是 [普通使用，因设计稿是px的二倍/三倍图](#场景一) ， [只对某些特殊样式转换](#场景二) ， [不同路径分别配置规则](#场景三)
+
+#### 场景一
+设计师给的稿是2倍图，分辨率750px。或者更高倍图。
+
+```js
+new MpxWebpackPlugin({
+  transRpxRules: [{
+    mode: 'all',
+    designWidth: 750 // 如果是其他倍，修改此值为设计稿的宽度即可
+  }]
+})
+```
+
+#### 场景二
+
+大部分样式都用px下，某些元素期望用rpx。或者反过来。
+
+```js
+new MpxWebpackPlugin({
+  transRpxRules: [{
+    mode: 'only',
+    comment: 'use rpx',
+    designWidth: 750 // 设计稿宽度
+  }]
+})
+```
+mpx的rpx注释能帮助你仅为部分类或者部分样式启用rpx转换，细节请看下面附录。
+
+#### 场景三
+使用了第三方组件，它的设计宽度和主项目不一致，期望能设置不同的转换规则
+
+```js
+new MpxWebpackPlugin({
+  transRpxRules: [
+    {
+      mode: 'only',
+      designWidth: 750,
+      comment: 'use rpx',
+      include: resolve('src')
+    },
+    {
+      mode: 'all',
+      designWidth: 1280, // 对iview单独使用一个不同的designWidth
+      include: resolve('node_modules/iview-weapp')
+    }
+  ]
+})
+
+```
+
+> 注意事项：转换规则是不可以对一个文件做多次转换的，会出错，所以一旦被一个规则命中后就不会再次命中另一个规则，include和exclude的编写需要注意先后顺序，就比如上面这个配置，如果第一个规则include的是'/'即整个项目，iview-weapp里的样式就无法命中第二条规则了。
+
+#### transRpxRules附录
+
+- **designWidth**
+
+设计稿宽度，单位为`px`。默认值为`750px`。
+
+`mpx`会基于小程序标准的屏幕宽度`baseWidth 750rpx`，与`option.designWidth`计算出一个转换比例`transRatio`
+
+转换比例的计算方式为`transRatio = (baseWidth / designWidth)`。精度为小数点后2位四舍五入
+
+所有生效的`rpx注释样式`中的px会乘上`transRatio`得出最终的rpx值
+
+例如：
+
+```css
+/* 转换前：designWidth = 1280 */
+.btn {
+  width: 200px;
+  height: 100px;
+}
+
+/* 转换后: transRatio = 0.59 */
+.btn {
+  width: 118rpx;
+  height: 59rpx;
+}
+```
+---
+
+- **comment: rpx注释样式**
+
+根据`rpx注释`的位置，`mpx`会将`一段css规则`或者`一条css声明`视为`rpx注释样式`
+
+开发者可以声明一段rpx注释样式，提示编译器是否转换这段css中的px
+
+例如：
+```html
+<style lang="css">
+  /* use px */
+  .not-translate-a {
+    font-size: 100px;
+    padding: 10px;
+  }
+  .not-translate-b {
+    /* use px */
+    font-size: 100px;
+    padding: 10px;
+  }
+  .translate-a {
+    font-size: 100px;
+    padding: 10px;
+  }
+  .translate-b {
+    font-size: 100px;
+    padding: 10px;
+  }
+</style>
+```
+> 第一个注释位于一个`选择器`前，是一个`css规则注释`，整个规则都会被视为`rpx注释样式`
+
+> 第二个注释位于一个`css声明`前，是一个`css声明注释`，只有`font-size: 100px`会被视为`rpx注释样式`
+
+> `transRpx = all`模式下，除了这两条rpx注释样式之外，其他都会转rpx
+
 
 ### decodeHTMLText
 
@@ -468,7 +636,7 @@ messages: {
 
 `String`
 
-为便于开发，Mpx 还支持配置语言包资源路径 messagesPath 来代替 messages 属性，Mpx 会从该路径下的 js 文件导出语言包对象。
+为便于开发，Mpx 还支持配置语言包资源路径 messagesPath 来代替 messages 属性，Mpx 会从该路径下的 js 文件导出语言包对象。如果同时配置 messages 和 messagesPath 属性，优先取 messages 定义的语言包。
 
 详细介绍及使用见[工具-国际化i18n](../guide/tool/i18n.md)一节。
 
@@ -504,17 +672,112 @@ new MpxWebpackPlugin({
 
 ## MpxWebpackPlugin static methods
 
-MpxWebpackPlugin通过静态方法暴露了以下五个内置loader，详情如下：
+MpxWebpackPlugin 通过静态方法暴露了以下五个内置 loader，详情如下：
 
 ### MpxWebpackPlugin.loader
 
+MpxWebpackPlugin 所提供的最主要 loader，用于处理 `.mpx` 文件，根据不同的[模式(mode)](/api/compile.html#mode)将 `.mpx` 文件输出为不同的结果。
+
+**webpack.conf.js**
+
+```js
+module.exports = {
+  module: {
+    rules: [
+      {
+        test: /\.mpx$/,
+        use: MpxWebpackPlugin.loader()
+      }
+    ]
+  }
+};
+```
+
+:::warning
+旧版 loader 配置属性 `transRpx` **即将移除**，请在统一配置文件 `build/mpx.plugin.conf.js` 中使用 `transRpxRules` 属性进行配置。
+:::
+
 ### MpxWebpackPlugin.pluginLoader
+
+:::tip
+该 loader 仅在开发**小程序插件**时使用，可在使用 Mpx 脚手架进行项目初始化时选择进行组件开发来生成对应的配置文件。
+:::
+
+`MpxWebpackPlugin.pluginLoader` 用于根据开发者编写的`plugin.json`文件内容，将特定的小程序组件、页面以及 js 文件进行构建，最终以小程序插件的形式输出。
+
+**webpack.plugin.conf.js**
+
+```js
+module.exports = {
+  module: {
+    rules: [
+      {
+        resource: path.resolve('src/plugin/plugin.json'), // 小程序插件的plugin.json的绝对路径
+        use: MpxWebpackPlugin.pluginLoader()
+      }
+    ]
+  }
+};
+```
+
+更多细节请查阅 [小程序插件开发](https://developers.weixin.qq.com/miniprogram/dev/framework/plugin/development.html)
 
 ### MpxWebpackPlugin.wxsPreLoader
 
+### MpxWebpackPlugin.fileLoader
+
+- **参数**:
+
+  - `{ Object } options`
+
+- **用法**:
+
+  提供图像资源的处理，生成对应图像文件，输出到输出目录并返回 public URL。具体用法如下：
+  ```js
+    module.exports = {
+      // 其它配置
+      ...
+      module: {
+        rules: [
+          test: /\.(png|jpe?g|gif|svg)$/,
+          loader: MpxWebpackPlugin.fileLoader({
+            name: 'img/[name][hash].[ext]'
+          })
+        ]
+      },
+      // 其它配置
+      ...
+    }
+  ```
+
 ### MpxWebpackPlugin.urlLoader
 
-### MpxWebpackPlugin.fileLoader
+- **参数**:
+
+  - `{ Object } options`
+
+- **用法**:
+
+  功能同 [fileLoader](#mpxwebpackplugin-fileloader) 方法，支持 `CDN` 和 `Base64` 两种URL加载方式，具体用法如下所示：
+  ```js
+    module.exports = {
+      // 其它配置
+      ...
+      module: {
+        rules: [
+          {
+            test: /\.(png|jpe?g|gif|svg)$/,
+            loader: MpxWebpackPlugin.urlLoader({
+              name: 'img/[name][hash].[ext]',
+              limit: 2048
+            })
+          }
+        ]
+      },
+      // 其它配置
+      ...
+    }
+  ```
 
 ## Request query
 
@@ -609,6 +872,7 @@ module.exports = {
 - **示例**：
 
 ```js
+// 可在项目app.mpx中进行配置
 module.exports = {
   packages: [
     '@packageName/src/app.mpx?root=test',
@@ -617,3 +881,33 @@ module.exports = {
 ```
 
 ### ?fallback
+
+- **类型**：`String`
+
+- **详细**：对于使用`MpxWebpackPlugin.urlLoader`的文件，如果配置`fallback=true`，则使用配置的自定义loader。
+
+- **示例**：
+
+```js
+// webpack.config.js配置
+const webpackConfig = {
+  module: {
+    rules: [{
+      test: /\.(png|jpe?g|gif|svg)$/,
+      loader: MpxWebpackPlugin.urlLoader({
+        name: 'img/[name][hash].[ext]',
+        publicPath: 'http://a.com/',
+        fallback: 'file-loader' // 自定义fallback为true时使用的loader
+      })
+    }]
+  }
+}
+```
+```css
+/* png资源引入 */
+<style>
+  .logo2 {
+    background-image: url('~images/logo.png?fallback=true'); /* 设置fallback=true，则使用如上方所配置的file-loader */
+  }
+</style>
+```
