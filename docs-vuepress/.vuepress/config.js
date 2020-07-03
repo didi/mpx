@@ -68,6 +68,7 @@ const sidebar = {
     'instance-api',
     'directives',
     'compile',
+    'builtIn',
     'extend'
   ],
   '/articles/': [

@@ -868,5 +868,3 @@ if(!context.console) {
 }
 
 module.exports = MpxWebpackPlugin
-
-console.log(MpxWebpackPlugin.urlLoader())

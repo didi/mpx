@@ -1,6 +1,6 @@
 # Api转换
 
-> convert API at each end 各个平台之间 api 进行转换
+> convert API at each end 各个平台之间 api 进行转换，目前已支持微信转支付宝、微信转web
 
 ## Usage
 
@@ -28,6 +28,8 @@ apiProxy(target, options) // target 为要抹平的对象
 |exclude|Array(String)|跨平台时不需要转换的 api|-|
 |usePromise|Boolean|是否将 api 转化为 promise 格式使用|否|false|-|
 |whiteList|Array(String)|强行转化为 promise 格式的 api|否|[]|需要 usePromise 设为 true|
+|blackList|Array(String)|强制不变成 promise 格式的 api|否|[]|-|
+|fallbackMap|Object|对于不支持的API，允许配置一个映射表，接管不存在的API|否|{}|-|
 
 ## example
 
