@@ -5,7 +5,7 @@ export default function processOption (
   ctorType,
   firstPage,
   mpxCid,
-  pageTitle,
+  jsonConfig,
   pagesMap,
   componentsMap,
   Vue,
@@ -118,6 +118,20 @@ export default function processOption (
     if (i18n) {
       window.__mpxI18n = option.i18n = new VueI18n(i18n)
     }
+
+    Vue.config.optionMergeStrategies.MpxPageConfig = function (toVal, fromVal) {
+      return Object.assign({}, toVal, fromVal)
+    }
+
+    Vue.options.MpxPageConfig = jsonConfig.window
+
+    if (jsonConfig.tabBar) {
+      option.tabBar = jsonConfig.tabBar
+    }
+
+    if (jsonConfig.networkTimeout) {
+      option.networkTimeout = jsonConfig.networkTimeout
+    }
   } else {
     // 局部注册页面和组件中依赖的组件
     for (componentName in componentsMap) {
@@ -129,14 +143,32 @@ export default function processOption (
         option.components[componentName] = component
       }
     }
+
+    const pageConfigList = [
+	    'navigationBarBackgroundColor',
+	    'navigationBarTextStyle',
+	    'navigationBarTitleText',
+	    'navigationStyle',
+	    'backgroundColor',
+	    'backgroundColorTop',
+	    'backgroundColorBottom',
+	    'enablePullDownRefresh',
+	    'backgroundTextStyle',
+	    'onReachBottomDistance',
+	    'pageOrientation',
+	    'disableScroll'
+	  ]
+    const MpxPageConfig = {}
+    pageConfigList.forEach(key => {
+      if (jsonConfig[key]) {
+        MpxPageConfig[key] = jsonConfig[key]
+      }
+    })
+    option.MpxPageConfig = MpxPageConfig
   }
 
   if (mpxCid) {
     option.mpxCid = mpxCid
-  }
-
-  if (pageTitle) {
-    option.pageTitle = pageTitle
   }
 
   return option

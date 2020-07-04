@@ -27,7 +27,7 @@ module.exports = function (script, options, callback) {
   const mpxCid = options.mpxCid
   const getRequireForSrc = options.getRequireForSrc
   const i18n = options.i18n
-  const pageTitle = options.pageTitle
+  const jsonConfig = options.jsonConfig
 
   const stringifyRequest = r => loaderUtils.stringifyRequest(loaderContext, r)
 
@@ -140,7 +140,7 @@ module.exports = function (script, options, callback) {
         ${JSON.stringify(ctorType)},
         ${JSON.stringify(firstPage)},
         ${JSON.stringify(mpxCid)},
-        ${JSON.stringify(pageTitle)},
+        ${JSON.stringify(jsonConfig)},
         ${shallowStringify(pagesMap)},
         ${shallowStringify(componentsMap)}`
 
