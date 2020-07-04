@@ -145,19 +145,19 @@ export default function processOption (
     }
 
     const pageConfigList = [
-	    'navigationBarBackgroundColor',
-	    'navigationBarTextStyle',
-	    'navigationBarTitleText',
-	    'navigationStyle',
-	    'backgroundColor',
-	    'backgroundColorTop',
-	    'backgroundColorBottom',
-	    'enablePullDownRefresh',
-	    'backgroundTextStyle',
-	    'onReachBottomDistance',
-	    'pageOrientation',
-	    'disableScroll'
-	  ]
+      'navigationBarBackgroundColor',
+      'navigationBarTextStyle',
+      'navigationBarTitleText',
+      'navigationStyle',
+      'backgroundColor',
+      'backgroundColorTop',
+      'backgroundColorBottom',
+      'enablePullDownRefresh',
+      'backgroundTextStyle',
+      'onReachBottomDistance',
+      'pageOrientation',
+      'disableScroll'
+    ]
     const MpxPageConfig = {}
     pageConfigList.forEach(key => {
       if (jsonConfig[key]) {
