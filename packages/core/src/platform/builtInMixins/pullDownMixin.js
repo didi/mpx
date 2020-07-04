@@ -1,7 +1,4 @@
-// import BScroll from '@better-scroll/core'
-// import PullDown from '@better-scroll/pull-down'
-// BScroll.use(PullDown)
-
+// web 下拉刷新事件
 const TIME_BOUNCE = 800
 const STOP = 56
 const THRESHOLD = 60
@@ -40,46 +37,45 @@ export default function onPullDownRefresh (mixinType) {
           this.$vnode.elm.parentNode.style.bottom = 0
           this.$vnode.elm.parentNode.style.right = 0
 
-          import('@better-scroll/core')
-            .then(res => res.default)
-            .then(resolve => import('@better-scroll/pull-down').then(result => resolve.use(result.default)))
-            .then(BScroll => {
-              let bscroll = new BScroll(this.$vnode.elm.parentNode, {
-                pullUpLoad: {
-                  threshold: 20
-                },
-                bounceTime: TIME_BOUNCE,
-                pullDownRefresh: {
-                  threshold: THRESHOLD,
-                  stop: STOP
-                }
-              })
+          // eslint-disable-next-line no-undef
+          let bscroll = new BScroll(this.$vnode.elm.parentNode, {
+            pullUpLoad: {
+              threshold: 20
+            },
+            bounceTime: TIME_BOUNCE,
+            pullDownRefresh: {
+              threshold: THRESHOLD,
+              stop: STOP
+            }
+          })
 
-              bscroll.on('pullingDown', pullingDownHandler)
+          bscroll.on('pullingDown', pullingDownHandler)
 
-              async function pullingDownHandler () {
-                await requestData()
-                bscroll.finishPullDown()
-                bscroll.refresh()
-              }
+          // eslint-disable-next-line no-inner-declarations
+          async function pullingDownHandler () {
+            await requestData()
+            bscroll.finishPullDown()
+            bscroll.refresh()
+          }
 
-              async function requestData () {
-                try {
-                  await ajaxGet(/* url */)
-                } catch (err) {
-                  console.log(err)
-                }
-              }
+          // eslint-disable-next-line no-inner-declarations
+          async function requestData () {
+            try {
+              await ajaxGet(/* url */)
+            } catch (err) {
+              console.log(err)
+            }
+          }
 
-              function ajaxGet (/* url */) {
-                return new Promise(resolve => {
-                  setTimeout(() => {
-                    const result = onPullDownRefreshMethod()
-                    resolve(result)
-                  }, 3000)
-                })
-              }
+          // eslint-disable-next-line no-inner-declarations
+          function ajaxGet (/* url */) {
+            return new Promise(resolve => {
+              setTimeout(() => {
+                const result = onPullDownRefreshMethod()
+                resolve(result)
+              }, 3000)
             })
+          }
         }
       }
     }

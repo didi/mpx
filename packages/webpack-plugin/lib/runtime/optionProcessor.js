@@ -1,4 +1,7 @@
 import { SHOW, HIDE } from '@mpxjs/core/src/core/innerLifecycle'
+import BScroll from '@better-scroll/core'
+import PullDown from '@better-scroll/pull-down'
+BScroll.use(PullDown)
 
 export default function processOption (
   option,
@@ -131,6 +134,7 @@ export default function processOption (
         option.components[componentName] = component
       }
     }
+    window.BScroll = BScroll
   }
 
   if (mpxCid) {

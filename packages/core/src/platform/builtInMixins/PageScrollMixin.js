@@ -1,3 +1,4 @@
+// web滚动事件
 export default function onPageScroll (mixinType) {
   if (mixinType === 'page' && __mpx_mode__ === 'web') {
     return {
@@ -9,21 +10,20 @@ export default function onPageScroll (mixinType) {
           this.$vnode.elm.parentNode.style.left = 0
           this.$vnode.elm.parentNode.style.bottom = 0
           this.$vnode.elm.parentNode.style.right = 0
-          import('@better-scroll/core')
-            .then(res => res.default)
-            .then(BScroll => {
-              let bscroll = new BScroll(this.$vnode.elm.parentNode, {
-                scrollY: true,
-                click: true,
-                probeType: 2
-              })
 
-              bscroll.on('scroll', onPageScrollHandler)
+          // eslint-disable-next-line no-undef
+          let bscroll = new BScroll(this.$vnode.elm.parentNode, {
+            scrollY: true,
+            click: true,
+            probeType: 2
+          })
 
-              function onPageScrollHandler (pos) {
-                onPageScroll({ scrollTop: -pos.y })
-              }
-            })
+          bscroll.on('scroll', onPageScrollHandler)
+
+          // eslint-disable-next-line no-inner-declarations
+          function onPageScrollHandler (pos) {
+            onPageScroll({ scrollTop: -pos.y })
+          }
         }
       }
     }
