@@ -2,7 +2,7 @@
 
 ## 安装
 
-Mpx 提供了对请求响应数据进行拦截的 mock 插件,可通过如下命令进行安装:
+Mpx 提供了对请求响应数据进行拦截的 mock 插件，可通过如下命令进行安装：
 
 ```sh
 npm i @mpxjs/mock
@@ -10,7 +10,7 @@ npm i @mpxjs/mock
 
 ## 使用说明
 
-新建 mock 文件目录及文件(例如: `src/mock/index.js` ):
+新建 mock 文件目录及文件(例如：`src/mock/index.js` )：
 
 ```js
 // src/mock/index.js
@@ -29,7 +29,7 @@ mock([
 ]);
 ```
 
-在入口文件( `app.mpx` )中引入:
+在入口文件( `app.mpx` )中引入：
 
 ```html
 <script type="text/javascript">
@@ -50,7 +50,7 @@ mock([
 ```
 
 ::: tip
-由于 mock 为全局自动代理,执行`@mpxjs/mock`所暴露的方法之后会立即拦截小程序的原生请求,如果需要根据不同环境变量等去控制是否使用 mock 数据,可以参考如下方法:
+由于 mock 为全局自动代理，执行`@mpxjs/mock`所暴露的方法之后会立即拦截小程序的原生请求，如果需要根据不同环境变量等去控制是否使用 mock 数据，可以参考如下方法：
 :::
 
 ```js
@@ -81,7 +81,7 @@ export default () => mock([
 
 ## Mock 入参
 
-`@mpxjs/mock` 所暴露的函数仅接收一个类型为 `mockRequstList` 的参数, 该类型定义如下:
+`@mpxjs/mock` 所暴露的函数仅接收一个类型为 `mockRequstList` 的参数，该类型定义如下：
 
 ```ts
 type mockItem = {
@@ -188,10 +188,10 @@ mock([
 
 :::
 
-更多生成规则可查阅[Mock官方文档-Syntax Specification](https://github.com/nuysoft/Mock/wiki/Syntax-Specification)
+更多生成规则可查阅 [Mock官方文档-Syntax Specification](https://github.com/nuysoft/Mock/wiki/Syntax-Specification)
 
-更多示例可查看[Mock示例](http://mockjs.com/examples.html)
+更多示例可查看 [Mock示例](http://mockjs.com/examples.html)
 
 ::: warning
-由于小程序环境的局限性,mockjs 依赖 eval 函数实现的相关能力(如:占位符)无法正确运行
+由于小程序环境的局限性，mockjs 依赖 eval 函数实现的相关能力(如：占位符)无法正确运行
 :::
