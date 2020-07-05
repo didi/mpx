@@ -123,6 +123,13 @@ MpxWebpackPlugin支持传入以下配置：
 > 若是通过官方脚手架生成的项目，可在 `build/mpx.plugin.conf.js` 中对这些项进行配置。
 
 ### mode
+- **类型**：`string`
+
+- **默认值**：`'wx'`。
+
+- **详细**：
+
+mode 为 Mpx 编译的目标平台， 目前支持的有微信小程序(wx)\支付宝小程序(ali)\百度小程序(swan)\头条小程序(tt)\ QQ 小程序(qq)\ H5 页面(web)
 
 ### srcMode
 
@@ -580,10 +587,54 @@ new MpxWebpackPlugin({
 
 > `transRpx = all`模式下，除了这两条rpx注释样式之外，其他都会转rpx
 
+- **类型**： `{options? : PostcssOptions, plugins? : PostcssPlugin[], ignoreConfigFile : Boolean}`
+
+- **详细**：使用类似于 postcss.config.js 的语法书写 postcss 的配置文件。用于定义 Mpx 对于组件/页面样式进行 postcss 处理时的配置， ignoreConfigFile 传递为 true 时会忽略项目中的 postcss 配置文件 。
+
+- **示例**：
+
+```js
+new MpxWebpackPlugin {
+  postcssInlineConfig: {
+    plugins: {
+      // 'postcss-import': {},
+      // 'postcss-preset-env': {},
+      // 'cssnano': {},
+      // 'autoprefixer': {}
+    }
+  }
+}
+
+```
+
+
+
+### transRpxRules
 
 ### decodeHTMLText
 
+- **类型**：`boolean`
+
+- **默认**：`false`
+
+- **详细**：
+
+设置为 true 时在模板编译时对模板中的 text 内容进行 decode
+
 ### nativeOptions
+
+- **类型**：`object`
+
+- **详细**：为原生多文件写法添加css预处理语言支持，用于优先搜索预编译器后缀的文件，按声明顺序查找。默认按照 css , less , stylus ,  scss , sass 的顺序
+
+- **例子** 
+
+```js
+  nativeOptions: {
+    cssLangs: ['css', 'less', 'stylus', 'scss', 'sass']
+  }
+```
+
 
 ### i18n
 
