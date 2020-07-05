@@ -351,7 +351,7 @@ new MpxWebpackPlugin({
 
 - **默认值**：`['image:src', 'audio:src', 'video:src', 'cover-image:src', 'import:src', 'include:src']`
 
-- **详细**：`Mpx` 提供了可以给自定义标签设置资源的功能，配置该属性，即可在目标标签中使用该 `:src` 加载资源文件
+- **详细**：`Mpx` 提供了可以给自定义标签设置资源的功能，配置该属性后，即可在目标标签中使用 `:src` 加载相应资源文件
 
 - **示例**：
 ```js
@@ -447,7 +447,7 @@ new MpxWebpackPlugin({
 
 - **默认值**: `false`
 
-- **详细**: 在非支付宝小程序环境下，`Mpx` 会强行将 `Page` 转为 `Conponent` 处理；将该值设置为 `true` 时，`Page` 可不被转换。
+- **详细**: 在非支付宝小程序环境下，`Mpx` 会强行将 `Page` 转为 `Conponent` 处理；将该值设置为 `true` 时，`Page` 将不被转换。
 
 - **示例**:
 ```js
@@ -798,7 +798,7 @@ module.exports = {
 
 ### MpxWebpackPlugin.wxsPreLoader
 
-加载并解析 `wxs` 脚本语言，并针对不同平台，做了差异化处理；同时支持处理内联`wxs`。
+加载并解析 `wxs` 脚本文件，并针对不同平台，做了差异化处理；同时可支持处理内联`wxs`。
 
 - **用法**：
 
