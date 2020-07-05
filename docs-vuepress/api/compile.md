@@ -347,6 +347,25 @@ new MpxWebpackPlugin({
 
 ### attributes
 
+- **类型**：`[key: string]`
+
+- **默认值**：`['image:src', 'audio:src', 'video:src', 'cover-image:src', 'import:src', 'include:src']`
+
+- **详细**：`Mpx` 提供了可以给自定义标签设置资源的功能，配置该属性，即可在目标标签中使用该 `:src` 加载资源文件
+
+- **示例**：
+```js
+new MpxWebpackPlugin({
+  attributes: ['customTag:src']
+})
+```
+```wxml
+<customTag :src="'https://www....../avator.png'"></customTag>
+```
+:::tip
+该属性可通过 `MpxWebpackPlugin` 配置，也可以通过配置 `WxmlLoader`，后者优先级高。
+:::
+
 ### externals
 
 - **类型**：`Array<string>`
@@ -428,14 +447,18 @@ new MpxWebpackPlugin({
 
 - **默认值**: `false`
 
-- **详情**: 一般小程序分为三层，`App`、`Page`、`Component`，`app` 用来描述整个应用，`page` 用来描述各个页面，`component` 用来描述各个组件。 但是支付宝小程序没有 `Component` 这一层，所以 `Mpx` 在框架层面抹平了这一差异；同时把 `Component` 强行转为 `Page` 的接口暴露出来，供开发者自由使用
+- **详细**: 在非支付宝小程序环境下，`Mpx` 会强行将 `Page` 转为 `Conponent` 处理；将该值设置为 `true` 时，`Page` 可不被转换。
 
 - **示例**:
+```js
+new MpxWebpackPlugin({
+  forceUsePageCtor: true
+})
 ```
-// TODO 用法演示
 
-```
-
+:::tip
+// TODO 可以深入讲解下，为什么会被强转
+:::
 
 ### postcssInlineConfig
 
@@ -774,6 +797,24 @@ module.exports = {
 更多细节请查阅 [小程序插件开发](https://developers.weixin.qq.com/miniprogram/dev/framework/plugin/development.html)
 
 ### MpxWebpackPlugin.wxsPreLoader
+
+加载并解析 `wxs` 脚本语言，并针对不同平台，做了差异化处理；同时支持处理内联`wxs`。
+
+- **用法**：
+
+```js
+  module.exports = {
+    module: {
+      rules: [
+        {
+            test: /\.(wxs|qs|sjs|filter\.js)$/,
+            loader: MpxWebpackPlugin.wxsPreLoader(),
+            enforce: 'pre'
+          }
+      ]
+    }
+  }
+```
 
 ### MpxWebpackPlugin.fileLoader
 
