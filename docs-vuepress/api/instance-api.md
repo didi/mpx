@@ -1,6 +1,6 @@
 # 实例api
 
-## this.$set
+## $set
 
 - **参数**：
   - `{Object | Array} target`
@@ -16,7 +16,7 @@
 
 - **参考**：[Mpx.set](global-api.html#set)
 
-## this.$watch
+## $watch
 
 - **参数**：
   - `{string | Function} expOrFn` 

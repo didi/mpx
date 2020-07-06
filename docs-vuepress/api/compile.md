@@ -635,12 +635,7 @@ new MpxWebpackPlugin {
     }
   }
 }
-
 ```
-
-
-
-### transRpxRules
 
 ### decodeHTMLText
 

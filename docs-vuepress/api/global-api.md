@@ -457,12 +457,12 @@ const a = observable(object)
 3. `handler`：响应函数，如果是对象，则 handler.handler 为回调函数，其他参数作为 options，与组件的 watch 一致。
 
 ```js
-import mpx, {watch} from '@mpxjs/core'
-// mpx.watch(...)
+import mpx, {watch, observable} from '@mpxjs/core'
+
 const a = observable({name: 1})
 watch(null, () => {
   console.log(a.name)
-  return a.name
+  return a.name // return一个表达式，当其值发生变化，会触发到响应函数，即第三个参数
 }, (val) => {
   console.log('update a.name', val)
 })
@@ -590,7 +590,11 @@ createComponent({
 
 - **参数**：
   - `{String} name` 
-  - `{Object} config`
+  - `{Object} options`
+    - `{Array} modes`：需要取消的平台
+    - `{Boolean} remove`：是否将此能力直接移除
+    - `{Function} processor`：设置成功的回调函数
+
 
 - **用法**:
 
