@@ -1,3 +1,5 @@
+const { isMustache } = require('../../../../utils/string')
+
 const TAG_NAME = 'button'
 
 module.exports = function ({ print }) {
@@ -51,7 +53,7 @@ module.exports = function ({ print }) {
                 value: 'userInfo'
               }
             ]
-          } else if (/\{\{((?:.|\n)+?)\}\}(?!})/.test(value)) {
+          } else if (isMustache(value)) {
             // 如果是个变量，报warning
             aliValueLog({ name, value })
           } else {
@@ -60,7 +62,7 @@ module.exports = function ({ print }) {
         },
         swan ({ name, value }) {
           let supportList = ['contact', 'share', 'getUserInfo', 'getPhoneNumber', 'openSetting']
-          if (/\{\{((?:.|\n)+?)\}\}(?!})/.test(value)) {
+          if (isMustache(value)) {
             // 如果是个变量，报warning
             baiduValueLog({ name, value })
           } else if (supportList.indexOf(value) === -1) {
@@ -68,7 +70,7 @@ module.exports = function ({ print }) {
           }
         },
         tt ({ name, value }) {
-          if (/\{\{((?:.|\n)+?)\}\}(?!})/.test(value)) {
+          if (isMustache(value)) {
             ttValueLog({ name, value })
           } else {
             let supportList = ['share', 'getPhoneNumber']
