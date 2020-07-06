@@ -452,9 +452,9 @@ const a = observable(object)
 - **用法**:
 
 用于观察数据从而触发相应操作。参数详细说明：
-1. context：回调执行的上下文
-2. expr：观察的表达式。可以是 path 字符串（取值将在context上进行查找），也可以是函数
-3. handler：响应函数，如果是对象，则 handler.handler 为回调函数，其他参数作为 options，与组件的 watch 一致
+1. `context`：回调执行的上下文。
+2. `expr`：观察的表达式。可以是 path 字符串（取值将在context上进行查找），也可以是函数。
+3. `handler`：响应函数，如果是对象，则 handler.handler 为回调函数，其他参数作为 options，与组件的 watch 一致。
 
 ```js
 import mpx, {watch} from '@mpxjs/core'
