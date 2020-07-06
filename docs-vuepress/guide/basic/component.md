@@ -17,4 +17,53 @@ Mpx中提供了使用方法类似于Vue的动态组件能力，这是一个基�
 
 ## slot
 
-todo 完善slot使用说明及示例
+在组件中使用slot（插槽）可以使我们封装的组件更具有可扩展性，Mpx完全支持原生插槽的使用。
+
+简单示例如下：
+
+```html
+<!-- 组件模板 -->
+<!-- components/mySlot.mpx -->
+
+<view>
+  <view>这是组件模板</view>
+  <slot name="slot1"></slot>
+  <slot name="slot2"></slot>
+</view>
+```
+
+下面是引入 `mySlot` 组件的页面
+
+```html
+<!-- index.mpx -->
+
+<template>
+  <view>
+    <my-slot>
+      <view slot="slot1">我是slot1中的内容</view>
+      <view slot="slot2">我是slot2中的内容</view>
+    </my-slot>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+
+createComponent({
+  options: {
+    multipleSlots: true // 启用多slot支持
+  },
+  // ...
+})
+</script>
+
+<script type="application/json">
+  {
+    "usingComponents": {
+      "my-slot": "components/mySlot"
+    }
+  }
+</script>
+```
+
+更多详情可查看[这里](https://developers.weixin.qq.com/miniprogram/dev/framework/custom-component/wxml-wxss.html)
