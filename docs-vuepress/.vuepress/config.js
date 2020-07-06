@@ -9,6 +9,7 @@ const sidebar = {
         'basic/single-file',
         'basic/ide',
         'basic/template',
+        'basic/css',
         'basic/reactive',
         'basic/class-style-binding',
         'basic/conditional-render',

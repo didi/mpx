@@ -59,9 +59,11 @@ Mpx的编译构建以webpack为基础，针对小程序项目结构深度定制�
 * [npm构建](../advance/npm.md)
 * [分包构建](../advance/subpackage.md#分包)
 * [包体积优化](../advance/subpackage.md)
-* [原生组件支持](../advance/progressive.md)
-* [原生能力兼容(custom-tab-bar/workers/小程序插件/云开发等)](todo link)
-* [css/模板预编译](todo link)
+* [原生组件支持](../advance/progressive.md#原生接入)
+* [原生能力兼容(custom-tab-bar/workers/云开发等)](../advance/)
+* [小程序插件](../advance/plugin.md)
+* [模板预编译](./template.md#模板预编译)
+* [css预编译](./css.md)
 * [静态资源处理](../advance/image-process.md)
 
 
@@ -76,7 +78,7 @@ Mpx支持全部小程序平台(微信，支付宝，百度，头条，qq)的增�
 * [网络请求](../extend/request.md)
 * [数据mock](../extend/mock.md)
 * [api增强抹平](../extend/api-proxy.md)
-* [webview抹平](todo link)
+* [webview抹平](../../api/extend.md#webview-bridge)
 * [Typescript支持](../tool/ts.md)
 * [I18n国际化](../tool/i18n.md)
 * [单元测试](../tool/unit-test.md)
