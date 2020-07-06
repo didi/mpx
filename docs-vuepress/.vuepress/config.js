@@ -30,6 +30,7 @@ const sidebar = {
         'advance/subpackage',
         'advance/image-process',
         'advance/progressive',
+        'advance/ability-compatible',
         'advance/plugin',
         'advance/platform'
       ]

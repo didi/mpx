@@ -60,7 +60,7 @@ Mpx的编译构建以webpack为基础，针对小程序项目结构深度定制�
 * [分包构建](../advance/subpackage.md#分包)
 * [包体积优化](../advance/subpackage.md)
 * [原生组件支持](../advance/progressive.md#原生接入)
-* [原生能力兼容(custom-tab-bar/workers/云开发等)](../advance/)
+* [原生能力兼容(custom-tab-bar/workers/云开发等)](../advance/ability-compatible.md)
 * [小程序插件](../advance/plugin.md)
 * [模板预编译](./template.md#模板预编译)
 * [css预编译](./css.md)
