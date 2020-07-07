@@ -846,7 +846,7 @@ module.exports = {
 
 ### MpxWebpackPlugin.urlLoader
 
-微信小程序对于图像资源存在一些限制，`MpxWebpackPlugin.urlLoader` 针对这些差异做了相关处理，开发者可以使用web应用开发的方式进行图像资源的引入，`MpxWebpackPlugin.urlLoader` 可根据图像资源的不同引入方式，支持 CDN 或者 Base64 的方式进行处理。更多细节请查阅[图像资源处理](../guide/advance/image-process.md)
+微信小程序对于图像资源存在一些限制，`MpxWebpackPlugin.urlLoader` 针对这些差异做了相关处理，开发者可以使用web应用开发的方式进行图像资源的引入，`MpxWebpackPlugin.urlLoader` 可根据图像资源的不同引入方式，支持 CDN 或者 Base64 的方式进行处理。更多细节请查阅[图像资源处理](../guide/advance/image-process.md)。
 
 - **用法**:
 

@@ -46,7 +46,7 @@ Mpx在性能上做到了极致，我们在框架中通过模板数据依赖收�
 
 最后，Mpx的运行时框架部分仅占用51KB；
 
-Mpx和业内其他框架的运行时性能对比可以参考[这篇文章](todo link)
+Mpx和业内其他框架的运行时性能对比可以参考[这篇文章](https://github.com/hiyuki/mp-framework-benchmark/blob/master/README.md)
 
 ### 状态管理
 
@@ -85,21 +85,21 @@ Mpx支持全部小程序平台(微信，支付宝，百度，头条，qq)的增�
 
 
 Mpx具有以下功能特性：
-* 数据响应 (赋值响应 / [watch](https://didi.github.io/mpx/single/script-enhance.html#watch) / [computed](https://didi.github.io/mpx/single/script-enhance.html#computed))
-* 增强模板语法 ([动态组件](https://didi.github.io/mpx/single/template-enhance.html#%E5%8A%A8%E6%80%81%E7%BB%84%E4%BB%B6) / [样式绑定 / 类名绑定 ](https://didi.github.io/mpx/single/template-enhance.html#class%E4%B8%8Estyle%E7%BB%91%E5%AE%9A) / [内联事件函数](https://didi.github.io/mpx/single/template-enhance.html#%E5%86%85%E8%81%94%E4%BA%8B%E4%BB%B6%E7%BB%91%E5%AE%9A) / [双向绑定](https://didi.github.io/mpx/single/template-enhance.html#%E5%8F%8C%E5%90%91%E7%BB%91%E5%AE%9A) / [refs](https://didi.github.io/mpx/single/template-enhance.html#refs))
-* 极致性能 ([运行时性能优化](https://didi.github.io/mpx/understanding/understanding.html#%E6%95%B0%E6%8D%AE%E5%93%8D%E5%BA%94%E4%B8%8E%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96) / [包体积优化](https://didi.github.io/mpx/understanding/understanding.html#%E5%88%86%E5%8C%85%E5%A4%84%E7%90%86%E7%BB%86%E8%8A%82) / 框架运行时体积14KB)
-* [高效强大的编译构建](https://didi.github.io/mpx/understanding/understanding.html#%E7%BC%96%E8%AF%91%E6%9E%84%E5%BB%BA) (基于webpack / 兼容webpack生态 / 兼容原生小程序 / 完善支持npm场景下的分包输出 / 高效调试)
-* [单文件组件开发](https://didi.github.io/mpx/single/what-is-single-file.html#%E5%8D%95%E6%96%87%E4%BB%B6)
-* [渐进接入 / 原生组件支持](https://didi.github.io/mpx/progressive.html)
-* [状态管理](https://didi.github.io/mpx/store/#%E5%A4%9A%E5%AE%9E%E4%BE%8B) (Vuex规范 / 支持多实例Store)
-* 跨团队开发 ([packages](https://didi.github.io/mpx/single/json-enhance.html#packages))
-* 逻辑复用 ([mixins](https://didi.github.io/mpx/single/script-enhance.html#mixins))
-* [周边能力支持](https://didi.github.io/mpx/extend/) (fetch / api增强 / mock / webview-bridge)
+* 数据响应 (赋值响应 / [watch](./reactive.md) / [computed](./reactive.md))
+* 增强模板语法 ([动态组件](./component.md#动态组件) / [样式绑定 / 类名绑定 ](./class-style-binding.md) / [内联事件函数](./event.md) / [双向绑定](./two-way-binding.md) / [refs](./refs.md))
+* 极致性能 ([运行时性能优化](../understand/runtime.md) / [包体积优化](../advance/subpackage.md#分包) / 框架运行时体积14KB)
+* [高效强大的编译构建](../understand/compile.md) (基于webpack / 兼容webpack生态 / 兼容原生小程序 / 完善支持npm场景下的分包输出 / 高效调试)
+* [单文件组件开发](./single-file.md)
+* [渐进接入 / 原生组件支持](../advance/progressive.md)
+* [状态管理](../advance/store.md) (Vuex规范 / 支持多实例Store)
+* 跨团队开发 ([packages](../advance/subpackage.md#packages))
+* 逻辑复用 ([mixins](../advance/mixin.md))
+* [周边能力支持](../extend/) (fetch / api增强 / mock / webview-bridge)
 * 脚手架支持
-* [多平台增强](https://didi.github.io/mpx/platform.html#%E5%A4%9A%E5%B9%B3%E5%8F%B0%E6%94%AF%E6%8C%81) (支持在微信、支付宝、百度、qq、头条小程序平台中进行增强开发)
-* [跨平台编译](https://didi.github.io/mpx/platform.html#%E8%B7%A8%E5%B9%B3%E5%8F%B0%E7%BC%96%E8%AF%91) (支持以微信为base，将一套代码转换输出到支付宝、百度、qq、头条小程序平台和[web平台](https://didi.github.io/mpx/platform.html#%E8%B7%A8%E5%B9%B3%E5%8F%B0%E8%BE%93%E5%87%BAweb)中运行)
-* [TypeScript支持](https://didi.github.io/mpx/ts.html) (基于ThisType实现了完善的类型推导)
-* [I18n国际化](https://didi.github.io/mpx/i18n.html)
+* [多平台增强](../advance/platform.md#多平台支持) (支持在微信、支付宝、百度、qq、头条小程序平台中进行增强开发)
+* [跨平台编译](../advance/platform.md#跨平台编译) (支持以微信为base，将一套代码转换输出到支付宝、百度、qq、头条小程序平台和[web平台](../advance/platform.md#跨平台输出web)中运行)
+* [TypeScript支持](../tool/ts.md) (基于ThisType实现了完善的类型推导)
+* [I18n国际化](../tool/i18n.md)
 * 单元测试支持 (即将到来)
 * 快应用输出 (即将到来)
 
