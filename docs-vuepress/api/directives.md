@@ -189,6 +189,8 @@ wx:model 默认使用 `value` 属性传值，使用 `wx:model-prop` 定义 wx:mo
 
 wx:model 默认监听 `input` 事件，可以使用 `wx:model-event` 定义 wx:model 指令对应的事件；
 
+示例：
+
 父组件
 ```html
 <template>
@@ -203,9 +205,17 @@ wx:model 默认监听 `input` 事件，可以使用 `wx:model-event` 定义 wx:m
     }
   })
 </script>
+<script type="application/json">
+  {
+    "usingComponents": {
+      "customCheck": "./customCheck"
+    }
+  }
+</script>
+
 ```
 
-子组件：（customCheck.mpx）
+子组件：(customCheck.mpx)
 ```html
 <template>
   <view bindtap="handleTap" class="viewProps">{{checkedProp}}</view>
@@ -252,6 +262,60 @@ wx:model 默认监听 `input` 事件，可以使用 `wx:model-event` 定义 wx:m
 
 ## wx:model-filter
 
+在使用 `wx:model` 时我们可能需要像 Vue 的 `.trim` 、`.lazy` 这样的修饰符来对双向数据绑定的数据进行过滤和修饰；Mpx 通过增强指令 `wx:model-filter` 可以实现这一功能；
+该指令可以绑定内建的 filter 或者自定义的 filter 方法，该方法接收过滤前的值，返回过滤操作后的值。
+
+例如我们希望拿到的 input 元素中的数据是经过 trim 的。示例：
+
+> 当然，Mpx 已经内置了 trim 过滤器；可以通过 wx:model-filter="trim" 直接使用；
+
+```html
+<template>
+  <view class="cover-page">
+    <view>
+       <!-- wx:model-filter 过滤wx:model 的值-->
+      <input type="text" wx:model-filter="trimSpace" wx:model="{{filterData}}" />
+      <view >{{filterData.length}}</view>
+    </view>
+  </view>
+</template>
+
+<script>
+  import { createPage } from '@mpxjs/core'
+  createPage({
+    data: {
+      filterData: 'model-filter'
+    },
+    trimSpace (val) {
+      // wx:model-filter 绑定的 filter 方法
+      return typeof val === 'string' && val.trim()
+    },
+    methods: {
+    }
+  })
+</script>
+``` 
+
+filter 方法除可以是和 `methods` 平级的方法，还可以是 `methods` 中的方法。
+
+```html
+<template>...</template>  
+<script>
+  import { createPage } from '@mpxjs/core'
+  createPage({
+    data: {
+      filterData: 'model-filter'
+    },
+    methods: {
+      trimSpace (val) {
+        // wx:model-filter 支持将过滤器方法定义成 methods 中的方法
+        return typeof val === 'string' && val.trim()
+      }
+    }
+  })
+</script>
+```
+
 ## wx:ref
 
 * **预期：** `String`
@@ -260,13 +324,11 @@ wx:model 默认监听 `input` 事件，可以使用 `wx:model-event` 定义 wx:m
 
   Mpx提供了 `wx:ref=xxx` 来更方便获取 WXML 节点信息的对象。在JS里只需要通过this.$refs.xxx 即可获取节点。
 
-  ```html
+```html
   <view wx:ref="tref">
     123
   </view>
-  ```
 
-  ```js
   <script>
     Page({
       ready () {
