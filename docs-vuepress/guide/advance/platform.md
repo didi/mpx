@@ -1,7 +1,4 @@
 # 跨平台
-
-todo 梳理更新内容
-
 ## 多平台支持
 
 Mpx支持在多个小程序平台中进行增强，目前支持的小程序平台包括微信，支付宝，百度，qq和头条，不过自2.0版本后，Mpx支持了以微信增强语法为base的跨平台输出，实现了一套业务源码在多端输出运行的能力，大大提升了多小程序平台业务的开发效率，详情可以查看[跨平台编译](#跨平台编译)
@@ -18,6 +15,7 @@ Mpx支持在多个小程序平台中进行增强，目前支持的小程序平�
 双向绑定辅助属性|wx:model-prop|a:model-prop|s-model-prop|qq:model-prop|tt:model-prop
 双向绑定辅助属性|wx:model-event|a:model-event|s-model-event|qq:model-event|tt:model-event
 双向绑定辅助属性|wx:model-value-path|a:model-value-path|s-model-value-path|qq:model-value-path|tt:model-value-path
+双向绑定辅助属性|wx:model-filter|a:model-filter|s-model-filter|qq:model-filter|tt:model-filter
 动态样式绑定|wx:class|a:class|s-class|qq:class|暂不支持
 动态样式绑定|wx:style|a:style|s-style|qq:style|暂不支持
 获取节点/组件实例|wx:ref|a:ref|s-ref|qq:ref|tt:ref

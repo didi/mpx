@@ -9,6 +9,7 @@ const sidebar = {
         'basic/single-file',
         'basic/ide',
         'basic/template',
+        'basic/css',
         'basic/reactive',
         'basic/class-style-binding',
         'basic/conditional-render',
@@ -29,6 +30,7 @@ const sidebar = {
         'advance/subpackage',
         'advance/image-process',
         'advance/progressive',
+        'advance/ability-compatible',
         'advance/plugin',
         'advance/platform'
       ]

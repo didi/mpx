@@ -414,19 +414,100 @@ mpx.mixin([
 
 ## toPureObject
 
+- **参数**：
+  - `{Object} options`
+
+- **用法**:
+
+由于使用的 mobx 的响应式数据，所以业务拿到的数据可能是 mobx 响应式数据实例（包含了些其他属性），使用`toPureObject`方法可以将响应式的数据转化成纯 js 对象。
+
+```js
+import mpx, {toPureObject} from '@mpxjs/core'
+// mpx.toPureObject(...)
+const pureObject = toPureObject(object)
+```
+
 ## observable
+
+- **参数**：
+  - `{Object} options`
+
+- **用法**:
+
+用于创建响应式数据，属于 mobx 提供的能力。
+
+```js
+import mpx, {observable} from '@mpxjs/core'
+// mpx.observable(...)
+const a = observable(object)
+```
 
 ## watch
 
+- **参数**：
+  - `{Object} context`
+  - `{String | Function} expr`
+  - `{Function | Object} handler`
+
+- **用法**:
+
+用于观察数据从而触发相应操作。参数详细说明：
+1. `context`：回调执行的上下文。
+2. `expr`：观察的表达式。可以是 path 字符串（取值将在context上进行查找），也可以是函数。
+3. `handler`：响应函数，如果是对象，则 handler.handler 为回调函数，其他参数作为 options，与组件的 watch 一致。
+
+```js
+import mpx, {watch, observable} from '@mpxjs/core'
+
+const a = observable({name: 1})
+watch(null, () => {
+  console.log(a.name)
+  return a.name // return一个表达式，当其值发生变化，会触发到响应函数，即第三个参数
+}, (val) => {
+  console.log('update a.name', val)
+})
+a.name = 10
+```
+
 ## use
+>用于安装外部扩展, 支持多参数
+方法接收两个参数：mpx.use(plugin, options)
+- 第一个参数是要安装的外部扩展
+- 第二个参数是对象，如果第二个参数是一个包含（prefix or postfix）的option， 那么将会对插件扩展的属性添加前缀或后缀
+
+**示例：**
+```js
+import mpx from '@mpxjs/core'
+import test from './test'
+mpx.use(test)
+mpx.use(test, {prefix: 'mpx'}, 'otherparams')
+```
 
 ## set
+用于对一个响应式对象新增属性，会`触发订阅者更新操作`
+- **参数**：
+  - `{Object | Array} target`
+  - `{string | number} propertyName/index`
+  - `{any} value`
 
-## remove
+- **示例：**
+```js
+mport mpx, {observable} from '@mpxjs/core'
+const person = observable({name: 1})
+mpx.set(person, 'age', 17) // age 改变后会触发订阅者视图更新
+```
 
 ## delete
-
-## setConvertRule
+用于对一个响应式对象删除属性，会`触发订阅者更新操作`
+- **参数**：
+  - `{Object | Array} target`
+  - `{string | number} propertyName/index`
+- **示例：**
+```js
+mport mpx, {observable} from '@mpxjs/core'
+const person = observable({name: 1})
+mpx.delete(person, 'age')
+```
 
 ## getMixin
 专为ts项目提供的反向推导辅助方法，该函数接收类型为 `Object` ,会将传入的嵌套mixins对象拉平成一个扁平的mixin对象
@@ -479,4 +560,56 @@ createComponent({
 
 ## getComputed
 
+- **参数**：
+  - `{Function} computedItem`
+
+- **用法**:
+
+Typescript 类型推导辅助函数。在 computed 中访问当前 computed 对象中的其他计算属性时，需要用 getComputed 辅助函数包裹。
+
+```js
+import {createComponent, getComputed} from '@mpxjs/core'
+
+createComponent({
+  data: {
+    a: 1,
+    b: '2'
+  },
+  computed: {
+    c() {
+      return this.b
+    },
+    d() {
+      return getComputed(this.c) + this.a + this.a
+    },
+  }
+})
+```
+
 ## implement
+
+- **参数**：
+  - `{String} name` 
+  - `{Object} options`
+    - `{Array} modes`：需要取消的平台
+    - `{Boolean} remove`：是否将此能力直接移除
+    - `{Function} processor`：设置成功的回调函数
+
+
+- **用法**:
+
+以微信为 base 将代码转换输出到其他平台时（如支付宝、web 平台等），会存在一些无法进行模拟的跨平台差异，会在运行时进行检测并报错指出，例如微信转支付宝时使用 moved 生命周期等。使用`implement`方法可以取消这种报错。您可以使用 mixin 自行实现跨平台差异，然后使用 implement 取消报错。
+
+```js
+import mpx from '@mpxjs/core'
+
+if (__mpx_mode__ === 'web') {
+  const processor = () => {
+  }
+  mpx.implement('onShareAppMessage', {
+    modes: ['web'], // 需要取消的平台，可配置多个
+    remove: true, // 是否将此能力直接移除
+    processor // 设置成功的回调函数
+  })
+}
+```
