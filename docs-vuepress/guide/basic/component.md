@@ -106,7 +106,7 @@ Mpx中提供了使用方法类似于 Vue 的动态组件能力，这是一个基
 
 ```
 
-默认情况下，一个模板中只能包含一个 `<slot></slot>`，如果需要多个 slot，需要在 js 中通过设置 `options.multipleSlots` 启用。
+默认情况下，一个模板中只能包含一个 `<slot></slot>`，如果需要多个 slot，需要在 js 中通过设置 `options.multipleSlots` 启用。多个 `slot` 用 `name` 属性区分，在父组件中分发时，需要为分发内容设置 `slot="someSlotName"` 来指定承接该内容的插槽，someSlotName 是某个子组件 `slot` 标签的 `name` 属性值。 
 
 示例：
 + panel.mpx
@@ -114,6 +114,7 @@ Mpx中提供了使用方法类似于 Vue 的动态组件能力，这是一个基
 ```html
 <template>
   <view class="alert">
+    <!-- 多个 slot 用 name 区分 -->
     <slot name="header"></slot>
     <slot name="body"></slot>
     <slot name="footer"></slot>
@@ -149,6 +150,7 @@ Mpx中提供了使用方法类似于 Vue 的动态组件能力，这是一个基
 <template>
   <view class="cover-page">
     <panel>
+      <!-- 分发时通过 slot="xxx" 指定承接的插槽 -->
       <view slot="header">这是 header</view>
       <view slot="body">这是 body</view>
       <view slot="footer">这是 footer</view>
