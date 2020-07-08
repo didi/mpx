@@ -74,6 +74,10 @@ module.exports = function (script, options, callback) {
       import Vue from 'vue'
       import VueRouter from 'vue-router'
       Vue.use(VueRouter)
+      import BScroll from '@better-scroll/core'
+      import PullDown from '@better-scroll/pull-down'
+      BScroll.use(PullDown)
+      global.__mpxBsIns = BScroll
       global.getApp = function(){}\n`
         if (i18n) {
           const i18nObj = Object.assign({}, i18n)
