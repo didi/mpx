@@ -749,11 +749,13 @@ new MpxWebpackPlugin({
 
 ## MpxWebpackPlugin static methods
 
-MpxWebpackPlugin 通过静态方法暴露了以下五个内置 loader，详情如下：
+`MpxWebpackPlugin` 通过静态方法暴露了以下五个内置 loader，详情如下：
 
 ### MpxWebpackPlugin.loader
 
-MpxWebpackPlugin 所提供的最主要 loader，用于处理 `.mpx` 文件，根据不同的[模式(mode)](/api/compile.html#mode)将 `.mpx` 文件输出为不同的结果。
+`MpxWebpackPlugin` 所提供的最主要 loader，用于处理 `.mpx` 文件，根据不同的[模式(mode)](/api/compile.html#mode)将 `.mpx` 文件输出为不同的结果。
+
+> \* 在微信环境下 `todo.mpx` 被loader处理后的文件为：`todo.wxml`、`todo.wxss`、`todo.js`、`todo.json`
 
 **webpack.conf.js**
 
@@ -763,16 +765,69 @@ module.exports = {
     rules: [
       {
         test: /\.mpx$/,
-        use: MpxWebpackPlugin.loader()
+        use: MpxWebpackPlugin.loader(options)
       }
     ]
   }
 };
 ```
 
+#### Options
+
+##### Options.transRpx `{Array<Object> | Object}`
+
+用于统一转换 px 或者 rpx 单位，默认值为`{}`，详见 [transRpxRules](/api/compile.html#transrpxrules)
+
 :::warning
-旧版 loader 配置属性 `transRpx` **即将移除**，请在统一配置文件 `build/mpx.plugin.conf.js` 中使用 `transRpxRules` 属性进行配置。
+`transRpx` 即将在`v2.6.0`版本中**移除**，请在统一配置文件 `build/mpx.plugin.conf.js` 中使用 `transRpxRules` 属性进行配置。
 :::
+
+##### Options.loaders `{Object}`
+
+可用于对某些资源文件的默认 loader 做覆盖或新增处理，以下例子演示了对 [less-loader](https://webpack.docschina.org/loaders/less-loader/) 做额外配置。
+
+```js
+module.exports = {
+  module: {
+    rules: [
+      {
+        test: /\.mpx$/,
+        use: MpxWebpackPlugin.loader({
+          loaders: { // loaders选项
+            less: [ // 针对less做loader配置
+              'css-loader',
+              {
+                loader: 'less-loader',
+                options: { // 为less-loader添加额外配置
+                  lessOptions: {
+                    strictMath: true
+                  }
+                }
+              }
+            ]
+          }
+        })
+      }
+    ]
+  }
+};
+```
+
+##### Options.templateOption `{Object}`
+
+针对使用其他模板引擎(如 [pug](https://www.pugjs.cn/api/getting-started.html))来编写 template 的情景下，可通过 `options.templateOption` 来传入引擎渲染时的额外参数。等同于：
+
+```js
+const pug = require('pug')
+
+const template = `view(class='gray') 这是一段pug模板`
+
+pug.render(template, options.templateOption)
+```
+
+##### Options.excludedPreLoaders `{RegExp}`
+
+在构建过程中忽略特定 `pre-loader` 对文件的处理，仅支持正则表达式，默认值为 `/eslint-loader/`。
 
 ### MpxWebpackPlugin.pluginLoader
 
