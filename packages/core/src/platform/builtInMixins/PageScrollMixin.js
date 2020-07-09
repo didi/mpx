@@ -30,34 +30,38 @@ export default function onPageScroll (mixinType) {
       },
       mounted () {
         if (this.isWrapper) {
-          this.$vnode.elm.style.position = 'fixed'
-          this.$vnode.elm.style.top = 0
-          this.$vnode.elm.style.left = 0
-          this.$vnode.elm.style.bottom = 0
-          this.$vnode.elm.style.right = 0
+          this.$vnode.elm.parentNode.style.position = 'fixed'
+          this.$vnode.elm.parentNode.style.top = 0
+          this.$vnode.elm.parentNode.style.left = 0
+          this.$vnode.elm.parentNode.style.bottom = 0
+          this.$vnode.elm.parentNode.style.right = 0
         }
-        // eslint-disable-next-line no-undef
-        window.bsIns = new __mpxBsIns(this.$vnode.elm, {
-          scrollY: true,
-          probeType: 2,
-          pullUpLoad: {
-            threshold: 20
-          },
-          bounceTime: TIME_BOUNCE,
-          pullDownRefresh: {
-            threshold: THRESHOLD,
-            stop: STOP
-          }
-        })
+        if (!this.bsIns) {
+          // eslint-disable-next-line no-undef
+          this.bsIns = new __mpxBsIns(this.$vnode.elm.parentNode, {
+            scrollY: true,
+            probeType: 2,
+            pullUpLoad: {
+              threshold: 20
+            },
+            bounceTime: TIME_BOUNCE,
+            pullDownRefresh: {
+              threshold: THRESHOLD,
+              stop: STOP
+            }
+          })
+        } else {
+          this.bsIns.refresh()
+        }
         if (this.isOnPageScroll) {
           this.onPageScrollMethod = this.$vnode.componentOptions.Ctor.options.onPageScroll && this.$vnode.componentOptions.Ctor.options.onPageScroll[0]
-          window.bsIns.on('scroll', this.onPageScrollHandler)
+          this.bsIns.on('scroll', this.onPageScrollHandler)
         }
         if (this.isOnReachBottomDistance) {
           this.onReachBottomDistance = this.$vnode.componentOptions.Ctor.options.onReachBottomDistance || 50
           // eslint-disable-next-line no-mixed-operators
           this.onReachBottomMethod = this.$vnode.componentOptions.Ctor.options.onReachBottom && this.$vnode.componentOptions.Ctor.options.onReachBottom[0] || function () {}
-          window.bsIns.on('scroll', this.onReachBottomHandler)
+          this.bsIns.on('scroll', this.onReachBottomHandler)
         }
         if (this.isEnablePullDownRefresh) {
           // eslint-disable-next-line no-mixed-operators
@@ -73,7 +77,7 @@ export default function onPageScroll (mixinType) {
             }
           }
 
-          let loading = this.$vnode.elm.firstChild.appendChild(document.createElement('div'))
+          let loading = this.$vnode.elm.appendChild(document.createElement('div'))
           loading.innerHTML = 'loading...'
           loading.style.position = 'absolute'
           loading.style.width = '100%'
@@ -84,17 +88,17 @@ export default function onPageScroll (mixinType) {
           loading.style.color = '#999'
           loading.style.top = 0
 
-          window.bsIns.on('pullingDown', this.pullingDownHandler)
+          this.bsIns.on('pullingDown', this.pullingDownHandler)
         } else {
-          window.bsIns.closePullDown()
+          this.bsIns.closePullDown()
         }
       },
       methods: {
 
         async pullingDownHandler () {
           await this.requestData()
-          window.bsIns.finishPullDown()
-          window.bsIns.refresh()
+          this.bsIns.finishPullDown()
+          this.bsIns.refresh()
         },
 
         async requestData () {
@@ -119,10 +123,10 @@ export default function onPageScroll (mixinType) {
         },
 
         onReachBottomHandler (pos) {
-          if ((pos.y > window.bsIns.maxScrollY + this.onReachBottomDistance && pos.y < window.bsIns.maxScrollY + this.onReachBottomDistance + 5) && window.bsIns.movingDirectionY === 1 && this.flag) {
+          if ((pos.y > this.bsIns.maxScrollY + this.onReachBottomDistance && pos.y < this.bsIns.maxScrollY + this.onReachBottomDistance + 5) && this.bsIns.movingDirectionY === 1 && this.flag) {
             this.flag = false
             this.onReachBottomMethod()
-          } else if (pos.y > window.bsIns.maxScrollY + this.onReachBottomDistance && window.bsIns.movingDirectionY === -1) {
+          } else if (pos.y > this.bsIns.maxScrollY + this.onReachBottomDistance && this.bsIns.movingDirectionY === -1) {
             this.flag = true
           }
         }
