@@ -4,7 +4,7 @@ export default function pageTitleMixin (mixinType) {
     return {
       activated () {
         if (this.$vnode.componentOptions && this.$options.MpxPageConfig.navigationBarTitleText) {
-          document.title = this.$options.MpxPageConfig.navigationBarTitleText
+          document.title = this.$options.__mpxPageConfig.navigationBarTitleText
         }
       }
     }

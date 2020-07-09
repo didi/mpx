@@ -72,7 +72,10 @@ module.exports = function (script, options, callback) {
       import Vue from 'vue'
       import VueRouter from 'vue-router'
       Vue.use(VueRouter)
-      global.getApp = function(){}\n`
+      global.getApp = function(){}
+      global.__networkTimeout = ${JSON.stringify(jsonConfig.networkTimeout)}
+      global.__tabBar = ${JSON.stringify(jsonConfig.tabBar)}
+      global.__mpxPageConfig = ${JSON.stringify(jsonConfig.window)}\n`
         if (i18n) {
           const i18nObj = Object.assign({}, i18n)
           content += `
