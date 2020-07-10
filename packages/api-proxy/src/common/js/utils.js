@@ -46,7 +46,7 @@ const handleSuccess = (opts, getOptions = noop, thisObj) => {
 
 function genFromMap () {
   const result = {}
-  const platforms = ['wx', 'ali', 'swan', 'qq', 'tt', 'web']
+  const platforms = ['wx', 'ali', 'swan', 'qq', 'jd', 'tt', 'web']
   platforms.forEach((platform) => {
     result[`__mpx_src_mode_${platform}__`] = platform
   })
@@ -62,6 +62,8 @@ function getEnvObj () {
     return swan
   } else if (typeof qq !== 'undefined' && typeof qq.getSystemInfo === 'function') {
     return qq
+  } else if (typeof jd !== 'undefined' && typeof jd.getSystemInfo === 'function') {
+    return jd
   } else if (typeof tt !== 'undefined' && typeof tt.getSystemInfo === 'function') {
     return tt
   }

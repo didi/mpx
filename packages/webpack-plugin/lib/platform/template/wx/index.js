@@ -8,7 +8,7 @@ const stringifyWithResolveComputed = templateCompiler.stringifyWithResolveComput
 
 module.exports = function getSpec ({ warn, error }) {
   const spec = {
-    supportedModes: ['ali', 'swan', 'qq', 'tt', 'web'],
+    supportedModes: ['ali', 'swan', 'qq', 'jd', 'tt', 'web'],
     // props预处理
     preProps: [],
     // props后处理
@@ -227,6 +227,13 @@ module.exports = function getSpec ({ warn, error }) {
           const dir = this.test.exec(name)[1]
           return {
             name: 'qq:' + dir,
+            value
+          }
+        },
+        jd ({ name, value }) {
+          const dir = this.test.exec(name)[1]
+          return {
+            name: 'jd:' + dir,
             value
           }
         },

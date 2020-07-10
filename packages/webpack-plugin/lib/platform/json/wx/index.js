@@ -36,7 +36,8 @@ module.exports = function getSpec ({ warn, error }) {
   }
 
   const spec = {
-    supportedModes: ['ali', 'swan', 'qq', 'tt'],
+    // todo 京东小程序适配
+    supportedModes: ['ali', 'swan', 'qq', 'jd', 'tt'],
     normalizeTest,
     page: [
       {
@@ -65,6 +66,7 @@ module.exports = function getSpec ({ warn, error }) {
         test: 'disableSwipeBack',
         ali: deletePath(),
         qq: deletePath(),
+        jd: deletePath(),
         swan: deletePath()
       },
       {

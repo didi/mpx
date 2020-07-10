@@ -13,6 +13,7 @@ function transformApi (options) {
   const platformMap = {
     'wx_ali': wxToAliApi,
     'qq_ali': wxToAliApi,
+    'jd_ali': wxToAliApi,
     'swan_ali': wxToAliApi,
     'tt_ali': wxToAliApi
   }
