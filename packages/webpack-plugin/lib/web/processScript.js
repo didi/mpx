@@ -77,7 +77,7 @@ module.exports = function (script, options, callback) {
       import BScroll from '@better-scroll/core'
       import PullDown from '@better-scroll/pull-down'
       BScroll.use(PullDown)
-      global.__mpxBsIns = BScroll
+      global.BScroll = BScroll
       global.getApp = function(){}\n`
         if (i18n) {
           const i18nObj = Object.assign({}, i18n)
