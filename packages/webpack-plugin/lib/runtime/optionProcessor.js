@@ -13,6 +13,30 @@ export default function processOption (
   VueI18n,
   i18n
 ) {
+  if (ctorType === 'page') {
+    const pageConfigList = [
+      'navigationBarBackgroundColor',
+      'navigationBarTextStyle',
+      'navigationBarTitleText',
+      'navigationStyle',
+      'backgroundColor',
+      'backgroundColorTop',
+      'backgroundColorBottom',
+      'enablePullDownRefresh',
+      'backgroundTextStyle',
+      'onReachBottomDistance',
+      'pageOrientation',
+      'disableScroll'
+    ]
+    const mpxPageConfig = Object.assign({}, window.__mpxPageConfig)
+    pageConfigList.forEach(key => {
+      if (jsonConfig[key]) {
+        mpxPageConfig[key] = jsonConfig[key]
+      }
+    })
+    option.__mpxPageConfig = mpxPageConfig
+  }
+  
   if (ctorType === 'app') {
     // 对于app中的组件需要全局注册
     for (var componentName in componentsMap) {
@@ -129,28 +153,6 @@ export default function processOption (
         option.components[componentName] = component
       }
     }
-
-    const pageConfigList = [
-      'navigationBarBackgroundColor',
-      'navigationBarTextStyle',
-      'navigationBarTitleText',
-      'navigationStyle',
-      'backgroundColor',
-      'backgroundColorTop',
-      'backgroundColorBottom',
-      'enablePullDownRefresh',
-      'backgroundTextStyle',
-      'onReachBottomDistance',
-      'pageOrientation',
-      'disableScroll'
-    ]
-    const mpxPageConfig = Object.assign({}, window.__mpxPageConfig)
-    pageConfigList.forEach(key => {
-      if (jsonConfig[key]) {
-        mpxPageConfig[key] = jsonConfig[key]
-      }
-    })
-    option.__mpxPageConfig = mpxPageConfig
   }
 
   if (mpxCid) {
