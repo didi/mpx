@@ -14,27 +14,7 @@ export default function processOption (
   i18n
 ) {
   if (ctorType === 'page') {
-    const pageConfigList = [
-      'navigationBarBackgroundColor',
-      'navigationBarTextStyle',
-      'navigationBarTitleText',
-      'navigationStyle',
-      'backgroundColor',
-      'backgroundColorTop',
-      'backgroundColorBottom',
-      'enablePullDownRefresh',
-      'backgroundTextStyle',
-      'onReachBottomDistance',
-      'pageOrientation',
-      'disableScroll'
-    ]
-    const mpxPageConfig = Object.assign({}, window.__mpxPageConfig)
-    pageConfigList.forEach(key => {
-      if (jsonConfig[key]) {
-        mpxPageConfig[key] = jsonConfig[key]
-      }
-    })
-    option.__mpxPageConfig = mpxPageConfig
+    option.__mpxPageConfig = Object.assign({}, window.__mpxPageConfig, jsonConfig)
   }
   if (ctorType === 'app') {
     // 对于app中的组件需要全局注册

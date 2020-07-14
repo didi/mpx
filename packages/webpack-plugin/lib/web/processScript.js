@@ -138,12 +138,25 @@ module.exports = function (script, options, callback) {
         : (script.content + '\n') + '\n'
       // 配置平台转换通过createFactory在core中convertor中定义和进行
       // 通过processOption进行组件注册和路由注入
+      const pureJsonConfig = {}
+      if (ctorType === 'page') {
+        const uselessOptions = new Set([
+          'usingComponents',
+          'style',
+          'singlePage'
+        ])
+        Object.keys(jsonConfig)
+          .filter(key => !uselessOptions.has(key))
+          .forEach(key => {
+            pureJsonConfig[key] = jsonConfig[key]
+          })
+      }
       content += `export default processOption(
         global.currentOption,
         ${JSON.stringify(ctorType)},
         ${JSON.stringify(firstPage)},
         ${JSON.stringify(mpxCid)},
-        ${JSON.stringify(jsonConfig)},
+        ${JSON.stringify(pureJsonConfig)},
         ${shallowStringify(pagesMap)},
         ${shallowStringify(componentsMap)}`
 
