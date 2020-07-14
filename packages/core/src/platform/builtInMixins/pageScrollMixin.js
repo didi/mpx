@@ -50,7 +50,7 @@ export default function onPageScroll (mixinType) {
             observeDOM: !!this.$options.enableObserveDOM
           }
           try {
-            bs = new BScroll(this.$el.parentNode.parentNode, bsConfig)
+            bs = new global.BScroll(this.$el.parentNode.parentNode, bsConfig)
           } catch (e) {
             const location = this.__mpxProxy && this.__mpxProxy.options.mpxFileResource
             return error(`Better scroll init error, please check.`, location, e)
@@ -90,7 +90,6 @@ export default function onPageScroll (mixinType) {
           this.__lastScrollY = bs.y
           off(this.__disposer)
         }
-
       },
       beforeDestroy () {
         off(this.__disposer)

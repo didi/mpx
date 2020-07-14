@@ -1,5 +1,4 @@
-import { webHandleSuccess, webHandleFail } from '../../../common/js'
-import { error } from '../../../common/js'
+import { webHandleSuccess, webHandleFail, error } from '../../../common/js'
 
 function stopPullDownRefresh (options = {}) {
   const router = window.__mpxRouter
@@ -42,7 +41,6 @@ function startPullDownRefresh (options = {}) {
     }
   })
 }
-
 
 export {
   stopPullDownRefresh,
