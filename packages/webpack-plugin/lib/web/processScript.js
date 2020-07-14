@@ -76,6 +76,8 @@ module.exports = function (script, options, callback) {
       Vue.use(VueRouter)
       import BScroll from '@better-scroll/core'
       import PullDown from '@better-scroll/pull-down'
+      import ObserveDOM from '@better-scroll/observe-dom'
+      BScroll.use(ObserveDOM)
       BScroll.use(PullDown)
       global.BScroll = BScroll
       global.getApp = function(){}\n`

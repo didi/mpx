@@ -1,7 +1,6 @@
 import builtInKeysMap from '../builtInKeysMap'
 import mergeOptions from '../../../core/mergeOptions'
 import MPXProxy from '../../../core/proxy'
-import { SHOW, HIDE } from '../../../core/innerLifecycle'
 
 function filterOptions (options) {
   const newOptions = {}
@@ -40,16 +39,6 @@ export function getDefaultOptions (type, { rawOptions = {} }) {
       this.__mpxProxy && this.__mpxProxy.destroyed()
     }
   }]
-  if (type === 'page') {
-    rootMixins.push({
-      activated () {
-        this.__mpxProxy && this.__mpxProxy.callUserHook(SHOW)
-      },
-      deactivated () {
-        this.__mpxProxy && this.__mpxProxy.callUserHook(HIDE)
-      }
-    })
-  }
   rawOptions.mixins = rawOptions.mixins ? rootMixins.concat(rawOptions.mixins) : rootMixins
   rawOptions = mergeOptions(rawOptions, type, false)
   return filterOptions(rawOptions)

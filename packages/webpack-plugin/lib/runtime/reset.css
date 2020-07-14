@@ -52,3 +52,75 @@ span {
   white-space: pre-line;
 }
 
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+
+.pull-down-loading {
+  text-align: center;
+  position: absolute;
+  width: 100%;
+  top: -56px;
+  height: 56px;
+  line-height: 56px;
+}
+
+/**
+ * ==============================================
+ * Dot Flashing
+ * ==============================================
+ */
+.dot-flashing {
+  display: inline-block;
+  position: relative;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #666;
+  animation: dot-flashing .4s infinite steps(2, jump-none) alternate;
+  animation-delay: .2s;
+}
+
+.dot-flashing::before, .dot-flashing::after {
+  content: '';
+  display: inline-block;
+  position: absolute;
+  top: 0;
+}
+
+.dot-flashing::before {
+  left: -14px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #666;
+  animation: dot-flashing .4s infinite steps(2, jump-none) alternate;
+  animation-delay: 0s;
+}
+
+.dot-flashing::after {
+  left: 14px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #666;
+  animation: dot-flashing .4s infinite steps(2, jump-none) alternate;
+  animation-delay: .4s;
+}
+
+@keyframes dot-flashing {
+  0% {
+    background-color: #666;
+  }
+  50% {
+    background-color: #bbb;
+  }
+  100% {
+    background-color: #ddd;
+  }
+}
+
+

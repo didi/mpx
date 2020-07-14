@@ -35,8 +35,6 @@ export default {
     '__mounted__': ['ready', 'onReady'],
     '__destroyed__': ['detached', 'onUnload'],
     '__updated__': ['updated'],
-    '__show__': ['onShow'],
-    '__hide__': ['onHide'],
     'errorCaptured': ['onError']
   },
   convert (options) {

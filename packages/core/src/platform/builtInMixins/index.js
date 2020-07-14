@@ -6,7 +6,7 @@ import showMixin from './showMixin'
 import relationsMixin from './relationsMixin'
 import i18nMixin from './i18nMixin'
 import pageTitleMixin from './pageTitleMixin'
-import onPageScroll from './PageScrollMixin'
+import pageScrollMixin from './pageScrollMixin'
 
 export default function getBuiltInMixins (options, type) {
   if (__mpx_mode__ === 'web') {
@@ -14,7 +14,8 @@ export default function getBuiltInMixins (options, type) {
       proxyEventMixin(),
       refsMixin(),
       pageTitleMixin(type),
-      onPageScroll(type)
+      pageStatusMixin(type),
+      pageScrollMixin(type)
     ].filter(item => item)
   } else {
     return [

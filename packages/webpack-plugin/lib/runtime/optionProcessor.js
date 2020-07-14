@@ -1,5 +1,3 @@
-import { SHOW, HIDE } from '@mpxjs/core/src/core/innerLifecycle'
-
 export default function processOption (
   option,
   ctorType,
@@ -107,9 +105,9 @@ export default function processOption (
         var vnode = window.__mpxRouter.__mpxActiveVnode
         if (vnode && vnode.componentInstance) {
           if (document.hidden) {
-            vnode.componentInstance.__mpxProxy && vnode.componentInstance.__mpxProxy.callUserHook(HIDE)
+            vnode.componentInstance.onHide && vnode.componentInstance.onHide()
           } else {
-            vnode.componentInstance.__mpxProxy && vnode.componentInstance.__mpxProxy.callUserHook(SHOW)
+            vnode.componentInstance.onShow && vnode.componentInstance.onShow()
           }
         }
       })
