@@ -27,7 +27,7 @@ module.exports = function (script, options, callback) {
   const mpxCid = options.mpxCid
   const getRequireForSrc = options.getRequireForSrc
   const i18n = options.i18n
-  const pageTitle = options.pageTitle
+  const jsonConfig = options.jsonConfig
 
   const stringifyRequest = r => loaderUtils.stringifyRequest(loaderContext, r)
 
@@ -72,7 +72,10 @@ module.exports = function (script, options, callback) {
       import Vue from 'vue'
       import VueRouter from 'vue-router'
       Vue.use(VueRouter)
-      global.getApp = function(){}\n`
+      global.getApp = function(){}
+      global.__networkTimeout = ${JSON.stringify(jsonConfig.networkTimeout)}
+      global.__tabBar = ${JSON.stringify(jsonConfig.tabBar)}
+      global.__mpxPageConfig = ${JSON.stringify(jsonConfig.window)}\n`
         if (i18n) {
           const i18nObj = Object.assign({}, i18n)
           content += `
@@ -135,12 +138,25 @@ module.exports = function (script, options, callback) {
         : (script.content + '\n') + '\n'
       // 配置平台转换通过createFactory在core中convertor中定义和进行
       // 通过processOption进行组件注册和路由注入
+      const pureJsonConfig = {}
+      if (ctorType === 'page') {
+        const uselessOptions = new Set([
+          'usingComponents',
+          'style',
+          'singlePage'
+        ])
+        Object.keys(jsonConfig)
+          .filter(key => !uselessOptions.has(key))
+          .forEach(key => {
+            pureJsonConfig[key] = jsonConfig[key]
+          })
+      }
       content += `export default processOption(
         global.currentOption,
         ${JSON.stringify(ctorType)},
         ${JSON.stringify(firstPage)},
         ${JSON.stringify(mpxCid)},
-        ${JSON.stringify(pageTitle)},
+        ${JSON.stringify(pureJsonConfig)},
         ${shallowStringify(pagesMap)},
         ${shallowStringify(componentsMap)}`
 

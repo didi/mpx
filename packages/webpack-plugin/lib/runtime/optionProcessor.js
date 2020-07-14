@@ -5,7 +5,7 @@ export default function processOption (
   ctorType,
   firstPage,
   mpxCid,
-  pageTitle,
+  jsonConfig,
   pagesMap,
   componentsMap,
   Vue,
@@ -13,6 +13,9 @@ export default function processOption (
   VueI18n,
   i18n
 ) {
+  if (ctorType === 'page') {
+    option.__mpxPageConfig = Object.assign({}, window.__mpxPageConfig, jsonConfig)
+  }
   if (ctorType === 'app') {
     // 对于app中的组件需要全局注册
     for (var componentName in componentsMap) {
@@ -133,10 +136,6 @@ export default function processOption (
 
   if (mpxCid) {
     option.mpxCid = mpxCid
-  }
-
-  if (pageTitle) {
-    option.pageTitle = pageTitle
   }
 
   return option

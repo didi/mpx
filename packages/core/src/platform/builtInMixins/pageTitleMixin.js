@@ -3,8 +3,8 @@ export default function pageTitleMixin (mixinType) {
   if (mixinType === 'page' && __mpx_mode__ === 'web') {
     return {
       activated () {
-        if (this.$vnode.componentOptions && this.$vnode.componentOptions.Ctor.options.pageTitle) {
-          document.title = this.$vnode.componentOptions.Ctor.options.pageTitle
+        if (this.$vnode.componentOptions && this.$options.__mpxPageConfig.navigationBarTitleText) {
+          document.title = this.$options.__mpxPageConfig.navigationBarTitleText
         }
       }
     }
