@@ -8,7 +8,7 @@ const PULL_DOWN_CONFIG = {
 
 let loading, bs
 
-function showLoading (context) {
+function showLoading () {
   loading = loading || document.querySelector('.pull-down-loading')
   if (loading) {
     loading.style.display = 'block'
