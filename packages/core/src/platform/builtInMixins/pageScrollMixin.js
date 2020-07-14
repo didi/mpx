@@ -79,7 +79,7 @@ export default function onPageScroll (mixinType) {
               bs.closePullDown()
             }
             // 处理滚动事件
-            if (this.onPageScroll || this.onReachBottomDistance) {
+            if (this.onPageScroll || this.onReachBottom) {
               on('scroll', this.__mpxPageScrollHandler, this.__disposer)
             }
           }
