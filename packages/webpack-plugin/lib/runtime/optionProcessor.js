@@ -36,7 +36,6 @@ export default function processOption (
     })
     option.__mpxPageConfig = mpxPageConfig
   }
-  
   if (ctorType === 'app') {
     // 对于app中的组件需要全局注册
     for (var componentName in componentsMap) {
