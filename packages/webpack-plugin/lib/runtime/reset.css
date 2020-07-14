@@ -68,11 +68,6 @@ html, body {
   line-height: 56px;
 }
 
-/**
- * ==============================================
- * Dot Flashing
- * ==============================================
- */
 .dot-flashing {
   display: inline-block;
   position: relative;

@@ -3,8 +3,8 @@ export default function pageTitleMixin (mixinType) {
   if (mixinType === 'page') {
     return {
       activated () {
-        if (this.$options.pageTitle) {
-          document.title = this.$options.pageTitle
+        if (this.$options.__mpxPageConfig.navigationBarTitleText) {
+          document.title = this.$options.__mpxPageConfig.navigationBarTitleText
         }
       }
     }

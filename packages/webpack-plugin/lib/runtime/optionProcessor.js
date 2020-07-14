@@ -3,9 +3,7 @@ export default function processOption (
   ctorType,
   firstPage,
   mpxCid,
-  pageTitle,
-  enablePullDownRefresh,
-  onReachBottomDistance,
+  jsonConfig,
   pagesMap,
   componentsMap,
   Vue,
@@ -129,22 +127,13 @@ export default function processOption (
         option.components[componentName] = component
       }
     }
+    if (ctorType === 'page') {
+      option.__mpxPageConfig = Object.assign({}, window.__mpxPageConfig, jsonConfig)
+    }
   }
 
   if (mpxCid) {
     option.mpxCid = mpxCid
-  }
-
-  if (pageTitle) {
-    option.pageTitle = pageTitle
-  }
-
-  if (enablePullDownRefresh) {
-    option.enablePullDownRefresh = enablePullDownRefresh
-  }
-
-  if (onReachBottomDistance) {
-    option.onReachBottomDistance = onReachBottomDistance
   }
 
   return option

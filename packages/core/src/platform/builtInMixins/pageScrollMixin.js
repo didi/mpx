@@ -47,7 +47,7 @@ export default function onPageScroll (mixinType) {
             probeType: 2,
             bounceTime: TIME_BOUNCE,
             pullDownRefresh: PULL_DOWN_CONFIG,
-            observeDOM: !!this.$options.enableObserveDOM
+            observeDOM: !!this.$options.__mpxPageConfig.enableObserveDOM
           }
           try {
             bs = new global.BScroll(this.$el.parentNode.parentNode, bsConfig)
@@ -65,12 +65,12 @@ export default function onPageScroll (mixinType) {
           // 恢复上次滚动位置
           bs.scrollTo(0, this.__lastScrollY)
           // 处理禁止滚动
-          if (this.$options.disableScroll) {
+          if (this.$options.__mpxPageConfig.disableScroll) {
             bs.disable()
           } else {
             bs.enable()
             // 处理下拉刷新效果
-            if (this.$options.enablePullDownRefresh) {
+            if (this.$options.__mpxPageConfig.enablePullDownRefresh) {
               showLoading(this)
               bs.openPullDown(PULL_DOWN_CONFIG)
               on('pullingDown', this.__mpxPullDownHandler, this.__disposer)
@@ -106,7 +106,7 @@ export default function onPageScroll (mixinType) {
         },
         __stopPullDownRefresh () {
           this.__pullingDown = false
-          if (this.$options.enablePullDownRefresh && bs) {
+          if (this.$options.__mpxPageConfig.enablePullDownRefresh && bs) {
             bs.finishPullDown()
           }
         },
@@ -120,7 +120,7 @@ export default function onPageScroll (mixinType) {
 
             // 处理onReachBottom
             if (this.onReachBottom) {
-              const onReachBottomDistance = this.$options.onReachBottomDistance || 50
+              const onReachBottomDistance = this.$options.__mpxPageConfig.onReachBottomDistance || 50
               // 处理ReachBottom
               if (!this.__bottomReached && pos.y <= bs.maxScrollY + onReachBottomDistance && bs.movingDirectionY === 1) {
                 this.__bottomReached = true
