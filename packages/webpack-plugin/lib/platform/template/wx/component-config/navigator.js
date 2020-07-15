@@ -62,7 +62,15 @@ module.exports = function ({ print }) {
         test: /^(success|fail|complete)$/,
         ali: aliEventLog,
         tt: ttEventLog,
-        web: webEventLog
+        web: webEventLog,
+        jd (eventName) {
+          const eventMap = {
+            'success': 'success',
+            'fail': 'error',
+            'complete': 'complete'
+          }
+          return eventMap[eventName]
+        }
       }
     ]
   }

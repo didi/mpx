@@ -7,6 +7,8 @@ module.exports = function ({ print }) {
   const baiduEventLog = print({ platform: 'baidu', tag: TAG_NAME, isError: false, type: 'event' })
   const ttPropLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false })
   const ttEventLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false, type: 'event' })
+  const jdPropLog = print({ platform: 'jd', tag: TAG_NAME, isError: false })
+  const jdEventLog = print({ platform: 'jd', tag: TAG_NAME, isError: false, type: 'event' })
 
   return {
     test: TAG_NAME,
@@ -45,6 +47,10 @@ module.exports = function ({ print }) {
       {
         test: /^(show-info|border-radius|font-size|)$/,
         tt: ttPropLog
+      },
+      {
+        test: /^(border-radius|font-size|duration|bindactiveend)$/,
+        jd: jdPropLog
       }
     ],
     event: [
@@ -52,7 +58,8 @@ module.exports = function ({ print }) {
         test: /^(activeend)$/,
         ali: aliEventLog,
         swan: baiduEventLog,
-        tt: ttEventLog
+        tt: ttEventLog,
+        jd: jdEventLog
       }
     ]
   }

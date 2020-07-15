@@ -5,6 +5,8 @@ module.exports = function ({ print }) {
   const aliEventLogError = print({ platform: 'ali', tag: TAG_NAME, isError: true, type: 'event' })
   const baiduPropLog = print({ platform: 'baidu', tag: TAG_NAME, isError: false })
   const baiduEventLogError = print({ platform: 'baidu', tag: TAG_NAME, isError: true, type: 'event' })
+  const jdPropLog = print({ platform: 'jd', tag: TAG_NAME, isError: false })
+  const jdEventLogError = print({ platform: 'jd', tag: TAG_NAME, isError: true, type: 'event' })
 
   return {
     // 匹配标签名，可传递正则
@@ -18,6 +20,20 @@ module.exports = function ({ print }) {
       {
         test: 'subkey',
         swan: baiduPropLog
+      },
+      {
+        test: /^(covers|polygons|subkey|layer-style|rotate|skew|enable-3D|show-compass|show-scale|enable-overlooking|enable-zoom|enable-scroll|enable-rotate|enable-satellite|enable-traffic|setting)$/,
+        jd: jdPropLog
+      },
+      {
+        test: /^(include-points|show-location)$/,
+        jd ({ name, value }) {
+          const propsMap = {
+            'include-points': 'includePoints',
+            'show-location': 'showLocation'
+          }
+          return propsMap[name]
+        }
       }
     ],
     // 组件事件中的差异部分
@@ -44,6 +60,10 @@ module.exports = function ({ print }) {
       {
         test: 'poitap',
         swan: baiduEventLogError
+      },
+      {
+        test: /^(labeltap|updated|poitap)$/,
+        jd: jdEventLogError
       }
     ]
   }
