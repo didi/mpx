@@ -55,7 +55,10 @@ module.exports = function ({ print }) {
         test: /^(transition|animationfinish)$/,
         ali: aliEventLog,
         tt: ttEventLog,
-        swan: baiduEventLog,
+        swan: baiduEventLog
+      },
+      {
+        test: /^(transition)$/,
         jd: jdEventLog
       }
     ]
