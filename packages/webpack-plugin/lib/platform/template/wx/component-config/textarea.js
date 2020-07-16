@@ -7,6 +7,8 @@ module.exports = function ({ print }) {
   const ttEventLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false, type: 'event' })
   const webPropLog = print({ platform: 'web', tag: TAG_NAME, isError: false })
   const webEventLog = print({ platform: 'web', tag: TAG_NAME, isError: false, type: 'event' })
+  const jdPropLog = print({ platform: 'jd', tag: TAG_NAME, isError: false })
+  const jdEventLog = print({ platform: 'jd', tag: TAG_NAME, isError: false, type: 'event' })
 
   return {
     test: TAG_NAME,
@@ -27,6 +29,10 @@ module.exports = function ({ print }) {
       {
         test: /^(placeholder-style|placeholder-class|fixed|cursor-spacing|show-confirm-bar|adjust-position|hold-keyboard|auto-height)$/,
         web: webPropLog
+      },
+      {
+        test: /^(hold-keyboard|disable-default-padding)$/,
+        jd: jdPropLog
       }
     ],
     event: [
@@ -51,6 +57,10 @@ module.exports = function ({ print }) {
       {
         test: 'confirm',
         web: webEventLog
+      },
+      {
+        test: /^(keyboardheightchange)$/,
+        jd: jdEventLog
       }
     ]
   }

@@ -9,6 +9,8 @@ module.exports = function ({ print }) {
   const ttPropLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false })
   const ttEventLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false, type: 'event' })
   const webPropLog = print({ platform: 'web', tag: TAG_NAME, isError: false })
+  const jdEventLog = print({ platform: 'jd', tag: TAG_NAME, isError: false, type: 'event' })
+  const jdPropLog = print({ platform: 'jd', tag: TAG_NAME, isError: false })
 
   return {
     test: TAG_NAME,
@@ -27,7 +29,8 @@ module.exports = function ({ print }) {
       },
       {
         test: /^(easing-function)$/,
-        qq: qqPropLog
+        qq: qqPropLog,
+        jd: jdPropLog
       },
       {
         test: /^(previous-margin|next-margin|skip-hidden-item-layout|easing-function)$/,
@@ -51,11 +54,9 @@ module.exports = function ({ print }) {
       {
         test: /^(transition|animationfinish)$/,
         ali: aliEventLog,
-        tt: ttEventLog
-      },
-      {
-        test: /^(transition)$/,
-        swan: baiduEventLog
+        tt: ttEventLog,
+        swan: baiduEventLog,
+        jd: jdEventLog
       }
     ]
   }

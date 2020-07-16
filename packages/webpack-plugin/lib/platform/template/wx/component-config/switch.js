@@ -4,6 +4,7 @@ module.exports = function ({ print }) {
   const aliPropLog = print({ platform: 'ali', tag: TAG_NAME, isError: false })
   const aliEventLog = print({ platform: 'ali', tag: TAG_NAME, isError: false, type: 'event' })
   const ttPropLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false })
+  const jdPropLog = print({ platform: 'jd', tag: TAG_NAME, isError: false })
 
   return {
     test: TAG_NAME,
@@ -18,7 +19,8 @@ module.exports = function ({ print }) {
       },
       {
         test: /^disabled$/,
-        tt: ttPropLog
+        tt: ttPropLog,
+        jd: jdPropLog
       }
     ],
     event: [
