@@ -291,6 +291,11 @@ module.exports = function getSpec ({ warn, error }) {
           const eventName = match[2]
           runRules(eventRules, eventName, { mode: 'swan' })
         },
+        jd ({ name, value }, { eventRules }) {
+          const match = this.test.exec(name)
+          const eventName = match[2]
+          runRules(eventRules, eventName, { mode: 'jd' })
+        },
         web ({ name, value }, { eventRules, el }) {
           const match = this.test.exec(name)
           const prefix = match[1]
