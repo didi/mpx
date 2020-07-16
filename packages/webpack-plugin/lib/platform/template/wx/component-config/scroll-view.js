@@ -23,7 +23,7 @@ module.exports = function ({ print }) {
         test: /^(enable-flex|scroll-anchoring|refresher-enabled|refresher-threshold|refresher-default-style|refresher-background|refresher-triggered)$/,
         jd: jdPropLog,
         ali: aliPropLog
-      },
+      }
     ],
     event: [
       {
