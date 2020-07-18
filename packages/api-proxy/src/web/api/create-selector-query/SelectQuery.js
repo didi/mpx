@@ -70,7 +70,7 @@ class SelectQuery {
   }
 
   _handleFields (fields, el, selector) {
-    const { id, dataset, rect, size, scrollOffset, properties = [], computedStyle = [] } = fields
+    const { id, dataset, rect, size, scrollOffset, properties = [], computedStyle = [], node } = fields
     const { left, right, top, bottom, width, height } = el.getBoundingClientRect()
 
     const res = {}
@@ -97,6 +97,28 @@ class SelectQuery {
       } else {
         res.width = width
         res.height = height
+      }
+    }
+    // 添加获取节点信息
+    if (node) {
+      res.node = el
+      // 如果是canvas节点，需要做特殊处理
+      if (isCanvas(el)) {
+        el.createImage = function () {
+          return new Image()
+        }
+        el.requestAnimationFrame = function (callback) {
+          return window.requestAnimationFrame(callback)
+        }
+        el.cancelAnimationFrame = function (requestID) {
+          return window.cancelAnimationFrame(requestID)
+        }
+        const rawGetContext = el.getContext
+        el.getContext = function (...args) {
+          const context = rawGetContext.apply(this, args)
+          // 如果实例方法有变动，可以在这里进行处理
+          return context
+        }
       }
     }
     if (scrollOffset) {
@@ -134,3 +156,8 @@ class SelectQuery {
 }
 
 export default SelectQuery
+
+// 判断是不是canvas元素
+function isCanvas (el) {
+  return el.nodeName && el.nodeName.toLowerCase() === 'canvas'
+}
