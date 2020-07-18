@@ -229,7 +229,7 @@ export default class MPXProxy {
   }
 
   callUserHook (hookName, ...params) {
-    const hook = this.options[hookName]
+    const hook = this.options[hookName] || this.target[hookName]
     if (typeof hook === 'function') {
       hook.call(this.target, ...params)
     }

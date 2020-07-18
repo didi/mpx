@@ -39,3 +39,6 @@ export * from './next-tick'
 
 // onWindowResize offWindowResize
 export * from './window'
+
+// stopPullDownRefresh startPullDownRefresh
+export * from './pull-down'

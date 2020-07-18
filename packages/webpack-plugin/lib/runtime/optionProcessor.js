@@ -1,11 +1,9 @@
-import { SHOW, HIDE } from '@mpxjs/core/src/core/innerLifecycle'
-
 export default function processOption (
   option,
   ctorType,
   firstPage,
   mpxCid,
-  pageTitle,
+  jsonConfig,
   pagesMap,
   componentsMap,
   Vue,
@@ -105,9 +103,9 @@ export default function processOption (
         var vnode = window.__mpxRouter.__mpxActiveVnode
         if (vnode && vnode.componentInstance) {
           if (document.hidden) {
-            vnode.componentInstance.__mpxProxy && vnode.componentInstance.__mpxProxy.callUserHook(HIDE)
+            vnode.componentInstance.onHide && vnode.componentInstance.onHide()
           } else {
-            vnode.componentInstance.__mpxProxy && vnode.componentInstance.__mpxProxy.callUserHook(SHOW)
+            vnode.componentInstance.onShow && vnode.componentInstance.onShow()
           }
         }
       })
@@ -129,14 +127,13 @@ export default function processOption (
         option.components[componentName] = component
       }
     }
+    if (ctorType === 'page') {
+      option.__mpxPageConfig = Object.assign({}, window.__mpxPageConfig, jsonConfig)
+    }
   }
 
   if (mpxCid) {
     option.mpxCid = mpxCid
-  }
-
-  if (pageTitle) {
-    option.pageTitle = pageTitle
   }
 
   return option
