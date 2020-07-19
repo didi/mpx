@@ -26,8 +26,7 @@ const COMPONENT_HOOKS = [
 ]
 
 export const lifecycleProxyMap = {
-  [BEFORECREATE]: ['onCreate'],
-  [CREATED]: ['onInit', 'onReady']
+  [CREATED]: ['onCreate', 'onInit', 'onReady']
 }
 
 export const LIFECYCLE = {

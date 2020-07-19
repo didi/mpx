@@ -11,7 +11,7 @@ export default function createFactory (type) {
     options.__nativeRender__ = !!isNative
     options.__type__ = type
     let ctor
-    if (__mpx_mode__ !== 'web') {
+    if (__mpx_mode__ !== 'web' && __mpx_mode__ !== 'qa') {
       if (customCtor) {
         ctor = customCtor
         customCtorType = customCtorType || type
