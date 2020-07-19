@@ -30,7 +30,6 @@ function transformApiForProxy (context, currentInject) {
 
 function filterOptions (options, type) {
   const newOptions = {}
-  const ignoreProps = builtInKeysMap
   Object.keys(options).forEach(key => {
     if (builtInKeysMap[key] || (key === 'data' && typeof options[key] === 'function')) {
       return
