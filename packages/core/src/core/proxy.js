@@ -66,10 +66,6 @@ export default class MPXProxy {
     if (__mpx_mode__ !== 'web' && __mpx_mode__ !== 'qa') {
       this.initState(this.options)
     }
-    // 没生效后面在看一下
-    if (__mpx_mode__ === 'qa') {
-      this.initWatch(this.options.watch)
-    }
     this.state = CREATED
     this.callUserHook(CREATED, ...params)
     if (__mpx_mode__ !== 'web' && __mpx_mode__ !== 'qa') {
