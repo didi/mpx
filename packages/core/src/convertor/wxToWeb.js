@@ -38,11 +38,6 @@ export default {
     'errorCaptured': ['onError']
   },
   convert (options) {
-    if (options.data && typeof options.data !== 'function') {
-      const rawData = options.data
-      /* eslint-disable no-new-func */
-      options.data = new Function(`return ${JSON.stringify(rawData)};`)
-    }
     if (options.properties) {
       const newProps = {}
       Object.keys(options.properties).forEach(key => {
