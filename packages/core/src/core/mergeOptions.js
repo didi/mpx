@@ -1,4 +1,4 @@
-import { isObject, aliasReplace, findItem, diffAndCloneA, makeMap } from '../helper/utils'
+import { isObject, aliasReplace, findItem, makeMap } from '../helper/utils'
 import { getConvertRule } from '../convertor/convertor'
 import { error, warn } from '../helper/log'
 import builtInKeysMap from '../platform/patch/builtInKeysMap'
