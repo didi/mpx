@@ -21,6 +21,15 @@ module.exports = function (additionalAssets, compilation, options, isProd) {
     let content = new ConcatSource()
     let jsonFile = finalFiles[i] + '.json'
     if (additionalAssets[jsonFile]) {
+      let depth = finalFiles[i].split('/').length
+      let srcPrefix = ''
+      for (let i = 1; i < depth; i++) {
+        if (i === depth - 1) {
+          srcPrefix += '..'
+        } else {
+          srcPrefix += '../'
+        }
+      }
       additionalAssets[jsonFile].forEach(item => {
         let json = JSON.parse(item).usingComponents
         if (json) {
