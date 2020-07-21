@@ -1,33 +1,9 @@
 import MPXProxy from '../../../core/proxy'
-import customKey from '../customOptionKeys'
+import builtInKeysMap from '../builtInKeysMap'
 import mergeOptions from '../../../core/mergeOptions'
 // import { error } from '../../../helper/log'
 
 function transformApiForProxy (context, currentInject) {
-  context.setData = function () {}
-  const rawSetData = context.setData.bind(context)
-  Object.defineProperties(context, {
-    setData: {
-      get () {
-        return context.__mpxProxy.forceUpdate.bind(context.__mpxProxy)
-      },
-      configurable: true
-    },
-    __getInitialData: {
-      get () {
-        return () => {
-          return context._data
-        }
-      },
-      configurable: false
-    },
-    __render: {
-      get () {
-        return rawSetData
-      },
-      configurable: false
-    }
-  })
   if (currentInject) {
     if (currentInject.render) {
       Object.defineProperties(context, {
@@ -54,14 +30,13 @@ function transformApiForProxy (context, currentInject) {
 
 function filterOptions (options, type) {
   const newOptions = {}
-  const ignoreProps = customKey
   Object.keys(options).forEach(key => {
-    if (ignoreProps.indexOf(key) !== -1 || (key === 'data' && typeof options[key] === 'function')) {
+    if (builtInKeysMap[key] || (key === 'data' && typeof options[key] === 'function')) {
       return
     }
     if (key === 'properties' || key === 'props') {
       newOptions['props'] = Object.assign({}, options['properties'], options['props'])
-    } else if (key === 'methods' && type === 'page') {
+    } else if (key === 'methods') {
       Object.assign(newOptions, options[key])
     } else {
       newOptions[key] = options[key]

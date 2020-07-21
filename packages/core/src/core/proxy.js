@@ -42,7 +42,7 @@ export default class MPXProxy {
     this.options = options
     // initial -> created -> mounted -> destroyed
     this.state = 'initial'
-    if (__mpx_mode__ !== 'web') {
+    if (__mpx_mode__ !== 'web' && __mpx_mode__ !== 'qa') {
       if (typeof target.__getInitialData !== 'function') {
         error('Please specify a [__getInitialData] function to get component\'s initial data.', this.options.mpxFileResource)
         return
@@ -55,20 +55,20 @@ export default class MPXProxy {
       this.forceUpdateData = {} // 强制更新的数据
       this.forceUpdateAll = false // 下次是否需要强制更新全部渲染数据
       this.curRenderTask = null
-      this.ignoreProxyMap = makeMap(EXPORT_MPX.config.ignoreProxyWhiteList)
     }
+    this.ignoreProxyMap = makeMap(EXPORT_MPX.config.ignoreProxyWhiteList)
     this.lockTask = asyncLock()
   }
 
   created (...params) {
     this.initApi()
     this.callUserHook(BEFORECREATE)
-    if (__mpx_mode__ !== 'web') {
+    if (__mpx_mode__ !== 'web' && __mpx_mode__ !== 'qa') {
       this.initState(this.options)
     }
     this.state = CREATED
     this.callUserHook(CREATED, ...params)
-    if (__mpx_mode__ !== 'web') {
+    if (__mpx_mode__ !== 'web' && __mpx_mode__ !== 'qa') {
       // 强制走小程序原生渲染逻辑
       this.options.__nativeRender__ ? this.doRender() : this.initRender()
     }
@@ -136,10 +136,12 @@ export default class MPXProxy {
       })
     }
     if (__mpx_mode__ !== 'web') {
-      // 挂载$watch
-      this.target.$watch = (...rest) => this.watch(...rest)
-      // 强制执行render
-      this.target.$forceUpdate = (...rest) => this.forceUpdate(...rest)
+      if (__mpx_mode__ !== 'qa') {
+        // 挂载$watch
+        this.target.$watch = (...rest) => this.watch(...rest)
+        // 强制执行render
+        this.target.$forceUpdate = (...rest) => this.forceUpdate(...rest)
+      }
       this.target.$nextTick = fn => this.nextTick(fn)
     }
   }
