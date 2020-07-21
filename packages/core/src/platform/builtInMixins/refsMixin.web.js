@@ -79,7 +79,7 @@ class SelectQuery {
   }
 
   _handleFields (fields, el, selector) {
-    const { id, dataset, rect, size, scrollOffset, properties = [], computedStyle = [], node} = fields
+    const { id, dataset, rect, size, scrollOffset, properties = [], computedStyle = [], node } = fields
     const { left, right, top, bottom, width, height } = el.getBoundingClientRect()
 
     const res = {}
@@ -111,11 +111,15 @@ class SelectQuery {
     // 添加获取节点信息
     if (node) {
       res.node = el
-      // 如果是canvas节点，需要做特殊处理
       if (isCanvas(el)) {
+        // 设置canvas的画布大小，避免直接使用style标签导致canvas的绘制出现拉伸效果
+        el.width = res.width
+        el.height = res.height
+        // 避免lint检查报错
         el.createImage = function () {
-          return new Image()
+          return new Image()  // eslint-disable-line
         }
+
         el.requestAnimationFrame = function (callback) {
           return window.requestAnimationFrame(callback)
         }
