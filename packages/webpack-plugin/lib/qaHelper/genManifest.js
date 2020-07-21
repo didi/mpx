@@ -1,77 +1,102 @@
-
 const ConcatSource = require('webpack-sources').ConcatSource
-const genManifest = require('./genManifest')
 
-function cleanAssets (assets) {
-  // clean Assets
-  let files = []
-  for (let file in assets) {
-    let filename = /(.*)\..*/.exec(file)[1]
-    if (!files.includes(filename)) {
-      files.push(filename)
-    }
-  }
-  return files
-}
+module.exports = function (compilation, options, isProd) {
+  let pagesMapArray = compilation.__mpx__.pagesMap && Object.values(compilation.__mpx__.pagesMap)
+  let projectEntry = compilation.__mpx__.projectEntry
 
-module.exports = function (additionalAssets, compilation, options, isProd) {
-  let finalFiles = cleanAssets(additionalAssets)
-
-  // integrate assets
-  for (let i = 0; i < finalFiles.length; i++) {
-    let content = new ConcatSource()
-    let jsonFile = finalFiles[i] + '.json'
-    if (additionalAssets[jsonFile]) {
-      let depth = finalFiles[i].split('/').length
-      let srcPrefix = ''
-      for (let i = 1; i < depth; i++) {
-        if (i === depth - 1) {
-          srcPrefix += '..'
-        } else {
-          srcPrefix += '../'
+  // @todo versionCode必填项，参考官网
+  if (projectEntry) {
+    let basicInfo = `{
+      "package": "${options.packageInfo.name}",
+      "name": "${options.packageInfo.name}",
+      "versionName": "${options.packageInfo.version}",
+      "versionCode": "1",   
+      "icon": "../${options.iconPath}",`
+    
+      let configInfo // @todo 对designWidth&&全局数据进行处理？
+      if (isProd) {
+        configInfo = `
+      "config": {
+        "designWidth": "750",
+        "data": {}
+      },`
+      } else {
+        configInfo = `
+      "config": {
+        "logLevel": "debug",
+        "designWidth": "750",
+        "data": {}
+      },`
+      }
+      let content = new ConcatSource(
+        basicInfo,
+        configInfo
+      )
+      // concat router
+      let routerPrefix = `
+      "router": {`
+      content.add(routerPrefix)
+      
+      let routerPages = ``,
+        lastIndex = projectEntry.lastIndexOf('/'),
+        entryComp = projectEntry.slice(lastIndex + 1),
+        prefix = projectEntry.slice(0, lastIndex)
+    
+      routerPages += `
+        "entry": "${prefix}",
+        "pages": {
+          "${prefix}": {
+            "component": "${entryComp}"
+          }`
+      
+      let subpackageConfig = `[`
+      for (let i = 0; i < pagesMapArray.length; i++) {
+        if (pagesMapArray[i] !== projectEntry) {
+          let lastIndex = pagesMapArray[i].lastIndexOf('/'),
+            compName = pagesMapArray[i].slice(lastIndex + 1),
+            prefix = pagesMapArray[i].slice(0, lastIndex)
+    
+          routerPages += `,
+          "${prefix}": {
+            "component": "${compName}"
+          }`
+        }
+        let isSubpackage = pagesMapArray[i].split('/')[0] !== 'pages'
+        if (isSubpackage) {
+          if (subpackageConfig !== `[`){
+            subpackageConfig += `,
+          {
+            "name": "${pagesMapArray[i].split('/')[0]}",
+            "resource": "${pagesMapArray[i]}"
+          }`
+          } else {
+            subpackageConfig += `
+          {
+            "name": "${pagesMapArray[i].split('/')[0]}",
+            "resource": "${pagesMapArray[i]}"
+          }`
+          }
         }
       }
-      additionalAssets[jsonFile].forEach(item => {
-        let json = JSON.parse(item).usingComponents
-        if (json) {
-          let keys = Object.keys(json)
-          keys.forEach(key => {
-            let tpl = `<import name="${key}" src="${srcPrefix + json[key] + '.ux'}"></import>\n`
-            content.add(tpl)
-          })
-        }
-      })
-    }
-
-    let tplFile = finalFiles[i] + '.wxml'
-    if (additionalAssets[tplFile]) {
-      content.add('<template>\n')
-      additionalAssets[tplFile].forEach(item => {
-        content.add(item, '\n')
-      })
-      content.add('\n</template>\n\n')
-    }
-
-    let styleFile = finalFiles[i] + '.wxss'
-    if (additionalAssets[styleFile]) {
-      content.add('<style>')
-      additionalAssets[styleFile].forEach(item => {
-        content.add(item)
-      })
-      content.add('</style>\n\n')
-    }
-
-    let fullPath = finalFiles[i] + '.js'
-    if (compilation.assets[fullPath]) {
-      let index = finalFiles[i].lastIndexOf('/')
-      let scriptName = finalFiles[i].slice(index + 1)
-      let scriptFile = scriptName + '.js'
-      let scriptTpl = `<script src="./${scriptFile}"></script>`
-      content.add(scriptTpl)
-    }
-
-    compilation.assets[finalFiles[i] + '.ux'] = content
+      content.add(routerPages)
+      content.add(
+      `
+        }`
+      )
+      content.add(
+      `       
+      }`
+      )
+      if (subpackageConfig !== `[`) {
+        subpackageConfig += `
+      ]`
+        let sub = `"subpackages": ${subpackageConfig}`
+      content.add(
+      `,
+      ${sub}`
+        )
+      }
+      content.add('\n}')
+      compilation.assets['manifest.json'] = content
   }
-
-  genManifest(compilation, options, isProd)
 }
