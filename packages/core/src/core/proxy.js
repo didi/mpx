@@ -320,7 +320,7 @@ export default class MPXProxy {
           }
           if (!processed) {
             // 如果当前数据和上次的miniRenderData完全无关，但存在于组件的视图数据中，则与组件视图数据进行diff
-            if (this.target.data.hasOwnProperty(firstKey)) {
+            if (this.target.data && this.target.data.hasOwnProperty(firstKey)) {
               const localInitialData = getByPath(this.target.data, key)
               const { clone, diff, diffData } = diffAndCloneA(data, localInitialData)
               this.miniRenderData[key] = clone
