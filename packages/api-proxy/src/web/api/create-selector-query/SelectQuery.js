@@ -105,14 +105,12 @@ class SelectQuery {
       // 如果是canvas节点，需要做特殊处理
       if (isCanvas(el)) {
         // 设置canvas的画布大小，避免直接使用style标签导致canvas的绘制出现拉伸效果
-        canvas.width = res.width
-        canvas.height = res.height
+        el.width = res.width
+        el.height = res.height
         // 避免lint检查报错
-        /* eslint-disable */
         el.createImage = function () {
-          return new Image()
+          return new Image()  // eslint-disable-line
         }
-        /* eslint-disable */
 
         el.requestAnimationFrame = function (callback) {
           return window.requestAnimationFrame(callback)
