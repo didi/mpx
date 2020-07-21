@@ -165,12 +165,12 @@ export default class MPXProxy {
   }
 
   // 构建响应式data
-  initData (data = {}, dataFn) {
+  initData (data, dataFn) {
     let proxyedKeys = []
     // 获取包含data/props在内的初始数据，包含初始原生微信转换支付宝时合并props进入data的逻辑
     const initialData = this.target.__getInitialData() || {}
     // 之所以没有直接使用initialData，而是通过对原始dataOpt进行深clone获取初始数据对象，主要是为了避免小程序自身序列化时错误地转换数据对象，比如将promise转为普通object
-    this.data = diffAndCloneA(data).clone
+    this.data = diffAndCloneA(data || {}).clone
     if (dataFn) {
       proxyedKeys = Object.keys(initialData)
       // 预先将initialData代理到this.target中，便于data函数访问
@@ -320,7 +320,7 @@ export default class MPXProxy {
           }
           if (!processed) {
             // 如果当前数据和上次的miniRenderData完全无关，但存在于组件的视图数据中，则与组件视图数据进行diff
-            if (this.target.data.hasOwnProperty(firstKey)) {
+            if (this.target.data && this.target.data.hasOwnProperty(firstKey)) {
               const localInitialData = getByPath(this.target.data, key)
               const { clone, diff, diffData } = diffAndCloneA(data, localInitialData)
               this.miniRenderData[key] = clone
