@@ -1,4 +1,4 @@
-import { isObject, aliasReplace, findItem, diffAndCloneA, makeMap } from '../helper/utils'
+import { isObject, aliasReplace, findItem, makeMap } from '../helper/utils'
 import { getConvertRule } from '../convertor/convertor'
 import { error, warn } from '../helper/log'
 import builtInKeysMap from '../platform/patch/builtInKeysMap'
@@ -207,7 +207,7 @@ function mergeMixins (parent, child) {
     if (currentHooksMap[key]) {
       mergeHooks(parent, child, key)
     } else if (key === 'data') {
-      mergeDataFn(parent, child, key)
+      mergeDataFn(parent, child)
     } else if (/^(computed|properties|props|methods|proto|options|relations)$/.test(key)) {
       mergeShallowObj(parent, child, key)
     } else if (/^(watch|observers|pageLifetimes|events)$/.test(key)) {
@@ -245,19 +245,26 @@ export function mergeShallowObj (parent, child, key) {
   Object.assign(parentVal, childVal)
 }
 
-function mergeDataFn (parent, child, key) {
-  const parentVal = parent[key]
-  const childVal = child[key]
-  if (typeof parentVal !== 'function' && typeof childVal !== 'function') {
-    mergeShallowObj(parent, child, key)
+function mergeDataFn (parent, child) {
+  let parentVal = parent.data
+  let childVal = child.data
+
+  if (typeof parentVal === 'function') {
+    parent.dataFn = parentVal
+    delete parent.data
+  }
+
+  if (typeof childVal !== 'function') {
+    mergeShallowObj(parent, child, 'data')
   } else {
+    parentVal = parent.dataFn
     if (!parentVal) {
-      parent[key] = childVal
+      parent.dataFn = childVal
     } else {
-      parent[key] = function mergeFn () {
-        const to = typeof parentVal === 'function' ? parentVal.call(this) : diffAndCloneA(parentVal).clone
-        const from = typeof childVal === 'function' ? childVal.call(this) : diffAndCloneA(childVal).clone
-        return Object.assign({}, to, from)
+      parent.dataFn = function mergeFn () {
+        const to = parentVal.call(this)
+        const from = childVal.call(this)
+        return Object.assign(to, from)
       }
     }
   }
@@ -338,7 +345,7 @@ function transformHOOKS (options) {
     const componentHooksMap = makeMap(convertRule.lifecycle.component)
     for (const key in options) {
       // 使用Component创建page实例，页面专属生命周期&自定义方法需写在methods内部
-      if (typeof options[key] === 'function' && key !== 'data' && !componentHooksMap[key]) {
+      if (typeof options[key] === 'function' && key !== 'dataFn' && !componentHooksMap[key]) {
         if (!options.methods) options.methods = {}
         options.methods[key] = options[key]
         delete options[key]

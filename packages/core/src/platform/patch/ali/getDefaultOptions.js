@@ -66,11 +66,11 @@ function transformApiForProxy (context, currentInject) {
 function filterOptions (options, type) {
   const newOptions = {}
   Object.keys(options).forEach(key => {
-    if (builtInKeysMap[key] || (key === 'data' && typeof options[key] === 'function')) {
+    if (builtInKeysMap[key]) {
       return
     }
     if (key === 'properties' || key === 'props') {
-      newOptions['props'] = Object.assign({}, options['properties'], options['props'])
+      newOptions.props = Object.assign({}, options['properties'], options['props'])
     } else if (key === 'methods' && type === 'page') {
       Object.assign(newOptions, options[key])
     } else {

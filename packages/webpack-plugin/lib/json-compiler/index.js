@@ -207,10 +207,7 @@ module.exports = function (raw = '{}') {
   }
 
   const processComponent = (component, context, rewritePath, outputPath, callback) => {
-    if (/^plugin:\/\//.test(component)) {
-      return callback()
-    }
-
+    if (!isUrlRequest(component, options.root)) return callback()
     if (resolveMode === 'native') {
       component = loaderUtils.urlToRequest(component, options.root)
     }
@@ -457,6 +454,7 @@ module.exports = function (raw = '{}') {
     const processPages = (pages, srcRoot = '', tarRoot = '', context, callback) => {
       if (pages) {
         async.forEach(pages, (page, callback) => {
+          if (!isUrlRequest(page, options.root)) return callback()
           if (resolveMode === 'native') {
             page = loaderUtils.urlToRequest(page, options.root)
           }

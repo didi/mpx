@@ -42,6 +42,8 @@ export default class MPXProxy {
     this.options = options
     // initial -> created -> mounted -> destroyed
     this.state = 'initial'
+    this.lockTask = asyncLock()
+    this.ignoreProxyMap = makeMap(EXPORT_MPX.config.ignoreProxyWhiteList)
     if (__mpx_mode__ !== 'web') {
       if (typeof target.__getInitialData !== 'function') {
         error('Please specify a [__getInitialData] function to get component\'s initial data.', this.options.mpxFileResource)
@@ -55,9 +57,7 @@ export default class MPXProxy {
       this.forceUpdateData = {} // 强制更新的数据
       this.forceUpdateAll = false // 下次是否需要强制更新全部渲染数据
       this.curRenderTask = null
-      this.ignoreProxyMap = makeMap(EXPORT_MPX.config.ignoreProxyWhiteList)
     }
-    this.lockTask = asyncLock()
   }
 
   created (...params) {
@@ -146,7 +146,7 @@ export default class MPXProxy {
 
   initState () {
     const options = this.options
-    const proxyedKeys = this.initData(options.data)
+    const proxyedKeys = this.initData(options.data, options.dataFn)
     const proxyedKeysMap = makeMap(proxyedKeys)
     this.initComputed(options.computed)
     // target的数据访问代理到将proxy的data
@@ -165,29 +165,26 @@ export default class MPXProxy {
   }
 
   // 构建响应式data
-  initData (dataOpt = {}) {
+  initData (data, dataFn) {
     let proxyedKeys = []
     // 获取包含data/props在内的初始数据，包含初始原生微信转换支付宝时合并props进入data的逻辑
     const initialData = this.target.__getInitialData() || {}
-    if (typeof dataOpt === 'function') {
+    // 之所以没有直接使用initialData，而是通过对原始dataOpt进行深clone获取初始数据对象，主要是为了避免小程序自身序列化时错误地转换数据对象，比如将promise转为普通object
+    this.data = diffAndCloneA(data || {}).clone
+    if (dataFn) {
       proxyedKeys = Object.keys(initialData)
       // 预先将initialData代理到this.target中，便于data函数访问
       proxy(this.target, initialData, proxyedKeys, undefined, (key) => {
         if (this.ignoreProxyMap[key]) return false
         error(`The props key [${key}] exist in the component instance already, please check and rename it!`, this.options.mpxFileResource)
       })
-      this.data = dataOpt.call(this.target) || {}
-    } else {
-      // 之所以没有直接使用initialData，而是通过对原始dataOpt进行深clone获取初始数据对象，主要是为了避免小程序自身序列化时错误地转换数据对象，比如将promise转为普通object
-      this.data = diffAndCloneA(dataOpt).clone || {}
+      Object.assign(this.data, dataFn.call(this.target))
     }
     this.collectLocalKeys(this.data)
-
     Object.keys(initialData).forEach((key) => {
       if (!this.data.hasOwnProperty(key)) {
         // 除了data函数返回的数据外深拷贝切断引用关系，避免后续watch由于小程序内部对data赋值重复触发watch
         this.data[key] = diffAndCloneA(initialData[key]).clone
-        // this.data[key] = initialData[key]
       }
     })
     // mpxCid 解决支付宝环境selector为全局问题
