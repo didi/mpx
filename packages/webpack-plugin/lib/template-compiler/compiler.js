@@ -893,7 +893,7 @@ function parse (template, options) {
             parent: currentParent
           }
           children.push(el)
-          processText(el, text)
+          processText(el, text, currentParent)
         }
       }
     },
@@ -1617,7 +1617,7 @@ function postProcessIf (el) {
   }
 }
 
-function processText (el, text) {
+function processText (el, text, currentParent) {
   // 快应用纯文本节点需text标签包裹
   if (text !== ' ' && mode === 'qa' && currentParent.tag !== 'text') {
     let node = createASTElement('text', [])
