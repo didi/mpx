@@ -1,6 +1,8 @@
 const postcss = require('postcss')
 const pxRegExp = /\b(\d+(\.\d+)?)px\b/
 const pxRegExpG = /\b(\d+(\.\d+)?)px\b/g
+const rpxRegExp = /\b(\d+(\.\d+)?)rpx\b/
+const rpxRegExpG = /\b(\d+(\.\d+)?)rpx\b/g
 
 module.exports = postcss.plugin('rpx', (options = {}) => root => {
   const mode = options.mode || 'only'
@@ -21,7 +23,14 @@ module.exports = postcss.plugin('rpx', (options = {}) => root => {
     if (pxRegExp.test(declaration.value)) {
       declaration.value = declaration.value.replace(pxRegExpG, function (match, $1) {
         if ($1 === '0') return $1
+        if (mode === 'web')
+          return `${$1 * ratio/7.5}vw`
         return `${$1 * ratio}rpx`
+      })
+    }
+    if (rpxRegExp.test(declaration.value) && mode === 'web') {
+      declaration.value = declaration.value.replace(rpxRegExpG, function (match, $1) {
+        return `${$1 * ratio/7.5}vw`
       })
     }
   }
@@ -33,11 +42,11 @@ module.exports = postcss.plugin('rpx', (options = {}) => root => {
     }
     rule.walkDecls(declaration => {
       if (ignore || isIgnoreComment(declaration.prev())) {
-        if (mode === 'only') {
+        if (mode === 'only' || mode === 'web') {
           transRpx(declaration)
         }
       } else {
-        if (mode === 'all') {
+        if (mode === 'all' || mode === 'web') {
           transRpx(declaration)
         }
       }
