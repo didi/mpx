@@ -1,12 +1,11 @@
-// eslint-disable-next-line no-useless-escape
 const attribute = /^\s*([^\s"'<>\/=]+)(?:\s*(=)\s*(?:"([^"]*)"+|'([^']*)'+|([^\s"'=<>`]+)))?/
 const ncname = `[a-zA-Z_][\\w\\-\\.]*`
 const qname = `((?:${ncname}\\:)?${ncname})`
 const startTagOpen = new RegExp(`^<${qname}`)
 const startTagClose = /^\s*(\/?)>/
 const endTag = new RegExp(`^<\\/${qname}[^>]*>`)
-// eslint-disable-next-line no-useless-escape
 const comment = /^<!\--/
+const invalidAttributeRE = /[\s"'<>\/=]/
 let currentParent
 
 function makeMap (str, expectsLowerCase) {
@@ -21,10 +20,10 @@ function makeMap (str, expectsLowerCase) {
 }
 
 const isRichTextTag = makeMap(
-  'a,abbr,address,article,aside,b,bdi,bdo,big,blockquote,br,caption,' +
-  'center,cite,code,col,colgroup,dd,del,div,dl,dt,em,fieldset,' +
-  'font,footer,h1,h2,h3,h4,h5,h6,header,hr,i,img,ins,label,legend,' +
-  'li,mark,nav,ol,p,pre,q,rt,ruby,s,section,small,span,strong,sub,sup,' +
+  'a,abbr,address,article,aside,b,bdi,bdo,big,blockquote,br,caption,'+
+  'center,cite,code,col,colgroup,dd,del,div,dl,dt,em,fieldset,'+
+  'font,footer,h1,h2,h3,h4,h5,h6,header,hr,i,img,ins,label,legend,'+
+  'li,mark,nav,ol,p,pre,q,rt,ruby,s,section,small,span,strong,sub,sup,'+
   'table,tbody,td,tfoot,th,thead,tr,tt,u,ul'
 )
 const isUnaryTag = makeMap(
@@ -61,10 +60,9 @@ function createASTElement (
 function parseHTML (html, options) {
   const stack = []
   let index = 0
-  // eslint-disable-next-line no-unused-vars
-  let last
+  // let last
   while (html) {
-    last = html
+    // last = html
     // Make sure we're not in a plaintext content element like script/style
     // if (!lastTag) {
     let textEnd = html.indexOf('<')
@@ -135,10 +133,11 @@ function parseHTML (html, options) {
       advance(text.length)
     }
     if (options.chars && text) {
-      options.chars(text, !html.length)
+      options.chars(text)
     }
     // }
   }
+  parseEndTag()
   function advance (n) {
     index += n
     html = html.substring(n)
@@ -148,7 +147,6 @@ function parseHTML (html, options) {
     let pos, lowerCasedTagName
     if (start == null) start = index
     if (end == null) end = index
-
     // Find the closest opened tag of the same type
     if (tagName) {
       lowerCasedTagName = tagName.toLowerCase()
@@ -161,10 +159,15 @@ function parseHTML (html, options) {
       // If no tag name is provided, clean shop
       pos = 0
     }
-
     if (pos >= 0) {
       // Close all the open elements, up the stack
       for (let i = stack.length - 1; i >= pos; i--) {
+        if ( i > pos || !tagName ) {
+          console.warn(
+            `tag <${stack[i].tag}> has no matching end tag.`,
+            { start: stack[i].start, end: stack[i].end }
+          )
+        }
         if (options.end) {
           options.end()
         }
@@ -176,7 +179,7 @@ function parseHTML (html, options) {
   }
 
   function handleStartTag (match) {
-    const tagName = match.tagName
+    const tagName = match.tagName.toLowerCase()
     const unarySlash = match.unarySlash
 
     const unary = isUnaryTag(tagName) || !!unarySlash
@@ -193,7 +196,7 @@ function parseHTML (html, options) {
     }
 
     if (!unary) {
-      stack.push({ tag: tagName, lowerCasedTag: tagName.toLowerCase(), attrs: attrs })
+      stack.push({ tag: tagName, lowerCasedTag: tagName.toLowerCase(), attrs: attrs, start: match.start, end: match.end })
       // lastTag = tagName
     }
 
@@ -203,64 +206,84 @@ function parseHTML (html, options) {
   }
 }
 
-export function parse (template) {
+export function parse(template) {
   let nodes = []
   const stack = []
   let root
-  let nodesReady
+  function pushChild (currentParent, child) {
+    if (currentParent) {
+      currentParent.children.push(child)
+    } else {
+      nodes.push(child)
+    }
+  }
   parseHTML(template, {
     start (tag, attrs, unary) {
       let element = createASTElement(tag, attrs, currentParent)
-      if (!root) {
+      if (!unary && !stack.length) {
         root = element
       }
       if (!unary) {
         currentParent = element
         stack.push(element)
       } else if (isUnaryTag(tag)) {
-        currentParent.children.push(element)
+        pushChild(currentParent, element)
       }
+      attrs.forEach(attr => {
+        if (invalidAttributeRE.test(attr.name)) {
+          console.warn(
+            `Invalid dynamic argument expression: attribute names cannot contain ` +
+            `spaces, quotes, <, >, / or =.`,
+            {
+              start: attr.start + attr.name.indexOf(`[`),
+              end: attr.start + attr.name.length
+            }
+          )
+        }
+      })
     },
+  
     end () {
       const element = stack[stack.length - 1]
       // pop stack
       stack.length -= 1
       currentParent = stack[stack.length - 1]
       currentParent && currentParent.children.push(element)
+      if (!stack.length) {
+        nodes.push(root)
+      }
     },
-    chars (text, isLast) {
+  
+    chars (text) {
       const child = {
         type: 'text',
         text
       }
-      if (currentParent) {
-        currentParent.children.push(child)
-      } else {
-        if (isLast) {
-          nodesReady = true
-          nodes.push(root)
-        }
-        nodes.push(child)
-      }
+      pushChild(currentParent, child)
     },
     comment (text) {
       const child = {
         type: 'comment',
         text
       }
-      if (currentParent) {
-        currentParent.children.push(child)
-      } else {
-        nodes.push(child)
-      }
+      pushChild(currentParent, child)
     }
   })
-  !nodesReady && nodes.push(root)
+  if (stack.length) {
+    let last
+    for (let i  = stack.length - 1; i >= 0; i--) {
+      if (last) {
+        stack[i].children.push(last)
+      }
+      last = stack[i]
+    }
+    nodes.push(last)
+  }
   return nodes
 }
 
 function spaceTran (str, space) {
-  const sReg = /(\s|&emsp;|&ensp;|&nbsp;){1}/g
+  const sReg = /( |&emsp;|&ensp;|&nbsp;){1}/g
   const setSpace = `&${space};`
   return str.replace(sReg, setSpace)
 }
@@ -271,6 +294,11 @@ export function htmlTranStr (template, space) {
     const name = item.name
     if (item.type === 'text') {
       html += isSpace(space) ? spaceTran(item.text, space) : item.text
+    } 
+    if (item.type === 'comment') {
+      console.warn(
+        `the rich-text nonsupport ${item.type} tag`
+      )
     }
     if (name && isRichTextTag(name)) {
       html += `<${name}`
@@ -281,7 +309,7 @@ export function htmlTranStr (template, space) {
           switch (key) {
             case 'style':
             case 'class':
-              isEffAttr = isContWidth
+              isEffAttr = true
               break
             case 'width':
               isEffAttr = isContWidth(name)
@@ -308,11 +336,18 @@ export function htmlTranStr (template, space) {
               isEffAttr = name === 'bdo'
               break
           }
-          html += isEffAttr ? ` ${key}="${attrs[key]}"` : ''
+          html += isEffAttr ? ` ${key}="${attrs[key]}"` : console.warn(
+            `This ${key} attribute is not supported for ${name} tags contained in rich-text`
+          )
         }
       }
-      html += `${isUnaryTag(name) ? '' : '>'}${item.children.length ? htmlTranStr(item.children, space) : ''}${isUnaryTag(name) ? ' />' : '</' + name + '>'}`
+      html += `${isUnaryTag(name) ? '' : '>'}${item.children.length ? htmlTranStr(item.children, space): ''}${isUnaryTag(name) ? ' />' : '</' + name+ '>'}`
+    } else if (name){
+      console.warn(
+        `the rich-text is not support ${name} tag`
+      )
     }
+     
   })
   return html
 }
