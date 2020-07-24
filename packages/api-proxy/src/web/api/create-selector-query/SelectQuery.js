@@ -104,20 +104,23 @@ class SelectQuery {
       res.node = el
       // 如果是canvas节点，需要做特殊处理
       if (isCanvas(el)) {
-        // 设置canvas的画布大小，避免直接使用style标签导致canvas的绘制出现拉伸效果
-        el.width = res.width
-        el.height = res.height
         // 避免lint检查报错
         el.createImage = function () {
           return new Image()  // eslint-disable-line
         }
 
+        el.createPath2D = function (path) {
+          return window.Path2D(path)
+        }
+
         el.requestAnimationFrame = function (callback) {
           return window.requestAnimationFrame(callback)
         }
+
         el.cancelAnimationFrame = function (requestID) {
           return window.cancelAnimationFrame(requestID)
         }
+
         const rawGetContext = el.getContext
         el.getContext = function (...args) {
           const context = rawGetContext.apply(this, args)
