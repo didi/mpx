@@ -3,6 +3,7 @@ module.exports = function ({ print }) {
   const aliPropLog = print({ platform: 'ali', tag: TAG_NAME, isError: false })
   const baiduPropLog = print({ platform: 'baidu', tag: TAG_NAME, isError: false })
   const qqPropLog = print({ platform: 'qq', tag: TAG_NAME, isError: false })
+  const jdPropLog = print({ platform: 'jd', tag: TAG_NAME, isError: false })
   const ttPropLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false })
 
   return {
@@ -18,6 +19,10 @@ module.exports = function ({ print }) {
         swan: baiduPropLog,
         qq: qqPropLog,
         tt: ttPropLog
+      },
+      {
+        test: /^webp|show-menu-by-longpress$/,
+        jd: jdPropLog,
       },
       {
         test: /^(mode|lazy-load|show-menu-by-longpress|webp|use-built-in)$/,

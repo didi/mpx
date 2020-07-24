@@ -3,6 +3,7 @@ const TAG_NAME = 'canvas'
 module.exports = function ({ print }) {
   const aliEventLog = print({ platform: 'ali', tag: TAG_NAME, isError: false, type: 'event' })
   const ttPropLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false })
+  const jdPropLog = print({ platform: 'jd', tag: TAG_NAME, isError: false })
   return {
     test: TAG_NAME,
     props: [
@@ -18,6 +19,10 @@ module.exports = function ({ print }) {
       {
         test: 'disable-scroll',
         tt: ttPropLog
+      },
+      {
+        test: 'type',
+        jd: jdPropLog
       }
     ],
     // 组件事件中的差异部分
