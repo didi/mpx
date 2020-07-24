@@ -1,7 +1,7 @@
 import builtInKeysMap from '../builtInKeysMap'
 import mergeOptions from '../../../core/mergeOptions'
 import MPXProxy from '../../../core/proxy'
-import { SHOW, HIDE } from '../../../core/innerLifecycle'
+import { diffAndCloneA } from '../../../helper/utils'
 
 function filterOptions (options) {
   const newOptions = {}
@@ -9,7 +9,16 @@ function filterOptions (options) {
     if (builtInKeysMap[key]) {
       return
     }
-    newOptions[key] = options[key]
+    if (key === 'data' || key === 'dataFn') {
+      newOptions.data = function mergeFn () {
+        return Object.assign(
+          diffAndCloneA(options.data || {}).clone,
+          options.dataFn && options.dataFn.call(this)
+        )
+      }
+    } else {
+      newOptions[key] = options[key]
+    }
   })
   return newOptions
 }
@@ -40,16 +49,6 @@ export function getDefaultOptions (type, { rawOptions = {} }) {
       this.__mpxProxy && this.__mpxProxy.destroyed()
     }
   }]
-  if (type === 'page') {
-    rootMixins.push({
-      activated () {
-        this.__mpxProxy && this.__mpxProxy.callUserHook(SHOW)
-      },
-      deactivated () {
-        this.__mpxProxy && this.__mpxProxy.callUserHook(HIDE)
-      }
-    })
-  }
   rawOptions.mixins = rawOptions.mixins ? rootMixins.concat(rawOptions.mixins) : rootMixins
   rawOptions = mergeOptions(rawOptions, type, false)
   return filterOptions(rawOptions)

@@ -192,7 +192,7 @@ const EXPORT_MPX = factory()
 EXPORT_MPX.config = {
   useStrictDiff: false,
   ignoreRenderError: false,
-  ignoreProxyWhiteList: ['id', 'dataset']
+  ignoreProxyWhiteList: ['id', 'dataset', 'data']
 }
 
 if (__mpx_mode__ === 'web') {
