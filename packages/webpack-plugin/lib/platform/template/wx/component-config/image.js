@@ -22,7 +22,7 @@ module.exports = function ({ print }) {
       },
       {
         test: /^webp|show-menu-by-longpress$/,
-        jd: jdPropLog,
+        jd: jdPropLog
       },
       {
         test: /^(mode|lazy-load|show-menu-by-longpress|webp|use-built-in)$/,
