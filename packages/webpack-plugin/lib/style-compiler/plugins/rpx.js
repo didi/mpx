@@ -47,6 +47,7 @@ module.exports = postcss.plugin('rpx', (options = {}) => root => {
       if (ignore || isIgnoreComment(declaration.prev())) {
         if (mode === 'only' || mode === 'web') {
           transRpx(declaration)
+          webTransRpx(declaration)
         }
       } else {
         if (mode === 'web') {
