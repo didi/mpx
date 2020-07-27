@@ -63,17 +63,18 @@ module.exports = function (compilation, options, isProd) {
         }
         let isSubpackage = pagesMapArray[i].split('/')[0] !== 'pages'
         if (isSubpackage) {
+          let name = pagesMapArray[i].split('/')[0]
           if (subpackageConfig !== `[`){
             subpackageConfig += `,
           {
-            "name": "${pagesMapArray[i].split('/')[0]}",
-            "resource": "${pagesMapArray[i]}"
+            "name": "${name}",
+            "resource": "${name}"
           }`
           } else {
             subpackageConfig += `
           {
-            "name": "${pagesMapArray[i].split('/')[0]}",
-            "resource": "${pagesMapArray[i]}"
+            "name": "${name}",
+            "resource": "${name}"
           }`
           }
         }
