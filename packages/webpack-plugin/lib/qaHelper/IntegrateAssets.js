@@ -72,5 +72,5 @@ module.exports = function (additionalAssets, compilation, options, isProd) {
     compilation.assets[finalFiles[i] + '.ux'] = content
   }
 
-  genManifest(compilation, finalFiles, options, isProd)
+  genManifest(compilation, options, isProd)
 }
