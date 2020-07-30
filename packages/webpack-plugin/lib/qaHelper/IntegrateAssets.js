@@ -16,6 +16,7 @@ function cleanAssets (assets) {
 
 module.exports = function (additionalAssets, compilation, options, isProd) {
   let finalFiles = cleanAssets(additionalAssets)
+
   // integrate assets
   for (let i = 0; i < finalFiles.length; i++) {
     let content = new ConcatSource()
@@ -35,7 +36,7 @@ module.exports = function (additionalAssets, compilation, options, isProd) {
         if (json) {
           let keys = Object.keys(json)
           keys.forEach(key => {
-            let tpl = `<import name="${key}" src="..${json[key] + '.ux'}"></import>\n`
+            let tpl = `<import name="${key}" src="${srcPrefix + json[key] + '.ux'}"></import>\n`
             content.add(tpl)
           })
         }
