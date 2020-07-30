@@ -101,6 +101,12 @@ module.exports = function (script, options, callback) {
             content += `i18n.${key} = require(${requestObj[key]})\n`
           })
         }
+        if (jsonConfig.tabBar) {
+          content += `
+          import MpxTabBar from '@mpxjs/webpack-plugin/lib/runtime/components/web/mpx/mpx-tabbar.vue'\n
+          Vue.components(MpxTabBar.name, MpxTabBar) \n
+          `
+        }
       }
       let firstPage = ''
       const pagesMap = {}
