@@ -64,9 +64,13 @@
 
         const stack = router.stack
         if (stack.length) {
-          const current = stack[stack.length - 1]
-          if (current.vnode && current.vnodeKey === vnodeKey && current.vnode.componentInstance) {
-            vnode.componentInstance = current.vnode.componentInstance
+          // 只要历史栈缓存中存在对应的页面存活实例，就进行复用
+          for (let i = stack.length; i > 0; i--) {
+            const current = stack[i - 1]
+            if (current.vnode && current.vnodeKey === vnodeKey && current.vnode.componentInstance) {
+              vnode.componentInstance = current.vnode.componentInstance
+              break
+            }
           }
         }
 

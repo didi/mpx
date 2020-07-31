@@ -154,9 +154,9 @@ declare function get (obj: object, key: string): any
 
 declare function set (obj: object, key: string, value: any): any
 
-declare function observable<T extends object> (obj: T): T
-
 declare function del (obj: object, key: string): any
+
+export function observable<T extends object> (obj: T): T
 
 export interface MpxComponentIns {
   $refs: ObjectOf<any>
