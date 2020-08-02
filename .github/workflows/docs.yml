@@ -8,8 +8,6 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-18.04
-    with:
-      node-version: '12.x'
     steps:
       - uses: actions/checkout@v2
 
