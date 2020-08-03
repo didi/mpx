@@ -65,7 +65,7 @@ module.exports = function (raw) {
 
   let result = compiler.serialize(ast)
 
-  if (isNative) {
+  if (isNative || mpx.forceDisableInject) {
     return result
   }
 
@@ -120,7 +120,6 @@ module.exports = function (raw) {
   })
 
   dep.templateInject = true
-
   issuer.addDependency(dep)
 
   let isSync = true

@@ -1,4 +1,4 @@
-const { compileAndParse, warnFn, errorFn } = require('../util')
+const { compileAndParse, warnFn, errorFn } = require('../../util')
 
 describe('template should transform correct', function () {
   afterEach(() => {

@@ -1,3 +1,5 @@
+const { isMustache } = require('../../../../utils/string')
+
 const TAG_NAME = 'navigator'
 
 module.exports = function ({ print }) {
@@ -25,9 +27,14 @@ module.exports = function ({ print }) {
       {
         test: 'open-type',
         ali (attr) {
-          let supportedList = ['navigate', 'redirect', 'switchTab', 'navigateBack', 'reLaunch']
-          if (supportedList.indexOf(attr.value) === -1) {
-            aliValueLogError(attr)
+          if (isMustache(attr.value)) {
+            // 如果是个变量，报warning~
+            aliPropLog(attr)
+          } else {
+            let supportedList = ['navigate', 'redirect', 'switchTab', 'navigateBack', 'reLaunch']
+            if (supportedList.indexOf(attr.value) === -1) {
+              aliValueLogError(attr)
+            }
           }
         },
         web (attr) {

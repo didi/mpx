@@ -984,7 +984,7 @@ function stringify (str) {
 }
 
 // function processLifecycleHack (el, options) {
-//   if (options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component') {
+//   if (isComponentNode(el,options)) {
 //     if (el.if) {
 //       el.if = {
 //         raw: `{{${el.if.exp} && mpxLifecycleHack}}`,
@@ -1011,7 +1011,7 @@ function stringify (str) {
 // }
 
 function processPageStatus (el, options) {
-  if (options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component') {
+  if (isComponentNode(el, options)) {
     addAttrs(el, [{
       name: 'mpxPageStatus',
       value: '{{mpxPageStatus}}'
@@ -1048,7 +1048,7 @@ function processComponentIs (el, options) {
 }
 
 // function processComponentDepth (el, options) {
-//   if (options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component') {
+//   if (isComponentNode(el,options)) {
 //     addAttrs(el, [{
 //       name: 'mpxDepth',
 //       value: '{{mpxDepth + 1}}'
@@ -1389,7 +1389,7 @@ function processFor (el) {
 
 function processRef (el, options, meta) {
   let val = getAndRemoveAttr(el, config[mode].directive.ref)
-  let type = options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component' ? 'component' : 'node'
+  let type = isComponentNode(el, options) ? 'component' : 'node'
   if (val) {
     if (!meta.refs) {
       meta.refs = []
@@ -1461,6 +1461,9 @@ function postProcessWxs (el, meta) {
       }
       src && addWxsModule(meta, module, src)
       content && addWxsContent(meta, module, content)
+      // wxs hoist
+      removeNode(el, true)
+      injectNodes.push(el)
     }
   }
 }
@@ -1473,7 +1476,7 @@ function processAttrs (el, options) {
     let parsed = parseMustache(value)
     if (parsed.hasBinding) {
       // 该属性判断用于提供给运行时对于计算属性作为props传递时提出警告
-      const isProps = (options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component') && !(attr.name === 'class' || attr.name === 'style')
+      const isProps = isComponentNode(el, options) && !(attr.name === 'class' || attr.name === 'style')
       addExp(el, parsed.result, isProps)
     }
     if (parsed.replaced) {
@@ -1696,6 +1699,10 @@ function isRealNode (el) {
   return !virtualNodeTagMap[el.tag]
 }
 
+function isComponentNode (el, options) {
+  return options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component'
+}
+
 function processAliExternalClassesHack (el, options) {
   let staticClass = getAndRemoveAttr(el, 'class')
   if (staticClass) {
@@ -1707,6 +1714,18 @@ function processAliExternalClassesHack (el, options) {
       name: 'class',
       value: staticClass
     }])
+  }
+
+  if (options.scopedId && isComponentNode(el, options)) {
+    options.externalClasses.forEach(({ className }) => {
+      let externalClass = getAndRemoveAttr(el, className)
+      if (externalClass) {
+        addAttrs(el, [{
+          name: className,
+          value: `${externalClass} ${options.scopedId}`
+        }])
+      }
+    })
   }
 }
 
@@ -1752,7 +1771,7 @@ function processAliStyleClassHack (el, options, root) {
       }
     }
     if (exp !== undefined) {
-      if (options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component') {
+      if (isComponentNode(el, options)) {
         addAttrs(el, [{
           name: typeName,
           value: exp
@@ -1777,7 +1796,7 @@ function processShow (el, options, root) {
     }
   }
   if (show !== undefined) {
-    if (options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component') {
+    if (isComponentNode(el, options)) {
       if (show === '') {
         show = '{{false}}'
       }
@@ -1812,10 +1831,57 @@ function postProcessTemplate (el) {
   }
 }
 
+function processAtMode (el) {
+  if (el.parent && el.parent._atModeStatus) {
+    el._atModeStatus = el.parent._atModeStatus
+  }
+
+  const elementAttrListCopy = el.attrsList.slice(0)
+  elementAttrListCopy.forEach(item => {
+    const attrName = item.name || ''
+    if (!attrName || attrName.indexOf('@') === -1) return
+    const modeStr = attrName.split('@').pop()
+    const modeArr = modeStr.split('|')
+    if (modeArr.some(i => ['wx', 'ali', 'swan', 'tt', 'qq', 'web'].includes(i))) {
+      const tempVal = getAndRemoveAttr(el, item.name)
+      // web下vue有@click之类的简写，配上mode，假定最多只会出现2个@符号，且mode在后
+      const attrArr = attrName.split('@')
+      const replacedAttrName = attrArr.length === 2 ? attrName.replace(/@.*/, '') : attrArr.pop() && attrArr.join('@')
+
+      const processedAttr = { name: replacedAttrName, value: tempVal }
+      if (modeArr.includes(mode)) {
+        if (!replacedAttrName) {
+          el._atModeStatus = 'match'
+        } else {
+          // 如果命中了指定的mode，则先存在el上，等跑完转换后再挂回去
+          el.noTransAttr ? el.noTransAttr.push(processedAttr) : el.noTransAttr = [processedAttr]
+        }
+      } else if (!replacedAttrName) {
+        el._atModeStatus = 'mismatch'
+      } else {
+        // 如果没命中指定的mode，则该属性删除
+      }
+    }
+  })
+}
+
 function processElement (el, root, options, meta) {
-  if (rulesRunner) {
+  processAtMode(el)
+  // 如果已经标记了这个元素要被清除，直接return跳过后续处理步骤
+  if (el._atModeStatus === 'mismatch') {
+    return
+  }
+
+  if (rulesRunner && el._atModeStatus !== 'match') {
     currentEl = el
     rulesRunner(el)
+  }
+
+  // 转换完成，把不需要处理的attr挂回去
+  if (el.noTransAttr) {
+    el.noTransAttr.forEach(item => {
+      addAttrs(el, item)
+    })
   }
 
   const transAli = mode === 'ali' && srcMode === 'wx'
@@ -1864,6 +1930,7 @@ function processElement (el, root, options, meta) {
 }
 
 function closeElement (el, meta) {
+  postProcessAtMode(el)
   if (mode === 'web') {
     // 处理代码维度条件编译移除死分支
     postProcessIf(el)
@@ -1876,6 +1943,12 @@ function closeElement (el, meta) {
   }
   postProcessFor(el)
   postProcessIf(el)
+}
+
+function postProcessAtMode (el) {
+  if (el._atModeStatus === 'mismatch') {
+    removeNode(el, true)
+  }
 }
 
 function postProcessComponentIs (el) {

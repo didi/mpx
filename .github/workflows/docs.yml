@@ -1,0 +1,29 @@
+name: docs
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  deploy:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Use node v12
+        uses: actions/setup-node@v1
+        with:
+          node-version: '10.21.0'
+
+      - name: generate static file
+        run: |
+          cd docs
+          npx gitbook-cli install
+          npx gitbook-cli build
+
+      - name: Deploy
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          publish_dir: ./docs/_book
+          personal_token: ${{ secrets.GH_PAGES_TOKEN }}

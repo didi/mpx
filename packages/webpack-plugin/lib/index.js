@@ -542,15 +542,21 @@ class MpxWebpackPlugin {
 
         // hack babel polyfill global
         parser.hooks.evaluate.for('CallExpression').tap('MpxWebpackPlugin', (expr) => {
+          const current = parser.state.current
+          const arg0 = expr.arguments[0]
+          const arg1 = expr.arguments[1]
+          const callee = expr.callee
           if (/core-js/.test(parser.state.module.resource)) {
-            const current = parser.state.current
-            const arg0 = expr.arguments[0]
-            const callee = expr.callee
-            if (arg0 && arg0.value === 'return this' && callee.name === 'Function') {
+            if (callee.name === 'Function' && arg0 && arg0.value === 'return this') {
               current.addDependency(new InjectDependency({
                 content: '(function() { return this })() || ',
                 index: expr.range[0]
               }))
+            }
+          }
+          if (/regenerator-runtime/.test(parser.state.module.resource)) {
+            if (callee.name === 'Function' && arg0 && arg0.value === 'r' && arg1 && arg1.value === 'regeneratorRuntime = r') {
+              current.addDependency(new ReplaceDependency('(function () {})', expr.range))
             }
           }
         })

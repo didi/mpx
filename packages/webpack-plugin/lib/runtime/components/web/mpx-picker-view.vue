@@ -90,7 +90,7 @@
             if (!component.pickerView) {
               component.pickerView = this
             }
-            value.push(this.$children[i].wheels[0].getSelectedIndex())
+            value.push(this.$children[i].wheels[0] && this.$children[i].wheels[0].getSelectedIndex() || 0)
           }
         })
         return value

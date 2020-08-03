@@ -203,11 +203,6 @@ module.exports = function (content) {
               mpx.appTitle = jsonRes.jsonObj.window.navigationBarTitleText
             }
 
-            let pageTitle = ''
-            if (ctorType === 'page' && jsonRes.jsonObj.navigationBarTitleText) {
-              pageTitle = jsonRes.jsonObj.navigationBarTitleText
-            }
-
             processScript(parts.script, {
               ctorType,
               srcMode,
@@ -215,7 +210,7 @@ module.exports = function (content) {
               isProduction,
               getRequireForSrc,
               i18n,
-              pageTitle,
+              jsonConfig: jsonRes.jsonObj,
               mpxCid: resourceQueryObj.mpxCid,
               builtInComponentsMap: templateRes.builtInComponentsMap,
               localComponentsMap: jsonRes.localComponentsMap,
@@ -239,7 +234,7 @@ module.exports = function (content) {
       if (!isProduction) {
         globalInjectCode += `global.currentResource = ${JSON.stringify(filePath)}\n`
       }
-      if (ctorType === 'app' && i18n) {
+      if (ctorType === 'app' && i18n && !mpx.forceDisableInject) {
         globalInjectCode += `global.i18n = ${JSON.stringify({ locale: i18n.locale })}\n`
 
         const i18nMethodsVar = 'i18nMethods'
