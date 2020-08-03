@@ -541,7 +541,7 @@ store.state.moduleB // -> moduleB 的状态
 export default store
 ```
 
-> Mpx 并未实现 vuex 中的命名空间，除 state 外的所有属性（getters / mutations / actions）将被平铺展开到根 store 的对应空间下。在多实例 store 中，我们的实现方式则于命名空间高度相似。
+> Mpx 并未实现 vuex 中的命名空间，除 state 外的所有属性（getters / mutations / actions）将被平铺展开到根 store 的对应空间下。在多实例 store 中，我们的实现方式则与命名空间高度相似。
 
 ### 模块的局部状态
 

@@ -11,10 +11,10 @@
 
 - **用法**：
 
-  这是全局 `Mpx.set` 的别名。向响应式对象中添加一个 property，并确保这个新 property 同样是响应式的，且触发视图更新。
+  这是全局 `mpx.set` 的别名。向响应式对象中添加一个 property，并确保这个新 property 同样是响应式的，且触发视图更新。
 它必须用于向响应式对象上添加新 property，因为 Mpx 无法探测普通的新增 property (比如 this.myObject.newProperty = 'hi')
 
-- **参考**：[Mpx.set](global-api.html#set)
+- **参考**：[mpx.set](global-api.html#set)
 
 ## $watch
 
@@ -108,6 +108,7 @@
     { immediate: true }
   )
   ```
+- **参考**：[mpx.watch](global-api.html#watch)
 
 ## $delete
 * **参数：** 
