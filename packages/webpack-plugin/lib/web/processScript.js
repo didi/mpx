@@ -69,13 +69,20 @@ module.exports = function (script, options, callback) {
       // add import
       if (ctorType === 'app') {
         content += `
-      import Vue from 'vue'
-      import VueRouter from 'vue-router'
-      Vue.use(VueRouter)
-      global.getApp = function(){}
-      global.__networkTimeout = ${JSON.stringify(jsonConfig.networkTimeout)}
-      global.__tabBar = ${JSON.stringify(jsonConfig.tabBar)}
-      global.__mpxPageConfig = ${JSON.stringify(jsonConfig.window)}\n`
+        import Vue from 'vue'
+        import VueRouter from 'vue-router'
+        Vue.use(VueRouter)
+        import BScroll from '@better-scroll/core'
+        import PullDown from '@better-scroll/pull-down'
+        import ObserveDOM from '@better-scroll/observe-dom'
+        BScroll.use(ObserveDOM)
+        BScroll.use(PullDown)
+        global.BScroll = BScroll
+        global.getApp = function(){}
+        global.__networkTimeout = ${JSON.stringify(jsonConfig.networkTimeout)}
+        global.__tabBar = ${JSON.stringify(jsonConfig.tabBar)}
+        global.__mpxPageConfig = ${JSON.stringify(jsonConfig.window)}\n`
+
         if (i18n) {
           const i18nObj = Object.assign({}, i18n)
           content += `
