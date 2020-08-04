@@ -61,7 +61,6 @@ const sidebar = {
         'understand/runtime',
         'understand/compile'
       ]
-
     }
   ],
   '/api/': [
@@ -75,7 +74,8 @@ const sidebar = {
   ],
   '/articles/': [
     '1.0',
-    '2.0'
+    '2.0',
+    'mpx1'
   ]
 }
 
