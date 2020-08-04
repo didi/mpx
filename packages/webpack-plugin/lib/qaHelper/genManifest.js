@@ -10,7 +10,8 @@ module.exports = function (compilation, options, isProd) {
       "package": "${options.packageInfo.name}",
       "name": "${options.packageInfo.name}",
       "versionName": "${options.packageInfo.version}",
-      "versionCode": "1",   
+      "versionCode": "1",
+      "minPlatformVersion": "1040",  
       "icon": "../${options.iconPath}",`
     
       let configInfo // @todo 对designWidth&&全局数据进行处理？
