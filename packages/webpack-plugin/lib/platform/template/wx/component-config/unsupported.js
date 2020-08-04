@@ -1,5 +1,5 @@
 // 支付宝小程序不支持的标签集合
-const ALI_UNSUPPORTED_TAG_NAME_ARR = ['live-pusher', 'live-player', 'video', 'audio', 'functional-page-navigator', 'editor']
+const ALI_UNSUPPORTED_TAG_NAME_ARR = ['live-pusher', 'live-player', 'audio', 'functional-page-navigator', 'editor']
 // 百度小程序不支持的标签集合
 const BAIDU_UNSUPPORTED_TAG_NAME_ARR = ['functional-page-navigator', 'live-pusher', 'editor']
 // QQ小程序不支持的标签集合
