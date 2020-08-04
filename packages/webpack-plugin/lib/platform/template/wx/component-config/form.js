@@ -23,7 +23,6 @@ module.exports = function ({ print }) {
       },
       {
         test: /^(report-submit|report-submit-timeout)$/,
-        tt: ttPropLog,
         web: webPropLog
       }
     ]
