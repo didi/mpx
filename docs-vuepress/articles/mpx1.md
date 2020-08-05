@@ -1,9 +1,10 @@
 ---
-title: 小程序开发者，为什么你应该尝试下MPX
-date: 2019-05-26 17:45:56
-tags: MPX
-categories: 前端
+sidebarDepth: 2
 ---
+
+# 小程序开发者，为什么你应该尝试下MPX
+
+> 作者：[sky-admin](http://github.com/sky-admin)
 
 > MPX框架是滴滴出行推出的一款专注小程序开发的增强型框架。本篇文章将从使用角度谈谈MPX的优势与好处。如果嫌内容太长，优势部分每个小节都有简单的一句话总结，可以快速阅读。如果想了解更多设计细节，可以阅读 [前一篇文章 - MPX2.0发布](https://didi.github.io/mpx/articles/2.0.html)。
 

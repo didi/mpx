@@ -73,22 +73,23 @@ const sidebar = {
     'extend'
   ],
   '/articles/': [
-    '1.0',
-    '2.0',
-    'mpx1'
+    { title: '滴滴开源小程序框架Mpx', path: '1.0' },
+    { title: 'Mpx发布2.0，完美支持跨平台开发', path: '2.0' },
+    { title: 'Mpx框架初体验', path: 'mpx1' },
+    { title: '基于Mpx的小程序体积优化', path: 'size-control' },
   ]
 }
 
 const nav = [
   { text: '指南', link: '/guide/basic/start' },
   { text: 'API', link: '/api/config' },
-  { text: '文章', link: '/articles/1.0' },
+  { text: '文章', link: '/articles/index' },
   { text: '更新记录', link: 'https://github.com/didi/mpx/releases' },
   { text: 'Github', link: 'https://github.com/didi/mpx' }
 ]
 
 module.exports = {
-  base: '/mpx/',
+  base: '/',
   head: [
     ['link', { rel: 'icon', href: '/favicon.ico' }]
   ],
