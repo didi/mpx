@@ -458,18 +458,18 @@ module.exports = function (raw = '{}') {
           if (resolveMode === 'native') {
             page = loaderUtils.urlToRequest(page, options.root)
           }
-          context = path.join(context, srcRoot)
-          resolve(context, page, (err, resource) => {
+          const subPackContext = path.join(context, srcRoot)
+          resolve(subPackContext, page, (err, resource) => {
             if (err) return callback(err)
             const { resourcePath, queryObj } = parseRequest(resource)
             const ext = path.extname(resourcePath)
             // 获取pageName
             let pageName
-            const relative = path.relative(context, resourcePath)
+            const relative = path.relative(subPackContext, resourcePath)
             if (/^\./.test(relative)) {
               // 如果当前page不存在于context中，对其进行重命名
               pageName = toPosix(path.join(tarRoot, getPageName(resourcePath, ext)))
-              emitWarning(`Current page ${resourcePath} is not in current pages directory ${context}, the page path will be replaced with ${pageName}, use ?resolve to get the page path and navigate to it!`)
+              emitWarning(`Current page ${resourcePath} is not in current pages directory ${subPackContext}, the page path will be replaced with ${pageName}, use ?resolve to get the page path and navigate to it!`)
             } else {
               pageName = toPosix(path.join(tarRoot, /^(.*?)(\.[^.]*)?$/.exec(relative)[1]))
               // 如果当前page与已有page存在命名冲突，也进行重命名
