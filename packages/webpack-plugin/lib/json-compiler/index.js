@@ -42,6 +42,9 @@ module.exports = function (raw = '{}') {
   const packageName = mpx.currentPackageRoot || 'main'
   const pagesMap = mpx.pagesMap
   const componentsMap = mpx.componentsMap[packageName]
+  const EntryNode = mpx.EntryNode
+  const entryNodesMap = mpx.entryNodesMap
+  const entryModulesMap = mpx.entryModulesMap
   const mode = mpx.mode
   const defs = mpx.defs
   const globalSrcMode = mpx.srcMode
@@ -52,6 +55,28 @@ module.exports = function (raw = '{}') {
   const isApp = !(pagesMap[resourcePath] || componentsMap[resourcePath])
   const publicPath = this._compilation.outputOptions.publicPath || ''
   const fs = this._compiler.inputFileSystem
+
+  // json模块都是由.mpx或.js的入口模块引入，且引入关系为一对一，其issuer必为入口module
+  const entryModule = this._module.issuer
+  // 通过rawRequest关联entryNode和entryModule
+  const entryRequest = entryModule.rawRequest
+  const entryType = isApp ? 'App' : pagesMap[resourcePath] ? 'Page' : 'Component'
+
+  function getEntryNode (request, type) {
+    if (!entryNodesMap[request]) {
+      entryNodesMap[request] = new EntryNode({
+        type,
+        request
+      })
+    } else if (entryNodesMap[request].type !== type) {
+      emitError(`获取request为${request}的entryNode时类型与已有节点冲突, 当前获取的type为${type}, 已有节点的type为${entryNodesMap[request].type}!`)
+    }
+    return entryNodesMap[request]
+  }
+
+  const currentEntry = getEntryNode(entryRequest, entryType)
+  currentEntry.module = entryModule
+  entryModulesMap.set(entryModule, currentEntry)
 
   const copydir = (dir, context, callback) => {
     fs.readdir(dir, (err, files) => {
@@ -262,10 +287,6 @@ module.exports = function (raw = '{}') {
       })
       const componentPath = packageInfo.outputPath
       rewritePath && rewritePath(publicPath + componentPath)
-      // 如果之前已经创建了入口，直接return
-      if (packageInfo.alreadyOutputed) {
-        return callback()
-      }
       if (ext === '.js') {
         const nativeLoaderOptions = mpx.loaderOptions ? '?' + JSON.stringify(mpx.loaderOptions) : ''
         resource = '!!' + nativeLoaderPath + nativeLoaderOptions + '!' + resource
@@ -274,6 +295,11 @@ module.exports = function (raw = '{}') {
       resource = addQuery(resource, {
         packageName: packageInfo.packageName
       })
+      currentEntry.addChild(getEntryNode(resource, 'Component'))
+      // 如果之前已经创建了入口，直接return
+      if (packageInfo.alreadyOutputed) {
+        return callback()
+      }
       addEntrySafely(resource, componentPath, callback)
     })
   }
@@ -291,13 +317,9 @@ module.exports = function (raw = '{}') {
     } else {
       const issuer = getJsonIssuer(this._module)
       if (issuer) {
-        this.emitError(
-          new Error(`[json compiler]:Mpx单次构建中只能存在一个App，当前组件/页面[${this.resource}]通过[${issuer.resource}]非法引入，引用的资源将被忽略，请确保组件/页面资源通过usingComponents/pages配置引入！`)
-        )
+        emitError(`[json compiler]:Mpx单次构建中只能存在一个App，当前组件/页面[${this.resource}]通过[${issuer.resource}]非法引入，引用的资源将被忽略，请确保组件/页面资源通过usingComponents/pages配置引入！`)
       } else {
-        this.emitError(
-          new Error(`[json compiler]:Mpx单次构建中只能存在一个App，请检查当前entry中的资源[${this.resource}]是否为组件/页面，通过添加?component/page查询字符串显式声明该资源是组件/页面！`)
-        )
+        emitError(`[json compiler]:Mpx单次构建中只能存在一个App，请检查当前entry中的资源[${this.resource}]是否为组件/页面，通过添加?component/page查询字符串显式声明该资源是组件/页面！`)
       }
       return callback()
     }
@@ -453,12 +475,12 @@ module.exports = function (raw = '{}') {
 
     const processPages = (pages, srcRoot = '', tarRoot = '', context, callback) => {
       if (pages) {
+        context = path.join(context, srcRoot)
         async.forEach(pages, (page, callback) => {
           if (!isUrlRequest(page, options.root)) return callback()
           if (resolveMode === 'native') {
             page = loaderUtils.urlToRequest(page, options.root)
           }
-          context = path.join(context, srcRoot)
           resolve(context, page, (err, resource) => {
             if (err) return callback(err)
             const { resourcePath, queryObj } = parseRequest(resource)
@@ -482,8 +504,12 @@ module.exports = function (raw = '{}') {
                 }
               }
             }
-            // 目前暂时不支持多个分包复用同一个页面
-            // 如果之前已经创建了入口，直接return
+            if (ext === '.js') {
+              const nativeLoaderOptions = mpx.loaderOptions ? '?' + JSON.stringify(mpx.loaderOptions) : ''
+              resource = '!!' + nativeLoaderPath + nativeLoaderOptions + '!' + resource
+            }
+            currentEntry.addChild(getEntryNode(resource, 'Page'))
+            // 如果之前已经创建了页面入口，直接return，目前暂时不支持多个分包复用同一个页面
             if (pagesMap[resourcePath]) return callback()
             pagesMap[resourcePath] = pageName
             if (tarRoot && subPackagesCfg[tarRoot]) {
@@ -495,9 +521,6 @@ module.exports = function (raw = '{}') {
               } else {
                 localPages.push(pageName)
               }
-            }
-            if (ext === '.js') {
-              resource = '!!' + nativeLoaderPath + '!' + resource
             }
             addEntrySafely(resource, pageName, callback)
           })

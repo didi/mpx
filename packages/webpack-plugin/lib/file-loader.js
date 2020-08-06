@@ -50,12 +50,12 @@ module.exports = function loader (content) {
         options.publicPath.endsWith('/')
           ? options.publicPath
           : `${options.publicPath}/`
-      }${outputPath}`
+        }${outputPath}`
     }
     publicPath = JSON.stringify(publicPath)
   }
 
-  this.emitFile(outputPath, content)
+  this.emitFile(outputPath, content, undefined, { modules: [this._module] })
 
   // TODO revert to ES2015 Module export, when new CSS Pipeline is in place
   return `module.exports = ${publicPath};`
