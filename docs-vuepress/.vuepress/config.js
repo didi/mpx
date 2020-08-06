@@ -94,6 +94,7 @@ module.exports = {
   head: [
     ['link', { rel: 'icon', href: '/favicon.ico' }]
   ],
+  title: 'Mpx框架',
   themeConfig: {
     sidebarDepth: 1,
     logo: '/logo.png',
