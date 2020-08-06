@@ -1,39 +1,10 @@
-<template>
-  <div class="mpx-tabbar-container" :class="extClass" :style="wrapperStyle">
-    <div class="tabbar-wrapper">
-      <div class="tab-item" v-for="(item, index) in list" :key="index" @click.stop="itemClickHandler(item, index)">
-        <img class="icon" :src="currentIndex === index ? (item.selectedIconPath || item.iconPath) : item.iconPath" alt="">
-        <span class="tab-cell" :style="'color:' + currentIndex === index ? this.selectedColor : ''">{{item.text}}</span>
-      </div>
-    </div>
-  </div>
-</template>
-
 <script>
+  import Vue from 'vue'
+
+  const tabBarMap = Vue.observable(global.__tabBar)
   export default {
     name: 'mpx-tabbar',
     props: {
-      custom: {
-        type: Boolean,
-        default: false
-      },
-      position: {
-        type: String,
-        validator: (val) => {
-          return ['top', 'bottom'].indexOf(val) >= 0
-        },
-        default: 'bottom'
-      },
-      extClass: {
-        type: String,
-        default: ''
-      },
-      list: {
-        type: Array,
-        required: true,
-        validator: (val) => val && val.length >= 2 && val.length <= 5, // 数组长度至少是两个,最多是五个
-        default: []
-      },
       current: {
         type: Number,
         default: 0
@@ -41,32 +12,19 @@
       bindchange: {
         type: Function,
         default: () => {}
-      },
-      color: {
-        type: String,
-        required: true,
-        default: ''
-      },
-      selectedColor: {
-        type: String,
-        required: true,
-        default: ''
-      },
-      borderStyle: {
-        type: String,
-        validator: (val) => {
-          return ['black', 'white'].indexOf(val) >= 0
-        },
-        default: 'black'
-      },
-      backgroundColor: {
-        type: String,
-        default: '#fff'
-      },
+      }
     },
     data () {
       return {
-        currentIndex: 0 // 当前被选中的tabbar
+        currentIndex: 0, // 当前被选中的tabbar
+        color: '',
+        backgroundColor: '',
+        borderStyle: '',
+        selectedColor: '',
+        extClass: '',
+        position: 'bottom',
+        list: [],
+        custom: false
       }
     },
     computed: {
@@ -76,19 +34,26 @@
         return style
       },
     },
+    watch: {
+      current (value) {
+        this.currentIndex = value
+      }
+    },
     mounted () {
-      this.currentIndex = this.current
+      this.currentIndex = this.current || 0
+      this.backgroundColor = tabBarMap.backgroundColor
+      this.borderStyle = tabBarMap.borderStyle || ''
+      this.extClass = tabBarMap.extClass || ''
+      this.position = tabBarMap.position || 'bottom'
+      this.list = tabBarMap.list
     },
     methods: {
       itemClickHandler (item, index) {
-        if (this.currentIndex !== index) {
-          this.$emit('bindchange', item)
-        }
-        const router = window.__mpxRouter
-        router.push(item.pagePath)
         this.currentIndex = index
+        global.__tabBar.current = index
+        this.$emit('bindchange', item, index)
       },
-      setCurrentTabBar (index) { // 动态设置 tabBar 某一项的内容
+      setTabBar (index) { // 动态设置 tabBar 某一项的内容
         if (index > this.list.length) {
           console.warn('设置选项超出 tabBar 下标')
         }
@@ -98,6 +63,30 @@
         return this.list[this.currentIndex]
       }
     },
+    render (createElement) {
+      const iconImage = (item, index) => createElement('img', {class: 'icon', src: item.selectedIconPath || item.iconPath})
+      const textSpan = (item, index) => createElement('span',
+        {
+          class: 'tab-cell',
+          style:{ color: this.currentIndex === index? tabBarMap.selectedColor: tabBarMap.color },
+          domProps: {innerHTML: item.text}
+        }
+      )
+
+      const tabBarWrapper = createElement('div', {class: 'tabbar-wrapper'},
+      [tabBarMap.list.map((item, index) => {
+        return createElement('div', {class: 'tab-item', on: {click: this.itemClickHandler.bind(this, item, index)}},
+        [iconImage(item, index), textSpan(item, index)]
+        )
+      })])
+      return createElement('div',
+        {
+          class: 'mpx-tabbar-container',
+          style: this.wrapperStyle,
+        },
+        [tabBarWrapper]
+      )
+    }
   }
 </script>
 
@@ -108,11 +97,16 @@
     right: 0
     width: 100%
     height: 48px // TODO 确认下高度是否需要做成可配置？
-    line-height: 48px
     .tabbar-wrapper
       display flex
       align-items center
-      .tab-item
+      height 100%
+     .tab-item
         flex 1
         text-align center
+        height 100%
+        display flex
+        align-items center
+        justify-content center
+        cursor pointer
 </style>

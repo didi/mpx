@@ -47,7 +47,8 @@ export default function onPageScroll (mixinType) {
             probeType: 2,
             bounceTime: TIME_BOUNCE,
             pullDownRefresh: PULL_DOWN_CONFIG,
-            observeDOM: !!this.$options.__mpxPageConfig.enableObserveDOM
+            observeDOM: !!this.$options.__mpxPageConfig.enableObserveDOM,
+            click: true
           }
           try {
             bs = new global.BScroll(this.$el.parentNode.parentNode, bsConfig)

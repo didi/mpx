@@ -34,9 +34,10 @@ module.exports = function (content) {
   const localSrcMode = loaderUtils.parseQuery(this.resourceQuery || '?').mode
   const resourcePath = parseRequest(this.resource).resourcePath
   const srcMode = localSrcMode || globalSrcMode
+  const tabBarMap = mpx.tabBarMap
   const vueContentCache = mpx.vueContentCache
   const autoScope = matchCondition(resourcePath, mpx.autoScopeRules)
-
+  const pagePathReg = /src\/(\S*).mpx/
   const resourceQueryObj = loaderUtils.parseQuery(this.resourceQuery || '?')
 
   // 支持资源query传入page或component支持页面/组件单独编译
@@ -58,9 +59,16 @@ module.exports = function (content) {
   }
 
   let ctorType = 'app'
+  let isTabBarPage = false
   if (pagesMap[resourcePath]) {
     // page
     ctorType = 'page'
+    const resourcePagepath = pagePathReg.exec(resourcePath)[1]
+    tabBarMap.list && tabBarMap.list.length && tabBarMap.list.forEach((item) => {
+      if (item.pagePath === resourcePagepath) {
+        isTabBarPage = true
+      }
+    })
   } else if (componentsMap[resourcePath]) {
     // component
     ctorType = 'component'
@@ -171,7 +179,8 @@ module.exports = function (content) {
                   srcMode,
                   defs,
                   loaderContext,
-                  ctorType
+                  ctorType,
+                  isTabBarPage
                 }, callback)
               },
               (callback) => {
@@ -202,6 +211,9 @@ module.exports = function (content) {
             if (ctorType === 'app' && jsonRes.jsonObj.window && jsonRes.jsonObj.window.navigationBarTitleText) {
               mpx.appTitle = jsonRes.jsonObj.window.navigationBarTitleText
             }
+            if (ctorType === 'app' && jsonRes.jsonObj.tabBar) {
+              mpx.tabBarMap = jsonRes.jsonObj.tabBar
+            }
 
             processScript(parts.script, {
               ctorType,
@@ -212,6 +224,7 @@ module.exports = function (content) {
               i18n,
               jsonConfig: jsonRes.jsonObj,
               mpxCid: resourceQueryObj.mpxCid,
+              tabBarMap: mpx.tabBarMap,
               builtInComponentsMap: templateRes.builtInComponentsMap,
               localComponentsMap: jsonRes.localComponentsMap,
               localPagesMap: jsonRes.localPagesMap

@@ -1,6 +1,8 @@
 const genComponentTag = require('../utils/gen-component-tag')
 const loaderUtils = require('loader-utils')
 const optionProcessorPath = require.resolve('../runtime/optionProcessor')
+const nativeTabBarPath = '@mpxjs/webpack-plugin/lib/runtime/components/web/mpx-tabbar-container.vue'
+const customTabBarPath = '@mpxjs/webpack-plugin/lib/runtime/components/web/mpx-tabbar-container.vue'
 
 function shallowStringify (obj) {
   let arr = []
@@ -28,8 +30,16 @@ module.exports = function (script, options, callback) {
   const getRequireForSrc = options.getRequireForSrc
   const i18n = options.i18n
   const jsonConfig = options.jsonConfig
+  const tabBarMap = options.tabBarMap
 
   const stringifyRequest = r => loaderUtils.stringifyRequest(loaderContext, r)
+
+  let tabBarMapPages = {}
+  if (tabBarMap && Array.isArray(tabBarMap.list) && tabBarMap.list.length) {
+    tabBarMap.list.map((item) => {
+      tabBarMapPages['/'+item.pagePath] = item
+    })
+  }  
 
   let output = '/* script */\n'
 
@@ -101,12 +111,6 @@ module.exports = function (script, options, callback) {
             content += `i18n.${key} = require(${requestObj[key]})\n`
           })
         }
-        if (jsonConfig.tabBar) {
-          content += `
-          import MpxTabBar from '@mpxjs/webpack-plugin/lib/runtime/components/web/mpx/mpx-tabbar.vue'\n
-          Vue.components(MpxTabBar.name, MpxTabBar) \n
-          `
-        }
       }
       let firstPage = ''
       const pagesMap = {}
@@ -115,15 +119,28 @@ module.exports = function (script, options, callback) {
         const pageCfg = localPagesMap[pagePath]
         const pageRequest = stringifyRequest(pageCfg.resource)
         if (pageCfg.async) {
-          pagesMap[pagePath] = `()=>import(${pageRequest})`
+          if (tabBarMapPages[pagePath]) {
+            // 如果是 tabBar 对应的页面
+            pagesMap[pagePath] = tabBarMap.custom ? `()=>import("${customTabBarPath}")` : `()=>import("${nativeTabBarPath}")`
+          } else {
+            pagesMap[pagePath] = `()=>import(${pageRequest})`
+          }
         } else {
           // 为了保持小程序中app->page->component的js执行顺序，所有的page和component都改为require引入
-          pagesMap[pagePath] = `getComponent(require(${pageRequest}))`
+          if (tabBarMapPages[pagePath]) {
+            // 如果是 tabBar 对应的页面
+            pagesMap[pagePath] = tabBarMap.custom ? `getComponent(require("${customTabBarPath}"))` : `getComponent(require("${nativeTabBarPath}"))`
+          } else {
+            pagesMap[pagePath] = `getComponent(require(${pageRequest}))`
+          }
         }
         if (pageCfg.isFirst) {
           firstPage = pagePath
         }
       })
+
+      pagesMap['/pages/tabbar/container/index'] = `getComponent(require("@mpxjs/webpack-plugin/lib/runtime/components/web/mpx-tabbar-container.vue"))`
+
 
       Object.keys(localComponentsMap).forEach((componentName) => {
         const componentCfg = localComponentsMap[componentName]
