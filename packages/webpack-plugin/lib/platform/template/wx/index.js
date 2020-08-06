@@ -391,19 +391,20 @@ module.exports = function getSpec ({ warn, error }) {
           let rEventName = runRules(eventRules, eventName, { mode: 'qa' })
           let rPrefix = runRules(spec.event.prefix, prefix, { mode: 'qa' })
           let rt = []
-          rt.push({
-            name: rPrefix + rEventName,
-            value
-          })
           if (match[1] === 'catch') {
             // 解决快应用的阻止冒泡
             // 由运行时去处理 e.stopPropagation()
             // el.attrsMap['data-cancelbubble'] = true
+            rEventName += '.proxy'
             rt.push({
               name: 'data-cancelbubble',
               value: 'true'
             })
           }
+          rt.push({
+            name: rPrefix + rEventName,
+            value
+          })
           return rt
         }
       },
