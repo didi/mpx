@@ -4,6 +4,7 @@ const LimitChunkCountPlugin = require('webpack/lib/optimize/LimitChunkCountPlugi
 const hash = require('hash-sum')
 const path = require('path')
 const WxsPlugin = require('./WxsPlugin')
+const ChildCompileDependency = require('../dependency/ChildCompileDependency')
 const getMainCompilation = require('../utils/get-main-compilation')
 const parseRequest = require('../utils/parse-request')
 const toPosix = require('../utils/to-posix')
@@ -15,6 +16,7 @@ module.exports = function () {
   const nativeCallback = this.async()
   const mainCompilation = getMainCompilation(this._compilation)
   const mpx = mainCompilation.__mpx__
+  const assetsInfo = mpx.assetsInfo
   const mode = mpx.mode
   const wxsMap = mpx.wxsMap
   const packageName = mpx.currentPackageRoot || 'main'
@@ -46,9 +48,8 @@ module.exports = function () {
     resourcePath = `${resourcePath}~${wxsModule}`
   }
 
-  const reasonModule = this._compilation.reasonModule || this._module
   if (wxsMap[resourcePath]) {
-    wxsMap[resourcePath].modules.push(reasonModule)
+    wxsMap[resourcePath].modules.push(this._module)
     return callback()
   }
 
@@ -57,8 +58,8 @@ module.exports = function () {
   filename = toPosix(filename)
   wxsMap[resourcePath] = {
     filename,
-    assets: [],
-    modules: [reasonModule]
+    dep: null,
+    modules: [this._module]
   }
   const outputOptions = {
     filename
@@ -74,13 +75,22 @@ module.exports = function () {
 
   const childCompiler = mainCompilation.createChildCompiler(request, outputOptions, plugins)
 
+  let entryModule
   childCompiler.hooks.thisCompilation.tap('MpxWebpackPlugin ', (compilation) => {
-    // 往更深层级的子编译向下传递父编译入口模块
-    compilation.reasonModule = reasonModule
+    compilation.hooks.succeedEntry.tap('MpxWebpackPlugin', (entry, name, module) => {
+      entryModule = module
+      const dep = new ChildCompileDependency(entryModule)
+      wxsMap[resourcePath].dep = dep
+    })
   })
 
   childCompiler.hooks.afterCompile.tapAsync('MpxWebpackPlugin', (compilation, callback) => {
-    wxsMap[resourcePath].assets = Object.keys(compilation.assets)
+    Object.keys(compilation.assets).forEach((name) => {
+      // 因为子编译会合并assetsInfo会互相覆盖，使用全局mpx对象收集完之后再合并到主assetsInfo中
+      const assetInfo = assetsInfo.get(name) || { modules: [] }
+      assetInfo.modules.push(entryModule)
+      assetsInfo.set(name, assetInfo)
+    })
     callback()
   })
 

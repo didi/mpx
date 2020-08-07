@@ -8,6 +8,7 @@ module.exports = function loader (content) {
   const context = options.context || this.rootContext
   const mainCompilation = getMainCompilation(this._compilation)
   const mpx = mainCompilation.__mpx__
+  const assetsInfo = mpx.assetsInfo
 
   let url = loaderUtils.interpolateName(this, options.name, {
     context,
@@ -55,7 +56,12 @@ module.exports = function loader (content) {
     publicPath = JSON.stringify(publicPath)
   }
 
-  this.emitFile(outputPath, content, undefined, { modules: [this._module] })
+  // 因为子编译会合并assetsInfo会互相覆盖，使用全局mpx对象收集完之后再合并到主assetsInfo中
+  const assetInfo = assetsInfo.get(outputPath) || { modules: [] }
+  assetInfo.modules.push(this._module)
+  assetsInfo.set(outputPath, assetInfo)
+
+  this.emitFile(outputPath, content)
 
   // TODO revert to ES2015 Module export, when new CSS Pipeline is in place
   return `module.exports = ${publicPath};`

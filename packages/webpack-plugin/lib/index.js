@@ -1,12 +1,12 @@
 'use strict'
 
 const path = require('path')
-const fs = require('fs')
 const ConcatSource = require('webpack-sources').ConcatSource
 const RawSource = require('webpack-sources').RawSource
 const ResolveDependency = require('./dependency/ResolveDependency')
 const InjectDependency = require('./dependency/InjectDependency')
 const ReplaceDependency = require('./dependency/ReplaceDependency')
+const ChildCompileDependency = require('./dependency/ChildCompileDependency')
 const NullFactory = require('webpack/lib/NullFactory')
 const normalize = require('./utils/normalize')
 const toPosix = require('./utils/to-posix')
@@ -23,7 +23,6 @@ const fixRelative = require('./utils/fix-relative')
 const parseRequest = require('./utils/parse-request')
 const matchCondition = require('./utils/match-condition')
 const parseAsset = require('./utils/parse-asset')
-const mkdir = require('mkdirp')
 
 const isProductionLikeMode = options => {
   return options.mode === 'production' || !options.mode
@@ -259,13 +258,27 @@ class MpxWebpackPlugin {
 
     new ExternalsPlugin('commonjs2', this.options.externals).apply(compiler)
 
-    compiler.hooks.compilation.tap('MpxWebpackPlugin ', (compilation) => {
+    compiler.hooks.compilation.tap('MpxWebpackPlugin ', (compilation, { normalModuleFactory }) => {
       compilation.hooks.normalModuleLoader.tap('MpxWebpackPlugin', (loaderContext, module) => {
         // 设置loaderContext的minimize
         if (isProductionLikeMode(compiler.options)) {
           loaderContext.minimize = true
         }
       })
+      compilation.dependencyFactories.set(ResolveDependency, new NullFactory())
+      compilation.dependencyTemplates.set(ResolveDependency, new ResolveDependency.Template())
+
+      compilation.dependencyFactories.set(InjectDependency, new NullFactory())
+      compilation.dependencyTemplates.set(InjectDependency, new InjectDependency.Template())
+
+      compilation.dependencyFactories.set(ReplaceDependency, new NullFactory())
+      compilation.dependencyTemplates.set(ReplaceDependency, new ReplaceDependency.Template())
+
+      compilation.dependencyFactories.set(ChildCompileDependency, new NullFactory())
+      compilation.dependencyTemplates.set(ChildCompileDependency, new ChildCompileDependency.Template())
+
+      compilation.dependencyFactories.set(RemovedModuleDependency, normalModuleFactory)
+      compilation.dependencyTemplates.set(RemovedModuleDependency, new RemovedModuleDependency.Template())
     })
 
     let mpx
@@ -310,6 +323,7 @@ class MpxWebpackPlugin {
           currentPackageRoot: '',
           wxsMap: {},
           wxsContentMap: {},
+          assetsInfo: new Map(),
           forceDisableInject: this.options.forceDisableInject,
           forceUsePageCtor: this.options.forceUsePageCtor,
           resolveMode: this.options.resolveMode,
@@ -496,37 +510,23 @@ class MpxWebpackPlugin {
           }
           compilation.emitAsset(file, content, { modules: additionalAssets[file].modules })
         }
-
-        // 将子编译(wxs和extract)产生assets的依赖关系同步到compilation.assetsInfo中
+        // 所有编译的静态资源assetsInfo合入主编译
+        mpx.assetsInfo.forEach((assetInfo, name) => {
+          const oldAssetInfo = compilation.assetsInfo.get(name)
+          if (oldAssetInfo && oldAssetInfo.modules) {
+            assetInfo.modules = assetInfo.modules.concat(oldAssetInfo.modules)
+          }
+          compilation.assetsInfo.set(name, assetInfo)
+        })
+        // 链接主编译模块与子编译入口
         Object.values(mpx.wxsMap).concat(Object.values(mpx.extractedMap)).forEach((item) => {
-          item.assets.forEach((name) => {
-            const assetInfo = compilation.assetsInfo.get(name)
-            if (assetInfo) {
-              assetInfo.modules = (assetInfo.modules || []).concat(item.modules)
-            }
+          item.modules.forEach((module) => {
+            module.addDependency(item.dep)
           })
         })
 
-        for (const name in mpx.childCompilerAssetsMap) {
-          const assetInfo = compilation.assetsInfo.get(name)
-          if (assetInfo) {
-            assetInfo.modules = (assetInfo.modules || []).concat(mpx.childCompilerAssetsMap[name])
-          }
-        }
         callback()
       })
-
-      compilation.dependencyFactories.set(ResolveDependency, new NullFactory())
-      compilation.dependencyTemplates.set(ResolveDependency, new ResolveDependency.Template())
-
-      compilation.dependencyFactories.set(InjectDependency, new NullFactory())
-      compilation.dependencyTemplates.set(InjectDependency, new InjectDependency.Template())
-
-      compilation.dependencyFactories.set(ReplaceDependency, new NullFactory())
-      compilation.dependencyTemplates.set(ReplaceDependency, new ReplaceDependency.Template())
-
-      compilation.dependencyFactories.set(RemovedModuleDependency, normalModuleFactory)
-      compilation.dependencyTemplates.set(RemovedModuleDependency, new RemovedModuleDependency.Template())
 
       normalModuleFactory.hooks.parser.for('javascript/auto').tap('MpxWebpackPlugin', (parser) => {
         // hack预处理，将expr.range写入loc中便于在CommonJsRequireDependency中获取，移除无效require
@@ -990,7 +990,7 @@ if(!context.console) {
             // if (ref.weak) {
             //   return
             // }
-            const refModule = dep.module || dep.removedModule
+            const refModule = dep.module || dep.removedModule || dep.childCompileEntryModule
             if (refModule) walk(refModule)
           })
         }
@@ -1077,12 +1077,12 @@ if(!context.console) {
           modules: [],
           totalSize: 0
         }
-        sizeInfo[packageName][fillType].push(fillInfo)
+        sizeInfo[packageName][fillType].push({ ...fillInfo })
         sizeInfo[packageName].totalSize += fillInfo.size
       }
 
       function fillSizeReportGroups (entryModules, packageName, fillType, fillInfo) {
-        if (!entryModules || !entryModules.size) debugger
+        if (!entryModules || !entryModules.size) return
         reportGroups.forEach((reportGroup) => {
           if (every(entryModules, (entryModule) => {
             return reportGroup.selfEntryModules.has(entryModule)
@@ -1094,7 +1094,6 @@ if(!context.console) {
             fillSizeInfo(reportGroup.sharedSizeInfo, packageName, fillType, fillInfo)
           }
         })
-
       }
 
       const assetsSizeInfo = {
@@ -1111,6 +1110,7 @@ if(!context.console) {
       }, {})
 
       for (let name in compilation.assets) {
+        if (name.startsWith('wxs')) debugger
         const packageName = getPackageName(name)
         const assetInfo = compilation.assetsInfo.get(name)
         if (assetInfo && assetInfo.modules) {
@@ -1123,6 +1123,7 @@ if(!context.console) {
             }
           })
           const size = compilation.assets[name].size()
+
           fillSizeReportGroups(entryModules, packageName, 'assets', { name, size })
           assetsSizeInfo.assets.push({
             type: 'static',
@@ -1234,7 +1235,8 @@ if(!context.console) {
       groupsSizeInfo.forEach((groupSizeInfo) => {
         const groupSummary = {
           selfSize: {},
-          sharedSize: {}
+          sharedSize: {},
+          name: groupSizeInfo.name
         }
 
         for (const key in groupSizeInfo.selfSizeInfo) {
@@ -1258,9 +1260,12 @@ if(!context.console) {
       }
 
       const reportFilePath = path.resolve(compiler.outputPath, this.options.reportSize.filename || 'report.json')
-      mkdir.sync(path.dirname(reportFilePath))
-      fs.writeFileSync(reportFilePath, JSON.stringify(reportData, null, 2))
-
+      compiler.outputFileSystem.mkdirp(path.dirname(reportFilePath), (err) => {
+        if (err) return callback(err)
+        compiler.outputFileSystem.writeFile(reportFilePath, JSON.stringify(reportData, null, 2), (err) => {
+          callback(err)
+        })
+      })
       console.log(`Size report is generated in ${reportFilePath}!`)
 
       return callback()

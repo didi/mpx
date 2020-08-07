@@ -5,6 +5,7 @@ const NodeTargetPlugin = require('webpack/lib/node/NodeTargetPlugin')
 const LibraryTemplatePlugin = require('webpack/lib/LibraryTemplatePlugin')
 const SingleEntryPlugin = require('webpack/lib/SingleEntryPlugin')
 const LimitChunkCountPlugin = require('webpack/lib/optimize/LimitChunkCountPlugin')
+const ChildCompileDependency = require('./dependency/ChildCompileDependency')
 const normalize = require('./utils/normalize')
 const parseRequest = require('./utils/parse-request')
 const getMainCompilation = require('./utils/get-main-compilation')
@@ -122,18 +123,17 @@ module.exports = function (content) {
   }
 
   const id = `${file}:${index}:${issuerFile}:${fromImport}`
-  const reasonModule = this._compilation.reasonModule || this._module
 
   // 由于webpack中moduleMap只在compilation维度有效，不同子编译之间可能会对相同的引用文件进行重复的无效抽取，建立全局extractedMap避免这种情况出现
   if (extractedMap[id]) {
-    extractedMap[id].modules.push(reasonModule)
+    extractedMap[id].modules.push(this._module)
     return extractedMap[id].resultSource
   }
   const nativeCallback = this.async()
   extractedMap[id] = {
     resultSource,
-    assets: [],
-    modules: [reasonModule]
+    dep: null,
+    modules: [this._module]
   }
 
   // 使用子编译器生成需要抽离的json，styles和template
@@ -152,8 +152,7 @@ module.exports = function (content) {
     new LimitChunkCountPlugin({ maxChunks: 1 })
   ])
 
-  childCompiler.hooks.thisCompilation.tap('MpxWebpackPlugin ', (compilation) => {
-    compilation.reasonModule = this._compilation.reasonModule || this._module
+  childCompiler.hooks.thisCompilation.tap('MpxWebpackPlugin', (compilation) => {
     compilation.hooks.normalModuleLoader.tap('MpxWebpackPlugin', (loaderContext) => {
       // 传递编译结果，子编译器进入content-loader后直接输出
       loaderContext.__mpx__ = {
@@ -162,10 +161,13 @@ module.exports = function (content) {
         contextDependencies: this.getContextDependencies()
       }
     })
+    compilation.hooks.succeedEntry.tap('MpxWebpackPlugin', (entry, name, module) => {
+      const dep = new ChildCompileDependency(module)
+      extractedMap[id].dep = dep
+    })
   })
 
   let source
-
   childCompiler.hooks.afterCompile.tapAsync('MpxWebpackPlugin', (compilation, callback) => {
     source = compilation.assets[childFilename] && compilation.assets[childFilename].source()
 
@@ -176,7 +178,6 @@ module.exports = function (content) {
       })
     })
 
-    extractedMap[id].assets = Object.keys(compilation.assets)
     callback()
   })
 
