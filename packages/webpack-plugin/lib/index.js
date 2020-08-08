@@ -934,6 +934,8 @@ if(!context.console) {
     })
 
     compiler.hooks.done.tapAsync('MpxWebpackPlugin', (stats, callback) => {
+      if (!this.options.reportSize) return callback()
+
       const compilation = stats.compilation
 
       function every (set, fn) {
@@ -1008,7 +1010,7 @@ if(!context.console) {
         walk(entryModule)
       }
 
-      const reportGroups = this.options.reportSize.groups
+      const reportGroups = this.options.reportSize.groups || []
 
       compilation.chunks.forEach((chunk) => {
         if (chunk.entryModule) {
