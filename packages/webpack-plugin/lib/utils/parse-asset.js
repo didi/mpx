@@ -112,6 +112,7 @@ function isOptimizedModulesArray (node) {
 }
 
 function isModuleWrapper (node) {
+  /* eslint-disable no-mixed-operators */
   return (// It's an anonymous function expression that wraps module
     (node.type === 'FunctionExpression' || node.type === 'ArrowFunctionExpression') && !node.id || // If `DedupePlugin` is used it can be an ID of duplicated module...
     isModuleId(node) || // or an array of shape [<module_id>, ...args]
@@ -167,11 +168,11 @@ function getModulesLocations (node) {
 
   if (node.type === 'ArrayExpression' || isOptimizedArray) {
     // Modules array or optimized array
-    const minId = isOptimizedArray ? // Get the [minId] value from the Array() call first argument literal value
-      node.callee.object.arguments[0].value : // `0` for simple array
-      0
-    const modulesNodes = isOptimizedArray ? // The modules reside in the `concat()` function call arguments
-      node.arguments[0].elements : node.elements
+    const minId = isOptimizedArray // Get the [minId] value from the Array() call first argument literal value
+      ? node.callee.object.arguments[0].value // `0` for simple array
+      : 0
+    const modulesNodes = isOptimizedArray // The modules reside in the `concat()` function call arguments
+      ? node.arguments[0].elements : node.elements
     return _.transform(modulesNodes, (result, moduleNode, i) => {
       if (!moduleNode) return
       result[i + minId] = getModuleLocation(moduleNode)

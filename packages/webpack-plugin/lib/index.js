@@ -1025,7 +1025,7 @@ if(!context.console) {
       const subpackages = new Set(Object.keys(mpx.componentsMap))
 
       function getPackageName (fileName) {
-        const root = /^([^\/\\]*)(\/|\\)?/.exec(fileName)[1]
+        const root = /^([^/\\]*)(\/|\\)?/.exec(fileName)[1]
         if (subpackages.has(root)) return root
         return 'main'
       }
@@ -1110,7 +1110,6 @@ if(!context.console) {
       }, {})
 
       for (let name in compilation.assets) {
-        if (name.startsWith('wxs')) debugger
         const packageName = getPackageName(name)
         const assetInfo = compilation.assetsInfo.get(name)
         if (assetInfo && assetInfo.modules) {
@@ -1163,7 +1162,7 @@ if(!context.console) {
             })
             chunkAssetInfo.modules.push({
               identifier,
-              size: moduleSize,
+              size: moduleSize
             })
             size -= moduleSize
           }

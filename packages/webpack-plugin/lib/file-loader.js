@@ -51,7 +51,7 @@ module.exports = function loader (content) {
         options.publicPath.endsWith('/')
           ? options.publicPath
           : `${options.publicPath}/`
-        }${outputPath}`
+      }${outputPath}`
     }
     publicPath = JSON.stringify(publicPath)
   }
