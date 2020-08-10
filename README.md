@@ -170,7 +170,7 @@ npm run build
 
 ## 文档
 
-https://didi.github.io/mpx
+https://mpxjs.cn/
 
 ## 设计思路
 
