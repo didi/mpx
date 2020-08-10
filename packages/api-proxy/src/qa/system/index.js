@@ -1,5 +1,5 @@
 /** 
-*@file 兼容微信系统信息相关API
+*@file 系统信息相关API
 *@export getSystemInfo、getSystemInfoSync
 **/
 
