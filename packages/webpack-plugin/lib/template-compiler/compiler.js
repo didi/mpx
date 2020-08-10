@@ -763,6 +763,8 @@ function parse (template, options) {
   let meta = {}
   let currentParent
   let multiRootError
+  // 用于记录模板用到的组件，匹配引用组件，看是否有冗余
+  let tagNames = []
 
   function genTempRoot () {
     // 使用临时节点作为root，处理multi root的情况
@@ -797,6 +799,7 @@ function parse (template, options) {
       }
       attrs = consumeMpxCommentAttrs(attrs, mode)
 
+      tagNames.push(tag)
       let element = createASTElement(tag, attrs, currentParent)
       if (ns) {
         element.ns = ns
@@ -926,6 +929,12 @@ function parse (template, options) {
     Array.isArray(val.warnArray) && val.warnArray.forEach(item => warn$1(item))
     Array.isArray(val.errorArray) && val.errorArray.forEach(item => error$1(item))
   })
+
+  if (!tagNames.includes('component')) {
+    options.usingComponents.forEach((item) => {
+      if (!tagNames.includes(item)) warn$1(`${item}组件进行了注册，但是未被对应的模板引用，建议删除！`)
+    })
+  }
 
   return {
     root,
