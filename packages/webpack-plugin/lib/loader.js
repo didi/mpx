@@ -38,7 +38,6 @@ module.exports = function (content) {
   const vueContentCache = mpx.vueContentCache
   const autoScope = matchCondition(resourcePath, mpx.autoScopeRules)
 
-
   // 支持资源query传入page或component支持页面/组件单独编译
   if ((resourceQueryObj.component && !componentsMap[resourcePath]) || (resourceQueryObj.page && !pagesMap[resourcePath])) {
     let entryChunkName
@@ -73,7 +72,7 @@ module.exports = function (content) {
   const processSrcQuery = (src, type) => {
     const localQuery = Object.assign({}, resourceQueryObj)
     // style src会被特殊处理为全局复用样式，暂时不添加resourcePath
-    if (type !== 'style') {
+    if (type !== 'styles') {
       localQuery.resourcePath = resourcePath
     }
     if (type === 'json') {
@@ -328,7 +327,7 @@ module.exports = function (content) {
           let requireString
           // require style
           if (style.src) {
-            style.src = processSrcQuery(src, 'styles')
+            style.src = processSrcQuery(style.src, 'styles')
             requireString = getRequireForSrc('styles', style, -1, scoped, undefined, true)
           } else {
             requireString = getRequire('styles', style, i, scoped)
@@ -382,7 +381,6 @@ module.exports = function (content) {
 
       if (template) {
         if (template.src) {
-
           template.src = processSrcQuery(template.src, 'template')
           output += getRequireForSrc('template', template) + '\n\n'
         } else {
