@@ -162,7 +162,7 @@ function parseHTML (html, options) {
     if (pos >= 0) {
       // Close all the open elements, up the stack
       for (let i = stack.length - 1; i >= pos; i--) {
-        if ( i > pos || !tagName ) {
+        if (i > pos || !tagName) {
           console.warn(`tag <${stack[i].tag}> has no matching end tag.`,
             { start: stack[i].start, end: stack[i].end })
         }
@@ -230,15 +230,13 @@ export function parse (template) {
       attrs.forEach(attr => {
         if (invalidAttributeRE.test(attr.name)) {
           console.warn(`Invalid dynamic argument expression: attribute names cannot contain ` +
-            `spaces, quotes, <, >, / or =.`,
-            {
-              start: attr.start + attr.name.indexOf(`[`),
-              end: attr.start + attr.name.length
-            })
+            `spaces, quotes, <, >, / or =.`, {
+            start: attr.start + attr.name.indexOf(`[`),
+            end: attr.start + attr.name.length
+          })
         }
       })
     },
-  
     end () {
       const element = stack[stack.length - 1]
       // pop stack
@@ -249,7 +247,6 @@ export function parse (template) {
         nodes.push(root)
       }
     },
-  
     chars (text) {
       const child = {
         type: 'text',
@@ -333,7 +330,7 @@ export function htmlTranStr (template, space) {
           html += isEffAttr ? ` ${key}="${attrs[key]}"` : console.warn(`This ${key} attribute is not supported for ${name} tags contained in rich-text`)
         }
       }
-      html += `${isUnaryTag(name) ? '' : '>'}${item.children.length ? htmlTranStr(item.children, space): ''}${isUnaryTag(name) ? ' />' : '</' + name+ '>'}`
+      html += `${isUnaryTag(name) ? '' : '>'}${item.children.length ? htmlTranStr(item.children, space) : ''}${isUnaryTag(name) ? ' />' : '</' + name + '>'}`
     } else if (name){
       console.warn(`the rich-text is not support ${name} tag`)
     }
