@@ -148,12 +148,12 @@ module.exports = function (json, options, rawCallback) {
 
   const processPages = (pages, srcRoot = '', tarRoot = '', context, callback) => {
     if (pages) {
+      context = path.join(context, srcRoot)
       async.forEach(pages, (page, callback) => {
         if (!isUrlRequest(page, projectRoot)) return callback()
         if (resolveMode === 'native') {
           page = loaderUtils.urlToRequest(page, projectRoot)
         }
-        context = path.join(context, srcRoot)
         resolve(context, page, (err, resource) => {
           if (err) return callback(err)
           const { resourcePath, queryObj } = parseRequest(resource)
