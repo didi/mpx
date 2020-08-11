@@ -11,7 +11,7 @@ module.exports = (content, filePath, needMap, mode, defs) => {
   const filename = path.basename(filePath)
   const cacheKey = hash(filename + content + mode)
   let output = cache.get(cacheKey)
-  if (output) return output
+  if (output) return JSON.parse(output)
   output = compiler.parseComponent(content, {
     mode,
     defs,
@@ -39,7 +39,8 @@ module.exports = (content, filePath, needMap, mode, defs) => {
       })
     }
   }
-  cache.set(cacheKey, output)
+  // 使用JSON.stringify进行序列化缓存，避免修改输出对象时影响到缓存
+  cache.set(cacheKey, JSON.stringify(output))
   return output
 }
 
