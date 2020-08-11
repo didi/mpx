@@ -46,7 +46,7 @@ const handleSuccess = (opts, getOptions = noop, thisObj) => {
 
 function genFromMap () {
   const result = {}
-  const platforms = ['wx', 'ali', 'swan', 'qq', 'tt', 'web']
+  const platforms = ['wx', 'ali', 'swan', 'qq', 'tt', 'web', 'qa']
   platforms.forEach((platform) => {
     result[`__mpx_src_mode_${platform}__`] = platform
   })
@@ -77,6 +77,10 @@ function error (msg) {
 
 function noop () {}
 
+const getType = (input) => {
+  Object.prototype.toString.call(input).slice(8, -1)
+}
+
 export {
   changeOpts,
   handleSuccess,
@@ -84,5 +88,6 @@ export {
   getEnvObj,
   error,
   warn,
-  noop
+  noop,
+  getType
 }
