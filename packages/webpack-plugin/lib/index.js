@@ -497,31 +497,27 @@ class MpxWebpackPlugin {
             additionalAssets[file].forEach((item) => {
               content.add(item)
             })
-            compilation.assets[file] = content
-          }
-          additionalAssets[file].forEach((item) => {
-            content.add(item)
-          })
 
-          const modules = (additionalAssets[file].modules || []).concat(additionalAssets[file].relativeModules || [])
+            const modules = (additionalAssets[file].modules || []).concat(additionalAssets[file].relativeModules || [])
 
-          if (modules.length > 1) {
-            // 同步relativeModules和modules之间的依赖
-            const fileDependencies = new Set()
-            const contextDependencies = new Set()
+            if (modules.length > 1) {
+              // 同步relativeModules和modules之间的依赖
+              const fileDependencies = new Set()
+              const contextDependencies = new Set()
 
-            modules.forEach((module) => {
-              module.buildInfo.fileDependencies.forEach((fileDependency) => {
-                fileDependencies.add(fileDependency)
+              modules.forEach((module) => {
+                module.buildInfo.fileDependencies.forEach((fileDependency) => {
+                  fileDependencies.add(fileDependency)
+                })
+                module.buildInfo.contextDependencies.forEach((contextDependency) => {
+                  contextDependencies.add(contextDependency)
+                })
+                module.buildInfo.fileDependencies = fileDependencies
+                module.buildInfo.contextDependencies = contextDependencies
               })
-              module.buildInfo.contextDependencies.forEach((contextDependency) => {
-                contextDependencies.add(contextDependency)
-              })
-              module.buildInfo.fileDependencies = fileDependencies
-              module.buildInfo.contextDependencies = contextDependencies
-            })
+            }
+            compilation.emitAsset(file, content, { modules: additionalAssets[file].modules })
           }
-          compilation.emitAsset(file, content, { modules: additionalAssets[file].modules })
         }
         // 所有编译的静态资源assetsInfo合入主编译
         mpx.assetsInfo.forEach((assetInfo, name) => {

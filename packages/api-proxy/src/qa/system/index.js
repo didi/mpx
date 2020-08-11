@@ -1,4 +1,4 @@
-/** 
+/**
 *@file 系统信息相关API
 *@export getSystemInfo、getSystemInfoSync
 **/
@@ -7,9 +7,9 @@
 import app from 'qApp'
 import { successHandler, failHandler } from '../../common/js'
 
-function getSystemInfoSync(options = {}) {
+function getSystemInfoSync (options = {}) {
   let systemInfo
-  try{
+  try {
     systemInfo = app.getInfo()
     const response = Object.assign({ msg: 'getSystemInfo:ok' }, systemInfo)
     successHandler(response, options.success, options.complete)
@@ -20,7 +20,7 @@ function getSystemInfoSync(options = {}) {
   }
 }
 
-function getSystemInfo(options = {}) {
+function getSystemInfo (options = {}) {
   try {
     const systemInfo = getSystemInfoSync(options)
     return Promise.resolve(systemInfo)
@@ -33,5 +33,3 @@ export {
   getSystemInfoSync,
   getSystemInfo
 }
-
-
