@@ -390,13 +390,6 @@ module.exports = {
         return ` {${arr.join(',')}} `
       }
     },
-    wxs: {
-      tag: 'wxs',
-      module: 'module',
-      src: 'src',
-      ext: '.wxs',
-      templatePrefix: 'module.exports = \n'
-    },
     directive: {
       if: 'if',
       elseif: 'elif',
