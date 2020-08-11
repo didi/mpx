@@ -42,6 +42,9 @@ module.exports = function (raw = '{}') {
   const packageName = mpx.currentPackageRoot || 'main'
   const pagesMap = mpx.pagesMap
   const componentsMap = mpx.componentsMap[packageName]
+  const EntryNode = mpx.EntryNode
+  const entryNodesMap = mpx.entryNodesMap
+  const entryModulesMap = mpx.entryModulesMap
   const mode = mpx.mode
   const defs = mpx.defs
   const globalSrcMode = mpx.srcMode
@@ -52,6 +55,28 @@ module.exports = function (raw = '{}') {
   const isApp = !(pagesMap[resourcePath] || componentsMap[resourcePath])
   const publicPath = this._compilation.outputOptions.publicPath || ''
   const fs = this._compiler.inputFileSystem
+
+  // json模块都是由.mpx或.js的入口模块引入，且引入关系为一对一，其issuer必为入口module
+  const entryModule = this._module.issuer
+  // 通过rawRequest关联entryNode和entryModule
+  const entryRequest = entryModule.rawRequest
+  const entryType = isApp ? 'App' : pagesMap[resourcePath] ? 'Page' : 'Component'
+
+  function getEntryNode (request, type) {
+    if (!entryNodesMap[request]) {
+      entryNodesMap[request] = new EntryNode({
+        type,
+        request
+      })
+    } else if (entryNodesMap[request].type !== type) {
+      emitError(`获取request为${request}的entryNode时类型与已有节点冲突, 当前获取的type为${type}, 已有节点的type为${entryNodesMap[request].type}!`)
+    }
+    return entryNodesMap[request]
+  }
+
+  const currentEntry = getEntryNode(entryRequest, entryType)
+  currentEntry.module = entryModule
+  entryModulesMap.set(entryModule, currentEntry)
 
   const copydir = (dir, context, callback) => {
     fs.readdir(dir, (err, files) => {
@@ -144,22 +169,20 @@ module.exports = function (raw = '{}') {
   }
 
   // json补全
-  if (!mpx.forceDisableInject) {
-    if (pagesMap[resourcePath]) {
-      // page
-      if (!mpx.forceUsePageCtor) {
-        if (!json.usingComponents) {
-          json.usingComponents = {}
-        }
-        if (!json.component && mode === 'swan') {
-          json.component = true
-        }
+  if (pagesMap[resourcePath]) {
+    // page
+    if (!mpx.forceUsePageCtor) {
+      if (!json.usingComponents) {
+        json.usingComponents = {}
       }
-    } else if (componentsMap[resourcePath]) {
-      // component
-      if (json.component !== true) {
+      if (!json.component && mode === 'swan') {
         json.component = true
       }
+    }
+  } else if (componentsMap[resourcePath]) {
+    // component
+    if (json.component !== true) {
+      json.component = true
     }
   }
 
@@ -209,10 +232,7 @@ module.exports = function (raw = '{}') {
   }
 
   const processComponent = (component, context, rewritePath, outputPath, callback) => {
-    if (/^plugin:\/\//.test(component)) {
-      return callback()
-    }
-
+    if (!isUrlRequest(component, options.root)) return callback()
     if (resolveMode === 'native') {
       component = loaderUtils.urlToRequest(component, options.root)
     }
@@ -260,14 +280,13 @@ module.exports = function (raw = '{}') {
         isStatic: false,
         error: (err) => {
           this.emitError(err)
+        },
+        warn: (err) => {
+          this.emitWarning(err)
         }
       })
       const componentPath = packageInfo.outputPath
       rewritePath && rewritePath(publicPath + componentPath)
-      // 如果之前已经创建了入口，直接return
-      if (packageInfo.alreadyOutputed) {
-        return callback()
-      }
       if (ext === '.js') {
         const nativeLoaderOptions = mpx.loaderOptions ? '?' + JSON.stringify(mpx.loaderOptions) : ''
         resource = '!!' + nativeLoaderPath + nativeLoaderOptions + '!' + resource
@@ -276,6 +295,11 @@ module.exports = function (raw = '{}') {
       resource = addQuery(resource, {
         packageName: packageInfo.packageName
       })
+      currentEntry.addChild(getEntryNode(resource, 'Component'))
+      // 如果之前已经创建了入口，直接return
+      if (packageInfo.alreadyOutputed) {
+        return callback()
+      }
       addEntrySafely(resource, componentPath, callback)
     })
   }
@@ -293,13 +317,9 @@ module.exports = function (raw = '{}') {
     } else {
       const issuer = getJsonIssuer(this._module)
       if (issuer) {
-        this.emitError(
-          new Error(`[json compiler]:Mpx单次构建中只能存在一个App，当前组件/页面[${this.resource}]通过[${issuer.resource}]非法引入，引用的资源将被忽略，请确保组件/页面资源通过usingComponents/pages配置引入！`)
-        )
+        emitError(`[json compiler]:Mpx单次构建中只能存在一个App，当前组件/页面[${this.resource}]通过[${issuer.resource}]非法引入，引用的资源将被忽略，请确保组件/页面资源通过usingComponents/pages配置引入！`)
       } else {
-        this.emitError(
-          new Error(`[json compiler]:Mpx单次构建中只能存在一个App，请检查当前entry中的资源[${this.resource}]是否为组件/页面，通过添加?component/page查询字符串显式声明该资源是组件/页面！`)
-        )
+        emitError(`[json compiler]:Mpx单次构建中只能存在一个App，请检查当前entry中的资源[${this.resource}]是否为组件/页面，通过添加?component/page查询字符串显式声明该资源是组件/页面！`)
       }
       return callback()
     }
@@ -307,8 +327,10 @@ module.exports = function (raw = '{}') {
     const subPackagesCfg = {}
     const localPages = []
     const processSubPackagesQueue = []
-    // 确保首页不变
-    const firstPage = json.pages && json.pages[0]
+    // 添加首页标识
+    if (json.pages && json.pages[0]) {
+      json.pages[0] = addQuery(json.pages[0], { isFirst: true })
+    }
 
     const processPackages = (packages, context, callback) => {
       if (packages) {
@@ -453,42 +475,54 @@ module.exports = function (raw = '{}') {
 
     const processPages = (pages, srcRoot = '', tarRoot = '', context, callback) => {
       if (pages) {
+        context = path.join(context, srcRoot)
         async.forEach(pages, (page, callback) => {
-          const rawPage = page
+          if (!isUrlRequest(page, options.root)) return callback()
           if (resolveMode === 'native') {
             page = loaderUtils.urlToRequest(page, options.root)
           }
-          let name = getPageName(tarRoot, rawPage)
-          name = toPosix(name)
-          resolve(path.join(context, srcRoot), page, (err, resource) => {
+          resolve(context, page, (err, resource) => {
             if (err) return callback(err)
-            let resourcePath = parseRequest(resource).resourcePath
-            const parsed = path.parse(resourcePath)
-            const ext = parsed.ext
-            // 如果存在page命名冲突，return err
-            for (let key in pagesMap) {
-              if (pagesMap[key] === name && key !== resourcePath) {
-                return callback(new Error(`Resources in ${resourcePath} and ${key} are registered with same page path ${name}, which is not allowed!`))
-              }
-            }
-            // 目前暂时不支持多个分包复用同一个页面
-            // 如果之前已经创建了入口，直接return
-            if (pagesMap[resourcePath]) return callback()
-            pagesMap[resourcePath] = name
-            if (tarRoot && subPackagesCfg[tarRoot]) {
-              subPackagesCfg[tarRoot].pages.push(toPosix(path.join('', page)))
+            const { resourcePath, queryObj } = parseRequest(resource)
+            const ext = path.extname(resourcePath)
+            // 获取pageName
+            let pageName
+            const relative = path.relative(context, resourcePath)
+            if (/^\./.test(relative)) {
+              // 如果当前page不存在于context中，对其进行重命名
+              pageName = toPosix(path.join(tarRoot, getPageName(resourcePath, ext)))
+              emitWarning(`Current page ${resourcePath} is not in current pages directory ${context}, the page path will be replaced with ${pageName}, use ?resolve to get the page path and navigate to it!`)
             } else {
-              // 确保首页不变
-              if (rawPage === firstPage) {
-                localPages.unshift(name)
-              } else {
-                localPages.push(name)
+              pageName = toPosix(path.join(tarRoot, /^(.*?)(\.[^.]*)?$/.exec(relative)[1]))
+              // 如果当前page与已有page存在命名冲突，也进行重命名
+              for (let key in pagesMap) {
+                if (pagesMap[key] === pageName && key !== resourcePath) {
+                  const pageNameRaw = pageName
+                  pageName = toPosix(path.join(tarRoot, getPageName(resourcePath, ext)))
+                  emitWarning(`Current page ${resourcePath} is registered with a conflict page path ${pageNameRaw} which is already existed in system, the page path will be replaced with ${pageName}, use ?resolve to get the page path and navigate to it!`)
+                  break
+                }
               }
             }
             if (ext === '.js') {
-              resource = '!!' + nativeLoaderPath + '!' + resource
+              const nativeLoaderOptions = mpx.loaderOptions ? '?' + JSON.stringify(mpx.loaderOptions) : ''
+              resource = '!!' + nativeLoaderPath + nativeLoaderOptions + '!' + resource
             }
-            addEntrySafely(resource, name, callback)
+            currentEntry.addChild(getEntryNode(resource, 'Page'))
+            // 如果之前已经创建了页面入口，直接return，目前暂时不支持多个分包复用同一个页面
+            if (pagesMap[resourcePath]) return callback()
+            pagesMap[resourcePath] = pageName
+            if (tarRoot && subPackagesCfg[tarRoot]) {
+              subPackagesCfg[tarRoot].pages.push(toPosix(path.relative(tarRoot, pageName)))
+            } else {
+              // 确保首页
+              if (queryObj.isFirst) {
+                localPages.unshift(pageName)
+              } else {
+                localPages.push(pageName)
+              }
+            }
+            addEntrySafely(resource, pageName, callback)
           })
         }, callback)
       } else {

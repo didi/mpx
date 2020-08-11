@@ -183,8 +183,14 @@ module.exports = function getSpec ({ warn, error }) {
         tt: deletePath()
       },
       {
-        test: 'functionalPages|plugins',
+        test: 'functionalPages',
         ali: deletePath(true),
+        qq: deletePath(true),
+        swan: deletePath(true),
+        tt: deletePath()
+      },
+      {
+        test: 'plugins',
         qq: deletePath(true),
         swan: deletePath(true),
         tt: deletePath()
@@ -202,15 +208,19 @@ module.exports = function getSpec ({ warn, error }) {
         swan: deletePath()
       },
       {
-        test: 'networkTimeout|workers|requiredBackgroundModes',
+        test: 'networkTimeout|requiredBackgroundModes',
+        ali: deletePath(),
+        tt: deletePath()
+      },
+      {
+        test: 'workers',
         ali: deletePath(),
         swan: deletePath(),
         tt: deletePath()
       },
       {
         test: 'navigateToMiniProgramAppIdList|permission',
-        ali: deletePath(),
-        swan: deletePath()
+        ali: deletePath()
       },
       {
         test: 'subpackages|subPackages',

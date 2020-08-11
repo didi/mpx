@@ -66,11 +66,11 @@ function transformApiForProxy (context, currentInject) {
 function filterOptions (options, type) {
   const newOptions = {}
   Object.keys(options).forEach(key => {
-    if (builtInKeysMap[key] || (key === 'data' && typeof options[key] === 'function')) {
+    if (builtInKeysMap[key]) {
       return
     }
     if (key === 'properties' || key === 'props') {
-      newOptions['props'] = Object.assign({}, options['properties'], options['props'])
+      newOptions.props = Object.assign({}, options['properties'], options['props'])
     } else if (key === 'methods' && type === 'page') {
       Object.assign(newOptions, options[key])
     } else {
@@ -100,7 +100,7 @@ export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
           // 微信原生转换支付宝时，每次props更新将其设置进data模拟微信表现
           Object.keys(nextProps).forEach((key) => {
             if (!key.startsWith('$') && typeof nextProps[key] !== 'function' && nextProps[key] !== this.props[key]) {
-              newData[key] = nextProps[key]
+              newData[key] = diffAndCloneA(nextProps[key]).clone
             }
           })
           this.__mpxProxy.forceUpdate(newData)

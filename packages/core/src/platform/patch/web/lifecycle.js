@@ -12,8 +12,23 @@ const COMPONENT_HOOKS = [
   'errorCaptured'
 ]
 
+const PAGE_HOOKS = [
+  ...COMPONENT_HOOKS,
+  'onLoad',
+  'onReady',
+  'onShow',
+  'onHide',
+  'onUnload',
+  'onPullDownRefresh',
+  'onReachBottom',
+  'onPageScroll'
+  // 'onShareAppMessage',
+  // 'onTabItemTap',
+  // 'onResize'
+]
+
 export const LIFECYCLE = {
   APP_HOOKS: COMPONENT_HOOKS,
-  PAGE_HOOKS: COMPONENT_HOOKS,
+  PAGE_HOOKS,
   COMPONENT_HOOKS
 }

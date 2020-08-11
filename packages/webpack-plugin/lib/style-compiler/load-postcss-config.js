@@ -2,25 +2,20 @@ const load = require('postcss-load-config')
 
 let loaded
 
-function isObject (val) {
-  return val && typeof val === 'object'
-}
-
 module.exports = function loadPostcssConfig (loaderContext, inlineConfig = {}) {
-  if (inlineConfig.useConfigFile === false) {
-    return Promise.resolve({
-      plugins: inlineConfig.plugins || [],
-      options: inlineConfig.options || {}
+  if (inlineConfig.ignoreConfigFile) {
+    loaded = Promise.resolve({
+      plugins: [],
+      options: {}
     })
   }
 
   if (!loaded) {
     const config = inlineConfig.config || {}
-    const ctx = { webpack: loaderContext }
-    if (config.ctx) {
-      ctx.options = config.ctx
+    const ctx = {
+      webpack: loaderContext,
+      defs: inlineConfig.defs || {}
     }
-    Object.assign(ctx, inlineConfig.defs)
     loaded = load(ctx, config.path, { argv: false }).catch(err => {
       // postcss-load-config throws error when no config file is found,
       // but for us it's optional. only emit other errors
@@ -32,21 +27,8 @@ module.exports = function loadPostcssConfig (loaderContext, inlineConfig = {}) {
   }
 
   return loaded.then(config => {
-    let plugins = []
-    let options = {}
-
-    if (typeof inlineConfig === 'function') {
-      inlineConfig = inlineConfig.call(this, this)
-    }
-    if (Array.isArray(inlineConfig)) {
-      plugins = inlineConfig
-    } else if (isObject(inlineConfig)) {
-      plugins =
-        typeof inlineConfig.plugins === 'function'
-          ? inlineConfig.plugins.call(this, this)
-          : inlineConfig.plugins || []
-      options = inlineConfig.options || {}
-    }
+    let plugins = inlineConfig.plugins || []
+    let options = inlineConfig.options || {}
 
     // merge postcss config file
     if (config && config.plugins) {

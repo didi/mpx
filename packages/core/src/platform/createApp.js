@@ -17,7 +17,7 @@ export default function createApp (option, config = {}) {
     }
   } else {
     const finalAppOption = dissolveAttrs(defaultOptions, 'methods')
-    const ctor = global.currentCtor || App
-    config.customCtor ? config.customCtor(finalAppOption) : ctor(finalAppOption)
+    const ctor = config.customCtor || global.currentCtor || App
+    ctor(finalAppOption)
   }
 }

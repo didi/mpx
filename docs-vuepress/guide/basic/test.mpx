@@ -1,0 +1,78 @@
+<template>
+  <view>
+    <!--current为组件名称字符串，可选范围为局部注册的自定义组件和全局注册的自定义组件-->
+    <component is="{{current}}"></component>
+  </view>
+</template>
+
+<script>
+  import mpx from '@mpxjs/core'
+
+  // 第一个参数为 mixins，可以混入任意配置，第二个参数为混入生效范围，可传递 'app' / 'page' / 'component' 字符串或由其组成的数组
+  mpx.injectMixins([
+    {
+      data: {
+        customData: '123'
+      }
+    }
+  ], ['page'])
+
+  // mpx.mixin 为 mpx.injectMixins 的别名，混入单个 mixin 时可以直接传递对象，生效范围可传递字符串
+  mpx.mixin({
+    methods: {
+      useCustomData () {
+        console.log(this.customData)
+      }
+    }
+  }, 'component')
+
+  // 当未传递生效范围时默认为全局生效，对 app / page / component 都生效
+  mpx.mixin({
+    computed: {
+      processedCustomData () {
+        return this.customData + '321'
+      }
+    }
+  })
+
+</script>
+
+<template>
+  <view>
+    <view>{{num}}</view>
+    <view>{{nump}}</view>
+  </view>
+</template>
+
+<script>
+  import { createComponent } from '@mpxjs/core'
+
+  createComponent({
+    data: {
+      num: 123
+    },
+    computed: {
+      nump () {
+        return this.num + 1
+
+        aaaaa
+
+        aaaaaa123123
+        111123
+      }
+    },
+    watch: {
+      num (val, oldVal) {
+        console.log(val, oldVal) // 123 321
+      },
+      nump (val, oldVal) {
+        console.log(val, oldVal) // 124 322
+      }
+    },
+    ready () {
+      setTimeout(() => {
+        this.num = 321
+      }, 1000)
+    }
+  })
+</script>

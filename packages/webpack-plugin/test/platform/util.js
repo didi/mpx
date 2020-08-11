@@ -1,4 +1,4 @@
-const compiler = require('../../../lib/template-compiler/compiler')
+const compiler = require('../../lib/template-compiler/compiler')
 
 const errorFn = jest.fn(console.error)
 const warnFn = jest.fn(console.warn)

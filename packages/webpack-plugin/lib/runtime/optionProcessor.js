@@ -1,11 +1,9 @@
-import { SHOW, HIDE } from '@mpxjs/core/src/core/innerLifecycle'
-
 export default function processOption (
   option,
   ctorType,
   firstPage,
   mpxCid,
-  pageTitle,
+  jsonConfig,
   pagesMap,
   componentsMap,
   Vue,
@@ -15,18 +13,18 @@ export default function processOption (
 ) {
   if (ctorType === 'app') {
     // 对于app中的组件需要全局注册
-    for (var componentName in componentsMap) {
+    for (const componentName in componentsMap) {
       if (componentsMap.hasOwnProperty(componentName)) {
-        var component = componentsMap[componentName]
+        const component = componentsMap[componentName]
         Vue.component(componentName, component)
       }
     }
 
-    var routes = []
+    const routes = []
 
-    for (var pagePath in pagesMap) {
+    for (const pagePath in pagesMap) {
       if (pagesMap.hasOwnProperty(pagePath)) {
-        var page = pagesMap[pagePath]
+        const page = pagesMap[pagePath]
         routes.push({
           path: pagePath,
           component: page
@@ -44,27 +42,70 @@ export default function processOption (
       window.__mpxRouter = option.router = new VueRouter({
         routes: routes
       })
+      window.__mpxRouter.stack = []
+      window.__mpxRouter.needCache = null
+      window.__mpxRouter.needRemove = []
       // 处理reLaunch中传递的url并非首页时的replace逻辑
       window.__mpxRouter.beforeEach(function (to, from, next) {
-        var action = window.__mpxRouter.__mpxAction
-        if (action && action.type === 'reLaunch') {
-          if (to.path !== action.path) {
-            return next({
-              path: action.path,
-              replace: true
-            })
+        let action = window.__mpxRouter.__mpxAction
+        const stack = window.__mpxRouter.stack
+        // 处理人为操作
+        if (!action) {
+          if (stack.length > 1 && stack[stack.length - 2].path === to.path) {
+            action = {
+              type: 'back',
+              delta: 1
+            }
+          } else {
+            action = {
+              type: 'to'
+            }
           }
+        }
+        const insertItem = {
+          path: to.path
+        }
+        // 构建历史栈
+        switch (action.type) {
+          case 'to':
+            stack.push(insertItem)
+            window.__mpxRouter.needCache = insertItem
+            break
+          case 'back':
+            window.__mpxRouter.needRemove = stack.splice(stack.length - action.delta, action.delta)
+            break
+          case 'redirect':
+            window.__mpxRouter.needRemove = stack.splice(stack.length - 1, 1, insertItem)
+            window.__mpxRouter.needCache = insertItem
+            break
+          case 'reLaunch':
+            if (!action.reLaunched) {
+              action.reLaunched = true
+              window.__mpxRouter.needRemove = stack
+              window.__mpxRouter.stack = [insertItem]
+              window.__mpxRouter.needCache = insertItem
+            }
+            if (!action.replaced) {
+              action.replaced = true
+              return next({
+                path: action.path,
+                query: {
+                  reLaunchCount: action.reLaunchCount
+                },
+                replace: true
+              })
+            }
         }
         next()
       })
       // 处理visibilitychange时触发当前活跃页面组件的onshow/onhide
       document.addEventListener('visibilitychange', function () {
-        var vnode = window.__mpxRouter.__mpxActiveVnode
+        const vnode = window.__mpxRouter.__mpxActiveVnode
         if (vnode && vnode.componentInstance) {
           if (document.hidden) {
-            vnode.componentInstance.__mpxProxy && vnode.componentInstance.__mpxProxy.callUserHook(HIDE)
+            vnode.componentInstance.onHide && vnode.componentInstance.onHide()
           } else {
-            vnode.componentInstance.__mpxProxy && vnode.componentInstance.__mpxProxy.callUserHook(SHOW)
+            vnode.componentInstance.onShow && vnode.componentInstance.onShow()
           }
         }
       })
@@ -77,23 +118,22 @@ export default function processOption (
     }
   } else {
     // 局部注册页面和组件中依赖的组件
-    for (componentName in componentsMap) {
+    for (const componentName in componentsMap) {
       if (componentsMap.hasOwnProperty(componentName)) {
-        component = componentsMap[componentName]
+        const component = componentsMap[componentName]
         if (!option.components) {
           option.components = {}
         }
         option.components[componentName] = component
       }
     }
+    if (ctorType === 'page') {
+      option.__mpxPageConfig = Object.assign({}, window.__mpxPageConfig, jsonConfig)
+    }
   }
 
   if (mpxCid) {
     option.mpxCid = mpxCid
-  }
-
-  if (pageTitle) {
-    option.pageTitle = pageTitle
   }
 
   return option

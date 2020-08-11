@@ -1,7 +1,5 @@
 import { webHandleSuccess, webHandleFail } from '../../../common/js'
 
-const initHistoryLength = window.history.length
-
 // 用于 navigator 组件
 if (window.__mpxRouter) {
   Object.defineProperty(window.__mpxRouter, 'reLaunch', {
@@ -63,11 +61,9 @@ function navigateBack (options = {}) {
   const router = window.__mpxRouter
   if (router) {
     const delta = options.delta || 1
-    if (!options.reLaunch) {
-      router.__mpxAction = {
-        type: 'back',
-        delta
-      }
+    router.__mpxAction = {
+      type: 'back',
+      delta
     }
     router.go(-delta)
     const res = { errMsg: 'navigateBack:ok' }
@@ -76,14 +72,30 @@ function navigateBack (options = {}) {
   }
 }
 
-async function reLaunch (options = {}) {
+function reLaunch (options = {}) {
   const router = window.__mpxRouter
   if (router) {
-    const backLength = window.history.length - initHistoryLength
-    // 通过__mpxAction标识当前是个reLaunch操作，在全局的beforeEnter钩子中决定back之后是否需要进行replace操作
-    router.__mpxAction = { type: 'reLaunch', path: options.url }
-    await navigateBack({ delta: backLength, reLaunch: true })
-    await new Promise(resolve => setTimeout(() => resolve(), 100))
+    const delta = router.stack.length - 1
+    let reLaunchCount = router.currentRoute.query.reLaunchCount || 0
+    router.__mpxAction = {
+      type: 'reLaunch',
+      path: options.url,
+      reLaunchCount: ++reLaunchCount,
+      replaced: false,
+      reLaunched: false
+    }
+    // 在需要操作后退时，先操作后退，在beforeEach中基于当前action通过next()进行replace操作，避免部分浏览器的表现不一致
+    if (delta > 0) {
+      router.go(-delta)
+    } else {
+      router.__mpxAction.replaced = true
+      router.replace({
+        path: options.url,
+        query: {
+          reLaunchCount
+        }
+      })
+    }
     const res = { errMsg: 'reLaunch:ok' }
     webHandleSuccess(res, options.success, options.complete)
     return Promise.resolve(res)

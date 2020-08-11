@@ -8,6 +8,10 @@ module.exports = function ({ print }) {
 
   return {
     test: TAG_NAME,
+    web (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-picker-view'
+    },
     props: [
       {
         test: /^(indicator-class|mask-class)$/,

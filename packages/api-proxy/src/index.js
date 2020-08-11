@@ -7,7 +7,7 @@ export default function install (target, options = {}) {
     whiteList = [], // 强制变成 promise 格式的 api
     blackList = [], // 强制不变成 promise 格式的 api
     platform = {},
-    exclude = [], // 转换平台时不转换的 Api
+    exclude = ['shareImageMessage'], // 强制不进行代理的api，临时fix微信分享朋友圈白屏
     custom = {}, // 自定义转化规则
     fallbackMap = {}, // 对于不支持的API，允许配置一个映射表，接管不存在的API
     optimize = false // 内部一些实验优化的开关，外部用户慎用
@@ -44,7 +44,8 @@ export default function install (target, options = {}) {
       target[api] = (...args) => {
         return allApi[api].apply(target, args)
       }
-    } catch (e) {} // 支付宝不支持重写 call 方法
+    } catch (e) {
+    } // 支付宝不支持重写 call 方法
   })
 
   // Fallback Map option
