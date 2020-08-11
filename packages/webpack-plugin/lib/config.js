@@ -390,6 +390,8 @@ module.exports = {
         return ` {${arr.join(',')}} `
       }
     },
+    wxs: {
+    },
     directive: {
       if: 'if',
       elseif: 'elif',
