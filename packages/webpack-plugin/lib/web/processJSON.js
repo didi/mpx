@@ -8,6 +8,7 @@ const toPosix = require('../utils/to-posix')
 const addQuery = require('../utils/add-query')
 const parseComponent = require('../parser')
 const readJsonForSrc = require('../utils/read-json-for-src')
+const isUrlRequest = require('../utils/is-url-request')
 
 module.exports = function (json, options, rawCallback) {
   const mode = options.mode
@@ -147,11 +148,12 @@ module.exports = function (json, options, rawCallback) {
 
   const processPages = (pages, srcRoot = '', tarRoot = '', context, callback) => {
     if (pages) {
+      context = path.join(context, srcRoot)
       async.forEach(pages, (page, callback) => {
+        if (!isUrlRequest(page, projectRoot)) return callback()
         if (resolveMode === 'native') {
           page = loaderUtils.urlToRequest(page, projectRoot)
         }
-        context = path.join(context, srcRoot)
         resolve(context, page, (err, resource) => {
           if (err) return callback(err)
           const { resourcePath, queryObj } = parseRequest(resource)
@@ -223,9 +225,8 @@ module.exports = function (json, options, rawCallback) {
   }
 
   const processComponent = (component, name, context, callback) => {
-    if (/^plugin:\/\//.test(component)) {
-      return callback()
-    }
+    if (!isUrlRequest(component, projectRoot)) return callback()
+
     if (resolveMode === 'native') {
       component = loaderUtils.urlToRequest(component, projectRoot)
     }

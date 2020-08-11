@@ -1,11 +1,9 @@
-import { SHOW, HIDE } from '@mpxjs/core/src/core/innerLifecycle'
-
 export default function processOption (
   option,
   ctorType,
   firstPage,
   mpxCid,
-  pageTitle,
+  jsonConfig,
   pagesMap,
   componentsMap,
   Vue,
@@ -15,18 +13,18 @@ export default function processOption (
 ) {
   if (ctorType === 'app') {
     // 对于app中的组件需要全局注册
-    for (var componentName in componentsMap) {
+    for (const componentName in componentsMap) {
       if (componentsMap.hasOwnProperty(componentName)) {
-        var component = componentsMap[componentName]
+        const component = componentsMap[componentName]
         Vue.component(componentName, component)
       }
     }
 
-    var routes = []
+    const routes = []
 
-    for (var pagePath in pagesMap) {
+    for (const pagePath in pagesMap) {
       if (pagesMap.hasOwnProperty(pagePath)) {
-        var page = pagesMap[pagePath]
+        const page = pagesMap[pagePath]
         routes.push({
           path: pagePath,
           component: page
@@ -49,8 +47,8 @@ export default function processOption (
       window.__mpxRouter.needRemove = []
       // 处理reLaunch中传递的url并非首页时的replace逻辑
       window.__mpxRouter.beforeEach(function (to, from, next) {
-        var action = window.__mpxRouter.__mpxAction
-        var stack = window.__mpxRouter.stack
+        let action = window.__mpxRouter.__mpxAction
+        const stack = window.__mpxRouter.stack
         // 处理人为操作
         if (!action) {
           if (stack.length > 1 && stack[stack.length - 2].path === to.path) {
@@ -64,7 +62,7 @@ export default function processOption (
             }
           }
         }
-        var insertItem = {
+        const insertItem = {
           path: to.path
         }
         // 构建历史栈
@@ -102,12 +100,12 @@ export default function processOption (
       })
       // 处理visibilitychange时触发当前活跃页面组件的onshow/onhide
       document.addEventListener('visibilitychange', function () {
-        var vnode = window.__mpxRouter.__mpxActiveVnode
+        const vnode = window.__mpxRouter.__mpxActiveVnode
         if (vnode && vnode.componentInstance) {
           if (document.hidden) {
-            vnode.componentInstance.__mpxProxy && vnode.componentInstance.__mpxProxy.callUserHook(HIDE)
+            vnode.componentInstance.onHide && vnode.componentInstance.onHide()
           } else {
-            vnode.componentInstance.__mpxProxy && vnode.componentInstance.__mpxProxy.callUserHook(SHOW)
+            vnode.componentInstance.onShow && vnode.componentInstance.onShow()
           }
         }
       })
@@ -120,23 +118,22 @@ export default function processOption (
     }
   } else {
     // 局部注册页面和组件中依赖的组件
-    for (componentName in componentsMap) {
+    for (const componentName in componentsMap) {
       if (componentsMap.hasOwnProperty(componentName)) {
-        component = componentsMap[componentName]
+        const component = componentsMap[componentName]
         if (!option.components) {
           option.components = {}
         }
         option.components[componentName] = component
       }
     }
+    if (ctorType === 'page') {
+      option.__mpxPageConfig = Object.assign({}, window.__mpxPageConfig, jsonConfig)
+    }
   }
 
   if (mpxCid) {
     option.mpxCid = mpxCid
-  }
-
-  if (pageTitle) {
-    option.pageTitle = pageTitle
   }
 
   return option
