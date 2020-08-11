@@ -1,6 +1,6 @@
 /**
- * mpxjs webview bridge v2.2.34
- * (c) 2019 @mpxjs team
+ * mpxjs webview bridge v2.5.30
+ * (c) 2020 @mpxjs team
  * @license Apache
  */
 function _defineProperty(obj, key, value) {
@@ -18,34 +18,20 @@ function _defineProperty(obj, key, value) {
   return obj;
 }
 
-function ownKeys(object, enumerableOnly) {
-  var keys = Object.keys(object);
-
-  if (Object.getOwnPropertySymbols) {
-    keys.push.apply(keys, Object.getOwnPropertySymbols(object));
-  }
-
-  if (enumerableOnly) keys = keys.filter(function (sym) {
-    return Object.getOwnPropertyDescriptor(object, sym).enumerable;
-  });
-  return keys;
-}
-
-function _objectSpread2(target) {
+function _objectSpread(target) {
   for (var i = 1; i < arguments.length; i++) {
     var source = arguments[i] != null ? arguments[i] : {};
+    var ownKeys = Object.keys(source);
 
-    if (i % 2) {
-      ownKeys(source, true).forEach(function (key) {
-        _defineProperty(target, key, source[key]);
-      });
-    } else if (Object.getOwnPropertyDescriptors) {
-      Object.defineProperties(target, Object.getOwnPropertyDescriptors(source));
-    } else {
-      ownKeys(source).forEach(function (key) {
-        Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key));
-      });
+    if (typeof Object.getOwnPropertySymbols === 'function') {
+      ownKeys = ownKeys.concat(Object.getOwnPropertySymbols(source).filter(function (sym) {
+        return Object.getOwnPropertyDescriptor(source, sym).enumerable;
+      }));
     }
+
+    ownKeys.forEach(function (key) {
+      _defineProperty(target, key, source[key]);
+    });
   }
 
   return target;
@@ -122,6 +108,59 @@ if (systemUA.indexOf('AlipayClient') > -1) {
   env = 'baidu';
 } else if (systemUA.indexOf('toutiao') > -1) {
   env = 'tt';
+} else {
+  window.parent.postMessage({
+    type: 'load',
+    detail: {
+      load: true
+    }
+  }, '*');
+}
+
+function postMessage(type, data) {
+  var eventType;
+
+  switch (type) {
+    case 'postMessage':
+      eventType = 'message';
+      break;
+
+    case 'navigateBack':
+      eventType = 'navigateBack';
+      break;
+
+    case 'navigateTo':
+      eventType = 'navigateTo';
+      break;
+
+    case 'redirectTo':
+      eventType = 'redirectTo';
+      break;
+    // case 'switchTab':
+    //   eventType = 'switchTab'
+    //   break
+
+    case 'reLaunch':
+      eventType = 'reLaunch';
+      break;
+
+    case 'getEnv':
+      eventType = 'getEnv';
+      break;
+  }
+
+  if (type !== 'getEnv') {
+    window.parent.postMessage({
+      type: eventType,
+      detail: {
+        data: data
+      }
+    }, '*');
+  } else {
+    data({
+      miniprogram: false
+    });
+  }
 }
 
 var webviewApiList = {};
@@ -139,6 +178,7 @@ function getEnvVariable() {
 var initWebviewBridge = function initWebviewBridge() {
   if (env === null) {
     console.log('mpxjs/webview: 未识别的环境，当前仅支持 微信、支付宝、百度、头条 QQ 小程序');
+    getWebviewApi();
     return;
   }
 
@@ -169,8 +209,13 @@ var getWebviewApi = function getWebviewApi(sdkReady) {
         args[_key] = arguments[_key];
       }
 
-      if (!apiName) {
-        console.log("".concat(env, "\u5C0F\u7A0B\u5E8F\u4E0D\u652F\u6301 ").concat(item, " \u65B9\u6CD5"));
+      if (!env) {
+        if (item === 'switchTab') {
+          console.log("\u6B64\u73AF\u5883\u4E0D\u652F\u6301 ".concat(item, " \u65B9\u6CD5"));
+          return;
+        }
+
+        return postMessage.apply(void 0, [item].concat(args)); // console.log(`${env}小程序不支持 ${item} 方法`)
       } else {
         return sdkReady.then(function () {
           var _getEnvWebviewVariabl;
@@ -352,7 +397,7 @@ var getAdvancedApi = function getAdvancedApi(config, mpx) {
 
 initWebviewBridge();
 
-var bridgeFunction = _objectSpread2({}, webviewApiList, {
+var bridgeFunction = _objectSpread({}, webviewApiList, {
   getAdvancedApi: getAdvancedApi,
   mpxEnv: env
 });
@@ -363,9 +408,9 @@ var navigateTo = webviewApiList.navigateTo,
     reLaunch = webviewApiList.reLaunch,
     redirectTo = webviewApiList.redirectTo,
     getEnv = webviewApiList.getEnv,
-    postMessage = webviewApiList.postMessage,
+    postMessage$1 = webviewApiList.postMessage,
     getLoadError = webviewApiList.getLoadError;
 var getAdvancedApi$1 = bridgeFunction.getAdvancedApi; // 此处导出的对象包含所有的api
 
 export default bridgeFunction;
-export { getAdvancedApi$1 as getAdvancedApi, getEnv, getLoadError, navigateBack, navigateTo, postMessage, reLaunch, redirectTo, switchTab };
+export { getAdvancedApi$1 as getAdvancedApi, getEnv, getLoadError, navigateBack, navigateTo, postMessage$1 as postMessage, reLaunch, redirectTo, switchTab };
