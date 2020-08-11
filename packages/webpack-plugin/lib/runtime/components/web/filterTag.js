@@ -1,11 +1,11 @@
-const attribute = /^\s*([^\s"'<>\/=]+)(?:\s*(=)\s*(?:"([^"]*)"+|'([^']*)'+|([^\s"'=<>`]+)))?/
+const attribute = /^\s*([^\s"'<>\/=]+)(?:\s*(=)\s*(?:"([^"]*)"+|'([^']*)'+|([^\s"'=<>`]+)))?/ // useless escape
 const ncname = `[a-zA-Z_][\\w\\-\\.]*`
 const qname = `((?:${ncname}\\:)?${ncname})`
 const startTagOpen = new RegExp(`^<${qname}`)
 const startTagClose = /^\s*(\/?)>/
 const endTag = new RegExp(`^<\\/${qname}[^>]*>`)
-const comment = /^<!\--/
-const invalidAttributeRE = /[\s"'<>\/=]/
+const comment = /^<!\--/ // useless escape
+const invalidAttributeRE = /[\s"'<>\/=]/ // useless escape
 let currentParent
 
 function makeMap (str, expectsLowerCase) {
@@ -264,7 +264,7 @@ export function parse (template) {
   })
   if (stack.length) {
     let last
-    for (let i  = stack.length - 1; i >= 0; i--) {
+    for (let i = stack.length - 1; i >= 0; i--) {
       if (last) {
         stack[i].children.push(last)
       }
@@ -287,7 +287,7 @@ export function htmlTranStr (template, space) {
     const name = item.name
     if (item.type === 'text') {
       html += isSpace(space) ? spaceTran(item.text, space) : item.text
-    } 
+    }
     if (item.type === 'comment') {
       console.warn(`the rich-text nonsupport ${item.type} tag`)
     }
@@ -331,7 +331,7 @@ export function htmlTranStr (template, space) {
         }
       }
       html += `${isUnaryTag(name) ? '' : '>'}${item.children.length ? htmlTranStr(item.children, space) : ''}${isUnaryTag(name) ? ' />' : '</' + name + '>'}`
-    } else if (name){
+    } else if (name) {
       console.warn(`the rich-text is not support ${name} tag`)
     }
   })
