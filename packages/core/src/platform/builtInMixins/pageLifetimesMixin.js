@@ -65,7 +65,7 @@ export default function pageLifetimes (mixinType) {
   } else {
     return {
       watch: {
-        '$parent.mpxPageStatus'(val) {
+        '$parent.mpxPageStatus' (val) {
           if (val) {
             const rawOptions = this.$rawOptions || ''
             const pageLifetimes = rawOptions.pageLifetimes
