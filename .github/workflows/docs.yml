@@ -21,4 +21,5 @@ jobs:
         uses: peaceiris/actions-gh-pages@v3
         with:
           publish_dir: ./docs/_book
+          force_orphan: true
           personal_token: ${{ secrets.GH_PAGES_TOKEN }}
