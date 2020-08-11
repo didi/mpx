@@ -960,6 +960,17 @@ if(!context.console) {
         return result
       }
 
+      function concat (setA, setB) {
+        const result = new Set()
+        setA.forEach((item) => {
+          result.add(item)
+        })
+        setB.forEach((item) => {
+          result.add(item)
+        })
+        return result
+      }
+
       function mapToArr (set, fn) {
         const result = []
         set.forEach((item) => {
@@ -968,12 +979,7 @@ if(!context.console) {
         return result
       }
 
-      function recordEntry (module, entryModule) {
-        module.entryModules = module.entryModules || new Set()
-        module.entryModules.add(entryModule)
-      }
-
-      function walkEntry (entryModule) {
+      function walkEntry (entryModule, sideEffect) {
         const modulesSet = new Set()
 
         function walkDependencies (module, dependencies = []) {
@@ -999,7 +1005,7 @@ if(!context.console) {
 
         function walk (module) {
           if (modulesSet.has(module)) return
-          recordEntry(module, entryModule)
+          sideEffect && sideEffect(module, entryModule)
           modulesSet.add(module)
           walkDependencies(module, module.dependencies)
           module.variables.forEach((variable) => {
@@ -1012,17 +1018,40 @@ if(!context.console) {
 
       const reportGroups = this.options.reportSize.groups || []
 
+      const reportGroupsWithNoEntryRules = reportGroups.filter((reportGroup) => {
+        return reportGroup.hasOwnProperty('noEntryRules')
+      })
+
+
       compilation.chunks.forEach((chunk) => {
         if (chunk.entryModule) {
-          walkEntry(chunk.entryModule)
+          walkEntry(chunk.entryModule, (module, entryModule) => {
+            module.entryModules = module.entryModules || new Set()
+            module.entryModules.add(entryModule)
+          })
           reportGroups.forEach((reportGroup) => {
             reportGroup.entryModules = reportGroup.entryModules || new Set()
-            if (matchCondition(parseRequest(chunk.entryModule.resource).resourcePath, reportGroup.rules)) {
+            if (reportGroup.entryRules && matchCondition(parseRequest(chunk.entryModule.resource).resourcePath, reportGroup.entryRules)) {
               reportGroup.entryModules.add(chunk.entryModule)
             }
           })
         }
       })
+
+      if (reportGroupsWithNoEntryRules.length) {
+        compilation.modules.forEach((module) => {
+          reportGroupsWithNoEntryRules.forEach((reportGroup) => {
+            if (matchCondition(parseRequest(module.resource).resourcePath, reportGroup.noEntryRules)) {
+              reportGroup.noEntryModules = reportGroup.noEntryModules || new Set()
+              reportGroup.noEntryModules.add(module)
+              walkEntry(module, (module, noEntryModule) => {
+                module.noEntryModules = module.noEntryModules || new Set()
+                module.noEntryModules.add(noEntryModule)
+              })
+            }
+          })
+        })
+      }
 
       const subpackages = new Set(Object.keys(mpx.componentsMap))
 
@@ -1035,8 +1064,15 @@ if(!context.console) {
       function getEntrySet (entryModules, ignoreSubEntry) {
         const selfSet = new Set()
         const sharedSet = new Set()
+        const otherSelfEntryModules = new Set()
         entryModules.forEach((entryModule) => {
-          selfSet.add(mpx.entryModulesMap.get(entryModule))
+          const entryNode = mpx.entryModulesMap.get(entryModule)
+          if (entryNode) {
+            selfSet.add(entryNode)
+          } else {
+            // 没有在entryModulesMap记录的entryModule默认为selfEntryModule
+            otherSelfEntryModules.add(entryModule)
+          }
         })
         if (!ignoreSubEntry) {
           let currentSet = selfSet
@@ -1060,7 +1096,7 @@ if(!context.console) {
         }
 
         return {
-          selfEntryModules: map(selfSet, item => item.module),
+          selfEntryModules: concat(map(selfSet, item => item.module), otherSelfEntryModules),
           sharedEntryModules: map(sharedSet, item => item.module)
         }
       }
@@ -1083,17 +1119,32 @@ if(!context.console) {
         sizeInfo[packageName].totalSize += fillInfo.size
       }
 
-      function fillSizeReportGroups (entryModules, packageName, fillType, fillInfo) {
-        if (!entryModules || !entryModules.size) return
+      function fillSizeReportGroups (entryModules, noEntryModules, packageName, fillType, fillInfo) {
         reportGroups.forEach((reportGroup) => {
-          if (every(entryModules, (entryModule) => {
-            return reportGroup.selfEntryModules.has(entryModule)
-          })) {
-            fillSizeInfo(reportGroup.selfSizeInfo, packageName, fillType, fillInfo)
-          } else if (has(entryModules, (entryModule) => {
-            return reportGroup.selfEntryModules.has(entryModule) || reportGroup.sharedEntryModules.has(entryModule)
-          })) {
-            fillSizeInfo(reportGroup.sharedSizeInfo, packageName, fillType, fillInfo)
+          if (reportGroup.noEntryModules && noEntryModules && noEntryModules.size) {
+            if (has(noEntryModules, (noEntryModule) => {
+              return reportGroup.noEntryModules.has(noEntryModule) && every(entryModules, (entryModule) => {
+                return noEntryModule.entryModules.has(entryModule)
+              })
+            })) {
+              return fillSizeInfo(reportGroup.selfSizeInfo, packageName, fillType, fillInfo)
+            } else if (has(noEntryModules, (noEntryModule) => {
+              return reportGroup.noEntryModules.has(noEntryModule)
+            })) {
+              return fillSizeInfo(reportGroup.sharedSizeInfo, packageName, fillType, fillInfo)
+            }
+          }
+
+          if (entryModules && entryModules.size) {
+            if (every(entryModules, (entryModule) => {
+              return reportGroup.selfEntryModules.has(entryModule)
+            })) {
+              return fillSizeInfo(reportGroup.selfSizeInfo, packageName, fillType, fillInfo)
+            } else if (has(entryModules, (entryModule) => {
+              return reportGroup.selfEntryModules.has(entryModule) || reportGroup.sharedEntryModules.has(entryModule)
+            })) {
+              return fillSizeInfo(reportGroup.sharedSizeInfo, packageName, fillType, fillInfo)
+            }
           }
         })
       }
@@ -1116,16 +1167,22 @@ if(!context.console) {
         const assetInfo = compilation.assetsInfo.get(name)
         if (assetInfo && assetInfo.modules) {
           const entryModules = new Set()
+          const noEntryModules = new Set()
           assetInfo.modules.forEach((module) => {
             if (module.entryModules) {
               module.entryModules.forEach((entryModule) => {
                 entryModules.add(entryModule)
               })
             }
+            if (module.noEntryModules) {
+              module.noEntryModules.forEach((noEntryModule) => {
+                noEntryModules.add(noEntryModule)
+              })
+            }
           })
           const size = compilation.assets[name].size()
 
-          fillSizeReportGroups(entryModules, packageName, 'assets', { name, size })
+          fillSizeReportGroups(entryModules, noEntryModules, packageName, 'assets', { name, size })
           assetsSizeInfo.assets.push({
             type: 'static',
             name,
@@ -1157,7 +1214,7 @@ if(!context.console) {
             const module = modulesMapById[id]
             const moduleSize = Buffer.byteLength(parsedModules[id])
             const identifier = module.readableIdentifier(compilation.requestShortener)
-            fillSizeReportGroups(module.entryModules, packageName, 'modules', {
+            fillSizeReportGroups(module.entryModules, module.noEntryModules, packageName, 'modules', {
               name,
               identifier,
               size: moduleSize
