@@ -20,10 +20,10 @@ function makeMap (str, expectsLowerCase) {
 }
 
 const isRichTextTag = makeMap(
-  'a,abbr,address,article,aside,b,bdi,bdo,big,blockquote,br,caption,'+
-  'center,cite,code,col,colgroup,dd,del,div,dl,dt,em,fieldset,'+
-  'font,footer,h1,h2,h3,h4,h5,h6,header,hr,i,img,ins,label,legend,'+
-  'li,mark,nav,ol,p,pre,q,rt,ruby,s,section,small,span,strong,sub,sup,'+
+  'a,abbr,address,article,aside,b,bdi,bdo,big,blockquote,br,caption,' +
+  'center,cite,code,col,colgroup,dd,del,div,dl,dt,em,fieldset,' +
+  'font,footer,h1,h2,h3,h4,h5,h6,header,hr,i,img,ins,label,legend,' +
+  'li,mark,nav,ol,p,pre,q,rt,ruby,s,section,small,span,strong,sub,sup,' +
   'table,tbody,td,tfoot,th,thead,tr,tt,u,ul'
 )
 const isUnaryTag = makeMap(
@@ -163,10 +163,8 @@ function parseHTML (html, options) {
       // Close all the open elements, up the stack
       for (let i = stack.length - 1; i >= pos; i--) {
         if ( i > pos || !tagName ) {
-          console.warn(
-            `tag <${stack[i].tag}> has no matching end tag.`,
-            { start: stack[i].start, end: stack[i].end }
-          )
+          console.warn(`tag <${stack[i].tag}> has no matching end tag.`,
+            { start: stack[i].start, end: stack[i].end })
         }
         if (options.end) {
           options.end()
@@ -206,7 +204,7 @@ function parseHTML (html, options) {
   }
 }
 
-export function parse(template) {
+export function parse (template) {
   let nodes = []
   const stack = []
   let root
@@ -231,14 +229,12 @@ export function parse(template) {
       }
       attrs.forEach(attr => {
         if (invalidAttributeRE.test(attr.name)) {
-          console.warn(
-            `Invalid dynamic argument expression: attribute names cannot contain ` +
+          console.warn(`Invalid dynamic argument expression: attribute names cannot contain ` +
             `spaces, quotes, <, >, / or =.`,
             {
               start: attr.start + attr.name.indexOf(`[`),
               end: attr.start + attr.name.length
-            }
-          )
+            })
         }
       })
     },
@@ -296,9 +292,7 @@ export function htmlTranStr (template, space) {
       html += isSpace(space) ? spaceTran(item.text, space) : item.text
     } 
     if (item.type === 'comment') {
-      console.warn(
-        `the rich-text nonsupport ${item.type} tag`
-      )
+      console.warn(`the rich-text nonsupport ${item.type} tag`)
     }
     if (name && isRichTextTag(name)) {
       html += `<${name}`
@@ -336,18 +330,13 @@ export function htmlTranStr (template, space) {
               isEffAttr = name === 'bdo'
               break
           }
-          html += isEffAttr ? ` ${key}="${attrs[key]}"` : console.warn(
-            `This ${key} attribute is not supported for ${name} tags contained in rich-text`
-          )
+          html += isEffAttr ? ` ${key}="${attrs[key]}"` : console.warn(`This ${key} attribute is not supported for ${name} tags contained in rich-text`)
         }
       }
       html += `${isUnaryTag(name) ? '' : '>'}${item.children.length ? htmlTranStr(item.children, space): ''}${isUnaryTag(name) ? ' />' : '</' + name+ '>'}`
     } else if (name){
-      console.warn(
-        `the rich-text is not support ${name} tag`
-      )
+      console.warn(`the rich-text is not support ${name} tag`)
     }
-     
   })
   return html
 }
