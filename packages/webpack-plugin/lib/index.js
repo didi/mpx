@@ -1022,7 +1022,6 @@ if(!context.console) {
         return reportGroup.hasOwnProperty('noEntryRules')
       })
 
-
       compilation.chunks.forEach((chunk) => {
         if (chunk.entryModule) {
           walkEntry(chunk.entryModule, (module, entryModule) => {
