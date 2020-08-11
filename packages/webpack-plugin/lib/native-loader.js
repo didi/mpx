@@ -200,7 +200,7 @@ module.exports = function (content) {
       )
 
       const getRequire = (type) => {
-        let localQuery = Object.assign({}, queryObj)
+        const localQuery = Object.assign({}, queryObj)
         let src = resourceName + typeExtMap[type]
         localQuery.resourcePath = resourcePath
         if (type !== 'script') {

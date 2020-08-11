@@ -7,9 +7,14 @@ on:
 
 jobs:
   deploy:
-    runs-on: ubuntu-18.04
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v2
+
+      - name: Use node v12
+        uses: actions/setup-node@v1
+        with:
+          node-version: '10.21.0'
 
       - name: generate static file
         run: |
