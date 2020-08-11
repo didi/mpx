@@ -101,7 +101,7 @@ function makeAttrsMap (attrs) {
     if (map[attrs[i].name] && !isIE && !isEdge) {
       warn$1('duplicate attribute: ' + attrs[i].name)
     }
-    if (mode === 'qa') {
+    if (mode === 'qa' && !attrs[i].name.startsWith('data-')) {
       attrs[i].name = humpDash.hump2dash(attrs[i].name)
     }
     map[attrs[i].name] = attrs[i].value

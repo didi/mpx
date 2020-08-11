@@ -196,40 +196,6 @@ module.exports = function getSpec ({ warn, error }) {
               }
             ]
           }
-        },
-        qa ({ value }, { el }) {
-          el.hasEvent = true
-          const attrsMap = el.attrsMap
-          const tagRE = /\{\{((?:.|\n)+?)\}\}(?!})/
-          const stringify = JSON.stringify
-          const match = tagRE.exec(value)
-          if (match) {
-            const modelValuePathRaw = attrsMap['wx:model-value-path']
-
-            const modelValuePath = modelValuePathRaw === undefined ? 'value' : modelValuePathRaw
-            const modelFilter = attrsMap['wx:model-filter']
-            let modelValuePathArr
-            try {
-              modelValuePathArr = JSON.parse(modelValuePathRaw)
-            } catch (e) {
-              if (modelValuePath === '') {
-                modelValuePathArr = []
-              } else {
-                modelValuePathArr = modelValuePath.split('.')
-              }
-            }
-            let modelValue = match[1].trim()
-            return [
-              {
-                name: 'value',
-                value: `{{${modelValue}}`
-              },
-              {
-                name: '@input',
-                value: `__model(${stringifyWithResolveComputed(modelValue)}, $event, ${stringifyWithResolveComputed(modelValuePathArr)}, ${stringify(modelFilter)})`
-              }
-            ]
-          }
         }
       },
       {
@@ -391,19 +357,20 @@ module.exports = function getSpec ({ warn, error }) {
           let rEventName = runRules(eventRules, eventName, { mode: 'qa' })
           let rPrefix = runRules(spec.event.prefix, prefix, { mode: 'qa' })
           let rt = []
-          rt.push({
-            name: rPrefix + rEventName,
-            value
-          })
           if (match[1] === 'catch') {
             // 解决快应用的阻止冒泡
             // 由运行时去处理 e.stopPropagation()
             // el.attrsMap['data-cancelbubble'] = true
+            rEventName += '.proxy'
             rt.push({
               name: 'data-cancelbubble',
               value: 'true'
             })
           }
+          rt.push({
+            name: rPrefix + rEventName,
+            value
+          })
           return rt
         }
       },

@@ -18,6 +18,9 @@ export default function proxyEventMixin () {
       if (!target) {
         throw new Error(`[${type}] event object must have [currentTarget/target] property!`)
       }
+      if (target.dataset && target.dataset.cancelbubble) {
+        $event.stopPropagation && $event.stopPropagation()
+      }
       const eventConfigs = target.dataset.eventconfigs || {}
       const curEventConfig = eventConfigs[type] || eventConfigs[fallbackType] || []
       let returnedValue
@@ -55,7 +58,12 @@ export default function proxyEventMixin () {
       const innerFilter = {
         trim: val => typeof val === 'string' && val.trim()
       }
-      const originValue = valuePath.reduce((acc, cur) => acc[cur], $event.detail)
+      let originValue
+      if (__mpx_mode__ === 'qa') {
+        originValue = valuePath.reduce((acc, cur) => acc[cur], $event)
+      } else {
+        originValue = valuePath.reduce((acc, cur) => acc[cur], $event.detail)
+      }
       const value = filterMethod ? (innerFilter[filterMethod] ? innerFilter[filterMethod](originValue) : typeof this[filterMethod] === 'function' && this[filterMethod]) : originValue
       setByPath(this, expr, value)
     }

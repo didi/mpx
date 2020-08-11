@@ -363,7 +363,7 @@ module.exports = {
     },
     event: {
       parseEvent (attr) {
-        let match = /^(bind|catch|capture-bind|capture-catch):?(.*?)(?:\.(.*))?$/.exec(attr)
+        let match = /^(@|on):?(.*?)(?:\.(.*))?$/.exec(attr)
         if (match) {
           return {
             prefix: match[1],
@@ -372,7 +372,7 @@ module.exports = {
           }
         }
       },
-      getEvent (eventName, prefix = 'bind') {
+      getEvent (eventName, prefix = '@') { // prefix 由 bind 改为 @ 因为调试 wx:model
         return prefix + eventName
       },
       defaultModelProp: 'value',
@@ -405,7 +405,12 @@ module.exports = {
       forIndex: 'for-index',
       forItem: 'for-item',
       key: 'tid',
-      ref: 'ref'
+      ref: 'ref',
+      model: 'model',
+      modelProp: 'model-prop',
+      modelEvent: 'model-event',
+      modelValuePath: 'model-value-path',
+      modelFilter: 'model-filter'
     }
   }
 }
