@@ -206,8 +206,8 @@ function mergeMixins (parent, child) {
   for (let key in child) {
     if (currentHooksMap[key]) {
       mergeHooks(parent, child, key)
-    } else if (key === 'data') {
-      mergeDataFn(parent, child)
+    } else if (/^(data|dataFn)$/.test(key)) {
+      mergeDataFn(parent, child, key)
     } else if (/^(computed|properties|props|methods|proto|options|relations)$/.test(key)) {
       mergeShallowObj(parent, child, key)
     } else if (/^(watch|observers|pageLifetimes|events)$/.test(key)) {
@@ -245,11 +245,11 @@ export function mergeShallowObj (parent, child, key) {
   Object.assign(parentVal, childVal)
 }
 
-function mergeDataFn (parent, child) {
-  let parentVal = parent.data
-  let childVal = child.data
+function mergeDataFn (parent, child, key) {
+  let parentVal = parent[key]
+  let childVal = child[key]
 
-  if (typeof parentVal === 'function') {
+  if (typeof parentVal === 'function' && key === 'data') {
     parent.dataFn = parentVal
     delete parent.data
   }
