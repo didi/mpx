@@ -14,7 +14,7 @@ module.exports = function ({ print }) {
       return 'qs'
     },
     tt () {
-      return 'wxs'
+      return 'sjs'
     },
     // 组件属性中的差异部分
     props: [

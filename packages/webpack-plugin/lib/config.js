@@ -317,10 +317,10 @@ module.exports = {
       }
     },
     wxs: {
-      tag: 'wxs',
+      tag: 'sjs',
       module: 'module',
       src: 'src',
-      ext: '.wxs',
+      ext: '.sjs',
       templatePrefix: 'module.exports = \n'
     },
     directive: {
