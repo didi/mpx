@@ -1,8 +1,9 @@
 const ModuleDependency = require('webpack/lib/dependencies//ModuleDependency')
 
 class RemovedModuleDependency extends ModuleDependency {
-  constructor (request, range) {
+  constructor (request, removedModule, range) {
     super(request)
+    this.removedModule = removedModule
     this.range = range
   }
 
