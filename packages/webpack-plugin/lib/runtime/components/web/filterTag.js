@@ -1,13 +1,13 @@
-//eslint-disable-next-line
+// eslint-disable-next-line
 const attribute = /^\s*([^\s"'<>\/=]+)(?:\s*(=)\s*(?:"([^"]*)"+|'([^']*)'+|([^\s"'=<>`]+)))?/ // useless escape
 const ncname = `[a-zA-Z_][\\w\\-\\.]*`
 const qname = `((?:${ncname}\\:)?${ncname})`
 const startTagOpen = new RegExp(`^<${qname}`)
 const startTagClose = /^\s*(\/?)>/
 const endTag = new RegExp(`^<\\/${qname}[^>]*>`)
-//eslint-disable-next-line
+// eslint-disable-next-line
 const comment = /^<!\--/
-//eslint-disable-next-line
+// eslint-disable-next-line
 const invalidAttributeRE = /[\s"'<>\/=]/
 let currentParent
 
