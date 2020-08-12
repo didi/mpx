@@ -46,7 +46,9 @@ module.exports = function (template, options, callback) {
           },
           mode,
           srcMode: templateSrcMode,
-          defs
+          defs,
+          usingComponents: [],
+          globalUsingComponents: []
         })
         if (parsed.meta.builtInComponentsMap) {
           Object.keys(parsed.meta.builtInComponentsMap).forEach((name) => {
