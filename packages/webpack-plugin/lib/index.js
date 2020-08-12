@@ -1022,6 +1022,7 @@ if(!context.console) {
         return reportGroup.hasOwnProperty('noEntryRules')
       })
 
+      // Walk and mark entryModules/noEntryModules
       compilation.chunks.forEach((chunk) => {
         if (chunk.entryModule) {
           walkEntry(chunk.entryModule, (module, entryModule) => {
@@ -1100,10 +1101,13 @@ if(!context.console) {
         }
       }
 
+      // Get and split selfEntryModules & sharedEntryModules
       reportGroups.forEach((reportGroup) => {
         const entrySet = getEntrySet(reportGroup.entryModules, reportGroup.ignoreSubEntry)
         Object.assign(reportGroup, entrySet, {
+          selfSize: 0,
           selfSizeInfo: {},
+          sharedSize: 0,
           sharedSizeInfo: {}
         })
       })
@@ -1112,10 +1116,10 @@ if(!context.console) {
         sizeInfo[packageName] = sizeInfo[packageName] || {
           assets: [],
           modules: [],
-          totalSize: 0
+          size: 0
         }
         sizeInfo[packageName][fillType].push({ ...fillInfo })
-        sizeInfo[packageName].totalSize += fillInfo.size
+        sizeInfo[packageName].size += fillInfo.size
       }
 
       function fillSizeReportGroups (entryModules, noEntryModules, packageName, fillType, fillInfo) {
@@ -1126,10 +1130,12 @@ if(!context.console) {
                 return noEntryModule.entryModules.has(entryModule)
               })
             })) {
+              reportGroup.selfSize += fillInfo.size
               return fillSizeInfo(reportGroup.selfSizeInfo, packageName, fillType, fillInfo)
             } else if (has(noEntryModules, (noEntryModule) => {
               return reportGroup.noEntryModules.has(noEntryModule)
             })) {
+              reportGroup.sharedSize += fillInfo.size
               return fillSizeInfo(reportGroup.sharedSizeInfo, packageName, fillType, fillInfo)
             }
           }
@@ -1138,10 +1144,12 @@ if(!context.console) {
             if (every(entryModules, (entryModule) => {
               return reportGroup.selfEntryModules.has(entryModule)
             })) {
+              reportGroup.selfSize += fillInfo.size
               return fillSizeInfo(reportGroup.selfSizeInfo, packageName, fillType, fillInfo)
             } else if (has(entryModules, (entryModule) => {
               return reportGroup.selfEntryModules.has(entryModule) || reportGroup.sharedEntryModules.has(entryModule)
             })) {
+              reportGroup.sharedSize += fillInfo.size
               return fillSizeInfo(reportGroup.sharedSizeInfo, packageName, fillType, fillInfo)
             }
           }
@@ -1149,11 +1157,23 @@ if(!context.console) {
       }
 
       const assetsSizeInfo = {
-        assets: [],
+        assets: []
+      }
+
+      const packagesSizeInfo = {}
+
+      const sizeSummary = {
+        groups: [],
+        sizeInfo: packagesSizeInfo,
         totalSize: 0,
         staticSize: 0,
         chunkSize: 0,
         copySize: 0
+      }
+
+      function fillPackagesSizeInfo (packageName, size) {
+        packagesSizeInfo[packageName] = packagesSizeInfo[packageName] || 0
+        packagesSizeInfo[packageName] += size
       }
 
       const modulesMapById = compilation.modules.reduce((map, module) => {
@@ -1161,6 +1181,7 @@ if(!context.console) {
         return map
       }, {})
 
+      // Generate original size info
       for (let name in compilation.assets) {
         const packageName = getPackageName(name)
         const assetInfo = compilation.assetsInfo.get(name)
@@ -1180,15 +1201,16 @@ if(!context.console) {
             }
           })
           const size = compilation.assets[name].size()
-
           fillSizeReportGroups(entryModules, noEntryModules, packageName, 'assets', { name, size })
           assetsSizeInfo.assets.push({
             type: 'static',
             name,
+            packageName,
             size
           })
-          assetsSizeInfo.staticSize += size
-          assetsSizeInfo.totalSize += size
+          fillPackagesSizeInfo(packageName, size)
+          sizeSummary.staticSize += size
+          sizeSummary.totalSize += size
         } else if (/\.m?js(\?.*)?$/i.test(name)) {
           let parsedModules
           try {
@@ -1202,13 +1224,15 @@ if(!context.console) {
           const chunkAssetInfo = {
             type: 'chunk',
             name,
+            packageName,
             size,
             modules: []
             // webpackTemplateSize: 0
           }
           assetsSizeInfo.assets.push(chunkAssetInfo)
-          assetsSizeInfo.chunkSize += size
-          assetsSizeInfo.totalSize += size
+          fillPackagesSizeInfo(packageName, size)
+          sizeSummary.chunkSize += size
+          sizeSummary.totalSize += size
           for (let id in parsedModules) {
             const module = modulesMapById[id]
             const moduleSize = Buffer.byteLength(parsedModules[id])
@@ -1231,13 +1255,55 @@ if(!context.console) {
           assetsSizeInfo.assets.push({
             type: 'copy',
             name,
+            packageName,
             size
           })
-          assetsSizeInfo.copySize += size
-          assetsSizeInfo.totalSize += size
+          fillPackagesSizeInfo(packageName, size)
+          sizeSummary.copySize += size
+          sizeSummary.totalSize += size
         }
       }
 
+      // Check threshold
+      function normalizeThreshold (threshold) {
+        if (typeof threshold === 'number') return threshold
+        if (typeof threshold === 'string') {
+          if (/ki?b$/i.test(threshold)) return parseFloat(threshold) * 1024
+          if (/mi?b$/i.test(threshold)) return parseFloat(threshold) * 1024 * 1024
+        }
+        return +threshold
+      }
+
+      function checkThreshold (threshold, size, sizeInfo, reportGroupName) {
+        const sizeThreshold = normalizeThreshold(threshold.size || threshold)
+        const packagesThreshold = threshold.packages
+
+        if (sizeThreshold && size && size > sizeThreshold) {
+          // error
+        }
+
+        if (packagesThreshold && sizeInfo) {
+          for (const packageName in sizeInfo) {
+            const packageSize = sizeInfo[packageName].size || sizeInfo[packageName]
+            const packageSizeThreshold = normalizeThreshold(packagesThreshold[packageName] || packagesThreshold)
+            if (packageSize && packageSizeThreshold && packageSize > packageSizeThreshold) {
+              // error
+            }
+          }
+        }
+      }
+
+      if (this.options.reportSize.threshold) {
+        checkThreshold(this.options.reportSize.threshold, sizeSummary.totalSize, packagesSizeInfo)
+      }
+
+      reportGroups.forEach((reportGroup) => {
+        if (reportGroup.threshold) {
+          checkThreshold(reportGroup.threshold, reportGroup.selfSize, reportGroup.selfSizeInfo, reportGroup.name || 'anonymous group')
+        }
+      })
+
+      // Format size info
       function mapModulesReadable (modulesSet) {
         return mapToArr(modulesSet, (module) => module.readableIdentifier(compilation.requestShortener))
       }
@@ -1249,13 +1315,14 @@ if(!context.console) {
           result[key] = {
             assets: sortAndFormat(item.assets),
             modules: sortAndFormat(item.modules),
-            totalSize: formatSize(item.totalSize)
+            size: formatSize(item.size)
           }
         }
         return result
       }
 
       function formatSize (byteLength) {
+        if (typeof byteLength !== 'number') return byteLength
         return (byteLength / 1024).toFixed(2) + 'KiB'
       }
 
@@ -1270,11 +1337,13 @@ if(!context.console) {
 
       const groupsSizeInfo = reportGroups.map((reportGroup) => {
         const readableInfo = {}
-        readableInfo.entryModules = mapModulesReadable(reportGroup.entryModules)
         readableInfo.selfEntryModules = mapModulesReadable(reportGroup.selfEntryModules)
         readableInfo.sharedEntryModules = mapModulesReadable(reportGroup.sharedEntryModules)
+        if (reportGroup.noEntryModules) readableInfo.noEntryModules = mapModulesReadable(reportGroup.noEntryModules)
         readableInfo.name = reportGroup.name || 'anonymous group'
+        readableInfo.selfSize = formatSize(reportGroup.selfSize)
         readableInfo.selfSizeInfo = formatSizeInfo(reportGroup.selfSizeInfo)
+        readableInfo.sharedSize = formatSize(reportGroup.sharedSize)
         readableInfo.sharedSizeInfo = formatSizeInfo(reportGroup.sharedSizeInfo)
         return readableInfo
       })
@@ -1282,33 +1351,32 @@ if(!context.console) {
       sortAndFormat(assetsSizeInfo.assets)
       assetsSizeInfo.assets.forEach((asset) => {
         if (asset.modules) sortAndFormat(asset.modules)
-      })
-      const sizeSummary = {
-        groups: []
-      };
+      });
       ['totalSize', 'staticSize', 'chunkSize', 'copySize'].forEach((key) => {
-        sizeSummary[key] = assetsSizeInfo[key] = formatSize(assetsSizeInfo[key])
+        sizeSummary[key] = formatSize(sizeSummary[key])
       })
       groupsSizeInfo.forEach((groupSizeInfo) => {
         const groupSummary = {
-          selfSize: {},
-          sharedSize: {},
+          selfSize: 0,
+          selfSizeInfo: {},
+          sharedSize: 0,
+          sharedSizeInfo: {},
           name: groupSizeInfo.name
         }
-
+        groupSummary.selfSize = groupSizeInfo.selfSize
         for (const key in groupSizeInfo.selfSizeInfo) {
-          groupSummary.selfSize[key] = {
-            size: groupSizeInfo.selfSizeInfo[key].totalSize
-          }
+          groupSummary.selfSizeInfo[key] = groupSizeInfo.selfSizeInfo[key].size
         }
+        groupSummary.sharedSize = groupSizeInfo.sharedSize
         for (const key in groupSizeInfo.sharedSizeInfo) {
-          groupSummary.sharedSize[key] = {
-            size: groupSizeInfo.sharedSizeInfo[key].totalSize
-          }
+          groupSummary.sharedSize[key] = groupSizeInfo.sharedSizeInfo[key].size
         }
-
         sizeSummary.groups.push(groupSummary)
       })
+
+      for (const packageName in packagesSizeInfo) {
+        packagesSizeInfo[packageName] = formatSize(packagesSizeInfo[packageName])
+      }
 
       const reportData = {
         sizeSummary,
@@ -1323,7 +1391,9 @@ if(!context.console) {
           callback(err)
         })
       })
-      console.log(`Size report is generated in ${reportFilePath}!`)
+
+      const logger = compilation.getLogger('MpxWebpackPlugin')
+      logger.info(`Size report is generated in ${reportFilePath}!`)
 
       return callback()
     })
