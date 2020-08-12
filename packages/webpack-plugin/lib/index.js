@@ -1277,9 +1277,10 @@ if(!context.console) {
       function checkThreshold (threshold, size, sizeInfo, reportGroupName) {
         const sizeThreshold = normalizeThreshold(threshold.size || threshold)
         const packagesThreshold = threshold.packages
+        const prefix = reportGroupName ? `${reportGroupName}体积分组` : '总包'
 
         if (sizeThreshold && size && size > sizeThreshold) {
-          // error
+          compilation.errors.push(`${prefix}的总体积（${size}B）超过设定阈值（${sizeThreshold}B），请检查！`)
         }
 
         if (packagesThreshold && sizeInfo) {
@@ -1287,7 +1288,8 @@ if(!context.console) {
             const packageSize = sizeInfo[packageName].size || sizeInfo[packageName]
             const packageSizeThreshold = normalizeThreshold(packagesThreshold[packageName] || packagesThreshold)
             if (packageSize && packageSizeThreshold && packageSize > packageSizeThreshold) {
-              // error
+              const readablePackageName = packageName === 'main' ? '主包' : `${packageName}分包`
+              compilation.errors.push(`${prefix}的${readablePackageName}体积（${size}B）超过设定阈值（${sizeThreshold}B），请检查！`)
             }
           }
         }
