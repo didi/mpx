@@ -1,6 +1,6 @@
 const { capitalToHyphen } = require('./string')
 
-module.exports = function ({ usingComponents, mode, log }) {
+module.exports = function (usingComponents, mode, warn) {
   // 百度和支付宝不支持大写组件标签名，统一转成带“-”和小写的形式。百度自带标签不会有带大写的情况
   if (usingComponents) {
     if (mode === 'ali' || mode === 'swan') {
@@ -8,10 +8,9 @@ module.exports = function ({ usingComponents, mode, log }) {
         const newK = capitalToHyphen(k)
         if (newK !== k) {
           if (usingComponents[newK]) {
-            log && log(`Component name "${newK}" already exists, so component "${k}" can't be converted automatically and it isn't supported in ali/swan environment!`)
+            warn && warn(`Component name "${newK}" already exists, so component "${k}" can't be converted automatically and it isn't supported in ali/swan environment!`)
           } else {
-            const pathValue = usingComponents[k]
-            usingComponents[newK] = pathValue
+            usingComponents[newK] = usingComponents[k]
             delete usingComponents[k]
           }
         }
