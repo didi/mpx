@@ -3,22 +3,32 @@ import mergeOptions from '../core/mergeOptions'
 import { dissolveAttrs } from '../helper/utils'
 
 export default function createApp (option, config = {}) {
-  const { rawOptions } = transferOptions(option, 'app', [{
-    onLaunch () {
-      Object.assign(this, option.proto)
-    },
-    created () {
-      // onPageNotFound
-      const { path, query, redirectedFrom = '' } = window.__mpxRouter.history.current
-      const fromPath = redirectedFrom.split('?')[0]
+  const builtInMixins = []
+  if (__mpx_mode__ === 'web') {
+    builtInMixins.push({
+      created () {
+        Object.assign(this, option.proto)
+        this.$options.onLaunch && this.$options.onLaunch.call(this, {})
 
-      window.currentOption.onPageNotFound.call(this, {
-        path: fromPath || path,
-        query,
-        isEntryPage: !!redirectedFrom
-      })
-    }
-  }])
+        // onPageNotFound
+        const { path, query, redirectedFrom = '' } = window.__mpxRouter.history.current
+        const fromPath = redirectedFrom.split('?')[0]
+  
+        window.currentOption.onPageNotFound.call(this, {
+          path: fromPath || path,
+          query,
+          isEntryPage: !!redirectedFrom
+        })
+      }
+    })
+  } else {
+    builtInMixins.push({
+      onLaunch () {
+        Object.assign(this, option.proto)
+      }
+    })
+  }
+  const { rawOptions } = transferOptions(option, 'app', builtInMixins)
   const defaultOptions = mergeOptions(rawOptions, 'app', false)
 
   if (__mpx_mode__ === 'web') {

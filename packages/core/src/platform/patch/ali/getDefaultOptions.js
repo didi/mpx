@@ -17,11 +17,12 @@ function transformApiForProxy (context, currentInject) {
   Object.defineProperties(context, {
     __getInitialData: {
       get () {
-        return () => {
+        return (options) => {
           if (context.props) {
             const newData = context.$rawOptions.__nativeRender__ ? context.data : Object.assign({}, context.data)
+            const validProps = Object.assign({}, options.props, options.properties)
             Object.keys(context.props).forEach((key) => {
-              if (!key.startsWith('$') && typeof context.props[key] !== 'function') {
+              if (validProps.hasOwnProperty(key) && typeof context.props[key] !== 'function') {
                 newData[key] = context.props[key]
               }
             })
@@ -70,7 +71,7 @@ function filterOptions (options, type) {
       return
     }
     if (key === 'properties' || key === 'props') {
-      newOptions.props = Object.assign({}, options['properties'], options['props'])
+      newOptions.props = Object.assign({}, options.properties, options.props)
     } else if (key === 'methods' && type === 'page') {
       Object.assign(newOptions, options[key])
     } else {
@@ -95,11 +96,12 @@ export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
     },
     deriveDataFromProps (nextProps) {
       if (this.__mpxProxy && this.__mpxProxy.isMounted() && nextProps && nextProps !== this.props) {
+        const validProps = Object.assign({}, this.$rawOptions.props, this.$rawOptions.properties)
         if (this.$rawOptions.__nativeRender__) {
           const newData = {}
           // 微信原生转换支付宝时，每次props更新将其设置进data模拟微信表现
           Object.keys(nextProps).forEach((key) => {
-            if (!key.startsWith('$') && typeof nextProps[key] !== 'function' && nextProps[key] !== this.props[key]) {
+            if (validProps.hasOwnProperty(key) && typeof nextProps[key] !== 'function' && nextProps[key] !== this.props[key]) {
               newData[key] = diffAndCloneA(nextProps[key]).clone
             }
           })
@@ -107,7 +109,7 @@ export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
         } else {
           // 由于支付宝中props透传父级setData的值，此处发生变化的属性实例一定不同，只需浅比较即可确定发生变化的属性
           Object.keys(nextProps).forEach(key => {
-            if (!key.startsWith('$') && typeof nextProps[key] !== 'function' && nextProps[key] !== this.props[key]) {
+            if (validProps.hasOwnProperty(key) && typeof nextProps[key] !== 'function' && nextProps[key] !== this.props[key]) {
               // 由于支付宝中透传父级setData的值，此处进行深copy后赋值避免父级存储的miniRenderData部分数据在此处被响应化，在子组件对props赋值时触发父组件的render
               this[key] = diffAndCloneA(nextProps[key]).clone
             }

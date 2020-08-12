@@ -177,7 +177,7 @@ module.exports = function (content) {
       try {
         let ret = JSON.parse(content)
         if (ret.usingComponents) {
-          fixUsingComponent({ usingComponents: ret.usingComponents, mode })
+          fixUsingComponent(ret.usingComponents, mode)
           usingComponents = usingComponents.concat(Object.keys(ret.usingComponents))
         }
       } catch (e) {
