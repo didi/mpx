@@ -6,6 +6,17 @@ export default function createApp (option, config = {}) {
   const { rawOptions } = transferOptions(option, 'app', [{
     onLaunch () {
       Object.assign(this, option.proto)
+    },
+    created () {
+      // onPageNotFound
+      const { path, query, redirectedFrom = '' } = window.__mpxRouter.history.current
+      const fromPath = redirectedFrom.split('?')[0]
+
+      window.currentOption.onPageNotFound.call(this, {
+        path: fromPath || path,
+        query,
+        isEntryPage: !!redirectedFrom
+      })
     }
   }])
   const defaultOptions = mergeOptions(rawOptions, 'app', false)
