@@ -316,7 +316,7 @@ class MpxWebpackPlugin {
           loaderOptions,
           extractedMap: {},
           extractSeenFile: {},
-          usingComponents: [],
+          usingComponents: {},
           hasApp: false,
           // todo es6 map读写性能高于object，之后会逐步替换
           vueContentCache: new Map(),
@@ -960,6 +960,17 @@ if(!context.console) {
         return result
       }
 
+      function concat (setA, setB) {
+        const result = new Set()
+        setA.forEach((item) => {
+          result.add(item)
+        })
+        setB.forEach((item) => {
+          result.add(item)
+        })
+        return result
+      }
+
       function mapToArr (set, fn) {
         const result = []
         set.forEach((item) => {
@@ -968,12 +979,7 @@ if(!context.console) {
         return result
       }
 
-      function recordEntry (module, entryModule) {
-        module.entryModules = module.entryModules || new Set()
-        module.entryModules.add(entryModule)
-      }
-
-      function walkEntry (entryModule) {
+      function walkEntry (entryModule, sideEffect) {
         const modulesSet = new Set()
 
         function walkDependencies (module, dependencies = []) {
@@ -999,7 +1005,7 @@ if(!context.console) {
 
         function walk (module) {
           if (modulesSet.has(module)) return
-          recordEntry(module, entryModule)
+          sideEffect && sideEffect(module, entryModule)
           modulesSet.add(module)
           walkDependencies(module, module.dependencies)
           module.variables.forEach((variable) => {
@@ -1012,17 +1018,40 @@ if(!context.console) {
 
       const reportGroups = this.options.reportSize.groups || []
 
+      const reportGroupsWithNoEntryRules = reportGroups.filter((reportGroup) => {
+        return reportGroup.hasOwnProperty('noEntryRules')
+      })
+
+      // Walk and mark entryModules/noEntryModules
       compilation.chunks.forEach((chunk) => {
         if (chunk.entryModule) {
-          walkEntry(chunk.entryModule)
+          walkEntry(chunk.entryModule, (module, entryModule) => {
+            module.entryModules = module.entryModules || new Set()
+            module.entryModules.add(entryModule)
+          })
           reportGroups.forEach((reportGroup) => {
             reportGroup.entryModules = reportGroup.entryModules || new Set()
-            if (matchCondition(parseRequest(chunk.entryModule.resource).resourcePath, reportGroup.rules)) {
+            if (reportGroup.entryRules && matchCondition(parseRequest(chunk.entryModule.resource).resourcePath, reportGroup.entryRules)) {
               reportGroup.entryModules.add(chunk.entryModule)
             }
           })
         }
       })
+
+      if (reportGroupsWithNoEntryRules.length) {
+        compilation.modules.forEach((module) => {
+          reportGroupsWithNoEntryRules.forEach((reportGroup) => {
+            if (matchCondition(parseRequest(module.resource).resourcePath, reportGroup.noEntryRules)) {
+              reportGroup.noEntryModules = reportGroup.noEntryModules || new Set()
+              reportGroup.noEntryModules.add(module)
+              walkEntry(module, (module, noEntryModule) => {
+                module.noEntryModules = module.noEntryModules || new Set()
+                module.noEntryModules.add(noEntryModule)
+              })
+            }
+          })
+        })
+      }
 
       const subpackages = new Set(Object.keys(mpx.componentsMap))
 
@@ -1035,8 +1064,15 @@ if(!context.console) {
       function getEntrySet (entryModules, ignoreSubEntry) {
         const selfSet = new Set()
         const sharedSet = new Set()
+        const otherSelfEntryModules = new Set()
         entryModules.forEach((entryModule) => {
-          selfSet.add(mpx.entryModulesMap.get(entryModule))
+          const entryNode = mpx.entryModulesMap.get(entryModule)
+          if (entryNode) {
+            selfSet.add(entryNode)
+          } else {
+            // 没有在entryModulesMap记录的entryModule默认为selfEntryModule
+            otherSelfEntryModules.add(entryModule)
+          }
         })
         if (!ignoreSubEntry) {
           let currentSet = selfSet
@@ -1060,15 +1096,18 @@ if(!context.console) {
         }
 
         return {
-          selfEntryModules: map(selfSet, item => item.module),
+          selfEntryModules: concat(map(selfSet, item => item.module), otherSelfEntryModules),
           sharedEntryModules: map(sharedSet, item => item.module)
         }
       }
 
+      // Get and split selfEntryModules & sharedEntryModules
       reportGroups.forEach((reportGroup) => {
         const entrySet = getEntrySet(reportGroup.entryModules, reportGroup.ignoreSubEntry)
         Object.assign(reportGroup, entrySet, {
+          selfSize: 0,
           selfSizeInfo: {},
+          sharedSize: 0,
           sharedSizeInfo: {}
         })
       })
@@ -1077,33 +1116,64 @@ if(!context.console) {
         sizeInfo[packageName] = sizeInfo[packageName] || {
           assets: [],
           modules: [],
-          totalSize: 0
+          size: 0
         }
         sizeInfo[packageName][fillType].push({ ...fillInfo })
-        sizeInfo[packageName].totalSize += fillInfo.size
+        sizeInfo[packageName].size += fillInfo.size
       }
 
-      function fillSizeReportGroups (entryModules, packageName, fillType, fillInfo) {
-        if (!entryModules || !entryModules.size) return
+      function fillSizeReportGroups (entryModules, noEntryModules, packageName, fillType, fillInfo) {
         reportGroups.forEach((reportGroup) => {
-          if (every(entryModules, (entryModule) => {
-            return reportGroup.selfEntryModules.has(entryModule)
-          })) {
-            fillSizeInfo(reportGroup.selfSizeInfo, packageName, fillType, fillInfo)
-          } else if (has(entryModules, (entryModule) => {
-            return reportGroup.selfEntryModules.has(entryModule) || reportGroup.sharedEntryModules.has(entryModule)
-          })) {
-            fillSizeInfo(reportGroup.sharedSizeInfo, packageName, fillType, fillInfo)
+          if (reportGroup.noEntryModules && noEntryModules && noEntryModules.size) {
+            if (has(noEntryModules, (noEntryModule) => {
+              return reportGroup.noEntryModules.has(noEntryModule) && every(entryModules, (entryModule) => {
+                return noEntryModule.entryModules.has(entryModule)
+              })
+            })) {
+              reportGroup.selfSize += fillInfo.size
+              return fillSizeInfo(reportGroup.selfSizeInfo, packageName, fillType, fillInfo)
+            } else if (has(noEntryModules, (noEntryModule) => {
+              return reportGroup.noEntryModules.has(noEntryModule)
+            })) {
+              reportGroup.sharedSize += fillInfo.size
+              return fillSizeInfo(reportGroup.sharedSizeInfo, packageName, fillType, fillInfo)
+            }
+          }
+
+          if (entryModules && entryModules.size) {
+            if (every(entryModules, (entryModule) => {
+              return reportGroup.selfEntryModules.has(entryModule)
+            })) {
+              reportGroup.selfSize += fillInfo.size
+              return fillSizeInfo(reportGroup.selfSizeInfo, packageName, fillType, fillInfo)
+            } else if (has(entryModules, (entryModule) => {
+              return reportGroup.selfEntryModules.has(entryModule) || reportGroup.sharedEntryModules.has(entryModule)
+            })) {
+              reportGroup.sharedSize += fillInfo.size
+              return fillSizeInfo(reportGroup.sharedSizeInfo, packageName, fillType, fillInfo)
+            }
           }
         })
       }
 
       const assetsSizeInfo = {
-        assets: [],
+        assets: []
+      }
+
+      const packagesSizeInfo = {}
+
+      const sizeSummary = {
+        groups: [],
+        sizeInfo: packagesSizeInfo,
         totalSize: 0,
         staticSize: 0,
         chunkSize: 0,
         copySize: 0
+      }
+
+      function fillPackagesSizeInfo (packageName, size) {
+        packagesSizeInfo[packageName] = packagesSizeInfo[packageName] || 0
+        packagesSizeInfo[packageName] += size
       }
 
       const modulesMapById = compilation.modules.reduce((map, module) => {
@@ -1111,28 +1181,36 @@ if(!context.console) {
         return map
       }, {})
 
+      // Generate original size info
       for (let name in compilation.assets) {
         const packageName = getPackageName(name)
         const assetInfo = compilation.assetsInfo.get(name)
         if (assetInfo && assetInfo.modules) {
           const entryModules = new Set()
+          const noEntryModules = new Set()
           assetInfo.modules.forEach((module) => {
             if (module.entryModules) {
               module.entryModules.forEach((entryModule) => {
                 entryModules.add(entryModule)
               })
             }
+            if (module.noEntryModules) {
+              module.noEntryModules.forEach((noEntryModule) => {
+                noEntryModules.add(noEntryModule)
+              })
+            }
           })
           const size = compilation.assets[name].size()
-
-          fillSizeReportGroups(entryModules, packageName, 'assets', { name, size })
+          fillSizeReportGroups(entryModules, noEntryModules, packageName, 'assets', { name, size })
           assetsSizeInfo.assets.push({
             type: 'static',
             name,
+            packageName,
             size
           })
-          assetsSizeInfo.staticSize += size
-          assetsSizeInfo.totalSize += size
+          fillPackagesSizeInfo(packageName, size)
+          sizeSummary.staticSize += size
+          sizeSummary.totalSize += size
         } else if (/\.m?js(\?.*)?$/i.test(name)) {
           let parsedModules
           try {
@@ -1146,18 +1224,20 @@ if(!context.console) {
           const chunkAssetInfo = {
             type: 'chunk',
             name,
+            packageName,
             size,
             modules: []
             // webpackTemplateSize: 0
           }
           assetsSizeInfo.assets.push(chunkAssetInfo)
-          assetsSizeInfo.chunkSize += size
-          assetsSizeInfo.totalSize += size
+          fillPackagesSizeInfo(packageName, size)
+          sizeSummary.chunkSize += size
+          sizeSummary.totalSize += size
           for (let id in parsedModules) {
             const module = modulesMapById[id]
             const moduleSize = Buffer.byteLength(parsedModules[id])
             const identifier = module.readableIdentifier(compilation.requestShortener)
-            fillSizeReportGroups(module.entryModules, packageName, 'modules', {
+            fillSizeReportGroups(module.entryModules, module.noEntryModules, packageName, 'modules', {
               name,
               identifier,
               size: moduleSize
@@ -1175,13 +1255,57 @@ if(!context.console) {
           assetsSizeInfo.assets.push({
             type: 'copy',
             name,
+            packageName,
             size
           })
-          assetsSizeInfo.copySize += size
-          assetsSizeInfo.totalSize += size
+          fillPackagesSizeInfo(packageName, size)
+          sizeSummary.copySize += size
+          sizeSummary.totalSize += size
         }
       }
 
+      // Check threshold
+      function normalizeThreshold (threshold) {
+        if (typeof threshold === 'number') return threshold
+        if (typeof threshold === 'string') {
+          if (/ki?b$/i.test(threshold)) return parseFloat(threshold) * 1024
+          if (/mi?b$/i.test(threshold)) return parseFloat(threshold) * 1024 * 1024
+        }
+        return +threshold
+      }
+
+      function checkThreshold (threshold, size, sizeInfo, reportGroupName) {
+        const sizeThreshold = normalizeThreshold(threshold.size || threshold)
+        const packagesThreshold = threshold.packages
+        const prefix = reportGroupName ? `${reportGroupName}体积分组` : '总包'
+
+        if (sizeThreshold && size && size > sizeThreshold) {
+          compilation.errors.push(`${prefix}的总体积（${size}B）超过设定阈值（${sizeThreshold}B），请检查！`)
+        }
+
+        if (packagesThreshold && sizeInfo) {
+          for (const packageName in sizeInfo) {
+            const packageSize = sizeInfo[packageName].size || sizeInfo[packageName]
+            const packageSizeThreshold = normalizeThreshold(packagesThreshold[packageName] || packagesThreshold)
+            if (packageSize && packageSizeThreshold && packageSize > packageSizeThreshold) {
+              const readablePackageName = packageName === 'main' ? '主包' : `${packageName}分包`
+              compilation.errors.push(`${prefix}的${readablePackageName}体积（${size}B）超过设定阈值（${sizeThreshold}B），请检查！`)
+            }
+          }
+        }
+      }
+
+      if (this.options.reportSize.threshold) {
+        checkThreshold(this.options.reportSize.threshold, sizeSummary.totalSize, packagesSizeInfo)
+      }
+
+      reportGroups.forEach((reportGroup) => {
+        if (reportGroup.threshold) {
+          checkThreshold(reportGroup.threshold, reportGroup.selfSize, reportGroup.selfSizeInfo, reportGroup.name || 'anonymous group')
+        }
+      })
+
+      // Format size info
       function mapModulesReadable (modulesSet) {
         return mapToArr(modulesSet, (module) => module.readableIdentifier(compilation.requestShortener))
       }
@@ -1193,13 +1317,14 @@ if(!context.console) {
           result[key] = {
             assets: sortAndFormat(item.assets),
             modules: sortAndFormat(item.modules),
-            totalSize: formatSize(item.totalSize)
+            size: formatSize(item.size)
           }
         }
         return result
       }
 
       function formatSize (byteLength) {
+        if (typeof byteLength !== 'number') return byteLength
         return (byteLength / 1024).toFixed(2) + 'KiB'
       }
 
@@ -1214,11 +1339,13 @@ if(!context.console) {
 
       const groupsSizeInfo = reportGroups.map((reportGroup) => {
         const readableInfo = {}
-        readableInfo.entryModules = mapModulesReadable(reportGroup.entryModules)
         readableInfo.selfEntryModules = mapModulesReadable(reportGroup.selfEntryModules)
         readableInfo.sharedEntryModules = mapModulesReadable(reportGroup.sharedEntryModules)
+        if (reportGroup.noEntryModules) readableInfo.noEntryModules = mapModulesReadable(reportGroup.noEntryModules)
         readableInfo.name = reportGroup.name || 'anonymous group'
+        readableInfo.selfSize = formatSize(reportGroup.selfSize)
         readableInfo.selfSizeInfo = formatSizeInfo(reportGroup.selfSizeInfo)
+        readableInfo.sharedSize = formatSize(reportGroup.sharedSize)
         readableInfo.sharedSizeInfo = formatSizeInfo(reportGroup.sharedSizeInfo)
         return readableInfo
       })
@@ -1226,33 +1353,32 @@ if(!context.console) {
       sortAndFormat(assetsSizeInfo.assets)
       assetsSizeInfo.assets.forEach((asset) => {
         if (asset.modules) sortAndFormat(asset.modules)
-      })
-      const sizeSummary = {
-        groups: []
-      };
+      });
       ['totalSize', 'staticSize', 'chunkSize', 'copySize'].forEach((key) => {
-        sizeSummary[key] = assetsSizeInfo[key] = formatSize(assetsSizeInfo[key])
+        sizeSummary[key] = formatSize(sizeSummary[key])
       })
       groupsSizeInfo.forEach((groupSizeInfo) => {
         const groupSummary = {
-          selfSize: {},
-          sharedSize: {},
+          selfSize: 0,
+          selfSizeInfo: {},
+          sharedSize: 0,
+          sharedSizeInfo: {},
           name: groupSizeInfo.name
         }
-
+        groupSummary.selfSize = groupSizeInfo.selfSize
         for (const key in groupSizeInfo.selfSizeInfo) {
-          groupSummary.selfSize[key] = {
-            size: groupSizeInfo.selfSizeInfo[key].totalSize
-          }
+          groupSummary.selfSizeInfo[key] = groupSizeInfo.selfSizeInfo[key].size
         }
+        groupSummary.sharedSize = groupSizeInfo.sharedSize
         for (const key in groupSizeInfo.sharedSizeInfo) {
-          groupSummary.sharedSize[key] = {
-            size: groupSizeInfo.sharedSizeInfo[key].totalSize
-          }
+          groupSummary.sharedSize[key] = groupSizeInfo.sharedSizeInfo[key].size
         }
-
         sizeSummary.groups.push(groupSummary)
       })
+
+      for (const packageName in packagesSizeInfo) {
+        packagesSizeInfo[packageName] = formatSize(packagesSizeInfo[packageName])
+      }
 
       const reportData = {
         sizeSummary,
@@ -1267,7 +1393,9 @@ if(!context.console) {
           callback(err)
         })
       })
-      console.log(`Size report is generated in ${reportFilePath}!`)
+
+      const logger = compilation.getLogger('MpxWebpackPlugin')
+      logger.info(`Size report is generated in ${reportFilePath}!`)
 
       return callback()
     })

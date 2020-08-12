@@ -187,7 +187,7 @@ module.exports = function (raw = '{}') {
   }
 
   if (json.usingComponents) {
-    fixUsingComponent({ usingComponents: json.usingComponents, mode, log: emitWarning })
+    fixUsingComponent(json.usingComponents, mode, emitWarning)
   }
 
   const rulesRunnerOptions = {
