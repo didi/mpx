@@ -158,7 +158,6 @@ export default class MPXProxy {
         return false
       }
       if (!proxyedKeysMap[key]) error(`The data/props/computed key [${key}] exist in the component/page instance already, please check and rename it!`, this.options.mpxFileResource)
-
     })
     this.initWatch(options.watch)
   }
