@@ -50,7 +50,7 @@ export default function processOption (
         path: '*',
         redirect: '/PageNotFound'
       }]
-  
+
       routes = routers
     }
 

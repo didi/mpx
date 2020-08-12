@@ -13,7 +13,7 @@ export default function createApp (option, config = {}) {
         // onPageNotFound
         const { path, query, redirectedFrom = '' } = window.__mpxRouter.history.current
         const fromPath = redirectedFrom.split('?')[0]
-  
+
         window.currentOption.onPageNotFound.call(this, {
           path: fromPath || path,
           query,
