@@ -31,6 +31,9 @@ module.exports = function (template, options, callback) {
     }
 
     output += genComponentTag(template, (template) => {
+      if (ctorType === 'app') {
+        return template.content
+      }
       if (template.content) {
         const templateSrcMode = template.mode || srcMode
         const parsed = templateCompiler.parse(template.content, {
@@ -46,7 +49,11 @@ module.exports = function (template, options, callback) {
           },
           mode,
           srcMode: templateSrcMode,
-          defs
+          defs,
+          usingComponents: options.usingComponents,
+          // web模式下全局组件不会被合入usingComponents中，故globalComponents可以传空
+          globalComponents: [],
+          checkUsingComponents: options.checkUsingComponents
         })
         if (parsed.meta.builtInComponentsMap) {
           Object.keys(parsed.meta.builtInComponentsMap).forEach((name) => {
