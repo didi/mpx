@@ -5,22 +5,22 @@ const loaderUtils = require('loader-utils')
 module.exports = function (content) {
   const mainCompilation = getMainCompilation(this._compilation)
   const i18n = mainCompilation.__mpx__.i18n
-  let prefix = ''
+  let prefix = 'var __mpx_messages__, __mpx_datetime_formats__, __mpx_number_formats__'
   if (i18n) {
     if (i18n.messages) {
-      prefix += `var __mpx_messages__ = ${JSON.stringify(i18n.messages)}\n`
+      prefix += `__mpx_messages__ = ${JSON.stringify(i18n.messages)}\n`
     } else if (i18n.messagesPath) {
-      prefix += `var __mpx_messages__ = require(${loaderUtils.stringifyRequest(this, i18n.messagesPath)})\n`
+      prefix += `__mpx_messages__ = require(${loaderUtils.stringifyRequest(this, i18n.messagesPath)})\n`
     }
     if (i18n.dateTimeFormats) {
-      prefix += `var __mpx_datetime_formats__ = ${JSON.stringify(i18n.dateTimeFormats)}\n`
+      prefix += `__mpx_datetime_formats__ = ${JSON.stringify(i18n.dateTimeFormats)}\n`
     } else if (i18n.dateTimeFormatsPath) {
-      prefix += `var __mpx_datetime_formats__ = require(${loaderUtils.stringifyRequest(this, i18n.dateTimeFormatsPath)})\n`
+      prefix += `__mpx_datetime_formats__ = require(${loaderUtils.stringifyRequest(this, i18n.dateTimeFormatsPath)})\n`
     }
     if (i18n.numberFormats) {
-      prefix += `var __mpx_number_formats__ = ${JSON.stringify(i18n.numberFormats)}\n`
+      prefix += `__mpx_number_formats__ = ${JSON.stringify(i18n.numberFormats)}\n`
     } else if (i18n.numberFormatsPath) {
-      prefix += `var __mpx_number_formats__ = require(${loaderUtils.stringifyRequest(this, i18n.numberFormatsPath)})\n`
+      prefix += `__mpx_number_formats__ = require(${loaderUtils.stringifyRequest(this, i18n.numberFormatsPath)})\n`
     }
   }
   content = prefix + content
