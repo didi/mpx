@@ -933,7 +933,7 @@ function parse (template, options) {
 
   if (!tagNames.has('component')) {
     options.usingComponents.forEach((item) => {
-      if (!tagNames.has(item) && !options.globalUsingComponents.includes(item)) warn$1(`${item}注册了，但是未被对应的模板引用，建议删除！`)
+      if (!tagNames.has(item) && !options.globalUsingComponents.includes(item) && options.warnUnnessCom) warn$1(`${item}注册了，但是未被对应的模板引用，建议删除！`)
     })
   }
 

@@ -139,6 +139,8 @@ class MpxWebpackPlugin {
       cssLangs: ['css', 'less', 'stylus', 'scss', 'sass']
     }, options.nativeOptions)
     options.i18n = options.i18n || null
+    // 控制warn冗余组件注册
+    options.warnUnnessCom = options.warnUnnessCom || false
     options.reportSize = options.reportSize || null
     this.options = options
   }
@@ -340,6 +342,7 @@ class MpxWebpackPlugin {
           nativeOptions: this.options.nativeOptions,
           defs: this.options.defs,
           i18n: this.options.i18n,
+          warnUnnessCom: this.options.warnUnnessCom,
           appTitle: 'Mpx homepage',
           attributes: this.options.attributes,
           externals: this.options.externals,

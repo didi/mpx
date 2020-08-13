@@ -52,7 +52,8 @@ module.exports = function (raw) {
     scopedId,
     filePath: this.resourcePath,
     i18n,
-    globalUsingComponents: Object.keys(mpx.usingComponents || {})
+    globalUsingComponents: Object.keys(mpx.usingComponents || {}),
+    warnUnnessCom: mpx.warnUnnessCom
   }))
 
   let ast = parsed.root
