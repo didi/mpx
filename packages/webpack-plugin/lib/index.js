@@ -1041,7 +1041,9 @@ if(!context.console) {
       if (reportGroupsWithNoEntryRules.length) {
         compilation.modules.forEach((module) => {
           reportGroupsWithNoEntryRules.forEach((reportGroup) => {
-            if (matchCondition(parseRequest(module.resource).resourcePath, reportGroup.noEntryRules)) {
+            if (module.resource && matchCondition(parseRequest(module.resource).resourcePath, reportGroup.noEntryRules) || module.modules && has(module.modules, (module) => {
+              return module.resource && matchCondition(parseRequest(module.resource).resourcePath, reportGroup.noEntryRules)
+            })) {
               reportGroup.noEntryModules = reportGroup.noEntryModules || new Set()
               reportGroup.noEntryModules.add(module)
               walkEntry(module, (module, noEntryModule) => {
@@ -1339,10 +1341,10 @@ if(!context.console) {
 
       const groupsSizeInfo = reportGroups.map((reportGroup) => {
         const readableInfo = {}
+        readableInfo.name = reportGroup.name || 'anonymous group'
         readableInfo.selfEntryModules = mapModulesReadable(reportGroup.selfEntryModules)
         readableInfo.sharedEntryModules = mapModulesReadable(reportGroup.sharedEntryModules)
         if (reportGroup.noEntryModules) readableInfo.noEntryModules = mapModulesReadable(reportGroup.noEntryModules)
-        readableInfo.name = reportGroup.name || 'anonymous group'
         readableInfo.selfSize = formatSize(reportGroup.selfSize)
         readableInfo.selfSizeInfo = formatSizeInfo(reportGroup.selfSizeInfo)
         readableInfo.sharedSize = formatSize(reportGroup.sharedSize)
@@ -1359,11 +1361,11 @@ if(!context.console) {
       })
       groupsSizeInfo.forEach((groupSizeInfo) => {
         const groupSummary = {
+          name: groupSizeInfo.name,
           selfSize: 0,
           selfSizeInfo: {},
           sharedSize: 0,
-          sharedSizeInfo: {},
-          name: groupSizeInfo.name
+          sharedSizeInfo: {}
         }
         groupSummary.selfSize = groupSizeInfo.selfSize
         for (const key in groupSizeInfo.selfSizeInfo) {
@@ -1371,7 +1373,7 @@ if(!context.console) {
         }
         groupSummary.sharedSize = groupSizeInfo.sharedSize
         for (const key in groupSizeInfo.sharedSizeInfo) {
-          groupSummary.sharedSize[key] = groupSizeInfo.sharedSizeInfo[key].size
+          groupSummary.sharedSizeInfo[key] = groupSizeInfo.sharedSizeInfo[key].size
         }
         sizeSummary.groups.push(groupSummary)
       })
@@ -1390,14 +1392,11 @@ if(!context.console) {
       compiler.outputFileSystem.mkdirp(path.dirname(reportFilePath), (err) => {
         if (err) return callback(err)
         compiler.outputFileSystem.writeFile(reportFilePath, JSON.stringify(reportData, null, 2), (err) => {
+          const logger = compilation.getLogger('MpxWebpackPlugin')
+          logger.info(`Size report is generated in ${reportFilePath}!`)
           callback(err)
         })
       })
-
-      const logger = compilation.getLogger('MpxWebpackPlugin')
-      logger.info(`Size report is generated in ${reportFilePath}!`)
-
-      return callback()
     })
   }
 }

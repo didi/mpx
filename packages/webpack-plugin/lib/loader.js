@@ -181,7 +181,8 @@ module.exports = function (content) {
                   srcMode,
                   defs,
                   loaderContext,
-                  ctorType
+                  ctorType,
+                  usingComponents
                 }, callback)
               },
               (callback) => {
