@@ -1041,9 +1041,9 @@ if(!context.console) {
       if (reportGroupsWithNoEntryRules.length) {
         compilation.modules.forEach((module) => {
           reportGroupsWithNoEntryRules.forEach((reportGroup) => {
-            if (module.resource && matchCondition(parseRequest(module.resource).resourcePath, reportGroup.noEntryRules) || module.modules && has(module.modules, (module) => {
+            if ((module.resource && matchCondition(parseRequest(module.resource).resourcePath, reportGroup.noEntryRules)) || (module.modules && has(module.modules, (module) => {
               return module.resource && matchCondition(parseRequest(module.resource).resourcePath, reportGroup.noEntryRules)
-            })) {
+            }))) {
               reportGroup.noEntryModules = reportGroup.noEntryModules || new Set()
               reportGroup.noEntryModules.add(module)
               walkEntry(module, (module, noEntryModule) => {
