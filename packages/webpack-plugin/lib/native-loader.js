@@ -23,7 +23,7 @@ module.exports = function (content) {
 
   const loaderContext = this
   const isProduction = this.minimize || process.env.NODE_ENV === 'production'
-  const options = loaderUtils.getOptions(this) || {}
+  const options = Object.assign({}, mpx.loaderOptions, loaderUtils.getOptions(this))
 
   const filePath = this.resourcePath
 
@@ -177,7 +177,7 @@ module.exports = function (content) {
       try {
         let ret = JSON.parse(content)
         if (ret.usingComponents) {
-          fixUsingComponent({ usingComponents: ret.usingComponents, mode })
+          fixUsingComponent(ret.usingComponents, mode)
           usingComponents = usingComponents.concat(Object.keys(ret.usingComponents))
         }
       } catch (e) {

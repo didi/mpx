@@ -763,6 +763,8 @@ function parse (template, options) {
   let meta = {}
   let currentParent
   let multiRootError
+  // 用于记录模板用到的组件，匹配引用组件，看是否有冗余
+  let tagNames = new Set()
 
   function genTempRoot () {
     // 使用临时节点作为root，处理multi root的情况
@@ -833,6 +835,8 @@ function parse (template, options) {
       element.parent = currentParent
 
       processElement(element, root, options, meta)
+      tagNames.add(element.tag)
+
       if (!unary) {
         currentParent = element
         stack.push(element)
@@ -926,6 +930,12 @@ function parse (template, options) {
     Array.isArray(val.warnArray) && val.warnArray.forEach(item => warn$1(item))
     Array.isArray(val.errorArray) && val.errorArray.forEach(item => error$1(item))
   })
+
+  if (!tagNames.has('component')) {
+    options.usingComponents.forEach((item) => {
+      if (!tagNames.has(item) && !options.globalComponents.includes(item) && options.checkUsingComponents) warn$1(`${item}注册了，但是未被对应的模板引用，建议删除！`)
+    })
+  }
 
   return {
     root,
