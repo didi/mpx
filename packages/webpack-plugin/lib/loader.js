@@ -182,7 +182,8 @@ module.exports = function (content) {
                   defs,
                   loaderContext,
                   ctorType,
-                  usingComponents
+                  usingComponents,
+                  checkUsingComponents: mpx.checkUsingComponents
                 }, callback)
               },
               (callback) => {

@@ -52,7 +52,8 @@ module.exports = function (template, options, callback) {
           defs,
           usingComponents: options.usingComponents,
           // web模式下全局组件不会被合入usingComponents中，故globalComponents可以传空
-          globalComponents: []
+          globalComponents: [],
+          checkUsingComponents: options.checkUsingComponents
         })
         if (parsed.meta.builtInComponentsMap) {
           Object.keys(parsed.meta.builtInComponentsMap).forEach((name) => {
