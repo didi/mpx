@@ -288,8 +288,7 @@ module.exports = function (raw = '{}') {
       const componentPath = packageInfo.outputPath
       rewritePath && rewritePath(publicPath + componentPath)
       if (ext === '.js') {
-        const nativeLoaderOptions = mpx.loaderOptions ? '?' + JSON.stringify(mpx.loaderOptions) : ''
-        resource = '!!' + nativeLoaderPath + nativeLoaderOptions + '!' + resource
+        resource = '!!' + nativeLoaderPath + '!' + resource
       }
       // 此处query为了实现消除分包间模块缓存，以实现不同分包中引用的组件在不同分包中都能输出
       resource = addQuery(resource, {
@@ -505,8 +504,7 @@ module.exports = function (raw = '{}') {
               }
             }
             if (ext === '.js') {
-              const nativeLoaderOptions = mpx.loaderOptions ? '?' + JSON.stringify(mpx.loaderOptions) : ''
-              resource = '!!' + nativeLoaderPath + nativeLoaderOptions + '!' + resource
+              resource = '!!' + nativeLoaderPath + '!' + resource
             }
             currentEntry.addChild(getEntryNode(resource, 'Page'))
             // 如果之前已经创建了页面入口，直接return，目前暂时不支持多个分包复用同一个页面
