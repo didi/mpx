@@ -48,7 +48,7 @@ const mpxLoaderConfig = {
           transformToRequire: {
             'mpx-image': 'src',
             'mpx-audio': 'src',
-            'mpx-video': 'src'
+            'mpx-video': 'src',
           }
         }
       },

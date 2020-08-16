@@ -1,7 +1,8 @@
 <script>
   import Vue from 'vue'
+  import getInnerListeners from '@mpxjs/webpack-plugin/lib/runtime/components/web/getInnerListeners'
 
-  const tabBarMap = Vue.observable(global.__tabBar)
+  const tabBarMap = Vue.observable(window.__tabBar)
   export default {
     name: 'mpx-tabbar',
     props: {
@@ -16,19 +17,17 @@
     },
     data () {
       return {
-        currentIndex: 0, // 当前被选中的tabbar
+        currentIndex: 0,
         color: '',
         backgroundColor: '',
         borderStyle: '',
         selectedColor: '',
-        extClass: '',
         position: 'bottom',
-        list: [],
-        custom: false
+        list: []
       }
     },
     computed: {
-      wrapperStyle () { // TODO border-top 1px 需要做适配处理
+      wrapperStyle () {
         let style = `background-color: ${this.backgroundColor}; border-top: 1px solid ${this.borderStyle};`
         style += this.position === 'bottom' ? 'bottom: 0;' : 'top: 0;'
         return style
@@ -50,7 +49,7 @@
     methods: {
       itemClickHandler (item, index) {
         this.currentIndex = index
-        global.__tabBar.current = index
+        tabBarMap.current = index
         this.$emit('bindchange', item, index)
       },
       setTabBar (index) { // 动态设置 tabBar 某一项的内容
@@ -64,11 +63,22 @@
       }
     },
     render (createElement) {
-      const iconImage = (item, index) => createElement('img', {class: 'icon', src: item.selectedIconPath || item.iconPath})
+      const iconImage = (item, index) => createElement('img',
+        {
+          class: 'icon',
+          style: {
+            height: '26px',
+            width: '26px'
+          },
+          domProps: {
+            src: this.currentIndex === index? item.selectedIconPath : item.iconPath
+          },
+          on: getInnerListeners(this, { ignoredListeners: ['load', 'error'] })
+        })
       const textSpan = (item, index) => createElement('span',
         {
           class: 'tab-cell',
-          style:{ color: this.currentIndex === index? tabBarMap.selectedColor: tabBarMap.color },
+          style: { color: this.currentIndex === index? tabBarMap.selectedColor: tabBarMap.color },
           domProps: {innerHTML: item.text}
         }
       )
@@ -76,7 +86,9 @@
       const tabBarWrapper = createElement('div', {class: 'tabbar-wrapper'},
       [tabBarMap.list.map((item, index) => {
         return createElement('div', {class: 'tab-item', on: {click: this.itemClickHandler.bind(this, item, index)}},
-        [iconImage(item, index), textSpan(item, index)]
+          item.selectedIconPath||item.iconPath?
+            [iconImage(item, index), textSpan(item, index)]
+            : [textSpan(item, index)]
         )
       })])
       return createElement('div',
@@ -108,5 +120,6 @@
         display flex
         align-items center
         justify-content center
+        flex-direction column
         cursor pointer
 </style>

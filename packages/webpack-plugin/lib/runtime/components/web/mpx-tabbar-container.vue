@@ -1,30 +1,24 @@
 <template>
   <div>
-    <mpx-tabbar :current="currentIndex"  @bindchange="itemChange"></mpx-tabbar>
-    <component :is="currentComponent"></component>
+    <custom-tab-bar :current="currentIndex"  @bindchange="itemChange"></custom-tab-bar>
+    <keep-alive>
+      <component ref="tabBarPage" :is="currentComponent"></component>
+    </keep-alive>
   </div>
 </template>
 
 <script>
   import Vue from 'vue'
-  import BScroll from '@better-scroll/core'
-  const tabBarMap = Vue.observable(global.__tabBar)
+  const tabBarMap = Vue.observable(window.__tabBar)
   const components = {}
-  if (tabBarMap.custom) {
-    components['mpx-tabbar'] = () => import('@mpxjs/webpack-plugin/lib/runtime/components/web/mpx-tabbar.vue')
-  } else {
-    components['mpx-tabbar'] = () => import('@mpxjs/webpack-plugin/lib/runtime/components/web/mpx-tabbar.vue')
-  }
 
   tabBarMap.list.forEach((item) => {
     const componentPath = item.pagePath
     const componentName = item.pagePath.replace('/', '-')
-    components[componentName] = () => import('src/' + componentPath)
+    components[componentName] = require('src/' + componentPath).default
   })
   export default {
     name: 'mpx-tabbar-container',
-    props: {
-    },
     data () {
       return {
         currentIndex: 0, // 当前被选中的tabbar
@@ -51,13 +45,14 @@
     methods: {
       itemChange (item, index) {
         this.currentIndex = index
+        this.$refs['tabBarPage'].onTabItemTap && this.$refs['tabBarPage'].onTabItemTap(item)
       },
       getCurrentIndex (judgePath) {
         tabBarMap.list.forEach((item, index) => {
           const componentPath = item.pagePath
           if (judgePath.indexOf(componentPath) > 0) {
             this.currentIndex = index
-            global.__tabBar.current = index
+            tabBarMap.current = index
           }
         })
       }

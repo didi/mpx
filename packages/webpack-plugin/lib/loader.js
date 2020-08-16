@@ -69,7 +69,7 @@ module.exports = function (content) {
         isTabBarPage = true
       }
     })
-  } else if (componentsMap[resourcePath]) {
+  } else if (componentsMap[resourcePath] || resourcePath.indexOf('src/custom-tab-bar') > -1) {
     // component
     ctorType = 'component'
   }
