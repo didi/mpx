@@ -1,22 +1,23 @@
-
+/* eslint-disable no-undef */
+/* eslint-disable new-parens */
 const audio = new Audio
 
-audio.stop = function() {
+audio.stop = function () {
   this.currentTime = 0
   this.pause()
 }
 
-audio.seek = function(value) {
+audio.seek = function (value) {
   this.currentTime = value
 }
 
-audio.destroy = function() {
+audio.destroy = function () {
   // audio = null //  Error in v-on handler: "Error: "audio" is read-only"
   this.src = ''
 }
 
 let onCanplay = true
-audio.onCanplay = function(callback) {
+audio.onCanplay = function (callback) {
   this.addEventListener('play', function (event) {
     if (event.type === 'play') {
       this.addEventListener('canplay', function (e) {
@@ -76,7 +77,7 @@ audio.offStop = function (callback) {
 let onEnded = true
 audio.onEnded = function (callback) {
   this.addEventListener('timeupdate', function () {
-    // 监听播放完成，ended 事件不准确  
+    // 监听播放完成，ended 事件不准确
     if (audio.currentTime >= audio.duration) {
       if (onEnded) {
         callback()
@@ -122,7 +123,7 @@ audio.onError = function (callback) {
 }
 
 audio.offError = function (callback) {
-  offError = false
+  onError = false
   if (callback) {
     callback()
   }
@@ -179,4 +180,3 @@ audio.offSeeked = function (callback) {
 export function createInnerAudioContext () {
   return audio
 }
-
