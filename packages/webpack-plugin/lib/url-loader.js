@@ -30,25 +30,28 @@ function isStyle (request) {
 
 module.exports = function (src) {
   let transBase64 = false
-  const options = getOptions(this) || {}
-
+  const options = Object.assign({}, getOptions(this))
   const filePath = this.resourcePath
   const mimetype = options.mimetype || mime.getType(filePath)
   const issuer = this._module.issuer
+  const queryOption = parseQuery(this.resourceQuery || '?')
 
-  if (issuer && issuer.request && isStyle(issuer.request)) {
+  if (issuer && issuer.request && isStyle(issuer.request) || queryOption.isStyle) {
     if (options.publicPath) {
       const limit = options.limit
       if (!limit || src.length < limit) {
         transBase64 = true
       }
-      const queryOption = parseQuery(this.resourceQuery || '?')
       if (queryOption.fallback) {
         transBase64 = false
       }
     } else {
       transBase64 = true
     }
+    // 如果设置了outputPathCDN且当前资源不为style时，则将传递给file-loader的publicPath删除，仅将style中的图像资源改为CDN地址
+    // 如果没有设置outputPathCDN则不删除publicPath，全局的非base64的图像资源都会被改为CDN地址
+  } else if (options.outputPathCDN) {
+    delete options.publicPath
   }
 
   if (transBase64) {
@@ -60,7 +63,7 @@ module.exports = function (src) {
     )}`
   } else {
     const fallback = require(options.fallback ? options.fallback : './file-loader')
-    return fallback.call(this, src)
+    return fallback.call(this, src, options)
   }
 }
 
