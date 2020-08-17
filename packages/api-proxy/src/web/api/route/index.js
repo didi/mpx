@@ -109,13 +109,13 @@ function switchTab (options = {}) {
   const delta = router.stack.length - 1
   let isToTabPage = false
   tabBarList.forEach((item) => {
-    if (toUrl.indexOf(item.pagePath)>-1) {
+    if (toUrl.indexOf(item.pagePath) > -1) {
       isToTabPage = true
     }
   })
   if (!isToTabPage) {
     // 跳转页面非 tabBar 页面，无法跳转
-    const res = { errMsg: "switchTab:fail can not switch to no-tabBar page" }
+    const res = { errMsg: 'switchTab:fail can not switch to no-tabBar page' }
     return Promise.reject(res)
   }
 

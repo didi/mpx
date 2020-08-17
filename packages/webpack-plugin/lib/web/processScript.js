@@ -38,11 +38,13 @@ module.exports = function (script, options, callback) {
   let tabBarMapStr = ''
   if (tabBarMap && Array.isArray(tabBarMap.list) && tabBarMap.list.length && ctorType === 'app') {
     tabBarMap.list.map((item) => {
-      tabBarMapPages['/'+item.pagePath] = item
+      tabBarMapPages['/' + item.pagePath] = item
     })
     tabBarMap.listMap = tabBarMapPages
     tabBarMapStr = JSON.stringify(tabBarMap)
+    /* eslint-disable no-useless-escape */
     tabBarMapStr = tabBarMapStr.replace(/"iconPath":"([\w\/\.\-]+[\.png\.jpeg\.gif])"/g, '"iconPath":getComponent(require("$1"))')
+    /* eslint-disable no-useless-escape */
     tabBarMapStr = tabBarMapStr.replace(/"selectedIconPath":"([\w\/\.\-]+[\.png\.jpeg\.gif])"/g, '"selectedIconPath":getComponent(require("$1"))')
   }
 
