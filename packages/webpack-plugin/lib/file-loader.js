@@ -50,7 +50,7 @@ module.exports = function loader (content, prevOptions) {
         options.publicPath.endsWith('/')
           ? options.publicPath
           : `${options.publicPath}/`
-        }${url}`
+      }${url}`
     }
     publicPath = JSON.stringify(publicPath)
   }

@@ -36,7 +36,7 @@ module.exports = function (src) {
   const issuer = this._module.issuer
   const queryOption = parseQuery(this.resourceQuery || '?')
 
-  if (issuer && issuer.request && isStyle(issuer.request) || queryOption.isStyle) {
+  if ((issuer && issuer.request && isStyle(issuer.request)) || queryOption.isStyle) {
     if (options.publicPath) {
       const limit = options.limit
       if (!limit || src.length < limit) {
