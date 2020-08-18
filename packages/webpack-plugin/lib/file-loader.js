@@ -46,11 +46,9 @@ module.exports = function loader (content, prevOptions) {
     if (typeof options.publicPath === 'function') {
       publicPath = options.publicPath(url, this.resourcePath, context)
     } else {
-      publicPath = `${
-        options.publicPath.endsWith('/')
-          ? options.publicPath
-          : `${options.publicPath}/`
-      }${url}`
+      publicPath = `${options.publicPath.endsWith('/')
+        ? options.publicPath
+        : `${options.publicPath}/`}${url}`
     }
     publicPath = JSON.stringify(publicPath)
   }

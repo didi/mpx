@@ -3,7 +3,7 @@ const mime = require('mime')
 const getOptions = loaderUtils.getOptions
 const parseQuery = loaderUtils.parseQuery
 
-function isStyle (request) {
+function isStyleRequest (request) {
   let elements = request.replace(/^-?!+/, '').replace(/!!+/g, '!').split('!')
   elements.pop()
   for (let i = 0; i < elements.length; i++) {
@@ -34,12 +34,15 @@ module.exports = function (src) {
   const filePath = this.resourcePath
   const mimetype = options.mimetype || mime.getType(filePath)
   const issuer = this._module.issuer
+  const publicPathScope = options.publicPathScope === 'all' ? 'all' : 'styleOnly'
   const queryOption = parseQuery(this.resourceQuery || '?')
+  const limit = options.limit
+  const useLocal = !limit || src.length < limit || queryOption.useLocal
+  const isStyle = (issuer && issuer.request && isStyleRequest(issuer.request)) || queryOption.isStyle
 
-  if ((issuer && issuer.request && isStyle(issuer.request)) || queryOption.isStyle) {
+  if (isStyle) {
     if (options.publicPath) {
-      const limit = options.limit
-      if (!limit || src.length < limit) {
+      if (useLocal) {
         transBase64 = true
       }
       if (queryOption.fallback) {
@@ -48,9 +51,9 @@ module.exports = function (src) {
     } else {
       transBase64 = true
     }
-    // 如果设置了outputPathCDN且当前资源不为style时，则将传递给file-loader的publicPath删除，仅将style中的图像资源改为CDN地址
-    // 如果没有设置outputPathCDN则不删除publicPath，全局的非base64的图像资源都会被改为CDN地址
-  } else if (options.outputPathCDN) {
+  } else if (publicPathScope === 'styleOnly' || useLocal) {
+    // 如果设置了publicPathScope为styleOnly且当前资源不为style时，则将传递给file-loader的publicPath删除，仅将style中的非local图像资源改为CDN地址
+    // 否则全局的非local的图像资源都会被改为CDN地址
     delete options.publicPath
   }
 
