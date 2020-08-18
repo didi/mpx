@@ -4,8 +4,8 @@
 
 ## computed
 
-计算属性是一个纯函数，利用组合其它数据的方式返回一个新的数据，你可以像绑定普通数据一样在模板中绑定计算属性。
-
+计算属性是一个函数/带setter和getter的对象，利用组合其它数据的方式返回一个新的数据，你可以像绑定普通数据一样在模板中绑定计算属性。
+> 类型：{ [key: string]: Function | { get: Function, set: Function } }
 > 适用于【页面 | 组件】
 
 示例：
@@ -22,17 +22,30 @@
 import {createComponent} from '@mpxjs/core'
 createComponent({
   data: {
-    message: 'Hello'
+    message: 'Hello',
+    num: 5
   },
   computed: {
     // 计算属性
     reversedMessage: function () {
       return this.message.split('').reverse().join('')
+    },
+    // 读取和设置
+    computeNum: {
+      get: function () {
+        return this.num - 1
+      },
+      set: function (val) {
+        this.num = val + 1
+      }
     }
   },
   ready() {
     // 改变message后reversedMessage会同步更新，模板也会重新渲染
     this.message = 'Hello world!'
+    this.computeNum // 4
+    this.computeNum = 10 
+    this.num // 11
   }
 })
 </script>
@@ -78,7 +91,7 @@ createComponent({
         console.log(newval, ':',  oldval) // test:old
         this.answer = 'Waiting for you to stop typing...'
       },
-      imeediate: true // 立即执行一次
+      immediate: true // 立即执行一次
       // deep: true // 是否深度观察
       // sync: true // 数据变化之后是否同步执行，默认是进行异步队列
     },
@@ -165,11 +178,44 @@ component ready: 电视
 ```
 
 
-## 页面生命周期
+## 页面生命周期转换
 
-除了小程序自定义组件本身的生命周期外，`mpx`提供了两个页面生命周期钩子，`pageShow`和`pageHide`，用于监听当前所属页面的显示或隐藏状态。
+除了类支付宝小程序之外，其他平台都能以组件的方式创建页面，因此mpx内部默认是以Component来创建页面的（微信小程序、百度小程序、头条小程序等类微信小程序）。[按官方标准](https://developers.weixin.qq.com/miniprogram/dev/framework/custom-component/component.html)，以Component创建页面时，页面特有的生命周期（onLoad、onReady、onShow等等）都必须`定义在methods内部`。为了进行统一处理，使用`mpx.createPage创建页面`时，可以统一使用标准页面的格式，`所有生命周期都定义在最外层即可`，mpx内部会根据普通进行`自动转换`到methods里面
 
-> 适用于【组件】
+```html
+<script>
+import {createPage} from '@mpxjs/core'
+// 类微信小程序
+createPage({
+  onLoad () {
+    // 页面加载
+    console.log('page onload')
+  },
+  onShow () {
+    // 页面显示
+    console.log('page onload')
+  },
+  onPullDownRefresh () {
+    // 需在json域开启enablePullDownRefresh
+    console.log('page onPullDownRefresh')
+  },
+  attached () {
+    // 以Component创建页面，那么页面也将具体组件的生命周期
+  },
+  detached () {
+    // 以Component创建页面，那么页面也将具体组件的生命周期
+  }
+})
+</script>
+```
+
+## <del>组件生命周期扩展</del>
+
+> 2.5.x 起不建议使用  
+> 2.6.x 将废弃  
+> 早期小程序本身缺乏组件感应所在页面的状态的能力做的增强，在小程序本身提供了 pageLifetimes 后失去意义且有不必要的性能开销，2.5.x为了避免业务异常，换手段hack实现了这两个方法，但同时有在控制台提示不要再使用，2.6.x将彻底去掉。
+
+除了小程序自定义组件本身的生命周期外，`mpx`为组件本身提供了两个生命周期钩子，`pageShow`和`pageHide`，用于监听当前组件所属页面的显示或隐藏状态。
 
 ```html
 <template>

@@ -1,13 +1,12 @@
-import {
-  isObservableArray,
-  isObservableMap,
-  isObservable,
-  get,
-  toJS
-} from 'mobx'
+import Vue from '../vue'
 
 import _getByPath from './getByPath'
 
+import { error } from './log'
+
+import { set } from '../observer/index'
+
+// type在支付宝环境下不一定准确，判断是普通对象优先使用isPlainObject
 export function type (n) {
   return Object.prototype.toString.call(n).slice(8, -1)
 }
@@ -22,7 +21,7 @@ export function asyncLock () {
         typeof fn === 'function' && fn()
       }).catch(e => {
         lock = false
-        console.error(e)
+        error('Something wrong in mpx asyncLock func execution, please check.', undefined, e)
         typeof onerror === 'function' && onerror()
       })
     }
@@ -31,17 +30,12 @@ export function asyncLock () {
 
 export function aliasReplace (options = {}, alias, target) {
   if (options[alias]) {
-    const dataType = type(options[alias])
-    switch (dataType) {
-      case 'Object':
-        options[target] = Object.assign({}, options[alias], options[target])
-        break
-      case 'Array':
-        options[target] = options[alias].concat(options[target] || [])
-        break
-      default:
-        options[target] = options[alias]
-        break
+    if (Array.isArray(options[alias])) {
+      options[target] = options[alias].concat(options[target] || [])
+    } else if (isObject(options[alias])) {
+      options[target] = Object.assign({}, options[alias], options[target])
+    } else {
+      options[target] = options[alias]
     }
     delete options[alias]
   }
@@ -50,20 +44,32 @@ export function aliasReplace (options = {}, alias, target) {
 
 export function findItem (arr = [], key) {
   for (const item of arr) {
-    if ((type(key) === 'RegExp' && key.test(item)) || item === key) {
+    if ((key instanceof RegExp && key.test(item)) || item === key) {
       return true
     }
   }
   return false
 }
 
-export function normalizeMap (arr) {
-  if (type(arr) === 'Array') {
+export function normalizeMap (prefix, arr) {
+  if (typeof prefix !== 'string') {
+    arr = prefix
+    prefix = ''
+  }
+  if (Array.isArray(arr)) {
     const map = {}
     arr.forEach(value => {
-      map[value] = value
+      map[value] = prefix ? `${prefix}.${value}` : value
     })
     return map
+  }
+  if (prefix && isObject(arr)) {
+    arr = Object.assign({}, arr)
+    Object.keys(arr).forEach(key => {
+      if (typeof arr[key] === 'string') {
+        arr[key] = `${prefix}.${arr[key]}`
+      }
+    })
   }
   return arr
 }
@@ -80,32 +86,35 @@ export function isExistAttr (obj, attr) {
   }
 }
 
-export function setByPath (data, pathStr, value) {
-  let parent
-  let variable
-  _getByPath(data, pathStr, (value, key, end) => {
-    if (end) {
-      parent = value
-      variable = key
+export function setByPath (data, pathStrOrArr, value) {
+  _getByPath(data, pathStrOrArr, (current, key, meta) => {
+    if (meta.isEnd) {
+      if (__mpx_mode__ === 'web') {
+        Vue.set(current, key, value)
+      } else {
+        set(current, key, value)
+      }
+    } else if (!current[key]) {
+      current[key] = {}
     }
-    return value[key]
+    return current[key]
   })
-  if (parent) {
-    parent[variable] = value
-  }
 }
 
-export function getByPath (data, pathStr, defaultVal = '', errTip) {
+export function getByPath (data, pathStrOrArr, defaultVal, errTip) {
   const results = []
-  pathStr.split(',').forEach(item => {
-    const path = item.trim()
+  let normalizedArr = []
+  if (Array.isArray(pathStrOrArr)) {
+    normalizedArr = [pathStrOrArr]
+  } else if (typeof pathStrOrArr === 'string') {
+    normalizedArr = pathStrOrArr.split(',').map(str => str.trim())
+  }
+
+  normalizedArr.forEach(path => {
     if (!path) return
     const result = _getByPath(data, path, (value, key) => {
       let newValue
-      if (isObservable(value)) {
-        // key可能不是一个响应式属性，那么get将无法返回正确值
-        newValue = get(value, key) || value[key]
-      } else if (isExistAttr(value, key)) {
+      if (isExistAttr(value, key)) {
         newValue = value[key]
       } else {
         newValue = errTip
@@ -118,28 +127,31 @@ export function getByPath (data, pathStr, defaultVal = '', errTip) {
   return results.length > 1 ? results : results[0]
 }
 
-export function defineGetter (target, key, value, context) {
+export function defineGetterSetter (target, key, getValue, setValue, context) {
   let get
-  if (typeof value === 'function') {
-    get = context ? value.bind(context) : value
+  let set
+  if (typeof getValue === 'function') {
+    get = context ? getValue.bind(context) : getValue
   } else {
     get = function () {
-      return value
+      return getValue
     }
   }
-  Object.defineProperty(target, key, {
+  if (typeof setValue === 'function') {
+    set = context ? setValue.bind(context) : setValue
+  }
+  let descriptor = {
     get,
     configurable: true,
     enumerable: true
-  })
+  }
+  if (set) descriptor.set = set
+  Object.defineProperty(target, key, descriptor)
 }
 
-export function proxy (target, source, keys, mapKeys, readonly) {
-  if (typeof mapKeys === 'boolean') {
-    readonly = mapKeys
-    mapKeys = null
-  }
-  keys.forEach((key, index) => {
+export function proxy (target, source, keys, readonly, onConflict) {
+  keys = keys || Object.keys(source)
+  keys.forEach((key) => {
     const descriptor = {
       get () {
         return source[key]
@@ -150,39 +162,17 @@ export function proxy (target, source, keys, mapKeys, readonly) {
     !readonly && (descriptor.set = function (val) {
       source[key] = val
     })
-    Object.defineProperty(target, mapKeys ? mapKeys[index] : key, descriptor)
+    if (onConflict) {
+      if (key in target) {
+        if (onConflict(key) === false) return
+      }
+    }
+    Object.defineProperty(target, key, descriptor)
   })
   return target
 }
 
-export function filterProperties (source, props = []) {
-  const newData = {}
-  props.forEach(prop => {
-    if (prop in source) {
-      const result = source[prop]
-      newData[prop] = isObservable(result) ? toJS(result) : result
-    }
-  })
-  return newData
-}
-
-export function merge (to, from) {
-  if (!from) return to
-  let key, toVal, fromVal
-  let keys = Object.keys(from)
-  for (let i = 0; i < keys.length; i++) {
-    key = keys[i]
-    toVal = to[key]
-    fromVal = from[key]
-    if (type(toVal) === 'Object' && type(fromVal) === 'Object') {
-      merge(toVal, fromVal)
-    } else {
-      to[key] = fromVal
-    }
-  }
-  return to
-}
-
+// 包含原型链上属性keys
 export function enumerableKeys (obj) {
   const keys = []
   for (let key in obj) {
@@ -191,12 +181,12 @@ export function enumerableKeys (obj) {
   return keys
 }
 
-export function extend (target, ...froms) {
-  for (const from of froms) {
-    if (type(from) === 'Object') {
-      // for in 能遍历原型链上的属性
-      for (const key in from) {
-        target[key] = from[key]
+// 此函数用于合并mpx插件挂载到mpx.prototype中的实例属性，因此需要进行原型链属性的合并
+export function extend (target, ...sources) {
+  for (const source of sources) {
+    if (isObject(source)) {
+      for (const key in source) {
+        target[key] = source[key]
       }
     }
   }
@@ -204,15 +194,15 @@ export function extend (target, ...froms) {
 }
 
 export function dissolveAttrs (target = {}, keys) {
-  if (type(keys) === 'String') {
+  if (typeof keys === 'string') {
     keys = [keys]
   }
-  const newOptions = extend({}, target)
+  const newOptions = Object.assign({}, target)
   keys.forEach(key => {
     const value = target[key]
-    if (type(value) !== 'Object') return
+    if (!isObject(value)) return
     delete newOptions[key]
-    extend(newOptions, value)
+    Object.assign(newOptions, value)
   })
   return newOptions
 }
@@ -221,8 +211,45 @@ export function isObject (obj) {
   return obj !== null && typeof obj === 'object'
 }
 
+export function isPlainObject (value) {
+  if (value === null || typeof value !== 'object') return false
+  const proto = Object.getPrototypeOf(value)
+  return proto === Object.prototype || proto === null
+}
+
+const hasOwnProperty = Object.prototype.hasOwnProperty
+
+export function hasOwn (obj, key) {
+  return hasOwnProperty.call(obj, key)
+}
+
+export const hasProto = '__proto__' in {}
+
+export function isValidArrayIndex (val) {
+  const n = parseFloat(String(val))
+  return n >= 0 && Math.floor(n) === n && isFinite(val)
+}
+
+export function remove (arr, item) {
+  if (arr.length) {
+    const index = arr.indexOf(item)
+    if (index > -1) {
+      return arr.splice(index, 1)
+    }
+  }
+}
+
+export function def (obj, key, val, enumerable) {
+  Object.defineProperty(obj, key, {
+    value: val,
+    enumerable: !!enumerable,
+    writable: true,
+    configurable: true
+  })
+}
+
 export function likeArray (arr) {
-  return Array.isArray(arr) || isObservableArray(arr)
+  return Array.isArray(arr)
 }
 
 export function isDef (v) {
@@ -230,7 +257,7 @@ export function isDef (v) {
 }
 
 export function stringifyClass (value) {
-  if (likeArray(value)) {
+  if (Array.isArray(value)) {
     return stringifyArray(value)
   }
   if (isObject(value)) {
@@ -309,14 +336,14 @@ export function mergeObjectArray (arr) {
   const res = {}
   for (let i = 0; i < arr.length; i++) {
     if (arr[i]) {
-      extend(res, arr[i])
+      Object.assign(res, arr[i])
     }
   }
   return res
 }
 
 export function normalizeDynamicStyle (value) {
-  if (likeArray(value)) {
+  if (Array.isArray(value)) {
     return mergeObjectArray(value)
   }
   if (typeof value === 'string') {
@@ -335,6 +362,60 @@ export function isEmptyObject (obj) {
   return true
 }
 
+export function aIsSubPathOfB (a, b) {
+  if (a.startsWith(b) && a !== b) {
+    let nextChar = a[b.length]
+    if (nextChar === '.') {
+      return a.slice(b.length + 1)
+    } else if (nextChar === '[') {
+      return a.slice(b.length)
+    }
+  }
+}
+
+export function getFirstKey (path) {
+  return /^[^[.]*/.exec(path)[0]
+}
+
+function doMergeData (target, source) {
+  Object.keys(source).forEach((srcKey) => {
+    if (target.hasOwnProperty(srcKey)) {
+      target[srcKey] = source[srcKey]
+    } else {
+      let processed = false
+      const tarKeys = Object.keys(target)
+      for (let i = 0; i < tarKeys.length; i++) {
+        const tarKey = tarKeys[i]
+        if (aIsSubPathOfB(tarKey, srcKey)) {
+          delete target[tarKey]
+          target[srcKey] = source[srcKey]
+          processed = true
+          continue
+        }
+        const subPath = aIsSubPathOfB(srcKey, tarKey)
+        if (subPath) {
+          setByPath(target[tarKey], subPath, source[srcKey])
+          processed = true
+          break
+        }
+      }
+      if (!processed) {
+        target[srcKey] = source[srcKey]
+      }
+    }
+  })
+  return target
+}
+
+export function mergeData (target, ...sources) {
+  if (target) {
+    sources.forEach((source) => {
+      if (source) doMergeData(target, source)
+    })
+  }
+  return target
+}
+
 export function processUndefined (obj) {
   let result = {}
   for (let key in obj) {
@@ -349,90 +430,78 @@ export function processUndefined (obj) {
   return result
 }
 
-function unwrap (a) {
-  if (isObservableArray(a)) {
-    return a.peek()
-  }
-  if (isObservableMap(a)) {
-    return a.entries()
-  }
-  return a
-}
-
 export function noop () {
 
 }
 
 export function diffAndCloneA (a, b) {
-  const diffPaths = []
-  const curPath = []
+  let diffData = null
+  let curPath = ''
   let diff = false
 
   function deepDiffAndCloneA (a, b, currentDiff) {
     const setDiff = (val) => {
-      if (currentDiff) return
       if (val) {
         currentDiff = val
-        diffPaths.push(curPath.slice())
+        if (curPath) {
+          diffData = diffData || {}
+          diffData[curPath] = clone
+        }
       }
     }
-
-    const toString = Object.prototype.toString
-    const type = typeof a
     let clone = a
-
-    if (type !== 'object' || a === null) {
-      setDiff(a !== b)
+    if (typeof a !== 'object' || a === null) {
+      if (!currentDiff) setDiff(a !== b)
     } else {
-      a = unwrap(a)
-      b = unwrap(b)
-      let sameClass = true
-
+      const toString = Object.prototype.toString
       const className = toString.call(a)
-      if (className !== toString.call(b)) {
-        setDiff(true)
-        sameClass = false
-      }
+      const sameClass = className === toString.call(b)
       let length
-      switch (className) {
-        case '[object RegExp]':
-        case '[object String]':
-          if (sameClass) setDiff('' + a !== '' + b)
-          break
-        case '[object Number]':
-        case '[object Date]':
-        case '[object Boolean]':
-          if (sameClass) setDiff(+a !== +b)
-          break
-        case '[object Symbol]':
-          if (sameClass) setDiff(a !== b)
-          break
-        case '[object Array]':
-          length = a.length
-          if (sameClass && length !== b.length) {
-            setDiff(true)
-          }
-          clone = []
-          for (let i = 0; i < length; i++) {
-            curPath.push(i)
-            clone[i] = deepDiffAndCloneA(a[i], sameClass ? b[i] : undefined, currentDiff)
-            curPath.pop()
-          }
-          break
-        default:
-          let keys = Object.keys(a)
-          let key
-          length = keys.length
-          if (sameClass && length !== Object.keys(b).length) {
-            setDiff(true)
-          }
-          clone = {}
-          for (let i = 0; i < length; i++) {
-            key = keys[i]
-            curPath.push(key)
-            clone[key] = deepDiffAndCloneA(a[key], sameClass ? b[key] : undefined, currentDiff)
-            curPath.pop()
-          }
+      let lastPath
+      if (isPlainObject(a)) {
+        const keys = Object.keys(a)
+        length = keys.length
+        clone = {}
+        if (!currentDiff) setDiff(!sameClass || length < Object.keys(b).length || !Object.keys(b).every((key) => a.hasOwnProperty(key)))
+        lastPath = curPath
+        for (let i = 0; i < length; i++) {
+          const key = keys[i]
+          curPath += `.${key}`
+          clone[key] = deepDiffAndCloneA(a[key], sameClass ? b[key] : undefined, currentDiff)
+          curPath = lastPath
+        }
+        // 继承原始对象的freeze/seal/preventExtensions操作
+        if (Object.isFrozen(a)) {
+          Object.freeze(clone)
+        } else if (Object.isSealed(a)) {
+          Object.seal(clone)
+        } else if (!Object.isExtensible(a)) {
+          Object.preventExtensions(clone)
+        }
+      } else if (Array.isArray(a)) {
+        length = a.length
+        clone = []
+        if (!currentDiff) setDiff(!sameClass || length < b.length)
+        lastPath = curPath
+        for (let i = 0; i < length; i++) {
+          curPath += `[${i}]`
+          clone[i] = deepDiffAndCloneA(a[i], sameClass ? b[i] : undefined, currentDiff)
+          curPath = lastPath
+        }
+        // 继承原始数组的freeze/seal/preventExtensions操作
+        if (Object.isFrozen(a)) {
+          Object.freeze(clone)
+        } else if (Object.isSealed(a)) {
+          Object.seal(clone)
+        } else if (!Object.isExtensible(a)) {
+          Object.preventExtensions(clone)
+        }
+      } else if (a instanceof RegExp) {
+        if (!currentDiff) setDiff(!sameClass || '' + a !== '' + b)
+      } else if (a instanceof Date) {
+        if (!currentDiff) setDiff(!sameClass || +a !== +b)
+      } else {
+        if (!currentDiff) setDiff(!sameClass || a !== b)
       }
     }
     if (currentDiff) {
@@ -441,12 +510,10 @@ export function diffAndCloneA (a, b) {
     return clone
   }
 
-  let clone = deepDiffAndCloneA(a, b, diff)
-
   return {
-    clone,
+    clone: deepDiffAndCloneA(a, b, diff),
     diff,
-    diffPaths
+    diffData
   }
 }
 
@@ -478,7 +545,7 @@ export function collectDataset (props) {
  * @param {Object} renderData
  * @return {Object} processedRenderData
  */
-export function preprocessRenderData (renderData) {
+export function preProcessRenderData (renderData) {
   // method for get key path array
   const processKeyPathMap = (keyPathMap) => {
     let keyPath = Object.keys(keyPathMap)
@@ -503,4 +570,11 @@ export function preprocessRenderData (renderData) {
     }
   })
   return processedRenderData
+}
+
+export function makeMap (arr) {
+  return arr.reduce((obj, item) => {
+    obj[item] = true
+    return obj
+  }, {})
 }

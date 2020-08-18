@@ -1,0 +1,52 @@
+.__mpx_actionsheet__
+    display none
+  &.show
+    display block
+  .__mpx_mask__
+    position fixed
+    z-index 1000
+    top 0
+    right 0
+    left 0
+    bottom 0
+    background rgba(0,0,0,0.6)
+  .__mpx_actionsheet_box__
+    position fixed
+    left 0
+    bottom 0
+    z-index 3000
+    width 100%
+    line-height 1.6
+    background-color #EFEFF4
+    transform translate(0, 100%)
+    transition transform .3s
+    &.show
+      transform translate(0, 0)
+  .__mpx_actionsheet_list__
+    background-color #FCFCFD
+    .__mpx_actionsheet_sheet__
+      position relative
+      font-size 18px
+      text-align center
+      padding 10px 0
+      &::before
+        content ""
+        position absolute
+        left 0
+        top 0
+        transform-origin 0 0
+        width 100%
+        border-top 1px solid rgba(0,0,0,0.2)
+        @media (min-resolution: 2dppx)
+          width 200%
+          transform scale(.5)
+        @media (min-resolution: 3dppx)
+          width 300%
+          transform scale(.333)
+  .__mpx_actionsheet_cancel__
+    font-size 18px
+    text-align center
+    color #000000
+    background-color #FCFCFD
+    padding 10px 0
+    margin-top 6px

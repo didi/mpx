@@ -1,17 +1,25 @@
 import * as wxLifecycle from '../platform/patch/wx/lifecycle'
+import * as aliLifecycle from '../platform/patch/ali/lifecycle'
 import { mergeLifecycle } from './mergeLifecycle'
+import { mergeToArray } from '../core/mergeOptions'
+import { error } from '../helper/log'
+import { implemented } from '../core/implement'
 
-const NOTSUPPORTS = ['moved', 'pageLifetimes', 'definitionFilter']
+const NOTSUPPORTS = ['moved', 'definitionFilter']
 
 function convertErrorDesc (key) {
-  console.error(`【MPX CONVERT ERROR】at ${global.currentResource || ''} : Don't support for convert the option【${key}】 of the wx-component into the ali-component`)
+  error(`Options.${key} is not supported in runtime conversion from wx to ali.`, global.currentResource)
 }
 
 function notSupportTip (options) {
   NOTSUPPORTS.forEach(key => {
     if (options[key]) {
-      convertErrorDesc(key)
-      delete options[key]
+      if (!implemented[key]) {
+        process.env.NODE_ENV !== 'production' && convertErrorDesc(key)
+        delete options[key]
+      } else if (implemented[key].remove) {
+        delete options[key]
+      }
     }
   })
   // relations部分支持
@@ -31,12 +39,13 @@ function notSupportTip (options) {
 
 export default {
   lifecycle: mergeLifecycle(wxLifecycle.LIFECYCLE),
-  mode: 'blend',
+  lifecycle2: mergeLifecycle(aliLifecycle.LIFECYCLE),
+  pageMode: 'blend',
   support: false,
   lifecycleProxyMap: {
-    '__created__': ['created', 'attached'],
+    '__created__': ['onLoad', 'created', 'attached'],
     '__mounted__': ['ready', 'onReady'],
-    '__destroyed__': ['detached'],
+    '__destroyed__': ['detached', 'onUnload'],
     '__updated__': ['updated']
   },
   convert (options) {
@@ -44,14 +53,25 @@ export default {
       const newProps = {}
       Object.keys(options.properties).forEach(key => {
         const prop = options.properties[key]
-        if (prop && prop.hasOwnProperty('value')) {
-          newProps[key] = prop.value
-        } else {
-          newProps[key] = typeof prop === 'function' ? prop() : null
+        if (prop) {
+          if (prop.hasOwnProperty('value')) {
+            newProps[key] = prop.value
+          } else {
+            const type = prop.hasOwnProperty('type') ? prop.type : prop
+            if (typeof type === 'function') newProps[key] = type()
+          }
         }
       })
       options.props = Object.assign(newProps, options.props)
       delete options.properties
+    }
+    if (options.onResize) {
+      mergeToArray(options, {
+        events: {
+          onResize: options.onResize
+        }
+      }, 'events')
+      delete options.onResize
     }
     notSupportTip(options)
   }

@@ -1,5 +1,4 @@
 const TAG_NAME = 'image'
-
 module.exports = function ({ print }) {
   const aliPropLog = print({ platform: 'ali', tag: TAG_NAME, isError: false })
   const baiduPropLog = print({ platform: 'baidu', tag: TAG_NAME, isError: false })
@@ -8,6 +7,10 @@ module.exports = function ({ print }) {
 
   return {
     test: TAG_NAME,
+    web (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-image'
+    },
     props: [
       {
         test: /^show-menu-by-longpress$/,
@@ -15,13 +18,11 @@ module.exports = function ({ print }) {
         swan: baiduPropLog,
         qq: qqPropLog,
         tt: ttPropLog
-      }
-    ],
-    event: [
+      },
       {
-        test: /^(error|load)$/,
-        ali (eventName) {
-          return eventName
+        test: /^(mode|lazy-load|show-menu-by-longpress|webp|use-built-in)$/,
+        web (prop, { el }) {
+          el.isBuiltIn = true
         }
       }
     ]

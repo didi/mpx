@@ -1,17 +1,15 @@
-import {
-  comparer
-} from 'mobx'
-
 import MPXProxy from '../../../core/proxy'
-import customeKey from '../../../core/customOptionKeys'
+import builtInKeysMap from '../builtInKeysMap'
 import mergeOptions from '../../../core/mergeOptions'
+import { error } from '../../../helper/log'
+import { diffAndCloneA } from '../../../helper/utils'
 
 function transformApiForProxy (context, currentInject) {
   const rawSetData = context.setData.bind(context)
   if (Object.getOwnPropertyDescriptor(context, 'setData').configurable) {
     Object.defineProperty(context, 'setData', {
       get () {
-        return context.$mpxProxy.setData.bind(context.$mpxProxy)
+        return context.__mpxProxy.forceUpdate.bind(context.__mpxProxy)
       },
       configurable: true
     })
@@ -19,11 +17,12 @@ function transformApiForProxy (context, currentInject) {
   Object.defineProperties(context, {
     __getInitialData: {
       get () {
-        return () => {
+        return (options) => {
           if (context.props) {
             const newData = context.$rawOptions.__nativeRender__ ? context.data : Object.assign({}, context.data)
+            const validProps = Object.assign({}, options.props, options.properties)
             Object.keys(context.props).forEach((key) => {
-              if (!key.startsWith('$') && typeof context.props[key] !== 'function') {
+              if (validProps.hasOwnProperty(key) && typeof context.props[key] !== 'function') {
                 newData[key] = context.props[key]
               }
             })
@@ -67,13 +66,12 @@ function transformApiForProxy (context, currentInject) {
 
 function filterOptions (options, type) {
   const newOptions = {}
-  const ignoreProps = customeKey
   Object.keys(options).forEach(key => {
-    if (ignoreProps.indexOf(key) !== -1 || (key === 'data' && typeof options[key] === 'function')) {
+    if (builtInKeysMap[key]) {
       return
     }
     if (key === 'properties' || key === 'props') {
-      newOptions['props'] = Object.assign({}, options['properties'], options['props'])
+      newOptions.props = Object.assign({}, options.properties, options.props)
     } else if (key === 'methods' && type === 'page') {
       Object.assign(newOptions, options[key])
     } else {
@@ -86,43 +84,51 @@ function filterOptions (options, type) {
 export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
   const hookNames = type === 'component' ? ['onInit', 'didMount', 'didUnmount'] : ['onLoad', 'onReady', 'onUnload']
   const rootMixins = [{
-    [hookNames[0]] () {
+    [hookNames[0]] (...params) {
       // 提供代理对象需要的api
       transformApiForProxy(this, currentInject)
       // 缓存options
       this.$rawOptions = rawOptions
       // 创建proxy对象
       const mpxProxy = new MPXProxy(rawOptions, this)
-      this.$mpxProxy = mpxProxy
-      this.$mpxProxy.created()
+      this.__mpxProxy = mpxProxy
+      this.__mpxProxy.created(...params)
     },
     deriveDataFromProps (nextProps) {
-      if (this.$mpxProxy && this.$mpxProxy.isMounted() && nextProps && nextProps !== this.props) {
+      if (this.__mpxProxy && this.__mpxProxy.isMounted() && nextProps && nextProps !== this.props) {
+        const validProps = Object.assign({}, this.$rawOptions.props, this.$rawOptions.properties)
         if (this.$rawOptions.__nativeRender__) {
           const newData = {}
+          // 微信原生转换支付宝时，每次props更新将其设置进data模拟微信表现
           Object.keys(nextProps).forEach((key) => {
-            if (!key.startsWith('$') && typeof nextProps[key] !== 'function' && !comparer.structural(this.props[key], nextProps[key])) {
-              newData[key] = nextProps[key]
+            if (validProps.hasOwnProperty(key) && typeof nextProps[key] !== 'function' && nextProps[key] !== this.props[key]) {
+              newData[key] = diffAndCloneA(nextProps[key]).clone
             }
           })
-          this.$mpxProxy.setData(newData)
+          this.__mpxProxy.forceUpdate(newData)
         } else {
+          // 由于支付宝中props透传父级setData的值，此处发生变化的属性实例一定不同，只需浅比较即可确定发生变化的属性
           Object.keys(nextProps).forEach(key => {
-            if (!key.startsWith('$') && typeof nextProps[key] !== 'function' && !comparer.structural(this.props[key], nextProps[key])) {
-              this[key] = nextProps[key]
+            if (validProps.hasOwnProperty(key) && typeof nextProps[key] !== 'function' && nextProps[key] !== this.props[key]) {
+              // 由于支付宝中透传父级setData的值，此处进行深copy后赋值避免父级存储的miniRenderData部分数据在此处被响应化，在子组件对props赋值时触发父组件的render
+              this[key] = diffAndCloneA(nextProps[key]).clone
             }
           })
         }
       }
     },
     didUpdate () {
-      this.$mpxProxy && this.$mpxProxy.updated()
+      this.__mpxProxy && this.__mpxProxy.updated()
     },
     [hookNames[1]] () {
-      this.$mpxProxy && this.$mpxProxy.mounted()
+      if (this.__mpxProxy) {
+        this.__mpxProxy.mounted()
+      } else {
+        error('请在支付宝开发工具的详情设置里面，启用component2编译。依赖基础库版本 >=1.14.0')
+      }
     },
     [hookNames[2]] () {
-      this.$mpxProxy && this.$mpxProxy.destroyed()
+      this.__mpxProxy && this.__mpxProxy.destroyed()
     }
   }]
   rawOptions.mixins = rawOptions.mixins ? rootMixins.concat(rawOptions.mixins) : rootMixins

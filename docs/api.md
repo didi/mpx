@@ -12,19 +12,74 @@ createApp(object)
 
 ### createPage
 
-> 内部使用[Component的方式创建页面](https://developers.weixin.qq.com/miniprogram/dev/framework/custom-component/component.html)，所以除了支持页面的生命周期之外还同时`支持组件的一切特性`。当使用Component创建页面时，`页面生命周期`需要写在`methods内部`（微信小程序原生规则），mpx进行了一定封装，页面生命周期既能写在外层（同组件生命周期），也可写在methods内部
+> 类微信小程序（微信、百度、头条等）内部使用[Component的方式创建页面](https://developers.weixin.qq.com/miniprogram/dev/framework/custom-component/component.html)，所以除了支持页面的生命周期之外还同时`支持组件的一切特性`。当使用Component创建页面时，`页面生命周期`需要写在`methods内部`（微信小程序原生规则），mpx进行了统一封装转换，`页面生命周期都写在最外层`即可
+
+> options的具体形式，除了computed、watch这类mpx扩展特性之外，其他的属性都参照原生小程序的官方文档即可。
+
+用法：`createPage(options, config?)`
+
+config是一个可选参数，应为一个对象。  
+如果希望标识一个组件是最纯粹的原生组件，不用数据响应等能力，可通过config.isNative传true声明。  
+如果有需要复写/改写最终调用的创建页面的构造器，可以通过config对象的customCtor提供。`注意：mpx本身是用component来创建页面的，如果传page可能在初始化时候生命周期不正常导致取props有一点问题`
 
 ``` js
 import mpx, {createPage} from '@mpxjs/core'
-mpx.createPage(object)
+mpx.createPage({
+  data: {test: 1},
+  computed: {
+    test2 () {
+      return this.test + 1
+    }
+  },
+  watch: {
+    test (val, old) {
+      console.log(val, old)
+    }
+  },
+  onShow () {
+    this.test++
+  }
+})
 createPage(object)
 ```
 
 ### createComponent
 
+> options的具体形式，除了computed、watch这类mpx扩展特性之外，其他的属性都参照原生小程序的官方文档即可。
+
+用法：`createComponent(options, config?)`
+
+config是一个可选参数，应为一个对象。  
+如果希望标识一个组件是最纯粹的原生组件，不用数据响应等能力，可通过config.isNative传true声明。  
+如果有需要复写/改写最终调用的创建组件的构造器，可以通过config对象的customCtor提供。
+
 ``` js
 import mpx, {createComponent} from '@mpxjs/core'
-mpx.createComponent(object)
+mpx.createComponent({
+  properties: {
+    prop: {
+      type: Number,
+      value: 10
+    }
+  },
+  data: {test: 1},
+  computed: {
+    test2 () {
+      return this.test + this.prop
+    }
+  },
+  watch: {
+    test (val, old) {
+      console.log(val, old)
+    },
+    prop: {
+      handler (val, old) {
+        console.log(val, old)
+      },
+      immediate: true // 是否首次执行一次
+    }
+  }
+})
 createComponent(object)
 ```
 
@@ -187,11 +242,11 @@ import {observable} from '@mpxjs/core'
 const a = observable(object)
 ```
 
-### extendObservable
+~~### extendObservable~~
 
-用于扩展响应式数据，属于mobx提供的能力, 主要用于添加新的可观察数据, `并不会触发订阅者更新`
+~~（已废弃）用于扩展响应式数据，属于mobx提供的能力, 主要用于添加新的可观察数据, `并不会触发订阅者更新`~~
 
-```js
+```js~~
 import {observable, extendObservable} from '@mpxjs/core'
 const a = observable(object)
 // mpx.extendObservable(...)

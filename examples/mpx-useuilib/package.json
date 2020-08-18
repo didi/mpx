@@ -33,7 +33,7 @@
     "babel-runtime": "^6.26.0",
     "chalk": "^2.3.2",
     "copy-webpack-plugin": "^5.0.3",
-    "css-loader": "^2.1.1",
+    "css-loader": "^0.28.11",
     "eslint": "^5.10.0",
     "eslint-config-babel": "^8.0.2",
     "eslint-config-standard": "^12.0.0",

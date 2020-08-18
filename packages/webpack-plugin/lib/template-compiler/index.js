@@ -2,8 +2,9 @@ const compiler = require('./compiler')
 const loaderUtils = require('loader-utils')
 const bindThis = require('./bind-this').transform
 const InjectDependency = require('../dependency/InjectDependency')
-const stripExtension = require('../utils/strip-extention')
+const parseRequest = require('../utils/parse-request')
 const getMainCompilation = require('../utils/get-main-compilation')
+const path = require('path')
 
 module.exports = function (raw) {
   this.cacheable()
@@ -11,15 +12,24 @@ module.exports = function (raw) {
   const isNative = options.isNative
   const compilation = this._compilation
   const mainCompilation = getMainCompilation(compilation)
-  const mode = mainCompilation.__mpx__.mode
-  const externalClasses = mainCompilation.__mpx__.externalClasses
-  const globalSrcMode = mainCompilation.__mpx__.srcMode
+  const mpx = mainCompilation.__mpx__
+  const mode = mpx.mode
+  const defs = mpx.defs
+  const i18n = mpx.i18n
+  const externalClasses = mpx.externalClasses
+  const globalSrcMode = mpx.srcMode
   const localSrcMode = loaderUtils.parseQuery(this.resourceQuery || '?').mode
-  const componentsMap = mainCompilation.__mpx__.componentsMap
-  const wxsContentMap = mainCompilation.__mpx__.wxsConentMap
-  const resource = stripExtension(this.resource)
+  const packageName = mpx.currentPackageRoot || 'main'
+  const componentsMap = mpx.componentsMap[packageName]
+  const wxsContentMap = mpx.wxsContentMap
+  const resourcePath = parseRequest(this.resource).resourcePath
+  let scopedId
 
-  let parsed = compiler.parse(raw, Object.assign(options, {
+  if (options.hasScoped) {
+    scopedId = options.moduleId
+  }
+
+  const parsed = compiler.parse(raw, Object.assign(options, {
     warn: (msg) => {
       this.emitWarning(
         new Error('[template compiler][' + this.resource + ']: ' + msg)
@@ -30,41 +40,48 @@ module.exports = function (raw) {
         new Error('[template compiler][' + this.resource + ']: ' + msg)
       )
     },
-    resource: this.resource,
-    isComponent: !!componentsMap[resource],
+    basename: path.basename(this.resource),
+    isComponent: !!componentsMap[resourcePath],
     mode,
+    defs,
+    globalMpxAttrsFilter: mpx.globalMpxAttrsFilter,
+    decodeHTMLText: mpx.decodeHTMLText,
     externalClasses,
     srcMode: localSrcMode || globalSrcMode,
-    isNative
+    isNative,
+    scopedId,
+    filePath: this.resourcePath,
+    i18n,
+    globalComponents: Object.keys(mpx.usingComponents),
+    checkUsingComponents: mpx.checkUsingComponents
   }))
 
   let ast = parsed.root
   let meta = parsed.meta
 
-  if (meta.wxsConentMap) {
-    for (let module in meta.wxsConentMap) {
-      wxsContentMap[`${resource}~${module}`] = meta.wxsConentMap[module]
+  if (meta.wxsContentMap) {
+    for (let module in meta.wxsContentMap) {
+      wxsContentMap[`${resourcePath}~${module}`] = meta.wxsContentMap[module]
     }
   }
 
   let result = compiler.serialize(ast)
 
-  if (isNative) {
+  if (isNative || mpx.forceDisableInject) {
     return result
   }
 
   let renderResult = bindThis(`global.currentInject = {
     moduleId: ${JSON.stringify(options.moduleId)},
     render: function () {
-      var __seen = [];
-      var renderData = {};
-      ${compiler.genNode(ast)}return renderData;
+      ${compiler.genNode(ast)}this._r();
     }
 };\n`, {
     needCollect: true,
     ignoreMap: meta.wxsModuleMap
   })
 
+  // todo 此处在loader中往其他模块addDep更加危险，考虑修改为通过抽取后的空模块的module.exports来传递信息
   let globalInjectCode = renderResult.code + '\n'
 
   if (mode === 'tt' && renderResult.propKeys) {
@@ -86,6 +103,15 @@ module.exports = function (raw) {
   const issuer = this._module.issuer
   const parser = issuer.parser
 
+  // 同步issuer的dependencies，确保watch中issuer rebuild时template也进行rebuild，使该loader中往issuer中注入的依赖持续有效
+  issuer.buildInfo.fileDependencies.forEach((dep) => {
+    this.addDependency(dep)
+  })
+  issuer.buildInfo.contextDependencies.forEach((dep) => {
+    this.addContextDependency(dep)
+  })
+
+  // 删除issuer中上次注入的dependencies，避免issuer本身不需要更新时上次的注入代码残留
   issuer.dependencies = issuer.dependencies.filter((dep) => {
     return !dep.templateInject
   })
@@ -96,7 +122,6 @@ module.exports = function (raw) {
   })
 
   dep.templateInject = true
-
   issuer.addDependency(dep)
 
   let isSync = true
@@ -128,8 +153,9 @@ module.exports = function (raw) {
 
   for (let module in meta.wxsModuleMap) {
     isSync = false
-    let src = meta.wxsModuleMap[module]
-    const expression = `require(${JSON.stringify(src)})`
+    const src = loaderUtils.urlToRequest(meta.wxsModuleMap[module], options.root)
+    // 编译render函数只在mpx文件中运行，此处issuer的context一定等同于当前loader的context
+    const expression = `require(${loaderUtils.stringifyRequest(this, src)})`
     const deps = []
     parser.parse(expression, {
       current: {

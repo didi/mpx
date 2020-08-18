@@ -1,32 +1,47 @@
-import { toJS as toPureObject, extendObservable, observable, set, get, remove, action as createAction } from 'mobx'
 import * as platform from './platform'
-import createStore from './core/createStore'
+import createStore, { createStoreWithThis } from './core/createStore'
 import { injectMixins } from './core/injectMixins'
-import { watch } from './core/watcher'
-import { extend } from './helper/utils'
+import { extend, diffAndCloneA, makeMap } from './helper/utils'
 import { setConvertRule } from './convertor/convertor'
+import { getMixin } from './core/mergeOptions'
+import { error } from './helper/log'
+import Vue from './vue'
+import { observe, set, del } from './observer/index'
+import { watch as watchWithVm } from './observer/watch'
+import implement from './core/implement'
 
 export function createApp (config, ...rest) {
   const mpx = new EXPORT_MPX()
-  platform.createApp(extend({ proto: mpx.proto }, config), ...rest)
+  platform.createApp(Object.assign({ proto: mpx.proto }, config), ...rest)
 }
 
 export function createPage (config, ...rest) {
   const mpx = new EXPORT_MPX()
-  platform.createPage(extend({ proto: mpx.proto }, config), ...rest)
+  platform.createPage(Object.assign({ proto: mpx.proto }, config), ...rest)
 }
 
 export function createComponent (config, ...rest) {
   const mpx = new EXPORT_MPX()
-  platform.createComponent(extend({ proto: mpx.proto }, config), ...rest)
+  platform.createComponent(Object.assign({ proto: mpx.proto }, config), ...rest)
 }
 
-export { createStore, toPureObject, observable, extendObservable, watch, createAction }
+export { createStore, createStoreWithThis, getMixin }
+
+export function getComputed (computed) {
+  // ts computed类型推导辅助函数
+  return computed
+}
+
+export function toPureObject (obj) {
+  return diffAndCloneA(obj).clone
+}
 
 function extendProps (target, proxyObj, rawProps, option) {
   const keys = Object.getOwnPropertyNames(proxyObj)
+  const rawPropsMap = makeMap(rawProps)
+
   for (const key of keys) {
-    if (APIs[key] || rawProps.indexOf(key) > -1) {
+    if (APIs[key] || rawPropsMap[key]) {
       continue
     } else if (option && (option.prefix || option.postfix)) {
       const transformKey = option.prefix
@@ -36,7 +51,7 @@ function extendProps (target, proxyObj, rawProps, option) {
     } else if (!target.hasOwnProperty(key)) {
       target[key] = proxyObj[key]
     } else {
-      console.error(new Error(`the new property: "${key}" from installing plugin conflicts with already exists，please use prefix/postfix, such as "use('plugin', {prefix: 'mm'})"`))
+      error(`Mpx property [${key}] from installing plugin conflicts with already exists，please pass prefix/postfix options to avoid property conflict, for example: "use('plugin', {prefix: 'mm'})"`)
     }
   }
 }
@@ -44,55 +59,122 @@ function extendProps (target, proxyObj, rawProps, option) {
 // 安装插件进行扩展API
 const installedPlugins = []
 
-function use (plugin, ...rest) {
+function use (plugin, options = {}) {
   if (installedPlugins.indexOf(plugin) > -1) {
     return this
   }
-  const option = rest[0]
+
+  const args = [options]
   const proxyMPX = factory()
   const rawProps = Object.getOwnPropertyNames(proxyMPX)
   const rawPrototypeProps = Object.getOwnPropertyNames(proxyMPX.prototype)
-  if (option && (option.prefix || option.postfix)) {
-    // 设置前后缀的参数，不需传递给plugin
-    rest.shift()
-  }
-  rest.unshift(proxyMPX)
+  args.unshift(proxyMPX)
+  // 传入真正的mpx对象供插件访问
+  args.push(EXPORT_MPX)
   if (typeof plugin.install === 'function') {
-    plugin.install.apply(plugin, rest)
+    plugin.install.apply(plugin, args)
   } else if (typeof plugin === 'function') {
-    plugin.apply(null, rest)
+    plugin.apply(null, args)
   }
-  extendProps(EXPORT_MPX, proxyMPX, rawProps, option)
-  extendProps(EXPORT_MPX.prototype, proxyMPX.prototype, rawPrototypeProps, option)
+  extendProps(EXPORT_MPX, proxyMPX, rawProps, options)
+  extendProps(EXPORT_MPX.prototype, proxyMPX.prototype, rawPrototypeProps, options)
   installedPlugins.push(plugin)
   return this
 }
 
-const APIs = {
-  createApp,
-  createPage,
-  createComponent,
-  createStore,
-  toPureObject,
-  mixin: injectMixins,
-  injectMixins,
-  observable,
-  extendObservable,
-  watch,
-  use,
-  set,
-  get,
-  remove,
-  setConvertRule,
-  createAction
-}
+let APIs = {}
 
 // 实例属性
-const InstanceAPIs = {
-  $set: set,
-  $get: get,
-  $remove: remove
+let InstanceAPIs = {}
+
+let observable
+let watch
+
+if (__mpx_mode__ === 'web') {
+  const vm = new Vue()
+  observable = Vue.observable.bind(Vue)
+  watch = vm.$watch.bind(vm)
+  const set = Vue.set.bind(Vue)
+  const del = Vue.delete.bind(Vue)
+  const remove = function (...args) {
+    if (process.env.NODE_ENV !== 'production') {
+      error('$remove will be removed in next minor version, please use $delete instead!', this.$rawOptions && this.$rawOptions.mpxFileResource)
+    }
+    return del.apply(this, args)
+  }
+  // todo 补齐web必要api
+  APIs = {
+    createApp,
+    createPage,
+    createComponent,
+    createStore,
+    createStoreWithThis,
+    mixin: injectMixins,
+    injectMixins,
+    toPureObject,
+    observable,
+    watch,
+    use,
+    set,
+    remove,
+    delete: del,
+    setConvertRule,
+    getMixin,
+    getComputed,
+    implement
+  }
+
+  InstanceAPIs = {
+    $remove: remove
+  }
+} else {
+  observable = function (obj) {
+    observe(obj)
+    return obj
+  }
+
+  const vm = {}
+
+  watch = function (expOrFn, cb, options) {
+    return watchWithVm(vm, expOrFn, cb, options)
+  }
+
+  const remove = function (...args) {
+    if (process.env.NODE_ENV !== 'production') {
+      error('$remove will be removed in next minor version, please use $delete instead!', this.$rawOptions && this.$rawOptions.mpxFileResource)
+    }
+    return del.apply(this, args)
+  }
+
+  APIs = {
+    createApp,
+    createPage,
+    createComponent,
+    createStore,
+    createStoreWithThis,
+    mixin: injectMixins,
+    injectMixins,
+    toPureObject,
+    observable,
+    watch,
+    use,
+    set,
+    remove,
+    delete: del,
+    setConvertRule,
+    getMixin,
+    getComputed,
+    implement
+  }
+
+  InstanceAPIs = {
+    $set: set,
+    $remove: remove,
+    $delete: del
+  }
 }
+
+export { watch, observable }
 
 function factory () {
   // 作为原型挂载属性的中间层
@@ -100,11 +182,35 @@ function factory () {
     this.proto = extend({}, this)
   }
 
-  extend(MPX, APIs)
-  extend(MPX.prototype, InstanceAPIs)
+  Object.assign(MPX, APIs)
+  Object.assign(MPX.prototype, InstanceAPIs)
   return MPX
 }
 
 const EXPORT_MPX = factory()
+
+EXPORT_MPX.config = {
+  useStrictDiff: false,
+  ignoreRenderError: false,
+  ignoreProxyWhiteList: ['id', 'dataset', 'data']
+}
+
+if (__mpx_mode__ === 'web') {
+  window.__mpx = EXPORT_MPX
+} else {
+  if (global.i18n) {
+    observe(global.i18n)
+    // 挂载翻译方法
+    if (global.i18nMethods) {
+      Object.keys(global.i18nMethods).forEach((methodName) => {
+        global.i18n[methodName] = (...args) => {
+          args.unshift(global.i18n.locale)
+          return global.i18nMethods[methodName].apply(this, args)
+        }
+      })
+    }
+    EXPORT_MPX.i18n = global.i18n
+  }
+}
 
 export default EXPORT_MPX

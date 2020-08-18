@@ -3,15 +3,24 @@ const normalizeTest = require('../normalize-test')
 const changeKey = require('../change-key')
 
 module.exports = function getSpec ({ warn, error }) {
-  function print (path, isError) {
-    const msg = `Json path <${path}> is not supported in ali environment!`
+  function print (mode, path, isError) {
+    const msg = `Json path <${path}> is not supported in ${mode} environment!`
     isError ? error(msg) : warn(msg)
   }
 
-  function deletePath (isError) {
-    return function (input, data = [], meta) {
+  function deletePath (opts) {
+    let isError = opts
+    let shouldLog = true
+    if (typeof opts === 'object') {
+      shouldLog = !opts.noLog
+      isError = opts.isError
+    }
+
+    return function (input, { mode, pathArr = [] }, meta) {
       const currPath = meta.paths.join('|')
-      print(data.concat(currPath).join('.'), isError)
+      if (shouldLog) {
+        print(mode, pathArr.concat(currPath).join('.'), isError)
+      }
       meta.paths.forEach((path) => {
         delete input[path]
       })
@@ -19,8 +28,15 @@ module.exports = function getSpec ({ warn, error }) {
     }
   }
 
+  function addGlobalComponents (input, { globalComponents }) {
+    if (globalComponents) {
+      input.usingComponents = Object.assign({}, globalComponents, input.usingComponents)
+    }
+    return input
+  }
+
   const spec = {
-    supportedTargets: ['ali', 'swan', 'qq', 'tt'],
+    supportedModes: ['ali', 'swan', 'qq', 'tt'],
     normalizeTest,
     page: [
       {
@@ -70,6 +86,12 @@ module.exports = function getSpec ({ warn, error }) {
         ali: deletePath(),
         swan: deletePath(),
         tt: deletePath()
+      },
+      {
+        ali: addGlobalComponents,
+        swan: addGlobalComponents,
+        qq: addGlobalComponents,
+        tt: addGlobalComponents
       }
     ],
     component: [
@@ -77,6 +99,12 @@ module.exports = function getSpec ({ warn, error }) {
         test: 'componentGenerics',
         ali: deletePath(true),
         swan: deletePath(true)
+      },
+      {
+        ali: addGlobalComponents,
+        swan: addGlobalComponents,
+        qq: addGlobalComponents,
+        tt: addGlobalComponents
       }
     ],
     tabBar: {
@@ -112,11 +140,15 @@ module.exports = function getSpec ({ warn, error }) {
           ali (input) {
             const value = input.list
             delete input.list
-            input.items = runRules(spec.tabBar.list, value, {
-              target: 'ali',
-              normalizeTest,
-              waterfall: true,
-              data: ['tabBar', 'list']
+            input.items = value.map(item => {
+              return runRules(spec.tabBar.list, item, {
+                mode: 'ali',
+                normalizeTest,
+                waterfall: true,
+                data: {
+                  pathArr: ['tabBar', 'list']
+                }
+              })
             })
             return input
           }
@@ -148,16 +180,27 @@ module.exports = function getSpec ({ warn, error }) {
       },
       {
         test: 'preloadRule',
-        ali: deletePath(),
-        qq: deletePath(),
         tt: deletePath()
       },
       {
-        test: 'functionalPages|plugins|usingComponents',
+        test: 'functionalPages',
         ali: deletePath(true),
         qq: deletePath(true),
         swan: deletePath(true),
         tt: deletePath()
+      },
+      {
+        test: 'plugins',
+        qq: deletePath(true),
+        swan: deletePath(true),
+        tt: deletePath()
+      },
+      {
+        test: 'usingComponents',
+        ali: deletePath({ noLog: true }),
+        qq: deletePath({ noLog: true }),
+        swan: deletePath({ noLog: true }),
+        tt: deletePath({ noLog: true })
       },
       {
         test: 'debug',
@@ -165,23 +208,26 @@ module.exports = function getSpec ({ warn, error }) {
         swan: deletePath()
       },
       {
-        test: 'networkTimeout|workers|requiredBackgroundModes|navigateToMiniProgramAppIdList|permission',
+        test: 'networkTimeout|requiredBackgroundModes',
+        ali: deletePath(),
+        tt: deletePath()
+      },
+      {
+        test: 'workers',
         ali: deletePath(),
         swan: deletePath(),
         tt: deletePath()
       },
       {
+        test: 'navigateToMiniProgramAppIdList|permission',
+        ali: deletePath()
+      },
+      {
         test: 'subpackages|subPackages',
-        ali: deletePath(true),
-        tt: deletePath()
+        tt: deletePath(true)
       },
       {
         test: 'packages',
-        ali (input) {
-          input.packages = input.packages.map((packageItem) => {
-            return packageItem.replace(/\?.*/, '')
-          })
-        },
         tt (input) {
           input.packages = input.packages.map((packageItem) => {
             return packageItem.replace(/\?.*/, '')
@@ -192,34 +238,42 @@ module.exports = function getSpec ({ warn, error }) {
         test: 'tabBar',
         ali (input) {
           input.tabBar = runRules(spec.tabBar, input.tabBar, {
-            target: 'ali',
+            mode: 'ali',
             normalizeTest,
             waterfall: true,
-            data: ['tabBar']
+            data: {
+              pathArr: ['tabBar']
+            }
           })
         },
         qq (input) {
           input.tabBar = runRules(spec.tabBar, input.tabBar, {
-            target: 'qq',
+            mode: 'qq',
             normalizeTest,
             waterfall: true,
-            data: ['tabBar']
+            data: {
+              pathArr: ['tabBar']
+            }
           })
         },
         swan (input) {
           input.tabBar = runRules(spec.tabBar, input.tabBar, {
-            target: 'swan',
+            mode: 'swan',
             normalizeTest,
             waterfall: true,
-            data: ['tabBar']
+            data: {
+              pathArr: ['tabBar']
+            }
           })
         },
         tt (input) {
           input.tabBar = runRules(spec.tabBar, input.tabBar, {
-            target: 'tt',
+            mode: 'tt',
             normalizeTest,
             waterfall: true,
-            data: ['tabBar']
+            data: {
+              pathArr: ['tabBar']
+            }
           })
         }
       },
@@ -227,37 +281,45 @@ module.exports = function getSpec ({ warn, error }) {
         test: 'window',
         ali (input) {
           input.window = runRules(spec.page, input.window, {
-            target: 'ali',
+            mode: 'ali',
             normalizeTest,
             waterfall: true,
-            data: ['window']
+            data: {
+              pathArr: ['window']
+            }
           })
           return input
         },
         qq (input) {
           input.window = runRules(spec.page, input.window, {
-            target: 'qq',
+            mode: 'qq',
             normalizeTest,
             waterfall: true,
-            data: ['window']
+            data: {
+              pathArr: ['window']
+            }
           })
           return input
         },
         swan (input) {
           input.window = runRules(spec.page, input.window, {
-            target: 'swan',
+            mode: 'swan',
             normalizeTest,
             waterfall: true,
-            data: ['window']
+            data: {
+              pathArr: ['window']
+            }
           })
           return input
         },
         tt (input) {
           input.window = runRules(spec.page, input.window, {
-            target: 'tt',
+            mode: 'tt',
             normalizeTest,
             waterfall: true,
-            data: ['window']
+            data: {
+              pathArr: ['window']
+            }
           })
           return input
         }

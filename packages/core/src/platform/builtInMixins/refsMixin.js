@@ -1,10 +1,13 @@
 import { BEFORECREATE, CREATED, BEFOREMOUNT, UPDATED, DESTROYED } from '../../core/innerLifecycle'
-import { is } from '../../helper/env'
 import { noop } from '../../helper/utils'
+import { error } from '../../helper/log'
+import { getEnvObj } from '../../helper/env'
+
+const envObj = getEnvObj()
 
 export default function getRefsMixin () {
   let aliMethods
-  if (is('ali')) {
+  if (__mpx_mode__ === 'ali') {
     const proxyMethods = ['boundingClientRect', 'scrollOffset']
 
     aliMethods = {
@@ -43,7 +46,8 @@ export default function getRefsMixin () {
           }
         }
         if (selector.lastIndexOf('.') > 0) {
-          console.error('the selectComponent or selectAllComponents only supports the single selector, so the compound selector may be failed')
+          const location = this.__mpxProxy && this.__mpxProxy.options.mpxFileResource
+          error('The selectComponent or selectAllComponents only supports the single selector, a composed selector is not supported.', location)
         }
         return all ? result : result[0]
       },
@@ -108,11 +112,13 @@ export default function getRefsMixin () {
         }
       },
       __getRefNode (ref) {
+        if (!ref) return
+        let selector = ref.selector.replace(/{{mpxCid}}/g, this.__mpxProxy.uid)
         if (ref.type === 'node') {
-          const query = this.createSelectorQuery()
-          return query && (ref.all ? query.selectAll(ref.selector) : query.select(ref.selector))
+          const query = this.createSelectorQuery ? this.createSelectorQuery() : envObj.createSelectorQuery()
+          return query && (ref.all ? query.selectAll(selector) : query.select(selector))
         } else if (ref.type === 'component') {
-          return ref.all ? this.selectAllComponents(ref.selector) : this.selectComponent(ref.selector)
+          return ref.all ? this.selectAllComponents(selector) : this.selectComponent(selector)
         }
       }
     }

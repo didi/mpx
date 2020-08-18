@@ -35,21 +35,24 @@
 
 #### IntelliJ
 
-如果使用IntelliJ系IDE开发，可将mpx后缀文件关联到vue类型，按vue解析。  
-![关联文件类型](../images/start-tips2.png)  
-但会报一个warning提示有重复的script标签，关闭该警告即可。  
+如果使用IntelliJ系IDE开发，可将mpx后缀文件关联到vue类型，按vue解析。
+![关联文件类型](../images/start-tips2.png)
+但会报一个warning提示有重复的script标签，关闭该警告即可。
 ![关闭警告](../images/start-tips1.png)
 
 
 #### vscode
 
-`.mpx`采用类似于`.vue`的单文件语法风格，在Visual Studio Marketplace中获取[vue语法高亮插件](https://marketplace.visualstudio.com/items?itemName=liuji-jim.vue)
-然后通过[配置vscode扩展语言](https://code.visualstudio.com/docs/languages/overview#_adding-a-file-extension-to-a-language)
-，将`.mpx`绑定到`.vue`语法的支持
+在Visual Studio Marketplace中获取[Mpx语法高亮插件](https://marketplace.visualstudio.com/items?itemName=pagnkelly.mpx)
 
 > 下方的方案为社区同学贡献，通过更多的插件使用，可能在某些功能上有所增强，但也可能遇到一些其他问题，请个人判断是否需要
 
 ##### vscode插件
+
+因为`.mpx`采用类似于`.vue`的单文件语法风格，可以使用Vue的插件通过[配置vscode扩展语言](https://code.visualstudio.com/docs/languages/overview#_adding-a-file-extension-to-a-language)
+，将`.mpx`绑定到`.vue`语法的支持。
+
+此外还有minapp插件可以配合使用。
 
 **更新**: `minapp`最新版已经支持了mpx，所以对`minapp`的使用加以修改
 
@@ -72,7 +75,7 @@
   }
 ```
 
-**注意**: 
+**注意**:
 1. 当添加了`xlang="wxml"`后，可以使用`vetur`配置的`template`的格式化，但是会存在vue插件的`snippet`
 2. **在改成`xlang="wxml"`后，虽然能格式化了，但是`image`和`input`标签的格式化会出问题，所以最好在最后完成的时候，改回`lang="wxml"`关闭格式化**
 3. 注意使用vscode的工作区功能，最好把`vue`插件相关提示先关闭了
@@ -82,7 +85,7 @@
 {
  "navigationBarTitleText": "",
  "usingComponents": {
- 
+
  }
 }
 </script>
@@ -114,7 +117,6 @@
    "      // 页面切入后台执行",
    "     console.log('page hide')\n",
    "    },",
-   "    methods: {\n",
    "    /**",
    "     * 页面相关事件处理函数--监听用户下拉动作",
    "    */",
@@ -126,8 +128,7 @@
    "     /**",
    "       * 用户点击右上角分享",
    "     */",
-   "    onShareAppMessage() {},",
-   "    }",
+   "    onShareAppMessage() {},"
    "  })",
    "</script>\n",
    "<style lang='scss'>\n",

@@ -3,14 +3,12 @@ const loaderUtils = require('loader-utils')
 const getMainCompilation = require('./utils/get-main-compilation')
 const toPosix = require('./utils/to-posix')
 
-module.exports = function loader (content) {
-  const options = loaderUtils.getOptions(this) || {}
+module.exports = function loader (content, prevOptions) {
+  const options = prevOptions || loaderUtils.getOptions(this) || {}
   const context = options.context || this.rootContext
   const mainCompilation = getMainCompilation(this._compilation)
-  const compilationMpx = mainCompilation.__mpx__
-  const subPackagesMap = compilationMpx.subPackagesMap
-  const mainResourceMap = compilationMpx.mainResourceMap
-  const resourcePath = this.resourcePath
+  const mpx = mainCompilation.__mpx__
+  const assetsInfo = mpx.assetsInfo
 
   let url = loaderUtils.interpolateName(this, options.name, {
     context,
@@ -18,50 +16,49 @@ module.exports = function loader (content) {
     regExp: options.regExp
   })
 
-  let subPackageRoot = ''
-  if (compilationMpx.processingSubPackages) {
-    for (let src in subPackagesMap) {
-      // 分包引用且主包未引用的资源，需打入分包目录中
-      if (resourcePath.startsWith(src) && !mainResourceMap[resourcePath]) {
-        subPackageRoot = subPackagesMap[src]
-        break
+  let outputPath
+
+  if (options.publicPath) {
+    outputPath = url
+    if (options.outputPathCDN) {
+      if (typeof options.outputPathCDN === 'function') {
+        outputPath = options.outputPathCDN(outputPath, this.resourcePath, context)
+      } else {
+        outputPath = toPosix(path.join(options.outputPathCDN, outputPath))
       }
     }
   } else {
-    mainResourceMap[resourcePath] = true
+    url = outputPath = mpx.getPackageInfo(this.resource, {
+      outputPath: url,
+      isStatic: true,
+      error: (err) => {
+        this.emitError(err)
+      },
+      warn: (err) => {
+        this.emitWarning(err)
+      }
+    }).outputPath
   }
 
-  url = toPosix(path.join(subPackageRoot, url))
-
-  let outputPath = url
-
-  if (options.outputPath) {
-    if (typeof options.outputPath === 'function') {
-      outputPath = options.outputPath(url, this.resourcePath, context)
-    } else {
-      outputPath = path.posix.join(options.outputPath, url)
-    }
-  }
-
-  let publicPath = `__webpack_public_path__ + ${JSON.stringify(outputPath)}`
+  let publicPath = `__webpack_public_path__ + ${JSON.stringify(url)}`
 
   if (options.publicPath) {
     if (typeof options.publicPath === 'function') {
       publicPath = options.publicPath(url, this.resourcePath, context)
     } else {
-      publicPath = `${
-        options.publicPath.endsWith('/')
-          ? options.publicPath
-          : `${options.publicPath}/`
-      }${url}`
+      publicPath = `${options.publicPath.endsWith('/')
+        ? options.publicPath
+        : `${options.publicPath}/`}${url}`
     }
-
     publicPath = JSON.stringify(publicPath)
   }
 
-  if (typeof options.emitFile === 'undefined' || options.emitFile) {
-    this.emitFile(outputPath, content)
-  }
+  // 因为子编译会合并assetsInfo会互相覆盖，使用全局mpx对象收集完之后再合并到主assetsInfo中
+  const assetInfo = assetsInfo.get(outputPath) || { modules: [] }
+  assetInfo.modules.push(this._module)
+  assetsInfo.set(outputPath, assetInfo)
+
+  this.emitFile(outputPath, content)
 
   // TODO revert to ES2015 Module export, when new CSS Pipeline is in place
   return `module.exports = ${publicPath};`

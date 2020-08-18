@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/core",
-  "version": "2.0.17",
+  "version": "2.6.4",
   "description": "mpx runtime core",
   "keywords": [
     "miniprogram",
@@ -9,17 +9,16 @@
   "author": "donghongping",
   "license": "Apache",
   "module": "src/index.js",
-  "typings": "types/index.d.ts",
+  "types": "@types/index.d.ts",
   "directories": {
     "src": "src"
   },
   "files": [
     "src",
-    "types"
+    "@types"
   ],
   "dependencies": {
-    "@types/weixin-app": "^2.2.17",
-    "mobx": "4.8.0"
+    "miniprogram-api-typings": "^2.8.3"
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org"
@@ -34,5 +33,6 @@
   "homepage": "https://didi.github.io/mpx/",
   "bugs": {
     "url": "https://github.com/didi/mpx/issues"
-  }
+  },
+  "sideEffects": false
 }

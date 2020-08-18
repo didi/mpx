@@ -1,7 +1,7 @@
 {
+  "miniprogramRoot": "miniprogram",
+  "cloudfunctionRoot": "functions",
   "compileType": "miniprogram",
-  "cloudfunctionRoot": "cloud",
-  "miniprogramRoot": "dist",
   "setting": {
     "newFeature": true,
     "urlCheck": true,

@@ -1,5 +1,5 @@
-import { is } from '../../helper/env'
-import { collectDataset, setByPath, getByPath } from '../../helper/utils'
+import { setByPath, collectDataset } from '../../helper/utils'
+import { error } from '../../helper/log'
 
 export default function proxyEventMixin () {
   const methods = {
@@ -28,12 +28,15 @@ export default function proxyEventMixin () {
         }
         if (callbackName) {
           const params = item.length > 1 ? item.slice(1).map(item => {
-            if (/^\$event/.test(item)) {
-              this.__mpxTempEvent = $event
-              const value = getByPath(this, item.replace('$event', '__mpxTempEvent'))
-              // 删除临时变量
-              delete this.__mpxTempEvent
-              return value
+            // 暂不支持$event.xxx的写法
+            // if (/^\$event/.test(item)) {
+            //   this.__mpxTempEvent = $event
+            //   const value = getByPath(this, item.replace('$event', '__mpxTempEvent'))
+            //   // 删除临时变量
+            //   delete this.__mpxTempEvent
+            //   return value
+            if (item === '__mpx_event__') {
+              return $event
             } else {
               return item
             }
@@ -41,21 +44,26 @@ export default function proxyEventMixin () {
           if (typeof this[callbackName] === 'function') {
             returnedValue = this[callbackName].apply(this, params)
           } else {
-            console.warn('【MPX ERROR】', `[${callbackName}] is not function`)
+            const location = this.__mpxProxy && this.__mpxProxy.options.mpxFileResource
+            error(`Instance property [${callbackName}] is not function, please check.`, location)
           }
         }
       })
       return returnedValue
     },
-    __model (expr, $event, valuePath = ['value']) {
-      const value = valuePath.reduce((acc, cur) => acc[cur], $event.detail)
+    __model (expr, $event, valuePath = ['value'], filterMethod) {
+      const innerFilter = {
+        trim: val => typeof val === 'string' && val.trim()
+      }
+      const originValue = valuePath.reduce((acc, cur) => acc[cur], $event.detail)
+      const value = filterMethod ? (innerFilter[filterMethod] ? innerFilter[filterMethod](originValue) : typeof this[filterMethod] === 'function' ? this[filterMethod](originValue) : originValue) : originValue
       setByPath(this, expr, value)
     }
   }
-  if (is('ali')) {
+  if (__mpx_mode__ === 'ali') {
     Object.assign(methods, {
       triggerEvent (eventName, eventDetail) {
-        const handlerName = eventName.replace(/^./, matched => matched.toUpperCase())
+        const handlerName = eventName.replace(/^./, matched => matched.toUpperCase()).replace(/-([a-z])/g, (match, p1) => p1.toUpperCase())
         const handler = this.props && (this.props['on' + handlerName] || this.props['catch' + handlerName])
         if (handler && typeof handler === 'function') {
           const dataset = collectDataset(this.props)

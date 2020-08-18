@@ -1,6 +1,8 @@
+const ad = require('./ad')
 const view = require('./view')
 const scrollView = require('./scroll-view')
 const swiper = require('./swiper')
+const swiperItem = require('./swiper-item')
 const movableView = require('./movable-view')
 const movableArea = require('./movable-area')
 const coverView = require('./cover-view')
@@ -10,10 +12,14 @@ const richText = require('./rich-text')
 const progress = require('./progress')
 const button = require('./button')
 const checkboxGroup = require('./checkbox-group')
+const checkbox = require('./checkbox')
+const radioGroup = require('./radio-group')
+const radio = require('./radio')
 const form = require('./form')
 const input = require('./input')
 const picker = require('./picker')
 const pickerView = require('./picker-view')
+const pickerViewColumn = require('./picker-view-column')
 const slider = require('./slider')
 const switchComponent = require('./switch')
 const textarea = require('./textarea')
@@ -22,7 +28,11 @@ const image = require('./image')
 const map = require('./map')
 const canvas = require('./canvas')
 const wxs = require('./wxs')
+const template = require('./template')
+const block = require('./block')
+const icon = require('./icon')
 const Nonsupport = require('./unsupported')
+const HyphenTagName = require('./hypen-tag-name')
 
 module.exports = function getComponentConfigs ({ warn, error }) {
   /**
@@ -34,7 +44,10 @@ module.exports = function getComponentConfigs ({ warn, error }) {
    * @return {function(*): Function}
    */
   const print = ({ platform, tag, type = 'property', isError = false }) => (arg) => {
-    if (type === 'tag') return error(`<${arg}> is not supported in ${platform} environment!`)
+    if (type === 'tag') {
+      error(`<${arg}> is not supported in ${platform} environment!`)
+      return
+    }
     let msg
     switch (type) {
       case 'event':
@@ -58,9 +71,11 @@ module.exports = function getComponentConfigs ({ warn, error }) {
   // 转换规则只需以微信为基准配置微信和支付宝的差异部分，比如微信和支付宝都支持但是写法不一致，或者微信支持而支付宝不支持的部分(抛出错误或警告)
   return [
     ...Nonsupport({ print }),
+    ad({ print }),
     view({ print }),
     scrollView({ print }),
     swiper({ print }),
+    swiperItem({ print }),
     movableView({ print }),
     movableArea({ print }),
     coverView({ print }),
@@ -70,10 +85,14 @@ module.exports = function getComponentConfigs ({ warn, error }) {
     progress({ print }),
     button({ print }),
     checkboxGroup({ print }),
+    checkbox({ print }),
+    radioGroup({ print }),
+    radio({ print }),
     form({ print }),
     input({ print }),
     picker({ print }),
     pickerView({ print }),
+    pickerViewColumn({ print }),
     slider({ print }),
     switchComponent({ print }),
     textarea({ print }),
@@ -81,6 +100,10 @@ module.exports = function getComponentConfigs ({ warn, error }) {
     image({ print }),
     map({ print }),
     canvas({ print }),
-    wxs({ print })
+    wxs({ print }),
+    template(),
+    block(),
+    icon(),
+    HyphenTagName({ print })
   ]
 }

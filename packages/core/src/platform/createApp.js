@@ -1,13 +1,34 @@
 import transferOptions from '../core/transferOptions'
 import mergeOptions from '../core/mergeOptions'
-import { dissolveAttrs, extend } from '../helper/utils'
+import { dissolveAttrs } from '../helper/utils'
 
-export default function createApp (option) {
-  const { rawOptions } = transferOptions(option, 'app', [{
-    onLaunch () {
-      extend(this, option.proto)
+export default function createApp (option, config = {}) {
+  const builtInMixins = []
+  if (__mpx_mode__ === 'web') {
+    builtInMixins.push({
+      created () {
+        Object.assign(this, option.proto)
+        this.$options.onLaunch && this.$options.onLaunch.call(this, {})
+      }
+    })
+  } else {
+    builtInMixins.push({
+      onLaunch () {
+        Object.assign(this, option.proto)
+      }
+    })
+  }
+  const { rawOptions } = transferOptions(option, 'app', builtInMixins)
+  const defaultOptions = mergeOptions(rawOptions, 'app', false)
+
+  if (__mpx_mode__ === 'web') {
+    global.currentOption = defaultOptions
+    global.getApp = function () {
+      return defaultOptions
     }
-  }])
-  global.currentCtor(dissolveAttrs(mergeOptions(rawOptions, 'app', false), 'methods'))
-  /* eslint-disable-line */
+  } else {
+    const finalAppOption = dissolveAttrs(defaultOptions, 'methods')
+    const ctor = config.customCtor || global.currentCtor || App
+    ctor(finalAppOption)
+  }
 }

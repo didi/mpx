@@ -1,0 +1,335 @@
+function genRegExp (str, flags) {
+  if (!__mpx_wxs__ || __mpx_mode__ === 'swan') {
+    return new RegExp(str, flags)
+  } else {
+    return getRegExp(str, flags)
+  }
+}
+
+
+function likeArray (arr) {
+  if (!__mpx_wxs__ || __mpx_mode__ === 'swan') {
+    return Array.isArray(arr)
+  } else {
+    return arr && arr.constructor === 'Array'
+  }
+}
+
+function isObject (obj) {
+  return obj !== null && typeof obj === 'object'
+}
+
+function isDef (v) {
+  return v !== undefined && v !== null
+}
+
+
+var RE_TOKEN_LIST_VALUE = genRegExp('^[0-9]+')
+var RE_TOKEN_NAMED_VALUE = genRegExp('^[A-Za-z0-9_]+')
+
+var _tokenCaches = {}
+
+var _pathCaches = {}
+
+function parseMessage (format) {
+  var tokens = []
+  var position = 0
+
+  var text = ''
+  while (position < format.length) {
+    var char = format[position++]
+    if (char === '{') {
+      if (text) {
+        tokens.push({ type: 'text', value: text })
+      }
+
+      text = ''
+      var sub = ''
+      char = format[position++]
+      while (char !== undefined && char !== '}') {
+        sub += char
+        char = format[position++]
+      }
+      var isClosed = char === '}'
+      var type = RE_TOKEN_LIST_VALUE.test(sub)
+        ? 'list'
+        : isClosed && RE_TOKEN_NAMED_VALUE.test(sub)
+          ? 'named'
+          : 'unknown'
+      tokens.push({ value: sub, type: type })
+    } else if (char === '%') {
+      // when found rails i18n syntax, skip text capture
+      if (format[(position)] !== '{') {
+        text += char
+      }
+    } else {
+      text += char
+    }
+  }
+
+  text && tokens.push({ type: 'text', value: text })
+
+  return tokens
+}
+
+function compile (tokens, values) {
+  var compiled = []
+  var index = 0
+
+  var mode = likeArray(values)
+    ? 'list'
+    : isObject(values)
+      ? 'named'
+      : 'unknown'
+  if (mode === 'unknown') {
+    return compiled
+  }
+
+  while (index < tokens.length) {
+    var token = tokens[index]
+    switch (token.type) {
+      case 'text':
+        compiled.push(token.value)
+        break
+      case 'list':
+        compiled.push(values[parseInt(token.value, 10)])
+        break
+      case 'named':
+        if (mode === 'named') {
+          compiled.push(values[token.value])
+        } else {
+          console.log('Type of token ' + token.type + ' and format of value ' + mode + ' do not match!')
+        }
+        break
+      case 'unknown':
+        console.log('Detect unknown type of token!')
+        break
+    }
+    index++
+  }
+  return compiled
+}
+
+function interpolate (message, values) {
+  if (!values) {
+    return [message]
+  }
+  var tokens = _tokenCaches[message]
+  if (!tokens) {
+    tokens = parseMessage(message)
+    _tokenCaches[message] = tokens
+  }
+  return compile(tokens, values)
+}
+
+function render (message, values) {
+  return interpolate(message, values).join('')
+}
+
+function getPathValue (message, path) {
+  if (!isObject(message)) return
+
+  var parsedPath = _pathCaches[path]
+  if (!parsedPath) {
+    parsedPath = parsePath(path)
+    _pathCaches[path] = parsedPath
+  }
+  return outPutByPath(message, parsedPath)
+}
+
+function outPutByPath (context, path) {
+  var result = context
+  var len = path.length
+  for (var index = 0; index < len; index++) {
+    var key
+    var item = path[index]
+    if (result) {
+      if (likeArray(item)) {
+        // 获取子数组的输出结果作为当前key
+        key = outPutByPath(context, item)
+      } else if (genRegExp('^__mpx_str_').test(item)) {
+        // 字符串一定会被[]包裹，一定在子数组中
+        result = item.replace('__mpx_str_', '')
+      } else if (genRegExp('^[0-9]+$').test(item)) {
+        // 数字一定会被[]包裹，一定在子数组中
+        result = +item
+      } else if (item === '+') {
+        // 获取加号后面所有path最终的结果
+        result += outPutByPath(context, path.slice(index + 1))
+        break
+      } else {
+        key = item
+      }
+      if (key !== undefined) {
+        result = result[key]
+      }
+    } else {
+      break
+    }
+  }
+  return result
+}
+
+function genStack (mark) {
+  var value = []
+  return {
+    mark: mark,
+    type: genRegExp('[\'"]').test(mark) ? 'string' : 'normal',
+    value: value,
+    push: function (data) {
+      value.push(data)
+    }
+  }
+}
+
+function parsePath (pathStr) {
+  function startStack (mark) {
+    // 开启栈或关闭栈都意味着前面的字符拼接截止
+    propertyJoinOver()
+    curStack && targetStacks.push(curStack)
+    curStack = genStack(mark)
+  }
+
+  function endStack () {
+    // 开启栈或关闭栈都意味着前面的字符拼接截止
+    propertyJoinOver()
+    // 字符串栈直接拼接
+    var result = curStack.type === 'string' ? '__mpx_str_' + curStack.value.join('') : curStack.value
+    curStack = targetStacks.pop()
+    // 将当前stack结果保存到父级stack里
+    curStack.push(result)
+  }
+
+  function propertyJoinOver () {
+    property = property.trim()
+    if (property) curStack.push(property)
+    property = ''
+  }
+
+  var curStack = genStack()
+  var targetStacks = []
+  var property = ''
+  var index = 0
+
+  if (genRegExp('^[^[]]+$').test(pathStr)) {
+    // 对于简单数据路径，直接分割，避免无意义的解析
+    return pathStr.split('.')
+  }
+  while (index < pathStr.length) {
+    var char = pathStr[index]
+    // 当前遍历引号内的字符串时
+    if (curStack.type === 'string') {
+      // 若为对应的结束flag，则出栈，反之直接push
+      curStack.mark === char ? endStack() : curStack.push(char)
+    } else if (genRegExp('[\'"[]').test(char)) {
+      startStack(char)
+    } else if (char === ']') {
+      endStack()
+    } else if (char === '.' || char === '+') {
+      propertyJoinOver()
+      if (char === '+') curStack.push(char)
+    } else {
+      property += char
+    }
+    index++
+  }
+  // 字符解析收尾
+  propertyJoinOver()
+  return curStack.value
+}
+
+function translate (messages, locale, key, values) {
+  var res = ''
+  if (messages && messages[locale] && key) {
+    var message = getPathValue(messages[locale], key)
+    if (isDef(message)) {
+      res = render(message, values)
+    }
+  }
+  return res
+}
+
+function exist (messages, locale, key) {
+  var res = false
+  if (messages && messages[locale] && key) {
+    var message = getPathValue(messages[locale], key)
+    if (isDef(message)) {
+      res = true
+    }
+  }
+  return res
+}
+
+function getMessages () {
+  // __mpx_messages__会在编译时通过lib/wxs/wxs-i18n-loader注入
+  return __mpx_messages__ || {}
+}
+
+function getDateTimeFormats () {
+  // __mpx_datetime_formats__会在编译时通过lib/wxs/wxs-i18n-loader注入
+  return __mpx_datetime_formats__ || {}
+}
+
+function getNumberFormats () {
+  // __mpx_number_formats__会在编译时通过lib/wxs/wxs-i18n-loader注入
+  return __mpx_number_formats__ || {}
+}
+
+function fetchChoice (message, choice) {
+  var choices = message.split('|')
+  choice = getChoiceIndex(choice, choices.length)
+  if (!choices[choice]) return message
+  return choices[choice].trim()
+}
+
+function getChoiceIndex (choice, choicesLength) {
+  choice = Math.abs(choice)
+  if (choicesLength === 2) {
+    return choice ? choice > 1 ? 1 : 0 : 1
+  }
+  return choice ? Math.min(choice, 2) : 0
+}
+
+module.exports = {
+  t: function (locale, key, values) {
+    return translate(getMessages(), locale, key, values)
+  },
+  tc: function (locale, key, choice, values) {
+    return fetchChoice(translate(getMessages(), locale, key, values), choice)
+  },
+  te: function (locale, key) {
+    return exist(getMessages(), locale, key)
+  },
+  d: function (locale, value, key) {
+    // if (__mpx_wxs__) {
+    console.log('Datetime localization is not supported!')
+    return value
+    // } else {
+    //   if (!key) {
+    //     return new Intl.DateTimeFormat(locale).format(value)
+    //   }
+    //   var formats = getDateTimeFormats()[locale]
+    //   if (isDef(formats)) {
+    //     var format = formats[key]
+    //     return new Intl.DateTimeFormat(locale, format).format(value)
+    //   }
+    //   return value
+    // }
+  },
+  n: function (locale, value, key, options) {
+    // if (__mpx_wxs__) {
+    console.log('Number localization is not supported!')
+    return value
+    // } else {
+    //   if (!key) {
+    //     return new Intl.NumberFormat(locale, options).format(value)
+    //   }
+    //   var formats = getNumberFormats()[locale]
+    //   if (isDef(formats)) {
+    //     var format = formats[key]
+    //     return new Intl.NumberFormat(locale, Object.assign({}, format, options)).format(value)
+    //   }
+    //   return value
+    // }
+  }
+}

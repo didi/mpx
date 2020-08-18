@@ -1,5 +1,5 @@
 /**
- * mpxjs webview bridge v2.0.0
+ * mpxjs webview bridge v2.2.34
  * (c) 2019 @mpxjs team
  * @license Apache
  */
@@ -24,20 +24,34 @@
     return obj;
   }
 
-  function _objectSpread(target) {
+  function ownKeys(object, enumerableOnly) {
+    var keys = Object.keys(object);
+
+    if (Object.getOwnPropertySymbols) {
+      keys.push.apply(keys, Object.getOwnPropertySymbols(object));
+    }
+
+    if (enumerableOnly) keys = keys.filter(function (sym) {
+      return Object.getOwnPropertyDescriptor(object, sym).enumerable;
+    });
+    return keys;
+  }
+
+  function _objectSpread2(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i] != null ? arguments[i] : {};
-      var ownKeys = Object.keys(source);
 
-      if (typeof Object.getOwnPropertySymbols === 'function') {
-        ownKeys = ownKeys.concat(Object.getOwnPropertySymbols(source).filter(function (sym) {
-          return Object.getOwnPropertyDescriptor(source, sym).enumerable;
-        }));
+      if (i % 2) {
+        ownKeys(source, true).forEach(function (key) {
+          _defineProperty(target, key, source[key]);
+        });
+      } else if (Object.getOwnPropertyDescriptors) {
+        Object.defineProperties(target, Object.getOwnPropertyDescriptors(source));
+      } else {
+        ownKeys(source).forEach(function (key) {
+          Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key));
+        });
       }
-
-      ownKeys.forEach(function (key) {
-        _defineProperty(target, key, source[key]);
-      });
     }
 
     return target;
@@ -90,60 +104,33 @@
 
   var SDK_URL_MAP = {
     wx: 'https://res.wx.qq.com/open/js/jweixin-1.3.2.js',
+    qq: 'https://qqq.gtimg.cn/miniprogram/webview_jssdk/qqjssdk-1.0.0.js',
     ali: 'https://appx/web-view.min.js',
     baidu: 'https://b.bdstatic.com/searchbox/icms/searchbox/js/swan-2.0.4.js',
     tt: 'https://s3.pstatp.com/toutiao/tmajssdk/jssdk.js'
   };
   var ENV_PATH_MAP = {
     wx: ['wx', 'miniProgram'],
+    qq: ['qq', 'miniProgram'],
     ali: ['my'],
     baidu: ['swan', 'webView'],
     tt: ['tt', 'miniProgram']
   };
   var env = null; // 环境判断
 
-  if (navigator.userAgent.indexOf('AlipayClient') > -1) {
+  var systemUA = navigator.userAgent;
+
+  if (systemUA.indexOf('AlipayClient') > -1) {
     env = 'ali';
-  } else if (navigator.userAgent.indexOf('miniProgram') > -1) {
-    env = 'wx';
-  } else if (navigator.userAgent.indexOf('swan') > -1) {
+  } else if (systemUA.indexOf('miniProgram') > -1 || systemUA.indexOf('miniprogram') > -1) {
+    env = systemUA.indexOf('QQ') > -1 ? 'qq' : 'wx';
+  } else if (systemUA.indexOf('swan') > -1) {
     env = 'baidu';
-  } else if (navigator.userAgent.indexOf('toutiao') > -1) {
+  } else if (systemUA.indexOf('toutiao') > -1) {
     env = 'tt';
   }
 
-  if (env === null) {
-    console.error('mpxjs/webview: 未识别的环境，当前仅支持 微信、支付宝、百度、头条 小程序');
-  }
-
-  var sdkReady = !window[env] ? SDK_URL_MAP[env] ? loadScript(SDK_URL_MAP[env]) : Promise.reject(new Error('未找到对应的sdk')) : Promise.resolve();
-  var wxConfig = null; // 微信的非小程序相关api需要config配置
-
-  var sdkConfigReady = function sdkConfigReady() {
-    return env !== 'wx' ? sdkReady : new Promise(function (resolve, reject) {
-      sdkReady.then(function () {
-        if (!window.wx) {
-          reject(new Error('sdk未就绪'));
-        }
-
-        if (wxConfig === null) {
-          reject(new Error('wxSDK 未配置'));
-        }
-
-        window.wx.config(wxConfig);
-        window.wx.ready(function () {
-          resolve();
-        });
-        window.wx.error(function (res) {
-          reject(res);
-        });
-      });
-    });
-  };
-
-  var wxsdkConfig = function wxsdkConfig(config) {
-    wxConfig = config;
-  };
+  var webviewApiList = {};
 
   function getEnvWebviewVariable() {
     return ENV_PATH_MAP[env].reduce(function (acc, cur) {
@@ -153,205 +140,227 @@
 
   function getEnvVariable() {
     return window[ENV_PATH_MAP[env][0]];
-  } // key为导出的标准名，对应平台不支持的话为undefined
+  }
 
+  var initWebviewBridge = function initWebviewBridge() {
+    if (env === null) {
+      console.log('mpxjs/webview: 未识别的环境，当前仅支持 微信、支付宝、百度、头条 QQ 小程序');
+      return;
+    }
 
-  var ApiList = {
-    'checkJSApi': {
-      wx: 'checkJSApi'
-    },
-    'chooseImage': {
-      wx: 'chooseImage',
-      baidu: 'chooseImage',
-      ali: 'chooseImage'
-    },
-    'previewImage': {
-      wx: 'previewImage',
-      baidu: 'previewImage',
-      ali: 'previewImage'
-    },
-    'uploadImage': {
-      wx: 'uploadImage'
-    },
-    'downloadImage': {
-      wx: 'downloadImage'
-    },
-    'getLocalImgData': {
-      wx: 'getLocalImgData'
-    },
-    'startRecord': {
-      wx: 'startRecord'
-    },
-    'stopRecord': {
-      wx: 'stopRecord'
-    },
-    'onVoiceRecordEnd': {
-      wx: 'onVoiceRecordEnd'
-    },
-    'playVoice': {
-      wx: 'playVoice'
-    },
-    'pauseVoice': {
-      wx: 'pauseVoice'
-    },
-    'stopVoice': {
-      wx: 'stopVoice'
-    },
-    'onVoicePlayEnd': {
-      wx: 'onVoicePlayEnd'
-    },
-    'uploadVoice': {
-      wx: 'uploadVoice'
-    },
-    'downloadVoice': {
-      wx: 'downloadVoice'
-    },
-    'translateVoice': {
-      wx: 'translateVoice'
-    },
-    'getNetworkType': {
-      wx: 'getNetworkType',
-      baidu: 'getNetworkType',
-      ali: 'getNetworkType'
-    },
-    'openLocation': {
-      wx: 'openLocation',
-      baidu: 'openLocation',
-      ali: 'openLocation'
-    },
-    'getLocation': {
-      wx: 'getLocation',
-      baidu: 'getLocation',
-      ali: 'getLocation'
-    },
-    'startSearchBeacons': {
-      wx: 'startSearchBeacons'
-    },
-    'stopSearchBeacons': {
-      wx: 'stopSearchBeacons'
-    },
-    'onSearchBeacons': {
-      wx: 'onSearchBeacons'
-    },
-    'scanQRCode': {
-      wx: 'scanQRCode'
-    },
-    'chooseCard': {
-      wx: 'chooseCard'
-    },
-    'addCard': {
-      wx: 'addCard'
-    },
-    'openCard': {
-      wx: 'openCard'
-    },
-    'alert': {
-      ali: 'alert'
-    },
-    'showLoading': {
-      ali: 'showLoading'
-    },
-    'hideLoading': {
-      ali: 'hideLoading'
-    },
-    'setStorage': {
-      ali: 'setStorage'
-    },
-    'getStorage': {
-      ali: 'getStorage'
-    },
-    'removeStorage': {
-      ali: 'removeStorage'
-    },
-    'clearStorage': {
-      ali: 'clearStorage'
-    },
-    'getStorageInfo': {
-      ali: 'getStorageInfo'
-    },
-    'startShare': {
-      ali: 'startShare'
-    },
-    'tradePay': {
-      ali: 'tradePay'
-    },
-    'onMessage': {
-      ali: 'onMessage'
+    var sdkReady = !window[env] ? SDK_URL_MAP[env] ? loadScript(SDK_URL_MAP[env]) : Promise.reject(new Error('未找到对应的sdk')) : Promise.resolve();
+    getWebviewApi(sdkReady);
+  };
+
+  var getWebviewApi = function getWebviewApi(sdkReady) {
+    var webviewApiNameList = {
+      navigateTo: 'navigateTo',
+      navigateBack: 'navigateBack',
+      switchTab: 'switchTab',
+      reLaunch: 'reLaunch',
+      redirectTo: 'redirectTo',
+      getEnv: 'getEnv',
+      postMessage: 'postMessage',
+      getLoadError: 'getLoadError',
+      onMessage: {
+        ali: true
+      }
+    };
+
+    var _loop = function _loop(item) {
+      var apiName = typeof webviewApiNameList[item] === 'string' ? webviewApiNameList[item] : !webviewApiNameList[item][env] ? false : typeof webviewApiNameList[item][env] === 'string' ? webviewApiNameList[item][env] : item;
+
+      webviewApiList[item] = function () {
+        for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
+          args[_key] = arguments[_key];
+        }
+
+        if (!apiName) {
+          console.log("".concat(env, "\u5C0F\u7A0B\u5E8F\u4E0D\u652F\u6301 ").concat(item, " \u65B9\u6CD5"));
+        } else {
+          return sdkReady.then(function () {
+            var _getEnvWebviewVariabl;
+
+            if (apiName === 'getLoadError') {
+              return Promise.resolve('js加载完成');
+            }
+
+            (_getEnvWebviewVariabl = getEnvWebviewVariable())[apiName].apply(_getEnvWebviewVariabl, args);
+          });
+        }
+      };
+    };
+
+    for (var item in webviewApiNameList) {
+      _loop(item);
     }
   };
-  var exportApiList = {};
 
-  var _loop = function _loop(item) {
-    exportApiList[item] = function () {
-      for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
-        args[_key] = arguments[_key];
+  var getAdvancedApi = function getAdvancedApi(config, mpx) {
+    // 微信的非小程序相关api需要config配置
+    if (!mpx) {
+      console.log('需要提供挂载方法的mpx对象');
+      return;
+    }
+
+    if (window.wx) {
+      if (config) {
+        console.log('微信环境下需要配置wx.config才能挂载方法');
+        return;
       }
 
-      if (!ApiList[item][env]) {
-        console.error("\u6B64\u73AF\u5883\u4E0D\u652F\u6301".concat(item, "\u65B9\u6CD5"));
-      } else {
-        sdkConfigReady().then(function () {
+      window.wx.config(config);
+    } // key为导出的标准名，对应平台不支持的话为undefined
+
+
+    var ApiList = {
+      'checkJSApi': {
+        wx: 'checkJSApi'
+      },
+      'chooseImage': {
+        wx: 'chooseImage',
+        baidu: 'chooseImage',
+        ali: 'chooseImage'
+      },
+      'previewImage': {
+        wx: 'previewImage',
+        baidu: 'previewImage',
+        ali: 'previewImage'
+      },
+      'uploadImage': {
+        wx: 'uploadImage'
+      },
+      'downloadImage': {
+        wx: 'downloadImage'
+      },
+      'getLocalImgData': {
+        wx: 'getLocalImgData'
+      },
+      'startRecord': {
+        wx: 'startRecord'
+      },
+      'stopRecord': {
+        wx: 'stopRecord'
+      },
+      'onVoiceRecordEnd': {
+        wx: 'onVoiceRecordEnd'
+      },
+      'playVoice': {
+        wx: 'playVoice'
+      },
+      'pauseVoice': {
+        wx: 'pauseVoice'
+      },
+      'stopVoice': {
+        wx: 'stopVoice'
+      },
+      'onVoicePlayEnd': {
+        wx: 'onVoicePlayEnd'
+      },
+      'uploadVoice': {
+        wx: 'uploadVoice'
+      },
+      'downloadVoice': {
+        wx: 'downloadVoice'
+      },
+      'translateVoice': {
+        wx: 'translateVoice'
+      },
+      'getNetworkType': {
+        wx: 'getNetworkType',
+        baidu: 'getNetworkType',
+        ali: 'getNetworkType'
+      },
+      'openLocation': {
+        wx: 'openLocation',
+        baidu: 'openLocation',
+        ali: 'openLocation'
+      },
+      'getLocation': {
+        wx: 'getLocation',
+        baidu: 'getLocation',
+        ali: 'getLocation'
+      },
+      'startSearchBeacons': {
+        wx: 'startSearchBeacons'
+      },
+      'stopSearchBeacons': {
+        wx: 'stopSearchBeacons'
+      },
+      'onSearchBeacons': {
+        wx: 'onSearchBeacons'
+      },
+      'scanQRCode': {
+        wx: 'scanQRCode'
+      },
+      'chooseCard': {
+        wx: 'chooseCard'
+      },
+      'addCard': {
+        wx: 'addCard'
+      },
+      'openCard': {
+        wx: 'openCard'
+      },
+      'alert': {
+        ali: 'alert'
+      },
+      'showLoading': {
+        ali: 'showLoading'
+      },
+      'hideLoading': {
+        ali: 'hideLoading'
+      },
+      'setStorage': {
+        ali: 'setStorage'
+      },
+      'getStorage': {
+        ali: 'getStorage'
+      },
+      'removeStorage': {
+        ali: 'removeStorage'
+      },
+      'clearStorage': {
+        ali: 'clearStorage'
+      },
+      'getStorageInfo': {
+        ali: 'getStorageInfo'
+      },
+      'startShare': {
+        ali: 'startShare'
+      },
+      'tradePay': {
+        ali: 'tradePay'
+      },
+      'onMessage': {
+        ali: 'onMessage'
+      }
+    };
+
+    var _loop2 = function _loop2(item) {
+      mpx[item] = function () {
+        if (!ApiList[item][env]) {
+          console.error("\u6B64\u73AF\u5883\u4E0D\u652F\u6301".concat(item, "\u65B9\u6CD5"));
+        } else {
           var _getEnvVariable;
 
-          (_getEnvVariable = getEnvVariable())[ApiList[item][env]].apply(_getEnvVariable, args);
-        }, function (res) {
-          console.error(res);
-        })["catch"](function (e) {
-          return console.error(e);
-        });
-      }
+          console.log(ApiList[item][env], 'ApiList[item][env]');
+
+          (_getEnvVariable = getEnvVariable())[ApiList[item][env]].apply(_getEnvVariable, arguments);
+        }
+      };
     };
-  };
 
-  for (var item in ApiList) {
-    _loop(item);
-  }
-
-  var webviewApiNameList = {
-    navigateTo: 'navigateTo',
-    navigateBack: 'navigateBack',
-    switchTab: 'switchTab',
-    reLaunch: 'reLaunch',
-    redirectTo: 'redirectTo',
-    getEnv: 'getEnv',
-    postMessage: 'postMessage',
-    onMessage: {
-      ali: true
+    for (var item in ApiList) {
+      _loop2(item);
     }
   };
-  var webviewApiList = {};
 
-  var _loop2 = function _loop2(item) {
-    var apiName = typeof webviewApiNameList[item] === 'string' ? webviewApiNameList[item] : !webviewApiNameList[item][env] ? false : typeof webviewApiNameList[item][env] === 'string' ? webviewApiNameList[item][env] : item;
+  initWebviewBridge();
 
-    webviewApiList[item] = function () {
-      for (var _len2 = arguments.length, args = new Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
-        args[_key2] = arguments[_key2];
-      }
-
-      if (!apiName) {
-        console.log("".concat(env, "\u5C0F\u7A0B\u5E8F\u4E0D\u652F\u6301 ").concat(item, " \u65B9\u6CD5"));
-      } else {
-        sdkReady.then(function () {
-          var _getEnvWebviewVariabl;
-
-          (_getEnvWebviewVariabl = getEnvWebviewVariable())[apiName].apply(_getEnvWebviewVariabl, args);
-        }, function (res) {
-          console.error(res);
-        })["catch"](function (e) {
-          return console.log(e);
-        });
-      }
-    };
-  };
-
-  for (var item in webviewApiNameList) {
-    _loop2(item);
-  }
-
-  var bridgeFunction = _objectSpread({}, webviewApiList, exportApiList, {
-    wxsdkConfig: wxsdkConfig // 此处导出的对象包含所有的api
-
+  var bridgeFunction = _objectSpread2({}, webviewApiList, {
+    getAdvancedApi: getAdvancedApi,
+    mpxEnv: env
   });
 
   return bridgeFunction;

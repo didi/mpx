@@ -27,7 +27,7 @@ function build (builds) {
 }
 
 function buildEntry ({ input, output }) {
-  const { file, banner } = output
+  const { file, fileName, banner } = output
   const isProd = /min\.js$/.test(file)
   return rollup.rollup(input)
     .then(bundle => bundle.generate(output))
@@ -42,6 +42,9 @@ function buildEntry ({ input, output }) {
             pure_funcs: ['makeMap']
           }
         }).code
+        if (fileName) {
+          write(fileName, minified, true)
+        }
         return write(file, minified, true)
       } else {
         return write(file, code)

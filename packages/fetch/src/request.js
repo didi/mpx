@@ -11,7 +11,8 @@ function transformReq (config) {
     set (val) {
       header = val
     },
-    enumerable: true
+    enumerable: true,
+    configurable: true
   }
   Object.defineProperties(config, {
     header: descriptor,
@@ -34,7 +35,8 @@ function transformRes (res) {
   }
   return res
 }
-export default function request (config) {
+
+export default function request (config, mpx) {
   return new Promise((resolve, reject) => {
     if (!config.url) {
       reject(new Error('no url'))
@@ -48,6 +50,11 @@ export default function request (config) {
     }
     if (config.params) {
       config.url = buildUrl(config.url, filterUndefined(config.params))
+      // 这个参数保留的话，若其value是响应式数据，在Android支付宝小程序中可能有问题
+      delete config.params
+    }
+    if (config.data) {
+      config.data = filterUndefined(config.data)
     }
     if (config.emulateJSON && /^post|put$/i.test(config.method)) {
       config.header = Object.assign({}, config.header, {
@@ -94,6 +101,14 @@ export default function request (config) {
       requestTask = swan.request(config)
       return
     }
-    console.log('no available request adapter for current platform')
+
+    mpx = mpx || window.__mpx
+    if (typeof mpx !== 'undefined' && typeof mpx.request === 'function') {
+      // mpx
+      const res = mpx.request(config)
+      requestTask = res.__returned || res
+      return
+    }
+    console.error('no available request adapter for current platform')
   })
 }

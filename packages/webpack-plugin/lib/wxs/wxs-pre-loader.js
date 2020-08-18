@@ -3,7 +3,7 @@ const traverse = require('babel-traverse').default
 const t = require('babel-types')
 const generate = require('babel-generator').default
 const getMainCompilation = require('../utils/get-main-compilation')
-const stripExtension = require('../utils/strip-extention')
+const parseRequest = require('../utils/parse-request')
 const parseQuery = require('loader-utils').parseQuery
 
 module.exports = function (content) {
@@ -16,9 +16,9 @@ module.exports = function (content) {
 
   // 处理内联wxs
   if (wxsModule) {
-    const wxsContentMap = mainCompilation.__mpx__.wxsConentMap
-    const resource = stripExtension(this.resource)
-    content = wxsContentMap[`${resource}~${wxsModule}`] || content
+    const wxsContentMap = mainCompilation.__mpx__.wxsContentMap
+    const resourcePath = parseRequest(this.resource).resourcePath
+    content = wxsContentMap[`${resourcePath}~${wxsModule}`] || content
   }
 
   if (module.wxs && mode !== 'swan') {
@@ -42,6 +42,17 @@ module.exports = function (content) {
                 item.stop()
               })
             }
+          }
+        },
+        // 处理vant-aliapp中export var bem = bem;这种不被acorn支持的2b语法
+        ExportNamedDeclaration (path) {
+          if (
+            path.node.declaration &&
+            path.node.declaration.declarations.length === 1 &&
+            path.node.declaration.declarations[0].id.name === path.node.declaration.declarations[0].init.name
+          ) {
+            const name = path.node.declaration.declarations[0].id.name
+            path.replaceWith(t.exportNamedDeclaration(undefined, [t.exportSpecifier(t.identifier(name), t.identifier(name))]))
           }
         }
       }
@@ -83,16 +94,26 @@ module.exports = function (content) {
         selfCompilation.__swan_exports_map__ = {}
       }
       Object.assign(wxsVisitor, {
-        AssignmentExpression (path) {
-          const left = path.node.left
-          const right = path.node.right
-          if (t.isMemberExpression(left) && left.object.name === 'module' && left.property.name === 'exports') {
-            if (t.isObjectExpression(right)) {
-              right.properties.forEach((property) => {
-                selfCompilation.__swan_exports_map__[property.key.name] = true
-              })
-            } else {
-              throw new Error('Swan filter module exports declaration must be an ObjectExpression!')
+        MemberExpression (path) {
+          if (path.node.object.name === 'module' && path.node.property.name === 'exports') {
+            const parentPath = path.parentPath
+            if (parentPath.isMemberExpression() && path.parentKey === 'object') {
+              if (parentPath.node.computed) {
+                if (t.isLiteral(parentPath.node.property)) {
+                  selfCompilation.__swan_exports_map__[parentPath.node.property.value] = true
+                }
+              } else if (t.isIdentifier(parentPath.node.property)) {
+                selfCompilation.__swan_exports_map__[parentPath.node.property.name] = true
+              }
+            } else if (parentPath.isAssignmentExpression() && path.parentKey === 'left') {
+              const right = parentPath.node.right
+              if (t.isObjectExpression(right)) {
+                right.properties.forEach((property) => {
+                  selfCompilation.__swan_exports_map__[property.key.name] = true
+                })
+              } else {
+                throw new Error('Swan filter module exports declaration must be an ObjectExpression!')
+              }
             }
           }
         },

@@ -2,19 +2,59 @@
   import mpx from '@mpxjs/core'
   import apiProxy from '@mpxjs/api-proxy'
 
-  mpx.use(apiProxy, {usePromise: true})
-  // app.js
-  App({})
+  mpx.use(apiProxy, { usePromise: true })
+  App({
+    onLaunch: function () {
+      // todo: env替换
+      wx.cloud.init({
+        env: 'blog-demo-46b1v',
+        traceUser: true
+      })
+    },
+    globalData: {
+      blog: {}
+    }
+  })
 </script>
 
 <style>
-
+  /**app.wxss**/
+  .container {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    box-sizing: border-box;
+  }
 </style>
 
 <script type="application/json">
   {
     "pages": [
-      "./pages/index"
-    ]
+      "./pages/index",
+      "./pages/detail",
+      "./pages/list"
+    ],
+    "window": {
+      "backgroundTextStyle": "light",
+      "navigationBarBackgroundColor": "#fff",
+      "navigationBarTitleText": "WeChat",
+      "navigationBarTextStyle": "black"
+    },
+    "tabBar": {
+      "position": "top",
+      "list": [
+        {
+          "pagePath": "pages/index",
+          "text": "发布"
+        },
+        {
+          "pagePath": "pages/list",
+          "text": "列表"
+        }
+      ]
+    },
+    "cloud": true
   }
 </script>

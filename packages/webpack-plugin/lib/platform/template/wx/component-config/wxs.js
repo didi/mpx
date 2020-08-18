@@ -10,6 +10,12 @@ module.exports = function ({ print }) {
     swan () {
       return 'filter'
     },
+    qq () {
+      return 'qs'
+    },
+    tt () {
+      return 'sjs'
+    },
     // 组件属性中的差异部分
     props: [
       {

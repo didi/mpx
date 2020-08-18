@@ -55,6 +55,7 @@ module.exports = {
       modelProp: 'wx:model-prop',
       modelEvent: 'wx:model-event',
       modelValuePath: 'wx:model-value-path',
+      modelFilter: 'wx:model-filter',
       for: 'wx:for',
       forIndex: 'wx:for-index',
       forItem: 'wx:for-item',
@@ -128,6 +129,7 @@ module.exports = {
       modelProp: 'a:model-prop',
       modelEvent: 'a:model-event',
       modelValuePath: 'a:model-value-path',
+      modelFilter: 'a:model-filter',
       for: 'a:for',
       forIndex: 'a:for-index',
       forItem: 'a:for-item',
@@ -195,6 +197,7 @@ module.exports = {
       modelProp: 's-model-prop',
       modelEvent: 's-model-event',
       modelValuePath: 's-model-value-path',
+      modelFilter: 's-model-filter',
       for: 's-for',
       forIndex: 's-for-index',
       forItem: 's-for-item',
@@ -243,7 +246,7 @@ module.exports = {
           }
           arr.push(`${key}:${value}`)
         }
-        return ` {${arr.join(',')}} `
+        return `({${arr.join(',')}})`
       }
     },
     wxs: {
@@ -261,6 +264,7 @@ module.exports = {
       modelProp: 'qq:model-prop',
       modelEvent: 'qq:model-event',
       modelValuePath: 'qq:model-value-path',
+      modelFilter: 'qq:model-filter',
       for: 'qq:for',
       forIndex: 'qq:for-index',
       forItem: 'qq:for-item',
@@ -313,10 +317,10 @@ module.exports = {
       }
     },
     wxs: {
-      tag: 'ts',
+      tag: 'sjs',
       module: 'module',
       src: 'src',
-      ext: '.ts',
+      ext: '.sjs',
       templatePrefix: 'module.exports = \n'
     },
     directive: {
@@ -327,6 +331,7 @@ module.exports = {
       modelProp: 'tt:model-prop',
       modelEvent: 'tt:model-event',
       modelValuePath: 'tt:model-value-path',
+      modelFilter: 'tt:model-filter',
       for: 'tt:for',
       forIndex: 'tt:for-index',
       forItem: 'tt:for-item',
@@ -335,6 +340,13 @@ module.exports = {
       dynamicStyle: 'tt:style',
       ref: 'tt:ref',
       show: 'tt:show'
+    }
+  },
+  web: {
+    directive: {
+      if: 'v-if',
+      elseif: 'v-else-if',
+      else: 'v-else'
     }
   }
 }

@@ -8,12 +8,11 @@ const jsonCompilerPath = normalize.lib('json-compiler/index')
 const templatePreprocessorPath = normalize.lib('template-compiler/preprocessor')
 const wxsLoaderPath = normalize.lib('wxs/wxs-loader')
 const wxmlLoaderPath = normalize.lib('wxml/wxml-loader')
+const wxssLoaderPath = normalize.lib('wxss/loader')
 const config = require('./config')
-const stringifyQuery = require('./utils/stringify-query')
-
-// internal lib loaders
 const selectorPath = normalize.lib('selector')
 const extractorPath = normalize.lib('extractor')
+const addQuery = require('./utils/add-query')
 
 // check whether default js loader exists
 const hasBabel = !!tryRequire('babel-loader')
@@ -64,7 +63,7 @@ function ensureBang (loader) {
   }
 }
 
-function resolveLoaders (options, moduleId, isProduction, hasScoped, hasComment, usingComponents, needCssSourceMap, projectRoot = '') {
+function resolveLoaders (options, moduleId, isProduction, hasScoped, hasComment, usingComponents, needCssSourceMap, projectRoot) {
   let cssLoaderOptions = ''
   let wxmlLoaderOptions = ''
   let jsonCompilerOptions = ''
@@ -75,7 +74,8 @@ function resolveLoaders (options, moduleId, isProduction, hasScoped, hasComment,
   wxmlLoaderOptions += '?root=' + projectRoot
   jsonCompilerOptions += '?root=' + projectRoot
   // 由于css-loader@1.0之后不再支持root，暂时不允许在css中使用/开头的路径，后续迁移至postcss-loader再进行支持
-  // cssLoaderOptions += (cssLoaderOptions ? '&' : '?') + 'root=' + projectRoot
+  // 现在切回css-loader@0.28.11了，先加回来和原生小程序保持一致
+  cssLoaderOptions += (cssLoaderOptions ? '&' : '?') + 'root=' + projectRoot + '&importLoaders=1&extract=true'
 
   const defaultLoaders = {
     html: wxmlLoaderPath + wxmlLoaderOptions,
@@ -136,23 +136,21 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
     )
   }
 
-  function addQueryMode (request, mode) {
-    if (!mode) {
-      return request
+  function processQuery (request, mode, type) {
+    let addQueryObj = {}
+    let removeKeys
+    if (mode) {
+      addQueryObj.mode = mode
     }
-    const queryIndex = request.indexOf('?')
-    let query
-    let resource = request
-    if (queryIndex >= 0) {
-      query = request.substr(queryIndex)
-      resource = request.substr(0, queryIndex)
-    }
-    let queryObj = loaderUtils.parseQuery(query || '?')
-    queryObj.mode = mode
-    return resource + stringifyQuery(queryObj)
+    // 为了使js模块全局唯一，避免闭包变量存在多份，删除js模块的分包标记
+    // 该逻辑有问题，模块复用后后续分包不会再执行component初始化函数，导致wx找不到组件
+    // if (type === 'script') {
+    //   removeKeys = 'packageName'
+    // }
+    return addQuery(request, addQueryObj, removeKeys)
   }
 
-  function getRequestString (type, part, index, scoped) {
+  function getRequestString (type, part, index = 0, scoped) {
     return loaderUtils.stringifyRequest(
       loaderContext,
       // disable all configuration loaders
@@ -162,32 +160,34 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
       // select the corresponding part from the mpx file
       getSelectorString(type, index) +
       // the url to the actual mpx file, including remaining requests
-      addQueryMode(rawRequest, part.mode)
+      processQuery(rawRequest, part.mode, type)
     )
   }
 
-  function getRequireForSrc (type, impt, index, scoped) {
-    return 'require(' + getSrcRequestString(type, impt, index, scoped) + ')'
+  function getRequireForSrc (type, impt, index, scoped, prefix, withIssuer) {
+    return 'require(' + getSrcRequestString(type, impt, index, scoped, prefix, withIssuer) + ')'
   }
 
-  function getImportForSrc (type, impt, index, scoped) {
+  function getImportForSrc (type, impt, index, scoped, prefix) {
     return (
       'import __' + type + '__ from ' +
-      getSrcRequestString(type, impt, index, scoped)
+      getSrcRequestString(type, impt, index, scoped, prefix)
     )
   }
 
-  function getNamedExportsForSrc (type, impt, index, scoped) {
+  function getNamedExportsForSrc (type, impt, index, scoped, prefix) {
     return (
       'export * from ' +
-      getSrcRequestString(type, impt, index, scoped)
+      getSrcRequestString(type, impt, index, scoped, prefix)
     )
   }
 
-  function getSrcRequestString (type, impt, index, scoped) {
+  function getSrcRequestString (type, impt, index = 0, scoped, prefix = '!', withIssuer) {
+    let loaderString = type === 'script' ? '' : prefix + getLoaderString(type, impt, index, scoped, withIssuer)
+    let src = impt.src
     return loaderUtils.stringifyRequest(
       loaderContext,
-      '!!' + getLoaderString(type, impt, index, scoped) + addQueryMode(impt.src, impt.mode)
+      loaderString + processQuery(src, impt.mode, type)
     )
   }
 
@@ -198,8 +198,7 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
       modules: true
     }
     const OPTIONS = {
-      localIdentName: '[hash:base64]',
-      importLoaders: 1
+      localIdentName: '[hash:base64]'
     }
     return loader.replace(/((?:^|!)css(?:-loader)?)(\?[^!]*)?/, (m, $1, $2) => {
       // $1: !css-loader
@@ -233,11 +232,11 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
       .join('!')
   }
 
-  function getLoaderString (type, part, index, scoped) {
+  function getLoaderString (type, part, index, scoped, withIssuer) {
     let loader = getRawLoaderString(type, part, index, scoped)
     const lang = getLangString(type, part)
     if (type !== 'script' && type !== 'wxs') {
-      loader = getExtractorString(type, index) + loader
+      loader = getExtractorString(type, index, withIssuer) + loader
     }
     if (preLoaders[lang]) {
       loader = loader + ensureBang(preLoaders[lang])
@@ -256,6 +255,10 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
     }
   }
 
+  function replaceCssLoader (rawLoader) {
+    return rawLoader.replace(/css(?:-loader)?/, wxssLoaderPath)
+  }
+
   function getRawLoaderString (type, part, index, scoped) {
     let lang = (part.lang && part.lang !== config[srcMode].typeExtMap.template.slice(1)) ? part.lang : defaultLang[type]
 
@@ -264,19 +267,21 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
       // style compiler that needs to be applied for all styles
       styleCompiler = styleCompilerPath + '?' +
         JSON.stringify({
-          id: moduleId,
+          moduleId,
           scoped: !!scoped,
           sourceMap: needCssSourceMap,
-          transRpx: options.transRpx,
-          comment: options.comment,
-          designWidth: options.designWidth
+          transRpx: options.transRpx
         })
       // normalize scss/sass/postcss if no specific loaders have been provided
       if (!loaders[lang]) {
         if (postcssExtensions.indexOf(lang) !== -1) {
           lang = 'css'
         } else if (lang === 'sass') {
-          lang = 'sass?indentedSyntax'
+          lang = `sass?${JSON.stringify({
+            sassOptions: {
+              indentedSyntax: true
+            }
+          })}`
         } else if (lang === 'scss') {
           lang = 'sass'
         }
@@ -291,7 +296,8 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
         hasScoped,
         hasComment,
         isNative,
-        moduleId
+        moduleId,
+        root: projectRoot
       }
       templateCompiler = templateCompilerPath + '?' + JSON.stringify(templateCompilerOptions)
     }
@@ -318,6 +324,7 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
         } else {
           loader = ensureBang(loader) + ensureBang(styleCompiler)
         }
+        loader = replaceCssLoader(loader)
       }
 
       if (type === 'template') {
@@ -335,6 +342,7 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
           return ensureBang(defaultLoaders.html) + ensureBang(templateCompiler) + ensureBang(templatePreprocessor)
         case 'styles':
           loader = addCssModulesToLoader(defaultLoaders.css, part, index)
+          loader = replaceCssLoader(loader)
           return ensureBang(loader) + ensureBang(styleCompiler) + ensureBang(ensureLoader(lang))
         case 'script':
           return ensureBang(defaultLoaders.js) + ensureBang(ensureLoader(lang))
@@ -348,7 +356,7 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
     }
   }
 
-  function getSelectorString (type, index = 0) {
+  function getSelectorString (type, index) {
     return ensureBang(
       selectorPath +
       '?type=' +
@@ -359,7 +367,7 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
     )
   }
 
-  function getExtractorString (type, index = 0) {
+  function getExtractorString (type, index, withIssuer) {
     return ensureBang(
       extractorPath +
       '?type=' +
@@ -367,7 +375,7 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
         ? type
         : 'customBlocks') +
       '&index=' + index +
-      '&resource=' + loaderContext.resource
+      (withIssuer ? '&issuerResource=' + loaderContext.resource : '')
     )
   }
 

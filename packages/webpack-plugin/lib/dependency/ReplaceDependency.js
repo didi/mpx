@@ -1,4 +1,3 @@
-'use strict'
 const NullDependency = require('webpack/lib/dependencies/NullDependency')
 
 class ReplaceDependency extends NullDependency {
@@ -20,7 +19,7 @@ class ReplaceDependency extends NullDependency {
 
 ReplaceDependency.Template = class ReplaceDependencyTemplate {
   apply (dep, source) {
-    source.replace(dep.range[0], dep.range[1] - 1, dep.replacement)
+    source.replace(dep.range[0], dep.range[1] - 1, '/* mpx replace */ ' + dep.replacement)
   }
 }
 

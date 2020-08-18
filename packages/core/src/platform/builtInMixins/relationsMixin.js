@@ -1,5 +1,4 @@
-import { type } from '../../helper/utils'
-import { is } from '../../helper/env'
+import { isObject } from '../../helper/utils'
 
 const targets = []
 let curTarget = null
@@ -39,7 +38,7 @@ function transferPath (relations, base) {
 }
 
 export default function relationsMixin (mixinType) {
-  if (is('ali') && mixinType === 'component') {
+  if (__mpx_mode__ === 'ali' && mixinType === 'component') {
     return {
       methods: {
         getRelationNodes (path) {
@@ -58,9 +57,9 @@ export default function relationsMixin (mixinType) {
                     list.push(child)
                   }
                 } else {
-                  const childrenType = type(child.props.children)
-                  if (childrenType === 'Object' || childrenType === 'Array') {
-                    const slotChildren = childrenType !== 'Array' ? [child.props.children] : child.props.children
+                  const children = child.props.children
+                  if (isObject(children)) {
+                    const slotChildren = Array.isArray(children) ? children : [children]
                     this.mpxCollectChildComponent(slotChildren, list)
                   }
                 }

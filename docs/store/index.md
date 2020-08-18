@@ -43,6 +43,8 @@ const store = createStore({
     }
   }
 })
+
+export default store
 ```
 
 现在，你可以通过 store.state 来获取状态对象，以及通过 store.commit 方法触发状态变更：
@@ -77,6 +79,8 @@ const store = createStore({
     }
   }
 })
+
+export default store
 ```
 
 ``` js
@@ -384,6 +388,7 @@ Action 类似于 mutation，不同在于：
 
 ``` js
 import {createStore} from '@mpxjs/core'
+
 const store = createStore({
   state: {
     count: 0
@@ -401,6 +406,8 @@ const store = createStore({
     }
   }
 })
+
+export default store
 ```
 
 Action 函数接受一个 context 对象，因此你可以调用 `context.commit` 提交一个 mutation，或者通过 `context.rootState`、`context.state` 和 `context.getters` 来获取全局state、局部state 和 全局 getters。
@@ -557,6 +564,7 @@ actions: {
 
 ``` js
 import {createStore} from '@mpxjs/core'
+
 const moduleA = {
   state: { ... },
   mutations: { ... },
@@ -579,6 +587,8 @@ const store = createStore({
 
 store.state.a // -> moduleA 的状态
 store.state.b // -> moduleB 的状态
+
+export default store
 ```
 
 ### 模块的局部状态
@@ -631,6 +641,35 @@ const moduleA = {
 }
 ```
 
+### 模块在组件中的引入方式
+
+``` js
+const store = createStore({
+  modules: {
+    a: {
+      state: {
+        name: 1
+      },
+      getters: {
+        getName: s => s.name
+      }
+    },
+    b: moduleB
+  }
+})
+
+createComponent({
+  computed: {
+    // mapState引入module方式有两种
+    ...store.mapState({
+      test: 'a.name'
+    }),
+    ...store.mapState('a', ['name']),
+    ...store.mapGetters('getName') // 由于没有提供namespace概念，所以getters都是全局的，类似的还有mutations & actions
+  }
+})
+```
+
 # 多实例
 
 允许创建多实例，各store实例彼此互相独立，状态互不干扰，不需要考虑命名空间的问题，而且可以随时动态创建一个新的store，更灵活且移植性更高。相对较于[modules](#module)，更推荐多实例模式
@@ -644,6 +683,8 @@ const moduleA = {
 例子：
 
 ```js
+import {createStore} from '@mpxjs/core'
+
 const store1 = createStore({
   state: {
     a: 1
@@ -691,6 +732,8 @@ const store2 = createStore({
     store1
   }
 })
+
+export {store1, store2}
 ```
 
 ### 多store注入下的'store.mapGetters、store.mapMuations、store.mapActions'
@@ -748,11 +791,12 @@ const store2 = createStore({
 // 组件内部使用store
 createComponent({
   computed: {
-    ...store2.mapGetters(['getB', 'store1.getA'])
-  },
-  methods: {
-    ...store2.mapMutations(['setB', 'store1.setA']),
-    ...store2.mapActions(['actionB', 'store1.actionA'])
+    ...store2.mapGetters(['getB']),
+    // 对于依赖store1的引入，可以使用以下两种方式，类似的mapMutations、mapActions, mapState
+    ...store2.mapgetters({
+      getA: 'store1.getA'
+    }),
+    ...store2.mapGetters('store1', ['getA'])
   }
 })
 ```

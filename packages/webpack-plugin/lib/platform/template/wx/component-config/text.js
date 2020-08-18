@@ -5,10 +5,26 @@ module.exports = function ({ print }) {
 
   return {
     test: TAG_NAME,
+    web (tag, { el }) {
+      if (el.hasEvent) {
+        el.isBuiltIn = true
+      }
+      if (el.isBuiltIn) {
+        return 'mpx-text'
+      } else {
+        return 'span'
+      }
+    },
     props: [
       {
         test: /^(decode)$/,
         swan: baiduPropLog
+      },
+      {
+        test: /^(selectable|space|decode|use-built-in)$/,
+        web (prop, { el }) {
+          el.isBuiltIn = true
+        }
       }
     ]
   }

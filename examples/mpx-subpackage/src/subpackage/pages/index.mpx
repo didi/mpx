@@ -1,0 +1,15 @@
+<template>
+  <view>这里是subPackage</view>
+</template>
+
+<script>
+  import { createPage } from '@mpxjs/core'
+
+  createPage({
+    onLoad () {}
+  })
+</script>
+
+<script type="application/json">
+  {}
+</script>

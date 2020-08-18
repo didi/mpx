@@ -2,9 +2,9 @@
 
 小程序对于图片资源存在一些限制，使得习惯开发web应用的开发者面对小程序时无法理解差异性
 
-mpx提供了[@mpxjs/url-loader](/compilationEnhance.md/#mpxjsurl-loader)对小程序中各种资源加载方式进行处理。
+~~mpx提供了[@mpxjs/url-loader](/compilationEnhance/index.md#mpxjsurl-loader)对小程序中各种资源加载方式进行处理。~~ (该loader已被默认整合进 MpxWebpackPlugin.loader)
 
-本文会从使用的角度出发，介绍小程序既有的对图像资源的限制，以及`@mpxjs/url-loader`是如何解决这些问题。
+本文会从使用的角度出发，介绍小程序既有的对图像资源的限制，以及 MpxWebpackPlugin.loader 是如何解决这些问题。
 
 ----
 ## 引用线上资源
@@ -41,21 +41,6 @@ webpackconfig = {
 * 在`<style>`中使用本地资源
 
   小程序不支持在`.wxss`的样式中使用本地资源，因此`@mpxjs/url-loader`会对`<style>`中的图片做强制base64
-  
-  **webpack.config.js**
-  ```js
-  webpackconfig = {
-    module: {
-      rules: [
-        {
-          test: /\.(png|jpe?g|gif|svg)(\?.*)?$/,
-          loader: '@mpxjs/url-loader',
-          options: /* 强制转换，所以options不做限制 */
-        }
-      ]
-    }
-  }
-  ```
 
   **index.mpx**
   ```html
@@ -67,12 +52,8 @@ webpackconfig = {
   ```
   > 编译后变成base64
 
-* `<image>`组件src属性使用本地资源
-
-  小程序既可以用路径方式引用本地图片资源，也可以用base64进行内联
+* `<image> / <cover-image>`组件src属性使用本地资源，@mpxjs/webpack-plugin提供了urlLoader来处理本地图片资源。
   
-  设置`@mpxjs/url-loader`的`limit`，资源体积超过`limit`的做打包处理
-
   **webpack.config.js**
   ```js
   webpackconfig = {
@@ -80,11 +61,9 @@ webpackconfig = {
       rules: [
         {
           test: /\.(png|jpe?g|gif|svg)(\?.*)?$/,
-          loader: '@mpxjs/url-loader',
-          options: {
-            limit: 10000,
+          loader: MpxWebpackPlugin.urlLoader({
             name: 'img/[name].[ext]'
-          } 
+          })
         }
       ]
     }
@@ -96,39 +75,6 @@ webpackconfig = {
   <template>
     <view>
       <image src='./bg2.png'/>
-    <view>
-  </template>
-  ```
-
-* `<cover-image>`组件src属性使用本地资源
-
-  `<cover-image>`只能引入线上资源或者通过路径引入本地资源，无法base64。
-  
-  可以在资源地址后面加上查询字符串`?fallback`禁止base64
-  
-  **webpack.config.js**
-  ```js
-  webpackconfig = {
-    module: {
-      rules: [
-        {
-          test: /\.(png|jpe?g|gif|svg)(\?.*)?$/,
-          loader: '@mpxjs/url-loader',
-          options: {
-            limit: 10000,
-            name: 'img/[name].[ext]'
-          } 
-        }
-      ]
-    }
-  }
-  ```
-
-   **index.mpx**
-  ```html
-  <template>
-    <view>
-      <cover-image src='./bg2.png?fallback'/>
     <view>
   </template>
   ```
@@ -151,11 +97,9 @@ webpackconfig = {
     rules: [
       {
         test: /\.(png|jpe?g|gif|svg)(\?.*)?$/,
-        loader: '@mpxjs/url-loader',
-        otions: {
-          limit: 10000,
+        loader: MpxWebpackPlugin.urlLoader({
           name: 'img/[name].[ext]'
-        } 
+        })
       }
     ]
   }
@@ -174,12 +118,14 @@ webpackconfig = {
 
 <script>
   import {createPage} from '@mpxjs/core'
+  // 如果是有限张图片
   import dark from './dark.png'
   import light from './light.png'
 
   createPage({
     data: {
-      count: 0
+      count: 0,
+      imageId: '1'
     },
     computed: {
       dynamicSrc() {
@@ -188,6 +134,10 @@ webpackconfig = {
       dynamicStyle() {
         let url = (this.count % 2 !== 0) ? dark : light
         return `background-image: url(${url})`
+      },
+      background () {
+        // 如果期望整个bgs文件夹里的图片都被纳入
+        return require('./bgs/' + this.imageId + '.jpg')
       }
     },
     methods: {

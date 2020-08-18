@@ -1,4 +1,4 @@
-const htmlMinifier = require('html-minifier')
+// const htmlMinifier = require('html-minifier')
 const attrParse = require('./attributesParser')
 const loaderUtils = require('loader-utils')
 const url = require('url')
@@ -7,6 +7,7 @@ const hash = require('hash-sum')
 const config = require('../config')
 const getMainCompilation = require('../utils/get-main-compilation')
 const createHelpers = require('../helpers')
+const isUrlRequest = require('../utils/is-url-request')
 
 function randomIdent () {
   return 'xxxHTMLLINKxxx' + Math.random() + Math.random() + 'xxx'
@@ -39,11 +40,12 @@ module.exports = function (content) {
 
   const usingComponents = []
 
-  const mainCompilation = getMainCompilation(this._compilation)
-  const mode = mainCompilation.__mpx__.mode
-  const globalSrcMode = mainCompilation.__mpx__.srcMode
+  const mpx = getMainCompilation(this._compilation).__mpx__
+  const mode = mpx.mode
+  const globalSrcMode = mpx.srcMode
   const localSrcMode = loaderUtils.parseQuery(this.resourceQuery || '?').mode
   const srcMode = localSrcMode || globalSrcMode
+  const customAttributes = options.attributes || mpx.attributes || []
 
   const {
     getSrcRequestString
@@ -58,10 +60,10 @@ module.exports = function (content) {
     needCssSourceMap,
     srcMode,
     isNative,
-    options.root
+    options.root || ''
   )
 
-  const attributes = ['image:src', 'audio:src', 'video:src', 'cover-image:src', 'import:src', 'include:src', `${config[mode].wxs.tag}:${config[mode].wxs.src}`]
+  const attributes = ['image:src', 'audio:src', 'video:src', 'cover-image:src', 'import:src', 'include:src', `${config[mode].wxs.tag}:${config[mode].wxs.src}`].concat(customAttributes)
 
   const links = attrParse(content, function (tag, attr) {
     const res = attributes.find(function (a) {
@@ -77,7 +79,7 @@ module.exports = function (content) {
   const data = {}
   content = [content]
   links.forEach(function (link) {
-    if (!loaderUtils.isUrlRequest(link.value, options.root)) return
+    if (!isUrlRequest(link.value, options.root)) return
 
     if (link.value.indexOf('mailto:') > -1) return
 
@@ -102,34 +104,32 @@ module.exports = function (content) {
   content.reverse()
   content = content.join('')
 
-  if (isProduction) {
-    const minimizeOptions = Object.assign({}, options);
-    [
-      'removeComments',
-      'removeCommentsFromCDATA',
-      'removeCDATASectionsFromCDATA',
-      'caseSensitive',
-      'collapseWhitespace',
-      'conservativeCollapse',
-      'useShortDoctype',
-      'keepClosingSlash',
-      'minifyJS',
-      'minifyCSS',
-      'removeScriptTypeAttributes',
-      'removeStyleTypeAttributes'
-    ].forEach(function (name) {
-      if (typeof minimizeOptions[name] === 'undefined') {
-        minimizeOptions[name] = true
-      }
-    })
-
-    const KEY_IGNORECUSTOM_FRAGMENTS = 'ignoreCustomFragments'
-    if (typeof minimizeOptions[KEY_IGNORECUSTOM_FRAGMENTS] === 'undefined') {
-      minimizeOptions[KEY_IGNORECUSTOM_FRAGMENTS] = [/{{[\s\S]*?}}/]
-    }
-
-    content = htmlMinifier.minify(content, minimizeOptions)
-  }
+  // if (isProduction) {
+  //   const minimizeOptions = Object.assign({}, options);
+  //   [
+  //     'removeComments',
+  //     'removeCommentsFromCDATA',
+  //     'removeCDATASectionsFromCDATA',
+  //     'caseSensitive',
+  //     'collapseWhitespace',
+  //     'conservativeCollapse',
+  //     'useShortDoctype',
+  //     'keepClosingSlash',
+  //     'removeScriptTypeAttributes',
+  //     'removeStyleTypeAttributes'
+  //   ].forEach(function (name) {
+  //     if (typeof minimizeOptions[name] === 'undefined') {
+  //       minimizeOptions[name] = true
+  //     }
+  //   })
+  //
+  //   const KEY_IGNORECUSTOM_FRAGMENTS = 'ignoreCustomFragments'
+  //   if (typeof minimizeOptions[KEY_IGNORECUSTOM_FRAGMENTS] === 'undefined') {
+  //     minimizeOptions[KEY_IGNORECUSTOM_FRAGMENTS] = [/{{[\s\S]*?}}/]
+  //   }
+  //
+  //   content = htmlMinifier.minify(content, minimizeOptions)
+  // }
 
   content = JSON.stringify(content)
 
@@ -147,10 +147,10 @@ module.exports = function (content) {
     switch (link.tag) {
       case 'import':
       case 'include':
-        requestString = getSrcRequestString('template', { src, mode: srcMode }, -1)
+        requestString = getSrcRequestString('template', { src, mode: localSrcMode }, -1)
         break
       case config[mode].wxs.tag:
-        requestString = getSrcRequestString('wxs', { src, mode: srcMode }, -1)
+        requestString = getSrcRequestString('wxs', { src, mode: localSrcMode }, -1, undefined, '!!')
         break
       default:
         requestString = JSON.stringify(src)

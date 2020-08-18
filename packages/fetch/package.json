@@ -1,15 +1,17 @@
 {
   "name": "@mpxjs/fetch",
-  "version": "2.0.12",
+  "version": "2.5.32",
   "description": "mpx fetch lib",
   "author": "donghongping",
   "license": "ISC",
   "main": "src/index.js",
+  "types": "@types/index.d.ts",
   "directories": {
     "src": "src"
   },
   "files": [
-    "src"
+    "src",
+    "@types"
   ],
   "publishConfig": {
     "registry": "https://registry.npmjs.org"
@@ -24,5 +26,8 @@
   },
   "scripts": {
     "test": "echo \"Error: run tests from root\" && exit 1"
+  },
+  "peerDependencies": {
+    "@mpxjs/core": "^2.3.0"
   }
 }

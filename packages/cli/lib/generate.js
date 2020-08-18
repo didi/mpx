@@ -46,7 +46,9 @@ module.exports = function generate (name, src, dest, done) {
     opts.metalsmith.before(metalsmith, opts, helpers)
   }
 
-  metalsmith.use(askQuestions(opts.prompts))
+  (opts.mock
+    ? metalsmith.use(mock(opts.mock))
+    : metalsmith.use(askQuestions(opts.prompts)))
     .use(computed(opts.computed))
     .use(filterFiles(opts.filters))
     .use(renderTemplateFiles(opts.skipInterpolation))
@@ -84,6 +86,20 @@ function askQuestions (prompts) {
   return (files, metalsmith, done) => {
     ask(prompts, metalsmith.metadata(), done)
   }
+}
+
+function mock (mock) {
+  return (files, metalsmith, done) => {
+    processMock(mock, metalsmith.metadata(), done)
+  }
+}
+
+function processMock (mock, data, done) {
+  if (!mock) {
+    return done()
+  }
+  Object.assign(data, mock)
+  done()
 }
 
 function computed (computed) {

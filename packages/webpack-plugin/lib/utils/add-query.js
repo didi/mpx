@@ -1,15 +1,29 @@
-const parseQuery = require('loader-utils').parseQuery
+const parseRequest = require('./parse-request')
 const stringifyQuery = require('./stringify-query')
+const type = require('./type')
 
-module.exports = function (request, data) {
-  const queryIndex = request.indexOf('?')
-  let query
-  let resource = request
-  if (queryIndex >= 0) {
-    query = request.substr(queryIndex)
-    resource = request.substr(0, queryIndex)
+// 默认为非强行覆盖原query，如需强行覆盖传递force为false
+module.exports = function (request, data = {}, removeKeys, force) {
+  const { rawResourcePath: resourcePath, loaderString, queryObj: queryObjRaw } = parseRequest(request)
+  const queryObj = Object.assign({}, queryObjRaw)
+  if (force) {
+    Object.assign(queryObj, data)
+  } else {
+    Object.keys(data).forEach((key) => {
+      if (!queryObj.hasOwnProperty(key)) {
+        queryObj[key] = data[key]
+      }
+    })
   }
-  let queryObj = parseQuery(query || '?')
-  Object.assign(queryObj, data)
-  return resource + stringifyQuery(queryObj)
+
+  if (removeKeys) {
+    if (type(removeKeys) === 'String') {
+      removeKeys = [removeKeys]
+    }
+    removeKeys.forEach((key) => {
+      delete queryObj[key]
+    })
+  }
+
+  return (loaderString ? `${loaderString}!` : '') + resourcePath + stringifyQuery(queryObj)
 }

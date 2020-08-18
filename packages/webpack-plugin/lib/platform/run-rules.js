@@ -15,22 +15,25 @@ function defaultNormalizeTest (rawTest, context) {
 }
 
 module.exports = function runRules (rules = [], input, options = {}) {
-  const { target, testKey, normalizeTest, data, waterfall } = options
+  const { mode, testKey, normalizeTest, data = {}, meta = {}, waterfall } = options
   rules = rules.rules || rules
   for (let i = 0; i < rules.length; i++) {
     const rule = rules[i]
     const tester = (normalizeTest || defaultNormalizeTest)(rule.test, rule)
     const testInput = testKey ? input[testKey] : input
-    const processor = rule[target]
-    const meta = {}
+    const processor = rule[mode]
+    // mode传入data中供processor使用
+    Object.assign(data, {
+      mode
+    })
     if (tester(testInput, meta) && processor) {
       let result = processor.call(rule, input, data, meta)
-      if (waterfall) {
-        input = result || input
-      } else {
-        return result
+      meta.processed = true
+      if (result !== undefined) {
+        input = result
       }
+      if (!waterfall) break
     }
   }
-  if (waterfall) return input
+  return input
 }

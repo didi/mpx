@@ -1,18 +1,17 @@
 import {
-  enumerableKeys,
-  extend
+  isEmptyObject, makeMap
 } from '../../../helper/utils'
-
 import MPXProxy from '../../../core/proxy'
-import customeKey from '../../../core/customOptionKeys'
+import builtInKeysMap from '../builtInKeysMap'
 import mergeOptions from '../../../core/mergeOptions'
+import { LIFECYCLE } from './lifecycle'
 
 function transformProperties (properties) {
   if (!properties) {
     return {}
   }
   const newProps = {}
-  enumerableKeys(properties).forEach(key => {
+  Object.keys(properties).forEach(key => {
     let rawFiled = properties[key]
     let newFiled = null
     if (rawFiled === null) {
@@ -25,12 +24,12 @@ function transformProperties (properties) {
         type: rawFiled
       }
     } else {
-      newFiled = extend({}, rawFiled)
+      newFiled = Object.assign({}, rawFiled)
     }
     newFiled.observer = function (value, oldValue) {
-      if (this.$mpxProxy) {
+      if (this.__mpxProxy) {
         this[key] = value
-        this.$mpxProxy.updated()
+        this.__mpxProxy.updated()
       }
     }
     newProps[key] = newFiled
@@ -43,13 +42,22 @@ function transformApiForProxy (context, currentInject) {
   Object.defineProperties(context, {
     setData: {
       get () {
-        return this.$mpxProxy.setData.bind(this.$mpxProxy)
+        return this.__mpxProxy.forceUpdate.bind(this.__mpxProxy)
       },
       configurable: true
     },
     __getInitialData: {
       get () {
-        return () => context.data
+        return (options) => {
+          const data = {}
+          const validData = Object.assign({}, options.data, options.properties, options.props)
+          for (const key in context.data) {
+            if (context.data.hasOwnProperty(key) && validData.hasOwnProperty(key)) {
+              data[key] = context.data[key]
+            }
+          }
+          return data
+        }
       },
       configurable: false
     },
@@ -87,13 +95,15 @@ function transformApiForProxy (context, currentInject) {
 
 function filterOptions (options) {
   const newOptions = {}
-  const ignoreProps = customeKey
   Object.keys(options).forEach(key => {
-    if (ignoreProps.indexOf(key) !== -1 || (key === 'data' && typeof options[key] === 'function')) {
+    if (builtInKeysMap[key]) {
       return
     }
     if (key === 'properties' || key === 'props') {
-      newOptions['properties'] = transformProperties(Object.assign({}, options['properties'], options['props']))
+      newOptions.properties = transformProperties(Object.assign({}, options.properties, options.props))
+    } else if (key === 'methods' && options.__pageCtor__) {
+      // 构造器为Page时抽取所有methods方法到顶层
+      Object.assign(newOptions, options[key])
     } else {
       newOptions[key] = options[key]
     }
@@ -101,38 +111,64 @@ function filterOptions (options) {
   return newOptions
 }
 
-function getRootMixin (mixin) {
+function getRootMixins (mixin) {
   const supportBehavior = typeof Behavior !== 'undefined'
+  const rootMixins = []
   if (supportBehavior) {
-    return {
-      // eslint-disable-next-line no-undef
-      behaviors: [Behavior(mixin)]
+    const behavior = {}
+    const pageHooksMap = makeMap(LIFECYCLE.PAGE_HOOKS)
+    Object.keys(mixin).forEach((key) => {
+      // 除页面生命周期之外使用behaviors进行mixin
+      if (!pageHooksMap[key]) {
+        behavior[key] = mixin[key]
+        delete mixin[key]
+      }
+    })
+    if (!isEmptyObject(behavior)) {
+      rootMixins.push({
+        // eslint-disable-next-line no-undef
+        behaviors: [Behavior(behavior)]
+      })
     }
-  } else {
-    return mixin
   }
+  rootMixins.push(mixin)
+  return rootMixins
+}
+
+function initProxy (context, rawOptions, currentInject) {
+  // 提供代理对象需要的api
+  transformApiForProxy(context, currentInject)
+  // 缓存options
+  context.$rawOptions = rawOptions
+  // 创建proxy对象
+  const mpxProxy = new MPXProxy(rawOptions, context)
+  context.__mpxProxy = mpxProxy
+  // 组件监听视图数据更新, attached之后才能拿到properties
+  context.__mpxProxy.created()
 }
 
 export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
-  const rootMixins = [getRootMixin({
-    attached () {
-      // 提供代理对象需要的api
-      transformApiForProxy(this, currentInject)
-      // 缓存options
-      this.$rawOptions = rawOptions
-      // 创建proxy对象
-      const mpxProxy = new MPXProxy(rawOptions, this)
-      this.$mpxProxy = mpxProxy
-      // 组件监听视图数据更新, attached之后才能拿到properties
-      this.$mpxProxy.created()
+  const hookNames = ['attached', 'ready', 'detached']
+  // 当用户传入page作为构造器构造页面时，修改所有关键hooks
+  if (rawOptions.__pageCtor__) {
+    hookNames[0] = 'onLoad'
+    hookNames[1] = 'onReady'
+    hookNames[2] = 'onUnload'
+  }
+  const rootMixins = getRootMixins({
+    [hookNames[0]] () {
+      if (!this.__mpxProxy) {
+        initProxy(this, rawOptions, currentInject)
+      }
     },
-    ready () {
-      this.$mpxProxy && this.$mpxProxy.mounted()
+    [hookNames[1]] () {
+      this.__mpxProxy && this.__mpxProxy.mounted()
     },
-    detached () {
-      this.$mpxProxy && this.$mpxProxy.destroyed()
+    [hookNames[2]] () {
+      this.__mpxProxy && this.__mpxProxy.destroyed()
     }
-  })]
+  })
+
   rawOptions.mixins = rawOptions.mixins ? rootMixins.concat(rawOptions.mixins) : rootMixins
   rawOptions = mergeOptions(rawOptions, type, false)
   return filterOptions(rawOptions)

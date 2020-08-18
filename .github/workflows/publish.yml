@@ -1,0 +1,29 @@
+# github action of publish package to npm via lerna
+name: lerna-publish-package
+
+on:
+  push:
+    tags:
+      - v*
+
+jobs:
+#  发布任务不检查代码风格
+#  lint:
+#    runs-on: ubuntu-latest
+#    steps:
+#      - uses: actions/checkout@v2
+#      - run: npm run lint
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-node@v1
+      with:
+        node-version: 12
+        registry-url: https://registry.npmjs.org/
+    - run: |
+        npm i
+        echo "//registry.npmjs.org/:_authToken=\${NODE_AUTH_TOKEN}" >> $HOME/.npmrc 2> /dev/null
+        npm run lerna:publish
+      env:
+        NODE_AUTH_TOKEN: ${{secrets.npm_token}}

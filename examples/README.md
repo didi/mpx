@@ -8,7 +8,10 @@
 2. progressive 渐进接入mpx，适用于已有项目如何接入mpx
 3. webview 展示@mpxjs/webview包在跨平台场景里H5中的使用
 4. useuilib 在mpx中使用第三方组件库的示例
-5. 未完待续，欢迎有问题的同学在issue中提出想了解的方面，合适我们将提供对应的demo
+5. subpackage 在mpx中使用分包加载
+6. cloud 在mpx中使用云开发
+7. i18n 多语言在mpx中的使用
+8. 未完待续，欢迎有问题的同学在issue中提出想了解的方面，合适我们将提供对应的demo
 
 ## 使用方式
 

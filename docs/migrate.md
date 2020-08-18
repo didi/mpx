@@ -4,6 +4,8 @@ mpx2.0是完全兼容1.0版本的，显著的区别是支持了跨小程序平�
 
 新创建的项目不用关心迁移问题，直接开发即可，使用1.0时期的包等都不受影响。
 
+需要注意的一点是对小程序提供的API调用，我们使用了@mpxjs/api-proxy来抹平差异，同时之前的promisify被整合到了这个包里，所以1.x升级2.x需要替换@mpxjs/promisify为@mpxjs/api-proxy，使用方式为 `mpx.use(apiProxy, {usePromise: true})` ，同时，所有的api调用应从wx.xxx变更为mpx.xxx，比如wx.navigateTo写为mpx.navigateTo，**参数保持和微信一致，平台差异方面api-proxy做了抹平**。
+
 老项目可以有两种升级方式：
 
 ## 拷贝升级
@@ -79,8 +81,7 @@ const webpackConf = {
       {
         test: /\.(png|jpe?g|gif|svg)$/,
         loader: MpxWebpackPlugin.urlLoader({
-          name: 'img/[name].[ext]',
-          limit: 10000
+          name: 'img/[name].[ext]'
         })
       }
     ]

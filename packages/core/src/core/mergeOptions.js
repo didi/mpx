@@ -1,51 +1,95 @@
-import { type, merge, extend, aliasReplace, findItem } from '../helper/utils'
+import { isObject, aliasReplace, findItem, makeMap } from '../helper/utils'
 import { getConvertRule } from '../convertor/convertor'
+import { error, warn } from '../helper/log'
+import builtInKeysMap from '../platform/patch/builtInKeysMap'
+import { implemented } from './implement'
 
-let CURRENT_HOOKS = []
+let currentHooksMap = {}
 let curType
 let convertRule
+let mpxCustomKeysMap
 
 export default function mergeOptions (options = {}, type, needConvert = true) {
+  // 缓存混合模式下的自定义属性列表
+  mpxCustomKeysMap = makeMap(options.mpxCustomKeysForBlend || [])
   // needConvert为false，表示衔接原生的root配置，那么此时的配置都是当前原生环境支持的配置，不需要转换
   convertRule = getConvertRule(needConvert ? options.mpxConvertMode || 'default' : 'local')
   // 微信小程序使用Component创建page
-  curType = type === 'app' || !convertRule.mode ? type : convertRule.mode
-  CURRENT_HOOKS = convertRule.lifecycle[curType]
+  if (type === 'page' && convertRule.pageMode) {
+    curType = convertRule.pageMode
+  } else {
+    curType = type
+  }
+  currentHooksMap = makeMap(convertRule.lifecycle[curType])
   const newOptions = {}
   extractMixins(newOptions, options, needConvert)
   if (needConvert) {
     proxyHooks(newOptions)
     // 自定义补充转换函数
-    typeof convertRule.convert === 'function' && convertRule.convert(newOptions)
+    typeof convertRule.convert === 'function' && convertRule.convert(newOptions, type)
+    // 当存在lifecycle2时，在转换后将currentHooksMap替换，以确保后续合并hooks时转换后的hooks能够被正确处理
+    if (convertRule.lifecycle2) {
+      const implementedHooks = convertRule.lifecycle[curType].filter((hook) => {
+        return implemented[hook]
+      })
+      currentHooksMap = makeMap(convertRule.lifecycle2[curType].concat(implementedHooks))
+    }
   }
+  newOptions.mpxCustomKeysForBlend = Object.keys(mpxCustomKeysMap)
   return transformHOOKS(newOptions)
+}
+
+export function getMixin (mixin = {}) {
+  // 用于ts反向推导mixin类型
+  return mixin.mixins ? extractMixins({}, mixin, true) : mixin
 }
 
 function extractMixins (mergeOptions, options, needConvert) {
   // 如果编译阶段behaviors都被当做mixins处理，那么进行别名替换
-  if (options.behaviors && type(options.behaviors[0]) === 'Object') {
+  if (options.behaviors && options.behaviors[0] && options.behaviors[0].__mpx_behaviors_to_mixins__) {
     aliasReplace(options, 'behaviors', 'mixins')
   }
   if (options.mixins) {
-    for (const mix of options.mixins) {
-      if (typeof mix === 'string') {
-        console.error(`【MPX CONVERT ERROR】at ${global.currentResource || ''} : Don't support for convert the string-formatted【behavior】into mixin`)
+    for (const mixin of options.mixins) {
+      if (typeof mixin === 'string') {
+        error('String-formatted builtin behaviors is not supported to be converted to mixins.', options.mpxFileResource)
       } else {
-        extractMixins(mergeOptions, mix, needConvert)
+        extractMixins(mergeOptions, mixin, needConvert)
       }
     }
   }
+  // 出于业务兼容考虑暂时不移除pageShow/pageHide
+  // options = extractPageShow(options)
   options = extractLifetimes(options)
   options = extractPageHooks(options)
   if (needConvert) {
     options = extractObservers(options)
   }
   mergeMixins(mergeOptions, options)
+  return mergeOptions
 }
 
+// function extractPageShow (options) {
+//   if (options.pageShow || options.pageHide) {
+//     const mixin = {
+//       pageLifetimes: {}
+//     }
+//     if (options.pageShow) {
+//       mixin.pageLifetimes.show = options.pageShow
+//       delete options.pageShow
+//     }
+//     if (options.pageHide) {
+//       mixin.pageLifetimes.hide = options.pageHide
+//       delete options.pageHide
+//     }
+//     mergeToArray(options, mixin, 'pageLifetimes')
+//   }
+//   return options
+// }
+
 function extractLifetimes (options) {
-  if (type(options.lifetimes) === 'Object') {
-    const newOptions = extend({}, options, options.lifetimes)
+  if (isObject(options.lifetimes)) {
+    const newOptions = Object.assign({}, options, options.lifetimes)
     delete newOptions.lifetimes
     return newOptions
   } else {
@@ -58,15 +102,17 @@ function extractObservers (options) {
   const props = Object.assign({}, options.properties, options.props)
   const watch = Object.assign({}, options.watch)
   let extract = false
+
   function mergeWatch (key, config) {
     if (watch[key]) {
-      type(watch[key]) !== 'Array' && (watch[key] = [watch[key]])
+      if (!Array.isArray(watch[key])) watch[key] = [watch[key]]
     } else {
       watch[key] = []
     }
     watch[key].push(config)
     extract = true
   }
+
   Object.keys(props).forEach(key => {
     const prop = props[key]
     if (prop && prop.observer) {
@@ -79,6 +125,7 @@ function extractObservers (options) {
           typeof callback === 'function' && callback.call(this, ...rest)
         },
         deep: true,
+        // 延迟触发首次回调，处理转换支付宝时在observer中查询组件的行为，如vant/picker中，如不考虑该特殊情形可用immediate代替
         immediateAsync: true
       })
     }
@@ -102,7 +149,7 @@ function extractObservers (options) {
             break
           }
         }
-        if (key.indexOf('.**')) {
+        if (key.indexOf('.**') > -1) {
           deep = true
           key = key.replace('.**', '')
         }
@@ -127,7 +174,7 @@ function extractObservers (options) {
     })
   }
   if (extract) {
-    const newOptions = extend({}, options)
+    const newOptions = Object.assign({}, options)
     newOptions.watch = watch
     delete newOptions.observers
     return newOptions
@@ -137,15 +184,16 @@ function extractObservers (options) {
 
 function extractPageHooks (options) {
   if (curType === 'blend') {
-    const newOptions = extend({}, options)
+    const newOptions = Object.assign({}, options)
     const methods = newOptions.methods
-    const PAGE_HOOKS = convertRule.lifecycle.page
+    const pageHooksMap = makeMap(convertRule.lifecycle.page)
     methods && Object.keys(methods).forEach(key => {
-      if (PAGE_HOOKS.indexOf(key) > -1) {
+      if (pageHooksMap[key]) {
         if (newOptions[key]) {
-          console.warn('【MPX ERROR】', `Don't redefine the lifecycle [${key}]， it will use the methods's lifecycle if redefined`)
+          warn(`Duplicate lifecycle [${key}] is defined in root options and methods, please check.`, options.mpxFileResource)
         }
         newOptions[key] = methods[key]
+        delete methods[key]
       }
     })
     return newOptions
@@ -156,27 +204,31 @@ function extractPageHooks (options) {
 
 function mergeMixins (parent, child) {
   for (let key in child) {
-    if (CURRENT_HOOKS.indexOf(key) > -1) {
+    if (currentHooksMap[key]) {
       mergeHooks(parent, child, key)
-    } else if (key === 'data') {
+    } else if (/^(data|dataFn)$/.test(key)) {
       mergeDataFn(parent, child, key)
-    } else if (/^(computed|properties|props|methods|proto)$/.test(key)) {
-      mergeSimpleProps(parent, child, key)
-    } else if (/^(watch|pageLifetimes|observers)$/.test(key)) {
+    } else if (/^(computed|properties|props|methods|proto|options|relations)$/.test(key)) {
+      mergeShallowObj(parent, child, key)
+    } else if (/^(watch|observers|pageLifetimes|events)$/.test(key)) {
       mergeToArray(parent, child, key)
-    } else if (/^behaviors$/.test(key)) {
+    } else if (/^behaviors|externalClasses$/.test(key)) {
       mergeArray(parent, child, key)
-    } else if (key !== 'mixins') {
+    } else if (key !== 'mixins' && key !== 'mpxCustomKeysForBlend') {
+      // 收集非函数的自定义属性，在Component创建的页面中挂载到this上，模拟Page创建页面的表现
+      if (curType === 'blend' && typeof child[key] !== 'function' && !builtInKeysMap[key]) {
+        mpxCustomKeysMap[key] = true
+      }
       mergeDefault(parent, child, key)
     }
   }
 }
 
-function mergeDefault (parent, child, key) {
+export function mergeDefault (parent, child, key) {
   parent[key] = child[key]
 }
 
-function mergeHooks (parent, child, key) {
+export function mergeHooks (parent, child, key) {
   if (parent[key]) {
     parent[key].push(child[key])
   } else {
@@ -184,46 +236,41 @@ function mergeHooks (parent, child, key) {
   }
 }
 
-function mergeSimpleProps (parent, child, key) {
+export function mergeShallowObj (parent, child, key) {
   let parentVal = parent[key]
   const childVal = child[key]
   if (!parentVal) {
     parent[key] = parentVal = {}
   }
-  extend(parentVal, childVal)
+  Object.assign(parentVal, childVal)
 }
 
 function mergeDataFn (parent, child, key) {
-  const parentVal = parent[key]
-  const childVal = child[key]
-  if (!parentVal) {
-    if (typeof childVal === 'function') {
-      parent[key] = childVal
-    } else {
-      parent[key] = {}
-      merge(parent[key], childVal)
-    }
-  } else if (typeof parentVal !== 'function' && typeof childVal !== 'function') {
-    mergeData(parent, child, key)
+  let parentVal = parent[key]
+  let childVal = child[key]
+
+  if (typeof parentVal === 'function' && key === 'data') {
+    parent.dataFn = parentVal
+    delete parent.data
+  }
+
+  if (typeof childVal !== 'function') {
+    mergeShallowObj(parent, child, 'data')
   } else {
-    parent[key] = function mergeFn () {
-      return merge(
-        typeof parentVal === 'function' ? parentVal.call(this, this) : parentVal,
-        typeof childVal === 'function' ? childVal.call(this, this) : childVal
-      )
+    parentVal = parent.dataFn
+    if (!parentVal) {
+      parent.dataFn = childVal
+    } else {
+      parent.dataFn = function mergeFn () {
+        const to = parentVal.call(this)
+        const from = childVal.call(this)
+        return Object.assign(to, from)
+      }
     }
   }
 }
 
-function mergeData (parent, child, key) {
-  const childVal = child[key]
-  if (!parent[key]) {
-    parent[key] = {}
-  }
-  merge(parent[key], childVal)
-}
-
-function mergeArray (parent, child, key) {
+export function mergeArray (parent, child, key) {
   const childVal = child[key]
   if (!parent[key]) {
     parent[key] = []
@@ -231,7 +278,7 @@ function mergeArray (parent, child, key) {
   parent[key] = parent[key].concat(childVal)
 }
 
-function mergeToArray (parent, child, key) {
+export function mergeToArray (parent, child, key) {
   let parentVal = parent[key]
   const childVal = child[key]
   if (!parentVal) {
@@ -241,27 +288,27 @@ function mergeToArray (parent, child, key) {
     if (key in parentVal) {
       let parent = parentVal[key]
       let child = childVal[key]
-      if (type(parent) !== 'Array') {
+      if (!Array.isArray(parent)) {
         parent = [parent]
       }
-      if (type(child) !== 'Array') {
+      if (!Array.isArray(child)) {
         child = [child]
       }
       parentVal[key] = parent.concat(child)
     } else {
-      parentVal[key] = type(childVal[key]) === 'Array' ? childVal[key] : [childVal[key]]
+      parentVal[key] = Array.isArray(childVal[key]) ? childVal[key] : [childVal[key]]
     }
   })
 }
 
 function composeHooks (target, includes) {
   Object.keys(target).forEach(key => {
-    if (!includes || includes.indexOf(key) !== -1) {
+    if (!includes || includes[key]) {
       const hooksArr = target[key]
       hooksArr && (target[key] = function (...args) {
         let result
         for (let i = 0; i < hooksArr.length; i++) {
-          if (type(hooksArr[i]) === 'Function') {
+          if (typeof hooksArr[i] === 'function') {
             const data = hooksArr[i].apply(this, args)
             data !== undefined && (result = data)
           }
@@ -281,7 +328,7 @@ function proxyHooks (options) {
     const newHooks = (options[key] || []).slice()
     const proxyArr = lifecycleProxyMap[key]
     proxyArr && proxyArr.forEach(lifecycle => {
-      if (CURRENT_HOOKS.indexOf(lifecycle) !== -1) {
+      if (options[lifecycle] && currentHooksMap[lifecycle]) {
         newHooks.push.apply(newHooks, options[lifecycle])
         delete options[lifecycle]
       }
@@ -291,14 +338,16 @@ function proxyHooks (options) {
 }
 
 function transformHOOKS (options) {
-  composeHooks(options, CURRENT_HOOKS)
+  composeHooks(options, currentHooksMap)
   options.pageLifetimes && composeHooks(options.pageLifetimes)
+  options.events && composeHooks(options.events)
   if (curType === 'blend' && convertRule.support) {
-    const COMPONENT_HOOKS = convertRule.lifecycle.component
+    const componentHooksMap = makeMap(convertRule.lifecycle.component)
     for (const key in options) {
       // 使用Component创建page实例，页面专属生命周期&自定义方法需写在methods内部
-      if (typeof options[key] === 'function' && key !== 'data' && COMPONENT_HOOKS.indexOf(key) === -1) {
-        (options.methods || (options.methods = {}))[key] = options[key]
+      if (typeof options[key] === 'function' && key !== 'dataFn' && !componentHooksMap[key]) {
+        if (!options.methods) options.methods = {}
+        options.methods[key] = options[key]
         delete options[key]
       }
     }

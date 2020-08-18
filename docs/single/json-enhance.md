@@ -1,5 +1,27 @@
 # JSON增强特性
 
+## 动态与注释
+
+作为配置文件，json最大的缺陷是不支持注释，然后是不够灵活。此处感谢社区同学贡献的解决方案：支持js。
+
+json块我们除了可以写`<script type="application/json"> …… </script>`，还可以这样：
+
+```html
+<script name="json">
+const pages = __mpx_mode__ === 'wx' ? [
+  'main/xxx',
+  'sub/xxx'
+] : [
+  'test/xxx'
+] // 可以为不同环境动态书写配置
+module.exports = {
+  usingComponents: {
+    aComponents: '../xxxxx' // 可以打注释 xxx组件
+  }
+}
+</script>
+```
+
 ## packages
 
 ### 背景
@@ -84,7 +106,7 @@ project
 > 分包是小程序平台提供的原生能力，mpx是对该能力做了部分加强，目前微信的分包机制是最全面的，百度其次，支付宝暂时无此能力，请根据平台决定如何使用。
 
 - [普通分包](#普通分包)
-- [独立分包 / 分包预下载](#独立分包/分包预下载)
+- [分包预下载](#分包预下载)
 
 #### 普通分包
 
@@ -136,13 +158,11 @@ mpx中会将 app.mpx（入口文件，也不一定非要叫app.mpx） 中package
 
 分包加载的好处详见微信的文档。路径冲突的概率也大大降低，只需要保证root不同即可。
 
-#### 独立分包/分包预下载
+#### 分包预下载
 
 > 仅微信小程序提供该部分能力
 
 分包预下载是在json中新增一个 preloadRule 字段，mpx打包时候会原封不动把这个部分放到app.json中，所以只需要按照 [微信小程序官方文档 - 分包预下载](https://developers.weixin.qq.com/miniprogram/dev/framework/subpackages/preload.html) 配置即可。
-
-独立分包则需要在subpackages的相应分包项中多一个字段 `independent` 为 true。
 
 前面的普通分包中提到了subpackages是根据用户在package中通过增加query，key为root来指定分包名。我们进一步扩展了这个能力，允许用户传递更多的query。
 
@@ -156,7 +176,7 @@ mpx中会将 app.mpx（入口文件，也不一定非要叫app.mpx） 中package
       "./pages/index/index"
     ],
     "packages": [
-      "{npmPackage || relativePathToPackage}/index?root=indep&independent=true"
+      "{npmPackage || relativePathToPackage}/index?root=xxx&name=subpack1"
     ]
   }
 </script>
@@ -180,12 +200,12 @@ mpx中会将 app.mpx（入口文件，也不一定非要叫app.mpx） 中package
   ],
   "subPackages": [
     {
-      "root": "indep",
+      "name": "subpack1",
+      "root": "xxx",
       "pages": [
         "pages/other/other",
         "pages/other/other2"
-      ],
-      "independent": true
+      ]
     }
   ]
 }
@@ -218,14 +238,18 @@ app.mpx的json部分的tabBar里custom一项为true时，需要在 src 目录下
 
 ## 体积优化指南
 
-体积优化的主力还是依靠分包来做的，但主包、分包的代码还是webpack输出的，如果输出打包结果的时候，如果不少代码被同时打包输出到主包和分包里，就是一个可以优化的点。
+由于微信小程序限制主包体积为2M，较复杂的应用可能需要尽可能进行体积优化。
 
-1、尽量让分包用的代码和主包用的代码分离。
+分包是微信小程序中优化包体积的核心手段(类似于异步按需加载)，Mpx对其进行了完善的支持，可以精确地标记出分包only的资源。此外还可以从按需构建及分析构建结果等方面下手。
 
-比如分包页面中需要使用一个叫 utilA 的方法，主包页面中需要使用一个叫 utilB 的方法，如果你将这两个方法写在同一个 util.js 文件中，在两个mpx文件中分别引入，这个文件会被打包两次，分别放到主包和分包里，造成极大的空间浪费。
+1. 尽量让纯分包用的代码和主包用的代码分离（即让资源成为分包only的）
 
-2、在json里做最小声明，mpx本身提供了按需打包的能力，但按需是指按用户的声明，无法做到根据一个page是否被使用来打包。
+    - 比如分包页面中需要使用一个叫 utilA 的体积很大的方法，主包页面中需要使用一个叫 utilB 的方法，如果你将这两个方法写在同一个 util.js 文件中，util模块最终会被打包到主bundle中，造成没必要的主包体积增大。[更多参考](understanding/understanding.md#分包处理细节)
 
-比如分包单独开发再以npm包形式发布这种开发模式中，可能会出现npm包开发者方为了调试组件编写了多份page引用对应组件仅为调试方便，最终集成时就会让这些调试页面占用空间。
+2. 在json里做最小声明，mpx本身提供了按需打包的能力，但按需是指按用户的声明，无法做到根据一个page是否被使用来打包
 
-可以另提供一份json文件和app.mpx同级，比如叫index.json，开发包时候以app.mpx为入口，集成时候以index.json为入口。
+    - 比如分包单独开发再以npm包形式发布这种开发模式中，可能会出现npm包开发者方为了调试组件编写了多份page引用对应组件仅为调试方便，最终集成时就会让这些调试页面占用空间。可以另提供一份json文件和app.mpx同级，比如叫index.json，开发包时候以app.mpx为入口，集成时候以index.json为入口。
+
+3. 使用analysis工具分析体积大的原因
+
+    - 构建时加上 `--report` 参数，会生成构建图，即可查看整个项目的体积构成来源了，进而分析是哪些模块占据了体积。webpack生态，webpack-bundle-analyzer插件提供的。
