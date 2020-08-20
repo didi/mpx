@@ -1,7 +1,7 @@
 // Type definitions for @mpxjs/core
 // Project: https://github.com/didi/mpx
 // Definitions by: hiyuki <https://github.com/hiyuki>
-// TypeScript Version: 3.5
+// TypeScript Version: 3.9.6
 
 /// <reference types="miniprogram-api-typings" />
 
@@ -103,7 +103,11 @@ interface Mixin<D, P, C, M> {
   [index: string]: any
 }
 
-type UnboxMixinField<T extends Mixin<{}, {}, {}, {}>, F> = F extends keyof T ? T[F] : {}
+type UnboxMixinField<T extends Mixin<{}, {}, {}, {}>, F> = T extends any
+  ? F extends keyof T
+    ? T[F]
+    : {}
+  : {}
 
 type UnboxMixinsField<Mi extends Array<any>, F> =
   UnionToIntersection<RequiredPropertiesForUnion<UnboxMixinField<ArrayType<Mi>, F>>>
@@ -111,7 +115,7 @@ type UnboxMixinsField<Mi extends Array<any>, F> =
 interface ComponentOpt<D, P, C, M, Mi extends Array<any>> extends Partial<WechatMiniprogram.Component.Lifetimes> {
   data?: D
   properties?: P
-  computed?: C & ThisType<ComponentInsInComputed<D, P, C, M, Mi>>
+  computed?: C & ThisType<ComponentIns<D, P, C, M, Mi>>
   methods?: M
   mixins?: Mi
   watch?: WatchField
@@ -184,12 +188,6 @@ type WxComponentIns<D> =
   ReplaceWxComponentIns
   & WechatMiniprogram.Component.InstanceProperties
   & WechatMiniprogram.Component.InstanceMethods<D>
-
-type ComponentInsInComputed<D, P, C, M, Mi extends Array<any>> =
-  GetDataType<D> & UnboxMixinsField<Mi, 'data'> &
-  M & UnboxMixinsField<Mi, 'methods'> &
-  GetPropsType<P & UnboxMixinsField<Mi, 'properties'>> &
-  C & UnboxMixinsField<Mi, 'computed'> & WxComponentIns<D> & MpxComponentIns
 
 type ComponentIns<D, P, C, M, Mi extends Array<any>> =
   GetDataType<D> & UnboxMixinsField<Mi, 'data'> &
