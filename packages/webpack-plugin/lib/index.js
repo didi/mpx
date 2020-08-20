@@ -1294,7 +1294,7 @@ if(!context.console) {
             const packageSizeThreshold = normalizeThreshold(packagesThreshold[packageName] || packagesThreshold)
             if (packageSize && packageSizeThreshold && packageSize > packageSizeThreshold) {
               const readablePackageName = packageName === 'main' ? '主包' : `${packageName}分包`
-              compilation.errors.push(`${prefix}的${readablePackageName}体积（${size}B）超过设定阈值（${sizeThreshold}B），请检查！`)
+              compilation.errors.push(`${prefix}的${readablePackageName}体积（${packageSize}B）超过设定阈值（${packageSizeThreshold}B），请检查！`)
             }
           }
         }
