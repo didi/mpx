@@ -21,7 +21,7 @@ let isOrigin
 window.addEventListener('message', (event) => {
   isOrigin = event.data === event.origin
   if (isOrigin) {
-    env = 'web';
+    env = 'web'
     window.parent.postMessage({
       type: 'load',
       detail: {
@@ -46,10 +46,10 @@ if (systemUA.indexOf('AlipayClient') > -1) {
     detail: {
       load: true
     }
-  }, '*');
+  }, '*')
 }
 
-function postMessage(type, data) {
+function postMessage (type, data) {
   let eventType
   switch (type) {
     case 'postMessage':
@@ -80,7 +80,7 @@ function postMessage(type, data) {
       detail: {
         data
       }
-    }, '*');
+    }, '*')
   } else {
     data({
       miniprogram: false
@@ -132,7 +132,7 @@ const getWebviewApi = (sdkReady) => {
           console.log(`此环境不支持 ${item} 方法`)
           return
         }
-        return postMessage(item, ...args);
+        return postMessage(item, ...args)
         // console.log(`${env}小程序不支持 ${item} 方法`)
       } else {
         return sdkReady.then(() => {
