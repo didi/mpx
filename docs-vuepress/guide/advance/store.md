@@ -789,6 +789,5 @@ const store = createStoreWithThis({
 })
 ```
 
-
-详细的使用方式及推导规则请查看 [Typescript 支持](todo add link)章节。
+详细的使用方式及推导规则请查看 [Typescript 支持](../tool/ts.md)章节。
 

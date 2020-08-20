@@ -22,7 +22,7 @@ export default {
   }
 }
 ```
-```js
+```html
 <template>
   <view class="list">
     <view wx:for="{{listData}}" wx:key="index">{{item}}</view>
@@ -44,7 +44,7 @@ export default {
   })
 </script>
 ```
-```js
+```shell
 // 输出结果为
 mixins ready: 手机
 component ready: 手机

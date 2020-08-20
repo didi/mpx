@@ -4,7 +4,7 @@
 
 为此，我们引入了 packages 的概念来解决依赖问题。
 
-后来微信原生增加 后来微信原生增加了 [分包加载](https://developers.weixin.qq.com/miniprogram/dev/framework/subpackages.html) 能力，支持多人协作场景和包体积控制。
+后来微信原生增加了 [分包加载](https://developers.weixin.qq.com/miniprogram/dev/framework/subpackages.html) 能力，支持多人协作场景和包体积控制。
 
 ## packages
 
@@ -55,7 +55,7 @@
 这样依赖的开发者可以不用考虑自己在被依赖时页面路径是怎么样的，也可以直接将调试用的app.mpx作为依赖入口直接暴露出去，
 对于主app的开发者来说也不需要了解依赖内部的细节，只需要在packages中声明自己所需的依赖即可
 
-#### 注意事项
+### 注意事项
 
 - 依赖的开发者在自己的入口 app.mpx 中注册页面时对于本地页面一定要使用相对路径进行注册，否则在主app中进行编译时会找不到对应的页面
 - 不管是用 json 还是 mpx 格式定义 package 入口，编译时永远只会解析 json 且只会关注 json 中的 pages 和 packages 域，其余所有东西在主app编译时都会被忽略
@@ -80,13 +80,14 @@ project
 
 微信文档中有以下三种分包，mpx 对这些能力都做了较好的支持。
 
-> 分包是小程序平台提供的原生能力，mpx是对该能力做了部分加强，目前微信的分包机制是最全面的，百度其次，支付宝暂时无此能力，请根据平台决定如何使用。
+> 分包是小程序平台提供的原生能力，mpx是对该能力做了部分加强，目前各大主流小程序平台都已支持分包，且框架在可能的情况下进行了抹平。
 
 - [普通分包](#普通分包)
-- [独立分包](#独立分包)
 - [分包预下载](#分包预下载)
 
-#### 普通分包
+### 普通分包
+
+todo 说明分包与packages的相似性，mpx支持使用packages添加?root配置分包，同时也支持原生分包配置
 
 mpx 中会将 app.mpx（入口文件，也不一定非要叫app.mpx） 中 packages 域下的路径带 root 为 key 的 query 则被解析认为是使用分包加载。
 
@@ -136,59 +137,7 @@ mpx 中会将 app.mpx（入口文件，也不一定非要叫app.mpx） 中 packa
 
 分包加载的好处详见微信的文档。路径冲突的概率也大大降低，只需要保证root不同即可。
 
-#### 独立分包
-
-> 仅微信小程序提供该部分能力
-
-独立分包是小程序中一种特殊类型的分包，可以独立于主包和其他分包运行。在 json 的subpackages 字段中对应的分包配置项中定义 independent 字段声明对应分包为独立分包，详细可查看[微信文档](https://developers.weixin.qq.com/miniprogram/dev/framework/subpackages/independent.html)。
-
-前面的普通分包中提到了 subpackages 是根据用户在 package 中通过增加query，key为root来指定分包名。我们进一步扩展了这个能力，允许用户传递更多的query。
-
-**独立分包示例**
-```html
-// @file src/app.mpx
-<script type="application/json">
-  {
-    "pages": [
-      "./pages/index/index"
-    ],
-    "packages": [
-      "{npmPackage || relativePathToPackage}/index?root=xxx&independent=true"
-    ]
-  }
-</script>
-
-// @file src/packages/index.mpx (子包的入口文件)
-<script type="application/json">
-  {
-    "pages": [
-      "./pages/other/other",
-      "./pages/other/other2"
-    ]
-  }
-</script>
-```
-
-打包结果：dist/app.json
-```json
-{
-  "pages": [
-    "pages/index/index"
-  ],
-  "subPackages": [
-    {
-      "root": "xxx",
-      "pages": [
-        "pages/other/other",
-        "pages/other/other2"
-      ],
-      "independent": true
-    }
-  ]
-}
-```
-
-#### 分包预下载
+### 分包预下载
 
 分包预下载是在 json中 新增一个 preloadRule 字段，mpx 打包时候会原封不动把这个部分放到 app.json 中，所以只需要按照 [微信小程序官方文档 - 分包预下载](https://developers.weixin.qq.com/miniprogram/dev/framework/subpackages/preload.html) 或者 [支付宝小程序官方文档 - 分包预下载](https://opendocs.alipay.com/mini/framework/subpackages) 配置即可。
 
@@ -255,7 +204,7 @@ mpx 中会将 app.mpx（入口文件，也不一定非要叫app.mpx） 中 packa
 }
 ```
 
-#### 分包注意事项
+### 分包注意事项
 
 当我们使用分包加载时，依赖包内的跳转路径需注意，比如要跳转到other2页面  
 不用分包时会是：wx.jump/pages/other/other2  
