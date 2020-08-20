@@ -17,6 +17,19 @@ const ENV_PATH_MAP = {
 }
 
 let env = null
+let isOrigin
+window.addEventListener('message', (event) => {
+  isOrigin = event.data === event.origin
+  if (isOrigin) {
+    env = 'web';
+    window.parent.postMessage({
+      type: 'load',
+      detail: {
+        load: true
+      }
+    }, '*')
+  }
+}, false)
 // 环境判断
 let systemUA = navigator.userAgent
 if (systemUA.indexOf('AlipayClient') > -1) {
@@ -61,7 +74,7 @@ function postMessage(type, data) {
       eventType = 'getEnv'
       break
   }
-  if (type !== 'getEnv') {
+  if (type !== 'getEnv' && isOrigin) {
     window.parent.postMessage({
       type: eventType,
       detail: {
@@ -114,7 +127,7 @@ const getWebviewApi = (sdkReady) => {
     const apiName = typeof webviewApiNameList[item] === 'string' ? webviewApiNameList[item] : !webviewApiNameList[item][env] ? false : typeof webviewApiNameList[item][env] === 'string' ? webviewApiNameList[item][env] : item
 
     webviewApiList[item] = (...args) => {
-      if (!env) {
+      if (env === 'web') {
         if (item === 'switchTab') {
           console.log(`此环境不支持 ${item} 方法`)
           return

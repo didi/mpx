@@ -1,10 +1,11 @@
 <template>
-    <iframe class="mpx-iframe" :src="src"></iframe>
+  <iframe id="mpxIframe" class="mpx-iframe" :src="src"></iframe>
 </template>
 
 <script>
   import getInnerListeners, { getCustomEvent } from './getInnerListeners'
-  import {redirectTo, navigateTo, navigateBack, reLaunch} from '@mpxjs/api-proxy/src/web/api/index'
+  import { redirectTo, navigateTo, navigateBack, reLaunch } from '@mpxjs/api-proxy/src/web/api/index'
+
   const eventLoad = 'load'
   const eventError = 'error'
   const eventMessage = 'message'
@@ -13,8 +14,9 @@
       return {
         origin: '',
         messageList: [],
-        isLoaded: false,
-        isJump: false
+        Loaded: false,
+        isActived: false,
+        mpxIframe: null
       }
     },
     props: {
@@ -33,8 +35,24 @@
         domain = this.src.split('/')
         if (domain[2]) {
           domain = domain[0] + '//' + domain[2]
-        }else{
-          domain= ''
+        } else {
+          domain = ''
+        }
+        return domain
+      },
+      getMainOrigin () {
+        let domain
+        const src = location.href
+        let index = src.indexOf('?')
+        if (index > -1) {
+          domain = src.substr(0, index)
+          return domain
+        }
+        domain = src.split('/')
+        if (domain[2]) {
+          domain = domain[0] + '//' + domain[2]
+        } else {
+          domain = ''
         }
         return domain
       }
@@ -49,44 +67,54 @@
           this.$emit(eventError, getCustomEvent(eventError, loadData))
         }
       }, 1500)
+    },
+    mounted () {
+      this.mpxIframe = document.querySelector('#mpxIframe')
+      this.mpxIframe.addEventListener('load', (event) => {
+        event.currentTarget.contentWindow.postMessage(this.getMainOrigin, '*')
+      })
       window.addEventListener('message', (event) => {
-        if (this.isJump) {
+        const data = event.data
+        const value = data.detail && data.detail.data && data.detail.data
+        if (!this.isActived) {
           return
         }
-        if (event.origin === this.getOrigin) {
-          const data = event.data
-          const value = data.detail && data.detail.data && data.detail.data
-          switch (data.type) {
-            case eventMessage:
-              this.messageList.push(value.data)
-              break
-            case 'navigateTo':
-              this.isJump = true
-              navigateTo(value)
-              break
-            case 'navigateBack':
-              this.isJump = true
-              value ? navigateBack(value) : navigateBack()
-              break
-            case 'redirectTo':
-              this.isJump = true
-              redirectTo(value)
-              break
-            case 'reLaunch':
-              this.isJump = true
-              reLaunch(value)
-              break
-            case 'load':
-              this.Loaded = true
-              const loadData = {
-                src: this.src
-              }
-              this.$emit(eventLoad, getCustomEvent(eventLoad, loadData))
-          }
+        switch (data.type) {
+          case eventMessage:
+            this.messageList.push(value.data)
+            break
+          case 'navigateTo':
+            this.isActived = false
+            navigateTo(value)
+            break
+          case 'navigateBack':
+            this.isActived = false
+            value ? navigateBack(value) : navigateBack()
+            break
+          case 'redirectTo':
+            this.isActived = false
+            redirectTo(value)
+            break
+          case 'reLaunch':
+            this.isActived = false
+            reLaunch(value)
+            break
+          case 'load':
+            this.Loaded = true
+            const loadData = {
+              src: this.src
+            }
+            this.$emit(eventLoad, getCustomEvent(eventLoad, loadData))
         }
-      }, false)
+      })
     },
-    destroyed() {
+    activated () {
+      this.isActived = true
+      // this.eventHandle =
+      // this.mpxIframe = document.querySelector('#mpxIframe')
+      // this.mpxIframe.addEventListener('load', this.eventHandle)
+    },
+    destroyed () {
       let data = {
         type: 'message',
         data: this.messageList
@@ -97,13 +125,13 @@
 </script>
 
 <style>
-    .mpx-iframe {
-        width: 100%;
-        height: 100%;
-        position: absolute;
-        left: 0;
-        top: 0;
-        right: 0;
-        bottom: 0;
-    }
+  .mpx-iframe {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+  }
 </style>

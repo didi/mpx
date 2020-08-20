@@ -102,7 +102,21 @@
     baidu: ['swan', 'webView'],
     tt: ['tt', 'miniProgram']
   };
-  var env = null; // 环境判断
+  var env = null;
+  var isOrigin;
+  window.addEventListener('message', function (event) {
+    isOrigin = event.data === event.origin;
+
+    if (isOrigin) {
+      env = 'web';
+      window.parent.postMessage({
+        type: 'load',
+        detail: {
+          load: true
+        }
+      }, '*');
+    }
+  }, false); // 环境判断
 
   var systemUA = navigator.userAgent;
 
@@ -155,7 +169,7 @@
         break;
     }
 
-    if (type !== 'getEnv') {
+    if (type !== 'getEnv' && isOrigin) {
       window.parent.postMessage({
         type: eventType,
         detail: {
@@ -215,7 +229,7 @@
           args[_key] = arguments[_key];
         }
 
-        if (!env) {
+        if (env === 'web') {
           if (item === 'switchTab') {
             console.log("\u6B64\u73AF\u5883\u4E0D\u652F\u6301 ".concat(item, " \u65B9\u6CD5"));
             return;
