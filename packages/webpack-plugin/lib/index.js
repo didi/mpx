@@ -1206,12 +1206,22 @@ if(!context.console) {
             }
           })
           const size = compilation.assets[name].size()
-          fillSizeReportGroups(entryModules, noEntryModules, packageName, 'assets', { name, size })
+          const identifier = assetInfo.modules[0].readableIdentifier(compilation.requestShortener) + (assetInfo.modules.length > 1 ? ` + ${assetInfo.modules.length - 1} modules` : '')
+          fillSizeReportGroups(entryModules, noEntryModules, packageName, 'assets', {
+            name,
+            identifier,
+            size
+          })
           assetsSizeInfo.assets.push({
             type: 'static',
             name,
             packageName,
-            size
+            size,
+            modules: assetInfo.modules.map((module) => {
+              return {
+                identifier: module.readableIdentifier(compilation.requestShortener)
+              }
+            })
           })
           fillPackagesSizeInfo(packageName, size)
           sizeSummary.staticSize += size
