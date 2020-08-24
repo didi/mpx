@@ -25,7 +25,7 @@ export default {
 ```html
 <template>
   <view class="list">
-    <view wx:for="{{listData}}" wx:key="index">{{item}}</view>
+    <view wx:for="{{list}}" wx:key="index">{{item}}</view>
   </view>
 </template>
 
@@ -36,7 +36,7 @@ export default {
   createComponent({
     mixins: [mixins],
     data: {
-      listData: ['手机', '电视', '电脑']
+      list: ['手机', '电视', '电脑']
     },
     ready () {
       console.log('component ready:', this.list.phone)
