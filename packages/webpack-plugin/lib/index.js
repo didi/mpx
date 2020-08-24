@@ -1214,7 +1214,7 @@ if(!context.console) {
             if (!identifier) identifier = moduleIdentifier
           })
           if (identifierSet.size > 1) identifier += ` + ${identifierSet.size - 1} modules`
-          
+
           fillSizeReportGroups(entryModules, noEntryModules, packageName, 'assets', {
             name,
             identifier,
