@@ -1206,7 +1206,15 @@ if(!context.console) {
             }
           })
           const size = compilation.assets[name].size()
-          const identifier = assetInfo.modules[0].readableIdentifier(compilation.requestShortener) + (assetInfo.modules.length > 1 ? ` + ${assetInfo.modules.length - 1} modules` : '')
+          const identifierSet = new Set()
+          let identifier = ''
+          assetInfo.modules.forEach((module) => {
+            const moduleIdentifier = module.readableIdentifier(compilation.requestShortener)
+            identifierSet.add(moduleIdentifier)
+            if (!identifier) identifier = moduleIdentifier
+          })
+          if (identifierSet.size > 1) identifier += ` + ${identifierSet.size - 1} modules`
+          
           fillSizeReportGroups(entryModules, noEntryModules, packageName, 'assets', {
             name,
             identifier,
@@ -1217,9 +1225,9 @@ if(!context.console) {
             name,
             packageName,
             size,
-            modules: assetInfo.modules.map((module) => {
+            modules: mapToArr(identifierSet, (identifier) => {
               return {
-                identifier: module.readableIdentifier(compilation.requestShortener)
+                identifier
               }
             })
           })
@@ -1368,8 +1376,8 @@ if(!context.console) {
       sortAndFormat(assetsSizeInfo.assets)
       assetsSizeInfo.assets.forEach((asset) => {
         if (asset.modules) sortAndFormat(asset.modules)
-      });
-      ['totalSize', 'staticSize', 'chunkSize', 'copySize'].forEach((key) => {
+      })
+      'totalSize|staticSize|chunkSize|copySize'.split('|').forEach((key) => {
         sizeSummary[key] = formatSize(sizeSummary[key])
       })
       groupsSizeInfo.forEach((groupSizeInfo) => {
@@ -1400,6 +1408,12 @@ if(!context.console) {
         groupsSizeInfo,
         assetsSizeInfo
       }
+
+      const fields = this.options.reportSize.fields || {}
+
+      'sizeSummary|groupsSizeInfo|assetsSizeInfo'.split('|').forEach((key) => {
+        if (fields.hasOwnProperty(key) && !fields[key]) delete reportData[key]
+      })
 
       const reportFilePath = path.resolve(compiler.outputPath, this.options.reportSize.filename || 'report.json')
       compiler.outputFileSystem.mkdirp(path.dirname(reportFilePath), (err) => {
