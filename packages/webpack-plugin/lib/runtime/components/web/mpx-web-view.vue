@@ -1,5 +1,5 @@
 <template>
-  <iframe id="mpxIframe" class="mpx-iframe" :src="src"></iframe>
+  <iframe ref="mpxIframe" class="mpx-iframe" :src="src"></iframe>
 </template>
 
 <script>
@@ -69,7 +69,7 @@
       }, 1500)
     },
     mounted () {
-      this.mpxIframe = document.querySelector('#mpxIframe')
+      this.mpxIframe = this.$refs.mpxIframe
       this.mpxIframe.addEventListener('load', (event) => {
         event.currentTarget.contentWindow.postMessage(this.getMainOrigin, '*')
       })
@@ -110,9 +110,6 @@
     },
     activated () {
       this.isActived = true
-      // this.eventHandle =
-      // this.mpxIframe = document.querySelector('#mpxIframe')
-      // this.mpxIframe.addEventListener('load', this.eventHandle)
     },
     destroyed () {
       let data = {
