@@ -16,7 +16,8 @@
         messageList: [],
         Loaded: false,
         isActived: false,
-        mpxIframe: null
+        mpxIframe: null,
+        isPostMessage: false
       }
     },
     props: {
@@ -25,22 +26,7 @@
       }
     },
     computed: {
-      getOrigin () {
-        let domain
-        let index = this.src.indexOf('?')
-        if (index > -1) {
-          domain = this.src.substr(0, index)
-          return domain
-        }
-        domain = this.src.split('/')
-        if (domain[2]) {
-          domain = domain[0] + '//' + domain[2]
-        } else {
-          domain = ''
-        }
-        return domain
-      },
-      getMainOrigin () {
+      isMainOrigin () {
         let domain
         const src = location.href
         let index = src.indexOf('?')
@@ -58,7 +44,6 @@
       }
     },
     created () {
-      let src = this.getOrigin
       setTimeout(() => {
         if (!this.Loaded) {
           const loadData = {
@@ -66,12 +51,12 @@
           }
           this.$emit(eventError, getCustomEvent(eventError, loadData))
         }
-      }, 1500)
+      }, 1000)
     },
     mounted () {
       this.mpxIframe = this.$refs.mpxIframe
       this.mpxIframe.addEventListener('load', (event) => {
-        event.currentTarget.contentWindow.postMessage(this.getMainOrigin, '*')
+        event.currentTarget.contentWindow.postMessage(this.isMainOrigin, '*')
       })
       window.addEventListener('message', (event) => {
         const data = event.data
@@ -81,6 +66,7 @@
         }
         switch (data.type) {
           case eventMessage:
+            this.isPostMessage = true
             this.messageList.push(value.data)
             break
           case 'navigateTo':
@@ -110,8 +96,22 @@
     },
     activated () {
       this.isActived = true
+      this.isPostMessage = false
+    },
+    deactivated () {
+      if (!this.isPostMessage) {
+        return
+      }
+      let data = {
+        type: 'message',
+        data: this.messageList
+      }
+      this.$emit(eventMessage, getCustomEvent(eventMessage, data))
     },
     destroyed () {
+      if (!this.isPostMessage) {
+        return
+      }
       let data = {
         type: 'message',
         data: this.messageList
