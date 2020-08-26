@@ -969,7 +969,7 @@ function getAndRemoveAttr (el, name, removeFromMap = true) {
   let list = el.attrsList
   for (let i = 0, l = list.length; i < l; i++) {
     if (list[i].name === name) {
-      val = list[i].value
+      val = list[i].value || true
       list.splice(i, 1)
       break
     }
@@ -1616,7 +1616,7 @@ function postProcessIf (el) {
     } else {
       attrs = [{
         name: config[mode].directive.else,
-        value: ''
+        value: undefined
       }]
     }
   }
