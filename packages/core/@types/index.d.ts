@@ -205,8 +205,6 @@ export function getMixin<D extends Data = {}, P extends Properties = {}, C = {},
   [index: string]: any
 }
 
-export function getComputed<C> (computed: C): C extends (...args: any[]) => any ? ReturnType<C> : C
-
 export function createPage<D extends Data = {}, P extends Properties = {}, C = {}, M extends Methods = {}, Mi extends Array<any> = []> (opt: ThisTypedPageOpt<D, P, C, M, Mi>, config?: createConfig): void
 
 export function createApp<T extends WechatMiniprogram.IAnyObject> (opt: WechatMiniprogram.App.Options<T>, config?: createConfig): void
@@ -457,7 +455,6 @@ export interface Mpx {
   createStore: typeof createStore
   createStoreWithThis: typeof createStoreWithThis
   getMixin: typeof getMixin
-  getComputed: typeof getComputed
   mixin: typeof injectMixins
   injectMixins: typeof injectMixins
   toPureObject: typeof toPureObject
