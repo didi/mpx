@@ -1,4 +1,5 @@
 const deindent = require('de-indent')
+const JSON5 = require('json5')
 const he = require('he')
 const config = require('../config')
 const normalize = require('../utils/normalize')
@@ -1173,7 +1174,7 @@ function processBindEvent (el) {
       const modelFilter = getAndRemoveAttr(el, config[mode].directive.modelFilter)
       let modelValuePathArr
       try {
-        modelValuePathArr = JSON.parse(modelValuePath)
+        modelValuePathArr = JSON5.parse(modelValuePath)
       } catch (e) {
         if (modelValuePath === '') {
           modelValuePathArr = []
