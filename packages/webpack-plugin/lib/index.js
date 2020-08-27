@@ -236,7 +236,8 @@ class MpxWebpackPlugin {
       const writedFileContentMap = new Map()
       const originalWriteFile = compiler.outputFileSystem.writeFile
       compiler.outputFileSystem.writeFile = (filePath, content, callback) => {
-        if (writedFileContentMap.has(filePath) && writedFileContentMap.get(filePath).equals(content)) {
+        const lastContent = writedFileContentMap.get(filePath)
+        if (Buffer.isBuffer(lastContent) ? lastContent.equals(content) : lastContent === content) {
           return callback()
         }
         writedFileContentMap.set(filePath, content)
