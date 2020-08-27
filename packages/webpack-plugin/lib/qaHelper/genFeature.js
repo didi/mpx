@@ -2,8 +2,8 @@
 *** 生成manifest文件features部分，https://doc.quickapp.cn/features/system/share.html
  */
 
- module.exports = function registerFeatures(wxPay, packageName, shareObj, qqObj, wxObj, weiboObj) {
-   const features = `[
+module.exports = function registerFeatures (wxPay, packageName, shareObj, qqObj, wxObj, weiboObj) {
+  let features = `[
         {"name": "system.resident"},
         {"name": "system.share"},
         {"name": "system.prompt"},
@@ -50,7 +50,7 @@
         {"name":"service.ad"},
         {"name": "service.alipay"}
       ]`
-    if (wxPay && wxPay.sign) {
+  if (wxPay && wxPay.sign) {
     features += ',\n'
     features += `
       {\n
@@ -62,10 +62,10 @@
         }\n
       }
     `
-    }
-    if (shareObj && shareObj.appSign) {
-      features += ',\n'
-      features += `{\n
+  }
+  if (shareObj && shareObj.appSign) {
+    features += ',\n'
+    features += `{\n
       "name": "service.share",\n
       "params": {\n
         "appSign": "${shareObj.appSign}",\n
@@ -104,4 +104,4 @@
     }\n`
   }
   return features
- }
+}
