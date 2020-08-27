@@ -1,3 +1,4 @@
+const registerFeatures = require('./genFeature')
 const ConcatSource = require('webpack-sources').ConcatSource
 
 module.exports = function (compilation, options, isProd) {
@@ -33,6 +34,10 @@ module.exports = function (compilation, options, isProd) {
       basicInfo,
       configInfo
     )
+    let features = `
+      "features": ${registerFeatures()}`
+    content.add(features)
+    content.add(`,`)
     // concat router
     let routerPrefix = `
       "router": {`
