@@ -7,7 +7,7 @@ const templateCompiler = require('../../../template-compiler/compiler')
 const parseMustache = templateCompiler.parseMustache
 const stringifyWithResolveComputed = templateCompiler.stringifyWithResolveComputed
 
-module.exports = function getSpec ({ warn, error }) {
+module.exports = function getSpec ({ warn, error, mode }) {
   const spec = {
     supportedModes: ['ali', 'swan', 'qq', 'tt', 'web'],
     // props预处理
@@ -383,6 +383,6 @@ module.exports = function getSpec ({ warn, error }) {
       ]
     }
   }
-  spec.rules = normalizeComponentRules(getComponentConfigs({ warn, error }).concat({}), spec)
+  spec.rules = normalizeComponentRules(getComponentConfigs({ warn, error }).concat({}), spec, mode)
   return spec
 }

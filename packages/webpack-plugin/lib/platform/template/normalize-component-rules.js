@@ -1,14 +1,14 @@
 const runRules = require('../run-rules')
 
-module.exports = function normalizeComponentRules (cfgs, spec) {
+module.exports = function normalizeComponentRules (cfgs, spec, mode) {
   return cfgs.map((cfg) => {
     const result = {}
     if (cfg.test) {
       result.test = cfg.test
     }
-    const supportedModes = cfg.supportedModes || spec.supportedModes
+    const targetMode = mode && [mode] || cfg.supportedModes || spec.supportedModes
     const eventRules = (cfg.event || []).concat(spec.event.rules)
-    supportedModes.forEach((mode) => {
+    targetMode.forEach((mode) => {
       result[mode] = function (el, data) {
         data = Object.assign({}, data, { el, eventRules })
         const testKey = 'name'
