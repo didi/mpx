@@ -1,5 +1,6 @@
 const path = require('path')
 const async = require('async')
+const JSON5 = require('json5')
 const hash = require('hash-sum')
 const SingleEntryPlugin = require('webpack/lib/SingleEntryPlugin')
 const parseRequest = require('./utils/parse-request')
@@ -60,7 +61,7 @@ module.exports = function (source) {
 
   let pluginEntry
   try {
-    pluginEntry = JSON.parse(source)
+    pluginEntry = JSON5.parse(source)
   } catch (err) {
     return callback(err)
   }

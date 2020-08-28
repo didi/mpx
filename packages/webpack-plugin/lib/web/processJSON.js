@@ -1,5 +1,6 @@
 const async = require('async')
 const path = require('path')
+const JSON5 = require('json5')
 const loaderUtils = require('loader-utils')
 const hash = require('hash-sum')
 const parseRequest = require('../utils/parse-request')
@@ -45,7 +46,7 @@ module.exports = function (json, options, rawCallback) {
   }
   // 由于json需要提前读取在template处理中使用，src的场景已经在loader中处理了，此处无需考虑json.src的场景
   try {
-    jsonObj = JSON.parse(json.content)
+    jsonObj = JSON5.parse(json.content)
   } catch (e) {
     return callback(e)
   }
@@ -102,7 +103,7 @@ module.exports = function (json, options, rawCallback) {
           },
           (result, content, callback) => {
             try {
-              content = JSON.parse(content)
+              content = JSON5.parse(content)
             } catch (err) {
               return callback(err)
             }

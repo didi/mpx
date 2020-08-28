@@ -1,4 +1,5 @@
 const async = require('async')
+const JSON5 = require('json5')
 const path = require('path')
 const hash = require('hash-sum')
 const SingleEntryPlugin = require('webpack/lib/SingleEntryPlugin')
@@ -162,7 +163,7 @@ module.exports = function (raw = '{}') {
     if (this.resourcePath.endsWith('.json.js')) {
       json = JSON.parse(mpxJSON.compileMPXJSONText({ source: raw, defs, filePath: this.resourcePath }))
     } else {
-      json = JSON.parse(raw)
+      json = JSON5.parse(raw)
     }
   } catch (err) {
     return callback(err)
@@ -187,7 +188,7 @@ module.exports = function (raw = '{}') {
   }
 
   if (json.usingComponents) {
-    fixUsingComponent({ usingComponents: json.usingComponents, mode, log: emitWarning })
+    fixUsingComponent(json.usingComponents, mode, emitWarning)
   }
 
   const rulesRunnerOptions = {
@@ -288,8 +289,7 @@ module.exports = function (raw = '{}') {
       const componentPath = packageInfo.outputPath
       rewritePath && rewritePath(publicPath + componentPath)
       if (ext === '.js') {
-        const nativeLoaderOptions = mpx.loaderOptions ? '?' + JSON.stringify(mpx.loaderOptions) : ''
-        resource = '!!' + nativeLoaderPath + nativeLoaderOptions + '!' + resource
+        resource = '!!' + nativeLoaderPath + '!' + resource
       }
       // 此处query为了实现消除分包间模块缓存，以实现不同分包中引用的组件在不同分包中都能输出
       resource = addQuery(resource, {
@@ -376,7 +376,7 @@ module.exports = function (raw = '{}') {
             },
             (result, content, callback) => {
               try {
-                content = JSON.parse(content)
+                content = JSON5.parse(content)
               } catch (err) {
                 return callback(err)
               }
@@ -505,8 +505,7 @@ module.exports = function (raw = '{}') {
               }
             }
             if (ext === '.js') {
-              const nativeLoaderOptions = mpx.loaderOptions ? '?' + JSON.stringify(mpx.loaderOptions) : ''
-              resource = '!!' + nativeLoaderPath + nativeLoaderOptions + '!' + resource
+              resource = '!!' + nativeLoaderPath + '!' + resource
             }
             currentEntry.addChild(getEntryNode(resource, 'Page'))
             // 如果之前已经创建了页面入口，直接return，目前暂时不支持多个分包复用同一个页面
@@ -539,10 +538,10 @@ module.exports = function (raw = '{}') {
       if (json.tabBar && json.tabBar[itemKey]) {
         json.tabBar[itemKey].forEach((item, index) => {
           if (item[iconKey] && isUrlRequest(item[iconKey], options.root)) {
-            output += `json.tabBar.${itemKey}[${index}].${iconKey} = require("${loaderUtils.urlToRequest(item[iconKey], options.root)}");\n`
+            output += `json.tabBar.${itemKey}[${index}].${iconKey} = require("${addQuery(loaderUtils.urlToRequest(item[iconKey], options.root), { useLocal: true })}");\n`
           }
           if (item[activeIconKey] && isUrlRequest(item[activeIconKey], options.root)) {
-            output += `json.tabBar.${itemKey}[${index}].${activeIconKey} = require("${loaderUtils.urlToRequest(item[activeIconKey], options.root)}");\n`
+            output += `json.tabBar.${itemKey}[${index}].${activeIconKey} = require("${addQuery(loaderUtils.urlToRequest(item[activeIconKey], options.root), { useLocal: true })}");\n`
           }
         })
       }
@@ -554,7 +553,7 @@ module.exports = function (raw = '{}') {
       if (optionMenuCfg && json.optionMenu) {
         let iconKey = optionMenuCfg.iconKey
         if (json.optionMenu[iconKey] && isUrlRequest(json.optionMenu[iconKey], options.root)) {
-          output += `json.optionMenu.${iconKey} = require("${loaderUtils.urlToRequest(json.optionMenu[iconKey], options.root)}");\n`
+          output += `json.optionMenu.${iconKey} = require("${addQuery(loaderUtils.urlToRequest(json.optionMenu[iconKey], options.root), { useLocal: true })}");\n`
         }
       }
       return output
