@@ -26,7 +26,7 @@
       }
     },
     computed: {
-      isMainOrigin () {
+      mainDomain () {
         let domain
         const src = location.href
         let index = src.indexOf('?')
@@ -56,7 +56,7 @@
     mounted () {
       this.mpxIframe = this.$refs.mpxIframe
       this.mpxIframe.addEventListener('load', (event) => {
-        event.currentTarget.contentWindow.postMessage(this.isMainOrigin, '*')
+        event.currentTarget.contentWindow.postMessage(this.mainDomain, '*')
       })
       window.addEventListener('message', (event) => {
         const data = event.data
