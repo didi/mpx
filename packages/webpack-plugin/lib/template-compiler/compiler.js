@@ -8,6 +8,7 @@ const isEmptyObject = require('../utils/is-empty-object')
 const mpxJSON = require('../utils/mpx-json')
 const getRulesRunner = require('../platform/index')
 const addQuery = require('../utils/add-query')
+const transDynamicClassExpr = require('./trans-dynamic-class-expr')
 
 /**
  * Make a map and return a function for checking if a key
@@ -1674,7 +1675,7 @@ function processClass (el, meta) {
   let staticClass = getAndRemoveAttr(el, type)
   if (dynamicClass) {
     let staticClassExp = parseMustache(staticClass).result
-    let dynamicClassExp = parseMustache(dynamicClass).result
+    let dynamicClassExp = transDynamicClassExpr(parseMustache(dynamicClass).result)
     addAttrs(el, [{
       name: targetType,
       value: `{{${stringifyModuleName}.stringifyClass(${staticClassExp}, ${dynamicClassExp})}}`
@@ -1925,10 +1926,8 @@ function processElement (el, root, options, meta) {
   processRef(el, options, meta)
 
   if (!pass) {
-    if (mode !== 'tt') {
-      processClass(el, meta)
-      processStyle(el, meta)
-    }
+    processClass(el, meta)
+    processStyle(el, meta)
     processShow(el, options, root)
   }
 
