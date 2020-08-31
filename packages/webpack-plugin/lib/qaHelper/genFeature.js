@@ -1,5 +1,5 @@
 /*
-*** 生成manifest文件features部分，https://doc.quickapp.cn/features/system/share.html
+*** 生成manifest文件features部分，https://doc.quickapp.cn/framework/manifest.html
  */
 
 module.exports = function registerFeatures (wxPay, packageName, shareObj, qqObj, wxObj, weiboObj) {

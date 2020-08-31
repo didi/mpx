@@ -1,4 +1,5 @@
 const registerFeatures = require('./genFeature')
+const registerConfig = require('./genConfig')
 const ConcatSource = require('webpack-sources').ConcatSource
 
 module.exports = function (compilation, options, isProd) {
@@ -7,6 +8,7 @@ module.exports = function (compilation, options, isProd) {
 
   // @todo versionCode必填项，参考官网
   if (projectEntry) {
+    // basic info
     let basicInfo = `{
       "package": "${options.packageInfo.name}",
       "name": "${options.packageInfo.name}",
@@ -15,30 +17,23 @@ module.exports = function (compilation, options, isProd) {
       "minPlatformVersion": "1040",  
       "icon": "../${options.iconPath}",`
 
-    let configInfo // @todo 对designWidth&&全局数据进行处理？
-    if (isProd) {
-      configInfo = `
-      "config": {
-        "designWidth": "750",
-        "data": {}
-      },`
-    } else {
-      configInfo = `
-      "config": {
-        "logLevel": "debug",
-        "designWidth": "750",
-        "data": {}
-      },`
-    }
     let content = new ConcatSource(
-      basicInfo,
-      configInfo
-    )
+        basicInfo
+      )
+
+    // config info
+    let configInfo = `
+      "config": ${registerConfig()}`
+    content.add(configInfo)
+    content.add(`,`)
+
+    // features info
     let features = `
       "features": ${registerFeatures()}`
     content.add(features)
     content.add(`,`)
-    // concat router
+
+    // config router
     let routerPrefix = `
       "router": {`
     content.add(routerPrefix)
