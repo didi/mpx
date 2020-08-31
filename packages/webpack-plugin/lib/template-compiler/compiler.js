@@ -1,4 +1,3 @@
-const deindent = require('de-indent')
 const JSON5 = require('json5')
 const he = require('he')
 const config = require('../config')
@@ -685,7 +684,7 @@ function parseComponent (content, options) {
   function end (tag, start, end) {
     if (depth === 1 && currentBlock) {
       currentBlock.end = start
-      let text = deindent(content.slice(currentBlock.start, currentBlock.end))
+      let text = content.slice(currentBlock.start, currentBlock.end)
       // pad content so that linters and pre-processors can output correct
       // line numbers in errors and warnings
       if (currentBlock.type !== 'template' && options.pad) {
@@ -707,9 +706,7 @@ function parseComponent (content, options) {
       return content.slice(0, block.start).replace(replaceRE, ' ')
     } else {
       let offset = content.slice(0, block.start).split(splitRE).length
-      let padChar = block.type === 'script' && !block.lang
-        ? '//\n'
-        : '\n'
+      let padChar = '\n'
       return Array(offset).join(padChar)
     }
   }
