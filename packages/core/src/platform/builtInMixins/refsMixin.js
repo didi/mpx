@@ -70,8 +70,8 @@ export default function getRefsMixin () {
         const identifiers = className ? className.trim().split(/\s+/).map(item => {
           return `.${item}`
         }) : []
-        if (component.id) {
-          identifiers.push(`#${component.id}`)
+        if (component.props.id) {
+          identifiers.push(`#${component.props.id}`)
         }
         if (destroyed) {
           this.__children__ = this.__children__.filter(item => item.component !== component)
