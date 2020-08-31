@@ -1,6 +1,8 @@
 const registerFeatures = require('./genFeature')
 const registerConfig = require('./genConfig')
 const registerRoutes = require('./genRouter')
+const registerDisplay = require('./genDisplay')
+const util = require('./util')
 const ConcatSource = require('webpack-sources').ConcatSource
 
 module.exports = function (compilation, options, isProd) {
@@ -9,7 +11,7 @@ module.exports = function (compilation, options, isProd) {
 
   // @todo versionCode必填项，参考官网
   if (projectEntry) {
-    // basic info
+    // register basic info
     let basicInfo = `{
       "package": "${options.packageInfo.name}",
       "name": "${options.packageInfo.name}",
@@ -22,35 +24,42 @@ module.exports = function (compilation, options, isProd) {
         basicInfo
       )
 
-    // config info
+    // register config info
     let configInfo = `
       "config": ${registerConfig()}`
     content.add(configInfo)
     content.add(`,`)
 
-    // features info
+    // register features
     let features = `
       "features": ${registerFeatures()}`
     content.add(features)
     content.add(`,`)
 
-    // config router & subpackages
+    // register router & subpackages
     let { routers, subpackages} = registerRoutes(projectEntry,pagesMapArray)
     let routes = `
       "router": {${routers}
       }`
     content.add(routes)
 
-  if (subpackages !== `[`) {
-    subpackages += `
-    ]`
-    let sub = `"subpackages": ${subpackages}`
-    content.add(
-      `,
-      ${sub}`
-    )
-  }
-  content.add('\n}')
-  compilation.assets['manifest.json'] = content
+    if (subpackages !== `[`) {
+      subpackages += `
+      ]`
+      let sub = `"subpackages": ${subpackages}`
+      content.add(
+        `,
+        ${sub}`
+      )
+    }
+    // register display
+    if (!util.isObjectEmpty()) {
+      content.add(`,\n`)
+      let display = `
+        "display": {${registerDisplay()}
+      }`
+    }
+    content.add('\n}')
+    compilation.assets['manifest.json'] = content
   }
 }
