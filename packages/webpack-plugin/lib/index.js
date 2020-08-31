@@ -85,10 +85,6 @@ class EntryNode {
 
 class MpxWebpackPlugin {
   constructor (options = {}) {
-    if (options.mode === 'qa') {
-      options.packageInfo = options.packageInfo || {}
-      options.iconPath = options.iconPath || ''
-    }
     options.mode = options.mode || 'wx'
 
     options.srcMode = options.srcMode || options.mode

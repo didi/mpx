@@ -13,51 +13,63 @@ module.exports = function (compilation, options, isProd) {
   if (projectEntry) {
     // register basic info
     let basicInfo = `{
-      "package": "${options.packageInfo.name}",
-      "name": "${options.packageInfo.name}",
-      "versionName": "${options.packageInfo.version}",
-      "versionCode": "1",
-      "minPlatformVersion": "1040",  
-      "icon": "../${options.iconPath}",`
+      "package": "${options.packageInfo && options.packageInfo.name || ''}",
+      "name": "${options.packageInfo && options.packageInfo.name || ''}",
+      "versionName": "${options.packageInfo && options.packageInfo.version || ''}",
+      "versionCode": ${options.packageInfo && options.packageInfo.version.slice(0, 3) || 1.0},
+      "minPlatformVersion": ${options.quickapp && options.quickapp.minPlatformVersion || 1070},  
+      "icon": "../${options.iconPath || ''}",`
 
     let content = new ConcatSource(
         basicInfo
       )
 
     // register config info
-    let configInfo = `
-      "config": ${registerConfig()}`
-    content.add(configInfo)
-    content.add(`,`)
+    let defineConfig = options.quickapp && options.quickapp.config || {}
+    if (!util.isObjectEmpty(defineConfig)) {
+      let configInfo = `
+      "config": ${registerConfig(defineConfig)}`
+      content.add(configInfo)
+      content.add(`,`)
+    }
 
     // register features
-    let features = `
-      "features": ${registerFeatures()}`
-    content.add(features)
-    content.add(`,`)
+    let defineFeatures = options.quickapp && options.quickapp.featuresInfo || {}
+    if (!util.isObjectEmpty(defineFeatures)) {
+      let features = `
+      "features": ${registerFeatures(defineFeatures)}`
+      content.add(features)
+    }
+    
 
     // register router & subpackages
-    let { routers, subpackages} = registerRoutes(projectEntry,pagesMapArray)
-    let routes = `
+    let { routers, subpackages} = registerRoutes(projectEntry,pagesMapArray, options.quickapp.router)
+    content.add(`,
       "router": {${routers}
       }`
-    content.add(routes)
+    )
 
     if (subpackages !== `[`) {
       subpackages += `
       ]`
-      let sub = `"subpackages": ${subpackages}`
-      content.add(
-        `,
-        ${sub}`
+      content.add(`,
+      "subpackages": ${subpackages}`
       )
     }
     // register display
+    let displayInfo = options.quickapp && options.quickapp.display || {}
     if (!util.isObjectEmpty()) {
-      content.add(`,\n`)
-      let display = `
-        "display": {${registerDisplay()}
-      }`
+      content.add(`,
+      "display": ${registerDisplay(displayInfo)}`
+      )
+    }
+
+    // config trustedSslDomains
+    let trustedSslDomains = options.quickapp && options.quickapp.trustedSslDomains || []
+    if (trustedSslDomains.length > 0) {
+      content.add(`,
+      "trustedSslDomains": ${JSON.stringify(trustedSslDomains)}`
+      )
     }
     content.add('\n}')
     compilation.assets['manifest.json'] = content
