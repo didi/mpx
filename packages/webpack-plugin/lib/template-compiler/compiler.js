@@ -2000,7 +2000,7 @@ function postProcessComponentIs (el) {
 }
 
 function stringifyAttr (val) {
-  if (val != null) {
+  if (typeof val === 'string') {
     const hasSingle = val.indexOf('\'') > -1
     const hasDouble = val.indexOf('"') > -1
     // 移除属性中换行
@@ -2034,7 +2034,7 @@ function serialize (root) {
           node.attrsList.forEach(function (attr) {
             result += ' ' + attr.name
             let value = attr.value
-            if (value != null) {
+            if (value != null && value !== true) {
               result += '=' + stringifyAttr(value)
             }
           })
