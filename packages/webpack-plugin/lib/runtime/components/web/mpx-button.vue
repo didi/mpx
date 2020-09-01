@@ -224,7 +224,6 @@
       &.mpx-button-type-primary.button-hover.mpx-button-plain
         color #06ae56
         background-color rgba(0, 0, 0, .1)
-
     &.mpx-button-type-warn
       color red
       &.mpx-button-type-warn.button-hover
