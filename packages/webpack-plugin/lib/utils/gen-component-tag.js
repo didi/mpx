@@ -6,7 +6,7 @@ function stringifyAttrs (attrs) {
   Object.keys(attrs).forEach(function (name) {
     result += ' ' + name
     let value = attrs[name]
-    if (value != null && value !== '' && value !== true) {
+    if (value != null && value !== true) {
       result += '=' + stringifyAttr(value)
     }
   })
