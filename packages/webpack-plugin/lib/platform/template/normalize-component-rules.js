@@ -6,7 +6,7 @@ module.exports = function normalizeComponentRules (cfgs, spec, mode) {
     if (cfg.test) {
       result.test = cfg.test
     }
-    const targetMode = mode && [mode] || cfg.supportedModes || spec.supportedModes
+    const targetMode = (mode && [mode]) || cfg.supportedModes || spec.supportedModes
     const eventRules = (cfg.event || []).concat(spec.event.rules)
     targetMode.forEach((mode) => {
       result[mode] = function (el, data) {
