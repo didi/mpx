@@ -78,14 +78,15 @@ module.exports = function genDisplay(displayInfo) {
   }
   if (displayInfo && displayInfo.pages) {
     display += `,\n
-        "pages": ${displayInfo.pages}
+        "pages": ${JSON.stringify(displayInfo.pages)}
     `
   }
   if (displayInfo && displayInfo.menuBarData) {
     display += `,\n
-        "menuBarData": "${displayInfo.menuBarData}"
+        "menuBarData": "${JSON.stringify(displayInfo.menuBarData)}"
     `
   }
+  if (display === '{') return ''
   display += `
       }`
   return display

@@ -3,24 +3,28 @@
  */
 
 module.exports = function genConfig(configInfo) {
-  let config = `{
-        "logLevel": "${configInfo && configInfo.logLevel || 'log'}",
-        "designWidth": ${configInfo && configInfo.designWidth || 750},
-        "network": {
-          "connectTimeout": ${configInfo && configInfo.network.connectTimeout || 30000},
-          "readTimeout": ${configInfo && configInfo.network.readTimeout || 30000},
-          "writeTimeout": ${configInfo && configInfo.network.writeTimeout || 30000}
-        }`
+  let config = `{`
+  if (configInfo && configInfo.logLevel) {
+    config += `
+        "logLevel": "${configInfo.logLevel}"`
+  }
+  if (configInfo && configInfo.designWidth) {
+    config += `,
+        "designWidth": ${configInfo.designWidth}`
+  }
+  if (configInfo && configInfo.network) {
+    config += `,
+        "network": ${JSON.stringify(configInfo.network)}`
+  }
   if (configInfo && configInfo.data) {
-      config += `,`
-      config += `
+      config += `,
         "data" : ${JSON.stringify(configInfo.data)}`
   }
   if (configInfo && configInfo.background) {
-      config += `,`
-      config += `
+      config += `,
         "background": ${JSON.stringify(configInfo.background)}`
   }
+  if (config === '{') return ''
   config += `
       }` 
 
