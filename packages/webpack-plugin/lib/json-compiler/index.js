@@ -1,4 +1,5 @@
 const async = require('async')
+const JSON5 = require('json5')
 const path = require('path')
 const hash = require('hash-sum')
 const SingleEntryPlugin = require('webpack/lib/SingleEntryPlugin')
@@ -162,7 +163,7 @@ module.exports = function (raw = '{}') {
     if (this.resourcePath.endsWith('.json.js')) {
       json = JSON.parse(mpxJSON.compileMPXJSONText({ source: raw, defs, filePath: this.resourcePath }))
     } else {
-      json = JSON.parse(raw)
+      json = JSON5.parse(raw)
     }
   } catch (err) {
     return callback(err)
@@ -355,13 +356,7 @@ module.exports = function (raw = '{}') {
               const filePath = result
               const extName = path.extname(filePath)
               if (extName === '.mpx' || extName === '.vue') {
-                const parts = parseComponent(
-                  content,
-                  filePath,
-                  this.sourceMap,
-                  mode,
-                  defs
-                )
+                const parts = parseComponent(content, filePath, this.sourceMap, mode, defs)
                 const json = parts.json || {}
                 if (json.content) {
                   content = json.content
@@ -375,7 +370,7 @@ module.exports = function (raw = '{}') {
             },
             (result, content, callback) => {
               try {
-                content = JSON.parse(content)
+                content = JSON5.parse(content)
               } catch (err) {
                 return callback(err)
               }
