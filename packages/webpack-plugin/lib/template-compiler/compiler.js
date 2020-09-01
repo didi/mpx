@@ -1,4 +1,4 @@
-const deindent = require('de-indent')
+const JSON5 = require('json5')
 const he = require('he')
 const config = require('../config')
 const normalize = require('../utils/normalize')
@@ -7,6 +7,7 @@ const isEmptyObject = require('../utils/is-empty-object')
 const mpxJSON = require('../utils/mpx-json')
 const getRulesRunner = require('../platform/index')
 const addQuery = require('../utils/add-query')
+const transDynamicClassExpr = require('./trans-dynamic-class-expr')
 
 /**
  * Make a map and return a function for checking if a key
@@ -297,9 +298,11 @@ const decodeMap = {
 const encodedRe = /&(?:lt|gt|quot|amp|#39);/g
 
 function decode (value) {
-  return value.replace(encodedRe, function (match) {
-    return decodeMap[match]
-  })
+  if (value != null) {
+    return value.replace(encodedRe, function (match) {
+      return decodeMap[match]
+    })
+  }
 }
 
 const i18nFuncNames = ['\\$(t)', '\\$(tc)', '\\$(te)', '\\$(d)', '\\$(n)']
@@ -509,7 +512,13 @@ function parseHTML (html, options) {
           delete args[5]
         }
       }
-      let value = args[3] || args[4] || args[5] || ''
+      let value
+      for (const index of [3, 4, 5]) {
+        if (args[index] != null) {
+          value = args[index]
+          break
+        }
+      }
       attrs[i] = {
         name: args[1],
         value: decode(value)
@@ -605,7 +614,6 @@ function parseComponent (content, options) {
         attrs: attrs.reduce(function (cumulated, ref) {
           let name = ref.name
           let value = ref.value
-
           cumulated[name] = value || true
           return cumulated
         }, {})
@@ -676,7 +684,7 @@ function parseComponent (content, options) {
   function end (tag, start, end) {
     if (depth === 1 && currentBlock) {
       currentBlock.end = start
-      let text = deindent(content.slice(currentBlock.start, currentBlock.end))
+      let text = content.slice(currentBlock.start, currentBlock.end)
       // pad content so that linters and pre-processors can output correct
       // line numbers in errors and warnings
       if (currentBlock.type !== 'template' && options.pad) {
@@ -698,9 +706,7 @@ function parseComponent (content, options) {
       return content.slice(0, block.start).replace(replaceRE, ' ')
     } else {
       let offset = content.slice(0, block.start).split(splitRE).length
-      let padChar = block.type === 'script' && !block.lang
-        ? '//\n'
-        : '\n'
+      let padChar = '\n'
       return Array(offset).join(padChar)
     }
   }
@@ -763,6 +769,8 @@ function parse (template, options) {
   let meta = {}
   let currentParent
   let multiRootError
+  // 用于记录模板用到的组件，匹配引用组件，看是否有冗余
+  let tagNames = new Set()
 
   function genTempRoot () {
     // 使用临时节点作为root，处理multi root的情况
@@ -833,6 +841,8 @@ function parse (template, options) {
       element.parent = currentParent
 
       processElement(element, root, options, meta)
+      tagNames.add(element.tag)
+
       if (!unary) {
         currentParent = element
         stack.push(element)
@@ -927,6 +937,12 @@ function parse (template, options) {
     Array.isArray(val.errorArray) && val.errorArray.forEach(item => error$1(item))
   })
 
+  if (!tagNames.has('component')) {
+    options.usingComponents.forEach((item) => {
+      if (!tagNames.has(item) && !options.globalComponents.includes(item) && options.checkUsingComponents) warn$1(`${item}注册了，但是未被对应的模板引用，建议删除！`)
+    })
+  }
+
   return {
     root,
     meta
@@ -952,7 +968,7 @@ function getAndRemoveAttr (el, name, removeFromMap = true) {
   let list = el.attrsList
   for (let i = 0, l = list.length; i < l; i++) {
     if (list[i].name === name) {
-      val = list[i].value
+      val = list[i].value || true
       list.splice(i, 1)
       break
     }
@@ -1156,7 +1172,7 @@ function processBindEvent (el) {
       const modelFilter = getAndRemoveAttr(el, config[mode].directive.modelFilter)
       let modelValuePathArr
       try {
-        modelValuePathArr = JSON.parse(modelValuePath)
+        modelValuePathArr = JSON5.parse(modelValuePath)
       } catch (e) {
         if (modelValuePath === '') {
           modelValuePathArr = []
@@ -1599,7 +1615,7 @@ function postProcessIf (el) {
     } else {
       attrs = [{
         name: config[mode].directive.else,
-        value: ''
+        value: undefined
       }]
     }
   }
@@ -1656,7 +1672,7 @@ function processClass (el, meta) {
   let staticClass = getAndRemoveAttr(el, type)
   if (dynamicClass) {
     let staticClassExp = parseMustache(staticClass).result
-    let dynamicClassExp = parseMustache(dynamicClass).result
+    let dynamicClassExp = transDynamicClassExpr(parseMustache(dynamicClass).result)
     addAttrs(el, [{
       name: targetType,
       value: `{{${stringifyModuleName}.stringifyClass(${staticClassExp}, ${dynamicClassExp})}}`
@@ -1907,10 +1923,8 @@ function processElement (el, root, options, meta) {
   processRef(el, options, meta)
 
   if (!pass) {
-    if (mode !== 'tt') {
-      processClass(el, meta)
-      processStyle(el, meta)
-    }
+    processClass(el, meta)
+    processStyle(el, meta)
     processShow(el, options, root)
   }
 
@@ -1986,7 +2000,7 @@ function postProcessComponentIs (el) {
 }
 
 function stringifyAttr (val) {
-  if (val) {
+  if (typeof val === 'string') {
     const hasSingle = val.indexOf('\'') > -1
     const hasDouble = val.indexOf('"') > -1
     // 移除属性中换行
@@ -2001,7 +2015,6 @@ function stringifyAttr (val) {
       return `"${val}"`
     }
   }
-  return val
 }
 
 function serialize (root) {
@@ -2021,7 +2034,7 @@ function serialize (root) {
           node.attrsList.forEach(function (attr) {
             result += ' ' + attr.name
             let value = attr.value
-            if (value != null && value !== '') {
+            if (value != null && value !== true) {
               result += '=' + stringifyAttr(value)
             }
           })

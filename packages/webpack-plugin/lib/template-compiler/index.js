@@ -51,7 +51,9 @@ module.exports = function (raw) {
     isNative,
     scopedId,
     filePath: this.resourcePath,
-    i18n
+    i18n,
+    globalComponents: Object.keys(mpx.usingComponents),
+    checkUsingComponents: mpx.checkUsingComponents
   }))
 
   let ast = parsed.root
