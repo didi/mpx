@@ -3,25 +3,79 @@
  */
 
 module.exports = function genDisplay(displayInfo) {
-  let display = `{
-        "backgroundColor": "${displayInfo && displayInfo.backgroundColor || '#ffffff'}",
-        "fullScreen": ${displayInfo && displayInfo.fullScreen || false},
-        "titleBar": ${displayInfo && displayInfo.titleBar || true},
-        "titleBarBackgroundColor": "${displayInfo && displayInfo.titleBarBackgroundColor || '#000000'}",
-        "titleBarTextColor": "${displayInfo && displayInfo.titleBarTextColor || ''}",
-        "titleBarText": "${displayInfo && displayInfo.titleBarText || ''}",
-        "menu": ${displayInfo && displayInfo.menu || false},
-        "windowSoftInputMode": "${displayInfo && displayInfo.windowSoftInputMode || 'adjustPan'}",
-        "orientation": "${displayInfo && displayInfo.orientation || 'portrait'}",
-        "statusBarImmersive": ${displayInfo && displayInfo.statusBarImmersive || false},
-        "statusBarTextStyle": "${displayInfo && displayInfo.statusBarTextStyle || 'auto'}",
-        "statusBarBackgroundColor": "${displayInfo && displayInfo.statusBarBackgroundColor || '#000000'}",
-        "statusBarBackgroundOpacity": ${displayInfo && displayInfo.statusBarBackgroundOpacity || false},
-        "fitCutout": ${displayInfo && displayInfo.fitCutout || false},
-        "themeMode": ${displayInfo && displayInfo.themeMode || -1},
-        "forceDark": ${displayInfo && displayInfo.forceDark || true},
-        "pageCache": ${displayInfo && displayInfo.pageCache || false},
-        "cacheDuration": ${displayInfo && displayInfo.cacheDuration || 3600000}`
+  let display = `{`
+  if (displayInfo && displayInfo.backgroundColor) {
+    display += `
+        "backgroundColor": "${displayInfo.backgroundColor}"`
+  }
+  if (displayInfo && displayInfo.fullScreen) {
+    display += `,
+        "fullScreen": ${displayInfo.fullScreen}`
+  }
+  if (displayInfo && displayInfo.titleBar) {
+    display += `,
+        "titleBar": ${displayInfo.titleBar}`
+  }
+  if (displayInfo && displayInfo.titleBarBackgroundColor) {
+    display += `,
+        "titleBarBackgroundColor": "${displayInfo.titleBarBackgroundColor}"`
+  }
+  if (displayInfo && displayInfo.titleBarTextColor) {
+    display += `,
+        "titleBarTextColor": "${displayInfo.titleBarTextColor}"`
+  }
+  if (displayInfo && displayInfo.titleBarText) {
+    display += `,
+        "titleBarText": "${displayInfo.titleBarText}"`
+  }
+  if (displayInfo && displayInfo.menu) {
+    display += `,
+        "menu": ${displayInfo.menu}`
+  }
+  if (displayInfo && displayInfo.windowSoftInputMode) {
+    display += `,
+        "windowSoftInputMode": "${displayInfo.windowSoftInputMode}"`
+  }
+  if (displayInfo && displayInfo.orientation) {
+    display += `,
+        "orientation": "${displayInfo.orientation}"`
+  }
+  if (displayInfo && displayInfo.statusBarImmersive) {
+    display += `,
+        "statusBarImmersive": ${displayInfo.statusBarImmersive}`
+  }
+  if (displayInfo && displayInfo.statusBarTextStyle) {
+    display += `,
+        "statusBarTextStyle": "${displayInfo.statusBarTextStyle}"`
+  }
+  if (displayInfo && displayInfo.statusBarBackgroundColor) {
+    display += `,
+        "statusBarBackgroundColor": "${displayInfo.statusBarBackgroundColor}"`
+  }
+  if (displayInfo && displayInfo.statusBarBackgroundOpacity) {
+    display += `,
+        "statusBarBackgroundOpacity": ${displayInfo.statusBarBackgroundOpacity}`
+  }
+  if (displayInfo && displayInfo.fitCutout) {
+    display += `,
+        "fitCutout": ${displayInfo.fitCutout}`
+  }
+  if (displayInfo && displayInfo.themeMode) {
+    display += `,
+        "themeMode": ${displayInfo.themeMode}`
+  }
+  if (displayInfo && displayInfo.forceDark) {
+    display += `,
+        "forceDark": ${displayInfo.forceDark}`
+  }
+  if (displayInfo && displayInfo.pageCache) {
+    display += `,
+        "pageCache": ${displayInfo.pageCache}`
+  }
+  if (displayInfo && displayInfo.cacheDuration) {
+    display += `,
+        "cacheDuration": ${displayInfo.cacheDuration}`
+  }
   if (displayInfo && displayInfo.pages) {
     display += `,\n
         "pages": ${displayInfo.pages}
