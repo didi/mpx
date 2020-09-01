@@ -980,8 +980,16 @@ function getAndRemoveAttr (el, name, removeFromMap = true) {
 }
 
 function addAttrs (el, attrs) {
-  el.attrsList = el.attrsList.concat(attrs)
-  el.attrsMap = makeAttrsMap(el.attrsList)
+  const list = el.attrsList
+  const map = el.attrsMap
+  for (let i = 0, l = attrs.length; i < l; i++) {
+    list.push(attrs[i])
+
+    if (map[attrs[i].name] && !isIE && !isEdge) {
+      warn$1('duplicate attribute: ' + attrs[i].name)
+    }
+    map[attrs[i].name] = attrs[i].value
+  }
 }
 
 function modifyAttr (el, name, val) {
