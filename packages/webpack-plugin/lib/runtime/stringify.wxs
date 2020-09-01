@@ -155,12 +155,14 @@ function parseStyleText (cssText) {
   var res = {}
   var listDelimiter = genRegExp(';(?![^(]*[)])', 'g')
   var propertyDelimiter = genRegExp(':(.+)')
-  cssText.split(listDelimiter).forEach(function (item) {
+  var arr = cssText.split(listDelimiter)
+  for (var i = 0; i < arr.length; i++) {
+    var item = arr[i]
     if (item) {
       var tmp = item.split(propertyDelimiter)
       tmp.length > 1 && (res[dash2hump(tmp[0].trim())] = tmp[1].trim())
     }
-  })
+  }
   return res
 }
 
