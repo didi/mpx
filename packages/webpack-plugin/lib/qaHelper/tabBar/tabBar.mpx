@@ -1,0 +1,53 @@
+<template>
+  <div class="tab-container">
+    <tabs>
+      <tab-content class="tab-content">
+        <div class="group-content" for="{{tabItem in tabList}}">
+          <component is="{{tabItem.key}}" wx:if="{{tabItem.key === selectKey}}"/>
+        </div>
+      </tab-content>
+      <tab-bar class="tab-bar">
+        <text class="tab-text" for="{{tabList}}" bindtap="handleClickTab(item)">{{tabList.text}}</text>
+      </tab-bar>
+    </tabs>
+  </div>
+</template>
+
+<script>
+  /*
+  import mpx, { createApp } from '@mpxjs/core'
+  ccreateApp({
+    data: {
+      selectKey: '',
+      tabList: [{
+        text: '首页',
+        key: 'homepages',
+        pagePath: 'pages/home'
+      }, {
+        text: '组件',
+        key: "componentpages",
+        pagePath: 'pages/component'
+      }]
+    },
+    onShow() {
+      let strPath = this.tabList && this.tabList[0].pagePath
+      let pagePath = strPath.split('/').reverse().slice(0, 2).join('')
+      this.selectKey = pagePath
+    },
+    methods: {
+      handleClickTab(item) {
+        this.selectKey = item.key
+      }
+    }
+  })
+  */
+</script>
+
+<style>
+</style>
+<script name="json">
+  module.exports = {
+    usingComponents: {
+    }
+  }
+</script>

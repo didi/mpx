@@ -12,6 +12,7 @@ const processJSON = require('./web/processJSON')
 const processScript = require('./web/processScript')
 const processStyles = require('./web/processStyles')
 const processTemplate = require('./web/processTemplate')
+const processTabBar = require('./qaHelper/tabBar/processTabBar')
 const readJsonForSrc = require('./utils/read-json-for-src')
 const normalize = require('./utils/normalize')
 
@@ -229,13 +230,33 @@ module.exports = function (content) {
           callback(null, output)
         })
       }
-
+      let globalInjectCode = ''
+      // 处理快应用tabBar
+      if (ctorType === 'app' && mode === 'qa') {
+        async.parallel([
+          (callback) => {
+            processTabBar(parts, {
+              mode,
+              srcMode,
+              defs,
+              loaderContext
+            }, callback)
+          }
+        ])
+        // 注入tabList供运行时tabBarMixin使用
+        const injectTab = () => {
+          const json = parts.json || parts.json.content || {}
+          const tabBar = json.tabBar
+          globalInjectCode += `global.tabList = ${JSON.stringify(tabBar)}\n`
+        }
+        injectTab()
+      }
       // 触发webpack global var 注入
       output += 'global.currentModuleId\n'
 
       // todo loader中inject dep比较危险，watch模式下不一定靠谱，可考虑将import改为require然后通过修改loader内容注入
       // 注入模块id及资源路径
-      let globalInjectCode = `global.currentModuleId = ${JSON.stringify(moduleId)}\n`
+      globalInjectCode = `global.currentModuleId = ${JSON.stringify(moduleId)}\n`
       if (!isProduction) {
         globalInjectCode += `global.currentResource = ${JSON.stringify(filePath)}\n`
       }

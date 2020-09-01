@@ -22,7 +22,8 @@ export default function getBuiltInMixins (options, type) {
       refsMixin(),
       showMixin(type),
       relationsMixin(type),
-      i18nMixin()
+      i18nMixin(),
+      tabBarMixin(type)
     ].filter(item => item)
   }
 }
