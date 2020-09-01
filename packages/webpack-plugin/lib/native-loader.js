@@ -1,5 +1,6 @@
 const hash = require('hash-sum')
 const path = require('path')
+const JSON5 = require('json5')
 const parseRequest = require('./utils/parse-request')
 const loaderUtils = require('loader-utils')
 const config = require('./config')
@@ -175,7 +176,7 @@ module.exports = function (content) {
     }, (content, callback) => {
       let usingComponents = [].concat(Object.keys(mpx.usingComponents))
       try {
-        let ret = JSON.parse(content)
+        let ret = JSON5.parse(content)
         if (ret.usingComponents) {
           fixUsingComponent(ret.usingComponents, mode)
           usingComponents = usingComponents.concat(Object.keys(ret.usingComponents))
