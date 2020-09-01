@@ -1,35 +1,34 @@
 <script>
   import getInnerListeners from './getInnerListeners'
-
+  const sizeClassMap = {
+    'default': '',
+    'mini': 'mpx-button-size-mini'
+  }
+  const typeClassMap = {
+    'primary': 'mpx-button-type-primary',
+    'warn': 'mpx-button-type-warn'
+  }
+  const plainClassMap = {
+    'false': '',
+    'true': 'mpx-button-plain'
+  }
+  const disabledClassMap = {
+    'false': '',
+    'true': 'mpx-button-disabled'
+  }
+  const clickDisabledClassMap = {
+    'false': '',
+    'true': 'mpx-button-click-disabled'
+  }
+  const loadingClassMap = {
+    'false': '',
+    'true': 'mpx-button-loading'
+  }
   export default {
     name: 'mpx-button',
     data () {
       return {
-        hover: false,
-        sizeClassMap: {
-          'default': '',
-          'mini': 'mpx-button-size-mini'
-        },
-        typeClassMap: {
-          'primary': 'mpx-button-type-primary',
-          'warn': 'mpx-button-type-warn'
-        },
-        plainClassMap: {
-          'false': '',
-          'true': 'mpx-button-plain'
-        },
-        disabledClassMap: {
-          'false': '',
-          'true': 'mpx-button-disabled'
-        },
-        clickDisabledClassMap: {
-          'false': '',
-          'true': 'mpx-button-clcik-disabled'
-        },
-        loadingClassMap: {
-          'false': '',
-          'true': 'mpx-button-loading'
-        }
+        hover: false
       }
     },
     props: {
@@ -75,13 +74,13 @@
         if (this.hoverClass && this.hoverClass !== 'none' && this.hover) {
           classArr.push(this.hoverClass)
         }
-        classArr.push(this.sizeClassMap[this.size])
-        classArr.push(this.typeClassMap[this.type])
-        classArr.push(this.plainClassMap[this.plain])
-        classArr.push(this.disabledClassMap['' + !!this.disabled])
+        classArr.push(sizeClassMap[this.size])
+        classArr.push(typeClassMap[this.type])
+        classArr.push(plainClassMap[this.plain])
+        classArr.push(disabledClassMap['' + !!this.disabled])
         // 禁用click
-        classArr.push(this.clickDisabledClassMap['' + !!this.disabled])
-        classArr.push(this.loadingClassMap['' + !!this.loading])
+        classArr.push(clickDisabledClassMap['' + !!this.disabled])
+        classArr.push(loadingClassMap['' + !!this.loading])
         return classArr
       }
     },
@@ -160,8 +159,6 @@
     .mpx-button
       position relative
       display block
-      margin-left auto
-      margin-right auto
       padding-left 14px
       padding-right 14px
       box-sizing border-box
@@ -174,10 +171,9 @@
       overflow hidden
       color #000
       background-color #f8f8f8
-      width: 184px;
-      margin-left: auto;
-      margin-right: auto;
-      font-weight: 700
+      width 184px
+      margin auto
+      font-weight 700
 
       &:after
         content " "
@@ -241,7 +237,7 @@
       color rgba(0, 0, 0, 0.18) !important
       background-color #fafafa !important
       border 1px solid rgba(0, 0, 0, .2) !important
-    &.mpx-button-clcik-disabled
+    &.mpx-button-click-disabled
       pointer-events none
     &.mpx-button-loading
       &:before
