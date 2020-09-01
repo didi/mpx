@@ -139,7 +139,7 @@ class Store {
       warn(`Unknown mutation type: ${type}.`)
     } else {
       mutation(...payload)
-      return this._subscribers.slice().forEach(sub => sub({type,payload}, this.state))
+      return this._subscribers.slice().forEach(sub => sub({ type, payload }, this.state))
     }
   }
 
