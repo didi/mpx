@@ -14,7 +14,19 @@ module.exports = function (template, options, callback) {
   if (ctorType === 'app') {
     template = {
       type: 'template',
-      content: '<div style="min-height: 100%;"><div class="pull-down-loading"><div class="dot-flashing"></div></div><mpx-keep-alive><router-view></router-view></mpx-keep-alive></div>'
+      content: `
+        <div style="height: 100%;">
+          <div style="height: 100%; overflow: hidden;">
+            <div class="pull-down-bswapper">
+              <div class="pull-down-loading">
+                <div class="dot-flashing"></div>
+              </div>
+              <mpx-keep-alive>
+                <router-view></router-view>
+              </mpx-keep-alive>
+            </div>
+          </div>
+        </div>`
     }
     builtInComponentsMap['mpx-keep-alive'] = {
       resource: addQuery('@mpxjs/webpack-plugin/lib/runtime/components/web/mpx-keep-alive.vue', { component: true })
