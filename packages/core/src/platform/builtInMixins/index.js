@@ -7,6 +7,7 @@ import relationsMixin from './relationsMixin'
 import i18nMixin from './i18nMixin'
 import pageTitleMixin from './pageTitleMixin'
 import pageScrollMixin from './pageScrollMixin'
+import pageMetaMixin from './pageMetaMixin'
 
 export default function getBuiltInMixins (options, type) {
   let bulitInMixins = []
@@ -16,7 +17,8 @@ export default function getBuiltInMixins (options, type) {
       refsMixin(),
       pageTitleMixin(type),
       pageStatusMixin(type),
-      pageScrollMixin(type)
+      pageScrollMixin(type),
+      pageMetaMixin(type)
     ]
   } else {
     // 此为差异抹平类mixins，原生模式下也需要注入也抹平平台差异
