@@ -332,7 +332,7 @@ module.exports = function (raw = '{}') {
     const firstPage = json.pages && json.pages[0]
     if (firstPage) {
       json.pages[0] = addQuery(json.pages[0], { isFirst: true })
-      mpx.projectEntry = firstPage.split('./')[1]
+      mpx.projectEntry = 'pages' + firstPage.split('/pages')[1]
     }
 
     const processPackages = (packages, context, callback) => {
