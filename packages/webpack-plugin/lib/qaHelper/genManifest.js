@@ -43,7 +43,7 @@ module.exports = function (compilation, options, isProd) {
     
 
     // register router & subpackages
-    let { routers, subpackages} = registerRoutes(projectEntry,pagesMapArray, options.quickapp.router)
+    let { routers, subpackages} = registerRoutes(projectEntry,pagesMapArray, options.quickapp.router || {})
     content.add(`,
       "router": {${routers}
       }`
