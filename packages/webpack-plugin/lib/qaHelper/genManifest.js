@@ -6,7 +6,7 @@ const util = require('./util')
 const ConcatSource = require('webpack-sources').ConcatSource
 
 module.exports = function (compilation, options, isProd) {
-  let pagesMapArray = compilation.__mpx__.pagesMap && Object.values(compilation.__mpx__.pagesMap)
+  let pagesMap = compilation.__mpx__.pagesMap || {}
   let projectEntry = compilation.__mpx__.projectEntry
 
   // @todo versionCode必填项，参考官网
@@ -43,7 +43,7 @@ module.exports = function (compilation, options, isProd) {
     
 
     // register router & subpackages
-    let { routers, subpackages} = registerRoutes(projectEntry,pagesMapArray, options.quickapp.router || {})
+    let { routers, subpackages} = registerRoutes(projectEntry, pagesMap, options.quickapp.router)
     content.add(`,
       "router": {${routers}
       }`

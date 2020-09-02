@@ -1,9 +1,9 @@
 /*
 *** 生成manifest文件router&subpackages部分，https://doc.quickapp.cn/framework/manifest.html
  */
-const util = require('./util')
 
-module.exports = function genRouter(projectEntry, pagesMapArray, defineRouter) {
+module.exports = function genRouter(projectEntry, pagesMap, defineRouter) {
+  let pageKeys = pagesMap && Object.keys(pagesMap)
   let lastIndex = projectEntry.lastIndexOf('/')
   let entryComp = projectEntry.slice(lastIndex + 1)
   let prefix = projectEntry.slice(0, lastIndex)
@@ -46,20 +46,20 @@ module.exports = function genRouter(projectEntry, pagesMapArray, defineRouter) {
           }`
   }
   
-  for (let i = 0; i < pagesMapArray.length; i++) {
-    let isSubpackage = pagesMapArray[i].split('/')[0] !== 'pages'
-
+  for (let i = 0; i < pageKeys.length; i++) {
+    let isSubpackage = pageKeys[i].indexOf('subpackage') > 0
     // 处理pages
-    if (pagesMapArray[i] !== projectEntry) {
-      let lastIndex = pagesMapArray[i].lastIndexOf('/')
-      let compName = pagesMapArray[i].slice(lastIndex + 1)
-      let prefix = pagesMapArray[i].slice(0, lastIndex)
+    let pagePath = pagesMap[pageKeys[i]]
+    if ( pagePath !== projectEntry) {
+      let lastIndex = pagePath.lastIndexOf('/')
+      let compName = pagePath.slice(lastIndex + 1)
+      let prefix = pagePath.slice(0, lastIndex)
 
       // 与用户自定义pages/options合并
       let index = -1
       if(!isSubpackage) {
         index = needProcessPages.findIndex(item => {
-          return item.path.slice(1) === pagesMapArray[i]
+          return item.path.slice(1) === pagePath
         })
       }
       if (index !== -1) {
@@ -79,7 +79,7 @@ module.exports = function genRouter(projectEntry, pagesMapArray, defineRouter) {
     }
     // 处理分包
     if (isSubpackage) {
-      let name = pagesMapArray[i].split('/')[0]
+      let name = pagePath.split('/')[0]
       if (subpackages !== `[`) {
         subpackages += `,
         {

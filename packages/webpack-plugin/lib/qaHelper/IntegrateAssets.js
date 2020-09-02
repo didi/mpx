@@ -1,28 +1,20 @@
 
 const ConcatSource = require('webpack-sources').ConcatSource
 const genManifest = require('./genManifest')
+const util = require('./util')
 
-function cleanAssets (assets) {
-  // clean Assets
-  let files = []
-  for (let file in assets) {
-    let filename = /(.*)\..*/.exec(file)[1]
-    if (!files.includes(filename)) {
-      files.push(filename)
-    }
-  }
-  return files
-}
 
 module.exports = function (additionalAssets, compilation, options, isProd) {
-  let finalFiles = cleanAssets(additionalAssets)
+  let pagesList = util.isObjectEmpty(compilation.__mpx__.pagesMap) ? [] : Object.values(compilation.__mpx__.pagesMap)
+  let componentsList = util.isObjectEmpty(compilation.__mpx__.componentsMap.main) ? [] : Object.values(compilation.__mpx__.componentsMap.main)
+  // 整合pages & components & app
+  let list = pagesList.concat(componentsList).concat(['app'])
 
-  // integrate assets
-  for (let i = 0; i < finalFiles.length; i++) {
+  for (let i = 0; i < list.length; i++) {
     let content = new ConcatSource()
-    let jsonFile = finalFiles[i] + '.json'
+    let jsonFile = list[i] + '.json'
     if (additionalAssets[jsonFile]) {
-      let depth = finalFiles[i].split('/').length
+      let depth = list[i].split('/').length
       let srcPrefix = ''
       for (let i = 1; i < depth; i++) {
         if (i === depth - 1) {
@@ -43,7 +35,7 @@ module.exports = function (additionalAssets, compilation, options, isProd) {
       })
     }
 
-    let tplFile = finalFiles[i] + '.wxml'
+    let tplFile = list[i] + '.wxml'
     if (additionalAssets[tplFile]) {
       content.add('<template>\n')
       additionalAssets[tplFile].forEach(item => {
@@ -52,7 +44,7 @@ module.exports = function (additionalAssets, compilation, options, isProd) {
       content.add('\n</template>\n\n')
     }
 
-    let styleFile = finalFiles[i] + '.wxss'
+    let styleFile = list[i] + '.wxss'
     if (additionalAssets[styleFile]) {
       content.add('<style>')
       additionalAssets[styleFile].forEach(item => {
@@ -61,16 +53,16 @@ module.exports = function (additionalAssets, compilation, options, isProd) {
       content.add('</style>\n\n')
     }
 
-    let fullPath = finalFiles[i] + '.js'
+    let fullPath = list[i] + '.js'
     if (compilation.assets[fullPath]) {
-      let index = finalFiles[i].lastIndexOf('/')
-      let scriptName = finalFiles[i].slice(index + 1)
+      let index = list[i].lastIndexOf('/')
+      let scriptName = list[i].slice(index + 1)
       let scriptFile = scriptName + '.js'
       let scriptTpl = `<script src="./${scriptFile}"></script>`
       content.add(scriptTpl)
     }
 
-    compilation.assets[finalFiles[i] + '.ux'] = content
+    compilation.assets[list[i] + '.ux'] = content
   }
 
   genManifest(compilation, options, isProd)
