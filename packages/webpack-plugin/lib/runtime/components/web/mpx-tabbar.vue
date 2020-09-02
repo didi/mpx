@@ -2,7 +2,7 @@
   import Vue from 'vue'
   import getInnerListeners from '@mpxjs/webpack-plugin/lib/runtime/components/web/getInnerListeners'
 
-  const tabBarMap = Vue.observable(window.__tabBar)
+  const tabBarMap = window.__tabBar
   export default {
     name: 'mpx-tabbar',
     props: {

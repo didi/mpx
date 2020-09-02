@@ -10,12 +10,13 @@
 <script>
   import Vue from 'vue'
   const tabBarMap = Vue.observable(window.__tabBar)
+  const tabBarPagesMap = window.__tabBarPagesMap
   const components = {}
 
   tabBarMap.list.forEach((item) => {
     const componentPath = item.pagePath
     const componentName = item.pagePath.replace('/', '-')
-    components[componentName] = require('src/' + componentPath).default
+    components[componentName] = tabBarPagesMap['/'+componentPath]
   })
   export default {
     name: 'mpx-tabbar-container',

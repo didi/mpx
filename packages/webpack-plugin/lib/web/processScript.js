@@ -33,19 +33,18 @@ module.exports = function (script, options, callback) {
   const tabBarMap = options.tabBarMap
 
   const stringifyRequest = r => loaderUtils.stringifyRequest(loaderContext, r)
-
-  let tabBarMapPages = {}
+  let tabBarPagesMap = {}
   let tabBarMapStr = ''
   if (tabBarMap && Array.isArray(tabBarMap.list) && tabBarMap.list.length && ctorType === 'app') {
-    tabBarMap.list.map((item) => {
-      tabBarMapPages['/' + item.pagePath] = item
+    tabBarPagesMap = tabBarMap.listMap
+    Object.keys(tabBarPagesMap).forEach((item) => {
+      tabBarPagesMap[item] = `()=>import("${tabBarPagesMap[item]}")`
     })
-    tabBarMap.listMap = tabBarMapPages
     tabBarMapStr = JSON.stringify(tabBarMap)
     /* eslint-disable no-useless-escape */
-    tabBarMapStr = tabBarMapStr.replace(/"iconPath":"([\w\/\.\-]+[\.png\.jpeg\.gif])"/g, '"iconPath":getComponent(require("$1"))')
+    tabBarMapStr = tabBarMapStr.replace(/"iconPath":"([\w\/\.\-]+[\.png\.jpeg\.gif])"/g, '"iconPath":require("$1")')
     /* eslint-disable no-useless-escape */
-    tabBarMapStr = tabBarMapStr.replace(/"selectedIconPath":"([\w\/\.\-]+[\.png\.jpeg\.gif])"/g, '"selectedIconPath":getComponent(require("$1"))')
+    tabBarMapStr = tabBarMapStr.replace(/"selectedIconPath":"([\w\/\.\-]+[\.png\.jpeg\.gif])"/g, '"selectedIconPath":require("$1")')
   }
 
   let output = '/* script */\n'
@@ -98,6 +97,7 @@ module.exports = function (script, options, callback) {
         global.getApp = function(){}
         global.__networkTimeout = ${JSON.stringify(jsonConfig.networkTimeout)}
         global.__tabBar = ${tabBarMapStr}
+        global.__tabBarPagesMap = ${shallowStringify(tabBarPagesMap)}
         global.__mpxPageConfig = ${JSON.stringify(jsonConfig.window)}\n`
 
         if (i18n) {
@@ -126,7 +126,7 @@ module.exports = function (script, options, callback) {
         const pageCfg = localPagesMap[pagePath]
         const pageRequest = stringifyRequest(pageCfg.resource)
         if (pageCfg.async) {
-          if (tabBarMapPages[pagePath]) {
+          if (tabBarPagesMap[pagePath]) {
             // 如果是 tabBar 对应的页面
             pagesMap[pagePath] = `()=>import("${nativeTabBarPath}")`
           } else {
@@ -134,7 +134,7 @@ module.exports = function (script, options, callback) {
           }
         } else {
           // 为了保持小程序中app->page->component的js执行顺序，所有的page和component都改为require引入
-          if (tabBarMapPages[pagePath]) {
+          if (tabBarPagesMap[pagePath]) {
             // 如果是 tabBar 对应的页面
             pagesMap[pagePath] = `getComponent(require("${nativeTabBarPath}"))`
           } else {
@@ -146,7 +146,7 @@ module.exports = function (script, options, callback) {
         }
       })
       if (tabBarMap && tabBarMap.custom) {
-        componentsMap['custom-tab-bar'] = `getComponent(require("src/custom-tab-bar/index.mpx?component=true"))`
+        componentsMap['custom-tab-bar'] = `getComponent(require("./custom-tab-bar/index.mpx?component=true"))`
       } else if (tabBarMap) {
         componentsMap['custom-tab-bar'] = `getComponent(require("${nativeTabBarComponent}"))`
       }

@@ -19,6 +19,7 @@ module.exports = function (json, options, rawCallback) {
   const pagesEntryMap = options.pagesEntryMap
   const componentsMap = options.componentsMap
   const projectRoot = options.projectRoot
+  const ctorType = options.ctorType
   const localPagesMap = {}
   const localComponentsMap = {}
   let output = '/* json */\n'
@@ -48,6 +49,16 @@ module.exports = function (json, options, rawCallback) {
     jsonObj = JSON.parse(json.content)
   } catch (e) {
     return callback(e)
+  }
+  const isTabBarAndAppType = jsonObj.tabBar && Array.isArray(jsonObj.tabBar.list) && jsonObj.tabBar.list.length && ctorType === 'app'
+
+  // 在解析 app json 时处理 tabBar，生成 listMap，方便后续处理
+  if (isTabBarAndAppType) {
+    const tabBarMapPages = {}
+    jsonObj.tabBar.list.forEach((item) => {
+      tabBarMapPages['/' + item.pagePath] = true
+    })
+    jsonObj.tabBar.listMap = tabBarMapPages
   }
 
   const fs = loaderContext._compiler.inputFileSystem
@@ -177,6 +188,9 @@ module.exports = function (json, options, rawCallback) {
                 break
               }
             }
+          }
+          if (isTabBarAndAppType && jsonObj.tabBar && jsonObj.tabBar.listMap && jsonObj.tabBar.listMap[pageName]) {
+            jsonObj.tabBar.listMap[pageName] = resourcePath
           }
           pagesMap[resourcePath] = pageName
           pagesEntryMap[resourcePath] = loaderContext.resourcePath
