@@ -48,7 +48,16 @@ function transformApiForProxy (context, currentInject) {
     },
     __getInitialData: {
       get () {
-        return () => context.data
+        return (options) => {
+          const data = {}
+          const validData = Object.assign({}, options.data, options.properties, options.props)
+          for (const key in context.data) {
+            if (context.data.hasOwnProperty(key) && validData.hasOwnProperty(key)) {
+              data[key] = context.data[key]
+            }
+          }
+          return data
+        }
       },
       configurable: false
     },
@@ -91,7 +100,7 @@ function filterOptions (options) {
       return
     }
     if (key === 'properties' || key === 'props') {
-      newOptions.properties = transformProperties(Object.assign({}, options['properties'], options['props']))
+      newOptions.properties = transformProperties(Object.assign({}, options.properties, options.props))
     } else if (key === 'methods' && options.__pageCtor__) {
       // 构造器为Page时抽取所有methods方法到顶层
       Object.assign(newOptions, options[key])

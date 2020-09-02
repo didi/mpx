@@ -1,4 +1,5 @@
 const hash = require('hash-sum')
+const JSON5 = require('json5')
 const parseComponent = require('./parser')
 const createHelpers = require('./helpers')
 const loaderUtils = require('loader-utils')
@@ -31,13 +32,12 @@ module.exports = function (content) {
   const defs = mpx.defs
   const i18n = mpx.i18n
   const globalSrcMode = mpx.srcMode
-  const localSrcMode = loaderUtils.parseQuery(this.resourceQuery || '?').mode
+  const resourceQueryObj = loaderUtils.parseQuery(this.resourceQuery || '?')
+  const localSrcMode = resourceQueryObj.mode
   const resourcePath = parseRequest(this.resource).resourcePath
   const srcMode = localSrcMode || globalSrcMode
   const vueContentCache = mpx.vueContentCache
   const autoScope = matchCondition(resourcePath, mpx.autoScopeRules)
-
-  const resourceQueryObj = loaderUtils.parseQuery(this.resourceQuery || '?')
 
   // 支持资源query传入page或component支持页面/组件单独编译
   if ((resourceQueryObj.component && !componentsMap[resourcePath]) || (resourceQueryObj.page && !pagesMap[resourcePath])) {
@@ -70,8 +70,19 @@ module.exports = function (content) {
   const stringifyRequest = r => loaderUtils.stringifyRequest(loaderContext, r)
   const isProduction = this.minimize || process.env.NODE_ENV === 'production'
   const options = loaderUtils.getOptions(this) || {}
+  const processSrcQuery = (src, type) => {
+    const localQuery = Object.assign({}, resourceQueryObj)
+    // style src会被特殊处理为全局复用样式，暂时不添加resourcePath
+    if (type !== 'styles') {
+      localQuery.resourcePath = resourcePath
+    }
+    if (type === 'json') {
+      localQuery.__component = true
+    }
+    return addQuery(src, localQuery)
+  }
 
-  const filePath = this.resourcePath
+  const filePath = resourcePath
 
   const moduleId = 'm' + hash(this._module.identifier())
 
@@ -114,9 +125,9 @@ module.exports = function (content) {
 
       if (parts.json && parts.json.content) {
         try {
-          let ret = JSON.parse(parts.json.content)
+          let ret = JSON5.parse(parts.json.content)
           if (ret.usingComponents) {
-            fixUsingComponent({ usingComponents: ret.usingComponents, mode })
+            fixUsingComponent(ret.usingComponents, mode)
             usingComponents = usingComponents.concat(Object.keys(ret.usingComponents))
           }
         } catch (e) {
@@ -171,7 +182,9 @@ module.exports = function (content) {
                   srcMode,
                   defs,
                   loaderContext,
-                  ctorType
+                  ctorType,
+                  usingComponents,
+                  checkUsingComponents: mpx.checkUsingComponents
                 }, callback)
               },
               (callback) => {
@@ -281,7 +294,7 @@ module.exports = function (content) {
         scriptSrcMode = script.mode || scriptSrcMode
         if (script.src) {
           // 传入resourcePath以确保后续处理中能够识别src引入的资源为组件主资源
-          script.src = addQuery(script.src, { resourcePath })
+          script.src = processSrcQuery(script.src, 'script')
           output += getNamedExportsForSrc('script', script) + '\n\n'
         } else {
           output += getNamedExports('script', script) + '\n\n'
@@ -314,12 +327,14 @@ module.exports = function (content) {
         let styleInjectionCode = ''
         parts.styles.forEach((style, i) => {
           let scoped = hasScoped ? (style.scoped || autoScope) : false
+          let requireString
           // require style
-          // todo style src会被特殊处理为全局复用样式，暂时不添加resourcePath，理论上在当前支持了@import样式复用后这里是可以添加resourcePath视为组件主资源的，后续待优化
-          let requireString = style.src
-            ? getRequireForSrc('styles', style, -1, scoped, undefined, true)
-            : getRequire('styles', style, i, scoped)
-
+          if (style.src) {
+            style.src = processSrcQuery(style.src, 'styles')
+            requireString = getRequireForSrc('styles', style, -1, scoped, undefined, true)
+          } else {
+            requireString = getRequire('styles', style, i, scoped)
+          }
           const hasStyleLoader = requireString.indexOf('style-loader') > -1
           const invokeStyle = code => `${code}\n`
 
@@ -357,7 +372,7 @@ module.exports = function (content) {
       // 给予json默认值, 确保生成json request以自动补全json
       const json = parts.json || {}
       if (json.src) {
-        json.src = addQuery(json.src, { resourcePath, __component: true })
+        json.src = processSrcQuery(json.src, 'json')
         output += getRequireForSrc('json', json) + '\n\n'
       } else {
         output += getRequire('json', json) + '\n\n'
@@ -369,7 +384,7 @@ module.exports = function (content) {
 
       if (template) {
         if (template.src) {
-          template.src = addQuery(template.src, { resourcePath })
+          template.src = processSrcQuery(template.src, 'template')
           output += getRequireForSrc('template', template) + '\n\n'
         } else {
           output += getRequire('template', template) + '\n\n'

@@ -1,4 +1,3 @@
-'use strict'
 const NullDependency = require('webpack/lib/dependencies/NullDependency')
 const parseRequest = require('../utils/parse-request')
 
