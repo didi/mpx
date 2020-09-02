@@ -3,7 +3,6 @@ import { webHandleSuccess, webHandleFail } from '../../../common/js'
 import RequestTask from './RequestTask'
 
 function request (options = { url: '' }) {
-  const timeout = 60 * 1000
   const CancelToken = axios.CancelToken
   const source = CancelToken.source()
   const requestTask = new RequestTask(source.cancel)
@@ -13,6 +12,7 @@ function request (options = { url: '' }) {
     method = 'GET',
     dataType = 'json',
     responseType = 'text',
+    timeout = 60 * 1000,
     header = {},
     success = null,
     fail = null,
