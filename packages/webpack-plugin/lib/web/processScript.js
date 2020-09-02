@@ -81,7 +81,7 @@ module.exports = function (script, options, callback) {
       return attrs
     },
     content (script) {
-      let content = `import processOption, { getComponent } from ${stringifyRequest(`!!${optionProcessorPath}`)}\n`
+      let content = `import processOption, { getComponent } from ${stringifyRequest(optionProcessorPath)}\n`
       // add import
       if (ctorType === 'app') {
         content += `
