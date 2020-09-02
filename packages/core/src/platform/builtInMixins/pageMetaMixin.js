@@ -30,7 +30,7 @@ function setNavigationBarBackgroundColor (color) {
     barStyle.setAttribute('name', barStyleName)
   }
 
-  barStyle.setAttribute('content', contentMap[color] || 'default')
+  barStyle.setAttribute('content', contentMap[color] || 'black')
 }
 
 export default function pageMetaMixin (mixinType) {
