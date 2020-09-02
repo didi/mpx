@@ -74,6 +74,7 @@ export default function onPageScroll (mixinType) {
               showLoading(this)
               bs.openPullDown(PULL_DOWN_CONFIG)
               on('pullingDown', this.__mpxPullDownHandler, this.__disposer)
+              this.__initPullDownStyle()
             } else {
               hideLoading(this)
               bs.closePullDown()
@@ -130,6 +131,11 @@ export default function onPageScroll (mixinType) {
               }
             }
           }
+        },
+        __initPullDownStyle () {
+          const { backgroundColor = '#fff', backgroundTextStyle = 'dark' } = this.$options.__mpxPageConfig
+          document.querySelector('.pull-down-loading').style.background = backgroundColor
+          document.querySelector('.dot-flashing').classList.add(backgroundTextStyle)
         }
       }
     }
