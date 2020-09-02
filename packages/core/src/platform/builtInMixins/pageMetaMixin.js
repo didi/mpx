@@ -1,11 +1,6 @@
 // https://developer.apple.com/library/archive/documentation/AppleApplications/Reference/SafariHTMLRef/Articles/MetaTags.html
 
-function makeMap (arr) {
-  return arr.reduce((map, item) => {
-    map[item] = true
-    return map
-  }, {})
-}
+import { makeMap } from '../../helper/utils'
 
 function setNavigationBarBackgroundColor (color) {
   if (!color) {
