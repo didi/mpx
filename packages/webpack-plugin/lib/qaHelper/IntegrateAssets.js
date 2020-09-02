@@ -3,7 +3,6 @@ const ConcatSource = require('webpack-sources').ConcatSource
 const genManifest = require('./genManifest')
 const util = require('./util')
 
-
 module.exports = function (additionalAssets, compilation, options, isProd) {
   let pagesList = util.isObjectEmpty(compilation.__mpx__.pagesMap) ? [] : Object.values(compilation.__mpx__.pagesMap)
   let componentsList = util.isObjectEmpty(compilation.__mpx__.componentsMap.main) ? [] : Object.values(compilation.__mpx__.componentsMap.main)

@@ -3,7 +3,7 @@
  */
 
 module.exports = {
-   isObjectEmpty: (obj) => {
-     return JSON.stringify(obj) === '{}' ? true : false
-   }
+  isObjectEmpty: (obj) => {
+    return JSON.stringify(obj) === '{}'
+  }
 }

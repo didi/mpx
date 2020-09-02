@@ -51,10 +51,11 @@
     mpx.getEnv((res) => {
       document.querySelector('#envText').textContent = JSON.stringify(res)
       console.log(res)
-    }).catch(e => {
-      // could catch error like this
-      console.error(e, 6666)
     })
+    // .catch(e => {
+    //   // could catch error like this
+    //   console.error(e, 6666)
+    // })
   }
 
   function navigateToBack () {

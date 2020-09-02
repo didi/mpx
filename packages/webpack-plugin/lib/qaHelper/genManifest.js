@@ -13,19 +13,19 @@ module.exports = function (compilation, options, isProd) {
   if (projectEntry) {
     // register basic info
     let basicInfo = `{
-      "package": "${options.packageInfo && options.packageInfo.name || ''}",
-      "name": "${options.packageInfo && options.packageInfo.name || ''}",
-      "versionName": "${options.packageInfo && options.packageInfo.version || ''}",
-      "versionCode": ${options.packageInfo && options.packageInfo.version.slice(0, 3) || 1.0},
-      "minPlatformVersion": ${options.quickapp && options.quickapp.minPlatformVersion || 1070},  
+      "package": "${(options.packageInfo && options.packageInfo.name) || ''}",
+      "name": "${(options.packageInfo && options.packageInfo.name) || ''}",
+      "versionName": "${(options.packageInfo && options.packageInfo.version) || ''}",
+      "versionCode": ${(options.packageInfo && options.packageInfo.version.slice(0, 3)) || 1.0},
+      "minPlatformVersion": ${(options.quickapp && options.quickapp.minPlatformVersion) || 1070},  
       "icon": "../${options.iconPath || ''}",`
 
     let content = new ConcatSource(
-        basicInfo
-      )
+      basicInfo
+    )
 
     // register config info
-    let defineConfig = options.quickapp && options.quickapp.config || {}
+    let defineConfig = (options.quickapp && options.quickapp.config) || {}
     if (!util.isObjectEmpty(defineConfig)) {
       let configInfo = `
       "config": ${registerConfig(defineConfig)}`
@@ -34,16 +34,15 @@ module.exports = function (compilation, options, isProd) {
     }
 
     // register features
-    let defineFeatures = options.quickapp && options.quickapp.featuresInfo || {}
+    let defineFeatures = (options.quickapp && options.quickapp.featuresInfo) || {}
     if (!util.isObjectEmpty(defineFeatures)) {
       let features = `
       "features": ${registerFeatures(defineFeatures)}`
       content.add(features)
     }
-    
 
     // register router & subpackages
-    let { routers, subpackages} = registerRoutes(projectEntry, pagesMap, options.quickapp.router)
+    let { routers, subpackages } = registerRoutes(projectEntry, pagesMap, options.quickapp.router)
     content.add(`,
       "router": {${routers}
       }`
@@ -57,7 +56,7 @@ module.exports = function (compilation, options, isProd) {
       )
     }
     // register display
-    let displayInfo = options.quickapp && options.quickapp.display || {}
+    let displayInfo = (options.quickapp && options.quickapp.display) || {}
     if (!util.isObjectEmpty()) {
       content.add(`,
       "display": ${registerDisplay(displayInfo)}`
@@ -65,7 +64,7 @@ module.exports = function (compilation, options, isProd) {
     }
 
     // config trustedSslDomains
-    let trustedSslDomains = options.quickapp && options.quickapp.trustedSslDomains || []
+    let trustedSslDomains = (options.quickapp && options.quickapp.trustedSslDomains) || []
     if (trustedSslDomains.length > 0) {
       content.add(`,
       "trustedSslDomains": ${JSON.stringify(trustedSslDomains)}`
