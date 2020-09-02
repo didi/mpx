@@ -5,9 +5,14 @@ const util = require('./util')
 
 module.exports = function (additionalAssets, compilation, options, isProd) {
   let pagesList = util.isObjectEmpty(compilation.__mpx__.pagesMap) ? [] : Object.values(compilation.__mpx__.pagesMap)
-  let componentsList = util.isObjectEmpty(compilation.__mpx__.componentsMap.main) ? [] : Object.values(compilation.__mpx__.componentsMap.main)
+  let componentsList = []
+  for (let compFolder in compilation.__mpx__.componentsMap) {
+    if (!util.isObjectEmpty(compFolder)) {
+      componentsList = Object.assign(componentsList, Object.values(compilation.__mpx__.componentsMap[compFolder]))
+    }
+  }
   // 整合pages & components & app
-  let list = pagesList.concat(componentsList).concat(['app'])
+  let list = pagesList.concat(componentsList, 'app')
 
   for (let i = 0; i < list.length; i++) {
     let content = new ConcatSource()
