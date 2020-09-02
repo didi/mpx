@@ -23,8 +23,8 @@ function setNavigationBarBackgroundColor (color) {
   // 目前仅在 ios 的 safari 浏览器的全屏模式下中有效果
   // 且仅支持以下三个值，如果使用其他值，则浏览器默认显示为 black
   const contentMap = makeMap([
-    'default', 
-    'black', 
+    'default',
+    'black',
     'black-translucent'
   ])
 
@@ -34,7 +34,7 @@ function setNavigationBarBackgroundColor (color) {
     barStyle = document.createElement('meta')
     barStyle.setAttribute('name', barStyleName)
   }
-  
+
   barStyle.setAttribute('content', contentMap[color] || 'default')
 }
 
