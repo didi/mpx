@@ -137,6 +137,10 @@ mpx 中会将 app.mpx（入口文件，也不一定非要叫app.mpx） 中 packa
 
 分包加载的好处详见微信的文档。路径冲突的概率也大大降低，只需要保证root不同即可。
 
+### 独立分包
+
+目前暂时不支持进行独立分包的构建
+
 ### 分包预下载
 
 分包预下载是在 json中 新增一个 preloadRule 字段，mpx 打包时候会原封不动把这个部分放到 app.json 中，所以只需要按照 [微信小程序官方文档 - 分包预下载](https://developers.weixin.qq.com/miniprogram/dev/framework/subpackages/preload.html) 或者 [支付宝小程序官方文档 - 分包预下载](https://opendocs.alipay.com/mini/framework/subpackages) 配置即可。

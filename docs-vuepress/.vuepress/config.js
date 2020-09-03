@@ -47,7 +47,7 @@ const sidebar = {
     {
       title: '拓展',
       collapsable: false,
-      path:'/guide/extend',
+      path: '/guide/extend',
       children: [
         'extend/request',
         'extend/mock',
@@ -75,6 +75,7 @@ const sidebar = {
   '/articles/': [
     { title: '滴滴开源小程序框架Mpx', path: '1.0' },
     { title: 'Mpx发布2.0，完美支持跨平台开发', path: '2.0' },
+    { title: '小程序框架运行时性能大测评', path: 'performance' },
     { title: 'Mpx框架初体验', path: 'mpx1' },
     { title: 'Mpx框架技术揭秘', path: 'mpx2' },
     { title: '基于Mpx的小程序体积优化', path: 'size-control' },
