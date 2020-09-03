@@ -932,7 +932,9 @@ function parse (template, options) {
     injectWxs(meta, i18nModuleName, i18nWxsRequest)
   }
 
+  // qa 不需要 wxs 标签
   injectNodes.forEach((node) => {
+    if (mode === 'qa' && node.tag === 'wxs') return
     addChild(root, node, true)
   })
 
@@ -1700,7 +1702,7 @@ function processClass (el, meta) {
       meta.mixinStyleClass = true
       addAttrs(el, [{
         name: targetType,
-        value: `{{stringifyClass(${staticClassExp}, ${dynamicClassExp})}}`
+        value: `{{__stringifyClass__(${staticClassExp}, ${dynamicClassExp})}}`
       }])
     } else {
       addAttrs(el, [{
@@ -1729,7 +1731,7 @@ function processStyle (el, meta) {
       meta.mixinStyleClass = true
       addAttrs(el, [{
         name: targetType,
-        value: `{{stringifyStyle(${staticStyleExp}, ${dynamicStyleExp})}}`
+        value: `{{__stringifyStyle__(${staticStyleExp}, ${dynamicStyleExp})}}`
       }])
     } else {
       addAttrs(el, [{
