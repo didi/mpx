@@ -1,0 +1,40 @@
+<template>
+  <div class="tab-container">
+    <tabs wx:if="{{position === 'bottom'}}">
+      <tab-content class="tab-content">
+        <div class="group-content" for="{{tabItem in tabList}}">
+          <component is="{{tabItem.key}}" wx:if="{{tabItem.key === selectKey}}"/>
+        </div>
+      </tab-content>
+      <tab-bar class="tab-bar">
+        <text class="tab-text" for="{{tabList}}" bindtap="handleClickTab(item)">{{tabList.text}}</text>
+      </tab-bar>
+    </tabs>
+    <tabs wx:if="{{position === 'top'}}">
+      <tab-bar class="tab-bar">
+        <text class="tab-text" for="{{tabList}}" bindtap="handleClickTab(item)">{{tabList.text}}</text>
+      </tab-bar>
+      <tab-content class="tab-content">
+        <div class="group-content" for="{{tabItem in tabList}}">
+          <component is="{{tabItem.key}}" wx:if="{{tabItem.key === selectKey}}"/>
+        </div>
+      </tab-content>
+    </tabs>
+  </div>
+</template>
+
+<script>
+  import mpx from '@mpxjs/core'
+  console.log('------------------------', mpx)
+  export default {
+    private: {
+      type: 'content_1'
+    },
+    onInit () {
+      console.log('onInit')
+    }
+  }
+</script>
+
+<style>
+</style>
