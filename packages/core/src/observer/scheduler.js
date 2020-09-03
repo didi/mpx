@@ -31,6 +31,17 @@ export function queueWatcher (watcher) {
   }
 }
 
+export function dequeueWatcher (watcher) {
+  if (!watcher.id || !has[watcher.id]) return
+  for (let i = 0; i < queue.length; i++) {
+    if (queue[i] === watcher) {
+      queue.splice(i, 1)
+      has[watcher.id] = false
+      break
+    }
+  }
+}
+
 function flushQueue () {
   flushing = true
   queue.sort((a, b) => a.id - b.id)
