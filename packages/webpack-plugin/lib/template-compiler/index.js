@@ -88,6 +88,18 @@ module.exports = function (raw) {
     globalInjectCode += `global.currentInject.propKeys = ${JSON.stringify(renderResult.propKeys)};\n`
   }
 
+  // 注入快应用动态 style/class 语法的 对象、数组语法实现
+  if (mode === 'qa' && meta.mixinStyleClass) {
+    globalInjectCode += (`global.currentInject.injectStyleClasses = {
+      stringifyStyle(staticStyleExp, dynamicStyleExp) {
+        return __stringify__.stringifyStyle(staticStyleExp, dynamicStyleExp)
+      },
+      stringifyClass(staticClassExp, dynamicClassExp) {
+        return __stringify__.stringifyClass(staticClassExp, dynamicClassExp)
+      }
+    };\n`)
+  }
+
   if (meta.computed) {
     globalInjectCode += bindThis(`global.currentInject.injectComputed = {
   ${meta.computed.join(',')}

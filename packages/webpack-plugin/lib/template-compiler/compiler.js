@@ -1696,10 +1696,18 @@ function processClass (el, meta) {
   if (dynamicClass) {
     let staticClassExp = parseMustache(staticClass).result
     let dynamicClassExp = transDynamicClassExpr(parseMustache(dynamicClass).result)
-    addAttrs(el, [{
-      name: targetType,
-      value: `{{${stringifyModuleName}.stringifyClass(${staticClassExp}, ${dynamicClassExp})}}`
-    }])
+    if (mode === 'qa') {
+      meta.mixinStyleClass = true
+      addAttrs(el, [{
+        name: targetType,
+        value: `{{stringifyClass(${staticClassExp}, ${dynamicClassExp})}}`
+      }])
+    } else {
+      addAttrs(el, [{
+        name: targetType,
+        value: `{{${stringifyModuleName}.stringifyClass(${staticClassExp}, ${dynamicClassExp})}}`
+      }])
+    }
     injectWxs(meta, stringifyModuleName, stringifyWxsPath)
   } else if (staticClass) {
     addAttrs(el, [{
@@ -1717,10 +1725,18 @@ function processStyle (el, meta) {
   if (dynamicStyle) {
     let staticStyleExp = parseMustache(staticStyle).result
     let dynamicStyleExp = parseMustache(dynamicStyle).result
-    addAttrs(el, [{
-      name: targetType,
-      value: `{{${stringifyModuleName}.stringifyStyle(${staticStyleExp}, ${dynamicStyleExp})}}`
-    }])
+    if (mode === 'qa') {
+      meta.mixinStyleClass = true
+      addAttrs(el, [{
+        name: targetType,
+        value: `{{stringifyStyle(${staticStyleExp}, ${dynamicStyleExp})}}`
+      }])
+    } else {
+      addAttrs(el, [{
+        name: targetType,
+        value: `{{${stringifyModuleName}.stringifyStyle(${staticStyleExp}, ${dynamicStyleExp})}}`
+      }])
+    }
     injectWxs(meta, stringifyModuleName, stringifyWxsPath)
   } else if (staticStyle) {
     addAttrs(el, [{

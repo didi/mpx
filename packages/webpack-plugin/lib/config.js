@@ -405,7 +405,9 @@ module.exports = {
       modelProp: 'model-prop',
       modelEvent: 'model-event',
       modelValuePath: 'model-value-path',
-      modelFilter: 'model-filter'
+      modelFilter: 'model-filter',
+      dynamicStyle: 'style',
+      dynamicClass: 'class'
     }
   }
 }
