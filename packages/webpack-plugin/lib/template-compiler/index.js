@@ -91,11 +91,11 @@ module.exports = function (raw) {
   // 注入快应用动态 style/class 语法的 对象、数组语法实现
   if (mode === 'qa' && meta.mixinStyleClass) {
     globalInjectCode += (`global.currentInject.injectStyleClasses = {
-      __stringifyStyle__(staticStyleExp, dynamicStyleExp) {
-        return __stringify__.stringifyStyle(staticStyleExp, dynamicStyleExp)
+      __stringifyStyle__(...args) {
+        return __stringify__.stringifyStyle(...args)
       },
-      __stringifyClass__(staticClassExp, dynamicClassExp) {
-        return __stringify__.stringifyClass(staticClassExp, dynamicClassExp)
+      __stringifyClass__(...args) {
+        return __stringify__.stringifyClass(...args)
       }
     };\n`)
   }
