@@ -35,7 +35,7 @@ export const createInnerAudioContext = () => {
   Object.defineProperty(__audio, 'obeyMuteSwitch', {
     value: true
   })
-  const simpleEvents = [
+  const eventNames = [
     'Canplay',
     'Ended',
     'Pause',
@@ -47,15 +47,15 @@ export const createInnerAudioContext = () => {
     'Stop',
     'Error'
   ]
-  const simpleListenerTuples = [
+  const eventListeners = [
     ['on', audio.addEventListener],
     ['off', audio.removeEventListener]
   ]
-  simpleEvents.forEach(eventName => {
-    simpleListenerTuples.forEach(([eventNamePrefix, listenerFunc]) => {
-      Object.defineProperty(__audio, `${eventNamePrefix}${eventName}`, {
+  eventNames.forEach(eventName => {
+    eventListeners.forEach(([eventNameItem, listenerFn]) => {
+      Object.defineProperty(__audio, `${eventNameItem}${eventName}`, {
         get () {
-          return callback => listenerFunc.call(audio, eventName.toLowerCase(), callback)
+          return callback => listenerFn.call(audio, eventName.toLowerCase(), callback)
         }
       })
     })
