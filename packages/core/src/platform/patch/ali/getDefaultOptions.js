@@ -9,7 +9,9 @@ function transformApiForProxy (context, currentInject) {
   if (Object.getOwnPropertyDescriptor(context, 'setData').configurable) {
     Object.defineProperty(context, 'setData', {
       get () {
-        return context.__mpxProxy.forceUpdate.bind(context.__mpxProxy)
+        return function (data, callback) {
+          return context.__mpxProxy.forceUpdate(data, { sync: true }, callback)
+        }
       },
       configurable: true
     })
@@ -106,7 +108,7 @@ export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
               newData[key] = clone
             }
           })
-          this.__mpxProxy.forceUpdate(newData)
+          this.setData(newData)
         } else {
           // 由于支付宝中props透传父级setData的值，此处发生变化的属性实例一定不同，只需浅比较即可确定发生变化的属性
           // 支付宝appx2.0版本后props传递发生变化，此处获取到的nextProps和this.props以及父组件setData的数据引用都不一致，进行了两次深克隆，此处this.props和nextProps的比对需要用deep diff
