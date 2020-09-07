@@ -36,7 +36,7 @@ function off (disposer = []) {
 
 function needBs (vm) {
   const mpxPageConfig = vm.$options.__mpxPageConfig
-  return mpxPageConfig.disableScroll || mpxPageConfig.enablePullDownRefresh || vm.onReachBottom || vm.onPageScroll
+  return mpxPageConfig.enablePullDownRefresh || vm.onReachBottom || vm.onPageScroll
 }
 
 function refreshBs (vm) {
@@ -70,12 +70,13 @@ export default function onPageScroll (mixinType) {
           // 恢复上次滚动位置
           bs.scrollTo(0, this.__lastScrollY)
           // 处理禁止滚动
-          if (this.$options.__mpxPageConfig.disableScroll) {
+          const { disableScroll, enablePullDownRefresh } = this.$options.__mpxPageConfig
+          if (disableScroll && !enablePullDownRefresh) {
             bs.disable()
           } else {
             bs.enable()
             // 处理下拉刷新效果
-            if (this.$options.__mpxPageConfig.enablePullDownRefresh) {
+            if (enablePullDownRefresh) {
               showLoading(this.$el)
               bs.openPullDown(PULL_DOWN_CONFIG)
               on('pullingDown', this.__mpxPullDownHandler, this.__disposer)
@@ -121,7 +122,11 @@ export default function onPageScroll (mixinType) {
           if (bs) {
             // 处理onPageScroll
             this.onPageScroll && this.onPageScroll({ scrollTop: -pos.y })
-
+            // 处理 disableScroll 和 enablePullDownRefresh 都为 true 时，
+            // 向上拉动后还能继续向下滚动的问题
+            if (this.$options.__mpxPageConfig.disableScroll && pos.y < 0 && bs.movingDirectionY === 1) {
+              bs.scrollTo(0, 0)
+            }
             // 处理onReachBottom
             if (this.onReachBottom) {
               const onReachBottomDistance = this.$options.__mpxPageConfig.onReachBottomDistance || 50
