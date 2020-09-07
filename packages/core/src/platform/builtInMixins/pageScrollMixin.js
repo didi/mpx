@@ -35,7 +35,7 @@ function off (disposer = []) {
 }
 
 function needBs (vm) {
-  const { disableScroll, enablePullDownRefresh } = this.$options.__mpxPageConfig
+  const { disableScroll, enablePullDownRefresh } = vm.$options.__mpxPageConfig
   return disableScroll || enablePullDownRefresh || vm.onReachBottom || vm.onPageScroll
 }
 
@@ -79,7 +79,7 @@ export default function onPageScroll (mixinType) {
             bs.enable()
             // 处理下拉刷新效果
             if (enablePullDownRefresh) {
-              showLoading(this.$el)
+              showLoading(this)
               bs.openPullDown(PULL_DOWN_CONFIG)
               on('pullingDown', this.__mpxPullDownHandler, this.__disposer)
             } else {
