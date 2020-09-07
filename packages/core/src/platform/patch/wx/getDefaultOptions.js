@@ -42,7 +42,9 @@ function transformApiForProxy (context, currentInject) {
   Object.defineProperties(context, {
     setData: {
       get () {
-        return this.__mpxProxy.forceUpdate.bind(this.__mpxProxy)
+        return function (data, callback) {
+          return this.__mpxProxy.forceUpdate(data, { sync: true }, callback)
+        }
       },
       configurable: true
     },
