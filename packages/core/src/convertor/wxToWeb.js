@@ -54,7 +54,7 @@ export default {
             if (prop.hasOwnProperty('value')) {
               // vue中对于引用类型数据需要使用函数返回
               newProp.default = isObject(prop.value) ? function propFn () {
-                return diffAndCloneA(prop.value)
+                return diffAndCloneA(prop.value).clone
               } : prop.value
             }
             newProps[key] = newProp
