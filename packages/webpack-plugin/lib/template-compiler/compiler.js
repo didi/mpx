@@ -980,8 +980,16 @@ function getAndRemoveAttr (el, name, removeFromMap = true) {
 }
 
 function addAttrs (el, attrs) {
-  el.attrsList = el.attrsList.concat(attrs)
-  el.attrsMap = makeAttrsMap(el.attrsList)
+  const list = el.attrsList
+  const map = el.attrsMap
+  for (let i = 0, l = attrs.length; i < l; i++) {
+    list.push(attrs[i])
+
+    if (map[attrs[i].name] && !isIE && !isEdge) {
+      warn$1('duplicate attribute: ' + attrs[i].name)
+    }
+    map[attrs[i].name] = attrs[i].value
+  }
 }
 
 function modifyAttr (el, name, val) {
@@ -1870,7 +1878,7 @@ function processAtMode (el) {
           el._atModeStatus = 'match'
         } else {
           // 如果命中了指定的mode，则先存在el上，等跑完转换后再挂回去
-          el.noTransAttr ? el.noTransAttr.push(processedAttr) : el.noTransAttr = [processedAttr]
+          el.noTransAttrs ? el.noTransAttrs.push(processedAttr) : el.noTransAttrs = [processedAttr]
         }
       } else if (!replacedAttrName) {
         el._atModeStatus = 'mismatch'
@@ -1894,10 +1902,9 @@ function processElement (el, root, options, meta) {
   }
 
   // 转换完成，把不需要处理的attr挂回去
-  if (el.noTransAttr) {
-    el.noTransAttr.forEach(item => {
-      addAttrs(el, item)
-    })
+  if (el.noTransAttrs) {
+    addAttrs(el, el.noTransAttrs)
+    delete el.noTransAttrs
   }
 
   const transAli = mode === 'ali' && srcMode === 'wx'

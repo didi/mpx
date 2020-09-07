@@ -1,5 +1,6 @@
 <script>
   import getInnerListeners from './getInnerListeners'
+
   const sizeClassMap = {
     'default': '',
     'mini': 'mpx-button-size-mini'
