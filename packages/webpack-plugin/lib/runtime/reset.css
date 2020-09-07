@@ -73,9 +73,17 @@ html, body, .app {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background-color: #666;
-  animation: dot-flashing .4s infinite steps(2, jump-none) alternate;
   animation-delay: .2s;
+}
+
+.dot-flashing.dark {
+  background-color: #666;
+  animation: dot-flashing-dark .4s infinite steps(2, jump-none) alternate;
+}
+
+.dot-flashing.light {
+  background-color: #fff;
+  animation: dot-flashing-light .4s infinite steps(2, jump-none) alternate;
 }
 
 .dot-flashing::before, .dot-flashing::after {
@@ -90,9 +98,17 @@ html, body, .app {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background-color: #666;
-  animation: dot-flashing .4s infinite steps(2, jump-none) alternate;
   animation-delay: 0s;
+}
+
+.dot-flashing.dark::before {
+  background-color: #666;
+  animation: dot-flashing-dark .4s infinite steps(2, jump-none) alternate;
+}
+
+.dot-flashing.light::before {
+  background-color: #fff;
+  animation: dot-flashing-light .4s infinite steps(2, jump-none) alternate;
 }
 
 .dot-flashing::after {
@@ -100,12 +116,20 @@ html, body, .app {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background-color: #666;
-  animation: dot-flashing .4s infinite steps(2, jump-none) alternate;
   animation-delay: .4s;
 }
 
-@keyframes dot-flashing {
+.dot-flashing.dark::after {
+  background-color: #666;
+  animation: dot-flashing-dark .4s infinite steps(2, jump-none) alternate;
+}
+
+.dot-flashing.light::after {
+  background-color: #fff;
+  animation: dot-flashing-light .4s infinite steps(2, jump-none) alternate;
+}
+
+@keyframes dot-flashing-dark {
   0% {
     background-color: #666;
   }
@@ -117,4 +141,11 @@ html, body, .app {
   }
 }
 
-
+@keyframes dot-flashing-light {
+  0% {
+    background-color: #fff;
+  }
+  100% {
+    background-color: #fff;
+  }
+}
