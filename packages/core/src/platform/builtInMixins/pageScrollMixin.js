@@ -40,6 +40,7 @@ function needBs (vm) {
 }
 
 function refreshBs (vm) {
+  // 待bs refresh方法支持替换content元素后，改为refresh实现
   if (bs) bs.destroy()
   const bsConfig = {
     scrollY: true,

@@ -7,12 +7,10 @@ const SourceMapGenerator = require('source-map').SourceMapGenerator
 const splitRE = /\r?\n/g
 const emptyRE = /^(?:\/\/)?\s*$/
 
-module.exports = (content, filePath, needMap, mode, defs, context) => {
-  context = context || process.cwd()
-  const sourceRoot = path.dirname(path.relative(context, filePath))
-  const filename = path.basename(filePath)
+module.exports = (content, filePath, needMap, mode, defs) => {
   // 缓存需要mode隔离，不同mode经过区块条件编译parseComponent得到的内容并不一致
-  const cacheKey = hash(filename + content + mode)
+  const cacheKey = hash(filePath + content + mode)
+
   let output = cache.get(cacheKey)
   if (output) return JSON.parse(output)
   output = compiler.parseComponent(content, {
@@ -22,13 +20,14 @@ module.exports = (content, filePath, needMap, mode, defs, context) => {
     pad: 'line'
   })
   if (needMap) {
+    // 添加hash避免content被webpack的sourcemap覆盖
+    const filename = filePath + '?' + cacheKey
     // source-map cache busting for hot-reloadded modules
     if (output.script && !output.script.src) {
       output.script.map = generateSourceMap(
         filename,
         content,
-        output.script.content,
-        sourceRoot
+        output.script.content
       )
     }
     if (output.styles) {
@@ -37,8 +36,7 @@ module.exports = (content, filePath, needMap, mode, defs, context) => {
           style.map = generateSourceMap(
             filename,
             content,
-            style.content,
-            sourceRoot
+            style.content
           )
         }
       })
@@ -49,11 +47,8 @@ module.exports = (content, filePath, needMap, mode, defs, context) => {
   return output
 }
 
-function generateSourceMap (filename, source, generated, sourceRoot) {
-  const map = new SourceMapGenerator({
-    file: filename,
-    sourceRoot
-  })
+function generateSourceMap (filename, source, generated) {
+  const map = new SourceMapGenerator()
   map.setSourceContent(filename, source)
   generated.split(splitRE).forEach((line, index) => {
     if (!emptyRE.test(line)) {
