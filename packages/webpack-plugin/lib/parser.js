@@ -1,4 +1,3 @@
-const path = require('path')
 const cache = require('lru-cache')(100)
 const hash = require('hash-sum')
 const compiler = require('./template-compiler/compiler')
