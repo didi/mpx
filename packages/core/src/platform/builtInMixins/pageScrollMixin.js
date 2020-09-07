@@ -36,7 +36,8 @@ function off (disposer = []) {
 
 function needBs (vm) {
   const { disableScroll, enablePullDownRefresh } = vm.$options.__mpxPageConfig
-  return disableScroll || enablePullDownRefresh || vm.onReachBottom || vm.onPageScroll
+  // 当任何一个页面初始化过bs时，由于touch事件被preventDefault了，之后的所有页面都需要使用bs进行滚动
+  return bs || disableScroll || enablePullDownRefresh || vm.onReachBottom || vm.onPageScroll
 }
 
 function refreshBs (vm) {
