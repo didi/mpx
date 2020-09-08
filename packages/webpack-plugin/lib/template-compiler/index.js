@@ -22,6 +22,7 @@ module.exports = function (raw) {
   const packageName = mpx.currentPackageRoot || 'main'
   const componentsMap = mpx.componentsMap[packageName]
   const wxsContentMap = mpx.wxsContentMap
+  const builtInComponentsMap = mpx.builtInComponentsMap
   const resourcePath = parseRequest(this.resource).resourcePath
   let scopedId
 
@@ -62,6 +63,13 @@ module.exports = function (raw) {
   if (meta.wxsContentMap) {
     for (let module in meta.wxsContentMap) {
       wxsContentMap[`${resourcePath}~${module}`] = meta.wxsContentMap[module]
+    }
+  }
+
+  if (meta.builtInComponentsMap) {
+    const map = builtInComponentsMap[resourcePath] = {}
+    for (let tag in meta.builtInComponentsMap) {
+      map[tag] = meta.builtInComponentsMap[tag]
     }
   }
 

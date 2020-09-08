@@ -1798,6 +1798,10 @@ function processScoped (el, options) {
 }
 
 const builtInComponentsPrefix = '@mpxjs/webpack-plugin/lib/runtime/components'
+const suffixMap = {
+  web: 'vue',
+  qa: 'ux'
+}
 
 function processBuiltInComponents (el, meta) {
   if (el.isBuiltIn) {
@@ -1806,7 +1810,7 @@ function processBuiltInComponents (el, meta) {
     }
     const tag = el.tag
     if (!meta.builtInComponentsMap[tag]) {
-      meta.builtInComponentsMap[tag] = `${builtInComponentsPrefix}/${mode}/${tag}.vue`
+      meta.builtInComponentsMap[tag] = `${builtInComponentsPrefix}/${mode}/${tag}.${suffixMap[mode]}`
     }
   }
 }
@@ -1948,6 +1952,10 @@ function processElement (el, root, options, meta) {
     // 预处理代码维度条件编译
     processIfForWeb(el)
     return
+  }
+
+  if (mode === 'qa') {
+    return processBuiltInComponents(el, meta)
   }
 
   const pass = isNative || processTemplate(el) || processingTemplate

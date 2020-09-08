@@ -14,6 +14,19 @@ module.exports = function (additionalAssets, compilation, options, isProd) {
   // 整合pages & components & app
   let list = pagesList.concat(componentsList, 'app')
 
+  const builtInComponentsMap = compilation.__mpx__.builtInComponentsMap
+  const pagesMap = compilation.__mpx__.pagesMap
+  const componentsMap = compilation.__mpx__.componentsMap.main
+  const qaComponentMap = {}
+  Object.keys(builtInComponentsMap).forEach(resourcePath => {
+    if (pagesMap[resourcePath]) {
+      qaComponentMap[pagesMap[resourcePath]] = builtInComponentsMap[resourcePath]
+    }
+    if (componentsMap[resourcePath]) {
+      qaComponentMap[componentsMap[resourcePath]] = builtInComponentsMap[resourcePath]
+    }
+  })
+
   for (let i = 0; i < list.length; i++) {
     let content = new ConcatSource()
     let jsonFile = list[i] + '.json'
@@ -36,6 +49,12 @@ module.exports = function (additionalAssets, compilation, options, isProd) {
             content.add(tpl)
           })
         }
+      })
+    }
+
+    if (qaComponentMap[list[i]]) {
+      Object.keys(qaComponentMap[list[i]]).forEach(tag => {
+        content.add(`<import name="${tag}" src="${qaComponentMap[list[i]][tag]}"></import>\n`)
       })
     }
 
