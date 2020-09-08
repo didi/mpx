@@ -1,13 +1,79 @@
+<!-- https://developers.weixin.qq.com/miniprogram/dev/component/button.html -->
 <template>
-  <div>
-    <text>hello mpx-button in qa: {{ count }}</text>
+  <div class="mpx-button {{ dynamicClass }}">
+    <text>
+      <slot></slot>
+    </text>
   </div>
 </template>
 
 <script>
   export default {
-    data:{
-      count: 20
-    }
+    props: {
+      size: {
+        default: 'default'
+      },
+      type: {
+        default: 'primary'
+      },
+      plain: {
+        default: false
+      },
+      disabled: {
+        default: false
+      },
+      loading: {
+        default: false
+      },
+      hoverClass: {
+        default: 'button-hover'
+      },
+      hoverStopPropagation: {
+        default: false
+      },
+      hoverStartTime: {
+        default: 20
+      },
+      hoverStayTime: {
+        default: 70
+      },
+      lang: {
+        default: 'en'
+      }
+    },
+    data () {
+      return {
+        dynamicClass: 'primary'
+      }
+    },
+    onReady() {
+        setTimeout(() => {
+          this.dynamicClass = 'warn'
+          console.log('change background')
+        }, 2000)
+    },
   }
 </script>
+
+<style>
+.mpx-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  border-radius: 5px;
+  color: #000;
+  background-color: #f8f8f8;
+  font-weight: 700;
+  border-radius: 10px;
+  padding: 14px 14px;
+}
+
+.primary {
+  background-color: #008000;
+}
+
+.warn {
+  background-color: #ff0000;
+}
+</style>
