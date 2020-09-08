@@ -33,6 +33,7 @@ const block = require('./block')
 const icon = require('./icon')
 const Nonsupport = require('./unsupported')
 const HyphenTagName = require('./hypen-tag-name')
+const webView = require('./web-view')
 
 module.exports = function getComponentConfigs ({ warn, error }) {
   /**
@@ -104,6 +105,7 @@ module.exports = function getComponentConfigs ({ warn, error }) {
     template(),
     block(),
     icon(),
-    HyphenTagName({ print })
+    HyphenTagName({ print }),
+    webView({ print })
   ]
 }

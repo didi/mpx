@@ -1,5 +1,6 @@
 const async = require('async')
 const path = require('path')
+const JSON5 = require('json5')
 const loaderUtils = require('loader-utils')
 const hash = require('hash-sum')
 const parseRequest = require('../utils/parse-request')
@@ -46,7 +47,7 @@ module.exports = function (json, options, rawCallback) {
   }
   // 由于json需要提前读取在template处理中使用，src的场景已经在loader中处理了，此处无需考虑json.src的场景
   try {
-    jsonObj = JSON.parse(json.content)
+    jsonObj = JSON5.parse(json.content)
   } catch (e) {
     return callback(e)
   }
@@ -93,13 +94,7 @@ module.exports = function (json, options, rawCallback) {
             const filePath = result
             const extName = path.extname(filePath)
             if (extName === '.mpx' || extName === '.vue') {
-              const parts = parseComponent(
-                content,
-                filePath,
-                loaderContext.sourceMap,
-                mode,
-                defs
-              )
+              const parts = parseComponent(content, filePath, loaderContext.sourceMap, mode, defs)
               const json = parts.json || {}
               if (json.content) {
                 content = json.content
@@ -113,7 +108,7 @@ module.exports = function (json, options, rawCallback) {
           },
           (result, content, callback) => {
             try {
-              content = JSON.parse(content)
+              content = JSON5.parse(content)
             } catch (err) {
               return callback(err)
             }
@@ -159,12 +154,12 @@ module.exports = function (json, options, rawCallback) {
 
   const processPages = (pages, srcRoot = '', tarRoot = '', context, callback) => {
     if (pages) {
+      context = path.join(context, srcRoot)
       async.forEach(pages, (page, callback) => {
         if (!isUrlRequest(page, projectRoot)) return callback()
         if (resolveMode === 'native') {
           page = loaderUtils.urlToRequest(page, projectRoot)
         }
-        context = path.join(context, srcRoot)
         resolve(context, page, (err, resource) => {
           if (err) return callback(err)
           const { resourcePath, queryObj } = parseRequest(resource)

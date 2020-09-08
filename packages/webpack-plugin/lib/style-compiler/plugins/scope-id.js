@@ -40,6 +40,8 @@ module.exports = postcss.plugin('scope-id', ({ id }) => root => {
             node = n
           }
         })
+        // 对于page selector不添加scope id
+        if (node && node.type === 'tag' && node.value === 'page') return
         selector.insertAfter(node, selectorParser.className({
           value: id
         }))

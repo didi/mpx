@@ -28,8 +28,15 @@ const PAGE_HOOKS = [
   // 'onResize'
 ]
 
+const APP_HOOKS = [
+  ...COMPONENT_HOOKS,
+  'onLaunch',
+  'onShow',
+  'onHide'
+]
+
 export const LIFECYCLE = {
-  APP_HOOKS: COMPONENT_HOOKS,
+  APP_HOOKS,
   PAGE_HOOKS,
   COMPONENT_HOOKS
 }
