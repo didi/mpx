@@ -55,9 +55,12 @@ export const createInnerAudioContext = () => {
     eventListeners.forEach(([eventNameItem, listenerFn]) => {
       Object.defineProperty(__audio, `${eventNameItem}${eventName}`, {
         get () {
-          return callback => {
-            let cb = callback
-            listenerFn.call(audio, eventName.toLowerCase(), cb)
+          return (callback = audio.cb) => {
+            if (eventNameItem !== 'off') {
+              audio.cb = callback
+            }
+            // debugger
+            return listenerFn.call(audio, eventName.toLowerCase(), audio.cb)
           }
         }
       })
