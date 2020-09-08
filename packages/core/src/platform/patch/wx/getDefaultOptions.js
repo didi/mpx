@@ -42,7 +42,9 @@ function transformApiForProxy (context, currentInject) {
   Object.defineProperties(context, {
     setData: {
       get () {
-        return this.__mpxProxy.forceUpdate.bind(this.__mpxProxy)
+        return function (data, callback) {
+          return this.__mpxProxy.forceUpdate(data, { sync: true }, callback)
+        }
       },
       configurable: true
     },
@@ -53,7 +55,7 @@ function transformApiForProxy (context, currentInject) {
           const validData = Object.assign({}, options.data, options.properties, options.props)
           for (const key in context.data) {
             if (context.data.hasOwnProperty(key) && validData.hasOwnProperty(key)) {
-              data[key] = context.data
+              data[key] = context.data[key]
             }
           }
           return data

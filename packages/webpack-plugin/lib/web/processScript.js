@@ -81,6 +81,7 @@ module.exports = function (script, options, callback) {
         global.getApp = function(){}
         global.__networkTimeout = ${JSON.stringify(jsonConfig.networkTimeout)}
         global.__tabBar = ${JSON.stringify(jsonConfig.tabBar)}
+        global.__style = ${JSON.stringify(jsonConfig.style || 'v1')}
         global.__mpxPageConfig = ${JSON.stringify(jsonConfig.window)}\n`
 
         if (i18n) {

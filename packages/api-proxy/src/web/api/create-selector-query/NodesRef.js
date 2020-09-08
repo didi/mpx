@@ -47,6 +47,19 @@ class NodesRef {
     )
     return this._selectorQuery
   }
+  // 获取Node节点实例
+  node (callback) {
+    this._selectorQuery._push(
+      this._selector,
+      this._component,
+      this._single,
+      {
+        node: true
+      },
+      callback
+    )
+    return this._selectorQuery
+  }
 }
 
 export default NodesRef

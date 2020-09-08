@@ -29,10 +29,10 @@ npm install
 
 ## 编译构建
 
-使用npm script执行mpx的编译构建，在开发模式下我们执行dev命令，将项目源码构建输出到`dist/${平台目录}`下，并且监听源码的改动进行重新编译。
+使用npm script执行mpx的编译构建，在开发模式下我们执行watch命令，将项目源码构建输出到`dist/${平台目录}`下，并且监听源码的改动进行重新编译。
 
 ```shell
-npm run dev
+npm run watch
 ```
 
 ## 预览调试
