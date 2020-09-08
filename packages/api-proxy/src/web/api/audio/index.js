@@ -55,7 +55,10 @@ export const createInnerAudioContext = () => {
     eventListeners.forEach(([eventNameItem, listenerFn]) => {
       Object.defineProperty(__audio, `${eventNameItem}${eventName}`, {
         get () {
-          return callback => listenerFn.call(audio, eventName.toLowerCase(), callback)
+          return callback => {
+            let cb = callback
+            listenerFn.call(audio, eventName.toLowerCase(), cb)
+          }
         }
       })
     })
