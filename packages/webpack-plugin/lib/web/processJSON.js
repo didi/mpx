@@ -54,11 +54,11 @@ module.exports = function (json, options, rawCallback) {
 
   // 在解析 app json 时处理 tabBar，生成 listMap，方便后续处理
   if (isTabBarAndAppType) {
-    const tabBarMapPages = {}
+    const tabBarPagesMap = {}
     jsonObj.tabBar.list.forEach((item) => {
-      tabBarMapPages['/' + item.pagePath] = true
+      tabBarPagesMap['/' + item.pagePath] = true
     })
-    jsonObj.tabBar.listMap = tabBarMapPages
+    jsonObj.tabBar.listMap = tabBarPagesMap
   }
 
   const fs = loaderContext._compiler.inputFileSystem
