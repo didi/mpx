@@ -14,17 +14,17 @@ export function pageScrollTo ({
   complete
 }) {
   nextTick(() => {
-    const bs = window.__mpx_bs__
+    const bs = window.__mpxBs
 
     if (!bs) {
       return webHandleFail({
-        errMsg: 'pageScrollTo:fail',
+        errMsg: 'pageScrollTo:fail'
       }, fail, complete)
     }
 
     const callback = () => {
       webHandleSuccess({
-        errMsg: 'pageScrollTo:ok',
+        errMsg: 'pageScrollTo:ok'
       }, success, complete)
     }
     // scrollTop 比 selector 的优先级高
@@ -36,6 +36,5 @@ export function pageScrollTo ({
       bs.scrollToElement(selector, duration)
       callback()
     }
-    
   })
 }
