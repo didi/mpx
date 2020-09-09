@@ -34,12 +34,6 @@ function off (disposer = []) {
   }
 }
 
-function needBs (vm) {
-  const { disableScroll, enablePullDownRefresh } = vm.$options.__mpxPageConfig
-  // 当任何一个页面初始化过bs时，由于touch事件被preventDefault了，之后的所有页面都需要使用bs进行滚动
-  return bs || disableScroll || enablePullDownRefresh || vm.onReachBottom || vm.onPageScroll
-}
-
 function refreshBs (vm) {
   // 待bs refresh方法支持替换content元素后，改为refresh实现
   if (bs) bs.destroy()
@@ -54,9 +48,10 @@ function refreshBs (vm) {
   }
   try {
     bs = new global.BScroll(vm.$el.parentNode, bsConfig)
+    return true
   } catch (e) {
     const location = vm.__mpxProxy && vm.__mpxProxy.options.mpxFileResource
-    return error(`Better scroll init error, please check.`, location, e)
+    error(`Better scroll init error, please check.`, location, e)
   }
 }
 
@@ -68,8 +63,7 @@ export default function onPageScroll (mixinType) {
         this.__disposer = []
       },
       activated () {
-        if (needBs(this)) {
-          refreshBs(this)
+        if (refreshBs(this)) {
           // 恢复上次滚动位置
           bs.scrollTo(0, this.__lastScrollY)
           // 处理禁止滚动
