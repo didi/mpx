@@ -31,7 +31,7 @@
     "identity-obj-proxy": "^3.0.0",
     "jest": "^24.8.0",
     "lerna": "^3.4.3",
-    "vue": "^2.6.11",
-    "vuepress": "1.4.0"
+    "vue": "^2.6.12",
+    "vuepress": "^1.5.4"
   }
 }
