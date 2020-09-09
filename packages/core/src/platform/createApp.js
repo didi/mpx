@@ -9,16 +9,6 @@ export default function createApp (option, config = {}) {
       created () {
         Object.assign(this, option.proto)
         this.$options.onLaunch && this.$options.onLaunch.call(this, {})
-
-        // onPageNotFound
-        const { path, query, redirectedFrom = '' } = window.__mpxRouter.history.current
-        const fromPath = redirectedFrom.split('?')[0]
-
-        window.currentOption.onPageNotFound.call(this, {
-          path: fromPath || path,
-          query,
-          isEntryPage: !!redirectedFrom
-        })
       }
     })
   } else {
