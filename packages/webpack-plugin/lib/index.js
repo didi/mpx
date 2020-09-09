@@ -341,6 +341,7 @@ class MpxWebpackPlugin {
           decodeHTMLText: this.options.decodeHTMLText,
           // native文件专用相关配置
           nativeOptions: this.options.nativeOptions,
+          tabBarMap: {},
           defs: this.options.defs,
           i18n: this.options.i18n,
           checkUsingComponents: this.options.checkUsingComponents,
@@ -799,19 +800,17 @@ if(!context.console) {
   }
 }
 \n`)
-            if (mpx.mode === 'swan') {
-              source.add('// swan runtime fix\n' +
-                'if (!context.navigator) {\n' +
-                '  context.navigator = {};\n' +
-                '}\n' +
-                'Object.defineProperty(context.navigator, "standalone",{\n' +
-                '  configurable: true,' +
-                '  enumerable: true,' +
-                '  get () {\n' +
-                '    return true;\n' +
-                '  }\n' +
-                '});\n\n')
-            }
+            source.add('// swan && pc runtime fix\n' +
+              'if (!context.navigator) {\n' +
+              '  context.navigator = {};\n' +
+              '}\n' +
+              'Object.defineProperty(context.navigator, "standalone",{\n' +
+              '  configurable: true,' +
+              '  enumerable: true,' +
+              '  get () {\n' +
+              '    return true;\n' +
+              '  }\n' +
+              '});\n\n')
             source.add(originalSource)
             source.add(`\nmodule.exports = window[${JSON.stringify(jsonpFunction)}];\n`)
           } else {

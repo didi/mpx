@@ -33,12 +33,10 @@ export function queueWatcher (watcher) {
 
 export function dequeueWatcher (watcher) {
   if (!watcher.id || !has[watcher.id]) return
-  for (let i = 0; i < queue.length; i++) {
-    if (queue[i] === watcher) {
-      queue.splice(i, 1)
-      has[watcher.id] = false
-      break
-    }
+  const index = queue.indexOf(watcher)
+  if (index > -1) {
+    queue.splice(index, 1)
+    has[watcher.id] = false
   }
 }
 
