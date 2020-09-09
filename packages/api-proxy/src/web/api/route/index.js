@@ -116,9 +116,47 @@ function reLaunch (options = {}) {
   }
 }
 
+function switchTab (options = {}) {
+  const router = window.__mpxRouter
+  const tabBarList = (window.__tabBar && window.__tabBar.list) || []
+  const toUrl = options.url
+  const delta = router.stack.length - 1
+  let isToTabPage = false
+  tabBarList.forEach((item) => {
+    if (toUrl.indexOf(item.pagePath) > -1) {
+      isToTabPage = true
+    }
+  })
+  if (!isToTabPage) {
+    // 跳转页面非 tabBar 页面，无法跳转
+    const res = { errMsg: 'switchTab:fail can not switch to no-tabBar page' }
+    return Promise.reject(res)
+  }
+
+  router.__mpxAction = {
+    type: 'switch',
+    path: options.url,
+    replaced: false,
+    switchTabed: false
+  }
+  if (delta > 0) {
+    console.log('router go', -delta)
+    router.go(-delta)
+  } else {
+    router.__mpxAction.replaced = true
+    router.replace({
+      path: options.url
+    })
+  }
+  const res = { errMsg: 'switchTab:ok' }
+  webHandleSuccess(res, options.success, options.complete)
+  return Promise.resolve(res)
+}
+
 export {
   redirectTo,
   navigateTo,
   navigateBack,
-  reLaunch
+  reLaunch,
+  switchTab
 }
