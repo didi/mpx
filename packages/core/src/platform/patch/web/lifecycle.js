@@ -21,10 +21,10 @@ const PAGE_HOOKS = [
   'onUnload',
   'onPullDownRefresh',
   'onReachBottom',
-  'onPageScroll'
+  'onPageScroll',
   // 'onShareAppMessage',
   // 'onTabItemTap',
-  // 'onResize'
+  'onResize'
 ]
 
 const APP_HOOKS = [
