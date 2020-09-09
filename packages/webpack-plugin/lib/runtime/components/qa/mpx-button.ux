@@ -1,7 +1,7 @@
 <!-- https://developers.weixin.qq.com/miniprogram/dev/component/button.html -->
 <template>
-  <div class="mpx-button {{ dynamicClass }}">
-    <text>
+  <div class="mpx-button-container">
+    <text class="{{ classes }}" @touchstart="onTouchStart" @touchend="onTouchEnd">
       <slot></slot>
     </text>
   </div>
@@ -14,7 +14,7 @@
         default: 'default'
       },
       type: {
-        default: 'primary'
+        default: 'default'
       },
       plain: {
         default: false
@@ -36,22 +36,52 @@
       },
       hoverStayTime: {
         default: 70
-      },
-      lang: {
-        default: 'en'
       }
     },
     data () {
       return {
-        dynamicClass: 'primary'
+        isHover: false,
+        touchStartTimer: null,
+        touchEndTimer: null
       }
     },
-    onReady() {
-        setTimeout(() => {
-          this.dynamicClass = 'warn'
-          console.log('change background')
-        }, 2000)
+    computed: {
+      classes () {
+        const arr = [
+          'mpx-button',
+          `mpx-button-size-${this.size}`,
+          `mpx-button-type-${this.type}`
+        ]
+        if (this.disabled) {
+          arr.push('mpx-button-disabled')
+        }
+        if (this.plain) {
+          arr.push('mpx-button-plain')
+        }
+        if (this.isHover && this.hoverClass !== 'none') {
+          arr.push('mpx-button-hover')
+        }
+        return arr.join(' ')
+      }
     },
+    onTouchStart (e) {
+      if (e.__hoverStopPropagation) {
+        return
+      }
+      e.__hoverStopPropagation = this.hoverStopPropagation
+      this.touchStartTimer && clearTimeout(this.touchStartTimer)
+      // 已向快应用官方反馈，后续修复：
+      // 开发者工具上 touchstart 内的 setTimeout 不执行，真机上是正常的
+      this.touchStartTimer = setTimeout(() => {
+        this.isHover = true
+      }, this.hoverStartTime)
+    },
+    onTouchEnd (e) {
+      this.touchEndTimer && clearTimeout(this.touchEndTimer)
+      this.touchEndTimer = setTimeout(() => {
+        this.isHover = false
+      }, this.hoverStayTime)
+    }
   }
 </script>
 
@@ -60,20 +90,46 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
-  border-radius: 5px;
-  color: #000;
-  background-color: #f8f8f8;
-  font-weight: 700;
+  padding: 20px 20px;
   border-radius: 10px;
-  padding: 14px 14px;
 }
 
-.primary {
-  background-color: #008000;
+.mpx-button-size-default {
+  font-size: 30px;
+  color: #000;
 }
 
-.warn {
-  background-color: #ff0000;
+.mpx-button-size-mini {
+  padding: 10px 20px 10px 20px;
+  font-size: 25px;
+}
+
+.mpx-button-type-default {
+  background-color: #f2f2f2;
+}
+
+.mpx-button-type-primary {
+  background-color:#00A429;
+  color: #fff;
+}
+
+.mpx-button-type-warn {
+  background-color: #D63637;
+  color: #fff;
+}
+
+.mpx-button-disabled {
+  background-color: #fafafa;
+  color: #ccc;
+  border: 1px solid rgba(0, 0, 0, .2);
+}
+
+.mpx-button-plain {
+  border: 1px solid #353535;
+  color: #353535;
+}
+
+.mpx-button-hover {
+  background-color: rgba(0, 0, 0, .2);
 }
 </style>
