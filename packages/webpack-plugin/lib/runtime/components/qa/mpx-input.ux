@@ -1,0 +1,72 @@
+<template>
+  <div class="mpx-input-container">
+    <input 
+      disabled="{{ disabled }}"
+      type="{{ type }}" 
+      value="{{ value }}"
+      placeholder="{{ placeholder }}"
+      maxlength="{{ maxlength }}"
+      enterkeytype="{{ confirmType }}"
+      id="input">
+    </input>
+  </div>
+</template>
+
+<script>
+export default {
+  props: {
+    value: {
+      default: ''
+    },
+    type: {
+      default: 'text'
+    },
+    placeholder: {
+      default: ''
+    },
+    disabled: {
+      default: false
+    },
+    maxlength: {
+      default: 140
+    },
+    autoFocus: {
+      default: false
+    },
+    confirmType: {
+      default: 'done'
+    },
+    selectionStart: {
+      default: -1
+    },
+    selectionEnd: {
+      default: -1
+    }
+  },
+  data() {
+    return {
+
+    }
+  },
+  onReady() {
+    const $input = this.$element('input')
+    if (this.autoFocus) {
+      $input.focus({
+        focus: true
+      })
+    }
+    if (this.autoFocus && this.selectionStart !== -1 && this.selectionEnd !== -1) {
+      $input.setSelectionRange({
+        start: this.selectionStart,
+        end: this.selectionEnd
+      })
+    }
+  }
+}
+</script>
+
+<style>    
+  .mpx-input-container input {
+    height: 44px;
+  }
+</style>
