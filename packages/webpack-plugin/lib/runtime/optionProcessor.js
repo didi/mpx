@@ -6,6 +6,7 @@ export default function processOption (
   jsonConfig,
   pagesMap,
   componentsMap,
+  tabBarMap,
   Vue,
   VueRouter,
   VueI18n,
@@ -77,6 +78,35 @@ export default function processOption (
           case 'redirect':
             window.__mpxRouter.needRemove = stack.splice(stack.length - 1, 1, insertItem)
             window.__mpxRouter.needCache = insertItem
+            break
+          case 'switch':
+            // 将非tabBar页面remove
+            let tabNode = null
+            const tabBarListMap = tabBarMap.listMap
+            if (!action.switchTabed) {
+              action.switchTabed = true
+              const removeStack = stack.filter((item) => {
+                if (item.path === action.path) {
+                  tabNode = item
+                }
+                return !tabBarListMap[item.path]
+              })
+              window.__mpxRouter.needRemove = removeStack
+              if (tabNode) {
+                window.__mpxRouter.stack = [tabNode]
+              } else {
+                window.__mpxRouter.stack = [insertItem]
+                window.__mpxRouter.needCache = insertItem
+              }
+            }
+            if (!action.replaced) {
+              action.replaced = true
+              return next({
+                path: action.path,
+                replace: true
+              })
+            }
+
             break
           case 'reLaunch':
             if (!action.reLaunched) {

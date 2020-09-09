@@ -341,6 +341,7 @@ class MpxWebpackPlugin {
           decodeHTMLText: this.options.decodeHTMLText,
           // native文件专用相关配置
           nativeOptions: this.options.nativeOptions,
+          tabBarMap: {},
           defs: this.options.defs,
           i18n: this.options.i18n,
           checkUsingComponents: this.options.checkUsingComponents,
