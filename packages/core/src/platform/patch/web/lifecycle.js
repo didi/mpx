@@ -31,7 +31,11 @@ const APP_HOOKS = [
   ...COMPONENT_HOOKS,
   'onLaunch',
   'onShow',
-  'onHide'
+  'onHide',
+  'onError',
+  'onPageNotFound',
+  'onUnhandledRejection',
+  'onThemeChange'
 ]
 
 export const LIFECYCLE = {
