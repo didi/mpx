@@ -1,5 +1,4 @@
 const postcss = require('postcss')
-const { preProcessDefs } = require('../../utils/index')
 
 /**
  * 按平台条件编译CSS，用法如下：
@@ -46,9 +45,7 @@ const { preProcessDefs } = require('../../utils/index')
 //     */
 // `
 module.exports = postcss.plugin('conditional-strip', (options = {}) => {
-  const { defs: rawDefs } = options
-
-  const defs = preProcessDefs(rawDefs)
+  const { defs } = options
 
   const defKeys = Object.keys(defs)
   const defValues = defKeys.map((key) => {

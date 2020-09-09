@@ -1,12 +1,10 @@
 const path = require('path')
-const { preProcessDefs } = require('../utils/index')
 
 // 将JS生成JSON
 function compileMPXJSON ({ source, defs, filePath }) {
-  const newDefs = preProcessDefs(defs)
-  const defKeys = Object.keys(newDefs)
+  const defKeys = Object.keys(defs)
   const defValues = defKeys.map((key) => {
-    return newDefs[key]
+    return defs[key]
   })
   // eslint-disable-next-line no-new-func
   const func = new Function('exports', 'require', 'module', '__filename', '__dirname', ...defKeys, source)
