@@ -23,6 +23,7 @@ const fixRelative = require('./utils/fix-relative')
 const parseRequest = require('./utils/parse-request')
 const matchCondition = require('./utils/match-condition')
 const parseAsset = require('./utils/parse-asset')
+const { preProcessDefs } = require('./utils/index')
 
 const isProductionLikeMode = options => {
   return options.mode === 'production' || !options.mode
@@ -342,7 +343,7 @@ class MpxWebpackPlugin {
           // native文件专用相关配置
           nativeOptions: this.options.nativeOptions,
           tabBarMap: {},
-          defs: this.options.defs,
+          defs: preProcessDefs(this.options.defs),
           i18n: this.options.i18n,
           checkUsingComponents: this.options.checkUsingComponents,
           appTitle: 'Mpx homepage',
