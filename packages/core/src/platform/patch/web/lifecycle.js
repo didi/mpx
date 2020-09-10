@@ -21,14 +21,24 @@ const PAGE_HOOKS = [
   'onUnload',
   'onPullDownRefresh',
   'onReachBottom',
-  'onPageScroll'
-  // 'onShareAppMessage',
-  // 'onTabItemTap',
-  // 'onResize'
+  'onPageScroll',
+  'onTabItemTap',
+  'onResize'
+]
+
+const APP_HOOKS = [
+  ...COMPONENT_HOOKS,
+  'onLaunch',
+  'onShow',
+  'onHide',
+  'onError',
+  'onPageNotFound',
+  'onUnhandledRejection',
+  'onThemeChange'
 ]
 
 export const LIFECYCLE = {
-  APP_HOOKS: COMPONENT_HOOKS,
+  APP_HOOKS,
   PAGE_HOOKS,
   COMPONENT_HOOKS
 }

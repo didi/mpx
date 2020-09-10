@@ -128,14 +128,20 @@ export default class MPXProxy {
   initApi () {
     // 挂载扩展属性到实例上
     proxy(this.target, this.options.proto, Object.keys(this.options.proto), true, (key) => {
+      if (this.ignoreProxyMap[key]) {
+        error(`The key [${key}] of mpx.prototype is a reserved keyword of miniprogram, please check and rename it!`, this.options.mpxFileResource)
+        return false
+      }
       error(`The key [${key}] of mpx.prototype exist in the component/page instance already, please check your plugins!`, this.options.mpxFileResource)
-      if (this.ignoreProxyMap[key]) return false
     })
     // 挂载混合模式下createPage中的自定义属性，模拟原生Page构造器的表现
     if (this.options.__type__ === 'page' && !this.options.__pageCtor__) {
       proxy(this.target, this.options, this.options.mpxCustomKeysForBlend, undefined, (key) => {
+        if (this.ignoreProxyMap[key]) {
+          error(`The key [${key}] of page options is a reserved keyword of miniprogram, please check and rename it!`, this.options.mpxFileResource)
+          return false
+        }
         error(`The key [${key}] of page options exist in the page instance already, please check your page options!`, this.options.mpxFileResource)
-        if (this.ignoreProxyMap[key]) return false
       })
     }
     if (__mpx_mode__ !== 'web') {
@@ -156,8 +162,11 @@ export default class MPXProxy {
     this.initComputed(options.computed)
     // target的数据访问代理到将proxy的data
     proxy(this.target, this.data, undefined, undefined, (key) => {
+      if (this.ignoreProxyMap[key]) {
+        error(`The data/props/computed key [${key}] is a reserved keyword of miniprogram, please check and rename it!`, this.options.mpxFileResource)
+        return false
+      }
       if (!proxyedKeysMap[key]) error(`The data/props/computed key [${key}] exist in the component/page instance already, please check and rename it!`, this.options.mpxFileResource)
-      if (this.ignoreProxyMap[key]) return false
     })
     this.initWatch(options.watch)
   }
@@ -173,15 +182,18 @@ export default class MPXProxy {
   initData (data, dataFn) {
     let proxyedKeys = []
     // 获取包含data/props在内的初始数据，包含初始原生微信转换支付宝时合并props进入data的逻辑
-    const initialData = this.target.__getInitialData() || {}
+    const initialData = this.target.__getInitialData(this.options) || {}
     // 之所以没有直接使用initialData，而是通过对原始dataOpt进行深clone获取初始数据对象，主要是为了避免小程序自身序列化时错误地转换数据对象，比如将promise转为普通object
     this.data = diffAndCloneA(data || {}).clone
     if (dataFn) {
       proxyedKeys = Object.keys(initialData)
       // 预先将initialData代理到this.target中，便于data函数访问
       proxy(this.target, initialData, proxyedKeys, undefined, (key) => {
-        error(`The props key [${key}] exist in the component instance already, please check and rename it!`, this.options.mpxFileResource)
-        if (this.ignoreProxyMap[key]) return false
+        if (this.ignoreProxyMap[key]) {
+          error(`The props/data key [${key}] is a reserved keyword of miniprogram, please check and rename it!`, this.options.mpxFileResource)
+          return false
+        }
+        error(`The props/data key [${key}] exist in the component instance already, please check and rename it!`, this.options.mpxFileResource)
       })
       Object.assign(this.data, dataFn.call(this.target))
     }
@@ -411,10 +423,17 @@ export default class MPXProxy {
     this._watcher = renderWatcher
   }
 
-  forceUpdate (data, callback) {
+  forceUpdate (data, options, callback) {
     if (typeof data === 'function') {
       callback = data
       data = undefined
+    }
+
+    options = options || {}
+
+    if (typeof options === 'function') {
+      callback = options
+      options = {}
     }
 
     if (isPlainObject(data)) {
@@ -434,7 +453,7 @@ export default class MPXProxy {
       this.nextTick(callback)
     }
     if (this._watcher) {
-      this._watcher.update()
+      this._watcher.update(options.sync)
     } else {
       if (this.forceUpdateAll) {
         Object.keys(this.data).forEach((key) => {
@@ -443,7 +462,9 @@ export default class MPXProxy {
           }
         })
       }
-      this.doRender()
+      options.sync ? this.doRender() : queueWatcher(() => {
+        this.doRender()
+      })
     }
   }
 }

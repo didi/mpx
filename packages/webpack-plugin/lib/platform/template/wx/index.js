@@ -1,4 +1,5 @@
 const runRules = require('../../run-rules')
+const JSON5 = require('json5')
 const getComponentConfigs = require('./component-config')
 const normalizeComponentRules = require('../normalize-component-rules')
 const isValidIdentifierStr = require('../../../utils/is-valid-identifier-str')
@@ -172,7 +173,7 @@ module.exports = function getSpec ({ warn, error }) {
             const modelFilter = attrsMap['wx:model-filter']
             let modelValuePathArr
             try {
-              modelValuePathArr = JSON.parse(modelValuePath)
+              modelValuePathArr = JSON5.parse(modelValuePath)
             } catch (e) {
               if (modelValuePath === '') {
                 modelValuePathArr = []

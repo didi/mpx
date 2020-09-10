@@ -6,20 +6,17 @@ const PULL_DOWN_CONFIG = {
   stop: 56
 }
 
-let loading, bs
+let bs
 
-function showLoading () {
-  loading = loading || document.querySelector('.pull-down-loading')
-  if (loading) {
-    loading.style.display = 'block'
-  }
-}
-
-function hideLoading () {
-  loading = loading || document.querySelector('.pull-down-loading')
-  if (loading) {
-    loading.style.display = 'none'
-  }
+function showLoading (vm) {
+  const { backgroundColor = '#fff', backgroundTextStyle = 'dark' } = vm.$options.__mpxPageConfig
+  const loading = document.createElement('div')
+  loading.className = 'pull-down-loading'
+  loading.style.backgroundColor = backgroundColor
+  const dot = document.createElement('div')
+  dot.className = `dot-flashing ${backgroundTextStyle}`
+  loading.append(dot)
+  vm.$el.prepend(loading)
 }
 
 function on (event, handler, disposer = []) {
@@ -37,45 +34,50 @@ function off (disposer = []) {
   }
 }
 
+function refreshBs (vm) {
+  // 待bs refresh方法支持替换content元素后，改为refresh实现
+  if (bs) bs.destroy()
+  const { enableObserveDOM = false } = vm.$options.__mpxPageConfig
+  const bsConfig = {
+    scrollY: true,
+    click: true,
+    probeType: 2,
+    bounceTime: TIME_BOUNCE,
+    pullDownRefresh: PULL_DOWN_CONFIG,
+    observeDOM: enableObserveDOM
+  }
+  try {
+    window.__mpxBs = bs = new global.BScroll(vm.$el.parentNode, bsConfig)
+    return true
+  } catch (e) {
+    const location = vm.__mpxProxy && vm.__mpxProxy.options.mpxFileResource
+    error(`Better scroll init error, please check.`, location, e)
+  }
+}
+
 export default function onPageScroll (mixinType) {
   if (mixinType === 'page') {
     return {
       mounted () {
-        if (!bs) {
-          const bsConfig = {
-            scrollY: true,
-            probeType: 2,
-            bounceTime: TIME_BOUNCE,
-            pullDownRefresh: PULL_DOWN_CONFIG,
-            observeDOM: !!this.$options.__mpxPageConfig.enableObserveDOM
-          }
-          try {
-            bs = new global.BScroll(this.$el.parentNode.parentNode, bsConfig)
-          } catch (e) {
-            const location = this.__mpxProxy && this.__mpxProxy.options.mpxFileResource
-            return error(`Better scroll init error, please check.`, location, e)
-          }
-        }
         this.__lastScrollY = 0
         this.__disposer = []
       },
       activated () {
-        if (bs) {
-          bs.refresh()
+        if (refreshBs(this)) {
           // 恢复上次滚动位置
           bs.scrollTo(0, this.__lastScrollY)
           // 处理禁止滚动
-          if (this.$options.__mpxPageConfig.disableScroll) {
+          const { disableScroll, enablePullDownRefresh } = this.$options.__mpxPageConfig
+          if (disableScroll && !enablePullDownRefresh) {
             bs.disable()
           } else {
             bs.enable()
             // 处理下拉刷新效果
-            if (this.$options.__mpxPageConfig.enablePullDownRefresh) {
+            if (enablePullDownRefresh) {
               showLoading(this)
               bs.openPullDown(PULL_DOWN_CONFIG)
               on('pullingDown', this.__mpxPullDownHandler, this.__disposer)
             } else {
-              hideLoading(this)
               bs.closePullDown()
             }
             // 处理滚动事件
@@ -106,7 +108,8 @@ export default function onPageScroll (mixinType) {
         },
         __stopPullDownRefresh () {
           this.__pullingDown = false
-          if (this.$options.__mpxPageConfig.enablePullDownRefresh && bs) {
+          const { enablePullDownRefresh } = this.$options.__mpxPageConfig
+          if (enablePullDownRefresh && bs) {
             bs.finishPullDown()
           }
         },
@@ -115,12 +118,16 @@ export default function onPageScroll (mixinType) {
         },
         __mpxPageScrollHandler (pos) {
           if (bs) {
+            const { disableScroll, onReachBottomDistance = 50 } = this.$options.__mpxPageConfig
             // 处理onPageScroll
             this.onPageScroll && this.onPageScroll({ scrollTop: -pos.y })
-
+            // 处理 disableScroll 和 enablePullDownRefresh 都为 true 时，
+            // 向上拉动后还能继续向下滚动的问题
+            if (disableScroll && pos.y < 0 && bs.movingDirectionY === 1) {
+              bs.scrollTo(0, 0)
+            }
             // 处理onReachBottom
             if (this.onReachBottom) {
-              const onReachBottomDistance = this.$options.__mpxPageConfig.onReachBottomDistance || 50
               // 处理ReachBottom
               if (!this.__bottomReached && pos.y <= bs.maxScrollY + onReachBottomDistance && bs.movingDirectionY === 1) {
                 this.__bottomReached = true

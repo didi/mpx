@@ -1,4 +1,4 @@
-import { queueWatcher } from './scheduler'
+import { queueWatcher, dequeueWatcher } from './scheduler'
 import { pushTarget, popTarget } from './dep'
 import { getByPath, isObject, remove } from '../helper/utils'
 
@@ -112,11 +112,13 @@ export default class Watcher {
    * Subscriber interface.
    * Will be called when a dependency changes.
    */
-  update () {
+  // 支持临时将某个异步watcher修改为sync执行，在模拟setData时使用
+  update (sync) {
     /* istanbul ignore else */
     if (this.lazy) {
       this.dirty = true
-    } else if (this.sync) {
+    } else if (this.sync || sync) {
+      if (sync) dequeueWatcher(this)
       this.run()
     } else {
       queueWatcher(this)
