@@ -65,6 +65,7 @@ export default class Toast {
       this.icon.classList.remove('success', 'loading')
     } else if (opts.icon === 'loading') {
       this.icon.removeAttribute('style')
+      this.icon.classList.remove('hide')
       this.icon.classList.add('loading')
       this.icon.classList.remove('success')
     } else if (opts.icon === 'none') {
