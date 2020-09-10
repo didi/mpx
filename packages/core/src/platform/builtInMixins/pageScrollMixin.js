@@ -47,7 +47,7 @@ function refreshBs (vm) {
     observeDOM: enableObserveDOM
   }
   try {
-    bs = new global.BScroll(vm.$el.parentNode, bsConfig)
+    window.__mpxBs = bs = new global.BScroll(vm.$el.parentNode, bsConfig)
     return true
   } catch (e) {
     const location = vm.__mpxProxy && vm.__mpxProxy.options.mpxFileResource

@@ -42,3 +42,5 @@ export * from './window'
 
 // stopPullDownRefresh startPullDownRefresh
 export * from './pull-down'
+
+export * from './page-scroll-to'
