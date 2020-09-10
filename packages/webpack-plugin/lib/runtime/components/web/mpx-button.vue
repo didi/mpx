@@ -1,7 +1,7 @@
 <script>
   import getInnerListeners from './getInnerListeners'
   // 获取当前小程序样式版本配置
-  const Style = window.__style || ''
+  const styleVersion = window.__style || ''
   const sizeClassMap = {
     'default': '',
     'mini': 'mpx-button-size-mini'
@@ -76,10 +76,10 @@
         if (this.hoverClass && this.hoverClass !== 'none' && this.hover) {
           classArr.push(this.hoverClass)
         }
-        if (Style === 'v2') {
-          classArr.push(`${sizeClassMap[this.size]}${Style}`)
-          classArr.push(`${typeClassMap[this.type]}${Style}`)
-          classArr.push(`mpx-button-version${Style}`)
+        if (styleVersion === 'v2') {
+          classArr.push(`${sizeClassMap[this.size]}${styleVersion}`)
+          classArr.push(`${typeClassMap[this.type]}${styleVersion}`)
+          classArr.push(`mpx-button-version${styleVersion}`)
         } else {
           classArr.push(sizeClassMap[this.size])
           classArr.push(typeClassMap[this.type])
