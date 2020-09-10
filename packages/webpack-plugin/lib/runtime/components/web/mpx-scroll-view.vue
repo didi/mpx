@@ -39,6 +39,12 @@
       },
       _scrollLeft () {
         return processSize(this.scrollLeft)
+      },
+      _lowerThreshold () {
+        return processSize(this.lowerThreshold)
+      },
+      _upperThreshold () {
+        return processSize(this.upperThreshold)
       }
     },
     mounted () {
@@ -64,16 +70,16 @@
           deltaX,
           deltaY
         }))
-        if (this.bs.minScrollX - x < this.upperThreshold && deltaX > 0) {
+        if (this.bs.minScrollX - x < this._upperThreshold && deltaX > 0) {
           this.dispatchScrollTo('left')
         }
-        if (this.bs.minScrollY - y < this.upperThreshold && deltaY > 0) {
+        if (this.bs.minScrollY - y < this._upperThreshold && deltaY > 0) {
           this.dispatchScrollTo('top')
         }
-        if (x - this.bs.maxScrollX < this.lowerThreshold && deltaX < 0) {
+        if (x - this.bs.maxScrollX < this._lowerThreshold && deltaX < 0) {
           this.dispatchScrollTo('right')
         }
-        if (y - this.bs.maxScrollY < this.lowerThreshold && deltaY < 0) {
+        if (y - this.bs.maxScrollY < this._lowerThreshold && deltaY < 0) {
           this.dispatchScrollTo('bottom')
         }
         this.lastX = x
