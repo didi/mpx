@@ -739,7 +739,7 @@ class MpxWebpackPlugin {
         const processedChunk = new Set()
         const rootName = compilation._preparedEntrypoints[0].name
 
-        function processChunk (chunk, isRuntime, relativeChunks) {
+        function processChunk (chunk, isRuntime, isEntry, relativeChunks) {
           if (!chunk.files[0] || processedChunk.has(chunk)) {
             return
           }
@@ -827,12 +827,12 @@ if(!context.console) {
             source.add(originalSource)
           }
 
+          if (isEntry && mpx.mode === 'qa') {
+            source.add('\nexport default context.currentOption')
+          }
+
           compilation.assets[chunk.files[0]] = source
           processedChunk.add(chunk)
-        }
-
-        if (isEntry && mpx.mode === 'qa') {
-          source.add('\nexport default context.currentOption')
         }
 
         compilation.chunkGroups.forEach((chunkGroup) => {
@@ -856,15 +856,15 @@ if(!context.console) {
           })
 
           if (runtimeChunk) {
-            processChunk(runtimeChunk, true, [])
+            processChunk(runtimeChunk, true, false, [])
             if (middleChunks.length) {
               middleChunks.forEach((middleChunk) => {
-                processChunk(middleChunk, false, [runtimeChunk])
+                processChunk(middleChunk, false, false, [runtimeChunk])
               })
             }
             if (entryChunk) {
               middleChunks.unshift(runtimeChunk)
-              processChunk(entryChunk, false, middleChunks)
+              processChunk(entryChunk, false, true, middleChunks)
             }
           }
         })
