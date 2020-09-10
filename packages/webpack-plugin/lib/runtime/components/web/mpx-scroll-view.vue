@@ -114,6 +114,12 @@
     },
     methods: {
       _initLayerComputed () {
+        const wrapper = this.$refs.wrapper
+        const wrapperWidth = wrapper.offsetWidth
+        const wrapperHeight = wrapper.offsetHeight
+
+        this.$refs.innerWrapper.style = `width: ${wrapperWidth}px; height: ${wrapperHeight}px`
+
         const innerWrapper = this.$refs.innerWrapper
         const childrenArr = Array.from(innerWrapper.children)
 
@@ -150,11 +156,6 @@
         const width = maxRight - minLeft
         const height = maxBottom - minTop
 
-        const wrapper = this.$refs.wrapper
-        const wrapperWidth = wrapper.offsetWidth
-        const wrapperHeight = wrapper.offsetHeight
-
-        this.$refs.innerWrapper.style = `width: ${wrapperWidth}px; height: ${wrapperHeight}px`
         this.$refs.scrollContent.style = `width: ${width}px; height: ${height}px`
       },
       refresh () {
