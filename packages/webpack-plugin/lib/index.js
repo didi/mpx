@@ -328,6 +328,7 @@ class MpxWebpackPlugin {
           currentPackageRoot: '',
           wxsMap: {},
           wxsContentMap: {},
+          builtInComponentsMap: {},
           assetsInfo: new Map(),
           forceDisableInject: this.options.forceDisableInject,
           forceUsePageCtor: this.options.forceUsePageCtor,

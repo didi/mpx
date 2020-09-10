@@ -18,8 +18,8 @@ export default function proxyEventMixin () {
       if (!target) {
         throw new Error(`[${type}] event object must have [currentTarget/target] property!`)
       }
-      if (target.dataset && target.dataset.cancelbubble) {
-        $event.stopPropagation && $event.stopPropagation()
+      if (__mpx_mode__ === 'qa') {
+        target.dataset.cancelbubble && $event.stopPropagation()
       }
       const eventConfigs = target.dataset.eventconfigs || {}
       const curEventConfig = eventConfigs[type] || eventConfigs[fallbackType] || []

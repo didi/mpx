@@ -25,6 +25,10 @@ module.exports = function ({ print }) {
       el.isBuiltIn = true
       return 'mpx-button'
     },
+    qa (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-button'
+    },
     props: [
       {
         test: 'open-type',

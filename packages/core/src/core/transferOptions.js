@@ -19,6 +19,10 @@ export default function transferOptions (options, type, builtInMixins = []) {
     // 编译计算属性注入
     options.computed = Object.assign({}, options.computed, currentInject.injectComputed)
   }
+  if (currentInject && currentInject.injectStyleClasses) {
+    // 编译注入计算动态样式、类名方法
+    options.methods = Object.assign({}, options.methods, currentInject.injectStyleClasses)
+  }
   // 转换mode
   options.mpxConvertMode = options.mpxConvertMode || getConvertMode(global.currentSrcMode)
   const rawOptions = mergeOptions(options, type)

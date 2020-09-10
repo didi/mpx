@@ -7,6 +7,10 @@ module.exports = function () {
       el.isBuiltIn = true
       return 'mpx-checkbox'
     },
+    qa (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-checkbox'
+    },
     event: [
       {
         test: 'tap',

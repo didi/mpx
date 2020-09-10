@@ -3,12 +3,29 @@ const ConcatSource = require('webpack-sources').ConcatSource
 const genManifest = require('./genManifest')
 const util = require('./util')
 
-
 module.exports = function (additionalAssets, compilation, options, isProd) {
   let pagesList = util.isObjectEmpty(compilation.__mpx__.pagesMap) ? [] : Object.values(compilation.__mpx__.pagesMap)
-  let componentsList = util.isObjectEmpty(compilation.__mpx__.componentsMap.main) ? [] : Object.values(compilation.__mpx__.componentsMap.main)
+  let componentsList = []
+  for (let compFolder in compilation.__mpx__.componentsMap) {
+    if (!util.isObjectEmpty(compFolder)) {
+      componentsList = Object.assign(componentsList, Object.values(compilation.__mpx__.componentsMap[compFolder]))
+    }
+  }
   // 整合pages & components & app
-  let list = pagesList.concat(componentsList).concat(['app'])
+  let list = pagesList.concat(componentsList, 'app')
+
+  const builtInComponentsMap = compilation.__mpx__.builtInComponentsMap
+  const pagesMap = compilation.__mpx__.pagesMap
+  const componentsMap = compilation.__mpx__.componentsMap.main
+  const qaComponentMap = {}
+  Object.keys(builtInComponentsMap).forEach(resourcePath => {
+    if (pagesMap[resourcePath]) {
+      qaComponentMap[pagesMap[resourcePath]] = builtInComponentsMap[resourcePath]
+    }
+    if (componentsMap[resourcePath]) {
+      qaComponentMap[componentsMap[resourcePath]] = builtInComponentsMap[resourcePath]
+    }
+  })
 
   for (let i = 0; i < list.length; i++) {
     let content = new ConcatSource()
@@ -32,6 +49,12 @@ module.exports = function (additionalAssets, compilation, options, isProd) {
             content.add(tpl)
           })
         }
+      })
+    }
+
+    if (qaComponentMap[list[i]]) {
+      Object.keys(qaComponentMap[list[i]]).forEach(tag => {
+        content.add(`<import name="${tag}" src="${qaComponentMap[list[i]][tag]}"></import>\n`)
       })
     }
 

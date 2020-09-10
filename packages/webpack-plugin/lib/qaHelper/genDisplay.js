@@ -2,7 +2,7 @@
 *** 生成manifest文件display部分，https://doc.quickapp.cn/framework/manifest.html
  */
 
-module.exports = function genDisplay(displayInfo) {
+module.exports = function genDisplay (displayInfo) {
   let display = `{`
   if (displayInfo && displayInfo.backgroundColor) {
     display += `
@@ -90,4 +90,4 @@ module.exports = function genDisplay(displayInfo) {
   display += `
       }`
   return display
- }
+}
