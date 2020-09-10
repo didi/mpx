@@ -87,7 +87,7 @@ describe('test toast', () => {
     expect(icon).toHaveAttribute('class', expect.not.stringContaining('hide'))
     expect(icon).toHaveAttribute('class', expect.not.stringContaining('success'))
     expect(icon).toHaveAttribute('class', expect.stringContaining('loading'))
-    expect(icon).not.toHaveAttribute('style')
+    expect(icon).toHaveAttribute('style', '')
   })
 
   test('should show mask', done => {
