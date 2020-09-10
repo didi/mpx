@@ -1,5 +1,6 @@
 <script>
   import getInnerListeners, { getCustomEvent } from './getInnerListeners'
+  import { processSize } from './util'
   import BScroll from '@better-scroll/core'
   import ObserveDom from '@better-scroll/observe-dom'
   import throttle from 'lodash/throttle'
@@ -20,11 +21,11 @@
         default: 50
       },
       scrollTop: {
-        type: Number,
+        type: [Number, String],
         default: 0
       },
       scrollLeft: {
-        type: Number,
+        type: [Number, String],
         default: 0
       },
       observeDOM: Boolean,
@@ -32,18 +33,26 @@
       scrollWithAnimation: Boolean,
       enableFlex: Boolean
     },
+    computed: {
+      _scrollTop () {
+        return processSize(this.scrollTop)
+      },
+      _scrollLeft () {
+        return processSize(this.scrollLeft)
+      }
+    },
     mounted () {
       this.bs = new BScroll(this.$refs.wrapper, {
-        startX: -this.scrollLeft,
-        startY: -this.scrollTop,
+        startX: -this._scrollLeft,
+        startY: -this._scrollTop,
         scrollX: this.scrollX,
         scrollY: this.scrollY,
         probeType: 3,
         bounce: false,
         observeDOM: this.observeDOM
       })
-      this.lastX = -this.scrollLeft
-      this.lastY = -this.scrollTop
+      this.lastX = -this._scrollLeft
+      this.lastY = -this._scrollTop
       this.bs.on('scroll', throttle(({ x, y }) => {
         const deltaX = x - this.lastX
         const deltaY = y - this.lastY
@@ -88,10 +97,10 @@
       scrollIntoView (val) {
         this.bs && this.bs.scrollToElement('#' + val, this.scrollWithAnimation ? 200 : 0)
       },
-      scrollTop (val) {
+      _scrollTop (val) {
         this.bs && this.bs.scrollTo(this.bs.x, -val, this.scrollWithAnimation ? 200 : 0)
       },
-      scrollLeft (val) {
+      _scrollLeft (val) {
         this.bs && this.bs.scrollTo(-val, this.bs.y, this.scrollWithAnimation ? 200 : 0)
       }
     },
