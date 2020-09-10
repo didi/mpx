@@ -109,7 +109,7 @@
 }
 
 .mpx-button-type-primary {
-  background-color:#00A429;
+  background-color:#07c160;
   color: #fff;
 }
 
