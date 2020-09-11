@@ -14,10 +14,20 @@
 <script type="application/json">
   {
     "pages": [
-      "./pages/index"
+      "./pages/index",
+      "./pages/test"
     ],
     "packages": [
       "./subpackage/app.mpx?root=sub1"
-    ]
+    ],
+    "tabBar": {
+      "list": [{
+        "text": "乘客",
+        "pagePath": "pages/index"
+      }, {
+        "text": "司机",
+        "pagePath": "pages/test"
+      }]
+    }
   }
 </script>
