@@ -423,10 +423,17 @@ export default class MPXProxy {
     this._watcher = renderWatcher
   }
 
-  forceUpdate (data, callback) {
+  forceUpdate (data, options, callback) {
     if (typeof data === 'function') {
       callback = data
       data = undefined
+    }
+
+    options = options || {}
+
+    if (typeof options === 'function') {
+      callback = options
+      options = {}
     }
 
     if (isPlainObject(data)) {
@@ -446,7 +453,7 @@ export default class MPXProxy {
       this.nextTick(callback)
     }
     if (this._watcher) {
-      this._watcher.update()
+      this._watcher.update(options.sync)
     } else {
       if (this.forceUpdateAll) {
         Object.keys(this.data).forEach((key) => {
@@ -455,7 +462,9 @@ export default class MPXProxy {
           }
         })
       }
-      this.doRender()
+      options.sync ? this.doRender() : queueWatcher(() => {
+        this.doRender()
+      })
     }
   }
 }

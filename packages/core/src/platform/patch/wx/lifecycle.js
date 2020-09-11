@@ -5,7 +5,9 @@ const APP_HOOKS = [
   'onShow',
   'onHide',
   'onError',
-  'onPageNotFound'
+  'onPageNotFound',
+  'onUnhandledRejection',
+  'onThemeChange'
 ]
 
 const PAGE_HOOKS = [

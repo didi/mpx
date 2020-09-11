@@ -24,6 +24,7 @@ const parseRequest = require('./utils/parse-request')
 const matchCondition = require('./utils/match-condition')
 const integrateAssets = require('./qaHelper/integrateAssets')
 const parseAsset = require('./utils/parse-asset')
+const { preProcessDefs } = require('./utils/index')
 
 const isProductionLikeMode = options => {
   return options.mode === 'production' || !options.mode
@@ -343,7 +344,8 @@ class MpxWebpackPlugin {
           decodeHTMLText: this.options.decodeHTMLText,
           // native文件专用相关配置
           nativeOptions: this.options.nativeOptions,
-          defs: this.options.defs,
+          tabBarMap: {},
+          defs: preProcessDefs(this.options.defs),
           i18n: this.options.i18n,
           checkUsingComponents: this.options.checkUsingComponents,
           appTitle: 'Mpx homepage',
@@ -737,7 +739,7 @@ class MpxWebpackPlugin {
         const processedChunk = new Set()
         const rootName = compilation._preparedEntrypoints[0].name
 
-        function processChunk (chunk, isRuntime, relativeChunks) {
+        function processChunk (chunk, isRuntime, isEntry, relativeChunks) {
           if (!chunk.files[0] || processedChunk.has(chunk)) {
             return
           }
@@ -756,10 +758,10 @@ class MpxWebpackPlugin {
             if (index === 0) {
               // 引用runtime
               // 支付宝分包独立打包，通过全局context获取webpackJSONP
-              if (mpx.mode === 'ali') {
+              if (mpx.mode === 'ali' || mpx.mode === 'qa') {
                 if (chunk.name === rootName) {
                   // 在rootChunk中挂载jsonpFunction
-                  source.add('// process ali subpackages runtime in root chunk\n' +
+                  source.add('// process ali/qa subpackages runtime in root chunk\n' +
                     'var context = (function() { return this })() || Function("return this")();\n\n')
                   source.add(`context[${JSON.stringify(jsonpFunction)}] = window[${JSON.stringify(jsonpFunction)}] = require("${relativePath}");\n`)
                 } else {
@@ -805,19 +807,17 @@ if(!context.console) {
   }
 }
 \n`)
-            if (mpx.mode === 'swan') {
-              source.add('// swan runtime fix\n' +
-                'if (!context.navigator) {\n' +
-                '  context.navigator = {};\n' +
-                '}\n' +
-                'Object.defineProperty(context.navigator, "standalone",{\n' +
-                '  configurable: true,' +
-                '  enumerable: true,' +
-                '  get () {\n' +
-                '    return true;\n' +
-                '  }\n' +
-                '});\n\n')
-            }
+            source.add('// swan && pc runtime fix\n' +
+              'if (!context.navigator) {\n' +
+              '  context.navigator = {};\n' +
+              '}\n' +
+              'Object.defineProperty(context.navigator, "standalone",{\n' +
+              '  configurable: true,' +
+              '  enumerable: true,' +
+              '  get () {\n' +
+              '    return true;\n' +
+              '  }\n' +
+              '});\n\n')
             source.add(originalSource)
             source.add(`\nmodule.exports = window[${JSON.stringify(jsonpFunction)}];\n`)
           } else {
@@ -825,6 +825,10 @@ if(!context.console) {
               source.add('module.exports =\n')
             }
             source.add(originalSource)
+          }
+
+          if (isEntry && mpx.mode === 'qa') {
+            source.add('\nexport default context.currentOption')
           }
 
           compilation.assets[chunk.files[0]] = source
@@ -852,15 +856,15 @@ if(!context.console) {
           })
 
           if (runtimeChunk) {
-            processChunk(runtimeChunk, true, [])
+            processChunk(runtimeChunk, true, false, [])
             if (middleChunks.length) {
               middleChunks.forEach((middleChunk) => {
-                processChunk(middleChunk, false, [runtimeChunk])
+                processChunk(middleChunk, false, false, [runtimeChunk])
               })
             }
             if (entryChunk) {
               middleChunks.unshift(runtimeChunk)
-              processChunk(entryChunk, false, middleChunks)
+              processChunk(entryChunk, false, true, middleChunks)
             }
           }
         })
