@@ -1,21 +1,16 @@
 const genComponentTag = require('../utils/gen-component-tag')
 
 module.exports = function (styles, options, callback) {
-  const ctorType = options.ctorType
   let output = '/* styles */\n'
-
-  if (ctorType === 'app') {
-    styles.push({
-      type: 'style',
-      attrs: {
-        src: '@mpxjs/webpack-plugin/lib/runtime/reset.css'
-      }
-    })
-  }
-
   if (styles.length) {
     styles.forEach((style) => {
-      output += genComponentTag(style)
+      output += genComponentTag(style, {
+        attrs (style) {
+          const attrs = Object.assign({}, style.attrs)
+          if (options.autoScope) attrs.scoped = true
+          return attrs
+        }
+      })
       output += '\n'
     })
     output += '\n'

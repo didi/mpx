@@ -7,6 +7,7 @@ import relationsMixin from './relationsMixin'
 import i18nMixin from './i18nMixin'
 import pageTitleMixin from './pageTitleMixin'
 import pageScrollMixin from './pageScrollMixin'
+import pageResizeMixin from './pageResizeMixin'
 import pageLifetimesMixin from './pageLifetimesMixin'
 
 export default function getBuiltInMixins (options, type) {
@@ -18,6 +19,7 @@ export default function getBuiltInMixins (options, type) {
       pageTitleMixin(type),
       pageStatusMixin(type),
       pageScrollMixin(type),
+      pageResizeMixin(type),
       pageLifetimesMixin(type)
     ]
   } else {
