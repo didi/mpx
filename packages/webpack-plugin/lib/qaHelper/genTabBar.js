@@ -16,8 +16,23 @@ const genEntryTabContent = (tabBar) => {
   return content
 }
 
+const genCustomContent = (tabBar, options) => {
+  let content = new ConcatSource()
+  let tabBarPath = options.projectRoot + '../../custom-tab-bar/index.ux'
+  content.add(`<import name="custom-tab-bar" src="${tabBarPath}"></import>`)
+  content.add(`<template><div class="tabbar-wrapper"><custom-tab-bar data='${JSON.stringify(tabBar)}'></custom-tab-bar></div></template>`)
+  return content
+}
+
 module.exports = function (tabBar, compilation, options) {
-  if (tabBar) {    
+  if (tabBar.custom) {
+    try {
+      let customTabContent = genCustomContent(tabBar, options)
+      compilation.assets['pages/tabBar/index' + '.ux'] = customTabContent
+    } catch(err) {
+      console.log('自定义tabBar custom error', err)
+    }
+  } else if (tabBar.list) {    
     let content = new ConcatSource()
     tabBar.list.forEach((item) => {
       const name = genName(item)
@@ -37,11 +52,11 @@ module.exports = function (tabBar, compilation, options) {
         content.add('<script>' + parts.script.content + '</script>\n')
 
         compilation.assets['pages/tabBar/tabBar' + '.ux'] = content
-        const entryTabContent = genEntryTabContent(tabBar.list)
+        const entryTabContent = genEntryTabContent(tabBar)
         compilation.assets['pages/tabBar/index' + '.ux'] = entryTabContent
 
       } catch (err) {
-        console.log(err)
+        console.log('tabBar error', err)
       }
     })
   }
