@@ -980,7 +980,7 @@ function getAndRemoveAttr (el, name, removeFromMap = true) {
 }
 
 function addAttrs (el, attrs) {
-  const list = el.attrsList
+  const list = []
   const map = el.attrsMap
   for (let i = 0, l = attrs.length; i < l; i++) {
     list.push(attrs[i])
@@ -990,6 +990,7 @@ function addAttrs (el, attrs) {
     }
     map[attrs[i].name] = attrs[i].value
   }
+  el.attrsList = el.attrsList.concat(list)
 }
 
 function modifyAttr (el, name, val) {
