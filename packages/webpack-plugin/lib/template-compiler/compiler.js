@@ -1990,7 +1990,7 @@ function postProcessComponentIs (el) {
       tempNode = getTempNode()
     }
     el.components.forEach(function (component) {
-      let newChild = createASTElement(component, el.attrsList, tempNode)
+      let newChild = createASTElement(component, el.attrsList.slice(), tempNode)
       newChild.if = {
         raw: `{{${el.is} === ${stringify(component)}}}`,
         exp: `${el.is} === ${stringify(component)}`
