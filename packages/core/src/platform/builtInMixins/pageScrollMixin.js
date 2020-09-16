@@ -28,7 +28,7 @@ function showLoading (vm) {
   vm.$el.prepend(loading)
 }
 
-export default function onPageScroll (mixinType) {
+export default function pageScrollMixin (mixinType) {
   if (mixinType !== 'page') {
     return
   }
@@ -214,7 +214,7 @@ function preventDefault (e, isStopPropagation) {
   }
 }
 
-class MpxScroll {
+export class MpxScroll {
   constructor (el, options) {
     this.options = options
     this.el = getElement(el)
