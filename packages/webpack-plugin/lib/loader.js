@@ -189,7 +189,8 @@ module.exports = function (content) {
               },
               (callback) => {
                 processStyles(parts.styles, {
-                  ctorType
+                  ctorType,
+                  autoScope
                 }, callback)
               },
               (callback) => {
