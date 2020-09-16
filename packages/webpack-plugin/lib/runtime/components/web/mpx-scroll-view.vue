@@ -48,6 +48,8 @@
       }
     },
     mounted () {
+      this._initLayerComputed()
+
       this.bs = new BScroll(this.$refs.wrapper, {
         startX: -this._scrollLeft,
         startY: -this._scrollTop,
@@ -111,7 +113,53 @@
       }
     },
     methods: {
+      _initLayerComputed () {
+        const wrapper = this.$refs.wrapper
+        const wrapperWidth = wrapper.offsetWidth
+        const wrapperHeight = wrapper.offsetHeight
+
+        this.$refs.innerWrapper.style = `width: ${wrapperWidth}px; height: ${wrapperHeight}px`
+
+        const innerWrapper = this.$refs.innerWrapper
+        const childrenArr = Array.from(innerWrapper.children)
+
+        const getMinLength = (min, value) => {
+          if (min === undefined) {
+            min = value
+          } else {
+            min = min > value ? value : min
+          }
+          return min
+        }
+
+        const getMaxLength = (max, value) => {
+          if (max === undefined) {
+            max = value
+          } else {
+            max = max < value ? value : max
+          }
+          return max
+        }
+
+        let minLeft
+        let maxRight
+        let minTop
+        let maxBottom
+        childrenArr.forEach(item => {
+          const temp = item.getBoundingClientRect()
+          minLeft = getMinLength(minLeft, temp.left)
+          minTop = getMinLength(minTop, temp.top)
+          maxRight = getMaxLength(maxRight, temp.right)
+          maxBottom = getMaxLength(maxBottom, temp.bottom)
+        })
+
+        const width = maxRight - minLeft
+        const height = maxBottom - minTop
+
+        this.$refs.scrollContent.style = `width: ${width}px; height: ${height}px`
+      },
       refresh () {
+        this._initLayerComputed()
         this.bs && this.bs.refresh()
       },
       dispatchScrollTo: throttle(function (direction) {
@@ -129,9 +177,16 @@
         on: getInnerListeners(this, { ignoredListeners: ['scroll', 'scrolltoupper', 'scrolltolower'] }),
         ref: 'wrapper'
       }
-      const content = createElement('div', {
-        class: 'mpx-scroll-view-content'
+
+      const innerWrapper = createElement('div', {
+        ref: 'innerWrapper'
       }, this.$slots.default)
+
+      const content = createElement('div', {
+        class: 'mpx-scroll-view-content',
+        ref: 'scrollContent'
+      }, [innerWrapper])
+
       return createElement('div', data, [content])
     }
   }
@@ -141,9 +196,4 @@
   .mpx-scroll-view
     overflow hidden
     position relative
-
-    .mpx-scroll-view-content
-      position absolute
-      top 0
-      left 0
 </style>
