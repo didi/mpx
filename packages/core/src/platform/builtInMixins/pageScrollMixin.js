@@ -84,7 +84,7 @@ export default function onPageScroll (mixinType) {
         }
       },
       __startPullDownRefresh () {
-        if (this.$options.__mpxPageConfig.enablePullDownRefresh && ms) {
+        if (!this.__pullingDown && this.$options.__mpxPageConfig.enablePullDownRefresh && ms) {
           ms.startPullDownRefresh()
         }
       },
@@ -223,25 +223,41 @@ class MpxScroll {
     this.screenHeight = this.screen.offsetHeight
     this.bottomReached = false
     this.ceiling = false
+    this.scrollTimer = null
     this.hooks = new EventEmitter()
     this.eventRegister = new EventRegister()
   }
 
   enablePullDownRefresh () {
-    this.bindTouchEvent(this.screen)
+    const el = this.screen
+    this.eventRegister.on(el, 'touchstart', e => this.onTouchStart(e))
+    this.eventRegister.on(el, 'touchmove', e => this.onTouchMove(e))
+    this.eventRegister.on(el, 'touchend', e => this.onTouchEnd(e))
   }
 
   enableScroll () {
     this.eventRegister.on(document, 'scroll', e => {
-      const scrollTop = this.screen.scrollTop
-      this.scrollTop = scrollTop
-      this.hooks.emit('scroll', scrollTop)
+      if (this.scrollTimer) {
+        this.clearScrollTimer()
+      }
+      this.scrollTimer = setTimeout(() => {
+        const scrollTop = this.screen.scrollTop
+        this.scrollTop = scrollTop
+        this.hooks.emit('scroll', scrollTop)
+      }, 50)
     })
   }
 
   destroy () {
     this.hooks.destroy()
     this.eventRegister.destroy()
+  }
+
+  clearScrollTimer () {
+    if (this.scrollTimer) {
+      clearTimeout(this.scrollTimer)
+      this.scrollTimer = null
+    }
   }
 
   pageScrollTo ({
@@ -299,12 +315,6 @@ class MpxScroll {
   stopPullDownRefresh () {
     const style = this.el.style
     style.transition = style.transform = ''
-  }
-
-  bindTouchEvent (el) {
-    this.eventRegister.on(el, 'touchstart', e => this.onTouchStart(e))
-    this.eventRegister.on(el, 'touchmove', e => this.onTouchMove(e))
-    this.eventRegister.on(el, 'touchend', e => this.onTouchEnd(e))
   }
 
   resetTouchStatus () {
@@ -366,7 +376,6 @@ class MpxScroll {
 
   /**
    * ease 减少页面下拉幅度
-   * @param {*} distance 
    */
   ease (distance) {
     const headHeight = +this.options.pullDownRefresh.threshold

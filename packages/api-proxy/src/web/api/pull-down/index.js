@@ -1,4 +1,4 @@
-import { webHandleSuccess, webHandleFail, error } from '../../../common/js'
+import { webHandleSuccess, webHandleFail } from '../../../common/js'
 
 function stopPullDownRefresh (options = {}) {
   const router = window.__mpxRouter
