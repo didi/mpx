@@ -5,7 +5,7 @@ let ms
 function refreshMs (vm) {
   if (ms) ms.destroy()
   try {
-    window.__mpxMs = ms = new MpxScroll(document.querySelector('.page'), {
+    window.__ms = ms = new MpxScroll(vm.$el, {
       pullDownRefresh: {
         threshold: 60
       }
@@ -43,51 +43,56 @@ export default function onPageScroll (mixinType) {
       ms.pageScrollTo({
         scrollTop: this.__lastScrollY
       })
-      const { disableScroll, enablePullDownRefresh } = this.$options.__mpxPageConfig
-      if (disableScroll && !enablePullDownRefresh) {
-        ms.disable()
-      } else {
-        ms.enable()
-        // 下拉刷新
-        if (enablePullDownRefresh) {
-          showLoading(this)
-          ms.on('pullingDown', this.__mpxPullDownHandler)
-        } else {
-          ms.stopPullDownRefresh()
-        }
-        // 页面滚动
-        if (this.onPageScroll || this.onReachBottom) {
-          ms.on('scroll', this.__mpxPageScrollHandler)
-        }
+      // 下拉刷新
+      if (this.$options.__mpxPageConfig.enablePullDownRefresh) {
+        ms.enablePullDownRefresh()
+        showLoading(this)
+        ms.hooks.on('pullingDown', this.__mpxPullDownHandler)
+      }
+      // 页面滚动
+      ms.enableScroll()
+      if (this.onPageScroll || this.onReachBottom) {
+        ms.hooks.on('scroll', this.__mpxPageScrollHandler)
       }
     },
     deactivated () {
       if (ms) {
         this.__lastScrollY = ms.scrollTop
-        console.log(ms.scrollTop)
+        ms.destroy()
       }
     },
-    beforeDestroy () {},
+    beforeDestroy () {
+      if (ms) {
+        ms.destroy()
+      }
+    },
     methods: {
       __mpxPullDownHandler () {
         this.__pullingDown = true
         // 如果 3s 后用户还没有调用过 __stopPullDownRefresh，则自动调用关闭 pullDown，同微信保持一致
         setTimeout(() => {
-          if (this.__pullingDown) this.__stopPullDownRefresh()
-          console.log('pull down finish')
+          if (this.__pullingDown) {
+            this.__stopPullDownRefresh()
+          }
         }, 3000)
         this.onPullDownRefresh && this.onPullDownRefresh()
       },
       __stopPullDownRefresh () {
         this.__pullingDown = false
-        const { enablePullDownRefresh } = this.$options.__mpxPageConfig
-        if (enablePullDownRefresh && ms) {
+        if (this.$options.__mpxPageConfig.enablePullDownRefresh && ms) {
           ms.stopPullDownRefresh()
+        }
+      },
+      __startPullDownRefresh () {
+        if (this.$options.__mpxPageConfig.enablePullDownRefresh && ms) {
+          ms.startPullDownRefresh()
         }
       },
       __mpxPageScrollHandler (scrollTop) {
         const { disableScroll, onReachBottomDistance = 50 } = this.$options.__mpxPageConfig
 
+        // 直接通过 css 或 preventDefault 禁止页面滚动时，下拉刷新也会失效
+        // 所以采用这种方式实现禁止页面滚动
         if (disableScroll) {
           return ms.pageScrollTo({
             scrollTop: 0,
@@ -107,16 +112,17 @@ export default function onPageScroll (mixinType) {
   }
 }
 
-/**
- * EventEmitter
- */
+// --------------- dom
+
 function addEvent (el, type, handler) {
   el.addEventListener(type, handler, { passive: false })
 }
 
 function removeEvent (el, type, handler) {
-  el.removeEventListener(type, handler)
+  el.removeEventListener(type, handler, { passive: false })
 }
+
+// --------------- EventEmitter
 
 class EventEmitter {
   constructor () {
@@ -138,18 +144,32 @@ class EventEmitter {
     return this
   }
 
-  off (type) {
-    this.events[type] = []
+  destroy () {
+    this.events = {}
     return this
+  }
+}
+
+// --------------- EventRegister
+class EventRegister {
+  constructor () {
+    this.disposer = []
+  }
+
+  on (el, type, handler) {
+    this.disposer.push([el, type, handler])
+    addEvent(el, type, handler)
   }
 
   destroy () {
-    this.events = {}
+    this.disposer.forEach(args => {
+      removeEvent(args[0], args[1], args[2])
+    })
+    this.disposer = []
   }
 }
-/**
- * MpxScroll
- */
+
+// --------------- MpxScroll
 function isDef (val) {
   return val !== undefined
 }
@@ -194,53 +214,40 @@ function preventDefault (e, isStopPropagation) {
   }
 }
 
-class MpxScroll extends EventEmitter {
+class MpxScroll {
   constructor (el, options) {
-    super()
     this.options = options
     this.el = getElement(el)
     this.screen = document.documentElement || document.body
+    this.scrollTop = 0
     this.screenHeight = this.screen.offsetHeight
-    this.enabled = true
     this.bottomReached = false
     this.ceiling = false
     this.hooks = new EventEmitter()
-    this.init()
+    this.eventRegister = new EventRegister()
   }
 
-  init () {
-    if (!this.enabled) {
-      return
-    }
-    this.bindScrollEvent(document)
+  enablePullDownRefresh () {
     this.bindTouchEvent(this.screen)
   }
 
-  enable () {
-    this.enabled = true
-  }
-
-  disable () {
-    this.enabled = false
-    this.destroy()
-    this.events.forEach(type => removeEvent(document, type))
-  }
-
-  bindScrollEvent (el) {
-    addEvent(el, 'scroll', e => {
+  enableScroll () {
+    this.eventRegister.on(document, 'scroll', e => {
       const scrollTop = this.screen.scrollTop
       this.scrollTop = scrollTop
-      this.emit('scroll', scrollTop)
+      this.hooks.emit('scroll', scrollTop)
     })
+  }
+
+  destroy () {
+    this.hooks.destroy()
+    this.eventRegister.destroy()
   }
 
   pageScrollTo ({
     scrollTop,
     selector,
-    duration = 300,
-    success,
-    fail,
-    complete
+    duration = 300
   }) {
     const speed = duration / 16
     let position = this.screen.scrollTop
@@ -286,7 +293,7 @@ class MpxScroll extends EventEmitter {
 
   startPullDownRefresh () {
     this.pullDown(this.options.pullDownRefresh.threshold)
-    this.emit('pullingDown')
+    this.hooks.emit('pullingDown')
   }
 
   stopPullDownRefresh () {
@@ -295,9 +302,9 @@ class MpxScroll extends EventEmitter {
   }
 
   bindTouchEvent (el) {
-    addEvent(el, 'touchstart', e => this.onTouchStart(e))
-    addEvent(el, 'touchmove', e => this.onTouchMove(e))
-    addEvent(el, 'touchend', e => this.onTouchEnd(e))
+    this.eventRegister.on(el, 'touchstart', e => this.onTouchStart(e))
+    this.eventRegister.on(el, 'touchmove', e => this.onTouchMove(e))
+    this.eventRegister.on(el, 'touchend', e => this.onTouchEnd(e))
   }
 
   resetTouchStatus () {
@@ -319,8 +326,6 @@ class MpxScroll extends EventEmitter {
 
   onTouchStart (e) {
     this.checkPullStart(e)
-    this.el.style.position = 'relative'
-    this.el.style.transition = 'transform 0s'
   }
 
   touchStart (e) {
@@ -359,6 +364,10 @@ class MpxScroll extends EventEmitter {
     this.el.style.cssText = `transform: translateY(${distance}px)`
   }
 
+  /**
+   * ease 减少页面下拉幅度
+   * @param {*} distance 
+   */
   ease (distance) {
     const headHeight = +this.options.pullDownRefresh.threshold
 
@@ -383,11 +392,10 @@ class MpxScroll extends EventEmitter {
   }
 
   onTouchEnd () {
-    console.log('onTouchEnd: ', this)
     if (this.deltaY >= this.options.pullDownRefresh.threshold) {
       this.el.style.transition = `transform 0.5s ease 3s`
       this.el.style.transform = 'translateY(0px)'
-      this.emit('pullingDown')
+      this.hooks.emit('pullingDown')
     }
   }
 
