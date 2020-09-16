@@ -1,4 +1,4 @@
-import { getNetworkType } from '../../src/web/api/network'
+import { getNetworkType } from '../../src/web/api/device/network'
 
 describe('test getNetworkType', () => {
   test('should be enums value', () => {

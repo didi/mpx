@@ -22,7 +22,7 @@ export * from './storage'
 export * from './system'
 
 // getNetworkType, onNetworkStatusChange, offNetworkStatusChange
-export * from './network'
+export * from './device/network'
 
 // request
 export * from './request'
