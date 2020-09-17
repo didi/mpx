@@ -36,7 +36,7 @@ module.exports = function genRouter (projectEntry, pagesMap, defineRouter) {
           "${prefix}": {
             "component": "${entryComp}",
             "path": "/${projectEntry}",
-            "filter": ${!util.isObjectEmpty(needProcessPages[index].filter) && util.obj2Json(needProcessPages[index].filter) || {}},
+            "filter": ${(!util.isObjectEmpty(needProcessPages[index].filter) && util.obj2Json(needProcessPages[index].filter)) || {}},
             "launchMode": "${needProcessPages[index].launchMode || 'standard'}"
           }`
   } else {
@@ -68,7 +68,7 @@ module.exports = function genRouter (projectEntry, pagesMap, defineRouter) {
         "${prefix}": {
           "component": "${compName}",
           "path": "/${compName}",
-          "filter": ${!util.isObjectEmpty(needProcessPages[index].filter) && util.obj2Json(needProcessPages[index].filter) || {}},
+          "filter": ${(!util.isObjectEmpty(needProcessPages[index].filter) && util.obj2Json(needProcessPages[index].filter)) || {}},
           "launchMode": "${needProcessPages[index].launchMode || 'standard'}"
         }`
       } else {
