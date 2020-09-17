@@ -4,6 +4,7 @@ const genManifest = require('./genManifest')
 const util = require('./util')
 
 module.exports = function (additionalAssets, compilation, options, isProd) {
+  let appJsonRules = {}
   let pagesList = util.isObjectEmpty(compilation.__mpx__.pagesMap) ? [] : Object.values(compilation.__mpx__.pagesMap)
   let componentsList = []
   for (let compFolder in compilation.__mpx__.componentsMap) {
@@ -18,6 +19,7 @@ module.exports = function (additionalAssets, compilation, options, isProd) {
   const pagesMap = compilation.__mpx__.pagesMap
   const componentsMap = compilation.__mpx__.componentsMap.main
   const qaComponentMap = {}
+
   Object.keys(builtInComponentsMap).forEach(resourcePath => {
     if (pagesMap[resourcePath]) {
       qaComponentMap[pagesMap[resourcePath]] = builtInComponentsMap[resourcePath]
@@ -30,6 +32,7 @@ module.exports = function (additionalAssets, compilation, options, isProd) {
   for (let i = 0; i < list.length; i++) {
     let content = new ConcatSource()
     let jsonFile = list[i] + '.json'
+
     if (additionalAssets[jsonFile]) {
       let depth = list[i].split('/').length
       let srcPrefix = ''
@@ -40,6 +43,14 @@ module.exports = function (additionalAssets, compilation, options, isProd) {
           srcPrefix += '../'
         }
       }
+      // process json rules
+      if (jsonFile === 'app.json') {
+        additionalAssets[jsonFile].forEach(item => {
+          let json = JSON.parse(item)
+          appJsonRules = Object.assign({}, json)
+        })
+      }
+
       additionalAssets[jsonFile].forEach(item => {
         let json = JSON.parse(item).usingComponents
         if (json) {
@@ -88,5 +99,5 @@ module.exports = function (additionalAssets, compilation, options, isProd) {
     compilation.assets[list[i] + '.ux'] = content
   }
 
-  genManifest(compilation, options, isProd)
+  genManifest(compilation, options, appJsonRules, isProd)
 }

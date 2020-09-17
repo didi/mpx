@@ -5,7 +5,7 @@ const registerDisplay = require('./genDisplay')
 const util = require('./util')
 const ConcatSource = require('webpack-sources').ConcatSource
 
-module.exports = function (compilation, options, isProd) {
+module.exports = function (compilation, options, appJsonRules, isProd) {
   let pagesMap = compilation.__mpx__.pagesMap || {}
   let projectEntry = compilation.__mpx__.projectEntry
 
@@ -59,7 +59,7 @@ module.exports = function (compilation, options, isProd) {
     let displayInfo = (options.quickapp && options.quickapp.display) || {}
     if (!util.isObjectEmpty()) {
       content.add(`,
-      "display": ${registerDisplay(displayInfo)}`
+      "display": ${registerDisplay(displayInfo, appJsonRules)}`
       )
     }
 
