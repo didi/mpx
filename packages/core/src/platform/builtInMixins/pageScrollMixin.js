@@ -67,14 +67,18 @@ export default function pageScrollMixin (mixinType) {
       }
     },
     methods: {
-      __mpxPullDownHandler () {
+      __mpxPullDownHandler (autoStop = false) {
         this.__pullingDown = true
-        // 如果 3s 后用户还没有调用过 __stopPullDownRefresh，则自动调用关闭 pullDown，同微信保持一致
-        setTimeout(() => {
-          if (this.__pullingDown) {
-            this.__stopPullDownRefresh()
-          }
-        }, 3000)
+        // 同微信保持一致
+        // 如果是手动触摸下拉， 3s 后用户还没有调用过 __stopPullDownRefresh，则自动调用关闭 pull down
+        // 如果是主动调用 startPullDownRefresh 的 api，则一直处于 pull down 状态，除非主动调用 stopPullDownRefresh
+        if (autoStop) {
+          setTimeout(() => {
+            if (this.__pullingDown) {
+              this.__stopPullDownRefresh()
+            }
+          }, 3000)
+        }
         this.onPullDownRefresh && this.onPullDownRefresh()
       },
       __stopPullDownRefresh () {
@@ -408,7 +412,7 @@ export class MpxScroll {
     if (this.deltaY >= this.options.pullDownRefresh.threshold) {
       this.el.style.transition = `transform 0.5s ease 3s`
       this.el.style.transform = 'translateY(0px)'
-      this.hooks.emit('pullingDown')
+      this.hooks.emit('pullingDown', true)
     }
   }
 
