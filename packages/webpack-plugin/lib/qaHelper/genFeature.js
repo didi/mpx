@@ -1,6 +1,7 @@
 /*
 *** 生成manifest文件features部分，https://doc.quickapp.cn/framework/manifest.html
  */
+const util = require('./util')
 
 module.exports = function registerFeatures (wxPay, packageName, shareObj, qqObj, wxObj, weiboObj) {
   let features = `[
@@ -50,7 +51,7 @@ module.exports = function registerFeatures (wxPay, packageName, shareObj, qqObj,
         {"name":"service.ad"},
         {"name": "service.alipay"}
       ]`
-  if (wxPay && wxPay.sign) {
+  if (!util.isObjectEmpty(wxPay)) {
     features += ',\n'
     features += `
       {\n
@@ -63,7 +64,7 @@ module.exports = function registerFeatures (wxPay, packageName, shareObj, qqObj,
       }
     `
   }
-  if (shareObj && shareObj.appSign) {
+  if (!util.isObjectEmpty(shareObj)) {
     features += ',\n'
     features += `{\n
       "name": "service.share",\n
@@ -75,7 +76,7 @@ module.exports = function registerFeatures (wxPay, packageName, shareObj, qqObj,
       }\n
     }`
   }
-  if (qqObj && qqObj.appId) {
+  if (!util.isObjectEmpty(qqObj)) {
     features += ',\n'
     features += `{\n
     "name": "service.qqaccount",\n
@@ -85,7 +86,7 @@ module.exports = function registerFeatures (wxPay, packageName, shareObj, qqObj,
     },\n
   }`
   }
-  if (wxObj && wxObj.appId) {
+  if (!util.isObjectEmpty(wxObj)) {
     features += ',\n'
     features += `{\n
       "name": "service.wxaccount",\n
@@ -94,7 +95,7 @@ module.exports = function registerFeatures (wxPay, packageName, shareObj, qqObj,
       }\n
     }`
   }
-  if (weiboObj && weiboObj.appKey) {
+  if (!util.isObjectEmpty(weiboObj)) {
     features += ',\n'
     features += `{\n
       "name": "service.wbaccount",\n

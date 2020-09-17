@@ -57,7 +57,7 @@ module.exports = function (compilation, options, appJsonRules, isProd) {
     }
     // register display
     let displayInfo = (options.quickapp && options.quickapp.display) || {}
-    if (!util.isObjectEmpty()) {
+    if (!util.isObjectEmpty(displayInfo)) {
       content.add(`,
       "display": ${registerDisplay(displayInfo, appJsonRules)}`
       )

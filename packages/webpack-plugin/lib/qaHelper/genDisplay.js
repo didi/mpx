@@ -1,6 +1,7 @@
 /*
 *** 生成manifest文件display部分，https://doc.quickapp.cn/framework/manifest.html
  */
+const util = require('./util')
 
 module.exports = function genDisplay (displayInfo, appJsonRules) {
   const appJsonWinRules = appJsonRules && appJsonRules.window
@@ -109,13 +110,13 @@ module.exports = function genDisplay (displayInfo, appJsonRules) {
         "cacheDuration": ${displayInfo.cacheDuration}`
   }
 
-  if (displayInfo && displayInfo.pages) {
+  if (displayInfo && !util.isObjectEmpty(displayInfo.pages)) {
     display += `,\n
-        "pages": ${JSON.stringify(displayInfo.pages)}
+        "pages": ${util.obj2json(displayInfo.pages)}
     `
   }
 
-  const menuBarData = (displayInfo && displayInfo.menuBarData) ? JSON.parse(displayInfo.menuBarData) : {}
+  const menuBarData = (displayInfo && displayInfo.menuBarData) ? util.json2Obj(displayInfo.menuBarData) : {}
   const hasMenuData = !!(((appJsonWinRules && appJsonWinRules.navigationBarTitleText)))
   // app json rules
   if (hasMenuData) {
@@ -126,7 +127,7 @@ module.exports = function genDisplay (displayInfo, appJsonRules) {
     }`
   } else if (menuBarData.menuBar) {
     display += `,\n
-        "menuBarData": "${JSON.stringify(displayInfo.menuBarData)}"
+        "menuBarData": "${util.obj2json(displayInfo.menuBarData)}"
     `
   }
 

@@ -1,6 +1,7 @@
 /*
 *** 生成manifest文件router&subpackages部分，https://doc.quickapp.cn/framework/manifest.html
  */
+const util = require('./util')
 
 module.exports = function genRouter (projectEntry, pagesMap, defineRouter) {
   let pageKeys = pagesMap && Object.keys(pagesMap)
@@ -35,7 +36,7 @@ module.exports = function genRouter (projectEntry, pagesMap, defineRouter) {
           "${prefix}": {
             "component": "${entryComp}",
             "path": "/${projectEntry}",
-            "filter": ${JSON.stringify(needProcessPages[index].filter) || {}},
+            "filter": ${!util.isObjectEmpty(needProcessPages[index].filter) && util.obj2Json(needProcessPages[index].filter) || {}},
             "launchMode": "${needProcessPages[index].launchMode || 'standard'}"
           }`
   } else {
@@ -67,7 +68,7 @@ module.exports = function genRouter (projectEntry, pagesMap, defineRouter) {
         "${prefix}": {
           "component": "${compName}",
           "path": "/${compName}",
-          "filter": ${JSON.stringify(needProcessPages[index].filter) || {}},
+          "filter": ${!util.isObjectEmpty(needProcessPages[index].filter) && util.obj2Json(needProcessPages[index].filter) || {}},
           "launchMode": "${needProcessPages[index].launchMode || 'standard'}"
         }`
       } else {
