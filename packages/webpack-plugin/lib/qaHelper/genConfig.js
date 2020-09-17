@@ -18,9 +18,9 @@ module.exports = function genConfig (configInfo, appJsonRules, isProd) {
 
   let network
   if (appJsonRules && appJsonRules.networkTimeout && !util.isObjectEmpty(appJsonRules.networkTimeout)) {
-    network = Object.assign({}, util.obj2Json(appJsonRules.networkTimeout))
+    network = Object.assign({}, appJsonRules.networkTimeout)
   } else if (configInfo && configInfo.network && !util.isObjectEmpty(configInfo.network)) {
-    network = Object.assign({}, util.obj2Json(configInfo.network))
+    network = Object.assign({}, util.json2Obj(configInfo.network))
   }
   if (network) {
     config += `,

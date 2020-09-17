@@ -110,24 +110,23 @@ module.exports = function genDisplay (displayInfo, appJsonRules) {
         "cacheDuration": ${displayInfo.cacheDuration}`
   }
 
-  if (displayInfo && !util.isObjectEmpty(displayInfo.pages)) {
-    display += `,\n
-        "pages": ${util.obj2json(displayInfo.pages)}
-    `
+  if (displayInfo && displayInfo.pages && displayInfo.pages !== '{}') {
+    display += `,
+        "pages": ${displayInfo.pages}`
   }
 
   const menuBarData = (displayInfo && displayInfo.menuBarData) ? util.json2Obj(displayInfo.menuBarData) : {}
   const hasMenuData = !!(((appJsonWinRules && appJsonWinRules.navigationBarTitleText)))
   // app json rules
   if (hasMenuData) {
-    display += `,\n
+    display += `,
       "menuBarData: {"
         "menuBar": ${hasMenuData},
         "menuBarStyle": ${(appJsonWinRules && appJsonWinRules.backgroundColorTop) || 'dark'}
     }`
   } else if (menuBarData.menuBar) {
     display += `,\n
-        "menuBarData": "${util.obj2json(displayInfo.menuBarData)}"
+        "menuBarData": "${util.obj2Json(displayInfo.menuBarData)}"
     `
   }
 
