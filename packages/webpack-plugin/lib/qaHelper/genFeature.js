@@ -51,7 +51,7 @@ module.exports = function registerFeatures (wxPay, packageName, shareObj, qqObj,
         {"name":"service.ad"},
         {"name": "service.alipay"}
       ]`
-  if (!util.isObjectEmpty(wxPay)) {
+  if (wxPay && wxPay.sign) {
     features += ',\n'
     features += `
       {\n
@@ -64,7 +64,7 @@ module.exports = function registerFeatures (wxPay, packageName, shareObj, qqObj,
       }
     `
   }
-  if (!util.isObjectEmpty(shareObj)) {
+  if (shareObj && shareObj.appSign) {
     features += ',\n'
     features += `{\n
       "name": "service.share",\n
@@ -76,17 +76,17 @@ module.exports = function registerFeatures (wxPay, packageName, shareObj, qqObj,
       }\n
     }`
   }
-  if (!util.isObjectEmpty(qqObj)) {
+  if (qqObj && qqObj.appId) {
     features += ',\n'
     features += `{\n
     "name": "service.qqaccount",\n
     "params": {\n
       "appId": "${qqObj.appId}",\n
-      "clientId": "${qqObj.clientId || ''}"\n
+      "clientId": "${qqObj && qqObj.clientId || ''}"\n
     },\n
   }`
   }
-  if (!util.isObjectEmpty(wxObj)) {
+  if (wxObj && wxObj.appId) {
     features += ',\n'
     features += `{\n
       "name": "service.wxaccount",\n
@@ -95,7 +95,7 @@ module.exports = function registerFeatures (wxPay, packageName, shareObj, qqObj,
       }\n
     }`
   }
-  if (!util.isObjectEmpty(weiboObj)) {
+  if (weiboObj && weiboObj.appKey) {
     features += ',\n'
     features += `{\n
       "name": "service.wbaccount",\n
