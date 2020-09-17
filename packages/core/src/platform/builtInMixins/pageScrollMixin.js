@@ -43,14 +43,18 @@ export default function pageScrollMixin (mixinType) {
       ms.pageScrollTo({
         scrollTop: this.__lastScrollY
       })
+      const { disableScroll, enablePullDownRefresh } = this.$options.__mpxPageConfig
       // 下拉刷新
-      if (this.$options.__mpxPageConfig.enablePullDownRefresh) {
+      if (enablePullDownRefresh) {
         ms.enablePullDownRefresh()
         showLoading(this)
         ms.hooks.on('pullingDown', this.__mpxPullDownHandler)
       }
       // 页面滚动
       ms.enableScroll()
+      if (disableScroll) {
+        ms.debounce = 0
+      }
       if (this.onPageScroll || this.onReachBottom) {
         ms.hooks.on('scroll', this.__mpxPageScrollHandler)
       }
@@ -70,8 +74,8 @@ export default function pageScrollMixin (mixinType) {
       __mpxPullDownHandler (autoStop = false) {
         this.__pullingDown = true
         // 同微信保持一致
-        // 如果是手动触摸下拉， 3s 后用户还没有调用过 __stopPullDownRefresh，则自动调用关闭 pull down
-        // 如果是主动调用 startPullDownRefresh 的 api，则一直处于 pull down 状态，除非主动调用 stopPullDownRefresh
+        // 如果是手动触摸下拉，3s 后用户还没有调用过 __stopPullDownRefresh，则自动调用关闭 pullDown
+        // 如果是手动调用 startPullDownRefresh 的 api，则一直处于 pull down 状态
         if (autoStop) {
           setTimeout(() => {
             if (this.__pullingDown) {
@@ -155,6 +159,7 @@ class EventEmitter {
 }
 
 // --------------- EventRegister
+
 class EventRegister {
   constructor () {
     this.disposer = []
@@ -174,6 +179,7 @@ class EventRegister {
 }
 
 // --------------- MpxScroll
+
 function isDef (val) {
   return val !== undefined
 }
@@ -228,6 +234,7 @@ export class MpxScroll {
     this.bottomReached = false
     this.ceiling = false
     this.scrollTimer = null
+    this.debounce = options.debounce || 50
     this.hooks = new EventEmitter()
     this.eventRegister = new EventRegister()
   }
@@ -248,7 +255,7 @@ export class MpxScroll {
         const scrollTop = this.screen.scrollTop
         this.scrollTop = scrollTop
         this.hooks.emit('scroll', scrollTop)
-      }, 50)
+      }, this.debounce)
     })
   }
 
@@ -316,6 +323,10 @@ export class MpxScroll {
   }
 
   startPullDownRefresh () {
+    this.pageScrollTo({
+      scrollTop: 0,
+      duration: 0
+    })
     this.pullDown(this.options.pullDownRefresh.threshold)
     this.hooks.emit('pullingDown')
   }
