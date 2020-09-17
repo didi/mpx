@@ -51,20 +51,21 @@
         })
       }
 
-      let backgroundSize = ''
-      let backgroundPosition = ''
       const style = {
         backgroundImage: `url(${this.src})`
       }
       switch (this.mode) {
         case 'scaleToFill':
-          backgroundSize = '100% 100%'
+          style.backgroundSize = '100% 100%'
           break
         case 'aspectFit':
-          backgroundSize = 'contain'
+          style.backgroundSize = 'contain'
+          style.backgroundPosition = 'center'
+          style.backgroundRepeat = 'no-repeat'
           break
         case 'aspectFill':
-          backgroundSize = 'cover'
+          style.backgroundSize = 'cover'
+          style.backgroundPosition = 'center'
           break
         case 'top':
         case 'bottom':
@@ -75,15 +76,8 @@
         case 'top right':
         case 'bottom left':
         case 'bottom right':
-          backgroundPosition = this.mode
+          style.backgroundPosition = this.mode
           break
-      }
-
-      if (backgroundSize) {
-        style.backgroundSize = backgroundSize
-      }
-      if (backgroundPosition) {
-        style.backgroundPosition = backgroundPosition
       }
 
       return createElement('div', {

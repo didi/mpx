@@ -193,20 +193,6 @@ export function extend (target, ...sources) {
   return target
 }
 
-export function dissolveAttrs (target = {}, keys) {
-  if (typeof keys === 'string') {
-    keys = [keys]
-  }
-  const newOptions = Object.assign({}, target)
-  keys.forEach(key => {
-    const value = target[key]
-    if (!isObject(value)) return
-    delete newOptions[key]
-    Object.assign(newOptions, value)
-  })
-  return newOptions
-}
-
 export function isObject (obj) {
   return obj !== null && typeof obj === 'object'
 }
