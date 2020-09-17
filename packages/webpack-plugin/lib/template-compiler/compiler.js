@@ -1,4 +1,4 @@
-const deindent = require('de-indent')
+const JSON5 = require('json5')
 const he = require('he')
 const config = require('../config')
 const normalize = require('../utils/normalize')
@@ -7,6 +7,7 @@ const isEmptyObject = require('../utils/is-empty-object')
 const mpxJSON = require('../utils/mpx-json')
 const getRulesRunner = require('../platform/index')
 const addQuery = require('../utils/add-query')
+const transDynamicClassExpr = require('./trans-dynamic-class-expr')
 
 /**
  * Make a map and return a function for checking if a key
@@ -683,7 +684,7 @@ function parseComponent (content, options) {
   function end (tag, start, end) {
     if (depth === 1 && currentBlock) {
       currentBlock.end = start
-      let text = deindent(content.slice(currentBlock.start, currentBlock.end))
+      let text = content.slice(currentBlock.start, currentBlock.end)
       // pad content so that linters and pre-processors can output correct
       // line numbers in errors and warnings
       if (currentBlock.type !== 'template' && options.pad) {
@@ -705,9 +706,7 @@ function parseComponent (content, options) {
       return content.slice(0, block.start).replace(replaceRE, ' ')
     } else {
       let offset = content.slice(0, block.start).split(splitRE).length
-      let padChar = block.type === 'script' && !block.lang
-        ? '//\n'
-        : '\n'
+      let padChar = '\n'
       return Array(offset).join(padChar)
     }
   }
@@ -969,7 +968,7 @@ function getAndRemoveAttr (el, name, removeFromMap = true) {
   let list = el.attrsList
   for (let i = 0, l = list.length; i < l; i++) {
     if (list[i].name === name) {
-      val = list[i].value
+      val = list[i].value || true
       list.splice(i, 1)
       break
     }
@@ -981,8 +980,16 @@ function getAndRemoveAttr (el, name, removeFromMap = true) {
 }
 
 function addAttrs (el, attrs) {
-  el.attrsList = el.attrsList.concat(attrs)
-  el.attrsMap = makeAttrsMap(el.attrsList)
+  const list = el.attrsList
+  const map = el.attrsMap
+  for (let i = 0, l = attrs.length; i < l; i++) {
+    list.push(attrs[i])
+
+    if (map[attrs[i].name] && !isIE && !isEdge) {
+      warn$1('duplicate attribute: ' + attrs[i].name)
+    }
+    map[attrs[i].name] = attrs[i].value
+  }
 }
 
 function modifyAttr (el, name, val) {
@@ -1173,7 +1180,7 @@ function processBindEvent (el) {
       const modelFilter = getAndRemoveAttr(el, config[mode].directive.modelFilter)
       let modelValuePathArr
       try {
-        modelValuePathArr = JSON.parse(modelValuePath)
+        modelValuePathArr = JSON5.parse(modelValuePath)
       } catch (e) {
         if (modelValuePath === '') {
           modelValuePathArr = []
@@ -1273,15 +1280,16 @@ function parseMustache (raw = '') {
       }
       let exp = match[1]
 
-      const defKeys = Object.keys(defs)
-      defKeys.forEach((defKey) => {
-        const defRE = new RegExp(`\\b${defKey}\\b`)
-        const defREG = new RegExp(`\\b${defKey}\\b`, 'g')
-        if (defRE.test(exp)) {
-          exp = exp.replace(defREG, stringify(defs[defKey]))
-          replaced = true
-        }
-      })
+      // 用eval来处理常量，废弃正则。优点是比正则替换靠谱，缺点是仅能在if上用。暂存这个正则实现
+      // const defKeys = Object.keys(defs)
+      // defKeys.forEach((defKey) => {
+      //   const defRE = new RegExp(`\\b${defKey}\\b`)
+      //   const defREG = new RegExp(`\\b${defKey}\\b`, 'g')
+      //   if (defRE.test(exp)) {
+      //     exp = exp.replace(defREG, stringify(defs[defKey]))
+      //     replaced = true
+      //   }
+      // })
 
       if (i18n) {
         i18nFuncNames.forEach((i18nFuncName) => {
@@ -1553,10 +1561,14 @@ function evalExp (exp) {
   // eslint-disable-next-line no-new-func
   let result = { success: false }
   try {
-    const fn = new Function(`return ${exp};`)
+    const defKeys = Object.keys(defs)
+    const defValues = defKeys.map((key) => {
+      return defs[key]
+    })
+    const fn = new Function(...defKeys, `return ${exp};`)
     result = {
       success: true,
-      result: fn()
+      result: fn(...defValues)
     }
   } catch (e) {
   }
@@ -1616,7 +1628,7 @@ function postProcessIf (el) {
     } else {
       attrs = [{
         name: config[mode].directive.else,
-        value: ''
+        value: undefined
       }]
     }
   }
@@ -1673,7 +1685,7 @@ function processClass (el, meta) {
   let staticClass = getAndRemoveAttr(el, type)
   if (dynamicClass) {
     let staticClassExp = parseMustache(staticClass).result
-    let dynamicClassExp = parseMustache(dynamicClass).result
+    let dynamicClassExp = transDynamicClassExpr(parseMustache(dynamicClass).result)
     addAttrs(el, [{
       name: targetType,
       value: `{{${stringifyModuleName}.stringifyClass(${staticClassExp}, ${dynamicClassExp})}}`
@@ -1871,7 +1883,7 @@ function processAtMode (el) {
           el._atModeStatus = 'match'
         } else {
           // 如果命中了指定的mode，则先存在el上，等跑完转换后再挂回去
-          el.noTransAttr ? el.noTransAttr.push(processedAttr) : el.noTransAttr = [processedAttr]
+          el.noTransAttrs ? el.noTransAttrs.push(processedAttr) : el.noTransAttrs = [processedAttr]
         }
       } else if (!replacedAttrName) {
         el._atModeStatus = 'mismatch'
@@ -1895,10 +1907,9 @@ function processElement (el, root, options, meta) {
   }
 
   // 转换完成，把不需要处理的attr挂回去
-  if (el.noTransAttr) {
-    el.noTransAttr.forEach(item => {
-      addAttrs(el, item)
-    })
+  if (el.noTransAttrs) {
+    addAttrs(el, el.noTransAttrs)
+    delete el.noTransAttrs
   }
 
   const transAli = mode === 'ali' && srcMode === 'wx'
@@ -1924,10 +1935,8 @@ function processElement (el, root, options, meta) {
   processRef(el, options, meta)
 
   if (!pass) {
-    if (mode !== 'tt') {
-      processClass(el, meta)
-      processStyle(el, meta)
-    }
+    processClass(el, meta)
+    processStyle(el, meta)
     processShow(el, options, root)
   }
 
@@ -2003,7 +2012,7 @@ function postProcessComponentIs (el) {
 }
 
 function stringifyAttr (val) {
-  if (val != null) {
+  if (typeof val === 'string') {
     const hasSingle = val.indexOf('\'') > -1
     const hasDouble = val.indexOf('"') > -1
     // 移除属性中换行
@@ -2037,7 +2046,7 @@ function serialize (root) {
           node.attrsList.forEach(function (attr) {
             result += ' ' + attr.name
             let value = attr.value
-            if (value != null) {
+            if (value != null && value !== true) {
               result += '=' + stringifyAttr(value)
             }
           })

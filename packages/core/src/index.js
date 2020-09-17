@@ -27,11 +27,6 @@ export function createComponent (config, ...rest) {
 
 export { createStore, createStoreWithThis, getMixin }
 
-export function getComputed (computed) {
-  // ts computed类型推导辅助函数
-  return computed
-}
-
 export function toPureObject (obj) {
   return diffAndCloneA(obj).clone
 }
@@ -120,7 +115,6 @@ if (__mpx_mode__ === 'web') {
     delete: del,
     setConvertRule,
     getMixin,
-    getComputed,
     implement
   }
 
@@ -163,7 +157,6 @@ if (__mpx_mode__ === 'web') {
     delete: del,
     setConvertRule,
     getMixin,
-    getComputed,
     implement
   }
 
