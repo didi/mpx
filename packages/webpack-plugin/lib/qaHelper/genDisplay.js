@@ -120,12 +120,12 @@ module.exports = function genDisplay (displayInfo, appJsonRules) {
   // app json rules
   if (hasMenuData) {
     display += `,
-      "menuBarData: {"
-        "menuBar": ${hasMenuData},
-        "menuBarStyle": ${(appJsonWinRules && appJsonWinRules.backgroundColorTop) || 'dark'}
-    }`
+        "menuBarData": {
+          "menuBar": ${hasMenuData},
+          "menuBarStyle": "${(appJsonWinRules && appJsonWinRules.backgroundColorTop) || 'dark'}"
+        }`
   } else if (menuBarData.menuBar) {
-    display += `,\n
+    display += `,
         "menuBarData": "${util.obj2Json(displayInfo.menuBarData)}"
     `
   }

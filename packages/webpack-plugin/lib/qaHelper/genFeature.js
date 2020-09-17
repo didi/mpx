@@ -1,7 +1,6 @@
 /*
 *** 生成manifest文件features部分，https://doc.quickapp.cn/framework/manifest.html
  */
-const util = require('./util')
 
 module.exports = function registerFeatures (wxPay, packageName, shareObj, qqObj, wxObj, weiboObj) {
   let features = `[
@@ -82,7 +81,7 @@ module.exports = function registerFeatures (wxPay, packageName, shareObj, qqObj,
     "name": "service.qqaccount",\n
     "params": {\n
       "appId": "${qqObj.appId}",\n
-      "clientId": "${qqObj && qqObj.clientId || ''}"\n
+      "clientId": "${(qqObj && qqObj.clientId) || ''}"\n
     },\n
   }`
   }
