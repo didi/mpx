@@ -285,9 +285,11 @@ export class MpxScroll {
         return () => {
           requestAnimationFrame(() => {
             position += step
-            this.screen.scrollTo(0, position)
             if (position < _scrollTop) {
+              this.screen.scrollTo(0, position)
               next()
+            } else {
+              this.screen.scrollTo(0, _scrollTop)
             }
           })
         }
@@ -295,9 +297,11 @@ export class MpxScroll {
         return () => {
           requestAnimationFrame(() => {
             position -= step
-            this.screen.scrollTo(0, position)
             if (position > _scrollTop) {
+              this.screen.scrollTo(0, position)
               next()
+            } else {
+              this.screen.scrollTo(0, _scrollTop)
             }
           })
         }
