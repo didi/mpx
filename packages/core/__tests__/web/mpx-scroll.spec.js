@@ -45,19 +45,18 @@ describe('test mpx scroll', () => {
     ms.startPullDownRefresh()
     setTimeout(() => {
       expect(ms.el.style.transition).toEqual('')
-      // expect(typeof ms.screen).toEqual('function')
       done()
     }, 3000)
   })
 
-  // test('stopPullDownRefresh', done => {
-  //   ms.startPullDownRefresh()
-  //   setTimeout(() => {
-  //     ms.stopPullDownRefresh()
-  //     expect(ms.el.style.transition).toEqual('')
-  //     done()
-  //   }, 1000)
-  // })
+  test('stopPullDownRefresh', done => {
+    ms.startPullDownRefresh()
+    setTimeout(() => {
+      ms.stopPullDownRefresh()
+      expect(ms.el.style.transition).toEqual('')
+      done()
+    }, 1000)
+  })
 
   test('event emitter', () => {
     if (app.$options.__mpxPageConfig.enablePullDownRefresh) {
