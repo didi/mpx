@@ -4,7 +4,9 @@ const APP_HOOKS = [
   'onLaunch',
   'onShow',
   'onHide',
-  'onError'
+  'onError',
+  'onShareAppMessage',
+  'onUnhandledRejection'
 ]
 
 const PAGE_HOOKS = [
