@@ -28,7 +28,7 @@ module.exports = function (compilation, options, appJsonRules, isProd) {
     let defineConfig = (options.quickapp && options.quickapp.config) || {}
     if (!util.isObjectEmpty(defineConfig)) {
       let configInfo = `
-      "config": ${registerConfig(defineConfig)}`
+      "config": ${registerConfig(defineConfig, appJsonRules, isProd)}`
       content.add(configInfo)
       content.add(`,`)
     }

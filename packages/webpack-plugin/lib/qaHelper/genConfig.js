@@ -2,28 +2,41 @@
 *** 生成manifest文件config部分，https://doc.quickapp.cn/framework/manifest.html
  */
 
-module.exports = function genConfig (configInfo) {
+const util = require('./util')
+
+module.exports = function genConfig (configInfo, appJsonRules, isProd) {
   let config = `{`
-  if (configInfo && configInfo.logLevel) {
-    config += `
-        "logLevel": "${configInfo.logLevel}"`
-  }
+
+  const logLevel = configInfo && configInfo.logLevel ? configInfo.logLevel : isProd ? 'off' : 'debug'
+  config += `
+        "logLevel": "${logLevel}"`
+
   if (configInfo && configInfo.designWidth) {
     config += `,
         "designWidth": ${configInfo.designWidth}`
   }
-  if (configInfo && configInfo.network) {
-    config += `,
-        "network": ${JSON.stringify(configInfo.network)}`
+
+  let network
+  if (appJsonRules && appJsonRules.networkTimeout && !util.isObjectEmpty(appJsonRules.networkTimeout)) {
+    network = Object.assign({}, util.obj2Json(appJsonRules.networkTimeout))
+  } else if (configInfo && configInfo.network && !util.isObjectEmpty(configInfo.network)) {
+    network = Object.assign({}, util.obj2Json(configInfo.network))
   }
-  if (configInfo && configInfo.data) {
+  if (network) {
     config += `,
-        "data" : ${JSON.stringify(configInfo.data)}`
+        "network": ${util.obj2Json(network)}`
   }
-  if (configInfo && configInfo.background) {
+
+  if (configInfo && configInfo.data && !util.isObjectEmpty(configInfo.data)) {
     config += `,
-        "background": ${JSON.stringify(configInfo.background)}`
+        "data" : ${util.obj2Json(configInfo.data)}`
   }
+
+  if (configInfo && configInfo.background && !util.isObjectEmpty(configInfo.background)) {
+    config += `,
+        "background": ${util.obj2Json(configInfo.background)}`
+  }
+
   if (config === '{') return ''
   config += `
       }`
