@@ -5,11 +5,7 @@ let ms
 function refreshMs (vm) {
   if (ms) ms.destroy()
   try {
-    window.__ms = ms = new MpxScroll(vm.$el, {
-      pullDownRefresh: {
-        threshold: 60
-      }
-    })
+    window.__ms = ms = new MpxScroll(vm.$el)
     return true
   } catch (e) {
     const location = vm.__mpxProxy && vm.__mpxProxy.options.mpxFileResource
@@ -46,12 +42,12 @@ export default function pageScrollMixin (mixinType) {
       const { disableScroll, enablePullDownRefresh } = this.$options.__mpxPageConfig
       // 下拉刷新
       if (enablePullDownRefresh) {
-        ms.enablePullDownRefresh()
+        ms.usePullDownRefresh()
         showLoading(this)
         ms.hooks.on('pullingDown', this.__mpxPullDownHandler)
       }
       // 页面滚动
-      ms.enableScroll()
+      ms.useScroll()
       if (disableScroll) {
         ms.debounce = 0
       }
@@ -225,7 +221,19 @@ function preventDefault (e, isStopPropagation) {
 }
 
 export class MpxScroll {
-  constructor (el, options) {
+  constructor (el, options = {}) {
+    const { pullDownRefresh } = options
+    const threshold = 60 // 最大下拉距离
+    const elastic = 10 // 加点下拉的弹性力度
+    if (!isDef(pullDownRefresh) || pullDownRefresh === true) {
+      options.pullDownRefresh = {
+        threshold,
+        elastic
+      }
+    } else {
+      pullDownRefresh.threshold = pullDownRefresh.threshold || threshold
+      pullDownRefresh.elastic = pullDownRefresh.elastic || elastic
+    }
     this.options = options
     this.el = getElement(el)
     this.screen = document.documentElement || document.body
@@ -239,14 +247,14 @@ export class MpxScroll {
     this.eventRegister = new EventRegister()
   }
 
-  enablePullDownRefresh () {
+  usePullDownRefresh () {
     const el = this.screen
     this.eventRegister.on(el, 'touchstart', e => this.onTouchStart(e))
     this.eventRegister.on(el, 'touchmove', e => this.onTouchMove(e))
     this.eventRegister.on(el, 'touchend', e => this.onTouchEnd(e))
   }
 
-  enableScroll () {
+  useScroll () {
     this.eventRegister.on(document, 'scroll', e => {
       if (this.scrollTimer) {
         this.clearScrollTimer()
@@ -262,6 +270,7 @@ export class MpxScroll {
   destroy () {
     this.hooks.destroy()
     this.eventRegister.destroy()
+    this.clearScrollTimer()
   }
 
   clearScrollTimer () {
@@ -327,8 +336,10 @@ export class MpxScroll {
       scrollTop: 0,
       duration: 0
     })
-    this.pullDown(this.options.pullDownRefresh.threshold)
-    this.hooks.emit('pullingDown')
+    setTimeout(() => {
+      this.pullDown(this.options.pullDownRefresh.threshold)
+      this.hooks.emit('pullingDown')
+    })
   }
 
   stopPullDownRefresh () {
@@ -375,16 +386,17 @@ export class MpxScroll {
   }
 
   pullDown (distance, isLoading) {
+    const { threshold } = this.options.pullDownRefresh
     let status
     if (isLoading) {
       status = 'loading'
     } else if (distance === 0) {
       status = 'normal'
     } else {
-      status = distance < this.options.pullDownRefresh.threshold ? 'pulling' : 'loosing'
+      status = distance < threshold ? 'pulling' : 'loosing'
     }
 
-    this.distance = distance
+    this.distance = distance = Math.min(distance, threshold)
 
     if (status !== this.status) {
       this.status = status
@@ -393,21 +405,12 @@ export class MpxScroll {
     this.el.style.cssText = `transform: translateY(${distance}px)`
   }
 
-  /**
-   * ease 减少页面下拉幅度
-   */
   ease (distance) {
-    const headHeight = +this.options.pullDownRefresh.threshold
-
-    if (distance > headHeight) {
-      if (distance < headHeight * 2) {
-        distance = headHeight + (distance - headHeight) / 2
-      } else {
-        distance = headHeight * 1.5 + (distance - headHeight * 2) / 4
-      }
+    const { elastic, threshold } = this.options.pullDownRefresh
+    if (distance > threshold) {
+      return Math.round(distance / elastic)
     }
-
-    return Math.round(distance)
+    return 0
   }
 
   touchMove (e) {
@@ -420,10 +423,13 @@ export class MpxScroll {
   }
 
   onTouchEnd () {
-    if (this.deltaY >= this.options.pullDownRefresh.threshold) {
+    const { elastic, threshold } = this.options.pullDownRefresh
+    if (this.deltaY >= threshold * elastic) {
       this.el.style.transition = `transform 0.5s ease 3s`
       this.el.style.transform = 'translateY(0px)'
       this.hooks.emit('pullingDown', true)
+    } else {
+      this.stopPullDownRefresh()
     }
   }
 
