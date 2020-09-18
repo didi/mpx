@@ -1,9 +1,11 @@
 const parseComponent = require('./parser')
 const loaderUtils = require('loader-utils')
+const getMainCompilation = require('./utils/get-main-compilation')
 
 module.exports = function (content) {
   this.cacheable()
-  const mpx = this._compilation.__mpx__
+  const mainCompilation = getMainCompilation(this._compilation)
+  const mpx = mainCompilation.__mpx__
   if (!mpx) {
     return content
   }

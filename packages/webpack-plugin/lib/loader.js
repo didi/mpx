@@ -15,11 +15,13 @@ const processStyles = require('./web/processStyles')
 const processTemplate = require('./web/processTemplate')
 const readJsonForSrc = require('./utils/read-json-for-src')
 const normalize = require('./utils/normalize')
+const getMainCompilation = require('./utils/get-main-compilation')
 
 module.exports = function (content) {
   this.cacheable()
 
-  const mpx = this._compilation.__mpx__
+  const mainCompilation = getMainCompilation(this._compilation)
+  const mpx = mainCompilation.__mpx__
   if (!mpx) {
     return content
   }
