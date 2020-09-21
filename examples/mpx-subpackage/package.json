@@ -8,7 +8,7 @@
     "build": "node ./build/build.js",
     "watch": "node ./build/build.js -w",
     "prod": "node ./build/build.js -p",
-    "watch:cross": "npm run watch --ali",
+    "watch:cross": "npm run watch --wx --ali --swan",
     "build:cross": "npm run build --wx --ali --swan",
     "prod:cross": "npm run prod --wx --ali --swan",
     "lint": "eslint --ext .js,.mpx src/",
