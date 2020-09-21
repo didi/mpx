@@ -1280,16 +1280,16 @@ function parseMustache (raw = '') {
       }
       let exp = match[1]
 
-      // 用eval来处理常量，废弃正则。优点是比正则替换靠谱，缺点是仅能在if上用。暂存这个正则实现
-      // const defKeys = Object.keys(defs)
-      // defKeys.forEach((defKey) => {
-      //   const defRE = new RegExp(`\\b${defKey}\\b`)
-      //   const defREG = new RegExp(`\\b${defKey}\\b`, 'g')
-      //   if (defRE.test(exp)) {
-      //     exp = exp.replace(defREG, stringify(defs[defKey]))
-      //     replaced = true
-      //   }
-      // })
+      // eval处理的话，和别的判断条件，比如运行时的判断混用情况下得不到一个结果，还是正则替换
+      const defKeys = Object.keys(defs)
+      defKeys.forEach((defKey) => {
+        const defRE = new RegExp(`\\b${defKey}\\b`)
+        const defREG = new RegExp(`\\b${defKey}\\b`, 'g')
+        if (defRE.test(exp)) {
+          exp = exp.replace(defREG, stringify(defs[defKey]))
+          replaced = true
+        }
+      })
 
       if (i18n) {
         i18nFuncNames.forEach((i18nFuncName) => {
@@ -1561,14 +1561,10 @@ function evalExp (exp) {
   // eslint-disable-next-line no-new-func
   let result = { success: false }
   try {
-    const defKeys = Object.keys(defs)
-    const defValues = defKeys.map((key) => {
-      return defs[key]
-    })
-    const fn = new Function(...defKeys, `return ${exp};`)
+    const fn = new Function(`return ${exp};`)
     result = {
       success: true,
-      result: fn(...defValues)
+      result: fn()
     }
   } catch (e) {
   }
