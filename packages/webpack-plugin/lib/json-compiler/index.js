@@ -17,13 +17,15 @@ const isUrlRequest = require('../utils/is-url-request')
 const getPageName = require('../utils/get-page-name')
 const addQuery = require('../utils/add-query')
 const readJsonForSrc = require('../utils/read-json-for-src')
+const getMainCompilation = require('../utils/get-main-compilation')
 
 module.exports = function (raw = '{}') {
   // 该loader中会在每次编译中动态添加entry，不能缓存，否则watch不好使
   this.cacheable(false)
   const nativeCallback = this.async()
   const options = loaderUtils.getOptions(this) || {}
-  const mpx = this._compilation.__mpx__
+  const mainCompilation = getMainCompilation(this._compilation)
+  const mpx = mainCompilation.__mpx__
 
   const emitWarning = (msg) => {
     this.emitWarning(
