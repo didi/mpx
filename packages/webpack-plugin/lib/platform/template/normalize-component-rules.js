@@ -9,7 +9,7 @@ module.exports = function normalizeComponentRules (cfgs, spec, mode) {
     const supportedModes = cfg.supportedModes || spec.supportedModes
     const eventRules = (cfg.event || []).concat(spec.event.rules)
     const targetMode = mode && [mode]
-    // // mode不用适配当前组件配置规则时, 则直接返回不执行runRules规则，只适配要转换规则的mode
+    // mode不用适配当前组件配置规则时, 则直接返回不执行runRules规则，只适配要转换规则的mode
     if (mode && supportedModes.indexOf(mode) === -1) {
       return result
     }
