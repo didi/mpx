@@ -8,6 +8,7 @@ const mpxJSON = require('../utils/mpx-json')
 const getRulesRunner = require('../platform/index')
 const addQuery = require('../utils/add-query')
 const transDynamicClassExpr = require('./trans-dynamic-class-expr')
+const hash = require('hash-sum')
 
 /**
  * Make a map and return a function for checking if a key
@@ -1043,6 +1044,52 @@ function processPageStatus (el, options) {
   }
 }
 
+const genericRE = /^generic:(.+)$/
+
+function processComponentGenericsForWeb (el, options, meta) {
+  if (options.componentGenerics && options.componentGenerics[el.tag]) {
+    const generic = el.tag
+    el.tag = 'component'
+    addAttrs(el, [{
+      name: ':is',
+      value: `generic${generic}`
+    }])
+  }
+
+  let hasGeneric = false
+
+  const genericHash = hash(options.filePath)
+
+  el.attrsList.forEach((attr) => {
+    if (genericRE.test(attr.name)) {
+      getAndRemoveAttr(el, attr.name)
+      addAttrs(el, [{
+        name: attr.name.replace(':', ''),
+        value: attr.value
+      }])
+      hasGeneric = true
+      addGenericInfo(meta, genericHash, attr.value)
+    }
+  })
+
+  if (hasGeneric) {
+    addAttrs(el, [{
+      name: 'generichash',
+      value: genericHash
+    }])
+  }
+}
+
+function addGenericInfo (meta, genericHash, genericValue) {
+  if (!meta.genericsInfo) {
+    meta.genericsInfo = {
+      hash: genericHash,
+      map: {}
+    }
+  }
+  meta.genericsInfo.map[genericValue] = true
+}
+
 function processComponentIs (el, options) {
   if (el.tag !== 'component') {
     return
@@ -1919,6 +1966,7 @@ function processElement (el, root, options, meta) {
     processBuiltInComponents(el, meta)
     // 预处理代码维度条件编译
     processIfForWeb(el)
+    processComponentGenericsForWeb(el, options, meta)
     return
   }
 

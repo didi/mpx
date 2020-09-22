@@ -5,6 +5,7 @@ const hash = require('hash-sum')
 const SingleEntryPlugin = require('webpack/lib/SingleEntryPlugin')
 const parseRequest = require('./utils/parse-request')
 const toPosix = require('./utils/to-posix')
+const getMainCompilation = require('./utils/get-main-compilation')
 
 // webpack4中.json文件会走json parser，抽取内容的占位内容必须为合法json，否则会在parse阶段报错
 const defaultResultSource = '{}'
@@ -14,7 +15,8 @@ module.exports = function (source) {
   this.cacheable(false)
 
   const nativeCallback = this.async()
-  const mpx = this._compilation.__mpx__
+  const mainCompilation = getMainCompilation(this._compilation)
+  const mpx = mainCompilation.__mpx__
 
   if (!mpx) {
     return nativeCallback(null, source)

@@ -7,12 +7,6 @@ describe('test mpx scroll', () => {
   domApp.setAttribute('id', 'app')
   document.body.appendChild(domApp)
 
-  Vue.component('child', {
-    template: `
-      <div class="page"></div>
-    `
-  })
-
   Vue.options.__mpxPageConfig = {
     enablePullDownRefresh: true,
     disableScroll: false
@@ -21,21 +15,17 @@ describe('test mpx scroll', () => {
   const app = new Vue({
     template: `
       <div id="app" class="app">
-        <keep-alive>
-          <child></child>
-        </keep-alive>
+        <div class="page">
+          <div class="pull-down-loading" style="height: 0"></div>
+        </div>
       </div>
     `
   })
   app.$mount('#app')
 
-  const ms = new MpxScroll('.page', {
-    pullDownRefresh: {
-      threshold: 60
-    }
-  })
+  const ms = new MpxScroll('.page')
 
-  ms.screen.scrollTo = jest.fn()
+  window.scrollTo = jest.fn()
 
   test('el is a dom', () => {
     expect(ms.el).toEqual(document.querySelector('.page'))
@@ -44,7 +34,7 @@ describe('test mpx scroll', () => {
   test('startPullDownRefresh', done => {
     ms.startPullDownRefresh()
     setTimeout(() => {
-      expect(ms.el.style.transform).toMatch(/translateY/)
+      expect(ms.progress.style.height).toEqual('60px')
       done()
     }, 3000)
   })
@@ -53,8 +43,10 @@ describe('test mpx scroll', () => {
     ms.startPullDownRefresh()
     setTimeout(() => {
       ms.stopPullDownRefresh()
-      expect(ms.el.style.transition).toEqual('')
-      done()
+      setTimeout(() => {
+        expect(ms.progress.style.height).toEqual('0px')
+        done()
+      }, 1000)
     }, 1000)
   })
 
@@ -75,6 +67,5 @@ describe('test mpx scroll', () => {
     ms.destroy()
     expect(Object.keys(ms.hooks.events).length).toEqual(0)
     expect(ms.eventRegister.disposer.length).toEqual(0)
-    expect(ms.scrollTimer).toEqual(null)
   })
 })

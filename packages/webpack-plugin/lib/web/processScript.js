@@ -33,6 +33,8 @@ module.exports = function (script, options, callback) {
   const i18n = options.i18n
   const jsonConfig = options.jsonConfig
   const tabBarMap = options.tabBarMap
+  const genericsInfo = options.genericsInfo
+  const componentGenerics = options.componentGenerics
 
   const stringifyRequest = r => loaderUtils.stringifyRequest(loaderContext, r)
   let tabBarPagesMap = {}
@@ -99,7 +101,7 @@ module.exports = function (script, options, callback) {
         global.BScroll = BScroll
         global.getApp = function(){}
         global.__networkTimeout = ${JSON.stringify(jsonConfig.networkTimeout)}
-
+        global.__mpxGenericsMap = {}
         global.__tabBar = ${tabBarMapStr}
         global.__tabBarPagesMap = ${shallowStringify(tabBarPagesMap)}
         global.__style = ${JSON.stringify(jsonConfig.style || 'v1')}
@@ -150,6 +152,7 @@ module.exports = function (script, options, callback) {
           firstPage = pagePath
         }
       })
+
       if (tabBarMap && tabBarMap.custom) {
         componentsMap['custom-tab-bar'] = `getComponent(require("./custom-tab-bar/index.mpx?component=true"))`
       } else if (tabBarMap) {
@@ -203,7 +206,9 @@ module.exports = function (script, options, callback) {
         ${JSON.stringify(pureJsonConfig)},
         ${shallowStringify(pagesMap)},
         ${shallowStringify(componentsMap)},
-        ${JSON.stringify(tabBarMap)}`
+        ${JSON.stringify(tabBarMap)},
+        ${JSON.stringify(componentGenerics)},
+        ${JSON.stringify(genericsInfo)}`
 
       if (ctorType === 'app') {
         content += `,

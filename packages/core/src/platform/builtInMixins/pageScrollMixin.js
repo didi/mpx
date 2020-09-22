@@ -13,15 +13,24 @@ function refreshMs (vm) {
   }
 }
 
+let loading = null
+
 function showLoading (vm) {
   const { backgroundColor = '#fff', backgroundTextStyle = 'dark' } = vm.$options.__mpxPageConfig
-  const loading = document.createElement('div')
+  loading = document.createElement('div')
   loading.className = 'pull-down-loading'
-  loading.style.backgroundColor = backgroundColor
+  loading.style.cssText = `background-color: ${backgroundColor}; height: 0`
   const dot = document.createElement('div')
   dot.className = `dot-flashing ${backgroundTextStyle}`
   loading.append(dot)
   vm.$el.prepend(loading)
+}
+
+function hideLoading (vm) {
+  if (loading) {
+    vm.$el.removeChild(loading)
+    loading = null
+  }
 }
 
 export default function pageScrollMixin (mixinType) {
@@ -33,19 +42,25 @@ export default function pageScrollMixin (mixinType) {
       this.__lastScrollY = 0
     },
     activated () {
+      showLoading(this)
+
       if (!refreshMs(this)) {
         return
       }
+
       ms.pageScrollTo({
-        scrollTop: this.__lastScrollY
+        scrollTop: this.__lastScrollY,
+        duration: 0
       })
+
       const { disableScroll, enablePullDownRefresh } = this.$options.__mpxPageConfig
+
       // 下拉刷新
       if (enablePullDownRefresh) {
         ms.usePullDownRefresh()
-        showLoading(this)
         ms.hooks.on('pullingDown', this.__mpxPullDownHandler)
       }
+
       // 页面滚动
       ms.useScroll()
       if (disableScroll) {
@@ -57,13 +72,15 @@ export default function pageScrollMixin (mixinType) {
     },
     deactivated () {
       if (ms) {
-        this.__lastScrollY = ms.scrollTop
+        this.__lastScrollY = getScrollTop()
         ms.destroy()
+        hideLoading(this)
       }
     },
     beforeDestroy () {
       if (ms) {
         ms.destroy()
+        hideLoading(this)
       }
     },
     methods: {
@@ -124,6 +141,20 @@ function addEvent (el, type, handler) {
 
 function removeEvent (el, type, handler) {
   el.removeEventListener(type, handler, { passive: false })
+}
+
+function getScrollTop () {
+  return document.documentElement.scrollTop || window.pageYOffset || document.body.scrollTop
+}
+
+function preventDefault (e, isStopPropagation) {
+  if (typeof e.cancelable !== 'boolean' || e.cancelable) {
+    e.preventDefault()
+  }
+
+  if (isStopPropagation) {
+    e.stopPropagation()
+  }
 }
 
 // --------------- EventEmitter
@@ -196,88 +227,138 @@ function getElement (el) {
     : el
 }
 
-const MIN_DISTANCE = 60
-
-function getDirection (x, y) {
-  if (x > y && x > MIN_DISTANCE) {
-    return 'horizontal'
-  }
-
-  if (y > x && y > MIN_DISTANCE) {
-    return 'vertical'
-  }
-
-  return ''
-}
-
-function preventDefault (e, isStopPropagation) {
-  if (typeof e.cancelable !== 'boolean' || e.cancelable) {
-    e.preventDefault()
-  }
-
-  if (isStopPropagation) {
-    e.stopPropagation()
-  }
-}
-
 export class MpxScroll {
   constructor (el, options = {}) {
-    const { pullDownRefresh } = options
-    const threshold = 60 // 最大下拉距离
-    const elastic = 10 // 加点下拉的弹性力度
-    if (!isDef(pullDownRefresh) || pullDownRefresh === true) {
-      options.pullDownRefresh = {
-        threshold,
-        elastic
-      }
-    } else {
-      pullDownRefresh.threshold = pullDownRefresh.threshold || threshold
-      pullDownRefresh.elastic = pullDownRefresh.elastic || elastic
+    const defaultOptions = {
+      threshold: 100, // 滑动触发下拉刷新的距离
+      stop: 60 // 下拉刷新时停留的位置距离屏幕顶部的距离
     }
-    this.options = options
     this.el = getElement(el)
-    this.screen = document.documentElement || document.body
-    this.scrollTop = 0
-    this.screenHeight = this.screen.offsetHeight
+    this.options = Object.assign({}, defaultOptions, options)
+    this.touchstartY = 0
+    this.currentY = 0
+    this.progress = this.el.children[0]
+    this.isRefresh = false
     this.bottomReached = false
-    this.ceiling = false
-    this.scrollTimer = null
-    this.debounce = options.debounce || 50
     this.hooks = new EventEmitter()
     this.eventRegister = new EventRegister()
   }
 
   usePullDownRefresh () {
-    const el = this.screen
-    this.eventRegister.on(el, 'touchstart', e => this.onTouchStart(e))
-    this.eventRegister.on(el, 'touchmove', e => this.onTouchMove(e))
-    this.eventRegister.on(el, 'touchend', e => this.onTouchEnd(e))
+    this.eventRegister.on(this.el, 'touchstart', e => this.onTouchStart(e))
+    this.eventRegister.on(this.el, 'touchmove', e => this.onTouchMove(e))
+    this.eventRegister.on(this.el, 'touchend', e => this.onTouchEnd(e))
+  }
+
+  onTouchStart (e) {
+    this.touchstartY = e.changedTouches[0].clientY
+  }
+
+  onTouchMove (e) {
+    const scrollTop = getScrollTop()
+    this.currentY = e.targetTouches[0].clientY
+    if (this.currentY - this.touchstartY >= 0 && scrollTop <= 0) {
+      preventDefault(e)
+      if (!this.isRefresh) {
+        this.pullDown(this.currentY - this.touchstartY)
+      }
+    }
+  }
+
+  pullDown (distance) {
+    if (distance < this.options.threshold) {
+      this.progress.style.height = distance + 'px'
+    } else {
+      this.progress.style.height = this.options.threshold + (distance - this.options.threshold) / 3 + 'px'
+    }
+  }
+
+  onTouchEnd (e) {
+    const scrollTop = getScrollTop()
+
+    if (scrollTop > 0 || this.isRefresh) {
+      return
+    }
+
+    const distance = this.currentY - this.touchstartY
+    if (distance > this.options.threshold) {
+      this.hooks.emit('pullingDown', true)
+      this.isRefresh = true
+      this.moveBack(this.options.stop)
+    } else if (distance > 0) {
+      this.moveBack()
+    }
+  }
+
+  moveBack (distance = 0) {
+    const currentHeight = this.progress.offsetHeight
+    const { stop } = this.options
+    const finalDistance = currentHeight > stop ? stop : 0
+    this.progress.style.height = finalDistance + 'px'
   }
 
   useScroll () {
     this.eventRegister.on(document, 'scroll', e => {
-      if (this.scrollTimer) {
-        this.clearScrollTimer()
-      }
-      this.scrollTimer = setTimeout(() => {
-        const scrollTop = this.screen.scrollTop
-        this.scrollTop = scrollTop
-        this.hooks.emit('scroll', scrollTop)
-      }, this.debounce)
+      const scrollTop = window.pageYOffset
+      this.scrollTop = scrollTop
+      this.hooks.emit('scroll', scrollTop)
     })
   }
 
   destroy () {
     this.hooks.destroy()
     this.eventRegister.destroy()
-    this.clearScrollTimer()
   }
 
-  clearScrollTimer () {
-    if (this.scrollTimer) {
-      clearTimeout(this.scrollTimer)
-      this.scrollTimer = null
+  startPullDownRefresh () {
+    if (this.isRefresh) {
+      return
     }
+
+    this.pageScrollTo({
+      scrollTop: 0,
+      duration: 0
+    })
+
+    this.isRefresh = true
+
+    const stop = this.options.stop
+    const step = stop / 16
+    let currentHeight = 0
+
+    const next = () => {
+      window.requestAnimationFrame(() => {
+        currentHeight += step
+        if (currentHeight < stop) {
+          this.progress.style.height = currentHeight + 'px'
+          next()
+        } else {
+          this.progress.style.height = stop + 'px'
+        }
+      })
+    }
+    next()
+  }
+
+  stopPullDownRefresh () {
+    if (!this.isRefresh) {
+      return
+    }
+    let currentHeight = this.options.stop
+    const step = currentHeight / 16
+    const next = () => {
+      window.requestAnimationFrame(() => {
+        currentHeight -= step
+        if (currentHeight <= 0) {
+          this.progress.style.height = 0 + 'px'
+          this.isRefresh = false
+        } else {
+          this.progress.style.height = currentHeight + 'px'
+          next()
+        }
+      })
+    }
+    next()
   }
 
   pageScrollTo ({
@@ -286,8 +367,7 @@ export class MpxScroll {
     duration = 300
   }) {
     const speed = duration / 16
-    let position = this.screen.scrollTop
-    let step
+    let position = getScrollTop()
     let _scrollTop
 
     if (isDef(scrollTop)) {
@@ -296,7 +376,11 @@ export class MpxScroll {
       _scrollTop = getOffsetTop(getElement(selector))
     }
 
-    step = Math.abs(position - _scrollTop) / speed
+    if (duration === 0) {
+      return window.scrollTo(0, _scrollTop)
+    }
+
+    const step = Math.abs(position - _scrollTop) / speed
 
     const next = (() => {
       // fix eslint
@@ -306,10 +390,10 @@ export class MpxScroll {
           requestAnimationFrame(() => {
             position += step
             if (position < _scrollTop) {
-              this.screen.scrollTo(0, position)
+              window.scrollTo(0, position)
               next()
             } else {
-              this.screen.scrollTo(0, _scrollTop)
+              window.scrollTo(0, _scrollTop)
             }
           })
         }
@@ -318,10 +402,10 @@ export class MpxScroll {
           requestAnimationFrame(() => {
             position -= step
             if (position > _scrollTop) {
-              this.screen.scrollTo(0, position)
+              window.scrollTo(0, position)
               next()
             } else {
-              this.screen.scrollTo(0, _scrollTop)
+              window.scrollTo(0, _scrollTop)
             }
           })
         }
@@ -331,111 +415,9 @@ export class MpxScroll {
     next()
   }
 
-  startPullDownRefresh () {
-    this.pageScrollTo({
-      scrollTop: 0,
-      duration: 0
-    })
-    setTimeout(() => {
-      this.pullDown(this.options.pullDownRefresh.threshold)
-      this.hooks.emit('pullingDown')
-    })
-  }
-
-  stopPullDownRefresh () {
-    const style = this.el.style
-    style.transition = style.transform = ''
-  }
-
-  resetTouchStatus () {
-    this.direction = ''
-    this.deltaX = 0
-    this.deltaY = 0
-    this.offsetX = 0
-    this.offsetY = 0
-  }
-
-  checkPullStart (e) {
-    this.ceiling = this.scrollTop <= 0
-
-    if (this.ceiling) {
-      this.duration = 0
-      this.touchStart(e)
-    }
-  }
-
-  onTouchStart (e) {
-    this.checkPullStart(e)
-  }
-
-  touchStart (e) {
-    this.resetTouchStatus()
-    this.startX = e.touches[0].clientX
-    this.startY = e.touches[0].clientY
-  }
-
-  onTouchMove (e) {
-    if (!this.ceiling) {
-      this.checkPullStart(e)
-    }
-    this.touchMove(e)
-    if (this.ceiling && this.deltaY >= 0 && this.direction === 'vertical') {
-      preventDefault(e)
-      this.pullDown(this.ease(this.deltaY))
-    }
-  }
-
-  pullDown (distance, isLoading) {
-    const { threshold } = this.options.pullDownRefresh
-    let status
-    if (isLoading) {
-      status = 'loading'
-    } else if (distance === 0) {
-      status = 'normal'
-    } else {
-      status = distance < threshold ? 'pulling' : 'loosing'
-    }
-
-    this.distance = distance = Math.min(distance, threshold)
-
-    if (status !== this.status) {
-      this.status = status
-    }
-
-    this.el.style.cssText = `transform: translateY(${distance}px)`
-  }
-
-  ease (distance) {
-    const { elastic, threshold } = this.options.pullDownRefresh
-    if (distance > threshold) {
-      return Math.round(distance / elastic)
-    }
-    return 0
-  }
-
-  touchMove (e) {
-    const touch = e.touches[0]
-    this.deltaX = touch.clientX - this.startX
-    this.deltaY = touch.clientY - this.startY
-    this.offsetX = Math.abs(this.deltaX)
-    this.offsetY = Math.abs(this.deltaY)
-    this.direction = this.direction || getDirection(this.offsetX, this.offsetY)
-  }
-
-  onTouchEnd () {
-    const { elastic, threshold } = this.options.pullDownRefresh
-    if (this.deltaY >= threshold * elastic) {
-      this.el.style.transition = `transform 0.5s ease 3s`
-      this.el.style.transform = 'translateY(0px)'
-      this.hooks.emit('pullingDown', true)
-    } else {
-      this.stopPullDownRefresh()
-    }
-  }
-
   onReachBottom (onReachBottomDistance, callback) {
     const { bottom } = this.el.getBoundingClientRect()
-    const mark = bottom - this.screenHeight <= onReachBottomDistance
+    const mark = bottom - window.innerHeight <= onReachBottomDistance
 
     if (!this.bottomReached && mark) {
       this.bottomReached = true

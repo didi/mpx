@@ -7,6 +7,8 @@ export default function processOption (
   pagesMap,
   componentsMap,
   tabBarMap,
+  componentGenerics,
+  genericsInfo,
   Vue,
   VueRouter,
   VueI18n,
@@ -144,7 +146,7 @@ export default function processOption (
     }
 
     if (i18n) {
-      window.__mpxI18n = option.i18n = new VueI18n(i18n)
+      window.__mpx.i18n = option.i18n = new VueI18n(i18n)
     }
   } else {
     // 局部注册页面和组件中依赖的组件
@@ -157,6 +159,36 @@ export default function processOption (
         option.components[componentName] = component
       }
     }
+
+    if (genericsInfo) {
+      const genericHash = genericsInfo.hash
+      window.__mpxGenericsMap[genericHash] = {}
+      Object.keys(genericsInfo.map).forEach((genericValue) => {
+        if (componentsMap[genericValue]) {
+          window.__mpxGenericsMap[genericHash][genericValue] = componentsMap[genericValue]
+        } else {
+          console.log(option)
+          console.warn(`[Mpx runtime warn]: generic value "${genericValue}" must be 
+registered in parent context!`)
+        }
+      })
+    }
+
+    if (componentGenerics) {
+      option.props = option.props || {}
+      option.props.generichash = String
+      Object.keys(componentGenerics).forEach((genericName) => {
+        if (componentGenerics[genericName].default) {
+          option.props[`generic${genericName}`] = {
+            type: String,
+            default: `${genericName}default`
+          }
+        } else {
+          option.props[`generic${genericName}`] = String
+        }
+      })
+    }
+
     if (ctorType === 'page') {
       option.__mpxPageConfig = Object.assign({}, window.__mpxPageConfig, jsonConfig)
     }
