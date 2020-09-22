@@ -125,12 +125,17 @@ module.exports = function (content) {
 
       let usingComponents = [].concat(Object.keys(mpx.usingComponents))
 
+      let componentGenerics = {}
+
       if (parts.json && parts.json.content) {
         try {
           let ret = JSON5.parse(parts.json.content)
           if (ret.usingComponents) {
             fixUsingComponent(ret.usingComponents, mode)
             usingComponents = usingComponents.concat(Object.keys(ret.usingComponents))
+          }
+          if (ret.componentGenerics) {
+            componentGenerics = Object.assign({}, ret.componentGenerics)
           }
         } catch (e) {
           return callback(e)
@@ -186,6 +191,7 @@ module.exports = function (content) {
                   loaderContext,
                   ctorType,
                   usingComponents,
+                  componentGenerics,
                   checkUsingComponents: mpx.checkUsingComponents
                 }, callback)
               },
@@ -227,10 +233,12 @@ module.exports = function (content) {
               isProduction,
               getRequireForSrc,
               i18n,
+              componentGenerics,
               jsonConfig: jsonRes.jsonObj,
               mpxCid: resourceQueryObj.mpxCid,
               tabBarMap: jsonRes.jsonObj.tabBar,
               builtInComponentsMap: templateRes.builtInComponentsMap,
+              genericsInfo: templateRes.genericsInfo,
               localComponentsMap: jsonRes.localComponentsMap,
               localPagesMap: jsonRes.localPagesMap
             }, callback)

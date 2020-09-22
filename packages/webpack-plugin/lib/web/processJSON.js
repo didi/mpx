@@ -256,6 +256,20 @@ module.exports = function (json, options, rawCallback) {
     })
   }
 
+  const processGenerics = (generics, context, callback) => {
+    if (generics) {
+      async.forEachOf(generics, (generic, name, callback) => {
+        if (generic.default) {
+          processComponent(generic.default, `${name}default`, context, callback)
+        } else {
+          callback()
+        }
+      }, callback)
+    } else {
+      callback()
+    }
+  }
+
   async.parallel([
     (callback) => {
       if (jsonObj.pages && jsonObj.pages[0]) {
@@ -270,7 +284,10 @@ module.exports = function (json, options, rawCallback) {
       processPackages(jsonObj.packages, context, callback)
     },
     (callback) => {
-      processSubPackages(json.subPackages || json.subpackages, context, callback)
+      processSubPackages(jsonObj.subPackages || jsonObj.subpackages, context, callback)
+    },
+    (callback) => {
+      processGenerics(jsonObj.componentGenerics, context, callback)
     }
   ], callback)
 }
