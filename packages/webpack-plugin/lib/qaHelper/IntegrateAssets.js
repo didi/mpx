@@ -106,8 +106,8 @@ module.exports = function (additionalAssets, compilation, options, isProd) {
     hasTabBar = {
       entry: 'pages/tabBar',
       pages: {
-        "pages/tabBar": {
-          "component": "index"
+        'pages/tabBar': {
+          'component': 'index'
         }
       }
     }

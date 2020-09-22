@@ -8,19 +8,19 @@ import router from 'qAppRouter'
 function navigateTo ({ url, params }) {
   router.push({
     uri: url,
-    params: params || null,
+    params: params || null
   })
 }
 function navigateBack ({ url, params }) {
   router.back({
     uri: url,
-    params: params || null,
+    params: params || null
   })
 }
 function redirectTo ({ url, params }) {
   router.replace({
     uri: url,
-    params: params || null,
+    params: params || null
   })
 }
 function reLaunch ({ url, params }) {

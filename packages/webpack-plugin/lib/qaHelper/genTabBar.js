@@ -1,9 +1,10 @@
 const fs = require('fs')
+const path = require('path')
 const ConcatSource = require('webpack-sources').ConcatSource
 const parseComponent = require('../parser')
 
 const genName = (item) => {
-  return item.pagePath.replace(/[.\/]/g, '')
+  return item.pagePath.replace(/[./]/g, '')
 }
 
 const genEntryTabContent = (tabBar) => {
@@ -29,10 +30,10 @@ module.exports = function (tabBar, compilation, options) {
     try {
       let customTabContent = genCustomContent(tabBar, options)
       compilation.assets['pages/tabBar/index' + '.ux'] = customTabContent
-    } catch(err) {
+    } catch (err) {
       console.log('自定义tabBar custom error', err)
     }
-  } else if (tabBar.list) {    
+  } else if (tabBar.list) {
     let content = new ConcatSource()
     tabBar.list.forEach((item) => {
       const name = genName(item)
@@ -42,8 +43,8 @@ module.exports = function (tabBar, compilation, options) {
       }
       content.add(`<import src="${targetPath}" name="${name}"></import>\n`)
     })
-    const filePath = __dirname + '/tabBar.ux'
-    fs.readFile(filePath, "utf8", (err, data) => {
+    const filePath = path.resolve(__dirname) + '/tabBar.ux'
+    fs.readFile(filePath, 'utf8', (err, data) => {
       if (err) console.log(err)
       try {
         const parts = parseComponent(data, filePath, false, options.mode, options.defs)
@@ -54,7 +55,6 @@ module.exports = function (tabBar, compilation, options) {
         compilation.assets['pages/tabBar/tabBar' + '.ux'] = content
         const entryTabContent = genEntryTabContent(tabBar)
         compilation.assets['pages/tabBar/index' + '.ux'] = entryTabContent
-
       } catch (err) {
         console.log('tabBar error', err)
       }
