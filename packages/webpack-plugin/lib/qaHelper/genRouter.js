@@ -3,7 +3,7 @@
  */
 const util = require('./util')
 
-module.exports = function genRouter (projectEntry, pagesMap, defineRouter) {
+module.exports = function genRouter (projectEntry, pagesMap, defineRouter, hasTabBar) {
   let pageKeys = pagesMap && Object.keys(pagesMap)
   let lastIndex = projectEntry.lastIndexOf('/')
   let entryComp = projectEntry.slice(lastIndex + 1)
@@ -11,7 +11,8 @@ module.exports = function genRouter (projectEntry, pagesMap, defineRouter) {
   let subpackages = `[`
   let routers = `
         "entry": "${prefix}",
-        "errorPage": "${defineRouter.errorPage || ''}",`
+        "errorPage": "${defineRouter.errorPage || ''}",
+        "pages": {`
   /*
   **** @todo需处理用户在 mpx.plugin.config.js 文件中自定义部分pages
   **** 用户自定义pages部分，用的是mpx项目中相对应组件的name和path,
@@ -25,14 +26,22 @@ module.exports = function genRouter (projectEntry, pagesMap, defineRouter) {
       }
     }
   }
-
+  // 用户配置了tabBar
+  if (hasTabBar) {
+    routers = `
+      "entry": "pages/tabBar",
+      "errorPage": "${defineRouter.errorPage || ''}",
+      "pages": {
+        "pages/tabBar": {
+          "component": "index"
+        },`
+  }
   // 首页用户自定义pages规则时，合并规则
   let index = needProcessPages.findIndex(item => {
     return item.path.slice(1) === projectEntry
   })
   if (index >= 0) {
     routers += `
-        "pages": {
           "${prefix}": {
             "component": "${entryComp}",
             "path": "/${projectEntry}",
@@ -41,7 +50,6 @@ module.exports = function genRouter (projectEntry, pagesMap, defineRouter) {
           }`
   } else {
     routers += `
-        "pages": {
           "${prefix}": {
             "component": "${entryComp}"
           }`

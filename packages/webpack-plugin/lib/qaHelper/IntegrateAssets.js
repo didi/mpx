@@ -1,6 +1,7 @@
 
 const ConcatSource = require('webpack-sources').ConcatSource
 const genManifest = require('./genManifest')
+const genTabBar = require('./genTabBar')
 const util = require('./util')
 
 module.exports = function (additionalAssets, compilation, options, isProd) {
@@ -98,6 +99,18 @@ module.exports = function (additionalAssets, compilation, options, isProd) {
 
     compilation.assets[list[i] + '.ux'] = content
   }
-
-  genManifest(compilation, options, appJsonRules, isProd)
+  const appJson = JSON.parse(additionalAssets['app.json'][0] || '{}')
+  let hasTabBar = null
+  if (appJson.tabBar) {
+    genTabBar(appJson.tabBar, compilation, options)
+    hasTabBar = {
+      entry: 'pages/tabBar',
+      pages: {
+        'pages/tabBar': {
+          'component': 'index'
+        }
+      }
+    }
+  }
+  genManifest(compilation, options, appJsonRules, isProd, hasTabBar)
 }

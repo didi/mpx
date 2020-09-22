@@ -5,7 +5,7 @@ const registerDisplay = require('./genDisplay')
 const util = require('./util')
 const ConcatSource = require('webpack-sources').ConcatSource
 
-module.exports = function (compilation, options, appJsonRules, isProd) {
+module.exports = function (compilation, options, appJsonRules, isProd, hasTabBar) {
   let pagesMap = compilation.__mpx__.pagesMap || {}
   let projectEntry = compilation.__mpx__.projectEntry
 
@@ -42,7 +42,7 @@ module.exports = function (compilation, options, appJsonRules, isProd) {
     }
 
     // register router & subpackages
-    let { routers, subpackages } = registerRoutes(projectEntry, pagesMap, options.quickapp.router)
+    let { routers, subpackages } = registerRoutes(projectEntry, pagesMap, options.quickapp.router, hasTabBar)
     content.add(`,
       "router": {${routers}
       }`
