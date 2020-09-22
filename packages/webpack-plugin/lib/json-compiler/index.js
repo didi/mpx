@@ -1,4 +1,5 @@
 const async = require('async')
+const JSON5 = require('json5')
 const path = require('path')
 const hash = require('hash-sum')
 const SingleEntryPlugin = require('webpack/lib/SingleEntryPlugin')
@@ -42,6 +43,9 @@ module.exports = function (raw = '{}') {
   const packageName = mpx.currentPackageRoot || 'main'
   const pagesMap = mpx.pagesMap
   const componentsMap = mpx.componentsMap[packageName]
+  const EntryNode = mpx.EntryNode
+  const entryNodesMap = mpx.entryNodesMap
+  const entryModulesMap = mpx.entryModulesMap
   const mode = mpx.mode
   const defs = mpx.defs
   const globalSrcMode = mpx.srcMode
@@ -52,6 +56,28 @@ module.exports = function (raw = '{}') {
   const isApp = !(pagesMap[resourcePath] || componentsMap[resourcePath])
   const publicPath = this._compilation.outputOptions.publicPath || ''
   const fs = this._compiler.inputFileSystem
+
+  // json模块都是由.mpx或.js的入口模块引入，且引入关系为一对一，其issuer必为入口module
+  const entryModule = this._module.issuer
+  // 通过rawRequest关联entryNode和entryModule
+  const entryRequest = entryModule.rawRequest
+  const entryType = isApp ? 'App' : pagesMap[resourcePath] ? 'Page' : 'Component'
+
+  function getEntryNode (request, type) {
+    if (!entryNodesMap[request]) {
+      entryNodesMap[request] = new EntryNode({
+        type,
+        request
+      })
+    } else if (entryNodesMap[request].type !== type) {
+      emitError(`获取request为${request}的entryNode时类型与已有节点冲突, 当前获取的type为${type}, 已有节点的type为${entryNodesMap[request].type}!`)
+    }
+    return entryNodesMap[request]
+  }
+
+  const currentEntry = getEntryNode(entryRequest, entryType)
+  currentEntry.module = entryModule
+  entryModulesMap.set(entryModule, currentEntry)
 
   const copydir = (dir, context, callback) => {
     fs.readdir(dir, (err, files) => {
@@ -137,7 +163,7 @@ module.exports = function (raw = '{}') {
     if (this.resourcePath.endsWith('.json.js')) {
       json = JSON.parse(mpxJSON.compileMPXJSONText({ source: raw, defs, filePath: this.resourcePath }))
     } else {
-      json = JSON.parse(raw)
+      json = JSON5.parse(raw)
     }
   } catch (err) {
     return callback(err)
@@ -162,7 +188,7 @@ module.exports = function (raw = '{}') {
   }
 
   if (json.usingComponents) {
-    fixUsingComponent({ usingComponents: json.usingComponents, mode, log: emitWarning })
+    fixUsingComponent(json.usingComponents, mode, emitWarning)
   }
 
   const rulesRunnerOptions = {
@@ -207,10 +233,7 @@ module.exports = function (raw = '{}') {
   }
 
   const processComponent = (component, context, rewritePath, outputPath, callback) => {
-    if (/^plugin:\/\//.test(component)) {
-      return callback()
-    }
-
+    if (!isUrlRequest(component, options.root)) return callback()
     if (resolveMode === 'native') {
       component = loaderUtils.urlToRequest(component, options.root)
     }
@@ -265,18 +288,18 @@ module.exports = function (raw = '{}') {
       })
       const componentPath = packageInfo.outputPath
       rewritePath && rewritePath(publicPath + componentPath)
-      // 如果之前已经创建了入口，直接return
-      if (packageInfo.alreadyOutputed) {
-        return callback()
-      }
       if (ext === '.js') {
-        const nativeLoaderOptions = mpx.loaderOptions ? '?' + JSON.stringify(mpx.loaderOptions) : ''
-        resource = '!!' + nativeLoaderPath + nativeLoaderOptions + '!' + resource
+        resource = '!!' + nativeLoaderPath + '!' + resource
       }
       // 此处query为了实现消除分包间模块缓存，以实现不同分包中引用的组件在不同分包中都能输出
       resource = addQuery(resource, {
         packageName: packageInfo.packageName
       })
+      currentEntry.addChild(getEntryNode(resource, 'Component'))
+      // 如果之前已经创建了入口，直接return
+      if (packageInfo.alreadyOutputed) {
+        return callback()
+      }
       addEntrySafely(resource, componentPath, callback)
     })
   }
@@ -294,13 +317,9 @@ module.exports = function (raw = '{}') {
     } else {
       const issuer = getJsonIssuer(this._module)
       if (issuer) {
-        this.emitError(
-          new Error(`[json compiler]:Mpx单次构建中只能存在一个App，当前组件/页面[${this.resource}]通过[${issuer.resource}]非法引入，引用的资源将被忽略，请确保组件/页面资源通过usingComponents/pages配置引入！`)
-        )
+        emitError(`[json compiler]:Mpx单次构建中只能存在一个App，当前组件/页面[${this.resource}]通过[${issuer.resource}]非法引入，引用的资源将被忽略，请确保组件/页面资源通过usingComponents/pages配置引入！`)
       } else {
-        this.emitError(
-          new Error(`[json compiler]:Mpx单次构建中只能存在一个App，请检查当前entry中的资源[${this.resource}]是否为组件/页面，通过添加?component/page查询字符串显式声明该资源是组件/页面！`)
-        )
+        emitError(`[json compiler]:Mpx单次构建中只能存在一个App，请检查当前entry中的资源[${this.resource}]是否为组件/页面，通过添加?component/page查询字符串显式声明该资源是组件/页面！`)
       }
       return callback()
     }
@@ -313,7 +332,6 @@ module.exports = function (raw = '{}') {
     const firstPage = json.pages && json.pages[0]
     if (firstPage) {
       json.pages[0] = addQuery(json.pages[0], { isFirst: true })
-      mpx.projectEntry = firstPage.split('./')[1]
     }
 
     const processPackages = (packages, context, callback) => {
@@ -340,13 +358,7 @@ module.exports = function (raw = '{}') {
               const filePath = result
               const extName = path.extname(filePath)
               if (extName === '.mpx' || extName === '.vue') {
-                const parts = parseComponent(
-                  content,
-                  filePath,
-                  this.sourceMap,
-                  mode,
-                  defs
-                )
+                const parts = parseComponent(content, filePath, this.sourceMap, mode, defs)
                 const json = parts.json || {}
                 if (json.content) {
                   content = json.content
@@ -360,7 +372,7 @@ module.exports = function (raw = '{}') {
             },
             (result, content, callback) => {
               try {
-                content = JSON.parse(content)
+                content = JSON5.parse(content)
               } catch (err) {
                 return callback(err)
               }
@@ -459,11 +471,12 @@ module.exports = function (raw = '{}') {
 
     const processPages = (pages, srcRoot = '', tarRoot = '', context, callback) => {
       if (pages) {
+        context = path.join(context, srcRoot)
         async.forEach(pages, (page, callback) => {
+          if (!isUrlRequest(page, options.root)) return callback()
           if (resolveMode === 'native') {
             page = loaderUtils.urlToRequest(page, options.root)
           }
-          context = path.join(context, srcRoot)
           resolve(context, page, (err, resource) => {
             if (err) return callback(err)
             const { resourcePath, queryObj } = parseRequest(resource)
@@ -487,22 +500,25 @@ module.exports = function (raw = '{}') {
                 }
               }
             }
-            // 目前暂时不支持多个分包复用同一个页面
-            // 如果之前已经创建了入口，直接return
+            if (ext === '.js') {
+              resource = '!!' + nativeLoaderPath + '!' + resource
+            }
+            currentEntry.addChild(getEntryNode(resource, 'Page'))
+            // 如果之前已经创建了页面入口，直接return，目前暂时不支持多个分包复用同一个页面
             if (pagesMap[resourcePath]) return callback()
             pagesMap[resourcePath] = pageName
             if (tarRoot && subPackagesCfg[tarRoot]) {
               subPackagesCfg[tarRoot].pages.push(toPosix(path.relative(tarRoot, pageName)))
             } else {
               // 确保首页
+              if (mode === 'qa') {
+                mpx.projectEntry = pageName
+              }
               if (queryObj.isFirst) {
                 localPages.unshift(pageName)
               } else {
                 localPages.push(pageName)
               }
-            }
-            if (ext === '.js') {
-              resource = '!!' + nativeLoaderPath + '!' + resource
             }
             addEntrySafely(resource, pageName, callback)
           })
@@ -521,10 +537,10 @@ module.exports = function (raw = '{}') {
       if (json.tabBar && json.tabBar[itemKey]) {
         json.tabBar[itemKey].forEach((item, index) => {
           if (item[iconKey] && isUrlRequest(item[iconKey], options.root)) {
-            output += `json.tabBar.${itemKey}[${index}].${iconKey} = require("${loaderUtils.urlToRequest(item[iconKey], options.root)}");\n`
+            output += `json.tabBar.${itemKey}[${index}].${iconKey} = require("${addQuery(loaderUtils.urlToRequest(item[iconKey], options.root), { useLocal: true })}");\n`
           }
           if (item[activeIconKey] && isUrlRequest(item[activeIconKey], options.root)) {
-            output += `json.tabBar.${itemKey}[${index}].${activeIconKey} = require("${loaderUtils.urlToRequest(item[activeIconKey], options.root)}");\n`
+            output += `json.tabBar.${itemKey}[${index}].${activeIconKey} = require("${addQuery(loaderUtils.urlToRequest(item[activeIconKey], options.root), { useLocal: true })}");\n`
           }
         })
       }
@@ -536,7 +552,7 @@ module.exports = function (raw = '{}') {
       if (optionMenuCfg && json.optionMenu) {
         let iconKey = optionMenuCfg.iconKey
         if (json.optionMenu[iconKey] && isUrlRequest(json.optionMenu[iconKey], options.root)) {
-          output += `json.optionMenu.${iconKey} = require("${loaderUtils.urlToRequest(json.optionMenu[iconKey], options.root)}");\n`
+          output += `json.optionMenu.${iconKey} = require("${addQuery(loaderUtils.urlToRequest(json.optionMenu[iconKey], options.root), { useLocal: true })}");\n`
         }
       }
       return output

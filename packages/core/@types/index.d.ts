@@ -1,7 +1,7 @@
 // Type definitions for @mpxjs/core
 // Project: https://github.com/didi/mpx
 // Definitions by: hiyuki <https://github.com/hiyuki>
-// TypeScript Version: 3.5
+// TypeScript Version: 4.0.2
 
 /// <reference types="miniprogram-api-typings" />
 
@@ -89,10 +89,10 @@ type UnionToIntersection<U> = (U extends any
 type ArrayType<T extends any[]> = T extends Array<infer R> ? R : never;
 
 type RequiredPropertyNames<T> = {
-  [K in keyof T]-?: undefined extends T[K] ? never : K
+  [K in keyof T]-?: T[K] extends undefined ? never : K
 }[keyof T];
 
-type RequiredPropertiesForUnion<T> = T extends object ? Pick<T, RequiredPropertyNames<T>> : T
+type RequiredPropertiesForUnion<T> = T extends object ? Pick<T, RequiredPropertyNames<T>> : never
 
 interface Mixin<D, P, C, M> {
   data?: D
@@ -111,7 +111,7 @@ type UnboxMixinsField<Mi extends Array<any>, F> =
 interface ComponentOpt<D, P, C, M, Mi extends Array<any>> extends Partial<WechatMiniprogram.Component.Lifetimes> {
   data?: D
   properties?: P
-  computed?: C & ThisType<ComponentInsInComputed<D, P, C, M, Mi>>
+  computed?: C
   methods?: M
   mixins?: Mi
   watch?: WatchField
@@ -154,9 +154,9 @@ declare function get (obj: object, key: string): any
 
 declare function set (obj: object, key: string, value: any): any
 
-declare function observable<T extends object> (obj: T): T
-
 declare function del (obj: object, key: string): any
+
+export function observable<T extends object> (obj: T): T
 
 export interface MpxComponentIns {
   $refs: ObjectOf<any>
@@ -185,12 +185,6 @@ type WxComponentIns<D> =
   & WechatMiniprogram.Component.InstanceProperties
   & WechatMiniprogram.Component.InstanceMethods<D>
 
-type ComponentInsInComputed<D, P, C, M, Mi extends Array<any>> =
-  GetDataType<D> & UnboxMixinsField<Mi, 'data'> &
-  M & UnboxMixinsField<Mi, 'methods'> &
-  GetPropsType<P & UnboxMixinsField<Mi, 'properties'>> &
-  C & UnboxMixinsField<Mi, 'computed'> & WxComponentIns<D> & MpxComponentIns
-
 type ComponentIns<D, P, C, M, Mi extends Array<any>> =
   GetDataType<D> & UnboxMixinsField<Mi, 'data'> &
   M & UnboxMixinsField<Mi, 'methods'> &
@@ -210,8 +204,6 @@ export function getMixin<D extends Data = {}, P extends Properties = {}, C = {},
   methods: M & UnboxMixinsField<Mi, 'methods'>
   [index: string]: any
 }
-
-export function getComputed<C> (computed: C): C extends (...args: any[]) => any ? ReturnType<C> : C
 
 export function createPage<D extends Data = {}, P extends Properties = {}, C = {}, M extends Methods = {}, Mi extends Array<any> = []> (opt: ThisTypedPageOpt<D, P, C, M, Mi>, config?: createConfig): void
 
@@ -463,7 +455,6 @@ export interface Mpx {
   createStore: typeof createStore
   createStoreWithThis: typeof createStoreWithThis
   getMixin: typeof getMixin
-  getComputed: typeof getComputed
   mixin: typeof injectMixins
   injectMixins: typeof injectMixins
   toPureObject: typeof toPureObject

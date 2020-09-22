@@ -75,7 +75,15 @@ function error (msg) {
   console.error && console.error(`[@mpxjs/api-proxy error]:\n ${msg}`)
 }
 
-function noop () {}
+function noop () {
+}
+
+function makeMap (arr) {
+  return arr.reduce((obj, item) => {
+    obj[item] = true
+    return obj
+  }, {})
+}
 
 const getType = (input) => {
   Object.prototype.toString.call(input).slice(8, -1)
@@ -89,5 +97,6 @@ export {
   error,
   warn,
   noop,
-  getType
+  getType,
+  makeMap
 }

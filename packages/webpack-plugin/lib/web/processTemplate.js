@@ -14,7 +14,7 @@ module.exports = function (template, options, callback) {
   if (ctorType === 'app') {
     template = {
       type: 'template',
-      content: '<mpx-keep-alive><router-view></router-view></mpx-keep-alive>'
+      content: '<div class="app"><mpx-keep-alive><router-view class="page"></router-view></mpx-keep-alive></div>'
     }
     builtInComponentsMap['mpx-keep-alive'] = {
       resource: addQuery('@mpxjs/webpack-plugin/lib/runtime/components/web/mpx-keep-alive.vue', { component: true })
@@ -31,6 +31,9 @@ module.exports = function (template, options, callback) {
     }
 
     output += genComponentTag(template, (template) => {
+      if (ctorType === 'app') {
+        return template.content
+      }
       if (template.content) {
         const templateSrcMode = template.mode || srcMode
         const parsed = templateCompiler.parse(template.content, {
@@ -46,7 +49,11 @@ module.exports = function (template, options, callback) {
           },
           mode,
           srcMode: templateSrcMode,
-          defs
+          defs,
+          usingComponents: options.usingComponents,
+          // web模式下全局组件不会被合入usingComponents中，故globalComponents可以传空
+          globalComponents: [],
+          checkUsingComponents: options.checkUsingComponents
         })
         if (parsed.meta.builtInComponentsMap) {
           Object.keys(parsed.meta.builtInComponentsMap).forEach((name) => {

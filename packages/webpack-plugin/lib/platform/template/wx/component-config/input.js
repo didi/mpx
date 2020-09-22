@@ -17,6 +17,10 @@ module.exports = function ({ print }) {
       el.isBuiltIn = true
       return 'mpx-input'
     },
+    qa (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-input'
+    },
     props: [
       {
         test: /^(cursor-spacing|auto-focus|adjust-position|hold-keyboard)$/,

@@ -11,12 +11,17 @@ export default function transferOptions (options, type, builtInMixins = []) {
   }
   // 文件编译路径
   options.mpxFileResource = global.currentResource
-  // 注入全局写入的mixins
-  options = mergeInjectedMixins(options, type)
-
+  // 注入全局写入的mixins，原生模式下不进行注入
+  if (!options.__nativeRender__) {
+    options = mergeInjectedMixins(options, type)
+  }
   if (currentInject && currentInject.injectComputed) {
     // 编译计算属性注入
     options.computed = Object.assign({}, options.computed, currentInject.injectComputed)
+  }
+  if (currentInject && currentInject.injectStyleClasses) {
+    // 编译注入计算动态样式、类名方法
+    options.methods = Object.assign({}, options.methods, currentInject.injectStyleClasses)
   }
   // 转换mode
   options.mpxConvertMode = options.mpxConvertMode || getConvertMode(global.currentSrcMode)

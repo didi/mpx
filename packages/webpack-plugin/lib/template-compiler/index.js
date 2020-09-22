@@ -22,6 +22,7 @@ module.exports = function (raw) {
   const packageName = mpx.currentPackageRoot || 'main'
   const componentsMap = mpx.componentsMap[packageName]
   const wxsContentMap = mpx.wxsContentMap
+  const builtInComponentsMap = mpx.builtInComponentsMap
   const resourcePath = parseRequest(this.resource).resourcePath
   let scopedId
 
@@ -51,7 +52,9 @@ module.exports = function (raw) {
     isNative,
     scopedId,
     filePath: this.resourcePath,
-    i18n
+    i18n,
+    globalComponents: Object.keys(mpx.usingComponents),
+    checkUsingComponents: mpx.checkUsingComponents
   }))
 
   let ast = parsed.root
@@ -60,6 +63,13 @@ module.exports = function (raw) {
   if (meta.wxsContentMap) {
     for (let module in meta.wxsContentMap) {
       wxsContentMap[`${resourcePath}~${module}`] = meta.wxsContentMap[module]
+    }
+  }
+
+  if (meta.builtInComponentsMap) {
+    const map = builtInComponentsMap[resourcePath] = {}
+    for (let tag in meta.builtInComponentsMap) {
+      map[tag] = meta.builtInComponentsMap[tag]
     }
   }
 
@@ -84,6 +94,18 @@ module.exports = function (raw) {
 
   if (mode === 'tt' && renderResult.propKeys) {
     globalInjectCode += `global.currentInject.propKeys = ${JSON.stringify(renderResult.propKeys)};\n`
+  }
+
+  // 注入快应用动态 style/class 语法的 对象、数组语法实现
+  if (mode === 'qa' && meta.mixinStyleClass) {
+    globalInjectCode += (`global.currentInject.injectStyleClasses = {
+      __stringifyStyle__(...args) {
+        return __stringify__.stringifyStyle(...args)
+      },
+      __stringifyClass__(...args) {
+        return __stringify__.stringifyClass(...args)
+      }
+    };\n`)
   }
 
   if (meta.computed) {

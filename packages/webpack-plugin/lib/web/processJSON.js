@@ -1,5 +1,6 @@
 const async = require('async')
 const path = require('path')
+const JSON5 = require('json5')
 const loaderUtils = require('loader-utils')
 const hash = require('hash-sum')
 const parseRequest = require('../utils/parse-request')
@@ -8,6 +9,7 @@ const toPosix = require('../utils/to-posix')
 const addQuery = require('../utils/add-query')
 const parseComponent = require('../parser')
 const readJsonForSrc = require('../utils/read-json-for-src')
+const isUrlRequest = require('../utils/is-url-request')
 
 module.exports = function (json, options, rawCallback) {
   const mode = options.mode
@@ -18,6 +20,7 @@ module.exports = function (json, options, rawCallback) {
   const pagesEntryMap = options.pagesEntryMap
   const componentsMap = options.componentsMap
   const projectRoot = options.projectRoot
+  const ctorType = options.ctorType
   const localPagesMap = {}
   const localComponentsMap = {}
   let output = '/* json */\n'
@@ -44,9 +47,19 @@ module.exports = function (json, options, rawCallback) {
   }
   // 由于json需要提前读取在template处理中使用，src的场景已经在loader中处理了，此处无需考虑json.src的场景
   try {
-    jsonObj = JSON.parse(json.content)
+    jsonObj = JSON5.parse(json.content)
   } catch (e) {
     return callback(e)
+  }
+  const isTabBarAndAppType = jsonObj.tabBar && Array.isArray(jsonObj.tabBar.list) && jsonObj.tabBar.list.length && ctorType === 'app'
+
+  // 在解析 app json 时处理 tabBar，生成 listMap，方便后续处理
+  if (isTabBarAndAppType) {
+    const tabBarPagesMap = {}
+    jsonObj.tabBar.list.forEach((item) => {
+      tabBarPagesMap['/' + item.pagePath] = true
+    })
+    jsonObj.tabBar.listMap = tabBarPagesMap
   }
 
   const fs = loaderContext._compiler.inputFileSystem
@@ -81,13 +94,7 @@ module.exports = function (json, options, rawCallback) {
             const filePath = result
             const extName = path.extname(filePath)
             if (extName === '.mpx' || extName === '.vue') {
-              const parts = parseComponent(
-                content,
-                filePath,
-                loaderContext.sourceMap,
-                mode,
-                defs
-              )
+              const parts = parseComponent(content, filePath, loaderContext.sourceMap, mode, defs)
               const json = parts.json || {}
               if (json.content) {
                 content = json.content
@@ -101,7 +108,7 @@ module.exports = function (json, options, rawCallback) {
           },
           (result, content, callback) => {
             try {
-              content = JSON.parse(content)
+              content = JSON5.parse(content)
             } catch (err) {
               return callback(err)
             }
@@ -147,11 +154,12 @@ module.exports = function (json, options, rawCallback) {
 
   const processPages = (pages, srcRoot = '', tarRoot = '', context, callback) => {
     if (pages) {
+      context = path.join(context, srcRoot)
       async.forEach(pages, (page, callback) => {
+        if (!isUrlRequest(page, projectRoot)) return callback()
         if (resolveMode === 'native') {
           page = loaderUtils.urlToRequest(page, projectRoot)
         }
-        context = path.join(context, srcRoot)
         resolve(context, page, (err, resource) => {
           if (err) return callback(err)
           const { resourcePath, queryObj } = parseRequest(resource)
@@ -175,6 +183,9 @@ module.exports = function (json, options, rawCallback) {
                 break
               }
             }
+          }
+          if (isTabBarAndAppType && jsonObj.tabBar && jsonObj.tabBar.listMap && jsonObj.tabBar.listMap[pageName]) {
+            jsonObj.tabBar.listMap[pageName] = resourcePath
           }
           pagesMap[resourcePath] = pageName
           pagesEntryMap[resourcePath] = loaderContext.resourcePath
@@ -223,9 +234,8 @@ module.exports = function (json, options, rawCallback) {
   }
 
   const processComponent = (component, name, context, callback) => {
-    if (/^plugin:\/\//.test(component)) {
-      return callback()
-    }
+    if (!isUrlRequest(component, projectRoot)) return callback()
+
     if (resolveMode === 'native') {
       component = loaderUtils.urlToRequest(component, projectRoot)
     }

@@ -8,7 +8,7 @@ const genName = (item) => {
 
 const genEntryTabContent = (tabBar) => {
   let content = new ConcatSource()
-  tabBar.forEach((item) => {
+  tabBar.list.forEach((item) => {
     item.key = genName(item)
   })
   content.add('<import name="tab-bar-main" src="./tabBar.ux"></import>')

@@ -6,6 +6,7 @@ const RawSource = require('webpack-sources').RawSource
 const ResolveDependency = require('./dependency/ResolveDependency')
 const InjectDependency = require('./dependency/InjectDependency')
 const ReplaceDependency = require('./dependency/ReplaceDependency')
+const ChildCompileDependency = require('./dependency/ChildCompileDependency')
 const NullFactory = require('webpack/lib/NullFactory')
 const normalize = require('./utils/normalize')
 const toPosix = require('./utils/to-posix')
@@ -22,6 +23,8 @@ const fixRelative = require('./utils/fix-relative')
 const parseRequest = require('./utils/parse-request')
 const matchCondition = require('./utils/match-condition')
 const integrateAssets = require('./qaHelper/integrateAssets')
+const parseAsset = require('./utils/parse-asset')
+const { preProcessDefs } = require('./utils/index')
 
 const isProductionLikeMode = options => {
   return options.mode === 'production' || !options.mode
@@ -66,12 +69,23 @@ const externalsMap = {
 const warnings = []
 const errors = []
 
+class EntryNode {
+  constructor (options) {
+    this.request = options.request
+    this.type = options.type
+    this.module = null
+    this.parents = new Set()
+    this.children = new Set()
+  }
+
+  addChild (node) {
+    this.children.add(node)
+    node.parents.add(this)
+  }
+}
+
 class MpxWebpackPlugin {
   constructor (options = {}) {
-    if (options.mode === 'qa') {
-      options.packageInfo = options.packageInfo || {}
-      options.iconPath = options.iconPath || ''
-    }
     options.mode = options.mode || 'wx'
 
     options.srcMode = options.srcMode || options.mode
@@ -127,6 +141,9 @@ class MpxWebpackPlugin {
       cssLangs: ['css', 'less', 'stylus', 'scss', 'sass']
     }, options.nativeOptions)
     options.i18n = options.i18n || null
+    // 控制warn冗余组件注册
+    options.checkUsingComponents = options.checkUsingComponents || false
+    options.reportSize = options.reportSize || null
     this.options = options
   }
 
@@ -221,7 +238,8 @@ class MpxWebpackPlugin {
       const writedFileContentMap = new Map()
       const originalWriteFile = compiler.outputFileSystem.writeFile
       compiler.outputFileSystem.writeFile = (filePath, content, callback) => {
-        if (writedFileContentMap.has(filePath) && writedFileContentMap.get(filePath).equals(content)) {
+        const lastContent = writedFileContentMap.get(filePath)
+        if (Buffer.isBuffer(lastContent) ? lastContent.equals(content) : lastContent === content) {
           return callback()
         }
         writedFileContentMap.set(filePath, content)
@@ -245,13 +263,27 @@ class MpxWebpackPlugin {
 
     new ExternalsPlugin('commonjs2', this.options.externals).apply(compiler)
 
-    compiler.hooks.compilation.tap('MpxWebpackPlugin ', (compilation) => {
+    compiler.hooks.compilation.tap('MpxWebpackPlugin ', (compilation, { normalModuleFactory }) => {
       compilation.hooks.normalModuleLoader.tap('MpxWebpackPlugin', (loaderContext, module) => {
         // 设置loaderContext的minimize
         if (isProductionLikeMode(compiler.options)) {
           loaderContext.minimize = true
         }
       })
+      compilation.dependencyFactories.set(ResolveDependency, new NullFactory())
+      compilation.dependencyTemplates.set(ResolveDependency, new ResolveDependency.Template())
+
+      compilation.dependencyFactories.set(InjectDependency, new NullFactory())
+      compilation.dependencyTemplates.set(InjectDependency, new InjectDependency.Template())
+
+      compilation.dependencyFactories.set(ReplaceDependency, new NullFactory())
+      compilation.dependencyTemplates.set(ReplaceDependency, new ReplaceDependency.Template())
+
+      compilation.dependencyFactories.set(ChildCompileDependency, new NullFactory())
+      compilation.dependencyTemplates.set(ChildCompileDependency, new ChildCompileDependency.Template())
+
+      compilation.dependencyFactories.set(RemovedModuleDependency, normalModuleFactory)
+      compilation.dependencyTemplates.set(RemovedModuleDependency, new RemovedModuleDependency.Template())
     })
 
     let mpx
@@ -279,18 +311,25 @@ class MpxWebpackPlugin {
           staticResourceMap: {
             main: {}
           },
+          EntryNode,
+          // 记录entry依赖关系，用于体积分析
+          entryNodesMap: {},
+          // 记录entryModule与entryNode的对应关系，用于体积分析
+          entryModulesMap: new Map(),
           // 记录静态资源首次命中的分包，当有其他分包再次引用了同样的静态资源时，对其request添加packageName query以避免模块缓存导致loader不再执行
           staticResourceHit,
           loaderOptions,
           extractedMap: {},
           extractSeenFile: {},
-          usingComponents: [],
+          usingComponents: {},
           hasApp: false,
           // todo es6 map读写性能高于object，之后会逐步替换
           vueContentCache: new Map(),
           currentPackageRoot: '',
           wxsMap: {},
           wxsContentMap: {},
+          builtInComponentsMap: {},
+          assetsInfo: new Map(),
           forceDisableInject: this.options.forceDisableInject,
           forceUsePageCtor: this.options.forceUsePageCtor,
           resolveMode: this.options.resolveMode,
@@ -305,8 +344,10 @@ class MpxWebpackPlugin {
           decodeHTMLText: this.options.decodeHTMLText,
           // native文件专用相关配置
           nativeOptions: this.options.nativeOptions,
-          defs: this.options.defs,
+          tabBarMap: {},
+          defs: preProcessDefs(this.options.defs),
           i18n: this.options.i18n,
+          checkUsingComponents: this.options.checkUsingComponents,
           appTitle: 'Mpx homepage',
           attributes: this.options.attributes,
           externals: this.options.externals,
@@ -315,7 +356,9 @@ class MpxWebpackPlugin {
             if (!additionalAssets[file][index]) {
               additionalAssets[file][index] = content
             }
-            sideEffects && sideEffects(additionalAssets)
+            sideEffects && sideEffects.forEach((sideEffect) => {
+              sideEffect(additionalAssets)
+            })
           },
           // 组件和静态资源的输出规则如下：
           // 1. 主包引用的资源输出至主包
@@ -407,13 +450,13 @@ class MpxWebpackPlugin {
               if (reason.module) {
                 if (reason.dependency instanceof HarmonyImportSideEffectDependency) {
                   reason.module.removeDependency(reason.dependency)
-                  reason.module.addDependency(new RemovedModuleDependency(reason.dependency.request))
+                  reason.module.addDependency(new RemovedModuleDependency(reason.dependency.request, module))
                   removed = true
                 } else if (reason.dependency instanceof CommonJsRequireDependency && reason.dependency.loc.range) {
                   let index = reason.module.dependencies.indexOf(reason.dependency)
                   if (index > -1 && reason.module.dependencies[index + 1] instanceof RequireHeaderDependency) {
                     reason.module.dependencies.splice(index, 2)
-                    reason.module.addDependency(new RemovedModuleDependency(reason.dependency.request, reason.dependency.loc.range))
+                    reason.module.addDependency(new RemovedModuleDependency(reason.dependency.request, module, reason.dependency.loc.range))
                     removed = true
                   }
                 }
@@ -457,23 +500,45 @@ class MpxWebpackPlugin {
             additionalAssets[file].forEach((item) => {
               content.add(item)
             })
-            compilation.assets[file] = content
+
+            const modules = (additionalAssets[file].modules || []).concat(additionalAssets[file].relativeModules || [])
+
+            if (modules.length > 1) {
+              // 同步relativeModules和modules之间的依赖
+              const fileDependencies = new Set()
+              const contextDependencies = new Set()
+
+              modules.forEach((module) => {
+                module.buildInfo.fileDependencies.forEach((fileDependency) => {
+                  fileDependencies.add(fileDependency)
+                })
+                module.buildInfo.contextDependencies.forEach((contextDependency) => {
+                  contextDependencies.add(contextDependency)
+                })
+                module.buildInfo.fileDependencies = fileDependencies
+                module.buildInfo.contextDependencies = contextDependencies
+              })
+            }
+            compilation.emitAsset(file, content, { modules: additionalAssets[file].modules })
           }
         }
+        // 所有编译的静态资源assetsInfo合入主编译
+        mpx.assetsInfo.forEach((assetInfo, name) => {
+          const oldAssetInfo = compilation.assetsInfo.get(name)
+          if (oldAssetInfo && oldAssetInfo.modules) {
+            assetInfo.modules = assetInfo.modules.concat(oldAssetInfo.modules)
+          }
+          compilation.assetsInfo.set(name, assetInfo)
+        })
+        // 链接主编译模块与子编译入口
+        Object.values(mpx.wxsMap).concat(Object.values(mpx.extractedMap)).forEach((item) => {
+          item.modules.forEach((module) => {
+            module.addDependency(item.dep)
+          })
+        })
+
         callback()
       })
-
-      compilation.dependencyFactories.set(ResolveDependency, new NullFactory())
-      compilation.dependencyTemplates.set(ResolveDependency, new ResolveDependency.Template())
-
-      compilation.dependencyFactories.set(InjectDependency, new NullFactory())
-      compilation.dependencyTemplates.set(InjectDependency, new InjectDependency.Template())
-
-      compilation.dependencyFactories.set(ReplaceDependency, new NullFactory())
-      compilation.dependencyTemplates.set(ReplaceDependency, new ReplaceDependency.Template())
-
-      compilation.dependencyFactories.set(RemovedModuleDependency, normalModuleFactory)
-      compilation.dependencyTemplates.set(RemovedModuleDependency, new RemovedModuleDependency.Template())
 
       normalModuleFactory.hooks.parser.for('javascript/auto').tap('MpxWebpackPlugin', (parser) => {
         // hack预处理，将expr.range写入loc中便于在CommonJsRequireDependency中获取，移除无效require
@@ -551,15 +616,21 @@ class MpxWebpackPlugin {
 
         // hack babel polyfill global
         parser.hooks.evaluate.for('CallExpression').tap('MpxWebpackPlugin', (expr) => {
+          const current = parser.state.current
+          const arg0 = expr.arguments[0]
+          const arg1 = expr.arguments[1]
+          const callee = expr.callee
           if (/core-js/.test(parser.state.module.resource)) {
-            const current = parser.state.current
-            const arg0 = expr.arguments[0]
-            const callee = expr.callee
-            if (arg0 && arg0.value === 'return this' && callee.name === 'Function') {
+            if (callee.name === 'Function' && arg0 && arg0.value === 'return this') {
               current.addDependency(new InjectDependency({
                 content: '(function() { return this })() || ',
                 index: expr.range[0]
               }))
+            }
+          }
+          if (/regenerator-runtime/.test(parser.state.module.resource)) {
+            if (callee.name === 'Function' && arg0 && arg0.value === 'r' && arg1 && arg1.value === 'regeneratorRuntime = r') {
+              current.addDependency(new ReplaceDependency('(function () {})', expr.range))
             }
           }
         })
@@ -650,6 +721,156 @@ class MpxWebpackPlugin {
           parser.hooks.callAnyMember.for('wx').tap('MpxWebpackPlugin', handler)
         }
       })
+
+      // 为了正确生成sourceMap，将该步骤由原来的compile.hooks.emit迁移到compilation.hooks.optimizeChunkAssets中来
+      compilation.hooks.optimizeChunkAssets.tapAsync('MpxWebpackPlugin', (chunks, callback) => {
+        if (this.options.mode === 'web') return callback()
+        const jsonpFunction = compilation.outputOptions.jsonpFunction
+
+        function getTargetFile (file) {
+          let targetFile = file
+          const queryStringIdx = targetFile.indexOf('?')
+          if (queryStringIdx >= 0) {
+            targetFile = targetFile.substr(0, queryStringIdx)
+          }
+          return targetFile
+        }
+
+        const processedChunk = new Set()
+        const rootName = compilation._preparedEntrypoints[0].name
+
+        function processChunk (chunk, isRuntime, isEntry, relativeChunks) {
+          if (!chunk.files[0] || processedChunk.has(chunk)) {
+            return
+          }
+
+          let originalSource = compilation.assets[chunk.files[0]]
+          const source = new ConcatSource()
+          source.add('\nvar window = window || {};\n\n')
+
+          relativeChunks.forEach((relativeChunk, index) => {
+            if (!relativeChunk.files[0]) return
+            let chunkPath = getTargetFile(chunk.files[0])
+            let relativePath = getTargetFile(relativeChunk.files[0])
+            relativePath = path.relative(path.dirname(chunkPath), relativePath)
+            relativePath = fixRelative(relativePath, mpx.mode)
+            relativePath = toPosix(relativePath)
+            if (index === 0) {
+              // 引用runtime
+              // 支付宝分包独立打包，通过全局context获取webpackJSONP
+              if (mpx.mode === 'ali' || mpx.mode === 'qa') {
+                if (chunk.name === rootName) {
+                  // 在rootChunk中挂载jsonpFunction
+                  source.add('// process ali/qa subpackages runtime in root chunk\n' +
+                    'var context = (function() { return this })() || Function("return this")();\n\n')
+                  source.add(`context[${JSON.stringify(jsonpFunction)}] = window[${JSON.stringify(jsonpFunction)}] = require("${relativePath}");\n`)
+                } else {
+                  // 其余chunk中通过context全局传递runtime
+                  source.add('// process ali subpackages runtime in other chunk\n' +
+                    'var context = (function() { return this })() || Function("return this")();\n\n')
+                  source.add(`window[${JSON.stringify(jsonpFunction)}] = context[${JSON.stringify(jsonpFunction)}];\n`)
+                }
+              } else {
+                source.add(`window[${JSON.stringify(jsonpFunction)}] = require("${relativePath}");\n`)
+              }
+            } else {
+              source.add(`require("${relativePath}");\n`)
+            }
+          })
+
+          if (isRuntime) {
+            source.add('var context = (function() { return this })() || Function("return this")();\n')
+            source.add(`
+// Fix babel runtime in some quirky environment like ali & qq dev.
+if(!context.console) {
+  try {
+    context.console = console;
+    context.setInterval = setInterval;
+    context.setTimeout = setTimeout;
+    context.JSON = JSON;
+    context.Math = Math;
+    context.RegExp = RegExp;
+    context.Infinity = Infinity;
+    context.isFinite = isFinite;
+    context.parseFloat = parseFloat;
+    context.parseInt = parseInt;
+    context.Promise = Promise;
+    context.WeakMap = WeakMap;
+    context.Reflect = Reflect;
+    context.RangeError = RangeError;
+    context.TypeError = TypeError;
+    context.Uint8Array = Uint8Array;
+    context.DataView = DataView;
+    context.ArrayBuffer = ArrayBuffer;
+    context.Symbol = Symbol;
+  } catch(e){
+  }
+}
+\n`)
+            source.add('// swan && pc runtime fix\n' +
+              'if (!context.navigator) {\n' +
+              '  context.navigator = {};\n' +
+              '}\n' +
+              'Object.defineProperty(context.navigator, "standalone",{\n' +
+              '  configurable: true,' +
+              '  enumerable: true,' +
+              '  get () {\n' +
+              '    return true;\n' +
+              '  }\n' +
+              '});\n\n')
+            source.add(originalSource)
+            source.add(`\nmodule.exports = window[${JSON.stringify(jsonpFunction)}];\n`)
+          } else {
+            if (mpx.pluginMain === chunk.name) {
+              source.add('module.exports =\n')
+            }
+            source.add(originalSource)
+          }
+
+          if (isEntry && mpx.mode === 'qa') {
+            source.add('\nexport default context.currentOption')
+          }
+
+          compilation.assets[chunk.files[0]] = source
+          processedChunk.add(chunk)
+        }
+
+        compilation.chunkGroups.forEach((chunkGroup) => {
+          if (!chunkGroup.isInitial()) {
+            return
+          }
+
+          let runtimeChunk, entryChunk
+          let middleChunks = []
+
+          let chunksLength = chunkGroup.chunks.length
+
+          chunkGroup.chunks.forEach((chunk, index) => {
+            if (index === 0) {
+              runtimeChunk = chunk
+            } else if (index === chunksLength - 1) {
+              entryChunk = chunk
+            } else {
+              middleChunks.push(chunk)
+            }
+          })
+
+          if (runtimeChunk) {
+            processChunk(runtimeChunk, true, false, [])
+            if (middleChunks.length) {
+              middleChunks.forEach((middleChunk) => {
+                processChunk(middleChunk, false, false, [runtimeChunk])
+              })
+            }
+            if (entryChunk) {
+              middleChunks.unshift(runtimeChunk)
+              processChunk(entryChunk, false, true, middleChunks)
+            }
+          }
+        })
+
+        callback()
+      })
     })
 
     compiler.hooks.normalModuleFactory.tap('MpxWebpackPlugin', (normalModuleFactory) => {
@@ -711,154 +932,6 @@ class MpxWebpackPlugin {
     })
 
     compiler.hooks.emit.tapAsync('MpxWebpackPlugin', (compilation, callback) => {
-      if (this.options.mode === 'web') return callback()
-      const jsonpFunction = compilation.outputOptions.jsonpFunction
-
-      function getTargetFile (file) {
-        let targetFile = file
-        const queryStringIdx = targetFile.indexOf('?')
-        if (queryStringIdx >= 0) {
-          targetFile = targetFile.substr(0, queryStringIdx)
-        }
-        return targetFile
-      }
-
-      const processedChunk = new Set()
-      const rootName = compilation._preparedEntrypoints[0].name
-
-      function processChunk (chunk, isRuntime, isEntry, relativeChunks) {
-        if (!chunk.files[0] || processedChunk.has(chunk)) {
-          return
-        }
-
-        let originalSource = compilation.assets[chunk.files[0]]
-        const source = new ConcatSource()
-        source.add('\nvar window = window || {};\n\n')
-
-        relativeChunks.forEach((relativeChunk, index) => {
-          if (!relativeChunk.files[0]) return
-          let chunkPath = getTargetFile(chunk.files[0])
-          let relativePath = getTargetFile(relativeChunk.files[0])
-          relativePath = path.relative(path.dirname(chunkPath), relativePath)
-          relativePath = fixRelative(relativePath, mpx.mode)
-          relativePath = toPosix(relativePath)
-          if (index === 0) {
-            // 引用runtime
-            // 支付宝分包/快应用独立打包，通过全局context获取webpackJSONP以传递模块
-            if (mpx.mode === 'ali' || mpx.mode === 'qa') {
-              if (chunk.name === rootName) {
-                // 在rootChunk中挂载jsonpFunction
-                source.add('// process ali/qa runtime in root chunk\n' +
-                  'var context = (function() { return this })() || Function("return this")();\n\n')
-                source.add(`context[${JSON.stringify(jsonpFunction)}] = window[${JSON.stringify(jsonpFunction)}] = require("${relativePath}");\n`)
-              } else {
-                // 其余chunk中通过context全局传递runtime
-                source.add('// process ali/qa runtime in other chunk\n' +
-                  'var context = (function() { return this })() || Function("return this")();\n\n')
-                source.add(`window[${JSON.stringify(jsonpFunction)}] = context[${JSON.stringify(jsonpFunction)}];\n`)
-              }
-            } else {
-              source.add(`window[${JSON.stringify(jsonpFunction)}] = require("${relativePath}");\n`)
-            }
-          } else {
-            // todo 快应用执行分包bundle时还是会发生模块重复，后续需要再进行特殊处理
-            source.add(`require("${relativePath}");\n`)
-          }
-        })
-
-        if (isRuntime) {
-          source.add('var context = (function() { return this })() || Function("return this")();\n')
-          source.add(`
-// Fix babel runtime in some quirky environment like ali & qq dev.
-if(!context.console) {
-  try {
-    context.console = console;
-    context.setInterval = setInterval;
-    context.setTimeout = setTimeout;
-    context.JSON = JSON;
-    context.Math = Math;
-    context.RegExp = RegExp;
-    context.Infinity = Infinity;
-    context.isFinite = isFinite;
-    context.parseFloat = parseFloat;
-    context.parseInt = parseInt;
-    context.Promise = Promise;
-    context.WeakMap = WeakMap;
-    context.Reflect = Reflect;
-    context.RangeError = RangeError;
-    context.TypeError = TypeError;
-    context.Uint8Array = Uint8Array;
-    context.DataView = DataView;
-    context.ArrayBuffer = ArrayBuffer;
-    context.Symbol = Symbol;
-  } catch(e){
-  }
-}
-\n`)
-          if (mpx.mode === 'swan') {
-            source.add('// swan runtime fix\n' +
-              'if (!context.navigator) {\n' +
-              '  context.navigator = {};\n' +
-              '}\n' +
-              'Object.defineProperty(context.navigator, "standalone",{\n' +
-              '  configurable: true,' +
-              '  enumerable: true,' +
-              '  get () {\n' +
-              '    return true;\n' +
-              '  }\n' +
-              '});\n\n')
-          }
-          source.add(originalSource)
-          source.add(`\nmodule.exports = window[${JSON.stringify(jsonpFunction)}];\n`)
-        } else {
-          if (mpx.pluginMain === chunk.name) {
-            source.add('module.exports =\n')
-          }
-          source.add(originalSource)
-        }
-
-        if (isEntry && mpx.mode === 'qa') {
-          source.add('\nexport default context.currentOption')
-        }
-
-        compilation.assets[chunk.files[0]] = source
-        processedChunk.add(chunk)
-      }
-
-      compilation.chunkGroups.forEach((chunkGroup) => {
-        if (!chunkGroup.isInitial()) {
-          return
-        }
-
-        let runtimeChunk, entryChunk
-        let middleChunks = []
-
-        let chunksLength = chunkGroup.chunks.length
-
-        chunkGroup.chunks.forEach((chunk, index) => {
-          if (index === 0) {
-            runtimeChunk = chunk
-          } else if (index === chunksLength - 1) {
-            entryChunk = chunk
-          } else {
-            middleChunks.push(chunk)
-          }
-        })
-
-        if (runtimeChunk) {
-          processChunk(runtimeChunk, true, false, [])
-          if (middleChunks.length) {
-            middleChunks.forEach((middleChunk) => {
-              processChunk(middleChunk, false, false, [runtimeChunk])
-            })
-          }
-          if (entryChunk) {
-            middleChunks.unshift(runtimeChunk)
-            processChunk(entryChunk, false, true, middleChunks)
-          }
-        }
-      })
-
       if (this.options.generateBuildMap) {
         const pagesMap = compilation.__mpx__.pagesMap
         const componentsPackageMap = compilation.__mpx__.componentsMap
@@ -875,8 +948,497 @@ if(!context.console) {
           }
         }
       }
-
       callback()
+    })
+
+    compiler.hooks.done.tapAsync('MpxWebpackPlugin', (stats, callback) => {
+      if (!this.options.reportSize) return callback()
+
+      const compilation = stats.compilation
+
+      function every (set, fn) {
+        for (const item of set) {
+          if (!fn(item)) return false
+        }
+        return true
+      }
+
+      function has (set, fn) {
+        for (const item of set) {
+          if (fn(item)) return true
+        }
+        return false
+      }
+
+      function map (set, fn) {
+        const result = new Set()
+        set.forEach((item) => {
+          result.add(fn(item))
+        })
+        return result
+      }
+
+      function concat (setA, setB) {
+        const result = new Set()
+        setA.forEach((item) => {
+          result.add(item)
+        })
+        setB.forEach((item) => {
+          result.add(item)
+        })
+        return result
+      }
+
+      function mapToArr (set, fn) {
+        const result = []
+        set.forEach((item) => {
+          result.push(fn(item))
+        })
+        return result
+      }
+
+      function walkEntry (entryModule, sideEffect) {
+        const modulesSet = new Set()
+
+        function walkDependencies (module, dependencies = []) {
+          dependencies.forEach((dep) => {
+            // // We skip Dependencies without Reference
+            // const ref = compilation.getDependencyReference(module, dep)
+            // if (!ref) {
+            //   return
+            // }
+            // // We skip Dependencies without Module pointer
+            // const refModule = ref.module
+            // if (!refModule) {
+            //   return
+            // }
+            // // We skip weak Dependencies
+            // if (ref.weak) {
+            //   return
+            // }
+            const refModule = dep.module || dep.removedModule || dep.childCompileEntryModule
+            if (refModule) walk(refModule)
+          })
+        }
+
+        function walk (module) {
+          if (modulesSet.has(module)) return
+          sideEffect && sideEffect(module, entryModule)
+          modulesSet.add(module)
+          walkDependencies(module, module.dependencies)
+          module.variables.forEach((variable) => {
+            walkDependencies(module, variable.dependencies)
+          })
+        }
+
+        walk(entryModule)
+      }
+
+      const reportGroups = this.options.reportSize.groups || []
+
+      const reportGroupsWithNoEntryRules = reportGroups.filter((reportGroup) => {
+        return reportGroup.hasOwnProperty('noEntryRules')
+      })
+
+      // Walk and mark entryModules/noEntryModules
+      compilation.chunks.forEach((chunk) => {
+        if (chunk.entryModule) {
+          walkEntry(chunk.entryModule, (module, entryModule) => {
+            module.entryModules = module.entryModules || new Set()
+            module.entryModules.add(entryModule)
+          })
+          reportGroups.forEach((reportGroup) => {
+            reportGroup.entryModules = reportGroup.entryModules || new Set()
+            if (reportGroup.entryRules && matchCondition(parseRequest(chunk.entryModule.resource).resourcePath, reportGroup.entryRules)) {
+              reportGroup.entryModules.add(chunk.entryModule)
+            }
+          })
+        }
+      })
+
+      if (reportGroupsWithNoEntryRules.length) {
+        compilation.modules.forEach((module) => {
+          reportGroupsWithNoEntryRules.forEach((reportGroup) => {
+            if ((module.resource && matchCondition(parseRequest(module.resource).resourcePath, reportGroup.noEntryRules)) || (module.modules && has(module.modules, (module) => {
+              return module.resource && matchCondition(parseRequest(module.resource).resourcePath, reportGroup.noEntryRules)
+            }))) {
+              reportGroup.noEntryModules = reportGroup.noEntryModules || new Set()
+              reportGroup.noEntryModules.add(module)
+              walkEntry(module, (module, noEntryModule) => {
+                module.noEntryModules = module.noEntryModules || new Set()
+                module.noEntryModules.add(noEntryModule)
+              })
+            }
+          })
+        })
+      }
+
+      const subpackages = new Set(Object.keys(mpx.componentsMap))
+
+      function getPackageName (fileName) {
+        const root = /^([^/\\]*)(\/|\\)?/.exec(fileName)[1]
+        if (subpackages.has(root)) return root
+        return 'main'
+      }
+
+      function getEntrySet (entryModules, ignoreSubEntry) {
+        const selfSet = new Set()
+        const sharedSet = new Set()
+        const otherSelfEntryModules = new Set()
+        entryModules.forEach((entryModule) => {
+          const entryNode = mpx.entryModulesMap.get(entryModule)
+          if (entryNode) {
+            selfSet.add(entryNode)
+          } else {
+            // 没有在entryModulesMap记录的entryModule默认为selfEntryModule
+            otherSelfEntryModules.add(entryModule)
+          }
+        })
+        if (!ignoreSubEntry) {
+          let currentSet = selfSet
+          while (currentSet.size) {
+            const newSet = new Set()
+            currentSet.forEach((entryNode) => {
+              entryNode.children.forEach((childNode) => {
+                if (selfSet.has(childNode) || sharedSet.has(childNode)) return
+                if (every(childNode.parents, (parentNode) => {
+                  return selfSet.has(parentNode)
+                })) {
+                  selfSet.add(childNode)
+                } else {
+                  sharedSet.add(childNode)
+                }
+                newSet.add(childNode)
+              })
+            })
+            currentSet = newSet
+          }
+        }
+
+        return {
+          selfEntryModules: concat(map(selfSet, item => item.module), otherSelfEntryModules),
+          sharedEntryModules: map(sharedSet, item => item.module)
+        }
+      }
+
+      // Get and split selfEntryModules & sharedEntryModules
+      reportGroups.forEach((reportGroup) => {
+        const entrySet = getEntrySet(reportGroup.entryModules, reportGroup.ignoreSubEntry)
+        Object.assign(reportGroup, entrySet, {
+          selfSize: 0,
+          selfSizeInfo: {},
+          sharedSize: 0,
+          sharedSizeInfo: {}
+        })
+      })
+
+      function fillSizeInfo (sizeInfo, packageName, fillType, fillInfo) {
+        sizeInfo[packageName] = sizeInfo[packageName] || {
+          assets: [],
+          modules: [],
+          size: 0
+        }
+        sizeInfo[packageName][fillType].push({ ...fillInfo })
+        sizeInfo[packageName].size += fillInfo.size
+      }
+
+      function fillSizeReportGroups (entryModules, noEntryModules, packageName, fillType, fillInfo) {
+        reportGroups.forEach((reportGroup) => {
+          if (reportGroup.noEntryModules && noEntryModules && noEntryModules.size) {
+            if (has(noEntryModules, (noEntryModule) => {
+              return reportGroup.noEntryModules.has(noEntryModule) && every(entryModules, (entryModule) => {
+                return noEntryModule.entryModules.has(entryModule)
+              })
+            })) {
+              reportGroup.selfSize += fillInfo.size
+              return fillSizeInfo(reportGroup.selfSizeInfo, packageName, fillType, fillInfo)
+            } else if (has(noEntryModules, (noEntryModule) => {
+              return reportGroup.noEntryModules.has(noEntryModule)
+            })) {
+              reportGroup.sharedSize += fillInfo.size
+              return fillSizeInfo(reportGroup.sharedSizeInfo, packageName, fillType, fillInfo)
+            }
+          }
+
+          if (entryModules && entryModules.size) {
+            if (every(entryModules, (entryModule) => {
+              return reportGroup.selfEntryModules.has(entryModule)
+            })) {
+              reportGroup.selfSize += fillInfo.size
+              return fillSizeInfo(reportGroup.selfSizeInfo, packageName, fillType, fillInfo)
+            } else if (has(entryModules, (entryModule) => {
+              return reportGroup.selfEntryModules.has(entryModule) || reportGroup.sharedEntryModules.has(entryModule)
+            })) {
+              reportGroup.sharedSize += fillInfo.size
+              return fillSizeInfo(reportGroup.sharedSizeInfo, packageName, fillType, fillInfo)
+            }
+          }
+        })
+      }
+
+      const assetsSizeInfo = {
+        assets: []
+      }
+
+      const packagesSizeInfo = {}
+
+      const sizeSummary = {
+        groups: [],
+        sizeInfo: packagesSizeInfo,
+        totalSize: 0,
+        staticSize: 0,
+        chunkSize: 0,
+        copySize: 0
+      }
+
+      function fillPackagesSizeInfo (packageName, size) {
+        packagesSizeInfo[packageName] = packagesSizeInfo[packageName] || 0
+        packagesSizeInfo[packageName] += size
+      }
+
+      const modulesMapById = compilation.modules.reduce((map, module) => {
+        map[module.id] = module
+        return map
+      }, {})
+
+      // Generate original size info
+      for (let name in compilation.assets) {
+        const packageName = getPackageName(name)
+        const assetInfo = compilation.assetsInfo.get(name)
+        if (assetInfo && assetInfo.modules) {
+          const entryModules = new Set()
+          const noEntryModules = new Set()
+          assetInfo.modules.forEach((module) => {
+            if (module.entryModules) {
+              module.entryModules.forEach((entryModule) => {
+                entryModules.add(entryModule)
+              })
+            }
+            if (module.noEntryModules) {
+              module.noEntryModules.forEach((noEntryModule) => {
+                noEntryModules.add(noEntryModule)
+              })
+            }
+          })
+          const size = compilation.assets[name].size()
+          const identifierSet = new Set()
+          let identifier = ''
+          assetInfo.modules.forEach((module) => {
+            const moduleIdentifier = module.readableIdentifier(compilation.requestShortener)
+            identifierSet.add(moduleIdentifier)
+            if (!identifier) identifier = moduleIdentifier
+          })
+          if (identifierSet.size > 1) identifier += ` + ${identifierSet.size - 1} modules`
+
+          fillSizeReportGroups(entryModules, noEntryModules, packageName, 'assets', {
+            name,
+            identifier,
+            size
+          })
+          assetsSizeInfo.assets.push({
+            type: 'static',
+            name,
+            packageName,
+            size,
+            modules: mapToArr(identifierSet, (identifier) => {
+              return {
+                identifier
+              }
+            })
+          })
+          fillPackagesSizeInfo(packageName, size)
+          sizeSummary.staticSize += size
+          sizeSummary.totalSize += size
+        } else if (/\.m?js(\?.*)?$/i.test(name)) {
+          let parsedModules
+          try {
+            parsedModules = parseAsset(compilation.assets[name].source())
+          } catch (err) {
+            const msg = err.code === 'ENOENT' ? 'no such file' : err.message
+            compilation.errors.push(`Error parsing bundle asset "${name}": ${msg}`)
+            continue
+          }
+          let size = compilation.assets[name].size()
+          const chunkAssetInfo = {
+            type: 'chunk',
+            name,
+            packageName,
+            size,
+            modules: []
+            // webpackTemplateSize: 0
+          }
+          assetsSizeInfo.assets.push(chunkAssetInfo)
+          fillPackagesSizeInfo(packageName, size)
+          sizeSummary.chunkSize += size
+          sizeSummary.totalSize += size
+          for (let id in parsedModules) {
+            const module = modulesMapById[id]
+            const moduleSize = Buffer.byteLength(parsedModules[id])
+            const identifier = module.readableIdentifier(compilation.requestShortener)
+            fillSizeReportGroups(module.entryModules, module.noEntryModules, packageName, 'modules', {
+              name,
+              identifier,
+              size: moduleSize
+            })
+            chunkAssetInfo.modules.push({
+              identifier,
+              size: moduleSize
+            })
+            size -= moduleSize
+          }
+          // chunkAssetInfo.webpackTemplateSize = size
+        } else {
+          // static copy assets such as project.config.json
+          const size = compilation.assets[name].size()
+          assetsSizeInfo.assets.push({
+            type: 'copy',
+            name,
+            packageName,
+            size
+          })
+          fillPackagesSizeInfo(packageName, size)
+          sizeSummary.copySize += size
+          sizeSummary.totalSize += size
+        }
+      }
+
+      // Check threshold
+      function normalizeThreshold (threshold) {
+        if (typeof threshold === 'number') return threshold
+        if (typeof threshold === 'string') {
+          if (/ki?b$/i.test(threshold)) return parseFloat(threshold) * 1024
+          if (/mi?b$/i.test(threshold)) return parseFloat(threshold) * 1024 * 1024
+        }
+        return +threshold
+      }
+
+      function checkThreshold (threshold, size, sizeInfo, reportGroupName) {
+        const sizeThreshold = normalizeThreshold(threshold.size || threshold)
+        const packagesThreshold = threshold.packages
+        const prefix = reportGroupName ? `${reportGroupName}体积分组` : '总包'
+
+        if (sizeThreshold && size && size > sizeThreshold) {
+          compilation.errors.push(`${prefix}的总体积（${size}B）超过设定阈值（${sizeThreshold}B），请检查！`)
+        }
+
+        if (packagesThreshold && sizeInfo) {
+          for (const packageName in sizeInfo) {
+            const packageSize = sizeInfo[packageName].size || sizeInfo[packageName]
+            const packageSizeThreshold = normalizeThreshold(packagesThreshold[packageName] || packagesThreshold)
+            if (packageSize && packageSizeThreshold && packageSize > packageSizeThreshold) {
+              const readablePackageName = packageName === 'main' ? '主包' : `${packageName}分包`
+              compilation.errors.push(`${prefix}的${readablePackageName}体积（${packageSize}B）超过设定阈值（${packageSizeThreshold}B），请检查！`)
+            }
+          }
+        }
+      }
+
+      if (this.options.reportSize.threshold) {
+        checkThreshold(this.options.reportSize.threshold, sizeSummary.totalSize, packagesSizeInfo)
+      }
+
+      reportGroups.forEach((reportGroup) => {
+        if (reportGroup.threshold) {
+          checkThreshold(reportGroup.threshold, reportGroup.selfSize, reportGroup.selfSizeInfo, reportGroup.name || 'anonymous group')
+        }
+      })
+
+      // Format size info
+      function mapModulesReadable (modulesSet) {
+        return mapToArr(modulesSet, (module) => module.readableIdentifier(compilation.requestShortener))
+      }
+
+      function formatSizeInfo (sizeInfo) {
+        const result = {}
+        for (const key in sizeInfo) {
+          const item = sizeInfo[key]
+          result[key] = {
+            assets: sortAndFormat(item.assets),
+            modules: sortAndFormat(item.modules),
+            size: formatSize(item.size)
+          }
+        }
+        return result
+      }
+
+      function formatSize (byteLength) {
+        if (typeof byteLength !== 'number') return byteLength
+        return (byteLength / 1024).toFixed(2) + 'KiB'
+      }
+
+      function sortAndFormat (sizeItems) {
+        sizeItems.sort((a, b) => {
+          return b.size - a.size
+        }).forEach((sizeItem) => {
+          sizeItem.size = formatSize(sizeItem.size)
+        })
+        return sizeItems
+      }
+
+      const groupsSizeInfo = reportGroups.map((reportGroup) => {
+        const readableInfo = {}
+        readableInfo.name = reportGroup.name || 'anonymous group'
+        readableInfo.selfEntryModules = mapModulesReadable(reportGroup.selfEntryModules)
+        readableInfo.sharedEntryModules = mapModulesReadable(reportGroup.sharedEntryModules)
+        if (reportGroup.noEntryModules) readableInfo.noEntryModules = mapModulesReadable(reportGroup.noEntryModules)
+        readableInfo.selfSize = formatSize(reportGroup.selfSize)
+        readableInfo.selfSizeInfo = formatSizeInfo(reportGroup.selfSizeInfo)
+        readableInfo.sharedSize = formatSize(reportGroup.sharedSize)
+        readableInfo.sharedSizeInfo = formatSizeInfo(reportGroup.sharedSizeInfo)
+        return readableInfo
+      })
+
+      sortAndFormat(assetsSizeInfo.assets)
+      assetsSizeInfo.assets.forEach((asset) => {
+        if (asset.modules) sortAndFormat(asset.modules)
+      })
+      'totalSize|staticSize|chunkSize|copySize'.split('|').forEach((key) => {
+        sizeSummary[key] = formatSize(sizeSummary[key])
+      })
+      groupsSizeInfo.forEach((groupSizeInfo) => {
+        const groupSummary = {
+          name: groupSizeInfo.name,
+          selfSize: 0,
+          selfSizeInfo: {},
+          sharedSize: 0,
+          sharedSizeInfo: {}
+        }
+        groupSummary.selfSize = groupSizeInfo.selfSize
+        for (const key in groupSizeInfo.selfSizeInfo) {
+          groupSummary.selfSizeInfo[key] = groupSizeInfo.selfSizeInfo[key].size
+        }
+        groupSummary.sharedSize = groupSizeInfo.sharedSize
+        for (const key in groupSizeInfo.sharedSizeInfo) {
+          groupSummary.sharedSizeInfo[key] = groupSizeInfo.sharedSizeInfo[key].size
+        }
+        sizeSummary.groups.push(groupSummary)
+      })
+
+      for (const packageName in packagesSizeInfo) {
+        packagesSizeInfo[packageName] = formatSize(packagesSizeInfo[packageName])
+      }
+
+      const reportData = {
+        sizeSummary,
+        groupsSizeInfo,
+        assetsSizeInfo
+      }
+
+      const fields = this.options.reportSize.fields || {}
+
+      'sizeSummary|groupsSizeInfo|assetsSizeInfo'.split('|').forEach((key) => {
+        if (fields.hasOwnProperty(key) && !fields[key]) delete reportData[key]
+      })
+
+      const reportFilePath = path.resolve(compiler.outputPath, this.options.reportSize.filename || 'report.json')
+      compiler.outputFileSystem.mkdirp(path.dirname(reportFilePath), (err) => {
+        if (err) return callback(err)
+        compiler.outputFileSystem.writeFile(reportFilePath, JSON.stringify(reportData, null, 2), (err) => {
+          const logger = compilation.getLogger('MpxWebpackPlugin')
+          logger.info(`Size report is generated in ${reportFilePath}!`)
+          callback(err)
+        })
+      })
     })
   }
 }

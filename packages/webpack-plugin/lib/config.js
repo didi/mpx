@@ -317,10 +317,10 @@ module.exports = {
       }
     },
     wxs: {
-      tag: 'ts',
+      tag: 'sjs',
       module: 'module',
       src: 'src',
-      ext: '.ts',
+      ext: '.sjs',
       templatePrefix: 'module.exports = \n'
     },
     directive: {
@@ -391,11 +391,6 @@ module.exports = {
       }
     },
     wxs: {
-      tag: 'wxs',
-      module: 'module',
-      src: 'src',
-      ext: '.wxs',
-      templatePrefix: 'module.exports = \n'
     },
     directive: {
       if: 'if',
@@ -410,7 +405,9 @@ module.exports = {
       modelProp: 'model-prop',
       modelEvent: 'model-event',
       modelValuePath: 'model-value-path',
-      modelFilter: 'model-filter'
+      modelFilter: 'model-filter',
+      dynamicStyle: 'style',
+      dynamicClass: 'class'
     }
   }
 }

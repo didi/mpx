@@ -1,6 +1,8 @@
 const genComponentTag = require('../utils/gen-component-tag')
 const loaderUtils = require('loader-utils')
 const optionProcessorPath = require.resolve('../runtime/optionProcessor')
+const nativeTabBarPath = '@mpxjs/webpack-plugin/lib/runtime/components/web/mpx-tabbar-container.vue'
+const nativeTabBarComponent = '@mpxjs/webpack-plugin/lib/runtime/components/web/mpx-tabbar.vue'
 
 function shallowStringify (obj) {
   let arr = []
@@ -27,9 +29,23 @@ module.exports = function (script, options, callback) {
   const mpxCid = options.mpxCid
   const getRequireForSrc = options.getRequireForSrc
   const i18n = options.i18n
-  const pageTitle = options.pageTitle
+  const jsonConfig = options.jsonConfig
+  const tabBarMap = options.tabBarMap
 
   const stringifyRequest = r => loaderUtils.stringifyRequest(loaderContext, r)
+  let tabBarPagesMap = {}
+  let tabBarMapStr = ''
+  if (tabBarMap && Array.isArray(tabBarMap.list) && tabBarMap.list.length && ctorType === 'app') {
+    tabBarPagesMap = tabBarMap.listMap
+    Object.keys(tabBarPagesMap).forEach((item) => {
+      tabBarPagesMap[item] = `()=>import("${tabBarPagesMap[item]}")`
+    })
+    tabBarMapStr = JSON.stringify(tabBarMap)
+    /* eslint-disable no-useless-escape */
+    tabBarMapStr = tabBarMapStr.replace(/"iconPath":"([\w\/\.\-]+[\.png\.jpeg\.gif])"/g, '"iconPath":require("$1")')
+    /* eslint-disable no-useless-escape */
+    tabBarMapStr = tabBarMapStr.replace(/"selectedIconPath":"([\w\/\.\-]+[\.png\.jpeg\.gif])"/g, '"selectedIconPath":require("$1")')
+  }
 
   let output = '/* script */\n'
 
@@ -65,14 +81,27 @@ module.exports = function (script, options, callback) {
       return attrs
     },
     content (script) {
-      let content = `import processOption, { getComponent } from ${stringifyRequest(`!!${optionProcessorPath}`)}\n`
+      let content = `import processOption, { getComponent } from ${stringifyRequest(optionProcessorPath)}\n`
       // add import
       if (ctorType === 'app') {
         content += `
-      import Vue from 'vue'
-      import VueRouter from 'vue-router'
-      Vue.use(VueRouter)
-      global.getApp = function(){}\n`
+        import Vue from 'vue'
+        import VueRouter from 'vue-router'
+        Vue.use(VueRouter)
+        import BScroll from '@better-scroll/core'
+        import PullDown from '@better-scroll/pull-down'
+        import ObserveDOM from '@better-scroll/observe-dom'
+        BScroll.use(ObserveDOM)
+        BScroll.use(PullDown)
+        global.BScroll = BScroll
+        global.getApp = function(){}
+        global.__networkTimeout = ${JSON.stringify(jsonConfig.networkTimeout)}
+
+        global.__tabBar = ${tabBarMapStr}
+        global.__tabBarPagesMap = ${shallowStringify(tabBarPagesMap)}
+        global.__style = ${JSON.stringify(jsonConfig.style || 'v1')}
+        global.__mpxPageConfig = ${JSON.stringify(jsonConfig.window)}\n`
+
         if (i18n) {
           const i18nObj = Object.assign({}, i18n)
           content += `
@@ -99,15 +128,30 @@ module.exports = function (script, options, callback) {
         const pageCfg = localPagesMap[pagePath]
         const pageRequest = stringifyRequest(pageCfg.resource)
         if (pageCfg.async) {
-          pagesMap[pagePath] = `()=>import(${pageRequest})`
+          if (tabBarPagesMap[pagePath]) {
+            // 如果是 tabBar 对应的页面
+            pagesMap[pagePath] = `()=>import("${nativeTabBarPath}")`
+          } else {
+            pagesMap[pagePath] = `()=>import(${pageRequest})`
+          }
         } else {
           // 为了保持小程序中app->page->component的js执行顺序，所有的page和component都改为require引入
-          pagesMap[pagePath] = `getComponent(require(${pageRequest}))`
+          if (tabBarPagesMap[pagePath]) {
+            // 如果是 tabBar 对应的页面
+            pagesMap[pagePath] = `getComponent(require("${nativeTabBarPath}"))`
+          } else {
+            pagesMap[pagePath] = `getComponent(require(${pageRequest}))`
+          }
         }
         if (pageCfg.isFirst) {
           firstPage = pagePath
         }
       })
+      if (tabBarMap && tabBarMap.custom) {
+        componentsMap['custom-tab-bar'] = `getComponent(require("./custom-tab-bar/index.mpx?component=true"))`
+      } else if (tabBarMap) {
+        componentsMap['custom-tab-bar'] = `getComponent(require("${nativeTabBarComponent}"))`
+      }
 
       Object.keys(localComponentsMap).forEach((componentName) => {
         const componentCfg = localComponentsMap[componentName]
@@ -135,14 +179,28 @@ module.exports = function (script, options, callback) {
         : (script.content + '\n') + '\n'
       // 配置平台转换通过createFactory在core中convertor中定义和进行
       // 通过processOption进行组件注册和路由注入
+      const pureJsonConfig = {}
+      if (ctorType === 'page') {
+        const uselessOptions = new Set([
+          'usingComponents',
+          'style',
+          'singlePage'
+        ])
+        Object.keys(jsonConfig)
+          .filter(key => !uselessOptions.has(key))
+          .forEach(key => {
+            pureJsonConfig[key] = jsonConfig[key]
+          })
+      }
       content += `export default processOption(
         global.currentOption,
         ${JSON.stringify(ctorType)},
         ${JSON.stringify(firstPage)},
         ${JSON.stringify(mpxCid)},
-        ${JSON.stringify(pageTitle)},
+        ${JSON.stringify(pureJsonConfig)},
         ${shallowStringify(pagesMap)},
-        ${shallowStringify(componentsMap)}`
+        ${shallowStringify(componentsMap)},
+        ${JSON.stringify(tabBarMap)}`
 
       if (ctorType === 'app') {
         content += `,

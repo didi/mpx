@@ -42,6 +42,9 @@ export default class MPXProxy {
     this.options = options
     // initial -> created -> mounted -> destroyed
     this.state = 'initial'
+    this.lockTask = asyncLock()
+    this.ignoreProxyMap = makeMap(EXPORT_MPX.config.ignoreProxyWhiteList)
+
     if (__mpx_mode__ !== 'web' && __mpx_mode__ !== 'qa') {
       if (typeof target.__getInitialData !== 'function') {
         error('Please specify a [__getInitialData] function to get component\'s initial data.', this.options.mpxFileResource)
@@ -125,13 +128,19 @@ export default class MPXProxy {
   initApi () {
     // 挂载扩展属性到实例上
     proxy(this.target, this.options.proto, Object.keys(this.options.proto), true, (key) => {
-      if (this.ignoreProxyMap[key]) return false
+      if (this.ignoreProxyMap[key]) {
+        error(`The key [${key}] of mpx.prototype is a reserved keyword of miniprogram, please check and rename it!`, this.options.mpxFileResource)
+        return false
+      }
       error(`The key [${key}] of mpx.prototype exist in the component/page instance already, please check your plugins!`, this.options.mpxFileResource)
     })
     // 挂载混合模式下createPage中的自定义属性，模拟原生Page构造器的表现
     if (this.options.__type__ === 'page' && !this.options.__pageCtor__) {
       proxy(this.target, this.options, this.options.mpxCustomKeysForBlend, undefined, (key) => {
-        if (this.ignoreProxyMap[key]) return false
+        if (this.ignoreProxyMap[key]) {
+          error(`The key [${key}] of page options is a reserved keyword of miniprogram, please check and rename it!`, this.options.mpxFileResource)
+          return false
+        }
         error(`The key [${key}] of page options exist in the page instance already, please check your page options!`, this.options.mpxFileResource)
       })
     }
@@ -148,12 +157,15 @@ export default class MPXProxy {
 
   initState () {
     const options = this.options
-    const proxyedKeys = this.initData(options.data)
+    const proxyedKeys = this.initData(options.data, options.dataFn)
     const proxyedKeysMap = makeMap(proxyedKeys)
     this.initComputed(options.computed)
     // target的数据访问代理到将proxy的data
     proxy(this.target, this.data, undefined, undefined, (key) => {
-      if (this.ignoreProxyMap[key]) return false
+      if (this.ignoreProxyMap[key]) {
+        error(`The data/props/computed key [${key}] is a reserved keyword of miniprogram, please check and rename it!`, this.options.mpxFileResource)
+        return false
+      }
       if (!proxyedKeysMap[key]) error(`The data/props/computed key [${key}] exist in the component/page instance already, please check and rename it!`, this.options.mpxFileResource)
     })
     this.initWatch(options.watch)
@@ -167,29 +179,29 @@ export default class MPXProxy {
   }
 
   // 构建响应式data
-  initData (dataOpt = {}) {
+  initData (data, dataFn) {
     let proxyedKeys = []
     // 获取包含data/props在内的初始数据，包含初始原生微信转换支付宝时合并props进入data的逻辑
-    const initialData = this.target.__getInitialData() || {}
-    if (typeof dataOpt === 'function') {
+    const initialData = this.target.__getInitialData(this.options) || {}
+    // 之所以没有直接使用initialData，而是通过对原始dataOpt进行深clone获取初始数据对象，主要是为了避免小程序自身序列化时错误地转换数据对象，比如将promise转为普通object
+    this.data = diffAndCloneA(data || {}).clone
+    if (dataFn) {
       proxyedKeys = Object.keys(initialData)
       // 预先将initialData代理到this.target中，便于data函数访问
       proxy(this.target, initialData, proxyedKeys, undefined, (key) => {
-        if (this.ignoreProxyMap[key]) return false
-        error(`The props key [${key}] exist in the component instance already, please check and rename it!`, this.options.mpxFileResource)
+        if (this.ignoreProxyMap[key]) {
+          error(`The props/data key [${key}] is a reserved keyword of miniprogram, please check and rename it!`, this.options.mpxFileResource)
+          return false
+        }
+        error(`The props/data key [${key}] exist in the component instance already, please check and rename it!`, this.options.mpxFileResource)
       })
-      this.data = dataOpt.call(this.target) || {}
-    } else {
-      // 之所以没有直接使用initialData，而是通过对原始dataOpt进行深clone获取初始数据对象，主要是为了避免小程序自身序列化时错误地转换数据对象，比如将promise转为普通object
-      this.data = diffAndCloneA(dataOpt).clone || {}
+      Object.assign(this.data, dataFn.call(this.target))
     }
     this.collectLocalKeys(this.data)
-
     Object.keys(initialData).forEach((key) => {
       if (!this.data.hasOwnProperty(key)) {
         // 除了data函数返回的数据外深拷贝切断引用关系，避免后续watch由于小程序内部对data赋值重复触发watch
         this.data[key] = diffAndCloneA(initialData[key]).clone
-        // this.data[key] = initialData[key]
       }
     })
     // mpxCid 解决支付宝环境selector为全局问题
@@ -231,7 +243,7 @@ export default class MPXProxy {
   }
 
   callUserHook (hookName, ...params) {
-    const hook = this.options[hookName]
+    const hook = this.options[hookName] || this.target[hookName]
     if (typeof hook === 'function') {
       hook.call(this.target, ...params)
     }
@@ -326,8 +338,8 @@ export default class MPXProxy {
           if (!processed) {
             // 如果当前数据和上次的miniRenderData完全无关，但存在于组件的视图数据中，则与组件视图数据进行diff
             const targetData = this.target.data || this.target._data
-            if (targetData.hasOwnProperty(firstKey)) {
-              const localInitialData = getByPath(targetData, key)
+            if (targetData && this.target.data.hasOwnProperty(firstKey)) {
+              const localInitialData = getByPath(this.target.data, key)
               const { clone, diff, diffData } = diffAndCloneA(data, localInitialData)
               this.miniRenderData[key] = clone
               if (diff) {
@@ -411,10 +423,17 @@ export default class MPXProxy {
     this._watcher = renderWatcher
   }
 
-  forceUpdate (data, callback) {
+  forceUpdate (data, options, callback) {
     if (typeof data === 'function') {
       callback = data
       data = undefined
+    }
+
+    options = options || {}
+
+    if (typeof options === 'function') {
+      callback = options
+      options = {}
     }
 
     if (isPlainObject(data)) {
@@ -434,7 +453,7 @@ export default class MPXProxy {
       this.nextTick(callback)
     }
     if (this._watcher) {
-      this._watcher.update()
+      this._watcher.update(options.sync)
     } else {
       if (this.forceUpdateAll) {
         Object.keys(this.data).forEach((key) => {
@@ -443,7 +462,9 @@ export default class MPXProxy {
           }
         })
       }
-      this.doRender()
+      options.sync ? this.doRender() : queueWatcher(() => {
+        this.doRender()
+      })
     }
   }
 }

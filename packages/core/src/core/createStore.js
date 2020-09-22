@@ -108,15 +108,20 @@ function mergeDeps (module, deps) {
 
 class Store {
   constructor (options) {
+    const {
+      plugins = []
+    } = options
     this.withThis = options.withThis
     this.__wrappedGetters = {}
     this.__depsGetters = {}
     this.getters = {}
     this.mutations = {}
     this.actions = {}
+    this._subscribers = []
     this.state = this.registerModule(options).state
     this.resetStoreVM()
     Object.assign(this, mapStore(this))
+    plugins.forEach(plugin => plugin(this))
   }
 
   dispatch (type, ...payload) {
@@ -133,8 +138,13 @@ class Store {
     if (!mutation) {
       warn(`Unknown mutation type: ${type}.`)
     } else {
-      return mutation(...payload)
+      mutation(...payload)
+      return this._subscribers.slice().forEach(sub => sub({ type, payload }, this.state))
     }
+  }
+
+  subscribe (fn, options) {
+    return genericSubscribe(fn, this._subscribers, options)
   }
 
   registerModule (module) {
@@ -186,6 +196,20 @@ class Store {
       observe(this.state, true)
       initComputed(this._vm, this.getters, this.__wrappedGetters)
       proxy(this.getters, this.__depsGetters)
+    }
+  }
+}
+
+function genericSubscribe (fn, subs, options) {
+  if (subs.indexOf(fn) < 0) {
+    options && options.prepend
+      ? subs.unshift(fn)
+      : subs.push(fn)
+  }
+  return () => {
+    const i = subs.indexOf(fn)
+    if (i > -1) {
+      subs.splice(i, 1)
     }
   }
 }

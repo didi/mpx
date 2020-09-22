@@ -1,8 +1,8 @@
-/** 
+/**
 *@file 路由相关API
-*@export 
+*@export
 **/
 
-function navigateTo (options = {}) {
-  
-}
+/* function navigateTo (options = {}) {
+
+} */

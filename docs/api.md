@@ -242,11 +242,11 @@ import {observable} from '@mpxjs/core'
 const a = observable(object)
 ```
 
-### extendObservable
+~~### extendObservable~~
 
-用于扩展响应式数据，属于mobx提供的能力, 主要用于添加新的可观察数据, `并不会触发订阅者更新`
+~~（已废弃）用于扩展响应式数据，属于mobx提供的能力, 主要用于添加新的可观察数据, `并不会触发订阅者更新`~~
 
-```js
+```js~~
 import {observable, extendObservable} from '@mpxjs/core'
 const a = observable(object)
 // mpx.extendObservable(...)

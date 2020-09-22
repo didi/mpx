@@ -1,0 +1,35 @@
+<template>
+  <input 
+    type="checkbox" 
+    class="mpx-checkbox"
+    checked="{{checked}}" 
+    value="{{value}}"
+    disabled="{{disabled}}">
+  </input>
+</template>
+
+<script>
+export default {
+  props: {
+    value: {},
+    disabled: {
+      default: false
+    },
+    checked: {
+      default: false
+    },
+    color: {
+      default: '#09BB07'
+    }
+  },
+  computed: {
+    
+  }
+}
+</script>
+
+<style>
+.mpx-checkbox {
+  margin: 3px 3px 3px 4px;
+}
+</style>
