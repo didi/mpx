@@ -146,7 +146,7 @@ export default function processOption (
     }
 
     if (i18n) {
-      window.__mpxI18n = option.i18n = new VueI18n(i18n)
+      window.__mpx.i18n = option.i18n = new VueI18n(i18n)
     }
   } else {
     // 局部注册页面和组件中依赖的组件
