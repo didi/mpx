@@ -233,6 +233,7 @@ export class MpxScroll {
       threshold: 100, // 滑动触发下拉刷新的距离
       stop: 60 // 下拉刷新时停留的位置距离屏幕顶部的距离
     }
+    this.ratio = 1
     this.el = getElement(el)
     this.options = Object.assign({}, defaultOptions, options)
     this.touchstartY = 0
@@ -266,11 +267,13 @@ export class MpxScroll {
   }
 
   pullDown (distance) {
-    if (distance < this.options.threshold) {
-      this.progress.style.height = distance + 'px'
+    let alteredDistance
+    if (distance * this.ratio < this.options.threshold) {
+      alteredDistance = distance
     } else {
-      this.progress.style.height = this.options.threshold + (distance - this.options.threshold) / 3 + 'px'
+      alteredDistance = this.options.threshold + (distance - this.options.threshold)
     }
+    this.progress.style.height = alteredDistance * this.ratio + 'px'
   }
 
   onTouchEnd (e) {
@@ -281,19 +284,19 @@ export class MpxScroll {
     }
 
     const distance = this.currentY - this.touchstartY
-    if (distance > this.options.threshold) {
+    if (distance * this.ratio >= this.options.threshold) {
       this.hooks.emit('pullingDown', true)
       this.isRefresh = true
-      this.moveBack(this.options.stop)
+      this.moveBack()
     } else if (distance > 0) {
       this.moveBack()
     }
   }
 
-  moveBack (distance = 0) {
+  moveBack () {
     const currentHeight = this.progress.offsetHeight
-    const { stop } = this.options
-    const finalDistance = currentHeight > stop ? stop : 0
+    const { stop, threshold } = this.options
+    const finalDistance = currentHeight >= threshold ? stop : 0
     this.progress.style.height = finalDistance + 'px'
   }
 
@@ -315,6 +318,7 @@ export class MpxScroll {
       return
     }
 
+    this.hooks.emit('pullingDown')
     this.pageScrollTo({
       scrollTop: 0,
       duration: 0
@@ -380,7 +384,7 @@ export class MpxScroll {
       return window.scrollTo(0, _scrollTop)
     }
 
-    const step = Math.abs(position - _scrollTop) / speed
+    const step = Math.floor(Math.abs(position - _scrollTop) / speed)
 
     const next = (() => {
       // fix eslint
@@ -389,7 +393,7 @@ export class MpxScroll {
         return () => {
           requestAnimationFrame(() => {
             position += step
-            if (position < _scrollTop) {
+            if (position <= _scrollTop) {
               window.scrollTo(0, position)
               next()
             } else {
@@ -401,7 +405,7 @@ export class MpxScroll {
         return () => {
           requestAnimationFrame(() => {
             position -= step
-            if (position > _scrollTop) {
+            if (position >= _scrollTop) {
               window.scrollTo(0, position)
               next()
             } else {
