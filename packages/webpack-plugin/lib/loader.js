@@ -94,7 +94,12 @@ module.exports = function (content) {
     options.cssSourceMap !== false
   )
 
-  const parts = parseComponent(content, filePath, this.sourceMap, mode, defs)
+  const parts = parseComponent(content, {
+    filePath,
+    needMap: this.sourceMap,
+    mode,
+    defs
+  })
 
   let output = ''
   const callback = this.async()
@@ -209,6 +214,7 @@ module.exports = function (content) {
                   loaderContext,
                   pagesMap,
                   pagesEntryMap: mpx.pagesEntryMap,
+                  pathHash: mpx.pathHash,
                   componentsMap,
                   projectRoot,
                   ctorType

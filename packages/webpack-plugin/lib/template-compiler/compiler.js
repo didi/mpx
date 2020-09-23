@@ -609,7 +609,7 @@ function parseComponent (content, options) {
   function start (tag, attrs, unary, start, end) {
     if (depth === 0) {
       currentBlock = {
-        type: tag,
+        tag,
         content: '',
         start: end,
         attrs: attrs.reduce(function (cumulated, ref) {
@@ -688,12 +688,12 @@ function parseComponent (content, options) {
       let text = content.slice(currentBlock.start, currentBlock.end)
       // pad content so that linters and pre-processors can output correct
       // line numbers in errors and warnings
-      if (currentBlock.type !== 'template' && options.pad) {
+      if (currentBlock.tag !== 'template' && options.pad) {
         text = padContent(currentBlock, options.pad) + text
       }
 
       // 对于<script name="json">的标签，传参调用函数，其返回结果作为json的内容
-      if (currentBlock.type === 'script' && currentBlock.name === 'json') {
+      if (currentBlock.tag === 'script' && currentBlock.name === 'json') {
         text = mpxJSON.compileMPXJSONText({ source: text, defs, filePath: options.filePath })
       }
       currentBlock.content = text

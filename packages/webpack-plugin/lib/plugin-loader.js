@@ -1,7 +1,6 @@
 const path = require('path')
 const async = require('async')
 const JSON5 = require('json5')
-const hash = require('hash-sum')
 const SingleEntryPlugin = require('webpack/lib/SingleEntryPlugin')
 const parseRequest = require('./utils/parse-request')
 const toPosix = require('./utils/to-posix')
@@ -26,6 +25,7 @@ module.exports = function (source) {
   const pagesMap = mpx.pagesMap
   const componentsMap = mpx.componentsMap[packageName]
   const extract = mpx.extract
+  const pathHash = mpx.pathHash
   const resourceName = this._compilation._preparedEntrypoints[0].name
   this._compilation._preparedEntrypoints.pop()
 
@@ -103,7 +103,7 @@ module.exports = function (source) {
           result = parseRequest(result).resourcePath
           let parsed = path.parse(result)
           let componentName = parsed.name
-          let dirName = componentName + hash(result)
+          let dirName = componentName + pathHash(result)
           let componentPath = path.join('components', dirName, componentName)
           componentPath = toPosix(componentPath)
           // 如果之前已经创建了入口，直接return
