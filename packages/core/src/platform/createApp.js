@@ -48,7 +48,7 @@ export default function createApp (option, config = {}) {
       return appData
     }
     global.getCurrentPages = function () {
-      if(!window.__mpxRouter) return []
+      if (!window.__mpxRouter) return []
       return window.__mpxRouter.stack.map(e => {
         return Object.assign({
           options: e.vnode.componentInstance,
