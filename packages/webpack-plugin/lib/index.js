@@ -776,8 +776,8 @@ class MpxWebpackPlugin {
             source.add('var context = (function() { return this })() || Function("return this")();\n')
             source.add(`
 // Fix babel runtime in some quirky environment like ali & qq dev.
-if(!context.console) {
-  try {
+try {
+  if(!context.console){
     context.console = console;
     context.setInterval = setInterval;
     context.setTimeout = setTimeout;
@@ -796,22 +796,30 @@ if(!context.console) {
     context.Uint8Array = Uint8Array;
     context.DataView = DataView;
     context.ArrayBuffer = ArrayBuffer;
-    context.Symbol = Symbol;
-  } catch(e){
+    context.Symbol = Symbol; 
   }
+} catch(e){
 }
-\n`)
-            source.add('// swan && pc runtime fix\n' +
-              'if (!context.navigator) {\n' +
-              '  context.navigator = {};\n' +
-              '}\n' +
-              'Object.defineProperty(context.navigator, "standalone",{\n' +
-              '  configurable: true,' +
-              '  enumerable: true,' +
-              '  get () {\n' +
-              '    return true;\n' +
-              '  }\n' +
-              '});\n\n')
+// swan && pc runtime fix
+try {
+  if (!context.navigator) {
+    Object.defineProperty(context, "navigator",{
+      configurable: true,
+      enumerable: true,
+      get () {
+        return {};
+      }
+    });
+  }
+  Object.defineProperty(context.navigator, "standalone",{
+    configurable: true,
+    enumerable: true,
+    get () {
+      return true;
+    }
+  }); 
+} catch(e){
+}\n`)
             source.add(originalSource)
             source.add(`\nmodule.exports = window[${JSON.stringify(jsonpFunction)}];\n`)
           } else {

@@ -14,7 +14,7 @@ module.exports = function (template, options, callback) {
 
   if (ctorType === 'app') {
     template = {
-      type: 'template',
+      tag: 'template',
       content: '<div class="app"><mpx-keep-alive><router-view class="page"></router-view></mpx-keep-alive></div>'
     }
     builtInComponentsMap['mpx-keep-alive'] = {

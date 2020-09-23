@@ -94,7 +94,12 @@ module.exports = function (content) {
     options.cssSourceMap !== false
   )
 
-  const parts = parseComponent(content, filePath, this.sourceMap, mode, defs)
+  const parts = parseComponent(content, {
+    filePath,
+    needMap: this.sourceMap,
+    mode,
+    defs
+  })
 
   let output = ''
   const callback = this.async()

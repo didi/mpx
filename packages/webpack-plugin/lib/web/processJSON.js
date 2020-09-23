@@ -94,7 +94,12 @@ module.exports = function (json, options, rawCallback) {
             const filePath = result
             const extName = path.extname(filePath)
             if (extName === '.mpx' || extName === '.vue') {
-              const parts = parseComponent(content, filePath, loaderContext.sourceMap, mode, defs)
+              const parts = parseComponent(content, {
+                filePath,
+                needMap: loaderContext.sourceMap,
+                mode,
+                defs
+              })
               const json = parts.json || {}
               if (json.content) {
                 content = json.content

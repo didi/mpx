@@ -58,7 +58,7 @@ module.exports = function (script, options, callback) {
     scriptSrcMode = script.mode || scriptSrcMode
   } else {
     script = {
-      type: 'script',
+      tag: 'script',
       content: ''
     }
     switch (ctorType) {
@@ -85,33 +85,31 @@ module.exports = function (script, options, callback) {
       return attrs
     },
     content (script) {
-      let content = `import processOption, { getComponent } from ${stringifyRequest(optionProcessorPath)}\n`
+      let content = `\n  import processOption, { getComponent } from ${stringifyRequest(optionProcessorPath)}\n`
       // add import
       if (ctorType === 'app') {
-        content += `
-        import '@mpxjs/webpack-plugin/lib/runtime/base.styl'
-        import Vue from 'vue'
-        import VueRouter from 'vue-router'
-        Vue.use(VueRouter)
-        import BScroll from '@better-scroll/core'
-        import PullDown from '@better-scroll/pull-down'
-        import ObserveDOM from '@better-scroll/observe-dom'
-        BScroll.use(ObserveDOM)
-        BScroll.use(PullDown)
-        global.BScroll = BScroll
-        global.getApp = function(){}
-        global.__networkTimeout = ${JSON.stringify(jsonConfig.networkTimeout)}
-        global.__mpxGenericsMap = {}
-        global.__tabBar = ${tabBarMapStr}
-        global.__tabBarPagesMap = ${shallowStringify(tabBarPagesMap)}
-        global.__style = ${JSON.stringify(jsonConfig.style || 'v1')}
-        global.__mpxPageConfig = ${JSON.stringify(jsonConfig.window)}\n`
+        content += `  import '@mpxjs/webpack-plugin/lib/runtime/base.styl'
+  import Vue from 'vue'
+  import VueRouter from 'vue-router'
+  Vue.use(VueRouter)
+  import BScroll from '@better-scroll/core'
+  import PullDown from '@better-scroll/pull-down'
+  import ObserveDOM from '@better-scroll/observe-dom'
+  BScroll.use(ObserveDOM)
+  BScroll.use(PullDown)
+  global.BScroll = BScroll
+  global.getApp = function(){}
+  global.__networkTimeout = ${JSON.stringify(jsonConfig.networkTimeout)}
+  global.__mpxGenericsMap = {}
+  global.__tabBar = ${tabBarMapStr}
+  global.__tabBarPagesMap = ${shallowStringify(tabBarPagesMap)}
+  global.__style = ${JSON.stringify(jsonConfig.style || 'v1')}
+  global.__mpxPageConfig = ${JSON.stringify(jsonConfig.window)}\n`
 
         if (i18n) {
           const i18nObj = Object.assign({}, i18n)
-          content += `
-        import VueI18n from 'vue-i18n'
-        Vue.use(VueI18n)\n`
+          content += `  import VueI18n from 'vue-i18n'
+  Vue.use(VueI18n)\n`
           const requestObj = {}
           const i18nKeys = ['messages', 'dateTimeFormats', 'numberFormats']
           i18nKeys.forEach((key) => {
@@ -120,9 +118,9 @@ module.exports = function (script, options, callback) {
               delete i18nObj[`${key}Path`]
             }
           })
-          content += `const i18n = ${JSON.stringify(i18nObj)}\n`
+          content += `  const i18n = ${JSON.stringify(i18nObj)}\n`
           Object.keys(requestObj).forEach((key) => {
-            content += `i18n.${key} = require(${requestObj[key]})\n`
+            content += `  i18n.${key} = require(${requestObj[key]})\n`
           })
         }
       }
@@ -175,9 +173,9 @@ module.exports = function (script, options, callback) {
         componentsMap[componentName] = `getComponent(require(${componentRequest}), true)`
       })
 
-      content += `global.currentSrcMode = ${JSON.stringify(scriptSrcMode)};\n`
+      content += `  global.currentSrcMode = ${JSON.stringify(scriptSrcMode)};\n`
       if (!isProduction) {
-        content += `global.currentResource = ${JSON.stringify(loaderContext.resourcePath)};\n`
+        content += `  global.currentResource = ${JSON.stringify(loaderContext.resourcePath)};\n`
       }
       // 为了正确获取currentSrcMode便于运行时进行转换，对于src引入的组件script采用require方式引入(由于webpack会将import的执行顺序上升至最顶),这意味着对于src引入脚本中的named export将不会生效，不过鉴于mpx和小程序中本身也没有在组件script中声明export的用法，所以应该没有影响
       content += script.src
@@ -198,30 +196,29 @@ module.exports = function (script, options, callback) {
             pureJsonConfig[key] = jsonConfig[key]
           })
       }
-      content += `export default processOption(
-        global.currentOption,
-        ${JSON.stringify(ctorType)},
-        ${JSON.stringify(firstPage)},
-        ${JSON.stringify(mpxCid)},
-        ${JSON.stringify(pureJsonConfig)},
-        ${shallowStringify(pagesMap)},
-        ${shallowStringify(componentsMap)},
-        ${JSON.stringify(tabBarMap)},
-        ${JSON.stringify(componentGenerics)},
-        ${JSON.stringify(genericsInfo)}`
+      content += `  export default processOption(
+    global.currentOption,
+    ${JSON.stringify(ctorType)},
+    ${JSON.stringify(firstPage)},
+    ${JSON.stringify(mpxCid)},
+    ${JSON.stringify(pureJsonConfig)},
+    ${shallowStringify(pagesMap)},
+    ${shallowStringify(componentsMap)},
+    ${JSON.stringify(tabBarMap)},
+    ${JSON.stringify(componentGenerics)},
+    ${JSON.stringify(genericsInfo)}`
 
       if (ctorType === 'app') {
         content += `,
-            Vue,
-            VueRouter`
+    Vue,
+    VueRouter`
         if (i18n) {
           content += `,
-            VueI18n,
-            i18n`
+    VueI18n,
+    i18n`
         }
       }
-      content += `
-          )\n`
+      content += `\n  )\n`
       return content
     }
   })
