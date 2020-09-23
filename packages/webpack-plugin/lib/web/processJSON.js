@@ -2,9 +2,7 @@ const async = require('async')
 const path = require('path')
 const JSON5 = require('json5')
 const loaderUtils = require('loader-utils')
-const hash = require('hash-sum')
 const parseRequest = require('../utils/parse-request')
-const getPageName = require('../utils/get-page-name')
 const toPosix = require('../utils/to-posix')
 const addQuery = require('../utils/add-query')
 const parseComponent = require('../parser')
@@ -21,6 +19,7 @@ module.exports = function (json, options, rawCallback) {
   const componentsMap = options.componentsMap
   const projectRoot = options.projectRoot
   const ctorType = options.ctorType
+  const pathHash = options.pathHash
   const localPagesMap = {}
   const localComponentsMap = {}
   let output = '/* json */\n'
@@ -94,7 +93,12 @@ module.exports = function (json, options, rawCallback) {
             const filePath = result
             const extName = path.extname(filePath)
             if (extName === '.mpx' || extName === '.vue') {
-              const parts = parseComponent(content, filePath, loaderContext.sourceMap, mode, defs)
+              const parts = parseComponent(content, {
+                filePath,
+                needMap: loaderContext.sourceMap,
+                mode,
+                defs
+              })
               const json = parts.json || {}
               if (json.content) {
                 content = json.content
@@ -150,6 +154,11 @@ module.exports = function (json, options, rawCallback) {
     } else {
       callback()
     }
+  }
+
+  const getPageName = (resourcePath, ext) => {
+    const baseName = path.basename(resourcePath, ext)
+    return path.join('pages', baseName + pathHash(resourcePath), baseName)
   }
 
   const processPages = (pages, srcRoot = '', tarRoot = '', context, callback) => {
@@ -244,7 +253,7 @@ module.exports = function (json, options, rawCallback) {
       if (err) return callback(err)
       const { resourcePath, queryObj } = parseRequest(resource)
       const parsed = path.parse(resourcePath)
-      const componentId = parsed.name + hash(resourcePath)
+      const componentId = parsed.name + pathHash(resourcePath)
 
       componentsMap[resourcePath] = componentId
 
@@ -254,6 +263,20 @@ module.exports = function (json, options, rawCallback) {
       }
       callback()
     })
+  }
+
+  const processGenerics = (generics, context, callback) => {
+    if (generics) {
+      async.forEachOf(generics, (generic, name, callback) => {
+        if (generic.default) {
+          processComponent(generic.default, `${name}default`, context, callback)
+        } else {
+          callback()
+        }
+      }, callback)
+    } else {
+      callback()
+    }
   }
 
   async.parallel([
@@ -270,7 +293,10 @@ module.exports = function (json, options, rawCallback) {
       processPackages(jsonObj.packages, context, callback)
     },
     (callback) => {
-      processSubPackages(json.subPackages || json.subpackages, context, callback)
+      processSubPackages(jsonObj.subPackages || jsonObj.subpackages, context, callback)
+    },
+    (callback) => {
+      processGenerics(jsonObj.componentGenerics, context, callback)
     }
   ], callback)
 }

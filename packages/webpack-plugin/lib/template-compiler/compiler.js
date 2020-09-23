@@ -8,6 +8,7 @@ const mpxJSON = require('../utils/mpx-json')
 const getRulesRunner = require('../platform/index')
 const addQuery = require('../utils/add-query')
 const transDynamicClassExpr = require('./trans-dynamic-class-expr')
+const hash = require('hash-sum')
 
 /**
  * Make a map and return a function for checking if a key
@@ -608,7 +609,7 @@ function parseComponent (content, options) {
   function start (tag, attrs, unary, start, end) {
     if (depth === 0) {
       currentBlock = {
-        type: tag,
+        tag,
         content: '',
         start: end,
         attrs: attrs.reduce(function (cumulated, ref) {
@@ -687,12 +688,12 @@ function parseComponent (content, options) {
       let text = content.slice(currentBlock.start, currentBlock.end)
       // pad content so that linters and pre-processors can output correct
       // line numbers in errors and warnings
-      if (currentBlock.type !== 'template' && options.pad) {
+      if (currentBlock.tag !== 'template' && options.pad) {
         text = padContent(currentBlock, options.pad) + text
       }
 
       // 对于<script name="json">的标签，传参调用函数，其返回结果作为json的内容
-      if (currentBlock.type === 'script' && currentBlock.name === 'json') {
+      if (currentBlock.tag === 'script' && currentBlock.name === 'json') {
         text = mpxJSON.compileMPXJSONText({ source: text, defs, filePath: options.filePath })
       }
       currentBlock.content = text
@@ -1041,6 +1042,52 @@ function processPageStatus (el, options) {
       value: '{{mpxPageStatus}}'
     }])
   }
+}
+
+const genericRE = /^generic:(.+)$/
+
+function processComponentGenericsForWeb (el, options, meta) {
+  if (options.componentGenerics && options.componentGenerics[el.tag]) {
+    const generic = el.tag
+    el.tag = 'component'
+    addAttrs(el, [{
+      name: ':is',
+      value: `generic${generic}`
+    }])
+  }
+
+  let hasGeneric = false
+
+  const genericHash = hash(options.filePath)
+
+  el.attrsList.forEach((attr) => {
+    if (genericRE.test(attr.name)) {
+      getAndRemoveAttr(el, attr.name)
+      addAttrs(el, [{
+        name: attr.name.replace(':', ''),
+        value: attr.value
+      }])
+      hasGeneric = true
+      addGenericInfo(meta, genericHash, attr.value)
+    }
+  })
+
+  if (hasGeneric) {
+    addAttrs(el, [{
+      name: 'generichash',
+      value: genericHash
+    }])
+  }
+}
+
+function addGenericInfo (meta, genericHash, genericValue) {
+  if (!meta.genericsInfo) {
+    meta.genericsInfo = {
+      hash: genericHash,
+      map: {}
+    }
+  }
+  meta.genericsInfo.map[genericValue] = true
 }
 
 function processComponentIs (el, options) {
@@ -1919,6 +1966,7 @@ function processElement (el, root, options, meta) {
     processBuiltInComponents(el, meta)
     // 预处理代码维度条件编译
     processIfForWeb(el)
+    processComponentGenericsForWeb(el, options, meta)
     return
   }
 
