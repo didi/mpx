@@ -230,10 +230,10 @@ function getElement (el) {
 export class MpxScroll {
   constructor (el, options = {}) {
     const defaultOptions = {
-      threshold: 100, // 滑动触发下拉刷新的距离
+      threshold: 60, // 滑动触发下拉刷新的距离
       stop: 60 // 下拉刷新时停留的位置距离屏幕顶部的距离
     }
-    this.ratio = 1
+    this.ratio = 0.65
     this.el = getElement(el)
     this.options = Object.assign({}, defaultOptions, options)
     this.touchstartY = 0
