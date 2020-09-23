@@ -100,6 +100,7 @@ module.exports = function (script, options, callback) {
         BScroll.use(PullDown)
         global.BScroll = BScroll
         global.getApp = function(){}
+        global.getCurrentPages = function(){ return [] }
         global.__networkTimeout = ${JSON.stringify(jsonConfig.networkTimeout)}
         global.__mpxGenericsMap = {}
         global.__tabBar = ${tabBarMapStr}

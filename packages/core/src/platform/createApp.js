@@ -47,6 +47,15 @@ export default function createApp (option, config = {}) {
     global.getApp = function () {
       return appData
     }
+    global.getCurrentPages = function () {
+      if(!window.__mpxRouter) return []
+      return window.__mpxRouter.stack.map(e => {
+        return Object.assign({
+          options: e.vnode.componentInstance,
+          route: e.path
+        }, e)
+      })
+    }
   } else {
     const ctor = config.customCtor || global.currentCtor || App
     ctor(defaultOptions)
