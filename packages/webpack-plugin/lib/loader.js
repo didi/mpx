@@ -214,6 +214,7 @@ module.exports = function (content) {
                   loaderContext,
                   pagesMap,
                   pagesEntryMap: mpx.pagesEntryMap,
+                  pathHash: mpx.pathHash,
                   componentsMap,
                   projectRoot,
                   ctorType
