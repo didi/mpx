@@ -31,8 +31,9 @@ function reLaunch ({ url, params }) {
     }, params || {})
   })
 }
-function switchTab ({ url, params }) {
-  console.warn('快应用需要自己处理custom-tab-bar文件中切换选项，进行渲染')
+
+function switchTab () {
+  console.error(`mpx.switchTab在快应用中请调用this.triggerEvent('switchtab', {path})`)
 }
 export {
   navigateTo,
