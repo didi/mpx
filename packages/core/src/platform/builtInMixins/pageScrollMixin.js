@@ -296,8 +296,23 @@ export class MpxScroll {
   moveBack () {
     const currentHeight = this.progress.offsetHeight
     const { stop, threshold } = this.options
-    const finalDistance = currentHeight >= threshold ? stop : 0
-    this.progress.style.height = finalDistance + 'px'
+    const finalDistance = currentHeight >= threshold
+      ? stop
+      : 0
+    let distance = currentHeight - finalDistance
+    const step = distance / 16
+    const next = () => {
+      window.requestAnimationFrame(() => {
+        distance -= step
+        if (distance > finalDistance) {
+          this.progress.style.height = distance + 'px'
+          next()
+        } else {
+          this.progress.style.height = finalDistance + 'px'
+        }
+      })
+    }
+    next()
   }
 
   useScroll () {
