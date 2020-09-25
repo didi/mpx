@@ -141,7 +141,7 @@
           movable: true,
           startX: this.x,
           startY: this.y,
-          bounce: this.outOfBounds || false,
+          bounce: this.outOfBounds,
           bounceTime: 800 / (this.damping / 20),
           probeType: 3,
           ...this.bsOptions
@@ -242,15 +242,12 @@
       },
       initOptions () {
         if (!this.friction || this.friction < 0) {
-          this.bsOptions = {
-            ...this.bsOptions,
-            friction: 2
-          }
+          this.friction = 2
         }
         if (this.$parent.$attrs && this.$parent.$attrs['scale-area'] === "true") {
           this.bsOptions = {
             ...this.bsOptions,
-            bindToTarget: this.scale ? false : true
+            bindToTarget: !this.scale
           }
         }
         if (this.scale) {
