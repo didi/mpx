@@ -31,15 +31,7 @@ describe('test mpx scroll', () => {
     expect(ms.el).toEqual(document.querySelector('.page'))
   })
 
-  test('startPullDownRefresh', done => {
-    ms.startPullDownRefresh()
-    setTimeout(() => {
-      expect(ms.progress.style.height).toEqual('60px')
-      done()
-    }, 3000)
-  })
-
-  test('stopPullDownRefresh', done => {
+  test('startPullDownRefresh and stopPullDownRefresh', done => {
     ms.startPullDownRefresh()
     setTimeout(() => {
       ms.stopPullDownRefresh()
@@ -54,18 +46,18 @@ describe('test mpx scroll', () => {
     ms.useScroll()
     if (app.$options.__mpxPageConfig.enablePullDownRefresh) {
       ms.usePullDownRefresh()
-      ms.hooks.on('pullingDown', app.__mpxPullDownHandler)
-      expect(ms.hooks.events.pullingDown.length).toEqual(1)
+      ms.hooks.pullingDown.on(app.__mpxPullDownHandler)
+      expect(ms.hooks.pullingDown.disposer.length).toEqual(1)
       expect(ms.eventRegister.disposer.length).toEqual(4)
     } else {
-      expect(ms.hooks.events.pullingDown).toEqual(undefined)
+      expect(ms.hooks.pullingDown.disposer.length).toEqual(0)
       expect(ms.eventRegister.disposer.length).toEqual(1)
     }
   })
 
   test('page destroy', () => {
     ms.destroy()
-    expect(Object.keys(ms.hooks.events).length).toEqual(0)
+    expect(ms.hooks.scroll.disposer.length).toEqual(0)
     expect(ms.eventRegister.disposer.length).toEqual(0)
   })
 })
