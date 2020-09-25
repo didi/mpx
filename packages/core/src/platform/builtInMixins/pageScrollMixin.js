@@ -211,7 +211,6 @@ class ScrollAnimation {
     const scheduler = () => {
       const now = Date.now()
       if (now >= endTime) {
-        callback(endPosition)
         window.cancelAnimationFrame(timer)
         timer = null
         return
