@@ -74,7 +74,6 @@ function showTabBar (options = {}) {
   }
   webHandleFail(rejected, options.fail, options.complete)
   return Promise.reject(rejected)
-
 }
 
 function hideTabBar (options = {}) {
