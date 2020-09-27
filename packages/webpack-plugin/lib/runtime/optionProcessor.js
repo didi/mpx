@@ -82,41 +82,34 @@ export default function processOption (
             window.__mpxRouter.needCache = insertItem
             break
           case 'switch':
-            // 将非tabBar页面remove
-            let tabNode = null
-            const tabBarListMap = tabBarMap.listMap
-            if (!action.switchTabed) {
-              action.switchTabed = true
-              const removeStack = stack.filter((item) => {
-                if (item.path === action.path) {
-                  tabNode = item
-                }
-                return !tabBarListMap[item.path]
-              })
-              window.__mpxRouter.needRemove = removeStack
-              if (tabNode) {
-                window.__mpxRouter.stack = [tabNode]
-              } else {
-                window.__mpxRouter.stack = [insertItem]
-                window.__mpxRouter.needCache = insertItem
-              }
-            }
             if (!action.replaced) {
               action.replaced = true
               return next({
                 path: action.path,
                 replace: true
               })
+            } else {
+              if (!tabBarMap[to.path]) {
+                return next(new Error('SwitchTab:fail can not switch to no-tabBar page!'))
+              }
+              // 将非tabBar页面remove
+              let tabItem = null
+              window.__mpxRouter.needRemove = stack.filter((item) => {
+                if (tabBarMap[item.path]) {
+                  tabItem = item
+                  return true
+                }
+                return false
+              })
+              if (tabItem) {
+                window.__mpxRouter.stack = [tabItem]
+              } else {
+                window.__mpxRouter.stack = [insertItem]
+                window.__mpxRouter.needCache = insertItem
+              }
             }
-
             break
           case 'reLaunch':
-            if (!action.reLaunched) {
-              action.reLaunched = true
-              window.__mpxRouter.needRemove = stack
-              window.__mpxRouter.stack = [insertItem]
-              window.__mpxRouter.needCache = insertItem
-            }
             if (!action.replaced) {
               action.replaced = true
               return next({
@@ -126,6 +119,10 @@ export default function processOption (
                 },
                 replace: true
               })
+            } else {
+              window.__mpxRouter.needRemove = stack
+              window.__mpxRouter.stack = [insertItem]
+              window.__mpxRouter.needCache = insertItem
             }
         }
         next()

@@ -16,7 +16,7 @@ function stopPullDownRefresh (options = {}) {
       if (err) {
         const res = { errMsg: `stopPullDownRefresh:fail ${err}` }
         webHandleFail(res, options.fail, options.complete)
-        !options.fail && reject(res)
+        reject(res)
       } else {
         const res = { errMsg: 'stopPullDownRefresh:ok' }
         webHandleSuccess(res, options.success, options.complete)
@@ -33,7 +33,7 @@ function startPullDownRefresh (options = {}) {
     if (err) {
       const res = { errMsg: `startPullDownRefresh:fail ${err}` }
       webHandleFail(res, options.fail, options.complete)
-      !options.fail && reject(res)
+      reject(res)
     } else {
       const res = { errMsg: 'startPullDownRefresh:ok' }
       webHandleSuccess(res, options.success, options.complete)

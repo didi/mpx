@@ -3,8 +3,7 @@ const loaderUtils = require('loader-utils')
 const normalize = require('../utils/normalize')
 const builtInLoaderPath = normalize.lib('built-in-loader')
 const optionProcessorPath = normalize.lib('runtime/optionProcessor')
-const nativeTabBarPath = normalize.lib('runtime/components/web/mpx-tabbar-container.vue')
-const nativeTabBarComponent = normalize.lib('runtime/components/web/mpx-tabbar.vue')
+const tabBarContainerPath = normalize.lib('runtime/components/web/mpx-tab-bar-container.vue')
 
 function shallowStringify (obj) {
   let arr = []
@@ -33,22 +32,32 @@ module.exports = function (script, options, callback) {
   const i18n = options.i18n
   const jsonConfig = options.jsonConfig
   const tabBarMap = options.tabBarMap
+  const tabBarStr = jsonConfig.tabBarStr
   const genericsInfo = options.genericsInfo
   const componentGenerics = options.componentGenerics
 
+  const emitWarning = (msg) => {
+    loaderContext.emitWarning(
+      new Error('[script processor][' + loaderContext.resource + ']: ' + msg)
+    )
+  }
+
   const stringifyRequest = r => loaderUtils.stringifyRequest(loaderContext, r)
   let tabBarPagesMap = {}
-  let tabBarMapStr = ''
-  if (tabBarMap && Array.isArray(tabBarMap.list) && tabBarMap.list.length && ctorType === 'app') {
-    tabBarPagesMap = tabBarMap.listMap
-    Object.keys(tabBarPagesMap).forEach((item) => {
-      tabBarPagesMap[item] = `()=>import("${tabBarPagesMap[item]}")`
+  if (tabBarMap) {
+    Object.keys(tabBarMap).forEach((pagePath) => {
+      const pageCfg = localPagesMap[pagePath]
+      if (pageCfg) {
+        const pageRequest = stringifyRequest(pageCfg.resource)
+        if (pageCfg.async) {
+          tabBarPagesMap[pagePath] = `()=>import(${pageRequest})`
+        } else {
+          tabBarPagesMap[pagePath] = `getComponent(require(${pageRequest}))`
+        }
+      } else {
+        emitWarning(`TabBar page path ${pagePath} is not exist in local page map, please check!`)
+      }
     })
-    tabBarMapStr = JSON.stringify(tabBarMap)
-    /* eslint-disable no-useless-escape */
-    tabBarMapStr = tabBarMapStr.replace(/"iconPath":"([\w\/\.\-]+[\.png\.jpeg\.gif])"/g, '"iconPath":require("$1")')
-    /* eslint-disable no-useless-escape */
-    tabBarMapStr = tabBarMapStr.replace(/"selectedIconPath":"([\w\/\.\-]+[\.png\.jpeg\.gif])"/g, '"selectedIconPath":require("$1")')
   }
 
   let output = '/* script */\n'
@@ -101,7 +110,9 @@ module.exports = function (script, options, callback) {
   global.getApp = function(){}
   global.__networkTimeout = ${JSON.stringify(jsonConfig.networkTimeout)}
   global.__mpxGenericsMap = {}
-  global.__tabBar = ${tabBarMapStr}
+  global.__tabBar = ${tabBarStr}
+  global.__tabBar.isShow = true
+  Vue.observable(global.__tabBar)
   global.__tabBarPagesMap = ${shallowStringify(tabBarPagesMap)}
   global.__style = ${JSON.stringify(jsonConfig.style || 'v1')}
   global.__mpxPageConfig = ${JSON.stringify(jsonConfig.window)}\n`
@@ -130,32 +141,21 @@ module.exports = function (script, options, callback) {
       Object.keys(localPagesMap).forEach((pagePath) => {
         const pageCfg = localPagesMap[pagePath]
         const pageRequest = stringifyRequest(pageCfg.resource)
-        if (pageCfg.async) {
-          if (tabBarPagesMap[pagePath]) {
-            // 如果是 tabBar 对应的页面
-            pagesMap[pagePath] = `()=>import("${nativeTabBarPath}")`
-          } else {
-            pagesMap[pagePath] = `()=>import(${pageRequest})`
-          }
+        if (tabBarMap[pagePath]) {
+          pagesMap[pagePath] = `getComponent(require(${stringifyRequest(tabBarContainerPath)}), true)`
         } else {
-          // 为了保持小程序中app->page->component的js执行顺序，所有的page和component都改为require引入
-          if (tabBarPagesMap[pagePath]) {
-            // 如果是 tabBar 对应的页面
-            pagesMap[pagePath] = `getComponent(require("${nativeTabBarPath}"))`
+          if (pageCfg.async) {
+            pagesMap[pagePath] = `()=>import(${pageRequest})`
           } else {
+            // 为了保持小程序中app->page->component的js执行顺序，所有的page和component都改为require引入
             pagesMap[pagePath] = `getComponent(require(${pageRequest}))`
           }
         }
+
         if (pageCfg.isFirst) {
           firstPage = pagePath
         }
       })
-
-      if (tabBarMap && tabBarMap.custom) {
-        componentsMap['custom-tab-bar'] = `getComponent(require("./custom-tab-bar/index.mpx?component=true"))`
-      } else if (tabBarMap) {
-        componentsMap['custom-tab-bar'] = `getComponent(require("${nativeTabBarComponent}"))`
-      }
 
       Object.keys(localComponentsMap).forEach((componentName) => {
         const componentCfg = localComponentsMap[componentName]

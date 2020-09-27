@@ -7,6 +7,16 @@ if (window.__mpxRouter) {
       return reLaunch
     }
   })
+
+  Object.defineProperty(window.__mpxRouter, 'switchTab', {
+    get () {
+      return switchTab
+    }
+  })
+
+  window.__mpxRouter.onError((e) => {
+    console.error(e)
+  })
 }
 
 function redirectTo (options = {}) {
@@ -26,7 +36,7 @@ function redirectTo (options = {}) {
         err => {
           const res = { errMsg: `redirectTo:fail ${err}` }
           webHandleFail(res, options.fail, options.complete)
-          !options.fail && reject(res)
+          reject(res)
         }
       )
     })
@@ -50,7 +60,7 @@ function navigateTo (options = {}) {
         err => {
           const res = { errMsg: err }
           webHandleFail(res, options.fail, options.complete)
-          !options.fail && reject(res)
+          reject(res)
         }
       )
     })
@@ -81,8 +91,7 @@ function reLaunch (options = {}) {
       type: 'reLaunch',
       path: options.url,
       reLaunchCount: ++reLaunchCount,
-      replaced: false,
-      reLaunched: false
+      replaced: false
     }
     // 在需要操作后退时，先操作后退，在beforeEach中基于当前action通过next()进行replace操作，避免部分浏览器的表现不一致
     if (delta > 0) {
@@ -104,39 +113,25 @@ function reLaunch (options = {}) {
 
 function switchTab (options = {}) {
   const router = window.__mpxRouter
-  const tabBarList = (window.__tabBar && window.__tabBar.list) || []
-  const toUrl = options.url
-  const delta = router.stack.length - 1
-  let isToTabPage = false
-  tabBarList.forEach((item) => {
-    if (toUrl.indexOf(item.pagePath) > -1) {
-      isToTabPage = true
+  if (router) {
+    const delta = router.stack.length - 1
+    router.__mpxAction = {
+      type: 'switch',
+      path: options.url,
+      replaced: false
     }
-  })
-  if (!isToTabPage) {
-    // 跳转页面非 tabBar 页面，无法跳转
-    const res = { errMsg: 'switchTab:fail can not switch to no-tabBar page' }
-    return Promise.reject(res)
+    if (delta > 0) {
+      router.go(-delta)
+    } else {
+      router.__mpxAction.replaced = true
+      router.replace({
+        path: options.url
+      })
+    }
+    const res = { errMsg: 'switchTab:ok' }
+    webHandleSuccess(res, options.success, options.complete)
+    return Promise.resolve(res)
   }
-
-  router.__mpxAction = {
-    type: 'switch',
-    path: options.url,
-    replaced: false,
-    switchTabed: false
-  }
-  if (delta > 0) {
-    console.log('router go', -delta)
-    router.go(-delta)
-  } else {
-    router.__mpxAction.replaced = true
-    router.replace({
-      path: options.url
-    })
-  }
-  const res = { errMsg: 'switchTab:ok' }
-  webHandleSuccess(res, options.success, options.complete)
-  return Promise.resolve(res)
 }
 
 export {
