@@ -1988,7 +1988,7 @@ function processElement (el, root, options, meta) {
     processShow(el, options, root)
   }
 
-  if (mode === 'ali') {
+  if (transAli) {
     processAliStyleClassHack(el, options, root)
   }
 

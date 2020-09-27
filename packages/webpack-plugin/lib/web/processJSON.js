@@ -66,8 +66,16 @@ module.exports = function (json, options, rawCallback) {
     return loaderContext.resolve(context, request, callback)
   }
 
+  const defaultTabbar = {
+    borderStyle: 'black',
+    position: 'bottom',
+    custom: false,
+    isShow: true
+  }
+
   const processTabBar = (tabBar, callback) => {
     if (tabBar) {
+      tabBar = Object.assign({}, defaultTabbar, tabBar)
       tabBarMap = {}
       jsonObj.tabBar.list.forEach((item) => {
         tabBarMap['/' + item.pagePath] = true
@@ -75,7 +83,7 @@ module.exports = function (json, options, rawCallback) {
       tabBarStr = JSON.stringify(tabBar)
       tabBarStr = tabBarStr.replace(/"(iconPath|selectedIconPath)":"([^"]+)"/g, function (matched, $1, $2) {
         if (isUrlRequest($2, projectRoot)) {
-          return `"${$1}":require("${loaderUtils.urlToRequest($1, projectRoot)}")`
+          return `"${$1}":require("${loaderUtils.urlToRequest($2, projectRoot)}")`
         }
         return matched
       })

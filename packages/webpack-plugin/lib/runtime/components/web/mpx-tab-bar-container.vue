@@ -1,6 +1,6 @@
 <template>
   <div>
-    <mpx-tab-bar v-show="showTabbar" ref="tabBar" :current="currentIndex" @change="itemChange"></mpx-tab-bar>
+    <mpx-tab-bar v-show="showTabbar" ref="tabBar" :currentIndex="currentIndex" @change="itemChange"></mpx-tab-bar>
     <keep-alive>
       <component ref="tabBarPage" :is="currentComponent"></component>
     </keep-alive>
@@ -51,10 +51,10 @@
     },
     methods: {
       itemChange (item, index) {
-        const router = window.__mpxRouter
-        if (router && router.switchTab) {
+        const mpx = window.__mpx
+        if (mpx && mpx.switchTab) {
           const pagePath = '/' + tabBar.list[index].pagePath
-          router.switchTab({
+          mpx.switchTab({
             url: pagePath
           })
         } else {

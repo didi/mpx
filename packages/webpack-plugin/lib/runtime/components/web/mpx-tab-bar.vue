@@ -54,7 +54,7 @@
         })])
       return createElement('div',
         {
-          class: 'mpx-tab-bar-container',
+          class: 'mpx-tab-bar',
           style: this.wrapperStyle,
         },
         [tabBarWrapper]
@@ -64,7 +64,7 @@
 </script>
 
 <style lang="stylus" rel="stylesheet/stylus">
-  .mpx-tab-bar-container
+  .mpx-tab-bar
     position: fixed
     left: 0
     right: 0

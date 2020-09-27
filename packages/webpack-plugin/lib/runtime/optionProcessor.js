@@ -89,17 +89,14 @@ export default function processOption (
                 replace: true
               })
             } else {
-              if (!tabBarMap[to.path]) {
-                return next(new Error('SwitchTab:fail can not switch to no-tabBar page!'))
-              }
               // 将非tabBar页面remove
               let tabItem = null
               window.__mpxRouter.needRemove = stack.filter((item) => {
                 if (tabBarMap[item.path]) {
                   tabItem = item
-                  return true
+                  return false
                 }
-                return false
+                return true
               })
               if (tabItem) {
                 window.__mpxRouter.stack = [tabItem]
@@ -131,10 +128,13 @@ export default function processOption (
       document.addEventListener('visibilitychange', function () {
         const vnode = window.__mpxRouter.__mpxActiveVnode
         if (vnode && vnode.componentInstance) {
-          if (document.hidden) {
-            vnode.componentInstance.onHide && vnode.componentInstance.onHide()
-          } else {
-            vnode.componentInstance.onShow && vnode.componentInstance.onShow()
+          const currentPage = vnode.tag.endsWith('mpx-tab-bar-container') ? vnode.componentInstance.$refs.tabBarPage : vnode.componentInstance
+          if (currentPage) {
+            if (document.hidden) {
+              currentPage.onHide && currentPage.onHide()
+            } else {
+              currentPage.onShow && currentPage.onShow()
+            }
           }
         }
       })
@@ -198,9 +198,9 @@ registered in parent context!`)
   return option
 }
 
-export function getComponent (component, isBulitIn) {
+export function getComponent (component, extendOptions) {
   component = component.__esModule ? component.default : component
   // eslint-disable-next-line
-  if (isBulitIn) component.__mpx_built_in__ = true
+  if (extendOptions) Object.assign(component, extendOptions)
   return component
 }
