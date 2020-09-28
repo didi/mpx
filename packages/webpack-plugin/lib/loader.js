@@ -243,7 +243,7 @@ module.exports = function (content) {
               mpxCid: resourceQueryObj.mpxCid,
               tabBarMap: jsonRes.tabBarMap,
               tabBarStr: jsonRes.tabBarStr,
-              builtInComponentsMap: Object.assign(templateRes.builtInComponentsMap, jsonRes.builtInComponentsMap),
+              builtInComponentsMap: templateRes.builtInComponentsMap,
               genericsInfo: templateRes.genericsInfo,
               localComponentsMap: jsonRes.localComponentsMap,
               localPagesMap: jsonRes.localPagesMap

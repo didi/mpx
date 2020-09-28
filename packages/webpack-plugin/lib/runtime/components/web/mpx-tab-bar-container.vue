@@ -11,7 +11,9 @@
   const tabBar = window.__tabBar
   const tabBarPagesMap = window.__tabBarPagesMap
 
-  const components = {}
+  const components = {
+    'mpx-tab-bar': tabBarPagesMap['mpx-tab-bar']
+  }
   tabBar.list.forEach((item) => {
     const path = item.pagePath
     const name = path.replace('/', '-')
