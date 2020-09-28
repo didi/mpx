@@ -84,10 +84,7 @@ describe('test toast', () => {
     const toast = document.body.lastChild
     const icon = toast.lastChild.firstChild
 
-    expect(icon).toHaveAttribute('class', expect.not.stringContaining('hide'))
-    expect(icon).toHaveAttribute('class', expect.not.stringContaining('success'))
-    expect(icon).toHaveAttribute('class', expect.stringContaining('loading'))
-    expect(icon).toHaveAttribute('style', '')
+    expect(icon).toHaveAttribute('class', expect.stringContaining('__mpx_loading_wrapper__'))
   })
 
   test('should show mask', done => {
