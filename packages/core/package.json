@@ -18,7 +18,7 @@
     "@types"
   ],
   "dependencies": {
-    "miniprogram-api-typings": "^2.8.3"
+    "miniprogram-api-typings": "^3.0.2"
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org"
