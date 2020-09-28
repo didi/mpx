@@ -82,41 +82,31 @@ export default function processOption (
             window.__mpxRouter.needCache = insertItem
             break
           case 'switch':
-            // 将非tabBar页面remove
-            let tabNode = null
-            const tabBarListMap = tabBarMap.listMap
-            if (!action.switchTabed) {
-              action.switchTabed = true
-              const removeStack = stack.filter((item) => {
-                if (item.path === action.path) {
-                  tabNode = item
-                }
-                return !tabBarListMap[item.path]
-              })
-              window.__mpxRouter.needRemove = removeStack
-              if (tabNode) {
-                window.__mpxRouter.stack = [tabNode]
-              } else {
-                window.__mpxRouter.stack = [insertItem]
-                window.__mpxRouter.needCache = insertItem
-              }
-            }
             if (!action.replaced) {
               action.replaced = true
               return next({
                 path: action.path,
                 replace: true
               })
+            } else {
+              // 将非tabBar页面remove
+              let tabItem = null
+              window.__mpxRouter.needRemove = stack.filter((item) => {
+                if (tabBarMap[item.path]) {
+                  tabItem = item
+                  return false
+                }
+                return true
+              })
+              if (tabItem) {
+                window.__mpxRouter.stack = [tabItem]
+              } else {
+                window.__mpxRouter.stack = [insertItem]
+                window.__mpxRouter.needCache = insertItem
+              }
             }
-
             break
           case 'reLaunch':
-            if (!action.reLaunched) {
-              action.reLaunched = true
-              window.__mpxRouter.needRemove = stack
-              window.__mpxRouter.stack = [insertItem]
-              window.__mpxRouter.needCache = insertItem
-            }
             if (!action.replaced) {
               action.replaced = true
               return next({
@@ -126,6 +116,10 @@ export default function processOption (
                 },
                 replace: true
               })
+            } else {
+              window.__mpxRouter.needRemove = stack
+              window.__mpxRouter.stack = [insertItem]
+              window.__mpxRouter.needCache = insertItem
             }
         }
         next()
@@ -134,10 +128,13 @@ export default function processOption (
       document.addEventListener('visibilitychange', function () {
         const vnode = window.__mpxRouter.__mpxActiveVnode
         if (vnode && vnode.componentInstance) {
-          if (document.hidden) {
-            vnode.componentInstance.onHide && vnode.componentInstance.onHide()
-          } else {
-            vnode.componentInstance.onShow && vnode.componentInstance.onShow()
+          const currentPage = vnode.tag.endsWith('mpx-tab-bar-container') ? vnode.componentInstance.$refs.tabBarPage : vnode.componentInstance
+          if (currentPage) {
+            if (document.hidden) {
+              currentPage.onHide && currentPage.onHide()
+            } else {
+              currentPage.onShow && currentPage.onShow()
+            }
           }
         }
       })
@@ -201,9 +198,9 @@ registered in parent context!`)
   return option
 }
 
-export function getComponent (component, isBulitIn) {
+export function getComponent (component, extendOptions) {
   component = component.__esModule ? component.default : component
   // eslint-disable-next-line
-  if (isBulitIn) component.__mpx_built_in__ = true
+  if (extendOptions) Object.assign(component, extendOptions)
   return component
 }

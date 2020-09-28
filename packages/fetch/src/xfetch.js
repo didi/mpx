@@ -35,6 +35,7 @@ export default class XFetch {
 
   fetch (config, priority) {
     // const request = () => this.queue.request(config, priority)
+    config.timeout = config.timeout || global.__networkTimeout
     const request = () => this.adapter(config)
     // middleware chain
     const chain = []
