@@ -253,7 +253,7 @@ function walkChildren (vm, selector, context, result, all) {
   if (vm.$children && vm.$children.length) {
     for (let i = 0; i < vm.$children.length; i++) {
       const child = vm.$children[i]
-      if (child.$vnode.context === context && !child.$options.__mpx_built_in__) {
+      if (child.$vnode.context === context && !child.$options.__mpxBuiltIn) {
         const identifier = getIdentifier(child.$vnode)
         // todo 这里暂时只支持静态类，且只支持单个选择器，更复杂的需求建议用refs实现
         if (identifier.indexOf(selector) > -1) {
@@ -268,7 +268,7 @@ function walkChildren (vm, selector, context, result, all) {
 
 function getEl (ref) {
   if (ref && ref.nodeType === 1) return ref
-  if (ref && ref.$options && ref.$options.__mpx_built_in__) return ref.$el
+  if (ref && ref.$options && ref.$options.__mpxBuiltIn) return ref.$el
 }
 
 function processRefs (refs) {
