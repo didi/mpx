@@ -63,7 +63,7 @@ module.exports = function (content) {
   if (pagesMap[resourcePath]) {
     // page
     ctorType = 'page'
-  } else if (componentsMap[resourcePath] || resourcePath.indexOf('src/custom-tab-bar') > -1) {
+  } else if (componentsMap[resourcePath]) {
     // component
     ctorType = 'component'
   }
@@ -94,7 +94,12 @@ module.exports = function (content) {
     options.cssSourceMap !== false
   )
 
-  const parts = parseComponent(content, filePath, this.sourceMap, mode, defs)
+  const parts = parseComponent(content, {
+    filePath,
+    needMap: this.sourceMap,
+    mode,
+    defs
+  })
 
   let output = ''
   const callback = this.async()
@@ -125,12 +130,17 @@ module.exports = function (content) {
 
       let usingComponents = [].concat(Object.keys(mpx.usingComponents))
 
+      let componentGenerics = {}
+
       if (parts.json && parts.json.content) {
         try {
           let ret = JSON5.parse(parts.json.content)
           if (ret.usingComponents) {
             fixUsingComponent(ret.usingComponents, mode)
             usingComponents = usingComponents.concat(Object.keys(ret.usingComponents))
+          }
+          if (ret.componentGenerics) {
+            componentGenerics = Object.assign({}, ret.componentGenerics)
           }
         } catch (e) {
           return callback(e)
@@ -186,6 +196,7 @@ module.exports = function (content) {
                   loaderContext,
                   ctorType,
                   usingComponents,
+                  componentGenerics,
                   checkUsingComponents: mpx.checkUsingComponents
                 }, callback)
               },
@@ -203,9 +214,9 @@ module.exports = function (content) {
                   loaderContext,
                   pagesMap,
                   pagesEntryMap: mpx.pagesEntryMap,
+                  pathHash: mpx.pathHash,
                   componentsMap,
-                  projectRoot,
-                  ctorType
+                  projectRoot
                 }, callback)
               }
             ], (err, res) => {
@@ -227,10 +238,13 @@ module.exports = function (content) {
               isProduction,
               getRequireForSrc,
               i18n,
+              componentGenerics,
               jsonConfig: jsonRes.jsonObj,
               mpxCid: resourceQueryObj.mpxCid,
-              tabBarMap: jsonRes.jsonObj.tabBar,
-              builtInComponentsMap: templateRes.builtInComponentsMap,
+              tabBarMap: jsonRes.tabBarMap,
+              tabBarStr: jsonRes.tabBarStr,
+              builtInComponentsMap: Object.assign(templateRes.builtInComponentsMap, jsonRes.builtInComponentsMap),
+              genericsInfo: templateRes.genericsInfo,
               localComponentsMap: jsonRes.localComponentsMap,
               localPagesMap: jsonRes.localPagesMap
             }, callback)

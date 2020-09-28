@@ -9,11 +9,12 @@ module.exports = function (template, options, callback) {
   const loaderContext = options.loaderContext
   const ctorType = options.ctorType
   const builtInComponentsMap = {}
+  let genericsInfo
   let output = '/* template */\n'
 
   if (ctorType === 'app') {
     template = {
-      type: 'template',
+      tag: 'template',
       content: '<div class="app"><mpx-keep-alive><router-view class="page"></router-view></mpx-keep-alive></div>'
     }
     builtInComponentsMap['mpx-keep-alive'] = {
@@ -51,6 +52,7 @@ module.exports = function (template, options, callback) {
           srcMode: templateSrcMode,
           defs,
           usingComponents: options.usingComponents,
+          componentGenerics: options.componentGenerics,
           // web模式下全局组件不会被合入usingComponents中，故globalComponents可以传空
           globalComponents: [],
           checkUsingComponents: options.checkUsingComponents
@@ -62,6 +64,10 @@ module.exports = function (template, options, callback) {
             }
           })
         }
+        if (parsed.meta.genericsInfo) {
+          genericsInfo = parsed.meta.genericsInfo
+        }
+
         return templateCompiler.serialize(parsed.root)
       }
     })
@@ -70,6 +76,7 @@ module.exports = function (template, options, callback) {
 
   callback(null, {
     output,
-    builtInComponentsMap
+    builtInComponentsMap,
+    genericsInfo
   })
 }
