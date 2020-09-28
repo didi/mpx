@@ -10,7 +10,7 @@ createApp(options)
 - **参数：**
     - `{Object} options`
     
-        可指定小程序的生命周期回调，methods 方法，以及一些全局变量等 
+        可指定小程序的生命周期回调，以及一些全局变量等 
             
 
 - **示例：**
@@ -24,7 +24,6 @@ mpx.createApp({
   onShow () {
     console.log('Page show')
   },
-  methods: {},
   //全局变量 可通过getApp()访问
   globalDataA: 'I am global dataA',
   globalDataB: 'I am global dataB'
@@ -302,7 +301,7 @@ createStoreWithThis(object)
 - **示例：**
 ```js
 
-import {createComponent, getComputed, getMixin, createStoreWithThis} from '@mpxjs/core
+import {createComponent, getMixin, createStoreWithThis} from '@mpxjs/core
 
 const store = createStoreWithThis({
   state: {
@@ -332,9 +331,8 @@ createComponent({
       return this.b
     },
     d() {
-      // 在computed中访问当前computed对象中的其他计算属性时，需要用getComputed辅助函数包裹，
-      // 而除此以外的任何场景下都不需要使用，例如访问data或者mixins中定义的computed等数据
-      return getComputed(this.c) + this.a + this.aaa
+      // data, mixin, computed中定义的数据能够被推导到this中
+      return this.a + this.aaa + this.c
     },
     // 从store上map过来的计算属性或者方法同样能够被推导到this中
     ...store.mapState(['aa'])
@@ -556,34 +554,6 @@ createComponent({
 28
 2 "attached"
 */
-```
-
-## getComputed
-
-- **参数**：
-  - `{Function} computedItem`
-
-- **用法**:
-
-Typescript 类型推导辅助函数。在 computed 中访问当前 computed 对象中的其他计算属性时，需要用 getComputed 辅助函数包裹。
-
-```js
-import {createComponent, getComputed} from '@mpxjs/core'
-
-createComponent({
-  data: {
-    a: 1,
-    b: '2'
-  },
-  computed: {
-    c() {
-      return this.b
-    },
-    d() {
-      return getComputed(this.c) + this.a + this.a
-    },
-  }
-})
 ```
 
 ## implement
