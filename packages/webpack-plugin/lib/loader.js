@@ -63,7 +63,7 @@ module.exports = function (content) {
   if (pagesMap[resourcePath]) {
     // page
     ctorType = 'page'
-  } else if (componentsMap[resourcePath] || resourcePath.indexOf('src/custom-tab-bar') > -1) {
+  } else if (componentsMap[resourcePath]) {
     // component
     ctorType = 'component'
   }
@@ -216,8 +216,7 @@ module.exports = function (content) {
                   pagesEntryMap: mpx.pagesEntryMap,
                   pathHash: mpx.pathHash,
                   componentsMap,
-                  projectRoot,
-                  ctorType
+                  projectRoot
                 }, callback)
               }
             ], (err, res) => {
@@ -242,8 +241,9 @@ module.exports = function (content) {
               componentGenerics,
               jsonConfig: jsonRes.jsonObj,
               mpxCid: resourceQueryObj.mpxCid,
-              tabBarMap: jsonRes.jsonObj.tabBar,
-              builtInComponentsMap: templateRes.builtInComponentsMap,
+              tabBarMap: jsonRes.tabBarMap,
+              tabBarStr: jsonRes.tabBarStr,
+              builtInComponentsMap: Object.assign(templateRes.builtInComponentsMap, jsonRes.builtInComponentsMap),
               genericsInfo: templateRes.genericsInfo,
               localComponentsMap: jsonRes.localComponentsMap,
               localPagesMap: jsonRes.localPagesMap
