@@ -151,7 +151,7 @@ module.exports = function (script, options, callback) {
       Object.keys(localPagesMap).forEach((pagePath) => {
         const pageCfg = localPagesMap[pagePath]
         const pageRequest = stringifyRequest(pageCfg.resource)
-        if (tabBarMap[pagePath]) {
+        if (tabBarMap && tabBarMap[pagePath]) {
           pagesMap[pagePath] = `getComponent(require(${stringifyRequest(tabBarContainerPath)}), { __mpxBuiltIn: true })`
         } else {
           if (pageCfg.async) {
