@@ -1,7 +1,6 @@
 const async = require('async')
 const JSON5 = require('json5')
 const path = require('path')
-const hash = require('hash-sum')
 const SingleEntryPlugin = require('webpack/lib/SingleEntryPlugin')
 const loaderUtils = require('loader-utils')
 const parseComponent = require('../parser')
@@ -14,16 +13,17 @@ const toPosix = require('../utils/to-posix')
 const fixUsingComponent = require('../utils/fix-using-component')
 const getRulesRunner = require('../platform/index')
 const isUrlRequest = require('../utils/is-url-request')
-const getPageName = require('../utils/get-page-name')
 const addQuery = require('../utils/add-query')
 const readJsonForSrc = require('../utils/read-json-for-src')
+const getMainCompilation = require('../utils/get-main-compilation')
 
 module.exports = function (raw = '{}') {
   // 该loader中会在每次编译中动态添加entry，不能缓存，否则watch不好使
   this.cacheable(false)
   const nativeCallback = this.async()
   const options = loaderUtils.getOptions(this) || {}
-  const mpx = this._compilation.__mpx__
+  const mainCompilation = getMainCompilation(this._compilation)
+  const mpx = mainCompilation.__mpx__
 
   const emitWarning = (msg) => {
     this.emitWarning(
@@ -52,6 +52,7 @@ module.exports = function (raw = '{}') {
   const localSrcMode = loaderUtils.parseQuery(this.resourceQuery || '?').mode
   const resolveMode = mpx.resolveMode
   const externals = mpx.externals
+  const pathHash = mpx.pathHash
   const resourcePath = parseRequest(this.resource).resourcePath
   const isApp = !(pagesMap[resourcePath] || componentsMap[resourcePath])
   const publicPath = this._compilation.outputOptions.publicPath || ''
@@ -270,10 +271,10 @@ module.exports = function (raw = '{}') {
             }
           }
           let relativePath = path.relative(root, resourceName)
-          outputPath = path.join('components', name + hash(root), relativePath)
+          outputPath = path.join('components', name + pathHash(root), relativePath)
         } else {
           let componentName = parsed.name
-          outputPath = path.join('components', componentName + hash(resourcePath), componentName)
+          outputPath = path.join('components', componentName + pathHash(resourcePath), componentName)
         }
       }
       const packageInfo = mpx.getPackageInfo(resource, {
@@ -356,7 +357,12 @@ module.exports = function (raw = '{}') {
               const filePath = result
               const extName = path.extname(filePath)
               if (extName === '.mpx' || extName === '.vue') {
-                const parts = parseComponent(content, filePath, this.sourceMap, mode, defs)
+                const parts = parseComponent(content, {
+                  filePath,
+                  needMap: this.sourceMap,
+                  mode,
+                  defs
+                })
                 const json = parts.json || {}
                 if (json.content) {
                   content = json.content
@@ -465,6 +471,11 @@ module.exports = function (raw = '{}') {
         })
       }
       callback()
+    }
+
+    const getPageName = (resourcePath, ext) => {
+      const baseName = path.basename(resourcePath, ext)
+      return path.join('pages', baseName + pathHash(resourcePath), baseName)
     }
 
     const processPages = (pages, srcRoot = '', tarRoot = '', context, callback) => {

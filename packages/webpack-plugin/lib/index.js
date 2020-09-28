@@ -24,6 +24,7 @@ const parseRequest = require('./utils/parse-request')
 const matchCondition = require('./utils/match-condition')
 const parseAsset = require('./utils/parse-asset')
 const { preProcessDefs } = require('./utils/index')
+const hash = require('hash-sum')
 
 const isProductionLikeMode = options => {
   return options.mode === 'production' || !options.mode
@@ -143,6 +144,7 @@ class MpxWebpackPlugin {
     // 控制warn冗余组件注册
     options.checkUsingComponents = options.checkUsingComponents || false
     options.reportSize = options.reportSize || null
+    options.pathHashMode = options.pathHashMode || 'absolute'
     this.options = options
   }
 
@@ -349,6 +351,12 @@ class MpxWebpackPlugin {
           appTitle: 'Mpx homepage',
           attributes: this.options.attributes,
           externals: this.options.externals,
+          pathHash: (resourcePath) => {
+            if (this.options.pathHashMode === 'relative' && this.options.projectRoot) {
+              return hash(path.relative(this.options.projectRoot, resourcePath))
+            }
+            return hash(resourcePath)
+          },
           extract: (content, file, index, sideEffects) => {
             additionalAssets[file] = additionalAssets[file] || []
             if (!additionalAssets[file][index]) {
@@ -776,8 +784,8 @@ class MpxWebpackPlugin {
             source.add('var context = (function() { return this })() || Function("return this")();\n')
             source.add(`
 // Fix babel runtime in some quirky environment like ali & qq dev.
-if(!context.console) {
-  try {
+try {
+  if(!context.console){
     context.console = console;
     context.setInterval = setInterval;
     context.setTimeout = setTimeout;
@@ -796,22 +804,30 @@ if(!context.console) {
     context.Uint8Array = Uint8Array;
     context.DataView = DataView;
     context.ArrayBuffer = ArrayBuffer;
-    context.Symbol = Symbol;
-  } catch(e){
+    context.Symbol = Symbol; 
   }
+} catch(e){
 }
-\n`)
-            source.add('// swan && pc runtime fix\n' +
-              'if (!context.navigator) {\n' +
-              '  context.navigator = {};\n' +
-              '}\n' +
-              'Object.defineProperty(context.navigator, "standalone",{\n' +
-              '  configurable: true,' +
-              '  enumerable: true,' +
-              '  get () {\n' +
-              '    return true;\n' +
-              '  }\n' +
-              '});\n\n')
+// swan && pc runtime fix
+try {
+  if (!context.navigator) {
+    Object.defineProperty(context, "navigator",{
+      configurable: true,
+      enumerable: true,
+      get () {
+        return {};
+      }
+    });
+  }
+  Object.defineProperty(context.navigator, "standalone",{
+    configurable: true,
+    enumerable: true,
+    get () {
+      return true;
+    }
+  }); 
+} catch(e){
+}\n`)
             source.add(originalSource)
             source.add(`\nmodule.exports = window[${JSON.stringify(jsonpFunction)}];\n`)
           } else {
