@@ -1,9 +1,11 @@
 const genComponentTag = require('../utils/gen-component-tag')
 const loaderUtils = require('loader-utils')
+const addQuery = require('../utils/add-query')
 const normalize = require('../utils/normalize')
 const builtInLoaderPath = normalize.lib('built-in-loader')
 const optionProcessorPath = normalize.lib('runtime/optionProcessor')
 const tabBarContainerPath = normalize.lib('runtime/components/web/mpx-tab-bar-container.vue')
+const tabBarPath = normalize.lib('runtime/components/web/mpx-tab-bar.vue')
 
 function shallowStringify (obj) {
   let arr = []
@@ -31,6 +33,7 @@ module.exports = function (script, options, callback) {
   const getRequireForSrc = options.getRequireForSrc
   const i18n = options.i18n
   const jsonConfig = options.jsonConfig
+  const tabBar = jsonConfig.tabBar
   const tabBarMap = options.tabBarMap
   const tabBarStr = options.tabBarStr
   const genericsInfo = options.genericsInfo
@@ -44,7 +47,11 @@ module.exports = function (script, options, callback) {
 
   const stringifyRequest = r => loaderUtils.stringifyRequest(loaderContext, r)
   let tabBarPagesMap = {}
-  if (tabBarMap) {
+  if (tabBar && tabBarMap) {
+    // 挂载tabBar组件
+    const tabBarRequest = stringifyRequest(addQuery(tabBar.custom ? './custom-tab-bar/index' : tabBarPath, { component: true }))
+    tabBarPagesMap['mpx-tab-bar'] = `getComponent(require(${tabBarRequest}))`
+    // 挂载tabBar页面
     Object.keys(tabBarMap).forEach((pagePath) => {
       const pageCfg = localPagesMap[pagePath]
       if (pageCfg) {

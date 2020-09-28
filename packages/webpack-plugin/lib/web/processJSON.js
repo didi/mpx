@@ -8,8 +8,6 @@ const addQuery = require('../utils/add-query')
 const parseComponent = require('../parser')
 const readJsonForSrc = require('../utils/read-json-for-src')
 const isUrlRequest = require('../utils/is-url-request')
-const normalize = require('../utils/normalize')
-const tabBarPath = normalize.lib('runtime/components/web/mpx-tab-bar.vue')
 
 module.exports = function (json, options, rawCallback) {
   const mode = options.mode
@@ -23,7 +21,6 @@ module.exports = function (json, options, rawCallback) {
   const pathHash = options.pathHash
   const localPagesMap = {}
   const localComponentsMap = {}
-  const builtInComponentsMap = {}
   let output = '/* json */\n'
   let jsonObj = {}
   let tabBarMap
@@ -36,13 +33,14 @@ module.exports = function (json, options, rawCallback) {
     )
   }
 
+  const stringifyRequest = r => loaderUtils.stringifyRequest(loaderContext, r)
+
   const callback = (err) => {
     return rawCallback(err, {
       output,
       jsonObj,
       localPagesMap,
       localComponentsMap,
-      builtInComponentsMap,
       tabBarMap,
       tabBarStr
     })
@@ -83,13 +81,10 @@ module.exports = function (json, options, rawCallback) {
       tabBarStr = JSON.stringify(tabBar)
       tabBarStr = tabBarStr.replace(/"(iconPath|selectedIconPath)":"([^"]+)"/g, function (matched, $1, $2) {
         if (isUrlRequest($2, projectRoot)) {
-          return `"${$1}":require("${loaderUtils.urlToRequest($2, projectRoot)}")`
+          return `"${$1}":require(${stringifyRequest(loaderUtils.urlToRequest($2, projectRoot))})`
         }
         return matched
       })
-      builtInComponentsMap['mpx-tab-bar'] = {
-        resource: addQuery(tabBar.custom ? './custom-tab-bar/index' : tabBarPath, { component: true })
-      }
     }
     callback()
   }
