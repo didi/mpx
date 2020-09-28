@@ -32,7 +32,7 @@ export default class Toast {
         this.title = createDom('div', { class: '__mpx_toast_title__' })
       ])
     ])
-    
+
     // loading animation dom
     this.loading = createDom('div', { class: '__mpx_loading_wrapper__' }, Array.from({ length: 12 }, (_, i) => {
       return createDom('div', { class: `line${i + 1}` })
