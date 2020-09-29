@@ -1,3 +1,4 @@
+import { error } from '../../helper/log'
 import { getOffsetTop, getElement, getScrollTop, preventDefault } from './dom'
 import EventEmitter from './EventEmitter'
 import EventRegister from './EventRegister'
@@ -43,6 +44,8 @@ export default class MpxScroll {
   }
 
   usePullDownRefresh () {
+    // fix lint
+    const IntersectionObserver = window.IntersectionObserver
     const ob = this.intersectionOb = new IntersectionObserver(changes => {
       const [change] = changes
       const isIntersecting = change.isIntersecting

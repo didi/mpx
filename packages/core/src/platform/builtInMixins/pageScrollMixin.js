@@ -1,5 +1,5 @@
 import { error } from '../../helper/log'
-import MpxScroll from '@mpxjs/core/src/helper/MpxScroll'
+import MpxScroll from '../../helper/MpxScroll'
 import { getScrollTop } from '../../helper/MpxScroll/dom'
 
 let ms
@@ -69,7 +69,7 @@ export default function pageScrollMixin (mixinType) {
             window.scrollTo(0, distance)
           })
         })
-        
+
         if (this.onPageScroll || this.onReachBottom) {
           ms.useScroll()
           ms.hooks.scroll.on(this.__mpxPageScrollHandler)

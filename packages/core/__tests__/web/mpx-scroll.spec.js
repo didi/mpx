@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom/extend-expect'
-import { MpxScroll } from '../../src/platform/builtInMixins/pageScrollMixin'
+import MpxScroll from '../../src/helper/MpxScroll/index'
 import Vue from 'vue/dist/vue.common.prod'
 
 describe('test mpx scroll', () => {
@@ -23,23 +23,16 @@ describe('test mpx scroll', () => {
   })
   app.$mount('#app')
 
-  const ms = new MpxScroll('.page')
+  const ms = new MpxScroll()
 
   window.scrollTo = jest.fn()
+  window.IntersectionObserver = class IntersectionObserver {
+    observe () {}
+    disconnect () {}
+  }
 
   test('el is a dom', () => {
     expect(ms.el).toEqual(document.querySelector('.page'))
-  })
-
-  test('startPullDownRefresh and stopPullDownRefresh', done => {
-    ms.startPullDownRefresh()
-    setTimeout(() => {
-      ms.stopPullDownRefresh()
-      setTimeout(() => {
-        expect(ms.progress.style.height).toEqual('0px')
-        done()
-      }, 1000)
-    }, 1000)
   })
 
   test('regist events and hooks', () => {
@@ -59,5 +52,6 @@ describe('test mpx scroll', () => {
     ms.destroy()
     expect(ms.hooks.scroll.disposer.length).toEqual(0)
     expect(ms.eventRegister.disposer.length).toEqual(0)
+    expect(ms.scrollTimer).toEqual(null)
   })
 })
