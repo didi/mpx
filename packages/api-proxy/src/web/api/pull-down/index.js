@@ -38,7 +38,7 @@ function startPullDownRefresh (options = {}) {
     const vnode = router.__mpxActiveVnode
     if (vnode && vnode.componentInstance) {
       const currentPage = vnode.tag.endsWith('mpx-tab-bar-container') ? vnode.componentInstance.$refs.tabBarPage : vnode.componentInstance
-      if (currentPage && currentPage.__stopPullDownRefresh) {
+      if (currentPage && currentPage.__startPullDownRefresh) {
         try {
           currentPage.__startPullDownRefresh()
         } catch (e) {
