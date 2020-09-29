@@ -1,10 +1,11 @@
 const genComponentTag = require('../utils/gen-component-tag')
 const loaderUtils = require('loader-utils')
+const addQuery = require('../utils/add-query')
 const normalize = require('../utils/normalize')
 const builtInLoaderPath = normalize.lib('built-in-loader')
 const optionProcessorPath = normalize.lib('runtime/optionProcessor')
-const nativeTabBarPath = normalize.lib('runtime/components/web/mpx-tabbar-container.vue')
-const nativeTabBarComponent = normalize.lib('runtime/components/web/mpx-tabbar.vue')
+const tabBarContainerPath = normalize.lib('runtime/components/web/mpx-tab-bar-container.vue')
+const tabBarPath = normalize.lib('runtime/components/web/mpx-tab-bar.vue')
 
 function shallowStringify (obj) {
   let arr = []
@@ -32,23 +33,38 @@ module.exports = function (script, options, callback) {
   const getRequireForSrc = options.getRequireForSrc
   const i18n = options.i18n
   const jsonConfig = options.jsonConfig
+  const tabBar = jsonConfig.tabBar
   const tabBarMap = options.tabBarMap
+  const tabBarStr = options.tabBarStr
   const genericsInfo = options.genericsInfo
   const componentGenerics = options.componentGenerics
 
+  const emitWarning = (msg) => {
+    loaderContext.emitWarning(
+      new Error('[script processor][' + loaderContext.resource + ']: ' + msg)
+    )
+  }
+
   const stringifyRequest = r => loaderUtils.stringifyRequest(loaderContext, r)
   let tabBarPagesMap = {}
-  let tabBarMapStr = ''
-  if (tabBarMap && Array.isArray(tabBarMap.list) && tabBarMap.list.length && ctorType === 'app') {
-    tabBarPagesMap = tabBarMap.listMap
-    Object.keys(tabBarPagesMap).forEach((item) => {
-      tabBarPagesMap[item] = `()=>import("${tabBarPagesMap[item]}")`
+  if (tabBar && tabBarMap) {
+    // 挂载tabBar组件
+    const tabBarRequest = stringifyRequest(addQuery(tabBar.custom ? './custom-tab-bar/index' : tabBarPath, { component: true }))
+    tabBarPagesMap['mpx-tab-bar'] = `getComponent(require(${tabBarRequest}))`
+    // 挂载tabBar页面
+    Object.keys(tabBarMap).forEach((pagePath) => {
+      const pageCfg = localPagesMap[pagePath]
+      if (pageCfg) {
+        const pageRequest = stringifyRequest(pageCfg.resource)
+        if (pageCfg.async) {
+          tabBarPagesMap[pagePath] = `()=>import(${pageRequest}).then(res => getComponent(res, { __mpxPageRoute: ${JSON.stringify(pagePath)} }))`
+        } else {
+          tabBarPagesMap[pagePath] = `getComponent(require(${pageRequest}), { __mpxPageRoute: ${JSON.stringify(pagePath)} })`
+        }
+      } else {
+        emitWarning(`TabBar page path ${pagePath} is not exist in local page map, please check!`)
+      }
     })
-    tabBarMapStr = JSON.stringify(tabBarMap)
-    /* eslint-disable no-useless-escape */
-    tabBarMapStr = tabBarMapStr.replace(/"iconPath":"([\w\/\.\-]+[\.png\.jpeg\.gif])"/g, '"iconPath":require("$1")')
-    /* eslint-disable no-useless-escape */
-    tabBarMapStr = tabBarMapStr.replace(/"selectedIconPath":"([\w\/\.\-]+[\.png\.jpeg\.gif])"/g, '"selectedIconPath":require("$1")')
   }
 
   let output = '/* script */\n'
@@ -99,9 +115,21 @@ module.exports = function (script, options, callback) {
   BScroll.use(PullDown)
   global.BScroll = BScroll
   global.getApp = function(){}
+  global.getCurrentPages = function(){
+    if(!global.__mpxRouter) return []
+    return global.__mpxRouter.stack.map(item => {
+      let page
+      const vnode = item.vnode
+      if(vnode && vnode.componentInstance) {
+        page = vnode.tag.endsWith('mpx-tab-bar-container') ? vnode.componentInstance.$refs.tabBarPage : vnode.componentInstance
+      }
+      return page || { route: item.path.slice(1) }
+    })
+  }
   global.__networkTimeout = ${JSON.stringify(jsonConfig.networkTimeout)}
   global.__mpxGenericsMap = {}
-  global.__tabBar = ${tabBarMapStr}
+  global.__tabBar = ${tabBarStr}
+  Vue.observable(global.__tabBar)
   global.__tabBarPagesMap = ${shallowStringify(tabBarPagesMap)}
   global.__style = ${JSON.stringify(jsonConfig.style || 'v1')}
   global.__mpxPageConfig = ${JSON.stringify(jsonConfig.window)}\n`
@@ -130,38 +158,27 @@ module.exports = function (script, options, callback) {
       Object.keys(localPagesMap).forEach((pagePath) => {
         const pageCfg = localPagesMap[pagePath]
         const pageRequest = stringifyRequest(pageCfg.resource)
-        if (pageCfg.async) {
-          if (tabBarPagesMap[pagePath]) {
-            // 如果是 tabBar 对应的页面
-            pagesMap[pagePath] = `()=>import("${nativeTabBarPath}")`
-          } else {
-            pagesMap[pagePath] = `()=>import(${pageRequest})`
-          }
+        if (tabBarMap && tabBarMap[pagePath]) {
+          pagesMap[pagePath] = `getComponent(require(${stringifyRequest(tabBarContainerPath)}), { __mpxBuiltIn: true })`
         } else {
-          // 为了保持小程序中app->page->component的js执行顺序，所有的page和component都改为require引入
-          if (tabBarPagesMap[pagePath]) {
-            // 如果是 tabBar 对应的页面
-            pagesMap[pagePath] = `getComponent(require("${nativeTabBarPath}"))`
+          if (pageCfg.async) {
+            pagesMap[pagePath] = `()=>import(${pageRequest}).then(res => getComponent(res, { __mpxPageRoute: ${JSON.stringify(pagePath)} }))`
           } else {
-            pagesMap[pagePath] = `getComponent(require(${pageRequest}))`
+            // 为了保持小程序中app->page->component的js执行顺序，所有的page和component都改为require引入
+            pagesMap[pagePath] = `getComponent(require(${pageRequest}), { __mpxPageRoute: ${JSON.stringify(pagePath)} })`
           }
         }
+
         if (pageCfg.isFirst) {
           firstPage = pagePath
         }
       })
 
-      if (tabBarMap && tabBarMap.custom) {
-        componentsMap['custom-tab-bar'] = `getComponent(require("./custom-tab-bar/index.mpx?component=true"))`
-      } else if (tabBarMap) {
-        componentsMap['custom-tab-bar'] = `getComponent(require("${nativeTabBarComponent}"))`
-      }
-
       Object.keys(localComponentsMap).forEach((componentName) => {
         const componentCfg = localComponentsMap[componentName]
         const componentRequest = stringifyRequest(componentCfg.resource)
         if (componentCfg.async) {
-          componentsMap[componentName] = `()=>import(${componentRequest})`
+          componentsMap[componentName] = `()=>import(${componentRequest}).then(res => getComponent(res))`
         } else {
           componentsMap[componentName] = `getComponent(require(${componentRequest}))`
         }
@@ -170,7 +187,7 @@ module.exports = function (script, options, callback) {
       Object.keys(builtInComponentsMap).forEach((componentName) => {
         const componentCfg = builtInComponentsMap[componentName]
         const componentRequest = stringifyRequest('builtInComponent.vue!=!' + builtInLoaderPath + '!' + componentCfg.resource)
-        componentsMap[componentName] = `getComponent(require(${componentRequest}), true)`
+        componentsMap[componentName] = `getComponent(require(${componentRequest}), { __mpxBuiltIn: true })`
       })
 
       content += `  global.currentSrcMode = ${JSON.stringify(scriptSrcMode)};\n`
