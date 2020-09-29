@@ -21,7 +21,7 @@ function showLoading (vm) {
   const { backgroundColor = '#fff', backgroundTextStyle = 'dark' } = vm.$options.__mpxPageConfig
   loading = document.createElement('div')
   loading.className = 'pull-down-loading'
-  loading.style.cssText = `will-change：transform; transform: translateZ(0); background-color: ${backgroundColor};`
+  loading.style.cssText = `background-color: ${backgroundColor};`
   const dot = document.createElement('div')
   dot.className = `dot-flashing ${backgroundTextStyle}`
   loading.append(dot)
