@@ -11,8 +11,8 @@ function isDef (val) {
 export default class MpxScroll {
   constructor (options = {}) {
     const defaultOptions = {
-      threshold: 70, // 滑动触发下拉刷新的距离
-      stop: 60, // 下拉刷新时停留的位置距离屏幕顶部的距离
+      threshold: 60, // 滑动触发下拉刷新的距离
+      stop: 56, // 下拉刷新时停留的位置距离屏幕顶部的距离
       bounceTime: 800, // 设置回弹动画的动画时长
       debounce: 50 // 页面滚动防抖延时时间
     }
