@@ -33,7 +33,7 @@ function reLaunch ({ url, params }) {
 }
 
 function switchTab () {
-  console.error(`mpx.switchTab在快应用中请调用this.triggerEvent('switchtab', {path})`)
+  console.error(`mpx.switchTab在快应用中请调用this.triggerEvent('switchtab', {path: '**'})`)
 }
 export {
   navigateTo,

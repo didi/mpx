@@ -1651,8 +1651,19 @@ function postProcessIf (el) {
 function processText (el, text, currentParent) {
   // 快应用纯文本节点需text标签包裹
   if (text !== ' ' && mode === 'qa' && currentParent.tag !== 'text') {
+    // 快应用text样式无法继承，需要将父亲的样式继承过来
     let node = createASTElement('text', [])
     node.children.push(el)
+    if (currentParent && currentParent.attrsMap && currentParent.attrsMap.style) {
+      let attrs = [{
+        name: 'style',
+        value: currentParent.attrsMap.style
+      }]
+      node.attrsList = attrs
+      node.attrsMap = Object.assign(el.attrsMap || {}, {
+        style: currentParent.attrsMap.style
+      })
+    }
     replaceNode(el, node)
   }
   if (el.type !== 3 || el.isComment) {

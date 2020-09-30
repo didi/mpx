@@ -4,6 +4,16 @@ import { error } from '../../helper/log'
 
 export default function getRefsMixin (type) {
   return {
+    methods: {
+      getTabBar() {
+        try {
+          return this._parent._ids.qaCtbRef.vm
+        } catch(e) {
+          console.error('快应用获取调用getTabBar失败', e)
+          return null
+        }
+      }
+    },
     [BEFORECREATE] () {
       this.$refs = {}
     },

@@ -39,9 +39,9 @@ const genCustomContent = (tabBar, options) => {
   })
   content.add(`<template>
     <div class="tabbar-wrapper">
-      <custom-tab-bar @switchtab="handleSwitch" data='${JSON.stringify(tabBar)}'></custom-tab-bar>
+      <custom-tab-bar id="qaCtbRef" @switchtab="handleSwitch" data='${JSON.stringify(tabBar)}'></custom-tab-bar>
       <div class="tabbar-component">
-        <component is='{{componentKey}}'></component>
+        <component is='{{componentKey}}' @switchtab="handleSwitch"></component>
       </div>
     </div>
   </template>\n`)
