@@ -3,7 +3,7 @@ import { getOffsetTop, getElement, getScrollTop, preventDefault } from './dom'
 import EventEmitter from './EventEmitter'
 import EventRegister from './EventRegister'
 import ScrollAnimation from './ScrollAnimation'
-import throttle from './throttle'
+import throttle from 'lodash/throttle'
 
 function isDef (val) {
   return val !== undefined
@@ -15,7 +15,7 @@ export default class MpxScroll {
       threshold: 60, // 滑动触发下拉刷新的距离
       stop: 56, // 下拉刷新时停留的位置距离屏幕顶部的距离
       bounceTime: 800, // 设置回弹动画的动画时长
-      throttle: 800 // 页面滚动节流
+      throttle: 500 // 页面滚动节流
     }
     this.options = Object.assign({}, defaultOptions, options)
 
@@ -38,7 +38,6 @@ export default class MpxScroll {
 
     const hooks = [
       'scroll', // 页面自然滚动
-      'move', // pull down 时 loading 移动
       'pullingDown' // pullDown 事件
     ]
     this.hooks = {}
@@ -80,12 +79,6 @@ export default class MpxScroll {
       }
     })
     ob.observe(document.querySelector('.pull-down-loading'))
-
-    this.hooks.move.on((bounceTime, beginPosition, endPosition) => {
-      this.scrollAnimation.easeOutQuart(bounceTime, beginPosition, endPosition, distance => {
-        this.transformPage(distance)
-      })
-    })
   }
 
   onTouchStart (e) {
@@ -134,7 +127,7 @@ export default class MpxScroll {
     const finalDistance = distance >= threshold
       ? stop
       : 0
-    this.hooks.move.emit(bounceTime, distance, finalDistance)
+    this.move(bounceTime, distance, finalDistance)
   }
 
   useScroll () {
@@ -182,7 +175,7 @@ export default class MpxScroll {
     this.isRefresh = true
 
     const { stop, bounceTime } = this.options
-    this.hooks.move.emit(bounceTime, 0, stop)
+    this.move(bounceTime, 0, stop)
   }
 
   stopPullDownRefresh () {
@@ -190,9 +183,18 @@ export default class MpxScroll {
       return
     }
     const { stop, bounceTime } = this.options
-    this.hooks.move.emit(bounceTime, stop, 0)
+    this.move(bounceTime, stop, 0)
     this.isRefresh = false
     this.legacyY = 0
+  }
+
+  move (bounceTime, beginPosition, endPosition) {
+    this.scrollAnimation.easeOutQuart(
+      bounceTime,
+      beginPosition,
+      endPosition,
+      distance => this.transformPage(distance)
+    )
   }
 
   pageScrollTo ({

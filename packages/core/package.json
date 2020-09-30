@@ -18,7 +18,8 @@
     "@types"
   ],
   "dependencies": {
-    "miniprogram-api-typings": "^3.0.2"
+    "miniprogram-api-typings": "^3.0.2",
+    "lodash.throttle": "^4.1.1"
   },
   "peerDependencies": {
     "vue": "^2.6.10",
