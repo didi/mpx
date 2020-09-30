@@ -1,10 +1,10 @@
 <template>
-  <div class="tab-container">
-    <tabs onchange="onChangeTab" if="{{position === 'top'}}" index="{{currentIndex}}" class="{{getWrapClass}}">
+  <div class="tab-container" id="qaCtbRef">
+    <tabs onchange="onChangeTab" if="{{position === 'top'}}" index="{{selected}}" class="{{getWrapClass}}">
       <tab-bar class="tab-bar" style="{{tabBarStyle}}">
         <div for="{{(index, tabItem) in tabList}}"  class="tab-wrapper-icon">
-          <image if="getWrapClass" src="{{index === currentIndex ? tabItem.selectedIconPath : tabItem.iconPath}}"></image>
-          <text class="tab-text" style="{{'color:' + (index === currentIndex ? selectedColor : color) }}">{{tabItem.text}}</text>
+          <image if="getWrapClass" src="{{index === selected ? tabItem.selectedIconPath : tabItem.iconPath}}"></image>
+          <text class="tab-text" style="{{'color:' + (index === selected ? selectedColor : color) }}">{{tabItem.text}}</text>
         </div>
       </tab-bar>
       <tab-content class="tab-content">
@@ -13,7 +13,7 @@
         </div>
       </tab-content>
     </tabs>
-    <tabs onchange="onChangeTab" if="{{position === 'bottom'}}" index="{{currentIndex}}" class="{{getWrapClass}}">
+    <tabs onchange="onChangeTab" if="{{position === 'bottom'}}" index="{{selected}}" class="{{getWrapClass}}">
       <tab-content class="tab-content">
         <div class="group-content" for="{{(index, tabItem) in tabList}}">
           <component is="{{tabItem.key}}"></component>
@@ -21,8 +21,8 @@
       </tab-content>
       <tab-bar class="tab-bar" style="{{tabBarStyle}}">
         <div for="{{(index, tabItem) in tabList}}"  class="tab-wrapper-icon">
-          <image if="getWrapClass" src="{{index === currentIndex ? tabItem.selectedIconPath : tabItem.iconPath}}"></image>
-          <text class="tab-text" style="{{'color:' + (index === currentIndex ? selectedColor : color) }}">{{tabItem.text}}</text>
+          <image if="getWrapClass" src="{{index === selected ? tabItem.selectedIconPath : tabItem.iconPath}}"></image>
+          <text class="tab-text" style="{{'color:' + (index === selected ? selectedColor : color) }}">{{tabItem.text}}</text>
         </div>
       </tab-bar>
     </tabs>
@@ -66,7 +66,7 @@ export default {
   data() {
     let oData = JSON.parse(this.data) || {}
     return {
-      currentIndex: 0,
+      selected: 0,
       tabList: oData.list || [],
       position: oData.position || 'top',
       color: oData.color || '',
@@ -90,7 +90,7 @@ export default {
     console.info(`外部传递的数据7777777：`, this.data)
   },
   onChangeTab(e) {
-    this.currentIndex = e.index
+    this.selected = e.index
   }
 }
 </script>
