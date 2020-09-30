@@ -5,10 +5,10 @@ import { error } from '../../helper/log'
 export default function getRefsMixin (type) {
   return {
     methods: {
-      getTabBar() {
+      getTabBar () {
         try {
           return this._parent._ids.qaCtbRef.vm
-        } catch(e) {
+        } catch (e) {
           console.error('快应用获取调用getTabBar失败', e)
           return null
         }
