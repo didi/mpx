@@ -3,6 +3,7 @@ import { getOffsetTop, getElement, getScrollTop, preventDefault } from './dom'
 import EventEmitter from './EventEmitter'
 import EventRegister from './EventRegister'
 import ScrollAnimation from './ScrollAnimation'
+import throttle from './throttle'
 
 function isDef (val) {
   return val !== undefined
@@ -14,24 +15,29 @@ export default class MpxScroll {
       threshold: 60, // 滑动触发下拉刷新的距离
       stop: 56, // 下拉刷新时停留的位置距离屏幕顶部的距离
       bounceTime: 800, // 设置回弹动画的动画时长
-      debounce: 50 // 页面滚动防抖延时时间
+      throttle: 800 // 页面滚动节流
     }
     this.options = Object.assign({}, defaultOptions, options)
-    this.ratio = 0.5 // 下拉阻尼系数
+
+    // 下拉阻尼系数
+    this.ratio = 0.5
+
     this.el = getElement('.page')
     this.touchstartY = 0
     this.currentY = 0
     this.translateY = 0
+
+    // 为了不阻断用户交互，在 pull down 过程中允许用户可以再次做下拉动作。
+    // 记录上次 pull down 的 translateY，再次下拉时加上这个 legacy 作为起始点
+    // 避免再次 touchstart 的时候 translateY 从某个值突然小于正处于 pull down 状态的 loading 高度
     this.legacyY = 0
+
     this.isIntersecting = false
     this.isRefresh = false
     this.bottomReached = false
-    this.scrollTimer = null
-    this.intersectionOb = null
 
     const hooks = [
       'scroll', // 页面自然滚动
-      'pageScrollTo', // 手动调用 pageScrollTo
       'move', // pull down 时 loading 移动
       'pullingDown' // pullDown 事件
     ]
@@ -39,8 +45,10 @@ export default class MpxScroll {
     hooks.forEach(hook => {
       this.hooks[hook] = new EventEmitter()
     })
-    this.eventRegister = new EventRegister()
     this.scrollAnimation = new ScrollAnimation()
+    this.pullDownEventRegister = null
+    this.scrollEventRegister = null
+    this.intersectionOb = null
   }
 
   usePullDownRefresh () {
@@ -53,6 +61,22 @@ export default class MpxScroll {
       if (!isIntersecting) {
         // 非 inter section 状态下及时清除 transtorm，以免影响正常滚动时元素的 fixed 定位
         this.el.style.cssText = ''
+        this.pullDownEventRegister && this.pullDownEventRegister.destroy()
+      } else {
+        this.pullDownEventRegister = new EventRegister(this.el, [
+          {
+            name: 'touchstart',
+            handler: e => this.onTouchStart(e)
+          },
+          {
+            name: 'touchmove',
+            handler: e => this.onTouchMove(e)
+          },
+          {
+            name: 'touchend',
+            handler: e => this.onTouchEnd(e)
+          }
+        ])
       }
     })
     ob.observe(document.querySelector('.pull-down-loading'))
@@ -62,9 +86,6 @@ export default class MpxScroll {
         this.transformPage(distance)
       })
     })
-    this.eventRegister.on(this.el, 'touchstart', e => this.onTouchStart(e))
-    this.eventRegister.on(this.el, 'touchmove', e => this.onTouchMove(e))
-    this.eventRegister.on(this.el, 'touchend', e => this.onTouchEnd(e))
   }
 
   onTouchStart (e) {
@@ -117,23 +138,24 @@ export default class MpxScroll {
   }
 
   useScroll () {
-    this.eventRegister.on(document, 'scroll', e => {
-      if (this.scrollTimer) {
-        this.clearScrollTimer()
-      }
-      this.scrollTimer = setTimeout(() => {
-        const scrollTop = window.pageYOffset
-        this.scrollTop = scrollTop
-        this.hooks.scroll.emit(scrollTop)
-      }, this.options.debounce)
+    const pageScrollHandler = throttle(e => {
+      const _e = {}
+      Object.defineProperty(_e, 'scrollTop', {
+        configurable: false,
+        enumerable: true,
+        get: () => getScrollTop()
+      })
+      this.hooks.scroll.emit(_e)
+    }, this.options.throttle, {
+      leading: true,
+      trailing: false
     })
-  }
-
-  clearScrollTimer () {
-    if (this.scrollTimer) {
-      clearTimeout(this.scrollTimer)
-      this.scrollTimer = null
-    }
+    this.scrollEventRegister = new EventRegister(document, [
+      {
+        name: 'scroll',
+        handler: pageScrollHandler
+      }
+    ])
   }
 
   destroy () {
@@ -141,8 +163,8 @@ export default class MpxScroll {
     Object.keys(hooks).forEach(hook => {
       this.hooks[hook].destroy()
     })
-    this.eventRegister.destroy()
-    this.clearScrollTimer()
+    this.scrollEventRegister && this.scrollEventRegister.destroy()
+    this.pullDownEventRegister && this.pullDownEventRegister.destroy()
     this.intersectionOb && this.intersectionOb.disconnect()
   }
 
@@ -194,7 +216,9 @@ export default class MpxScroll {
 
     const position = getScrollTop()
 
-    this.hooks.pageScrollTo.emit(duration, position, _scrollTop)
+    this.scrollAnimation.easeOutQuart(duration, position, _scrollTop, distance => {
+      window.scrollTo(0, distance)
+    })
   }
 
   onReachBottom (onReachBottomDistance, callback) {

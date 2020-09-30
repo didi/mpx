@@ -41,17 +41,14 @@ describe('test mpx scroll', () => {
       ms.usePullDownRefresh()
       ms.hooks.pullingDown.on(app.__mpxPullDownHandler)
       expect(ms.hooks.pullingDown.disposer.length).toEqual(1)
-      expect(ms.eventRegister.disposer.length).toEqual(4)
+      expect(ms.pullDownEventRegister).toEqual(null)
     } else {
       expect(ms.hooks.pullingDown.disposer.length).toEqual(0)
-      expect(ms.eventRegister.disposer.length).toEqual(1)
     }
   })
 
   test('page destroy', () => {
     ms.destroy()
-    expect(ms.hooks.scroll.disposer.length).toEqual(0)
-    expect(ms.eventRegister.disposer.length).toEqual(0)
-    expect(ms.scrollTimer).toEqual(null)
+    expect(ms.hooks.pullingDown.disposer.length).toEqual(0)
   })
 })

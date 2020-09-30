@@ -64,12 +64,6 @@ export default function pageScrollMixin (mixinType) {
           duration: 0
         })
 
-        ms.hooks.pageScrollTo.on((bounceTime, beginPosition, endPosition) => {
-          ms.scrollAnimation.easeOutQuart(bounceTime, beginPosition, endPosition, distance => {
-            window.scrollTo(0, distance)
-          })
-        })
-
         if (this.onPageScroll || this.onReachBottom) {
           ms.useScroll()
           ms.hooks.scroll.on(this.__mpxPageScrollHandler)
@@ -93,7 +87,6 @@ export default function pageScrollMixin (mixinType) {
     },
     methods: {
       __mpxPullDownHandler (autoStop = false, isRefresh = false) {
-        console.log(autoStop, isRefresh)
         this.__pullingDown = true
         // 同微信保持一致
         // 如果是手动触摸下拉，3s 后用户还没有调用过 __stopPullDownRefresh，则自动调用关闭 pullDown
@@ -122,10 +115,16 @@ export default function pageScrollMixin (mixinType) {
           ms.startPullDownRefresh()
         }
       },
-      __mpxPageScrollHandler (scrollTop) {
+      __mpxPageScrollHandler (e) {
         const { onReachBottomDistance = 50 } = this.$options.__mpxPageConfig
         if (this.onPageScroll) {
-          this.onPageScroll({ scrollTop })
+          const _e = {}
+          Object.defineProperty(_e, 'scrollTop', {
+            configurable: false,
+            enumerable: true,
+            get: () => e.scrollTop
+          })
+          this.onPageScroll(_e)
         }
         if (this.onReachBottom) {
           ms.onReachBottom(onReachBottomDistance, this.onReachBottom)

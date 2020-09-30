@@ -1,25 +1,40 @@
-function addEvent (el, type, handler) {
-  el.addEventListener(type, handler, { passive: false })
+function addEvent (el, type, handler, capture) {
+  el.addEventListener(type, handler, {
+    passive: false,
+    capture: !!capture
+  })
 }
 
-function removeEvent (el, type, handler) {
-  el.removeEventListener(type, handler, { passive: false })
+function removeEvent (el, type, handler, capture) {
+  el.removeEventListener(type, handler, {
+    capture: !!capture
+  })
 }
 
 export default class EventRegister {
-  constructor () {
-    this.disposer = []
+  constructor (wrapper, events) {
+    this.wrapper = wrapper
+    this.events = events
+    this.addDOMEvents()
   }
 
-  on (el, type, handler) {
-    this.disposer.push([el, type, handler])
-    addEvent(el, type, handler)
+  addDOMEvents (el, type, handler) {
+    this.handleDOMEvents(addEvent)
+  }
+
+  removeDOMEvents () {
+    this.handleDOMEvents(removeEvent)
+  }
+
+  handleDOMEvents (eventOperation) {
+    const wrapper = this.wrapper
+    this.events.forEach(event => {
+      eventOperation(wrapper, event.name, event.handler, !!event.capture)
+    })
   }
 
   destroy () {
-    this.disposer.forEach(args => {
-      removeEvent(args[0], args[1], args[2])
-    })
-    this.disposer = []
+    this.removeDOMEvents()
+    this.events = []
   }
 }
