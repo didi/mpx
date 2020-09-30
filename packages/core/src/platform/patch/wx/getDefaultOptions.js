@@ -170,7 +170,6 @@ export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
       this.__mpxProxy && this.__mpxProxy.destroyed()
     }
   })
-
   rawOptions.mixins = rawOptions.mixins ? rootMixins.concat(rawOptions.mixins) : rootMixins
   rawOptions = mergeOptions(rawOptions, type, false)
   return filterOptions(rawOptions)

@@ -11,7 +11,6 @@ const parseRequest = require('./utils/parse-request')
 const getMainCompilation = require('./utils/get-main-compilation')
 const toPosix = require('./utils/to-posix')
 const config = require('./config')
-const hash = require('hash-sum')
 const fixRelative = require('./utils/fix-relative')
 
 const defaultResultSource = '// removed by extractor'
@@ -28,6 +27,7 @@ module.exports = function (content) {
   const componentsMap = mpx.componentsMap[packageName]
 
   const extract = mpx.extract
+  const pathHash = mpx.pathHash
   const extractedMap = mpx.extractedMap
   const mode = mpx.mode
   const seenFile = mpx.extractSeenFile
@@ -59,7 +59,7 @@ module.exports = function (content) {
         seenFile[id] = filename + typeExtMap[type]
       } else {
         const resourceName = path.parse(resourcePath).name
-        const outputPath = path.join(type, resourceName + hash(resourcePath) + typeExtMap[type])
+        const outputPath = path.join(type, resourceName + pathHash(resourcePath) + typeExtMap[type])
         seenFile[id] = mpx.getPackageInfo(resourceRaw, {
           outputPath,
           isStatic: true,

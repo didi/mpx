@@ -8,6 +8,7 @@ const mpxJSON = require('../utils/mpx-json')
 const getRulesRunner = require('../platform/index')
 const addQuery = require('../utils/add-query')
 const transDynamicClassExpr = require('./trans-dynamic-class-expr')
+const hash = require('hash-sum')
 
 /**
  * Make a map and return a function for checking if a key
@@ -608,7 +609,7 @@ function parseComponent (content, options) {
   function start (tag, attrs, unary, start, end) {
     if (depth === 0) {
       currentBlock = {
-        type: tag,
+        tag,
         content: '',
         start: end,
         attrs: attrs.reduce(function (cumulated, ref) {
@@ -687,12 +688,12 @@ function parseComponent (content, options) {
       let text = content.slice(currentBlock.start, currentBlock.end)
       // pad content so that linters and pre-processors can output correct
       // line numbers in errors and warnings
-      if (currentBlock.type !== 'template' && options.pad) {
+      if (currentBlock.tag !== 'template' && options.pad) {
         text = padContent(currentBlock, options.pad) + text
       }
 
       // 对于<script name="json">的标签，传参调用函数，其返回结果作为json的内容
-      if (currentBlock.type === 'script' && currentBlock.name === 'json') {
+      if (currentBlock.tag === 'script' && currentBlock.name === 'json') {
         text = mpxJSON.compileMPXJSONText({ source: text, defs, filePath: options.filePath })
       }
       currentBlock.content = text
@@ -1043,6 +1044,52 @@ function processPageStatus (el, options) {
   }
 }
 
+const genericRE = /^generic:(.+)$/
+
+function processComponentGenericsForWeb (el, options, meta) {
+  if (options.componentGenerics && options.componentGenerics[el.tag]) {
+    const generic = el.tag
+    el.tag = 'component'
+    addAttrs(el, [{
+      name: ':is',
+      value: `generic${generic}`
+    }])
+  }
+
+  let hasGeneric = false
+
+  const genericHash = hash(options.filePath)
+
+  el.attrsList.forEach((attr) => {
+    if (genericRE.test(attr.name)) {
+      getAndRemoveAttr(el, attr.name)
+      addAttrs(el, [{
+        name: attr.name.replace(':', ''),
+        value: attr.value
+      }])
+      hasGeneric = true
+      addGenericInfo(meta, genericHash, attr.value)
+    }
+  })
+
+  if (hasGeneric) {
+    addAttrs(el, [{
+      name: 'generichash',
+      value: genericHash
+    }])
+  }
+}
+
+function addGenericInfo (meta, genericHash, genericValue) {
+  if (!meta.genericsInfo) {
+    meta.genericsInfo = {
+      hash: genericHash,
+      map: {}
+    }
+  }
+  meta.genericsInfo.map[genericValue] = true
+}
+
 function processComponentIs (el, options) {
   if (el.tag !== 'component') {
     return
@@ -1280,16 +1327,16 @@ function parseMustache (raw = '') {
       }
       let exp = match[1]
 
-      // 用eval来处理常量，废弃正则。优点是比正则替换靠谱，缺点是仅能在if上用。暂存这个正则实现
-      // const defKeys = Object.keys(defs)
-      // defKeys.forEach((defKey) => {
-      //   const defRE = new RegExp(`\\b${defKey}\\b`)
-      //   const defREG = new RegExp(`\\b${defKey}\\b`, 'g')
-      //   if (defRE.test(exp)) {
-      //     exp = exp.replace(defREG, stringify(defs[defKey]))
-      //     replaced = true
-      //   }
-      // })
+      // eval处理的话，和别的判断条件，比如运行时的判断混用情况下得不到一个结果，还是正则替换
+      const defKeys = Object.keys(defs)
+      defKeys.forEach((defKey) => {
+        const defRE = new RegExp(`\\b${defKey}\\b`)
+        const defREG = new RegExp(`\\b${defKey}\\b`, 'g')
+        if (defRE.test(exp)) {
+          exp = exp.replace(defREG, stringify(defs[defKey]))
+          replaced = true
+        }
+      })
 
       if (i18n) {
         i18nFuncNames.forEach((i18nFuncName) => {
@@ -1561,14 +1608,10 @@ function evalExp (exp) {
   // eslint-disable-next-line no-new-func
   let result = { success: false }
   try {
-    const defKeys = Object.keys(defs)
-    const defValues = defKeys.map((key) => {
-      return defs[key]
-    })
-    const fn = new Function(...defKeys, `return ${exp};`)
+    const fn = new Function(`return ${exp};`)
     result = {
       success: true,
-      result: fn(...defValues)
+      result: fn()
     }
   } catch (e) {
   }
@@ -1919,6 +1962,7 @@ function processElement (el, root, options, meta) {
     processBuiltInComponents(el, meta)
     // 预处理代码维度条件编译
     processIfForWeb(el)
+    processComponentGenericsForWeb(el, options, meta)
     return
   }
 
@@ -1940,7 +1984,7 @@ function processElement (el, root, options, meta) {
     processShow(el, options, root)
   }
 
-  if (mode === 'ali') {
+  if (transAli) {
     processAliStyleClassHack(el, options, root)
   }
 

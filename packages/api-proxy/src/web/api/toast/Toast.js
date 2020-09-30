@@ -1,5 +1,13 @@
 import { webHandleSuccess } from '../../../common/js'
 import '../../../common/stylus/Toast.styl'
+import '../../../common/stylus/Loading.styl'
+
+function createDom (tag, attrs = {}, children = []) {
+  let dom = document.createElement(tag)
+  Object.keys(attrs).forEach(k => dom.setAttribute(k, attrs[k]))
+  children.length && children.forEach(child => dom.appendChild(child))
+  return dom
+}
 
 export default class Toast {
   constructor () {
@@ -9,39 +17,28 @@ export default class Toast {
       image: '',
       duration: 2000,
       mask: false,
-      success: (...args) => {},
-      fail: (...args) => {},
-      complete: (...args) => {}
+      success: () => {},
+      fail: () => {},
+      complete: () => {}
     }
     this.hideTimer = null
     this.type = null
 
-    const toast = document.createElement('div')
-    toast.setAttribute('class', '__mpx_toast__')
+    // create & combine toast
+    this.toast = createDom('div', { class: '__mpx_toast__' }, [
+      this.mask = createDom('div', { class: '__mpx_mask__' }),
+      createDom('div', { class: '__mpx_toast_box__' }, [
+        this.icon = createDom('div', { class: '__mpx_toast_icon__' }),
+        this.title = createDom('div', { class: '__mpx_toast_title__' })
+      ])
+    ])
 
-    const mask = document.createElement('div')
-    mask.setAttribute('class', '__mpx_mask__')
+    // loading animation dom
+    this.loading = createDom('div', { class: '__mpx_loading_wrapper__' }, Array.from({ length: 12 }, (_, i) => {
+      return createDom('div', { class: `line${i + 1}` })
+    }))
 
-    const box = document.createElement('div')
-    box.setAttribute('class', '__mpx_toast_box__')
-
-    const icon = document.createElement('div')
-    icon.setAttribute('class', '__mpx_toast_icon__')
-
-    const title = document.createElement('div')
-    title.setAttribute('class', '__mpx_toast_title__')
-
-    box.appendChild(icon)
-    box.appendChild(title)
-    toast.appendChild(mask)
-    toast.appendChild(box)
-    document.body.appendChild(toast)
-
-    this.toast = toast
-    this.mask = mask
-    this.box = box
-    this.icon = icon
-    this.title = title
+    document.body.appendChild(this.toast)
   }
 
   show (options, type) {
@@ -60,22 +57,24 @@ export default class Toast {
       this.mask.classList.remove('show')
     }
 
-    if (opts.image) {
-      this.icon.style.backgroundImage = `url(${opts.image})`
-      this.icon.classList.remove('success', 'loading')
-    } else if (opts.icon === 'loading') {
-      this.icon.removeAttribute('style')
-      this.icon.classList.add('loading')
-      this.icon.classList.remove('success')
-    } else if (opts.icon === 'none') {
-      this.icon.classList.add('hide')
+    if (opts.icon === 'loading') {
+      this.icon.replaceWith(this.loading) // if loading, replace with loading dom
     } else {
-      this.icon.removeAttribute('style')
-      this.icon.classList.add('success')
-      this.icon.classList.remove('loading')
+      this.loading.replaceWith(this.icon) // set icon to default
+
+      const defaultIconClass = '__mpx_toast_icon__'
+      const iconClass = opts.image
+        ? '' // image
+        : opts.icon === 'none'
+          ? 'hide' // none
+          : 'success' // default
+
+      this.icon.classList = `${iconClass} ${defaultIconClass}`
+      this.icon.style.cssText = opts.image && `background-image: url(${opts.image})`
     }
 
     this.title.textContent = opts.title || ''
+
     this.toast.classList.add('show')
 
     opts.duration >= 0 && this.hide({ duration: opts.duration }, type)
