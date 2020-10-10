@@ -9,6 +9,10 @@ module.exports = function ({ print }) {
 
   return {
     test: TAG_NAME,
+    web (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-video'
+    },
     props: [
       {
         test: /^(direction|show-mute-btn|title|play-btn-position|enable-play-gesture|auto-pause-if-navigate|auto-pause-if-open-native|vslide-gesture|vslide-gesture-in-fullscreen)$/,
