@@ -87,7 +87,7 @@ export default {
     }
   },
   onInit() {
-    console.info(`外部传递的数据7777777：`, this.data)
+    console.info(`外部传递的数据：`, this.data)
   },
   onChangeTab(e) {
     this.selected = e.index
