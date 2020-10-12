@@ -818,26 +818,6 @@ try {
     context.Symbol = Symbol; 
   }
 } catch(e){
-}
-// swan && pc runtime fix
-try {
-  if (!context.navigator) {
-    Object.defineProperty(context, "navigator",{
-      configurable: true,
-      enumerable: true,
-      get () {
-        return {};
-      }
-    });
-  }
-  Object.defineProperty(context.navigator, "standalone",{
-    configurable: true,
-    enumerable: true,
-    get () {
-      return true;
-    }
-  }); 
-} catch(e){
 }\n`)
             source.add(originalSource)
             source.add(`\nmodule.exports = window[${JSON.stringify(jsonpFunction)}];\n`)
