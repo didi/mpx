@@ -2,11 +2,11 @@ import * as wxLifecycle from '../platform/patch/wx/lifecycle'
 import * as webLifecycle from '../platform/patch/web/lifecycle'
 import { mergeLifecycle } from './mergeLifecycle'
 import { error } from '../helper/log'
-import { isObject, diffAndCloneA, getChainKeyOfObj, delChainKeyOfObj } from '../helper/utils'
+import { isObject, diffAndCloneA } from '../helper/utils'
 import { implemented } from '../core/implement'
 
 // 暂不支持的wx选项，后期需要各种花式支持
-const NOTSUPPORTS = ['moved', 'relations', 'pageLifetimes.resize', 'definitionFilter', 'onPageNotFound', 'onShareAppMessage', 'pageShow', 'pageHide']
+const NOTSUPPORTS = ['moved', 'relations', 'definitionFilter', 'onPageNotFound', 'onShareAppMessage', 'pageShow', 'pageHide']
 
 function convertErrorDesc (key) {
   error(`Options.${key} is not supported in runtime conversion from wx to web.`, global.currentResource)
@@ -14,13 +14,12 @@ function convertErrorDesc (key) {
 
 function notSupportTip (options) {
   NOTSUPPORTS.forEach(key => {
-    let optValue = getChainKeyOfObj(options, key)
-    if (optValue) {
+    if (options[key]) {
       if (!implemented[key]) {
         process.env.NODE_ENV !== 'production' && convertErrorDesc(key)
-        delChainKeyOfObj(options, key)
+        delete options[key]
       } else if (implemented[key].remove) {
-        delChainKeyOfObj(options, key)
+        delete options[key]
       }
     }
   })
