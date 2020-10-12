@@ -615,14 +615,25 @@ class MpxWebpackPlugin {
             module.addVariable(name, expression, deps)
           }
         }
-
         // hack babel polyfill global
+        parser.hooks.statementIf.tap('MpxWebpackPlugin', (expr) => {
+          if (/core-js.+microtask/.test(parser.state.module.resource)) {
+            if (expr.test.left && (expr.test.left.name === 'Observer' || expr.test.left.name === 'MutationObserver')) {
+              const current = parser.state.current
+              current.addDependency(new InjectDependency({
+                content: 'document && ',
+                index: expr.test.range[0]
+              }))
+            }
+          }
+        })
+
         parser.hooks.evaluate.for('CallExpression').tap('MpxWebpackPlugin', (expr) => {
           const current = parser.state.current
           const arg0 = expr.arguments[0]
           const arg1 = expr.arguments[1]
           const callee = expr.callee
-          if (/core-js/.test(parser.state.module.resource)) {
+          if (/core-js.+global/.test(parser.state.module.resource)) {
             if (callee.name === 'Function' && arg0 && arg0.value === 'return this') {
               current.addDependency(new InjectDependency({
                 content: '(function() { return this })() || ',
