@@ -18,12 +18,12 @@ export default function pageStatusMixin (mixinType) {
       if (vnode && vnode.componentInstance) {
         pageInstance = vnode.tag.endsWith('mpx-tabbar-container') ? vnode.componentInstance.$children[1] : vnode.componentInstance
       }
-      if(!pageInstance) return
+      if (!pageInstance) return
       this.$watch(
         () => pageInstance.mpxPageStatus,
         status => {
           if (!status) return
-          const pageLifetimes = this.$rawOptions && this.$rawOptions.pageLifetimes || {}
+          const pageLifetimes = (this.$rawOptions && this.$rawOptions.pageLifetimes) || {}
           // show & hide
           if (status in pageLifetimes && typeof pageLifetimes[status] === 'function') {
             pageLifetimes[status].call(this)
