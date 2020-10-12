@@ -1266,7 +1266,7 @@ try {
           fillPackagesSizeInfo(packageName, size)
           sizeSummary.staticSize += size
           sizeSummary.totalSize += size
-        } else if (/\.m?js(\?.*)?$/i.test(name)) {
+        } else if (/\.m?js$/i.test(name)) {
           let parsedModules
           try {
             parsedModules = parseAsset(compilation.assets[name].source())
@@ -1304,7 +1304,8 @@ try {
             size -= moduleSize
           }
           // chunkAssetInfo.webpackTemplateSize = size
-        } else {
+          // filter sourcemap
+        } else if (!/\.m?js\.map$/i.test(name)) {
           // static copy assets such as project.config.json
           const size = compilation.assets[name].size()
           assetsSizeInfo.assets.push({
