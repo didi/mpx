@@ -9,6 +9,7 @@ const getRulesRunner = require('../platform/index')
 const addQuery = require('../utils/add-query')
 const transDynamicClassExpr = require('./trans-dynamic-class-expr')
 const hash = require('hash-sum')
+const dash2hump = require('../utils/hump-dash').dash2hump
 
 /**
  * Make a map and return a function for checking if a key
@@ -1048,7 +1049,7 @@ const genericRE = /^generic:(.+)$/
 
 function processComponentGenericsForWeb (el, options, meta) {
   if (options.componentGenerics && options.componentGenerics[el.tag]) {
-    const generic = el.tag
+    const generic = dash2hump(el.tag)
     el.tag = 'component'
     addAttrs(el, [{
       name: ':is',
