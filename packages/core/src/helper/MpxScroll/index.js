@@ -15,7 +15,7 @@ export default class MpxScroll {
       threshold: 60, // 滑动触发下拉刷新的距离
       stop: 56, // 下拉刷新时停留的位置距离屏幕顶部的距离
       bounceTime: 800, // 设置回弹动画的动画时长
-      throttle: 500 // 页面滚动节流
+      throttle: 50 // 页面滚动节流
     }
     this.options = Object.assign({}, defaultOptions, options)
 
@@ -141,7 +141,7 @@ export default class MpxScroll {
       this.hooks.scroll.emit(_e)
     }, this.options.throttle, {
       leading: true,
-      trailing: false
+      trailing: true
     })
     this.scrollEventRegister = new EventRegister(document, [
       {
