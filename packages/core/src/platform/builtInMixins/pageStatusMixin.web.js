@@ -2,8 +2,6 @@ import { CREATED } from '../../core/innerLifecycle'
 
 let systemInfo = {}
 
-let timer = null
-
 let count = 0
 
 function getCurrentPageInstance () {
@@ -16,32 +14,29 @@ function getCurrentPageInstance () {
 }
 
 function onResize () {
-  // 避免频繁触发
-  if (timer) {
-    clearTimeout(timer)
+  // 设备屏幕状态
+  const deviceOrientation = window.screen.width > window.screen.height ? 'landscape' : 'portrait'
+
+  // 设备参数
+  systemInfo = {
+    deviceOrientation,
+    size: {
+      screenWidth: window.screen.width,
+      screenHeight: window.screen.height,
+      windowWidth: document.documentElement.clientWidth,
+      windowHeight: document.documentElement.clientHeight
+    }
   }
-  timer = setTimeout(() => {
-    // 设备屏幕状态
-    const deviceOrientation = window.screen.width > window.screen.height ? 'landscape' : 'portrait'
 
-    // 设备参数
-    systemInfo = {
-      deviceOrientation,
-      size: {
-        screenWidth: window.screen.width,
-        screenHeight: window.screen.height,
-        windowWidth: document.documentElement.clientWidth,
-        windowHeight: document.documentElement.clientHeight
-      }
-    }
+  const _t = getCurrentPageInstance()
 
-    const _t = getCurrentPageInstance()
-
-    if (_t) {
-      _t.mpxPageStatus = `resize${count++}`
-    }
-  }, 50)
+  if (_t) {
+    _t.mpxPageStatus = `resize${count++}`
+  }
 }
+
+// listen resize
+window.addEventListener('resize', onResize)
 
 export default function pageStatusMixin (mixinType) {
   if (mixinType === 'page') {
@@ -50,11 +45,10 @@ export default function pageStatusMixin (mixinType) {
         mpxPageStatus: 'show'
       },
       activated () {
-        // listen resize
-        window.addEventListener('resize', onResize)
+        this.onShow && this.onShow()
       },
       deactivated () {
-        window.removeEventListener('resize', onResize)
+        this.onHide && this.onHide()
       }
     }
   }
