@@ -3,7 +3,7 @@ export default function processOption (
   ctorType,
   firstPage,
   mpxCid,
-  jsonConfig,
+  pageConfig,
   pagesMap,
   componentsMap,
   tabBarMap,
@@ -187,7 +187,7 @@ registered in parent context!`)
     }
 
     if (ctorType === 'page') {
-      option.__mpxPageConfig = Object.assign({}, window.__mpxPageConfig, jsonConfig)
+      option.__mpxPageConfig = Object.assign({}, window.__mpxPageConfig, pageConfig)
     }
   }
 

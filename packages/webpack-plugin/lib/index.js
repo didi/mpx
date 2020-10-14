@@ -615,14 +615,25 @@ class MpxWebpackPlugin {
             module.addVariable(name, expression, deps)
           }
         }
-
         // hack babel polyfill global
+        parser.hooks.statementIf.tap('MpxWebpackPlugin', (expr) => {
+          if (/core-js.+microtask/.test(parser.state.module.resource)) {
+            if (expr.test.left && (expr.test.left.name === 'Observer' || expr.test.left.name === 'MutationObserver')) {
+              const current = parser.state.current
+              current.addDependency(new InjectDependency({
+                content: 'document && ',
+                index: expr.test.range[0]
+              }))
+            }
+          }
+        })
+
         parser.hooks.evaluate.for('CallExpression').tap('MpxWebpackPlugin', (expr) => {
           const current = parser.state.current
           const arg0 = expr.arguments[0]
           const arg1 = expr.arguments[1]
           const callee = expr.callee
-          if (/core-js/.test(parser.state.module.resource)) {
+          if (/core-js.+global/.test(parser.state.module.resource)) {
             if (callee.name === 'Function' && arg0 && arg0.value === 'return this') {
               current.addDependency(new InjectDependency({
                 content: '(function() { return this })() || ',
@@ -806,26 +817,6 @@ try {
     context.ArrayBuffer = ArrayBuffer;
     context.Symbol = Symbol; 
   }
-} catch(e){
-}
-// swan && pc runtime fix
-try {
-  if (!context.navigator) {
-    Object.defineProperty(context, "navigator",{
-      configurable: true,
-      enumerable: true,
-      get () {
-        return {};
-      }
-    });
-  }
-  Object.defineProperty(context.navigator, "standalone",{
-    configurable: true,
-    enumerable: true,
-    get () {
-      return true;
-    }
-  }); 
 } catch(e){
 }\n`)
             source.add(originalSource)
@@ -1255,7 +1246,7 @@ try {
           fillPackagesSizeInfo(packageName, size)
           sizeSummary.staticSize += size
           sizeSummary.totalSize += size
-        } else if (/\.m?js(\?.*)?$/i.test(name)) {
+        } else if (/\.m?js$/i.test(name)) {
           let parsedModules
           try {
             parsedModules = parseAsset(compilation.assets[name].source())
@@ -1293,7 +1284,8 @@ try {
             size -= moduleSize
           }
           // chunkAssetInfo.webpackTemplateSize = size
-        } else {
+          // filter sourcemap
+        } else if (!/\.m?js\.map$/i.test(name)) {
           // static copy assets such as project.config.json
           const size = compilation.assets[name].size()
           assetsSizeInfo.assets.push({

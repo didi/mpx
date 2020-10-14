@@ -5,7 +5,7 @@ export default function getTabBarMixin (mixinType) {
   if (mixinType === 'page') {
     return {
       [CREATED] () {
-        if (this.$parent && this.$parent.$vnode.tag.endsWith('mpx-tab-bar-container')) {
+        if (this.$parent && this.$parent.$vnode && this.$parent.$vnode.tag && this.$parent.$vnode.tag.endsWith('mpx-tab-bar-container')) {
           this.getTabBar = () => {
             return this.$parent.$refs.tabBar
           }
