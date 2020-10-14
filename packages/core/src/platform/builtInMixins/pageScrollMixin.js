@@ -69,7 +69,7 @@ export default function pageScrollMixin (mixinType) {
           ms.hooks.scroll.on(this.__mpxPageScrollHandler)
         }
       } else {
-        document.body.style.cssText = 'overflow: hidden;'
+        document.body.style.overflow = 'hidden'
       }
     },
     deactivated () {
