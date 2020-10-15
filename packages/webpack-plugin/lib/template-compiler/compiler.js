@@ -693,7 +693,7 @@ function parseComponent (content, options) {
       }
 
       // 对于<script name="json">的标签，传参调用函数，其返回结果作为json的内容
-      if (currentBlock.tag === 'script' && currentBlock.name === 'json') {
+      if (currentBlock.tag === 'script' && currentBlock.type !== 'application/json' && currentBlock.name === 'json') {
         text = mpxJSON.compileMPXJSONText({ source: text, defs, filePath: options.filePath })
       }
       currentBlock.content = text
