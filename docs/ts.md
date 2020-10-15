@@ -112,7 +112,7 @@ mpx.$myProperty = 'my-property'
 Mpx基于泛型函数提供了非常方便用户使用的反向类型推导能力，简单来说，就是用户可以用非常接近于js的方式调用Mpx提供的api，就能够获得大量基于用户输入参数反向推导得到的类型提示及检查。但是由于ts本身的能力限制，我们在mpx的运行时中添加了少量辅助函数和变种api，便于用户最大程度地享受反向类型推导带来的便利性，具体的注意事项和使用方法如下述demo
 
 ```typescript
-import {createComponent, getComputed, getMixin, createStoreWithThis} from '@mpxjs/core'
+import {createComponent, getMixin, createStoreWithThis} from '@mpxjs/core'
 
 // createStoreWithThis作为createStore的变种方法，主要变化在于定义getters，mutations和actions时，
 // 获取自身的state，getters等属性不再通过参数传入，而是通过this.state或者this.getters等属性进行访问，
@@ -149,9 +149,8 @@ createComponent({
       return this.b
     },
     d() {
-      // 在computed中访问当前computed对象中的其他计算属性时，需要用getComputed辅助函数包裹，
-      // 而除此以外的任何场景下都不需要使用，例如访问data或者mixins中定义的computed等数据
-      return getComputed(this.c) + this.a + this.aaa
+      // data, mixin, computed中定义的数据能够被推导到this中
+      return this.a + this.aaa + this.c
     },
     // 从store上map过来的计算属性或者方法同样能够被推导到this中
     ...store.mapState(['aa'])

@@ -23,6 +23,7 @@ const fixRelative = require('./utils/fix-relative')
 const parseRequest = require('./utils/parse-request')
 const matchCondition = require('./utils/match-condition')
 const parseAsset = require('./utils/parse-asset')
+const { preProcessDefs } = require('./utils/index')
 
 const isProductionLikeMode = options => {
   return options.mode === 'production' || !options.mode
@@ -341,7 +342,8 @@ class MpxWebpackPlugin {
           decodeHTMLText: this.options.decodeHTMLText,
           // native文件专用相关配置
           nativeOptions: this.options.nativeOptions,
-          defs: this.options.defs,
+          tabBarMap: {},
+          defs: preProcessDefs(this.options.defs),
           i18n: this.options.i18n,
           checkUsingComponents: this.options.checkUsingComponents,
           appTitle: 'Mpx homepage',
@@ -799,19 +801,17 @@ if(!context.console) {
   }
 }
 \n`)
-            if (mpx.mode === 'swan') {
-              source.add('// swan runtime fix\n' +
-                'if (!context.navigator) {\n' +
-                '  context.navigator = {};\n' +
-                '}\n' +
-                'Object.defineProperty(context.navigator, "standalone",{\n' +
-                '  configurable: true,' +
-                '  enumerable: true,' +
-                '  get () {\n' +
-                '    return true;\n' +
-                '  }\n' +
-                '});\n\n')
-            }
+            source.add('// swan && pc runtime fix\n' +
+              'if (!context.navigator) {\n' +
+              '  context.navigator = {};\n' +
+              '}\n' +
+              'Object.defineProperty(context.navigator, "standalone",{\n' +
+              '  configurable: true,' +
+              '  enumerable: true,' +
+              '  get () {\n' +
+              '    return true;\n' +
+              '  }\n' +
+              '});\n\n')
             source.add(originalSource)
             source.add(`\nmodule.exports = window[${JSON.stringify(jsonpFunction)}];\n`)
           } else {
