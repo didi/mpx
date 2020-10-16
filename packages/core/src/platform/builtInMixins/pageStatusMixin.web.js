@@ -45,9 +45,11 @@ export default function pageStatusMixin (mixinType) {
         mpxPageStatus: 'show'
       },
       activated () {
+        this.mpxPageStatus = 'show'
         this.onShow && this.onShow()
       },
       deactivated () {
+        this.mpxPageStatus = 'hide'
         this.onHide && this.onHide()
       }
     }
