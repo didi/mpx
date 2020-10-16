@@ -116,6 +116,7 @@ module.exports = function (content) {
         }
         break
       case 'template':
+      case 'json':
         resultSource = `module.exports = __webpack_public_path__ + ${JSON.stringify(file)};`
         break
     }
