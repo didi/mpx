@@ -64,9 +64,9 @@ function postMessage (type, data) {
     case 'redirectTo':
       eventType = 'redirectTo'
       break
-    // case 'switchTab':
-    //   eventType = 'switchTab'
-    //   break
+    case 'switchTab':
+      eventType = 'switchTab'
+      break
     case 'reLaunch':
       eventType = 'reLaunch'
       break
@@ -128,10 +128,6 @@ const getWebviewApi = (sdkReady) => {
 
     webviewApiList[item] = (...args) => {
       if (env === 'web') {
-        if (item === 'switchTab') {
-          console.log(`此环境不支持 ${item} 方法`)
-          return
-        }
         return postMessage(item, ...args)
         // console.log(`${env}小程序不支持 ${item} 方法`)
       } else {
