@@ -9,6 +9,7 @@ const getRulesRunner = require('../platform/index')
 const addQuery = require('../utils/add-query')
 const transDynamicClassExpr = require('./trans-dynamic-class-expr')
 const hash = require('hash-sum')
+const dash2hump = require('../utils/hump-dash').dash2hump
 
 /**
  * Make a map and return a function for checking if a key
@@ -693,7 +694,7 @@ function parseComponent (content, options) {
       }
 
       // 对于<script name="json">的标签，传参调用函数，其返回结果作为json的内容
-      if (currentBlock.tag === 'script' && currentBlock.name === 'json') {
+      if (currentBlock.tag === 'script' && currentBlock.type !== 'application/json' && currentBlock.name === 'json') {
         text = mpxJSON.compileMPXJSONText({ source: text, defs, filePath: options.filePath })
       }
       currentBlock.content = text
@@ -1048,7 +1049,7 @@ const genericRE = /^generic:(.+)$/
 
 function processComponentGenericsForWeb (el, options, meta) {
   if (options.componentGenerics && options.componentGenerics[el.tag]) {
-    const generic = el.tag
+    const generic = dash2hump(el.tag)
     el.tag = 'component'
     addAttrs(el, [{
       name: ':is',
@@ -1903,6 +1904,10 @@ function postProcessTemplate (el) {
   }
 }
 
+const isValidMode = makeMap('wx,ali,swan,tt,qq,web')
+
+const wrapRE = /^\((.*)\)$/
+
 function processAtMode (el) {
   if (el.parent && el.parent._atModeStatus) {
     el._atModeStatus = el.parent._atModeStatus
@@ -1912,15 +1917,15 @@ function processAtMode (el) {
   elementAttrListCopy.forEach(item => {
     const attrName = item.name || ''
     if (!attrName || attrName.indexOf('@') === -1) return
-    const modeStr = attrName.split('@').pop()
+    const attrArr = attrName.split('@')
+    let modeStr = attrArr.pop()
+    if (wrapRE.test(modeStr)) modeStr = wrapRE.exec(modeStr)[1]
     const modeArr = modeStr.split('|')
-    if (modeArr.some(i => ['wx', 'ali', 'swan', 'tt', 'qq', 'web'].includes(i))) {
-      const tempVal = getAndRemoveAttr(el, item.name)
-      // web下vue有@click之类的简写，配上mode，假定最多只会出现2个@符号，且mode在后
-      const attrArr = attrName.split('@')
-      const replacedAttrName = attrArr.length === 2 ? attrName.replace(/@.*/, '') : attrArr.pop() && attrArr.join('@')
+    if (modeArr.every(i => isValidMode(i))) {
+      const attrValue = getAndRemoveAttr(el, attrName)
+      const replacedAttrName = attrArr.join('@')
 
-      const processedAttr = { name: replacedAttrName, value: tempVal }
+      const processedAttr = { name: replacedAttrName, value: attrValue }
       if (modeArr.includes(mode)) {
         if (!replacedAttrName) {
           el._atModeStatus = 'match'

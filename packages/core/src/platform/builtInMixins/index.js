@@ -6,7 +6,7 @@ import showMixin from './showMixin'
 import relationsMixin from './relationsMixin'
 import i18nMixin from './i18nMixin'
 import pageTitleMixin from './pageTitleMixin'
-// import pageScrollMixin from './pageScrollMixin'
+import pageScrollMixin from './pageScrollMixin'
 import pageResizeMixin from './pageResizeMixin'
 import componentGenericsMixin from './componentGenericsMixin'
 import getTabBarMixin from './getTabBarMixin'
@@ -20,8 +20,7 @@ export default function getBuiltInMixins (options, type) {
       refsMixin(),
       pageTitleMixin(type),
       pageStatusMixin(type),
-      // 使用bs进行pageScroll限制太多，暂时先移除
-      // pageScrollMixin(type),
+      pageScrollMixin(type),
       pageResizeMixin(type),
       componentGenericsMixin(type),
       getTabBarMixin(type),
