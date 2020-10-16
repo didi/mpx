@@ -564,3 +564,30 @@ export function makeMap (arr) {
     return obj
   }, {})
 }
+
+/**
+ * Get object values by chaining-key
+ * @param {Object} obj target Object
+ * @param {String} key chaining-key, e.g.: 'a.b.c'
+ */
+export function getChainKeyOfObj (obj = {}, key = '') {
+  return key.split('.').reduce((o, k) => o && o[k], obj)
+}
+
+/**
+ * Delete object values by chaining-key
+ * @param {Object} obj target object
+ * @param {String} key chaining-key
+ */
+export function delChainKeyOfObj (obj = {}, key = '') {
+  return key.split('.').reduce((o, k, index, arr) => {
+    if (arr.length === index + 1) {
+      try {
+        return delete o[k]
+      } catch { // undefined
+        return false
+      }
+    }
+    return o && o[k]
+  }, obj)
+}

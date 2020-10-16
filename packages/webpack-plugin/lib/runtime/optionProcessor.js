@@ -131,8 +131,10 @@ export default function processOption (
           const currentPage = vnode.tag.endsWith('mpx-tab-bar-container') ? vnode.componentInstance.$refs.tabBarPage : vnode.componentInstance
           if (currentPage) {
             if (document.hidden) {
+              currentPage.mpxPageStatus = 'hide'
               currentPage.onHide && currentPage.onHide()
             } else {
+              currentPage.mpxPageStatus = 'show'
               currentPage.onShow && currentPage.onShow()
             }
           }
