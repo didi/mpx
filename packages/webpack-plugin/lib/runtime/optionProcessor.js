@@ -11,7 +11,6 @@ export default function processOption (
   genericsInfo,
   Vue,
   VueRouter,
-  VueI18n,
   i18n
 ) {
   if (ctorType === 'app') {
@@ -143,7 +142,7 @@ export default function processOption (
     }
 
     if (i18n) {
-      window.__mpx.i18n = option.i18n = new VueI18n(i18n)
+      option.i18n = i18n
     }
   } else {
     // 局部注册页面和组件中依赖的组件

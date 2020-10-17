@@ -143,10 +143,14 @@ module.exports = function (script, options, callback) {
               delete i18nObj[`${key}Path`]
             }
           })
-          content += `  const i18n = ${JSON.stringify(i18nObj)}\n`
+          content += `  const i18nCfg = ${JSON.stringify(i18nObj)}\n`
           Object.keys(requestObj).forEach((key) => {
-            content += `  i18n.${key} = require(${requestObj[key]})\n`
+            content += `  i18nCfg.${key} = require(${requestObj[key]})\n`
           })
+          content += `  const i18n = new VueI18n(i18nCfg)
+  if(global.__mpx) {
+    global.__mpx.i18n = i18n
+  }\n`
         }
       }
       let firstPage = ''
@@ -238,7 +242,6 @@ module.exports = function (script, options, callback) {
     VueRouter`
         if (i18n) {
           content += `,
-    VueI18n,
     i18n`
         }
       }
