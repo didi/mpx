@@ -1,29 +1,31 @@
 const async = require('async')
 const JSON5 = require('json5')
 const path = require('path')
-const hash = require('hash-sum')
 const SingleEntryPlugin = require('webpack/lib/SingleEntryPlugin')
 const loaderUtils = require('loader-utils')
 const parseComponent = require('../parser')
 const config = require('../config')
 const normalize = require('../utils/normalize')
 const nativeLoaderPath = normalize.lib('native-loader')
+const themeLoaderPath = normalize.lib('json-compiler/theme-loader')
+const extractorPath = normalize.lib('extractor')
 const parseRequest = require('../utils/parse-request')
 const mpxJSON = require('../utils/mpx-json')
 const toPosix = require('../utils/to-posix')
 const fixUsingComponent = require('../utils/fix-using-component')
 const getRulesRunner = require('../platform/index')
-const isUrlRequest = require('../utils/is-url-request')
-const getPageName = require('../utils/get-page-name')
+const isUrlRequestRaw = require('../utils/is-url-request')
 const addQuery = require('../utils/add-query')
 const readJsonForSrc = require('../utils/read-json-for-src')
+const getMainCompilation = require('../utils/get-main-compilation')
 
 module.exports = function (raw = '{}') {
   // 该loader中会在每次编译中动态添加entry，不能缓存，否则watch不好使
   this.cacheable(false)
   const nativeCallback = this.async()
   const options = loaderUtils.getOptions(this) || {}
-  const mpx = this._compilation.__mpx__
+  const mainCompilation = getMainCompilation(this._compilation)
+  const mpx = mainCompilation.__mpx__
 
   const emitWarning = (msg) => {
     this.emitWarning(
@@ -36,6 +38,10 @@ module.exports = function (raw = '{}') {
       new Error('[json compiler][' + this.resource + ']: ' + msg)
     )
   }
+
+  const stringifyRequest = r => loaderUtils.stringifyRequest(this, r)
+  const isUrlRequest = r => isUrlRequestRaw(r, options.root)
+  const urlToRequest = r => loaderUtils.urlToRequest(r, options.root)
 
   if (!mpx) {
     return nativeCallback(null, raw)
@@ -52,6 +58,7 @@ module.exports = function (raw = '{}') {
   const localSrcMode = loaderUtils.parseQuery(this.resourceQuery || '?').mode
   const resolveMode = mpx.resolveMode
   const externals = mpx.externals
+  const pathHash = mpx.pathHash
   const resourcePath = parseRequest(this.resource).resourcePath
   const isApp = !(pagesMap[resourcePath] || componentsMap[resourcePath])
   const publicPath = this._compilation.outputOptions.publicPath || ''
@@ -233,9 +240,9 @@ module.exports = function (raw = '{}') {
   }
 
   const processComponent = (component, context, rewritePath, outputPath, callback) => {
-    if (!isUrlRequest(component, options.root)) return callback()
+    if (!isUrlRequest(component)) return callback()
     if (resolveMode === 'native') {
-      component = loaderUtils.urlToRequest(component, options.root)
+      component = urlToRequest(component)
     }
 
     if (externals.some((external) => {
@@ -270,10 +277,10 @@ module.exports = function (raw = '{}') {
             }
           }
           let relativePath = path.relative(root, resourceName)
-          outputPath = path.join('components', name + hash(root), relativePath)
+          outputPath = path.join('components', name + pathHash(root), relativePath)
         } else {
           let componentName = parsed.name
-          outputPath = path.join('components', componentName + hash(resourcePath), componentName)
+          outputPath = path.join('components', componentName + pathHash(resourcePath), componentName)
         }
       }
       const packageInfo = mpx.getPackageInfo(resource, {
@@ -356,7 +363,12 @@ module.exports = function (raw = '{}') {
               const filePath = result
               const extName = path.extname(filePath)
               if (extName === '.mpx' || extName === '.vue') {
-                const parts = parseComponent(content, filePath, this.sourceMap, mode, defs)
+                const parts = parseComponent(content, {
+                  filePath,
+                  needMap: this.sourceMap,
+                  mode,
+                  defs
+                })
                 const json = parts.json || {}
                 if (json.content) {
                   content = json.content
@@ -467,13 +479,18 @@ module.exports = function (raw = '{}') {
       callback()
     }
 
+    const getPageName = (resourcePath, ext) => {
+      const baseName = path.basename(resourcePath, ext)
+      return path.join('pages', baseName + pathHash(resourcePath), baseName)
+    }
+
     const processPages = (pages, srcRoot = '', tarRoot = '', context, callback) => {
       if (pages) {
         context = path.join(context, srcRoot)
         async.forEach(pages, (page, callback) => {
-          if (!isUrlRequest(page, options.root)) return callback()
+          if (!isUrlRequest(page)) return callback()
           if (resolveMode === 'native') {
-            page = loaderUtils.urlToRequest(page, options.root)
+            page = urlToRequest(page)
           }
           resolve(context, page, (err, resource) => {
             if (err) return callback(err)
@@ -531,11 +548,11 @@ module.exports = function (raw = '{}') {
 
       if (json.tabBar && json.tabBar[itemKey]) {
         json.tabBar[itemKey].forEach((item, index) => {
-          if (item[iconKey] && isUrlRequest(item[iconKey], options.root)) {
-            output += `json.tabBar.${itemKey}[${index}].${iconKey} = require("${addQuery(loaderUtils.urlToRequest(item[iconKey], options.root), { useLocal: true })}");\n`
+          if (item[iconKey] && isUrlRequest(item[iconKey])) {
+            output += `json.tabBar.${itemKey}[${index}].${iconKey} = require("${addQuery(urlToRequest(item[iconKey]), { useLocal: true })}");\n`
           }
-          if (item[activeIconKey] && isUrlRequest(item[activeIconKey], options.root)) {
-            output += `json.tabBar.${itemKey}[${index}].${activeIconKey} = require("${addQuery(loaderUtils.urlToRequest(item[activeIconKey], options.root), { useLocal: true })}");\n`
+          if (item[activeIconKey] && isUrlRequest(item[activeIconKey])) {
+            output += `json.tabBar.${itemKey}[${index}].${activeIconKey} = require("${addQuery(urlToRequest(item[activeIconKey]), { useLocal: true })}");\n`
           }
         })
       }
@@ -546,9 +563,24 @@ module.exports = function (raw = '{}') {
       let optionMenuCfg = config[mode].optionMenu
       if (optionMenuCfg && json.optionMenu) {
         let iconKey = optionMenuCfg.iconKey
-        if (json.optionMenu[iconKey] && isUrlRequest(json.optionMenu[iconKey], options.root)) {
-          output += `json.optionMenu.${iconKey} = require("${addQuery(loaderUtils.urlToRequest(json.optionMenu[iconKey], options.root), { useLocal: true })}");\n`
+        if (json.optionMenu[iconKey] && isUrlRequest(json.optionMenu[iconKey])) {
+          output += `json.optionMenu.${iconKey} = require("${addQuery(urlToRequest(json.optionMenu[iconKey]), { useLocal: true })}");\n`
         }
+      }
+      return output
+    }
+
+    const processThemeLocation = (output) => {
+      if (json.themeLocation && isUrlRequest(json.themeLocation)) {
+        const themeRequest = '!!' + extractorPath + '?' +
+          JSON.stringify({
+            type: 'json',
+            index: -1
+          }) + '!' +
+          themeLoaderPath + '?root = ' + options.root + '!' +
+          addQuery(urlToRequest(json.themeLocation), { __component: true })
+
+        output += `json.themeLocation = require(${stringifyRequest(themeRequest)});\n`
       }
       return output
     }
@@ -639,6 +671,7 @@ module.exports = function (raw = '{}') {
       const processOutput = (output) => {
         output = processTabBar(output)
         output = processOptionMenu(output)
+        output = processThemeLocation(output)
         return output
       }
       callback(null, processOutput)

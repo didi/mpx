@@ -1,5 +1,6 @@
 <script>
   import getInnerListeners from './getInnerListeners'
+  import { processSize } from './util'
 
   const defaultColor = {
     success: '#09BB07',
@@ -23,9 +24,14 @@
         default: 23
       }
     },
+    computed: {
+      _size () {
+        return processSize(this.size)
+      }
+    },
     render (createElement) {
       const type = this.type || 'success'
-      const sizeStr = isNaN(+this.size) ? this.size : this.size + 'px'
+      let sizeStr = this._size + 'px'
       const color = this.color || defaultColor[type]
       const data = {
         class: ['mpx-icon', `mpx-icon-${type}`],

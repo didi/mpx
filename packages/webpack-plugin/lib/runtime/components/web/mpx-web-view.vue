@@ -4,7 +4,7 @@
 
 <script>
   import getInnerListeners, { getCustomEvent } from './getInnerListeners'
-  import { redirectTo, navigateTo, navigateBack, reLaunch } from '@mpxjs/api-proxy/src/web/api/index'
+  import { redirectTo, navigateTo, navigateBack, reLaunch, switchTab} from '@mpxjs/api-proxy/src/web/api/index'
 
   const eventLoad = 'load'
   const eventError = 'error'
@@ -80,6 +80,10 @@
           case 'redirectTo':
             this.isActived = false
             redirectTo(value)
+            break
+          case 'switchTab':
+            this.isActived = false
+            switchTab(value)
             break
           case 'reLaunch':
             this.isActived = false

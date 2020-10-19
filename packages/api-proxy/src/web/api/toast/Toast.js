@@ -1,5 +1,6 @@
 import { webHandleSuccess } from '../../../common/js'
 import '../../../common/stylus/Toast.styl'
+import '../../../common/stylus/Loading.styl'
 
 function createDom (tag, attrs = {}, children = []) {
   let dom = document.createElement(tag)
@@ -16,13 +17,14 @@ export default class Toast {
       image: '',
       duration: 2000,
       mask: false,
-      success: (...args) => {},
-      fail: (...args) => {},
-      complete: (...args) => {}
+      success: () => {},
+      fail: () => {},
+      complete: () => {}
     }
     this.hideTimer = null
     this.type = null
 
+    // create & combine toast
     this.toast = createDom('div', { class: '__mpx_toast__' }, [
       this.mask = createDom('div', { class: '__mpx_mask__' }),
       createDom('div', { class: '__mpx_toast_box__' }, [
@@ -30,6 +32,11 @@ export default class Toast {
         this.title = createDom('div', { class: '__mpx_toast_title__' })
       ])
     ])
+
+    // loading animation dom
+    this.loading = createDom('div', { class: '__mpx_loading_wrapper__' }, Array.from({ length: 12 }, (_, i) => {
+      return createDom('div', { class: `line${i + 1}` })
+    }))
 
     document.body.appendChild(this.toast)
   }
@@ -50,19 +57,24 @@ export default class Toast {
       this.mask.classList.remove('show')
     }
 
-    const defaultIconClass = '__mpx_toast_icon__'
-    const iconClass = opts.image
-      ? '' // image
-      : opts.icon === 'loading'
-        ? 'loading' // loading
+    if (opts.icon === 'loading') {
+      this.icon.replaceWith(this.loading) // if loading, replace with loading dom
+    } else {
+      this.loading.replaceWith(this.icon) // set icon to default
+
+      const defaultIconClass = '__mpx_toast_icon__'
+      const iconClass = opts.image
+        ? '' // image
         : opts.icon === 'none'
           ? 'hide' // none
           : 'success' // default
 
-    this.icon.classList = `${iconClass} ${defaultIconClass}`
-    this.icon.style.cssText = opts.image && `background-image: url(${opts.image})`
+      this.icon.classList = `${iconClass} ${defaultIconClass}`
+      this.icon.style.cssText = opts.image && `background-image: url(${opts.image})`
+    }
 
     this.title.textContent = opts.title || ''
+
     this.toast.classList.add('show')
 
     opts.duration >= 0 && this.hide({ duration: opts.duration }, type)

@@ -1,5 +1,5 @@
 /**
- * mpxjs webview bridge v2.5.30
+ * mpxjs webview bridge v2.6.11
  * (c) 2020 @mpxjs team
  * @license Apache
  */
@@ -156,9 +156,10 @@
       case 'redirectTo':
         eventType = 'redirectTo';
         break;
-      // case 'switchTab':
-      //   eventType = 'switchTab'
-      //   break
+
+      case 'switchTab':
+        eventType = 'switchTab';
+        break;
 
       case 'reLaunch':
         eventType = 'reLaunch';
@@ -230,11 +231,6 @@
         }
 
         if (env === 'web') {
-          if (item === 'switchTab') {
-            console.log("\u6B64\u73AF\u5883\u4E0D\u652F\u6301 ".concat(item, " \u65B9\u6CD5"));
-            return;
-          }
-
           return postMessage.apply(void 0, [item].concat(args)); // console.log(`${env}小程序不支持 ${item} 方法`)
         } else {
           return sdkReady.then(function () {

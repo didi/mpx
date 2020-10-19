@@ -24,6 +24,7 @@ const parseRequest = require('./utils/parse-request')
 const matchCondition = require('./utils/match-condition')
 const parseAsset = require('./utils/parse-asset')
 const { preProcessDefs } = require('./utils/index')
+const hash = require('hash-sum')
 
 const isProductionLikeMode = options => {
   return options.mode === 'production' || !options.mode
@@ -143,6 +144,7 @@ class MpxWebpackPlugin {
     // 控制warn冗余组件注册
     options.checkUsingComponents = options.checkUsingComponents || false
     options.reportSize = options.reportSize || null
+    options.pathHashMode = options.pathHashMode || 'absolute'
     this.options = options
   }
 
@@ -349,6 +351,12 @@ class MpxWebpackPlugin {
           appTitle: 'Mpx homepage',
           attributes: this.options.attributes,
           externals: this.options.externals,
+          pathHash: (resourcePath) => {
+            if (this.options.pathHashMode === 'relative' && this.options.projectRoot) {
+              return hash(path.relative(this.options.projectRoot, resourcePath))
+            }
+            return hash(resourcePath)
+          },
           extract: (content, file, index, sideEffects) => {
             additionalAssets[file] = additionalAssets[file] || []
             if (!additionalAssets[file][index]) {
@@ -607,14 +615,25 @@ class MpxWebpackPlugin {
             module.addVariable(name, expression, deps)
           }
         }
-
         // hack babel polyfill global
+        parser.hooks.statementIf.tap('MpxWebpackPlugin', (expr) => {
+          if (/core-js.+microtask/.test(parser.state.module.resource)) {
+            if (expr.test.left && (expr.test.left.name === 'Observer' || expr.test.left.name === 'MutationObserver')) {
+              const current = parser.state.current
+              current.addDependency(new InjectDependency({
+                content: 'document && ',
+                index: expr.test.range[0]
+              }))
+            }
+          }
+        })
+
         parser.hooks.evaluate.for('CallExpression').tap('MpxWebpackPlugin', (expr) => {
           const current = parser.state.current
           const arg0 = expr.arguments[0]
           const arg1 = expr.arguments[1]
           const callee = expr.callee
-          if (/core-js/.test(parser.state.module.resource)) {
+          if (/core-js.+global/.test(parser.state.module.resource)) {
             if (callee.name === 'Function' && arg0 && arg0.value === 'return this') {
               current.addDependency(new InjectDependency({
                 content: '(function() { return this })() || ',
@@ -776,8 +795,8 @@ class MpxWebpackPlugin {
             source.add('var context = (function() { return this })() || Function("return this")();\n')
             source.add(`
 // Fix babel runtime in some quirky environment like ali & qq dev.
-if(!context.console) {
-  try {
+try {
+  if(!context.console){
     context.console = console;
     context.setInterval = setInterval;
     context.setTimeout = setTimeout;
@@ -796,22 +815,10 @@ if(!context.console) {
     context.Uint8Array = Uint8Array;
     context.DataView = DataView;
     context.ArrayBuffer = ArrayBuffer;
-    context.Symbol = Symbol;
-  } catch(e){
+    context.Symbol = Symbol; 
   }
-}
-\n`)
-            source.add('// swan && pc runtime fix\n' +
-              'if (!context.navigator) {\n' +
-              '  context.navigator = {};\n' +
-              '}\n' +
-              'Object.defineProperty(context.navigator, "standalone",{\n' +
-              '  configurable: true,' +
-              '  enumerable: true,' +
-              '  get () {\n' +
-              '    return true;\n' +
-              '  }\n' +
-              '});\n\n')
+} catch(e){
+}\n`)
             source.add(originalSource)
             source.add(`\nmodule.exports = window[${JSON.stringify(jsonpFunction)}];\n`)
           } else {
@@ -1239,7 +1246,7 @@ if(!context.console) {
           fillPackagesSizeInfo(packageName, size)
           sizeSummary.staticSize += size
           sizeSummary.totalSize += size
-        } else if (/\.m?js(\?.*)?$/i.test(name)) {
+        } else if (/\.m?js$/i.test(name)) {
           let parsedModules
           try {
             parsedModules = parseAsset(compilation.assets[name].source())
@@ -1277,7 +1284,8 @@ if(!context.console) {
             size -= moduleSize
           }
           // chunkAssetInfo.webpackTemplateSize = size
-        } else {
+          // filter sourcemap
+        } else if (!/\.m?js\.map$/i.test(name)) {
           // static copy assets such as project.config.json
           const size = compilation.assets[name].size()
           assetsSizeInfo.assets.push({
