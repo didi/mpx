@@ -116,8 +116,11 @@ module.exports = function (content) {
         }
         break
       case 'template':
-      case 'json':
         resultSource = `module.exports = __webpack_public_path__ + ${JSON.stringify(file)};`
+        break
+      case 'json':
+        // 目前json中index为-1时只有处理theme.json一种情况，该情况下返回的路径只能为不带有./或../开头的相对路径，否则微信小程序预览构建会报错，issue#622
+        resultSource = `module.exports = ${JSON.stringify(file)};`
         break
     }
     index = 0
