@@ -1989,7 +1989,8 @@ function processElement (el, root, options, meta) {
     processShow(el, options, root)
   }
 
-  if (transAli) {
+  // 当mode为ali不管是不是跨平台都需要进行此处理，以保障ali当中的refs相关增强能力正常运行
+  if (mode === 'ali') {
     processAliStyleClassHack(el, options, root)
   }
 
