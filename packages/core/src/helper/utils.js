@@ -584,7 +584,7 @@ export function delChainKeyOfObj (obj = {}, key = '') {
     if (arr.length === index + 1) {
       try {
         return delete o[k]
-      } catch { // undefined
+      } catch (e) { // undefined
         return false
       }
     }
