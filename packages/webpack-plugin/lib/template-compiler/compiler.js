@@ -1724,7 +1724,8 @@ function injectWxs (meta, module, src) {
 
 function processClass (el, meta) {
   const type = 'class'
-  const targetType = el.tag.startsWith('th-') ? 'ex-' + type : type
+  const needEx = el.tag.startsWith('th-')
+  const targetType = needEx ? 'ex-' + type : type
   let dynamicClass = getAndRemoveAttr(el, config[mode].directive.dynamicClass)
   let staticClass = getAndRemoveAttr(el, type)
   if (dynamicClass) {
@@ -1740,6 +1741,17 @@ function processClass (el, meta) {
       name: targetType,
       value: staticClass
     }])
+  }
+
+  if (needEx && staticClass) {
+    const refClassRegExp = /ref_(\w+)_(\d+)/
+    const match = staticClass.match(refClassRegExp)
+    if (match) {
+      addAttrs(el, [{
+        name: 'class',
+        value: match[0]
+      }])
+    }
   }
 }
 
