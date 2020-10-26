@@ -29,8 +29,9 @@ module.exports = function ({ print }) {
       {
         test: 'open-type',
         ali ({ name, value }) {
-          if (value === 'share' || value === 'launchApp' || value === 'getAuthorize') {
-            // do nothing
+          const notSupported = ['contact', 'launchApp', 'openSetting', 'feedback']
+          if (notSupported.indexOf(value) > -1) {
+            aliValueLogError({ name, value })
           } else if (value === 'getPhoneNumber') {
             return [
               {
@@ -56,12 +57,10 @@ module.exports = function ({ print }) {
           } else if (isMustache(value)) {
             // 如果是个变量，报warning
             aliValueLog({ name, value })
-          } else {
-            aliValueLogError({ name, value })
           }
         },
         swan ({ name, value }) {
-          let supportList = ['contact', 'share', 'getUserInfo', 'getPhoneNumber', 'openSetting']
+          const supportList = ['contact', 'share', 'getUserInfo', 'getPhoneNumber', 'openSetting']
           if (isMustache(value)) {
             // 如果是个变量，报warning
             baiduValueLog({ name, value })
@@ -73,7 +72,7 @@ module.exports = function ({ print }) {
           if (isMustache(value)) {
             ttValueLog({ name, value })
           } else {
-            let supportList = ['share', 'getPhoneNumber']
+            const supportList = ['share', 'getPhoneNumber']
             if (supportList.indexOf(value) === -1) {
               ttValueLogError({ name, value })
             }
@@ -110,17 +109,17 @@ module.exports = function ({ print }) {
     ],
     event: [
       {
-        test: 'getphonenumber',
+        test: /^(getphonenumber|getuserinfo)/,
         ali () {
           return 'getAuthorize'
         }
       },
       {
-        test: /^(getuserinfo|contact|error|launchapp|opensetting)$/,
+        test: /^(contact|launchapp|opensetting)$/,
         ali: aliEventLog
       },
       {
-        test: /^(contact|error|launchapp)$/,
+        test: /^(error|launchapp)$/,
         swan: baiduEventLog
       },
       {
