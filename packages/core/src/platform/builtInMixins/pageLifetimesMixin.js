@@ -1,4 +1,4 @@
-let systemInfo = {}
+/* let systemInfo = {}
 
 let timer = ''
 
@@ -35,7 +35,7 @@ function onResize () {
       count++
     }
   }, 50)
-}
+} */
 
 export default function pageLifetimes (mixinType) {
   if (mixinType === 'page') {
@@ -44,28 +44,22 @@ export default function pageLifetimes (mixinType) {
         mpxPageStatus: 'show'
       },
       activated () {
-        // 页面显示\隐藏
-        document.addEventListener('visibilitychange', () => {
-          if (document.visibilityState === 'visible') {
-            this.mpxPageStatus = 'show'
-          } else {
-            this.mpxPageStatus = 'hide'
-          }
-        })
 
-        // 屏幕尺寸变化，横竖屏
-        window.addEventListener('resize', onResize)
       },
       deactivated () {
-        // 卸载事件
-        document.removeEventListener('visibilitychange', () => {})
-        window.removeEventListener('resize', onResize)
+
       }
     }
   } else {
     return {
+      properties: {
+        mpxPageStatus: {
+          type: String
+        }
+      },
       watch: {
-        '$parent.mpxPageStatus' (val) {
+        mpxPageStatus (val) {
+          console.log('val---->', val)
           if (val) {
             const rawOptions = this.$rawOptions || ''
             const pageLifetimes = rawOptions.pageLifetimes
@@ -79,7 +73,8 @@ export default function pageLifetimes (mixinType) {
       },
       created () {
         // 初始化一下，触发 show
-        this.$rawOptions.pageLifetimes.show.call(this)
+        // this.$rawOptions.pageLifetimes.show.call(this)
+        console.log('$rawOptions---->', this.$rawOptions)
       }
     }
   }
