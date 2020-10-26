@@ -57,7 +57,9 @@
         scrollY: this.scrollY,
         probeType: 3,
         bounce: false,
-        observeDOM: this.observeDOM
+        observeDOM: this.observeDOM,
+        stopPropagation: true,
+        bindToWrapper: true
       })
       this.lastX = -this._scrollLeft
       this.lastY = -this._scrollTop

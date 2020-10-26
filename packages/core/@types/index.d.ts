@@ -119,6 +119,7 @@ interface ComponentOpt<D, P, C, M, Mi extends Array<any>> extends Partial<Wechat
   options?: Partial<{
     addGlobalClass: boolean
     multipleSlots: boolean
+    styleIsolation: string
   }>
 
   pageShow?: () => void
