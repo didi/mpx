@@ -68,14 +68,14 @@ type GetComputedType<T> = {
 }
 
 type PropValueType<Def> = Def extends {
-    type: ((...args: any[]) => infer T) | ((...args: any[]) => infer T)[];
+    type: (...args: any[]) => infer T;
     optionalType?: ((...args: any[]) => infer T)[];
     value?: infer T;
   }
   ? T
   : Def extends (...args: any[]) => infer T
     ? T
-    : never;
+    : any;
 
 type GetPropsType<T> = {
   readonly [K in keyof T]: PropValueType<T[K]>
