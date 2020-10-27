@@ -10,7 +10,7 @@ type Data = object | (() => object)
 type PropType = StringConstructor | NumberConstructor | BooleanConstructor | ObjectConstructor | ArrayConstructor | null
 
 interface PropOpt {
-  type: PropType | Array<PropType>
+  type: PropType
   optionalTypes?: Array<PropType>
   value?: any
 
