@@ -10,7 +10,7 @@ type Data = object | (() => object)
 type PropType = StringConstructor | NumberConstructor | BooleanConstructor | ObjectConstructor | ArrayConstructor | null
 
 interface PropOpt {
-  type: PropType
+  type: PropType | Array<PropType>
   optionalTypes?: Array<PropType>
   value?: any
 
@@ -68,7 +68,8 @@ type GetComputedType<T> = {
 }
 
 type PropValueType<Def> = Def extends {
-    type: (...args: any[]) => infer T;
+    type: ((...args: any[]) => infer T) | ((...args: any[]) => infer T)[];
+    optionalType?: ((...args: any[]) => infer T)[];
     value?: infer T;
   }
   ? T
