@@ -38,6 +38,7 @@ module.exports = function (script, options, callback) {
   const tabBarStr = options.tabBarStr
   const genericsInfo = options.genericsInfo
   const componentGenerics = options.componentGenerics
+  const forceDisableBuiltInLoader = options.forceDisableBuiltInLoader
 
   const emitWarning = (msg) => {
     loaderContext.emitWarning(
@@ -187,7 +188,7 @@ module.exports = function (script, options, callback) {
 
       Object.keys(builtInComponentsMap).forEach((componentName) => {
         const componentCfg = builtInComponentsMap[componentName]
-        const componentRequest = stringifyRequest('builtInComponent.vue!=!' + builtInLoaderPath + '!' + componentCfg.resource)
+        const componentRequest = forceDisableBuiltInLoader ? stringifyRequest(componentCfg.resource) : stringifyRequest('builtInComponent.vue!=!' + builtInLoaderPath + '!' + componentCfg.resource)
         componentsMap[componentName] = `getComponent(require(${componentRequest}), { __mpxBuiltIn: true })`
       })
 

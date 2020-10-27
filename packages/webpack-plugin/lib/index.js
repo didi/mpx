@@ -141,10 +141,10 @@ class MpxWebpackPlugin {
       cssLangs: ['css', 'less', 'stylus', 'scss', 'sass']
     }, options.nativeOptions)
     options.i18n = options.i18n || null
-    // 控制warn冗余组件注册
     options.checkUsingComponents = options.checkUsingComponents || false
     options.reportSize = options.reportSize || null
     options.pathHashMode = options.pathHashMode || 'absolute'
+    options.forceDisableBuiltInLoader = options.forceDisableBuiltInLoader || false
     this.options = options
   }
 
@@ -348,6 +348,7 @@ class MpxWebpackPlugin {
           defs: preProcessDefs(this.options.defs),
           i18n: this.options.i18n,
           checkUsingComponents: this.options.checkUsingComponents,
+          forceDisableBuiltInLoader: this.options.forceDisableBuiltInLoader,
           appTitle: 'Mpx homepage',
           attributes: this.options.attributes,
           externals: this.options.externals,
