@@ -147,22 +147,22 @@ class Store {
     return genericSubscribe(fn, this._subscribers, options)
   }
 
-  registerModule (module) {
-    const state = module.state || {}
+  registerModule (model) {
+    const state = model.state || {}
     const reactiveModule = {
       state
     }
-    if (module.getters) {
-      reactiveModule.getters = transformGetters(module.getters, reactiveModule, this)
+    if (model.getters) {
+      reactiveModule.getters = transformGetters(model.getters, reactiveModule, this)
     }
-    if (module.mutations) {
-      reactiveModule.mutations = transformMutations(module.mutations, reactiveModule, this)
+    if (model.mutations) {
+      reactiveModule.mutations = transformMutations(model.mutations, reactiveModule, this)
     }
-    if (module.actions) {
-      reactiveModule.actions = transformActions(module.actions, reactiveModule, this)
+    if (model.actions) {
+      reactiveModule.actions = transformActions(model.actions, reactiveModule, this)
     }
-    if (module.deps) {
-      mergeDeps(reactiveModule, module.deps)
+    if (model.deps) {
+      mergeDeps(reactiveModule, model.deps)
     }
     Object.assign(this.__depsGetters, reactiveModule.depsGetters)
     Object.assign(this.__wrappedGetters, reactiveModule.getters)
@@ -170,9 +170,9 @@ class Store {
     Object.assign(this.mutations, reactiveModule.mutations)
     // merge actions
     Object.assign(this.actions, reactiveModule.actions)
-    // 子module
-    if (module.modules) {
-      const childs = module.modules
+    // 子model
+    if (model.modules) {
+      const childs = model.modules
       Object.keys(childs).forEach(key => {
         reactiveModule.state[key] = this.registerModule(childs[key]).state
       })
