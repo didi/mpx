@@ -218,7 +218,6 @@ export default function createStore (options) {
   return new Store(options)
 }
 
-
 // auxiliary functions
 export function createState (state) {
   return state
