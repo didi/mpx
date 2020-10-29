@@ -15,7 +15,7 @@ import { warn } from '../helper/log'
 
 import mapStore from './mapStore'
 
-function transformGetters (getters, module, store) {
+function transformGetters (getters, model, store) {
   const newGetters = {}
   for (let key in getters) {
     if (key in store.getters) {
@@ -24,19 +24,19 @@ function transformGetters (getters, module, store) {
     const getter = function () {
       if (store.withThis) {
         return getters[key].call({
-          state: module.state,
+          state: model.state,
           getters: store.getters,
           rootState: store.state
         })
       }
-      return getters[key](module.state, store.getters, store.state)
+      return getters[key](model.state, store.getters, store.state)
     }
     newGetters[key] = getter
   }
   return newGetters
 }
 
-function transformMutations (mutations, module, store) {
+function transformMutations (mutations, model, store) {
   const newMutations = {}
   for (let key in mutations) {
     if (store.mutations[key]) {
@@ -44,15 +44,15 @@ function transformMutations (mutations, module, store) {
     }
 
     const mutation = function (...payload) {
-      if (store.withThis) return mutations[key].apply({ state: module.state }, payload)
-      return mutations[key](module.state, ...payload)
+      if (store.withThis) return mutations[key].apply({ state: model.state }, payload)
+      return mutations[key](model.state, ...payload)
     }
     newMutations[key] = mutation
   }
   return newMutations
 }
 
-function transformActions (actions, module, store) {
+function transformActions (actions, model, store) {
   const newActions = {}
   for (let key in actions) {
     if (store.actions[key]) {
@@ -61,7 +61,7 @@ function transformActions (actions, module, store) {
     newActions[key] = function (...payload) {
       const context = {
         rootState: store.state,
-        state: module.state,
+        state: model.state,
         getters: store.getters,
         dispatch: store.dispatch.bind(store),
         commit: store.commit.bind(store)
@@ -84,22 +84,22 @@ function transformActions (actions, module, store) {
   return newActions
 }
 
-function mergeDeps (module, deps) {
+function mergeDeps (model, deps) {
   const mergeProps = ['state', 'getters', 'mutations', 'actions']
   Object.keys(deps).forEach(key => {
     const store = deps[key]
     mergeProps.forEach(prop => {
-      if (module[prop] && (key in module[prop])) {
+      if (model[prop] && (key in model[prop])) {
         warn(`Deps's name [${key}] conflicts with ${prop}'s key in current options.`)
       } else {
-        module[prop] = module[prop] || {}
+        model[prop] = model[prop] || {}
         if (prop === 'getters') {
           // depsGetters单独存放，不需要重新进行初始化
-          module.depsGetters = module.depsGetters || {}
-          module.depsGetters[key] = store.getters
-          // module[prop][key] = () => store[prop]
+          model.depsGetters = model.depsGetters || {}
+          model.depsGetters[key] = store.getters
+          // model[prop][key] = () => store[prop]
         } else {
-          module[prop][key] = store[prop]
+          model[prop][key] = store[prop]
         }
       }
     })
