@@ -1,7 +1,7 @@
 // Type definitions for @mpxjs/core
 // Project: https://github.com/didi/mpx
 // Definitions by: hiyuki <https://github.com/hiyuki>
-// TypeScript Version: 4.0.2
+// TypeScript Version: 4.1.0-beta
 
 /// <reference types="miniprogram-api-typings" />
 
@@ -317,18 +317,35 @@ interface MutationsAndActionsWithThis {
   [key: string]: (...payload: any[]) => any
 }
 
-type GetDispatchAndCommitWithThis<A, D> = keyof D extends never ? (<T extends keyof A>(type: T, ...payload: A[T] extends (...payload: infer P) => any ? P : never) => A[T] extends (...payload: any[]) => infer R ? R : never) : ((type: string, ...payload: any[]) => any)
+// Store Type Bindings
 
+type GetActionsKey<A> = {
+  [K in `${Exclude<keyof A, symbol>}`]: K extends keyof A ? A[K] : never
+} // {actA: () => void}
+
+type CombineDepsToActions<DK extends string|number, A> = UnionToIntersection<{
+  [K in keyof GetActionsKey<A>]: {
+    [key in `${DK}.${K}`]: GetActionsKey<A>[K] // store.actA: () => void
+  }
+}[keyof GetActionsKey<A>]> // {store.actA: () => void} & {store.actB: () => void}
+
+type GetAllActionsKey<A, D extends Deps, AK extends 'actions'|'mutations'> = {
+  [K in `${Exclude<keyof A, symbol>}`]: K extends keyof A ? A[K] : never
+} & UnionToIntersection<{
+  [K in `${Exclude<keyof D, symbol>}`]:CombineDepsToActions<K, D[K][AK]>
+}[`${Exclude<keyof D, symbol>}`]>
+
+type GetDispatchAndCommitWithThis<A, D extends Deps, AK extends 'actions'|'mutations'> = (<T extends keyof GetAllActionsKey<A, D, AK>>(type: T, ...payload: GetAllActionsKey<A, D, AK>[T] extends (...payload: infer P) => any ? P : never) => GetAllActionsKey<A, D, AK>[T] extends (...payload: any[]) => infer R ? R : never)
 interface StoreOptWithThis<S, G, M, A, D extends Deps> {
   state?: S
-  getters?: G & ThisType<{ state: S & UnboxDepsField<D, 'state'>, getters: G & UnboxDepsField<D, 'getters'>, rootState: any }>
+  getters?: G & ThisType<{ state: S & UnboxDepsField<D, 'state'>, getters: GetGetters<G> & UnboxDepsField<D, 'getters'>, rootState: any }>
   mutations?: M & ThisType<{ state: S & UnboxDepsField<D, 'state'> }>
   actions?: A & ThisType<{
     rootState: any,
     state: S & UnboxDepsField<D, 'state'>,
     getters: GetComputedType<G> & UnboxDepsField<D, 'getters'>,
-    dispatch: GetDispatchAndCommitWithThis<A, D>,
-    commit: GetDispatchAndCommitWithThis<M, D>
+    dispatch: GetDispatchAndCommitWithThis<A, D, 'actions'>,
+    commit: GetDispatchAndCommitWithThis<M, D, 'mutations'>
   }>
   deps?: D
   modules?: ObjectOf<StoreOptWithThis<{}, {}, {}, {}, {}>>
@@ -345,9 +362,9 @@ declare class StoreWithThis<S = {}, G = {}, M = {}, A = {}, D extends Deps = {}>
   mutations: M & UnboxDepsField<D, 'mutations'>
   actions: A & UnboxDepsField<D, 'actions'>
 
-  dispatch: GetDispatchAndCommitWithThis<A, D>
+  dispatch: GetDispatchAndCommitWithThis<A, D, 'actions'>
 
-  commit: GetDispatchAndCommitWithThis<M, D>
+  commit: GetDispatchAndCommitWithThis<M, D, 'mutations'>
 
   mapState<K extends keyof S> (maps: K[]): {
     [I in K]: () => S[I]
@@ -403,9 +420,23 @@ declare class StoreWithThis<S = {}, G = {}, M = {}, A = {}, D extends Deps = {}>
 
 export function createStoreWithThis<S = {}, G = {}, M extends MutationsAndActionsWithThis = {}, A extends MutationsAndActionsWithThis = {}, D extends Deps = {}> (option: StoreOptWithThis<S, G, M, A, D>): StoreWithThis<S, G, M, A, D>
 
+// auxiliary functions
+export function createState<S = {}> (state: S): S
+
+export function createGetters<S = {}, D extends Deps = {}, G = {}> (state: S, getters: G & ThisType<{ state: S & UnboxDepsField<D, 'state'>, getters: GetGetters<G> & UnboxDepsField<D, 'getters'>, rootState: any }>, deps?: D): G
+
+export function createMutations<S = {}, D extends Deps = {}, M extends MutationsAndActionsWithThis = {}> (state: S, mutations: M & ThisType<{ state: S & UnboxDepsField<D, 'state'> }>, deps?: D): M
+
+export function createActions<S = {}, G = {}, M extends MutationsAndActionsWithThis = {}, D extends Deps = {}, A extends MutationsAndActionsWithThis = {}> (state: S, getters: G, mutations: M & ThisType<{ state: S & UnboxDepsField<D, 'state'> }>, actions: A & ThisType<{
+  rootState: any,
+  state: S & UnboxDepsField<D, 'state'>,
+  getters: GetComputedType<G> & UnboxDepsField<D, 'getters'>,
+  dispatch: GetDispatchAndCommitWithThis<A, D, 'actions'>,
+  commit: GetDispatchAndCommitWithThis<M, D, 'mutations'>
+}>, deps?: D): A
+
 
 export function injectMixins (mixins: object | Array<object>, type?: 'app' | 'page' | 'component'): void
-
 
 declare class Watcher {
   constructor (context: any, expr: string | (() => any), handler: WatchHandler | WatchOptWithHandler, options?: WatchOpt)

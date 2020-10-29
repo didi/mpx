@@ -218,6 +218,21 @@ export default function createStore (options) {
   return new Store(options)
 }
 
+
+// auxiliary functions
+export function createState (state) {
+  return state
+}
+export function createGetters (state, getters, deps = {}) {
+  return getters
+}
+export function createMutations (state, mutations, deps = {}) {
+  return mutations
+}
+export function createActions (state, getters, mutations, actions, deps = {}) {
+  return actions
+}
+
 export function createStoreWithThis (options) {
   options.withThis = true
   return new Store(options)
