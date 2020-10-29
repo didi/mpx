@@ -1,5 +1,5 @@
 import * as platform from './platform'
-import createStore, { createStoreWithThis } from './core/createStore'
+import createStore, { createStoreWithThis, createState, createGetters, createMutations, createActions } from './core/createStore'
 import { injectMixins } from './core/injectMixins'
 import { extend, diffAndCloneA, makeMap } from './helper/utils'
 import { setConvertRule } from './convertor/convertor'
@@ -25,7 +25,7 @@ export function createComponent (config, ...rest) {
   platform.createComponent(Object.assign({ proto: mpx.proto }, config), ...rest)
 }
 
-export { createStore, createStoreWithThis, getMixin }
+export { createStore, createStoreWithThis, createState, createGetters, createMutations, createActions, getMixin }
 
 export function toPureObject (obj) {
   return diffAndCloneA(obj).clone
