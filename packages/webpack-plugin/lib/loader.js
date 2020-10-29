@@ -139,7 +139,8 @@ module.exports = function (content) {
         getRequire,
         getNamedExports,
         getRequireForSrc,
-        getNamedExportsForSrc
+        getNamedExportsForSrc,
+        getImport
       } = createHelpers(
         loaderContext,
         options,
@@ -301,7 +302,12 @@ module.exports = function (content) {
           script.src = processSrcQuery(script.src, 'script')
           output += getNamedExportsForSrc('script', script) + '\n\n'
         } else {
-          output += getNamedExports('script', script) + '\n\n'
+          if (mode === 'qa') {
+            output += getImport('script', script) + '\n\n'
+            output += `\n export default context.currentOption`
+          } else {
+            output += getNamedExports('script', script) + '\n\n'
+          }
         }
       } else {
         switch (ctorType) {
