@@ -246,7 +246,8 @@ module.exports = function (content) {
               builtInComponentsMap: templateRes.builtInComponentsMap,
               genericsInfo: templateRes.genericsInfo,
               localComponentsMap: jsonRes.localComponentsMap,
-              localPagesMap: jsonRes.localPagesMap
+              localPagesMap: jsonRes.localPagesMap,
+              forceDisableBuiltInLoader: mpx.forceDisableBuiltInLoader
             }, callback)
           }
         ], (err, scriptRes) => {

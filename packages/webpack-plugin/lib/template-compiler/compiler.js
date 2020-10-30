@@ -1134,9 +1134,9 @@ function parseFuncStr2 (str) {
   let funcRE = /^([^()]+)(\((.*)\))?/
   let match = funcRE.exec(str)
   if (match) {
-    let funcName = stringify(match[1])
+    const funcName = parseMustache(match[1]).result
+    const hasArgs = !!match[2]
     let args = match[3] ? `,${match[3]}` : ''
-    let hasArgs = !!match[2]
     const ret = /(,|^)\s*(\$event)\s*(,|$)/.exec(args)
     if (ret) {
       const subIndex = ret[0].indexOf('$event')
@@ -1724,7 +1724,8 @@ function injectWxs (meta, module, src) {
 
 function processClass (el, meta) {
   const type = 'class'
-  const targetType = el.tag.startsWith('th-') ? 'ex-' + type : type
+  const needEx = el.tag.startsWith('th-')
+  const targetType = needEx ? 'ex-' + type : type
   let dynamicClass = getAndRemoveAttr(el, config[mode].directive.dynamicClass)
   let staticClass = getAndRemoveAttr(el, type)
   if (dynamicClass) {
@@ -1732,7 +1733,8 @@ function processClass (el, meta) {
     let dynamicClassExp = transDynamicClassExpr(parseMustache(dynamicClass).result)
     addAttrs(el, [{
       name: targetType,
-      value: `{{${stringifyModuleName}.stringifyClass(${staticClassExp}, ${dynamicClassExp})}}`
+      // swan中externalClass是通过编译时静态实现，因此需要保留原有的staticClass形式避免externalClass失效
+      value: mode === 'swan' && staticClass ? `${staticClass} {{${stringifyModuleName}.stringifyClass('', ${dynamicClassExp})}}` : `{{${stringifyModuleName}.stringifyClass(${staticClassExp}, ${dynamicClassExp})}}`
     }])
     injectWxs(meta, stringifyModuleName, stringifyWxsPath)
   } else if (staticClass) {
@@ -1740,6 +1742,17 @@ function processClass (el, meta) {
       name: targetType,
       value: staticClass
     }])
+  }
+
+  if (needEx && staticClass) {
+    const refClassRegExp = /ref_(\w+)_(\d+)/
+    const match = staticClass.match(refClassRegExp)
+    if (match) {
+      addAttrs(el, [{
+        name: 'class',
+        value: match[0]
+      }])
+    }
   }
 }
 
@@ -1942,6 +1955,21 @@ function processAtMode (el) {
   })
 }
 
+// 去除重复的attrsList项，这些项可能由平台转换规则造成
+function processDuplicateAttrsList (el) {
+  const attrsMap = new Map()
+  const attrsList = []
+  el.attrsList.forEach((attr) => {
+    if (!attrsMap.has(attr.name)) {
+      attrsMap.set(attr.name, attr.value)
+    } else if (attr.value === attrsMap.get(attr.name)) {
+      return
+    }
+    attrsList.push(attr)
+  })
+  el.attrsList = attrsList
+}
+
 function processElement (el, root, options, meta) {
   processAtMode(el)
   // 如果已经标记了这个元素要被清除，直接return跳过后续处理步骤
@@ -1959,6 +1987,8 @@ function processElement (el, root, options, meta) {
     addAttrs(el, el.noTransAttrs)
     delete el.noTransAttrs
   }
+
+  processDuplicateAttrsList(el)
 
   const transAli = mode === 'ali' && srcMode === 'wx'
 
@@ -1989,7 +2019,8 @@ function processElement (el, root, options, meta) {
     processShow(el, options, root)
   }
 
-  if (transAli) {
+  // 当mode为ali不管是不是跨平台都需要进行此处理，以保障ali当中的refs相关增强能力正常运行
+  if (mode === 'ali') {
     processAliStyleClassHack(el, options, root)
   }
 
