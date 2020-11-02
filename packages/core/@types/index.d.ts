@@ -323,6 +323,10 @@ interface MutationsAndActionsWithThis {
   [key: string]: (...payload: any[]) => any
 }
 
+interface DeeperMutationsAndActions {
+  [key: string]: ((...payload: any[]) => any)|MutationsAndActionsWithThis
+}
+
 // Store Type Bindings
 type StringKeyof<T> = `${Exclude<keyof T, symbol>}`
 
@@ -334,7 +338,7 @@ type WrapType<K extends keyof any, V> = {
 
 type GetActionsKey<A, P extends string|number = ''> = UnionToIntersection<{
   [K in StringKeyof<A>]: K extends keyof A ? {
-    [RK in CombineStringKey<P, K>]: A[K] extends MutationsAndActionsWithThis ? GetActionsKey<A[K], RK> : WrapType<RK, A[K]>
+    [RK in CombineStringKey<P, K>]: A[K] extends DeeperMutationsAndActions ? GetActionsKey<A[K], RK> : WrapType<RK, A[K]>
   }[CombineStringKey<P, K>] : never
 }[StringKeyof<A>]> // {actA: () => void, storeB.actB: () => void}
 
