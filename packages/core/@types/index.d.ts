@@ -322,7 +322,7 @@ interface MutationsAndActionsWithThis {
 }
 
 interface DeeperMutationsAndActions {
-  [key: string]: ((...payload: any[]) => any)|MutationsAndActionsWithThis
+  [key: string]: ((...payload: any[]) => any) | MutationsAndActionsWithThis
 }
 
 // Store Type Bindings
@@ -330,13 +330,13 @@ type StringKeyof<T> = Exclude<keyof T, symbol>
 
 type CombineStringKey<H extends string | number, L extends string | number> = H extends '' ? `${L}` : `${H}.${L}`
 
-type GetActionsKey<A, P extends string|number = ''> = UnionToIntersection<{
+type GetActionsKey<A, P extends string | number = ''> = UnionToIntersection<{
   [K in StringKeyof<A>]: {
     [RK in CombineStringKey<P, K>]: A[K] extends DeeperMutationsAndActions ? GetActionsKey<A[K], RK> : Record<RK, A[K]>
   }[CombineStringKey<P, K>]
 }[StringKeyof<A>]> // {actA: () => void, storeB.actB: () => void}
 
-type GetAllActionsKey<A, D extends Deps, AK extends 'actions'|'mutations'> = {
+type GetAllActionsKey<A, D extends Deps, AK extends 'actions' | 'mutations'> = {
   [K in StringKeyof<A>]: A[K]
 } & UnionToIntersection<{
   [K in StringKeyof<D>]: {
@@ -345,7 +345,8 @@ type GetAllActionsKey<A, D extends Deps, AK extends 'actions'|'mutations'> = {
 }[StringKeyof<D>]>
 
 
-type GetDispatchAndCommitWithThis<A, D extends Deps, AK extends 'actions'|'mutations'> = (<T extends keyof GetAllActionsKey<A, D, AK>>(type: T, ...payload: GetAllActionsKey<A, D, AK>[T] extends (...payload: infer P) => any ? P : never) => GetAllActionsKey<A, D, AK>[T] extends (...payload: any[]) => infer R ? R : never)
+type GetDispatchAndCommitWithThis<A, D extends Deps, AK extends 'actions' | 'mutations'> = (<T extends keyof GetAllActionsKey<A, D, AK>>(type: T, ...payload: GetAllActionsKey<A, D, AK>[T] extends (...payload: infer P) => any ? P : never) => GetAllActionsKey<A, D, AK>[T] extends (...payload: any[]) => infer R ? R : never)
+
 interface StoreOptWithThis<S, G, M, A, D extends Deps> {
   state?: S
   getters?: G & ThisType<{ state: S & UnboxDepsField<D, 'state'>, getters: GetComputedType<G> & UnboxDepsField<D, 'getters'>, rootState: any }>
