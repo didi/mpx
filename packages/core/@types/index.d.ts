@@ -353,7 +353,7 @@ type GetAllActionsKey<A, D extends Deps, AK extends 'actions'|'mutations'> = Rem
 type GetDispatchAndCommitWithThis<A, D extends Deps, AK extends 'actions'|'mutations'> = (<T extends keyof GetAllActionsKey<A, D, AK>>(type: T, ...payload: GetAllActionsKey<A, D, AK>[T] extends (...payload: infer P) => any ? P : never) => GetAllActionsKey<A, D, AK>[T] extends (...payload: any[]) => infer R ? R : never)
 interface StoreOptWithThis<S, G, M, A, D extends Deps> {
   state?: S
-  getters?: G & ThisType<{ state: S & UnboxDepsField<D, 'state'>, getters: GetGetters<G> & UnboxDepsField<D, 'getters'>, rootState: any }>
+  getters?: G & ThisType<{ state: S & UnboxDepsField<D, 'state'>, getters: GetComputedType<G> & UnboxDepsField<D, 'getters'>, rootState: any }>
   mutations?: M & ThisType<{ state: S & UnboxDepsField<D, 'state'> }>
   actions?: A & ThisType<{
     rootState: any,
@@ -438,7 +438,7 @@ export function createStoreWithThis<S = {}, G = {}, M extends MutationsAndAction
 // auxiliary functions
 export function createStateWithThis<S = {}> (state: S): S
 
-export function createGettersWithThis<S = {}, D extends Deps = {}, G = {}> (state: S, getters: G & ThisType<{ state: S & UnboxDepsField<D, 'state'>, getters: GetGetters<G> & UnboxDepsField<D, 'getters'>, rootState: any }>, deps?: D): G
+export function createGettersWithThis<S = {}, D extends Deps = {}, G = {}> (state: S, getters: G & ThisType<{ state: S & UnboxDepsField<D, 'state'>, getters: GetComputedType<G> & UnboxDepsField<D, 'getters'>, rootState: any }>, deps?: D): G
 
 export function createMutationsWithThis<S = {}, D extends Deps = {}, M extends MutationsAndActionsWithThis = {}> (state: S, mutations: M & ThisType<{ state: S & UnboxDepsField<D, 'state'> }>, deps?: D): M
 
