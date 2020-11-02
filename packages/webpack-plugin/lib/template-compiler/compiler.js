@@ -915,7 +915,7 @@ function parse (template, options) {
           type: 3,
           text: text,
           parent: currentParent,
-          isComment: true,
+          isComment: true
         })
       }
     }
