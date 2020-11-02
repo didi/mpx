@@ -7,7 +7,7 @@ interface CancelTokenClass {
   }
 }
 
-interface fetchOption extends WechatMiniprogram.RequestOption {
+export interface fetchOption extends WechatMiniprogram.RequestOption {
   params?: object
   cancelToken?: InstanceType<CancelTokenClass>['token']
   emulateJSON?: boolean
