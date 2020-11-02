@@ -87,6 +87,12 @@ type UnionToIntersection<U> = (U extends any
   ? I
   : never;
 
+type RemoveProps<T, D> = UnionToIntersection<Exclude<{
+  [K in keyof T]: {
+    [x in K]: T[K]
+  }
+}[keyof T], D>>
+
 type ArrayType<T extends any[]> = T extends Array<infer R> ? R : never;
 
 type RequiredPropertyNames<T> = {
@@ -318,22 +324,27 @@ interface MutationsAndActionsWithThis {
 }
 
 // Store Type Bindings
+type StringKeyof<T> = `${Exclude<keyof T, symbol>}`
 
-type GetActionsKey<A> = {
-  [K in `${Exclude<keyof A, symbol>}`]: K extends keyof A ? A[K] : never
-} // {actA: () => void}
+type CombineStringKey<H extends string | number, L extends string | number> = H extends '' ? `${L}` : `${H}.${L}`
 
-type CombineDepsToActions<DK extends string|number, A> = UnionToIntersection<{
-  [K in keyof GetActionsKey<A>]: {
-    [key in `${DK}.${K}`]: GetActionsKey<A>[K] // store.actA: () => void
-  }
-}[keyof GetActionsKey<A>]> // {store.actA: () => void} & {store.actB: () => void}
+type WrapType<K extends keyof any, V> = {
+  [k in K]: V
+}
 
-type GetAllActionsKey<A, D extends Deps, AK extends 'actions'|'mutations'> = {
-  [K in `${Exclude<keyof A, symbol>}`]: K extends keyof A ? A[K] : never
+type GetActionsKey<A, P extends string|number = ''> = UnionToIntersection<{
+  [K in StringKeyof<A>]: K extends keyof A ? {
+    [RK in CombineStringKey<P, K>]: A[K] extends MutationsAndActionsWithThis ? GetActionsKey<A[K], RK> : WrapType<RK, A[K]>
+  }[CombineStringKey<P, K>] : never
+}[StringKeyof<A>]> // {actA: () => void, storeB.actB: () => void}
+
+type GetAllActionsKey<A, D extends Deps, AK extends 'actions'|'mutations'> = RemoveProps<{
+  [K in StringKeyof<A>]: K extends keyof A ? A[K] : never
 } & UnionToIntersection<{
-  [K in `${Exclude<keyof D, symbol>}`]:CombineDepsToActions<K, D[K][AK]>
-}[`${Exclude<keyof D, symbol>}`]>
+  [K in StringKeyof<D>]: {
+    [P in keyof GetActionsKey<D[K][AK], K>]: GetActionsKey<D[K][AK], K>[P]
+  }
+}[StringKeyof<D>]>, { [x:string]: never }>
 
 type GetDispatchAndCommitWithThis<A, D extends Deps, AK extends 'actions'|'mutations'> = (<T extends keyof GetAllActionsKey<A, D, AK>>(type: T, ...payload: GetAllActionsKey<A, D, AK>[T] extends (...payload: infer P) => any ? P : never) => GetAllActionsKey<A, D, AK>[T] extends (...payload: any[]) => infer R ? R : never)
 interface StoreOptWithThis<S, G, M, A, D extends Deps> {
