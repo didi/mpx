@@ -218,17 +218,17 @@ export default function createStore (options) {
   return new Store(options)
 }
 
-// auxiliary functions
-export function createState (state) {
+// ts util functions
+export function createStateWithThis (state) {
   return state
 }
-export function createGetters (state, getters, deps = {}) {
+export function createGettersWithThis (state, getters, deps = {}) {
   return getters
 }
-export function createMutations (state, mutations, deps = {}) {
+export function createMutationsWithThis (state, mutations, deps = {}) {
   return mutations
 }
-export function createActions (state, getters, mutations, actions, deps = {}) {
+export function createActionsWithThis (state, getters, mutations, actions, deps = {}) {
   return actions
 }
 

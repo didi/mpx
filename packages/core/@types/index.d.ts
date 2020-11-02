@@ -328,7 +328,7 @@ interface DeeperMutationsAndActions {
 }
 
 // Store Type Bindings
-type StringKeyof<T> = `${Exclude<keyof T, symbol>}`
+type StringKeyof<T> = Exclude<keyof T, symbol>
 
 type CombineStringKey<H extends string | number, L extends string | number> = H extends '' ? `${L}` : `${H}.${L}`
 
@@ -337,13 +337,13 @@ type WrapType<K extends keyof any, V> = {
 }
 
 type GetActionsKey<A, P extends string|number = ''> = UnionToIntersection<{
-  [K in StringKeyof<A>]: K extends keyof A ? {
+  [K in StringKeyof<A>]: {
     [RK in CombineStringKey<P, K>]: A[K] extends DeeperMutationsAndActions ? GetActionsKey<A[K], RK> : WrapType<RK, A[K]>
-  }[CombineStringKey<P, K>] : never
+  }[CombineStringKey<P, K>]
 }[StringKeyof<A>]> // {actA: () => void, storeB.actB: () => void}
 
 type GetAllActionsKey<A, D extends Deps, AK extends 'actions'|'mutations'> = RemoveProps<{
-  [K in StringKeyof<A>]: K extends keyof A ? A[K] : never
+  [K in StringKeyof<A>]: A[K]
 } & UnionToIntersection<{
   [K in StringKeyof<D>]: {
     [P in keyof GetActionsKey<D[K][AK], K>]: GetActionsKey<D[K][AK], K>[P]
@@ -436,13 +436,13 @@ declare class StoreWithThis<S = {}, G = {}, M = {}, A = {}, D extends Deps = {}>
 export function createStoreWithThis<S = {}, G = {}, M extends MutationsAndActionsWithThis = {}, A extends MutationsAndActionsWithThis = {}, D extends Deps = {}> (option: StoreOptWithThis<S, G, M, A, D>): StoreWithThis<S, G, M, A, D>
 
 // auxiliary functions
-export function createState<S = {}> (state: S): S
+export function createStateWithThis<S = {}> (state: S): S
 
-export function createGetters<S = {}, D extends Deps = {}, G = {}> (state: S, getters: G & ThisType<{ state: S & UnboxDepsField<D, 'state'>, getters: GetGetters<G> & UnboxDepsField<D, 'getters'>, rootState: any }>, deps?: D): G
+export function createGettersWithThis<S = {}, D extends Deps = {}, G = {}> (state: S, getters: G & ThisType<{ state: S & UnboxDepsField<D, 'state'>, getters: GetGetters<G> & UnboxDepsField<D, 'getters'>, rootState: any }>, deps?: D): G
 
-export function createMutations<S = {}, D extends Deps = {}, M extends MutationsAndActionsWithThis = {}> (state: S, mutations: M & ThisType<{ state: S & UnboxDepsField<D, 'state'> }>, deps?: D): M
+export function createMutationsWithThis<S = {}, D extends Deps = {}, M extends MutationsAndActionsWithThis = {}> (state: S, mutations: M & ThisType<{ state: S & UnboxDepsField<D, 'state'> }>, deps?: D): M
 
-export function createActions<S = {}, G = {}, M extends MutationsAndActionsWithThis = {}, D extends Deps = {}, A extends MutationsAndActionsWithThis = {}> (state: S, getters: G, mutations: M & ThisType<{ state: S & UnboxDepsField<D, 'state'> }>, actions: A & ThisType<{
+export function createActionsWithThis<S = {}, G = {}, M extends MutationsAndActionsWithThis = {}, D extends Deps = {}, A extends MutationsAndActionsWithThis = {}> (state: S, getters: G, mutations: M & ThisType<{ state: S & UnboxDepsField<D, 'state'> }>, actions: A & ThisType<{
   rootState: any,
   state: S & UnboxDepsField<D, 'state'>,
   getters: GetComputedType<G> & UnboxDepsField<D, 'getters'>,
