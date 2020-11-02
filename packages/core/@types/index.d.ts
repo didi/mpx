@@ -87,11 +87,9 @@ type UnionToIntersection<U> = (U extends any
   ? I
   : never;
 
-type RemoveProps<T, D> = UnionToIntersection<Exclude<{
-  [K in keyof T]: {
-    [x in K]: T[K]
-  }
-}[keyof T], D>>
+type RemoveNeverProps<T> = Pick<T, {
+  [K in keyof T]: T[K] extends never ? never : K
+}[keyof T]>
 
 type ArrayType<T extends any[]> = T extends Array<infer R> ? R : never;
 
@@ -332,23 +330,20 @@ type StringKeyof<T> = Exclude<keyof T, symbol>
 
 type CombineStringKey<H extends string | number, L extends string | number> = H extends '' ? `${L}` : `${H}.${L}`
 
-type WrapType<K extends keyof any, V> = {
-  [k in K]: V
-}
-
 type GetActionsKey<A, P extends string|number = ''> = UnionToIntersection<{
   [K in StringKeyof<A>]: {
-    [RK in CombineStringKey<P, K>]: A[K] extends DeeperMutationsAndActions ? GetActionsKey<A[K], RK> : WrapType<RK, A[K]>
+    [RK in CombineStringKey<P, K>]: A[K] extends DeeperMutationsAndActions ? GetActionsKey<A[K], RK> : Record<RK, A[K]>
   }[CombineStringKey<P, K>]
 }[StringKeyof<A>]> // {actA: () => void, storeB.actB: () => void}
 
-type GetAllActionsKey<A, D extends Deps, AK extends 'actions'|'mutations'> = RemoveProps<{
+type GetAllActionsKey<A, D extends Deps, AK extends 'actions'|'mutations'> = {
   [K in StringKeyof<A>]: A[K]
 } & UnionToIntersection<{
   [K in StringKeyof<D>]: {
     [P in keyof GetActionsKey<D[K][AK], K>]: GetActionsKey<D[K][AK], K>[P]
   }
-}[StringKeyof<D>]>, { [x:string]: never }>
+}[StringKeyof<D>]>
+
 
 type GetDispatchAndCommitWithThis<A, D extends Deps, AK extends 'actions'|'mutations'> = (<T extends keyof GetAllActionsKey<A, D, AK>>(type: T, ...payload: GetAllActionsKey<A, D, AK>[T] extends (...payload: infer P) => any ? P : never) => GetAllActionsKey<A, D, AK>[T] extends (...payload: any[]) => infer R ? R : never)
 interface StoreOptWithThis<S, G, M, A, D extends Deps> {
