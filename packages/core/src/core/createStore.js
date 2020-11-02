@@ -15,7 +15,7 @@ import { warn } from '../helper/log'
 
 import mapStore from './mapStore'
 
-function transformGetters (getters, model, store) {
+function transformGetters (getters, module, store) {
   const newGetters = {}
   for (let key in getters) {
     if (key in store.getters) {
@@ -24,19 +24,19 @@ function transformGetters (getters, model, store) {
     const getter = function () {
       if (store.withThis) {
         return getters[key].call({
-          state: model.state,
+          state: module.state,
           getters: store.getters,
           rootState: store.state
         })
       }
-      return getters[key](model.state, store.getters, store.state)
+      return getters[key](module.state, store.getters, store.state)
     }
     newGetters[key] = getter
   }
   return newGetters
 }
 
-function transformMutations (mutations, model, store) {
+function transformMutations (mutations, module, store) {
   const newMutations = {}
   for (let key in mutations) {
     if (store.mutations[key]) {
@@ -44,15 +44,15 @@ function transformMutations (mutations, model, store) {
     }
 
     const mutation = function (...payload) {
-      if (store.withThis) return mutations[key].apply({ state: model.state }, payload)
-      return mutations[key](model.state, ...payload)
+      if (store.withThis) return mutations[key].apply({ state: module.state }, payload)
+      return mutations[key](module.state, ...payload)
     }
     newMutations[key] = mutation
   }
   return newMutations
 }
 
-function transformActions (actions, model, store) {
+function transformActions (actions, module, store) {
   const newActions = {}
   for (let key in actions) {
     if (store.actions[key]) {
@@ -61,7 +61,7 @@ function transformActions (actions, model, store) {
     newActions[key] = function (...payload) {
       const context = {
         rootState: store.state,
-        state: model.state,
+        state: module.state,
         getters: store.getters,
         dispatch: store.dispatch.bind(store),
         commit: store.commit.bind(store)
@@ -84,22 +84,22 @@ function transformActions (actions, model, store) {
   return newActions
 }
 
-function mergeDeps (model, deps) {
+function mergeDeps (module, deps) {
   const mergeProps = ['state', 'getters', 'mutations', 'actions']
   Object.keys(deps).forEach(key => {
     const store = deps[key]
     mergeProps.forEach(prop => {
-      if (model[prop] && (key in model[prop])) {
+      if (module[prop] && (key in module[prop])) {
         warn(`Deps's name [${key}] conflicts with ${prop}'s key in current options.`)
       } else {
-        model[prop] = model[prop] || {}
+        module[prop] = module[prop] || {}
         if (prop === 'getters') {
           // depsGetters单独存放，不需要重新进行初始化
-          model.depsGetters = model.depsGetters || {}
-          model.depsGetters[key] = store.getters
-          // model[prop][key] = () => store[prop]
+          module.depsGetters = module.depsGetters || {}
+          module.depsGetters[key] = store.getters
+          // module[prop][key] = () => store[prop]
         } else {
-          model[prop][key] = store[prop]
+          module[prop][key] = store[prop]
         }
       }
     })
@@ -147,22 +147,22 @@ class Store {
     return genericSubscribe(fn, this._subscribers, options)
   }
 
-  registerModule (model) {
-    const state = model.state || {}
+  registerModule (module) {
+    const state = module.state || {}
     const reactiveModule = {
       state
     }
-    if (model.getters) {
-      reactiveModule.getters = transformGetters(model.getters, reactiveModule, this)
+    if (module.getters) {
+      reactiveModule.getters = transformGetters(module.getters, reactiveModule, this)
     }
-    if (model.mutations) {
-      reactiveModule.mutations = transformMutations(model.mutations, reactiveModule, this)
+    if (module.mutations) {
+      reactiveModule.mutations = transformMutations(module.mutations, reactiveModule, this)
     }
-    if (model.actions) {
-      reactiveModule.actions = transformActions(model.actions, reactiveModule, this)
+    if (module.actions) {
+      reactiveModule.actions = transformActions(module.actions, reactiveModule, this)
     }
-    if (model.deps) {
-      mergeDeps(reactiveModule, model.deps)
+    if (module.deps) {
+      mergeDeps(reactiveModule, module.deps)
     }
     Object.assign(this.__depsGetters, reactiveModule.depsGetters)
     Object.assign(this.__wrappedGetters, reactiveModule.getters)
@@ -170,9 +170,9 @@ class Store {
     Object.assign(this.mutations, reactiveModule.mutations)
     // merge actions
     Object.assign(this.actions, reactiveModule.actions)
-    // 子model
-    if (model.modules) {
-      const childs = model.modules
+    // 子module
+    if (module.modules) {
+      const childs = module.modules
       Object.keys(childs).forEach(key => {
         reactiveModule.state[key] = this.registerModule(childs[key]).state
       })
