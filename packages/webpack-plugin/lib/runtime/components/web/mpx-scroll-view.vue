@@ -48,57 +48,13 @@
       }
     },
     mounted () {
-      this._initLayerComputed()
-
-      this.bs = new BScroll(this.$refs.wrapper, {
-        startX: -this._scrollLeft,
-        startY: -this._scrollTop,
-        scrollX: this.scrollX,
-        scrollY: this.scrollY,
-        probeType: 3,
-        bounce: false,
-        observeDOM: this.observeDOM,
-        stopPropagation: true,
-        bindToWrapper: true
-      })
-      this.lastX = -this._scrollLeft
-      this.lastY = -this._scrollTop
-      this.bs.on('scroll', throttle(({ x, y }) => {
-        const deltaX = x - this.lastX
-        const deltaY = y - this.lastY
-        this.$emit('scroll', getCustomEvent('scroll', {
-          scrollLeft: -x,
-          scrollTop: -y,
-          scrollWidth: this.bs.scrollerWidth,
-          scrollHeight: this.bs.scrollerHeight,
-          deltaX,
-          deltaY
-        }))
-        if (this.bs.minScrollX - x < this._upperThreshold && deltaX > 0) {
-          this.dispatchScrollTo('left')
-        }
-        if (this.bs.minScrollY - y < this._upperThreshold && deltaY > 0) {
-          this.dispatchScrollTo('top')
-        }
-        if (x - this.bs.maxScrollX < this._lowerThreshold && deltaX < 0) {
-          this.dispatchScrollTo('right')
-        }
-        if (y - this.bs.maxScrollY < this._lowerThreshold && deltaY < 0) {
-          this.dispatchScrollTo('bottom')
-        }
-        this.lastX = x
-        this.lastY = y
-      }, 30, {
-        leading: true,
-        trailing: false
-      }))
-      if (this.scrollIntoView) {
-        this.bs.scrollToElement('#' + this.scrollIntoView)
-      }
+      this.init()
+    },
+    activated () {
+      this.refresh()
     },
     beforeDestroy () {
-      this.bs && this.bs.destroy()
-      delete this.bs
+      this.destroy()
     },
     updated () {
       this.refresh()
@@ -115,12 +71,67 @@
       }
     },
     methods: {
-      _initLayerComputed () {
+      destroy () {
+        if(!this.bs) return
+        this.bs.destroy()
+        delete this.bs
+      },
+      init () {
+        if(this.bs) return
+        this.initLayerComputed()
+
+        this.bs = new BScroll(this.$refs.wrapper, {
+          startX: -this._scrollLeft,
+          startY: -this._scrollTop,
+          scrollX: this.scrollX,
+          scrollY: this.scrollY,
+          probeType: 3,
+          bounce: false,
+          observeDOM: this.observeDOM,
+          stopPropagation: true,
+          bindToWrapper: true
+        })
+        this.lastX = -this._scrollLeft
+        this.lastY = -this._scrollTop
+        this.bs.on('scroll', throttle(({ x, y }) => {
+          const deltaX = x - this.lastX
+          const deltaY = y - this.lastY
+          this.$emit('scroll', getCustomEvent('scroll', {
+            scrollLeft: -x,
+            scrollTop: -y,
+            scrollWidth: this.bs.scrollerWidth,
+            scrollHeight: this.bs.scrollerHeight,
+            deltaX,
+            deltaY
+          }))
+          if (this.bs.minScrollX - x < this._upperThreshold && deltaX > 0) {
+            this.dispatchScrollTo('left')
+          }
+          if (this.bs.minScrollY - y < this._upperThreshold && deltaY > 0) {
+            this.dispatchScrollTo('top')
+          }
+          if (x - this.bs.maxScrollX < this._lowerThreshold && deltaX < 0) {
+            this.dispatchScrollTo('right')
+          }
+          if (y - this.bs.maxScrollY < this._lowerThreshold && deltaY < 0) {
+            this.dispatchScrollTo('bottom')
+          }
+          this.lastX = x
+          this.lastY = y
+        }, 30, {
+          leading: true,
+          trailing: false
+        }))
+        if (this.scrollIntoView) {
+          this.bs.scrollToElement('#' + this.scrollIntoView)
+        }
+      },
+      initLayerComputed () {
         const wrapper = this.$refs.wrapper
         const wrapperWidth = wrapper.offsetWidth
         const wrapperHeight = wrapper.offsetHeight
-
-        this.$refs.innerWrapper.style = `width: ${wrapperWidth}px; height: ${wrapperHeight}px`
+        this.$refs.innerWrapper.style.width = `${wrapperWidth}px`
+        this.$refs.innerWrapper.style.height = `${wrapperHeight}px`
 
         const innerWrapper = this.$refs.innerWrapper
         const childrenArr = Array.from(innerWrapper.children)
@@ -157,11 +168,11 @@
 
         const width = maxRight - minLeft
         const height = maxBottom - minTop
-
-        this.$refs.scrollContent.style = `width: ${width}px; height: ${height}px`
+        this.$refs.scrollContent.style.width = `${width}px`
+        this.$refs.scrollContent.style.height = `${height}px`
       },
       refresh () {
-        this._initLayerComputed()
+        this.initLayerComputed()
         this.bs && this.bs.refresh()
       },
       dispatchScrollTo: throttle(function (direction) {
