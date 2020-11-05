@@ -914,6 +914,7 @@ function parse (template, options) {
         currentParent.children.push({
           type: 3,
           text: text,
+          parent: currentParent,
           isComment: true
         })
       }
@@ -1926,8 +1927,8 @@ function processAtMode (el) {
     el._atModeStatus = el.parent._atModeStatus
   }
 
-  const elementAttrListCopy = el.attrsList.slice(0)
-  elementAttrListCopy.forEach(item => {
+  const attrsListClone = cloneAttrsList(el.attrsList)
+  attrsListClone.forEach(item => {
     const attrName = item.name || ''
     if (!attrName || attrName.indexOf('@') === -1) return
     const attrArr = attrName.split('@')
@@ -2057,6 +2058,28 @@ function postProcessAtMode (el) {
   }
 }
 
+// 目前为了处理动态组件children中后续if无效的问题(#633)，仅进行节点对象本身的浅clone，没有对attrsList/attrsMap/exps/if/elseif/else/for等深层对象进行copy
+function cloneNode (el) {
+  const clone = Object.assign({}, el)
+  if (el.parent) clone.parent = null
+  if (el.children) {
+    clone.children = []
+    el.children.forEach((child) => {
+      addChild(clone, cloneNode(child))
+    })
+  }
+  return clone
+}
+
+function cloneAttrsList (attrsList) {
+  return attrsList.map(({ name, value }) => {
+    return {
+      name,
+      value
+    }
+  })
+}
+
 function postProcessComponentIs (el) {
   if (el.is && el.components) {
     let tempNode
@@ -2070,13 +2093,14 @@ function postProcessComponentIs (el) {
       tempNode = getTempNode()
     }
     el.components.forEach(function (component) {
-      let newChild = createASTElement(component, el.attrsList.slice(), tempNode)
+      let newChild = createASTElement(component, cloneAttrsList(el.attrsList), tempNode)
       newChild.if = {
         raw: `{{${el.is} === ${stringify(component)}}}`,
         exp: `${el.is} === ${stringify(component)}`
       }
-      // 此处直接指向原始children存在问题，但由于动态组件一般情况下很少有共用children故基本无法报出，完善处理需要每次clone原始children并分别更新parent
-      newChild.children = el.children
+      el.children.forEach((child) => {
+        addChild(newChild, cloneNode(child))
+      })
       newChild.exps = el.exps
       addChild(tempNode, newChild)
       postProcessIf(newChild)
