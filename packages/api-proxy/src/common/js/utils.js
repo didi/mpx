@@ -67,6 +67,22 @@ function getEnvObj () {
   }
 }
 
+function getEnv () {
+  if (typeof my !== 'undefined' && typeof my.getSystemInfo === 'function') {
+    return 'my'
+  } else if (typeof swan !== 'undefined' && typeof swan.getSystemInfo === 'function') {
+    return 'swan'
+  } else if (typeof qq !== 'undefined' && typeof qq.getSystemInfo === 'function') {
+    return 'qq'
+  } else if (typeof tt !== 'undefined' && typeof tt.getSystemInfo === 'function') {
+    return 'tt'
+  } if (typeof wx !== 'undefined' && typeof wx.getSystemInfo === 'function') {
+    return 'wx'
+  } else {
+    return undefined
+  }
+}
+
 function warn (msg) {
   console.warn && console.warn(`[@mpxjs/api-proxy warn]:\n ${msg}`)
 }
@@ -90,6 +106,7 @@ export {
   handleSuccess,
   genFromMap,
   getEnvObj,
+  getEnv,
   error,
   warn,
   noop,

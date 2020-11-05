@@ -1,5 +1,6 @@
-import { error, getEnvObj, genFromMap, makeMap } from '../common/js'
+import { error, getEnvObj, getEnv, genFromMap, makeMap } from '../common/js'
 import getWxToAliApi from './platform/wxToAli'
+import getWxToQqApi from "./platform/wxToQq"
 
 const fromMap = genFromMap()
 
@@ -9,19 +10,27 @@ function joinName (from = '', to = '') {
 
 function transformApi (options) {
   const envObj = getEnvObj()
+  const env = getEnv()
   const wxToAliApi = getWxToAliApi({ optimize: options.optimize })
+  const wxToQqApi = getWxToQqApi({ optimize: options.optimize })
   const platformMap = {
     'wx_ali': wxToAliApi,
     'qq_ali': wxToAliApi,
     'swan_ali': wxToAliApi,
-    'tt_ali': wxToAliApi
+    'tt_ali': wxToAliApi,
+    'wx_qq': wxToQqApi
+  }
+  const proxyPlatformMap = {
+    'ali': wxToAliApi,
+    'qq': wxToQqApi
   }
   const needProxy = {}
   const excludeMap = makeMap(options.exclude)
+  const proxyApi = proxyPlatformMap[env] || []
   // 后续不一定只转换ali，需要基于目标平台决定合并的自定义api集，例如输出快应用时需要定义并合并wxToQaApi
-  Object.keys(envObj).concat(Object.keys(wxToAliApi)).forEach((key) => {
+  Object.keys(envObj).concat(Object.keys(proxyApi)).forEach((key) => {
     if (!excludeMap[key]) {
-      needProxy[key] = envObj[key] || wxToAliApi[key]
+      needProxy[key] = envObj[key] || proxyApi[key]
     }
   })
   const transedApi = Object.create(null)
