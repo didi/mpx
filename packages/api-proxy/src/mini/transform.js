@@ -1,4 +1,4 @@
-import { error, getEnvObj, getEnv, genFromMap, makeMap } from '../common/js'
+import { error, getEnvObj, genFromMap, makeMap } from '../common/js'
 import getWxToAliApi from './platform/wxToAli'
 import getWxToQqApi from './platform/wxToQq'
 
@@ -10,7 +10,7 @@ function joinName (from = '', to = '') {
 
 function transformApi (options) {
   const envObj = getEnvObj()
-  const env = getEnv()
+  const env = __mpx_mode__
   const wxToAliApi = getWxToAliApi({ optimize: options.optimize })
   const wxToQqApi = getWxToQqApi({ optimize: options.optimize })
   const platformMap = {
