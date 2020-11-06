@@ -164,7 +164,10 @@ declare function del (obj: object, key: string): any
 
 export function observable<T extends object> (obj: T): T
 
+type MpxComProps<D, P, C, M, Mi extends Array<any>> = {$rawOptions: ComponentOpt<D, P, C, M, Mi>}
+
 export interface MpxComponentIns {
+
   $refs: ObjectOf<any>
 
   $set: typeof set
@@ -195,7 +198,8 @@ type ComponentIns<D, P, C, M, Mi extends Array<any>> =
   GetDataType<D> & UnboxMixinsField<Mi, 'data'> &
   M & UnboxMixinsField<Mi, 'methods'> &
   GetPropsType<P & UnboxMixinsField<Mi, 'properties'>> &
-  GetComputedType<C & UnboxMixinsField<Mi, 'computed'>> & WxComponentIns<D> & MpxComponentIns
+  GetComputedType<C & UnboxMixinsField<Mi, 'computed'>> &
+  WxComponentIns<D> & MpxComponentIns & MpxComProps<D, P, C, M, Mi> & Record<any, any>
 
 interface createConfig {
   customCtor: any
@@ -447,6 +451,7 @@ export function createActionsWithThis<S = {}, G = {}, M extends MutationsAndActi
 }>, deps?: D): A
 
 
+export function injectMixins<D extends Data = {}, P extends Properties = {}, C = {}, M extends Methods = {}, Mi extends Array<any> = []> (mixins: ThisTypedComponentOpt<D, P, C, M, Mi> | ThisTypedComponentOpt<D, P, C, M, Mi>[], type?: 'app' | 'page' | 'component'): void
 export function injectMixins (mixins: object | Array<object>, type?: 'app' | 'page' | 'component'): void
 
 declare class Watcher {
