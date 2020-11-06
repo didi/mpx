@@ -254,6 +254,47 @@ other {
 */
 ```
 
+#### 标签属性维度条件编译
+
+标签属性维度条件编译允许用户在标签上使用 `@` 和 `|` 标识来指定某个标签或属性只在某些平台下有效。
+
+对于同一个 button 组件，微信小程序支持 `open-type="getUserInfo"`，但是支付宝小程序支持 `open-type="getAuthorize" `。如果不使用任何维度的条件编译，则在编译的时候会有警告和报错信息。
+
+比业务中需要通过 button 按钮获取用户信息，虽然可以使用条件维度编译来解决，但是增加了很多代码量：
+
+```html
+<button 
+  wx:if="{{__mpx_mode__ === 'wx' || __mpx_mode__ === 'swan'}}" 
+  open-type="getUserInfo" 
+  bindgetuserinfo="getUserInfo">获取用户信息
+</button>
+
+<button 
+  wx:elif="{{__mpx_mode__ === 'ali'}}" 
+  open-type="getAuthorize" 
+  scope="userInfo"
+  onTap="onTap">获取用户信息
+</button>
+```
+
+而用标签属性维度的编译则方便很多：
+
+``` html
+<button 
+  open-type@wx|swan="getUserInfo" 
+  bindgetuserinfo@wx|swan="getUserInfo"
+  open-type@ali="getAuthorize" 
+  scope@ali="userInfo"
+  onTap@ali="onTap">获取用户信息
+</button>
+```
+
+标签属性维度的编译也可以当做条件编译来使用，例如只想在百度小程序中使用某个组件或标签：
+
+``` html
+<view @swan>this is a  view component</view>
+```
+
 ### 其他注意事项
 
 * 当目标平台为支付宝时，需要启用支付宝最新的component2编译才能保障框架正常工作，关于component2[点此查看详情](https://docs.alipay.com/mini/framework/custom-component-overview)；
