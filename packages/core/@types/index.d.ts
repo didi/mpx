@@ -457,7 +457,7 @@ export function createActionsWithThis<S = {}, G = {}, M extends MutationsAndActi
 }>, options?: {
   state?: S,
   getters?: G,
-  mutations?: M & ThisType<{ state: S & UnboxDepsField<D, 'state'> }>,
+  mutations?: M,
   deps?: D
 }): A
 
