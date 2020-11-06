@@ -42,7 +42,7 @@ createApp(options)
 - **参数：**
     - `{Object} options`
     
-         具体形式除了 computed、watch 这类 mpx 扩展特性之外，其他的属性都参照原生小程序的官方文档即可。
+         具体形式除了 computed、watch 这类 Mpx 扩展特性之外，其他的属性都参照原生小程序的官方文档即可。
     - `{Object} config`（可选参数）   
           
          如果希望标识一个组件是最纯粹的原生组件，不用数据响应等能力，可通过 config.isNative 传 true 声明。
@@ -83,7 +83,7 @@ createPage(object)
 - **参数：**
     - `{Object} options`
     
-        具体形式除了 computed、watch 这类 mpx 扩展特性之外，其他的属性都参照原生小程序的官方文档即可。
+        具体形式除了 computed、watch 这类 Mpx 扩展特性之外，其他的属性都参照原生小程序的官方文档即可。
     - `{Object} config`（可选参数）        
     
         如果希望标识一个组件是最纯粹的原生组件，不用数据响应等能力，可通过 config.isNative 传 true 声明。
@@ -443,29 +443,101 @@ const a = observable(object)
 ## watch
 
 - **参数**：
-  - `{Object} context`
-  - `{String | Function} expr`
-  - `{Function | Object} handler`
+  - `{Function} expr`
+  - `{Function | Object} callback`
+  - `{Object} [options]`
+    - `{boolean} deep`
+    - `{boolean} immediate`
+
+- **返回值**：`{Function} unwatch`
 
 - **用法**:
 
-用于观察数据从而触发相应操作。参数详细说明：
-1. `context`：回调执行的上下文。
-2. `expr`：观察的表达式。可以是 path 字符串（取值将在context上进行查找），也可以是函数。
-3. `handler`：响应函数，如果是对象，则 handler.handler 为回调函数，其他参数作为 options，与组件的 watch 一致。
+  观察一个函数计算结果的变化。回调函数得到的参数分别为新值和旧值。参数详细说明：
+  1. `expr`：是函数类型，返回一个你需要观察的表达式，表达式的运算量需要是响应式数据。
+  2. `callback`：响应函数，如果是对象，则 callback.handler 为回调函数，其他参数作为 options。
+
+  返回值详细说明：
+
+  `unwatch`：返回一个函数，用来取消观察，停止触发回调。
+
+- **示例**：
 
 ```js
-import mpx, {watch, observable} from '@mpxjs/core'
+import {watch} from '@mpxjs/core'
 
-const a = observable({name: 1})
-watch(null, () => {
-  console.log(a.name)
-  return a.name // return一个表达式，当其值发生变化，会触发到响应函数，即第三个参数
-}, (val) => {
-  console.log('update a.name', val)
+let unwatch = watch(() => {
+  return this.a + this.b
+}, (newVal, oldVal) => {
+  // 做点什么
 })
-a.name = 10
+
+// 调用返回值unwatch可以取消观察
+unwatch()
 ```
+
+- **选项**：deep
+
+  为了发现对象内部值的变化，可以在选项参数中指定 deep: true。
+
+  ``` javascript
+  import {watch} from '@mpxjs/core'
+
+  watch(() => {
+    return this.someObject
+  }, () => {
+    // 回调函数
+  }), {
+    deep: true
+  })
+  this.someObject.nestedValue = 123
+  // callback is fired
+  ```
+
+- **选项**：immediate
+
+  在选项参数中指定 `immediate: true` 将立即以表达式的当前值触发回调。
+
+  ``` javascript
+  import {watch} from '@mpxjs/core'
+
+  watch(() => {
+    return this.a
+  }, () => {
+    // 回调函数
+  }), {
+    immediate: true
+  })
+  // 立即以 `this.a` 的当前值触发回调
+  ```
+  注意在带有 immediate 选项时，你不能在第一次回调时取消侦听。
+  ``` javascript
+  import {watch} from '@mpxjs/core'
+  
+  var unwatch = watch(() => {
+    return this.a
+  }, () => {
+    unwatch() // 这会导致报错！
+  }), {
+    immediate: true
+  })
+
+  ```
+  如果你仍然希望在回调内部调用取消侦听的函数，你应该先检查其可用性。
+  ``` javascript
+  import {watch} from '@mpxjs/core'
+
+  var unwatch = watch(() => {
+    return this.a
+  }, () => {
+    if (unwatch) { // 请先检查其可用性！
+      unwatch()
+    }
+  }), {
+    immediate: true
+  })
+
+- **参考**：另外 Mpx 还提供了实例方法 $watch，详见：[$watch](instance-api.html#watch)
 
 ## use
 >用于安装外部扩展, 支持多参数
