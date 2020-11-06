@@ -1,5 +1,6 @@
-import { error, getEnvObj, genFromMap, makeMap } from '../common/js'
+import { error, getEnvObj, getEnv, genFromMap, makeMap } from '../common/js'
 import getWxToAliApi from './platform/wxToAli'
+import getWxToQqApi from './platform/wxToQq'
 
 const fromMap = genFromMap()
 
