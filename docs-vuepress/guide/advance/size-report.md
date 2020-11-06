@@ -29,11 +29,17 @@ Mpx 在包体积控制上做了很多工作，主要包括：
 new MpxWebpackPlugin({
   // ...
   reportSize: {
-    // 配置阈值，此处代表总包体积阈值为 1MB，超出将会触发编译报错提醒，该报错不阻断构建
-    threshold: '1MB',
+    // 体积报告生成后输出的文件地址名，路径相对为 dist/wx 或者 dist/ali
+    filename: '../report.json',
+    // 配置阈值，此处代表总包体积阈值为 16MB，分包体积阈值为 2MB，超出将会触发编译报错提醒，该报错不阻断构建
+    threshold: {
+      size: '16MB',
+      packages: '2MB'
+    },
     // 配置体积计算分组，以输入分组为维度对体积进行分析，当没有该配置时结果中将不会包含分组体积信息
     groups: [
       {
+        // 分组名称
         name: 'vant',
         // 配置分组 entry 匹配规则，小程序中所有的页面和组件都可被视为 entry，如下所示的分组配置将计算项目中引入的 vant 组件带来的体积占用
         entryRules: {
@@ -42,7 +48,7 @@ new MpxWebpackPlugin({
       },
       {
         name: 'pageGroup',
-        // 每个分组中可分别配置阈值
+        // 每个分组中可分别配置阈值，如果不配置则表示
         threshold: '500KB',
         entryRules: {
           include: ['src/pages/index', 'src/pages/user']
@@ -50,7 +56,10 @@ new MpxWebpackPlugin({
       },
       {
         name: 'someSdk',
-        // 有的时候你可能希望计算纯 js 入口引入的体积（不包含组件和页面），这种情况下需要使用 noEntryModules 配置匹配规则
+        entryRules: {
+          include: ['@somegroup/someSdk/index', '@somegroup/someSdk2/index']
+        },
+        // 有的时候你可能希望计算纯 js 入口引入的体积（不包含组件和页面），这种情况下需要使用 noEntryModules
         noEntryModules: {
           include: 'src/lib/sdk.js'
         }
@@ -59,6 +68,89 @@ new MpxWebpackPlugin({
   }
 })
 ```
+参考上述示例进行配置后，构建代码后，dist 目录下会产出 report.json 文件，里边是项目的具体体积信息，关于输入 json 的简单示例如下：
 
+```js
+{
+    // 项目体积概要，大部分情况下，我们只需要看这部分就足够了
+    "sizeSummary": {
+        // 分组体积概要，与上述配置文件中的 groups 对应
+        "groups": [
+            {
+                "name": "vant",
+                // 只有该分组包含的模块体积
+                "selfSize": "164.75KiB",
+                "selfSizeInfo": {
+                  // 该分组所占 shansong
+                  "shansong": "164.75KiB"
+                },
+                "sharedSize": "885.68KiB",
+                "sharedSizeInfo": {
+                  "main": "885.68KiB"
+                }
+            },
+        ],
+        // 项目各个分包以及主包体积概要
+        "sizeInfo": {
+            "main": "1000KiB",
+            "fenbao1": "200kiB"
+        },
+        // 项目总体积
+        "totalSize": "13468.85KiB",
+        // 项目静态资源总体积
+        "staticSize": "4880.58KiB",
+        // 项目chunk 文件总体积
+        "chunkSize": "8587.70KiB",
+        // 非依赖项体积大小
+        "copySize": "1KiB"
+    },
+    // 分组资源详细体积
+    "groupsSizeInfo": [
+        {
+            "name": "groupOne",
+            // group 自身包含的 module 详情列表
+            "selfEntryModules": [],
+            // group 与其他group 共有的 module 详情列表
+            "sharedEntryModules": [],
+            // 自身包含 module 体积
+            "selfSize": "",
+            // 自身包含 module 体积详情
+            "selfSizeInfo": {
+                "main": {},
+                "homepage": {}
+            },
+            // 与其他 group 共有 module 体积
+            "sharedSize": "",
+            // 与其他 group 共有 module 体积详情
+            "sharedSizeInfo": {
+                "main": {},
+                "homepage": {}
+            },
 
+        }
+    ],
+    // 项目资源详细体积报告
+    "assetsSizeInfo": {
+        "assets": [{
+            // 资源类型
+            "type": "chunk",
+            "name": "test",
+            // 分包名
+            "packageName": "main",
+            "size": "",
+            "modules": []
+        }]
+    }
+}
+```
+## 业务实践
+目前 sizeReport 工具在滴滴出行小程序, 花小猪, 特惠出行小程序以及一部分外部小程序中使用。
 
+在滴滴出行小程序中，配置使用 sizeReport 工具后使包体积管控和优化更加工程化：
+
+* 在 sizeReport 检测结果文件中，通过对 groupsSizeInfo 和 assetsSizeInfo 中assets 与 module 体积分析，我们发现了部分体积较大图片文件和css资源，通过将图片存 CDN 和删除冗余文件；
+
+* 基于各小程序平台对小程序总包，主包，分包有大小限制的原则，给各接入方配置了主包和首页分包体积大小占比阈值，在构建时检测到包体积超过阈值时，抛出 error 阻断构建，开发者可通过 size-report.json 中详细的包体积分析准确的找到体积变动点。
+
+## 总结
+Mpx sizeReport 工具对小程序体积计算有更细微(模块级别)的体积展示。 更加适合小程序开发场景的包体积分析。
