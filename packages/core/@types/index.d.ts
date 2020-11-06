@@ -438,17 +438,28 @@ export function createStoreWithThis<S = {}, G = {}, M extends MutationsAndAction
 // auxiliary functions
 export function createStateWithThis<S = {}> (state: S): S
 
-export function createGettersWithThis<S = {}, D extends Deps = {}, G = {}> (state: S, getters: G & ThisType<{ state: S & UnboxDepsField<D, 'state'>, getters: GetComputedType<G> & UnboxDepsField<D, 'getters'>, rootState: any }>, deps?: D): G
+export function createGettersWithThis<S = {}, D extends Deps = {}, G = {}> (getters: G & ThisType<{ state: S & UnboxDepsField<D, 'state'>, getters: GetComputedType<G> & UnboxDepsField<D, 'getters'>, rootState: any }>, options?: {
+  state?: S, 
+  deps?: D
+}): G
 
-export function createMutationsWithThis<S = {}, D extends Deps = {}, M extends MutationsAndActionsWithThis = {}> (state: S, mutations: M & ThisType<{ state: S & UnboxDepsField<D, 'state'> }>, deps?: D): M
+export function createMutationsWithThis<S = {}, D extends Deps = {}, M extends MutationsAndActionsWithThis = {}> (mutations: M & ThisType<{ state: S & UnboxDepsField<D, 'state'> }>, options?: {
+  state?: S,
+  deps?: D
+}): M
 
-export function createActionsWithThis<S = {}, G = {}, M extends MutationsAndActionsWithThis = {}, D extends Deps = {}, A extends MutationsAndActionsWithThis = {}> (state: S, getters: G, mutations: M & ThisType<{ state: S & UnboxDepsField<D, 'state'> }>, actions: A & ThisType<{
+export function createActionsWithThis<S = {}, G = {}, M extends MutationsAndActionsWithThis = {}, D extends Deps = {}, A extends MutationsAndActionsWithThis = {}> (actions: A & ThisType<{
   rootState: any,
   state: S & UnboxDepsField<D, 'state'>,
   getters: GetComputedType<G> & UnboxDepsField<D, 'getters'>,
   dispatch: GetDispatchAndCommitWithThis<A, D, 'actions'>,
   commit: GetDispatchAndCommitWithThis<M, D, 'mutations'>
-}>, deps?: D): A
+}>, options?: {
+  state?: S,
+  getters?: G,
+  mutations?: M & ThisType<{ state: S & UnboxDepsField<D, 'state'> }>,
+  deps?: D
+}): A
 
 
 export function injectMixins<D extends Data = {}, P extends Properties = {}, C = {}, M extends Methods = {}, Mi extends Array<any> = []> (mixins: ThisTypedComponentOpt<D, P, C, M, Mi> | ThisTypedComponentOpt<D, P, C, M, Mi>[], type?: 'app' | 'page' | 'component'): void
