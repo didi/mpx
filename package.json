@@ -33,5 +33,8 @@
     "lerna": "^3.4.3",
     "vue": "^2.6.12",
     "vuepress": "^1.5.4"
+  },
+  "dependencies": {
+    "@vuepress/plugin-pwa": "^1.7.1"
   }
 }

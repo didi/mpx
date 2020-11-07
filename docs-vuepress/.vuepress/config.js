@@ -96,6 +96,7 @@ module.exports = {
     ['link', { rel: 'icon', href: '/favicon.ico' }]
   ],
   title: 'Mpx框架',
+  plugins: ['@vuepress/pwa'],
   themeConfig: {
     sidebarDepth: 1,
     logo: '/logo.png',
