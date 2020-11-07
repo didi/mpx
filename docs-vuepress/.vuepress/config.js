@@ -96,7 +96,15 @@ module.exports = {
     ['link', { rel: 'icon', href: '/favicon.ico' }]
   ],
   title: 'Mpx框架',
-  plugins: ['@vuepress/pwa'],
+  plugins: {
+    '@vuepress/pwa': {
+      serviceWorker: true,
+      updatePopup: {
+        message: '文档有更新啦！',
+        buttonText: '刷新'
+      }
+    }
+  },
   themeConfig: {
     sidebarDepth: 1,
     logo: '/logo.png',
