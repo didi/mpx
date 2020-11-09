@@ -222,13 +222,13 @@ export default function createStore (options) {
 export function createStateWithThis (state) {
   return state
 }
-export function createGettersWithThis (state, getters, deps = {}) {
+export function createGettersWithThis (getters, options = {}) {
   return getters
 }
-export function createMutationsWithThis (state, mutations, deps = {}) {
+export function createMutationsWithThis (mutations, options = {}) {
   return mutations
 }
-export function createActionsWithThis (state, getters, mutations, actions, deps = {}) {
+export function createActionsWithThis (actions, options = {}) {
   return actions
 }
 

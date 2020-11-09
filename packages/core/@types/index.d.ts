@@ -147,14 +147,14 @@ type PageOpt<D, P, C, M, Mi extends Array<any>> =
   ComponentOpt<D, P, C, M, Mi>
   & Partial<WechatMiniprogram.Page.ILifetime>
 
-type ThisTypedPageOpt<D, P, C, M, Mi extends Array<any>> =
+type ThisTypedPageOpt<D, P, C, M, Mi extends Array<any>, O = {}> =
   PageOpt<D, P, C, M, Mi>
-  & ThisType<ComponentIns<D, P, C, M, Mi>>
+  & ThisType<ComponentIns<D, P, C, M, Mi, O>> & O
 
 
-type ThisTypedComponentOpt<D, P, C, M, Mi extends Array<any>> =
+type ThisTypedComponentOpt<D, P, C, M, Mi extends Array<any>, O = {}> =
   ComponentOpt<D, P, C, M, Mi>
-  & ThisType<ComponentIns<D, P, C, M, Mi>>
+  & ThisType<ComponentIns<D, P, C, M, Mi, O>> & O
 
 declare function get (obj: object, key: string): any
 
@@ -164,7 +164,10 @@ declare function del (obj: object, key: string): any
 
 export function observable<T extends object> (obj: T): T
 
+type MpxComProps<O> = { $rawOptions: O }
+
 export interface MpxComponentIns {
+
   $refs: ObjectOf<any>
 
   $set: typeof set
@@ -178,6 +181,8 @@ export interface MpxComponentIns {
   $forceUpdate (params: object, callback: () => void): void
 
   $nextTick (fn: () => void): void
+
+  [k: string]: any
 }
 
 interface ReplaceWxComponentIns {
@@ -191,19 +196,20 @@ type WxComponentIns<D> =
   & WechatMiniprogram.Component.InstanceProperties
   & WechatMiniprogram.Component.InstanceMethods<D>
 
-type ComponentIns<D, P, C, M, Mi extends Array<any>> =
+type ComponentIns<D, P, C, M, Mi extends Array<any>, O = {}> =
   GetDataType<D> & UnboxMixinsField<Mi, 'data'> &
   M & UnboxMixinsField<Mi, 'methods'> &
   GetPropsType<P & UnboxMixinsField<Mi, 'properties'>> &
-  GetComputedType<C & UnboxMixinsField<Mi, 'computed'>> & WxComponentIns<D> & MpxComponentIns
+  GetComputedType<C & UnboxMixinsField<Mi, 'computed'>> &
+  WxComponentIns<D> & MpxComponentIns & MpxComProps<O>
 
 interface createConfig {
   customCtor: any
 }
 
-export function createComponent<D extends Data = {}, P extends Properties = {}, C = {}, M extends Methods = {}, Mi extends Array<any> = []> (opt: ThisTypedComponentOpt<D, P, C, M, Mi>, config?: createConfig): void
+export function createComponent<D extends Data = {}, P extends Properties = {}, C = {}, M extends Methods = {}, Mi extends Array<any> = [], O = {}> (opt: ThisTypedComponentOpt<D, P, C, M, Mi, O>, config?: createConfig): void
 
-export function getMixin<D extends Data = {}, P extends Properties = {}, C = {}, M extends Methods = {}, Mi extends Array<any> = []> (opt: ThisTypedComponentOpt<D, P, C, M, Mi>): {
+export function getMixin<D extends Data = {}, P extends Properties = {}, C = {}, M extends Methods = {}, Mi extends Array<any> = [], O = {}> (opt: ThisTypedComponentOpt<D, P, C, M, Mi, O>): {
   data: GetDataType<D> & UnboxMixinsField<Mi, 'data'>
   properties: P & UnboxMixinsField<Mi, 'properties'>
   computed: C & UnboxMixinsField<Mi, 'computed'>
@@ -211,7 +217,7 @@ export function getMixin<D extends Data = {}, P extends Properties = {}, C = {},
   [index: string]: any
 }
 
-export function createPage<D extends Data = {}, P extends Properties = {}, C = {}, M extends Methods = {}, Mi extends Array<any> = []> (opt: ThisTypedPageOpt<D, P, C, M, Mi>, config?: createConfig): void
+export function createPage<D extends Data = {}, P extends Properties = {}, C = {}, M extends Methods = {}, Mi extends Array<any> = [], O = {}> (opt: ThisTypedPageOpt<D, P, C, M, Mi, O>, config?: createConfig): void
 
 export function createApp<T extends WechatMiniprogram.IAnyObject> (opt: WechatMiniprogram.App.Options<T>, config?: createConfig): void
 
@@ -434,20 +440,30 @@ export function createStoreWithThis<S = {}, G = {}, M extends MutationsAndAction
 // auxiliary functions
 export function createStateWithThis<S = {}> (state: S): S
 
-export function createGettersWithThis<S = {}, D extends Deps = {}, G = {}> (state: S, getters: G & ThisType<{ state: S & UnboxDepsField<D, 'state'>, getters: GetComputedType<G> & UnboxDepsField<D, 'getters'>, rootState: any }>, deps?: D): G
+export function createGettersWithThis<S = {}, D extends Deps = {}, G = {}> (getters: G & ThisType<{ state: S & UnboxDepsField<D, 'state'>, getters: GetComputedType<G> & UnboxDepsField<D, 'getters'>, rootState: any }>, options?: {
+  state?: S, 
+  deps?: D
+}): G
 
-export function createMutationsWithThis<S = {}, D extends Deps = {}, M extends MutationsAndActionsWithThis = {}> (state: S, mutations: M & ThisType<{ state: S & UnboxDepsField<D, 'state'> }>, deps?: D): M
+export function createMutationsWithThis<S = {}, D extends Deps = {}, M extends MutationsAndActionsWithThis = {}> (mutations: M & ThisType<{ state: S & UnboxDepsField<D, 'state'> }>, options?: {
+  state?: S,
+  deps?: D
+}): M
 
-export function createActionsWithThis<S = {}, G = {}, M extends MutationsAndActionsWithThis = {}, D extends Deps = {}, A extends MutationsAndActionsWithThis = {}> (state: S, getters: G, mutations: M & ThisType<{ state: S & UnboxDepsField<D, 'state'> }>, actions: A & ThisType<{
+export function createActionsWithThis<S = {}, G = {}, M extends MutationsAndActionsWithThis = {}, D extends Deps = {}, A extends MutationsAndActionsWithThis = {}> (actions: A & ThisType<{
   rootState: any,
   state: S & UnboxDepsField<D, 'state'>,
   getters: GetComputedType<G> & UnboxDepsField<D, 'getters'>,
   dispatch: GetDispatchAndCommitWithThis<A, D, 'actions'>,
   commit: GetDispatchAndCommitWithThis<M, D, 'mutations'>
-}>, deps?: D): A
+}>, options?: {
+  state?: S,
+  getters?: G,
+  mutations?: M,
+  deps?: D
+}): A
 
-
-export function injectMixins (mixins: object | Array<object>, type?: 'app' | 'page' | 'component'): void
+export function injectMixins (mixins: object | Array<object>, type?: 'page' | 'component' | 'app'): void
 
 declare class Watcher {
   constructor (context: any, expr: string | (() => any), handler: WatchHandler | WatchOptWithHandler, options?: WatchOpt)
