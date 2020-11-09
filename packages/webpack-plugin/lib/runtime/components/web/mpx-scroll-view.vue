@@ -29,6 +29,7 @@
         default: 0
       },
       observeDOM: Boolean,
+      updateRefresh: Boolean,
       scrollIntoView: String,
       scrollWithAnimation: Boolean,
       enableFlex: Boolean
@@ -57,7 +58,7 @@
       this.destroy()
     },
     updated () {
-      this.refresh()
+      if (this.updateRefresh) this.refresh()
     },
     watch: {
       scrollIntoView (val) {
@@ -72,14 +73,13 @@
     },
     methods: {
       destroy () {
-        if(!this.bs) return
+        if (!this.bs) return
         this.bs.destroy()
         delete this.bs
       },
       init () {
-        if(this.bs) return
+        if (this.bs) return
         this.initLayerComputed()
-
         this.bs = new BScroll(this.$refs.wrapper, {
           startX: -this._scrollLeft,
           startY: -this._scrollTop,
@@ -91,6 +91,10 @@
           stopPropagation: true,
           bindToWrapper: true
         })
+        this.bs.scroller.hooks.on('beforeRefresh', () => {
+          this.initLayerComputed()
+        })
+
         this.lastX = -this._scrollLeft
         this.lastY = -this._scrollTop
         this.bs.on('scroll', throttle(({ x, y }) => {
@@ -172,8 +176,7 @@
         this.$refs.scrollContent.style.height = `${height}px`
       },
       refresh () {
-        this.initLayerComputed()
-        this.bs && this.bs.refresh()
+        if (this.bs) this.bs.refresh()
       },
       dispatchScrollTo: throttle(function (direction) {
         let eventName = 'scrolltoupper'

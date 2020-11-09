@@ -1,3 +1,4 @@
+// @ts-ignore
 import mpx from '@mpxjs/core'
 
 interface CancelTokenClass {
@@ -7,6 +8,7 @@ interface CancelTokenClass {
   }
 }
 
+// @ts-ignore
 interface fetchOption extends WechatMiniprogram.RequestOption {
   params?: object
   cancelToken?: InstanceType<CancelTokenClass>['token']
@@ -19,6 +21,7 @@ interface CreateOption {
   ratio?: number
 }
 
+// @ts-ignore
 type fetchT = (option: fetchOption, priority?: 'normal'|'low') => Promise<WechatMiniprogram.RequestSuccessCallbackResult>
 type addLowPriorityWhiteListT = (rules: string|RegExp|Array<string|RegExp>) => void
 type createT = (option?: CreateOption) => xfetch

@@ -899,7 +899,7 @@ try {
         if (data.loaders && isFromMpx) {
           data.loaders.forEach((loader) => {
             if (/ts-loader/.test(loader.loader)) {
-              loader.options = Object.assign({}, { appendTsSuffixTo: [/\.(mpx|vue)$/] })
+              loader.options = Object.assign({}, loader.options, { appendTsSuffixTo: [/\.(mpx|vue)$/] })
             }
           })
         }
