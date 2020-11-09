@@ -54,15 +54,15 @@ function genFromMap () {
 }
 
 function getEnvObj () {
-  if (typeof wx !== 'undefined' && typeof wx.getSystemInfo === 'function') {
+  if (__mpx_mode__ === 'wx') {
     return wx
-  } else if (typeof my !== 'undefined' && typeof my.getSystemInfo === 'function') {
+  } else if (__mpx_mode__ === 'ali') {
     return my
-  } else if (typeof swan !== 'undefined' && typeof swan.getSystemInfo === 'function') {
+  } else if (__mpx_mode__ === 'swan') {
     return swan
-  } else if (typeof qq !== 'undefined' && typeof qq.getSystemInfo === 'function') {
+  } else if (__mpx_mode__ === 'qq') {
     return qq
-  } else if (typeof tt !== 'undefined' && typeof tt.getSystemInfo === 'function') {
+  } else if (__mpx_mode__ === 'tt') {
     return tt
   }
 }
