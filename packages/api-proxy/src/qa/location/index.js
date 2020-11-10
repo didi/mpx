@@ -133,7 +133,7 @@ function onLocationChange (callback = '') {
 }
 
 // 取消监听地理位置
-function stopLocationUpdate ({
+function offLocationChange ({
   success,
   fail,
   complete
@@ -141,11 +141,11 @@ function stopLocationUpdate ({
   try {
     geolocation.unsubscribe()
     successHandler({
-      errMsg: 'stopLocationUpdate:ok'
+      errMsg: 'offLocationChange:ok'
     }, success, complete)
   } catch (error) {
     failHandler({
-      errMsg: `stopLocationUpdate:fail ${error}`
+      errMsg: `offLocationChange:fail ${error}`
     }, fail, complete)
   }
 }
@@ -155,5 +155,5 @@ export {
   openLocation,
   chooseLocation,
   onLocationChange,
-  stopLocationUpdate
+  offLocationChange
 }
