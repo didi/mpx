@@ -5,7 +5,7 @@ import '../../../common/stylus/Modal.styl'
 let _getLength = (t) => {
   let len = 0
   for (let i = 0; i < t.length; i++) {
-    if (t.charCodeAt(i)>127 || t.charCodeAt(i)==94) {
+    if (t.charCodeAt(i) > 127 || t.charCodeAt(i) === 94) {
       len += 2
     } else {
       len++
