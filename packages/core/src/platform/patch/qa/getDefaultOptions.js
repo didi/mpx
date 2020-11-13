@@ -1,6 +1,7 @@
 import MPXProxy from '../../../core/proxy'
 import builtInKeysMap from '../builtInKeysMap'
 import mergeOptions from '../../../core/mergeOptions'
+import { getByPath } from '../../../helper/utils'
 // import { error } from '../../../helper/log'
 
 function transformApiForProxy (context, currentInject) {
@@ -45,6 +46,25 @@ function filterOptions (options, type) {
   return newOptions
 }
 
+// 将option上的watch，用快应用原生的$watch绑定
+function initWatch (context, rawOptions) {
+  if (!rawOptions.watch) {
+    return
+  }
+  let watch = rawOptions.watch
+  for (let key in watch) {
+    let watchValue = watch[key][0] || undefined
+    let options = typeof watchValue === 'object' ? watchValue : {}
+    let handler = options.handler || watchValue
+    if (typeof handler === 'function') {
+      context.$watch(key, handler)
+      if (options.immediate) {
+        handler.call(context, getByPath(context, key), undefined)
+      }
+    }
+  }
+}
+
 export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
   // const hookNames = type === 'component' ? ['onInit', 'onReady', 'onDestroy'] : ['onInit', 'onReady', 'onUnload']
   const rootMixins = [{
@@ -57,6 +77,7 @@ export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
       const mpxProxy = new MPXProxy(rawOptions, this)
       this.__mpxProxy = mpxProxy
       this.__mpxProxy.created(...params)
+      initWatch(this, rawOptions)
     },
     onReady () {
       this.__mpxProxy && this.__mpxProxy.mounted()
