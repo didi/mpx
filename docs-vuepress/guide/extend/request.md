@@ -74,6 +74,18 @@ mpx.xfetch.fetch({
 	emulateJSON: true // 等价于header = {'content-type': 'application/x-www-form-urlencoded'}
 })
 ```
+### 支持 timeout
+
+```js
+mpx.xfetch.fetch({
+	url: 'http://xxx.com',
+	method: 'POST',
+	data: {
+		name: 'test'
+	},
+	timeout: 10000 // 超时时间
+})
+```
 
 ### 支持 params
 ```js

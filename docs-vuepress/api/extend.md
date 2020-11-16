@@ -30,6 +30,11 @@ mpx-fetch提供了一个实例**xfetch** ，该实例包含以下api
             类型：`Object`
         
             设置请求参数，参数会以 Query String 的形式进行传递
+        - **timeout**
+                            
+            类型：`Number`
+                            
+            单位为毫秒。若不传，默认读取app.json文件中__networkTimeout属性。 对于超时的处理可在 catch 方法中进行
         - **emulateJSON**
         
             类型：`Boolean`
