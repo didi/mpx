@@ -415,6 +415,7 @@ class MpxWebpackPlugin {
               alreadyOutputed = true
             }
             // 将当前的currentResourceMap和实际进行输出的actualResourceMap都填充上，便于resolve时使用
+            // todo 此处逻辑存在一定问题，当一个分包中两个地方一个声明了主包资源，另一个声明为当前分包时，此处前者生成的资源map会被后者覆盖，导致前者的json无法输出，后续优化分包资源处理时需要优化
             currentResourceMap[resourcePath] = actualResourceMap[resourcePath] = outputPath
 
             if (isStatic && packageName !== 'main' && !mpx.staticResourceHit[resourcePath]) {
