@@ -12,6 +12,8 @@ todo update by lihuanyu
   Wxss文件中只能用 CDN 地址或 Base64, 针对第二、三种方式引入的资源，可以通过配置决定使用 CDN 还是 Base64，且 Mpx 中图像资源处理会优先检查 Base64，具体配置参数如下：
 * publicPath：资源存放 CDN 地址，可选
 * limit: 资源大小限制，可根据资源的大小判断走 Base64 还是 CDN， 可选
+* publicPathScope: 限制输出 CDN 图像资源的范围，可选 styleOnly、all，默认为 styleOnly。（图像引用方式分两大类 Template, Style）
+* outputPathCDN: 设置 CDN 图像对应的本地相对地址（相对于当前编译输出目录的地址，如 dist,或者 dist/wx），可写脚本将本地图像批量上传到 CDN
 
 ## Base64 图像资源
 图像转 Base64的两种方式:
@@ -54,6 +56,28 @@ const webpackConfig = {
   }
 }
 ```
+
+## CDN 图像资源输出本地目录，用户自行批量上传到CDN服务器
+```js
+// webpack.config.js 配置
+const webpackConfig = {
+  module: {
+    rules: [{
+      test: /\.(png|jpe?g|gif|svg)$/,
+      loader: MpxWebpackPlugin.urlLoader({
+          name: 'img/[name][hash].[ext]',
+          publicPath: 'http://a.com',
+          limit: 100,
+          publicPathScope: 'styleOnly',
+          outputPathCDN: './cdnImages'
+      })
+    }]
+  }
+}
+```
+> 备注:  
+> 图像默认编译后会输出到 img 目录下, 当设置 outputPathCDN 后，输出的本地图像地址为 outputPathCDN + img/图像.png  
+> CND 文件地址为 publicPath + img/图像.png，所以当使用脚本上传到 CDN 时，路径要带上 img  
 
 ## 用户自定义图像处理方式
 ```js
