@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+      - doc-rebuild
 
 jobs:
   deploy:
@@ -22,9 +23,18 @@ jobs:
           npx gitbook-cli install
           npx gitbook-cli build
 
-      - name: Deploy
+      - name: Deploy to github pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           publish_dir: ./docs/_book
           force_orphan: true
           personal_token: ${{ secrets.GH_PAGES_TOKEN }}
+
+      - name: Deploy to self-host server
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.DOCS_SERVER_HOST }}
+          username: ${{ secrets.DOCS_SERVER_USER }}
+          key: ${{ secrets.DOCS_SERVER_KEY }}
+          source: "./docs/_book"
+          target: "${{ secrets.DOCS_SERVER_DIR }}"
