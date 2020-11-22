@@ -17,11 +17,11 @@ jobs:
         with:
           node-version: '10.21.0'
 
-      - name: generate static file
+      # vuepress生成最终文档
+      - name: generate docs file
         run: |
-          cd docs
-          npx gitbook-cli install
-          npx gitbook-cli build
+          npm i
+          npm run docs:build
 
       # 使用 https://github.com/appleboy/scp-action 进行部署，注意 strip_components 用于控制层级
       - name: Deploy to self-host server
@@ -31,10 +31,19 @@ jobs:
           username: ${{ secrets.DOCS_SERVER_USER }}
           key: ${{ secrets.DOCS_SERVER_KEY }}
           command_timeout: "20m"
-          source: "./docs/_book/"
+          source: "./docs-vuepress/.vuepress/dist/"
           strip_components: 3
-          target: "${{ secrets.DOCS_SERVER_DIR }}"
+          target: "/temp/mpxtemp"
+          # target: "${{ secrets.DOCS_SERVER_DIR }}"
 
+      # vuepress生产的文件需要控制根目录，暂时还是先用老文档部署GitHub pages
+      - name: generate old static file
+        run: |
+          cd docs
+          npx gitbook-cli install
+          npx gitbook-cli build
+
+      # 部署github pages
       - name: Deploy to github pages
         uses: peaceiris/actions-gh-pages@v3
         with:
