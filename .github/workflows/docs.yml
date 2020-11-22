@@ -36,5 +36,6 @@ jobs:
           host: ${{ secrets.DOCS_SERVER_HOST }}
           username: ${{ secrets.DOCS_SERVER_USER }}
           key: ${{ secrets.DOCS_SERVER_KEY }}
+          debug: true
           source: "./docs/_book"
           target: "${{ secrets.DOCS_SERVER_DIR }}"
