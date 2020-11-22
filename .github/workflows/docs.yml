@@ -23,6 +23,7 @@ jobs:
           npx gitbook-cli install
           npx gitbook-cli build
 
+      # 使用 https://github.com/appleboy/scp-action 进行部署，注意 strip_components 用于控制层级
       - name: Deploy to self-host server
         uses: appleboy/scp-action@master
         with:
@@ -31,8 +32,8 @@ jobs:
           key: ${{ secrets.DOCS_SERVER_KEY }}
           command_timeout: "20m"
           source: "./docs/_book/index.html"
-          target: "/temp/mpxtemp"
-          # target: "${{ secrets.DOCS_SERVER_DIR }}"
+          strip_components: 2
+          target: "${{ secrets.DOCS_SERVER_DIR }}"
 
       - name: Deploy to github pages
         uses: peaceiris/actions-gh-pages@v3
