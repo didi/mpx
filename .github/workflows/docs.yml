@@ -31,9 +31,10 @@ jobs:
           username: ${{ secrets.DOCS_SERVER_USER }}
           key: ${{ secrets.DOCS_SERVER_KEY }}
           command_timeout: "20m"
-          source: "./docs/_book/"
-          strip_components: 2
-          target: "${{ secrets.DOCS_SERVER_DIR }}"
+          source: "./docs/_book/index.html"
+          strip_components: 1
+          target: "/temp/mpxtemp"
+          # target: "${{ secrets.DOCS_SERVER_DIR }}"
 
       - name: Deploy to github pages
         uses: peaceiris/actions-gh-pages@v3
