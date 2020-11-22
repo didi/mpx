@@ -33,8 +33,7 @@ jobs:
           command_timeout: "20m"
           source: "./docs-vuepress/.vuepress/dist/"
           strip_components: 4
-          target: "/temp/docstemp"
-          # target: "${{ secrets.DOCS_SERVER_DIR }}"
+          target: "${{ secrets.DOCS_SERVER_DIR }}"
 
       # vuepress生产的文件需要控制根目录，暂时还是先用老文档部署GitHub pages
       - name: generate old static file

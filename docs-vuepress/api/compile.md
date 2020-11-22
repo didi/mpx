@@ -359,7 +359,7 @@ new MpxWebpackPlugin({
   attributes: ['customTag:src']
 })
 ```
-```wxml
+```html
 <customTag :src="'https://www....../avator.png'"></customTag>
 ```
 :::tip
