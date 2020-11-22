@@ -1,7 +1,5 @@
 # 图像资源处理
 
-todo update by lihuanyu
-
 ## 图像资源引入有三种方式
 1. Template 中通过 image src 指定图像资源
     - 直接指定图像的远程资源地址    
