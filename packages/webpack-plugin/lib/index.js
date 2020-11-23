@@ -95,18 +95,7 @@ class MpxWebpackPlugin {
     if (options.mode === 'web' && options.srcMode !== 'wx') {
       errors.push('MpxWebpackPlugin supports mode to be "web" only when srcMode is set to "wx"!')
     }
-    if (!Array.isArray(options.externalClasses)) {
-      options.externalClasses = ['custom-class', 'i-class']
-    }
-
-    options.externalClasses = options.externalClasses.map((className) => {
-      return {
-        className,
-        replacement: className.replace(/-(.)/g, (matched, $1) => {
-          return $1.toUpperCase()
-        })
-      }
-    })
+    options.externalClasses = options.externalClasses || ['custom-class', 'i-class']
     options.resolveMode = options.resolveMode || 'webpack'
     options.writeMode = options.writeMode || 'changed'
     options.autoScopeRules = options.autoScopeRules || {}
@@ -335,6 +324,7 @@ class MpxWebpackPlugin {
           resolveMode: this.options.resolveMode,
           mode: this.options.mode,
           srcMode: this.options.srcMode,
+          // deprecated option
           globalMpxAttrsFilter: this.options.globalMpxAttrsFilter,
           externalClasses: this.options.externalClasses,
           projectRoot: this.options.projectRoot,
@@ -817,7 +807,7 @@ try {
     context.Uint8Array = Uint8Array;
     context.DataView = DataView;
     context.ArrayBuffer = ArrayBuffer;
-    context.Symbol = Symbol; 
+    context.Symbol = Symbol;
   }
 } catch(e){
 }\n`)

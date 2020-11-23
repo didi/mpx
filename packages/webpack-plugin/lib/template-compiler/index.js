@@ -9,7 +9,6 @@ const path = require('path')
 module.exports = function (raw) {
   this.cacheable()
   const options = loaderUtils.getOptions(this) || {}
-  const isNative = options.isNative
   const compilation = this._compilation
   const mainCompilation = getMainCompilation(compilation)
   const mpx = mainCompilation.__mpx__
@@ -17,6 +16,7 @@ module.exports = function (raw) {
   const defs = mpx.defs
   const i18n = mpx.i18n
   const externalClasses = mpx.externalClasses
+  const decodeHTMLText = mpx.decodeHTMLText
   const globalSrcMode = mpx.srcMode
   const localSrcMode = loaderUtils.parseQuery(this.resourceQuery || '?').mode
   const packageName = mpx.currentPackageRoot || 'main'
@@ -40,24 +40,27 @@ module.exports = function (raw) {
     )
   }
 
-  const parsed = compiler.parse(raw, Object.assign(options, {
+  const parsed = compiler.parse(raw, {
     warn,
     error,
-    basename: path.basename(this.resource),
+    usingComponents: options.usingComponents,
+    hasComment: options.hasComment,
+    isNative: options.isNative,
+    basename: path.basename(resourcePath),
     isComponent: !!componentsMap[resourcePath],
     mode,
-    defs,
-    globalMpxAttrsFilter: mpx.globalMpxAttrsFilter,
-    decodeHTMLText: mpx.decodeHTMLText,
-    externalClasses,
     srcMode: localSrcMode || globalSrcMode,
-    isNative,
+    defs,
+    decodeHTMLText,
+    externalClasses,
     scopedId,
     filePath: this.resourcePath,
     i18n,
+    checkUsingComponents: mpx.checkUsingComponents,
     globalComponents: Object.keys(mpx.usingComponents),
-    checkUsingComponents: mpx.checkUsingComponents
-  }))
+    // deprecated option
+    globalMpxAttrsFilter: mpx.globalMpxAttrsFilter
+  })
 
   let ast = parsed.root
   let meta = parsed.meta
@@ -70,7 +73,7 @@ module.exports = function (raw) {
 
   let result = compiler.serialize(ast)
 
-  if (isNative || mpx.forceDisableInject) {
+  if (options.isNative || mpx.forceDisableInject) {
     return result
   }
 
@@ -171,7 +174,7 @@ ${e.stack}`)
 
   for (let module in meta.wxsModuleMap) {
     isSync = false
-    const src = loaderUtils.urlToRequest(meta.wxsModuleMap[module], options.root)
+    const src = loaderUtils.urlToRequest(meta.wxsModuleMap[module], options.projectRoot)
     // 编译render函数只在mpx文件中运行，此处issuer的context一定等同于当前loader的context
     const expression = `require(${loaderUtils.stringifyRequest(this, src)})`
     const deps = []

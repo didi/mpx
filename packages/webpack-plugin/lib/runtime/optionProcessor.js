@@ -22,6 +22,24 @@ export default function processOption (
       }
     }
 
+    // 注册v-ex-classes自定义指令处理externalClasses
+    Vue.directive('ex-classes', (el, binding, vnode) => {
+      const context = vnode.context
+      if (context) {
+        const externalClasses = context.$options.externalClasses || []
+        const classList = el.classList
+        binding.value.forEach((className) => {
+          const actualExternalClassNames = context.$attrs[className]
+          if (externalClasses.indexOf(className) !== -1 && actualExternalClassNames) {
+            classList.remove(className)
+            actualExternalClassNames.split(' ').forEach((actualExternalClassName) => {
+              classList.add(actualExternalClassName)
+            })
+          }
+        })
+      }
+    })
+
     const routes = []
 
     for (const pagePath in pagesMap) {
@@ -166,7 +184,7 @@ export default function processOption (
           window.__mpxGenericsMap[genericHash][genericValue] = componentsMap[genericValue]
         } else {
           console.log(option)
-          console.warn(`[Mpx runtime warn]: generic value "${genericValue}" must be 
+          console.warn(`[Mpx runtime warn]: generic value "${genericValue}" must be
 registered in parent context!`)
         }
       })

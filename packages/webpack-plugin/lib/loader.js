@@ -190,6 +190,8 @@ module.exports = function (content) {
             async.parallel([
               (callback) => {
                 processTemplate(parts.template, {
+                  hasComment,
+                  isNative,
                   mode,
                   srcMode,
                   defs,
@@ -197,6 +199,8 @@ module.exports = function (content) {
                   ctorType,
                   usingComponents,
                   componentGenerics,
+                  decodeHTMLText: mpx.decodeHTMLText,
+                  externalClasses: mpx.externalClasses,
                   checkUsingComponents: mpx.checkUsingComponents
                 }, callback)
               },
