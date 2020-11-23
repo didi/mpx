@@ -6,7 +6,8 @@ import { successHandler, failHandler } from '../../common/js'
 
 function setStorageSync(key, data) {
   let obj = Object.create(null)
-  obj[key] = data
+  obj['key'] = key
+  obj['value'] = data
 
   try {
     storage.set(obj)
@@ -18,67 +19,96 @@ function setStorageSync(key, data) {
 
 function setStorage(options) {
   return new Promise((resolve, reject) => {
-    storage.set(options)
-  }).then(res => {
-    successHandler(res, options.success, options.complete)
-    resolve()
-  }).catch(err => {
-    failHandler(err, options.fail, options.complete)
-    reject()
-  })
-}
-
-function removeStorageSync(key) {
-  let obj = Object.create(null)
-  obj['key'] = key
-
-  try {
-    storage.delete(obj)
-  } catch (e) {
-    const error = Object.assign({ errMsg: 'removeStorageSync:error' }, e)
-    console.log(error)
-  }
-}
-
-function removeStorage(options) {
-  return new Promise((resolve, reject) => {
-    storage.set(options)
-  }).then(res => {
-    successHandler(res, options.success, options.complete)
-    resolve()
-  }).catch(e => {
-    const error = Object.assign({ errMsg: 'removeStorage:error' }, e)
-    failHandler(error, options.fail, options.complete)
-    reject()
+    try {
+      storage.set({
+        key: options.key,
+        value: options.data,
+        success: function(data) {
+          successHandler(data, options.success, options.complete)
+          return resolve(data)
+        },
+        fail: function (data, code) {
+          failHandler(code, options.fail, options.complete)
+          return reject(code)
+        }
+      })
+    } catch (e) {
+      const error = Object.assign({ errMsg: 'setStorage:error' }, e)
+      console.log(error)
+    }
   })
 }
 
 function getStorageSync(key) {
-  let obj = Object.create(null)
-  obj['key'] = key
-
   try {
-    storage.get(obj)
+    let info = storage.get({
+      key: key,
+      default: key || ''
+    })
+    return info
   } catch (e) {
     const error = Object.assign({ errMsg: 'getStorageSync:error' }, e)
-    console.log(error)
+    console.log('getStorageSync error', error)
   }
 }
 
 function getStorage(options) {
   return new Promise((resolve, reject) => {
-    storage.get(options)
-  }).then(res => {
-    successHandler(res, options.success, options.complete)
-    resolve()
-  }).catch(e => {
-    const error = Object.assign({ errMsg: 'getStorage:error' }, e)
-    failHandler(error, options.fail, options.complete)
-    reject()
+    try {
+      storage.get({
+        key: options.key,
+        default: options.key || '',
+        success: function(data) {
+          successHandler(data, options.success, options.complete)
+          return resolve(data)
+        },
+        fail: function (data, code) {
+          failHandler(code, options.fail, options.complete)
+          return reject(code)
+        }
+      })
+    } catch (e) {
+      const error = Object.assign({ errMsg: 'getStorage:error' }, e)
+      console.log('getStorage error', error)
+    }
   })
 }
 
-function getStorageInfo() {
+function removeStorageSync(key) {
+  try {
+    storage.delete({
+      key: key
+    })
+    console.log(storage.length)
+  } catch (e) {
+    const error = Object.assign({ errMsg: 'removeStorageSync:error' }, e)
+    console.log('removeStorageSync error', error)
+  }
+}
+
+function removeStorage(options) {
+  return new Promise((resolve, reject) => {
+    try {
+      storage.delete({
+        key: options.key,
+        success: function(data) {
+          console.log(storage.length)
+          successHandler(data, options.success, options.complete)
+          return resolve(data)
+        },
+        fail: function (data, code) {
+          failHandler(code, options.fail, options.complete)
+          return reject(code)
+        }
+      })
+    } catch (e) {
+      const error = Object.assign({ errMsg: 'removeStorage:error' }, e)
+      console.log('removeStorage error', error)
+    }
+  })
+}
+
+function getStorageInfoSync() {
   let storageInfo = Object.create(null)
   let keys = []
 
@@ -97,33 +127,54 @@ function getStorageInfo() {
       currentSize: 'It does not support for getting storage limitSize on quick app',
       limitSize: 'It does not support for getting storage limitSize on quick app'
     })
-    successHandler(storageInfo, options.success, options.complete)
     return storageInfo
   } catch(e) {
-    const error = Object.assign({ errMsg: 'getStorageInfo:error' }, e)
-    failHandler(error, options.fail, options.complete)
+    const error = Object.assign({ errMsg: 'getStorageInfoSync:error' }, e)
+    console.log('getStorageInfoSync error', error)
   }
+}
+
+function getStorageInfo(options) {
+  return new Promise((resolve, reject) => {
+    try {
+      let storageInfo = getStorageInfoSync(options.key)
+      successHandler(storageInfo, options.success, options.complete)
+      return resolve(storageInfo)
+    } catch (e) {
+      const error = Object.assign({ errMsg: 'getStorageInfo:error' }, e)
+      console.log('getStorageInfo error', error)
+      failHandler(error, options.fail, options.complete)
+      return reject(error)
+    }
+  })
 }
 
 function clearStorageSync() {
   try {
     storage.clear({})
   } catch (e) {
-    const error = Object.assign({ errMsg: 'removeStorageSync:error' }, e)
+    const error = Object.assign({ errMsg: 'clearStorageSync:error' }, e)
     console.log(error)
   }
 }
 
-function clearStorage() {
+function clearStorage(options) {
   return new Promise((resolve, reject) => {
-    storage.clear(options)
-  }).then(res => {
-    successHandler(res, options.success, options.complete)
-    resolve()
-  }).catch(e => {
-    const error = Object.assign({ errMsg: 'clearStorage:error' }, e)
-    failHandler(error, options.fail, options.complete)
-    reject()
+    try {
+      storage.clear({
+        success: function(data) {
+          successHandler(data, options.success, options.complete)
+          return resolve(data)
+        },
+        fail: function (data, code) {
+          failHandler(code, options.fail, options.complete)
+          return reject(code)
+        }
+      })
+    } catch (e) {
+      const error = Object.assign({ errMsg: 'clearStorage:error' }, e)
+      console.log(error)
+    }
   })
 }
 
@@ -134,6 +185,7 @@ export {
   removeStorage,
   getStorageSync,
   getStorage,
+  getStorageInfoSync,
   getStorageInfo,
   clearStorageSync,
   clearStorage
