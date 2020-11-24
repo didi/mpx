@@ -152,19 +152,19 @@ module.exports = function (content) {
         getNamedExports,
         getRequireForSrc,
         getNamedExportsForSrc
-      } = createHelpers(
+      } = createHelpers({
         loaderContext,
         options,
         moduleId,
-        isProduction,
         hasScoped,
         hasComment,
         usingComponents,
         needCssSourceMap,
         srcMode,
+        globalSrcMode,
         isNative,
         projectRoot
-      )
+      })
 
       // 处理mode为web时输出vue格式文件
       if (mode === 'web') {
