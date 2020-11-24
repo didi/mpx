@@ -138,7 +138,7 @@ module.exports = function (raw = '{}') {
     if (callbacked) return callback()
     // localSrcMode与globalSrcMode不一致, 继承localsSrcMode, 但不会强制覆盖已经添加的mode
     if (srcMode !== globalSrcMode) {
-      addQuery(resource, { mode: srcMode })
+      resource = addQuery(resource, { mode: srcMode })
     }
     const dep = SingleEntryPlugin.createDependency(resource, name)
     entryDeps.add(dep)
