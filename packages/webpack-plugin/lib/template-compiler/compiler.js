@@ -1819,18 +1819,28 @@ function processAliExternalClassesHack (el, options) {
 
 function processWebExternalClassesHack (el, options) {
   let staticClass = getAndRemoveAttr(el, 'class')
-  if (staticClass) {
+  let dynamicClass = getAndRemoveAttr(el, ':class')
+  if (staticClass || dynamicClass) {
     const externalClasses = []
     options.externalClasses.forEach((className) => {
       const reg = new RegExp('\\b' + className + '\\b')
-      if (reg.test(staticClass)) {
+      if (reg.test(staticClass) || reg.test(dynamicClass)) {
         externalClasses.push(className)
       }
     })
-    const attrs = [{
-      name: 'class',
-      value: staticClass
-    }]
+    const attrs = []
+    if (staticClass) {
+      attrs.push({
+        name: 'class',
+        value: staticClass
+      })
+    }
+    if (dynamicClass) {
+      attrs.push({
+        name: ':class',
+        value: dynamicClass
+      })
+    }
     if (externalClasses.length) {
       attrs.push({
         name: 'v-ex-classes',
