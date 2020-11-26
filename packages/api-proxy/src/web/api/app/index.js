@@ -23,7 +23,6 @@ function onAppHide (callback) {
   window.__mpxAppCbs.hide.push(callback)
 }
 
-
 function offAppShow (callback) {
   const cbs = window.__mpxAppCbs.show
   cbs.splice(cbs.indexOf(callback), 1)

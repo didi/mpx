@@ -160,6 +160,7 @@ export default function processOption (
             if (global.__mpxAppCbs && global.__mpxAppCbs.show) {
               global.__mpxAppCbs.show.forEach((cb) => {
                 // todo 实现app.onShow参数
+                /* eslint-disable standard/no-callback-literal */
                 cb({})
               })
             }
