@@ -702,14 +702,14 @@ class MpxWebpackPlugin {
           const args = expr.arguments
           const name = callee.object.name
           const { queryObj, resourcePath } = parseRequest(parser.state.module.resource)
-
-          if (apiBlackListMap[callee.property.name || callee.property.value] || (name !== 'mpx' && name !== 'wx') || (name === 'wx' && !matchCondition(resourcePath, this.options.transMpxRules))) {
-            return
-          }
-
           const localSrcMode = queryObj.mode
           const globalSrcMode = this.options.srcMode
           const srcMode = localSrcMode || globalSrcMode
+
+          if (srcMode === globalSrcMode || apiBlackListMap[callee.property.name || callee.property.value] || (name !== 'mpx' && name !== 'wx') || (name === 'wx' && !matchCondition(resourcePath, this.options.transMpxRules))) {
+            return
+          }
+
           const srcModeString = `__mpx_src_mode_${srcMode}__`
           const dep = new InjectDependency({
             content: args.length

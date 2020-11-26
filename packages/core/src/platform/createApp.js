@@ -30,6 +30,17 @@ export default function createApp (option, config = {}) {
         Object.assign(this, option.proto)
         Object.assign(this, appData)
         this.$options.onLaunch && this.$options.onLaunch.call(this, {})
+        global.__mpxAppCbs = global.__mpxAppCbs || {
+          show: [],
+          hide: []
+        }
+        if (this.$options.onShow) {
+          this.$options.onShow.call(this, {})
+          global.__mpxAppCbs.show.push(this.$options.onShow.bind(this))
+        }
+        if (this.$options.onHide) {
+          global.__mpxAppCbs.hide.push(this.$options.onHide.bind(this))
+        }
       }
     })
   } else {

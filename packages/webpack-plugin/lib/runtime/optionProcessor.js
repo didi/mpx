@@ -146,11 +146,24 @@ export default function processOption (
         const vnode = window.__mpxRouter.__mpxActiveVnode
         if (vnode && vnode.componentInstance) {
           const currentPage = vnode.tag.endsWith('mpx-tab-bar-container') ? vnode.componentInstance.$refs.tabBarPage : vnode.componentInstance
-          if (currentPage) {
-            if (document.hidden) {
+          if (document.hidden) {
+            if (global.__mpxAppCbs && global.__mpxAppCbs.hide) {
+              global.__mpxAppCbs.hide.forEach((cb) => {
+                cb()
+              })
+            }
+            if (currentPage) {
               currentPage.mpxPageStatus = 'hide'
               currentPage.onHide && currentPage.onHide()
-            } else {
+            }
+          } else {
+            if (global.__mpxAppCbs && global.__mpxAppCbs.show) {
+              global.__mpxAppCbs.show.forEach((cb) => {
+                // todo 实现app.onShow参数
+                cb({})
+              })
+            }
+            if (currentPage) {
               currentPage.mpxPageStatus = 'show'
               currentPage.onShow && currentPage.onShow()
             }
