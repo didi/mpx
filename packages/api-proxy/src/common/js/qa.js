@@ -4,13 +4,13 @@ import {
 } from './utils'
 
 function successHandler (res, success, complete) {
-  success && getType(success) === 'function' && success(res)
-  complete && getType(complete) === 'function' && complete(res)
+  success && getType(success) === 'Function' && success(res)
+  complete && getType(complete) === 'Function' && complete(res)
 }
 
 function failHandler (err, fail, complete) {
-  fail && getType(fail) === 'function' && fail(err)
-  complete && getType(complete) === 'function' && complete(err)
+  fail && getType(fail) === 'Function' && fail(err)
+  complete && getType(complete) === 'Function' && complete(err)
 }
 
 function assignHandler (success, fail, complete) {
