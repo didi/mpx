@@ -441,7 +441,7 @@ export function createStoreWithThis<S = {}, G = {}, M extends MutationsAndAction
 export function createStateWithThis<S = {}> (state: S): S
 
 export function createGettersWithThis<S = {}, D extends Deps = {}, G = {}> (getters: G & ThisType<{ state: S & UnboxDepsField<D, 'state'>, getters: GetComputedType<G> & UnboxDepsField<D, 'getters'>, rootState: any }>, options?: {
-  state?: S, 
+  state?: S,
   deps?: D
 }): G
 
@@ -490,10 +490,17 @@ interface ConvertRule {
   convert?: (...args: any[]) => any
 }
 
+interface AnyConstructor {
+  new (...args: any[]): any
+
+  prototype: any
+}
+
 interface MpxConfig {
   useStrictDiff: Boolean
   ignoreRenderError: Boolean
   ignoreConflictWhiteList: Array<string>
+  observeClassInstance: Boolean | Array<AnyConstructor>
 }
 
 type SupportedMode = 'wx' | 'ali' | 'qq' | 'swan' | 'tt' | 'web' | 'qa'

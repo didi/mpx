@@ -625,6 +625,7 @@ class MpxWebpackPlugin {
           const arg0 = expr.arguments[0]
           const arg1 = expr.arguments[1]
           const callee = expr.callee
+          // todo 该逻辑在corejs3中不需要，等corejs3比较普及之后可以干掉
           if (/core-js.+global/.test(parser.state.module.resource)) {
             if (callee.name === 'Function' && arg0 && arg0.value === 'return this') {
               current.addDependency(new InjectDependency({
@@ -702,14 +703,14 @@ class MpxWebpackPlugin {
           const args = expr.arguments
           const name = callee.object.name
           const { queryObj, resourcePath } = parseRequest(parser.state.module.resource)
-
-          if (apiBlackListMap[callee.property.name || callee.property.value] || (name !== 'mpx' && name !== 'wx') || (name === 'wx' && !matchCondition(resourcePath, this.options.transMpxRules))) {
-            return
-          }
-
           const localSrcMode = queryObj.mode
           const globalSrcMode = this.options.srcMode
           const srcMode = localSrcMode || globalSrcMode
+
+          if (srcMode === globalSrcMode || apiBlackListMap[callee.property.name || callee.property.value] || (name !== 'mpx' && name !== 'wx') || (name === 'wx' && !matchCondition(resourcePath, this.options.transMpxRules))) {
+            return
+          }
+
           const srcModeString = `__mpx_src_mode_${srcMode}__`
           const dep = new InjectDependency({
             content: args.length
@@ -801,13 +802,13 @@ try {
     context.parseInt = parseInt;
     context.Promise = Promise;
     context.WeakMap = WeakMap;
-    context.Reflect = Reflect;
     context.RangeError = RangeError;
     context.TypeError = TypeError;
     context.Uint8Array = Uint8Array;
     context.DataView = DataView;
     context.ArrayBuffer = ArrayBuffer;
     context.Symbol = Symbol;
+    context.Reflect = Reflect;
   }
 } catch(e){
 }\n`)
