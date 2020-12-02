@@ -13,6 +13,7 @@ const config = require('./config')
 const selectorPath = normalize.lib('selector')
 const extractorPath = normalize.lib('extractor')
 const addQuery = require('./utils/add-query')
+const qaLoader = normalize.lib('qaHelper/exportLoader')
 
 // check whether default js loader exists
 const hasBabel = !!tryRequire('babel-loader')
@@ -63,10 +64,11 @@ function ensureBang (loader) {
   }
 }
 
-function resolveLoaders (options, moduleId, isProduction, hasScoped, hasComment, usingComponents, needCssSourceMap, projectRoot) {
+function resolveLoaders (mode, options, moduleId, isProduction, hasScoped, hasComment, usingComponents, needCssSourceMap, projectRoot) {
   let cssLoaderOptions = ''
   let wxmlLoaderOptions = ''
   let jsonCompilerOptions = ''
+  let jsloader = ''
   if (needCssSourceMap) {
     cssLoaderOptions += '?sourceMap'
   }
@@ -77,10 +79,13 @@ function resolveLoaders (options, moduleId, isProduction, hasScoped, hasComment,
   // 现在切回css-loader@0.28.11了，先加回来和原生小程序保持一致
   cssLoaderOptions += (cssLoaderOptions ? '&' : '?') + 'root=' + projectRoot + '&importLoaders=1&extract=true'
 
+   // 快应用增加loader
+  jsloader += hasBabel ? 'babel-loader' : ''
+  jsloader += mode === 'qa' ? `!${qaLoader}` : ''
   const defaultLoaders = {
     html: wxmlLoaderPath + wxmlLoaderOptions,
     css: getCSSLoaderString(),
-    js: hasBabel ? 'babel-loader' : '',
+    js: jsloader,
     json: jsonCompilerPath + jsonCompilerOptions,
     wxs: wxsLoaderPath
   }
@@ -99,7 +104,7 @@ function resolveLoaders (options, moduleId, isProduction, hasScoped, hasComment,
   }
 }
 
-module.exports = function createHelpers (loaderContext, options, moduleId, isProduction, hasScoped, hasComment, usingComponents, needCssSourceMap, srcMode, isNative, projectRoot) {
+module.exports = function createHelpers (loaderContext, options, moduleId, isProduction, hasScoped, hasComment, usingComponents, needCssSourceMap, srcMode, mode, isNative, projectRoot) {
   const rawRequest = getRawRequest(loaderContext, options.excludedPreLoaders)
   const {
     defaultLoaders,
@@ -108,6 +113,7 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
     preLoaders,
     postLoaders
   } = resolveLoaders(
+    mode,
     options,
     moduleId,
     isProduction,
