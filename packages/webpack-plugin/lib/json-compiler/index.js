@@ -56,6 +56,7 @@ module.exports = function (raw = '{}') {
   const defs = mpx.defs
   const globalSrcMode = mpx.srcMode
   const localSrcMode = loaderUtils.parseQuery(this.resourceQuery || '?').mode
+  const srcMode = localSrcMode || globalSrcMode
   const resolveMode = mpx.resolveMode
   const externals = mpx.externals
   const pathHash = mpx.pathHash
@@ -135,6 +136,10 @@ module.exports = function (raw = '{}') {
   const addEntrySafely = (resource, name, callback) => {
     // 如果loader已经回调，就不再添加entry
     if (callbacked) return callback()
+    // localSrcMode与globalSrcMode不一致, 继承localsSrcMode, 但不会强制覆盖已经添加的mode
+    if (srcMode !== globalSrcMode) {
+      resource = addQuery(resource, { mode: srcMode })
+    }
     const dep = SingleEntryPlugin.createDependency(resource, name)
     entryDeps.add(dep)
     this._compilation.addEntry(this._compiler.context, dep, name, (err, module) => {
@@ -201,7 +206,7 @@ module.exports = function (raw = '{}') {
   const rulesRunnerOptions = {
     mode,
     mpx,
-    srcMode: localSrcMode || globalSrcMode,
+    srcMode,
     type: 'json',
     waterfall: true,
     warn: emitWarning,

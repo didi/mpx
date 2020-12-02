@@ -6,6 +6,8 @@ import { error } from './log'
 
 import { set } from '../observer/index'
 
+import EXPORT_MPX from '../index'
+
 // type在支付宝环境下不一定准确，判断是普通对象优先使用isPlainObject（新版支付宝不复现，issue #644 修改isPlainObject实现与type等价）
 export function type (n) {
   return Object.prototype.toString.call(n).slice(8, -1)
@@ -198,11 +200,20 @@ export function isObject (obj) {
 }
 
 export function isPlainObject (value) {
-  // if (value === null || typeof value !== 'object') return false
-  // const proto = Object.getPrototypeOf(value)
-  // return proto === Object.prototype || proto === null
-  // issue #644 为了使通过class创建的实例对象也能被响应化，改变此处实现，不过需要注意在旧版支付宝中对于data中声明的promise实例也可能进行响应化使得promise不可用（新版支付宝不复现该问题）
-  return type(value) === 'Object'
+  if (value === null || typeof value !== 'object' || type(value) !== 'Object') return false
+  const proto = Object.getPrototypeOf(value)
+  if (proto === Object.prototype || proto === null) return true
+  // issue #644
+  if (EXPORT_MPX.config.observeClassInstance) {
+    if (Array.isArray(EXPORT_MPX.config.observeClassInstance)) {
+      for (let i = 0; i < EXPORT_MPX.config.observeClassInstance.length; i++) {
+        if (proto === EXPORT_MPX.config.observeClassInstance[i].prototype) return true
+      }
+    } else {
+      return true
+    }
+  }
+  return false
 }
 
 const hasOwnProperty = Object.prototype.hasOwnProperty

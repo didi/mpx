@@ -188,19 +188,19 @@ module.exports = function (content) {
       const {
         getRequireForSrc,
         getNamedExportsForSrc
-      } = createHelpers(
+      } = createHelpers({
         loaderContext,
         options,
         moduleId,
-        isProduction,
         hasScoped,
         hasComment,
         usingComponents,
         needCssSourceMap,
         srcMode,
+        globalSrcMode,
         isNative,
         projectRoot
-      )
+      })
 
       const getRequire = (type) => {
         const localQuery = Object.assign({}, queryObj)

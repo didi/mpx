@@ -95,18 +95,7 @@ class MpxWebpackPlugin {
     if (options.mode === 'web' && options.srcMode !== 'wx') {
       errors.push('MpxWebpackPlugin supports mode to be "web" only when srcMode is set to "wx"!')
     }
-    if (!Array.isArray(options.externalClasses)) {
-      options.externalClasses = ['custom-class', 'i-class']
-    }
-
-    options.externalClasses = options.externalClasses.map((className) => {
-      return {
-        className,
-        replacement: className.replace(/-(.)/g, (matched, $1) => {
-          return $1.toUpperCase()
-        })
-      }
-    })
+    options.externalClasses = options.externalClasses || ['custom-class', 'i-class']
     options.resolveMode = options.resolveMode || 'webpack'
     options.writeMode = options.writeMode || 'changed'
     options.autoScopeRules = options.autoScopeRules || {}
@@ -335,6 +324,7 @@ class MpxWebpackPlugin {
           resolveMode: this.options.resolveMode,
           mode: this.options.mode,
           srcMode: this.options.srcMode,
+          // deprecated option
           globalMpxAttrsFilter: this.options.globalMpxAttrsFilter,
           externalClasses: this.options.externalClasses,
           projectRoot: this.options.projectRoot,
@@ -415,6 +405,7 @@ class MpxWebpackPlugin {
               alreadyOutputed = true
             }
             // 将当前的currentResourceMap和实际进行输出的actualResourceMap都填充上，便于resolve时使用
+            // todo 此处逻辑存在一定问题，当一个分包中两个地方一个声明了主包资源，另一个声明为当前分包时，此处前者生成的资源map会被后者覆盖，导致前者的json无法输出，后续优化分包资源处理时需要优化
             currentResourceMap[resourcePath] = actualResourceMap[resourcePath] = outputPath
 
             if (isStatic && packageName !== 'main' && !mpx.staticResourceHit[resourcePath]) {
@@ -634,6 +625,7 @@ class MpxWebpackPlugin {
           const arg0 = expr.arguments[0]
           const arg1 = expr.arguments[1]
           const callee = expr.callee
+          // todo 该逻辑在corejs3中不需要，等corejs3比较普及之后可以干掉
           if (/core-js.+global/.test(parser.state.module.resource)) {
             if (callee.name === 'Function' && arg0 && arg0.value === 'return this') {
               current.addDependency(new InjectDependency({
@@ -711,14 +703,14 @@ class MpxWebpackPlugin {
           const args = expr.arguments
           const name = callee.object.name
           const { queryObj, resourcePath } = parseRequest(parser.state.module.resource)
-
-          if (apiBlackListMap[callee.property.name || callee.property.value] || (name !== 'mpx' && name !== 'wx') || (name === 'wx' && !matchCondition(resourcePath, this.options.transMpxRules))) {
-            return
-          }
-
           const localSrcMode = queryObj.mode
           const globalSrcMode = this.options.srcMode
           const srcMode = localSrcMode || globalSrcMode
+
+          if (srcMode === globalSrcMode || apiBlackListMap[callee.property.name || callee.property.value] || (name !== 'mpx' && name !== 'wx') || (name === 'wx' && !matchCondition(resourcePath, this.options.transMpxRules))) {
+            return
+          }
+
           const srcModeString = `__mpx_src_mode_${srcMode}__`
           const dep = new InjectDependency({
             content: args.length
@@ -810,13 +802,13 @@ try {
     context.parseInt = parseInt;
     context.Promise = Promise;
     context.WeakMap = WeakMap;
-    context.Reflect = Reflect;
     context.RangeError = RangeError;
     context.TypeError = TypeError;
     context.Uint8Array = Uint8Array;
     context.DataView = DataView;
     context.ArrayBuffer = ArrayBuffer;
-    context.Symbol = Symbol; 
+    context.Symbol = Symbol;
+    context.Reflect = Reflect;
   }
 } catch(e){
 }\n`)
