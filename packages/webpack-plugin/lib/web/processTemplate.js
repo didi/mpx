@@ -1,6 +1,8 @@
 const templateCompiler = require('../template-compiler/compiler')
 const genComponentTag = require('../utils/gen-component-tag')
 const addQuery = require('../utils/add-query')
+const path = require('path')
+const parseRequest = require('../utils/parse-request')
 
 module.exports = function (template, options, callback) {
   const mode = options.mode
@@ -8,6 +10,7 @@ module.exports = function (template, options, callback) {
   const defs = options.defs
   const loaderContext = options.loaderContext
   const ctorType = options.ctorType
+  const resourcePath = parseRequest(loaderContext.resource).resourcePath
   const builtInComponentsMap = {}
   let genericsInfo
   let output = '/* template */\n'
@@ -48,14 +51,24 @@ module.exports = function (template, options, callback) {
               new Error('[template compiler][' + loaderContext.resource + ']: ' + msg)
             )
           },
+          usingComponents: options.usingComponents,
+          hasComment: options.hasComment,
+          isNative: options.isNative,
+          basename: path.basename(resourcePath),
+          isComponent: ctorType === 'component',
           mode,
           srcMode: templateSrcMode,
           defs,
-          usingComponents: options.usingComponents,
-          componentGenerics: options.componentGenerics,
+          decodeHTMLText: options.decodeHTMLText,
+          externalClasses: options.externalClasses,
+          scopedId: null,
+          filePath: loaderContext.resourcePath,
+          i18n: null,
+          checkUsingComponents: options.checkUsingComponents,
           // web模式下全局组件不会被合入usingComponents中，故globalComponents可以传空
           globalComponents: [],
-          checkUsingComponents: options.checkUsingComponents
+          // web模式下实现抽象组件
+          componentGenerics: options.componentGenerics
         })
         if (parsed.meta.builtInComponentsMap) {
           Object.keys(parsed.meta.builtInComponentsMap).forEach((name) => {

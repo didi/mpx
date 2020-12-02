@@ -27,7 +27,7 @@ export default class Toast {
     // create & combine toast
     this.toast = createDom('div', { class: '__mpx_toast__' }, [
       this.mask = createDom('div', { class: '__mpx_mask__' }),
-      createDom('div', { class: '__mpx_toast_box__' }, [
+      this.content = createDom('div', { class: '__mpx_toast_box__' }, [
         this.icon = createDom('div', { class: '__mpx_toast_icon__' }),
         this.title = createDom('div', { class: '__mpx_toast_title__' })
       ])
@@ -58,9 +58,9 @@ export default class Toast {
     }
 
     if (opts.icon === 'loading') {
-      this.icon.replaceWith(this.loading) // if loading, replace with loading dom
+      this.icon.parentNode && this.content.replaceChild(this.loading, this.icon) // if loading, replace with loading dom
     } else {
-      this.loading.replaceWith(this.icon) // set icon to default
+      this.loading.parentNode && this.content.replaceChild(this.icon, this.loading) // set icon to default
 
       const defaultIconClass = '__mpx_toast_icon__'
       const iconClass = opts.image

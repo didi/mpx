@@ -1793,8 +1793,9 @@ function isComponentNode (el, options) {
 function processAliExternalClassesHack (el, options) {
   let staticClass = getAndRemoveAttr(el, 'class')
   if (staticClass) {
-    options.externalClasses.forEach(({ className, replacement }) => {
+    options.externalClasses.forEach((className) => {
       const reg = new RegExp('\\b' + className + '\\b', 'g')
+      const replacement = dash2hump(className)
       staticClass = staticClass.replace(reg, `{{${replacement}||''}}`)
     })
     addAttrs(el, [{
@@ -1804,7 +1805,7 @@ function processAliExternalClassesHack (el, options) {
   }
 
   if (options.scopedId && isComponentNode(el, options)) {
-    options.externalClasses.forEach(({ className }) => {
+    options.externalClasses.forEach((className) => {
       let externalClass = getAndRemoveAttr(el, className)
       if (externalClass) {
         addAttrs(el, [{
@@ -1814,6 +1815,41 @@ function processAliExternalClassesHack (el, options) {
       }
     })
   }
+}
+
+function processWebExternalClassesHack (el, options) {
+  let staticClass = getAndRemoveAttr(el, 'class')
+  let dynamicClass = getAndRemoveAttr(el, ':class')
+  if (staticClass || dynamicClass) {
+    const externalClasses = []
+    options.externalClasses.forEach((className) => {
+      const reg = new RegExp('\\b' + className + '\\b')
+      if (reg.test(staticClass) || reg.test(dynamicClass)) {
+        externalClasses.push(className)
+      }
+    })
+    const attrs = []
+    if (staticClass) {
+      attrs.push({
+        name: 'class',
+        value: staticClass
+      })
+    }
+    if (dynamicClass) {
+      attrs.push({
+        name: ':class',
+        value: dynamicClass
+      })
+    }
+    if (externalClasses.length) {
+      attrs.push({
+        name: 'v-ex-classes',
+        value: JSON.stringify(externalClasses)
+      })
+    }
+    addAttrs(el, attrs)
+  }
+  // todo 处理scoped的情况
 }
 
 function processScoped (el, options) {
@@ -1998,6 +2034,7 @@ function processElement (el, root, options, meta) {
     processBuiltInComponents(el, meta)
     // 预处理代码维度条件编译
     processIfForWeb(el)
+    processWebExternalClassesHack(el, options)
     processComponentGenericsForWeb(el, options, meta)
     return
   }
