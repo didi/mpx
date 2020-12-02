@@ -20,6 +20,10 @@ const updateNotifier = require('update-notifier')
 const isLocalPath = localPath.isLocalPath
 const getTemplatePath = localPath.getTemplatePath
 
+function commaSeparatedList (value) {
+  return value.split(',')
+}
+
 /**
  * Usage.
  */
@@ -28,6 +32,7 @@ program
   .usage('[project-name]')
   .option('-c, --clone', 'use git clone')
   .option('--offline [value]', 'use cached template or specific a local path to mpx-template')
+  .option('--mock [value]', 'use mock data to generate project', commaSeparatedList)
   .on('--help', () => {
     console.log()
     console.log('  Examples:')
@@ -69,12 +74,11 @@ updateNotifier({ pkg, updateCheckInterval: 0 }).notify({ isGlobal: true })
  * Padding.
  */
 
-console.log()
 process.on('exit', () => {
   console.log()
 })
 
-if (inPlace || exists(to)) {
+if (!program.mock && (inPlace || exists(to))) {
   inquirer.prompt([{
     type: 'confirm',
     message: inPlace
@@ -99,7 +103,12 @@ function run () {
   if (isLocalPath(template)) {
     const templatePath = getTemplatePath(template)
     if (exists(templatePath)) {
-      generate(name, templatePath, to, err => {
+      generate({
+        name,
+        src: templatePath,
+        dest: to,
+        mockList: program.mock
+      }, err => {
         if (err) logger.fatal(err)
         console.log()
         logger.success('Generated "%s".', name)
@@ -130,7 +139,12 @@ function downloadAndGenerate (template) {
   download(template, tmp, { clone }, err => {
     spinner.stop()
     if (err) logger.fatal('Failed to download repo ' + template + ': ' + err.message.trim())
-    generate(name, tmp, to, err => {
+    generate({
+      name,
+      src: tmp,
+      dest: to,
+      mockList: program.mock
+    }, err => {
       if (err) logger.fatal(err)
       console.log()
       logger.success('Generated "%s".', name)

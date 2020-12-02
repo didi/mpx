@@ -1,5 +1,6 @@
 <script>
   import getInnerListeners from './getInnerListeners'
+  import { processSize } from './util'
 
   let defaultColor = {
     success: '#09BB07',
@@ -23,9 +24,14 @@
         default: 23
       }
     },
+    computed: {
+      _size () {
+        return processSize(this.size)
+      }
+    },
     render (createElement) {
       let type = this.type || 'success'
-      const sizeStr = isNaN(+this.size) ? this.size : this.size + 'px'
+      const sizeStr = isNaN(+this._size) ? this._size : this._size + 'px'
       const color = this.color || defaultColor[type]
       let style = {
         color: color,

@@ -21,6 +21,9 @@ export * from './storage'
 // getSystemInfo, getSystemInfoSync
 export * from './system'
 
+// getNetworkType, onNetworkStatusChange, offNetworkStatusChange
+export * from './device/network'
+
 // request
 export * from './request'
 
@@ -44,3 +47,7 @@ export * from './window'
 export * from './pull-down'
 
 export * from './page-scroll-to'
+
+export * from './tab-bar'
+
+export * from './app'

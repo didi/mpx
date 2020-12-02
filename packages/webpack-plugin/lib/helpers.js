@@ -63,7 +63,7 @@ function ensureBang (loader) {
   }
 }
 
-function resolveLoaders (options, moduleId, isProduction, hasScoped, hasComment, usingComponents, needCssSourceMap, projectRoot) {
+function resolveLoaders ({ options, needCssSourceMap, projectRoot }) {
   let cssLoaderOptions = ''
   let wxmlLoaderOptions = ''
   let jsonCompilerOptions = ''
@@ -99,7 +99,7 @@ function resolveLoaders (options, moduleId, isProduction, hasScoped, hasComment,
   }
 }
 
-module.exports = function createHelpers (loaderContext, options, moduleId, isProduction, hasScoped, hasComment, usingComponents, needCssSourceMap, srcMode, isNative, projectRoot) {
+module.exports = function createHelpers ({ loaderContext, options, moduleId, hasScoped, hasComment, usingComponents, needCssSourceMap, srcMode, globalSrcMode, isNative, projectRoot }) {
   const rawRequest = getRawRequest(loaderContext, options.excludedPreLoaders)
   const {
     defaultLoaders,
@@ -107,16 +107,11 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
     loaders,
     preLoaders,
     postLoaders
-  } = resolveLoaders(
+  } = resolveLoaders({
     options,
-    moduleId,
-    isProduction,
-    hasScoped,
-    hasComment,
-    usingComponents,
     needCssSourceMap,
     projectRoot
-  )
+  })
 
   function getRequire (type, part, index, scoped) {
     return 'require(' + getRequestString(type, part, index, scoped) + ')'
@@ -136,18 +131,16 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
     )
   }
 
-  function processQuery (request, mode, type) {
-    let addQueryObj = {}
-    let removeKeys
-    if (mode) {
-      addQueryObj.mode = mode
+  function processQuery (request, mode) {
+    // localSrcMode与globalSrcMode不一致，继承srcMode
+    if (srcMode !== globalSrcMode) {
+      request = addQuery(request, { mode: srcMode })
     }
-    // 为了使js模块全局唯一，避免闭包变量存在多份，删除js模块的分包标记
-    // 该逻辑有问题，模块复用后后续分包不会再执行component初始化函数，导致wx找不到组件
-    // if (type === 'script') {
-    //   removeKeys = 'packageName'
-    // }
-    return addQuery(request, addQueryObj, removeKeys)
+    if (mode) {
+      // 当前区块如声明了mode则强制覆盖已有request中的mode
+      request = addQuery(request, { mode }, undefined, true)
+    }
+    return request
   }
 
   function getRequestString (type, part, index = 0, scoped) {
@@ -160,7 +153,7 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
       // select the corresponding part from the mpx file
       getSelectorString(type, index) +
       // the url to the actual mpx file, including remaining requests
-      processQuery(rawRequest, part.mode, type)
+      processQuery(rawRequest, part.mode)
     )
   }
 
@@ -187,7 +180,7 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
     let src = impt.src
     return loaderUtils.stringifyRequest(
       loaderContext,
-      loaderString + processQuery(src, impt.mode, type)
+      loaderString + processQuery(src, impt.mode)
     )
   }
 
@@ -297,7 +290,7 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
         hasComment,
         isNative,
         moduleId,
-        root: projectRoot
+        projectRoot
       }
       templateCompiler = templateCompilerPath + '?' + JSON.stringify(templateCompilerOptions)
     }
