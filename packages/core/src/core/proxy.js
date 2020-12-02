@@ -119,7 +119,7 @@ export default class MPXProxy {
 
   destroyed () {
     this.state = DESTROYED
-    if (__mpx_mode__ !== 'web') {
+    if (__mpx_mode__ !== 'web' && __mpx_mode__ !== 'qa') {
       this.clearWatchers()
     }
     this.callUserHook(DESTROYED)

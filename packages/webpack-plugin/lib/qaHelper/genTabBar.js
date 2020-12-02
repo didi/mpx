@@ -7,6 +7,18 @@ const genName = (item) => {
   return item.pagePath.replace(/[./]/g, '')
 }
 
+const genTargetPath = (item) => {
+  return item.pagePath.replace(/(.*pages)/, '..')
+}
+
+const arrangeTabBarList = (tabBar, transformPath) => {
+  tabBar.list.forEach((item) => {
+    item.key = genName(item)
+    item.pagePath = transformPath ? genTargetPath(item) : item.pagePath
+  })
+  return tabBar
+}
+
 const genEntryTabContent = (tabBar) => {
   let content = new ConcatSource()
   tabBar.list.forEach((item) => {
@@ -19,9 +31,47 @@ const genEntryTabContent = (tabBar) => {
 
 const genCustomContent = (tabBar, options) => {
   let content = new ConcatSource()
+  let newTabBar = arrangeTabBarList(tabBar, true)
   let tabBarPath = options.projectRoot + '../../custom-tab-bar/index.ux'
-  content.add(`<import name="custom-tab-bar" src="${tabBarPath}"></import>`)
-  content.add(`<template><div class="tabbar-wrapper"><custom-tab-bar data='${JSON.stringify(tabBar)}'></custom-tab-bar></div></template>`)
+  content.add(`<import name="custom-tab-bar" src="${tabBarPath}"></import>\n`)
+  newTabBar.list.forEach((item) => {
+    content.add(`<import name='${item.key}' src="${item.pagePath}.ux"></import>\n`)
+  })
+  content.add(`<template>
+    <div class="tabbar-wrapper">
+      <custom-tab-bar id="qaCtbRef" @switchtab="handleSwitch" data='${JSON.stringify(tabBar)}'></custom-tab-bar>
+      <div class="tabbar-component">
+        <component is='{{componentKey}}' @switchtab="handleSwitch"></component>
+      </div>
+    </div>
+  </template>\n`)
+  // script
+  content = genCustomScript(content, JSON.stringify(newTabBar))
+  return content
+}
+
+const genCustomScript = (content, tabBar) => {
+  content.add('<script>\n')
+  content.add(`export default {
+    data() {
+      let oData = JSON.parse('${tabBar}') || {}
+      let initKey = oData.list && oData.list[0] && oData.list[0].key
+      return {
+        componentKey: initKey,
+        tabList: oData.list || []
+      }
+    },
+    handleSwitch(event) {
+      let targetPath = event.detail.path.replace(/(.*pages)/, '..')
+      this.tabList.forEach((item) => {
+        console.log('======', item)
+        if (item.pagePath === targetPath) {
+          this.componentKey = item.key
+        }
+      })
+    }
+  }\n`)
+  content.add('</script>\n')
   return content
 }
 
@@ -37,7 +87,7 @@ module.exports = function (tabBar, compilation, options) {
     let content = new ConcatSource()
     tabBar.list.forEach((item) => {
       const name = genName(item)
-      let targetPath = item.pagePath.replace(/(.\/pages)/, '..')
+      let targetPath = genTargetPath(item)
       if (targetPath.indexOf('.ux') === -1) {
         targetPath += '.ux'
       }

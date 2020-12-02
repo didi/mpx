@@ -96,6 +96,13 @@ export default function proxyEventMixin () {
       }
     })
   }
+  if (__mpx_mode__ === 'qa') {
+    Object.assign(methods, {
+      triggerEvent (eventName, eventDetail) {
+        this.$emit(eventName, eventDetail)
+      }
+    })
+  }
   return {
     methods
   }
