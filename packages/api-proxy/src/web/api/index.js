@@ -46,6 +46,9 @@ export * from './window'
 // stopPullDownRefresh startPullDownRefresh
 export * from './pull-down'
 
+// createInnerAudioContext
+export * from './audio'
+
 export * from './page-scroll-to'
 
 export * from './tab-bar'
