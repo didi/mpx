@@ -6,7 +6,9 @@ import { error } from './log'
 
 import { set } from '../observer/index'
 
-// type在支付宝环境下不一定准确，判断是普通对象优先使用isPlainObject
+import EXPORT_MPX from '../index'
+
+// type在支付宝环境下不一定准确，判断是普通对象优先使用isPlainObject（新版支付宝不复现，issue #644 修改isPlainObject实现与type等价）
 export function type (n) {
   return Object.prototype.toString.call(n).slice(8, -1)
 }
@@ -193,28 +195,25 @@ export function extend (target, ...sources) {
   return target
 }
 
-export function dissolveAttrs (target = {}, keys) {
-  if (typeof keys === 'string') {
-    keys = [keys]
-  }
-  const newOptions = Object.assign({}, target)
-  keys.forEach(key => {
-    const value = target[key]
-    if (!isObject(value)) return
-    delete newOptions[key]
-    Object.assign(newOptions, value)
-  })
-  return newOptions
-}
-
 export function isObject (obj) {
   return obj !== null && typeof obj === 'object'
 }
 
 export function isPlainObject (value) {
-  if (value === null || typeof value !== 'object') return false
+  if (value === null || typeof value !== 'object' || type(value) !== 'Object') return false
   const proto = Object.getPrototypeOf(value)
-  return proto === Object.prototype || proto === null
+  if (proto === Object.prototype || proto === null) return true
+  // issue #644
+  if (EXPORT_MPX.config.observeClassInstance) {
+    if (Array.isArray(EXPORT_MPX.config.observeClassInstance)) {
+      for (let i = 0; i < EXPORT_MPX.config.observeClassInstance.length; i++) {
+        if (proto === EXPORT_MPX.config.observeClassInstance[i].prototype) return true
+      }
+    } else {
+      return true
+    }
+  }
+  return false
 }
 
 const hasOwnProperty = Object.prototype.hasOwnProperty
@@ -577,4 +576,31 @@ export function makeMap (arr) {
     obj[item] = true
     return obj
   }, {})
+}
+
+/**
+ * Get object values by chaining-key
+ * @param {Object} obj target Object
+ * @param {String} key chaining-key, e.g.: 'a.b.c'
+ */
+export function getChainKeyOfObj (obj = {}, key = '') {
+  return key.split('.').reduce((o, k) => o && o[k], obj)
+}
+
+/**
+ * Delete object values by chaining-key
+ * @param {Object} obj target object
+ * @param {String} key chaining-key
+ */
+export function delChainKeyOfObj (obj = {}, key = '') {
+  return key.split('.').reduce((o, k, index, arr) => {
+    if (arr.length === index + 1) {
+      try {
+        return delete o[k]
+      } catch (e) { // undefined
+        return false
+      }
+    }
+    return o && o[k]
+  }, obj)
 }

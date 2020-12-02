@@ -42,7 +42,9 @@ function transformApiForProxy (context, currentInject) {
   Object.defineProperties(context, {
     setData: {
       get () {
-        return this.__mpxProxy.forceUpdate.bind(this.__mpxProxy)
+        return function (data, callback) {
+          return this.__mpxProxy.forceUpdate(data, { sync: true }, callback)
+        }
       },
       configurable: true
     },
@@ -168,7 +170,6 @@ export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
       this.__mpxProxy && this.__mpxProxy.destroyed()
     }
   })
-
   rawOptions.mixins = rawOptions.mixins ? rootMixins.concat(rawOptions.mixins) : rootMixins
   rawOptions = mergeOptions(rawOptions, type, false)
   return filterOptions(rawOptions)

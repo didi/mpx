@@ -49,7 +49,7 @@ module.exports = function (content) {
 
   const {
     getSrcRequestString
-  } = createHelpers(
+  } = createHelpers({
     loaderContext,
     options,
     moduleId,
@@ -59,9 +59,10 @@ module.exports = function (content) {
     usingComponents,
     needCssSourceMap,
     srcMode,
+    globalSrcMode,
     isNative,
-    options.root || ''
-  )
+    projectRoot: options.root || ''
+  })
 
   const attributes = ['image:src', 'audio:src', 'video:src', 'cover-image:src', 'import:src', 'include:src', `${config[mode].wxs.tag}:${config[mode].wxs.src}`].concat(customAttributes)
 

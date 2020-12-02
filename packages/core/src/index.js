@@ -1,5 +1,11 @@
 import * as platform from './platform'
-import createStore, { createStoreWithThis } from './core/createStore'
+import createStore, {
+  createStoreWithThis,
+  createStateWithThis,
+  createGettersWithThis,
+  createMutationsWithThis,
+  createActionsWithThis
+} from './core/createStore'
 import { injectMixins } from './core/injectMixins'
 import { extend, diffAndCloneA, makeMap } from './helper/utils'
 import { setConvertRule } from './convertor/convertor'
@@ -25,11 +31,14 @@ export function createComponent (config, ...rest) {
   platform.createComponent(Object.assign({ proto: mpx.proto }, config), ...rest)
 }
 
-export { createStore, createStoreWithThis, getMixin }
-
-export function getComputed (computed) {
-  // ts computed类型推导辅助函数
-  return computed
+export {
+  createStore,
+  createStoreWithThis,
+  createStateWithThis,
+  createGettersWithThis,
+  createMutationsWithThis,
+  createActionsWithThis,
+  getMixin
 }
 
 export function toPureObject (obj) {
@@ -120,7 +129,6 @@ if (__mpx_mode__ === 'web') {
     delete: del,
     setConvertRule,
     getMixin,
-    getComputed,
     implement
   }
 
@@ -163,7 +171,6 @@ if (__mpx_mode__ === 'web') {
     delete: del,
     setConvertRule,
     getMixin,
-    getComputed,
     implement
   }
 
@@ -192,7 +199,8 @@ const EXPORT_MPX = factory()
 EXPORT_MPX.config = {
   useStrictDiff: false,
   ignoreRenderError: false,
-  ignoreProxyWhiteList: ['id', 'dataset', 'data']
+  ignoreProxyWhiteList: ['id', 'dataset', 'data'],
+  observeClassInstance: false
 }
 
 if (__mpx_mode__ === 'web') {

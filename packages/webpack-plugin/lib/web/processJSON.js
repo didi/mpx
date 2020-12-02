@@ -1,9 +1,8 @@
 const async = require('async')
 const path = require('path')
+const JSON5 = require('json5')
 const loaderUtils = require('loader-utils')
-const hash = require('hash-sum')
 const parseRequest = require('../utils/parse-request')
-const getPageName = require('../utils/get-page-name')
 const toPosix = require('../utils/to-posix')
 const addQuery = require('../utils/add-query')
 const parseComponent = require('../parser')
@@ -19,10 +18,13 @@ module.exports = function (json, options, rawCallback) {
   const pagesEntryMap = options.pagesEntryMap
   const componentsMap = options.componentsMap
   const projectRoot = options.projectRoot
+  const pathHash = options.pathHash
   const localPagesMap = {}
   const localComponentsMap = {}
   let output = '/* json */\n'
   let jsonObj = {}
+  let tabBarMap
+  let tabBarStr
   const context = loaderContext.context
 
   const emitWarning = (msg) => {
@@ -31,12 +33,16 @@ module.exports = function (json, options, rawCallback) {
     )
   }
 
+  const stringifyRequest = r => loaderUtils.stringifyRequest(loaderContext, r)
+
   const callback = (err) => {
     return rawCallback(err, {
       output,
       jsonObj,
       localPagesMap,
-      localComponentsMap
+      localComponentsMap,
+      tabBarMap,
+      tabBarStr
     })
   }
 
@@ -45,7 +51,7 @@ module.exports = function (json, options, rawCallback) {
   }
   // 由于json需要提前读取在template处理中使用，src的场景已经在loader中处理了，此处无需考虑json.src的场景
   try {
-    jsonObj = JSON.parse(json.content)
+    jsonObj = JSON5.parse(json.content)
   } catch (e) {
     return callback(e)
   }
@@ -56,6 +62,31 @@ module.exports = function (json, options, rawCallback) {
     const { queryObj } = parseRequest(request)
     context = queryObj.context || context
     return loaderContext.resolve(context, request, callback)
+  }
+
+  const defaultTabbar = {
+    borderStyle: 'black',
+    position: 'bottom',
+    custom: false,
+    isShow: true
+  }
+
+  const processTabBar = (tabBar, callback) => {
+    if (tabBar) {
+      tabBar = Object.assign({}, defaultTabbar, tabBar)
+      tabBarMap = {}
+      jsonObj.tabBar.list.forEach((item) => {
+        tabBarMap['/' + item.pagePath] = true
+      })
+      tabBarStr = JSON.stringify(tabBar)
+      tabBarStr = tabBarStr.replace(/"(iconPath|selectedIconPath)":"([^"]+)"/g, function (matched, $1, $2) {
+        if (isUrlRequest($2, projectRoot)) {
+          return `"${$1}":require(${stringifyRequest(loaderUtils.urlToRequest($2, projectRoot))})`
+        }
+        return matched
+      })
+    }
+    callback()
   }
 
   const processPackages = (packages, context, callback) => {
@@ -82,13 +113,12 @@ module.exports = function (json, options, rawCallback) {
             const filePath = result
             const extName = path.extname(filePath)
             if (extName === '.mpx' || extName === '.vue') {
-              const parts = parseComponent(
-                content,
+              const parts = parseComponent(content, {
                 filePath,
-                loaderContext.sourceMap,
+                needMap: loaderContext.sourceMap,
                 mode,
                 defs
-              )
+              })
               const json = parts.json || {}
               if (json.content) {
                 content = json.content
@@ -102,7 +132,7 @@ module.exports = function (json, options, rawCallback) {
           },
           (result, content, callback) => {
             try {
-              content = JSON.parse(content)
+              content = JSON5.parse(content)
             } catch (err) {
               return callback(err)
             }
@@ -144,6 +174,11 @@ module.exports = function (json, options, rawCallback) {
     } else {
       callback()
     }
+  }
+
+  const getPageName = (resourcePath, ext) => {
+    const baseName = path.basename(resourcePath, ext)
+    return path.join('pages', baseName + pathHash(resourcePath), baseName)
   }
 
   const processPages = (pages, srcRoot = '', tarRoot = '', context, callback) => {
@@ -235,7 +270,7 @@ module.exports = function (json, options, rawCallback) {
       if (err) return callback(err)
       const { resourcePath, queryObj } = parseRequest(resource)
       const parsed = path.parse(resourcePath)
-      const componentId = parsed.name + hash(resourcePath)
+      const componentId = parsed.name + pathHash(resourcePath)
 
       componentsMap[resourcePath] = componentId
 
@@ -245,6 +280,20 @@ module.exports = function (json, options, rawCallback) {
       }
       callback()
     })
+  }
+
+  const processGenerics = (generics, context, callback) => {
+    if (generics) {
+      async.forEachOf(generics, (generic, name, callback) => {
+        if (generic.default) {
+          processComponent(generic.default, `${name}default`, context, callback)
+        } else {
+          callback()
+        }
+      }, callback)
+    } else {
+      callback()
+    }
   }
 
   async.parallel([
@@ -261,7 +310,13 @@ module.exports = function (json, options, rawCallback) {
       processPackages(jsonObj.packages, context, callback)
     },
     (callback) => {
-      processSubPackages(json.subPackages || json.subpackages, context, callback)
+      processSubPackages(jsonObj.subPackages || jsonObj.subpackages, context, callback)
+    },
+    (callback) => {
+      processGenerics(jsonObj.componentGenerics, context, callback)
+    },
+    (callback) => {
+      processTabBar(jsonObj.tabBar, callback)
     }
   ], callback)
 }

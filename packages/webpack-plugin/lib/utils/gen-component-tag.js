@@ -6,7 +6,7 @@ function stringifyAttrs (attrs) {
   Object.keys(attrs).forEach(function (name) {
     result += ' ' + name
     let value = attrs[name]
-    if (value != null && value !== '' && value !== true) {
+    if (value != null && value !== true) {
       result += '=' + stringifyAttr(value)
     }
   })
@@ -20,7 +20,12 @@ function genComponentTag (part, processor = {}) {
       content: processor
     }
   }
-  const tag = processor.tag ? processor.tag(part) : part.type
+  if (part.content) {
+    // unpad
+    part.content = '\n' + part.content.replace(/^\n*/m, '')
+  }
+
+  const tag = processor.tag ? processor.tag(part) : part.tag
   const attrs = processor.attrs ? processor.attrs(part) : part.attrs
   const content = processor.content ? processor.content(part) : part.content
   let result = ''

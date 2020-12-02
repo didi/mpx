@@ -17,6 +17,19 @@ const ENV_PATH_MAP = {
 }
 
 let env = null
+let isOrigin
+window.addEventListener('message', (event) => {
+  isOrigin = event.data === event.origin
+  if (isOrigin) {
+    env = 'web'
+    window.parent.postMessage({
+      type: 'load',
+      detail: {
+        load: true
+      }
+    }, '*')
+  }
+}, false)
 // 环境判断
 let systemUA = navigator.userAgent
 if (systemUA.indexOf('AlipayClient') > -1) {
@@ -27,6 +40,52 @@ if (systemUA.indexOf('AlipayClient') > -1) {
   env = 'baidu'
 } else if (systemUA.indexOf('toutiao') > -1) {
   env = 'tt'
+} else {
+  window.parent.postMessage({
+    type: 'load',
+    detail: {
+      load: true
+    }
+  }, '*')
+}
+
+function postMessage (type, data) {
+  let eventType
+  switch (type) {
+    case 'postMessage':
+      eventType = 'message'
+      break
+    case 'navigateBack':
+      eventType = 'navigateBack'
+      break
+    case 'navigateTo':
+      eventType = 'navigateTo'
+      break
+    case 'redirectTo':
+      eventType = 'redirectTo'
+      break
+    case 'switchTab':
+      eventType = 'switchTab'
+      break
+    case 'reLaunch':
+      eventType = 'reLaunch'
+      break
+    case 'getEnv':
+      eventType = 'getEnv'
+      break
+  }
+  if (type !== 'getEnv' && isOrigin) {
+    window.parent.postMessage({
+      type: eventType,
+      detail: {
+        data
+      }
+    }, '*')
+  } else {
+    data({
+      miniprogram: false
+    })
+  }
 }
 
 const webviewApiList = {}
@@ -42,6 +101,7 @@ function getEnvVariable () {
 const initWebviewBridge = () => {
   if (env === null) {
     console.log('mpxjs/webview: 未识别的环境，当前仅支持 微信、支付宝、百度、头条 QQ 小程序')
+    getWebviewApi()
     return
   }
   const sdkReady = !window[env] ? SDK_URL_MAP[env] ? loadScript(SDK_URL_MAP[env]) : Promise.reject(new Error('未找到对应的sdk')) : Promise.resolve()
@@ -67,8 +127,9 @@ const getWebviewApi = (sdkReady) => {
     const apiName = typeof webviewApiNameList[item] === 'string' ? webviewApiNameList[item] : !webviewApiNameList[item][env] ? false : typeof webviewApiNameList[item][env] === 'string' ? webviewApiNameList[item][env] : item
 
     webviewApiList[item] = (...args) => {
-      if (!apiName) {
-        console.log(`${env}小程序不支持 ${item} 方法`)
+      if (env === 'web') {
+        return postMessage(item, ...args)
+        // console.log(`${env}小程序不支持 ${item} 方法`)
       } else {
         return sdkReady.then(() => {
           if (apiName === 'getLoadError') {

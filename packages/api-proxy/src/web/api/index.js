@@ -45,3 +45,9 @@ export * from './pull-down'
 
 // createInnerAudioContext
 export * from './audio'
+
+export * from './page-scroll-to'
+
+export * from './tab-bar'
+
+export * from './app'

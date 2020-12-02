@@ -23,6 +23,8 @@ const fixRelative = require('./utils/fix-relative')
 const parseRequest = require('./utils/parse-request')
 const matchCondition = require('./utils/match-condition')
 const parseAsset = require('./utils/parse-asset')
+const { preProcessDefs } = require('./utils/index')
+const hash = require('hash-sum')
 
 const isProductionLikeMode = options => {
   return options.mode === 'production' || !options.mode
@@ -93,18 +95,7 @@ class MpxWebpackPlugin {
     if (options.mode === 'web' && options.srcMode !== 'wx') {
       errors.push('MpxWebpackPlugin supports mode to be "web" only when srcMode is set to "wx"!')
     }
-    if (!Array.isArray(options.externalClasses)) {
-      options.externalClasses = ['custom-class', 'i-class']
-    }
-
-    options.externalClasses = options.externalClasses.map((className) => {
-      return {
-        className,
-        replacement: className.replace(/-(.)/g, (matched, $1) => {
-          return $1.toUpperCase()
-        })
-      }
-    })
+    options.externalClasses = options.externalClasses || ['custom-class', 'i-class']
     options.resolveMode = options.resolveMode || 'webpack'
     options.writeMode = options.writeMode || 'changed'
     options.autoScopeRules = options.autoScopeRules || {}
@@ -139,9 +130,10 @@ class MpxWebpackPlugin {
       cssLangs: ['css', 'less', 'stylus', 'scss', 'sass']
     }, options.nativeOptions)
     options.i18n = options.i18n || null
-    // 控制warn冗余组件注册
     options.checkUsingComponents = options.checkUsingComponents || false
     options.reportSize = options.reportSize || null
+    options.pathHashMode = options.pathHashMode || 'absolute'
+    options.forceDisableBuiltInLoader = options.forceDisableBuiltInLoader || false
     this.options = options
   }
 
@@ -236,7 +228,8 @@ class MpxWebpackPlugin {
       const writedFileContentMap = new Map()
       const originalWriteFile = compiler.outputFileSystem.writeFile
       compiler.outputFileSystem.writeFile = (filePath, content, callback) => {
-        if (writedFileContentMap.has(filePath) && writedFileContentMap.get(filePath).equals(content)) {
+        const lastContent = writedFileContentMap.get(filePath)
+        if (Buffer.isBuffer(lastContent) ? lastContent.equals(content) : lastContent === content) {
           return callback()
         }
         writedFileContentMap.set(filePath, content)
@@ -331,6 +324,7 @@ class MpxWebpackPlugin {
           resolveMode: this.options.resolveMode,
           mode: this.options.mode,
           srcMode: this.options.srcMode,
+          // deprecated option
           globalMpxAttrsFilter: this.options.globalMpxAttrsFilter,
           externalClasses: this.options.externalClasses,
           projectRoot: this.options.projectRoot,
@@ -340,12 +334,20 @@ class MpxWebpackPlugin {
           decodeHTMLText: this.options.decodeHTMLText,
           // native文件专用相关配置
           nativeOptions: this.options.nativeOptions,
-          defs: this.options.defs,
+          tabBarMap: {},
+          defs: preProcessDefs(this.options.defs),
           i18n: this.options.i18n,
           checkUsingComponents: this.options.checkUsingComponents,
+          forceDisableBuiltInLoader: this.options.forceDisableBuiltInLoader,
           appTitle: 'Mpx homepage',
           attributes: this.options.attributes,
           externals: this.options.externals,
+          pathHash: (resourcePath) => {
+            if (this.options.pathHashMode === 'relative' && this.options.projectRoot) {
+              return hash(path.relative(this.options.projectRoot, resourcePath))
+            }
+            return hash(resourcePath)
+          },
           extract: (content, file, index, sideEffects) => {
             additionalAssets[file] = additionalAssets[file] || []
             if (!additionalAssets[file][index]) {
@@ -403,6 +405,7 @@ class MpxWebpackPlugin {
               alreadyOutputed = true
             }
             // 将当前的currentResourceMap和实际进行输出的actualResourceMap都填充上，便于resolve时使用
+            // todo 此处逻辑存在一定问题，当一个分包中两个地方一个声明了主包资源，另一个声明为当前分包时，此处前者生成的资源map会被后者覆盖，导致前者的json无法输出，后续优化分包资源处理时需要优化
             currentResourceMap[resourcePath] = actualResourceMap[resourcePath] = outputPath
 
             if (isStatic && packageName !== 'main' && !mpx.staticResourceHit[resourcePath]) {
@@ -604,14 +607,26 @@ class MpxWebpackPlugin {
             module.addVariable(name, expression, deps)
           }
         }
-
         // hack babel polyfill global
+        parser.hooks.statementIf.tap('MpxWebpackPlugin', (expr) => {
+          if (/core-js.+microtask/.test(parser.state.module.resource)) {
+            if (expr.test.left && (expr.test.left.name === 'Observer' || expr.test.left.name === 'MutationObserver')) {
+              const current = parser.state.current
+              current.addDependency(new InjectDependency({
+                content: 'document && ',
+                index: expr.test.range[0]
+              }))
+            }
+          }
+        })
+
         parser.hooks.evaluate.for('CallExpression').tap('MpxWebpackPlugin', (expr) => {
           const current = parser.state.current
           const arg0 = expr.arguments[0]
           const arg1 = expr.arguments[1]
           const callee = expr.callee
-          if (/core-js/.test(parser.state.module.resource)) {
+          // todo 该逻辑在corejs3中不需要，等corejs3比较普及之后可以干掉
+          if (/core-js.+global/.test(parser.state.module.resource)) {
             if (callee.name === 'Function' && arg0 && arg0.value === 'return this') {
               current.addDependency(new InjectDependency({
                 content: '(function() { return this })() || ',
@@ -688,14 +703,14 @@ class MpxWebpackPlugin {
           const args = expr.arguments
           const name = callee.object.name
           const { queryObj, resourcePath } = parseRequest(parser.state.module.resource)
-
-          if (apiBlackListMap[callee.property.name || callee.property.value] || (name !== 'mpx' && name !== 'wx') || (name === 'wx' && !matchCondition(resourcePath, this.options.transMpxRules))) {
-            return
-          }
-
           const localSrcMode = queryObj.mode
           const globalSrcMode = this.options.srcMode
           const srcMode = localSrcMode || globalSrcMode
+
+          if (srcMode === globalSrcMode || apiBlackListMap[callee.property.name || callee.property.value] || (name !== 'mpx' && name !== 'wx') || (name === 'wx' && !matchCondition(resourcePath, this.options.transMpxRules))) {
+            return
+          }
+
           const srcModeString = `__mpx_src_mode_${srcMode}__`
           const dep = new InjectDependency({
             content: args.length
@@ -711,6 +726,140 @@ class MpxWebpackPlugin {
           parser.hooks.callAnyMember.for('mpx').tap('MpxWebpackPlugin', handler)
           parser.hooks.callAnyMember.for('wx').tap('MpxWebpackPlugin', handler)
         }
+      })
+
+      // 为了正确生成sourceMap，将该步骤由原来的compile.hooks.emit迁移到compilation.hooks.optimizeChunkAssets中来
+      compilation.hooks.optimizeChunkAssets.tapAsync('MpxWebpackPlugin', (chunks, callback) => {
+        if (this.options.mode === 'web') return callback()
+        const jsonpFunction = compilation.outputOptions.jsonpFunction
+
+        function getTargetFile (file) {
+          let targetFile = file
+          const queryStringIdx = targetFile.indexOf('?')
+          if (queryStringIdx >= 0) {
+            targetFile = targetFile.substr(0, queryStringIdx)
+          }
+          return targetFile
+        }
+
+        const processedChunk = new Set()
+        const rootName = compilation._preparedEntrypoints[0].name
+
+        function processChunk (chunk, isRuntime, relativeChunks) {
+          if (!chunk.files[0] || processedChunk.has(chunk)) {
+            return
+          }
+
+          let originalSource = compilation.assets[chunk.files[0]]
+          const source = new ConcatSource()
+          source.add('\nvar window = window || {};\n\n')
+
+          relativeChunks.forEach((relativeChunk, index) => {
+            if (!relativeChunk.files[0]) return
+            let chunkPath = getTargetFile(chunk.files[0])
+            let relativePath = getTargetFile(relativeChunk.files[0])
+            relativePath = path.relative(path.dirname(chunkPath), relativePath)
+            relativePath = fixRelative(relativePath, mpx.mode)
+            relativePath = toPosix(relativePath)
+            if (index === 0) {
+              // 引用runtime
+              // 支付宝分包独立打包，通过全局context获取webpackJSONP
+              if (mpx.mode === 'ali') {
+                if (chunk.name === rootName) {
+                  // 在rootChunk中挂载jsonpFunction
+                  source.add('// process ali subpackages runtime in root chunk\n' +
+                    'var context = (function() { return this })() || Function("return this")();\n\n')
+                  source.add(`context[${JSON.stringify(jsonpFunction)}] = window[${JSON.stringify(jsonpFunction)}] = require("${relativePath}");\n`)
+                } else {
+                  // 其余chunk中通过context全局传递runtime
+                  source.add('// process ali subpackages runtime in other chunk\n' +
+                    'var context = (function() { return this })() || Function("return this")();\n\n')
+                  source.add(`window[${JSON.stringify(jsonpFunction)}] = context[${JSON.stringify(jsonpFunction)}];\n`)
+                }
+              } else {
+                source.add(`window[${JSON.stringify(jsonpFunction)}] = require("${relativePath}");\n`)
+              }
+            } else {
+              source.add(`require("${relativePath}");\n`)
+            }
+          })
+
+          if (isRuntime) {
+            source.add('var context = (function() { return this })() || Function("return this")();\n')
+            source.add(`
+// Fix babel runtime in some quirky environment like ali & qq dev.
+try {
+  if(!context.console){
+    context.console = console;
+    context.setInterval = setInterval;
+    context.setTimeout = setTimeout;
+    context.JSON = JSON;
+    context.Math = Math;
+    context.RegExp = RegExp;
+    context.Infinity = Infinity;
+    context.isFinite = isFinite;
+    context.parseFloat = parseFloat;
+    context.parseInt = parseInt;
+    context.Promise = Promise;
+    context.WeakMap = WeakMap;
+    context.RangeError = RangeError;
+    context.TypeError = TypeError;
+    context.Uint8Array = Uint8Array;
+    context.DataView = DataView;
+    context.ArrayBuffer = ArrayBuffer;
+    context.Symbol = Symbol;
+    context.Reflect = Reflect;
+  }
+} catch(e){
+}\n`)
+            source.add(originalSource)
+            source.add(`\nmodule.exports = window[${JSON.stringify(jsonpFunction)}];\n`)
+          } else {
+            if (mpx.pluginMain === chunk.name) {
+              source.add('module.exports =\n')
+            }
+            source.add(originalSource)
+          }
+
+          compilation.assets[chunk.files[0]] = source
+          processedChunk.add(chunk)
+        }
+
+        compilation.chunkGroups.forEach((chunkGroup) => {
+          if (!chunkGroup.isInitial()) {
+            return
+          }
+
+          let runtimeChunk, entryChunk
+          let middleChunks = []
+
+          let chunksLength = chunkGroup.chunks.length
+
+          chunkGroup.chunks.forEach((chunk, index) => {
+            if (index === 0) {
+              runtimeChunk = chunk
+            } else if (index === chunksLength - 1) {
+              entryChunk = chunk
+            } else {
+              middleChunks.push(chunk)
+            }
+          })
+
+          if (runtimeChunk) {
+            processChunk(runtimeChunk, true, [])
+            if (middleChunks.length) {
+              middleChunks.forEach((middleChunk) => {
+                processChunk(middleChunk, false, [runtimeChunk])
+              })
+            }
+            if (entryChunk) {
+              middleChunks.unshift(runtimeChunk)
+              processChunk(entryChunk, false, middleChunks)
+            }
+          }
+        })
+
+        callback()
       })
     })
 
@@ -742,7 +891,7 @@ class MpxWebpackPlugin {
         if (data.loaders && isFromMpx) {
           data.loaders.forEach((loader) => {
             if (/ts-loader/.test(loader.loader)) {
-              loader.options = Object.assign({}, { appendTsSuffixTo: [/\.(mpx|vue)$/] })
+              loader.options = Object.assign({}, loader.options, { appendTsSuffixTo: [/\.(mpx|vue)$/] })
             }
           })
         }
@@ -773,149 +922,6 @@ class MpxWebpackPlugin {
     })
 
     compiler.hooks.emit.tapAsync('MpxWebpackPlugin', (compilation, callback) => {
-      if (this.options.mode === 'web') return callback()
-      const jsonpFunction = compilation.outputOptions.jsonpFunction
-
-      function getTargetFile (file) {
-        let targetFile = file
-        const queryStringIdx = targetFile.indexOf('?')
-        if (queryStringIdx >= 0) {
-          targetFile = targetFile.substr(0, queryStringIdx)
-        }
-        return targetFile
-      }
-
-      const processedChunk = new Set()
-      const rootName = compilation._preparedEntrypoints[0].name
-
-      function processChunk (chunk, isRuntime, relativeChunks) {
-        if (!chunk.files[0] || processedChunk.has(chunk)) {
-          return
-        }
-
-        let originalSource = compilation.assets[chunk.files[0]]
-        const source = new ConcatSource()
-        source.add('\nvar window = window || {};\n\n')
-
-        relativeChunks.forEach((relativeChunk, index) => {
-          if (!relativeChunk.files[0]) return
-          let chunkPath = getTargetFile(chunk.files[0])
-          let relativePath = getTargetFile(relativeChunk.files[0])
-          relativePath = path.relative(path.dirname(chunkPath), relativePath)
-          relativePath = fixRelative(relativePath, mpx.mode)
-          relativePath = toPosix(relativePath)
-          if (index === 0) {
-            // 引用runtime
-            // 支付宝分包独立打包，通过全局context获取webpackJSONP
-            if (mpx.mode === 'ali') {
-              if (chunk.name === rootName) {
-                // 在rootChunk中挂载jsonpFunction
-                source.add('// process ali subpackages runtime in root chunk\n' +
-                  'var context = (function() { return this })() || Function("return this")();\n\n')
-                source.add(`context[${JSON.stringify(jsonpFunction)}] = window[${JSON.stringify(jsonpFunction)}] = require("${relativePath}");\n`)
-              } else {
-                // 其余chunk中通过context全局传递runtime
-                source.add('// process ali subpackages runtime in other chunk\n' +
-                  'var context = (function() { return this })() || Function("return this")();\n\n')
-                source.add(`window[${JSON.stringify(jsonpFunction)}] = context[${JSON.stringify(jsonpFunction)}];\n`)
-              }
-            } else {
-              source.add(`window[${JSON.stringify(jsonpFunction)}] = require("${relativePath}");\n`)
-            }
-          } else {
-            source.add(`require("${relativePath}");\n`)
-          }
-        })
-
-        if (isRuntime) {
-          source.add('var context = (function() { return this })() || Function("return this")();\n')
-          source.add(`
-// Fix babel runtime in some quirky environment like ali & qq dev.
-if(!context.console) {
-  try {
-    context.console = console;
-    context.setInterval = setInterval;
-    context.setTimeout = setTimeout;
-    context.JSON = JSON;
-    context.Math = Math;
-    context.RegExp = RegExp;
-    context.Infinity = Infinity;
-    context.isFinite = isFinite;
-    context.parseFloat = parseFloat;
-    context.parseInt = parseInt;
-    context.Promise = Promise;
-    context.WeakMap = WeakMap;
-    context.Reflect = Reflect;
-    context.RangeError = RangeError;
-    context.TypeError = TypeError;
-    context.Uint8Array = Uint8Array;
-    context.DataView = DataView;
-    context.ArrayBuffer = ArrayBuffer;
-    context.Symbol = Symbol;
-  } catch(e){
-  }
-}
-\n`)
-          if (mpx.mode === 'swan') {
-            source.add('// swan runtime fix\n' +
-              'if (!context.navigator) {\n' +
-              '  context.navigator = {};\n' +
-              '}\n' +
-              'Object.defineProperty(context.navigator, "standalone",{\n' +
-              '  configurable: true,' +
-              '  enumerable: true,' +
-              '  get () {\n' +
-              '    return true;\n' +
-              '  }\n' +
-              '});\n\n')
-          }
-          source.add(originalSource)
-          source.add(`\nmodule.exports = window[${JSON.stringify(jsonpFunction)}];\n`)
-        } else {
-          if (mpx.pluginMain === chunk.name) {
-            source.add('module.exports =\n')
-          }
-          source.add(originalSource)
-        }
-
-        compilation.assets[chunk.files[0]] = source
-        processedChunk.add(chunk)
-      }
-
-      compilation.chunkGroups.forEach((chunkGroup) => {
-        if (!chunkGroup.isInitial()) {
-          return
-        }
-
-        let runtimeChunk, entryChunk
-        let middleChunks = []
-
-        let chunksLength = chunkGroup.chunks.length
-
-        chunkGroup.chunks.forEach((chunk, index) => {
-          if (index === 0) {
-            runtimeChunk = chunk
-          } else if (index === chunksLength - 1) {
-            entryChunk = chunk
-          } else {
-            middleChunks.push(chunk)
-          }
-        })
-
-        if (runtimeChunk) {
-          processChunk(runtimeChunk, true, [])
-          if (middleChunks.length) {
-            middleChunks.forEach((middleChunk) => {
-              processChunk(middleChunk, false, [runtimeChunk])
-            })
-          }
-          if (entryChunk) {
-            middleChunks.unshift(runtimeChunk)
-            processChunk(entryChunk, false, middleChunks)
-          }
-        }
-      })
-
       if (this.options.generateBuildMap) {
         const pagesMap = compilation.__mpx__.pagesMap
         const componentsPackageMap = compilation.__mpx__.componentsMap
@@ -932,7 +938,6 @@ if(!context.console) {
           }
         }
       }
-
       callback()
     })
 
@@ -1206,17 +1211,35 @@ if(!context.console) {
             }
           })
           const size = compilation.assets[name].size()
-          fillSizeReportGroups(entryModules, noEntryModules, packageName, 'assets', { name, size })
+          const identifierSet = new Set()
+          let identifier = ''
+          assetInfo.modules.forEach((module) => {
+            const moduleIdentifier = module.readableIdentifier(compilation.requestShortener)
+            identifierSet.add(moduleIdentifier)
+            if (!identifier) identifier = moduleIdentifier
+          })
+          if (identifierSet.size > 1) identifier += ` + ${identifierSet.size - 1} modules`
+
+          fillSizeReportGroups(entryModules, noEntryModules, packageName, 'assets', {
+            name,
+            identifier,
+            size
+          })
           assetsSizeInfo.assets.push({
             type: 'static',
             name,
             packageName,
-            size
+            size,
+            modules: mapToArr(identifierSet, (identifier) => {
+              return {
+                identifier
+              }
+            })
           })
           fillPackagesSizeInfo(packageName, size)
           sizeSummary.staticSize += size
           sizeSummary.totalSize += size
-        } else if (/\.m?js(\?.*)?$/i.test(name)) {
+        } else if (/\.m?js$/i.test(name)) {
           let parsedModules
           try {
             parsedModules = parseAsset(compilation.assets[name].source())
@@ -1254,7 +1277,8 @@ if(!context.console) {
             size -= moduleSize
           }
           // chunkAssetInfo.webpackTemplateSize = size
-        } else {
+          // filter sourcemap
+        } else if (!/\.m?js\.map$/i.test(name)) {
           // static copy assets such as project.config.json
           const size = compilation.assets[name].size()
           assetsSizeInfo.assets.push({
@@ -1294,7 +1318,7 @@ if(!context.console) {
             const packageSizeThreshold = normalizeThreshold(packagesThreshold[packageName] || packagesThreshold)
             if (packageSize && packageSizeThreshold && packageSize > packageSizeThreshold) {
               const readablePackageName = packageName === 'main' ? '主包' : `${packageName}分包`
-              compilation.errors.push(`${prefix}的${readablePackageName}体积（${size}B）超过设定阈值（${sizeThreshold}B），请检查！`)
+              compilation.errors.push(`${prefix}的${readablePackageName}体积（${packageSize}B）超过设定阈值（${packageSizeThreshold}B），请检查！`)
             }
           }
         }
@@ -1358,8 +1382,8 @@ if(!context.console) {
       sortAndFormat(assetsSizeInfo.assets)
       assetsSizeInfo.assets.forEach((asset) => {
         if (asset.modules) sortAndFormat(asset.modules)
-      });
-      ['totalSize', 'staticSize', 'chunkSize', 'copySize'].forEach((key) => {
+      })
+      'totalSize|staticSize|chunkSize|copySize'.split('|').forEach((key) => {
         sizeSummary[key] = formatSize(sizeSummary[key])
       })
       groupsSizeInfo.forEach((groupSizeInfo) => {
@@ -1390,6 +1414,12 @@ if(!context.console) {
         groupsSizeInfo,
         assetsSizeInfo
       }
+
+      const fields = this.options.reportSize.fields || {}
+
+      'sizeSummary|groupsSizeInfo|assetsSizeInfo'.split('|').forEach((key) => {
+        if (fields.hasOwnProperty(key) && !fields[key]) delete reportData[key]
+      })
 
       const reportFilePath = path.resolve(compiler.outputPath, this.options.reportSize.filename || 'report.json')
       compiler.outputFileSystem.mkdirp(path.dirname(reportFilePath), (err) => {

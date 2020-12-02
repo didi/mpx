@@ -1,135 +1,139 @@
 import { error } from '../../helper/log'
+import MpxScroll from '../../helper/MpxScroll'
+import { getScrollTop } from '../../helper/MpxScroll/dom'
 
-const TIME_BOUNCE = 800
-const PULL_DOWN_CONFIG = {
-  threshold: 60,
-  stop: 56
+let ms
+
+function refreshMs (vm) {
+  if (ms) ms.destroy()
+  try {
+    window.__ms = ms = new MpxScroll()
+    return true
+  } catch (e) {
+    const location = vm.__mpxProxy && vm.__mpxProxy.options.mpxFileResource
+    error(`MpxScroll init error, please check.`, location, e)
+  }
 }
 
-let loading, bs
+let loading = null
 
-function showLoading () {
-  loading = loading || document.querySelector('.pull-down-loading')
+function showLoading (vm) {
+  const { backgroundColor = '#fff', backgroundTextStyle = 'dark' } = vm.$options.__mpxPageConfig
+  loading = document.createElement('div')
+  loading.className = 'pull-down-loading'
+  loading.style.cssText = `background-color: ${backgroundColor};`
+  const dot = document.createElement('div')
+  dot.className = `dot-flashing ${backgroundTextStyle}`
+  loading.append(dot)
+  vm.$el.prepend(loading)
+}
+
+function hideLoading (vm) {
   if (loading) {
-    loading.style.display = 'block'
+    vm.$el.removeChild(loading)
+    loading = null
   }
 }
 
-function hideLoading () {
-  loading = loading || document.querySelector('.pull-down-loading')
-  if (loading) {
-    loading.style.display = 'none'
+export default function pageScrollMixin (mixinType) {
+  if (mixinType !== 'page') {
+    return
   }
-}
+  return {
+    mounted () {
+      this.__lastScrollY = 0
+    },
+    activated () {
+      if (!refreshMs(this)) {
+        return
+      }
 
-function on (event, handler, disposer = []) {
-  if (bs) {
-    bs.on(event, handler)
-    disposer.push([event, handler])
-  }
-}
+      const { disableScroll, enablePullDownRefresh } = this.$options.__mpxPageConfig
 
-function off (disposer = []) {
-  if (bs) {
-    disposer.forEach((args) => {
-      bs.off(args[0], args[1])
-    })
-  }
-}
+      // 下拉刷新
+      if (enablePullDownRefresh) {
+        showLoading(this)
+        ms.usePullDownRefresh()
+        ms.hooks.pullingDown.on(this.__mpxPullDownHandler)
+      }
 
-export default function onPageScroll (mixinType) {
-  if (mixinType === 'page') {
-    return {
-      mounted () {
-        if (!bs) {
-          const bsConfig = {
-            scrollY: true,
-            probeType: 2,
-            bounceTime: TIME_BOUNCE,
-            pullDownRefresh: PULL_DOWN_CONFIG,
-            observeDOM: !!this.$options.__mpxPageConfig.enableObserveDOM
-          }
-          try {
-            bs = new global.BScroll(this.$el.parentNode.parentNode, bsConfig)
-          } catch (e) {
-            const location = this.__mpxProxy && this.__mpxProxy.options.mpxFileResource
-            return error(`Better scroll init error, please check.`, location, e)
-          }
+      // 页面滚动
+      if (!disableScroll) {
+        ms.pageScrollTo({
+          scrollTop: this.__lastScrollY,
+          duration: 0
+        })
+
+        if (this.onPageScroll || this.onReachBottom) {
+          ms.useScroll()
+          ms.hooks.scroll.on(this.__mpxPageScrollHandler)
         }
-        this.__lastScrollY = 0
-        this.__disposer = []
-      },
-      activated () {
-        if (bs) {
-          bs.refresh()
-          // 恢复上次滚动位置
-          bs.scrollTo(0, this.__lastScrollY)
-          // 处理禁止滚动
-          if (this.$options.__mpxPageConfig.disableScroll) {
-            bs.disable()
-          } else {
-            bs.enable()
-            // 处理下拉刷新效果
-            if (this.$options.__mpxPageConfig.enablePullDownRefresh) {
-              showLoading(this)
-              bs.openPullDown(PULL_DOWN_CONFIG)
-              on('pullingDown', this.__mpxPullDownHandler, this.__disposer)
-            } else {
-              hideLoading(this)
-              bs.closePullDown()
+      } else {
+        document.body.style.overflow = 'hidden'
+      }
+    },
+    deactivated () {
+      if (ms) {
+        this.__lastScrollY = getScrollTop()
+        ms.destroy()
+        hideLoading(this)
+      }
+    },
+    beforeDestroy () {
+      if (ms) {
+        ms.destroy()
+        hideLoading(this)
+      }
+    },
+    methods: {
+      __mpxPullDownHandler (autoStop = false, isRefresh = false) {
+        this.__pullingDown = true
+        // 同微信保持一致
+        // 如果是手动触摸下拉，3s 后用户还没有调用过 __stopPullDownRefresh，则自动调用关闭 pullDown
+        // 如果是手动调用 startPullDownRefresh 的 api，则一直处于 pull down 状态，除非用户手动调用 stopPullDownRefresh
+        if (isRefresh) {
+          this.__clearPullDownTimer()
+        }
+        if (autoStop) {
+          this.__mpxPullDownTimer = setTimeout(() => {
+            if (this.__pullingDown) {
+              this.__stopPullDownRefresh()
             }
-            // 处理滚动事件
-            if (this.onPageScroll || this.onReachBottom) {
-              on('scroll', this.__mpxPageScrollHandler, this.__disposer)
-            }
-          }
-        }
-      },
-      deactivated () {
-        if (bs) {
-          this.__lastScrollY = bs.y
-          off(this.__disposer)
-        }
-      },
-      beforeDestroy () {
-        off(this.__disposer)
-      },
-      methods: {
-        __mpxPullDownHandler () {
-          // 处理onPullDownRefresh
-          this.__pullingDown = true
-          // 如果3s后用户还没有调用过__stopPullDownRefresh，则自动调用关闭pullDown，同微信保持一致
-          setTimeout(() => {
-            if (this.__pullingDown) this.__stopPullDownRefresh()
           }, 3000)
-          this.onPullDownRefresh && this.onPullDownRefresh()
-        },
-        __stopPullDownRefresh () {
-          this.__pullingDown = false
-          if (this.$options.__mpxPageConfig.enablePullDownRefresh && bs) {
-            bs.finishPullDown()
-          }
-        },
-        refreshScroll () {
-          bs && bs.refresh()
-        },
-        __mpxPageScrollHandler (pos) {
-          if (bs) {
-            // 处理onPageScroll
-            this.onPageScroll && this.onPageScroll({ scrollTop: -pos.y })
-
-            // 处理onReachBottom
-            if (this.onReachBottom) {
-              const onReachBottomDistance = this.$options.__mpxPageConfig.onReachBottomDistance || 50
-              // 处理ReachBottom
-              if (!this.__bottomReached && pos.y <= bs.maxScrollY + onReachBottomDistance && bs.movingDirectionY === 1) {
-                this.__bottomReached = true
-                this.onReachBottom()
-              } else if (pos.y > bs.maxScrollY + onReachBottomDistance && bs.movingDirectionY === -1) {
-                this.__bottomReached = false
-              }
-            }
-          }
+        }
+        this.onPullDownRefresh && this.onPullDownRefresh()
+      },
+      __stopPullDownRefresh () {
+        this.__pullingDown = false
+        if (this.$options.__mpxPageConfig.enablePullDownRefresh && ms) {
+          ms.stopPullDownRefresh()
+          this.__clearPullDownTimer()
+        }
+      },
+      __startPullDownRefresh () {
+        if (!this.__pullingDown && this.$options.__mpxPageConfig.enablePullDownRefresh && ms) {
+          ms.startPullDownRefresh()
+        }
+      },
+      __mpxPageScrollHandler (e) {
+        const { onReachBottomDistance = 50 } = this.$options.__mpxPageConfig
+        if (this.onPageScroll) {
+          const _e = {}
+          Object.defineProperty(_e, 'scrollTop', {
+            configurable: false,
+            enumerable: true,
+            get: () => e.scrollTop
+          })
+          this.onPageScroll(_e)
+        }
+        if (this.onReachBottom) {
+          ms.onReachBottom(onReachBottomDistance, this.onReachBottom)
+        }
+      },
+      __clearPullDownTimer () {
+        if (this.__mpxPullDownTimer) {
+          clearTimeout(this.__mpxPullDownTimer)
+          this.__mpxPullDownTimer = null
         }
       }
     }
