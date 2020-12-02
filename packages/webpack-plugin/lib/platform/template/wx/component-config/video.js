@@ -11,6 +11,10 @@ module.exports = function ({ print }) {
   const aliEventLogError = print({ platform: 'ali', tag: TAG_NAME, isError: false, type: 'event' })
   return {
     test: TAG_NAME,
+    web (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-video'
+    },
     props: [
       {
         test: /^(enable-danmu|danmu-btn|show-progress|play-btn-position|enable-play-gesture|auto-pause-if-navigate|auto-pause-if-open-native|vslide-gesture|vslide-gesture-in-fullscreen|ad-unit-id|poster-for-crawler|show-casting-button|picture-in-picture-mode|picture-in-picture-show-progress|enable-auto-rotation|show-snapshot-button|show-screen-lock-button)$/,
