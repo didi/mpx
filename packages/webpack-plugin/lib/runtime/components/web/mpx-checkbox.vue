@@ -30,6 +30,9 @@
             if (this.disabled) {
               return
             }
+            if (this.group) {
+              this.group.notifyChange()
+            }
             this.isChecked = !this.isChecked
           }
         },
