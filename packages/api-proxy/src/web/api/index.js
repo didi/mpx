@@ -49,3 +49,5 @@ export * from './pull-down'
 export * from './page-scroll-to'
 
 export * from './tab-bar'
+
+export * from './app'

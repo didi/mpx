@@ -38,6 +38,7 @@ module.exports = function (script, options, callback) {
   const tabBarStr = options.tabBarStr
   const genericsInfo = options.genericsInfo
   const componentGenerics = options.componentGenerics
+  const forceDisableBuiltInLoader = options.forceDisableBuiltInLoader
 
   const emitWarning = (msg) => {
     loaderContext.emitWarning(
@@ -128,9 +129,6 @@ module.exports = function (script, options, callback) {
   }
   global.__networkTimeout = ${JSON.stringify(jsonConfig.networkTimeout)}
   global.__mpxGenericsMap = {}
-  global.__tabBar = ${tabBarStr}
-  Vue.observable(global.__tabBar)
-  global.__tabBarPagesMap = ${shallowStringify(tabBarPagesMap)}
   global.__style = ${JSON.stringify(jsonConfig.style || 'v1')}
   global.__mpxPageConfig = ${JSON.stringify(jsonConfig.window)}\n`
 
@@ -146,10 +144,14 @@ module.exports = function (script, options, callback) {
               delete i18nObj[`${key}Path`]
             }
           })
-          content += `  const i18n = ${JSON.stringify(i18nObj)}\n`
+          content += `  const i18nCfg = ${JSON.stringify(i18nObj)}\n`
           Object.keys(requestObj).forEach((key) => {
-            content += `  i18n.${key} = require(${requestObj[key]})\n`
+            content += `  i18nCfg.${key} = require(${requestObj[key]})\n`
           })
+          content += `  const i18n = new VueI18n(i18nCfg)
+  if(global.__mpx) {
+    global.__mpx.i18n = i18n
+  }\n`
         }
       }
       let firstPage = ''
@@ -186,21 +188,22 @@ module.exports = function (script, options, callback) {
 
       Object.keys(builtInComponentsMap).forEach((componentName) => {
         const componentCfg = builtInComponentsMap[componentName]
-        const componentRequest = stringifyRequest('builtInComponent.vue!=!' + builtInLoaderPath + '!' + componentCfg.resource)
+        const componentRequest = forceDisableBuiltInLoader ? stringifyRequest(componentCfg.resource) : stringifyRequest('builtInComponent.vue!=!' + builtInLoaderPath + '!' + componentCfg.resource)
         componentsMap[componentName] = `getComponent(require(${componentRequest}), { __mpxBuiltIn: true })`
       })
 
-      content += `  global.currentSrcMode = ${JSON.stringify(scriptSrcMode)};\n`
+      content += `  global.currentSrcMode = ${JSON.stringify(scriptSrcMode)}\n`
       if (!isProduction) {
-        content += `  global.currentResource = ${JSON.stringify(loaderContext.resourcePath)};\n`
+        content += `  global.currentResource = ${JSON.stringify(loaderContext.resourcePath)}\n`
       }
-      // 为了正确获取currentSrcMode便于运行时进行转换，对于src引入的组件script采用require方式引入(由于webpack会将import的执行顺序上升至最顶),这意味着对于src引入脚本中的named export将不会生效，不过鉴于mpx和小程序中本身也没有在组件script中声明export的用法，所以应该没有影响
+      // 为了正确获取currentSrcMode便于运行时进行转换，对于src引入的组件script采用require方式引入(由于webpack会将import的执行顺序上升至最顶)，这意味着对于src引入脚本中的named export将不会生效，不过鉴于mpx和小程序中本身也没有在组件script中声明export的用法，所以应该没有影响
       content += script.src
         ? (getRequireForSrc('script', script) + '\n')
         : (script.content + '\n') + '\n'
-      // 配置平台转换通过createFactory在core中convertor中定义和进行
-      // 通过processOption进行组件注册和路由注入
-      const pureJsonConfig = {}
+      // createApp/Page/Component执行完成后立刻获取当前的option并暂存
+      content += `  const currentOption = global.currentOption\n`
+      // 获取pageConfig
+      const pageConfig = {}
       if (ctorType === 'page') {
         const uselessOptions = new Set([
           'usingComponents',
@@ -210,15 +213,24 @@ module.exports = function (script, options, callback) {
         Object.keys(jsonConfig)
           .filter(key => !uselessOptions.has(key))
           .forEach(key => {
-            pureJsonConfig[key] = jsonConfig[key]
+            pageConfig[key] = jsonConfig[key]
           })
       }
+      // 为了执行顺序正确，tabBarPagesMap在app逻辑执行完成后注入，保障小程序中app->page->component的js执行顺序
+      if (tabBarStr && tabBarPagesMap) {
+        content += `  global.__tabBar = ${tabBarStr}
+  Vue.observable(global.__tabBar)
+  global.__tabBarPagesMap = ${shallowStringify(tabBarPagesMap)}\n`
+      }
+
+      // 配置平台转换通过createFactory在core中convertor中定义和进行
+      // 通过processOption进行组件注册和路由注入
       content += `  export default processOption(
-    global.currentOption,
+    currentOption,
     ${JSON.stringify(ctorType)},
     ${JSON.stringify(firstPage)},
     ${JSON.stringify(mpxCid)},
-    ${JSON.stringify(pureJsonConfig)},
+    ${JSON.stringify(pageConfig)},
     ${shallowStringify(pagesMap)},
     ${shallowStringify(componentsMap)},
     ${JSON.stringify(tabBarMap)},
@@ -231,7 +243,6 @@ module.exports = function (script, options, callback) {
     VueRouter`
         if (i18n) {
           content += `,
-    VueI18n,
     i18n`
         }
       }

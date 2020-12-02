@@ -9,6 +9,7 @@ const getRulesRunner = require('../platform/index')
 const addQuery = require('../utils/add-query')
 const transDynamicClassExpr = require('./trans-dynamic-class-expr')
 const hash = require('hash-sum')
+const dash2hump = require('../utils/hump-dash').dash2hump
 
 /**
  * Make a map and return a function for checking if a key
@@ -693,7 +694,7 @@ function parseComponent (content, options) {
       }
 
       // 对于<script name="json">的标签，传参调用函数，其返回结果作为json的内容
-      if (currentBlock.tag === 'script' && currentBlock.name === 'json') {
+      if (currentBlock.tag === 'script' && currentBlock.type !== 'application/json' && currentBlock.name === 'json') {
         text = mpxJSON.compileMPXJSONText({ source: text, defs, filePath: options.filePath })
       }
       currentBlock.content = text
@@ -913,6 +914,7 @@ function parse (template, options) {
         currentParent.children.push({
           type: 3,
           text: text,
+          parent: currentParent,
           isComment: true
         })
       }
@@ -1048,7 +1050,7 @@ const genericRE = /^generic:(.+)$/
 
 function processComponentGenericsForWeb (el, options, meta) {
   if (options.componentGenerics && options.componentGenerics[el.tag]) {
-    const generic = el.tag
+    const generic = dash2hump(el.tag)
     el.tag = 'component'
     addAttrs(el, [{
       name: ':is',
@@ -1133,9 +1135,9 @@ function parseFuncStr2 (str) {
   let funcRE = /^([^()]+)(\((.*)\))?/
   let match = funcRE.exec(str)
   if (match) {
-    let funcName = stringify(match[1])
+    const funcName = parseMustache(match[1]).result
+    const hasArgs = !!match[2]
     let args = match[3] ? `,${match[3]}` : ''
-    let hasArgs = !!match[2]
     const ret = /(,|^)\s*(\$event)\s*(,|$)/.exec(args)
     if (ret) {
       const subIndex = ret[0].indexOf('$event')
@@ -1723,7 +1725,8 @@ function injectWxs (meta, module, src) {
 
 function processClass (el, meta) {
   const type = 'class'
-  const targetType = el.tag.startsWith('th-') ? 'ex-' + type : type
+  const needEx = el.tag.startsWith('th-')
+  const targetType = needEx ? 'ex-' + type : type
   let dynamicClass = getAndRemoveAttr(el, config[mode].directive.dynamicClass)
   let staticClass = getAndRemoveAttr(el, type)
   if (dynamicClass) {
@@ -1731,7 +1734,8 @@ function processClass (el, meta) {
     let dynamicClassExp = transDynamicClassExpr(parseMustache(dynamicClass).result)
     addAttrs(el, [{
       name: targetType,
-      value: `{{${stringifyModuleName}.stringifyClass(${staticClassExp}, ${dynamicClassExp})}}`
+      // swan中externalClass是通过编译时静态实现，因此需要保留原有的staticClass形式避免externalClass失效
+      value: mode === 'swan' && staticClass ? `${staticClass} {{${stringifyModuleName}.stringifyClass('', ${dynamicClassExp})}}` : `{{${stringifyModuleName}.stringifyClass(${staticClassExp}, ${dynamicClassExp})}}`
     }])
     injectWxs(meta, stringifyModuleName, stringifyWxsPath)
   } else if (staticClass) {
@@ -1739,6 +1743,17 @@ function processClass (el, meta) {
       name: targetType,
       value: staticClass
     }])
+  }
+
+  if (needEx && staticClass) {
+    const refClassRegExp = /ref_(\w+)_(\d+)/
+    const match = staticClass.match(refClassRegExp)
+    if (match) {
+      addAttrs(el, [{
+        name: 'class',
+        value: match[0]
+      }])
+    }
   }
 }
 
@@ -1778,8 +1793,9 @@ function isComponentNode (el, options) {
 function processAliExternalClassesHack (el, options) {
   let staticClass = getAndRemoveAttr(el, 'class')
   if (staticClass) {
-    options.externalClasses.forEach(({ className, replacement }) => {
+    options.externalClasses.forEach((className) => {
       const reg = new RegExp('\\b' + className + '\\b', 'g')
+      const replacement = dash2hump(className)
       staticClass = staticClass.replace(reg, `{{${replacement}||''}}`)
     })
     addAttrs(el, [{
@@ -1789,7 +1805,7 @@ function processAliExternalClassesHack (el, options) {
   }
 
   if (options.scopedId && isComponentNode(el, options)) {
-    options.externalClasses.forEach(({ className }) => {
+    options.externalClasses.forEach((className) => {
       let externalClass = getAndRemoveAttr(el, className)
       if (externalClass) {
         addAttrs(el, [{
@@ -1799,6 +1815,41 @@ function processAliExternalClassesHack (el, options) {
       }
     })
   }
+}
+
+function processWebExternalClassesHack (el, options) {
+  let staticClass = getAndRemoveAttr(el, 'class')
+  let dynamicClass = getAndRemoveAttr(el, ':class')
+  if (staticClass || dynamicClass) {
+    const externalClasses = []
+    options.externalClasses.forEach((className) => {
+      const reg = new RegExp('\\b' + className + '\\b')
+      if (reg.test(staticClass) || reg.test(dynamicClass)) {
+        externalClasses.push(className)
+      }
+    })
+    const attrs = []
+    if (staticClass) {
+      attrs.push({
+        name: 'class',
+        value: staticClass
+      })
+    }
+    if (dynamicClass) {
+      attrs.push({
+        name: ':class',
+        value: dynamicClass
+      })
+    }
+    if (externalClasses.length) {
+      attrs.push({
+        name: 'v-ex-classes',
+        value: JSON.stringify(externalClasses)
+      })
+    }
+    addAttrs(el, attrs)
+  }
+  // todo 处理scoped的情况
 }
 
 function processScoped (el, options) {
@@ -1903,24 +1954,28 @@ function postProcessTemplate (el) {
   }
 }
 
+const isValidMode = makeMap('wx,ali,swan,tt,qq,web')
+
+const wrapRE = /^\((.*)\)$/
+
 function processAtMode (el) {
   if (el.parent && el.parent._atModeStatus) {
     el._atModeStatus = el.parent._atModeStatus
   }
 
-  const elementAttrListCopy = el.attrsList.slice(0)
-  elementAttrListCopy.forEach(item => {
+  const attrsListClone = cloneAttrsList(el.attrsList)
+  attrsListClone.forEach(item => {
     const attrName = item.name || ''
     if (!attrName || attrName.indexOf('@') === -1) return
-    const modeStr = attrName.split('@').pop()
+    const attrArr = attrName.split('@')
+    let modeStr = attrArr.pop()
+    if (wrapRE.test(modeStr)) modeStr = wrapRE.exec(modeStr)[1]
     const modeArr = modeStr.split('|')
-    if (modeArr.some(i => ['wx', 'ali', 'swan', 'tt', 'qq', 'web'].includes(i))) {
-      const tempVal = getAndRemoveAttr(el, item.name)
-      // web下vue有@click之类的简写，配上mode，假定最多只会出现2个@符号，且mode在后
-      const attrArr = attrName.split('@')
-      const replacedAttrName = attrArr.length === 2 ? attrName.replace(/@.*/, '') : attrArr.pop() && attrArr.join('@')
+    if (modeArr.every(i => isValidMode(i))) {
+      const attrValue = getAndRemoveAttr(el, attrName)
+      const replacedAttrName = attrArr.join('@')
 
-      const processedAttr = { name: replacedAttrName, value: tempVal }
+      const processedAttr = { name: replacedAttrName, value: attrValue }
       if (modeArr.includes(mode)) {
         if (!replacedAttrName) {
           el._atModeStatus = 'match'
@@ -1935,6 +1990,21 @@ function processAtMode (el) {
       }
     }
   })
+}
+
+// 去除重复的attrsList项，这些项可能由平台转换规则造成
+function processDuplicateAttrsList (el) {
+  const attrsMap = new Map()
+  const attrsList = []
+  el.attrsList.forEach((attr) => {
+    if (!attrsMap.has(attr.name)) {
+      attrsMap.set(attr.name, attr.value)
+    } else if (attr.value === attrsMap.get(attr.name)) {
+      return
+    }
+    attrsList.push(attr)
+  })
+  el.attrsList = attrsList
 }
 
 function processElement (el, root, options, meta) {
@@ -1955,6 +2025,8 @@ function processElement (el, root, options, meta) {
     delete el.noTransAttrs
   }
 
+  processDuplicateAttrsList(el)
+
   const transAli = mode === 'ali' && srcMode === 'wx'
 
   if (mode === 'web') {
@@ -1962,6 +2034,7 @@ function processElement (el, root, options, meta) {
     processBuiltInComponents(el, meta)
     // 预处理代码维度条件编译
     processIfForWeb(el)
+    processWebExternalClassesHack(el, options)
     processComponentGenericsForWeb(el, options, meta)
     return
   }
@@ -1984,7 +2057,8 @@ function processElement (el, root, options, meta) {
     processShow(el, options, root)
   }
 
-  if (transAli) {
+  // 当mode为ali不管是不是跨平台都需要进行此处理，以保障ali当中的refs相关增强能力正常运行
+  if (mode === 'ali') {
     processAliStyleClassHack(el, options, root)
   }
 
@@ -2021,6 +2095,28 @@ function postProcessAtMode (el) {
   }
 }
 
+// 目前为了处理动态组件children中后续if无效的问题(#633)，仅进行节点对象本身的浅clone，没有对attrsList/attrsMap/exps/if/elseif/else/for等深层对象进行copy
+function cloneNode (el) {
+  const clone = Object.assign({}, el)
+  if (el.parent) clone.parent = null
+  if (el.children) {
+    clone.children = []
+    el.children.forEach((child) => {
+      addChild(clone, cloneNode(child))
+    })
+  }
+  return clone
+}
+
+function cloneAttrsList (attrsList) {
+  return attrsList.map(({ name, value }) => {
+    return {
+      name,
+      value
+    }
+  })
+}
+
 function postProcessComponentIs (el) {
   if (el.is && el.components) {
     let tempNode
@@ -2034,13 +2130,14 @@ function postProcessComponentIs (el) {
       tempNode = getTempNode()
     }
     el.components.forEach(function (component) {
-      let newChild = createASTElement(component, el.attrsList.slice(), tempNode)
+      let newChild = createASTElement(component, cloneAttrsList(el.attrsList), tempNode)
       newChild.if = {
         raw: `{{${el.is} === ${stringify(component)}}}`,
         exp: `${el.is} === ${stringify(component)}`
       }
-      // 此处直接指向原始children存在问题，但由于动态组件一般情况下很少有共用children故基本无法报出，完善处理需要每次clone原始children并分别更新parent
-      newChild.children = el.children
+      el.children.forEach((child) => {
+        addChild(newChild, cloneNode(child))
+      })
       newChild.exps = el.exps
       addChild(tempNode, newChild)
       postProcessIf(newChild)

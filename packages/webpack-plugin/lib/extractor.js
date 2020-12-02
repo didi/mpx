@@ -22,9 +22,9 @@ module.exports = function (content) {
   const mainCompilation = getMainCompilation(this._compilation)
   const mpx = mainCompilation.__mpx__
 
-  const packageName = mpx.currentPackageRoot || 'main'
+  const currentPackageName = mpx.currentPackageRoot || 'main'
   const pagesMap = mpx.pagesMap
-  const componentsMap = mpx.componentsMap[packageName]
+  const componentsMap = mpx.componentsMap
 
   const extract = mpx.extract
   const pathHash = mpx.pathHash
@@ -46,11 +46,13 @@ module.exports = function (content) {
   let resultSource = defaultResultSource
 
   const getFile = (resourceRaw, type) => {
-    const resourcePath = parseRequest(resourceRaw).resourcePath
+    const { resourcePath, queryObj } = parseRequest(resourceRaw)
+    const packageName = queryObj.packageName || currentPackageName
+    const localComponentsMap = componentsMap[packageName]
     const id = `${mode}:${packageName}:${type}:${resourcePath}`
     if (!seenFile[id]) {
       const resourcePath = parseRequest(resourceRaw).resourcePath
-      let filename = pagesMap[resourcePath] || componentsMap[resourcePath]
+      let filename = pagesMap[resourcePath] || localComponentsMap[resourcePath]
       if (!filename && resourcePath === rootResourcePath) {
         filename = rootName
       }
@@ -117,6 +119,10 @@ module.exports = function (content) {
         break
       case 'template':
         resultSource = `module.exports = __webpack_public_path__ + ${JSON.stringify(file)};`
+        break
+      case 'json':
+        // 目前json中index为-1时只有处理theme.json一种情况，该情况下返回的路径只能为不带有./或../开头的相对路径，否则微信小程序预览构建会报错，issue#622
+        resultSource = `module.exports = ${JSON.stringify(file)};`
         break
     }
     index = 0

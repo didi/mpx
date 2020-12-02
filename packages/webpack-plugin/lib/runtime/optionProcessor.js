@@ -3,7 +3,7 @@ export default function processOption (
   ctorType,
   firstPage,
   mpxCid,
-  jsonConfig,
+  pageConfig,
   pagesMap,
   componentsMap,
   tabBarMap,
@@ -11,7 +11,6 @@ export default function processOption (
   genericsInfo,
   Vue,
   VueRouter,
-  VueI18n,
   i18n
 ) {
   if (ctorType === 'app') {
@@ -22,6 +21,24 @@ export default function processOption (
         Vue.component(componentName, component)
       }
     }
+
+    // 注册v-ex-classes自定义指令处理externalClasses
+    Vue.directive('ex-classes', (el, binding, vnode) => {
+      const context = vnode.context
+      if (context) {
+        const externalClasses = context.$options.externalClasses || []
+        const classList = el.classList
+        binding.value.forEach((className) => {
+          const actualExternalClassNames = context.$attrs[className]
+          if (externalClasses.indexOf(className) !== -1 && actualExternalClassNames) {
+            classList.remove(className)
+            actualExternalClassNames.split(' ').forEach((actualExternalClassName) => {
+              classList.add(actualExternalClassName)
+            })
+          }
+        })
+      }
+    })
 
     const routes = []
 
@@ -129,10 +146,26 @@ export default function processOption (
         const vnode = window.__mpxRouter.__mpxActiveVnode
         if (vnode && vnode.componentInstance) {
           const currentPage = vnode.tag.endsWith('mpx-tab-bar-container') ? vnode.componentInstance.$refs.tabBarPage : vnode.componentInstance
-          if (currentPage) {
-            if (document.hidden) {
+          if (document.hidden) {
+            if (global.__mpxAppCbs && global.__mpxAppCbs.hide) {
+              global.__mpxAppCbs.hide.forEach((cb) => {
+                cb()
+              })
+            }
+            if (currentPage) {
+              currentPage.mpxPageStatus = 'hide'
               currentPage.onHide && currentPage.onHide()
-            } else {
+            }
+          } else {
+            if (global.__mpxAppCbs && global.__mpxAppCbs.show) {
+              global.__mpxAppCbs.show.forEach((cb) => {
+                // todo 实现app.onShow参数
+                /* eslint-disable standard/no-callback-literal */
+                cb({})
+              })
+            }
+            if (currentPage) {
+              currentPage.mpxPageStatus = 'show'
               currentPage.onShow && currentPage.onShow()
             }
           }
@@ -143,7 +176,7 @@ export default function processOption (
     }
 
     if (i18n) {
-      window.__mpx.i18n = option.i18n = new VueI18n(i18n)
+      option.i18n = i18n
     }
   } else {
     // 局部注册页面和组件中依赖的组件
@@ -165,7 +198,7 @@ export default function processOption (
           window.__mpxGenericsMap[genericHash][genericValue] = componentsMap[genericValue]
         } else {
           console.log(option)
-          console.warn(`[Mpx runtime warn]: generic value "${genericValue}" must be 
+          console.warn(`[Mpx runtime warn]: generic value "${genericValue}" must be
 registered in parent context!`)
         }
       })
@@ -187,7 +220,7 @@ registered in parent context!`)
     }
 
     if (ctorType === 'page') {
-      option.__mpxPageConfig = Object.assign({}, window.__mpxPageConfig, jsonConfig)
+      option.__mpxPageConfig = Object.assign({}, window.__mpxPageConfig, pageConfig)
     }
   }
 

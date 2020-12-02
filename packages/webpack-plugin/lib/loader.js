@@ -152,19 +152,19 @@ module.exports = function (content) {
         getNamedExports,
         getRequireForSrc,
         getNamedExportsForSrc
-      } = createHelpers(
+      } = createHelpers({
         loaderContext,
         options,
         moduleId,
-        isProduction,
         hasScoped,
         hasComment,
         usingComponents,
         needCssSourceMap,
         srcMode,
+        globalSrcMode,
         isNative,
         projectRoot
-      )
+      })
 
       // 处理mode为web时输出vue格式文件
       if (mode === 'web') {
@@ -190,6 +190,8 @@ module.exports = function (content) {
             async.parallel([
               (callback) => {
                 processTemplate(parts.template, {
+                  hasComment,
+                  isNative,
                   mode,
                   srcMode,
                   defs,
@@ -197,6 +199,8 @@ module.exports = function (content) {
                   ctorType,
                   usingComponents,
                   componentGenerics,
+                  decodeHTMLText: mpx.decodeHTMLText,
+                  externalClasses: mpx.externalClasses,
                   checkUsingComponents: mpx.checkUsingComponents
                 }, callback)
               },
@@ -246,7 +250,8 @@ module.exports = function (content) {
               builtInComponentsMap: templateRes.builtInComponentsMap,
               genericsInfo: templateRes.genericsInfo,
               localComponentsMap: jsonRes.localComponentsMap,
-              localPagesMap: jsonRes.localPagesMap
+              localPagesMap: jsonRes.localPagesMap,
+              forceDisableBuiltInLoader: mpx.forceDisableBuiltInLoader
             }, callback)
           }
         ], (err, scriptRes) => {
