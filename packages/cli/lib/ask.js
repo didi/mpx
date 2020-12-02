@@ -66,7 +66,7 @@ function prompt (data, key, prompt, done) {
   let promptDefault = prompt.default
   if (typeof prompt.default === 'function') {
     promptDefault = function () {
-      return prompt.default.bind(this)(data)
+      return prompt.default(data)
     }
   }
 
