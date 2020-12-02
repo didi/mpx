@@ -21,6 +21,9 @@ export * from './storage'
 // getSystemInfo, getSystemInfoSync
 export * from './system'
 
+// getNetworkType, onNetworkStatusChange, offNetworkStatusChange
+export * from './device/network'
+
 // request
 export * from './request'
 
