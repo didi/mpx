@@ -1,6 +1,18 @@
 import { ToPromise, webHandleSuccess } from '../../../common/js'
 import '../../../common/stylus/Modal.styl'
-
+// import { forEach } from '@didi/mpx-fetch/src/util'
+// 汉字为两个字符，字母/数字为一个字符
+let _getLength = (t) => {
+  let len = 0
+  for (let i = 0; i < t.length; i++) {
+    if (t.charCodeAt(i) > 127 || t.charCodeAt(i) === 94) {
+      len += 2
+    } else {
+      len++
+    }
+  }
+  return len
+}
 export default class Modal extends ToPromise {
   constructor () {
     super()
@@ -61,11 +73,18 @@ export default class Modal extends ToPromise {
     this.confirmBtn = confirmBtn
   }
   show (options = {}) {
+    if (options.confirmText && _getLength(options.confirmText) > 8) {
+      // eslint-disable-next-line
+      return Promise.reject({errMsg: 'showModal:fail confirmText length should not larger than 4 Chinese characters'})
+    }
+    if (options.cancelText && _getLength(options.cancelText) > 8) {
+      // eslint-disable-next-line
+      return Promise.reject({errMsg: 'showModal:fail cancelText length should not larger than 4 Chinese characters'})
+    }
     if (this.hideTimer) {
       clearTimeout(this.hideTimer)
       this.hideTimer = null
     }
-
     const opts = Object.assign({}, this.defaultOpts, options)
 
     this.title.textContent = opts.title

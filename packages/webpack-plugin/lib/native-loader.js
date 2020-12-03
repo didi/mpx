@@ -11,11 +11,13 @@ const mpxJSON = require('./utils/mpx-json')
 const async = require('async')
 const matchCondition = require('./utils/match-condition')
 const fixUsingComponent = require('./utils/fix-using-component')
+const getMainCompilation = require('./utils/get-main-compilation')
 
 module.exports = function (content) {
   this.cacheable()
 
-  const mpx = this._compilation.__mpx__
+  const mainCompilation = getMainCompilation(this._compilation)
+  const mpx = mainCompilation.__mpx__
   if (!mpx) {
     return content
   }
@@ -186,19 +188,19 @@ module.exports = function (content) {
       const {
         getRequireForSrc,
         getNamedExportsForSrc
-      } = createHelpers(
+      } = createHelpers({
         loaderContext,
         options,
         moduleId,
-        isProduction,
         hasScoped,
         hasComment,
         usingComponents,
         needCssSourceMap,
         srcMode,
+        globalSrcMode,
         isNative,
         projectRoot
-      )
+      })
 
       const getRequire = (type) => {
         const localQuery = Object.assign({}, queryObj)

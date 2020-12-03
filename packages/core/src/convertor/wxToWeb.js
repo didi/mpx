@@ -6,7 +6,11 @@ import { isObject, diffAndCloneA } from '../helper/utils'
 import { implemented } from '../core/implement'
 
 // 暂不支持的wx选项，后期需要各种花式支持
+<<<<<<< HEAD
 const NOTSUPPORTS = ['moved', 'relations', 'pageLifetimes', 'definitionFilter', 'onShareAppMessage', 'pageShow', 'pageHide']
+=======
+const NOTSUPPORTS = ['moved', 'relations', 'definitionFilter', 'onPageNotFound', 'onShareAppMessage', 'pageShow', 'pageHide']
+>>>>>>> 505a253c8c5c7255087213146c22c6b662c72b22
 
 function convertErrorDesc (key) {
   error(`Options.${key} is not supported in runtime conversion from wx to web.`, global.currentResource)

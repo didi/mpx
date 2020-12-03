@@ -218,6 +218,20 @@ export default function createStore (options) {
   return new Store(options)
 }
 
+// ts util functions
+export function createStateWithThis (state) {
+  return state
+}
+export function createGettersWithThis (getters, options = {}) {
+  return getters
+}
+export function createMutationsWithThis (mutations, options = {}) {
+  return mutations
+}
+export function createActionsWithThis (actions, options = {}) {
+  return actions
+}
+
 export function createStoreWithThis (options) {
   options.withThis = true
   return new Store(options)

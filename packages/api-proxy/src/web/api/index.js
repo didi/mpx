@@ -21,6 +21,9 @@ export * from './storage'
 // getSystemInfo, getSystemInfoSync
 export * from './system'
 
+// getNetworkType, onNetworkStatusChange, offNetworkStatusChange
+export * from './device/network'
+
 // request
 export * from './request'
 
@@ -42,3 +45,12 @@ export * from './window'
 
 // stopPullDownRefresh startPullDownRefresh
 export * from './pull-down'
+
+// createInnerAudioContext
+export * from './audio'
+
+export * from './page-scroll-to'
+
+export * from './tab-bar'
+
+export * from './app'

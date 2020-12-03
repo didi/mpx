@@ -34,6 +34,7 @@ const icon = require('./icon')
 const Nonsupport = require('./unsupported')
 const HyphenTagName = require('./hypen-tag-name')
 const webView = require('./web-view')
+const video = require('./video')
 
 module.exports = function getComponentConfigs ({ warn, error }) {
   /**
@@ -106,6 +107,7 @@ module.exports = function getComponentConfigs ({ warn, error }) {
     block(),
     icon(),
     HyphenTagName({ print }),
-    webView({ print })
+    webView({ print }),
+    video({ print })
   ]
 }
