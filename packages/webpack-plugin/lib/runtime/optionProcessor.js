@@ -51,9 +51,23 @@ export default function processOption (
         let action = window.__mpxRouter.__mpxAction
         const stack = window.__mpxRouter.stack
 
+        // 处理人为操作
+        if (!action) {
+          if (stack.length > 1 && stack[stack.length - 2].path === to.path) {
+            action = {
+              type: 'back',
+              delta: 1
+            }
+          } else {
+            action = {
+              type: 'to'
+            }
+          }
+        }
+
         const pageInRoutes = routes.some(item => item.path === to.path)
         if (!pageInRoutes) {
-          if (!action) {
+          if (stack.length < 1) {
             // onPageNotFound，仅首次进入时生效
             window.__mpxRouter.app.$options.onPageNotFound({
               path: to.path,
@@ -79,20 +93,6 @@ export default function processOption (
                 methods = 'navigateTo'
             }
             throw new Error(`${methods}:fail page "${to.path}" is not found`)
-          }
-        }
-
-        // 处理人为操作
-        if (!action) {
-          if (stack.length > 1 && stack[stack.length - 2].path === to.path) {
-            action = {
-              type: 'back',
-              delta: 1
-            }
-          } else {
-            action = {
-              type: 'to'
-            }
           }
         }
 
