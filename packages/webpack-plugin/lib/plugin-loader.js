@@ -106,10 +106,10 @@ module.exports = function (source) {
           let dirName = componentName + pathHash(result)
           let componentPath = path.join('components', dirName, componentName)
           componentPath = toPosix(componentPath)
+          pluginEntry.publicComponents[name] = componentPath
           // 如果之前已经创建了入口，直接return
           if (componentsMap[result] === componentPath) return callback()
           componentsMap[result] = componentPath
-          pluginEntry.publicComponents[name] = componentPath
           addEntrySafely(result, componentPath, callback)
         })
       }, callback)
