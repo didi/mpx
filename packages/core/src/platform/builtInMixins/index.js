@@ -26,6 +26,9 @@ export default function getBuiltInMixins (options, type) {
       getTabBarMixin(type),
       pageRouteMixin(type)
     ]
+    if (options.relations) {
+      bulitInMixins.push(relationsMixin(type))
+    }
   } else {
     // 此为差异抹平类mixins，原生模式下也需要注入也抹平平台差异
     bulitInMixins = [
