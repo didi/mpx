@@ -616,7 +616,7 @@ function parseComponent (content, options) {
         attrs: attrs.reduce(function (cumulated, ref) {
           let name = ref.name
           let value = ref.value
-          cumulated[name] = value || true
+          cumulated[name] = value != null ? value : true
           return cumulated
         }, {})
       }
@@ -669,7 +669,7 @@ function parseComponent (content, options) {
         block.scoped = true
       }
       if (attr.name === 'module') {
-        block.module = attr.value || true
+        block.module = attr.value != null ? attr.value : true
       }
       if (attr.name === 'src') {
         block.src = attr.value
@@ -971,7 +971,7 @@ function getAndRemoveAttr (el, name, removeFromMap = true) {
   let list = el.attrsList
   for (let i = 0, l = list.length; i < l; i++) {
     if (list[i].name === name) {
-      val = list[i].value || true
+      val = list[i].value != null ? list[i].value : true
       list.splice(i, 1)
       break
     }
