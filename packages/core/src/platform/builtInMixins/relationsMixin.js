@@ -168,5 +168,77 @@ export default function relationsMixin (mixinType) {
         }
       }
     }
+  } else if (__mpx_mode__ === 'web' && mixinType === 'component') {
+    return {
+      mounted () {
+        if (this.$rawOptions.relations) {
+          this.$mpxRelations = this.$rawOptions.relations
+          this.__mpxCollectChildComponent = {}
+          this.__mpxCollectParentComponent = {}
+
+          this.__mpxCollectAllComponent()
+
+          this.__mpxRelationExec('linked')
+        }
+      },
+      beforeDestroy () {
+        this.__mpxRelationExec('unlinked')
+      },
+      methods: {
+        __mpxRelationExec (type) {
+          Object.keys(this.__mpxCollectChildComponent).forEach(path => {
+            this.__mpxCollectChildComponent[path].forEach(item => {
+              let target = item.$rawOptions.relations[path] && item.$rawOptions.relations[path][type]
+              if (typeof target === 'function') {
+                target.call(item, this)
+              }
+            })
+          })
+          Object.keys(this.__mpxCollectParentComponent).forEach(path => {
+            let instance = this.__mpxCollectParentComponent[path]
+            let target = instance && instance.$rawOptions.relations[path] && instance.$rawOptions.relations[path][type]
+            if (typeof target === 'function') {
+              target.call(target, this)
+            }
+          })
+        },
+        __mpxCollectAllComponent () { // 收集所有关联组件
+          Object.keys(this.$mpxRelations).forEach(path => {
+            let type = this.$mpxRelations[path].type
+            if (type === 'child' || type === 'descendant') { // 向下查找
+              Object.keys(this.$slots).forEach(slotsKey => {
+                this.__mpxCollectChildComponents(path, this.$options.mpxCid, type, this.$slots[slotsKey], this.__mpxCollectChildComponent)
+              })
+            } else if (type === 'parent' || type === 'ancestor') { // 向上查找
+              this.__mpxCollectParentCompoents(path, this.$options.mpxCid, type, this.$parent, this.__mpxCollectParentComponent)
+            }
+          })
+        },
+        __mpxCollectChildComponents (path, selfPath, type, children, list) {
+          children.forEach(vNode => {
+            let child = vNode.componentInstance
+            if (child) {
+              if (child.$options.mpxCid === path) {
+                list[selfPath] = list[selfPath] || []
+                list[selfPath].push(child)
+              }
+            } else {
+              vNode.children && this.__mpxCollectChildComponents.apply(vNode, [path, selfPath, type, vNode.children, list])
+            }
+          })
+        },
+        __mpxCollectParentCompoents (path, slefPath, type, $paraent, list) {
+          while ($paraent && !list[slefPath]) {
+            if ($paraent.$rawOptions.relations) {
+              if ($paraent.$options.mpxCid === path) {
+                list[slefPath] = $paraent
+              }
+            } else {
+              $paraent = $paraent.$parent
+            }
+          }
+        }
+      }
+    }
   }
 }
