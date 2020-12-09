@@ -79,6 +79,8 @@ Mpx 将 mixin.styl 中的代码经过 loader 编译后生成一份单独的 wxss
 
 ### @import 复用
 
+如果指定 style 标签的 lang 属性并且使用 @import 导入样式，那么这个文件经过对应的 loader 处理之后的内容会重复打包到引用它的文件目录下，并不会抽离成单独的文件，这样无形中增加了代码体积。
+
 ``` template
 <!-- index.mpx -->
 <style lang="stylus">
@@ -88,14 +90,12 @@ Mpx 将 mixin.styl 中的代码经过 loader 编译后生成一份单独的 wxss
 
 ``` template
 <!-- list.mpx -->
-<style lang="stylus">
-  @import "../styles/mixin.styl"
+<style lang="less">
+  @import "../styles/mixin.less";
 </style>
 ```
 
-如果 @import 一份非 css 文件，那么这个文件经过对应的 loader 处理之后的内容会重复打包到引用它的文件目录下，并不会抽离成单独的文件，这样无形中增加了代码体积。
-
-如果 @import 一份 css 文件，则最终打包后的效果与 style src 一致。
+如果导入的是一份 css 文件，则最终打包后的效果与 style src 一致。
 
 ``` styl
 // styles/mixin.css
