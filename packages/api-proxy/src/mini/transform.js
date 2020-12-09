@@ -1,6 +1,7 @@
 import { error, getEnvObj, genFromMap, makeMap } from '../common/js'
 import getWxToAliApi from './platform/wxToAli'
 import getWxToQqApi from './platform/wxToQq'
+import getWxToQaApi from './platform/wxToQa'
 
 const fromMap = genFromMap()
 
@@ -13,16 +14,20 @@ function transformApi (options) {
   const env = __mpx_mode__
   const wxToAliApi = getWxToAliApi({ optimize: options.optimize })
   const wxToQqApi = getWxToQqApi({ optimize: options.optimize })
+  const wxToQaApi = getWxToQaApi({ optimize: options.optimize })
   const platformMap = {
     'wx_ali': wxToAliApi,
     'qq_ali': wxToAliApi,
     'swan_ali': wxToAliApi,
     'tt_ali': wxToAliApi,
-    'wx_qq': wxToQqApi
+    'wx_qq': wxToQqApi,
+    'wx_qa': wxToQaApi
+
   }
   const proxyPlatformMap = {
     'ali': wxToAliApi,
-    'qq': wxToQqApi
+    'qq': wxToQqApi,
+    'qa': wxToQaApi
   }
   const needProxy = {}
   const excludeMap = makeMap(options.exclude)
