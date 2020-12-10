@@ -44,7 +44,7 @@ export default class MPXProxy {
     this.state = 'initial'
     this.lockTask = asyncLock()
     this.ignoreProxyMap = makeMap(EXPORT_MPX.config.ignoreProxyWhiteList)
-    if (__mpx_mode__ !== 'web') {
+    if (__mpx_mode__ !== 'web' && __mpx_mode__ !== 'qa') {
       this._watchers = []
       this._watcher = null
       this.localKeysMap = {} // 非props key
@@ -59,12 +59,12 @@ export default class MPXProxy {
   created (...params) {
     this.initApi()
     this.callUserHook(BEFORECREATE)
-    if (__mpx_mode__ !== 'web') {
+    if (__mpx_mode__ !== 'web' && __mpx_mode__ !== 'qa') {
       this.initState(this.options)
     }
     this.state = CREATED
     this.callUserHook(CREATED, ...params)
-    if (__mpx_mode__ !== 'web') {
+    if (__mpx_mode__ !== 'web' && __mpx_mode__ !== 'qa') {
       // 强制走小程序原生渲染逻辑
       this.options.__nativeRender__ ? this.doRender() : this.initRender()
     }
@@ -137,7 +137,7 @@ export default class MPXProxy {
         error(`The key [${key}] of page options exist in the page instance already, please check your page options!`, this.options.mpxFileResource)
       })
     }
-    if (__mpx_mode__ !== 'web') {
+    if (__mpx_mode__ !== 'web' && __mpx_mode__ !== 'qa') {
       // 挂载$watch
       this.target.$watch = (...rest) => this.watch(...rest)
       // 强制执行render

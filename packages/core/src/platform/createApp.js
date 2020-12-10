@@ -53,7 +53,7 @@ export default function createApp (option, config = {}) {
   const { rawOptions } = transferOptions(option, 'app', builtInMixins)
   const defaultOptions = filterOptions(mergeOptions(rawOptions, 'app', false), appData)
 
-  if (__mpx_mode__ === 'web') {
+  if (__mpx_mode__ === 'web' || __mpx_mode__ === 'qa') {
     global.currentOption = defaultOptions
     global.getApp = function () {
       return appData
