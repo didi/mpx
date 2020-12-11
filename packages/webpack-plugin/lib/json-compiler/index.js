@@ -50,9 +50,7 @@ module.exports = function (raw = '{}') {
   const packageName = mpx.currentPackageRoot || 'main'
   const pagesMap = mpx.pagesMap
   const componentsMap = mpx.componentsMap[packageName]
-  const EntryNode = mpx.EntryNode
-  const entryNodesMap = mpx.entryNodesMap
-  const entryModulesMap = mpx.entryModulesMap
+  const getEntryNode = mpx.getEntryNode
   const mode = mpx.mode
   const defs = mpx.defs
   const globalSrcMode = mpx.srcMode
@@ -75,21 +73,7 @@ module.exports = function (raw = '{}') {
   const entryRequest = entryModule.rawRequest
   const entryType = isApp ? 'App' : pagesMap[resourcePath] ? 'Page' : 'Component'
 
-  function getEntryNode (request, type) {
-    if (!entryNodesMap[request]) {
-      entryNodesMap[request] = new EntryNode({
-        type,
-        request
-      })
-    } else if (entryNodesMap[request].type !== type) {
-      emitError(`获取request为${request}的entryNode时类型与已有节点冲突, 当前获取的type为${type}, 已有节点的type为${entryNodesMap[request].type}!`)
-    }
-    return entryNodesMap[request]
-  }
-
-  const currentEntry = getEntryNode(entryRequest, entryType)
-  currentEntry.module = entryModule
-  entryModulesMap.set(entryModule, currentEntry)
+  const currentEntry = getEntryNode(entryRequest, entryType, entryModule)
 
   const copydir = (dir, context, callback) => {
     fs.readdir(dir, (err, files) => {
@@ -304,9 +288,11 @@ module.exports = function (raw = '{}') {
         resource = '!!' + nativeLoaderPath + '!' + resource
       }
       // 此处query为了实现消除分包间模块缓存，以实现不同分包中引用的组件在不同分包中都能输出
-      resource = addQuery(resource, {
-        packageName: packageInfo.packageName
-      })
+      if (packageInfo.packageName !== 'main') {
+        resource = addQuery(resource, {
+          packageName: packageInfo.packageName
+        })
+      }
       currentEntry.addChild(getEntryNode(resource, 'Component'))
       // 如果之前已经创建了入口，直接return
       if (packageInfo.alreadyOutputed) {

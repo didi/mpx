@@ -43,36 +43,12 @@ module.exports = function (source) {
   const packageName = 'main'
   const pagesMap = mpx.pagesMap
   const componentsMap = mpx.componentsMap[packageName]
-  const EntryNode = mpx.EntryNode
-  const entryNodesMap = mpx.entryNodesMap
-  const entryModulesMap = mpx.entryModulesMap
   const resolveMode = mpx.resolveMode
   const projectRoot = mpx.projectRoot
   const extract = mpx.extract
   const pathHash = mpx.pathHash
   const resourceName = this._compilation._preparedEntrypoints[0].name
   this._compilation._preparedEntrypoints.pop()
-
-  const entryModule = this._module
-  // 通过rawRequest关联entryNode和entryModule
-  const entryRequest = entryModule.rawRequest
-  const entryType = 'PluginJSON'
-
-  function getEntryNode (request, type) {
-    if (!entryNodesMap[request]) {
-      entryNodesMap[request] = new EntryNode({
-        type,
-        request
-      })
-    } else if (entryNodesMap[request].type !== type) {
-      emitError(`获取request为${request}的entryNode时类型与已有节点冲突, 当前获取的type为${type}, 已有节点的type为${entryNodesMap[request].type}!`)
-    }
-    return entryNodesMap[request]
-  }
-
-  const currentEntry = getEntryNode(entryRequest, entryType)
-  currentEntry.module = entryModule
-  entryModulesMap.set(entryModule, currentEntry)
 
   let entryDeps = new Set()
 
@@ -114,7 +90,7 @@ module.exports = function (source) {
   }
 
   let processMain, processComponents, processPages
-
+  
   processMain = processComponents = processPages = (callback) => {
     callback()
   }
@@ -135,8 +111,7 @@ module.exports = function (source) {
           return callback(new Error(`The plugin's main path ${main} must be in the context ${context}!`))
         }
         pluginEntry.main = mainPath + '.js'
-        mpx.pluginMain = mainPath
-        currentEntry.addChild(getEntryNode(resource, 'PluginJS'))
+        mpx.pluginMainResource = resource
         addEntrySafely(resource, mainPath, callback)
       })
     }.bind(this, pluginEntry.main)
@@ -179,7 +154,6 @@ module.exports = function (source) {
           if (ext === '.js') {
             resource = '!!' + nativeLoaderPath + '!' + resource
           }
-          currentEntry.addChild(getEntryNode(resource, 'Component'))
           // 如果之前已经创建了入口，直接return
           if (componentsMap[resource] === componentPath) return callback()
           componentsMap[resource] = componentPath
@@ -217,7 +191,6 @@ module.exports = function (source) {
           if (ext === '.js') {
             resource = '!!' + nativeLoaderPath + '!' + resource
           }
-          currentEntry.addChild(getEntryNode(resource, 'Page'))
           // 如果之前已经创建了入口，直接return
           if (pagesMap[resourcePath] === pageName) return callback()
           pagesMap[resourcePath] = pageName

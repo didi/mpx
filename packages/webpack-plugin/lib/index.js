@@ -302,7 +302,6 @@ class MpxWebpackPlugin {
           staticResourceMap: {
             main: {}
           },
-          EntryNode,
           // 记录entry依赖关系，用于体积分析
           entryNodesMap: {},
           // 记录entryModule与entryNode的对应关系，用于体积分析
@@ -344,6 +343,25 @@ class MpxWebpackPlugin {
           attributes: this.options.attributes,
           externals: this.options.externals,
           useRelativePath: this.options.useRelativePath,
+          getEntryNode: (request, type, module) => {
+            const entryNodesMap = mpx.entryNodesMap
+            const entryModulesMap = mpx.entryModulesMap
+            if (!entryNodesMap[request]) {
+              entryNodesMap[request] = new EntryNode({
+                type,
+                request
+              })
+            }
+            const currentEntry = entryNodesMap[request]
+            if (currentEntry.type !== type) {
+              emitError(`获取request为${request}的entryNode时类型与已有节点冲突, 当前获取的type为${type}, 已有节点的type为${currentEntry.type}!`)
+            }
+            if (module) {
+              currentEntry.module = module
+              entryModulesMap.set(module, currentEntry)
+            }
+            return currentEntry
+          },
           pathHash: (resourcePath) => {
             if (this.options.pathHashMode === 'relative' && this.options.projectRoot) {
               return hash(path.relative(this.options.projectRoot, resourcePath))
@@ -419,6 +437,12 @@ class MpxWebpackPlugin {
           }
         }
       }
+
+      compilation.hooks.succeedModule.tap('MpxWebpackPlugin', (module) => {
+        if (mpx.pluginMainResource && mpx.pluginMainResource === module.rawRequest) {
+          mpx.getEntryNode(mpx.pluginMainResource, 'Plugin', module)
+        }
+      })
 
       compilation.hooks.finishModules.tap('MpxWebpackPlugin', (modules) => {
         // 自动跟进分包配置修改splitChunksPlugin配置
@@ -811,7 +835,7 @@ try {
             source.add(originalSource)
             source.add(`\nmodule.exports = window[${JSON.stringify(jsonpFunction)}];\n`)
           } else {
-            if (mpx.pluginMain === chunk.name) {
+            if (mpx.pluginMainResource && chunk.entryModule && mpx.pluginMainResource === chunk.entryModule.rawRequest) {
               source.add('module.exports =\n')
             }
             source.add(originalSource)
@@ -964,6 +988,16 @@ try {
         return result
       }
 
+      function filter (set, fn) {
+        const result = new Set()
+        set.forEach((item) => {
+          if (fn(item)) {
+            result.add(item)
+          }
+        })
+        return result
+      }
+
       function concat (setA, setB) {
         const result = new Set()
         setA.forEach((item) => {
@@ -1102,8 +1136,20 @@ try {
         }
 
         return {
-          selfEntryModules: concat(map(selfSet, item => item.module), otherSelfEntryModules),
-          sharedEntryModules: map(sharedSet, item => item.module)
+          selfEntryModules: concat(map(filter(selfSet, item => {
+            if (!item.module) {
+              compilation.warnings.push(`EntryNode[${item.request}] has no module, please check!`)
+              return false
+            }
+            return true
+          }), item => item.module), otherSelfEntryModules),
+          sharedEntryModules: map(filter(sharedSet, item => {
+            if (!item.module) {
+              compilation.warnings.push(`EntryNode[${item.request}] has no module, please check!`)
+              return false
+            }
+            return true
+          }), item => item.module)
         }
       }
 
