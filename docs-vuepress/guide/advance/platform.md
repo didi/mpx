@@ -380,7 +380,16 @@ checkbox|是
 checkbox-group|是
 radio|是
 radio-group|是
+movable-area|是
+rich-text|是
 picker|是
+picker-view|是
+slider|是
+switch|是
+video|是
+audio|是
+canvas|是
+web-view|是
 
 #### 生命周期
 
