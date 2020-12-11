@@ -134,6 +134,7 @@ class MpxWebpackPlugin {
     options.reportSize = options.reportSize || null
     options.pathHashMode = options.pathHashMode || 'absolute'
     options.forceDisableBuiltInLoader = options.forceDisableBuiltInLoader || false
+    options.useRelativePath = options.useRelativePath || false
     this.options = options
   }
 
@@ -342,6 +343,7 @@ class MpxWebpackPlugin {
           appTitle: 'Mpx homepage',
           attributes: this.options.attributes,
           externals: this.options.externals,
+          useRelativePath: this.options.useRelativePath,
           pathHash: (resourcePath) => {
             if (this.options.pathHashMode === 'relative' && this.options.projectRoot) {
               return hash(path.relative(this.options.projectRoot, resourcePath))
@@ -372,15 +374,12 @@ class MpxWebpackPlugin {
             const resourceMap = isStatic ? mpx.staticResourceMap : mpx.componentsMap
             // 主包中有引用一律使用主包中资源，不再额外输出
             if (!resourceMap.main[resourcePath]) {
-              if (queryObj.packageName) {
-                packageName = queryObj.packageName
-                packageRoot = packageName === 'main' ? '' : packageName
-                if (packageName !== currentPackageName && packageName !== 'main') {
-                  error && error(new Error(`根据小程序分包资源引用规则，资源只支持声明为当前分包或者主包，否则可能会导致资源无法引用的问题，当前资源的当前分包为${currentPackageName}，资源查询字符串声明的分包为${packageName}，请检查！`))
-                }
-              } else if (currentPackageRoot) {
-                packageName = packageRoot = currentPackageRoot
+              if (queryObj.packageName && queryObj.packageName !== currentPackageName) {
+                warn && warn(new Error(`资源[${resource}]查询字符串中声明的分包[${queryObj.packageName}]与当前正在处理的分包[${currentPackageName}]不符，请检查！`))
               }
+
+              packageRoot = currentPackageRoot
+              packageName = currentPackageName
 
               if (this.options.auditResource) {
                 if (this.options.auditResource !== 'component' || !isStatic) {
@@ -395,18 +394,15 @@ class MpxWebpackPlugin {
 
             outputPath = toPosix(path.join(packageRoot, outputPath))
 
-            const currentResourceMap = resourceMap[currentPackageName]
-            const actualResourceMap = resourceMap[packageName]
+            const currentResourceMap = resourceMap[packageName]
 
             let alreadyOutputed = false
             // 如果之前已经进行过输出，则不需要重复进行
-            if (actualResourceMap[resourcePath]) {
-              outputPath = actualResourceMap[resourcePath]
+            if (currentResourceMap[resourcePath] === outputPath) {
               alreadyOutputed = true
+            } else {
+              currentResourceMap[resourcePath] = outputPath
             }
-            // 将当前的currentResourceMap和实际进行输出的actualResourceMap都填充上，便于resolve时使用
-            // todo 此处逻辑存在一定问题，当一个分包中两个地方一个声明了主包资源，另一个声明为当前分包时，此处前者生成的资源map会被后者覆盖，导致前者的json无法输出，后续优化分包资源处理时需要优化
-            currentResourceMap[resourcePath] = actualResourceMap[resourcePath] = outputPath
 
             if (isStatic && packageName !== 'main' && !mpx.staticResourceHit[resourcePath]) {
               mpx.staticResourceHit[resourcePath] = packageName

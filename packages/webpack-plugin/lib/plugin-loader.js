@@ -5,6 +5,10 @@ const SingleEntryPlugin = require('webpack/lib/SingleEntryPlugin')
 const parseRequest = require('./utils/parse-request')
 const toPosix = require('./utils/to-posix')
 const getMainCompilation = require('./utils/get-main-compilation')
+const isUrlRequestRaw = require('./utils/is-url-request')
+const loaderUtils = require('loader-utils')
+const normalize = require('./utils/normalize')
+const nativeLoaderPath = normalize.lib('native-loader')
 
 // webpack4中.json文件会走json parser，抽取内容的占位内容必须为合法json，否则会在parse阶段报错
 const defaultResultSource = '{}'
@@ -17,17 +21,58 @@ module.exports = function (source) {
   const mainCompilation = getMainCompilation(this._compilation)
   const mpx = mainCompilation.__mpx__
 
+  const emitError = (msg) => {
+    this.emitError(
+      new Error('[json compiler][' + this.resource + ']: ' + msg)
+    )
+  }
+
+  const isUrlRequest = r => isUrlRequestRaw(r, projectRoot)
+  const urlToRequest = r => loaderUtils.urlToRequest(r, projectRoot)
+  const resolve = (context, request, callback) => {
+    const { queryObj } = parseRequest(request)
+    context = queryObj.context || context
+    return this.resolve(context, request, callback)
+  }
+
   if (!mpx) {
     return nativeCallback(null, source)
   }
 
+  const context = this.context
   const packageName = 'main'
   const pagesMap = mpx.pagesMap
   const componentsMap = mpx.componentsMap[packageName]
+  const EntryNode = mpx.EntryNode
+  const entryNodesMap = mpx.entryNodesMap
+  const entryModulesMap = mpx.entryModulesMap
+  const resolveMode = mpx.resolveMode
+  const projectRoot = mpx.projectRoot
   const extract = mpx.extract
   const pathHash = mpx.pathHash
   const resourceName = this._compilation._preparedEntrypoints[0].name
   this._compilation._preparedEntrypoints.pop()
+
+  const entryModule = this._module
+  // 通过rawRequest关联entryNode和entryModule
+  const entryRequest = entryModule.rawRequest
+  const entryType = 'PluginJSON'
+
+  function getEntryNode (request, type) {
+    if (!entryNodesMap[request]) {
+      entryNodesMap[request] = new EntryNode({
+        type,
+        request
+      })
+    } else if (entryNodesMap[request].type !== type) {
+      emitError(`获取request为${request}的entryNode时类型与已有节点冲突, 当前获取的type为${type}, 已有节点的type为${entryNodesMap[request].type}!`)
+    }
+    return entryNodesMap[request]
+  }
+
+  const currentEntry = getEntryNode(entryRequest, entryType)
+  currentEntry.module = entryModule
+  entryModulesMap.set(entryModule, currentEntry)
 
   let entryDeps = new Set()
 
@@ -68,11 +113,6 @@ module.exports = function (source) {
     return callback(err)
   }
 
-  function getName (raw) {
-    const match = /^(.*?)(\.[^.]*)?$/.exec(raw)
-    return match[1]
-  }
-
   let processMain, processComponents, processPages
 
   processMain = processComponents = processPages = (callback) => {
@@ -81,16 +121,23 @@ module.exports = function (source) {
 
   if (pluginEntry.main) {
     processMain = function (main, callback) {
-      this.resolve(this.context, main, (err, result) => {
+      if (!isUrlRequest(main)) return callback()
+      if (resolveMode === 'native') {
+        main = urlToRequest(main)
+      }
+      resolve(context, main, (err, resource) => {
         if (err) return callback(err)
-        let mainPath = getName(path.join('', main))
-        mainPath = toPosix(mainPath)
+        const { resourcePath } = parseRequest(resource)
+        // 获取pageName
+        const relative = path.relative(context, resourcePath)
+        const mainPath = toPosix(/^(.*?)(\.[^.]*)?$/.exec(relative)[1])
         if (/^\./.test(mainPath)) {
-          return callback(new Error(`Main's path ${main} which is referenced in ${this.context} must be a subdirectory of ${this.context}!`))
+          return callback(new Error(`The plugin's main path ${main} must be in the context ${context}!`))
         }
         pluginEntry.main = mainPath + '.js'
-        addEntrySafely(result, mainPath, callback)
         mpx.pluginMain = mainPath
+        currentEntry.addChild(getEntryNode(resource, 'PluginJS'))
+        addEntrySafely(resource, mainPath, callback)
       })
     }.bind(this, pluginEntry.main)
   }
@@ -98,19 +145,45 @@ module.exports = function (source) {
   if (pluginEntry.publicComponents) {
     processComponents = function (components, callback) {
       async.forEachOf(components, (component, name, callback) => {
-        this.resolve(this.context, component, (err, result) => {
+        if (!isUrlRequest(component)) return callback()
+        if (resolveMode === 'native') {
+          component = urlToRequest(component)
+        }
+        resolve(context, component, (err, resource, info) => {
           if (err) return callback(err)
-          result = parseRequest(result).resourcePath
-          let parsed = path.parse(result)
-          let componentName = parsed.name
-          let dirName = componentName + pathHash(result)
-          let componentPath = path.join('components', dirName, componentName)
-          componentPath = toPosix(componentPath)
+          const resourcePath = parseRequest(resource).resourcePath
+          const parsed = path.parse(resourcePath)
+          const ext = parsed.ext
+          let outputPath
+          if (ext === '.js') {
+            let root = info.descriptionFileRoot
+            let name = 'nativeComponent'
+            if (info.descriptionFileData) {
+              if (info.descriptionFileData.miniprogram) {
+                root = path.join(root, info.descriptionFileData.miniprogram)
+              }
+              if (info.descriptionFileData.name) {
+                // 去掉name里面的@符号，因为支付宝不支持文件路径上有@
+                name = info.descriptionFileData.name.split('@').join('')
+              }
+            }
+            const resourceName = path.join(parsed.dir, parsed.name)
+            let relativePath = path.relative(root, resourceName)
+            outputPath = path.join('components', name + pathHash(root), relativePath)
+          } else {
+            let componentName = parsed.name
+            outputPath = path.join('components', componentName + pathHash(resourcePath), componentName)
+          }
+          const componentPath = toPosix(outputPath)
           pluginEntry.publicComponents[name] = componentPath
+          if (ext === '.js') {
+            resource = '!!' + nativeLoaderPath + '!' + resource
+          }
+          currentEntry.addChild(getEntryNode(resource, 'Component'))
           // 如果之前已经创建了入口，直接return
-          if (componentsMap[result] === componentPath) return callback()
-          componentsMap[result] = componentPath
-          addEntrySafely(result, componentPath, callback)
+          if (componentsMap[resource] === componentPath) return callback()
+          componentsMap[resource] = componentPath
+          addEntrySafely(resource, componentPath, callback)
         })
       }, callback)
     }.bind(this, pluginEntry.publicComponents)
@@ -119,25 +192,36 @@ module.exports = function (source) {
   if (pluginEntry.pages) {
     processPages = function (pages, callback) {
       async.forEachOf(pages, (page, name, callback) => {
-        this.resolve(this.context, page, (err, result) => {
+        if (!isUrlRequest(page)) return callback()
+        if (resolveMode === 'native') {
+          page = urlToRequest(page)
+        }
+        resolve(context, page, (err, resource) => {
           if (err) return callback(err)
-          result = parseRequest(result).resourcePath
-          let pagePath = getName(path.join('', page))
-          pagePath = toPosix(pagePath)
-          if (/^\./.test(pagePath)) {
-            return callback(new Error(`Page's path ${page} which is referenced in ${this.context} must be a subdirectory of ${this.context}!`))
+          const { resourcePath } = parseRequest(resource)
+          const ext = path.extname(resourcePath)
+          // 获取pageName
+          const relative = path.relative(context, resourcePath)
+          const pageName = toPosix(/^(.*?)(\.[^.]*)?$/.exec(relative)[1])
+          if (/^\./.test(pageName)) {
+            // 如果当前page不存在于context中，插件模式下报错
+            return callback(new Error(`Current page ${resourcePath} is not in current pages directory ${context}, which is not allowed in plugin mode!`))
           }
-          // 如果存在page命名冲突，return err
+          // 如果当前page与已有page存在命名冲突，插件模式下报错
           for (let key in pagesMap) {
-            if (pagesMap[key] === pagePath && key !== result) {
-              return callback(new Error(`Resources in ${result} and ${key} are registered with same page path ${pagePath}, which is not allowed!`))
+            if (pagesMap[key] === pageName && key !== resourcePath) {
+              return callback(new Error(`Current page ${resourcePath} is registered with a conflict page path ${pageName} which is already existed in system, which is not allowed in plugin mode!`))
             }
           }
+          pluginEntry.pages[name] = pageName
+          if (ext === '.js') {
+            resource = '!!' + nativeLoaderPath + '!' + resource
+          }
+          currentEntry.addChild(getEntryNode(resource, 'Page'))
           // 如果之前已经创建了入口，直接return
-          if (pagesMap[result] === pagePath) return callback()
-          pagesMap[result] = pagePath
-          pluginEntry.pages[name] = pagePath
-          addEntrySafely(result, pagePath, callback)
+          if (pagesMap[resourcePath] === pageName) return callback()
+          pagesMap[resourcePath] = pageName
+          addEntrySafely(resource, pageName, callback)
         })
       }, callback)
     }.bind(this, pluginEntry.pages)
