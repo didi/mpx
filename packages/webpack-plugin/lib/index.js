@@ -354,7 +354,7 @@ class MpxWebpackPlugin {
             }
             const currentEntry = entryNodesMap[request]
             if (currentEntry.type !== type) {
-              emitError(`获取request为${request}的entryNode时类型与已有节点冲突, 当前获取的type为${type}, 已有节点的type为${currentEntry.type}!`)
+              compilation.errors.push(`获取request为${request}的entryNode时类型与已有节点冲突, 当前获取的type为${type}, 已有节点的type为${currentEntry.type}!`)
             }
             if (module) {
               currentEntry.module = module

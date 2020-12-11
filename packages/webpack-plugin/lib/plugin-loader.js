@@ -21,12 +21,6 @@ module.exports = function (source) {
   const mainCompilation = getMainCompilation(this._compilation)
   const mpx = mainCompilation.__mpx__
 
-  const emitError = (msg) => {
-    this.emitError(
-      new Error('[json compiler][' + this.resource + ']: ' + msg)
-    )
-  }
-
   const isUrlRequest = r => isUrlRequestRaw(r, projectRoot)
   const urlToRequest = r => loaderUtils.urlToRequest(r, projectRoot)
   const resolve = (context, request, callback) => {
@@ -90,7 +84,7 @@ module.exports = function (source) {
   }
 
   let processMain, processComponents, processPages
-  
+
   processMain = processComponents = processPages = (callback) => {
     callback()
   }
