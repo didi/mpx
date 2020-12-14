@@ -170,73 +170,56 @@ export default function relationsMixin (mixinType) {
     }
   } else if (__mpx_mode__ === 'web' && mixinType === 'component') {
     return {
+      created () {
+        this.$mpxRelations = this.$rawOptions.relations
+        this.__mpxRelationsVNodeMaps = {}
+      },
       mounted () {
-        if (this.$rawOptions.relations) {
-          this.$mpxRelations = this.$rawOptions.relations
-          this.__mpxCollectChildComponent = {}
-          this.__mpxCollectParentComponent = {}
-
-          this.__mpxCollectAllComponent()
-
-          this.__mpxRelationExec('linked')
-        }
+        this.__mpxCollectAllComponent()
+        this.__mpxRelationExec('linked')
       },
       beforeDestroy () {
         this.__mpxRelationExec('unlinked')
       },
       methods: {
-        __mpxRelationExec (type) {
-          Object.keys(this.__mpxCollectChildComponent).forEach(path => {
-            this.__mpxCollectChildComponent[path].forEach(item => {
-              let target = item.$mpxRelations[path] && item.$mpxRelations[path][type]
-              if (typeof target === 'function') {
-                target.call(item, this)
-              }
-            })
-          })
-          Object.keys(this.__mpxCollectParentComponent).forEach(path => {
-            let instance = this.__mpxCollectParentComponent[path]
-            let target = instance && instance.$mpxRelations[path] && instance.$mpxRelations[path][type]
-            if (typeof target === 'function') {
-              target.call(target, this)
-            }
-          })
-        },
-        __mpxCollectAllComponent () { // 收集所有关联组件
+        __mpxCollectAllComponent () {
           Object.keys(this.$mpxRelations).forEach(path => {
             let type = this.$mpxRelations[path].type
-            if (type === 'child' || type === 'descendant') { // 向下查找
-              Object.keys(this.$slots).forEach(slotsKey => {
-                this.__mpxCollectChildComponents(path, this.$options.mpxCid, type, this.$slots[slotsKey], this.__mpxCollectChildComponent)
-              })
-            } else if (type === 'parent' || type === 'ancestor') { // 向上查找
-              this.__mpxCollectParentCompoents(path, this.$options.mpxCid, type, this.$parent, this.__mpxCollectParentComponent)
+            if (type === 'parent' || type === 'ancestor') { // 向上查找
+              this.__mpxRelationsVNodeMaps[path] = {}
+              this.__mpxCollectParentComponent(path, this, type, this, this.__mpxRelationsVNodeMaps[path])
             }
           })
         },
-        __mpxCollectChildComponents (path, selfPath, type, children, list) {
-          children.forEach(vNode => {
-            let child = vNode.componentInstance
-            if (child) {
-              if (child.$options.mpxCid === path) {
-                list[selfPath] = list[selfPath] || []
-                list[selfPath].push(child)
+        __mpxCollectParentComponent (parentPath, child, type, cur, list) {
+          if (cur.$parent && !list.parent) {
+            let target = cur.$parent.$options.mpxCid === parentPath ? cur.$parent : ''
+            if (target) {
+              let relations = target.$mpxRelations[child.$options.mpxCid] || {}
+              if (relations.type === 'child' || relations.type === 'descendant') {
+                list.parent = target
+                list.child = child
               }
             } else {
-              vNode.children && this.__mpxCollectChildComponents.apply(vNode, [path, selfPath, type, vNode.children, list])
-            }
-          })
-        },
-        __mpxCollectParentCompoents (path, slefPath, type, $paraent, list) {
-          while ($paraent && !list[slefPath]) {
-            if ($paraent.$rawOptions.relations) {
-              if ($paraent.$options.mpxCid === path) {
-                list[slefPath] = $paraent
-              }
-            } else {
-              $paraent = $paraent.$parent
+              this.__mpxCollectParentComponent(parentPath, child, type, cur.$parent, list)
             }
           }
+        },
+        __mpxRelationExec (type) {
+          Object.keys(this.__mpxRelationsVNodeMaps).forEach(path => {
+            let context = this.__mpxRelationsVNodeMaps[path]
+            let { parent, child } = context
+            if (parent && child) {
+              let parentRelations = parent.$mpxRelations[child.$options.mpxCid]
+              if (typeof parentRelations[type] === 'function') {
+                parentRelations[type].call(parent, child)
+              }
+              let childRelations = child.$mpxRelations[parent.$options.mpxCid]
+              if (typeof childRelations[type] === 'function') {
+                childRelations[type].call(child, parent)
+              }
+            }
+          })
         }
       }
     }
