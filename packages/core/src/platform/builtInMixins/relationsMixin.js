@@ -187,14 +187,12 @@ export default function relationsMixin (mixinType) {
             let type = this.$mpxRelations[path].type
             if (type === 'parent' || type === 'ancestor') { // 向上查找
               this.__mpxRelationsVNodeMaps[path] = {}
-              this.depth = 0
               this.__mpxCollectParentComponent(path, this, type, this, this.__mpxRelationsVNodeMaps[path])
             }
           })
         },
         __mpxCollectParentComponent (parentPath, child, type, cur, list) {
           if (cur.$parent && !list.parent && this.depth < 2) {
-            this.depth++
             let target = cur.$parent.$options.mpxCid === parentPath ? cur.$parent : ''
             if (target) {
               let relations = target.$mpxRelations[child.$options.mpxCid] || {}
@@ -202,8 +200,6 @@ export default function relationsMixin (mixinType) {
                 list.parent = target
                 list.child = child
               }
-            } else {
-              this.__mpxCollectParentComponent(parentPath, child, type, cur.$parent, list)
             }
           }
         },
