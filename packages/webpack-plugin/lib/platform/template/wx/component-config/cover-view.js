@@ -21,7 +21,7 @@ module.exports = function ({ print }) {
         test: 'scroll-top',
         ali: aliPropLog,
         swan ({ name, value }) {
-          if ( typeof value === 'string') {
+          if (typeof value === 'string') {
             baiduValueLogError({ name, value })
           }
         },
