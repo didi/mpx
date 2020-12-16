@@ -192,7 +192,7 @@ export default function relationsMixin (mixinType) {
           })
         },
         __mpxCollectParentComponent (parentPath, child, type, cur, list) {
-          if (cur.$parent && !list.parent && this.depth < 2) {
+          if (cur.$parent && !list.parent) {
             let target = cur.$parent.$options.mpxCid === parentPath ? cur.$parent : ''
             if (target) {
               let relations = target.$mpxRelations[child.$options.mpxCid] || {}
