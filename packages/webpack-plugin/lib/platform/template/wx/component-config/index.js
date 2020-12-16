@@ -64,6 +64,8 @@ module.exports = function getComponentConfigs ({ warn, error }) {
       case 'tagRequiredProps':
         msg = `<${tag}> should have '${arg}' attr in ali environment!`
         break
+      case 'value-attr-uniform':
+        mag = `The internal attribute name of the <${tag}>'s attribute '${arg && arg.name}' is not supported in the ali environment, Please check!`
       default:
         msg = `<${tag}>'s transform has some error happened!`
     }

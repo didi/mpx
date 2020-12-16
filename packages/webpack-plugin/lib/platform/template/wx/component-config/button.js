@@ -11,6 +11,8 @@ module.exports = function ({ print }) {
   const baiduValueLog = print({ platform: 'baidu', tag: TAG_NAME, isError: false, type: 'value' })
   const baiduPropLog = print({ platform: 'baidu', tag: TAG_NAME, isError: false })
   const baiduEventLog = print({ platform: 'baidu', tag: TAG_NAME, isError: false })
+  const qqValueLogError = print({ platform: 'qq', tag: TAG_NAME, isError: true, type: 'value' })
+  const qqValueLog = print({ platform: 'qq', tag: TAG_NAME, isError: false, type: 'value' })
   const qqPropLog = print({ platform: 'qq', tag: TAG_NAME, isError: false })
   const qqEventLog = print({ platform: 'qq', tag: TAG_NAME, isError: false, type: 'event' })
   const ttPropLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false })
@@ -68,11 +70,20 @@ module.exports = function ({ print }) {
             baiduValueLogError({ name, value })
           }
         },
+        qq ({ name, value }) {
+          const supportList = ['share', 'getUserInfo', 'launchApp', 'openSetting', 'contact', 'feedback']
+          if (isMustache(value)) {
+            // 如果是个变量，报warning
+            qqValueLog({ name, value })
+          } else if (supportList.indexOf(value) === -1) {
+            qqValueLogError({ name, value })
+          }
+        },
         tt ({ name, value }) {
           if (isMustache(value)) {
             ttValueLog({ name, value })
           } else {
-            const supportList = ['share', 'getPhoneNumber']
+            const supportList = ['share', 'getPhoneNumber', 'contact']
             if (supportList.indexOf(value) === -1) {
               ttValueLogError({ name, value })
             }
@@ -109,7 +120,7 @@ module.exports = function ({ print }) {
     ],
     event: [
       {
-        test: /^(getphonenumber|getuserinfo)/,
+        test: /^(getphonenumber|getuserinfo)$/,
         ali () {
           return 'getAuthorize'
         }
@@ -123,12 +134,15 @@ module.exports = function ({ print }) {
         swan: baiduEventLog
       },
       {
-        test: /^(contact)$/,
+        test: /^(getphonenumber)$/,
         qq: qqEventLog
       },
       {
-        test: /^(getuserinfo|contact|getphonenumbe|error|launchapp|opensetting)$/,
-        tt: ttEventLog,
+        test: /^(getuserinfo|contact|error|launchapp|opensetting)$/,
+        tt: ttEventLog
+      },
+      {
+        test: /^(getuserinfo|contact|error|launchapp|opensetting|getphonenumber)$/,
         web: webEventLog
       }
     ]
