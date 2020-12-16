@@ -55,7 +55,7 @@ export default function processOption (
     if (routes.length) {
       if (firstPage) {
         routes.push({
-          path: '*',
+          path: '/',
           redirect: firstPage
         })
       }
@@ -69,6 +69,7 @@ export default function processOption (
       window.__mpxRouter.beforeEach(function (to, from, next) {
         let action = window.__mpxRouter.__mpxAction
         const stack = window.__mpxRouter.stack
+
         // 处理人为操作
         if (!action) {
           if (stack.length > 1 && stack[stack.length - 2].path === to.path) {
@@ -82,6 +83,38 @@ export default function processOption (
             }
           }
         }
+
+        const pageInRoutes = routes.some(item => item.path === to.path)
+        if (!pageInRoutes) {
+          if (stack.length < 1) {
+            // onPageNotFound，仅首次进入时生效
+            window.__mpxRouter.app.$options.onPageNotFound({
+              path: to.path,
+              query: to.query,
+              isEntryPage: true
+            })
+          } else {
+            let methods = ''
+            switch (action.type) {
+              case 'to':
+                methods = 'navigateTo'
+                break
+              case 'redirect':
+                methods = 'redirectTo'
+                break
+              case 'back':
+                methods = 'navigateBack'
+                break
+              case 'reLaunch':
+                methods = 'reLaunch'
+                break
+              default:
+                methods = 'navigateTo'
+            }
+            throw new Error(`${methods}:fail page "${to.path}" is not found`)
+          }
+        }
+
         const insertItem = {
           path: to.path
         }
