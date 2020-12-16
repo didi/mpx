@@ -183,6 +183,9 @@ export default function relationsMixin (mixinType) {
       },
       methods: {
         __mpxCollectAllComponent () {
+          if (!this.$mpxRelations) {
+            return
+          }
           Object.keys(this.$mpxRelations).forEach(path => {
             let type = this.$mpxRelations[path].type
             if (type === 'parent' || type === 'ancestor') { // 向上查找
