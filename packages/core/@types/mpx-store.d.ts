@@ -146,7 +146,7 @@ declare namespace MpxStore {
   }[StringKeyof<D>]>
   type GetDispatchAndCommitWithThis<A, D extends Deps, AK extends 'actions' | 'mutations'> = (<T extends keyof GetAllDepsType<A, D, AK>>(type: T, ...payload: GetAllDepsType<A, D, AK>[T] extends (...payload: infer P) => any ? P : never) => GetAllDepsType<A, D, AK>[T] extends (...payload: any[]) => infer R ? R : never)
 
-  type GetAllMapKeys<S, D extends Deps, SK extends 'state' | 'getters'> = GetAllDepsType<S, D, SK>
+  type GetAllMapKeys<S, D extends Deps, SK extends 'state' | 'getters'> = GetAllDepsType<S, D, SK> & GetStateAndGettersKey<S>
 
   interface StoreOptWithThis<S, G, M, A, D extends Deps> {
     state?: S
@@ -177,15 +177,15 @@ declare namespace MpxStore {
     mapState<K extends keyof S>(maps: K[]): {
       [I in K]: () => S[I]
     }
-    mapState(depPath: string, maps: string[]): {
-      [key: string]: () => any
+    mapState<T extends string, P extends string>(depPath: P, maps: readonly T[]): {
+      [K in T]: () => (CombineStringKey<P, K> extends keyof GetAllMapKeys<S, D, 'state'> ? GetAllMapKeys<S, D, 'state'>[CombineStringKey<P, K>] : any)
     }
     mapState<T extends mapStateFunctionType<S & UnboxDepsField<D, 'state'>, GetComputedType<G> & UnboxDepsField<D, 'getters'>>>(obj: ThisType<any> & T): {
-      [I in keyof T]: ReturnType<T[I]>
+      [I in keyof T]: () => ReturnType<T[I]>
     }
     // Support chain derivation
-    mapState<T extends { [key: string]: keyof GetAllMapKeys<G, D, 'state'> }>(obj: T): {
-      [I in keyof T]: GetAllMapKeys<G, D, 'state'>[T[I]]
+    mapState<T extends { [key: string]: keyof GetAllMapKeys<S, D, 'state'> }>(obj: T): {
+      [I in keyof T]: () => GetAllMapKeys<S, D, 'state'>[T[I]]
     }
     mapState<T extends { [key: string]: keyof S }>(obj: T): {
       [I in keyof T]: () => S[T[I]]
@@ -195,12 +195,13 @@ declare namespace MpxStore {
     }
 
     mapGetters<K extends keyof G>(maps: K[]): Pick<G, K>
-    mapGetters(depPath: string, maps: string[]): {
-      [key: string]: () => any
+    mapGetters<T extends string, P extends string>(depPath: P, maps: readonly T[]): {
+      // use GetComputedType to get getters' returns
+      [K in T]: () => (CombineStringKey<P, K> extends keyof GetAllMapKeys<GetComputedType<G>, D, 'getters'> ? GetAllMapKeys<GetComputedType<G>, D, 'getters'>[CombineStringKey<P, K>] : any)
     }
     // Support chain derivation
-    mapGetters<T extends { [key: string]: keyof GetAllMapKeys<G, D, 'getters'> }>(obj: T): {
-      [I in keyof T]: GetAllMapKeys<G, D, 'getters'>[T[I]]
+    mapGetters<T extends { [key: string]: keyof GetAllMapKeys<GetComputedType<G>, D, 'getters'> }>(obj: T): {
+      [I in keyof T]: () => GetAllMapKeys<GetComputedType<G>, D, 'getters'>[T[I]]
     }
     mapGetters<T extends { [key: string]: keyof G }>(obj: T): {
       [I in keyof T]: G[T[I]]
@@ -211,8 +212,8 @@ declare namespace MpxStore {
     }
 
     mapMutations<K extends keyof M>(maps: K[]): Pick<M, K>
-    mapMutations(depPath: string, maps: string[]): {
-      [key: string]: (...payloads: any[]) => any
+    mapMutations<T extends string, P extends string>(depPath: P, maps: readonly T[]): {
+      [K in T]: CombineStringKey<P, K> extends keyof GetAllDepsType<M, D, 'mutations'> ? GetAllDepsType<M, D, 'mutations'>[CombineStringKey<P, K>] : (...payloads: any[]) => any
     }
     mapMutations<T extends { [key: string]: keyof M }>(obj: T): {
       [I in keyof T]: M[T[I]]
@@ -222,8 +223,8 @@ declare namespace MpxStore {
     }
 
     mapActions<K extends keyof A>(maps: K[]): Pick<A, K>
-    mapActions(depPath: string, maps: string[]): {
-      [key: string]: (...payloads: any[]) => any
+    mapActions<T extends string, P extends string>(depPath: P, maps: readonly T[]): {
+      [K in T]: CombineStringKey<P, K> extends keyof GetAllDepsType<A, D, 'actions'> ? GetAllDepsType<A, D, 'actions'>[CombineStringKey<P, K>] : (...payloads: any[]) => any
     }
     mapActions<T extends { [key: string]: keyof A }>(obj: T): {
       [I in keyof T]: A[T[I]]

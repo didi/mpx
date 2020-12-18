@@ -243,8 +243,9 @@ export function createStoreWithThis<S = {}, G = {}, M extends MutationsAndAction
 // auxiliary functions
 export function createStateWithThis<S = {}> (state: S): S
 
-export function createGettersWithThis<S = {}, D extends Deps = {}, G = {}> (getters: G & ThisType<{ state: S & UnboxDepsField<D, 'state'>, getters: GetComputedType<G> & UnboxDepsField<D, 'getters'>, rootState: any }>, options?: {
+export function createGettersWithThis<S = {}, D extends Deps = {}, G = {}, OG = {}> (getters: G & ThisType<{ state: S & UnboxDepsField<D, 'state'>, getters: GetComputedType<G & OG> & UnboxDepsField<D, 'getters'>, rootState: any }>, options?: {
   state?: S,
+  getters?: OG,
   deps?: D
 }): G
 
