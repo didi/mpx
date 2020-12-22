@@ -9,6 +9,8 @@ module.exports = function ({ print }) {
   const ttEventLogError = print({ platform: 'bytedance', tag: TAG_NAME, isError: false, type: 'event' })
   const aliPropLog = print({ platform: 'ali', tag: TAG_NAME, isError: false })
   const aliEventLogError = print({ platform: 'ali', tag: TAG_NAME, isError: false, type: 'event' })
+  const qaPropLog = print({ platform: 'qa', tag: TAG_NAME, isError: false })
+  const qaEventLogError = print({ platform: 'qa', tag: TAG_NAME, isError: false, type: 'event' })
   return {
     test: TAG_NAME,
     web (tag, { el }) {
@@ -42,7 +44,11 @@ module.exports = function ({ print }) {
 
         test: /^(duration|danmu-list|danmu-btn|enable-danmu|muted|initial-time|page-gesture|direction|show-progress|show-center-play-btn|enable-progress-gesture|show-mute-btn|title|enable-play-gesture|auto-pause-if-navigate|auto-pause-if-open-native|vslide-gesture|vslide-gesture-in-fullscreen|ad-unit-id|poster-for-crawler|show-casting-button|picture-in-picture-mode|picture-in-picture-show-progress|enable-auto-rotation|show-screen-lock-button|show-snapshot-button)$/,
         tt: ttPropLog
-      }
+      },
+      {
+        test: /^(duration|danmu-list|danmu-btn|enable-danmu|muted|initial-time|page-gesture|direction|show-progress|show-center-play-btn|enable-progress-gesture|show-mute-btn|enable-play-gesture|auto-pause-if-navigate|auto-pause-if-open-native|vslide-gesture|vslide-gesture-in-fullscreen|ad-unit-id|poster-for-crawler|show-casting-button|picture-in-picture-mode|picture-in-picture-show-progress|enable-auto-rotation|show-screen-lock-button|show-snapshot-button)$/,
+        qa: qaPropLog
+      },
     ],
     event: [
       {
@@ -72,6 +78,10 @@ module.exports = function ({ print }) {
       {
         test: /^(progress|enterpictureinpicture|leavepictureinpicture|controlstoggle|loadedmetadata|seekcomplete)$/,
         tt: ttEventLogError
+      },
+      {
+        test: /^(progress|enterpictureinpicture|leavepictureinpicture|controlstoggle|loadedmetadata|seekcomplete)$/,
+        qa: qaEventLogError
       }
     ]
   }

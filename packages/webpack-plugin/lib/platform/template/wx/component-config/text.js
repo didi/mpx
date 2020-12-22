@@ -2,6 +2,7 @@ const TAG_NAME = 'text'
 
 module.exports = function ({ print }) {
   const baiduPropLog = print({ platform: 'baidu', tag: TAG_NAME, isError: false })
+  const qaPropLog = print({ platform: 'quickapp', tag: TAG_NAME, isError: false })
 
   return {
     test: TAG_NAME,
@@ -24,7 +25,8 @@ module.exports = function ({ print }) {
         test: /^(selectable|space|decode|use-built-in)$/,
         web (prop, { el }) {
           el.isBuiltIn = true
-        }
+        },
+        qa: qaPropLog
       }
     ]
   }

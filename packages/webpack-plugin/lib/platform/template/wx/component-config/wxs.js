@@ -16,6 +16,9 @@ module.exports = function ({ print }) {
     tt () {
       return 'sjs'
     },
+    qa () {
+      return 'qjs'
+    },
     // 组件属性中的差异部分
     props: [
       {
