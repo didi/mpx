@@ -70,6 +70,9 @@ class SelectQuery {
   }
 
   _handleFields (fields, el, selector) {
+    if (!el) {
+      return null
+    }
     const { id, dataset, rect, size, scrollOffset, properties = [], computedStyle = [], node } = fields
     const { left, right, top, bottom, width, height } = el.getBoundingClientRect()
 
