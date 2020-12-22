@@ -32,17 +32,21 @@
     watch: {
       src: {
         handler (src) {
-          this.image.src = src
+          if (src) {
+            this.image.src = src
+          }
         },
         immediate: true
       }
     },
     render (createElement) {
       if (this.mode === 'widthFix') {
+        const domProps = {}
+        if (this.src) {
+          domProps.src = this.src
+        }
         return createElement('img', {
-          domProps: {
-            src: this.src
-          },
+          domProps,
           style: {
             height: 'auto'
           },
@@ -51,8 +55,9 @@
         })
       }
 
-      const style = {
-        backgroundImage: `url(${this.src})`
+      const style = {}
+      if (this.src) {
+        style.backgroundImage = `url(${this.src})`
       }
       switch (this.mode) {
         case 'scaleToFill':
