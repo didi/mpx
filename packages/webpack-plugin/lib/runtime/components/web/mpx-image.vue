@@ -32,9 +32,7 @@
     watch: {
       src: {
         handler (src) {
-          if (src) {
-            this.image.src = src
-          }
+          if (src) this.image.src = src
         },
         immediate: true
       }
@@ -42,9 +40,7 @@
     render (createElement) {
       if (this.mode === 'widthFix') {
         const domProps = {}
-        if (this.src) {
-          domProps.src = this.src
-        }
+        if (this.src) domProps.src = this.src
         return createElement('img', {
           domProps,
           style: {
@@ -56,9 +52,7 @@
       }
 
       const style = {}
-      if (this.src) {
-        style.backgroundImage = `url(${this.src})`
-      }
+      if (this.src) style.backgroundImage = `url(${this.src})`
       switch (this.mode) {
         case 'scaleToFill':
           style.backgroundSize = '100% 100%'
