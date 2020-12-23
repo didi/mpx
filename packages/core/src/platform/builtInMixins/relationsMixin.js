@@ -199,7 +199,7 @@ export default function relationsMixin (mixinType) {
             let target = cur.$parent.$options.mpxCid === parentPath ? cur.$parent : ''
             if (target) {
               let relations = target.$mpxRelations[child.$options.mpxCid] || {}
-              if (relations.type === 'child' || relations.type === 'descendant') {
+              if ((relations.type === 'child' || relations.type === 'descendant') && (target.$vnode.context === child.$vnode.context)) {
                 list.parent = target
                 list.child = child
               }
