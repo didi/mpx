@@ -183,35 +183,27 @@ export default function relationsMixin (mixinType) {
       },
       methods: {
         __mpxCollectAllComponent () {
+          if (!this.$mpxRelations) {
+            return
+          }
           Object.keys(this.$mpxRelations).forEach(path => {
             let type = this.$mpxRelations[path].type
-            if (type === 'child' || type === 'descendant') { // 向下查找
-              Object.keys(this.$slots).forEach(key => {
-                this.$slots[key].forEach(vNode => {
-                  this.__mpxFindChildComponent(this, path, vNode)
-                })
-              })
+            if (type === 'parent' || type === 'ancestor') { // 向上查找
+              this.__mpxRelationsVNodeMaps[path] = {}
+              this.__mpxCollectParentComponent(path, this, type, this, this.__mpxRelationsVNodeMaps[path])
             }
           })
         },
-        __mpxFindChildComponent (parent, path, cur) {
-          let target = cur && cur.componentInstance
-          if ((target && target.$options.mpxCid) === path) {
-            let relations = target.$mpxRelations
-            if (relations) {
-              Object.keys(relations).forEach(cid => {
-                if (cid === parent.$options.mpxCid) {
-                  target.__mpxRelationsVNodeMaps[parent.$options.mpxCid] = {
-                    parent,
-                    child: target
-                  }
-                }
-              })
+        __mpxCollectParentComponent (parentPath, child, type, cur, list) {
+          if (cur.$parent && !list.parent) {
+            let target = cur.$parent.$options.mpxCid === parentPath ? cur.$parent : ''
+            if (target) {
+              let relations = target.$mpxRelations[child.$options.mpxCid] || {}
+              if (relations.type === 'child' || relations.type === 'descendant') {
+                list.parent = target
+                list.child = child
+              }
             }
-          } else if (cur.children) {
-            cur.children.forEach(child => {
-              this.__mpxFindChildComponent(parent, path, child)
-            })
           }
         },
         __mpxRelationExec (type) {
