@@ -1,8 +1,9 @@
 const TAG_NAME = 'view'
-const qaPropLog = print({ platform: 'quickapp', tag: TAG_NAME, isError: false })
-const qaEventLogError = print({ platform: 'quickapp', tag: TAG_NAME, isError: false, type: 'event' })
 
 module.exports = function ({ print }) {
+  const qaPropLog = print({ platform: 'quickapp', tag: TAG_NAME, isError: false })
+  const qaEventLogError = print({ platform: 'quickapp', tag: TAG_NAME, isError: false, type: 'event' })
+  
   return {
     // 匹配标签名，可传递正则
     test: TAG_NAME,

@@ -58,7 +58,6 @@ export default function proxyEventMixin () {
       const innerFilter = {
         trim: val => typeof val === 'string' && val.trim()
       }
-      const originValue = valuePath.reduce((acc, cur) => acc[cur], $event.detail)
       let originValue
       if (__mpx_mode__ === 'qa') {
         originValue = valuePath.reduce((acc, cur) => acc[cur], $event)
