@@ -157,13 +157,16 @@ declare namespace MpxStore {
       state: S & UnboxDepsField<D, 'state'>,
       getters: GetComputedType<G> & UnboxDepsField<D, 'getters'>,
       dispatch: GetDispatchAndCommitWithThis<A, D, 'actions'>,
-      commit: GetDispatchAndCommitWithThis<M, D, 'mutations'>
+      commit: GetDispatchAndCommitWithThis<M, D, 'mutations'> & GetCommit<M, D>
+    } & { // todo elegant overload
+      dispatch(type: string, ...payload: any[]): any
+      commit(type: string, ...payload: any[]): any
     }>
     deps?: D
     modules?: Record<string, StoreOptWithThis<{}, {}, {}, {}, {}>>
   }
 
-  interface StoreWithThis<S = {}, G = {}, M = {}, A = {}, D extends Deps = {}> {
+  interface IStoreWithThis<S = {}, G = {}, M = {}, A = {}, D extends Deps = {}> {
 
     state: S & UnboxDepsField<D, 'state'>
     getters: GetComputedType<G> & UnboxDepsField<D, 'getters'>
@@ -232,7 +235,11 @@ declare namespace MpxStore {
     mapActions<T extends { [key: string]: string }>(obj: T): {
       [I in keyof T]: (...payloads: any[]) => any
     }
+  }
 
+  type StoreWithThis<S = {}, G = {}, M = {}, A = {}, D extends Deps = {}> = IStoreWithThis<S, G, M, A, D> & {
+    dispatch(type: string, ...payload: any[]): any
+    commit(type: string, ...payload: any[]): any
   }
 
   interface StoreOpt<S, G, M, A, D extends Deps> {
