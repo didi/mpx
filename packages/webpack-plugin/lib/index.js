@@ -134,6 +134,7 @@ class MpxWebpackPlugin {
     options.reportSize = options.reportSize || null
     options.pathHashMode = options.pathHashMode || 'absolute'
     options.forceDisableBuiltInLoader = options.forceDisableBuiltInLoader || false
+    options.useRelativePath = options.useRelativePath || false
     this.options = options
   }
 
@@ -301,7 +302,6 @@ class MpxWebpackPlugin {
           staticResourceMap: {
             main: {}
           },
-          EntryNode,
           // 记录entry依赖关系，用于体积分析
           entryNodesMap: {},
           // 记录entryModule与entryNode的对应关系，用于体积分析
@@ -342,6 +342,26 @@ class MpxWebpackPlugin {
           appTitle: 'Mpx homepage',
           attributes: this.options.attributes,
           externals: this.options.externals,
+          useRelativePath: this.options.useRelativePath,
+          getEntryNode: (request, type, module) => {
+            const entryNodesMap = mpx.entryNodesMap
+            const entryModulesMap = mpx.entryModulesMap
+            if (!entryNodesMap[request]) {
+              entryNodesMap[request] = new EntryNode({
+                type,
+                request
+              })
+            }
+            const currentEntry = entryNodesMap[request]
+            if (currentEntry.type !== type) {
+              compilation.errors.push(`获取request为${request}的entryNode时类型与已有节点冲突, 当前获取的type为${type}, 已有节点的type为${currentEntry.type}!`)
+            }
+            if (module) {
+              currentEntry.module = module
+              entryModulesMap.set(module, currentEntry)
+            }
+            return currentEntry
+          },
           pathHash: (resourcePath) => {
             if (this.options.pathHashMode === 'relative' && this.options.projectRoot) {
               return hash(path.relative(this.options.projectRoot, resourcePath))
@@ -372,15 +392,12 @@ class MpxWebpackPlugin {
             const resourceMap = isStatic ? mpx.staticResourceMap : mpx.componentsMap
             // 主包中有引用一律使用主包中资源，不再额外输出
             if (!resourceMap.main[resourcePath]) {
-              if (queryObj.packageName) {
-                packageName = queryObj.packageName
-                packageRoot = packageName === 'main' ? '' : packageName
-                if (packageName !== currentPackageName && packageName !== 'main') {
-                  error && error(new Error(`根据小程序分包资源引用规则，资源只支持声明为当前分包或者主包，否则可能会导致资源无法引用的问题，当前资源的当前分包为${currentPackageName}，资源查询字符串声明的分包为${packageName}，请检查！`))
-                }
-              } else if (currentPackageRoot) {
-                packageName = packageRoot = currentPackageRoot
+              if (queryObj.packageName && queryObj.packageName !== currentPackageName) {
+                warn && warn(new Error(`资源[${resource}]查询字符串中声明的分包[${queryObj.packageName}]与当前正在处理的分包[${currentPackageName}]不符，请检查！`))
               }
+
+              packageRoot = currentPackageRoot
+              packageName = currentPackageName
 
               if (this.options.auditResource) {
                 if (this.options.auditResource !== 'component' || !isStatic) {
@@ -395,18 +412,15 @@ class MpxWebpackPlugin {
 
             outputPath = toPosix(path.join(packageRoot, outputPath))
 
-            const currentResourceMap = resourceMap[currentPackageName]
-            const actualResourceMap = resourceMap[packageName]
+            const currentResourceMap = resourceMap[packageName]
 
             let alreadyOutputed = false
             // 如果之前已经进行过输出，则不需要重复进行
-            if (actualResourceMap[resourcePath]) {
-              outputPath = actualResourceMap[resourcePath]
+            if (currentResourceMap[resourcePath] === outputPath) {
               alreadyOutputed = true
+            } else {
+              currentResourceMap[resourcePath] = outputPath
             }
-            // 将当前的currentResourceMap和实际进行输出的actualResourceMap都填充上，便于resolve时使用
-            // todo 此处逻辑存在一定问题，当一个分包中两个地方一个声明了主包资源，另一个声明为当前分包时，此处前者生成的资源map会被后者覆盖，导致前者的json无法输出，后续优化分包资源处理时需要优化
-            currentResourceMap[resourcePath] = actualResourceMap[resourcePath] = outputPath
 
             if (isStatic && packageName !== 'main' && !mpx.staticResourceHit[resourcePath]) {
               mpx.staticResourceHit[resourcePath] = packageName
@@ -423,6 +437,12 @@ class MpxWebpackPlugin {
           }
         }
       }
+
+      compilation.hooks.succeedModule.tap('MpxWebpackPlugin', (module) => {
+        if (mpx.pluginMainResource && mpx.pluginMainResource === module.rawRequest) {
+          mpx.getEntryNode(mpx.pluginMainResource, 'Plugin', module)
+        }
+      })
 
       compilation.hooks.finishModules.tap('MpxWebpackPlugin', (modules) => {
         // 自动跟进分包配置修改splitChunksPlugin配置
@@ -815,7 +835,7 @@ try {
             source.add(originalSource)
             source.add(`\nmodule.exports = window[${JSON.stringify(jsonpFunction)}];\n`)
           } else {
-            if (mpx.pluginMain === chunk.name) {
+            if (mpx.pluginMainResource && chunk.entryModule && mpx.pluginMainResource === chunk.entryModule.rawRequest) {
               source.add('module.exports =\n')
             }
             source.add(originalSource)
@@ -968,6 +988,16 @@ try {
         return result
       }
 
+      function filter (set, fn) {
+        const result = new Set()
+        set.forEach((item) => {
+          if (fn(item)) {
+            result.add(item)
+          }
+        })
+        return result
+      }
+
       function concat (setA, setB) {
         const result = new Set()
         setA.forEach((item) => {
@@ -1106,8 +1136,20 @@ try {
         }
 
         return {
-          selfEntryModules: concat(map(selfSet, item => item.module), otherSelfEntryModules),
-          sharedEntryModules: map(sharedSet, item => item.module)
+          selfEntryModules: concat(map(filter(selfSet, item => {
+            if (!item.module) {
+              compilation.warnings.push(`EntryNode[${item.request}] has no module, please check!`)
+              return false
+            }
+            return true
+          }), item => item.module), otherSelfEntryModules),
+          sharedEntryModules: map(filter(sharedSet, item => {
+            if (!item.module) {
+              compilation.warnings.push(`EntryNode[${item.request}] has no module, please check!`)
+              return false
+            }
+            return true
+          }), item => item.module)
         }
       }
 

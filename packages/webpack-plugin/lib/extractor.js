@@ -22,9 +22,9 @@ module.exports = function (content) {
   const mainCompilation = getMainCompilation(this._compilation)
   const mpx = mainCompilation.__mpx__
 
-  const currentPackageName = mpx.currentPackageRoot || 'main'
+  const packageName = mpx.currentPackageRoot || 'main'
   const pagesMap = mpx.pagesMap
-  const componentsMap = mpx.componentsMap
+  const componentsMap = mpx.componentsMap[packageName]
 
   const extract = mpx.extract
   const pathHash = mpx.pathHash
@@ -46,13 +46,11 @@ module.exports = function (content) {
   let resultSource = defaultResultSource
 
   const getFile = (resourceRaw, type) => {
-    const { resourcePath, queryObj } = parseRequest(resourceRaw)
-    const packageName = queryObj.packageName || currentPackageName
-    const localComponentsMap = componentsMap[packageName]
+    const { resourcePath } = parseRequest(resourceRaw)
     const id = `${mode}:${packageName}:${type}:${resourcePath}`
     if (!seenFile[id]) {
       const resourcePath = parseRequest(resourceRaw).resourcePath
-      let filename = pagesMap[resourcePath] || localComponentsMap[resourcePath]
+      let filename = pagesMap[resourcePath] || componentsMap[resourcePath]
       if (!filename && resourcePath === rootResourcePath) {
         filename = rootName
       }

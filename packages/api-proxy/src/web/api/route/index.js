@@ -79,11 +79,25 @@ function reLaunch (options = {}) {
       router.go(-delta)
     } else {
       router.__mpxAction.replaced = true
-      router.replace({
-        path: options.url,
-        query: {
-          reLaunchCount
-        }
+      return new Promise((resolve, reject) => {
+        router.replace(
+          {
+            path: options.url,
+            query: {
+              reLaunchCount
+            }
+          },
+          () => {
+            const res = { errMsg: 'reLaunch:ok' }
+            webHandleSuccess(res, options.success, options.complete)
+            resolve(res)
+          },
+          err => {
+            const res = { errMsg: err }
+            webHandleFail(res, options.fail, options.complete)
+            !options.fail && reject(res)
+          }
+        )
       })
     }
     const res = { errMsg: 'reLaunch:ok' }
@@ -113,8 +127,22 @@ function switchTab (options = {}) {
         router.go(-delta)
       } else {
         router.__mpxAction.replaced = true
-        router.replace({
-          path: options.url
+        return new Promise((resolve, reject) => {
+          router.replace(
+            {
+              path: options.url
+            },
+            () => {
+              const res = { errMsg: 'switchTab:ok' }
+              webHandleSuccess(res, options.success, options.complete)
+              resolve(res)
+            },
+            err => {
+              const res = { errMsg: err }
+              webHandleFail(res, options.fail, options.complete)
+              !options.fail && reject(res)
+            }
+          )
         })
       }
     }

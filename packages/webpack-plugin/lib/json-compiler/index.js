@@ -46,12 +46,11 @@ module.exports = function (raw = '{}') {
   if (!mpx) {
     return nativeCallback(null, raw)
   }
+  const useRelativePath = mpx.useRelativePath
   const packageName = mpx.currentPackageRoot || 'main'
   const pagesMap = mpx.pagesMap
   const componentsMap = mpx.componentsMap[packageName]
-  const EntryNode = mpx.EntryNode
-  const entryNodesMap = mpx.entryNodesMap
-  const entryModulesMap = mpx.entryModulesMap
+  const getEntryNode = mpx.getEntryNode
   const mode = mpx.mode
   const defs = mpx.defs
   const globalSrcMode = mpx.srcMode
@@ -64,6 +63,9 @@ module.exports = function (raw = '{}') {
   const isApp = !(pagesMap[resourcePath] || componentsMap[resourcePath])
   const publicPath = this._compilation.outputOptions.publicPath || ''
   const fs = this._compiler.inputFileSystem
+  const rootName = mainCompilation._preparedEntrypoints[0].name
+  const currentName = componentsMap[resourcePath] || pagesMap[resourcePath] || rootName
+  const currentPath = publicPath + currentName
 
   // json模块都是由.mpx或.js的入口模块引入，且引入关系为一对一，其issuer必为入口module
   const entryModule = this._module.issuer
@@ -71,21 +73,7 @@ module.exports = function (raw = '{}') {
   const entryRequest = entryModule.rawRequest
   const entryType = isApp ? 'App' : pagesMap[resourcePath] ? 'Page' : 'Component'
 
-  function getEntryNode (request, type) {
-    if (!entryNodesMap[request]) {
-      entryNodesMap[request] = new EntryNode({
-        type,
-        request
-      })
-    } else if (entryNodesMap[request].type !== type) {
-      emitError(`获取request为${request}的entryNode时类型与已有节点冲突, 当前获取的type为${type}, 已有节点的type为${entryNodesMap[request].type}!`)
-    }
-    return entryNodesMap[request]
-  }
-
-  const currentEntry = getEntryNode(entryRequest, entryType)
-  currentEntry.module = entryModule
-  entryModulesMap.set(entryModule, currentEntry)
+  const currentEntry = getEntryNode(entryRequest, entryType, entryModule)
 
   const copydir = (dir, context, callback) => {
     fs.readdir(dir, (err, files) => {
@@ -136,10 +124,6 @@ module.exports = function (raw = '{}') {
   const addEntrySafely = (resource, name, callback) => {
     // 如果loader已经回调，就不再添加entry
     if (callbacked) return callback()
-    // localSrcMode与globalSrcMode不一致, 继承localsSrcMode, 但不会强制覆盖已经添加的mode
-    if (srcMode !== globalSrcMode) {
-      resource = addQuery(resource, { mode: srcMode })
-    }
     const dep = SingleEntryPlugin.createDependency(resource, name)
     entryDeps.add(dep)
     this._compilation.addEntry(this._compiler.context, dep, name, (err, module) => {
@@ -304,9 +288,11 @@ module.exports = function (raw = '{}') {
         resource = '!!' + nativeLoaderPath + '!' + resource
       }
       // 此处query为了实现消除分包间模块缓存，以实现不同分包中引用的组件在不同分包中都能输出
-      resource = addQuery(resource, {
-        packageName: packageInfo.packageName
-      })
+      if (packageInfo.packageName !== 'main') {
+        resource = addQuery(resource, {
+          packageName: packageInfo.packageName
+        })
+      }
       currentEntry.addChild(getEntryNode(resource, 'Component'))
       // 如果之前已经创建了入口，直接return
       if (packageInfo.alreadyOutputed) {
@@ -525,7 +511,7 @@ module.exports = function (raw = '{}') {
             }
             currentEntry.addChild(getEntryNode(resource, 'Page'))
             // 如果之前已经创建了页面入口，直接return，目前暂时不支持多个分包复用同一个页面
-            if (pagesMap[resourcePath]) return callback()
+            if (pagesMap[resourcePath] === pageName) return callback()
             pagesMap[resourcePath] = pageName
             if (tarRoot && subPackagesCfg[tarRoot]) {
               subPackagesCfg[tarRoot].pages.push(toPosix(path.relative(tarRoot, pageName)))
@@ -593,8 +579,11 @@ module.exports = function (raw = '{}') {
     const processComponents = (components, context, callback) => {
       if (components) {
         async.forEachOf(components, (component, name, callback) => {
-          processComponent(component, context, (path) => {
-            json.usingComponents[name] = path
+          processComponent(component, context, (componentPath) => {
+            if (useRelativePath === true) {
+              componentPath = path.relative(path.dirname(currentPath), componentPath)
+            }
+            json.usingComponents[name] = componentPath
           }, undefined, callback)
         }, callback)
       } else {
@@ -685,16 +674,22 @@ module.exports = function (raw = '{}') {
     // page.json或component.json
     if (json.usingComponents) {
       async.forEachOf(json.usingComponents, (component, name, callback) => {
-        processComponent(component, this.context, (path) => {
-          json.usingComponents[name] = path
+        processComponent(component, this.context, (componentPath) => {
+          if (useRelativePath === true) {
+            componentPath = path.relative(path.dirname(currentPath), componentPath)
+          }
+          json.usingComponents[name] = componentPath
         }, undefined, callback)
       }, callback)
     } else if (json.componentGenerics) {
       // 处理抽象节点
       async.forEachOf(json.componentGenerics, (genericCfg, name, callback) => {
         if (genericCfg && genericCfg.default) {
-          processComponent(genericCfg.default, this.context, (path) => {
-            json.componentGenerics[name].default = path
+          processComponent(genericCfg.default, this.context, (componentPath) => {
+            if (useRelativePath === true) {
+              componentPath = path.relative(path.dirname(currentPath), componentPath)
+            }
+            json.componentGenerics[name].default = componentPath
           }, undefined, callback)
         } else {
           callback()
