@@ -1,7 +1,7 @@
 // Type definitions for @mpxjs/core
 // Project: https://github.com/didi/mpx
 // Definitions by: hiyuki <https://github.com/hiyuki>
-// TypeScript Version: 4.1.0-beta
+// TypeScript Version: 4.1.3
 
 /// <reference types="miniprogram-api-typings" />
 /// <reference path="./mpx-store.d.ts" />
