@@ -39,11 +39,11 @@
     render: function render () {
       const slot = this.$slots.default
       const vnode = getFirstComponentChild(slot)
-      const vnodeKey = getVnodeKey(vnode)
-      if (typeof window !== 'undefined') {
+      if (typeof window === 'undefined') {
         return vnode || (slot && slot[0])
       }
-       const router = global.__mpxRouter
+      const vnodeKey = getVnodeKey(vnode)
+      const router = window.__mpxRouter
       if (vnodeKey && router && vnode.data.routerView) {
         if (router.needCache) {
           router.needCache.vnode = vnode
