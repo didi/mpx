@@ -1,5 +1,5 @@
 import { CREATED } from '../../core/innerLifecycle'
-import { isBrowser } from '../../helper/utils'
+import { inBrowser } from '../../helper/utils'
 let systemInfo = {}
 
 let count = 0
@@ -36,7 +36,7 @@ function onResize () {
 }
 
 // listen resize
-if (!isBrowser) {
+if (inBrowser) {
   window.addEventListener('resize', onResize)
 }
 

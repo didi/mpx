@@ -1,4 +1,4 @@
-import { isBrowser } from '../../../utils/env'
+import { inBrowser } from '../../../utils/env'
 const callbacks = []
 
 global.__mpxAppCbs = global.__mpxAppCbs || {
@@ -6,7 +6,7 @@ global.__mpxAppCbs = global.__mpxAppCbs || {
   hide: []
 }
 
-if (isBrowser) {
+if (inBrowser) {
   window.addEventListener('resize', () => {
     const result = {
       size: {
