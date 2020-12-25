@@ -37,7 +37,7 @@
         color: color,
         fontSize: sizeStr
       }
-      if (window.__style === 'v2') {
+      if (global.__style === 'v2') {
         switch (type) {
           case 'success':
           case 'info':

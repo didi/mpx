@@ -43,7 +43,7 @@
         return vnode || (slot && slot[0])
       }
       const vnodeKey = getVnodeKey(vnode)
-      const router = window.__mpxRouter
+      const router = global.__mpxRouter
       if (vnodeKey && router && vnode.data.routerView) {
         if (router.needCache) {
           router.needCache.vnode = vnode

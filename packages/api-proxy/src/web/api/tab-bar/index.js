@@ -2,7 +2,7 @@ import { webHandleSuccess, webHandleFail } from '../../../common/js'
 import Vue from 'vue'
 
 function setTabBarStyle (options = {}) {
-  const tabBar = window.__tabBar
+  const tabBar = global.__tabBar
   let resolved, rejected
   if (tabBar) {
     if (tabBar.custom) {
@@ -28,7 +28,7 @@ function setTabBarStyle (options = {}) {
 }
 
 function setTabBarItem (options = {}) {
-  const tabBar = window.__tabBar
+  const tabBar = global.__tabBar
   let resolved, rejected
   if (tabBar) {
     if (tabBar.custom) {
@@ -59,7 +59,7 @@ function setTabBarItem (options = {}) {
 }
 
 function showTabBar (options = {}) {
-  const tabBar = window.__tabBar
+  const tabBar = global.__tabBar
   let resolved, rejected
   if (tabBar) {
     Vue.set(tabBar, 'isShow', true)
@@ -77,7 +77,7 @@ function showTabBar (options = {}) {
 }
 
 function hideTabBar (options = {}) {
-  const tabBar = window.__tabBar
+  const tabBar = global.__tabBar
   let resolved, rejected
   if (tabBar) {
     Vue.set(tabBar, 'isShow', false)

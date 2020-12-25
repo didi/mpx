@@ -177,7 +177,7 @@ export default function processOption (
       // 处理visibilitychange时触发当前活跃页面组件的onshow/onhide
       if (typeof window !== 'undefined') {
         document.addEventListener('visibilitychange', function () {
-          const vnode = window.__mpxRouter.__mpxActiveVnode
+          const vnode = global.__mpxRouter.__mpxActiveVnode
           if (vnode && vnode.componentInstance) {
             const currentPage = vnode.tag.endsWith('mpx-tab-bar-container') ? vnode.componentInstance.$refs.tabBarPage : vnode.componentInstance
             if (document.hidden) {
@@ -206,7 +206,7 @@ export default function processOption (
           }
         })
         // 初始化length
-        window.__mpxRouter.__mpxHistoryLength = window.history.length
+        global.__mpxRouter.__mpxHistoryLength = global.history.length
       }
     }
 
@@ -227,10 +227,10 @@ export default function processOption (
 
     if (genericsInfo) {
       const genericHash = genericsInfo.hash
-      window.__mpxGenericsMap[genericHash] = {}
+      global.__mpxGenericsMap[genericHash] = {}
       Object.keys(genericsInfo.map).forEach((genericValue) => {
         if (componentsMap[genericValue]) {
-          window.__mpxGenericsMap[genericHash][genericValue] = componentsMap[genericValue]
+          global.__mpxGenericsMap[genericHash][genericValue] = componentsMap[genericValue]
         } else {
           console.log(option)
           console.warn(`[Mpx runtime warn]: generic value "${genericValue}" must be
@@ -255,7 +255,7 @@ registered in parent context!`)
     }
 
     if (ctorType === 'page') {
-      option.__mpxPageConfig = Object.assign({}, window.__mpxPageConfig, pageConfig)
+      option.__mpxPageConfig = Object.assign({}, global.__mpxPageConfig, pageConfig)
     }
   }
 
