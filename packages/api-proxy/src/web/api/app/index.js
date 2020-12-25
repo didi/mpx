@@ -1,19 +1,21 @@
 const callbacks = []
 
-window.__mpxAppCbs = window.__mpxAppCbs || {
+global.__mpxAppCbs = global.__mpxAppCbs || {
   show: [],
   hide: []
 }
 
-window.addEventListener('resize', () => {
-  const result = {
-    size: {
-      windowWidth: window.screen.width,
-      windowHeight: window.screen.height
+if (typeof window !== 'undefined') {
+  window.addEventListener('resize', () => {
+    const result = {
+      size: {
+        windowWidth: window.screen.width,
+        windowHeight: window.screen.height
+      }
     }
-  }
-  callbacks.forEach(cb => cb(result))
-})
+    callbacks.forEach(cb => cb(result))
+  })
+}
 
 function onAppShow (callback) {
   window.__mpxAppCbs.show.push(callback)

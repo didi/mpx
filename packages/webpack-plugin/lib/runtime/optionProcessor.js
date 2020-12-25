@@ -59,16 +59,16 @@ export default function processOption (
           redirect: firstPage
         })
       }
-      window.__mpxRouter = option.router = new VueRouter({
+      global.__mpxRouter = option.router = new VueRouter({
         routes: routes
       })
-      window.__mpxRouter.stack = []
-      window.__mpxRouter.needCache = null
-      window.__mpxRouter.needRemove = []
+      global.__mpxRouter.stack = []
+      global.__mpxRouter.needCache = null
+      global.__mpxRouter.needRemove = []
       // 处理reLaunch中传递的url并非首页时的replace逻辑
-      window.__mpxRouter.beforeEach(function (to, from, next) {
-        let action = window.__mpxRouter.__mpxAction
-        const stack = window.__mpxRouter.stack
+      global.__mpxRouter.beforeEach(function (to, from, next) {
+        let action = global.__mpxRouter.__mpxAction
+        const stack = global.__mpxRouter.stack
 
         // 处理人为操作
         if (!action) {
@@ -88,7 +88,7 @@ export default function processOption (
         if (!pageInRoutes) {
           if (stack.length < 1) {
             // onPageNotFound，仅首次进入时生效
-            window.__mpxRouter.app.$options.onPageNotFound({
+            global.__mpxRouter.app.$options.onPageNotFound({
               path: to.path,
               query: to.query,
               isEntryPage: true
@@ -122,14 +122,14 @@ export default function processOption (
         switch (action.type) {
           case 'to':
             stack.push(insertItem)
-            window.__mpxRouter.needCache = insertItem
+            global.__mpxRouter.needCache = insertItem
             break
           case 'back':
-            window.__mpxRouter.needRemove = stack.splice(stack.length - action.delta, action.delta)
+            global.__mpxRouter.needRemove = stack.splice(stack.length - action.delta, action.delta)
             break
           case 'redirect':
-            window.__mpxRouter.needRemove = stack.splice(stack.length - 1, 1, insertItem)
-            window.__mpxRouter.needCache = insertItem
+            global.__mpxRouter.needRemove = stack.splice(stack.length - 1, 1, insertItem)
+            global.__mpxRouter.needCache = insertItem
             break
           case 'switch':
             if (!action.replaced) {
@@ -141,7 +141,7 @@ export default function processOption (
             } else {
               // 将非tabBar页面remove
               let tabItem = null
-              window.__mpxRouter.needRemove = stack.filter((item) => {
+              global.__mpxRouter.needRemove = stack.filter((item) => {
                 if (tabBarMap[item.path]) {
                   tabItem = item
                   return false
@@ -149,10 +149,10 @@ export default function processOption (
                 return true
               })
               if (tabItem) {
-                window.__mpxRouter.stack = [tabItem]
+                global.__mpxRouter.stack = [tabItem]
               } else {
-                window.__mpxRouter.stack = [insertItem]
-                window.__mpxRouter.needCache = insertItem
+                global.__mpxRouter.stack = [insertItem]
+                global.__mpxRouter.needCache = insertItem
               }
             }
             break
@@ -167,45 +167,47 @@ export default function processOption (
                 replace: true
               })
             } else {
-              window.__mpxRouter.needRemove = stack
-              window.__mpxRouter.stack = [insertItem]
-              window.__mpxRouter.needCache = insertItem
+              global.__mpxRouter.needRemove = stack
+              global.__mpxRouter.stack = [insertItem]
+              global.__mpxRouter.needCache = insertItem
             }
         }
         next()
       })
       // 处理visibilitychange时触发当前活跃页面组件的onshow/onhide
-      document.addEventListener('visibilitychange', function () {
-        const vnode = window.__mpxRouter.__mpxActiveVnode
-        if (vnode && vnode.componentInstance) {
-          const currentPage = vnode.tag.endsWith('mpx-tab-bar-container') ? vnode.componentInstance.$refs.tabBarPage : vnode.componentInstance
-          if (document.hidden) {
-            if (global.__mpxAppCbs && global.__mpxAppCbs.hide) {
-              global.__mpxAppCbs.hide.forEach((cb) => {
-                cb()
-              })
-            }
-            if (currentPage) {
-              currentPage.mpxPageStatus = 'hide'
-              currentPage.onHide && currentPage.onHide()
-            }
-          } else {
-            if (global.__mpxAppCbs && global.__mpxAppCbs.show) {
-              global.__mpxAppCbs.show.forEach((cb) => {
-                // todo 实现app.onShow参数
-                /* eslint-disable standard/no-callback-literal */
-                cb({})
-              })
-            }
-            if (currentPage) {
-              currentPage.mpxPageStatus = 'show'
-              currentPage.onShow && currentPage.onShow()
+      if (typeof window !== 'undefined') {
+        document.addEventListener('visibilitychange', function () {
+          const vnode = window.__mpxRouter.__mpxActiveVnode
+          if (vnode && vnode.componentInstance) {
+            const currentPage = vnode.tag.endsWith('mpx-tab-bar-container') ? vnode.componentInstance.$refs.tabBarPage : vnode.componentInstance
+            if (document.hidden) {
+              if (global.__mpxAppCbs && global.__mpxAppCbs.hide) {
+                global.__mpxAppCbs.hide.forEach((cb) => {
+                  cb()
+                })
+              }
+              if (currentPage) {
+                currentPage.mpxPageStatus = 'hide'
+                currentPage.onHide && currentPage.onHide()
+              }
+            } else {
+              if (global.__mpxAppCbs && global.__mpxAppCbs.show) {
+                global.__mpxAppCbs.show.forEach((cb) => {
+                  // todo 实现app.onShow参数
+                  /* eslint-disable standard/no-callback-literal */
+                  cb({})
+                })
+              }
+              if (currentPage) {
+                currentPage.mpxPageStatus = 'show'
+                currentPage.onShow && currentPage.onShow()
+              }
             }
           }
-        }
-      })
-      // 初始化length
-      window.__mpxRouter.__mpxHistoryLength = window.history.length
+        })
+        // 初始化length
+        window.__mpxRouter.__mpxHistoryLength = window.history.length
+      }
     }
 
     if (i18n) {

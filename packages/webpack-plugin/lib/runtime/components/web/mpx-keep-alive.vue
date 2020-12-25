@@ -40,7 +40,10 @@
       const slot = this.$slots.default
       const vnode = getFirstComponentChild(slot)
       const vnodeKey = getVnodeKey(vnode)
-      const router = window.__mpxRouter
+      if (typeof window !== 'undefined') {
+        return vnode || (slot && slot[0])
+      }
+       const router = global.__mpxRouter
       if (vnodeKey && router && vnode.data.routerView) {
         if (router.needCache) {
           router.needCache.vnode = vnode
