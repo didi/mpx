@@ -1,6 +1,7 @@
+import { isBrowser } from '../../../utils/env'
 const callbacks = []
 
-if (typeof window !== 'undefined') {
+if (isBrowser) {
   window.addEventListener('resize', () => {
     const result = {
       size: {

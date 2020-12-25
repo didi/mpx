@@ -1,3 +1,4 @@
+import { inBrowser } from '../utils/env'
 export default function processOption (
   option,
   ctorType,
@@ -175,7 +176,7 @@ export default function processOption (
         next()
       })
       // 处理visibilitychange时触发当前活跃页面组件的onshow/onhide
-      if (typeof window !== 'undefined') {
+      if (inBrowser) {
         document.addEventListener('visibilitychange', function () {
           const vnode = global.__mpxRouter.__mpxActiveVnode
           if (vnode && vnode.componentInstance) {

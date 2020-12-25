@@ -191,12 +191,12 @@ const getAdvancedApi = (config, mpx) => {
     console.log('需要提供挂载方法的mpx对象');
     return
   }
-  if (global.wx) {
+  if (window.wx) {
     if (config) {
       console.log('微信环境下需要配置wx.config才能挂载方法');
       return
     }
-    global.wx.config(config);
+    window.wx.config(config);
   }
 
   // key为导出的标准名，对应平台不支持的话为undefined

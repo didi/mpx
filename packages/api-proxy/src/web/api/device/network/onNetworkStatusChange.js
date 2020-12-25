@@ -1,8 +1,9 @@
+import { isBrowser } from '../../../../utils/env'
 const fnMap = new Map()
 
 const oldObserveList = new Set()
 
-if (typeof window !== 'undefined') {
+if (isBrowser) {
   window.addEventListener('offline', () => {
     oldObserveList.forEach(fn => fn({ isConnected: false, type: 'none' }))
   })
