@@ -143,7 +143,7 @@
       }
     },
     mounted () {
-      console.log(window.__style)
+      console.log(global.__style)
       this.videoNode = this.$refs['_mpx_video_ref']
       this.initStyle()
       this.initEvent()

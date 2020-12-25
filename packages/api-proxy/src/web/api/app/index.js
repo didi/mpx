@@ -1,35 +1,38 @@
+import { isBrowser } from '../../../utils/env'
 const callbacks = []
 
-window.__mpxAppCbs = window.__mpxAppCbs || {
+global.__mpxAppCbs = global.__mpxAppCbs || {
   show: [],
   hide: []
 }
 
-window.addEventListener('resize', () => {
-  const result = {
-    size: {
-      windowWidth: window.screen.width,
-      windowHeight: window.screen.height
+if (isBrowser) {
+  window.addEventListener('resize', () => {
+    const result = {
+      size: {
+        windowWidth: window.screen.width,
+        windowHeight: window.screen.height
+      }
     }
-  }
-  callbacks.forEach(cb => cb(result))
-})
+    callbacks.forEach(cb => cb(result))
+  })
+}
 
 function onAppShow (callback) {
-  window.__mpxAppCbs.show.push(callback)
+  global.__mpxAppCbs.show.push(callback)
 }
 
 function onAppHide (callback) {
-  window.__mpxAppCbs.hide.push(callback)
+  global.__mpxAppCbs.hide.push(callback)
 }
 
 function offAppShow (callback) {
-  const cbs = window.__mpxAppCbs.show
+  const cbs = global.__mpxAppCbs.show
   cbs.splice(cbs.indexOf(callback), 1)
 }
 
 function offAppHide (callback) {
-  const cbs = window.__mpxAppCbs.hide
+  const cbs = global.__mpxAppCbs.hide
   cbs.splice(cbs.indexOf(callback), 1)
 }
 
