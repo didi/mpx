@@ -13,6 +13,25 @@ module.exports = function (content) {
   const defs = mpx.defs
   const query = loaderUtils.getOptions(this) || {}
   const filePath = this.resourcePath
+  if (mpx.loaderOptions.useStripCode) {
+    const startComment = `@${mpx.loaderOptions.useStripCode.startComment || '@if'} `
+    // 这个应该要移出去写在枚举文件里面
+    const modes = ['wx', 'ali', 'swan', 'qq', 'tt']
+    const useMode = modes.reduce((cur, sum) => {
+      return sum + '|' + cur
+    })
+    const endComment = `@${mpx.loaderOptions.useStripCode.endComment || '@endif'}`
+    const exp = '[\\t ]*\\/\\* ?' + startComment + '(' + useMode + ')' + ' ?\\*\\/[\\s\\S]*?\\/\\* ?' + endComment + ' ?\\*\\/[\\t ]*\\n?'
+    const regexPattern = new RegExp(exp, 'g')
+    content = content.replace(regexPattern, function (match) {
+      const matchMode = arguments[1]
+      if (matchMode === mpx.mode) {
+        return match
+      } else {
+        return ''
+      }
+    })
+  }
   const parts = parseComponent(content, {
     filePath,
     needMap: this.sourceMap,
