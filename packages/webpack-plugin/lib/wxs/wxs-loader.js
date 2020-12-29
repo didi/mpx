@@ -10,7 +10,6 @@ const parseRequest = require('../utils/parse-request')
 const toPosix = require('../utils/to-posix')
 const fixRelative = require('../utils/fix-relative')
 const config = require('../config')
-const loaderUtils = require('loader-utils')
 
 module.exports = function () {
   const nativeCallback = this.async()

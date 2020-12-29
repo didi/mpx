@@ -28,7 +28,6 @@ module.exports = function loader (content, prevOptions) {
       }
     }
   } else {
-    
     url = outputPath = mpx.getPackageInfo({
       resource: this.resource,
       outputPath: url,

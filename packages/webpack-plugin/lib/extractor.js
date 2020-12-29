@@ -37,7 +37,6 @@ module.exports = function (content) {
   })
   const rootResourcePath = parseRequest(rootModule.resource).resourcePath
 
-
   let resultSource = defaultResultSource
 
   const getFile = (resourceRaw, type) => {
