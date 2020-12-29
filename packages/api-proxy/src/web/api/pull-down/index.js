@@ -1,7 +1,7 @@
 import { webHandleSuccess, webHandleFail } from '../../../common/js'
 
 function stopPullDownRefresh (options = {}) {
-  const router = window.__mpxRouter
+  const router = global.__mpxRouter
   if (router) {
     let err
 
@@ -31,7 +31,7 @@ function stopPullDownRefresh (options = {}) {
 }
 
 function startPullDownRefresh (options = {}) {
-  const router = window.__mpxRouter
+  const router = global.__mpxRouter
   if (router) {
     let err
 
