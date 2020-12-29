@@ -9,6 +9,7 @@ const path = require('path')
 module.exports = function (raw) {
   this.cacheable()
   const options = loaderUtils.getOptions(this) || {}
+  const { resourcePath, queryObj } = parseRequest(this.resource)
   const compilation = this._compilation
   const mainCompilation = getMainCompilation(compilation)
   const mpx = mainCompilation.__mpx__
@@ -18,11 +19,10 @@ module.exports = function (raw) {
   const externalClasses = mpx.externalClasses
   const decodeHTMLText = mpx.decodeHTMLText
   const globalSrcMode = mpx.srcMode
-  const localSrcMode = loaderUtils.parseQuery(this.resourceQuery || '?').mode
-  const packageName = mpx.currentPackageRoot || 'main'
+  const localSrcMode = queryObj.mode
+  const packageName = queryObj.packageName || mpx.currentPackageRoot || 'main'
   const componentsMap = mpx.componentsMap[packageName]
   const wxsContentMap = mpx.wxsContentMap
-  const resourcePath = parseRequest(this.resource).resourcePath
   let scopedId
   if (options.hasScoped) {
     scopedId = options.moduleId

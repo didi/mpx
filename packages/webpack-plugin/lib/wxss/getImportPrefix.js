@@ -3,27 +3,26 @@
   Author Tobias Koppers @sokra
   Modified by @hiyuki
 */
-var normalize = require('../utils/normalize')
-var extractorPath = normalize.lib('extractor')
+const normalize = require('../utils/normalize')
+const extractorPath = normalize.lib('extractor')
+const selectorPath = normalize.lib('selector')
 
-module.exports = function getImportPrefix (loaderContext, query) {
-  if (query.importLoaders === false) {
-    return ''
-  }
-  var importLoaders = parseInt(query.importLoaders, 10) || 0
-  var loadersRequest = loaderContext.loaders.slice(
+module.exports = function getImportPrefix (loaderContext, extract) {
+  const selectorIndex = loaderContext.loaders.findIndex(({ path }) => {
+    return path === selectorPath
+  })
+  let loadersRequest = loaderContext.loaders.slice(
     loaderContext.loaderIndex,
-    loaderContext.loaderIndex + 1 + importLoaders
+    selectorIndex !== -1 ? selectorIndex : undefined
   ).map(function (x) {
     return x.request
   }).join('!')
-  if (query.extract) {
+  if (extract) {
     loadersRequest = extractorPath + '?' +
       JSON.stringify({
         type: 'styles',
         index: -1,
-        fromImport: true,
-        issuerResource: loaderContext.resource
+        fromImport: true
       }) + '!' + loadersRequest
   }
   return '-!' + loadersRequest + '!'
