@@ -25,6 +25,7 @@ const matchCondition = require('./utils/match-condition')
 const parseAsset = require('./utils/parse-asset')
 const { preProcessDefs } = require('./utils/index')
 const hash = require('hash-sum')
+const addConfig = require('./qaHelper/add-config')
 
 const isProductionLikeMode = options => {
   return options.mode === 'production' || !options.mode
@@ -495,7 +496,6 @@ class MpxWebpackPlugin {
           additionalAssets[file].forEach((item) => {
             content.add(item)
           })
-
           const modules = (additionalAssets[file].modules || []).concat(additionalAssets[file].relativeModules || [])
 
           if (modules.length > 1) {
@@ -922,6 +922,9 @@ try {
     })
 
     compiler.hooks.emit.tapAsync('MpxWebpackPlugin', (compilation, callback) => {
+      if (this.options.mode === 'qa') {
+        compilation.assets['app.json'] = addConfig(compilation.assets['app.json'], this.options)
+      }
       if (this.options.generateBuildMap) {
         const pagesMap = compilation.__mpx__.pagesMap
         const componentsPackageMap = compilation.__mpx__.componentsMap
