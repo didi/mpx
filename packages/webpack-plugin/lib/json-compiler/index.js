@@ -47,19 +47,19 @@ module.exports = function (raw = '{}') {
     return nativeCallback(null, raw)
   }
   const useRelativePath = mpx.useRelativePath
-  const packageName = mpx.currentPackageRoot || 'main'
+  const { resourcePath, queryObj } = parseRequest(this.resource)
+  const packageName = queryObj.packageName || mpx.currentPackageRoot || 'main'
   const pagesMap = mpx.pagesMap
   const componentsMap = mpx.componentsMap[packageName]
   const getEntryNode = mpx.getEntryNode
   const mode = mpx.mode
   const defs = mpx.defs
   const globalSrcMode = mpx.srcMode
-  const localSrcMode = loaderUtils.parseQuery(this.resourceQuery || '?').mode
+  const localSrcMode = queryObj.mode
   const srcMode = localSrcMode || globalSrcMode
   const resolveMode = mpx.resolveMode
   const externals = mpx.externals
   const pathHash = mpx.pathHash
-  const resourcePath = parseRequest(this.resource).resourcePath
   const isApp = !(pagesMap[resourcePath] || componentsMap[resourcePath])
   const publicPath = this._compilation.outputOptions.publicPath || ''
   const fs = this._compiler.inputFileSystem
@@ -272,26 +272,22 @@ module.exports = function (raw = '{}') {
           outputPath = path.join('components', componentName + pathHash(resourcePath), componentName)
         }
       }
-      const packageInfo = mpx.getPackageInfo(resource, {
+      const packageInfo = mpx.getPackageInfo({
+        resource,
         outputPath,
         isStatic: false,
-        error: (err) => {
-          this.emitError(err)
-        },
         warn: (err) => {
           this.emitWarning(err)
         }
+      })
+      // 此处query为了实现消除分包间模块缓存，以实现不同分包中引用的组件在不同分包中都能输出
+      resource = addQuery(resource, {
+        packageName: packageInfo.packageName
       })
       const componentPath = packageInfo.outputPath
       rewritePath && rewritePath(publicPath + componentPath)
       if (ext === '.js') {
         resource = '!!' + nativeLoaderPath + '!' + resource
-      }
-      // 此处query为了实现消除分包间模块缓存，以实现不同分包中引用的组件在不同分包中都能输出
-      if (packageInfo.packageName !== 'main') {
-        resource = addQuery(resource, {
-          packageName: packageInfo.packageName
-        })
       }
       currentEntry.addChild(getEntryNode(resource, 'Component'))
       // 如果之前已经创建了入口，直接return
@@ -569,7 +565,7 @@ module.exports = function (raw = '{}') {
             index: -1
           }) + '!' +
           themeLoaderPath + '?root = ' + options.root + '!' +
-          addQuery(urlToRequest(json.themeLocation), { __component: true })
+          addQuery(urlToRequest(json.themeLocation), { __component: true, isStatic: true })
 
         output += `json.themeLocation = require(${stringifyRequest(themeRequest)});\n`
       }
