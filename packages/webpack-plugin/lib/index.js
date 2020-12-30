@@ -424,17 +424,25 @@ class MpxWebpackPlugin {
           }
         }
       }
+      // 处理watch时缓存模块中的buildInfo
+      const rawAddModule = compilation.addModule
+      compilation.addModule = (...args) => {
+        const addModuleResult = rawAddModule.apply(compilation, args)
+        if (!addModuleResult.build && addModuleResult.issuer) {
+          const buildInfo = addModuleResult.module.buildInfo
+          if (buildInfo.pagesMap) {
+            Object.assign(mpx.pagesMap, buildInfo.pagesMap)
+          }
+          if (buildInfo.componentsMap && buildInfo.packageName) {
+            Object.assign(mpx.componentsMap[buildInfo.packageName], buildInfo.componentsMap)
+          }
+        }
+        return addModuleResult
+      }
 
       compilation.hooks.succeedModule.tap('MpxWebpackPlugin', (module) => {
         if (mpx.pluginMainResource && mpx.pluginMainResource === module.rawRequest) {
           mpx.getEntryNode(mpx.pluginMainResource, 'Plugin', module)
-        }
-        const buildInfo = module.buildInfo
-        if (buildInfo.pagesMap) {
-          Object.assign(mpx.pagesMap, buildInfo.pagesMap)
-        }
-        if (buildInfo.componentsMap && buildInfo.packageName) {
-          Object.assign(mpx.componentsMap[buildInfo.packageName], buildInfo.componentsMap)
         }
       })
 
