@@ -608,3 +608,23 @@ export function delChainKeyOfObj (obj = {}, key = '') {
     return o && o[k]
   }, obj)
 }
+
+export function getUrlQueryParams (url = '') {
+  const urlParams = {}
+  try {
+    if (url && url.indexOf('?') !== -1) {
+      const paramsStr = url.split('?')[1]
+      if (paramsStr) {
+        const paramsArr = paramsStr.split('&')
+        paramsArr.forEach((param) => {
+          const key = param.split('=')[0]
+          const value = param.split('=')[1]
+          urlParams[key] = decodeURIComponent(value)
+        })
+      }
+    }
+  } catch (e) {
+    console.error('page onLoad parse url query error:', e)
+  }
+  return urlParams
+}
