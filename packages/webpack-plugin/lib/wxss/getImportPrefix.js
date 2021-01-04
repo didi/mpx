@@ -5,11 +5,10 @@
 */
 const normalize = require('../utils/normalize')
 const extractorPath = normalize.lib('extractor')
-const selectorPath = normalize.lib('selector')
 
 module.exports = function getImportPrefix (loaderContext, extract) {
   const selectorIndex = loaderContext.loaders.findIndex(({ path }) => {
-    return path === selectorPath
+    return path.indexOf('@mpxjs/webpack-plugin/lib/selector') !== -1
   })
   let loadersRequest = loaderContext.loaders.slice(
     loaderContext.loaderIndex,
