@@ -3,15 +3,15 @@
  * @param mixinType
  * @returns {{created(): void}}
  */
-import { getUrlQueryParams } from '../../helper/utils'
+import { CREATED } from '../../core/innerLifecycle'
 export default function onLoad (mixinType) {
   if (mixinType === 'page' && __mpx_mode__ === 'web') {
     return {
-      created () {
+      [CREATED] () {
         if (this.onLoad) {
-          const locationHref = window.location.href
-          const options = getUrlQueryParams(locationHref)
-          this.onLoad(options)
+          const router = global.__mpxRouter || {}
+          const current = (router.history && router.history.current) || {}
+          this.onLoad(current.query)
         }
       }
     }

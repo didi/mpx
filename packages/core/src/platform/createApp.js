@@ -1,7 +1,7 @@
 import transferOptions from '../core/transferOptions'
 import mergeOptions from '../core/mergeOptions'
 import builtInKeysMap from './patch/builtInKeysMap'
-import { makeMap, getUrlQueryParams } from '../helper/utils'
+import { makeMap } from '../helper/utils'
 import * as webLifecycle from '../platform/patch/web/lifecycle'
 
 const webAppHooksMap = makeMap(webLifecycle.LIFECYCLE.APP_HOOKS)
@@ -25,19 +25,19 @@ export default function createApp (option, config = {}) {
   const builtInMixins = []
   const appData = {}
   if (__mpx_mode__ === 'web') {
-    const currentUrl = window.location.href
-    const urlQueryParams = getUrlQueryParams(currentUrl)
-    const options = {
-      path: currentUrl,
-      query: urlQueryParams,
-      scene: 0, // 有待确定
-      shareTicket: '', // 有待确定
-      referrerInfo: {}
-    }
     builtInMixins.push({
       created () {
         Object.assign(this, option.proto)
         Object.assign(this, appData)
+        const router = global.__mpxRouter || {}
+        const current = (router.history && router.history.current) || {}
+        const options = {
+          path: current.path && current.path.replace(/^\//, ''),
+          query: current.query,
+          scene: 0,
+          shareTicket: '',
+          referrerInfo: {}
+        }
         this.$options.onLaunch && this.$options.onLaunch.call(this, options)
         global.__mpxAppCbs = global.__mpxAppCbs || {
           show: [],
