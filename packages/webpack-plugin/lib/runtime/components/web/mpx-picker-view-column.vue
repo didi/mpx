@@ -24,7 +24,17 @@
       }
     },
     computed: {},
-    watch: {},
+    watch: {
+      selectedIndex(newVal) {
+        if (this.wheels[0]) {
+          this.$nextTick(() => {
+            // make sure the dom rendering is complete
+            this.wheels[0].refresh()
+            this.wheels[0].wheelTo(newVal[0])
+          })
+        }
+      }
+    },
     mounted() {
       this.wheels = []
       this.refresh()
@@ -44,6 +54,10 @@
         this.refreshing = true
         this.$nextTick(() => {
           const wheelWrapper = this.$refs.wheelWrapper
+          if (this.wheels[0]) {
+            this.wheels[0].refresh()
+            return
+          }
           this.wheels[0] = new BScroll(wheelWrapper, {
             wheel: {
               selectedIndex: this.selectedIndex[0],
