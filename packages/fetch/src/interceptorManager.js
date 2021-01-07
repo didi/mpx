@@ -1,11 +1,24 @@
+import { isThenable } from './util'
+
 export default class InterceptorManager {
   constructor () {
     this.interceptors = []
   }
 
   use (fulfilled, rejected) {
+    const wrappedFulfilled = (result) => {
+      const returnedResult = fulfilled(result)
+      if (!returnedResult) {
+        return result
+      } else {
+        if (isThenable(returnedResult)) {
+          return returnedResult.then((resolvedReturnedResult) => resolvedReturnedResult || result)
+        }
+        return returnedResult
+      }
+    }
     const interceptor = {
-      fulfilled,
+      fulfilled: wrappedFulfilled,
       rejected
     }
     this.interceptors.push(interceptor)
