@@ -26,6 +26,10 @@ const blackList = [
   'getMenuButtonBoundingClientRect'
 ]
 
+if (__mpx_mode__ !== 'ali') {
+  blackList.push('uploadFile', 'downloadFile')
+}
+
 function getMapFromList (list) {
   if (list && list.length) {
     const map = {}
