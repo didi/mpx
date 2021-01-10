@@ -11,11 +11,13 @@ const mpxJSON = require('./utils/mpx-json')
 const async = require('async')
 const matchCondition = require('./utils/match-condition')
 const fixUsingComponent = require('./utils/fix-using-component')
+const getMainCompilation = require('./utils/get-main-compilation')
 
 module.exports = function (content) {
   this.cacheable()
 
-  const mpx = this._compilation.__mpx__
+  const mainCompilation = getMainCompilation(this._compilation)
+  const mpx = mainCompilation.__mpx__
   if (!mpx) {
     return content
   }
@@ -29,17 +31,15 @@ module.exports = function (content) {
   const filePath = this.resourcePath
 
   const moduleId = 'm' + hash(this._module.identifier())
-
+  const { resourcePath, queryObj } = parseRequest(this.resource)
   const projectRoot = mpx.projectRoot
   const mode = mpx.mode
   const defs = mpx.defs
   const globalSrcMode = mpx.srcMode
-  const queryObj = loaderUtils.parseQuery(this.resourceQuery || '?')
   const localSrcMode = queryObj.mode
-  const packageName = mpx.currentPackageRoot || 'main'
+  const packageName = queryObj.packageName || mpx.currentPackageRoot || 'main'
   const pagesMap = mpx.pagesMap
   const componentsMap = mpx.componentsMap[packageName]
-  const resourcePath = parseRequest(this.resource).resourcePath
   const parsed = path.parse(resourcePath)
   const resourceName = path.join(parsed.dir, parsed.name)
   const isApp = !pagesMap[resourcePath] && !componentsMap[resourcePath]
@@ -186,11 +186,10 @@ module.exports = function (content) {
       const {
         getRequireForSrc,
         getNamedExportsForSrc
-      } = createHelpers(
+      } = createHelpers({
         loaderContext,
         options,
         moduleId,
-        isProduction,
         hasScoped,
         hasComment,
         usingComponents,
@@ -198,7 +197,7 @@ module.exports = function (content) {
         srcMode,
         isNative,
         projectRoot
-      )
+      })
 
       const getRequire = (type) => {
         const localQuery = Object.assign({}, queryObj)

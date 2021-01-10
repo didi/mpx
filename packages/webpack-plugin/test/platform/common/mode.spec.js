@@ -77,7 +77,7 @@ describe('template should transform correct', function () {
   })
 
   it('if attr name matched mode name should work correct', function () {
-    const input = '<button ali@swan="handleClick">获取用户信息</button>'
+    const input = '<button ali@(swan|qq)="handleClick">获取用户信息</button>'
     const output = compileAndParse(input)
     expect(output).toBe('<button>获取用户信息</button>')
 

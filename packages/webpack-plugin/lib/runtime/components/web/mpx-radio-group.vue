@@ -4,9 +4,15 @@
   function travelSlot (slot, effect) {
     if (slot) {
       slot.forEach((VNode) => {
+        const el = VNode.elm
+        const component = VNode.componentInstance
+        component.isChecked = false
         effect && effect(VNode)
         if (VNode.children) {
           travelSlot(VNode.children, effect)
+        }
+        if (VNode.elm && VNode.elm.className && VNode.elm.className.indexOf('mpx-radio') > -1) {
+          VNode.elm.className = 'mpx-radio'
         }
       })
     }
@@ -71,12 +77,13 @@
           }
         })
       },
-      notifyChange (value) {
+      notifyChange (value, vm) {
         if (value !== undefined) {
           this.setValue(value)
         } else {
           value = this.getValue()
         }
+        vm.isChecked = true
         this.$emit('change', getCustomEvent('change', { value }))
       }
     }

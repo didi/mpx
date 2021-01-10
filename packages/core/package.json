@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/core",
-  "version": "2.6.17",
+  "version": "2.6.44",
   "description": "mpx runtime core",
   "keywords": [
     "miniprogram",
@@ -18,7 +18,12 @@
     "@types"
   ],
   "dependencies": {
-    "miniprogram-api-typings": "^2.8.3"
+    "lodash.throttle": "^4.1.1",
+    "miniprogram-api-typings": "^3.0.2"
+  },
+  "peerDependencies": {
+    "vue": "^2.6.10",
+    "vue-i18n": "^8.15.3"
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org"

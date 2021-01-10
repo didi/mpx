@@ -3,26 +3,27 @@
   Author Tobias Koppers @sokra
   Modified by @hiyuki
 */
-var loaderUtils = require('loader-utils')
-var processCss = require('./processCss')
-var getImportPrefix = require('./getImportPrefix')
-var compileExports = require('./compile-exports')
-var createResolver = require('./createResolver')
-var isUrlRequest = require('../utils/is-url-request')
-var getMainCompilation = require('../utils/get-main-compilation')
+const loaderUtils = require('loader-utils')
+const processCss = require('./processCss')
+const getImportPrefix = require('./getImportPrefix')
+const compileExports = require('./compile-exports')
+const createResolver = require('./createResolver')
+const isUrlRequest = require('../utils/is-url-request')
+const getMainCompilation = require('../utils/get-main-compilation')
+const addQuery = require('../utils/add-query')
 
 module.exports = function (content, map) {
   if (this.cacheable) this.cacheable()
 
-  var callback = this.async()
-  var query = loaderUtils.getOptions(this) || {}
-  var root = query.root
-  var moduleMode = query.modules || query.module
-  var camelCaseKeys = query.camelCase || query.camelcase
-  var sourceMap = query.sourceMap || false
-  var resolve = createResolver(query.alias)
-  var mpx = getMainCompilation(this._compilation).__mpx__
-  var externals = mpx.externals
+  const callback = this.async()
+  const query = loaderUtils.getOptions(this) || {}
+  const root = query.root
+  const moduleMode = query.modules || query.module
+  const camelCaseKeys = query.camelCase || query.camelcase
+  const sourceMap = query.sourceMap || false
+  const resolve = createResolver(query.alias)
+  const mpx = getMainCompilation(this._compilation).__mpx__
+  const externals = mpx.externals
 
   if (sourceMap) {
     if (map) {
@@ -54,13 +55,13 @@ module.exports = function (content, map) {
   }, function (err, result) {
     if (err) return callback(err)
 
-    var cssAsString = JSON.stringify(result.source)
+    let cssAsString = JSON.stringify(result.source)
 
     // for importing CSS
-    var importUrlPrefix = getImportPrefix(this, query)
+    const importUrlPrefix = getImportPrefix(this)
 
-    var alreadyImported = {}
-    var importJs = result.importItems.filter(function (imp) {
+    const alreadyImported = {}
+    const importJs = result.importItems.filter(function (imp) {
       if (!imp.mediaQuery) {
         if (alreadyImported[imp.url]) {
           return false
@@ -81,23 +82,25 @@ module.exports = function (content, map) {
           JSON.stringify('@import url(' + imp.url + ');') + ', ' +
           JSON.stringify(imp.mediaQuery) + ']);'
       } else {
-        var importUrl = importUrlPrefix + imp.url
         if (query.extract) {
+          const importUrlPrefix = getImportPrefix(this, true)
+          const importUrl = importUrlPrefix + addQuery(imp.url, { isStatic: true, issuerResource: this.resource })
           return 'exports.push([module.id, ' +
             JSON.stringify('@import "') +
             '+ require(' + loaderUtils.stringifyRequest(this, importUrl) + ') +' +
             JSON.stringify('";') + ', ' +
             JSON.stringify(imp.mediaQuery) + ']);'
         }
+        const importUrl = importUrlPrefix + imp.url
         return 'exports.i(require(' + loaderUtils.stringifyRequest(this, importUrl) + '), ' + JSON.stringify(imp.mediaQuery) + ');'
       }
     }, this).join('\n')
 
     function importItemMatcher (item) {
-      var match = result.importItemRegExp.exec(item)
-      var idx = +match[1]
-      var importItem = result.importItems[idx]
-      var importUrl = importUrlPrefix + importItem.url
+      const match = result.importItemRegExp.exec(item)
+      const idx = +match[1]
+      const importItem = result.importItems[idx]
+      const importUrl = importUrlPrefix + importItem.url
       return '" + require(' + loaderUtils.stringifyRequest(this, importUrl) + ').locals' +
         '[' + JSON.stringify(importItem.export) + '] + "'
     }
@@ -105,16 +108,16 @@ module.exports = function (content, map) {
     cssAsString = cssAsString.replace(result.importItemRegExpG, importItemMatcher.bind(this))
 
     // helper for ensuring valid CSS strings from requires
-    var urlEscapeHelper = ''
+    let urlEscapeHelper = ''
 
     if (query.url !== false && result.urlItems.length > 0) {
       urlEscapeHelper = 'var escape = require(' + loaderUtils.stringifyRequest(this, '!!' + require.resolve('./url/escape.js')) + ');\n'
 
       cssAsString = cssAsString.replace(result.urlItemRegExpG, function (item) {
-        var match = result.urlItemRegExp.exec(item)
-        var idx = +match[1]
-        var urlItem = result.urlItems[idx]
-        var url = resolve(urlItem.url)
+        const match = result.urlItemRegExp.exec(item)
+        let idx = +match[1]
+        const urlItem = result.urlItems[idx]
+        const url = resolve(urlItem.url)
         idx = url.indexOf('?#')
         if (idx < 0) idx = url.indexOf('#')
         var urlRequest
@@ -129,12 +132,12 @@ module.exports = function (content, map) {
       }.bind(this))
     }
 
-    var exportJs = compileExports(result, importItemMatcher.bind(this), camelCaseKeys)
+    let exportJs = compileExports(result, importItemMatcher.bind(this), camelCaseKeys)
     if (exportJs) {
       exportJs = 'exports.locals = ' + exportJs + ';'
     }
 
-    var moduleJs
+    let moduleJs
     if (sourceMap && result.map) {
       // add a SourceMap
       map = result.map

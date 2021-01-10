@@ -25,13 +25,15 @@ const render = nunjucks.renderString
 /**
  * Generate a template given a `src` and `dest`.
  *
- * @param {String} name
- * @param {String} src
- * @param {String} dest
+ * @param {Object} option
+ * @param {String} option.name
+ * @param {String} option.src
+ * @param {String} option.dest
+ * @param {Array} option.mockList
  * @param {Function} done
  */
 
-module.exports = function generate (name, src, dest, done) {
+module.exports = function generate ({ name, src, dest, mockList }, done) {
   const opts = getOptions(name, src)
   const metalsmith = Metalsmith(path.join(src, 'template'))
   const data = Object.assign(metalsmith.metadata(), {
@@ -46,9 +48,14 @@ module.exports = function generate (name, src, dest, done) {
     opts.metalsmith.before(metalsmith, opts, helpers)
   }
 
-  (opts.mock
-    ? metalsmith.use(mock(opts.mock))
-    : metalsmith.use(askQuestions(opts.prompts)))
+  const mockData = opts.getMockData && opts.getMockData(mockList)
+
+  const chain = mockData
+    ? metalsmith.use(mock(mockData))
+    : metalsmith.use(askQuestions(opts.prompts))
+
+  chain
+    .use(useDefault(opts.prompts))
     .use(computed(opts.computed))
     .use(filterFiles(opts.filters))
     .use(renderTemplateFiles(opts.skipInterpolation))
@@ -88,18 +95,35 @@ function askQuestions (prompts) {
   }
 }
 
-function mock (mock) {
+function mock (mockData) {
   return (files, metalsmith, done) => {
-    processMock(mock, metalsmith.metadata(), done)
+    processMock(mockData, metalsmith.metadata(), done)
   }
 }
 
-function processMock (mock, data, done) {
-  if (!mock) {
+function processMock (mockData, data, done) {
+  if (!mockData) {
     return done()
   }
-  Object.assign(data, mock)
+  Object.assign(data, mockData)
   done()
+}
+
+function useDefault (prompts) {
+  return (files, metalsmith, done) => {
+    const data = metalsmith.metadata()
+    Object.keys(prompts).forEach((key) => {
+      const prompt = prompts[key]
+      if (!data.hasOwnProperty(key) && prompt.hasOwnProperty('default')) {
+        if (typeof prompt.default === 'function') {
+          data[key] = prompt.default(data)
+        } else {
+          data[key] = prompt.default
+        }
+      }
+    })
+    done()
+  }
 }
 
 function computed (computed) {

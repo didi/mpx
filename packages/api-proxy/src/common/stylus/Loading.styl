@@ -1,0 +1,37 @@
+create-line($i)
+  opacity: 1 - $i * 0.0833
+  transform rotate($i * 30 deg) translate(0, -13px)
+  animation (__mpx__loading + $i + _start__) (0.1s * $i) linear 1, __mpx__loading__ 1.2s linear (0.1s * $i) infinite
+
+.__mpx_loading_wrapper__ 
+  width 40px
+  height 40px
+  position relative
+  margin 6px auto
+  display inline-block
+
+
+.__mpx_loading_wrapper__ div 
+  width 2px
+  height 10px
+  border-radius 1px
+  background #bec2cb
+  position absolute
+  left 50%
+  top 41%
+
+@keyframes __mpx__loading__
+  from
+    opacity 1
+  to
+    opacity 0
+
+for i in 0..11
+  .__mpx_loading_wrapper__ .line{i + 1}
+    create-line(i)
+
+  @keyframes __mpx__loading{i}_start__
+    from
+      opacity i * 0.0833
+    to
+      opacity 0

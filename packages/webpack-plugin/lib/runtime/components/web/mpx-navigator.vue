@@ -1,7 +1,6 @@
 <script>
   import getInnerListeners from './getInnerListeners'
 
-
   export default {
     name: 'mpx-navigator',
     data () {
@@ -38,14 +37,20 @@
     },
     mounted () {
       this.$on('tap', () => {
-        const router = window.__mpxRouter
-        switch (this.openType) {
-          case 'navigateBack':
-            router && router.go && router.go(-this.delta)
-            break
-          case 'reLaunch':
-            router && router.reLaunch && router.reLaunch(this.url)
-            break
+        const mpx = global.__mpx
+        if (mpx) {
+          switch (this.openType) {
+            case 'navigateBack':
+              mpx.navigateBack && mpx.navigateBack({
+                delta: this.delta
+              })
+              break
+            case 'reLaunch':
+              mpx.reLaunch && mpx.reLaunch({
+                url: this.url
+              })
+              break
+          }
         }
       })
     },

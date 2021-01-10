@@ -1,6 +1,6 @@
 <script>
   import getInnerListeners, { getCustomEvent } from './getInnerListeners'
-
+  import { processSize } from './util'
 
   export default {
     name: 'mpx-progress',
@@ -56,6 +56,17 @@
         transition: 'none'
       }
     },
+    computed: {
+      _borderRadius () {
+        return processSize(this.borderRadius)
+      },
+      _fontSize () {
+        return processSize(this.fontSize)
+      },
+      _strokeWidth () {
+        return processSize(this.strokeWidth)
+      }
+    },
     mounted () {
       this.$watch(() => {
         return this.percent
@@ -87,9 +98,9 @@
     },
     render (createElement) {
       const children = []
-      const strokeWidthStr = isNaN(+this.strokeWidth) ? this.strokeWidth : this.strokeWidth + 'px'
-      const fontSizeStr = isNaN(+this.fontSize) ? this.fontSize : this.fontSize + 'px'
-      const borderRadiusStr = isNaN(+this.borderRadius) ? this.borderRadius : this.borderRadius + 'px'
+      const strokeWidthStr = this._strokeWidth + 'px'
+      const fontSizeStr = this._fontSize + 'px'
+      const borderRadiusStr = this._borderRadius + 'px'
 
       const progress = createElement('div', {
         class: 'progress',
@@ -116,7 +127,6 @@
       }, [progress])
 
       children.push(progressContainer)
-
       if (this.showInfo) {
         const info = createElement('div', {
           class: 'info',
@@ -148,6 +158,7 @@
       flex: 1
       position relative
       overflow hidden
+      height: 3px
 
     .progress
       position absolute
@@ -155,6 +166,7 @@
       left 0
       width 100%
       transform-origin 0 0
+      height: 100%
 
     .info
       padding-left 20px
