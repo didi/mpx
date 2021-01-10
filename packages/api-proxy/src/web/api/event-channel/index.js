@@ -1,60 +1,55 @@
 class EventChannel {
   constructor () {
-    this._events = new Map()
+    this.listener = {}
   }
-  on (event, fn) {
-    const events = this._events
-    if (!events.has(event)) {
-      events.set(event, new Set())
-    }
-    if (!events.get(event).has(fn)) {
-      events.get(event).add(fn)
-    }
-    return this
-  }
-  off (event, fn) {
-    if (!arguments.length) {
-      this._events = new Map()
-      return this
-    }
-    const cbs = this._events.get(event)
-    if (!cbs) { return this }
-    if (!fn) {
-      this._events.delete(event)
-    } else {
-      for (let cb of cbs) {
-        if (cb === fn || cb.fn === fn) {
-          cbs.delete(cb)
-          break
-        }
-      }
-    }
-    return this
-  }
-  emit (event, ...args) {
-    const cbs = this._events.get(event)
+  emit (eventName, ...args) {
+    const cbs = this.listener[eventName]
     if (cbs) {
-      cbs.forEach(cb => {
+      cbs.map((item, index) => {
         try {
-          cb.apply(this, args)
+          item.fn.apply(this, args)
         } catch (e) {
           console.log(`event "${event}" error ${e}`)
+        }
+        if (item.type === 'once') {
+          cbs.splice(index, 1)
         }
       })
     }
   }
-  once (event, fn) {
-    const _this = this
-    function onceCb () {
-      _this.off(event, onceCb)
-      fn.apply(_this, arguments)
+  off (eventName, EventCallback) {
+    if (EventCallback) {
+      const cbs = this.listener[eventName]
+      const copyCbs = []
+      if (cbs) {
+        cbs.map((item, index) => {
+          if (item.fn !== EventCallback) {
+            copyCbs.push(item)
+          }
+        })
+      }
+      this.listener[eventName] = copyCbs
+    } else {
+      this.listener[eventName] && (this.listener[eventName].length = 0)
     }
-    onceCb.fn = fn
-    this.on(event, onceCb)
-    return this
+  }
+  on (eventName, EventCallback) {
+    (this.listener[eventName] || (this.listener[eventName] = [])).push({fn: EventCallback, type: 'on'})
+  }
+  once (eventName, EventCallback) {
+    (this.listener[eventName] || (this.listener[eventName] = [])).push({fn: EventCallback, type: 'once'})
+  }
+  _addListener (eventName, EventCallback, type) {
+    (this.listener[eventName] || (this.listener[eventName] = [])).push({fn: EventCallback, type})
+  }
+  _addListeners (events) {
+    if (Object.prototype.toString.call(events) === '[object Object]') {
+      Object.keys(events).map((eventName) => {
+        (this.listener[eventName] || (this.listener[eventName] = [])).push({fn: events[eventName], type: 'on'})
+      })
+    }
   }
 }
-
 export {
   EventChannel
 }
