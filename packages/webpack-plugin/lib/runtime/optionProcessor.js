@@ -207,9 +207,7 @@ export default function processOption (
           }
         })
         // 初始化length
-        if (global.__mpxRouter) {
-          global.__mpxRouter.__mpxHistoryLength = global.history.length
-        }
+        global.__mpxRouter.__mpxHistoryLength = global.history.length
       }
     }
 
