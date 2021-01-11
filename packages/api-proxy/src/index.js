@@ -17,7 +17,7 @@ export default function install (target, options = {}) {
   /* eslint-disable camelcase, no-undef */
   if (typeof __mpx_src_mode__ !== 'undefined') {
     if (from && from !== __mpx_src_mode__) {
-      console.warn && console.warn('platform key from nnconsistent with the current environment value\n')
+      console.warn && console.warn('the platform from field inconsistent with the current environment value\n')
     }
     from = `__mpx_src_mode_${__mpx_src_mode__}__`
   } else {
