@@ -23,12 +23,10 @@ const blackList = [
   'createWorker',
   'pageScrollTo',
   'reportAnalytics',
-  'getMenuButtonBoundingClientRect'
+  'getMenuButtonBoundingClientRect',
+  'uploadFile',
+  'downloadFile'
 ]
-
-if (__mpx_mode__ !== 'ali') {
-  blackList.push('uploadFile', 'downloadFile')
-}
 
 function getMapFromList (list) {
   if (list && list.length) {
