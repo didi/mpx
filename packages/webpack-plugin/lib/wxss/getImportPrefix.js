@@ -8,7 +8,9 @@ const extractorPath = normalize.lib('extractor')
 
 module.exports = function getImportPrefix (loaderContext, extract) {
   const selectorIndex = loaderContext.loaders.findIndex(({ path }) => {
-    return path.indexOf('@mpxjs/webpack-plugin/lib/selector') !== -1
+    return path
+      .replace(/\\/g, '/')
+      .indexOf('@mpxjs/webpack-plugin/lib/selector') !== -1
   })
   let loadersRequest = loaderContext.loaders.slice(
     loaderContext.loaderIndex,
