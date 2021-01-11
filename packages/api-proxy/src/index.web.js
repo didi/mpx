@@ -20,7 +20,7 @@ export default function install (target) {
     }
   })
 }
-export function getMpxApiProxy() {
+export function getMpxApiProxy () {
   let apiProxy = {}
   install(apiProxy)
   return apiProxy
