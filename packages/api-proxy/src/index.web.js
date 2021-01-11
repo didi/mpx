@@ -5,7 +5,7 @@ import { genFromMap } from './common/js'
 export default function install (target) {
   const fromMap = genFromMap()
 
-  global.EventChannel = new EventChannel()
+  global.EventChannel = EventChannel
 
   Object.keys(allApi).forEach(api => {
     target[api] = function (...args) {

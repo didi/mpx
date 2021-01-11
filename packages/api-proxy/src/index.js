@@ -22,7 +22,6 @@ export default function install (target, options = {}) {
     from = `__mpx_src_mode_${__mpx_src_mode__}__`
   } else {
     if (!from) {
-      // 报warning 无from 参数走默认 wx
       from = 'wx'
       console.warn && console.warn('the platform from field is empty, wx will be used by default\n')
     }
