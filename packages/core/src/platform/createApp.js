@@ -29,8 +29,7 @@ export default function createApp (option, config = {}) {
       created () {
         Object.assign(this, option.proto)
         Object.assign(this, appData)
-        const router = global.__mpxRouter || {}
-        const current = (router.history && router.history.current) || {}
+        const current = (global.__mpxRouter && global.__mpxRouter.currentRoute) || {}
         const options = {
           path: current.path && current.path.replace(/^\//, ''),
           query: current.query,
