@@ -9,6 +9,7 @@ const sidebar = {
         'basic/single-file',
         'basic/ide',
         'basic/template',
+        'basic/css',
         'basic/reactive',
         'basic/class-style-binding',
         'basic/conditional-render',
@@ -29,6 +30,7 @@ const sidebar = {
         'advance/subpackage',
         'advance/image-process',
         'advance/progressive',
+        'advance/ability-compatible',
         'advance/plugin',
         'advance/platform'
       ]
@@ -45,7 +47,7 @@ const sidebar = {
     {
       title: '拓展',
       collapsable: false,
-      path:'/guide/extend',
+      path: '/guide/extend',
       children: [
         'extend/request',
         'extend/mock',
@@ -59,7 +61,6 @@ const sidebar = {
         'understand/runtime',
         'understand/compile'
       ]
-
     }
   ],
   '/api/': [
@@ -72,24 +73,38 @@ const sidebar = {
     'extend'
   ],
   '/articles/': [
-    '1.0',
-    '2.0'
+    { title: '滴滴开源小程序框架Mpx', path: '1.0' },
+    { title: 'Mpx发布2.0，完美支持跨平台开发', path: '2.0' },
+    { title: '小程序框架运行时性能大测评', path: 'performance' },
+    { title: 'Mpx框架初体验', path: 'mpx1' },
+    { title: 'Mpx框架技术揭秘', path: 'mpx2' },
+    { title: '基于Mpx的小程序体积优化', path: 'size-control' },
   ]
 }
 
 const nav = [
   { text: '指南', link: '/guide/basic/start' },
   { text: 'API', link: '/api/config' },
-  { text: '文章', link: '/articles/1.0' },
+  { text: '文章', link: '/articles/index' },
   { text: '更新记录', link: 'https://github.com/didi/mpx/releases' },
   { text: 'Github', link: 'https://github.com/didi/mpx' }
 ]
 
 module.exports = {
-  base: '/mpx/',
+  base: '/',
   head: [
     ['link', { rel: 'icon', href: '/favicon.ico' }]
   ],
+  title: 'Mpx框架',
+  plugins: {
+    '@vuepress/pwa': {
+      serviceWorker: true,
+      updatePopup: {
+        message: '文档有更新啦！',
+        buttonText: '刷新'
+      }
+    }
+  },
   themeConfig: {
     sidebarDepth: 1,
     logo: '/logo.png',

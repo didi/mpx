@@ -6,7 +6,30 @@
 
 简单的使用示例如下：
 
-todo 组件和节点的简单示例，包含template和script
+```html
+  <template>
+    <view class="container">
+      <!-- my-header 为一个组件，组件内部定义了一个 show 方法 -->
+      <my-header wx:ref="myHeader"></my-header>
+      <view wx:ref="content"></view>
+    </view>
+  </template>
+
+  <script>
+    import { createComponent } from '@mpxjs/core'
+
+    createComponent({
+      ready() {
+        // 通过 this.$refs 获取view的节点查询对象
+        this.$refs.content.fields({size: true},function (res){
+          // res 就是我们要拿到的节点大小
+        }).exec()
+        // 通过 this.$refs 可直接获取组件实例
+        this.$refs.myHeader.show()  // 拿到组件实例，调用组件内部的方法
+      }
+    })
+  </script>
+```
 
 ## 在列表渲染中使用`wx:ref`
 
@@ -14,4 +37,38 @@ todo 组件和节点的简单示例，包含template和script
 
 使用示例如下：
 
-todo wx:for中的组件和节点的简单示例，包含template和script
+```html
+<template>
+  <view>
+    <!-- list 组件 -->
+    <list wx:ref="list" wx:for="{{listData}}" data="{{item.name}}" wx:key="id"></list>
+    <!-- view 节点 -->
+    <view wx:ref="test" wx:for="{{listData}}" wx:key="id">{{item.name}}</view>
+  </view>
+</template>
+
+<script>
+  import { createComponent } from '@mpxjs/core'
+
+  createComponent({
+    data: {
+      listData: [
+        {id: 1, name: 'A'},
+        {id: 2, name: 'B'},
+        {id: 3, name: 'C'},
+      ]
+    },
+    ready () {
+      // 通过 this.$refs.list 获取的是组件实例的数组
+      this.$refs.list.foEach(item => {
+        // 对每一个组件实例的操作...
+      })
+      // 通过 this.$refs.test 获取的是节点查询对象，通过相关的方法操作节点
+      this.$refs.test.fields({size: true}, function (res) {
+        // 此处拿到的 res 是一个数组，包含了列表渲染中的所有节点的大小信息
+      }).exec()
+    }
+  })
+</script>
+
+```
