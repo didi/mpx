@@ -111,5 +111,9 @@ module.exports = {
     displayAllHeaders: false,
     sidebar,
     nav
+  },
+  chainWebpack: (config, isServer) => {
+    // 添加node_modules避免resolve错误
+    config.resolve.modules.add('node_modules')
   }
 }
