@@ -28,7 +28,7 @@ module.exports = postcss.plugin('rpx', (options = {}) => root => {
 
   root.walkRules(rule => {
     let ignore = false
-    if (isIgnoreComment(rule.prev())) {
+    if (isIgnoreComment(rule.prev()) || isIgnoreComment(rule.last)) {
       ignore = true
     }
     rule.walkDecls(declaration => {

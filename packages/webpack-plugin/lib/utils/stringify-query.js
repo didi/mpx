@@ -1,37 +1,35 @@
 /**
  * stringify object to query string, started with '?'
- * @param obj queryObj
+ * @param {Object} obj
+ * @param {boolean} useJSON
  * @return {string} queryString
  */
-function stringifyQuery (obj) {
+const JSON5 = require('json5')
+
+function stringifyQuery (obj, useJSON) {
+  if (useJSON) return `?${JSON5.stringify(obj)}`
+
   const res = obj ? Object.keys(obj).sort().map(key => {
     const val = obj[key]
 
     if (val === undefined) {
-      return ''
-    }
-
-    if (val === null) {
-      return key
+      return
     }
 
     if (Array.isArray(val)) {
+      const key2 = `${key}[]`
       const result = []
       val.slice().forEach(val2 => {
         if (val2 === undefined) {
           return
         }
-        if (val2 === null) {
-          result.push(key)
-        } else {
-          result.push(key + '=' + val2)
-        }
+        result.push(`${key2}=${encodeURIComponent(val2)}`)
       })
       return result.join('&')
     }
 
-    return key + '=' + val
-  }).filter(x => x.length > 0).join('&') : null
+    return `${key}=${encodeURIComponent(val)}`
+  }).filter(x => x).join('&') : null
   return res ? `?${res}` : ''
 }
 

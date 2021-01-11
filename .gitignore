@@ -3,7 +3,7 @@
 .gitconfig
 node_modules/
 *.log
-#packages/**/package-lock.json
-/package-lock.json
+examples/*/package-lock.json
 .DS_Store
 docs-vuepress/.vuepress/dist
+elevate/

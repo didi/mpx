@@ -1,16 +1,11 @@
 import requestAdapter from './request'
 import CancelToken from './cancelToken'
-// import RequestQueue from './queue'
 import InterceptorManager from './interceptorManager'
 
 export default class XFetch {
   constructor (options, MPX) {
     this.CancelToken = CancelToken
-    // this.queue = new RequestQueue({
-    //   adapter: (config) => requestAdapter(config),
-    //   ...options
-    // })
-    this.adapter = (config) => requestAdapter(config, MPX)
+    this.requestAdapter = (config) => requestAdapter(config, MPX)
     this.interceptors = {
       request: new InterceptorManager(),
       response: new InterceptorManager()
@@ -18,24 +13,24 @@ export default class XFetch {
   }
 
   create (options) {
+    console.warn('The xfetch.create api is deprecated now and will be removed in next minor version!')
     return new XFetch(options)
   }
 
   lock () {
-    // this.queue.lock()
+    console.warn('The xfetch.lock api is useless now and will be removed in next minor version!')
   }
 
   unlock () {
-    // this.queue.unlock()
+    console.warn('The xfetch.unlock api is useless now and will be removed in next minor version!')
   }
 
   addLowPriorityWhiteList (rules) {
-    // this.queue.addLowPriorityWhiteList(rules)
+    console.warn('The xfetch.addLowPriorityWhiteList api is useless now and will be removed in next minor version!')
   }
 
   fetch (config, priority) {
-    // const request = () => this.queue.request(config, priority)
-    const request = () => this.adapter(config)
+    config.timeout = config.timeout || global.__networkTimeout
     // middleware chain
     const chain = []
     let promise = Promise.resolve(config)
@@ -44,7 +39,7 @@ export default class XFetch {
       chain.push(interceptor.fulfilled, interceptor.rejected)
     })
 
-    chain.push(request, undefined)
+    chain.push(this.requestAdapter, undefined)
 
     this.interceptors.response.forEach(function pushResponseInterceptors (interceptor) {
       chain.push(interceptor.fulfilled, interceptor.rejected)

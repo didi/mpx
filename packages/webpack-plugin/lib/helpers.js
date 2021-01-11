@@ -63,7 +63,7 @@ function ensureBang (loader) {
   }
 }
 
-function resolveLoaders (options, moduleId, isProduction, hasScoped, hasComment, usingComponents, needCssSourceMap, projectRoot) {
+function resolveLoaders ({ options, needCssSourceMap, projectRoot }) {
   let cssLoaderOptions = ''
   let wxmlLoaderOptions = ''
   let jsonCompilerOptions = ''
@@ -75,7 +75,7 @@ function resolveLoaders (options, moduleId, isProduction, hasScoped, hasComment,
   jsonCompilerOptions += '?root=' + projectRoot
   // 由于css-loader@1.0之后不再支持root，暂时不允许在css中使用/开头的路径，后续迁移至postcss-loader再进行支持
   // 现在切回css-loader@0.28.11了，先加回来和原生小程序保持一致
-  cssLoaderOptions += (cssLoaderOptions ? '&' : '?') + 'root=' + projectRoot + '&importLoaders=1&extract=true'
+  cssLoaderOptions += (cssLoaderOptions ? '&' : '?') + 'root=' + projectRoot + '&extract=true'
 
   const defaultLoaders = {
     html: wxmlLoaderPath + wxmlLoaderOptions,
@@ -99,7 +99,7 @@ function resolveLoaders (options, moduleId, isProduction, hasScoped, hasComment,
   }
 }
 
-module.exports = function createHelpers (loaderContext, options, moduleId, isProduction, hasScoped, hasComment, usingComponents, needCssSourceMap, srcMode, isNative, projectRoot) {
+module.exports = function createHelpers ({ loaderContext, options, moduleId, hasScoped, hasComment, usingComponents, needCssSourceMap, srcMode, isNative, projectRoot }) {
   const rawRequest = getRawRequest(loaderContext, options.excludedPreLoaders)
   const {
     defaultLoaders,
@@ -107,16 +107,11 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
     loaders,
     preLoaders,
     postLoaders
-  } = resolveLoaders(
+  } = resolveLoaders({
     options,
-    moduleId,
-    isProduction,
-    hasScoped,
-    hasComment,
-    usingComponents,
     needCssSourceMap,
     projectRoot
-  )
+  })
 
   function getRequire (type, part, index, scoped) {
     return 'require(' + getRequestString(type, part, index, scoped) + ')'
@@ -136,18 +131,12 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
     )
   }
 
-  function processQuery (request, mode, type) {
-    let addQueryObj = {}
-    let removeKeys
+  function processMode (request, mode) {
     if (mode) {
-      addQueryObj.mode = mode
+      // 当前区块如声明了mode则强制覆盖已有request中的mode
+      request = addQuery(request, { mode }, undefined, true)
     }
-    // 为了使js模块全局唯一，避免闭包变量存在多份，删除js模块的分包标记
-    // 该逻辑有问题，模块复用后后续分包不会再执行component初始化函数，导致wx找不到组件
-    // if (type === 'script') {
-    //   removeKeys = 'packageName'
-    // }
-    return addQuery(request, addQueryObj, removeKeys)
+    return request
   }
 
   function getRequestString (type, part, index = 0, scoped) {
@@ -160,12 +149,12 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
       // select the corresponding part from the mpx file
       getSelectorString(type, index) +
       // the url to the actual mpx file, including remaining requests
-      processQuery(rawRequest, part.mode, type)
+      processMode(rawRequest, part.mode)
     )
   }
 
-  function getRequireForSrc (type, impt, index, scoped, prefix, withIssuer) {
-    return 'require(' + getSrcRequestString(type, impt, index, scoped, prefix, withIssuer) + ')'
+  function getRequireForSrc (type, impt, index, scoped, prefix) {
+    return 'require(' + getSrcRequestString(type, impt, index, scoped, prefix) + ')'
   }
 
   function getImportForSrc (type, impt, index, scoped, prefix) {
@@ -182,12 +171,12 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
     )
   }
 
-  function getSrcRequestString (type, impt, index = 0, scoped, prefix = '!', withIssuer) {
-    let loaderString = type === 'script' ? '' : prefix + getLoaderString(type, impt, index, scoped, withIssuer)
+  function getSrcRequestString (type, impt, index = 0, scoped, prefix = '!') {
+    let loaderString = type === 'script' ? '' : prefix + getLoaderString(type, impt, index, scoped)
     let src = impt.src
     return loaderUtils.stringifyRequest(
       loaderContext,
-      loaderString + processQuery(src, impt.mode, type)
+      loaderString + processMode(src, impt.mode)
     )
   }
 
@@ -232,11 +221,11 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
       .join('!')
   }
 
-  function getLoaderString (type, part, index, scoped, withIssuer) {
+  function getLoaderString (type, part, index, scoped) {
     let loader = getRawLoaderString(type, part, index, scoped)
     const lang = getLangString(type, part)
     if (type !== 'script' && type !== 'wxs') {
-      loader = getExtractorString(type, index, withIssuer) + loader
+      loader = getExtractorString(type, index) + loader
     }
     if (preLoaders[lang]) {
       loader = loader + ensureBang(preLoaders[lang])
@@ -297,7 +286,7 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
         hasComment,
         isNative,
         moduleId,
-        root: projectRoot
+        projectRoot
       }
       templateCompiler = templateCompilerPath + '?' + JSON.stringify(templateCompilerOptions)
     }
@@ -357,25 +346,24 @@ module.exports = function createHelpers (loaderContext, options, moduleId, isPro
   }
 
   function getSelectorString (type, index) {
+    const selectorOptions = {
+      type,
+      index
+    }
     return ensureBang(
-      selectorPath +
-      '?type=' +
-      (type === 'script' || type === 'template' || type === 'styles' || type === 'json'
-        ? type
-        : 'customBlocks') +
-      '&index=' + index
+      selectorPath + '?' +
+      JSON.stringify(selectorOptions)
     )
   }
 
-  function getExtractorString (type, index, withIssuer) {
+  function getExtractorString (type, index) {
+    const extractorOptions = {
+      type,
+      index
+    }
     return ensureBang(
-      extractorPath +
-      '?type=' +
-      (type === 'script' || type === 'template' || type === 'styles' || type === 'json'
-        ? type
-        : 'customBlocks') +
-      '&index=' + index +
-      (withIssuer ? '&issuerResource=' + loaderContext.resource : '')
+      extractorPath + '?' +
+      JSON.stringify(extractorOptions)
     )
   }
 
