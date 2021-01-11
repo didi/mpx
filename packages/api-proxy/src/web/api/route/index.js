@@ -1,4 +1,5 @@
 import { webHandleSuccess, webHandleFail } from '../../../common/js'
+import { EventChannel } from '../event-channel'
 
 function redirectTo (options = {}) {
   const router = global.__mpxRouter
@@ -26,7 +27,6 @@ function redirectTo (options = {}) {
 
 function navigateTo (options = {}) {
   const router = global.__mpxRouter
-  const EventChannel = global.EventChannel
   const eventChannel = new EventChannel()
   window.__mpxEventChannels = {
     toPath: options.url.split('?')[0],

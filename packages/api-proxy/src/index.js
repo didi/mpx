@@ -32,7 +32,7 @@ export default function install (target, options = {}) {
     to = __mpx_mode__
   } else if (!to) {
     console.warn && console.warn('the platform to field is empty, ali will be used by default\n')
-    to = 'ali'
+    to = 'wx'
   }
   /* eslint-enable */
 

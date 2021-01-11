@@ -5,7 +5,7 @@ import { genFromMap } from './common/js'
 export default function install (target) {
   const fromMap = genFromMap()
 
-  global.EventChannel = EventChannel
+  global.EventChannel = new EventChannel()
 
   Object.keys(allApi).forEach(api => {
     target[api] = function (...args) {
@@ -20,7 +20,7 @@ export default function install (target) {
     }
   })
 }
-export function getMpxApiProxy () {
+export function getProxy () {
   let apiProxy = {}
   install(apiProxy)
   return apiProxy
