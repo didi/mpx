@@ -34,8 +34,10 @@ ResolveDependency.Template = class ResolveDependencyTemplate {
     const resourcePath = parseRequest(dep.resource).resourcePath
     const pagesMap = dep.pagesMap
     const componentsMap = dep.componentsMap[dep.packageName]
+    const mainComponentsMap = dep.componentsMap.main
     const staticResourceMap = dep.staticResourceMap[dep.packageName]
-    const resolved = pagesMap[resourcePath] || componentsMap[resourcePath] || staticResourceMap[resourcePath]
+    const mainStaticResourceMap = dep.staticResourceMap.main
+    const resolved = pagesMap[resourcePath] || componentsMap[resourcePath] || mainComponentsMap[resourcePath] || staticResourceMap[resourcePath] || mainStaticResourceMap[resourcePath]
     if (!resolved) {
       throw new Error(`Path ${dep.resource} is not a page/component/static resource, which is resolved from ${dep.issuerResource}!`)
     }

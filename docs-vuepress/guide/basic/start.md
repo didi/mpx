@@ -150,7 +150,7 @@ json区块完全支持小程序原生的[app.json配置](https://developers.weix
 </script>
 ```
 
-更多用法可以查看我们的官方实例：https://github.com/didi/mpx/tree/master/examples/
+更多用法可以查看我们的官方实例：[https://github.com/didi/mpx/tree/master/examples/](https://github.com/didi/mpx/tree/master/examples/)
 
 ## 跨平台输出
 
@@ -159,10 +159,10 @@ json区块完全支持小程序原生的[app.json配置](https://developers.weix
 执行以下命令进行跨平台输出
 
 ```shell
-npm run build:crosss
+npm run build:cross
 ```
 
-关于跨平台能力的更多详情请查看[这里](../advance/platform.md#todoHash)
+关于跨平台能力的更多详情请查看[这里](../advance/platform.md)
 
 
 

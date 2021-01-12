@@ -1,11 +1,11 @@
 import { CREATED } from '../../core/innerLifecycle'
-
+import { inBrowser } from '../../helper/utils'
 let systemInfo = {}
 
 let count = 0
 
 function getCurrentPageInstance () {
-  let vnode = window.__mpxRouter.__mpxActiveVnode
+  let vnode = global.__mpxRouter.__mpxActiveVnode
   let pageInstance
   if (vnode && vnode.componentInstance) {
     pageInstance = vnode.tag.endsWith('mpx-tab-bar-container') ? vnode.componentInstance.$children[1] : vnode.componentInstance
@@ -36,7 +36,9 @@ function onResize () {
 }
 
 // listen resize
-window.addEventListener('resize', onResize)
+if (inBrowser) {
+  window.addEventListener('resize', onResize)
+}
 
 export default function pageStatusMixin (mixinType) {
   if (mixinType === 'page') {

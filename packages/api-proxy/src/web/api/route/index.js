@@ -1,7 +1,7 @@
 import { webHandleSuccess, webHandleFail } from '../../../common/js'
 
 function redirectTo (options = {}) {
-  const router = window.__mpxRouter
+  const router = global.__mpxRouter
   if (router) {
     router.__mpxAction = { type: 'redirect' }
     return new Promise((resolve, reject) => {
@@ -25,7 +25,7 @@ function redirectTo (options = {}) {
 }
 
 function navigateTo (options = {}) {
-  const router = window.__mpxRouter
+  const router = global.__mpxRouter
   if (router) {
     router.__mpxAction = { type: 'to' }
     return new Promise((resolve, reject) => {
@@ -49,7 +49,7 @@ function navigateTo (options = {}) {
 }
 
 function navigateBack (options = {}) {
-  const router = window.__mpxRouter
+  const router = global.__mpxRouter
   if (router) {
     const delta = options.delta || 1
     router.__mpxAction = {
@@ -64,7 +64,7 @@ function navigateBack (options = {}) {
 }
 
 function reLaunch (options = {}) {
-  const router = window.__mpxRouter
+  const router = global.__mpxRouter
   if (router) {
     const delta = router.stack.length - 1
     let reLaunchCount = router.currentRoute.query.reLaunchCount || 0
@@ -107,7 +107,7 @@ function reLaunch (options = {}) {
 }
 
 function switchTab (options = {}) {
-  const router = window.__mpxRouter
+  const router = global.__mpxRouter
   if (router) {
     const toRoute = router.match(options.url, router.history.current)
     const currentRoute = router.currentRoute
