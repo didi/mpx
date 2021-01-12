@@ -18,7 +18,7 @@ module.exports = function ({ print }) {
   const webPropLog = print({ platform: 'web', tag: TAG_NAME, isError: false })
   const webEventLog = print({ platform: 'web', tag: TAG_NAME, isError: false })
   const webValueLogError = print({ platform: 'web', tag: TAG_NAME, isError: true, type: 'value' })
-  const wxPropValueLog = print ({platform: 'wx', tag: TAG_NAME, isError: false, type: 'value'})
+  const wxPropValueLog = print({ platform: 'wx', tag: TAG_NAME, isError: false, type: 'value' })
   return {
     test: TAG_NAME,
     web (tag, { el }) {
