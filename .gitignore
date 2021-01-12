@@ -1,5 +1,6 @@
 .idea/
 .vscode/
+.gitconfig
 node_modules/
 *.log
 examples/*/package-lock.json
