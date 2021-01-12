@@ -2,6 +2,11 @@ const { isMustache } = require('../../../../utils/string')
 
 const TAG_NAME = 'button'
 
+// 微信支持的属性及其值
+const wxSupportPropsValue = {
+  'open-type': ['contact', 'share', 'getPhoneNumber', 'getUserInfo', 'launchApp', 'openSetting', 'feedback']
+}
+
 module.exports = function ({ print }) {
   const aliValueLogError = print({ platform: 'ali', tag: TAG_NAME, isError: true, type: 'value' })
   const aliValueLog = print({ platform: 'ali', tag: TAG_NAME, isError: false, type: 'value' })
@@ -21,6 +26,7 @@ module.exports = function ({ print }) {
   const ttEventLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false, type: 'event' })
   const webPropLog = print({ platform: 'web', tag: TAG_NAME, isError: false })
   const webEventLog = print({ platform: 'web', tag: TAG_NAME, isError: false, type: 'event' })
+  const wxPropValueLog = print ({platform: 'wx', tag: TAG_NAME, isError: false, type: 'value'})
   return {
     test: TAG_NAME,
     web (tag, { el }) {
@@ -62,7 +68,10 @@ module.exports = function ({ print }) {
           }
         },
         swan ({ name, value }) {
-          const supportList = ['contact', 'share', 'getUserInfo', 'getPhoneNumber', 'openSetting']
+          const supportList = ['contact', 'share', 'getUserInfo', 'getPhoneNumber', 'openSetting', 'chooseAddress', 'chooseInvoiceTitle', 'login']
+          if (wxSupportPropsValue[name].indexOf(value) === -1) {
+            wxPropValueLog({ name, value })
+          }
           if (isMustache(value)) {
             // 如果是个变量，报warning
             baiduValueLog({ name, value })
@@ -71,7 +80,10 @@ module.exports = function ({ print }) {
           }
         },
         qq ({ name, value }) {
-          const supportList = ['share', 'getUserInfo', 'launchApp', 'openSetting', 'contact', 'feedback']
+          const supportList = ['share', 'getUserInfo', 'launchApp', 'openSetting', 'contact', 'feedback', 'openGroupProfile', 'addFriend', 'addColorSign', 'openPublicProfile', 'addGroupApp', 'shareMessageToFriend', 'addToFavorites']
+          if (wxSupportPropsValue[name].indexOf(value) === -1) {
+            wxPropValueLog({ name, value })
+          }
           if (isMustache(value)) {
             // 如果是个变量，报warning
             qqValueLog({ name, value })
@@ -80,6 +92,9 @@ module.exports = function ({ print }) {
           }
         },
         tt ({ name, value }) {
+          if (wxSupportPropsValue[name].indexOf(value) === -1) {
+            wxPropValueLog({ name, value })
+          }
           if (isMustache(value)) {
             ttValueLog({ name, value })
           } else {
