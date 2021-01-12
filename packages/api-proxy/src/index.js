@@ -16,10 +16,23 @@ export default function install (target, options = {}) {
   let { from = '', to = '' } = platform
   /* eslint-disable camelcase, no-undef */
   if (typeof __mpx_src_mode__ !== 'undefined') {
+    if (from && from !== __mpx_src_mode__) {
+      console.warn && console.warn('the platform from field inconsistent with the current environment value\n')
+    }
     from = `__mpx_src_mode_${__mpx_src_mode__}__`
+  } else {
+    if (!from) {
+      from = 'wx'
+      console.warn && console.warn('the platform from field is empty, wx will be used by default\n')
+    }
+    from = `__mpx_src_mode_${from}__`
   }
+
   if (typeof __mpx_mode__ !== 'undefined') {
     to = __mpx_mode__
+  } else if (!to) {
+    console.warn && console.warn('the platform to field is empty, ali will be used by default\n')
+    to = 'wx'
   }
   /* eslint-enable */
 
@@ -55,4 +68,10 @@ export default function install (target, options = {}) {
         target[k] = fallbackMap[k]
       }
     })
+}
+
+export function getProxy (options = {}) {
+  let apiProxy = {}
+  install(apiProxy, options)
+  return apiProxy
 }
