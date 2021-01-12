@@ -689,7 +689,7 @@ filter 方法除可以是和 `methods` 平级的方法，还可以是 `methods` 
 
   // click inner
   // inner
-  // outer
+  // middle
   ```
 
 * **参考：** [事件处理 - catch](../guide/basic/event.html)
