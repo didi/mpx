@@ -204,7 +204,7 @@ EXPORT_MPX.config = {
 }
 
 if (__mpx_mode__ === 'web') {
-  window.__mpx = EXPORT_MPX
+  global.__mpx = EXPORT_MPX
 } else {
   if (global.i18n) {
     observe(global.i18n)

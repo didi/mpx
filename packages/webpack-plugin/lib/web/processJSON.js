@@ -15,12 +15,14 @@ module.exports = function (json, options, rawCallback) {
   const loaderContext = options.loaderContext
   const resolveMode = options.resolveMode
   const pagesMap = options.pagesMap
-  const pagesEntryMap = options.pagesEntryMap
   const componentsMap = options.componentsMap
+  const pagesEntryMap = options.pagesEntryMap
   const projectRoot = options.projectRoot
   const pathHash = options.pathHash
   const localPagesMap = {}
   const localComponentsMap = {}
+  const buildInfo = loaderContext._module.buildInfo
+
   let output = '/* json */\n'
   let jsonObj = {}
   let tabBarMap
@@ -213,7 +215,8 @@ module.exports = function (json, options, rawCallback) {
               }
             }
           }
-          pagesMap[resourcePath] = pageName
+          buildInfo.pagesMap = buildInfo.pagesMap || {}
+          buildInfo.pagesMap[resourcePath] = pagesMap[resourcePath] = pageName
           pagesEntryMap[resourcePath] = loaderContext.resourcePath
           localPagesMap[pageName] = {
             resource: addQuery(resource, { page: true }),
@@ -272,7 +275,9 @@ module.exports = function (json, options, rawCallback) {
       const parsed = path.parse(resourcePath)
       const componentId = parsed.name + pathHash(resourcePath)
 
-      componentsMap[resourcePath] = componentId
+      buildInfo.packageName = 'main'
+      buildInfo.componentsMap = buildInfo.componentsMap || {}
+      buildInfo.componentsMap[resourcePath] = componentsMap[resourcePath] = componentId
 
       localComponentsMap[name] = {
         resource: addQuery(resource, { component: true, mpxCid: componentId }),
