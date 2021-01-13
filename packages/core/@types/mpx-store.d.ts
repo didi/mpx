@@ -151,7 +151,8 @@ declare namespace MpxStore {
   }[StringKeyof<D>]>
   type GetDispatchAndCommitWithThis<A, D extends Deps, AK extends 'actions' | 'mutations'> = (<T extends keyof GetAllDepsType<A, D, AK>>(type: T, ...payload: GetAllDepsType<A, D, AK>[T] extends (...payload: infer P) => any ? P : never) => GetAllDepsType<A, D, AK>[T] extends (...payload: any[]) => infer R ? R : never)
 
-  type GetAllMapKeys<S, D extends Deps, SK extends 'state' | 'getters'> = GetAllDepsType<S, D, SK> & GetStateAndGettersKey<S>
+  // type GetAllMapKeys<S, D extends Deps, SK extends 'state' | 'getters'> = GetAllDepsType<S, D, SK> & GetStateAndGettersKey<S>
+  type GetAllMapKeys<S, D extends Deps, SK extends 'state' | 'getters'> = GetAllDepsType<S, D, SK> // 关闭对state、getters本身传入对象的深层次推导，因为过深的递归会导致ts推导直接挂掉
 
   interface StoreOptWithThis<S, G, M, A, D extends Deps> {
     state?: S
