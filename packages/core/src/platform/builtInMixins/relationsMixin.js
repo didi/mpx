@@ -1,4 +1,5 @@
 import { isObject } from '../../helper/utils'
+import { CREATED, MOUNTED } from '../../core/innerLifecycle'
 
 const targets = []
 let curTarget = null
@@ -35,6 +36,11 @@ function transferPath (relations, base) {
     newRelations[parsePath(key, base)] = relations[key]
   })
   return newRelations
+}
+
+const relationTypeMap = {
+  parent: 'child',
+  ancestor: 'descendant'
 }
 
 export default function relationsMixin (mixinType) {
@@ -170,55 +176,64 @@ export default function relationsMixin (mixinType) {
     }
   } else if (__mpx_mode__ === 'web' && mixinType === 'component') {
     return {
-      created () {
-        this.$mpxRelations = this.$rawOptions.relations
-        this.__mpxRelationsVNodeMaps = {}
+      [CREATED] () {
+        this.__mpxRelations = {}
       },
-      mounted () {
-        this.__mpxCollectAllComponent()
-        this.__mpxRelationExec('linked')
+      [MOUNTED] () {
+        this.__mpxCollectRelations()
+        this.__mpxExecRelations('linked')
       },
       beforeDestroy () {
-        this.__mpxRelationExec('unlinked')
+        this.__mpxExecRelations('unlinked')
       },
       methods: {
-        __mpxCollectAllComponent () {
-          if (!this.$mpxRelations) {
-            return
-          }
-          Object.keys(this.$mpxRelations).forEach(path => {
-            let type = this.$mpxRelations[path].type
-            if (type === 'parent' || type === 'ancestor') { // 向上查找
-              this.__mpxRelationsVNodeMaps[path] = {}
-              this.__mpxCollectParentComponent(path, this, type, this, this.__mpxRelationsVNodeMaps[path])
-            }
+        __mpxCollectRelations () {
+          const relations = this.$rawOptions.relations
+          if (!relations) return
+          Object.keys(relations).forEach(path => {
+            const relation = relations[path]
+            // 向上查找parent是否为relation目标
+            this.__mpxCheckParent(this, relation, path)
           })
         },
-        __mpxCollectParentComponent (parentPath, child, type, cur, list) {
-          if (cur.$parent && !list.parent) {
-            let target = cur.$parent.$options.mpxCid === parentPath ? cur.$parent : ''
-            if (target) {
-              let relations = target.$mpxRelations[child.$options.mpxCid] || {}
-              if ((relations.type === 'child' || relations.type === 'descendant') && (target.$vnode.context === child.$vnode.context)) {
-                list.parent = target
-                list.child = child
+        __mpxCheckParent (current, relation, path) {
+          const type = relation.type
+          const target = current.$parent
+          if (!target) return
+
+          // target为内建组件时，直接跳过，继续向上查找
+          if (target.$options.__mpxBuiltIn) {
+            return this.__mpxCheckParent(target, relation, path)
+          }
+
+          // 当前组件在target的slots当中
+          if ((type === 'parent' || type === 'ancestor') && target.$vnode.context === this.$vnode.context) {
+            const targetRelation = target.$rawOptions && target.$rawOptions.relations && target.$rawOptions.relations[this.$options.mpxCid]
+            if (
+              targetRelation &&
+              targetRelation.type === relationTypeMap[type] &&
+              target.$options.mpxCid === path
+            ) {
+              // 当前匹配成功
+              this.__mpxRelations[path] = {
+                target,
+                targetRelation,
+                relation
               }
+            } else if (type === 'ancestor') {
+              // 当前匹配失败，但type为ancestor时，继续向上查找
+              return this.__mpxCheckParent(target, relation, path)
             }
           }
         },
-        __mpxRelationExec (type) {
-          Object.keys(this.__mpxRelationsVNodeMaps).forEach(path => {
-            let context = this.__mpxRelationsVNodeMaps[path]
-            let { parent, child } = context
-            if (parent && child) {
-              let parentRelations = parent.$mpxRelations[child.$options.mpxCid]
-              if (typeof parentRelations[type] === 'function') {
-                parentRelations[type].call(parent, child)
-              }
-              let childRelations = child.$mpxRelations[parent.$options.mpxCid]
-              if (typeof childRelations[type] === 'function') {
-                childRelations[type].call(child, parent)
-              }
+        __mpxExecRelations (type) {
+          Object.keys(this.__mpxRelations).forEach(path => {
+            const { target, targetRelation, relation } = this.__mpxRelations[path]
+            if (typeof targetRelation[type] === 'function') {
+              targetRelation[type].call(target, this)
+            }
+            if (typeof relation[type] === 'function') {
+              relation[type].call(this, target)
             }
           })
         }
