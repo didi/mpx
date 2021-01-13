@@ -33,7 +33,7 @@ module.exports = function ({ print }) {
       {
         test: 'open-type',
         ali (attr) {
-          if (wxSupportPropsValue[attr.name].indexOf(attr.value) === -1) {
+          if (wxSupportPropsValue[attr.name] && wxSupportPropsValue[attr.name].indexOf(attr.value) === -1) {
             wxPropValueLog({ name: attr.name, value: attr.value })
           }
           if (isMustache(attr.value)) {
@@ -47,7 +47,7 @@ module.exports = function ({ print }) {
           }
         },
         tt (attr) {
-          if (wxSupportPropsValue[attr.name].indexOf(attr.value) === -1) {
+          if (wxSupportPropsValue[attr.name] && wxSupportPropsValue[attr.name].indexOf(attr.value) === -1) {
             wxPropValueLog({ name: attr.name, value: attr.value })
           }
           if (isMustache(attr.value)) {

@@ -69,7 +69,7 @@ module.exports = function ({ print }) {
         },
         swan ({ name, value }) {
           const supportList = ['contact', 'share', 'getUserInfo', 'getPhoneNumber', 'openSetting', 'chooseAddress', 'chooseInvoiceTitle', 'login']
-          if (wxSupportPropsValue[name].indexOf(value) === -1) {
+          if (wxSupportPropsValue[name] && wxSupportPropsValue[name].indexOf(value) === -1) {
             wxPropValueLog({ name, value })
           }
           if (isMustache(value)) {
@@ -81,7 +81,7 @@ module.exports = function ({ print }) {
         },
         qq ({ name, value }) {
           const supportList = ['share', 'getUserInfo', 'launchApp', 'openSetting', 'contact', 'feedback', 'openGroupProfile', 'addFriend', 'addColorSign', 'openPublicProfile', 'addGroupApp', 'shareMessageToFriend', 'addToFavorites']
-          if (wxSupportPropsValue[name].indexOf(value) === -1) {
+          if (wxSupportPropsValue[name] && wxSupportPropsValue[name].indexOf(value) === -1) {
             wxPropValueLog({ name, value })
           }
           if (isMustache(value)) {
@@ -92,7 +92,7 @@ module.exports = function ({ print }) {
           }
         },
         tt ({ name, value }) {
-          if (wxSupportPropsValue[name].indexOf(value) === -1) {
+          if (wxSupportPropsValue[name] && wxSupportPropsValue[name].indexOf(value) === -1) {
             wxPropValueLog({ name, value })
           }
           if (isMustache(value)) {
