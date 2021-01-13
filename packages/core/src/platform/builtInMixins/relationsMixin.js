@@ -174,6 +174,7 @@ export default function relationsMixin (mixinType) {
       [CREATED] () {
         this.$mpxRelations = this.$rawOptions.relations
         this.__mpxRelationsVNodeMaps = {}
+        this.cacheSlotComInstance = new Set()
       },
       [MOUNTED] () {
         this.__mpxCollectAllComponent()
@@ -200,7 +201,7 @@ export default function relationsMixin (mixinType) {
             let target = $parent.$options.mpxCid === parentPath ? $parent : ''
             if (target) {
               if (!target.cacheSlotComInstance.has(child)) {
-                target.__mpxFindSlotChilds.call(target) // 如果缓存中没有目标组件，则需更新下 cacheSlotComInstance
+                target.__mpxFindSlotChildren.call(target) // 如果缓存中没有目标组件，则需更新下 cacheSlotComInstance
               }
               if (target.cacheSlotComInstance.has(child)) {
                 let relations = target.$mpxRelations[child.$options.mpxCid] || {}
@@ -212,7 +213,7 @@ export default function relationsMixin (mixinType) {
             }
           }
         },
-        __mpxFindSlotChilds () { // 收集slot中所有组件实例
+        __mpxFindSlotChildren () { // 收集slot中所有组件实例
           Object.keys(this.$slots).forEach(slotKey => {
             this.$slots[slotKey].forEach(vNode => {
               if (vNode.componentInstance) {
