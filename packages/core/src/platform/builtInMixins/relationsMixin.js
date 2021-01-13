@@ -190,20 +190,47 @@ export default function relationsMixin (mixinType) {
             let type = this.$mpxRelations[path].type
             if (type === 'parent' || type === 'ancestor') { // 向上查找
               this.__mpxRelationsVNodeMaps[path] = {}
-              this.__mpxCollectParentComponent(path, this, type, this, this.__mpxRelationsVNodeMaps[path])
+              this.__mpxCollectParentComponent(path, this.$parent, this, this.__mpxRelationsVNodeMaps[path])
             }
           })
         },
-        __mpxCollectParentComponent (parentPath, child, type, cur, list) {
-          if (cur.$parent && !list.parent) {
-            let target = cur.$parent.$options.mpxCid === parentPath ? cur.$parent : ''
+        __mpxCollectParentComponent (parentPath, $parent, child, list) {
+          if (parentPath && !list.parent) {
+            let target = $parent.$options.mpxCid === parentPath ? $parent : ''
             if (target) {
-              let relations = target.$mpxRelations[child.$options.mpxCid] || {}
-              if ((relations.type === 'child' || relations.type === 'descendant') && (target.$vnode.context === child.$vnode.context)) {
-                list.parent = target
-                list.child = child
+              if (!target.cacheSlotComInstance.has(child)) {
+                target.__mpxFindSlotChilds.call(target) // 如果缓存中没有目标组件，则需更新下 cacheSlotComInstance
+              }
+              if (target.cacheSlotComInstance.has(child)) {
+                let relations = target.$mpxRelations[child.$options.mpxCid] || {}
+                if (relations.type === 'child' || relations.type === 'descendant') {
+                  list.parent = target
+                  list.child = child
+                }
               }
             }
+          }
+        },
+        __mpxFindSlotChilds () { // 收集slot中所有组件实例
+          Object.keys(this.$slots).forEach(slotKey => {
+            this.$slots[slotKey].forEach(vNode => {
+              if (vNode.componentInstance) {
+                this.cacheSlotComInstance.add(vNode.componentInstance)
+              } else if (vNode.children) {
+                vNode.children.forEach(item => {
+                  this.__mpxDepsSearchSlotChild(item, this.cacheSlotComInstance)
+                })
+              }
+            })
+          })
+        },
+        __mpxDepsSearchSlotChild (child, cache) { // 深度遍历，查找slot下所有一级子级组件
+          if (child.componentInstance) {
+            cache.add(child.componentInstance)
+          } else if (child.children) {
+            child.children.forEach(item => {
+              this.__mpxDepsSearchSlotChild(item, cache)
+            })
           }
         },
         __mpxRelationExec (type) {
