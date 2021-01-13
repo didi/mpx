@@ -178,7 +178,7 @@ export default function processOption (
       // 处理visibilitychange时触发当前活跃页面组件的onshow/onhide
       if (inBrowser) {
         document.addEventListener('visibilitychange', function () {
-          const vnode = global.__mpxRouter.__mpxActiveVnode
+          const vnode = global.__mpxRouter && global.__mpxRouter.__mpxActiveVnode
           if (vnode && vnode.componentInstance) {
             const currentPage = vnode.tag.endsWith('mpx-tab-bar-container') ? vnode.componentInstance.$refs.tabBarPage : vnode.componentInstance
             if (document.hidden) {

@@ -1,5 +1,5 @@
 function objectKeys (obj) {
-  if (!__mpx_wxs__ || __mpx_mode__ === 'swan') {
+  if (!__mpx_wxs__) {
     return Object.keys(obj)
   } else {
     var keys = []
@@ -57,7 +57,7 @@ function objectKeys (obj) {
 }
 
 function genRegExp (str, flags) {
-  if (!__mpx_wxs__ || __mpx_mode__ === 'swan') {
+  if (!__mpx_wxs__) {
     return new RegExp(str, flags)
   } else {
     return getRegExp(str, flags)
@@ -82,7 +82,7 @@ function isObject (obj) {
 }
 
 function likeArray (arr) {
-  if (!__mpx_wxs__ || __mpx_mode__ === 'swan') {
+  if (!__mpx_wxs__) {
     return Array.isArray(arr)
   } else {
     return arr && arr.constructor === 'Array'

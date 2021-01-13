@@ -4,7 +4,7 @@ import mpx from '@mpxjs/core'
 interface CancelTokenClass {
   new (...args: any): {
     token: Promise<any>
-    exec(msg?: any): Promise<any>
+    exec (msg?: any): Promise<any>
   }
 }
 
@@ -22,8 +22,8 @@ interface CreateOption {
 }
 
 // @ts-ignore
-type fetchT = (option: fetchOption, priority?: 'normal'|'low') => Promise<WechatMiniprogram.RequestSuccessCallbackResult & {requestConfig: fetchOption}>
-type addLowPriorityWhiteListT = (rules: string|RegExp|Array<string|RegExp>) => void
+type fetchT = (option: fetchOption, priority?: 'normal' | 'low') => Promise<WechatMiniprogram.RequestSuccessCallbackResult & { requestConfig: fetchOption }>
+type addLowPriorityWhiteListT = (rules: string | RegExp | Array<string | RegExp>) => void
 type createT = (option?: CreateOption) => xfetch
 
 export interface xfetch {
@@ -45,6 +45,7 @@ declare module '@mpxjs/core' {
   interface Mpx {
     xfetch: xfetch
   }
+
   interface MpxComponentIns {
     $xfetch: xfetch
   }
@@ -64,5 +65,9 @@ declare const mpxFetch: {
   install: (...args: any) => any,
   XFetch: XFetchClass
 }
+
+export const XFetch: XFetchClass
+
+export const CancelToken: CancelTokenClass
 
 export default mpxFetch

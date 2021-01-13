@@ -5,10 +5,12 @@
 */
 const normalize = require('../utils/normalize')
 const extractorPath = normalize.lib('extractor')
+const toPosix = require('../utils/to-posix')
 
 module.exports = function getImportPrefix (loaderContext, extract) {
   const selectorIndex = loaderContext.loaders.findIndex(({ path }) => {
-    return path.indexOf('@mpxjs/webpack-plugin/lib/selector') !== -1
+    // 兼容windows路径
+    return toPosix(path).indexOf('@mpxjs/webpack-plugin/lib/selector') !== -1
   })
   let loadersRequest = loaderContext.loaders.slice(
     loaderContext.loaderIndex,
