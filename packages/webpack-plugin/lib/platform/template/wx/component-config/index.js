@@ -112,11 +112,11 @@ module.exports = function getComponentConfigs ({ warn, error }) {
     template(),
     block(),
     icon(),
-    HyphenTagName({ print }),
     webView({ print }),
     video({ print }),
     camera({ print }),
     livePlayer({ print }),
-    livePusher({ print })
+    livePusher({ print }),
+    HyphenTagName({ print })
   ]
 }
