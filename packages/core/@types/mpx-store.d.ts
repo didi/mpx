@@ -49,6 +49,10 @@ declare namespace MpxStore {
 
   interface Store<S = {}, G = {}, M = {}, A = {}, D extends Deps = {}> {
 
+    __deps: D
+    __state: S
+    __getters: GetGetters<G>
+
     state: S & UnboxDepsField<D, 'state'>
     getters: GetGetters<G> & UnboxDepsField<D, 'getters'>
     mutations: GetMutations<M> & UnboxDepsField<D, 'mutations'>
@@ -134,20 +138,29 @@ declare namespace MpxStore {
     }[CombineStringKey<P, K>]
   }[StringKeyof<A>]> // {actA: () => void, storeB.actB: () => void}
 
-  type GetStateAndGettersKey<S, P extends string | number = ''> = UnionToIntersection<{
-    [K in StringKeyof<S>]: {
-      [RK in CombineStringKey<P, K>]: S[K] extends DeeperStateAndGetters ? GetStateAndGettersKey<S[K], RK> : Record<RK, S[K]>
-    }[CombineStringKey<P, K>]
-  }[StringKeyof<S>]> // {stateA: any, storeB.stateB: any}
+  type GetStateAndGettersKey<D extends Deps, DK extends keyof D, T extends 'state' | 'getters', P extends string | number = ''> = UnionToIntersection<{
+    [K in StringKeyof<D[DK][`__${T}`]>]: {
+      [RK in CombineStringKey<P, K>]: D[DK][`__${T}`][K]
+    }
+  }[StringKeyof<D[DK][`__${T}`]>] | {
+    [K in StringKeyof<D[DK]['__deps']>]: GetStateAndGettersKey<D[DK]['__deps'], K, T, CombineStringKey<P, K>>
+  }[StringKeyof<D[DK]['__deps']>]>
+
+  // type GetStateAndGettersKey<S, P extends string | number = ''> = UnionToIntersection<{
+  //   [K in StringKeyof<S>]: {
+  //     [RK in CombineStringKey<P, K>]: S[K] extends DeeperStateAndGetters ? GetStateAndGettersKey<S[K], RK> : Record<RK, S[K]>
+  //   }[CombineStringKey<P, K>]
+  // }[StringKeyof<S>]> // {stateA: any, storeB.stateB: any}
 
   type GetAllDepsType<A, D extends Deps, AK extends 'state' | 'getters' | 'actions' | 'mutations'> = {
     [K in StringKeyof<A>]: A[K]
   } & UnionToIntersection<{
     [K in StringKeyof<D>]: AK extends 'actions' | 'mutations' ? {
       [P in keyof GetActionsKey<D[K][AK], K>]: GetActionsKey<D[K][AK], K>[P]
-    } : { // state, getters
-      [P in keyof GetStateAndGettersKey<D[K][AK], K>]: GetStateAndGettersKey<D[K][AK], K>[P]
-    }
+    } : AK extends 'state' | 'getters' ? { // state, getters
+      [P in keyof GetStateAndGettersKey<D, K, AK, K>]: GetStateAndGettersKey<D, K, AK, K>[P]
+      // [P in keyof GetStateAndGettersKey<D[K][AK], K>]: GetStateAndGettersKey<D[K][AK], K>[P]
+    } : {}
   }[StringKeyof<D>]>
   type GetDispatchAndCommitWithThis<A, D extends Deps, AK extends 'actions' | 'mutations'> = (<T extends keyof GetAllDepsType<A, D, AK>>(type: T, ...payload: GetAllDepsType<A, D, AK>[T] extends (...payload: infer P) => any ? P : never) => GetAllDepsType<A, D, AK>[T] extends (...payload: any[]) => infer R ? R : never)
 
@@ -170,6 +183,10 @@ declare namespace MpxStore {
   }
 
   interface IStoreWithThis<S = {}, G = {}, M = {}, A = {}, D extends Deps = {}> {
+
+    __deps: D
+    __state: S
+    __getters: GetComputedType<G>
 
     state: S & UnboxDepsField<D, 'state'>
     getters: GetComputedType<G> & UnboxDepsField<D, 'getters'>
