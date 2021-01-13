@@ -260,10 +260,7 @@ export function createActionsWithThis<S = {}, G = {}, M extends MutationsAndActi
   getters: GetComputedType<G> & UnboxDepsField<D, 'getters'>,
   dispatch: GetDispatchAndCommitWithThis<A, D, 'actions'>,
   commit: GetDispatchAndCommitWithThis<M, D, 'mutations'>
-} & {
-  dispatch(type: string, ...payload: any[]): any
-  commit(type: string, ...payload: any[]): any
-}>, options?: {
+} & MpxStore.CompatibleDispatch>, options?: {
   state?: S,
   getters?: G,
   mutations?: M,
