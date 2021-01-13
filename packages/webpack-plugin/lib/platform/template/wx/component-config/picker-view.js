@@ -5,7 +5,6 @@ module.exports = function ({ print }) {
   const baiduEventLog = print({ platform: 'baidu', tag: TAG_NAME, isError: false })
   const ttPropLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false })
   const ttEventLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false, type: 'event' })
-
   return {
     test: TAG_NAME,
     web (tag, { el }) {
@@ -19,15 +18,6 @@ module.exports = function ({ print }) {
       }
     ],
     event: [
-      {
-        test: /^(change)$/,
-        ali (eventName) {
-          const eventMap = {
-            'change': 'change'
-          }
-          return eventMap[eventName]
-        }
-      },
       {
         test: /^(pickstart|pickend)$/,
         ali: aliEventLog,

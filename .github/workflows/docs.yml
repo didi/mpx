@@ -10,6 +10,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - uses: technote-space/get-diff-action@v4
+        with:
+          PATTERNS: |
+            +(docs|docs-vuepress)/**/*
 
       - name: Use node v12
         uses: actions/setup-node@v1
@@ -18,12 +22,14 @@ jobs:
 
       # vuepress生成最终文档
       - name: generate docs file
+        if: env.GIT_DIFF
         run: |
           npm i
           npm run docs:build
 
       # 使用 https://github.com/appleboy/scp-action 进行部署，注意 strip_components 用于控制层级
       - name: Deploy to self-host server
+        if: env.GIT_DIFF
         uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.DOCS_SERVER_HOST }}
@@ -36,6 +42,7 @@ jobs:
 
       # vuepress生产的文件需要控制根目录，暂时还是先用老文档部署GitHub pages
       - name: generate old static file
+        if: env.GIT_DIFF
         run: |
           cd docs
           npx gitbook-cli install
@@ -43,6 +50,7 @@ jobs:
 
       # 部署github pages
       - name: Deploy to github pages
+        if: env.GIT_DIFF
         uses: peaceiris/actions-gh-pages@v3
         with:
           publish_dir: ./docs/_book

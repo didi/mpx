@@ -96,6 +96,13 @@ module.exports = {
     ['link', { rel: 'icon', href: '/favicon.ico' }]
   ],
   title: 'Mpx框架',
+  locales: {
+    '/': {
+      lang: 'zh-CN', // 将会被设置为 <html> 的 lang 属性
+      title: 'Mpx框架',
+      description: '深度性能优化的增强型小程序开发框架'
+    },
+  },
   plugins: {
     '@vuepress/pwa': {
       serviceWorker: true,
