@@ -8,6 +8,8 @@ const config = require('../config')
 const getMainCompilation = require('../utils/get-main-compilation')
 const createHelpers = require('../helpers')
 const isUrlRequest = require('../utils/is-url-request')
+const addQuery = require('../utils/add-query')
+const parseRequest = require('../utils/parse-request')
 
 function randomIdent () {
   return 'xxxHTMLLINKxxx' + Math.random() + Math.random() + 'xxx'
@@ -18,7 +20,7 @@ module.exports = function (content) {
   const isProduction = this.minimize || process.env.NODE_ENV === 'production'
   const options = loaderUtils.getOptions(this) || {}
 
-  const filePath = this.resourcePath
+  const { resourcePath: filePath, queryObj } = parseRequest(this.resource)
 
   const context = (
     this.rootContext ||
@@ -43,7 +45,7 @@ module.exports = function (content) {
   const mpx = getMainCompilation(this._compilation).__mpx__
   const mode = mpx.mode
   const globalSrcMode = mpx.srcMode
-  const localSrcMode = loaderUtils.parseQuery(this.resourceQuery || '?').mode
+  const localSrcMode = queryObj.mode
   const srcMode = localSrcMode || globalSrcMode
   const customAttributes = options.attributes || mpx.attributes || []
 
@@ -59,7 +61,6 @@ module.exports = function (content) {
     usingComponents,
     needCssSourceMap,
     srcMode,
-    globalSrcMode,
     isNative,
     projectRoot: options.root || ''
   })
@@ -142,6 +143,7 @@ module.exports = function (content) {
     const link = data[match]
 
     let src = loaderUtils.urlToRequest(link.value, options.root)
+    src = addQuery(src, { isStatic: true })
 
     let requestString
 
@@ -151,6 +153,8 @@ module.exports = function (content) {
         requestString = getSrcRequestString('template', { src, mode: localSrcMode }, -1)
         break
       case config[mode].wxs.tag:
+        // 显式传递issuerResource避免模块缓存以及提供给wxs-loader计算相对路径
+        src = addQuery(src, { issuerResource: loaderContext.resource })
         requestString = getSrcRequestString('wxs', { src, mode: localSrcMode }, -1, undefined, '!!')
         break
       default:

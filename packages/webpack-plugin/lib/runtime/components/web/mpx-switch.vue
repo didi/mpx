@@ -60,7 +60,7 @@
         })
         children.push(switchElem)
       } else {
-        const style = window.__style === 'v2' ? 'v2' : 'v1'
+        const style = global.__style === 'v2' ? 'v2' : 'v1'
         const checkbox = createElement('div', {
           class: ['mpx-switch-checkbox', this.switchChecked && 'mpx-switch-checkbox-checked-' + style]
         })

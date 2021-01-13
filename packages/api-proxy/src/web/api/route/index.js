@@ -1,7 +1,8 @@
 import { webHandleSuccess, webHandleFail } from '../../../common/js'
+import { EventChannel } from '../event-channel'
 
 function redirectTo (options = {}) {
-  const router = window.__mpxRouter
+  const router = global.__mpxRouter
   if (router) {
     router.__mpxAction = { type: 'redirect' }
     return new Promise((resolve, reject) => {
@@ -25,16 +26,25 @@ function redirectTo (options = {}) {
 }
 
 function navigateTo (options = {}) {
-  const router = window.__mpxRouter
+  const router = global.__mpxRouter
+  const eventChannel = new EventChannel()
+  window.__mpxEventChannels = {
+    toPath: options.url.split('?')[0],
+    eventChannel: eventChannel
+  }
   if (router) {
     router.__mpxAction = { type: 'to' }
+    if (options.events) {
+      eventChannel._addListeners(options.events)
+    }
+
     return new Promise((resolve, reject) => {
       router.push(
         {
           path: options.url
         },
         () => {
-          const res = { errMsg: 'navigateTo:ok', eventChannel: null }
+          const res = { errMsg: 'navigateTo:ok', eventChannel: eventChannel }
           webHandleSuccess(res, options.success, options.complete)
           resolve(res)
         },
@@ -49,7 +59,7 @@ function navigateTo (options = {}) {
 }
 
 function navigateBack (options = {}) {
-  const router = window.__mpxRouter
+  const router = global.__mpxRouter
   if (router) {
     const delta = options.delta || 1
     router.__mpxAction = {
@@ -64,7 +74,7 @@ function navigateBack (options = {}) {
 }
 
 function reLaunch (options = {}) {
-  const router = window.__mpxRouter
+  const router = global.__mpxRouter
   if (router) {
     const delta = router.stack.length - 1
     let reLaunchCount = router.currentRoute.query.reLaunchCount || 0
@@ -79,11 +89,25 @@ function reLaunch (options = {}) {
       router.go(-delta)
     } else {
       router.__mpxAction.replaced = true
-      router.replace({
-        path: options.url,
-        query: {
-          reLaunchCount
-        }
+      return new Promise((resolve, reject) => {
+        router.replace(
+          {
+            path: options.url,
+            query: {
+              reLaunchCount
+            }
+          },
+          () => {
+            const res = { errMsg: 'reLaunch:ok' }
+            webHandleSuccess(res, options.success, options.complete)
+            resolve(res)
+          },
+          err => {
+            const res = { errMsg: err }
+            webHandleFail(res, options.fail, options.complete)
+            !options.fail && reject(res)
+          }
+        )
       })
     }
     const res = { errMsg: 'reLaunch:ok' }
@@ -93,7 +117,7 @@ function reLaunch (options = {}) {
 }
 
 function switchTab (options = {}) {
-  const router = window.__mpxRouter
+  const router = global.__mpxRouter
   if (router) {
     const toRoute = router.match(options.url, router.history.current)
     const currentRoute = router.currentRoute
@@ -113,8 +137,22 @@ function switchTab (options = {}) {
         router.go(-delta)
       } else {
         router.__mpxAction.replaced = true
-        router.replace({
-          path: options.url
+        return new Promise((resolve, reject) => {
+          router.replace(
+            {
+              path: options.url
+            },
+            () => {
+              const res = { errMsg: 'switchTab:ok' }
+              webHandleSuccess(res, options.success, options.complete)
+              resolve(res)
+            },
+            err => {
+              const res = { errMsg: err }
+              webHandleFail(res, options.fail, options.complete)
+              !options.fail && reject(res)
+            }
+          )
         })
       }
     }

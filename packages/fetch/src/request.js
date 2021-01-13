@@ -102,7 +102,7 @@ export default function request (config, mpx) {
       return
     }
 
-    mpx = mpx || window.__mpx
+    mpx = mpx || global.__mpx
     if (typeof mpx !== 'undefined' && typeof mpx.request === 'function') {
       // mpx
       const res = mpx.request(config)

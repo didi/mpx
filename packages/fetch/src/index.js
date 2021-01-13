@@ -1,4 +1,5 @@
 import XFetch from './xfetch'
+import CancelToken from './cancelToken'
 
 let installed = false
 
@@ -14,7 +15,10 @@ function install (proxyMPX, options, MPX) {
   })
 }
 
+export { XFetch, CancelToken }
+
 export default {
   install,
-  XFetch
+  XFetch,
+  CancelToken
 }

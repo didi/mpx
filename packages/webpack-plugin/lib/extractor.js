@@ -22,15 +22,12 @@ module.exports = function (content) {
   const mainCompilation = getMainCompilation(this._compilation)
   const mpx = mainCompilation.__mpx__
 
-  const currentPackageName = mpx.currentPackageRoot || 'main'
   const pagesMap = mpx.pagesMap
-  const componentsMap = mpx.componentsMap
 
   const extract = mpx.extract
   const pathHash = mpx.pathHash
   const extractedMap = mpx.extractedMap
   const mode = mpx.mode
-  const seenFile = mpx.extractSeenFile
   const typeExtMap = config[mode].typeExtMap
 
   const rootName = mainCompilation._preparedEntrypoints[0].name
@@ -40,53 +37,43 @@ module.exports = function (content) {
   })
   const rootResourcePath = parseRequest(rootModule.resource).resourcePath
 
-  const resourceRaw = this.resource
-  const issuerResourceRaw = options.issuerResource
-
   let resultSource = defaultResultSource
 
   const getFile = (resourceRaw, type) => {
     const { resourcePath, queryObj } = parseRequest(resourceRaw)
-    const packageName = queryObj.packageName || currentPackageName
-    const localComponentsMap = componentsMap[packageName]
-    const id = `${mode}:${packageName}:${type}:${resourcePath}`
-    if (!seenFile[id]) {
-      const resourcePath = parseRequest(resourceRaw).resourcePath
-      let filename = pagesMap[resourcePath] || localComponentsMap[resourcePath]
-      if (!filename && resourcePath === rootResourcePath) {
-        filename = rootName
-      }
-
-      if (filename) {
-        seenFile[id] = filename + typeExtMap[type]
-      } else {
-        const resourceName = path.parse(resourcePath).name
-        const outputPath = path.join(type, resourceName + pathHash(resourcePath) + typeExtMap[type])
-        seenFile[id] = mpx.getPackageInfo(resourceRaw, {
-          outputPath,
-          isStatic: true,
-          error: (err) => {
-            this.emitError(err)
-          },
-          warn: (err) => {
-            this.emitWarning(err)
-          }
-        }).outputPath
-      }
+    const currentPackageName = queryObj.packageName || mpx.currentPackageRoot || 'main'
+    const componentsMap = mpx.componentsMap[currentPackageName]
+    let filename = pagesMap[resourcePath] || componentsMap[resourcePath]
+    if (!filename && resourcePath === rootResourcePath) {
+      filename = rootName
     }
-    return seenFile[id]
+    if (filename) {
+      return filename + typeExtMap[type]
+    } else {
+      const resourceName = path.parse(resourcePath).name
+      const outputPath = path.join(type, resourceName + pathHash(resourcePath) + typeExtMap[type])
+      return mpx.getPackageInfo({
+        resource: resourceRaw,
+        outputPath,
+        isStatic: true,
+        warn: (err) => {
+          this.emitWarning(err)
+        }
+      }).outputPath
+    }
   }
 
   const type = options.type
   const fromImport = options.fromImport
-  let index = +options.index
+  const index = +options.index || 0
+  const { queryObj } = parseRequest(this.resource)
 
   let issuerFile
-  if (issuerResourceRaw) {
-    issuerFile = getFile(issuerResourceRaw, type)
+  if (queryObj.issuerResource) {
+    issuerFile = getFile(queryObj.issuerResource, type)
   }
 
-  const file = getFile(resourceRaw, type)
+  const file = getFile(this.resource, type)
   const filename = /(.*)\..*/.exec(file)[1]
 
   const sideEffects = []
@@ -125,7 +112,6 @@ module.exports = function (content) {
         resultSource = `module.exports = ${JSON.stringify(file)};`
         break
     }
-    index = 0
   }
 
   const id = `${file}:${index}:${issuerFile}:${fromImport}`
