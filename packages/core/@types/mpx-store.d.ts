@@ -118,6 +118,11 @@ declare namespace MpxStore {
     [key: string]: any | DeeperStateAndGetters
   }
 
+  interface CompatibleDispatch {
+    dispatch(type: string, ...payload: any[]): any
+    commit(type: string, ...payload: any[]): any
+  }
+
   // Store Type Bindings
   type StringKeyof<T> = Exclude<keyof T, symbol>
 
@@ -157,11 +162,8 @@ declare namespace MpxStore {
       state: S & UnboxDepsField<D, 'state'>,
       getters: GetComputedType<G> & UnboxDepsField<D, 'getters'>,
       dispatch: GetDispatchAndCommitWithThis<A, D, 'actions'>,
-      commit: GetDispatchAndCommitWithThis<M, D, 'mutations'> & GetCommit<M, D>
-    } & { // todo elegant overload
-      dispatch(type: string, ...payload: any[]): any
-      commit(type: string, ...payload: any[]): any
-    }>
+      commit: GetDispatchAndCommitWithThis<M, D, 'mutations'>
+    } & CompatibleDispatch>
     deps?: D
     modules?: Record<string, StoreOptWithThis<{}, {}, {}, {}, {}>>
   }
@@ -237,10 +239,7 @@ declare namespace MpxStore {
     }
   }
 
-  type StoreWithThis<S = {}, G = {}, M = {}, A = {}, D extends Deps = {}> = IStoreWithThis<S, G, M, A, D> & {
-    dispatch(type: string, ...payload: any[]): any
-    commit(type: string, ...payload: any[]): any
-  }
+  type StoreWithThis<S = {}, G = {}, M = {}, A = {}, D extends Deps = {}> = IStoreWithThis<S, G, M, A, D> & CompatibleDispatch
 
   interface StoreOpt<S, G, M, A, D extends Deps> {
     state?: S,
