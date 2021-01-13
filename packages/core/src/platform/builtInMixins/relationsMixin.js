@@ -1,4 +1,5 @@
 import { isObject } from '../../helper/utils'
+import { CREATED, MOUNTED } from '../../core/innerLifecycle'
 
 const targets = []
 let curTarget = null
@@ -170,11 +171,11 @@ export default function relationsMixin (mixinType) {
     }
   } else if (__mpx_mode__ === 'web' && mixinType === 'component') {
     return {
-      created () {
+      [CREATED] () {
         this.$mpxRelations = this.$rawOptions.relations
         this.__mpxRelationsVNodeMaps = {}
       },
-      mounted () {
+      [MOUNTED] () {
         this.__mpxCollectAllComponent()
         this.__mpxRelationExec('linked')
       },
