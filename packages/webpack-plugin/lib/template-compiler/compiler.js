@@ -10,6 +10,7 @@ const addQuery = require('../utils/add-query')
 const transDynamicClassExpr = require('./trans-dynamic-class-expr')
 const hash = require('hash-sum')
 const dash2hump = require('../utils/hump-dash').dash2hump
+const { inBrowser } = require('../utils/env')
 
 /**
  * Make a map and return a function for checking if a key
@@ -231,7 +232,6 @@ function assertMpxCommentAttrsEnd () {
 }
 
 // Browser environment sniffing
-const inBrowser = typeof window !== 'undefined'
 const UA = inBrowser && window.navigator.userAgent.toLowerCase()
 const isIE = UA && /msie|trident/.test(UA)
 const isEdge = UA && UA.indexOf('edge/') > 0

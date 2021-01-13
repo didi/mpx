@@ -1,7 +1,7 @@
 <script>
   import getInnerListeners from './getInnerListeners'
 
-  const tabBar = window.__tabBar
+  const tabBar = global.__tabBar
   export default {
     name: 'mpx-tab-bar',
     props: {

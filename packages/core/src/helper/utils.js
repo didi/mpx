@@ -12,6 +12,10 @@ import EXPORT_MPX from '../index'
 export function type (n) {
   return Object.prototype.toString.call(n).slice(8, -1)
 }
+/**
+ * 判断当前环境是否是浏览器环境
+ */
+export const inBrowser = typeof window !== 'undefined'
 
 export function asyncLock () {
   let lock = false

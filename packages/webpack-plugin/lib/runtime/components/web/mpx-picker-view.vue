@@ -50,10 +50,9 @@
     computed: {},
     watch: {
       value: {
-        handler() {
-          this.selectedIndex = this.value
-        },
-        immediate: true
+        handler(newVal) {
+          this.setValue(newVal)
+        }
       }
     },
     mounted() {
@@ -68,6 +67,7 @@
     },
     methods: {
       setValue(value) {
+        this.selectedIndex = value
         travelSlot(this.$slots.default, (VNode, i) => {
           if (VNode.tag && VNode.tag.endsWith('mpx-picker-view-column')) {
             const el = VNode.elm
@@ -77,7 +77,7 @@
                 component.pickerView = this
               }
             }
-            this.$children[i].selectedIndex[0] = value[i]
+            this.$children[i].selectedIndex.splice(0, 1, value[i])
           }
         })
       },

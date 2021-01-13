@@ -3,7 +3,7 @@ import { nextTick } from '../next-tick'
 
 export function pageScrollTo (options) {
   nextTick(() => {
-    const ms = window.__ms
+    const ms = global.__ms
     const { success, fail, complete } = options
 
     if (!ms) {
