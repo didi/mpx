@@ -584,9 +584,9 @@ class MpxWebpackPlugin {
           const current = parser.state.current
           const { queryObj, resourcePath } = parseRequest(module.resource)
           const localSrcMode = queryObj.mode
-          const globalSrcMode = this.options.srcMode
+          const globalSrcMode = mpx.srcMode
           const srcMode = localSrcMode || globalSrcMode
-          const mode = this.options.mode
+          const mode = mpx.mode
 
           let target
 
@@ -602,7 +602,7 @@ class MpxWebpackPlugin {
           const type = target.name
 
           const name = type === 'wx' ? 'mpx' : 'createFactory'
-          const replaceContent = type === 'wx' ? 'mpx' : `${name}(${JSON.stringify(type)})`
+          const replaceContent = type === 'wx' ? '__webpack_require__.n(mpx)()' : `__webpack_require__.n(createFactory)()(${JSON.stringify(type)})`
 
           const dep = new ReplaceDependency(replaceContent, target.range)
           current.addDependency(dep)
@@ -663,7 +663,7 @@ class MpxWebpackPlugin {
           }
         })
 
-        if (this.options.srcMode !== this.options.mode) {
+        if (mpx.srcMode !== mpx.mode) {
           // 全量替换未声明的wx identifier
           parser.hooks.expression.for('wx').tap('MpxWebpackPlugin', transHandler)
 
@@ -687,8 +687,8 @@ class MpxWebpackPlugin {
             parser.hooks.call.for('App').tap('MpxWebpackPlugin', (expr) => {
               transHandler(expr.callee)
             })
-            if (this.options.mode === 'ali') {
-              // 支付宝不支持Behaviors
+            if (mpx.mode === 'ali' || mpx.mode === 'web') {
+              // 支付宝和web不支持Behaviors
               parser.hooks.call.for('Behavior').tap('MpxWebpackPlugin', (expr) => {
                 transHandler(expr.callee)
               })
@@ -726,7 +726,7 @@ class MpxWebpackPlugin {
           const name = callee.object.name
           const { queryObj, resourcePath } = parseRequest(parser.state.module.resource)
           const localSrcMode = queryObj.mode
-          const globalSrcMode = this.options.srcMode
+          const globalSrcMode = mpx.srcMode
           const srcMode = localSrcMode || globalSrcMode
 
           if (srcMode === globalSrcMode || apiBlackListMap[callee.property.name || callee.property.value] || (name !== 'mpx' && name !== 'wx') || (name === 'wx' && !matchCondition(resourcePath, this.options.transMpxRules))) {
@@ -743,7 +743,7 @@ class MpxWebpackPlugin {
           parser.state.current.addDependency(dep)
         }
 
-        if (this.options.srcMode !== this.options.mode) {
+        if (mpx.srcMode !== mpx.mode) {
           parser.hooks.callAnyMember.for('imported var').tap('MpxWebpackPlugin', handler)
           parser.hooks.callAnyMember.for('mpx').tap('MpxWebpackPlugin', handler)
           parser.hooks.callAnyMember.for('wx').tap('MpxWebpackPlugin', handler)
@@ -752,7 +752,7 @@ class MpxWebpackPlugin {
 
       // 为了正确生成sourceMap，将该步骤由原来的compile.hooks.emit迁移到compilation.hooks.optimizeChunkAssets中来
       compilation.hooks.optimizeChunkAssets.tapAsync('MpxWebpackPlugin', (chunks, callback) => {
-        if (this.options.mode === 'web') return callback()
+        if (mpx.mode === 'web') return callback()
         const jsonpFunction = compilation.outputOptions.jsonpFunction
 
         function getTargetFile (file) {

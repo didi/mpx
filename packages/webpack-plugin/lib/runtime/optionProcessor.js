@@ -1,4 +1,5 @@
 import { inBrowser } from '../utils/env'
+
 export default function processOption (
   option,
   ctorType,
@@ -33,8 +34,8 @@ export default function processOption (
           const actualExternalClassNames = context.$attrs[className]
           if (externalClasses.indexOf(className) !== -1 && actualExternalClassNames) {
             classList.remove(className)
-            actualExternalClassNames.split(' ').forEach((actualExternalClassName) => {
-              classList.add(actualExternalClassName)
+            actualExternalClassNames.split(/\s+/).forEach((actualExternalClassName) => {
+              if (actualExternalClassName) classList.add(actualExternalClassName)
             })
           }
         })
