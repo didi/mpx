@@ -365,6 +365,7 @@ methods|支持
 mixins|支持
 observers|不支持，请使用watch代替
 behaviors|不支持，请使用mixins代替
+relations|支持
 
 ### 组件API
 
