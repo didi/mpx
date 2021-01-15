@@ -323,8 +323,8 @@ module.exports = function (raw = '{}') {
     const processSubPackagesQueue = []
     // 添加首页标识
     if (json.pages && json.pages[0]) {
-      if (Object.prototype.toString.apply(json.pages[0]) === '[object Object]') {
-        json.pages[0].path = addQuery(json.pages[0].path, { isFirst: true })
+      if (typeof json.pages[0] !== 'string') {
+        json.pages[0].src = addQuery(json.pages[0].src, { isFirst: true })
       } else {
         json.pages[0] = addQuery(json.pages[0], { isFirst: true })
       }
@@ -480,9 +480,9 @@ module.exports = function (raw = '{}') {
         context = path.join(context, srcRoot)
         async.forEach(pages, (page, callback) => {
           let aliasPath = ''
-          if (Object.prototype.toString.apply(page) === '[object Object]') {
-            aliasPath = page.key
-            page = page.path
+          if (typeof page !== 'string') {
+            aliasPath = page.path
+            page = page.src
           }
           if (!isUrlRequest(page)) return callback()
           if (resolveMode === 'native') {
