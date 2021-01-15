@@ -323,7 +323,11 @@ module.exports = function (raw = '{}') {
     const processSubPackagesQueue = []
     // 添加首页标识
     if (json.pages && json.pages[0]) {
-      json.pages[0] = addQuery(json.pages[0], { isFirst: true })
+      if (Object.prototype.toString.apply(json.pages[0]) === '[object Object]') {
+        json.pages[0].path = addQuery(json.pages[0].path, { isFirst: true })
+      } else {
+        json.pages[0] = addQuery(json.pages[0], { isFirst: true })
+      }
     }
 
     const processPackages = (packages, context, callback) => {
