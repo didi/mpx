@@ -475,6 +475,11 @@ module.exports = function (raw = '{}') {
       if (pages) {
         context = path.join(context, srcRoot)
         async.forEach(pages, (page, callback) => {
+          let aliasPath = ''
+          if (Object.prototype.toString.apply(page) === '[object Object]') {
+            aliasPath = page.key
+            page = page.path
+          }
           if (!isUrlRequest(page)) return callback()
           if (resolveMode === 'native') {
             page = urlToRequest(page)
@@ -488,16 +493,34 @@ module.exports = function (raw = '{}') {
             const relative = path.relative(context, resourcePath)
             if (/^\./.test(relative)) {
               // 如果当前page不存在于context中，对其进行重命名
-              pageName = toPosix(path.join(tarRoot, getPageName(resourcePath, ext)))
-              emitWarning(`Current page ${resourcePath} is not in current pages directory ${context}, the page path will be replaced with ${pageName}, use ?resolve to get the page path and navigate to it!`)
+              if (!aliasPath) {
+                pageName = toPosix(path.join(tarRoot, getPageName(resourcePath, ext)))
+                emitWarning(`Current page ${resourcePath} is not in current pages directory ${context}, the page path will be replaced with ${pageName}, use ?resolve to get the page path and navigate to it!`)
+              }
             } else {
-              pageName = toPosix(path.join(tarRoot, /^(.*?)(\.[^.]*)?$/.exec(relative)[1]))
-              // 如果当前page与已有page存在命名冲突，也进行重命名
+              if (!aliasPath) {
+                pageName = toPosix(path.join(tarRoot, /^(.*?)(\.[^.]*)?$/.exec(relative)[1]))
+                // 如果当前page与已有page存在命名冲突，也进行重命名
+                for (let key in pagesMap) {
+                  if (pagesMap[key] === pageName && key !== resourcePath) {
+                    const pageNameRaw = pageName
+                    pageName = toPosix(path.join(tarRoot, getPageName(resourcePath, ext)))
+                    emitWarning(`Current page ${resourcePath} is registered with a conflict page path ${pageNameRaw} which is already existed in system, the page path will be replaced with ${pageName}, use ?resolve to get the page path and navigate to it!`)
+                    break
+                  }
+                }
+              }
+            }
+            if (aliasPath) {
+              if (/^(\.\/|\/)(.*)/.test(aliasPath)) {
+                pageName = toPosix(/^(\.\/|\/)(.*)/.exec(aliasPath)[2])
+              } else {
+                pageName = toPosix(aliasPath)
+              }
+              // 判断 key 存在重复情况直接报错
               for (let key in pagesMap) {
                 if (pagesMap[key] === pageName && key !== resourcePath) {
-                  const pageNameRaw = pageName
-                  pageName = toPosix(path.join(tarRoot, getPageName(resourcePath, ext)))
-                  emitWarning(`Current page ${resourcePath} is registered with a conflict page path ${pageNameRaw} which is already existed in system, the page path will be replaced with ${pageName}, use ?resolve to get the page path and navigate to it!`)
+                  emitError(`Current page ${resourcePath} is registered with a conflict page path ${pageName}, The key fields ${aliasPath} in the object need to be unique`)
                   break
                 }
               }
