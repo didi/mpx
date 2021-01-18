@@ -232,9 +232,9 @@ module.exports = function (json, options, rawCallback) {
           }
           if (aliasPath) {
             if (/^(\.\/|\/)(.*)/.test(aliasPath)) {
-              pageName = '/' + toPosix(/^(\.\/|\/)(.*)/.exec(aliasPath)[2])
+              pageName = '/' + toPosix(path.join(tarRoot, /^(\.\/|\/)(.*)/.exec(aliasPath)[2]))
             } else {
-              pageName = '/' + toPosix(aliasPath)
+              pageName = '/' + toPosix(path.join(tarRoot, aliasPath))
             }
             // 判断 key 存在重复情况直接报错
             for (let key in pagesMap) {
