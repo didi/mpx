@@ -14,10 +14,17 @@ mpx.use(apiProxy, options)
 ```
 
 ```js
-// 单独使用
-import apiProxy from '@mpxjs/api-proxy'
+// 脱离 Mpx 单独使用
+import { getProxy } from '@mpxjs/api-proxy'
+// proxy 即为target 实例
+const proxy = getProxy(options)
 
-apiProxy(target, options) // target 为要抹平的对象
+proxy.navigateTo({
+  url: '/pages/test',
+  success (res) {
+    console.log(res)
+  }
+})
 ```
 
 ## Options
