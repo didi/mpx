@@ -385,9 +385,8 @@ class MpxWebpackPlugin {
           getPackageInfo: ({ resource, outputPath, resourceType = 'components', warn }) => {
             let packageRoot = ''
             let packageName = 'main'
-            const { resourcePath, queryObj } = parseRequest(resource)
-            // 优先使用query中声明的packageName
-            const currentPackageName = queryObj.packageName || mpx.currentPackageRoot || 'main'
+            const { resourcePath } = parseRequest(resource)
+            const currentPackageName = mpx.currentPackageRoot || 'main'
             const currentPackageRoot = currentPackageName === 'main' ? '' : currentPackageName
             const resourceMap = mpx[`${resourceType}Map`]
             // 主包中有引用一律使用主包中资源，不再额外输出
@@ -430,8 +429,39 @@ class MpxWebpackPlugin {
         }
       }
       // 处理watch时缓存模块中的buildInfo
+      // 在调用addModule前对module添加分包信息，以控制分包输出及消除缓存，该操作由afterResolve钩子迁移至此是由于dependencyCache的存在，watch状态下afterResolve钩子并不会对所有模块执行，而模块的packageName在watch过程中是可能发生变更的，如新增删除一个分包资源的主包引用
       const rawAddModule = compilation.addModule
       compilation.addModule = (...args) => {
+        const module = args[0]
+        const { queryObj, resourcePath } = parseRequest(module.resource)
+        let isStatic = queryObj.isStatic
+        if (module.loaders) {
+          module.loaders.forEach((loader) => {
+            if (/(url-loader|file-loader)/.test(loader.loader)) {
+              isStatic = true
+            }
+          })
+        }
+
+        let needPackageQuery = isStatic
+        if (!isStatic && matchCondition(resourcePath, this.options.subpackageModulesRules)) {
+          needPackageQuery = true
+        }
+
+        if (needPackageQuery) {
+          const { packageName } = mpx.getPackageInfo({
+            resource: module.resource,
+            resourceType: isStatic ? 'staticResources' : 'subpackageModules'
+          })
+
+          module.request = addQuery(module.request, {
+            packageName
+          }, undefined, true)
+          module.resource = addQuery(module.resource, {
+            packageName
+          }, undefined, true)
+        }
+
         const addModuleResult = rawAddModule.apply(compilation, args)
         if (!addModuleResult.build && addModuleResult.issuer) {
           const buildInfo = addModuleResult.module.buildInfo
@@ -911,36 +941,13 @@ try {
         callback(null, data)
       })
 
-      // resolve完成后修改loaders或者resource/request
+      // resolve完成后修改loaders信息并批量添加mode query
       normalModuleFactory.hooks.afterResolve.tapAsync('MpxWebpackPlugin', (data, callback) => {
-        const { queryObj, resourcePath } = parseRequest(data.resource)
-        let isStatic = queryObj.isStatic
         if (data.loaders) {
           data.loaders.forEach((loader) => {
             if (/ts-loader/.test(loader.loader)) {
               loader.options = Object.assign({}, loader.options, { appendTsSuffixTo: [/\.(mpx|vue)$/] })
             }
-            if (/(url-loader|file-loader)/.test(loader.loader)) {
-              isStatic = true
-            }
-          })
-        }
-        let needPackageQuery = isStatic
-        if (!isStatic && matchCondition(resourcePath, this.options.subpackageModulesRules)) {
-          needPackageQuery = true
-        }
-
-        if (needPackageQuery) {
-          const { packageName } = mpx.getPackageInfo({
-            resource: data.resource,
-            resourceType: isStatic ? 'staticResources' : 'subpackageModules'
-          })
-
-          data.request = addQuery(data.request, {
-            packageName
-          })
-          data.resource = addQuery(data.resource, {
-            packageName
           })
         }
         // 根据用户传入的modeRules对特定资源添加mode query

@@ -283,7 +283,7 @@ module.exports = function (raw = '{}') {
       // 此处query为了实现消除分包间模块缓存，以实现不同分包中引用的组件在不同分包中都能输出
       resource = addQuery(resource, {
         packageName: packageInfo.packageName
-      })
+      }, undefined, true)
       const componentPath = packageInfo.outputPath
       rewritePath && rewritePath(publicPath + componentPath)
       if (ext === '.js') {
