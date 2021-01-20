@@ -9,9 +9,9 @@ createApp(options)
 
 - **参数：**
     - `{Object} options`
-    
-        可指定小程序的生命周期回调，以及一些全局变量等 
-            
+
+        可指定小程序的生命周期回调，以及一些全局变量等
+
 
 - **示例：**
 ```js
@@ -41,12 +41,12 @@ createApp(options)
     ```
 - **参数：**
     - `{Object} options`
-    
+
          具体形式除了 computed、watch 这类 Mpx 扩展特性之外，其他的属性都参照原生小程序的官方文档即可。
-    - `{Object} config`（可选参数）   
-          
+    - `{Object} config`（可选参数）
+
          如果希望标识一个组件是最纯粹的原生组件，不用数据响应等能力，可通过 config.isNative 传 true 声明。
-         如果有需要复写/改写最终调用的创建页面的构造器，可以通过 config 对象的 customCtor 提供。  
+         如果有需要复写/改写最终调用的创建页面的构造器，可以通过 config 对象的 customCtor 提供。
          **注意:**
          mpx本身是用 component 来创建页面的，如果传page可能在初始化时候生命周期不正常导致取props有一点问题
 
@@ -82,13 +82,13 @@ createPage(object)
     ```
 - **参数：**
     - `{Object} options`
-    
+
         具体形式除了 computed、watch 这类 Mpx 扩展特性之外，其他的属性都参照原生小程序的官方文档即可。
-    - `{Object} config`（可选参数）        
-    
+    - `{Object} config`（可选参数）
+
         如果希望标识一个组件是最纯粹的原生组件，不用数据响应等能力，可通过 config.isNative 传 true 声明。
-        如果有需要复写/改写最终调用的创建组件的构造器，可以通过 config 对象的 customCtor 提供。  
-         
+        如果有需要复写/改写最终调用的创建组件的构造器，可以通过 config 对象的 customCtor 提供。
+
 
 - **示例：**
 ```js
@@ -122,7 +122,7 @@ mpx.createComponent({
 
 createComponent(object)
 ```
- 
+
 ## createStore
 > 创建一个全局状态管理容器，实现复杂场景下的组件通信需求
 - **用法：**
@@ -131,14 +131,14 @@ createComponent(object)
     ```
 - **参数：**
     - `{Object} options`
-        
+
         options 可指定以下属性：
         - **state**
 
             类型：`Object`
 
             store的根 state 对象。
-                
+
             [详细介绍](../guide/advance/store.html#state)
 
         - **mutations**
@@ -146,7 +146,7 @@ createComponent(object)
             类型：`{ [type: string]: Function }`
 
             在 store 上注册 mutation，处理函数总是接受 state 作为第一个参数（如果定义在模块中，则为模块的局部状态），payload 作为第二个参数（可选）。
-    
+
             [详细介绍](../guide/advance/store.html#mutation)
 
         - **actions**
@@ -154,7 +154,7 @@ createComponent(object)
             类型：`{ [type: string]: Function }`
 
              在 store 上注册 action。处理函数总是接受 context 作为第一个参数，payload 作为第二个参数（可选）。
-    
+
              context 对象包含以下属性：
              ```js
               {
@@ -164,21 +164,21 @@ createComponent(object)
                 getters     // 等同于 `store.getters`
               }
              ```
-             同时如果有第二个参数 payload 的话也能够接收。 
-    
+             同时如果有第二个参数 payload 的话也能够接收。
+
              [详细介绍](../guide/advance/store.html#action)
 
         - **getters**
 
             类型：`{[key: string]: Function }`
-  
+
             在 store 上注册 getter，getter 方法接受以下参数：
             ```js
             state,     // 如果在模块中定义则为模块的局部状态
             getters   // 等同于 store.getters
             ```
             注册的 getter 暴露为 store.getters。
-    
+
             [详细介绍](../guide/advance/store.html#getter)
 
         - **modules**
@@ -215,12 +215,12 @@ createComponent(object)
             }
             ```
             [详细介绍](../guide/advance/store.html#modules)
-            
+
 - **示例：**
 
 ```js
 import mpx, {createStore} from '@mpxjs/core'
-const store1 = mpx.createStore({ 
+const store1 = mpx.createStore({
   state: {
     count: 0
   },
@@ -234,13 +234,13 @@ const store1 = mpx.createStore({
       context.commit('increment')
     }
   },
-  ... 
+  ...
 })
 const store2 = createStore({ ...options })
 ```
-            
+
 - **Store 实例属性**
-    - **state** 
+    - **state**
 
       - 类型：`Object`
 
@@ -274,17 +274,17 @@ const store2 = createStore({ ...options })
     mapGetters(map: Array<string> | Object): Object
     ```
     为组件创建计算属性以返回 getter 的返回值。[详细介绍](../guide/advance/store.html#getter)
-    
+
     ```js
     mapActions(map: Array<string> | Object): Object
     ```
     创建组件方法分发 action。[详细介绍](../guide/advance/store.html#action)
-    
+
     ```js
     mapMutations(map: Array<string> | Object): Object
     ```
     创建组件方法提交 mutation。[详细介绍](../guide/advance/store.html#mutation)
-    
+
 
 ## createStoreWithThis
 
@@ -295,8 +295,13 @@ const store2 = createStore({ ...options })
   才能正确推导出 this 的类型，当需要将 getters/mutations/actions 拆解为对象编写时，需要用户显式地声明 this 类型，无法直接推导得出。
 - **用法：**
 ```js
-createStoreWithThis(object)
+createStoreWithThis(store)
 ```
+
+- **参数：**
+    - `{Object} store`
+
+        接收一个 store 对象。
 
 - **示例：**
 ```js
@@ -364,6 +369,135 @@ createComponent({
   }
 })
 ```
+
+## createStateWithThis
+
+> createStateWithThis 为创建 state 提供了类型推导，对于基本类型可以由 TypeScript 自行推导，使用其他类型时，推荐使用 as 进行约束
+
+- **用法：**
+    ```js
+    createStateWithThis(state)
+    ```
+- **参数：**
+    - `{Object} state`
+
+        需要定义的 state 对象键值对。
+
+- **示例：**
+
+    ```js
+    import { createStateWithThis } from '@mpxjs/core'
+
+    export type StatusType = 'start' | 'running' | 'stop'
+
+    export default createStateWithThis({
+      status: 'running' as StatusType
+    })
+    ```
+
+## createGettersWithThis
+
+- **用法：**
+    ```js
+    createGettersWithThis(getters, options?)
+    ```
+- **参数：**
+    - `{Object} getters`
+
+        需要定义的 getters 对象。
+    - `{Object} options`（可选参数）
+
+        在 options 中可以传入 state，getters，deps。由于 getter 的类型推论需要基于 state，所以导出 getters 时，需要将 state 进行传入。deps 是作为一个扩展存在，getters 可以通过 deps 中传入的其他 store 来获取值，当 store 没有其他需要依赖的 deps 时可以不传。createMutationsWithThis 和 createActionsWithThis 同理。
+
+- **示例：**
+    ```js
+    import { createGettersWithThis } from '@mpxjs/core'
+
+    export default createGettersWithThis({
+      isStart () {
+        return this.state.status === 'start'
+      },
+      getNum () {
+        return this.state.base.test + this.getters.base.getTest
+      }
+    }, {
+      state,
+      deps: {
+        base: createStoreWithThis({
+          state: {
+            testNum: 0
+          },
+          getters: {
+            getTest () {
+              return this.state.testNum * 2
+            }
+          }
+        })
+    }})
+    ```
+
+## createMutationsWithThis
+
+- **用法：**
+    ```js
+    createMutationsWithThis(mutations, options?)
+    ```
+- **参数：**
+    - `{Object} mutations`
+
+        需要定义的 mutations 对象。
+    - `{Object} options`（可选参数）
+
+        在 options 中可以传入 state，deps。
+
+- **示例：**
+
+    ```js
+    import { createMutationsWithThis } from '@mpxjs/core'
+
+    export default createMutationsWithThis({
+      setCurrentStatus (payload: StatusType) {
+        this.state.status = payload
+      }
+    }, { state })
+    ```
+
+
+## createActionsWithThis
+
+- **用法：**
+    ```js
+    createActionsWithThis(actions, options?)
+    ```
+- **参数：**
+    - `{Object} actions`
+
+        需要定义的 actions 对象。
+    - `{Object} options`（可选参数）
+
+        由于action 可以同时调用 getters、mutations，所以需要将这些都传入，以便进行类型推导。因此 options 可以传入 state、getters、mutations、deps。
+
+- **示例：**
+
+    ```js
+    import { createActionsWithThis } from '@mpxjs/core'
+    import state, { StatusType } from './state'
+    import getters from './getters'
+    import mutations from './mutations'
+
+    export default createActionsWithThis({
+      testActions (payload: StatusType) {
+        return Promise.resolve(() => {
+          this.commit('setCurrentStatus', payload)
+        })
+      }
+    }, {
+      state,
+      getters,
+      mutations
+    })
+    ```
+
 ## mixin
 **全局注入mixin**
 方法接收两个参数：mpx.mixin(mixins, types)
@@ -386,7 +520,7 @@ mpx.mixin([
     methods: {
       getData: function(){}
     }
-  }, 
+  },
   {
     methods: {
       setData: function(){}
@@ -399,7 +533,7 @@ mpx.mixin([
     methods: {
       getData: function(){}
     }
-  }, 
+  },
   {
     methods: {
       setData: function(){}
@@ -513,7 +647,7 @@ unwatch()
   注意在带有 immediate 选项时，你不能在第一次回调时取消侦听。
   ``` javascript
   import {watch} from '@mpxjs/core'
-  
+
   var unwatch = watch(() => {
     return this.a
   }, () => {
@@ -606,7 +740,7 @@ const mixin = mpx.getMixin({
     })]
   })]
 })
-/* 
+/*
 mixin值
 {
   data: {value2: 6, value1: 2},
@@ -621,7 +755,7 @@ createComponent({
   mixins: [mixin]
 })
 
-/* 
+/*
 以上执行输出：
 28
 2 "attached"
@@ -631,7 +765,7 @@ createComponent({
 ## implement
 
 - **参数**：
-  - `{String} name` 
+  - `{String} name`
   - `{Object} options`
     - `{Array} modes`：需要取消的平台
     - `{Boolean} remove`：是否将此能力直接移除
