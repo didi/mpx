@@ -8,11 +8,11 @@ export default class InterceptorManager {
   use (fulfilled, rejected) {
     const wrappedFulfilled = (result) => {
       const returnedResult = fulfilled(result)
-      if (!returnedResult) {
+      if (returnedResult === undefined) {
         return result
       } else {
         if (isThenable(returnedResult)) {
-          return returnedResult.then((resolvedReturnedResult) => resolvedReturnedResult || result)
+          return returnedResult.then((resolvedReturnedResult) => resolvedReturnedResult === undefined ? result : resolvedReturnedResult)
         }
         return returnedResult
       }
