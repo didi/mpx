@@ -411,7 +411,7 @@ createComponent({
 
 - **示例：**
     ```js
-    import { createGettersWithThis } from '@mpxjs/core'
+    import { createGettersWithThis, createStoreWithThis } from '@mpxjs/core'
 
     export default createGettersWithThis({
       isStart () {
