@@ -394,11 +394,11 @@ class MpxWebpackPlugin {
             if (!resourceMap.main[resourcePath]) {
               packageRoot = currentPackageRoot
               packageName = currentPackageName
-              if (this.options.auditResource) {
-                if (this.options.auditResource !== 'component' || !isStatic) {
+              if (this.options.auditResource && resourceType !== 'subpackageModules') {
+                if (this.options.auditResource !== 'component' || resourceType === 'components') {
                   Object.keys(resourceMap).filter(key => key !== 'main').forEach((key) => {
                     if (resourceMap[key][resourcePath] && key !== packageName) {
-                      warn && warn(new Error(`当前${isStatic ? '静态' : '组件'}资源${resourcePath}在分包${key}和分包${packageName}中都有引用，会分别输出到两个分包中，为了总体积最优，可以在主包中建立引用声明以消除资源输出冗余！`))
+                      warn && warn(new Error(`当前${resourceType === 'components' ? '组件' : '静态'}资源${resourcePath}在分包${key}和分包${packageName}中都有引用，会分别输出到两个分包中，为了总体积最优，可以在主包中建立引用声明以消除资源输出冗余！`))
                     }
                   })
                 }
