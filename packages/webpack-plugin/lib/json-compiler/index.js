@@ -275,7 +275,7 @@ module.exports = function (raw = '{}') {
       const packageInfo = mpx.getPackageInfo({
         resource,
         outputPath,
-        isStatic: false,
+        resourceType: 'components',
         warn: (err) => {
           this.emitWarning(err)
         }
@@ -448,7 +448,8 @@ module.exports = function (raw = '{}') {
         }
         mpx.currentPackageRoot = tarRoot
         mpx.componentsMap[tarRoot] = {}
-        mpx.staticResourceMap[tarRoot] = {}
+        mpx.staticResourcesMap[tarRoot] = {}
+        mpx.subpackageModulesMap[tarRoot] = {}
         processPages(subPackage.pages, srcRoot, tarRoot, context, callback)
       } else {
         callback()

@@ -135,6 +135,7 @@ class MpxWebpackPlugin {
     options.pathHashMode = options.pathHashMode || 'absolute'
     options.forceDisableBuiltInLoader = options.forceDisableBuiltInLoader || false
     options.useRelativePath = options.useRelativePath || false
+    options.subpackageModulesRules = options.subpackageModulesRules || {}
     this.options = options
   }
 
@@ -296,7 +297,11 @@ class MpxWebpackPlugin {
             main: {}
           },
           // 静态资源(图片，字体，独立样式)等，依照所属包进行记录，冗余存储，同上
-          staticResourceMap: {
+          staticResourcesMap: {
+            main: {}
+          },
+          // 用于记录命中subpackageModulesRules的js模块最终输出到了什么分包中
+          subpackageModulesMap: {
             main: {}
           },
           // 记录entry依赖关系，用于体积分析
@@ -377,14 +382,14 @@ class MpxWebpackPlugin {
           // 2. 分包引用且主包引用过的资源输出至主包，不在当前分包重复输出
           // 3. 分包引用且无其他包引用的资源输出至当前分包
           // 4. 分包引用且其他分包也引用过的资源，重复输出至当前分包
-          getPackageInfo: ({ resource, outputPath, isStatic, warn }) => {
+          getPackageInfo: ({ resource, outputPath, resourceType = 'components', warn }) => {
             let packageRoot = ''
             let packageName = 'main'
             const { resourcePath, queryObj } = parseRequest(resource)
             // 优先使用query中声明的packageName
             const currentPackageName = queryObj.packageName || mpx.currentPackageRoot || 'main'
             const currentPackageRoot = currentPackageName === 'main' ? '' : currentPackageName
-            const resourceMap = isStatic ? mpx.staticResourceMap : mpx.componentsMap
+            const resourceMap = mpx[`${resourceType}Map`]
             // 主包中有引用一律使用主包中资源，不再额外输出
             if (!resourceMap.main[resourcePath]) {
               packageRoot = currentPackageRoot
@@ -399,20 +404,20 @@ class MpxWebpackPlugin {
                 }
               }
             }
+            resourceMap[packageName] = resourceMap[packageName] || {}
+            const currentResourceMap = resourceMap[packageName]
 
             let alreadyOutputed = false
             if (outputPath) {
               outputPath = toPosix(path.join(packageRoot, outputPath))
-              let currentResourceMap = resourceMap[packageName]
-              if (!currentResourceMap) {
-                currentResourceMap = resourceMap[packageName] = {}
-              }
               // 如果之前已经进行过输出，则不需要重复进行
               if (currentResourceMap[resourcePath] === outputPath) {
                 alreadyOutputed = true
               } else {
                 currentResourceMap[resourcePath] = outputPath
               }
+            } else {
+              currentResourceMap[resourcePath] = true
             }
 
             return {
@@ -569,11 +574,11 @@ class MpxWebpackPlugin {
             const packageName = queryObj.packageName
             const pagesMap = mpx.pagesMap
             const componentsMap = mpx.componentsMap
-            const staticResourceMap = mpx.staticResourceMap
+            const staticResourcesMap = mpx.staticResourcesMap
             const publicPath = mpx.mode === 'web' ? '' : compilation.outputOptions.publicPath
             const range = expr.range
             const issuerResource = parser.state.module.issuer.resource
-            const dep = new ResolveDependency(resource, packageName, pagesMap, componentsMap, staticResourceMap, publicPath, range, issuerResource)
+            const dep = new ResolveDependency(resource, packageName, pagesMap, componentsMap, staticResourcesMap, publicPath, range, issuerResource)
             parser.state.current.addDependency(dep)
             return true
           }
@@ -908,7 +913,7 @@ try {
 
       // resolve完成后修改loaders或者resource/request
       normalModuleFactory.hooks.afterResolve.tapAsync('MpxWebpackPlugin', (data, callback) => {
-        const { queryObj } = parseRequest(data.resource)
+        const { queryObj, resourcePath } = parseRequest(data.resource)
         let isStatic = queryObj.isStatic
         if (data.loaders) {
           data.loaders.forEach((loader) => {
@@ -920,10 +925,15 @@ try {
             }
           })
         }
-        if (isStatic) {
+        let needPackageQuery = isStatic
+        if (!isStatic && matchCondition(resourcePath, this.options.subpackageModulesRules)) {
+          needPackageQuery = true
+        }
+
+        if (needPackageQuery) {
           const { packageName } = mpx.getPackageInfo({
             resource: data.resource,
-            isStatic: true
+            resourceType: isStatic ? 'staticResources' : 'subpackageModules'
           })
 
           data.request = addQuery(data.request, {
