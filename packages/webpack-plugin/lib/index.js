@@ -433,33 +433,36 @@ class MpxWebpackPlugin {
       const rawAddModule = compilation.addModule
       compilation.addModule = (...args) => {
         const module = args[0]
-        const { queryObj, resourcePath } = parseRequest(module.resource)
-        let isStatic = queryObj.isStatic
-        if (module.loaders) {
-          module.loaders.forEach((loader) => {
-            if (/(url-loader|file-loader)/.test(loader.loader)) {
-              isStatic = true
-            }
-          })
-        }
+        // 避免context module报错
+        if (module.request && module.resource) {
+          const { queryObj, resourcePath } = parseRequest(module.resource)
+          let isStatic = queryObj.isStatic
+          if (module.loaders) {
+            module.loaders.forEach((loader) => {
+              if (/(url-loader|file-loader)/.test(loader.loader)) {
+                isStatic = true
+              }
+            })
+          }
 
-        let needPackageQuery = isStatic
-        if (!isStatic && matchCondition(resourcePath, this.options.subpackageModulesRules)) {
-          needPackageQuery = true
-        }
+          let needPackageQuery = isStatic
+          if (!isStatic && matchCondition(resourcePath, this.options.subpackageModulesRules)) {
+            needPackageQuery = true
+          }
 
-        if (needPackageQuery) {
-          const { packageName } = mpx.getPackageInfo({
-            resource: module.resource,
-            resourceType: isStatic ? 'staticResources' : 'subpackageModules'
-          })
+          if (needPackageQuery) {
+            const { packageName } = mpx.getPackageInfo({
+              resource: module.resource,
+              resourceType: isStatic ? 'staticResources' : 'subpackageModules'
+            })
 
-          module.request = addQuery(module.request, {
-            packageName
-          }, undefined, true)
-          module.resource = addQuery(module.resource, {
-            packageName
-          }, undefined, true)
+            module.request = addQuery(module.request, {
+              packageName
+            }, undefined, true)
+            module.resource = addQuery(module.resource, {
+              packageName
+            }, undefined, true)
+          }
         }
 
         const addModuleResult = rawAddModule.apply(compilation, args)
