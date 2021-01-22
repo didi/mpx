@@ -2,9 +2,12 @@
   import mpx from '@mpxjs/core'
   import apiProxy from '@mpxjs/api-proxy'
 
-  mpx.use(apiProxy, {usePromise: true})
-  // app.js
-  App({})
+  mpx.use(apiProxy, { usePromise: true })
+  App({
+    onLaunch: function () {
+      
+    }
+  })
 </script>
 
 <style>
@@ -17,7 +20,10 @@
       "./pages/index"
     ],
     "packages": [
-      "./subpackage/app.mpx?root=sub1"
+      "./subpackage/homepage/app.mpx?root=homepage",
+      "./subpackage/suggest/app.mpx?root=suggest",
+      "./subpackage/estimate/app.mpx?root=estimate"
     ]
   }
 </script>
+

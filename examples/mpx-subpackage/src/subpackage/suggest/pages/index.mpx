@@ -1,0 +1,44 @@
+<template>
+  <view>这里是suggest页</view>
+  <view>
+    <list bind:backTo="backTo"/>
+  </view>
+</template>
+
+<script>
+  import { createPage } from '@mpxjs/core'
+  import Store from '../../../store'
+  import estimatePage from '../../estimate/pages/index.mpx?resolve'
+  createPage({
+    computed: {
+      ...Store.mapState(['num']),
+    },
+    methods: {
+      ...Store.mapMutations(['updateNum']),
+      backTo() {
+        // this.updateNum(++this.num)
+        wx.navigateBack({
+          success() {
+            console.log('suggest-navigateBack::')
+            wx.navigateTo({
+              url: estimatePage
+            })
+            console.log('跳转estiamte-page')
+          }
+        })
+      }
+    },
+    onUnload() {
+      console.log('suggest::onUnload')
+    }
+  })
+</script>
+
+<script type="application/json">
+  {
+    "component": true,
+    "usingComponents": {
+      "list": "../../../components/list"
+    }
+  }
+</script>

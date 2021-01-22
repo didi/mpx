@@ -1,20 +1,17 @@
 <template>
-  <list></list>
-  <button bind:tap="handleTap">点击</button>
+  <button bind:tap="handleTap">点击跳转到首页</button>
 </template>
 
 <script>
   import { createPage } from '@mpxjs/core'
-  import subPackageIndexPage from '../subpackage/pages/index.mpx?resolve'
+  import HomePage from '../subpackage/homepage/pages/index.mpx?resolve'
 
   createPage({
     onLoad () {},
-    methods: {
-      handleTap () {
-        wx.navigateTo({
-          url: subPackageIndexPage
-        })
-      }
+    onReady() {
+      wx.redirectTo({
+        url: HomePage
+      })
     }
   })
 </script>
@@ -22,7 +19,6 @@
 <script type="application/json">
   {
     "usingComponents": {
-      "list": "../components/list"
     }
   }
 </script>

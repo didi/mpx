@@ -1,6 +1,7 @@
 <template>
   <view class="list">
     <view wx:for="{{listData}}" wx:key="index">{{item}}</view>
+    <view bindtap="handleTap">点击返回homepage页面</view>
   </view>
 </template>
 
@@ -10,6 +11,11 @@
   createComponent({
     data: {
       listData: ['手机', '电视', '电脑']
+    },
+    methods: {
+      handleTap () {
+        this.triggerEvent('backTo')
+      }
     }
   })
 </script>

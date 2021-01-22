@@ -1,0 +1,23 @@
+<template>
+  <view>这里是estimate页</view>
+  <view bindtap="handleTap">dddddd</view>
+</template>
+
+<script>
+  import { createPage } from '@mpxjs/core'
+  createPage({
+    onLoad () {
+
+    },
+    methods: {
+      handleTap () {
+        this.triggerEvent('update')
+        wx.navigateBack()
+      }
+    }
+  })
+</script>
+
+<script type="application/json">
+  {}
+</script>

@@ -1,0 +1,44 @@
+<template>
+  <view>这里是homegPage页</view>
+  <view bindtap="handleTap">点击跳转到Sugget页面</view>
+</template>
+
+<script>
+  import { createPage } from '@mpxjs/core'
+  import suggestPage from '../../suggest/pages/index.mpx?resolve'
+  import estimatePage from '../../estimate/pages/index.mpx?resolve'
+  import Store from '../../../store'
+  createPage({
+    computed: {
+      ...Store.mapState(['num'])
+    },
+    methods: {
+      handleTap () {
+        wx.navigateTo({
+          url: suggestPage
+        })
+      }
+    },
+    watch: {
+      num(val) {
+        if (val) {
+          console.log('watch:num')
+          const pages = getCurrentPages().map(item => item.route)
+          console.log('-------当前路由栈---------watch:num', pages)
+          wx.navigateTo({
+            url: estimatePage
+          })
+        }
+      }
+    },
+    onShow() {
+      console.log('homepage::onShow')
+      const pages = getCurrentPages().map(item => item.route)
+      console.log('-------当前路由栈---------homepage::onShow', pages)
+    }
+  })
+</script>
+
+<script type="application/json">
+  {}
+</script>
