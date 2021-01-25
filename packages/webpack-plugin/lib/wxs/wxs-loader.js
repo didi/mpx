@@ -24,8 +24,8 @@ module.exports = function () {
   const issuerPackageName = issuerQueryObj.packageName || mpx.currentPackageRoot || 'main'
   const pagesMap = mpx.pagesMap
   const componentsMap = mpx.componentsMap[issuerPackageName]
-  const staticResourceMap = mpx.staticResourceMap[issuerPackageName]
-  const issuerName = pagesMap[issuerResourcePath] || componentsMap[issuerResourcePath] || staticResourceMap[issuerResourcePath] || rootName
+  const staticResourcesMap = mpx.staticResourcesMap[issuerPackageName]
+  const issuerName = pagesMap[issuerResourcePath] || componentsMap[issuerResourcePath] || staticResourcesMap[issuerResourcePath] || rootName
   const issuerDir = path.dirname(issuerName)
 
   const getName = (raw) => {
@@ -44,7 +44,7 @@ module.exports = function () {
   filename = mpx.getPackageInfo({
     resource: this.resource,
     outputPath: filename,
-    isStatic: true,
+    resourceType: 'staticResources',
     warn: (err) => {
       this.emitWarning(err)
     }
