@@ -55,7 +55,7 @@ module.exports = function (content) {
       return mpx.getPackageInfo({
         resource: resourceRaw,
         outputPath,
-        isStatic: true,
+        resourceType: 'staticResources',
         warn: (err) => {
           this.emitWarning(err)
         }

@@ -31,7 +31,7 @@ module.exports = function loader (content, prevOptions) {
     url = outputPath = mpx.getPackageInfo({
       resource: this.resource,
       outputPath: url,
-      isStatic: true,
+      resourceType: 'staticResources',
       warn: (err) => {
         this.emitWarning(err)
       }
