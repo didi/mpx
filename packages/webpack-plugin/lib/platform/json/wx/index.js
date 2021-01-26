@@ -223,18 +223,6 @@ module.exports = function getSpec ({ warn, error }) {
         ali: deletePath()
       },
       {
-        test: 'subpackages|subPackages',
-        tt: deletePath(true)
-      },
-      {
-        test: 'packages',
-        tt (input) {
-          input.packages = input.packages.map((packageItem) => {
-            return packageItem.replace(/\?.*/, '')
-          })
-        }
-      },
-      {
         test: 'tabBar',
         ali (input) {
           input.tabBar = runRules(spec.tabBar, input.tabBar, {

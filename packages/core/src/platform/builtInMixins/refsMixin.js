@@ -118,6 +118,12 @@ export default function getRefsMixin () {
           const query = this.createSelectorQuery ? this.createSelectorQuery() : envObj.createSelectorQuery()
           return query && (ref.all ? query.selectAll(selector) : query.select(selector))
         } else if (ref.type === 'component') {
+          // 头条获取组件ref返回promise
+          if (__mpx_mode__ === 'tt') {
+            return new Promise((resolve) => {
+              ref.all ? this.selectAllComponents(selector, resolve) : this.selectComponent(selector, resolve)
+            })
+          }
           return ref.all ? this.selectAllComponents(selector) : this.selectComponent(selector)
         }
       }
