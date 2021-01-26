@@ -35,6 +35,12 @@ module.exports = function (json, options, rawCallback) {
     )
   }
 
+  const emitError = (msg) => {
+    this.emitError(
+      new Error('[json compiler][' + this.resource + ']: ' + msg)
+    )
+  }
+
   const stringifyRequest = r => loaderUtils.stringifyRequest(loaderContext, r)
 
   const callback = (err) => {
@@ -187,6 +193,11 @@ module.exports = function (json, options, rawCallback) {
     if (pages) {
       context = path.join(context, srcRoot)
       async.forEach(pages, (page, callback) => {
+        let aliasPath = ''
+        if (typeof page !== 'string') {
+          aliasPath = page.path
+          page = page.src
+        }
         if (!isUrlRequest(page, projectRoot)) return callback()
         if (resolveMode === 'native') {
           page = loaderUtils.urlToRequest(page, projectRoot)
@@ -197,21 +208,32 @@ module.exports = function (json, options, rawCallback) {
           const ext = path.extname(resourcePath)
           // 获取pageName
           let pageName
-          const relative = path.relative(context, resourcePath)
-          if (/^\./.test(relative)) {
-            // 如果当前page不存在于context中，对其进行重命名
-            pageName = '/' + toPosix(path.join(tarRoot, getPageName(resourcePath, ext)))
-            emitWarning(`Current page ${resourcePath} is not in current pages directory ${context}, the page path will be replaced with ${pageName}, use ?resolve to get the page path and navigate to it!`)
-          } else {
-            pageName = '/' + toPosix(path.join(tarRoot, /^(.*?)(\.[^.]*)?$/.exec(relative)[1]))
-            // 如果当前page与已有page存在命名冲突，也进行重命名
+          if (aliasPath) {
+            pageName = '/' + toPosix(path.join(tarRoot, aliasPath))
+            // 判断 key 存在重复情况直接报错
             for (let key in pagesMap) {
-              // 此处引入pagesEntryMap确保相同entry下路由路径重复注册才报错，不同entry下的路由路径重复则无影响
-              if (pagesMap[key] === pageName && key !== resourcePath && pagesEntryMap[key] === loaderContext.resourcePath) {
-                const pageNameRaw = pageName
-                pageName = '/' + toPosix(path.join(tarRoot, getPageName(resourcePath, ext)))
-                emitWarning(`Current page ${resourcePath} is registered with a conflict page path ${pageNameRaw} which is already existed in system, the page path will be replaced with ${pageName}, use ?resolve to get the page path and navigate to it!`)
+              if (pagesMap[key] === pageName && key !== resourcePath) {
+                emitError(`Current page ${resourcePath} is registered with a conflict page path ${pageName}, The key fields ${aliasPath} in the object need to be unique`)
                 break
+              }
+            }
+          } else {
+            const relative = path.relative(context, resourcePath)
+            if (/^\./.test(relative)) {
+              // 如果当前page不存在于context中，对其进行重命名
+              pageName = '/' + toPosix(path.join(tarRoot, getPageName(resourcePath, ext)))
+              emitWarning(`Current page ${resourcePath} is not in current pages directory ${context}, the page path will be replaced with ${pageName}, use ?resolve to get the page path and navigate to it!`)
+            } else {
+              pageName = '/' + toPosix(path.join(tarRoot, /^(.*?)(\.[^.]*)?$/.exec(relative)[1]))
+              // 如果当前page与已有page存在命名冲突，也进行重命名
+              for (let key in pagesMap) {
+                // 此处引入pagesEntryMap确保相同entry下路由路径重复注册才报错，不同entry下的路由路径重复则无影响
+                if (pagesMap[key] === pageName && key !== resourcePath && pagesEntryMap[key] === loaderContext.resourcePath) {
+                  const pageNameRaw = pageName
+                  pageName = '/' + toPosix(path.join(tarRoot, getPageName(resourcePath, ext)))
+                  emitWarning(`Current page ${resourcePath} is registered with a conflict page path ${pageNameRaw} which is already existed in system, the page path will be replaced with ${pageName}, use ?resolve to get the page path and navigate to it!`)
+                  break
+                }
               }
             }
           }
@@ -304,7 +326,11 @@ module.exports = function (json, options, rawCallback) {
   async.parallel([
     (callback) => {
       if (jsonObj.pages && jsonObj.pages[0]) {
-        jsonObj.pages[0] = addQuery(jsonObj.pages[0], { isFirst: true })
+        if (typeof jsonObj.pages[0] !== 'string') {
+          jsonObj.pages[0].src = addQuery(jsonObj.pages[0].src, { isFirst: true })
+        } else {
+          jsonObj.pages[0] = addQuery(jsonObj.pages[0], { isFirst: true })
+        }
       }
       processPages(jsonObj.pages, '', '', context, callback)
     },
