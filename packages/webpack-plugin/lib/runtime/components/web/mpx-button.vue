@@ -108,8 +108,7 @@
         mergeAfter = {
           listeners: {
             touchstart: this.handleTouchstart,
-            touchend: this.handleTouchend,
-            click: this.handleClick
+            touchend: this.handleTouchend
           },
           force: true
         }
@@ -148,11 +147,6 @@
         this.endTimer = setTimeout(() => {
           this.hover = false
         }, this.hoverStayTime)
-      },
-      handleClick (event) {
-        if (this.formType === 'submit') {
-          event.preventDefault()
-        }
       }
     }
   }
