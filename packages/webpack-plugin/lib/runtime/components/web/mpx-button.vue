@@ -129,7 +129,7 @@
           defaultListeners: ['tap']
         })
       }
-      return createElement('button', data, this.$slots.default)
+      return createElement('div', data, this.$slots.default)
     },
     methods: {
       handleTouchstart (e) {

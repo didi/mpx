@@ -146,6 +146,7 @@
         this.blockLeft = lineStep * (this.value - this.min) + 'px'
       },
       sliderTouchMove (event) {
+        event.preventDefault()
         if (this.isDrag) {
           let eventName = 'changing'
           let moveStartX = event.targetTouches[0] && event.targetTouches[0].pageX

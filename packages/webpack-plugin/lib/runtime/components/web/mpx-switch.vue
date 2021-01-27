@@ -28,16 +28,6 @@
       }
     },
     render (createElement) {
-      const mergeBefore = {
-        change: (e) => {
-          this.switchChecked = e.target.checked
-          extendEvent(e, {
-            detail: {
-              value: e.target.checked
-            }
-          })
-        }
-      }
       let children = []
       const domProps = {
         type: 'checkbox',
@@ -47,7 +37,16 @@
 
       const checkbox = createElement('input', {
         class: 'mpx-switch-input',
-        on: getInnerListeners(this, { mergeBefore }),
+        on: {
+          change: (e) => {
+            this.switchChecked = e.target.checked
+            extendEvent(e, {
+              detail: {
+                value: e.target.checked
+              }
+            })
+          }
+        },
         domProps
       })
       if (this.type === 'switch') {
