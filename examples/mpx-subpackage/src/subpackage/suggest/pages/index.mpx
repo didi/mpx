@@ -2,6 +2,7 @@
   <view>这里是suggest页</view>
   <view>
     <list bind:backTo="backTo"/>
+    <dialog/>
   </view>
 </template>
 
@@ -28,6 +29,12 @@
         })
       }
     },
+    onHide() {
+      console.log('suggest-onHide:')
+    },
+    onShow() {
+      console.log('suggest-onShow:')
+    },
     onUnload() {
       console.log('suggest::onUnload')
     }
@@ -38,7 +45,8 @@
   {
     "component": true,
     "usingComponents": {
-      "list": "../../../components/list"
+      "list": "../../../components/list",
+      "dialog": "../../../components/dialog"
     }
   }
 </script>

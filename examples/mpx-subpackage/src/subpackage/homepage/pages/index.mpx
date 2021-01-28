@@ -1,6 +1,7 @@
 <template>
   <view>这里是homegPage页</view>
   <view bindtap="handleTap">点击跳转到Sugget页面</view>
+  <dialog wx:if="{{showDialog}}"/>
 </template>
 
 <script>
@@ -9,6 +10,9 @@
   import estimatePage from '../../estimate/pages/index.mpx?resolve'
   import Store from '../../../store'
   createPage({
+    data: {
+      showDialog: true
+    },
     computed: {
       ...Store.mapState(['num'])
     },
@@ -32,13 +36,22 @@
       }
     },
     onShow() {
+      this.showDialog = true
       console.log('homepage::onShow')
       const pages = getCurrentPages().map(item => item.route)
       console.log('-------当前路由栈---------homepage::onShow', pages)
+    },
+    onHide() {
+      this.showDialog = false
+      console.log('homepage: onHide')
     }
   })
 </script>
 
 <script type="application/json">
-  {}
+  {
+    "usingComponents": {
+      "dialog": "../../../components/dialog"
+    }
+  }
 </script>

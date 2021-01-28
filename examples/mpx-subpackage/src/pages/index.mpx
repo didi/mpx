@@ -1,5 +1,13 @@
 <template>
-  <button bind:tap="handleTap">点击跳转到首页</button>
+  <view class="wrapper">
+    <button bind:tap="handleTap">点击跳转到首页</button>
+    <view class="coverview">
+      <cover-view>testestestesetetetewrweterqerq</cover-view>
+    </view>
+    <view class="normalview">
+      <view>111111111</view>
+    </view>
+  </view>
 </template>
 
 <script>
@@ -15,7 +23,9 @@
     }
   })
 </script>
+<style lang="stylus">
 
+</style>
 <script type="application/json">
   {
     "usingComponents": {
