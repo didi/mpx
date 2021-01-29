@@ -120,7 +120,7 @@ class MpxWebpackPlugin {
     options.externals = (options.externals || []).map((external) => {
       return externalsMap[external] || external
     })
-    options.projectRoot = options.projectRoot || ''
+    options.projectRoot = options.projectRoot || process.cwd()
     options.forceUsePageCtor = options.forceUsePageCtor || false
     options.postcssInlineConfig = options.postcssInlineConfig || {}
     options.transRpxRules = options.transRpxRules || null
