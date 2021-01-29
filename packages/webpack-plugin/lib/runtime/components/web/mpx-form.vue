@@ -50,7 +50,7 @@
         class: 'mpx-form',
         on: getInnerListeners(this, { ignoredListeners: ['submit', 'reset'] }),
       }
-      return createElement('from', data, this.$slots.default)
+      return createElement('form', data, this.$slots.default)
     },
     mounted () {
       this.initialValue = getFormValue(this.$slots.default, (VNode) => {
