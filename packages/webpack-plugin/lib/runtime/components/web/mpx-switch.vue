@@ -1,10 +1,11 @@
 <script>
-  import getInnerListeners, { extendEvent } from './getInnerListeners'
+  import getInnerListeners, { extendEvent, getCustomEvent } from './getInnerListeners'
 
 
   export default {
     name: 'mpx-switch',
     props: {
+      name: String,
       type: {
         type: String,
         default: 'switch'
@@ -73,6 +74,20 @@
         class: [this.type === 'switch' ? 'mpx-switch-wrap' : 'mpx-checkbox-wrap']
       }
       return createElement('div', data, children)
+    },
+    methods: {
+      getValue () {
+        return this.switchChecked
+      },
+      setValue (value) {
+        this.switchChecked = value
+      },
+      notifyChange (value) {
+        if (value !== undefined) {
+          this.setValue(value)
+        }
+        this.$emit('change', getCustomEvent('change', { value: value }))
+      }
     }
   }
 </script>
