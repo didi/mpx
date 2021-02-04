@@ -310,9 +310,10 @@ function decode (value) {
 const i18nFuncNames = ['\\$(t)', '\\$(tc)', '\\$(te)', '\\$(d)', '\\$(n)']
 const i18nWxsPath = normalize.lib('runtime/i18n.wxs')
 const i18nWxsLoaderPath = normalize.lib('wxs/wxs-i18n-loader.js')
-const i18nWxsRequest = i18nWxsLoaderPath + '!' + i18nWxsPath
+// 添加~前缀避免wxs绝对路径在存在projectRoot时被拼接为错误路径
+const i18nWxsRequest = '~' + i18nWxsLoaderPath + '!' + i18nWxsPath
 const i18nModuleName = '__i18n__'
-const stringifyWxsPath = normalize.lib('runtime/stringify.wxs')
+const stringifyWxsPath = '~' + normalize.lib('runtime/stringify.wxs')
 const stringifyModuleName = '__stringify__'
 
 const tagRES = /(\{\{(?:.|\n)+?\}\})(?!})/

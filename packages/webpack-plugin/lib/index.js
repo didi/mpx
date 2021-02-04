@@ -949,7 +949,8 @@ try {
         if (data.loaders) {
           data.loaders.forEach((loader) => {
             if (/ts-loader/.test(loader.loader)) {
-              loader.options = Object.assign({}, loader.options, { appendTsSuffixTo: [/\.(mpx|vue)$/] })
+              // todo 暂时固定写死options，待后续优化为复用rules后修正
+              loader.options = { appendTsSuffixTo: [/\.(mpx|vue)$/] }
             }
           })
         }
