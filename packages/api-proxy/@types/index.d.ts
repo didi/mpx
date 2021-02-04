@@ -1,3 +1,4 @@
+// @ts-ignore
 import { Mpx } from '@mpxjs/core'
 
 type AddPromise<W> = {

@@ -18,7 +18,7 @@
     "@types"
   ],
   "dependencies": {
-    "lodash.throttle": "^4.1.1",
+    "lodash": "^4.1.1",
     "miniprogram-api-typings": "^3.0.2"
   },
   "peerDependencies": {
