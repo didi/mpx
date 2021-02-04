@@ -6,14 +6,14 @@
       slot.forEach((VNode) => {
         const el = VNode.elm
         const component = VNode.componentInstance
-        component.isChecked = false
+        // component.isChecked = false
         effect && effect(VNode)
         if (VNode.children) {
           travelSlot(VNode.children, effect)
         }
-        if (VNode.elm && VNode.elm.className && VNode.elm.className.indexOf('mpx-radio') > -1) {
-          VNode.elm.className = 'mpx-radio'
-        }
+        // if (VNode.elm && VNode.elm.className && VNode.elm.className.indexOf('mpx-radio') > -1) {
+        //   VNode.elm.className = 'mpx-radio'
+        // }
       })
     }
   }
@@ -53,8 +53,8 @@
               if (!component.group) {
                 component.group = this
               }
-              if (component.group === this && el && el.checked && el.value) {
-                value = el.value
+              if (component.group === this && component.isChecked && component.value) {
+                value = component.value
               }
             }
           }
@@ -70,8 +70,8 @@
               if (!component.group) {
                 component.group = this
               }
-              if (component.group === this && el && el.value) {
-                el.checked = value === el.value
+              if (component.group === this && component.value) {
+                component.isChecked = false
               }
             }
           }
@@ -83,7 +83,9 @@
         } else {
           value = this.getValue()
         }
-        vm.isChecked = true
+        if (vm && vm.isChecked !== undefined) {
+          vm.isChecked = true
+        }
         this.$emit('change', getCustomEvent('change', { value }))
       }
     }

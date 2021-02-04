@@ -10,21 +10,37 @@ TypeScript 是一个开源的编程语言，通过在 JavaScript（世界上最�
 
 ## TypeScript优势
 
-1. 静态类型检查  
+1. 静态类型检查
    静态类型检查可以避免很多不必要类型的错误，在编译阶段提前发现问题；
-   
-2. 强大的类型推断能力  
+
+2. 强大的类型推断能力
    除了类型声明外，`TypeScript` 提供了强大的类型推断能力，该能力能够大大减少我们需要编写的类型声明，有效地减少我们使用 `TypeScript` 的额外压力；
 
-3. IDE 智能提示  
+3. IDE 智能提示
    目前主流的 IDE 都对 `TypeScript` 提供了良好的支持，基于 `TypeScript` 的类型系统提供友好准确的编码提示与错误检查。
 
 
 ## 使用方式
 
-### .mpx中编写ts
+### 编写ts前的准备工作
 
-.mpx文件中 script 标签声明 lang 为 ts ，在编译时会自动这部分 script 中的内容进行ts 类型检查
+由于对 store 做类型推导使用了最新的 `TypeScript` 特性，因此需要将编辑器的 `TypeScript` 版本升级至 **4.1.3** 及以上版本。以下是 VSCode 配置示例：
+
+1. 更新项目中的TypeScript为 4.1.3 及以上版本。
+
+2. 在VSCode中打开一个 .js/.ts/.tsx 后缀的文件，使用 `Shift+Command+P` 唤出 VSCode 命令行，输入 `TypeScript` ，选择 `Select TypeScript Version`，选择使用工作区版本，将版本切换至 4.1.3 及以上版本。
+
+<img src="../../assets/images/select-ts-version.png" style="border-radius: 6px"/>
+
+3. 在 VSCode 编辑器中安装 mpx 插件，来支持在.mpx单文件中编写 ts 时的代码提示和实时报错等优秀体验。
+
+::: warning
+使用 @typescript/eslint-plugin 对 ts 代码进行检查，当在.mpx文件中使用全局类型时，eslint 会抛出 no-undef 错误，可以关闭相关 eslint 规则校验
+:::
+
+### .mpx中编写ts（推荐）
+
+目前 Mpx 已经支持在.mpx文件的 script 标签中编写 ts 代码，需要在 script 标签上添加 ` lang="ts" ` 属性，在编译时会自动这部分 script 中的内容进行 ts 类型检查。
 
 ```html
 <script lang="ts">
@@ -32,7 +48,7 @@ TypeScript 是一个开源的编程语言，通过在 JavaScript（世界上最�
 </script>
 ```
 
-由于大部分 IDE 对 ts 的语法提示支持都只对 .ts 和 .d.ts 文件生效，上述在 .mpx 文件中编写ts代码虽然能在编译时进行 ts 类型检查，但是无法享受 IDE 中编写 ts 时的代码提示和实时报错等优秀体验，所以，我们更建议大家创建一个 .ts 文件进行 ts 代码编写，通过 src 的方式引入到 .mpx 当中
+当然，由于大部分IDE对 ts 的语法支持都只对 .ts 和 .d.ts 文件生效，因此 Mpx 也支持创建一个 .ts 文件进行 ts 代码编写，在.mpx文件中，通过 src 的方式引入。
 
 ```html
 <script lang="ts" src="./index.ts"></script>
@@ -76,7 +92,7 @@ TypeScript 是一个开源的编程语言，通过在 JavaScript（世界上最�
 
 ### 增强类型
 
-如果需要增加 Mpx 的属性和选项，可以自定义声明 TypeScript 补充现有的类型。
+如果需要增加 Mpx 的属性和选项，可以自定义声明 `TypeScript` 补充现有的类型。
 
 例如，首先创建一个 types.d.ts 文件
 
@@ -135,7 +151,6 @@ const store = createStoreWithThis({
   }
 })
 
-
 createComponent({
   data: {
     a: 1,
@@ -182,10 +197,25 @@ createComponent({
 
 ### getMixin
 
-todo 描述getMixin的使用方法及含义
+为 ts 项目提供的反向推导 mixin 的辅助函数，getMixin 接收一个对象作为参数，使用 mixins 时，支持嵌套 mixin。具体用法见[getMixin](../../../../api/global-api.md#getmixin)。
 
 ### createStoreWithThis
 
-todo 描述createStoreWithThis的使用方法及含义
+为了在 ts 项目中更好的支持 store 的类型推导，提供了 createStoreWithThis 进行 store 的创建，createStoreWithThis 接收一个 options 对象作为参数。通过 createStoreWithThis 创建 store 时，使用` this.state `，` this.getters `，` this.commit `, ` this.dispatch `对自身的相关属性进行获取。具体用法见[createStoreWithThis](../../../../api/global-api.md#createstorewiththis)。
 
+### createStateWithThis
+
+创建一个 state，支持 state 类型推导的辅助函数，具体用法见[createStateWithThis](../../../../api/global-api.md#createstatewiththis)
+
+### createGettersWithThis
+
+创建一个 getters，支持 getters 类型推导的辅助函数，具体用法见[createGettersWithThis](../../../../api/global-api.md#creategetterswiththis)
+
+### createMutationsWithThis
+
+创建一个 mutations，支持 mutations 类型推导的辅助函数，具体用法见[createMutationsWithThis](../../../../api/global-api.md#createmutationswiththis)
+
+### createActionsWithThis
+
+创建一个 actions，支持 actions 类型推导的辅助函数，具体用法见[createActionsWithThis](../../../../api/global-api.md#createactionswiththis)
 

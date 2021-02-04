@@ -15,6 +15,7 @@
       }
     },
     props: {
+      name: String,
       min: {
         type: Number,
         default: 0
@@ -146,10 +147,11 @@
         this.blockLeft = lineStep * (this.value - this.min) + 'px'
       },
       sliderTouchMove (event) {
+        event.preventDefault()
         if (this.isDrag) {
           let eventName = 'changing'
           let moveStartX = event.targetTouches[0] && event.targetTouches[0].pageX
-          this.setValue(moveStartX)
+          this.setLineValue(moveStartX)
           this.$emit(eventName, getCustomEvent(eventName, { value: this.sliderValue }))
         }
       },
@@ -162,11 +164,11 @@
         if (this.disabled) {
           return
         }
-        this.setValue(event.pageX)
+        this.setLineValue(event.pageX)
         let eventName = 'change'
         this.$emit(eventName, getCustomEvent(eventName, { value: this.sliderValue }))
       },
-      setValue (moveStartX) {
+      setLineValue (moveStartX) {
         let stepNum = (this.max - this.min) / this.step // 获取step分段数值
         let stepWidth = this.sliderWidth / stepNum // 获取每段长度
         let num = parseInt(moveStartX / stepWidth) // 获取已拖拽step分段数据
@@ -181,6 +183,19 @@
           this.blockLeft = num * stepWidth + 'px'
           this.sliderValue = this.min + num * this.step // 设置展示值逻辑
         }
+      },
+      getValue () {
+        return this.sliderValue
+      },
+      setValue (value) {
+        this.sliderValue = value
+        this.setLineValue(0)
+      },
+      notifyChange (value) {
+        if (value !== undefined) {
+          this.setValue(value)
+        }
+        this.$emit('change', getCustomEvent('change', { value: value }))
       }
     }
   }
