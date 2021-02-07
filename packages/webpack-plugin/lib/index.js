@@ -923,6 +923,7 @@ try {
 
     compiler.hooks.emit.tapAsync('MpxWebpackPlugin', (compilation, callback) => {
       if (this.options.mode === 'qa') {
+        console.error('compilation.assets', compilation.assets['app.json'])
         compilation.assets['app.json'] = addConfig(compilation.assets['app.json'], this.options)
       }
       if (this.options.generateBuildMap) {

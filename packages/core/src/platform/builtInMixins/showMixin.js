@@ -1,6 +1,6 @@
 export default function pageStatusMixin (mixinType) {
   if (mixinType === 'component') {
-    if (__mpx_mode__ === 'ali' || __mpx_mode__ === 'qa') {
+    if (__mpx_mode__ === 'ali') {
       return {
         props: {
           mpxShow: true
