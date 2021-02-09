@@ -1,9 +1,16 @@
+const { isMustache } = require('../../../../utils/string')
+
 const TAG_NAME = 'camera'
 
 module.exports = function ({ print }) {
+  const ttValueLogError = print({ platform: 'bytedance', tag: TAG_NAME, isError: true, type: 'value' })
+  const ttEventLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false })
+  const ttPropLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false })
   const baiduValueLogError = print({ platform: 'baidu', tag: TAG_NAME, isError: true, type: 'value' })
   const baiduEventLog = print({ platform: 'baidu', tag: TAG_NAME, isError: false })
-
+  const qqValueLog = print({ platform: 'qq', tag: TAG_NAME, isError: false, type: 'value' })
+  const qqPropLog = print({ platform: 'qq', tag: TAG_NAME, isError: false })
+  const qqEventLog = print({ platform: 'qq', tag: TAG_NAME, isError: false, type: 'event' })
   return {
     test: TAG_NAME,
     props: [
@@ -15,13 +22,39 @@ module.exports = function ({ print }) {
             baiduValueLogError({ name, value })
           }
           return false
+        },
+        tt ({ name, value }) {
+          if (value !== 'normal') {
+            ttValueLogError({ name, value })
+          }
+          return false
         }
+      },
+      {
+        test: 'flash',
+        qq ({ name, value }) {
+          const supportList = ['auto', 'on', 'off']
+          if (isMustache(value) || supportList.indexOf(value) === -1) {
+            // 如果是个变量，或者是不支持的属性值，报warning
+            qqValueLog({ name, value })
+          }
+        },
+        tt: ttPropLog
+      },
+      {
+        test: /^(resolution|frame-size)$/,
+        qq: qqPropLog
       }
     ],
     event: [
       {
         test: /^(scancode)$/,
-        swan: baiduEventLog
+        swan: baiduEventLog,
+        tt: ttEventLog
+      },
+      {
+        test: /^(initdone)$/,
+        qq: qqEventLog
       }
     ]
   }

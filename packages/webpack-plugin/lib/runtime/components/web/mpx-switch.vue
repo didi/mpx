@@ -1,10 +1,11 @@
 <script>
-  import getInnerListeners, { extendEvent } from './getInnerListeners'
+  import getInnerListeners, { extendEvent, getCustomEvent } from './getInnerListeners'
 
 
   export default {
     name: 'mpx-switch',
     props: {
+      name: String,
       type: {
         type: String,
         default: 'switch'
@@ -28,16 +29,6 @@
       }
     },
     render (createElement) {
-      const mergeBefore = {
-        change: (e) => {
-          this.switchChecked = e.target.checked
-          extendEvent(e, {
-            detail: {
-              value: e.target.checked
-            }
-          })
-        }
-      }
       let children = []
       const domProps = {
         type: 'checkbox',
@@ -47,7 +38,16 @@
 
       const checkbox = createElement('input', {
         class: 'mpx-switch-input',
-        on: getInnerListeners(this, { mergeBefore }),
+        on: {
+          change: (e) => {
+            this.switchChecked = e.target.checked
+            extendEvent(e, {
+              detail: {
+                value: e.target.checked
+              }
+            })
+          }
+        },
         domProps
       })
       if (this.type === 'switch') {
@@ -60,7 +60,7 @@
         })
         children.push(switchElem)
       } else {
-        const style = window.__style === 'v2' ? 'v2' : 'v1'
+        const style = global.__style === 'v2' ? 'v2' : 'v1'
         const checkbox = createElement('div', {
           class: ['mpx-switch-checkbox', this.switchChecked && 'mpx-switch-checkbox-checked-' + style]
         })
@@ -74,6 +74,20 @@
         class: [this.type === 'switch' ? 'mpx-switch-wrap' : 'mpx-checkbox-wrap']
       }
       return createElement('div', data, children)
+    },
+    methods: {
+      getValue () {
+        return this.switchChecked
+      },
+      setValue (value) {
+        this.switchChecked = value
+      },
+      notifyChange (value) {
+        if (value !== undefined) {
+          this.setValue(value)
+        }
+        this.$emit('change', getCustomEvent('change', { value: value }))
+      }
     }
   }
 </script>

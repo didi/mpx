@@ -10,6 +10,7 @@ const addQuery = require('../utils/add-query')
 const transDynamicClassExpr = require('./trans-dynamic-class-expr')
 const hash = require('hash-sum')
 const dash2hump = require('../utils/hump-dash').dash2hump
+const { inBrowser } = require('../utils/env')
 
 /**
  * Make a map and return a function for checking if a key
@@ -231,7 +232,6 @@ function assertMpxCommentAttrsEnd () {
 }
 
 // Browser environment sniffing
-const inBrowser = typeof window !== 'undefined'
 const UA = inBrowser && window.navigator.userAgent.toLowerCase()
 const isIE = UA && /msie|trident/.test(UA)
 const isEdge = UA && UA.indexOf('edge/') > 0
@@ -310,9 +310,10 @@ function decode (value) {
 const i18nFuncNames = ['\\$(t)', '\\$(tc)', '\\$(te)', '\\$(d)', '\\$(n)']
 const i18nWxsPath = normalize.lib('runtime/i18n.wxs')
 const i18nWxsLoaderPath = normalize.lib('wxs/wxs-i18n-loader.js')
-const i18nWxsRequest = i18nWxsLoaderPath + '!' + i18nWxsPath
+// 添加~前缀避免wxs绝对路径在存在projectRoot时被拼接为错误路径
+const i18nWxsRequest = '~' + i18nWxsLoaderPath + '!' + i18nWxsPath
 const i18nModuleName = '__i18n__'
-const stringifyWxsPath = normalize.lib('runtime/stringify.wxs')
+const stringifyWxsPath = '~' + normalize.lib('runtime/stringify.wxs')
 const stringifyModuleName = '__stringify__'
 
 const tagRES = /(\{\{(?:.|\n)+?\}\})(?!})/
@@ -633,7 +634,8 @@ function parseComponent (content, options) {
           }
         } else {
           if (tag === 'script') {
-            if (currentBlock.type === 'application/json' || currentBlock.name === 'json') {
+            // 支持type写为application\/json5
+            if (/^application\/json/.test(currentBlock.type) || currentBlock.name === 'json') {
               tag = 'json'
             }
           }
@@ -694,7 +696,7 @@ function parseComponent (content, options) {
       }
 
       // 对于<script name="json">的标签，传参调用函数，其返回结果作为json的内容
-      if (currentBlock.tag === 'script' && currentBlock.type !== 'application/json' && currentBlock.name === 'json') {
+      if (currentBlock.tag === 'script' && !/^application\/json/.test(currentBlock.type) && currentBlock.name === 'json') {
         text = mpxJSON.compileMPXJSONText({ source: text, defs, filePath: options.filePath })
       }
       currentBlock.content = text
@@ -967,11 +969,12 @@ function addChild (parent, newChild, before) {
 }
 
 function getAndRemoveAttr (el, name, removeFromMap = true) {
-  let val
+  let val, has
   let list = el.attrsList
   for (let i = 0, l = list.length; i < l; i++) {
     if (list[i].name === name) {
-      val = list[i].value || true
+      val = list[i].value
+      has = true
       list.splice(i, 1)
       break
     }
@@ -979,7 +982,10 @@ function getAndRemoveAttr (el, name, removeFromMap = true) {
   if (removeFromMap && val === el.attrsMap[name]) {
     delete el.attrsMap[name]
   }
-  return val
+  return {
+    has,
+    val
+  }
 }
 
 function addAttrs (el, attrs) {
@@ -1103,10 +1109,7 @@ function processComponentIs (el, options) {
     warn$1('Component in which <component> tag is used must have a nonblank usingComponents field')
   }
 
-  let is = getAndRemoveAttr(el, 'is')
-  if (!is) {
-    warn$1('<component> tag should have attrs[is].')
-  }
+  let is = getAndRemoveAttr(el, 'is').val
   if (is) {
     let match = tagRE.exec(is)
     if (match) {
@@ -1117,6 +1120,8 @@ function processComponentIs (el, options) {
     } else {
       el.is = stringify(is)
     }
+  } else {
+    warn$1('<component> tag should have attrs[is].')
   }
 }
 
@@ -1218,15 +1223,15 @@ function processBindEvent (el) {
     }
   })
 
-  let modelExp = getAndRemoveAttr(el, config[mode].directive.model)
+  let modelExp = getAndRemoveAttr(el, config[mode].directive.model).val
   if (modelExp) {
     let match = tagRE.exec(modelExp)
     if (match) {
-      const modelProp = getAndRemoveAttr(el, config[mode].directive.modelProp) || config[mode].event.defaultModelProp
-      const modelEvent = getAndRemoveAttr(el, config[mode].directive.modelEvent) || config[mode].event.defaultModelEvent
-      const modelValuePathRaw = getAndRemoveAttr(el, config[mode].directive.modelValuePath)
+      const modelProp = getAndRemoveAttr(el, config[mode].directive.modelProp).val || config[mode].event.defaultModelProp
+      const modelEvent = getAndRemoveAttr(el, config[mode].directive.modelEvent).val || config[mode].event.defaultModelEvent
+      const modelValuePathRaw = getAndRemoveAttr(el, config[mode].directive.modelValuePath).val
       const modelValuePath = modelValuePathRaw === undefined ? config[mode].event.defaultModelValuePath : modelValuePathRaw
-      const modelFilter = getAndRemoveAttr(el, config[mode].directive.modelFilter)
+      const modelFilter = getAndRemoveAttr(el, config[mode].directive.modelFilter).val
       let modelValuePathArr
       try {
         modelValuePathArr = JSON5.parse(modelValuePath)
@@ -1285,10 +1290,10 @@ function processBindEvent (el) {
     if (needBind) {
       if (rawName) {
         // 清空原始事件绑定
-        let val
+        let has
         do {
-          val = getAndRemoveAttr(el, rawName)
-        } while (val)
+          has = getAndRemoveAttr(el, rawName).has
+        } while (has)
         // 清除修饰符
         rawName = rawName.replace(/\..*/, '')
       }
@@ -1390,37 +1395,37 @@ function addExp (el, exp, isProps) {
 }
 
 function processIf (el) {
-  let val = getAndRemoveAttr(el, config[mode].directive.if)
+  let val = getAndRemoveAttr(el, config[mode].directive.if).val
   if (val) {
     let parsed = parseMustache(val)
     el.if = {
       raw: parsed.val,
       exp: parsed.result
     }
-  } else if (val = getAndRemoveAttr(el, config[mode].directive.elseif)) {
+  } else if (val = getAndRemoveAttr(el, config[mode].directive.elseif).val) {
     let parsed = parseMustache(val)
     el.elseif = {
       raw: parsed.val,
       exp: parsed.result
     }
-  } else if (getAndRemoveAttr(el, config[mode].directive.else) != null) {
+  } else if (getAndRemoveAttr(el, config[mode].directive.else).has) {
     el.else = true
   }
 }
 
 function processIfForWeb (el) {
-  let val = getAndRemoveAttr(el, config[mode].directive.if)
+  let val = getAndRemoveAttr(el, config[mode].directive.if).val
   if (val) {
     el.if = {
       raw: val,
       exp: val
     }
-  } else if (val = getAndRemoveAttr(el, config[mode].directive.elseif)) {
+  } else if (val = getAndRemoveAttr(el, config[mode].directive.elseif).val) {
     el.elseif = {
       raw: val,
       exp: val
     }
-  } else if (getAndRemoveAttr(el, config[mode].directive.else) != null) {
+  } else if (getAndRemoveAttr(el, config[mode].directive.else).has) {
     el.else = true
   }
 }
@@ -1428,7 +1433,7 @@ function processIfForWeb (el) {
 const swanForInRe = /^\s*(\w+)(?:\s*,\s*(\w+))?\s+in\s+(\S+)(?:\s+trackBy\s+(\S+))?\s*$/
 
 function processFor (el) {
-  let val = getAndRemoveAttr(el, config[mode].directive.for)
+  let val = getAndRemoveAttr(el, config[mode].directive.for).val
   if (val) {
     let matched
     if (mode === 'swan' && (matched = swanForInRe.exec(val))) {
@@ -1444,13 +1449,13 @@ function processFor (el) {
         raw: parsed.val,
         exp: parsed.result
       }
-      if (val = getAndRemoveAttr(el, config[mode].directive.forIndex)) {
+      if (val = getAndRemoveAttr(el, config[mode].directive.forIndex).val) {
         el.for.index = val
       }
-      if (val = getAndRemoveAttr(el, config[mode].directive.forItem)) {
+      if (val = getAndRemoveAttr(el, config[mode].directive.forItem).val) {
         el.for.item = val
       }
-      if (val = getAndRemoveAttr(el, config[mode].directive.key)) {
+      if (val = getAndRemoveAttr(el, config[mode].directive.key).val) {
         el.for.key = val
       }
     }
@@ -1462,7 +1467,7 @@ function processFor (el) {
 }
 
 function processRef (el, options, meta) {
-  let val = getAndRemoveAttr(el, config[mode].directive.ref)
+  let val = getAndRemoveAttr(el, config[mode].directive.ref).val
   let type = isComponentNode(el, options) ? 'component' : 'node'
   if (val) {
     if (!meta.refs) {
@@ -1475,7 +1480,7 @@ function processRef (el, options, meta) {
     if (type === 'node' && mode === 'ali') {
       refClassName += '_{{mpxCid}}'
     }
-    let className = getAndRemoveAttr(el, 'class')
+    let className = getAndRemoveAttr(el, 'class').val
     className = className ? className + ' ' + refClassName : refClassName
     addAttrs(el, [{
       name: 'class',
@@ -1727,8 +1732,8 @@ function processClass (el, meta) {
   const type = 'class'
   const needEx = el.tag.startsWith('th-')
   const targetType = needEx ? 'ex-' + type : type
-  let dynamicClass = getAndRemoveAttr(el, config[mode].directive.dynamicClass)
-  let staticClass = getAndRemoveAttr(el, type)
+  let dynamicClass = getAndRemoveAttr(el, config[mode].directive.dynamicClass).val
+  let staticClass = getAndRemoveAttr(el, type).val
   if (dynamicClass) {
     let staticClassExp = parseMustache(staticClass).result
     let dynamicClassExp = transDynamicClassExpr(parseMustache(dynamicClass).result)
@@ -1760,8 +1765,8 @@ function processClass (el, meta) {
 function processStyle (el, meta) {
   const type = 'style'
   const targetType = el.tag.startsWith('th-') ? 'ex-' + type : type
-  let dynamicStyle = getAndRemoveAttr(el, config[mode].directive.dynamicStyle)
-  let staticStyle = getAndRemoveAttr(el, type)
+  let dynamicStyle = getAndRemoveAttr(el, config[mode].directive.dynamicStyle).val
+  let staticStyle = getAndRemoveAttr(el, type).val
   if (dynamicStyle) {
     let staticStyleExp = parseMustache(staticStyle).result
     let dynamicStyleExp = parseMustache(dynamicStyle).result
@@ -1791,7 +1796,7 @@ function isComponentNode (el, options) {
 }
 
 function processAliExternalClassesHack (el, options) {
-  let staticClass = getAndRemoveAttr(el, 'class')
+  let staticClass = getAndRemoveAttr(el, 'class').val
   if (staticClass) {
     options.externalClasses.forEach((className) => {
       const reg = new RegExp('\\b' + className + '\\b', 'g')
@@ -1806,7 +1811,7 @@ function processAliExternalClassesHack (el, options) {
 
   if (options.scopedId && isComponentNode(el, options)) {
     options.externalClasses.forEach((className) => {
-      let externalClass = getAndRemoveAttr(el, className)
+      let externalClass = getAndRemoveAttr(el, className).val
       if (externalClass) {
         addAttrs(el, [{
           name: className,
@@ -1818,8 +1823,8 @@ function processAliExternalClassesHack (el, options) {
 }
 
 function processWebExternalClassesHack (el, options) {
-  let staticClass = getAndRemoveAttr(el, 'class')
-  let dynamicClass = getAndRemoveAttr(el, ':class')
+  let staticClass = getAndRemoveAttr(el, 'class').val
+  let dynamicClass = getAndRemoveAttr(el, ':class').val
   if (staticClass || dynamicClass) {
     const externalClasses = []
     options.externalClasses.forEach((className) => {
@@ -1855,7 +1860,7 @@ function processWebExternalClassesHack (el, options) {
 function processScoped (el, options) {
   const scopedId = options.scopedId
   if (scopedId && isRealNode(el)) {
-    const staticClass = getAndRemoveAttr(el, 'class')
+    const staticClass = getAndRemoveAttr(el, 'class').val
     addAttrs(el, [{
       name: 'class',
       value: staticClass ? `${staticClass} ${scopedId}` : scopedId
@@ -1879,7 +1884,7 @@ function processBuiltInComponents (el, meta) {
 
 function processAliStyleClassHack (el, options, root) {
   ['style', 'class'].forEach((type) => {
-    let exp = getAndRemoveAttr(el, type)
+    let exp = getAndRemoveAttr(el, type).val
     let sep = type === 'style' ? ';' : ' '
 
     let typeName = 'mpx' + type.replace(/^./, (matched) => {
@@ -1910,7 +1915,7 @@ function processAliStyleClassHack (el, options, root) {
 }
 
 function processShow (el, options, root) {
-  let show = getAndRemoveAttr(el, config[mode].directive.show)
+  let show = getAndRemoveAttr(el, config[mode].directive.show).val
   if (options.isComponent && el.parent === root && isRealNode(el)) {
     if (show !== undefined) {
       show = `{{${parseMustache(show).result}&&mpxShow}}`
@@ -1929,7 +1934,7 @@ function processShow (el, options, root) {
       }])
     } else {
       const showExp = parseMustache(show).result
-      let oldStyle = getAndRemoveAttr(el, 'style')
+      let oldStyle = getAndRemoveAttr(el, 'style').val
       oldStyle = oldStyle ? oldStyle + ';' : ''
       addAttrs(el, [{
         name: 'style',
@@ -1940,7 +1945,7 @@ function processShow (el, options, root) {
 }
 
 function processTemplate (el) {
-  if (el.tag === 'template' && el.attrsMap['name']) {
+  if (el.tag === 'template' && el.attrsMap.name) {
     el.isTemplate = true
     processingTemplate = true
     return true
@@ -1972,7 +1977,7 @@ function processAtMode (el) {
     if (wrapRE.test(modeStr)) modeStr = wrapRE.exec(modeStr)[1]
     const modeArr = modeStr.split('|')
     if (modeArr.every(i => isValidMode(i))) {
-      const attrValue = getAndRemoveAttr(el, attrName)
+      const attrValue = getAndRemoveAttr(el, attrName).val
       const replacedAttrName = attrArr.join('@')
 
       const processedAttr = { name: replacedAttrName, value: attrValue }
@@ -2187,7 +2192,7 @@ function serialize (root) {
           node.attrsList.forEach(function (attr) {
             result += ' ' + attr.name
             let value = attr.value
-            if (value != null && value !== true) {
+            if (value != null) {
               result += '=' + stringifyAttr(value)
             }
           })

@@ -37,7 +37,7 @@
     },
     mounted () {
       this.$on('tap', () => {
-        const mpx = window.__mpx
+        const mpx = global.__mpx
         if (mpx) {
           switch (this.openType) {
             case 'navigateBack':

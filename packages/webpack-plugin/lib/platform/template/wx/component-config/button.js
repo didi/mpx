@@ -2,6 +2,11 @@ const { isMustache } = require('../../../../utils/string')
 
 const TAG_NAME = 'button'
 
+// 微信支持的属性及其值
+const wxSupportPropsValue = {
+  'open-type': ['contact', 'share', 'getPhoneNumber', 'getUserInfo', 'launchApp', 'openSetting', 'feedback']
+}
+
 module.exports = function ({ print }) {
   const aliValueLogError = print({ platform: 'ali', tag: TAG_NAME, isError: true, type: 'value' })
   const aliValueLog = print({ platform: 'ali', tag: TAG_NAME, isError: false, type: 'value' })
@@ -11,6 +16,8 @@ module.exports = function ({ print }) {
   const baiduValueLog = print({ platform: 'baidu', tag: TAG_NAME, isError: false, type: 'value' })
   const baiduPropLog = print({ platform: 'baidu', tag: TAG_NAME, isError: false })
   const baiduEventLog = print({ platform: 'baidu', tag: TAG_NAME, isError: false })
+  const qqValueLogError = print({ platform: 'qq', tag: TAG_NAME, isError: true, type: 'value' })
+  const qqValueLog = print({ platform: 'qq', tag: TAG_NAME, isError: false, type: 'value' })
   const qqPropLog = print({ platform: 'qq', tag: TAG_NAME, isError: false })
   const qqEventLog = print({ platform: 'qq', tag: TAG_NAME, isError: false, type: 'event' })
   const ttPropLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false })
@@ -20,6 +27,7 @@ module.exports = function ({ print }) {
   const webPropLog = print({ platform: 'web', tag: TAG_NAME, isError: false })
   const webEventLog = print({ platform: 'web', tag: TAG_NAME, isError: false, type: 'event' })
   const qaPropLog = print({ platform: 'qa', tag: TAG_NAME, isError: false })
+  const wxPropValueLog = print({ platform: 'wx', tag: TAG_NAME, isError: false, type: 'value' })
 
   return {
     test: TAG_NAME,
@@ -62,7 +70,10 @@ module.exports = function ({ print }) {
           }
         },
         swan ({ name, value }) {
-          const supportList = ['contact', 'share', 'getUserInfo', 'getPhoneNumber', 'openSetting']
+          const supportList = ['contact', 'share', 'getUserInfo', 'getPhoneNumber', 'openSetting', 'chooseAddress', 'chooseInvoiceTitle', 'login']
+          if (wxSupportPropsValue[name] && wxSupportPropsValue[name].indexOf(value) === -1) {
+            wxPropValueLog({ name, value })
+          }
           if (isMustache(value)) {
             // 如果是个变量，报warning
             baiduValueLog({ name, value })
@@ -70,11 +81,26 @@ module.exports = function ({ print }) {
             baiduValueLogError({ name, value })
           }
         },
+        qq ({ name, value }) {
+          const supportList = ['share', 'getUserInfo', 'launchApp', 'openSetting', 'contact', 'feedback', 'openGroupProfile', 'addFriend', 'addColorSign', 'openPublicProfile', 'addGroupApp', 'shareMessageToFriend', 'addToFavorites']
+          if (wxSupportPropsValue[name] && wxSupportPropsValue[name].indexOf(value) === -1) {
+            wxPropValueLog({ name, value })
+          }
+          if (isMustache(value)) {
+            // 如果是个变量，报warning
+            qqValueLog({ name, value })
+          } else if (supportList.indexOf(value) === -1) {
+            qqValueLogError({ name, value })
+          }
+        },
         tt ({ name, value }) {
+          if (wxSupportPropsValue[name] && wxSupportPropsValue[name].indexOf(value) === -1) {
+            wxPropValueLog({ name, value })
+          }
           if (isMustache(value)) {
             ttValueLog({ name, value })
           } else {
-            const supportList = ['share', 'getPhoneNumber']
+            const supportList = ['share', 'getPhoneNumber', 'contact']
             if (supportList.indexOf(value) === -1) {
               ttValueLogError({ name, value })
             }
@@ -115,7 +141,7 @@ module.exports = function ({ print }) {
     ],
     event: [
       {
-        test: /^(getphonenumber|getuserinfo)/,
+        test: /^(getphonenumber|getuserinfo)$/,
         ali () {
           return 'getAuthorize'
         }
@@ -129,12 +155,15 @@ module.exports = function ({ print }) {
         swan: baiduEventLog
       },
       {
-        test: /^(contact)$/,
+        test: /^(getphonenumber)$/,
         qq: qqEventLog
       },
       {
-        test: /^(getuserinfo|contact|getphonenumbe|error|launchapp|opensetting)$/,
-        tt: ttEventLog,
+        test: /^(getuserinfo|contact|error|launchapp|opensetting)$/,
+        tt: ttEventLog
+      },
+      {
+        test: /^(getuserinfo|contact|error|launchapp|opensetting|getphonenumber)$/,
         web: webEventLog
       }
     ]

@@ -50,18 +50,6 @@ module.exports = function ({ print }) {
           return obj
         }
       }
-    ],
-    event: [
-      {
-        test: /^(change)$/,
-        ali (eventName) {
-          const eventMap = {
-            'change': 'change',
-            'changing': 'changing'
-          }
-          return eventMap[eventName]
-        }
-      }
     ]
   }
 }

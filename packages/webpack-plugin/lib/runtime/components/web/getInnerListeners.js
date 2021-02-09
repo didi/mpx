@@ -68,16 +68,16 @@ function processTap (listeners, context) {
         }, 350)
       }
     },
+    touchmove () {
+      context.__mpxTapInfo.needTap = false
+      context.__mpxTapInfo.startTimer && clearTimeout(context.__mpxTapInfo.startTimer)
+      context.__mpxTapInfo.startTimer = null
+    },
     touchend (e) {
       context.__mpxTapInfo.startTimer && clearTimeout(context.__mpxTapInfo.startTimer)
       if (listeners.tap && context.__mpxTapInfo.needTap) {
-        const xDis = Math.abs(e.changedTouches[0].pageX - context.__mpxTapInfo.detail.x)
-        const yDis = Math.abs(e.changedTouches[0].pageY - context.__mpxTapInfo.detail.y)
-
-        if (Math.max(xDis, yDis) <= 15) {
-          const re = inheritEvent('tap', e, context.__mpxTapInfo.detail)
-          context.$emit('tap', re)
-        }
+        const re = inheritEvent('tap', e, context.__mpxTapInfo.detail)
+        context.$emit('tap', re)
       }
     }
   }, {

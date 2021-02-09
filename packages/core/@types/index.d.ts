@@ -1,7 +1,7 @@
 // Type definitions for @mpxjs/core
 // Project: https://github.com/didi/mpx
 // Definitions by: hiyuki <https://github.com/hiyuki>
-// TypeScript Version: 4.1.0-beta
+// TypeScript Version: 4.1.3
 
 /// <reference types="miniprogram-api-typings" />
 /// <reference path="./mpx-store.d.ts" />
@@ -193,7 +193,7 @@ export interface MpxComponentIns {
 
   $watch (expr: string | (() => any), handler: WatchHandler | WatchOptWithHandler, options?: WatchOpt): () => void
 
-  $forceUpdate (params: object, callback: () => void): void
+  $forceUpdate (params?: object, callback?: () => void): void
 
   $nextTick (fn: () => void): void
 
@@ -243,8 +243,9 @@ export function createStoreWithThis<S = {}, G = {}, M extends MutationsAndAction
 // auxiliary functions
 export function createStateWithThis<S = {}> (state: S): S
 
-export function createGettersWithThis<S = {}, D extends Deps = {}, G = {}> (getters: G & ThisType<{ state: S & UnboxDepsField<D, 'state'>, getters: GetComputedType<G> & UnboxDepsField<D, 'getters'>, rootState: any }>, options?: {
+export function createGettersWithThis<S = {}, D extends Deps = {}, G = {}, OG = {}> (getters: G & ThisType<{ state: S & UnboxDepsField<D, 'state'>, getters: GetComputedType<G & OG> & UnboxDepsField<D, 'getters'>, rootState: any }>, options?: {
   state?: S,
+  getters?: OG,
   deps?: D
 }): G
 
@@ -259,7 +260,7 @@ export function createActionsWithThis<S = {}, G = {}, M extends MutationsAndActi
   getters: GetComputedType<G> & UnboxDepsField<D, 'getters'>,
   dispatch: GetDispatchAndCommitWithThis<A, D, 'actions'>,
   commit: GetDispatchAndCommitWithThis<M, D, 'mutations'>
-}>, options?: {
+} & MpxStore.CompatibleDispatch>, options?: {
   state?: S,
   getters?: G,
   mutations?: M,

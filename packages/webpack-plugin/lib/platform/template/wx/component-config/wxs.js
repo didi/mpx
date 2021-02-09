@@ -8,7 +8,7 @@ module.exports = function ({ print }) {
       return 'import-sjs'
     },
     swan () {
-      return 'filter'
+      return 'import-sjs'
     },
     qq () {
       return 'qs'
