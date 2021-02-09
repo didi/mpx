@@ -2,6 +2,8 @@ const TAG_NAME = 'swiper-item'
 
 module.exports = function ({ print }) {
   const aliPropLog = print({ platform: 'ali', tag: TAG_NAME, isError: false })
+  const qaPropLog = print({ platform: 'qa', tag: TAG_NAME, isError: false })
+
   return {
     test: TAG_NAME,
     web (tag, { el }) {
@@ -12,6 +14,10 @@ module.exports = function ({ print }) {
       {
         test: /^(item-id)$/,
         ali: aliPropLog
+      },
+      {
+        test: /^(skip-hidden-item-layout)$/,
+        qa: qaPropLog
       }
     ]
   }
