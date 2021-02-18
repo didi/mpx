@@ -6,6 +6,7 @@ module.exports = function ({ print }) {
   const qqPropLog = print({ platform: 'qq', tag: TAG_NAME, isError: false })
   // const ttPropLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false })
   const webPropLog = print({ platform: 'web', tag: TAG_NAME, isError: false })
+  const qaPropLog = print({ platform: 'qa', tag: TAG_NAME, isError: false })
 
   return {
     test: TAG_NAME,
@@ -23,7 +24,8 @@ module.exports = function ({ print }) {
       },
       {
         test: /^(report-submit|report-submit-timeout)$/,
-        web: webPropLog
+        web: webPropLog,
+        qa: qaPropLog
       }
     ]
   }

@@ -7,7 +7,7 @@ let ms
 function refreshMs (vm) {
   if (ms) ms.destroy()
   try {
-    window.__ms = ms = new MpxScroll()
+    global.__ms = ms = new MpxScroll()
     return true
   } catch (e) {
     const location = vm.__mpxProxy && vm.__mpxProxy.options.mpxFileResource

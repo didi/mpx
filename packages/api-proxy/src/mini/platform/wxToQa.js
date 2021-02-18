@@ -1,6 +1,6 @@
 import { changeOpts, getEnvObj } from '../../common/js'
 
-const Qa_OBJ = getEnvObj()
+const qaObj = getEnvObj()
 
 const getWxToQaApi = ({ optimize = false }) => {
   return {
@@ -12,7 +12,7 @@ const getWxToQaApi = ({ optimize = false }) => {
       const opts = changeOpts(options, undefined, {
         subscribe: true
       })
-      Qa_OBJ.subscribeAppMsg(opts)
+      qaObj.subscribeAppMsg(opts)
     }
   }
 }

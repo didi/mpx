@@ -1,5 +1,28 @@
 # Typescript支持
 
+### 为什么要使用Typescript
+
+>  `TypeScript` 是 `JavaScript` 的强类型版本，就然后在编译期去掉类型和特有语法，生成纯粹的 `JavaScript` 代码。由于最终在浏览器中运行的仍然是 `JavaScript`，所以 `TypeScript` 并不依赖于浏览器的支持，也并不会带来兼容性问题。
+
+> `TypeScript` 是 `JavaScript` 的超集，这意味着他支持所有的 `JavaScript` 语法。并在此之上对 `JavaScript` 添加了一些扩展，如 `class` / `interface` / `module` 等。这样会大大提升代码的可阅读性。
+
+### 总体上好处可以归纳成下面4点：
+
+1.  静态类型检查
+
+    静态类型检查可以避免很多不必要类型的错误，不用在调试的时候才发现问题。
+
+2.  IDE 智能提示
+    在 `TypeScript` 这一类语言之前， `JavaScript`  的智能提示基本完全依赖 IDE 提供的猜测。局限性就是，这种猜测可能并不正确。并且也缺乏更多的辅助信息, 所以要正确使用一个类库, 得不断地在文档和 IDE 之间切换，影响心情和效率， 而 `TypeScript` 不仅自己写的类库有丰富的类型信息。
+
+3. 代码重构
+
+    有时候的确需要修改一些变量/属性/方法名，牵涉到属性和方法的时候，很多改动是跨文件的，不像普通变量可以简单定位 `scope` ， 属性方法名的重命名对于 `JavaScript`来说异常痛苦， 一方面是修改本身就不方便, 另一方面是改了还不确定该改的是不是改了，不该改的是不是也改了。而 TypeScript 的静态类型系统就可以较为完美的解决这个问题。
+
+4. 可读性
+
+    对于阅读代码的人来讲，各种便利的类型一目了然，更容易明白作者的意图。
+
 ## 使用方式
 
 ### .mpx中编写ts
@@ -89,7 +112,7 @@ mpx.$myProperty = 'my-property'
 Mpx基于泛型函数提供了非常方便用户使用的反向类型推导能力，简单来说，就是用户可以用非常接近于js的方式调用Mpx提供的api，就能够获得大量基于用户输入参数反向推导得到的类型提示及检查。但是由于ts本身的能力限制，我们在mpx的运行时中添加了少量辅助函数和变种api，便于用户最大程度地享受反向类型推导带来的便利性，具体的注意事项和使用方法如下述demo
 
 ```typescript
-import {createComponent, getComputed, getMixin, createStoreWithThis} from '@mpxjs/core'
+import {createComponent, getMixin, createStoreWithThis} from '@mpxjs/core'
 
 // createStoreWithThis作为createStore的变种方法，主要变化在于定义getters，mutations和actions时，
 // 获取自身的state，getters等属性不再通过参数传入，而是通过this.state或者this.getters等属性进行访问，
@@ -126,9 +149,8 @@ createComponent({
       return this.b
     },
     d() {
-      // 在computed中访问当前computed对象中的其他计算属性时，需要用getComputed辅助函数包裹，
-      // 而除此以外的任何场景下都不需要使用，例如访问data或者mixins中定义的computed等数据
-      return getComputed(this.c) + this.a + this.aaa
+      // data, mixin, computed中定义的数据能够被推导到this中
+      return this.a + this.aaa + this.c
     },
     // 从store上map过来的计算属性或者方法同样能够被推导到this中
     ...store.mapState(['aa'])

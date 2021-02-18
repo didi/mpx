@@ -1,13 +1,16 @@
+import { inBrowser } from '../../../../utils/env'
 const fnMap = new Map()
 
 const oldObserveList = new Set()
 
-window.addEventListener('offline', () => {
-  oldObserveList.forEach(fn => fn({ isConnected: false, type: 'none' }))
-})
-window.addEventListener('online', () => {
-  oldObserveList.forEach(fn => fn({ isConnected: true, type: 'unknow' }))
-})
+if (inBrowser) {
+  window.addEventListener('offline', () => {
+    oldObserveList.forEach(fn => fn({ isConnected: false, type: 'none' }))
+  })
+  window.addEventListener('online', () => {
+    oldObserveList.forEach(fn => fn({ isConnected: true, type: 'unknow' }))
+  })
+}
 
 export function onNetworkStatusChange (callbackFn) {
   if (navigator.connection) {

@@ -15,6 +15,7 @@ module.exports = {
     'swan': false,
     'qq': false,
     'tt': false,
+    'qa': false,
     'Component': false,
     'Page': false,
     'App': false,

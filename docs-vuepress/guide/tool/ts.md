@@ -1,12 +1,46 @@
 # Typescript支持
 
-todo 完善补充
+## 什么是TypeScript
+
+TypeScript 是一个开源的编程语言，通过在 JavaScript（世界上最常用的语言之一） 的基础上添加静态类型定义构建而成。
+
+类型提供了一种描述对象形状的方法。可以帮助提供更好的文档，还可以让 TypeScript 验证你的代码可以正常工作。
+
+在 TypeScript 中，不是每个地方都需要标注类型，因为类型推断允许您无需编写额外的代码即可获得大量功能。
+
+## TypeScript优势
+
+1. 静态类型检查
+   静态类型检查可以避免很多不必要类型的错误，在编译阶段提前发现问题；
+
+2. 强大的类型推断能力
+   除了类型声明外，`TypeScript` 提供了强大的类型推断能力，该能力能够大大减少我们需要编写的类型声明，有效地减少我们使用 `TypeScript` 的额外压力；
+
+3. IDE 智能提示
+   目前主流的 IDE 都对 `TypeScript` 提供了良好的支持，基于 `TypeScript` 的类型系统提供友好准确的编码提示与错误检查。
+
 
 ## 使用方式
 
-### .mpx中编写ts
+### 编写ts前的准备工作
 
-.mpx文件中script标签声明lang为ts，在编译时会自动这部分script中的内容进行ts类型检查
+由于对 store 做类型推导使用了最新的 `TypeScript` 特性，因此需要将编辑器的 `TypeScript` 版本升级至 **4.1.3** 及以上版本。以下是 VSCode 配置示例：
+
+1. 更新项目中的TypeScript为 4.1.3 及以上版本。
+
+2. 在VSCode中打开一个 .js/.ts/.tsx 后缀的文件，使用 `Shift+Command+P` 唤出 VSCode 命令行，输入 `TypeScript` ，选择 `Select TypeScript Version`，选择使用工作区版本，将版本切换至 4.1.3 及以上版本。
+
+<img src="../../assets/images/select-ts-version.png" style="border-radius: 6px"/>
+
+3. 在 VSCode 编辑器中安装 mpx 插件，来支持在.mpx单文件中编写 ts 时的代码提示和实时报错等优秀体验。
+
+::: warning
+使用 @typescript/eslint-plugin 对 ts 代码进行检查，当在.mpx文件中使用全局类型时，eslint 会抛出 no-undef 错误，可以关闭相关 eslint 规则校验
+:::
+
+### .mpx中编写ts（推荐）
+
+目前 Mpx 已经支持在.mpx文件的 script 标签中编写 ts 代码，需要在 script 标签上添加 ` lang="ts" ` 属性，在编译时会自动这部分 script 中的内容进行 ts 类型检查。
 
 ```html
 <script lang="ts">
@@ -14,7 +48,7 @@ todo 完善补充
 </script>
 ```
 
-由于大部分IDE对ts的语法提示支持都只对.ts和.d.ts文件生效，上述在.mpx文件中编写ts代码虽然能在编译时进行ts类型检查，但是无法享受IDE中编写ts时的代码提示和实时报错等优秀体验，所以，我们更建议大家创建一个.ts文件进行ts代码编写，通过src的方式引入到.mpx当中
+当然，由于大部分IDE对 ts 的语法支持都只对 .ts 和 .d.ts 文件生效，因此 Mpx 也支持创建一个 .ts 文件进行 ts 代码编写，在.mpx文件中，通过 src 的方式引入。
 
 ```html
 <script lang="ts" src="./index.ts"></script>
@@ -22,7 +56,7 @@ todo 完善补充
 
 ### 为.ts文件添加loader
 
-在webpack配置中添加如下rules以配置ts-loader
+在 Webpack 配置中添加如下 rules 以配置 ts-loader
 
 ```js
 {
@@ -36,7 +70,7 @@ todo 完善补充
 
 ### 编写tsconfig.json文件
 
-对相关配置不熟悉的同学可以直接采用下面配置，能够最大限度发挥mpx中强大的ts类型推导能力
+对相关配置不熟悉的同学可以直接采用下面配置，能够最大限度发挥 Mpx 中强大的 ts 类型推导能力
 
 ```json
 {
@@ -58,7 +92,7 @@ todo 完善补充
 
 ### 增强类型
 
-如果需要增加 Mpx 的属性和选项，可以自定义声明 TypeScript 补充现有的类型。
+如果需要增加 Mpx 的属性和选项，可以自定义声明 `TypeScript` 补充现有的类型。
 
 例如，首先创建一个 types.d.ts 文件
 
@@ -88,10 +122,10 @@ mpx.$myProperty = 'my-property'
 
 ## 类型推导及注意事项
 
-Mpx基于泛型函数提供了非常方便用户使用的反向类型推导能力，简单来说，就是用户可以用非常接近于js的方式调用Mpx提供的api，就能够获得大量基于用户输入参数反向推导得到的类型提示及检查。但是由于ts本身的能力限制，我们在mpx的运行时中添加了少量辅助函数和变种api，便于用户最大程度地享受反向类型推导带来的便利性，具体的注意事项和使用方法如下述demo
+Mpx 基于泛型函数提供了非常方便用户使用的反向类型推导能力，简单来说，就是用户可以用非常接近于 js 的方式调用 Mpx 提供的 api ，就能够获得大量基于用户输入参数反向推导得到的类型提示及检查。但是由于 ts 本身的能力限制，我们在 Mpx 的运行时中添加了少量辅助函数和变种api，便于用户最大程度地享受反向类型推导带来的便利性，简单的使用示例如下：
 
 ```typescript
-import {createComponent, getComputed, getMixin, createStoreWithThis} from '@mpxjs/core'
+import {createComponent, getMixin, createStoreWithThis} from '@mpxjs/core'
 
 // createStoreWithThis作为createStore的变种方法，主要变化在于定义getters，mutations和actions时，
 // 获取自身的state，getters等属性不再通过参数传入，而是通过this.state或者this.getters等属性进行访问，
@@ -117,7 +151,6 @@ const store = createStoreWithThis({
   }
 })
 
-
 createComponent({
   data: {
     a: 1,
@@ -128,9 +161,8 @@ createComponent({
       return this.b
     },
     d() {
-      // 在computed中访问当前computed对象中的其他计算属性时，需要用getComputed辅助函数包裹，
-      // 而除此以外的任何场景下都不需要使用，例如访问data或者mixins中定义的computed等数据
-      return getComputed(this.c) + this.a + this.aaa
+      // data, mixin, computed中定义的数据能够被推导到this中
+      return this.a + this.aaa + this.c
     },
     // 从store上map过来的计算属性或者方法同样能够被推导到this中
     ...store.mapState(['aa'])
@@ -163,7 +195,27 @@ createComponent({
 })
 ```
 
-更加具体的使用方法和实现原理我们会在后面的文档和文章中补充完整
+### getMixin
 
+为 ts 项目提供的反向推导 mixin 的辅助函数，getMixin 接收一个对象作为参数，使用 mixins 时，支持嵌套 mixin。具体用法见[getMixin](../../../../api/global-api.md#getmixin)。
 
+### createStoreWithThis
+
+为了在 ts 项目中更好的支持 store 的类型推导，提供了 createStoreWithThis 进行 store 的创建，createStoreWithThis 接收一个 options 对象作为参数。通过 createStoreWithThis 创建 store 时，使用` this.state `，` this.getters `，` this.commit `, ` this.dispatch `对自身的相关属性进行获取。具体用法见[createStoreWithThis](../../../../api/global-api.md#createstorewiththis)。
+
+### createStateWithThis
+
+创建一个 state，支持 state 类型推导的辅助函数，具体用法见[createStateWithThis](../../../../api/global-api.md#createstatewiththis)
+
+### createGettersWithThis
+
+创建一个 getters，支持 getters 类型推导的辅助函数，具体用法见[createGettersWithThis](../../../../api/global-api.md#creategetterswiththis)
+
+### createMutationsWithThis
+
+创建一个 mutations，支持 mutations 类型推导的辅助函数，具体用法见[createMutationsWithThis](../../../../api/global-api.md#createmutationswiththis)
+
+### createActionsWithThis
+
+创建一个 actions，支持 actions 类型推导的辅助函数，具体用法见[createActionsWithThis](../../../../api/global-api.md#createactionswiththis)
 

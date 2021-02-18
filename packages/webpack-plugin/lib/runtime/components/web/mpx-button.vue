@@ -1,7 +1,7 @@
 <script>
   import getInnerListeners from './getInnerListeners'
   // 获取当前小程序样式版本配置
-  const styleVersion = window.__style || ''
+  const styleVersion = global.__style || ''
   const sizeClassMap = {
     'default': '',
     'mini': 'mpx-button-size-mini'
@@ -129,7 +129,7 @@
           defaultListeners: ['tap']
         })
       }
-      return createElement('button', data, this.$slots.default)
+      return createElement('div', data, this.$slots.default)
     },
     methods: {
       handleTouchstart (e) {

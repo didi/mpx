@@ -98,7 +98,7 @@ module.exports = function (script, options, callback) {
       // src改为内联require，删除
       delete attrs.src
       // 目前ts模式都建议使用src来引ts，不支持使用lang内联编写ts
-      delete attrs.lang
+      // delete attrs.lang
       return attrs
     },
     content (script) {
@@ -118,6 +118,7 @@ module.exports = function (script, options, callback) {
   global.getApp = function(){}
   global.getCurrentPages = function(){
     if(!global.__mpxRouter) return []
+    // @ts-ignore
     return global.__mpxRouter.stack.map(item => {
       let page
       const vnode = item.vnode
@@ -220,6 +221,7 @@ module.exports = function (script, options, callback) {
       if (tabBarStr && tabBarPagesMap) {
         content += `  global.__tabBar = ${tabBarStr}
   Vue.observable(global.__tabBar)
+  // @ts-ignore
   global.__tabBarPagesMap = ${shallowStringify(tabBarPagesMap)}\n`
       }
 
@@ -231,7 +233,9 @@ module.exports = function (script, options, callback) {
     ${JSON.stringify(firstPage)},
     ${JSON.stringify(mpxCid)},
     ${JSON.stringify(pageConfig)},
+    // @ts-ignore
     ${shallowStringify(pagesMap)},
+    // @ts-ignore
     ${shallowStringify(componentsMap)},
     ${JSON.stringify(tabBarMap)},
     ${JSON.stringify(componentGenerics)},

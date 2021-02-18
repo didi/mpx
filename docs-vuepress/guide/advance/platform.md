@@ -1,7 +1,4 @@
 # 跨平台
-
-todo 梳理更新内容
-
 ## 多平台支持
 
 Mpx支持在多个小程序平台中进行增强，目前支持的小程序平台包括微信，支付宝，百度，qq和头条，不过自2.0版本后，Mpx支持了以微信增强语法为base的跨平台输出，实现了一套业务源码在多端输出运行的能力，大大提升了多小程序平台业务的开发效率，详情可以查看[跨平台编译](#跨平台编译)
@@ -18,6 +15,7 @@ Mpx支持在多个小程序平台中进行增强，目前支持的小程序平�
 双向绑定辅助属性|wx:model-prop|a:model-prop|s-model-prop|qq:model-prop|tt:model-prop
 双向绑定辅助属性|wx:model-event|a:model-event|s-model-event|qq:model-event|tt:model-event
 双向绑定辅助属性|wx:model-value-path|a:model-value-path|s-model-value-path|qq:model-value-path|tt:model-value-path
+双向绑定辅助属性|wx:model-filter|a:model-filter|s-model-filter|qq:model-filter|tt:model-filter
 动态样式绑定|wx:class|a:class|s-class|qq:class|暂不支持
 动态样式绑定|wx:style|a:style|s-style|qq:style|暂不支持
 获取节点/组件实例|wx:ref|a:ref|s-ref|qq:ref|tt:ref
@@ -254,6 +252,47 @@ other {
 /*
   @mpx-endif
 */
+```
+
+#### 组件属性维度条件编译
+
+组件属性维度条件编译允许用户在组件上使用 `@` 和 `|` 标识来指定某个组件或属性只在某些平台下有效。
+
+对于同一个 button 组件，微信小程序支持 `open-type="getUserInfo"`，但是支付宝小程序支持 `open-type="getAuthorize" `。如果不使用任何维度的条件编译，则在编译的时候会有警告和报错信息。
+
+比如业务中需要通过 button 按钮获取用户信息，虽然可以使用条件维度编译来解决，但是增加了很多代码量：
+
+```html
+<button 
+  wx:if="{{__mpx_mode__ === 'wx' || __mpx_mode__ === 'swan'}}" 
+  open-type="getUserInfo" 
+  bindgetuserinfo="getUserInfo">获取用户信息
+</button>
+
+<button 
+  wx:elif="{{__mpx_mode__ === 'ali'}}" 
+  open-type="getAuthorize" 
+  scope="userInfo"
+  onTap="onTap">获取用户信息
+</button>
+```
+
+而用组件属性维度的编译则方便很多：
+
+``` html
+<button 
+  open-type@wx|swan="getUserInfo" 
+  bindgetuserinfo@wx|swan="getUserInfo"
+  open-type@ali="getAuthorize" 
+  scope@ali="userInfo"
+  onTap@ali="onTap">获取用户信息
+</button>
+```
+
+组件属性维度的编译也可以当做条件编译来使用，例如只想在百度小程序中使用某个组件：
+
+``` html
+<view @swan>this is a  view component</view>
 ```
 
 ### 其他注意事项

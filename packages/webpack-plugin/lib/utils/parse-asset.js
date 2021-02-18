@@ -18,7 +18,7 @@ function parseAsset (content) {
     locations: null
   }
   walk.recursive(ast, walkState, {
-    AssignmentExpression (node, state) {
+    AssignmentExpression (node, state, c) {
       if (state.locations) return // Modules are stored in exports.modules:
       // exports.modules = {};
 
@@ -29,6 +29,11 @@ function parseAsset (content) {
 
       if (left && left.object && left.object.name === 'exports' && left.property && left.property.name === 'modules' && isModulesHash(right)) {
         state.locations = getModulesLocations(right)
+      }
+
+      // module.exports = ... recursive walk right
+      if (left && left.object && left.object.name === 'module' && left.property && left.property.name === 'exports') {
+        c(right, state)
       }
     },
 
