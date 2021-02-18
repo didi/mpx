@@ -308,7 +308,10 @@ module.exports = function (content) {
       globalInjectCode += `global.currentCtorType = ${JSON.stringify(ctor.replace(/^./, (match) => {
         return match.toLowerCase()
       }))}\n`
-
+      // 转快应用时添加全局global.wx变量
+      if (ctor === 'App' && mode === 'qa') {
+        globalInjectCode += `global.wx = global.wx || global.qa\n`
+      }
       //
       // <script>
       output += '/* script */\n'

@@ -6,11 +6,12 @@ module.exports = function (cnt, options) {
   let config = {
     package: qa && qa.package || '',
     name: qa && qa.name || '',
+    icon: 'assets/images/logo.png',
     versionName: qa && qa.versionName || '',
     versionCode: qa && qa.versionCode || 1,
     minPlatformVersion: qa && qa.minPlatformVersion || 1080
   }
-  let finalConfig = JSON.stringify(Object.assign({}, appJson, config), null, 2)
+  let finalConfig = JSON.stringify(Object.assign({}, config, appJson), null, 2)
   let content = new ConcatSource(finalConfig)
   return content
 }
