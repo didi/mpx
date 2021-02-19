@@ -136,7 +136,7 @@ module.exports = function ({ print }) {
       },
       {
         test: /^(open-type|lang|session-from|send-message-title|send-message-path|send-message-img|app-parameter|show-message-card|bindgetuserinfo|bindcontact|bindgetphonenumber|binderror|bindopensetting|bindlaunchapp)$/,
-        qaPropLog
+        qa: qaPropLog
       }
     ],
     event: [
