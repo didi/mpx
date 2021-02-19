@@ -11,6 +11,8 @@ module.exports = function ({ print }) {
   const qqValueLog = print({ platform: 'qq', tag: TAG_NAME, isError: false, type: 'value' })
   const qqPropLog = print({ platform: 'qq', tag: TAG_NAME, isError: false })
   const qqEventLog = print({ platform: 'qq', tag: TAG_NAME, isError: false, type: 'event' })
+  const qaPropLog = print({ platform: 'quickapp', tag: TAG_NAME, isError: false })
+  const qaEventLog = print({ platform: 'quickapp', tag: TAG_NAME, isError: false, type: 'event' })
   return {
     test: TAG_NAME,
     props: [
@@ -28,6 +30,9 @@ module.exports = function ({ print }) {
             ttValueLogError({ name, value })
           }
           return false
+        },
+        qa () {
+          return false
         }
       },
       {
@@ -44,6 +49,25 @@ module.exports = function ({ print }) {
       {
         test: /^(resolution|frame-size)$/,
         qq: qqPropLog
+      },
+      {
+        test: /^(frame-size|device-position)$/,
+        qa (prop) {
+          const propsMap = {
+            'device-position': 'deviceposition',
+            'frame-size': 'framesize'
+          }
+          prop.name = propsMap[prop.name]
+          if (prop.name === 'framesize') {
+            const valueMap = {
+              'small': 'low',
+              'medium': 'medium',
+              'large': 'high'
+            }
+            prop.value = valueMap[prop.value]
+          }
+          return prop
+        }
       }
     ],
     event: [

@@ -7,7 +7,7 @@ const QQ_UNSUPPORTED_TAG_NAME_ARR = ['functional-page-navigator', 'official-acco
 // 头条小程序不支持的标签集合
 const TT_UNSUPPORTED_TAG_NAME_ARR = ['movable-view', 'cover-image', 'cover-view', 'movable-area', 'open-data', 'official-account', 'editor', 'functional-page-navigator', 'audio', 'live-pusher']
 // 快应用不支持的标签集合
-const QA_UNSUPPORTED_TAG_NAME_ARR = ['movable-view', 'movable-area', 'open-data', 'official-account', 'editor', 'functional-page-navigator', 'live-player', 'live-pusher', 'ad', 'camera']
+const QA_UNSUPPORTED_TAG_NAME_ARR = ['movable-view', 'movable-area', 'open-data', 'official-account', 'editor', 'functional-page-navigator', 'live-player', 'live-pusher', 'ad', 'cover-image']
 
 /**
  * @param {function(object): function} print
