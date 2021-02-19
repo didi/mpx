@@ -28,7 +28,8 @@ module.exports = function ({ print }) {
         test: /^(user-select)$/,
         ali: aliPropLog,
         tt: ttPropLog,
-        qq: qqPropLog
+        qq: qqPropLog,
+        qa: qaPropLog
       },
       {
         test: /^(selectable|space|decode|use-built-in)$/,

@@ -39,7 +39,7 @@ module.exports = function ({ print }) {
         web: webPropLog
       },
       {
-        test: /^(placeholder-style|placeholder-class|fixed|cursor-spacing|show-confirm-bar|adjust-position|hold-keyboard|auto-height)$/,
+        test: /^(fixed|cursor-spacing|show-confirm-bar|adjust-position|hold-keyboard|auto-height)$/,
         qa: qaPropLog
       }
     ],

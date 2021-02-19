@@ -9,8 +9,8 @@ module.exports = function ({ print }) {
   const ttEventLogError = print({ platform: 'bytedance', tag: TAG_NAME, isError: false, type: 'event' })
   const aliPropLog = print({ platform: 'ali', tag: TAG_NAME, isError: false })
   const aliEventLogError = print({ platform: 'ali', tag: TAG_NAME, isError: false, type: 'event' })
-  const qaPropLog = print({ platform: 'qa', tag: TAG_NAME, isError: false })
-  const qaEventLogError = print({ platform: 'qa', tag: TAG_NAME, isError: false, type: 'event' })
+  const qaPropLog = print({ platform: 'quickapp', tag: TAG_NAME, isError: false })
+  const qaEventLogError = print({ platform: 'quickapp', tag: TAG_NAME, isError: false, type: 'event' })
   return {
     test: TAG_NAME,
     web (tag, { el }) {
