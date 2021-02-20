@@ -391,7 +391,7 @@ module.exports = {
       }
     },
     wxs: {
-      tag: 'import-qjs',
+      tag: 'qjs',
       module: 'name',
       src: 'from',
       ext: '.qjs',
