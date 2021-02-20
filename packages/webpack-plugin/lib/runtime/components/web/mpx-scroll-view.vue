@@ -1,11 +1,30 @@
+<template>
+    <div class="mpx-scroll-view" ref="wrapper">
+        <div class="mpx-scroll-view-content" ref="scrollContent">
+            <div class="mpx-pull-down-wrapper" v-if="refresherEnabled" :style="_pullDownWrapperStyle">
+                <div :class="_pullDownContentClassName" v-if="refresherDefaultStyle !== 'none'">
+                    <div class="circle circle1"></div>
+                    <div class="circle circle2"></div>
+                    <div class="circle circle3"></div>
+                </div>
+            </div>
+            <div ref="innerWrapper" class="inner-wrapper">
+                <slot></slot>
+            </div>
+        </div>
+    </div>
+</template>
+
 <script>
-  import getInnerListeners, { getCustomEvent } from './getInnerListeners'
-  import { processSize } from './util'
+  import getInnerListeners, {getCustomEvent} from './getInnerListeners'
+  import {processSize} from './util'
   import BScroll from '@better-scroll/core'
+  import PullDown from '@better-scroll/pull-down'
   import ObserveDom from '@better-scroll/observe-dom'
   import throttle from 'lodash/throttle'
 
   BScroll.use(ObserveDom)
+  BScroll.use(PullDown)
 
   export default {
     name: 'mpx-scroll-view',
@@ -32,7 +51,26 @@
       updateRefresh: Boolean,
       scrollIntoView: String,
       scrollWithAnimation: Boolean,
-      enableFlex: Boolean
+      enableFlex: Boolean,
+      refresherEnabled: Boolean,
+      refresherTriggered: Boolean,
+      refresherThreshold: {
+        type: Number,
+        default: 45
+      },
+      refresherDefaultStyle: {
+        type: String,
+        default: 'black'
+      },
+      refresherBackground: {
+        type: String,
+        default: ''
+      }
+    },
+    data () {
+      return {
+        isLoading: false
+      }
     },
     computed: {
       _scrollTop () {
@@ -46,6 +84,21 @@
       },
       _upperThreshold () {
         return processSize(this.upperThreshold)
+      },
+      _pullDownWrapperStyle () {
+        return `background:${this.refresherBackground}`
+      },
+      _pullDownContentClassName () {
+        let className = 'mpx-pull-down-content'
+        if (this.refresherDefaultStyle === 'black') {
+          className += ' mpx-pull-down-content-black'
+        } else if (this.refresherDefaultStyle === 'white') {
+          className += ' mpx-pull-down-content-white'
+        }
+        if (this.isLoading) {
+          className += ' active'
+        }
+        return className
       }
     },
     mounted () {
@@ -69,6 +122,16 @@
       },
       _scrollLeft (val) {
         this.bs && this.bs.scrollTo(-val, this.bs.y, this.scrollWithAnimation ? 200 : 0)
+      },
+      refresherTriggered: {
+        handler (val) {
+          if (!val) {
+            this.$emit('refresherrestore')
+            this.isLoading = false
+            this.bs && this.bs.finishPullDown()
+            this.bs && this.bs.refresh()
+          }
+        },
       }
     },
     methods: {
@@ -80,7 +143,7 @@
       init () {
         if (this.bs) return
         this.initLayerComputed()
-        this.bs = new BScroll(this.$refs.wrapper, {
+        const BsOptions = {
           startX: -this._scrollLeft,
           startY: -this._scrollTop,
           scrollX: this.scrollX,
@@ -90,14 +153,21 @@
           observeDOM: this.observeDOM,
           stopPropagation: true,
           bindToWrapper: true
-        })
+        }
+        if (this.refresherEnabled) {
+          BsOptions.bounce = true
+          BsOptions.pullDownRefresh = {
+            threshold: this.refresherThreshold,
+            stop: 56
+          }
+        }
+        this.bs = new BScroll(this.$refs.wrapper, BsOptions)
         this.bs.scroller.hooks.on('beforeRefresh', () => {
           this.initLayerComputed()
         })
-
         this.lastX = -this._scrollLeft
         this.lastY = -this._scrollTop
-        this.bs.on('scroll', throttle(({ x, y }) => {
+        this.bs.on('scroll', throttle(({x, y}) => {
           const deltaX = x - this.lastX
           const deltaY = y - this.lastY
           this.$emit('scroll', getCustomEvent('scroll', {
@@ -129,14 +199,32 @@
         if (this.scrollIntoView) {
           this.bs.scrollToElement('#' + this.scrollIntoView)
         }
+        if (this.refresherEnabled) {
+          this.bs.scroller.actionsHandler.hooks.on('move', () => {
+            if (this.bs.y > 0 && this.bs.y < this.refresherThreshold) {
+              this.isLoading = false
+              this.$emit('refresherpulling')
+            }
+          })
+          this.bs.scroller.hooks.on('touchEnd', () => {
+            if (this.bs.y > 0) {
+              this.isLoading = true
+              if (this.bs.y < this.refresherThreshold) {
+                this.$emit('refresherabort')
+              }
+            }
+          })
+          this.bs.on('pullingDown', () => {
+            this.$emit('refresherrefresh')
+          })
+        }
       },
       initLayerComputed () {
-        const wrapper = this.$refs.wrapper
+        const wrapper = this.$refs.scrollContent
         const wrapperWidth = wrapper.offsetWidth
         const wrapperHeight = wrapper.offsetHeight
         this.$refs.innerWrapper.style.width = `${wrapperWidth}px`
         this.$refs.innerWrapper.style.height = `${wrapperHeight}px`
-
         const innerWrapper = this.$refs.innerWrapper
         const childrenArr = Array.from(innerWrapper.children)
 
@@ -176,40 +264,78 @@
         this.$refs.scrollContent.style.height = `${height}px`
       },
       refresh () {
+        this.initLayerComputed()
         if (this.bs) this.bs.refresh()
       },
       dispatchScrollTo: throttle(function (direction) {
         let eventName = 'scrolltoupper'
         if (direction === 'bottom' || direction === 'right') eventName = 'scrolltolower'
-        this.$emit(eventName, getCustomEvent(eventName, { direction }))
+        this.$emit(eventName, getCustomEvent(eventName, {direction}))
       }, 200, {
         leading: true,
         trailing: false
       })
-    },
-    render (createElement) {
-      const data = {
-        class: 'mpx-scroll-view',
-        on: getInnerListeners(this, { ignoredListeners: ['scroll', 'scrolltoupper', 'scrolltolower'] }),
-        ref: 'wrapper'
-      }
-
-      const innerWrapper = createElement('div', {
-        ref: 'innerWrapper'
-      }, this.$slots.default)
-
-      const content = createElement('div', {
-        class: 'mpx-scroll-view-content',
-        ref: 'scrollContent'
-      }, [innerWrapper])
-
-      return createElement('div', data, [content])
     }
   }
 </script>
 
 <style lang="stylus">
-  .mpx-scroll-view
-    overflow hidden
-    position relative
+    .mpx-scroll-view
+        overflow hidden
+        position relative
+        .mpx-pull-down-wrapper
+            position: absolute
+            width: 100%
+            height: 250px
+            box-sizing: border-box
+            transform: translateY(-100%) translateZ(0)
+            .mpx-pull-down-content
+                position: absolute
+                bottom: 20px
+                left: 50%
+                transform: translateX(-50%)
+            .mpx-pull-down-content-black
+                .circle
+                    display: inline-block;
+                    margin-right: 5px
+                    width: 8px;
+                    height: 8px;
+                    border-radius: 50%;
+                    background: rgba(0,0,0,.3);
+                &.active
+                    .circle1
+                        animation: changeStyle 1s 0s infinite
+                    .circle2
+                        animation: changeStyle 1s 0.3s infinite
+                    .circle3
+                        animation: changeStyle 1s 0.6s infinite
+                @keyframes changeStyle
+                    0%
+                        background: rgba(0,0,0,.8);
+                    100%
+                        background: rgba(0,0,0,.3)
+
+            .mpx-pull-down-content-white
+                .circle
+                    display: inline-block;
+                    margin-right: 5px
+                    width: 8px;
+                    height: 8px;
+                    border-radius: 50%;
+                    background: rgba(255,255,255,.3)
+                &.active
+                    .circle1
+                        animation: changeWhiteStyle 1s 0s infinite;
+                    .circle2
+                        animation: changeWhiteStyle 1s 0.3s infinite;
+                    .circle3
+                        animation: changeWhiteStyle 1s 0.6s infinite;
+                @keyframes changeWhiteStyle{
+                    0% {
+                        background: rgba(255,255,255,.7)
+                    }
+                    100% {
+                        background: rgba(255,255,255,.3)
+                    }
+                }
 </style>
