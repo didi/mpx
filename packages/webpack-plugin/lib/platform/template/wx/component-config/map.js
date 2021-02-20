@@ -8,6 +8,8 @@ module.exports = function ({ print }) {
   const baiduEventLogError = print({ platform: 'baidu', tag: TAG_NAME, isError: true, type: 'event' })
   const ttEventLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false, type: 'event' })
   const ttPropLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false })
+  const qaPropLog = print({ platform: 'quickapp', tag: TAG_NAME, isError: false })
+  const qaEventLogError = print({ platform: 'quickapp', tag: TAG_NAME, isError: true, type: 'event' })
   return {
     // 匹配标签名，可传递正则
     test: TAG_NAME,
@@ -33,6 +35,10 @@ module.exports = function ({ print }) {
       {
         test: /^(min-scale|max-scale|polyline|controls|polygons|subkey|layer-style|rotate|skew|enable-3D|show-compass|show-scale|enable-overlooking|enable-zoom|enable-scroll|enable-rotate|enable-satellite|enable-traffic|enable-poi|enable-building|setting)$/,
         tt: ttPropLog
+      },
+      {
+        test: /^(min-scale|max-scale|covers|polyline|include-points|show-location|subkey|layer-style|skew|enable-3D|show-compass|show-scale|enable-overlooking|enable-zoom|enable-scroll|enable-rotate|enable-satellite|enable-traffic|enable-poi|enable-building|setting)$/,
+        qa: qaPropLog
       }
     ],
     // 组件事件中的差异部分
@@ -63,6 +69,10 @@ module.exports = function ({ print }) {
       {
         test: /^(labeltap|controltap|updated|regionchange|poitap|anchorpointtap)$/,
         tt: ttEventLog
+      },
+      {
+        test: /^(labeltap|anchorpointtap)$/,
+        qa: qaEventLogError
       }
     ]
   }
