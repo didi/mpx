@@ -16,8 +16,8 @@
 </template>
 
 <script>
-  import getInnerListeners, {getCustomEvent} from './getInnerListeners'
-  import {processSize} from './util'
+  import getInnerListeners, { getCustomEvent } from './getInnerListeners'
+  import { processSize } from './util'
   import BScroll from '@better-scroll/core'
   import PullDown from '@better-scroll/pull-down'
   import ObserveDom from '@better-scroll/observe-dom'
@@ -167,7 +167,7 @@
         })
         this.lastX = -this._scrollLeft
         this.lastY = -this._scrollTop
-        this.bs.on('scroll', throttle(({x, y}) => {
+        this.bs.on('scroll', throttle(({ x, y }) => {
           const deltaX = x - this.lastX
           const deltaY = y - this.lastY
           this.$emit('scroll', getCustomEvent('scroll', {
@@ -220,7 +220,7 @@
         }
       },
       initLayerComputed () {
-        const wrapper = this.$refs.scrollContent
+        const wrapper = this.$refs.wrapper
         const wrapperWidth = wrapper.offsetWidth
         const wrapperHeight = wrapper.offsetHeight
         this.$refs.innerWrapper.style.width = `${wrapperWidth}px`
@@ -264,13 +264,12 @@
         this.$refs.scrollContent.style.height = `${height}px`
       },
       refresh () {
-        this.initLayerComputed()
         if (this.bs) this.bs.refresh()
       },
       dispatchScrollTo: throttle(function (direction) {
         let eventName = 'scrolltoupper'
         if (direction === 'bottom' || direction === 'right') eventName = 'scrolltolower'
-        this.$emit(eventName, getCustomEvent(eventName, {direction}))
+        this.$emit(eventName, getCustomEvent(eventName, { direction }))
       }, 200, {
         leading: true,
         trailing: false
