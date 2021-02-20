@@ -201,13 +201,13 @@
         }
         if (this.refresherEnabled) {
           this.bs.scroller.actionsHandler.hooks.on('move', () => {
-            if (this.bs.y > 0 && this.bs.y < this.refresherThreshold) {
+            if (this.bs.y > 0 && this.bs.y < this.refresherThreshold && this.bs.movingDirectionY !== 1) {
               this.isLoading = false
               this.$emit('refresherpulling')
             }
           })
           this.bs.scroller.hooks.on('touchEnd', () => {
-            if (this.bs.y > 0) {
+            if (this.bs.y > 0 && this.bs.movingDirectionY !== 1) {
               this.isLoading = true
               if (this.bs.y < this.refresherThreshold) {
                 this.$emit('refresherabort')
@@ -279,62 +279,59 @@
 </script>
 
 <style lang="stylus">
-    .mpx-scroll-view
-        overflow hidden
-        position relative
-        .mpx-pull-down-wrapper
-            position: absolute
-            width: 100%
-            height: 250px
-            box-sizing: border-box
-            transform: translateY(-100%) translateZ(0)
-            .mpx-pull-down-content
-                position: absolute
-                bottom: 20px
-                left: 50%
-                transform: translateX(-50%)
-            .mpx-pull-down-content-black
-                .circle
-                    display: inline-block;
-                    margin-right: 5px
-                    width: 8px;
-                    height: 8px;
-                    border-radius: 50%;
-                    background: rgba(0,0,0,.3);
-                &.active
-                    .circle1
-                        animation: changeStyle 1s 0s infinite
-                    .circle2
-                        animation: changeStyle 1s 0.3s infinite
-                    .circle3
-                        animation: changeStyle 1s 0.6s infinite
-                @keyframes changeStyle
-                    0%
-                        background: rgba(0,0,0,.8);
-                    100%
-                        background: rgba(0,0,0,.3)
+.mpx-scroll-view
+  overflow hidden
+  position relative
+  .mpx-pull-down-wrapper
+    position: absolute
+    width: 100%
+    height: 250px
+    box-sizing: border-box
+    transform: translateY(-100%) translateZ(0)
+    .mpx-pull-down-content
+      position: absolute
+      bottom: 20px
+      left: 50%
+      transform: translateX(-50%)
+    .mpx-pull-down-content-black
+      .circle
+        display: inline-block;
+        margin-right: 5px
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: rgba(0,0,0,.3);
+      &.active
+        .circle1
+          animation: blackLoading 1s 0s infinite
+        .circle2
+          animation: blackLoading 1s 0.3s infinite
+        .circle3
+          animation: blackLoading 1s 0.6s infinite
+        @keyframes blackLoading
+          0%
+            background: rgba(0,0,0,.8);
+          100%
+            background: rgba(0,0,0,.3)
 
-            .mpx-pull-down-content-white
-                .circle
-                    display: inline-block;
-                    margin-right: 5px
-                    width: 8px;
-                    height: 8px;
-                    border-radius: 50%;
-                    background: rgba(255,255,255,.3)
-                &.active
-                    .circle1
-                        animation: changeWhiteStyle 1s 0s infinite;
-                    .circle2
-                        animation: changeWhiteStyle 1s 0.3s infinite;
-                    .circle3
-                        animation: changeWhiteStyle 1s 0.6s infinite;
-                @keyframes changeWhiteStyle{
-                    0% {
-                        background: rgba(255,255,255,.7)
-                    }
-                    100% {
-                        background: rgba(255,255,255,.3)
-                    }
-                }
+    .mpx-pull-down-content-white
+      .circle
+        display: inline-block;
+        margin-right: 5px
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: rgba(255,255,255,.3)
+      &.active
+        .circle1
+          animation: whiteLoading 1s 0s infinite;
+        .circle2
+            animation: whiteLoading 1s 0.3s infinite;
+          .circle3
+            animation: whiteLoading 1s 0.6s infinite;
+        @keyframes whiteLoading
+          0% 
+            background: rgba(255,255,255,.7)
+          100% 
+            background: rgba(255,255,255,.3)
 </style>
