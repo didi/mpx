@@ -201,13 +201,13 @@
         }
         if (this.refresherEnabled) {
           this.bs.scroller.actionsHandler.hooks.on('move', () => {
-            if (this.bs.y > 0 && this.bs.y < this.refresherThreshold && this.bs.movingDirectionY !== 1) {
+            if (this.bs.y > 0 && this.bs.y < this.refresherThreshold && this.bs.movingDirectionY === -1) {
               this.isLoading = false
               this.$emit('refresherpulling')
             }
           })
           this.bs.scroller.hooks.on('touchEnd', () => {
-            if (this.bs.y > 0 && this.bs.movingDirectionY !== 1) {
+            if (this.bs.y > 0 && this.bs.movingDirectionY === -1) {
               this.isLoading = true
               if (this.bs.y < this.refresherThreshold) {
                 this.$emit('refresherabort')
