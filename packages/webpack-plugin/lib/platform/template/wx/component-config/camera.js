@@ -31,9 +31,7 @@ module.exports = function ({ print }) {
           }
           return false
         },
-        qa () {
-          return false
-        }
+        qa: qaPropLog
       },
       {
         test: 'flash',
@@ -74,7 +72,8 @@ module.exports = function ({ print }) {
       {
         test: /^(scancode)$/,
         swan: baiduEventLog,
-        tt: ttEventLog
+        tt: ttEventLog,
+        qa: qaEventLog
       },
       {
         test: /^(initdone)$/,
