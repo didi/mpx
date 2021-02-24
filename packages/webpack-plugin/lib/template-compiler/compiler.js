@@ -2083,7 +2083,7 @@ function closeElement (el, meta) {
   if (mode === 'web') {
     // 处理代码维度条件编译移除死分支
     postProcessIf(el)
-    return
+    // return
   }
   const pass = isNative || postProcessTemplate(el) || processingTemplate
   postProcessWxs(el, meta)
@@ -2175,7 +2175,7 @@ function stringifyAttr (val) {
   }
 }
 
-function serialize (root) {
+function serialize (root, wxsModuleMap) {
   function walk (node) {
     let result = ''
     if (node) {
@@ -2185,6 +2185,10 @@ function serialize (root) {
         } else {
           result += node.text
         }
+      }
+      if (node.tag === 'wxs' && mode === 'web') {
+        wxsModuleMap.push(node.attrsMap)
+        return result
       }
       if (node.type === 1) {
         if (node.tag !== 'temp-node') {

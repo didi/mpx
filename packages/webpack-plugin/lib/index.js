@@ -725,7 +725,7 @@ class MpxWebpackPlugin {
             parser.hooks.call.for('App').tap('MpxWebpackPlugin', (expr) => {
               transHandler(expr.callee)
             })
-            if (mpx.mode === 'ali' || mpx.mode === 'web') {
+            if (mpx.mode === 'ali') {
               // 支付宝和web不支持Behaviors
               parser.hooks.call.for('Behavior').tap('MpxWebpackPlugin', (expr) => {
                 transHandler(expr.callee)

@@ -252,7 +252,8 @@ module.exports = function (content) {
               genericsInfo: templateRes.genericsInfo,
               localComponentsMap: jsonRes.localComponentsMap,
               localPagesMap: jsonRes.localPagesMap,
-              forceDisableBuiltInLoader: mpx.forceDisableBuiltInLoader
+              forceDisableBuiltInLoader: mpx.forceDisableBuiltInLoader,
+              wxsModuleMap: templateRes.wxsModuleMap
             }, callback)
           }
         ], (err, scriptRes) => {

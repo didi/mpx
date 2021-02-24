@@ -1,8 +1,10 @@
 const templateCompiler = require('../template-compiler/compiler')
 const genComponentTag = require('../utils/gen-component-tag')
 const addQuery = require('../utils/add-query')
+const loaderUtils = require('loader-utils')
 const path = require('path')
 const parseRequest = require('../utils/parse-request')
+const getMainCompilation = require('../utils/get-main-compilation')
 
 module.exports = function (template, options, callback) {
   const mode = options.mode
@@ -12,8 +14,13 @@ module.exports = function (template, options, callback) {
   const ctorType = options.ctorType
   const resourcePath = parseRequest(loaderContext.resource).resourcePath
   const builtInComponentsMap = {}
+  const compilation = loaderContext._compilation
+  const mainCompilation = getMainCompilation(compilation)
+  const mpx = mainCompilation.__mpx__
+  const wxsContentMap = mpx.wxsContentMap
   let genericsInfo
   let output = '/* template */\n'
+  let wxsModuleMap = []
 
   if (ctorType === 'app') {
     template = {
@@ -70,26 +77,53 @@ module.exports = function (template, options, callback) {
           // web模式下实现抽象组件
           componentGenerics: options.componentGenerics
         })
-        if (parsed.meta.builtInComponentsMap) {
-          Object.keys(parsed.meta.builtInComponentsMap).forEach((name) => {
+        const meta = parsed.meta
+
+        if (meta.wxsContentMap) {
+          for (let module in meta.wxsContentMap) {
+            wxsContentMap[`${resourcePath}~${module}`] = meta.wxsContentMap[module]
+          }
+        }
+
+        if (meta.builtInComponentsMap) {
+          Object.keys(meta.builtInComponentsMap).forEach((name) => {
             builtInComponentsMap[name] = {
-              resource: addQuery(parsed.meta.builtInComponentsMap[name], { component: true })
+              resource: addQuery(meta.builtInComponentsMap[name], { component: true })
             }
           })
         }
-        if (parsed.meta.genericsInfo) {
-          genericsInfo = parsed.meta.genericsInfo
+        if (meta.genericsInfo) {
+          genericsInfo = meta.genericsInfo
         }
 
-        return templateCompiler.serialize(parsed.root)
+        for (let module in meta.wxsModuleMap) {
+          const src = loaderUtils.urlToRequest(meta.wxsModuleMap[module], options.projectRoot)
+          const expression = `require(${loaderUtils.stringifyRequest(this, src)})`
+          const _module = loaderContext._module
+          const deps = []
+          _module.parser.parse(expression, {
+            current: {
+              addDependency: dep => {
+                dep.userRequest = module
+                deps.push(dep)
+              }
+            },
+            module: _module
+          })
+          _module.addVariable(module, expression, deps)
+        }
+
+        return templateCompiler.serialize(parsed.root, wxsModuleMap)
       }
     })
     output += '\n\n'
   }
 
+
   callback(null, {
     output,
     builtInComponentsMap,
-    genericsInfo
+    genericsInfo,
+    wxsModuleMap
   })
 }

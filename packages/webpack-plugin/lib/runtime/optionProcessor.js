@@ -11,6 +11,7 @@ export default function processOption (
   tabBarMap,
   componentGenerics,
   genericsInfo,
+  mixin,
   Vue,
   VueRouter,
   i18n
@@ -259,6 +260,12 @@ registered in parent context!`)
     if (ctorType === 'page') {
       option.__mpxPageConfig = Object.assign({}, global.__mpxPageConfig, pageConfig)
     }
+  }
+
+  if (option.mixins) {
+    option.mixins.push(mixin)
+  } else {
+    option.mixins = [mixin]
   }
 
   if (mpxCid) {

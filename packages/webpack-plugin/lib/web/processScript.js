@@ -92,6 +92,7 @@ module.exports = function (script, options, callback) {
           'createComponent({})\n'
     }
   }
+  script.wxsModuleMap = options.wxsModuleMap
   output += genComponentTag(script, {
     attrs (script) {
       const attrs = Object.assign({}, script.attrs)
@@ -102,7 +103,20 @@ module.exports = function (script, options, callback) {
       return attrs
     },
     content (script) {
-      let content = `\n  import processOption, { getComponent } from ${stringifyRequest(optionProcessorPath)}\n`
+      const wxsModuleMap = script.wxsModuleMap || []
+      let wxsRequest = ''
+      let mixin = `{
+        created () { \n
+      `
+      wxsModuleMap.forEach((item) => {
+        const src = loaderUtils.urlToRequest(item.src)
+        const expression = `require(${loaderUtils.stringifyRequest(this, src)})`
+        wxsRequest += `const ${item.module} = ${expression}\n`
+        mixin += `  this.${item.module} = ${item.module}\n`
+      })
+      mixin += `  }\n
+          }`
+      let content = `\n  import processOption, { getComponent } from ${stringifyRequest(optionProcessorPath)}\n${wxsRequest}`
       // add import
       if (ctorType === 'app') {
         content += `  import '@mpxjs/webpack-plugin/lib/runtime/base.styl'
@@ -240,7 +254,10 @@ module.exports = function (script, options, callback) {
     ${JSON.stringify(tabBarMap)},
     ${JSON.stringify(componentGenerics)},
     ${JSON.stringify(genericsInfo)}`
-
+      if (mixin) {
+        content += `,
+    ${mixin}`
+      }
       if (ctorType === 'app') {
         content += `,
     Vue,
