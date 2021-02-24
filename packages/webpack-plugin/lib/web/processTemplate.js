@@ -119,7 +119,6 @@ module.exports = function (template, options, callback) {
     output += '\n\n'
   }
 
-
   callback(null, {
     output,
     builtInComponentsMap,
