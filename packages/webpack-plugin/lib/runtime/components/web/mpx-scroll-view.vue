@@ -273,13 +273,13 @@
           class: this._pullDownContentClassName,
         }, [
           createElement('div', {
-            class: 'circle circle1'
+            class: 'circle circle-a'
           }),
           createElement('div', {
-            class: 'circle circle2'
+            class: 'circle circle-b'
           }),
           createElement('div', {
-            class: 'circle circle3'
+            class: 'circle circle-c'
           }),
         ]
       ) : null
@@ -323,11 +323,11 @@
         border-radius: 50%;
         background: rgba(0,0,0,.3);
       &.active
-        .circle1
+        .circle-a
           animation: blackLoading 1s 0s infinite
-        .circle2
+        .circle-b
           animation: blackLoading 1s 0.3s infinite
-        .circle3
+        .circle-c
           animation: blackLoading 1s 0.6s infinite
         @keyframes blackLoading
           0%
@@ -344,12 +344,12 @@
         border-radius: 50%;
         background: rgba(255,255,255,.3)
       &.active
-        .circle1
+        .circle-a
           animation: whiteLoading 1s 0s infinite;
-        .circle2
-            animation: whiteLoading 1s 0.3s infinite;
-          .circle3
-            animation: whiteLoading 1s 0.6s infinite;
+        .circle-b
+          animation: whiteLoading 1s 0.3s infinite;
+        .circle-c
+          animation: whiteLoading 1s 0.6s infinite;
         @keyframes whiteLoading
           0%
             background: rgba(255,255,255,.7)
