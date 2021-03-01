@@ -1,20 +1,3 @@
-<template>
-    <div class="mpx-scroll-view" ref="wrapper">
-        <div class="mpx-scroll-view-content" ref="scrollContent">
-            <div class="mpx-pull-down-wrapper" v-if="refresherEnabled" :style="_pullDownWrapperStyle">
-                <div :class="_pullDownContentClassName" v-if="refresherDefaultStyle !== 'none'">
-                    <div class="circle circle1"></div>
-                    <div class="circle circle2"></div>
-                    <div class="circle circle3"></div>
-                </div>
-            </div>
-            <div ref="innerWrapper" class="inner-wrapper">
-                <slot></slot>
-            </div>
-        </div>
-    </div>
-</template>
-
 <script>
   import getInnerListeners, { getCustomEvent } from './getInnerListeners'
   import { processSize } from './util'
@@ -274,6 +257,44 @@
         leading: true,
         trailing: false
       })
+    },
+    render (createElement) {
+      const data = {
+        class: 'mpx-scroll-view',
+        on: getInnerListeners(this, { ignoredListeners: ['scroll', 'scrolltoupper', 'scrolltolower'] }),
+        ref: 'wrapper'
+      }
+
+      const innerWrapper = createElement('div', {
+        ref: 'innerWrapper'
+      }, this.$slots.default)
+
+      const pullDownContent = this.refresherDefaultStyle !== 'none' ? createElement('div', {
+          class: this._pullDownContentClassName,
+        }, [
+          createElement('div', {
+            class: 'circle circle1'
+          }),
+          createElement('div', {
+            class: 'circle circle2'
+          }),
+          createElement('div', {
+            class: 'circle circle3'
+          }),
+        ]
+      ) : null
+
+      const pullDownWrapper = this.refresherEnabled ? createElement('div', {
+        class: 'mpx-pull-down-wrapper',
+        style: this._pullDownWrapperStyle
+      }, [pullDownContent]) : null
+
+      const content = createElement('div', {
+        class: 'mpx-scroll-view-content',
+        ref: 'scrollContent'
+      }, [pullDownWrapper, innerWrapper])
+
+      return createElement('div', data, [content])
     }
   }
 </script>
