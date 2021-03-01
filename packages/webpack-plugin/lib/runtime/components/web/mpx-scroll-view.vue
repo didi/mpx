@@ -201,13 +201,13 @@
         }
         if (this.refresherEnabled) {
           this.bs.scroller.actionsHandler.hooks.on('move', () => {
-            if (this.bs.y > 0 && this.bs.y < this.refresherThreshold && this.bs.movingDirectionY === -1) {
+            if (this.bs.y > 0 && this.bs.y < this.refresherThreshold && this.bs.movingDirectionY !== 1) {
               this.isLoading = false
               this.$emit('refresherpulling')
             }
           })
           this.bs.scroller.hooks.on('touchEnd', () => {
-            if (this.bs.y > 0 && this.bs.movingDirectionY === -1) {
+            if (this.bs.y > 0 && this.bs.movingDirectionY !== 1) {
               this.isLoading = true
               if (this.bs.y < this.refresherThreshold) {
                 this.$emit('refresherabort')
@@ -330,8 +330,8 @@
           .circle3
             animation: whiteLoading 1s 0.6s infinite;
         @keyframes whiteLoading
-          0% 
+          0%
             background: rgba(255,255,255,.7)
-          100% 
+          100%
             background: rgba(255,255,255,.3)
 </style>
