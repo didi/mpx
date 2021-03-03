@@ -88,9 +88,7 @@
           scrollY: this.scrollY,
           probeType: 3,
           bounce: false,
-          observeDOM: this.observeDOM,
-          stopPropagation: true,
-          bindToWrapper: true,
+          observeDOM: this.observeDOM
         }
         const bsOptions = Object.assign({}, originBsOptions, this.scrollOptions)
         this.bs = new BScroll(this.$refs.wrapper, bsOptions)
