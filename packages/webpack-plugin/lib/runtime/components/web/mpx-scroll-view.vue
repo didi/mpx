@@ -29,7 +29,6 @@
         default: 0
       },
       scrollOptions: Object,
-      observeDOM: Boolean,
       updateRefresh: Boolean,
       scrollIntoView: String,
       scrollWithAnimation: Boolean,
@@ -87,8 +86,7 @@
           scrollX: this.scrollX,
           scrollY: this.scrollY,
           probeType: 3,
-          bounce: false,
-          observeDOM: this.observeDOM
+          bounce: false
         }
         const bsOptions = Object.assign({}, originBsOptions, this.scrollOptions)
         this.bs = new BScroll(this.$refs.wrapper, bsOptions)
