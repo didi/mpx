@@ -187,6 +187,20 @@ module.exports = function (raw = '{}') {
     fixUsingComponent(json.usingComponents, mode, emitWarning)
   }
 
+  // 快应用补全json配置
+  if (mode === 'qa' && isApp) {
+    const qa = mpx.quickapp || {}
+    const config = {
+      package: qa && qa.package || '',
+      name: qa && qa.name || '',
+      icon: 'assets/images/logo.png',
+      versionName: qa && qa.versionName || '',
+      versionCode: qa && qa.versionCode || 1,
+      minPlatformVersion: qa && qa.minPlatformVersion || 1080
+    }
+    json = Object.assign({}, json, config)
+  }
+
   const rulesRunnerOptions = {
     mode,
     mpx,
