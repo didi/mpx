@@ -2,7 +2,7 @@ const TAG_NAME = 'text'
 
 module.exports = function ({ print }) {
   const baiduPropLog = print({ platform: 'baidu', tag: TAG_NAME, isError: false })
-  const qaPropLog = print({ platform: 'quickapp', tag: TAG_NAME, isError: false })
+  const qaPropLog = print({ platform: 'qa', tag: TAG_NAME, isError: false })
   const aliPropLog = print({ platform: 'ali', tag: TAG_NAME, isError: false })
   const ttPropLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false })
   const qqPropLog = print({ platform: 'qq', tag: TAG_NAME, isError: false })

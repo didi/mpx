@@ -10,7 +10,7 @@ module.exports = function ({ print }) {
   const webPropLog = print({ platform: 'web', tag: TAG_NAME, isError: false })
   const webEventLog = print({ platform: 'web', tag: TAG_NAME, isError: false, type: 'event' })
   const webValueLog = print({ platform: 'web', tag: TAG_NAME, isError: false, type: 'value' })
-  const qaPropLog = print({ platform: 'quickapp', tag: TAG_NAME, isError: false })
+  const qaPropLog = print({ platform: 'qa', tag: TAG_NAME, isError: false })
 
   return {
     test: TAG_NAME,

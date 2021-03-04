@@ -8,8 +8,8 @@ module.exports = function ({ print }) {
   const baiduEventLogError = print({ platform: 'baidu', tag: TAG_NAME, isError: true, type: 'event' })
   const ttEventLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false, type: 'event' })
   const ttPropLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false })
-  const qaPropLog = print({ platform: 'quickapp', tag: TAG_NAME, isError: false })
-  const qaEventLogError = print({ platform: 'quickapp', tag: TAG_NAME, isError: true, type: 'event' })
+  const qaPropLog = print({ platform: 'qa', tag: TAG_NAME, isError: false })
+  const qaEventLogError = print({ platform: 'qa', tag: TAG_NAME, isError: true, type: 'event' })
   return {
     // 匹配标签名，可传递正则
     test: TAG_NAME,

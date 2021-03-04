@@ -11,8 +11,8 @@ module.exports = function ({ print }) {
   const qqValueLog = print({ platform: 'qq', tag: TAG_NAME, isError: false, type: 'value' })
   const qqPropLog = print({ platform: 'qq', tag: TAG_NAME, isError: false })
   const qqEventLog = print({ platform: 'qq', tag: TAG_NAME, isError: false, type: 'event' })
-  const qaPropLog = print({ platform: 'quickapp', tag: TAG_NAME, isError: false })
-  const qaEventLog = print({ platform: 'quickapp', tag: TAG_NAME, isError: false, type: 'event' })
+  const qaPropLog = print({ platform: 'qa', tag: TAG_NAME, isError: false })
+  const qaEventLog = print({ platform: 'qa', tag: TAG_NAME, isError: false, type: 'event' })
   return {
     test: TAG_NAME,
     props: [
