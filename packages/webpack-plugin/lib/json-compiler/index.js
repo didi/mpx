@@ -191,12 +191,12 @@ module.exports = function (raw = '{}') {
   if (mode === 'qa' && isApp) {
     const qa = mpx.quickapp || {}
     const config = {
-      package: qa && qa.package || '',
-      name: qa && qa.name || '',
+      package: (qa && qa.package) || '',
+      name: (qa && qa.name) || '',
       icon: 'assets/images/logo.png',
-      versionName: qa && qa.versionName || '',
-      versionCode: qa && qa.versionCode || 1,
-      minPlatformVersion: qa && qa.minPlatformVersion || 1080
+      versionName: (qa && qa.versionName) || '',
+      versionCode: (qa && qa.versionCode) || 1,
+      minPlatformVersion: (qa && qa.minPlatformVersion) || 1080
     }
     json = Object.assign({}, json, config)
   }
