@@ -250,10 +250,10 @@ module.exports = function (content) {
               tabBarStr: jsonRes.tabBarStr,
               builtInComponentsMap: templateRes.builtInComponentsMap,
               genericsInfo: templateRes.genericsInfo,
+              wxsModuleMap: templateRes.wxsModuleMap,
               localComponentsMap: jsonRes.localComponentsMap,
               localPagesMap: jsonRes.localPagesMap,
-              forceDisableBuiltInLoader: mpx.forceDisableBuiltInLoader,
-              wxsModuleMap: templateRes.wxsModuleMap
+              forceDisableBuiltInLoader: mpx.forceDisableBuiltInLoader
             }, callback)
           }
         ], (err, scriptRes) => {

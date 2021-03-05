@@ -92,7 +92,6 @@ module.exports = function (script, options, callback) {
           'createComponent({})\n'
     }
   }
-  script.wxsModuleMap = options.wxsModuleMap
   output += genComponentTag(script, {
     attrs (script) {
       const attrs = Object.assign({}, script.attrs)
@@ -103,17 +102,17 @@ module.exports = function (script, options, callback) {
       return attrs
     },
     content (script) {
-      const wxsModuleMap = script.wxsModuleMap || []
+      const wxsModuleMap = options.wxsModuleMap || []
       let wxsRequest = ''
       let mixin = `{
         created () { \n
       `
-      wxsModuleMap.forEach((item) => {
-        const src = loaderUtils.urlToRequest(item.src)
+      for (item in wxsModuleMap) {
+        const src = loaderUtils.urlToRequest(wxsModuleMap[item])
         const expression = `require(${loaderUtils.stringifyRequest(this, src)})`
-        wxsRequest += `const ${item.module} = ${expression}\n`
-        mixin += `  this.${item.module} = ${item.module}\n`
-      })
+        wxsRequest += `const ${item} = ${expression}\n`
+        mixin += `  this.${item} = ${item}\n`
+      }
       mixin += `  }\n
           }`
       let content = `\n  import processOption, { getComponent } from ${stringifyRequest(optionProcessorPath)}\n${wxsRequest}`
