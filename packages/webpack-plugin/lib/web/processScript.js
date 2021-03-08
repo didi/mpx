@@ -107,7 +107,7 @@ module.exports = function (script, options, callback) {
       let mixin = `{
         created () { \n
       `
-      for (item in wxsModuleMap) {
+      for (let item in wxsModuleMap) {
         const src = loaderUtils.urlToRequest(wxsModuleMap[item])
         const expression = `require(${loaderUtils.stringifyRequest(this, src)})`
         wxsRequest += `const ${item} = ${expression}\n`
