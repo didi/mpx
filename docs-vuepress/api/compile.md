@@ -345,6 +345,14 @@ new MpxWebpackPlugin({
 })
 ```
 
+使用的时候：
+
+```js
+const env = __env__;
+```
+
+> 注意：这里定义之后使用的时候是按照全局变量来使用，而非按照`process.env.KEY`这样的形式
+
 ### attributes
 
 - **类型**：`[key: string]`
