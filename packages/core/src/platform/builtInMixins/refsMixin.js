@@ -106,8 +106,15 @@ export default function getRefsMixin () {
       __getRefs () {
         if (this.__getRefsData) {
           const refs = this.__getRefsData()
+          const self = this
           refs.forEach(ref => {
-            this.$refs[ref.key] = this.__getRefNode(ref)
+            Object.defineProperty(this.$refs, ref.key, {
+              enumerable: true,
+              configurable: true,
+              get () {
+                return self.__getRefNode(ref)
+              }
+            })
           })
         }
       },
