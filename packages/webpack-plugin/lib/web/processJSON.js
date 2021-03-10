@@ -213,8 +213,8 @@ module.exports = function (json, options, rawCallback) {
             // 判断 key 存在重复情况直接报错
             for (let key in pagesMap) {
               if (pagesMap[key] === pageName && key !== resourcePath) {
-                emitError(`Current page ${resourcePath} is registered with a conflict page path ${pageName}, The key fields ${aliasPath} in the object need to be unique`)
-                break
+                emitError(`Current page [${resourcePath}] registers a conflict page path [${pageName}] with existed page [${key}], which is not allowed, please rename it!`)
+                return callback()
               }
             }
           } else {
@@ -222,7 +222,7 @@ module.exports = function (json, options, rawCallback) {
             if (/^\./.test(relative)) {
               // 如果当前page不存在于context中，对其进行重命名
               pageName = '/' + toPosix(path.join(tarRoot, getPageName(resourcePath, ext)))
-              emitWarning(`Current page ${resourcePath} is not in current pages directory ${context}, the page path will be replaced with ${pageName}, use ?resolve to get the page path and navigate to it!`)
+              emitWarning(`Current page [${resourcePath}] is not in current pages directory [${context}], the page path will be replaced with [${pageName}], use ?resolve to get the page path and navigate to it!`)
             } else {
               pageName = '/' + toPosix(path.join(tarRoot, /^(.*?)(\.[^.]*)?$/.exec(relative)[1]))
               // 如果当前page与已有page存在命名冲突，也进行重命名
@@ -231,11 +231,15 @@ module.exports = function (json, options, rawCallback) {
                 if (pagesMap[key] === pageName && key !== resourcePath && pagesEntryMap[key] === loaderContext.resourcePath) {
                   const pageNameRaw = pageName
                   pageName = '/' + toPosix(path.join(tarRoot, getPageName(resourcePath, ext)))
-                  emitWarning(`Current page ${resourcePath} is registered with a conflict page path ${pageNameRaw} which is already existed in system, the page path will be replaced with ${pageName}, use ?resolve to get the page path and navigate to it!`)
+                  emitWarning(`Current page [${resourcePath}] is registered with a conflict page path [${pageNameRaw}] which is already existed in system, the page path will be replaced with [${pageName}], use ?resolve to get the page path and navigate to it!`)
                   break
                 }
               }
             }
+          }
+          if (pagesMap[resourcePath]) {
+            emitWarning(`Current page [${resourcePath}] which is imported from [${loaderContext.resourcePath}] has been registered in pagesMap already, it will be ignored, please check it and remove the redundant page declaration!`)
+            return callback()
           }
           buildInfo.pagesMap = buildInfo.pagesMap || {}
           buildInfo.pagesMap[resourcePath] = pagesMap[resourcePath] = pageName
