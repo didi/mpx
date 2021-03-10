@@ -80,7 +80,18 @@ module.exports = function (template, options, callback) {
         if (parsed.meta.genericsInfo) {
           genericsInfo = parsed.meta.genericsInfo
         }
-
+        // 输出H5有多个root element时, 使用div标签包裹
+        if (parsed.root.tag === 'temp-node') {
+          const childLen = parsed.root.children && parsed.root.children.reduce((total, item) => {
+            if (item.type === 1) {
+              total += 1
+            }
+            return total
+          }, 0)
+          if (childLen >= 2) {
+            parsed.root.tag = 'div'
+          }
+        }
         return templateCompiler.serialize(parsed.root)
       }
     })
