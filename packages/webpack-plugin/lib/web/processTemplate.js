@@ -85,6 +85,9 @@ module.exports = function (template, options, callback) {
           const childLen = parsed.root.children && parsed.root.children.reduce((total, item) => {
             if (item.type === 1) {
               total += 1
+              if (item.tag === 'template') {
+                item.tag = 'div'
+              }
             }
             return total
           }, 0)
