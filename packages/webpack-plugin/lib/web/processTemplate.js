@@ -4,6 +4,22 @@ const addQuery = require('../utils/add-query')
 const path = require('path')
 const parseRequest = require('../utils/parse-request')
 
+function calculateRootEleChild (arr, type) {
+  if (!arr) {
+    return 0
+  }
+  return arr.reduce((total, item) => {
+    if (item.type === type) {
+      if (item.tag === 'template') {
+        total += calculateRootEleChild(item.children, type)
+      } else {
+        total += 1
+      }
+    }
+    return total
+  }, 0)
+}
+
 module.exports = function (template, options, callback) {
   const mode = options.mode
   const srcMode = options.srcMode
@@ -82,15 +98,7 @@ module.exports = function (template, options, callback) {
         }
         // 输出H5有多个root element时, 使用div标签包裹
         if (parsed.root.tag === 'temp-node') {
-          const childLen = parsed.root.children && parsed.root.children.reduce((total, item) => {
-            if (item.type === 1) {
-              total += 1
-              if (item.tag === 'template') {
-                item.tag = 'div'
-              }
-            }
-            return total
-          }, 0)
+          const childLen = calculateRootEleChild(parsed.root.children, 1)
           if (childLen >= 2) {
             parsed.root.tag = 'div'
           }
