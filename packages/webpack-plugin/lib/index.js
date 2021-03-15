@@ -1040,7 +1040,7 @@ try {
       function walkEntry (entryModule, sideEffect) {
         const modulesSet = new Set()
 
-        function walkDependencies (module, dependencies = []) {
+        function walkDependencies (dependencies = []) {
           dependencies.forEach((dep) => {
             // // We skip Dependencies without Reference
             // const ref = compilation.getDependencyReference(module, dep)
@@ -1065,9 +1065,12 @@ try {
           if (modulesSet.has(module)) return
           sideEffect && sideEffect(module, entryModule)
           modulesSet.add(module)
-          walkDependencies(module, module.dependencies)
+          walkDependencies(module.dependencies)
+          module.blocks.forEach((block) => {
+            walkDependencies(block.dependencies)
+          })
           module.variables.forEach((variable) => {
-            walkDependencies(module, variable.dependencies)
+            walkDependencies(variable.dependencies)
           })
         }
 
