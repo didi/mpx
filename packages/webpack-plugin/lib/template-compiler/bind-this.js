@@ -19,6 +19,12 @@ dangerousKeys.split(',').forEach((key) => {
   dangerousKeyMap[key] = true
 })
 
+let renderIdentifiers = '__c,__v,__e,_i,__ss,__sc'
+let renderIdentifiersMap = {}
+renderIdentifiers.split(',').map(identifier => {
+  renderIdentifiersMap[identifier] = true
+})
+
 module.exports = {
   transform (code, {
     needCollect = false,
@@ -57,6 +63,9 @@ module.exports = {
         }
       },
       Identifier (path) {
+        if (renderIdentifiersMap[path.node.name] && t.isCallExpression(path.parent)) {
+          return path.replaceWith(t.memberExpression(t.thisExpression(), path.node))
+        }
         if (
           !(t.isDeclaration(path.parent) && path.parentKey === 'id') &&
           !(t.isFunction(path.parent) && path.listKey === 'params') &&

@@ -26,9 +26,20 @@ function transformProperties (properties) {
     } else {
       newFiled = Object.assign({}, rawFiled)
     }
+    // wx 挂载 observer 监听
     newFiled.observer = function (value, oldValue) {
       if (this.__mpxProxy) {
-        this[key] = value
+        // if (typeof value === 'object') {
+        //   Object.keys(value).map(key => {
+        //     Object.defineProperty(this, key, {
+        //       get() {
+        //         // console.log('this is:', value)
+        //         return value[key]
+        //       }
+        //     })
+        //   })
+        // }
+        this[key] = value // 修改对应响应式数据值
         this.__mpxProxy.updated()
       }
     }
@@ -53,7 +64,7 @@ function transformApiForProxy (context, currentInject) {
         return (options) => {
           const data = {}
           const validData = Object.assign({}, options.data, options.properties, options.props)
-          for (const key in context.data) {
+          for (const key in context.data) { // context 为这个微信的 this 实例，properties 和 data 字段内定义的数据都是通过 context.data 来获取
             if (context.data.hasOwnProperty(key) && validData.hasOwnProperty(key)) {
               data[key] = context.data[key]
             }
@@ -138,7 +149,7 @@ function getRootMixins (mixin) {
 }
 
 function initProxy (context, rawOptions, currentInject) {
-  // 提供代理对象需要的api
+  // 提供代理对象需要的api (微信小程序 this 实例上相关 api 的代理)
   transformApiForProxy(context, currentInject)
   // 缓存options
   context.$rawOptions = rawOptions

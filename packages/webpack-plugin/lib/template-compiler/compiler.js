@@ -850,7 +850,7 @@ function parse (template, options) {
         stack.push(element)
       } else {
         element.unary = true
-        closeElement(element, meta)
+        closeElement(element, meta, currentParent)
       }
     },
 
@@ -865,7 +865,7 @@ function parse (template, options) {
         // pop stack
         stack.pop()
         currentParent = stack[stack.length - 1]
-        closeElement(element, meta)
+        closeElement(element, meta, currentParent)
       }
     },
 
@@ -908,6 +908,7 @@ function parse (template, options) {
     comment: function comment (text) {
       if (!currentParent) genTempRoot()
       // special comments should not be output
+      // TODO: 边界 case
       if (isMpxCommentAttrs(text)) {
         produceMpxCommentAttrs(text)
       } else if (options.hasComment) {
@@ -1042,6 +1043,7 @@ function stringify (str) {
 // }
 
 function processPageStatus (el, options) {
+  // 是组件节点的话需要增加 attrs
   if (isComponentNode(el, options)) {
     addAttrs(el, [{
       name: 'mpxPageStatus',
@@ -1368,6 +1370,7 @@ function parseMustache (raw = '') {
     } else {
       result = `(${ret.join('+')})`
     }
+
     return {
       result,
       hasBinding: true,
@@ -1400,6 +1403,10 @@ function processIf (el) {
       raw: parsed.val,
       exp: parsed.result
     }
+    addIfCondition(el, {
+      exp: parsed.result,
+      block: el
+    })
   } else if (val = getAndRemoveAttr(el, config[mode].directive.elseif).val) {
     let parsed = parseMustache(val)
     el.elseif = {
@@ -1444,8 +1451,8 @@ function processFor (el) {
     } else {
       let parsed = parseMustache(val)
       el.for = {
-        raw: parsed.val,
-        exp: parsed.result
+        raw: parsed.val, // template 上写的 {{ xxx }} 原始值
+        exp: parsed.result // 处理过后的 xxx 表达式的值
       }
       if (val = getAndRemoveAttr(el, config[mode].directive.forIndex).val) {
         el.for.index = val
@@ -1623,7 +1630,8 @@ function evalExp (exp) {
   return result
 }
 
-function postProcessIf (el) {
+// TODO: evalExp 内的逻辑是否对于 addIfCondition 有影响？evalExp 主要是计算非变量值的情况
+function postProcessIf (el, currentParent) {
   let attrs, result, prevNode
   if (el.if) {
     result = evalExp(el.if.exp)
@@ -1641,6 +1649,8 @@ function postProcessIf (el) {
       }]
     }
   } else if (el.elseif) {
+    // TODO: 针对 runtimeComponent 的处理走特殊逻辑，还是说集成到原有这部分逻辑
+    return processIfConditions(el, currentParent)
     prevNode = findPrevNode(el)
     if (prevNode._if === true) {
       removeNode(el)
@@ -1668,6 +1678,7 @@ function postProcessIf (el) {
       }
     }
   } else if (el.else) {
+    return processIfConditions(el, currentParent)
     prevNode = findPrevNode(el)
     if (prevNode._if === true) {
       removeNode(el)
@@ -1682,6 +1693,28 @@ function postProcessIf (el) {
   }
   if (attrs) {
     addAttrs(el, attrs)
+  }
+}
+
+function processIfConditions (el, parent) {
+  removeNode(el)
+  const prev = findPrevElement(parent.children)
+  if (prev && (prev.if || prev._if)) {
+    addIfCondition(prev, {
+      exp: el.elseif ? el.elseif.exp : '',
+      block: el
+    })
+  }
+}
+
+function findPrevElement (children) {
+  let i = children.length
+  while (i--) {
+    if (children[i].type === 1) {
+      return children[i]
+    } else {
+      children.pop()
+    }
   }
 }
 
@@ -1735,6 +1768,9 @@ function processClass (el, meta) {
   if (dynamicClass) {
     let staticClassExp = parseMustache(staticClass).result
     let dynamicClassExp = transDynamicClassExpr(parseMustache(dynamicClass).result)
+    // TODO: swan 处理？
+    el.class = dynamicClassExp
+    el.staticClass = staticClassExp
     addAttrs(el, [{
       name: targetType,
       // swan中externalClass是通过编译时静态实现，因此需要保留原有的staticClass形式避免externalClass失效
@@ -1742,6 +1778,7 @@ function processClass (el, meta) {
     }])
     injectWxs(meta, stringifyModuleName, stringifyWxsPath)
   } else if (staticClass) {
+    el.staticClass = staticClass
     addAttrs(el, [{
       name: targetType,
       value: staticClass
@@ -1768,12 +1805,15 @@ function processStyle (el, meta) {
   if (dynamicStyle) {
     let staticStyleExp = parseMustache(staticStyle).result
     let dynamicStyleExp = parseMustache(dynamicStyle).result
+    el.staticStyle = staticStyleExp
+    el.style = dynamicStyleExp
     addAttrs(el, [{
       name: targetType,
       value: `{{${stringifyModuleName}.stringifyStyle(${staticStyleExp}, ${dynamicStyleExp})}}`
     }])
     injectWxs(meta, stringifyModuleName, stringifyWxsPath)
   } else if (staticStyle) {
+    el.staticStyle = staticStyle
     addAttrs(el, [{
       name: targetType,
       value: staticStyle
@@ -2076,7 +2116,7 @@ function processElement (el, root, options, meta) {
   processAttrs(el, options)
 }
 
-function closeElement (el, meta) {
+function closeElement (el, meta, currentParent) {
   postProcessAtMode(el)
   if (mode === 'web') {
     // 处理代码维度条件编译移除死分支
@@ -2089,7 +2129,7 @@ function closeElement (el, meta) {
     el = postProcessComponentIs(el)
   }
   postProcessFor(el)
-  postProcessIf(el)
+  postProcessIf(el, currentParent)
 }
 
 function postProcessAtMode (el) {
@@ -2132,14 +2172,22 @@ function postProcessComponentIs (el) {
     } else {
       tempNode = getTempNode()
     }
+    console.log('the el.components is:', el.components)
+    // 手动创建新的需要动态渲染的 node 出来
     el.components.forEach(function (component) {
       let newChild = createASTElement(component, cloneAttrsList(el.attrsList), tempNode)
+      newChild.mpxPageStatus = true
       newChild.if = {
         raw: `{{${el.is} === ${stringify(component)}}}`,
         exp: `${el.is} === ${stringify(component)}`
       }
       el.children.forEach((child) => {
         addChild(newChild, cloneNode(child))
+      })
+      // 手动新创建的 node 添加 ifConditions
+      addIfCondition(newChild, {
+        exp: newChild.if.exp,
+        block: newChild
       })
       newChild.exps = el.exps
       addChild(tempNode, newChild)
@@ -2300,14 +2348,179 @@ function genFor (node) {
   return `this._i(${node.for.exp}, function(${item},${index}){\n${genNode(node)}});\n`
 }
 
+function addIfCondition (el, condition) {
+  if (!el.ifConditions) {
+    el.ifConditions = []
+  }
+  el.ifConditions.push(condition)
+}
+
+// TODO: 添加 trimEndingWhitespace 去除尾部 node 的函数
+function genElement (node) {
+  let code = ''
+  if (node.type === 1) {
+    if (node.tag !== 'temp-node' && node.tag !== 'import') {
+      if (node.for && !node.forProcessed) {
+        return _genFor(node)
+      } else if (node.if && !node.ifProcessed) {
+        return _genIf(node)
+      } else if (node.slot) {
+        return _genSlot(node)
+      } else {
+        if (!isEmptyObject(node.attrsMap)) {
+          console.log('the node attrsMap is:', node.attrsList, node.attrsMap)
+        }
+        // <component is="{{ xxx }}">
+        if (node.is) {
+          code = _genComponent(node.is, node)
+        } else {
+          let data = _genData(node)
+          // console.log('the data is:', data)
+          const children = _genChildren(node)
+          code = `__c('${node.tag}' ${data ? `,${data}` : ''} ${
+            children ? `,${children}` : ''
+          })`
+        }
+
+        return code
+      }
+    } else {
+      return _genChildren(node)
+    }
+  }
+}
+
+function _genComponent (componentName, node) {
+  const children = _genChildren(el)
+  return `__c(${componentName}, ${_genData(node)}${
+    children ? `,${children}` : ''
+  })`
+}
+
+const filterKeys = ['wx:for', 'wx:for-index', 'wx:for-item', 'wx:if', 'is', 'data', 'mpxPageStatus']
+
+function _genData (node) {
+  let data = ''
+  if (!isEmptyObject(node.attrsMap)) {
+    data = '{'
+    if (node.style || node.staticStyle) {
+      if (node.style && node.staticStyle) {
+        data += `style: __ss(${node.staticStyle}, ${node.style}),`
+      } else if (node.style) {
+        data += `style: __ss("", ${node.style}),`
+      } else if (node.staticStyle) {
+        // TODO: 只有 staticStyle 和有 style 取的值不一样，一个是没有带引号，一个带了引号的
+        // class 和 style 的处理情况一样。这里可以优化一下，统一处理成带引号的？
+        data += `style: __ss("${node.staticStyle}"),`
+      }
+      delete node.attrsMap.style
+    }
+    if (node.class || node.staticClass) {
+      if (node.class && node.staticClass) {
+        data += `class: __sc(${node.staticClass}, ${node.class}),`
+      } else if (node.class) {
+        data += `class: __sc("", ${node.class}),`
+      } else if (node.staticClass) {
+        data += `class: __sc("${node.staticClass}"),`
+      }
+      delete node.attrsMap.class
+    }
+    if (node.mpxPageStatus) {
+      data += `mpxPageStatus: mpxPageStatus,`
+    }
+    Object.keys(node.attrsMap).map(key => {
+      if (!filterKeys.includes(key)) {
+        data += `'${key}': '${node.attrsMap[key]}',`
+      }
+    })
+    if (data === '{') {
+      data = ''
+    } else {
+      data = data.replace(/,$/, '') + '}'
+    }
+  }
+
+  return data
+}
+
+function _genFor (node) {
+  node.forProcessed = true
+  const index = node.for.index || 'index'
+  const item = node.for.item || 'item'
+
+  return `_i(${node.for.exp}, function(${item}, ${index}) {
+    return ${genElement(node)}
+  })`
+}
+
+function _genIf (node) {
+  node.ifProcessed = true
+  return _genIfConfitions(node.ifConditions.slice())
+}
+
+function _genChildren (node) {
+  const children = node.children
+  if (children.length) {
+    return `[${children.map(c => _genNode(c)).filter(t => !!t).join(',')}]`
+  }
+}
+
+function _genSlot () {
+
+}
+
+function _genIfConfitions (conditions) {
+  // console.log('the conditions is:', conditions)
+  if (!conditions.length) {
+    return '__e()'
+  }
+
+  const condition = conditions.shift()
+  if (condition.exp) {
+    return `(${condition.exp})?${genElement(condition.block)}:${_genIfConfitions(conditions)}`
+  } else {
+    return genElement(condition.block)
+  }
+}
+
+function _genNode (node) {
+  if (node.type === 1) {
+    return genElement(node)
+  } else if (node.type === 3 && node.isComment) {
+    return ''
+    // TODO: 暂时不做处理
+    // return _genComment(node)
+  } else {
+    return _genText(node) // 文本节点统一通过 _genText 来生成，type = 2(带有表达式的文本，在 mpx 统一处理为了3) || type = 3(纯文本，非注释)
+  }
+}
+
+function _genText (node) {
+  // TODO: template 换行节点总会生成一个空的 text 节点？ ->  trimEndingWhitespace 方法
+  // mpx 对于纯文本节点的处理和带有表达式的文本节点的处理存放字段不同
+  let exp = ''
+  if (node.exps && node.exps[0]) {
+    exp = node.exps[0].exp
+    return `__v(${exp})`
+  } else if (node.text && node.text !== ' ') {
+    exp = node.text
+    return `__v("${exp}")`
+  } else {
+    return ''
+  }
+  // return exp === ' ' ? '' : `__v(${exp})`
+}
+
 function genNode (node) {
   let exp = ''
   if (node) {
+    // type=3 为文本节点，可能为文本注释节点，也可能为非注释节点，通过 isComment 来标识
     if (node.type === 3) {
       if (node.exps && !node.isComment) {
         exp += genExps(node)
       }
     }
+    // type=1 为元素节点
     if (node.type === 1) {
       if (node.tag !== 'temp-node') {
         if (node.for && !node.forProcessed) {
@@ -2343,6 +2556,7 @@ module.exports = {
   parse,
   serialize,
   genNode,
+  genElement,
   makeAttrsMap,
   stringifyAttr,
   parseMustache,

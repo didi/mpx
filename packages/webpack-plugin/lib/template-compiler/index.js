@@ -76,10 +76,14 @@ module.exports = function (raw) {
   if (options.isNative || mpx.forceDisableInject) {
     return result
   }
-
+  console.log('the ast is:', ast)
   const rawCode = `global.currentInject = {
+    genVnode: function() {
+      return ${compiler.genNode(ast)}
+    },
     moduleId: ${JSON.stringify(options.moduleId)},
     render: function () {
+      // this._r(this.genVnode())
       ${compiler.genNode(ast)}this._r();
     }
 };\n`

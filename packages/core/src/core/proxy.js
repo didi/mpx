@@ -148,6 +148,7 @@ export default class MPXProxy {
 
   initState () {
     const options = this.options
+    // TODO: dataFn 用以函数方法来获取数据
     const proxyedKeys = this.initData(options.data, options.dataFn)
     const proxyedKeysMap = makeMap(proxyedKeys)
     this.initComputed(options.computed)
@@ -175,7 +176,7 @@ export default class MPXProxy {
     // 获取包含data/props在内的初始数据，包含初始原生微信转换支付宝时合并props进入data的逻辑
     const initialData = this.target.__getInitialData(this.options) || {}
     // 之所以没有直接使用initialData，而是通过对原始dataOpt进行深clone获取初始数据对象，主要是为了避免小程序自身序列化时错误地转换数据对象，比如将promise转为普通object
-    this.data = diffAndCloneA(data || {}).clone
+    this.data = diffAndCloneA(data || {}).clone // this.data 目前仅包含 options.data 上的数据，还没将 props 上的数据合进来
     if (dataFn) {
       proxyedKeys = Object.keys(initialData)
       // 预先将initialData代理到this.target中，便于data函数访问
@@ -189,6 +190,8 @@ export default class MPXProxy {
       Object.assign(this.data, dataFn.call(this.target))
     }
     this.collectLocalKeys(this.data)
+    this.collectLocalKeys(this.options.__ats)
+    // 将 props 上的数据取出来放到 this.data 上
     Object.keys(initialData).forEach((key) => {
       if (!this.data.hasOwnProperty(key)) {
         // 除了data函数返回的数据外深拷贝切断引用关系，避免后续watch由于小程序内部对data赋值重复触发watch
@@ -204,8 +207,11 @@ export default class MPXProxy {
 
   initWatch (watch) {
     if (watch) {
-      for (const key in watch) {
+      for (let key in watch) {
         const handler = watch[key]
+        if (this.options.__ats && this.options.__ats.hasOwnProperty(key)) {
+          key = `at.${key}`
+        }
         if (Array.isArray(handler)) {
           for (let i = 0; i < handler.length; i++) {
             this.watch(key, handler[i])
@@ -256,9 +262,9 @@ export default class MPXProxy {
     this.doRender(this.processRenderDataWithStrictDiff(renderData))
   }
 
-  renderWithData () {
+  renderWithData (vnode) {
     const renderData = preProcessRenderData(this.renderData)
-    this.doRender(this.processRenderDataWithStrictDiff(renderData))
+    this.doRender(this.processRenderDataWithStrictDiff(renderData), () => {} ,vnode)
     // 重置renderData准备下次收集
     this.renderData = {}
   }
@@ -271,11 +277,12 @@ export default class MPXProxy {
 
   processRenderDataWithStrictDiff (renderData) {
     const result = {}
+    console.log('the renderData is:', renderData)
     for (let key in renderData) {
       if (renderData.hasOwnProperty(key)) {
         const data = renderData[key]
         const firstKey = getFirstKey(key)
-        if (!this.localKeysMap[firstKey]) {
+        if (!this.localKeysMap[firstKey]) { // 如果是 props 数据的话，直接略过(但是 props 数据更新了还是会触发 render 函数)
           continue
         }
         // 外部clone，用于只需要clone的场景
@@ -354,7 +361,8 @@ export default class MPXProxy {
     return result
   }
 
-  doRender (data, cb) {
+  doRender (data, cb, vnode) {
+    console.log('111doRender', data, vnode)
     if (typeof this.target.__render !== 'function') {
       error('Please specify a [__render] function to render view.', this.options.mpxFileResource)
       return
@@ -366,7 +374,9 @@ export default class MPXProxy {
     const isEmpty = isEmptyObject(data) && isEmptyObject(this.forceUpdateData)
     const resolve = this.renderTaskExecutor(isEmpty)
 
-    if (isEmpty) {
+    // 目前 mpx 是对数据做了 diff，在初次渲染调用 render 函数的时候做完 diff，变化的数据为空
+    // 因此不会调用后面的 setData 操作。这里先加个对于 vnode 特殊判断的逻辑以供渲染调试。
+    if (isEmpty && !vnode) {
       cb && cb()
       return
     }
@@ -389,6 +399,12 @@ export default class MPXProxy {
         resolve && resolve()
       }
     }
+    
+    if (vnode && this.options.runtimeComponent) {
+      data.r = vnode
+    }
+    
+    console.log('the data is:', data)
     this.target.__render(processUndefined(data), callback)
   }
 
