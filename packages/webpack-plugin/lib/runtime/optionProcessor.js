@@ -96,8 +96,9 @@ export default function processOption (
                 query: to.query,
                 isEntryPage: true
               })
+              return
             } else {
-              global.__mpxRouter.replace(firstPage)
+              to.path = firstPage
             }
           } else {
             let methods = ''
