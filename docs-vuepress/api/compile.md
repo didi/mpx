@@ -964,13 +964,54 @@ Mpx中允许用户在request中传递特定query执行特定逻辑，目前已�
 
 ### ?resolve
 
-- **详细**: 在使用 import 引入包的时候在末尾加上 `?resolve`，编译时会被处理成正确的、完整的绝对路径。
+- **详细**: 
+
+  在使用 import 引入包的时候在末尾加上 `?resolve`，编译时会被处理成正确的、完整的绝对路径。
 
 - **示例**:
 
-``` javascript
-import subPackageIndexPage from '../subpackage/pages/index.mpx?resolve'
-```
+  使用原生小程序路由跳转时，url 可以是绝对路径，也可以是相对路径：
+
+  ``` javascript
+    wx.navigateTo({
+      url: '/pages/index/index',
+      // url: '../../pages/index/index'
+    })
+  ```
+
+  使用 Mpx 开发小程序，源码一般在 src 目录下，编译后的代码在 dist/wx 或 dist/ali 目录下，路由跳转的路径如果写相对路径，会有问题，因为源码里写的相对路径不一定正好能对应打包出来的 dist 目录下的路径。
+
+  ``` javascript
+    mpx.navigateTo({
+      url: '../../pages/index/index'
+    })
+  ```
+
+  所以可以写绝对路径：
+
+  ``` javascript
+    mpx.navigateTo({
+      url: '/pages/index/index'
+    })
+  ```
+
+  如果考虑到存在分包的情况，开发者得知道跳转的目标页属于哪个分包，会增加额外的心智负担。
+
+  ``` javascript
+    mpx.navigateTo({
+      url: '/subpackage/pages/index/index'
+    })
+  ```
+
+  所以可以在源码中使用 import 引入的页面地址后加上 `?resolve`，这个地址在编译时会被处理成正确的绝对路径。
+
+  ``` javascript
+  import subPackageIndexPage from '../subpackage/pages/index.mpx?resolve'
+
+  mpx.navigateTo({
+    url: subPackageIndexPage
+  })
+  ```
 
 ### ?packageName
 
