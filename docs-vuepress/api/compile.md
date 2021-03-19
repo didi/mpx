@@ -1003,7 +1003,7 @@ Mpx中允许用户在request中传递特定query执行特定逻辑，目前已�
     })
   ```
 
-  所以可以在源码中使用 import 引入的页面地址后加上 `?resolve`，这个地址在编译时会被处理成正确的绝对路径。
+  所以可以在源码中使用 import 引入的页面地址后加上 `?resolve`，这个地址在编译时会被处理成正确的绝对路径。当分包策略发生变化时，业务代码无需做修改也能获取到正确的资源位置。
 
   ``` javascript
   import subPackageIndexPage from '../subpackage/pages/index.mpx?resolve'
