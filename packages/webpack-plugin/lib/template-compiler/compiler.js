@@ -252,6 +252,7 @@ let injectNodes = []
 let forScopes = []
 let forScopesMap = {}
 let hasI18n = false
+let i18nInjectableComputed = []
 
 function updateForScopesMap () {
   forScopes.forEach((scope) => {
@@ -930,7 +931,11 @@ function parse (template, options) {
   }
 
   if (hasI18n) {
-    injectWxs(meta, i18nModuleName, i18nWxsRequest)
+    if (i18n.injectComputed) {
+      meta.computed = i18nInjectableComputed
+    } else {
+      injectWxs(meta, i18nModuleName, i18nWxsRequest)
+    }
   }
 
   injectNodes.forEach((node) => {
@@ -1349,8 +1354,17 @@ function parseMustache (raw = '') {
         i18nFuncNames.forEach((i18nFuncName) => {
           const funcNameRE = new RegExp(`${i18nFuncName}\\(`)
           const funcNameREG = new RegExp(`${i18nFuncName}\\(`, 'g')
+          const keyNameREG = new RegExp(`\\([\\'\\"](.*)[\\'\\"]\\)`)
           if (funcNameRE.test(exp)) {
-            exp = exp.replace(funcNameREG, `${i18nModuleName}.$1(mpxLocale, `)
+            if (i18n.injectComputed) {
+              const funcName = funcNameRE.exec(exp)[1]
+              const keyName = keyNameREG.exec(exp)[1]
+              const i18nInjectComputedKey = `${i18nModuleName}_${funcName}_${keyName.split('.').join('_')}`
+              i18nInjectableComputed.push(`${i18nInjectComputedKey}: function(){\nreturn this.${exp}}`)
+              exp = i18nInjectComputedKey
+            } else {
+              exp = exp.replace(funcNameREG, `${i18nModuleName}.$1(mpxLocale, `)
+            }
             hasI18n = true
             replaced = true
           }
