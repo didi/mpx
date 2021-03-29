@@ -46,7 +46,7 @@ function processTap (listeners, context) {
     return
   }
   context.__mpxTapInfo = context.__mpxTapInfo || {}
-  mergeListeners(listeners, {
+  let events = {
     touchstart (e) {
       context.__mpxTapInfo.detail = {
         x: e.changedTouches[0].pageX,
@@ -85,7 +85,18 @@ function processTap (listeners, context) {
         context.$emit('tap', re)
       }
     }
-  }, {
+  }
+  if (!document.documentElement.touchstart) {
+    events = {
+      click (e) {
+        if (listeners.tap) {
+          const re = inheritEvent('tap', e, context.__mpxTapInfo.detail)
+          context.$emit('tap', re)
+        }
+      }
+    }
+  }
+  mergeListeners(listeners, events, {
     force: true
   })
 }
