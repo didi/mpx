@@ -31,6 +31,8 @@ import {
   DESTROYED
 } from './innerLifecycle'
 import { warn, error } from '../helper/log'
+import _ from 'lodash'
+import patch from '../vnode/patch'
 
 let uid = 0
 
@@ -263,6 +265,11 @@ export default class MPXProxy {
   }
 
   renderWithData (vnode) {
+    // TODO: 待优化，目前这个为了方便测试
+    if (vnode) {
+      const _vnode = _.cloneDeep(vnode)
+      proxy(this.target, { _vnode: patch(undefined, _vnode) }, ['_vnode'], true)
+    }
     const renderData = preProcessRenderData(this.renderData)
     this.doRender(this.processRenderDataWithStrictDiff(renderData), () => {} ,vnode)
     // 重置renderData准备下次收集

@@ -54,7 +54,7 @@ export default function getRefsMixin () {
       selectAllComponents (selector) {
         return this.selectComponent(selector, true)
       },
-      // 每个组件都通过 mixin 混入了 __updateRef 方法来通知父组件有个子组件被创建了
+      // mode = ali 每个组件都通过 mixin 混入了 __updateRef 方法来通知父组件有个子组件被创建了
       // 父组件在编译 template 的过程当中去查找哪些组件带有 wx:ref 指令
       // 带有 wx:ref 指令的组件会被动态添加 onUpdateRef: __handleUpdateRef key/value 属性，用来响应子组件触发的 updateRef 方法
       // 这样就完成 ref 语法糖的功能

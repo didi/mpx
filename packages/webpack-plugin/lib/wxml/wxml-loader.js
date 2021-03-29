@@ -21,14 +21,16 @@ module.exports = function (content) {
   const options = loaderUtils.getOptions(this) || {}
 
   const { resourcePath: filePath, queryObj } = parseRequest(this.resource)
-
+  console.log('the filePath is:', filePath)
   const context = (
     this.rootContext ||
     (this.options && this.options.context) ||
     process.cwd()
   )
+  console.log('the relative path is:', path.relative(context, filePath))
   const shortFilePath = path.relative(context, filePath).replace(/^(\.\.[\\/])+/, '')
   const moduleId = hash(isProduction ? (shortFilePath + '\n' + content) : shortFilePath)
+  console.log('the shortFilePath is:', shortFilePath)
 
   const needCssSourceMap = (
     !isProduction &&
@@ -77,6 +79,7 @@ module.exports = function (content) {
     })
     return !!res
   })
+  console.log('the links is:', links)
   links.reverse()
   const data = {}
   content = [content]
@@ -160,7 +163,7 @@ module.exports = function (content) {
       default:
         requestString = JSON.stringify(src)
     }
-
+    console.log('the requestString is:', requestString)
     return '" + require(' + requestString + ') + "'
   }) + ';'
 }

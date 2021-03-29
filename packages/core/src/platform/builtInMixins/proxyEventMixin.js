@@ -1,5 +1,7 @@
 import { setByPath, collectDataset } from '../../helper/utils'
 import { error } from '../../helper/log'
+import { cache } from '../../vnode/utils'
+import EventTarget from '../../event/event-target'
 
 export default function proxyEventMixin () {
   const methods = {
@@ -58,6 +60,49 @@ export default function proxyEventMixin () {
       const originValue = valuePath.reduce((acc, cur) => acc[cur], $event.detail)
       const value = filterMethod ? (innerFilter[filterMethod] ? innerFilter[filterMethod](originValue) : typeof this[filterMethod] === 'function' ? this[filterMethod](originValue) : originValue) : originValue
       setByPath(this, expr, value)
+    },
+    __eh ($event) {
+      // if (EventTarget.$$checkEvent($event)) {
+      //   console.log('call __eh method')
+      // }
+      this.__callEvent('tap', $event, { button: 0 })
+    },
+    __callEvent(eventName, evt, extra) {
+      const domNode = this.__getDomNodeFromEvt(evt)
+      if (!domNode) {
+        return
+      }
+      EventTarget.$$process(domNode, eventName, evt)
+
+      const target = evt.currentTarget || evt.target
+      const eventConfigs = target.dataset.eventconfigs || {}
+      const curEventConfig = eventConfigs[eventName]
+      console.log('the curEventConfig is:', curEventConfig)
+      if (curEventConfig) {
+        curEventConfig.forEach(item => {
+          const callbackName = item[0]
+          if (callbackName) {
+            const params = item.length > 1 ? item.slice(1).map(item => {
+              if (item === '__mpx_event__') {
+                return evt
+              } else {
+                return item
+              }
+            }) : [evt]
+            const callback = this.r && this.r.mpxbindevents && this.r.mpxbindevents[callbackName] || this[callbackName]
+            if (typeof callback === 'function') {
+              callback(...params)
+            } else {
+              const location = this.__mpxProxy && this.__mpxProxy.options.mpxFileResource
+              error(`Instance property [${callbackName}] is not function, please check.`, location)
+            }
+          }
+        })
+      }
+    },
+    __getDomNodeFromEvt(evt) {
+      const id = evt.currentTarget && evt.currentTarget.dataset.privateNodeId
+      return cache.getNode(id)
     }
   }
   if (__mpx_mode__ === 'ali') {

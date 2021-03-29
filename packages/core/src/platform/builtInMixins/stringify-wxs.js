@@ -206,8 +206,9 @@ export function stringifyClass(staticClass, dynamicClass) {
   return concat(staticClass, _stringifyClass(dynamicClass))
 }
 
-export function stringifyStyle(staticStyle, dynamicStyle) {
+export function stringifyStyle(staticStyle, dynamicStyle, showStyle) {
+  if (!showStyle) showStyle = {}
   var normalizedDynamicStyle = normalizeDynamicStyle(dynamicStyle)
   var parsedStaticStyle = typeof staticStyle === 'string' ? parseStyleText(staticStyle) : {}
-  return genStyleText(extend(parsedStaticStyle, normalizedDynamicStyle))
+  return genStyleText(extend(parsedStaticStyle, extend(normalizedDynamicStyle, showStyle)))
 }

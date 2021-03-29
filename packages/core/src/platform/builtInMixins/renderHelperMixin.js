@@ -4,19 +4,6 @@ import { stringifyClass, stringifyStyle } from './stringify-wxs'
 let uid = 0
 const getUid = () => ++uid
 
-// TODO: 阉割版 VNODE 之后按需优化
-class VNode {
-  constructor(tag, data, children, text, elm, context) {
-    this.tag = tag
-    this.data = data
-    this.children = children
-    this.text = text
-    this.elm = elm
-    this.ns = undefined
-    this.context = context
-  }
-}
-
 function simpleNormalizeChildren(children) {
   for (var i = 0; i < children.length; i++) {
     if (Array.isArray(children[i])) {
@@ -71,18 +58,21 @@ export default function renderHelperMixin () {
 
         children = simpleNormalizeChildren(children)
 
-        return {
+        const vnode =  {
           nodeType: tag || '',
           ...data,
+          _data: data,
           nodeId: getUid(),
           children
         }
+        return vnode
       },
       __v(content) {
         return {
           nodeType: '',
           nodeId: '',
-          content
+          content,
+          text: content
         }
       },
       __e() {

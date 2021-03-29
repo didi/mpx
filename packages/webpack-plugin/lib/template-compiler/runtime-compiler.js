@@ -1143,6 +1143,10 @@ function parseFuncStr2 (str) {
     const funcName = parseMustache(match[1]).result
     const hasArgs = !!match[2]
     let args = match[3] ? `,${match[3]}` : ''
+    // TODO: 将单引号转为双引号
+    if (args) {
+      args = args.replace(/'/g, '"')
+    }
     const ret = /(,|^)\s*(\$event)\s*(,|$)/.exec(args)
     if (ret) {
       const subIndex = ret[0].indexOf('$event')
@@ -1153,6 +1157,7 @@ function parseFuncStr2 (str) {
       }
     }
     return {
+      funcName,
       hasArgs,
       expStr: `[${funcName + args}]`
     }
@@ -1207,8 +1212,16 @@ function processBindEvent (el) {
     if (parsedEvent) {
       let type = parsedEvent.eventName
       let modifiers = (parsedEvent.modifier || '').split('.')
-      let parsedFunc = parseFuncStr2(attr.value) // 处理绑定的事件类型 fn/fn(args)/fn("args")
+      let parsedFunc = parseFuncStr2(attr.value)
       if (parsedFunc) {
+        if (!el.events) {
+          el.events = {}
+        }
+        el.events[type] = {
+          ...parsedEvent,
+          funcName: parsedFunc.funcName
+        }
+        // el.events[type] = parsedFunc.funcName
         if (!eventConfigMap[type]) {
           eventConfigMap[type] = {
             rawName: attr.name,
@@ -1312,12 +1325,19 @@ function processBindEvent (el) {
     }
   }
 
-  // 将 eventConfigMap 绑定到 data-eventconfigs 上以供事件处理时获取
   if (!isEmptyObject(eventConfigMap)) {
+    el.eventconfigs = `${config[mode].event.shallowStringify(eventConfigMap)}`
     addAttrs(el, [{
       name: 'data-eventconfigs',
       value: `{{${config[mode].event.shallowStringify(eventConfigMap)}}}`
     }])
+  } else {
+    let d = ''
+    Object.keys(el.events).map(name => {
+      const { eventName, funcName } = el.events[name]
+      d += `${eventName}: [[${funcName}]],`
+    })
+    el.eventconfigs = `{${d}}`
   }
 }
 
@@ -1777,7 +1797,8 @@ function processClass (el, meta) {
       // swan中externalClass是通过编译时静态实现，因此需要保留原有的staticClass形式避免externalClass失效
       value: mode === 'swan' && staticClass ? `${staticClass} {{${stringifyModuleName}.stringifyClass('', ${dynamicClassExp})}}` : `{{${stringifyModuleName}.stringifyClass(${staticClassExp}, ${dynamicClassExp})}}`
     }])
-    injectWxs(meta, stringifyModuleName, stringifyWxsPath)
+    // runtime compile 不需要注入 wxs 模块
+    // injectWxs(meta, stringifyModuleName, stringifyWxsPath)
   } else if (staticClass) {
     el.staticClass = staticClass
     addAttrs(el, [{
@@ -1812,7 +1833,7 @@ function processStyle (el, meta) {
       name: targetType,
       value: `{{${stringifyModuleName}.stringifyStyle(${staticStyleExp}, ${dynamicStyleExp})}}`
     }])
-    injectWxs(meta, stringifyModuleName, stringifyWxsPath)
+    // injectWxs(meta, stringifyModuleName, stringifyWxsPath)
   } else if (staticStyle) {
     el.staticStyle = staticStyle
     addAttrs(el, [{
@@ -1955,24 +1976,32 @@ function processAliStyleClassHack (el, options, root) {
 
 function processShow (el, options, root) {
   let show = getAndRemoveAttr(el, config[mode].directive.show).val
-  // 在每个模板的根节点上添加 mpxShow 属性，用以支持 wx:show 指令的实现
+  let showExp
   if (options.isComponent && el.parent === root && isRealNode(el)) {
     if (show !== undefined) {
-      show = `{{${parseMustache(show).result}&&mpxShow}}`
+      // show = `{{${parseMustache(show).result}&&mpxShow}}`
+      showExp = `${parseMustache(show).result}&&mpxShow`
     } else {
-      show = '{{mpxShow}}'
+      // show = '{{mpxShow}}'
+      showExp = 'mpxShow'
     }
   }
+
   if (show !== undefined) {
-    if (isComponentNode(el, options)) { // 子组件节点 wx:show 处理
+    // 自定义组件节点
+    if (isComponentNode(el, options)) {
       if (show === '') {
-        show = '{{false}}'
+        // show = '{{false}}'
+        showExp = 'false'
       }
-      addAttrs(el, [{
-        name: 'mpxShow',
-        value: show
-      }])
-    } else { // 普通元素节点 wx:show 处理
+      // 运行时编译不需要这个属性
+      // addAttrs(el, [{
+      //   name: 'mpxShow',
+      //   value: show
+      // }])
+      el.show = showExp ? showExp : parseMustache(show).result
+    } else {
+      // 普通元素节点
       const showExp = parseMustache(show).result
       let oldStyle = getAndRemoveAttr(el, 'style').val
       oldStyle = oldStyle ? oldStyle + ';' : ''
@@ -1980,6 +2009,7 @@ function processShow (el, options, root) {
         name: 'style',
         value: `${oldStyle}{{${showExp}||${showExp}===undefined?'':'display:none;'}}`
       }])
+      el.showStyle = `${showExp}||${showExp}===undefined?{}:{display:"none"}`
     }
   }
 }
@@ -2399,23 +2429,65 @@ function _genComponent (componentName, node) {
   })`
 }
 
-const filterKeys = ['wx:for', 'wx:for-index', 'wx:for-item', 'wx:if', 'is', 'data', 'mpxPageStatus']
+const filterKeys = [
+  'wx:for',
+  'wx:for-index',
+  'wx:for-item',
+  'wx:if',
+  'is',
+  'data',
+  'mpxPageStatus'
+]
+
+function __hackStyleReplace(str, res) {
+  if (!res) {
+    return str
+  }
+  return str.replace(/}/, ',' + res + '}')
+}
+
+function genHandlers (events) {
+  const prefix = 'mpxbindevents:'
+  let staticHandlers = ``
+  Object.keys(events).map(name => {
+    const funcName = events[name].funcName
+    staticHandlers += `${funcName}: this.${funcName.slice(1, -1)}.bind(this),`
+  })
+  return prefix + `{${staticHandlers}}`
+}
 
 function _genData (node) {
   let data = ''
   if (!isEmptyObject(node.attrsMap)) {
     data = '{'
-    if (node.style || node.staticStyle) {
+    // 普通元素节点
+    // let normalShow = ''
+    // if (node.normalShow) {
+    //   normalShow = `${node.normalShow}: (${node.normalShow})||(${node.normalShow})===undefined?'':'display:none'`
+    // }
+    // 自定义组件节点 wx:show，原生的元素节点通过 style 来进行控制 node.showStyle
+    if (node.show) {
+      data += `mpxShow: ${node.show},`
+    }
+    // else {
+    //   data += 'mpxShow: true,'
+    // }
+    if (node.style || node.staticStyle || node.showStyle) {
+      // console.log('node.style is:', node.style)
       if (node.style && node.staticStyle) {
-        data += `style: __ss(${node.staticStyle}, ${node.style}),`
+        data += `style: __ss(${node.staticStyle}, ${node.style}, ${node.showStyle}),`
       } else if (node.style) {
-        data += `style: __ss("", ${node.style}),`
+        data += `style: __ss("", ${node.style}, ${node.showStyle}),`
       } else if (node.staticStyle) {
         // TODO: 只有 staticStyle 和有 style 取的值不一样，一个是没有带引号，一个带了引号的
         // class 和 style 的处理情况一样。这里可以优化一下，统一处理成带引号的？
-        data += `style: __ss("${node.staticStyle}"),`
+        data += `style: __ss("${node.staticStyle}", {}, ${node.showStyle}),`
+      } else {
+        data += `style: __ss("", {}, ${node.showStyle}),`
       }
-      delete node.attrsMap.style
+      // console.log('the data is:', data)
+      getAndRemoveAttr(node, 'style', true)
+      // delete node.attrsMap.style
     }
     if (node.class || node.staticClass) {
       if (node.class && node.staticClass) {
@@ -2425,10 +2497,25 @@ function _genData (node) {
       } else if (node.staticClass) {
         data += `class: __sc("${node.staticClass}"),`
       }
-      delete node.attrsMap.class
+      getAndRemoveAttr(node, 'class', true)
     }
     if (node.mpxPageStatus) {
       data += `mpxPageStatus: mpxPageStatus,`
+    }
+    if (node.events) {
+      node.attrsList.forEach(attr => {
+        if (/bind/.test(attr.name)) {
+          getAndRemoveAttr(node, attr.name, true)
+        }
+      })
+      data += `${genHandlers(node.events)},`
+      // Object.keys(node.events).map(event => {
+      //   data += `${node.events[event]}: this.${node.events[event].slice(1, -1)}.bind(this),`
+      // })
+    }
+    if (node.eventconfigs) {
+      data += `eventconfigs: ${node.eventconfigs},`
+      getAndRemoveAttr(node, 'data-eventconfigs', true)
     }
     Object.keys(node.attrsMap).map(key => {
       if (!filterKeys.includes(key)) {
