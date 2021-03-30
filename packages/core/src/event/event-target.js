@@ -1,5 +1,6 @@
 import Event from './event'
 import CustomEvent from './custom-event'
+import { cache } from '../vnode/utils'
 
 /**
  * 比较 touch 列表
@@ -72,12 +73,34 @@ export default class EventTarget {
     return this.$__eventHandlerMap
   }
 
+  static $$searchNodesPath(path, isCustomComponent) {
+    let target = path[path.length - 1]
+    let parentNode = target.parentNode
+
+    while(parentNode && parentNode.tag) {
+      path.push(parentNode)
+      parentNode = parentNode.parentNode
+    }
+
+    if (path.length > 1) {
+      const root = path[path.length - 1]
+      let parentNodeId = root.context && root.context.mpxParentId
+      if (parentNodeId) {
+        path = path.concat(
+          EventTarget.$$searchNodesPath([cache.getNode(parentNodeId)], true)
+        )
+      }
+    }
+
+    return isCustomComponent ? path.slice(1) : path
+  }
+
   /**
    * 触发事件捕获、冒泡流程
    */
   static $$process(target, eventName, miniprogramEvent, extra, callback) {
     let event
-
+    
     if (eventName instanceof CustomEvent || eventName instanceof Event) {
       // 传入的是事件对象
       event = eventName
@@ -87,20 +110,7 @@ export default class EventTarget {
 
     eventName = eventName.toLowerCase()
 
-    const path = [target]
-    let parentNode = target.parentNode
-
-    while (parentNode && parentNode.tagName !== 'HTML') {
-      path.push(parentNode)
-      parentNode = parentNode.parentNode
-    }
-
-    if (path[path.length - 1].tagName === 'BODY') {
-      // 如果最后一个节点是 document.body，则追加 document.documentElement
-      path.push(parentNode)
-    }
-
-    console.log('the path is:', path)
+    let path = EventTarget.$$searchNodesPath([target])
 
     if (!event) {
       // 此处特殊处理，不直接返回小程序的 event 对象
@@ -111,7 +121,8 @@ export default class EventTarget {
         touches: miniprogramEvent.touches,
         changedTouches: miniprogramEvent.changedTouches,
         bubbles: true, // 默认都可以冒泡
-        $$extra: extra
+        $$extra: extra,
+        miniprogramEvent
       })
     }
 
@@ -202,7 +213,7 @@ export default class EventTarget {
    * 获取 handlers
    */
   $_getHandlers(eventName, isCapture, isInit) {
-    const handlerMap = this.$_eventHandlerMap
+    const handlerMap = (this.data && this.data.mpxeventmap) || this.$_eventHandlerMap
 
     if (isInit) {
       const handlerObj = (handlerMap[eventName] = handlerMap[eventName] || {})
@@ -227,7 +238,7 @@ export default class EventTarget {
     eventName = eventName.toLowerCase()
     const handlers = this.$_getHandlers(eventName, isCapture)
     const onEventName = `on${eventName}`
-
+    // console.log('phase is:', event.$_eventPhase, this.context)
     if ((!isCapture || !isTarget) && typeof this[onEventName] === 'function') {
       // 触发 onXXX 绑定的事件
       if (event && event.$$immediateStop) return
@@ -239,13 +250,28 @@ export default class EventTarget {
     }
 
     if (!handlers) return
-
     // 触发 addEventListener 绑定的事件
     if (handlers.length) {
-      handlers.forEach((handler) => {
+      handlers.forEach(({ name, handler }) => {
         if (event && event.$$immediateStop) return
         try {
-          handler.call(this || null, event, ...args)
+          // console.log('the handlers is:', name, event.$_currentTarget)
+          const eventConfigs =
+            event.$_currentTarget &&
+            event.$_currentTarget.data &&
+            event.$_currentTarget.data.eventconfigs
+          const curEventConfig = eventConfigs[eventName].find(item => item[0] === name)
+          const params =
+            curEventConfig.length > 1
+              ? curEventConfig.slice(1).map((item) => {
+                  if (item === '__mpx_event__') {
+                    return event.$_miniprogramEvent
+                  } else {
+                    return item
+                  }
+                })
+              : [event.$_miniprogramEvent]
+          handler(...params)
         } catch (err) {
           console.error(err)
         }

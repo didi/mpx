@@ -28,6 +28,7 @@ class Event {
     this.$_targetTouches = null
     this.$_changedTouches = null
     this.$_cancelable = false
+    this.$_miniprogramEvent = options.miniprogramEvent
 
     // Add fields
     const extra = options.$$extra
