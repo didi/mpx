@@ -1206,6 +1206,9 @@ function stringifyWithResolveComputed (modelValue) {
 
 function processBindEvent (el) {
   const eventConfigMap = {}
+  if (!el.events) {
+    el.events = {}
+  }
   el.attrsList.forEach(function (attr) {
     let parsedEvent = config[mode].event.parseEvent(attr.name)
 
@@ -1214,14 +1217,10 @@ function processBindEvent (el) {
       let modifiers = (parsedEvent.modifier || '').split('.')
       let parsedFunc = parseFuncStr2(attr.value)
       if (parsedFunc) {
-        if (!el.events) {
-          el.events = {}
-        }
-        el.events[type] = {
+        el.events[attr.name] = {
           ...parsedEvent,
           funcName: parsedFunc.funcName
         }
-        // el.events[type] = parsedFunc.funcName
         if (!eventConfigMap[type]) {
           eventConfigMap[type] = {
             rawName: attr.name,
@@ -1286,59 +1285,43 @@ function processBindEvent (el) {
   }
 
   for (let type in eventConfigMap) {
-    let needBind = false
-    let { configs, rawName, proxy } = eventConfigMap[type]
-    if (proxy) {
-      needBind = true
-    } else if (configs.length > 1) {
-      needBind = true
-    } else if (configs.length === 1) {
-      needBind = !!configs[0].hasArgs
-    }
-    // 排除特殊情况
-    if (needBind && !isValidIdentifierStr(type)) {
-      warn$1(`EventName ${type} which need be framework proxy processed must be a valid identifier!`)
-      needBind = false
-    }
-    if (needBind) {
-      if (rawName) {
-        // 清空原始事件绑定
-        let has
-        do {
-          has = getAndRemoveAttr(el, rawName).has
-        } while (has)
-        // 清除修饰符
-        rawName = rawName.replace(/\..*/, '')
-      }
+    let { configs, rawName } = eventConfigMap[type]
 
-      addAttrs(el, [
-        {
-          name: rawName || config[mode].event.getEvent(type),
-          value: '__invoke'
-        }
-      ])
-      eventConfigMap[type] = configs.map((item) => {
-        return item.expStr
-      })
-    } else {
-      delete eventConfigMap[type]
+    if (rawName) {
+      // 清空原始事件绑定
+      let has
+      do {
+        has = getAndRemoveAttr(el, rawName).has
+      } while (has)
+      // 清除修饰符
+      rawName = rawName.replace(/\..*/, '')
     }
-  }
 
-  if (!isEmptyObject(eventConfigMap)) {
-    el.eventconfigs = `${config[mode].event.shallowStringify(eventConfigMap)}`
-    addAttrs(el, [{
-      name: 'data-eventconfigs',
-      value: `{{${config[mode].event.shallowStringify(eventConfigMap)}}}`
-    }])
-  } else {
-    let d = ''
-    Object.keys(el.events).map(name => {
-      const { eventName, funcName } = el.events[name]
-      d += `${eventName}: [[${funcName}]],`
+    eventConfigMap[type] = configs.map((item) => {
+      return item.expStr
     })
-    el.eventconfigs = `{${d}}`
   }
+
+  let arr = []
+  if (eventConfigMap) {
+    for (let key in eventConfigMap) {
+      let value = eventConfigMap[key]
+      if (Array.isArray(value)) {
+        value = `[${value.join(',')}]`
+      }
+      arr.push(`${key}:${value}`)
+    }
+  }
+
+  Object.keys(el.events).map(name => {
+    const { eventName, funcName } = el.events[name]
+    if (!eventConfigMap[eventName]) {
+      arr.push(`${eventName}: [[${funcName}]]`)
+    }
+  })
+  el.eventconfigs = `{${arr.join(',')}}`
+
+  // console.log('the eventconfig is111:', arr, el.eventconfigs, 222, eventConfigMap)
 }
 
 // todo 暂时未考虑swan中不用{{}}包裹控制属性的情况
@@ -2447,13 +2430,53 @@ function __hackStyleReplace(str, res) {
 }
 
 function genHandlers (events) {
-  const prefix = 'mpxbindevents:'
+  const bindeventsKey = 'mpxbindevents:'
+  const eventmapKey = 'mpxeventmap:'
   let staticHandlers = ``
+  let captureAndBubbleMap = {}
   Object.keys(events).map(name => {
-    const funcName = events[name].funcName
+    const { prefix, eventName, funcName } = events[name]
     staticHandlers += `${funcName}: this.${funcName.slice(1, -1)}.bind(this),`
+
+    if (!captureAndBubbleMap[eventName]) {
+      captureAndBubbleMap[eventName] = {
+        capture: [],
+        bubble: []
+      }
+    }
+    // TODO: 目前仅处理原生事件的冒泡 & 捕获阶段，不处理自定义事件
+    switch (prefix) {
+      case 'catch':
+      case 'capture-bind':
+      case 'capture-catch':
+        captureAndBubbleMap[eventName].capture.push(funcName)
+        // captureHandlers += `capture: [this.${funcName.slice(1, -1)}.bind(this)],`
+        break
+      default:
+        captureAndBubbleMap[eventName].bubble.push(funcName)
+        // bubbleHandlers += `bubble: [this.${funcName.slice(1, -1)}.bind(this)],`
+        break
+    }
+    // captureAndBubbleMap[eventName] = `'${eventName}': {${captureHandlers + bubbleHandlers}},`
   })
-  return prefix + `{${staticHandlers}}`
+  let str = ''
+  Object.keys(captureAndBubbleMap).map(eventName => {
+    str += `${eventName}:{`
+    let captureEventsStr = 'capture: ['
+    captureAndBubbleMap[eventName].capture.map(funcName => {
+      captureEventsStr += `{name: ${funcName}, handler: this.${funcName.slice(1, -1)}.bind(this)},`
+    })
+    str += captureEventsStr + '],'
+
+    let bubbleEventsStr = 'bubble: ['
+    captureAndBubbleMap[eventName].bubble.map(funcName => {
+      bubbleEventsStr += `{name: ${funcName}, handler: this.${funcName.slice(1, -1)}.bind(this)},`
+    })
+    str += bubbleEventsStr + '],'
+
+    str += '},'
+  })
+  return eventmapKey + `{${str}},` + bindeventsKey + `{${staticHandlers}}`
 }
 
 function _genData (node) {
