@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/webpack-plugin",
-  "version": "2.6.50",
+  "version": "2.6.52",
   "description": "mpx compile core",
   "keywords": [
     "mpx"
@@ -15,13 +15,13 @@
     "lib"
   ],
   "dependencies": {
-    "@better-scroll/core": "^2.0.4",
-    "@better-scroll/movable": "^2.0.4",
-    "@better-scroll/observe-dom": "^2.0.4",
-    "@better-scroll/pull-down": "^2.0.4",
-    "@better-scroll/slide": "^2.0.4",
-    "@better-scroll/wheel": "^2.0.4",
-    "@better-scroll/zoom": "^2.0.4",
+    "@better-scroll/core": "^2.2.1",
+    "@better-scroll/movable": "^2.2.1",
+    "@better-scroll/observe-dom": "^2.2.1",
+    "@better-scroll/pull-down": "^2.2.1",
+    "@better-scroll/slide": "^2.2.1",
+    "@better-scroll/wheel": "^2.2.1",
+    "@better-scroll/zoom": "^2.2.1",
     "acorn-walk": "^7.2.0",
     "async": "^2.6.0",
     "babel-code-frame": "^6.26.0",

@@ -30,7 +30,7 @@
         type: [Number, String],
         default: 0
       },
-      observeDOM: Boolean,
+      scrollOptions: Object,
       updateRefresh: Boolean,
       scrollIntoView: String,
       scrollWithAnimation: Boolean,
@@ -126,25 +126,25 @@
       init () {
         if (this.bs) return
         this.initLayerComputed()
-        const BsOptions = {
+        const originBsOptions = {
           startX: -this._scrollLeft,
           startY: -this._scrollTop,
           scrollX: this.scrollX,
           scrollY: this.scrollY,
           probeType: 3,
           bounce: false,
-          observeDOM: this.observeDOM,
           stopPropagation: true,
           bindToWrapper: true
         }
         if (this.refresherEnabled) {
-          BsOptions.bounce = true
-          BsOptions.pullDownRefresh = {
+          originBsOptions.bounce = true
+          originBsOptions.pullDownRefresh = {
             threshold: this.refresherThreshold,
             stop: 56
           }
         }
-        this.bs = new BScroll(this.$refs.wrapper, BsOptions)
+        const bsOptions = Object.assign({}, originBsOptions, this.scrollOptions)
+        this.bs = new BScroll(this.$refs.wrapper, bsOptions)
         this.bs.scroller.hooks.on('beforeRefresh', () => {
           this.initLayerComputed()
         })

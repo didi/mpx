@@ -313,7 +313,7 @@ other {
 
 ### 使用方法
 
-使用@mpxjs/cli创建新项目时选择跨平台并选择输出web后，即可生成可输出web的示例项目，运行`npm run watchweb`，就会在dist/web下输出构建后的web项目，并启动静态服务预览运行。
+使用@mpxjs/cli创建新项目时选择跨平台并选择输出web后，即可生成可输出web的示例项目，运行`npm run watch:web`，就会在dist/web下输出构建后的web项目，并启动静态服务预览运行。
 
 ### 支持范围
 目前输出web的能力仍处于持续开发阶段，现阶段支持的小程序技术能力范围有限，下列表格中显示了当前版本中已支持的能力范围
@@ -360,11 +360,11 @@ web同名事件默认全部支持，已支持组件的特殊事件默认为支�
 
 #### 基础组件
 
-组件名称|是否支持
-:----|----
+组件名称|是否支持|说明
+:----|------- |---
 view|是
 cover-view|是
-scroll-view|是
+scroll-view|是|scroll-view 转 web 底层滚动依赖 BetterScroll 实现<br/>支持额外传入以下属性： <br/><br/>`scrollOptions`: object <br/>可重写 BetterScroll 初始化基本配置<br/>若出现无法滚动，可尝试手动传入 `{ observeDOM: true }` <br/><br/> `updateRefresh`: boolean <br/>Vue updated 钩子函数触发时，可用于重新计算 BetterScroll
 progress|是
 navigator|是
 swiper|是
