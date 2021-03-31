@@ -361,7 +361,7 @@ web同名事件默认全部支持，已支持组件的特殊事件默认为支�
 #### 基础组件
 
 组件名称|是否支持|说明
-:----|------- |---
+:----|---- |----
 view|是
 cover-view|是
 scroll-view|是|scroll-view 转 web 底层滚动依赖 BetterScroll 实现<br/>支持额外传入以下属性： <br/><br/>`scrollOptions`: object <br/>可重写 BetterScroll 初始化基本配置<br/>若出现无法滚动，可尝试手动传入 `{ observeDOM: true }` <br/><br/> `updateRefresh`: boolean <br/>Vue updated 钩子函数触发时，可用于重新计算 BetterScroll
