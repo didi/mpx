@@ -236,7 +236,17 @@ export default class MPXProxy {
   callUserHook (hookName, ...params) {
     const hook = this.options[hookName] || this.target[hookName]
     if (typeof hook === 'function') {
-      hook.call(this.target, ...params)
+      try {
+        hook.call(this.target, ...params)
+      } catch (e) {
+        if (typeof EXPORT_MPX.config.onHookError === 'function') {
+          EXPORT_MPX.config.onHookError(e, this.target, hookName)
+        } else {
+          Promise.resolve().then(() => {
+            throw e
+          })
+        }
+      }
     }
   }
 

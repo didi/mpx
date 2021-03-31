@@ -200,7 +200,8 @@ EXPORT_MPX.config = {
   useStrictDiff: false,
   ignoreRenderError: false,
   ignoreProxyWhiteList: ['id', 'dataset', 'data'],
-  observeClassInstance: false
+  observeClassInstance: false,
+  onHookError: null
 }
 
 if (__mpx_mode__ === 'web') {

@@ -1,44 +1,45 @@
-import { inBrowser } from '../../../utils/env'
-const callbacks = []
-
 global.__mpxAppCbs = global.__mpxAppCbs || {
   show: [],
-  hide: []
+  hide: [],
+  error: []
+
 }
 
-if (inBrowser) {
-  window.addEventListener('resize', () => {
-    const result = {
-      size: {
-        windowWidth: window.screen.width,
-        windowHeight: window.screen.height
-      }
-    }
-    callbacks.forEach(cb => cb(result))
-  })
+function onError (callback) {
+  global.__mpxAppCbs.error.push(callback)
+}
+
+function offError (callback) {
+  const cbs = global.__mpxAppCbs.error
+  const index = cbs.indexOf(callback)
+  if (index > -1) cbs.splice(index, 1)
 }
 
 function onAppShow (callback) {
   global.__mpxAppCbs.show.push(callback)
 }
 
+function offAppShow (callback) {
+  const cbs = global.__mpxAppCbs.show
+  const index = cbs.indexOf(callback)
+  if (index > -1) cbs.splice(index, 1)
+}
+
 function onAppHide (callback) {
   global.__mpxAppCbs.hide.push(callback)
 }
 
-function offAppShow (callback) {
-  const cbs = global.__mpxAppCbs.show
-  cbs.splice(cbs.indexOf(callback), 1)
-}
-
 function offAppHide (callback) {
   const cbs = global.__mpxAppCbs.hide
-  cbs.splice(cbs.indexOf(callback), 1)
+  const index = cbs.indexOf(callback)
+  if (index > -1) cbs.splice(index, 1)
 }
 
 export {
   onAppShow,
   onAppHide,
   offAppShow,
-  offAppHide
+  offAppHide,
+  onError,
+  offError
 }
