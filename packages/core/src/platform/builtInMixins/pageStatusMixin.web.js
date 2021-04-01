@@ -34,7 +34,7 @@ function onResize () {
   if (_t) {
     _t.mpxPageStatus = `resize${count++}`
     if (typeof _t.onResize === 'function') {
-      _t.onResize.call(_t, systemInfo)
+      _t.onResize(systemInfo)
     }
   }
 }

@@ -94,7 +94,6 @@ function initProxy (context, rawOptions, currentInject) {
   context.__mpxProxy.created()
 }
 
-
 export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
   const hookNames = type === 'component' ? ['onInit', 'didMount', 'didUnmount'] : ['onLoad', 'onReady', 'onUnload']
   const rootMixins = [{
