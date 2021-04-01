@@ -239,8 +239,8 @@ export default class MPXProxy {
       try {
         hook.call(this.target, ...params)
       } catch (e) {
-        if (typeof EXPORT_MPX.config.onHookError === 'function') {
-          EXPORT_MPX.config.onHookError(e, this.target, hookName)
+        if (typeof EXPORT_MPX.config.hookErrorHandler === 'function') {
+          EXPORT_MPX.config.hookErrorHandler(e, this.target, hookName)
         } else {
           Promise.resolve().then(() => {
             throw e
