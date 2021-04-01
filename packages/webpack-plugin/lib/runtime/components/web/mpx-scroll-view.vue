@@ -55,8 +55,8 @@
       if (!this.__mpx_deactivated) {
         return
       }
+      this.__mpx_deactivated = false
       if (this.__mpx_deactivated_refresh) {
-        this.__mpx_deactivated = false
         this.__mpx_deactivated_refresh = false
         this.refresh()
       }
