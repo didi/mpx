@@ -89,12 +89,20 @@ export default function processOption (
         const pageInRoutes = routes.some(item => item.path === to.path)
         if (!pageInRoutes) {
           if (stack.length < 1) {
-            // onPageNotFound，仅首次进入时生效
-            global.__mpxRouter.app.$options.onPageNotFound({
-              path: to.path,
-              query: to.query,
-              isEntryPage: true
-            })
+            if (global.__mpxRouter.app.$options.onPageNotFound) {
+              // onPageNotFound，仅首次进入时生效
+              global.__mpxRouter.app.$options.onPageNotFound({
+                path: to.path,
+                query: to.query,
+                isEntryPage: true
+              })
+              return
+            } else {
+              return next({
+                path: firstPage,
+                replace: true
+              })
+            }
           } else {
             let methods = ''
             switch (action.type) {
