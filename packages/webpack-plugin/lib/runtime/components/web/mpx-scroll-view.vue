@@ -190,7 +190,7 @@
             if (this.enhanced) {
               this.$emit('dragstart', getCustomEvent('dragstart', {
                 scrollLeft: this.bs.x ? this.bs.x * -1 : 0,
-                scrollTop: this.bs.y ?   this.bs.y * -1 : 0
+                scrollTop: this.bs.y ? this.bs.y * -1 : 0
               }))
             }
           })
@@ -198,7 +198,7 @@
             if (this.enhanced) {
               this.$emit('dragging', getCustomEvent('dragging', {
                 scrollLeft: this.bs.x ? this.bs.x * -1 : 0,
-                scrollTop: this.bs.y ?   this.bs.y * -1 : 0
+                scrollTop: this.bs.y ? this.bs.y * -1 : 0
               }))
             }
             if (this.refresherEnabled) {
@@ -212,7 +212,7 @@
             if (this.enhanced) {
               this.$emit('dragend', getCustomEvent('dragend', {
                 scrollLeft: this.bs.x ? this.bs.x * -1 : 0,
-                scrollTop: this.bs.y ?   this.bs.y * -1 : 0
+                scrollTop: this.bs.y ? this.bs.y * -1 : 0
               }))
             }
           })
