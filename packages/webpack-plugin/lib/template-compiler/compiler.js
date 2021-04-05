@@ -728,6 +728,7 @@ function parse (template, options) {
   rulesResultMap.clear()
   warn$1 = options.warn || baseWarn
   error$1 = options.error || baseError
+  i18nInjectableComputed = []
 
   const _warn = content => {
     const currentElementRuleResult = rulesResultMap.get(currentEl) || rulesResultMap.set(currentEl, {
@@ -932,7 +933,7 @@ function parse (template, options) {
 
   if (hasI18n) {
     if (i18n.injectComputed) {
-      meta.computed = i18nInjectableComputed
+      meta.computed = meta.computed.concat(i18nInjectableComputed)
     } else {
       injectWxs(meta, i18nModuleName, i18nWxsRequest)
     }
@@ -1354,12 +1355,10 @@ function parseMustache (raw = '') {
         i18nFuncNames.forEach((i18nFuncName) => {
           const funcNameRE = new RegExp(`${i18nFuncName}\\(`)
           const funcNameREG = new RegExp(`${i18nFuncName}\\(`, 'g')
-          const keyNameREG = new RegExp(`\\([\\'\\"](.*)[\\'\\"]\\)`)
           if (funcNameRE.test(exp)) {
             if (i18n.injectComputed) {
               const funcName = funcNameRE.exec(exp)[1]
-              const keyName = keyNameREG.exec(exp)[1]
-              const i18nInjectComputedKey = `${i18nModuleName}_${funcName}_${keyName.split('.').join('_')}`
+              const i18nInjectComputedKey = `${i18nModuleName}_${funcName}_${i18nInjectableComputed.length + 1}`
               i18nInjectableComputed.push(`${i18nInjectComputedKey}: function(){\nreturn this.${exp}}`)
               exp = i18nInjectComputedKey
             } else {
