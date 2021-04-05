@@ -98,6 +98,7 @@ export default function processOption (
               })
               return
             } else {
+              console.warn(`[Mpx runtime warn]: the ${to.path} path does not exist in the application，will redirect to the home page path ${firstPage}`)
               return next({
                 path: firstPage,
                 replace: true
