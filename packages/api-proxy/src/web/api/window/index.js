@@ -1,4 +1,5 @@
 import { inBrowser } from '../../../utils/env'
+
 const callbacks = []
 
 if (inBrowser) {
@@ -18,7 +19,10 @@ function onWindowResize (callback) {
 }
 
 function offWindowResize (callback) {
-  callbacks.splice(callbacks.indexOf(callback), 1)
+  const index = callbacks.indexOf(callback)
+  if (index > -1) {
+    callbacks.splice(index, 1)
+  }
 }
 
 export {

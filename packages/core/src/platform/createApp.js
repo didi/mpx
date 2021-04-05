@@ -40,7 +40,8 @@ export default function createApp (option, config = {}) {
         this.$options.onLaunch && this.$options.onLaunch.call(this, options)
         global.__mpxAppCbs = global.__mpxAppCbs || {
           show: [],
-          hide: []
+          hide: [],
+          error: []
         }
         if (this.$options.onShow) {
           this.$options.onShow.call(this, options)
@@ -48,6 +49,9 @@ export default function createApp (option, config = {}) {
         }
         if (this.$options.onHide) {
           global.__mpxAppCbs.hide.push(this.$options.onHide.bind(this))
+        }
+        if (this.$options.onError) {
+          global.__mpxAppCbs.error.push(this.$options.onError.bind(this))
         }
       }
     })

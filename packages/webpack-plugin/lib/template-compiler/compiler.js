@@ -1117,15 +1117,7 @@ function processComponentIs (el, options) {
 
   let is = getAndRemoveAttr(el, 'is').val
   if (is) {
-    let match = tagRE.exec(is)
-    if (match) {
-      if (match[0] !== is) {
-        warn$1('only first mustache expression is valid in <component> attrs[is].')
-      }
-      el.is = match[1].trim()
-    } else {
-      el.is = stringify(is)
-    }
+    el.is = parseMustache(is).result
   } else {
     warn$1('<component> tag should have attrs[is].')
   }
@@ -1809,20 +1801,25 @@ function isComponentNode (el, options) {
 }
 
 function processAliExternalClassesHack (el, options) {
-  let staticClass = getAndRemoveAttr(el, 'class').val
-  if (staticClass) {
-    options.externalClasses.forEach((className) => {
-      const reg = new RegExp('\\b' + className + '\\b', 'g')
-      const replacement = dash2hump(className)
-      staticClass = staticClass.replace(reg, `{{${replacement}||''}}`)
-    })
-    addAttrs(el, [{
-      name: 'class',
-      value: staticClass
-    }])
-  }
+  const isComponent = isComponentNode(el, options)
+  // 处理组件externalClass多层传递
+  const classLikeAttrNames = isComponent ? ['class'].concat(options.externalClasses) : ['class']
+  classLikeAttrNames.forEach((classLikeAttrName) => {
+    let classLikeAttrValue = getAndRemoveAttr(el, classLikeAttrName).val
+    if (classLikeAttrValue) {
+      options.externalClasses.forEach((className) => {
+        const reg = new RegExp('\\b' + className + '\\b', 'g')
+        const replacement = dash2hump(className)
+        classLikeAttrValue = classLikeAttrValue.replace(reg, `{{${replacement}||''}}`)
+      })
+      addAttrs(el, [{
+        name: classLikeAttrName,
+        value: classLikeAttrValue
+      }])
+    }
+  })
 
-  if (options.scopedId && isComponentNode(el, options)) {
+  if (options.scopedId && isComponent) {
     options.externalClasses.forEach((className) => {
       let externalClass = getAndRemoveAttr(el, className).val
       if (externalClass) {
@@ -1836,8 +1833,9 @@ function processAliExternalClassesHack (el, options) {
 }
 
 function processWebExternalClassesHack (el, options) {
-  let staticClass = getAndRemoveAttr(el, 'class').val
-  let dynamicClass = getAndRemoveAttr(el, ':class').val
+  // todo 处理scoped的情况, 处理组件多层传递externalClass的情况，通过externalClass属性传递实际类名及scopeId信息，可以使用特殊的类名形式代表scopeId，如#idstring
+  let staticClass = el.attrsMap['class']
+  let dynamicClass = el.attrsMap[':class']
   if (staticClass || dynamicClass) {
     const externalClasses = []
     options.externalClasses.forEach((className) => {
@@ -1846,28 +1844,13 @@ function processWebExternalClassesHack (el, options) {
         externalClasses.push(className)
       }
     })
-    const attrs = []
-    if (staticClass) {
-      attrs.push({
-        name: 'class',
-        value: staticClass
-      })
-    }
-    if (dynamicClass) {
-      attrs.push({
-        name: ':class',
-        value: dynamicClass
-      })
-    }
     if (externalClasses.length) {
-      attrs.push({
+      addAttrs(el, [{
         name: 'v-ex-classes',
         value: JSON.stringify(externalClasses)
-      })
+      }])
     }
-    addAttrs(el, attrs)
   }
-  // todo 处理scoped的情况
 }
 
 function processScoped (el, options) {
