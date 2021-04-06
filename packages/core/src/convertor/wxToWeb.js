@@ -31,13 +31,7 @@ export default {
   pageMode: 'blend',
   // support传递为true以将methods外层的方法函数合入methods中
   support: true,
-  lifecycleProxyMap: {
-    '__created__': ['created', 'attached'],
-    '__mounted__': ['ready', 'onReady'],
-    '__destroyed__': ['detached', 'onUnload'],
-    '__updated__': ['updated'],
-    'errorCaptured': ['onError']
-  },
+  lifecycleProxyMap: wxLifecycle.lifecycleProxyMap,
   convert (options) {
     if (options.properties) {
       const newProps = {}
