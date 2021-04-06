@@ -53,7 +53,8 @@
     },
     data () {
       return {
-        isLoading: false
+        isLoading: false,
+        isAutoPullDown: true
       }
     },
     computed: {
@@ -112,8 +113,14 @@
           if (!val) {
             this.$emit('refresherrestore')
             this.isLoading = false
+            this.isAutoPullDown = true
             this.bs && this.bs.finishPullDown()
             this.bs && this.bs.refresh()
+          } else {
+            if (this.isAutoPullDown) {
+              this.isLoading = true
+              this.bs.autoPullDownRefresh()
+            }
           }
         },
       }
@@ -193,6 +200,9 @@
                 scrollTop: this.bs.y ? this.bs.y * -1 : 0
               }))
             }
+            if (this.refresherEnabled) {
+              this.isAutoPullDown = false
+            }
           })
           actionsHandlerHooks.on('move', () => {
             if (this.enhanced) {
@@ -203,6 +213,7 @@
             }
             if (this.refresherEnabled) {
               if (this.bs.y > 0 && this.bs.y < this.refresherThreshold && this.bs.movingDirectionY !== 1) {
+                this.isAutoPullDown = false
                 this.isLoading = false
                 this.$emit('refresherpulling')
               }
@@ -222,6 +233,7 @@
               if (this.bs.y > 0 && this.bs.movingDirectionY !== 1) {
                 this.isLoading = true
                 if (this.bs.y < this.refresherThreshold) {
+                  this.isAutoPullDown = true
                   this.$emit('refresherabort')
                 }
               }

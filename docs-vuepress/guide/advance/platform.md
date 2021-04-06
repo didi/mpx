@@ -364,7 +364,7 @@ web同名事件默认全部支持，已支持组件的特殊事件默认为支�
 :----|------- |---
 view|是
 cover-view|是
-scroll-view|是|scroll-view 转 web 底层滚动依赖 BetterScroll 实现<br/>支持额外传入以下属性： <br/><br/>`scrollOptions`: object <br/>可重写 BetterScroll 初始化基本配置<br/>若出现无法滚动，可尝试手动传入 `{ observeDOM: true }` <br/><br/> `updateRefresh`: boolean <br/>Vue updated 钩子函数触发时，可用于重新计算 BetterScroll
+scroll-view|是|scroll-view 转 web 底层滚动依赖 BetterScroll 实现支持额外传入以下属性： <br/><br/>`scroll-options`: object <br/>可重写 BetterScroll 初始化基本配置<br/>若出现无法滚动，可尝试手动传入 `{ observeDOM: true }` <br/><br/> `update-refresh`: boolean <br/>Vue updated 钩子函数触发时，可用于重新计算 BetterScroll<br/><br/>tips: 当使用下拉刷新相关属性时，由于 Vue 数据响应机制的限制，在 web 侧可能出现下拉组件状态无法复原的问题，可尝试在 `refresherrefresh` 事件中，手动将 refresher-triggered 属性值设置为 true
 progress|是
 navigator|是
 swiper|是
