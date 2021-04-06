@@ -957,6 +957,11 @@ module.exports = {
   - `publicPath` : 自定义 public 目录
   - `fallback` : 文件字节数大于限制时，为文件指定加载程序
 
+## json增强
+
+### packages
+
+### 自定义 page 路径
 
 ## Request query
 
