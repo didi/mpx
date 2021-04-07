@@ -933,6 +933,9 @@ function parse (template, options) {
 
   if (hasI18n) {
     if (i18n.injectComputed) {
+      if (!meta.computed) {
+        meta.computed = []
+      }
       meta.computed = meta.computed.concat(i18nInjectableComputed)
     } else {
       injectWxs(meta, i18nModuleName, i18nWxsRequest)
