@@ -13,3 +13,20 @@ export function mergeLifecycle (lifecycle) {
     }
   }
 }
+
+function mergeArrMap (target, source) {
+  Object.keys(source).forEach((key) => {
+    if (!target[key]) {
+      target[key] = source[key].slice()
+    } else {
+      target[key] = target[key].concat(source[key])
+    }
+  })
+}
+
+export function mergeLifecycleProxyMap (target, ...sources) {
+  sources.forEach((source) => {
+    mergeArrMap(target, source)
+  })
+  return target
+}

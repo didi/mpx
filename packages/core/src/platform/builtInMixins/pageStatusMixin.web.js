@@ -1,5 +1,6 @@
 import { CREATED } from '../../core/innerLifecycle'
 import { inBrowser } from '../../helper/utils'
+
 let systemInfo = {}
 
 let count = 0
@@ -32,6 +33,9 @@ function onResize () {
 
   if (_t) {
     _t.mpxPageStatus = `resize${count++}`
+    if (typeof _t.onResize === 'function') {
+      _t.onResize(systemInfo)
+    }
   }
 }
 
