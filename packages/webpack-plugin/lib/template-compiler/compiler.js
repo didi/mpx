@@ -932,7 +932,7 @@ function parse (template, options) {
   }
 
   if (hasI18n) {
-    if (i18n.injectComputed) {
+    if (i18n.useComputed) {
       if (!meta.computed) {
         meta.computed = []
       }
@@ -1351,10 +1351,9 @@ function parseMustache (raw = '') {
           const funcNameRE = new RegExp(`${i18nFuncName}\\(`)
           const funcNameREG = new RegExp(`${i18nFuncName}\\(`, 'g')
           if (funcNameRE.test(exp)) {
-            if (i18n.injectComputed) {
-              const funcName = funcNameRE.exec(exp)[1]
-              const i18nInjectComputedKey = `${i18nModuleName}_${funcName}_${i18nInjectableComputed.length + 1}`
-              i18nInjectableComputed.push(`${i18nInjectComputedKey}: function(){\nreturn this.${exp}}`)
+            if (i18n.useComputed) {
+              const i18nInjectComputedKey = `_i${i18nInjectableComputed.length + 1}`
+              i18nInjectableComputed.push(`${i18nInjectComputedKey}: function(){\nreturn ${exp}}`)
               exp = i18nInjectComputedKey
             } else {
               exp = exp.replace(funcNameREG, `${i18nModuleName}.$1(mpxLocale, `)
