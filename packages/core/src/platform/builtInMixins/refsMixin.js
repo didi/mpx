@@ -113,7 +113,7 @@ export default function getRefsMixin () {
       },
       __getRefNode (ref) {
         if (!ref) return
-        let selector = ref.selector.replace(/{{mpxCid}}/g, this.__mpxProxy.uid)
+        let selector = ref.selector.replace(/{{mpxCid}}/g, this.mpxCid)
         if (ref.type === 'node') {
           const query = this.createSelectorQuery ? this.createSelectorQuery() : envObj.createSelectorQuery()
           return query && (ref.all ? query.selectAll(selector) : query.select(selector))
