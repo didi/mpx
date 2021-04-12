@@ -151,9 +151,9 @@ module.exports = function (content) {
 
       const {
         getRequire,
-        getNamedExports,
         getRequireForSrc,
-        getNamedExportsForSrc
+        getRequestString,
+        getSrcRequestString
       } = createHelpers({
         loaderContext,
         options,
@@ -245,7 +245,7 @@ module.exports = function (content) {
               i18n,
               componentGenerics,
               jsonConfig: jsonRes.jsonObj,
-              mpxCid: queryObj.mpxCid,
+              componentId: queryObj.componentId || '',
               tabBarMap: jsonRes.tabBarMap,
               tabBarStr: jsonRes.tabBarStr,
               builtInComponentsMap: templateRes.builtInComponentsMap,
@@ -318,12 +318,17 @@ module.exports = function (content) {
       const script = parts.script
       if (script) {
         scriptSrcMode = script.mode || scriptSrcMode
+        let scriptRequestString
         if (script.src) {
           // 传入resourcePath以确保后续处理中能够识别src引入的资源为组件主资源
           script.src = processSrcQuery(script.src, 'script')
-          output += getNamedExportsForSrc('script', script) + '\n\n'
+          scriptRequestString = getSrcRequestString('script', script)
         } else {
-          output += getNamedExports('script', script) + '\n\n'
+          scriptRequestString = getRequestString('script', script)
+        }
+        if (scriptRequestString) {
+          output += 'export * from ' + scriptRequestString + '\n\n'
+          if (ctorType === 'app') mpx.appScriptRawRequest = JSON.parse(scriptRequestString)
         }
       } else {
         switch (ctorType) {

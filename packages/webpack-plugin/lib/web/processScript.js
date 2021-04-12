@@ -29,7 +29,7 @@ module.exports = function (script, options, callback) {
   const srcMode = options.srcMode
   const loaderContext = options.loaderContext
   const isProduction = options.isProduction
-  const mpxCid = options.mpxCid
+  const componentId = options.componentId
   const getRequireForSrc = options.getRequireForSrc
   const i18n = options.i18n
   const jsonConfig = options.jsonConfig
@@ -238,7 +238,7 @@ module.exports = function (script, options, callback) {
     currentOption,
     ${JSON.stringify(ctorType)},
     ${JSON.stringify(firstPage)},
-    ${JSON.stringify(mpxCid)},
+    ${JSON.stringify(componentId)},
     ${JSON.stringify(pageConfig)},
     // @ts-ignore
     ${shallowStringify(pagesMap)},

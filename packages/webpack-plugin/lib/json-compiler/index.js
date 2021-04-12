@@ -283,7 +283,7 @@ module.exports = function (raw = '{}') {
       // 此处query为了实现消除分包间模块缓存，以实现不同分包中引用的组件在不同分包中都能输出
       resource = addQuery(resource, {
         packageName: packageInfo.packageName
-      }, undefined, true)
+      })
       const componentPath = packageInfo.outputPath
       rewritePath && rewritePath(publicPath + componentPath)
       if (ext === '.js') {
@@ -445,10 +445,16 @@ module.exports = function (raw = '{}') {
         let srcRoot = subPackage.srcRoot || subPackage.root || ''
         if (!tarRoot || subPackagesCfg[tarRoot]) return callback()
 
+        const otherConfig = getOtherConfig(subPackage)
+        // 支付宝不支持独立分包，无需处理
+        if (otherConfig.independent && mode !== 'ali') {
+          mpx.independentSubpackagesMap[tarRoot] = true
+        }
+
         subPackagesCfg[tarRoot] = {
           root: tarRoot,
           pages: [],
-          ...getOtherConfig(subPackage)
+          ...otherConfig
         }
         mpx.currentPackageRoot = tarRoot
         mpx.componentsMap[tarRoot] = {}
@@ -659,6 +665,13 @@ module.exports = function (raw = '{}') {
           }
           callback()
         })
+      },
+      (callback) => {
+        if (mpx.appScriptPromise) {
+          mpx.appScriptPromise.then(callback)
+        } else {
+          callback()
+        }
       },
       (callback) => {
         async.series(processSubPackagesQueue, (err) => {

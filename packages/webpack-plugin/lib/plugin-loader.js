@@ -181,7 +181,7 @@ module.exports = function (source) {
           // 与json-compiler处理组件的行为表现一致
           resource = addQuery(resource, {
             packageName: 'main'
-          }, undefined, true)
+          })
           if (ext === '.js') {
             resource = '!!' + nativeLoaderPath + '!' + resource
           }

@@ -83,8 +83,8 @@ module.exports = function (json, options, rawCallback) {
     if (tabBar) {
       tabBar = Object.assign({}, defaultTabbar, tabBar)
       tabBarMap = {}
-      jsonObj.tabBar.list.forEach((item) => {
-        tabBarMap['/' + item.pagePath] = true
+      jsonObj.tabBar.list.forEach(({ pagePath }) => {
+        tabBarMap[pagePath] = true
       })
       tabBarStr = JSON.stringify(tabBar)
       tabBarStr = tabBarStr.replace(/"(iconPath|selectedIconPath)":"([^"]+)"/g, function (matched, $1, $2) {
@@ -209,7 +209,7 @@ module.exports = function (json, options, rawCallback) {
           // 获取pageName
           let pageName
           if (aliasPath) {
-            pageName = '/' + toPosix(path.join(tarRoot, aliasPath))
+            pageName = toPosix(path.join(tarRoot, aliasPath))
             // 判断 key 存在重复情况直接报错
             for (let key in pagesMap) {
               if (pagesMap[key] === pageName && key !== resourcePath) {
@@ -221,16 +221,16 @@ module.exports = function (json, options, rawCallback) {
             const relative = path.relative(context, resourcePath)
             if (/^\./.test(relative)) {
               // 如果当前page不存在于context中，对其进行重命名
-              pageName = '/' + toPosix(path.join(tarRoot, getPageName(resourcePath, ext)))
+              pageName = toPosix(path.join(tarRoot, getPageName(resourcePath, ext)))
               emitWarning(`Current page [${resourcePath}] is not in current pages directory [${context}], the page path will be replaced with [${pageName}], use ?resolve to get the page path and navigate to it!`)
             } else {
-              pageName = '/' + toPosix(path.join(tarRoot, /^(.*?)(\.[^.]*)?$/.exec(relative)[1]))
+              pageName = toPosix(path.join(tarRoot, /^(.*?)(\.[^.]*)?$/.exec(relative)[1]))
               // 如果当前page与已有page存在命名冲突，也进行重命名
               for (let key in pagesMap) {
                 // 此处引入pagesEntryMap确保相同entry下路由路径重复注册才报错，不同entry下的路由路径重复则无影响
                 if (pagesMap[key] === pageName && key !== resourcePath && pagesEntryMap[key] === loaderContext.resourcePath) {
                   const pageNameRaw = pageName
-                  pageName = '/' + toPosix(path.join(tarRoot, getPageName(resourcePath, ext)))
+                  pageName = toPosix(path.join(tarRoot, getPageName(resourcePath, ext)))
                   emitWarning(`Current page [${resourcePath}] is registered with a conflict page path [${pageNameRaw}] which is already existed in system, the page path will be replaced with [${pageName}], use ?resolve to get the page path and navigate to it!`)
                   break
                 }
@@ -306,7 +306,7 @@ module.exports = function (json, options, rawCallback) {
       buildInfo.componentsMap[resourcePath] = componentsMap[resourcePath] = componentId
 
       localComponentsMap[name] = {
-        resource: addQuery(resource, { component: true, mpxCid: componentId }),
+        resource: addQuery(resource, { component: true, componentId }),
         async: queryObj.async
       }
       callback()
