@@ -90,12 +90,20 @@ export default function processOption (
         const pageInRoutes = routes.some(item => item.path === to.path)
         if (!pageInRoutes) {
           if (stack.length < 1) {
-            // onPageNotFound，仅首次进入时生效
-            global.__mpxRouter.app.$options.onPageNotFound({
-              path: to.path,
-              query: to.query,
-              isEntryPage: true
-            })
+            if (global.__mpxRouter.app.$options.onPageNotFound) {
+              // onPageNotFound，仅首次进入时生效
+              global.__mpxRouter.app.$options.onPageNotFound({
+                path: to.path,
+                query: to.query,
+                isEntryPage: true
+              })
+              return
+            } else {
+              return next({
+                path: firstPage,
+                replace: true
+              })
+            }
           } else {
             let methods = ''
             switch (action.type) {
@@ -179,6 +187,15 @@ export default function processOption (
       })
       // 处理visibilitychange时触发当前活跃页面组件的onshow/onhide
       if (inBrowser) {
+        const errorHandler = function (e) {
+          if (global.__mpxAppCbs && global.__mpxAppCbs.error) {
+            global.__mpxAppCbs.error.forEach((cb) => {
+              cb(e)
+            })
+          }
+        }
+        Vue.config.errorHandler = errorHandler
+        window.addEventListener('error', errorHandler)
         document.addEventListener('visibilitychange', function () {
           const vnode = global.__mpxRouter && global.__mpxRouter.__mpxActiveVnode
           if (vnode && vnode.componentInstance) {
@@ -280,4 +297,26 @@ export function getComponent (component, extendOptions) {
   // eslint-disable-next-line
   if (extendOptions) Object.assign(component, extendOptions)
   return component
+}
+
+export function getWxsMixin (wxsModules) {
+  const keys = Object.keys(wxsModules)
+  if (keys.length) {
+    return {
+      created () {
+        let wxsWarns = keys.filter((item) => {
+          if (this[item]) {
+            return item
+          }
+          return false
+        })
+        if (wxsWarns.length) {
+          console.warn(`The "${wxsWarns}" has already been defined`)
+        }
+        Object.assign(this, wxsModules)
+      }
+    }
+  } else {
+    return {}
+  }
 }

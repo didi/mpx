@@ -68,10 +68,15 @@ function processTap (listeners, context) {
         }, 350)
       }
     },
-    touchmove () {
-      context.__mpxTapInfo.needTap = false
-      context.__mpxTapInfo.startTimer && clearTimeout(context.__mpxTapInfo.startTimer)
-      context.__mpxTapInfo.startTimer = null
+    touchmove (e) {
+      const tapDetailInfo = context.__mpxTapInfo.detail || {}
+      const currentPageX = e.changedTouches[0].pageX
+      const currentPageY = e.changedTouches[0].pageY
+      if (Math.abs(currentPageX - tapDetailInfo.x) > 1 || Math.abs(currentPageY - tapDetailInfo.y) > 1) {
+        context.__mpxTapInfo.needTap = false
+        context.__mpxTapInfo.startTimer && clearTimeout(context.__mpxTapInfo.startTimer)
+        context.__mpxTapInfo.startTimer = null
+      }
     },
     touchend (e) {
       context.__mpxTapInfo.startTimer && clearTimeout(context.__mpxTapInfo.startTimer)

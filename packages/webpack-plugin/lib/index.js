@@ -342,6 +342,7 @@ class MpxWebpackPlugin {
           attributes: this.options.attributes,
           externals: this.options.externals,
           useRelativePath: this.options.useRelativePath,
+          removedChunks: [],
           getEntryNode: (request, type, module) => {
             const entryNodesMap = mpx.entryNodesMap
             const entryModulesMap = mpx.entryModulesMap
@@ -480,7 +481,7 @@ class MpxWebpackPlugin {
 
       compilation.hooks.succeedModule.tap('MpxWebpackPlugin', (module) => {
         if (mpx.pluginMainResource && mpx.pluginMainResource === module.rawRequest) {
-          mpx.getEntryNode(mpx.pluginMainResource, 'Plugin', module)
+          mpx.getEntryNode(mpx.pluginMainResource, 'PluginMain', module)
         }
       })
 
@@ -1039,7 +1040,7 @@ try {
       function walkEntry (entryModule, sideEffect) {
         const modulesSet = new Set()
 
-        function walkDependencies (module, dependencies = []) {
+        function walkDependencies (dependencies = []) {
           dependencies.forEach((dep) => {
             // // We skip Dependencies without Reference
             // const ref = compilation.getDependencyReference(module, dep)
@@ -1064,9 +1065,12 @@ try {
           if (modulesSet.has(module)) return
           sideEffect && sideEffect(module, entryModule)
           modulesSet.add(module)
-          walkDependencies(module, module.dependencies)
+          walkDependencies(module.dependencies)
+          module.blocks.forEach((block) => {
+            walkDependencies(block.dependencies)
+          })
           module.variables.forEach((variable) => {
-            walkDependencies(module, variable.dependencies)
+            walkDependencies(variable.dependencies)
           })
         }
 
@@ -1080,7 +1084,7 @@ try {
       })
 
       // Walk and mark entryModules/noEntryModules
-      compilation.chunks.forEach((chunk) => {
+      compilation.chunks.concat(mpx.removedChunks).forEach((chunk) => {
         if (chunk.entryModule) {
           walkEntry(chunk.entryModule, (module, entryModule) => {
             module.entryModules = module.entryModules || new Set()
@@ -1157,14 +1161,14 @@ try {
         return {
           selfEntryModules: concat(map(filter(selfSet, item => {
             if (!item.module) {
-              compilation.warnings.push(`EntryNode[${item.request}] has no module, please check!`)
+              compilation.warnings.push(`EntryNode [${item.request}] has no module, please check!`)
               return false
             }
             return true
           }), item => item.module), otherSelfEntryModules),
           sharedEntryModules: map(filter(sharedSet, item => {
             if (!item.module) {
-              compilation.warnings.push(`EntryNode[${item.request}] has no module, please check!`)
+              compilation.warnings.push(`EntryNode [${item.request}] has no module, please check!`)
               return false
             }
             return true

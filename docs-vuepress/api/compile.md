@@ -345,6 +345,14 @@ new MpxWebpackPlugin({
 })
 ```
 
+使用的时候：
+
+```js
+const env = __env__;
+```
+
+> 注意：这里定义之后使用的时候是按照全局变量来使用，而非按照`process.env.KEY`这样的形式
+
 ### attributes
 
 - **类型**：`[key: string]`
@@ -730,6 +738,26 @@ new MpxWebpackPlugin({
   auditResource: true
 })
 ```
+
+### subpackageModulesRules
+
+- **类型**：`Object`
+
+- **详细**：是否将多分包共用的模块分别输出到各自分包中，匹配规则为include匹配到且未被exclude匹配到的资源
+
+- **背景**：依据微信小程序的分包策略，多个分包使用到的 js 模块会打入主包当中，但在大型分包较多的项目中，该策略极易将大量的模块打入主包，从而使主包体积大小超出2M限制，该配置项提供给开发者自主抉择，可将部分模块冗余输出至多个分包，从而控制主包体积不超限
+
+- **示例**：
+
+```js
+new MpxWebpackPlugin({
+  subpackageModulesRules: {
+    include: ['@someNpm/name/src/api/*.js'],
+    exclude: ['@someNpm/name/src/api/module.js']
+  }
+})
+```
+> tips: 该功能是将模块分别放入多个分包，模块状态不可复用，使用前要依据模块功能做好评估，例如全局store就不适用该功能
 
 ### generateBuildMap
 
