@@ -4,7 +4,7 @@ export default function processOption (
   option,
   ctorType,
   firstPage,
-  mpxCid,
+  componentId,
   pageConfig,
   pagesMap,
   componentsMap,
@@ -48,7 +48,7 @@ export default function processOption (
       if (pagesMap.hasOwnProperty(pagePath)) {
         const page = pagesMap[pagePath]
         routes.push({
-          path: pagePath,
+          path: '/' + pagePath,
           component: page
         })
       }
@@ -58,7 +58,7 @@ export default function processOption (
       if (firstPage) {
         routes.push({
           path: '/',
-          redirect: firstPage
+          redirect: '/' + firstPage
         })
       }
       global.__mpxRouter = option.router = new VueRouter({
@@ -153,7 +153,7 @@ export default function processOption (
               // 将非tabBar页面remove
               let tabItem = null
               global.__mpxRouter.needRemove = stack.filter((item) => {
-                if (tabBarMap[item.path]) {
+                if (tabBarMap[item.path.slice(1)]) {
                   tabItem = item
                   return false
                 }
@@ -279,8 +279,8 @@ registered in parent context!`)
     }
   }
 
-  if (mpxCid) {
-    option.mpxCid = mpxCid
+  if (componentId) {
+    option.componentPath = '/' + componentId
   }
 
   return option
