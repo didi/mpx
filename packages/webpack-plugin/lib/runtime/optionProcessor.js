@@ -152,7 +152,7 @@ export default function processOption (
               // 将非tabBar页面remove
               let tabItem = null
               global.__mpxRouter.needRemove = stack.filter((item) => {
-                if (tabBarMap[item.path]) {
+                if (tabBarMap[item.path.slice(1)]) {
                   tabItem = item
                   return false
                 }

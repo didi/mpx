@@ -309,7 +309,7 @@ class MpxWebpackPlugin {
           },
           // 记录独立分包
           independentSubpackagesMap: {},
-          // 当前机制下分包处理队列在app.json的json-compiler中进行，由于addEntry回调特性，无法保障app.js中引用的模块都被标记为主包，故重写processModuleDependencies获取app.js极其所有依赖处理完成的时机，在这之后再执行分包处理队列
+          // 当前机制下分包处理队列在app.json的json-compiler中进行，由于addEntry回调特性，无法保障app.js中引用的模块都被标记为主包，故重写processModuleDependencies获取app.js及其所有依赖处理完成的时机，在这之后再执行分包处理队列
           appScriptRawRequest: '',
           appScriptPromise: null,
           // 记录entry依赖关系，用于体积分析
@@ -448,11 +448,11 @@ class MpxWebpackPlugin {
           mpx.appScriptPromise = new Promise((resolve) => {
             proxyedCallback = (err) => {
               resolve()
-              callback(err)
+              return callback(err)
             }
           })
         }
-        rawProcessModuleDependencies.apply(compilation, [module, proxyedCallback])
+        return rawProcessModuleDependencies.apply(compilation, [module, proxyedCallback])
       }
 
       // 处理watch时缓存模块中的buildInfo
