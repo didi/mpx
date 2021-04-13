@@ -957,6 +957,46 @@ module.exports = {
   - `publicPath` : 自定义 public 目录
   - `fallback` : 文件字节数大于限制时，为文件指定加载程序
 
+## json增强
+### 自定义 page 路径
+- **背景**: 用户在进行分包或主包的 pages 配置时，如果引用的页面不存在于当前 app.mpx 所在的上下文中，例如存在于 npm 包中，为避免和本地声明的其他 page 路径冲突，Mpx 会对路径进行 hash 化处理。这样一来，用户就无法使用之前定义的路径；此外部分用户也希望可以对引入的页面路径进行自定义。
+
+- **详细**: 在 json 中配置 pages 时，数组中支持放入 Object，对象中传入两个字段，src 字段表示页面地址，path 字段表示自定义页面路径
+
+- **示例**:
+```js
+{
+  // 主包中的声明
+  "pages": [
+    {
+      "src": "@someGroup/someNpmPackage/pages/view/index.mpx",
+      "path": "pages/somNpmPackage/index" // 注意保持 path 的唯一性
+    }
+  ],
+  // 分包中的声明
+  "subPackages": [
+    {
+      "root": "test",
+      "pages": [
+         {
+           "src": "@someGroup/someNpmPackage/pages/view/test.mpx",
+           "path": "pages/somNpmPackage/test" // 注意保持 path 的唯一性
+         }
+      ]
+    }
+  ]
+}
+
+// 使用
+// 可以直接使用你自己声明的 path
+mpx.navigateTo({
+  url: '/pages/somNpmPackage/index'
+})
+
+mpx.navigateTo({
+  url: '/test/pages/somNpmPackage/test'
+})
+```
 
 ## Request query
 
