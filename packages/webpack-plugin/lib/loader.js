@@ -273,7 +273,7 @@ module.exports = function (content) {
         globalInjectCode += `global.currentResource = ${JSON.stringify(filePath)}\n`
       }
       if (ctorType === 'app' && i18n && !mpx.forceDisableInject) {
-        globalInjectCode += `global.i18n = ${JSON.stringify({ locale: i18n.locale })}\n`
+        globalInjectCode += `global.i18n = ${JSON.stringify({ locale: i18n.locale, version: 0 })}\n`
 
         const i18nMethodsVar = 'i18nMethods'
         const i18nWxsPath = normalize.lib('runtime/i18n.wxs')

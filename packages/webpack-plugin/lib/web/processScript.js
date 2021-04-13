@@ -150,6 +150,11 @@ module.exports = function (script, options, callback) {
             content += `  i18nCfg.${key} = require(${requestObj[key]})\n`
           })
           content += `  const i18n = new VueI18n(i18nCfg)
+  i18n.mergeMessages = (newMessages) => {
+    Object.keys(newMessages).forEach((locale) => {
+      i18n.mergeLocaleMessage(locale, newMessages[locale])
+    })
+  }
   if(global.__mpx) {
     global.__mpx.i18n = i18n
   }\n`
