@@ -244,6 +244,7 @@ module.exports = function (content) {
               getRequireForSrc,
               i18n,
               componentGenerics,
+              projectRoot,
               jsonConfig: jsonRes.jsonObj,
               componentId: queryObj.componentId || '',
               tabBarMap: jsonRes.tabBarMap,

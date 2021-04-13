@@ -301,23 +301,16 @@ export function getComponent (component, extendOptions) {
 }
 
 export function getWxsMixin (wxsModules) {
-  const keys = Object.keys(wxsModules)
-  if (keys.length) {
-    return {
-      created () {
-        let wxsWarns = keys.filter((item) => {
-          if (this[item]) {
-            return item
-          }
-          return false
-        })
-        if (wxsWarns.length) {
-          console.warn(`The "${wxsWarns}" has already been defined`)
+  if (!wxsModules) return {}
+  return {
+    created () {
+      Object.keys(wxsModules).forEach((key) => {
+        if (key in this) {
+          console.error(`[Mpx runtime error]: The wxs module key [${key}] exist in the component/page instance already, please check and rename it!`)
+        } else {
+          this[key] = wxsModules[key]
         }
-        Object.assign(this, wxsModules)
-      }
+      })
     }
-  } else {
-    return {}
   }
 }

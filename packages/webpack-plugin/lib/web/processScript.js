@@ -102,14 +102,16 @@ module.exports = function (script, options, callback) {
       return attrs
     },
     content (script) {
-      const wxsModuleMap = options.wxsModuleMap || []
-      let wxsRequest = 'const wxsModules = {}\n'
-      for (let item in wxsModuleMap) {
-        const src = loaderUtils.urlToRequest(wxsModuleMap[item])
-        const expression = `require(${loaderUtils.stringifyRequest(this, src)})`
-        wxsRequest += `wxsModules['${item}'] = ${expression}\n`
+      let content = `\n  import processOption, { getComponent, getWxsMixin } from ${stringifyRequest(optionProcessorPath)}\n`
+      content += 'const wxsModules = {}\n'
+      if (options.wxsModuleMap) {
+        Object.keys(options.wxsModuleMap).forEach((key) => {
+          const src = loaderUtils.urlToRequest(options.wxsModuleMap[module], options.projectRoot)
+          const expression = `require(${stringifyRequest(src)})`
+          content += `wxsModules['${key}'] = ${expression}\n`
+        })
       }
-      let content = `\n  import processOption, { getComponent, getWxsMixin } from ${stringifyRequest(optionProcessorPath)}\n${wxsRequest}\n`
+
       // add import
       if (ctorType === 'app') {
         content += `  import '@mpxjs/webpack-plugin/lib/runtime/base.styl'
@@ -251,8 +253,9 @@ module.exports = function (script, options, callback) {
     ${shallowStringify(componentsMap)},
     ${JSON.stringify(tabBarMap)},
     ${JSON.stringify(componentGenerics)},
-    ${JSON.stringify(genericsInfo)}`
-      content += `,getWxsMixin(wxsModules)`
+    ${JSON.stringify(genericsInfo)},
+    getWxsMixin(wxsModules)`
+
       if (ctorType === 'app') {
         content += `,
     Vue,

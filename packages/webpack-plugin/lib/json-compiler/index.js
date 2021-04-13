@@ -41,7 +41,7 @@ module.exports = function (raw = '{}') {
 
   const stringifyRequest = r => loaderUtils.stringifyRequest(this, r)
   const isUrlRequest = r => isUrlRequestRaw(r, options.root)
-  const urlToRequest = r => loaderUtils.urlToRequest(r, options.root)
+  const urlToRequest = r => loaderUtils.urlToRequest(r)
 
   if (!mpx) {
     return nativeCallback(null, raw)

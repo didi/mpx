@@ -33,8 +33,7 @@ module.exports = function (template, options, callback) {
   const mainCompilation = getMainCompilation(compilation)
   const mpx = mainCompilation.__mpx__
   const wxsContentMap = mpx.wxsContentMap
-  let wxsModuleMap = {}
-  let genericsInfo
+  let wxsModuleMap, genericsInfo
   let output = '/* template */\n'
 
   if (ctorType === 'app') {
@@ -92,12 +91,14 @@ module.exports = function (template, options, callback) {
           // web模式下实现抽象组件
           componentGenerics: options.componentGenerics
         })
+        if (parsed.meta.wxsModuleMap) {
+          wxsModuleMap = parsed.meta.wxsModuleMap
+        }
         if (parsed.meta.wxsContentMap) {
           for (let module in parsed.meta.wxsContentMap) {
             wxsContentMap[`${resourcePath}~${module}`] = parsed.meta.wxsContentMap[module]
           }
         }
-        wxsModuleMap = parsed.meta.wxsModuleMap ? parsed.meta.wxsModuleMap : {}
         if (parsed.meta.builtInComponentsMap) {
           Object.keys(parsed.meta.builtInComponentsMap).forEach((name) => {
             builtInComponentsMap[name] = {
