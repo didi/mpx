@@ -160,12 +160,13 @@ module.exports = function (script, options, callback) {
   }\n`
         }
       }
+      // 注入wxs模块
       content += '  const wxsModules = {}\n'
       if (options.wxsModuleMap) {
         Object.keys(options.wxsModuleMap).forEach((module) => {
           const src = loaderUtils.urlToRequest(options.wxsModuleMap[module], options.projectRoot)
           const expression = `require(${stringifyRequest(src)})`
-          content += `  wxsModules['${module}'] = ${expression}\n`
+          content += `  wxsModules.${module} = ${expression}\n`
         })
       }
       let firstPage = ''
