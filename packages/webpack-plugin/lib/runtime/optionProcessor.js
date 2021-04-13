@@ -11,6 +11,7 @@ export default function processOption (
   tabBarMap,
   componentGenerics,
   genericsInfo,
+  mixin,
   Vue,
   VueRouter,
   i18n
@@ -279,6 +280,12 @@ registered in parent context!`)
     }
   }
 
+  if (option.mixins) {
+    option.mixins.push(mixin)
+  } else {
+    option.mixins = [mixin]
+  }
+
   if (componentId) {
     option.componentPath = '/' + componentId
   }
@@ -291,4 +298,26 @@ export function getComponent (component, extendOptions) {
   // eslint-disable-next-line
   if (extendOptions) Object.assign(component, extendOptions)
   return component
+}
+
+export function getWxsMixin (wxsModules) {
+  const keys = Object.keys(wxsModules)
+  if (keys.length) {
+    return {
+      created () {
+        let wxsWarns = keys.filter((item) => {
+          if (this[item]) {
+            return item
+          }
+          return false
+        })
+        if (wxsWarns.length) {
+          console.warn(`The "${wxsWarns}" has already been defined`)
+        }
+        Object.assign(this, wxsModules)
+      }
+    }
+  } else {
+    return {}
+  }
 }

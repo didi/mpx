@@ -3,6 +3,7 @@ const genComponentTag = require('../utils/gen-component-tag')
 const addQuery = require('../utils/add-query')
 const path = require('path')
 const parseRequest = require('../utils/parse-request')
+const getMainCompilation = require('../utils/get-main-compilation')
 
 function calculateRootEleChild (arr) {
   if (!arr) {
@@ -28,6 +29,11 @@ module.exports = function (template, options, callback) {
   const ctorType = options.ctorType
   const resourcePath = parseRequest(loaderContext.resource).resourcePath
   const builtInComponentsMap = {}
+  const compilation = loaderContext._compilation
+  const mainCompilation = getMainCompilation(compilation)
+  const mpx = mainCompilation.__mpx__
+  const wxsContentMap = mpx.wxsContentMap
+  let wxsModuleMap = {}
   let genericsInfo
   let output = '/* template */\n'
 
@@ -86,6 +92,12 @@ module.exports = function (template, options, callback) {
           // web模式下实现抽象组件
           componentGenerics: options.componentGenerics
         })
+        if (parsed.meta.wxsContentMap) {
+          for (let module in parsed.meta.wxsContentMap) {
+            wxsContentMap[`${resourcePath}~${module}`] = parsed.meta.wxsContentMap[module]
+          }
+        }
+        wxsModuleMap = parsed.meta.wxsModuleMap ? parsed.meta.wxsModuleMap : {}
         if (parsed.meta.builtInComponentsMap) {
           Object.keys(parsed.meta.builtInComponentsMap).forEach((name) => {
             builtInComponentsMap[name] = {
@@ -112,6 +124,7 @@ module.exports = function (template, options, callback) {
   callback(null, {
     output,
     builtInComponentsMap,
-    genericsInfo
+    genericsInfo,
+    wxsModuleMap
   })
 }

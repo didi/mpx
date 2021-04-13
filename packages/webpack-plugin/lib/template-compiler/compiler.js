@@ -2079,6 +2079,7 @@ function processElement (el, root, options, meta) {
 function closeElement (el, meta) {
   postProcessAtMode(el)
   if (mode === 'web') {
+    postProcessWxs(el, meta)
     // 处理代码维度条件编译移除死分支
     postProcessIf(el)
     return
@@ -2183,6 +2184,9 @@ function serialize (root) {
         } else {
           result += node.text
         }
+      }
+      if (node.tag === 'wxs' && mode === 'web') {
+        return result
       }
       if (node.type === 1) {
         if (node.tag !== 'temp-node') {
