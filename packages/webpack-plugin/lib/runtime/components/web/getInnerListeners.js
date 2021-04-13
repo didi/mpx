@@ -90,6 +90,10 @@ function processTap (listeners, context) {
     events = {
       click (e) {
         if (listeners.tap) {
+          context.__mpxTapInfo.detail = {
+            x: e.changedTouches[0].pageX,
+            y: e.changedTouches[0].pageY
+          }
           const re = inheritEvent('tap', e, context.__mpxTapInfo.detail)
           context.$emit('tap', re)
         }
