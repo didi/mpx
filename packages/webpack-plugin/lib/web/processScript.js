@@ -103,15 +103,6 @@ module.exports = function (script, options, callback) {
     },
     content (script) {
       let content = `\n  import processOption, { getComponent, getWxsMixin } from ${stringifyRequest(optionProcessorPath)}\n`
-      content += 'const wxsModules = {}\n'
-      if (options.wxsModuleMap) {
-        Object.keys(options.wxsModuleMap).forEach((key) => {
-          const src = loaderUtils.urlToRequest(options.wxsModuleMap[module], options.projectRoot)
-          const expression = `require(${stringifyRequest(src)})`
-          content += `wxsModules['${key}'] = ${expression}\n`
-        })
-      }
-
       // add import
       if (ctorType === 'app') {
         content += `  import '@mpxjs/webpack-plugin/lib/runtime/base.styl'
@@ -168,6 +159,14 @@ module.exports = function (script, options, callback) {
     global.__mpx.i18n = i18n
   }\n`
         }
+      }
+      content += '  const wxsModules = {}\n'
+      if (options.wxsModuleMap) {
+        Object.keys(options.wxsModuleMap).forEach((module) => {
+          const src = loaderUtils.urlToRequest(options.wxsModuleMap[module], options.projectRoot)
+          const expression = `require(${stringifyRequest(src)})`
+          content += `  wxsModules['${module}'] = ${expression}\n`
+        })
       }
       let firstPage = ''
       const pagesMap = {}
