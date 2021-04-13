@@ -31,7 +31,7 @@
     "babylon": "^6.18.0",
     "consolidate": "^0.15.1",
     "css": "^2.2.1",
-    "css-seleqctor-tokenizer": "^0.7.0",
+    "css-selector-tokenizer": "^0.7.0",
     "cssnano": "^3.10.0",
     "de-indent": "^1.0.2",
     "fastparse": "^1.1.1",
