@@ -183,7 +183,7 @@ type MpxComProps<O> = { $rawOptions: O }
 
 export interface MpxComponentIns {
 
-  $refs: ObjectOf<WechatMiniprogram.NodesRef>
+  $refs: ObjectOf<WechatMiniprogram.NodesRef | ComponentIns<{}, {}, {}, {}, []>>
 
   $set: typeof set
 
