@@ -29,13 +29,14 @@ describe('test toast', () => {
     expect(success.mock.calls[0][0]['errMsg']).toBe('showToast:ok')
     expect(complete.mock.calls.length).toBe(1)
 
+    // default duration is 1500ms
     setTimeout(() => {
       expect(toast).toHaveAttribute('class', expect.stringContaining('show'))
       expect(mask).toHaveAttribute('class', expect.not.stringContaining('show'))
       expect(toast.childNodes.length).toBe(2)
       expect(icon).toHaveAttribute('class', expect.stringContaining('success'))
       expect(title).toHaveTextContent(text)
-    }, 1500)
+    }, 1000)
     setTimeout(() => {
       expect(toast).toHaveAttribute('class', expect.not.stringContaining('show'))
       done()
