@@ -15,12 +15,11 @@
   export default {
     name: 'mpx-checkbox-group',
     props: {
-      name: String,
-      value: {
-        type: Array,
-        default () {
-          return []
-        }
+      name: String
+    },
+    data () {
+      return {
+        value: []
       }
     },
     render (createElement) {
@@ -49,8 +48,8 @@
               if (!component.group) {
                 component.group = this
               }
-              if (component.group === this && el && el.checked && el.value) {
-                value.push(el.value)
+              if (component.group === this && component.isChecked && component.value) {
+                value.push(component.value)
               }
             }
           }
@@ -66,8 +65,8 @@
               if (!component.group) {
                 component.group = this
               }
-              if (component.group === this && el && el.value) {
-                el.checked = value.indexOf(el.value) !== -1
+              if (component.group === this && component.value) {
+                component.isChecked = value.indexOf(component.isChecked) !== -1
               }
             }
           }

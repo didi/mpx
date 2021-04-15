@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/core",
-  "version": "2.6.48",
+  "version": "2.6.56",
   "description": "mpx runtime core",
   "keywords": [
     "miniprogram",
@@ -18,7 +18,7 @@
     "@types"
   ],
   "dependencies": {
-    "lodash.throttle": "^4.1.1",
+    "lodash": "^4.1.1",
     "miniprogram-api-typings": "^3.0.2"
   },
   "peerDependencies": {

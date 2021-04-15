@@ -79,6 +79,7 @@ const sidebar = {
     { title: 'Mpx框架初体验', path: 'mpx1' },
     { title: 'Mpx框架技术揭秘', path: 'mpx2' },
     { title: '基于Mpx的小程序体积优化', path: 'size-control' },
+    { title: 'Mpx中基于 Typescript Template Literal Types 实现链式key的类型推导', path: 'ts-derivation' },
   ]
 }
 
