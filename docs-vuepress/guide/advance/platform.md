@@ -303,7 +303,7 @@ other {
 
 ## 跨平台输出web
 
-从2.3.0版本开始，Mpx开始支持将已有项目跨平台输出web平台中运行的能力，由于该能力目前还处于持续开发阶段，目前仅支持将一些简单的运营类的小程序输出为web项目，无法直接转换大型复杂项目，我们会持续对输出web的能力进行完善和补全，以提高其适用范围和开发体验。
+从2.3.0版本开始，Mpx开始支持将已有项目跨平台输出web平台中运行的能力，目前输出web能力完备，能够支持直接转换大型复杂项目，我们会持续对输出web的能力进行优化，不断的建全更全面的适用范围和开发体验。
 
 ### 技术实现
 
@@ -313,10 +313,10 @@ other {
 
 ### 使用方法
 
-使用@mpxjs/cli创建新项目时选择跨平台并选择输出web后，即可生成可输出web的示例项目，运行`npm run watch:web`，就会在dist/web下输出构建后的web项目，并启动静态服务预览运行。
+使用@mpxjs/cli创建新项目时选择跨平台并选择输出web后，即可生成可输出web的示例项目，运行`npm run watch:web:serve`，就会在dist/web下输出构建后的web项目，并启动静态服务预览运行。
 
 ### 支持范围
-目前输出web的能力仍处于持续开发阶段，现阶段支持的小程序技术能力范围有限，下列表格中显示了当前版本中已支持的能力范围
+目前对输出web的通用能力支持已经非常完备，下列表格中显示了当前版本中已支持的能力范围
 
 #### 模板指令
 指令名称|是否支持
@@ -362,29 +362,40 @@ web同名事件默认全部支持，已支持组件的特殊事件默认为支�
 
 组件名称|是否支持|说明
 :----|---- |----
-view|是
-cover-view|是
-scroll-view|是|scroll-view 转 web 底层滚动依赖 BetterScroll 实现支持额外传入以下属性： <br/><br/>`scroll-options`: object <br/>可重写 BetterScroll 初始化基本配置<br/>若出现无法滚动，可尝试手动传入 `{ observeDOM: true }` <br/><br/> `update-refresh`: boolean <br/>Vue updated 钩子函数触发时，可用于重新计算 BetterScroll<br/><br/>tips: 当使用下拉刷新相关属性时，由于 Vue 数据响应机制的限制，在 web 侧可能出现下拉组件状态无法复原的问题，可尝试在 `refresherrefresh` 事件中，手动将 refresher-triggered 属性值设置为 true
-progress|是
-navigator|是
-swiper|是
-swiper-item|是
-text|是
-image|是
+audio|是
 block|是
-form|是
-input|是
-textarea|是
 button|是
+canvas|是
 checkbox|是
 checkbox-group|是
+cover-view|是
+form|是
+image|是
+input|是
+movable-area|是
+movable-view|是
+navigator|是
+picker|是
+picker-view|是
+progress|是
 radio|是
 radio-group|是
-picker|是
+rich-text|是
+scroll-view|是|scroll-view 转 web 底层滚动依赖 BetterScroll 实现支持额外传入以下属性： <br/><br/>`scroll-options`: object <br/>可重写 BetterScroll 初始化基本配置<br/>若出现无法滚动，可尝试手动传入 `{ observeDOM: true }` <br/><br/> `update-refresh`: boolean <br/>Vue updated 钩子函数触发时，可用于重新计算 BetterScroll<br/><br/>tips: 当使用下拉刷新相关属性时，由于 Vue 数据响应机制的限制，在 web 侧可能出现下拉组件状态无法复原的问题，可尝试在 `refresherrefresh` 事件中，手动将 refresher-triggered 属性值设置为 true
+swiper|是
+swiper-item|是
+switch|是
+slider|是
+text|是
+textarea|是
+video|是
+view|是
+web-view|是
+在项目的app.json 中配置 "style": "v2"启用新版的组件样式，涉及的组件有 button icon radio checkbox switch slider在输出web时也与小程序保持了一致
 
 #### 生命周期
 
-声明周期名称|是否支持
+生命周期名称|是否支持
 :----|----
 onLaunch|是
 onLoad|是
@@ -399,6 +410,17 @@ ready|是
 detached|是
 updated|是
 
+#### 应用级事件
+
+应用级事件名称|是否支持
+:----|----
+onPageNotFound|是
+onPageScroll|是
+onPullDownRefresh|是
+onReachBottom|是
+onResize|是
+onTabItemTap|是
+
 #### 组件配置
 
 
@@ -408,8 +430,10 @@ properties|部分支持，observer不支持，请使用watch代替
 data|支持
 watch|支持
 computed|支持
+relations|支持
 methods|支持
 mixins|支持
+pageLifetimes|支持
 observers|不支持，请使用watch代替
 behaviors|不支持，请使用mixins代替
 
@@ -463,14 +487,29 @@ offWindowResize|支持
 #### JSON配置
 配置项|是否支持
 :----|----
-pages|是
-usingComponents|是
+backgroundColor|是
+backgroundTextStyle|是
+disableScroll|是
+enablePullDownRefresh|是
+onReachBottomDistance|是
 packages|是
-subpackages|是
+pages|是
+navigationBarBackgroundColor|是
+navigationBarTextStyle|是
 navigationBarTitleText|是
+networkTimeout|是
+subpackages|是
+tabBar|是
+usingComponents|是
+window|是
 
 #### 拓展能力
 能力|是否支持
 :---|---
 fetch|是
 i18n|是
+
+#### 小程序其他原生能力
+能力|是否支持
+:---|---
+wxs|是
