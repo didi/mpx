@@ -116,7 +116,11 @@ export function inheritEvent (type, oe, detail = {}) {
 
 export function getCustomEvent (type, detail = {}) {
   /* eslint-disable no-undef */
-  const ce = { type, detail }
+  const ce = {
+    type,
+    detail,
+    timeStamp: new Date().valueOf()
+  }
   return ce
 }
 
