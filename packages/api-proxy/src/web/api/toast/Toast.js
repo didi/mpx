@@ -65,12 +65,12 @@ export default class Toast {
       const defaultIconClass = '__mpx_toast_icon__'
 
       const iconClass = opts.image
-          ? '' // image
-          : opts.icon === 'none'
-              ? 'hide' // none
-              : (opts.icon === 'error')
-                  ? 'error'
-                  : 'success' // default
+        ? '' // image
+        : opts.icon === 'none'
+          ? 'hide' // none
+          : opts.icon === 'error'
+            ? 'error'
+            : 'success' // default
 
       this.icon.classList = `${iconClass} ${defaultIconClass}`
       this.icon.style.cssText = opts.image && `background-image: url(${opts.image})`
