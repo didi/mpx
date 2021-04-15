@@ -2,13 +2,13 @@ const NullDependency = require('webpack/lib/dependencies/NullDependency')
 const parseRequest = require('../utils/parse-request')
 
 class ResolveDependency extends NullDependency {
-  constructor (resource, packageName, pagesMap, componentsMap, staticResourceMap, publicPath, range, issuerResource) {
+  constructor (resource, packageName, pagesMap, componentsMap, staticResourcesMap, publicPath, range, issuerResource) {
     super()
     this.resource = resource
     this.packageName = packageName
     this.pagesMap = pagesMap
     this.componentsMap = componentsMap
-    this.staticResourceMap = staticResourceMap
+    this.staticResourcesMap = staticResourcesMap
     this.publicPath = publicPath
     this.range = range
     this.issuerResource = issuerResource
@@ -34,8 +34,10 @@ ResolveDependency.Template = class ResolveDependencyTemplate {
     const resourcePath = parseRequest(dep.resource).resourcePath
     const pagesMap = dep.pagesMap
     const componentsMap = dep.componentsMap[dep.packageName]
-    const staticResourceMap = dep.staticResourceMap[dep.packageName]
-    const resolved = pagesMap[resourcePath] || componentsMap[resourcePath] || staticResourceMap[resourcePath]
+    const mainComponentsMap = dep.componentsMap.main
+    const staticResourcesMap = dep.staticResourcesMap[dep.packageName]
+    const mainStaticResourcesMap = dep.staticResourcesMap.main
+    const resolved = pagesMap[resourcePath] || componentsMap[resourcePath] || mainComponentsMap[resourcePath] || staticResourcesMap[resourcePath] || mainStaticResourcesMap[resourcePath]
     if (!resolved) {
       throw new Error(`Path ${dep.resource} is not a page/component/static resource, which is resolved from ${dep.issuerResource}!`)
     }

@@ -1,11 +1,12 @@
 import { CREATED } from '../../core/innerLifecycle'
 import { inBrowser } from '../../helper/utils'
+
 let systemInfo = {}
 
 let count = 0
 
 function getCurrentPageInstance () {
-  let vnode = global.__mpxRouter.__mpxActiveVnode
+  let vnode = global.__mpxRouter && global.__mpxRouter.__mpxActiveVnode
   let pageInstance
   if (vnode && vnode.componentInstance) {
     pageInstance = vnode.tag.endsWith('mpx-tab-bar-container') ? vnode.componentInstance.$children[1] : vnode.componentInstance
@@ -32,6 +33,9 @@ function onResize () {
 
   if (_t) {
     _t.mpxPageStatus = `resize${count++}`
+    if (typeof _t.onResize === 'function') {
+      _t.onResize(systemInfo)
+    }
   }
 }
 

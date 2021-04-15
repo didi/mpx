@@ -1,4 +1,5 @@
 import { webHandleSuccess, webHandleFail } from '../../../common/js'
+import { EventChannel } from '../event-channel'
 
 function redirectTo (options = {}) {
   const router = global.__mpxRouter
@@ -27,14 +28,21 @@ function redirectTo (options = {}) {
 function navigateTo (options = {}) {
   const router = global.__mpxRouter
   if (router) {
-    router.__mpxAction = { type: 'to' }
+    const eventChannel = new EventChannel()
+    router.__mpxAction = {
+      type: 'to',
+      eventChannel
+    }
+    if (options.events) {
+      eventChannel._addListeners(options.events)
+    }
     return new Promise((resolve, reject) => {
       router.push(
         {
           path: options.url
         },
         () => {
-          const res = { errMsg: 'navigateTo:ok', eventChannel: null }
+          const res = { errMsg: 'navigateTo:ok', eventChannel }
           webHandleSuccess(res, options.success, options.complete)
           resolve(res)
         },

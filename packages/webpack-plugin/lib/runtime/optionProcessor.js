@@ -1,15 +1,17 @@
 import { inBrowser } from '../utils/env'
+
 export default function processOption (
   option,
   ctorType,
   firstPage,
-  mpxCid,
+  componentId,
   pageConfig,
   pagesMap,
   componentsMap,
   tabBarMap,
   componentGenerics,
   genericsInfo,
+  mixin,
   Vue,
   VueRouter,
   i18n
@@ -33,8 +35,8 @@ export default function processOption (
           const actualExternalClassNames = context.$attrs[className]
           if (externalClasses.indexOf(className) !== -1 && actualExternalClassNames) {
             classList.remove(className)
-            actualExternalClassNames.split(' ').forEach((actualExternalClassName) => {
-              classList.add(actualExternalClassName)
+            actualExternalClassNames.split(/\s+/).forEach((actualExternalClassName) => {
+              if (actualExternalClassName) classList.add(actualExternalClassName)
             })
           }
         })
@@ -47,7 +49,7 @@ export default function processOption (
       if (pagesMap.hasOwnProperty(pagePath)) {
         const page = pagesMap[pagePath]
         routes.push({
-          path: pagePath,
+          path: '/' + pagePath,
           component: page
         })
       }
@@ -57,7 +59,7 @@ export default function processOption (
       if (firstPage) {
         routes.push({
           path: '/',
-          redirect: firstPage
+          redirect: '/' + firstPage
         })
       }
       global.__mpxRouter = option.router = new VueRouter({
@@ -88,12 +90,21 @@ export default function processOption (
         const pageInRoutes = routes.some(item => item.path === to.path)
         if (!pageInRoutes) {
           if (stack.length < 1) {
-            // onPageNotFound，仅首次进入时生效
-            global.__mpxRouter.app.$options.onPageNotFound({
-              path: to.path,
-              query: to.query,
-              isEntryPage: true
-            })
+            if (global.__mpxRouter.app.$options.onPageNotFound) {
+              // onPageNotFound，仅首次进入时生效
+              global.__mpxRouter.app.$options.onPageNotFound({
+                path: to.path,
+                query: to.query,
+                isEntryPage: true
+              })
+              return
+            } else {
+              console.warn(`[Mpx runtime warn]: the ${to.path} path does not exist in the application，will redirect to the home page path ${firstPage}`)
+              return next({
+                path: firstPage,
+                replace: true
+              })
+            }
           } else {
             let methods = ''
             switch (action.type) {
@@ -143,7 +154,7 @@ export default function processOption (
               // 将非tabBar页面remove
               let tabItem = null
               global.__mpxRouter.needRemove = stack.filter((item) => {
-                if (tabBarMap[item.path]) {
+                if (tabBarMap[item.path.slice(1)]) {
                   tabItem = item
                   return false
                 }
@@ -177,8 +188,17 @@ export default function processOption (
       })
       // 处理visibilitychange时触发当前活跃页面组件的onshow/onhide
       if (inBrowser) {
+        const errorHandler = function (e) {
+          if (global.__mpxAppCbs && global.__mpxAppCbs.error) {
+            global.__mpxAppCbs.error.forEach((cb) => {
+              cb(e)
+            })
+          }
+        }
+        Vue.config.errorHandler = errorHandler
+        window.addEventListener('error', errorHandler)
         document.addEventListener('visibilitychange', function () {
-          const vnode = global.__mpxRouter.__mpxActiveVnode
+          const vnode = global.__mpxRouter && global.__mpxRouter.__mpxActiveVnode
           if (vnode && vnode.componentInstance) {
             const currentPage = vnode.tag.endsWith('mpx-tab-bar-container') ? vnode.componentInstance.$refs.tabBarPage : vnode.componentInstance
             if (document.hidden) {
@@ -260,8 +280,14 @@ registered in parent context!`)
     }
   }
 
-  if (mpxCid) {
-    option.mpxCid = mpxCid
+  if (option.mixins) {
+    option.mixins.push(mixin)
+  } else {
+    option.mixins = [mixin]
+  }
+
+  if (componentId) {
+    option.componentPath = '/' + componentId
   }
 
   return option
@@ -272,4 +298,19 @@ export function getComponent (component, extendOptions) {
   // eslint-disable-next-line
   if (extendOptions) Object.assign(component, extendOptions)
   return component
+}
+
+export function getWxsMixin (wxsModules) {
+  if (!wxsModules) return {}
+  return {
+    created () {
+      Object.keys(wxsModules).forEach((key) => {
+        if (key in this) {
+          console.error(`[Mpx runtime error]: The wxs module key [${key}] exist in the component/page instance already, please check and rename it!`)
+        } else {
+          this[key] = wxsModules[key]
+        }
+      })
+    }
+  }
 }

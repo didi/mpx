@@ -113,11 +113,17 @@ export default function getRefsMixin () {
       },
       __getRefNode (ref) {
         if (!ref) return
-        let selector = ref.selector.replace(/{{mpxCid}}/g, this.__mpxProxy.uid)
+        let selector = ref.selector.replace(/{{mpxCid}}/g, this.mpxCid)
         if (ref.type === 'node') {
           const query = this.createSelectorQuery ? this.createSelectorQuery() : envObj.createSelectorQuery()
           return query && (ref.all ? query.selectAll(selector) : query.select(selector))
         } else if (ref.type === 'component') {
+          // 头条获取组件ref返回promise
+          if (__mpx_mode__ === 'tt') {
+            return new Promise((resolve) => {
+              ref.all ? this.selectAllComponents(selector, resolve) : this.selectComponent(selector, resolve)
+            })
+          }
           return ref.all ? this.selectAllComponents(selector) : this.selectComponent(selector)
         }
       }

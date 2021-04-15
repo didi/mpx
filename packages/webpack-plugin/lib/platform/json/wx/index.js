@@ -208,7 +208,7 @@ module.exports = function getSpec ({ warn, error }) {
         swan: deletePath()
       },
       {
-        test: 'networkTimeout|requiredBackgroundModes',
+        test: 'requiredBackgroundModes',
         ali: deletePath(),
         tt: deletePath()
       },
@@ -219,20 +219,8 @@ module.exports = function getSpec ({ warn, error }) {
         tt: deletePath()
       },
       {
-        test: 'navigateToMiniProgramAppIdList|permission',
+        test: 'navigateToMiniProgramAppIdList|networkTimeout|permission',
         ali: deletePath()
-      },
-      {
-        test: 'subpackages|subPackages',
-        tt: deletePath(true)
-      },
-      {
-        test: 'packages',
-        tt (input) {
-          input.packages = input.packages.map((packageItem) => {
-            return packageItem.replace(/\?.*/, '')
-          })
-        }
       },
       {
         test: 'tabBar',

@@ -1,8 +1,9 @@
 .idea/
 .vscode/
+.gitconfig
 node_modules/
 *.log
-**/package-lock.json
+examples/*/package-lock.json
 .DS_Store
 docs-vuepress/.vuepress/dist
 elevate/

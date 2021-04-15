@@ -6,7 +6,7 @@ import { isObject, diffAndCloneA } from '../helper/utils'
 import { implemented } from '../core/implement'
 
 // 暂不支持的wx选项，后期需要各种花式支持
-const NOTSUPPORTS = ['moved', 'relations', 'definitionFilter', 'onShareAppMessage', 'pageShow', 'pageHide']
+const NOTSUPPORTS = ['moved', 'definitionFilter', 'onShareAppMessage', 'pageShow', 'pageHide']
 
 function convertErrorDesc (key) {
   error(`Options.${key} is not supported in runtime conversion from wx to web.`, global.currentResource)
@@ -31,13 +31,7 @@ export default {
   pageMode: 'blend',
   // support传递为true以将methods外层的方法函数合入methods中
   support: true,
-  lifecycleProxyMap: {
-    '__created__': ['onLoad', 'created', 'attached'],
-    '__mounted__': ['ready', 'onReady'],
-    '__destroyed__': ['detached', 'onUnload'],
-    '__updated__': ['updated'],
-    'errorCaptured': ['onError']
-  },
+  lifecycleProxyMap: wxLifecycle.lifecycleProxyMap,
   convert (options) {
     if (options.properties) {
       const newProps = {}

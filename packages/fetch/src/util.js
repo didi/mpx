@@ -2,6 +2,10 @@ function type (a) {
   return Object.prototype.toString.call(a).slice(8, -1)
 }
 
+function isThenable (obj) {
+  return obj && typeof obj.then === 'function'
+}
+
 function parseUrl (url) {
   const query = {}
   const arr = url.match(new RegExp('[\?\&][^\?\&]+=[^\?\&]+', 'g')) || [] /* eslint-disable-line no-useless-escape */
@@ -43,4 +47,4 @@ function filterUndefined (data) {
   return data
 }
 
-export { parseUrl, buildUrl, filterUndefined, type }
+export { parseUrl, buildUrl, filterUndefined, type, isThenable }

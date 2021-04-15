@@ -104,10 +104,6 @@ class MpxWebpackPlugin {
     options.transMpxRules = options.transMpxRules || {
       include: () => true
     }
-    if (options.autoSplit === undefined) {
-      // web模式下默认不开启autoSplit
-      options.autoSplit = options.mode !== 'web'
-    }
     // 通过默认defs配置实现mode及srcMode的注入，简化内部处理逻辑
     options.defs = Object.assign({}, options.defs, {
       '__mpx_mode__': options.mode,
@@ -120,7 +116,7 @@ class MpxWebpackPlugin {
     options.externals = (options.externals || []).map((external) => {
       return externalsMap[external] || external
     })
-    options.projectRoot = options.projectRoot || ''
+    options.projectRoot = options.projectRoot || process.cwd()
     options.forceUsePageCtor = options.forceUsePageCtor || false
     options.postcssInlineConfig = options.postcssInlineConfig || {}
     options.transRpxRules = options.transRpxRules || null
@@ -135,6 +131,7 @@ class MpxWebpackPlugin {
     options.pathHashMode = options.pathHashMode || 'absolute'
     options.forceDisableBuiltInLoader = options.forceDisableBuiltInLoader || false
     options.useRelativePath = options.useRelativePath || false
+    options.subpackageModulesRules = options.subpackageModulesRules || {}
     this.options = options
   }
 
@@ -162,20 +159,20 @@ class MpxWebpackPlugin {
     return { loader: normalize.lib('file-loader'), options }
   }
 
-  runModeRules (request) {
-    const { resourcePath, queryObj } = parseRequest(request)
+  runModeRules (data) {
+    const { resourcePath, queryObj } = parseRequest(data.resource)
     if (queryObj.mode) {
-      return request
+      return
     }
     const mode = this.options.mode
     const modeRule = this.options.modeRules[mode]
     if (!modeRule) {
-      return request
+      return
     }
     if (matchCondition(resourcePath, modeRule)) {
-      return addQuery(request, { mode })
+      data.resource = addQuery(data.resource, { mode })
+      data.request = addQuery(data.request, { mode })
     }
-    return request
   }
 
   apply (compiler) {
@@ -214,9 +211,16 @@ class MpxWebpackPlugin {
     let splitChunksPlugin
     let splitChunksOptions
 
-    if (this.options.autoSplit) {
+    if (this.options.mode !== 'web') {
       compiler.options.optimization.runtimeChunk = {
-        name: 'bundle'
+        name: (entrypoint) => {
+          for (let packageName in mpx.independentSubpackagesMap) {
+            if (mpx.independentSubpackagesMap.hasOwnProperty(packageName) && isChunkInPackage(entrypoint.name, packageName)) {
+              return `${packageName}/bundle`
+            }
+          }
+          return 'bundle'
+        }
       }
       splitChunksOptions = compiler.options.optimization.splitChunks
       delete compiler.options.optimization.splitChunks
@@ -279,9 +283,6 @@ class MpxWebpackPlugin {
 
     let mpx
 
-    // staticResourceHit需要长效保持记录哪些资源是静态资源，避免后续误用缓存
-    const staticResourceHit = {}
-
     compiler.hooks.thisCompilation.tap('MpxWebpackPlugin', (compilation, { normalModuleFactory }) => {
       compilation.warnings = compilation.warnings.concat(warnings)
       compilation.errors = compilation.errors.concat(errors)
@@ -299,18 +300,24 @@ class MpxWebpackPlugin {
             main: {}
           },
           // 静态资源(图片，字体，独立样式)等，依照所属包进行记录，冗余存储，同上
-          staticResourceMap: {
+          staticResourcesMap: {
             main: {}
           },
+          // 用于记录命中subpackageModulesRules的js模块最终输出到了什么分包中
+          subpackageModulesMap: {
+            main: {}
+          },
+          // 记录独立分包
+          independentSubpackagesMap: {},
+          // 当前机制下分包处理队列在app.json的json-compiler中进行，由于addEntry回调特性，无法保障app.js中引用的模块都被标记为主包，故重写processModuleDependencies获取app.js及其所有依赖处理完成的时机，在这之后再执行分包处理队列
+          appScriptRawRequest: '',
+          appScriptPromise: null,
           // 记录entry依赖关系，用于体积分析
           entryNodesMap: {},
           // 记录entryModule与entryNode的对应关系，用于体积分析
           entryModulesMap: new Map(),
-          // 记录静态资源首次命中的分包，当有其他分包再次引用了同样的静态资源时，对其request添加packageName query以避免模块缓存导致loader不再执行
-          staticResourceHit,
           loaderOptions,
           extractedMap: {},
-          extractSeenFile: {},
           usingComponents: {},
           hasApp: false,
           // todo es6 map读写性能高于object，之后会逐步替换
@@ -343,6 +350,7 @@ class MpxWebpackPlugin {
           attributes: this.options.attributes,
           externals: this.options.externals,
           useRelativePath: this.options.useRelativePath,
+          removedChunks: [],
           getEntryNode: (request, type, module) => {
             const entryNodesMap = mpx.entryNodesMap
             const entryModulesMap = mpx.entryModulesMap
@@ -369,6 +377,7 @@ class MpxWebpackPlugin {
             return hash(resourcePath)
           },
           extract: (content, file, index, sideEffects) => {
+            index = index === -1 ? 0 : index
             additionalAssets[file] = additionalAssets[file] || []
             if (!additionalAssets[file][index]) {
               additionalAssets[file][index] = content
@@ -382,55 +391,47 @@ class MpxWebpackPlugin {
           // 2. 分包引用且主包引用过的资源输出至主包，不在当前分包重复输出
           // 3. 分包引用且无其他包引用的资源输出至当前分包
           // 4. 分包引用且其他分包也引用过的资源，重复输出至当前分包
-          // 5. 当用户通过packageName query显式指定了资源的所属包时，输出至指定的包
-          getPackageInfo: (resource, { outputPath, isStatic, error, warn }) => {
+          getPackageInfo: ({ resource, outputPath, resourceType = 'components', warn }) => {
             let packageRoot = ''
             let packageName = 'main'
+            const { resourcePath } = parseRequest(resource)
             const currentPackageRoot = mpx.currentPackageRoot
             const currentPackageName = currentPackageRoot || 'main'
-            const { resourcePath, queryObj } = parseRequest(resource)
-            const resourceMap = isStatic ? mpx.staticResourceMap : mpx.componentsMap
+            const resourceMap = mpx[`${resourceType}Map`]
+            const isIndependent = mpx.independentSubpackagesMap[currentPackageRoot]
             // 主包中有引用一律使用主包中资源，不再额外输出
-            if (!resourceMap.main[resourcePath]) {
-              if (queryObj.packageName && queryObj.packageName !== currentPackageName) {
-                warn && warn(new Error(`资源[${resource}]查询字符串中声明的分包[${queryObj.packageName}]与当前正在处理的分包[${currentPackageName}]不符，请检查！`))
-              }
-
+            if (!resourceMap.main[resourcePath] || isIndependent) {
               packageRoot = currentPackageRoot
               packageName = currentPackageName
-
-              if (this.options.auditResource) {
-                if (this.options.auditResource !== 'component' || !isStatic) {
+              if (this.options.auditResource && resourceType !== 'subpackageModules' && !isIndependent) {
+                if (this.options.auditResource !== 'component' || resourceType === 'components') {
                   Object.keys(resourceMap).filter(key => key !== 'main').forEach((key) => {
                     if (resourceMap[key][resourcePath] && key !== packageName) {
-                      warn && warn(new Error(`当前${isStatic ? '静态' : '组件'}资源${resourcePath}在分包${key}和分包${packageName}中都有引用，会分别输出到两个分包中，为了总体积最优，可以在主包中建立引用声明以消除资源输出冗余！`))
+                      warn && warn(new Error(`当前${resourceType === 'components' ? '组件' : '静态'}资源${resourcePath}在分包${key}和分包${packageName}中都有引用，会分别输出到两个分包中，为了总体积最优，可以在主包中建立引用声明以消除资源输出冗余！`))
                     }
                   })
                 }
               }
             }
-
-            outputPath = toPosix(path.join(packageRoot, outputPath))
-
+            resourceMap[packageName] = resourceMap[packageName] || {}
             const currentResourceMap = resourceMap[packageName]
 
             let alreadyOutputed = false
-            // 如果之前已经进行过输出，则不需要重复进行
-            if (currentResourceMap[resourcePath] === outputPath) {
-              alreadyOutputed = true
+            if (outputPath) {
+              outputPath = toPosix(path.join(packageRoot, outputPath))
+              // 如果之前已经进行过输出，则不需要重复进行
+              if (currentResourceMap[resourcePath] === outputPath) {
+                alreadyOutputed = true
+              } else {
+                currentResourceMap[resourcePath] = outputPath
+              }
             } else {
-              currentResourceMap[resourcePath] = outputPath
-            }
-
-            if (isStatic && packageName !== 'main' && !mpx.staticResourceHit[resourcePath]) {
-              mpx.staticResourceHit[resourcePath] = packageName
+              currentResourceMap[resourcePath] = true
             }
 
             return {
               packageName,
               packageRoot,
-              resourcePath,
-              queryObj,
               outputPath,
               alreadyOutputed
             }
@@ -438,9 +439,75 @@ class MpxWebpackPlugin {
         }
       }
 
+      const rawProcessModuleDependencies = compilation.processModuleDependencies
+      compilation.processModuleDependencies = (module, callback) => {
+        let proxyedCallback = callback
+        if (module.rawRequest === mpx.appScriptRawRequest) {
+          // 避免模块request重名，只对第一次匹配到的模块进行代理
+          mpx.appScriptRawRequest = ''
+          mpx.appScriptPromise = new Promise((resolve) => {
+            proxyedCallback = (err) => {
+              resolve()
+              return callback(err)
+            }
+          })
+        }
+        return rawProcessModuleDependencies.apply(compilation, [module, proxyedCallback])
+      }
+
+      // 处理watch时缓存模块中的buildInfo
+      // 在调用addModule前对module添加分包信息，以控制分包输出及消除缓存，该操作由afterResolve钩子迁移至此是由于dependencyCache的存在，watch状态下afterResolve钩子并不会对所有模块执行，而模块的packageName在watch过程中是可能发生变更的，如新增删除一个分包资源的主包引用
+      const rawAddModule = compilation.addModule
+      compilation.addModule = (...args) => {
+        const module = args[0]
+        // 避免context module报错
+        if (module.request && module.resource) {
+          const { queryObj, resourcePath } = parseRequest(module.resource)
+          // 对于已有packageName标识的模块跳过处理
+          if (!queryObj.packageName) {
+            let isStatic = queryObj.isStatic
+            if (module.loaders) {
+              module.loaders.forEach((loader) => {
+                if (/(url-loader|file-loader)/.test(loader.loader)) {
+                  isStatic = true
+                }
+              })
+            }
+            const isIndependent = mpx.independentSubpackagesMap[mpx.currentPackageRoot]
+
+            let needPackageQuery = isStatic || isIndependent
+            if (!needPackageQuery && matchCondition(resourcePath, this.options.subpackageModulesRules)) {
+              needPackageQuery = true
+            }
+
+            if (needPackageQuery) {
+              const { packageName } = mpx.getPackageInfo({
+                resource: module.resource,
+                resourceType: isStatic ? 'staticResources' : 'subpackageModules'
+              })
+
+              module.request = addQuery(module.request, { packageName })
+              module.resource = addQuery(module.resource, { packageName })
+            }
+          }
+        }
+
+        const addModuleResult = rawAddModule.apply(compilation, args)
+        if (!addModuleResult.build && addModuleResult.issuer) {
+          const buildInfo = addModuleResult.module.buildInfo
+          if (buildInfo.pagesMap) {
+            Object.assign(mpx.pagesMap, buildInfo.pagesMap)
+          }
+          if (buildInfo.componentsMap && buildInfo.packageName) {
+            Object.assign(mpx.componentsMap[buildInfo.packageName], buildInfo.componentsMap)
+          }
+        }
+        return addModuleResult
+      }
+
       compilation.hooks.succeedModule.tap('MpxWebpackPlugin', (module) => {
         if (mpx.pluginMainResource && mpx.pluginMainResource === module.rawRequest) {
-          mpx.getEntryNode(mpx.pluginMainResource, 'Plugin', module)
+          mpx.getEntryNode(mpx.pluginMainResource, 'PluginMain', module)
         }
       })
 
@@ -509,11 +576,11 @@ class MpxWebpackPlugin {
           let content = new ConcatSource()
           if (additionalAssets[file].prefix) {
             additionalAssets[file].prefix.forEach((item) => {
-              content.add(item)
+              if (item) content.add(item)
             })
           }
           additionalAssets[file].forEach((item) => {
-            content.add(item)
+            if (item) content.add(item)
           })
 
           const modules = (additionalAssets[file].modules || []).concat(additionalAssets[file].relativeModules || [])
@@ -567,11 +634,10 @@ class MpxWebpackPlugin {
             const packageName = queryObj.packageName
             const pagesMap = mpx.pagesMap
             const componentsMap = mpx.componentsMap
-            const staticResourceMap = mpx.staticResourceMap
-            const publicPath = mpx.mode === 'web' ? '' : compilation.outputOptions.publicPath
+            const staticResourcesMap = mpx.staticResourcesMap
             const range = expr.range
             const issuerResource = parser.state.module.issuer.resource
-            const dep = new ResolveDependency(resource, packageName, pagesMap, componentsMap, staticResourceMap, publicPath, range, issuerResource)
+            const dep = new ResolveDependency(resource, packageName, pagesMap, componentsMap, staticResourcesMap, publicPath, range, issuerResource)
             parser.state.current.addDependency(dep)
             return true
           }
@@ -582,9 +648,9 @@ class MpxWebpackPlugin {
           const current = parser.state.current
           const { queryObj, resourcePath } = parseRequest(module.resource)
           const localSrcMode = queryObj.mode
-          const globalSrcMode = this.options.srcMode
+          const globalSrcMode = mpx.srcMode
           const srcMode = localSrcMode || globalSrcMode
-          const mode = this.options.mode
+          const mode = mpx.mode
 
           let target
 
@@ -600,7 +666,7 @@ class MpxWebpackPlugin {
           const type = target.name
 
           const name = type === 'wx' ? 'mpx' : 'createFactory'
-          const replaceContent = type === 'wx' ? 'mpx' : `${name}(${JSON.stringify(type)})`
+          const replaceContent = type === 'wx' ? '__webpack_require__.n(mpx)()' : `__webpack_require__.n(createFactory)()(${JSON.stringify(type)})`
 
           const dep = new ReplaceDependency(replaceContent, target.range)
           current.addDependency(dep)
@@ -661,7 +727,7 @@ class MpxWebpackPlugin {
           }
         })
 
-        if (this.options.srcMode !== this.options.mode) {
+        if (mpx.srcMode !== mpx.mode) {
           // 全量替换未声明的wx identifier
           parser.hooks.expression.for('wx').tap('MpxWebpackPlugin', transHandler)
 
@@ -685,8 +751,8 @@ class MpxWebpackPlugin {
             parser.hooks.call.for('App').tap('MpxWebpackPlugin', (expr) => {
               transHandler(expr.callee)
             })
-            if (this.options.mode === 'ali') {
-              // 支付宝不支持Behaviors
+            if (mpx.mode === 'ali' || mpx.mode === 'web') {
+              // 支付宝和web不支持Behaviors
               parser.hooks.call.for('Behavior').tap('MpxWebpackPlugin', (expr) => {
                 transHandler(expr.callee)
               })
@@ -724,7 +790,7 @@ class MpxWebpackPlugin {
           const name = callee.object.name
           const { queryObj, resourcePath } = parseRequest(parser.state.module.resource)
           const localSrcMode = queryObj.mode
-          const globalSrcMode = this.options.srcMode
+          const globalSrcMode = mpx.srcMode
           const srcMode = localSrcMode || globalSrcMode
 
           if (srcMode === globalSrcMode || apiBlackListMap[callee.property.name || callee.property.value] || (name !== 'mpx' && name !== 'wx') || (name === 'wx' && !matchCondition(resourcePath, this.options.transMpxRules))) {
@@ -741,7 +807,7 @@ class MpxWebpackPlugin {
           parser.state.current.addDependency(dep)
         }
 
-        if (this.options.srcMode !== this.options.mode) {
+        if (mpx.srcMode !== mpx.mode) {
           parser.hooks.callAnyMember.for('imported var').tap('MpxWebpackPlugin', handler)
           parser.hooks.callAnyMember.for('mpx').tap('MpxWebpackPlugin', handler)
           parser.hooks.callAnyMember.for('wx').tap('MpxWebpackPlugin', handler)
@@ -750,7 +816,7 @@ class MpxWebpackPlugin {
 
       // 为了正确生成sourceMap，将该步骤由原来的compile.hooks.emit迁移到compilation.hooks.optimizeChunkAssets中来
       compilation.hooks.optimizeChunkAssets.tapAsync('MpxWebpackPlugin', (chunks, callback) => {
-        if (this.options.mode === 'web') return callback()
+        if (mpx.mode === 'web') return callback()
         const jsonpFunction = compilation.outputOptions.jsonpFunction
 
         function getTargetFile (file) {
@@ -891,9 +957,8 @@ try {
         if (queryObj.resolve) {
           // 此处的query用于将资源引用的当前包信息传递给resolveDependency
           const pathLoader = normalize.lib('path-loader')
-          const packageName = mpx.currentPackageRoot || 'main'
           resource = addQuery(resource, {
-            packageName
+            packageName: mpx.currentPackageRoot || 'main'
           })
           data.request = `!!${pathLoader}!${resource}`
         } else if (queryObj.wxsModule) {
@@ -905,38 +970,18 @@ try {
         callback(null, data)
       })
 
-      // resolve完成后修改loaders或者resource/request
+      // resolve完成后修改loaders信息并批量添加mode query
       normalModuleFactory.hooks.afterResolve.tapAsync('MpxWebpackPlugin', (data, callback) => {
-        const isFromMpx = /\.(mpx|vue)/.test(data.resource)
-        if (data.loaders && isFromMpx) {
+        if (data.loaders) {
           data.loaders.forEach((loader) => {
             if (/ts-loader/.test(loader.loader)) {
-              loader.options = Object.assign({}, loader.options, { appendTsSuffixTo: [/\.(mpx|vue)$/] })
+              // todo 暂时固定写死options，待后续优化为复用rules后修正
+              loader.options = { appendTsSuffixTo: [/\.(mpx|vue)$/] }
             }
           })
         }
         // 根据用户传入的modeRules对特定资源添加mode query
-        data.resource = this.runModeRules(data.resource)
-
-        if (mpx.currentPackageRoot) {
-          const resourcePath = parseRequest(data.resource).resourcePath
-
-          const staticResourceHit = mpx.staticResourceHit
-          const packageName = mpx.currentPackageRoot || 'main'
-
-          let needAddQuery = false
-
-          if (staticResourceHit[resourcePath] && staticResourceHit[resourcePath] !== packageName) {
-            needAddQuery = true
-          }
-
-          if (needAddQuery) {
-            // 此处的query用于避免静态资源模块缓存，确保不同分包中引用的静态资源为不同模块
-            data.request = addQuery(data.request, {
-              packageName
-            })
-          }
-        }
+        this.runModeRules(data)
         callback(null, data)
       })
     })
@@ -1020,7 +1065,7 @@ try {
       function walkEntry (entryModule, sideEffect) {
         const modulesSet = new Set()
 
-        function walkDependencies (module, dependencies = []) {
+        function walkDependencies (dependencies = []) {
           dependencies.forEach((dep) => {
             // // We skip Dependencies without Reference
             // const ref = compilation.getDependencyReference(module, dep)
@@ -1045,9 +1090,12 @@ try {
           if (modulesSet.has(module)) return
           sideEffect && sideEffect(module, entryModule)
           modulesSet.add(module)
-          walkDependencies(module, module.dependencies)
+          walkDependencies(module.dependencies)
+          module.blocks.forEach((block) => {
+            walkDependencies(block.dependencies)
+          })
           module.variables.forEach((variable) => {
-            walkDependencies(module, variable.dependencies)
+            walkDependencies(variable.dependencies)
           })
         }
 
@@ -1061,7 +1109,7 @@ try {
       })
 
       // Walk and mark entryModules/noEntryModules
-      compilation.chunks.forEach((chunk) => {
+      compilation.chunks.concat(mpx.removedChunks).forEach((chunk) => {
         if (chunk.entryModule) {
           walkEntry(chunk.entryModule, (module, entryModule) => {
             module.entryModules = module.entryModules || new Set()
@@ -1138,14 +1186,14 @@ try {
         return {
           selfEntryModules: concat(map(filter(selfSet, item => {
             if (!item.module) {
-              compilation.warnings.push(`EntryNode[${item.request}] has no module, please check!`)
+              compilation.warnings.push(`EntryNode [${item.request}] has no module, please check!`)
               return false
             }
             return true
           }), item => item.module), otherSelfEntryModules),
           sharedEntryModules: map(filter(sharedSet, item => {
             if (!item.module) {
-              compilation.warnings.push(`EntryNode[${item.request}] has no module, please check!`)
+              compilation.warnings.push(`EntryNode [${item.request}] has no module, please check!`)
               return false
             }
             return true

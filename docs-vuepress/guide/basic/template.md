@@ -6,22 +6,21 @@ Mpx中的模板语法以小程序模板语法为基础，支持小程序的全�
 
 Mpx提供的增强指令语法如下：
 
-* [wx:style动态样式](todo link)
-* [wx:class动态类名](todo link)
-* [wx:model双向绑定](todo link)
-* [wx:model-prop双向绑定属性](todo link)
-* [wx:model-event双向绑定事件](todo link)
-* [wx:model-value-path双向绑定数据路径](todo link)
-* [wx:model-filter双向绑定过滤器](todo link)
-* [wx:ref获取实例](todo link)
-* [wx:show隐藏显示](todo link)
-* [component动态组件](todo link)
-* [事件处理内联传参](todo link)
-* [模板条件编译](todo link)
+* [wx:style动态样式](./class-style-binding.md#样式绑定)
+* [wx:class动态类名](./class-style-binding.md#类名绑定)
+* [wx:model双向绑定](./two-way-binding.md)
+* [wx:model-prop双向绑定属性](./two-way-binding.md#更改双向绑定的监听事件及数据属性)
+* [wx:model-event双向绑定事件](./two-way-binding.md#更改双向绑定的监听事件及数据属性)
+* [wx:model-value-path双向绑定数据路径](./two-way-binding.md#更改双向绑定事件数据路径)
+* [wx:model-filter双向绑定过滤器](./two-way-binding.md#双向绑定过滤器)
+* [wx:ref获取实例](./refs.md)
+* [wx:show隐藏显示](./conditional-render.md)
+* [component动态组件](./component.md#动态组件)
+* [事件处理内联传参](./event.md)
+* [模板条件编译](./template.md)
 
 下面是使用了模板增强语法的一个简单实例，许多在原生小程序上很繁琐的模板描述在增强语法的帮助下变得清晰简洁：
 
-```html
 ```html
 <template>
   <!--动态样式-->
@@ -104,6 +103,8 @@ Mpx提供的增强指令语法如下：
   }
 </script>
 ```
+
+## 模板预编译
 
 Mpx还支持开发者使用插值语法与小程序不冲突第三方的模板引擎语法来编写template，如pug：
 

@@ -183,11 +183,11 @@ module.exports = {
       }
     },
     wxs: {
-      tag: 'filter',
+      tag: 'import-sjs',
       module: 'module',
       src: 'src',
-      ext: '.filter.js',
-      templatePrefix: 'var __swan_exports__ = \n'
+      ext: '.sjs',
+      templatePrefix: 'export default \n'
     },
     directive: {
       if: 's-if',
@@ -347,6 +347,13 @@ module.exports = {
       if: 'v-if',
       elseif: 'v-else-if',
       else: 'v-else'
+    },
+    wxs: {
+      tag: 'wxs',
+      module: 'module',
+      src: 'src',
+      ext: '.wxs',
+      templatePrefix: 'module.exports = \n'
     }
   }
 }

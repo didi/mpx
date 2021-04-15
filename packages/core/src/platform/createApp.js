@@ -29,17 +29,29 @@ export default function createApp (option, config = {}) {
       created () {
         Object.assign(this, option.proto)
         Object.assign(this, appData)
-        this.$options.onLaunch && this.$options.onLaunch.call(this, {})
+        const current = (global.__mpxRouter && global.__mpxRouter.currentRoute) || {}
+        const options = {
+          path: current.path && current.path.replace(/^\//, ''),
+          query: current.query,
+          scene: 0,
+          shareTicket: '',
+          referrerInfo: {}
+        }
+        this.$options.onLaunch && this.$options.onLaunch.call(this, options)
         global.__mpxAppCbs = global.__mpxAppCbs || {
           show: [],
-          hide: []
+          hide: [],
+          error: []
         }
         if (this.$options.onShow) {
-          this.$options.onShow.call(this, {})
+          this.$options.onShow.call(this, options)
           global.__mpxAppCbs.show.push(this.$options.onShow.bind(this))
         }
         if (this.$options.onHide) {
           global.__mpxAppCbs.hide.push(this.$options.onHide.bind(this))
+        }
+        if (this.$options.onError) {
+          global.__mpxAppCbs.error.push(this.$options.onError.bind(this))
         }
       }
     })
