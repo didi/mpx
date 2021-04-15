@@ -29,7 +29,7 @@ module.exports = function (script, options, callback) {
   const srcMode = options.srcMode
   const loaderContext = options.loaderContext
   const isProduction = options.isProduction
-  const mpxCid = options.mpxCid
+  const componentId = options.componentId
   const getRequireForSrc = options.getRequireForSrc
   const i18n = options.i18n
   const jsonConfig = options.jsonConfig
@@ -102,7 +102,7 @@ module.exports = function (script, options, callback) {
       return attrs
     },
     content (script) {
-      let content = `\n  import processOption, { getComponent } from ${stringifyRequest(optionProcessorPath)}\n`
+      let content = `\n  import processOption, { getComponent, getWxsMixin } from ${stringifyRequest(optionProcessorPath)}\n`
       // add import
       if (ctorType === 'app') {
         content += `  import '@mpxjs/webpack-plugin/lib/runtime/base.styl'
@@ -150,10 +150,24 @@ module.exports = function (script, options, callback) {
             content += `  i18nCfg.${key} = require(${requestObj[key]})\n`
           })
           content += `  const i18n = new VueI18n(i18nCfg)
+  i18n.mergeMessages = (newMessages) => {
+    Object.keys(newMessages).forEach((locale) => {
+      i18n.mergeLocaleMessage(locale, newMessages[locale])
+    })
+  }
   if(global.__mpx) {
     global.__mpx.i18n = i18n
   }\n`
         }
+      }
+      // 注入wxs模块
+      content += '  const wxsModules = {}\n'
+      if (options.wxsModuleMap) {
+        Object.keys(options.wxsModuleMap).forEach((module) => {
+          const src = loaderUtils.urlToRequest(options.wxsModuleMap[module], options.projectRoot)
+          const expression = `require(${stringifyRequest(src)})`
+          content += `  wxsModules.${module} = ${expression}\n`
+        })
       }
       let firstPage = ''
       const pagesMap = {}
@@ -231,7 +245,7 @@ module.exports = function (script, options, callback) {
     currentOption,
     ${JSON.stringify(ctorType)},
     ${JSON.stringify(firstPage)},
-    ${JSON.stringify(mpxCid)},
+    ${JSON.stringify(componentId)},
     ${JSON.stringify(pageConfig)},
     // @ts-ignore
     ${shallowStringify(pagesMap)},
@@ -239,7 +253,8 @@ module.exports = function (script, options, callback) {
     ${shallowStringify(componentsMap)},
     ${JSON.stringify(tabBarMap)},
     ${JSON.stringify(componentGenerics)},
-    ${JSON.stringify(genericsInfo)}`
+    ${JSON.stringify(genericsInfo)},
+    getWxsMixin(wxsModules)`
 
       if (ctorType === 'app') {
         content += `,

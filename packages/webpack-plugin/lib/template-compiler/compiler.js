@@ -252,6 +252,7 @@ let injectNodes = []
 let forScopes = []
 let forScopesMap = {}
 let hasI18n = false
+let i18nInjectableComputed = []
 
 function updateForScopesMap () {
   forScopes.forEach((scope) => {
@@ -727,6 +728,7 @@ function parse (template, options) {
   rulesResultMap.clear()
   warn$1 = options.warn || baseWarn
   error$1 = options.error || baseError
+  i18nInjectableComputed = []
 
   const _warn = content => {
     const currentElementRuleResult = rulesResultMap.get(currentEl) || rulesResultMap.set(currentEl, {
@@ -930,7 +932,14 @@ function parse (template, options) {
   }
 
   if (hasI18n) {
-    injectWxs(meta, i18nModuleName, i18nWxsRequest)
+    if (i18n.useComputed) {
+      if (!meta.computed) {
+        meta.computed = []
+      }
+      meta.computed = meta.computed.concat(i18nInjectableComputed)
+    } else {
+      injectWxs(meta, i18nModuleName, i18nWxsRequest)
+    }
   }
 
   injectNodes.forEach((node) => {
@@ -1342,7 +1351,13 @@ function parseMustache (raw = '') {
           const funcNameRE = new RegExp(`${i18nFuncName}\\(`)
           const funcNameREG = new RegExp(`${i18nFuncName}\\(`, 'g')
           if (funcNameRE.test(exp)) {
-            exp = exp.replace(funcNameREG, `${i18nModuleName}.$1(mpxLocale, `)
+            if (i18n.useComputed) {
+              const i18nInjectComputedKey = `_i${i18nInjectableComputed.length + 1}`
+              i18nInjectableComputed.push(`${i18nInjectComputedKey}: function(){\nreturn ${exp}}`)
+              exp = i18nInjectComputedKey
+            } else {
+              exp = exp.replace(funcNameREG, `${i18nModuleName}.$1(mpxLocale, `)
+            }
             hasI18n = true
             replaced = true
           }
@@ -2064,6 +2079,7 @@ function processElement (el, root, options, meta) {
 function closeElement (el, meta) {
   postProcessAtMode(el)
   if (mode === 'web') {
+    postProcessWxs(el, meta)
     // 处理代码维度条件编译移除死分支
     postProcessIf(el)
     return
@@ -2168,6 +2184,9 @@ function serialize (root) {
         } else {
           result += node.text
         }
+      }
+      if (node.tag === 'wxs' && mode === 'web') {
+        return result
       }
       if (node.type === 1) {
         if (node.tag !== 'temp-node') {

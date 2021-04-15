@@ -1,11 +1,21 @@
 import requestAdapter from './request'
 import CancelToken from './cancelToken'
 import InterceptorManager from './interceptorManager'
+import RequestQueue from './queue'
 
 export default class XFetch {
   constructor (options, MPX) {
     this.CancelToken = CancelToken
-    this.requestAdapter = (config) => requestAdapter(config, MPX)
+    // this.requestAdapter = (config) => requestAdapter(config, MPX)
+    // 当存在 useQueue 配置时，才使用 this.queue 变量
+    if (options && options.useQueue && typeof options.useQueue === 'object') {
+      this.queue = new RequestQueue({
+        adapter: (config) => requestAdapter(config, MPX),
+        ...options.useQueue
+      })
+    } else {
+      this.requestAdapter = (config) => requestAdapter(config, MPX)
+    }
     this.interceptors = {
       request: new InterceptorManager(),
       response: new InterceptorManager()
@@ -26,7 +36,7 @@ export default class XFetch {
   }
 
   addLowPriorityWhiteList (rules) {
-    console.warn('The xfetch.addLowPriorityWhiteList api is useless now and will be removed in next minor version!')
+    this.queue.addLowPriorityWhiteList(rules)
   }
 
   fetch (config, priority) {
@@ -35,11 +45,14 @@ export default class XFetch {
     const chain = []
     let promise = Promise.resolve(config)
 
+    // use queue
+    const request = this.queue && (() => this.queue.request(config, priority))
+
     this.interceptors.request.forEach(function unshiftRequestInterceptors (interceptor) {
       chain.push(interceptor.fulfilled, interceptor.rejected)
     })
 
-    chain.push(this.requestAdapter, undefined)
+    chain.push(request || this.requestAdapter, undefined)
 
     this.interceptors.response.forEach(function pushResponseInterceptors (interceptor) {
       chain.push(interceptor.fulfilled, interceptor.rejected)
