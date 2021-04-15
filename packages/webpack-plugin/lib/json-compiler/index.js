@@ -41,7 +41,7 @@ module.exports = function (raw = '{}') {
 
   const stringifyRequest = r => loaderUtils.stringifyRequest(this, r)
   const isUrlRequest = r => isUrlRequestRaw(r, options.root)
-  const urlToRequest = r => loaderUtils.urlToRequest(r, options.root)
+  const urlToRequest = r => loaderUtils.urlToRequest(r)
 
   if (!mpx) {
     return nativeCallback(null, raw)
@@ -283,7 +283,7 @@ module.exports = function (raw = '{}') {
       // 此处query为了实现消除分包间模块缓存，以实现不同分包中引用的组件在不同分包中都能输出
       resource = addQuery(resource, {
         packageName: packageInfo.packageName
-      }, undefined, true)
+      })
       const componentPath = packageInfo.outputPath
       rewritePath && rewritePath(publicPath + componentPath)
       if (ext === '.js') {
@@ -445,10 +445,16 @@ module.exports = function (raw = '{}') {
         let srcRoot = subPackage.srcRoot || subPackage.root || ''
         if (!tarRoot || subPackagesCfg[tarRoot]) return callback()
 
+        const otherConfig = getOtherConfig(subPackage)
+        // 支付宝不支持独立分包，无需处理
+        if (otherConfig.independent && mode !== 'ali') {
+          mpx.independentSubpackagesMap[tarRoot] = true
+        }
+
         subPackagesCfg[tarRoot] = {
           root: tarRoot,
           pages: [],
-          ...getOtherConfig(subPackage)
+          ...otherConfig
         }
         mpx.currentPackageRoot = tarRoot
         mpx.componentsMap[tarRoot] = {}
@@ -500,8 +506,8 @@ module.exports = function (raw = '{}') {
               // 判断 key 存在重复情况直接报错
               for (let key in pagesMap) {
                 if (pagesMap[key] === pageName && key !== resourcePath) {
-                  emitError(`Current page ${resourcePath} is registered with a conflict page path ${pageName}, The key fields ${aliasPath} in the object need to be unique`)
-                  break
+                  emitError(`Current page [${resourcePath}] registers a conflict page path [${pageName}] with existed page [${key}], which is not allowed, please rename it!`)
+                  return callback()
                 }
               }
             } else {
@@ -509,7 +515,7 @@ module.exports = function (raw = '{}') {
               if (/^\./.test(relative)) {
                 // 如果当前page不存在于context中，对其进行重命名
                 pageName = toPosix(path.join(tarRoot, getPageName(resourcePath, ext)))
-                emitWarning(`Current page ${resourcePath} is not in current pages directory ${context}, the page path will be replaced with ${pageName}, use ?resolve to get the page path and navigate to it!`)
+                emitWarning(`Current page [${resourcePath}] is not in current pages directory [${context}], the page path will be replaced with [${pageName}], use ?resolve to get the page path and navigate to it!`)
               } else {
                 pageName = toPosix(path.join(tarRoot, /^(.*?)(\.[^.]*)?$/.exec(relative)[1]))
                 // 如果当前page与已有page存在命名冲突，也进行重命名
@@ -517,7 +523,7 @@ module.exports = function (raw = '{}') {
                   if (pagesMap[key] === pageName && key !== resourcePath) {
                     const pageNameRaw = pageName
                     pageName = toPosix(path.join(tarRoot, getPageName(resourcePath, ext)))
-                    emitWarning(`Current page ${resourcePath} is registered with a conflict page path ${pageNameRaw} which is already existed in system, the page path will be replaced with ${pageName}, use ?resolve to get the page path and navigate to it!`)
+                    emitWarning(`Current page [${resourcePath}] is registered with a conflict page path [${pageNameRaw}] which is already existed in system, the page path will be replaced with [${pageName}], use ?resolve to get the page path and navigate to it!`)
                     break
                   }
                 }
@@ -526,9 +532,12 @@ module.exports = function (raw = '{}') {
             if (ext === '.js') {
               resource = '!!' + nativeLoaderPath + '!' + resource
             }
-            currentEntry.addChild(getEntryNode(resource, 'Page'))
             // 如果之前已经创建了页面入口，直接return，目前暂时不支持多个分包复用同一个页面
-            if (pagesMap[resourcePath] === pageName) return callback()
+            if (pagesMap[resourcePath]) {
+              emitWarning(`Current page [${resourcePath}] which is imported from [${this.resourcePath}] has been registered in pagesMap already, it will be ignored, please check it and remove the redundant page declaration!`)
+              return callback()
+            }
+            currentEntry.addChild(getEntryNode(resource, 'Page'))
             pagesMap[resourcePath] = pageName
             if (tarRoot && subPackagesCfg[tarRoot]) {
               subPackagesCfg[tarRoot].pages.push(toPosix(path.relative(tarRoot, pageName)))
@@ -656,6 +665,13 @@ module.exports = function (raw = '{}') {
           }
           callback()
         })
+      },
+      (callback) => {
+        if (mpx.appScriptPromise) {
+          mpx.appScriptPromise.then(callback)
+        } else {
+          callback()
+        }
       },
       (callback) => {
         async.series(processSubPackagesQueue, (err) => {

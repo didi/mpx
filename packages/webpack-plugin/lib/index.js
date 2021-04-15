@@ -104,10 +104,6 @@ class MpxWebpackPlugin {
     options.transMpxRules = options.transMpxRules || {
       include: () => true
     }
-    if (options.autoSplit === undefined) {
-      // web模式下默认不开启autoSplit
-      options.autoSplit = options.mode !== 'web'
-    }
     // 通过默认defs配置实现mode及srcMode的注入，简化内部处理逻辑
     options.defs = Object.assign({}, options.defs, {
       '__mpx_mode__': options.mode,
@@ -215,9 +211,16 @@ class MpxWebpackPlugin {
     let splitChunksPlugin
     let splitChunksOptions
 
-    if (this.options.autoSplit) {
+    if (this.options.mode !== 'web') {
       compiler.options.optimization.runtimeChunk = {
-        name: 'bundle'
+        name: (entrypoint) => {
+          for (let packageName in mpx.independentSubpackagesMap) {
+            if (mpx.independentSubpackagesMap.hasOwnProperty(packageName) && isChunkInPackage(entrypoint.name, packageName)) {
+              return `${packageName}/bundle`
+            }
+          }
+          return 'bundle'
+        }
       }
       splitChunksOptions = compiler.options.optimization.splitChunks
       delete compiler.options.optimization.splitChunks
@@ -304,6 +307,11 @@ class MpxWebpackPlugin {
           subpackageModulesMap: {
             main: {}
           },
+          // 记录独立分包
+          independentSubpackagesMap: {},
+          // 当前机制下分包处理队列在app.json的json-compiler中进行，由于addEntry回调特性，无法保障app.js中引用的模块都被标记为主包，故重写processModuleDependencies获取app.js及其所有依赖处理完成的时机，在这之后再执行分包处理队列
+          appScriptRawRequest: '',
+          appScriptPromise: null,
           // 记录entry依赖关系，用于体积分析
           entryNodesMap: {},
           // 记录entryModule与entryNode的对应关系，用于体积分析
@@ -342,6 +350,7 @@ class MpxWebpackPlugin {
           attributes: this.options.attributes,
           externals: this.options.externals,
           useRelativePath: this.options.useRelativePath,
+          removedChunks: [],
           getEntryNode: (request, type, module) => {
             const entryNodesMap = mpx.entryNodesMap
             const entryModulesMap = mpx.entryModulesMap
@@ -386,14 +395,15 @@ class MpxWebpackPlugin {
             let packageRoot = ''
             let packageName = 'main'
             const { resourcePath } = parseRequest(resource)
-            const currentPackageName = mpx.currentPackageRoot || 'main'
-            const currentPackageRoot = currentPackageName === 'main' ? '' : currentPackageName
+            const currentPackageRoot = mpx.currentPackageRoot
+            const currentPackageName = currentPackageRoot || 'main'
             const resourceMap = mpx[`${resourceType}Map`]
+            const isIndependent = mpx.independentSubpackagesMap[currentPackageRoot]
             // 主包中有引用一律使用主包中资源，不再额外输出
-            if (!resourceMap.main[resourcePath]) {
+            if (!resourceMap.main[resourcePath] || isIndependent) {
               packageRoot = currentPackageRoot
               packageName = currentPackageName
-              if (this.options.auditResource && resourceType !== 'subpackageModules') {
+              if (this.options.auditResource && resourceType !== 'subpackageModules' && !isIndependent) {
                 if (this.options.auditResource !== 'component' || resourceType === 'components') {
                   Object.keys(resourceMap).filter(key => key !== 'main').forEach((key) => {
                     if (resourceMap[key][resourcePath] && key !== packageName) {
@@ -428,6 +438,23 @@ class MpxWebpackPlugin {
           }
         }
       }
+
+      const rawProcessModuleDependencies = compilation.processModuleDependencies
+      compilation.processModuleDependencies = (module, callback) => {
+        let proxyedCallback = callback
+        if (module.rawRequest === mpx.appScriptRawRequest) {
+          // 避免模块request重名，只对第一次匹配到的模块进行代理
+          mpx.appScriptRawRequest = ''
+          mpx.appScriptPromise = new Promise((resolve) => {
+            proxyedCallback = (err) => {
+              resolve()
+              return callback(err)
+            }
+          })
+        }
+        return rawProcessModuleDependencies.apply(compilation, [module, proxyedCallback])
+      }
+
       // 处理watch时缓存模块中的buildInfo
       // 在调用addModule前对module添加分包信息，以控制分包输出及消除缓存，该操作由afterResolve钩子迁移至此是由于dependencyCache的存在，watch状态下afterResolve钩子并不会对所有模块执行，而模块的packageName在watch过程中是可能发生变更的，如新增删除一个分包资源的主包引用
       const rawAddModule = compilation.addModule
@@ -436,32 +463,32 @@ class MpxWebpackPlugin {
         // 避免context module报错
         if (module.request && module.resource) {
           const { queryObj, resourcePath } = parseRequest(module.resource)
-          let isStatic = queryObj.isStatic
-          if (module.loaders) {
-            module.loaders.forEach((loader) => {
-              if (/(url-loader|file-loader)/.test(loader.loader)) {
-                isStatic = true
-              }
-            })
-          }
+          // 对于已有packageName标识的模块跳过处理
+          if (!queryObj.packageName) {
+            let isStatic = queryObj.isStatic
+            if (module.loaders) {
+              module.loaders.forEach((loader) => {
+                if (/(url-loader|file-loader)/.test(loader.loader)) {
+                  isStatic = true
+                }
+              })
+            }
+            const isIndependent = mpx.independentSubpackagesMap[mpx.currentPackageRoot]
 
-          let needPackageQuery = isStatic
-          if (!isStatic && matchCondition(resourcePath, this.options.subpackageModulesRules)) {
-            needPackageQuery = true
-          }
+            let needPackageQuery = isStatic || isIndependent
+            if (!needPackageQuery && matchCondition(resourcePath, this.options.subpackageModulesRules)) {
+              needPackageQuery = true
+            }
 
-          if (needPackageQuery) {
-            const { packageName } = mpx.getPackageInfo({
-              resource: module.resource,
-              resourceType: isStatic ? 'staticResources' : 'subpackageModules'
-            })
+            if (needPackageQuery) {
+              const { packageName } = mpx.getPackageInfo({
+                resource: module.resource,
+                resourceType: isStatic ? 'staticResources' : 'subpackageModules'
+              })
 
-            module.request = addQuery(module.request, {
-              packageName
-            }, undefined, true)
-            module.resource = addQuery(module.resource, {
-              packageName
-            }, undefined, true)
+              module.request = addQuery(module.request, { packageName })
+              module.resource = addQuery(module.resource, { packageName })
+            }
           }
         }
 
@@ -480,7 +507,7 @@ class MpxWebpackPlugin {
 
       compilation.hooks.succeedModule.tap('MpxWebpackPlugin', (module) => {
         if (mpx.pluginMainResource && mpx.pluginMainResource === module.rawRequest) {
-          mpx.getEntryNode(mpx.pluginMainResource, 'Plugin', module)
+          mpx.getEntryNode(mpx.pluginMainResource, 'PluginMain', module)
         }
       })
 
@@ -608,7 +635,6 @@ class MpxWebpackPlugin {
             const pagesMap = mpx.pagesMap
             const componentsMap = mpx.componentsMap
             const staticResourcesMap = mpx.staticResourcesMap
-            const publicPath = mpx.mode === 'web' ? '' : compilation.outputOptions.publicPath
             const range = expr.range
             const issuerResource = parser.state.module.issuer.resource
             const dep = new ResolveDependency(resource, packageName, pagesMap, componentsMap, staticResourcesMap, publicPath, range, issuerResource)
@@ -1039,7 +1065,7 @@ try {
       function walkEntry (entryModule, sideEffect) {
         const modulesSet = new Set()
 
-        function walkDependencies (module, dependencies = []) {
+        function walkDependencies (dependencies = []) {
           dependencies.forEach((dep) => {
             // // We skip Dependencies without Reference
             // const ref = compilation.getDependencyReference(module, dep)
@@ -1064,9 +1090,12 @@ try {
           if (modulesSet.has(module)) return
           sideEffect && sideEffect(module, entryModule)
           modulesSet.add(module)
-          walkDependencies(module, module.dependencies)
+          walkDependencies(module.dependencies)
+          module.blocks.forEach((block) => {
+            walkDependencies(block.dependencies)
+          })
           module.variables.forEach((variable) => {
-            walkDependencies(module, variable.dependencies)
+            walkDependencies(variable.dependencies)
           })
         }
 
@@ -1080,7 +1109,7 @@ try {
       })
 
       // Walk and mark entryModules/noEntryModules
-      compilation.chunks.forEach((chunk) => {
+      compilation.chunks.concat(mpx.removedChunks).forEach((chunk) => {
         if (chunk.entryModule) {
           walkEntry(chunk.entryModule, (module, entryModule) => {
             module.entryModules = module.entryModules || new Set()
@@ -1157,14 +1186,14 @@ try {
         return {
           selfEntryModules: concat(map(filter(selfSet, item => {
             if (!item.module) {
-              compilation.warnings.push(`EntryNode[${item.request}] has no module, please check!`)
+              compilation.warnings.push(`EntryNode [${item.request}] has no module, please check!`)
               return false
             }
             return true
           }), item => item.module), otherSelfEntryModules),
           sharedEntryModules: map(filter(sharedSet, item => {
             if (!item.module) {
-              compilation.warnings.push(`EntryNode[${item.request}] has no module, please check!`)
+              compilation.warnings.push(`EntryNode [${item.request}] has no module, please check!`)
               return false
             }
             return true

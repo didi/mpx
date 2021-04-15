@@ -27,24 +27,22 @@ function redirectTo (options = {}) {
 
 function navigateTo (options = {}) {
   const router = global.__mpxRouter
-  const eventChannel = new EventChannel()
-  window.__mpxEventChannels = {
-    toPath: options.url.split('?')[0],
-    eventChannel: eventChannel
-  }
   if (router) {
-    router.__mpxAction = { type: 'to' }
+    const eventChannel = new EventChannel()
+    router.__mpxAction = {
+      type: 'to',
+      eventChannel
+    }
     if (options.events) {
       eventChannel._addListeners(options.events)
     }
-
     return new Promise((resolve, reject) => {
       router.push(
         {
           path: options.url
         },
         () => {
-          const res = { errMsg: 'navigateTo:ok', eventChannel: eventChannel }
+          const res = { errMsg: 'navigateTo:ok', eventChannel }
           webHandleSuccess(res, options.success, options.complete)
           resolve(res)
         },

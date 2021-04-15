@@ -29,8 +29,10 @@ export default function i18nMixin () {
         // 挂载翻译方法
         if (global.i18nMethods) {
           Object.keys(global.i18nMethods).forEach((methodName) => {
+            if (/^__/.test(methodName)) return
             this['$' + methodName] = (...args) => {
-              args.unshift(this.mpxLocale)
+              // tap i18n.version
+              args.unshift((global.i18n.version, this.mpxLocale))
               return global.i18nMethods[methodName].apply(this, args)
             }
           })
