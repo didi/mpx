@@ -14,6 +14,9 @@ const nativeLoaderPath = normalize.lib('native-loader')
 // webpack4中.json文件会走json parser，抽取内容的占位内容必须为合法json，否则会在parse阶段报错
 const defaultResultSource = '{}'
 
+// ali不导出的插件页面的固定prefix
+const NO_EXPORT = '__mpx_plugin_no_export_page__'
+
 module.exports = function (source) {
   // 该loader中会在每次编译中动态添加entry，不能缓存，否则watch不好使
   this.cacheable(false)
@@ -21,6 +24,8 @@ module.exports = function (source) {
   const nativeCallback = this.async()
   const mainCompilation = getMainCompilation(this._compilation)
   const mpx = mainCompilation.__mpx__
+
+  mpx.isPluginMode = true
 
   const isUrlRequest = r => isUrlRequestRaw(r, projectRoot)
   const urlToRequest = r => loaderUtils.urlToRequest(r, projectRoot)
@@ -96,6 +101,16 @@ module.exports = function (source) {
   const callback = (err) => {
     checkEntryDeps(() => {
       if (err) return nativeCallback(err)
+      if (mpx.mode === 'ali') {
+        let publicPages = Object.keys(pluginEntry.pages).reduce((cur, key) => {
+          if (!key.startsWith(NO_EXPORT)) {
+            cur[key] = pluginEntry.pages[key]
+          }
+          return cur
+        }, {})
+        pluginEntry.publicPages = publicPages
+        pluginEntry.pages = Object.values(pluginEntry.pages)
+      }
       const sideEffects = []
       const file = resourceName + '.json'
       sideEffects.push((additionalAssets) => {
@@ -196,6 +211,16 @@ module.exports = function (source) {
   }
 
   if (pluginEntry.pages) {
+    // 处理 pages
+    if (mpx.srcMode === 'ali') { // 处理ali
+      let pagesMap = pluginEntry.publicPages
+      pluginEntry.pages = pluginEntry.pages.reduce((cur, val, index) => {
+        if (!Object.values(pagesMap).includes(val)) { // no export page
+          cur[`${NO_EXPORT}${index}`] = val
+        }
+        return cur
+      }, pagesMap)
+    }
     processPages = function (pages, callback) {
       async.forEachOf(pages, (page, name, callback) => {
         let aliasPath = ''
