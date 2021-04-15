@@ -183,7 +183,7 @@ type MpxComProps<O> = { $rawOptions: O }
 
 export interface MpxComponentIns {
 
-  $refs: ObjectOf<any>
+  $refs: ObjectOf<WechatMiniprogram.NodesRef>
 
   $set: typeof set
 
@@ -196,6 +196,10 @@ export interface MpxComponentIns {
   $forceUpdate (params?: object, callback?: () => void): void
 
   $nextTick (fn: () => void): void
+
+  $i18n: {
+    locale: string
+  }
 
   [k: string]: any
 }
@@ -305,6 +309,7 @@ interface MpxConfig {
   ignoreRenderError: Boolean
   ignoreConflictWhiteList: Array<string>
   observeClassInstance: Boolean | Array<AnyConstructor>
+  hookErrorHandler: (e: Error, target: ComponentIns<{}, {}, {}, {}, []>, hookName: string) => any | null
 }
 
 type SupportedMode = 'wx' | 'ali' | 'qq' | 'swan' | 'tt' | 'web' | 'qa'
@@ -346,6 +351,13 @@ export interface Mpx {
   setConvertRule: typeof setConvertRule
 
   config: MpxConfig
+
+  i18n: {
+    locale: string,
+    version: number
+    mergeMessages (messages: object): void
+    mergeLocaleMessage (locale: string, message: object): void
+  }
 }
 
 type GetFunctionKey<T> = {

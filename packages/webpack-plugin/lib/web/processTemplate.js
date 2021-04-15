@@ -3,6 +3,23 @@ const genComponentTag = require('../utils/gen-component-tag')
 const addQuery = require('../utils/add-query')
 const path = require('path')
 const parseRequest = require('../utils/parse-request')
+const getMainCompilation = require('../utils/get-main-compilation')
+
+function calculateRootEleChild (arr) {
+  if (!arr) {
+    return 0
+  }
+  return arr.reduce((total, item) => {
+    if (item.type === 1) {
+      if (item.tag === 'template') {
+        total += calculateRootEleChild(item.children)
+      } else {
+        total += 1
+      }
+    }
+    return total
+  }, 0)
+}
 
 module.exports = function (template, options, callback) {
   const mode = options.mode
@@ -12,7 +29,11 @@ module.exports = function (template, options, callback) {
   const ctorType = options.ctorType
   const resourcePath = parseRequest(loaderContext.resource).resourcePath
   const builtInComponentsMap = {}
-  let genericsInfo
+  const compilation = loaderContext._compilation
+  const mainCompilation = getMainCompilation(compilation)
+  const mpx = mainCompilation.__mpx__
+  const wxsContentMap = mpx.wxsContentMap
+  let wxsModuleMap, genericsInfo
   let output = '/* template */\n'
 
   if (ctorType === 'app') {
@@ -70,6 +91,14 @@ module.exports = function (template, options, callback) {
           // web模式下实现抽象组件
           componentGenerics: options.componentGenerics
         })
+        if (parsed.meta.wxsModuleMap) {
+          wxsModuleMap = parsed.meta.wxsModuleMap
+        }
+        if (parsed.meta.wxsContentMap) {
+          for (let module in parsed.meta.wxsContentMap) {
+            wxsContentMap[`${resourcePath}~${module}`] = parsed.meta.wxsContentMap[module]
+          }
+        }
         if (parsed.meta.builtInComponentsMap) {
           Object.keys(parsed.meta.builtInComponentsMap).forEach((name) => {
             builtInComponentsMap[name] = {
@@ -80,7 +109,13 @@ module.exports = function (template, options, callback) {
         if (parsed.meta.genericsInfo) {
           genericsInfo = parsed.meta.genericsInfo
         }
-
+        // 输出H5有多个root element时, 使用div标签包裹
+        if (parsed.root.tag === 'temp-node') {
+          const childLen = calculateRootEleChild(parsed.root.children)
+          if (childLen >= 2) {
+            parsed.root.tag = 'div'
+          }
+        }
         return templateCompiler.serialize(parsed.root)
       }
     })
@@ -90,6 +125,7 @@ module.exports = function (template, options, callback) {
   callback(null, {
     output,
     builtInComponentsMap,
-    genericsInfo
+    genericsInfo,
+    wxsModuleMap
   })
 }
