@@ -501,7 +501,6 @@ networkTimeout|是
 subpackages|是
 tabBar|是
 usingComponents|是
-window|是
 
 #### 拓展能力
 能力|是否支持
