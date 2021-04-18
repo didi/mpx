@@ -508,6 +508,8 @@ class MpxWebpackPlugin {
       compilation.hooks.succeedModule.tap('MpxWebpackPlugin', (module) => {
         if (mpx.pluginMainResource && mpx.pluginMainResource === module.rawRequest) {
           mpx.getEntryNode(mpx.pluginMainResource, 'PluginMain', module)
+        } else if (mpx.miniToPluginExports && mpx.miniToPluginExports.has(module.rawRequest)) {
+          mpx.getEntryNode(module.rawRequest, 'PluginExport', module)
         }
       })
 
@@ -850,7 +852,7 @@ class MpxWebpackPlugin {
             if (index === 0) {
               // 引用runtime
               // 支付宝分包独立打包，通过全局context获取webpackJSONP
-              if (mpx.mode === 'ali') {
+              if (mpx.mode === 'ali' && !mpx.isPluginMode) {
                 if (chunk.name === rootName) {
                   // 在rootChunk中挂载jsonpFunction
                   source.add('// process ali subpackages runtime in root chunk\n' +
@@ -902,6 +904,9 @@ try {
             source.add(`\nmodule.exports = window[${JSON.stringify(jsonpFunction)}];\n`)
           } else {
             if (mpx.pluginMainResource && chunk.entryModule && mpx.pluginMainResource === chunk.entryModule.rawRequest) {
+              source.add('module.exports =\n')
+            // mpx.miniToPluginExports is a Set
+            } else if (mpx.miniToPluginExports && chunk.entryModule && mpx.miniToPluginExports.has(chunk.entryModule.rawRequest)) {
               source.add('module.exports =\n')
             }
             source.add(originalSource)

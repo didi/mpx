@@ -90,7 +90,17 @@
       this.init()
     },
     activated () {
-      this.refresh()
+      if (!this.__mpx_deactivated) {
+        return
+      }
+      this.__mpx_deactivated = false
+      if (this.__mpx_deactivated_refresh) {
+        this.__mpx_deactivated_refresh = false
+        this.refresh()
+      }
+    },
+    deactivated () {
+      this.__mpx_deactivated = true
     },
     beforeDestroy () {
       this.destroy()
@@ -289,6 +299,10 @@
         this.$refs.scrollContent.style.height = `${height}px`
       },
       refresh () {
+        if (this.__mpx_deactivated) {
+          this.__mpx_deactivated_refresh = true
+          return
+        }
         if (this.bs) this.bs.refresh()
       },
       dispatchScrollTo: throttle(function (direction) {
