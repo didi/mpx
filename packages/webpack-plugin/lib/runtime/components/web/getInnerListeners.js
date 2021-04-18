@@ -105,6 +105,7 @@ export function inheritEvent (type, oe, detail = {}) {
   detail = Object.assign({}, oe.detail, detail)
   const ne = getCustomEvent(type, detail)
   extendEvent(ne, {
+    timeStamp: oe.timeStamp,
     target: oe.target,
     currentTarget: oe.currentTarget,
     stopPropagation: oe.stopPropagation.bind(oe),
@@ -115,7 +116,11 @@ export function inheritEvent (type, oe, detail = {}) {
 
 export function getCustomEvent (type, detail = {}) {
   /* eslint-disable no-undef */
-  const ce = new CustomEvent(type, { detail })
+  const ce = {
+    type,
+    detail,
+    timeStamp: new Date().valueOf()
+  }
   return ce
 }
 
