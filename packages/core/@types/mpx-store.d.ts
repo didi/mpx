@@ -67,6 +67,11 @@ declare namespace MpxStore {
     }
     mapState(depPath: string, maps: string[]): object
 
+    // mapState support object
+    mapState<T extends { [key: string]: keyof GetAllMapKeys<S, D, 'state'> }>(obj: T): {
+      [I in keyof T]: () => GetAllMapKeys<S, D, 'state'>[T[I]]
+    }
+
     mapGetters<K extends keyof G>(maps: K[]): {
       [I in K]: () => GetGetters<G>[I]
     }

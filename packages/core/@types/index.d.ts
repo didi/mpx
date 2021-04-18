@@ -253,7 +253,7 @@ export function createGettersWithThis<S = {}, D extends Deps = {}, G = {}, OG = 
   deps?: D
 }): G
 
-export function createMutationsWithThis<S = {}, D extends Deps = {}, M extends MutationsAndActionsWithThis = {}> (mutations: M & ThisType<{ state: S & UnboxDepsField<D, 'state'> }>, options?: {
+export function createMutationsWithThis<S = {}, D extends Deps = {}, M extends MutationsAndActionsWithThis = {}> (mutations: M & ThisType<{ state: S & UnboxDepsField<D, 'state'> , commit: GetDispatchAndCommitWithThis<M, D, 'mutations'>  }>, options?: {
   state?: S,
   deps?: D
 }): M
