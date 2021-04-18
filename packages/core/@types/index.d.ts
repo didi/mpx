@@ -183,7 +183,7 @@ type MpxComProps<O> = { $rawOptions: O }
 
 export interface MpxComponentIns {
 
-  $refs: ObjectOf<any>
+  $refs: ObjectOf<WechatMiniprogram.NodesRef | ComponentIns<{}, {}, {}, {}, []>>
 
   $set: typeof set
 
@@ -196,6 +196,10 @@ export interface MpxComponentIns {
   $forceUpdate (params?: object, callback?: () => void): void
 
   $nextTick (fn: () => void): void
+
+  $i18n: {
+    locale: string
+  }
 
   [k: string]: any
 }
@@ -249,7 +253,7 @@ export function createGettersWithThis<S = {}, D extends Deps = {}, G = {}, OG = 
   deps?: D
 }): G
 
-export function createMutationsWithThis<S = {}, D extends Deps = {}, M extends MutationsAndActionsWithThis = {}> (mutations: M & ThisType<{ state: S & UnboxDepsField<D, 'state'> }>, options?: {
+export function createMutationsWithThis<S = {}, D extends Deps = {}, M extends MutationsAndActionsWithThis = {}> (mutations: M & ThisType<{ state: S & UnboxDepsField<D, 'state'> , commit: GetDispatchAndCommitWithThis<M, D, 'mutations'>  }>, options?: {
   state?: S,
   deps?: D
 }): M
@@ -305,6 +309,7 @@ interface MpxConfig {
   ignoreRenderError: Boolean
   ignoreConflictWhiteList: Array<string>
   observeClassInstance: Boolean | Array<AnyConstructor>
+  hookErrorHandler: (e: Error, target: ComponentIns<{}, {}, {}, {}, []>, hookName: string) => any | null
 }
 
 type SupportedMode = 'wx' | 'ali' | 'qq' | 'swan' | 'tt' | 'web' | 'qa'
@@ -346,6 +351,13 @@ export interface Mpx {
   setConvertRule: typeof setConvertRule
 
   config: MpxConfig
+
+  i18n: {
+    locale: string,
+    version: number
+    mergeMessages (messages: object): void
+    mergeLocaleMessage (locale: string, message: object): void
+  }
 }
 
 type GetFunctionKey<T> = {

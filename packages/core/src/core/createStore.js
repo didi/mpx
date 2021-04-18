@@ -42,9 +42,12 @@ function transformMutations (mutations, module, store) {
     if (store.mutations[key]) {
       warn(`Duplicate mutation type: ${key}.`)
     }
-
+    const context = {
+      state: module.state,
+      commit: store.commit.bind(store)
+    }
     const mutation = function (...payload) {
-      if (store.withThis) return mutations[key].apply({ state: module.state }, payload)
+      if (store.withThis) return mutations[key].apply(context, payload)
       return mutations[key](module.state, ...payload)
     }
     newMutations[key] = mutation

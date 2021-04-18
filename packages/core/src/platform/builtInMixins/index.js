@@ -7,7 +7,6 @@ import relationsMixin from './relationsMixin'
 import i18nMixin from './i18nMixin'
 import pageTitleMixin from './pageTitleMixin'
 import pageScrollMixin from './pageScrollMixin'
-import pageResizeMixin from './pageResizeMixin'
 import componentGenericsMixin from './componentGenericsMixin'
 import getTabBarMixin from './getTabBarMixin'
 import pageRouteMixin from './pageRouteMixin'
@@ -22,7 +21,6 @@ export default function getBuiltInMixins (options, type) {
       pageTitleMixin(type),
       pageStatusMixin(type),
       pageScrollMixin(type),
-      pageResizeMixin(type),
       componentGenericsMixin(type),
       getTabBarMixin(type),
       pageRouteMixin(type),

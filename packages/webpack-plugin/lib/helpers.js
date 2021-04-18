@@ -134,7 +134,7 @@ module.exports = function createHelpers ({ loaderContext, options, moduleId, has
   function processMode (request, mode) {
     if (mode) {
       // 当前区块如声明了mode则强制覆盖已有request中的mode
-      request = addQuery(request, { mode }, undefined, true)
+      request = addQuery(request, { mode }, true)
     }
     return request
   }
