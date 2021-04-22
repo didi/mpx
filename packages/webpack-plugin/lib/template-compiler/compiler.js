@@ -1200,7 +1200,7 @@ function stringifyWithResolveComputed (modelValue) {
   return result.join('+')
 }
 
-function processBindEvent (el) {
+function processBindEvent (el, options) {
   const eventConfigMap = {}
   el.attrsList.forEach(function (attr) {
     let parsedEvent = config[mode].event.parseEvent(attr.name)
@@ -1217,7 +1217,7 @@ function processBindEvent (el) {
           }
         }
         eventConfigMap[type].configs.push(parsedFunc)
-        if (modifiers.indexOf('proxy') > -1) {
+        if (modifiers.indexOf('proxy') > -1 || options.forceProxyEvent) {
           eventConfigMap[type].proxy = true
         }
       }
@@ -2066,7 +2066,7 @@ function processElement (el, root, options, meta) {
   }
 
   if (!pass) {
-    processBindEvent(el)
+    processBindEvent(el, options)
     if (mode !== 'ali') {
       processPageStatus(el, options)
     }

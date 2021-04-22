@@ -132,6 +132,7 @@ class MpxWebpackPlugin {
     options.forceDisableBuiltInLoader = options.forceDisableBuiltInLoader || false
     options.useRelativePath = options.useRelativePath || false
     options.subpackageModulesRules = options.subpackageModulesRules || {}
+    options.forceProxyEventRules = options.forceProxyEventRules || {}
     this.options = options
   }
 
@@ -351,6 +352,7 @@ class MpxWebpackPlugin {
           externals: this.options.externals,
           useRelativePath: this.options.useRelativePath,
           removedChunks: [],
+          forceProxyEventRules: this.options.forceProxyEventRules,
           getEntryNode: (request, type, module) => {
             const entryNodesMap = mpx.entryNodesMap
             const entryModulesMap = mpx.entryModulesMap
@@ -905,7 +907,7 @@ try {
           } else {
             if (mpx.pluginMainResource && chunk.entryModule && mpx.pluginMainResource === chunk.entryModule.rawRequest) {
               source.add('module.exports =\n')
-            // mpx.miniToPluginExports is a Set
+              // mpx.miniToPluginExports is a Set
             } else if (mpx.miniToPluginExports && chunk.entryModule && mpx.miniToPluginExports.has(chunk.entryModule.rawRequest)) {
               source.add('module.exports =\n')
             }
