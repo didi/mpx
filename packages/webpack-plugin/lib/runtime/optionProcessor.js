@@ -197,6 +197,9 @@ export default function processOption (
         }
         Vue.config.errorHandler = errorHandler
         window.addEventListener('error', errorHandler)
+        window.addEventListener('unhandledrejection', event => {
+          errorHandler(event.reason)
+        })
         document.addEventListener('visibilitychange', function () {
           const vnode = global.__mpxRouter && global.__mpxRouter.__mpxActiveVnode
           if (vnode && vnode.componentInstance) {
