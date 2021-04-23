@@ -2,7 +2,6 @@ const allowPlaybackRate = [0.5, 0.8, 1.0, 1.25, 1.5, 2.0]
 export const createVideoContext = (id, context) => {
   if (!id || !context) {
     throw new Error(`${!id ? 'id' : 'this'} 为必传参数`)
-    return
   }
   const __videoNode = context.$el?.querySelector(`#${id}`)
   if (!__videoNode) {
@@ -11,74 +10,74 @@ export const createVideoContext = (id, context) => {
   const __videoContext = {}
 
   // todo 进入后台音频播放模式
-  __videoContext.requestBackgroundPlayback = () => { 
+  __videoContext.requestBackgroundPlayback = () => {
     console.warn('暂不支持requestBackgroundPlayback API')
   }
 
   // todo 退出后台音频播放
-  __videoContext.exitBackgroundPlayback = () => { 
+  __videoContext.exitBackgroundPlayback = () => {
     console.warn('暂不支持exitBackgroundPlayback API')
   }
 
   // todo 退出小窗，该方法可在任意页面调用
-  __videoContext.exitPictureInPicture = ({success, fail, complete}) => { 
+  __videoContext.exitPictureInPicture = ({ success, fail, complete }) => {
     console.warn('暂不支持exitPictureInPicture API')
   }
 
-   // todo 发送弹幕
-   __videoContext.sendDanmu = ({text, color}) => { 
+  // todo 发送弹幕
+  __videoContext.sendDanmu = ({ text, color }) => {
     console.warn('暂不支持发送弹幕')
   }
 
   // 进入全屏
-  __videoContext.requestFullScreen = ({direction}) => { 
+  __videoContext.requestFullScreen = ({ direction }) => {
     __videoNode.webkitRequestFullScreen && __videoNode.webkitRequestFullScreen() // Chrome
-    __videoNode.mozRequestFullScreen && __videoNode.mozRequestFullScreen()  // Firefox
+    __videoNode.mozRequestFullScreen && __videoNode.mozRequestFullScreen() // Firefox
     __videoNode.msRequestFullscreen && __videoNode.msRequestFullscreen() // IE
     __videoNode.oRequestFullScreen && __videoNode.oRequestFullScreen() // 欧朋
     __videoNode.webkitEnterFullscreen && __videoNode.webkitEnterFullscreen() // 苹果
-    if ( direction === 0 ) {
+    if (direction === 0) {
       __videoNode.setAttribute('x5-video-orientation', 'portraint') // portraint 竖屏 landscape 横屏
-    } else if (direction === 90 || direction === -90 ) {
+    } else if (direction === 90 || direction === -90) {
       __videoNode.setAttribute('x5-video-orientation', 'landscape') // portraint 竖屏 landscape 横屏
     }
   }
 
   // 退出全屏
-  __videoContext.exitFullScreen = () => { 
+  __videoContext.exitFullScreen = () => {
     document.webkitCancelFullScreen && document.webkitCancelFullScreen() // Chrome
-    document.mozCancelFullScreen && document.mozCancelFullScreen()  // Firefox
+    document.mozCancelFullScreen && document.mozCancelFullScreen() // Firefox
     document.exitFullscreen && document.exitFullscreen() // W3C
   }
 
   // 显示状态栏
-  __videoContext.showStatusBar = () => { 
+  __videoContext.showStatusBar = () => {
     __videoNode.setAttribute('controls', 'controls')
   }
 
   // 隐藏状态栏
-  __videoContext.hideStatusBar = () => { 
+  __videoContext.hideStatusBar = () => {
     __videoNode.removeAttribute('controls')
   }
 
   // 暂停
-  __videoContext.pause = () => { 
+  __videoContext.pause = () => {
     __videoNode.pause()
   }
 
   // 播放
-  __videoContext.play = () => { 
+  __videoContext.play = () => {
     __videoNode.play()
   }
 
   // 停止视频
-  __videoContext.stop = () => { 
+  __videoContext.stop = () => {
     __videoNode.currentTime = 0
     __videoNode.pause()
   }
 
   // 设置倍速播放
-  __videoContext.playbackRate = (number) => { 
+  __videoContext.playbackRate = (number) => {
     if (allowPlaybackRate.indexOf(number) === -1) {
       console.warn(`不支持${number}倍速播放`)
       return
@@ -87,7 +86,7 @@ export const createVideoContext = (id, context) => {
   }
 
   // 跳转到指定位置
-  __videoContext.seek = (number) => { 
+  __videoContext.seek = (number) => {
     __videoNode.currentTime = number
   }
 
