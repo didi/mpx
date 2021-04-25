@@ -253,7 +253,7 @@ export function createGettersWithThis<S = {}, D extends Deps = {}, G = {}, OG = 
   deps?: D
 }): G
 
-export function createMutationsWithThis<S = {}, D extends Deps = {}, M extends MutationsAndActionsWithThis = {}> (mutations: M & ThisType<{ state: S & UnboxDepsField<D, 'state'> , commit: GetDispatchAndCommitWithThis<M, D, 'mutations'>  }>, options?: {
+export function createMutationsWithThis<S = {}, D extends Deps = {}, M extends MutationsAndActionsWithThis = {}> (mutations: M & ThisType<{ state: S & UnboxDepsField<D, 'state'>, commit: GetDispatchAndCommitWithThis<M, D, 'mutations'> }>, options?: {
   state?: S,
   deps?: D
 }): M
@@ -310,6 +310,7 @@ interface MpxConfig {
   ignoreConflictWhiteList: Array<string>
   observeClassInstance: Boolean | Array<AnyConstructor>
   hookErrorHandler: (e: Error, target: ComponentIns<{}, {}, {}, {}, []>, hookName: string) => any | null
+  proxyEventHandler: (e: Event) => any | null
 }
 
 type SupportedMode = 'wx' | 'ali' | 'qq' | 'swan' | 'tt' | 'web' | 'qa'
