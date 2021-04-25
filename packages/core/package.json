@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/core",
-  "version": "2.6.59",
+  "version": "2.6.60",
   "description": "mpx runtime core",
   "keywords": [
     "miniprogram",
@@ -18,9 +18,9 @@
     "@types"
   ],
   "dependencies": {
+    "@types/node": "^14.14.41",
     "lodash": "^4.1.1",
-    "miniprogram-api-typings": "^3.0.2",
-    "@types/node": "^14.14.41"
+    "miniprogram-api-typings": "^3.0.2"
   },
   "peerDependencies": {
     "vue": "^2.6.10",
