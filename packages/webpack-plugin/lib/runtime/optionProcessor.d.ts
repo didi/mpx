@@ -10,6 +10,8 @@ export default function processOption (...args: any): object
 
 export function getComponent (...args: any): object
 
+export function getWxsMixin (...args: any): object
+
 
 
 
