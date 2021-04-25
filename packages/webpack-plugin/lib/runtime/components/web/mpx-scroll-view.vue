@@ -31,11 +31,14 @@
         default: 0
       },
       scrollOptions: Object,
-      updateRefresh: Boolean,
+      updateRefresh: {
+        type: Boolean,
+        default: true
+      },
       scrollIntoView: String,
       scrollWithAnimation: Boolean,
       enableFlex: Boolean,
-      enhanced:Boolean,
+      enhanced: Boolean,
       refresherEnabled: Boolean,
       refresherTriggered: Boolean,
       refresherThreshold: {
@@ -359,17 +362,20 @@
   .mpx-scroll-view
     overflow hidden
     position relative
+
     .mpx-pull-down-wrapper
       position: absolute
       width: 100%
       height: 250px
       box-sizing: border-box
       transform: translateY(-100%) translateZ(0)
+
       .mpx-pull-down-content
         position: absolute
         bottom: 20px
         left: 50%
         transform: translateX(-50%)
+
       .mpx-pull-down-content-black
         .circle
           display: inline-block;
@@ -377,19 +383,23 @@
           width: 8px;
           height: 8px;
           border-radius: 50%;
-          background: rgba(0,0,0,.3);
+          background: rgba(0, 0, 0, .3);
+
         &.active
           .circle-a
             animation: blackLoading 1s 0s infinite
+
           .circle-b
             animation: blackLoading 1s 0.3s infinite
+
           .circle-c
             animation: blackLoading 1s 0.6s infinite
+
           @keyframes blackLoading
             0%
-              background: rgba(0,0,0,.8);
+              background: rgba(0, 0, 0, .8);
             100%
-              background: rgba(0,0,0,.3)
+              background: rgba(0, 0, 0, .3)
 
       .mpx-pull-down-content-white
         .circle
@@ -398,17 +408,21 @@
           width: 8px;
           height: 8px;
           border-radius: 50%;
-          background: rgba(255,255,255,.3)
+          background: rgba(255, 255, 255, .3)
+
         &.active
           .circle-a
             animation: whiteLoading 1s 0s infinite;
+
           .circle-b
             animation: whiteLoading 1s 0.3s infinite;
+
           .circle-c
             animation: whiteLoading 1s 0.6s infinite;
+
           @keyframes whiteLoading
             0%
-              background: rgba(255,255,255,.7)
+              background: rgba(255, 255, 255, .7)
             100%
-              background: rgba(255,255,255,.3)
+              background: rgba(255, 255, 255, .3)
 </style>
