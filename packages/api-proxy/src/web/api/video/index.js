@@ -1,9 +1,14 @@
 const allowPlaybackRate = [0.5, 0.8, 1.0, 1.25, 1.5, 2.0]
 export const createVideoContext = (id, context) => {
-  if (!id || !context) {
-    throw new Error(`${!id ? 'id' : 'this'} 为必传参数`)
+  if (!id) {
+    throw new Error('id为必传参数')
   }
-  const __videoNode = context.$el?.querySelector(`#${id}`)
+  let __videoNode
+  if (context && context.$el) {
+    __videoNode = context.$el.querySelector(`#${id}`)
+  } else {
+    __videoNode = document.querySelector(`#${id}`)
+  }
   if (!__videoNode) {
     throw new Error(`未找到id为${id}的节点`)
   }
