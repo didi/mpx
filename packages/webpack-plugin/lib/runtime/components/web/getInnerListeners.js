@@ -54,6 +54,7 @@ function processTap (listeners, context) {
       }
       context.__mpxTapInfo.startTimer = null
       context.__mpxTapInfo.needTap = true
+      context.__mpxTapInfo.hadTouch = true
       if (listeners.longpress || listeners.longtap) {
         context.__mpxTapInfo.startTimer = setTimeout(() => {
           context.__mpxTapInfo.needTap = false
@@ -84,20 +85,17 @@ function processTap (listeners, context) {
         const re = inheritEvent('tap', e, context.__mpxTapInfo.detail)
         context.$emit('tap', re)
       }
-    }
-  }
-  if (!document.documentElement.touchstart) {
-    events = {
-      click (e) {
-        if (listeners.tap) {
-          context.__mpxTapInfo.detail = {
-            x: e.pageX,
-            y: e.pageY
-          }
-          const re = inheritEvent('tap', e, context.__mpxTapInfo.detail)
-          context.$emit('tap', re)
+    },
+    click (e) {
+      if (listeners.tap && !context.__mpxTapInfo.hadTouch) {
+        context.__mpxTapInfo.detail = {
+          x: e.pageX,
+          y: e.pageY
         }
+        const re = inheritEvent('tap', e, context.__mpxTapInfo.detail)
+        context.$emit('tap', re)
       }
+      context.__mpxTapInfo.hadTouch = false
     }
   }
   mergeListeners(listeners, events, {
