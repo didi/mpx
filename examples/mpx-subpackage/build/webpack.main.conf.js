@@ -22,6 +22,10 @@ module.exports = merge(baseWebpackConfig, {
     path: resolveDist()
   },
   resolve: {
-    modules: [resolveSrc()]
+    extensions: ['.ts', '.js', '.mpx'],
+    modules: [resolveSrc()],
+    alias: {
+      'common': resolveSrc('common')
+    }
   }
 })

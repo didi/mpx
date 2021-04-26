@@ -17,6 +17,7 @@
   "author": "sky-admin <546485299@qq.com>",
   "license": "ISC",
   "dependencies": {
+    "@didi/webpack-import-replace-plugin": "^1.0.0",
     "@mpxjs/api-proxy": "^2.0.0",
     "@mpxjs/core": "^2.0.0"
   },

@@ -6,8 +6,11 @@
 
 <script>
   import { createComponent } from '@mpxjs/core'
-
+  console.log('00000000000 dialog')
   createComponent({
+    created() {
+      console.log('dialog created')
+    },
     methods: {
       getRoutes() {
         let pages = getCurrentPages() || []
@@ -27,12 +30,14 @@
 </script>
 
 <style lang="stylus">
-  .list
-    background-color red
+@import "../common/stylus/var.styl"
 </style>
 
 <script type="application/json">
   {
-    "component": true
+    "component": true,
+    "usingComponents": {
+      "list": "./list"
+    }
   }
 </script>

@@ -7,9 +7,11 @@
 </template>
 
 <script>
+  import 'performanceLog?SuggestScriptStart'
   import { createPage } from '@mpxjs/core'
   import Store from '../../../store'
   import estimatePage from '../../estimate/pages/index.mpx?resolve'
+  console.log('suggest script')
   createPage({
     computed: {
       ...Store.mapState(['num']),

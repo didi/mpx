@@ -1,7 +1,17 @@
 <script>
+  /**
+   * 1. 只要usingComponents中引入了组件，那引入的组件mpx文件中的script就会执行
+   * 2. 只有template模版中引用组件，才会执行script中attached相关的代码
+   * 3. 和最外层app.mpx注册分包无关～只和分包有关，从分包的app.mpx注册pages就有关系
+   * 4. 在运行时,对运行的分包里的所有page
+   * 5. 如果usingComponent一层一层的引用~则从最内层script执行-然后向上一步一步执行
+   * 6. 执行顺序并非按照页面注册的顺序，异步并行
+  */
+  import 'performanceLog?appScriptStart'
   import mpx from '@mpxjs/core'
   import apiProxy from '@mpxjs/api-proxy'
-
+  import suggestPage from './subpackage/estimate/pages/index.mpx?resolve'
+  console.log('app script')
   mpx.use(apiProxy, { usePromise: true })
   App({
     onLaunch: function () {

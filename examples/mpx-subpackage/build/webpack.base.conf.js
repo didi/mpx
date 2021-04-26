@@ -1,5 +1,6 @@
 const path = require('path')
 const MpxWebpackPlugin = require('@mpxjs/webpack-plugin')
+const ImportReplacePlugin = require('@didi/webpack-import-replace-plugin')
 
 function resolve (dir) {
   return path.join(__dirname, '..', dir)
@@ -69,6 +70,21 @@ const webpackConf = {
   output: {
     filename: '[name].js'
   },
+  plugins: [
+    // 替换特殊的引入语句为打点语句用于性能统计分析
+    new ImportReplacePlugin({
+      test: /performanceLog\?(.*)/,
+      replace (rs) {
+        if (rs[1] === 'appScriptStart') {
+          return `var jsPerfMap = {'${rs[1]}': 0, start: +new Date(), end: +new Date()};global.jsPerfMap = jsPerfMap;`
+        }
+        if (Array.isArray(rs) && rs.length >= 2) {
+          return `var __start = getApp().jsPerfMap.start; var __time = (+new Date()) - __start; getApp().jsPerfMap['${rs[1]}'] = __time;`
+        }
+        return ''
+      }
+    })
+  ],
   optimization: {
     runtimeChunk: {
       name: 'bundle'

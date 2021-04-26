@@ -4,7 +4,9 @@
 </template>
 
 <script>
+  import 'performanceLog?EstiamteScriptStart'
   import { createPage } from '@mpxjs/core'
+  console.log('estimate page script  ')
   createPage({
     onLoad () {
 

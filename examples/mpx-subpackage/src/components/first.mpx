@@ -1,16 +1,11 @@
 <template>
   <view class="list">
-    <view wx:for="{{listData}}" wx:key="index">{{item}}</view>
-    <view bindtap="handleTap">点击返回homepage页面</view>
-    <form class="form" report-submit="true" bindsubmit="formSubmit">
-      <button class="formBtn" form-type="submit"></button>
-    </form>
   </view>
 </template>
 
 <script>
-  import mpx, { createComponent } from '@mpxjs/core'
-  console.log('999999 list')
+  import { createComponent } from '@mpxjs/core'
+  console.log('first component script')
   /**
    * 1. 只要usingComponents中引入了组件，那引入的组件mpx文件中的script就会执行
    * 2. 只有template模版中引用组件，才会执行script中attached相关的代码
@@ -22,15 +17,10 @@
     methods: {
       handleTap () {
         this.triggerEvent('backTo')
-      },
-      formSubmit(e) {
-        let rs = mpx.canIUse('form.report-submit')
-        console.log('333333_444444', rs)
-        console.log('1111111____2222:', e.detail.formId)
       }
     },
     attached() {
-      console.log('list:attached:', this.getRoutes())
+      console.log('test:attached:', this.getRoutes())
     }
   })
 </script>

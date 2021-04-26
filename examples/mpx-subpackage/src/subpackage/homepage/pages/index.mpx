@@ -5,10 +5,15 @@
 </template>
 
 <script>
+  import 'performanceLog?HomePageScriptStart'
   import { createPage } from '@mpxjs/core'
   import suggestPage from '../../suggest/pages/index.mpx?resolve'
   import estimatePage from '../../estimate/pages/index.mpx?resolve'
   import Store from '../../../store'
+  console.log('112133333 page srcirpt')
+  const res = wx.getSystemInfoSync()
+  console.log(JSON.stringify(res))
+  console.log('__________')
   createPage({
     data: {
       showDialog: true
@@ -51,7 +56,9 @@
 <script type="application/json">
   {
     "usingComponents": {
-      "dialog": "../../../components/dialog"
+      "dialog": "../../../components/dialog",
+      "first": "../../../components/first",
+      "second": "../../../components/second"
     }
   }
 </script>
