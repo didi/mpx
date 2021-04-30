@@ -242,7 +242,7 @@ export default class MPXProxy {
         if (typeof EXPORT_MPX.config.hookErrorHandler === 'function') {
           EXPORT_MPX.config.hookErrorHandler(e, this.target, hookName)
         } else {
-          Promise.resolve().then(() => {
+          setTimeout(() => {
             throw e
           })
         }
