@@ -49,11 +49,11 @@ export default function processOption (
       if (Array.isArray(newAnimation) && newAnimation.length) {
         newAnimation.forEach((item) => {
           const property = []
-          const {animates, option} = item
+          const { animates, option } = item
           const dynamicStyle = { // 存储动画需要改变的样式属性
             transform: ''
           }
-          animates?.forEach((itemAnimation) => {
+          animates.forEach((itemAnimation) => {
             switch (itemAnimation.type) {
               case 'style':
                 const [key, value] = itemAnimation.args
