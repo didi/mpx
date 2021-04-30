@@ -54,3 +54,6 @@ export * from './page-scroll-to'
 export * from './tab-bar'
 
 export * from './app'
+
+// createAnimation
+export * from './animation'

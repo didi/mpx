@@ -1855,6 +1855,16 @@ function processWebExternalClassesHack (el, options) {
   }
 }
 
+function processAnimation (el) {
+  const dynamicAnimation = el.attrsMap[':animation']
+  if (dynamicAnimation) {
+    addAttrs(el, [{
+      name: 'v-animation',
+      value: dynamicAnimation
+    }])
+  }
+}
+
 function processScoped (el, options) {
   const scopedId = options.scopedId
   if (scopedId && isRealNode(el)) {
@@ -2037,6 +2047,7 @@ function processElement (el, root, options, meta) {
     processBuiltInComponents(el, meta)
     // 预处理代码维度条件编译
     processIfForWeb(el)
+    processAnimation(el)
     processWebExternalClassesHack(el, options)
     processComponentGenericsForWeb(el, options, meta)
     return

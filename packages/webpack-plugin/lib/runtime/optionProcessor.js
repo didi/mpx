@@ -43,6 +43,44 @@ export default function processOption (
       }
     })
 
+    Vue.directive('animation', (el, binding, vnode) => {
+      const newAnimation = binding?.value?.actions
+      let timer = 0
+      if (Array.isArray(newAnimation) && newAnimation.length) {
+        newAnimation.forEach((item) => {
+          const property = []
+          const {animates, option} = item
+          const dynamicStyle = { // 存储动画需要改变的样式属性
+            transform: ''
+          }
+          animates?.forEach((itemAnimation) => {
+            switch (itemAnimation.type) {
+              case 'style':
+                const [key, value] = itemAnimation.args
+                dynamicStyle[key] = value
+                property.push(key)
+                break
+              default:
+                dynamicStyle.transform += `${itemAnimation.type}(${itemAnimation.args}) `
+                !property.includes('transform') && property.push('transform')
+            }
+          })
+          // 动画类样式根据duration来动态设置
+          setTimeout(() => {
+            // 设置transition属性
+            el.style.transition = `${parseInt(option.duration)}ms ${option.timingFunction} ${parseInt(option.delay)}ms`
+            el.style.transitionProperty = `${property}`
+            el.style.transformOrigin = option.transformOrigin
+            // 动画属性
+            Object.assign(el.style, dynamicStyle)
+          }, timer)
+          timer += option.duration
+          timer += option.duration
+        })
+      }
+      // transition动画属性设置
+    })
+
     const routes = []
 
     for (const pagePath in pagesMap) {
