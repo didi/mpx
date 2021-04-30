@@ -214,11 +214,14 @@ class Animation {
       animates: [...action.animates],
       option: Object.assign({}, action.option)
     })
+    return this
   }
 
   export () {
+    const actions = this.actions.slice(0)
+    this.actions.length = 0
     return {
-      actions: this.actions
+      actions
     }
   }
 }

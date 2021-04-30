@@ -45,12 +45,13 @@ export default function processOption (
 
     Vue.directive('animation', (el, binding, vnode) => {
       const newAnimation = binding?.value?.actions
-      let timer = 0
+      const dynamicStyleQueue = []
       if (Array.isArray(newAnimation) && newAnimation.length) {
         newAnimation.forEach((item) => {
           const property = []
           const { animates, option } = item
-          const dynamicStyle = { // 存储动画需要改变的样式属性
+          // 存储动画需要改变的样式属性
+          const dynamicStyle = {
             transform: ''
           }
           animates.forEach((itemAnimation) => {
@@ -65,20 +66,29 @@ export default function processOption (
                 !property.includes('transform') && property.push('transform')
             }
           })
-          // 动画类样式根据duration来动态设置
-          setTimeout(() => {
-            // 设置transition属性
-            el.style.transition = `${parseInt(option.duration)}ms ${option.timingFunction} ${parseInt(option.delay)}ms`
-            el.style.transitionProperty = `${property}`
-            el.style.transformOrigin = option.transformOrigin
-            // 动画属性
-            Object.assign(el.style, dynamicStyle)
-          }, timer)
-          timer += option.duration
-          timer += option.duration
+          Object.assign(dynamicStyle, {
+            transition: `${parseInt(option.duration)}ms ${option.timingFunction} ${parseInt(option.delay)}ms`,
+            transitionProperty: `${property}`,
+            transformOrigin: option.transformOrigin
+          })
+          dynamicStyleQueue.push(dynamicStyle)
         })
+        const setAnimation = function () {
+          if (!dynamicStyleQueue.length) {
+            return
+          }
+          const dynamicStyle = dynamicStyleQueue.shift()
+          Object.assign(el.style, dynamicStyle)
+        }
+        // 首次动画属性设置
+        setTimeout(() => {
+          setAnimation()
+        }, 0)
+        // 在transitionend事件内设置动画样式
+        el.addEventListener('transitionend', () => {
+          setAnimation()
+        }, false)
       }
-      // transition动画属性设置
     })
 
     const routes = []
