@@ -11,7 +11,6 @@ module.exports = class PackagePlugin {
     resolver.getHook(this.source).tapAsync('PackagePlugin', (request, resolveContext, callback) => {
       const innerRequest = request.request || request.path;
       if (!innerRequest) return callback();
-      let hit = false
       let newRequest = ''
       /**
        * 判断是否需要更改innerRequest
@@ -23,12 +22,11 @@ module.exports = class PackagePlugin {
         let prefixReg = new RegExp(`${key}/(${strEntry})/`)
         let newKey = (key + '/' + this.resolvePackList[key][0]).replace(/(\/+)/g, '/')
         if (innerRequest.indexOf(key) !== -1 && !prefixReg.test(innerRequest)) {
-          hit = true
           newRequest = innerRequest.replace(key, newKey)
         }
 
       }
-      if (hit) {
+      if (newRequest) {
         const obj = Object.assign({}, request, {
           request: newRequest
         });
