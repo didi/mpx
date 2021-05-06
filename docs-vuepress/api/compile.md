@@ -449,6 +449,26 @@ new MpxWebpackPlugin({
 
 - **参考**：<a href="https://developers.weixin.qq.com/miniprogram/dev/extended/weui/quickstart.html" target="_blank">weui组件库</a>
 
+### miniNpmPackage
+
+- **类型**：`Array<string>`
+
+- **默认值**: `false`
+
+- **详细**: 在非支付宝小程序环境下，`Mpx` 会强行将 `Page` 转为 `Conponent` 处理；将该值设置为 `true` 时，`Page` 将不被转换。
+
+- **详细**: 微信小程序官方提供了[发布小程序 npm 包的约束](https://developers.weixin.qq.com/miniprogram/dev/devtools/npm.html)。
+部分小程序npm包，如[vant组件库](https://vant-contrib.gitee.io/vant-weapp/#/quickstart)官方文档使用说明，引用资源并不会包含miniprogram所指定的目录
+如 "@vant/weapp/button/index"，导致 `Mpx` 解析路径失败。`Mpx`为解决这个问题，提供miniNpmPackage字段供用户配置需要解析的小程序npm包
+
+
+- **示例**:
+```js
+new MpxWebpackPlugin({
+  miniNpmPackage: ['@vant/weapp']
+})
+```
+
 ### forceUsePageCtor
 
 - **类型**: `Boolean`

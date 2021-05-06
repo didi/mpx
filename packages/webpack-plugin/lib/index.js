@@ -66,10 +66,6 @@ let loaderOptions
 const externalsMap = {
   weui: /^weui-miniprogram/
 }
-// 内置vant解析，vant的package.json中的miniprogram是lib, vant使用文档是不包含dist或lib的，在解析的时候会出错
-const resolvePackList = {
-  '@vant/weapp': ['dist', 'lib']
-}
 
 const warnings = []
 const errors = []
@@ -138,6 +134,7 @@ class MpxWebpackPlugin {
     options.useRelativePath = options.useRelativePath || false
     options.subpackageModulesRules = options.subpackageModulesRules || {}
     options.forceProxyEventRules = options.forceProxyEventRules || {}
+    options.miniNpmPackage = options.miniNpmPackage || false
     this.options = options
   }
 
@@ -207,14 +204,17 @@ class MpxWebpackPlugin {
     }
 
     const resolvePlugin = new AddModePlugin('before-resolve', this.options.mode, 'resolve')
-    const packageEntryPlugin = new PackageEntryPlugin('after-described-resolve',  resolvePackList, 'resolve')
 
     if (Array.isArray(compiler.options.resolve.plugins)) {
       compiler.options.resolve.plugins.push(resolvePlugin)
     } else {
       compiler.options.resolve.plugins = [resolvePlugin]
     }
-    compiler.options.resolve.plugins.push(packageEntryPlugin)
+
+    if (this.options.miniNpmPackage) {
+      const packageEntryPlugin = new PackageEntryPlugin('after-described-relative', this.options.miniNpmPackage, 'resolve')
+      compiler.options.resolve.plugins.push(packageEntryPlugin)
+    }
 
     let splitChunksPlugin
     let splitChunksOptions
