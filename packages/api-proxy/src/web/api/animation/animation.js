@@ -1,7 +1,8 @@
 let action
 function collectionData (type, value) {
   const animates = action.animates
-  if (!animates.length) { //如果没有直接push进数组里
+  if (!animates.length) {
+    // 如果没有直接push进数组里
     animates.push(trimAnimationData(type, value))
     return
   }
@@ -139,7 +140,7 @@ class Animation {
     return this
   }
 
-  scale3d(...value) {
+  scale3d (...value) {
     const defaultVal = [1, 1, 1]
     defaultVal.splice(0, value.length, ...value)
     collectionData('scale3d', defaultVal)
