@@ -73,8 +73,12 @@ export default function processOption (
           })
           dynamicStyleQueue.push(dynamicStyle)
         })
+        const transitionEvent = function () {
+          setAnimation()
+        }
         const setAnimation = function () {
           if (!dynamicStyleQueue.length) {
+            el.removeEventListener('transitionend', transitionEvent, false)
             return
           }
           const dynamicStyle = dynamicStyleQueue.shift()
@@ -85,9 +89,7 @@ export default function processOption (
           setAnimation()
         }, 0)
         // 在transitionend事件内设置动画样式
-        el.addEventListener('transitionend', () => {
-          setAnimation()
-        }, false)
+        el.addEventListener('transitionend', transitionEvent, false)
       }
     })
 
