@@ -8,18 +8,20 @@ module.exports = class PackagePlugin {
 
   apply (resolver) {
     const target = resolver.ensureHook(this.target)
-    // 仿照aliasPlugin
     resolver.getHook(this.source).tapAsync('PackagePlugin', (request, resolveContext, callback) => {
       const innerRequest = request.request || request.path;
       if (!innerRequest) return callback();
       let hit = false
       let newRequest = ''
-      // 初始命不中, 两种方案：一种是直接添加options alias. 弊端开发人员可能会直接写@vant/weapp/dist 这种解析就有问题了， 第二种：请求的时候判断资源是否命中
+      /**
+       * 判断是否需要更改innerRequest
+       * 1. 用户资源不含有组件库package.json中入口目录(如vant组件库package.json中miniprogram字段)
+       * 2. 用户直接配置alias: @vant/weapp/(dist|lib) 需要排除, 更改innerRequest后需要排除
+      */
       for (let key in this.resolvePackList) {
         let strEntry = (this.resolvePackList[key] || []).join('|')
         let prefixReg = new RegExp(`${key}/(${strEntry})/`)
         let newKey = (key + '/' + this.resolvePackList[key][0]).replace(/(\/+)/g, '/')
-        // 初始req不带有package.json中的miniprogram字段 && 更改新的req后不能在命中此逻辑
         if (innerRequest.indexOf(key) !== -1 && !prefixReg.test(innerRequest)) {
           hit = true
           newRequest = innerRequest.replace(key, newKey)
@@ -32,7 +34,6 @@ module.exports = class PackagePlugin {
         });
         resolver.doResolve(target, obj, 'change request:' + newRequest, resolveContext, (err, result) => {
           if (err) return callback(err);
-          console.log(result)
           if (result === undefined) return callback(null, null);
           callback(null, result);
         })
