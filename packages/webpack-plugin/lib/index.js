@@ -14,6 +14,7 @@ const addQuery = require('./utils/add-query')
 const DefinePlugin = require('webpack/lib/DefinePlugin')
 const ExternalsPlugin = require('webpack/lib/ExternalsPlugin')
 const AddModePlugin = require('./resolver/AddModePlugin')
+const PackageEntryPlugin = require('./resolver/PackageEntryPlugin')
 const CommonJsRequireDependency = require('webpack/lib/dependencies/CommonJsRequireDependency')
 const HarmonyImportSideEffectDependency = require('webpack/lib/dependencies/HarmonyImportSideEffectDependency')
 const RequireHeaderDependency = require('webpack/lib/dependencies/RequireHeaderDependency')
@@ -64,6 +65,10 @@ let loaderOptions
 
 const externalsMap = {
   weui: /^weui-miniprogram/
+}
+// 内置vant解析，vant的package.json中的miniprogram是lib, vant使用文档是不包含dist或lib的，在解析的时候会出错
+const resolvePackList = {
+  '@vant/weapp': ['dist', 'lib']
 }
 
 const warnings = []
@@ -202,12 +207,14 @@ class MpxWebpackPlugin {
     }
 
     const resolvePlugin = new AddModePlugin('before-resolve', this.options.mode, 'resolve')
+    const packageEntryPlugin = new PackageEntryPlugin('after-described-resolve',  resolvePackList, 'resolve')
 
     if (Array.isArray(compiler.options.resolve.plugins)) {
       compiler.options.resolve.plugins.push(resolvePlugin)
     } else {
       compiler.options.resolve.plugins = [resolvePlugin]
     }
+    compiler.options.resolve.plugins.push(packageEntryPlugin)
 
     let splitChunksPlugin
     let splitChunksOptions
