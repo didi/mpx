@@ -134,7 +134,7 @@ class MpxWebpackPlugin {
     options.useRelativePath = options.useRelativePath || false
     options.subpackageModulesRules = options.subpackageModulesRules || {}
     options.forceProxyEventRules = options.forceProxyEventRules || {}
-    options.miniNpmPackage = options.miniNpmPackage || false
+    options.miniNpmPackage = options.miniNpmPackage || []
     this.options = options
   }
 
@@ -204,6 +204,8 @@ class MpxWebpackPlugin {
     }
 
     const resolvePlugin = new AddModePlugin('before-resolve', this.options.mode, 'resolve')
+    // 更改request后需要重新resolve或者after-described-resolve，需要变更request.path字段，因为在FileExistsPlugin根据拼接的path进行判断文件是否存在
+    const packageEntryPlugin = new PackageEntryPlugin('before-described-relative',  this.options.miniNpmPackage, 'after-described-resolve')
 
     if (Array.isArray(compiler.options.resolve.plugins)) {
       compiler.options.resolve.plugins.push(resolvePlugin)
@@ -211,10 +213,7 @@ class MpxWebpackPlugin {
       compiler.options.resolve.plugins = [resolvePlugin]
     }
 
-    if (this.options.miniNpmPackage) {
-      const packageEntryPlugin = new PackageEntryPlugin('after-described-relative', this.options.miniNpmPackage, 'resolve')
-      compiler.options.resolve.plugins.push(packageEntryPlugin)
-    }
+    compiler.options.resolve.plugins.push(packageEntryPlugin)
 
     let splitChunksPlugin
     let splitChunksOptions
