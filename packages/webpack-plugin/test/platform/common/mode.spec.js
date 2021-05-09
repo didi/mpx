@@ -6,6 +6,15 @@ describe('template should transform correct', function () {
     errorFn.mockClear()
   })
 
+  it('same attr with or without at mode', function () {
+    const input1 = `<view class="normal" class@ali="ali" >123</view>`
+    const output1 = compileAndParse(input1)
+    expect(output1).toBe('<view class="ali">123</view>')
+    const input2 = `<view class="normal" class@wx="wx" >123</view>`
+    const output2 = compileAndParse(input2)
+    expect(output2).toBe('<view class="normal">123</view>')
+  })
+
   it('work correct in wx mode', function () {
     const input1 = `<view @wx>123</view>`
     const output1 = compileAndParse(input1)
