@@ -234,7 +234,7 @@ function assertMpxCommentAttrsEnd () {
 // Browser environment sniffing
 const UA = inBrowser && window.navigator.userAgent.toLowerCase()
 const isIE = UA && /msie|trident/.test(UA)
-const isEdge = UA && UA.indexOf('edge/') > 0
+// const isEdge = UA && UA.indexOf('edge/') > 0
 
 // configurable state
 // 由于template处理为纯同步过程，采用闭包变量存储各种状态方便全局访问
