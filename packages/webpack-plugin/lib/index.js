@@ -204,8 +204,7 @@ class MpxWebpackPlugin {
     }
 
     const resolvePlugin = new AddModePlugin('before-resolve', this.options.mode, 'resolve')
-    // 更改request后需要重新resolve或者after-described-resolve，需要变更request.path字段，因为在FileExistsPlugin根据拼接的path进行判断文件是否存在
-    const packageEntryPlugin = new PackageEntryPlugin('before-described-relative',  this.options.miniNpmPackage, 'after-described-resolve')
+    const packageEntryPlugin = new PackageEntryPlugin('before-described-relative', this.options.miniNpmPackage, 'described-relative')
 
     if (Array.isArray(compiler.options.resolve.plugins)) {
       compiler.options.resolve.plugins.push(resolvePlugin)
