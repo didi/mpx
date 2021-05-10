@@ -89,6 +89,11 @@ const webpackConf = {
   resolve: {
     extensions: ['.js', '.mpx'],
     modules: ['node_modules']
+    /*
+    alias: {
+      'vant': '@vant/weapp/lib'
+    }
+    */
   }
 }
 

@@ -1,19 +1,32 @@
 <template>
-  <list></list>
-  <button bind:tap="handleTap">点击</button>
+  <view>
+    <view>111122222444446666</view>
+    <van-button type="primary" size="large">大号按钮</van-button>
+    <button class="login-btn">33333333</button>
+    <!--
+    <mp-icon icon="play" color="black" size="{{25}}" bindtap="showDialog"></mp-icon>
+    <mp-dialog title="test" show="{{dialogShow}}" bindbuttontap="tapDialogButton" buttons="{{buttons}}">
+      <view>test content</view>
+    </mp-dialog>
+    -->
+  </view> 
 </template>
 
 <script>
   import { createPage } from '@mpxjs/core'
-  import subPackageIndexPage from '../subpackage/pages/index.mpx?resolve'
 
   createPage({
+    data: {
+      dialogShow: true,
+      buttons: [{text: '取消'}, {text: '确定'}]
+    },
     onLoad () {},
     methods: {
-      handleTap () {
-        wx.navigateTo({
-          url: subPackageIndexPage
-        })
+      showDialog() {
+        console.log('showDialog')
+      },
+      tapDialogButton() {
+        console.log('tapDialogButton')
       }
     }
   })
@@ -22,7 +35,10 @@
 <script type="application/json">
   {
     "usingComponents": {
-      "list": "../components/list"
+      // "mp-icon": "weui-miniprogram/icon/icon",
+      // "mp-dialog": "weui-miniprogram/dialog/dialog",
+      "van-button": "@vant/weapp/button/index",
+      "mpx-button": "@didi/mpx-ui/src/components/button"
     }
   }
 </script>

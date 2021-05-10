@@ -18,6 +18,9 @@
     ],
     "packages": [
       "./subpackage/app.mpx?root=sub1"
-    ]
+    ],
+    "useExtendedLib": {
+      "weui": true
+    }
   }
 </script>

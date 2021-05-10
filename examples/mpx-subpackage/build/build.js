@@ -25,7 +25,11 @@ if (modeArr.length === 0) {
   if (isPluginProject) {
     webpackConfigArr.push(merge(userSelectedMode === 'wx' ? webpackWxConfig : webpackMainConfig, {
       plugins: [
-        new MpxWebpackPlugin({mode: userSelectedMode})
+        new MpxWebpackPlugin({
+          mode: userSelectedMode,
+          externals: ['weui'],
+          miniNpmPackage: ['@vant/weapp']
+        })
       ]
     }))
   } else {
@@ -34,7 +38,11 @@ if (modeArr.length === 0) {
         path: resolveDist('', '../dist/')
       },
       plugins: [
-        new MpxWebpackPlugin({mode: userSelectedMode})
+        new MpxWebpackPlugin({
+          mode: userSelectedMode,
+          externals: ['weui'],
+          miniNpmPackage: ['@vant/weapp']
+        })
       ]
     }))
   }
@@ -48,7 +56,9 @@ if (modeArr.length === 0) {
       plugins: [
         new MpxWebpackPlugin({
           mode: item,
-          srcMode: 'wx'
+          srcMode: 'wx',
+          externals: ['weui'],
+          miniNpmPackage: ['@vant/weapp']
         })
       ]
     })
