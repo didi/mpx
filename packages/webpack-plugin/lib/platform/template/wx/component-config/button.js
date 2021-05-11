@@ -80,7 +80,7 @@ module.exports = function ({ print }) {
           }
         },
         qq ({ name, value }) {
-          const supportList = ['share', 'getUserInfo', 'launchApp', 'openSetting', 'contact', 'feedback', 'openGroupProfile', 'addFriend', 'addColorSign', 'openPublicProfile', 'addGroupApp', 'shareMessageToFriend', 'addToFavorites']
+          const supportList = ['share', 'getUserInfo', 'getPhoneNumber', 'launchApp', 'openSetting', 'contact', 'feedback', 'openGroupProfile', 'addFriend', 'addColorSign', 'openPublicProfile', 'addGroupApp', 'shareMessageToFriend', 'addToFavorites']
           if (wxSupportPropsValue[name] && wxSupportPropsValue[name].indexOf(value) === -1) {
             wxPropValueLog({ name, value })
           }
