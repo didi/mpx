@@ -101,9 +101,9 @@ function guardIESVGBug (attrs) {
 function makeAttrsMap (attrs) {
   let map = {}
   for (let i = 0, l = attrs.length; i < l; i++) {
-    if (map[attrs[i].name] && !isIE && !isEdge) {
-      warn$1('duplicate attribute: ' + attrs[i].name)
-    }
+    // if (map[attrs[i].name] && !isIE && !isEdge) {
+    //   warn$1('duplicate attribute: ' + attrs[i].name)
+    // }
     map[attrs[i].name] = attrs[i].value
   }
   return map
@@ -234,7 +234,7 @@ function assertMpxCommentAttrsEnd () {
 // Browser environment sniffing
 const UA = inBrowser && window.navigator.userAgent.toLowerCase()
 const isIE = UA && /msie|trident/.test(UA)
-const isEdge = UA && UA.indexOf('edge/') > 0
+// const isEdge = UA && UA.indexOf('edge/') > 0
 
 // configurable state
 // 由于template处理为纯同步过程，采用闭包变量存储各种状态方便全局访问
@@ -979,7 +979,7 @@ function addChild (parent, newChild, before) {
 
 function getAndRemoveAttr (el, name, removeFromMap = true) {
   let val, has
-  let list = el.attrsList
+  const list = el.attrsList
   for (let i = 0, l = list.length; i < l; i++) {
     if (list[i].name === name) {
       val = list[i].value
@@ -1002,10 +1002,9 @@ function addAttrs (el, attrs) {
   const map = el.attrsMap
   for (let i = 0, l = attrs.length; i < l; i++) {
     list.push(attrs[i])
-
-    if (map[attrs[i].name] && !isIE && !isEdge) {
-      warn$1('duplicate attribute: ' + attrs[i].name)
-    }
+    // if (map[attrs[i].name] && !isIE && !isEdge) {
+    //   warn$1('duplicate attribute: ' + attrs[i].name)
+    // }
     map[attrs[i].name] = attrs[i].value
   }
 }
@@ -1997,15 +1996,14 @@ function processAtMode (el) {
 
 // 去除重复的attrsList项，这些项可能由平台转换规则造成
 function processDuplicateAttrsList (el) {
-  const attrsMap = new Map()
+  const attrsMap = el.attrsMap
   const attrsList = []
-  el.attrsList.forEach((attr) => {
-    if (!attrsMap.has(attr.name)) {
-      attrsMap.set(attr.name, attr.value)
-    } else if (attr.value === attrsMap.get(attr.name)) {
-      return
-    }
-    attrsList.push(attr)
+  Object.keys(attrsMap).forEach((name) => {
+    const value = attrsMap[name]
+    attrsList.push({
+      name,
+      value
+    })
   })
   el.attrsList = attrsList
 }

@@ -6,6 +6,7 @@ const warnFn = jest.fn(console.warn)
 function compileAndParse (input, { srcMode, mode } = { srcMode: 'wx', mode: 'ali' }) {
   const parsed = compiler.parse(input, {
     usingComponents: [],
+    externalClasses: [],
     srcMode,
     mode,
     warn: warnFn,

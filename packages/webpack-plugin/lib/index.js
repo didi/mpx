@@ -571,7 +571,7 @@ class MpxWebpackPlugin {
         if (module.external && module.userRequest.startsWith('dll-reference ') && mpx.mode !== 'web') {
           const chunk = options.chunk
           const request = module.request
-          let relativePath = path.relative(path.dirname(chunk.name), request)
+          let relativePath = path.posix.relative(path.dirname(chunk.name), request)
           if (!/^\.\.?\//.test(relativePath)) relativePath = './' + relativePath
           if (chunk) {
             return new RawSource(`module.exports = require("${relativePath}");\n`)
