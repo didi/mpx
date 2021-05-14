@@ -204,7 +204,7 @@ class MpxWebpackPlugin {
     }
 
     const resolvePlugin = new AddModePlugin('before-resolve', this.options.mode, 'resolve')
-    const packageEntryPlugin = new PackageEntryPlugin('before-described-relative', this.options.miniNpmPackage, 'described-relative')
+    const packageEntryPlugin = new PackageEntryPlugin('before-described-relative', this.options.miniNpmPackage, 'resolve')
 
     if (Array.isArray(compiler.options.resolve.plugins)) {
       compiler.options.resolve.plugins.push(resolvePlugin)
