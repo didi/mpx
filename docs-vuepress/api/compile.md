@@ -449,6 +449,28 @@ new MpxWebpackPlugin({
 
 - **参考**：<a href="https://developers.weixin.qq.com/miniprogram/dev/extended/weui/quickstart.html" target="_blank">weui组件库</a>
 
+### miniNpmPackage
+
+- **类型**：`Array<string>`
+
+- **默认值**: `[]`
+
+- **详细**: 微信小程序官方提供了[发布小程序 npm 包的约束](https://developers.weixin.qq.com/miniprogram/dev/devtools/npm.html)。
+部分小程序npm包，如[vant组件库](https://vant-contrib.gitee.io/vant-weapp/#/quickstart)官方文档使用说明，引用资源并不会包含miniprogram所指定的目录
+如 "@vant/weapp/button/index"，导致 `Mpx` 解析路径失败。
+`Mpx`为解决这个问题，提供miniNpmPackage字段供用户配置需要解析的小程序npm包。miniNpmPackage对应的数组值为npm包对应的package.json中的name字段。
+`Mpx`解析规则如下:
+  1. 如package.json中有miniprogram字段，则会默认拼接miniprogram对应的值到资源路径中
+  2. 如package.json中无miniprogram字段，但配置了miniNpmPackage，则默认会拼接miniprogram_dist目录
+
+
+- **示例**:
+```js
+new MpxWebpackPlugin({
+  miniNpmPackage: ['@vant/weapp']
+})
+```
+
 ### forceUsePageCtor
 
 - **类型**: `Boolean`
