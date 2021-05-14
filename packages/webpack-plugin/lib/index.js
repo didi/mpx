@@ -14,6 +14,7 @@ const addQuery = require('./utils/add-query')
 const DefinePlugin = require('webpack/lib/DefinePlugin')
 const ExternalsPlugin = require('webpack/lib/ExternalsPlugin')
 const AddModePlugin = require('./resolver/AddModePlugin')
+const PackageEntryPlugin = require('./resolver/PackageEntryPlugin')
 const CommonJsRequireDependency = require('webpack/lib/dependencies/CommonJsRequireDependency')
 const HarmonyImportSideEffectDependency = require('webpack/lib/dependencies/HarmonyImportSideEffectDependency')
 const RequireHeaderDependency = require('webpack/lib/dependencies/RequireHeaderDependency')
@@ -133,6 +134,7 @@ class MpxWebpackPlugin {
     options.useRelativePath = options.useRelativePath || false
     options.subpackageModulesRules = options.subpackageModulesRules || {}
     options.forceProxyEventRules = options.forceProxyEventRules || {}
+    options.miniNpmPackage = options.miniNpmPackage || []
     this.options = options
   }
 
@@ -202,12 +204,15 @@ class MpxWebpackPlugin {
     }
 
     const resolvePlugin = new AddModePlugin('before-resolve', this.options.mode, 'resolve')
+    const packageEntryPlugin = new PackageEntryPlugin('before-described-relative', this.options.miniNpmPackage, 'described-relative')
 
     if (Array.isArray(compiler.options.resolve.plugins)) {
       compiler.options.resolve.plugins.push(resolvePlugin)
     } else {
       compiler.options.resolve.plugins = [resolvePlugin]
     }
+
+    compiler.options.resolve.plugins.push(packageEntryPlugin)
 
     let splitChunksPlugin
     let splitChunksOptions
