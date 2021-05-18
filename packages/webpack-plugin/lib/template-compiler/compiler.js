@@ -1352,7 +1352,7 @@ function parseMustache (raw = '') {
           if (funcNameRE.test(exp)) {
             if (i18n.useComputed) {
               const i18nInjectComputedKey = `_i${i18nInjectableComputed.length + 1}`
-              i18nInjectableComputed.push(`${i18nInjectComputedKey}: function(){\nreturn ${exp}}`)
+              i18nInjectableComputed.push(`${i18nInjectComputedKey}: function(){\nreturn ${exp.trim()}}`)
               exp = i18nInjectComputedKey
             } else {
               exp = exp.replace(funcNameREG, `${i18nModuleName}.$1(mpxLocale, `)
