@@ -23,7 +23,8 @@ const blackList = [
   'createWorker',
   'pageScrollTo',
   'reportAnalytics',
-  'getMenuButtonBoundingClientRect'
+  'getMenuButtonBoundingClientRect',
+  'reportMonitor'
 ]
 
 function getMapFromList (list) {
