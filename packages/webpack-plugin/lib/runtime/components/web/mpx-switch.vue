@@ -52,6 +52,7 @@
                 value: e.target.checked
               }
             })
+            this.notifyChange(this.switchChecked)
           }
         },
         domProps
