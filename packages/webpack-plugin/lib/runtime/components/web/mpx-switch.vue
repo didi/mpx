@@ -1,7 +1,6 @@
 <script>
   import getInnerListeners, { extendEvent, getCustomEvent } from './getInnerListeners'
 
-
   export default {
     name: 'mpx-switch',
     props: {
@@ -23,9 +22,17 @@
         default: '#04BE02'
       }
     },
+    watch: {
+      checked: {
+        handler (newVal) {
+          this.switchChecked = newVal
+        },
+        immediate: true
+      }
+    },
     data () {
       return {
-        switchChecked: this.checked
+        switchChecked: false
       }
     },
     render (createElement) {
@@ -35,7 +42,6 @@
         checked: this.checked,
         disabled: this.disabled
       }
-
       const checkbox = createElement('input', {
         class: 'mpx-switch-input',
         on: {
@@ -46,6 +52,7 @@
                 value: e.target.checked
               }
             })
+            this.notifyChange(this.switchChecked)
           }
         },
         domProps
