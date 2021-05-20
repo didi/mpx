@@ -85,16 +85,6 @@
   .mpx-checkbox-wrap
     display: inline-flex
     position: relative
-  .mpx-switch-input
-    position: absolute
-    left: 0
-    right: 0
-    bottom: 0
-    top: 0
-    width: 100%
-    height: 100%
-    z-index: 2
-    opacity: 0
   .mpx-switch-wrap
     display: inline-flex
     width: 52px
