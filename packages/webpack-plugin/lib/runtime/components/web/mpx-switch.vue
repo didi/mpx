@@ -58,7 +58,7 @@
         on: {
           click: (e) => {
             this.switchChecked = !this.switchChecked
-            this.notifyChange(this.switchChecked)
+            this.notifyChange()
           }
         }
       }
