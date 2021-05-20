@@ -30,6 +30,7 @@
     render (createElement) {
       const data = {
         class: 'mpx-radio-group',
+        ref: 'radioGroup',
         on: getInnerListeners(this, { ignoredListeners: ['change'] })
       }
       return createElement('div', data, this.$slots.default)
@@ -86,7 +87,7 @@
         if (vm && vm.isChecked !== undefined) {
           vm.isChecked = true
         }
-        this.$emit('change', getCustomEvent('change', { value }))
+        this.$emit('change', getCustomEvent('change', { value }, this.$refs.radioGroup))
       }
     }
   }
