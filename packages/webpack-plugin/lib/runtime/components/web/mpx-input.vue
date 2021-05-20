@@ -113,9 +113,11 @@
       notifyChange (value) {
         if (value !== undefined) {
           this.setValue(value)
+        } else {
+          value = this.getValue()
         }
         // 通过原生input派发事件
-        this.$emit('input', getCustomEvent('input', { value: value }, this.$refs.input))
+        this.$emit('input', getCustomEvent('input', { value }, this.$refs.input))
       },
       setSelectionRange (start, end) {
         if (!this.__selectionRange) this.__selectionRange = {

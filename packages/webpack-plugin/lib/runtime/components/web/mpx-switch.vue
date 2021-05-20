@@ -74,8 +74,10 @@
       notifyChange (value) {
         if (value !== undefined) {
           this.setValue(value)
+        } else {
+          value = this.getValue()
         }
-        this.$emit('change', getCustomEvent('change', { value: value }, this.$refs.switch))
+        this.$emit('change', getCustomEvent('change', { value }, this.$refs.switch))
       }
     }
   }
