@@ -115,7 +115,7 @@
           this.setValue(value)
         }
         // 通过原生input派发事件
-        this.$refs.input.dispatchEvent(getCustomEvent('input'))
+        this.$emit('input', getCustomEvent('input', { value: value }, this.$refs.input))
       },
       setSelectionRange (start, end) {
         if (!this.__selectionRange) this.__selectionRange = {

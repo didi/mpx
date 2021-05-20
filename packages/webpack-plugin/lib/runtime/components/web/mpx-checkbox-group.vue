@@ -25,6 +25,7 @@
     render (createElement) {
       const data = {
         class: 'mpx-checkbox-group',
+        ref: 'checkboxGroup',
         on: getInnerListeners(this, { ignoredListeners: ['change'] })
       }
       return createElement('div', data, this.$slots.default)
@@ -78,7 +79,7 @@
         } else {
           value = this.getValue()
         }
-        this.$emit('change', getCustomEvent('change', { value: value }))
+        this.$emit('change', getCustomEvent('change', { value: value }, this.$refs.checkboxGroup))
       }
     }
   }

@@ -130,6 +130,7 @@
 
       const data = {
         class: ['mpx-slider'],
+        ref: 'slider',
         on: getInnerListeners(this, { ignoredListeners: ['change', 'changing'] })
       }
       return createElement('div', data, children)
@@ -152,12 +153,12 @@
           let eventName = 'changing'
           let moveStartX = event.targetTouches[0] && event.targetTouches[0].pageX
           this.setLineValue(moveStartX)
-          this.$emit(eventName, getCustomEvent(eventName, { value: this.sliderValue }))
+          this.$emit(eventName, getCustomEvent(eventName, { value: this.sliderValue }, this.$refs.slider))
         }
       },
       sliderTouchEnd (event) {
         let eventName = 'change'
-        this.$emit(eventName, getCustomEvent(eventName, { value: this.sliderValue }))
+        this.$emit(eventName, getCustomEvent(eventName, { value: this.sliderValue }, this.$refs.slider))
         this.isDrag = false
       },
       sliderClick (event) {
@@ -166,7 +167,7 @@
         }
         this.setLineValue(event.pageX)
         let eventName = 'change'
-        this.$emit(eventName, getCustomEvent(eventName, { value: this.sliderValue }))
+        this.$emit(eventName, getCustomEvent(eventName, { value: this.sliderValue }, this.$refs.slider))
       },
       setLineValue (moveStartX) {
         let stepNum = (this.max - this.min) / this.step // 获取step分段数值
@@ -195,7 +196,7 @@
         if (value !== undefined) {
           this.setValue(value)
         }
-        this.$emit('change', getCustomEvent('change', { value: value }))
+        this.$emit('change', getCustomEvent('change', { value: value }, this.$refs.slider))
       }
     }
   }

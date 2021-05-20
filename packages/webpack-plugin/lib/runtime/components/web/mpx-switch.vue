@@ -23,40 +23,17 @@
       }
     },
     watch: {
-      checked: {
-        handler (newVal) {
-          this.switchChecked = newVal
-        },
-        immediate: true
+      checked (newVal) {
+        this.switchChecked = newVal
       }
     },
     data () {
       return {
-        switchChecked: false
+        switchChecked: this.checked
       }
     },
     render (createElement) {
       let children = []
-      const domProps = {
-        type: 'checkbox',
-        checked: this.checked,
-        disabled: this.disabled
-      }
-      const checkbox = createElement('input', {
-        class: 'mpx-switch-input',
-        on: {
-          change: (e) => {
-            this.switchChecked = e.target.checked
-            extendEvent(e, {
-              detail: {
-                value: e.target.checked
-              }
-            })
-            this.notifyChange(this.switchChecked)
-          }
-        },
-        domProps
-      })
       if (this.type === 'switch') {
         const switchElem = createElement('div', {
           class: ['mpx-switch-label', this.switchChecked ? 'checked-switch-label' : 'uncheck-switch-label'],
@@ -74,11 +51,16 @@
 
         children.push(checkbox)
       }
-      children.push(checkbox)
       children.push(...(this.$slots.default || []))
-
       const data = {
-        class: [this.type === 'switch' ? 'mpx-switch-wrap' : 'mpx-checkbox-wrap']
+        class: [this.type === 'switch' ? 'mpx-switch-wrap' : 'mpx-checkbox-wrap'],
+        ref: 'switch',
+        on: {
+          click: (e) => {
+            this.switchChecked = !this.switchChecked
+            this.notifyChange(this.switchChecked)
+          }
+        }
       }
       return createElement('div', data, children)
     },
@@ -93,7 +75,7 @@
         if (value !== undefined) {
           this.setValue(value)
         }
-        this.$emit('change', getCustomEvent('change', { value: value }))
+        this.$emit('change', getCustomEvent('change', { value: value }, this.$refs.switch))
       }
     }
   }
@@ -105,6 +87,10 @@
     position: relative
   .mpx-switch-input
     position: absolute
+    left: 0
+    right: 0
+    bottom: 0
+    top: 0
     width: 100%
     height: 100%
     z-index: 2
