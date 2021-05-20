@@ -27,7 +27,7 @@ module.exports = class PackageEntryPlugin {
       if (!innerRequest || request.miniprogram) return callback()
 
       const descriptionFileData = request.descriptionFileData || {}
-      const { name, miniprogram } = descriptionFileData
+      const { name = '', miniprogram } = descriptionFileData
       let newEntry = ''
       // request.path和系统环境有关：windows和linux
       let normalizedName = path.normalize(name)
