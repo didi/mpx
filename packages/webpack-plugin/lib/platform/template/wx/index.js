@@ -19,7 +19,7 @@ module.exports = function getSpec ({ warn, error }) {
           const parsed = parseMustache(value)
           if (parsed.hasBinding) {
             return {
-              name: ':' + name,
+              name: name === 'animation' ? 'v-' + name : ':' + name,
               value: parsed.result
             }
           }

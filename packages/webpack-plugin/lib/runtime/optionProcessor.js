@@ -45,7 +45,7 @@ export default function processOption (
 
     Vue.directive('animation', (el, binding, vnode) => {
       const newAnimation = binding?.value?.actions
-      const dynamicStyleQueue = []
+      el.dynamicStyleQueue = []
       if (Array.isArray(newAnimation) && newAnimation.length) {
         newAnimation.forEach((item) => {
           const property = []
@@ -63,7 +63,9 @@ export default function processOption (
                 break
               default:
                 dynamicStyle.transform += `${itemAnimation.type}(${itemAnimation.args}) `
-                !property.includes('transform') && property.push('transform')
+                if (!property.includes('transform')) {
+                  property.push('transform')
+                }
             }
           })
           Object.assign(dynamicStyle, {
@@ -71,25 +73,20 @@ export default function processOption (
             transitionProperty: `${property}`,
             transformOrigin: option.transformOrigin
           })
-          dynamicStyleQueue.push(dynamicStyle)
+          el.dynamicStyleQueue.push(dynamicStyle)
         })
-        const transitionEvent = function () {
-          setAnimation()
-        }
         const setAnimation = function () {
-          if (!dynamicStyleQueue.length) {
-            el.removeEventListener('transitionend', transitionEvent, false)
+          if (!el.dynamicStyleQueue.length) {
+            el.removeEventListener('transitionend', setAnimation, false)
             return
           }
-          const dynamicStyle = dynamicStyleQueue.shift()
+          const dynamicStyle = el.dynamicStyleQueue.shift()
           Object.assign(el.style, dynamicStyle)
         }
         // 首次动画属性设置
-        setTimeout(() => {
-          setAnimation()
-        }, 0)
+        setTimeout(setAnimation, 0)
         // 在transitionend事件内设置动画样式
-        el.addEventListener('transitionend', transitionEvent, false)
+        el.addEventListener('transitionend', setAnimation, false)
       }
     })
 
