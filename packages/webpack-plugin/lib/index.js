@@ -1153,11 +1153,12 @@ try {
         })
       }
 
-      const subpackages = new Set(Object.keys(mpx.componentsMap))
-
+      const subpackages = Object.keys(mpx.componentsMap)
+      delete subpackages.main
       function getPackageName (fileName) {
-        const root = /^([^/\\]*)(\/|\\)?/.exec(fileName)[1]
-        if (subpackages.has(root)) return root
+        for (let item of subpackages) {
+          if (fileName.startsWith(item)) return item
+        }
         return 'main'
       }
 
