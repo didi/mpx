@@ -94,4 +94,22 @@ describe('template should transform correct', function () {
     const output2 = compileAndParse(input2)
     expect(output2).toBe('<button wx="123">获取用户信息</button>')
   })
+
+  it('if attr name matched mode and env name should work correct', function () {
+    const input = '<button @click@ali:didi="getUserInfo">获取用户信息</button>'
+    const output = compileAndParse(input, { env: 'didi', mode: 'ali' })
+    expect(output).toBe('<button @click="getUserInfo">获取用户信息</button>')
+
+    const input2 = '<button @click@(ali:qingju:didi|swan)="getUserInfo">获取用户信息</button>'
+    const output2 = compileAndParse(input2, { env: 'didi', mode: 'ali' })
+    expect(output2).toBe('<button @click="getUserInfo">获取用户信息</button>')
+
+    const input3 = '<button @click@:qingju="getUserInfo">获取用户信息</button>'
+    const output3 = compileAndParse(input3, { env: 'didi', mode: 'ali' })
+    expect(output3).toBe('<button>获取用户信息</button>')
+
+    const input4 = '<button @click@:qingju="getUserInfo" @:didi>获取用户信息</button>'
+    const output4 = compileAndParse(input4, { env: 'didi', mode: 'ali' })
+    expect(output4).toBe('<button>获取用户信息</button>')
+  })
 })

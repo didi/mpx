@@ -767,6 +767,7 @@ function parse (template, options) {
   }
 
   mode = options.mode || 'wx'
+  env = options.env
   defs = options.defs || {}
   srcMode = options.srcMode || mode
   isNative = options.isNative
@@ -2003,7 +2004,7 @@ function processAtMode (el) {
       modeStr = wrapRE.exec(modeStr)[1]
     }
 
-    const modeArr =  modeStr.split('|')
+    const modeArr = modeStr.split('|')
     const attrValue = getAndRemoveAttr(el, attrName).val
     const replacedAttrName = attrArr.join('@')
     const processedAttr = { name: replacedAttrName, value: attrValue }
@@ -2023,8 +2024,9 @@ function processAtMode (el) {
         if (conditions.findIndex(item => item === `${_mode}${env}`) > -1) {
           if (!replacedAttrName) {
             el._atModeStatus = 'match'
+          } else {
+            el.noTransAttrs ? el.noTransAttrs.push(processedAttr) : el.noTransAttrs = [processedAttr]
           }
-          el.noTransAttrs ? el.noTransAttrs.push(processedAttr) : el.noTransAttrs = [processedAttr]
           break
         } else {
           if (!replacedAttrName) {
@@ -2033,9 +2035,10 @@ function processAtMode (el) {
         }
       } else {
         if (_mode === mode) {
-          el.noTransAttrs ? el.noTransAttrs.push(processedAttr) : el.noTransAttrs = [processedAttr]
           if (!replacedAttrName) {
             el._atModeStatus = 'match'
+          } else {
+            el.noTransAttrs ? el.noTransAttrs.push(processedAttr) : el.noTransAttrs = [processedAttr]
           }
           break
         } else {
