@@ -1998,6 +1998,8 @@ function processAtMode (el) {
     // hello@:didi
     // hello@wx:didi:qingju:chengxin|ali
     // hello@(wx:didi:qingju:chengxin|ali)
+    // @click@ali
+    // @click:qingju:didi
     const attrArr = attrName.split('@')
     let modeStr = attrArr.pop()
     if (wrapRE.test(modeStr)) {
