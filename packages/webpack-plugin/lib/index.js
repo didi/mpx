@@ -14,6 +14,7 @@ const addQuery = require('./utils/add-query')
 const DefinePlugin = require('webpack/lib/DefinePlugin')
 const ExternalsPlugin = require('webpack/lib/ExternalsPlugin')
 const AddModePlugin = require('./resolver/AddModePlugin')
+const AddEnvPlugin = require('./resolver/AddEnvPlugin')
 const PackageEntryPlugin = require('./resolver/PackageEntryPlugin')
 const CommonJsRequireDependency = require('webpack/lib/dependencies/CommonJsRequireDependency')
 const HarmonyImportSideEffectDependency = require('webpack/lib/dependencies/HarmonyImportSideEffectDependency')
@@ -88,6 +89,7 @@ class EntryNode {
 class MpxWebpackPlugin {
   constructor (options = {}) {
     options.mode = options.mode || 'wx'
+    options.env = options.env || ''
 
     options.srcMode = options.srcMode || options.mode
     if (options.mode !== options.srcMode && options.srcMode !== 'wx') {
@@ -108,7 +110,8 @@ class MpxWebpackPlugin {
     // 通过默认defs配置实现mode及srcMode的注入，简化内部处理逻辑
     options.defs = Object.assign({}, options.defs, {
       '__mpx_mode__': options.mode,
-      '__mpx_src_mode__': options.srcMode
+      '__mpx_src_mode__': options.srcMode,
+      '__mpx_env__': options.env
     })
     // 批量指定源码mode
     options.modeRules = options.modeRules || {}
@@ -203,13 +206,14 @@ class MpxWebpackPlugin {
       warnings.push(`webpack options: MpxWebpackPlugin strongly depends options.node.globel to be true, custom options.node will be ignored!`)
     }
 
-    const resolvePlugin = new AddModePlugin('before-resolve', this.options.mode, 'resolve')
+    const addModeResolvePlugin = new AddModePlugin('before-resolve', this.options.mode, 'resolve')
+    const addEnvResolvePlugin = new AddEnvPlugin('before-resolve', this.options.env, 'resolve')
     const packageEntryPlugin = new PackageEntryPlugin('before-described-relative', this.options.miniNpmPackage, 'resolve')
 
     if (Array.isArray(compiler.options.resolve.plugins)) {
-      compiler.options.resolve.plugins.push(resolvePlugin)
+      compiler.options.resolve.plugins.push(addModeResolvePlugin, addEnvResolvePlugin)
     } else {
-      compiler.options.resolve.plugins = [resolvePlugin]
+      compiler.options.resolve.plugins = [addModeResolvePlugin, addEnvResolvePlugin]
     }
 
     compiler.options.resolve.plugins.push(packageEntryPlugin)
@@ -337,6 +341,7 @@ class MpxWebpackPlugin {
           resolveMode: this.options.resolveMode,
           mode: this.options.mode,
           srcMode: this.options.srcMode,
+          env: this.options.env,
           // deprecated option
           globalMpxAttrsFilter: this.options.globalMpxAttrsFilter,
           externalClasses: this.options.externalClasses,

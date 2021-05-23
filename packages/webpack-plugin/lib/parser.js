@@ -6,7 +6,7 @@ const SourceMapGenerator = require('source-map').SourceMapGenerator
 const splitRE = /\r?\n/g
 const emptyRE = /^(?:\/\/)?\s*$/
 
-module.exports = (content, { filePath, needMap, mode, defs }) => {
+module.exports = (content, { filePath, needMap, mode, defs, env }) => {
   // 缓存需要mode隔离，不同mode经过区块条件编译parseComponent得到的内容并不一致
   const cacheKey = hash(filePath + content + mode)
 
@@ -16,7 +16,8 @@ module.exports = (content, { filePath, needMap, mode, defs }) => {
     mode,
     defs,
     filePath,
-    pad: 'line'
+    pad: 'line',
+    env
   })
   if (needMap) {
     // 添加hash避免content被webpack的sourcemap覆盖

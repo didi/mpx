@@ -253,6 +253,7 @@ let forScopes = []
 let forScopesMap = {}
 let hasI18n = false
 let i18nInjectableComputed = []
+let env
 
 function updateForScopesMap () {
   forScopes.forEach((scope) => {
@@ -598,6 +599,7 @@ function parseHTML (html, options) {
 function parseComponent (content, options) {
   mode = options.mode || 'wx'
   defs = options.defs || {}
+  env = options.env
 
   let sfc = {
     template: null,
@@ -626,8 +628,16 @@ function parseComponent (content, options) {
         checkAttrs(currentBlock, attrs)
         // 带mode的fields只有匹配当前编译mode才会编译
         if (tag === 'style') {
-          if (currentBlock.mode) {
+          if (currentBlock.mode && currentBlock.env) {
+            if (currentBlock.mode === mode && currentBlock.env === env) {
+              sfc.styles.push(currentBlock)
+            }
+          } else if (currentBlock.mode) {
             if (currentBlock.mode === mode) {
+              sfc.styles.push(currentBlock)
+            }
+          } else if (currentBlock.env) {
+            if (currentBlock.env === env) {
               sfc.styles.push(currentBlock)
             }
           } else {
@@ -640,8 +650,16 @@ function parseComponent (content, options) {
               tag = 'json'
             }
           }
-          if (currentBlock.mode) {
+          if (currentBlock.mode && currentBlock.env) {
+            if (currentBlock.mode === mode && currentBlock.env === env) {
+              sfc[tag] = currentBlock
+            }
+          } else if (currentBlock.mode) {
             if (currentBlock.mode === mode) {
+              sfc[tag] = currentBlock
+            }
+          } else if (currentBlock.env) {
+            if (currentBlock.env === env) {
               sfc[tag] = currentBlock
             }
           } else {
@@ -682,6 +700,9 @@ function parseComponent (content, options) {
       }
       if (attr.name === 'name') {
         block.name = attr.value
+      }
+      if (attr.name === 'env') {
+        block.env = attr.value
       }
     }
   }
@@ -1968,27 +1989,60 @@ function processAtMode (el) {
   const attrsListClone = cloneAttrsList(el.attrsList)
   attrsListClone.forEach(item => {
     const attrName = item.name || ''
-    if (!attrName || attrName.indexOf('@') === -1) return
+    if (!attrName || attrName.indexOf('@') === -1) {
+      return
+    }
+    // @wx|ali
+    // hello@wx|ali
+    // hello@:didi
+    // hello@wx:didi:qingju:chengxin|ali
+    // hello@(wx:didi:qingju:chengxin|ali)
     const attrArr = attrName.split('@')
     let modeStr = attrArr.pop()
-    if (wrapRE.test(modeStr)) modeStr = wrapRE.exec(modeStr)[1]
-    const modeArr = modeStr.split('|')
-    if (modeArr.every(i => isValidMode(i))) {
-      const attrValue = getAndRemoveAttr(el, attrName).val
-      const replacedAttrName = attrArr.join('@')
+    if (wrapRE.test(modeStr)) {
+      modeStr = wrapRE.exec(modeStr)[1]
+    }
 
-      const processedAttr = { name: replacedAttrName, value: attrValue }
-      if (modeArr.includes(mode)) {
+    const modeArr =  modeStr.split('|')
+    const attrValue = getAndRemoveAttr(el, attrName).val
+    const replacedAttrName = attrArr.join('@')
+    const processedAttr = { name: replacedAttrName, value: attrValue }
+    for (let i = 0; i < modeArr.length; i++) {
+      let [_mode, ...envArr] = modeArr[i].split(':')
+      if (!_mode) {
+        _mode = mode
+      }
+      if (!isValidMode(_mode)) {
         if (!replacedAttrName) {
-          el._atModeStatus = 'match'
-        } else {
-          // 如果命中了指定的mode，则先存在el上，等跑完转换后再挂回去
-          el.noTransAttrs ? el.noTransAttrs.push(processedAttr) : el.noTransAttrs = [processedAttr]
+          el._atModeStatus = 'mismatch'
         }
-      } else if (!replacedAttrName) {
-        el._atModeStatus = 'mismatch'
+        break
+      }
+      if (envArr.length) {
+        const conditions = envArr.map(_env => `${_mode}${_env}`)
+        if (conditions.findIndex(item => item === `${_mode}${env}`) > -1) {
+          if (!replacedAttrName) {
+            el._atModeStatus = 'match'
+          }
+          el.noTransAttrs ? el.noTransAttrs.push(processedAttr) : el.noTransAttrs = [processedAttr]
+          break
+        } else {
+          if (!replacedAttrName) {
+            el._atModeStatus = 'mismatch'
+          }
+        }
       } else {
-        // 如果没命中指定的mode，则该属性删除
+        if (_mode === mode) {
+          el.noTransAttrs ? el.noTransAttrs.push(processedAttr) : el.noTransAttrs = [processedAttr]
+          if (!replacedAttrName) {
+            el._atModeStatus = 'match'
+          }
+          break
+        } else {
+          if (!replacedAttrName) {
+            el._atModeStatus = 'mismatch'
+          }
+        }
       }
     }
   })
