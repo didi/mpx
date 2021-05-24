@@ -652,18 +652,23 @@ function parseComponent (content, options) {
           }
           if (currentBlock.mode && currentBlock.env) {
             if (currentBlock.mode === mode && currentBlock.env === env) {
-              sfc[tag] = currentBlock
+              currentBlock.priority = 4
             }
           } else if (currentBlock.mode) {
             if (currentBlock.mode === mode) {
-              sfc[tag] = currentBlock
+              currentBlock.priority = 3
             }
           } else if (currentBlock.env) {
             if (currentBlock.env === env) {
-              sfc[tag] = currentBlock
+              currentBlock.priority = 2
             }
           } else {
-            if (!(sfc[tag] && sfc[tag].mode)) {
+            currentBlock.priority = 1
+          }
+          if (!sfc[tag] && !currentBlock.mode && !currentBlock.env) {
+            sfc[tag] = currentBlock
+          } else {
+            if ((sfc[tag] && sfc[tag].priority) < currentBlock.priority) {
               sfc[tag] = currentBlock
             }
           }
@@ -2006,48 +2011,32 @@ function processAtMode (el) {
       modeStr = wrapRE.exec(modeStr)[1]
     }
 
-    const modeArr = modeStr.split('|')
-    const attrValue = getAndRemoveAttr(el, attrName).val
-    const replacedAttrName = attrArr.join('@')
-    const processedAttr = { name: replacedAttrName, value: attrValue }
-    for (let i = 0; i < modeArr.length; i++) {
-      let [_mode, ...envArr] = modeArr[i].split(':')
-      if (!_mode) {
-        _mode = mode
-      }
-      if (!isValidMode(_mode)) {
+    const conditionMap = {}
+
+    modeStr.split('|').forEach(item => {
+      const arr = item.split(':')
+      const key = arr[0] || mode
+      conditionMap[key] = arr.slice(1)
+    })
+    
+    const modeArr = Object.keys(conditionMap)
+
+    if (modeArr.every(i => isValidMode(i))) {
+      const attrValue = getAndRemoveAttr(el, attrName).val
+      const replacedAttrName = attrArr.join('@')
+
+      const processedAttr = { name: replacedAttrName, value: attrValue }
+      if (modeArr.includes(mode) && (!conditionMap[mode].length || conditionMap[mode].includes(env))) {
         if (!replacedAttrName) {
-          el._atModeStatus = 'mismatch'
-        }
-        break
-      }
-      if (envArr.length) {
-        const conditions = envArr.map(_env => `${_mode}${_env}`)
-        if (conditions.findIndex(item => item === `${_mode}${env}`) > -1) {
-          if (!replacedAttrName) {
-            el._atModeStatus = 'match'
-          } else {
-            el.noTransAttrs ? el.noTransAttrs.push(processedAttr) : el.noTransAttrs = [processedAttr]
-          }
-          break
+          el._atModeStatus = 'match'
         } else {
-          if (!replacedAttrName) {
-            el._atModeStatus = 'mismatch'
-          }
+          // 如果命中了指定的mode，则先存在el上，等跑完转换后再挂回去
+          el.noTransAttrs ? el.noTransAttrs.push(processedAttr) : el.noTransAttrs = [processedAttr]
         }
+      } else if (!replacedAttrName) {
+        el._atModeStatus = 'mismatch'
       } else {
-        if (_mode === mode) {
-          if (!replacedAttrName) {
-            el._atModeStatus = 'match'
-          } else {
-            el.noTransAttrs ? el.noTransAttrs.push(processedAttr) : el.noTransAttrs = [processedAttr]
-          }
-          break
-        } else {
-          if (!replacedAttrName) {
-            el._atModeStatus = 'mismatch'
-          }
-        }
+        // 如果没命中指定的mode，则该属性删除
       }
     }
   })

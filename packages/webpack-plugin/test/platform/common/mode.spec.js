@@ -111,5 +111,13 @@ describe('template should transform correct', function () {
     const input4 = '<button @click@:qingju="getUserInfo" @:didi>获取用户信息</button>'
     const output4 = compileAndParse(input4, { env: 'didi', mode: 'ali' })
     expect(output4).toBe('<button>获取用户信息</button>')
+
+    const input5 = '<button @:qingju>获取用户信息</button>'
+    const output5 = compileAndParse(input5, { env: 'didi', mode: 'ali' })
+    expect(output5).toBe('')
+
+    const input6 = '<button @click@:qingju:didi="getUserInfo">获取用户信息</button>'
+    const output6 = compileAndParse(input6, { env: 'didi', mode: 'ali' })
+    expect(output6).toBe('<button @click="getUserInfo">获取用户信息</button>')
   })
 })
