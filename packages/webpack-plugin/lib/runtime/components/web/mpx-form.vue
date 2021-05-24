@@ -34,8 +34,8 @@
       if (VNode.tag) {
         const el = VNode.elm
         const component = VNode.componentInstance
-        if (component && component.name && component.notifyChange) {
-          component.notifyChange(value[component.name])
+        if (component && component.name && component.setValue) {
+          component.setValue(value[component.name])
         } else if (el && el.name && el.value !== undefined) {
           el.value = value[el.name]
         }

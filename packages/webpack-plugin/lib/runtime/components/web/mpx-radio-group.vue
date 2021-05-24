@@ -84,9 +84,6 @@
         } else {
           value = this.getValue()
         }
-        if (vm && vm.isChecked !== undefined) {
-          vm.isChecked = true
-        }
         this.$emit('change', getCustomEvent('change', { value }, this.$refs.radioGroup))
       }
     }

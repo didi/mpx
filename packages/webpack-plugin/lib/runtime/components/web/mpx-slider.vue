@@ -40,11 +40,11 @@
         type: Boolean,
         default: false
       },
-      'block-size': {
+      blockSize: {
         type: Number,
         default: 28
       },
-      'block-color': {
+      blockColor: {
         type: String,
         default: '#ffffff'
       },
@@ -52,7 +52,7 @@
         type: String,
         default: '#e9e9e9'
       },
-      'show-value': {
+      showValue: {
         type: Boolean,
         default: false
       }
@@ -170,6 +170,7 @@
         this.$emit(eventName, getCustomEvent(eventName, { value: this.sliderValue }, this.$refs.slider))
       },
       setLineValue (moveStartX) {
+        moveStartX = moveStartX - 18
         let stepNum = (this.max - this.min) / this.step // 获取step分段数值
         let stepWidth = this.sliderWidth / stepNum // 获取每段长度
         let num = parseInt(moveStartX / stepWidth) // 获取已拖拽step分段数据
@@ -189,12 +190,14 @@
         return this.sliderValue
       },
       setValue (value) {
-        this.sliderValue = value
+        this.sliderValue = 0
         this.setLineValue(0)
       },
       notifyChange (value) {
         if (value !== undefined) {
           this.setValue(value)
+        } else {
+          value = this.getValue()
         }
         this.$emit('change', getCustomEvent('change', { value: value }, this.$refs.slider))
       }

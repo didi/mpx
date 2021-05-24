@@ -30,10 +30,10 @@
             if (this.disabled) {
               return
             }
-            this.isChecked = true
             if (this.group) {
               this.group.notifyChange(this.value, this)
             }
+            this.isChecked = true
           }
         },
         force: true
