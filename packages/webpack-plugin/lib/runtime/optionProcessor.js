@@ -42,9 +42,15 @@ export default function processOption (
         })
       }
     })
-
-    Vue.directive('animation', (el, binding, vnode) => {
+    Vue.directive('animation', (el, binding) => {
       const newAnimation = binding?.value?.actions
+      if (el.actions === newAnimation) {
+        return
+      }
+      el.actions = newAnimation
+      if (typeof el.setAnimation === 'function') {
+        el.removeEventListener('transitionend', el.setAnimation, false)
+      }
       el.dynamicStyleQueue = []
       if (Array.isArray(newAnimation) && newAnimation.length) {
         newAnimation.forEach((item) => {
@@ -75,18 +81,18 @@ export default function processOption (
           })
           el.dynamicStyleQueue.push(dynamicStyle)
         })
-        const setAnimation = function () {
+        el.setAnimation = function () {
           if (!el.dynamicStyleQueue.length) {
-            el.removeEventListener('transitionend', setAnimation, false)
+            el.removeEventListener('transitionend', el.setAnimation, false)
             return
           }
           const dynamicStyle = el.dynamicStyleQueue.shift()
           Object.assign(el.style, dynamicStyle)
         }
         // 首次动画属性设置
-        setTimeout(setAnimation, 0)
+        setTimeout(el.setAnimation, 0)
         // 在transitionend事件内设置动画样式
-        el.addEventListener('transitionend', setAnimation, false)
+        el.addEventListener('transitionend', el.setAnimation, false)
       }
     })
 

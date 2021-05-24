@@ -5,32 +5,46 @@ class Animation {
     this._options = options
   }
 
+  _processSize (size) {
+    if (typeof size === 'number') {
+      return `${size}px`
+    } else {
+      if (size.indexOf('rpx') !== -1) {
+        // 计算rpx折算回px
+        const rs = parseInt(size, 10)
+        const width = window.screen.width
+        const finalRs = Math.floor(rs / 750 * width)
+        return `${finalRs}px`
+      } else {
+        return size
+      }
+    }
+  }
+
   _collectData (type, value) {
     switch (type) {
-      case 'background-color':
-      case 'opacity':
-        this._propMaps[type] = {
-          value,
-          type: 'style'
-        }
-        break
       case 'left':
       case 'right':
       case 'top':
       case 'bottom':
       case 'width':
       case 'height':
-        if (typeof value === 'number') {
-          value = `${value}px`
-        }
+        value = this._processSize(value)
         this._propMaps[type] = {
-          value,
+          args: [type, value],
+          type: 'style'
+        }
+        break
+      case 'background-color':
+      case 'opacity':
+        this._propMaps[type] = {
+          args: [type, value],
           type: 'style'
         }
         break
       default:
         this._propMaps[type] = {
-          value,
+          args: Array.isArray(value) ? value : [value],
           type
         }
         break
@@ -196,13 +210,9 @@ class Animation {
     } else {
       Object.assign(option, this._options)
     }
-    for (let i in this._propMaps) {
-      const {value, type} = this._propMaps[i]
-      animates.push({
-        args: type === 'style' ? [i, value] : Array.isArray(value) ? value : [value],
-        type
-      })
-    }
+    Object.keys(this._propMaps).forEach((item) => {
+      animates.push(this._propMaps[item])
+    })
     this._actions.push({
       animates,
       option
@@ -212,6 +222,7 @@ class Animation {
 
   export () {
     const actions = this._actions.slice(0)
+    this._actions.length = 0
     return {
       actions
     }
