@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/webview-bridge",
-  "version": "2.6.44",
+  "version": "2.6.62",
   "description": "a bridge for mpx webview",
   "author": "skyadmin",
   "license": "ISC",

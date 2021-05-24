@@ -127,14 +127,13 @@ export function inheritEvent (type, oe, detail = {}) {
   return ne
 }
 
-export function getCustomEvent (type, detail = {}) {
-  /* eslint-disable no-undef */
-  const ce = {
+export function getCustomEvent (type, detail = {}, target = null) {
+  return {
     type,
     detail,
+    target,
     timeStamp: new Date().valueOf()
   }
-  return ce
 }
 
 function noop () {
