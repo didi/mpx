@@ -2018,7 +2018,7 @@ function processAtMode (el) {
       const key = arr[0] || mode
       conditionMap[key] = arr.slice(1)
     })
-    
+
     const modeArr = Object.keys(conditionMap)
 
     if (modeArr.every(i => isValidMode(i))) {

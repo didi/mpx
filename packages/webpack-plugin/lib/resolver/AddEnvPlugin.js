@@ -1,5 +1,4 @@
 const path = require('path')
-const stringifyQuery = require('../utils/stringify-query')
 const parseRequest = require('../utils/parse-request')
 
 module.exports = class AddEnvPlugin {
@@ -19,7 +18,7 @@ module.exports = class AddEnvPlugin {
       let obj = {
         env
       }
-      
+
       const parsed = parseRequest(request.request)
       const resourcePath = parsed.rawResourcePath
       const resourceQuery = parsed.resourceQuery
