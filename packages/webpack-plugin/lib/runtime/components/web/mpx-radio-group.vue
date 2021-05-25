@@ -72,7 +72,7 @@
                 component.group = this
               }
               if (component.group === this && component.value) {
-                component.isChecked = false
+                component.isChecked = value === component.value
               }
             }
           }

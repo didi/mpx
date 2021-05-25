@@ -137,6 +137,7 @@
     position: relative
     &.switch-disabled
       background: #e1e1e1
+      color: #adadad
   .mpx-switch-checkbox-checked-v1
     color: #09BB07
     &:before

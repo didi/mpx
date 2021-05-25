@@ -85,7 +85,8 @@
       let sliderLine = createElement('div', {
         class: 'mpx-slider-line',
         style: {
-          width: this.blockLeft,
+          width: parseFloat(this.blockLeft) > 0 ? this.blockLeft : 0,
+          top: `${(this.blockSize - 2) / 2}px`,
           backgroundColor: this.activeColor
         }
       })
@@ -94,9 +95,10 @@
       let sliderBlock = createElement('div', {
         class: 'mpx-slider-block',
         style: {
-          left: this.blockLeft,
           width: blockSize,
           height: blockSize,
+          transform: `translate(${this.blockLeft}, -50%)`,
+          transformOrigin: '50% 50%',
           backgroundColor: this.blockColor
         },
         on: {
@@ -109,6 +111,9 @@
       wrapChildren.push(...(this.$slots.default || []))
 
       const sliderWrap = createElement('div', {
+        style:{
+          padding: `${(this.blockSize - 2) / 2}px 0`
+        },
         class: 'mpx-slider-wrap'
       }, wrapChildren)
       children.push(sliderWrap)
@@ -142,10 +147,14 @@
         }
         this.isDrag = true
       },
-      initBlockLeft () { //初始化滑块居左位置
-        let lineSum = this.max - this.min
-        let lineStep = parseInt(this.sliderWidth / lineSum)
-        this.blockLeft = lineStep * (this.value - this.min) + 'px'
+      initBlockLeft (value) { //初始化滑块居左位置
+        if (value === undefined) {
+          value = this.value
+        }
+        const lineSum = this.max - this.min
+        const lineRatio = (value - this.min) / lineSum
+        this.blockLeft = this.sliderWidth * lineRatio - this.blockSize / 2 + 'px'
+        console.log(this.blockLeft, 'this.blockLeft')
       },
       sliderTouchMove (event) {
         event.preventDefault()
@@ -170,7 +179,7 @@
         this.$emit(eventName, getCustomEvent(eventName, { value: this.sliderValue }, this.$refs.slider))
       },
       setLineValue (moveStartX) {
-        moveStartX = moveStartX - 18
+        moveStartX = moveStartX - this.startX
         let stepNum = (this.max - this.min) / this.step // 获取step分段数值
         let stepWidth = this.sliderWidth / stepNum // 获取每段长度
         let num = parseInt(moveStartX / stepWidth) // 获取已拖拽step分段数据
@@ -179,10 +188,10 @@
         }
         if (moveStartX % stepWidth > stepWidth / 2) { // 向左拖拽逻辑
           let width = (num + 1) * stepWidth > this.sliderWidth ? this.sliderWidth : (num + 1) * stepWidth
-          this.blockLeft = width + 'px'
+          this.blockLeft = width - this.blockSize / 2 + 'px'
           this.sliderValue = this.min + (num + 1) * this.step // 设置展示值逻辑
         } else if (parseInt(this.blockLeft) - moveStartX) {  // 向右拖拽逻辑
-          this.blockLeft = num * stepWidth + 'px'
+          this.blockLeft = num * stepWidth - this.blockSize / 2 + 'px'
           this.sliderValue = this.min + num * this.step // 设置展示值逻辑
         }
       },
@@ -190,8 +199,8 @@
         return this.sliderValue
       },
       setValue (value) {
-        this.sliderValue = 0
-        this.setLineValue(0)
+        this.sliderValue = value
+        this.initBlockLeft(value)
       },
       notifyChange (value) {
         if (value !== undefined) {
@@ -209,16 +218,16 @@
   .mpx-slider
     margin: 0 18px
     display: flex
+    align-items center
     .mpx-slider-wrap
       position: relative
-      padding: 10px 0
       flex: 1
+      height: 2px
     .mpx-slider-bg
       height: 2px
     .mpx-slider-line
       height: 2px
       position: absolute
-      top: 10px
       pointer-events: none
     .mpx-slider-block
       box-shadow: 0 0 4px rgba(0, 0, 0, 0.2)
