@@ -206,16 +206,16 @@ class MpxWebpackPlugin {
       warnings.push(`webpack options: MpxWebpackPlugin strongly depends options.node.globel to be true, custom options.node will be ignored!`)
     }
 
-    const AddModePlugin = new AddModePlugin('before-resolve', this.options.mode, 'resolve')
+    const addModePlugin = new AddModePlugin('before-resolve', this.options.mode, 'resolve')
     const packageEntryPlugin = new PackageEntryPlugin('before-described-relative', this.options.miniNpmPackage, 'resolve')
     if (Array.isArray(compiler.options.resolve.plugins)) {
-      compiler.options.resolve.plugins.push(AddModePlugin)
+      compiler.options.resolve.plugins.push(addModePlugin)
     } else {
-      compiler.options.resolve.plugins = [AddModePlugin]
+      compiler.options.resolve.plugins = [addModePlugin]
     }
     if (this.options.env) {
-      const AddEnvPlugin = new AddEnvPlugin('before-resolve', this.options.env, 'resolve')
-      compiler.options.resolve.plugins.push(AddEnvPlugin)
+      const addEnvPlugin = new AddEnvPlugin('before-resolve', this.options.env, 'resolve')
+      compiler.options.resolve.plugins.push(addEnvPlugin)
     }
     compiler.options.resolve.plugins.push(packageEntryPlugin)
 
