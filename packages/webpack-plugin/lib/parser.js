@@ -8,7 +8,7 @@ const emptyRE = /^(?:\/\/)?\s*$/
 
 module.exports = (content, { filePath, needMap, mode, defs, env }) => {
   // 缓存需要mode隔离，不同mode经过区块条件编译parseComponent得到的内容并不一致
-  const cacheKey = hash(filePath + content + mode)
+  const cacheKey = hash(filePath + content + mode + env)
 
   let output = cache.get(cacheKey)
   if (output) return JSON.parse(output)

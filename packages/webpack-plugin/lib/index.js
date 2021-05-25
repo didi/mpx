@@ -206,19 +206,17 @@ class MpxWebpackPlugin {
       warnings.push(`webpack options: MpxWebpackPlugin strongly depends options.node.globel to be true, custom options.node will be ignored!`)
     }
 
-    const resolvePlugins = [
-      new AddModePlugin('before-resolve', this.options.mode, 'resolve')
-    ]
-    if (this.options.env) {
-      resolvePlugins.push(new AddEnvPlugin('before-resolve', this.options.env, 'resolve'))
-    }
-    if (Array.isArray(compiler.options.resolve.plugins)) {
-      compiler.options.resolve.plugins.push(...resolvePlugins)
-    } else {
-      compiler.options.resolve.plugins = resolvePlugins
-    }
-
+    const AddModePlugin = new AddModePlugin('before-resolve', this.options.mode, 'resolve')
     const packageEntryPlugin = new PackageEntryPlugin('before-described-relative', this.options.miniNpmPackage, 'resolve')
+    if (Array.isArray(compiler.options.resolve.plugins)) {
+      compiler.options.resolve.plugins.push(AddModePlugin)
+    } else {
+      compiler.options.resolve.plugins = [AddModePlugin]
+    }
+    if (this.options.env) {
+      const AddEnvPlugin = new AddEnvPlugin('before-resolve', this.options.env, 'resolve')
+      compiler.options.resolve.plugins.push(AddEnvPlugin)
+    }
     compiler.options.resolve.plugins.push(packageEntryPlugin)
 
     let splitChunksPlugin

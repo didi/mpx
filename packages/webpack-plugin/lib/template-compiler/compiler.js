@@ -665,10 +665,8 @@ function parseComponent (content, options) {
           } else {
             currentBlock.priority = 1
           }
-          if (!sfc[tag] && !currentBlock.mode && !currentBlock.env) {
-            sfc[tag] = currentBlock
-          } else {
-            if ((sfc[tag] && sfc[tag].priority) < currentBlock.priority) {
+          if (currentBlock.priority) {
+            if (!sfc[tag] || sfc[tag].priority < currentBlock.priority) {
               sfc[tag] = currentBlock
             }
           }
@@ -2009,6 +2007,10 @@ function processAtMode (el) {
     let modeStr = attrArr.pop()
     if (wrapRE.test(modeStr)) {
       modeStr = wrapRE.exec(modeStr)[1]
+    }
+
+    if (!modeStr) {
+      return
     }
 
     const conditionMap = {}
