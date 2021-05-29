@@ -267,24 +267,6 @@ module.exports = function getSpec ({ warn, error }) {
             value
           }
         },
-        tt ({ name, value }) {
-          const match = this.test.exec(name)
-          const modifierStr = match[3] || ''
-          let ret
-          if (match[1] === 'capture-catch' || match[1] === 'capture-bind') {
-            const convertName = 'bind'
-            warn(`bytedance miniapp doens't support '${match[1]}' and will be translated into '${convertName}' automatically!`)
-            ret = { name: convertName + match[2] + modifierStr, value }
-          } else {
-            ret = { name, value }
-          }
-          return ret
-        },
-        swan ({ name, value }, { eventRules }) {
-          const match = this.test.exec(name)
-          const eventName = match[2]
-          runRules(eventRules, eventName, { mode: 'swan' })
-        },
         web ({ name, value }, { eventRules, el }) {
           const match = this.test.exec(name)
           const prefix = match[1]
