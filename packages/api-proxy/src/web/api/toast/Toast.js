@@ -62,8 +62,6 @@ export default class Toast {
     } else {
       this.loading.parentNode && this.content.replaceChild(this.icon, this.loading) // set icon to default
 
-      const defaultIconClass = '__mpx_toast_icon__'
-
       const iconClass = opts.image
         ? '' // image
         : opts.icon === 'none'
@@ -72,7 +70,11 @@ export default class Toast {
             ? 'error'
             : 'success' // default
 
-      this.icon.classList = `${iconClass} ${defaultIconClass}`
+      this.icon.classList.forEach(item => {
+        if (item === '__mpx_toast_icon__') return
+        this.icon.classList.remove(item)
+      })
+      if (iconClass) this.icon.classList.add(iconClass)
       this.icon.style.cssText = opts.image && `background-image: url(${opts.image})`
     }
 
