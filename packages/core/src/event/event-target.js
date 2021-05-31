@@ -111,7 +111,7 @@ export default class EventTarget {
     eventName = eventName.toLowerCase()
 
     let path = EventTarget.$$searchNodesPath([target])
-
+    // console.log('eventName and path is:', eventName, path)
     if (!event) {
       // 此处特殊处理，不直接返回小程序的 event 对象
       event = new Event({
@@ -238,7 +238,7 @@ export default class EventTarget {
     eventName = eventName.toLowerCase()
     const handlers = this.$_getHandlers(eventName, isCapture)
     const onEventName = `on${eventName}`
-    // console.log('phase is:', event.$_eventPhase, this.context)
+    // console.log('the handlers is:', handlers)
     if ((!isCapture || !isTarget) && typeof this[onEventName] === 'function') {
       // 触发 onXXX 绑定的事件
       if (event && event.$$immediateStop) return
@@ -248,14 +248,14 @@ export default class EventTarget {
         console.error(err)
       }
     }
-
+    // console.log('the handlers is:', handlers)
     if (!handlers) return
     // 触发 addEventListener 绑定的事件
     if (handlers.length) {
       handlers.forEach(({ name, handler }) => {
         if (event && event.$$immediateStop) return
         try {
-          // console.log('the handlers is:', name, event.$_currentTarget)
+          // console.log('the currentTarget is:', name, event.$_currentTarget)
           const eventConfigs =
             event.$_currentTarget &&
             event.$_currentTarget.data &&

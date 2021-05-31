@@ -29,16 +29,6 @@ function transformProperties (properties) {
     // wx 挂载 observer 监听
     newFiled.observer = function (value, oldValue) {
       if (this.__mpxProxy) {
-        // if (typeof value === 'object') {
-        //   Object.keys(value).map(key => {
-        //     Object.defineProperty(this, key, {
-        //       get() {
-        //         // console.log('this is:', value)
-        //         return value[key]
-        //       }
-        //     })
-        //   })
-        // }
         this[key] = value // 修改对应响应式数据值
         this.__mpxProxy.updated()
       }
@@ -103,6 +93,16 @@ function transformApiForProxy (context, currentInject) {
         }
       })
     }
+    if (currentInject.injectRuntimeSlots) {
+      Object.defineProperties(context, {
+        __getRuntimeSlots: {
+          get() {
+            return currentInject.injectRuntimeSlots
+          },
+          configurable: false
+        }
+      })
+    }
   }
 }
 
@@ -153,6 +153,12 @@ function initProxy (context, rawOptions, currentInject) {
   transformApiForProxy(context, currentInject)
   // 缓存options
   context.$rawOptions = rawOptions
+  if (context.__getRuntimeSlots) {
+    if (!rawOptions.computed) {
+      rawOptions.computed = {}
+    }
+    rawOptions.computed.runtimeSlots = context.__getRuntimeSlots
+  }
   // 创建proxy对象
   const mpxProxy = new MPXProxy(rawOptions, context)
   context.__mpxProxy = mpxProxy

@@ -7,6 +7,9 @@ export const cache = {
     }
   },
   getNode(id) {
+    if (!id) {
+      return nodeCache
+    }
     return nodeCache[id]
   }
 }

@@ -11,7 +11,18 @@ const transDynamicClassExpr = require('./trans-dynamic-class-expr')
 const hash = require('hash-sum')
 const dash2hump = require('../utils/hump-dash').dash2hump
 const { inBrowser } = require('../utils/env')
+const {
+  setTemplateNodes,
+  collectSlotComponents,
+  getRawComponentMap,
+  getSlotComponents,
+  genSlots,
+  collectRawComponentMap,
+  transformSlotsToString,
+  getAliasTag
+} = require('../runtime-utils')
 
+let hashIndex = 0
 /**
  * Make a map and return a function for checking if a key
  * is in that map.
@@ -109,14 +120,16 @@ function makeAttrsMap (attrs) {
   return map
 }
 
-function createASTElement (tag, attrs, parent) {
+function createASTElement (tag, attrs, parent, filePath, isCustomComponent = false) {
   return {
     type: 1,
     tag: tag,
     attrsList: attrs,
     attrsMap: makeAttrsMap(attrs),
     parent: parent,
-    children: []
+    children: [],
+    filePath,
+    isCustomComponent
   }
 }
 
@@ -721,6 +734,17 @@ function parseComponent (content, options) {
   return sfc
 }
 
+function hasRuntimeCompileWrapper(el) {
+  let parent = el.parent
+  while(parent) {
+    if (parent.isRuntimeCompileWrapper) {
+      return true
+    }
+    parent = parent.parent
+  }
+  return false
+}
+
 function parse (template, options) {
   rulesResultMap.clear()
   warn$1 = options.warn || baseWarn
@@ -779,7 +803,7 @@ function parse (template, options) {
     root = currentParent = getTempNode()
     stack.push(root)
   }
-
+  console.log('the parse options is:', options.filePath)
   parseHTML(template, {
     warn: warn$1,
     expectHTML: options.expectHTML,
@@ -807,7 +831,13 @@ function parse (template, options) {
       }
       attrs = consumeMpxCommentAttrs(attrs, mode)
 
-      let element = createASTElement(tag, attrs, currentParent)
+      if (options.componentsAbsolutePath[tag]) {
+        const path = options.componentsAbsolutePath[tag]
+        const aliasTags = getAliasTag()
+        console.log('the tag an absolute path and aliasTag is:', tag, path, aliasTags[path])
+        // console.log('the tag and absolute path is:', tag, options.componentsAbsolutePath[tag], )
+      }
+      let element = createASTElement(tag, attrs, currentParent, options.filePath, options.usingComponents.includes(tag))
       if (ns) {
         element.ns = ns
       }
@@ -850,7 +880,7 @@ function parse (template, options) {
         stack.push(element)
       } else {
         element.unary = true
-        closeElement(element, meta, currentParent)
+        closeElement(element, options, meta, currentParent)
       }
     },
 
@@ -865,7 +895,7 @@ function parse (template, options) {
         // pop stack
         stack.pop()
         currentParent = stack[stack.length - 1]
-        closeElement(element, meta, currentParent)
+        closeElement(element, options, meta, currentParent)
       }
     },
 
@@ -1045,10 +1075,11 @@ function stringify (str) {
 function processPageStatus (el, options) {
   // 是组件节点的话需要增加 attrs
   if (isComponentNode(el, options)) {
-    addAttrs(el, [{
-      name: 'mpxPageStatus',
-      value: '{{mpxPageStatus}}'
-    }])
+    el.mpxPageStatus = true
+    // addAttrs(el, [{
+    //   name: 'mpxPageStatus',
+    //   value: '{{mpxPageStatus}}'
+    // }])
   }
 }
 
@@ -1204,15 +1235,40 @@ function stringifyWithResolveComputed (modelValue) {
   return result.join('+')
 }
 
-function processBindEvent (el) {
+function processDataset (el) {
+  if (!el.dataset) {
+    el.dataset = {}
+  }
+  let datasetRe = /data-(.*)/
+  el.attrsList.forEach(function (attr) {
+    let match = attr.name.match(datasetRe)
+    if (match) {
+      el.dataset = {
+        [match[1]]: attr.value
+      }
+    }
+
+    getAndRemoveAttr(el, attr.name, true)
+  })
+}
+
+function processBindEvent (el, options) {
   const eventConfigMap = {}
   if (!el.events) {
     el.events = {}
   }
+  let usingHashTemplate = false
   el.attrsList.forEach(function (attr) {
     let parsedEvent = config[mode].event.parseEvent(attr.name)
 
     if (parsedEvent) {
+      let prefix = parsedEvent.prefix
+      // 在运行时组件内部使用了特殊的事件模型的节点需要对节点名进行 hash
+      // TODO: 有些边界 case 需要优化，例如在非运行时组件里面的运行时组件的 slot 使用了这些。
+      if (options.runtimeCompile && !usingHashTemplate && ['catch', 'capture-bind', 'capture-catch'].includes(prefix)) {
+        usingHashTemplate = true
+      }
+
       let type = parsedEvent.eventName
       let modifiers = (parsedEvent.modifier || '').split('.')
       let parsedFunc = parseFuncStr2(attr.value)
@@ -1231,14 +1287,27 @@ function processBindEvent (el) {
         if (modifiers.indexOf('proxy') > -1) {
           eventConfigMap[type].proxy = true
         }
+
+        // 所有的事件都走代理的形式
+        eventConfigMap[type].proxy = true
+        // getAndRemoveAttr(el, attr.name)
       }
     }
   })
-
+  if (usingHashTemplate && !el.aliasTag) {
+    // el.aliasTag = 'd' + hash(`${el.tag}${++hashIndex}`)
+    el.needHashTag = true
+  }
   let modelExp = getAndRemoveAttr(el, config[mode].directive.model).val
   if (modelExp) {
     let match = tagRE.exec(modelExp)
     if (match) {
+      el.model = {
+        eventName: '',
+        prop: [],
+        filter: ''
+      }
+
       const modelProp = getAndRemoveAttr(el, config[mode].directive.modelProp).val || config[mode].event.defaultModelProp
       const modelEvent = getAndRemoveAttr(el, config[mode].directive.modelEvent).val || config[mode].event.defaultModelEvent
       const modelValuePathRaw = getAndRemoveAttr(el, config[mode].directive.modelValuePath).val
@@ -1275,6 +1344,17 @@ function processBindEvent (el) {
         hasArgs: true,
         expStr: `[${stringify('__model')},${stringifiedModelValue},${stringify(eventIdentifier)},${stringify(modelValuePathArr)},${stringify(modelFilter)}]`
       })
+
+      // 用以生成 vnode 的事件配置
+      el.events[`bind${modelEvent}`] = {
+        prefix: 'bind',
+        eventName: modelEvent,
+        expStr: '[__model]',
+        funcName: '"__model"'
+      }
+
+      el.model.prop = [modelProp, parseMustache(modelExp).result]
+
       addAttrs(el, [
         {
           name: modelProp,
@@ -1285,23 +1365,56 @@ function processBindEvent (el) {
   }
 
   for (let type in eventConfigMap) {
-    let { configs, rawName } = eventConfigMap[type]
-
-    if (rawName) {
-      // 清空原始事件绑定
-      let has
-      do {
-        has = getAndRemoveAttr(el, rawName).has
-      } while (has)
-      // 清除修饰符
-      rawName = rawName.replace(/\..*/, '')
+    let needBind = false
+    let { configs, rawName, proxy } = eventConfigMap[type]
+    if (proxy) {
+      needBind = true
+    } else if (configs.length > 1) {
+      needBind = true
+    } else if (configs.length === 1) {
+      needBind = !!configs[0].hasArgs
     }
+    // 排除特殊情况
+    if (needBind && !isValidIdentifierStr(type)) {
+      warn$1(`EventName ${type} which need be framework proxy processed must be a valid identifier!`)
+      needBind = false
+    }
+    if (needBind) {
+      if (rawName) {
+        // 清空原始事件绑定
+        let has
+        do {
+          has = getAndRemoveAttr(el, rawName).has
+        } while (has)
+        // 清除修饰符
+        rawName = rawName.replace(/\..*/, '')
+      }
 
-    eventConfigMap[type] = configs.map((item) => {
-      return item.expStr
-    })
+      // TODO: 待优化，runtime-utils 里面的 genRuntimeTemplate 方法中有关事件的内容可以统一在这里进行生成处理
+      addAttrs(el, [
+        {
+          name: rawName || config[mode].event.getEvent(type),
+          value: '__invoke'
+        }
+      ])
+      eventConfigMap[type] = configs.map((item) => {
+        return item.expStr
+      })
+    } else {
+      delete eventConfigMap[type]
+    }
   }
 
+  let eventconfigs = ''
+  if (!isEmptyObject(eventConfigMap)) {
+    eventconfigs = `${config[mode].event.shallowStringify(eventConfigMap)},`
+    addAttrs(el, [{
+      name: 'data-eventconfigs',
+      value: `{{${config[mode].event.shallowStringify(eventConfigMap)}}}`
+    }])
+  }
+
+  // 构造 data-eventconfigs 配置
   let arr = []
   if (eventConfigMap) {
     for (let key in eventConfigMap) {
@@ -1495,6 +1608,7 @@ function processRef (el, options, meta) {
       name: 'class',
       value: className
     }])
+    el.refs = `{ key: '${val}', selector: '.${refClassName}', type: '${type}', all: ${all} }`
     meta.refs.push({
       key: val,
       selector: `.${refClassName}`,
@@ -1635,7 +1749,7 @@ function evalExp (exp) {
 }
 
 // TODO: evalExp 内的逻辑是否对于 addIfCondition 有影响？evalExp 主要是计算非变量值的情况
-function postProcessIf (el, currentParent) {
+function postProcessIf (el, options, currentParent) {
   let attrs, result, prevNode
   if (el.if) {
     result = evalExp(el.if.exp)
@@ -1653,8 +1767,12 @@ function postProcessIf (el, currentParent) {
       }]
     }
   } else if (el.elseif) {
-    // TODO: 针对 runtimeComponent 的处理走特殊逻辑，还是说集成到原有这部分逻辑
-    return processIfConditions(el, currentParent)
+    /**
+     * 针对运行时组件或者是在非运行时组件内有运行时组件包裹的 slot，都需要走运行时编译
+     */
+    if (options.runtimeCompile || el.inRuntimeCompileWrapper) {
+      return processIfConditions(el, currentParent)
+    }
     prevNode = findPrevNode(el)
     if (prevNode._if === true) {
       removeNode(el)
@@ -1682,7 +1800,9 @@ function postProcessIf (el, currentParent) {
       }
     }
   } else if (el.else) {
-    return processIfConditions(el, currentParent)
+    if (options.runtimeCompile || el.inRuntimeCompileWrapper) {
+      return processIfConditions(el, currentParent)
+    }
     prevNode = findPrevNode(el)
     if (prevNode._if === true) {
       removeNode(el)
@@ -1763,7 +1883,7 @@ function injectWxs (meta, module, src) {
   injectNodes.push(wxsNode)
 }
 
-function processClass (el, meta) {
+function processClass (el, options, meta) {
   const type = 'class'
   const needEx = el.tag.startsWith('th-')
   const targetType = needEx ? 'ex-' + type : type
@@ -1780,8 +1900,10 @@ function processClass (el, meta) {
       // swan中externalClass是通过编译时静态实现，因此需要保留原有的staticClass形式避免externalClass失效
       value: mode === 'swan' && staticClass ? `${staticClass} {{${stringifyModuleName}.stringifyClass('', ${dynamicClassExp})}}` : `{{${stringifyModuleName}.stringifyClass(${staticClassExp}, ${dynamicClassExp})}}`
     }])
-    // runtime compile 不需要注入 wxs 模块
-    // injectWxs(meta, stringifyModuleName, stringifyWxsPath)
+    // 运行时编译的组件不需要注入 stringifyWxs 模块
+    if (!options.runtimeCompile) {
+      injectWxs(meta, stringifyModuleName, stringifyWxsPath)
+    }
   } else if (staticClass) {
     el.staticClass = staticClass
     addAttrs(el, [{
@@ -1802,7 +1924,7 @@ function processClass (el, meta) {
   }
 }
 
-function processStyle (el, meta) {
+function processStyle (el, options, meta) {
   const type = 'style'
   const targetType = el.tag.startsWith('th-') ? 'ex-' + type : type
   let dynamicStyle = getAndRemoveAttr(el, config[mode].directive.dynamicStyle).val
@@ -1816,7 +1938,10 @@ function processStyle (el, meta) {
       name: targetType,
       value: `{{${stringifyModuleName}.stringifyStyle(${staticStyleExp}, ${dynamicStyleExp})}}`
     }])
-    // injectWxs(meta, stringifyModuleName, stringifyWxsPath)
+    // 运行时编译的组件不需要注入 stringifyWxs 模块
+    if (!options.runtimeCompile) {
+      injectWxs(meta, stringifyModuleName, stringifyWxsPath)
+    }
   } else if (staticStyle) {
     el.staticStyle = staticStyle
     addAttrs(el, [{
@@ -1957,35 +2082,101 @@ function processAliStyleClassHack (el, options, root) {
   })
 }
 
+function processHidden(el) {
+  if (!el.inRuntimeCompileWrapper) {
+    return
+  }
+  let { has, val } = getAndRemoveAttr(el, 'hidden')
+  if (has) {
+    if (val === undefined) {
+      el.hidden = 'true'
+    } else {
+      el.hidden = parseMustache(val).result
+    }
+  }
+}
+
+// 暂时不考虑动态绑定数据的情况
+// function getBindingAttr(el, name, getStatic) {
+//   // const dynamicValue =
+//   //   getAndRemoveAttr(el, ':' + name) ||
+//   //   getAndRemoveAttr(el, 'v-bind:' + name)
+//   // if (dynamicValue != null) {
+//   //   return parseFilters(dynamicValue)
+//   // } else if (getStatic !== false) {
+//   //   const staticValue = getAndRemoveAttr(el, name)
+//   //   if (staticValue != null) {
+//   //     return JSON.stringify(staticValue)
+//   //   }
+//   // }
+//   const staticValue = getAndRemoveAttr(el, name)
+//   if (staticValue != null) {
+//     return JSON.stringify(staticValue)
+//   }
+// }
+
+function processSlotOutlet(el) {
+  if (el.tag === 'slot') {
+    // TODO: 删除 slot 属性后再添加，这种方式需要优化，目前 mpx serialize 是通过 attrsList 遍历生成属性的
+    const { has, val } = getAndRemoveAttr(el, 'name', true) // 先不考虑动态绑定的数据类型
+    const slotName = has ? val : 'default'
+    el.slotName = JSON.stringify(slotName)
+
+    if (has) {
+      addAttrs(el, [{
+        name: 'name',
+        value: val
+      }])
+    }
+  }
+}
+
+function processSlotContent(el) {
+  const { has, val } = getAndRemoveAttr(el, 'slot')
+  if (has) {
+    const slotTarget = val === undefined ? 'default' : val
+    el.slotTarget = JSON.stringify(slotTarget)
+    // el.slotTarget = slotTarget
+  } else {
+    if (el.inRuntimeCompileWrapper || el.innerRuntimeCompileWrapper) {
+      el.slotTarget = JSON.stringify('default')
+      // el.slotTarget = 'default'
+    }
+  }
+}
+
 function processShow (el, options, root) {
   let show = getAndRemoveAttr(el, config[mode].directive.show).val
   let showExp
+  let isRoot = false
+  // 如果是根节点，那么需要添加 mpxShow 变量
   if (options.isComponent && el.parent === root && isRealNode(el)) {
+    isRoot = true
     if (show !== undefined) {
-      // show = `{{${parseMustache(show).result}&&mpxShow}}`
+      show = `{{${parseMustache(show).result}&&mpxShow}}`
       showExp = `${parseMustache(show).result}&&mpxShow`
     } else {
-      // show = '{{mpxShow}}'
+      show = '{{mpxShow}}'
       showExp = 'mpxShow'
     }
   }
 
-  if (show !== undefined) {
-    // 自定义组件节点
+  // 如果是根节点
+  if (isRoot) {
+    // 自定义组件节点将 show 作为属性传递下去
     if (isComponentNode(el, options)) {
       if (show === '') {
-        // show = '{{false}}'
+        show = '{{false}}'
         showExp = 'false'
       }
       // 运行时编译不需要这个属性
-      // addAttrs(el, [{
-      //   name: 'mpxShow',
-      //   value: show
-      // }])
+      addAttrs(el, [{
+        name: 'mpxShow',
+        value: show
+      }])
       el.show = showExp ? showExp : parseMustache(show).result
     } else {
       // 普通元素节点
-      const showExp = parseMustache(show).result
       let oldStyle = getAndRemoveAttr(el, 'style').val
       oldStyle = oldStyle ? oldStyle + ';' : ''
       addAttrs(el, [{
@@ -1993,6 +2184,33 @@ function processShow (el, options, root) {
         value: `${oldStyle}{{${showExp}||${showExp}===undefined?'':'display:none;'}}`
       }])
       el.showStyle = `${showExp}||${showExp}===undefined?{}:{display:"none"}`
+    }
+  } else {
+    // 使用了 wx:show 的节点
+    if (show !== undefined) {
+      // 自定义组件节点将 show 作为属性传递下去
+      if (isComponentNode(el, options)) {
+        if (show === '') {
+          show = '{{false}}'
+          showExp = 'false'
+        }
+        // 运行时编译不需要这个属性
+        addAttrs(el, [{
+          name: 'mpxShow',
+          value: show
+        }])
+        el.show = showExp ? showExp : parseMustache(show).result
+      } else {
+        // 普通元素节点
+        const showExp = parseMustache(show).result
+        let oldStyle = getAndRemoveAttr(el, 'style').val
+        oldStyle = oldStyle ? oldStyle + ';' : ''
+        addAttrs(el, [{
+          name: 'style',
+          value: `${oldStyle}{{${showExp}||${showExp}===undefined?'':'display:none;'}}`
+        }])
+        el.showStyle = `${showExp}||${showExp}===undefined?{}:{display:"none"}`
+      }
     }
   }
 }
@@ -2065,7 +2283,62 @@ function processDuplicateAttrsList (el) {
   el.attrsList = attrsList
 }
 
+function processAt(el) {
+  const { has, val } = getAndRemoveAttr(el, 'at')
+  if (has) {
+    const { hasBinding, result } = parseMustache(val)
+    el.at = hasBinding ? result : val
+    addAttrs(el, [{
+      name: 'at',
+      value: val
+    }])
+  }
+}
+// isRuntimeCompileWrapper -> 包含 slot 插件的运行时节点
+// innerRuntimeCompileWrapper -> 被运行时组件节点所包含的运行时节点
+// inRuntimeCompileWrapper -> 被运行时组件节点包含的 slot 节点
+// runtimeComponents 都需要将 slots 作为属性传递下去
+function processRuntime (el, options, meta) {
+  // TODO: 收集注入 base.wxml tag，同时设置 aliasTag
+  el.runtimeCompile = !!options.runtimeCompile
+
+  // 如果是运行时组件
+  if (options.runtimeComponents.includes(el.tag)) {
+    el.isRuntimeCompileWrapper = true
+
+    // 如果是运行时组件a嵌套了运行时组件b，即b作为a的slot，那么将b标记为 innerRuntimeCompileWrapper
+    // 一旦b也有slot，那么b的所有的slot单独生成slot并作为其属性
+    if (hasRuntimeCompileWrapper(el)) {
+      el.innerRuntimeCompileWrapper = true
+    } else {
+      el.slotAlias = hash(`${++hashIndex}${el.tag}`)
+      if (!options.runtimeCompile) {
+        addAttrs(el, [{
+          name: 'slots',
+          value: `{{ runtimeSlots["${el.slotAlias}"] }}`
+        }])
+      } else {
+        el.slots = `runtimeSlot["${el.slotAlias}"]`
+      }
+      console.log('the slotAlias is:', el.slotAlias)
+    }
+  } else if (hasRuntimeCompileWrapper(el)) { // 针对不是运行时组件里面的运行时组件 slots 标签的处理(这里的标签即包括自定义组件也包括普通的节点)
+    el.inRuntimeCompileWrapper = true
+  }
+
+  if (options.usingComponents.includes(el.tag) && !options.runtimeComponents.includes(el.tag)) {
+    if (options.runtimeCompile || hasRuntimeCompileWrapper(el)) {
+      // if (!el.aliasTag) {
+      //   el.aliasTag = hash(`${el.tag}${++hashIndex}`)
+      // }
+      el.normalNodeInRuntimeCompile = true
+    }
+  }
+}
+
 function processElement (el, root, options, meta) {
+  processAt(el, options)
+  processRuntime(el, options, meta)
   processAtMode(el)
   // 如果已经标记了这个元素要被清除，直接return跳过后续处理步骤
   if (el._atModeStatus === 'mismatch') {
@@ -2110,10 +2383,14 @@ function processElement (el, root, options, meta) {
   processRef(el, options, meta)
 
   if (!pass) {
-    processClass(el, meta)
-    processStyle(el, meta)
+    processClass(el, options, meta)
+    processStyle(el, options, meta)
     processShow(el, options, root)
+    processHidden(el)
   }
+
+  processSlotContent(el)
+  processSlotOutlet(el)
 
   // 当mode为ali不管是不是跨平台都需要进行此处理，以保障ali当中的refs相关增强能力正常运行
   if (mode === 'ali') {
@@ -2121,7 +2398,8 @@ function processElement (el, root, options, meta) {
   }
 
   if (!pass) {
-    processBindEvent(el)
+    // processDataset(el)
+    processBindEvent(el, options)
     if (mode !== 'ali') {
       processPageStatus(el, options)
     }
@@ -2129,9 +2407,31 @@ function processElement (el, root, options, meta) {
   }
 
   processAttrs(el, options)
+
+  // 搜集需要注入到 base.wxml 模块里面的节点:
+  // 1. 拥有 aliasTag 的节点 -> 使用了 catch/capture 等特殊事件处理函数
+  // 2. 运行时组件里面所有的 usingComponents
+  // 3. 非运行时组件里面使用了运行时组件，且运行时组件里面嵌套了自定义非运行时组件
+  // 4. (非运行时组件里面)使用了运行时组件里面嵌套了自定义运行时组件
+  if (el.aliasTag ||
+    (el.runtimeCompile && options.usingComponents.includes(el.tag)) ||
+    (el.inRuntimeCompileWrapper && options.usingComponents.includes(el.tag)) ||
+    el.innerRuntimeCompileWrapper) {
+      // TODO: 这里的节点收集需要优化
+      // setTemplateNodes(el)
+    }
+
+  if (options.runtimeCompile && options.usingComponents.includes(el.tag) ||
+    el.inRuntimeCompileWrapper && options.usingComponents.includes(el.tag) ||
+    el.innerRuntimeCompileWrapper) {
+      const tag = el.tag
+      const componentAbsolutePath = options.componentsAbsolutePath[tag]
+      const { aliasTag } = getAliasTag()[componentAbsolutePath]
+      console.log('begin alias tag is:', tag, aliasTag, componentAbsolutePath)
+    }
 }
 
-function closeElement (el, meta, currentParent) {
+function closeElement (el, options, meta, currentParent) {
   postProcessAtMode(el)
   if (mode === 'web') {
     // 处理代码维度条件编译移除死分支
@@ -2141,10 +2441,20 @@ function closeElement (el, meta, currentParent) {
   const pass = isNative || postProcessTemplate(el) || processingTemplate
   postProcessWxs(el, meta)
   if (!pass) {
-    el = postProcessComponentIs(el)
+    el = postProcessComponentIs(el, options)
   }
   postProcessFor(el)
-  postProcessIf(el, currentParent)
+  postProcessIf(el, options, currentParent)
+  postProcessHashComponent(el, meta)
+}
+
+function postProcessHashComponent(el, meta) {
+  if (el.aliasTag) {
+    if (!meta.hashComponent) {
+      meta.hashComponent = {}
+    }
+    meta.hashComponent[el.aliasTag] = el
+  }
 }
 
 function postProcessAtMode (el) {
@@ -2175,7 +2485,12 @@ function cloneAttrsList (attrsList) {
   })
 }
 
-function postProcessComponentIs (el) {
+// TODO: component is
+function postProcessComponentIs (el, options) {
+  if (options.runtimeCompile && el.is) {
+    el.mpxPageStatus = true
+    return el
+  }
   if (el.is && el.components) {
     let tempNode
     if (el.for || el.if || el.elseif || el.else) {
@@ -2191,7 +2506,6 @@ function postProcessComponentIs (el) {
     // 手动创建新的需要动态渲染的 node 出来
     el.components.forEach(function (component) {
       let newChild = createASTElement(component, cloneAttrsList(el.attrsList), tempNode)
-      newChild.mpxPageStatus = true
       newChild.if = {
         raw: `{{${el.is} === ${stringify(component)}}}`,
         exp: `${el.is} === ${stringify(component)}`
@@ -2199,11 +2513,15 @@ function postProcessComponentIs (el) {
       el.children.forEach((child) => {
         addChild(newChild, cloneNode(child))
       })
-      // 手动新创建的 node 添加 ifConditions
-      addIfCondition(newChild, {
-        exp: newChild.if.exp,
-        block: newChild
-      })
+      if (options.runtimeCompile || el.inRuntimeCompileWrapper) {
+        // for runtimeCompile
+        newChild.mpxPageStatus = true
+        // 手动新创建的 node 添加 ifConditions
+        addIfCondition(newChild, {
+          exp: newChild.if.exp,
+          block: newChild
+        })
+      }
       newChild.exps = el.exps
       addChild(tempNode, newChild)
       postProcessIf(newChild)
@@ -2236,7 +2554,7 @@ function stringifyAttr (val) {
   }
 }
 
-function serialize (root) {
+function serialize (root, meta = {}) {
   function walk (node) {
     let result = ''
     if (node) {
@@ -2261,9 +2579,18 @@ function serialize (root) {
             result += '/>'
           } else {
             result += '>'
-            node.children.forEach(function (child) {
-              result += walk(child)
-            })
+            // 运行时组件的子节点都不需要被渲染出来，统一交给外部生成 slot render fn
+            if (!node.isRuntimeCompileWrapper) {
+              node.children.forEach(function (child) {
+                result += walk(child)
+              })
+            } else {
+              if (!meta.vnodeElements) {
+                meta.vnodeElements = {}
+              }
+              console.log('the node.slotAlias is:', node.slotAlias)
+              meta.vnodeElements[node.slotAlias] = node.children
+            }
             result += '</' + node.tag + '>'
           }
         } else {
@@ -2371,7 +2698,64 @@ function addIfCondition (el, condition) {
 }
 
 // TODO: 添加 trimEndingWhitespace 去除尾部 node 的函数
-function genElement (node) {
+function genElement (node, usingComponents = []) {
+  /**
+   * 收集运行时组件里面嵌套的 slot 组件及其路径，这些 slot 组件包括：
+   * 1. 运行时组件
+   * 2. 非运行时组件
+   * 这些组件及其路径最终都会被输出到 mpx-custom-component.json 配置文件当中
+   */
+  const { rawComponentMap, rawFileComponentMap } = getRawComponentMap()
+
+  // 被注入到 base.wxml 里面的节点(自定义组件)都需要被 hash，避免节点出现重复
+  function hashNodeTag() {
+    let componentPath = ''
+    if (rawFileComponentMap[node.filePath] && rawFileComponentMap[node.filePath][node.tag] && node.isCustomComponent) {
+      if (rawFileComponentMap[node.filePath][node.tag]['aliasTag']) {
+        node.aliasTag = rawFileComponentMap[node.filePath][node.tag]['aliasTag']
+        componentPath = rawFileComponentMap[node.filePath][node.tag]['componentPath']
+      }
+    }
+
+    if (node.isCustomComponent) {
+      // if (!node.aliasTag) {
+      //   node.aliasTag = 'd' + hash(`${node.tag}${++hashIndex}`)
+      // }
+      collectRawComponentMap(node.tag, componentPath, node.filePath, node.aliasTag)
+    }
+
+    if (node.isCustomComponent || node.needHashTag && !node.aliasTag) {
+      node.aliasTag = 'd' + hash(`${node.tag}${++hashIndex}`)
+    }
+  }
+
+  hashNodeTag()
+
+  // slot 注入节点的收集
+  if (node.isRuntimeCompileWrapper || node.inRuntimeCompileWrapper) {
+    // if (rawComponentMap[node.tag]) {
+    //   collectSlotComponents(node.tag, rawComponentMap[node.tag])
+    // }
+    // console.log('the slot tag is:', node.tag, node.filePath,rawFileComponentMap)
+    if (rawFileComponentMap[node.filePath] && rawFileComponentMap[node.filePath][node.tag] && node.isCustomComponent) {
+      // console.log('node.aliasTag is:', rawFileComponentMap)
+      collectSlotComponents(node.aliasTag || node.tag, rawFileComponentMap[node.filePath][node.tag]['componentPath'])
+    } else {
+      // if (node.isCustomComponent) {
+      //   if (!node.aliasTag) {
+      //     node.aliasTag = 'd' + hash(`${node.tag}${++hashIndex}`)
+      //   }
+      //   console.log('the node.aliasTag is:', node.aliasTag)
+      //   collectRawComponentMap(node.tag, '', node.filePath, node.aliasTag)
+      // }
+    }
+  }
+
+  // 收集需要注入到 base.wxml 的节点 (只要被 hash 过的节点都需要被注入)
+  if (node.aliasTag) {
+    setTemplateNodes(node)
+  }
+
   let code = ''
   if (node.type === 1) {
     if (node.tag !== 'temp-node' && node.tag !== 'import') {
@@ -2379,20 +2763,21 @@ function genElement (node) {
         return _genFor(node)
       } else if (node.if && !node.ifProcessed) {
         return _genIf(node)
-      } else if (node.slot) {
+      } else if (node.tag === 'slot') {
         return _genSlot(node)
       } else {
         if (!isEmptyObject(node.attrsMap)) {
-          console.log('the node attrsMap is:', node.attrsList, node.attrsMap)
+          // console.log('the node attrsMap is:', node.attrsList, node.attrsMap)
         }
         // <component is="{{ xxx }}">
         if (node.is) {
           code = _genComponent(node.is, node)
+          console.log('the component.is is:', code)
         } else {
           let data = _genData(node)
           // console.log('the data is:', data)
           const children = _genChildren(node)
-          code = `__c('${node.tag}' ${data ? `,${data}` : ''} ${
+          code = `__c('${node.aliasTag || node.tag}' ${data ? `,${data}` : ''} ${
             children ? `,${children}` : ''
           })`
         }
@@ -2406,7 +2791,7 @@ function genElement (node) {
 }
 
 function _genComponent (componentName, node) {
-  const children = _genChildren(el)
+  const children = _genChildren(node)
   return `__c(${componentName}, ${_genData(node)}${
     children ? `,${children}` : ''
   })`
@@ -2422,134 +2807,194 @@ const filterKeys = [
   'mpxPageStatus'
 ]
 
-function __hackStyleReplace(str, res) {
-  if (!res) {
-    return str
-  }
-  return str.replace(/}/, ',' + res + '}')
-}
-
 function genHandlers (events) {
   const bindeventsKey = 'mpxbindevents:'
-  const eventmapKey = 'mpxeventmap:'
   let staticHandlers = ``
-  let captureAndBubbleMap = {}
+
   Object.keys(events).map(name => {
     const { prefix, eventName, funcName } = events[name]
     staticHandlers += `${funcName}: this.${funcName.slice(1, -1)}.bind(this),`
-
-    if (!captureAndBubbleMap[eventName]) {
-      captureAndBubbleMap[eventName] = {
-        capture: [],
-        bubble: []
-      }
-    }
-    // TODO: 目前仅处理原生事件的冒泡 & 捕获阶段，不处理自定义事件
-    switch (prefix) {
-      case 'catch':
-      case 'capture-bind':
-      case 'capture-catch':
-        captureAndBubbleMap[eventName].capture.push(funcName)
-        // captureHandlers += `capture: [this.${funcName.slice(1, -1)}.bind(this)],`
-        break
-      default:
-        captureAndBubbleMap[eventName].bubble.push(funcName)
-        // bubbleHandlers += `bubble: [this.${funcName.slice(1, -1)}.bind(this)],`
-        break
-    }
-    // captureAndBubbleMap[eventName] = `'${eventName}': {${captureHandlers + bubbleHandlers}},`
   })
-  let str = ''
-  Object.keys(captureAndBubbleMap).map(eventName => {
-    str += `${eventName}:{`
-    let captureEventsStr = 'capture: ['
-    captureAndBubbleMap[eventName].capture.map(funcName => {
-      captureEventsStr += `{name: ${funcName}, handler: this.${funcName.slice(1, -1)}.bind(this)},`
-    })
-    str += captureEventsStr + '],'
 
-    let bubbleEventsStr = 'bubble: ['
-    captureAndBubbleMap[eventName].bubble.map(funcName => {
-      bubbleEventsStr += `{name: ${funcName}, handler: this.${funcName.slice(1, -1)}.bind(this)},`
-    })
-    str += bubbleEventsStr + '],'
-
-    str += '},'
-  })
-  return eventmapKey + `{${str}},` + bindeventsKey + `{${staticHandlers}}`
+  return bindeventsKey + `{${staticHandlers}}`
 }
 
+// function genHandlers (events) {
+//   const bindeventsKey = 'mpxbindevents:'
+//   const eventmapKey = 'mpxeventmap:'
+//   let staticHandlers = ``
+//   let captureAndBubbleMap = {}
+
+//   Object.keys(events).map(name => {
+//     const { prefix, eventName, funcName } = events[name]
+//     staticHandlers += `${funcName}: this.${funcName.slice(1, -1)}.bind(this),`
+
+//     if (!captureAndBubbleMap[eventName]) {
+//       captureAndBubbleMap[eventName] = {
+//         capture: [],
+//         bubble: []
+//       }
+//     }
+//     // TODO: 目前仅处理原生事件的冒泡 & 捕获阶段，不处理自定义事件
+//     switch (prefix) {
+//       case 'catch':
+//       case 'capture-bind':
+//       case 'capture-catch':
+//         captureAndBubbleMap[eventName].capture.push(funcName)
+//         break
+//       default:
+//         captureAndBubbleMap[eventName].bubble.push(funcName)
+//         break
+//     }
+//     // captureAndBubbleMap[eventName] = `'${eventName}': {${captureHandlers + bubbleHandlers}},`
+//   })
+//   let str = ''
+//   Object.keys(captureAndBubbleMap).map(eventName => {
+//     str += `${eventName}:{`
+//     let captureEventsStr = 'capture: ['
+//     captureAndBubbleMap[eventName].capture.map(funcName => {
+//       captureEventsStr += `{name: ${funcName}, handler: this.${funcName.slice(1, -1)}.bind(this)},`
+//     })
+//     str += captureEventsStr + '],'
+
+//     let bubbleEventsStr = 'bubble: ['
+//     captureAndBubbleMap[eventName].bubble.map(funcName => {
+//       bubbleEventsStr += `{name: ${funcName}, handler: this.${funcName.slice(1, -1)}.bind(this)},`
+//     })
+//     str += bubbleEventsStr + '],'
+
+//     str += '},'
+//   })
+
+//   return eventmapKey + `{${str}},` + bindeventsKey + `{${staticHandlers}}`
+// }
+
 function _genData (node) {
-  let data = ''
-  if (!isEmptyObject(node.attrsMap)) {
-    data = '{'
-    // 普通元素节点
-    // let normalShow = ''
-    // if (node.normalShow) {
-    //   normalShow = `${node.normalShow}: (${node.normalShow})||(${node.normalShow})===undefined?'':'display:none'`
-    // }
-    // 自定义组件节点 wx:show，原生的元素节点通过 style 来进行控制 node.showStyle
-    if (node.show) {
-      data += `mpxShow: ${node.show},`
+  let data = '{'
+  // 自定义组件节点 wx:show，需要将 mpxShow 作为属性传递到自定义组件内部，原生的元素节点通过 style 来进行控制 node.showStyle
+  if (node.show) {
+    data += `mpxShow: ${node.show},`
+  }
+  if (node.hidden) {
+    data += `hidden: ${node.hidden},`
+  }
+  // 默认插槽不添加 slot 属性，这个 slot 属性主要是用于非运行组件的插槽来使用。具体见 base.wxml 里面动态生成非运行时组件的内容
+  if (node.slotTarget && node.slotTarget !== '"default"') {
+    data += `slot: ${node.slotTarget},`
+  }
+  if (node.slotName) {
+    data += `slotName: ${node.slotName},`
+  }
+  if (node.slots) {
+    data += `slots: runtimeSlots["${node.slotAlias}"],`
+  }
+  // 运行时组件的 slots 都是通过 properties 传递，单独在这里生产 slots render 函数
+  if (node.innerRuntimeCompileWrapper) {
+    if (node.children.length > 0) {
+      data += `slots: ${transformSlotsToString(genSlots(node.children, genElement))},`
+      // 这里直接清空所有运行时组件的子节点，slots 统一从注入的 injectRuntimeSlots 当中获取，避免生成重复代码
+      node.children = []
     }
-    // else {
-    //   data += 'mpxShow: true,'
-    // }
-    if (node.style || node.staticStyle || node.showStyle) {
-      // console.log('node.style is:', node.style)
-      if (node.style && node.staticStyle) {
-        data += `style: __ss(${node.staticStyle}, ${node.style}, ${node.showStyle}),`
-      } else if (node.style) {
-        data += `style: __ss("", ${node.style}, ${node.showStyle}),`
-      } else if (node.staticStyle) {
-        // TODO: 只有 staticStyle 和有 style 取的值不一样，一个是没有带引号，一个带了引号的
-        // class 和 style 的处理情况一样。这里可以优化一下，统一处理成带引号的？
-        data += `style: __ss("${node.staticStyle}", {}, ${node.showStyle}),`
-      } else {
-        data += `style: __ss("", {}, ${node.showStyle}),`
-      }
-      // console.log('the data is:', data)
-      getAndRemoveAttr(node, 'style', true)
-      // delete node.attrsMap.style
+  }
+  if (node.style || node.staticStyle || node.showStyle) {
+    if (node.style && node.staticStyle) {
+      data += `style: __ss(${node.staticStyle}, ${node.style}, ${node.showStyle}),`
+    } else if (node.style) {
+      data += `style: __ss("", ${node.style}, ${node.showStyle}),`
+    } else if (node.staticStyle) {
+      // TODO: 只有 staticStyle 和有 style 取的值不一样，一个是没有带引号，一个带了引号的
+      // class 和 style 的处理情况一样。这里可以优化一下，统一处理成带引号的？
+      data += `style: __ss("${node.staticStyle}", {}, ${node.showStyle}),`
+    } else {
+      data += `style: __ss("", {}, ${node.showStyle}),`
     }
-    if (node.class || node.staticClass) {
-      if (node.class && node.staticClass) {
-        data += `class: __sc(${node.staticClass}, ${node.class}),`
-      } else if (node.class) {
-        data += `class: __sc("", ${node.class}),`
-      } else if (node.staticClass) {
-        data += `class: __sc("${node.staticClass}"),`
-      }
-      getAndRemoveAttr(node, 'class', true)
+    getAndRemoveAttr(node, 'style', true)
+  }
+  if (node.class || node.staticClass) {
+    if (node.class && node.staticClass) {
+      data += `class: __sc(${node.staticClass}, ${node.class}),`
+    } else if (node.class) {
+      data += `class: __sc("", ${node.class}),`
+    } else if (node.staticClass) {
+      data += `class: __sc("${node.staticClass}"),`
     }
-    if (node.mpxPageStatus) {
-      data += `mpxPageStatus: mpxPageStatus,`
-    }
-    if (node.events) {
-      node.attrsList.forEach(attr => {
-        if (/bind/.test(attr.name)) {
-          getAndRemoveAttr(node, attr.name, true)
-        }
-      })
-      data += `${genHandlers(node.events)},`
-      // Object.keys(node.events).map(event => {
-      //   data += `${node.events[event]}: this.${node.events[event].slice(1, -1)}.bind(this),`
-      // })
-    }
-    if (node.eventconfigs) {
-      data += `eventconfigs: ${node.eventconfigs},`
-      getAndRemoveAttr(node, 'data-eventconfigs', true)
-    }
-    Object.keys(node.attrsMap).map(key => {
-      if (!filterKeys.includes(key)) {
-        data += `'${key}': '${node.attrsMap[key]}',`
+    getAndRemoveAttr(node, 'class', true)
+  }
+  if (node.mpxPageStatus) {
+    data += `mpxPageStatus: mpxPageStatus,`
+  }
+  // if (node.dataset) {
+  //   data += 'dataset: {'
+  //   Object.keys(node.dataset).map(key => {
+  //     data += `${key}: '${node.dataset[key]}',`
+  //   })
+  //   data += '},'
+  // }
+  if (node.events) {
+    node.attrsList.forEach(attr => {
+      if (/bind/.test(attr.name)) {
+        getAndRemoveAttr(node, attr.name, true)
       }
     })
-    if (data === '{') {
-      data = ''
-    } else {
-      data = data.replace(/,$/, '') + '}'
+    data += `${genHandlers(node.events)},`
+  }
+  if (node.eventconfigs) {
+    data += `eventconfigs: ${node.eventconfigs},`
+    getAndRemoveAttr(node, 'data-eventconfigs', true)
+  }
+  if (node.model) {
+    Object.keys(node.model).map(key => {
+      const arr = node.model[key]
+      if (arr.length > 0) {
+        if (key === 'prop') {
+          data += `${arr[0]}: ${arr[1]},`
+
+          // 删除 model-prop 配置，避免生成 vnode 出现重复属性
+          getAndRemoveAttr(node, arr[0], true)
+        }
+      }
+    })
+  }
+  if (node.refs) {
+    data += `refs: ${node.refs},`
+  }
+  /**
+   * wx:bind="$attrs"
+   *
+   * at: {{ { attr1: 'xx' } }} / at: {{ at }} / at: {{ at }}
+   *
+   * case1: 使用 at 透传属性
+   * case2: 枚举属性透传
+   * case3: 混写，有个合并属性的流程
+   */
+  function stringifyAttrsMap() {
+    Object.keys(node.attrsMap).map(key => {
+      if (!filterKeys.includes(key)) {
+        const parsed = parseMustache(node.attrsMap[key])
+        data += `'${key}': ${parsed.hasBinding ? parsed.result : `'${parsed.val}'`},`
+      }
+    })
+  }
+
+  if (node.at) {
+    data += `at:  ${node.at},`
+  } else {
+    if (node.isRuntimeCompileWrapper) {
+      data += `at: {`
     }
+
+    stringifyAttrsMap()
+
+    if (node.isRuntimeCompileWrapper) {
+      data += '},'
+    }
+  }
+
+
+  if (data === '{') {
+    data = ''
+  } else {
+    data = data.replace(/,$/, '') + '}'
   }
 
   return data
@@ -2577,8 +3022,12 @@ function _genChildren (node) {
   }
 }
 
-function _genSlot () {
-
+// 目前仅考虑最简单的情况
+function _genSlot (node) {
+  const slotName = node.slotName
+  const children = _genChildren(node)
+  let res = `__t(${slotName}${children ? `,${children}` : ''})`
+  return res
 }
 
 function _genIfConfitions (conditions) {

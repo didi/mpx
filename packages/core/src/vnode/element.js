@@ -1,8 +1,8 @@
 import VNode from './node'
 
 export const nodeOps = {
-  createElement(tag, data, children, text) {
-    return new Element(tag, data, children, text)
+  createElement(tag, data, children, text, elm, context) {
+    return new Element(tag, data, children, text, elm, context)
   },
   createTextNode(text) {
     return new Element(undefined, undefined, undefined, text)

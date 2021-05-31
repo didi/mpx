@@ -56,17 +56,20 @@ export default function renderHelperMixin () {
           return tag
         }
 
+        const nodeId = getUid()
+        data.nodeId = nodeId
         children = simpleNormalizeChildren(children)
 
         const vnode =  {
           nodeType: tag || '',
           ...data,
           _data: data,
-          nodeId: getUid(),
+          nodeId,
           children
         }
         return vnode
       },
+      // createTextNode
       __v(content) {
         return {
           nodeType: '',
@@ -75,12 +78,17 @@ export default function renderHelperMixin () {
           text: content
         }
       },
+      // createEmptyNode
       __e() {
         return {
           nodeType: '',
           nodeId: '',
           content: ''
         }
+      },
+      __t(name, fallback = []) {
+        let nodes = (this.slots && this.slots[name]) || fallback
+        return nodes
       },
       __sc(...args) {
         return stringifyClass(...args)

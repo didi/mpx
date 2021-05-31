@@ -1,12 +1,13 @@
 import EventTarget from '../event/event-target'
 
 export default class VNode extends EventTarget {
-  constructor(tag, data, children, text, elm, context) {
+  constructor(tag, data = {}, children, text, elm, context) {
     super()
 
     this.nodeType = tag || ''
     this.tag = tag
     this.data = data
+    this.id = data.nodeId
     this.children = children
     this.text = text
     this.elm = elm
@@ -26,5 +27,5 @@ export const createEmptyVNode = (text = '') => {
 }
 
 export function createTextVNode(val = '') {
-  return new VNode(undefined, undefined, undefined, String(val))
+  return new VNode(undefined, undefined, undefined, undefined, String(val))
 }

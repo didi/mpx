@@ -268,9 +268,10 @@ export default class MPXProxy {
     // TODO: 待优化，目前这个为了方便测试
     if (vnode) {
       const _vnode = _.cloneDeep(vnode)
-      proxy(this.target, { _vnode: patch(undefined, _vnode) }, ['_vnode'], true)
+      proxy(this.target, { _vnode: patch(undefined, _vnode, this.target) }, ['_vnode'], true)
     }
     const renderData = preProcessRenderData(this.renderData)
+    console.log('the renderData is:', renderData)
     this.doRender(this.processRenderDataWithStrictDiff(renderData), () => {} ,vnode)
     // 重置renderData准备下次收集
     this.renderData = {}
@@ -284,7 +285,7 @@ export default class MPXProxy {
 
   processRenderDataWithStrictDiff (renderData) {
     const result = {}
-    console.log('the renderData is:', renderData)
+    // console.log('the renderData is:', renderData)
     for (let key in renderData) {
       if (renderData.hasOwnProperty(key)) {
         const data = renderData[key]
@@ -369,7 +370,7 @@ export default class MPXProxy {
   }
 
   doRender (data, cb, vnode) {
-    console.log('111doRender', data, vnode)
+    // console.log('111doRender', data, vnode)
     if (typeof this.target.__render !== 'function') {
       error('Please specify a [__render] function to render view.', this.options.mpxFileResource)
       return
@@ -407,8 +408,11 @@ export default class MPXProxy {
       }
     }
     
+    // 如果是一个 runtimeComponent，那么渲染的数据直接使用 vnode
     if (vnode && this.options.runtimeComponent) {
-      data.r = vnode
+      data = {
+        r: vnode
+      }
     }
     
     console.log('the data is:', data)

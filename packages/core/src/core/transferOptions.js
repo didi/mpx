@@ -6,6 +6,7 @@ import { warn } from '../helper/log'
 
 function composePropertiesToAttrs(type, options = {}) {
   if (type === 'component') {
+    options.runtimeComponent = true
     if (!options.computed) {
       options.computed = {}
     }
@@ -16,7 +17,7 @@ function composePropertiesToAttrs(type, options = {}) {
       // 将 properties 数据转为 computed
       Object.assign(options.computed, {
         [key]() {
-          return this.at[key]
+          return this.at && this.at[key]
         }
       })
     })
@@ -55,10 +56,8 @@ export default function transferOptions (options, type, builtInMixins = []) {
   // 转换mode
   options.mpxConvertMode = options.mpxConvertMode || getConvertMode(global.currentSrcMode)
   const rawOptions = mergeOptions(options, type)
-  
-  // TODO: 添加 runtimeComponent 判断条件
-  if (currentInject && currentInject.runtimeComponent) {}
-  if (options.runtimeComponent) {
+
+  if (currentInject && currentInject.runtimeCompile) {
     // 所有的 mixins 都处理完成后，合并 properties/props 为单 at 属性
     composePropertiesToAttrs(type, rawOptions)
   }

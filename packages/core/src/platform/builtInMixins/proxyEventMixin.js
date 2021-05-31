@@ -62,46 +62,13 @@ export default function proxyEventMixin () {
       setByPath(this, expr, value)
     },
     __eh ($event) {
-      // if (EventTarget.$$checkEvent($event)) {
-      //   console.log('call __eh method')
-      // }
-      this.__callEvent('tap', $event, { button: 0 })
-    },
-    __callEvent(eventName, evt, extra) {
-      const domNode = this.__getDomNodeFromEvt(evt)
-      if (!domNode) {
-        return
-      }
-      EventTarget.$$process(domNode, eventName, evt)
-
-      const target = evt.currentTarget || evt.target
-      const eventConfigs = target.dataset.eventconfigs || {}
-      const curEventConfig = eventConfigs[eventName]
-      console.log('the curEventConfig is:', curEventConfig)
-      if (curEventConfig) {
-        curEventConfig.forEach(item => {
-          const callbackName = item[0]
-          if (callbackName) {
-            const params = item.length > 1 ? item.slice(1).map(item => {
-              if (item === '__mpx_event__') {
-                return evt
-              } else {
-                return item
-              }
-            }) : [evt]
-            const callback = this.r && this.r.mpxbindevents && this.r.mpxbindevents[callbackName] || this[callbackName]
-            if (typeof callback === 'function') {
-              callback(...params)
-            } else {
-              const location = this.__mpxProxy && this.__mpxProxy.options.mpxFileResource
-              error(`Instance property [${callbackName}] is not function, please check.`, location)
-            }
-          }
-        })
-      }
+      return this.__invoke($event)
     },
     __getDomNodeFromEvt(evt) {
       const id = evt.currentTarget && evt.currentTarget.dataset.privateNodeId
+      return cache.getNode(id)
+    },
+    __getNode(id) {
       return cache.getNode(id)
     }
   }
