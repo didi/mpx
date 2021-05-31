@@ -72,7 +72,7 @@
                 component.group = this
               }
               if (component.group === this && component.value) {
-                component.isChecked = false
+                component.isChecked = value === component.value
               }
             }
           }
@@ -83,9 +83,6 @@
           this.setValue(value)
         } else {
           value = this.getValue()
-        }
-        if (vm && vm.isChecked !== undefined) {
-          vm.isChecked = true
         }
         this.$emit('change', getCustomEvent('change', { value }, this.$refs.radioGroup))
       }

@@ -67,49 +67,4 @@ describe('common spec case', function () {
     expect(output13).toBe(`<view s-for="item, index in list">123</view>`)
     expect(output14).toBe('<view s-for="t1, t2 in [0,1,2,3,4,5,6,7] trackBy t1">123</view>')
   })
-
-  it('should trans event binding for tt miniapp', function () {
-    const input1 = `<test-comp1 bind:click="clickHandler">123</test-comp1>`
-    const input1b = `<test-comp1 bindclick="clickHandler">123</test-comp1>`
-    const input2 = `<test-comp1 catch:click="clickHandler">123</test-comp1>`
-    const input2b = `<test-comp1 catchclick="clickHandler">123</test-comp1>`
-    const input3 = `<test-comp1 bind:click.trim="clickHandler">123</test-comp1>`
-    const input5 = `<test-comp1 capture-bind:click="clickHandler">123</test-comp1>`
-    const input6 = `<test-comp1 capture-catch:click="clickHandler">123</test-comp1>`
-
-    // 有没冒号都能用，按原文转
-    const output1 = compileAndParse(input1, { srcMode: 'wx', mode: 'tt' })
-    expect(output1).toBe('<test-comp1 bind:click="clickHandler">123</test-comp1>')
-    expect(warnFn).not.toHaveBeenCalled()
-
-    const output1b = compileAndParse(input1b, { srcMode: 'wx', mode: 'tt' })
-    expect(output1b).toBe('<test-comp1 bindclick="clickHandler">123</test-comp1>')
-    expect(warnFn).not.toHaveBeenCalled()
-
-    const output2 = compileAndParse(input2, { srcMode: 'wx', mode: 'tt' })
-    expect(output2).toBe('<test-comp1 catch:click="clickHandler">123</test-comp1>')
-    expect(warnFn).not.toHaveBeenCalled()
-
-    const output2b = compileAndParse(input2b, { srcMode: 'wx', mode: 'tt' })
-    expect(output2b).toBe('<test-comp1 catchclick="clickHandler">123</test-comp1>')
-    expect(warnFn).not.toHaveBeenCalled()
-
-    const output3 = compileAndParse(input3, { srcMode: 'wx', mode: 'tt' })
-    expect(output3).toBe('<test-comp1 bind:click.trim="clickHandler">123</test-comp1>')
-    expect(warnFn).not.toHaveBeenCalled()
-
-    const output4 = compileAndParse(input3, { srcMode: 'wx', mode: 'wx' })
-    expect(output4).toBe('<test-comp1 bind:click.trim="clickHandler">123</test-comp1>')
-    expect(warnFn).not.toHaveBeenCalled()
-
-    const output5 = compileAndParse(input5, { srcMode: 'wx', mode: 'tt' })
-    expect(output5).toBe('<test-comp1 bindclick="clickHandler">123</test-comp1>')
-    expect(warnFn).toHaveBeenCalledWith(`bytedance miniapp doens't support 'capture-bind' and will be translated into 'bind' automatically!`)
-    warnFn.mockClear()
-
-    const output6 = compileAndParse(input6, { srcMode: 'wx', mode: 'tt' })
-    expect(output6).toBe('<test-comp1 bindclick="clickHandler">123</test-comp1>')
-    expect(warnFn).toHaveBeenCalledWith(`bytedance miniapp doens't support 'capture-catch' and will be translated into 'bind' automatically!`)
-    warnFn.mockClear()
-  })
 })
