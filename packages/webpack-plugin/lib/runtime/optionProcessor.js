@@ -43,17 +43,22 @@ export default function processOption (
       }
     })
     Vue.directive('animation', (el, binding) => {
-      const newAnimation = binding?.value?.actions
-      if (el.actions === newAnimation) {
+      const newActions = binding?.value?.actions
+      if (el.actions === newActions) {
+        Promise.resolve().then(() => {
+          Object.assign(el.style, el.lastDynamicStyle)
+        })
         return
       }
-      el.actions = newAnimation
+      el.actions = newActions
       if (typeof el.setAnimation === 'function') {
         el.removeEventListener('transitionend', el.setAnimation, false)
+        el.setAnimation = undefined
       }
       el.dynamicStyleQueue = []
-      if (Array.isArray(newAnimation) && newAnimation.length) {
-        newAnimation.forEach((item) => {
+      el.lastDynamicStyle = undefined
+      if (Array.isArray(newActions) && newActions.length) {
+        newActions.forEach((item) => {
           const property = []
           const { animates, option } = item
           // 存储动画需要改变的样式属性
@@ -88,6 +93,7 @@ export default function processOption (
           }
           const dynamicStyle = el.dynamicStyleQueue.shift()
           Object.assign(el.style, dynamicStyle)
+          el.lastDynamicStyle = dynamicStyle
         }
         // 首次动画属性设置
         setTimeout(el.setAnimation, 0)
