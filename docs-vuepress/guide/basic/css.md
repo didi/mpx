@@ -67,15 +67,15 @@ Mpx 支持 CSS 预编译处理，你可以通过在 style 标签上设置 `lang`
 
 ``` template
 <!-- index.mpx -->
-<style lang="stylus" src="../styles/mixin.styl"></style>
+<style lang="stylus" src="../styles/common.styl"></style>
 ```
 
 ``` template
 <!-- list.mpx -->
-<style lang="stylus" src="../styles/mixin.styl"></style>
+<style lang="stylus" src="../styles/common.styl"></style>
 ```
 
-Mpx 将 mixin.styl 中的代码经过 loader 编译后生成一份单独的 wxss 文件，这样既实现了样式抽离，又能节省打包后的代码体积。
+Mpx 将 common.styl 中的代码经过 loader 编译后生成一份单独的 wxss 文件，这样既实现了样式抽离，又能节省打包后的代码体积。
 
 ### @import 复用
 
