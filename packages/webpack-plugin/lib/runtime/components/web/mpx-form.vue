@@ -28,6 +28,15 @@
     })
     return value
   }
+  function setEmptyValue (value) {
+    if (typeof value === 'string') {
+      return ''
+    } else if (typeof value === 'number') {
+      return 0
+    } else if (Array.isArray(value)) {
+      return []
+    }
+  }
 
   function setFormValue (slot, value) {
     travelSlot(slot, (VNode) => {
@@ -35,9 +44,9 @@
         const el = VNode.elm
         const component = VNode.componentInstance
         if (component && component.name && component.setValue) {
-          component.setValue(value[component.name])
+          component.setValue(setEmptyValue(value[component.name]))
         } else if (el && el.name && el.value !== undefined) {
-          el.value = value[el.name]
+          el.value = setEmptyValue(value[el.name])
         }
       }
     })

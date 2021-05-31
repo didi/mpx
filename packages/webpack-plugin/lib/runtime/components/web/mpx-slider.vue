@@ -9,8 +9,7 @@
         isDrag: false,
         startX: 0,
         sliderWidth: 0,
-        blockLeft: 0,
-        sliderValue: this.value || this.min,
+        sliderValue: this.value < this.min ? this.min : this.value > this.max ? this.max : this.value,
         stepWidth: 0
       }
     },
@@ -57,13 +56,17 @@
         default: false
       }
     },
+    computed: {
+      blockLeft () {
+        const lineSum = this.max - this.min
+        const lineRatio = (this.sliderValue - this.min) / lineSum
+        return this.sliderWidth * lineRatio - this.blockSize / 2 + 'px' || 0
+      }
+    },
     mounted () {
       let sliderWrapEle = this.$refs.sliderWrap
       let width = window.getComputedStyle(sliderWrapEle, null).width
       this.sliderWidth = parseInt(width)
-      if (this.value > 0) {
-        this.initBlockLeft() //调用初始化滑块居左位置
-      }
       this.startX = sliderWrapEle.getBoundingClientRect().left || 18
     },
     render (createElement) {
@@ -147,15 +150,6 @@
         }
         this.isDrag = true
       },
-      initBlockLeft (value) { //初始化滑块居左位置
-        if (value === undefined) {
-          value = this.value
-        }
-        const lineSum = this.max - this.min
-        const lineRatio = (value - this.min) / lineSum
-        this.blockLeft = this.sliderWidth * lineRatio - this.blockSize / 2 + 'px'
-        console.log(this.blockLeft, 'this.blockLeft')
-      },
       sliderTouchMove (event) {
         event.preventDefault()
         if (this.isDrag) {
@@ -188,10 +182,8 @@
         }
         if (moveStartX % stepWidth > stepWidth / 2) { // 向左拖拽逻辑
           let width = (num + 1) * stepWidth > this.sliderWidth ? this.sliderWidth : (num + 1) * stepWidth
-          this.blockLeft = width - this.blockSize / 2 + 'px'
           this.sliderValue = this.min + (num + 1) * this.step // 设置展示值逻辑
         } else if (parseInt(this.blockLeft) - moveStartX) {  // 向右拖拽逻辑
-          this.blockLeft = num * stepWidth - this.blockSize / 2 + 'px'
           this.sliderValue = this.min + num * this.step // 设置展示值逻辑
         }
       },
@@ -199,8 +191,8 @@
         return this.sliderValue
       },
       setValue (value) {
+        value = value < this.min ? this.min : value > this.max ? this.max : value
         this.sliderValue = value
-        this.initBlockLeft(value)
       },
       notifyChange (value) {
         if (value !== undefined) {
