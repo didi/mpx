@@ -63,6 +63,7 @@ export default class Toast {
       this.loading.parentNode && this.content.replaceChild(this.icon, this.loading) // set icon to default
 
       const defaultIconClass = '__mpx_toast_icon__'
+
       const iconClass = opts.image
         ? '' // image
         : opts.icon === 'none'
