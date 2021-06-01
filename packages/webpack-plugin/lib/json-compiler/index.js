@@ -53,6 +53,7 @@ module.exports = function (raw = '{}') {
   const componentsMap = mpx.componentsMap[packageName]
   const getEntryNode = mpx.getEntryNode
   const mode = mpx.mode
+  const env = mpx.env
   const defs = mpx.defs
   const globalSrcMode = mpx.srcMode
   const localSrcMode = queryObj.mode
@@ -358,7 +359,8 @@ module.exports = function (raw = '{}') {
                   filePath,
                   needMap: this.sourceMap,
                   mode,
-                  defs
+                  defs,
+                  env
                 })
                 const json = parts.json || {}
                 if (json.content) {

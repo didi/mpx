@@ -32,6 +32,7 @@ module.exports = function (content) {
   const resolveMode = mpx.resolveMode
   const projectRoot = mpx.projectRoot
   const mode = mpx.mode
+  const env = mpx.env
   const defs = mpx.defs
   const i18n = mpx.i18n
   const globalSrcMode = mpx.srcMode
@@ -100,7 +101,8 @@ module.exports = function (content) {
     filePath,
     needMap: this.sourceMap,
     mode,
-    defs
+    defs,
+    env
   })
 
   let output = ''
@@ -214,6 +216,7 @@ module.exports = function (content) {
               (callback) => {
                 processJSON(parts.json, {
                   mode,
+                  env,
                   defs,
                   resolveMode,
                   loaderContext,

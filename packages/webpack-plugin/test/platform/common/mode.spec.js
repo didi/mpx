@@ -94,4 +94,46 @@ describe('template should transform correct', function () {
     const output2 = compileAndParse(input2)
     expect(output2).toBe('<button wx="123">获取用户信息</button>')
   })
+
+  it('if attr name matched mode and env name should work correct', function () {
+    const input = '<button @click@ali:didi="getUserInfo">获取用户信息</button>'
+    const output = compileAndParse(input, { env: 'didi', mode: 'ali' })
+    expect(output).toBe('<button @click="getUserInfo">获取用户信息</button>')
+
+    const input2 = '<button @click@(ali:qingju:didi|swan)="getUserInfo">获取用户信息</button>'
+    const output2 = compileAndParse(input2, { env: 'didi', mode: 'ali' })
+    expect(output2).toBe('<button @click="getUserInfo">获取用户信息</button>')
+
+    const input3 = '<button @click@:qingju="getUserInfo">获取用户信息</button>'
+    const output3 = compileAndParse(input3, { env: 'didi', mode: 'ali' })
+    expect(output3).toBe('<button>获取用户信息</button>')
+
+    const input4 = '<button @click@:qingju="getUserInfo" @:didi>获取用户信息</button>'
+    const output4 = compileAndParse(input4, { env: 'didi', mode: 'ali' })
+    expect(output4).toBe('<button>获取用户信息</button>')
+
+    const input5 = '<button @:qingju>获取用户信息</button>'
+    const output5 = compileAndParse(input5, { env: 'didi', mode: 'ali' })
+    expect(output5).toBe('')
+
+    const input6 = '<button @click@:qingju:didi="getUserInfo">获取用户信息</button>'
+    const output6 = compileAndParse(input6, { env: 'didi', mode: 'ali' })
+    expect(output6).toBe('<button @click="getUserInfo">获取用户信息</button>')
+
+    const input7 = '<button hello@="123">获取用户信息</button>'
+    const output7 = compileAndParse(input7, { env: 'didi', mode: 'ali' })
+    expect(output7).toBe('<button hello@="123">获取用户信息</button>')
+
+    const input8 = '<button hello@@:didi="123">获取用户信息</button>'
+    const output8 = compileAndParse(input8, { env: 'didi', mode: 'ali' })
+    expect(output8).toBe('<button hello@="123">获取用户信息</button>')
+
+    const input9 = '<button hello@@@ali:didi="123">获取用户信息</button>'
+    const output9 = compileAndParse(input9, { env: 'didi', mode: 'ali' })
+    expect(output9).toBe('<button hello@@="123">获取用户信息</button>')
+
+    const input10 = '<button hello@@@didi:didi="123">获取用户信息</button>'
+    const output10 = compileAndParse(input10, { env: 'didi', mode: 'ali' })
+    expect(output10).toBe('<button hello@@@didi:didi="123">获取用户信息</button>')
+  })
 })
