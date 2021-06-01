@@ -16,6 +16,10 @@
   </block>
 </template>
 
+<template name="block">
+  <template is="children" data="{{ r: r.children }}"></template>
+</template>
+
 <template name="view">
   <view
     style="{{r.style}}"
@@ -25,12 +29,13 @@
     animation="{{r.animation}}"
     data-private-node-id="{{r.nodeId}}"
 
-    bindtap="onTap"
-    bindtouchstart="onTouchStart"
-    bindtouchmove="onTouchMove"
-    bindtouchend="onTouchEnd"
-    bindtouchcancel="onTouchCancel"
-    bindlongpress="onLongTap"
+    data-eventconfigs="{{ r.eventconfigs }}"
+    bindtap="__eh"
+    bindtouchstart="__eh"
+    bindtouchmove="__eh"
+    bindtouchend="__eh"
+    bindtouchcancel="__eh"
+    bindlongpress="__eh"
 
     hover-class="{{r['hover-class']}}"
     hover-start-time="{{r['hover-start-time']}}"
@@ -281,21 +286,22 @@
     animation="{{r.animation}}"
     data-private-node-id="{{r.nodeId}}"
 
-    bindtap="$eh"
-    bindtouchstart="$eh"
-    bindtouchmove="$eh"
-    bindtouchend="$eh"
-    bindtouchcancel="$eh"
+    data-eventconfigs="{{ r.eventconfigs }}"
+    bindtap="__eh"
+    bindtouchstart="__eh"
+    bindtouchmove="__eh"
+    bindtouchend="__eh"
+    bindtouchcancel="__eh"
 
-    bindgetuserinfo="onButtonGetUserInfo"
-    bindcontact="onButtonContact"
-    bindgetphonenumber="onButtonGetPhoneNumber"
+    bindgetuserinfo="__eh"
+    bindcontact="__eh"
+    bindgetphonenumber="__eh"
     binderror="onButtonError"
     bindopensetting="onButtonOpenSetting"
     bindlaunchapp="onButtonLaunchApp"
 
     size="{{tool.processVal(r.size, 'default')}}"
-    type="{{tool.processVal(r.type, 'default')}}"
+    type="{{tool.processVal(r.type, '')}}"
     plain="{{tool.processVal(r.plain, false)}}"
     disabled="{{tool.processVal(r.disabled, false)}}"
     loading="{{tool.processVal(r.loading, false)}}"
@@ -353,9 +359,10 @@
     id="{{r.id}}"
     data-private-node-id="{{r.nodeId}}"
 
+    data-eventconfigs="{{ r.eventconfigs }}"
     bindtap="onTap"
 
-    bindinput="onInputInput"
+    bindinput="__eh"
     bindfocus="onInputFocus"
     bindblur="onInputBlur"
     bindconfirm="onInputConfirm"
@@ -555,13 +562,14 @@
     id="{{r.id}}"
     data-private-node-id="{{r.nodeId}}"
 
+    data-eventconfigs="{{ r.eventconfigs }}"
     bindtap="onTap"
     bindtouchstart="onTouchStart"
     bindtouchmove="onTouchMove"
     bindtouchend="onTouchEnd"
     bindtouchcancel="onTouchCancel"
 
-    bindchange="onPickerChange"
+    bindchange="__eh"
     bindcolumnchange="onPickerColumnChange"
     bindcancel="onPickerCancel"
 
@@ -827,67 +835,3 @@
     bindaudiovolumenotify="onLivePusherAudioVolumeNofify"
   ></live-pusher></template>
 
-  <!-- 最终生成的模板肯定都是被编译后的 -->
-
-  <!-- 不需要走运行时编译的组件，模板需要走老的 template compiler 逻辑，需要将 wx:xxx 等 mpx 指令编译后生成最终的模板 -->
-  <template name="btn">
-    <btn
-      class="{{ r.class }}"
-      a="{{ r.a }}"
-      b="{{ r.b }}"
-      mpxShow="{{ r.mpxShow }}"
-      mpxPageStatus="{{ r.mpxPageStatus }}"></btn>
-  </template>
-  <!-- 需要走运行时编译的组件，模板需要走 vnode 层的 template compiler 逻辑 -->
-  <template name="btn1">
-    <btn1 at="{{ r.at }}"></btn1>
-  </template>
-  <!-- <template name="cube-button">
-    <cube-button
-      data-private-node-id="{{r.nodeId}}"
-      data-private-page-id="{{r.pageId}}"
-      at="{{ r.at }}"
-      bindclick="{{ r.click }}">
-      <block wx:for="{{r.children}}" wx:key="nodeId">
-        <block wx:if="{{item['slot']}}">
-          <view slot="{{item['slot']}}">
-            <template is="element" data="{{r: item}}" />
-          </view>
-        </block>
-        <block wx:else>
-          <block wx:if="{{item.nodeId}}">
-            <template is="element" data="{{r: item}}" />
-          </block>
-          <block wx:else>
-            <block>{{item.content}}</block>
-          </block>
-        </block>
-      </block>
-    </cube-button>
-  </template>
-
-  <template name="cube-icon">
-    <cube-icon
-      data-private-node-id="{{r.nodeId}}"
-      data-private-page-id="{{r.pageId}}"
-      a="{{r.a}}"
-      b="{{r.b}}"
-      bindclick="{{r.click}}"
-    >
-      <block wx:for="{{r.children}}" wx:key="nodeId">
-        <block wx:if="{{item['slot']}}">
-          <view slot="{{item['slot']}}">
-            <template is="element" data="{{r: item}}" />
-          </view>
-        </block>
-        <block wx:else>
-          <block wx:if="{{item.nodeId}}">
-            <template is="element" data="{{r: item}}" />
-          </block>
-          <block wx:else>
-            <block>{{item.content}}</block>
-          </block>
-        </block>
-      </block>
-    </cube-icon>
-  </template> -->

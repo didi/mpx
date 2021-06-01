@@ -13,13 +13,10 @@ const dash2hump = require('../utils/hump-dash').dash2hump
 const { inBrowser } = require('../utils/env')
 const {
   setTemplateNodes,
-  collectSlotComponents,
-  getRawComponentMap,
-  getSlotComponents,
   genSlots,
-  collectRawComponentMap,
   transformSlotsToString,
-  getAliasTag
+  getAliasTag,
+  collectInjectedPath
 } = require('../runtime-utils')
 
 let hashIndex = 0
@@ -120,16 +117,14 @@ function makeAttrsMap (attrs) {
   return map
 }
 
-function createASTElement (tag, attrs, parent, filePath, isCustomComponent = false) {
+function createASTElement (tag, attrs, parent) {
   return {
     type: 1,
     tag: tag,
     attrsList: attrs,
     attrsMap: makeAttrsMap(attrs),
     parent: parent,
-    children: [],
-    filePath,
-    isCustomComponent
+    children: []
   }
 }
 
@@ -837,7 +832,9 @@ function parse (template, options) {
         console.log('the tag an absolute path and aliasTag is:', tag, path, aliasTags[path])
         // console.log('the tag and absolute path is:', tag, options.componentsAbsolutePath[tag], )
       }
-      let element = createASTElement(tag, attrs, currentParent, options.filePath, options.usingComponents.includes(tag))
+      let element = createASTElement(tag, attrs, currentParent)
+      // 注入 base.wxml 里面的节点需要根据是否是自定义节点来决定使用的标签名
+      element.isCustomComponent = isComponentNode(element, options)
       if (ns) {
         element.ns = ns
       }
@@ -1072,6 +1069,7 @@ function stringify (str) {
 //   }
 // }
 
+// TODO：添加 mpxPageStatus 属性的处理
 function processPageStatus (el, options) {
   // 是组件节点的话需要增加 attrs
   if (isComponentNode(el, options)) {
@@ -1295,8 +1293,7 @@ function processBindEvent (el, options) {
     }
   })
   if (usingHashTemplate && !el.aliasTag) {
-    // el.aliasTag = 'd' + hash(`${el.tag}${++hashIndex}`)
-    el.needHashTag = true
+    el.aliasTag = 'd' + hash(`${el.tag}${++hashIndex}`)
   }
   let modelExp = getAndRemoveAttr(el, config[mode].directive.model).val
   if (modelExp) {
@@ -2294,12 +2291,11 @@ function processAt(el) {
     }])
   }
 }
-// isRuntimeCompileWrapper -> 包含 slot 插件的运行时节点
-// innerRuntimeCompileWrapper -> 被运行时组件节点所包含的运行时节点
-// inRuntimeCompileWrapper -> 被运行时组件节点包含的 slot 节点
+// isRuntimeCompileWrapper -> 包含 slot 插槽的运行时节点(运行时组件节点)
+// innerRuntimeCompileWrapper -> 被运行时组件节点所包含的运行时组件节点
+// inRuntimeCompileWrapper -> 被运行时组件节点包含的 slot 节点(普通自定义节点 & 普通节点)
 // runtimeComponents 都需要将 slots 作为属性传递下去
 function processRuntime (el, options, meta) {
-  // TODO: 收集注入 base.wxml tag，同时设置 aliasTag
   el.runtimeCompile = !!options.runtimeCompile
 
   // 如果是运行时组件
@@ -2326,11 +2322,14 @@ function processRuntime (el, options, meta) {
     el.inRuntimeCompileWrapper = true
   }
 
+  /**
+   * 普通的自定义组件:
+   * 1. 如果是被一个运行时组件使用(options.runtimeCompile)
+   * 2. 或者是作为一个运行时组件的 slot 使用(hasRuntimeCompileWrapper)
+   * 做一个标记，在注入 base.wxml 模板节点的内容特殊处理
+   */
   if (options.usingComponents.includes(el.tag) && !options.runtimeComponents.includes(el.tag)) {
     if (options.runtimeCompile || hasRuntimeCompileWrapper(el)) {
-      // if (!el.aliasTag) {
-      //   el.aliasTag = hash(`${el.tag}${++hashIndex}`)
-      // }
       el.normalNodeInRuntimeCompile = true
     }
   }
@@ -2408,26 +2407,20 @@ function processElement (el, root, options, meta) {
 
   processAttrs(el, options)
 
-  // 搜集需要注入到 base.wxml 模块里面的节点:
+  // TODO: 可以再把节点的类型明确下
+  // 搜集需要注入到 base.wxml 模块里面的节点（判断依据：有 aliasTag 的节点）
   // 1. 拥有 aliasTag 的节点 -> 使用了 catch/capture 等特殊事件处理函数
   // 2. 运行时组件里面所有的 usingComponents
   // 3. 非运行时组件里面使用了运行时组件，且运行时组件里面嵌套了自定义非运行时组件
   // 4. (非运行时组件里面)使用了运行时组件里面嵌套了自定义运行时组件
-  if (el.aliasTag ||
-    (el.runtimeCompile && options.usingComponents.includes(el.tag)) ||
-    (el.inRuntimeCompileWrapper && options.usingComponents.includes(el.tag)) ||
-    el.innerRuntimeCompileWrapper) {
-      // TODO: 这里的节点收集需要优化
-      // setTemplateNodes(el)
-    }
-
   if (options.runtimeCompile && options.usingComponents.includes(el.tag) ||
     el.inRuntimeCompileWrapper && options.usingComponents.includes(el.tag) ||
     el.innerRuntimeCompileWrapper) {
       const tag = el.tag
       const componentAbsolutePath = options.componentsAbsolutePath[tag]
       const { aliasTag } = getAliasTag()[componentAbsolutePath]
-      console.log('begin alias tag is:', tag, aliasTag, componentAbsolutePath)
+      el.aliasTag = aliasTag
+      collectInjectedPath(componentAbsolutePath)
     }
 }
 
@@ -2588,7 +2581,6 @@ function serialize (root, meta = {}) {
               if (!meta.vnodeElements) {
                 meta.vnodeElements = {}
               }
-              console.log('the node.slotAlias is:', node.slotAlias)
               meta.vnodeElements[node.slotAlias] = node.children
             }
             result += '</' + node.tag + '>'
@@ -2705,51 +2697,7 @@ function genElement (node, usingComponents = []) {
    * 2. 非运行时组件
    * 这些组件及其路径最终都会被输出到 mpx-custom-component.json 配置文件当中
    */
-  const { rawComponentMap, rawFileComponentMap } = getRawComponentMap()
-
-  // 被注入到 base.wxml 里面的节点(自定义组件)都需要被 hash，避免节点出现重复
-  function hashNodeTag() {
-    let componentPath = ''
-    if (rawFileComponentMap[node.filePath] && rawFileComponentMap[node.filePath][node.tag] && node.isCustomComponent) {
-      if (rawFileComponentMap[node.filePath][node.tag]['aliasTag']) {
-        node.aliasTag = rawFileComponentMap[node.filePath][node.tag]['aliasTag']
-        componentPath = rawFileComponentMap[node.filePath][node.tag]['componentPath']
-      }
-    }
-
-    if (node.isCustomComponent) {
-      // if (!node.aliasTag) {
-      //   node.aliasTag = 'd' + hash(`${node.tag}${++hashIndex}`)
-      // }
-      collectRawComponentMap(node.tag, componentPath, node.filePath, node.aliasTag)
-    }
-
-    if (node.isCustomComponent || node.needHashTag && !node.aliasTag) {
-      node.aliasTag = 'd' + hash(`${node.tag}${++hashIndex}`)
-    }
-  }
-
-  hashNodeTag()
-
-  // slot 注入节点的收集
-  if (node.isRuntimeCompileWrapper || node.inRuntimeCompileWrapper) {
-    // if (rawComponentMap[node.tag]) {
-    //   collectSlotComponents(node.tag, rawComponentMap[node.tag])
-    // }
-    // console.log('the slot tag is:', node.tag, node.filePath,rawFileComponentMap)
-    if (rawFileComponentMap[node.filePath] && rawFileComponentMap[node.filePath][node.tag] && node.isCustomComponent) {
-      // console.log('node.aliasTag is:', rawFileComponentMap)
-      collectSlotComponents(node.aliasTag || node.tag, rawFileComponentMap[node.filePath][node.tag]['componentPath'])
-    } else {
-      // if (node.isCustomComponent) {
-      //   if (!node.aliasTag) {
-      //     node.aliasTag = 'd' + hash(`${node.tag}${++hashIndex}`)
-      //   }
-      //   console.log('the node.aliasTag is:', node.aliasTag)
-      //   collectRawComponentMap(node.tag, '', node.filePath, node.aliasTag)
-      // }
-    }
-  }
+  
 
   // 收集需要注入到 base.wxml 的节点 (只要被 hash 过的节点都需要被注入)
   if (node.aliasTag) {

@@ -25,6 +25,12 @@ const matchCondition = require('./utils/match-condition')
 const parseAsset = require('./utils/parse-asset')
 const { preProcessDefs } = require('./utils/index')
 const hash = require('hash-sum')
+const {
+  genRuntimeTemplate,
+  getTemplateNodes,
+  addCustomComponentWxss,
+  getInjectedComponentMap
+} = require('./runtime-utils')
 
 const isProductionLikeMode = options => {
   return options.mode === 'production' || !options.mode
@@ -574,8 +580,42 @@ class MpxWebpackPlugin {
               module.buildInfo.contextDependencies = contextDependencies
             })
           }
+
+          if (/base\w*\.wxml/.test(file)) {
+            let runtimeTemplate = genRuntimeTemplate(getTemplateNodes())
+            content.add(runtimeTemplate)
+            // clearTemplateNodes()
+            // console.log('the injected wxml is:', getTemplateNodes())
+          }
+
+          // 运行时组件的样式注入
+          if (/mpx-custom-element\.wxss/.test(file)) {
+            let res = new ConcatSource()
+            res.add(addCustomComponentWxss())
+            res.add(content.source())
+            content = res
+            // console.log('the mpx-custom-element content is:', content.source())
+          }
+
+          if (/mpx-custom-element\.json/.test(file)) {
+            // console.log('get injected path', getInjectedComponentMap())
+            let _content = JSON.parse(content.source())
+            if (!_content.usingComponents) {
+              _content.usingComponents = {}
+            }
+            // 将运行时组件里面的 usingComponents 配置以及在非运行时组件里面的运行时组件使用的 slot 都需要最终输出到 mpx-custom-element.json 当中
+            // Object.assign(_content.usingComponents, getCustomComponent(), getSlotComponents())
+            Object.assign(_content.usingComponents, getInjectedComponentMap())
+            let res = new ConcatSource()
+            res.add(JSON.stringify(_content, null, 2))
+            content = res
+          }
           compilation.emitAsset(file, content, { modules: additionalAssets[file].modules })
+
+          // console.log('additionalAssets is:', compilation.assets)
         }
+
+        // console.log('emit additionalAssets:', additionalAssets)
         // 所有编译的静态资源assetsInfo合入主编译
         mpx.assetsInfo.forEach((assetInfo, name) => {
           const oldAssetInfo = compilation.assetsInfo.get(name)

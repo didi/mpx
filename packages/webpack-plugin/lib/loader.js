@@ -16,6 +16,8 @@ const processTemplate = require('./web/processTemplate')
 const readJsonForSrc = require('./utils/read-json-for-src')
 const normalize = require('./utils/normalize')
 const getMainCompilation = require('./utils/get-main-compilation')
+const path = require('path')
+const { setAliasTag } = require('./runtime-utils')
 
 module.exports = function (content) {
   this.cacheable()
@@ -25,6 +27,7 @@ module.exports = function (content) {
   if (!mpx) {
     return content
   }
+  console.log('the mpx.pagesMap is:', mpx.pagesMap)
   const { resourcePath, queryObj } = parseRequest(this.resource)
   const packageName = queryObj.packageName || mpx.currentPackageRoot || 'main'
   const pagesMap = mpx.pagesMap
@@ -106,6 +109,8 @@ module.exports = function (content) {
   let output = ''
   const callback = this.async()
 
+  let runtimeComponents = []
+  let componentsAbsolutePath = {}
   async.waterfall([
     (callback) => {
       const json = parts.json || {}
@@ -120,6 +125,71 @@ module.exports = function (content) {
       }
     },
     (callback) => {
+      let _callback = callback
+      if (parts.json && parts.json.content) {
+        const json = JSON5.parse(parts.json.content)
+        if (json.usingComponents) {
+          let localComponents = json.usingComponents
+          async.parallel(
+            Object.keys(localComponents).map(name => cb => {
+              this.resolve(path.dirname(this.resource), localComponents[name], (err, path) => {
+                if (err) {
+                  cb(err)
+                }
+                if (path) {
+                  componentsAbsolutePath[name] = path
+                  setAliasTag(path, 'c' + hash(path))
+                  cb(null, [name, path])
+                } else {
+                  cb()
+                }
+              })
+            }),
+            (err, res) => {
+              if (err) {
+                _callback()
+              }
+              if (res) {
+                async.parallel(res.map(item => cb => {
+                  // TODO：编译优化报错
+                  const name = item[0]
+                  const path = item[1]
+                  this.fs.readFile(path, (err, buffer) => {
+                    if (err) {
+                      cb()
+                    } else {
+                      const content = buffer.toString('utf8')
+                      const parts = parseComponent(content, {
+                        filePath: path,
+                        needMap: false,
+                        mode,
+                        defs
+                      })
+                      if (parts.json && parts.json.content) {
+                        const content = JSON5.parse(parts.json.content)
+                        if (content && content.runtimeCompile) {
+                          runtimeComponents.push(name)
+                        }
+                      }
+                      cb()
+                    }
+                  })
+                }), () => {
+                  _callback()
+                })
+              } else {
+                _callback()
+              }
+            }
+          )
+        } else {
+          _callback()
+        }
+      } else {
+        _callback()
+      }
+    },
+    (callback) => {
       // web输出模式下没有任何inject，可以通过cache直接返回，由于读取src json可能会新增模块依赖，需要在之后返回缓存内容
       if (vueContentCache.has(filePath)) {
         return callback(null, vueContentCache.get(filePath))
@@ -129,14 +199,15 @@ module.exports = function (content) {
       const templateAttrs = parts.template && parts.template.attrs
       const hasComment = templateAttrs && templateAttrs.comments
       const isNative = false
-
       let usingComponents = [].concat(Object.keys(mpx.usingComponents))
 
       let componentGenerics = {}
+      let runtimeCompile = false
 
       if (parts.json && parts.json.content) {
         try {
           let ret = JSON5.parse(parts.json.content)
+          runtimeCompile = !!ret.runtimeCompile
           if (ret.usingComponents) {
             fixUsingComponent(ret.usingComponents, mode)
             usingComponents = usingComponents.concat(Object.keys(ret.usingComponents))
@@ -164,7 +235,10 @@ module.exports = function (content) {
         needCssSourceMap,
         srcMode,
         isNative,
-        projectRoot
+        projectRoot,
+        runtimeComponents,
+        runtimeCompile,
+        componentsAbsolutePath
       })
 
       // 处理mode为web时输出vue格式文件
@@ -423,7 +497,7 @@ module.exports = function (content) {
         })
         this._module.addDependency(dep)
       }
-
+      console.log('the output is:', output)
       callback(null, output)
     }
   ], callback)

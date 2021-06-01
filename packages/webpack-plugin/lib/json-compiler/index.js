@@ -18,6 +18,11 @@ const isUrlRequestRaw = require('../utils/is-url-request')
 const addQuery = require('../utils/add-query')
 const readJsonForSrc = require('../utils/read-json-for-src')
 const getMainCompilation = require('../utils/get-main-compilation')
+const {
+  collectRuntimeModules,
+  collectCustomComponentWxss,
+  setAliasComponentPath
+} = require('../runtime-utils')
 
 module.exports = function (raw = '{}') {
   // 该loader中会在每次编译中动态添加entry，不能缓存，否则watch不好使
@@ -26,6 +31,9 @@ module.exports = function (raw = '{}') {
   const options = loaderUtils.getOptions(this) || {}
   const mainCompilation = getMainCompilation(this._compilation)
   const mpx = mainCompilation.__mpx__
+
+  const runtimeComponents = options.runtimeComponents || []
+  const componentsAbsolutePath = options.componentsAbsolutePath || {}
 
   const emitWarning = (msg) => {
     this.emitWarning(
@@ -126,7 +134,9 @@ module.exports = function (raw = '{}') {
     if (callbacked) return callback()
     const dep = SingleEntryPlugin.createDependency(resource, name)
     entryDeps.add(dep)
+    console.log('callbacked', resource, name)
     this._compilation.addEntry(this._compiler.context, dep, name, (err, module) => {
+      console.log('the module resource', resource, 111, name)
       entryDeps.delete(dep)
       checkEntryDeps()
       callback(err, module)
@@ -165,6 +175,19 @@ module.exports = function (raw = '{}') {
     return callback(err)
   }
 
+  // 将 element 加入到编译的流程
+  if (json.runtimeCompile) {
+    const _path = path.resolve(this.rootContext, 'src/components/mpx-custom-element.mpx')
+    // const _path = path.resolve(this._module.issuer.context, 'src/pages/mpx-custom-element.mpx')
+    // 在 issuer module 上添加 runtimeCompile 属性
+    this._module.issuer.runtimeCompile = true
+    collectRuntimeModules(this._module.issuer)
+    if (!json.usingComponents) {
+      json.usingComponents = {}
+    }
+    json.usingComponents['element'] = _path
+  }
+  // console.log('the componentsMap is:', resourcePath, mpx.componentsMap)
   // json补全
   if (pagesMap[resourcePath]) {
     // page
@@ -283,7 +306,7 @@ module.exports = function (raw = '{}') {
       // 此处query为了实现消除分包间模块缓存，以实现不同分包中引用的组件在不同分包中都能输出
       resource = addQuery(resource, {
         packageName: packageInfo.packageName
-      }, undefined, true)
+      })
       const componentPath = packageInfo.outputPath
       rewritePath && rewritePath(publicPath + componentPath)
       if (ext === '.js') {
@@ -676,6 +699,13 @@ module.exports = function (raw = '{}') {
             componentPath = path.relative(path.dirname(currentPath), componentPath)
           }
           json.usingComponents[name] = componentPath
+
+          setAliasComponentPath(componentsAbsolutePath[name], componentPath)
+
+          if (runtimeComponents.includes(name)) {
+            collectCustomComponentWxss(`${componentPath}.wxss`)
+          }
+          // console.log('the component path is:', componentPath, this.resourcePath)
         }, undefined, callback)
       }, callback)
     } else if (json.componentGenerics) {
