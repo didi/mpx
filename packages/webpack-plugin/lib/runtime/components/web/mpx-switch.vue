@@ -46,7 +46,7 @@
       } else {
         const style = global.__style === 'v2' ? 'v2' : 'v1'
         const checkbox = createElement('div', {
-          class: ['mpx-switch-checkbox', this.switchChecked && 'mpx-switch-checkbox-checked-' + style]
+          class: ['mpx-switch-checkbox', this.switchChecked && 'mpx-switch-checkbox-checked-' + style, this.disabled && 'switch-disabled']
         })
 
         children.push(checkbox)
@@ -57,6 +57,9 @@
         ref: 'switch',
         on: {
           click: (e) => {
+            if (this.disabled) {
+              return
+            }
             this.switchChecked = !this.switchChecked
             this.notifyChange()
           }
@@ -132,6 +135,9 @@
     width: 22px
     height: 22px
     position: relative
+    &.switch-disabled
+      background: #e1e1e1
+      color: #adadad
   .mpx-switch-checkbox-checked-v1
     color: #09BB07
     &:before

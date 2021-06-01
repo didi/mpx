@@ -15,6 +15,7 @@ module.exports = function (raw) {
   const mainCompilation = getMainCompilation(compilation)
   const mpx = mainCompilation.__mpx__
   const mode = mpx.mode
+  const env = mpx.env
   const defs = mpx.defs
   const i18n = mpx.i18n
   const externalClasses = mpx.externalClasses
@@ -50,6 +51,7 @@ module.exports = function (raw) {
     basename: path.basename(resourcePath),
     isComponent: !!componentsMap[resourcePath],
     mode,
+    env,
     srcMode: localSrcMode || globalSrcMode,
     defs,
     decodeHTMLText,

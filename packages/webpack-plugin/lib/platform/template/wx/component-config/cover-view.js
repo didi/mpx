@@ -16,6 +16,9 @@ module.exports = function ({ print }) {
         return 'div'
       }
     },
+    tt () {
+      return 'view'
+    },
     props: [
       {
         test: 'scroll-top',
