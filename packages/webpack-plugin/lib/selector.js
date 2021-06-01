@@ -10,6 +10,7 @@ module.exports = function (content) {
     return content
   }
   const mode = mpx.mode
+  const env = mpx.env
   const defs = mpx.defs
   const query = loaderUtils.getOptions(this) || {}
   const filePath = this.resourcePath
@@ -17,7 +18,8 @@ module.exports = function (content) {
     filePath,
     needMap: this.sourceMap,
     mode,
-    defs
+    defs,
+    env
   })
   let part = parts[query.type] || {}
   if (Array.isArray(part)) {
