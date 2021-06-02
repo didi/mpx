@@ -363,7 +363,6 @@ web同名事件默认全部支持，已支持组件的特殊事件默认为支�
 组件名称|是否支持|说明
 :----|---- |----
 audio|是
-animation|是
 block|是
 button|是
 canvas|是
@@ -484,6 +483,7 @@ showLoading|支持
 hideLoading|支持
 onWindowResize|支持
 offWindowResize|支持
+createAnimation|支持
 
 #### JSON配置
 配置项|是否支持
