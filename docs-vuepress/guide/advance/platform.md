@@ -355,7 +355,7 @@ new MpxWebpackPlugin({
 
 #### 代码维度条件编译
 
-与 `__mpx_mode__`一样，你可以访问`__mpx_env__`获取当前编译env，进行平台和环境差异逻辑编写。
+如果在 MpxWebpackPlugin 插件初始化时自定义了 env，你可以访问`__mpx_env__`获取当前编译env，进行环境差异逻辑编写。使用方法与`__mpx_mode__`相同。
 
 #### 组件属性维度条件编译
 
