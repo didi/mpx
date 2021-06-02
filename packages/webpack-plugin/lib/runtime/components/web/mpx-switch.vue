@@ -1,10 +1,10 @@
 <script>
-  import getInnerListeners, { extendEvent } from './getInnerListeners'
-
+  import getInnerListeners, { extendEvent, getCustomEvent } from './getInnerListeners'
 
   export default {
     name: 'mpx-switch',
     props: {
+      name: String,
       type: {
         type: String,
         default: 'switch'
@@ -22,34 +22,18 @@
         default: '#04BE02'
       }
     },
+    watch: {
+      checked (newVal) {
+        this.switchChecked = newVal
+      }
+    },
     data () {
       return {
         switchChecked: this.checked
       }
     },
     render (createElement) {
-      const mergeBefore = {
-        change: (e) => {
-          this.switchChecked = e.target.checked
-          extendEvent(e, {
-            detail: {
-              value: e.target.checked
-            }
-          })
-        }
-      }
       let children = []
-      const domProps = {
-        type: 'checkbox',
-        checked: this.checked,
-        disabled: this.disabled
-      }
-
-      const checkbox = createElement('input', {
-        class: 'mpx-switch-input',
-        on: getInnerListeners(this, { mergeBefore }),
-        domProps
-      })
       if (this.type === 'switch') {
         const switchElem = createElement('div', {
           class: ['mpx-switch-label', this.switchChecked ? 'checked-switch-label' : 'uncheck-switch-label'],
@@ -62,18 +46,42 @@
       } else {
         const style = global.__style === 'v2' ? 'v2' : 'v1'
         const checkbox = createElement('div', {
-          class: ['mpx-switch-checkbox', this.switchChecked && 'mpx-switch-checkbox-checked-' + style]
+          class: ['mpx-switch-checkbox', this.switchChecked && 'mpx-switch-checkbox-checked-' + style, this.disabled && 'switch-disabled']
         })
 
         children.push(checkbox)
       }
-      children.push(checkbox)
       children.push(...(this.$slots.default || []))
-
       const data = {
-        class: [this.type === 'switch' ? 'mpx-switch-wrap' : 'mpx-checkbox-wrap']
+        class: [this.type === 'switch' ? 'mpx-switch-wrap' : 'mpx-checkbox-wrap'],
+        ref: 'switch',
+        on: {
+          click: (e) => {
+            if (this.disabled) {
+              return
+            }
+            this.switchChecked = !this.switchChecked
+            this.notifyChange()
+          }
+        }
       }
       return createElement('div', data, children)
+    },
+    methods: {
+      getValue () {
+        return this.switchChecked
+      },
+      setValue (value) {
+        this.switchChecked = value
+      },
+      notifyChange (value) {
+        if (value !== undefined) {
+          this.setValue(value)
+        } else {
+          value = this.getValue()
+        }
+        this.$emit('change', getCustomEvent('change', { value }, this.$refs.switch))
+      }
     }
   }
 </script>
@@ -82,12 +90,6 @@
   .mpx-checkbox-wrap
     display: inline-flex
     position: relative
-  .mpx-switch-input
-    position: absolute
-    width: 100%
-    height: 100%
-    z-index: 2
-    opacity: 0
   .mpx-switch-wrap
     display: inline-flex
     width: 52px
@@ -133,6 +135,9 @@
     width: 22px
     height: 22px
     position: relative
+    &.switch-disabled
+      background: #e1e1e1
+      color: #adadad
   .mpx-switch-checkbox-checked-v1
     color: #09BB07
     &:before

@@ -116,14 +116,25 @@ export default function getRefsMixin () {
         }
         if (this.__getRefsData) {
           const refs = this.__getRefsData()
+          const self = this
           refs.forEach(ref => {
-            this.$refs[ref.key] = this.__getRefNode(ref)
+            if (ref.type === 'node') {
+              Object.defineProperty(this.$refs, ref.key, {
+                enumerable: true,
+                configurable: true,
+                get () {
+                  return self.__getRefNode(ref)
+                }
+              })
+            } else {
+              this.$refs[ref.key] = this.__getRefNode(ref)
+            }
           })
         }
       },
       __getRefNode (ref) {
         if (!ref) return
-        let selector = ref.selector.replace(/{{mpxCid}}/g, this.__mpxProxy.uid)
+        let selector = ref.selector.replace(/{{mpxCid}}/g, this.mpxCid)
         if (ref.type === 'node') {
           const query = this.createSelectorQuery ? this.createSelectorQuery() : envObj.createSelectorQuery()
           return query && (ref.all ? query.selectAll(selector) : query.select(selector))

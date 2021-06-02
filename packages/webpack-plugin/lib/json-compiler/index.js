@@ -49,7 +49,7 @@ module.exports = function (raw = '{}') {
 
   const stringifyRequest = r => loaderUtils.stringifyRequest(this, r)
   const isUrlRequest = r => isUrlRequestRaw(r, options.root)
-  const urlToRequest = r => loaderUtils.urlToRequest(r, options.root)
+  const urlToRequest = r => loaderUtils.urlToRequest(r)
 
   if (!mpx) {
     return nativeCallback(null, raw)
@@ -61,6 +61,7 @@ module.exports = function (raw = '{}') {
   const componentsMap = mpx.componentsMap[packageName]
   const getEntryNode = mpx.getEntryNode
   const mode = mpx.mode
+  const env = mpx.env
   const defs = mpx.defs
   const globalSrcMode = mpx.srcMode
   const localSrcMode = queryObj.mode
@@ -346,7 +347,11 @@ module.exports = function (raw = '{}') {
     const processSubPackagesQueue = []
     // 添加首页标识
     if (json.pages && json.pages[0]) {
-      json.pages[0] = addQuery(json.pages[0], { isFirst: true })
+      if (typeof json.pages[0] !== 'string') {
+        json.pages[0].src = addQuery(json.pages[0].src, { isFirst: true })
+      } else {
+        json.pages[0] = addQuery(json.pages[0], { isFirst: true })
+      }
     }
 
     const processPackages = (packages, context, callback) => {
@@ -377,7 +382,8 @@ module.exports = function (raw = '{}') {
                   filePath,
                   needMap: this.sourceMap,
                   mode,
-                  defs
+                  defs,
+                  env
                 })
                 const json = parts.json || {}
                 if (json.content) {
@@ -460,20 +466,37 @@ module.exports = function (raw = '{}') {
     // 为了获取资源的所属子包，该函数需串行执行
     const processSubPackage = (subPackage, context, callback) => {
       if (subPackage) {
+        if (typeof subPackage.root === 'string' && subPackage.root.startsWith('.')) {
+          emitError(`Current subpackage root [${subPackage.root}] is not allow starts with '.'`)
+          return callback()
+        }
         let tarRoot = subPackage.tarRoot || subPackage.root || ''
         let srcRoot = subPackage.srcRoot || subPackage.root || ''
         if (!tarRoot || subPackagesCfg[tarRoot]) return callback()
 
+        const otherConfig = getOtherConfig(subPackage)
+        // 支付宝不支持独立分包，无需处理
+        if (otherConfig.independent && mode !== 'ali') {
+          mpx.independentSubpackagesMap[tarRoot] = true
+        }
+
         subPackagesCfg[tarRoot] = {
           root: tarRoot,
           pages: [],
-          ...getOtherConfig(subPackage)
+          ...otherConfig
         }
         mpx.currentPackageRoot = tarRoot
         mpx.componentsMap[tarRoot] = {}
         mpx.staticResourcesMap[tarRoot] = {}
         mpx.subpackageModulesMap[tarRoot] = {}
-        processPages(subPackage.pages, srcRoot, tarRoot, context, callback)
+        async.parallel([
+          (callback) => {
+            processPages(subPackage.pages, srcRoot, tarRoot, context, callback)
+          },
+          (callback) => {
+            processPlugins(subPackage.plugins, srcRoot, tarRoot, context, callback)
+          }
+        ], callback)
       } else {
         callback()
       }
@@ -499,6 +522,11 @@ module.exports = function (raw = '{}') {
       if (pages) {
         context = path.join(context, srcRoot)
         async.forEach(pages, (page, callback) => {
+          let aliasPath = ''
+          if (typeof page !== 'string') {
+            aliasPath = page.path
+            page = page.src
+          }
           if (!isUrlRequest(page)) return callback()
           if (resolveMode === 'native') {
             page = urlToRequest(page)
@@ -509,29 +537,43 @@ module.exports = function (raw = '{}') {
             const ext = path.extname(resourcePath)
             // 获取pageName
             let pageName
-            const relative = path.relative(context, resourcePath)
-            if (/^\./.test(relative)) {
-              // 如果当前page不存在于context中，对其进行重命名
-              pageName = toPosix(path.join(tarRoot, getPageName(resourcePath, ext)))
-              emitWarning(`Current page ${resourcePath} is not in current pages directory ${context}, the page path will be replaced with ${pageName}, use ?resolve to get the page path and navigate to it!`)
-            } else {
-              pageName = toPosix(path.join(tarRoot, /^(.*?)(\.[^.]*)?$/.exec(relative)[1]))
-              // 如果当前page与已有page存在命名冲突，也进行重命名
+            if (aliasPath) {
+              pageName = toPosix(path.join(tarRoot, aliasPath))
+              // 判断 key 存在重复情况直接报错
               for (let key in pagesMap) {
                 if (pagesMap[key] === pageName && key !== resourcePath) {
-                  const pageNameRaw = pageName
-                  pageName = toPosix(path.join(tarRoot, getPageName(resourcePath, ext)))
-                  emitWarning(`Current page ${resourcePath} is registered with a conflict page path ${pageNameRaw} which is already existed in system, the page path will be replaced with ${pageName}, use ?resolve to get the page path and navigate to it!`)
-                  break
+                  emitError(`Current page [${resourcePath}] registers a conflict page path [${pageName}] with existed page [${key}], which is not allowed, please rename it!`)
+                  return callback()
+                }
+              }
+            } else {
+              const relative = path.relative(context, resourcePath)
+              if (/^\./.test(relative)) {
+                // 如果当前page不存在于context中，对其进行重命名
+                pageName = toPosix(path.join(tarRoot, getPageName(resourcePath, ext)))
+                emitWarning(`Current page [${resourcePath}] is not in current pages directory [${context}], the page path will be replaced with [${pageName}], use ?resolve to get the page path and navigate to it!`)
+              } else {
+                pageName = toPosix(path.join(tarRoot, /^(.*?)(\.[^.]*)?$/.exec(relative)[1]))
+                // 如果当前page与已有page存在命名冲突，也进行重命名
+                for (let key in pagesMap) {
+                  if (pagesMap[key] === pageName && key !== resourcePath) {
+                    const pageNameRaw = pageName
+                    pageName = toPosix(path.join(tarRoot, getPageName(resourcePath, ext)))
+                    emitWarning(`Current page [${resourcePath}] is registered with a conflict page path [${pageNameRaw}] which is already existed in system, the page path will be replaced with [${pageName}], use ?resolve to get the page path and navigate to it!`)
+                    break
+                  }
                 }
               }
             }
             if (ext === '.js') {
               resource = '!!' + nativeLoaderPath + '!' + resource
             }
-            currentEntry.addChild(getEntryNode(resource, 'Page'))
             // 如果之前已经创建了页面入口，直接return，目前暂时不支持多个分包复用同一个页面
-            if (pagesMap[resourcePath] === pageName) return callback()
+            if (pagesMap[resourcePath]) {
+              emitWarning(`Current page [${resourcePath}] which is imported from [${this.resourcePath}] has been registered in pagesMap already, it will be ignored, please check it and remove the redundant page declaration!`)
+              return callback()
+            }
+            currentEntry.addChild(getEntryNode(resource, 'Page'))
             pagesMap[resourcePath] = pageName
             if (tarRoot && subPackagesCfg[tarRoot]) {
               subPackagesCfg[tarRoot].pages.push(toPosix(path.relative(tarRoot, pageName)))
@@ -629,12 +671,50 @@ module.exports = function (raw = '{}') {
       }
     }
 
+    const addMiniToPluginFile = file => {
+      if (mpx.miniToPluginExports) {
+        mpx.miniToPluginExports.add(file)
+      } else {
+        mpx.miniToPluginExports = new Set([file])
+      }
+    }
+
+    /* 导出到插件 */
+    const processPlugins = (plugins, srcRoot = '', tarRoot = '', context, callback) => {
+      if (mpx.mode !== 'wx' || !plugins) return callback() // 目前只有微信支持导出到插件
+      context = path.join(context, srcRoot)
+      async.forEachOf(plugins, (plugin, name, callback) => {
+        if (!plugin.export) return callback()
+        let pluginExport = plugin.export
+        if (resolveMode === 'native') {
+          pluginExport = urlToRequest(pluginExport)
+        }
+        resolve(context, pluginExport, (err, resource, info) => {
+          if (err) return callback(err)
+          const { resourcePath } = parseRequest(resource)
+          // 获取 export 的模块名
+          const relative = path.relative(context, resourcePath)
+          const name = toPosix(/^(.*?)(\.[^.]*)?$/.exec(relative)[1])
+          if (/^\./.test(name)) {
+            return callback(new Error(`The miniprogram plugins' export path ${plugin.export} must be in the context ${context}!`))
+          }
+          plugin.export = name + '.js'
+          currentEntry.addChild(getEntryNode(resource, 'PluginExport'))
+          addMiniToPluginFile(resource)
+          addEntrySafely(resource, toPosix(tarRoot ? `${tarRoot}/${name}` : name), callback)
+        })
+      }, callback)
+    }
+
     // 串行处理，先处理主包代码，再处理分包代码，为了正确识别出分包中定义的组件属于主包还是分包
     let errors = []
     // 外部收集errors，确保整个series流程能够执行完
     async.series([
       (callback) => {
         async.parallel([
+          (callback) => {
+            processPlugins(json.plugins, '', '', this.context, callback)
+          },
           (callback) => {
             processPages(json.pages, '', '', this.context, callback)
           },
@@ -659,6 +739,13 @@ module.exports = function (raw = '{}') {
           }
           callback()
         })
+      },
+      (callback) => {
+        if (mpx.appScriptPromise) {
+          mpx.appScriptPromise.then(callback)
+        } else {
+          callback()
+        }
       },
       (callback) => {
         async.series(processSubPackagesQueue, (err) => {

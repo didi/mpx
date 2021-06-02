@@ -4,6 +4,7 @@ const bindThis = require('./bind-this').transform
 const InjectDependency = require('../dependency/InjectDependency')
 const parseRequest = require('../utils/parse-request')
 const getMainCompilation = require('../utils/get-main-compilation')
+const matchCondition = require('../utils/match-condition')
 const path = require('path')
 const isEmptyObject = require('../utils/is-empty-object')
 const { transformSlotsToString } = require('../runtime-utils')
@@ -21,6 +22,7 @@ module.exports = function (raw) {
   const mainCompilation = getMainCompilation(compilation)
   const mpx = mainCompilation.__mpx__
   const mode = mpx.mode
+  const env = mpx.env
   const defs = mpx.defs
   const i18n = mpx.i18n
   const externalClasses = mpx.externalClasses
@@ -59,6 +61,7 @@ module.exports = function (raw) {
     basename: path.basename(resourcePath),
     isComponent: !!componentsMap[resourcePath],
     mode,
+    env,
     srcMode: localSrcMode || globalSrcMode,
     defs,
     decodeHTMLText,
@@ -69,7 +72,8 @@ module.exports = function (raw) {
     checkUsingComponents: mpx.checkUsingComponents,
     globalComponents: Object.keys(mpx.usingComponents),
     // deprecated option
-    globalMpxAttrsFilter: mpx.globalMpxAttrsFilter
+    globalMpxAttrsFilter: mpx.globalMpxAttrsFilter,
+    forceProxyEvent: matchCondition(this.resourcePath, mpx.forceProxyEventRules)
   })
 
   let ast = parsed.root

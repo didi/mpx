@@ -17,14 +17,9 @@ export default function proxyEventMixin () {
       setByPath(this, expr, value)
     },
     getOpenerEventChannel () {
-      const mpxEventChannels = global.__mpxEventChannels
       const router = global.__mpxRouter
-      const currentRoute = (router && router.currentRoute) || {}
-      if (mpxEventChannels && currentRoute.path === mpxEventChannels.toPath) {
-        return mpxEventChannels.eventChannel
-      } else {
-        return {}
-      }
+      const eventChannel = router && router.__mpxAction && router.__mpxAction.eventChannel
+      return eventChannel
     }
   }
 

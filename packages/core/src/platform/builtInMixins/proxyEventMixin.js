@@ -1,11 +1,17 @@
 import { setByPath, collectDataset } from '../../helper/utils'
 import { error } from '../../helper/log'
 import { cache } from '../../vnode/utils'
-import EventTarget from '../../event/event-target'
+import EXPORT_MPX from '../../index'
 
 export default function proxyEventMixin () {
   const methods = {
     __invoke ($event) {
+      if (typeof EXPORT_MPX.config.proxyEventHandler === 'function') {
+        try {
+          EXPORT_MPX.config.proxyEventHandler($event)
+        } catch (e) {
+        }
+      }
       const type = $event.type
       const emitMode = $event.detail && $event.detail.mpxEmit
       if (!type) {

@@ -162,7 +162,6 @@ function initProxy (context, rawOptions, currentInject) {
   // 创建proxy对象
   const mpxProxy = new MPXProxy(rawOptions, context)
   context.__mpxProxy = mpxProxy
-  // 组件监听视图数据更新, attached之后才能拿到properties
   context.__mpxProxy.created()
 }
 

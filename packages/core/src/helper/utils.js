@@ -12,6 +12,7 @@ import EXPORT_MPX from '../index'
 export function type (n) {
   return Object.prototype.toString.call(n).slice(8, -1)
 }
+
 /**
  * 判断当前环境是否是浏览器环境
  */
@@ -191,8 +192,27 @@ export function enumerableKeys (obj) {
 export function extend (target, ...sources) {
   for (const source of sources) {
     if (isObject(source)) {
+      // 合并原型链属性
       for (const key in source) {
         target[key] = source[key]
+      }
+    }
+  }
+  return target
+}
+
+// deepMerge 用于合并i18n语言集
+export function merge (target, ...sources) {
+  if (isObject(target)) {
+    for (const source of sources) {
+      if (isObject(source)) {
+        Object.keys(source).forEach((key) => {
+          if (isObject(source[key]) && isObject(target[key])) {
+            merge(target[key], source[key])
+          } else {
+            target[key] = source[key]
+          }
+        })
       }
     }
   }

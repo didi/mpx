@@ -35,6 +35,7 @@ module.exports = function (content) {
   const resolveMode = mpx.resolveMode
   const projectRoot = mpx.projectRoot
   const mode = mpx.mode
+  const env = mpx.env
   const defs = mpx.defs
   const i18n = mpx.i18n
   const globalSrcMode = mpx.srcMode
@@ -103,7 +104,8 @@ module.exports = function (content) {
     filePath,
     needMap: this.sourceMap,
     mode,
-    defs
+    defs,
+    env
   })
 
   let output = ''
@@ -222,9 +224,9 @@ module.exports = function (content) {
 
       const {
         getRequire,
-        getNamedExports,
         getRequireForSrc,
-        getNamedExportsForSrc
+        getRequestString,
+        getSrcRequestString
       } = createHelpers({
         loaderContext,
         options,
@@ -288,6 +290,7 @@ module.exports = function (content) {
               (callback) => {
                 processJSON(parts.json, {
                   mode,
+                  env,
                   defs,
                   resolveMode,
                   loaderContext,
@@ -318,12 +321,14 @@ module.exports = function (content) {
               getRequireForSrc,
               i18n,
               componentGenerics,
+              projectRoot,
               jsonConfig: jsonRes.jsonObj,
-              mpxCid: queryObj.mpxCid,
+              componentId: queryObj.componentId || '',
               tabBarMap: jsonRes.tabBarMap,
               tabBarStr: jsonRes.tabBarStr,
               builtInComponentsMap: templateRes.builtInComponentsMap,
               genericsInfo: templateRes.genericsInfo,
+              wxsModuleMap: templateRes.wxsModuleMap,
               localComponentsMap: jsonRes.localComponentsMap,
               localPagesMap: jsonRes.localPagesMap,
               forceDisableBuiltInLoader: mpx.forceDisableBuiltInLoader
@@ -347,7 +352,7 @@ module.exports = function (content) {
         globalInjectCode += `global.currentResource = ${JSON.stringify(filePath)}\n`
       }
       if (ctorType === 'app' && i18n && !mpx.forceDisableInject) {
-        globalInjectCode += `global.i18n = ${JSON.stringify({ locale: i18n.locale })}\n`
+        globalInjectCode += `global.i18n = ${JSON.stringify({ locale: i18n.locale, version: 0 })}\n`
 
         const i18nMethodsVar = 'i18nMethods'
         const i18nWxsPath = normalize.lib('runtime/i18n.wxs')
@@ -391,12 +396,17 @@ module.exports = function (content) {
       const script = parts.script
       if (script) {
         scriptSrcMode = script.mode || scriptSrcMode
+        let scriptRequestString
         if (script.src) {
           // 传入resourcePath以确保后续处理中能够识别src引入的资源为组件主资源
           script.src = processSrcQuery(script.src, 'script')
-          output += getNamedExportsForSrc('script', script) + '\n\n'
+          scriptRequestString = getSrcRequestString('script', script)
         } else {
-          output += getNamedExports('script', script) + '\n\n'
+          scriptRequestString = getRequestString('script', script)
+        }
+        if (scriptRequestString) {
+          output += 'export * from ' + scriptRequestString + '\n\n'
+          if (ctorType === 'app') mpx.appScriptRawRequest = JSON.parse(scriptRequestString)
         }
       } else {
         switch (ctorType) {
