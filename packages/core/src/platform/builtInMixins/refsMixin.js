@@ -129,13 +129,19 @@ export default function getRefsMixin () {
           const query = this.createSelectorQuery ? this.createSelectorQuery() : envObj.createSelectorQuery()
           return query && (ref.all ? query.selectAll(selector) : query.select(selector))
         } else if (ref.type === 'component') {
-          // 头条获取组件ref返回promise
           if (__mpx_mode__ === 'tt') {
-            return new Promise((resolve) => {
-              ref.all ? this.selectAllComponents(selector, resolve) : this.selectComponent(selector, resolve)
-            })
+            // 头条同步获取不到组件ref时返回promise进行异步获取
+            const components = this.selectAllComponents(selector)
+            if (components) {
+              return ref.all ? components : components[0]
+            } else {
+              return new Promise((resolve) => {
+                ref.all ? this.selectAllComponents(selector, resolve) : this.selectComponent(selector, resolve)
+              })
+            }
+          } else {
+            return ref.all ? this.selectAllComponents(selector) : this.selectComponent(selector)
           }
-          return ref.all ? this.selectAllComponents(selector) : this.selectComponent(selector)
         }
       }
     }
