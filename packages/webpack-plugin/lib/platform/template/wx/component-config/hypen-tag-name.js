@@ -9,7 +9,6 @@ module.exports = function () {
     // tag name contains capital letters
     test: /[A-Z]/,
     ali: convertTagName,
-    tt: convertTagName,
     swan: convertTagName
   }
 }
