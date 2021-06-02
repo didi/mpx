@@ -666,7 +666,7 @@ function parseComponent (content, options) {
             currentBlock.priority = 1
           }
           if (currentBlock.priority) {
-            if (!sfc[tag] || sfc[tag].priority < currentBlock.priority) {
+            if (!sfc[tag] || sfc[tag].priority <= currentBlock.priority) {
               sfc[tag] = currentBlock
             }
           }
