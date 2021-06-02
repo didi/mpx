@@ -510,6 +510,8 @@ fetch|是
 i18n|是
 
 #### 小程序其他原生能力
-能力|是否支持
+能力|支持度
 :---|---
-wxs|是
+wxs|支持
+animation|支持组件的animation属性，支持所有animation对象方法(export、step、width、height、rotate、scale、skew、translate等等)
+
