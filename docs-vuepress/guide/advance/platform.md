@@ -374,9 +374,9 @@ new MpxWebpackPlugin({
 <button open-type@:didi="getUserInfo">获取用户信息</button>
 ```
 
-如果只想在 mode 为 wx 且 env 为 didi 的环境下使用 open-type 属性，则可以这样写：
+如果只想在 mode 为 wx 且 env 为 didi 或 qingju 的环境下使用 open-type 属性，则可以这样写：
 ``` html
-<button open-type@wx:didi="getUserInfo">获取用户信息</button>
+<button open-type@wx:didi:qingju="getUserInfo">获取用户信息</button>
 ```
 
 组件属性维度的编译也可以当做条件编译来使用，例如只想在滴滴出行小程序中使用某个组件：
