@@ -185,6 +185,7 @@ module.exports = function (raw = '{}') {
   }
 
   if (json.usingComponents) {
+    // todo 迁移到rulesRunner中进行
     fixUsingComponent(json.usingComponents, mode, emitWarning)
   }
 

@@ -1511,6 +1511,10 @@ function processRef (el, options, meta) {
     if (type === 'node' && mode === 'ali') {
       refClassName += '_{{mpxCid}}'
     }
+    // 头条中对于component的同步select解析是全局的
+    if (type === 'component' && mode === 'tt') {
+      refClassName += '_{{mpxCid}}'
+    }
     let className = getAndRemoveAttr(el, 'class').val
     className = className ? className + ' ' + refClassName : refClassName
     addAttrs(el, [{
