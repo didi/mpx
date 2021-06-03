@@ -289,7 +289,7 @@ module.exports = {
     },
     event: {
       parseEvent (attr) {
-        let match = /^(bind)(.*?)(?:\.(.*))?$/.exec(attr)
+        let match = /^(bind|catch|capture-bind|capture-catch):?(.*?)(?:\.(.*))?$/.exec(attr)
         if (match) {
           return {
             prefix: match[1],

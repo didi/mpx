@@ -253,6 +253,7 @@ let forScopes = []
 let forScopesMap = {}
 let hasI18n = false
 let i18nInjectableComputed = []
+let env
 
 function updateForScopesMap () {
   forScopes.forEach((scope) => {
@@ -598,6 +599,7 @@ function parseHTML (html, options) {
 function parseComponent (content, options) {
   mode = options.mode || 'wx'
   defs = options.defs || {}
+  env = options.env
 
   let sfc = {
     template: null,
@@ -626,8 +628,16 @@ function parseComponent (content, options) {
         checkAttrs(currentBlock, attrs)
         // 带mode的fields只有匹配当前编译mode才会编译
         if (tag === 'style') {
-          if (currentBlock.mode) {
+          if (currentBlock.mode && currentBlock.env) {
+            if (currentBlock.mode === mode && currentBlock.env === env) {
+              sfc.styles.push(currentBlock)
+            }
+          } else if (currentBlock.mode) {
             if (currentBlock.mode === mode) {
+              sfc.styles.push(currentBlock)
+            }
+          } else if (currentBlock.env) {
+            if (currentBlock.env === env) {
               sfc.styles.push(currentBlock)
             }
           } else {
@@ -640,12 +650,23 @@ function parseComponent (content, options) {
               tag = 'json'
             }
           }
-          if (currentBlock.mode) {
+          if (currentBlock.mode && currentBlock.env) {
+            if (currentBlock.mode === mode && currentBlock.env === env) {
+              currentBlock.priority = 4
+            }
+          } else if (currentBlock.mode) {
             if (currentBlock.mode === mode) {
-              sfc[tag] = currentBlock
+              currentBlock.priority = 3
+            }
+          } else if (currentBlock.env) {
+            if (currentBlock.env === env) {
+              currentBlock.priority = 2
             }
           } else {
-            if (!(sfc[tag] && sfc[tag].mode)) {
+            currentBlock.priority = 1
+          }
+          if (currentBlock.priority) {
+            if (!sfc[tag] || sfc[tag].priority <= currentBlock.priority) {
               sfc[tag] = currentBlock
             }
           }
@@ -682,6 +703,9 @@ function parseComponent (content, options) {
       }
       if (attr.name === 'name') {
         block.name = attr.value
+      }
+      if (attr.name === 'env') {
+        block.env = attr.value
       }
     }
   }
@@ -746,6 +770,7 @@ function parse (template, options) {
   }
 
   mode = options.mode || 'wx'
+  env = options.env
   defs = options.defs || {}
   srcMode = options.srcMode || mode
   isNative = options.isNative
@@ -1486,6 +1511,10 @@ function processRef (el, options, meta) {
     if (type === 'node' && mode === 'ali') {
       refClassName += '_{{mpxCid}}'
     }
+    // 头条中对于component的同步select解析是全局的
+    if (type === 'component' && mode === 'tt') {
+      refClassName += '_{{mpxCid}}'
+    }
     let className = getAndRemoveAttr(el, 'class').val
     className = className ? className + ' ' + refClassName : refClassName
     addAttrs(el, [{
@@ -1968,17 +1997,42 @@ function processAtMode (el) {
   const attrsListClone = cloneAttrsList(el.attrsList)
   attrsListClone.forEach(item => {
     const attrName = item.name || ''
-    if (!attrName || attrName.indexOf('@') === -1) return
+    if (!attrName || attrName.indexOf('@') === -1) {
+      return
+    }
+    // @wx|ali
+    // hello@wx|ali
+    // hello@:didi
+    // hello@wx:didi:qingju:chengxin|ali
+    // hello@(wx:didi:qingju:chengxin|ali)
+    // @click@ali
+    // @click:qingju:didi
     const attrArr = attrName.split('@')
     let modeStr = attrArr.pop()
-    if (wrapRE.test(modeStr)) modeStr = wrapRE.exec(modeStr)[1]
-    const modeArr = modeStr.split('|')
+    if (wrapRE.test(modeStr)) {
+      modeStr = wrapRE.exec(modeStr)[1]
+    }
+
+    if (!modeStr) {
+      return
+    }
+
+    const conditionMap = {}
+
+    modeStr.split('|').forEach(item => {
+      const arr = item.split(':')
+      const key = arr[0] || mode
+      conditionMap[key] = arr.slice(1)
+    })
+
+    const modeArr = Object.keys(conditionMap)
+
     if (modeArr.every(i => isValidMode(i))) {
       const attrValue = getAndRemoveAttr(el, attrName).val
       const replacedAttrName = attrArr.join('@')
 
       const processedAttr = { name: replacedAttrName, value: attrValue }
-      if (modeArr.includes(mode)) {
+      if (modeArr.includes(mode) && (!conditionMap[mode].length || conditionMap[mode].includes(env))) {
         if (!replacedAttrName) {
           el._atModeStatus = 'match'
         } else {

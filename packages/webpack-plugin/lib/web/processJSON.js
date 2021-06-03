@@ -11,6 +11,7 @@ const isUrlRequest = require('../utils/is-url-request')
 
 module.exports = function (json, options, rawCallback) {
   const mode = options.mode
+  const env = options.env
   const defs = options.defs
   const loaderContext = options.loaderContext
   const resolveMode = options.resolveMode
@@ -125,7 +126,8 @@ module.exports = function (json, options, rawCallback) {
                 filePath,
                 needMap: loaderContext.sourceMap,
                 mode,
-                defs
+                defs,
+                env
               })
               const json = parts.json || {}
               if (json.content) {

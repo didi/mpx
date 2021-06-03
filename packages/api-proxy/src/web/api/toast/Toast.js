@@ -72,7 +72,7 @@ export default class Toast {
             ? 'error'
             : 'success' // default
 
-      this.icon.classList = `${iconClass} ${defaultIconClass}`
+      this.icon.className = `${iconClass} ${defaultIconClass}`
       this.icon.style.cssText = opts.image && `background-image: url(${opts.image})`
     }
 
