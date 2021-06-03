@@ -160,7 +160,10 @@ function parseStyleText (cssText) {
     var item = arr[i]
     if (item) {
       var tmp = item.split(propertyDelimiter)
-      tmp.length > 1 && (res[dash2hump(tmp[0].trim())] = tmp[1].trim())
+      if (tmp.length > 1) {
+        var k = dash2hump(tmp[0].trim())
+        res[k] = tmp[1].trim()
+      }
     }
   }
   return res
