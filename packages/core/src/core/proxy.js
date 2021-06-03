@@ -195,7 +195,7 @@ export default class MPXProxy {
         this.data[key] = diffAndCloneA(initialData[key]).clone
       }
     })
-    // mpxCid 解决支付宝和头条环境selector为全局问题
+    // mpxCid 解决支付宝环境selector为全局问题
     this.data.mpxCid = this.uid
     this.localKeysMap.mpxCid = true
     observe(this.data, true)
