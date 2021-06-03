@@ -87,6 +87,9 @@ export default function getRefsMixin () {
   return {
     [BEFORECREATE] () {
       this.$refs = {}
+      if (__mpx_mode__ === 'tt') {
+        this.$asyncRefs = {}
+      }
     },
     [CREATED] () {
       this.__updateRef && this.__updateRef()
@@ -118,27 +121,24 @@ export default function getRefsMixin () {
               })
             } else {
               this.$refs[ref.key] = this.__getRefNode(ref)
+              if (__mpx_mode__ === 'tt') {
+                this.$asyncRefs[ref.key] = this.__getRefNode(ref, true)
+              }
             }
           })
         }
       },
-      __getRefNode (ref) {
+      __getRefNode (ref, isAsync) {
         if (!ref) return
         let selector = ref.selector.replace(/{{mpxCid}}/g, this.mpxCid)
         if (ref.type === 'node') {
           const query = this.createSelectorQuery ? this.createSelectorQuery() : envObj.createSelectorQuery()
           return query && (ref.all ? query.selectAll(selector) : query.select(selector))
         } else if (ref.type === 'component') {
-          if (__mpx_mode__ === 'tt') {
-            // 头条同步获取不到组件ref时返回promise进行异步获取
-            const components = this.selectAllComponents(selector)
-            if (components) {
-              return ref.all ? components : components[0]
-            } else {
-              return new Promise((resolve) => {
-                ref.all ? this.selectAllComponents(selector, resolve) : this.selectComponent(selector, resolve)
-              })
-            }
+          if (isAsync) {
+            return new Promise((resolve) => {
+              ref.all ? this.selectAllComponents(selector, resolve) : this.selectComponent(selector, resolve)
+            })
           } else {
             return ref.all ? this.selectAllComponents(selector) : this.selectComponent(selector)
           }
