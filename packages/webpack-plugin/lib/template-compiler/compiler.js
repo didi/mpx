@@ -2630,10 +2630,10 @@ function serialize (root, meta = {}) {
                 result += walk(child)
               })
             } else {
-              if (!meta.vnodeElements) {
-                meta.vnodeElements = {}
+              if (!meta.slotElements) {
+                meta.slotElements = {}
               }
-              meta.vnodeElements[node.slotAlias] = node.children
+              meta.slotElements[node.slotAlias] = node.children
             }
             result += '</' + node.tag + '>'
           }
@@ -2892,7 +2892,7 @@ function _genData (node) {
   if (node.innerRuntimeCompileWrapper) {
     if (node.children.length > 0) {
       data += `slots: ${transformSlotsToString(genSlots(node.children, genElement))},`
-      // 这里直接清空所有运行时组件的子节点，slots 统一从注入的 injectRuntimeSlots 当中获取，避免生成重复代码
+      // 这里直接清空所有运行时组件的子节点，slots 统一从注入的 runtimeSlots 当中获取，避免生成重复代码
       node.children = []
     }
   }

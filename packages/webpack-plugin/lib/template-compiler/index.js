@@ -9,14 +9,17 @@ const path = require('path')
 const isEmptyObject = require('../utils/is-empty-object')
 const { transformSlotsToString } = require('../runtime-utils')
 
+const noCacheReg = /mpx-custom-element\.mpx|base\.wxml/
+
 module.exports = function (raw) {
-  if (/mpx-custom-element\.mpx/.test(this.resourcePath) || /base\.wxml/.test(this.resourcePath)) {
+  if (noCacheReg.test(this.resourcePath)) {
     this.cacheable(false)
   } else {
     this.cacheable()
   }
+  
   const options = loaderUtils.getOptions(this) || {}
-  console.log('the template compiler options is:', options)
+  // console.log('the template compiler options is:', options)
   const { resourcePath, queryObj } = parseRequest(this.resource)
   const compilation = this._compilation
   const mainCompilation = getMainCompilation(compilation)
@@ -91,13 +94,13 @@ module.exports = function (raw) {
     return result
   }
 
-  // 生成的 slots 注入到 runtime
+  // 生成 slots render 函数并注入到 runtime
   let injectSlots = {}
   try {
-    if (meta.vnodeElements) {
-      Object.keys(meta.vnodeElements).forEach(key => {
+    if (meta.slotElements) {
+      Object.keys(meta.slotElements).forEach(key => {
         injectSlots[key] = {}
-        const astChildren = meta.vnodeElements[key]
+        const astChildren = meta.slotElements[key]
         astChildren.map(node => {
           const slotTarget = node.slotTarget
           if (slotTarget) {
@@ -115,7 +118,7 @@ module.exports = function (raw) {
       })
     }
   } catch (e) {
-    console.log('generate the vnodeElements error:', e)
+    console.log('generate the slotElements error:', e)
   }
 
   let renderResult = {}
@@ -137,6 +140,7 @@ module.exports = function (raw) {
         }
       };\n`
     } catch (e) {
+      
       console.log('the e is:', e)
     }
   } else {
@@ -176,8 +180,8 @@ module.exports = function (raw) {
       data += `'${key}': ${ transformSlotsToString(injectSlots[key]) },`
     })
     data += '}'
-    console.log('the data is:', data)
-    globalInjectCode += `global.currentInject.injectRuntimeSlots = function () {
+    // console.log('the data is:', data)
+    globalInjectCode += `global.currentInject.runtimeSlots = function () {
       return ${data}
     };\n`
   }
@@ -270,8 +274,7 @@ module.exports = function (raw) {
 
   if (isSync || options.runtimeCompile) {
     if (options.runtimeCompile) {
-      const src = loaderUtils.stringifyRequest(this, require.resolve('./base.wxml'))
-      console.log('the template-compiler base.wxml is:', require.resolve('./base.wxml'), this.rootContext, src)
+      const src = loaderUtils.stringifyRequest(this, require.resolve('../runtime-render/base.wxml'))
       return `<import src=${src}/> <template is="{{r.nodeType || 'h-element'}}" data="{{ r: r }}"></template>`
     }
     return result

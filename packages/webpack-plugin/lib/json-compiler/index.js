@@ -19,9 +19,8 @@ const addQuery = require('../utils/add-query')
 const readJsonForSrc = require('../utils/read-json-for-src')
 const getMainCompilation = require('../utils/get-main-compilation')
 const {
-  collectRuntimeModules,
   collectCustomComponentWxss,
-  setAliasComponentPath
+  collectAliasComponentPath
 } = require('../runtime-utils')
 
 module.exports = function (raw = '{}') {
@@ -178,11 +177,7 @@ module.exports = function (raw = '{}') {
 
   // 将 element 加入到编译的流程
   if (json.runtimeCompile) {
-    const _path = path.resolve(this.rootContext, 'src/components/mpx-custom-element.mpx')
-    // const _path = path.resolve(this._module.issuer.context, 'src/pages/mpx-custom-element.mpx')
-    // 在 issuer module 上添加 runtimeCompile 属性
-    this._module.issuer.runtimeCompile = true
-    collectRuntimeModules(this._module.issuer)
+    const _path = path.resolve(__dirname, '../runtime-render/mpx-custom-element.mpx')
     if (!json.usingComponents) {
       json.usingComponents = {}
     }
@@ -780,6 +775,9 @@ module.exports = function (raw = '{}') {
   } else {
     // page.json或component.json
     if (json.usingComponents) {
+      if (json.runtimeCompile) {
+        delete json.runtimeCompile
+      }
       async.forEachOf(json.usingComponents, (component, name, callback) => {
         processComponent(component, this.context, (componentPath) => {
           if (useRelativePath === true) {
@@ -787,7 +785,7 @@ module.exports = function (raw = '{}') {
           }
           json.usingComponents[name] = componentPath
 
-          setAliasComponentPath(componentsAbsolutePath[name], componentPath)
+          collectAliasComponentPath(componentsAbsolutePath[name], componentPath)
 
           if (runtimeComponents.includes(name)) {
             collectCustomComponentWxss(`${componentPath}.wxss`)

@@ -17,7 +17,7 @@ const readJsonForSrc = require('./utils/read-json-for-src')
 const normalize = require('./utils/normalize')
 const getMainCompilation = require('./utils/get-main-compilation')
 const path = require('path')
-const { setAliasTag } = require('./runtime-utils')
+const { collectAliasTag } = require('./runtime-utils')
 
 module.exports = function (content) {
   this.cacheable()
@@ -140,7 +140,7 @@ module.exports = function (content) {
                 }
                 if (path) {
                   componentsAbsolutePath[name] = path
-                  setAliasTag(path, 'c' + hash(path))
+                  collectAliasTag(path, 'c' + hash(path))
                   cb(null, [name, path])
                 } else {
                   cb()

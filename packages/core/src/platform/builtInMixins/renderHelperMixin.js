@@ -86,6 +86,7 @@ export default function renderHelperMixin () {
           content: ''
         }
       },
+      // resolveSlot
       __t(name, fallback = []) {
         let nodes = (this.slots && this.slots[name]) || fallback
         return nodes
@@ -95,6 +96,10 @@ export default function renderHelperMixin () {
       },
       __ss(...args) {
         return stringifyStyle(...args)
+      },
+      __a(tag) {
+        console.log(this.__mpxProxy.target.__aliasTags)
+        console.log('the tag is:', tag)
       }
     }
   }

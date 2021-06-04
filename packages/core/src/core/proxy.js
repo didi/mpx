@@ -192,7 +192,7 @@ export default class MPXProxy {
       Object.assign(this.data, dataFn.call(this.target))
     }
     this.collectLocalKeys(this.data)
-    this.collectLocalKeys(this.options.__ats)
+    this.collectLocalKeys(this.options.$attrs)
     // 将 props 上的数据取出来放到 this.data 上
     Object.keys(initialData).forEach((key) => {
       if (!this.data.hasOwnProperty(key)) {
@@ -211,8 +211,9 @@ export default class MPXProxy {
     if (watch) {
       for (let key in watch) {
         const handler = watch[key]
-        if (this.options.__ats && this.options.__ats.hasOwnProperty(key)) {
-          key = `at.${key}`
+        if (this.options.$attrs && this.options.$attrs.hasOwnProperty(key)) {
+          // key = `at.${key}`
+          key = `bigAttrs.${key}`
         }
         if (Array.isArray(handler)) {
           for (let i = 0; i < handler.length; i++) {
@@ -279,10 +280,10 @@ export default class MPXProxy {
     if (vnode) {
       const _vnode = _.cloneDeep(vnode)
       proxy(this.target, { _vnode: patch(undefined, _vnode, this.target) }, ['_vnode'], true)
+      return this.doRenderWithVNode(vnode)
     }
     const renderData = preProcessRenderData(this.renderData)
-    console.log('the renderData is:', renderData)
-    this.doRender(this.processRenderDataWithStrictDiff(renderData), () => {} ,vnode)
+    this.doRender(this.processRenderDataWithStrictDiff(renderData))
     // 重置renderData准备下次收集
     this.renderData = {}
   }
@@ -379,8 +380,13 @@ export default class MPXProxy {
     return result
   }
 
-  doRender (data, cb, vnode) {
-    // console.log('111doRender', data, vnode)
+  doRenderWithVNode(vnode) {
+    if (!isEmptyObject(vnode) && this.options.runtimeComponent) {
+      this.target.__render({ r: vnode })
+    }
+  }
+
+  doRender (data, cb) {
     if (typeof this.target.__render !== 'function') {
       error('Please specify a [__render] function to render view.', this.options.mpxFileResource)
       return
@@ -392,9 +398,7 @@ export default class MPXProxy {
     const isEmpty = isEmptyObject(data) && isEmptyObject(this.forceUpdateData)
     const resolve = this.renderTaskExecutor(isEmpty)
 
-    // 目前 mpx 是对数据做了 diff，在初次渲染调用 render 函数的时候做完 diff，变化的数据为空
-    // 因此不会调用后面的 setData 操作。这里先加个对于 vnode 特殊判断的逻辑以供渲染调试。
-    if (isEmpty && !vnode) {
+    if (isEmpty) {
       cb && cb()
       return
     }
@@ -418,14 +422,6 @@ export default class MPXProxy {
       }
     }
     
-    // 如果是一个 runtimeComponent，那么渲染的数据直接使用 vnode
-    if (vnode && this.options.runtimeComponent) {
-      data = {
-        r: vnode
-      }
-    }
-    
-    console.log('the data is:', data)
     this.target.__render(processUndefined(data), callback)
   }
 

@@ -93,11 +93,21 @@ function transformApiForProxy (context, currentInject) {
         }
       })
     }
-    if (currentInject.injectRuntimeSlots) {
+    if (currentInject.runtimeSlots) {
       Object.defineProperties(context, {
         __getRuntimeSlots: {
           get() {
-            return currentInject.injectRuntimeSlots
+            return currentInject.runtimeSlots
+          },
+          configurable: false
+        }
+      })
+    }
+    if (currentInject.aliasTags) {
+      Object.defineProperties(context, {
+        __aliasTags: {
+          get() {
+            return currentInject.aliasTags
           },
           configurable: false
         }

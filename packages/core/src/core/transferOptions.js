@@ -4,26 +4,30 @@ import { getConvertMode } from '../convertor/getConvertMode'
 import { findItem } from '../helper/utils'
 import { warn } from '../helper/log'
 
-function composePropertiesToAttrs(type, options = {}) {
+function composePropsToComputed(type, options = {}) {
   if (type === 'component') {
     options.runtimeComponent = true
     if (!options.computed) {
       options.computed = {}
     }
-    options.__ats = {}
+    options.$attrs = {}
     const props = Object.assign({}, options.properties || {}, options.props || {})
     Object.keys(props).map((key) => {
-      options.__ats[key] = true
+      options.$attrs[key] = true
       // 将 properties 数据转为 computed
       Object.assign(options.computed, {
         [key]() {
-          return this.at && this.at[key]
+          return this.bigAttrs && this.bigAttrs[key]
         }
       })
     })
     delete options.properties
     delete options.props
     options.properties = {
+      bigAttrs: {
+        type: Object,
+        value: {}
+      },
       at: {
         type: Object,
         value: {}
@@ -58,8 +62,8 @@ export default function transferOptions (options, type, builtInMixins = []) {
   const rawOptions = mergeOptions(options, type)
 
   if (currentInject && currentInject.runtimeCompile) {
-    // 所有的 mixins 都处理完成后，合并 properties/props 为单 at 属性
-    composePropertiesToAttrs(type, rawOptions)
+    // 所有的 mixins 都处理完成后，合并 properties/props 为单 bigAttrs 属性
+    composePropsToComputed(type, rawOptions)
   }
 
   // 注入内建的mixins, 内建mixin是按原始平台编写的，所以合并规则和rootMixins保持一致

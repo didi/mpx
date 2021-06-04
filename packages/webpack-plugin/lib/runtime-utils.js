@@ -1,13 +1,7 @@
 const isEmptyObject = require('./utils/is-empty-object')
 const { wx } = require('./config')
 
-const customComponentMap = {}
 const customComponentWxssSet = new Set()
-const runtimeModules = []
-const templateNodes = []
-const slotComponents = {}
-const rawComponentMap = {}
-const rawFileComponentMap = {}
 const injectedPath = new Set()
 let _templateNodes = {}
 let pathAndAliasTagMap = {}
@@ -65,7 +59,7 @@ module.exports = {
 
     return res
   },
-  setAliasComponentPath(path, componentPath) {
+  collectAliasComponentPath(path, componentPath) {
     if (!pathAndAliasTagMap[path]) {
       pathAndAliasTagMap[path] = {
         componentPath
@@ -74,7 +68,7 @@ module.exports = {
       pathAndAliasTagMap[path]['componentPath'] = componentPath
     }
   },
-  setAliasTag(path, aliasTag) {
+  collectAliasTag(path, aliasTag) {
     if (!pathAndAliasTagMap[path]) {
       pathAndAliasTagMap[path] = {
         aliasTag
@@ -96,29 +90,15 @@ module.exports = {
     } else {
       composeNodeAttrs(_templateNodes[tag], node)
     }
-    templateNodes.push(node)
   },
   clearTemplateNodes() {
     _templateNodes = {}
-    templateNodes.length = 0
   },
   setBaseWxmlModule(module) {
     baseWxmlModule = module
   },
   getBaseWxmlModule() {
     return baseWxmlModule
-  },
-  collectRuntimeModules(module) {
-    runtimeModules.push(module)
-  },
-  getRuntimeModules() {
-    return runtimeModules
-  },
-  collectCustomComponent(map = {}) {
-    Object.assign(customComponentMap, map)
-  },
-  getCustomComponent() {
-    return customComponentMap
   },
   collectCustomComponentWxss(path) {
     customComponentWxssSet.add(path)
@@ -129,38 +109,6 @@ module.exports = {
       res += `@import '${wxss}';\n`
     })
     return res
-  },
-  collectRawComponentMap(name, componentPath = '', resourcePath, aliasName) {
-    rawComponentMap[name] = componentPath
-    if (!rawFileComponentMap[resourcePath]) {
-      rawFileComponentMap[resourcePath] = {
-        [name]: {
-          componentPath,
-          aliasTag: aliasName
-        }
-      }
-    } else {
-      rawFileComponentMap[resourcePath][name] = {
-        componentPath,
-        aliasTag: aliasName
-      }
-      // rawFileComponentMap[resourcePath][name] = componentPath
-    }
-
-    // console.log('the rawFileComponentMap is:', rawFileComponentMap)
-  },
-  getRawComponentMap() {
-    return {
-      rawComponentMap,
-      rawFileComponentMap
-    }
-    // return rawComponentMap
-  },
-  collectSlotComponents(name, path) {
-    slotComponents[name] = path
-  },
-  getSlotComponents() {
-    return slotComponents
   },
   /**
    * 被注入到 base.wxml 里面的自定义组件模板生成器，生成的模板主要分为2种类型：
