@@ -32,6 +32,7 @@ module.exports = function (content) {
   const resolveMode = mpx.resolveMode
   const projectRoot = mpx.projectRoot
   const mode = mpx.mode
+  const env = mpx.env
   const defs = mpx.defs
   const i18n = mpx.i18n
   const globalSrcMode = mpx.srcMode
@@ -100,7 +101,8 @@ module.exports = function (content) {
     filePath,
     needMap: this.sourceMap,
     mode,
-    defs
+    defs,
+    env
   })
 
   let output = ''
@@ -214,6 +216,7 @@ module.exports = function (content) {
               (callback) => {
                 processJSON(parts.json, {
                   mode,
+                  env,
                   defs,
                   resolveMode,
                   loaderContext,
@@ -230,7 +233,6 @@ module.exports = function (content) {
           },
           ([templateRes, stylesRes, jsonRes], callback) => {
             output += templateRes.output
-            output += stylesRes.output
             output += jsonRes.output
             if (ctorType === 'app' && jsonRes.jsonObj.window && jsonRes.jsonObj.window.navigationBarTitleText) {
               mpx.appTitle = jsonRes.jsonObj.window.navigationBarTitleText
@@ -254,7 +256,8 @@ module.exports = function (content) {
               wxsModuleMap: templateRes.wxsModuleMap,
               localComponentsMap: jsonRes.localComponentsMap,
               localPagesMap: jsonRes.localPagesMap,
-              forceDisableBuiltInLoader: mpx.forceDisableBuiltInLoader
+              forceDisableBuiltInLoader: mpx.forceDisableBuiltInLoader,
+              styleRequest: stylesRes.output
             }, callback)
           }
         ], (err, scriptRes) => {

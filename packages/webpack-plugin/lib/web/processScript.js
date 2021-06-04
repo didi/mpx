@@ -104,6 +104,10 @@ module.exports = function (script, options, callback) {
     content (script) {
       let content = `\n  import processOption, { getComponent, getWxsMixin } from ${stringifyRequest(optionProcessorPath)}\n`
       // add import
+      // 注入style模块
+      if (options.styleRequest) {
+        content += options.styleRequest
+      }
       if (ctorType === 'app') {
         content += `  import '@mpxjs/webpack-plugin/lib/runtime/base.styl'
   import Vue from 'vue'

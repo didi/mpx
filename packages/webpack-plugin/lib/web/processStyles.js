@@ -1,17 +1,12 @@
-const genComponentTag = require('../utils/gen-component-tag')
-
+const loaderUtils = require('loader-utils')
+const normalize = require('../utils/normalize')
+const selectorPath = normalize.lib('selector')
 module.exports = function (styles, options, callback) {
-  let output = '/* styles */\n'
+  let output = ''
   if (styles.length) {
-    styles.forEach((style) => {
-      output += genComponentTag(style, {
-        attrs (style) {
-          const attrs = Object.assign({}, style.attrs)
-          if (options.autoScope) attrs.scoped = true
-          return attrs
-        }
-      })
-      output += '\n'
+    styles.forEach((style, i) => {
+      const requestString = loaderUtils.stringifyRequest(options.ctx, `component.${style.lang || 'css'}!=!${selectorPath}?type=styles&index=${i}!${loaderUtils.getRemainingRequest(options.ctx)}`)
+      output += `\n  import ${requestString}`
     })
     output += '\n'
   }
