@@ -1935,7 +1935,7 @@ function processClass (el, options, meta) {
       injectWxs(meta, stringifyModuleName, stringifyWxsPath)
     }
   } else if (staticClass) {
-    el.staticClass = staticClass
+    el.staticClass = parseMustache(staticClass).result
     addAttrs(el, [{
       name: targetType,
       value: staticClass
@@ -1973,7 +1973,7 @@ function processStyle (el, options, meta) {
       injectWxs(meta, stringifyModuleName, stringifyWxsPath)
     }
   } else if (staticStyle) {
-    el.staticStyle = staticStyle
+    el.staticStyle = parseMustache(staticStyle).result
     addAttrs(el, [{
       name: targetType,
       value: staticStyle
@@ -2897,27 +2897,14 @@ function _genData (node) {
     }
   }
   if (node.style || node.staticStyle || node.showStyle) {
-    if (node.style && node.staticStyle) {
-      data += `style: __ss(${node.staticStyle}, ${node.style}, ${node.showStyle}),`
-    } else if (node.style) {
-      data += `style: __ss("", ${node.style}, ${node.showStyle}),`
-    } else if (node.staticStyle) {
-      // TODO: 只有 staticStyle 和有 style 取的值不一样，一个是没有带引号，一个带了引号的
-      // class 和 style 的处理情况一样。这里可以优化一下，统一处理成带引号的？
-      data += `style: __ss("${node.staticStyle}", {}, ${node.showStyle}),`
-    } else {
-      data += `style: __ss("", {}, ${node.showStyle}),`
-    }
+    const staticStyle = node.staticStyle ? node.staticStyle : stringify('')
+    const style = node.style ? node.style : stringify({})
+    data += `style: __ss(${staticStyle}, ${style}, ${node.showStyle}),`
     getAndRemoveAttr(node, 'style', true)
   }
   if (node.class || node.staticClass) {
-    if (node.class && node.staticClass) {
-      data += `class: __sc(${node.staticClass}, ${node.class}),`
-    } else if (node.class) {
-      data += `class: __sc("", ${node.class}),`
-    } else if (node.staticClass) {
-      data += `class: __sc("${node.staticClass}"),`
-    }
+    const staticClass = node.staticClass || stringify('')
+    data += `class: __sc(${staticClass}, ${node.class}),`
     getAndRemoveAttr(node, 'class', true)
   }
   if (node.mpxPageStatus) {
