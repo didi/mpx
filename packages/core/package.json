@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/core",
-  "version": "2.6.67",
+  "version": "2.6.68",
   "description": "mpx runtime core",
   "keywords": [
     "miniprogram",
