@@ -209,12 +209,8 @@ export default class MPXProxy {
 
   initWatch (watch) {
     if (watch) {
-      for (let key in watch) {
+      for (const key in watch) {
         const handler = watch[key]
-        if (this.options.$attrs && this.options.$attrs.hasOwnProperty(key)) {
-          // key = `at.${key}`
-          key = `bigAttrs.${key}`
-        }
         if (Array.isArray(handler)) {
           for (let i = 0; i < handler.length; i++) {
             this.watch(key, handler[i])

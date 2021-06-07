@@ -1282,7 +1282,7 @@ function processBindEvent (el, options) {
   if (!el.events) {
     el.events = {}
   }
-  let usingHashTemplate = false
+  let usingHashTag = false
   el.attrsList.forEach(function (attr) {
     let parsedEvent = config[mode].event.parseEvent(attr.name)
 
@@ -1290,8 +1290,8 @@ function processBindEvent (el, options) {
       let prefix = parsedEvent.prefix
       // 在运行时组件内部使用了特殊的事件模型的节点需要对节点名进行 hash
       // TODO: 有些边界 case 需要优化，例如在非运行时组件里面的运行时组件的 slot 使用了这些。
-      if (options.runtimeCompile && !usingHashTemplate && ['catch', 'capture-bind', 'capture-catch'].includes(prefix)) {
-        usingHashTemplate = true
+      if (options.runtimeCompile && !usingHashTag && ['catch', 'capture-bind', 'capture-catch'].includes(prefix)) {
+        usingHashTag = true
       }
 
       let type = parsedEvent.eventName
@@ -1309,17 +1309,13 @@ function processBindEvent (el, options) {
           }
         }
         eventConfigMap[type].configs.push(parsedFunc)
-        if (modifiers.indexOf('proxy') > -1 || options.forceProxyEvent) {
+        if (modifiers.indexOf('proxy') > -1 || options.forceProxyEvent || options.runtimeCompile) {
           eventConfigMap[type].proxy = true
         }
-
-        // 所有的事件都走代理的形式
-        eventConfigMap[type].proxy = true
-        // getAndRemoveAttr(el, attr.name)
       }
     }
   })
-  if (usingHashTemplate && !el.aliasTag) {
+  if (usingHashTag && !el.aliasTag) {
     el.aliasTag = 'd' + hash(`${el.tag}${++hashIndex}`)
   }
   let modelExp = getAndRemoveAttr(el, config[mode].directive.model).val
@@ -1457,8 +1453,6 @@ function processBindEvent (el, options) {
     }
   })
   el.eventconfigs = `{${arr.join(',')}}`
-
-  // console.log('the eventconfig is111:', arr, el.eventconfigs, 222, eventConfigMap)
 }
 
 // todo 暂时未考虑swan中不用{{}}包裹控制属性的情况
@@ -2169,10 +2163,8 @@ function processSlotContent(el) {
 function processShow (el, options, root) {
   let show = getAndRemoveAttr(el, config[mode].directive.show).val
   let showExp
-  let isRoot = false
   // 如果是根节点，那么需要添加 mpxShow 变量
   if (options.isComponent && el.parent === root && isRealNode(el)) {
-    isRoot = true
     if (show !== undefined) {
       show = `{{${parseMustache(show).result}&&mpxShow}}`
       showExp = `${parseMustache(show).result}&&mpxShow`
@@ -2182,8 +2174,7 @@ function processShow (el, options, root) {
     }
   }
 
-  // 如果是根节点
-  if (isRoot) {
+  if (show !== undefined) {
     // 自定义组件节点将 show 作为属性传递下去
     if (isComponentNode(el, options)) {
       if (show === '') {
@@ -2198,6 +2189,7 @@ function processShow (el, options, root) {
       el.show = showExp ? showExp : parseMustache(show).result
     } else {
       // 普通元素节点
+      const showExp = parseMustache(show).result
       let oldStyle = getAndRemoveAttr(el, 'style').val
       oldStyle = oldStyle ? oldStyle + ';' : ''
       addAttrs(el, [{
@@ -2206,34 +2198,60 @@ function processShow (el, options, root) {
       }])
       el.showStyle = `${showExp}||${showExp}===undefined?{}:{display:"none"}`
     }
-  } else {
-    // 使用了 wx:show 的节点
-    if (show !== undefined) {
-      // 自定义组件节点将 show 作为属性传递下去
-      if (isComponentNode(el, options)) {
-        if (show === '') {
-          show = '{{false}}'
-          showExp = 'false'
-        }
-        // 运行时编译不需要这个属性
-        addAttrs(el, [{
-          name: 'mpxShow',
-          value: show
-        }])
-        el.show = showExp ? showExp : parseMustache(show).result
-      } else {
-        // 普通元素节点
-        const showExp = parseMustache(show).result
-        let oldStyle = getAndRemoveAttr(el, 'style').val
-        oldStyle = oldStyle ? oldStyle + ';' : ''
-        addAttrs(el, [{
-          name: 'style',
-          value: `${oldStyle}{{${showExp}||${showExp}===undefined?'':'display:none;'}}`
-        }])
-        el.showStyle = `${showExp}||${showExp}===undefined?{}:{display:"none"}`
-      }
-    }
   }
+
+  // 如果是根节点
+  // if (isRoot) {
+  //   // 自定义组件节点将 show 作为属性传递下去
+  //   if (isComponentNode(el, options)) {
+  //     if (show === '') {
+  //       show = '{{false}}'
+  //       showExp = 'false'
+  //     }
+  //     // 运行时编译不需要这个属性
+  //     addAttrs(el, [{
+  //       name: 'mpxShow',
+  //       value: show
+  //     }])
+  //     el.show = showExp ? showExp : parseMustache(show).result
+  //   } else {
+  //     // 普通元素节点
+  //     let oldStyle = getAndRemoveAttr(el, 'style').val
+  //     oldStyle = oldStyle ? oldStyle + ';' : ''
+  //     addAttrs(el, [{
+  //       name: 'style',
+  //       value: `${oldStyle}{{${showExp}||${showExp}===undefined?'':'display:none;'}}`
+  //     }])
+  //     el.showStyle = `${showExp}||${showExp}===undefined?{}:{display:"none"}`
+  //   }
+  // } else {
+  //   // 使用了 wx:show 的节点
+  //   if (show !== undefined) {
+  //     // 自定义组件节点将 show 作为属性传递下去
+  //     if (isComponentNode(el, options)) {
+  //       if (show === '') {
+  //         show = '{{false}}'
+  //         showExp = 'false'
+  //       }
+  //       // 运行时编译不需要这个属性
+  //       addAttrs(el, [{
+  //         name: 'mpxShow',
+  //         value: show
+  //       }])
+  //       el.show = showExp ? showExp : parseMustache(show).result
+  //     } else {
+  //       // 普通元素节点
+  //       const showExp = parseMustache(show).result
+  //       let oldStyle = getAndRemoveAttr(el, 'style').val
+  //       oldStyle = oldStyle ? oldStyle + ';' : ''
+  //       addAttrs(el, [{
+  //         name: 'style',
+  //         value: `${oldStyle}{{${showExp}||${showExp}===undefined?'':'display:none;'}}`
+  //       }])
+  //       el.showStyle = `${showExp}||${showExp}===undefined?{}:{display:"none"}`
+  //     }
+  //   }
+  // }
 }
 
 function processTemplate (el) {
@@ -2812,62 +2830,12 @@ function genHandlers (events) {
   let staticHandlers = ``
 
   Object.keys(events).map(name => {
-    const { prefix, eventName, funcName } = events[name]
+    const { funcName } = events[name]
     staticHandlers += `${funcName}: this.${funcName.slice(1, -1)}.bind(this),`
   })
 
   return bindeventsKey + `{${staticHandlers}}`
 }
-
-// function genHandlers (events) {
-//   const bindeventsKey = 'mpxbindevents:'
-//   const eventmapKey = 'mpxeventmap:'
-//   let staticHandlers = ``
-//   let captureAndBubbleMap = {}
-
-//   Object.keys(events).map(name => {
-//     const { prefix, eventName, funcName } = events[name]
-//     staticHandlers += `${funcName}: this.${funcName.slice(1, -1)}.bind(this),`
-
-//     if (!captureAndBubbleMap[eventName]) {
-//       captureAndBubbleMap[eventName] = {
-//         capture: [],
-//         bubble: []
-//       }
-//     }
-//     // TODO: 目前仅处理原生事件的冒泡 & 捕获阶段，不处理自定义事件
-//     switch (prefix) {
-//       case 'catch':
-//       case 'capture-bind':
-//       case 'capture-catch':
-//         captureAndBubbleMap[eventName].capture.push(funcName)
-//         break
-//       default:
-//         captureAndBubbleMap[eventName].bubble.push(funcName)
-//         break
-//     }
-//     // captureAndBubbleMap[eventName] = `'${eventName}': {${captureHandlers + bubbleHandlers}},`
-//   })
-//   let str = ''
-//   Object.keys(captureAndBubbleMap).map(eventName => {
-//     str += `${eventName}:{`
-//     let captureEventsStr = 'capture: ['
-//     captureAndBubbleMap[eventName].capture.map(funcName => {
-//       captureEventsStr += `{name: ${funcName}, handler: this.${funcName.slice(1, -1)}.bind(this)},`
-//     })
-//     str += captureEventsStr + '],'
-
-//     let bubbleEventsStr = 'bubble: ['
-//     captureAndBubbleMap[eventName].bubble.map(funcName => {
-//       bubbleEventsStr += `{name: ${funcName}, handler: this.${funcName.slice(1, -1)}.bind(this)},`
-//     })
-//     str += bubbleEventsStr + '],'
-
-//     str += '},'
-//   })
-
-//   return eventmapKey + `{${str}},` + bindeventsKey + `{${staticHandlers}}`
-// }
 
 function _genData (node) {
   let data = '{'
