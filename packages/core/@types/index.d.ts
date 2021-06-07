@@ -181,9 +181,9 @@ declare function set (obj: object, key: string, value: any): any
 
 declare function del (obj: object, key: string): any
 
-declare function t (key: string, values: I18nValues): string
+declare function t (key: string, values?: I18nValues): string
 
-declare function tc (key: string, choice: number, values: I18nValues): string
+declare function tc (key: string, choice: number, values?: I18nValues): string
 
 declare function te (key: string): boolean
 
