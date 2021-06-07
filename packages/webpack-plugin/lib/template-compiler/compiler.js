@@ -1981,7 +1981,7 @@ function postProcessTemplate (el) {
   }
 }
 
-const isValidMode = makeMap('wx,ali,swan,tt,qq,web')
+const isValidMode = makeMap('wx,ali,swan,tt,qq,web,qa,jd')
 
 const wrapRE = /^\((.*)\)$/
 
