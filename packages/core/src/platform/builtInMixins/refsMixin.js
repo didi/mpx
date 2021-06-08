@@ -108,28 +108,29 @@ export default function getRefsMixin () {
     methods: {
       ...aliMethods,
       __getRefs () {
+        const setRef = (context, ref) => {
+          if (ref.type === 'node') {
+            Object.defineProperty(context.$refs, ref.key, {
+              enumerable: true,
+              configurable: true,
+              get: () => {
+                return this.__getRefNode(ref)
+              }
+            })
+          } else {
+            context.$refs[ref.key] = this.__getRefNode(ref)
+          }
+        }
+
         if (this.r && this.r.refs) {
           const refs = this.r.refs
           // 运行时编译组件获取 ref 节点
           const rootContext = this.__getNode(this.r.nodeId).context
-          rootContext.$refs[refs.key] = this.__getRefNode(refs)
+          setRef(rootContext, refs)
         }
         if (this.__getRefsData) {
           const refs = this.__getRefsData()
-          const self = this
-          refs.forEach(ref => {
-            if (ref.type === 'node') {
-              Object.defineProperty(this.$refs, ref.key, {
-                enumerable: true,
-                configurable: true,
-                get () {
-                  return self.__getRefNode(ref)
-                }
-              })
-            } else {
-              this.$refs[ref.key] = this.__getRefNode(ref)
-            }
-          })
+          refs.forEach(ref => setRef(this, ref))
         }
       },
       __getRefNode (ref) {
