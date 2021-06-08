@@ -14,8 +14,15 @@ module.exports = function getRulesRunner ({ type, mode, srcMode, data, meta, tes
     const normalizeTest = spec.normalizeTest
     const mainRules = mainKey ? spec[mainKey] : spec
     if (mainRules) {
-      return function (input) {
-        return runRules(mainRules, input, { mode, data, meta, testKey, waterfall, normalizeTest })
+      return function (input, options) {
+        return runRules(mainRules, input, Object.assign({
+          mode,
+          data,
+          meta,
+          testKey,
+          waterfall,
+          normalizeTest
+        }, options))
       }
     }
   }
