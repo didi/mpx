@@ -19,7 +19,7 @@ dangerousKeys.split(',').forEach((key) => {
   dangerousKeyMap[key] = true
 })
 
-let renderIdentifiers = '__c,__v,__e,__t,_i,__ss,__sc'
+let renderIdentifiers = '__c,__v,__e,__t,__a,__b,_i,__ss,__sc'
 let renderIdentifiersMap = {}
 renderIdentifiers.split(',').map(identifier => {
   renderIdentifiersMap[identifier] = true

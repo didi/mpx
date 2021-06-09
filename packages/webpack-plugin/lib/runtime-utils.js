@@ -8,6 +8,8 @@ let pathAndAliasTagMap = {}
 
 let baseWxmlModule = null
 
+const filterKeys = ['data-eventconfigs', 'mpxShow', 'big-attrs', 'mpxPageStatus']
+
 function genNotRuntimeCustomComponentSlots() {
   return `
     <block wx:for="{{r.children}}" wx:key="nodeId">
@@ -114,7 +116,7 @@ module.exports = {
    * 被注入到 base.wxml 里面的自定义组件模板生成器，生成的模板主要分为2种类型：
    *
    * 1. 非运行组件，属性需要枚举
-   * 2. 运行时组件，属性统一使用 at 进行透传
+   * 2. 运行时组件，属性统一使用 bigAttrs 进行透传
    */
   genRuntimeTemplate(nodesMap) {
     let res = '\n'
@@ -134,19 +136,22 @@ module.exports = {
       if (node.hidden) {
         res += ' ' + 'hidden="{{ r.hidden }}"'
       }
-      // 事件统一代理至 __eh 方法上，通过 data-eventconfigs 获取真实的事件信息
+      // 事件统一代理至 __invoke 方法上，通过 data-eventconfigs 获取真实的事件信息
       if (node.events) {
         // console.log('the node.events is:', node.events)
         Object.keys(node.events).map((name) => {
-          res += ' ' + `${name}="__eh"`
+          res += ' ' + `${name}="__invoke"`
         })
       }
-      // 如果是运行时组件，统一使用 at 进行传参
-      // if (node.isRuntimeCompileWrapper) {
-      //   res += ' ' + `at="{{ r.at }}"`
-      // }
-      if (node.runtimeCompile) {
-        res += ' ' + `at="{{ r.at }}"`
+      /**
+       * 运行时组件：
+       *
+       * 1. 统一使用 bigAttrs 进行传参
+       * 2. 统一使用 slots 属性传递插槽的 render 函数
+       */
+      if (node.isRuntimeComponent) {
+        res += ' ' + `big-attrs="{{ r.bigAttrs }}"`
+        res += ' ' + 'slots="{{ r.slots }}"'
       }
       if (node.mpxPageStatus) {
         res += ' ' + 'mpxPageStatus="{{ r.mpxPageStatus || \'\' }}"'
@@ -154,20 +159,9 @@ module.exports = {
       res += ' ' + 'mpxShow="{{ r.mpxShow === undefined ? true : r.mpxShow }}"'
       res += ' ' + 'data-eventconfigs="{{ r.eventconfigs }}"'
       res += ' ' + 'data-private-node-id="{{ r.nodeId }}"'
-      // 运行时组件通过 slots 属性传递插槽的 render 函数
-      if (node.isRuntimeCompileWrapper) {
-        res += ' ' + 'slots="{{ r.slots }}"'
-      }
       node.attrsList.forEach((attr) => {
-        // 事件统一走 _eh 代理
-        if (wx.event.parseEvent(attr.name)) {
-          console.log('the event attr is:', attr.name)
-          return
-        }
-        if (attr.name === 'data-eventconfigs') {
-          return
-        }
-        if (attr.name === 'mpxShow') {
+        // 事件统一走 __invoke 代理
+        if (wx.event.parseEvent(attr.name) || filterKeys.includes(attr.name)) {
           return
         }
 

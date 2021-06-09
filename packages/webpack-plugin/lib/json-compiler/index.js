@@ -183,7 +183,7 @@ module.exports = function (raw = '{}') {
     }
     json.usingComponents['element'] = _path
   }
-  // console.log('the componentsMap is:', resourcePath, mpx.componentsMap)
+
   // json补全
   if (pagesMap[resourcePath]) {
     // page

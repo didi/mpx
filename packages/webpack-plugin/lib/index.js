@@ -623,6 +623,7 @@ class MpxWebpackPlugin {
             })
           }
 
+          // 基础模板信息注入
           if (/base\w*\.wxml/.test(file)) {
             let runtimeTemplate = genRuntimeTemplate(getTemplateNodes())
             content.add(runtimeTemplate)
@@ -638,6 +639,7 @@ class MpxWebpackPlugin {
             // console.log('the mpx-custom-element content is:', content.source())
           }
 
+          // 运行时组件配置注入
           if (/mpx-custom-element\.json/.test(file)) {
             // console.log('get injected path', getInjectedComponentMap())
             let _content = JSON.parse(content.source())
