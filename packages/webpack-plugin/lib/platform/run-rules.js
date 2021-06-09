@@ -28,7 +28,8 @@ module.exports = function runRules (rules = [], input, options = {}) {
     })
     if (tester(testInput, meta) && processor) {
       let result = processor.call(rule, input, data, meta)
-      Object.assign(meta, result.meta || {})
+      const resultMeta = (result && result.meta) || {}
+      Object.assign(meta, resultMeta)
       meta.processed = true
       if (result !== undefined) {
         input = result
