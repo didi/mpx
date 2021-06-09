@@ -27,7 +27,6 @@ module.exports = function (content) {
   if (!mpx) {
     return content
   }
-  console.log('the mpx.pagesMap is:', mpx.pagesMap)
   const { resourcePath, queryObj } = parseRequest(this.resource)
   const packageName = queryObj.packageName || mpx.currentPackageRoot || 'main'
   const pagesMap = mpx.pagesMap
@@ -127,68 +126,83 @@ module.exports = function (content) {
       }
     },
     (callback) => {
-      let _callback = callback
       if (parts.json && parts.json.content) {
-        const json = JSON5.parse(parts.json.content)
+        let json = {}
+        try {
+          json = JSON5.parse(parts.json.content)
+        } catch (e) {
+          return callback(e)
+        }
         if (json.usingComponents) {
           let localComponents = json.usingComponents
+          // 解析自定义组件路径
           async.parallel(
             Object.keys(localComponents).map(name => cb => {
-              this.resolve(path.dirname(this.resource), localComponents[name], (err, path) => {
+              this.resolve(path.dirname(this.resource), localComponents[name], (err, absolutePath) => {
                 if (err) {
-                  cb(err)
+                  return callback(err)
                 }
-                if (path) {
-                  componentsAbsolutePath[name] = path
-                  collectAliasTag(path, 'c' + hash(path))
-                  cb(null, [name, path])
-                } else {
-                  cb()
-                }
+                componentsAbsolutePath[name] = absolutePath
+                // 以绝对路径缓存组件名
+                collectAliasTag(absolutePath, 'c' + hash(absolutePath))
+                cb(null, [name, absolutePath])
               })
             }),
             (err, res) => {
               if (err) {
-                _callback()
+                return callback(err)
               }
-              if (res) {
-                async.parallel(res.map(item => cb => {
-                  // TODO：编译优化报错
-                  const name = item[0]
-                  const path = item[1]
-                  this.fs.readFile(path, (err, buffer) => {
-                    if (err) {
-                      cb()
-                    } else {
-                      const content = buffer.toString('utf8')
-                      const parts = parseComponent(content, {
-                        filePath: path,
-                        needMap: false,
-                        mode,
-                        defs
+              // 读取自定义组件配置
+              async.parallel(res.map(item => cb => {
+                const name = item[0]
+                const absolutePath = item[1]
+                this.fs.readFile(absolutePath, (err, buffer) => {
+                  if (err) {
+                    callback(err)
+                  } else {
+                    const content = buffer.toString('utf8')
+                    // parseComponent 会做缓存
+                    const parts = parseComponent(content, {
+                      absolutePath,
+                      needMap: this.sourceMap,
+                      mode,
+                      defs,
+                      env
+                    })
+                    // readJsonForSrc 会做缓存
+                    const json = parts.json || {}
+                    if (json.src) {
+                      readJsonForSrc(json.src, loaderContext, path.dirname(absolutePath), (err, content) => {
+                        if (err) {
+                          return callback(err)
+                        }
+                        if (content && content.runtimeCompile) {
+                          runtimeComponents.push(name)
+                        }
                       })
-                      if (parts.json && parts.json.content) {
+                    } else if (json.content) {
+                      try {
                         const content = JSON5.parse(parts.json.content)
                         if (content && content.runtimeCompile) {
                           runtimeComponents.push(name)
                         }
+                      } catch (e) {
+                        return callback(e)
                       }
-                      cb()
                     }
-                  })
-                }), () => {
-                  _callback()
+                    cb()
+                  }
                 })
-              } else {
-                _callback()
-              }
+              }), () => {
+                callback()
+              })
             }
           )
         } else {
-          _callback()
+          callback()
         }
       } else {
-        _callback()
+        callback()
       }
     },
     (callback) => {
