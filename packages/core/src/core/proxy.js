@@ -31,7 +31,7 @@ import {
   DESTROYED
 } from './innerLifecycle'
 import { warn, error } from '../helper/log'
-import _ from 'lodash'
+import cloneDeep from 'lodash/cloneDeep'
 import patch from '../vnode/patch'
 
 let uid = 0
@@ -274,7 +274,7 @@ export default class MPXProxy {
   renderWithData (vnode) {
     // TODO: 待优化，目前这个为了方便测试
     if (vnode) {
-      const _vnode = _.cloneDeep(vnode)
+      const _vnode = cloneDeep(vnode)
       proxy(this.target, { _vnode: patch(undefined, _vnode, this.target) }, ['_vnode'], true)
       return this.doRenderWithVNode(vnode)
     }

@@ -5,7 +5,7 @@ import { findItem } from '../helper/utils'
 import { warn } from '../helper/log'
 
 function composePropsToComputed(type, options = {}) {
-  if (type === 'component') {
+  if (type === 'component' || type === 'page') {
     options.runtimeComponent = true
     if (!options.computed) {
       options.computed = {}
