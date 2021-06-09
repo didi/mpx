@@ -67,9 +67,6 @@ export default function proxyEventMixin () {
       const value = filterMethod ? (innerFilter[filterMethod] ? innerFilter[filterMethod](originValue) : typeof this[filterMethod] === 'function' ? this[filterMethod](originValue) : originValue) : originValue
       setByPath(this, expr, value)
     },
-    __eh ($event) {
-      return this.__invoke($event)
-    },
     __getDomNodeFromEvt(evt) {
       const id = evt.currentTarget && evt.currentTarget.dataset.privateNodeId
       return cache.getNode(id)
