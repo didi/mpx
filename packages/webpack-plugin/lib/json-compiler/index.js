@@ -46,7 +46,9 @@ module.exports = function (raw = '{}') {
   if (!mpx) {
     return nativeCallback(null, raw)
   }
-  const useRelativePath = mpx.useRelativePath
+
+  // 微信插件下要求组件使用相对路径
+  const useRelativePath = mpx.isPluginMode || mpx.useRelativePath
   const { resourcePath, queryObj } = parseRequest(this.resource)
   const packageName = queryObj.packageName || mpx.currentPackageRoot || 'main'
   const pagesMap = mpx.pagesMap
