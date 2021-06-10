@@ -621,7 +621,7 @@ module.exports = function (raw = '{}') {
         async.forEachOf(components, (component, name, callback) => {
           processComponent(component, context, (componentPath) => {
             if (useRelativePath === true) {
-              componentPath = path.relative(path.dirname(currentPath), componentPath)
+              componentPath = toPosix(path.relative(path.dirname(currentPath), componentPath))
             }
             json.usingComponents[name] = componentPath
           }, undefined, callback)
@@ -761,7 +761,7 @@ module.exports = function (raw = '{}') {
       async.forEachOf(json.usingComponents, (component, name, callback) => {
         processComponent(component, this.context, (componentPath) => {
           if (useRelativePath === true) {
-            componentPath = path.relative(path.dirname(currentPath), componentPath)
+            componentPath = toPosix(path.relative(path.dirname(currentPath), componentPath))
           }
           json.usingComponents[name] = componentPath
         }, undefined, callback)
@@ -772,7 +772,7 @@ module.exports = function (raw = '{}') {
         if (genericCfg && genericCfg.default) {
           processComponent(genericCfg.default, this.context, (componentPath) => {
             if (useRelativePath === true) {
-              componentPath = path.relative(path.dirname(currentPath), componentPath)
+              componentPath = toPosix(path.relative(path.dirname(currentPath), componentPath))
             }
             json.componentGenerics[name].default = componentPath
           }, undefined, callback)
