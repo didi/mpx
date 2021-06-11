@@ -2068,7 +2068,7 @@ function processElement (el, root, options, meta) {
     currentEl = el
     rulesRunner(el)
     if (el.injectWxsProps) {
-      const {injectWxsPath, injectWxsModuleName} = el.injectWxsProps
+      const { injectWxsPath, injectWxsModuleName } = el.injectWxsProps
       injectWxs(meta, injectWxsModuleName, '~' + normalize.lib(injectWxsPath))
     }
   }
