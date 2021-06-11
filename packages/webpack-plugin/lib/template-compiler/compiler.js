@@ -316,8 +316,6 @@ const i18nWxsRequest = '~' + i18nWxsLoaderPath + '!' + i18nWxsPath
 const i18nModuleName = '__i18n__'
 const stringifyWxsPath = '~' + normalize.lib('runtime/stringify.wxs')
 const stringifyModuleName = '__stringify__'
-const swanTransForWxsPath = '~' + normalize.lib('runtime/swanTransFor.wxs')
-const swanTransForModuleName = '__swanTransFor__'
 
 const tagRES = /(\{\{(?:.|\n)+?\}\})(?!})/
 const tagRE = /\{\{((?:.|\n)+?)\}\}(?!})/
@@ -2059,12 +2057,6 @@ function processDuplicateAttrsList (el) {
   el.attrsList = attrsList
 }
 
-function processMeta (meta) {
-  if (meta.isSwanTransforData) {
-    injectWxs(meta, swanTransForModuleName, swanTransForWxsPath)
-  }
-}
-
 function processElement (el, root, options, meta) {
   processAtMode(el)
   // 如果已经标记了这个元素要被清除，直接return跳过后续处理步骤
@@ -2074,9 +2066,11 @@ function processElement (el, root, options, meta) {
 
   if (rulesRunner && el._atModeStatus !== 'match') {
     currentEl = el
-    const meta = {}
-    rulesRunner(el, { meta })
-    processMeta(meta)
+    rulesRunner(el)
+    if (el.injectWxsProps) {
+      const {injectWxsPath, injectWxsModuleName} = el.injectWxsProps
+      injectWxs(meta, injectWxsModuleName, '~' + normalize.lib(injectWxsPath))
+    }
   }
 
   // 转换完成，把不需要处理的attr挂回去

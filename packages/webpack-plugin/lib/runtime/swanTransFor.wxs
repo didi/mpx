@@ -15,7 +15,7 @@ module.exports = {
     if (likeArray(value) || isObject(value)) {
       return value
     }
-    if (/^\d+$/.test(value)) {
+    if (typeof value === 'number') {
       const loopNum = +value
       let list = []
       for (let i = 0; i < loopNum; i++) {

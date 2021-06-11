@@ -1,6 +1,6 @@
 const runRules = require('../run-rules')
 
-module.exports = function normalizeComponentRules (cfgs, spec, data = {}, meta = {}) {
+module.exports = function normalizeComponentRules (cfgs, spec) {
   return cfgs.map((cfg) => {
     const result = {}
     if (cfg.test) {
@@ -45,7 +45,6 @@ module.exports = function normalizeComponentRules (cfgs, spec, data = {}, meta =
           }
         })
         el.attrsList = rAttrsList
-        el.meta = meta
         el.attrsMap = require('../../template-compiler/compiler').makeAttrsMap(rAttrsList)
         // 前置处理attrs,便于携带信息用于tag的处理
         const rTag = cfg[mode] && cfg[mode].call(this, el.tag, data)
