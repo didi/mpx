@@ -15,17 +15,18 @@ module.exports = class AddEnvPlugin {
       if (request.env) {
         return callback()
       }
-      let obj = {
+      const obj = {
         env
       }
-
       const parsed = parseRequest(request.request)
       const resourcePath = parsed.rawResourcePath
       const resourceQuery = parsed.resourceQuery
       const resourceExt = path.extname(resourcePath)
-
-      obj.request = resourcePath.substring(0, resourcePath.length - resourceExt.length) + '.' + env + resourceExt + resourceQuery
-
+      if (request.mode && resourceExt === '.' + request.mode) {
+        obj.request = resourcePath + '.' + env + resourceQuery
+      } else {
+        obj.request = resourcePath.substring(0, resourcePath.length - resourceExt.length) + '.' + env + resourceExt + resourceQuery
+      }
       resolver.doResolve(target, Object.assign({}, request, obj), 'add env: ' + env, resolveContext, callback)
     })
   }

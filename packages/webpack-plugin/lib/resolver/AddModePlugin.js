@@ -13,10 +13,10 @@ module.exports = class AddModePlugin {
     const target = resolver.ensureHook(this.target)
     const mode = this.mode
     resolver.getHook(this.source).tapAsync('AddModePlugin', (request, resolveContext, callback) => {
-      if (request.mode) {
+      if (request.mode || request.env) {
         return callback()
       }
-      let obj = {
+      const obj = {
         mode
       }
       const parsed = parseRequest(request.request)
