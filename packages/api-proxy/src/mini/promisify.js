@@ -18,6 +18,7 @@ const blackList = [
   'hideNavigationBarLoading',
   'createAnimation',
   'createSelectorQuery',
+  'createIntersectionObserver',
   'hideKeyboard',
   'stopPullDownRefresh',
   'createWorker',
