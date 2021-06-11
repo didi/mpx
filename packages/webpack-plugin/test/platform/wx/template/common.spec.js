@@ -52,8 +52,8 @@ describe('common spec case', function () {
     const output13 = compileAndParse(input13, { srcMode: 'wx', mode: 'swan' })
     const output14 = compileAndParse(input14, { srcMode: 'wx', mode: 'swan' })
 
-    expect(output1).toBe('<view s-for="item, index in __swanTransFor__.processFor(list) trackBy item.unique">123</view>')
-    expect(output2).toBe('<view s-for="item, index in __swanTransFor__.processFor(list)">123</view>')
+    expect(output1).toBe('<import-sjs module="__swanTransFor__" src="~/home/runner/work/mpx/mpx/packages/webpack-plugin/lib/runtime/swanTransFor.wxs"></import-sjs><view s-for="item, index in __swanTransFor__.processFor(list) trackBy item.unique">123</view>')
+    expect(output2).toBe('<import-sjs module="__swanTransFor__" src="~/home/runner/work/mpx/mpx/packages/webpack-plugin/lib/runtime/swanTransFor.wxs"></import-sjs><view s-for="item, index in __swanTransFor__.processFor(list)">123</view>')
     expect(output3).toBe('<view s-for="t1, index in __swanTransFor__.processFor(list)">123</view>')
     expect(output4).toBe('<view s-for="item, t1 in __swanTransFor__.processFor(list)">123</view>')
     expect(output5).toBe('<view s-for="t1, t2 in __swanTransFor__.processFor(list)">123</view>')
