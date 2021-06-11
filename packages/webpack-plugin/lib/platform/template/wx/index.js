@@ -6,6 +6,7 @@ const isValidIdentifierStr = require('../../../utils/is-valid-identifier-str')
 const templateCompiler = require('../../../template-compiler/compiler')
 const parseMustache = templateCompiler.parseMustache
 const stringifyWithResolveComputed = templateCompiler.stringifyWithResolveComputed
+const normalize = require('../../../utils/normalize')
 
 module.exports = function getSpec ({ warn, error }) {
   const spec = {
@@ -41,9 +42,15 @@ module.exports = function getSpec ({ warn, error }) {
           const indexName = attrsMap['wx:for-index'] || 'index'
           const keyName = attrsMap['wx:key'] || null
           let keyStr = ''
+
+          if (parsed.hasBinding) {
+            listName = listName.slice(1, -1)
+          }
+
           if (keyName) {
             const parsed = parseMustache(keyName)
             if (parsed.hasBinding) {
+              // keyStr = ` trackBy ${parsed.result.slice(1, -1)}`
             } else if (keyName === '*this') {
               keyStr = ` trackBy ${itemName}`
             } else {
@@ -56,7 +63,7 @@ module.exports = function getSpec ({ warn, error }) {
           }
           if (el) {
             el.injectWxsProps = {
-              injectWxsPath: 'runtime/swanTransFor.wxs',
+              injectWxsPath: '~' + normalize.lib('runtime/swanTransFor.wxs'),
               injectWxsModuleName: '__swanTransFor__'
             }
           }
