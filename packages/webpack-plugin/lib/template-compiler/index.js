@@ -78,7 +78,7 @@ module.exports = function (raw) {
     globalComponents: Object.keys(mpx.usingComponents),
     // deprecated option
     globalMpxAttrsFilter: mpx.globalMpxAttrsFilter,
-    forceProxyEvent: matchCondition(this.resourcePath, mpx.forceProxyEventRules)
+    forceProxyEvent: matchCondition(this.resourcePath, mpx.forceProxyEventRules) || options.runtimeCompile
   })
 
   let ast = parsed.root

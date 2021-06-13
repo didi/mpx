@@ -855,6 +855,10 @@ function parse (template, options) {
       }
       attrs = consumeMpxCommentAttrs(attrs, mode)
 
+      let element = createASTElement(tag, attrs, currentParent)
+      // 注入 base.wxml 里面的节点需要根据是否是自定义节点来决定使用的标签名
+      element.isCustomComponent = options.usingComponents.includes(tag)
+      element.isRuntimeComponent = isRuntimeComponentNode(element, options)
       if (options.componentsAbsolutePath[tag]) {
         const path = options.componentsAbsolutePath[tag]
         const aliasTags = getAliasTag()
@@ -862,13 +866,8 @@ function parse (template, options) {
           meta.aliasTags = {}
         }
         meta.aliasTags[tag] = aliasTags[path]['aliasTag']
-        console.log('the tag an absolute path and aliasTag is:', tag, path, aliasTags, aliasTags[path])
-        // console.log('the tag and absolute path is:', tag, options.componentsAbsolutePath[tag], )
+        element.filePath = path
       }
-      let element = createASTElement(tag, attrs, currentParent)
-      // 注入 base.wxml 里面的节点需要根据是否是自定义节点来决定使用的标签名
-      element.isCustomComponent = isComponentNode(element, options)
-      element.isRuntimeComponent = isRuntimeComponentNode(element, options)
       if (ns) {
         element.ns = ns
       }
@@ -1312,7 +1311,7 @@ function processBindEvent (el, options) {
           }
         }
         eventConfigMap[type].configs.push(parsedFunc)
-        if (modifiers.indexOf('proxy') > -1 || options.forceProxyEvent || options.runtimeCompile) {
+        if (modifiers.indexOf('proxy') > -1 || options.forceProxyEvent) {
           eventConfigMap[type].proxy = true
         }
       }
@@ -2141,7 +2140,6 @@ function processHidden(el) {
 
 function processSlotOutlet(el) {
   if (el.tag === 'slot') {
-    // TODO: 删除 slot 属性后再添加，这种方式需要优化，目前 mpx serialize 是通过 attrsList 遍历生成属性的
     const { has, val } = getAndRemoveAttr(el, 'name', true) // 先不考虑动态绑定的数据类型
     const slotName = has ? val : 'default'
     el.slotName = JSON.stringify(slotName)
@@ -2159,12 +2157,10 @@ function processSlotContent(el) {
   const { has, val } = getAndRemoveAttr(el, 'slot')
   if (has) {
     const slotTarget = val === undefined ? 'default' : val
-    el.slotTarget = JSON.stringify(slotTarget)
-    // el.slotTarget = slotTarget
+    el.slotTarget = stringify(slotTarget)
   } else {
     if (el.inRuntimeCompileWrapper || el.innerRuntimeComponent) {
-      el.slotTarget = JSON.stringify('default')
-      // el.slotTarget = 'default'
+      el.slotTarget = stringify('default')
     }
   }
 }
@@ -2367,7 +2363,7 @@ function processBindProps(el) {
   }
 }
 
-// isRuntimeComponent -> 包含 slot 插槽的运行时节点(运行时组件节点)
+// isRuntimeComponent -> 运行时组件
 // innerRuntimeComponent -> 被运行时组件节点所包含的运行时组件节点
 // inRuntimeCompileWrapper -> 被运行时组件节点包含的 slot 节点(普通自定义节点 & 普通节点)
 // runtimeComponents 都需要将 slots 作为属性传递下去
@@ -2390,7 +2386,6 @@ function processRuntime (el, options) {
       } else {
         el.slots = `runtimeSlot["${el.slotAlias}"]`
       }
-      console.log('the slotAlias is:', el.slotAlias)
     }
   } else if (hasRuntimeCompileWrapper(el)) { // 针对不是运行时组件里面的运行时组件 slots 标签的处理(这里的标签即包括自定义组件也包括普通的节点)
     el.inRuntimeCompileWrapper = true
@@ -2402,9 +2397,21 @@ function processRuntime (el, options) {
    * 2. 或者是作为一个运行时组件的 slot 使用(hasRuntimeCompileWrapper)
    * 做一个标记，在注入 base.wxml 模板节点的内容特殊处理
    */
-  if (el.isCustomComponent && !el.isRuntimeComponent) {
-    if (options.runtimeCompile || el.inRuntimeCompileWrapper) {
-      el.normalNodeInRuntimeCompile = true
+  // if (el.isCustomComponent && !el.isRuntimeComponent) {
+  //   if (options.runtimeCompile || el.inRuntimeCompileWrapper) {
+  //     el.normalNodeInRuntimeCompile = true
+  //   }
+  // }
+
+  // 搜集需要注入到 mpx-custom-element.json 模块里面的自定义组件路径
+  // 运行组件 || 非运行组件里面使用了运行组件里面嵌套了自定义组件 || 运行时组件嵌套了运行时组件
+  if (el.isCustomComponent) {
+    if (options.runtimeCompile || el.inRuntimeCompileWrapper || el.innerRuntimeComponent) {
+      const tag = el.tag
+      const componentAbsolutePath = options.componentsAbsolutePath[tag]
+      const { aliasTag } = getAliasTag()[componentAbsolutePath]
+      el.aliasTag = aliasTag
+      collectInjectedPath(componentAbsolutePath)
     }
   }
 }
@@ -2481,21 +2488,19 @@ function processElement (el, root, options, meta) {
 
   processAttrs(el, options)
 
-  // TODO: 可以再把节点的类型明确下
-  // 搜集需要注入到 base.wxml 模块里面的节点（判断依据：有 aliasTag 的节点）
-  // 1. 拥有 aliasTag 的节点 -> 使用了 catch/capture 等特殊事件处理函数
-  // 2. 运行时组件里面所有的 usingComponents
-  // 3. 非运行时组件里面使用了运行时组件，且运行时组件里面嵌套了自定义非运行时组件
-  // 4. (非运行时组件里面)使用了运行时组件里面嵌套了自定义运行时组件
-  if (options.runtimeCompile && options.usingComponents.includes(el.tag) ||
-    el.inRuntimeCompileWrapper && options.usingComponents.includes(el.tag) ||
-    el.innerRuntimeComponent) {
-      const tag = el.tag
-      const componentAbsolutePath = options.componentsAbsolutePath[tag]
-      const { aliasTag } = getAliasTag()[componentAbsolutePath]
-      el.aliasTag = aliasTag
-      collectInjectedPath(componentAbsolutePath)
-    }
+  // 搜集需要注入到 mpx-custom-element.json 模块里面的自定义组件
+  // 1. 运行时组件里面所有的 usingComponents
+  // 2. 非运行时组件里面使用了运行时组件，在运行时组件里面嵌套了自定义非运行时组件
+  // 3. (非运行时组件里面)使用了运行时组件里面嵌套了自定义运行时组件
+  // if (options.runtimeCompile && options.usingComponents.includes(el.tag) ||
+  //   el.inRuntimeCompileWrapper && options.usingComponents.includes(el.tag) ||
+  //   el.innerRuntimeComponent) {
+  //     const tag = el.tag
+  //     const componentAbsolutePath = options.componentsAbsolutePath[tag]
+  //     const { aliasTag } = getAliasTag()[componentAbsolutePath]
+  //     el.aliasTag = aliasTag
+  //     collectInjectedPath(componentAbsolutePath)
+  //   }
 }
 
 function closeElement (el, options, meta, currentParent) {
@@ -2769,13 +2774,6 @@ function addIfCondition (el, condition) {
 
 // TODO: 添加 trimEndingWhitespace 去除尾部 node 的函数
 function genElement (node) {
-  /**
-   * 收集运行时组件里面嵌套的 slot 组件及其路径，这些 slot 组件包括：
-   * 1. 运行时组件
-   * 2. 非运行时组件
-   * 这些组件及其路径最终都会被输出到 mpx-custom-component.json 配置文件当中
-   */
-
   // 收集需要注入到 base.wxml 的节点 (只要被 hash 过的节点都需要被注入)
   if (node.aliasTag) {
     setTemplateNodes(node)
@@ -2908,7 +2906,7 @@ function _genData (node) {
   if (node.model) {
     const modelProp = node.model.prop
     if (modelProp.length > 0) {
-      // data += `${modelProp[0]}: ${modelProp[1]},`
+      data += `${modelProp[0]}: ${modelProp[1]},`
 
       // model-props 需要被合并到 bigAttrs 当中
       bigAttrs += `{${modelProp[0]}: ${modelProp[1]}},`
@@ -2941,14 +2939,24 @@ function _genData (node) {
     return res
   }
 
-  if (node.isRuntimeComponent) {
+  function stringifyBigAttrs() {
     if (node.bigAttrs) {
       bigAttrs += `${node.bigAttrs},`
       getAndRemoveAttr(node, 'big-attrs')
     }
     bigAttrs += `{${stringifyAttrsMap()}}`
     data += `${bigAttrs}),`
+  }
+
+  if (process.env.NODE_ENV === 'production') {
+    if (node.isRuntimeComponent) {
+      stringifyBigAttrs()
+    } else {
+      data += `${stringifyAttrsMap()}`
+    }
   } else {
+    // 非生产环境同时输出 bigAttrs 和 单个的属性值，主要是为了解决编译依赖的属性注入问题
+    stringifyBigAttrs()
     data += `${stringifyAttrsMap()}`
   }
 
@@ -2996,7 +3004,6 @@ function _genSlot (node) {
 }
 
 function _genIfConfitions (conditions) {
-  // console.log('the conditions is:', conditions)
   if (!conditions.length) {
     return '__e()'
   }

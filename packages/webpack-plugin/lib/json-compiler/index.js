@@ -20,7 +20,8 @@ const readJsonForSrc = require('../utils/read-json-for-src')
 const getMainCompilation = require('../utils/get-main-compilation')
 const {
   collectCustomComponentWxss,
-  collectAliasComponentPath
+  collectAliasComponentPath,
+  setRuntimeComponent
 } = require('../runtime-utils')
 
 module.exports = function (raw = '{}') {
@@ -181,7 +182,9 @@ module.exports = function (raw = '{}') {
     if (!json.usingComponents) {
       json.usingComponents = {}
     }
-    json.usingComponents['element'] = _path
+    if (!json.usingComponents['element']) {
+      json.usingComponents['element'] = _path
+    }
   }
 
   // json补全
@@ -775,6 +778,7 @@ module.exports = function (raw = '{}') {
   } else {
     // page.json或component.json
     if (json.usingComponents) {
+      setRuntimeComponent(this.resourcePath, !!json.runtimeCompile)
       if (json.runtimeCompile) {
         delete json.runtimeCompile
       }

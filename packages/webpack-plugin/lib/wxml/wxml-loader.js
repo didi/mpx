@@ -10,7 +10,6 @@ const createHelpers = require('../helpers')
 const isUrlRequest = require('../utils/is-url-request')
 const addQuery = require('../utils/add-query')
 const parseRequest = require('../utils/parse-request')
-const { setBaseWxmlModule } = require('../runtime-utils')
 
 function randomIdent () {
   return 'xxxHTMLLINKxxx' + Math.random() + Math.random() + 'xxx'
@@ -138,10 +137,7 @@ module.exports = function (content) {
   // }
 
   content = JSON.stringify(content)
-  if (/base\.wxml/.test(filePath)) {
-    setBaseWxmlModule(this._module.issuer)
-    // console.log('the base.wxml issuer module is:', this._module.issuer)
-  }
+  
   const exportsString = 'module.exports = '
 
   return exportsString + content.replace(/xxxHTMLLINKxxx[0-9.]+xxx/g, function (match) {

@@ -3,10 +3,9 @@ const { wx } = require('./config')
 
 const customComponentWxssSet = new Set()
 const injectedPath = new Set()
-let _templateNodes = {}
+const runtimeCompileMap = {}
+let templateNodes = {}
 let pathAndAliasTagMap = {}
-
-let baseWxmlModule = null
 
 const filterKeys = ['data-eventconfigs', 'mpxShow', 'big-attrs', 'mpxPageStatus']
 
@@ -46,6 +45,12 @@ function composeNodeAttrs(oldNode, newNode) {
 }
 
 module.exports = {
+  setRuntimeComponent(path, isRuntimeCompile) {
+     runtimeCompileMap[path] = isRuntimeCompile
+  },
+  getRuntimeComponent() {
+    return runtimeCompileMap
+  },
   collectInjectedPath(path) {
     injectedPath.add(path)
   },
@@ -83,24 +88,18 @@ module.exports = {
     return pathAndAliasTagMap
   },
   getTemplateNodes() {
-    return _templateNodes
+    return templateNodes
   },
   setTemplateNodes(node) {
     let tag = node.aliasTag || node.tag
-    if (!_templateNodes[tag]) {
-      _templateNodes[tag] = node
+    if (!templateNodes[tag]) {
+      templateNodes[tag] = node
     } else {
-      composeNodeAttrs(_templateNodes[tag], node)
+      composeNodeAttrs(templateNodes[tag], node)
     }
   },
   clearTemplateNodes() {
-    _templateNodes = {}
-  },
-  setBaseWxmlModule(module) {
-    baseWxmlModule = module
-  },
-  getBaseWxmlModule() {
-    return baseWxmlModule
+    templateNodes = {}
   },
   collectCustomComponentWxss(path) {
     customComponentWxssSet.add(path)
@@ -138,7 +137,6 @@ module.exports = {
       }
       // 事件统一代理至 __invoke 方法上，通过 data-eventconfigs 获取真实的事件信息
       if (node.events) {
-        // console.log('the node.events is:', node.events)
         Object.keys(node.events).map((name) => {
           res += ' ' + `${name}="__invoke"`
         })
@@ -180,7 +178,8 @@ module.exports = {
       if (node.unary) {
         res += '/>'
       } else {
-        if (node.normalNodeInRuntimeCompile) {
+        // 非运行时自定义组件在注入 base.wxml 模板都使用 slot 插槽
+        if (node.isCustomComponent && !(node.filePath && runtimeCompileMap[node.filePath])) {
           res += `>${genNotRuntimeCustomComponentSlots()}</${templateName}>`
         } else {
           res += `><template is="children" data="{{r: r.children}}" /></${nodeTag}>`
