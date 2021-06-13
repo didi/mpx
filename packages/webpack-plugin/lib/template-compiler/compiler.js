@@ -1412,7 +1412,6 @@ function processBindEvent (el, options) {
         rawName = rawName.replace(/\..*/, '')
       }
 
-      // TODO: 待优化，runtime-utils 里面的 genRuntimeTemplate 方法中有关事件的内容可以统一在这里进行生成处理
       addAttrs(el, [
         {
           name: rawName || config[mode].event.getEvent(type),
@@ -1435,28 +1434,6 @@ function processBindEvent (el, options) {
 
     el.eventconfigs = config[mode].event.shallowStringify(eventConfigMap)
   }
-
-  // 构造 vnode data-eventconfigs 配置
-  // let arr = []
-  // if (eventConfigMap) {
-  //   for (let key in eventConfigMap) {
-  //     let value = eventConfigMap[key]
-  //     if (Array.isArray(value)) {
-  //       value = `[${value.join(',')}]`
-  //     }
-  //     arr.push(`${key}:${value}`)
-  //   }
-  // }
-
-  // Object.keys(el.events).map(name => {
-  //   const { eventName, funcName } = el.events[name]
-  //   if (!eventConfigMap[eventName]) {
-  //     arr.push(`${eventName}: [[${funcName}]]`)
-  //   }
-  // })
-  // el.eventconfigs = `{${arr.join(',')}}`
-
-  // console.log('the eventconfig is111:', arr, el.eventconfigs, 222, eventConfigMap)
 }
 
 // todo 暂时未考虑swan中不用{{}}包裹控制属性的情况
@@ -2391,18 +2368,6 @@ function processRuntime (el, options) {
     el.inRuntimeCompileWrapper = true
   }
 
-  /**
-   * 普通的自定义组件(非运行时自定义组件):
-   * 1. 如果是被一个运行时组件使用(options.runtimeCompile)
-   * 2. 或者是作为一个运行时组件的 slot 使用(hasRuntimeCompileWrapper)
-   * 做一个标记，在注入 base.wxml 模板节点的内容特殊处理
-   */
-  // if (el.isCustomComponent && !el.isRuntimeComponent) {
-  //   if (options.runtimeCompile || el.inRuntimeCompileWrapper) {
-  //     el.normalNodeInRuntimeCompile = true
-  //   }
-  // }
-
   // 搜集需要注入到 mpx-custom-element.json 模块里面的自定义组件路径
   // 运行组件 || 非运行组件里面使用了运行组件里面嵌套了自定义组件 || 运行时组件嵌套了运行时组件
   if (el.isCustomComponent) {
@@ -2487,20 +2452,6 @@ function processElement (el, root, options, meta) {
   }
 
   processAttrs(el, options)
-
-  // 搜集需要注入到 mpx-custom-element.json 模块里面的自定义组件
-  // 1. 运行时组件里面所有的 usingComponents
-  // 2. 非运行时组件里面使用了运行时组件，在运行时组件里面嵌套了自定义非运行时组件
-  // 3. (非运行时组件里面)使用了运行时组件里面嵌套了自定义运行时组件
-  // if (options.runtimeCompile && options.usingComponents.includes(el.tag) ||
-  //   el.inRuntimeCompileWrapper && options.usingComponents.includes(el.tag) ||
-  //   el.innerRuntimeComponent) {
-  //     const tag = el.tag
-  //     const componentAbsolutePath = options.componentsAbsolutePath[tag]
-  //     const { aliasTag } = getAliasTag()[componentAbsolutePath]
-  //     el.aliasTag = aliasTag
-  //     collectInjectedPath(componentAbsolutePath)
-  //   }
 }
 
 function closeElement (el, options, meta, currentParent) {
@@ -2558,9 +2509,9 @@ function cloneAttrsList (attrsList) {
   })
 }
 
-// TODO: component is
 function postProcessComponentIs (el, options) {
-  if (options.runtimeCompile && el.is) {
+  // 运行时组件的 component is 指令
+  if (el.is && options.runtimeCompile || el.inRuntimeCompileWrapper ) {
     el.mpxPageStatus = true
     return el
   }
@@ -2575,7 +2526,6 @@ function postProcessComponentIs (el, options) {
     } else {
       tempNode = getTempNode()
     }
-    console.log('the el.components is:', el.components)
     // 手动创建新的需要动态渲染的 node 出来
     el.components.forEach(function (component) {
       let newChild = createASTElement(component, cloneAttrsList(el.attrsList), tempNode)
@@ -2586,15 +2536,6 @@ function postProcessComponentIs (el, options) {
       el.children.forEach((child) => {
         addChild(newChild, cloneNode(child))
       })
-      if (options.runtimeCompile || el.inRuntimeCompileWrapper) {
-        // for runtimeCompile
-        newChild.mpxPageStatus = true
-        // 手动新创建的 node 添加 ifConditions
-        addIfCondition(newChild, {
-          exp: newChild.if.exp,
-          block: newChild
-        })
-      }
       newChild.exps = el.exps
       addChild(tempNode, newChild)
       postProcessIf(newChild)
