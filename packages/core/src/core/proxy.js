@@ -31,7 +31,6 @@ import {
   DESTROYED
 } from './innerLifecycle'
 import { warn, error } from '../helper/log'
-import cloneDeep from 'lodash/cloneDeep'
 import patch from '../vnode/patch'
 
 let uid = 0
@@ -272,9 +271,10 @@ export default class MPXProxy {
   }
 
   renderWithData (vnode) {
-    // TODO: 待优化，目前这个为了方便测试
     if (vnode) {
-      const _vnode = cloneDeep(vnode)
+      // 对 vnode 进行深拷贝，原有的 vnode 数据仅做渲染使用，拷贝后的数据做上下文的绑定
+      // TODO: 目前未做 vnode diff 工作，都是全量 render，二期优化
+      const _vnode = diffAndCloneA(vnode).clone
       proxy(this.target, { _vnode: patch(undefined, _vnode, this.target) }, ['_vnode'], true)
       return this.doRenderWithVNode(vnode)
     }
@@ -292,7 +292,6 @@ export default class MPXProxy {
 
   processRenderDataWithStrictDiff (renderData) {
     const result = {}
-    // console.log('the renderData is:', renderData)
     for (let key in renderData) {
       if (renderData.hasOwnProperty(key)) {
         const data = renderData[key]

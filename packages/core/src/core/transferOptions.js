@@ -28,10 +28,6 @@ function composePropsToComputed(type, options = {}) {
         type: Object,
         value: {}
       },
-      at: {
-        type: Object,
-        value: {}
-      },
       slots: {
         type: Object,
         value: {}

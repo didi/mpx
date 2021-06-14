@@ -1,9 +1,5 @@
-import EventTarget from '../event/event-target'
-
-export default class VNode extends EventTarget {
+export default class VNode {
   constructor(tag, data = {}, children, text, elm, context) {
-    super()
-
     this.nodeType = tag || ''
     this.tag = tag
     this.data = data

@@ -641,7 +641,6 @@ class MpxWebpackPlugin {
 
           // 运行时组件配置注入
           if (/mpx-custom-element\.json/.test(file)) {
-            // console.log('get injected path', getInjectedComponentMap())
             let _content = JSON.parse(content.source())
             if (!_content.usingComponents) {
               _content.usingComponents = {}

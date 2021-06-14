@@ -99,7 +99,6 @@ export default function renderHelperMixin () {
       },
       __a(tag) {
         console.log(this.__mpxProxy.target.__aliasTags)
-        console.log('the tag is:', tag)
       },
       __b(...args) {
         // TODO: 添加对于数据结构的判断
