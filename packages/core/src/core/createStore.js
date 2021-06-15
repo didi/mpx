@@ -6,7 +6,8 @@ import Vue from '../vue'
 
 import {
   proxy,
-  getByPath
+  getByPath,
+  deepClone
 } from '../helper/utils'
 
 import { warn } from '../helper/log'
@@ -109,6 +110,13 @@ function mergeDeps (module, deps) {
   })
 }
 
+// 初始化state的工具函数
+function resetStateFn (initState, store) {
+  Object.keys(initState).forEach(key => {
+    store[key] = initState[key]
+  })
+}
+
 class Store {
   constructor (options) {
     const {
@@ -121,7 +129,10 @@ class Store {
     this.mutations = {}
     this.actions = {}
     this._subscribers = []
+    // 保存子module的实例
+    this.modules = {}
     this.state = this.registerModule(options).state
+    this.initState = deepClone(this.state)
     this.resetStoreVM()
     Object.assign(this, mapStore(this))
     plugins.forEach(plugin => plugin(this))
@@ -134,6 +145,18 @@ class Store {
     } else {
       return action(...payload)
     }
+  }
+
+  // 初始化state包括modules里面的
+  resetState () {
+    const state = deepClone(this.initState)
+    if (this.modules) {
+      Object.keys(this.modules).forEach(key => {
+        resetStateFn(this.initState[key], this.modules[key].state)
+        delete state[key]
+      })
+    }
+    resetStateFn(state, this.state)
   }
 
   commit (type, ...payload) {
@@ -177,7 +200,11 @@ class Store {
     if (module.modules) {
       const childs = module.modules
       Object.keys(childs).forEach(key => {
-        reactiveModule.state[key] = this.registerModule(childs[key]).state
+        let reactiveModuleChildInstance = this.registerModule(childs[key])
+        if (this.modules) {
+          this.modules[key] = reactiveModuleChildInstance
+        }
+        reactiveModule.state[key] = reactiveModuleChildInstance.state
       })
     }
     return reactiveModule

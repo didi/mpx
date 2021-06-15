@@ -202,6 +202,9 @@ declare namespace MpxStore {
 
     commit: GetDispatchAndCommitWithThis<M, D, 'mutations'>
 
+    /* 初始化整个store的state,包括子modules */
+    resetState():void
+
     mapState<K extends keyof S>(maps: K[]): {
       [I in K]: () => S[I]
     }

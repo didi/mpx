@@ -628,3 +628,23 @@ export function delChainKeyOfObj (obj = {}, key = '') {
     return o && o[k]
   }, obj)
 }
+
+/**
+ * 深拷贝
+ * @export
+ * @param {*} val
+ * @param {*} [map=new WeakMap()]
+ * @returns
+ */
+export function deepClone (val, map = new WeakMap()) {
+  if (val === null || typeof val !== 'object') return val
+  if (map.has(val)) return map.get(val)
+  let clone = Array.isArray(val) ? [] : {}
+  map.set(val, clone)
+  let keys = Object.keys(val)
+  let len = keys.length
+  while (len--) {
+    clone[keys[len]] = deepClone(val[keys[len]], map)
+  }
+  return clone
+}
