@@ -1,7 +1,6 @@
 const NodeTargetPlugin = require('webpack/lib/node/NodeTargetPlugin')
 const SingleEntryPlugin = require('webpack/lib/SingleEntryPlugin')
 const LimitChunkCountPlugin = require('webpack/lib/optimize/LimitChunkCountPlugin')
-const hash = require('hash-sum')
 const path = require('path')
 const WxsPlugin = require('./WxsPlugin')
 const ChildCompileDependency = require('../dependency/ChildCompileDependency')
@@ -38,7 +37,7 @@ module.exports = function () {
     resourcePath = `${resourcePath}~${wxsModule}`
   }
 
-  const name = path.parse(resourcePath).name + hash(resourcePath)
+  const name = path.parse(resourcePath).name + mpx.pathHash(resourcePath)
   let filename = path.join(/^\.([^.]+)/.exec(config[mode].wxs.ext)[1], `${name}${config[mode].wxs.ext}`)
 
   filename = mpx.getPackageInfo({

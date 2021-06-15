@@ -46,7 +46,9 @@ module.exports = function (raw = '{}') {
   if (!mpx) {
     return nativeCallback(null, raw)
   }
-  const useRelativePath = mpx.useRelativePath
+
+  // 微信插件下要求组件使用相对路径
+  const useRelativePath = mpx.isPluginMode || mpx.useRelativePath
   const { resourcePath, queryObj } = parseRequest(this.resource)
   const packageName = queryObj.packageName || mpx.currentPackageRoot || 'main'
   const pagesMap = mpx.pagesMap
@@ -621,7 +623,7 @@ module.exports = function (raw = '{}') {
         async.forEachOf(components, (component, name, callback) => {
           processComponent(component, context, (componentPath) => {
             if (useRelativePath === true) {
-              componentPath = path.relative(path.dirname(currentPath), componentPath)
+              componentPath = toPosix(path.relative(path.dirname(currentPath), componentPath))
             }
             json.usingComponents[name] = componentPath
           }, undefined, callback)
@@ -761,7 +763,7 @@ module.exports = function (raw = '{}') {
       async.forEachOf(json.usingComponents, (component, name, callback) => {
         processComponent(component, this.context, (componentPath) => {
           if (useRelativePath === true) {
-            componentPath = path.relative(path.dirname(currentPath), componentPath)
+            componentPath = toPosix(path.relative(path.dirname(currentPath), componentPath))
           }
           json.usingComponents[name] = componentPath
         }, undefined, callback)
@@ -772,7 +774,7 @@ module.exports = function (raw = '{}') {
         if (genericCfg && genericCfg.default) {
           processComponent(genericCfg.default, this.context, (componentPath) => {
             if (useRelativePath === true) {
-              componentPath = path.relative(path.dirname(currentPath), componentPath)
+              componentPath = toPosix(path.relative(path.dirname(currentPath), componentPath))
             }
             json.componentGenerics[name].default = componentPath
           }, undefined, callback)

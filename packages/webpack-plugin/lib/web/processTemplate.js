@@ -25,6 +25,7 @@ module.exports = function (template, options, callback) {
   const mode = options.mode
   const srcMode = options.srcMode
   const defs = options.defs
+  const moduleId = options.moduleId
   const loaderContext = options.loaderContext
   const ctorType = options.ctorType
   const resourcePath = parseRequest(loaderContext.resource).resourcePath
@@ -82,7 +83,8 @@ module.exports = function (template, options, callback) {
           defs,
           decodeHTMLText: options.decodeHTMLText,
           externalClasses: options.externalClasses,
-          scopedId: null,
+          hasScoped: false,
+          moduleId,
           filePath: loaderContext.resourcePath,
           i18n: null,
           checkUsingComponents: options.checkUsingComponents,
