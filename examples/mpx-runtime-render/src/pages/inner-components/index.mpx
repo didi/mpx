@@ -1,6 +1,7 @@
 <template>
   <view>
-    <runtime-swiper></runtime-swiper>
+    用以测试 base.wxml 原生组件的相关功能（待完善）
+    <!-- <runtime-swiper></runtime-swiper> -->
   </view>
 </template>
 
@@ -8,15 +9,23 @@
 import { createPage } from '@mpxjs/core'
 
 createPage({
-
+  data: {
+    navigatorList: [
+      {
+        name: 'swiper'
+      }
+    ]
+  }
 })
 </script>
 
 <style lang="stylus">
-.wrapper
-  margin 10px
-  padding 10px
-  border 1px solid #ccc
+.navigator-item
+  font-size 20px
+  padding-top 10px
+  padding-left 10px
+  padding-bottom 10px
+  border-bottom 1px solid #ccc
 </style>
 
 <script type="application/json">

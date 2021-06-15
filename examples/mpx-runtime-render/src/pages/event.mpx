@@ -7,149 +7,17 @@
     <view wx:for="{{ navigatorList }}">
       <view class="navigator-item" bindtap="jumpTo(item)">{{ item.name }}</view>
     </view>
-    <!-- <view b="cccc" wx:ref="myView" capture-bind:tap="onMyViewTapCapture">
-      <aaa wx:show="{{ wxShow }}" ddd-ddd="asd" c="{{ at.attr2 }}" d="{{ names }}" wx:ref="myBtn" bindaaabtn="handleaaaBtnFn"></aaa>
-      <v1 wx:bind="{{ { attr1: at.attr2, attr2: 'dddefefe' } }}"></v1>
-    </view>  -->
-    <!-- 组件名字重复的话，将组件名直接 hash，来作为 slots 的 key，确保其唯一性 -->
-    <!-- 如果传自定义组件 -->
-    <!-- 非运行时自定义组件的 slot 处理和运行时自定义组件的 slot 处理 -->
-    <!-- <google>
-      <testtest>
-        <view>hello world</view>
-        <view>hello world123123</view>
-      </testtest>
-      <view slot="after">
-        this is after slot
-        <testtest>
-          <view slot="before">AFTER SLOT</view>
-        </testtest>
-      </view>
-      <view>this is default slot</view>
-      <view slot="before">this is before slot</view>
-    </google> -->
-    <!-- <view wx:for="{{ dataList }}" wx:class="{{ innerClass }}" wx:style="{{ {fontSize: '26px', fontWeight: 'bold', color: '#fc9153'} }}">{{ item + 1 }}</view> -->
-    <!-- <custom-input wx:model="{{ message }}" wx:model-filter="filter" wx:model-value-path="['value']" wx:model-event="customInput" wx:model-prop="customValue"></custom-input>
-    <view>{{ message }}</view> -->
-    <!-- <view class="item">
-      wx:style 指令
-      <view wx:style="{{ {fontSize: '26px', fontWeight: 'bold', color: '#fc9153'} }}">wx:style</view>
-    </view>
-    <view class="item">
-      wx:class 指令
-      <view wx:class="{{ {active: active, disabled: disabled} }}">wx:class</view>
-    </view> -->
-
-    <view wx:show="{{ wxShow }}" class="item">
-      wx:ref 指令11 ---
-      <btn
-        wx:ref="myBtn"
-        attr1="{{ attr1 }}"
-        attr2="this is"
-        bindtest="handleTestBtnFn"
-      >
-        <view slot="before" class="item">
-          wx:model 指令 -> input
-          <input type="text" wx:model="{{message}}" wx:model-filter="filter" />
-          <view>{{ message }}</view>
-        </view>
-
-        <view slot="after" class="item">
-          wx:model 指令 -> picker
-          <picker
-            wx:model="{{ country }}"
-            wx:model-event="change"
-            range="{{ array }}"
-          >
-            <view class="picker"> 当前 picker 选择：{{ country }} </view>
-          </picker>
-        </view>
-        <!-- <view slot="after">this is after slo222t</view> -->
-        <!-- <slot-a slot="after">
-          <slot-a slot="before">
-            <view slot="after">this is before slot-a-1</view>
-          </slot-a>
-        </slot-a>
-        <view slot="before">this 1is btn before slot</view>
-        <slot-a>
-          <testtest wx:bind="{{ at }}" slot="after">
-            <view bindtap="tapaaa" slot="before">this is tes2t after-before slot</view>
-          </testtest>
-        </slot-a>
-        <view wx:if="{{ country }}">if</view>
-        <view wx:elif="{{ disabled }}">elif</view>
-        <view wx:else>ifelse</view>
-        <slot-a pa="{{ pa }}" pb="{{ pb }}" bindtest="tapaaa">
-          <testtest wx:bind="{{ at }}" slot="after" bindv2event="v2event" bindv2event1="v2event1">
-            <slot-a pc="pc" pd="pd" slot="before">
-              <view wx:for="{{ dataList }}" wx:for-index="indexxxx" wx:for-item="itemmm">
-                <view>the index1: {{ indexxxx }} and item is: {{ itemmm + 1 }}</view>
-              </view>
-              <view wx:if="{{ country }}">if</view>
-              <view wx:elif="{{ disabled }}">elif</view>
-              <view wx:else>else</view>
-            </slot-a>
-          </testtest>
-        </slot-a> -->
-      </btn>
-      <slot-a>
-        <slot-a-alias></slot-a-alias>
-      </slot-a>
-    </view>
-    <!-- <view class="item" bind:tap="clickDataList">
-      wx:for 指令 ---
-      <view wx:for="{{ dataList }}" wx:for-index="indexxx" wx:for-item="itemmm">
-        <view bind:tap="clickDataList">the index: {{ indexxx }} and item is: {{ itemmm + 1 }}</view>
-      </view>
-    </view>
-    <view class="item">
-      wx:show 指令
-      <view wx:show="{{ wxShow }}">wx:show</view>
-    </view>
-    <view class="item">
-      component 动态组件
-      <component is="{{ componentName }}"></component>
-    </view> -->
-    <!-- <view class="item">
-      事件
-      <button bindtap="handleTapInlineWithEvent('g', $event)">事件</button>
-    </view>
-    <view class="item">
-      不走运行时编译的组件：
-      <aaa bindaaabtn="handleaaaBtnFn"></aaa>
-    </view> -->
-    <!-- <button data-name="a" bindtap="handleTap">a</button>
-    <button data-name="b" bindtap="handleTapInline('b')" bindtouchstart="handleTapInline('b')">b</button>
-    <view bindtap="onViewTap">
-      on-view-tap
-      <button bindtap="handleTapInline(name)">c</button>
-    </view>
-    <button wx:for="{{names}}" bindtap="handleTapInline(item, index)">{{item}}</button> -->
-    <!-- <button bindtap="handleTapInlineWithEvent('g', $event)">g</button>
-    <view>{{ message11 }}</view> -->
   </view>
 </template>
 
 <script>
-/*
-
-数据的更新都是在 rootContext 层面进行更新 -> 重新触发 render 函数
-
-TODO：
-
-1. 原生事件的冒泡 & 自定事件触发的时序需要确认
-
-2. <button data-name="a" bindtap="handleTap"></button> 目前组件上的 dataset 暂时都是拿不到数据的，比如这块的 data-name 属性，但是这块可以做 https://developers.weixin.qq.com/miniprogram/dev/framework/view/wxml/event.html
-
-*/
-
 import { createComponent } from '@mpxjs/core'
 
 createComponent({
   data: {
     navigatorList: [
       {
-        name: 'at属性对象',
+        name: '新增wx:bind动态传参指令',
         path: '/pages/attrs/index'
       },
       {
@@ -177,10 +45,6 @@ createComponent({
         path: '/pages/model/index'
       },
       {
-        name: 'wx:ref',
-        path: '/pages/ref/index'
-      },
-      {
         name: '事件模型',
         path: '/pages/event/index'
       },
@@ -189,55 +53,22 @@ createComponent({
         path: '/pages/slot/index'
       },
       {
+        name: 'wx:ref',
+        path: '/pages/ref/index'
+      },
+      {
         name: '动态component',
         path: '/pages/component/index'
       },
       {
-        name: 'inner-components',
+        name: 'inner-components(原生组件)',
         path: '/pages/inner-components/index'
       }
     ],
-    country: '',
-    message: '222',
-    message11: 'gogo',
-    name: 'c',
-    names: ['d', 'e', 'f'],
-    array: ['美国', '中国', '巴西', '日本'],
-    index: 0,
-    active: true,
-    disabled: true,
-    dataList: [1, 2, 3, 4],
-    wxShow: true,
-    componentName: 'btn',
-    at: {
-      attr1: 123456,
-      attr2: 'this is b attr'
-    },
-    attr1: 123123,
-    attr2: 'this is attr2',
-    pa: 'pa',
-    pb: 'pb',
-    innerClass: {
-      active: true
-    }
+    message: 'msg'
   },
   attached() {
-    setTimeout(() => {
-      // this.wxShow = false
-      // console.log('myView is:', this.$refs.myView)
-      // this.$refs.myBtn.tapBtn()
-      // console.log('the myBtn re1f is:', this.$refs.myBtn.sayHello())
-      // console.log('the vnode is:', this._vnode)
-      console.log('the runtimeSlots is:', this.runtimeSlots)
-      // console.log('the btn1 ref is:', this.$refs.btn1)
-      // console.log('the root a is:', this.$refs.dd)
-      // this.message11 = 'gogo'
-      // this.country = 111
-      // console.log('the injectRender is:', this.__injectedRender)
-      // this.attr2 = 'attr2 has changed'
-      // this.at.attr1 = 'attr1 has changed'
-      this.componentName = 'v1'
-    }, 1000)
+
   },
   watch: {
     message(val) {
@@ -250,60 +81,9 @@ createComponent({
         url: item.path
       })
     },
-    v2event(e) {
-      console.log('v2event', e)
-    },
-    v2event1(e) {
-      console.log('v2event1', e)
-    },
-    tapaaa(str) {
-      console.log('tapaaa', str)
-    },
-    dddd() {
-      console.log('啊啊啊啊')
-    },
-    bindPickerChange(e) {
-      this.index = e.detail.value
-    },
-    filter(val) {
-      return val - 100
-    },
-    handleTestBtnFn() {
-      console.log('handleTestBtnFn on event page')
-    },
-    handleaaaBtnFn() {
-      console.log('handleaaaBtnFn on event page')
-      this.message = '222 -> changed'
-    },
-    handleTap(e) {
-      console.log('name:', e, e.target.dataset.name)
-    },
-    // 直接通过参数获取数据，直观方便
-    handleTapInline(name, index) {
-      console.log('name:', name, index)
-    },
-    handleTapInlineWithEvent(name, e) {
-      console.log('name:', name)
-      console.log('event:', e)
-    },
     onViewTapBubble(str, e) {
       console.log('onViewTapBubble', str, e)
-    },
-    onMyViewTapCapture() {
-      console.log('onMyViewTapCapture')
-    },
-    onTap(e) {
-      console.log('page tap', e)
-    },
-    onRootTouchStart() {
-      console.log('on root 1touch start')
-    },
-    clickDataList() {
-      console.log('click data list')
     }
-    // __eh($event) {
-    //   return this.__invoke($event)
-    // }
   }
 })
 </script>
@@ -322,10 +102,6 @@ createComponent({
 </style>
 
 <script type="application/json">
-/*
-  如果 runtimeCompile 置为 true，那么 usingComponents 里面的内容都需要在 base.wxml 里面添加相关的内容
-  这部分的依赖其实只需要添加到 element 组件当中
-*/
 {
   "runtimeCompile": true,
   "usingComponents": {

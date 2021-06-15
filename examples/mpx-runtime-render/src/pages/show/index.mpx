@@ -8,9 +8,10 @@
       <slot-a wx:show="{{ show2 }}"></slot-a>
     </view>
   </view>
+  <view hidden="{{ hidden }}">hidden</view>
   <!-- 自定义节点作为 root 节点 -->
   <slot-b wx:show="{{ showRoot }}">
-    <view>123</view>
+    <view>自定义节点作为 Root 节点</view>
   </slot-b>
 </template>
 
@@ -22,9 +23,11 @@ createComponent({
     showRoot: false,
     show1: false,
     show2: false,
+    hidden: false
   },
   attached() {
     setTimeout(() => {
+      this.hidden = true
       this.showRoot = true
       ++this.watchData
     }, 2000)
@@ -32,7 +35,7 @@ createComponent({
       this.show1 = true
     }, 3000)
     setTimeout(() => {
-       this.show2 = true
+      this.show2 = true
     }, 4000)
   }
 })

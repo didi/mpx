@@ -968,7 +968,6 @@ function parse (template, options) {
     comment: function comment (text) {
       if (!currentParent) genTempRoot()
       // special comments should not be output
-      // TODO: 边界 case
       if (isMpxCommentAttrs(text)) {
         produceMpxCommentAttrs(text)
       } else if (options.hasComment) {
@@ -1201,10 +1200,6 @@ function parseFuncStr2 (str) {
     const funcName = parseMustache(match[1]).result
     const hasArgs = !!match[2]
     let args = match[3] ? `,${match[3]}` : ''
-    // TODO: 将单引号转为双引号
-    if (args) {
-      args = args.replace(/'/g, '"')
-    }
     const ret = /(,|^)\s*(\$event)\s*(,|$)/.exec(args)
     if (ret) {
       const subIndex = ret[0].indexOf('$event')
@@ -1896,7 +1891,6 @@ function processClass (el, options, meta) {
   if (dynamicClass) {
     let staticClassExp = parseMustache(staticClass).result
     let dynamicClassExp = transDynamicClassExpr(parseMustache(dynamicClass).result)
-    // TODO: swan 处理？
     el.class = dynamicClassExp
     el.staticClass = staticClassExp
     addAttrs(el, [{
@@ -2915,7 +2909,7 @@ function _genNode (node) {
 }
 
 function _genText (node) {
-  // TODO: template 换行节点总会生成一个空的 text 节点？ ->  trimEndingWhitespace 方法
+  // TODO: trimEndingWhitespace 方法
   // mpx 对于纯文本节点的处理和带有表达式的文本节点的处理存放字段不同
   let exp = ''
   if (node.exps && node.exps[0]) {

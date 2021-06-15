@@ -18,6 +18,8 @@ module.exports = {
     __mpx_mode__: true
   },
   rules: {
-    camelcase: ['error', { 'allow': ['__mpx_mode__'] }]
+    camelcase: ['error', { 'allow': ['__mpx_mode__'] }],
+    'arrow-parens': 0,
+    'space-before-function-paren': 0,
   },
 }
