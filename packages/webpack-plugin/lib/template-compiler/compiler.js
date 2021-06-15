@@ -8,7 +8,6 @@ const mpxJSON = require('../utils/mpx-json')
 const getRulesRunner = require('../platform/index')
 const addQuery = require('../utils/add-query')
 const transDynamicClassExpr = require('./trans-dynamic-class-expr')
-const hash = require('hash-sum')
 const dash2hump = require('../utils/hump-dash').dash2hump
 const { inBrowser } = require('../utils/env')
 const {
@@ -674,7 +673,7 @@ function parseComponent (content, options) {
             currentBlock.priority = 1
           }
           if (currentBlock.priority) {
-            if (!sfc[tag] || sfc[tag].priority < currentBlock.priority) {
+            if (!sfc[tag] || sfc[tag].priority <= currentBlock.priority) {
               sfc[tag] = currentBlock
             }
           }
@@ -1132,7 +1131,7 @@ function processComponentGenericsForWeb (el, options, meta) {
 
   let hasGeneric = false
 
-  const genericHash = hash(options.filePath)
+  const genericHash = options.moduleId
 
   el.attrsList.forEach((attr) => {
     if (genericRE.test(attr.name)) {
@@ -1990,13 +1989,13 @@ function processAliExternalClassesHack (el, options) {
     }
   })
 
-  if (options.scopedId && isComponent) {
+  if (options.hasScoped && isComponent) {
     options.externalClasses.forEach((className) => {
       let externalClass = getAndRemoveAttr(el, className).val
       if (externalClass) {
         addAttrs(el, [{
           name: className,
-          value: `${externalClass} ${options.scopedId}`
+          value: `${externalClass} ${options.moduleId}`
         }])
       }
     })
@@ -2025,12 +2024,12 @@ function processWebExternalClassesHack (el, options) {
 }
 
 function processScoped (el, options) {
-  const scopedId = options.scopedId
-  if (scopedId && isRealNode(el)) {
+  if (options.hasScoped && isRealNode(el)) {
+    const moduleId = options.moduleId
     const staticClass = getAndRemoveAttr(el, 'class').val
     addAttrs(el, [{
       name: 'class',
-      value: staticClass ? `${staticClass} ${scopedId}` : scopedId
+      value: staticClass ? `${staticClass} ${moduleId}` : moduleId
     }])
   }
 }
@@ -2197,7 +2196,7 @@ function postProcessTemplate (el) {
   }
 }
 
-const isValidMode = makeMap('wx,ali,swan,tt,qq,web')
+const isValidMode = makeMap('wx,ali,swan,tt,qq,web,qa,jd')
 
 const wrapRE = /^\((.*)\)$/
 

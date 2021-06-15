@@ -1,0 +1,64 @@
+<template>
+  <view>
+    <view data-slot-a="slota" bindtap="tapSlotA">== this is slot-a start ==</view>
+    <slot name="before"></slot>
+    <slot></slot>
+    <slot name="after"></slot>
+
+    <view>== this is slot-a end ==</view>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+/*
+  some tips:
+
+  1. button 有个 type 属性会导致颜色等通过 class 进行样式覆盖不生效
+*/
+createComponent({
+  // runtimeComponent: true,
+  options: {
+    multipleSlots: true
+  },
+  attached() {
+    console.log('the slot-a pa and pb is:', this.pa, this.pb)
+    console.log('the slot-a pc and pd is:', this.pc, this.pd)
+  },
+  properties: {
+    pa: {
+      type: String
+    },
+    pb: {
+      type: String
+    },
+    pc: {
+      type: String
+    },
+    pd: {
+      type: String
+    }
+  },
+  data: {
+    btnName: 'this is btnName'
+  },
+  methods: {
+    tapSlotA(e) {
+      this.triggerEvent('test')
+      console.log('tap slot a', e)
+    }
+  }
+})
+</script>
+
+<style lang="stylus"></style>
+
+<script type="application/json">
+{
+  // "runtimeCompile": true,
+  "component": true,
+  "usingComponents": {
+    // "element": "./element"
+  }
+}
+</script>

@@ -1,0 +1,162 @@
+<template>
+  <import src="../template/custom-component/base.wxml" />
+  <template
+    is="{{r.nodeType || 'h-element'}}"
+    wx:if="{{ r }}"
+    data="{{ r: r }}"
+  ></template>
+  <!-- 源码
+  <view>
+    <slot name="a"></slot>
+    <slot name="b"></slot>
+    <slot name="c"></slot>
+    <button open-type="{{ openType }}">this is 2-1 button</button>
+    <view class="static-view">this is 2-2 view</view>
+    <cube-button bindclick="noParseButtonClick">this </cube-button>
+    <cube-icon bindclick="noParseIconClick"></cube-icon>
+  </view> -->
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+
+// 函数不能直接挂载到 wxml上，因此只能通过传参的方式传入子组件，然后在子组件当中进行调用
+createComponent({
+  options: {
+    addGlobalClass: true,
+    styleIsolation: 'shared'
+  },
+  properties: {
+    slots: Object,
+    aaaa: Number
+  },
+  data: {
+    r: {}
+  },
+  watch: {
+    slots: {
+      handler(val) {
+        setTimeout(() => {
+          this.$render()
+        })
+      },
+      immediate: true
+    },
+    at: {
+      handler() {
+        // hack 写法确保 initProxy 和 at 属性都已经设置完毕，重新渲染 vnode
+        setTimeout(() => {
+          this.$render()
+        })
+      },
+      immediate: true
+    }
+  },
+  lifetimes: {
+    attached() {
+      setTimeout(() => {
+        console.log('the at is:', this.at)
+      }, 3000)
+    }
+  },
+  methods: {
+    $render() {
+      const vnode = this.__c(
+        'view',
+        {
+          isElement: true,
+          class: 'cube-button-group'
+        },
+        // 子组件都需要通过 element 去渲染，因此需要把事件都传递至 element 当中
+        [
+          this.__c(this.slots.a()),
+          this.__c(this.slots.b()),
+          this.__c(this.slots.c()),
+          this.__c(
+            'button',
+            {
+              isElement: true,
+              class: 'normal-button-2-1',
+              'open-type': this['open-type'],
+              eventMap: {
+                tap: 'normalBtnClick'
+              },
+              normalBtnClick: this.normalBtnClick
+            },
+            [
+              this.__c('', {
+                content: 'this is 2-1 normal button'
+              })
+            ]
+          ),
+          this.__c(
+            'view',
+            {
+              isElement: true,
+              class: 'static-view'
+            },
+            [
+              this.__c('', {
+                content: 'this is 2-2 view'
+              })
+            ]
+          ),
+          this.__c('cube-button', {
+            isElement: true,
+            at: {
+              'open-type': 'share'
+            },
+            click: this.noParseButtonClick
+          }),
+          this.__c(
+            'cube-icon',
+            {
+              isElement: true,
+              a: 'cube-icon a',
+              b: 123,
+              click: this.noParseIconClick
+            },
+            [
+              {
+                content: 'this is slot-cube-icon in button-group.mpx'
+              }
+            ]
+          )
+        ]
+      )
+
+      this.r = vnode
+    },
+    normalBtnClick(e) {
+      console.log('this is normalButtonClick', e)
+    },
+    noParseButtonClick(e) {
+      console.log('this is noParseButtonClick', e)
+    },
+    noParseIconClick() {
+      console.log('this is noParseIconClick')
+    }
+  }
+})
+</script>
+
+<style lang="stylus">
+.static-view
+  color red
+
+@keyframes popup {
+  0% {
+    color red
+  }
+}
+</style>
+
+<script type="application/json">
+{
+  "usingCustomComponent": true,
+  "usingComponents": {
+    "element": "./element.mpx",
+    "icon": "./icon.mpx"
+  }
+}
+</script>

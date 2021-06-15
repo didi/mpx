@@ -1,4 +1,3 @@
-const hash = require('hash-sum')
 const JSON5 = require('json5')
 const parseComponent = require('./parser')
 const createHelpers = require('./helpers')
@@ -91,7 +90,7 @@ module.exports = function (content) {
 
   const filePath = resourcePath
 
-  const moduleId = 'm' + hash(this._module.identifier())
+  const moduleId = mpx.pathHash(filePath)
 
   const needCssSourceMap = (
     !isProduction &&
@@ -289,6 +288,7 @@ module.exports = function (content) {
                   srcMode,
                   defs,
                   loaderContext,
+                  moduleId,
                   ctorType,
                   usingComponents,
                   componentGenerics,

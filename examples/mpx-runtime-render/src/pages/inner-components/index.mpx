@@ -1,0 +1,28 @@
+<template>
+  <view>
+    <runtime-swiper></runtime-swiper>
+  </view>
+</template>
+
+<script>
+import { createPage } from '@mpxjs/core'
+
+createPage({
+
+})
+</script>
+
+<style lang="stylus">
+.wrapper
+  margin 10px
+  padding 10px
+  border 1px solid #ccc
+</style>
+
+<script type="application/json">
+{
+  "usingComponents": {
+    "runtime-swiper": "./swiper/index.mpx"
+  }
+}
+</script>

@@ -1,0 +1,73 @@
+<template>
+  <view class="gogo">
+    <view class="wrapper">
+      <view id="outer" data-a="a" bindtap="handleTap1">
+        tap: handleTap11
+        <view id="middle" data-b="b" catchtap="handleTap2">
+          catch-tap: handleTap21
+          <view id="inner" data-c="c" bindtap="handleTap3">
+            tap: handleTap31
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="wrapper">
+      <view id="outer" data-d="d" capture-bind:tap="handleTap1">
+        capture: handleTap21
+        <view id="middle" data-e="e" catchtap="handleTap2">
+          catch-tap: handleTap22
+          <view id="inner" data-f="f" bindtap="handleTap3">
+            tap: handleTap32
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="wrapper">
+      <event-a bindevent="eventHandler"></event-a>
+    </view>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+
+createComponent({
+  pageLifetimes: {
+    show() {
+      console.log('show')
+    }
+  },
+  methods: {
+    handleTap1(e) {
+      console.log('handleTap1', e)
+    },
+    handleTap2(e) {
+      console.log('handleTap2', e)
+    },
+    handleTap3(e) {
+      console.log('handleTap3', e)
+    },
+    eventHandler(e) {
+      console.log('the eventHandler result is:', e.detail)
+    }
+  }
+})
+</script>
+
+<style lang="stylus">
+.wrapper
+  margin 10px
+  padding 10px
+  border 1px solid #ccc
+</style>
+
+<script type="application/json">
+{
+  "runtimeCompile": true,
+  "usingComponents": {
+    "event-a": "./components/a.mpx"
+  }
+}
+</script>

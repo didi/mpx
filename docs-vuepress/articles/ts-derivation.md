@@ -4,6 +4,8 @@ sidebarDepth: 2
 
 # 使用Typescript新特性Template Literal Types完善链式key的类型推导
 
+> 作者：[anotherso1a](https://github.com/anotherso1a)
+
 ## 前言
 
 在**Mpx框架**中我们采用了类似 `Vuex` 的数据仓库设计，这使得小程序的数据也可以在框架中得到**统一的管理**。但由于设计上的原因，这一部分在TS推导的实现上变得异常艰难，其中有一个明显的问题就是**链式key**的推导：
@@ -356,7 +358,9 @@ type ActionChainKeys<T, P extends string | number = ''> = UnionToIntersection<{
 再看我们最开始提出的问题：
 
 > 编写一个 dispatch 方法，使得：
+>
 > `let result = dispatch('deeperActions.anotherAction') // 返回类型为： Promise<string>`
+>
 > `let final = dispatch('deeperActions.otherActions.finalAction', 'hello world') // 返回类型为：Promise<boolean>`
 
 我们开始定义 `dispatch` 方法：
@@ -387,6 +391,8 @@ let final = dispatch('deeperActions.otherActions.finalAction', 'hello world') //
 最终结果：
 
 ![](http://cdn.qiniu.archerk.com.cn/QQ20210128-162139-HD.gif)
+
+* 若图片加载失败请访问： http://cdn.qiniu.archerk.com.cn/QQ20210128-162139-HD.gif
 
 ## 结尾
 

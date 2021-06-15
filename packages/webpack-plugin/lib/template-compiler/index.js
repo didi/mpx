@@ -37,10 +37,6 @@ module.exports = function (raw) {
   const packageName = queryObj.packageName || mpx.currentPackageRoot || 'main'
   const componentsMap = mpx.componentsMap[packageName]
   const wxsContentMap = mpx.wxsContentMap
-  let scopedId
-  if (options.hasScoped) {
-    scopedId = options.moduleId
-  }
 
   const warn = (msg) => {
     this.emitWarning(
@@ -71,7 +67,8 @@ module.exports = function (raw) {
     defs,
     decodeHTMLText,
     externalClasses,
-    scopedId,
+    hasScoped: options.hasScoped,
+    moduleId: options.moduleId,
     filePath: this.resourcePath,
     i18n,
     checkUsingComponents: mpx.checkUsingComponents,

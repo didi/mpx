@@ -1,0 +1,112 @@
+<template>
+  <view class="container">
+    <view class="page-body">
+      <view class="page-section page-section-spacing swiper">
+        <swiper
+          indicator-dots="{{indicatorDots}}"
+          autoplay="{{autoplay}}"
+          interval="{{interval}}"
+          duration="{{duration}}"
+        >
+          <block wx:for="{{background}}" wx:key="*this">
+            <swiper-item>
+              <view class="swiper-item {{item}}"></view>
+            </swiper-item>
+          </block>
+        </swiper>
+      </view>
+      <view class="page-section" style="margin-top: 40rpx;margin-bottom: 0;">
+        <view class="weui-cells weui-cells_after-title">
+          <view class="weui-cell weui-cell_switch">
+            <view class="weui-cell__bd">指示点</view>
+            <view class="weui-cell__ft">
+              <switch
+                checked="{{indicatorDots}}"
+                bindchange="changeIndicatorDots"
+              />
+            </view>
+          </view>
+          <view class="weui-cell weui-cell_switch">
+            <view class="weui-cell__bd">自动播放</view>
+            <view class="weui-cell__ft">
+              <switch checked="{{autoplay}}" bindchange="changeAutoplay" />
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <view class="page-section page-section-spacing">
+        <view class="page-section-title">
+          <text>幻灯片切换时长(ms)</text>
+          <text class="info">{{ duration }}</text>
+        </view>
+        <slider
+          bindchange="durationChange"
+          value="{{duration}}"
+          min="500"
+          max="2000"
+        />
+        <view class="page-section-title">
+          <text>自动播放间隔时长(ms)</text>
+          <text class="info">{{ interval }}</text>
+        </view>
+        <slider
+          bindchange="intervalChange"
+          value="{{interval}}"
+          min="2000"
+          max="10000"
+        />
+      </view>
+    </view>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+
+createComponent({
+  data: {
+    background: ['demo-text-1', 'demo-text-2', 'demo-text-3'],
+    indicatorDots: true,
+    vertical: false,
+    autoplay: true,
+    interval: 2000,
+    duration: 500
+  },
+  methods: {
+    changeIndicatorDots(e) {
+      this.indicatorDots = !!e.detail.value
+      console.log('changeIndicatorDots', e.detail.value)
+    },
+    changeAutoplay(e) {
+      this.autoplay = !!e.detail.value
+      console.log('changeAutoPlay', e.detail.value)
+    },
+    intervalChange(e) {
+      console.log('intervalChange', e.detail.value)
+    },
+    durationChange(e) {
+      console.log('durationChange', e.detail.value)
+    }
+  }
+})
+</script>
+
+<style lang="stylus">
+.swiper-item
+  height 100%
+.demo-text-1
+  background-color #333
+.demo-text-2
+  background-color #fc9153
+.demo-text-3
+  background-color pink
+</style>
+
+<script type="application/json">
+{
+  "runtimeCompile": true,
+  "usingComponents": {
+  }
+}
+</script>

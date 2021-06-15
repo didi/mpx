@@ -1,0 +1,99 @@
+<template>
+  <view bind:tap="handleTap1">
+    <view>
+      <view capture-bind:tap="handleTap2">
+        this v1.mpx for runtimeCompile {{ btnName }}
+        <v2></v2>
+      </view>
+    </view>
+    <!-- <button open-type="getPhoneNumber" bindgetphonenumber="getUserInfo">getUserInfo</button> -->
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+/*
+
+在需要编译的模板里面根据，根据绑定的事件类型去决定生成模板的内容(hash值)
+
+*/
+
+
+/*
+  不编
+*/
+createComponent({
+  // runtimeComponent: true,
+  attached() {
+    // setTimeout(() => {
+    //   console.log('the v1 mpxParentId is:', this.mpxParentId)
+    // }, 1000)
+    setTimeout(() => {
+      console.log('this attr1:', this.attr1)
+      console.log('this attr2:', this.attr2)
+    }, 2000)
+  },
+  properties: {
+    // mpxParentId: {
+    //   type: Number
+    // },
+    attr1: {
+      type: Number
+    },
+    attr2: {
+      type: String
+    }
+  },
+  data: {
+    btnName: 'this is btnName'
+  },
+  methods: {
+    getUserInfo(e) {
+      console.log('the userinfo is:1111', e)
+    },
+    handleTap1(str) {
+      // console.log('the ownerComponent is:', this.selectOwnerComponent().__getParentNode())
+      console.log('v1: handleTap1', str)
+    },
+    handleTap2(str) {
+      console.log('v1: capture', str)
+    },
+    handleTap3(str, event) {
+      console.log('v1: handleTap3', str, event)
+    },
+    handleTap4(str) {
+      console.log('v1: handleTap4', str)
+    },
+    tapV1Capture() {
+      console.log('v1: capture')
+    },
+    tapBtn() {
+      console.log('tapBtn')
+    },
+    tapBtn1(str, $event) {
+      this.triggerEvent('test')
+      console.log('tapBtn1 and str is:', str, $event)
+    },
+    sayHello() {
+      this.btnName = 'changed BTNNAME'
+      console.log('sayHello')
+      return 'sayHello'
+    },
+    handleaaaBtnFn() {
+      console.log('handleaaaBtnFn in btn component')
+    }
+  }
+})
+</script>
+
+<style lang="stylus"></style>
+
+<script type="application/json">
+{
+  // "runtimeCompile": true,
+  "component": true,
+  "usingComponents": {
+    "v2": "./v2.mpx"
+  }
+}
+</script>

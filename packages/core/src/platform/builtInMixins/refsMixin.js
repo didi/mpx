@@ -91,6 +91,9 @@ export default function getRefsMixin () {
   return {
     [BEFORECREATE] () {
       this.$refs = {}
+      if (__mpx_mode__ === 'tt') {
+        this.$asyncRefs = {}
+      }
     },
     [CREATED] () {
       this.__updateRef && this.__updateRef()
@@ -122,9 +125,9 @@ export default function getRefsMixin () {
           }
         }
 
+        // 运行时编译组件获取 ref 节点
         if (this.r && this.r.refs) {
           const refs = this.r.refs
-          // 运行时编译组件获取 ref 节点
           const rootContext = this.__getNode(this.r.nodeId).context
           setRef(rootContext, refs)
         }
@@ -133,20 +136,20 @@ export default function getRefsMixin () {
           refs.forEach(ref => setRef(this, ref))
         }
       },
-      __getRefNode (ref) {
+      __getRefNode (ref, isAsync) {
         if (!ref) return
         let selector = ref.selector.replace(/{{mpxCid}}/g, this.mpxCid)
         if (ref.type === 'node') {
           const query = this.createSelectorQuery ? this.createSelectorQuery() : envObj.createSelectorQuery()
           return query && (ref.all ? query.selectAll(selector) : query.select(selector))
         } else if (ref.type === 'component') {
-          // 头条获取组件ref返回promise
-          if (__mpx_mode__ === 'tt') {
+          if (isAsync) {
             return new Promise((resolve) => {
               ref.all ? this.selectAllComponents(selector, resolve) : this.selectComponent(selector, resolve)
             })
+          } else {
+            return ref.all ? this.selectAllComponents(selector) : this.selectComponent(selector)
           }
-          return ref.all ? this.selectAllComponents(selector) : this.selectComponent(selector)
         }
       }
     }
