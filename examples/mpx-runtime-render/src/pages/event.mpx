@@ -11,9 +11,9 @@
 </template>
 
 <script>
-import { createComponent } from '@mpxjs/core'
+import { createPage } from '@mpxjs/core'
 
-createComponent({
+createPage({
   data: {
     navigatorList: [
       {
@@ -105,13 +105,6 @@ createComponent({
 {
   "runtimeCompile": true,
   "usingComponents": {
-    "btn": "../components/btn.mpx",
-    "testtest": "../components/V2.mpx",
-    "slot-a": "../components/slot-a.mpx",
-    "slot-a-alias": "./slot/components/slot-a.mpx"
-    // "aaa": "../components/aaa.mpx",
-    // "custom-input": "../components/input.mpx",
-    // "v1": "../components/v1.mpx"
   }
 }
 </script>

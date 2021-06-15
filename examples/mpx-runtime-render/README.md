@@ -23,8 +23,8 @@ npm run build:mp // 小程序生产环境构建
 | wx:style | 已完成 |
 | wx:class | 已完成 |
 | wx:model | 已完成 |
-| wx:ref | 已完成 |
-| slot | 部分极端场景暂未处理，二期优化 |
+| slot | 已完成 |
+| wx:ref | 部分极端场景暂未处理，二期优化 |
 | 动态 component 指令 | 未完全实现，二期优化 |
 
 ## 二期优化点
