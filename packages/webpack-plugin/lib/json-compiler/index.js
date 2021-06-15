@@ -135,9 +135,7 @@ module.exports = function (raw = '{}') {
     if (callbacked) return callback()
     const dep = SingleEntryPlugin.createDependency(resource, name)
     entryDeps.add(dep)
-    console.log('callbacked', resource, name)
     this._compilation.addEntry(this._compiler.context, dep, name, (err, module) => {
-      console.log('the module resource', resource, 111, name)
       entryDeps.delete(dep)
       checkEntryDeps()
       callback(err, module)
@@ -794,7 +792,6 @@ module.exports = function (raw = '{}') {
           if (runtimeComponents.includes(name)) {
             collectCustomComponentWxss(`${componentPath}.wxss`)
           }
-          // console.log('the component path is:', componentPath, this.resourcePath)
         }, undefined, callback)
       }, callback)
     } else if (json.componentGenerics) {

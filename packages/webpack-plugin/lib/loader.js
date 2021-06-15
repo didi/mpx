@@ -176,14 +176,16 @@ module.exports = function (content) {
                         if (err) {
                           return callback(err)
                         }
-                        if (content && content.runtimeCompile) {
+                        const isRuntimeCompile = content && content.runtimeCompile
+                        if (isRuntimeCompile) {
                           runtimeComponents.push(name)
                         }
                       })
                     } else if (json.content) {
                       try {
                         const content = JSON5.parse(parts.json.content)
-                        if (content && content.runtimeCompile) {
+                        const isRuntimeCompile = content && content.runtimeCompile
+                        if (isRuntimeCompile) {
                           runtimeComponents.push(name)
                         }
                       } catch (e) {
@@ -521,7 +523,6 @@ module.exports = function (content) {
         })
         this._module.addDependency(dep)
       }
-      console.log('the output is:', output)
       callback(null, output)
     }
   ], callback)

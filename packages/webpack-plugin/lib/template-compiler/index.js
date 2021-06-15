@@ -220,7 +220,6 @@ module.exports = function (raw) {
 
   const issuer = this._module.issuer
   const parser = issuer.parser
-  // console.log('the fileDependencies is:', issuer.buildInfo.fileDependencies, resourcePath)
   // 同步issuer的dependencies，确保watch中issuer rebuild时template也进行rebuild，使该loader中往issuer中注入的依赖持续有效
   issuer.buildInfo.fileDependencies.forEach((dep) => {
     this.addDependency(dep)

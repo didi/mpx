@@ -1,6 +1,7 @@
 import Element, { nodeOps } from './element'
 import { cache } from './utils'
 
+// TODO: patch 流程下期优化
 export default function patch (oldVnode, vnode, context) {
   if (!context.nodeIds) {
     context.nodeIds = new Set()

@@ -1,4 +1,4 @@
-import { isObject } from '../../helper/utils'
+import { isObject, isPlainObject } from '../../helper/utils'
 import { stringifyClass, stringifyStyle } from './stringify-wxs'
 
 let uid = 0
@@ -101,9 +101,8 @@ export default function renderHelperMixin () {
         console.log(this.__mpxProxy.target.__aliasTags)
       },
       __b(...args) {
-        // TODO: 添加对于数据结构的判断
         return args.reduce((res, arg) => {
-          return Object.assign(res, arg)
+          return isPlainObject ? Object.assign(res, arg) : res
         }, {})
       }
     }

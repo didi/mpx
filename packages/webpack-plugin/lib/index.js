@@ -627,7 +627,6 @@ class MpxWebpackPlugin {
           if (/base\w*\.wxml/.test(file)) {
             let runtimeTemplate = genRuntimeTemplate(getTemplateNodes())
             content.add(runtimeTemplate)
-            // console.log('the injected wxml is:', getTemplateNodes())
           }
 
           // 运行时组件的样式注入
@@ -636,7 +635,6 @@ class MpxWebpackPlugin {
             res.add(addCustomComponentWxss())
             res.add(content.source())
             content = res
-            // console.log('the mpx-custom-element content is:', content.source())
           }
 
           // 运行时组件配置注入

@@ -13,7 +13,7 @@ createComponent({
   options: {
     addGlobalClass: true,
     styleIsolation: 'shared',
-    // virtualHost: true
+    virtualHost: true
   },
   properties: {
     r: {
