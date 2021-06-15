@@ -21,7 +21,7 @@ module.exports = function (content) {
   const options = loaderUtils.getOptions(this) || {}
 
   const { resourcePath: filePath, queryObj } = parseRequest(this.resource)
-  
+
   const context = (
     this.rootContext ||
     (this.options && this.options.context) ||
@@ -160,7 +160,6 @@ module.exports = function (content) {
       default:
         requestString = JSON.stringify(src)
     }
-    console.log('the requestString is:', requestString)
     return '" + require(' + requestString + ') + "'
   }) + ';'
 }

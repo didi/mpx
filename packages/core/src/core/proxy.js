@@ -149,7 +149,6 @@ export default class MPXProxy {
 
   initState () {
     const options = this.options
-    // TODO: dataFn 用以函数方法来获取数据
     const proxyedKeys = this.initData(options.data, options.dataFn)
     const proxyedKeysMap = makeMap(proxyedKeys)
     this.initComputed(options.computed)

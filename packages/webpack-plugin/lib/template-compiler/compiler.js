@@ -1753,7 +1753,6 @@ function evalExp (exp) {
   return result
 }
 
-// TODO: evalExp 内的逻辑是否对于 addIfCondition 有影响？evalExp 主要是计算非变量值的情况
 function postProcessIf (el, options, currentParent) {
   let attrs, result, prevNode
   if (el.if) {
@@ -2181,59 +2180,6 @@ function processShow (el, options, root) {
       el.showStyle = `${showExp}||${showExp}===undefined?{}:{display:"none"}`
     }
   }
-
-  // 如果是根节点
-  // if (isRoot) {
-  //   // 自定义组件节点将 show 作为属性传递下去
-  //   if (isComponentNode(el, options)) {
-  //     if (show === '') {
-  //       show = '{{false}}'
-  //       showExp = 'false'
-  //     }
-  //     // 运行时编译不需要这个属性
-  //     addAttrs(el, [{
-  //       name: 'mpxShow',
-  //       value: show
-  //     }])
-  //     el.show = showExp ? showExp : parseMustache(show).result
-  //   } else {
-  //     // 普通元素节点
-  //     let oldStyle = getAndRemoveAttr(el, 'style').val
-  //     oldStyle = oldStyle ? oldStyle + ';' : ''
-  //     addAttrs(el, [{
-  //       name: 'style',
-  //       value: `${oldStyle}{{${showExp}||${showExp}===undefined?'':'display:none;'}}`
-  //     }])
-  //     el.showStyle = `${showExp}||${showExp}===undefined?{}:{display:"none"}`
-  //   }
-  // } else {
-  //   // 使用了 wx:show 的节点
-  //   if (show !== undefined) {
-  //     // 自定义组件节点将 show 作为属性传递下去
-  //     if (isComponentNode(el, options)) {
-  //       if (show === '') {
-  //         show = '{{false}}'
-  //         showExp = 'false'
-  //       }
-  //       // 运行时编译不需要这个属性
-  //       addAttrs(el, [{
-  //         name: 'mpxShow',
-  //         value: show
-  //       }])
-  //       el.show = showExp ? showExp : parseMustache(show).result
-  //     } else {
-  //       // 普通元素节点
-  //       const showExp = parseMustache(show).result
-  //       let oldStyle = getAndRemoveAttr(el, 'style').val
-  //       oldStyle = oldStyle ? oldStyle + ';' : ''
-  //       addAttrs(el, [{
-  //         name: 'style',
-  //         value: `${oldStyle}{{${showExp}||${showExp}===undefined?'':'display:none;'}}`
-  //       }])
-  //       el.showStyle = `${showExp}||${showExp}===undefined?{}:{display:"none"}`
-  //     }
-  //   }
-  // }
 }
 
 function processTemplate (el) {
@@ -2733,7 +2679,6 @@ function genElement (node) {
         // <component is="{{ xxx }}">
         if (node.is) {
           code = _genComponent(node.is, node)
-          console.log('the component.is is:', code)
         } else {
           let data = _genData(node)
           const children = _genChildren(node)

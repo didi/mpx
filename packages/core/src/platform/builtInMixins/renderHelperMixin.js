@@ -1,5 +1,5 @@
 import { isObject, isPlainObject } from '../../helper/utils'
-import { stringifyClass, stringifyStyle } from './stringify-wxs'
+import { stringifyClass, stringifyStyle } from '../../helper/stringify'
 
 let uid = 0
 const getUid = () => ++uid
