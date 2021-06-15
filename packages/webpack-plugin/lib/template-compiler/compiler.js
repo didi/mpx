@@ -10,6 +10,7 @@ const addQuery = require('../utils/add-query')
 const transDynamicClassExpr = require('./trans-dynamic-class-expr')
 const dash2hump = require('../utils/hump-dash').dash2hump
 const { inBrowser } = require('../utils/env')
+const hash = require('hash-sum')
 const {
   setTemplateNodes,
   genSlots,

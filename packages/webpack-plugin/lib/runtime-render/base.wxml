@@ -28,8 +28,8 @@
     hidden="{{r.hidden}}"
     animation="{{r.animation}}"
     data-private-node-id="{{r.nodeId}}"
-
     data-eventconfigs="{{ r.eventconfigs }}"
+
     bindtap="__invoke"
     bindtouchstart="__invoke"
     bindtouchmove="__invoke"
@@ -53,16 +53,17 @@
     hidden="{{r.hidden}}"
     id="{{r.id}}"
     data-private-node-id="{{r.nodeId}}"
+    data-eventconfigs="{{ r.eventconfigs }}"
 
-    bindtap="onTap"
-    bindtouchstart="onTouchStart"
-    bindtouchmove="onTouchMove"
-    bindtouchend="onTouchEnd"
-    bindtouchcancel="onTouchCancel"
+    bindtap="__invoke"
+    bindtouchstart="__invoke"
+    bindtouchmove="__invoke"
+    bindtouchend="__invoke"
+    bindtouchcancel="__invoke"
 
-    bindchange="onSwiperChange"
-    bindtransition="onSwiperTransition"
-    bindanimationEnd="onSwiperAnimationEnd"
+    bindchange="__invoke"
+    bindtransition="__invoke"
+    bindanimationEnd="__invoke"
 
     indicator-dots="{{tool.processVal(r['indicator-dots'], false)}}"
     indicator-color="{{tool.processVal(r['indicator-color'], 'rgba(0, 0, 0, .3)')}}"
@@ -87,20 +88,35 @@
       class="{{item.class}}"
       id="{{item.id}}"
       data-private-node-id="{{item.nodeId}}"
-    ><template is="children" data="{{r: item.children}}" /></swiper-item></swiper></template><template name="scroll-view"><scroll-view
+    ><template is="children" data="{{r: item.children}}" /></swiper-item></swiper></template>
+
+  <template name="swiper-item">
+    <swiper-item
+      wx:for="{{r.children}}"
+      wx:if="{{item.nodeType !== 'h-comment'}}"
+      wx:key="nodeId"
+      class="{{item.class}}"
+      id="{{item.id}}"
+      data-private-node-id="{{item.nodeId}}"
+      data-eventconfigs="{{ r.eventconfigs }}"
+    ><template is="children" data="{{r: item.children}}" /></swiper-item>
+  </template>
+
+  <template name="scroll-view"><scroll-view
     style="{{r.style}}"
     class="{{r.class}}"
     hidden="{{r.hidden}}"
     id="{{r.id}}"
     data-private-node-id="{{r.nodeId}}"
+    data-eventconfigs="{{ r.eventconfigs }}"
 
-    bindrefresherpulling="onScrollViewRefresherPulling"
-    bindrefresherrefresh="onScrollViewRefresherRefresh"
-    bindrefresherrestore="onScrollViewRefresherRestore"
-    bindrefresherabort="onScrollViewRefresherAbort"
-    bindscrolltoupper="onScrollViewScrollToUpper"
-    bindscrolltolower="onScrollViewScrollToLower"
-    bindscroll="onScrollViewScroll"
+    bindrefresherpulling="__invoke"
+    bindrefresherrefresh="__invoke"
+    bindrefresherrestore="__invoke"
+    bindrefresherabort="__invoke"
+    bindscrolltoupper="__invoke"
+    bindscrolltolower="__invoke"
+    bindscroll="__invoke"
 
     scroll-x="{{r['scroll-x']}}"
     scroll-y="{{r['scroll-y']}}"
@@ -127,8 +143,9 @@
     id="{{r.id}}"
     hidden="{{r.hidden}}"
     data-private-node-id="{{r.nodeId}}"
+    data-eventconfigs="{{ r.eventconfigs }}"
 
-    bindtap="onTap"
+    bindtap="__invoke"
 
     scroll-top="{{r['scroll-top']}}"
   ><template is="children" data="{{r: r.children}}" /></cover-view></template>
@@ -139,8 +156,9 @@
     hidden="{{r.hidden}}"
     id="{{r.id}}"
     data-private-node-id="{{r.nodeId}}"
+    data-eventconfigs="{{ r.eventconfigs }}"
 
-    bindtap="onTap"
+    bindtap="__invoke"
 
     src="{{r.src}}"
   ><template is="children" data="{{r: r.children}}" /></cover-image></template>
@@ -151,6 +169,7 @@
     hidden="{{r.hidden}}"
     id="{{r.id}}"
     data-private-node-id="{{r.nodeId}}"
+    data-eventconfigs="{{ r.eventconfigs }}"
 
     scale-area="{{r['scale-area']}}"
   ><moveable-view
@@ -162,12 +181,13 @@
       hidden="{{item.hidden}}"
       id="{{item.id}}"
       data-private-node-id="{{item.nodeId}}"
+      data-eventconfigs="{{ r.eventconfigs }}"
 
-      bindtap="onTap"
-      bindtouchstart="onTouchStart"
-      bindtouchmove="onTouchMove"
-      bindtouchend="onTouchEnd"
-      bindtouchcancel="onTouchCancel"
+      bindtap="__invoke"
+      bindtouchstart="__invoke"
+      bindtouchmove="__invoke"
+      bindtouchend="__invoke"
+      bindtouchcancel="__invoke"
 
       animation="{{tool.processVal(r.animation, true)}}"
       direction="{{tool.processVal(item.direction, 'none')}}"
@@ -184,18 +204,18 @@
       scale-value="{{tool.processVal(item['scale-value'], 1)}}"
     ><template is="children" data="{{r: item.children}}" /></moveable-view></moveable-area></template>
 
-    <template name="h-element"><view
+  <template name="h-element"><view
     style="{{r.style}}"
     class="{{r.class}}"
     id="{{r.id}}"
     animation="{{r.animation}}"
     data-private-node-id="{{r.nodeId}}"
 
-    bindtap="onTap"
-    bindtouchstart="onTouchStart"
-    bindtouchmove="onTouchMove"
-    bindtouchend="onTouchEnd"
-    bindtouchcancel="onTouchCancel"
+    bindtap="__invoke"
+    bindtouchstart="__invoke"
+    bindtouchmove="__invoke"
+    bindtouchend="__invoke"
+    bindtouchcancel="__invoke"
   ><template is="children" data="{{r: r.children}}" /></view></template>
 
 
@@ -208,12 +228,13 @@
     id="{{r.id}}"
     animation="{{r.animation}}"
     data-private-node-id="{{r.nodeId}}"
+    data-eventconfigs="{{ r.eventconfigs }}"
 
-    bindtap="onTap"
-    bindtouchstart="onTouchStart"
-    bindtouchmove="onTouchMove"
-    bindtouchend="onTouchEnd"
-    bindtouchcancel="onTouchCancel"
+    bindtap="__invoke"
+    bindtouchstart="__invoke"
+    bindtouchmove="__invoke"
+    bindtouchend="__invoke"
+    bindtouchcancel="__invoke"
 
     decode="{{r.decode}}"
     space="{{r.space}}"
@@ -228,30 +249,34 @@
     hidden="{{r.hidden}}"
     id="{{r.id}}"
     data-private-node-id="{{r.nodeId}}"
+    data-eventconfigs="{{ r.eventconfigs }}"
 
-    bindtap="onTap"
-    bindtouchstart="onTouchStart"
-    bindtouchmove="onTouchMove"
-    bindtouchend="onTouchEnd"
-    bindtouchcancel="onTouchCancel"
+    bindtap="__invoke"
+    bindtouchstart="__invoke"
+    bindtouchmove="__invoke"
+    bindtouchend="__invoke"
+    bindtouchcancel="__invoke"
 
     type="{{r.type}}"
     size="{{tool.processVal(r.size, '23')}}"
     color="{{r.color}}"
-  ></icon></template><template name="progress"><progress
+  ></icon></template>
+
+  <template name="progress"><progress
     style="{{r.style}}"
     class="{{r.class}}"
     hidden="{{r.hidden}}"
     id="{{r.id}}"
     data-private-node-id="{{r.nodeId}}"
+    data-eventconfigs="{{ r.eventconfigs }}"
 
-    bindtap="onTap"
-    bindtouchstart="onTouchStart"
-    bindtouchmove="onTouchMove"
-    bindtouchend="onTouchEnd"
-    bindtouchcancel="onTouchCancel"
+    bindtap="__invoke"
+    bindtouchstart="__invoke"
+    bindtouchmove="__invoke"
+    bindtouchend="__invoke"
+    bindtouchcancel="__invoke"
 
-    bindctiveend="onProgressActiveEnd"
+    bindctiveend="__invoke"
 
     percent="{{tool.processVal(r.percent, 0)}}"
     show-info="{{r['show-info']}}"
@@ -263,30 +288,35 @@
     background-color="{{r['background-color']}}"
     active="{{tool.processVal(r.active, false)}}"
     active-mode="{{r['active-mode']}}"
-  ></progress></template><template name="rich-text"><rich-text
+  ></progress></template>
+
+  <template name="rich-text"><rich-text
     style="{{r.style}}"
     class="{{r.class}}"
     hidden="{{r.hidden}}"
     id="{{r.id}}"
     data-private-node-id="{{r.nodeId}}"
+    data-eventconfigs="{{ r.eventconfigs }}"
 
-    bindtap="onTap"
-    bindtouchstart="onTouchStart"
-    bindtouchmove="onTouchMove"
-    bindtouchend="onTouchEnd"
-    bindtouchcancel="onTouchCancel"
-    bindlongpress="onLongTap"
+    bindtap="__invoke"
+    bindtouchstart="__invoke"
+    bindtouchmove="__invoke"
+    bindtouchend="__invoke"
+    bindtouchcancel="__invoke"
+    bindlongpress="__invoke"
 
     nodes="{{tool.processVal(r.nodes, [])}}"
-  ></rich-text></template><template name="button"><button
+  ></rich-text></template>
+
+  <template name="button"><button
     style="{{r.style}}"
     class="{{r.class}}"
     hidden="{{r.hidden}}"
     id="{{r.id}}"
     animation="{{r.animation}}"
     data-private-node-id="{{r.nodeId}}"
-
     data-eventconfigs="{{ r.eventconfigs }}"
+
     bindtap="__invoke"
     bindtouchstart="__invoke"
     bindtouchmove="__invoke"
@@ -296,9 +326,9 @@
     bindgetuserinfo="__invoke"
     bindcontact="__invoke"
     bindgetphonenumber="__invoke"
-    binderror="onButtonError"
-    bindopensetting="onButtonOpenSetting"
-    bindlaunchapp="onButtonLaunchApp"
+    binderror="__invoke"
+    bindopensetting="__invoke"
+    bindlaunchapp="__invoke"
 
     size="{{tool.processVal(r.size, 'default')}}"
     type="{{tool.processVal(r.type, '')}}"
@@ -319,54 +349,63 @@
     app-parameter="{{tool.processVal(r['app-parameter'], '')}}"
     show-message-card="{{tool.processVal(r['show-message-card'], '')}}"
     business-id="{{tool.processVal(r['business-id'], '')}}"
-  ><template is="children" data="{{r: r.children}}" /></button></template><template name="form"><form
+  ><template is="children" data="{{r: r.children}}" /></button></template>
+
+
+  <template name="form"><form
     style="{{r.style}}"
     class="{{r.class}}"
     hidden="{{r.hidden}}"
     id="{{r.id}}"
     animation="{{r.animation}}"
     data-private-node-id="{{r.nodeId}}"
+    data-eventconfigs="{{ r.eventconfigs }}"
 
-    bindtap="onTap"
-    bindtouchstart="onTouchStart"
-    bindtouchmove="onTouchMove"
-    bindtouchend="onTouchEnd"
-    bindtouchcancel="onTouchCancel"
+    bindtap="__invoke"
+    bindtouchstart="__invoke"
+    bindtouchmove="__invoke"
+    bindtouchend="__invoke"
+    bindtouchcancel="__invoke"
 
-    bindsubmit="onFormSubmit"
-    bindreset="onFormReset"
+    bindsubmit="__invoke"
+    bindreset="__invoke"
 
     report-submit="{{r['report-submit']}}"
     report-submit-timeout="{{tool.processVal(r['report-submit-timeout'], 0)}}"
-  ><template is="children" data="{{r: r.children}}" /></form></template><template name="label"><label
+  ><template is="children" data="{{r: r.children}}" /></form></template>
+
+  <template name="label"><label
     style="{{r.style}}"
     class="{{r.class}}"
     hidden="{{r.hidden}}"
     id="{{r.id}}"
     data-private-node-id="{{r.nodeId}}"
+    data-eventconfigs="{{ r.eventconfigs }}"
 
-    bindtap="onTap"
-    bindtouchstart="onTouchStart"
-    bindtouchmove="onTouchMove"
-    bindtouchend="onTouchEnd"
-    bindtouchcancel="onTouchCancel"
+    bindtap="__invoke"
+    bindtouchstart="__invoke"
+    bindtouchmove="__invoke"
+    bindtouchend="__invoke"
+    bindtouchcancel="__invoke"
 
     for="{{tool.processVal(r.for, '')}}"
-  ><template is="children" data="{{r: r.children}}" /></label></template><template name="input"><input
+  ><template is="children" data="{{r: r.children}}" /></label></template>
+
+  <template name="input"><input
     style="{{r.style}}"
     class="{{r.class}}"
     hidden="{{r.hidden}}"
     id="{{r.id}}"
     data-private-node-id="{{r.nodeId}}"
-
     data-eventconfigs="{{ r.eventconfigs }}"
-    bindtap="onTap"
+
+    bindtap="__invoke"
 
     bindinput="__invoke"
-    bindfocus="onInputFocus"
-    bindblur="onInputBlur"
-    bindconfirm="onInputConfirm"
-    bindkeyboardheightchange="onInputKeyBoardHeightChange"
+    bindfocus="__invoke"
+    bindblur="__invoke"
+    bindconfirm="__invoke"
+    bindkeyboardheightchange="__invoke"
 
     value="{{r.value}}"
     type="{{tool.processVal(r.type, 'text')}}"
@@ -385,21 +424,24 @@
     selection-end="{{tool.processVal(r['selection-end'], -1)}}"
     adjust-position="{{tool.processVal(r['adjust-position'], true)}}"
     hold-keyboard="{{r['hold-keyboard']}}"
-  ></input></template><template name="textarea"><textarea
+  ></input></template>
+
+  <template name="textarea"><textarea
     style="{{r.style}}"
     class="{{r.class}}"
     hidden="{{r.hidden}}"
     id="{{r.id}}"
     data-private-node-id="{{r.nodeId}}"
+    data-eventconfigs="{{ r.eventconfigs }}"
 
-    bindtap="onTap"
+    bindtap="__invoke"
 
-    bindfocus="onTextareaFocus"
-    bindblur="onTextareaBlur"
-    bindlineChange="onTextareaLineChange"
-    bindinput="onTextareaInput"
-    bindconfirm="onTextareaConfirm"
-    bindkeyboardheightchange="onTextareaKeyBoardHeightChange"
+    bindfocus="__invoke"
+    bindblur="__invoke"
+    bindlineChange="__invoke"
+    bindinput="__invoke"
+    bindconfirm="__invoke"
+    bindkeyboardheightchange="__invoke"
 
     value="{{tool.processVal(r.value, '')}}"
     placeholder="{{r.placeholder}}"
@@ -417,99 +459,120 @@
     selection-end="{{tool.processVal(r['selection-end'], -1)}}"
     adjust-position="{{tool.processVal(r['adjust-position'], true)}}"
     disable-default-padding="{{r['disable-default-padding']}}"
-  ></textarea></template><template name="radio"><radio
+  ></textarea></template>
+
+  <template name="radio"><radio
     style="{{r.style}}"
     class="{{r.class}}"
     hidden="{{r.hidden}}"
     id="{{r.id}}"
     data-private-node-id="{{r.nodeId}}"
+    data-eventconfigs="{{ r.eventconfigs }}"
 
-    bindtap="onTap"
+    bindtap="__invoke"
 
     value="{{tool.processVal(r.value, '')}}"
     disabled="{{tool.processVal(r.disabled, false)}}"
     checked="{{tool.processVal(r.checked, false)}}"
     color="{{tool.processVal(r.color, '')}}"
-  ><template is="children" data="{{r: r.children}}" /></radio></template><template name="radio-group"><radio-group
+  ><template is="children" data="{{r: r.children}}" /></radio></template>
+
+  <template name="radio-group"><radio-group
     style="{{r.style}}"
     class="{{r.class}}"
     hidden="{{r.hidden}}"
     id="{{r.id}}"
     data-private-node-id="{{r.nodeId}}"
+    data-eventconfigs="{{ r.eventconfigs }}"
 
-    bindtap="onTap"
-    bindchange="onRadioChange"
+    bindtap="__invoke"
+    bindchange="__invoke"
 
     name="{{name}}"
-  ><template is="children" data="{{r: r.children}}" /></radio-group></template><template name="checkbox"><checkbox
+  ><template is="children" data="{{r: r.children}}" /></radio-group></template>
+
+  <template name="checkbox"><checkbox
     style="{{r.style}}"
     class="{{r.class}}"
     hidden="{{r.hidden}}"
     id="{{r.id}}"
     data-private-node-id="{{r.nodeId}}"
+    data-eventconfigs="{{ r.eventconfigs }}"
 
-    bindtap="onTap"
-    bindchange="onCheckboxItemChange"
+    bindtap="__invoke"
+    bindchange="__invoke"
 
     name="{{r.name}}"
     value="{{tool.processVal(r.value, '')}}"
     disabled="{{r.disabled}}"
     checked="{{r.checked}}"
     color="{{r.color}}"
-  ></checkbox></template><template name="checkbox-group"><checkbox-group
+  ></checkbox></template>
+
+  <template name="checkbox-group"><checkbox-group
     style="{{r.style}}"
     class="{{r.class}}"
     hidden="{{r.hidden}}"
     id="{{r.id}}"
     data-private-node-id="{{r.nodeId}}"
+    data-eventconfigs="{{ r.eventconfigs }}"
 
-    bindtap="onTap"
-    bindchange="onCheckboxChange"
+    bindtap="__invoke"
+    bindchange="__invoke"
 
     name="{{r.name}}"
-  ><template is="children" data="{{r: r.children}}" /></checkbox-group></template><template name="switch"><switch
+  ><template is="children" data="{{r: r.children}}" /></checkbox-group></template>
+
+  <template name="switch"><switch
     style="{{r.style}}"
     class="{{r.class}}"
     hidden="{{r.hidden}}"
     id="{{r.id}}"
     data-private-node-id="{{r.nodeId}}"
+    data-eventconfigs="{{ r.eventconfigs }}"
 
-    bindtap="onTap"
-    bindchange="onSwitchChange"
+    bindtap="__invoke"
+    bindchange="__invoke"
 
     name="{{tool.processVal(r.name, '')}}"
     checked="{{r.checked}}"
     disabled="{{r.disabled}}"
     type="{{tool.processVal(r.type, 'switch')}}"
     color="{{r.color}}"
-  ></switch></template><template name="editor"><editor
+  ></switch></template>
+
+  <template name="editor"><editor
     style="{{r.style}}"
     class="{{r.class}}"
     hidden="{{r.hidden}}"
     id="{{r.id}}"
     data-private-node-id="{{r.nodeId}}"
+    data-eventconfigs="{{ r.eventconfigs }}"
 
-    bindready="onEditorReady"
-    bindfocus="onEditorFocus"
-    bindblur="onEditorBlur"
-    bindinput="onEditorInput"
-    bindstatuschange="onEditorStatusChange"
+    bindready="__invoke"
+    bindfocus="__invoke"
+    bindblur="__invoke"
+    bindinput="__invoke"
+    bindstatuschange="__invoke"
 
     read-only="{{r['read-only']}}"
     placeholder="{{tool.processVal(r['placeholder'], '')}}"
     show-img-size="{{r['show-img-size']}}"
     show-img-toolbar="{{r['show-img-toolbar']}}"
     show-img-resize="{{r['show-img-resize']}}"
-  /></template><template name="slider"><slider
+  /></template>
+
+  <template name="slider"><slider
     style="{{r.style}}"
     class="{{r.class}}"
     hidden="{{r.hidden}}"
     id="{{r.id}}"
     data-private-node-id="{{r.nodeId}}"
+    data-eventconfigs="{{ r.eventconfigs }}"
 
-    bindtap="onTap"
-    bindchange="onSliderChange"
-    bindchanging="onSliderChanging"
+    bindtap="__invoke"
+    bindchange="__invoke"
+    bindchanging="__invoke"
 
     name="{{tool.processVal(r.name, '')}}"
     min="{{tool.processVal(r.min, 0)}}"
@@ -524,16 +587,19 @@
     block-size="{{tool.processVal(r['block-size'], 28)}}"
     block-color="{{tool.processVal(r['block-color'], '#ffffff')}}"
     show-value="{{r['show-value']}}"
-  ></slider></template><template name="picker-view"><picker-view
+  ></slider></template>
+
+  <template name="picker-view"><picker-view
     style="{{r.style}}"
     class="{{r.class}}"
     hidden="{{r.hidden}}"
     id="{{r.id}}"
     data-private-node-id="{{r.nodeId}}"
+    data-eventconfigs="{{ r.eventconfigs }}"
 
-    bindchange="onPickerViewChange"
-    bindpickstart="onPickerViewPickstart"
-    onpickend="onPickerViewPickend"
+    bindchange="__invoke"
+    bindpickstart="__invoke"
+    onpickend="__invoke"
 
     indicator-style="{{tool.processVal(r['indicator-style'], '')}}"
     indicator-class="{{tool.processVal(r['indicator-class'], '')}}"
@@ -550,28 +616,31 @@
         id="{{item.id}}"
         data-private-node-id="{{item.nodeId}}"
 
-        bindtap="onTap"
-        bindtouchstart="onTouchStart"
-        bindtouchmove="onTouchMove"
-        bindtouchend="onTouchEnd"
-        bindtouchcancel="onTouchCancel"
-    ><template is="children" data="{{r: item.children}}" /></picker-view-column></picker-view></template><template name="picker"><picker
+        bindtap="__invoke"
+        bindtouchstart="__invoke"
+        bindtouchmove="__invoke"
+        bindtouchend="__invoke"
+        bindtouchcancel="__invoke"
+    ><template is="children" data="{{r: item.children}}" /></picker-view-column></picker-view></template>
+
+
+  <template name="picker"><picker
     style="{{r.style}}"
     class="{{r.class}}"
     hidden="{{r.hidden}}"
     id="{{r.id}}"
     data-private-node-id="{{r.nodeId}}"
-
     data-eventconfigs="{{ r.eventconfigs }}"
-    bindtap="onTap"
-    bindtouchstart="onTouchStart"
-    bindtouchmove="onTouchMove"
-    bindtouchend="onTouchEnd"
-    bindtouchcancel="onTouchCancel"
+
+    bindtap="__invoke"
+    bindtouchstart="__invoke"
+    bindtouchmove="__invoke"
+    bindtouchend="__invoke"
+    bindtouchcancel="__invoke"
 
     bindchange="__invoke"
-    bindcolumnchange="onPickerColumnChange"
-    bindcancel="onPickerCancel"
+    bindcolumnchange="__invoke"
+    bindcancel="__invoke"
 
     name="{{r.name}}"
     mode="{{tool.processVal(r.mode, 'selector')}}"
@@ -583,22 +652,25 @@
     end="{{tool.processVal(r.end, '')}}"
     fields="{{tool.processVal(r.fields, 'day')}}"
     customItem="{{tool.processVal(r['custom-item'], '')}}"
-  ><template is="children" data="{{r: r.children}}" /></picker></template><template name="navigator"><navigator
+  ><template is="children" data="{{r: r.children}}" /></picker></template>
+
+  <template name="navigator"><navigator
     style="{{r.style}}"
     class="{{r.class}}"
     hidden="{{r.hidden}}"
     id="{{r.id}}"
     data-private-node-id="{{r.nodeId}}"
+    data-eventconfigs="{{ r.eventconfigs }}"
 
-    bindtap="onTap"
-    bindtouchstart="onTouchStart"
-    bindtouchmove="onTouchMove"
-    bindtouchend="onTouchEnd"
-    bindtouchcancel="onTouchCancel"
+    bindtap="__invoke"
+    bindtouchstart="__invoke"
+    bindtouchmove="__invoke"
+    bindtouchend="__invoke"
+    bindtouchcancel="__invoke"
 
-    bindsuccess="onNavigatorSuccess"
-    bindfail="onNavigatorFail"
-    bindcomplete="onNavigatorComplete"
+    bindsuccess="__invoke"
+    bindfail="__invoke"
+    bindcomplete="__invoke"
 
     url="{{tool.processVal(r.url, '')}}"
     open-type="{{tool.processVal(r['open-type'], 'navigate')}}"
@@ -612,48 +684,54 @@
     path="{{tool.processVal(r.path, '')}}"
     extra-data="{{r['extra-data']}}"
     version="{{tool.processVal(r.version, 'release')}}"
-  ><template is="children" data="{{r: r.children}}" /></navigator></template><template name="image"><image
+  ><template is="children" data="{{r: r.children}}" /></navigator></template>
+
+  <template name="image"><image
     style="{{r.style}}"
     class="{{r.class}}"
     hidden="{{r.hidden}}"
     id="{{r.id}}"
     data-private-node-id="{{r.nodeId}}"
+    data-eventconfigs="{{ r.eventconfigs }}"
 
-    bindtap="onTap"
-    bindtouchstart="onTouchStart"
-    bindtouchmove="onTouchMove"
-    bindtouchend="onTouchEnd"
-    bindtouchcancel="onTouchCancel"
+    bindtap="__invoke"
+    bindtouchstart="__invoke"
+    bindtouchmove="__invoke"
+    bindtouchend="__invoke"
+    bindtouchcancel="__invoke"
 
-    bindload="onImageLoad"
-    binderror="onImageError"
+    bindload="__invoke"
+    binderror="__invoke"
 
     webp="{{r.webp}}"
     src="{{r.src}}"
     mode="{{r.mode || 'scaleToFill'}}"
     lazy-load="{{r['lazy-load']}}"
     show-menu-by-longpress="{{r['show-menu-by-longpress']}}"
-  ></image></template><template name="video"><video
+  ></image></template>
+
+  <template name="video"><video
     style="{{r.style}}"
     class="{{r.class}}"
     hidden="{{r.hidden}}"
     id="{{r.id}}"
     data-private-node-id="{{r.nodeId}}"
+    data-eventconfigs="{{ r.eventconfigs }}"
 
-    bindtap="onTap"
-    bindtouchstart="onTouchStart"
-    bindtouchmove="onTouchMove"
-    bindtouchend="onTouchEnd"
-    bindtouchcancel="onTouchCancel"
+    bindtap="__invoke"
+    bindtouchstart="__invoke"
+    bindtouchmove="__invoke"
+    bindtouchend="__invoke"
+    bindtouchcancel="__invoke"
 
-    bindplay="onVideoPlay"
-    bindpause="onVideoPause"
-    bindended="onVideoEnded"
-    bindtimeupdate="onVideoTimeUpdate"
-    bindfullscreenchange="onVideoFullScreenChange"
-    bindwaiting="onVideoWaiting"
-    binderror="onVideoError"
-    bindprogress="onVideoProgress"
+    bindplay="__invoke"
+    bindpause="__invoke"
+    bindended="__invoke"
+    bindtimeupdate="__invoke"
+    bindfullscreenchange="__invoke"
+    bindwaiting="__invoke"
+    binderror="__invoke"
+    bindprogress="__invoke"
 
     src="{{r.src}}"
     duration="{{tool.processVal(r.duration, 0)}}"
@@ -681,38 +759,43 @@
     auto-pause-if-open-native="{{tool.processVal(r['auto-pause-if-open-native'], true)}}"
     vslide-gesture="{{r['vslide-gesture']}}"
     vslide-gesture-in-fullscreen="{{tool.processVal(r['vslide-gesture-in-fullscreen'], true)}}"
-  ></video></template><template name="camera"><camera
+  ></video></template>
+
+  <template name="camera"><camera
     style="{{r.style}}"
     hidden="{{r.hidden}}"
     id="{{r.id}}"
     data-private-node-id="{{r.nodeId}}"
-
+    data-eventconfigs="{{ r.eventconfigs }}"
 
     mode="{{tool.processVal(r.mode, 'normal')}}"
     device-position="{{tool.processVal(r['device-position'], 'back')}}"
 
-    bindstop="onCameraStop"
-    binderror="onCameraError"
-    bindinitdone="onCameraInitDone"
-    bindscancode="onCameraScanCode"
- /></template><template name="map"><map
+    bindstop="__invoke"
+    binderror="__invoke"
+    bindinitdone="__invoke"
+    bindscancode="__invoke"
+ /></template>
+
+ <template name="map"><map
     style="{{r.style}}"
     class="{{r.class}}"
     hidden="{{r.hidden}}"
     id="{{r.id}}"
     data-private-node-id="{{r.nodeId}}"
+    data-eventconfigs="{{ r.eventconfigs }}"
 
-    bindtap="onTap"
-    bindtouchstart="onTouchStart"
-    bindtouchmove="onTouchMove"
-    bindtouchend="onTouchEnd"
-    bindtouchcancel="onTouchCancel"
+    bindtap="__invoke"
+    bindtouchstart="__invoke"
+    bindtouchmove="__invoke"
+    bindtouchend="__invoke"
+    bindtouchcancel="__invoke"
 
-    bindmarkertap="onMapMarkerTap"
-    bindcontroltap="onMapControlTap"
-    bindcallouttap="onMapCalloutTap"
-    bindupdated="onMapUpdated"
-    bindregibindchange="onMapRegionChange"
+    bindmarkertap="__invoke"
+    bindcontroltap="__invoke"
+    bindcallouttap="__invoke"
+    bindupdated="__invoke"
+    bindregibindchange="__invoke"
 
     longitude="{{tool.processVal(r.longitude, 39.92)}}"
     latitude="{{tool.processVal(r.latitude, 116.46)}}"
@@ -736,44 +819,53 @@
     enable-rotate="{{r['enable-rotate']}}"
     enable-satellite="{{r['enable-satellite']}}"
     enable-traffic="{{r['enable-traffic']}}"
-  ><template is="children" data="{{r: r.children}}" /></map></template><template name="canvas"><canvas
+  ><template is="children" data="{{r: r.children}}" /></map></template>
+
+  <template name="canvas"><canvas
     style="{{r.style}}"
     class="{{r.class}}"
     hidden="{{r.hidden}}"
     id="{{r.id}}"
     data-private-node-id="{{r.nodeId}}"
+    data-eventconfigs="{{ r.eventconfigs }}"
 
-    bindtap="onTap"
-    bindtouchstart="onTouchStart"
-    bindtouchmove="onTouchMove"
-    bindtouchend="onTouchEnd"
-    bindtouchcancel="onTouchCancel"
+    bindtap="__invoke"
+    bindtouchstart="__invoke"
+    bindtouchmove="__invoke"
+    bindtouchend="__invoke"
+    bindtouchcancel="__invoke"
 
-    bindlongpress="onCanvasLongTap"
-    binderror="onCanvasError"
+    bindlongpress="__invoke"
+    binderror="__invoke"
 
     type="{{r.type}}"
     canvas-id="{{r['canvas-id']}}"
     disable-scroll="{{r['disable-scroll']}}"
-  ></canvas></template><template name="web-view"><web-view
+  ></canvas></template>
+
+  <template name="web-view"><web-view
     style="{{r.style}}"
     class="{{r.class}}"
     hidden="{{r.hidden}}"
     id="{{r.id}}"
     data-private-node-id="{{r.nodeId}}"
+    data-eventconfigs="{{ r.eventconfigs }}"
 
-    bindtap="onTap"
-    bindtouchstart="onTouchStart"
-    bindtouchmove="onTouchMove"
-    bindtouchend="onTouchEnd"
-    bindtouchcancel="onTouchCancel"
+    bindtap="__invoke"
+    bindtouchstart="__invoke"
+    bindtouchmove="__invoke"
+    bindtouchend="__invoke"
+    bindtouchcancel="__invoke"
 
-    bindmessage="onWebviewMessage"
-    bindload="onWebviewLoad"
-    binderror="onWebviewError"
+    bindmessage="__invoke"
+    bindload="__invoke"
+    binderror="__invoke"
 
     src="{{r.src}}"
-  ></web-view></template><template name="live-player"><live-player
+  ></web-view></template>
+
+  <template name="live-player"><live-player
+    data-eventconfigs="{{ r.eventconfigs }}"
     src="{{r.src}}"
     mode="{{tool.processVal(r.mode, 'live')}}"
     autoplay="{{tool.processVal(r.autoplay, false)}}"
@@ -788,13 +880,16 @@
     auto-pause-if-open-native="{{tool.processVal(r['auto-pause-if-open-native'], true)}}"
     picture-in-picture-mode="{{r['picture-in-picture-mode']}}"
 
-    bindstatechange="onLivePlayerStateChange"
-    bindfullscreenchange="onLivePlayerFullScreenChange"
-    bindnetstatus="onLivePlayerNetStatus"
-    bindaudiovolumenotify="onLivePlayerAudioVolumeNofify"
-    bindenterpictureinpicture="onLivePlayerEnterPictureInPicture"
-    bindleavepictureinpicture="onLivePlayerLeavePictureInPicture"
-  ></live-player></template><template name="live-pusher"><live-pusher
+    bindstatechange="__invoke"
+    bindfullscreenchange="__invoke"
+    bindnetstatus="__invoke"
+    bindaudiovolumenotify="__invoke"
+    bindenterpictureinpicture="__invoke"
+    bindleavepictureinpicture="__invoke"
+  ></live-player></template>
+
+  <template name="live-pusher"><live-pusher
+    data-eventconfigs="{{ r.eventconfigs }}"
     url="{{r.url}}"
     mode="{{tool.processVal(r.mode, 'RTC')}}"
     autopush="{{tool.processVal(r.autopush, false)}}"
@@ -826,12 +921,12 @@
     beauty-style="{{tool.processVal(r['beauty-style'], 'smooth')}}"
     filter="{{tool.processVal(r.filter, 'standard')}}"
 
-    bindstatechange="onLivePusherStateChange"
-    bindnetstatus="onLivePusherNetStatus"
-    binderror="onLivePusherError"
-    bindbgmstart="onLivePusherBgmStart"
-    bindbgmprogress="onLivePusherBgmProgress"
-    bindbgmcomplete="onLivePusherBgmComplete"
-    bindaudiovolumenotify="onLivePusherAudioVolumeNofify"
+    bindstatechange="__invoke"
+    bindnetstatus="__invoke"
+    binderror="__invoke"
+    bindbgmstart="__invoke"
+    bindbgmprogress="__invoke"
+    bindbgmcomplete="__invoke"
+    bindaudiovolumenotify="__invoke"
   ></live-pusher></template>
 

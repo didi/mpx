@@ -143,7 +143,7 @@ module.exports = function (content) {
                 }
                 componentsAbsolutePath[name] = absolutePath
                 // 以绝对路径缓存组件名
-                collectAliasTag(absolutePath, 'c' + hash(absolutePath))
+                collectAliasTag(absolutePath, 'c' + mpx.pathHash(absolutePath))
                 cb(null, [name, absolutePath])
               })
             }),
