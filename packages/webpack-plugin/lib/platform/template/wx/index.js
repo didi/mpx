@@ -62,14 +62,19 @@ module.exports = function getSpec ({ warn, error }) {
             }
           }
           if (el) {
-            el.injectWxsProps = {
-              injectWxsPath: '~' + normalize.lib('runtime/swanTransFor.wxs'),
-              injectWxsModuleName: '__swanTransFor__'
+            const injectWxsProp = {
+              injectWxsPath: '~' + normalize.lib('runtime/swanHelper.wxs'),
+              injectWxsModuleName: '__swanHelper__'
+            }
+            if (el.injectWxsProps && Array.isArray(el.injectWxsProps)) {
+              el.injectWxsProps.push(injectWxsProp)
+            } else {
+              el.injectWxsProps = [injectWxsProp]
             }
           }
           return {
             name: 's-for',
-            value: `${itemName}, ${indexName} in __swanTransFor__.processFor(${listName})${keyStr}`
+            value: `${itemName}, ${indexName} in __swanHelper__.processFor(${listName})${keyStr}`
           }
         },
         web ({ value }, { el }) {

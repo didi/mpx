@@ -2059,13 +2059,15 @@ function processDuplicateAttrsList (el) {
 
 // 处理wxs注入逻辑
 function processInjectWxs (meta, el) {
-  if (el.injectWxsProps) {
-    const { injectWxsPath, injectWxsModuleName } = el.injectWxsProps
-    injectWxs(meta, injectWxsModuleName, injectWxsPath)
+  if (el.injectWxsProps && el.injectWxsProps.length) {
+    el.injectWxsProps.forEach((injectWxsProp) => {
+      const { injectWxsPath, injectWxsModuleName } = injectWxsProp
+      injectWxs(meta, injectWxsModuleName, injectWxsPath)
+    })
   }
 }
 
-function postAddAttrs (el) {
+function processNoTransAttrs (el) {
   // 转换完成，把不需要处理的attr挂回去
   if (el.noTransAttrs) {
     addAttrs(el, el.noTransAttrs)
@@ -2087,7 +2089,7 @@ function processElement (el, root, options, meta) {
 
   processInjectWxs(meta, el)
 
-  postAddAttrs(el)
+  processNoTransAttrs(el)
 
   processDuplicateAttrsList(el)
 
