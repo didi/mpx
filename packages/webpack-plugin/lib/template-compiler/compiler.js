@@ -2321,6 +2321,24 @@ function processRuntime (el, options) {
   }
 }
 
+// 处理wxs注入逻辑
+function processInjectWxs (meta, el) {
+  if (el.injectWxsProps && el.injectWxsProps.length) {
+    el.injectWxsProps.forEach((injectWxsProp) => {
+      const { injectWxsPath, injectWxsModuleName } = injectWxsProp
+      injectWxs(meta, injectWxsModuleName, injectWxsPath)
+    })
+  }
+}
+
+function processNoTransAttrs (el) {
+  // 转换完成，把不需要处理的attr挂回去
+  if (el.noTransAttrs) {
+    addAttrs(el, el.noTransAttrs)
+    delete el.noTransAttrs
+  }
+}
+
 function processElement (el, root, options, meta) {
   processBindProps(el, options)
   processRuntime(el, options, meta)
@@ -2335,11 +2353,9 @@ function processElement (el, root, options, meta) {
     rulesRunner(el)
   }
 
-  // 转换完成，把不需要处理的attr挂回去
-  if (el.noTransAttrs) {
-    addAttrs(el, el.noTransAttrs)
-    delete el.noTransAttrs
-  }
+  processInjectWxs(meta, el)
+
+  processNoTransAttrs(el)
 
   processDuplicateAttrsList(el)
 
@@ -2383,7 +2399,6 @@ function processElement (el, root, options, meta) {
   }
 
   if (!pass) {
-    // processDataset(el)
     processBindEvent(el, options)
     if (mode !== 'ali') {
       processPageStatus(el, options)
