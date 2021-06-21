@@ -1,5 +1,5 @@
 <template>
-  <import src="./base.wxml" />
+  <import src="./mpx-render-base.wxml" />
   <template is="{{r.nodeType || 'h-element'}}" data="{{ r: r }}"></template>
 </template>
 

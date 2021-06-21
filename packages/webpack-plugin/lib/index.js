@@ -624,7 +624,7 @@ class MpxWebpackPlugin {
           }
 
           // 基础模板信息注入
-          if (/base\w*\.wxml/.test(file)) {
+          if (/mpx-render-base\w*\.wxml/.test(file)) {
             let runtimeTemplate = genRuntimeTemplate(getTemplateNodes())
             content.add(runtimeTemplate)
           }

@@ -112,7 +112,7 @@ module.exports = {
     return res
   },
   /**
-   * 被注入到 base.wxml 里面的自定义组件模板生成器，生成的模板主要分为2种类型：
+   * 被注入到 mpx-render-base.wxml 里面的自定义组件模板生成器，生成的模板主要分为2种类型：
    *
    * 1. 非运行组件，属性需要枚举
    * 2. 运行时组件，属性统一使用 bigAttrs 进行透传
@@ -178,7 +178,7 @@ module.exports = {
       if (node.unary) {
         res += '/>'
       } else {
-        // 非运行时自定义组件在注入 base.wxml 模板都使用 slot 插槽
+        // 非运行时自定义组件在注入 mpx-render-base.wxml 模板都使用 slot 插槽
         if (node.isCustomComponent && !(node.filePath && runtimeCompileMap[node.filePath])) {
           res += `>${genNotRuntimeCustomComponentSlots()}</${templateName}>`
         } else {

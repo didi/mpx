@@ -856,7 +856,7 @@ function parse (template, options) {
       attrs = consumeMpxCommentAttrs(attrs, mode)
 
       let element = createASTElement(tag, attrs, currentParent)
-      // 注入 base.wxml 里面的节点需要根据是否是自定义节点来决定使用的标签名
+      // 注入 mpx-render-base.wxml 里面的节点需要根据是否是自定义节点来决定使用的标签名
       element.isCustomComponent = options.usingComponents.includes(tag)
       element.isRuntimeComponent = isRuntimeComponentNode(element, options)
       if (options.componentsAbsolutePath[tag]) {
@@ -2655,7 +2655,7 @@ function addIfCondition (el, condition) {
 
 // TODO: 添加 trimEndingWhitespace 去除尾部 node 的函数
 function genElement (node) {
-  // 收集需要注入到 base.wxml 的节点 (只要被 hash 过的节点都需要被注入)
+  // 收集需要注入到 mpx-render-base.wxml 的节点 (只要被 hash 过的节点都需要被注入)
   if (node.aliasTag) {
     setTemplateNodes(node)
   }
@@ -2732,7 +2732,7 @@ function _genData (node) {
   if (node.hidden) {
     data += `hidden: ${node.hidden},`
   }
-  // 默认插槽不添加 slot 属性，这个 slot 属性主要是用于非运行组件的插槽来使用。具体见 base.wxml 里面动态生成非运行时组件的内容
+  // 默认插槽不添加 slot 属性，这个 slot 属性主要是用于非运行组件的插槽来使用。具体见 mpx-render-base.wxml 里面动态生成非运行时组件的内容
   if (node.slotTarget && node.slotTarget !== '"default"') {
     data += `slot: ${node.slotTarget},`
   }

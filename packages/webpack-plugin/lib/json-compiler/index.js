@@ -24,6 +24,8 @@ const {
   setRuntimeComponent
 } = require('../runtime-utils')
 
+const renderCustomElementPath = path.resolve(__dirname, '../runtime-render/mpx-custom-element.mpx')
+
 module.exports = function (raw = '{}') {
   // 该loader中会在每次编译中动态添加entry，不能缓存，否则watch不好使
   this.cacheable(false)
@@ -178,12 +180,11 @@ module.exports = function (raw = '{}') {
 
   // 将 element 加入到编译的流程
   if (json.runtimeCompile) {
-    const _path = path.resolve(__dirname, '../runtime-render/mpx-custom-element.mpx')
     if (!json.usingComponents) {
       json.usingComponents = {}
     }
     if (!json.usingComponents['element']) {
-      json.usingComponents['element'] = _path
+      json.usingComponents['element'] = renderCustomElementPath
     }
   }
 

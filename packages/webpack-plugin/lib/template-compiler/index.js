@@ -12,7 +12,7 @@ const {
   getAliasTag
 } = require('../runtime-utils')
 
-const noCacheReg = /mpx-custom-element\.mpx|base\.wxml/
+const noCacheReg = /mpx-custom-element\.mpx|mpx-render-base\.wxml/
 
 module.exports = function (raw) {
   if (noCacheReg.test(this.resourcePath)) {
@@ -286,7 +286,7 @@ module.exports = function (raw) {
 
   // 运行时编译的组件直接返回动态模板的内容
   if (options.runtimeCompile) {
-    const src = loaderUtils.stringifyRequest(this, require.resolve('../runtime-render/base.wxml'))
+    const src = loaderUtils.stringifyRequest(this, require.resolve('../runtime-render/mpx-render-base.wxml'))
     return `<import src=${src}/> <template is="{{r.nodeType || 'h-element'}}" data="{{ r: r }}"></template>`
   }
 
