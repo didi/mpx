@@ -29,7 +29,7 @@ module.exports = function (content) {
 
   const filePath = this.resourcePath
 
-  const moduleId = mpx.pathHash(filePath)
+  const moduleId = 'm' + mpx.pathHash(filePath)
   const { resourcePath, queryObj } = parseRequest(this.resource)
   const projectRoot = mpx.projectRoot
   const mode = mpx.mode

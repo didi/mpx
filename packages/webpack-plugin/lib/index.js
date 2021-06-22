@@ -1161,9 +1161,11 @@ try {
 
       const subpackages = Object.keys(mpx.componentsMap)
       delete subpackages.main
+
       function getPackageName (fileName) {
-        for (let item of subpackages) {
-          if (fileName.startsWith(item)) return item
+        fileName = toPosix(fileName)
+        for (let packageName of subpackages) {
+          if (fileName.startsWith(packageName + '/')) return packageName
         }
         return 'main'
       }
