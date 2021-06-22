@@ -2057,6 +2057,24 @@ function processDuplicateAttrsList (el) {
   el.attrsList = attrsList
 }
 
+// 处理wxs注入逻辑
+function processInjectWxs (meta, el) {
+  if (el.injectWxsProps && el.injectWxsProps.length) {
+    el.injectWxsProps.forEach((injectWxsProp) => {
+      const { injectWxsPath, injectWxsModuleName } = injectWxsProp
+      injectWxs(meta, injectWxsModuleName, injectWxsPath)
+    })
+  }
+}
+
+function processNoTransAttrs (el) {
+  // 转换完成，把不需要处理的attr挂回去
+  if (el.noTransAttrs) {
+    addAttrs(el, el.noTransAttrs)
+    delete el.noTransAttrs
+  }
+}
+
 function processElement (el, root, options, meta) {
   processAtMode(el)
   // 如果已经标记了这个元素要被清除，直接return跳过后续处理步骤
@@ -2069,11 +2087,9 @@ function processElement (el, root, options, meta) {
     rulesRunner(el)
   }
 
-  // 转换完成，把不需要处理的attr挂回去
-  if (el.noTransAttrs) {
-    addAttrs(el, el.noTransAttrs)
-    delete el.noTransAttrs
-  }
+  processInjectWxs(meta, el)
+
+  processNoTransAttrs(el)
 
   processDuplicateAttrsList(el)
 

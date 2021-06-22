@@ -1,4 +1,5 @@
 const compiler = require('../../lib/template-compiler/compiler')
+const path = require('path')
 
 const errorFn = jest.fn(console.error)
 const warnFn = jest.fn(console.warn)
@@ -22,8 +23,13 @@ function compileAndParse (input, { srcMode, mode, env } = { srcMode: 'wx', mode:
   return compiler.serialize(ast)
 }
 
+function resolve (dir) {
+  return path.join(__dirname, '..', dir)
+}
+
 module.exports = {
   errorFn,
   warnFn,
-  compileAndParse
+  compileAndParse,
+  resolve
 }
