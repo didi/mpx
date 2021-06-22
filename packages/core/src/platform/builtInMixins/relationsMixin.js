@@ -208,11 +208,11 @@ export default function relationsMixin (mixinType) {
 
           // 当前组件在target的slots当中
           if ((type === 'parent' || type === 'ancestor') && target.$vnode.context === this.$vnode.context) {
-            const targetRelation = target.$rawOptions && target.$rawOptions.relations && target.$rawOptions.relations[this.$options.mpxCid]
+            const targetRelation = target.$rawOptions && target.$rawOptions.relations && target.$rawOptions.relations[this.$options.componentPath]
             if (
               targetRelation &&
               targetRelation.type === relationTypeMap[type] &&
-              target.$options.mpxCid === path
+              target.$options.componentPath === path
             ) {
               // 当前匹配成功
               this.__mpxRelations[path] = {

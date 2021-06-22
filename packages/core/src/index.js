@@ -7,7 +7,7 @@ import createStore, {
   createActionsWithThis
 } from './core/createStore'
 import { injectMixins } from './core/injectMixins'
-import { extend, diffAndCloneA, makeMap } from './helper/utils'
+import { extend, diffAndCloneA, makeMap, merge } from './helper/utils'
 import { setConvertRule } from './convertor/convertor'
 import { getMixin } from './core/mergeOptions'
 import { error } from './helper/log'
@@ -200,7 +200,9 @@ EXPORT_MPX.config = {
   useStrictDiff: false,
   ignoreRenderError: false,
   ignoreProxyWhiteList: ['id', 'dataset', 'data'],
-  observeClassInstance: false
+  observeClassInstance: false,
+  hookErrorHandler: null,
+  proxyEventHandler: null
 }
 
 if (__mpx_mode__ === 'web') {
@@ -211,11 +213,26 @@ if (__mpx_mode__ === 'web') {
     // 挂载翻译方法
     if (global.i18nMethods) {
       Object.keys(global.i18nMethods).forEach((methodName) => {
+        if (/^__/.test(methodName)) return
         global.i18n[methodName] = (...args) => {
-          args.unshift(global.i18n.locale)
+          // tap i18n.version
+          args.unshift((global.i18n.version, global.i18n.locale))
           return global.i18nMethods[methodName].apply(this, args)
         }
       })
+
+      if (global.i18nMethods.__getMessages) {
+        const messages = global.i18nMethods.__getMessages()
+        global.i18n.mergeMessages = (newMessages) => {
+          merge(messages, newMessages)
+          global.i18n.version++
+        }
+        global.i18n.mergeLocaleMessage = (locale, message) => {
+          messages[locale] = messages[locale] || {}
+          merge(messages[locale], message)
+          global.i18n.version++
+        }
+      }
     }
     EXPORT_MPX.i18n = global.i18n
   }

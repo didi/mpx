@@ -18,12 +18,14 @@ const blackList = [
   'hideNavigationBarLoading',
   'createAnimation',
   'createSelectorQuery',
+  'createIntersectionObserver',
   'hideKeyboard',
   'stopPullDownRefresh',
   'createWorker',
   'pageScrollTo',
   'reportAnalytics',
-  'getMenuButtonBoundingClientRect'
+  'getMenuButtonBoundingClientRect',
+  'reportMonitor'
 ]
 
 function getMapFromList (list) {

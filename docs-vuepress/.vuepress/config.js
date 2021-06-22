@@ -32,7 +32,9 @@ const sidebar = {
         'advance/progressive',
         'advance/ability-compatible',
         'advance/plugin',
-        'advance/platform'
+        'advance/platform',
+        'advance/size-report',
+        'advance/dll-plugin'
       ]
     },
     {

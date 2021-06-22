@@ -101,6 +101,16 @@ export default function request (config, mpx) {
       requestTask = swan.request(config)
       return
     }
+    if (typeof qq !== 'undefined' && typeof qq.request === 'function') {
+      // qq
+      requestTask = qq.request(config)
+      return
+    }
+    if (typeof tt !== 'undefined' && typeof tt.request === 'function') {
+      // tt
+      requestTask = tt.request(config)
+      return
+    }
 
     mpx = mpx || global.__mpx
     if (typeof mpx !== 'undefined' && typeof mpx.request === 'function') {

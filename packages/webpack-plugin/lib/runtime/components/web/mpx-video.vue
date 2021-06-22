@@ -1,19 +1,17 @@
 <template>
-  <div class="mpx-video-container">
-    <video
-            ref="_mpx_video_ref"
-            :class="classList"
-            webkit-playsinline="true" playsinline="true" x5-playsinline="true"
-            :src="src"
-            :controls="showControlsTool"
-            :autoplay="autoplay"
-            :loop="loop"
-            :muted="mutedCopy"
-            :poster="poster"
-            @touchend="preventDefaultHandler"
-    >
-    </video>
-  </div>
+  <video
+    ref="_mpx_video_ref"
+    :class="classList"
+    webkit-playsinline="true" playsinline="true" x5-playsinline="true"
+    :src="src"
+    :controls="showControlsTool"
+    :autoplay="autoplay"
+    :loop="loop"
+    :muted="mutedCopy"
+    :poster="poster"
+    @touchend="preventDefaultHandler"
+  >
+  </video>
 </template>
 
 <script>
@@ -143,7 +141,6 @@
       }
     },
     mounted () {
-      console.log(global.__style)
       this.videoNode = this.$refs['_mpx_video_ref']
       this.initStyle()
       this.initEvent()
@@ -207,7 +204,8 @@
             this.$emit('bindfullscreenchange', {fullScreen: true})
           } else {
             this.$emit('bindfullscreenchange', {fullScreen: false})
-          }        })
+          }
+        })
         this.videoNode.addEventListener('webkitfullscreenchange', (e) => {
           if (document.webkitIsFullScreen) {
             this.$emit('bindfullscreenchange', {fullScreen: true})

@@ -1,6 +1,6 @@
 /**
- * mpxjs webview bridge v2.6.11
- * (c) 2020 @mpxjs team
+ * mpxjs webview bridge v2.6.61
+ * (c) 2021 @mpxjs team
  * @license Apache
  */
 function loadScript (url, { time = 5000, crossOrigin = false } = {}) {
@@ -77,7 +77,7 @@ window.addEventListener('message', (event) => {
 let systemUA = navigator.userAgent;
 if (systemUA.indexOf('AlipayClient') > -1) {
   env = 'ali';
-} else if (systemUA.indexOf('miniProgram') > -1 || systemUA.indexOf('miniprogram') > -1) {
+} else if (systemUA.toLowerCase().indexOf('miniprogram') > -1) {
   env = systemUA.indexOf('QQ') > -1 ? 'qq' : 'wx';
 } else if (systemUA.indexOf('swan') > -1) {
   env = 'baidu';

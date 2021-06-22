@@ -171,11 +171,21 @@ type ThisTypedComponentOpt<D, P, C, M, Mi extends Array<any>, O = {}> =
   ComponentOpt<D, P, C, M, Mi>
   & ThisType<ComponentIns<D, P, C, M, Mi, O>> & O
 
+type I18nValues = {
+  [k: string]: string
+} | Array<string>
+
 declare function get (obj: object, key: string): any
 
 declare function set (obj: object, key: string, value: any): any
 
 declare function del (obj: object, key: string): any
+
+declare function t (key: string, values?: I18nValues): string
+
+declare function tc (key: string, choice: number, values?: I18nValues): string
+
+declare function te (key: string): boolean
 
 export function observable<T extends object> (obj: T): T
 
@@ -183,7 +193,7 @@ type MpxComProps<O> = { $rawOptions: O }
 
 export interface MpxComponentIns {
 
-  $refs: ObjectOf<any>
+  $refs: ObjectOf<WechatMiniprogram.NodesRef & ComponentIns<{}, {}, {}, {}, []>>
 
   $set: typeof set
 
@@ -196,6 +206,16 @@ export interface MpxComponentIns {
   $forceUpdate (params?: object, callback?: () => void): void
 
   $nextTick (fn: () => void): void
+
+  $i18n: {
+    locale: string
+  }
+
+  $t: typeof t
+
+  $tc: typeof tc
+
+  $te: typeof te
 
   [k: string]: any
 }
@@ -249,7 +269,7 @@ export function createGettersWithThis<S = {}, D extends Deps = {}, G = {}, OG = 
   deps?: D
 }): G
 
-export function createMutationsWithThis<S = {}, D extends Deps = {}, M extends MutationsAndActionsWithThis = {}> (mutations: M & ThisType<{ state: S & UnboxDepsField<D, 'state'> }>, options?: {
+export function createMutationsWithThis<S = {}, D extends Deps = {}, M extends MutationsAndActionsWithThis = {}> (mutations: M & ThisType<{ state: S & UnboxDepsField<D, 'state'>, commit: GetDispatchAndCommitWithThis<M, D, 'mutations'> }>, options?: {
   state?: S,
   deps?: D
 }): M
@@ -305,6 +325,8 @@ interface MpxConfig {
   ignoreRenderError: Boolean
   ignoreConflictWhiteList: Array<string>
   observeClassInstance: Boolean | Array<AnyConstructor>
+  hookErrorHandler: (e: Error, target: ComponentIns<{}, {}, {}, {}, []>, hookName: string) => any | null
+  proxyEventHandler: (e: Event) => any | null
 }
 
 type SupportedMode = 'wx' | 'ali' | 'qq' | 'swan' | 'tt' | 'web' | 'qa'
@@ -346,6 +368,16 @@ export interface Mpx {
   setConvertRule: typeof setConvertRule
 
   config: MpxConfig
+
+  i18n: {
+    locale: string,
+    version: number
+    t: typeof t
+    tc: typeof tc
+    te: typeof te
+    mergeMessages (messages: object): void
+    mergeLocaleMessage (locale: string, message: object): void
+  }
 }
 
 type GetFunctionKey<T> = {

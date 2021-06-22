@@ -1,6 +1,3 @@
-// @ts-ignore
-import mpx from '@mpxjs/core'
-
 interface CancelTokenClass {
   new (...args: any): {
     token: Promise<any>
@@ -26,19 +23,21 @@ type fetchT = (option: fetchOption, priority?: 'normal' | 'low') => Promise<Wech
 type addLowPriorityWhiteListT = (rules: string | RegExp | Array<string | RegExp>) => void
 type createT = (option?: CreateOption) => xfetch
 
+export interface InterceptorsRR {
+  use: (fulfilled: (...args: any[]) => any, rejected?: (...args: any[]) => any) => (...args: any[]) => any
+}
+
+export interface Interceptors {
+  request: InterceptorsRR
+  response: InterceptorsRR
+}
+
 export interface xfetch {
-  fetch: fetchT,
-  addLowPriorityWhiteList: addLowPriorityWhiteListT,
-  CancelToken: CancelTokenClass,
-  create: createT,
-  interceptors: {
-    request: {
-      use: (fn: (config: any) => any) => void
-    },
-    response: {
-      use: (fn: (config: any) => any) => void
-    }
-  }
+  fetch: fetchT
+  addLowPriorityWhiteList: addLowPriorityWhiteListT
+  CancelToken: CancelTokenClass
+  create: createT
+  interceptors: Interceptors
 }
 
 declare module '@mpxjs/core' {

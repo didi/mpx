@@ -11,45 +11,36 @@ function joinName (from = '', to = '') {
 
 function transformApi (options) {
   const envObj = getEnvObj()
-  const env = __mpx_mode__
+  const from = options.from
+  const to = options.to
+  const fromTo = joinName(from, to)
   const wxToAliApi = getWxToAliApi({ optimize: options.optimize })
   const wxToQqApi = getWxToQqApi({ optimize: options.optimize })
   const wxToQaApi = getWxToQaApi({ optimize: options.optimize })
   const platformMap = {
     'wx_ali': wxToAliApi,
-    'qq_ali': wxToAliApi,
-    'swan_ali': wxToAliApi,
-    'tt_ali': wxToAliApi,
     'wx_qq': wxToQqApi,
     'wx_qa': wxToQaApi
-
   }
-  const proxyPlatformMap = {
-    'ali': wxToAliApi,
-    'qq': wxToQqApi,
-    'qa': wxToQaApi
-  }
-  const needProxy = {}
+  const needProxy = Object.create(null)
   const excludeMap = makeMap(options.exclude)
-  const proxyApi = proxyPlatformMap[env] || []
-  // 后续不一定只转换ali，需要基于目标平台决定合并的自定义api集，例如输出快应用时需要定义并合并wxToQaApi
-  Object.keys(envObj).concat(Object.keys(proxyApi)).forEach((key) => {
+  const transedApi = platformMap[fromTo] || {}
+  Object.keys(envObj).concat(Object.keys(transedApi)).forEach((key) => {
     if (!excludeMap[key]) {
-      needProxy[key] = envObj[key] || proxyApi[key]
+      needProxy[key] = envObj[key] || transedApi[key]
     }
   })
-  const transedApi = Object.create(null)
+  const result = Object.create(null)
   Object.keys(needProxy).forEach(api => {
     // 非函数不做转换
     if (typeof needProxy[api] !== 'function') {
-      transedApi[api] = needProxy[api]
+      result[api] = needProxy[api]
       return
     }
 
-    transedApi[api] = (...args) => {
-      const to = options.to
+    result[api] = (...args) => {
       let from = options.from
-
+      const to = options.to
       if (args.length > 0) {
         from = args.pop()
         if (typeof from !== 'string' || !fromMap[from]) {
@@ -74,7 +65,7 @@ function transformApi (options) {
     }
   })
 
-  return transedApi
+  return result
 }
 
 export default transformApi
