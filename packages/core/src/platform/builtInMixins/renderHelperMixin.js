@@ -4,7 +4,7 @@ import { stringifyClass, stringifyStyle } from '../../helper/stringify'
 let uid = 0
 const getUid = () => ++uid
 
-function simpleNormalizeChildren(children) {
+function simpleNormalizeChildren (children) {
   for (var i = 0; i < children.length; i++) {
     if (Array.isArray(children[i])) {
       return Array.prototype.concat.apply([], children)
@@ -16,7 +16,7 @@ function simpleNormalizeChildren(children) {
 export default function renderHelperMixin () {
   return {
     methods: {
-      _i(val, handler) {
+      _i (val, handler) {
         let ret, i, l, keys, key
         if (Array.isArray(val) || typeof val === 'string') {
           ret = new Array(val.length)
@@ -39,15 +39,15 @@ export default function renderHelperMixin () {
 
         return ret
       },
-      _c(key, value) {
+      _c (key, value) {
         this.__mpxProxy.renderData[key] = value
         return value
       },
-      _r(vnode) {
+      _r (vnode) {
         this.__mpxProxy.renderWithData(vnode)
       },
       // createElement
-      __c(tag, data = {}, children = []) {
+      __c (tag, data = {}, children = []) {
         if (Array.isArray(data)) {
           children = data
           data = {}
@@ -60,7 +60,7 @@ export default function renderHelperMixin () {
         data.nodeId = nodeId
         children = simpleNormalizeChildren(children)
 
-        const vnode =  {
+        const vnode = {
           nodeType: tag || '',
           ...data,
           _data: data,
@@ -70,7 +70,7 @@ export default function renderHelperMixin () {
         return vnode
       },
       // createTextNode
-      __v(content) {
+      __v (content) {
         return {
           nodeType: '',
           nodeId: '',
@@ -79,7 +79,7 @@ export default function renderHelperMixin () {
         }
       },
       // createEmptyNode
-      __e() {
+      __e () {
         return {
           nodeType: '',
           nodeId: '',
@@ -87,22 +87,22 @@ export default function renderHelperMixin () {
         }
       },
       // resolveSlot
-      __t(name, fallback = []) {
+      __t (name, fallback = []) {
         let nodes = (this.slots && this.slots[name]) || fallback
         return nodes
       },
-      __sc(...args) {
+      __sc (...args) {
         return stringifyClass(...args)
       },
-      __ss(...args) {
+      __ss (...args) {
         return stringifyStyle(...args)
       },
-      __a(tag) {
+      __a (tag) {
         console.log(this.__mpxProxy.target.__aliasTags)
       },
-      __b(...args) {
+      __b (...args) {
         return args.reduce((res, arg) => {
-          return isPlainObject ? Object.assign(res, arg) : res
+          return isPlainObject(arg) ? Object.assign(res, arg) : res
         }, {})
       }
     }

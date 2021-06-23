@@ -756,9 +756,9 @@ function parseComponent (content, options) {
   return sfc
 }
 
-function hasRuntimeCompileWrapper(el) {
+function hasRuntimeCompileWrapper (el) {
   let parent = el.parent
-  while(parent) {
+  while (parent) {
     if (parent.isRuntimeComponent) {
       return true
     }
@@ -859,7 +859,7 @@ function parse (template, options) {
       // 注入 mpx-render-base.wxml 里面的节点需要根据是否是自定义节点来决定使用的标签名
       element.isCustomComponent = options.usingComponents.includes(tag)
       element.isRuntimeComponent = isRuntimeComponentNode(element, options)
-      if (options.componentsAbsolutePath[tag]) {
+      if (options.componentsAbsolutePath && options.componentsAbsolutePath[tag]) {
         const path = options.componentsAbsolutePath[tag]
         const aliasTags = getAliasTag()
         if (!meta.aliasTags) {
@@ -1257,22 +1257,22 @@ function stringifyWithResolveComputed (modelValue) {
   return result.join('+')
 }
 
-function processDataset (el) {
-  if (!el.dataset) {
-    el.dataset = {}
-  }
-  let datasetRe = /data-(.*)/
-  el.attrsList.forEach(function (attr) {
-    let match = attr.name.match(datasetRe)
-    if (match) {
-      el.dataset = {
-        [match[1]]: attr.value
-      }
-    }
+// function processDataset (el) {
+//   if (!el.dataset) {
+//     el.dataset = {}
+//   }
+//   let datasetRe = /data-(.*)/
+//   el.attrsList.forEach(function (attr) {
+//     let match = attr.name.match(datasetRe)
+//     if (match) {
+//       el.dataset = {
+//         [match[1]]: attr.value
+//       }
+//     }
 
-    getAndRemoveAttr(el, attr.name, true)
-  })
-}
+//     getAndRemoveAttr(el, attr.name, true)
+//   })
+// }
 
 function processBindEvent (el, options) {
   const eventConfigMap = {}
@@ -2075,7 +2075,7 @@ function processAliStyleClassHack (el, options, root) {
   })
 }
 
-function processHidden(el) {
+function processHidden (el) {
   if (!el.inRuntimeCompileWrapper) {
     return
   }
@@ -2108,7 +2108,7 @@ function processHidden(el) {
 //   }
 // }
 
-function processSlotOutlet(el) {
+function processSlotOutlet (el) {
   if (el.tag === 'slot') {
     const { has, val } = getAndRemoveAttr(el, 'name', true) // 先不考虑动态绑定的数据类型
     const slotName = has ? val : 'default'
@@ -2123,7 +2123,7 @@ function processSlotOutlet(el) {
   }
 }
 
-function processSlotContent(el) {
+function processSlotContent (el) {
   const { has, val } = getAndRemoveAttr(el, 'slot')
   if (has) {
     const slotTarget = val === undefined ? 'default' : val
@@ -2161,7 +2161,7 @@ function processShow (el, options, root) {
         name: 'mpxShow',
         value: show
       }])
-      el.show = showExp ? showExp : parseMustache(show).result
+      el.show = showExp || parseMustache(show).result
     } else {
       // 普通元素节点
       const showExp = parseMustache(show).result
@@ -2268,7 +2268,7 @@ function processDuplicateAttrsList (el) {
   el.attrsList = attrsList
 }
 
-function processBindProps(el) {
+function processBindProps (el) {
   const { has, val } = getAndRemoveAttr(el, config[mode].directive.bind)
   if (has) {
     const { hasBinding, result } = parseMustache(val)
@@ -2427,7 +2427,7 @@ function closeElement (el, options, meta, currentParent) {
   postProcessHashComponent(el, meta)
 }
 
-function postProcessHashComponent(el, meta) {
+function postProcessHashComponent (el, meta) {
   if (el.aliasTag) {
     if (!meta.hashComponent) {
       meta.hashComponent = {}
@@ -2466,7 +2466,7 @@ function cloneAttrsList (attrsList) {
 
 function postProcessComponentIs (el, options) {
   // 运行时组件的 component is 指令
-  if (el.is && options.runtimeCompile || el.inRuntimeCompileWrapper ) {
+  if ((el.is && options.runtimeCompile) || el.inRuntimeCompileWrapper) {
     el.mpxPageStatus = true
     return el
   }
@@ -2698,7 +2698,7 @@ function genElement (node) {
 
         return code
       }
-    } else if (node.tag === 'temp-node'){
+    } else if (node.tag === 'temp-node') {
       // 临时节点最终通过 block 来承接渲染
       return _genBlock(node)
     } else {
@@ -2788,7 +2788,7 @@ function _genData (node) {
   // }
   if (node.events) {
     node.attrsList.forEach(attr => {
-      if (!!config[mode].event.parseEvent(attr.name)) {
+      if (config[mode].event.parseEvent(attr.name)) {
         getAndRemoveAttr(node, attr.name)
       }
     })
@@ -2823,7 +2823,7 @@ function _genData (node) {
    * case2: 枚举属性透传
    * case3: 混写，有个合并属性的流程
    */
-  function stringifyAttrsMap() {
+  function stringifyAttrsMap () {
     let res = ''
     Object.keys(node.attrsMap).map(key => {
       if (!filterKeys.includes(key)) {
@@ -2834,7 +2834,7 @@ function _genData (node) {
     return res
   }
 
-  function stringifyBigAttrs() {
+  function stringifyBigAttrs () {
     if (node.bigAttrs) {
       bigAttrs += `${node.bigAttrs},`
       getAndRemoveAttr(node, 'big-attrs')

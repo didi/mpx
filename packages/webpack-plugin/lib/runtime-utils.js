@@ -9,19 +9,17 @@ let pathAndAliasTagMap = {}
 
 const filterKeys = ['data-eventconfigs', 'mpxShow', 'big-attrs', 'mpxPageStatus']
 
-function genNotRuntimeCustomComponentSlots() {
+function genNotRuntimeCustomComponentSlots () {
   return `
     <block wx:for="{{r.children}}" wx:key="nodeId">
       <block wx:if="{{item['slot']}}">
         <view slot="{{item['slot']}}">
           <element r="{{item}}"></element>
-          <!-- <template is="element" data="{{r: item}}" /> -->
         </view>
       </block>
       <block wx:else>
         <block wx:if="{{item.nodeId}}">
           <element r="{{item}}"></element>
-          <!-- <template is="element" data="{{r: item}}" /> -->
         </block>
         <block wx:else>
           <block>{{item.content}}</block>
@@ -32,7 +30,7 @@ function genNotRuntimeCustomComponentSlots() {
 }
 
 // TODO：合并节点属性的方法目前仅处理了 attrsList 里面的内容，其他属性的合并也需要处理
-function composeNodeAttrs(oldNode, newNode) {
+function composeNodeAttrs (oldNode, newNode) {
   newNode.attrsList.forEach((attr) => {
     if (
       oldNode.attrsList &&
@@ -45,19 +43,19 @@ function composeNodeAttrs(oldNode, newNode) {
 }
 
 module.exports = {
-  setRuntimeComponent(path, isRuntimeCompile) {
-     runtimeCompileMap[path] = isRuntimeCompile
+  setRuntimeComponent (path, isRuntimeCompile) {
+    runtimeCompileMap[path] = isRuntimeCompile
   },
-  getRuntimeComponent() {
+  getRuntimeComponent () {
     return runtimeCompileMap
   },
-  collectInjectedPath(path) {
+  collectInjectedPath (path) {
     injectedPath.add(path)
   },
-  getInjectedPath() {
+  getInjectedPath () {
     return injectedPath
   },
-  getInjectedComponentMap() {
+  getInjectedComponentMap () {
     const res = {}
     injectedPath.forEach((path) => {
       const { aliasTag, componentPath } = pathAndAliasTagMap[path]
@@ -66,7 +64,7 @@ module.exports = {
 
     return res
   },
-  collectAliasComponentPath(path, componentPath) {
+  collectAliasComponentPath (path, componentPath) {
     if (!pathAndAliasTagMap[path]) {
       pathAndAliasTagMap[path] = {
         componentPath
@@ -75,7 +73,7 @@ module.exports = {
       pathAndAliasTagMap[path]['componentPath'] = componentPath
     }
   },
-  collectAliasTag(path, aliasTag) {
+  collectAliasTag (path, aliasTag) {
     if (!pathAndAliasTagMap[path]) {
       pathAndAliasTagMap[path] = {
         aliasTag
@@ -84,13 +82,13 @@ module.exports = {
       pathAndAliasTagMap[path]['aliasTag'] = aliasTag
     }
   },
-  getAliasTag() {
+  getAliasTag () {
     return pathAndAliasTagMap
   },
-  getTemplateNodes() {
+  getTemplateNodes () {
     return templateNodes
   },
-  setTemplateNodes(node) {
+  setTemplateNodes (node) {
     let tag = node.aliasTag || node.tag
     if (!templateNodes[tag]) {
       templateNodes[tag] = node
@@ -98,13 +96,13 @@ module.exports = {
       composeNodeAttrs(templateNodes[tag], node)
     }
   },
-  clearTemplateNodes() {
+  clearTemplateNodes () {
     templateNodes = {}
   },
-  collectCustomComponentWxss(path) {
+  collectCustomComponentWxss (path) {
     customComponentWxssSet.add(path)
   },
-  addCustomComponentWxss() {
+  addCustomComponentWxss () {
     let res = ''
     customComponentWxssSet.forEach((wxss) => {
       res += `@import '${wxss}';\n`
@@ -117,7 +115,7 @@ module.exports = {
    * 1. 非运行组件，属性需要枚举
    * 2. 运行时组件，属性统一使用 bigAttrs 进行透传
    */
-  genRuntimeTemplate(nodesMap) {
+  genRuntimeTemplate (nodesMap) {
     let res = '\n'
     Object.keys(nodesMap).map((tag) => {
       const node = nodesMap[tag]
@@ -190,7 +188,7 @@ module.exports = {
 
     return res
   },
-  genSlots(astNodes = [], genElement) {
+  genSlots (astNodes = [], genElement) {
     let slots = {}
     astNodes.map((node) => {
       const slotTarget = node.slotTarget
@@ -204,7 +202,7 @@ module.exports = {
     })
     return slots
   },
-  transformSlotsToString(slotsMap = {}) {
+  transformSlotsToString (slotsMap = {}) {
     let res = '{'
     if (!isEmptyObject(slotsMap)) {
       Object.keys(slotsMap).map((slotTarget) => {

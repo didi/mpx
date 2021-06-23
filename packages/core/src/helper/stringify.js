@@ -1,67 +1,9 @@
 function objectKeys (obj) {
-  if (!__mpx_wxs__) {
-    return Object.keys(obj)
-  } else {
-    var keys = []
-    var stackMap = {
-      '{': '}',
-      '[': ']',
-      '(': ')'
-    }
-    var shiftMap = {
-      'n': '\n',
-      'b': '\b',
-      'f': '\f',
-      'r': '\r',
-      't': '\t'
-    }
-    if (typeof obj === 'object') {
-      var objStr = JSON.stringify(obj)
-      if (objStr[0] === '{' && objStr[objStr.length - 1] === '}') {
-        var key = ''
-        var inKey = true
-        var stack = []
-        var shift = false
-        for (var i = 1; i < objStr.length - 1; i++) {
-          var item = objStr[i]
-          if (inKey) {
-            if (item === ':') {
-              keys.push(key.slice(1, -1))
-              key = ''
-              inKey = false
-            } else {
-              if (shift === false && item === '\\') {
-                shift = true
-                continue
-              }
-              if (shift) {
-                item = shiftMap[item] || item
-                shift = false
-              }
-              key += item
-            }
-          } else {
-            if (stackMap[item]) {
-              stack.push(item)
-            } else if (stackMap[stack[stack.length - 1]] === item) {
-              stack.pop()
-            } else if (stack.length === 0 && item === ',') {
-              inKey = true
-            }
-          }
-        }
-      }
-    }
-    return keys
-  }
+  return Object.keys(obj)
 }
 
 function genRegExp (str, flags) {
-  if (!__mpx_wxs__) {
-    return new RegExp(str, flags)
-  } else {
-    return getRegExp(str, flags)
-  }
+  return new RegExp(str, flags)
 }
 
 function extend (target, from) {
@@ -82,11 +24,7 @@ function isObject (obj) {
 }
 
 function likeArray (arr) {
-  if (!__mpx_wxs__) {
-    return Array.isArray(arr)
-  } else {
-    return arr && arr.constructor === 'Array'
-  }
+  return Array.isArray(arr)
 }
 
 function isDef (v) {
@@ -199,14 +137,14 @@ function normalizeDynamicStyle (value) {
   return value
 }
 
-export function stringifyClass(staticClass, dynamicClass) {
+export function stringifyClass (staticClass, dynamicClass) {
   if (typeof staticClass !== 'string') {
     return console.log('Template attr class must be a string!')
   }
   return concat(staticClass, _stringifyClass(dynamicClass))
 }
 
-export function stringifyStyle(staticStyle, dynamicStyle, showStyle) {
+export function stringifyStyle (staticStyle, dynamicStyle, showStyle) {
   if (!showStyle) showStyle = {}
   var normalizedDynamicStyle = normalizeDynamicStyle(dynamicStyle)
   var parsedStaticStyle = typeof staticStyle === 'string' ? parseStyleText(staticStyle) : {}

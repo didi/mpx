@@ -374,7 +374,7 @@ export default class MPXProxy {
     return result
   }
 
-  doRenderWithVNode(vnode) {
+  doRenderWithVNode (vnode) {
     if (!isEmptyObject(vnode) && this.options.runtimeComponent) {
       this.target.__render({ r: vnode })
     }
@@ -415,7 +415,7 @@ export default class MPXProxy {
         resolve && resolve()
       }
     }
-    
+
     this.target.__render(processUndefined(data), callback)
   }
 

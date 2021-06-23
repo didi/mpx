@@ -1,5 +1,5 @@
 export default class VNode {
-  constructor(tag, data = {}, children, text, elm, context) {
+  constructor (tag, data = {}, children, text, elm, context) {
     this.nodeType = tag || ''
     this.tag = tag
     this.data = data
@@ -22,6 +22,6 @@ export const createEmptyVNode = (text = '') => {
   return node
 }
 
-export function createTextVNode(val = '') {
+export function createTextVNode (val = '') {
   return new VNode(undefined, undefined, undefined, undefined, String(val))
 }

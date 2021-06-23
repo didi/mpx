@@ -181,7 +181,7 @@ module.exports = function (raw) {
   if (!isEmptyObject(injectSlots)) {
     let data = '{'
     Object.keys(injectSlots).map(key => {
-      data += `'${key}': ${ transformSlotsToString(injectSlots[key]) },`
+      data += `'${key}': ${transformSlotsToString(injectSlots[key])},`
     })
     data += '}'
     globalInjectCode += `global.currentInject.runtimeSlots = function () {

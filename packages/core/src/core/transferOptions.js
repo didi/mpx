@@ -4,7 +4,7 @@ import { getConvertMode } from '../convertor/getConvertMode'
 import { findItem } from '../helper/utils'
 import { warn } from '../helper/log'
 
-function composePropsToComputed(type, options = {}) {
+function composePropsToComputed (type, options = {}) {
   if (type === 'component' || type === 'page') {
     options.runtimeComponent = true
     if (!options.computed) {
@@ -16,7 +16,7 @@ function composePropsToComputed(type, options = {}) {
       options.$attrs[key] = true
       // 将 properties 数据转为 computed
       Object.assign(options.computed, {
-        [key]() {
+        [key] () {
           return this.bigAttrs && this.bigAttrs[key]
         }
       })
@@ -35,7 +35,6 @@ function composePropsToComputed(type, options = {}) {
     }
   }
 }
-
 
 // 运行时和编译结果融合的过程
 export default function transferOptions (options, type, builtInMixins = []) {

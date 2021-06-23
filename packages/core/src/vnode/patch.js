@@ -1,4 +1,4 @@
-import Element, { nodeOps } from './element'
+import { nodeOps } from './element'
 import { cache } from './utils'
 
 // TODO: patch 流程下期优化
@@ -10,7 +10,7 @@ export default function patch (oldVnode, vnode, context) {
   return vnode.elm
 }
 
-function createElm(vnode, parentElm, context) {
+function createElm (vnode, parentElm, context) {
   const data = vnode._data || {}
   if (vnode.nodeId) {
     context.nodeIds.add(vnode.nodeId)
@@ -18,7 +18,7 @@ function createElm(vnode, parentElm, context) {
   // const context = vnode.context
   const tag = vnode.nodeType
   const children = vnode.children
-  
+
   if (tag) {
     vnode.elm = nodeOps.createElement(tag, data, children, undefined, undefined, context)
     createChildren(vnode, children, context)
@@ -29,12 +29,12 @@ function createElm(vnode, parentElm, context) {
   } else if (vnode.isComment) {
     // do something
   }
-  
+
   cache.setNode(vnode.nodeId, vnode.elm)
   return vnode.elm
 }
 
-function createChildren(vnode, children, context) {
+function createChildren (vnode, children, context) {
   if (Array.isArray(children)) {
     for (let i = 0; i < children.length; i++) {
       createElm(children[i], vnode.elm, context)
@@ -44,7 +44,7 @@ function createChildren(vnode, children, context) {
   }
 }
 
-function insert(parentElm, elm) {
+function insert (parentElm, elm) {
   if (parentElm && elm) {
     nodeOps.appendChild(parentElm, elm)
   }

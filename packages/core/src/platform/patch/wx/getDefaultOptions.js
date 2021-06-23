@@ -96,7 +96,7 @@ function transformApiForProxy (context, currentInject) {
     if (currentInject.runtimeSlots) {
       Object.defineProperties(context, {
         __getRuntimeSlots: {
-          get() {
+          get () {
             return currentInject.runtimeSlots
           },
           configurable: false
@@ -106,7 +106,7 @@ function transformApiForProxy (context, currentInject) {
     if (currentInject.aliasTags) {
       Object.defineProperties(context, {
         __aliasTags: {
-          get() {
+          get () {
             return currentInject.aliasTags
           },
           configurable: false

@@ -1,12 +1,12 @@
 const nodeCache = {}
 
 export const cache = {
-  setNode(id, node) {
+  setNode (id, node) {
     if (id) {
       nodeCache[id] = node
     }
   },
-  getNode(id) {
+  getNode (id) {
     if (!id) {
       return nodeCache
     }
@@ -14,7 +14,7 @@ export const cache = {
   }
 }
 
-export function addParentRef(vnode, parent) {
+export function addParentRef (vnode, parent) {
   if (vnode.nodeId) {
     cache.setNode(vnode.nodeId, vnode)
   }
