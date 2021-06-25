@@ -191,9 +191,9 @@ module.exports = function (raw = '{}') {
     fixUsingComponent(json.usingComponents, mode, emitWarning)
   }
 
-  // 快应用补全json配置
+  // 快应用补全json配置，必填项
   if (mode === 'qa' && isApp) {
-    const qa = mpx.quickapp || {}
+    const qa = json.quickapp || {}
     const config = {
       package: (qa && qa.package) || '',
       name: (qa && qa.name) || '',

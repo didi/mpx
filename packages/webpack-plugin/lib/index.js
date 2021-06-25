@@ -136,9 +136,6 @@ class MpxWebpackPlugin {
     options.forceDisableBuiltInLoader = options.forceDisableBuiltInLoader || false
     options.useRelativePath = options.useRelativePath || false
     options.subpackageModulesRules = options.subpackageModulesRules || {}
-    if (options.mode === 'qa') {
-      options.quickapp = options.quickapp || {}
-    }
     options.forceProxyEventRules = options.forceProxyEventRules || {}
     options.miniNpmPackage = options.miniNpmPackage || []
     this.options = options
@@ -365,7 +362,6 @@ class MpxWebpackPlugin {
           attributes: this.options.attributes,
           externals: this.options.externals,
           useRelativePath: this.options.useRelativePath,
-          quickapp: this.options.quickapp || {},
           removedChunks: [],
           forceProxyEventRules: this.options.forceProxyEventRules,
           getEntryNode: (request, type, module) => {
