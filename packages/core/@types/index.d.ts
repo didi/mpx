@@ -5,6 +5,7 @@
 
 /// <reference types="miniprogram-api-typings" />
 /// <reference path="./mpx-store.d.ts" />
+/// <reference path="./web.d.ts" />
 
 // declare Store types
 type StoreOpt<S, G, M, A, D extends MpxStore.Deps> = MpxStore.StoreOpt<S, G, M, A, D>
