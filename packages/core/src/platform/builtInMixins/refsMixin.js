@@ -123,7 +123,7 @@ export default function getRefsMixin () {
                 } else { // component
                   if (needRefresh) {
                     needRefresh = false
-                    return cachedRef = self.__getRefNode(ref) // return new selector context
+                    return (cachedRef = self.__getRefNode(ref)) // return new selector context
                   }
                   return cachedRef
                 }
@@ -139,7 +139,7 @@ export default function getRefsMixin () {
                 get () {
                   if (needAsyncRefresh) {
                     needAsyncRefresh = false
-                    return cachedAsyncRef = self.__getRefNode(ref, true) // return new selector context
+                    return (cachedAsyncRef = self.__getRefNode(ref, true)) // return new selector context
                   }
                   return cachedAsyncRef
                 }
