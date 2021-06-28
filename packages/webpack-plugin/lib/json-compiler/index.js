@@ -232,6 +232,21 @@ module.exports = function (raw = '{}') {
     return this.resolve(context, request, callback)
   }
 
+  const processComponents = (components, context, callback) => {
+    if (components) {
+      async.forEachOf(components, (component, name, callback) => {
+        processComponent(component, context, (componentPath) => {
+          if (useRelativePath === true) {
+            componentPath = toPosix(path.relative(path.dirname(currentPath), componentPath))
+          }
+          components[name] = componentPath
+        }, undefined, callback)
+      }, callback)
+    } else {
+      callback()
+    }
+  }
+
   const processComponent = (component, context, rewritePath, outputPath, callback) => {
     if (!isUrlRequest(component)) return callback()
     if (resolveMode === 'native') {
@@ -303,7 +318,7 @@ module.exports = function (raw = '{}') {
   }
 
   // 由于json模块都是由mpx/js文件引入的，需要向上找两层issuer获取真实的引用源
-  function getJsonIssuer (module) {
+  const getJsonIssuer = (module) => {
     if (module.issuer) {
       return module.issuer.issuer
     }
@@ -618,21 +633,6 @@ module.exports = function (raw = '{}') {
       return output
     }
 
-    const processComponents = (components, context, callback) => {
-      if (components) {
-        async.forEachOf(components, (component, name, callback) => {
-          processComponent(component, context, (componentPath) => {
-            if (useRelativePath === true) {
-              componentPath = toPosix(path.relative(path.dirname(currentPath), componentPath))
-            }
-            json.usingComponents[name] = componentPath
-          }, undefined, callback)
-        }, callback)
-      } else {
-        callback()
-      }
-    }
-
     const processWorkers = (workers, context, callback) => {
       if (workers) {
         let workersPath = path.join(context, workers)
@@ -758,32 +758,34 @@ module.exports = function (raw = '{}') {
       callback(null, processOutput)
     })
   } else {
-    // page.json或component.json
-    if (json.usingComponents) {
-      async.forEachOf(json.usingComponents, (component, name, callback) => {
-        processComponent(component, this.context, (componentPath) => {
-          if (useRelativePath === true) {
-            componentPath = toPosix(path.relative(path.dirname(currentPath), componentPath))
+    const processGenerics = (generics, context, callback) => {
+      if (generics) {
+        async.forEachOf(generics, (generic, name, callback) => {
+          if (generic.default) {
+            processComponent(generic.default, context, (componentPath) => {
+              if (useRelativePath === true) {
+                componentPath = toPosix(path.relative(path.dirname(currentPath), componentPath))
+              }
+              generic.default = componentPath
+            }, undefined, callback)
+          } else {
+            callback()
           }
-          json.usingComponents[name] = componentPath
-        }, undefined, callback)
-      }, callback)
-    } else if (json.componentGenerics) {
-      // 处理抽象节点
-      async.forEachOf(json.componentGenerics, (genericCfg, name, callback) => {
-        if (genericCfg && genericCfg.default) {
-          processComponent(genericCfg.default, this.context, (componentPath) => {
-            if (useRelativePath === true) {
-              componentPath = toPosix(path.relative(path.dirname(currentPath), componentPath))
-            }
-            json.componentGenerics[name].default = componentPath
-          }, undefined, callback)
-        } else {
-          callback()
-        }
-      }, callback)
-    } else {
-      callback()
+        }, callback)
+      } else {
+        callback()
+      }
     }
+    // page.json或component.json
+    async.parallel([
+      (callback) => {
+        processComponents(json.usingComponents, this.context, callback)
+      },
+      (callback) => {
+        processGenerics(json.componentGenerics, this.context, callback)
+      }
+    ], (err) => {
+      callback(err)
+    })
   }
 }
