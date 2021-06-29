@@ -4,6 +4,7 @@ import { mergeLifecycle } from './mergeLifecycle'
 import { mergeToArray } from '../core/mergeOptions'
 import { error } from '../helper/log'
 import { implemented } from '../core/implement'
+import { hasOwn } from '../helper/utils'
 
 const NOTSUPPORTS = ['moved', 'definitionFilter']
 
@@ -49,10 +50,10 @@ export default {
       Object.keys(options.properties).forEach(key => {
         const prop = options.properties[key]
         if (prop) {
-          if (prop.hasOwnProperty('value')) {
+          if (hasOwn(prop, 'value')) {
             newProps[key] = prop.value
           } else {
-            const type = prop.hasOwnProperty('type') ? prop.type : prop
+            const type = hasOwn(prop, 'type') ? prop.type : prop
             if (typeof type === 'function') newProps[key] = type()
           }
         }

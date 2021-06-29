@@ -2,7 +2,7 @@ import * as wxLifecycle from '../platform/patch/wx/lifecycle'
 import * as webLifecycle from '../platform/patch/web/lifecycle'
 import { mergeLifecycle } from './mergeLifecycle'
 import { error } from '../helper/log'
-import { isObject, diffAndCloneA } from '../helper/utils'
+import { isObject, diffAndCloneA, hasOwn } from '../helper/utils'
 import { implemented } from '../core/implement'
 
 // 暂不支持的wx选项，后期需要各种花式支持
@@ -38,14 +38,14 @@ export default {
       Object.keys(options.properties).forEach(key => {
         const prop = options.properties[key]
         if (prop) {
-          if (prop.hasOwnProperty('type')) {
+          if (hasOwn(prop, 'type')) {
             const newProp = {}
-            if (prop.hasOwnProperty('optionalTypes')) {
+            if (hasOwn(prop, 'optionalTypes')) {
               newProp.type = [prop.type, ...prop.optionalTypes]
             } else {
               newProp.type = prop.type
             }
-            if (prop.hasOwnProperty('value')) {
+            if (hasOwn(prop, 'value')) {
               // vue中对于引用类型数据需要使用函数返回
               newProp.default = isObject(prop.value) ? function propFn () {
                 return diffAndCloneA(prop.value).clone

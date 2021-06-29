@@ -655,7 +655,7 @@ class MpxWebpackPlugin {
             const staticResourcesMap = mpx.staticResourcesMap
             const range = expr.range
             const issuerResource = parser.state.module.issuer.resource
-            const dep = new ResolveDependency(resource, packageName, pagesMap, componentsMap, staticResourcesMap, publicPath, range, issuerResource)
+            const dep = new ResolveDependency(resource, packageName, pagesMap, componentsMap, staticResourcesMap, publicPath, range, issuerResource, compilation)
             parser.state.current.addDependency(dep)
             return true
           }
