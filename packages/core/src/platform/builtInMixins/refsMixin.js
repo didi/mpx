@@ -110,20 +110,36 @@ export default function getRefsMixin () {
         if (this.__getRefsData) {
           const refs = this.__getRefsData()
           const self = this
+
           refs.forEach(ref => {
-            if (ref.type === 'node') {
-              Object.defineProperty(this.$refs, ref.key, {
+            let cachedRef = null // saving component refs, every time call __getRefs, set its value to null
+            Object.defineProperty(this.$refs, ref.key, {
+              enumerable: true,
+              configurable: true,
+              get () {
+                if (ref.type === 'node') {
+                  return self.__getRefNode(ref) // for nodes, every time being accessed, returns as a new selector context.
+                } else { // component
+                  if (!cachedRef) {
+                    return (cachedRef = self.__getRefNode(ref)) // return new selector context
+                  }
+                  return cachedRef
+                }
+              }
+            })
+
+            if (__mpx_mode__ === 'tt' && ref.type === 'component') {
+              let cachedAsyncRef = null
+              Object.defineProperty(this.$asyncRefs, ref.key, {
                 enumerable: true,
                 configurable: true,
                 get () {
-                  return self.__getRefNode(ref)
+                  if (!cachedAsyncRef) {
+                    return (cachedAsyncRef = self.__getRefNode(ref, true)) // return new selector context
+                  }
+                  return cachedAsyncRef
                 }
               })
-            } else {
-              this.$refs[ref.key] = this.__getRefNode(ref)
-              if (__mpx_mode__ === 'tt') {
-                this.$asyncRefs[ref.key] = this.__getRefNode(ref, true)
-              }
             }
           })
         }
