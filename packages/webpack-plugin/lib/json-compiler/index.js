@@ -193,14 +193,13 @@ module.exports = function (raw = '{}') {
 
   // 快应用补全json配置，必填项
   if (mode === 'qa' && isApp) {
-    const qa = json.quickapp || {}
     const config = {
-      package: (qa && qa.package) || '',
-      name: (qa && qa.name) || '',
+      package: json.package || '',
+      name: json.name || '',
       icon: 'assets/images/logo.png',
-      versionName: (qa && qa.versionName) || '',
-      versionCode: (qa && qa.versionCode) || 1,
-      minPlatformVersion: (qa && qa.minPlatformVersion) || 1080
+      versionName: json.versionName || '',
+      versionCode: json.versionCode || 1,
+      minPlatformVersion: json.minPlatformVersion || 1080
     }
     json = Object.assign({}, json, config)
   }
