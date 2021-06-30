@@ -88,7 +88,7 @@ module.exports = function (content) {
 
   const filePath = resourcePath
 
-  const moduleId = mpx.pathHash(filePath)
+  const moduleId = 'm' + mpx.pathHash(filePath)
 
   const needCssSourceMap = (
     !isProduction &&

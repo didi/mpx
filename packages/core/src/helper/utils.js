@@ -347,7 +347,7 @@ export function parseStyleText (cssText) {
 export function genStyleText (styleObj) {
   let res = ''
   for (let key in styleObj) {
-    if (styleObj.hasOwnProperty(key)) {
+    if (hasOwn(styleObj, key)) {
       let item = styleObj[key]
       res += `${hump2dash(key)}:${item};`
     }
@@ -402,7 +402,7 @@ export function getFirstKey (path) {
 
 function doMergeData (target, source) {
   Object.keys(source).forEach((srcKey) => {
-    if (target.hasOwnProperty(srcKey)) {
+    if (hasOwn(target, srcKey)) {
       target[srcKey] = source[srcKey]
     } else {
       let processed = false
@@ -442,7 +442,7 @@ export function mergeData (target, ...sources) {
 export function processUndefined (obj) {
   let result = {}
   for (let key in obj) {
-    if (obj.hasOwnProperty(key)) {
+    if (hasOwn(obj, key)) {
       if (obj[key] !== undefined) {
         result[key] = obj[key]
       } else {
@@ -485,7 +485,7 @@ export function diffAndCloneA (a, b) {
         const keys = Object.keys(a)
         length = keys.length
         clone = {}
-        if (!currentDiff) setDiff(!sameClass || length < Object.keys(b).length || !Object.keys(b).every((key) => a.hasOwnProperty(key)))
+        if (!currentDiff) setDiff(!sameClass || length < Object.keys(b).length || !Object.keys(b).every((key) => hasOwn(a, key)))
         lastPath = curPath
         for (let i = 0; i < length; i++) {
           const key = keys[i]
@@ -553,7 +553,7 @@ let datasetReg = /^data-(.+)$/
 export function collectDataset (props) {
   let dataset = {}
   for (let key in props) {
-    if (props.hasOwnProperty(key)) {
+    if (hasOwn(props, key)) {
       let matched = datasetReg.exec(key)
       if (matched) {
         dataset[matched[1]] = props[key]
