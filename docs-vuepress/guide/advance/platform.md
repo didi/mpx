@@ -56,7 +56,7 @@ new MpxwebpackPlugin({
   // mode为mpx编译的目标平台，可选值有(wx|ali|swan|qq|tt)
   mode: 'ali',
   // srcMode为mpx编译的源码平台，目前仅支持wx   
-  srcMode: 'wx' 
+  srcMode: 'wx'
 })
 ```
 
@@ -295,6 +295,95 @@ other {
 <view @swan>this is a  view component</view>
 ```
 
+### 自定义 env 实现基于不同目标环境的编译
+
+Mpx 支持在以上四种条件编译的基础上，通过自定义 env 的形式实现在不同环境下编译产出不同的代码。
+
+实例化 MpxWebpackPlugin 的时候，传入配置 env。
+
+``` javascript
+const MpxWebpackPlugin = require('@mpxjs/webpack-plugin')
+new MpxWebpackPlugin({
+  // mode为mpx编译的目标平台，可选值有(wx|ali|swan|qq|tt)
+  mode: 'ali',
+  // srcMode为mpx编译的源码平台，目前仅支持wx   
+  srcMode: 'wx',
+  // env为mpx编译的目标环境，需自定义
+  env: 'didi'
+})
+```
+#### 文件维度条件编译
+
+微信转支付宝的项目中存在一个业务地图组件map.mpx，由于微信和支付宝中的原生地图组件标准差异非常大，无法通过框架转译方式直接进行跨平台输出，而且这个地图组件在不同的目标环境中也有很大的差异，这时你可以在相同的位置新建一个 map.ali.didi.mpx 或 map.ali.qingju.mpx，在其中使用支付宝的技术标准进行开发，编译系统会根据当前编译的 mode 和 env 来加载对应模块，当 mode 为 ali，env 为 didi 时，会优先加载 map.ali.didi.mpx、map.ali.mpx，如果没有定义 env，则会优先加载 map.ali.mpx，反之则会加载 map.mpx。
+#### 区块维度条件编译
+
+在.mpx单文件中一般存在template、js、stlye、json四个区块，mpx的编译系统支持以区块为维度进行条件编译，只需在区块标签中添加`mode`或`env`属性定义该区块的目标平台即可，示例如下：
+
+```html
+<!--编译mode为ali且env为didi时使用如下区块，优先级最高是4-->
+<template mode="ali" env="didi">
+  <view>该区块中的所有代码需采用支付宝的技术标准进行编写</view>
+</template>
+
+<!--编译mode为ali时使用如下区块，优先级是3-->
+<template mode="ali">
+  <view>该区块中的所有代码需采用支付宝的技术标准进行编写</view>
+</template>
+
+<!--编译env为didi时使用如下区块，优先级是2-->
+<template env="didi">
+  <view>该区块中的所有代码需采用支付宝的技术标准进行编写</view>
+</template>
+
+<!--其他环境，优先级是1-->
+<template>
+  <view>该区块中的所有代码需采用支付宝的技术标准进行编写</view>
+</template>
+```
+
+注意，如果多个相同的区块写相同的 mode 和 env，默认会用最后一个，如：
+
+``` html
+<template mode="ali">
+  <view>该区块会被忽略</view>
+</template>
+
+<template mode="ali">
+  <view>默认会用这个区块</view>
+</template>
+```
+
+#### 代码维度条件编译
+
+如果在 MpxWebpackPlugin 插件初始化时自定义了 env，你可以访问`__mpx_env__`获取当前编译env，进行环境差异逻辑编写。使用方法与`__mpx_mode__`相同。
+
+#### 组件属性维度条件编译
+
+组件属性维度条件编译允许用户在组件上使用 `@` 、`:` 、 `|` 等标识来指定某个组件或属性只在某些平台或环境下有效。组合使用的格式是 `@mode:env:env|mode:env`，mode优先级大于env。
+
+对于同一个 button 组件，微信小程序支持 `open-type="getUserInfo"`，但是支付宝小程序支持 `open-type="getAuthorize" `。如果不使用任何维度的条件编译，则在编译的时候会有警告和报错信息。
+
+如果当前编译的目标平台是 wx，以下写法 open-type 属性将被忽略
+
+``` html
+<button open-type@swan:didi="getUserInfo">获取用户信息</button>
+```
+
+如果当前 env 不是 didi，以下写法 open-type 属性也会被忽略
+``` html
+<button open-type@:didi="getUserInfo">获取用户信息</button>
+```
+
+如果只想在 mode 为 wx 且 env 为 didi 或 qingju 的环境下使用 open-type 属性，则可以这样写：
+``` html
+<button open-type@wx:didi:qingju="getUserInfo">获取用户信息</button>
+```
+
+组件属性维度的编译也可以当做条件编译来使用，例如只想在滴滴出行小程序中使用某个组件：
+
+``` html
+<view @:didi>this is a  view component</view>
+```
 ### 其他注意事项
 
 * 当目标平台为支付宝时，需要启用支付宝最新的component2编译才能保障框架正常工作，关于component2[点此查看详情](https://docs.alipay.com/mini/framework/custom-component-overview)；
@@ -483,6 +572,7 @@ showLoading|支持
 hideLoading|支持
 onWindowResize|支持
 offWindowResize|支持
+createAnimation|支持
 
 #### JSON配置
 配置项|是否支持
@@ -509,6 +599,8 @@ fetch|是
 i18n|是
 
 #### 小程序其他原生能力
-能力|是否支持
+能力|支持度
 :---|---
-wxs|是
+wxs|支持
+animation|支持组件的animation属性，支持所有animation对象方法(export、step、width、height、rotate、scale、skew、translate等等)
+

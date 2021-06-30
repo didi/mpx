@@ -15,6 +15,7 @@ module.exports = function (raw) {
   const mainCompilation = getMainCompilation(compilation)
   const mpx = mainCompilation.__mpx__
   const mode = mpx.mode
+  const env = mpx.env
   const defs = mpx.defs
   const i18n = mpx.i18n
   const externalClasses = mpx.externalClasses
@@ -24,10 +25,6 @@ module.exports = function (raw) {
   const packageName = queryObj.packageName || mpx.currentPackageRoot || 'main'
   const componentsMap = mpx.componentsMap[packageName]
   const wxsContentMap = mpx.wxsContentMap
-  let scopedId
-  if (options.hasScoped) {
-    scopedId = options.moduleId
-  }
 
   const warn = (msg) => {
     this.emitWarning(
@@ -50,11 +47,13 @@ module.exports = function (raw) {
     basename: path.basename(resourcePath),
     isComponent: !!componentsMap[resourcePath],
     mode,
+    env,
     srcMode: localSrcMode || globalSrcMode,
     defs,
     decodeHTMLText,
     externalClasses,
-    scopedId,
+    hasScoped: options.hasScoped,
+    moduleId: options.moduleId,
     filePath: this.resourcePath,
     i18n,
     checkUsingComponents: mpx.checkUsingComponents,
@@ -176,7 +175,7 @@ ${e.stack}`)
 
   for (let module in meta.wxsModuleMap) {
     isSync = false
-    const src = loaderUtils.urlToRequest(meta.wxsModuleMap[module], options.projectRoot)
+    const src = loaderUtils.urlToRequest(meta.wxsModuleMap[module], options.root)
     // 编译render函数只在mpx文件中运行，此处issuer的context一定等同于当前loader的context
     const expression = `require(${loaderUtils.stringifyRequest(this, src)})`
     const deps = []

@@ -14,13 +14,15 @@ module.exports = function (content) {
     return content
   }
   const mode = mpx.mode
+  const env = mpx.env
   const defs = mpx.defs
   const resourcePath = parseRequest(this.resource).resourcePath
   const parts = parseComponent(content, {
     filePath: resourcePath,
     needMap: this.sourceMap,
     mode,
-    defs
+    defs,
+    env
   })
 
   let output = ''

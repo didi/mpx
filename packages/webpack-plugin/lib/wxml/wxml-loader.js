@@ -2,8 +2,6 @@
 const attrParse = require('./attributesParser')
 const loaderUtils = require('loader-utils')
 const url = require('url')
-const path = require('path')
-const hash = require('hash-sum')
 const config = require('../config')
 const getMainCompilation = require('../utils/get-main-compilation')
 const createHelpers = require('../helpers')
@@ -19,16 +17,10 @@ module.exports = function (content) {
   const loaderContext = this
   const isProduction = this.minimize || process.env.NODE_ENV === 'production'
   const options = loaderUtils.getOptions(this) || {}
+  const mpx = getMainCompilation(this._compilation).__mpx__
 
   const { resourcePath: filePath, queryObj } = parseRequest(this.resource)
-
-  const context = (
-    this.rootContext ||
-    (this.options && this.options.context) ||
-    process.cwd()
-  )
-  const shortFilePath = path.relative(context, filePath).replace(/^(\.\.[\\/])+/, '')
-  const moduleId = hash(isProduction ? (shortFilePath + '\n' + content) : shortFilePath)
+  const moduleId = 'm' + mpx.pathHash(filePath)
 
   const needCssSourceMap = (
     !isProduction &&
@@ -42,7 +34,6 @@ module.exports = function (content) {
 
   const usingComponents = []
 
-  const mpx = getMainCompilation(this._compilation).__mpx__
   const mode = mpx.mode
   const globalSrcMode = mpx.srcMode
   const localSrcMode = queryObj.mode

@@ -33,7 +33,8 @@ const sidebar = {
         'advance/ability-compatible',
         'advance/plugin',
         'advance/platform',
-        'advance/size-report'
+        'advance/size-report',
+        'advance/dll-plugin'
       ]
     },
     {

@@ -36,7 +36,8 @@ export default class XFetch {
   }
 
   addLowPriorityWhiteList (rules) {
-    this.queue.addLowPriorityWhiteList(rules)
+    // when useQueue not optioned, this.quene is undefined
+    this.queue && this.queue.addLowPriorityWhiteList(rules)
   }
 
   fetch (config, priority) {

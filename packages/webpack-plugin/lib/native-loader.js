@@ -1,4 +1,3 @@
-const hash = require('hash-sum')
 const path = require('path')
 const JSON5 = require('json5')
 const parseRequest = require('./utils/parse-request')
@@ -30,7 +29,7 @@ module.exports = function (content) {
 
   const filePath = this.resourcePath
 
-  const moduleId = 'm' + hash(this._module.identifier())
+  const moduleId = 'm' + mpx.pathHash(filePath)
   const { resourcePath, queryObj } = parseRequest(this.resource)
   const projectRoot = mpx.projectRoot
   const mode = mpx.mode

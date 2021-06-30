@@ -648,6 +648,14 @@ const getWxToAliApi = ({ optimize = false }) => {
       }
 
       return selectorQuery
+    },
+
+    closeBLEConnection (options = {}) {
+      ALI_OBJ.disconnectBLEDevice(options)
+    },
+
+    createBLEConnection (options = {}) {
+      ALI_OBJ.connectBLEDevice(options)
     }
   }
 }

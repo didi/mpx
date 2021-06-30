@@ -1,5 +1,5 @@
 import {
-  isEmptyObject, makeMap
+  isEmptyObject, makeMap, hasOwn
 } from '../../../helper/utils'
 import MPXProxy from '../../../core/proxy'
 import builtInKeysMap from '../builtInKeysMap'
@@ -54,7 +54,7 @@ function transformApiForProxy (context, currentInject) {
           const data = {}
           const validData = Object.assign({}, options.data, options.properties, options.props)
           for (const key in context.data) {
-            if (context.data.hasOwnProperty(key) && validData.hasOwnProperty(key)) {
+            if (hasOwn(context.data, key) && hasOwn(validData, key)) {
               data[key] = context.data[key]
             }
           }

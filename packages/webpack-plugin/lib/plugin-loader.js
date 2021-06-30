@@ -101,7 +101,7 @@ module.exports = function (source) {
   const callback = (err) => {
     checkEntryDeps(() => {
       if (err) return nativeCallback(err)
-      if (mpx.mode === 'ali') {
+      if (mpx.mode === 'ali' && pluginEntry.pages) {
         let publicPages = Object.keys(pluginEntry.pages).reduce((cur, key) => {
           if (!key.startsWith(NO_EXPORT)) {
             cur[key] = pluginEntry.pages[key]
