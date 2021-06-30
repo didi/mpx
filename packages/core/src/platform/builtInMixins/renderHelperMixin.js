@@ -1,5 +1,6 @@
 import { isObject, isPlainObject } from '../../helper/utils'
 import { stringifyClass, stringifyStyle } from '../../helper/stringify'
+import VNode, { createEmptyVNode, createTextVNode } from '../../vnode/node'
 
 let uid = 0
 const getUid = () => ++uid
@@ -60,6 +61,8 @@ export default function renderHelperMixin () {
         data.nodeId = nodeId
         children = simpleNormalizeChildren(children)
 
+        const _vnode = new VNode(tag, data, children, '')
+        console.log('the _vnode is:', _vnode)
         const vnode = {
           nodeType: tag || '',
           ...data,
@@ -69,8 +72,9 @@ export default function renderHelperMixin () {
         }
         return vnode
       },
-      // createTextNode
+      // createTextVNode
       __v (content) {
+        const textVnode = createTextVNode(content)
         return {
           nodeType: '',
           nodeId: '',
@@ -78,8 +82,9 @@ export default function renderHelperMixin () {
           text: content
         }
       },
-      // createEmptyNode
+      // createEmptyVNode
       __e () {
+        const emptyVnode = createEmptyVNode()
         return {
           nodeType: '',
           nodeId: '',

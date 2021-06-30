@@ -68,7 +68,15 @@ createPage({
     message: 'msg'
   },
   attached() {
-
+    setTimeout(() => {
+      this.message = 'gogo'
+      // const setData = this.__mpxProxy.target.__render
+      // setData({
+      //   'r.children[0].children[0]': null
+      // })
+      // console.log('the _vnode is:', this._vnode)
+      // console.log('the render is:', this.__mpxProxy.target.__render)
+    }, 1000)
   },
   watch: {
     message(val) {

@@ -13,6 +13,18 @@ export default class VNode {
     this.isStatic = false
     this.isComment = false
   }
+
+  // 节点路径
+  get _path () {
+    const pathStack = []
+    let parent = this.parent
+    while (parent) {
+      const index = parent.children.indexOf(this)
+      pathStack.unshift('children', index)
+      parent = parent.parent
+    }
+    return pathStack
+  }
 }
 
 export const createEmptyVNode = (text = '') => {

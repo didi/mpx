@@ -12,6 +12,9 @@ export const nodeOps = {
   },
   appendChild (node, child) {
     node.appendChild(child)
+  },
+  parentNode (node) {
+    return node.parentNode
   }
 }
 

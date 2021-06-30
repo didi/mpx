@@ -274,6 +274,13 @@ export default class MPXProxy {
       // 对 vnode 进行深拷贝，原有的 vnode 数据仅做渲染使用，拷贝后的数据做上下文的绑定
       // TODO: 目前未做 vnode diff 工作，都是全量 render，二期优化
       const _vnode = diffAndCloneA(vnode).clone
+      if (!this._vnode) {
+        this._vnode = _vnode
+      } else {
+        
+      }
+      patch(this._vnode, _vnode, this.target)
+      // proxy(this.target, { vnode: vnode }, ['vnode'], true)
       proxy(this.target, { _vnode: patch(undefined, _vnode, this.target) }, ['_vnode'], true)
       return this.doRenderWithVNode(vnode)
     }
