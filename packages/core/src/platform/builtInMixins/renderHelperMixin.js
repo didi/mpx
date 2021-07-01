@@ -62,7 +62,7 @@ export default function renderHelperMixin () {
         children = simpleNormalizeChildren(children)
 
         const _vnode = new VNode(tag, data, children, '')
-        console.log('the _vnode is:', _vnode)
+        // 用以渲染的 vnode 维持最小数据状态
         const vnode = {
           nodeType: tag || '',
           ...data,

@@ -1,5 +1,6 @@
 <template>
   <view
+    wx:if="{{ flag }}"
     class="root"
     data-a="{{ message }}"
     bind:tap="onViewTapBubble('b', $event)"
@@ -8,6 +9,7 @@
       <view class="navigator-item" bindtap="jumpTo(item)">{{ item.name }}</view>
     </view>
   </view>
+  <text wx:else>okok</text>
 </template>
 
 <script>
@@ -65,16 +67,18 @@ createPage({
         path: '/pages/inner-components/index'
       }
     ],
-    message: 'msg'
+    message: 'msg',
+    flag: true
   },
   attached() {
     setTimeout(() => {
-      this.message = 'gogo'
+      // this.message = 'gogo'
+      this.flag = false
       // const setData = this.__mpxProxy.target.__render
       // setData({
       //   'r.children[0].children[0]': null
       // })
-      // console.log('the _vnode is:', this._vnode)
+      console.log('the _vnode is:', this._vnode)
       // console.log('the render is:', this.__mpxProxy.target.__render)
     }, 1000)
   },

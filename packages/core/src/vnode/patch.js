@@ -8,16 +8,20 @@ export default function patch (oldVnode, vnode, context) {
   if (!context.nodeIds) {
     context.nodeIds = new Set()
   }
-  if (!isDef(oldVnode) || oldVnode === vnode) {
-    createElm(vnode, undefined, context)
-    return vnode.elm
+  // 初次创建的流程需优化
+  if (oldVnode === vnode) {
+    createElm(oldVnode, undefined, context)
+    // return vnode.elm
   } else {
-    patchVnode(oldVnode, vnode)
+    patchVnode(oldVnode, vnode, diffPath)
   }
+
+  return diffPath
 }
 
-function patchVnode (oldVnode, vnode) {
+function patchVnode (oldVnode, vnode, diffPath) {
   if (oldVnode.nodeType !== vnode.nodeType) {
+    diffPath[oldVnode.elm._path] = vnode
     replaceVnode(oldVnode, vnode, context)
     return
   }
@@ -40,7 +44,7 @@ function patchVnode (oldVnode, vnode) {
     }
   }
 
-  patchChildren(oldVnode, vnode)
+  patchChildren(oldVnode, vnode, diffPath)
 }
 
 function replaceVnode (oldVnode, vnode, diffPath) {
@@ -54,12 +58,12 @@ function patchData (vnode, key, oldValue, value) {
   // TODO: do patchData and collect diff path
 }
 
-function patchChildren (oldVnode, vnode) {
+function patchChildren (oldVnode, vnode, diffPath) {
   const oldCh = oldVnode.children
   const ch = vnode.children
-
-  if (!!oldCh.length) {
-    if (!!ch.length) {
+  // TODO: 待完善
+  if (oldCh.length === 0) {
+    if (ch.length === 0) {
 
     } else if (ch.length === 1) {
 
@@ -67,9 +71,16 @@ function patchChildren (oldVnode, vnode) {
 
     }
   } else if (oldCh.length === 1) {
-
+    if (ch.length === 0) {
+    } else if (ch.length === 1) {
+      patchVnode(oldCh[0], ch[0], diffPath)
+    } else {
+    }
   } else {
-
+    if (ch.length === 0) {
+    } else if (ch.length === 1) {
+    } else {
+    }
   }
 }
 

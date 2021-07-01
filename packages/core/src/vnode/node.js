@@ -14,16 +14,27 @@ export default class VNode {
     this.isComment = false
   }
 
-  // 节点路径
+  // 获取树节点路径
   get _path () {
     const pathStack = []
-    let parent = this.parent
+    let parent = this.parentNode
+    let child = this
     while (parent) {
-      const index = parent.children.indexOf(this)
+      const index = parent.childNodes.indexOf(child)
       pathStack.unshift('children', index)
-      parent = parent.parent
+      child = parent
+      parent = parent.parentNode
     }
-    return pathStack
+    const pathStr = pathStack.reduce((preVal, curVal, curIndex) => {
+      if (typeof curVal === 'number') {
+        curVal = `[${curVal}]`
+        if (curIndex !== pathStack.length - 1) {
+          curVal = curVal + '.'
+        }
+      }
+      return preVal + curVal
+    }, 'r.')
+    return pathStr
   }
 }
 

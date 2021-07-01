@@ -279,10 +279,10 @@ export default class MPXProxy {
       } else {
         
       }
-      patch(this._vnode, _vnode, this.target)
-      // proxy(this.target, { vnode: vnode }, ['vnode'], true)
-      proxy(this.target, { _vnode: patch(undefined, _vnode, this.target) }, ['_vnode'], true)
-      return this.doRenderWithVNode(vnode)
+      let diffPath = patch(this._vnode, _vnode, this.target)
+      // patch(this._vnode, _vnode, this.target)
+      // proxy(this.target, { _vnode: patch(this._vnode, _vnode, this.target) }, ['_vnode'], true)
+      return this.doRenderWithVNode(vnode, diffPath)
     }
     const renderData = preProcessRenderData(this.renderData)
     this.doRender(this.processRenderDataWithStrictDiff(renderData))
@@ -381,8 +381,14 @@ export default class MPXProxy {
     return result
   }
 
-  doRenderWithVNode (vnode) {
-    if (!isEmptyObject(vnode) && this.options.runtimeComponent) {
+  doRenderWithVNode (vnode, diffPath) {
+    if (!isEmptyObject(diffPath)) {
+      Object.keys(diffPath).map(key => {
+        diffPath['r.children[0].children[2]'] = diffPath[key]
+        delete diffPath[key]
+      })
+      this.target.__render(diffPath)
+    } else if (!isEmptyObject(vnode) && this.options.runtimeComponent) {
       this.target.__render({ r: vnode })
     }
   }
