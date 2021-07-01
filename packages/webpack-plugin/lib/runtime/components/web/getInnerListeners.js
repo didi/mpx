@@ -1,3 +1,5 @@
+import { isEmptyObject } from './util'
+
 function processModel (listeners, context) {
   // 该函数只有wx:model的情况下才调用，而且默认e.detail.value有值
   // 该函数必须在产生merge前执行
@@ -42,9 +44,15 @@ function mergeListeners (listeners, otherListeners, options = {}) {
 }
 
 function processTap (listeners, context) {
-  if (!(listeners.tap || listeners.longpress || listeners.longtap)) {
-    return
-  }
+  const listenerMap = {}
+  const tapEvents = ['tap', 'longpress', 'longtap']
+  tapEvents.forEach((eventName) => {
+    if (listeners[eventName]) {
+      listenerMap[eventName] = true
+      delete listeners[eventName]
+    }
+  })
+  if (isEmptyObject(listenerMap)) return
   context.__mpxTapInfo = context.__mpxTapInfo || {}
   let events = {
     touchstart (e) {
@@ -55,14 +63,14 @@ function processTap (listeners, context) {
       context.__mpxTapInfo.startTimer = null
       context.__mpxTapInfo.needTap = true
       context.__mpxTapInfo.hadTouch = true
-      if (listeners.longpress || listeners.longtap) {
+      if (listenerMap.longpress || listenerMap.longtap) {
         context.__mpxTapInfo.startTimer = setTimeout(() => {
           context.__mpxTapInfo.needTap = false
-          if (listeners.longpress) {
+          if (listenerMap.longpress) {
             const re = inheritEvent('longpress', e, context.__mpxTapInfo.detail)
             context.$emit('longpress', re)
           }
-          if (listeners.longtap) {
+          if (listenerMap.longtap) {
             const re = inheritEvent('longtap', e, context.__mpxTapInfo.detail)
             context.$emit('longtap', re)
           }
@@ -81,13 +89,13 @@ function processTap (listeners, context) {
     },
     touchend (e) {
       context.__mpxTapInfo.startTimer && clearTimeout(context.__mpxTapInfo.startTimer)
-      if (listeners.tap && context.__mpxTapInfo.needTap) {
+      if (listenerMap.tap && context.__mpxTapInfo.needTap) {
         const re = inheritEvent('tap', e, context.__mpxTapInfo.detail)
         context.$emit('tap', re)
       }
     },
     click (e) {
-      if (listeners.tap && !context.__mpxTapInfo.hadTouch) {
+      if (listenerMap.tap && !context.__mpxTapInfo.hadTouch) {
         context.__mpxTapInfo.detail = {
           x: e.pageX,
           y: e.pageY
