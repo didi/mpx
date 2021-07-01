@@ -124,6 +124,7 @@ class MpxWebpackPlugin {
     options.forceUsePageCtor = options.forceUsePageCtor || false
     options.postcssInlineConfig = options.postcssInlineConfig || {}
     options.transRpxRules = options.transRpxRules || null
+    options.transVwRules = options.transVwRules || null
     options.auditResource = options.auditResource || false
     options.decodeHTMLText = options.decodeHTMLText || false
     options.nativeOptions = Object.assign({
@@ -350,6 +351,7 @@ class MpxWebpackPlugin {
           projectRoot: this.options.projectRoot,
           autoScopeRules: this.options.autoScopeRules,
           transRpxRules: this.options.transRpxRules,
+          transVwRules: this.options.transVwRules,
           postcssInlineConfig: this.options.postcssInlineConfig,
           decodeHTMLText: this.options.decodeHTMLText,
           // native文件专用相关配置
@@ -994,10 +996,18 @@ try {
       // resolve完成后修改loaders信息并批量添加mode query
       normalModuleFactory.hooks.afterResolve.tapAsync('MpxWebpackPlugin', (data, callback) => {
         if (data.loaders) {
-          data.loaders.forEach((loader) => {
+          data.loaders.forEach((loader, index) => {
             if (/ts-loader/.test(loader.loader)) {
               // todo 暂时固定写死options，待后续优化为复用rules后修正
               loader.options = { appendTsSuffixTo: [/\.(mpx|vue)$/] }
+            }
+            if (this.options.mode === 'web' && this.options.transVwRules) {
+              if (/css-loader/.test(loader.loader) && !/vw-loader/.test(data.loaders[index + 1].loader)) {
+                data.loaders.splice(index + 1, 0, {
+                  loader: normalize.lib('vw-loader'),
+                  options: this.options.transVwRules
+                })
+              }
             }
           })
         }
