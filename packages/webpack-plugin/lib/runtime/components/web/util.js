@@ -32,3 +32,13 @@ export function processSize (size, option = {}) {
 export function type (n) {
   return Object.prototype.toString.call(n).slice(8, -1)
 }
+
+export function isEmptyObject (obj) {
+  if (!obj) {
+    return true
+  }
+  for (let key in obj) {
+    return false
+  }
+  return true
+}
