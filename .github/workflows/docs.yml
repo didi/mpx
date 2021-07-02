@@ -7,18 +7,52 @@ on:
 
 jobs:
   deploy:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - uses: technote-space/get-diff-action@v4
+        with:
+          PATTERNS: |
+            +(docs|docs-vuepress)/**/*
 
-      - name: generate static file
+      - name: Use node v12
+        uses: actions/setup-node@v1
+        with:
+          node-version: '10.21.0'
+
+      # vuepress生成最终文档
+      - name: generate docs file
+        if: env.GIT_DIFF
+        run: |
+          npm i
+          npm run docs:build
+
+      # 使用 https://github.com/appleboy/scp-action 进行部署，注意 strip_components 用于控制层级
+      - name: Deploy to self-host server
+        if: env.GIT_DIFF
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.DOCS_SERVER_HOST }}
+          username: ${{ secrets.DOCS_SERVER_USER }}
+          key: ${{ secrets.DOCS_SERVER_KEY }}
+          command_timeout: "20m"
+          source: "./docs-vuepress/.vuepress/dist/"
+          strip_components: 4
+          target: "${{ secrets.DOCS_SERVER_DIR }}"
+
+      # vuepress生产的文件需要控制根目录，暂时还是先用老文档部署GitHub pages
+      - name: generate old static file
+        if: env.GIT_DIFF
         run: |
           cd docs
           npx gitbook-cli install
           npx gitbook-cli build
 
-      - name: Deploy
+      # 部署github pages
+      - name: Deploy to github pages
+        if: env.GIT_DIFF
         uses: peaceiris/actions-gh-pages@v3
         with:
           publish_dir: ./docs/_book
+          force_orphan: true
           personal_token: ${{ secrets.GH_PAGES_TOKEN }}

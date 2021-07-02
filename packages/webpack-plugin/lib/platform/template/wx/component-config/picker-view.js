@@ -21,15 +21,6 @@ module.exports = function ({ print }) {
     ],
     event: [
       {
-        test: /^(change)$/,
-        ali (eventName) {
-          const eventMap = {
-            'change': 'change'
-          }
-          return eventMap[eventName]
-        }
-      },
-      {
         test: /^(pickstart|pickend)$/,
         ali: aliEventLog,
         swan: baiduEventLog,

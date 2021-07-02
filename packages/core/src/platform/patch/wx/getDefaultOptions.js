@@ -1,5 +1,5 @@
 import {
-  isEmptyObject, makeMap
+  isEmptyObject, makeMap, hasOwn
 } from '../../../helper/utils'
 import MPXProxy from '../../../core/proxy'
 import builtInKeysMap from '../builtInKeysMap'
@@ -42,13 +42,24 @@ function transformApiForProxy (context, currentInject) {
   Object.defineProperties(context, {
     setData: {
       get () {
-        return this.__mpxProxy.forceUpdate.bind(this.__mpxProxy)
+        return function (data, callback) {
+          return this.__mpxProxy.forceUpdate(data, { sync: true }, callback)
+        }
       },
       configurable: true
     },
     __getInitialData: {
       get () {
-        return () => context.data
+        return (options) => {
+          const data = {}
+          const validData = Object.assign({}, options.data, options.properties, options.props)
+          for (const key in context.data) {
+            if (hasOwn(context.data, key) && hasOwn(validData, key)) {
+              data[key] = context.data[key]
+            }
+          }
+          return data
+        }
       },
       configurable: false
     },
@@ -87,11 +98,11 @@ function transformApiForProxy (context, currentInject) {
 function filterOptions (options) {
   const newOptions = {}
   Object.keys(options).forEach(key => {
-    if (builtInKeysMap[key] || (key === 'data' && typeof options[key] === 'function')) {
+    if (builtInKeysMap[key]) {
       return
     }
     if (key === 'properties' || key === 'props') {
-      newOptions['properties'] = transformProperties(Object.assign({}, options['properties'], options['props']))
+      newOptions.properties = transformProperties(Object.assign({}, options.properties, options.props))
     } else if (key === 'methods' && options.__pageCtor__) {
       // 构造器为Page时抽取所有methods方法到顶层
       Object.assign(newOptions, options[key])
@@ -134,7 +145,6 @@ function initProxy (context, rawOptions, currentInject) {
   // 创建proxy对象
   const mpxProxy = new MPXProxy(rawOptions, context)
   context.__mpxProxy = mpxProxy
-  // 组件监听视图数据更新, attached之后才能拿到properties
   context.__mpxProxy.created()
 }
 
@@ -159,7 +169,6 @@ export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
       this.__mpxProxy && this.__mpxProxy.destroyed()
     }
   })
-
   rawOptions.mixins = rawOptions.mixins ? rootMixins.concat(rawOptions.mixins) : rootMixins
   rawOptions = mergeOptions(rawOptions, type, false)
   return filterOptions(rawOptions)

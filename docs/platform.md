@@ -266,7 +266,7 @@ other {
 
 ## 使用方法
 
-使用@mpxjs/cli创建新项目时选择跨平台并选择输出web后，即可生成可输出web的示例项目，运行`npm run watchweb`，就会在dist/web下输出构建后的web项目，并启动静态服务预览运行。
+使用@mpxjs/cli创建新项目时选择跨平台并选择输出web后，即可生成可输出web的示例项目，运行`npm run watch:web`，就会在dist/web下输出构建后的web项目，并启动静态服务预览运行。
 
 ## 支持范围
 目前输出web的能力仍处于持续开发阶段，现阶段支持的小程序技术能力范围有限，下列表格中显示了当前版本中已支持的能力范围
@@ -365,6 +365,7 @@ methods|支持
 mixins|支持
 observers|不支持，请使用watch代替
 behaviors|不支持，请使用mixins代替
+relations|部分支持，linkChanged、target不支持
 
 ### 组件API
 

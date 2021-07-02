@@ -1,16 +1,21 @@
 import requestAdapter from './request'
 import CancelToken from './cancelToken'
-// import RequestQueue from './queue'
 import InterceptorManager from './interceptorManager'
+import RequestQueue from './queue'
 
 export default class XFetch {
   constructor (options, MPX) {
     this.CancelToken = CancelToken
-    // this.queue = new RequestQueue({
-    //   adapter: (config) => requestAdapter(config),
-    //   ...options
-    // })
-    this.adapter = (config) => requestAdapter(config, MPX)
+    // this.requestAdapter = (config) => requestAdapter(config, MPX)
+    // 当存在 useQueue 配置时，才使用 this.queue 变量
+    if (options && options.useQueue && typeof options.useQueue === 'object') {
+      this.queue = new RequestQueue({
+        adapter: (config) => requestAdapter(config, MPX),
+        ...options.useQueue
+      })
+    } else {
+      this.requestAdapter = (config) => requestAdapter(config, MPX)
+    }
     this.interceptors = {
       request: new InterceptorManager(),
       response: new InterceptorManager()
@@ -18,27 +23,23 @@ export default class XFetch {
   }
 
   create (options) {
+    console.warn('The xfetch.create api is deprecated now and will be removed in next minor version!')
     return new XFetch(options)
   }
 
-  lock () {
-    // this.queue.lock()
-  }
-
-  unlock () {
-    // this.queue.unlock()
-  }
-
   addLowPriorityWhiteList (rules) {
-    // this.queue.addLowPriorityWhiteList(rules)
+    // when useQueue not optioned, this.quene is undefined
+    this.queue && this.queue.addLowPriorityWhiteList(rules)
   }
 
   fetch (config, priority) {
-    // const request = () => this.queue.request(config, priority)
-    const request = () => this.adapter(config)
+    config.timeout = config.timeout || global.__networkTimeout
     // middleware chain
     const chain = []
     let promise = Promise.resolve(config)
+
+    // use queue
+    const request = (config) => this.queue ? this.queue.request(config, priority) : this.requestAdapter(config)
 
     this.interceptors.request.forEach(function unshiftRequestInterceptors (interceptor) {
       chain.push(interceptor.fulfilled, interceptor.rejected)

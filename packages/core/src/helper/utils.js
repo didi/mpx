@@ -6,10 +6,17 @@ import { error } from './log'
 
 import { set } from '../observer/index'
 
-// type在支付宝环境下不一定准确，判断是普通对象优先使用isPlainObject
+import EXPORT_MPX from '../index'
+
+// type在支付宝环境下不一定准确，判断是普通对象优先使用isPlainObject（新版支付宝不复现，issue #644 修改isPlainObject实现与type等价）
 export function type (n) {
   return Object.prototype.toString.call(n).slice(8, -1)
 }
+
+/**
+ * 判断当前环境是否是浏览器环境
+ */
+export const inBrowser = typeof window !== 'undefined'
 
 export function asyncLock () {
   let lock = false
@@ -185,6 +192,7 @@ export function enumerableKeys (obj) {
 export function extend (target, ...sources) {
   for (const source of sources) {
     if (isObject(source)) {
+      // 合并原型链属性
       for (const key in source) {
         target[key] = source[key]
       }
@@ -193,18 +201,22 @@ export function extend (target, ...sources) {
   return target
 }
 
-export function dissolveAttrs (target = {}, keys) {
-  if (typeof keys === 'string') {
-    keys = [keys]
+// deepMerge 用于合并i18n语言集
+export function merge (target, ...sources) {
+  if (isObject(target)) {
+    for (const source of sources) {
+      if (isObject(source)) {
+        Object.keys(source).forEach((key) => {
+          if (isObject(source[key]) && isObject(target[key])) {
+            merge(target[key], source[key])
+          } else {
+            target[key] = source[key]
+          }
+        })
+      }
+    }
   }
-  const newOptions = Object.assign({}, target)
-  keys.forEach(key => {
-    const value = target[key]
-    if (!isObject(value)) return
-    delete newOptions[key]
-    Object.assign(newOptions, value)
-  })
-  return newOptions
+  return target
 }
 
 export function isObject (obj) {
@@ -212,9 +224,20 @@ export function isObject (obj) {
 }
 
 export function isPlainObject (value) {
-  if (value === null || typeof value !== 'object') return false
+  if (value === null || typeof value !== 'object' || type(value) !== 'Object') return false
   const proto = Object.getPrototypeOf(value)
-  return proto === Object.prototype || proto === null
+  if (proto === Object.prototype || proto === null) return true
+  // issue #644
+  if (EXPORT_MPX.config.observeClassInstance) {
+    if (Array.isArray(EXPORT_MPX.config.observeClassInstance)) {
+      for (let i = 0; i < EXPORT_MPX.config.observeClassInstance.length; i++) {
+        if (proto === EXPORT_MPX.config.observeClassInstance[i].prototype) return true
+      }
+    } else {
+      return true
+    }
+  }
+  return false
 }
 
 const hasOwnProperty = Object.prototype.hasOwnProperty
@@ -324,7 +347,7 @@ export function parseStyleText (cssText) {
 export function genStyleText (styleObj) {
   let res = ''
   for (let key in styleObj) {
-    if (styleObj.hasOwnProperty(key)) {
+    if (hasOwn(styleObj, key)) {
       let item = styleObj[key]
       res += `${hump2dash(key)}:${item};`
     }
@@ -379,7 +402,7 @@ export function getFirstKey (path) {
 
 function doMergeData (target, source) {
   Object.keys(source).forEach((srcKey) => {
-    if (target.hasOwnProperty(srcKey)) {
+    if (hasOwn(target, srcKey)) {
       target[srcKey] = source[srcKey]
     } else {
       let processed = false
@@ -419,7 +442,7 @@ export function mergeData (target, ...sources) {
 export function processUndefined (obj) {
   let result = {}
   for (let key in obj) {
-    if (obj.hasOwnProperty(key)) {
+    if (hasOwn(obj, key)) {
       if (obj[key] !== undefined) {
         result[key] = obj[key]
       } else {
@@ -462,7 +485,7 @@ export function diffAndCloneA (a, b) {
         const keys = Object.keys(a)
         length = keys.length
         clone = {}
-        if (!currentDiff) setDiff(!sameClass || length < Object.keys(b).length || !Object.keys(b).every((key) => a.hasOwnProperty(key)))
+        if (!currentDiff) setDiff(!sameClass || length < Object.keys(b).length || !Object.keys(b).every((key) => hasOwn(a, key)))
         lastPath = curPath
         for (let i = 0; i < length; i++) {
           const key = keys[i]
@@ -530,7 +553,7 @@ let datasetReg = /^data-(.+)$/
 export function collectDataset (props) {
   let dataset = {}
   for (let key in props) {
-    if (props.hasOwnProperty(key)) {
+    if (hasOwn(props, key)) {
       let matched = datasetReg.exec(key)
       if (matched) {
         dataset[matched[1]] = props[key]
@@ -577,4 +600,31 @@ export function makeMap (arr) {
     obj[item] = true
     return obj
   }, {})
+}
+
+/**
+ * Get object values by chaining-key
+ * @param {Object} obj target Object
+ * @param {String} key chaining-key, e.g.: 'a.b.c'
+ */
+export function getChainKeyOfObj (obj = {}, key = '') {
+  return key.split('.').reduce((o, k) => o && o[k], obj)
+}
+
+/**
+ * Delete object values by chaining-key
+ * @param {Object} obj target object
+ * @param {String} key chaining-key
+ */
+export function delChainKeyOfObj (obj = {}, key = '') {
+  return key.split('.').reduce((o, k, index, arr) => {
+    if (arr.length === index + 1) {
+      try {
+        return delete o[k]
+      } catch (e) { // undefined
+        return false
+      }
+    }
+    return o && o[k]
+  }, obj)
 }

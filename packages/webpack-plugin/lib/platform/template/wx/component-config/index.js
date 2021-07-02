@@ -1,38 +1,43 @@
 const ad = require('./ad')
-const view = require('./view')
-const scrollView = require('./scroll-view')
-const swiper = require('./swiper')
-const swiperItem = require('./swiper-item')
-const movableView = require('./movable-view')
-const movableArea = require('./movable-area')
-const coverView = require('./cover-view')
-const coverImage = require('./cover-image')
-const text = require('./text')
-const richText = require('./rich-text')
-const progress = require('./progress')
+const block = require('./block')
 const button = require('./button')
+const camera = require('./camera')
+const canvas = require('./canvas')
 const checkboxGroup = require('./checkbox-group')
 const checkbox = require('./checkbox')
+const coverImage = require('./cover-image')
+const coverView = require('./cover-view')
+const form = require('./form')
+const HyphenTagName = require('./hypen-tag-name')
+const icon = require('./icon')
+const image = require('./image')
+const input = require('./input')
+const livePlayer = require('./live-player')
+const livePusher = require('./live-pusher')
+const map = require('./map')
+const movableArea = require('./movable-area')
+const movableView = require('./movable-view')
+const navigator = require('./navigator')
+const pickerViewColumn = require('./picker-view-column')
+const pickerView = require('./picker-view')
+const picker = require('./picker')
+const progress = require('./progress')
 const radioGroup = require('./radio-group')
 const radio = require('./radio')
-const form = require('./form')
-const input = require('./input')
-const picker = require('./picker')
-const pickerView = require('./picker-view')
-const pickerViewColumn = require('./picker-view-column')
+const richText = require('./rich-text')
+const scrollView = require('./scroll-view')
 const slider = require('./slider')
+const swiperItem = require('./swiper-item')
+const swiper = require('./swiper')
 const switchComponent = require('./switch')
-const textarea = require('./textarea')
-const navigator = require('./navigator')
-const image = require('./image')
-const map = require('./map')
-const canvas = require('./canvas')
-const wxs = require('./wxs')
 const template = require('./template')
-const block = require('./block')
-const icon = require('./icon')
+const text = require('./text')
+const textarea = require('./textarea')
 const Nonsupport = require('./unsupported')
-const HyphenTagName = require('./hypen-tag-name')
+const video = require('./video')
+const view = require('./view')
+const webView = require('./web-view')
+const wxs = require('./wxs')
 
 module.exports = function getComponentConfigs ({ warn, error }) {
   /**
@@ -61,6 +66,9 @@ module.exports = function getComponentConfigs ({ warn, error }) {
         break
       case 'tagRequiredProps':
         msg = `<${tag}> should have '${arg}' attr in ali environment!`
+        break
+      case 'value-attr-uniform':
+        msg = `The internal attribute name of the <${tag}>'s attribute '${arg && arg.value}' is not supported in the ali environment, Please check!`
         break
       default:
         msg = `<${tag}>'s transform has some error happened!`
@@ -104,6 +112,11 @@ module.exports = function getComponentConfigs ({ warn, error }) {
     template(),
     block(),
     icon(),
+    webView({ print }),
+    video({ print }),
+    camera({ print }),
+    livePlayer({ print }),
+    livePusher({ print }),
     HyphenTagName({ print })
   ]
 }

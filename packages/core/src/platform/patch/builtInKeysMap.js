@@ -16,6 +16,7 @@ if (__mpx_mode__ === 'web') {
   ]
 } else {
   bulitInKeys = [
+    'dataFn',
     'proto',
     'mixins',
     'watch',

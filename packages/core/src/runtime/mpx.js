@@ -1,3 +1,3 @@
-const mpx = require('../index')
+import mpx from '../index'
 
-module.exports = mpx.default
+export default mpx

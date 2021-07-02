@@ -1,14 +1,16 @@
 const runRules = require('../../run-rules')
+const JSON5 = require('json5')
 const getComponentConfigs = require('./component-config')
 const normalizeComponentRules = require('../normalize-component-rules')
 const isValidIdentifierStr = require('../../../utils/is-valid-identifier-str')
 const templateCompiler = require('../../../template-compiler/compiler')
 const parseMustache = templateCompiler.parseMustache
 const stringifyWithResolveComputed = templateCompiler.stringifyWithResolveComputed
+const normalize = require('../../../utils/normalize')
 
 module.exports = function getSpec ({ warn, error }) {
   const spec = {
-    supportedModes: ['ali', 'swan', 'qq', 'jd', 'tt', 'web'],
+    supportedModes: ['ali', 'swan', 'qq', 'tt', 'jd', 'web', 'qa'],
     // props预处理
     preProps: [],
     // props后处理
@@ -18,7 +20,7 @@ module.exports = function getSpec ({ warn, error }) {
           const parsed = parseMustache(value)
           if (parsed.hasBinding) {
             return {
-              name: ':' + name,
+              name: name === 'animation' ? 'v-' + name : ':' + name,
               value: parsed.result
             }
           }
@@ -34,37 +36,17 @@ module.exports = function getSpec ({ warn, error }) {
           const attrsMap = data.el.attrsMap
           const parsed = parseMustache(obj.value)
           let listName = parsed.result
-          let KEY_TYPES = {
-            PROPERTY: 0,
-            INDEX: 1
-          }
-          let keyType = KEY_TYPES.PROPERTY
-          // 在wx:for="abcd"值为字符串时varListName为null,按照小程序循环规则将字符串转换为 ["a", "b", "c", "d"]
-          if (parsed.hasBinding) {
-            // unwrap ()
-            listName = listName.slice(1, -1)
-            // 处理数字循环
-            if (/^\d+$/.test(listName)) {
-              keyType = KEY_TYPES.INDEX
-              // 创建循环数组
-              const loopNum = +listName
-              // 定义一个建议值,因为会增加template文件大小,
-              if (loopNum > 300) warn(`It's not recommended to exceed 300 in baidu environment`)
-              let list = []
-              for (let i = 0; i < loopNum; i++) {
-                list[i] = i
-              }
-              listName = JSON.stringify(list)
-            }
-          } else {
-            keyType = KEY_TYPES.INDEX
-            // for值为字符串,转成字符数组
-            listName = JSON.stringify(parsed.val.split(''))
-          }
+          const el = data.el
+
           const itemName = attrsMap['wx:for-item'] || 'item'
           const indexName = attrsMap['wx:for-index'] || 'index'
           const keyName = attrsMap['wx:key'] || null
           let keyStr = ''
+
+          if (parsed.hasBinding) {
+            listName = listName.slice(1, -1)
+          }
+
           if (keyName) {
             const parsed = parseMustache(keyName)
             if (parsed.hasBinding) {
@@ -72,22 +54,27 @@ module.exports = function getSpec ({ warn, error }) {
             } else if (keyName === '*this') {
               keyStr = ` trackBy ${itemName}`
             } else {
-              // 定义key索引
-              if (keyType === KEY_TYPES.INDEX) {
-                warn(`The numeric type loop variable does not support custom keys. Automatically set to the index value.`)
-                keyStr = ` trackBy ${itemName}`
-              } else if (keyType === KEY_TYPES.PROPERTY && !isValidIdentifierStr(keyName)) {
+              if (!isValidIdentifierStr(keyName)) {
                 keyStr = ` trackBy ${itemName}['${keyName}']`
-              } else if (keyType === KEY_TYPES.PROPERTY) {
-                keyStr = ` trackBy ${itemName}.${keyName}`
               } else {
-                // 以后增加其他key类型
+                keyStr = ` trackBy ${itemName}.${keyName}`
               }
+            }
+          }
+          if (el) {
+            const injectWxsProp = {
+              injectWxsPath: '~' + normalize.lib('runtime/swanHelper.wxs'),
+              injectWxsModuleName: '__swanHelper__'
+            }
+            if (el.injectWxsProps && Array.isArray(el.injectWxsProps)) {
+              el.injectWxsProps.push(injectWxsProp)
+            } else {
+              el.injectWxsProps = [injectWxsProp]
             }
           }
           return {
             name: 's-for',
-            value: `${itemName}, ${indexName} in ${listName}${keyStr}`
+            value: `${itemName}, ${indexName} in __swanHelper__.processFor(${listName})${keyStr}`
           }
         },
         web ({ value }, { el }) {
@@ -152,7 +139,7 @@ module.exports = function getSpec ({ warn, error }) {
             const modelFilter = attrsMap['wx:model-filter']
             let modelValuePathArr
             try {
-              modelValuePathArr = JSON.parse(modelValuePath)
+              modelValuePathArr = JSON5.parse(modelValuePath)
             } catch (e) {
               if (modelValuePath === '') {
                 modelValuePathArr = []
@@ -272,24 +259,6 @@ module.exports = function getSpec ({ warn, error }) {
             }) + modifierStr,
             value
           }
-        },
-        tt ({ name, value }) {
-          const match = this.test.exec(name)
-          const modifierStr = match[3] || ''
-          let ret
-          if (match[1] === 'capture-catch' || match[1] === 'capture-bind') {
-            const convertName = 'bind'
-            warn(`bytedance miniapp doens't support '${match[1]}' and will be translated into '${convertName}' automatically!`)
-            ret = { name: convertName + match[2] + modifierStr, value }
-          } else {
-            ret = { name, value }
-          }
-          return ret
-        },
-        swan ({ name, value }, { eventRules }) {
-          const match = this.test.exec(name)
-          const eventName = match[2]
-          runRules(eventRules, eventName, { mode: 'swan' })
         },
         jd ({ name, value }, { eventRules }) {
           const match = this.test.exec(name)

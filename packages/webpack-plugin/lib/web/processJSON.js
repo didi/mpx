@@ -1,27 +1,33 @@
 const async = require('async')
 const path = require('path')
+const JSON5 = require('json5')
 const loaderUtils = require('loader-utils')
-const hash = require('hash-sum')
 const parseRequest = require('../utils/parse-request')
-const getPageName = require('../utils/get-page-name')
 const toPosix = require('../utils/to-posix')
 const addQuery = require('../utils/add-query')
 const parseComponent = require('../parser')
 const readJsonForSrc = require('../utils/read-json-for-src')
+const isUrlRequest = require('../utils/is-url-request')
 
 module.exports = function (json, options, rawCallback) {
   const mode = options.mode
+  const env = options.env
   const defs = options.defs
   const loaderContext = options.loaderContext
   const resolveMode = options.resolveMode
   const pagesMap = options.pagesMap
-  const pagesEntryMap = options.pagesEntryMap
   const componentsMap = options.componentsMap
+  const pagesEntryMap = options.pagesEntryMap
   const projectRoot = options.projectRoot
+  const pathHash = options.pathHash
   const localPagesMap = {}
   const localComponentsMap = {}
+  const buildInfo = loaderContext._module.buildInfo
+
   let output = '/* json */\n'
   let jsonObj = {}
+  let tabBarMap
+  let tabBarStr
   const context = loaderContext.context
 
   const emitWarning = (msg) => {
@@ -30,12 +36,22 @@ module.exports = function (json, options, rawCallback) {
     )
   }
 
+  const emitError = (msg) => {
+    this.emitError(
+      new Error('[json compiler][' + this.resource + ']: ' + msg)
+    )
+  }
+
+  const stringifyRequest = r => loaderUtils.stringifyRequest(loaderContext, r)
+
   const callback = (err) => {
     return rawCallback(err, {
       output,
       jsonObj,
       localPagesMap,
-      localComponentsMap
+      localComponentsMap,
+      tabBarMap,
+      tabBarStr
     })
   }
 
@@ -44,7 +60,7 @@ module.exports = function (json, options, rawCallback) {
   }
   // 由于json需要提前读取在template处理中使用，src的场景已经在loader中处理了，此处无需考虑json.src的场景
   try {
-    jsonObj = JSON.parse(json.content)
+    jsonObj = JSON5.parse(json.content)
   } catch (e) {
     return callback(e)
   }
@@ -55,6 +71,31 @@ module.exports = function (json, options, rawCallback) {
     const { queryObj } = parseRequest(request)
     context = queryObj.context || context
     return loaderContext.resolve(context, request, callback)
+  }
+
+  const defaultTabbar = {
+    borderStyle: 'black',
+    position: 'bottom',
+    custom: false,
+    isShow: true
+  }
+
+  const processTabBar = (tabBar, callback) => {
+    if (tabBar) {
+      tabBar = Object.assign({}, defaultTabbar, tabBar)
+      tabBarMap = {}
+      jsonObj.tabBar.list.forEach(({ pagePath }) => {
+        tabBarMap[pagePath] = true
+      })
+      tabBarStr = JSON.stringify(tabBar)
+      tabBarStr = tabBarStr.replace(/"(iconPath|selectedIconPath)":"([^"]+)"/g, function (matched, $1, $2) {
+        if (isUrlRequest($2, projectRoot)) {
+          return `"${$1}":require(${stringifyRequest(loaderUtils.urlToRequest($2, projectRoot))})`
+        }
+        return matched
+      })
+    }
+    callback()
   }
 
   const processPackages = (packages, context, callback) => {
@@ -81,13 +122,13 @@ module.exports = function (json, options, rawCallback) {
             const filePath = result
             const extName = path.extname(filePath)
             if (extName === '.mpx' || extName === '.vue') {
-              const parts = parseComponent(
-                content,
+              const parts = parseComponent(content, {
                 filePath,
-                loaderContext.sourceMap,
+                needMap: loaderContext.sourceMap,
                 mode,
-                defs
-              )
+                defs,
+                env
+              })
               const json = parts.json || {}
               if (json.content) {
                 content = json.content
@@ -101,7 +142,7 @@ module.exports = function (json, options, rawCallback) {
           },
           (result, content, callback) => {
             try {
-              content = JSON.parse(content)
+              content = JSON5.parse(content)
             } catch (err) {
               return callback(err)
             }
@@ -145,38 +186,65 @@ module.exports = function (json, options, rawCallback) {
     }
   }
 
+  const getPageName = (resourcePath, ext) => {
+    const baseName = path.basename(resourcePath, ext)
+    return path.join('pages', baseName + pathHash(resourcePath), baseName)
+  }
+
   const processPages = (pages, srcRoot = '', tarRoot = '', context, callback) => {
     if (pages) {
+      context = path.join(context, srcRoot)
       async.forEach(pages, (page, callback) => {
+        let aliasPath = ''
+        if (typeof page !== 'string') {
+          aliasPath = page.path
+          page = page.src
+        }
+        if (!isUrlRequest(page, projectRoot)) return callback()
         if (resolveMode === 'native') {
           page = loaderUtils.urlToRequest(page, projectRoot)
         }
-        context = path.join(context, srcRoot)
         resolve(context, page, (err, resource) => {
           if (err) return callback(err)
           const { resourcePath, queryObj } = parseRequest(resource)
           const ext = path.extname(resourcePath)
           // 获取pageName
           let pageName
-          const relative = path.relative(context, resourcePath)
-          if (/^\./.test(relative)) {
-            // 如果当前page不存在于context中，对其进行重命名
-            pageName = '/' + toPosix(path.join(tarRoot, getPageName(resourcePath, ext)))
-            emitWarning(`Current page ${resourcePath} is not in current pages directory ${context}, the page path will be replaced with ${pageName}, use ?resolve to get the page path and navigate to it!`)
-          } else {
-            pageName = '/' + toPosix(path.join(tarRoot, /^(.*?)(\.[^.]*)?$/.exec(relative)[1]))
-            // 如果当前page与已有page存在命名冲突，也进行重命名
+          if (aliasPath) {
+            pageName = toPosix(path.join(tarRoot, aliasPath))
+            // 判断 key 存在重复情况直接报错
             for (let key in pagesMap) {
-              // 此处引入pagesEntryMap确保相同entry下路由路径重复注册才报错，不同entry下的路由路径重复则无影响
-              if (pagesMap[key] === pageName && key !== resourcePath && pagesEntryMap[key] === loaderContext.resourcePath) {
-                const pageNameRaw = pageName
-                pageName = '/' + toPosix(path.join(tarRoot, getPageName(resourcePath, ext)))
-                emitWarning(`Current page ${resourcePath} is registered with a conflict page path ${pageNameRaw} which is already existed in system, the page path will be replaced with ${pageName}, use ?resolve to get the page path and navigate to it!`)
-                break
+              if (pagesMap[key] === pageName && key !== resourcePath) {
+                emitError(`Current page [${resourcePath}] registers a conflict page path [${pageName}] with existed page [${key}], which is not allowed, please rename it!`)
+                return callback()
+              }
+            }
+          } else {
+            const relative = path.relative(context, resourcePath)
+            if (/^\./.test(relative)) {
+              // 如果当前page不存在于context中，对其进行重命名
+              pageName = toPosix(path.join(tarRoot, getPageName(resourcePath, ext)))
+              emitWarning(`Current page [${resourcePath}] is not in current pages directory [${context}], the page path will be replaced with [${pageName}], use ?resolve to get the page path and navigate to it!`)
+            } else {
+              pageName = toPosix(path.join(tarRoot, /^(.*?)(\.[^.]*)?$/.exec(relative)[1]))
+              // 如果当前page与已有page存在命名冲突，也进行重命名
+              for (let key in pagesMap) {
+                // 此处引入pagesEntryMap确保相同entry下路由路径重复注册才报错，不同entry下的路由路径重复则无影响
+                if (pagesMap[key] === pageName && key !== resourcePath && pagesEntryMap[key] === loaderContext.resourcePath) {
+                  const pageNameRaw = pageName
+                  pageName = toPosix(path.join(tarRoot, getPageName(resourcePath, ext)))
+                  emitWarning(`Current page [${resourcePath}] is registered with a conflict page path [${pageNameRaw}] which is already existed in system, the page path will be replaced with [${pageName}], use ?resolve to get the page path and navigate to it!`)
+                  break
+                }
               }
             }
           }
-          pagesMap[resourcePath] = pageName
+          if (pagesMap[resourcePath]) {
+            emitWarning(`Current page [${resourcePath}] which is imported from [${loaderContext.resourcePath}] has been registered in pagesMap already, it will be ignored, please check it and remove the redundant page declaration!`)
+            return callback()
+          }
+          buildInfo.pagesMap = buildInfo.pagesMap || {}
+          buildInfo.pagesMap[resourcePath] = pagesMap[resourcePath] = pageName
           pagesEntryMap[resourcePath] = loaderContext.resourcePath
           localPagesMap[pageName] = {
             resource: addQuery(resource, { page: true }),
@@ -223,9 +291,8 @@ module.exports = function (json, options, rawCallback) {
   }
 
   const processComponent = (component, name, context, callback) => {
-    if (/^plugin:\/\//.test(component)) {
-      return callback()
-    }
+    if (!isUrlRequest(component, projectRoot)) return callback()
+
     if (resolveMode === 'native') {
       component = loaderUtils.urlToRequest(component, projectRoot)
     }
@@ -234,22 +301,42 @@ module.exports = function (json, options, rawCallback) {
       if (err) return callback(err)
       const { resourcePath, queryObj } = parseRequest(resource)
       const parsed = path.parse(resourcePath)
-      const componentId = parsed.name + hash(resourcePath)
+      const componentId = parsed.name + pathHash(resourcePath)
 
-      componentsMap[resourcePath] = componentId
+      buildInfo.packageName = 'main'
+      buildInfo.componentsMap = buildInfo.componentsMap || {}
+      buildInfo.componentsMap[resourcePath] = componentsMap[resourcePath] = componentId
 
       localComponentsMap[name] = {
-        resource: addQuery(resource, { component: true, mpxCid: componentId }),
+        resource: addQuery(resource, { component: true, componentId }),
         async: queryObj.async
       }
       callback()
     })
   }
 
+  const processGenerics = (generics, context, callback) => {
+    if (generics) {
+      async.forEachOf(generics, (generic, name, callback) => {
+        if (generic.default) {
+          processComponent(generic.default, `${name}default`, context, callback)
+        } else {
+          callback()
+        }
+      }, callback)
+    } else {
+      callback()
+    }
+  }
+
   async.parallel([
     (callback) => {
       if (jsonObj.pages && jsonObj.pages[0]) {
-        jsonObj.pages[0] = addQuery(jsonObj.pages[0], { isFirst: true })
+        if (typeof jsonObj.pages[0] !== 'string') {
+          jsonObj.pages[0].src = addQuery(jsonObj.pages[0].src, { isFirst: true })
+        } else {
+          jsonObj.pages[0] = addQuery(jsonObj.pages[0], { isFirst: true })
+        }
       }
       processPages(jsonObj.pages, '', '', context, callback)
     },
@@ -260,7 +347,13 @@ module.exports = function (json, options, rawCallback) {
       processPackages(jsonObj.packages, context, callback)
     },
     (callback) => {
-      processSubPackages(json.subPackages || json.subpackages, context, callback)
+      processSubPackages(jsonObj.subPackages || jsonObj.subpackages, context, callback)
+    },
+    (callback) => {
+      processGenerics(jsonObj.componentGenerics, context, callback)
+    },
+    (callback) => {
+      processTabBar(jsonObj.tabBar, callback)
     }
   ], callback)
 }

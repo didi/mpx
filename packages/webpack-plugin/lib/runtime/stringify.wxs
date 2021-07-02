@@ -1,5 +1,5 @@
 function objectKeys (obj) {
-  if (!__mpx_wxs__ || __mpx_mode__ === 'swan') {
+  if (!__mpx_wxs__) {
     return Object.keys(obj)
   } else {
     var keys = []
@@ -57,7 +57,7 @@ function objectKeys (obj) {
 }
 
 function genRegExp (str, flags) {
-  if (!__mpx_wxs__ || __mpx_mode__ === 'swan') {
+  if (!__mpx_wxs__) {
     return new RegExp(str, flags)
   } else {
     return getRegExp(str, flags)
@@ -82,7 +82,7 @@ function isObject (obj) {
 }
 
 function likeArray (arr) {
-  if (!__mpx_wxs__ || __mpx_mode__ === 'swan') {
+  if (!__mpx_wxs__) {
     return Array.isArray(arr)
   } else {
     return arr && arr.constructor === 'Array'
@@ -119,6 +119,8 @@ function stringifyArray (value) {
   return res
 }
 
+var mpxDashReg = genRegExp('(.+)MpxDash$')
+
 function stringifyObject (value) {
   var res = ''
   var objKeys = objectKeys(value)
@@ -126,6 +128,9 @@ function stringifyObject (value) {
     var key = objKeys[i]
     if (value[key]) {
       if (res) res += ' '
+      if (mpxDashReg.test(key)) {
+        key = hump2dash(mpxDashReg.exec(key)[1])
+      }
       res += key
     }
   }
@@ -150,12 +155,17 @@ function parseStyleText (cssText) {
   var res = {}
   var listDelimiter = genRegExp(';(?![^(]*[)])', 'g')
   var propertyDelimiter = genRegExp(':(.+)')
-  cssText.split(listDelimiter).forEach(function (item) {
+  var arr = cssText.split(listDelimiter)
+  for (var i = 0; i < arr.length; i++) {
+    var item = arr[i]
     if (item) {
       var tmp = item.split(propertyDelimiter)
-      tmp.length > 1 && (res[dash2hump(tmp[0].trim())] = tmp[1].trim())
+      if (tmp.length > 1) {
+        var k = dash2hump(tmp[0].trim())
+        res[k] = tmp[1].trim()
+      }
     }
-  })
+  }
   return res
 }
 

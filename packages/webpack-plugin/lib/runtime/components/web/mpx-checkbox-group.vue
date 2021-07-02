@@ -15,17 +15,17 @@
   export default {
     name: 'mpx-checkbox-group',
     props: {
-      name: String,
-      value: {
-        type: Array,
-        default () {
-          return []
-        }
+      name: String
+    },
+    data () {
+      return {
+        value: []
       }
     },
     render (createElement) {
       const data = {
         class: 'mpx-checkbox-group',
+        ref: 'checkboxGroup',
         on: getInnerListeners(this, { ignoredListeners: ['change'] })
       }
       return createElement('div', data, this.$slots.default)
@@ -49,8 +49,8 @@
               if (!component.group) {
                 component.group = this
               }
-              if (component.group === this && el && el.checked && el.value) {
-                value.push(el.value)
+              if (component.group === this && component.isChecked && component.value) {
+                value.push(component.value)
               }
             }
           }
@@ -66,8 +66,8 @@
               if (!component.group) {
                 component.group = this
               }
-              if (component.group === this && el && el.value) {
-                el.checked = value.indexOf(el.value) !== -1
+              if (component.group === this && component.value) {
+                component.isChecked = value.indexOf(component.isChecked) !== -1
               }
             }
           }
@@ -79,7 +79,7 @@
         } else {
           value = this.getValue()
         }
-        this.$emit('change', getCustomEvent('change', { value: value }))
+        this.$emit('change', getCustomEvent('change', { value }, this.$refs.checkboxGroup))
       }
     }
   }

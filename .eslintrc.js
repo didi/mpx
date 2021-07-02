@@ -16,6 +16,7 @@ module.exports = {
     'qq': false,
     'jd': false,
     'tt': false,
+    'qa': false,
     'Component': false,
     'Page': false,
     'App': false,

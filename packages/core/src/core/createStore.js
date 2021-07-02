@@ -42,9 +42,12 @@ function transformMutations (mutations, module, store) {
     if (store.mutations[key]) {
       warn(`Duplicate mutation type: ${key}.`)
     }
-
+    const context = {
+      state: module.state,
+      commit: store.commit.bind(store)
+    }
     const mutation = function (...payload) {
-      if (store.withThis) return mutations[key].apply({ state: module.state }, payload)
+      if (store.withThis) return mutations[key].apply(context, payload)
       return mutations[key](module.state, ...payload)
     }
     newMutations[key] = mutation
@@ -108,15 +111,20 @@ function mergeDeps (module, deps) {
 
 class Store {
   constructor (options) {
+    const {
+      plugins = []
+    } = options
     this.withThis = options.withThis
     this.__wrappedGetters = {}
     this.__depsGetters = {}
     this.getters = {}
     this.mutations = {}
     this.actions = {}
+    this._subscribers = []
     this.state = this.registerModule(options).state
     this.resetStoreVM()
     Object.assign(this, mapStore(this))
+    plugins.forEach(plugin => plugin(this))
   }
 
   dispatch (type, ...payload) {
@@ -133,8 +141,13 @@ class Store {
     if (!mutation) {
       warn(`Unknown mutation type: ${type}.`)
     } else {
-      return mutation(...payload)
+      mutation(...payload)
+      return this._subscribers.slice().forEach(sub => sub({ type, payload }, this.state))
     }
+  }
+
+  subscribe (fn, options) {
+    return genericSubscribe(fn, this._subscribers, options)
   }
 
   registerModule (module) {
@@ -190,8 +203,36 @@ class Store {
   }
 }
 
+function genericSubscribe (fn, subs, options) {
+  if (subs.indexOf(fn) < 0) {
+    options && options.prepend
+      ? subs.unshift(fn)
+      : subs.push(fn)
+  }
+  return () => {
+    const i = subs.indexOf(fn)
+    if (i > -1) {
+      subs.splice(i, 1)
+    }
+  }
+}
+
 export default function createStore (options) {
   return new Store(options)
+}
+
+// ts util functions
+export function createStateWithThis (state) {
+  return state
+}
+export function createGettersWithThis (getters, options = {}) {
+  return getters
+}
+export function createMutationsWithThis (mutations, options = {}) {
+  return mutations
+}
+export function createActionsWithThis (actions, options = {}) {
+  return actions
 }
 
 export function createStoreWithThis (options) {

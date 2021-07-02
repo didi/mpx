@@ -1,5 +1,5 @@
 function genRegExp (str, flags) {
-  if (!__mpx_wxs__ || __mpx_mode__ === 'swan') {
+  if (!__mpx_wxs__) {
     return new RegExp(str, flags)
   } else {
     return getRegExp(str, flags)
@@ -8,7 +8,7 @@ function genRegExp (str, flags) {
 
 
 function likeArray (arr) {
-  if (!__mpx_wxs__ || __mpx_mode__ === 'swan') {
+  if (!__mpx_wxs__) {
     return Array.isArray(arr)
   } else {
     return arr && arr.constructor === 'Array'
@@ -260,19 +260,23 @@ function exist (messages, locale, key) {
   return res
 }
 
+var messages = {}
+var dateTimeFormats = {}
+var numberFormats = {}
+
 function getMessages () {
   // __mpx_messages__会在编译时通过lib/wxs/wxs-i18n-loader注入
-  return __mpx_messages__ || {}
+  return __mpx_messages__ || messages
 }
 
 function getDateTimeFormats () {
   // __mpx_datetime_formats__会在编译时通过lib/wxs/wxs-i18n-loader注入
-  return __mpx_datetime_formats__ || {}
+  return __mpx_datetime_formats__ || dateTimeFormats
 }
 
 function getNumberFormats () {
   // __mpx_number_formats__会在编译时通过lib/wxs/wxs-i18n-loader注入
-  return __mpx_number_formats__ || {}
+  return __mpx_number_formats__ || numberFormats
 }
 
 function fetchChoice (message, choice) {
@@ -302,7 +306,7 @@ module.exports = {
   },
   d: function (locale, value, key) {
     // if (__mpx_wxs__) {
-    console.log('Datetime localization is not supported in template temporarily!')
+    console.log('Datetime localization is not supported!')
     return value
     // } else {
     //   if (!key) {
@@ -318,7 +322,7 @@ module.exports = {
   },
   n: function (locale, value, key, options) {
     // if (__mpx_wxs__) {
-    console.log('Number localization is not supported in template temporarily!')
+    console.log('Number localization is not supported!')
     return value
     // } else {
     //   if (!key) {
@@ -332,4 +336,10 @@ module.exports = {
     //   return value
     // }
   }
+}
+
+if (!__mpx_wxs__) {
+  module.exports.__getMessages = getMessages
+  module.exports.__getDateTimeFormats = getDateTimeFormats
+  module.exports.__getNumberFormats = getNumberFormats
 }

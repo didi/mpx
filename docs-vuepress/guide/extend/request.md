@@ -1,6 +1,7 @@
 # 网络请求
 
-todo 重新整理说明
+
+>Mpx提供了网络请求库fetch，抹平了微信，阿里等平台请求参数及响应数据的差异；同时支持请求拦截器，请求取消等
 
 
 ### 使用说明
@@ -71,6 +72,18 @@ mpx.xfetch.fetch({
 		name: 'test'
 	},
 	emulateJSON: true // 等价于header = {'content-type': 'application/x-www-form-urlencoded'}
+})
+```
+### 支持 timeout
+
+```js
+mpx.xfetch.fetch({
+	url: 'http://xxx.com',
+	method: 'POST',
+	data: {
+		name: 'test'
+	},
+	timeout: 10000 // 超时时间
 })
 ```
 

@@ -1,4 +1,5 @@
 <script>
+  import { inBrowser } from '../../../utils/env'
   function isDef (v) {
     return v !== undefined && v !== null
   }
@@ -39,8 +40,11 @@
     render: function render () {
       const slot = this.$slots.default
       const vnode = getFirstComponentChild(slot)
+      if (!inBrowser) {
+        return vnode || (slot && slot[0])
+      }
       const vnodeKey = getVnodeKey(vnode)
-      const router = window.__mpxRouter
+      const router = global.__mpxRouter
       if (vnodeKey && router && vnode.data.routerView) {
         if (router.needCache) {
           router.needCache.vnode = vnode
@@ -64,9 +68,13 @@
 
         const stack = router.stack
         if (stack.length) {
-          const current = stack[stack.length - 1]
-          if (current.vnode && current.vnodeKey === vnodeKey && current.vnode.componentInstance) {
-            vnode.componentInstance = current.vnode.componentInstance
+          // 只要历史栈缓存中存在对应的页面存活实例，就进行复用
+          for (let i = stack.length; i > 0; i--) {
+            const current = stack[i - 1]
+            if (current.vnode && current.vnodeKey === vnodeKey && current.vnode.componentInstance) {
+              vnode.componentInstance = current.vnode.componentInstance
+              break
+            }
           }
         }
 

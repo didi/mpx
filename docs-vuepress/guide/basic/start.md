@@ -29,10 +29,10 @@ npm install
 
 ## 编译构建
 
-使用npm script执行mpx的编译构建，在开发模式下我们执行dev命令，将项目源码构建输出到`dist/${平台目录}`下，并且监听源码的改动进行重新编译。
+使用npm script执行mpx的编译构建，在开发模式下我们执行watch命令，将项目源码构建输出到`dist/${平台目录}`下，并且监听源码的改动进行重新编译。
 
 ```shell
-npm run dev
+npm run watch
 ```
 
 ## 预览调试
@@ -150,7 +150,7 @@ json区块完全支持小程序原生的[app.json配置](https://developers.weix
 </script>
 ```
 
-更多用法可以查看我们的官方实例：https://github.com/didi/mpx/tree/master/examples/
+更多用法可以查看我们的官方实例：[https://github.com/didi/mpx/tree/master/examples/](https://github.com/didi/mpx/tree/master/examples/)
 
 ## 跨平台输出
 
@@ -159,10 +159,10 @@ json区块完全支持小程序原生的[app.json配置](https://developers.weix
 执行以下命令进行跨平台输出
 
 ```shell
-npm run build:crosss
+npm run build:cross
 ```
 
-关于跨平台能力的更多详情请查看[这里](../advance/platform.md#todoHash)
+关于跨平台能力的更多详情请查看[这里](../advance/platform.md)
 
 
 

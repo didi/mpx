@@ -38,7 +38,7 @@ module.exports = function getSpec ({ warn, error }) {
   }
 
   const spec = {
-    supportedModes: ['ali', 'swan', 'qq', 'jd', 'tt'],
+    supportedModes: ['ali', 'swan', 'qq', 'tt', 'jd', 'qa'],
     normalizeTest,
     page: [
       {
@@ -221,33 +221,28 @@ module.exports = function getSpec ({ warn, error }) {
         swan: deletePath()
       },
       {
-        test: 'networkTimeout|workers|requiredBackgroundModes',
+        test: 'requiredBackgroundModes',
+        ali: deletePath(),
+        tt: deletePath()
+      },
+      {
+        test: 'workers',
+        jd: deletePath(),
         ali: deletePath(),
         swan: deletePath(),
         tt: deletePath()
       },
       {
-        test: 'workers|requiredBackgroundModes',
-        jd: deletePath()
-      },
-      {
-        test: 'navigateToMiniProgramAppIdList|permission',
-        ali: deletePath(),
-        swan: deletePath(),
-        jd: deletePath()
-      },
-      {
         test: 'subpackages|subPackages',
-        tt: deletePath(true),
         jd: deletePath(true)
       },
       {
         test: 'packages',
-        tt (input) {
-          input.packages = input.packages.map((packageItem) => {
-            return packageItem.replace(/\?.*/, '')
-          })
-        },
+        jd: deletePath()
+      },
+      {
+        test: 'navigateToMiniProgramAppIdList|networkTimeout|permission',
+        ali: deletePath(),
         jd: deletePath()
       },
       {

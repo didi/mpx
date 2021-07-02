@@ -1,3 +1,5 @@
+import { isEmptyObject } from './util'
+
 function processModel (listeners, context) {
   // 该函数只有wx:model的情况下才调用，而且默认e.detail.value有值
   // 该函数必须在产生merge前执行
@@ -42,11 +44,17 @@ function mergeListeners (listeners, otherListeners, options = {}) {
 }
 
 function processTap (listeners, context) {
-  if (!(listeners.tap || listeners.longpress || listeners.longtap)) {
-    return
-  }
+  const listenerMap = {}
+  const tapEvents = ['tap', 'longpress', 'longtap']
+  tapEvents.forEach((eventName) => {
+    if (listeners[eventName]) {
+      listenerMap[eventName] = true
+      delete listeners[eventName]
+    }
+  })
+  if (isEmptyObject(listenerMap)) return
   context.__mpxTapInfo = context.__mpxTapInfo || {}
-  mergeListeners(listeners, {
+  let events = {
     touchstart (e) {
       context.__mpxTapInfo.detail = {
         x: e.changedTouches[0].pageX,
@@ -54,33 +62,51 @@ function processTap (listeners, context) {
       }
       context.__mpxTapInfo.startTimer = null
       context.__mpxTapInfo.needTap = true
-      if (listeners.longpress || listeners.longtap) {
+      context.__mpxTapInfo.hadTouch = true
+      if (listenerMap.longpress || listenerMap.longtap) {
         context.__mpxTapInfo.startTimer = setTimeout(() => {
           context.__mpxTapInfo.needTap = false
-          if (listeners.longpress) {
+          if (listenerMap.longpress) {
             const re = inheritEvent('longpress', e, context.__mpxTapInfo.detail)
             context.$emit('longpress', re)
           }
-          if (listeners.longtap) {
+          if (listenerMap.longtap) {
             const re = inheritEvent('longtap', e, context.__mpxTapInfo.detail)
             context.$emit('longtap', re)
           }
         }, 350)
       }
     },
+    touchmove (e) {
+      const tapDetailInfo = context.__mpxTapInfo.detail || {}
+      const currentPageX = e.changedTouches[0].pageX
+      const currentPageY = e.changedTouches[0].pageY
+      if (Math.abs(currentPageX - tapDetailInfo.x) > 1 || Math.abs(currentPageY - tapDetailInfo.y) > 1) {
+        context.__mpxTapInfo.needTap = false
+        context.__mpxTapInfo.startTimer && clearTimeout(context.__mpxTapInfo.startTimer)
+        context.__mpxTapInfo.startTimer = null
+      }
+    },
     touchend (e) {
       context.__mpxTapInfo.startTimer && clearTimeout(context.__mpxTapInfo.startTimer)
-      if (listeners.tap && context.__mpxTapInfo.needTap) {
-        const xDis = Math.abs(e.changedTouches[0].pageX - context.__mpxTapInfo.detail.x)
-        const yDis = Math.abs(e.changedTouches[0].pageY - context.__mpxTapInfo.detail.y)
-
-        if (Math.max(xDis, yDis) <= 15) {
-          const re = inheritEvent('tap', e, context.__mpxTapInfo.detail)
-          context.$emit('tap', re)
-        }
+      if (listenerMap.tap && context.__mpxTapInfo.needTap) {
+        const re = inheritEvent('tap', e, context.__mpxTapInfo.detail)
+        context.$emit('tap', re)
       }
+    },
+    click (e) {
+      if (listenerMap.tap && !context.__mpxTapInfo.hadTouch) {
+        context.__mpxTapInfo.detail = {
+          x: e.pageX,
+          y: e.pageY
+        }
+        const re = inheritEvent('tap', e, context.__mpxTapInfo.detail)
+        context.$emit('tap', re)
+      }
+      context.__mpxTapInfo.hadTouch = false
     }
-  }, {
+  }
+  mergeListeners(listeners, events, {
     force: true
   })
 }
@@ -100,6 +126,7 @@ export function inheritEvent (type, oe, detail = {}) {
   detail = Object.assign({}, oe.detail, detail)
   const ne = getCustomEvent(type, detail)
   extendEvent(ne, {
+    timeStamp: oe.timeStamp,
     target: oe.target,
     currentTarget: oe.currentTarget,
     stopPropagation: oe.stopPropagation.bind(oe),
@@ -108,10 +135,13 @@ export function inheritEvent (type, oe, detail = {}) {
   return ne
 }
 
-export function getCustomEvent (type, detail = {}) {
-  /* eslint-disable no-undef */
-  const ce = new CustomEvent(type, { detail })
-  return ce
+export function getCustomEvent (type, detail = {}, target = null) {
+  return {
+    type,
+    detail,
+    target,
+    timeStamp: new Date().valueOf()
+  }
 }
 
 function noop () {

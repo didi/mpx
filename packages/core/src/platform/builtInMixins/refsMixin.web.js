@@ -79,7 +79,7 @@ class SelectQuery {
   }
 
   _handleFields (fields, el, selector) {
-    const { id, dataset, rect, size, scrollOffset, properties = [], computedStyle = [] } = fields
+    const { id, dataset, rect, size, scrollOffset, properties = [], computedStyle = [], node } = fields
     const { left, right, top, bottom, width, height } = el.getBoundingClientRect()
 
     const res = {}
@@ -106,6 +106,35 @@ class SelectQuery {
       } else {
         res.width = width
         res.height = height
+      }
+    }
+    // 添加获取节点信息
+    if (node) {
+      res.node = el
+      if (isCanvas(el)) {
+        // 避免lint检查报错
+        el.createImage = function () {
+          return new Image()  // eslint-disable-line
+        }
+
+        el.createPath2D = function (path) {
+          return window.Path2D(path)
+        }
+
+        el.requestAnimationFrame = function (callback) {
+          return window.requestAnimationFrame(callback)
+        }
+
+        el.cancelAnimationFrame = function (requestID) {
+          return window.cancelAnimationFrame(requestID)
+        }
+
+        const rawGetContext = el.getContext
+        el.getContext = function (...args) {
+          const context = rawGetContext.apply(this, args)
+          // 如果实例方法有变动，可以在这里进行处理
+          return context
+        }
       }
     }
     if (scrollOffset) {
@@ -196,6 +225,20 @@ class NodesRef {
     )
     return this._selectorQuery
   }
+
+  // 获取Node节点实例
+  node (callback) {
+    this._selectorQuery._push(
+      this._selector,
+      this._component,
+      this._single,
+      {
+        node: true
+      },
+      callback
+    )
+    return this._selectorQuery
+  }
 }
 
 function getIdentifier (vnode) {
@@ -211,7 +254,7 @@ function walkChildren (vm, selector, context, result, all) {
   if (vm.$children && vm.$children.length) {
     for (let i = 0; i < vm.$children.length; i++) {
       const child = vm.$children[i]
-      if (child.$vnode.context === context && !child.$options.__mpx_built_in__) {
+      if (child.$vnode.context === context && !child.$options.__mpxBuiltIn) {
         const identifier = getIdentifier(child.$vnode)
         // todo 这里暂时只支持静态类，且只支持单个选择器，更复杂的需求建议用refs实现
         if (identifier.indexOf(selector) > -1) {
@@ -226,7 +269,7 @@ function walkChildren (vm, selector, context, result, all) {
 
 function getEl (ref) {
   if (ref && ref.nodeType === 1) return ref
-  if (ref && ref.$options && ref.$options.__mpx_built_in__) return ref.$el
+  if (ref && ref.$options && ref.$options.__mpxBuiltIn) return ref.$el
 }
 
 function processRefs (refs) {
@@ -248,7 +291,6 @@ function processRefs (refs) {
           refs[rKey] = ref
         }
       }
-      delete refs[key]
     }
   })
 }
@@ -279,4 +321,9 @@ export default function getRefsMixin () {
       }
     }
   }
+}
+
+// 判断是不是canvas元素
+function isCanvas (el) {
+  return el.nodeName && el.nodeName.toLowerCase() === 'canvas'
 }

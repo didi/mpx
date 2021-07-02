@@ -1,7 +1,4 @@
 # 跨平台
-
-todo 梳理更新内容
-
 ## 多平台支持
 
 Mpx支持在多个小程序平台中进行增强，目前支持的小程序平台包括微信，支付宝，百度，qq和头条，不过自2.0版本后，Mpx支持了以微信增强语法为base的跨平台输出，实现了一套业务源码在多端输出运行的能力，大大提升了多小程序平台业务的开发效率，详情可以查看[跨平台编译](#跨平台编译)
@@ -18,6 +15,7 @@ Mpx支持在多个小程序平台中进行增强，目前支持的小程序平�
 双向绑定辅助属性|wx:model-prop|a:model-prop|s-model-prop|qq:model-prop|tt:model-prop
 双向绑定辅助属性|wx:model-event|a:model-event|s-model-event|qq:model-event|tt:model-event
 双向绑定辅助属性|wx:model-value-path|a:model-value-path|s-model-value-path|qq:model-value-path|tt:model-value-path
+双向绑定辅助属性|wx:model-filter|a:model-filter|s-model-filter|qq:model-filter|tt:model-filter
 动态样式绑定|wx:class|a:class|s-class|qq:class|暂不支持
 动态样式绑定|wx:style|a:style|s-style|qq:style|暂不支持
 获取节点/组件实例|wx:ref|a:ref|s-ref|qq:ref|tt:ref
@@ -58,7 +56,7 @@ new MpxwebpackPlugin({
   // mode为mpx编译的目标平台，可选值有(wx|ali|swan|qq|tt)
   mode: 'ali',
   // srcMode为mpx编译的源码平台，目前仅支持wx   
-  srcMode: 'wx' 
+  srcMode: 'wx'
 })
 ```
 
@@ -256,6 +254,136 @@ other {
 */
 ```
 
+#### 组件属性维度条件编译
+
+组件属性维度条件编译允许用户在组件上使用 `@` 和 `|` 标识来指定某个组件或属性只在某些平台下有效。
+
+对于同一个 button 组件，微信小程序支持 `open-type="getUserInfo"`，但是支付宝小程序支持 `open-type="getAuthorize" `。如果不使用任何维度的条件编译，则在编译的时候会有警告和报错信息。
+
+比如业务中需要通过 button 按钮获取用户信息，虽然可以使用条件维度编译来解决，但是增加了很多代码量：
+
+```html
+<button 
+  wx:if="{{__mpx_mode__ === 'wx' || __mpx_mode__ === 'swan'}}" 
+  open-type="getUserInfo" 
+  bindgetuserinfo="getUserInfo">获取用户信息
+</button>
+
+<button 
+  wx:elif="{{__mpx_mode__ === 'ali'}}" 
+  open-type="getAuthorize" 
+  scope="userInfo"
+  onTap="onTap">获取用户信息
+</button>
+```
+
+而用组件属性维度的编译则方便很多：
+
+``` html
+<button 
+  open-type@wx|swan="getUserInfo" 
+  bindgetuserinfo@wx|swan="getUserInfo"
+  open-type@ali="getAuthorize" 
+  scope@ali="userInfo"
+  onTap@ali="onTap">获取用户信息
+</button>
+```
+
+组件属性维度的编译也可以当做条件编译来使用，例如只想在百度小程序中使用某个组件：
+
+``` html
+<view @swan>this is a  view component</view>
+```
+
+### 自定义 env 实现基于不同目标环境的编译
+
+Mpx 支持在以上四种条件编译的基础上，通过自定义 env 的形式实现在不同环境下编译产出不同的代码。
+
+实例化 MpxWebpackPlugin 的时候，传入配置 env。
+
+``` javascript
+const MpxWebpackPlugin = require('@mpxjs/webpack-plugin')
+new MpxWebpackPlugin({
+  // mode为mpx编译的目标平台，可选值有(wx|ali|swan|qq|tt)
+  mode: 'ali',
+  // srcMode为mpx编译的源码平台，目前仅支持wx   
+  srcMode: 'wx',
+  // env为mpx编译的目标环境，需自定义
+  env: 'didi'
+})
+```
+#### 文件维度条件编译
+
+微信转支付宝的项目中存在一个业务地图组件map.mpx，由于微信和支付宝中的原生地图组件标准差异非常大，无法通过框架转译方式直接进行跨平台输出，而且这个地图组件在不同的目标环境中也有很大的差异，这时你可以在相同的位置新建一个 map.ali.didi.mpx 或 map.ali.qingju.mpx，在其中使用支付宝的技术标准进行开发，编译系统会根据当前编译的 mode 和 env 来加载对应模块，当 mode 为 ali，env 为 didi 时，会优先加载 map.ali.didi.mpx、map.ali.mpx，如果没有定义 env，则会优先加载 map.ali.mpx，反之则会加载 map.mpx。
+#### 区块维度条件编译
+
+在.mpx单文件中一般存在template、js、stlye、json四个区块，mpx的编译系统支持以区块为维度进行条件编译，只需在区块标签中添加`mode`或`env`属性定义该区块的目标平台即可，示例如下：
+
+```html
+<!--编译mode为ali且env为didi时使用如下区块，优先级最高是4-->
+<template mode="ali" env="didi">
+  <view>该区块中的所有代码需采用支付宝的技术标准进行编写</view>
+</template>
+
+<!--编译mode为ali时使用如下区块，优先级是3-->
+<template mode="ali">
+  <view>该区块中的所有代码需采用支付宝的技术标准进行编写</view>
+</template>
+
+<!--编译env为didi时使用如下区块，优先级是2-->
+<template env="didi">
+  <view>该区块中的所有代码需采用支付宝的技术标准进行编写</view>
+</template>
+
+<!--其他环境，优先级是1-->
+<template>
+  <view>该区块中的所有代码需采用支付宝的技术标准进行编写</view>
+</template>
+```
+
+注意，如果多个相同的区块写相同的 mode 和 env，默认会用最后一个，如：
+
+``` html
+<template mode="ali">
+  <view>该区块会被忽略</view>
+</template>
+
+<template mode="ali">
+  <view>默认会用这个区块</view>
+</template>
+```
+
+#### 代码维度条件编译
+
+如果在 MpxWebpackPlugin 插件初始化时自定义了 env，你可以访问`__mpx_env__`获取当前编译env，进行环境差异逻辑编写。使用方法与`__mpx_mode__`相同。
+
+#### 组件属性维度条件编译
+
+组件属性维度条件编译允许用户在组件上使用 `@` 、`:` 、 `|` 等标识来指定某个组件或属性只在某些平台或环境下有效。组合使用的格式是 `@mode:env:env|mode:env`，mode优先级大于env。
+
+对于同一个 button 组件，微信小程序支持 `open-type="getUserInfo"`，但是支付宝小程序支持 `open-type="getAuthorize" `。如果不使用任何维度的条件编译，则在编译的时候会有警告和报错信息。
+
+如果当前编译的目标平台是 wx，以下写法 open-type 属性将被忽略
+
+``` html
+<button open-type@swan:didi="getUserInfo">获取用户信息</button>
+```
+
+如果当前 env 不是 didi，以下写法 open-type 属性也会被忽略
+``` html
+<button open-type@:didi="getUserInfo">获取用户信息</button>
+```
+
+如果只想在 mode 为 wx 且 env 为 didi 或 qingju 的环境下使用 open-type 属性，则可以这样写：
+``` html
+<button open-type@wx:didi:qingju="getUserInfo">获取用户信息</button>
+```
+
+组件属性维度的编译也可以当做条件编译来使用，例如只想在滴滴出行小程序中使用某个组件：
+
+``` html
+<view @:didi>this is a  view component</view>
+```
 ### 其他注意事项
 
 * 当目标平台为支付宝时，需要启用支付宝最新的component2编译才能保障框架正常工作，关于component2[点此查看详情](https://docs.alipay.com/mini/framework/custom-component-overview)；
@@ -264,7 +392,7 @@ other {
 
 ## 跨平台输出web
 
-从2.3.0版本开始，Mpx开始支持将已有项目跨平台输出web平台中运行的能力，由于该能力目前还处于持续开发阶段，目前仅支持将一些简单的运营类的小程序输出为web项目，无法直接转换大型复杂项目，我们会持续对输出web的能力进行完善和补全，以提高其适用范围和开发体验。
+从2.3.0版本开始，Mpx开始支持将已有项目跨平台输出web平台中运行的能力，目前输出web能力完备，能够支持直接转换大型复杂项目，我们会持续对输出web的能力进行优化，不断的建全更全面的适用范围和开发体验。
 
 ### 技术实现
 
@@ -274,10 +402,10 @@ other {
 
 ### 使用方法
 
-使用@mpxjs/cli创建新项目时选择跨平台并选择输出web后，即可生成可输出web的示例项目，运行`npm run watchweb`，就会在dist/web下输出构建后的web项目，并启动静态服务预览运行。
+使用@mpxjs/cli创建新项目时选择跨平台并选择输出web后，即可生成可输出web的示例项目，运行`npm run watch:web:serve`，就会在dist/web下输出构建后的web项目，并启动静态服务预览运行。
 
 ### 支持范围
-目前输出web的能力仍处于持续开发阶段，现阶段支持的小程序技术能力范围有限，下列表格中显示了当前版本中已支持的能力范围
+目前对输出web的通用能力支持已经非常完备，下列表格中显示了当前版本中已支持的能力范围
 
 #### 模板指令
 指令名称|是否支持
@@ -321,31 +449,42 @@ web同名事件默认全部支持，已支持组件的特殊事件默认为支�
 
 #### 基础组件
 
-组件名称|是否支持
-:----|----
-view|是
-cover-view|是
-scroll-view|是
-progress|是
-navigator|是
-swiper|是
-swiper-item|是
-text|是
-image|是
+组件名称|是否支持|说明
+:----|---- |----
+audio|是
 block|是
-form|是
-input|是
-textarea|是
 button|是
+canvas|是
 checkbox|是
 checkbox-group|是
+cover-view|是
+form|是
+image|是
+input|是
+movable-area|是
+movable-view|是
+navigator|是
+picker|是
+picker-view|是
+progress|是
 radio|是
 radio-group|是
-picker|是
+rich-text|是
+scroll-view|是|scroll-view 转 web 底层滚动依赖 BetterScroll 实现支持额外传入以下属性： <br/><br/>`scroll-options`: object <br/>可重写 BetterScroll 初始化基本配置<br/>若出现无法滚动，可尝试手动传入 `{ observeDOM: true }` <br/><br/> `update-refresh`: boolean <br/>Vue updated 钩子函数触发时，可用于重新计算 BetterScroll<br/><br/>tips: 当使用下拉刷新相关属性时，由于 Vue 数据响应机制的限制，在 web 侧可能出现下拉组件状态无法复原的问题，可尝试在 `refresherrefresh` 事件中，手动将 refresher-triggered 属性值设置为 true
+swiper|是
+swiper-item|是
+switch|是
+slider|是
+text|是
+textarea|是
+video|是
+view|是
+web-view|是
+在项目的app.json 中配置 "style": "v2"启用新版的组件样式，涉及的组件有 button icon radio checkbox switch slider在输出web时也与小程序保持了一致
 
 #### 生命周期
 
-声明周期名称|是否支持
+生命周期名称|是否支持
 :----|----
 onLaunch|是
 onLoad|是
@@ -360,6 +499,17 @@ ready|是
 detached|是
 updated|是
 
+#### 应用级事件
+
+应用级事件名称|是否支持
+:----|----
+onPageNotFound|是
+onPageScroll|是
+onPullDownRefresh|是
+onReachBottom|是
+onResize|是
+onTabItemTap|是
+
 #### 组件配置
 
 
@@ -369,8 +519,10 @@ properties|部分支持，observer不支持，请使用watch代替
 data|支持
 watch|支持
 computed|支持
+relations|支持
 methods|支持
 mixins|支持
+pageLifetimes|支持
 observers|不支持，请使用watch代替
 behaviors|不支持，请使用mixins代替
 
@@ -420,18 +572,35 @@ showLoading|支持
 hideLoading|支持
 onWindowResize|支持
 offWindowResize|支持
+createAnimation|支持
 
 #### JSON配置
 配置项|是否支持
 :----|----
-pages|是
-usingComponents|是
+backgroundColor|是
+backgroundTextStyle|是
+disableScroll|是
+enablePullDownRefresh|是
+onReachBottomDistance|是
 packages|是
-subpackages|是
+pages|是
+navigationBarBackgroundColor|是
+navigationBarTextStyle|是
 navigationBarTitleText|是
+networkTimeout|是
+subpackages|是
+tabBar|是
+usingComponents|是
 
 #### 拓展能力
 能力|是否支持
 :---|---
 fetch|是
 i18n|是
+
+#### 小程序其他原生能力
+能力|支持度
+:---|---
+wxs|支持
+animation|支持组件的animation属性，支持所有animation对象方法(export、step、width、height、rotate、scale、skew、translate等等)
+

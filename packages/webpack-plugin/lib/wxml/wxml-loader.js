@@ -2,12 +2,12 @@
 const attrParse = require('./attributesParser')
 const loaderUtils = require('loader-utils')
 const url = require('url')
-const path = require('path')
-const hash = require('hash-sum')
 const config = require('../config')
 const getMainCompilation = require('../utils/get-main-compilation')
 const createHelpers = require('../helpers')
 const isUrlRequest = require('../utils/is-url-request')
+const addQuery = require('../utils/add-query')
+const parseRequest = require('../utils/parse-request')
 
 function randomIdent () {
   return 'xxxHTMLLINKxxx' + Math.random() + Math.random() + 'xxx'
@@ -17,16 +17,10 @@ module.exports = function (content) {
   const loaderContext = this
   const isProduction = this.minimize || process.env.NODE_ENV === 'production'
   const options = loaderUtils.getOptions(this) || {}
+  const mpx = getMainCompilation(this._compilation).__mpx__
 
-  const filePath = this.resourcePath
-
-  const context = (
-    this.rootContext ||
-    (this.options && this.options.context) ||
-    process.cwd()
-  )
-  const shortFilePath = path.relative(context, filePath).replace(/^(\.\.[\\/])+/, '')
-  const moduleId = hash(isProduction ? (shortFilePath + '\n' + content) : shortFilePath)
+  const { resourcePath: filePath, queryObj } = parseRequest(this.resource)
+  const moduleId = 'm' + mpx.pathHash(filePath)
 
   const needCssSourceMap = (
     !isProduction &&
@@ -40,16 +34,15 @@ module.exports = function (content) {
 
   const usingComponents = []
 
-  const mpx = getMainCompilation(this._compilation).__mpx__
   const mode = mpx.mode
   const globalSrcMode = mpx.srcMode
-  const localSrcMode = loaderUtils.parseQuery(this.resourceQuery || '?').mode
+  const localSrcMode = queryObj.mode
   const srcMode = localSrcMode || globalSrcMode
   const customAttributes = options.attributes || mpx.attributes || []
 
   const {
     getSrcRequestString
-  } = createHelpers(
+  } = createHelpers({
     loaderContext,
     options,
     moduleId,
@@ -60,8 +53,8 @@ module.exports = function (content) {
     needCssSourceMap,
     srcMode,
     isNative,
-    options.root || ''
-  )
+    projectRoot: options.root || ''
+  })
 
   const attributes = ['image:src', 'audio:src', 'video:src', 'cover-image:src', 'import:src', 'include:src', `${config[mode].wxs.tag}:${config[mode].wxs.src}`].concat(customAttributes)
 
@@ -141,6 +134,7 @@ module.exports = function (content) {
     const link = data[match]
 
     let src = loaderUtils.urlToRequest(link.value, options.root)
+    src = addQuery(src, { isStatic: true })
 
     let requestString
 
@@ -150,6 +144,8 @@ module.exports = function (content) {
         requestString = getSrcRequestString('template', { src, mode: localSrcMode }, -1)
         break
       case config[mode].wxs.tag:
+        // 显式传递issuerResource避免模块缓存以及提供给wxs-loader计算相对路径
+        src = addQuery(src, { issuerResource: loaderContext.resource })
         requestString = getSrcRequestString('wxs', { src, mode: localSrcMode }, -1, undefined, '!!')
         break
       default:

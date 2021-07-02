@@ -9,7 +9,6 @@ export default class RequestQueue {
     this.delay = config.delay || 0
     this.ratio = config.ratio || 0.3
     this.flushing = false
-    this.isLock = false
     this.workList = []
     this.lowWorkList = []
     this.workingList = []
@@ -73,15 +72,6 @@ export default class RequestQueue {
     }
   }
 
-  lock () {
-    this.isLock = true
-  }
-
-  unlock () {
-    this.isLock = false
-    this.workingRequest()
-  }
-
   flushQueue () {
     if (this.flushing) return
     this.flushing = true
@@ -92,7 +82,6 @@ export default class RequestQueue {
 
   workingRequest () {
     while (this.workingList.length < this.limit && this.workList.length) {
-      if (this.isLock) break
       let work = this.workList.shift()
       this.workingList.push(work)
       this.run(work)
@@ -101,7 +90,6 @@ export default class RequestQueue {
     const buffer = parseInt((this.limit - this.workingList.length) * this.ratio, 10) || 1
     const limit = this.limit - buffer
     while (this.workingList.length < limit && this.lowWorkList.length) {
-      if (this.isLock) break
       let work = this.lowWorkList.shift()
       this.workingList.push(work)
       this.run(work)

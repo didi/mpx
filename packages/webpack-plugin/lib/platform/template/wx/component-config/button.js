@@ -2,6 +2,11 @@ const { isMustache } = require('../../../../utils/string')
 
 const TAG_NAME = 'button'
 
+// 微信支持的属性及其值
+const wxSupportPropsValue = {
+  'open-type': ['contact', 'share', 'getPhoneNumber', 'getUserInfo', 'launchApp', 'openSetting', 'feedback']
+}
+
 module.exports = function ({ print }) {
   const aliValueLogError = print({ platform: 'ali', tag: TAG_NAME, isError: true, type: 'value' })
   const aliValueLog = print({ platform: 'ali', tag: TAG_NAME, isError: false, type: 'value' })
@@ -11,6 +16,8 @@ module.exports = function ({ print }) {
   const baiduValueLog = print({ platform: 'baidu', tag: TAG_NAME, isError: false, type: 'value' })
   const baiduPropLog = print({ platform: 'baidu', tag: TAG_NAME, isError: false })
   const baiduEventLog = print({ platform: 'baidu', tag: TAG_NAME, isError: false })
+  const qqValueLogError = print({ platform: 'qq', tag: TAG_NAME, isError: true, type: 'value' })
+  const qqValueLog = print({ platform: 'qq', tag: TAG_NAME, isError: false, type: 'value' })
   const qqPropLog = print({ platform: 'qq', tag: TAG_NAME, isError: false })
   const qqEventLog = print({ platform: 'qq', tag: TAG_NAME, isError: false, type: 'event' })
   const jdPropLog = print({ platform: 'jd', tag: TAG_NAME, isError: false })
@@ -21,6 +28,9 @@ module.exports = function ({ print }) {
   const ttEventLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false, type: 'event' })
   const webPropLog = print({ platform: 'web', tag: TAG_NAME, isError: false })
   const webEventLog = print({ platform: 'web', tag: TAG_NAME, isError: false, type: 'event' })
+  const qaPropLog = print({ platform: 'qa', tag: TAG_NAME, isError: false })
+  const wxPropValueLog = print({ platform: 'wx', tag: TAG_NAME, isError: false, type: 'value' })
+
   return {
     test: TAG_NAME,
     web (tag, { el }) {
@@ -31,8 +41,9 @@ module.exports = function ({ print }) {
       {
         test: 'open-type',
         ali ({ name, value }) {
-          if (value === 'share' || value === 'launchApp' || value === 'getAuthorize') {
-            // do nothing
+          const notSupported = ['contact', 'launchApp', 'openSetting', 'feedback']
+          if (notSupported.indexOf(value) > -1) {
+            aliValueLogError({ name, value })
           } else if (value === 'getPhoneNumber') {
             return [
               {
@@ -58,12 +69,13 @@ module.exports = function ({ print }) {
           } else if (isMustache(value)) {
             // 如果是个变量，报warning
             aliValueLog({ name, value })
-          } else {
-            aliValueLogError({ name, value })
           }
         },
         swan ({ name, value }) {
-          let supportList = ['contact', 'share', 'getUserInfo', 'getPhoneNumber', 'openSetting']
+          const supportList = ['contact', 'share', 'getUserInfo', 'getPhoneNumber', 'openSetting', 'chooseAddress', 'chooseInvoiceTitle', 'login']
+          if (wxSupportPropsValue[name] && wxSupportPropsValue[name].indexOf(value) === -1) {
+            wxPropValueLog({ name, value })
+          }
           if (isMustache(value)) {
             // 如果是个变量，报warning
             baiduValueLog({ name, value })
@@ -71,11 +83,26 @@ module.exports = function ({ print }) {
             baiduValueLogError({ name, value })
           }
         },
+        qq ({ name, value }) {
+          const supportList = ['share', 'getUserInfo', 'getPhoneNumber', 'launchApp', 'openSetting', 'contact', 'feedback', 'openGroupProfile', 'addFriend', 'addColorSign', 'openPublicProfile', 'addGroupApp', 'shareMessageToFriend', 'addToFavorites']
+          if (wxSupportPropsValue[name] && wxSupportPropsValue[name].indexOf(value) === -1) {
+            wxPropValueLog({ name, value })
+          }
+          if (isMustache(value)) {
+            // 如果是个变量，报warning
+            qqValueLog({ name, value })
+          } else if (supportList.indexOf(value) === -1) {
+            qqValueLogError({ name, value })
+          }
+        },
         tt ({ name, value }) {
+          if (wxSupportPropsValue[name] && wxSupportPropsValue[name].indexOf(value) === -1) {
+            wxPropValueLog({ name, value })
+          }
           if (isMustache(value)) {
             ttValueLog({ name, value })
           } else {
-            let supportList = ['share', 'getPhoneNumber']
+            const supportList = ['share', 'getPhoneNumber', 'contact']
             if (supportList.indexOf(value) === -1) {
               ttValueLogError({ name, value })
             }
@@ -112,25 +139,29 @@ module.exports = function ({ print }) {
           // todo 这部分能力基于内部封装实现
           el.isBuiltIn = true
         }
+      },
+      {
+        test: /^(open-type|lang|session-from|send-message-title|send-message-path|send-message-img|app-parameter|show-message-card|bindgetuserinfo|bindcontact|bindgetphonenumber|binderror|bindopensetting|bindlaunchapp)$/,
+        qa: qaPropLog
       }
     ],
     event: [
       {
-        test: 'getphonenumber',
+        test: /^(getphonenumber|getuserinfo)$/,
         ali () {
           return 'getAuthorize'
         }
       },
       {
-        test: /^(getuserinfo|contact|error|launchapp|opensetting)$/,
+        test: /^(contact|launchapp|opensetting)$/,
         ali: aliEventLog
       },
       {
-        test: /^(contact|error|launchapp)$/,
+        test: /^(error|launchapp)$/,
         swan: baiduEventLog
       },
       {
-        test: /^(contact)$/,
+        test: /^(getphonenumber)$/,
         qq: qqEventLog
       },
       {
@@ -138,8 +169,11 @@ module.exports = function ({ print }) {
         jd: jdEventLog
       },
       {
-        test: /^(getuserinfo|contact|getphonenumbe|error|launchapp|opensetting)$/,
-        tt: ttEventLog,
+        test: /^(getuserinfo|contact|error|launchapp|opensetting)$/,
+        tt: ttEventLog
+      },
+      {
+        test: /^(getuserinfo|contact|error|launchapp|opensetting|getphonenumber)$/,
         web: webEventLog
       }
     ]

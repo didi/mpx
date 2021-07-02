@@ -4,6 +4,7 @@ import { mergeLifecycle } from './mergeLifecycle'
 import { mergeToArray } from '../core/mergeOptions'
 import { error } from '../helper/log'
 import { implemented } from '../core/implement'
+import { hasOwn } from '../helper/utils'
 
 const NOTSUPPORTS = ['moved', 'definitionFilter']
 
@@ -42,22 +43,17 @@ export default {
   lifecycle2: mergeLifecycle(aliLifecycle.LIFECYCLE),
   pageMode: 'blend',
   support: false,
-  lifecycleProxyMap: {
-    '__created__': ['onLoad', 'created', 'attached'],
-    '__mounted__': ['ready', 'onReady'],
-    '__destroyed__': ['detached', 'onUnload'],
-    '__updated__': ['updated']
-  },
+  lifecycleProxyMap: wxLifecycle.lifecycleProxyMap,
   convert (options) {
     if (options.properties) {
       const newProps = {}
       Object.keys(options.properties).forEach(key => {
         const prop = options.properties[key]
         if (prop) {
-          if (prop.hasOwnProperty('value')) {
+          if (hasOwn(prop, 'value')) {
             newProps[key] = prop.value
           } else {
-            const type = prop.hasOwnProperty('type') ? prop.type : prop
+            const type = hasOwn(prop, 'type') ? prop.type : prop
             if (typeof type === 'function') newProps[key] = type()
           }
         }

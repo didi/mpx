@@ -9,12 +9,12 @@
         isDrag: false,
         startX: 0,
         sliderWidth: 0,
-        blockLeft: 0,
-        sliderValue: this.value || this.min,
+        sliderValue: this.value < this.min ? this.min : this.value > this.max ? this.max : this.value,
         stepWidth: 0
       }
     },
     props: {
+      name: String,
       min: {
         type: Number,
         default: 0
@@ -39,11 +39,11 @@
         type: Boolean,
         default: false
       },
-      'block-size': {
+      blockSize: {
         type: Number,
         default: 28
       },
-      'block-color': {
+      blockColor: {
         type: String,
         default: '#ffffff'
       },
@@ -51,18 +51,22 @@
         type: String,
         default: '#e9e9e9'
       },
-      'show-value': {
+      showValue: {
         type: Boolean,
         default: false
+      }
+    },
+    computed: {
+      blockLeft () {
+        const lineSum = this.max - this.min
+        const lineRatio = (this.sliderValue - this.min) / lineSum
+        return this.sliderWidth * lineRatio - this.blockSize / 2 + 'px' || 0
       }
     },
     mounted () {
       let sliderWrapEle = this.$refs.sliderWrap
       let width = window.getComputedStyle(sliderWrapEle, null).width
       this.sliderWidth = parseInt(width)
-      if (this.value > 0) {
-        this.initBlockLeft() //调用初始化滑块居左位置
-      }
       this.startX = sliderWrapEle.getBoundingClientRect().left || 18
     },
     render (createElement) {
@@ -84,7 +88,8 @@
       let sliderLine = createElement('div', {
         class: 'mpx-slider-line',
         style: {
-          width: this.blockLeft,
+          width: parseFloat(this.blockLeft) > 0 ? this.blockLeft : 0,
+          top: `${(this.blockSize - 2) / 2}px`,
           backgroundColor: this.activeColor
         }
       })
@@ -93,9 +98,10 @@
       let sliderBlock = createElement('div', {
         class: 'mpx-slider-block',
         style: {
-          left: this.blockLeft,
           width: blockSize,
           height: blockSize,
+          transform: `translate(${this.blockLeft}, -50%)`,
+          transformOrigin: '50% 50%',
           backgroundColor: this.blockColor
         },
         on: {
@@ -108,6 +114,9 @@
       wrapChildren.push(...(this.$slots.default || []))
 
       const sliderWrap = createElement('div', {
+        style:{
+          padding: `${(this.blockSize - 2) / 2}px 0`
+        },
         class: 'mpx-slider-wrap'
       }, wrapChildren)
       children.push(sliderWrap)
@@ -129,6 +138,7 @@
 
       const data = {
         class: ['mpx-slider'],
+        ref: 'slider',
         on: getInnerListeners(this, { ignoredListeners: ['change', 'changing'] })
       }
       return createElement('div', data, children)
@@ -140,33 +150,30 @@
         }
         this.isDrag = true
       },
-      initBlockLeft () { //初始化滑块居左位置
-        let lineSum = this.max - this.min
-        let lineStep = parseInt(this.sliderWidth / lineSum)
-        this.blockLeft = lineStep * (this.value - this.min) + 'px'
-      },
       sliderTouchMove (event) {
+        event.preventDefault()
         if (this.isDrag) {
           let eventName = 'changing'
           let moveStartX = event.targetTouches[0] && event.targetTouches[0].pageX
-          this.setValue(moveStartX)
-          this.$emit(eventName, getCustomEvent(eventName, { value: this.sliderValue }))
+          this.setLineValue(moveStartX)
+          this.$emit(eventName, getCustomEvent(eventName, { value: this.sliderValue }, this.$refs.slider))
         }
       },
       sliderTouchEnd (event) {
         let eventName = 'change'
-        this.$emit(eventName, getCustomEvent(eventName, { value: this.sliderValue }))
+        this.$emit(eventName, getCustomEvent(eventName, { value: this.sliderValue }, this.$refs.slider))
         this.isDrag = false
       },
       sliderClick (event) {
         if (this.disabled) {
           return
         }
-        this.setValue(event.pageX)
+        this.setLineValue(event.pageX)
         let eventName = 'change'
-        this.$emit(eventName, getCustomEvent(eventName, { value: this.sliderValue }))
+        this.$emit(eventName, getCustomEvent(eventName, { value: this.sliderValue }, this.$refs.slider))
       },
-      setValue (moveStartX) {
+      setLineValue (moveStartX) {
+        moveStartX = moveStartX - this.startX
         let stepNum = (this.max - this.min) / this.step // 获取step分段数值
         let stepWidth = this.sliderWidth / stepNum // 获取每段长度
         let num = parseInt(moveStartX / stepWidth) // 获取已拖拽step分段数据
@@ -175,12 +182,25 @@
         }
         if (moveStartX % stepWidth > stepWidth / 2) { // 向左拖拽逻辑
           let width = (num + 1) * stepWidth > this.sliderWidth ? this.sliderWidth : (num + 1) * stepWidth
-          this.blockLeft = width + 'px'
           this.sliderValue = this.min + (num + 1) * this.step // 设置展示值逻辑
         } else if (parseInt(this.blockLeft) - moveStartX) {  // 向右拖拽逻辑
-          this.blockLeft = num * stepWidth + 'px'
           this.sliderValue = this.min + num * this.step // 设置展示值逻辑
         }
+      },
+      getValue () {
+        return this.sliderValue
+      },
+      setValue (value) {
+        value = value < this.min ? this.min : value > this.max ? this.max : value
+        this.sliderValue = value
+      },
+      notifyChange (value) {
+        if (value !== undefined) {
+          this.setValue(value)
+        } else {
+          value = this.getValue()
+        }
+        this.$emit('change', getCustomEvent('change', { value: value }, this.$refs.slider))
       }
     }
   }
@@ -190,16 +210,16 @@
   .mpx-slider
     margin: 0 18px
     display: flex
+    align-items center
     .mpx-slider-wrap
       position: relative
-      padding: 10px 0
       flex: 1
+      height: 2px
     .mpx-slider-bg
       height: 2px
     .mpx-slider-line
       height: 2px
       position: absolute
-      top: 10px
       pointer-events: none
     .mpx-slider-block
       box-shadow: 0 0 4px rgba(0, 0, 0, 0.2)

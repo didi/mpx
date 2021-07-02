@@ -5,12 +5,12 @@ const NodeTargetPlugin = require('webpack/lib/node/NodeTargetPlugin')
 const LibraryTemplatePlugin = require('webpack/lib/LibraryTemplatePlugin')
 const SingleEntryPlugin = require('webpack/lib/SingleEntryPlugin')
 const LimitChunkCountPlugin = require('webpack/lib/optimize/LimitChunkCountPlugin')
+const ChildCompileDependency = require('./dependency/ChildCompileDependency')
 const normalize = require('./utils/normalize')
 const parseRequest = require('./utils/parse-request')
 const getMainCompilation = require('./utils/get-main-compilation')
 const toPosix = require('./utils/to-posix')
 const config = require('./config')
-const hash = require('hash-sum')
 const fixRelative = require('./utils/fix-relative')
 
 const defaultResultSource = '// removed by extractor'
@@ -22,14 +22,12 @@ module.exports = function (content) {
   const mainCompilation = getMainCompilation(this._compilation)
   const mpx = mainCompilation.__mpx__
 
-  const packageName = mpx.currentPackageRoot || 'main'
   const pagesMap = mpx.pagesMap
-  const componentsMap = mpx.componentsMap[packageName]
 
   const extract = mpx.extract
+  const pathHash = mpx.pathHash
   const extractedMap = mpx.extractedMap
   const mode = mpx.mode
-  const seenFile = mpx.extractSeenFile
   const typeExtMap = config[mode].typeExtMap
 
   const rootName = mainCompilation._preparedEntrypoints[0].name
@@ -39,55 +37,51 @@ module.exports = function (content) {
   })
   const rootResourcePath = parseRequest(rootModule.resource).resourcePath
 
-  const resourceRaw = this.resource
-  const issuerResourceRaw = options.issuerResource
-
   let resultSource = defaultResultSource
 
   const getFile = (resourceRaw, type) => {
-    const resourcePath = parseRequest(resourceRaw).resourcePath
-    const id = `${mode}:${packageName}:${type}:${resourcePath}`
-    if (!seenFile[id]) {
-      const resourcePath = parseRequest(resourceRaw).resourcePath
-      let filename = pagesMap[resourcePath] || componentsMap[resourcePath]
-      if (!filename && resourcePath === rootResourcePath) {
-        filename = rootName
-      }
-
-      if (filename) {
-        seenFile[id] = filename + typeExtMap[type]
-      } else {
-        const resourceName = path.parse(resourcePath).name
-        const outputPath = path.join(type, resourceName + hash(resourcePath) + typeExtMap[type])
-        seenFile[id] = mpx.getPackageInfo(resourceRaw, {
-          outputPath,
-          isStatic: true,
-          error: (err) => {
-            this.emitError(err)
-          },
-          warn: (err) => {
-            this.emitWarning(err)
-          }
-        }).outputPath
-      }
+    const { resourcePath, queryObj } = parseRequest(resourceRaw)
+    const currentPackageName = queryObj.packageName || mpx.currentPackageRoot || 'main'
+    const componentsMap = mpx.componentsMap[currentPackageName]
+    let filename = pagesMap[resourcePath] || componentsMap[resourcePath]
+    if (!filename && resourcePath === rootResourcePath) {
+      filename = rootName
     }
-    return seenFile[id]
+    if (filename) {
+      return filename + typeExtMap[type]
+    } else {
+      const resourceName = path.parse(resourcePath).name
+      const outputPath = path.join(type, resourceName + pathHash(resourcePath) + typeExtMap[type])
+      return mpx.getPackageInfo({
+        resource: resourceRaw,
+        outputPath,
+        resourceType: 'staticResources',
+        warn: (err) => {
+          this.emitWarning(err)
+        }
+      }).outputPath
+    }
   }
 
   const type = options.type
   const fromImport = options.fromImport
-  let index = +options.index
+  const index = +options.index || 0
+  const { queryObj } = parseRequest(this.resource)
 
   let issuerFile
-  if (issuerResourceRaw) {
-    issuerFile = getFile(issuerResourceRaw, type)
+  if (queryObj.issuerResource) {
+    issuerFile = getFile(queryObj.issuerResource, type)
   }
 
-  const file = getFile(resourceRaw, type)
+  const file = getFile(this.resource, type)
   const filename = /(.*)\..*/.exec(file)[1]
 
-  let sideEffects = () => {
-  }
+  const sideEffects = []
+
+  sideEffects.push((additionalAssets) => {
+    additionalAssets[file].modules = additionalAssets[file].modules || []
+    additionalAssets[file].modules.push(this._module)
+  })
 
   if (index === -1) {
     // 需要返回路径或产生副作用
@@ -100,43 +94,38 @@ module.exports = function (content) {
           if (fromImport) {
             resultSource = `module.exports = ${JSON.stringify(relativePath)};`
           } else {
-            const issuer = this._module.issuer
-            // todo 此处只同步issuer模块的文件依赖不能保障完全正确，理想状态下还应该同步issuerFile对应的内联样式模块中的文件依赖，因为内联样式模块还可能通过url或者是@import引入新的文件依赖；
-            // todo 在当前架构设计下src样式模块和内联样式模块无法保障处理顺序，此时可能无法拿到内联样式模块的文件依赖；
-            // todo 当前做法能够保障大多数场景下的正确，先作为临时处理方式，待后续优化。
-            // todo 这种模块间在构建期相互影响的设计模式存在很大不可控制性，后续优化时考虑全面移除该类设计。
-            if (issuer) {
-              issuer.buildInfo.fileDependencies.forEach((dep) => {
-                this.addDependency(dep)
-              })
-              issuer.buildInfo.contextDependencies.forEach((dep) => {
-                this.addContextDependency(dep)
-              })
-            }
-            sideEffects = (additionalAssets) => {
+            sideEffects.push((additionalAssets) => {
               additionalAssets[issuerFile] = additionalAssets[issuerFile] || []
               additionalAssets[issuerFile].prefix = additionalAssets[issuerFile].prefix || []
               additionalAssets[issuerFile].prefix.push(`@import "${relativePath}";\n`)
-            }
+              additionalAssets[issuerFile].relativeModules = additionalAssets[issuerFile].relativeModules || []
+              additionalAssets[issuerFile].relativeModules.push(this._module)
+            })
           }
         }
         break
       case 'template':
         resultSource = `module.exports = __webpack_public_path__ + ${JSON.stringify(file)};`
         break
+      case 'json':
+        // 目前json中index为-1时只有处理theme.json一种情况，该情况下返回的路径只能为不带有./或../开头的相对路径，否则微信小程序预览构建会报错，issue#622
+        resultSource = `module.exports = ${JSON.stringify(file)};`
+        break
     }
-    index = 0
   }
 
   const id = `${file}:${index}:${issuerFile}:${fromImport}`
 
-  let nativeCallback
   // 由于webpack中moduleMap只在compilation维度有效，不同子编译之间可能会对相同的引用文件进行重复的无效抽取，建立全局extractedMap避免这种情况出现
   if (extractedMap[id]) {
-    return extractedMap[id]
-  } else {
-    extractedMap[id] = resultSource
-    nativeCallback = this.async()
+    extractedMap[id].modules.push(this._module)
+    return extractedMap[id].resultSource
+  }
+  const nativeCallback = this.async()
+  extractedMap[id] = {
+    resultSource,
+    dep: null,
+    modules: [this._module]
   }
 
   // 使用子编译器生成需要抽离的json，styles和template
@@ -155,7 +144,7 @@ module.exports = function (content) {
     new LimitChunkCountPlugin({ maxChunks: 1 })
   ])
 
-  childCompiler.hooks.thisCompilation.tap('MpxWebpackPlugin ', (compilation) => {
+  childCompiler.hooks.thisCompilation.tap('MpxWebpackPlugin', (compilation) => {
     compilation.hooks.normalModuleLoader.tap('MpxWebpackPlugin', (loaderContext) => {
       // 传递编译结果，子编译器进入content-loader后直接输出
       loaderContext.__mpx__ = {
@@ -164,10 +153,13 @@ module.exports = function (content) {
         contextDependencies: this.getContextDependencies()
       }
     })
+    compilation.hooks.succeedEntry.tap('MpxWebpackPlugin', (entry, name, module) => {
+      const dep = new ChildCompileDependency(module)
+      extractedMap[id].dep = dep
+    })
   })
 
   let source
-
   childCompiler.hooks.afterCompile.tapAsync('MpxWebpackPlugin', (compilation, callback) => {
     source = compilation.assets[childFilename] && compilation.assets[childFilename].source()
 

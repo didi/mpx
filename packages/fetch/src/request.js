@@ -50,6 +50,8 @@ export default function request (config, mpx) {
     }
     if (config.params) {
       config.url = buildUrl(config.url, filterUndefined(config.params))
+      // 这个参数保留的话，若其value是响应式数据，在Android支付宝小程序中可能有问题
+      delete config.params
     }
     if (config.data) {
       config.data = filterUndefined(config.data)
@@ -99,8 +101,18 @@ export default function request (config, mpx) {
       requestTask = swan.request(config)
       return
     }
+    if (typeof qq !== 'undefined' && typeof qq.request === 'function') {
+      // qq
+      requestTask = qq.request(config)
+      return
+    }
+    if (typeof tt !== 'undefined' && typeof tt.request === 'function') {
+      // tt
+      requestTask = tt.request(config)
+      return
+    }
 
-    mpx = mpx || window.__mpx
+    mpx = mpx || global.__mpx
     if (typeof mpx !== 'undefined' && typeof mpx.request === 'function') {
       // mpx
       const res = mpx.request(config)

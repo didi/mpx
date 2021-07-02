@@ -1,5 +1,7 @@
-import { error, getEnvObj, genFromMap } from '../common/js'
+import { error, getEnvObj, genFromMap, makeMap } from '../common/js'
 import getWxToAliApi from './platform/wxToAli'
+import getWxToQqApi from './platform/wxToQq'
+import getWxToQaApi from './platform/wxToQa'
 
 const fromMap = genFromMap()
 
@@ -9,28 +11,36 @@ function joinName (from = '', to = '') {
 
 function transformApi (options) {
   const envObj = getEnvObj()
+  const from = options.from
+  const to = options.to
+  const fromTo = joinName(from, to)
   const wxToAliApi = getWxToAliApi({ optimize: options.optimize })
+  const wxToQqApi = getWxToQqApi({ optimize: options.optimize })
+  const wxToQaApi = getWxToQaApi({ optimize: options.optimize })
   const platformMap = {
     'wx_ali': wxToAliApi,
-    'qq_ali': wxToAliApi,
-    'jd_ali': wxToAliApi,
-    'swan_ali': wxToAliApi,
-    'tt_ali': wxToAliApi
+    'wx_qq': wxToQqApi,
+    'wx_qa': wxToQaApi
   }
-  const needProxy = Object.assign({}, envObj, wxToAliApi)
-  const transedApi = Object.create(null)
-
+  const needProxy = Object.create(null)
+  const excludeMap = makeMap(options.exclude)
+  const transedApi = platformMap[fromTo] || {}
+  Object.keys(envObj).concat(Object.keys(transedApi)).forEach((key) => {
+    if (!excludeMap[key]) {
+      needProxy[key] = envObj[key] || transedApi[key]
+    }
+  })
+  const result = Object.create(null)
   Object.keys(needProxy).forEach(api => {
     // 非函数不做转换
     if (typeof needProxy[api] !== 'function') {
-      transedApi[api] = needProxy[api]
+      result[api] = needProxy[api]
       return
     }
 
-    transedApi[api] = (...args) => {
-      const to = options.to
+    result[api] = (...args) => {
       let from = options.from
-
+      const to = options.to
       if (args.length > 0) {
         from = args.pop()
         if (typeof from !== 'string' || !fromMap[from]) {
@@ -44,8 +54,7 @@ function transformApi (options) {
         return options.custom[fromTo][api].apply(this, args)
       } else if (
         platformMap[fromTo] &&
-        platformMap[fromTo][api] &&
-        options.exclude.indexOf(api) < 0
+        platformMap[fromTo][api]
       ) {
         return platformMap[fromTo][api].apply(this, args)
       } else if (envObj[api]) {
@@ -56,7 +65,7 @@ function transformApi (options) {
     }
   })
 
-  return transedApi
+  return result
 }
 
 export default transformApi

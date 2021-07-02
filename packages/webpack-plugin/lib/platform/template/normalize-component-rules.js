@@ -25,8 +25,8 @@ module.exports = function normalizeComponentRules (cfgs, spec) {
           data
         }
         el.attrsList.forEach((attr) => {
-          const meta = {}
           let rAttr = runRules(spec.preAttrs, attr, options)
+          const meta = {}
           rAttr = runRules(spec.directive, rAttr, {
             ...options,
             meta

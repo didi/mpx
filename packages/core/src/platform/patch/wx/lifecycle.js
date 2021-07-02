@@ -1,11 +1,13 @@
-import { BEFORECREATE, CREATED, UPDATED } from '../../../core/innerLifecycle'
+import { BEFORECREATE, CREATED, DESTROYED, MOUNTED, UPDATED, BEFOREMOUNT } from '../../../core/innerLifecycle'
 
 const APP_HOOKS = [
   'onLaunch',
   'onShow',
   'onHide',
   'onError',
-  'onPageNotFound'
+  'onPageNotFound',
+  'onUnhandledRejection',
+  'onThemeChange'
 ]
 
 const PAGE_HOOKS = [
@@ -37,8 +39,12 @@ const COMPONENT_HOOKS = [
 
 export const lifecycleProxyMap = {
   [BEFORECREATE]: ['beforeCreate'],
+  // onLoad需要获取页面query参数，不做代理，所有平台都与此保持一致。
   [CREATED]: ['created', 'attached'],
-  [UPDATED]: ['updated']
+  [UPDATED]: ['updated'],
+  [BEFOREMOUNT]: ['beforeMount'],
+  [MOUNTED]: ['ready', 'onReady'],
+  [DESTROYED]: ['detached', 'onUnload']
 }
 
 export const LIFECYCLE = {

@@ -32,17 +32,17 @@
     watch: {
       src: {
         handler (src) {
-          this.image.src = src
+          if (src) this.image.src = src
         },
         immediate: true
       }
     },
     render (createElement) {
       if (this.mode === 'widthFix') {
+        const domProps = {}
+        if (this.src) domProps.src = this.src
         return createElement('img', {
-          domProps: {
-            src: this.src
-          },
+          domProps,
           style: {
             height: 'auto'
           },
@@ -51,41 +51,35 @@
         })
       }
 
-      let backgroundSize = ''
-      let backgroundPosition = ''
-      const style = {
-        backgroundImage: `url(${this.src})`
+      const style = {}
+      if (this.src) {
+        style.backgroundImage = `url(${this.src})`
+        switch (this.mode) {
+          case 'scaleToFill':
+            style.backgroundSize = '100% 100%'
+            break
+          case 'aspectFit':
+            style.backgroundSize = 'contain'
+            style.backgroundPosition = 'center'
+            style.backgroundRepeat = 'no-repeat'
+            break
+          case 'aspectFill':
+            style.backgroundSize = 'cover'
+            style.backgroundPosition = 'center'
+            break
+          case 'top':
+          case 'bottom':
+          case 'center':
+          case 'left':
+          case 'right':
+          case 'top left':
+          case 'top right':
+          case 'bottom left':
+          case 'bottom right':
+            style.backgroundPosition = this.mode
+            break
+        }
       }
-      switch (this.mode) {
-        case 'scaleToFill':
-          backgroundSize = '100% 100%'
-          break
-        case 'aspectFit':
-          backgroundSize = 'contain'
-          break
-        case 'aspectFill':
-          backgroundSize = 'cover'
-          break
-        case 'top':
-        case 'bottom':
-        case 'center':
-        case 'left':
-        case 'right':
-        case 'top left':
-        case 'top right':
-        case 'bottom left':
-        case 'bottom right':
-          backgroundPosition = this.mode
-          break
-      }
-
-      if (backgroundSize) {
-        style.backgroundSize = backgroundSize
-      }
-      if (backgroundPosition) {
-        style.backgroundPosition = backgroundPosition
-      }
-
       return createElement('div', {
         style,
         class: ['mpx-image'],

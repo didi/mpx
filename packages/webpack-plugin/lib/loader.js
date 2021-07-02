@@ -1,4 +1,4 @@
-const hash = require('hash-sum')
+const JSON5 = require('json5')
 const parseComponent = require('./parser')
 const createHelpers = require('./helpers')
 const loaderUtils = require('loader-utils')
@@ -14,33 +14,34 @@ const processStyles = require('./web/processStyles')
 const processTemplate = require('./web/processTemplate')
 const readJsonForSrc = require('./utils/read-json-for-src')
 const normalize = require('./utils/normalize')
+const getMainCompilation = require('./utils/get-main-compilation')
 
 module.exports = function (content) {
   this.cacheable()
 
-  const mpx = this._compilation.__mpx__
+  const mainCompilation = getMainCompilation(this._compilation)
+  const mpx = mainCompilation.__mpx__
   if (!mpx) {
     return content
   }
-  const packageName = mpx.currentPackageRoot || 'main'
+  const { resourcePath, queryObj } = parseRequest(this.resource)
+  const packageName = queryObj.packageName || mpx.currentPackageRoot || 'main'
   const pagesMap = mpx.pagesMap
   const componentsMap = mpx.componentsMap[packageName]
   const resolveMode = mpx.resolveMode
   const projectRoot = mpx.projectRoot
   const mode = mpx.mode
+  const env = mpx.env
   const defs = mpx.defs
   const i18n = mpx.i18n
   const globalSrcMode = mpx.srcMode
-  const localSrcMode = loaderUtils.parseQuery(this.resourceQuery || '?').mode
-  const resourcePath = parseRequest(this.resource).resourcePath
+  const localSrcMode = queryObj.mode
   const srcMode = localSrcMode || globalSrcMode
   const vueContentCache = mpx.vueContentCache
   const autoScope = matchCondition(resourcePath, mpx.autoScopeRules)
 
-  const resourceQueryObj = loaderUtils.parseQuery(this.resourceQuery || '?')
-
   // 支持资源query传入page或component支持页面/组件单独编译
-  if ((resourceQueryObj.component && !componentsMap[resourcePath]) || (resourceQueryObj.page && !pagesMap[resourcePath])) {
+  if ((queryObj.component && !componentsMap[resourcePath]) || (queryObj.page && !pagesMap[resourcePath])) {
     let entryChunkName
     const rawRequest = this._module.rawRequest
     const _preparedEntrypoints = this._compilation._preparedEntrypoints
@@ -50,7 +51,7 @@ module.exports = function (content) {
         break
       }
     }
-    if (resourceQueryObj.component) {
+    if (queryObj.component) {
       componentsMap[resourcePath] = entryChunkName || 'noEntryComponent'
     } else {
       pagesMap[resourcePath] = entryChunkName || 'noEntryPage'
@@ -70,10 +71,24 @@ module.exports = function (content) {
   const stringifyRequest = r => loaderUtils.stringifyRequest(loaderContext, r)
   const isProduction = this.minimize || process.env.NODE_ENV === 'production'
   const options = loaderUtils.getOptions(this) || {}
+  const processSrcQuery = (src, type) => {
+    const localQuery = Object.assign({}, queryObj)
+    // style src会被特殊处理为全局复用样式，不添加resourcePath，添加isStatic及issuerResource
+    if (type === 'styles') {
+      localQuery.isStatic = true
+      localQuery.issuerResource = this.resource
+    } else {
+      localQuery.resourcePath = resourcePath
+    }
+    if (type === 'json') {
+      localQuery.__component = true
+    }
+    return addQuery(src, localQuery)
+  }
 
-  const filePath = this.resourcePath
+  const filePath = resourcePath
 
-  const moduleId = 'm' + hash(this._module.identifier())
+  const moduleId = 'm' + mpx.pathHash(filePath)
 
   const needCssSourceMap = (
     !isProduction &&
@@ -81,7 +96,13 @@ module.exports = function (content) {
     options.cssSourceMap !== false
   )
 
-  const parts = parseComponent(content, filePath, this.sourceMap, mode, defs)
+  const parts = parseComponent(content, {
+    filePath,
+    needMap: this.sourceMap,
+    mode,
+    defs,
+    env
+  })
 
   let output = ''
   const callback = this.async()
@@ -112,12 +133,17 @@ module.exports = function (content) {
 
       let usingComponents = [].concat(Object.keys(mpx.usingComponents))
 
+      let componentGenerics = {}
+
       if (parts.json && parts.json.content) {
         try {
-          let ret = JSON.parse(parts.json.content)
+          let ret = JSON5.parse(parts.json.content)
           if (ret.usingComponents) {
-            fixUsingComponent({ usingComponents: ret.usingComponents, mode })
+            fixUsingComponent(ret.usingComponents, mode)
             usingComponents = usingComponents.concat(Object.keys(ret.usingComponents))
+          }
+          if (ret.componentGenerics) {
+            componentGenerics = Object.assign({}, ret.componentGenerics)
           }
         } catch (e) {
           return callback(e)
@@ -126,14 +152,13 @@ module.exports = function (content) {
 
       const {
         getRequire,
-        getNamedExports,
         getRequireForSrc,
-        getNamedExportsForSrc
-      } = createHelpers(
+        getRequestString,
+        getSrcRequestString
+      } = createHelpers({
         loaderContext,
         options,
         moduleId,
-        isProduction,
         hasScoped,
         hasComment,
         usingComponents,
@@ -141,11 +166,11 @@ module.exports = function (content) {
         srcMode,
         isNative,
         projectRoot
-      )
+      })
 
       // 处理mode为web时输出vue格式文件
       if (mode === 'web') {
-        if (ctorType === 'app' && !resourceQueryObj.app) {
+        if (ctorType === 'app' && !queryObj.app) {
           const request = addQuery(this.resource, { app: true })
           output += `
       import App from ${stringifyRequest(request)}
@@ -167,26 +192,37 @@ module.exports = function (content) {
             async.parallel([
               (callback) => {
                 processTemplate(parts.template, {
+                  hasComment,
+                  isNative,
                   mode,
                   srcMode,
                   defs,
                   loaderContext,
-                  ctorType
+                  moduleId,
+                  ctorType,
+                  usingComponents,
+                  componentGenerics,
+                  decodeHTMLText: mpx.decodeHTMLText,
+                  externalClasses: mpx.externalClasses,
+                  checkUsingComponents: mpx.checkUsingComponents
                 }, callback)
               },
               (callback) => {
                 processStyles(parts.styles, {
-                  ctorType
+                  ctorType,
+                  autoScope
                 }, callback)
               },
               (callback) => {
                 processJSON(parts.json, {
                   mode,
+                  env,
                   defs,
                   resolveMode,
                   loaderContext,
                   pagesMap,
                   pagesEntryMap: mpx.pagesEntryMap,
+                  pathHash: mpx.pathHash,
                   componentsMap,
                   projectRoot
                 }, callback)
@@ -203,11 +239,6 @@ module.exports = function (content) {
               mpx.appTitle = jsonRes.jsonObj.window.navigationBarTitleText
             }
 
-            let pageTitle = ''
-            if (ctorType === 'page' && jsonRes.jsonObj.navigationBarTitleText) {
-              pageTitle = jsonRes.jsonObj.navigationBarTitleText
-            }
-
             processScript(parts.script, {
               ctorType,
               srcMode,
@@ -215,11 +246,18 @@ module.exports = function (content) {
               isProduction,
               getRequireForSrc,
               i18n,
-              pageTitle,
-              mpxCid: resourceQueryObj.mpxCid,
+              componentGenerics,
+              projectRoot,
+              jsonConfig: jsonRes.jsonObj,
+              componentId: queryObj.componentId || '',
+              tabBarMap: jsonRes.tabBarMap,
+              tabBarStr: jsonRes.tabBarStr,
               builtInComponentsMap: templateRes.builtInComponentsMap,
+              genericsInfo: templateRes.genericsInfo,
+              wxsModuleMap: templateRes.wxsModuleMap,
               localComponentsMap: jsonRes.localComponentsMap,
-              localPagesMap: jsonRes.localPagesMap
+              localPagesMap: jsonRes.localPagesMap,
+              forceDisableBuiltInLoader: mpx.forceDisableBuiltInLoader
             }, callback)
           }
         ], (err, scriptRes) => {
@@ -240,7 +278,7 @@ module.exports = function (content) {
         globalInjectCode += `global.currentResource = ${JSON.stringify(filePath)}\n`
       }
       if (ctorType === 'app' && i18n && !mpx.forceDisableInject) {
-        globalInjectCode += `global.i18n = ${JSON.stringify({ locale: i18n.locale })}\n`
+        globalInjectCode += `global.i18n = ${JSON.stringify({ locale: i18n.locale, version: 0 })}\n`
 
         const i18nMethodsVar = 'i18nMethods'
         const i18nWxsPath = normalize.lib('runtime/i18n.wxs')
@@ -277,19 +315,23 @@ module.exports = function (content) {
         return match.toLowerCase()
       }))}\n`
 
-      //
       // <script>
       output += '/* script */\n'
       let scriptSrcMode = srcMode
       const script = parts.script
       if (script) {
         scriptSrcMode = script.mode || scriptSrcMode
+        let scriptRequestString
         if (script.src) {
           // 传入resourcePath以确保后续处理中能够识别src引入的资源为组件主资源
-          script.src = addQuery(script.src, { resourcePath })
-          output += getNamedExportsForSrc('script', script) + '\n\n'
+          script.src = processSrcQuery(script.src, 'script')
+          scriptRequestString = getSrcRequestString('script', script)
         } else {
-          output += getNamedExports('script', script) + '\n\n'
+          scriptRequestString = getRequestString('script', script)
+        }
+        if (scriptRequestString) {
+          output += 'export * from ' + scriptRequestString + '\n\n'
+          if (ctorType === 'app') mpx.appScriptRawRequest = JSON.parse(scriptRequestString)
         }
       } else {
         switch (ctorType) {
@@ -319,12 +361,14 @@ module.exports = function (content) {
         let styleInjectionCode = ''
         parts.styles.forEach((style, i) => {
           let scoped = hasScoped ? (style.scoped || autoScope) : false
+          let requireString
           // require style
-          // todo style src会被特殊处理为全局复用样式，暂时不添加resourcePath，理论上在当前支持了@import样式复用后这里是可以添加resourcePath视为组件主资源的，后续待优化
-          let requireString = style.src
-            ? getRequireForSrc('styles', style, -1, scoped, undefined, true)
-            : getRequire('styles', style, i, scoped)
-
+          if (style.src) {
+            style.src = processSrcQuery(style.src, 'styles')
+            requireString = getRequireForSrc('styles', style, -1, scoped)
+          } else {
+            requireString = getRequire('styles', style, i, scoped)
+          }
           const hasStyleLoader = requireString.indexOf('style-loader') > -1
           const invokeStyle = code => `${code}\n`
 
@@ -362,7 +406,7 @@ module.exports = function (content) {
       // 给予json默认值, 确保生成json request以自动补全json
       const json = parts.json || {}
       if (json.src) {
-        json.src = addQuery(json.src, { resourcePath, __component: true })
+        json.src = processSrcQuery(json.src, 'json')
         output += getRequireForSrc('json', json) + '\n\n'
       } else {
         output += getRequire('json', json) + '\n\n'
@@ -374,7 +418,7 @@ module.exports = function (content) {
 
       if (template) {
         if (template.src) {
-          template.src = addQuery(template.src, { resourcePath })
+          template.src = processSrcQuery(template.src, 'template')
           output += getRequireForSrc('template', template) + '\n\n'
         } else {
           output += getRequire('template', template) + '\n\n'

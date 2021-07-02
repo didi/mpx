@@ -46,7 +46,7 @@ const handleSuccess = (opts, getOptions = noop, thisObj) => {
 
 function genFromMap () {
   const result = {}
-  const platforms = ['wx', 'ali', 'swan', 'qq', 'jd', 'tt', 'web']
+  const platforms = ['wx', 'ali', 'swan', 'qq', 'jd', 'tt', 'web', 'qa']
   platforms.forEach((platform) => {
     result[`__mpx_src_mode_${platform}__`] = platform
   })
@@ -54,18 +54,20 @@ function genFromMap () {
 }
 
 function getEnvObj () {
-  if (typeof wx !== 'undefined' && typeof wx.getSystemInfo === 'function') {
+  if (__mpx_mode__ === 'wx') {
     return wx
-  } else if (typeof my !== 'undefined' && typeof my.getSystemInfo === 'function') {
+  } else if (__mpx_mode__ === 'ali') {
     return my
-  } else if (typeof swan !== 'undefined' && typeof swan.getSystemInfo === 'function') {
+  } else if (__mpx_mode__ === 'swan') {
     return swan
-  } else if (typeof qq !== 'undefined' && typeof qq.getSystemInfo === 'function') {
+  } else if (__mpx_mode__ === 'qq') {
     return qq
-  } else if (typeof jd !== 'undefined' && typeof jd.getSystemInfo === 'function') {
-    return jd
-  } else if (typeof tt !== 'undefined' && typeof tt.getSystemInfo === 'function') {
+  } else if (__mpx_mode__ === 'tt') {
     return tt
+  } else if (__mpx_mode__ === 'qa') {
+    return qa
+  } else if (__mpx_mode__ === 'jd') {
+    return jd
   }
 }
 
@@ -77,7 +79,15 @@ function error (msg) {
   console.error && console.error(`[@mpxjs/api-proxy error]:\n ${msg}`)
 }
 
-function noop () {}
+function noop () {
+}
+
+function makeMap (arr) {
+  return arr.reduce((obj, item) => {
+    obj[item] = true
+    return obj
+  }, {})
+}
 
 export {
   changeOpts,
@@ -86,5 +96,6 @@ export {
   getEnvObj,
   error,
   warn,
-  noop
+  noop,
+  makeMap
 }

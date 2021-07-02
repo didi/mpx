@@ -1,7 +1,13 @@
 import * as platform from './platform'
-import createStore, { createStoreWithThis } from './core/createStore'
+import createStore, {
+  createStoreWithThis,
+  createStateWithThis,
+  createGettersWithThis,
+  createMutationsWithThis,
+  createActionsWithThis
+} from './core/createStore'
 import { injectMixins } from './core/injectMixins'
-import { extend, diffAndCloneA, makeMap } from './helper/utils'
+import { extend, diffAndCloneA, makeMap, merge, hasOwn } from './helper/utils'
 import { setConvertRule } from './convertor/convertor'
 import { getMixin } from './core/mergeOptions'
 import { error } from './helper/log'
@@ -25,11 +31,14 @@ export function createComponent (config, ...rest) {
   platform.createComponent(Object.assign({ proto: mpx.proto }, config), ...rest)
 }
 
-export { createStore, createStoreWithThis, getMixin }
-
-export function getComputed (computed) {
-  // ts computed类型推导辅助函数
-  return computed
+export {
+  createStore,
+  createStoreWithThis,
+  createStateWithThis,
+  createGettersWithThis,
+  createMutationsWithThis,
+  createActionsWithThis,
+  getMixin
 }
 
 export function toPureObject (obj) {
@@ -48,7 +57,7 @@ function extendProps (target, proxyObj, rawProps, option) {
         ? option.prefix + '_' + key
         : key + '_' + option.postfix
       target[transformKey] = proxyObj[key]
-    } else if (!target.hasOwnProperty(key)) {
+    } else if (!hasOwn(target, key)) {
       target[key] = proxyObj[key]
     } else {
       error(`Mpx property [${key}] from installing plugin conflicts with already exists，please pass prefix/postfix options to avoid property conflict, for example: "use('plugin', {prefix: 'mm'})"`)
@@ -120,7 +129,6 @@ if (__mpx_mode__ === 'web') {
     delete: del,
     setConvertRule,
     getMixin,
-    getComputed,
     implement
   }
 
@@ -163,7 +171,6 @@ if (__mpx_mode__ === 'web') {
     delete: del,
     setConvertRule,
     getMixin,
-    getComputed,
     implement
   }
 
@@ -192,22 +199,40 @@ const EXPORT_MPX = factory()
 EXPORT_MPX.config = {
   useStrictDiff: false,
   ignoreRenderError: false,
-  ignoreProxyWhiteList: ['id', 'dataset']
+  ignoreProxyWhiteList: ['id', 'dataset', 'data'],
+  observeClassInstance: false,
+  hookErrorHandler: null,
+  proxyEventHandler: null
 }
 
 if (__mpx_mode__ === 'web') {
-  window.__mpx = EXPORT_MPX
+  global.__mpx = EXPORT_MPX
 } else {
   if (global.i18n) {
     observe(global.i18n)
     // 挂载翻译方法
     if (global.i18nMethods) {
       Object.keys(global.i18nMethods).forEach((methodName) => {
+        if (/^__/.test(methodName)) return
         global.i18n[methodName] = (...args) => {
-          args.unshift(global.i18n.locale)
+          // tap i18n.version
+          args.unshift((global.i18n.version, global.i18n.locale))
           return global.i18nMethods[methodName].apply(this, args)
         }
       })
+
+      if (global.i18nMethods.__getMessages) {
+        const messages = global.i18nMethods.__getMessages()
+        global.i18n.mergeMessages = (newMessages) => {
+          merge(messages, newMessages)
+          global.i18n.version++
+        }
+        global.i18n.mergeLocaleMessage = (locale, message) => {
+          messages[locale] = messages[locale] || {}
+          merge(messages[locale], message)
+          global.i18n.version++
+        }
+      }
     }
     EXPORT_MPX.i18n = global.i18n
   }

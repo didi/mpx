@@ -9,7 +9,6 @@ const parseQuery = require('loader-utils').parseQuery
 module.exports = function (content) {
   this.cacheable()
   const mainCompilation = getMainCompilation(this._compilation)
-  const selfCompilation = this._compilation
   const module = this._module
   const mode = mainCompilation.__mpx__.mode
   const wxsModule = parseQuery(this.resourceQuery || '?').wxsModule
@@ -21,7 +20,7 @@ module.exports = function (content) {
     content = wxsContentMap[`${resourcePath}~${wxsModule}`] || content
   }
 
-  if (module.wxs && mode !== 'swan') {
+  if (module.wxs) {
     if (mode === 'ali') {
       let insertNodes = babylon.parse(
         'var __mpx_args__ = [];\n' +
@@ -65,8 +64,7 @@ module.exports = function (content) {
       return content
     }
   } else {
-    // 对于编译进render函数中和swan中的wxs模块进行处理，抹平差异
-
+    // 对于编译进render函数中的wxs模块进行处理，抹平差异
     let wxsVisitor = {
       MemberExpression (path) {
         const property = path.node.property
@@ -89,46 +87,6 @@ module.exports = function (content) {
       }
     }
 
-    if (mode === 'swan' && module.wxs && selfCompilation.entries.indexOf(module) > -1) {
-      if (!selfCompilation.__swan_exports_map__) {
-        selfCompilation.__swan_exports_map__ = {}
-      }
-      Object.assign(wxsVisitor, {
-        MemberExpression (path) {
-          if (path.node.object.name === 'module' && path.node.property.name === 'exports') {
-            const parentPath = path.parentPath
-            if (parentPath.isMemberExpression() && path.parentKey === 'object') {
-              if (parentPath.node.computed) {
-                if (t.isLiteral(parentPath.node.property)) {
-                  selfCompilation.__swan_exports_map__[parentPath.node.property.value] = true
-                }
-              } else if (t.isIdentifier(parentPath.node.property)) {
-                selfCompilation.__swan_exports_map__[parentPath.node.property.name] = true
-              }
-            } else if (parentPath.isAssignmentExpression() && path.parentKey === 'left') {
-              const right = parentPath.node.right
-              if (t.isObjectExpression(right)) {
-                right.properties.forEach((property) => {
-                  selfCompilation.__swan_exports_map__[property.key.name] = true
-                })
-              } else {
-                throw new Error('Swan filter module exports declaration must be an ObjectExpression!')
-              }
-            }
-          }
-        },
-        ExportDefaultDeclaration (path) {
-          const declaration = path.node.declaration
-          if (t.isObjectExpression(declaration)) {
-            declaration.properties.forEach((property) => {
-              selfCompilation.__swan_exports_map__[property.key.name] = true
-            })
-          } else {
-            throw new Error('Swan filter module exports declaration must be an ObjectExpression!')
-          }
-        }
-      })
-    }
     const ast = babylon.parse(content, {
       sourceType: 'module'
     })
