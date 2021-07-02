@@ -46,7 +46,7 @@ const handleSuccess = (opts, getOptions = noop, thisObj) => {
 
 function genFromMap () {
   const result = {}
-  const platforms = ['wx', 'ali', 'swan', 'qq', 'tt', 'web']
+  const platforms = ['wx', 'ali', 'swan', 'qq', 'tt', 'web', 'dd']
   platforms.forEach((platform) => {
     result[`__mpx_src_mode_${platform}__`] = platform
   })
@@ -64,6 +64,8 @@ function getEnvObj () {
     return qq
   } else if (__mpx_mode__ === 'tt') {
     return tt
+  } else if (__mpx_mode__ === 'dd') {
+    return dd
   }
 }
 
@@ -85,6 +87,8 @@ function makeMap (arr) {
   }, {})
 }
 
+const inBrowser = typeof window !== 'undefined'
+
 export {
   changeOpts,
   handleSuccess,
@@ -93,5 +97,6 @@ export {
   error,
   warn,
   noop,
-  makeMap
+  makeMap,
+  inBrowser
 }
