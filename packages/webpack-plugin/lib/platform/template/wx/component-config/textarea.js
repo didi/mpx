@@ -7,9 +7,12 @@ module.exports = function ({ print }) {
   const ttEventLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false, type: 'event' })
   const webPropLog = print({ platform: 'web', tag: TAG_NAME, isError: false })
   const webEventLog = print({ platform: 'web', tag: TAG_NAME, isError: false, type: 'event' })
+  const qaPropLog = print({ platform: 'qa', tag: TAG_NAME, isError: false })
+  const qaEventLog = print({ platform: 'qa', tag: TAG_NAME, isError: false, type: 'event' })
   const qqEventLog = print({ platform: 'qq', tag: TAG_NAME, isError: false, type: 'event' })
   const qqPropLog = print({ platform: 'qq', tag: TAG_NAME, isError: false })
   const baiduPropLog = print({ platform: 'baidu', tag: TAG_NAME, isError: false })
+
   return {
     test: TAG_NAME,
     web (tag, { el }) {
@@ -34,6 +37,10 @@ module.exports = function ({ print }) {
       {
         test: /^(placeholder-style|placeholder-class|fixed|cursor-spacing|show-confirm-bar|adjust-position|hold-keyboard|auto-height)$/,
         web: webPropLog
+      },
+      {
+        test: /^(fixed|cursor-spacing|show-confirm-bar|adjust-position|hold-keyboard|auto-height)$/,
+        qa: qaPropLog
       }
     ],
     event: [
@@ -45,6 +52,14 @@ module.exports = function ({ print }) {
         test: /^keyboardheightchange$/,
         ali: aliEventLog,
         qq: qqEventLog
+      },
+      {
+        test: 'confirm',
+        web: webEventLog
+      },
+      {
+        test: 'blur|input|confirm',
+        qa: qaEventLog
       },
       {
         test: /^(linechange|keyboardheightchange)$/,

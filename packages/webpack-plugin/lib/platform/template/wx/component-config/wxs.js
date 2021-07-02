@@ -16,6 +16,9 @@ module.exports = function ({ print }) {
     tt () {
       return 'sjs'
     },
+    qa () {
+      return 'qjs'
+    },
     // 组件属性中的差异部分
     props: [
       {
@@ -23,11 +26,19 @@ module.exports = function ({ print }) {
         ali (obj) {
           obj.name = 'from'
           return obj
+        },
+        qa (obj) {
+          obj.name = 'from'
+          return obj
         }
       },
       {
         test: 'module',
         ali (obj) {
+          obj.name = 'name'
+          return obj
+        },
+        qa (obj) {
           obj.name = 'name'
           return obj
         }

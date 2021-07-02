@@ -26,7 +26,9 @@ module.exports = function ({ print }) {
   const ttEventLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false, type: 'event' })
   const webPropLog = print({ platform: 'web', tag: TAG_NAME, isError: false })
   const webEventLog = print({ platform: 'web', tag: TAG_NAME, isError: false, type: 'event' })
+  const qaPropLog = print({ platform: 'qa', tag: TAG_NAME, isError: false })
   const wxPropValueLog = print({ platform: 'wx', tag: TAG_NAME, isError: false, type: 'value' })
+
   return {
     test: TAG_NAME,
     web (tag, { el }) {
@@ -131,6 +133,10 @@ module.exports = function ({ print }) {
           // todo 这部分能力基于内部封装实现
           el.isBuiltIn = true
         }
+      },
+      {
+        test: /^(open-type|lang|session-from|send-message-title|send-message-path|send-message-img|app-parameter|show-message-card|bindgetuserinfo|bindcontact|bindgetphonenumber|binderror|bindopensetting|bindlaunchapp)$/,
+        qa: qaPropLog
       }
     ],
     event: [

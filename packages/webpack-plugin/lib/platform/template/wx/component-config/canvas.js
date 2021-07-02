@@ -4,6 +4,7 @@ module.exports = function ({ print }) {
   const aliEventLog = print({ platform: 'ali', tag: TAG_NAME, isError: false, type: 'event' })
   const ttPropLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false })
   const ttEventLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false, type: 'event' })
+  const qaEventLog = print({ platform: 'qa', tag: TAG_NAME, isError: false, type: 'event' })
   return {
     test: TAG_NAME,
     props: [
@@ -44,7 +45,8 @@ module.exports = function ({ print }) {
       },
       {
         test: /^(longtap|error)$/,
-        tt: ttEventLog
+        tt: ttEventLog,
+        qa: qaEventLog
       }
     ]
   }

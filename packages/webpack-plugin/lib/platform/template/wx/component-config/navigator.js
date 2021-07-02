@@ -19,6 +19,9 @@ module.exports = function ({ print }) {
   const webEventLog = print({ platform: 'web', tag: TAG_NAME, isError: false })
   const webValueLogError = print({ platform: 'web', tag: TAG_NAME, isError: true, type: 'value' })
   const wxPropValueLog = print({ platform: 'wx', tag: TAG_NAME, isError: false, type: 'value' })
+  const qaEventLog = print({ platform: 'qa', tag: TAG_NAME, isError: false, type: 'event' })
+  const qaPropLog = print({ platform: 'qa', tag: TAG_NAME, isError: false })
+  const qaValueLogError = print({ platform: 'qa', tag: TAG_NAME, isError: true, type: 'value' })
   return {
     test: TAG_NAME,
     web (tag, { el }) {
@@ -28,7 +31,8 @@ module.exports = function ({ print }) {
     props: [
       {
         test: /^(target|delta|app-id|path|extra-data|version|hover-stop-propagation)$/,
-        ali: aliPropLogError
+        ali: aliPropLogError,
+        qa: qaPropLog
       },
       {
         test: 'open-type',
@@ -65,6 +69,19 @@ module.exports = function ({ print }) {
           if (supportedList.indexOf(attr.value) === -1) {
             webValueLogError(attr)
           }
+        },
+        qa (attr) {
+          if (wxSupportPropsValue[attr.name] && wxSupportPropsValue[attr.name].indexOf(attr.value) === -1) {
+            wxPropValueLog({ name: attr.name, value: attr.value })
+          }
+          if (isMustache(attr.value)) {
+            qaPropLog(attr)
+          } else {
+            let supportedList = ['navigate', 'redirect', 'switchTab', 'navigateBack', 'reLaunch']
+            if (supportedList.indexOf(attr.value) === -1) {
+              qaValueLogError(attr)
+            }
+          }
         }
       },
       {
@@ -81,7 +98,8 @@ module.exports = function ({ print }) {
         test: /^(success|fail|complete)$/,
         ali: aliEventLog,
         tt: ttEventLog,
-        web: webEventLog
+        web: webEventLog,
+        qa: qaEventLog
       }
     ]
   }

@@ -4,6 +4,7 @@ module.exports = function ({ print }) {
   const baiduPropLog = print({ platform: 'baidu', tag: TAG_NAME, isError: false })
   const qqPropLog = print({ platform: 'qq', tag: TAG_NAME, isError: false })
   const ttPropLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false })
+  const qaPropLog = print({ platform: 'qa', tag: TAG_NAME, isError: false })
 
   return {
     test: TAG_NAME,
@@ -24,6 +25,10 @@ module.exports = function ({ print }) {
         web (prop, { el }) {
           el.isBuiltIn = true
         }
+      },
+      {
+        test: /^(show-menu-by-longpress|webp)$/,
+        qa: qaPropLog
       }
     ]
   }

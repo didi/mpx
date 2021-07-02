@@ -355,5 +355,72 @@ module.exports = {
       ext: '.wxs',
       templatePrefix: 'module.exports = \n'
     }
+  },
+  qa: {
+    typeExtMap: {
+      json: '.json',
+      script: '.js',
+      template: '.qxml',
+      styles: '.css'
+    },
+    tabBar: {
+      itemKey: 'list',
+      iconKey: 'iconPath',
+      activeIconKey: 'selectedIconPath'
+    },
+    event: {
+      parseEvent (attr) {
+        let match = /^(bind|catch|capture-bind|capture-catch):?(.*?)(?:\.(.*))?$/.exec(attr)
+        if (match) {
+          return {
+            prefix: match[1],
+            eventName: match[2],
+            modifier: match[3]
+          }
+        }
+      },
+      getEvent (eventName, prefix = 'bind') {
+        return prefix + eventName
+      },
+      defaultModelProp: 'value',
+      defaultModelEvent: 'input',
+      defaultModelValuePath: 'value',
+      shallowStringify (obj) {
+        let arr = []
+        for (let key in obj) {
+          let value = obj[key]
+          if (Array.isArray(value)) {
+            value = `[${value.join(',')}]`
+          }
+          arr.push(`${key}:${value}`)
+        }
+        return ` {${arr.join(',')}} `
+      }
+    },
+    wxs: {
+      tag: 'qjs',
+      module: 'name',
+      src: 'from',
+      ext: '.qjs',
+      templatePrefix: 'export default \n'
+    },
+    directive: {
+      if: 'qa:if',
+      elseif: 'qa:elif',
+      else: 'qa:else',
+      model: 'qa:model',
+      modelProp: 'qa:model-prop',
+      modelEvent: 'qa:model-event',
+      modelValuePath: 'qa:model-value-path',
+      modelFilter: 'qa:model-filter',
+      for: 'qa:for',
+      forIndex: 'qa:for-index',
+      forItem: 'qa:for-item',
+      key: 'qa:key',
+      dynamicClass: 'qa:class',
+      dynamicStyle: 'qa:style',
+      ref: 'qa:ref',
+      show: 'qa:show'
+    }
   }
 }
