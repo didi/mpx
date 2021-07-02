@@ -193,15 +193,15 @@ module.exports = function (raw = '{}') {
 
   // 快应用补全json配置，必填项
   if (mode === 'qa' && isApp) {
-    const config = {
-      package: json.package || '',
-      name: json.name || '',
+    const defaultConf = {
+      package: '',
+      name: '',
       icon: 'assets/images/logo.png',
-      versionName: json.versionName || '',
-      versionCode: json.versionCode || 1,
-      minPlatformVersion: json.minPlatformVersion || 1080
+      versionName: '',
+      versionCode: 1,
+      minPlatformVersion: 1080
     }
-    json = Object.assign({}, json, config)
+    json = Object.assign({}, defaultConf, json)
   }
 
   const rulesRunnerOptions = {
