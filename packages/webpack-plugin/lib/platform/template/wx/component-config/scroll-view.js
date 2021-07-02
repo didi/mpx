@@ -34,7 +34,7 @@ module.exports = function ({ print }) {
       },
       {
         test: /^(enable-flex|scroll-anchoring|refresher-enabled|refresher-threshold|refresher-default-style|refresher-background|refresher-triggered)$/,
-        jd: jdPropLog,
+        jd: jdPropLog
       },
       {
         test: /^(enable-back-to-top|enable-flex|scroll-anchoring|enhanced|bounces|show-scrollbar|paging-enabled|fast-deceleration|binddragstart|binddragging|binddragend)$/,
