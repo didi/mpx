@@ -59,6 +59,7 @@ module.exports = function ({ print }) {
       },
       {
         test: /^(transition)$/,
+        swan: baiduPropLog,
         jd: jdEventLog
       }
     ]
