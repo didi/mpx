@@ -3,6 +3,7 @@ const TAG_NAME = 'swiper'
 module.exports = function ({ print }) {
   const aliPropLog = print({ platform: 'ali', tag: TAG_NAME, isError: false })
   const baiduPropLog = print({ platform: 'baidu', tag: TAG_NAME, isError: false })
+  const baiduEventLog = print({ platform: 'baidu', tag: TAG_NAME, isError: false, type: 'event' })
   const qqPropLog = print({ platform: 'qq', tag: TAG_NAME, isError: false })
   const ttPropLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false })
   const webPropLog = print({ platform: 'web', tag: TAG_NAME, isError: false })
@@ -59,7 +60,7 @@ module.exports = function ({ print }) {
       },
       {
         test: /^(transition)$/,
-        swan: baiduPropLog,
+        swan: baiduEventLog,
         jd: jdEventLog
       }
     ]
