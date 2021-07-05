@@ -142,6 +142,7 @@ class MpxWebpackPlugin {
     options.forceDisableBuiltInLoader = options.forceDisableBuiltInLoader || false
     options.useRelativePath = options.useRelativePath || false
     options.subpackageModulesRules = options.subpackageModulesRules || {}
+    options.forceMainPackageRules = options.forceMainPackageRules || {}
     options.forceProxyEventRules = options.forceProxyEventRules || {}
     options.miniNpmPackage = options.miniNpmPackage || []
     this.options = options
@@ -419,7 +420,9 @@ class MpxWebpackPlugin {
             const resourceMap = mpx[`${resourceType}Map`]
             const isIndependent = mpx.independentSubpackagesMap[currentPackageRoot]
             // 主包中有引用一律使用主包中资源，不再额外输出
-            if (!resourceMap.main[resourcePath] || isIndependent) {
+            // 资源路径匹配到forceMainPackageRules规则时强制输出到主包，降低分包资源冗余
+            // todo forceMainPackageRules规则目前只能处理当前资源，不能处理资源子树，配置不当有可能会导致资源引用错误
+            if (!(resourceMap.main[resourcePath] || matchCondition(resourcePath, this.options.forceMainPackageRules)) || isIndependent) {
               packageRoot = currentPackageRoot
               packageName = currentPackageName
               if (this.options.auditResource && resourceType !== 'subpackageModules' && !isIndependent) {
@@ -685,7 +688,7 @@ class MpxWebpackPlugin {
             const staticResourcesMap = mpx.staticResourcesMap
             const range = expr.range
             const issuerResource = parser.state.module.issuer.resource
-            const dep = new ResolveDependency(resource, packageName, pagesMap, componentsMap, staticResourcesMap, publicPath, range, issuerResource)
+            const dep = new ResolveDependency(resource, packageName, pagesMap, componentsMap, staticResourcesMap, publicPath, range, issuerResource, compilation)
             parser.state.current.addDependency(dep)
             return true
           }
@@ -1194,9 +1197,11 @@ try {
 
       const subpackages = Object.keys(mpx.componentsMap)
       delete subpackages.main
+
       function getPackageName (fileName) {
-        for (let item of subpackages) {
-          if (fileName.startsWith(item)) return item
+        fileName = toPosix(fileName)
+        for (let packageName of subpackages) {
+          if (fileName.startsWith(packageName + '/')) return packageName
         }
         return 'main'
       }

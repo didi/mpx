@@ -2,7 +2,7 @@ import MPXProxy from '../../../core/proxy'
 import builtInKeysMap from '../builtInKeysMap'
 import mergeOptions from '../../../core/mergeOptions'
 import { error } from '../../../helper/log'
-import { diffAndCloneA } from '../../../helper/utils'
+import { diffAndCloneA, hasOwn } from '../../../helper/utils'
 
 function transformApiForProxy (context, currentInject) {
   const rawSetData = context.setData.bind(context)
@@ -24,7 +24,7 @@ function transformApiForProxy (context, currentInject) {
             const newData = context.$rawOptions.__nativeRender__ ? context.data : Object.assign({}, context.data)
             const validProps = Object.assign({}, options.props, options.properties)
             Object.keys(context.props).forEach((key) => {
-              if (validProps.hasOwnProperty(key) && typeof context.props[key] !== 'function') {
+              if (hasOwn(validProps, key) && typeof context.props[key] !== 'function') {
                 newData[key] = context.props[key]
               }
             })
@@ -109,7 +109,7 @@ export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
           const newData = {}
           // 微信原生转换支付宝时，每次props更新将其设置进data模拟微信表现
           Object.keys(nextProps).forEach((key) => {
-            if (validProps.hasOwnProperty(key) && typeof nextProps[key] !== 'function') {
+            if (hasOwn(validProps, key) && typeof nextProps[key] !== 'function') {
               const { diff, clone } = diffAndCloneA(nextProps[key], this.props[key])
               if (diff) newData[key] = clone
             }
@@ -119,7 +119,7 @@ export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
           // 由于支付宝中props透传父级setData的值，此处发生变化的属性实例一定不同，只需浅比较即可确定发生变化的属性
           // 支付宝appx2.0版本后props传递发生变化，此处获取到的nextProps和this.props以及父组件setData的数据引用都不一致，进行了两次深克隆，此处this.props和nextProps的比对需要用deep diff
           Object.keys(nextProps).forEach(key => {
-            if (validProps.hasOwnProperty(key) && typeof nextProps[key] !== 'function') {
+            if (hasOwn(validProps, key) && typeof nextProps[key] !== 'function') {
               const { diff, clone } = diffAndCloneA(nextProps[key], this.props[key])
               // 由于支付宝中透传父级setData的值，此处进行深copy后赋值避免父级存储的miniRenderData部分数据在此处被响应化，在子组件对props赋值时触发父组件的render
               if (diff) this[key] = clone

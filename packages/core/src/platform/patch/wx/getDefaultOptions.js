@@ -1,5 +1,5 @@
 import {
-  isEmptyObject, makeMap
+  isEmptyObject, makeMap, hasOwn
 } from '../../../helper/utils'
 import MPXProxy from '../../../core/proxy'
 import builtInKeysMap from '../builtInKeysMap'
@@ -54,8 +54,8 @@ function transformApiForProxy (context, currentInject) {
         return (options) => {
           const data = {}
           const validData = Object.assign({}, options.data, options.properties, options.props)
-          for (const key in context.data) { // context 为这个微信的 this 实例，properties 和 data 字段内定义的数据都是通过 context.data 来获取
-            if (context.data.hasOwnProperty(key) && validData.hasOwnProperty(key)) {
+          for (const key in context.data) {
+            if (hasOwn(context.data, key) && hasOwn(validData, key)) {
               data[key] = context.data[key]
             }
           }
