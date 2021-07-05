@@ -107,39 +107,41 @@ export default function getRefsMixin () {
     methods: {
       ...aliMethods,
       __getRefs () {
+        const self = this
+
+        const setNodeRef = (context, ref) => {
+          Object.defineProperty(context.$refs, ref.key, {
+            enumerable: true,
+            configurable: true,
+            get() {
+              return self.__getRefNode(ref) // for nodes, every time being accessed, returns as a new selector context.
+            }
+          })
+        }
+
+        const setComponentRef = (context, ref, isAsync) => {
+          let cacheRef = null // saving component refs, every time call __getRefs, set its value to null
+          const refContext = isAsync ? context.$asyncRefs : context.$refs
+          Object.defineProperty(refContext, ref.key, {
+            enumerable: true,
+            configurable: true,
+            get() {
+              if (!cacheRef) {
+                return (cacheRef = self.__getRefNode(ref, isAsync))
+              }
+              return cacheRef
+            }
+          })
+        }
+
         if (this.__getRefsData) {
           const refs = this.__getRefsData()
-          const self = this
-
-          refs.forEach(ref => {
-            let cachedRef = null // saving component refs, every time call __getRefs, set its value to null
-            Object.defineProperty(this.$refs, ref.key, {
-              enumerable: true,
-              configurable: true,
-              get () {
-                if (ref.type === 'node') {
-                  return self.__getRefNode(ref) // for nodes, every time being accessed, returns as a new selector context.
-                } else { // component
-                  if (!cachedRef) {
-                    return (cachedRef = self.__getRefNode(ref)) // return new selector context
-                  }
-                  return cachedRef
-                }
-              }
-            })
+          refs.forEach((ref) => {
+            const setRef = ref.type === 'node' ? setNodeRef : setComponentRef
+            setRef(this, ref)
 
             if (__mpx_mode__ === 'tt' && ref.type === 'component') {
-              let cachedAsyncRef = null
-              Object.defineProperty(this.$asyncRefs, ref.key, {
-                enumerable: true,
-                configurable: true,
-                get () {
-                  if (!cachedAsyncRef) {
-                    return (cachedAsyncRef = self.__getRefNode(ref, true)) // return new selector context
-                  }
-                  return cachedAsyncRef
-                }
-              })
+              setComponentRef(this, ref, true)
             }
           })
         }
