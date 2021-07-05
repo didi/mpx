@@ -113,7 +113,7 @@ export default function getRefsMixin () {
           Object.defineProperty(context.$refs, ref.key, {
             enumerable: true,
             configurable: true,
-            get() {
+            get () {
               return self.__getRefNode(ref) // for nodes, every time being accessed, returns as a new selector context.
             }
           })
@@ -125,7 +125,7 @@ export default function getRefsMixin () {
           Object.defineProperty(refContext, ref.key, {
             enumerable: true,
             configurable: true,
-            get() {
+            get () {
               if (!cacheRef) {
                 return (cacheRef = self.__getRefNode(ref, isAsync))
               }
