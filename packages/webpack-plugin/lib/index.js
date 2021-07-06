@@ -600,7 +600,6 @@ class MpxWebpackPlugin {
           additionalAssets[file].forEach((item) => {
             if (item) content.add(item)
           })
-
           const modules = (additionalAssets[file].modules || []).concat(additionalAssets[file].relativeModules || [])
 
           if (modules.length > 1) {

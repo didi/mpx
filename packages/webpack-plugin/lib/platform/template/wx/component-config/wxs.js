@@ -13,8 +13,14 @@ module.exports = function ({ print }) {
     qq () {
       return 'qs'
     },
+    jd () {
+      return 'jds'
+    },
     tt () {
       return 'sjs'
+    },
+    qa () {
+      return 'qjs'
     },
     dd () {
       return 'dds'
@@ -26,11 +32,19 @@ module.exports = function ({ print }) {
         ali (obj) {
           obj.name = 'from'
           return obj
+        },
+        qa (obj) {
+          obj.name = 'from'
+          return obj
         }
       },
       {
         test: 'module',
         ali (obj) {
+          obj.name = 'name'
+          return obj
+        },
+        qa (obj) {
           obj.name = 'name'
           return obj
         }

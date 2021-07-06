@@ -17,6 +17,7 @@ const lifecycleTemplates = {
   ali: aliLifecycle.LIFECYCLE,
   swan: wxLifecycle.LIFECYCLE,
   qq: wxLifecycle.LIFECYCLE,
+  jd: wxLifecycle.LIFECYCLE,
   tt: wxLifecycle.LIFECYCLE
 }
 // 根据当前环境获取的默认生命周期信息
