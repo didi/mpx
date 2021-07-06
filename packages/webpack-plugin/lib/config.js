@@ -489,5 +489,72 @@ module.exports = {
       ref: 'qa:ref',
       show: 'qa:show'
     }
+  },
+  dd: {
+    typeExtMap: {
+      json: '.json',
+      script: '.js',
+      template: '.ddml',
+      styles: '.ddss'
+    },
+    tabBar: {
+      itemKey: 'list',
+      iconKey: 'iconPath',
+      activeIconKey: 'selectedIconPath'
+    },
+    event: {
+      parseEvent (attr) {
+        let match = /^(bind|catch|capture-bind|capture-catch):?(.*?)(?:\.(.*))?$/.exec(attr)
+        if (match) {
+          return {
+            prefix: match[1],
+            eventName: match[2],
+            modifier: match[3]
+          }
+        }
+      },
+      getEvent (eventName, prefix = 'bind') {
+        return prefix + eventName
+      },
+      defaultModelProp: 'value',
+      defaultModelEvent: 'input',
+      defaultModelValuePath: 'value',
+      shallowStringify (obj) {
+        let arr = []
+        for (let key in obj) {
+          let value = obj[key]
+          if (Array.isArray(value)) {
+            value = `[${value.join(',')}]`
+          }
+          arr.push(`${key}:${value}`)
+        }
+        return ` {${arr.join(',')}} `
+      }
+    },
+    wxs: {
+      tag: 'dds',
+      module: 'module',
+      src: 'src',
+      ext: '.dds',
+      templatePrefix: 'module.exports = \n'
+    },
+    directive: {
+      if: 'dd:if',
+      elseif: 'dd:elif',
+      else: 'dd:else',
+      model: 'dd:model',
+      modelProp: 'dd:model-prop',
+      modelEvent: 'dd:model-event',
+      modelValuePath: 'dd:model-value-path',
+      modelFilter: 'dd:model-filter',
+      for: 'dd:for',
+      forIndex: 'dd:for-index',
+      forItem: 'dd:for-item',
+      key: 'dd:key',
+      dynamicClass: 'dd:class',
+      dynamicStyle: 'dd:style',
+      ref: 'dd:ref',
+      show: 'dd:show'
+    }
   }
 }

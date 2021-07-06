@@ -46,7 +46,7 @@ const handleSuccess = (opts, getOptions = noop, thisObj) => {
 
 function genFromMap () {
   const result = {}
-  const platforms = ['wx', 'ali', 'swan', 'qq', 'jd', 'tt', 'web', 'qa']
+  const platforms = ['wx', 'ali', 'swan', 'qq', 'tt', 'web', 'qa', 'jd', 'dd']
   platforms.forEach((platform) => {
     result[`__mpx_src_mode_${platform}__`] = platform
   })
@@ -54,20 +54,23 @@ function genFromMap () {
 }
 
 function getEnvObj () {
-  if (__mpx_mode__ === 'wx') {
-    return wx
-  } else if (__mpx_mode__ === 'ali') {
-    return my
-  } else if (__mpx_mode__ === 'swan') {
-    return swan
-  } else if (__mpx_mode__ === 'qq') {
-    return qq
-  } else if (__mpx_mode__ === 'tt') {
-    return tt
-  } else if (__mpx_mode__ === 'qa') {
-    return qa
-  } else if (__mpx_mode__ === 'jd') {
-    return jd
+  switch (__mpx_mode__) {
+    case 'wx':
+      return wx
+    case 'ali':
+      return my
+    case 'swan':
+      return swan
+    case 'qq':
+      return qq
+    case 'tt':
+      return tt
+    case 'jd':
+      return jd
+    case 'qa':
+      return qa
+    case 'dd':
+      return dd
   }
 }
 
@@ -89,6 +92,8 @@ function makeMap (arr) {
   }, {})
 }
 
+const inBrowser = typeof window !== 'undefined'
+
 export {
   changeOpts,
   handleSuccess,
@@ -97,5 +102,6 @@ export {
   error,
   warn,
   noop,
-  makeMap
+  makeMap,
+  inBrowser
 }

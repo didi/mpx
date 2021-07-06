@@ -27,9 +27,10 @@ module.exports = function getSpec ({ warn, error }) {
       return input
     }
   }
+
   /**
    * @desc 在app.mpx里配置usingComponents作为全局组件
-  */
+   */
   function addGlobalComponents (input, { globalComponents }) {
     if (globalComponents) {
       input.usingComponents = Object.assign({}, globalComponents, input.usingComponents)
@@ -38,7 +39,7 @@ module.exports = function getSpec ({ warn, error }) {
   }
 
   const spec = {
-    supportedModes: ['ali', 'swan', 'qq', 'tt', 'jd', 'qa'],
+    supportedModes: ['ali', 'swan', 'qq', 'tt', 'jd', 'qa', 'dd'],
     normalizeTest,
     page: [
       {
