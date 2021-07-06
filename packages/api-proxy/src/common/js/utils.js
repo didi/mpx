@@ -54,18 +54,23 @@ function genFromMap () {
 }
 
 function getEnvObj () {
-  if (__mpx_mode__ === 'wx') {
-    return wx
-  } else if (__mpx_mode__ === 'ali') {
-    return my
-  } else if (__mpx_mode__ === 'swan') {
-    return swan
-  } else if (__mpx_mode__ === 'qq') {
-    return qq
-  } else if (__mpx_mode__ === 'tt') {
-    return tt
-  } else if (__mpx_mode__ === 'dd') {
-    return dd
+  switch (__mpx_mode__) {
+    case 'wx':
+      return wx
+    case 'ali':
+      return my
+    case 'swan':
+      return swan
+    case 'qq':
+      return qq
+    case 'tt':
+      return tt
+    case 'jd':
+      return jd
+    case 'qa':
+      return qa
+    case 'dd':
+      return dd
   }
 }
 
