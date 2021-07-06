@@ -3,6 +3,7 @@ const CONVERTMODES = {
   'wx-web': 'wxToWeb',
   'wx-swan': 'wxToSwan',
   'wx-qq': 'wxToQq',
+  'wx-jd': 'wxToJd',
   'wx-tt': 'wxToTt'
 }
 

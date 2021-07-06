@@ -46,7 +46,7 @@ const handleSuccess = (opts, getOptions = noop, thisObj) => {
 
 function genFromMap () {
   const result = {}
-  const platforms = ['wx', 'ali', 'swan', 'qq', 'tt', 'web', 'qa']
+  const platforms = ['wx', 'ali', 'swan', 'qq', 'jd', 'tt', 'web', 'qa']
   platforms.forEach((platform) => {
     result[`__mpx_src_mode_${platform}__`] = platform
   })
@@ -66,6 +66,8 @@ function getEnvObj () {
     return tt
   } else if (__mpx_mode__ === 'qa') {
     return qa
+  } else if (__mpx_mode__ === 'jd') {
+    return jd
   }
 }
 

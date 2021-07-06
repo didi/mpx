@@ -13,6 +13,9 @@ module.exports = function ({ print }) {
     qq () {
       return 'qs'
     },
+    jd () {
+      return 'jds'
+    },
     tt () {
       return 'sjs'
     },

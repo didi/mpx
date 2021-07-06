@@ -10,7 +10,7 @@ const normalize = require('../../../utils/normalize')
 
 module.exports = function getSpec ({ warn, error }) {
   const spec = {
-    supportedModes: ['ali', 'swan', 'qq', 'tt', 'web', 'qa'],
+    supportedModes: ['ali', 'swan', 'qq', 'tt', 'jd', 'web', 'qa'],
     // props预处理
     preProps: [],
     // props后处理
@@ -217,6 +217,13 @@ module.exports = function getSpec ({ warn, error }) {
             value
           }
         },
+        jd ({ name, value }) {
+          const dir = this.test.exec(name)[1]
+          return {
+            name: 'jd:' + dir,
+            value
+          }
+        },
         tt ({ name, value }) {
           const dir = this.test.exec(name)[1]
           return {
@@ -252,6 +259,11 @@ module.exports = function getSpec ({ warn, error }) {
             }) + modifierStr,
             value
           }
+        },
+        jd ({ name, value }, { eventRules }) {
+          const match = this.test.exec(name)
+          const eventName = match[2]
+          runRules(eventRules, eventName, { mode: 'jd' })
         },
         web ({ name, value }, { eventRules, el }) {
           const match = this.test.exec(name)
