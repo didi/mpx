@@ -4,6 +4,8 @@ module.exports = function ({ print }) {
   const aliEventLog = print({ platform: 'ali', tag: TAG_NAME, isError: false, type: 'event' })
   const ttPropLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false })
   const ttEventLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false, type: 'event' })
+  const jdPropLog = print({ platform: 'jd', tag: TAG_NAME, isError: false })
+  const qaEventLog = print({ platform: 'qa', tag: TAG_NAME, isError: false, type: 'event' })
   return {
     test: TAG_NAME,
     props: [
@@ -19,6 +21,10 @@ module.exports = function ({ print }) {
       {
         test: 'disable-scroll',
         tt: ttPropLog
+      },
+      {
+        test: 'type',
+        jd: jdPropLog
       }
     ],
     // 组件事件中的差异部分
@@ -44,7 +50,8 @@ module.exports = function ({ print }) {
       },
       {
         test: /^(longtap|error)$/,
-        tt: ttEventLog
+        tt: ttEventLog,
+        qa: qaEventLog
       }
     ]
   }

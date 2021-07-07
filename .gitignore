@@ -4,6 +4,7 @@
 node_modules/
 *.log
 examples/*/package-lock.json
+packages/*/package-lock.json
 .DS_Store
 docs-vuepress/.vuepress/dist
 elevate/
