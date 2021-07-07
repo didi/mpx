@@ -993,10 +993,20 @@ try {
       // resolve完成后修改loaders信息并批量添加mode query
       normalModuleFactory.hooks.afterResolve.tapAsync('MpxWebpackPlugin', (data, callback) => {
         if (data.loaders) {
-          data.loaders.forEach((loader) => {
+          data.loaders.forEach((loader, index) => {
             if (/ts-loader/.test(loader.loader)) {
               // todo 暂时固定写死options，待后续优化为复用rules后修正
               loader.options = { appendTsSuffixTo: [/\.(mpx|vue)$/] }
+            }
+            if (this.options.mode === 'web') {
+              if (/css-loader/.test(loader.loader) && /type=styles/.test(data.request)) {
+                if (data.loaders[index + 2].loader === normalize.lib('style-compiler/index.js')) {
+                  return
+                }
+                data.loaders.splice(index + 2, 0, {
+                  loader: normalize.lib('style-compiler/index.js')
+                })
+              }
             }
           })
         }
