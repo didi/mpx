@@ -162,7 +162,7 @@ module.exports = function (content) {
                     const content = buffer.toString('utf8')
                     // parseComponent 会做缓存
                     const parts = parseComponent(content, {
-                      absolutePath,
+                      filePath: absolutePath,
                       needMap: this.sourceMap,
                       mode,
                       defs,
