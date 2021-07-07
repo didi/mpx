@@ -1,5 +1,5 @@
 // declaration for mpx mode
-declare let __mpx_mode__: 'wx' | 'ali' | 'swan' | 'qq' | 'tt' | 'web'
+declare let __mpx_mode__: 'wx' | 'ali' | 'swan' | 'qq' | 'tt' | 'web' | 'dd' | 'qa' | 'jd'
 
 // declaration for mpx env
 declare let __mpx_env__: string

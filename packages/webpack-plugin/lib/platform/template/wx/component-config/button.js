@@ -20,6 +20,8 @@ module.exports = function ({ print }) {
   const qqValueLog = print({ platform: 'qq', tag: TAG_NAME, isError: false, type: 'value' })
   const qqPropLog = print({ platform: 'qq', tag: TAG_NAME, isError: false })
   const qqEventLog = print({ platform: 'qq', tag: TAG_NAME, isError: false, type: 'event' })
+  const jdPropLog = print({ platform: 'jd', tag: TAG_NAME, isError: false })
+  const jdEventLog = print({ platform: 'jd', tag: TAG_NAME, isError: false, type: 'event' })
   const ttPropLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false })
   const ttValueLogError = print({ platform: 'bytedance', tag: TAG_NAME, isError: true, type: 'value' })
   const ttValueLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false, type: 'value' })
@@ -120,6 +122,10 @@ module.exports = function ({ print }) {
         qq: qqPropLog
       },
       {
+        test: /^(session-from|send-message-title|send-message-path|send-message-img|show-message-card|bindcontact|bindlaunchapp)$/,
+        jd: jdPropLog
+      },
+      {
         test: /^(plain|lang|session-from|send-message-title|send-message-path|send-message-img|app-parameter|show-message-card)$/,
         tt: ttPropLog
       },
@@ -157,6 +163,10 @@ module.exports = function ({ print }) {
       {
         test: /^(getphonenumber)$/,
         qq: qqEventLog
+      },
+      {
+        test: /^(contact|feedback)$/,
+        jd: jdEventLog
       },
       {
         test: /^(getuserinfo|contact|error|launchapp|opensetting)$/,

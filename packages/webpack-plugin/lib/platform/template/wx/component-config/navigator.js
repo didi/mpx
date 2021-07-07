@@ -99,7 +99,15 @@ module.exports = function ({ print }) {
         ali: aliEventLog,
         tt: ttEventLog,
         web: webEventLog,
-        qa: qaEventLog
+        qa: qaEventLog,
+        jd (eventName) {
+          const eventMap = {
+            'success': 'success',
+            'fail': 'error',
+            'complete': 'complete'
+          }
+          return eventMap[eventName]
+        }
       }
     ]
   }
