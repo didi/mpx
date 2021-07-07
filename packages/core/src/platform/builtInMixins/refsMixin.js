@@ -5,6 +5,28 @@ import { getEnvObj } from '../../helper/env'
 
 const envObj = getEnvObj()
 
+const setNodeRef = function (target, ref, context) {
+  Object.defineProperty(target.$refs, ref.key, {
+    enumerable: true,
+    configurable: true,
+    get () {
+      return context.__getRefNode(ref) // for nodes, every time being accessed, returns as a new selector context.
+    }
+  })
+}
+
+const setComponentRef = function (target, ref, context, isAsync) {
+  const cacheRef = context.__getRefNode(ref, isAsync)
+  const targetRefs = isAsync ? target.$asyncRefs : target.$refs
+  Object.defineProperty(targetRefs, ref.key, {
+    enumerable: true,
+    configurable: true,
+    get () {
+      return cacheRef
+    }
+  })
+}
+
 export default function getRefsMixin () {
   let aliMethods
   if (__mpx_mode__ === 'ali') {
@@ -111,49 +133,22 @@ export default function getRefsMixin () {
     methods: {
       ...aliMethods,
       __getRefs () {
-        const self = this
-
-        const setNodeRef = (context, ref) => {
-          Object.defineProperty(context.$refs, ref.key, {
-            enumerable: true,
-            configurable: true,
-            get () {
-              return self.__getRefNode(ref) // for nodes, every time being accessed, returns as a new selector context.
-            }
-          })
-        }
-
-        const setComponentRef = (context, ref, isAsync) => {
-          let cacheRef = null // saving component refs, every time call __getRefs, set its value to null
-          const refContext = isAsync ? context.$asyncRefs : context.$refs
-          Object.defineProperty(refContext, ref.key, {
-            enumerable: true,
-            configurable: true,
-            get () {
-              if (!cacheRef) {
-                return (cacheRef = self.__getRefNode(ref, isAsync))
-              }
-              return cacheRef
-            }
-          })
-        }
-
         // 运行时编译组件获取 ref 节点
         if (this.r && this.r.refs) {
-          const refs = this.r.refs
-          const rootContext = this.__getNode(this.r.nodeId).context
-          const setRef = refs.type === 'node' ? setNodeRef : setComponentRef
-          setRef(rootContext, refs)
+          const ref = this.r.refs
+          const target = this.__getNode(this.r.nodeId).context
+          const setRef = ref.type === 'node' ? setNodeRef : setComponentRef
+          setRef(target, ref, this)
         }
         if (this.__getRefsData) {
           const refs = this.__getRefsData()
 
           refs.forEach(ref => {
             const setRef = ref.type === 'node' ? setNodeRef : setComponentRef
-            setRef(this, ref)
+            setRef(this, ref, this)
 
             if (__mpx_mode__ === 'tt' && ref.type === 'component') {
-              setComponentRef(this, ref, true)
+              setComponentRef(this, ref, this, true)
             }
           })
         }
