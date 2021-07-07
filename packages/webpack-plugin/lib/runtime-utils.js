@@ -7,7 +7,18 @@ const runtimeCompileMap = {}
 let templateNodes = {}
 let pathAndAliasTagMap = {}
 
-const filterKeys = ['data-eventconfigs', 'mpxShow', 'big-attrs', 'mpxPageStatus']
+// mpx-render-base.wxml 里面的指令生成都需要被忽略掉
+const filterKeys = [
+  'wx:for',
+  'wx:for-index',
+  'wx:for-item',
+  'wx:if',
+  'is',
+  'data-eventconfigs',
+  'mpxShow',
+  'big-attrs',
+  'mpxPageStatus'
+]
 
 function genNotRuntimeCustomComponentSlots () {
   return `
@@ -209,7 +220,9 @@ module.exports = {
         res += `${slotTarget}: [`
         const renderFns = slotsMap[slotTarget] || []
         renderFns.map((renderFn) => {
-          res += `${renderFn},`
+          if (renderFn) {
+            res += `${renderFn},`
+          }
         })
         res += '],'
       })
