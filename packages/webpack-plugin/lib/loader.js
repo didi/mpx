@@ -6,6 +6,7 @@ const InjectDependency = require('./dependency/InjectDependency')
 const parseRequest = require('./utils/parse-request')
 const matchCondition = require('./utils/match-condition')
 const fixUsingComponent = require('./utils/fix-using-component')
+const warningUnusedComponent = require('./utils/warning-unused-component') 
 const addQuery = require('./utils/add-query')
 const async = require('async')
 const processJSON = require('./web/processJSON')
@@ -18,6 +19,10 @@ const getMainCompilation = require('./utils/get-main-compilation')
 
 module.exports = function (content) {
   this.cacheable()
+
+  const emitWarning = (msg) => {
+    this.emitWarning(new Error('[Mpx loader] ' + msg))
+  }  
 
   const mainCompilation = getMainCompilation(this._compilation)
   const mpx = mainCompilation.__mpx__
@@ -140,7 +145,11 @@ module.exports = function (content) {
           let ret = JSON5.parse(parts.json.content)
           if (ret.usingComponents) {
             fixUsingComponent(ret.usingComponents, mode)
-            usingComponents = usingComponents.concat(Object.keys(ret.usingComponents))
+            const retComponents = Object.keys(ret.usingComponents)
+            usingComponents = usingComponents.concat(retComponents)
+            if (parts.template && retComponents.length) {
+              warningUnusedComponent(retComponents, parts.template.content, emitWarning)
+            } 
           }
           if (ret.componentGenerics) {
             componentGenerics = Object.assign({}, ret.componentGenerics)
