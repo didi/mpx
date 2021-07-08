@@ -16,12 +16,15 @@ const setNodeRef = function (target, ref, context) {
 }
 
 const setComponentRef = function (target, ref, context, isAsync) {
-  const cacheRef = context.__getRefNode(ref, isAsync)
+  let cacheRef = null
   const targetRefs = isAsync ? target.$asyncRefs : target.$refs
   Object.defineProperty(targetRefs, ref.key, {
     enumerable: true,
     configurable: true,
     get () {
+      if (!cacheRef) {
+        return (cacheRef = context.__getRefNode(ref, isAsync))
+      }
       return cacheRef
     }
   })
