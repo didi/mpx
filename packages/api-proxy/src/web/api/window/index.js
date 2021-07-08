@@ -1,4 +1,4 @@
-import { inBrowser } from '../../../utils/env'
+import { inBrowser } from '../../../common/js/utils'
 
 const callbacks = []
 

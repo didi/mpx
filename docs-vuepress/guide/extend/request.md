@@ -25,13 +25,12 @@ mpx.createApp({
 })
 ```
 
-### 导入api说明
+### 导出说明
 
 mpx-fetch提供了一个实例 **xfetch** ，该实例包含以下api
 
 - fetch(config)， 正常的promisify风格的请求方法
 - CancelToken，实例属性，用于创建一个取消请求的凭证。
-- create()， 用于创建一个新的mpx-fetch实例
 - interceptors，实例属性，用于添加拦截器，包含两个属性，request & response
 
 ### 请求拦截器

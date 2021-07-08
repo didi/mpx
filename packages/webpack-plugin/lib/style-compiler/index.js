@@ -10,7 +10,11 @@ const scopeId = require('./plugins/scope-id')
 const matchCondition = require('../utils/match-condition')
 
 module.exports = function (css, map) {
-  this.cacheable()
+  if (/mpx-custom-element\.mpx/.test(this.resourcePath)) {
+    this.cacheable(false)
+  } else {
+    this.cacheable()
+  }
   const cb = this.async()
   const loaderOptions = loaderUtils.getOptions(this) || {}
 

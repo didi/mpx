@@ -1,5 +1,10 @@
 const runRules = require('../run-rules')
 
+/**
+ * @desc 针对每一个组件(属性，event，指令等)执行规则判断
+ * @params cfgs [{test: 'camera', props:[], event: []}] 组件配置列表
+ * @params spec ../index.js中公共的spec
+*/
 module.exports = function normalizeComponentRules (cfgs, spec) {
   return cfgs.map((cfg) => {
     const result = {}
@@ -7,6 +12,7 @@ module.exports = function normalizeComponentRules (cfgs, spec) {
       result.test = cfg.test
     }
     const supportedModes = cfg.supportedModes || spec.supportedModes
+    // 合并component-config中组件的event 与index中公共的event规则
     const eventRules = (cfg.event || []).concat(spec.event.rules)
     supportedModes.forEach((mode) => {
       result[mode] = function (el, data) {

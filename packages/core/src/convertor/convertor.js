@@ -9,6 +9,7 @@ import wxToWebRule from './wxToWeb'
 import wxToSwanRule from './wxToSwan'
 import wxToQqRule from './wxToQq'
 import wxToTtRule from './wxToTt'
+import wxToDdRule from './wxToDd'
 
 // 生命周期模板
 const lifecycleTemplates = {
@@ -16,6 +17,7 @@ const lifecycleTemplates = {
   ali: aliLifecycle.LIFECYCLE,
   swan: wxLifecycle.LIFECYCLE,
   qq: wxLifecycle.LIFECYCLE,
+  jd: wxLifecycle.LIFECYCLE,
   tt: wxLifecycle.LIFECYCLE
 }
 // 根据当前环境获取的默认生命周期信息
@@ -52,11 +54,14 @@ const defaultConvertRule = {
 const RULEMAPS = {
   local: { ...defaultConvertRule },
   default: defaultConvertRule,
-  wxToWeb: wxToWebRule, // 微信转web rule
+  // 微信转web rule
+  wxToWeb: wxToWebRule,
+  // 微信转支付宝rule
+  wxToAli: wxToAliRule,
   wxToSwan: { ...defaultConvertRule, ...wxToSwanRule },
   wxToQq: { ...defaultConvertRule, ...wxToQqRule },
   wxToTt: { ...defaultConvertRule, ...wxToTtRule },
-  wxToAli: wxToAliRule // 微信转支付宝rule
+  wxToDd: { ...defaultConvertRule, ...wxToDdRule }
 
 }
 

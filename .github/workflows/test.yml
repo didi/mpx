@@ -15,7 +15,7 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: install deps
-        run: npm i && npx lerna bootstrap
+        run: npm i && npx lerna bootstrap --no-ci
 
       - name: exec unit test
         run: npm t

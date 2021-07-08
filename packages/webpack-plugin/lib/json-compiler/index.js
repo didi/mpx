@@ -18,6 +18,13 @@ const isUrlRequestRaw = require('../utils/is-url-request')
 const addQuery = require('../utils/add-query')
 const readJsonForSrc = require('../utils/read-json-for-src')
 const getMainCompilation = require('../utils/get-main-compilation')
+const {
+  collectCustomComponentWxss,
+  collectAliasComponentPath,
+  setRuntimeComponent
+} = require('../runtime-utils')
+
+const renderCustomElementPath = path.resolve(__dirname, '../runtime-render/mpx-custom-element.mpx')
 
 module.exports = function (raw = '{}') {
   // 该loader中会在每次编译中动态添加entry，不能缓存，否则watch不好使
@@ -26,6 +33,9 @@ module.exports = function (raw = '{}') {
   const options = loaderUtils.getOptions(this) || {}
   const mainCompilation = getMainCompilation(this._compilation)
   const mpx = mainCompilation.__mpx__
+
+  const runtimeComponents = options.runtimeComponents || []
+  const componentsAbsolutePath = options.componentsAbsolutePath || {}
 
   const emitWarning = (msg) => {
     this.emitWarning(
@@ -168,6 +178,25 @@ module.exports = function (raw = '{}') {
     return callback(err)
   }
 
+  // 将 element 加入到编译的流程
+  if (json.runtimeCompile) {
+    if (!json.usingComponents) {
+      json.usingComponents = {}
+    }
+    if (!json.usingComponents['element']) {
+      json.usingComponents['element'] = renderCustomElementPath
+    }
+  }
+
+  const processRuntimeComponent = (jsonConfig) => {
+    setRuntimeComponent(this.resourcePath, !!jsonConfig.runtimeCompile)
+    if (jsonConfig.runtimeCompile) {
+      delete jsonConfig.runtimeCompile
+    }
+  }
+
+  processRuntimeComponent(json)
+
   // json补全
   if (pagesMap[resourcePath]) {
     // page
@@ -189,6 +218,19 @@ module.exports = function (raw = '{}') {
   if (json.usingComponents) {
     // todo 迁移到rulesRunner中进行
     fixUsingComponent(json.usingComponents, mode, emitWarning)
+  }
+
+  // 快应用补全json配置，必填项
+  if (mode === 'qa' && isApp) {
+    const defaultConf = {
+      package: '',
+      name: '',
+      icon: 'assets/images/logo.png',
+      versionName: '',
+      versionCode: 1,
+      minPlatformVersion: 1080
+    }
+    json = Object.assign({}, defaultConf, json)
   }
 
   const rulesRunnerOptions = {
@@ -232,6 +274,13 @@ module.exports = function (raw = '{}') {
     return this.resolve(context, request, callback)
   }
 
+  const collectComponentInfoForRuntime = (componentName, componentPath) => {
+    collectAliasComponentPath(componentsAbsolutePath[componentName], componentPath)
+    if (runtimeComponents.includes(componentName)) {
+      collectCustomComponentWxss(`${componentPath}.wxss`)
+    }
+  }
+
   const processComponents = (components, context, callback) => {
     if (components) {
       async.forEachOf(components, (component, name, callback) => {
@@ -240,6 +289,8 @@ module.exports = function (raw = '{}') {
             componentPath = toPosix(path.relative(path.dirname(currentPath), componentPath))
           }
           components[name] = componentPath
+
+          collectComponentInfoForRuntime(name, componentPath)
         }, undefined, callback)
       }, callback)
     } else {

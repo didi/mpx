@@ -151,7 +151,6 @@ module.exports = function (content) {
       default:
         requestString = JSON.stringify(src)
     }
-
     return '" + require(' + requestString + ') + "'
   }) + ';'
 }

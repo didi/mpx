@@ -27,6 +27,12 @@ const matchCondition = require('./utils/match-condition')
 const parseAsset = require('./utils/parse-asset')
 const { preProcessDefs } = require('./utils/index')
 const hash = require('hash-sum')
+const {
+  genRuntimeTemplate,
+  getTemplateNodes,
+  addCustomComponentWxss,
+  getInjectedComponentMap
+} = require('./runtime-utils')
 
 const isProductionLikeMode = options => {
   return options.mode === 'production' || !options.mode
@@ -600,7 +606,6 @@ class MpxWebpackPlugin {
           additionalAssets[file].forEach((item) => {
             if (item) content.add(item)
           })
-
           const modules = (additionalAssets[file].modules || []).concat(additionalAssets[file].relativeModules || [])
 
           if (modules.length > 1) {
@@ -619,8 +624,35 @@ class MpxWebpackPlugin {
               module.buildInfo.contextDependencies = contextDependencies
             })
           }
+
+          // 基础模板信息注入
+          if (/mpx-render-base\w*\.wxml/.test(file)) {
+            let runtimeTemplate = genRuntimeTemplate(getTemplateNodes())
+            content.add(runtimeTemplate)
+          }
+
+          // 运行时组件的样式注入
+          if (/mpx-custom-element\.wxss/.test(file)) {
+            let res = new ConcatSource()
+            res.add(addCustomComponentWxss())
+            res.add(content.source())
+            content = res
+          }
+
+          // 运行时组件配置注入
+          if (/mpx-custom-element\.json/.test(file)) {
+            let _content = JSON.parse(content.source())
+            if (!_content.usingComponents) {
+              _content.usingComponents = {}
+            }
+            Object.assign(_content.usingComponents, getInjectedComponentMap())
+            let res = new ConcatSource()
+            res.add(JSON.stringify(_content, null, 2))
+            content = res
+          }
           compilation.emitAsset(file, content, { modules: additionalAssets[file].modules })
         }
+
         // 所有编译的静态资源assetsInfo合入主编译
         mpx.assetsInfo.forEach((assetInfo, name) => {
           const oldAssetInfo = compilation.assetsInfo.get(name)

@@ -47,4 +47,20 @@ function filterUndefined (data) {
   return data
 }
 
-export { parseUrl, buildUrl, filterUndefined, type, isThenable }
+function getEnvObj () {
+  if (__mpx_mode__ === 'wx') {
+    return wx
+  } else if (__mpx_mode__ === 'ali') {
+    return my
+  } else if (__mpx_mode__ === 'swan') {
+    return swan
+  } else if (__mpx_mode__ === 'qq') {
+    return qq
+  } else if (__mpx_mode__ === 'tt') {
+    return tt
+  } else if (__mpx_mode__ === 'dd') {
+    return dd
+  }
+}
+
+export { parseUrl, buildUrl, filterUndefined, type, isThenable, getEnvObj }

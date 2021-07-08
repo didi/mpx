@@ -139,7 +139,16 @@ mpx 中会将 app.mpx（入口文件，也不一定非要叫app.mpx） 中 packa
 
 ### 独立分包
 
-目前暂时不支持进行独立分包的构建
+Mpx目前已支持独立分包构建，使用packages语法声明分包时只需要在后面添加 `independent=true` query 即可，同时也支持原生语法声明。
+
+**示例：**
+```json
+{
+    "packages": [
+      "subpackageA/index?root=pacA&independent=true"
+    ]
+  }
+```
 
 ### 分包预下载
 

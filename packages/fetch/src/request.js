@@ -1,5 +1,5 @@
 /* eslint-disable no-undef */
-import { buildUrl, filterUndefined } from './util'
+import { buildUrl, filterUndefined, getEnvObj } from './util'
 
 function transformReq (config) {
   // 抹平wx & ali 请求参数
@@ -83,32 +83,15 @@ export default function request (config, mpx) {
       typeof rawFail === 'function' && rawFail.call(this, err)
       reject(err)
     }
-    if (typeof wx !== 'undefined' && typeof wx.request === 'function') {
-      // weixin
-      requestTask = wx.request(config)
+    const envObj = getEnvObj()
+
+    if (envObj && typeof envObj.request === 'function') {
+      requestTask = envObj.request(config)
       return
     }
-    if (typeof my !== 'undefined') {
-      // alipay
-      const request = my.request || my.httpRequest
-      if (typeof request === 'function') {
-        requestTask = request.call(my, config)
-        return
-      }
-    }
-    if (typeof swan !== 'undefined' && typeof swan.request === 'function') {
-      // baidu
-      requestTask = swan.request(config)
-      return
-    }
-    if (typeof qq !== 'undefined' && typeof qq.request === 'function') {
-      // qq
-      requestTask = qq.request(config)
-      return
-    }
-    if (typeof tt !== 'undefined' && typeof tt.request === 'function') {
-      // tt
-      requestTask = tt.request(config)
+
+    if (__mpx_mode__ === 'ali' && typeof envObj.httpRequest === 'function') {
+      requestTask = envObj.httpRequest(config)
       return
     }
 

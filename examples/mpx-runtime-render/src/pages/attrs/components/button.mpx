@@ -1,0 +1,76 @@
+<template>
+  <view>
+    <view capture-bind:tap="tapView" class="wrapper">
+      <slot name="before"></slot>
+      <button bind:tap="tapBtn" wx:class="{{ btnClass }}">{{ text }}</button>
+      <slot name="after"></slot>
+    </view>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+
+createComponent({
+  properties: {
+    text: {
+      type: String
+    },
+    inline: {
+      type: Boolean
+    },
+    bolder: {
+      type: Boolean
+    },
+    openType: {
+      type: String
+    }
+  },
+  computed: {
+    btnClass() {
+      return {
+        'cube-btn_inline': !!this.inline,
+        'cube-btn_bolder': !!this.bolder
+      }
+    }
+  },
+  attached() {
+    setTimeout(() => {
+      console.log('the bigAttrs is:', this.bigAttrs)
+      console.log('the at is:', this.text)
+    }, 3000)
+  },
+  methods: {
+    tapView() {
+      console.log('tap the view')
+    },
+    tapBtn() {
+      console.log('tap the btn')
+    }
+  }
+})
+</script>
+
+<style lang="stylus">
+.cube-btn
+  color red !important
+.wrapper
+  margin 10px
+  padding 10px
+  border 1px solid #ccc
+.cube-btn_inline
+  display: inline-block
+.cube-btn_bolder
+  color red
+  font-weight 800
+</style>
+
+<script type="application/json">
+{
+  "runtimeCompile": true,
+  "component": true,
+  "usingComponents": {
+
+  }
+}
+</script>

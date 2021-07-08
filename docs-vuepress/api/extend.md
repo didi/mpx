@@ -71,11 +71,12 @@ mpx.createApp({
 ```
 
 ### CancelToken
->实例属性，用于创建一个取消请求的凭证。
+> 命名导出，用于创建一个取消请求的凭证。
 
 - **示例**:
 ```js
-const cancelToken = new mpx.xfetch.CancelToken()
+import { CancelToken } from '@mpxjs/fetch'
+const cancelToken = new CancelToken()
 mpx.xfetch.fetch({
 	url: 'http://xxx.com',
 	data: {
@@ -85,16 +86,17 @@ mpx.xfetch.fetch({
 })
 cancelToken.exec('手动取消请求') // 执行后请求中断，返回abort fail
 ```
-### create()
->用于创建一个新的mpx-fetch实例
+### XFetch
+> 命名导出，用于创建一个新的mpx-fetch实例进行独立使用
 
 - **示例**:
 ```js
-const newFetch = new mpx.xfetch.create() // 生成新的mpx-fetch实例
+import { XFetch } from '@mpxjs/fetch'
+const newFetch = new XFetch(options) // 生成新的mpx-fetch实例
 ```
 
 ### interceptors
->实例属性，用于添加拦截器，包含两个属性，request & response
+> 实例属性，用于添加拦截器，包含两个属性，request & response
 
 - **示例**:
 ```js

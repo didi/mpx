@@ -1,0 +1,85 @@
+<template>
+  <view>
+    <view class="wrapper">
+      <input type="text" wx:model="{{ num }}" wx:model-filter="filter" />
+      <view>{{ num }}</view>
+    </view>
+
+    <view class="wrapper">
+      <picker
+        wx:model="{{ countryIndex }}"
+        wx:model-event="change"
+        range="{{ array }}"
+      >
+        <view class="picker">
+          当前 picker 选择：{{ _country }} {{ countryIndex }}
+        </view>
+      </picker>
+    </view>
+
+    <view class="wrapper">
+      <!-- TODO: 运行时组件的 at 的合并与传入 -->
+      <custom-input
+        wx:model="{{ username }}"
+        wx:model-event="change"
+        wx:model-prop="customUserName"
+      ></custom-input>
+      <view>the username is: {{ username }}</view>
+    </view>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+
+createComponent({
+  data: {
+    num: 100,
+    countryIndex: 1,
+    array: ['美国', '中国', '巴西', '日本'],
+    username: 'apple'
+  },
+  watch: {
+    username(newVal, oldVal) {
+      console.log('the newVal and oldVal is:', newVal, oldVal)
+    }
+  },
+  computed: {
+    _country() {
+      return this.array[this.countryIndex]
+    }
+  },
+  methods: {
+    filter(val) {
+      return val - 100
+    }
+  }
+})
+</script>
+
+<style lang="stylus">
+.wrapper
+  margin 10px
+  padding 10px
+  border 1px solid #ccc
+</style>
+
+<!-- <script type="application/json">
+{
+  "runtimeCompile": true,
+  "usingComponents": {
+    "custom-input": "./components/custom-input.mpx"
+  }
+}
+</script> -->
+
+<script type="application/json" src="./model.json"></script>
+
+<!-- <script name="json">
+module.exports = {
+  runtimeCompile: true,
+  usingComponents: {
+    'custom-input': './components/custom-input.mpx'
+  }
+}
+</script> -->

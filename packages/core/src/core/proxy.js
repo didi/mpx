@@ -32,6 +32,7 @@ import {
   DESTROYED
 } from './innerLifecycle'
 import { warn, error } from '../helper/log'
+import patch from '../vnode/patch'
 
 let uid = 0
 
@@ -176,7 +177,7 @@ export default class MPXProxy {
     // 获取包含data/props在内的初始数据，包含初始原生微信转换支付宝时合并props进入data的逻辑
     const initialData = this.target.__getInitialData(this.options) || {}
     // 之所以没有直接使用initialData，而是通过对原始dataOpt进行深clone获取初始数据对象，主要是为了避免小程序自身序列化时错误地转换数据对象，比如将promise转为普通object
-    this.data = diffAndCloneA(data || {}).clone
+    this.data = diffAndCloneA(data || {}).clone // this.data 目前仅包含 options.data 上的数据，还没将 props 上的数据合进来
     if (dataFn) {
       proxyedKeys = Object.keys(initialData)
       // 预先将initialData代理到this.target中，便于data函数访问
@@ -190,6 +191,8 @@ export default class MPXProxy {
       Object.assign(this.data, dataFn.call(this.target))
     }
     this.collectLocalKeys(this.data)
+    this.collectLocalKeys(this.options.$attrs)
+    // 将 props 上的数据取出来放到 this.data 上
     Object.keys(initialData).forEach((key) => {
       if (!hasOwn(this.data, key)) {
         // 除了data函数返回的数据外深拷贝切断引用关系，避免后续watch由于小程序内部对data赋值重复触发watch
@@ -267,7 +270,14 @@ export default class MPXProxy {
     this.doRender(this.processRenderDataWithStrictDiff(renderData))
   }
 
-  renderWithData () {
+  renderWithData (vnode) {
+    if (vnode) {
+      // 对 vnode 进行深拷贝，原有的 vnode 数据仅做渲染使用，拷贝后的数据做上下文的绑定
+      // TODO: 目前未做 vnode diff 工作，都是全量 render，二期优化
+      const _vnode = diffAndCloneA(vnode).clone
+      proxy(this.target, { _vnode: patch(undefined, _vnode, this.target) }, ['_vnode'], true)
+      return this.doRenderWithVNode(vnode)
+    }
     const renderData = preProcessRenderData(this.renderData)
     this.doRender(this.processRenderDataWithStrictDiff(renderData))
     // 重置renderData准备下次收集
@@ -286,7 +296,7 @@ export default class MPXProxy {
       if (hasOwn(renderData, key)) {
         const data = renderData[key]
         const firstKey = getFirstKey(key)
-        if (!this.localKeysMap[firstKey]) {
+        if (!this.localKeysMap[firstKey]) { // 如果是 props 数据的话，直接略过(但是 props 数据更新了还是会触发 render 函数)
           continue
         }
         // 外部clone，用于只需要clone的场景
@@ -365,6 +375,12 @@ export default class MPXProxy {
     return result
   }
 
+  doRenderWithVNode (vnode) {
+    if (!isEmptyObject(vnode) && this.options.runtimeComponent) {
+      this.target.__render({ r: vnode })
+    }
+  }
+
   doRender (data, cb) {
     if (typeof this.target.__render !== 'function') {
       error('Please specify a [__render] function to render view.', this.options.mpxFileResource)
@@ -400,6 +416,7 @@ export default class MPXProxy {
         resolve && resolve()
       }
     }
+
     this.target.__render(processUndefined(data), callback)
   }
 
