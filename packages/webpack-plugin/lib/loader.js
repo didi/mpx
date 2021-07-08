@@ -147,7 +147,7 @@ module.exports = function (content) {
             fixUsingComponent(ret.usingComponents, mode)
             const retComponents = Object.keys(ret.usingComponents)
             usingComponents = usingComponents.concat(retComponents)
-            if (parts.template && retComponents.length) {
+            if (parts.template && retComponents.length && !ret.dynamicComponent) {
               warningUnusedComponent(retComponents, parts.template.content, emitWarning)
             } 
           }
