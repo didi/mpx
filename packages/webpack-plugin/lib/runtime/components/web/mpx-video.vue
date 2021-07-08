@@ -9,7 +9,6 @@
     :loop="loop"
     :muted="mutedCopy"
     :poster="poster"
-    @touchend="preventDefaultHandler"
   >
   </video>
 </template>
@@ -134,12 +133,6 @@
         processTimer: null
       }
     },
-    computed: {
-      fullscreenElement () {
-        // console.log(document.fullscreenElement)
-        return document.fullscreenElement
-      }
-    },
     mounted () {
       this.videoNode = this.$refs['_mpx_video_ref']
       this.initStyle()
@@ -181,12 +174,6 @@
         this.videoNode.addEventListener('loadedmetadata', (e) => {
           this.$emit('bindloadedmetadata', e)
         })
-      },
-      preventDefaultHandler (e) {
-        this.showControlsTool = !this.showControlsTool
-        this.$emit('bindcontrolstoggle')
-        e.preventDefault()
-        return false
       },
       processListener () {
         this.processTimer = setInterval(() => {
