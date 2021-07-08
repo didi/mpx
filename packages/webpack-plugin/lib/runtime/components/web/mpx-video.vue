@@ -155,24 +155,27 @@
       },
       initEvent () {
         this.videoNode.addEventListener('play', () => {
-          this.$emit('bindplay')
+          this.$emit('play')
           this.processListener()
         })
         this.videoNode.addEventListener('pause', () => {
           clearInterval(this.processTimer)
-          this.$emit('bindpause')
+          this.$emit('pause')
         })
         this.videoNode.addEventListener('ended', () => {
-          this.$emit('bindended')
+          this.$emit('ended')
         })
         this.videoNode.addEventListener('error', (e) => {
-          this.$emit('binderror', e)
+          this.$emit('error', e)
         })
         this.videoNode.addEventListener('waiting', (e) => {
-          this.$emit('bindwaiting', e)
+          this.$emit('waiting', e)
         })
         this.videoNode.addEventListener('loadedmetadata', (e) => {
-          this.$emit('bindloadedmetadata', e)
+          this.$emit('loadedmetadata', e)
+        })
+        this.videoNode.addEventListener('timeupdate', (e) => {
+          this.$emit('timeupdate', e)
         })
       },
       processListener () {
