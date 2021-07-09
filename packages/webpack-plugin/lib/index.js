@@ -992,6 +992,8 @@ try {
 
       // resolve完成后修改loaders信息并批量添加mode query
       normalModuleFactory.hooks.afterResolve.tapAsync('MpxWebpackPlugin', (data, callback) => {
+        const { resourcePath, queryObj } = parseRequest(data.request)
+        const isPitcherRequest = /pitcher/.test(data.request)
         if (data.loaders) {
           data.loaders.forEach((loader, index) => {
             if (/ts-loader/.test(loader.loader)) {
@@ -999,13 +1001,13 @@ try {
               loader.options = { appendTsSuffixTo: [/\.(mpx|vue)$/] }
             }
             if (this.options.mode === 'web') {
-              if (/css-loader/.test(loader.loader) && /type=styles/.test(data.request)) {
-                if (data.loaders[index + 2].loader === normalize.lib('style-compiler/index.js')) {
-                  return
+              const isCssLoader = /css-loader/.test(loader.loader)
+              if (resourcePath.endsWith('.mpx') && queryObj.type === 'style' && !isPitcherRequest && isCssLoader) {
+                if (data.loaders[index + 2].loader !== normalize.lib('style-compiler/index.js')) {
+                  data.loaders.splice(index + 2, 0, {
+                    loader: normalize.lib('style-compiler/index.js')
+                  })
                 }
-                data.loaders.splice(index + 2, 0, {
-                  loader: normalize.lib('style-compiler/index.js')
-                })
               }
             }
           })
