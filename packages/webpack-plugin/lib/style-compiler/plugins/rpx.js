@@ -20,7 +20,6 @@ module.exports = postcss.plugin('rpx', (options = {}) => root => {
 
   function transRpx (declaration) {
     if (pxRegExp.test(declaration.value)) {
-
       declaration.value = declaration.value.replace(pxRegExpG, function (match, $1) {
         if ($1 === '0') return $1
         if (mpxMode === 'web') {
@@ -28,7 +27,6 @@ module.exports = postcss.plugin('rpx', (options = {}) => root => {
         } else {
           return `${$1 * ratio}rpx`
         }
-
       })
     }
   }
