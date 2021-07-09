@@ -1,7 +1,7 @@
 const path = require('path')
 const async = require('async')
 const JSON5 = require('json5')
-const SingleEntryPlugin = require('webpack/lib/SingleEntryPlugin')
+const EntryPlugin = require('webpack/lib/EntryPlugin')
 const parseRequest = require('./utils/parse-request')
 const toPosix = require('./utils/to-posix')
 const getMainCompilation = require('./utils/get-main-compilation')
@@ -60,7 +60,7 @@ module.exports = function (source) {
   const projectRoot = mpx.projectRoot
   const extract = mpx.extract
   const pathHash = mpx.pathHash
-  const resourceName = this._compilation._preparedEntrypoints[0].name
+  const resourceName = mainCompilation.entries.keys().next().value
 
   const entryModule = this._module
   // 通过rawRequest关联entryNode和entryModule
@@ -68,6 +68,7 @@ module.exports = function (source) {
   const entryType = 'Plugin'
   const currentEntry = getEntryNode(entryRequest, entryType, entryModule)
   // 最终输出中不需要为plugin.json产生chunk，而是使用extract直接输出json文件，删除plugin.json对应的entrypoint
+  mainCompilation.entries.delete(resourceName)
   this._compilation._preparedEntrypoints.pop()
   // 为了在体积统计中能够统计到该entry，将其缓存在mpx.removedChunks中
   mpx.removedChunks.push({
@@ -88,9 +89,9 @@ module.exports = function (source) {
   }
 
   const addEntrySafely = (resource, name, callback) => {
-    const dep = SingleEntryPlugin.createDependency(resource, name)
+    const dep = EntryPlugin.createDependency(resource, { name })
     entryDeps.add(dep)
-    this._compilation.addEntry(this._compiler.context, dep, name, (err, module) => {
+    this._compilation.addEntry(this._compiler.context, dep, { name }, (err, module) => {
       entryDeps.delete(dep)
       checkEntryDeps()
       callback(err, module)

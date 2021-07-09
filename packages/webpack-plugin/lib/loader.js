@@ -44,10 +44,9 @@ module.exports = function (content) {
   if ((queryObj.component && !componentsMap[resourcePath]) || (queryObj.page && !pagesMap[resourcePath])) {
     let entryChunkName
     const rawRequest = this._module.rawRequest
-    const _preparedEntrypoints = this._compilation._preparedEntrypoints
-    for (let i = 0; i < _preparedEntrypoints.length; i++) {
-      if (rawRequest === _preparedEntrypoints[i].request) {
-        entryChunkName = _preparedEntrypoints[i].name
+    for (const [, { options }] of mainCompilation.entries) {
+      if (rawRequest === options.request) {
+        entryChunkName = options.name
         break
       }
     }

@@ -1,5 +1,5 @@
 const NodeTargetPlugin = require('webpack/lib/node/NodeTargetPlugin')
-const SingleEntryPlugin = require('webpack/lib/SingleEntryPlugin')
+const EntryPlugin = require('webpack/lib/EntryPlugin')
 const LimitChunkCountPlugin = require('webpack/lib/optimize/LimitChunkCountPlugin')
 const path = require('path')
 const WxsPlugin = require('./WxsPlugin')
@@ -17,7 +17,7 @@ module.exports = function () {
   const assetsInfo = mpx.assetsInfo
   const mode = mpx.mode
   const wxsMap = mpx.wxsMap
-  const rootName = mainCompilation._preparedEntrypoints[0].name
+  const rootName = mainCompilation.entries.keys().next().value
   let { resourcePath, queryObj } = parseRequest(this.resource)
   const { resourcePath: issuerResourcePath, queryObj: issuerQueryObj } = parseRequest(queryObj.issuerResource || this._module.issuer.resource)
   const issuerPackageName = issuerQueryObj.packageName || mpx.currentPackageRoot || 'main'
@@ -74,7 +74,7 @@ module.exports = function () {
   const plugins = [
     new WxsPlugin({ mode }),
     new NodeTargetPlugin(),
-    new SingleEntryPlugin(this.context, request, getName(filename)),
+    new EntryPlugin(this.context, request, { name: getName(filename) }),
     new LimitChunkCountPlugin({ maxChunks: 1 })
   ]
 

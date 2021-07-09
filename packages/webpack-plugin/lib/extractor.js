@@ -3,7 +3,7 @@ const path = require('path')
 const NodeTemplatePlugin = require('webpack/lib/node/NodeTemplatePlugin')
 const NodeTargetPlugin = require('webpack/lib/node/NodeTargetPlugin')
 const LibraryTemplatePlugin = require('webpack/lib/LibraryTemplatePlugin')
-const SingleEntryPlugin = require('webpack/lib/SingleEntryPlugin')
+const EntryPlugin = require('webpack/lib/EntryPlugin')
 const LimitChunkCountPlugin = require('webpack/lib/optimize/LimitChunkCountPlugin')
 const ChildCompileDependency = require('./dependency/ChildCompileDependency')
 const normalize = require('./utils/normalize')
@@ -12,6 +12,7 @@ const getMainCompilation = require('./utils/get-main-compilation')
 const toPosix = require('./utils/to-posix')
 const config = require('./config')
 const fixRelative = require('./utils/fix-relative')
+const NativeModule = require('module')
 
 const defaultResultSource = '// removed by extractor'
 
@@ -30,11 +31,10 @@ module.exports = function (content) {
   const mode = mpx.mode
   const typeExtMap = config[mode].typeExtMap
 
-  const rootName = mainCompilation._preparedEntrypoints[0].name
-  const rootRequest = mainCompilation._preparedEntrypoints[0].request
-  const rootModule = mainCompilation.entries.find((module) => {
-    return module.rawRequest === rootRequest
-  })
+  const rootEntry = mainCompilation.entries.values().next().value
+  const rootName = rootEntry.options.name
+  const rootDep = rootEntry.dependencies[0]
+  const rootModule = mainCompilation.moduleGraph.getModule(rootDep)
   const rootResourcePath = parseRequest(rootModule.resource).resourcePath
 
   let resultSource = defaultResultSource
@@ -61,6 +61,14 @@ module.exports = function (content) {
         }
       }).outputPath
     }
+  }
+
+  const exec = (code, filename) => {
+    const module = new NativeModule(filename, this)
+    module.paths = NativeModule._nodeModulePaths(this.context)
+    module.filename = filename
+    module._compile(code, filename)
+    return module.exports
   }
 
   const type = options.type
@@ -140,7 +148,7 @@ module.exports = function (content) {
     new NodeTemplatePlugin(outputOptions),
     new LibraryTemplatePlugin(null, 'commonjs2'),
     new NodeTargetPlugin(),
-    new SingleEntryPlugin(this.context, request, filename),
+    new EntryPlugin(this.context, request, { name: filename }),
     new LimitChunkCountPlugin({ maxChunks: 1 })
   ])
 
@@ -191,7 +199,7 @@ module.exports = function (content) {
     }
 
     try {
-      let text = this.exec(source, request)
+      let text = exec(source, request)
       if (Array.isArray(text)) {
         text = text.map((item) => {
           return item[1]

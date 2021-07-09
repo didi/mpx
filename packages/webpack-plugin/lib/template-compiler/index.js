@@ -126,12 +126,14 @@ ${e.stack}`)
   const parser = issuer.parser
 
   // 同步issuer的dependencies，确保watch中issuer rebuild时template也进行rebuild，使该loader中往issuer中注入的依赖持续有效
-  issuer.buildInfo.fileDependencies.forEach((dep) => {
-    this.addDependency(dep)
-  })
-  issuer.buildInfo.contextDependencies.forEach((dep) => {
-    this.addContextDependency(dep)
-  })
+  // todo 后续进行机制改造，去除类似同步dependencies的必要
+  const issuerSnapshot = issuer.buildInfo.snapshot
+  for (const file of issuerSnapshot.getFileIterable()) {
+    this.addDependency(file)
+  }
+  for (const context of issuerSnapshot.getContextIterable()) {
+    this.addContextDependency(context)
+  }
 
   // 删除issuer中上次注入的dependencies，避免issuer本身不需要更新时上次的注入代码残留
   issuer.dependencies = issuer.dependencies.filter((dep) => {

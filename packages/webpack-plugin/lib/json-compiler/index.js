@@ -1,7 +1,7 @@
 const async = require('async')
 const JSON5 = require('json5')
 const path = require('path')
-const SingleEntryPlugin = require('webpack/lib/SingleEntryPlugin')
+const EntryPlugin = require('webpack/lib/EntryPlugin')
 const loaderUtils = require('loader-utils')
 const parseComponent = require('../parser')
 const config = require('../config')
@@ -66,7 +66,7 @@ module.exports = function (raw = '{}') {
   const isApp = !(pagesMap[resourcePath] || componentsMap[resourcePath])
   const publicPath = this._compilation.outputOptions.publicPath || ''
   const fs = this._compiler.inputFileSystem
-  const rootName = mainCompilation._preparedEntrypoints[0].name
+  const rootName = mainCompilation.entries.keys().next().value
   const currentName = componentsMap[resourcePath] || pagesMap[resourcePath] || rootName
   const currentPath = publicPath + currentName
 
@@ -127,9 +127,9 @@ module.exports = function (raw = '{}') {
   const addEntrySafely = (resource, name, callback) => {
     // 如果loader已经回调，就不再添加entry
     if (callbacked) return callback()
-    const dep = SingleEntryPlugin.createDependency(resource, name)
+    const dep = EntryPlugin.createDependency(resource, { name })
     entryDeps.add(dep)
-    this._compilation.addEntry(this._compiler.context, dep, name, (err, module) => {
+    this._compilation.addEntry(this._compiler.context, dep, { name }, (err, module) => {
       entryDeps.delete(dep)
       checkEntryDeps()
       callback(err, module)
