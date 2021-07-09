@@ -324,7 +324,6 @@ module.exports = function (content) {
         return match.toLowerCase()
       }))}\n`
 
-      //
       // <script>
       output += '/* script */\n'
       let scriptSrcMode = srcMode

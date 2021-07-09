@@ -7,7 +7,7 @@ import createStore, {
   createActionsWithThis
 } from './core/createStore'
 import { injectMixins } from './core/injectMixins'
-import { extend, diffAndCloneA, makeMap, merge } from './helper/utils'
+import { extend, diffAndCloneA, makeMap, merge, hasOwn } from './helper/utils'
 import { setConvertRule } from './convertor/convertor'
 import { getMixin } from './core/mergeOptions'
 import { error } from './helper/log'
@@ -57,7 +57,7 @@ function extendProps (target, proxyObj, rawProps, option) {
         ? option.prefix + '_' + key
         : key + '_' + option.postfix
       target[transformKey] = proxyObj[key]
-    } else if (!target.hasOwnProperty(key)) {
+    } else if (!hasOwn(target, key)) {
       target[key] = proxyObj[key]
     } else {
       error(`Mpx property [${key}] from installing plugin conflicts with already exists，please pass prefix/postfix options to avoid property conflict, for example: "use('plugin', {prefix: 'mm'})"`)

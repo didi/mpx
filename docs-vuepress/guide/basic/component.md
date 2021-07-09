@@ -10,7 +10,7 @@ Mpx中提供了使用方法类似于 Vue 的动态组件能力，这是一个基
 使用示例如下：
 
 ```html
-<view>w
+<view>
   <!-- current为组件名称字符串，可选范围为局部注册的自定义组件和全局注册的自定义组件 -->
   <!-- 当 `current`改变时，组件也会跟着切换  -->
   <component is="{{current}}"></component>

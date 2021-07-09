@@ -27,14 +27,6 @@ export default class XFetch {
     return new XFetch(options)
   }
 
-  lock () {
-    console.warn('The xfetch.lock api is useless now and will be removed in next minor version!')
-  }
-
-  unlock () {
-    console.warn('The xfetch.unlock api is useless now and will be removed in next minor version!')
-  }
-
   addLowPriorityWhiteList (rules) {
     // when useQueue not optioned, this.quene is undefined
     this.queue && this.queue.addLowPriorityWhiteList(rules)
@@ -47,13 +39,13 @@ export default class XFetch {
     let promise = Promise.resolve(config)
 
     // use queue
-    const request = this.queue && (() => this.queue.request(config, priority))
+    const request = (config) => this.queue ? this.queue.request(config, priority) : this.requestAdapter(config)
 
     this.interceptors.request.forEach(function unshiftRequestInterceptors (interceptor) {
       chain.push(interceptor.fulfilled, interceptor.rejected)
     })
 
-    chain.push(request || this.requestAdapter, undefined)
+    chain.push(request, undefined)
 
     this.interceptors.response.forEach(function pushResponseInterceptors (interceptor) {
       chain.push(interceptor.fulfilled, interceptor.rejected)

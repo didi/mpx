@@ -2,13 +2,14 @@ import * as wxLifecycle from '../platform/patch/wx/lifecycle'
 import * as aliLifecycle from '../platform/patch/ali/lifecycle'
 import * as webLifecycle from '../platform/patch/web/lifecycle'
 import { mergeLifecycle } from './mergeLifecycle'
-import { isObject } from '../helper/utils'
+import { isObject, hasOwn } from '../helper/utils'
 import { error } from '../helper/log'
 import wxToAliRule from './wxToAli'
 import wxToWebRule from './wxToWeb'
 import wxToSwanRule from './wxToSwan'
 import wxToQqRule from './wxToQq'
 import wxToTtRule from './wxToTt'
+import wxToDdRule from './wxToDd'
 
 // 生命周期模板
 const lifecycleTemplates = {
@@ -16,6 +17,7 @@ const lifecycleTemplates = {
   ali: aliLifecycle.LIFECYCLE,
   swan: wxLifecycle.LIFECYCLE,
   qq: wxLifecycle.LIFECYCLE,
+  jd: wxLifecycle.LIFECYCLE,
   tt: wxLifecycle.LIFECYCLE
 }
 // 根据当前环境获取的默认生命周期信息
@@ -52,11 +54,14 @@ const defaultConvertRule = {
 const RULEMAPS = {
   local: { ...defaultConvertRule },
   default: defaultConvertRule,
-  wxToWeb: wxToWebRule, // 微信转web rule
+  // 微信转web rule
+  wxToWeb: wxToWebRule,
+  // 微信转支付宝rule
+  wxToAli: wxToAliRule,
   wxToSwan: { ...defaultConvertRule, ...wxToSwanRule },
   wxToQq: { ...defaultConvertRule, ...wxToQqRule },
   wxToTt: { ...defaultConvertRule, ...wxToTtRule },
-  wxToAli: wxToAliRule // 微信转支付宝rule
+  wxToDd: { ...defaultConvertRule, ...wxToDdRule }
 
 }
 
@@ -70,7 +75,7 @@ export function setConvertRule (rule) {
     rule.lifecycle = mergeLifecycle(rule.lifecycle)
   }
   Object.keys(defaultConvertRule).forEach(key => {
-    if (rule.hasOwnProperty(key)) {
+    if (hasOwn(rule, key)) {
       if (isObject(defaultConvertRule[key])) {
         defaultConvertRule[key] = Object.assign({}, defaultConvertRule[key], rule[key])
       } else {

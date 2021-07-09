@@ -191,6 +191,19 @@ module.exports = function (raw = '{}') {
     fixUsingComponent(json.usingComponents, mode, emitWarning)
   }
 
+  // 快应用补全json配置，必填项
+  if (mode === 'qa' && isApp) {
+    const defaultConf = {
+      package: '',
+      name: '',
+      icon: 'assets/images/logo.png',
+      versionName: '',
+      versionCode: 1,
+      minPlatformVersion: 1080
+    }
+    json = Object.assign({}, defaultConf, json)
+  }
+
   const rulesRunnerOptions = {
     mode,
     mpx,
