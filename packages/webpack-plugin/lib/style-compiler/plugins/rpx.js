@@ -25,10 +25,10 @@ module.exports = postcss.plugin('rpx', (options = {}) => root => {
     let unit
     let regExp
     if (rpxRegExp.test(declaration.value)) {
-      regExp = rpxRegExp
+      regExp = rpxRegExpG
       unit = 'rpx'
     } else if (pxRegExp.test(declaration.value)) {
-      regExp = pxRegExp
+      regExp = pxRegExpG
       unit = 'px'
     }
     declaration.value = declaration.value.replace(regExp, function (match, $1) {
@@ -36,7 +36,7 @@ module.exports = postcss.plugin('rpx', (options = {}) => root => {
     })
   }
 
-  function handleCalc(value, unit) {
+  function handleCalc (value, unit) {
     if (value === '0') return value
     switch (unit) {
       case 'rpx':
