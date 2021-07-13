@@ -134,7 +134,6 @@
     mounted () {
       this.initStyle()
       this.initEvent()
-      // this.fullscreenchangeHandler()
     },
     methods: {
       initStyle () {
@@ -155,17 +154,17 @@
         const videoNode = this.$refs['_mpx_video_ref']
         videoNode.addEventListener('play', (e) => {
           const eventDetails = e && inheritEvent('play', e, {})
-          this.$emit('play')
+          this.$emit('play', eventDetails)
         })
 
         videoNode.addEventListener('pause', (e) => {
           const eventDetails = e && inheritEvent('pause', e, {})
-          this.$emit('pause')
+          this.$emit('pause', eventDetails)
         })
 
         videoNode.addEventListener('ended', (e) => {
           const eventDetails = e && inheritEvent('ended', e, {})
-          this.$emit('ended')
+          this.$emit('ended', eventDetails)
         })
 
         videoNode.addEventListener('timeupdate', (e) => {
@@ -176,12 +175,12 @@
 
         videoNode.addEventListener('error', (e) => {
           const eventDetails = e && inheritEvent('error', e, {})
-          this.$emit('error')
+          this.$emit('error', eventDetails)
         })
 
         videoNode.addEventListener('waiting', (e) => {
           const eventDetails = e && inheritEvent('waiting', e, {})
-          this.$emit('waiting')
+          this.$emit('waiting', eventDetails)
         })
 
         videoNode.addEventListener('loadedmetadata', (e) => {
@@ -218,12 +217,12 @@
 
         videoNode.addEventListener('enterpictureinpicture', (e) => {
           const eventDetails = e && inheritEvent('enterpictureinpicture', e, {})
-          this.$emit('enterpictureinpicture')
+          this.$emit('enterpictureinpicture', eventDetails)
         })
 
         videoNode.addEventListener('leavepictureinpicture', (e) => {
           const eventDetails = e && inheritEvent('leavepictureinpicture', e, {})
-          this.$emit('leavepictureinpicture')
+          this.$emit('leavepictureinpicture', eventDetails)
         })
       }
     }
