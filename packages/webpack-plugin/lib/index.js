@@ -33,6 +33,7 @@ const {
   addCustomComponentWxss,
   getInjectedComponentMap
 } = require('./runtime-utils')
+const baseWxml = require('./template-compiler/base-wxml')
 
 const isProductionLikeMode = options => {
   return options.mode === 'production' || !options.mode
@@ -628,7 +629,9 @@ class MpxWebpackPlugin {
 
           // 基础模板信息注入
           if (/mpx-render-base\w*\.wxml/.test(file)) {
-            let runtimeTemplate = genRuntimeTemplate(getTemplateNodes())
+            const baseWxmlTemplate = baseWxml.generate()
+            const runtimeTemplate = genRuntimeTemplate(getTemplateNodes())
+            content.add(baseWxmlTemplate)
             content.add(runtimeTemplate)
           }
 

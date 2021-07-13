@@ -15,6 +15,19 @@
   </block>
 </template>
 
+<template name="h-element"><view
+  style="{{r.data.style}}"
+  class="{{r.data.class}}"
+  id="{{r.data.id}}"
+  animation="{{r.data.animation}}"
+
+  bindtap="__invoke"
+  bindtouchstart="__invoke"
+  bindtouchmove="__invoke"
+  bindtouchend="__invoke"
+  bindtouchcancel="__invoke"
+><template is="children" data="{{r: r.children}}" /></view></template>
+
 <!-- <template name="children">
   <block wx:for="{{r}}" wx:key="nodeId">
     <block wx:if="{{item.nodeId}}">
@@ -26,7 +39,7 @@
   </block>
 </template> -->
 
-<template name="block">
+<!-- <template name="block">
   <template is="children" data="{{ r: r.children }}"></template>
 </template>
 
@@ -213,21 +226,6 @@
       scale-max="{{tool.processVal(item['scale-max'], 10)}}"
       scale-value="{{tool.processVal(item['scale-value'], 1)}}"
     ><template is="children" data="{{r: item.children}}" /></moveable-view></moveable-area></template>
-
-  <template name="h-element"><view
-    style="{{r.style}}"
-    class="{{r.class}}"
-    id="{{r.id}}"
-    animation="{{r.animation}}"
-    data-private-node-id="{{r.nodeId}}"
-
-    bindtap="__invoke"
-    bindtouchstart="__invoke"
-    bindtouchmove="__invoke"
-    bindtouchend="__invoke"
-    bindtouchcancel="__invoke"
-  ><template is="children" data="{{r: r.children}}" /></view></template>
-
 
   <template name="h-comment">
     {{ r.content }}
@@ -938,5 +936,5 @@
     bindbgmprogress="__invoke"
     bindbgmcomplete="__invoke"
     bindaudiovolumenotify="__invoke"
-  ></live-pusher></template>
+  ></live-pusher></template> -->
 

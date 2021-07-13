@@ -18,6 +18,7 @@ const {
   getAliasTag,
   collectInjectedPath
 } = require('../runtime-utils')
+const baseWxml = require('./base-wxml')
 
 let hashIndex = 0
 /**
@@ -2432,7 +2433,18 @@ function closeElement (el, options, meta, currentParent) {
   }
   postProcessFor(el)
   postProcessIf(el, options, currentParent)
+  postProcessRuntime(el, options)
   postProcessHashComponent(el, meta)
+}
+
+// 部分节点类型不需要被收集
+const runtimeFilterTag = ['component', 'slot']
+
+function postProcessRuntime (el) {
+  // 只收集基本节点类型
+  if (el.runtimeCompile && !el.aliasTag && !runtimeFilterTag.includes(el.tag)) {
+    baseWxml.set(el)
+  }
 }
 
 function postProcessHashComponent (el, meta) {

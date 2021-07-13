@@ -22,14 +22,14 @@ const filterKeys = [
 
 function genNotRuntimeCustomComponentSlots () {
   return `
-    <block wx:for="{{r.children}}" wx:key="nodeId">
-      <block wx:if="{{item['slot']}}">
-        <view slot="{{item['slot']}}">
+    <block wx:for="{{r.children}}" wx:key="index">
+      <block wx:if="{{item.data['slot']}}">
+        <view slot="{{item.data['slot']}}">
           <element r="{{item}}"></element>
         </view>
       </block>
       <block wx:else>
-        <block wx:if="{{item.nodeId}}">
+        <block wx:if="{{item.nodeType}}">
           <element r="{{item}}"></element>
         </block>
         <block wx:else>
