@@ -5,16 +5,26 @@
 </template>
 
 <template name="children">
-  <block wx:for="{{r}}" wx:key="nodeId">
-    <block wx:if="{{item.nodeId}}">
+  <block wx:for="{{r}}" wx:key="index">
+    <block wx:if="{{item.nodeType}}">
       <element r="{{item}}" />
     </block>
-    <!-- wx:else 不能被渲染？ -->
-    <block wx:if="{{!item.nodeId}}">
+    <block wx:if="{{!item.nodeType}}">
       <block>{{item.content}}</block>
     </block>
   </block>
 </template>
+
+<!-- <template name="children">
+  <block wx:for="{{r}}" wx:key="nodeId">
+    <block wx:if="{{item.nodeId}}">
+      <element r="{{item}}" />
+    </block>
+    <block wx:if="{{!item.nodeId}}">
+      <block>{{item.content}}</block>
+    </block>
+  </block>
+</template> -->
 
 <template name="block">
   <template is="children" data="{{ r: r.children }}"></template>
@@ -22,13 +32,13 @@
 
 <template name="view">
   <view
-    style="{{r.style}}"
-    class="{{r.class}}"
-    id="{{r.id}}"
-    hidden="{{r.hidden}}"
-    animation="{{r.animation}}"
+    style="{{r.data.style}}"
+    class="{{r.data.class}}"
+    id="{{r.data.id}}"
+    hidden="{{r.data.hidden}}"
+    animation="{{r.data.animation}}"
     data-private-node-id="{{r.nodeId}}"
-    data-eventconfigs="{{ r.eventconfigs }}"
+    data-eventconfigs="{{ r.data.eventconfigs }}"
 
     bindtap="__invoke"
     bindtouchstart="__invoke"
@@ -37,12 +47,12 @@
     bindtouchcancel="__invoke"
     bindlongpress="__invoke"
 
-    hover-class="{{r['hover-class']}}"
-    hover-start-time="{{r['hover-start-time']}}"
-    hover-stay-time="{{r['hover-stay-time']}}"
-    hidden="{{r.hidden}}"
-    hover-stop-propagation="{{r['hover-stop-propagation']}}"
-    role="{{r.role}}"
+    hover-class="{{r.data['hover-class']}}"
+    hover-start-time="{{r.data['hover-start-time']}}"
+    hover-stay-time="{{r.data['hover-stay-time']}}"
+    hidden="{{r.data.hidden}}"
+    hover-stop-propagation="{{r.data['hover-stop-propagation']}}"
+    role="{{r.data.role}}"
   ><template is="children" data="{{r: r.children}}" /></view>
 </template>
 
@@ -309,13 +319,13 @@
   ></rich-text></template>
 
   <template name="button"><button
-    style="{{r.style}}"
-    class="{{r.class}}"
-    hidden="{{r.hidden}}"
-    id="{{r.id}}"
-    animation="{{r.animation}}"
+    style="{{r.data.style}}"
+    class="{{r.data.class}}"
+    hidden="{{r.data.hidden}}"
+    id="{{r.data.id}}"
+    animation="{{r.data.animation}}"
     data-private-node-id="{{r.nodeId}}"
-    data-eventconfigs="{{ r.eventconfigs }}"
+    data-eventconfigs="{{ r.data.eventconfigs }}"
 
     bindtap="__invoke"
     bindtouchstart="__invoke"
@@ -330,25 +340,25 @@
     bindopensetting="__invoke"
     bindlaunchapp="__invoke"
 
-    size="{{tool.processVal(r.size, 'default')}}"
-    type="{{tool.processVal(r.type, '')}}"
-    plain="{{tool.processVal(r.plain, false)}}"
-    disabled="{{tool.processVal(r.disabled, false)}}"
-    loading="{{tool.processVal(r.loading, false)}}"
-    form-type="{{tool.processVal(r['form-type'], '')}}"
-    open-type="{{tool.processVal(r['open-type'], '')}}"
-    hover-class="{{tool.processVal(r['hover-class'], 'button-hover')}}"
-    hover-stop-propagation="{{tool.processVal(r['hover-stop-propagation'], false)}}"
-    hover-start-time="{{tool.processVal(r['hover-start-time'], 20)}}"
-    hover-stay-time="{{tool.processVal(r['hover-stay-time'], 70)}}"
-    lang="{{tool.processVal(r.lang, 'en')}}"
-    session-from="{{tool.processVal(r['session-from'], '')}}"
-    send-message-title="{{tool.processVal(r['send-message-title'], '')}}"
-    send-message-path="{{tool.processVal(r['send-message-path'], '')}}"
-    send-message-img="{{tool.processVal(r['send-message-img'], '')}}"
-    app-parameter="{{tool.processVal(r['app-parameter'], '')}}"
-    show-message-card="{{tool.processVal(r['show-message-card'], '')}}"
-    business-id="{{tool.processVal(r['business-id'], '')}}"
+    size="{{tool.processVal(r.data.size, 'default')}}"
+    type="{{tool.processVal(r.data.type, '')}}"
+    plain="{{tool.processVal(r.data.plain, false)}}"
+    disabled="{{tool.processVal(r.data.disabled, false)}}"
+    loading="{{tool.processVal(r.data.loading, false)}}"
+    form-type="{{tool.processVal(r.data['form-type'], '')}}"
+    open-type="{{tool.processVal(r.data['open-type'], '')}}"
+    hover-class="{{tool.processVal(r.data['hover-class'], 'button-hover')}}"
+    hover-stop-propagation="{{tool.processVal(r.data['hover-stop-propagation'], false)}}"
+    hover-start-time="{{tool.processVal(r.data['hover-start-time'], 20)}}"
+    hover-stay-time="{{tool.processVal(r.data['hover-stay-time'], 70)}}"
+    lang="{{tool.processVal(r.data.lang, 'en')}}"
+    session-from="{{tool.processVal(r.data['session-from'], '')}}"
+    send-message-title="{{tool.processVal(r.data['send-message-title'], '')}}"
+    send-message-path="{{tool.processVal(r.data['send-message-path'], '')}}"
+    send-message-img="{{tool.processVal(r.data['send-message-img'], '')}}"
+    app-parameter="{{tool.processVal(r.data['app-parameter'], '')}}"
+    show-message-card="{{tool.processVal(r.data['show-message-card'], '')}}"
+    business-id="{{tool.processVal(r.data['business-id'], '')}}"
   ><template is="children" data="{{r: r.children}}" /></button></template>
 
 
@@ -392,12 +402,12 @@
   ><template is="children" data="{{r: r.children}}" /></label></template>
 
   <template name="input"><input
-    style="{{r.style}}"
-    class="{{r.class}}"
-    hidden="{{r.hidden}}"
-    id="{{r.id}}"
+    style="{{r.data.style}}"
+    class="{{r.data.class}}"
+    hidden="{{r.data.hidden}}"
+    id="{{r.data.id}}"
     data-private-node-id="{{r.nodeId}}"
-    data-eventconfigs="{{ r.eventconfigs }}"
+    data-eventconfigs="{{ r.data.eventconfigs }}"
 
     bindtap="__invoke"
 
@@ -407,7 +417,7 @@
     bindconfirm="__invoke"
     bindkeyboardheightchange="__invoke"
 
-    value="{{r.value}}"
+    value="{{r.data.value}}"
     type="{{tool.processVal(r.type, 'text')}}"
     password="{{r.password}}"
     placeholder="{{r.placeholder}}"
@@ -625,12 +635,12 @@
 
 
   <template name="picker"><picker
-    style="{{r.style}}"
-    class="{{r.class}}"
-    hidden="{{r.hidden}}"
-    id="{{r.id}}"
+    style="{{r.data.style}}"
+    class="{{r.data.class}}"
+    hidden="{{r.data.hidden}}"
+    id="{{r.data.id}}"
     data-private-node-id="{{r.nodeId}}"
-    data-eventconfigs="{{ r.eventconfigs }}"
+    data-eventconfigs="{{ r.data.eventconfigs }}"
 
     bindtap="__invoke"
     bindtouchstart="__invoke"
@@ -642,16 +652,16 @@
     bindcolumnchange="__invoke"
     bindcancel="__invoke"
 
-    name="{{r.name}}"
-    mode="{{tool.processVal(r.mode, 'selector')}}"
-    disabled="{{r.disabled}}"
-    range="{{tool.processVal(r.range, [])}}"
-    range-key="{{tool.processVal(r['range-key'], '')}}"
-    value="{{r.value}}"
-    start="{{tool.processVal(r.start, '')}}"
-    end="{{tool.processVal(r.end, '')}}"
-    fields="{{tool.processVal(r.fields, 'day')}}"
-    customItem="{{tool.processVal(r['custom-item'], '')}}"
+    name="{{r.data.name}}"
+    mode="{{tool.processVal(r.data.mode, 'selector')}}"
+    disabled="{{r.data.disabled}}"
+    range="{{tool.processVal(r.data.range, [])}}"
+    range-key="{{tool.processVal(r.data['range-key'], '')}}"
+    value="{{r.data.value}}"
+    start="{{tool.processVal(r.data.start, '')}}"
+    end="{{tool.processVal(r.data.end, '')}}"
+    fields="{{tool.processVal(r.data.fields, 'day')}}"
+    customItem="{{tool.processVal(r.data['custom-item'], '')}}"
   ><template is="children" data="{{r: r.children}}" /></picker></template>
 
   <template name="navigator"><navigator

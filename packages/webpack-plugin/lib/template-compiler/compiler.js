@@ -960,6 +960,10 @@ function parse (template, options) {
             text: decodeInMustache(text),
             parent: currentParent
           }
+          // 作为运行时组件的文本节点需要设置 slotTarget 用以数据渲染
+          if (hasRuntimeCompileWrapper(el)) {
+            el.slotTarget = stringify('default')
+          }
           children.push(el)
           processText(el)
         }
@@ -2286,7 +2290,7 @@ function processBindProps (el) {
 // runtimeComponents 都需要将 slots 作为属性传递下去
 function processRuntime (el, options) {
   el.runtimeCompile = !!options.runtimeCompile
-
+  el.moduleId = options.moduleId
   // 如果是运行时组件
   if (el.isRuntimeComponent) {
     // 如果是运行时组件a嵌套了运行时组件b，即b作为a的slot，那么将b标记为 innerRuntimeComponent
@@ -2314,9 +2318,13 @@ function processRuntime (el, options) {
     if (options.runtimeCompile || el.inRuntimeCompileWrapper || el.innerRuntimeComponent) {
       const tag = el.tag
       const componentAbsolutePath = options.componentsAbsolutePath[tag]
-      const { aliasTag } = getAliasTag()[componentAbsolutePath]
-      el.aliasTag = aliasTag
-      collectInjectedPath(componentAbsolutePath)
+      if (componentAbsolutePath) {
+        const pathAndTagMap = getAliasTag()[componentAbsolutePath] || {}
+        if (pathAndTagMap.aliasTag) {
+          el.aliasTag = pathAndTagMap.aliasTag
+        }
+        collectInjectedPath(componentAbsolutePath)
+      }
     }
   }
 }
@@ -2704,6 +2712,8 @@ function genElement (node) {
     } else {
       return _genChildren(node)
     }
+  } else if (node.type === 3) {
+    return _genNode(node)
   }
 }
 
@@ -2731,7 +2741,7 @@ function genHandlers (events) {
 
   Object.keys(events).map(name => {
     const { funcName } = events[name]
-    staticHandlers += `${funcName}: this.${funcName.slice(1, -1)}.bind(this),`
+    staticHandlers += `${funcName}: this.${funcName.slice(1, -1)},`
   })
 
   return bindeventsKey + `{${staticHandlers}}`
@@ -2740,6 +2750,10 @@ function genHandlers (events) {
 function _genData (node) {
   let bigAttrs = 'bigAttrs: __b('
   let data = '{'
+  // 通过 moduleId 来维持所有子组件的唯一根节点
+  if (node.moduleId) {
+    data += `moduleId: "${node.moduleId}",`
+  }
   // 自定义组件节点 wx:show，需要将 mpxShow 作为属性传递到自定义组件内部，原生的元素节点通过 style 来进行控制 node.showStyle
   if (node.show) {
     data += `mpxShow: ${node.show},`

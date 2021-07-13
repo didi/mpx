@@ -7,7 +7,18 @@ const runtimeCompileMap = {}
 let templateNodes = {}
 let pathAndAliasTagMap = {}
 
-const filterKeys = ['data-eventconfigs', 'mpxShow', 'big-attrs', 'mpxPageStatus']
+// mpx-render-base.wxml 里面的指令生成都需要被忽略掉
+const filterKeys = [
+  'wx:for',
+  'wx:for-index',
+  'wx:for-item',
+  'wx:if',
+  'is',
+  'data-eventconfigs',
+  'mpxShow',
+  'big-attrs',
+  'mpxPageStatus'
+]
 
 function genNotRuntimeCustomComponentSlots () {
   return `
@@ -125,13 +136,13 @@ module.exports = {
       res += `<template name="${templateName}">`
       res += `<${nodeTag}`
       if (node.class || node.staticClass) {
-        res += ' ' + 'class="{{ r.class }}"'
+        res += ' ' + 'class="{{ r.data.class }}"'
       }
       if (node.style || node.staticStyle || node.showStyle) {
-        res += ' ' + 'style="{{ r.style }}"'
+        res += ' ' + 'style="{{ r.data.style }}"'
       }
       if (node.hidden) {
-        res += ' ' + 'hidden="{{ r.hidden }}"'
+        res += ' ' + 'hidden="{{ r.data.hidden }}"'
       }
       // 事件统一代理至 __invoke 方法上，通过 data-eventconfigs 获取真实的事件信息
       if (node.events) {
@@ -146,14 +157,14 @@ module.exports = {
        * 2. 统一使用 slots 属性传递插槽的 render 函数
        */
       if (node.isRuntimeComponent) {
-        res += ' ' + `big-attrs="{{ r.bigAttrs }}"`
-        res += ' ' + 'slots="{{ r.slots }}"'
+        res += ' ' + `big-attrs="{{ r.data.bigAttrs }}"`
+        res += ' ' + 'slots="{{ r.data.slots }}"'
       }
       if (node.mpxPageStatus) {
-        res += ' ' + 'mpxPageStatus="{{ r.mpxPageStatus || \'\' }}"'
+        res += ' ' + 'mpxPageStatus="{{ r.data.mpxPageStatus || \'\' }}"'
       }
-      res += ' ' + 'mpxShow="{{ r.mpxShow === undefined ? true : r.mpxShow }}"'
-      res += ' ' + 'data-eventconfigs="{{ r.eventconfigs }}"'
+      res += ' ' + 'mpxShow="{{ r.data.mpxShow === undefined ? true : r.data.mpxShow }}"'
+      res += ' ' + 'data-eventconfigs="{{ r.data.eventconfigs }}"'
       res += ' ' + 'data-private-node-id="{{ r.nodeId }}"'
       node.attrsList.forEach((attr) => {
         // 事件统一走 __invoke 代理
@@ -167,9 +178,9 @@ module.exports = {
           // res += '=' + stringifyAttr(value)
           // 带有连字符的属性（是否统一使用驼峰）
           if (attr.name.includes('-')) {
-            res += `="{{ r['${attr.name}'] }}"`
+            res += `="{{ r.data['${attr.name}'] }}"`
           } else {
-            res += `="{{ r.${attr.name} }}"`
+            res += `="{{ r.data.${attr.name} }}"`
           }
         }
       })
@@ -209,7 +220,9 @@ module.exports = {
         res += `${slotTarget}: [`
         const renderFns = slotsMap[slotTarget] || []
         renderFns.map((renderFn) => {
-          res += `${renderFn},`
+          if (renderFn) {
+            res += `${renderFn},`
+          }
         })
         res += '],'
       })

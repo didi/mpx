@@ -21,11 +21,26 @@ createComponent({
       value: {}
     }
   },
+  computed: {
+    vnodeData () {
+      const data = this.r.data || {}
+      return data
+    },
+    vnodeId () {
+      return this.r.nodeId
+    },
+    vnodeRootContext () {
+      const moduleId = this.vnodeData.moduleId
+      return this._getRootContext(moduleId)
+    }
+  },
   attached() {
     // 动态绑定由 vnode 传递的事件
-    if (this.r.mpxbindevents) {
-      Object.keys(this.r.mpxbindevents).map(event => {
-        this[event] = this.r.mpxbindevents[event]
+    if (this.vnodeData.mpxbindevents) {
+      Object.keys(this.vnodeData.mpxbindevents).map(event => {
+        // this[event] = this.vnodeData.mpxbindevents[event]
+        // 固定事件调用上下文
+        this[event] = this.vnodeData.mpxbindevents[event].bind(this.vnodeRootContext)
       })
     }
   },

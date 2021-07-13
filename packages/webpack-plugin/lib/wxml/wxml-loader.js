@@ -20,7 +20,7 @@ module.exports = function (content) {
   const mpx = getMainCompilation(this._compilation).__mpx__
 
   const { resourcePath: filePath, queryObj } = parseRequest(this.resource)
-  const moduleId = mpx.pathHash(filePath)
+  const moduleId = 'm' + mpx.pathHash(filePath)
 
   const needCssSourceMap = (
     !isProduction &&

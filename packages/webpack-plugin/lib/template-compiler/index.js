@@ -194,7 +194,9 @@ module.exports = function (raw) {
     const aliasTags = getAliasTag()
     options.usingComponents.map(name => {
       const path = options.componentsAbsolutePath[name]
-      injectAliasTag[name] = aliasTags[path]['aliasTag']
+      if (path && aliasTags[path]) {
+        injectAliasTag[name] = aliasTags[path]['aliasTag']
+      }
     })
     globalInjectCode += `global.currentInject.aliasTags = ${JSON.stringify(injectAliasTag)};\n`
   }
@@ -267,7 +269,7 @@ module.exports = function (raw) {
 
   for (let module in meta.wxsModuleMap) {
     isSync = false
-    const src = loaderUtils.urlToRequest(meta.wxsModuleMap[module], options.projectRoot)
+    const src = loaderUtils.urlToRequest(meta.wxsModuleMap[module], options.root)
     // 编译render函数只在mpx文件中运行，此处issuer的context一定等同于当前loader的context
     const expression = `require(${loaderUtils.stringifyRequest(this, src)})`
     const deps = []
