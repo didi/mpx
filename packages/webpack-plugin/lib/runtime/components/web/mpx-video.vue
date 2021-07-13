@@ -14,7 +14,7 @@
 </template>
 
 <script>
-  // import getInnerListeners from './getInnerListeners'
+  import { inheritEvent } from './getInnerListeners'
   export default {
     name: 'mpx-video',
     props: {
@@ -126,23 +126,21 @@
     },
     data () {
       return {
-        videoNode: null,
         showControlsTool: this.controls,
         mutedCopy: this.muted,
-        classList: '',
-        processTimer: null
+        classList: ''
       }
     },
     mounted () {
-      this.videoNode = this.$refs['_mpx_video_ref']
       this.initStyle()
       this.initEvent()
-      this.fullscreenchangeHandler()
+      // this.fullscreenchangeHandler()
     },
     methods: {
       initStyle () {
+        const videoNode = this.$refs['_mpx_video_ref']
         if (this.initialTime) {
-          this.videoNode.currentTime = this.initialTime
+          videoNode.currentTime = this.initialTime
         }
         if (this.autoplay) { // log 解决autoplay无法自动播放问题
           this.mutedCopy = true
@@ -154,68 +152,78 @@
         if (!this.showMuteBtn) this.classList += ' mpx-no-show_mute_btn'
       },
       initEvent () {
-        this.videoNode.addEventListener('play', () => {
+        const videoNode = this.$refs['_mpx_video_ref']
+        videoNode.addEventListener('play', (e) => {
+          const eventDetails = e && inheritEvent('play', e, {})
           this.$emit('play')
-          this.processListener()
         })
-        this.videoNode.addEventListener('pause', () => {
-          clearInterval(this.processTimer)
+
+        videoNode.addEventListener('pause', (e) => {
+          const eventDetails = e && inheritEvent('pause', e, {})
           this.$emit('pause')
         })
-        this.videoNode.addEventListener('ended', () => {
+
+        videoNode.addEventListener('ended', (e) => {
+          const eventDetails = e && inheritEvent('ended', e, {})
           this.$emit('ended')
         })
-        this.videoNode.addEventListener('error', (e) => {
-          this.$emit('error', e)
+
+        videoNode.addEventListener('timeupdate', (e) => {
+          const eNode = e.target || {}
+          const eventDetails = e && inheritEvent('timeupdate', e, { currentTime: eNode.currentTime, duration: eNode.duration })
+          this.$emit('timeupdate', eventDetails)
         })
-        this.videoNode.addEventListener('waiting', (e) => {
-          this.$emit('waiting', e)
+
+        videoNode.addEventListener('error', (e) => {
+          const eventDetails = e && inheritEvent('error', e, {})
+          this.$emit('error')
         })
-        this.videoNode.addEventListener('loadedmetadata', (e) => {
-          this.$emit('loadedmetadata', e)
+
+        videoNode.addEventListener('waiting', (e) => {
+          const eventDetails = e && inheritEvent('waiting', e, {})
+          this.$emit('waiting')
         })
-        this.videoNode.addEventListener('timeupdate', (e) => {
-          this.$emit('timeupdate', e)
+
+        videoNode.addEventListener('loadedmetadata', (e) => {
+          const eNode = e.target || {}
+          const eventDetails = e && inheritEvent('loadedmetadata', e, { width: eNode.videoWidth, height: eNode.videoHeight, duration: eNode.duration })
+          this.$emit('loadedmetadata', eventDetails)
         })
-      },
-      processListener () {
-        this.processTimer = setInterval(() => {
-          const e = {
-            currentTime: this.videoNode.currentTime,
-            duration: 90
-          }
-          this.$emit('bindtimeupdate', e)
-        }, 250)
-      },
-      fullscreenchangeHandler () {
-        // 监听全屏状态 兼容
-        this.videoNode.addEventListener('fullscreenchange', (e) => {
+
+        videoNode.addEventListener('progress', (e) => {
+          const eNode = e.target || {}
+          const buffered = (eNode.buffered?.end(0)) / (eNode?.duration)
+          const eventDetails = e && inheritEvent('progress', e, { buffered: buffered * 100 })
+          this.$emit('progress', eventDetails)
+        })
+
+        videoNode.addEventListener('seeked', (e) => {
+          const eNode = e.target || {}
+          const eventDetails = e && inheritEvent('seekcomplete', e, { position: eNode.currentTime })
+          this.$emit('seekcomplete', eventDetails)
+        })
+
+        videoNode.addEventListener('fullscreenchange', (e) => {
+          const eNode = e.target || {}
+          //  TODO direction
+          const eventDetails = e && inheritEvent('fullscreenchange', e, { fullScreen: false })
           if (document.isFullScreen) {
-            this.$emit('bindfullscreenchange', {fullScreen: true})
+            eventDetails.detail.fullScreen = true
+            this.$emit('fullscreenchange', eventDetails)
           } else {
-            this.$emit('bindfullscreenchange', {fullScreen: false})
+            eventDetails.detail.fullScreen = false
+            this.$emit('fullscreenchange', eventDetails)
           }
         })
-        this.videoNode.addEventListener('webkitfullscreenchange', (e) => {
-          if (document.webkitIsFullScreen) {
-            this.$emit('bindfullscreenchange', {fullScreen: true})
-          } else {
-            this.$emit('bindfullscreenchange', {fullScreen: false})
-          }
+
+        videoNode.addEventListener('enterpictureinpicture', (e) => {
+          const eventDetails = e && inheritEvent('enterpictureinpicture', e, {})
+          this.$emit('enterpictureinpicture')
         })
-        this.videoNode.addEventListener('mozfullscreenchange', (e) => {
-          if (document.mozIsFullScreen) {
-            this.$emit('bindfullscreenchange', {fullScreen: true})
-          } else {
-            this.$emit('bindfullscreenchange', {fullScreen: false})
-          }
-        })
-        this.videoNode.addEventListener('MSFullscreenChange', (e) => {
-          if (document.MSIsFullScreen) {
-            this.$emit('bindfullscreenchange', {fullScreen: true})
-          } else {
-            this.$emit('bindfullscreenchange', {fullScreen: false})
-          }
+
+        videoNode.addEventListener('leavepictureinpicture', (e) => {
+          const eventDetails = e && inheritEvent('leavepictureinpicture', e, {})
+          this.$emit('leavepictureinpicture')
         })
       }
     }
