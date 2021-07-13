@@ -43,6 +43,7 @@ module.exports = postcss.plugin('rpx', (options = {}) => root => {
         if (mpxMode === 'web') {
           return `${value * rpx2vwRatio}vw`
         }
+        break
       case 'px':
         if (mpxMode === 'web') {
           return `${value / px2vwRatio}vw`
