@@ -479,32 +479,29 @@ class MpxWebpackPlugin {
         // 避免context module报错
         if (module.request && module.resource) {
           const { queryObj, resourcePath } = parseRequest(module.resource)
-          // 对于已有packageName标识的模块跳过处理
-          if (!queryObj.packageName) {
-            let isStatic = queryObj.isStatic
-            if (module.loaders) {
-              module.loaders.forEach((loader) => {
-                if (/(url-loader|file-loader)/.test(loader.loader)) {
-                  isStatic = true
-                }
-              })
-            }
-            const isIndependent = mpx.independentSubpackagesMap[mpx.currentPackageRoot]
+          let isStatic = queryObj.isStatic
+          if (module.loaders) {
+            module.loaders.forEach((loader) => {
+              if (/(url-loader|file-loader)/.test(loader.loader)) {
+                isStatic = true
+              }
+            })
+          }
+          const isIndependent = mpx.independentSubpackagesMap[mpx.currentPackageRoot]
 
-            let needPackageQuery = isStatic || isIndependent
-            if (!needPackageQuery && matchCondition(resourcePath, this.options.subpackageModulesRules)) {
-              needPackageQuery = true
-            }
+          let needPackageQuery = isStatic || isIndependent
+          if (!needPackageQuery && matchCondition(resourcePath, this.options.subpackageModulesRules)) {
+            needPackageQuery = true
+          }
 
-            if (needPackageQuery) {
-              const { packageName } = mpx.getPackageInfo({
-                resource: module.resource,
-                resourceType: isStatic ? 'staticResources' : 'subpackageModules'
-              })
-
-              module.request = addQuery(module.request, { packageName })
-              module.resource = addQuery(module.resource, { packageName })
-            }
+          if (needPackageQuery) {
+            const { packageName } = mpx.getPackageInfo({
+              resource: module.resource,
+              resourceType: isStatic ? 'staticResources' : 'subpackageModules'
+            })
+            // 基于计算得出的packageName强行覆盖
+            module.request = addQuery(module.request, { packageName }, true)
+            module.resource = addQuery(module.resource, { packageName }, true)
           }
         }
 
