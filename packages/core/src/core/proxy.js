@@ -400,7 +400,14 @@ export default class MPXProxy {
         resolve && resolve()
       }
     }
-    this.target.__render(processUndefined(data), callback)
+    data = processUndefined(data)
+    if (typeof EXPORT_MPX.config.setDataHandler === 'function') {
+      try {
+        EXPORT_MPX.config.setDataHandler(data)
+      } catch (e) {
+      }
+    }
+    this.target.__render(data, callback)
   }
 
   initRender () {
