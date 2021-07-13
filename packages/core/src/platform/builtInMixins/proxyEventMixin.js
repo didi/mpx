@@ -1,6 +1,5 @@
 import { setByPath, collectDataset } from '../../helper/utils'
 import { error } from '../../helper/log'
-import { cache } from '../../vnode/utils'
 import EXPORT_MPX from '../../index'
 
 export default function proxyEventMixin () {
@@ -66,13 +65,6 @@ export default function proxyEventMixin () {
       const originValue = valuePath.reduce((acc, cur) => acc[cur], $event.detail)
       const value = filterMethod ? (innerFilter[filterMethod] ? innerFilter[filterMethod](originValue) : typeof this[filterMethod] === 'function' ? this[filterMethod](originValue) : originValue) : originValue
       setByPath(this, expr, value)
-    },
-    __getDomNodeFromEvt (evt) {
-      const id = evt.currentTarget && evt.currentTarget.dataset.privateNodeId
-      return cache.getNode(id)
-    },
-    __getNode (id) {
-      return cache.getNode(id)
     }
   }
   if (__mpx_mode__ === 'ali') {

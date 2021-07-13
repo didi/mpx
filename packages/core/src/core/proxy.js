@@ -31,7 +31,6 @@ import {
   DESTROYED
 } from './innerLifecycle'
 import { warn, error } from '../helper/log'
-import patch from '../vnode/patch'
 
 let uid = 0
 
@@ -271,18 +270,7 @@ export default class MPXProxy {
 
   renderWithData (vnode) {
     if (vnode) {
-      // 对 vnode 进行深拷贝，原有的 vnode 数据仅做渲染使用，拷贝后的数据做上下文的绑定
-      // TODO: 目前未做 vnode diff 工作，都是全量 render，二期优化
-      const _vnode = diffAndCloneA(vnode).clone
-      if (!this._vnode) {
-        this._vnode = _vnode
-      } else {
-        
-      }
-      let diffPath = patch(this._vnode, _vnode, this.target)
-      // patch(this._vnode, _vnode, this.target)
-      // proxy(this.target, { _vnode: patch(this._vnode, _vnode, this.target) }, ['_vnode'], true)
-      return this.doRenderWithVNode(vnode, diffPath)
+      return this.doRenderWithVNode(vnode)
     }
     const renderData = preProcessRenderData(this.renderData)
     this.doRender(this.processRenderDataWithStrictDiff(renderData))
@@ -381,16 +369,23 @@ export default class MPXProxy {
     return result
   }
 
-  doRenderWithVNode (vnode, diffPath) {
-    if (!isEmptyObject(diffPath)) {
-      Object.keys(diffPath).map(key => {
-        diffPath['r.children[0].children[2]'] = diffPath[key]
-        delete diffPath[key]
-      })
-      this.target.__render(diffPath)
-    } else if (!isEmptyObject(vnode) && this.options.runtimeComponent) {
+  doRenderWithVNode (vnode) {
+    if (!this._vnode) {
       this.target.__render({ r: vnode })
+    } else {
+      let diffPath = diffAndCloneA(vnode, this._vnode).diffData
+      console.log('the diffPath is:', diffPath)
+      if (!isEmptyObject(diffPath)) {
+        diffPath = Object.keys(diffPath).reduce((preVal, curVal) => {
+          const key = 'r' + curVal
+          preVal[key] = diffPath[curVal]
+          return preVal
+        }, {})
+        this.target.__render(diffPath)
+      }
     }
+    // 缓存本地的 vnode 用以下一次 diff
+    this._vnode = vnode
   }
 
   doRender (data, cb) {
@@ -428,7 +423,6 @@ export default class MPXProxy {
         resolve && resolve()
       }
     }
-
     this.target.__render(processUndefined(data), callback)
   }
 

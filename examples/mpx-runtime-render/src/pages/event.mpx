@@ -2,14 +2,16 @@
   <view
     wx:if="{{ flag }}"
     class="root"
+    wx:class="{{ cls }}"
     data-a="{{ message }}"
     bind:tap="onViewTapBubble('b', $event)"
   >
     <view wx:for="{{ navigatorList }}">
-      <view class="navigator-item" bindtap="jumpTo(item)">{{ item.name }}</view>
+      <view wx:class="{{ ['active'] }}" class="navigator-item" bindtap="jumpTo(item)">{{ item.name }}</view>
     </view>
   </view>
   <text wx:else>okok</text>
+  <!-- <view wx:for="{{ list }}">{{ item }}</view> -->
 </template>
 
 <script>
@@ -67,19 +69,21 @@ createPage({
         path: '/pages/inner-components/index'
       }
     ],
+    list: [],
     message: 'msg',
-    flag: true
+    flag: true,
+    cls: {
+      cls1: false
+    }
   },
   attached() {
     setTimeout(() => {
       // this.message = 'gogo'
-      this.flag = false
-      // const setData = this.__mpxProxy.target.__render
-      // setData({
-      //   'r.children[0].children[0]': null
-      // })
-      console.log('the _vnode is:', this._vnode)
-      // console.log('the render is:', this.__mpxProxy.target.__render)
+      // this.flag = false
+      // this.list = [1, 2, 3]
+      // this.cls.cls1 = true
+      // this.navigatorList = [this.navigatorList[0]]
+      // console.log('the navigatorList is:', this.navigatorList)
     }, 1000)
   },
   watch: {

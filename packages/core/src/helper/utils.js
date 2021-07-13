@@ -540,6 +540,99 @@ export function diffAndCloneA (a, b) {
   }
 }
 
+// TODO: 需优化，可去掉
+export function diffVnode (a, b, context) {
+  let diffData = null
+  let curPath = ''
+  let diff = false
+
+  function deepDiffAndCloneA (a, b, currentDiff) {
+    const setDiff = (val) => {
+      if (val) {
+        currentDiff = val
+        if (curPath) {
+          // 如果是普通对象形式 & 有 nodeId，说明是新的节点
+          if (isPlainObject(clone) && clone.nodeId) {
+            // TODO: 递归绑定上下文
+          } else if (Array.isArray(clone)) {
+            // TODO: 遍历绑定上下文
+          }
+          diffData = diffData || {}
+          diffData[curPath] = clone
+        }
+      }
+    }
+    let clone = a
+    if (typeof a !== 'object' || a === null) {
+      if (!currentDiff) setDiff(a !== b)
+    } else {
+      const toString = Object.prototype.toString
+      const className = toString.call(a)
+      const sameClass = className === toString.call(b)
+      let length
+      let lastPath
+      if (isPlainObject(a)) {
+        const keys = Object.keys(a)
+        length = keys.length
+        clone = {}
+        if (!currentDiff) setDiff(!sameClass || length < Object.keys(b).length || !Object.keys(b).every((key) => a.hasOwnProperty(key)))
+        lastPath = curPath
+        for (let i = 0; i < length; i++) {
+          const key = keys[i]
+          if (key === 'nodeId' || key === 'context') {
+            continue
+          }
+          curPath += `.${key}`
+          clone[key] = deepDiffAndCloneA(a[key], sameClass ? b[key] : undefined, currentDiff)
+          curPath = lastPath
+        }
+        // 继承原始对象的freeze/seal/preventExtensions操作
+        if (Object.isFrozen(a)) {
+          Object.freeze(clone)
+        } else if (Object.isSealed(a)) {
+          Object.seal(clone)
+        } else if (!Object.isExtensible(a)) {
+          Object.preventExtensions(clone)
+        }
+      } else if (Array.isArray(a)) {
+        length = a.length
+        clone = []
+        if (!currentDiff) setDiff(!sameClass || length < b.length)
+        lastPath = curPath
+        for (let i = 0; i < length; i++) {
+          curPath += `[${i}]`
+          clone[i] = deepDiffAndCloneA(a[i], sameClass ? b[i] : undefined, currentDiff)
+          curPath = lastPath
+        }
+        // 继承原始数组的freeze/seal/preventExtensions操作
+        if (Object.isFrozen(a)) {
+          Object.freeze(clone)
+        } else if (Object.isSealed(a)) {
+          Object.seal(clone)
+        } else if (!Object.isExtensible(a)) {
+          Object.preventExtensions(clone)
+        }
+      } else if (a instanceof RegExp) {
+        if (!currentDiff) setDiff(!sameClass || '' + a !== '' + b)
+      } else if (a instanceof Date) {
+        if (!currentDiff) setDiff(!sameClass || +a !== +b)
+      } else {
+        if (!currentDiff) setDiff(!sameClass || a !== b)
+      }
+    }
+    if (currentDiff) {
+      diff = currentDiff
+    }
+    return clone
+  }
+
+  return {
+    clone: deepDiffAndCloneA(a, b, diff),
+    diff,
+    diffData
+  }
+}
+
 export function isValidIdentifierStr (str) {
   return /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(str)
 }

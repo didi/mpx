@@ -1,9 +1,9 @@
 import { isObject, isPlainObject } from '../../helper/utils'
 import { stringifyClass, stringifyStyle } from '../../helper/stringify'
-import VNode, { createEmptyVNode, createTextVNode } from '../../vnode/node'
+import contextMap from '../../vnode/context'
 
-let uid = 0
-const getUid = () => ++uid
+// let uid = 0
+// const getUid = () => ++uid
 
 function simpleNormalizeChildren (children) {
   for (var i = 0; i < children.length; i++) {
@@ -57,37 +57,33 @@ export default function renderHelperMixin () {
           return tag
         }
 
-        const nodeId = getUid()
-        data.nodeId = nodeId
+        // const nodeId = getUid()
+        // data.nodeId = nodeId
         children = simpleNormalizeChildren(children)
 
-        const _vnode = new VNode(tag, data, children, '')
         // 用以渲染的 vnode 维持最小数据状态
         const vnode = {
           nodeType: tag || '',
-          ...data,
-          _data: data,
-          nodeId,
+          data,
+          // nodeId,
           children
         }
         return vnode
       },
       // createTextVNode
       __v (content) {
-        const textVnode = createTextVNode(content)
         return {
           nodeType: '',
-          nodeId: '',
+          // nodeId: '',
           content,
           text: content
         }
       },
       // createEmptyVNode
       __e () {
-        const emptyVnode = createEmptyVNode()
         return {
           nodeType: '',
-          nodeId: '',
+          // nodeId: '',
           content: ''
         }
       },
@@ -109,6 +105,9 @@ export default function renderHelperMixin () {
         return args.reduce((res, arg) => {
           return isPlainObject(arg) ? Object.assign(res, arg) : res
         }, {})
+      },
+      _getRootContext (id) {
+        return contextMap.get(id)
       }
     }
   }

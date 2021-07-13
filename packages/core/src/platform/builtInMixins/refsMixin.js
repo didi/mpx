@@ -126,10 +126,9 @@ export default function getRefsMixin () {
         }
 
         // 运行时编译组件获取 ref 节点
-        if (this.r && this.r.refs) {
-          const refs = this.r.refs
-          const rootContext = this.__getNode(this.r.nodeId).context
-          setRef(rootContext, refs)
+        if (this.vnodeData && this.vnodeData.refs) {
+          const ref = this.vnodeData.refs
+          setRef(this.vnodeRootContext, ref)
         }
         if (this.__getRefsData) {
           const refs = this.__getRefsData()
