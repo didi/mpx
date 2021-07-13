@@ -203,7 +203,6 @@
         })
 
         videoNode.addEventListener('fullscreenchange', (e) => {
-          const eNode = e.target || {}
           //  TODO direction
           const eventDetails = e && inheritEvent('fullscreenchange', e, { fullScreen: false })
           if (document.isFullScreen) {
