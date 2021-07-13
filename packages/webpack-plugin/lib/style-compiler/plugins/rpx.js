@@ -1,6 +1,8 @@
 const postcss = require('postcss')
 const pxRegExp = /\b(\d+(\.\d+)?)px\b/
 const pxRegExpG = /\b(\d+(\.\d+)?)px\b/g
+const rpxRegExp = /\b(\d+(\.\d+)?)rpx\b/
+const rpxRegExpG = /\b(\d+(\.\d+)?)rpx\b/g
 
 module.exports = postcss.plugin('rpx', (options = {}) => root => {
   const mode = options.mode || 'only'
@@ -9,7 +11,8 @@ module.exports = postcss.plugin('rpx', (options = {}) => root => {
   const baseWidth = 750
   const designWidth = options.designWidth || 750
   const ratio = +(baseWidth / designWidth).toFixed(2)
-  const vwRatio = +(designWidth / 100).toFixed(2)
+  const px2vwRatio = +(designWidth / 100).toFixed(2)
+  const rpx2vwRatio = +(100 / designWidth).toFixed(8)
   function isIgnoreComment (node) {
     let result = node && node.type === 'comment' && node.text.trim() === (options.comment || defaultIgnoreComment)
     if (result) {
@@ -19,15 +22,33 @@ module.exports = postcss.plugin('rpx', (options = {}) => root => {
   }
 
   function transRpx (declaration) {
-    if (pxRegExp.test(declaration.value)) {
-      declaration.value = declaration.value.replace(pxRegExpG, function (match, $1) {
-        if ($1 === '0') return $1
+    let unit
+    let regExp
+    if (rpxRegExp.test(declaration.value)) {
+      regExp = rpxRegExp
+      unit = 'rpx'
+    } else if (pxRegExp.test(declaration.value)) {
+      regExp = pxRegExp
+      unit = 'px'
+    }
+    declaration.value = declaration.value.replace(regExp, function (match, $1) {
+      return handleCalc($1, unit)
+    })
+  }
+
+  function handleCalc(value, unit) {
+    if (value === '0') return value
+    switch (unit) {
+      case 'rpx':
         if (mpxMode === 'web') {
-          return `${$1 / vwRatio}vw`
-        } else {
-          return `${$1 * ratio}rpx`
+          return `${value * rpx2vwRatio}vw`
         }
-      })
+      case 'px':
+        if (mpxMode === 'web') {
+          return `${value / px2vwRatio}vw`
+        } else {
+          return `${value * ratio}rpx`
+        }
     }
   }
   root.walkRules(rule => {
