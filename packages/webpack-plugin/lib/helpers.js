@@ -63,7 +63,7 @@ function ensureBang (loader) {
   }
 }
 
-function resolveLoaders ({ options, needCssSourceMap, projectRoot }) {
+function resolveLoaders ({ options, needCssSourceMap, projectRoot, runtimeComponents, componentsAbsolutePath }) {
   let cssLoaderOptions = ''
   let wxmlLoaderOptions = ''
   let jsonCompilerOptions = ''
@@ -72,7 +72,12 @@ function resolveLoaders ({ options, needCssSourceMap, projectRoot }) {
   }
 
   wxmlLoaderOptions += '?root=' + projectRoot
-  jsonCompilerOptions += '?root=' + projectRoot
+  jsonCompilerOptions = '?' + JSON.stringify({
+    root: projectRoot,
+    runtimeComponents,
+    componentsAbsolutePath
+  })
+  // jsonCompilerOptions += '?root=' + projectRoot + `&runtimeComponents=${JSON.stringify(runtimeComponents)}&componentsAbsolutePath=${JSON.stringify(componentsAbsolutePath)}`
   // 由于css-loader@1.0之后不再支持root，暂时不允许在css中使用/开头的路径，后续迁移至postcss-loader再进行支持
   // 现在切回css-loader@0.28.11了，先加回来和原生小程序保持一致
   cssLoaderOptions += (cssLoaderOptions ? '&' : '?') + 'root=' + projectRoot + '&extract=true'
@@ -99,7 +104,7 @@ function resolveLoaders ({ options, needCssSourceMap, projectRoot }) {
   }
 }
 
-module.exports = function createHelpers ({ loaderContext, options, moduleId, hasScoped, hasComment, usingComponents, needCssSourceMap, srcMode, isNative, projectRoot }) {
+module.exports = function createHelpers ({ loaderContext, options, moduleId, hasScoped, hasComment, usingComponents, needCssSourceMap, srcMode, isNative, projectRoot, runtimeComponents, runtimeCompile, componentsAbsolutePath }) {
   const rawRequest = getRawRequest(loaderContext, options.excludedPreLoaders)
   const {
     defaultLoaders,
@@ -110,7 +115,9 @@ module.exports = function createHelpers ({ loaderContext, options, moduleId, has
   } = resolveLoaders({
     options,
     needCssSourceMap,
-    projectRoot
+    projectRoot,
+    runtimeComponents,
+    componentsAbsolutePath
   })
 
   function getRequire (type, part, index, scoped) {
@@ -286,6 +293,9 @@ module.exports = function createHelpers ({ loaderContext, options, moduleId, has
         hasComment,
         isNative,
         moduleId,
+        runtimeComponents,
+        runtimeCompile,
+        componentsAbsolutePath,
         root: projectRoot
       }
       templateCompiler = templateCompilerPath + '?' + JSON.stringify(templateCompilerOptions)

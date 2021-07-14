@@ -26,9 +26,10 @@ function transformProperties (properties) {
     } else {
       newFiled = Object.assign({}, rawFiled)
     }
+    // wx 挂载 observer 监听
     newFiled.observer = function (value, oldValue) {
       if (this.__mpxProxy) {
-        this[key] = value
+        this[key] = value // 修改对应响应式数据值
         this.__mpxProxy.updated()
       }
     }
@@ -92,6 +93,26 @@ function transformApiForProxy (context, currentInject) {
         }
       })
     }
+    if (currentInject.runtimeSlots) {
+      Object.defineProperties(context, {
+        __getRuntimeSlots: {
+          get () {
+            return currentInject.runtimeSlots
+          },
+          configurable: false
+        }
+      })
+    }
+    if (currentInject.aliasTags) {
+      Object.defineProperties(context, {
+        __aliasTags: {
+          get () {
+            return currentInject.aliasTags
+          },
+          configurable: false
+        }
+      })
+    }
   }
 }
 
@@ -138,10 +159,16 @@ function getRootMixins (mixin) {
 }
 
 function initProxy (context, rawOptions, currentInject) {
-  // 提供代理对象需要的api
+  // 提供代理对象需要的api (微信小程序 this 实例上相关 api 的代理)
   transformApiForProxy(context, currentInject)
   // 缓存options
   context.$rawOptions = rawOptions
+  if (context.__getRuntimeSlots) {
+    if (!rawOptions.computed) {
+      rawOptions.computed = {}
+    }
+    rawOptions.computed.runtimeSlots = context.__getRuntimeSlots
+  }
   // 创建proxy对象
   const mpxProxy = new MPXProxy(rawOptions, context)
   context.__mpxProxy = mpxProxy

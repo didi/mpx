@@ -15,6 +15,8 @@ const processTemplate = require('./web/processTemplate')
 const readJsonForSrc = require('./utils/read-json-for-src')
 const normalize = require('./utils/normalize')
 const getMainCompilation = require('./utils/get-main-compilation')
+const path = require('path')
+const { collectAliasTag } = require('./runtime-utils')
 
 module.exports = function (content) {
   this.cacheable()
@@ -107,6 +109,8 @@ module.exports = function (content) {
   let output = ''
   const callback = this.async()
 
+  let runtimeComponents = []
+  let componentsAbsolutePath = {}
   async.waterfall([
     (callback) => {
       const json = parts.json || {}
@@ -121,6 +125,88 @@ module.exports = function (content) {
       }
     },
     (callback) => {
+      if (parts.json && parts.json.content) {
+        let json = {}
+        try {
+          json = JSON5.parse(parts.json.content)
+        } catch (e) {
+          return callback(e)
+        }
+        if (json.usingComponents) {
+          let localComponents = json.usingComponents
+          // 解析自定义组件路径
+          async.parallel(
+            Object.keys(localComponents).map(name => cb => {
+              this.resolve(path.dirname(this.resource), localComponents[name], (err, absolutePath) => {
+                if (err) {
+                  return callback(err)
+                }
+                componentsAbsolutePath[name] = absolutePath
+                // 以绝对路径缓存组件名
+                collectAliasTag(absolutePath, 'c' + mpx.pathHash(absolutePath))
+                cb(null, [name, absolutePath])
+              })
+            }),
+            (err, res) => {
+              if (err) {
+                return callback(err)
+              }
+              // 读取自定义组件配置
+              async.parallel(res.map(item => cb => {
+                const name = item[0]
+                const absolutePath = item[1]
+                this.fs.readFile(absolutePath, (err, buffer) => {
+                  if (err) {
+                    callback(err)
+                  } else {
+                    const content = buffer.toString('utf8')
+                    // parseComponent 会做缓存
+                    const parts = parseComponent(content, {
+                      filePath: absolutePath,
+                      needMap: this.sourceMap,
+                      mode,
+                      defs,
+                      env
+                    })
+                    // readJsonForSrc 会做缓存
+                    const json = parts.json || {}
+                    if (json.src) {
+                      readJsonForSrc(json.src, loaderContext, path.dirname(absolutePath), (err, content) => {
+                        if (err) {
+                          return callback(err)
+                        }
+                        const isRuntimeCompile = content && content.runtimeCompile
+                        if (isRuntimeCompile) {
+                          runtimeComponents.push(name)
+                        }
+                      })
+                    } else if (json.content) {
+                      try {
+                        const content = JSON5.parse(parts.json.content)
+                        const isRuntimeCompile = content && content.runtimeCompile
+                        if (isRuntimeCompile) {
+                          runtimeComponents.push(name)
+                        }
+                      } catch (e) {
+                        return callback(e)
+                      }
+                    }
+                    cb()
+                  }
+                })
+              }), () => {
+                callback()
+              })
+            }
+          )
+        } else {
+          callback()
+        }
+      } else {
+        callback()
+      }
+    },
+    (callback) => {
       // web输出模式下没有任何inject，可以通过cache直接返回，由于读取src json可能会新增模块依赖，需要在之后返回缓存内容
       if (vueContentCache.has(filePath)) {
         return callback(null, vueContentCache.get(filePath))
@@ -130,14 +216,15 @@ module.exports = function (content) {
       const templateAttrs = parts.template && parts.template.attrs
       const hasComment = templateAttrs && templateAttrs.comments
       const isNative = false
-
       let usingComponents = [].concat(Object.keys(mpx.usingComponents))
 
       let componentGenerics = {}
+      let runtimeCompile = false
 
       if (parts.json && parts.json.content) {
         try {
           let ret = JSON5.parse(parts.json.content)
+          runtimeCompile = !!ret.runtimeCompile
           if (ret.usingComponents) {
             fixUsingComponent(ret.usingComponents, mode)
             usingComponents = usingComponents.concat(Object.keys(ret.usingComponents))
@@ -165,7 +252,10 @@ module.exports = function (content) {
         needCssSourceMap,
         srcMode,
         isNative,
-        projectRoot
+        projectRoot,
+        runtimeComponents,
+        runtimeCompile,
+        componentsAbsolutePath
       })
 
       // 处理mode为web时输出vue格式文件
@@ -315,7 +405,6 @@ module.exports = function (content) {
         return match.toLowerCase()
       }))}\n`
 
-      //
       // <script>
       output += '/* script */\n'
       let scriptSrcMode = srcMode
@@ -433,7 +522,6 @@ module.exports = function (content) {
         })
         this._module.addDependency(dep)
       }
-
       callback(null, output)
     }
   ], callback)

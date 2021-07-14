@@ -1,0 +1,47 @@
+<template>
+  <import src="./mpx-render-base.wxml" />
+  <template is="{{r.nodeType || 'h-element'}}" data="{{ r: r }}"></template>
+</template>
+
+<script>
+// element 里面需要承载所有需要走运行时渲染的组件
+import { createComponent } from '@mpxjs/core'
+
+// 上层的 vnode 渲染好的时候，所有的事件已经被缓存，在 element 直接绑定全部缓存好的事件即可
+createComponent({
+  // runtimeComponent: true,
+  options: {
+    addGlobalClass: true,
+    styleIsolation: 'shared',
+    virtualHost: true
+  },
+  properties: {
+    r: {
+      type: Object,
+      value: {}
+    }
+  },
+  attached() {
+    // 动态绑定由 vnode 传递的事件
+    if (this.r.mpxbindevents) {
+      Object.keys(this.r.mpxbindevents).map(event => {
+        this[event] = this.r.mpxbindevents[event]
+      })
+    }
+  },
+  methods: {}
+})
+</script>
+
+<style lang="stylus">
+
+</style>
+
+<script type="application/json">
+{
+  "component": true,
+  "usingComponents": {
+    "element": "./mpx-custom-element.mpx"
+  }
+}
+</script>

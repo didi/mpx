@@ -1,0 +1,45 @@
+<template>
+  <view>
+    <view class="slot-wrapper">
+      <view>运行时组件 -> 嵌套非运行时组件</view>
+      <slot-a>
+        <view slot="before">this is slot-a before slot</view>
+        <view slot="after">this is slot-a after slot</view>
+      </slot-a>
+    </view>
+    <view class="slot-wrapper">
+      <view>运行时组件 -> 嵌套运行时组件 -> 嵌套非运行时组件</view>
+      <slot-b>
+        <view slot="before">this is slot-b before slot</view>
+        <slot-a>
+          <view slot="before">this is slot-a before content slot</view>
+          <view slot="after">this is slot-a after content slot</view>
+        </slot-a>
+        <view slot="after">this is slot-b after slot</view>
+      </slot-b>
+    </view>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+
+createComponent({})
+</script>
+
+<style lang="stylus">
+.slot-wrapper
+  padding 20px
+  margin 10px
+  border 1px solid #ccc
+</style>
+
+<script type="application/json">
+{
+  "runtimeCompile": true,
+  "usingComponents": {
+    "slot-a": "./components/slot-a.mpx",
+    "slot-b": "./components/slot-b.mpx"
+  }
+}
+</script>

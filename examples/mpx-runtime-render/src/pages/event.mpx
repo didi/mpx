@@ -1,0 +1,110 @@
+<template>
+  <view
+    class="root"
+    data-a="{{ message }}"
+    bind:tap="onViewTapBubble('b', $event)"
+  >
+    <view wx:for="{{ navigatorList }}">
+      <view class="navigator-item" bindtap="jumpTo(item)">{{ item.name }}</view>
+    </view>
+  </view>
+</template>
+
+<script>
+import { createPage } from '@mpxjs/core'
+
+createPage({
+  data: {
+    navigatorList: [
+      {
+        name: '新增wx:bind动态传参指令',
+        path: '/pages/attrs/index'
+      },
+      {
+        name: 'wx:style',
+        path: '/pages/style/index'
+      },
+      {
+        name: 'wx:class',
+        path: '/pages/class/index'
+      },
+      {
+        name: 'wx:show',
+        path: '/pages/show/index'
+      },
+      {
+        name: 'wx:if',
+        path: '/pages/if/index'
+      },
+      {
+        name: 'wx:for',
+        path: '/pages/for/index'
+      },
+      {
+        name: 'wx:model',
+        path: '/pages/model/index'
+      },
+      {
+        name: '事件模型',
+        path: '/pages/event/index'
+      },
+      {
+        name: 'slot',
+        path: '/pages/slot/index'
+      },
+      {
+        name: 'wx:ref',
+        path: '/pages/ref/index'
+      },
+      {
+        name: '动态component',
+        path: '/pages/component/index'
+      },
+      {
+        name: 'inner-components(原生组件)',
+        path: '/pages/inner-components/index'
+      }
+    ],
+    message: 'msg'
+  },
+  attached() {
+
+  },
+  watch: {
+    message(val) {
+      console.log('the message val is:', val)
+    }
+  },
+  methods: {
+    jumpTo(item) {
+      wx.navigateTo({
+        url: item.path
+      })
+    },
+    onViewTapBubble(str, e) {
+      console.log('onViewTapBubble', str, e)
+    }
+  }
+})
+</script>
+
+<style lang="stylus">
+.navigator-item
+  font-size 20px
+  padding-top 10px
+  padding-left 10px
+  padding-bottom 10px
+  border-bottom 1px solid #ccc
+.active
+  color red
+.disabled
+  color #333
+</style>
+
+<script type="application/json">
+{
+  "runtimeCompile": true,
+  "usingComponents": {
+  }
+}
+</script>

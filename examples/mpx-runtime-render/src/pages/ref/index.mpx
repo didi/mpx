@@ -1,0 +1,57 @@
+<template>
+  <view>
+    <view class="wrapper">
+      <view wx:ref="refView1">this is ref view</view>
+    </view>
+
+    <view class="wrapper">
+      <ref-a wx:ref="refA">
+        <view>this is ref-a slot content</view>
+      </ref-a>
+    </view>
+
+    <view class="wrapper">
+      <ref-a wx:ref="refA2">
+        <ref-b>
+          <view>this is ref-b slot content</view>
+        </ref-b>
+      </ref-a>
+    </view>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+
+createComponent({
+  data: {
+    ref: '111'
+  },
+  attached() {
+    setTimeout(() => {
+      console.log('the refView1 is:', this.$refs.refView1)
+      console.log('the refA is:', this.$refs.refA.sayHello())
+      // console.log('the refB is:', this.$refs.refB.helloRefB())
+    }, 1000)
+  },
+  methods: {
+  }
+})
+</script>
+
+<style lang="stylus">
+.wrapper
+  margin 10px
+  padding 10px
+  border 1px solid #ccc
+</style>
+
+<script type="application/json">
+{
+  "runtimeCompile": true,
+  "usingComponents": {
+    "ref-a": "./components/ref-a.mpx",
+    "ref-b": "./components/ref-b.mpx"
+  }
+}
+</script>
