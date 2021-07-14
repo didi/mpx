@@ -14,7 +14,7 @@
 </template>
 
 <script>
-  import { inheritEvent } from './getInnerListeners'
+  import { inheritEvent, extendEvent } from './getInnerListeners'
   export default {
     name: 'mpx-video',
     props: {
@@ -152,76 +152,78 @@
       },
       initEvent () {
         const videoNode = this.$refs['_mpx_video_ref']
+
         videoNode.addEventListener('play', (e) => {
-          const eventDetails = e && inheritEvent('play', e, {})
-          this.$emit('play', eventDetails)
+          extendEvent(e, {detail: {}})
+          this.$emit('play', e)
         })
 
         videoNode.addEventListener('pause', (e) => {
-          const eventDetails = e && inheritEvent('pause', e, {})
-          this.$emit('pause', eventDetails)
+          extendEvent(e, {detail: {}})
+          this.$emit('pause', e)
         })
 
         videoNode.addEventListener('ended', (e) => {
-          const eventDetails = e && inheritEvent('ended', e, {})
-          this.$emit('ended', eventDetails)
+          extendEvent(e, {detail: {}})
+          this.$emit('ended', e)
         })
 
         videoNode.addEventListener('timeupdate', (e) => {
-          const eNode = e.target || {}
-          const eventDetails = e && inheritEvent('timeupdate', e, { currentTime: eNode.currentTime, duration: eNode.duration })
-          this.$emit('timeupdate', eventDetails)
+          const eNode = e.target
+          extendEvent(e, {detail: {currentTime: eNode.currentTime, duration: eNode.duration}})
+          this.$emit('timeupdate', e)
         })
 
         videoNode.addEventListener('error', (e) => {
-          const eventDetails = e && inheritEvent('error', e, {})
-          this.$emit('error', eventDetails)
+          extendEvent(e, {detail: {}})
+          this.$emit('error', e)
         })
 
         videoNode.addEventListener('waiting', (e) => {
-          const eventDetails = e && inheritEvent('waiting', e, {})
-          this.$emit('waiting', eventDetails)
+          extendEvent(e, {detail: {}})
+          this.$emit('waiting', e)
         })
 
         videoNode.addEventListener('loadedmetadata', (e) => {
-          const eNode = e.target || {}
-          const eventDetails = e && inheritEvent('loadedmetadata', e, { width: eNode.videoWidth, height: eNode.videoHeight, duration: eNode.duration })
-          this.$emit('loadedmetadata', eventDetails)
+          const eNode = e.target
+          extendEvent(e, {detail: {width: eNode.videoWidth, height: eNode.videoHeight, duration: eNode.duration}})
+          this.$emit('loadedmetadata', e)
         })
 
         videoNode.addEventListener('progress', (e) => {
-          const eNode = e.target || {}
-          const buffered = (eNode.buffered?.end(0)) / (eNode?.duration)
-          const eventDetails = e && inheritEvent('progress', e, { buffered: buffered * 100 })
-          this.$emit('progress', eventDetails)
+          const eNode = e.target
+          const buffered = (eNode?.buffered?.end(0)) / (eNode?.duration)
+          extendEvent(e, {detail: {buffered: buffered * 100}})
+          this.$emit('progress', e)
         })
 
         videoNode.addEventListener('seeked', (e) => {
-          const eNode = e.target || {}
-          const eventDetails = e && inheritEvent('seekcomplete', e, { position: eNode.currentTime })
-          this.$emit('seekcomplete', eventDetails)
+          const eNode = e.target
+          const NewEvent = inheritEvent('seekcomplete', e, {position: eNode.currentTime})
+          this.$emit('seekcomplete', NewEvent)
         })
 
         videoNode.addEventListener('fullscreenchange', (e) => {
+          const eNode = e.target
           //  TODO direction
-          const eventDetails = e && inheritEvent('fullscreenchange', e, { fullScreen: false })
+          extendEvent(e, {detail: {fullScreen: false}})
           if (document.isFullScreen) {
-            eventDetails.detail.fullScreen = true
-            this.$emit('fullscreenchange', eventDetails)
+            e.detail.fullScreen = true
+            this.$emit('fullscreenchange', e)
           } else {
-            eventDetails.detail.fullScreen = false
-            this.$emit('fullscreenchange', eventDetails)
+            e.detail.fullScreen = false
+            this.$emit('fullscreenchange', e)
           }
         })
 
         videoNode.addEventListener('enterpictureinpicture', (e) => {
-          const eventDetails = e && inheritEvent('enterpictureinpicture', e, {})
-          this.$emit('enterpictureinpicture', eventDetails)
+          extendEvent(e, {detail: {}})
+          this.$emit('enterpictureinpicture', e)
         })
 
         videoNode.addEventListener('leavepictureinpicture', (e) => {
-          const eventDetails = e && inheritEvent('leavepictureinpicture', e, {})
-          this.$emit('leavepictureinpicture', eventDetails)
+          extendEvent(e, {detail: {}})
+          this.$emit('leavepictureinpicture', e)
         })
       }
     }
