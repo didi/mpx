@@ -23,7 +23,6 @@ export default class XFetch {
   }
 
   create (options) {
-    console.warn('The xfetch.create api is deprecated now and will be removed in next minor version!')
     return new XFetch(options)
   }
 

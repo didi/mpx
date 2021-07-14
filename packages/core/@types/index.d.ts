@@ -329,6 +329,7 @@ interface MpxConfig {
   observeClassInstance: Boolean | Array<AnyConstructor>
   hookErrorHandler: (e: Error, target: ComponentIns<{}, {}, {}, {}, []>, hookName: string) => any | null
   proxyEventHandler: (e: Event) => any | null
+  setDataHandler: (data: object) => any | null
 }
 
 type SupportedMode = 'wx' | 'ali' | 'qq' | 'swan' | 'tt' | 'web' | 'qa'
