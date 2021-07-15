@@ -263,6 +263,15 @@ let forScopesMap = {}
 let hasI18n = false
 let i18nInjectableComputed = []
 let env
+let directivesSet = new Set()
+
+function updateModeDirectives (directiveMap = {}) {
+  if (!isEmptyObject(directiveMap)) {
+    for (let key in directiveMap) {
+      directivesSet.add(directiveMap[key])
+    }
+  }
+}
 
 function updateForScopesMap () {
   forScopes.forEach((scope) => {
@@ -806,6 +815,8 @@ function parse (template, options) {
     warn: _warn,
     error: _error
   })
+
+  updateModeDirectives(config[mode].directive)
 
   injectNodes = []
   forScopes = []
@@ -2727,15 +2738,15 @@ function _genComponent (componentName, node) {
   })`
 }
 
-const filterKeys = [
-  'wx:for',
-  'wx:for-index',
-  'wx:for-item',
-  'wx:if',
+const ignoreKeysForBigAttrs = new Set([
   'is',
   'data',
-  'mpxPageStatus'
-]
+  'mpxPageStatus',
+  'style',
+  'class',
+  'big-attrs',
+  'data-eventconfigs'
+])
 
 function genHandlers (events) {
   const bindeventsKey = 'mpxbindevents:'
@@ -2785,12 +2796,12 @@ function _genData (node) {
     const staticStyle = node.staticStyle ? node.staticStyle : stringify('')
     const style = node.style ? node.style : stringify({})
     data += `style: __ss(${staticStyle}, ${style}, ${node.showStyle}),`
-    getAndRemoveAttr(node, 'style', true)
+    // getAndRemoveAttr(node, 'style', true)
   }
   if (node.class || node.staticClass) {
     const staticClass = node.staticClass || stringify('')
     data += `class: __sc(${staticClass}, ${node.class}),`
-    getAndRemoveAttr(node, 'class', true)
+    // getAndRemoveAttr(node, 'class', true)
   }
   if (node.mpxPageStatus) {
     data += `mpxPageStatus: mpxPageStatus,`
@@ -2802,17 +2813,15 @@ function _genData (node) {
   //   })
   //   data += '},'
   // }
-  if (node.events) {
-    node.attrsList.forEach(attr => {
-      if (config[mode].event.parseEvent(attr.name)) {
-        getAndRemoveAttr(node, attr.name)
-      }
-    })
+  if (!isEmptyObject(node.events)) {
+    for (let name in node.events) {
+      getAndRemoveAttr(node, name, true)
+    }
     data += `${genHandlers(node.events)},`
   }
   if (node.eventconfigs) {
     data += `eventconfigs: ${node.eventconfigs},`
-    getAndRemoveAttr(node, 'data-eventconfigs', true)
+    // getAndRemoveAttr(node, 'data-eventconfigs', true)
   }
   if (node.model) {
     const modelProp = node.model.prop
@@ -2842,7 +2851,12 @@ function _genData (node) {
   function stringifyAttrsMap () {
     let res = ''
     Object.keys(node.attrsMap).map(key => {
-      if (!filterKeys.includes(key)) {
+      if (!directivesSet.has(key) && !ignoreKeysForBigAttrs.has(key)) {
+        // 单属性名定义 <view props1></view> 类型写法，默认将 props1 处理为 boolean 类型
+        if (node.attrsMap[key] === undefined) {
+          res += `'${key}': true,`
+          return
+        }
         const parsed = parseMustache(node.attrsMap[key])
         res += `'${key}': ${parsed.hasBinding ? parsed.result : `'${parsed.val}'`},`
       }
@@ -2853,7 +2867,7 @@ function _genData (node) {
   function stringifyBigAttrs () {
     if (node.bigAttrs) {
       bigAttrs += `${node.bigAttrs},`
-      getAndRemoveAttr(node, 'big-attrs')
+      // getAndRemoveAttr(node, 'big-attrs')
     }
     bigAttrs += `{${stringifyAttrsMap()}}`
     data += `${bigAttrs}),`

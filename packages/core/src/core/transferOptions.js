@@ -25,6 +25,7 @@ function composePropsToComputed (type, options = {}) {
       // 将 properties 数据转为 computed
       Object.assign(options.computed, {
         [key] () {
+          // TODO：连字符、驼峰形式的字段名转化
           let value = this.bigAttrs && this.bigAttrs[key]
           if (value === undefined) {
             value = getPropDefaultValue(this, props[key])

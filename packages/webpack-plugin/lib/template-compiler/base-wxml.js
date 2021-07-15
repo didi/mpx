@@ -33,10 +33,12 @@ module.exports = {
             eventCache.add(eventName)
             res += `${key}="__invoke" `
           }
-        } else if (key === 'data-eventconfigs') {
-          res += `${key}="{{ r.data.eventconfigs }}"`
         } else {
-          res += `${key}="{{ r.data['${key}'] }}" `
+          if (key === 'data-eventconfigs') {
+            res += `${key}="{{ r.data.eventconfigs }}"`
+          } else {
+            res += `${key}="{{ r.data['${key}'] }}" `
+          }
         }
 
         // res += '\n'

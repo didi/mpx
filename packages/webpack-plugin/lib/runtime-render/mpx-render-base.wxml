@@ -28,6 +28,10 @@
   bindtouchcancel="__invoke"
 ><template is="children" data="{{r: r.children}}" /></view></template>
 
+<template name="block">
+  <template is="children" data="{{ r: r.children }}"></template>
+</template>
+
 <!-- <template name="children">
   <block wx:for="{{r}}" wx:key="nodeId">
     <block wx:if="{{item.nodeId}}">
@@ -39,10 +43,7 @@
   </block>
 </template> -->
 
-<!-- <template name="block">
-  <template is="children" data="{{ r: r.children }}"></template>
-</template>
-
+<!--
 <template name="view">
   <view
     style="{{r.data.style}}"
