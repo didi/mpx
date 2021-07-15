@@ -7,7 +7,12 @@ module.exports = function (styles, options, callback) {
       output += genComponentTag(style, {
         attrs (style) {
           const attrs = Object.assign({}, style.attrs)
-          if (options.autoScope) attrs.scoped = true
+          if (options.autoScope || attrs.scoped) {
+            attrs.mpxScoped = true
+            if (attrs.scoped) {
+              delete attrs.scoped
+            }
+          }
           return attrs
         }
       })
