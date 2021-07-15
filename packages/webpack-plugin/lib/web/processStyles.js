@@ -13,6 +13,12 @@ module.exports = function (styles, options, callback) {
               delete attrs.scoped
             }
           }
+          if (options.needCssSourceMap) {
+            attrs.needCssSourceMap = true
+          }
+          if (options.moduleId) {
+            attrs.moduleId = options.moduleId
+          }
           return attrs
         }
       })

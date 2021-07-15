@@ -1002,12 +1002,15 @@ try {
             }
             if (this.options.mode === 'web') {
               const isCssLoader = /css-loader/.test(loader.loader)
-              if (resourcePath.endsWith('.mpx') && queryObj.type === 'style' && !isPitcherRequest && isCssLoader) {
+              const { moduleId, mpxScoped, needCssSourceMap, type } = queryObj
+              if (resourcePath.endsWith('.mpx') && type === 'style' && !isPitcherRequest && isCssLoader) {
                 if (data.loaders[index + 1].loader !== normalize.lib('style-compiler/index.js')) {
                   data.loaders.splice(index + 1, 0, {
                     loader: normalize.lib('style-compiler/index.js'),
                     options: {
-                      scoped: !!queryObj.mpxScoped
+                      moduleId: moduleId,
+                      scoped: !!mpxScoped,
+                      sourceMap: !!needCssSourceMap
                     }
                   })
                 }

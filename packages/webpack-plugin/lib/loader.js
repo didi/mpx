@@ -191,8 +191,10 @@ module.exports = function (content) {
           (callback) => {
             async.parallel([
               (callback) => {
+                const hasScoped = (parts.styles.some(({ scoped }) => scoped) || autoScope)
                 processTemplate(parts.template, {
                   hasComment,
+                  hasScoped,
                   isNative,
                   mode,
                   srcMode,
@@ -210,7 +212,9 @@ module.exports = function (content) {
               (callback) => {
                 processStyles(parts.styles, {
                   ctorType,
-                  autoScope
+                  autoScope,
+                  moduleId,
+                  needCssSourceMap
                 }, callback)
               },
               (callback) => {
