@@ -1,8 +1,16 @@
 import { mergeInjectedMixins } from './injectMixins'
 import mergeOptions from './mergeOptions'
 import { getConvertMode } from '../convertor/getConvertMode'
-import { findItem } from '../helper/utils'
+import { findItem, hasOwn } from '../helper/utils'
 import { warn } from '../helper/log'
+
+function getPropDefaultValue (context, prop) {
+  if (!hasOwn(prop, 'value')) {
+    return undefined
+  }
+  const def = prop.value
+  return typeof def === 'function' ? def.call(context) : def
+}
 
 function composePropsToComputed (type, options = {}) {
   if (type === 'component' || type === 'page') {
@@ -17,7 +25,11 @@ function composePropsToComputed (type, options = {}) {
       // 将 properties 数据转为 computed
       Object.assign(options.computed, {
         [key] () {
-          return this.bigAttrs && this.bigAttrs[key]
+          let value = this.bigAttrs && this.bigAttrs[key]
+          if (value === undefined) {
+            value = getPropDefaultValue(this, props[key])
+          }
+          return value
         }
       })
     })

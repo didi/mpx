@@ -2434,7 +2434,6 @@ function closeElement (el, options, meta, currentParent) {
   postProcessFor(el)
   postProcessIf(el, options, currentParent)
   postProcessRuntime(el, options)
-  postProcessHashComponent(el, meta)
 }
 
 // 部分节点类型不需要被收集
@@ -2444,15 +2443,6 @@ function postProcessRuntime (el) {
   // 只收集基本节点类型
   if (el.runtimeCompile && !el.aliasTag && !runtimeFilterTag.includes(el.tag)) {
     baseWxml.set(el)
-  }
-}
-
-function postProcessHashComponent (el, meta) {
-  if (el.aliasTag) {
-    if (!meta.hashComponent) {
-      meta.hashComponent = {}
-    }
-    meta.hashComponent[el.aliasTag] = el
   }
 }
 

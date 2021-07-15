@@ -1,5 +1,6 @@
 <template>
   <view>
+    <common-aaa class="goggo" b="332" style="color: red;" bindeee="onDdd"></common-aaa>
     <view class="style-wrapper">
       <view style="color: red;" wx:style="{{ {fontSize:'24px', fontWeight:'bold'} }}">
         this is outer 24px style index.mpx
@@ -34,6 +35,9 @@ createComponent({
     activeStyle: {
       backgroundColor: '#fc9153'
     }
+  },
+  methods: {
+    onDdd () {}
   }
 })
 </script>
@@ -50,6 +54,7 @@ createComponent({
   "runtimeCompile": true,
   "component": true,
   "usingComponents": {
+    "common-aaa": "../../components/common-a/index.mpx"
     // "element": "./element"
   }
 }

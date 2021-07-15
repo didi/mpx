@@ -1,10 +1,12 @@
 <template>
+  <common-a wx:class="{{ cls }}" a="123" binddd="onViewTouchStart" gogo></common-a>
   <view
     wx:if="{{ flag }}"
     class="root"
     wx:class="{{ cls }}"
     data-a="{{ message }}"
     bind:tap="onViewTapBubble('b', $event)"
+    bindtouchstart="onViewTouchStart"
   >
     <view wx:for="{{ navigatorList }}">
       <view wx:class="{{ ['active'] }}" class="navigator-item" bindtap="jumpTo(item)">{{ item.name }}</view>
@@ -99,6 +101,9 @@ createPage({
     },
     onViewTapBubble(str, e) {
       console.log('onViewTapBubble', str, e)
+    },
+    onViewTouchStart() {
+      console.log('onViewTouchStart')
     }
   }
 })
@@ -121,6 +126,7 @@ createPage({
 {
   "runtimeCompile": true,
   "usingComponents": {
+    "common-a": "../components/common-a/index.mpx"
   }
 }
 </script>
