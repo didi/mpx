@@ -128,7 +128,7 @@ module.exports = function getSpec ({ warn, error }) {
         web ({ value }, { el }) {
           el.hasEvent = true
           const attrsMap = el.attrsMap
-          const tagRE = /\{\{((?:.|\n)+?)\}\}(?!})/
+          const tagRE = /\{\{((?:.|\n|\r)+?)\}\}(?!})/
           const stringify = JSON.stringify
           const match = tagRE.exec(value)
           if (match) {

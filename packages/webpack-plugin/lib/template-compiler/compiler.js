@@ -317,9 +317,9 @@ const i18nModuleName = '__i18n__'
 const stringifyWxsPath = '~' + normalize.lib('runtime/stringify.wxs')
 const stringifyModuleName = '__stringify__'
 
-const tagRES = /(\{\{(?:.|\n)+?\}\})(?!})/
-const tagRE = /\{\{((?:.|\n)+?)\}\}(?!})/
-const tagREG = /\{\{((?:.|\n)+?)\}\}(?!})/g
+const tagRES = /(\{\{(?:.|\n|\r)+?\}\})(?!})/
+const tagRE = /\{\{((?:.|\n|\r)+?)\}\}(?!})/
+const tagREG = /\{\{((?:.|\n|\r)+?)\}\}(?!})/g
 
 function decodeInMustache (value) {
   const sArr = value.split(tagRES)
