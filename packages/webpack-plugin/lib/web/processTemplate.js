@@ -28,7 +28,6 @@ module.exports = function (template, options, callback) {
   const moduleId = options.moduleId
   const loaderContext = options.loaderContext
   const ctorType = options.ctorType
-  const hasScoped =  options.hasScoped
   const resourcePath = parseRequest(loaderContext.resource).resourcePath
   const builtInComponentsMap = {}
   const compilation = loaderContext._compilation
@@ -57,7 +56,7 @@ module.exports = function (template, options, callback) {
       return callback(new Error('[mpx loader][' + loaderContext.resource + ']: ' + 'template lang is not supported in trans web mode temporarily, we will support it in the future!'))
     }
 
-    output += genComponentTag(template, template => {
+    output += genComponentTag(template, (template) => {
       if (ctorType === 'app') {
         return template.content
       }
