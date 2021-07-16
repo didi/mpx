@@ -401,7 +401,7 @@ export default class MPXProxy {
     data = processUndefined(data)
     if (typeof EXPORT_MPX.config.setDataHandler === 'function') {
       try {
-        EXPORT_MPX.config.setDataHandler(data)
+        EXPORT_MPX.config.setDataHandler(data, this.target)
       } catch (e) {
       }
     }
