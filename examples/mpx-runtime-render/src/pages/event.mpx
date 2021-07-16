@@ -1,4 +1,7 @@
 <template>
+  <global-a wx:bind="{{ { a: 'hello global-a', b: true } }}">
+    <common-a></common-a>
+  </global-a>
   <common-a wx:class="{{ cls }}" camel-case="camel" a="123" binddd="onViewTouchStart" gogo></common-a>
   <view
     wx:if="{{ flag }}"

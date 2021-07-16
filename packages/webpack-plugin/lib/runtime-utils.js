@@ -6,6 +6,7 @@ const injectedPath = new Set()
 const runtimeCompileMap = {}
 let templateNodes = {}
 let pathAndAliasTagMap = {}
+let globalRuntimeComponent = {}
 
 // mpx-render-base.wxml 里面的指令生成都需要被忽略掉
 const filterKeys = [
@@ -13,7 +14,8 @@ const filterKeys = [
   'wx:for-index',
   'wx:for-item',
   'wx:if',
-  'is'
+  'is',
+  'big-attrs' // TODO: 这个属性是否统一在 template compiler 里面处理？？
 ]
 
 function genNotRuntimeCustomComponentSlots () {
@@ -37,6 +39,12 @@ function genNotRuntimeCustomComponentSlots () {
 }
 
 module.exports = {
+  getGlobalRuntimeComponent () {
+    return globalRuntimeComponent
+  },
+  setGlobalRuntimeComponent (runtimeComponent = {}) {
+    Object.assign(globalRuntimeComponent, runtimeComponent)
+  },
   setRuntimeComponent (path, isRuntimeCompile) {
     runtimeCompileMap[path] = isRuntimeCompile
   },
@@ -117,7 +125,7 @@ module.exports = {
     Object.keys(nodesMap).map((tag) => {
       const { node, allAttrs } = nodesMap[tag]
       const templateName = node.aliasTag || node.tag
-      const nodeTag = node.isCustomComponent ? node.aliasTag : node.tag
+      const nodeTag = (node.isCustomComponent && !node.isGlobalComponent) ? node.aliasTag : node.tag
       res += `<template name="${templateName}">`
       res += `<${nodeTag}`
       /**

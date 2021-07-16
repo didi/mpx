@@ -869,7 +869,9 @@ function parse (template, options) {
 
       let element = createASTElement(tag, attrs, currentParent)
       // 注入 mpx-render-base.wxml 里面的节点需要根据是否是自定义节点来决定使用的标签名
-      element.isCustomComponent = options.usingComponents.includes(tag)
+      // element.isCustomComponent = options.usingComponents.includes(tag)
+      element.isCustomComponent = isCustomComponent(element, options)
+      element.isGlobalComponent = isGlobalComponent(element, options)
       element.isRuntimeComponent = isRuntimeComponentNode(element, options)
       if (options.componentsAbsolutePath && options.componentsAbsolutePath[tag]) {
         const path = options.componentsAbsolutePath[tag]
@@ -1981,6 +1983,14 @@ function isRuntimeComponentNode (el, options) {
   return options.runtimeComponents && options.runtimeComponents.includes(el.tag)
 }
 
+function isCustomComponent (el, options) {
+  return isComponentNode(el, options) || isGlobalComponent(el, options)
+}
+
+function isGlobalComponent (el, options) {
+  return options.globalComponents && options.globalComponents.includes(el.tag)
+}
+
 function processAliExternalClassesHack (el, options) {
   const isComponent = isComponentNode(el, options)
   // 处理组件externalClass多层传递
@@ -2326,7 +2336,7 @@ function processRuntime (el, options) {
 
   // 搜集需要注入到 mpx-custom-element.json 模块里面的自定义组件路径
   // 运行组件 || 非运行组件里面使用了运行组件里面嵌套了自定义组件 || 运行时组件嵌套了运行时组件
-  if (el.isCustomComponent) {
+  if (el.isCustomComponent && !el.isGlobalComponent) {
     if (options.runtimeCompile || el.inRuntimeCompileWrapper || el.innerRuntimeComponent) {
       const tag = el.tag
       const componentAbsolutePath = options.componentsAbsolutePath[tag]
@@ -2450,9 +2460,9 @@ function closeElement (el, options, meta, currentParent) {
 // 部分节点类型不需要被收集
 const runtimeFilterTag = ['component', 'slot']
 
-function postProcessRuntime (el) {
+function postProcessRuntime (el, options) {
   // 只收集基本节点类型
-  if (el.runtimeCompile && !el.aliasTag && !runtimeFilterTag.includes(el.tag)) {
+  if (options.runtimeCompile && !el.isCustomComponent && !runtimeFilterTag.includes(el.tag)) {
     baseWxml.set(el)
   }
 }
@@ -2692,7 +2702,7 @@ function addIfCondition (el, condition) {
 // TODO: 添加 trimEndingWhitespace 去除尾部 node 的函数
 function genElement (node) {
   // 收集需要注入到 mpx-render-base.wxml 的节点 (只要被 hash 过的节点都需要被注入)
-  if (node.aliasTag) {
+  if (node.aliasTag || node.isGlobalComponent) {
     setTemplateNodes(node)
   }
 
