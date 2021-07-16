@@ -1008,7 +1008,7 @@ try {
                   data.loaders.splice(index + 1, 0, {
                     loader: normalize.lib('style-compiler/index.js'),
                     options: {
-                      moduleId: moduleId,
+                      moduleId,
                       sourceMap: !!needCssSourceMap
                     }
                   })
