@@ -162,12 +162,25 @@ const MpxSizeReportPlugin = require('@mpxjs/size-report')
 ```
 与此同时，如果你开启了本地可视化平台服务，可以直接通过可视化平台查看项目体积构成。默认开启自动打开平台网页或者手动打开后，整体页面展示如下图：
 
+[![size-report](https://dpubstatic.udache.com/static/dpubimg/vdRKQMLGgu/feat1.png)](https://mpxjs.cn)
+
+
+可视化平台中包含三部分功能，第一个体积分析如上图所示，主要是展示整体项目的体积总览，以及 group 体积列表和分包体积列表。
+
+第二个功能是体积详情模块，在该模块中，可以最小颗粒度的查看包体积构成，通过 table 表格的层层展开可看到每个 group 中包含的分包，点击分包可看到该分包包含的静态资源和 js 模块详细列表，同时聚合模式可将分散的模块整合为具体的npm包名，方便宏观查看。此外为了方便用户定向查看某个特定资源的分布情况，列表上方可进行资源路径/名称搜索，该搜索支持模糊匹配，搜索结果为该资源在项目中 group 和 分包的分布情况。
+
+[![size-report](https://dpubstatic.udache.com/static/dpubimg/wjX1hnWgO8/feat2.png)](https://mpxjs.cn)
+
+
+第三个功能为体积对比功能，这里主要进行项目不同版本之间的体积大小变化比较，体积对比依赖插件生成的json文件，通过该功能，可具体的分析出包体积具体增大的group，分包，以及模块，给包体积优化提供定向目标。
+
+[![size-report](https://dpubstatic.udache.com/static/dpubimg/uYblHN4w7n/feat3.png)](https://mpxjs.cn)
 
 
 ## 业务实践
-目前 sizeReport 工具在滴滴出行小程序, 花小猪, 特惠出行小程序以及一部分外部小程序中使用。
+目前 sizeReport 工具在滴滴出行小程序, 花小猪, 青桔骑行, 特惠出行小程序以及一部分外部小程序中使用。
 
-在滴滴出行小程序中，配置使用 sizeReport 工具后使包体积管控和优化更加工程化：
+在滴滴出行小程序中，配置使用 @mpxjs/size-report 插件后使包体积管控和优化更加工程化：
 
 * 在 sizeReport 检测结果文件中，通过对 groupsSizeInfo 和 assetsSizeInfo 中assets 与 module 体积分析，我们发现了部分体积较大图片文件和css资源，通过将图片存 CDN 和删除冗余文件；
 
