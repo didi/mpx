@@ -1,5 +1,5 @@
 <template>
-  <common-a wx:class="{{ cls }}" hover-class="a" a="123" binddd="onViewTouchStart" gogo></common-a>
+  <common-a wx:class="{{ cls }}" camel-case="camel" a="123" binddd="onViewTouchStart" gogo></common-a>
   <view
     wx:if="{{ flag }}"
     class="root"
@@ -9,7 +9,7 @@
     bindtouchstart="onViewTouchStart"
   >
     <view wx:for="{{ navigatorList }}">
-      <view hoverclass="active" class="navigator-item" bindtap="jumpTo(item)">{{ item.name }}</view>
+      <view hoverClass="active" class="navigator-item" bindtap="jumpTo(item)">{{ item.name }}</view>
     </view>
   </view>
   <text wx:else>okok</text>

@@ -21,7 +21,11 @@ createComponent({
         }
       }
     },
-    gogo: Boolean
+    gogo: Boolean,
+    camelCase: {
+      type: String,
+      value: 'camelCase'
+    }
   },
   data: {
     componentName: 'a'
@@ -30,6 +34,7 @@ createComponent({
     console.log('the a is:', this.a)
     console.log('the b is:', this.b)
     console.log('the gogo is:', this.gogo)
+    console.log('the camelCase is:', this.camelCase)
   }
 })
 </script>

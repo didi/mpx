@@ -1,6 +1,6 @@
 <template>
   <view>
-    <common-aaa class="goggo" b="332" hoverclass="b" style="color: red;" bindeee="onDdd"></common-aaa>
+    <common-aaa class="goggo" b="332" style="color: red;" bindeee="onDdd"></common-aaa>
     <view class="style-wrapper">
       <view style="color: red;" wx:style="{{ {fontSize:'24px', fontWeight:'bold'} }}">
         this is outer 24px style index.mpx
