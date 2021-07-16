@@ -18,7 +18,8 @@ import {
   mergeData,
   aIsSubPathOfB,
   getFirstKey,
-  makeMap
+  makeMap,
+  hasOwn
 } from '../helper/utils'
 import _getByPath from '../helper/getByPath'
 import { getRenderCallBack } from '../platform/patch'
@@ -192,7 +193,7 @@ export default class MPXProxy {
     this.collectLocalKeys(this.options.$attrs)
     // 将 props 上的数据取出来放到 this.data 上
     Object.keys(initialData).forEach((key) => {
-      if (!this.data.hasOwnProperty(key)) {
+      if (!hasOwn(this.data, key)) {
         // 除了data函数返回的数据外深拷贝切断引用关系，避免后续watch由于小程序内部对data赋值重复触发watch
         this.data[key] = diffAndCloneA(initialData[key]).clone
       }
@@ -221,7 +222,7 @@ export default class MPXProxy {
 
   collectLocalKeys (data) {
     for (let key in data) {
-      if (data.hasOwnProperty(key)) {
+      if (hasOwn(data, key)) {
         this.localKeysMap[key] = true
       }
     }
@@ -287,7 +288,7 @@ export default class MPXProxy {
   processRenderDataWithStrictDiff (renderData) {
     const result = {}
     for (let key in renderData) {
-      if (renderData.hasOwnProperty(key)) {
+      if (hasOwn(renderData, key)) {
         const data = renderData[key]
         const firstKey = getFirstKey(key)
         if (!this.localKeysMap[firstKey]) { // 如果是 props 数据的话，直接略过(但是 props 数据更新了还是会触发 render 函数)
@@ -295,7 +296,7 @@ export default class MPXProxy {
         }
         // 外部clone，用于只需要clone的场景
         let clone
-        if (this.miniRenderData.hasOwnProperty(key)) {
+        if (hasOwn(this.miniRenderData, key)) {
           const { clone: localClone, diff, diffData } = diffAndCloneA(data, this.miniRenderData[key])
           clone = localClone
           if (diff) {
@@ -343,7 +344,7 @@ export default class MPXProxy {
           }
           if (!processed) {
             // 如果当前数据和上次的miniRenderData完全无关，但存在于组件的视图数据中，则与组件视图数据进行diff
-            if (this.target.data && this.target.data.hasOwnProperty(firstKey)) {
+            if (this.target.data && hasOwn(this.target.data, firstKey)) {
               const localInitialData = getByPath(this.target.data, key)
               const { clone, diff, diffData } = diffAndCloneA(data, localInitialData)
               this.miniRenderData[key] = clone

@@ -8,8 +8,7 @@ const matchCondition = require('../utils/match-condition')
 const path = require('path')
 const isEmptyObject = require('../utils/is-empty-object')
 const {
-  transformSlotsToString,
-  getAliasTag
+  transformSlotsToString
 } = require('../runtime-utils')
 
 const noCacheReg = /mpx-custom-element\.mpx|mpx-render-base\.wxml/
@@ -189,17 +188,17 @@ module.exports = function (raw) {
     };\n`
   }
 
-  if (options.usingComponents && options.usingComponents.length > 0) {
-    let injectAliasTag = {}
-    const aliasTags = getAliasTag()
-    options.usingComponents.map(name => {
-      const path = options.componentsAbsolutePath[name]
-      if (path && aliasTags[path]) {
-        injectAliasTag[name] = aliasTags[path]['aliasTag']
-      }
-    })
-    globalInjectCode += `global.currentInject.aliasTags = ${JSON.stringify(injectAliasTag)};\n`
-  }
+  // if (options.usingComponents && options.usingComponents.length > 0) {
+  //   let injectAliasTag = {}
+  //   const aliasTags = getAliasTag()
+  //   options.usingComponents.map(name => {
+  //     const path = options.componentsAbsolutePath[name]
+  //     if (path && aliasTags[path]) {
+  //       injectAliasTag[name] = aliasTags[path]['aliasTag']
+  //     }
+  //   })
+  //   globalInjectCode += `global.currentInject.aliasTags = ${JSON.stringify(injectAliasTag)};\n`
+  // }
 
   if (mode === 'tt' && renderResult.propKeys) {
     globalInjectCode += `global.currentInject.propKeys = ${JSON.stringify(renderResult.propKeys)};\n`

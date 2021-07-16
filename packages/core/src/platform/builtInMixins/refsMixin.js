@@ -5,6 +5,31 @@ import { getEnvObj } from '../../helper/env'
 
 const envObj = getEnvObj()
 
+const setNodeRef = function (target, ref, context) {
+  Object.defineProperty(target.$refs, ref.key, {
+    enumerable: true,
+    configurable: true,
+    get () {
+      return context.__getRefNode(ref) // for nodes, every time being accessed, returns as a new selector context.
+    }
+  })
+}
+
+const setComponentRef = function (target, ref, context, isAsync) {
+  let cacheRef = null
+  const targetRefs = isAsync ? target.$asyncRefs : target.$refs
+  Object.defineProperty(targetRefs, ref.key, {
+    enumerable: true,
+    configurable: true,
+    get () {
+      if (!cacheRef) {
+        return (cacheRef = context.__getRefNode(ref, isAsync))
+      }
+      return cacheRef
+    }
+  })
+}
+
 export default function getRefsMixin () {
   let aliMethods
   if (__mpx_mode__ === 'ali') {
@@ -111,28 +136,23 @@ export default function getRefsMixin () {
     methods: {
       ...aliMethods,
       __getRefs () {
-        const setRef = (context, ref) => {
-          if (ref.type === 'node') {
-            Object.defineProperty(context.$refs, ref.key, {
-              enumerable: true,
-              configurable: true,
-              get: () => {
-                return this.__getRefNode(ref)
-              }
-            })
-          } else {
-            context.$refs[ref.key] = this.__getRefNode(ref)
-          }
-        }
-
         // 运行时编译组件获取 ref 节点
         if (this.vnodeData && this.vnodeData.refs) {
           const ref = this.vnodeData.refs
-          setRef(this.vnodeRootContext, ref)
+          const setRef = ref.type === 'node' ? setNodeRef : setComponentRef
+          setRef(this.vnodeRootContext, ref, this)
         }
         if (this.__getRefsData) {
           const refs = this.__getRefsData()
-          refs.forEach(ref => setRef(this, ref))
+
+          refs.forEach(ref => {
+            const setRef = ref.type === 'node' ? setNodeRef : setComponentRef
+            setRef(this, ref, this)
+
+            if (__mpx_mode__ === 'tt' && ref.type === 'component') {
+              setComponentRef(this, ref, this, true)
+            }
+          })
         }
       },
       __getRefNode (ref, isAsync) {

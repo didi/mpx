@@ -13,7 +13,15 @@ Mpx 支持微信小程序原生自定义 tabbar ，关于自定义 tabbar 的详
   "tabBar": {
     "custom": true,
     "color": "#000000",
-    "backgroundColor": "#ffffff"
+    "selectedColor": "#000000",
+    "backgroundColor": "#000000",
+    "list": [{
+      "pagePath": "./page/component/index",
+      "text": "组件"
+    }, {
+      "pagePath": "./page/API/index",
+      "text": "接口"
+    }]
   },
   "usingComponents": {}
 }

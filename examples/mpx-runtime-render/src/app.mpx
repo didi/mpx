@@ -27,7 +27,7 @@ createApp({
     // "./pages/for",
     // "./pages/model",
     // "./pages/if",
-    // "./pages/ref",
+    "./pages/ref",
     // "./pages/attrs",
     // "./pages/inner-components/index.mpx"
   ]
