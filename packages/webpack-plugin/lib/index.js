@@ -1002,14 +1002,13 @@ try {
             }
             if (this.options.mode === 'web') {
               const isCssLoader = /css-loader/.test(loader.loader)
-              const { moduleId, mpxScoped, needCssSourceMap, type } = queryObj
+              const { moduleId, needCssSourceMap, type } = queryObj
               if (resourcePath.endsWith('.mpx') && type === 'style' && !isPitcherRequest && isCssLoader) {
                 if (data.loaders[index + 1].loader !== normalize.lib('style-compiler/index.js')) {
                   data.loaders.splice(index + 1, 0, {
                     loader: normalize.lib('style-compiler/index.js'),
                     options: {
                       moduleId: moduleId,
-                      scoped: !!mpxScoped,
                       sourceMap: !!needCssSourceMap
                     }
                   })

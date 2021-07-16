@@ -7,16 +7,9 @@ module.exports = function (styles, options, callback) {
       output += genComponentTag(style, {
         attrs (style) {
           const attrs = Object.assign({}, style.attrs)
-          if (options.autoScope) {
-            attrs.scoped = true
-            attrs.mpxScoped = true
-          }
-          if (options.needCssSourceMap) {
-            attrs.needCssSourceMap = true
-          }
-          if (options.moduleId) {
-            attrs.moduleId = options.moduleId
-          }
+          if (options.autoScope) attrs.scoped = true
+          if (options.needCssSourceMap) attrs.needCssSourceMap = true
+          if (options.moduleId) attrs.moduleId = options.moduleId
           return attrs
         }
       })
