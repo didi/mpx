@@ -5,6 +5,7 @@ import MPXProxy from '../../../core/proxy'
 import builtInKeysMap from '../builtInKeysMap'
 import mergeOptions from '../../../core/mergeOptions'
 import { LIFECYCLE } from './lifecycle'
+import { queueWatcher } from '../../../observer/scheduler'
 
 function transformProperties (properties) {
   if (!properties) {
@@ -29,8 +30,12 @@ function transformProperties (properties) {
     newFiled.observer = function (value, oldValue) {
       if (this.__mpxProxy) {
         this[key] = value
-        // todo 感觉有问题，父级更新属性自己同时发生新的setData时update应该会触发两次，待确认，需要有机制进行一下合并。
-        this.__mpxProxy.updated()
+        queueWatcher(() => {
+          // 只有当当前没有渲染任务时，属性更新才需要单独触发updated，否则可以由渲染任务结束后触发updated
+          if (this.__mpxProxy.curRenderTask && this.__mpxProxy.curRenderTask.state === 'finished') {
+            this.__mpxProxy.updated()
+          }
+        })
       }
     }
     newProps[key] = newFiled
