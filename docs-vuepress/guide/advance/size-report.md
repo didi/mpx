@@ -19,54 +19,71 @@ Mpx 在包体积控制上做了很多工作，主要包括：
 * 没有针对某个分包进行体积分析的能力，由于小程序中存在对单一分包的体积限制，我们的体积往往会集中在主包和主要业务分包中，以分包维度进行体积分析的能力非常必要；
 * 无法以特定的输入范围为维度进行体积的统计分析，这个能力诉求更多地出现在跨团队合作的复杂小程序当中，如滴滴出行。在这种场景下，接入合作的各方会更加关注己方引入的体积，并进行针对性地优化。
 
-由于上述原因，我们在 Mpx@2.6.x 版本中提供了包体积分析能力，弥补了 `webpack-bundle-analyzer` 的能力缺失，为业务提供了便捷准确的包体积管控优化抓手。
+由于上述原因，我们提供了`@mpxjs/size-report`插件提供包体积分析能力，弥补了 `webpack-bundle-analyzer` 的能力缺失，为业务提供了便捷准确的包体积管控优化抓手。
 
 ## 使用方法
 
-在 `@mpxjs/webpack-plugin` 配置中添加 `reportSize` 配置项即可使用，简单示例如下：
+#### 安装插件
+```
+npm i @didi/mpx-size-report --save-dev
+```
+#### 配置插件
+在项目 webpack.config 文件中配置使用 `@mpxjs/size-report` 插件即可使用，简单示例如下：
 
 ```js
-new MpxWebpackPlugin({
-  // ...
-  reportSize: {
-    // 体积报告生成后输出的文件地址名，路径相对为 dist/wx 或者 dist/ali
-    filename: '../report.json',
-    // 配置阈值，此处代表总包体积阈值为 16MB，分包体积阈值为 2MB，超出将会触发编译报错提醒，该报错不阻断构建
-    threshold: {
-      size: '16MB',
-      packages: '2MB'
-    },
-    // 配置体积计算分组，以输入分组为维度对体积进行分析，当没有该配置时结果中将不会包含分组体积信息
-    groups: [
-      {
-        // 分组名称
-        name: 'vant',
-        // 配置分组 entry 匹配规则，小程序中所有的页面和组件都可被视为 entry，如下所示的分组配置将计算项目中引入的 vant 组件带来的体积占用
-        entryRules: {
-          include: '@vant/weapp'
-        }
-      },
-      {
-        name: 'pageGroup',
-        // 每个分组中可分别配置阈值，如果不配置则表示
-        threshold: '500KB',
-        entryRules: {
-          include: ['src/pages/index', 'src/pages/user']
-        }
-      },
-      {
-        name: 'someSdk',
-        entryRules: {
-          include: ['@somegroup/someSdk/index', '@somegroup/someSdk2/index']
+const MpxSizeReportPlugin = require('@mpxjs/size-report')
+
+{
+  plugins: [
+    new MpxSizeReportPlugin({
+      // ...
+      // 是否打开本地 size report 平台服务，默认 true
+      startServer: true,
+      // 是否自动打开可视化平台页面，startServer为true时起作用，默认true
+      autoOpenBrowser: true,
+      reportSize: {
+        // 体积报告生成后输出的文件地址名，路径相对为 dist/wx 或者 dist/ali
+        filename: '../report.json',
+        // 配置阈值，此处代表总包体积阈值为 16MB，分包体积阈值为 2MB，超出将会触发编译报错提醒，该报错不阻断构建
+        threshold: {
+          size: '16MB',
+          packages: '2MB'
         },
-        // 有的时候你可能希望计算纯 js 入口引入的体积（不包含组件和页面），这种情况下需要使用 noEntryModules
-        noEntryModules: {
-          include: 'src/lib/sdk.js'
-        }
+        // 配置体积计算分组，以输入分组为维度对体积进行分析，当没有该配置时结果中将不会包含分组体积信息
+        groups: [
+          {
+            // 分组名称
+            name: 'vant',
+            // 配置分组 entry 匹配规则，小程序中所有的页面和组件都可被视为 entry，如下所示的分组配置将计算项目中引入的 vant 组件带来的体积占用
+            entryRules: {
+              include: '@vant/weapp'
+            }
+          },
+          {
+            name: 'pageGroup',
+            // 每个分组中可分别配置阈值，如果不配置则表示
+            threshold: '500KB',
+            entryRules: {
+              include: ['src/pages/index', 'src/pages/user']
+            }
+          },
+          {
+            name: 'someSdk',
+            entryRules: {
+              include: ['@somegroup/someSdk/index', '@somegroup/someSdk2/index']
+            },
+            // 有的时候你可能希望计算纯 js 入口引入的体积（不包含组件和页面），这种情况下需要使用 noEntryModules
+            noEntryModules: {
+              include: 'src/lib/sdk.js'
+            }
+          }
+        ]
       }
-    ]
-  }
-})
+    })
+
+  ]
+
+}
 ```
 参考上述示例进行配置后，构建代码后，dist 目录下会产出 report.json 文件，里边是项目的具体体积信息，关于输入 json 的简单示例如下：
 
@@ -143,6 +160,10 @@ new MpxWebpackPlugin({
     }
 }
 ```
+与此同时，如果你开启了本地可视化平台服务，可以直接通过可视化平台查看项目体积构成。默认开启自动打开平台网页或者手动打开后，整体页面展示如下图：
+
+
+
 ## 业务实践
 目前 sizeReport 工具在滴滴出行小程序, 花小猪, 特惠出行小程序以及一部分外部小程序中使用。
 
