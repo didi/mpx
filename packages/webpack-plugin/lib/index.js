@@ -24,7 +24,6 @@ const SplitChunksPlugin = require('webpack/lib/optimize/SplitChunksPlugin')
 const fixRelative = require('./utils/fix-relative')
 const parseRequest = require('./utils/parse-request')
 const matchCondition = require('./utils/match-condition')
-const parseAsset = require('./utils/parse-asset')
 const { preProcessDefs } = require('./utils/index')
 const hash = require('hash-sum')
 
