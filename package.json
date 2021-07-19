@@ -5,7 +5,7 @@
     "lerna:publish": "lerna publish from-package --yes",
     "lint": "eslint --ext .js packages/",
     "fix": "eslint --fix --ext .js packages/",
-    "test": "jest",
+    "test": "jest ./packages/webpack-plugin/test/platform/wx/template/parse.spec.js",
     "release": "npm run lint && npm run test && npx lerna version",
     "docs:dev": "vuepress dev docs-vuepress",
     "docs:build": "vuepress build docs-vuepress"

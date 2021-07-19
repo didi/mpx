@@ -27,9 +27,27 @@ function resolve (dir) {
   return path.join(__dirname, '..', dir)
 }
 
+function baseParse (template, { srcMode, mode, env } = { srcMode: 'wx', mode: 'wx', env: '' }) {
+  return compiler.parse(template, {
+    usingComponents: [],
+    externalClasses: [],
+    srcMode,
+    mode,
+    env,
+    warn: warnFn,
+    error: errorFn,
+    defs: {
+      '__mpx_mode__': mode,
+      '__mpx_src_mode__': srcMode,
+      '__mpx_env__': env
+    }
+  })
+}
+
 module.exports = {
   errorFn,
   warnFn,
   compileAndParse,
-  resolve
+  resolve,
+  baseParse
 }
