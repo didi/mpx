@@ -16,6 +16,10 @@
         this is arr style
       </view>
     </view>
+    <global-a>
+      <view>this is global-a default slot</view>
+      <view slot="after">this is global-a after slot</view>
+    </global-a>
   </view>
 </template>
 
@@ -55,7 +59,6 @@ createComponent({
   "component": true,
   "usingComponents": {
     "common-aaa": "../../components/common-a/index.mpx"
-    // "element": "./element"
   }
 }
 </script>

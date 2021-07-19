@@ -11,7 +11,7 @@ createComponent({
   properties: {
     a: {
       type: String,
-      value: ''
+      value: '[common-a property a]: this is default value'
     },
     b: {
       type: Object,
