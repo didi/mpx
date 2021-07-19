@@ -105,8 +105,7 @@ module.exports = function getSpec ({ warn, error }) {
     component: [
       {
         test: 'componentGenerics',
-        ali: deletePath(true),
-        swan: deletePath(true)
+        ali: deletePath(true)
       },
       {
         ali: addGlobalComponents,
