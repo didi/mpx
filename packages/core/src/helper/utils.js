@@ -628,3 +628,12 @@ export function delChainKeyOfObj (obj = {}, key = '') {
     return o && o[k]
   }, obj)
 }
+
+export function spreadProp (obj, key) {
+  if (hasOwn(obj, key)) {
+    const temp = obj[key]
+    delete obj[key]
+    Object.assign(obj, temp)
+  }
+  return obj
+}

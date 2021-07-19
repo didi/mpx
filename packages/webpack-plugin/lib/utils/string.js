@@ -3,7 +3,7 @@ function isCapital (c) {
 }
 
 function isMustache (str) {
-  return /\{\{((?:.|\n)+?)\}\}(?!})/.test(str)
+  return /\{\{((?:.|\n|\r)+?)\}\}(?!})/.test(str)
 }
 
 // WordExample/wordExample -> word-example

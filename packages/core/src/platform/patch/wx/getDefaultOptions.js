@@ -5,6 +5,7 @@ import MPXProxy from '../../../core/proxy'
 import builtInKeysMap from '../builtInKeysMap'
 import mergeOptions from '../../../core/mergeOptions'
 import { LIFECYCLE } from './lifecycle'
+import { queueWatcher } from '../../../observer/scheduler'
 
 function transformProperties (properties) {
   if (!properties) {
@@ -29,7 +30,12 @@ function transformProperties (properties) {
     newFiled.observer = function (value, oldValue) {
       if (this.__mpxProxy) {
         this[key] = value
-        this.__mpxProxy.updated()
+        queueWatcher(() => {
+          // 只有当当前没有渲染任务时，属性更新才需要单独触发updated，否则可以由渲染任务结束后触发updated
+          if (this.__mpxProxy.curRenderTask && this.__mpxProxy.curRenderTask.state === 'finished') {
+            this.__mpxProxy.updated()
+          }
+        })
       }
     }
     newProps[key] = newFiled
