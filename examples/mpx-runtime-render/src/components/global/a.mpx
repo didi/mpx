@@ -37,7 +37,7 @@ createComponent({
 
 <script type="application/json">
 {
-  // "runtimeCompile": true,
+  "runtimeCompile": true,
   "usingComponents": {
 
   }

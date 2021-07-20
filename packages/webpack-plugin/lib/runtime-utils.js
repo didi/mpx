@@ -144,7 +144,7 @@ module.exports = {
         }
 
         if (wx.event.parseEvent(attr)) {
-          res += ` ${attr}="_invoke"`
+          res += ` ${attr}="__invoke"`
           return
         }
 
@@ -158,6 +158,7 @@ module.exports = {
             strVal = '"{{ r.data.mpxShow === undefined ? true : r.data.mpxShow }}"'
             break
           case 'data-eventconfigs':
+            // TODO: 自定义组件不需要 eventconfigs 配置属性
             strVal = '"{{ r.data.eventconfigs }}"'
             break
           default:

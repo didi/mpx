@@ -1,6 +1,6 @@
 <template>
   <view>
-    <view>this is a component</view>
+    <view bindtap="tap">this is common-a component</view>
   </view>
 </template>
 
@@ -35,6 +35,11 @@ createComponent({
     console.log('the b is:', this.b)
     console.log('the gogo is:', this.gogo)
     console.log('the camelCase is:', this.camelCase)
+  },
+  methods: {
+    tap () {
+      this.triggerEvent('commonaevent')
+    }
   }
 })
 </script>

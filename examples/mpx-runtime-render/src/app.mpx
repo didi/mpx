@@ -29,7 +29,8 @@ createApp({
     "./pages/if",
     "./pages/ref",
     "./pages/attrs",
-    "./pages/inner-components/index.mpx"
+    "./pages/inner-components/index.mpx",
+    "./pages/global-component/index.mpx"
   ],
   "usingComponents": {
     "global-a": "./components/global/a.mpx"
