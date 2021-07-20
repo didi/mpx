@@ -869,7 +869,6 @@ function parse (template, options) {
 
       let element = createASTElement(tag, attrs, currentParent)
       // 注入 mpx-render-base.wxml 里面的节点需要根据是否是自定义节点来决定使用的标签名
-      // element.isCustomComponent = options.usingComponents.includes(tag)
       element.isCustomComponent = isCustomComponent(element, options)
       element.isGlobalComponent = isGlobalComponent(element, options)
       element.isRuntimeComponent = isRuntimeComponentNode(element, options)
@@ -1980,15 +1979,15 @@ function isComponentNode (el, options) {
 }
 
 function isRuntimeComponentNode (el, options) {
-  return options.runtimeComponents && options.runtimeComponents.includes(el.tag)
+  return (options.runtimeComponents && options.runtimeComponents.includes(el.tag)) || false
 }
 
 function isCustomComponent (el, options) {
-  return isComponentNode(el, options) || isGlobalComponent(el, options)
+  return isComponentNode(el, options) || isGlobalComponent(el, options) || false
 }
 
 function isGlobalComponent (el, options) {
-  return options.globalComponents && options.globalComponents.includes(el.tag)
+  return (options.globalComponents && options.globalComponents.includes(el.tag)) || false
 }
 
 function processAliExternalClassesHack (el, options) {
@@ -2370,6 +2369,7 @@ function processNoTransAttrs (el) {
 }
 
 function processElement (el, root, options, meta) {
+  // wx:bind 指令
   processBindProps(el, options)
   processRuntime(el, options, meta)
   processAtMode(el)

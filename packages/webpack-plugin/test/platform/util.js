@@ -27,9 +27,31 @@ function resolve (dir) {
   return path.join(__dirname, '..', dir)
 }
 
-function baseParse (template, { srcMode, mode, env } = { srcMode: 'wx', mode: 'wx', env: '' }) {
-  return compiler.parse(template, {
+function baseParse (
+  template,
+  {
+    srcMode,
+    mode,
+    env,
+    usingComponents,
+    runtimeCompile,
+    runtimeComponents,
+    componentsAbsolutePath
+  } = {
+    srcMode: 'wx',
+    mode: 'wx',
+    env: '',
     usingComponents: [],
+    runtimeCompile: false,
+    runtimeComponents: [],
+    componentsAbsolutePath: {}
+  }
+) {
+  return compiler.parse(template, {
+    componentsAbsolutePath,
+    runtimeComponents,
+    runtimeCompile,
+    usingComponents,
     externalClasses: [],
     srcMode,
     mode,
