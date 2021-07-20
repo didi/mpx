@@ -27,31 +27,16 @@ function resolve (dir) {
   return path.join(__dirname, '..', dir)
 }
 
-function baseParse (
-  template,
-  {
-    srcMode,
-    mode,
-    env,
-    usingComponents,
-    runtimeCompile,
-    runtimeComponents,
-    componentsAbsolutePath
-  } = {
-    srcMode: 'wx',
-    mode: 'wx',
-    env: '',
-    usingComponents: [],
-    runtimeCompile: false,
-    runtimeComponents: [],
-    componentsAbsolutePath: {}
-  }
-) {
+function baseParse (template, options = {}) {
+  const mode = options.mode || 'wx'
+  const srcMode = options.srcMode || 'wx'
+  const env = options.env || ''
+
   return compiler.parse(template, {
-    componentsAbsolutePath,
-    runtimeComponents,
-    runtimeCompile,
-    usingComponents,
+    componentsAbsolutePath: options.componentsAbsolutePath || [],
+    runtimeComponents: options.runtimeComponents || [],
+    runtimeCompile: options.runtimeCompile || false,
+    usingComponents: options.usingComponents || [],
     externalClasses: [],
     srcMode,
     mode,

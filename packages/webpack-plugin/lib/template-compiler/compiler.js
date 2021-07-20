@@ -2788,9 +2788,10 @@ function _genData (node) {
   if (node.slotTarget && node.slotTarget !== '"default"') {
     data += `slot: ${node.slotTarget},`
   }
-  if (node.slotName) {
-    data += `slotName: ${node.slotName},`
-  }
+  // slot 节点通过 _genSlot 方法统一使用 __t 生成
+  // if (node.slotName) {
+  //   data += `slotName: ${node.slotName},`
+  // }
   if (node.slots) {
     data += `slots: runtimeSlots["${node.slotAlias}"],`
   }
