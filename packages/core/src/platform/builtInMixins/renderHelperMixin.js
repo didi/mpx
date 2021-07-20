@@ -2,9 +2,6 @@ import { isObject, isPlainObject } from '../../helper/utils'
 import { stringifyClass, stringifyStyle } from '../../helper/stringify'
 import contextMap from '../../vnode/context'
 
-// let uid = 0
-// const getUid = () => ++uid
-
 function simpleNormalizeChildren (children) {
   for (var i = 0; i < children.length; i++) {
     if (Array.isArray(children[i])) {
@@ -57,15 +54,12 @@ export default function renderHelperMixin () {
           return tag
         }
 
-        // const nodeId = getUid()
-        // data.nodeId = nodeId
         children = simpleNormalizeChildren(children)
 
         // 用以渲染的 vnode 维持最小数据状态
         const vnode = {
           nodeType: tag || '',
           data,
-          // nodeId,
           children
         }
         return vnode
@@ -74,16 +68,13 @@ export default function renderHelperMixin () {
       __v (content) {
         return {
           nodeType: '',
-          // nodeId: '',
-          content,
-          text: content
+          content
         }
       },
       // createEmptyVNode
       __e () {
         return {
           nodeType: '',
-          // nodeId: '',
           content: ''
         }
       },
