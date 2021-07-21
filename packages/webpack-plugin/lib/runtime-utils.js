@@ -14,8 +14,7 @@ const filterKeys = [
   'wx:for-index',
   'wx:for-item',
   'wx:if',
-  'is',
-  'big-attrs' // TODO: 这个属性是否统一在 template compiler 里面处理？？
+  'is'
 ]
 
 function genNotRuntimeCustomComponentSlots () {
@@ -125,19 +124,10 @@ module.exports = {
     Object.keys(nodesMap).map((tag) => {
       const { node, allAttrs } = nodesMap[tag]
       const templateName = node.aliasTag || node.tag
-      const nodeTag = (node.isCustomComponent && !node.isGlobalComponent) ? node.aliasTag : node.tag
+      const nodeTag = node.isLocalComponent ? node.aliasTag : node.tag
       res += `<template name="${templateName}">`
       res += `<${nodeTag}`
-      /**
-       * 运行时组件：
-       *
-       * 1. 统一使用 bigAttrs 进行传参
-       * 2. 统一使用 slots 属性传递插槽的 render 函数
-       */
-      if (node.isRuntimeComponent) {
-        res += ' ' + `big-attrs="{{ r.data.bigAttrs }}"`
-        res += ' ' + 'slots="{{ r.data.slots }}"'
-      }
+
       allAttrs.forEach((attr) => {
         if (filterKeys.includes(attr)) {
           return
@@ -151,6 +141,9 @@ module.exports = {
         res += ' ' + attr
         let strVal = ''
         switch (attr) {
+          case 'big-attrs':
+            strVal = '"{{ r.data.bigAttrs }}"'
+            break
           case 'mpxPageStatus':
             strVal = '"{{ r.data.mpxPageStatus || \'\' }}"'
             break
@@ -158,7 +151,6 @@ module.exports = {
             strVal = '"{{ r.data.mpxShow === undefined ? true : r.data.mpxShow }}"'
             break
           case 'data-eventconfigs':
-            // TODO: 自定义组件不需要 eventconfigs 配置属性
             strVal = '"{{ r.data.eventconfigs }}"'
             break
           default:

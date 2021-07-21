@@ -80,6 +80,7 @@ export default function renderHelperMixin () {
       },
       // resolveSlot
       __t (name, fallback = []) {
+        // 通过 props 传递的 slots 函数
         let nodes = (this.slots && this.slots[name]) || fallback
         return nodes
       },

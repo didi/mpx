@@ -129,6 +129,20 @@ function createASTElement (tag, attrs, parent) {
   }
 }
 
+function extendElementProps (element, options) {
+  const tag = element.tag
+  element.isCustomComponent = isCustomComponent(element, options)
+  element.isGlobalComponent = isGlobalComponent(element, options)
+  element.isLocalComponent = element.isCustomComponent && !element.isGlobalComponent
+  element.isRuntimeComponent = isRuntimeComponentNode(element, options)
+
+  // 挂载自定义组件的文件路径
+  if (options.componentsAbsolutePath && options.componentsAbsolutePath[tag]) {
+    const path = options.componentsAbsolutePath[tag]
+    element.filePath = path
+  }
+}
+
 function isForbiddenTag (el) {
   return (
     el.tag === 'style' ||
@@ -869,19 +883,16 @@ function parse (template, options) {
 
       let element = createASTElement(tag, attrs, currentParent)
       // 注入 mpx-render-base.wxml 里面的节点需要根据是否是自定义节点来决定使用的标签名
-      // element.isCustomComponent = options.usingComponents.includes(tag)
-      element.isCustomComponent = isCustomComponent(element, options)
-      element.isGlobalComponent = isGlobalComponent(element, options)
-      element.isRuntimeComponent = isRuntimeComponentNode(element, options)
-      if (options.componentsAbsolutePath && options.componentsAbsolutePath[tag]) {
-        const path = options.componentsAbsolutePath[tag]
-        const aliasTags = getAliasTag()
-        if (!meta.aliasTags) {
-          meta.aliasTags = {}
-        }
-        meta.aliasTags[tag] = aliasTags[path]['aliasTag']
-        element.filePath = path
-      }
+      extendElementProps(element, options)
+      // if (options.componentsAbsolutePath && options.componentsAbsolutePath[tag]) {
+      //   const path = options.componentsAbsolutePath[tag]
+      //   const aliasTags = getAliasTag()
+      //   if (!meta.aliasTags) {
+      //     meta.aliasTags = {}
+      //   }
+      //   meta.aliasTags[tag] = aliasTags[path]['aliasTag']
+      //   element.filePath = path
+      // }
       if (ns) {
         element.ns = ns
       }
@@ -2295,13 +2306,17 @@ function processDuplicateAttrsList (el) {
 }
 
 function processBindProps (el) {
-  const { has, val } = getAndRemoveAttr(el, config[mode].directive.bind)
-  if (has) {
-    const { hasBinding, result } = parseMustache(val)
-    el.bigAttrs = hasBinding ? result : val
+  if (el.isRuntimeComponent) {
+    let value = ''
+    const { has, val } = getAndRemoveAttr(el, config[mode].directive.bind)
+    if (has) {
+      const { hasBinding, result } = parseMustache(val)
+      el.bigAttrs = hasBinding ? result : val
+      value = val
+    }
     addAttrs(el, [{
       name: 'big-attrs',
-      value: val
+      value
     }])
   }
 }
@@ -2321,14 +2336,15 @@ function processRuntime (el, options) {
       el.innerRuntimeComponent = true
     } else {
       el.slotAlias = hash(`${++hashIndex}${el.tag}`)
-      if (!options.runtimeCompile) {
-        addAttrs(el, [{
-          name: 'slots',
-          value: `{{ runtimeSlots["${el.slotAlias}"] }}`
-        }])
-      } else {
-        el.slots = `runtimeSlot["${el.slotAlias}"]`
-      }
+      // TODO：这块可以放置到 postProcessRuntime 处理流程里面去做
+      addAttrs(el, [{
+        name: 'slots',
+        value: `{{ runtimeSlots["${el.slotAlias}"] }}`
+      }])
+      el.slots = `runtimeSlots["${el.slotAlias}"]`
+      // if (!options.runtimeCompile) {
+      // } else {
+      // }
     }
   } else if (hasRuntimeCompileWrapper(el)) { // 针对不是运行时组件里面的运行时组件 slots 标签的处理(这里的标签即包括自定义组件也包括普通的节点)
     el.inRuntimeCompileWrapper = true
@@ -2336,7 +2352,7 @@ function processRuntime (el, options) {
 
   // 搜集需要注入到 mpx-custom-element.json 模块里面的自定义组件路径
   // 运行组件 || 非运行组件里面使用了运行组件里面嵌套了自定义组件 || 运行时组件嵌套了运行时组件
-  if (el.isCustomComponent && !el.isGlobalComponent) {
+  if (el.isLocalComponent) {
     if (options.runtimeCompile || el.inRuntimeCompileWrapper || el.innerRuntimeComponent) {
       const tag = el.tag
       const componentAbsolutePath = options.componentsAbsolutePath[tag]
@@ -2458,11 +2474,12 @@ function closeElement (el, options, meta, currentParent) {
 }
 
 // 部分节点类型不需要被收集
-const runtimeFilterTag = ['component', 'slot']
+const runtimeFilterTag = ['import', 'template', 'component', 'slot']
 
 function postProcessRuntime (el, options) {
-  // 只收集基本节点类型
-  if (options.runtimeCompile && !el.isCustomComponent && !runtimeFilterTag.includes(el.tag)) {
+  // 运行时组件里面的基础节点需要被收集起来，这些被收集起来的节点最终被注入到 mpx-base-template.wxml 模板当中
+  // TODO：非运行时组件里面运行时组件里面存在基础节点的 slot 也需要收集起来
+  if (options.runtimeCompile && !el.aliasTag && !el.isCustomComponent && !runtimeFilterTag.includes(el.tag)) {
     baseWxml.set(el)
   }
 }
@@ -2755,6 +2772,7 @@ const ignoreKeysForBigAttrs = new Set([
   'style',
   'class',
   'big-attrs',
+  'slots',
   'data-eventconfigs'
 ])
 
@@ -2792,7 +2810,8 @@ function _genData (node) {
     data += `slotName: ${node.slotName},`
   }
   if (node.slots) {
-    data += `slots: runtimeSlots["${node.slotAlias}"],`
+    data += `slots: ${node.slots},`
+    getAndRemoveAttr(node, 'slots', true)
   }
   // 运行时组件的 slots 都是通过 properties 传递，单独在这里生产 slots render 函数
   if (node.innerRuntimeComponent) {
@@ -2806,12 +2825,12 @@ function _genData (node) {
     const staticStyle = node.staticStyle ? node.staticStyle : stringify('')
     const style = node.style ? node.style : stringify({})
     data += `style: __ss(${staticStyle}, ${style}, ${node.showStyle}),`
-    // getAndRemoveAttr(node, 'style', true)
+    getAndRemoveAttr(node, 'style', true)
   }
   if (node.class || node.staticClass) {
     const staticClass = node.staticClass || stringify('')
     data += `class: __sc(${staticClass}, ${node.class}),`
-    // getAndRemoveAttr(node, 'class', true)
+    getAndRemoveAttr(node, 'class', true)
   }
   if (node.mpxPageStatus) {
     data += `mpxPageStatus: mpxPageStatus,`
@@ -2831,7 +2850,7 @@ function _genData (node) {
   }
   if (node.eventconfigs) {
     data += `eventconfigs: ${node.eventconfigs},`
-    // getAndRemoveAttr(node, 'data-eventconfigs', true)
+    getAndRemoveAttr(node, 'data-eventconfigs', true)
   }
   if (node.model) {
     const modelProp = node.model.prop
