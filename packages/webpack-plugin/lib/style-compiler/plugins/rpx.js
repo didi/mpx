@@ -22,42 +22,34 @@ module.exports = postcss.plugin('rpx', (options = {}) => root => {
   }
 
   function transRpx (declaration) {
-    let unit
-    let regExp
-    if (rpxRegExp.test(declaration.value)) {
-      regExp = rpxRegExpG
-      unit = 'rpx'
-    } else if (pxRegExp.test(declaration.value)) {
-      regExp = pxRegExpG
-      unit = 'px'
+    if (pxRegExp.test(declaration.value)) {
+      declaration.value = declaration.value.replace(pxRegExpG, function (match, $1) {
+        if ($1 === '0') return $1
+        if (mpxMode === 'web') {
+          return `${$1 / px2vwRatio}vw`
+        }
+        return `${$1 * ratio}rpx`
+      })
     }
-    declaration.value = declaration.value.replace(regExp, function (match, $1) {
-      return handleCalc($1, unit)
-    })
+  }
+  function transWebRpx (declaration) {
+    if (rpxRegExp.test(declaration.value)) {
+      declaration.value = declaration.value.replace(rpxRegExpG, function (match, $1) {
+        if ($1 === '0') return $1
+        return `${$1 * rpx2vwRatio}vw`
+      })
+    }
   }
 
-  function handleCalc (value, unit) {
-    if (value === '0') return value
-    switch (unit) {
-      case 'rpx':
-        if (mpxMode === 'web') {
-          return `${value * rpx2vwRatio}vw`
-        }
-        break
-      case 'px':
-        if (mpxMode === 'web') {
-          return `${value / px2vwRatio}vw`
-        } else {
-          return `${value * ratio}rpx`
-        }
-    }
-  }
   root.walkRules(rule => {
     let ignore = false
     if (isIgnoreComment(rule.prev()) || isIgnoreComment(rule.last)) {
       ignore = true
     }
     rule.walkDecls(declaration => {
+      if (mpxMode === 'web') {
+        transWebRpx(declaration)
+      }
       if (ignore || isIgnoreComment(declaration.prev())) {
         if (mode === 'only') {
           transRpx(declaration)

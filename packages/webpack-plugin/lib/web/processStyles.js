@@ -7,9 +7,12 @@ module.exports = function (styles, options, callback) {
       output += genComponentTag(style, {
         attrs (style) {
           const attrs = Object.assign({}, style.attrs)
-          if (options.autoScope) attrs.scoped = true
-          if (options.needCssSourceMap) attrs.needCssSourceMap = true
-          if (options.moduleId) attrs.moduleId = options.moduleId
+          attrs.mpxStyleOptions = JSON.stringify({
+            // web暂时不处理scoped
+            // scoped: !!options.autoScope,
+            sourceMap: !!options.needCssSourceMap,
+            moduleId: options.moduleId
+          })
           return attrs
         }
       })

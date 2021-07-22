@@ -1002,15 +1002,20 @@ try {
             }
             if (this.options.mode === 'web') {
               const isCssLoader = /css-loader/.test(loader.loader)
-              const { moduleId, needCssSourceMap, type } = queryObj
-              if (resourcePath.endsWith('.mpx') && type === 'style' && !isPitcherRequest && isCssLoader) {
-                if (data.loaders[index + 1].loader !== normalize.lib('style-compiler/index.js')) {
-                  data.loaders.splice(index + 1, 0, {
+              const { mpxStyleOptions, type } = queryObj
+              const mpxStyleResource = resourcePath.endsWith('.mpx') && type === 'style'
+              const cssResource = resourcePath.endsWith('.styl') || resourcePath.endsWith('.less') || resourcePath.endsWith('.scss') || resourcePath.endsWith('.sass') || resourcePath.endsWith('.css')
+              if ((mpxStyleResource && !isPitcherRequest && isCssLoader) || (cssResource && isCssLoader)) {
+                let loaderIndex
+                if (cssResource) {
+                  loaderIndex = index + 1
+                } else if (mpxStyleResource) {
+                  loaderIndex = index + 2
+                }
+                if (data.loaders[loaderIndex].loader !== normalize.lib('style-compiler/index.js')) {
+                  data.loaders.splice(loaderIndex, 0, {
                     loader: normalize.lib('style-compiler/index.js'),
-                    options: {
-                      moduleId,
-                      sourceMap: !!needCssSourceMap
-                    }
+                    options: (mpxStyleOptions && JSON.parse(mpxStyleOptions)) || {}
                   })
                 }
               }
