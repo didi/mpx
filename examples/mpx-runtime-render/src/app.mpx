@@ -18,10 +18,10 @@ createApp({
 {
   "pages": [
     "./pages/event.mpx",
-    "./pages/style",
+    // "./pages/style",
     // "./pages/class",
-    // "./pages/slot",
-    // "./pages/event/index",
+    "./pages/slot",
+    "./pages/event/index",
     // "./pages/component",
     // "./pages/show",
     // "./pages/for",
@@ -29,7 +29,8 @@ createApp({
     // "./pages/if",
     // "./pages/ref",
     // "./pages/attrs",
-    // "./pages/inner-components/index.mpx"
+    // "./pages/inner-components/index.mpx",
+    // "./pages/global-component/index.mpx"
   ],
   "usingComponents": {
     "global-a": "./components/global/a.mpx"

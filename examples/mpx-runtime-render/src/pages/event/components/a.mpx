@@ -23,6 +23,9 @@ createComponent({
   data: {
     componentName: 'a'
   },
+  attached () {
+    console.log('the a is:', this.a)
+  },
   methods: {
     tap() {
       this.triggerEvent('event', { a: 1 })

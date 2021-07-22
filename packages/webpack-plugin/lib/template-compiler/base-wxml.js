@@ -35,7 +35,7 @@ module.exports = {
           }
         } else {
           if (key === 'data-eventconfigs') {
-            res += `${key}="{{ r.data.eventconfigs }}"`
+            res += `${key}="{{ r.data.eventconfigs }}" `
           } else {
             res += `${key}="{{ r.data['${key}'] }}" `
           }

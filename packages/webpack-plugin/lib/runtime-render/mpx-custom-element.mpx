@@ -38,7 +38,6 @@ createComponent({
     // 动态绑定由 vnode 传递的事件
     if (this.vnodeData.mpxbindevents) {
       Object.keys(this.vnodeData.mpxbindevents).map(event => {
-        // this[event] = this.vnodeData.mpxbindevents[event]
         // 固定事件调用上下文
         this[event] = this.vnodeData.mpxbindevents[event].bind(this.vnodeRootContext)
       })

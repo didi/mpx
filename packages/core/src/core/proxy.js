@@ -375,8 +375,8 @@ export default class MPXProxy {
       this.target.__render({ r: vnode })
     } else {
       let diffPath = diffAndCloneA(vnode, this._vnode).diffData
-      console.log('the diffPath is:', diffPath)
       if (!isEmptyObject(diffPath)) {
+        // 构造 diffPath 数据
         diffPath = Object.keys(diffPath).reduce((preVal, curVal) => {
           const key = 'r' + curVal
           preVal[key] = diffPath[curVal]
