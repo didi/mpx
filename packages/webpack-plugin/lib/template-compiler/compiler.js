@@ -2181,7 +2181,6 @@ function processShow (el, options, root) {
         show = '{{false}}'
         showExp = 'false'
       }
-      // 运行时编译不需要这个属性
       addAttrs(el, [{
         name: 'mpxShow',
         value: show

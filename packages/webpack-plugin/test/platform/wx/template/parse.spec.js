@@ -9,20 +9,6 @@ describe('compiler: parse', () => {
       expect(el.tag).toBe('view')
       expect(el.attrsList).toEqual([])
       expect(el.children[0].text).toBe('mpx')
-      // expect(element).toStrictEqual({
-      //   type: 1,
-      //   tag: 'view',
-      //   attrsList: [],
-      //   attrsMap: {},
-      //   parent: root,
-      //   children: [],
-      //   isCustomComponent: undefined,
-      //   isGlobalComponent: undefined,
-      //   isRuntimeComponent: undefined,
-      //   runtimeCompile: false,
-      //   moduleId: undefined,
-      //   events: {}
-      // })
     })
 
     test('interpolation in element', () => {
@@ -184,12 +170,36 @@ describe('compiler: parse', () => {
       expect(el).not.toHaveProperty('style')
     })
 
-    test('wx:show', () => {
+    test('wx:show using by normal element', () => {
+      const { root } = baseParse('<view wx:show="{{ flag }}"></view>', {
+        runtimeCompile: true
+      })
 
+      const el = root.children[0]
+      expect(el.attrsMap).toStrictEqual({
+        style: '{{(flag)||(flag)===undefined?\'\':\'display:none;\'}}'
+      })
+      expect(el.attrsList).toStrictEqual([
+        {
+          name: 'style',
+          value: '{{(flag)||(flag)===undefined?\'\':\'display:none;\'}}'
+        }
+      ])
+      expect(el).toHaveProperty('showStyle', '(flag)||(flag)===undefined?{}:{display:"none"}')
     })
 
-    test('wx:class', () => {
+    test('wx:show using by custom component', () => {
+      const { root } = baseParse('<my-component wx:show="{{ flag }}"></my-component>', {
+        runtimeCompile: true,
+        usingComponents: ['my-component']
+      })
 
+      const el = root.children[0]
+      expect(el).toHaveProperty('show', '(flag)')
     })
+
+    // test('wx:class', () => {
+
+    // })
   })
 })
