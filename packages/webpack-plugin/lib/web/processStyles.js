@@ -7,9 +7,8 @@ module.exports = function (styles, options, callback) {
       output += genComponentTag(style, {
         attrs (style) {
           const attrs = Object.assign({}, style.attrs)
+          if (options.autoScope) attrs.scoped = true
           attrs.mpxStyleOptions = JSON.stringify({
-            // web暂时不处理scoped
-            // scoped: !!options.autoScope,
             sourceMap: !!options.needCssSourceMap,
             moduleId: options.moduleId
           })
