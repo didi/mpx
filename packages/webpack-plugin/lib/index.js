@@ -1001,23 +1001,23 @@ try {
               loader.options = { appendTsSuffixTo: [/\.(mpx|vue)$/] }
             }
             if (this.options.mode === 'web') {
-              const isCssLoader = /css-loader/.test(loader.loader)
               const { mpxStyleOptions, type } = queryObj
               const mpxStyleResource = resourcePath.endsWith('.mpx') && type === 'style'
               const cssResource = /\.(styl|less｜scss｜sass|css)$/.test(resourcePath)
-              if ((mpxStyleResource && !isPitcherRequest && isCssLoader) || (cssResource && isCssLoader)) {
-                let loaderIndex
-                if (cssResource) {
-                  loaderIndex = index + 1
-                } else if (mpxStyleResource) {
-                  loaderIndex = index + 2
-                }
-                if (data.loaders[loaderIndex].loader !== normalize.lib('style-compiler/index.js')) {
-                  data.loaders.splice(loaderIndex, 0, {
-                    loader: normalize.lib('style-compiler/index.js'),
-                    options: (mpxStyleOptions && JSON.parse(mpxStyleOptions)) || {}
-                  })
-                }
+              const isCssLoader = /css-loader/.test(loader.loader)
+              const isVueStyleLoader = /vue-loader\/lib\/loaders\/stylePostLoader.js/.test(loader.loader)
+              let loaderIndex = 0
+              if (cssResource && isCssLoader) {
+                loaderIndex = index + 1
+              }
+              if (mpxStyleResource && !isPitcherRequest && isVueStyleLoader) {
+                loaderIndex = index + 1
+              }
+              if (loaderIndex && data.loaders[loaderIndex].loader !== normalize.lib('style-compiler/index.js')) {
+                data.loaders.splice(loaderIndex, 0, {
+                  loader: normalize.lib('style-compiler/index.js'),
+                  options: (mpxStyleOptions && JSON.parse(mpxStyleOptions)) || {}
+                })
               }
             }
           })
