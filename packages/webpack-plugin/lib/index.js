@@ -1004,7 +1004,7 @@ try {
               const isCssLoader = /css-loader/.test(loader.loader)
               const { mpxStyleOptions, type } = queryObj
               const mpxStyleResource = resourcePath.endsWith('.mpx') && type === 'style'
-              const cssResource = resourcePath.endsWith('.styl') || resourcePath.endsWith('.less') || resourcePath.endsWith('.scss') || resourcePath.endsWith('.sass') || resourcePath.endsWith('.css')
+              const cssResource = /\.(styl|less｜scss｜sass|css)$/.test(resourcePath)
               if ((mpxStyleResource && !isPitcherRequest && isCssLoader) || (cssResource && isCssLoader)) {
                 let loaderIndex
                 if (cssResource) {
