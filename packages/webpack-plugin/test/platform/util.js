@@ -37,6 +37,7 @@ function baseParse (template, options = {}) {
     runtimeComponents: options.runtimeComponents || [],
     runtimeCompile: options.runtimeCompile || false,
     usingComponents: options.usingComponents || [],
+    isComponent: options.isComponent || false,
     externalClasses: [],
     srcMode,
     mode,

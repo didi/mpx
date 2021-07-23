@@ -2178,8 +2178,8 @@ function processShow (el, options, root) {
   // 如果是根节点，那么需要添加 mpxShow 变量
   if (options.isComponent && el.parent === root && isRealNode(el)) {
     if (show !== undefined) {
-      show = `{{${parseMustache(show).result}&&mpxShow}}`
       showExp = `${parseMustache(show).result}&&mpxShow`
+      show = `{{${parseMustache(show).result}&&mpxShow}}`
     } else {
       show = '{{mpxShow}}'
       showExp = 'mpxShow'

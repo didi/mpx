@@ -31,6 +31,7 @@ describe('compiler: parse', () => {
       const el = root.children[0]
       expect(el.isRuntimeComponent).toBe(true)
       expect(el.isCustomComponent).toBe(true)
+      expect(el).toHaveProperty('mpxPageStatus', true)
     })
 
     test('runtime element in runtime component', () => {
@@ -188,6 +189,53 @@ describe('compiler: parse', () => {
       expect(el).toHaveProperty('showStyle', '(flag)||(flag)===undefined?{}:{display:"none"}')
     })
 
+    test('wx:show using by root custom component', () => {
+      const { root } = baseParse('<my-component></my-component>', {
+        usingComponents: ['my-component'],
+        isComponent: true
+      })
+
+      const el = root.children[0]
+      expect(el).toHaveProperty('show', 'mpxShow')
+      expect(el.attrsMap).toMatchObject({
+        mpxShow: '{{mpxShow}}'
+      })
+      expect(el.attrsList).toStrictEqual([
+        {
+          name: 'mpxShow',
+          value: '{{mpxShow}}'
+        },
+        {
+          name: 'mpxPageStatus',
+          value: '{{mpxPageStatus}}'
+        }
+      ])
+    })
+
+    test('wx:show using by root custom component with directive', () => {
+      const { root } = baseParse('<my-component wx:show="{{ flag }}"></my-component>', {
+        usingComponents: ['my-component'],
+        isComponent: true
+      })
+
+      const el = root.children[0]
+      expect(el).toHaveProperty('show', '(flag)&&mpxShow')
+      expect(el.attrsMap).toStrictEqual({
+        mpxShow: '{{(flag)&&mpxShow}}',
+        mpxPageStatus: '{{mpxPageStatus}}'
+      })
+      expect(el.attrsList).toStrictEqual([
+        {
+          name: 'mpxShow',
+          value: '{{(flag)&&mpxShow}}'
+        },
+        {
+          name: 'mpxPageStatus',
+          value: '{{mpxPageStatus}}'
+        }
+      ])
+    })
+
     test('wx:show using by custom component', () => {
       const { root } = baseParse('<my-component wx:show="{{ flag }}"></my-component>', {
         runtimeCompile: true,
@@ -196,6 +244,45 @@ describe('compiler: parse', () => {
 
       const el = root.children[0]
       expect(el).toHaveProperty('show', '(flag)')
+      expect(el).toHaveProperty('mpxPageStatus', true)
+      expect(el.attrsMap).toStrictEqual({
+        mpxShow: '{{ flag }}',
+        mpxPageStatus: '{{mpxPageStatus}}'
+      })
+      expect(el.attrsList).toStrictEqual([
+        {
+          name: 'mpxShow',
+          value: '{{ flag }}'
+        },
+        {
+          name: 'mpxPageStatus',
+          value: '{{mpxPageStatus}}'
+        }
+      ])
+    })
+
+    test('wx:show using with string', () => {
+      // in page using wx:show
+      const { root } = baseParse('<my-component wx:show=""></my-component>', {
+        usingComponents: ['my-component']
+      })
+
+      const el = root.children[0]
+      expect(el).toHaveProperty('show', 'false')
+      expect(el.attrsMap).toStrictEqual({
+        mpxShow: '{{false}}',
+        mpxPageStatus: '{{mpxPageStatus}}'
+      })
+      expect(el.attrsList).toStrictEqual([
+        {
+          name: 'mpxShow',
+          value: '{{false}}'
+        },
+        {
+          name: 'mpxPageStatus',
+          value: '{{mpxPageStatus}}'
+        }
+      ])
     })
 
     // test('wx:class', () => {
