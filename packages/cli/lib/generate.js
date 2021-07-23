@@ -50,12 +50,9 @@ module.exports = function generate ({ name, src, dest, mockList }, done) {
 
   const mockData = opts.getMockData && opts.getMockData(mockList)
 
-  const chain = mockData
-    ? metalsmith.use(mock(mockData))
-    : metalsmith.use(askQuestions(opts.prompts))
-
-  chain
-    .use(useDefault(opts.prompts))
+  metalsmith
+    .use(preUseDefault(opts.prompts))
+    .use(mockData ? mock(mockData) : askQuestions(opts.prompts))
     .use(computed(opts.computed))
     .use(filterFiles(opts.filters))
     .use(renderTemplateFiles(opts.skipInterpolation))
@@ -109,14 +106,26 @@ function processMock (mockData, data, done) {
   done()
 }
 
-function useDefault (prompts) {
+function preUseDefault (prompts) {
   return (files, metalsmith, done) => {
     const data = metalsmith.metadata()
     Object.keys(prompts).forEach((key) => {
       const prompt = prompts[key]
-      if (!data.hasOwnProperty(key) && prompt.hasOwnProperty('default')) {
+      if (prompt.hasOwnProperty('default')) {
         if (typeof prompt.default === 'function') {
-          data[key] = prompt.default(data)
+          let temp
+          Object.defineProperty(data, key, {
+            get () {
+              if (temp !== undefined) {
+                return temp
+              }
+              return prompt.default(data)
+            },
+            set (val) {
+              temp = val
+            },
+            enumerable: true
+          })
         } else {
           data[key] = prompt.default
         }
