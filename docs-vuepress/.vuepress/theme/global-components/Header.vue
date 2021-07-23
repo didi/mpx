@@ -31,29 +31,24 @@ export default {
 };
 </script>
 
-<style>
-.logo {
-  background-image: url("https://dpubstatic.udache.com/static/dpubimg/1ESVodfAED/logo.png");
-  background-size: contain;
-  background-repeat: no-repeat;
-  font-size: 0;
-  width: 135px;
-  height: 35px;
-}
-.nav {
-  margin-left: 50px;
-}
-.row {
-  display: flex;
-  align-items: center;
-}
-.header {
-  padding: 40px 0 0 30px;
-  position: relative;
-}
-.banner {
-  position: absolute;
-  right: 0;
-  top: 0;
-}
+<style lang="stylus" scoped>
+.logo
+  background-image url("https://dpubstatic.udache.com/static/dpubimg/1ESVodfAED/logo.png")
+  background-size contain
+  background-repeat no-repeat
+  font-size 0
+  width 135px
+  height 35px
+.nav
+  margin-left 50px
+.row
+  display flex
+  align-items center
+.header
+  padding 40px 0 0 30px
+  position relative
+.banner
+  position absolute
+  right 0
+  top 0
 </style>

@@ -1,7 +1,7 @@
 <template>
-  <div class="content">
+  <div>
     <!-- 第一部分 -->
-    <section class="one-section">
+    <section class="one-section one-section__content">
       <div>
         <h2 class="one-section__title">增强型跨端小程序框架</h2>
         <p class="one-section__desc">
@@ -284,269 +284,238 @@
 </template>
 
 <script>
-export default {};
+export default {}
 </script>
 
-<style>
-.row {
-  display: flex;
-  align-items: center;
-}
+<style lang="stylus" scoped>
+ul li
+  list-style none
+.row
+  display flex
+  align-items center
 
-.header {
-  padding: 40px 0 0 30px;
-  position: relative;
-}
+.header
+  padding 40px 0 0 30px
+  position relative
 
-.title {
-  font-size: 30px;
-  margin-bottom: 20px;
-  font-weight: 500;
-}
+.title
+  font-size 30px
+  margin-bottom 20px
+  font-weight 500
 
-.desc {
-  font-size: 12px;
-  line-height: 22px;
-  margin-bottom: 40px;
-}
+.desc
+  font-size 12px
+  line-height 22px
+  margin-bottom 40px
 
-.btn {
-  width: 116px;
-  height: 40px;
-  background-image: linear-gradient(-58deg, #50be97 30%, #31bc7f 79%);
-  box-shadow: -3px 12px 35px 0 rgba(49, 188, 127, 0.2);
-  border-radius: 4px;
-  border: none;
-  font-size: 14px;
-}
-.content {
-  padding: 0 200px;
-}
+.btn
+  width 116px
+  height 40px
+  background-image linear-gradient(-58deg, #50be97 30%, #31bc7f 79%)
+  box-shadow -3px 12px 35px 0 rgba(49, 188, 127, 0.2)
+  border-radius 4px
+  border none
+  font-size 14px
 
-.one-section {
-  padding-top: 181px;
-  width: 100%;
-}
+.one-section__content
+  padding 0 200px
 
-.one-section__title {
-  margin-bottom: 20px;
-  font-size: 40px;
-  font-weight: 500;
-}
+.one-section
+  padding-top 181px
+  width 100%
 
-.one-section__desc {
-  width: 450px;
-  line-height: 30px;
-  margin-bottom: 70px;
-}
+.one-section__title
+  margin-bottom 20px
+  font-size 40px
+  font-weight 500
+  border-bottom none
 
-.one-section__btn {
-  width: 162px;
-  height: 52px;
-  border-radius: 4px;
-  border: none;
-  font-size: 20px;
-}
+.one-section__desc
+  width 450px
+  line-height 30px
+  margin-bottom 70px
 
-.one-section__enter {
-  background-image: linear-gradient(-58deg, #50be97 30%, #31bc7f 79%);
-  box-shadow: -3px 12px 35px 0 rgba(49, 188, 127, 0.2);
-}
+.one-section__btn
+  width 162px
+  height 52px
+  border-radius 4px
+  border none
+  font-size 20px
 
-.one-section__github {
-  margin-left: 30px;
-  background: #ffffff;
-  border: 0 solid #efefef;
-  box-shadow: -3px 12px 35px 0 rgba(49, 188, 127, 0.2);
-}
+.one-section__enter
+  background-image linear-gradient(-58deg, #50be97 30%, #31bc7f 79%)
+  box-shadow -3px 12px 35px 0 rgba(49, 188, 127, 0.2)
 
-.white-link {
-  color: #ffffff;
-  font-weight: 600;
-}
+.one-section__github
+  margin-left 30px
+  background #ffffff
+  border 0 solid #efefef
+  box-shadow -3px 12px 35px 0 rgba(49, 188, 127, 0.2)
 
-.blue-link {
-  color: #31bc7f;
-  font-weight: 600;
-}
+.white-link
+  color #ffffff
+  font-weight 600
+  display flex
+  align-items center
+  justify-content center
 
-.two-section {
-  padding-top: 240px;
-  display: flex;
-  justify-content: center;
-}
+.blue-link
+  color #31bc7f
+  font-weight 600
+  width 100%
+  height 100%
+  display flex
+  align-items center
+  justify-content center
 
-.two-section__item {
-  width: 280px;
-  height: 344px;
-  padding: 40px 18px 46px 18px;
-  box-sizing: border-box;
-  background: #ffffff;
-  border: 0 solid #efefef;
-  box-shadow: 0 51px 145px 0 rgba(49, 188, 127, 0.1),
+.two-section
+  padding-top 240px
+  display flex
+  justify-content center
+
+.two-section__item 
+  width 280px
+  height 344px
+  padding 40px 18px 46px 18px
+  box-sizing border-box
+  background #ffffff
+  border 0 solid #efefef
+  box-shadow 0 51px 145px 0 rgba(49, 188, 127, 0.1),
     0 11px 32px 0 rgba(49, 188, 127, 0.06),
-    0 3px 10px 0 rgba(49, 188, 127, 0.04);
-  border-radius: 4px;
-  margin: 0 10px;
-  text-align: center;
-}
+    0 3px 10px 0 rgba(49, 188, 127, 0.04)
+  border-radius 4px
+  margin 0 10px
+  text-align center
+  list-style none
+ 
 
-.two-section__step {
-  position: relative;
-  top: 54px;
-}
+.two-section__step 
+  position relative
+  top 54px
 
-.two-section__title {
-  font-size: 20px;
-  margin: 33px 0 21px 0;
-}
+.two-section__title 
+  font-size 20px
+  margin 33px 0 21px 0
 
-.two-section__desc {
-  font-size: 12px;
-  line-height: 22px;
-}
+.two-section__desc 
+  font-size 12px
+  line-height 22px
+ 
 
-.three-section {
-  margin-top: 183px;
-  display: flex;
-  background: url("https://dpubstatic.udache.com/static/dpubimg/k_-K6Ok3Ap/todomvc_bg.png")
-    no-repeat;
-  background-size: 100% 713px;
-  padding: 0 200px;
-  height: 713px;
-  align-items: center;
-}
+.three-section 
+  margin-top 183px
+  display flex
+  background url("https://dpubstatic.udache.com/static/dpubimg/k_-K6Ok3Ap/todomvc_bg.png") no-repeat
+  background-size 100% 713px
+  padding 0 200px
+  height 713px
+  align-items center
 
-.three-section__mvc {
-  margin-left: 60px;
-}
+.three-section__mvc 
+  margin-left 60px
 
-.white-text {
-  color: #fff;
-}
+.white-text 
+  color #fff
 
-.three-section__btn {
-  background: #fff;
-}
+.three-section__btn 
+  background #fff
 
-.section {
-  display: flex;
-  align-items: center;
-  height: 520px;
-  box-sizing: border-box;
-  margin-top: 183px;
-}
+.section 
+  display flex
+  align-items center
+  height 520px
+  box-sizing border-box
+  margin-top 183px
 
-.grow {
-  flex: 1;
-}
+.grow 
+  flex 1
 
-.four-section__bg {
-  background: url("https://dpubstatic.udache.com/static/dpubimg/2EOn4VU6x-/jizhi_bg.png")
-    no-repeat;
-  background-size: 100% 520px;
-  height: 100%;
-  text-align: center;
-}
+.four-section__bg 
+  background url("https://dpubstatic.udache.com/static/dpubimg/2EOn4VU6x-/jizhi_bg.png") no-repeat    
+  background-size 100% 520px
+  height 100%
+  text-align center
 
-.four-section__text {
-  padding: 0 200px 0 85px;
-}
+.four-section__text 
+  padding 0 200px 0 85px
 
-.five-section__bg {
-  background: url("https://dpubstatic.udache.com/static/dpubimg/9Cs6CV_OF2/jianjin_bg.png")
-    no-repeat;
-  background-size: 100% 520px;
-  height: 100%;
-  text-align: center;
-}
+.five-section__bg 
+  background url("https://dpubstatic.udache.com/static/dpubimg/9Cs6CV_OF2/jianjin_bg.png") no-repeat
+  background-size 100% 520px
+  height 100%
+  text-align center
+ 
+.five-section__text 
+  padding 0 85px 0 200px
+ 
+.six-section 
+  margin-top 140px
+  display flex
+  align-items center
+  justify-content center
+  background url("https://dpubstatic.udache.com/static/dpubimg/W5_rX8s40G/kaifa_bg.png") no-repeat
+  background-size 100% 694px
+  height 694px
+ 
+.six-section__item 
+  background #ffffff
+  border 0 solid #a4a4a4
+  border-radius 4px
+  width 280px
+  height 80px
+  display flex
+  padding 17px 0 17px 17px
+  box-sizing border-box
 
-.five-section__text {
-  padding: 0 85px 0 200px;
-}
+.six-section__step 
+  margin-right 20px
 
-.six-section {
-  margin-top: 140px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: url("https://dpubstatic.udache.com/static/dpubimg/W5_rX8s40G/kaifa_bg.png")
-    no-repeat;
-  background-size: 100% 694px;
-  height: 694px;
-}
+.six-section__row 
+  margin-bottom 20px
 
-.six-section__item {
-  background: #ffffff;
-  border: 0 solid #a4a4a4;
-  border-radius: 4px;
-  width: 280px;
-  height: 80px;
-  display: flex;
-  padding: 17px 0 17px 17px;
-  box-sizing: border-box;
-}
+.six-section__list 
+  display flex
+  flex-direction column
+  justify-content space-between
+  font-size 12px
+  color #3A495D
 
-.six-section__step {
-  margin-right: 20px;
-}
+.six-section__title 
+  margin-bottom 50px
+  text-align center
+  color #ffffff
 
-.six-section__row {
-  margin-bottom: 20px;
-}
+.six-section__icon 
+  margin-right 9px
 
-.six-section__list {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-}
+.seven-section 
+  margin-top 113px
+  padding 0 200px
+  text-align center
+ 
+.seven-section__center 
+  width 402px
+  background url("https://dpubstatic.udache.com/static/dpubimg/XrJHfoN2ky/anli_bg.png") no-repeat center center
+  height 100%
+  background-size contain
 
-.six-section__title {
-  margin-bottom: 50px;
-  text-align: center;
-  color: #ffffff;
-}
+.seven-section__phone
+  background url("https://dpubstatic.udache.com/static/dpubimg/hxFU4KVamb/anli_pic_phone.png") no-repeat center center
+  height 100%
+  background-size contain
 
-.six-section__icon {
-  margin-right: 9px;
-}
+.seven-section__wrap
+  height 433px
+  margin-top 40px
 
-.seven-section {
-  margin-top: 113px;
-  padding: 0 200px;
-  text-align: center;
-}
+.seven-section__title 
+  text-align left
+  font-size 20px
+  font-weight 600
 
-.seven-section__center {
-  width: 402px;
-  background: url("https://dpubstatic.udache.com/static/dpubimg/XrJHfoN2ky/anli_bg.png")
-    no-repeat center center;
-  height: 100%;
-  background-size: contain;
-}
-
-.seven-section__phone {
-  background: url("https://dpubstatic.udache.com/static/dpubimg/hxFU4KVamb/anli_pic_phone.png")
-    no-repeat center center;
-  height: 100%;
-  background-size: contain;
-}
-
-.seven-section__wrap {
-  height: 433px;
-  margin-top: 40px;
-}
-
-.seven-section__title {
-  text-align: left;
-  font-size: 20px;
-  font-weight: 600;
-}
-
-.seven-section__desc {
-  margin-top: 41px;
-  text-align: left;
-  font-size: 12px;
-  line-height: 23px;
-}
+.seven-section__desc
+  margin-top 41px
+  text-align left
+  font-size 12px
+  line-height 23px
 </style>
