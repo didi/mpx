@@ -1,9 +1,18 @@
 <template>
-  <div class="test" slot-key="container">213123123213</div>
+  <div class="container">
+    <ParentLayout/>
+  </div>
 </template>
 
+
 <script>
-export default {}
+import ParentLayout from '@parent-theme/layouts/Layout.vue'
+
+export default {
+  components: {
+    ParentLayout
+  }
+}
 </script>
 
 <style>

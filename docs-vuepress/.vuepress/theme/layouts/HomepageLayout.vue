@@ -20,15 +20,6 @@ export default {
 };
 </script>
 
-<style>
-@import "../styles/reset.css";
-.container { 
-  line-height: 1;
-  font-family: "PingFang SC", "STHeitiSC-Light", "Helvetica-Light", arial,sans-serif, "Droid Sans Fallback";
-  -webkit-tap-highlight-color: transparent;
-  font-size: 14px;
-  color: #3a495d;
-  width: 100%;
-  height: 100%;
-}
+<style lang="stylus" scoped>
+
 </style>
