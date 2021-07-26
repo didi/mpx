@@ -2724,14 +2724,17 @@ function genElement (node) {
   }
 
   let code = ''
-  if (node.type === 1) {
-    if (node.tag !== 'temp-node' && node.tag !== 'import') {
+  if (node.type === 1) { // 元素节点
+    if (node.tag !== 'import') {
       if (node.for && !node.forProcessed) {
         return _genFor(node)
       } else if (node.if && !node.ifProcessed) {
         return _genIf(node)
       } else if (node.tag === 'slot') {
         return _genSlot(node)
+      } else if (node.tag === 'temp-node') {
+        // 临时节点通过 block 来承接渲染
+        return _genBlock(node)
       } else {
         // <component is="{{ xxx }}">
         if (node.is) {
@@ -2746,14 +2749,11 @@ function genElement (node) {
 
         return code
       }
-    } else if (node.tag === 'temp-node') {
-      // 临时节点最终通过 block 来承接渲染
-      return _genBlock(node)
     } else {
       return _genChildren(node)
     }
-  } else if (node.type === 3) {
-    return _genNode(node)
+  } else if (node.type === 3) { // 文本节点
+    return _genText(node)
   }
 }
 
@@ -2990,12 +2990,17 @@ function _genText (node) {
     exp = node.exps[0].exp
     return `__v(${exp})`
   } else if (node.text && node.text !== ' ') {
-    exp = node.text
-    return `__v("${exp}")`
+    exp = transformSpecialNewlines(JSON.stringify(node.text))
+    return `__v(${exp})`
   } else {
     return ''
   }
-  // return exp === ' ' ? '' : `__v(${exp})`
+}
+
+function transformSpecialNewlines (text) {
+  return text
+    .replace(/\u2028/g, '\\u2028')
+    .replace(/\u2029/g, '\\u2029')
 }
 
 function genNode (node) {
