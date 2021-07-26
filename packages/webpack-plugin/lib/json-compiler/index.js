@@ -672,30 +672,62 @@ module.exports = function (raw = '{}') {
       }
     }
 
+    const processPluginGenericsImplementation = (genericsImplementation, context, callback) => {
+      async.forEachOf(genericsImplementation, (genericComponents, name, callback) => {
+        async.forEachOf(genericComponents, (genericComponentPath, name, callback) => {
+          processComponent(genericComponentPath, context, (componentPath) => {
+            if (useRelativePath === true) {
+              componentPath = toPosix(path.relative(path.dirname(currentPath), componentPath))
+            }
+            genericComponents[name] = componentPath
+          }, undefined, callback)
+        }, callback)
+      }, callback)
+    }
+
+    const processPluginExport = (plugin, tarRoot, context, callback) => {
+      if (!plugin.export) {
+        return callback()
+      }
+      let pluginExport = plugin.export
+      if (resolveMode === 'native') {
+        pluginExport = urlToRequest(pluginExport)
+      }
+      resolve(context, pluginExport, (err, resource, info) => {
+        if (err) return callback(err)
+        const { resourcePath } = parseRequest(resource)
+        // 获取 export 的模块名
+        const relative = path.relative(context, resourcePath)
+        const name = toPosix(/^(.*?)(\.[^.]*)?$/.exec(relative)[1])
+        if (/^\./.test(name)) {
+          return callback(new Error(`The miniprogram plugins' export path ${plugin.export} must be in the context ${context}!`))
+        }
+        plugin.export = name + '.js'
+        currentEntry.addChild(getEntryNode(resource, 'PluginExport'))
+        addMiniToPluginFile(resource)
+        addEntrySafely(resource, toPosix(tarRoot ? `${tarRoot}/${name}` : name), callback)
+      })
+    }
+
     /* 导出到插件 */
     const processPlugins = (plugins, srcRoot = '', tarRoot = '', context, callback) => {
       if (mpx.mode !== 'wx' || !plugins) return callback() // 目前只有微信支持导出到插件
       context = path.join(context, srcRoot)
       async.forEachOf(plugins, (plugin, name, callback) => {
-        if (!plugin.export) return callback()
-        let pluginExport = plugin.export
-        if (resolveMode === 'native') {
-          pluginExport = urlToRequest(pluginExport)
+        if (plugin.genericsImplementation) {
+          async.series([
+            (callback) => {
+              processPluginGenericsImplementation(plugin.genericsImplementation, context, callback)
+            },
+            (callback) => {
+              processPluginExport(plugin, tarRoot, context, callback)
+            }
+          ], (err) => {
+            callback(err)
+          })
+        } else {
+          processPluginExport(plugin, context, callback)
         }
-        resolve(context, pluginExport, (err, resource, info) => {
-          if (err) return callback(err)
-          const { resourcePath } = parseRequest(resource)
-          // 获取 export 的模块名
-          const relative = path.relative(context, resourcePath)
-          const name = toPosix(/^(.*?)(\.[^.]*)?$/.exec(relative)[1])
-          if (/^\./.test(name)) {
-            return callback(new Error(`The miniprogram plugins' export path ${plugin.export} must be in the context ${context}!`))
-          }
-          plugin.export = name + '.js'
-          currentEntry.addChild(getEntryNode(resource, 'PluginExport'))
-          addMiniToPluginFile(resource)
-          addEntrySafely(resource, toPosix(tarRoot ? `${tarRoot}/${name}` : name), callback)
-        })
       }, callback)
     }
 
