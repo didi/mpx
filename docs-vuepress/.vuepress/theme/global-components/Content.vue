@@ -3,15 +3,19 @@
     <!-- 第一部分 -->
     <section class="one-section one-section__content">
       <div>
-        <h2 class="one-section__title">增强型跨端小程序框架</h2>
+        <h2 class="one-section__title">{{$page.frontmatter.heroText}}</h2>
         <p class="one-section__desc">
-          良好的开发体验，极致的应用性能，完整的原生兼容，一份源码跨端输出所有小程序平台及Web。
+          {{$page.frontmatter.tagline}}
         </p>
         <button class="one-section__btn one-section__enter">
-          <a class="white-link" href="/guide/basic/start.html">快速进入</a>
+          <a class="white-link" :href="$page.frontmatter.actionLink">
+            {{$page.frontmatter.actionText}}
+          </a>
         </button>
         <button class="one-section__btn one-section__github">
-          <a class="blue-link" href="https://github.com/didi/mpx">Github</a>
+          <a class="blue-link" :href="$page.frontmatter.githubLink">
+            {{$page.frontmatter.githubText}}
+          </a>
         </button>
       </div>
     </section>
@@ -19,71 +23,60 @@
     <!-- 第二部分 -->
     <section class="two-section">
       <ul class="row">
-        <li class="two-section__item">
-          <img src="../../public/doc-svg/texing_icon_gao.svg" alt="svg" />
-          <p class="two-section__title">高性能</p>
-          <p class="two-section__desc">
-            以增强的方式将Vue中大量优良特性引入到小程序开发中，配合灵活强大的编译构建，大大提升了小程序开发体验和效率，同时提供了媲美原生开发的稳定性。
-          </p>
-        </li>
-        <li class="two-section__item two-section__step">
-          <img src="../../public/doc-svg/texing_icon_you.svg" alt="svg" />
-          <p class="two-section__title">优体验</p>
-          <p class="two-section__desc">
-            框架自带深度的运行时性能优化及包体积优化，让开发者在大多数场景下只需专注于业务开发，就能生产出媲美原生的高性能小程序应用。
-          </p>
-        </li>
-        <li class="two-section__item">
-          <img src="../../public/doc-svg/texing_icon_kua.svg" alt="svg" />
-          <p class="two-section__title">跨平台</p>
-          <p class="two-section__desc">
-            一份源码，多端运行，Mpx专注解决小程序跨端问题，以静态编译为主要手段，将业务源码输出到微信/支付宝/百度/头条/QQ小程序平台和web环境下运行。
-          </p>
+        <li class="two-section__item" v-for="(item, index) in $page.frontmatter.features" :key="index">
+          <img :src="item.icon" alt="svg" />
+          <p class="two-section__title">{{item.item}}</p>
+          <p class="two-section__desc">{{item.details}}</p>
+          <div class="two-section__line"></div>
         </li>
       </ul>
     </section>
 
     <!-- 第三部分 -->
-    <section class="three-section">
+    <section class="three-section" :style="{ backgroundImage: `url(${$page.frontmatter.threeSection.bg})` }">
       <div>
         <img
           width="270"
-          src="https://dpubstatic.udache.com/static/dpubimg/eCoUSCwEEm/anli_pic_phone.png"
+          :src="$page.frontmatter.threeSection.img"
           alt="svg"
         />
       </div>
       <div class="three-section__mvc">
         <div>
-          <p class="white-text title">TodoMVC</p>
+          <p class="white-text title">{{$page.frontmatter.threeSection.title}}</p>
           <p class="white-text desc">
-            示例源码链接示例源码链接示例源码链接示例源码链接示例源码链接示例源码链接示例源码链接示例源码链接示例源码链接示例源码链接示例源码链接示例源码链接示例源码链接示例源码链接示例源码链接示例源码链接。
+            {{$page.frontmatter.threeSection.details}}
           </p>
         </div>
         <button class="three-section__btn btn">
-          <a href="/guide/basic/start.html" class="blue-link">点击进入</a>
+          <a :href="$page.frontmatter.threeSection.actionLink" class="blue-link">
+            {{$page.frontmatter.threeSection.actionText}}
+          </a>
         </button>
       </div>
     </section>
 
     <!-- 第四部分 -->
     <section class="section">
-      <div class="grow four-section__bg">
+      <div class="grow four-section__bg" :style="{ backgroundImage: `url(${$page.frontmatter.fourSection.bg})` }">
         <img
           width="412"
-          src="https://dpubstatic.udache.com/static/dpubimg/oOWo-JDcm6/jizhi_pic.png"
+          :src="$page.frontmatter.fourSection.img"
           alt="svg"
         />
       </div>
       <div class="grow">
         <div class="four-section__text">
           <div>
-            <p class="title">极致性能</p>
+            <p class="title">{{$page.frontmatter.fourSection.title}}</p>
             <p class="desc">
-              在方便使用框架提供的便捷特性的同时，也能享受到媲美原生开发的确定性和稳定性，完全没有框架太多坑，不如用原生的顾虑；不管是增强输出还是跨平台输出，最终的dist代码可读性极强，便于调试排查；
+              {{$page.frontmatter.fourSection.details}}
             </p>
           </div>
           <button class="btn">
-            <a href="/guide/basic/start.html" class="white-link">点击进入</a>
+            <a :href="$page.frontmatter.threeSection.actionLink" class="white-link">
+              {{$page.frontmatter.threeSection.actionText}}
+            </a>
           </button>
         </div>
       </div>
@@ -94,131 +87,40 @@
       <div class="grow">
         <div class="five-section__text">
           <div>
-            <p class="title">渐进迁移</p>
+            <p class="title">{{$page.frontmatter.fiveSection.title}}</p>
             <p class="desc">
-              极致的性能：得益于增强的设计思路，Mpx框架在运行时不需要做太多封装抹平转换的工作，框架的运行时部分极为轻量简洁，压缩+gzip后仅占用14KB；配合编译构建进行的包体积优化和基于模板渲染函数进行的数据依赖跟踪，Mpx框架在性能方面做到了业内最优(小程序框架运行时性能评测报告
-              (opens new window))；
+              {{$page.frontmatter.fiveSection.details}}
             </p>
           </div>
           <button class="btn">
-            <a href="/guide/basic/start.html" class="white-link">点击进入</a>
+            <a :href="$page.frontmatter.fiveSection.actionLink"  class="white-link">
+              {{$page.frontmatter.fiveSection.actionText}}
+            </a>
           </button>
         </div>
       </div>
-      <div class="grow five-section__bg">
+      <div class="grow five-section__bg" :style="{ backgroundImage: `url(${$page.frontmatter.fiveSection.bg})` }">
         <img
           width="412"
-          src="https://dpubstatic.udache.com/static/dpubimg/A1QOOIO0bj/jianjin_pic.png"
+          :src="$page.frontmatter.fiveSection.img"
           alt="svg"
         />
       </div>
     </section>
 
     <!-- 第六部分 -->
-    <section class="six-section">
+    <section class="six-section" :style="{ backgroundImage: `url(${$page.frontmatter.sixSection.bg})` }">
       <div>
-        <p class="title six-section__title">渐进迁移</p>
-        <ul class="row six-section__row">
-          <li>
-            <a href="" class="six-section__item six-section__step">
+        <p class="title six-section__title">{{$page.frontmatter.sixSection.title}}</p>
+        <ul class="row six-section__row" v-for="(current, index) in list" :key="index">
+          <li v-for="(item, index) in current" :key="index">
+            <a :href="item.actionLink" class="six-section__item six-section__step">
               <div class="six-section__icon">
-                <img src="../../public/doc-svg/kaifa_icon_2.svg" alt="svg" />
+                <img :src="item.icon" alt="svg" />
               </div>
               <div class="six-section__list">
-                <div>@mpxjs/api-proxy</div>
-                <div>运行时核心</div>
-              </div>
-            </a>
-          </li>
-          <li>
-            <a href="" class="six-section__item six-section__step">
-              <div class="six-section__icon">
-                <img src="../../public/doc-svg/kaifa_icon_2.svg" alt="svg" />
-              </div>
-              <div class="six-section__list">
-                <div>@mpxjs/webpack-plugin</div>
-                <div>编译核心</div>
-              </div>
-            </a>
-          </li>
-          <li>
-            <a href="" class="six-section__item">
-              <div class="six-section__icon">
-                <img src="../../public/doc-svg/kaifa_icon_3.svg" alt="svg" />
-              </div>
-              <div class="six-section__list">
-                <div>@mpxjs/cli</div>
-                <div>脚手架工具</div>
-              </div>
-            </a>
-          </li>
-        </ul>
-        <ul class="row six-section__row">
-          <li>
-            <a href="" class="six-section__item six-section__step">
-              <div class="six-section__icon">
-                <img src="../../public/doc-svg/kaifa_icon_4.svg" alt="svg" />
-              </div>
-              <div class="six-section__list">
-                <div>@mpxjs/fetch</div>
-                <div>网络请求库</div>
-              </div>
-            </a>
-          </li>
-          <li>
-            <a href="" class="six-section__item six-section__step">
-              <div class="six-section__icon">
-                <img src="../../public/doc-svg/kaifa_icon_5.svg" alt="svg" />
-              </div>
-              <div class="six-section__list">
-                <div>@mpxjs/api-proxy api</div>
-                <div>增强调用</div>
-              </div>
-            </a>
-          </li>
-          <li>
-            <a href="" class="six-section__item">
-              <div class="six-section__icon">
-                <img src="../../public/doc-svg/kaifa_icon_6.svg" alt="svg" />
-              </div>
-              <div class="six-section__list">
-                <div>@mpxjs/webview-bridge web</div>
-                <div>页面桥接</div>
-              </div>
-            </a>
-          </li>
-        </ul>
-        <ul class="row">
-          <li>
-            <a href="" class="six-section__item six-section__step">
-              <div class="six-section__icon">
-                <img src="../../public/doc-svg/kaifa_icon_7.svg" alt="svg" />
-              </div>
-              <div class="six-section__list">
-                <div>@mpxjs/vscode-plugin ide</div>
-                <div>插件</div>
-              </div>
-            </a>
-          </li>
-          <li>
-            <a href="" class="six-section__item six-section__step">
-              <div class="six-section__icon">
-                <img src="../../public/doc-svg/kaifa_icon_8.svg" alt="svg" />
-              </div>
-              <div class="six-section__list">
-                <div>@mpxjs/es-check</div>
-                <div>高级语法检查</div>
-              </div>
-            </a>
-          </li>
-          <li>
-            <a href="" class="six-section__item">
-              <div class="six-section__icon">
-                <img src="../../public/doc-svg/kaifa_icon_9.svg" alt="svg" />
-              </div>
-              <div class="six-section__list">
-                <div>@mpxjs/size-analyzer</div>
-                <div>包体积分析工具</div>
+                <div class="six-section__bold">{{item.title}}</div>
+                <div>{{item.details}}</div>
               </div>
             </a>
           </li>
@@ -228,12 +130,14 @@
 
     <!-- 第七部分 -->
     <section class="seven-section">
-      <p class="title">成功案例</p>
+      <p class="title">{{$page.frontmatter.sevenSection.title}}</p>
       <div class="row seven-section__wrap">
         <div class="grow">
-          <p class="seven-section__title">滴滴出行</p>
+          <p class="seven-section__title">
+            
+          </p>
           <p class="seven-section__desc">
-            写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧
+            
           </p>
         </div>
         <div class="grow seven-section__center">
@@ -241,50 +145,30 @@
         </div>
         <div class="grow"></div>
       </div>
-      <ul>
-        <li>
-          <img
-            src="https://dpubstatic.udache.com/static/dpubimg/bcca3d10-01b7-4c08-951a-22418b2443d6.jpg"
-            alt="code"
-          />
-        </li>
-        <li>
-          <img
-            src="https://dpubstatic.udache.com/static/dpubimg/708d5579-81f0-480e-96b3-5f49e8022273.jpg"
-            alt="code"
-          />
-        </li>
-        <li>
-          <img
-            src="https://dpubstatic.udache.com/static/dpubimg/8c25bec8-938e-452d-96f9-5e524092a8ee.png"
-            alt="code"
-          />
-        </li>
-        <li>
-          <img
-            src="https://dpubstatic.udache.com/static/dpubimg/8fdd04ed-a74b-4b87-be6e-652550fb843f.png"
-            alt="code"
-          />
-        </li>
-        <li>
-          <img
-            src="https://dpubstatic.udache.com/static/dpubimg/8fdd04ed-a74b-4b87-be6e-652550fb843f.png"
-            alt="code"
-          />
-        </li>
-        <li>
-          <img
-            src="https://dpubstatic.udache.com/static/dpubimg/d3b62a33-7dbd-45ea-a4aa-f30ad61965f2.jpg"
-            alt="code"
-          />
-        </li>
-      </ul>
     </section>
   </div>
 </template>
 
 <script>
-export default {}
+export default {
+  computed: {
+    list () {
+      let result = []
+      let details = this.$page.frontmatter.sixSection.details
+      let current = []
+      let i = 0
+      while (i < details.length) {
+        if (i % 3 === 0) {
+          current = []
+          result.push(current)
+        }
+        current.push(details[i])
+        i++
+      }
+      return result
+    }
+  }
+}
 </script>
 
 <style lang="stylus" scoped>
@@ -322,7 +206,7 @@ ul li
 
 .one-section
   padding-top 181px
-  width 100%
+  // width 100%
 
 .one-section__title
   margin-bottom 20px
@@ -387,11 +271,22 @@ ul li
   margin 0 10px
   text-align center
   list-style none
+  position relative
+  overflow hidden
  
 
-.two-section__step 
+.two-section__item:nth-child(2)
   position relative
   top 54px
+
+.two-section__line
+  height 8px
+  width 100%
+  position absolute
+  left 0
+  bottom 0
+  opacity 0.6
+  background-image linear-gradient(-58deg, #50BE97 30%, #31BC7F 79%)
 
 .two-section__title 
   font-size 20px
@@ -405,7 +300,7 @@ ul li
 .three-section 
   margin-top 183px
   display flex
-  background url("https://dpubstatic.udache.com/static/dpubimg/k_-K6Ok3Ap/todomvc_bg.png") no-repeat
+  background-repeat no-repeat
   background-size 100% 713px
   padding 0 200px
   height 713px
@@ -431,7 +326,7 @@ ul li
   flex 1
 
 .four-section__bg 
-  background url("https://dpubstatic.udache.com/static/dpubimg/2EOn4VU6x-/jizhi_bg.png") no-repeat    
+  background-repeat no-repeat   
   background-size 100% 520px
   height 100%
   text-align center
@@ -440,7 +335,7 @@ ul li
   padding 0 200px 0 85px
 
 .five-section__bg 
-  background url("https://dpubstatic.udache.com/static/dpubimg/9Cs6CV_OF2/jianjin_bg.png") no-repeat
+  background-repeat no-repeat
   background-size 100% 520px
   height 100%
   text-align center
@@ -453,7 +348,7 @@ ul li
   display flex
   align-items center
   justify-content center
-  background url("https://dpubstatic.udache.com/static/dpubimg/W5_rX8s40G/kaifa_bg.png") no-repeat
+  background-repeat no-repeat
   background-size 100% 694px
   height 694px
  
@@ -461,7 +356,7 @@ ul li
   background #ffffff
   border 0 solid #a4a4a4
   border-radius 4px
-  width 280px
+  width 290px
   height 80px
   display flex
   padding 17px 0 17px 17px
@@ -472,6 +367,8 @@ ul li
 
 .six-section__row 
   margin-bottom 20px
+  flex-wrap: wrap;
+  justify-content: center;
 
 .six-section__list 
   display flex
@@ -479,6 +376,11 @@ ul li
   justify-content space-between
   font-size 12px
   color #3A495D
+
+.six-section__bold
+  font-size 16px
+  font-weight 500
+  white-space nowrap
 
 .six-section__title 
   margin-bottom 50px
