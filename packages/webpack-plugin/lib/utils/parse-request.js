@@ -1,5 +1,6 @@
 const parseQuery = require('loader-utils').parseQuery
 const seen = new Map()
+const path = require('path')
 
 function genQueryObj (result) {
   // 避免外部修改queryObj影响缓存
@@ -25,6 +26,10 @@ module.exports = function parseRequest (request) {
   const rawResourcePath = resourcePath
   if (queryObj.resourcePath) {
     resourcePath = queryObj.resourcePath
+  } else if (queryObj.infix) {
+    const resourceDir = path.dirname(resourcePath)
+    const resourceBase = path.basename(resourcePath)
+    resourcePath = path.join(resourceDir, resourceBase.replace(queryObj.infix, ''))
   }
   const result = {
     resource,

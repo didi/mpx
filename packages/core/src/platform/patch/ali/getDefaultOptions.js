@@ -129,7 +129,11 @@ export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
       }
     },
     didUpdate () {
-      this.__mpxProxy && this.__mpxProxy.updated()
+      if (this.__mpxProxy) {
+        this.__mpxProxy.lockTask(() => {
+          this.__mpxProxy.updated()
+        })
+      }
     },
     [hookNames[1]] () {
       if (this.__mpxProxy) {

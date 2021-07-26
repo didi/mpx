@@ -5,6 +5,31 @@ import { getEnvObj } from '../../helper/env'
 
 const envObj = getEnvObj()
 
+const setNodeRef = function (target, ref, context) {
+  Object.defineProperty(target.$refs, ref.key, {
+    enumerable: true,
+    configurable: true,
+    get () {
+      return context.__getRefNode(ref) // for nodes, every time being accessed, returns as a new selector context.
+    }
+  })
+}
+
+const setComponentRef = function (target, ref, context, isAsync) {
+  let cacheRef = null
+  const targetRefs = isAsync ? target.$asyncRefs : target.$refs
+  Object.defineProperty(targetRefs, ref.key, {
+    enumerable: true,
+    configurable: true,
+    get () {
+      if (!cacheRef) {
+        return (cacheRef = context.__getRefNode(ref, isAsync))
+      }
+      return cacheRef
+    }
+  })
+}
+
 export default function getRefsMixin () {
   let aliMethods
   if (__mpx_mode__ === 'ali') {
@@ -109,37 +134,13 @@ export default function getRefsMixin () {
       __getRefs () {
         if (this.__getRefsData) {
           const refs = this.__getRefsData()
-          const self = this
 
           refs.forEach(ref => {
-            let cachedRef = null // saving component refs, every time call __getRefs, set its value to null
-            Object.defineProperty(this.$refs, ref.key, {
-              enumerable: true,
-              configurable: true,
-              get () {
-                if (ref.type === 'node') {
-                  return self.__getRefNode(ref) // for nodes, every time being accessed, returns as a new selector context.
-                } else { // component
-                  if (!cachedRef) {
-                    return (cachedRef = self.__getRefNode(ref)) // return new selector context
-                  }
-                  return cachedRef
-                }
-              }
-            })
+            const setRef = ref.type === 'node' ? setNodeRef : setComponentRef
+            setRef(this, ref, this)
 
             if (__mpx_mode__ === 'tt' && ref.type === 'component') {
-              let cachedAsyncRef = null
-              Object.defineProperty(this.$asyncRefs, ref.key, {
-                enumerable: true,
-                configurable: true,
-                get () {
-                  if (!cachedAsyncRef) {
-                    return (cachedAsyncRef = self.__getRefNode(ref, true)) // return new selector context
-                  }
-                  return cachedAsyncRef
-                }
-              })
+              setComponentRef(this, ref, this, true)
             }
           })
         }
