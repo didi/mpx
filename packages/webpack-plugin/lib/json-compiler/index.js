@@ -726,7 +726,7 @@ module.exports = function (raw = '{}') {
             callback(err)
           })
         } else {
-          processPluginExport(plugin, context, callback)
+          processPluginExport(plugin, tarRoot, context, callback)
         }
       }, callback)
     }
