@@ -40,6 +40,9 @@
           :src="$page.frontmatter.threeSection.img"
           alt="svg"
         />
+        <div class="todo">
+          <!-- <TodoMVC /> -->
+        </div>
       </div>
       <div class="three-section__mvc">
         <div>
@@ -131,6 +134,7 @@
     <!-- 第七部分 -->
     <section class="seven-section">
       <p class="title">{{$page.frontmatter.sevenSection.title}}</p>
+      <Carousel />
       <div class="row seven-section__wrap">
         <div class="grow">
           <p class="seven-section__title">
@@ -150,6 +154,9 @@
 </template>
 
 <script>
+import TodoMVC from "../components/TodoMVC.vue";
+import Carousel from '../components/Carousel.vue';
+
 export default {
   computed: {
     list () {
@@ -167,6 +174,34 @@ export default {
       }
       return result
     }
+  },
+  // mounted() {
+  //   this.loadJs(
+  //     "https://dpubstatic.udache.com/static/dpubimg/jZgwlFIBjH/app.js"
+  //   ).then(() => {
+  //     console.log("加载成功");
+  //   });
+  // },
+  // methods: {
+  //   loadJs(src) {
+  //     return new Promise((resolve, reject) => {
+  //       let script = document.createElement("script");
+  //       script.type = "text/javascript";
+  //       script.src = src;
+  //       document.querySelector(".todo").appendChild(script);
+
+  //       script.onload = () => {
+  //         resolve();
+  //       };
+  //       script.onerror = () => {
+  //         reject();
+  //       };
+  //     });
+  //   },
+  // },
+  components: {
+    TodoMVC,
+    Carousel
   }
 }
 </script>

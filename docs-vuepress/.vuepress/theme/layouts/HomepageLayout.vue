@@ -15,7 +15,7 @@ export default {
   components: {
     Header,
     Content,
-    Footer,
+    Footer
   },
 };
 </script>
