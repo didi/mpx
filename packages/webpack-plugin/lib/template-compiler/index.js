@@ -9,7 +9,7 @@ const path = require('path')
 const isEmptyObject = require('../utils/is-empty-object')
 const {
   transformSlotsToString
-} = require('../runtime-utils')
+} = require('../runtime-render/utils')
 
 const noCacheReg = /mpx-custom-element\.mpx|mpx-render-base\.wxml/
 

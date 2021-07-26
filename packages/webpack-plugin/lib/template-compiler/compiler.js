@@ -17,8 +17,8 @@ const {
   transformSlotsToString,
   getAliasTag,
   collectInjectedPath
-} = require('../runtime-utils')
-const baseWxml = require('./base-wxml')
+} = require('../runtime-render/utils')
+const baseWxml = require('../runtime-render/base-wxml.js')
 
 let hashIndex = 0
 /**

@@ -9,14 +9,13 @@ import { createComponent } from '@mpxjs/core'
 
 // 上层的 vnode 渲染好的时候，所有的事件已经被缓存，在 element 直接绑定全部缓存好的事件即可
 createComponent({
-  // runtimeComponent: true,
   options: {
     addGlobalClass: true,
     styleIsolation: 'shared',
     virtualHost: true
   },
   properties: {
-    r: {
+    r: { // 递归渲染数据
       type: Object,
       value: {}
     }

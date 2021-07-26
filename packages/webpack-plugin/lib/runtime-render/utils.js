@@ -1,5 +1,5 @@
-const isEmptyObject = require('./utils/is-empty-object')
-const { wx } = require('./config')
+const isEmptyObject = require('../utils/is-empty-object')
+const { wx } = require('../config')
 
 const customComponentWxssSet = new Set()
 const injectedPath = new Set()

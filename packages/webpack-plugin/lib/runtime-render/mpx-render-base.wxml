@@ -1,5 +1,3 @@
-<wxs src="./tool.wxs" module="tool" />
-
 <template name="element">
   <template is="{{r.nodeType}}" data="{{r: r}}" />
 </template>

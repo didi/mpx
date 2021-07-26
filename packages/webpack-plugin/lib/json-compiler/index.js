@@ -22,7 +22,7 @@ const {
   collectCustomComponentWxss,
   collectAliasComponentPath,
   setRuntimeComponent
-} = require('../runtime-utils')
+} = require('../runtime-render/utils')
 
 const renderCustomElementPath = path.resolve(__dirname, '../runtime-render/mpx-custom-element.mpx')
 

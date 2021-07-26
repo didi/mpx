@@ -32,8 +32,8 @@ const {
   getTemplateNodes,
   addCustomComponentWxss,
   getInjectedComponentMap
-} = require('./runtime-utils')
-const baseWxml = require('./template-compiler/base-wxml')
+} = require('./runtime-render/utils')
+const baseWxml = require('./runtime-render/base-wxml')
 
 const isProductionLikeMode = options => {
   return options.mode === 'production' || !options.mode

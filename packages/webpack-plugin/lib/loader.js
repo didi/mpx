@@ -20,7 +20,7 @@ const {
   collectAliasTag,
   setGlobalRuntimeComponent,
   getGlobalRuntimeComponent
-} = require('./runtime-utils')
+} = require('./runtime-render/utils')
 
 module.exports = function (content) {
   this.cacheable()
