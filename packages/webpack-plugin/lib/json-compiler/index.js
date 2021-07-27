@@ -25,6 +25,7 @@ module.exports = function (raw = '{}') {
   const nativeCallback = this.async()
   const options = loaderUtils.getOptions(this) || {}
   const mainCompilation = getMainCompilation(this._compilation)
+  const moduleGraph = this._compilation.moduleGraph
   const mpx = mainCompilation.__mpx__
 
   const emitWarning = (msg) => {
@@ -71,7 +72,7 @@ module.exports = function (raw = '{}') {
   const currentPath = publicPath + currentName
 
   // json模块都是由.mpx或.js的入口模块引入，且引入关系为一对一，其issuer必为入口module
-  const entryModule = this._module.issuer
+  const entryModule = moduleGraph.getIssuer(this._module)
   // 通过rawRequest关联entryNode和entryModule
   const entryRequest = entryModule.rawRequest
   const entryType = isApp ? 'App' : pagesMap[resourcePath] ? 'Page' : 'Component'
@@ -332,8 +333,9 @@ module.exports = function (raw = '{}') {
 
   // 由于json模块都是由mpx/js文件引入的，需要向上找两层issuer获取真实的引用源
   const getJsonIssuer = (module) => {
-    if (module.issuer) {
-      return module.issuer.issuer
+    const issuer = moduleGraph.getIssuer(module)
+    if (issuer) {
+      return moduleGraph.getIssuer(issuer)
     }
   }
 

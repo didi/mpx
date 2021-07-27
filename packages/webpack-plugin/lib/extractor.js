@@ -1,5 +1,6 @@
 const loaderUtils = require('loader-utils')
 const path = require('path')
+const NormalModule = require('webpack/lib/NormalModule')
 const NodeTemplatePlugin = require('webpack/lib/node/NodeTemplatePlugin')
 const NodeTargetPlugin = require('webpack/lib/node/NodeTargetPlugin')
 const LibraryTemplatePlugin = require('webpack/lib/LibraryTemplatePlugin')
@@ -152,8 +153,9 @@ module.exports = function (content) {
     new LimitChunkCountPlugin({ maxChunks: 1 })
   ])
 
+  let source
   childCompiler.hooks.thisCompilation.tap('MpxWebpackPlugin', (compilation) => {
-    compilation.hooks.normalModuleLoader.tap('MpxWebpackPlugin', (loaderContext) => {
+    NormalModule.getCompilationHooks(compilation).loader.tap('MpxWebpackPlugin', (loaderContext) => {
       // 传递编译结果，子编译器进入content-loader后直接输出
       loaderContext.__mpx__ = {
         content,
@@ -165,20 +167,18 @@ module.exports = function (content) {
       const dep = new ChildCompileDependency(module)
       extractedMap[id].dep = dep
     })
-  })
-
-  let source
-  childCompiler.hooks.afterCompile.tapAsync('MpxWebpackPlugin', (compilation, callback) => {
-    source = compilation.assets[childFilename] && compilation.assets[childFilename].source()
-
-    // Remove all chunk assets
-    compilation.chunks.forEach((chunk) => {
-      chunk.files.forEach((file) => {
-        delete compilation.assets[file]
+    compilation.hooks.processAssets.tap({
+      name: 'MpxWebpackPlugin',
+      stage: compilation.PROCESS_ASSETS_STAGE_SUMMARIZE
+    }, () => {
+      source = compilation.assets[childFilename] && compilation.assets[childFilename].source()
+      // Remove all chunk assets
+      compilation.chunks.forEach((chunk) => {
+        chunk.files.forEach((file) => {
+          delete compilation.assets[file]
+        })
       })
     })
-
-    callback()
   })
 
   childCompiler.runAsChild((err, entries, compilation) => {

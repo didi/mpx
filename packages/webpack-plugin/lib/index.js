@@ -8,13 +8,15 @@ const InjectDependency = require('./dependency/InjectDependency')
 const ReplaceDependency = require('./dependency/ReplaceDependency')
 const ChildCompileDependency = require('./dependency/ChildCompileDependency')
 const NullFactory = require('webpack/lib/NullFactory')
+const NormalModule = require('webpack/lib/NormalModule')
+const JavascriptModulesPlugin = require('webpack/lib/javascript/JavascriptModulesPlugin')
 const normalize = require('./utils/normalize')
 const toPosix = require('./utils/to-posix')
 const addQuery = require('./utils/add-query')
 const DefinePlugin = require('webpack/lib/DefinePlugin')
 const ExternalsPlugin = require('webpack/lib/ExternalsPlugin')
-// const AddModePlugin = require('./resolver/AddModePlugin')
-// const AddEnvPlugin = require('./resolver/AddEnvPlugin')
+const AddModePlugin = require('./resolver/AddModePlugin')
+const AddEnvPlugin = require('./resolver/AddEnvPlugin')
 const PackageEntryPlugin = require('./resolver/PackageEntryPlugin')
 const CommonJsRequireDependency = require('webpack/lib/dependencies/CommonJsRequireDependency')
 const HarmonyImportSideEffectDependency = require('webpack/lib/dependencies/HarmonyImportSideEffectDependency')
@@ -283,7 +285,7 @@ class MpxWebpackPlugin {
     new ExternalsPlugin('commonjs2', this.options.externals).apply(compiler)
 
     compiler.hooks.compilation.tap('MpxWebpackPlugin ', (compilation, { normalModuleFactory }) => {
-      compilation.hooks.normalModuleLoader.tap('MpxWebpackPlugin', (loaderContext, module) => {
+      NormalModule.getCompilationHooks(compilation).loader.tap('MpxWebpackPlugin', (loaderContext, module) => {
         // 设置loaderContext的minimize
         if (isProductionLikeMode(compiler.options)) {
           loaderContext.minimize = true
@@ -310,6 +312,7 @@ class MpxWebpackPlugin {
     compiler.hooks.thisCompilation.tap('MpxWebpackPlugin', (compilation, { normalModuleFactory }) => {
       compilation.warnings = compilation.warnings.concat(warnings)
       compilation.errors = compilation.errors.concat(errors)
+      const moduleGraph = compilation.moduleGraph
       // additionalAssets和mpx由于包含缓存机制，必须在每次compilation时重新初始化
       const additionalAssets = {}
       if (!compilation.__mpx__) {
@@ -583,10 +586,10 @@ class MpxWebpackPlugin {
         })
       })
 
-      compilation.moduleTemplates.javascript.hooks.content.tap('MpxWebpackPlugin', (source, module, options) => {
+      JavascriptModulesPlugin.getCompilationHooks(compilation).renderModuleContent.tap('MpxWebpackPlugin', (source, module, renderContext) => {
         // 处理dll产生的external模块
         if (module.external && module.userRequest.startsWith('dll-reference ') && mpx.mode !== 'web') {
-          const chunk = options.chunk
+          const chunk = renderContext.chunk
           const request = module.request
           let relativePath = toPosix(path.relative(path.dirname(chunk.name), request))
           if (!/^\.\.?\//.test(relativePath)) relativePath = './' + relativePath
@@ -659,7 +662,7 @@ class MpxWebpackPlugin {
             const componentsMap = mpx.componentsMap
             const staticResourcesMap = mpx.staticResourcesMap
             const range = expr.range
-            const issuerResource = parser.state.module.issuer.resource
+            const issuerResource = moduleGraph.getIssuer(parser.state.module).resource
             const dep = new ResolveDependency(resource, packageName, pagesMap, componentsMap, staticResourcesMap, publicPath, range, issuerResource, compilation)
             parser.state.current.addDependency(dep)
             return true
@@ -837,9 +840,12 @@ class MpxWebpackPlugin {
         }
       })
 
-      // 为了正确生成sourceMap，将该步骤由原来的compile.hooks.emit迁移到compilation.hooks.optimizeChunkAssets中来
-      compilation.hooks.optimizeChunkAssets.tapAsync('MpxWebpackPlugin', (chunks, callback) => {
-        if (mpx.mode === 'web') return callback()
+      // 为了正确生成sourceMap，将该步骤由原来的compile.hooks.emit迁移到compilation.hooks.processAssets
+      compilation.hooks.processAssets.tap({
+        name: 'MpxWebpackPlugin',
+        stage: compilation.PROCESS_ASSETS_STAGE_ADDITIONS
+      }, () => {
+        if (mpx.mode === 'web') return
 
         const {
           globalObject,
@@ -859,18 +865,20 @@ class MpxWebpackPlugin {
         const rootName = compilation.entries.keys().next().value
 
         function processChunk (chunk, isRuntime, relativeChunks) {
-          if (!chunk.files[0] || processedChunk.has(chunk)) {
+          const chunkFile = chunk.files.values().next().value
+          if (!chunkFile || processedChunk.has(chunk)) {
             return
           }
 
-          let originalSource = compilation.assets[chunk.files[0]]
+          let originalSource = compilation.assets[chunkFile]
           const source = new ConcatSource()
           source.add(`\nvar ${globalObject} = ${globalObject} || {};\n\n`)
 
           relativeChunks.forEach((relativeChunk, index) => {
-            if (!relativeChunk.files[0]) return
-            let chunkPath = getTargetFile(chunk.files[0])
-            let relativePath = getTargetFile(relativeChunk.files[0])
+            const relativeChunkFile = relativeChunk.files.values().next().value
+            if (!relativeChunkFile) return
+            let chunkPath = getTargetFile(chunkFile)
+            let relativePath = getTargetFile(relativeChunkFile)
             relativePath = path.relative(path.dirname(chunkPath), relativePath)
             relativePath = fixRelative(relativePath, mpx.mode)
             relativePath = toPosix(relativePath)
@@ -937,7 +945,7 @@ try {
             source.add(originalSource)
           }
 
-          compilation.assets[chunk.files[0]] = source
+          compilation.assets[chunkFile] = source
           processedChunk.add(chunk)
         }
 
@@ -974,8 +982,6 @@ try {
             }
           }
         })
-
-        callback()
       })
     })
 

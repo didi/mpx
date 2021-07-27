@@ -33,7 +33,8 @@ module.exports = function (src) {
   const options = Object.assign({}, getOptions(this))
   const filePath = this.resourcePath
   const mimetype = options.mimetype || mime.getType(filePath)
-  const issuer = this._module.issuer
+  const moduleGraph = this._compilation.moduleGraph
+  const issuer = moduleGraph.getIssuer(this._module)
   const publicPathScope = options.publicPathScope === 'all' ? 'all' : 'styleOnly'
   const queryOption = parseQuery(this.resourceQuery || '?')
   const limit = options.limit

@@ -12,6 +12,7 @@ module.exports = function (raw) {
   const options = loaderUtils.getOptions(this) || {}
   const { resourcePath, queryObj } = parseRequest(this.resource)
   const compilation = this._compilation
+  const moduleGraph = compilation.moduleGraph
   const mainCompilation = getMainCompilation(compilation)
   const mpx = mainCompilation.__mpx__
   const mode = mpx.mode
@@ -122,7 +123,7 @@ ${e.stack}`)
   };\n`
   }
 
-  const issuer = this._module.issuer
+  const issuer = moduleGraph.getIssuer(this._module)
   const parser = issuer.parser
 
   // 同步issuer的dependencies，确保watch中issuer rebuild时template也进行rebuild，使该loader中往issuer中注入的依赖持续有效
