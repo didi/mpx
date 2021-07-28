@@ -672,12 +672,12 @@ module.exports = function (raw = '{}') {
       }
     }
 
-    const processPluginGenericsImplementation = (genericsImplementation, context, callback) => {
+    const processPluginGenericsImplementation = (genericsImplementation, tarRoot, context, callback) => {
       async.forEachOf(genericsImplementation, (genericComponents, name, callback) => {
         async.forEachOf(genericComponents, (genericComponentPath, name, callback) => {
           processComponent(genericComponentPath, context, (componentPath) => {
             if (useRelativePath === true) {
-              componentPath = toPosix(path.relative(path.dirname(currentPath), componentPath))
+              componentPath = toPosix(path.relative(publicPath + tarRoot, componentPath))
             }
             genericComponents[name] = componentPath
           }, undefined, callback)
@@ -720,7 +720,7 @@ module.exports = function (raw = '{}') {
         async.parallel([
           (callback) => {
             if (plugin.genericsImplementation) {
-              processPluginGenericsImplementation(plugin.genericsImplementation, context, callback)
+              processPluginGenericsImplementation(plugin.genericsImplementation, tarRoot, context, callback)
             } else {
               callback()
             }
