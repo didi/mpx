@@ -664,11 +664,11 @@ module.exports = function (raw = '{}') {
       }
     }
 
-    const addMiniToPluginFile = file => {
-      if (mpx.miniToPluginExports) {
-        mpx.miniToPluginExports.add(file)
+    const addMiniToPluginModules = module => {
+      if (mpx.miniToPluginModules) {
+        mpx.miniToPluginModules.add(module)
       } else {
-        mpx.miniToPluginExports = new Set([file])
+        mpx.miniToPluginModules = new Set([module])
       }
     }
 
@@ -703,9 +703,12 @@ module.exports = function (raw = '{}') {
           return callback(new Error(`The miniprogram plugins' export path ${plugin.export} must be in the context ${context}!`))
         }
         plugin.export = name + '.js'
-        currentEntry.addChild(getEntryNode(resource, 'PluginExport'))
-        addMiniToPluginFile(resource)
-        addEntrySafely(resource, toPosix(tarRoot ? `${tarRoot}/${name}` : name), callback)
+        addEntrySafely(resource, toPosix(tarRoot ? `${tarRoot}/${name}` : name), (err, module) => {
+          if (err) return callback(err)
+          addMiniToPluginModules(module)
+          currentEntry.addChild(getEntryNode(resource, 'PluginExport', module))
+          callback(err, module)
+        })
       })
     }
 
