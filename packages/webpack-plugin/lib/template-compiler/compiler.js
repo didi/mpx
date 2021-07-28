@@ -1991,15 +1991,15 @@ function isComponentNode (el, options) {
 }
 
 function isRuntimeComponentNode (el, options) {
-  return options.runtimeComponents && options.runtimeComponents.includes(el.tag)
+  return (options.runtimeComponents && options.runtimeComponents.includes(el.tag)) || false
 }
 
 function isCustomComponent (el, options) {
-  return isComponentNode(el, options) || isGlobalComponent(el, options)
+  return isComponentNode(el, options) || isGlobalComponent(el, options) || false
 }
 
 function isGlobalComponent (el, options) {
-  return options.globalComponents && options.globalComponents.includes(el.tag)
+  return (options.globalComponents && options.globalComponents.includes(el.tag)) || false
 }
 
 function processAliExternalClassesHack (el, options) {
@@ -2178,8 +2178,8 @@ function processShow (el, options, root) {
   // 如果是根节点，那么需要添加 mpxShow 变量
   if (options.isComponent && el.parent === root && isRealNode(el)) {
     if (show !== undefined) {
-      show = `{{${parseMustache(show).result}&&mpxShow}}`
       showExp = `${parseMustache(show).result}&&mpxShow`
+      show = `{{${parseMustache(show).result}&&mpxShow}}`
     } else {
       show = '{{mpxShow}}'
       showExp = 'mpxShow'
@@ -2193,7 +2193,6 @@ function processShow (el, options, root) {
         show = '{{false}}'
         showExp = 'false'
       }
-      // 运行时编译不需要这个属性
       addAttrs(el, [{
         name: 'mpxShow',
         value: show
@@ -2386,6 +2385,7 @@ function processNoTransAttrs (el) {
 }
 
 function processElement (el, root, options, meta) {
+  // wx:bind 指令
   processBindProps(el, options)
   processRuntime(el, options, meta)
   processAtMode(el)
@@ -2806,9 +2806,10 @@ function _genData (node) {
   if (node.slotTarget && node.slotTarget !== '"default"') {
     data += `slot: ${node.slotTarget},`
   }
-  if (node.slotName) {
-    data += `slotName: ${node.slotName},`
-  }
+  // slot 节点通过 _genSlot 方法统一使用 __t 生成
+  // if (node.slotName) {
+  //   data += `slotName: ${node.slotName},`
+  // }
   if (node.slots) {
     data += `slots: ${node.slots},`
     getAndRemoveAttr(node, 'slots', true)

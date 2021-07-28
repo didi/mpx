@@ -27,9 +27,35 @@ function resolve (dir) {
   return path.join(__dirname, '..', dir)
 }
 
+function baseParse (template, options = {}) {
+  const mode = options.mode || 'wx'
+  const srcMode = options.srcMode || 'wx'
+  const env = options.env || ''
+
+  return compiler.parse(template, {
+    componentsAbsolutePath: options.componentsAbsolutePath || [],
+    runtimeComponents: options.runtimeComponents || [],
+    runtimeCompile: options.runtimeCompile || false,
+    usingComponents: options.usingComponents || [],
+    isComponent: options.isComponent || false,
+    externalClasses: [],
+    srcMode,
+    mode,
+    env,
+    warn: warnFn,
+    error: errorFn,
+    defs: {
+      '__mpx_mode__': mode,
+      '__mpx_src_mode__': srcMode,
+      '__mpx_env__': env
+    }
+  })
+}
+
 module.exports = {
   errorFn,
   warnFn,
   compileAndParse,
-  resolve
+  resolve,
+  baseParse
 }
