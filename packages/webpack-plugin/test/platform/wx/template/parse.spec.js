@@ -176,7 +176,7 @@ describe('compiler: parse', () => {
         const { root } = baseParse('<view wx:show="{{ flag }}"></view>', {
           runtimeCompile: true
         })
-  
+
         const el = root.children[0]
         expect(el.attrsMap).toStrictEqual({
           style: '{{(flag)||(flag)===undefined?\'\':\'display:none;\'}}'
@@ -189,13 +189,13 @@ describe('compiler: parse', () => {
         ])
         expect(el).toHaveProperty('showStyle', '(flag)||(flag)===undefined?{}:{display:"none"}')
       })
-  
+
       test('wx:show using by root custom component', () => {
         const { root } = baseParse('<my-component></my-component>', {
           usingComponents: ['my-component'],
           isComponent: true
         })
-  
+
         const el = root.children[0]
         expect(el).toHaveProperty('show', 'mpxShow')
         expect(el.attrsMap).toMatchObject({
@@ -212,13 +212,13 @@ describe('compiler: parse', () => {
           }
         ])
       })
-  
+
       test('wx:show using by root custom component with directive', () => {
         const { root } = baseParse('<my-component wx:show="{{ flag }}"></my-component>', {
           usingComponents: ['my-component'],
           isComponent: true
         })
-  
+
         const el = root.children[0]
         expect(el).toHaveProperty('show', '(flag)&&mpxShow')
         expect(el.attrsMap).toStrictEqual({
@@ -236,13 +236,13 @@ describe('compiler: parse', () => {
           }
         ])
       })
-  
+
       test('wx:show using by custom component', () => {
         const { root } = baseParse('<my-component wx:show="{{ flag }}"></my-component>', {
           runtimeCompile: true,
           usingComponents: ['my-component']
         })
-  
+
         const el = root.children[0]
         expect(el).toHaveProperty('show', '(flag)')
         expect(el).toHaveProperty('mpxPageStatus', true)
@@ -261,13 +261,13 @@ describe('compiler: parse', () => {
           }
         ])
       })
-  
+
       test('wx:show using with string', () => {
         // in page using wx:show
         const { root } = baseParse('<my-component wx:show=""></my-component>', {
           usingComponents: ['my-component']
         })
-  
+
         const el = root.children[0]
         expect(el).toHaveProperty('show', 'false')
         expect(el.attrsMap).toStrictEqual({
@@ -345,7 +345,7 @@ describe('compiler: parse', () => {
         ])
       })
     })
-    
+
     describe('bind events', () => {})
   })
 })
