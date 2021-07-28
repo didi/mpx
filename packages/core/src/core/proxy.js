@@ -75,16 +75,18 @@ export default class MPXProxy {
     if ((!this.isMounted() && this.curRenderTask) || (this.isMounted() && isEmptyRender)) {
       return
     }
-    let promiseResolve
-    const promise = new Promise(resolve => {
-      promiseResolve = resolve
-    })
     this.curRenderTask = {
-      promise,
-      resolve: promiseResolve
+      state: 'pending'
     }
+    const promise = new Promise(resolve => {
+      this.curRenderTask.resolve = (res) => {
+        this.curRenderTask.state = 'finished'
+        resolve(res)
+      }
+    })
+    this.curRenderTask.promise = promise
     // isMounted之前基于mounted触发，isMounted之后基于setData回调触发
-    return this.isMounted() && promiseResolve
+    return this.isMounted() && this.curRenderTask.resolve
   }
 
   isMounted () {
@@ -103,11 +105,7 @@ export default class MPXProxy {
 
   updated () {
     if (this.isMounted()) {
-      this.lockTask(() => {
-        if (this.isMounted()) {
-          this.callUserHook(UPDATED)
-        }
-      })
+      this.callUserHook(UPDATED)
     }
   }
 
@@ -424,7 +422,14 @@ export default class MPXProxy {
         resolve && resolve()
       }
     }
-    this.target.__render(processUndefined(data), callback)
+    data = processUndefined(data)
+    if (typeof EXPORT_MPX.config.setDataHandler === 'function') {
+      try {
+        EXPORT_MPX.config.setDataHandler(data, this.target)
+      } catch (e) {
+      }
+    }
+    this.target.__render(data, callback)
   }
 
   initRender () {

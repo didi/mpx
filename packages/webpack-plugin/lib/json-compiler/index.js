@@ -323,7 +323,7 @@ module.exports = function (raw = '{}') {
       const resourceName = path.join(parsed.dir, parsed.name)
 
       if (!outputPath) {
-        if (ext === '.js') {
+        if (ext === '.js' && resourceName.includes('node_modules')) {
           let root = info.descriptionFileRoot
           let name = 'nativeComponent'
           if (info.descriptionFileData) {
