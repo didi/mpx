@@ -714,20 +714,20 @@ module.exports = function (raw = '{}') {
       if (mpx.mode !== 'wx' || !plugins) return callback() // 目前只有微信支持导出到插件
       context = path.join(context, srcRoot)
       async.forEachOf(plugins, (plugin, name, callback) => {
-        if (plugin.genericsImplementation) {
-          async.series([
-            (callback) => {
+        async.parallel([
+          (callback) => {
+            if (plugin.genericsImplementation) {
               processPluginGenericsImplementation(plugin.genericsImplementation, context, callback)
-            },
-            (callback) => {
-              processPluginExport(plugin, tarRoot, context, callback)
+            } else {
+              callback()
             }
-          ], (err) => {
-            callback(err)
-          })
-        } else {
-          processPluginExport(plugin, tarRoot, context, callback)
-        }
+          },
+          (callback) => {
+            processPluginExport(plugin, tarRoot, context, callback)
+          }
+        ], (err) => {
+          callback(err)
+        })
       }, callback)
     }
 
