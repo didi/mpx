@@ -124,141 +124,141 @@ mpx.xfetch.interceptors.response.use(function(res) {
 
         类型：`object`
 
-            - url
+        - url
 
-                类型：`string`
+            类型：`string`
 
-                详细：全路径匹配，规则可以参考[path-to-regexp](https://www.npmjs.com/package/path-to-regexp)，也可参考下面简单示例。
+            详细：全路径匹配，规则可以参考[path-to-regexp](https://www.npmjs.com/package/path-to-regexp)，也可参考下面的简单示例。
 
-                ::: warning
-                如果设置了此项，则 protocol、host、port、path 规则不再生效。此项支持 path-to-regexp 匹配，protocol、host、port、path 为全等匹配。
-                :::
+            ::: warning
+            如果设置了此项，则 protocol、host、port、path 规则不再生效。此项支持 path-to-regexp 匹配，protocol、host、port、path 为全等匹配。
+            :::
 
-            - protocol
+        - protocol
 
-                类型：`string`
+            类型：`string`
 
-                详细：待匹配的协议头
+            详细：待匹配的协议头
 
-            - host
+        - host
 
-                类型：`string`
+            类型：`string`
 
-                详细：不包含端口的 host
+            详细：不包含端口的 host
 
-            - port
+        - port
 
-                类型：`string`
+            类型：`string`
 
-                详细：待匹配的端口
+            详细：待匹配的端口
 
-            - path
+        - path
 
-                类型：`string`
+            类型：`string`
 
-                详细：待匹配的路径
+            详细：待匹配的路径
 
-            - params
+        - params
 
-                类型：`object`
+            类型：`object`
 
-                详细：同时匹配请求中的 `params` 和 `query`
+            详细：同时匹配请求中的 `params` 和 `query`
 
-            - data
+        - data
 
-                类型：`object`
+            类型：`object`
 
-                详细：匹配请求中的 `data`
+            详细：匹配请求中的 `data`
 
-            - header
+        - header
 
-                类型：`object`
+            类型：`object`
 
-                详细：匹配请求中的 `header`
+            详细：匹配请求中的 `header`
 
-            - method
+        - method
 
-                类型：`Method | Method[]`
+            类型：`Method | Method[]`
 
-                详细：匹配请求方法，不区分大小写，可以传一个方法，也可以传一个方法数组
+            详细：匹配请求方法，不区分大小写，可以传一个方法，也可以传一个方法数组
 
-            - custom
+        - custom
 
-                类型：`function`
+            类型：`function`
 
-                详细：自定义匹配规则，参数会注入原始请求配置，结果需返回 `true` 或 `false`
+            详细：自定义匹配规则，参数会注入原始请求配置，结果需返回 `true` 或 `false`
 
-                ::: warning
-                如果设置了此项，匹配结果以此项为准，以上规则均不再生效。
-                :::
+            ::: warning
+            如果设置了此项，匹配结果以此项为准，以上规则均不再生效。
+            :::
 
     - **proxy**
 
         类型：`object`
 
-            - url
+        - url
 
-                类型：`string`
+            类型：`string`
 
-                详细：代理的 url
+            详细：代理的 url
 
-            - protocol
+        - protocol
 
-                类型：`string`
+            类型：`string`
 
-                详细：修改原请求的协议头
+            详细：修改原请求的协议头
 
-            - host
+        - host
 
-                类型：`string`
+            类型：`string`
 
-                详细：代理的 host，不包含端口号
+            详细：代理的 host，不包含端口号
 
-            - port
+        - port
 
-                类型：`string`
+            类型：`string`
 
-                详细：修改端口号
+            详细：修改端口号
 
-            - path
+        - path
 
-                类型：`string`
+            类型：`string`
 
-                详细：修改原请求路径
+            详细：修改原请求路径
 
-            - params
+        - params
 
-                类型：`object`
+            类型：`object`
 
-                详细：合并原请求的 params
+            详细：合并原请求的 params
 
-            - data
+        - data
 
-                类型：`object`
+            类型：`object`
 
-                详细：合并原请求的 data
+            详细：合并原请求的 data
 
-            - header
+        - header
 
-                类型：`object`
+            类型：`object`
 
-                详细：合并原请求的 header
+            详细：合并原请求的 header
 
-            - method
+        - method
 
-                类型：`Method`
+            类型：`Method`
 
-                详细：替换原请求的方法
+            详细：替换原请求的方法
 
-            - custom
+        - custom
 
-                类型：`function`
+            类型：`function`
 
-                详细：自定义代理规则，会注入两个参数，第一个是上一个匹配规则处理后的请求配置，第二个是 match 的参数对象，结果需返回要修改的请求配置对象。
+            详细：自定义代理规则，会注入两个参数，第一个是上一个匹配规则处理后的请求配置，第二个是 match 的参数对象，结果需返回要修改的请求配置对象。
 
-                ::: warning
-                如果设置了此项，最终代理配置将以此项为准，其他配置规则均不再生效。
-                :::
+            ::: warning
+            如果设置了此项，最终代理配置将以此项为准，其他配置规则均不再生效。
+            :::
 
     - **waterfall**
 
