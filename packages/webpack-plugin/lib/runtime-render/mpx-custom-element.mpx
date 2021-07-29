@@ -38,7 +38,10 @@ createComponent({
     if (this.vnodeData.mpxbindevents) {
       Object.keys(this.vnodeData.mpxbindevents).map(event => {
         // 固定事件调用上下文
-        this[event] = this.vnodeData.mpxbindevents[event].bind(this.vnodeRootContext)
+        const rawEvent = this.vnodeData.mpxbindevents[event]
+        if (rawEvent && typeof rawEvent === 'function') {
+          this[event] = rawEvent.bind(this.vnodeRootContext)
+        }
       })
     }
   },
