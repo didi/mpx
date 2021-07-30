@@ -86,6 +86,7 @@ mpx.xfetch.fetch({
 })
 cancelToken.exec('手动取消请求') // 执行后请求中断，返回abort fail
 ```
+
 ### XFetch
 > 命名导出，用于创建一个新的mpx-fetch实例进行独立使用
 
@@ -110,6 +111,279 @@ mpx.xfetch.interceptors.response.use(function(res) {
     // 也可以返回promise
     return res
 })
+```
+
+### proxy 代理
+#### setProxy
+> 配置代理项，可以传入一个数组或者一个对象，请求会按设置的规则进行代理
+
+- **参数：**
+
+    类型： `{Array | Object}`
+    - **test**
+
+        类型：`object`
+
+        - url
+
+            类型：`string`
+
+            详细：全路径匹配，规则可以参考[path-to-regexp](https://www.npmjs.com/package/path-to-regexp)，也可参考下面的简单示例。
+
+            ::: warning
+            如果设置了此项，则 protocol、host、port、path 规则不再生效。此项支持 path-to-regexp 匹配，protocol、host、port、path 为全等匹配。
+            :::
+
+        - protocol
+
+            类型：`string`
+
+            详细：待匹配的协议头
+
+        - host
+
+            类型：`string`
+
+            详细：不包含端口的 host
+
+        - port
+
+            类型：`string`
+
+            详细：待匹配的端口
+
+        - path
+
+            类型：`string`
+
+            详细：待匹配的路径
+
+        - params
+
+            类型：`object`
+
+            详细：同时匹配请求中的 `params` 和 `query`
+
+        - data
+
+            类型：`object`
+
+            详细：匹配请求中的 `data`
+
+        - header
+
+            类型：`object`
+
+            详细：匹配请求中的 `header`
+
+        - method
+
+            类型：`Method | Method[]`
+
+            详细：匹配请求方法，不区分大小写，可以传一个方法，也可以传一个方法数组
+
+        - custom
+
+            类型：`function`
+
+            详细：自定义匹配规则，参数会注入原始请求配置，结果需返回 `true` 或 `false`
+
+            ::: warning
+            如果设置了此项，匹配结果以此项为准，以上规则均不再生效。
+            :::
+
+    - **proxy**
+
+        类型：`object`
+
+        - url
+
+            类型：`string`
+
+            详细：代理的 url
+
+        - protocol
+
+            类型：`string`
+
+            详细：修改原请求的协议头
+
+        - host
+
+            类型：`string`
+
+            详细：代理的 host，不包含端口号
+
+        - port
+
+            类型：`string`
+
+            详细：修改端口号
+
+        - path
+
+            类型：`string`
+
+            详细：修改原请求路径
+
+        - params
+
+            类型：`object`
+
+            详细：合并原请求的 params
+
+        - data
+
+            类型：`object`
+
+            详细：合并原请求的 data
+
+        - header
+
+            类型：`object`
+
+            详细：合并原请求的 header
+
+        - method
+
+            类型：`Method`
+
+            详细：替换原请求的方法
+
+        - custom
+
+            类型：`function`
+
+            详细：自定义代理规则，会注入两个参数，第一个是上一个匹配规则处理后的请求配置，第二个是 match 的参数对象，结果需返回要修改的请求配置对象。
+
+            ::: warning
+            如果设置了此项，最终代理配置将以此项为准，其他配置规则均不再生效。
+            :::
+
+    - **waterfall**
+
+        类型：`boolean`
+
+        详细：默认为 `false`，为 `false` 时，命中当前规则处理完就直接返回；为 `true` 时，命中当前匹配规则处理完成后将结果传递给下面命中匹配规则继续处理。
+
+- **示例：**
+```js
+mpx.xfetch.setProxy([{
+    test: { // 此项匹配之后，会按下面 proxy 配置的修改请求配置
+		header: {
+            'content-type': 'application/x-www-form-urlencoded'
+        },
+        method: 'get',
+        params: {
+            a: 1
+        },
+        data: {
+            test1: 'abc'
+        }
+	},
+	proxy: {
+		header: {
+			env: 'env test'
+		},
+		params: {
+			b: 2
+        },
+        data: {
+            test2: 'cba'
+        }
+	},
+	waterfall: true // 为 true 时会将此次修改后的请求配置继续传递给下面的规则处理
+}, {
+    test: {// 可以分别单独匹配 protocol、host、port、path；代理规则同样
+        protocol: 'http:',
+		host: 'mock.didi.com',
+		port: '',
+		path: '/mock/test'
+    },
+    proxy: {
+        host: 'test.didi.com',
+        port: 8888
+    },
+    waterfall: true
+}, {
+    test: { // 自定义匹配规则
+        custom (config) { // config 为原始的请求配置
+            // 自定义匹配逻辑
+			if (xxx) {
+				return true
+			}
+			return false
+		}
+    },
+    proxy: { // 自定义代理配置
+        custom (config, params) {
+			// config 为上面匹配后修改过的请求配置
+            // params 为 match 后的参数对象
+            // 返回需要修改的请求配置对象
+			return {
+                params: {
+                    c: 3
+                },
+				data: {
+					test3: 'aaa'
+				}
+			}
+		}
+    },
+    waterfall: true
+}, {
+    test: {
+        // : 可以匹配目标项，并将 match 结果返回到代理 custom 函数中
+        // :和?都属于保留符号，若不想做匹配时需用 '\\' 转义
+        // (.*)为全匹配
+        url: ':protocol\\://mock.didi.com/mock/:id/oneapi/router/forum/api/v1/(.*)',
+        method: ['get', 'post']
+    },
+    proxy: {
+        url: 'https://127.0.0.1:8080/go/into/$id/api/v2/abcd' // '$'项在代理生效后会替换匹配规则中的':'项
+    },
+    waterfall: false // false 时不会继续匹配后面的规则
+}])
+```
+
+#### prependProxy
+> 向前追加代理规则
+
+- **示例：**
+```js
+mpx.xfetch.prependProxy({
+	test: {},
+	proxy: {},
+	waterfall: true
+})
+```
+
+#### appendProxy
+> 向后追加代理规则
+
+- **示例：**
+```js
+mpx.xfetch.appendProxy({
+	test: {},
+	proxy: {},
+	waterfall: true
+})
+```
+
+#### getProxy
+> 查看已有的代理配置
+
+- **示例：**
+```js
+console.log(mpx.xfetch.getProxy())
+```
+
+#### clearProxy
+> 解除所有的代理配置
+
+- **示例：**
+```js
+mpx.xfetch.clearProxy()
 ```
 
 ## api-proxy
