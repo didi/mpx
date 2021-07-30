@@ -90,12 +90,6 @@ module.exports = function (content) {
 
   const moduleId = 'm' + mpx.pathHash(filePath)
 
-  const needCssSourceMap = (
-    !isProduction &&
-    this.sourceMap &&
-    options.cssSourceMap !== false
-  )
-
   const parts = parseComponent(content, {
     filePath,
     needMap: this.sourceMap,
@@ -162,7 +156,6 @@ module.exports = function (content) {
         hasScoped,
         hasComment,
         usingComponents,
-        needCssSourceMap,
         srcMode,
         isNative,
         projectRoot

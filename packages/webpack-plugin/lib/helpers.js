@@ -63,13 +63,10 @@ function ensureBang (loader) {
   }
 }
 
-function resolveLoaders ({ options, needCssSourceMap, projectRoot }) {
+function resolveLoaders ({ options, projectRoot }) {
   let cssLoaderOptions = ''
   let wxmlLoaderOptions = ''
   let jsonCompilerOptions = ''
-  if (needCssSourceMap) {
-    cssLoaderOptions += '?sourceMap'
-  }
 
   wxmlLoaderOptions += '?root=' + projectRoot
   jsonCompilerOptions += '?root=' + projectRoot
@@ -99,7 +96,7 @@ function resolveLoaders ({ options, needCssSourceMap, projectRoot }) {
   }
 }
 
-module.exports = function createHelpers ({ loaderContext, options, moduleId, hasScoped, hasComment, usingComponents, needCssSourceMap, srcMode, isNative, projectRoot }) {
+module.exports = function createHelpers ({ loaderContext, options, moduleId, hasScoped, hasComment, usingComponents, srcMode, isNative, projectRoot }) {
   const rawRequest = getRawRequest(loaderContext, options.excludedPreLoaders)
   const {
     defaultLoaders,
@@ -109,7 +106,6 @@ module.exports = function createHelpers ({ loaderContext, options, moduleId, has
     postLoaders
   } = resolveLoaders({
     options,
-    needCssSourceMap,
     projectRoot
   })
 

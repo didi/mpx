@@ -3,8 +3,7 @@ const rpxRegExp = /\b(\d+(\.\d+)?)rpx\b/
 const rpxRegExpG = /\b(\d+(\.\d+)?)rpx\b/g
 
 module.exports = postcss.plugin('vw', (options = {}) => root => {
-  const designWidth = options.designWidth || 750
-  const rpx2vwRatio = +(100 / designWidth).toFixed(8)
+  const rpx2vwRatio = +(100 / 750).toFixed(8)
 
   function transVw (declaration) {
     if (rpxRegExp.test(declaration.value)) {
