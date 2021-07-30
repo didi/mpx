@@ -993,10 +993,10 @@ try {
       // resolve完成后修改loaders信息并批量添加mode query
       normalModuleFactory.hooks.afterResolve.tapAsync('MpxWebpackPlugin', (data, callback) => {
         if (data.loaders) {
-          const firstLoader = (data.loaders[0] && data.loaders[0].loader) || ''
-          const isPitcherRequest = firstLoader.includes('vue-loader/lib/loaders/pitcher.js')
           const { queryObj } = parseRequest(data.request)
           const mpxStyleOptions = queryObj.mpxStyleOptions
+          const firstLoader = (data.loaders[0] && data.loaders[0].loader) || ''
+          const isPitcherRequest = firstLoader.includes('vue-loader/lib/loaders/pitcher.js')
           let cssLoaderIndex = -1
           let vueStyleLoaderIndex = -1
           let mpxStyleLoaderIndex = -1
