@@ -10,9 +10,7 @@ module.exports = function (styles, options, callback) {
           if (options.autoScope) attrs.scoped = true
           attrs.mpxStyleOptions = JSON.stringify({
             // scoped: !!options.autoScope,
-            sourceMap: !!options.needCssSourceMap,
-            moduleId: options.moduleId,
-            transRpx: options.transRpx
+            moduleId: options.moduleId
           })
           return attrs
         }

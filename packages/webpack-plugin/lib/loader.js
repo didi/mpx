@@ -211,9 +211,7 @@ module.exports = function (content) {
                 processStyles(parts.styles, {
                   ctorType,
                   autoScope,
-                  moduleId,
-                  needCssSourceMap,
-                  transRpx: options.transRpx
+                  moduleId
                 }, callback)
               },
               (callback) => {

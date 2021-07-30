@@ -257,9 +257,7 @@ module.exports = function createHelpers ({ loaderContext, options, moduleId, has
       styleCompiler = styleCompilerPath + '?' +
         JSON.stringify({
           moduleId,
-          scoped: !!scoped,
-          sourceMap: needCssSourceMap,
-          transRpx: options.transRpx
+          scoped: !!scoped
         })
       // normalize scss/sass/postcss if no specific loaders have been provided
       if (!loaders[lang]) {

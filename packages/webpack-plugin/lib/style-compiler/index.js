@@ -67,7 +67,7 @@ module.exports = function (css, map) {
       plugins.push(vw)
     }
     // source map
-    if (loaderOptions.sourceMap && !options.map) {
+    if (this.sourceMap && !options.map) {
       options.map = {
         inline: false,
         annotation: false,

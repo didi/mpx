@@ -993,7 +993,8 @@ try {
       // resolve完成后修改loaders信息并批量添加mode query
       normalModuleFactory.hooks.afterResolve.tapAsync('MpxWebpackPlugin', (data, callback) => {
         if (data.loaders) {
-          const isPitcherRequest = /vue-loader\/lib\/loaders\/pitcher.js/.test(data.loaders[0] && data.loaders[0].loader)
+          const firstLoader = (data.loaders[0] && data.loaders[0].loader) || ''
+          const isPitcherRequest = firstLoader.includes('vue-loader/lib/loaders/pitcher.js')
           const { queryObj } = parseRequest(data.request)
           const mpxStyleOptions = queryObj.mpxStyleOptions
           let cssLoaderIndex = -1
@@ -1001,7 +1002,7 @@ try {
           let mpxStyleLoaderIndex = -1
           data.loaders.forEach((loader, index) => {
             const currentLoader = loader.loader
-            if (/ts-loader/.test(currentLoader)) {
+            if (currentLoader.includes('ts-loader')) {
               // todo 暂时固定写死options，待后续优化为复用rules后修正
               loader.options = { appendTsSuffixTo: [/\.(mpx|vue)$/] }
             }
@@ -1009,7 +1010,7 @@ try {
               cssLoaderIndex = index
             } else if (currentLoader.includes('vue-loader/lib/loaders/stylePostLoader.js')) {
               vueStyleLoaderIndex = index
-            } else if (currentLoader.includes('style-compiler/index.js')) {
+            } else if (currentLoader.includes('@mpxjs/webpack-plugin/lib/style-compiler/index.js')) {
               mpxStyleLoaderIndex = index
             }
           })
