@@ -1,9 +1,37 @@
-function type (a) {
-  return Object.prototype.toString.call(a).slice(8, -1)
+const toString = Object.prototype.toString
+
+// 是否为一个对象
+function isObject (val) {
+  return toString.call(val) === '[object Object]'
+}
+
+// 是否为一个数组
+function isArray (val) {
+  return toString.call(val) === '[object Array]'
+}
+
+// 是否为一个字符串
+function isString (val) {
+  return toString.call(val) === '[object String]'
+}
+
+// 是否为 Function
+function isFunction (val) {
+  return toString.call(val) === '[object Function]'
 }
 
 function isThenable (obj) {
   return obj && typeof obj.then === 'function'
+}
+
+// 不为空对象
+function isNotEmptyObject (obj) {
+  return obj && isObject(obj) && Object.keys(obj).length > 0
+}
+
+// 不为空数组
+function isNotEmptyArray (ary) {
+  return ary && isArray(ary) && ary.length > 0
 }
 
 function parseUrl (url) {
@@ -33,7 +61,7 @@ function buildUrl (url, query) {
 }
 
 function filterUndefined (data) {
-  if (type(data) !== 'Object') {
+  if (!isObject(data)) {
     return data
   }
   data = Object.assign({}, data)
@@ -45,6 +73,29 @@ function filterUndefined (data) {
     }
   })
   return data
+}
+
+// 解析拆分 url 参数
+function parseURL (url) {
+  const match = /^(.*?)(?:\?(.*?))?(?:#(.*?))?$/.exec(url)
+  const [ fullUrl, baseUrl = '', search = '', hash = '' ] = match
+
+  const u1 = baseUrl.split('//') // 分割出协议
+  const protocolReg = /^http(s?):/
+  const protocol = protocolReg.test(u1[0]) ? u1[0] : ''
+  const u2 = u1[1] || u1[0] // 可能没有协议
+  const host = u2.substring(u2.indexOf('/'), 0) // 分割出主机名和端口号
+  const path = u2.substring(u2.indexOf('/')) // 分割出路径
+  const hostname = host.split(':')[0]
+  const port = host.split(':')[1] || ''
+
+  // search 改为对象格式
+  const query = {}
+  search && search.split('&').forEach((item) => {
+    const [ name, value ] = item.split('=')
+    query[name] = decodeURIComponent(value)
+  })
+  return { fullUrl, baseUrl, protocol, hostname, port, host, path, query, hash }
 }
 
 function getEnvObj () {
@@ -63,4 +114,17 @@ function getEnvObj () {
   }
 }
 
-export { parseUrl, buildUrl, filterUndefined, type, isThenable, getEnvObj }
+export {
+  parseUrl,
+  buildUrl,
+  filterUndefined,
+  isObject,
+  isArray,
+  isString,
+  isFunction,
+  isThenable,
+  isNotEmptyObject,
+  isNotEmptyArray,
+  parseURL,
+  getEnvObj
+}

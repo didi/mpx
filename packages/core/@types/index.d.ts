@@ -276,16 +276,17 @@ export function createMutationsWithThis<S = {}, D extends Deps = {}, M extends M
   deps?: D
 }): M
 
-export function createActionsWithThis<S = {}, G = {}, M extends MutationsAndActionsWithThis = {}, D extends Deps = {}, A extends MutationsAndActionsWithThis = {}> (actions: A & ThisType<{
+export function createActionsWithThis<S = {}, G = {}, M extends MutationsAndActionsWithThis = {}, D extends Deps = {}, A extends MutationsAndActionsWithThis = {}, OA extends MutationsAndActionsWithThis = {}> (actions: A & ThisType<{
   rootState: any,
   state: S & UnboxDepsField<D, 'state'>,
   getters: GetComputedType<G> & UnboxDepsField<D, 'getters'>,
-  dispatch: GetDispatchAndCommitWithThis<A, D, 'actions'>,
+  dispatch: GetDispatchAndCommitWithThis<A & OA, D, 'actions'>,
   commit: GetDispatchAndCommitWithThis<M, D, 'mutations'>
 } & MpxStore.CompatibleDispatch>, options?: {
   state?: S,
   getters?: G,
   mutations?: M,
+  actions?: OA,
   deps?: D
 }): A
 
