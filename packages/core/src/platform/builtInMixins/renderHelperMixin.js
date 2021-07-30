@@ -67,7 +67,7 @@ export default function renderHelperMixin () {
       // createTextVNode
       __v (content) {
         return {
-          nodeType: '',
+          nodeType: '#text',
           content
         }
       },

@@ -22,57 +22,61 @@ createPage({
   data: {
     navigatorList: [
       {
-        name: '新增wx:bind动态传参指令',
-        path: '/pages/attrs/index'
+        name: 'template-render',
+        path: '/pages/template-render/index'
       },
-      {
-        name: 'wx:style',
-        path: '/pages/style/index'
-      },
-      {
-        name: 'wx:class',
-        path: '/pages/class/index'
-      },
-      {
-        name: 'wx:show',
-        path: '/pages/show/index'
-      },
-      {
-        name: 'wx:if',
-        path: '/pages/if/index'
-      },
-      {
-        name: 'wx:for',
-        path: '/pages/for/index'
-      },
-      {
-        name: 'wx:model',
-        path: '/pages/model/index'
-      },
-      {
-        name: '事件模型',
-        path: '/pages/event/index'
-      },
-      {
-        name: 'slot',
-        path: '/pages/slot/index'
-      },
-      {
-        name: 'wx:ref',
-        path: '/pages/ref/index'
-      },
-      {
-        name: 'global-runtime component',
-        path: '/pages/global-component/index'
-      },
-      {
-        name: '动态component',
-        path: '/pages/component/index'
-      },
-      {
-        name: 'inner-components(原生组件)',
-        path: '/pages/inner-components/index'
-      }
+      // {
+      //   name: '新增wx:bind动态传参指令',
+      //   path: '/pages/attrs/index'
+      // },
+      // {
+      //   name: 'wx:style',
+      //   path: '/pages/style/index'
+      // },
+      // {
+      //   name: 'wx:class',
+      //   path: '/pages/class/index'
+      // },
+      // {
+      //   name: 'wx:show',
+      //   path: '/pages/show/index'
+      // },
+      // {
+      //   name: 'wx:if',
+      //   path: '/pages/if/index'
+      // },
+      // {
+      //   name: 'wx:for',
+      //   path: '/pages/for/index'
+      // },
+      // {
+      //   name: 'wx:model',
+      //   path: '/pages/model/index'
+      // },
+      // {
+      //   name: '事件模型',
+      //   path: '/pages/event/index'
+      // },
+      // {
+      //   name: 'slot',
+      //   path: '/pages/slot/index'
+      // },
+      // {
+      //   name: 'wx:ref',
+      //   path: '/pages/ref/index'
+      // },
+      // {
+      //   name: 'global-runtime component',
+      //   path: '/pages/global-component/index'
+      // },
+      // {
+      //   name: '动态component',
+      //   path: '/pages/component/index'
+      // },
+      // {
+      //   name: 'inner-components(原生组件)',
+      //   path: '/pages/inner-components/index'
+      // }
     ],
     list: [],
     message: 'msg',
@@ -127,7 +131,7 @@ createPage({
 
 <script type="application/json">
 {
-  "runtimeCompile": true,
+  // "runtimeCompile": true,
   "usingComponents": {
     "common-a": "../components/common-a/index.mpx"
   }
