@@ -256,7 +256,7 @@ class MpxWebpackPlugin {
     const defs = this.options.defs
 
     const defsOpt = {
-      '__mpx_wxs__': DefinePlugin.runtimeValue(({module}) => {
+      '__mpx_wxs__': DefinePlugin.runtimeValue(({ module }) => {
         return JSON.stringify(!!module.wxs)
       })
     }
@@ -1269,7 +1269,7 @@ try {
           modules: [],
           size: 0
         }
-        sizeInfo[packageName][fillType].push({...fillInfo})
+        sizeInfo[packageName][fillType].push({ ...fillInfo })
         sizeInfo[packageName].size += fillInfo.size
       }
 
