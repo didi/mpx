@@ -520,14 +520,6 @@ class MpxWebpackPlugin {
         return addModuleResult
       }
 
-      compilation.hooks.succeedModule.tap('MpxWebpackPlugin', (module) => {
-        if (mpx.pluginMainResource && mpx.pluginMainResource === module.rawRequest) {
-          mpx.getEntryNode(mpx.pluginMainResource, 'PluginMain', module)
-        } else if (mpx.miniToPluginExports && mpx.miniToPluginExports.has(module.rawRequest)) {
-          mpx.getEntryNode(module.rawRequest, 'PluginExport', module)
-        }
-      })
-
       compilation.hooks.finishModules.tap('MpxWebpackPlugin', (modules) => {
         // 自动跟进分包配置修改splitChunksPlugin配置
         if (splitChunksPlugin) {
@@ -917,10 +909,10 @@ try {
             source.add(originalSource)
             source.add(`\nmodule.exports = window[${JSON.stringify(jsonpFunction)}];\n`)
           } else {
-            if (mpx.pluginMainResource && chunk.entryModule && mpx.pluginMainResource === chunk.entryModule.rawRequest) {
+            if (mpx.pluginMainModule && chunk.entryModule && mpx.pluginMainModule === chunk.entryModule) {
               source.add('module.exports =\n')
               // mpx.miniToPluginExports is a Set
-            } else if (mpx.miniToPluginExports && chunk.entryModule && mpx.miniToPluginExports.has(chunk.entryModule.rawRequest)) {
+            } else if (mpx.miniToPluginModules && chunk.entryModule && mpx.miniToPluginModules.has(chunk.entryModule)) {
               source.add('module.exports =\n')
             }
             source.add(originalSource)
