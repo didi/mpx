@@ -1,8 +1,6 @@
 import { isObject, isPlainObject } from '../../helper/utils'
 import { stringifyClass, stringifyStyle } from '../../helper/stringify'
-
-let uid = 0
-const getUid = () => ++uid
+import contextMap from '../../vnode/context'
 
 function simpleNormalizeChildren (children) {
   for (var i = 0; i < children.length; i++) {
@@ -56,38 +54,33 @@ export default function renderHelperMixin () {
           return tag
         }
 
-        const nodeId = getUid()
-        data.nodeId = nodeId
         children = simpleNormalizeChildren(children)
 
+        // 用以渲染的 vnode 维持最小数据状态
         const vnode = {
           nodeType: tag || '',
-          ...data,
-          _data: data,
-          nodeId,
+          data,
           children
         }
         return vnode
       },
-      // createTextNode
+      // createTextVNode
       __v (content) {
         return {
           nodeType: '',
-          nodeId: '',
-          content,
-          text: content
+          content
         }
       },
-      // createEmptyNode
+      // createEmptyVNode
       __e () {
         return {
           nodeType: '',
-          nodeId: '',
           content: ''
         }
       },
       // resolveSlot
       __t (name, fallback = []) {
+        // 通过 props 传递的 slots 函数
         let nodes = (this.slots && this.slots[name]) || fallback
         return nodes
       },
@@ -104,6 +97,9 @@ export default function renderHelperMixin () {
         return args.reduce((res, arg) => {
           return isPlainObject(arg) ? Object.assign(res, arg) : res
         }, {})
+      },
+      _getRootContext (id) {
+        return contextMap.get(id)
       }
     }
   }

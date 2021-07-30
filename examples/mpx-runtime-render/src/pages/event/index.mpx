@@ -25,7 +25,7 @@
     </view>
 
     <view class="wrapper">
-      <event-a bindevent="eventHandler"></event-a>
+      <event-a a="event page" bindevent="eventHandler"></event-a>
     </view>
   </view>
 </template>

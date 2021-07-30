@@ -6,7 +6,7 @@ Mpx针对表单组件提供了`wx:model`双向绑定指令，类似于`v-model`�
 
 ```html
 <view>
-  <input type="text" wx:model="{{message}}">
+  <input type="text" wx:model="{{message}}"/>
   <!--view中的文案会随着用户对输入框进行输入而实时更新-->
   <view>{{message}}</view>
 </view>

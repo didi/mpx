@@ -14,13 +14,22 @@ createComponent({
     confirmBtn: {
       text: '确认2',
       inline: false,
-      bolder: true
+      bolder: true,
+      red: true
     },
     cancelBtn: {
       text: '取消按钮',
       inline: false,
-      bolder: false
+      bolder: true
     }
+  },
+  attached () {
+    setTimeout(() => {
+      this.confirmBtn.red = false
+    }, 2000)
+    setTimeout(() => {
+      this.confirmBtn.red = true
+    }, 5000)
   }
 })
 </script>

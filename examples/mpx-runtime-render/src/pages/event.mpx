@@ -1,13 +1,18 @@
 <template>
   <view
+    wx:if="{{ flag }}"
     class="root"
+    wx:class="{{ cls }}"
     data-a="{{ message }}"
     bind:tap="onViewTapBubble('b', $event)"
+    bindtouchstart="onViewTouchStart"
   >
     <view wx:for="{{ navigatorList }}">
-      <view class="navigator-item" bindtap="jumpTo(item)">{{ item.name }}</view>
+      <view hoverClass="active" class="navigator-item" bindtap="jumpTo(item)">{{ item.name }}</view>
     </view>
   </view>
+  <text wx:else>okok</text>
+  <!-- <view wx:for="{{ list }}">{{ item }}</view> -->
 </template>
 
 <script>
@@ -57,6 +62,10 @@ createPage({
         path: '/pages/ref/index'
       },
       {
+        name: 'global-runtime component',
+        path: '/pages/global-component/index'
+      },
+      {
         name: '动态component',
         path: '/pages/component/index'
       },
@@ -65,10 +74,22 @@ createPage({
         path: '/pages/inner-components/index'
       }
     ],
-    message: 'msg'
+    list: [],
+    message: 'msg',
+    flag: true,
+    cls: {
+      cls1: false
+    }
   },
   attached() {
-
+    setTimeout(() => {
+      // this.message = 'gogo'
+      // this.flag = false
+      // this.list = [1, 2, 3]
+      // this.cls.cls1 = true
+      // this.navigatorList = [this.navigatorList[0]]
+      // console.log('the navigatorList is:', this.navigatorList)
+    }, 1000)
   },
   watch: {
     message(val) {
@@ -83,6 +104,9 @@ createPage({
     },
     onViewTapBubble(str, e) {
       console.log('onViewTapBubble', str, e)
+    },
+    onViewTouchStart() {
+      // console.log('onViewTouchStart')
     }
   }
 })
@@ -105,6 +129,7 @@ createPage({
 {
   "runtimeCompile": true,
   "usingComponents": {
+    "common-a": "../components/common-a/index.mpx"
   }
 }
 </script>

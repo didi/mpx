@@ -1,11 +1,12 @@
-const isEmptyObject = require('./utils/is-empty-object')
-const { wx } = require('./config')
+const isEmptyObject = require('../utils/is-empty-object')
+const { wx } = require('../config')
 
 const customComponentWxssSet = new Set()
 const injectedPath = new Set()
 const runtimeCompileMap = {}
 let templateNodes = {}
 let pathAndAliasTagMap = {}
+let globalRuntimeComponent = {}
 
 // mpx-render-base.wxml 里面的指令生成都需要被忽略掉
 const filterKeys = [
@@ -13,23 +14,19 @@ const filterKeys = [
   'wx:for-index',
   'wx:for-item',
   'wx:if',
-  'is',
-  'data-eventconfigs',
-  'mpxShow',
-  'big-attrs',
-  'mpxPageStatus'
+  'is'
 ]
 
 function genNotRuntimeCustomComponentSlots () {
   return `
-    <block wx:for="{{r.children}}" wx:key="nodeId">
-      <block wx:if="{{item['slot']}}">
-        <view slot="{{item['slot']}}">
+    <block wx:for="{{r.children}}" wx:key="index">
+      <block wx:if="{{item.data['slot']}}">
+        <view slot="{{item.data['slot']}}">
           <element r="{{item}}"></element>
         </view>
       </block>
       <block wx:else>
-        <block wx:if="{{item.nodeId}}">
+        <block wx:if="{{item.nodeType}}">
           <element r="{{item}}"></element>
         </block>
         <block wx:else>
@@ -40,20 +37,13 @@ function genNotRuntimeCustomComponentSlots () {
   `
 }
 
-// TODO：合并节点属性的方法目前仅处理了 attrsList 里面的内容，其他属性的合并也需要处理
-function composeNodeAttrs (oldNode, newNode) {
-  newNode.attrsList.forEach((attr) => {
-    if (
-      oldNode.attrsList &&
-      !oldNode.attrsList.find((item) => item.name === attr.name)
-    ) {
-      oldNode.attrsList.push(attr)
-    }
-  })
-  return oldNode
-}
-
 module.exports = {
+  getGlobalRuntimeComponent () {
+    return globalRuntimeComponent
+  },
+  setGlobalRuntimeComponent (runtimeComponent = {}) {
+    Object.assign(globalRuntimeComponent, runtimeComponent)
+  },
   setRuntimeComponent (path, isRuntimeCompile) {
     runtimeCompileMap[path] = isRuntimeCompile
   },
@@ -100,15 +90,18 @@ module.exports = {
     return templateNodes
   },
   setTemplateNodes (node) {
-    let tag = node.aliasTag || node.tag
+    const tag = node.aliasTag || node.tag
     if (!templateNodes[tag]) {
-      templateNodes[tag] = node
-    } else {
-      composeNodeAttrs(templateNodes[tag], node)
+      templateNodes[tag] = {
+        node,
+        allAttrs: new Set()
+      }
     }
-  },
-  clearTemplateNodes () {
-    templateNodes = {}
+    if (node.attrsList.length > 0) {
+      node.attrsList.map(attr => {
+        templateNodes[tag].allAttrs.add(attr.name)
+      })
+    }
   },
   collectCustomComponentWxss (path) {
     customComponentWxssSet.add(path)
@@ -129,60 +122,47 @@ module.exports = {
   genRuntimeTemplate (nodesMap) {
     let res = '\n'
     Object.keys(nodesMap).map((tag) => {
-      const node = nodesMap[tag]
+      const { node, allAttrs } = nodesMap[tag]
       const templateName = node.aliasTag || node.tag
-      const nodeTag = node.isCustomComponent ? node.aliasTag : node.tag
-      // console.log('the node attrsList is:', node.aliasTag || node.tag, node.attrsList)
+      const nodeTag = node.isLocalComponent ? node.aliasTag : node.tag
       res += `<template name="${templateName}">`
       res += `<${nodeTag}`
-      if (node.class || node.staticClass) {
-        res += ' ' + 'class="{{ r.class }}"'
-      }
-      if (node.style || node.staticStyle || node.showStyle) {
-        res += ' ' + 'style="{{ r.style }}"'
-      }
-      if (node.hidden) {
-        res += ' ' + 'hidden="{{ r.hidden }}"'
-      }
-      // 事件统一代理至 __invoke 方法上，通过 data-eventconfigs 获取真实的事件信息
-      if (node.events) {
-        Object.keys(node.events).map((name) => {
-          res += ' ' + `${name}="__invoke"`
-        })
-      }
-      /**
-       * 运行时组件：
-       *
-       * 1. 统一使用 bigAttrs 进行传参
-       * 2. 统一使用 slots 属性传递插槽的 render 函数
-       */
-      if (node.isRuntimeComponent) {
-        res += ' ' + `big-attrs="{{ r.bigAttrs }}"`
-        res += ' ' + 'slots="{{ r.slots }}"'
-      }
-      if (node.mpxPageStatus) {
-        res += ' ' + 'mpxPageStatus="{{ r.mpxPageStatus || \'\' }}"'
-      }
-      res += ' ' + 'mpxShow="{{ r.mpxShow === undefined ? true : r.mpxShow }}"'
-      res += ' ' + 'data-eventconfigs="{{ r.eventconfigs }}"'
-      res += ' ' + 'data-private-node-id="{{ r.nodeId }}"'
-      node.attrsList.forEach((attr) => {
-        // 事件统一走 __invoke 代理
-        if (wx.event.parseEvent(attr.name) || filterKeys.includes(attr.name)) {
+
+      allAttrs.forEach((attr) => {
+        if (filterKeys.includes(attr)) {
           return
         }
 
-        res += ' ' + attr.name
-        let value = attr.value
-        if (value != null) {
-          // res += '=' + stringifyAttr(value)
-          // 带有连字符的属性（是否统一使用驼峰）
-          if (attr.name.includes('-')) {
-            res += `="{{ r['${attr.name}'] }}"`
-          } else {
-            res += `="{{ r.${attr.name} }}"`
-          }
+        if (wx.event.parseEvent(attr)) {
+          res += ` ${attr}="__invoke"`
+          return
         }
+
+        res += ' ' + attr
+        let strVal = ''
+        switch (attr) {
+          case 'big-attrs':
+            strVal = '"{{ r.data.bigAttrs }}"'
+            break
+          case 'mpxPageStatus':
+            strVal = '"{{ r.data.mpxPageStatus || \'\' }}"'
+            break
+          case 'mpxShow':
+            strVal = '"{{ r.data.mpxShow === undefined ? true : r.data.mpxShow }}"'
+            break
+          case 'data-eventconfigs':
+            strVal = '"{{ r.data.eventconfigs }}"'
+            break
+          default:
+            if (attr.includes('-')) {
+              strVal = `"{{ r.data['${attr}'] }}"`
+            } else {
+              strVal = `"{{ r.data.${attr} }}"`
+            }
+            break
+        }
+
+        res += `=${strVal}`
       })
       if (node.unary) {
         res += '/>'

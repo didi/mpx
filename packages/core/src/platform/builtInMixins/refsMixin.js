@@ -137,11 +137,10 @@ export default function getRefsMixin () {
       ...aliMethods,
       __getRefs () {
         // 运行时编译组件获取 ref 节点
-        if (this.r && this.r.refs) {
-          const ref = this.r.refs
-          const target = this.__getNode(this.r.nodeId).context
+        if (this.vnodeData && this.vnodeData.refs) {
+          const ref = this.vnodeData.refs
           const setRef = ref.type === 'node' ? setNodeRef : setComponentRef
-          setRef(target, ref, this)
+          setRef(this.vnodeRootContext, ref, this)
         }
         if (this.__getRefsData) {
           const refs = this.__getRefsData()

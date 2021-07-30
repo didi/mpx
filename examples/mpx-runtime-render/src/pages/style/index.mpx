@@ -1,5 +1,6 @@
 <template>
   <view>
+    <common-aaa class="goggo" b="332" style="color: red;" bindcommonaevent="onCommonAEvent"></common-aaa>
     <view class="style-wrapper">
       <view style="color: red;" wx:style="{{ {fontSize:'24px', fontWeight:'bold'} }}">
         this is outer 24px style index.mpx
@@ -14,6 +15,12 @@
       <view wx:style="{{ [baseStyle, activeStyle] }}">
         this is arr style
       </view>
+    </view>
+    <view class="style-wrapper">
+      <global-a>
+        <view>this is global-a default slot</view>
+        <view slot="after">this is global-a after slot</view>
+      </global-a>
     </view>
   </view>
 </template>
@@ -34,6 +41,11 @@ createComponent({
     activeStyle: {
       backgroundColor: '#fc9153'
     }
+  },
+  methods: {
+    onCommonAEvent () {
+      console.log('onCommonAEvent')
+    }
   }
 })
 </script>
@@ -50,7 +62,7 @@ createComponent({
   "runtimeCompile": true,
   "component": true,
   "usingComponents": {
-    // "element": "./element"
+    "common-aaa": "../../components/common-a/index.mpx"
   }
 }
 </script>

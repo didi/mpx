@@ -8,6 +8,9 @@
         <view slot="after">this is after slot</view>
       </cube-btn>
     </view>
+    <view class="wrapper">
+      <common-a wx:bind="{{ commonAObj }}" bindcommonaevent="onCommonAEvent"></common-a>
+    </view>
   </view>
 </template>
 
@@ -38,12 +41,20 @@ createComponent({
     }
   },
   data: {
-
+    commonAObj: {
+      camelCase: 'camel',
+      a: 123
+    }
   },
   attached() {
     setTimeout(() => {
       console.log('the confirmBtn and cancelBtn', this.confirmBtn, this.cancelBtn)
     }, 2000)
+  },
+  methods: {
+    onCommonAEvent () {
+      console.log('onCommonAEvent')
+    }
   }
 })
 </script>
@@ -58,7 +69,8 @@ createComponent({
 <script type="application/json">
 {
   "usingComponents": {
-    "cube-btn": "./button.mpx"
+    "cube-btn": "./button.mpx",
+    "common-a": "../../../components/common-a/index"
   }
 }
 </script>

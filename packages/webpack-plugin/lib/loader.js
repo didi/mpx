@@ -16,7 +16,11 @@ const readJsonForSrc = require('./utils/read-json-for-src')
 const normalize = require('./utils/normalize')
 const getMainCompilation = require('./utils/get-main-compilation')
 const path = require('path')
-const { collectAliasTag } = require('./runtime-utils')
+const {
+  collectAliasTag,
+  setGlobalRuntimeComponent,
+  getGlobalRuntimeComponent
+} = require('./runtime-render/utils')
 
 module.exports = function (content) {
   this.cacheable()
@@ -109,8 +113,9 @@ module.exports = function (content) {
   let output = ''
   const callback = this.async()
 
-  let runtimeComponents = []
-  let componentsAbsolutePath = {}
+  const globalRuntimeComponent = getGlobalRuntimeComponent()
+  let runtimeComponents = Object.keys(globalRuntimeComponent)
+  let componentsAbsolutePath = Object.assign({}, globalRuntimeComponent)
   async.waterfall([
     (callback) => {
       const json = parts.json || {}
@@ -258,6 +263,10 @@ module.exports = function (content) {
         componentsAbsolutePath
       })
 
+      // 如果是全局的运行时组件，收集起来
+      if (ctorType === 'app' && runtimeComponents.length > 0) {
+        setGlobalRuntimeComponent(componentsAbsolutePath)
+      }
       // 处理mode为web时输出vue格式文件
       if (mode === 'web') {
         if (ctorType === 'app' && !queryObj.app) {

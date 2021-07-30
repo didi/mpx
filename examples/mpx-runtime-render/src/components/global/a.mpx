@@ -1,6 +1,8 @@
 <template>
   <view>
-    <view bindtap="tap">this is event a components</view>
+    <slot></slot>
+    <view>this is global a component1</view>
+    <slot name="after"></slot>
   </view>
 </template>
 
@@ -8,35 +10,29 @@
 import { createComponent } from '@mpxjs/core'
 
 createComponent({
-  // pageShow() {
-  //   console.log(123123)
-  // },
-  options: {
-    multipleSlots: true
-  },
   properties: {
     a: {
       type: String,
-      value: ''
+      value: '[global property a]: this is default a'
+    },
+    b: {
+      type: Boolean
     }
   },
   data: {
-    componentName: 'a'
   },
   attached () {
-    console.log('the a is:', this.a)
-  },
-  methods: {
-    tap() {
-      this.triggerEvent('event', { a: 1 })
-      console.log(123)
-    }
+    console.log('the global-a a is:', this.a)
+    console.log('the global-a b is:', this.b)
   }
 })
 </script>
 
 <style lang="stylus">
-
+.wrapper
+  margin 10px
+  padding 10px
+  border 1px solid #ccc
 </style>
 
 <script type="application/json">

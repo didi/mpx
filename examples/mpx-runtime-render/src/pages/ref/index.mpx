@@ -12,7 +12,7 @@
 
     <view class="wrapper">
       <ref-a wx:ref="refA2">
-        <ref-b>
+        <ref-b wx:ref="refB">
           <view>this is ref-b slot content</view>
         </ref-b>
       </ref-a>
@@ -31,8 +31,8 @@ createComponent({
     setTimeout(() => {
       console.log('the refView1 is:', this.$refs.refView1)
       console.log('the refA is:', this.$refs.refA.sayHello())
-      // console.log('the refB is:', this.$refs.refB.helloRefB())
-    }, 1000)
+      console.log('the refB is:', this.$refs.refB.helloRefB())
+    }, 100)
   },
   methods: {
   }

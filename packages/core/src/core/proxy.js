@@ -32,7 +32,6 @@ import {
   DESTROYED
 } from './innerLifecycle'
 import { warn, error } from '../helper/log'
-import patch from '../vnode/patch'
 
 let uid = 0
 
@@ -76,16 +75,18 @@ export default class MPXProxy {
     if ((!this.isMounted() && this.curRenderTask) || (this.isMounted() && isEmptyRender)) {
       return
     }
-    let promiseResolve
-    const promise = new Promise(resolve => {
-      promiseResolve = resolve
-    })
     this.curRenderTask = {
-      promise,
-      resolve: promiseResolve
+      state: 'pending'
     }
+    const promise = new Promise(resolve => {
+      this.curRenderTask.resolve = (res) => {
+        this.curRenderTask.state = 'finished'
+        resolve(res)
+      }
+    })
+    this.curRenderTask.promise = promise
     // isMounted之前基于mounted触发，isMounted之后基于setData回调触发
-    return this.isMounted() && promiseResolve
+    return this.isMounted() && this.curRenderTask.resolve
   }
 
   isMounted () {
@@ -104,11 +105,7 @@ export default class MPXProxy {
 
   updated () {
     if (this.isMounted()) {
-      this.lockTask(() => {
-        if (this.isMounted()) {
-          this.callUserHook(UPDATED)
-        }
-      })
+      this.callUserHook(UPDATED)
     }
   }
 
@@ -272,10 +269,6 @@ export default class MPXProxy {
 
   renderWithData (vnode) {
     if (vnode) {
-      // 对 vnode 进行深拷贝，原有的 vnode 数据仅做渲染使用，拷贝后的数据做上下文的绑定
-      // TODO: 目前未做 vnode diff 工作，都是全量 render，二期优化
-      const _vnode = diffAndCloneA(vnode).clone
-      proxy(this.target, { _vnode: patch(undefined, _vnode, this.target) }, ['_vnode'], true)
       return this.doRenderWithVNode(vnode)
     }
     const renderData = preProcessRenderData(this.renderData)
@@ -376,9 +369,22 @@ export default class MPXProxy {
   }
 
   doRenderWithVNode (vnode) {
-    if (!isEmptyObject(vnode) && this.options.runtimeComponent) {
+    if (!this._vnode) {
       this.target.__render({ r: vnode })
+    } else {
+      let diffPath = diffAndCloneA(vnode, this._vnode).diffData
+      if (!isEmptyObject(diffPath)) {
+        // 构造 diffPath 数据
+        diffPath = Object.keys(diffPath).reduce((preVal, curVal) => {
+          const key = 'r' + curVal
+          preVal[key] = diffPath[curVal]
+          return preVal
+        }, {})
+        this.target.__render(diffPath)
+      }
     }
+    // 缓存本地的 vnode 用以下一次 diff
+    this._vnode = vnode
   }
 
   doRender (data, cb) {
@@ -419,7 +425,7 @@ export default class MPXProxy {
     data = processUndefined(data)
     if (typeof EXPORT_MPX.config.setDataHandler === 'function') {
       try {
-        EXPORT_MPX.config.setDataHandler(data)
+        EXPORT_MPX.config.setDataHandler(data, this.target)
       } catch (e) {
       }
     }
