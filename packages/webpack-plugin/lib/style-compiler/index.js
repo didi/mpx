@@ -19,7 +19,7 @@ module.exports = function (css, map) {
   const mpx = mainCompilation.__mpx__
   const defs = mpx.defs
 
-  const transRpxRulesRaw = mpx.transRpxRules || loaderOptions.transRpx
+  const transRpxRulesRaw = mpx.transRpxRules
 
   const transRpxRules = transRpxRulesRaw ? (Array.isArray(transRpxRulesRaw) ? transRpxRulesRaw : [transRpxRulesRaw]) : []
 
