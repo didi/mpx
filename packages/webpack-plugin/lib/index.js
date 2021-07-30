@@ -137,7 +137,10 @@ class MpxWebpackPlugin {
     options.subpackageModulesRules = options.subpackageModulesRules || {}
     options.forceMainPackageRules = options.forceMainPackageRules || {}
     options.forceProxyEventRules = options.forceProxyEventRules || {}
-    options.miniNpmPackage = options.miniNpmPackage || []
+    options.miniNpmPackages = options.miniNpmPackages || []
+    options.fileConditionRules = options.fileConditionRules || {
+      include: () => true
+    }
     this.options = options
   }
 
@@ -206,15 +209,15 @@ class MpxWebpackPlugin {
       warnings.push(`webpack options: MpxWebpackPlugin strongly depends options.node.globel to be true, custom options.node will be ignored!`)
     }
 
-    const addModePlugin = new AddModePlugin('before-resolve', this.options.mode, 'resolve')
-    const packageEntryPlugin = new PackageEntryPlugin('before-described-relative', this.options.miniNpmPackage, 'resolve')
+    const addModePlugin = new AddModePlugin('before-file', this.options.mode, this.options.fileConditionRules, 'file')
+    const addEnvPlugin = new AddEnvPlugin('before-file', this.options.env, this.options.fileConditionRules, 'file')
+    const packageEntryPlugin = new PackageEntryPlugin('before-described-relative', this.options.miniNpmPackages, 'resolve')
     if (Array.isArray(compiler.options.resolve.plugins)) {
       compiler.options.resolve.plugins.push(addModePlugin)
     } else {
       compiler.options.resolve.plugins = [addModePlugin]
     }
     if (this.options.env) {
-      const addEnvPlugin = new AddEnvPlugin('before-resolve', this.options.env, 'resolve')
       compiler.options.resolve.plugins.push(addEnvPlugin)
     }
     compiler.options.resolve.plugins.push(packageEntryPlugin)

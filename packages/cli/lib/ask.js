@@ -17,35 +17,9 @@ const promptMapping = {
  */
 
 module.exports = function ask (prompts, data, done) {
-  preprocessDefault(prompts, data)
   async.eachSeries(Object.keys(prompts), (key, next) => {
     prompt(data, key, prompts[key], next)
   }, done)
-}
-
-function preprocessDefault (prompts, data) {
-  Object.keys(prompts).forEach((key) => {
-    const prompt = prompts[key]
-    if (prompt.hasOwnProperty('default')) {
-      if (typeof prompt.default === 'function') {
-        let temp
-        Object.defineProperty(data, key, {
-          get () {
-            if (temp !== undefined) {
-              return temp
-            }
-            return prompt.default(data)
-          },
-          set (val) {
-            temp = val
-          },
-          enumerable: true
-        })
-      } else {
-        data[key] = prompt.default
-      }
-    }
-  })
 }
 
 /**
