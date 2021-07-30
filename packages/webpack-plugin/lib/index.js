@@ -25,7 +25,7 @@ const fixRelative = require('./utils/fix-relative')
 const parseRequest = require('./utils/parse-request')
 const matchCondition = require('./utils/match-condition')
 const parseAsset = require('./utils/parse-asset')
-const { preProcessDefs } = require('./utils/index')
+const {preProcessDefs} = require('./utils/index')
 const hash = require('hash-sum')
 
 const isProductionLikeMode = options => {
@@ -147,27 +147,27 @@ class MpxWebpackPlugin {
     if (loaderOptions.transRpx) {
       warnings.push('Mpx loader option [transRpx] is deprecated now, please use mpx webpack plugin config [transRpxRules] instead!')
     }
-    return { loader: normalize.lib('loader'), options }
+    return {loader: normalize.lib('loader'), options}
   }
 
   static pluginLoader (options = {}) {
-    return { loader: normalize.lib('plugin-loader'), options }
+    return {loader: normalize.lib('plugin-loader'), options}
   }
 
   static wxsPreLoader (options = {}) {
-    return { loader: normalize.lib('wxs/wxs-pre-loader'), options }
+    return {loader: normalize.lib('wxs/wxs-pre-loader'), options}
   }
 
   static urlLoader (options = {}) {
-    return { loader: normalize.lib('url-loader'), options }
+    return {loader: normalize.lib('url-loader'), options}
   }
 
   static fileLoader (options = {}) {
-    return { loader: normalize.lib('file-loader'), options }
+    return {loader: normalize.lib('file-loader'), options}
   }
 
   runModeRules (data) {
-    const { resourcePath, queryObj } = parseRequest(data.resource)
+    const {resourcePath, queryObj} = parseRequest(data.resource)
     if (queryObj.mode) {
       return
     }
@@ -177,8 +177,8 @@ class MpxWebpackPlugin {
       return
     }
     if (matchCondition(resourcePath, modeRule)) {
-      data.resource = addQuery(data.resource, { mode })
-      data.request = addQuery(data.request, { mode })
+      data.resource = addQuery(data.resource, {mode})
+      data.request = addQuery(data.request, {mode})
     }
   }
 
@@ -256,7 +256,7 @@ class MpxWebpackPlugin {
     const defs = this.options.defs
 
     const defsOpt = {
-      '__mpx_wxs__': DefinePlugin.runtimeValue(({ module }) => {
+      '__mpx_wxs__': DefinePlugin.runtimeValue(({module}) => {
         return JSON.stringify(!!module.wxs)
       })
     }
@@ -270,7 +270,7 @@ class MpxWebpackPlugin {
 
     new ExternalsPlugin('commonjs2', this.options.externals).apply(compiler)
 
-    compiler.hooks.compilation.tap('MpxWebpackPlugin ', (compilation, { normalModuleFactory }) => {
+    compiler.hooks.compilation.tap('MpxWebpackPlugin ', (compilation, {normalModuleFactory}) => {
       compilation.hooks.normalModuleLoader.tap('MpxWebpackPlugin', (loaderContext, module) => {
         // 设置loaderContext的minimize
         if (isProductionLikeMode(compiler.options)) {
@@ -295,7 +295,7 @@ class MpxWebpackPlugin {
 
     let mpx
 
-    compiler.hooks.thisCompilation.tap('MpxWebpackPlugin', (compilation, { normalModuleFactory }) => {
+    compiler.hooks.thisCompilation.tap('MpxWebpackPlugin', (compilation, {normalModuleFactory}) => {
       compilation.warnings = compilation.warnings.concat(warnings)
       compilation.errors = compilation.errors.concat(errors)
       // additionalAssets和mpx由于包含缓存机制，必须在每次compilation时重新初始化
@@ -405,10 +405,10 @@ class MpxWebpackPlugin {
           // 2. 分包引用且主包引用过的资源输出至主包，不在当前分包重复输出
           // 3. 分包引用且无其他包引用的资源输出至当前分包
           // 4. 分包引用且其他分包也引用过的资源，重复输出至当前分包
-          getPackageInfo: ({ resource, outputPath, resourceType = 'components', warn }) => {
+          getPackageInfo: ({resource, outputPath, resourceType = 'components', warn}) => {
             let packageRoot = ''
             let packageName = 'main'
-            const { resourcePath } = parseRequest(resource)
+            const {resourcePath} = parseRequest(resource)
             const currentPackageRoot = mpx.currentPackageRoot
             const currentPackageName = currentPackageRoot || 'main'
             const resourceMap = mpx[`${resourceType}Map`]
@@ -478,7 +478,7 @@ class MpxWebpackPlugin {
         const module = args[0]
         // 避免context module报错
         if (module.request && module.resource) {
-          const { queryObj, resourcePath } = parseRequest(module.resource)
+          const {queryObj, resourcePath} = parseRequest(module.resource)
           // 对于已有packageName标识的模块跳过处理
           if (!queryObj.packageName) {
             let isStatic = queryObj.isStatic
@@ -497,13 +497,13 @@ class MpxWebpackPlugin {
             }
 
             if (needPackageQuery) {
-              const { packageName } = mpx.getPackageInfo({
+              const {packageName} = mpx.getPackageInfo({
                 resource: module.resource,
                 resourceType: isStatic ? 'staticResources' : 'subpackageModules'
               })
 
-              module.request = addQuery(module.request, { packageName })
-              module.resource = addQuery(module.resource, { packageName })
+              module.request = addQuery(module.request, {packageName})
+              module.resource = addQuery(module.resource, {packageName})
             }
           }
         }
@@ -618,7 +618,7 @@ class MpxWebpackPlugin {
               module.buildInfo.contextDependencies = contextDependencies
             })
           }
-          compilation.emitAsset(file, content, { modules: additionalAssets[file].modules })
+          compilation.emitAsset(file, content, {modules: additionalAssets[file].modules})
         }
         // 所有编译的静态资源assetsInfo合入主编译
         mpx.assetsInfo.forEach((assetInfo, name) => {
@@ -640,14 +640,14 @@ class MpxWebpackPlugin {
 
       normalModuleFactory.hooks.parser.for('javascript/auto').tap('MpxWebpackPlugin', (parser) => {
         // hack预处理，将expr.range写入loc中便于在CommonJsRequireDependency中获取，移除无效require
-        parser.hooks.call.for('require').tap({ name: 'MpxWebpackPlugin', stage: -100 }, (expr) => {
+        parser.hooks.call.for('require').tap({name: 'MpxWebpackPlugin', stage: -100}, (expr) => {
           expr.loc.range = expr.range
         })
 
         parser.hooks.call.for('__mpx_resolve_path__').tap('MpxWebpackPlugin', (expr) => {
           if (expr.arguments[0]) {
             const resource = expr.arguments[0].value
-            const { queryObj } = parseRequest(resource)
+            const {queryObj} = parseRequest(resource)
             const packageName = queryObj.packageName
             const pagesMap = mpx.pagesMap
             const componentsMap = mpx.componentsMap
@@ -663,7 +663,7 @@ class MpxWebpackPlugin {
         const transHandler = (expr) => {
           const module = parser.state.module
           const current = parser.state.current
-          const { queryObj, resourcePath } = parseRequest(module.resource)
+          const {queryObj, resourcePath} = parseRequest(module.resource)
           const localSrcMode = queryObj.mode
           const globalSrcMode = mpx.srcMode
           const srcMode = localSrcMode || globalSrcMode
@@ -805,7 +805,7 @@ class MpxWebpackPlugin {
           const callee = expr.callee
           const args = expr.arguments
           const name = callee.object.name
-          const { queryObj, resourcePath } = parseRequest(parser.state.module.resource)
+          const {queryObj, resourcePath} = parseRequest(parser.state.module.resource)
           const localSrcMode = queryObj.mode
           const globalSrcMode = mpx.srcMode
           const srcMode = localSrcMode || globalSrcMode
@@ -973,7 +973,7 @@ try {
       // resolve前修改原始request
       normalModuleFactory.hooks.beforeResolve.tapAsync('MpxWebpackPlugin', (data, callback) => {
         let request = data.request
-        let { queryObj, resource } = parseRequest(request)
+        let {queryObj, resource} = parseRequest(request)
         if (queryObj.resolve) {
           // 此处的query用于将资源引用的当前包信息传递给resolveDependency
           const pathLoader = normalize.lib('path-loader')
@@ -993,34 +993,40 @@ try {
       // resolve完成后修改loaders信息并批量添加mode query
       normalModuleFactory.hooks.afterResolve.tapAsync('MpxWebpackPlugin', (data, callback) => {
         if (data.loaders) {
-          const { resourcePath, queryObj } = parseRequest(data.request)
           const isPitcherRequest = /vue-loader\/lib\/loaders\/pitcher.js/.test(data.loaders[0] && data.loaders[0].loader)
+          const { queryObj } = parseRequest(data.request)
+          const mpxStyleOptions = queryObj.mpxStyleOptions
+          let cssLoaderIndex = -1
+          let vueStyleLoaderIndex = -1
+          let mpxStyleLoaderIndex = -1
           data.loaders.forEach((loader, index) => {
-            if (/ts-loader/.test(loader.loader)) {
+            const currentLoader = loader.loader
+            if (/ts-loader/.test(currentLoader)) {
               // todo 暂时固定写死options，待后续优化为复用rules后修正
               loader.options = { appendTsSuffixTo: [/\.(mpx|vue)$/] }
             }
-            if (this.options.mode === 'web') {
-              const { mpxStyleOptions, type } = queryObj
-              const mpxStyleResource = resourcePath.endsWith('.mpx') && type === 'style'
-              const cssResource = /\.(styl|less｜scss｜sass|css)$/.test(resourcePath)
-              const isCssLoader = /css-loader/.test(loader.loader)
-              const isVueStyleLoader = /vue-loader\/lib\/loaders\/stylePostLoader.js/.test(loader.loader)
-              let loaderIndex = 0
-              if (cssResource && isCssLoader) {
-                loaderIndex = index + 1
-              }
-              if (mpxStyleResource && !isPitcherRequest && isVueStyleLoader) {
-                loaderIndex = index + 1
-              }
-              if (loaderIndex && data.loaders[loaderIndex].loader !== normalize.lib('style-compiler/index.js')) {
-                data.loaders.splice(loaderIndex, 0, {
-                  loader: normalize.lib('style-compiler/index.js'),
-                  options: (mpxStyleOptions && JSON.parse(mpxStyleOptions)) || {}
-                })
-              }
+            if (currentLoader.includes('css-loader')) {
+              cssLoaderIndex = index
+            } else if (currentLoader.includes('vue-loader/lib/loaders/stylePostLoader.js')) {
+              vueStyleLoaderIndex = index
+            } else if (currentLoader.includes('style-compiler/index.js')) {
+              mpxStyleLoaderIndex = index
             }
           })
+          if (mpxStyleLoaderIndex === -1) {
+            let loaderIndex = -1
+            if (cssLoaderIndex > -1 && vueStyleLoaderIndex === -1) {
+              loaderIndex = cssLoaderIndex
+            } else if (cssLoaderIndex > -1 && vueStyleLoaderIndex > -1 && !isPitcherRequest) {
+              loaderIndex = vueStyleLoaderIndex
+            }
+            if (loaderIndex > -1) {
+              data.loaders.splice(loaderIndex + 1, 0, {
+                loader: normalize.lib('style-compiler/index.js'),
+                options: (mpxStyleOptions && JSON.parse(mpxStyleOptions)) || {}
+              })
+            }
+          }
         }
         // 根据用户传入的modeRules对特定资源添加mode query
         this.runModeRules(data)
@@ -1033,9 +1039,9 @@ try {
         const pagesMap = compilation.__mpx__.pagesMap
         const componentsPackageMap = compilation.__mpx__.componentsMap
         const componentsMap = Object.keys(componentsPackageMap).map(item => componentsPackageMap[item]).reduce((pre, cur) => {
-          return { ...pre, ...cur }
+          return {...pre, ...cur}
         }, {})
-        const outputMap = JSON.stringify({ ...pagesMap, ...componentsMap })
+        const outputMap = JSON.stringify({...pagesMap, ...componentsMap})
         compilation.assets['../outputMap.json'] = {
           source: () => {
             return outputMap
@@ -1263,7 +1269,7 @@ try {
           modules: [],
           size: 0
         }
-        sizeInfo[packageName][fillType].push({ ...fillInfo })
+        sizeInfo[packageName][fillType].push({...fillInfo})
         sizeInfo[packageName].size += fillInfo.size
       }
 

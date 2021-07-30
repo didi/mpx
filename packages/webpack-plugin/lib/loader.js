@@ -212,7 +212,8 @@ module.exports = function (content) {
                   ctorType,
                   autoScope,
                   moduleId,
-                  needCssSourceMap
+                  needCssSourceMap,
+                  transRpx: options.transRpx
                 }, callback)
               },
               (callback) => {

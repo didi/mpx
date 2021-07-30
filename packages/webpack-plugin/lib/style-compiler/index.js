@@ -5,6 +5,7 @@ const loadPostcssConfig = require('./load-postcss-config')
 
 const trim = require('./plugins/trim')
 const rpx = require('./plugins/rpx')
+const vw = require('./plugins/vw')
 const pluginCondStrip = require('./plugins/conditional-strip')
 const scopeId = require('./plugins/scope-id')
 const matchCondition = require('../utils/match-condition')
@@ -57,11 +58,14 @@ module.exports = function (css, map) {
 
       if (testResolveRange(include, exclude)) {
         // 对同一个资源一旦匹配到，推入一个rpx插件后就不再继续推了
-        plugins.push(rpx({ mode, comment, designWidth, mpxMode: mpx.mode }))
+        plugins.push(rpx({ mode, comment, designWidth }))
         break
       }
     }
 
+    if (mpx.mode === 'web') {
+      plugins.push(vw)
+    }
     // source map
     if (loaderOptions.sourceMap && !options.map) {
       options.map = {

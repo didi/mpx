@@ -9,8 +9,10 @@ module.exports = function (styles, options, callback) {
           const attrs = Object.assign({}, style.attrs)
           if (options.autoScope) attrs.scoped = true
           attrs.mpxStyleOptions = JSON.stringify({
+            // scoped: !!options.autoScope,
             sourceMap: !!options.needCssSourceMap,
-            moduleId: options.moduleId
+            moduleId: options.moduleId,
+            transRpx: options.transRpx
           })
           return attrs
         }
