@@ -1,5 +1,5 @@
 import { match } from 'path-to-regexp'
-import { isArray, isFunction, isNotEmptyArray, isNotEmptyObject, isString, parseUrl } from './util'
+import { isArray, isFunction, isNotEmptyArray, isNotEmptyObject, isString, parseUrl, deepMerge } from './util'
 
 /**
  * 匹配项所有属性值，在源对象都能找到匹配
@@ -8,18 +8,22 @@ import { isArray, isFunction, isNotEmptyArray, isNotEmptyObject, isString, parse
  * @returns {boolean}
  */
 function attrMatch (test = {}, input = {}) {
+  let result = true
   for (const key in test) {
     // value 值为 true 时 key 存在即命中匹配
     if (test.hasOwnProperty(key) && input.hasOwnProperty(key)) {
+      if (test[key] === true) continue
       // value 如果不是字符串需要进行序列化之后再匹配
       const testValue = isString(test[key]) ? test[key] : JSON.stringify(test[key])
       const inputValue = isString(input[key]) ? input[key] : JSON.stringify(input[key])
-      if (test[key] === true || testValue === inputValue) {
-        return true
+      if (testValue !== inputValue) {
+        result = false
       }
+    } else {
+      result = false
     }
   }
-  return false
+  return result
 }
 
 /**
@@ -79,19 +83,19 @@ function doTest (config, test) {
   // params 匹配
   const paramsMatched = isNotEmptyObject(tParams) ? attrMatch(tParams, params) : true
   // data 匹配
-  const dataMatched = isNotEmptyObject(tData) ? attrMatch(tData, data) : true
+  const likeGet = /^GET|DELETE|HEAD$/i.test(method)
+  const dataMatched = isNotEmptyObject(tData) ? attrMatch(tData, likeGet ? params : data) : true
   // header 匹配
   const headerMatched = isNotEmptyObject(tHeader) ? attrMatch(tHeader, header) : true
   // method 匹配
   let methodMatched = false
-  const methodUpper = method.toUpperCase()
   if (isArray(tMethod)) {
     const tMethodUpper = tMethod.map((item) => {
       return item.toUpperCase()
     })
-    methodMatched = isNotEmptyArray(tMethodUpper) ? tMethodUpper.indexOf(methodUpper) > -1 : true
+    methodMatched = isNotEmptyArray(tMethodUpper) ? tMethodUpper.indexOf(method) > -1 : true
   } else if (isString(tMethod)) {
-    methodMatched = tMethod.toUpperCase() === method.toUpperCase()
+    methodMatched = tMethod ? tMethod.toUpperCase() === method : true
   }
 
   // 是否匹配
@@ -113,7 +117,7 @@ function doTest (config, test) {
 function doProxy (config, proxy, matchParams) {
   let finalConfig = config
   if (isNotEmptyObject(proxy)) {
-    const { url = '', params = {}, data = {}, header = {}, method = '' } = config
+    const { url = '', params = {}, data = {}, header = {}, method = 'GET' } = config
     const {
       url: pUrl = '',
       protocol: pProtocol = '',
@@ -150,9 +154,11 @@ function doProxy (config, proxy, matchParams) {
       finalUrl = compoProtocol + '//' + compoHost + (compoPort && ':' + compoPort) + compoPath
     }
 
+
     const finalHeader = Object.assign(header, pHeader)
-    const finalParams = Object.assign(params, pParams)
-    const finalData = Object.assign(data, pData)
+    const finalParams = deepMerge(params, pParams)
+    const likeGet = /^GET|DELETE|HEAD$/i.test(method)
+    const finalData = deepMerge(likeGet ? params : data, pData)
     const finalMethod = pMethod || method
 
     finalConfig = {

@@ -189,3 +189,21 @@ export function transformRes (res) {
   }
   return res
 }
+
+export function deepMerge () {
+  const result = {}
+
+  function assignValue (val, key) {
+    if (typeof result[key] === 'object' && typeof val === 'object') {
+      result[key] = deepMerge(result[key], val)
+    } else {
+      result[key] = val
+    }
+  }
+
+  for (let i = 0; i < arguments.length; i++) {
+    forEach(arguments[i], assignValue)
+  }
+  return result
+}
+

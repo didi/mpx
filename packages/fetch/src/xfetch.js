@@ -18,6 +18,7 @@ export default class XFetch {
     } else {
       this.requestAdapter = (config) => requestAdapter(config, MPX)
     }
+    if (options && options.proxy) this.setProxy(options.proxy)
     this.interceptors = {
       request: new InterceptorManager(),
       response: new InterceptorManager()
