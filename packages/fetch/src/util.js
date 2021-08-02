@@ -1,84 +1,103 @@
 const toString = Object.prototype.toString
 
 // 是否为一个对象
-function isObject (val) {
+export function isObject (val) {
   return toString.call(val) === '[object Object]'
 }
 
 // 是否为一个数组
-function isArray (val) {
+export function isArray (val) {
   return toString.call(val) === '[object Array]'
 }
 
 // 是否为一个字符串
-function isString (val) {
+export function isString (val) {
   return toString.call(val) === '[object String]'
 }
 
+// 是否为 Date
+export function isDate (val) {
+  return toString.call(val) === '[object Date]'
+}
+
 // 是否为 Function
-function isFunction (val) {
+export function isFunction (val) {
   return toString.call(val) === '[object Function]'
 }
 
-function isThenable (obj) {
+export function isThenable (obj) {
   return obj && typeof obj.then === 'function'
 }
 
 // 不为空对象
-function isNotEmptyObject (obj) {
+export function isNotEmptyObject (obj) {
   return obj && isObject(obj) && Object.keys(obj).length > 0
 }
 
 // 不为空数组
-function isNotEmptyArray (ary) {
+export function isNotEmptyArray (ary) {
   return ary && isArray(ary) && ary.length > 0
 }
 
-function parseUrl (url) {
-  const query = {}
-  const arr = url.match(new RegExp('[\?\&][^\?\&]+=[^\?\&]+', 'g')) || [] /* eslint-disable-line no-useless-escape */
-  arr.forEach(function (item) {
-    let entry = item.substring(1).split('=')
-    let key = decodeURIComponent(entry[0])
-    let val = decodeURIComponent(entry[1])
-    query[key] = val
-  })
-
-  const queryIndex = url.indexOf('?')
-  return {
-    url: queryIndex === -1 ? url : url.slice(0, queryIndex),
-    query
-  }
+export function isURLSearchParams (val) {
+  return typeof URLSearchParams !== 'undefined' && val instanceof URLSearchParams
 }
 
-function buildUrl (url, query) {
-  if (!url) return ''
-  const params = Object.keys(query)
-    .map(item => `${encodeURIComponent(item)}=${encodeURIComponent(query[item])}`)
-    .join('&')
-  const flag = url.indexOf('?') > -1 ? '&' : '?'
-  return `${url}${flag}${params}`
+export function encode (val) {
+  return encodeURIComponent(val).replace(/%40/gi, '@').replace(/%3A/gi, ':').replace(/%24/g, '$').replace(/%2C/gi, ',').replace(/%5B/gi, '[').replace(/%5D/gi, ']')
 }
 
-function filterUndefined (data) {
-  if (!isObject(data)) {
-    return data
+export function decode (val) {
+  return decodeURIComponent(val)
+}
+
+export function serialize (params) {
+  if (isURLSearchParams(params)) {
+    return params.toString()
   }
-  data = Object.assign({}, data)
-  Object.keys(data).forEach(key => {
-    if (data[key] === undefined) {
-      delete data[key]
-    } else if (data[key] === null) {
-      data[key] = ''
+  const parts = []
+  forEach(params, (val, key) => {
+    if (typeof val === 'undefined' || val === null) {
+      return
     }
+
+    if (isArray(val)) {
+      key = key + '[]'
+    }
+
+    if (!isArray(val)) {
+      val = [val]
+    }
+
+    forEach(val, function parseValue (v) {
+      if (isDate(v)) {
+        v = v.toISOString()
+      } else if (isObject(v)) {
+        v = JSON.stringify(v)
+      }
+      parts.push(encode(key) + '=' + encode(v))
+    })
   })
-  return data
+
+  return parts.join('&')
+}
+
+export function buildUrl (url, params = {}, serializer) {
+  if (!serializer) {
+    serializer = serialize
+  }
+  const serializedParams = serializer(params)
+  if (serializedParams) {
+    url += (url.indexOf('?') === -1 ? '?' : '&') + serializedParams
+  }
+
+  return url
 }
 
 // 解析拆分 url 参数
-function parseURL (url) {
+export function parseUrl (url) {
   const match = /^(.*?)(?:\?(.*?))?(?:#(.*?))?$/.exec(url)
-  const [ fullUrl, baseUrl = '', search = '', hash = '' ] = match
+  const [fullUrl, baseUrl = '', search = '', hash = ''] = match
 
   const u1 = baseUrl.split('//') // 分割出协议
   const protocolReg = /^http(s?):/
@@ -92,13 +111,13 @@ function parseURL (url) {
   // search 改为对象格式
   const query = {}
   search && search.split('&').forEach((item) => {
-    const [ name, value ] = item.split('=')
-    query[name] = decodeURIComponent(value)
+    const [name, value] = item.split('=')
+    query[decode(name)] = decode(value)
   })
   return { fullUrl, baseUrl, protocol, hostname, port, host, path, query, hash }
 }
 
-function getEnvObj () {
+export function getEnvObj () {
   if (__mpx_mode__ === 'wx') {
     return wx
   } else if (__mpx_mode__ === 'ali') {
@@ -114,17 +133,37 @@ function getEnvObj () {
   }
 }
 
-export {
-  parseUrl,
-  buildUrl,
-  filterUndefined,
-  isObject,
-  isArray,
-  isString,
-  isFunction,
-  isThenable,
-  isNotEmptyObject,
-  isNotEmptyArray,
-  parseURL,
-  getEnvObj
+export function transformReq (config) {
+  // 抹平wx & ali 请求参数
+  let header = config.header || config.headers
+  const descriptor = {
+    get () {
+      return header
+    },
+    set (val) {
+      header = val
+    },
+    enumerable: true,
+    configurable: true
+  }
+  Object.defineProperties(config, {
+    header: descriptor,
+    headers: descriptor
+  })
+}
+
+export function transformRes (res) {
+  // 抹平wx & ali 响应数据
+  if (res.status === undefined) {
+    res.status = res.statusCode
+  } else {
+    res.statusCode = res.status
+  }
+
+  if (res.header === undefined) {
+    res.header = res.headers
+  } else {
+    res.headers = res.header
+  }
+  return res
 }

@@ -3,7 +3,7 @@ import CancelToken from './cancelToken'
 import InterceptorManager from './interceptorManager'
 import RequestQueue from './queue'
 import { requestProxy } from './proxy'
-import { isNotEmptyArray, isNotEmptyObject } from './util'
+import { isNotEmptyArray, isNotEmptyObject, transformReq, parseUrl } from './util'
 
 export default class XFetch {
   constructor (options, MPX) {
@@ -21,6 +21,45 @@ export default class XFetch {
     this.interceptors = {
       request: new InterceptorManager(),
       response: new InterceptorManager()
+    }
+  }
+
+  static normalizeConfig (config) {
+    if (!config.url) {
+      throw new Error('no url')
+    }
+
+    transformReq(config)
+
+    if (!config.method) {
+      config.method = 'GET'
+    } else {
+      config.method = config.method.toUpperCase()
+    }
+
+    const params = config.params || {}
+    const { baseUrl, query } = parseUrl(config.url)
+
+    config.url = baseUrl
+    Object.assign(params, query)
+
+    if (/^GET|DELETE|HEAD$/i.test(config.method)) {
+      Object.assign(params, config.data)
+      // get 请求都以params为准
+      config.data = {}
+    }
+
+    if (isNotEmptyObject(params)) {
+      config.params = params
+    }
+
+    if (/^POST|PUT$/i.test(config.method)) {
+      let contentType = config.header['content-type'] || config.header['Content-Type']
+      if (config.emulateJSON && !contentType) {
+        config.header = config.header || {}
+        config.header['content-type'] = 'application/x-www-form-urlencoded'
+      }
+      delete config.emulateJSON
     }
   }
 
@@ -88,6 +127,15 @@ export default class XFetch {
 
     // use queue
     const request = (config) => {
+      // 对config进行以下正规化处理：
+      // 1. 检查config.url存在
+      // 2. 抹平微信/支付宝header/headers字段差异
+      // 3. 填充默认method为GET, method大写化
+      // 4. 抽取url中query合并至config.params
+      // 5. 对于类GET请求将config.data移动合并至config.params(最终发送请求前进行统一序列化并拼接至config.url上)
+      // 6. 对于类POST请求将config.emulateJSON实现为config.header['content-type'] = 'application/x-www-form-urlencoded'
+      // 后续请求处理都应基于正规化后的config进行处理(proxy/mock/validate/serialize)
+      XFetch.normalizeConfig(config)
       config = this.checkProxy(config) // proxy
       return this.queue ? this.queue.request(config, priority) : this.requestAdapter(config)
     }
