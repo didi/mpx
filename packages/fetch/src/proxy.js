@@ -154,7 +154,6 @@ function doProxy (config, proxy, matchParams) {
       finalUrl = compoProtocol + '//' + compoHost + (compoPort && ':' + compoPort) + compoPath
     }
 
-
     const finalHeader = Object.assign(header, pHeader)
     const finalParams = deepMerge(params, pParams)
     const likeGet = /^GET|DELETE|HEAD$/i.test(method)
