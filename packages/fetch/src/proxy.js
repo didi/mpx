@@ -182,7 +182,6 @@ export function requestProxy (options, config) {
 
       // waterfall 模式
       return !waterfall
-
     }
   })
 
