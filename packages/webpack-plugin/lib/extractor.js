@@ -6,7 +6,7 @@ const NodeTargetPlugin = require('webpack/lib/node/NodeTargetPlugin')
 const LibraryTemplatePlugin = require('webpack/lib/LibraryTemplatePlugin')
 const EntryPlugin = require('webpack/lib/EntryPlugin')
 const LimitChunkCountPlugin = require('webpack/lib/optimize/LimitChunkCountPlugin')
-const ChildCompileDependency = require('./dependency/ChildCompileDependency')
+const ChildCompileDependency = require('./dependencies/ChildCompileDependency')
 const normalize = require('./utils/normalize')
 const parseRequest = require('./utils/parse-request')
 const getMainCompilation = require('./utils/get-main-compilation')
@@ -14,6 +14,8 @@ const toPosix = require('./utils/to-posix')
 const config = require('./config')
 const fixRelative = require('./utils/fix-relative')
 const NativeModule = require('module')
+const AssetDependency = require('./dependencies/AssetDependency')
+const ExtractDependency = require('./dependencies/ExtractDependency')
 
 const defaultResultSource = '// removed by extractor'
 
@@ -26,7 +28,6 @@ module.exports = function (content) {
 
   const pagesMap = mpx.pagesMap
 
-  const extract = mpx.extract
   const pathHash = mpx.pathHash
   const extractedMap = mpx.extractedMap
   const mode = mpx.mode
@@ -85,32 +86,15 @@ module.exports = function (content) {
   const file = getFile(this.resource, type)
   const filename = /(.*)\..*/.exec(file)[1]
 
-  const sideEffects = []
-
-  sideEffects.push((additionalAssets) => {
-    additionalAssets[file].modules = additionalAssets[file].modules || []
-    additionalAssets[file].modules.push(this._module)
-  })
-
   if (index === -1) {
     // 需要返回路径或产生副作用
     switch (type) {
       // styles中index为-1就两种情况，一种是.mpx中使用src引用样式，第二种为css-loader中处理@import
+      // 为了支持持久化缓存，.mpx中使用src引用样式对issueFile asset产生的副作用迁移到ExtractDependency中处理
       case 'styles':
-        if (issuerFile) {
-          let relativePath = toPosix(path.relative(path.dirname(issuerFile), file))
-          relativePath = fixRelative(relativePath, mode)
-          if (fromImport) {
-            resultSource = `module.exports = ${JSON.stringify(relativePath)};`
-          } else {
-            sideEffects.push((additionalAssets) => {
-              additionalAssets[issuerFile] = additionalAssets[issuerFile] || []
-              additionalAssets[issuerFile].prefix = additionalAssets[issuerFile].prefix || []
-              additionalAssets[issuerFile].prefix.push(`@import "${relativePath}";\n`)
-              additionalAssets[issuerFile].relativeModules = additionalAssets[issuerFile].relativeModules || []
-              additionalAssets[issuerFile].relativeModules.push(this._module)
-            })
-          }
+        if (issuerFile && fromImport) {
+          const relativePath = fixRelative(toPosix(path.relative(path.dirname(issuerFile), file)), mode)
+          resultSource = `module.exports = ${JSON.stringify(relativePath)};`
         }
         break
       case 'template':
@@ -155,6 +139,8 @@ module.exports = function (content) {
 
   let source
   childCompiler.hooks.thisCompilation.tap('MpxWebpackPlugin', (compilation) => {
+    // 将主编译入口module层层子编译传递下去，所有子编译的资源dep均挂载到主编译入口module中
+    compilation.rootModule = this._compilation.rootModule || this._module
     NormalModule.getCompilationHooks(compilation).loader.tap('MpxWebpackPlugin', (loaderContext) => {
       // 传递编译结果，子编译器进入content-loader后直接输出
       loaderContext.__mpx__ = {
@@ -164,8 +150,8 @@ module.exports = function (content) {
       }
     })
     compilation.hooks.succeedEntry.tap('MpxWebpackPlugin', (entry, name, module) => {
-      const dep = new ChildCompileDependency(module)
-      extractedMap[id].dep = dep
+      // const dep = new ChildCompileDependency(module)
+      // extractedMap[id].dep = dep
     })
     compilation.hooks.processAssets.tap({
       name: 'MpxWebpackPlugin',
@@ -178,6 +164,12 @@ module.exports = function (content) {
           delete compilation.assets[file]
         })
       })
+      // 使用assetDependency输出子编译静态资源便于持久化缓存
+      for (const { name, source, info } of compilation.getAssets()) {
+        compilation.rootModule.addPresentationalDependency(new AssetDependency(name, source, info))
+      }
+      compilation.assets = {}
+      compilation.assetsInfo.clear()
     })
   })
 
@@ -206,12 +198,18 @@ module.exports = function (content) {
         }).join('\n')
       }
 
-      extract(text, file, index, sideEffects)
-
-      // 在production模式下移除extract残留空模块
-      if (resultSource === defaultResultSource && this.minimize) {
-        this._module.needRemove = true
+      if (compilation.rootModule) {
+        // 改用dep的方式进行静态文件抽取，便于持久化缓存
+        compilation.rootModule.addPresentationalDependency(new ExtractDependency(text, file, index, {
+          type,
+          issuerFile,
+          fromImport
+        }))
       }
+      // 在production模式下移除extract残留空模块
+      // if (resultSource === defaultResultSource && this.minimize) {
+      //   this._module.needRemove = true
+      // }
     } catch (err) {
       return nativeCallback(err)
     }

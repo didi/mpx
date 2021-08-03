@@ -2,7 +2,7 @@ const JSON5 = require('json5')
 const parseComponent = require('./parser')
 const createHelpers = require('./helpers')
 const loaderUtils = require('loader-utils')
-const InjectDependency = require('./dependency/InjectDependency')
+const InjectDependency = require('./dependencies/InjectDependency')
 const parseRequest = require('./utils/parse-request')
 const matchCondition = require('./utils/match-condition')
 const fixUsingComponent = require('./utils/fix-using-component')
@@ -429,7 +429,7 @@ module.exports = function (content) {
           content: globalInjectCode,
           index: -3
         })
-        this._module.addDependency(dep)
+        this._module.addPresentationalDependency(dep)
       }
 
       callback(null, output)

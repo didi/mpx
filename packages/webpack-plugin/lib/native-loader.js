@@ -4,7 +4,7 @@ const parseRequest = require('./utils/parse-request')
 const loaderUtils = require('loader-utils')
 const config = require('./config')
 const createHelpers = require('./helpers')
-const InjectDependency = require('./dependency/InjectDependency')
+const InjectDependency = require('./dependencies/InjectDependency')
 const stringifyQuery = require('./utils/stringify-query')
 const mpxJSON = require('./utils/mpx-json')
 const async = require('async')
@@ -260,7 +260,7 @@ module.exports = function (content) {
           content: globalInjectCode,
           index: -3
         })
-        this._module.addDependency(dep)
+        this._module.addPresentationalDependency(dep)
       }
 
       // 触发webpack global var 注入

@@ -52,9 +52,9 @@ module.exports = function loader (content, prevOptions) {
   }
 
   // 因为子编译会合并assetsInfo会互相覆盖，使用全局mpx对象收集完之后再合并到主assetsInfo中
-  const assetInfo = assetsInfo.get(outputPath) || { modules: [] }
-  assetInfo.modules.push(this._module)
-  assetsInfo.set(outputPath, assetInfo)
+  // const assetInfo = assetsInfo.get(outputPath) || { modules: [] }
+  // assetInfo.modules.push(this._module)
+  // assetsInfo.set(outputPath, assetInfo)
 
   this.emitFile(outputPath, content)
 

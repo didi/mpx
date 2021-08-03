@@ -1,7 +1,7 @@
 const compiler = require('./compiler')
 const loaderUtils = require('loader-utils')
 const bindThis = require('./bind-this').transform
-const InjectDependency = require('../dependency/InjectDependency')
+const InjectDependency = require('../dependencies/InjectDependency')
 const parseRequest = require('../utils/parse-request')
 const getMainCompilation = require('../utils/get-main-compilation')
 const matchCondition = require('../utils/match-condition')
@@ -147,7 +147,7 @@ ${e.stack}`)
   })
 
   dep.templateInject = true
-  issuer.addDependency(dep)
+  issuer.addPresentationalDependency(dep)
 
   let isSync = true
 

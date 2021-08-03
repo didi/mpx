@@ -3,7 +3,7 @@ const EntryPlugin = require('webpack/lib/EntryPlugin')
 const LimitChunkCountPlugin = require('webpack/lib/optimize/LimitChunkCountPlugin')
 const path = require('path')
 const WxsPlugin = require('./WxsPlugin')
-const ChildCompileDependency = require('../dependency/ChildCompileDependency')
+const ChildCompileDependency = require('../dependencies/ChildCompileDependency')
 const getMainCompilation = require('../utils/get-main-compilation')
 const parseRequest = require('../utils/parse-request')
 const toPosix = require('../utils/to-posix')
@@ -86,8 +86,8 @@ module.exports = function () {
   childCompiler.hooks.thisCompilation.tap('MpxWebpackPlugin ', (compilation) => {
     compilation.hooks.succeedEntry.tap('MpxWebpackPlugin', (entry, name, module) => {
       entryModule = module
-      const dep = new ChildCompileDependency(entryModule)
-      wxsMap[filename].dep = dep
+      // const dep = new ChildCompileDependency(entryModule)
+      // wxsMap[filename].dep = dep
     })
   })
 
