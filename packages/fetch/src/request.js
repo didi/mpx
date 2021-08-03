@@ -13,7 +13,7 @@ export default function request (config, mpx) {
     }
 
     const contentType = config.header['content-type'] || config.header['Content-Type']
-    if (/^POST|PUT$/i.test(config.method) && /application\/x-www-form-urlencoded/i.test(contentType)) {
+    if (/^POST|PUT$/i.test(config.method) && /application\/x-www-form-urlencoded/i.test(contentType) && typeof config.data === 'object') {
       config.data = bodySerializer(config.data)
     }
 
