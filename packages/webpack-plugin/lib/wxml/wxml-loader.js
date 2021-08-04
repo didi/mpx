@@ -145,7 +145,7 @@ module.exports = function (content) {
         break
       case config[mode].wxs.tag:
         // 显式传递issuerResource避免模块缓存以及提供给wxs-loader计算相对路径
-        src = addQuery(src, { issuerResource: loaderContext.resource })
+        src = addQuery(src, { issuerResource: loaderContext.resource, isStatic: true })
         requestString = getSrcRequestString('wxs', { src, mode: localSrcMode }, -1, undefined, '!!')
         break
       default:

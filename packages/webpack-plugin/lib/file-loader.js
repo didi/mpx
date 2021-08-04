@@ -8,7 +8,7 @@ module.exports = function loader (content, prevOptions) {
   const context = options.context || this.rootContext
   const mainCompilation = getMainCompilation(this._compilation)
   const mpx = mainCompilation.__mpx__
-  const assetsInfo = mpx.assetsInfo
+  // const assetsInfo = mpx.assetsInfo
 
   let url = loaderUtils.interpolateName(this, options.name, {
     context,
