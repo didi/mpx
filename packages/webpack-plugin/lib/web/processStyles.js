@@ -8,6 +8,10 @@ module.exports = function (styles, options, callback) {
         attrs (style) {
           const attrs = Object.assign({}, style.attrs)
           if (options.autoScope) attrs.scoped = true
+          attrs.mpxStyleOptions = JSON.stringify({
+            // scoped: !!options.autoScope,
+            moduleId: options.moduleId
+          })
           return attrs
         }
       })

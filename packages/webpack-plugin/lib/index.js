@@ -984,12 +984,41 @@ try {
       // resolve完成后修改loaders信息并批量添加mode query
       normalModuleFactory.hooks.afterResolve.tapAsync('MpxWebpackPlugin', (data, callback) => {
         if (data.loaders) {
-          data.loaders.forEach((loader) => {
-            if (/ts-loader/.test(loader.loader)) {
+          const { queryObj } = parseRequest(data.request)
+          const mpxStyleOptions = queryObj.mpxStyleOptions
+          const firstLoader = (data.loaders[0] && data.loaders[0].loader) || ''
+          const isPitcherRequest = firstLoader.includes('vue-loader/lib/loaders/pitcher.js')
+          let cssLoaderIndex = -1
+          let vueStyleLoaderIndex = -1
+          let mpxStyleLoaderIndex = -1
+          data.loaders.forEach((loader, index) => {
+            const currentLoader = loader.loader
+            if (currentLoader.includes('ts-loader')) {
               // todo 暂时固定写死options，待后续优化为复用rules后修正
               loader.options = { appendTsSuffixTo: [/\.(mpx|vue)$/] }
             }
+            if (currentLoader.includes('css-loader')) {
+              cssLoaderIndex = index
+            } else if (currentLoader.includes('vue-loader/lib/loaders/stylePostLoader.js')) {
+              vueStyleLoaderIndex = index
+            } else if (currentLoader.includes('@mpxjs/webpack-plugin/lib/style-compiler/index.js')) {
+              mpxStyleLoaderIndex = index
+            }
           })
+          if (mpxStyleLoaderIndex === -1) {
+            let loaderIndex = -1
+            if (cssLoaderIndex > -1 && vueStyleLoaderIndex === -1) {
+              loaderIndex = cssLoaderIndex
+            } else if (cssLoaderIndex > -1 && vueStyleLoaderIndex > -1 && !isPitcherRequest) {
+              loaderIndex = vueStyleLoaderIndex
+            }
+            if (loaderIndex > -1) {
+              data.loaders.splice(loaderIndex + 1, 0, {
+                loader: normalize.lib('style-compiler/index.js'),
+                options: (mpxStyleOptions && JSON.parse(mpxStyleOptions)) || {}
+              })
+            }
+          }
         }
         // 根据用户传入的modeRules对特定资源添加mode query
         this.runModeRules(data)

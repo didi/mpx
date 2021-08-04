@@ -55,9 +55,9 @@ export default class XFetch {
     }
 
     if (/^POST|PUT$/i.test(config.method)) {
+      config.header = config.header || {}
       let contentType = config.header['content-type'] || config.header['Content-Type']
       if (config.emulateJSON && !contentType) {
-        config.header = config.header || {}
         config.header['content-type'] = 'application/x-www-form-urlencoded'
       }
       delete config.emulateJSON
