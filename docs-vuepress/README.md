@@ -223,15 +223,17 @@ npm i -g @mpxjs/cli
 # 初始化项目
 mpx init <project-name>
 
-# ::: slot header
-# 123
-# :::
+# 进入项目目录
+cd <project-name>
 
-# ::: slot content
-# 123
-# :::
+# 安装依赖
+npm i
 
+# development
+npm run watch
 
-# ::: slot footer
-# 123
-# :::
+# production
+npm run build
+```
+
+使用小程序开发者工具打开项目文件夹下dist中对应平台的文件夹即可预览效果。

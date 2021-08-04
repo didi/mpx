@@ -1,8 +1,13 @@
 <template>
   <div class="container">
-    <Header slot-key="header" />
-    <Content slot-key="content" />
-    <Footer slot-key="footer" />
+    <template v-if="small">
+      <Header slot-key="header" />
+      <Content slot-key="content" />
+      <Footer slot-key="footer" />
+    </template>
+    <template v-else>
+      <ParentLayout />
+    </template>
   </div>
 </template>
 
@@ -10,13 +15,27 @@
 import Header from "../global-components/Header.vue";
 import Content from "../global-components/Content.vue";
 import Footer from "../global-components/Footer.vue";
+import ParentLayout from '@parent-theme/layouts/Layout.vue'
 
 export default {
   components: {
     Header,
     Content,
-    Footer
+    Footer,
+    ParentLayout
   },
+  data () {
+    const current = document.documentElement.clientWidth > 1020
+    return {
+      small: current
+    }
+  },
+  mounted () {
+    window.onresize = () => {
+      const current = document.documentElement.clientWidth > 1020
+      this.small = current
+    }
+  }
 };
 </script>
 
