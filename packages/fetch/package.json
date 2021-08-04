@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/fetch",
-  "version": "2.6.74",
+  "version": "2.6.77",
   "description": "mpx fetch lib",
   "author": "donghongping",
   "license": "ISC",
@@ -26,6 +26,9 @@
   },
   "scripts": {
     "test": "echo \"Error: run tests from root\" && exit 1"
+  },
+  "dependencies": {
+    "path-to-regexp": "^6.2.0"
   },
   "peerDependencies": {
     "@mpxjs/core": "^2.3.0"

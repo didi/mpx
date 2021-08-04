@@ -422,5 +422,139 @@ module.exports = {
       ref: 'qa:ref',
       show: 'qa:show'
     }
+  },
+  jd: {
+    typeExtMap: {
+      json: '.json',
+      script: '.js',
+      template: '.jxml',
+      styles: '.jxss'
+    },
+    tabBar: {
+      itemKey: 'list',
+      iconKey: 'iconPath',
+      activeIconKey: 'selectedIconPath'
+    },
+    event: {
+      parseEvent (attr) {
+        let match = /^(bind|catch|capture-bind|capture-catch):?(.*?)(?:\.(.*))?$/.exec(attr)
+        if (match) {
+          return {
+            prefix: match[1],
+            eventName: match[2],
+            modifier: match[3]
+          }
+        }
+      },
+      getEvent (eventName, prefix = 'bind') {
+        return prefix + eventName
+      },
+      defaultModelProp: 'value',
+      defaultModelEvent: 'input',
+      defaultModelValuePath: 'value',
+      shallowStringify (obj) {
+        let arr = []
+        for (let key in obj) {
+          let value = obj[key]
+          if (Array.isArray(value)) {
+            value = `[${value.join(',')}]`
+          }
+          arr.push(`${key}:${value}`)
+        }
+        return ` {${arr.join(',')}} `
+      }
+    },
+    wxs: {
+      tag: 'jds',
+      module: 'module',
+      src: 'src',
+      ext: '.jds',
+      templatePrefix: 'module.exports = \n'
+    },
+    directive: {
+      if: 'jd:if',
+      elseif: 'jd:elif',
+      else: 'jd:else',
+      model: 'jd:model',
+      modelProp: 'jd:model-prop',
+      modelEvent: 'jd:model-event',
+      modelValuePath: 'jd:model-value-path',
+      modelFilter: 'jd:model-filter',
+      for: 'jd:for',
+      forIndex: 'jd:for-index',
+      forItem: 'jd:for-item',
+      key: 'jd:key',
+      dynamicClass: 'jd:class',
+      dynamicStyle: 'jd:style',
+      ref: 'jd:ref',
+      show: 'jd:show'
+    }
+  },
+  dd: {
+    typeExtMap: {
+      json: '.json',
+      script: '.js',
+      template: '.ddml',
+      styles: '.ddss'
+    },
+    tabBar: {
+      itemKey: 'list',
+      iconKey: 'iconPath',
+      activeIconKey: 'selectedIconPath'
+    },
+    event: {
+      parseEvent (attr) {
+        let match = /^(bind|catch|capture-bind|capture-catch):?(.*?)(?:\.(.*))?$/.exec(attr)
+        if (match) {
+          return {
+            prefix: match[1],
+            eventName: match[2],
+            modifier: match[3]
+          }
+        }
+      },
+      getEvent (eventName, prefix = 'bind') {
+        return prefix + eventName
+      },
+      defaultModelProp: 'value',
+      defaultModelEvent: 'input',
+      defaultModelValuePath: 'value',
+      shallowStringify (obj) {
+        let arr = []
+        for (let key in obj) {
+          let value = obj[key]
+          if (Array.isArray(value)) {
+            value = `[${value.join(',')}]`
+          }
+          arr.push(`${key}:${value}`)
+        }
+        return ` {${arr.join(',')}} `
+      }
+    },
+    wxs: {
+      tag: 'dds',
+      module: 'module',
+      src: 'src',
+      ext: '.dds',
+      templatePrefix: 'module.exports = \n'
+    },
+    directive: {
+      if: 'dd:if',
+      elseif: 'dd:elif',
+      else: 'dd:else',
+      model: 'dd:model',
+      modelProp: 'dd:model-prop',
+      modelEvent: 'dd:model-event',
+      modelValuePath: 'dd:model-value-path',
+      modelFilter: 'dd:model-filter',
+      for: 'dd:for',
+      forIndex: 'dd:for-index',
+      forItem: 'dd:for-item',
+      key: 'dd:key',
+      dynamicClass: 'dd:class',
+      dynamicStyle: 'dd:style',
+      ref: 'dd:ref',
+      show: 'dd:show'
+    }
   }
 }

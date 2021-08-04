@@ -6,6 +6,8 @@ module.exports = function ({ print }) {
   const aliPropValueWarningLog = print({ platform: 'ali', tag: TAG_NAME, isError: true, type: 'value-attr-uniform' })
   const baiduPropLog = print({ platform: 'baidu', tag: TAG_NAME, isError: false })
   const baiduEventLogError = print({ platform: 'baidu', tag: TAG_NAME, isError: true, type: 'event' })
+  const jdPropLog = print({ platform: 'jd', tag: TAG_NAME, isError: false })
+  const jdEventLogError = print({ platform: 'jd', tag: TAG_NAME, isError: true, type: 'event' })
   const ttEventLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false, type: 'event' })
   const ttPropLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false })
   const qaPropLog = print({ platform: 'qa', tag: TAG_NAME, isError: false })
@@ -31,6 +33,20 @@ module.exports = function ({ print }) {
       {
         test: 'subkey',
         swan: baiduPropLog
+      },
+      {
+        test: /^(covers|polygons|subkey|layer-style|rotate|skew|enable-3D|show-compass|show-scale|enable-overlooking|enable-zoom|enable-scroll|enable-rotate|enable-satellite|enable-traffic|setting)$/,
+        jd: jdPropLog
+      },
+      {
+        test: /^(include-points|show-location)$/,
+        jd ({ name, value }) {
+          const propsMap = {
+            'include-points': 'includePoints',
+            'show-location': 'showLocation'
+          }
+          return propsMap[name]
+        }
       },
       {
         test: /^(min-scale|max-scale|polyline|controls|polygons|subkey|layer-style|rotate|skew|enable-3D|show-compass|show-scale|enable-overlooking|enable-zoom|enable-scroll|enable-rotate|enable-satellite|enable-traffic|enable-poi|enable-building|setting)$/,
@@ -65,6 +81,10 @@ module.exports = function ({ print }) {
       {
         test: 'poitap',
         swan: baiduEventLogError
+      },
+      {
+        test: /^(labeltap|updated|poitap)$/,
+        jd: jdEventLogError
       },
       {
         test: /^(labeltap|controltap|updated|regionchange|poitap|anchorpointtap)$/,

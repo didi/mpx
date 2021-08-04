@@ -226,7 +226,10 @@ export function isObject (obj) {
 export function isPlainObject (value) {
   if (value === null || typeof value !== 'object' || type(value) !== 'Object') return false
   const proto = Object.getPrototypeOf(value)
-  if (proto === Object.prototype || proto === null) return true
+  if (proto === null) return true
+  // 处理支付宝接口返回数据对象的__proto__与js中创建对象的__proto__不一致的问题，判断value.__proto__.__proto__ === null时也认为是plainObject
+  const innerProto = Object.getPrototypeOf(proto)
+  if (proto === Object.prototype || innerProto === null) return true
   // issue #644
   if (EXPORT_MPX.config.observeClassInstance) {
     if (Array.isArray(EXPORT_MPX.config.observeClassInstance)) {
@@ -627,4 +630,13 @@ export function delChainKeyOfObj (obj = {}, key = '') {
     }
     return o && o[k]
   }, obj)
+}
+
+export function spreadProp (obj, key) {
+  if (hasOwn(obj, key)) {
+    const temp = obj[key]
+    delete obj[key]
+    Object.assign(obj, temp)
+  }
+  return obj
 }
