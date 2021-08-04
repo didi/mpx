@@ -59,12 +59,6 @@ module.exports = function (content) {
 
   let useMPXJSON = false
   let cssLang = ''
-
-  const needCssSourceMap = (
-    !isProduction &&
-    this.sourceMap &&
-    options.cssSourceMap !== false
-  )
   const hasScoped = (queryObj.scoped || autoScope) && mode === 'ali'
   const hasComment = false
   const isNative = true
@@ -192,7 +186,6 @@ module.exports = function (content) {
         hasScoped,
         hasComment,
         usingComponents,
-        needCssSourceMap,
         srcMode,
         isNative,
         projectRoot
