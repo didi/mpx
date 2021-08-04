@@ -152,9 +152,12 @@ module.exports = function (source) {
           return callback()
         }
         pluginEntry.main = mainPath + '.js'
-        currentEntry.addChild(getEntryNode(resource, 'PluginMain'))
-        mpx.pluginMainResource = resource
-        addEntrySafely(resource, mainPath, callback)
+        addEntrySafely(resource, mainPath, (err, module) => {
+          if (err) return callback(err)
+          mpx.pluginMainModule = module
+          currentEntry.addChild(getEntryNode(resource, 'PluginMain', module))
+          callback(err, module)
+        })
       })
     }.bind(this, pluginEntry.main)
   }
