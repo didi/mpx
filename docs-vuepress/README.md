@@ -79,8 +79,18 @@ threeSection:
   actionLink: /guide/basic/start.html
   img: https://dpubstatic.udache.com/static/dpubimg/eCoUSCwEEm/anli_pic_phone.png
   bg: https://dpubstatic.udache.com/static/dpubimg/k_-K6Ok3Ap/todomvc_bg.png
+  list:
+    - title: 微信
+      icon1: https://gift-static.hongyibo.com.cn/static/kfpub/3547/todomvc_icon_wechat_normal.png
+      icon2: https://gift-static.hongyibo.com.cn/static/kfpub/3547/todomvc_icon_wechat_active.png
+      code: https://gift-static.hongyibo.com.cn/static/kfpub/3547/wx-qrcode.jpg
+    - title: 支付宝
+      icon1: https://gift-static.hongyibo.com.cn/static/kfpub/3547/todomvc_icon_alipay_normal.png
+      icon2: https://gift-static.hongyibo.com.cn/static/kfpub/3547/todomvc_icon_alipay_active.png
+      code: https://gift-static.hongyibo.com.cn/static/kfpub/3547/ali-qrcode.jpg
 sevenSection:
   title: 成功案例
+  bg: https://dpubstatic.udache.com/static/dpubimg/XrJHfoN2ky/anli_bg.png
   details:
   - title: 滴滴出行
     details: 写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧
@@ -218,9 +228,6 @@ resourcesList:
 communityList:
   title: 社区
   details:
-  - title: 交流群
-    actionLink: https://github.com/didi/mpx
-    img: https://dpubstatic.udache.com/static/dpubimg/dpub2_project_190649/index_190649.html
   - title: 微信群
     actionLink: https://github.com/didi/mpx
     img: https://dpubstatic.udache.com/static/dpubimg/82e2e776-71e8-4ca5-8878-33b0d5020b6d.jpg

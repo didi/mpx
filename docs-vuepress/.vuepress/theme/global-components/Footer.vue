@@ -25,7 +25,10 @@
               <span class="footer__text footer__title">{{$page.frontmatter.communityList.title}}</span>
             </li>
             <li class="footer__wrap" v-for="(item, index) in $page.frontmatter.communityList.details" :key="index">
-              <a :href="item.img || item.actionLink" class="footer__text" target="_blank">{{item.title}}</a>
+              <popover :code="item.img" v-if="item.img">
+                <span class="footer__text" target="_blank">{{item.title}}</span>
+              </popover>
+              <a v-else :href="item.img || item.actionLink" class="footer__text" target="_blank">{{item.title}}</a>
             </li>
           </ul>
         </li>
@@ -56,7 +59,13 @@
 </template>
 
 <script>
-export default {};
+import Popover from '../components/Popover.vue'
+
+export default {
+  components: {
+    Popover
+  }
+};
 </script>
 
 <style lang="stylus" scoped>
@@ -66,7 +75,6 @@ ul li
 .footer
   margin-top 60px
   display flex
-  // align-items center
   text-align center
   padding 0 200px
   height 436px

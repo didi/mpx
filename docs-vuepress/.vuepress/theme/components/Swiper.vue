@@ -1,7 +1,7 @@
 <template>
   <div class="swiper-container">
     <div class="swiper-button">
-      <img :class="prevCls" class="swiper-img" @click="handlePrev" src="../../public/doc-svg/anli_icon_left.svg" />
+      <img :class="prevCls" class="swiper-img" @click="handlePrev" src="../../public/doc-svg/anli_icon_left.svg" loading="lazy" />
     </div>
     <div class="swiper" ref="wrapper">
       <div

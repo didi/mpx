@@ -35,13 +35,22 @@
     <!-- 第三部分 -->
     <section class="three-section" :style="{ backgroundImage: `url(${$page.frontmatter.threeSection.bg})` }">
       <div>
-        <img
-          width="270"
-          :src="$page.frontmatter.threeSection.img"
-          alt="svg"
-        />
-        <div class="todo">
-          <!-- <TodoMVC /> -->
+        <div class="three-section__todo">
+          <div class="three-section__phone">
+            <img
+              width="375"
+              height="667"
+              src="https://dpubstatic.udache.com/static/dpubimg/hxFU4KVamb/anli_pic_phone.png"
+              alt="phone">
+          </div>
+          <div class="three-section__iframe">
+            <iframe
+              width="375"
+              height="667"
+              src="https://dpubstatic.udache.com/static/dpubimg/c3b0d3bc-1bb0-4bee-b6da-4205a2744e21.html"
+              frameborder="0">
+            </iframe>
+          </div>
         </div>
       </div>
       <div class="three-section__mvc">
@@ -57,6 +66,7 @@
             {{$page.frontmatter.threeSection.actionText}}
           </a>
         </button>
+        <code-list :dataList="mvcList"></code-list>
       </div>
     </section>
 
@@ -147,29 +157,31 @@
             {{currentTitle}}
           </p>
           <p class="seven-section__desc">
-            
           </p>
         </div>
-        <div class="grow seven-section__center">
-          <div class="seven-section__phone">
-            <div class="seven-section__inner">
-              <swiper-img :dataList="dataList" :currentIndex="currentIndex"></swiper-img>
-            </div>
+        <div class="grow seven-section__center" :style="{ backgroundImage: `url(${$page.frontmatter.sevenSection.bg})` }">
+          <div class="seven-section_phone">
+            <img
+              width="213"
+              height="433"
+              src="https://dpubstatic.udache.com/static/dpubimg/hxFU4KVamb/anli_pic_phone.png"
+              alt="phone">
+          </div>
+          <div class="seven-section__inner">
+            <swiper-img :dataList="dataList" :currentIndex="currentIndex"></swiper-img>
           </div>
         </div>
         <div class="grow"></div>
       </div>
       <swiper :dataList="dataList" @change="handleChange"></swiper>
-      
     </section>
   </div>
 </template>
 
 <script>
-import TodoMVC from "../components/TodoMVC.vue";
-import Carousel from '../components/Carousel.vue';
-import  Swiper from '../components/Swiper.vue';
+import Swiper from '../components/Swiper.vue';
 import SwiperImg from '../components/SwiperImg.vue';
+import CodeList from '../components/CodeList.vue';
 
 export default {
   data () {
@@ -197,39 +209,18 @@ export default {
       const list = this.$page.frontmatter.sevenSection.details
       return list
     },
+    mvcList () {
+      const list = this.$page.frontmatter.threeSection.list
+      return list
+    },
     currentTitle () {
       return this.dataList[this.currentIndex].title
     }
   },
-  // mounted() {
-  //   this.loadJs(
-  //     "https://dpubstatic.udache.com/static/dpubimg/jZgwlFIBjH/app.js"
-  //   ).then(() => {
-  //     console.log("加载成功");
-  //   });
-  // },
-  // methods: {
-  //   loadJs(src) {
-  //     return new Promise((resolve, reject) => {
-  //       let script = document.createElement("script");
-  //       script.type = "text/javascript";
-  //       script.src = src;
-  //       document.querySelector(".todo").appendChild(script);
-
-  //       script.onload = () => {
-  //         resolve();
-  //       };
-  //       script.onerror = () => {
-  //         reject();
-  //       };
-  //     });
-  //   },
-  // },
   components: {
-    TodoMVC,
-    Carousel,
     Swiper,
-    SwiperImg
+    SwiperImg,
+    CodeList
   },
   methods: {
     handleChange (index) {
@@ -274,7 +265,6 @@ ul li
 
 .one-section
   padding-top 181px
-  // width 100%
 
 .one-section__title
   margin-bottom 20px
@@ -332,9 +322,7 @@ ul li
   box-sizing border-box
   background #ffffff
   border 0 solid #efefef
-  box-shadow 0 51px 145px 0 rgba(49, 188, 127, 0.1),
-    0 11px 32px 0 rgba(49, 188, 127, 0.06),
-    0 3px 10px 0 rgba(49, 188, 127, 0.04)
+  box-shadow 0 51px 145px 0 rgba(49, 188, 127, 0.1), 0 11px 32px 0 rgba(49, 188, 127, 0.06), 0 3px 10px 0 rgba(49, 188, 127, 0.04)
   border-radius 4px
   margin 0 10px
   text-align center
@@ -376,6 +364,24 @@ ul li
 
 .three-section__mvc 
   margin-left 60px
+
+.three-section__todo
+  position relative
+
+.three-section__phone
+  position absolute
+  left 0
+  top 0
+
+.three-section__iframe
+  position relative
+  display inline-block
+  left 0
+  top 0
+  border-radius 30px
+  background #fff
+  overflow hidden
+  box-shadow 0 80px 252px 0 rgba(49,188,127,0.12), 0 36px 76px 0 rgba(49,188,127,0.08), 0 15px 31px 0 rgba(49,188,127,0.06), 0 5px 11px 0 rgba(49,188,127,0.04)
 
 .white-text 
   color #fff
@@ -469,17 +475,13 @@ ul li
  
 .seven-section__center 
   width 402px
-  background url("https://dpubstatic.udache.com/static/dpubimg/XrJHfoN2ky/anli_bg.png") no-repeat center center
   height 100%
+  background-repeat no-repeat
   background-size contain
+  background-position center
   display flex
   justify-content center
-
-.seven-section__phone
-  width 213px
-  height 100%
-  background url("https://dpubstatic.udache.com/static/dpubimg/hxFU4KVamb/anli_pic_phone.png") no-repeat center center
-  background-size contain
+  position relative
 
 .seven-section__inner
   padding 12px
@@ -490,6 +492,12 @@ ul li
   height 433px
   margin-top 40px
   margin-bottom 40px
+
+.seven-section_phone
+  position absolute
+  top 0
+  left 50%
+  transform translate3d(-50%, 0, 0)
 
 .seven-section__title 
   text-align right
