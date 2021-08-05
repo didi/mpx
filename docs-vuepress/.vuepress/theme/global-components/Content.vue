@@ -46,6 +46,7 @@
       </div>
       <div class="three-section__mvc">
         <div>
+          <span class="dot-inner" style="background: #fff; margin: 0 auto;"></span>
           <p class="white-text title">{{$page.frontmatter.threeSection.title}}</p>
           <p class="white-text desc">
             {{$page.frontmatter.threeSection.details}}
@@ -71,6 +72,7 @@
       <div class="grow">
         <div class="four-section__text">
           <div>
+            <span class="dot-inner"></span>
             <p class="title">{{$page.frontmatter.fourSection.title}}</p>
             <p class="desc">
               {{$page.frontmatter.fourSection.details}}
@@ -90,6 +92,7 @@
       <div class="grow">
         <div class="five-section__text">
           <div>
+            <span class="dot-inner"></span>
             <p class="title">{{$page.frontmatter.fiveSection.title}}</p>
             <p class="desc">
               {{$page.frontmatter.fiveSection.details}}
@@ -113,7 +116,10 @@
 
     <!-- 第六部分 -->
     <section class="six-section" :style="{ backgroundImage: `url(${$page.frontmatter.sixSection.bg})` }">
-      <div>
+      <div class="six-section__inner">
+        <div style="text-align: center;">
+          <span class="dot-inner" style="background: #fff; margin: 0 auto;"></span>
+        </div>
         <p class="title six-section__title">{{$page.frontmatter.sixSection.title}}</p>
         <ul class="row six-section__row" v-for="(current, index) in list" :key="index">
           <li v-for="(item, index) in current" :key="index">
@@ -133,22 +139,28 @@
 
     <!-- 第七部分 -->
     <section class="seven-section">
+      <span class="dot-inner"></span>
       <p class="title">{{$page.frontmatter.sevenSection.title}}</p>
-      <Carousel />
       <div class="row seven-section__wrap">
         <div class="grow">
           <p class="seven-section__title">
-            
+            {{currentTitle}}
           </p>
           <p class="seven-section__desc">
             
           </p>
         </div>
         <div class="grow seven-section__center">
-          <div class="seven-section__phone"></div>
+          <div class="seven-section__phone">
+            <div class="seven-section__inner">
+              <swiper-img :dataList="dataList" :currentIndex="currentIndex"></swiper-img>
+            </div>
+          </div>
         </div>
         <div class="grow"></div>
       </div>
+      <swiper :dataList="dataList" @change="handleChange"></swiper>
+      
     </section>
   </div>
 </template>
@@ -156,8 +168,15 @@
 <script>
 import TodoMVC from "../components/TodoMVC.vue";
 import Carousel from '../components/Carousel.vue';
+import  Swiper from '../components/Swiper.vue';
+import SwiperImg from '../components/SwiperImg.vue';
 
 export default {
+  data () {
+    return {
+      currentIndex: 0
+    }
+  },
   computed: {
     list () {
       let result = []
@@ -173,6 +192,13 @@ export default {
         i++
       }
       return result
+    },
+    dataList () {
+      const list = this.$page.frontmatter.sevenSection.details
+      return list
+    },
+    currentTitle () {
+      return this.dataList[this.currentIndex].title
     }
   },
   // mounted() {
@@ -201,7 +227,14 @@ export default {
   // },
   components: {
     TodoMVC,
-    Carousel
+    Carousel,
+    Swiper,
+    SwiperImg
+  },
+  methods: {
+    handleChange (index) {
+      this.currentIndex = index
+    }
   }
 }
 </script>
@@ -386,6 +419,9 @@ ul li
   background-repeat no-repeat
   background-size 100% 694px
   height 694px
+
+.six-section__inner
+  margin-bottom 50px
  
 .six-section__item 
   background #ffffff
@@ -429,24 +465,34 @@ ul li
   margin-top 113px
   padding 0 200px
   text-align center
+  background #f5f5f5
  
 .seven-section__center 
   width 402px
   background url("https://dpubstatic.udache.com/static/dpubimg/XrJHfoN2ky/anli_bg.png") no-repeat center center
   height 100%
   background-size contain
+  display flex
+  justify-content center
 
 .seven-section__phone
-  background url("https://dpubstatic.udache.com/static/dpubimg/hxFU4KVamb/anli_pic_phone.png") no-repeat center center
+  width 213px
   height 100%
+  background url("https://dpubstatic.udache.com/static/dpubimg/hxFU4KVamb/anli_pic_phone.png") no-repeat center center
   background-size contain
+
+.seven-section__inner
+  padding 12px
+  box-shadow 0 43px 86px 0 rgba(49,188,127,0.07), 0 7px 21px 0 rgba(49,188,127,0.04), 0 2px 6px 0 rgba(49,188,127,0.03)
+  border-radius 30px
 
 .seven-section__wrap
   height 433px
   margin-top 40px
+  margin-bottom 40px
 
 .seven-section__title 
-  text-align left
+  text-align right
   font-size 20px
   font-weight 600
 
@@ -455,4 +501,14 @@ ul li
   text-align left
   font-size 12px
   line-height 23px
+
+.dot
+  width 100%
+
+.dot-inner
+  background #31BC7F
+  border-radius 4px
+  width 34px
+  height 10px
+  display inline-block
 </style>

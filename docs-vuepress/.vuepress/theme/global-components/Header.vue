@@ -1,10 +1,10 @@
 <template>
-  <header class="row header">
+  <header class="header">
     <h1 class="logo">Mpx</h1>
     <div class="row">
-      <nav class="nav"><a href="/guide/basic/start.html">指南</a></nav>
-      <nav class="nav"><a href="/api/config.html">API</a></nav>
-      <nav class="nav"><a href="/articles/">文章</a></nav>
+      <nav class="nav"><a class="nav-link" href="/guide/basic/start.html">指南</a></nav>
+      <nav class="nav"><a class="nav-link" href="/api/config.html">API</a></nav>
+      <nav class="nav"><a class="nav-link" href="/articles/">文章</a></nav>
       <div class="searchBox-wrapper">
         <div class="searchBox"><SearchBox /></div>
       </div>
@@ -50,6 +50,10 @@ export default {
 .header
   padding 40px 0 0 30px
   position relative
+  display flex
+  align-items center
+.nav-link
+  color #3A495D
 .banner
   position absolute
   right 0

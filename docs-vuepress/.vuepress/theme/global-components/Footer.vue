@@ -64,7 +64,7 @@ ul li
   list-style none
 
 .footer
-  margin-top 120px
+  margin-top 60px
   display flex
   // align-items center
   text-align center

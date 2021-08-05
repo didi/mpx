@@ -1,10 +1,10 @@
 <template>
   <div class="container">
-    <template v-if="small">
+    <div style="background: #f5f5f5;" v-if="small">
       <Header slot-key="header" />
       <Content slot-key="content" />
       <Footer slot-key="footer" />
-    </template>
+    </div>
     <template v-else>
       <ParentLayout />
     </template>
