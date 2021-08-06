@@ -1,7 +1,7 @@
 import Dep from './dep'
 import { arrayMethods } from './array'
 
-import { def, isPlainObject, isObject, hasProto, hasOwn, isValidArrayIndex } from '../helper/utils'
+import { def, isPlainObject, isObject, hasProto, hasOwn, isValidArrayIndex, arrayProtoAugment } from '../helper/utils'
 
 import { warn } from '../helper/log'
 
@@ -30,7 +30,7 @@ export class Observer {
     this.vmCount = 0
     def(value, '__ob__', this)
     if (Array.isArray(value)) {
-      const augment = hasProto
+      const augment = hasProto && arrayProtoAugment
         ? protoAugment
         : copyAugment
       augment(value, arrayMethods, arrayKeys)
