@@ -61,7 +61,7 @@ export default {
   top 0
 .searchBox-wrapper
   position absolute
-  right 20px
+  right 150px
   z-index 2
 .header__line
   height 30px

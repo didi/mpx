@@ -2,7 +2,7 @@
   <div class="swiper-img">
     <div class="swiper-img__list" :style="getStyle">
       <div class="swiper-img__wrap" v-for="(item, index) in dataList" :key="index">
-        <img width="188" :src="item.demo" alt="">
+        <img width="188" height="410" :src="item.demo" alt="img" loading="lazy" />
       </div>
     </div>
   </div>

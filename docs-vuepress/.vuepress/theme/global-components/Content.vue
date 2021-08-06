@@ -24,7 +24,7 @@
     <section class="two-section">
       <ul class="row">
         <li class="two-section__item" v-for="(item, index) in $page.frontmatter.features" :key="index">
-          <img :src="item.icon" alt="svg" />
+          <img :src="item.icon" alt="svg" loading="lazy" />
           <p class="two-section__title">{{item.item}}</p>
           <p class="two-section__desc">{{item.details}}</p>
           <div class="two-section__line"></div>
@@ -41,7 +41,8 @@
               width="375"
               height="667"
               src="https://dpubstatic.udache.com/static/dpubimg/hxFU4KVamb/anli_pic_phone.png"
-              alt="phone">
+              alt="phone"
+              loading="lazy" />
           </div>
           <div class="three-section__iframe">
             <iframe
@@ -77,7 +78,7 @@
           width="412"
           :src="$page.frontmatter.fourSection.img"
           alt="svg"
-        />
+          loading="lazy" />
       </div>
       <div class="grow">
         <div class="four-section__text">
@@ -89,8 +90,8 @@
             </p>
           </div>
           <button class="btn">
-            <a :href="$page.frontmatter.threeSection.actionLink" class="white-link">
-              {{$page.frontmatter.threeSection.actionText}}
+            <a :href="$page.frontmatter.fourSection.actionLink" class="white-link">
+              {{$page.frontmatter.fourSection.actionText}}
             </a>
           </button>
         </div>
@@ -120,7 +121,7 @@
           width="412"
           :src="$page.frontmatter.fiveSection.img"
           alt="svg"
-        />
+          loading="lazy" />
       </div>
     </section>
 
@@ -135,7 +136,7 @@
           <li v-for="(item, index) in current" :key="index">
             <a :href="item.actionLink" class="six-section__item six-section__step">
               <div class="six-section__icon">
-                <img :src="item.icon" alt="svg" />
+                <img :src="item.icon" alt="svg" loading="lazy" />
               </div>
               <div class="six-section__list">
                 <div class="six-section__bold">{{item.title}}</div>
@@ -165,7 +166,8 @@
               width="213"
               height="433"
               src="https://dpubstatic.udache.com/static/dpubimg/hxFU4KVamb/anli_pic_phone.png"
-              alt="phone">
+              alt="phone"
+              loading="lazy" />
           </div>
           <div class="seven-section__inner">
             <swiper-img :dataList="dataList" :currentIndex="currentIndex"></swiper-img>
