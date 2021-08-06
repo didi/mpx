@@ -25,12 +25,12 @@ export default {
     ParentLayout
   },
   data () {
-    const current = document.documentElement.clientWidth > 1020
+    // const current = document.documentElement.clientWidth > 1020
     return {
-      small: current
+      small: true
     }
   },
-  mounted () {
+  beforeMount () {
     window.onresize = () => {
       const current = document.documentElement.clientWidth > 1020
       this.small = current
