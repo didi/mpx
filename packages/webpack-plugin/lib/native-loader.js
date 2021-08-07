@@ -63,6 +63,8 @@ module.exports = function (content) {
   const hasComment = false
   const isNative = true
 
+  const resolve = this.resolve
+
   const tryEvalMPXJSON = (callback) => {
     const _src = resourceName + EXT_MPX_JSON
     this.addDependency(_src)
@@ -82,8 +84,9 @@ module.exports = function (content) {
   }
 
   function checkFileExists (extName, callback) {
-    fs.stat(resourceName + extName, (err) => {
-      callback(null, !err)
+    resolve(parsed.dir, resourceName + extName, (err, result) => {
+      err = null
+      callback(err, result)
     })
   }
 
@@ -153,14 +156,17 @@ module.exports = function (content) {
         tryEvalMPXJSON(callback)
       } else {
         if (typeExtMap['json']) {
-          const jsonSrc = resourceName + typeExtMap['json']
-          this.addDependency(jsonSrc)
-          fs.readFile(jsonSrc, (err, raw) => {
-            if (err) {
-              callback(err)
-            } else {
-              callback(null, raw.toString('utf-8'))
-            }
+          // eslint-disable-next-line handle-callback-err
+          checkFileExists(typeExtMap['json'], (err, result) => {
+            const { rawResourcePath } = parseRequest(result)
+            this.addDependency(rawResourcePath)
+            fs.readFile(rawResourcePath, (err, raw) => {
+              if (err) {
+                callback(err)
+              } else {
+                callback(null, raw.toString('utf-8'))
+              }
+            })
           })
         } else {
           callback(null, '{}')
