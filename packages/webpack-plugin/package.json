@@ -59,9 +59,7 @@
     "webpack-sources": "^1.1.0"
   },
   "peerDependencies": {
-    "css-loader": "^0.28.10",
-    "webpack": "^4.0.0",
-    "webpack-cli": "^3.0.0"
+    "webpack": "^5.48.0"
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org"

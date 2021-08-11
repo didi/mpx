@@ -69,10 +69,9 @@ module.exports = function (content) {
   const loaderContext = this
   const stringifyRequest = r => loaderUtils.stringifyRequest(loaderContext, r)
   const isProduction = this.minimize || process.env.NODE_ENV === 'production'
-  const options = loaderUtils.getOptions(this) || {}
   const processSrcQuery = (src, type) => {
     const localQuery = Object.assign({}, queryObj)
-    // style src会被特殊处理为全局复用样式，不添加resourcePath，添加isStatic及issuerResource
+
     if (type === 'styles') {
       localQuery.isStatic = true
       localQuery.issuerResource = this.resource
@@ -88,12 +87,6 @@ module.exports = function (content) {
   const filePath = resourcePath
 
   const moduleId = 'm' + mpx.pathHash(filePath)
-
-  const needCssSourceMap = (
-    !isProduction &&
-    this.sourceMap &&
-    options.cssSourceMap !== false
-  )
 
   const parts = parseComponent(content, {
     filePath,
@@ -124,8 +117,7 @@ module.exports = function (content) {
       if (vueContentCache.has(filePath)) {
         return callback(null, vueContentCache.get(filePath))
       }
-      // 只有ali才可能需要scoped
-      const hasScoped = (parts.styles.some(({ scoped }) => scoped) || autoScope) && mode === 'ali'
+      const hasScoped = parts.styles.some(({ scoped }) => scoped) || autoScope
       const templateAttrs = parts.template && parts.template.attrs
       const hasComment = templateAttrs && templateAttrs.comments
       const isNative = false
@@ -148,24 +140,6 @@ module.exports = function (content) {
           return callback(e)
         }
       }
-
-      const {
-        getRequire,
-        getRequireForSrc,
-        getRequestString,
-        getSrcRequestString
-      } = createHelpers({
-        loaderContext,
-        options,
-        moduleId,
-        hasScoped,
-        hasComment,
-        usingComponents,
-        needCssSourceMap,
-        srcMode,
-        isNative,
-        projectRoot
-      })
 
       // 处理mode为web时输出vue格式文件
       if (mode === 'web') {
@@ -191,6 +165,7 @@ module.exports = function (content) {
             async.parallel([
               (callback) => {
                 processTemplate(parts.template, {
+                  hasScoped,
                   hasComment,
                   isNative,
                   mode,
@@ -243,7 +218,6 @@ module.exports = function (content) {
               srcMode,
               loaderContext,
               isProduction,
-              getRequireForSrc,
               i18n,
               componentGenerics,
               projectRoot,
@@ -267,17 +241,20 @@ module.exports = function (content) {
         })
       }
 
-      // 触发webpack global var 注入
-      output += 'global.currentModuleId\n'
+      const {
+        getRequire,
+        getRequestString,
+      } = createHelpers(loaderContext)
 
-      // todo loader中inject dep比较危险，watch模式下不一定靠谱，可考虑将import改为require然后通过修改loader内容注入
+      // todo webpack5不再支持注入global
       // 注入模块id及资源路径
-      let globalInjectCode = `global.currentModuleId = ${JSON.stringify(moduleId)}\n`
+      output += `global.currentModuleId = ${JSON.stringify(moduleId)}\n`
       if (!isProduction) {
-        globalInjectCode += `global.currentResource = ${JSON.stringify(filePath)}\n`
+        output += `global.currentResource = ${JSON.stringify(filePath)}\n`
       }
-      if (ctorType === 'app' && i18n && !mpx.forceDisableInject) {
-        globalInjectCode += `global.i18n = ${JSON.stringify({ locale: i18n.locale, version: 0 })}\n`
+      if (ctorType === 'app' && i18n) {
+        output += `global.i18n = ${JSON.stringify({ locale: i18n.locale, version: 0 })}\n`
+
 
         const i18nMethodsVar = 'i18nMethods'
         const i18nWxsPath = normalize.lib('runtime/i18n.wxs')
@@ -294,9 +271,10 @@ module.exports = function (content) {
           },
           module: this._module
         })
+        // todo webpack5中不再支持addVariable
         this._module.addVariable(i18nMethodsVar, expression, deps)
 
-        globalInjectCode += `global.i18nMethods = ${i18nMethodsVar}\n`
+        output += `global.i18nMethods = ${i18nMethodsVar}\n`
       }
       // 注入构造函数
       let ctor = 'App'
@@ -309,29 +287,66 @@ module.exports = function (content) {
       } else if (ctorType === 'component') {
         ctor = 'Component'
       }
-      globalInjectCode += `global.currentCtor = ${ctor}\n`
-      globalInjectCode += `global.currentCtorType = ${JSON.stringify(ctor.replace(/^./, (match) => {
+      output += `global.currentCtor = ${ctor}\n`
+      output += `global.currentCtorType = ${JSON.stringify(ctor.replace(/^./, (match) => {
         return match.toLowerCase()
       }))}\n`
 
-      // <script>
+      // template
+      output += '/* template */\n'
+      const template = parts.template
+
+      if (template) {
+        const extraOptions = {
+          hasScoped,
+          hasComment,
+          isNative,
+          moduleId,
+          usingComponents
+        }
+        if (template.src) extraOptions.resourcePath = resourcePath
+        // 基于global.currentInject来注入模板渲染函数和refs等信息
+        output += getRequire('template', template, extraOptions) + '\n\n'
+      }
+
+      // styles
+      output += '/* styles */\n'
+      if (parts.styles.length) {
+        parts.styles.forEach((style, i) => {
+          const scoped = style.scoped || autoScope
+          const extraOptions = {
+            moduleId,
+            scoped
+          }
+          // require style
+          if (style.src) {
+            // style src会被特殊处理为全局复用样式，不添加resourcePath，添加isStatic及issuerResource
+            extraOptions.isStatic = true
+            extraOptions.issuerResource = this.resource
+          }
+          output += getRequire('styles', style, extraOptions, i) + '\n'
+        })
+        output += '\n'
+      }
+
+      // json
+      output += '/* json */\n'
+      // 给予json默认值, 确保生成json request以自动补全json
+      const json = parts.json || {}
+      output += getRequire('json', json, json.src && { resourcePath })
+
+      // script
       output += '/* script */\n'
       let scriptSrcMode = srcMode
       const script = parts.script
       if (script) {
         scriptSrcMode = script.mode || scriptSrcMode
-        let scriptRequestString
-        if (script.src) {
-          // 传入resourcePath以确保后续处理中能够识别src引入的资源为组件主资源
-          script.src = processSrcQuery(script.src, 'script')
-          scriptRequestString = getSrcRequestString('script', script)
-        } else {
-          scriptRequestString = getRequestString('script', script)
-        }
-        if (scriptRequestString) {
-          output += 'export * from ' + scriptRequestString + '\n\n'
-          if (ctorType === 'app') mpx.appScriptRawRequest = JSON.parse(scriptRequestString)
-        }
+        if (scriptSrcMode) output += `global.currentSrcMode = ${JSON.stringify(scriptSrcMode)}\n`
+        const extraOptions = {}
+        if (script.src) extraOptions.resourcePath = resourcePath
+        // todo 通过isAppScript标识当前模块，分包处理需要等该模块的依赖处理完成后才能进行，严谨来说也应该等待app.json和app.wxss处理完成后才能开始，后续优化
+        if (ctorType === 'app') extraOptions.isAppScript = true
+        output += getRequire('script', script, extraOptions)
       } else {
         switch (ctorType) {
           case 'app':
@@ -348,90 +363,6 @@ module.exports = function (content) {
         }
         output += '\n'
       }
-
-      if (scriptSrcMode) {
-        globalInjectCode += `global.currentSrcMode = ${JSON.stringify(scriptSrcMode)}\n`
-      }
-
-      // styles
-      output += '/* styles */\n'
-      let cssModules
-      if (parts.styles.length) {
-        let styleInjectionCode = ''
-        parts.styles.forEach((style, i) => {
-          let scoped = hasScoped ? (style.scoped || autoScope) : false
-          let requireString
-          // require style
-          if (style.src) {
-            style.src = processSrcQuery(style.src, 'styles')
-            requireString = getRequireForSrc('styles', style, -1, scoped)
-          } else {
-            requireString = getRequire('styles', style, i, scoped)
-          }
-          const hasStyleLoader = requireString.indexOf('style-loader') > -1
-          const invokeStyle = code => `${code}\n`
-
-          const moduleName = style.module === true ? '$style' : style.module
-          // setCssModule
-          if (moduleName) {
-            if (!cssModules) {
-              cssModules = {}
-            }
-            if (moduleName in cssModules) {
-              loaderContext.emitError(
-                'CSS module name "' + moduleName + '" is not unique!'
-              )
-              styleInjectionCode += invokeStyle(requireString)
-            } else {
-              cssModules[moduleName] = true
-
-              if (!hasStyleLoader) {
-                requireString += '.locals'
-              }
-
-              styleInjectionCode += invokeStyle(
-                'this["' + moduleName + '"] = ' + requireString
-              )
-            }
-          } else {
-            styleInjectionCode += invokeStyle(requireString)
-          }
-        })
-        output += styleInjectionCode + '\n'
-      }
-
-      // json
-      output += '/* json */\n'
-      // 给予json默认值, 确保生成json request以自动补全json
-      const json = parts.json || {}
-      if (json.src) {
-        json.src = processSrcQuery(json.src, 'json')
-        output += getRequireForSrc('json', json) + '\n\n'
-      } else {
-        output += getRequire('json', json) + '\n\n'
-      }
-
-      // template
-      output += '/* template */\n'
-      const template = parts.template
-
-      if (template) {
-        if (template.src) {
-          template.src = processSrcQuery(template.src, 'template')
-          output += getRequireForSrc('template', template) + '\n\n'
-        } else {
-          output += getRequire('template', template) + '\n\n'
-        }
-      }
-
-      if (!mpx.forceDisableInject) {
-        const dep = new InjectDependency({
-          content: globalInjectCode,
-          index: -3
-        })
-        this._module.addPresentationalDependency(dep)
-      }
-
       callback(null, output)
     }
   ], callback)

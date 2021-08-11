@@ -30,7 +30,6 @@ module.exports = function (script, options, callback) {
   const loaderContext = options.loaderContext
   const isProduction = options.isProduction
   const componentId = options.componentId
-  const getRequireForSrc = options.getRequireForSrc
   const i18n = options.i18n
   const jsonConfig = options.jsonConfig
   const tabBar = jsonConfig.tabBar
@@ -213,8 +212,9 @@ module.exports = function (script, options, callback) {
       }
       // 为了正确获取currentSrcMode便于运行时进行转换，对于src引入的组件script采用require方式引入(由于webpack会将import的执行顺序上升至最顶)，这意味着对于src引入脚本中的named export将不会生效，不过鉴于mpx和小程序中本身也没有在组件script中声明export的用法，所以应该没有影响
       content += script.src
-        ? (getRequireForSrc('script', script) + '\n')
-        : (script.content + '\n') + '\n'
+        ? `require(${stringifyRequest(script.src)})\n`
+        : script.content
+      content += '\n'
       // createApp/Page/Component执行完成后立刻获取当前的option并暂存
       content += `  const currentOption = global.currentOption\n`
       // 获取pageConfig

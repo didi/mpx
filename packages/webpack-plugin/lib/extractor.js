@@ -16,6 +16,7 @@ const fixRelative = require('./utils/fix-relative')
 const NativeModule = require('module')
 const AssetDependency = require('./dependencies/AssetDependency')
 const ExtractDependency = require('./dependencies/ExtractDependency')
+const Cache = require('webpack/lib/Cache')
 
 const defaultResultSource = '// removed by extractor'
 
@@ -41,6 +42,7 @@ module.exports = function (content) {
 
   let resultSource = defaultResultSource
 
+  // todo getFile考虑要不要放在外部处理，将extractor的资源在addModule时就确定输出位置
   const getFile = (resourceRaw, type) => {
     const { resourcePath, queryObj } = parseRequest(resourceRaw)
     const currentPackageName = queryObj.packageName || mpx.currentPackageRoot || 'main'
@@ -136,6 +138,10 @@ module.exports = function (content) {
     new EntryPlugin(this.context, request, { name: filename }),
     new LimitChunkCountPlugin({ maxChunks: 1 })
   ])
+
+
+  // todo 消除子编译cache能力避免bad case，后续考虑更优的方式来处理
+  childCompiler.cache = new Cache()
 
   let source
   childCompiler.hooks.thisCompilation.tap('MpxWebpackPlugin', (compilation) => {

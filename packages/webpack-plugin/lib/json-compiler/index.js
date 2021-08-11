@@ -19,7 +19,7 @@ const addQuery = require('../utils/add-query')
 const readJsonForSrc = require('../utils/read-json-for-src')
 const getMainCompilation = require('../utils/get-main-compilation')
 
-module.exports = function (raw = '{}') {
+module.exports = function (raw) {
   // 该loader中会在每次编译中动态添加entry，不能缓存，否则watch不好使
   this.cacheable(false)
   const nativeCallback = this.async()
@@ -163,7 +163,7 @@ module.exports = function (raw = '{}') {
     if (this.resourcePath.endsWith('.json.js')) {
       json = JSON.parse(mpxJSON.compileMPXJSONText({ source: raw, defs, filePath: this.resourcePath }))
     } else {
-      json = JSON5.parse(raw)
+      json = JSON5.parse(raw || '{}')
     }
   } catch (err) {
     return callback(err)
@@ -457,7 +457,7 @@ module.exports = function (raw = '{}') {
       }
     }
 
-    const getOtherConfig = (raw) => {
+    const getOtherConfig = (config) => {
       let result = {}
       let blackListMap = {
         tarRoot: true,
@@ -465,9 +465,9 @@ module.exports = function (raw = '{}') {
         root: true,
         pages: true
       }
-      for (let key in raw) {
+      for (let key in config) {
         if (!blackListMap[key]) {
-          result[key] = raw[key]
+          result[key] = config[key]
         }
       }
       return result
