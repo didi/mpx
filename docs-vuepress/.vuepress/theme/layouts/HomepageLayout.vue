@@ -1,9 +1,9 @@
 <template>
   <div class="container">
     <div style="background: #f5f5f5;" v-if="small">
-      <Header slot-key="header" />
-      <Content slot-key="content" />
-      <Footer slot-key="footer" />
+      <Header />
+      <Content />
+      <Footer />
     </div>
     <template v-else>
       <ParentLayout />

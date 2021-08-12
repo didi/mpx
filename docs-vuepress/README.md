@@ -75,7 +75,7 @@ fiveSection:
 threeSection:
   title: TodoMVC
   details: TodoMVC是一个示例项目，它使用目前流行的不同JavaScript框架的来实现同一个Demo，来帮助你熟悉和选择最合适的前端框架。官网地址：http://todomvc.com，学习框架最直接有效的方式就是上手练习，接下来我们将用Mpx.js来完成TodoMVC的示例。
-  actionText: 查看详尽
+  actionText: 查看详情
   actionLink: https://dpubstatic.udache.com/static/dpubimg/c3b0d3bc-1bb0-4bee-b6da-4205a2744e21.html#/pages/index
   img: https://dpubstatic.udache.com/static/dpubimg/eCoUSCwEEm/anli_pic_phone.png
   bg: https://dpubstatic.udache.com/static/dpubimg/k_-K6Ok3Ap/todomvc_bg.png

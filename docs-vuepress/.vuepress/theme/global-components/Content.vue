@@ -38,14 +38,15 @@
         <div class="three-section__todo">
           <div class="three-section__phone">
             <img
-              width="375"
-              height="667"
+              width="410"
+              height="712"
               src="https://dpubstatic.udache.com/static/dpubimg/hxFU4KVamb/anli_pic_phone.png"
               alt="phone"
               loading="lazy" />
           </div>
           <div class="three-section__iframe">
             <iframe
+              scrolling="no"
               width="375"
               height="667"
               src="https://dpubstatic.udache.com/static/dpubimg/c3b0d3bc-1bb0-4bee-b6da-4205a2744e21.html"
@@ -249,7 +250,7 @@ ul li
   font-weight 500
 
 .desc
-  font-size 12px
+  font-size 14px
   line-height 22px
   margin-bottom 40px
 
@@ -351,7 +352,7 @@ ul li
   margin 33px 0 21px 0
 
 .two-section__desc 
-  font-size 12px
+  font-size 14px
   line-height 22px
  
 
@@ -360,7 +361,7 @@ ul li
   display flex
   background-repeat no-repeat
   background-size 100% 713px
-  padding 0 200px
+  padding 0 185px
   height 713px
   align-items center
 
@@ -378,9 +379,9 @@ ul li
 .three-section__iframe
   position relative
   display inline-block
-  left 0
-  top 0
-  border-radius 30px
+  left 20px
+  top 20px
+  border-radius 44px
   background #fff
   overflow hidden
   box-shadow 0 80px 252px 0 rgba(49,188,127,0.12), 0 36px 76px 0 rgba(49,188,127,0.08), 0 15px 31px 0 rgba(49,188,127,0.06), 0 5px 11px 0 rgba(49,188,127,0.04)
@@ -453,7 +454,7 @@ ul li
   display flex
   flex-direction column
   justify-content space-between
-  font-size 12px
+  font-size 14px
   color #3A495D
 
 .six-section__bold
@@ -486,7 +487,7 @@ ul li
   position relative
 
 .seven-section__inner
-  padding 12px
+  padding 14px
   box-shadow 0 43px 86px 0 rgba(49,188,127,0.07), 0 7px 21px 0 rgba(49,188,127,0.04), 0 2px 6px 0 rgba(49,188,127,0.03)
   border-radius 30px
 
@@ -509,7 +510,7 @@ ul li
 .seven-section__desc
   margin-top 41px
   text-align left
-  font-size 12px
+  font-size 14px
   line-height 23px
 
 .dot
