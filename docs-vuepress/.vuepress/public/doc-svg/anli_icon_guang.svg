@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="6px" height="61px" viewBox="0 0 6 61" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>anli_icon_guang</title>
+    <defs>
+        <linearGradient x1="121.307086%" y1="50.0585659%" x2="11.2932687%" y2="50.2382225%" id="linearGradient-1">
+            <stop stop-color="#FFFFFF" stop-opacity="0" offset="0%"></stop>
+            <stop stop-color="#FFFFFF" offset="100%"></stop>
+        </linearGradient>
+    </defs>
+    <g id="定稿" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" opacity="0.800000012">
+        <g id="MPX-2.5d-1280" transform="translate(-188.000000, -4765.000000)" fill="url(#linearGradient-1)">
+            <g id="成功案例" transform="translate(78.000000, 4364.000000)">
+                <g id="编组-6" transform="translate(88.828187, 0.000000)">
+                    <rect id="anli_icon_guang" transform="translate(23.971557, 431.249349) rotate(90.000000) translate(-23.971557, -431.249349) " x="-6.1734687" y="428.675993" width="60.2900506" height="5.14671164" rx="2.57335582"></rect>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

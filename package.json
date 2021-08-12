@@ -12,7 +12,9 @@
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^4.2.4",
+    "@vuepress/plugin-back-to-top": "^1.8.2",
     "@vuepress/plugin-pwa": "^1.8.0",
+    "@vuepress/plugin-search": "^1.8.2",
     "babel-eslint": "^10.0.1",
     "babel-jest": "^24.9.0",
     "eslint": "^5.10.0",
