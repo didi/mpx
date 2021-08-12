@@ -127,9 +127,22 @@ declare namespace MpxStore {
     [key: string]: any | DeeperStateAndGetters
   }
 
+  /**
+   * remove compatible code in Mpx.
+   * if you need using createStoreWithThis mix with createStore
+   * you can add a global define file
+   * use Declaration Merging(https://www.typescriptlang.org/docs/handbook/declaration-merging.html) on CompatibleDispatch:
+   * @example
+   * declare module MpxStore {
+   *  interface CompatibleDispatch {
+   *    dispatch(type: string, ...payload: any[]): any
+   *    commit(type: string, ...payload: any[]): any
+   *  }
+   * }
+   */
   interface CompatibleDispatch {
-    dispatch(type: string, ...payload: any[]): any
-    commit(type: string, ...payload: any[]): any
+    // dispatch(type: string, ...payload: any[]): any
+    // commit(type: string, ...payload: any[]): any
   }
 
   // Store Type Bindings

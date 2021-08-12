@@ -137,7 +137,10 @@ class MpxWebpackPlugin {
     options.subpackageModulesRules = options.subpackageModulesRules || {}
     options.forceMainPackageRules = options.forceMainPackageRules || {}
     options.forceProxyEventRules = options.forceProxyEventRules || {}
-    options.miniNpmPackage = options.miniNpmPackage || []
+    options.miniNpmPackages = options.miniNpmPackages || []
+    options.fileConditionRules = options.fileConditionRules || {
+      include: () => true
+    }
     this.options = options
   }
 
@@ -206,15 +209,15 @@ class MpxWebpackPlugin {
       warnings.push(`webpack options: MpxWebpackPlugin strongly depends options.node.globel to be true, custom options.node will be ignored!`)
     }
 
-    const addModePlugin = new AddModePlugin('before-resolve', this.options.mode, 'resolve')
-    const packageEntryPlugin = new PackageEntryPlugin('before-described-relative', this.options.miniNpmPackage, 'resolve')
+    const addModePlugin = new AddModePlugin('before-file', this.options.mode, this.options.fileConditionRules, 'file')
+    const addEnvPlugin = new AddEnvPlugin('before-file', this.options.env, this.options.fileConditionRules, 'file')
+    const packageEntryPlugin = new PackageEntryPlugin('before-described-relative', this.options.miniNpmPackages, 'resolve')
     if (Array.isArray(compiler.options.resolve.plugins)) {
       compiler.options.resolve.plugins.push(addModePlugin)
     } else {
       compiler.options.resolve.plugins = [addModePlugin]
     }
     if (this.options.env) {
-      const addEnvPlugin = new AddEnvPlugin('before-resolve', this.options.env, 'resolve')
       compiler.options.resolve.plugins.push(addEnvPlugin)
     }
     compiler.options.resolve.plugins.push(packageEntryPlugin)
@@ -516,14 +519,6 @@ class MpxWebpackPlugin {
         }
         return addModuleResult
       }
-
-      compilation.hooks.succeedModule.tap('MpxWebpackPlugin', (module) => {
-        if (mpx.pluginMainResource && mpx.pluginMainResource === module.rawRequest) {
-          mpx.getEntryNode(mpx.pluginMainResource, 'PluginMain', module)
-        } else if (mpx.miniToPluginExports && mpx.miniToPluginExports.has(module.rawRequest)) {
-          mpx.getEntryNode(module.rawRequest, 'PluginExport', module)
-        }
-      })
 
       compilation.hooks.finishModules.tap('MpxWebpackPlugin', (modules) => {
         // 自动跟进分包配置修改splitChunksPlugin配置
@@ -914,10 +909,10 @@ try {
             source.add(originalSource)
             source.add(`\nmodule.exports = window[${JSON.stringify(jsonpFunction)}];\n`)
           } else {
-            if (mpx.pluginMainResource && chunk.entryModule && mpx.pluginMainResource === chunk.entryModule.rawRequest) {
+            if (mpx.pluginMainModule && chunk.entryModule && mpx.pluginMainModule === chunk.entryModule) {
               source.add('module.exports =\n')
               // mpx.miniToPluginExports is a Set
-            } else if (mpx.miniToPluginExports && chunk.entryModule && mpx.miniToPluginExports.has(chunk.entryModule.rawRequest)) {
+            } else if (mpx.miniToPluginModules && chunk.entryModule && mpx.miniToPluginModules.has(chunk.entryModule)) {
               source.add('module.exports =\n')
             }
             source.add(originalSource)
@@ -989,12 +984,41 @@ try {
       // resolve完成后修改loaders信息并批量添加mode query
       normalModuleFactory.hooks.afterResolve.tapAsync('MpxWebpackPlugin', (data, callback) => {
         if (data.loaders) {
-          data.loaders.forEach((loader) => {
-            if (/ts-loader/.test(loader.loader)) {
+          const { queryObj } = parseRequest(data.request)
+          const mpxStyleOptions = queryObj.mpxStyleOptions
+          const firstLoader = (data.loaders[0] && data.loaders[0].loader) || ''
+          const isPitcherRequest = firstLoader.includes('vue-loader/lib/loaders/pitcher.js')
+          let cssLoaderIndex = -1
+          let vueStyleLoaderIndex = -1
+          let mpxStyleLoaderIndex = -1
+          data.loaders.forEach((loader, index) => {
+            const currentLoader = loader.loader
+            if (currentLoader.includes('ts-loader')) {
               // todo 暂时固定写死options，待后续优化为复用rules后修正
               loader.options = { appendTsSuffixTo: [/\.(mpx|vue)$/] }
             }
+            if (currentLoader.includes('css-loader')) {
+              cssLoaderIndex = index
+            } else if (currentLoader.includes('vue-loader/lib/loaders/stylePostLoader.js')) {
+              vueStyleLoaderIndex = index
+            } else if (currentLoader.includes('@mpxjs/webpack-plugin/lib/style-compiler/index.js')) {
+              mpxStyleLoaderIndex = index
+            }
           })
+          if (mpxStyleLoaderIndex === -1) {
+            let loaderIndex = -1
+            if (cssLoaderIndex > -1 && vueStyleLoaderIndex === -1) {
+              loaderIndex = cssLoaderIndex
+            } else if (cssLoaderIndex > -1 && vueStyleLoaderIndex > -1 && !isPitcherRequest) {
+              loaderIndex = vueStyleLoaderIndex
+            }
+            if (loaderIndex > -1) {
+              data.loaders.splice(loaderIndex + 1, 0, {
+                loader: normalize.lib('style-compiler/index.js'),
+                options: (mpxStyleOptions && JSON.parse(mpxStyleOptions)) || {}
+              })
+            }
+          }
         }
         // 根据用户传入的modeRules对特定资源添加mode query
         this.runModeRules(data)
