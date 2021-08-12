@@ -47,7 +47,7 @@ export default class XFetch {
     if (/^GET|DELETE|HEAD$/i.test(config.method)) {
       Object.assign(params, config.data)
       // get 请求都以params为准
-      config.data = {}
+      delete config.data
     }
 
     if (isNotEmptyObject(params)) {
