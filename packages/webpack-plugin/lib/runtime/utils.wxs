@@ -3,14 +3,12 @@ module.exports = {
   /** wxs格式化：驼峰转中划线 */
   humpToLine: function (str) {
     if (typeof str !== 'string') str += ''
-    var charArr = str.split('');
-    str = charArr.map(function (item) {
+    return str.split('').map(function (item, idx) {
       if (item.toUpperCase() === item) {
-        return '-' + item.toLowerCase()
+        return idx === 0 ? item.toLowerCase() : '-' + item.toLowerCase()
       } else {
         return item
       }
     }).join('')
-    return str
   }
 }
