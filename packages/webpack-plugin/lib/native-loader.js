@@ -82,7 +82,7 @@ module.exports = function (content) {
     })
   }
 
-  function checkFileExists (extName, callback) {
+  const checkFileExists = (extName, callback) => {
     this.resolve(parsed.dir, resourceName + extName, (err, result) => {
       err = null
       callback(err, result)
