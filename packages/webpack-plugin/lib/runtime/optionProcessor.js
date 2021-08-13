@@ -43,7 +43,7 @@ export default function processOption (
       }
     })
     Vue.directive('animation', (el, binding) => {
-      const newActions = binding?.value?.actions
+      const newActions = binding && binding.value && binding.value.actions
       if (el.actions === newActions) {
         Promise.resolve().then(() => {
           Object.assign(el.style, el.lastDynamicStyle)

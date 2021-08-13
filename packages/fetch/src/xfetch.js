@@ -47,7 +47,7 @@ export default class XFetch {
     if (/^GET|DELETE|HEAD$/i.test(config.method)) {
       Object.assign(params, config.data)
       // get 请求都以params为准
-      config.data = {}
+      delete config.data
     }
 
     if (isNotEmptyObject(params)) {
@@ -55,10 +55,11 @@ export default class XFetch {
     }
 
     if (/^POST|PUT$/i.test(config.method)) {
-      config.header = config.header || {}
-      let contentType = config.header['content-type'] || config.header['Content-Type']
+      const header = config.header || {}
+      let contentType = header['content-type'] || header['Content-Type']
       if (config.emulateJSON && !contentType) {
-        config.header['content-type'] = 'application/x-www-form-urlencoded'
+        header['content-type'] = 'application/x-www-form-urlencoded'
+        config.header = header
       }
       delete config.emulateJSON
     }
