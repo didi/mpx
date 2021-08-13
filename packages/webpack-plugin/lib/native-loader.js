@@ -149,7 +149,8 @@ module.exports = function (content) {
             delete typeExtMap[key]
           }
           if (!err && result) {
-            typeExtRawResourcePathMap[key] = result
+            const { rawResourcePath } = parseRequest(result)
+            typeExtRawResourcePathMap[key] = rawResourcePath
           }
           callback(err)
         })
