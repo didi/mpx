@@ -107,7 +107,8 @@ module.exports = function (content) {
         if (results[i]) {
           cssLang = langs[i]
           typeExtMap.styles = CSS_LANG_EXT_MAP[cssLang]
-          typeExtRawResourcePathMap.styles = results[i]
+          const { rawResourcePath } = parseRequest(results[i])
+          typeExtRawResourcePathMap.styles = rawResourcePath
           break
         }
       }
