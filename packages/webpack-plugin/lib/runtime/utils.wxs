@@ -1,0 +1,16 @@
+
+module.exports = {
+  /** wxs格式化：驼峰转中划线 */
+  humpToLine: function (str) {
+    if (typeof str !== 'string') str += ''
+    var charArr = str.split('');
+    str = charArr.map(function (item) {
+      if (item.toUpperCase() === item) {
+        return '-' + item.toLowerCase()
+      } else {
+        return item
+      }
+    }).join('')
+    return str
+  }
+}
