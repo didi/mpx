@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="50px" height="50px" viewBox="0 0 50 50" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>kaifa_icon_3</title>
+    <g id="定稿" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="MPX-2.5d-1920" transform="translate(-1136.000000, -3865.000000)">
+            <g id="开发生态" transform="translate(0.000000, 3592.329189)">
+                <g id="编组-4" transform="translate(520.000000, 257.670811)">
+                    <g id="编组-12" transform="translate(600.000000, 0.000000)">
+                        <g id="kaifa_icon_3" transform="translate(16.000000, 15.000000)">
+                            <rect id="矩形备份-31" fill="#CAEFE0" opacity="0.3" x="0" y="0" width="50" height="50" rx="4"></rect>
+                            <rect id="矩形" fill="#CAEFE0" fill-rule="nonzero" x="23" y="21" width="15" height="20" rx="2"></rect>
+                            <path d="M12,10 C11.448,10 11,10.44772 11,11 C11,11.55228 11.448,12 12,12 L14,12 L14,20 L14,29 L14,37 L12,37 C11.448,37 11,37.4477 11,38 C11,38.5523 11.448,39 12,39 L14,39 L14,40 C14,40.5523 14.448,41 15,41 C15.552,41 16,40.5523 16,40 L16,39 L34,39 L34,40 C34,40.5523 34.448,41 35,41 C35.552,41 36,40.5523 36,40 L36,39 L38,39 C38.552,39 39,38.5523 39,38 C39,37.4477 38.552,37 38,37 L36,37 L36,29 L36,20 L36,12 L38,12 C38.552,12 39,11.55228 39,11 C39,10.44772 38.552,10 38,10 L12,10 Z M34,28 L34,21 L16,21 L16,28 L34,28 Z M16,30 L34,30 L34,37 L16,37 L16,30 Z M16,19 L16,12 L34,12 L34,19 L16,19 Z" id="形状" fill="#3A495D"></path>
+                        </g>
+                    </g>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

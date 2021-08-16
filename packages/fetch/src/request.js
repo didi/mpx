@@ -12,7 +12,8 @@ export default function request (config, mpx) {
       delete config.params
     }
 
-    const contentType = config.header['content-type'] || config.header['Content-Type']
+    const header = config.header || {}
+    const contentType = header['content-type'] || header['Content-Type']
     if (/^POST|PUT$/i.test(config.method) && /application\/x-www-form-urlencoded/i.test(contentType) && typeof config.data === 'object') {
       config.data = bodySerializer(config.data)
     }
