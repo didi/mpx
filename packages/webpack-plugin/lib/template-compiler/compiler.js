@@ -1344,7 +1344,10 @@ function processBindEvent (el, options) {
   }
 }
 
-// todo 暂时未考虑swan中不用{{}}包裹控制属性的情况
+function wrapMustache (val) {
+  return val && !tagRE.test(val) ? `{{val}}` : val
+}
+
 function parseMustache (raw = '') {
   let replaced = false
   if (tagRE.test(raw)) {
@@ -1427,12 +1430,14 @@ function addExp (el, exp, isProps) {
 function processIf (el) {
   let val = getAndRemoveAttr(el, config[mode].directive.if).val
   if (val) {
+    if (mode === 'swan') val = wrapMustache(val)
     let parsed = parseMustache(val)
     el.if = {
       raw: parsed.val,
       exp: parsed.result
     }
   } else if (val = getAndRemoveAttr(el, config[mode].directive.elseif).val) {
+    if (mode === 'swan') val = wrapMustache(val)
     let parsed = parseMustache(val)
     el.elseif = {
       raw: parsed.val,
@@ -1474,6 +1479,7 @@ function processFor (el) {
         index: matched[2] || 'index'
       }
     } else {
+      if (mode === 'swan') val = wrapMustache(val)
       let parsed = parseMustache(val)
       el.for = {
         raw: parsed.val,
@@ -1937,6 +1943,7 @@ function processAliStyleClassHack (el, options, root) {
 
 function processShow (el, options, root) {
   let show = getAndRemoveAttr(el, config[mode].directive.show).val
+  if (mode === 'swan') show = wrapMustache(show)
   if (options.isComponent && el.parent === root && isRealNode(el)) {
     if (show !== undefined) {
       show = `{{${parseMustache(show).result}&&mpxShow}}`
