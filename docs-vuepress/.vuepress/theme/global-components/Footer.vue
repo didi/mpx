@@ -5,7 +5,7 @@
         <li class="grow">
           <img
             width="180"
-            src="https://dpubstatic.udache.com/static/dpubimg/cCGcEcig69/footer_logo.png"
+            src="https://dpubstatic.udache.com/static/dpubimg/T1R-u2N8nn/footer_logo.png"
             alt="logo"
           />
         </li>
@@ -78,7 +78,7 @@ ul li
   text-align center
   padding 0 200px
   height 436px
-  background url("https://dpubstatic.udache.com/static/dpubimg/NbnyMuw0A1/footer_bg.png") no-repeat
+  background url("https://dpubstatic.udache.com/static/dpubimg/cSRXkZjG5W/footer_bg.png") no-repeat
   background-size 100% 436px
 
 .footer__list

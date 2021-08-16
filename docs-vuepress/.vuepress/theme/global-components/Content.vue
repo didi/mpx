@@ -24,7 +24,7 @@
     <section class="two-section">
       <ul class="row">
         <li class="two-section__item" v-for="(item, index) in $page.frontmatter.features" :key="index">
-          <img :src="item.icon" alt="svg" loading="lazy" />
+          <img :src="item.icon" alt="svg" loading="lazy" width="80" height="80" />
           <p class="two-section__title">{{item.item}}</p>
           <p class="two-section__desc">{{item.details}}</p>
           <div class="two-section__line"></div>
@@ -40,18 +40,21 @@
             <img
               width="410"
               height="712"
-              src="https://dpubstatic.udache.com/static/dpubimg/hxFU4KVamb/anli_pic_phone.png"
+              src="https://dpubstatic.udache.com/static/dpubimg/Vx5n_3YCtP/anli_pic_phone.png"
               alt="phone"
               loading="lazy" />
           </div>
           <div class="three-section__iframe">
-            <iframe
+            <div class="iframe_wrapper">
+              <iframe
+              title="todo示例"
               scrolling="no"
-              width="375"
-              height="667"
+              width="325"
+              height="617"
               src="https://dpubstatic.udache.com/static/dpubimg/c3b0d3bc-1bb0-4bee-b6da-4205a2744e21.html"
               frameborder="0">
             </iframe>
+            </div>
           </div>
         </div>
       </div>
@@ -137,7 +140,7 @@
           <li v-for="(item, index) in current" :key="index">
             <a :href="item.actionLink" class="six-section__item six-section__step">
               <div class="six-section__icon">
-                <img :src="item.icon" alt="svg" loading="lazy" />
+                <img :src="item.icon" alt="svg" loading="lazy" width="50" height="50" />
               </div>
               <div class="six-section__list">
                 <div class="six-section__bold">{{item.title}}</div>
@@ -166,7 +169,7 @@
             <img
               width="213"
               height="433"
-              src="https://dpubstatic.udache.com/static/dpubimg/hxFU4KVamb/anli_pic_phone.png"
+              src="https://dpubstatic.udache.com/static/dpubimg/Vx5n_3YCtP/anli_pic_phone.png"
               alt="phone"
               loading="lazy" />
           </div>
@@ -379,12 +382,21 @@ ul li
 .three-section__iframe
   position relative
   display inline-block
+  width 375px
+  height 672px
   left 20px
   top 20px
   border-radius 44px
   background #fff
   overflow hidden
   box-shadow 0 80px 252px 0 rgba(49,188,127,0.12), 0 36px 76px 0 rgba(49,188,127,0.08), 0 15px 31px 0 rgba(49,188,127,0.06), 0 5px 11px 0 rgba(49,188,127,0.04)
+
+.iframe_wrapper
+  width 375px
+  height 672px
+  display flex
+  justify-content center
+  align-items center
 
 .white-text 
   color #fff

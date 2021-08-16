@@ -13,13 +13,13 @@
     <img
       class="banner"
       width="60%"
-      src="https://dpubstatic.udache.com/static/dpubimg/tKlPfygfIM/banner_bg.png"
+      src="https://dpubstatic.udache.com/static/dpubimg/RZO9xjPj0j/banner_bg.png"
       alt="banner"
     />
     <img
       class="banner"
       width="50%"
-      src="https://dpubstatic.udache.com/static/dpubimg/U7vbANyvqJ/banner_pic.png"
+      src="https://dpubstatic.udache.com/static/dpubimg/u3KGxYyATw/banner_pic.png"
       alt="banner"
     />
   </header>
@@ -36,7 +36,7 @@ export default {
 
 <style lang="stylus" scoped>
 .logo
-  background-image url("https://gift-static.hongyibo.com.cn/static/kfpub/3547/logo_color.png")
+  background-image url("https://dpubstatic.udache.com/static/dpubimg/imdk1FF2QF/logo_color.png")
   background-size 135px 35px
   background-repeat no-repeat
   font-size 0

@@ -1,7 +1,7 @@
 <template>
   <div class="swiper-container">
     <div class="swiper-button">
-      <img :class="prevCls" class="swiper-img" @click="handlePrev" src="../../public/doc-svg/anli_icon_left.svg" loading="lazy" />
+      <img :class="prevCls" class="swiper-img" @click="handlePrev" src="https://dpubstatic.udache.com/static/dpubimg/0cgzDC8Apn/anli_icon_left.png" width="50" height="50" alt="left" loading="lazy" />
     </div>
     <div class="swiper" ref="wrapper">
       <div
@@ -20,7 +20,7 @@
       </div>
     </div>
     <div class="swiper-button">
-      <img :class="nextCls" class="swiper-img" @click="handleNext" src="../../public/doc-svg/anli_icon_right.svg" loading="lazy" />
+      <img :class="nextCls" class="swiper-img" @click="handleNext" src="https://dpubstatic.udache.com/static/dpubimg/QhD6ulEP7k/anli_icon_right.png" width="50" height="50" alt="right" loading="lazy" />
     </div>
   </div>
 </template>
