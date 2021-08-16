@@ -2065,7 +2065,7 @@ function processDuplicateAttrsList (el) {
 }
 
 // 处理wxs注入逻辑
-function processInjectWxs (meta, el) {
+function processInjectWxs (el, meta) {
   if (el.injectWxsProps && el.injectWxsProps.length) {
     el.injectWxsProps.forEach((injectWxsProp) => {
       const { injectWxsPath, injectWxsModuleName } = injectWxsProp
@@ -2094,11 +2094,11 @@ function processElement (el, root, options, meta) {
     rulesRunner(el)
   }
 
-  processInjectWxs(meta, el)
-
   processNoTransAttrs(el)
 
   processDuplicateAttrsList(el)
+
+  processInjectWxs(el, meta)
 
   const transAli = mode === 'ali' && srcMode === 'wx'
 
