@@ -6,7 +6,8 @@ const TAG_NAME = 'component'
 /** is 属性格式化为中划线(-)连接 */
 const formatPropIs = (obj, data) => {
   const parsed = parseMustache(obj.value)
-  const value = parsed.result
+  let value = parsed.result
+  if (parsed.hasBinding) value = value.slice(1, -1)
   const el = data.el
   if (el) {
     const injectWxsProp = {
@@ -21,7 +22,7 @@ const formatPropIs = (obj, data) => {
   }
   return {
     name: 'is',
-    value: `{{__wxsUtils__.humpToLine${value}}}`
+    value: `{{__wxsUtils__.humpToLine(${value})}}`
   }
 }
 
