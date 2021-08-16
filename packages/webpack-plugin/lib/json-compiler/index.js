@@ -428,6 +428,27 @@ module.exports = function (raw = '{}') {
                     subPackage.plugins = content.plugins
                   }
 
+                  if (content.usingComponents) {
+                    mpx.usingComponents = mpx.usingComponents || {}
+                    Object.keys(content.usingComponents).forEach((key) => {
+                      if (mpx.usingComponents[key]) {
+                        emitError(`Current subpackage [${tarRoot}] registers a conflict usingComponents [${key}], which is not allowed, please rename it!`)
+                        return callback()
+                      }
+                      const request = content.usingComponents[key]
+                      if (request.indexOf('?') > -1) {
+                        processSelfQueue.push((callback) => {
+                          processComponent(request, context, (componentPath) => {
+                            if (useRelativePath === true) {
+                              componentPath = toPosix(path.relative(path.dirname(currentPath), componentPath))
+                            }
+                            mpx.usingComponents[key] = componentPath
+                          }, undefined, callback)
+                        })
+                      }
+                    })
+                  }
+
                   processSubPackagesQueue.push((callback) => {
                     processSubPackage(subPackage, context, callback)
                   })
@@ -646,6 +667,17 @@ module.exports = function (raw = '{}') {
       return output
     }
 
+    const processUsingComponent = (output) => {
+      if (!mpx.usingComponents) {
+        return output
+      }
+      output += 'json.usingComponents = json.usingComponents || {}; \n'
+      Object.keys(mpx.usingComponents).forEach(key => {
+        output += `json.usingComponents['${key}'] = '${mpx.usingComponents[key]}'; \n`
+      })
+      return output
+    }
+
     const processWorkers = (workers, context, callback) => {
       if (workers) {
         let workersPath = path.join(context, workers)
@@ -801,6 +833,7 @@ module.exports = function (raw = '{}') {
         output = processTabBar(output)
         output = processOptionMenu(output)
         output = processThemeLocation(output)
+        output = processUsingComponent(output)
         return output
       }
       callback(null, processOutput)
