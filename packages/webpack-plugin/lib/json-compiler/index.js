@@ -428,6 +428,22 @@ module.exports = function (raw = '{}') {
                     subPackage.plugins = content.plugins
                   }
 
+                  if (content.usingComponents) {
+                    mpx.usingComponents = mpx.usingComponents || {}
+                    processSelfQueue.push((callback) => {
+                      processComponents(content.usingComponents, context, () => {
+                        Object.keys(content.usingComponents).forEach(key => {
+                          if (mpx.usingComponents[key]) {
+                            emitError(`Current subpackage [${tarRoot}] registers a conflict usingComponents [${key}], which is not allowed, please rename it!`)
+                          } else {
+                            mpx.usingComponents[key] = content.usingComponents[key]
+                          }
+                        })
+                        callback()
+                      })
+                    })
+                  }
+
                   processSubPackagesQueue.push((callback) => {
                     processSubPackage(subPackage, context, callback)
                   })
@@ -440,25 +456,6 @@ module.exports = function (raw = '{}') {
               if (content.packages) {
                 processSelfQueue.push((callback) => {
                   processPackages(content.packages, context, callback)
-                })
-              }
-              if (content.usingComponents) {
-                mpx.usingComponents = mpx.usingComponents || {}
-                Object.keys(content.usingComponents).forEach((key) => {
-                  if (mpx.usingComponents[key]) {
-                    emitError(`Current subpackage [${tarRoot}] registers a conflict usingComponents [${key}], which is not allowed, please rename it!`)
-                    return callback()
-                  }
-                  const request = content.usingComponents[key]
-                  processSelfQueue.push((callback) => {
-                    processComponent(request, context, (componentPath) => {
-                      if (useRelativePath === true) {
-                        componentPath = toPosix(path.relative(path.dirname(currentPath), componentPath))
-                      }
-                      mpx.usingComponents[key] = componentPath
-                      console.log('mpx.usingComponents: ', mpx.usingComponents)
-                    }, undefined, callback)
-                  })
                 })
               }
               if (processSelfQueue.length) {
