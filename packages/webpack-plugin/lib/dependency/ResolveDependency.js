@@ -46,8 +46,8 @@ ResolveDependency.Template = class ResolveDependencyTemplate {
     // for tenon
     // const issuerResource = pagesMap[parseRequest(dep.issuerResource).resourcePath]
     // return JSON.stringify('./' + path.relative(path.dirname(`/${issuerResource}.js`), `/${resolved}.js`))
-    return JSON.stringify('hummer://' + resolved)
-    // return JSON.stringify(dep.publicPath + resolved)
+    // return JSON.stringify('hummer://' + resolved)
+    return JSON.stringify(dep.publicPath + resolved)
   }
 }
 
