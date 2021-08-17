@@ -38,6 +38,7 @@ const video = require('./video')
 const view = require('./view')
 const webView = require('./web-view')
 const wxs = require('./wxs')
+const component = require('./component')
 
 module.exports = function getComponentConfigs ({ warn, error }) {
   /**
@@ -117,6 +118,7 @@ module.exports = function getComponentConfigs ({ warn, error }) {
     camera({ print }),
     livePlayer({ print }),
     livePusher({ print }),
-    HyphenTagName({ print })
+    HyphenTagName({ print }),
+    component()
   ]
 }
