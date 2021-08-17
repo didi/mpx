@@ -135,7 +135,33 @@ if (__mpx_mode__ === 'web') {
   InstanceAPIs = {
     $remove: remove
   }
-} else {
+} else if (__mpx_mode__ === 'tenon') {
+  const set = (target, key, value) => {
+    return Reflect.set(target, key, value)
+  }
+  const del = (target, key) => {
+    return Reflect.deleteProperty(target, key)
+  }
+  APIs = {
+    createApp,
+    createPage,
+    createComponent,
+    // createStore, // todo 使用Hummer提供的store
+    // createStoreWithThis,
+    mixin: injectMixins,
+    injectMixins,
+    // toPureObject, // todo 使用Vue3的方法
+    observable, // todo 使用V3 reactive
+    watch, // todo 使用Vue3的watch
+    use,
+    set,
+    delete: del,
+    setConvertRule,
+    getMixin,
+    implement
+  }
+}
+else {
   observable = function (obj) {
     observe(obj)
     return obj
@@ -206,7 +232,7 @@ EXPORT_MPX.config = {
   setDataHandler: null
 }
 
-if (__mpx_mode__ === 'web') {
+if (__mpx_mode__ === 'web' || __mpx_mode__ === 'tenon') {
   global.__mpx = EXPORT_MPX
 } else {
   if (global.i18n) {

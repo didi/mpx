@@ -2104,6 +2104,15 @@ function processElement (el, root, options, meta) {
     processComponentGenericsForWeb(el, options, meta)
     return
   }
+  if (mode === 'tenon') {
+    // 收集内建组件
+    // processBuiltInComponents(el, meta)
+    // 预处理代码维度条件编译
+    processIfForWeb(el)
+    // processWebExternalClassesHack(el, options)
+    // processComponentGenericsForWeb(el, options, meta)
+    return
+  }
 
   const pass = isNative || processTemplate(el) || processingTemplate
 
@@ -2141,7 +2150,7 @@ function processElement (el, root, options, meta) {
 
 function closeElement (el, meta) {
   postProcessAtMode(el)
-  if (mode === 'web') {
+  if (mode === 'web' || mode === 'tenon') {
     postProcessWxs(el, meta)
     // 处理代码维度条件编译移除死分支
     postProcessIf(el)
@@ -2248,7 +2257,7 @@ function serialize (root) {
           result += node.text
         }
       }
-      if (node.tag === 'wxs' && mode === 'web') {
+      if (node.tag === 'wxs' && (mode === 'web' || mode === 'tenon')) {
         return result
       }
       if (node.type === 1) {

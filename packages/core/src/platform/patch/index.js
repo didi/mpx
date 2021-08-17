@@ -3,6 +3,7 @@ import getBuiltInMixins from '../builtInMixins/index'
 import { getDefaultOptions as getWxDefaultOptions } from './wx/getDefaultOptions'
 import { getDefaultOptions as getAliDefaultOptions } from './ali/getDefaultOptions'
 import { getDefaultOptions as getWebDefaultOptions } from './web/getDefaultOptions'
+import { getDefaultOptions as getTenonDefaultOptions } from './tenon/getDefaultOptions'
 import { error } from '../../helper/log'
 
 export default function createFactory (type) {
@@ -10,7 +11,7 @@ export default function createFactory (type) {
     options.__nativeRender__ = !!isNative
     options.__type__ = type
     let ctor
-    if (__mpx_mode__ !== 'web') {
+    if (__mpx_mode__ !== 'web' && __mpx_mode__ !== 'tenon') {
       if (customCtor) {
         ctor = customCtor
         customCtorType = customCtorType || type
@@ -37,6 +38,8 @@ export default function createFactory (type) {
     let getDefaultOptions
     if (__mpx_mode__ === 'web') {
       getDefaultOptions = getWebDefaultOptions
+    } else if (__mpx_mode__ === 'tenon') {
+      getDefaultOptions = getTenonDefaultOptions
     } else if (__mpx_mode__ === 'ali') {
       getDefaultOptions = getAliDefaultOptions
     } else {
@@ -50,7 +53,7 @@ export default function createFactory (type) {
     if (defaultOptions.pageShow || defaultOptions.pageHide) {
       error('出于性能考虑，pageShow/pageHide增强钩子将在下个版本被移除，请使用原生的pageLifetimes替代，此外请不要强依赖pageLifetimes.show进行初始化操作，因为pageLifetimes.show并不能保证在初始化时一定被调用！', global.currentResource)
     }
-    if (__mpx_mode__ === 'web') {
+    if (__mpx_mode__ === 'web' || __mpx_mode__ === 'tenon') {
       global.currentOption = defaultOptions
     } else if (ctor) {
       return ctor(defaultOptions)

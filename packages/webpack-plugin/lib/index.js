@@ -225,7 +225,7 @@ class MpxWebpackPlugin {
     let splitChunksPlugin
     let splitChunksOptions
 
-    if (this.options.mode !== 'web') {
+    if (this.options.mode !== 'web' && this.options.mode !== 'tenon') {
       compiler.options.optimization.runtimeChunk = {
         name: (entrypoint) => {
           for (let packageName in mpx.independentSubpackagesMap) {
@@ -824,7 +824,7 @@ class MpxWebpackPlugin {
 
       // 为了正确生成sourceMap，将该步骤由原来的compile.hooks.emit迁移到compilation.hooks.optimizeChunkAssets中来
       compilation.hooks.optimizeChunkAssets.tapAsync('MpxWebpackPlugin', (chunks, callback) => {
-        if (mpx.mode === 'web') return callback()
+        if (mpx.mode === 'web' || mpx.mode === 'tenon') return callback()
         const jsonpFunction = compilation.outputOptions.jsonpFunction
 
         function getTargetFile (file) {

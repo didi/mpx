@@ -1,6 +1,7 @@
 import * as wxLifecycle from '../platform/patch/wx/lifecycle'
 import * as aliLifecycle from '../platform/patch/ali/lifecycle'
 import * as webLifecycle from '../platform/patch/web/lifecycle'
+import * as tenonLifecycle from '../platform/patch/tenon/lifecycle'
 import { mergeLifecycle } from './mergeLifecycle'
 import { isObject, hasOwn } from '../helper/utils'
 import { error } from '../helper/log'
@@ -26,6 +27,9 @@ let pageMode
 
 if (__mpx_mode__ === 'web') {
   lifecycleInfo = webLifecycle
+  pageMode = ''
+} else if (__mpx_mode__ === 'tenon') {
+  lifecycleInfo = tenonLifecycle
   pageMode = ''
 } else if (__mpx_mode__ === 'ali') {
   lifecycleInfo = aliLifecycle

@@ -65,7 +65,7 @@ export default function createApp (option, config = {}) {
   const { rawOptions } = transferOptions(option, 'app', builtInMixins)
   const defaultOptions = filterOptions(spreadProp(mergeOptions(rawOptions, 'app', false), 'methods'), appData)
 
-  if (__mpx_mode__ === 'web') {
+  if (__mpx_mode__ === 'web' || __mpx_mode__ === 'tenon') {
     global.currentOption = defaultOptions
     global.getApp = function () {
       return appData

@@ -12,6 +12,7 @@ const processJSON = require('./web/processJSON')
 const processScript = require('./web/processScript')
 const processStyles = require('./web/processStyles')
 const processTemplate = require('./web/processTemplate')
+const processForTenon = require('./tenon/index')
 const readJsonForSrc = require('./utils/read-json-for-src')
 const normalize = require('./utils/normalize')
 const getMainCompilation = require('./utils/get-main-compilation')
@@ -167,6 +168,47 @@ module.exports = function (content) {
         isNative,
         projectRoot
       })
+
+      if (mode === 'tenon') {
+        if (ctorType === 'app' && !queryObj.app) {
+          const request = addQuery(this.resource, { app: true })
+          output += `
+      import App from ${stringifyRequest(request)}
+      import * as Tenon from '@hummer/tenon-vue'
+
+      Tenon.render(App)\n`
+          // 直接结束loader进入parse
+          this.loaderIndex = -1
+          return callback(null, output)
+        }
+        if (ctorType === 'page' && queryObj.tenon) {
+          console.log(resourcePath)
+          const request = addQuery(resourcePath, { page: true })
+          output += `
+      import page from ${stringifyRequest(request)}
+      import * as Tenon from '@hummer/tenon-vue'
+
+      Tenon.render(page)\n`
+          this.loaderIndex = -1
+          return callback(null, output)
+        }
+        return processForTenon({
+          mpx,
+          loaderContext,
+          isProduction,
+          queryObj,
+          filePath,
+          parts,
+          ctorType,
+          autoScope,
+          componentsMap,
+          projectRoot,
+          getRequireForSrc,
+          vueContentCache,
+          moduleId,
+          callback
+        })
+      }
 
       // 处理mode为web时输出vue格式文件
       if (mode === 'web') {

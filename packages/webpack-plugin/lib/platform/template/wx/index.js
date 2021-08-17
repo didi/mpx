@@ -10,7 +10,7 @@ const normalize = require('../../../utils/normalize')
 
 module.exports = function getSpec ({ warn, error }) {
   const spec = {
-    supportedModes: ['ali', 'swan', 'qq', 'tt', 'web', 'qa', 'jd', 'dd'],
+    supportedModes: ['ali', 'swan', 'qq', 'tt', 'web', 'qa', 'jd', 'dd', 'tenon'],
     // props预处理
     preProps: [],
     // props后处理
@@ -86,6 +86,16 @@ module.exports = function getSpec ({ warn, error }) {
             name: 'v-for',
             value: `(${itemName}, ${indexName}) in ${parsed.result}`
           }
+        },
+        tenon ({ value }, { el }) {
+          const parsed = parseMustache(value)
+          const attrsMap = el.attrsMap
+          const itemName = attrsMap['wx:for-item'] || 'item'
+          const indexName = attrsMap['wx:for-index'] || 'index'
+          return {
+            name: 'v-for',
+            value: `(${itemName}, ${indexName}) in ${parsed.result}`
+          }
         }
       },
       {
@@ -94,6 +104,25 @@ module.exports = function getSpec ({ warn, error }) {
           return false
         },
         web ({ value }, { el }) {
+          // vue的template中不能包含key，对应于小程序中的block
+          if (el.tag === 'block') return false
+          const itemName = el.attrsMap['wx:for-item'] || 'item'
+          const keyName = value
+          if (value === '*this') {
+            value = itemName
+          } else {
+            if (isValidIdentifierStr(keyName)) {
+              value = `${itemName}.${keyName}`
+            } else {
+              value = `${itemName}['${keyName}']`
+            }
+          }
+          return {
+            name: ':key',
+            value
+          }
+        },
+        tenon ({ value }, { el }) {
           // vue的template中不能包含key，对应于小程序中的block
           if (el.tag === 'block') return false
           const itemName = el.attrsMap['wx:for-item'] || 'item'
@@ -163,6 +192,45 @@ module.exports = function getSpec ({ warn, error }) {
               }
             ]
           }
+        },
+        tenon ({ value }, { el }) {
+          el.hasEvent = true
+          const attrsMap = el.attrsMap
+          const tagRE = /\{\{((?:.|\n|\r)+?)\}\}(?!})/
+          const stringify = JSON.stringify
+          const match = tagRE.exec(value)
+          if (match) {
+            const modelProp = attrsMap['wx:model-prop'] || 'value'
+            const modelEvent = attrsMap['wx:model-event'] || 'input'
+            const modelValuePathRaw = attrsMap['wx:model-value-path']
+            const modelValuePath = modelValuePathRaw === undefined ? 'value' : modelValuePathRaw
+            const modelFilter = attrsMap['wx:model-filter']
+            let modelValuePathArr
+            try {
+              modelValuePathArr = JSON5.parse(modelValuePath)
+            } catch (e) {
+              if (modelValuePath === '') {
+                modelValuePathArr = []
+              } else {
+                modelValuePathArr = modelValuePath.split('.')
+              }
+            }
+            let modelValue = match[1].trim()
+            return [
+              {
+                name: ':' + modelProp,
+                value: modelValue
+              },
+              {
+                name: 'mpxModelEvent',
+                value: modelEvent
+              },
+              {
+                name: '@mpxModel',
+                value: `__model(${stringifyWithResolveComputed(modelValue)}, $event, ${stringify(modelValuePathArr)}, ${stringify(modelFilter)})`
+              }
+            ]
+          }
         }
       },
       {
@@ -185,6 +253,14 @@ module.exports = function getSpec ({ warn, error }) {
         // 样式类名绑定
         test: /^wx:(class|style)$/,
         web ({ name, value }) {
+          const dir = this.test.exec(name)[1]
+          const parsed = parseMustache(value)
+          return {
+            name: ':' + dir,
+            value: parsed.result
+          }
+        },
+        tenon ({ name, value }) {
           const dir = this.test.exec(name)[1]
           const parsed = parseMustache(value)
           return {
@@ -248,6 +324,17 @@ module.exports = function getSpec ({ warn, error }) {
             name: 'v-' + dir,
             value: parsed.result
           }
+        },
+        tenon ({ name, value }) {
+          let dir = this.test.exec(name)[1]
+          const parsed = parseMustache(value)
+          if (dir === 'elif') {
+            dir = 'else-if'
+          }
+          return {
+            name: 'v-' + dir,
+            value: parsed.result
+          }
         }
       },
       // 事件
@@ -273,6 +360,23 @@ module.exports = function getSpec ({ warn, error }) {
           runRules(eventRules, eventName, { mode: 'jd' })
         },
         web ({ name, value }, { eventRules, el }) {
+          const match = this.test.exec(name)
+          const prefix = match[1]
+          const eventName = match[2]
+          const modifierStr = match[3] || ''
+          const meta = {
+            modifierStr
+          }
+          // 记录event监听信息用于后续判断是否需要使用内置基础组件
+          el.hasEvent = true
+          const rPrefix = runRules(spec.event.prefix, prefix, { mode: 'web', meta })
+          const rEventName = runRules(eventRules, eventName, { mode: 'web' })
+          return {
+            name: rPrefix + rEventName + meta.modifierStr,
+            value
+          }
+        },
+        tenon ({ name, value }, { eventRules, el }) {
           const match = this.test.exec(name)
           const prefix = match[1]
           const eventName = match[2]
