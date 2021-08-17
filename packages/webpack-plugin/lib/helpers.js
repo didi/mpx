@@ -51,10 +51,18 @@ module.exports = function createHelpers (loaderContext) {
     const src = part.src
     const options = {
       mpx: true,
-      type,
+      // type,
       index,
       ...extraOptions
     }
+
+    switch (type) {
+      case 'json':
+      case 'styles':
+      case 'template':
+        options.extract = true
+    }
+
     if (part.mode) options.mode = mode
 
     if (src) {

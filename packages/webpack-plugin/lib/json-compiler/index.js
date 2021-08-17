@@ -52,6 +52,7 @@ module.exports = function (raw) {
   const useRelativePath = mpx.isPluginMode || mpx.useRelativePath
   const { resourcePath, queryObj } = parseRequest(this.resource)
   const packageName = queryObj.packageName || mpx.currentPackageRoot || 'main'
+  const appsMap = mpx.appsMap
   const pagesMap = mpx.pagesMap
   const componentsMap = mpx.componentsMap[packageName]
   const getEntryNode = mpx.getEntryNode
@@ -67,8 +68,20 @@ module.exports = function (raw) {
   const isApp = !(pagesMap[resourcePath] || componentsMap[resourcePath])
   const publicPath = this._compilation.outputOptions.publicPath || ''
   const fs = this._compiler.inputFileSystem
-  const rootName = mainCompilation.entries.keys().next().value
-  const currentName = componentsMap[resourcePath] || pagesMap[resourcePath] || rootName
+
+  if (isApp) {
+    for (const [name, { dependencies }] of mainCompilation.entries) {
+      if (moduleGraph.getModule(dependencies[0]) === this._module) {
+        appsMap[resourcePath] = name
+        break
+      }
+    }
+  }
+
+  const currentName = componentsMap[resourcePath] || pagesMap[resourcePath] || appsMap[resourcePath]
+  if (!currentName) {
+    emitError('No currentName!')
+  }
   const currentPath = publicPath + currentName
 
   // json模块都是由.mpx或.js的入口模块引入，且引入关系为一对一，其issuer必为入口module

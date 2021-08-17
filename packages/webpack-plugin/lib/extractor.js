@@ -20,6 +20,15 @@ const Cache = require('webpack/lib/Cache')
 
 const defaultResultSource = '// removed by extractor'
 
+module.exports = function() {}
+
+module.exports.pitch = async function(remainingRequest){
+  const mpx = this.getMpx()
+  const exports = await this.importModule(`!!${remainingRequest}`)
+  this.emitFile(exports)
+
+}
+
 module.exports = function (content) {
   this.cacheable()
   const options = loaderUtils.getOptions(this) || {}

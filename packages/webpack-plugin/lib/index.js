@@ -285,11 +285,17 @@ class MpxWebpackPlugin {
 
     new ExternalsPlugin('commonjs2', this.options.externals).apply(compiler)
 
+    let mpx
+
     compiler.hooks.compilation.tap('MpxWebpackPlugin ', (compilation, { normalModuleFactory }) => {
       NormalModule.getCompilationHooks(compilation).loader.tap('MpxWebpackPlugin', (loaderContext, module) => {
         // 设置loaderContext的minimize
         if (isProductionLikeMode(compiler.options)) {
           loaderContext.minimize = true
+        }
+
+        loaderContext.getMpx = () => {
+          return mpx
         }
       })
       compilation.dependencyFactories.set(ResolveDependency, new NullFactory())
@@ -314,8 +320,6 @@ class MpxWebpackPlugin {
       compilation.dependencyTemplates.set(RemovedModuleDependency, new RemovedModuleDependency.Template())
     })
 
-    let mpx
-
     compiler.hooks.thisCompilation.tap('MpxWebpackPlugin', (compilation, { normalModuleFactory }) => {
       compilation.warnings = compilation.warnings.concat(warnings)
       compilation.errors = compilation.errors.concat(errors)
@@ -323,6 +327,8 @@ class MpxWebpackPlugin {
       if (!compilation.__mpx__) {
         // init mpx
         mpx = compilation.__mpx__ = {
+          // app记录，便于获取appName
+          appsMap: {},
           // pages全局记录，无需区分主包分包
           pagesMap: {},
           // 记录pages对应的entry，处理多appEntry输出web多页项目时可能出现的pagePath冲突的问题，多appEntry输出目前仅web模式支持
@@ -410,6 +416,27 @@ class MpxWebpackPlugin {
               return hash(path.relative(this.options.projectRoot, resourcePath))
             }
             return hash(resourcePath)
+          },
+          getFilename: ({ resource, type, warn }) => {
+            const { resourcePath, queryObj } = parseRequest(resource)
+            const currentPackageName = queryObj.packageName || mpx.currentPackageRoot || 'main'
+            const componentsMap = mpx.componentsMap[currentPackageName]
+            let filename = pagesMap[resourcePath] || componentsMap[resourcePath]
+            if (!filename && resourcePath === rootResourcePath) {
+              filename = rootName
+            }
+            if (filename) {
+              return filename + typeExtMap[type]
+            } else {
+              const resourceName = path.parse(resourcePath).name
+              const outputPath = path.join(type, resourceName + pathHash(resourcePath) + typeExtMap[type])
+              return mpx.getPackageInfo({
+                resource,
+                outputPath,
+                resourceType: 'staticResources',
+                warn
+              }).outputPath
+            }
           },
           // 组件和静态资源的输出规则如下：
           // 1. 主包引用的资源输出至主包

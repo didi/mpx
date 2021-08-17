@@ -23,7 +23,12 @@ module.exports = class AddEnvPlugin {
         env
       }
       const resourcePath = request.path
-      const extname = path.extname(resourcePath)
+      let extname = ''
+      if (resourcePath.endsWith('.json.js')) {
+        extname = '.json.js'
+      } else {
+        extname = path.extname(resourcePath)
+      }
       // 当前资源没有后缀名或者路径不符合fileConditionRules规则时，直接返回
       if (!extname || !matchCondition(resourcePath, this.fileConditionRules)) return callback()
       const queryObj = parseQuery(request.query || '?')
