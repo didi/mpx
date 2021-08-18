@@ -118,6 +118,7 @@ module.exports = function (source) {
         additionalAssets[file].modules = additionalAssets[file].modules || []
         additionalAssets[file].modules.push(entryModule)
       })
+      // todo extract已移除，使用emitFile来实现
       extract(JSON.stringify(pluginEntry), file, 0, sideEffects)
       nativeCallback(null, defaultResultSource)
     })

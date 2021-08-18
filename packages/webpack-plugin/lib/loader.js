@@ -69,20 +69,20 @@ module.exports = function (content) {
   const loaderContext = this
   const stringifyRequest = r => loaderUtils.stringifyRequest(loaderContext, r)
   const isProduction = this.minimize || process.env.NODE_ENV === 'production'
-  const processSrcQuery = (src, type) => {
-    const localQuery = Object.assign({}, queryObj)
-
-    if (type === 'styles') {
-      localQuery.isStatic = true
-      localQuery.issuerResource = this.resource
-    } else {
-      localQuery.resourcePath = resourcePath
-    }
-    if (type === 'json') {
-      localQuery.__component = true
-    }
-    return addQuery(src, localQuery)
-  }
+  // const processSrcQuery = (src, type) => {
+  //   const localQuery = Object.assign({}, queryObj)
+  //
+  //   if (type === 'styles') {
+  //     localQuery.isStatic = true
+  //     localQuery.issuerResource = this.resource
+  //   } else {
+  //     localQuery.resourcePath = resourcePath
+  //   }
+  //   if (type === 'json') {
+  //     localQuery.__component = true
+  //   }
+  //   return addQuery(src, localQuery)
+  // }
 
   const filePath = resourcePath
 
@@ -244,7 +244,6 @@ module.exports = function (content) {
 
       const {
         getRequire,
-        getRequestString,
       } = createHelpers(loaderContext)
 
       // todo webpack5不再支持注入global
@@ -323,7 +322,7 @@ module.exports = function (content) {
           if (style.src) {
             // style src会被特殊处理为全局复用样式，不添加resourcePath，添加isStatic及issuerResource
             extraOptions.isStatic = true
-            extraOptions.issuerResource = this.resource
+            extraOptions.issuerFile = mpx.getExtractedFile(this.resource)
           }
           output += getRequire('styles', style, extraOptions, i) + '\n'
         })

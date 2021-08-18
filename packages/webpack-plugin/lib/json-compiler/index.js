@@ -69,15 +69,6 @@ module.exports = function (raw) {
   const publicPath = this._compilation.outputOptions.publicPath || ''
   const fs = this._compiler.inputFileSystem
 
-  if (isApp) {
-    for (const [name, { dependencies }] of mainCompilation.entries) {
-      if (moduleGraph.getModule(dependencies[0]) === this._module) {
-        appsMap[resourcePath] = name
-        break
-      }
-    }
-  }
-
   const currentName = componentsMap[resourcePath] || pagesMap[resourcePath] || appsMap[resourcePath]
   if (!currentName) {
     emitError('No currentName!')
@@ -353,8 +344,20 @@ module.exports = function (raw) {
   }
 
   if (isApp) {
-    if (!mpx.hasApp) {
-      mpx.hasApp = true
+
+  }
+
+  if (isApp) {
+    if (!mpx.appInfo) {
+      for (const [name, { dependencies }] of mainCompilation.entries) {
+        if (moduleGraph.getModule(dependencies[0]) === this._module) {
+          mpx.appInfo = {
+            name,
+            resourcePath
+          }
+          break
+        }
+      }
     } else {
       const issuer = getJsonIssuer(this._module)
       if (issuer) {

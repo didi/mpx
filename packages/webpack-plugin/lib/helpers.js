@@ -51,7 +51,7 @@ module.exports = function createHelpers (loaderContext) {
     const src = part.src
     const options = {
       mpx: true,
-      // type,
+      type,
       index,
       ...extraOptions
     }

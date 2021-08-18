@@ -14,7 +14,6 @@ function randomIdent () {
 }
 
 module.exports = function (content) {
-  const loaderContext = this
   const isProduction = this.minimize || process.env.NODE_ENV === 'production'
   const options = loaderUtils.getOptions(this) || {}
   const mpx = getMainCompilation(this._compilation).__mpx__
@@ -34,19 +33,8 @@ module.exports = function (content) {
   const customAttributes = options.attributes || mpx.attributes || []
 
   const {
-    getSrcRequestString
-  } = createHelpers({
-    loaderContext,
-    options,
-    moduleId,
-    isProduction,
-    hasScoped,
-    hasComment,
-    usingComponents,
-    srcMode,
-    isNative,
-    projectRoot: options.root || ''
-  })
+    getRequestString
+  } = createHelpers(this)
 
   const attributes = ['image:src', 'audio:src', 'video:src', 'cover-image:src', 'import:src', 'include:src', `${config[mode].wxs.tag}:${config[mode].wxs.src}`].concat(customAttributes)
 
@@ -120,25 +108,36 @@ module.exports = function (content) {
 
   const exportsString = 'module.exports = '
 
-  return exportsString + content.replace(/xxxHTMLLINKxxx[0-9.]+xxx/g, function (match) {
+  return exportsString + content.replace(/xxxHTMLLINKxxx[0-9.]+xxx/g, (match) => {
     if (!data[match]) return match
 
     const link = data[match]
 
     let src = loaderUtils.urlToRequest(link.value, options.root)
-    src = addQuery(src, { isStatic: true })
 
-    let requestString
+    let requestString, extraOptions
+
 
     switch (link.tag) {
       case 'import':
       case 'include':
-        requestString = getSrcRequestString('template', { src, mode: localSrcMode }, -1)
+        extraOptions = {
+          hasScoped,
+          hasComment,
+          isNative,
+          moduleId,
+          usingComponents,
+          isStatic: true
+        }
+        requestString = getRequestString('template', { src, mode: localSrcMode }, extraOptions)
         break
       case config[mode].wxs.tag:
         // 显式传递issuerResource避免模块缓存以及提供给wxs-loader计算相对路径
-        src = addQuery(src, { issuerResource: loaderContext.resource, isStatic: true })
-        requestString = getSrcRequestString('wxs', { src, mode: localSrcMode }, -1, undefined, '!!')
+        extraOptions = {
+          issuerFile: mpx.getExtractedFile(this.resource),
+          isStatic: true
+        }
+        requestString = getRequestString('wxs', { src, mode: localSrcMode }, extraOptions)
         break
       default:
         requestString = JSON.stringify(src)
