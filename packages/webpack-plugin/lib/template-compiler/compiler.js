@@ -911,9 +911,6 @@ function parse (template, options) {
       let children = currentParent.children
       if (currentParent.tag !== 'text') {
         text = text.trim()
-          ? text.trim()
-          // only preserve whitespace if its not right after a starting tag
-          : preserveWhitespace && children.length ? ' ' : ''
       }
 
       if ((!config[mode].wxs || currentParent.tag !== config[mode].wxs.tag) && options.decodeHTMLText) {
