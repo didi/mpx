@@ -8,9 +8,11 @@ function isFile (request) {
 }
 
 module.exports = function (raw) {
-  const options = loaderUtils.getOptions(this) || {}
-  const isUrlRequest = r => isUrlRequestRaw(r, options.root)
-  const urlToRequest = r => loaderUtils.urlToRequest(r, options.root)
+  const mpx = this.getMpx()
+  const root = mpx.projectRoot
+  const externals = mpx.externals
+  const isUrlRequest = r => isUrlRequestRaw(r, root, externals)
+  const urlToRequest = r => loaderUtils.urlToRequest(r, root)
 
   const json = JSON5.parse(raw)
   let output = `var json = ${JSON.stringify(json, null, 2)};\n`

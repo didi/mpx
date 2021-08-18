@@ -7,8 +7,6 @@ const parseComponent = require('../parser')
 const config = require('../config')
 const normalize = require('../utils/normalize')
 const nativeLoaderPath = normalize.lib('native-loader')
-const themeLoaderPath = normalize.lib('json-compiler/theme-loader')
-const extractorPath = normalize.lib('extractor')
 const parseRequest = require('../utils/parse-request')
 const mpxJSON = require('../utils/mpx-json')
 const toPosix = require('../utils/to-posix')
@@ -18,6 +16,7 @@ const isUrlRequestRaw = require('../utils/is-url-request')
 const addQuery = require('../utils/add-query')
 const readJsonForSrc = require('../utils/read-json-for-src')
 const getMainCompilation = require('../utils/get-main-compilation')
+const createHelpers = require('../helpers')
 
 module.exports = function (raw) {
   // 该loader中会在每次编译中动态添加entry，不能缓存，否则watch不好使
@@ -53,7 +52,6 @@ module.exports = function (raw) {
   const publicPath = this._compilation.outputOptions.publicPath || ''
   const fs = this._compiler.inputFileSystem
 
-  const stringifyRequest = r => loaderUtils.stringifyRequest(this, r)
   const isUrlRequest = r => isUrlRequestRaw(r, root, externals)
   const urlToRequest = r => loaderUtils.urlToRequest(r)
 
@@ -68,6 +66,8 @@ module.exports = function (raw) {
       new Error('[json compiler][' + this.resource + ']: ' + msg)
     )
   }
+
+  const { getRequestString } = createHelpers(this)
 
   const currentName = componentsMap[resourcePath] || pagesMap[resourcePath] || appsMap[resourcePath]
   if (!currentName) {
@@ -640,15 +640,11 @@ module.exports = function (raw) {
 
     const processThemeLocation = (output) => {
       if (json.themeLocation && isUrlRequest(json.themeLocation)) {
-        const themeRequest = '!!' + extractorPath + '?' +
-          JSON.stringify({
-            type: 'json',
-            index: -1
-          }) + '!' +
-          themeLoaderPath + '?root = ' + root + '!' +
-          addQuery(urlToRequest(json.themeLocation), { __component: true, isStatic: true })
-
-        output += `json.themeLocation = require(${stringifyRequest(themeRequest)});\n`
+        const requestString = getRequestString('json', { src: urlToRequest(json.themeLocation) }, {
+          isTheme: true,
+          isStatic: true
+        })
+        output += `json.themeLocation = require(${requestString});\n`
       }
       return output
     }

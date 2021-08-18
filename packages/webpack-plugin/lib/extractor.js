@@ -3,7 +3,7 @@ const parseRequest = require('./utils/parse-request')
 const toPosix = require('./utils/to-posix')
 const fixRelative = require('./utils/fix-relative')
 
-const defaultResultSource = '// removed by extractor'
+const DEFAULT_RESULT_SOURCE = '// removed by extractor'
 
 module.exports.pitch = async function (remainingRequest) {
   const mpx = this.getMpx()
@@ -24,7 +24,7 @@ module.exports.pitch = async function (remainingRequest) {
     }
   })
 
-  let resultSource = defaultResultSource
+  let resultSource = DEFAULT_RESULT_SOURCE
 
   const { buildInfo } = this._module
 

@@ -29,7 +29,14 @@ const matchCondition = require('./utils/match-condition')
 const { preProcessDefs } = require('./utils/index')
 const config = require('./config')
 const hash = require('hash-sum')
-
+const wxssLoaderPath = normalize.lib('wxss/loader')
+const wxmlLoaderPath = normalize.lib('wxml/loader')
+const styleCompilerPath = normalize.lib('style-compiler/index')
+const templateCompilerPath = normalize.lib('template-compiler/index')
+const jsonCompilerPath = normalize.lib('json-compiler/index')
+const jsonThemeCompilerPath = normalize.lib('json-compiler/theme')
+const extractorPath = normalize.lib('extractor')
+const MPX_PROCESSED_FLAG = 'processed'
 
 const isProductionLikeMode = options => {
   return options.mode === 'production' || !options.mode
@@ -64,8 +71,6 @@ function getPackageCacheGroup (packageName) {
     }
   }
 }
-
-let loaderOptions
 
 const externalsMap = {
   weui: /^weui-miniprogram/
@@ -148,11 +153,22 @@ class MpxWebpackPlugin {
   }
 
   static loader (options = {}) {
-    loaderOptions = options
-    if (loaderOptions.transRpx) {
+    if (options.transRpx) {
       warnings.push('Mpx loader option [transRpx] is deprecated now, please use mpx webpack plugin config [transRpxRules] instead!')
     }
     return { loader: normalize.lib('loader'), options }
+  }
+
+  static nativeLoader (options = {}) {
+    return { loader: normalize.lib('native-loader'), options }
+  }
+
+  static wxssLoader (options) {
+    return { loader: normalize.lib('wxss/loader'), options }
+  }
+
+  static wxmlLoader (options) {
+    return { loader: normalize.lib('wxml/loader'), options }
   }
 
   static pluginLoader (options = {}) {
@@ -350,7 +366,6 @@ class MpxWebpackPlugin {
             entryNodesMap: {},
             // 记录entryModule与entryNode的对应关系，用于体积分析
             entryModulesMap: new Map(),
-            loaderOptions,
             extractedMap: {},
             usingComponents: {},
             // todo es6 map读写性能高于object，之后会逐步替换
@@ -1011,91 +1026,122 @@ try {
       }
     )
 
-    compiler
-      .hooks
-      .normalModuleFactory
-      .tap(
-        'MpxWebpackPlugin'
-        , (
-          normalModuleFactory
-        ) => {
-          // resolve前修改原始request
-          normalModuleFactory
-            .hooks
-            .beforeResolve
-            .tap(
-              'MpxWebpackPlugin'
-              , (
-                data
-              ) => {
-                let
-                  request = data.request
-                let {
-                  queryObj
-                  ,
-                  resource
-                }
-
-                  = parseRequest(request)
-                if (queryObj.resolve) {
-                  // 此处的query用于将资源引用的当前包信息传递给resolveDependency
-                  const pathLoader = normalize.lib('path-loader')
-                  resource = addQuery(resource, {
-                    packageName: mpx.currentPackageRoot || 'main'
-                  })
-                  data.request = `!!${pathLoader}!${resource}`
-                } else if (queryObj.wxsModule) {
-                  const wxsPreLoader = normalize.lib('wxs/wxs-pre-loader')
-                  if (!/wxs-loader/.test(request)) {
-                    data.request = `!!${wxsPreLoader}!${resource}`
-                  }
-                }
-              })
-
-// resolve完成后修改loaders信息并批量添加mode query
-
-          normalModuleFactory.hooks.afterResolve.tapAsync('MpxWebpackPlugin', (data, callback) => {
-            if (data.loaders) {
-              const { queryObj } = parseRequest(data.request)
-              const mpxStyleOptions = queryObj.mpxStyleOptions
-              const firstLoader = (data.loaders[0] && data.loaders[0].loader) || ''
-              const isPitcherRequest = firstLoader.includes('vue-loader/lib/loaders/pitcher.js')
-              let cssLoaderIndex = -1
-              let vueStyleLoaderIndex = -1
-              let mpxStyleLoaderIndex = -1
-              data.loaders.forEach((loader, index) => {
-                const currentLoader = loader.loader
-                if (currentLoader.includes('ts-loader')) {
-                  // todo 暂时固定写死options，待后续优化为复用rules后修正
-                  loader.options = { appendTsSuffixTo: [/\.(mpx|vue)$/] }
-                }
-                if (currentLoader.includes('css-loader')) {
-                  cssLoaderIndex = index
-                } else if (currentLoader.includes('vue-loader/lib/loaders/stylePostLoader.js')) {
-                  vueStyleLoaderIndex = index
-                } else if (currentLoader.includes('@mpxjs/webpack-plugin/lib/style-compiler/index.js')) {
-                  mpxStyleLoaderIndex = index
-                }
-              })
-              if (mpxStyleLoaderIndex === -1) {
-                let loaderIndex = -1
-                if (cssLoaderIndex > -1 && vueStyleLoaderIndex === -1) {
-                  loaderIndex = cssLoaderIndex
-                } else if (cssLoaderIndex > -1 && vueStyleLoaderIndex > -1 && !isPitcherRequest) {
-                  loaderIndex = vueStyleLoaderIndex
-                }
-                if (loaderIndex > -1) {
-                  data.loaders.splice(loaderIndex + 1, 0, {
-                    loader: normalize.lib('style-compiler/index.js'),
-                    options: (mpxStyleOptions && JSON.parse(mpxStyleOptions)) || {}
-                  })
-                }
-              }
-            }
-            // 根据用户传入的modeRules对特定资源添加mode query
-            this.runModeRules(createData)
+    compiler.hooks.normalModuleFactory.tap('MpxWebpackPlugin', (normalModuleFactory) => {
+      // resolve前修改原始request
+      normalModuleFactory.hooks.beforeResolve.tap('MpxWebpackPlugin', (data) => {
+        let request = data.request
+        let { queryObj, resource } = parseRequest(request)
+        if (queryObj.resolve) {
+          // 此处的query用于将资源引用的当前包信息传递给resolveDependency
+          const pathLoader = normalize.lib('path-loader')
+          resource = addQuery(resource, {
+            packageName: mpx.currentPackageRoot || 'main'
           })
-        })
+          data.request = `!!${pathLoader}!${resource}`
+        } else if (queryObj.wxsModule) {
+          const wxsPreLoader = normalize.lib('wxs/wxs-pre-loader')
+          if (!/wxs-loader/.test(request)) {
+            data.request = `!!${wxsPreLoader}!${resource}`
+          }
+        }
+      })
+
+      // 应用过rules后，注入mpx相关资源编译loader
+      normalModuleFactory.hooks.afterResolve.tapAsync('MpxWebpackPlugin', (data, callback) => {
+        const { queryObj } = parseRequest(data.request)
+        if (queryObj.mpx && queryObj.mpx !== MPX_PROCESSED_FLAG) {
+          const type = queryObj.type
+          const extract = queryObj.extract
+          switch (type) {
+            case 'styles':
+              let wxssLoaderIndex
+              data.loaders.forEach((loader, index) => {
+                if (loader.loader.includes('css-loader')) {
+                  loader.loader = wxssLoaderPath
+                }
+                if (loader.loader === wxssLoaderPath) {
+                  wxssLoaderIndex = index
+                }
+              })
+              if (wxssLoaderIndex) {
+                data.loaders.splice(wxssLoaderIndex + 1, 0, {
+                  loader: styleCompilerPath
+                })
+              }
+              break
+            case 'template':
+              let wxmlLoaderIndex
+              data.loaders.forEach((loader, index) => {
+                if (loader.loader.includes('html-loader')) {
+                  loader.loader = wxmlLoaderPath
+                }
+                if (loader.loader === wxmlLoaderPath) {
+                  wxmlLoaderIndex = index
+                }
+              })
+              if (wxmlLoaderIndex) {
+                data.loaders.splice(wxmlLoaderIndex + 1, 0, {
+                  loader: templateCompilerPath
+                })
+              }
+              break
+            case 'json':
+              if (queryObj.isTheme) {
+                data.loaders.push({
+                  loader: jsonThemeCompilerPath
+                })
+              } else {
+                data.loaders.push({
+                  loader: jsonCompilerPath
+                })
+              }
+              break
+          }
+          if (extract) {
+            data.loaders.unshift({
+              loader: extractorPath
+            })
+          }
+
+          data.resource = addQuery(data.resource, { mpx: MPX_PROCESSED_FLAG }, true)
+          data.request = addQuery(data.request, { mpx: MPX_PROCESSED_FLAG }, true)
+        }
+
+
+        // const mpxStyleOptions = queryObj.mpxStyleOptions
+        // const firstLoader = (data.loaders[0] && data.loaders[0].loader) || ''
+        // const isPitcherRequest = firstLoader.includes('vue-loader/lib/loaders/pitcher.js')
+        // let cssLoaderIndex = -1
+        // let vueStyleLoaderIndex = -1
+        // let mpxStyleLoaderIndex = -1
+        // data.loaders.forEach((loader, index) => {
+        //   const currentLoader = loader.loader
+        //   if (currentLoader.includes('css-loader')) {
+        //     cssLoaderIndex = index
+        //   } else if (currentLoader.includes('vue-loader/lib/loaders/stylePostLoader.js')) {
+        //     vueStyleLoaderIndex = index
+        //   } else if (currentLoader.includes('@mpxjs/webpack-plugin/lib/style-compiler/index.js')) {
+        //     mpxStyleLoaderIndex = index
+        //   }
+        // })
+        // if (mpxStyleLoaderIndex === -1) {
+        //   let loaderIndex = -1
+        //   if (cssLoaderIndex > -1 && vueStyleLoaderIndex === -1) {
+        //     loaderIndex = cssLoaderIndex
+        //   } else if (cssLoaderIndex > -1 && vueStyleLoaderIndex > -1 && !isPitcherRequest) {
+        //     loaderIndex = vueStyleLoaderIndex
+        //   }
+        //   if (loaderIndex > -1) {
+        //     data.loaders.splice(loaderIndex + 1, 0, {
+        //       loader: normalize.lib('style-compiler/index.js'),
+        //       options: (mpxStyleOptions && JSON.parse(mpxStyleOptions)) || {}
+        //     })
+        //   }
+        // }
+        // 根据用户传入的modeRules对特定资源添加mode query
+        this.runModeRules(data)
+      })
+    })
 
     compiler.hooks.emit.tapAsync('MpxWebpackPlugin', (compilation, callback) => {
       if (this.options.generateBuildMap) {
