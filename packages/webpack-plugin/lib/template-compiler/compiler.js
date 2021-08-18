@@ -1345,7 +1345,7 @@ function processBindEvent (el, options) {
 }
 
 function wrapMustache (val) {
-  return val && !tagRE.test(val) ? `{{val}}` : val
+  return val && !tagRE.test(val) ? `{{${val}}}` : val
 }
 
 function parseMustache (raw = '') {
