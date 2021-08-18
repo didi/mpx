@@ -794,7 +794,6 @@ function parse (template, options) {
   platformGetTagNamespace = options.getTagNamespace || no
 
   let stack = []
-  let preserveWhitespace = options.preserveWhitespace !== false
   let root
   let meta = {}
   let currentParent
