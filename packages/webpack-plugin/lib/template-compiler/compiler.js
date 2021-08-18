@@ -791,7 +791,6 @@ function parse (template, options) {
   platformGetTagNamespace = options.getTagNamespace || no
 
   let stack = []
-  let preserveWhitespace = options.preserveWhitespace !== false
   let root
   let meta = {}
   let currentParent
@@ -908,9 +907,6 @@ function parse (template, options) {
       let children = currentParent.children
       if (currentParent.tag !== 'text') {
         text = text.trim()
-          ? text.trim()
-          // only preserve whitespace if its not right after a starting tag
-          : preserveWhitespace && children.length ? ' ' : ''
       }
 
       if ((!config[mode].wxs || currentParent.tag !== config[mode].wxs.tag) && options.decodeHTMLText) {
@@ -1342,7 +1338,7 @@ function processBindEvent (el, options) {
 }
 
 function wrapMustache (val) {
-  return val && !tagRE.test(val) ? `{{val}}` : val
+  return val && !tagRE.test(val) ? `{{${val}}}` : val
 }
 
 function parseMustache (raw = '') {
