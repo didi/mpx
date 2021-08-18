@@ -23,26 +23,9 @@ module.exports = function (raw) {
   // 该loader中会在每次编译中动态添加entry，不能缓存，否则watch不好使
   this.cacheable(false)
   const nativeCallback = this.async()
-  const options = loaderUtils.getOptions(this) || {}
   const mainCompilation = getMainCompilation(this._compilation)
   const moduleGraph = this._compilation.moduleGraph
-  const mpx = mainCompilation.__mpx__
-
-  const emitWarning = (msg) => {
-    this.emitWarning(
-      new Error('[json compiler][' + this.resource + ']: ' + msg)
-    )
-  }
-
-  const emitError = (msg) => {
-    this.emitError(
-      new Error('[json compiler][' + this.resource + ']: ' + msg)
-    )
-  }
-
-  const stringifyRequest = r => loaderUtils.stringifyRequest(this, r)
-  const isUrlRequest = r => isUrlRequestRaw(r, options.root)
-  const urlToRequest = r => loaderUtils.urlToRequest(r)
+  const mpx = this.getMpx()
 
   if (!mpx) {
     return nativeCallback(null, raw)
@@ -64,10 +47,27 @@ module.exports = function (raw) {
   const srcMode = localSrcMode || globalSrcMode
   const resolveMode = mpx.resolveMode
   const externals = mpx.externals
+  const root = mpx.projectRoot
   const pathHash = mpx.pathHash
   const isApp = !(pagesMap[resourcePath] || componentsMap[resourcePath])
   const publicPath = this._compilation.outputOptions.publicPath || ''
   const fs = this._compiler.inputFileSystem
+
+  const stringifyRequest = r => loaderUtils.stringifyRequest(this, r)
+  const isUrlRequest = r => isUrlRequestRaw(r, root, externals)
+  const urlToRequest = r => loaderUtils.urlToRequest(r)
+
+  const emitWarning = (msg) => {
+    this.emitWarning(
+      new Error('[json compiler][' + this.resource + ']: ' + msg)
+    )
+  }
+
+  const emitError = (msg) => {
+    this.emitError(
+      new Error('[json compiler][' + this.resource + ']: ' + msg)
+    )
+  }
 
   const currentName = componentsMap[resourcePath] || pagesMap[resourcePath] || appsMap[resourcePath]
   if (!currentName) {
@@ -269,17 +269,6 @@ module.exports = function (raw) {
     if (!isUrlRequest(component)) return callback()
     if (resolveMode === 'native') {
       component = urlToRequest(component)
-    }
-
-    if (externals.some((external) => {
-      if (typeof external === 'string') {
-        return external === component
-      } else if (external instanceof RegExp) {
-        return external.test(component)
-      }
-      return false
-    })) {
-      return callback()
     }
 
     resolve(context, component, (err, resource, info) => {
@@ -656,7 +645,7 @@ module.exports = function (raw) {
             type: 'json',
             index: -1
           }) + '!' +
-          themeLoaderPath + '?root = ' + options.root + '!' +
+          themeLoaderPath + '?root = ' + root + '!' +
           addQuery(urlToRequest(json.themeLocation), { __component: true, isStatic: true })
 
         output += `json.themeLocation = require(${stringifyRequest(themeRequest)});\n`

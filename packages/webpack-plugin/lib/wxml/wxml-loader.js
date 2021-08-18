@@ -1,12 +1,9 @@
-// const htmlMinifier = require('html-minifier')
 const attrParse = require('./attributesParser')
 const loaderUtils = require('loader-utils')
 const url = require('url')
 const config = require('../config')
-const getMainCompilation = require('../utils/get-main-compilation')
 const createHelpers = require('../helpers')
 const isUrlRequest = require('../utils/is-url-request')
-const addQuery = require('../utils/add-query')
 const parseRequest = require('../utils/parse-request')
 
 function randomIdent () {
@@ -14,12 +11,13 @@ function randomIdent () {
 }
 
 module.exports = function (content) {
-  const isProduction = this.minimize || process.env.NODE_ENV === 'production'
   const options = loaderUtils.getOptions(this) || {}
-  const mpx = getMainCompilation(this._compilation).__mpx__
+  const mpx = this.getMpx()
+  const root = mpx.projectRoot
+  const externals = mpx.externals
 
-  const { resourcePath: filePath, queryObj } = parseRequest(this.resource)
-  const moduleId = 'm' + mpx.pathHash(filePath)
+  const { queryObj } = parseRequest(this.resource)
+  const moduleId = queryObj.moduleId
   const hasScoped = false
   const hasComment = false
   const isNative = true
@@ -27,14 +25,10 @@ module.exports = function (content) {
   const usingComponents = []
 
   const mode = mpx.mode
-  const globalSrcMode = mpx.srcMode
   const localSrcMode = queryObj.mode
-  const srcMode = localSrcMode || globalSrcMode
   const customAttributes = options.attributes || mpx.attributes || []
 
-  const {
-    getRequestString
-  } = createHelpers(this)
+  const { getRequestString } = createHelpers(this)
 
   const attributes = ['image:src', 'audio:src', 'video:src', 'cover-image:src', 'import:src', 'include:src', `${config[mode].wxs.tag}:${config[mode].wxs.src}`].concat(customAttributes)
 
@@ -52,7 +46,7 @@ module.exports = function (content) {
   const data = {}
   content = [content]
   links.forEach(function (link) {
-    if (!isUrlRequest(link.value, options.root)) return
+    if (!isUrlRequest(link.value, root, externals)) return
 
     if (link.value.indexOf('mailto:') > -1) return
 
@@ -76,34 +70,6 @@ module.exports = function (content) {
   })
   content.reverse()
   content = content.join('')
-
-  // if (isProduction) {
-  //   const minimizeOptions = Object.assign({}, options);
-  //   [
-  //     'removeComments',
-  //     'removeCommentsFromCDATA',
-  //     'removeCDATASectionsFromCDATA',
-  //     'caseSensitive',
-  //     'collapseWhitespace',
-  //     'conservativeCollapse',
-  //     'useShortDoctype',
-  //     'keepClosingSlash',
-  //     'removeScriptTypeAttributes',
-  //     'removeStyleTypeAttributes'
-  //   ].forEach(function (name) {
-  //     if (typeof minimizeOptions[name] === 'undefined') {
-  //       minimizeOptions[name] = true
-  //     }
-  //   })
-  //
-  //   const KEY_IGNORECUSTOM_FRAGMENTS = 'ignoreCustomFragments'
-  //   if (typeof minimizeOptions[KEY_IGNORECUSTOM_FRAGMENTS] === 'undefined') {
-  //     minimizeOptions[KEY_IGNORECUSTOM_FRAGMENTS] = [/{{[\s\S]*?}}/]
-  //   }
-  //
-  //   content = htmlMinifier.minify(content, minimizeOptions)
-  // }
-
   content = JSON.stringify(content)
 
   const exportsString = 'module.exports = '
@@ -113,7 +79,7 @@ module.exports = function (content) {
 
     const link = data[match]
 
-    let src = loaderUtils.urlToRequest(link.value, options.root)
+    let src = loaderUtils.urlToRequest(link.value, root)
 
     let requestString, extraOptions
 

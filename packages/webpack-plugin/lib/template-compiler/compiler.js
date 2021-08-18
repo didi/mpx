@@ -129,107 +129,6 @@ function isForbiddenTag (el) {
   )
 }
 
-// mpx special comments
-// example
-/*
-{
-  'tt,swan': {
-    remove: [
-      'open-type',
-      // src mode attr
-      'wx:if'
-    ],
-    add: {
-      type: 'primary',
-      // attr name only
-      foo: null,
-    }
-  }
-}
-*/
-let curMpxComment = null
-
-function evalMpxCommentExp (exp) {
-  /* eslint-disable no-new-func */
-  const f = new Function(`return ${exp};`)
-  return f()
-}
-
-function isMpxCommentAttrs (content) {
-  return /@mpx-attrs/.test(content)
-}
-
-function normalizePlatformMpxAttrsOpts (opts) {
-  const ret = {}
-  // Array to map for removing attributes
-  ret.remove = (opts.remove || []).reduce((acc, val) => {
-    acc[val] = true
-    return acc
-  }, {})
-  // Default adding map
-  ret.add = opts.add || {}
-  return ret
-}
-
-function produceMpxCommentAttrs (content) {
-  const exp = /@mpx-attrs[^(]*?\(([\s\S]*)\)/.exec(content)[1].trim()
-  const tmpOpts = evalMpxCommentExp(exp)
-  // normalize
-  Object.keys(tmpOpts).forEach(k => {
-    Object.assign(tmpOpts[k], normalizePlatformMpxAttrsOpts(tmpOpts[k]))
-
-    if (k.indexOf(',') > -1) {
-      const modes = k.split(',')
-      modes.forEach(mode => {
-        tmpOpts[mode] = tmpOpts[k]
-      })
-      delete tmpOpts[k]
-    }
-  })
-  curMpxComment = tmpOpts
-}
-
-function modifyAttrsFromCurMpxAttrOptions (attrs, curModeMpxComment) {
-  const removeMap = curModeMpxComment.remove
-  const addMap = curModeMpxComment.add
-
-  const newAttrs = []
-  attrs.forEach(attr => {
-    if (!removeMap[attr.name]) {
-      newAttrs.push(attr)
-    }
-  })
-
-  Object.keys(addMap).forEach(name => {
-    newAttrs.push({
-      name,
-      value: addMap[name]
-    })
-  })
-
-  return newAttrs
-}
-
-function consumeMpxCommentAttrs (attrs, mode) {
-  let ret = attrs
-  if (curMpxComment) {
-    const curModeMpxComment = curMpxComment[mode]
-    if (curModeMpxComment) {
-      ret = modifyAttrsFromCurMpxAttrOptions(attrs, curModeMpxComment)
-    }
-
-    // reset
-    curMpxComment = null
-  }
-  return ret
-}
-
-function assertMpxCommentAttrsEnd () {
-  if (curMpxComment) {
-    error$1('No target for @mpx-attrs!')
-  }
-}
-
 // Browser environment sniffing
 const UA = inBrowser && window.navigator.userAgent.toLowerCase()
 const isIE = UA && /msie|trident/.test(UA)
@@ -821,16 +720,6 @@ function parse (template, options) {
         attrs = guardIESVGBug(attrs)
       }
 
-      if (options.globalMpxAttrsFilter) {
-        attrs = modifyAttrsFromCurMpxAttrOptions(attrs, normalizePlatformMpxAttrsOpts(options.globalMpxAttrsFilter({
-          tagName: tag,
-          attrs,
-          __mpx_mode__: mode,
-          filePath: options.filePath
-        }) || {}))
-      }
-      attrs = consumeMpxCommentAttrs(attrs, mode)
-
       let element = createASTElement(tag, attrs, currentParent)
       if (ns) {
         element.ns = ns
@@ -844,21 +733,6 @@ function parse (template, options) {
           '<' + tag + '>' + ', as they will not be parsed.'
         )
       }
-
-      // single root
-      // // gen root
-      // if (!root) {
-      //   root = element
-      // } else {
-      //   // mount element
-      //   if (currentParent) {
-      //     currentParent.children.push(element)
-      //     element.parent = currentParent
-      //   } else {
-      //     multiRootError = true
-      //     return
-      //   }
-      // }
 
       // multi root
       if (!currentParent) genTempRoot()
@@ -928,10 +802,7 @@ function parse (template, options) {
     },
     comment: function comment (text) {
       if (!currentParent) genTempRoot()
-      // special comments should not be output
-      if (isMpxCommentAttrs(text)) {
-        produceMpxCommentAttrs(text)
-      } else if (options.hasComment) {
+      if (options.hasComment) {
         currentParent.children.push({
           type: 3,
           text: text,
@@ -941,8 +812,6 @@ function parse (template, options) {
       }
     }
   })
-
-  assertMpxCommentAttrsEnd()
 
   if (multiRootError) {
     error$1('Template fields should has one single root, considering wrapping your template content with <view> or <text> tag!')
@@ -1141,15 +1010,6 @@ function processComponentIs (el, options) {
     warn$1('<component> tag should have attrs[is].')
   }
 }
-
-// function processComponentDepth (el, options) {
-//   if (isComponentNode(el,options)) {
-//     addAttrs(el, [{
-//       name: 'mpxDepth',
-//       value: '{{mpxDepth + 1}}'
-//     }])
-//   }
-// }
 
 const eventIdentifier = '__mpx_event__'
 

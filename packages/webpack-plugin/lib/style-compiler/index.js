@@ -1,27 +1,22 @@
-const getMainCompilation = require('../utils/get-main-compilation')
 const postcss = require('postcss')
-const loaderUtils = require('loader-utils')
 const loadPostcssConfig = require('./load-postcss-config')
-
 const trim = require('./plugins/trim')
 const rpx = require('./plugins/rpx')
 const vw = require('./plugins/vw')
 const pluginCondStrip = require('./plugins/conditional-strip')
 const scopeId = require('./plugins/scope-id')
 const matchCondition = require('../utils/match-condition')
+const parseRequest = require('../utils/parse-request')
 
 module.exports = function (css, map) {
   this.cacheable()
   const cb = this.async()
-  const loaderOptions = loaderUtils.getOptions(this) || {}
-
-  const mainCompilation = getMainCompilation(this._compilation)
-  const mpx = mainCompilation.__mpx__
+  const { queryObj } = parseRequest(this.resource)
+  const mpx = this.getMpx()
   const defs = mpx.defs
-
   const transRpxRulesRaw = mpx.transRpxRules
-
   const transRpxRules = transRpxRulesRaw ? (Array.isArray(transRpxRulesRaw) ? transRpxRulesRaw : [transRpxRulesRaw]) : []
+
 
   const testResolveRange = (include = () => true, exclude) => {
     return matchCondition(this.resourcePath, { include, exclude })
@@ -39,8 +34,8 @@ module.exports = function (css, map) {
       config.options
     )
 
-    if (loaderOptions.scoped) {
-      plugins.push(scopeId({ id: loaderOptions.moduleId }))
+    if (queryObj.scoped) {
+      plugins.push(scopeId({ id: queryObj.moduleId }))
     }
 
     plugins.push(pluginCondStrip({

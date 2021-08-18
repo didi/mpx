@@ -5,25 +5,22 @@
 */
 const loaderUtils = require('loader-utils')
 const processCss = require('./processCss')
-const getImportPrefix = require('./getImportPrefix')
 const compileExports = require('./compile-exports')
 const createResolver = require('./createResolver')
 const isUrlRequest = require('../utils/is-url-request')
-const getMainCompilation = require('../utils/get-main-compilation')
-const addQuery = require('../utils/add-query')
+const createHelpers = require('../helpers')
 
 module.exports = function (content, map) {
   if (this.cacheable) this.cacheable()
-
   const callback = this.async()
   const query = loaderUtils.getOptions(this) || {}
-  const root = query.root
   const moduleMode = query.modules || query.module
   const camelCaseKeys = query.camelCase || query.camelcase
-  const sourceMap = this.sourceMap || false
   const resolve = createResolver(query.alias)
-  const mpx = getMainCompilation(this._compilation).__mpx__
+  const mpx = this.getMpx()
   const externals = mpx.externals
+  const root = mpx.projectRoot
+  const sourceMap = mpx.cssSourceMap || false
 
   if (sourceMap) {
     if (map) {
@@ -43,25 +40,24 @@ module.exports = function (content, map) {
     map = null
   }
 
+  const { getRequestString } = createHelpers(this)
+
   processCss(content, map, {
     mode: moduleMode ? 'local' : 'global',
     from: loaderUtils.getRemainingRequest(this).split('!').pop(),
     to: loaderUtils.getCurrentRequest(this).split('!').pop(),
-    query: query,
-    resolve: resolve,
+    query,
+    resolve,
     minimize: this.minimize,
     loaderContext: this,
-    sourceMap: sourceMap
-  }, function (err, result) {
+    sourceMap
+  }, (err, result) => {
     if (err) return callback(err)
 
     let cssAsString = JSON.stringify(result.source)
 
-    // for importing CSS
-    const importUrlPrefix = getImportPrefix(this)
-
     const alreadyImported = {}
-    const importJs = result.importItems.filter(function (imp) {
+    const importJs = result.importItems.filter((imp) => {
       if (!imp.mediaQuery) {
         if (alreadyImported[imp.url]) {
           return false
@@ -69,43 +65,35 @@ module.exports = function (content, map) {
         alreadyImported[imp.url] = true
       }
       return true
-    }).map(function (imp) {
-      if (!isUrlRequest(imp.url, root) || externals.some((external) => {
-        if (typeof external === 'string') {
-          return external === imp.url
-        } else if (external instanceof RegExp) {
-          return external.test(imp.url)
-        }
-        return false
-      })) {
+    }).map((imp) => {
+      if (!isUrlRequest(imp.url, root, externals)) {
         return 'exports.push([module.id, ' +
           JSON.stringify('@import url(' + imp.url + ');') + ', ' +
           JSON.stringify(imp.mediaQuery) + ']);'
       } else {
-        if (query.extract) {
-          const importUrlPrefix = getImportPrefix(this, true)
-          const importUrl = importUrlPrefix + addQuery(imp.url, { isStatic: true, issuerResource: this.resource })
-          return 'exports.push([module.id, ' +
-            JSON.stringify('@import "') +
-            '+ require(' + loaderUtils.stringifyRequest(this, importUrl) + ') +' +
-            JSON.stringify('";') + ', ' +
-            JSON.stringify(imp.mediaQuery) + ']);'
-        }
-        const importUrl = importUrlPrefix + imp.url
-        return 'exports.i(require(' + loaderUtils.stringifyRequest(this, importUrl) + '), ' + JSON.stringify(imp.mediaQuery) + ');'
+        const requestString = getRequestString('styles', { src: imp.url }, {
+          isStatic: true,
+          issuerFile: mpx.getExtractedFile(this.resource),
+          fromImport: true
+        })
+        return 'exports.push([module.id, ' +
+          JSON.stringify('@import "') +
+          '+ require(' + requestString + ') +' +
+          JSON.stringify('";') + ', ' +
+          JSON.stringify(imp.mediaQuery) + ']);'
       }
-    }, this).join('\n')
+    }).join('\n')
 
-    function importItemMatcher (item) {
+    const importItemMatcher = (item) => {
       const match = result.importItemRegExp.exec(item)
       const idx = +match[1]
       const importItem = result.importItems[idx]
-      const importUrl = importUrlPrefix + importItem.url
+      const importUrl = importItem.url
       return '" + require(' + loaderUtils.stringifyRequest(this, importUrl) + ').locals' +
         '[' + JSON.stringify(importItem.export) + '] + "'
     }
 
-    cssAsString = cssAsString.replace(result.importItemRegExpG, importItemMatcher.bind(this))
+    cssAsString = cssAsString.replace(result.importItemRegExpG, importItemMatcher)
 
     // helper for ensuring valid CSS strings from requires
     let urlEscapeHelper = ''
@@ -113,7 +101,7 @@ module.exports = function (content, map) {
     if (query.url !== false && result.urlItems.length > 0) {
       urlEscapeHelper = 'var escape = require(' + loaderUtils.stringifyRequest(this, '!!' + require.resolve('./url/escape.js')) + ');\n'
 
-      cssAsString = cssAsString.replace(result.urlItemRegExpG, function (item) {
+      cssAsString = cssAsString.replace(result.urlItemRegExpG, (item) => {
         const match = result.urlItemRegExp.exec(item)
         let idx = +match[1]
         const urlItem = result.urlItems[idx]
@@ -129,10 +117,10 @@ module.exports = function (content, map) {
         }
         urlRequest = url
         return '" + escape(require(' + loaderUtils.stringifyRequest(this, urlRequest) + ')) + "'
-      }.bind(this))
+      })
     }
 
-    let exportJs = compileExports(result, importItemMatcher.bind(this), camelCaseKeys)
+    let exportJs = compileExports(result, importItemMatcher, camelCaseKeys)
     if (exportJs) {
       exportJs = 'exports.locals = ' + exportJs + ';'
     }
@@ -165,5 +153,5 @@ module.exports = function (content, map) {
       moduleJs + '\n\n' +
       '// exports\n' +
       exportJs)
-  }.bind(this))
+  })
 }

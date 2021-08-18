@@ -365,8 +365,6 @@ class MpxWebpackPlugin {
             mode: this.options.mode,
             srcMode: this.options.srcMode,
             env: this.options.env,
-            // deprecated option
-            globalMpxAttrsFilter: this.options.globalMpxAttrsFilter,
             externalClasses: this.options.externalClasses,
             projectRoot: this.options.projectRoot,
             autoScopeRules: this.options.autoScopeRules,
@@ -553,21 +551,28 @@ class MpxWebpackPlugin {
         //   }
         //   return rawAddModule.apply(compilation, args)
         // }
+        //
+        // const rawBuildModule = compilation.buildModule
+        //
+        // compilation.buildModule = (module, callback) => {
+        //   const injectedCallback = (err) => {
+        //     if (module.presentationalDependencies) {
+        //       module.presentationalDependencies.forEach((dep) => {
+        //         if (dep.depAction && typeof dep.depAction === 'function') {
+        //           dep.depAction(compilation)
+        //         }
+        //       })
+        //     }
+        //     return callback(err)
+        //   }
+        //   return rawBuildModule.call(compilation, module, injectedCallback)
+        // }
 
-        const rawBuildModule = compilation.buildModule
+        const rawEmitAsset = compilation.emitAsset
 
-        compilation.buildModule = (module, callback) => {
-          const injectedCallback = (err) => {
-            if (module.presentationalDependencies) {
-              module.presentationalDependencies.forEach((dep) => {
-                if (dep.depAction && typeof dep.depAction === 'function') {
-                  dep.depAction(compilation)
-                }
-              })
-            }
-            return callback(err)
-          }
-          return rawBuildModule.call(compilation, module, injectedCallback)
+        compilation.emitAsset = (file, source, assetInfo) => {
+          if (assetInfo.skipEmit) return
+          return rawEmitAsset.call(compilation, file, source, assetInfo)
         }
 
         compilation.hooks.stillValidModule.tap('MpxWebpackPlugin', (module) => {
@@ -652,9 +657,6 @@ class MpxWebpackPlugin {
                   extractedAssetsMap.set(filename, extractedAssets)
                 }
                 extractedAssets.push(extractedInfo)
-                // 清空extracted相关assets
-                delete module.buildInfo.assets[filename]
-                module.buildInfo.assetsInfo.delete(filename)
                 // todo 后续计算体积时可以通过这个钩子关联静态assets和module
                 // compilation.hooks.moduleAsset.call(module, filename)
               }
