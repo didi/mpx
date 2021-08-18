@@ -449,54 +449,53 @@ class MpxWebpackPlugin {
             // 2. 分包引用且主包引用过的资源输出至主包，不在当前分包重复输出
             // 3. 分包引用且无其他包引用的资源输出至当前分包
             // 4. 分包引用且其他分包也引用过的资源，重复输出至当前分包
-            getPackageInfo:
-              ({ resource, outputPath, resourceType = 'components', warn }) => {
-                let packageRoot = ''
-                let packageName = 'main'
-                const { resourcePath } = parseRequest(resource)
-                const currentPackageRoot = mpx.currentPackageRoot
-                const currentPackageName = currentPackageRoot || 'main'
-                const resourceMap = mpx[`${resourceType}Map`]
-                const isIndependent = mpx.independentSubpackagesMap[currentPackageRoot]
-                // 主包中有引用一律使用主包中资源，不再额外输出
-                // 资源路径匹配到forceMainPackageRules规则时强制输出到主包，降低分包资源冗余
-                // todo forceMainPackageRules规则目前只能处理当前资源，不能处理资源子树，配置不当有可能会导致资源引用错误
-                if (!(resourceMap.main[resourcePath] || matchCondition(resourcePath, this.options.forceMainPackageRules)) || isIndependent) {
-                  packageRoot = currentPackageRoot
-                  packageName = currentPackageName
-                  if (this.options.auditResource && resourceType !== 'subpackageModules' && !isIndependent) {
-                    if (this.options.auditResource !== 'component' || resourceType === 'components') {
-                      Object.keys(resourceMap).filter(key => key !== 'main').forEach((key) => {
-                        if (resourceMap[key][resourcePath] && key !== packageName) {
-                          warn && warn(new Error(`当前${resourceType === 'components' ? '组件' : '静态'}资源${resourcePath}在分包${key}和分包${packageName}中都有引用，会分别输出到两个分包中，为了总体积最优，可以在主包中建立引用声明以消除资源输出冗余！`))
-                        }
-                      })
-                    }
+            getPackageInfo: ({ resource, outputPath, resourceType = 'components', warn }) => {
+              let packageRoot = ''
+              let packageName = 'main'
+              const { resourcePath } = parseRequest(resource)
+              const currentPackageRoot = mpx.currentPackageRoot
+              const currentPackageName = currentPackageRoot || 'main'
+              const resourceMap = mpx[`${resourceType}Map`]
+              const isIndependent = mpx.independentSubpackagesMap[currentPackageRoot]
+              // 主包中有引用一律使用主包中资源，不再额外输出
+              // 资源路径匹配到forceMainPackageRules规则时强制输出到主包，降低分包资源冗余
+              // todo forceMainPackageRules规则目前只能处理当前资源，不能处理资源子树，配置不当有可能会导致资源引用错误
+              if (!(resourceMap.main[resourcePath] || matchCondition(resourcePath, this.options.forceMainPackageRules)) || isIndependent) {
+                packageRoot = currentPackageRoot
+                packageName = currentPackageName
+                if (this.options.auditResource && resourceType !== 'subpackageModules' && !isIndependent) {
+                  if (this.options.auditResource !== 'component' || resourceType === 'components') {
+                    Object.keys(resourceMap).filter(key => key !== 'main').forEach((key) => {
+                      if (resourceMap[key][resourcePath] && key !== packageName) {
+                        warn && warn(new Error(`当前${resourceType === 'components' ? '组件' : '静态'}资源${resourcePath}在分包${key}和分包${packageName}中都有引用，会分别输出到两个分包中，为了总体积最优，可以在主包中建立引用声明以消除资源输出冗余！`))
+                      }
+                    })
                   }
-                }
-                resourceMap[packageName] = resourceMap[packageName] || {}
-                const currentResourceMap = resourceMap[packageName]
-
-                let alreadyOutputed = false
-                if (outputPath) {
-                  outputPath = toPosix(path.join(packageRoot, outputPath))
-                  // 如果之前已经进行过输出，则不需要重复进行
-                  if (currentResourceMap[resourcePath] === outputPath) {
-                    alreadyOutputed = true
-                  } else {
-                    currentResourceMap[resourcePath] = outputPath
-                  }
-                } else {
-                  currentResourceMap[resourcePath] = true
-                }
-
-                return {
-                  packageName,
-                  packageRoot,
-                  outputPath,
-                  alreadyOutputed
                 }
               }
+              resourceMap[packageName] = resourceMap[packageName] || {}
+              const currentResourceMap = resourceMap[packageName]
+
+              let alreadyOutputed = false
+              if (outputPath) {
+                outputPath = toPosix(path.join(packageRoot, outputPath))
+                // 如果之前已经进行过输出，则不需要重复进行
+                if (currentResourceMap[resourcePath] === outputPath) {
+                  alreadyOutputed = true
+                } else {
+                  currentResourceMap[resourcePath] = outputPath
+                }
+              } else {
+                currentResourceMap[resourcePath] = true
+              }
+
+              return {
+                packageName,
+                packageRoot,
+                outputPath,
+                alreadyOutputed
+              }
+            }
           }
         }
 
