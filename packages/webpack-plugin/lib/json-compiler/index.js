@@ -381,11 +381,10 @@ module.exports = function (raw = '{}') {
               })
             },
             (result, content, callback) => {
-              const filePath = result
-              const extName = path.extname(filePath)
+              const extName = path.extname(result)
               if (extName === '.mpx' || extName === '.vue') {
                 const parts = parseComponent(content, {
-                  filePath,
+                  filePath: result,
                   needMap: this.sourceMap,
                   mode,
                   defs,
