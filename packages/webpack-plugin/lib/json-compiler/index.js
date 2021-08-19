@@ -372,14 +372,12 @@ module.exports = function (raw) {
     const processPackages = (packages, context, callback) => {
       if (packages) {
         async.forEach(packages, (packagePath, callback) => {
-          const parsed = parseRequest(packagePath)
-          const queryObj = parsed.queryObj
-          // readFile无法处理query
-          packagePath = parsed.resourcePath
+          const { queryObj } = parseRequest(packagePath)
           async.waterfall([
             (callback) => {
               resolve(context, packagePath, (err, result) => {
-                callback(err, result)
+                const { rawResourcePath } = parseRequest(result)
+                callback(err, rawResourcePath)
               })
             },
             (result, callback) => {
@@ -390,11 +388,10 @@ module.exports = function (raw) {
               })
             },
             (result, content, callback) => {
-              const filePath = result
-              const extName = path.extname(filePath)
+              const extName = path.extname(result)
               if (extName === '.mpx' || extName === '.vue') {
                 const parts = parseComponent(content, {
-                  filePath,
+                  filePath: result,
                   needMap: this.sourceMap,
                   mode,
                   defs,
