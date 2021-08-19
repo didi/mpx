@@ -220,17 +220,6 @@ module.exports = function (raw = '{}') {
     rulesRunnerOptions.data = {
       globalComponents: mpx.usingComponents
     }
-  } else {
-    // 保存全局注册组件
-    if (json.usingComponents) {
-      mpx.usingComponents = {}
-      Object.keys(json.usingComponents).forEach((key) => {
-        const request = json.usingComponents[key]
-        mpx.usingComponents[key] = addQuery(request, {
-          context: this.context
-        })
-      })
-    }
   }
 
   const rulesRunner = getRulesRunner(rulesRunnerOptions)
@@ -430,17 +419,14 @@ module.exports = function (raw = '{}') {
 
                   if (content.usingComponents) {
                     mpx.usingComponents = mpx.usingComponents || {}
-                    processSelfQueue.push((callback) => {
-                      processComponents(content.usingComponents, context, () => {
-                        Object.keys(content.usingComponents).forEach(key => {
-                          if (mpx.usingComponents[key]) {
-                            emitError(`Current subpackage [${tarRoot}] registers a conflict usingComponents [${key}], which is not allowed, please rename it!`)
-                          } else {
-                            mpx.usingComponents[key] = content.usingComponents[key]
-                          }
+                    Object.keys(content.usingComponents).forEach(key => {
+                      if (mpx.usingComponents[key]) {
+                        emitError(`Current subpackage [${tarRoot}] registers a conflict usingComponents [${key}], which is not allowed, please rename it!`)
+                      } else {
+                        mpx.usingComponents[key] = addQuery(content.usingComponents[key], {
+                          context: context
                         })
-                        callback()
-                      })
+                      }
                     })
                   }
 
@@ -774,9 +760,6 @@ module.exports = function (raw = '{}') {
             processPages(json.pages, '', '', this.context, callback)
           },
           (callback) => {
-            processComponents(json.usingComponents, this.context, callback)
-          },
-          (callback) => {
             processWorkers(json.workers, this.context, callback)
           },
           (callback) => {
@@ -794,6 +777,16 @@ module.exports = function (raw = '{}') {
           }
           callback()
         })
+      },
+      (callback) => {
+        // 保存全局注册组件
+        Object.keys(json.usingComponents).forEach(key => {
+          let request = json.usingComponents[key]
+          mpx.usingComponents[key] = addQuery(request, {
+            context: this.context
+          })
+        })
+        processComponents(mpx.usingComponents, this.context, callback)
       },
       (callback) => {
         if (mpx.appScriptPromise) {
