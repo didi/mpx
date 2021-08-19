@@ -365,14 +365,12 @@ module.exports = function (raw = '{}') {
     const processPackages = (packages, context, callback) => {
       if (packages) {
         async.forEach(packages, (packagePath, callback) => {
-          const parsed = parseRequest(packagePath)
-          const queryObj = parsed.queryObj
-          // readFile无法处理query
-          packagePath = parsed.resourcePath
+          const { queryObj } = parseRequest(packagePath)
           async.waterfall([
             (callback) => {
               resolve(context, packagePath, (err, result) => {
-                callback(err, result)
+                const { rawResourcePath } = parseRequest(result)
+                callback(err, rawResourcePath)
               })
             },
             (result, callback) => {
