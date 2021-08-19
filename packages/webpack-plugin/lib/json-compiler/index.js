@@ -372,7 +372,8 @@ module.exports = function (raw = '{}') {
           async.waterfall([
             (callback) => {
               resolve(context, packagePath, (err, result) => {
-                callback(err, result)
+                const { rawResourcePath } = parseRequest(result)
+                callback(err, rawResourcePath)
               })
             },
             (result, callback) => {
