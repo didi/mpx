@@ -427,15 +427,15 @@ class MpxWebpackPlugin {
             extractedFilesMap: new Map(),
             getExtractedFile: (resource, { warn, error } = {}) => {
               const { resourcePath, queryObj } = parseRequest(resource)
+              const type = queryObj.type
+              const isStatic = queryObj.isStatic
               const currentPackageName = queryObj.packageName || mpx.currentPackageRoot || 'main'
-              const key = `${resourcePath}|${currentPackageName}`
+              const key = `${resourcePath}|${type}|${currentPackageName}`
               const cachedFile = mpx.extractedFilesMap.get(key)
               if (cachedFile) {
                 return cachedFile
               }
               let file
-              const type = queryObj.type
-              const isStatic = queryObj.isStatic
               if (isStatic) {
                 const resourceName = path.parse(resourcePath).name
                 const outputPath = path.join(type, resourceName + mpx.pathHash(resourcePath) + typeExtMap[type])
@@ -585,7 +585,7 @@ class MpxWebpackPlugin {
         const rawEmitAsset = compilation.emitAsset
 
         compilation.emitAsset = (file, source, assetInfo) => {
-          if (assetInfo.skipEmit) return
+          if (assetInfo && assetInfo.skipEmit) return
           return rawEmitAsset.call(compilation, file, source, assetInfo)
         }
 
@@ -681,9 +681,9 @@ class MpxWebpackPlugin {
             const sortedExtractedAssets = extractedAssets.sort((a, b) => a.index - b.index)
             const source = new ConcatSource()
             sortedExtractedAssets.forEach(({ content }) => {
-              if (content) source.add(item)
+              if (content) source.add(content)
             })
-            compilation.emitAsset(filename, content)
+            compilation.emitAsset(filename, source)
           }
         })
 
@@ -1046,65 +1046,57 @@ try {
         }
       })
 
+      const typeLoaderProcessInfo = {
+        styles: ['css-loader', wxssLoaderPath, styleCompilerPath],
+        template: ['html-loader', wxmlLoaderPath, templateCompilerPath]
+      }
+
       // 应用过rules后，注入mpx相关资源编译loader
-      normalModuleFactory.hooks.afterResolve.tapAsync('MpxWebpackPlugin', (data, callback) => {
-        const { queryObj } = parseRequest(data.request)
+      normalModuleFactory.hooks.afterResolve.tap('MpxWebpackPlugin', ({ createData }) => {
+        const { queryObj } = parseRequest(createData.request)
+        const loaders = createData.loaders
         if (queryObj.mpx && queryObj.mpx !== MPX_PROCESSED_FLAG) {
           const type = queryObj.type
           const extract = queryObj.extract
           switch (type) {
             case 'styles':
-              let wxssLoaderIndex
-              data.loaders.forEach((loader, index) => {
-                if (loader.loader.includes('css-loader')) {
-                  loader.loader = wxssLoaderPath
-                }
-                if (loader.loader === wxssLoaderPath) {
-                  wxssLoaderIndex = index
-                }
-              })
-              if (wxssLoaderIndex) {
-                data.loaders.splice(wxssLoaderIndex + 1, 0, {
-                  loader: styleCompilerPath
-                })
-              }
-              break
             case 'template':
-              let wxmlLoaderIndex
-              data.loaders.forEach((loader, index) => {
-                if (loader.loader.includes('html-loader')) {
-                  loader.loader = wxmlLoaderPath
+              let insertBeforeIndex = -1
+              const info = typeLoaderProcessInfo[type]
+              loaders.forEach((loader, index) => {
+                if (loader.loader.includes(info[0])) {
+                  loader.loader = info[1]
                 }
-                if (loader.loader === wxmlLoaderPath) {
-                  wxmlLoaderIndex = index
+                if (loader.loader === info[1]) {
+                  insertBeforeIndex = index
                 }
               })
-              if (wxmlLoaderIndex) {
-                data.loaders.splice(wxmlLoaderIndex + 1, 0, {
-                  loader: templateCompilerPath
+              if (insertBeforeIndex > -1) {
+                loaders.splice(insertBeforeIndex + 1, 0, {
+                  loader: info[2]
                 })
               }
               break
             case 'json':
               if (queryObj.isTheme) {
-                data.loaders.push({
+                loaders.unshift({
                   loader: jsonThemeCompilerPath
                 })
               } else {
-                data.loaders.push({
+                loaders.unshift({
                   loader: jsonCompilerPath
                 })
               }
               break
           }
           if (extract) {
-            data.loaders.unshift({
+            loaders.unshift({
               loader: extractorPath
             })
           }
 
-          data.resource = addQuery(data.resource, { mpx: MPX_PROCESSED_FLAG }, true)
-          data.request = addQuery(data.request, { mpx: MPX_PROCESSED_FLAG }, true)
+          createData.resource = addQuery(createData.resource, { mpx: MPX_PROCESSED_FLAG }, true)
+          createData.request = addQuery(createData.request, { mpx: MPX_PROCESSED_FLAG }, true)
         }
 
 
@@ -1139,7 +1131,7 @@ try {
         //   }
         // }
         // 根据用户传入的modeRules对特定资源添加mode query
-        this.runModeRules(data)
+        this.runModeRules(createData)
       })
     })
 

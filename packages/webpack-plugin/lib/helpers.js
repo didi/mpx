@@ -43,8 +43,9 @@ module.exports = function createHelpers (loaderContext) {
 
   function getFakeRequest (type, part) {
     const lang = part.lang || defaultLang[type] || type
-    const { resourcePath, resourceQuery } = parseRequest(loaderContext.resource)
-    return `${resourcePath}.${lang}${resourceQuery}`
+    const { resourcePath, queryObj } = parseRequest(loaderContext.resource)
+    if (lang === 'json') queryObj.asScript = true
+    return addQuery(`${resourcePath}.${lang}`, queryObj)
   }
 
   function getRequestString (type, part, extraOptions = {}, index = 0) {
@@ -58,6 +59,7 @@ module.exports = function createHelpers (loaderContext) {
 
     switch (type) {
       case 'json':
+        options.asScript = true
       case 'styles':
       case 'template':
         options.extract = true
@@ -75,7 +77,6 @@ module.exports = function createHelpers (loaderContext) {
   }
 
   return {
-    loaders,
     getRequire,
     getImport,
     getNamedExports,

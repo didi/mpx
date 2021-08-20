@@ -5,6 +5,8 @@ const fixRelative = require('./utils/fix-relative')
 
 const DEFAULT_RESULT_SOURCE = '// removed by extractor'
 
+module.exports = content => content
+
 module.exports.pitch = async function (remainingRequest) {
   const mpx = this.getMpx()
   const mode = mpx.mode
@@ -14,7 +16,13 @@ module.exports.pitch = async function (remainingRequest) {
   const isStatic = queryObj.isStatic
   const issuerFile = queryObj.issuerFile
   const fromImport = queryObj.fromImport
-  const content = await this.importModule(`!!${remainingRequest}`)
+  let content = await this.importModule(`!!${remainingRequest}`)
+  // 处理wxss-loader的返回
+  if (Array.isArray(content)) {
+    content = content.map((item) => {
+      return item[1]
+    }).join('\n')
+  }
   const file = mpx.getExtractedFile(this.resource, {
     warn: (err) => {
       this.emitWarning(err)
@@ -75,4 +83,4 @@ module.exports.pitch = async function (remainingRequest) {
 
 }
 
-module.exports = content => content
+

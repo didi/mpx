@@ -19,7 +19,7 @@ module.exports = function (raw) {
   const packageName = queryObj.packageName || mpx.currentPackageRoot || 'main'
   const componentsMap = mpx.componentsMap[packageName]
   const wxsContentMap = mpx.wxsContentMap
-  const usingComponents = queryObj.usingComponents
+  const usingComponents = queryObj.usingComponents || []
   const hasComment = queryObj.hasComment
   const isNative = queryObj.isNative
   const hasScoped = queryObj.hasScoped
@@ -123,7 +123,7 @@ global.currentInject.getRefsData = function () {
 };\n`
   }
 
-  this.emitFile(file, '', undefined, {
+  this.emitFile(resourcePath, '', undefined, {
     skipEmit: true,
     extractedResultSource: resultSource
   })

@@ -305,7 +305,7 @@ module.exports = function (content) {
         }
         if (template.src) extraOptions.resourcePath = resourcePath
         // 基于global.currentInject来注入模板渲染函数和refs等信息
-        output += getRequire('template', template, extraOptions) + '\n\n'
+        output += getRequire('template', template, extraOptions) + '\n'
       }
 
       // styles
@@ -325,14 +325,13 @@ module.exports = function (content) {
           }
           output += getRequire('styles', style, extraOptions, i) + '\n'
         })
-        output += '\n'
       }
 
       // json
       output += '/* json */\n'
       // 给予json默认值, 确保生成json request以自动补全json
       const json = parts.json || {}
-      output += getRequire('json', json, json.src && { resourcePath })
+      output += getRequire('json', json, json.src && { resourcePath }) + '\n'
 
       // script
       output += '/* script */\n'
@@ -345,7 +344,7 @@ module.exports = function (content) {
         if (script.src) extraOptions.resourcePath = resourcePath
         // todo 通过isAppScript标识当前模块，分包处理需要等该模块的依赖处理完成后才能进行，严谨来说也应该等待app.json和app.wxss处理完成后才能开始，后续优化
         if (ctorType === 'app') extraOptions.isAppScript = true
-        output += getRequire('script', script, extraOptions)
+        output += getRequire('script', script, extraOptions) + '\n'
       } else {
         switch (ctorType) {
           case 'app':

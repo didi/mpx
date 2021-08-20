@@ -69,10 +69,20 @@ module.exports = function (raw) {
 
   const { getRequestString } = createHelpers(this)
 
-  const currentName = componentsMap[resourcePath] || pagesMap[resourcePath] || appsMap[resourcePath]
-  if (!currentName) {
-    emitError('No currentName!')
+  let currentName
+
+  if (isApp) {
+    for (const [name, { dependencies }] of mainCompilation.entries) {
+      const entryModule = moduleGraph.getModule(dependencies[0])
+      if (parseRequest(entryModule.resource).resourcePath === resourcePath) {
+        currentName = name
+        break
+      }
+    }
+  } else {
+    currentName = componentsMap[resourcePath] || pagesMap[resourcePath]
   }
+
   const currentPath = publicPath + currentName
 
   // json模块都是由.mpx或.js的入口模块引入，且引入关系为一对一，其issuer必为入口module
@@ -333,19 +343,10 @@ module.exports = function (raw) {
   }
 
   if (isApp) {
-
-  }
-
-  if (isApp) {
     if (!mpx.appInfo) {
-      for (const [name, { dependencies }] of mainCompilation.entries) {
-        if (moduleGraph.getModule(dependencies[0]) === this._module) {
-          mpx.appInfo = {
-            name,
-            resourcePath
-          }
-          break
-        }
+      mpx.appInfo = {
+        name: currentName,
+        resourcePath
       }
     } else {
       const issuer = getJsonIssuer(this._module)
