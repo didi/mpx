@@ -4,7 +4,7 @@ module.exports = {
   humpToLine: function (str) {
     if (typeof str !== 'string') str += ''
     return str.split('').map(function (item, idx) {
-      if (item.toUpperCase() === item) {
+      if (getRegExp('[A-Z]').test(item)) {
         return idx === 0 ? item.toLowerCase() : '-' + item.toLowerCase()
       } else {
         return item
