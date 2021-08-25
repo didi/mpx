@@ -387,10 +387,16 @@ class MpxWebpackPlugin {
             return currentEntry
           },
           pathHash: (resourcePath) => {
-            if (this.options.pathHashMode === 'relative' && this.options.projectRoot) {
-              return hash(path.relative(this.options.projectRoot, resourcePath))
+            let hashPath = resourcePath
+            const pathHashMode = this.options.pathHashMode
+            const projectRoot = this.options.projectRoot || ''
+            if (pathHashMode === 'relative') {
+              hashPath = path.relative(projectRoot, resourcePath)
             }
-            return hash(resourcePath)
+            if (typeof pathHashMode === 'function') {
+              hashPath = pathHashMode(resourcePath, projectRoot) || resourcePath
+            }
+            return hash(hashPath)
           },
           extract: (content, file, index, sideEffects) => {
             index = index === -1 ? 0 : index
