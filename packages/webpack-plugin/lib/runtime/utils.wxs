@@ -1,10 +1,17 @@
+function genRegExp (str, flags) {
+  if (!__mpx_wxs__) {
+    return new RegExp(str, flags)
+  } else {
+    return getRegExp(str, flags)
+  }
+}
 
 module.exports = {
   /** wxs格式化：驼峰转中划线 */
   humpToLine: function (str) {
     if (typeof str !== 'string') str += ''
     return str.split('').map(function (item, idx) {
-      if (getRegExp('[A-Z]').test(item)) {
+      if (genRegExp('[A-Z]').test(item)) {
         return idx === 0 ? item.toLowerCase() : '-' + item.toLowerCase()
       } else {
         return item
