@@ -9,13 +9,11 @@ function genRegExp (str, flags) {
 module.exports = {
   /** wxs格式化：驼峰转中划线 */
   humpToLine: function (str) {
+    if (!str) return
     if (typeof str !== 'string') str += ''
-    return str.split('').map(function (item, idx) {
-      if (genRegExp('[A-Z]').test(item)) {
-        return idx === 0 ? item.toLowerCase() : '-' + item.toLowerCase()
-      } else {
-        return item
-      }
-    }).join('')
+    var reg = genRegExp('[A-Z]', 'g')
+    return str.replace(reg, function (match) {
+      return '-' + match.toLowerCase()
+    })
   }
 }
