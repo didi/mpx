@@ -40,7 +40,8 @@ module.exports = function (css, map) {
     )
 
     if (loaderOptions.scoped) {
-      plugins.push(scopeId({ id: loaderOptions.moduleId }))
+      const moduleId = loaderOptions.moduleId || loaderOptions.mid
+      plugins.push(scopeId({ id: moduleId }))
     }
 
     plugins.push(pluginCondStrip({
