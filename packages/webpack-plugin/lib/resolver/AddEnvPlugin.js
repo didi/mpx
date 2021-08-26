@@ -1,11 +1,15 @@
 const path = require('path')
-const parseRequest = require('../utils/parse-request')
+const stringifyQuery = require('../utils/stringify-query')
+const parseQuery = require('loader-utils').parseQuery
+const addInfix = require('../utils/add-infix')
+const matchCondition = require('../utils/match-condition')
 
 module.exports = class AddEnvPlugin {
-  constructor (source, env, target) {
+  constructor (source, env, fileConditionRules, target) {
     this.source = source
     this.target = target
     this.env = env
+    this.fileConditionRules = fileConditionRules
   }
 
   apply (resolver) {
@@ -18,15 +22,20 @@ module.exports = class AddEnvPlugin {
       const obj = {
         env
       }
-      const parsed = parseRequest(request.request)
-      const resourcePath = parsed.rawResourcePath
-      const resourceQuery = parsed.resourceQuery
-      const resourceExt = path.extname(resourcePath)
-      if (request.mode && resourceExt === '.' + request.mode) {
-        obj.request = resourcePath + '.' + env + resourceQuery
+      const resourcePath = request.path
+      let extname = ''
+      if (resourcePath.endsWith('.json.js')) {
+        extname = '.json.js'
       } else {
-        obj.request = resourcePath.substring(0, resourcePath.length - resourceExt.length) + '.' + env + resourceExt + resourceQuery
+        extname = path.extname(resourcePath)
       }
+      // 当前资源没有后缀名或者路径不符合fileConditionRules规则时，直接返回
+      if (!extname || !matchCondition(resourcePath, this.fileConditionRules)) return callback()
+      const queryObj = parseQuery(request.query || '?')
+      queryObj.infix = `${queryObj.infix || ''}.${env}`
+      obj.query = stringifyQuery(queryObj)
+      obj.path = addInfix(resourcePath, env, extname)
+      obj.relativePath = request.relativePath && addInfix(request.relativePath, env, extname)
       resolver.doResolve(target, Object.assign({}, request, obj), 'add env: ' + env, resolveContext, callback)
     })
   }

@@ -285,7 +285,7 @@ module.exports = function (raw = '{}') {
       const resourceName = path.join(parsed.dir, parsed.name)
 
       if (!outputPath) {
-        if (ext === '.js') {
+        if (ext === '.js' && resourceName.includes('node_modules')) {
           let root = info.descriptionFileRoot
           let name = 'nativeComponent'
           if (info.descriptionFileData) {
@@ -365,14 +365,12 @@ module.exports = function (raw = '{}') {
     const processPackages = (packages, context, callback) => {
       if (packages) {
         async.forEach(packages, (packagePath, callback) => {
-          const parsed = parseRequest(packagePath)
-          const queryObj = parsed.queryObj
-          // readFile无法处理query
-          packagePath = parsed.resourcePath
+          const { queryObj } = parseRequest(packagePath)
           async.waterfall([
             (callback) => {
               resolve(context, packagePath, (err, result) => {
-                callback(err, result)
+                const { rawResourcePath } = parseRequest(result)
+                callback(err, rawResourcePath)
               })
             },
             (result, callback) => {
@@ -383,11 +381,10 @@ module.exports = function (raw = '{}') {
               })
             },
             (result, content, callback) => {
-              const filePath = result
-              const extName = path.extname(filePath)
+              const extName = path.extname(result)
               if (extName === '.mpx' || extName === '.vue') {
                 const parts = parseComponent(content, {
-                  filePath,
+                  filePath: result,
                   needMap: this.sourceMap,
                   mode,
                   defs,
@@ -664,12 +661,52 @@ module.exports = function (raw = '{}') {
       }
     }
 
-    const addMiniToPluginFile = file => {
-      if (mpx.miniToPluginExports) {
-        mpx.miniToPluginExports.add(file)
+    const addMiniToPluginModules = module => {
+      if (mpx.miniToPluginModules) {
+        mpx.miniToPluginModules.add(module)
       } else {
-        mpx.miniToPluginExports = new Set([file])
+        mpx.miniToPluginModules = new Set([module])
       }
+    }
+
+    const processPluginGenericsImplementation = (genericsImplementation, tarRoot, context, callback) => {
+      async.forEachOf(genericsImplementation, (genericComponents, name, callback) => {
+        async.forEachOf(genericComponents, (genericComponentPath, name, callback) => {
+          processComponent(genericComponentPath, context, (componentPath) => {
+            if (useRelativePath === true) {
+              componentPath = toPosix(path.relative(publicPath + tarRoot, componentPath))
+            }
+            genericComponents[name] = componentPath
+          }, undefined, callback)
+        }, callback)
+      }, callback)
+    }
+
+    const processPluginExport = (plugin, tarRoot, context, callback) => {
+      if (!plugin.export) {
+        return callback()
+      }
+      let pluginExport = plugin.export
+      if (resolveMode === 'native') {
+        pluginExport = urlToRequest(pluginExport)
+      }
+      resolve(context, pluginExport, (err, resource, info) => {
+        if (err) return callback(err)
+        const { resourcePath } = parseRequest(resource)
+        // 获取 export 的模块名
+        const relative = path.relative(context, resourcePath)
+        const name = toPosix(/^(.*?)(\.[^.]*)?$/.exec(relative)[1])
+        if (/^\./.test(name)) {
+          return callback(new Error(`The miniprogram plugins' export path ${plugin.export} must be in the context ${context}!`))
+        }
+        plugin.export = name + '.js'
+        addEntrySafely(resource, toPosix(tarRoot ? `${tarRoot}/${name}` : name), (err, module) => {
+          if (err) return callback(err)
+          addMiniToPluginModules(module)
+          currentEntry.addChild(getEntryNode(resource, 'PluginExport', module))
+          callback(err, module)
+        })
+      })
     }
 
     /* 导出到插件 */
@@ -677,24 +714,19 @@ module.exports = function (raw = '{}') {
       if (mpx.mode !== 'wx' || !plugins) return callback() // 目前只有微信支持导出到插件
       context = path.join(context, srcRoot)
       async.forEachOf(plugins, (plugin, name, callback) => {
-        if (!plugin.export) return callback()
-        let pluginExport = plugin.export
-        if (resolveMode === 'native') {
-          pluginExport = urlToRequest(pluginExport)
-        }
-        resolve(context, pluginExport, (err, resource, info) => {
-          if (err) return callback(err)
-          const { resourcePath } = parseRequest(resource)
-          // 获取 export 的模块名
-          const relative = path.relative(context, resourcePath)
-          const name = toPosix(/^(.*?)(\.[^.]*)?$/.exec(relative)[1])
-          if (/^\./.test(name)) {
-            return callback(new Error(`The miniprogram plugins' export path ${plugin.export} must be in the context ${context}!`))
+        async.parallel([
+          (callback) => {
+            if (plugin.genericsImplementation) {
+              processPluginGenericsImplementation(plugin.genericsImplementation, tarRoot, context, callback)
+            } else {
+              callback()
+            }
+          },
+          (callback) => {
+            processPluginExport(plugin, tarRoot, context, callback)
           }
-          plugin.export = name + '.js'
-          currentEntry.addChild(getEntryNode(resource, 'PluginExport'))
-          addMiniToPluginFile(resource)
-          addEntrySafely(resource, toPosix(tarRoot ? `${tarRoot}/${name}` : name), callback)
+        ], (err) => {
+          callback(err)
         })
       }, callback)
     }

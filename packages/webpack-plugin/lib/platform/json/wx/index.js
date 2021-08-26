@@ -28,6 +28,9 @@ module.exports = function getSpec ({ warn, error }) {
     }
   }
 
+  /**
+   * @desc 在app.mpx里配置usingComponents作为全局组件
+   */
   function addGlobalComponents (input, { globalComponents }) {
     if (globalComponents) {
       input.usingComponents = Object.assign({}, globalComponents, input.usingComponents)
@@ -36,7 +39,7 @@ module.exports = function getSpec ({ warn, error }) {
   }
 
   const spec = {
-    supportedModes: ['ali', 'swan', 'qq', 'tt', 'qa'],
+    supportedModes: ['ali', 'swan', 'qq', 'tt', 'jd', 'qa', 'dd'],
     normalizeTest,
     page: [
       {
@@ -53,7 +56,8 @@ module.exports = function getSpec ({ warn, error }) {
             input.allowsBounceVertical = 'YES'
           }
           return input
-        }
+        },
+        jd: deletePath()
       },
       {
         test: 'navigationBarBackgroundColor',
@@ -65,12 +69,14 @@ module.exports = function getSpec ({ warn, error }) {
         test: 'disableSwipeBack',
         ali: deletePath(),
         qq: deletePath(),
+        jd: deletePath(),
         swan: deletePath()
       },
       {
         test: 'onReachBottomDistance|disableScroll',
         ali: deletePath(),
-        qq: deletePath()
+        qq: deletePath(),
+        jd: deletePath()
       },
       {
         test: 'backgroundColorTop|backgroundColorBottom',
@@ -85,20 +91,21 @@ module.exports = function getSpec ({ warn, error }) {
         test: 'pageOrientation',
         ali: deletePath(),
         swan: deletePath(),
-        tt: deletePath()
+        tt: deletePath(),
+        jd: deletePath()
       },
       {
         ali: addGlobalComponents,
         swan: addGlobalComponents,
         qq: addGlobalComponents,
-        tt: addGlobalComponents
+        tt: addGlobalComponents,
+        jd: addGlobalComponents
       }
     ],
     component: [
       {
         test: 'componentGenerics',
-        ali: deletePath(true),
-        swan: deletePath(true)
+        ali: deletePath(true)
       },
       {
         ali: addGlobalComponents,
@@ -166,7 +173,8 @@ module.exports = function getSpec ({ warn, error }) {
           test: 'custom',
           ali: deletePath(),
           swan: deletePath(),
-          tt: deletePath()
+          tt: deletePath(),
+          jd: deletePath()
         }
       ]
     },
@@ -176,31 +184,36 @@ module.exports = function getSpec ({ warn, error }) {
         ali: deletePath(),
         qq: deletePath(),
         swan: deletePath(),
-        tt: deletePath()
+        tt: deletePath(),
+        jd: deletePath()
       },
       {
         test: 'preloadRule',
-        tt: deletePath()
+        tt: deletePath(),
+        jd: deletePath()
       },
       {
         test: 'functionalPages',
         ali: deletePath(true),
         qq: deletePath(true),
         swan: deletePath(true),
-        tt: deletePath()
+        tt: deletePath(),
+        jd: deletePath(true)
       },
       {
         test: 'plugins',
         qq: deletePath(true),
         swan: deletePath(true),
-        tt: deletePath()
+        tt: deletePath(),
+        jd: deletePath(true)
       },
       {
         test: 'usingComponents',
         ali: deletePath({ noLog: true }),
         qq: deletePath({ noLog: true }),
         swan: deletePath({ noLog: true }),
-        tt: deletePath({ noLog: true })
+        tt: deletePath({ noLog: true }),
+        jd: deletePath({ noLog: true })
       },
       {
         test: 'debug',
@@ -214,13 +227,23 @@ module.exports = function getSpec ({ warn, error }) {
       },
       {
         test: 'workers',
+        jd: deletePath(),
         ali: deletePath(),
         swan: deletePath(),
         tt: deletePath()
       },
       {
+        test: 'subpackages|subPackages',
+        jd: deletePath(true)
+      },
+      {
+        test: 'packages',
+        jd: deletePath()
+      },
+      {
         test: 'navigateToMiniProgramAppIdList|networkTimeout|permission',
-        ali: deletePath()
+        ali: deletePath(),
+        jd: deletePath()
       },
       {
         test: 'tabBar',
@@ -257,6 +280,16 @@ module.exports = function getSpec ({ warn, error }) {
         tt (input) {
           input.tabBar = runRules(spec.tabBar, input.tabBar, {
             mode: 'tt',
+            normalizeTest,
+            waterfall: true,
+            data: {
+              pathArr: ['tabBar']
+            }
+          })
+        },
+        jd (input) {
+          input.tabBar = runRules(spec.tabBar, input.tabBar, {
+            mode: 'jd',
             normalizeTest,
             waterfall: true,
             data: {
@@ -303,6 +336,17 @@ module.exports = function getSpec ({ warn, error }) {
         tt (input) {
           input.window = runRules(spec.page, input.window, {
             mode: 'tt',
+            normalizeTest,
+            waterfall: true,
+            data: {
+              pathArr: ['window']
+            }
+          })
+          return input
+        },
+        jd (input) {
+          input.window = runRules(spec.page, input.window, {
+            mode: 'jd',
             normalizeTest,
             waterfall: true,
             data: {

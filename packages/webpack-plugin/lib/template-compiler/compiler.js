@@ -317,9 +317,9 @@ const i18nModuleName = '__i18n__'
 const stringifyWxsPath = '~' + normalize.lib('runtime/stringify.wxs')
 const stringifyModuleName = '__stringify__'
 
-const tagRES = /(\{\{(?:.|\n)+?\}\})(?!})/
-const tagRE = /\{\{((?:.|\n)+?)\}\}(?!})/
-const tagREG = /\{\{((?:.|\n)+?)\}\}(?!})/g
+const tagRES = /(\{\{(?:.|\n|\r)+?\}\})(?!})/
+const tagRE = /\{\{((?:.|\n|\r)+?)\}\}(?!})/
+const tagREG = /\{\{((?:.|\n|\r)+?)\}\}(?!})/g
 
 function decodeInMustache (value) {
   const sArr = value.split(tagRES)
@@ -794,7 +794,6 @@ function parse (template, options) {
   platformGetTagNamespace = options.getTagNamespace || no
 
   let stack = []
-  let preserveWhitespace = options.preserveWhitespace !== false
   let root
   let meta = {}
   let currentParent
@@ -911,9 +910,6 @@ function parse (template, options) {
       let children = currentParent.children
       if (currentParent.tag !== 'text') {
         text = text.trim()
-          ? text.trim()
-          // only preserve whitespace if its not right after a starting tag
-          : preserveWhitespace && children.length ? ' ' : ''
       }
 
       if ((!config[mode].wxs || currentParent.tag !== config[mode].wxs.tag) && options.decodeHTMLText) {
@@ -1344,7 +1340,10 @@ function processBindEvent (el, options) {
   }
 }
 
-// todo 暂时未考虑swan中不用{{}}包裹控制属性的情况
+function wrapMustache (val) {
+  return val && !tagRE.test(val) ? `{{${val}}}` : val
+}
+
 function parseMustache (raw = '') {
   let replaced = false
   if (tagRE.test(raw)) {
@@ -1427,12 +1426,14 @@ function addExp (el, exp, isProps) {
 function processIf (el) {
   let val = getAndRemoveAttr(el, config[mode].directive.if).val
   if (val) {
+    if (mode === 'swan') val = wrapMustache(val)
     let parsed = parseMustache(val)
     el.if = {
       raw: parsed.val,
       exp: parsed.result
     }
   } else if (val = getAndRemoveAttr(el, config[mode].directive.elseif).val) {
+    if (mode === 'swan') val = wrapMustache(val)
     let parsed = parseMustache(val)
     el.elseif = {
       raw: parsed.val,
@@ -1474,6 +1475,7 @@ function processFor (el) {
         index: matched[2] || 'index'
       }
     } else {
+      if (mode === 'swan') val = wrapMustache(val)
       let parsed = parseMustache(val)
       el.for = {
         raw: parsed.val,
@@ -1937,6 +1939,7 @@ function processAliStyleClassHack (el, options, root) {
 
 function processShow (el, options, root) {
   let show = getAndRemoveAttr(el, config[mode].directive.show).val
+  if (mode === 'swan') show = wrapMustache(show)
   if (options.isComponent && el.parent === root && isRealNode(el)) {
     if (show !== undefined) {
       show = `{{${parseMustache(show).result}&&mpxShow}}`
@@ -1980,7 +1983,7 @@ function postProcessTemplate (el) {
   }
 }
 
-const isValidMode = makeMap('wx,ali,swan,tt,qq,web,qa,jd')
+const isValidMode = makeMap('wx,ali,swan,tt,qq,web,qa,jd,dd')
 
 const wrapRE = /^\((.*)\)$/
 
@@ -2058,7 +2061,7 @@ function processDuplicateAttrsList (el) {
 }
 
 // 处理wxs注入逻辑
-function processInjectWxs (meta, el) {
+function processInjectWxs (el, meta) {
   if (el.injectWxsProps && el.injectWxsProps.length) {
     el.injectWxsProps.forEach((injectWxsProp) => {
       const { injectWxsPath, injectWxsModuleName } = injectWxsProp
@@ -2087,11 +2090,11 @@ function processElement (el, root, options, meta) {
     rulesRunner(el)
   }
 
-  processInjectWxs(meta, el)
-
   processNoTransAttrs(el)
 
   processDuplicateAttrsList(el)
+
+  processInjectWxs(el, meta)
 
   const transAli = mode === 'ali' && srcMode === 'wx'
 

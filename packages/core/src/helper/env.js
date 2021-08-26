@@ -1,13 +1,20 @@
 export function getEnvObj () {
-  if (typeof wx !== 'undefined' && typeof wx.getSystemInfo === 'function') {
-    return wx
-  } else if (typeof my !== 'undefined' && typeof my.getSystemInfo === 'function') {
-    return my
-  } else if (typeof swan !== 'undefined' && typeof swan.getSystemInfo === 'function') {
-    return swan
-  } else if (typeof qq !== 'undefined' && typeof qq.getSystemInfo === 'function') {
-    return qq
-  } else if (typeof tt !== 'undefined' && typeof tt.getSystemInfo === 'function') {
-    return tt
+  switch (__mpx_mode__) {
+    case 'wx':
+      return wx
+    case 'ali':
+      return my
+    case 'swan':
+      return swan
+    case 'qq':
+      return qq
+    case 'tt':
+      return tt
+    case 'jd':
+      return jd
+    case 'qa':
+      return qa
+    case 'dd':
+      return dd
   }
 }

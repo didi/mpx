@@ -1,7 +1,7 @@
 import transferOptions from '../core/transferOptions'
 import mergeOptions from '../core/mergeOptions'
 import builtInKeysMap from './patch/builtInKeysMap'
-import { makeMap } from '../helper/utils'
+import { makeMap, spreadProp } from '../helper/utils'
 import * as webLifecycle from '../platform/patch/web/lifecycle'
 
 const webAppHooksMap = makeMap(webLifecycle.LIFECYCLE.APP_HOOKS)
@@ -63,7 +63,7 @@ export default function createApp (option, config = {}) {
     })
   }
   const { rawOptions } = transferOptions(option, 'app', builtInMixins)
-  const defaultOptions = filterOptions(mergeOptions(rawOptions, 'app', false), appData)
+  const defaultOptions = filterOptions(spreadProp(mergeOptions(rawOptions, 'app', false), 'methods'), appData)
 
   if (__mpx_mode__ === 'web') {
     global.currentOption = defaultOptions

@@ -7,6 +7,8 @@ module.exports = function ({ print }) {
   const qqPropLog = print({ platform: 'qq', tag: TAG_NAME, isError: false })
   const ttPropLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false })
   const webPropLog = print({ platform: 'web', tag: TAG_NAME, isError: false })
+  const jdEventLog = print({ platform: 'jd', tag: TAG_NAME, isError: false, type: 'event' })
+  const jdPropLog = print({ platform: 'jd', tag: TAG_NAME, isError: false })
   const qaPropLog = print({ platform: 'qa', tag: TAG_NAME, isError: false })
 
   return {
@@ -23,6 +25,10 @@ module.exports = function ({ print }) {
       {
         test: /^(skip-hidden-item-layout|easing-function|snap-to-edge)$/,
         swan: baiduPropLog
+      },
+      {
+        test: /^(easing-function)$/,
+        jd: jdPropLog
       },
       {
         test: /^(easing-function|snap-to-edge)$/,
@@ -54,7 +60,8 @@ module.exports = function ({ print }) {
       },
       {
         test: /^(transition)$/,
-        swan: baiduEventLog
+        swan: baiduEventLog,
+        jd: jdEventLog
       }
     ]
   }

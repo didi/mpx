@@ -5,7 +5,7 @@ const loaderUtils = require('loader-utils')
 const config = require('./config')
 const createHelpers = require('./helpers')
 const InjectDependency = require('./dependency/InjectDependency')
-const stringifyQuery = require('./utils/stringify-query')
+const addQuery = require('./utils/add-query')
 const mpxJSON = require('./utils/mpx-json')
 const async = require('async')
 const matchCondition = require('./utils/match-condition')
@@ -44,8 +44,8 @@ module.exports = function (content) {
   const isApp = !pagesMap[resourcePath] && !componentsMap[resourcePath]
   const srcMode = localSrcMode || globalSrcMode
   const fs = this._compiler.inputFileSystem
-  const originTypeExtMap = config[srcMode].typeExtMap
-  const typeExtMap = Object.assign({}, originTypeExtMap)
+  const typeExtMap = config[srcMode].typeExtMap
+  const typeResourceMap = {}
   const autoScope = matchCondition(resourcePath, mpx.autoScopeRules)
 
   const EXT_MPX_JSON = '.json.js'
@@ -53,8 +53,7 @@ module.exports = function (content) {
     less: '.less',
     stylus: '.styl',
     sass: '.sass',
-    scss: '.scss',
-    css: originTypeExtMap.styles
+    scss: '.scss'
   }
 
   let useMPXJSON = false
@@ -64,7 +63,8 @@ module.exports = function (content) {
   const isNative = true
 
   const tryEvalMPXJSON = (callback) => {
-    const _src = resourceName + EXT_MPX_JSON
+    const { rawResourcePath } = parseRequest(typeResourceMap['json'])
+    const _src = rawResourcePath
     this.addDependency(_src)
     fs.readFile(_src, (err, raw) => {
       if (err) {
@@ -81,14 +81,15 @@ module.exports = function (content) {
     })
   }
 
-  function checkFileExists (extName, callback) {
-    fs.stat(resourceName + extName, (err) => {
-      callback(null, !err)
+  const checkFileExists = (extName, callback) => {
+    this.resolve(parsed.dir, resourceName + extName, (err, result) => {
+      err = null
+      callback(err, result)
     })
   }
 
   function checkCSSLangFiles (callback) {
-    const langs = mpx.nativeOptions.cssLangs || ['css', 'less', 'stylus', 'scss', 'sass']
+    const langs = mpx.nativeOptions.cssLangs || ['less', 'stylus', 'scss', 'sass']
     const results = []
     async.eachOf(langs, function (lang, i, callback) {
       if (!CSS_LANG_EXT_MAP[lang]) {
@@ -96,7 +97,7 @@ module.exports = function (content) {
       }
       checkFileExists(CSS_LANG_EXT_MAP[lang], (err, result) => {
         if (!err && result) {
-          results[i] = true
+          results[i] = result
         }
         callback(err)
       })
@@ -104,7 +105,7 @@ module.exports = function (content) {
       for (let i = 0; i < langs.length; i++) {
         if (results[i]) {
           cssLang = langs[i]
-          typeExtMap.styles = CSS_LANG_EXT_MAP[cssLang]
+          typeResourceMap.styles = results[i]
           break
         }
       }
@@ -116,8 +117,8 @@ module.exports = function (content) {
     // checkFileExists(EXT_MPX_JSON, (err, result) => {
     checkFileExists(EXT_MPX_JSON, (err, result) => {
       if (!err && result) {
+        typeResourceMap.json = result
         useMPXJSON = true
-        typeExtMap.json = EXT_MPX_JSON
       }
       callback(err)
     })
@@ -140,8 +141,8 @@ module.exports = function (content) {
           return callback()
         }
         checkFileExists(ext, (err, result) => {
-          if (!err && !result) {
-            delete typeExtMap[key]
+          if (!err && result) {
+            typeResourceMap[key] = result
           }
           callback(err)
         })
@@ -152,10 +153,10 @@ module.exports = function (content) {
       if (useMPXJSON) {
         tryEvalMPXJSON(callback)
       } else {
-        if (typeExtMap['json']) {
-          const jsonSrc = resourceName + typeExtMap['json']
-          this.addDependency(jsonSrc)
-          fs.readFile(jsonSrc, (err, raw) => {
+        if (typeResourceMap['json']) {
+          // eslint-disable-next-line handle-callback-err
+          const { rawResourcePath } = parseRequest(typeResourceMap['json'])
+          fs.readFile(rawResourcePath, (err, raw) => {
             if (err) {
               callback(err)
             } else {
@@ -193,7 +194,7 @@ module.exports = function (content) {
 
       const getRequire = (type) => {
         const localQuery = Object.assign({}, queryObj)
-        let src = resourceName + typeExtMap[type]
+        let src = typeResourceMap[type]
         localQuery.resourcePath = resourcePath
         if (type !== 'script') {
           this.addDependency(src)
@@ -204,15 +205,14 @@ module.exports = function (content) {
         if (type === 'json' && !useMPXJSON) {
           localQuery.__component = true
         }
-        src += stringifyQuery(localQuery)
-
+        src = addQuery(src, localQuery, true)
         const partsOpts = { src }
 
         if (type === 'script') {
           return getNamedExportsForSrc(type, partsOpts)
         }
         if (type === 'styles') {
-          if (cssLang !== 'css') {
+          if (cssLang) {
             partsOpts.lang = cssLang
           }
           if (hasScoped) {
@@ -259,7 +259,7 @@ module.exports = function (content) {
       // 触发webpack global var 注入
       let output = 'global.currentModuleId;\n'
 
-      for (let type in typeExtMap) {
+      for (let type in typeResourceMap) {
         output += `/* ${type} */\n${getRequire(type)}\n\n`
       }
 

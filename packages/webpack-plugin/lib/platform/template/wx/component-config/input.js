@@ -7,6 +7,8 @@ module.exports = function ({ print }) {
   const baiduEventLog = print({ platform: 'baidu', tag: TAG_NAME, isError: false, type: 'event' })
   const ttPropLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false })
   const ttEventLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false, type: 'event' })
+  const jdPropLog = print({ platform: 'jd', tag: TAG_NAME, isError: false })
+  const jdEventLog = print({ platform: 'jd', tag: TAG_NAME, isError: false, type: 'event' })
   const webPropLog = print({ platform: 'web', tag: TAG_NAME, isError: false })
   const webEventLog = print({ platform: 'web', tag: TAG_NAME, isError: false, type: 'event' })
   const webValueLog = print({ platform: 'web', tag: TAG_NAME, isError: false, type: 'value' })
@@ -30,6 +32,10 @@ module.exports = function ({ print }) {
       {
         test: /^(placeholder-class|auto-focus|confirm-type|confirm-hold|adjust-position|hold-keyboard)$/,
         tt: ttPropLog
+      },
+      {
+        test: /^(hold-keyboard)$/,
+        jd: jdPropLog
       },
       {
         test: 'type',
@@ -66,7 +72,8 @@ module.exports = function ({ print }) {
         ali: aliEventLog,
         swan: baiduEventLog,
         tt: ttEventLog,
-        web: webEventLog
+        web: webEventLog,
+        jd: jdEventLog
       },
       {
         test: 'confirm',
