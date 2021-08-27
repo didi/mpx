@@ -439,8 +439,7 @@ class MpxWebpackPlugin {
               if (isStatic) {
                 const resourceName = path.parse(resourcePath).name
                 const outputPath = path.join(type, resourceName + mpx.pathHash(resourcePath) + typeExtMap[type])
-                file = mpx.getPackageInfo({
-                  resource,
+                file = mpx.getPackageInfo(resource, {
                   outputPath,
                   resourceType: 'staticResources',
                   warn
@@ -464,7 +463,7 @@ class MpxWebpackPlugin {
             // 2. 分包引用且主包引用过的资源输出至主包，不在当前分包重复输出
             // 3. 分包引用且无其他包引用的资源输出至当前分包
             // 4. 分包引用且其他分包也引用过的资源，重复输出至当前分包
-            getPackageInfo: ({ resource, outputPath, resourceType = 'components', warn }) => {
+            getPackageInfo: (resource, { outputPath, resourceType = 'components', warn } = {}) => {
               let packageRoot = ''
               let packageName = 'main'
               const { resourcePath } = parseRequest(resource)
@@ -554,8 +553,7 @@ class MpxWebpackPlugin {
         //     }
         //
         //     if (needPackageQuery) {
-        //       const { packageName } = mpx.getPackageInfo({
-        //         resource: module.resource,
+        //       const { packageName } = mpx.getPackageInfo(module.resource, {
         //         resourceType: isStatic ? 'staticResources' : 'subpackageModules'
         //       })
         //       // 基于计算得出的packageName强行覆盖

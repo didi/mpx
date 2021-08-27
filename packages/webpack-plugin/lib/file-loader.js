@@ -28,8 +28,7 @@ module.exports = function loader (content, prevOptions) {
       }
     }
   } else {
-    url = outputPath = mpx.getPackageInfo({
-      resource: this.resource,
+    url = outputPath = mpx.getPackageInfo(this.resource, {
       outputPath: url,
       resourceType: 'staticResources',
       warn: (err) => {

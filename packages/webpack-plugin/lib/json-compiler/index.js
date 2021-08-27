@@ -19,8 +19,8 @@ const getMainCompilation = require('../utils/get-main-compilation')
 const createHelpers = require('../helpers')
 
 module.exports = function (raw) {
-  // 该loader中会在每次编译中动态添加entry，不能缓存，否则watch不好使
-  this.cacheable(false)
+  // 将addEntry和填充pages/componentsMap等副作用通过dep在loader外部进行，使json模块可缓存
+  this.cacheable()
   const nativeCallback = this.async()
   const mainCompilation = getMainCompilation(this._compilation)
   const moduleGraph = this._compilation.moduleGraph
@@ -34,7 +34,6 @@ module.exports = function (raw) {
   const useRelativePath = mpx.isPluginMode || mpx.useRelativePath
   const { resourcePath, queryObj } = parseRequest(this.resource)
   const packageName = queryObj.packageName || mpx.currentPackageRoot || 'main'
-  const appsMap = mpx.appsMap
   const pagesMap = mpx.pagesMap
   const componentsMap = mpx.componentsMap[packageName]
   const getEntryNode = mpx.getEntryNode
@@ -308,8 +307,7 @@ module.exports = function (raw) {
           outputPath = path.join('components', componentName + pathHash(resourcePath), componentName)
         }
       }
-      const packageInfo = mpx.getPackageInfo({
-        resource,
+      const packageInfo = mpx.getPackageInfo(resource, {
         outputPath,
         resourceType: 'components',
         warn: (err) => {

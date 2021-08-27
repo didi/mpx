@@ -42,8 +42,7 @@ module.exports = function () {
   const name = path.parse(resourcePath).name + mpx.pathHash(resourcePath)
   let filename = path.join(/^\.([^.]+)/.exec(config[mode].wxs.ext)[1], `${name}${config[mode].wxs.ext}`)
 
-  filename = mpx.getPackageInfo({
-    resource: this.resource,
+  filename = mpx.getPackageInfo(this.resource, {
     outputPath: filename,
     resourceType: 'staticResources',
     warn: (err) => {

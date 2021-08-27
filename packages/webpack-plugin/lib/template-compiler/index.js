@@ -122,7 +122,7 @@ global.currentInject.getRefsData = function () {
   return ${JSON.stringify(meta.refs)};
 };\n`
   }
-
+  // 基于importModule会自动合并asset信息的特性，通过emitFile的方式将模板注入代码传递到extractor中作为抽取过后的模块内容执行，从而使后面执行script时能够读取到相关信息，
   this.emitFile(resourcePath, '', undefined, {
     skipEmit: true,
     extractedResultSource: resultSource
