@@ -1765,7 +1765,8 @@ function processClass (el, meta) {
   const needEx = el.tag.startsWith('th-')
   const targetType = needEx ? 'ex-' + type : type
   let dynamicClass = getAndRemoveAttr(el, config[mode].directive.dynamicClass).val
-  let staticClass = getAndRemoveAttr(el, type).val
+  let staticClass = getAndRemoveAttr(el, type).val || ''
+  staticClass = staticClass.replace(/\s+/g, ' ')
   if (dynamicClass) {
     let staticClassExp = parseMustache(staticClass).result
     let dynamicClassExp = transDynamicClassExpr(parseMustache(dynamicClass).result)
@@ -1798,7 +1799,8 @@ function processStyle (el, meta) {
   const type = 'style'
   const targetType = el.tag.startsWith('th-') ? 'ex-' + type : type
   let dynamicStyle = getAndRemoveAttr(el, config[mode].directive.dynamicStyle).val
-  let staticStyle = getAndRemoveAttr(el, type).val
+  let staticStyle = getAndRemoveAttr(el, type).val || ''
+  staticStyle = staticStyle.replace(/\s+/g, ' ')
   if (dynamicStyle) {
     let staticStyleExp = parseMustache(staticStyle).result
     let dynamicStyleExp = parseMustache(dynamicStyle).result
