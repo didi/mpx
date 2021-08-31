@@ -36,7 +36,9 @@ const templateCompilerPath = normalize.lib('template-compiler/index')
 const jsonCompilerPath = normalize.lib('json-compiler/index')
 const jsonThemeCompilerPath = normalize.lib('json-compiler/theme')
 const extractorPath = normalize.lib('extractor')
+const async = require('async')
 const MPX_PROCESSED_FLAG = 'processed'
+
 
 const isProductionLikeMode = options => {
   return options.mode === 'production' || !options.mode
@@ -515,18 +517,27 @@ class MpxWebpackPlugin {
 
         const rawProcessModuleDependencies = compilation.processModuleDependencies
         compilation.processModuleDependencies = (module, callback) => {
-          let proxyedCallback = callback
-          if (module.rawRequest === mpx.appScriptRawRequest) {
-            // 避免模块request重名，只对第一次匹配到的模块进行代理
-            mpx.appScriptRawRequest = ''
-            mpx.appScriptPromise = new Promise((resolve) => {
-              proxyedCallback = (err) => {
-                resolve()
-                return callback(err)
-              }
-            })
-          }
-          return rawProcessModuleDependencies.apply(compilation, [module, proxyedCallback])
+          async.series([
+            (callback) => {
+              async.forEach(module.presentationalDependencies.filter((dep) => dep.mpxAction), (dep, callback) => {
+                dep.mpxAction(mpx, compilation, callback)
+              }, callback)
+            },
+            (callback) => {
+              // let proxyedCallback = callback
+              // if (module.rawRequest === mpx.appScriptRawRequest) {
+              //   // 避免模块request重名，只对第一次匹配到的模块进行代理
+              //   mpx.appScriptRawRequest = ''
+              //   mpx.appScriptPromise = new Promise((resolve) => {
+              //     proxyedCallback = (err) => {
+              //       resolve()
+              //       return callback(err)
+              //     }
+              //   })
+              // }
+              rawProcessModuleDependencies.call(compilation, module, callback)
+            }
+          ], callback)
         }
 
         // 处理watch时缓存模块中的buildInfo

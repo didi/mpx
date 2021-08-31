@@ -1,6 +1,7 @@
 const NullDependency = require('webpack/lib/dependencies/NullDependency')
 const makeSerializable = require('webpack/lib/util/makeSerializable')
-
+const async = require('async')
+const EntryPlugin = require('webpack/lib/EntryPlugin')
 
 class JsonSideEffectDependency extends NullDependency {
   constructor (info = {}) {
@@ -15,12 +16,35 @@ class JsonSideEffectDependency extends NullDependency {
     return 'mpx inject'
   }
 
-  mpxAction (mpx, compilation) {
+  mpxAction (mpx, compilation, callback) {
     const info = this.info
-    const currentPackageName = mpx.currentPackageRoot
-    if (info.pagesMap) {
+    const compiler = compilation.compiler
+    const packageName = mpx.currentPackageRoot || 'main'
+    const componentsMap = mpx.componentsMap[packageName] = mpx.componentsMap[packageName] || {}
+    Object.assign(mpx.pagesMap, info.pagesMap)
+    Object.assign(componentsMap, info.componentsMap)
+    if (this.entriesQueue) {
+      async.series(this.entriesQueue.map((info) => {
+        const entries = info.entries
+        const root = mpx.currentPackageRoot = info.root
+        mpx.componentsMap[root] = {}
+        mpx.staticResourcesMap[root] = {}
+        mpx.subpackageModulesMap[root] = {}
+        return (callback) => {
+          async.parallel(entries.map(({ resource, name }) => {
+            // const type = entry.type
+            return (callback) => {
+              const dep = EntryPlugin.createDependency(resource, { name })
+              compilation.addEntry(compiler.context, dep, { name }, (err, module) => {
+                callback(err, module)
+              })
+            }
+          }), callback)
+        }
+      }), callback)
+    } else {
+      callback()
     }
-
   }
 
   updateHash (hash) {
