@@ -417,19 +417,6 @@ module.exports = function (raw = '{}') {
                     subPackage.plugins = content.plugins
                   }
 
-                  if (content.usingComponents) {
-                    mpx.usingComponents = mpx.usingComponents || {}
-                    Object.keys(content.usingComponents).forEach(key => {
-                      if (mpx.usingComponents[key]) {
-                        emitError(`Current subpackage [${tarRoot}] registers a conflict usingComponents [${key}], which is not allowed, please rename it!`)
-                      } else {
-                        mpx.usingComponents[key] = addQuery(content.usingComponents[key], {
-                          context: context
-                        })
-                      }
-                    })
-                  }
-
                   processSubPackagesQueue.push((callback) => {
                     processSubPackage(subPackage, context, callback)
                   })
@@ -442,6 +429,18 @@ module.exports = function (raw = '{}') {
               if (content.packages) {
                 processSelfQueue.push((callback) => {
                   processPackages(content.packages, context, callback)
+                })
+              }
+              if (content.usingComponents) {
+                Object.keys(content.usingComponents).forEach(key => {
+                  if (json.usingComponents[key]) {
+                    emitError(`Current subpackage [${context}] registers a conflict usingComponents [${key}], which is not allowed, please rename it!`)
+                  } else {
+                    let path = content.usingComponents[key]
+                    json.usingComponents[key] = addQuery(path, {
+                      context
+                    })
+                  }
                 })
               }
               if (processSelfQueue.length) {
@@ -648,17 +647,6 @@ module.exports = function (raw = '{}') {
       return output
     }
 
-    const processUsingComponent = (output) => {
-      if (!mpx.usingComponents) {
-        return output
-      }
-      output += 'json.usingComponents = json.usingComponents || {}; \n'
-      Object.keys(mpx.usingComponents).forEach(key => {
-        output += `json.usingComponents['${key}'] = '${mpx.usingComponents[key]}'; \n`
-      })
-      return output
-    }
-
     const processWorkers = (workers, context, callback) => {
       if (workers) {
         let workersPath = path.join(context, workers)
@@ -752,6 +740,9 @@ module.exports = function (raw = '{}') {
     // 外部收集errors，确保整个series流程能够执行完
     async.series([
       (callback) => {
+        processPackages(json.packages, this.context, callback)
+      },
+      (callback) => {
         async.parallel([
           (callback) => {
             processPlugins(json.plugins, '', '', this.context, callback)
@@ -760,10 +751,10 @@ module.exports = function (raw = '{}') {
             processPages(json.pages, '', '', this.context, callback)
           },
           (callback) => {
-            processWorkers(json.workers, this.context, callback)
+            processComponents(json.usingComponents, this.context, callback)
           },
           (callback) => {
-            processPackages(json.packages, this.context, callback)
+            processWorkers(json.workers, this.context, callback)
           },
           (callback) => {
             processCustomTabBar(json.tabBar, this.context, callback)
@@ -775,18 +766,9 @@ module.exports = function (raw = '{}') {
           if (err) {
             errors.push(err)
           }
+          mpx.usingComponents = json.usingComponents
           callback()
         })
-      },
-      (callback) => {
-        // 保存全局注册组件
-        Object.keys(json.usingComponents).forEach(key => {
-          let request = json.usingComponents[key]
-          mpx.usingComponents[key] = addQuery(request, {
-            context: this.context
-          })
-        })
-        processComponents(mpx.usingComponents, this.context, callback)
       },
       (callback) => {
         if (mpx.appScriptPromise) {
@@ -808,7 +790,6 @@ module.exports = function (raw = '{}') {
     ], () => {
       if (errors.length) return callback(errors[0])
       delete json.packages
-      delete json.subpackages
       delete json.subPackages
       json.pages = localPages
       for (let root in subPackagesCfg) {
@@ -821,7 +802,6 @@ module.exports = function (raw = '{}') {
         output = processTabBar(output)
         output = processOptionMenu(output)
         output = processThemeLocation(output)
-        output = processUsingComponent(output)
         return output
       }
       callback(null, processOutput)
