@@ -434,7 +434,7 @@ module.exports = function (raw = '{}') {
               if (content.usingComponents) {
                 Object.keys(content.usingComponents).forEach(key => {
                   if (json.usingComponents[key]) {
-                    emitError(`Current subpackage [${context}] registers a conflict usingComponents [${key}], which is not allowed, please rename it!`)
+                    emitError(`Current subpackage [${parsed.resourcePath}] registers a conflict usingComponents [${key}], which is not allowed, please rename it!`)
                   } else {
                     let path = content.usingComponents[key]
                     json.usingComponents[key] = addQuery(path, {
