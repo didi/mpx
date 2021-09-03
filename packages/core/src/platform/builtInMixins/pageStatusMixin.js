@@ -1,3 +1,5 @@
+import { BEFORECREATE } from '../../core/innerLifecycle'
+
 export default function pageStatusMixin (mixinType) {
   // 只有tt和ali没有pageLifeTimes支持，需要框架实现，其余平台一律使用原生pageLifeTimes
   // 由于业务上大量使用了pageShow进行初始化。。。下个版本再移除非必要的pageShow/Hide实现。。。
@@ -14,14 +16,18 @@ export default function pageStatusMixin (mixinType) {
       }
     }
     if (__mpx_mode__ === 'ali') {
-      Object.assign(pageMixin, {
-        events: {
-          onResize (e) {
-            this.__resizeEvent = e
-            this.mpxPageStatus = 'resize'
-          }
+      pageMixin.events = {
+        onResize (e) {
+          this.__resizeEvent = e
+          this.mpxPageStatus = 'resize'
         }
-      })
+      }
+    }
+    if (__mpx_mode__ === 'tt') {
+      pageMixin.onResize = function (e) {
+        this.__resizeEvent = e
+        this.mpxPageStatus = 'resize'
+      }
     }
     return pageMixin
   } else {
@@ -38,39 +44,38 @@ export default function pageStatusMixin (mixinType) {
                 if (pageLifetimes) {
                   if (val === 'show' && typeof pageLifetimes.show === 'function') pageLifetimes.show.call(this)
                   if (val === 'hide' && typeof pageLifetimes.hide === 'function') pageLifetimes.hide.call(this)
-                  if (val === 'resize' && typeof pageLifetimes.resize === 'function') pageLifetimes.resize.call(this, this.__resizeEvent)
+                  if (val === 'resize' && typeof pageLifetimes.resize === 'function') pageLifetimes.resize.call(this, this.$page.__resizeEvent)
                 }
               }
             },
+            sync: true,
             immediate: true
           }
         }
       }
     } else {
       return {
-        properties: {
-          mpxPageStatus: {
-            type: String
-          }
-        },
-        watch: {
-          mpxPageStatus: {
-            handler (val) {
-              if (val) {
-                const options = this.$rawOptions
-                if (val === 'show' && typeof options.pageShow === 'function') options.pageShow.call(this)
-                if (val === 'hide' && typeof options.pageHide === 'function') options.pageHide.call(this)
-                if (__mpx_mode__ === 'tt') {
-                  const pageLifetimes = this.$rawOptions.pageLifetimes
-                  if (pageLifetimes) {
-                    if (val === 'show' && typeof pageLifetimes.show === 'function') pageLifetimes.show.call(this)
-                    if (val === 'hide' && typeof pageLifetimes.hide === 'function') pageLifetimes.hide.call(this)
-                  }
+        [BEFORECREATE] () {
+          const pages = getCurrentPages()
+          const currentPage = pages[pages.length - 1]
+          this.$watch(() => currentPage.mpxPageStatus, (val) => {
+            if (val) {
+              const options = this.$rawOptions
+              if (val === 'show' && typeof options.pageShow === 'function') options.pageShow.call(this)
+              if (val === 'hide' && typeof options.pageHide === 'function') options.pageHide.call(this)
+              if (__mpx_mode__ === 'tt') {
+                const pageLifetimes = this.$rawOptions.pageLifetimes
+                if (pageLifetimes) {
+                  if (val === 'show' && typeof pageLifetimes.show === 'function') pageLifetimes.show.call(this)
+                  if (val === 'hide' && typeof pageLifetimes.hide === 'function') pageLifetimes.hide.call(this)
+                  if (val === 'resize' && typeof pageLifetimes.resize === 'function') pageLifetimes.resize.call(this, currentPage.__resizeEvent)
                 }
               }
-            },
+            }
+          }, {
+            sync: true,
             immediate: true
-          }
+          })
         }
       }
     }

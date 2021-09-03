@@ -1071,15 +1071,6 @@ function stringify (str) {
 //   }
 // }
 
-function processPageStatus (el, options) {
-  if (isComponentNode(el, options)) {
-    addAttrs(el, [{
-      name: 'mpxPageStatus',
-      value: '{{mpxPageStatus}}'
-    }])
-  }
-}
-
 const genericRE = /^generic:(.+)$/
 
 function processComponentGenericsForWeb (el, options, meta) {
@@ -2135,9 +2126,6 @@ function processElement (el, root, options, meta) {
 
   if (!pass) {
     processBindEvent(el, options)
-    if (mode !== 'ali') {
-      processPageStatus(el, options)
-    }
     processComponentIs(el, options)
   }
 
