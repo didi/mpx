@@ -1,4 +1,4 @@
-import { BEFORECREATE } from '../../core/innerLifecycle'
+import { CREATED } from '../../core/innerLifecycle'
 
 export default function pageStatusMixin (mixinType) {
   // 只有tt和ali没有pageLifeTimes支持，需要框架实现，其余平台一律使用原生pageLifeTimes
@@ -55,7 +55,7 @@ export default function pageStatusMixin (mixinType) {
       }
     } else {
       return {
-        [BEFORECREATE] () {
+        [CREATED] () {
           const pages = getCurrentPages()
           const currentPage = pages[pages.length - 1]
           this.$watch(() => currentPage.mpxPageStatus, (val) => {
