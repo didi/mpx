@@ -5,8 +5,7 @@ const EntryPlugin = require('webpack/lib/EntryPlugin')
 const loaderUtils = require('loader-utils')
 const parseComponent = require('../parser')
 const config = require('../config')
-const normalize = require('../utils/normalize')
-const nativeLoaderPath = normalize.lib('native-loader')
+
 const parseRequest = require('../utils/parse-request')
 const mpxJSON = require('../utils/mpx-json')
 const toPosix = require('../utils/to-posix')
@@ -15,19 +14,18 @@ const getRulesRunner = require('../platform/index')
 const isUrlRequestRaw = require('../utils/is-url-request')
 const addQuery = require('../utils/add-query')
 const readJsonForSrc = require('../utils/read-json-for-src')
-const getMainCompilation = require('../utils/get-main-compilation')
 const createHelpers = require('../helpers')
+const JsonSideEffectDependency = require('../dependencies/JsonSideEffectDependency')
 
 module.exports = function (raw) {
   // 将addEntry和填充pages/componentsMap等副作用通过dep在loader外部进行，使json模块可缓存
   this.cacheable()
-  const nativeCallback = this.async()
-  const mainCompilation = getMainCompilation(this._compilation)
+  const rawCallback = this.async()
   const moduleGraph = this._compilation.moduleGraph
   const mpx = this.getMpx()
 
   if (!mpx) {
-    return nativeCallback(null, raw)
+    return rawCallback(null, raw)
   }
 
   // 微信插件下要求组件使用相对路径
@@ -36,7 +34,6 @@ module.exports = function (raw) {
   const packageName = queryObj.packageName || mpx.currentPackageRoot || 'main'
   const pagesMap = mpx.pagesMap
   const componentsMap = mpx.componentsMap[packageName]
-  const getEntryNode = mpx.getEntryNode
   const mode = mpx.mode
   const env = mpx.env
   const defs = mpx.defs
@@ -51,6 +48,43 @@ module.exports = function (raw) {
   const publicPath = this._compilation.outputOptions.publicPath || ''
   const fs = this._compiler.inputFileSystem
 
+  const JsonSideEffectInfo = {
+    componentsMap: {},
+    pagesMap: {},
+    staticResourcesMap: {},
+    entries: []
+  }
+
+  let currentName
+  if (isApp) {
+    for (const [name, { dependencies }] of this._compilation.entries) {
+      const entryModule = moduleGraph.getModule(dependencies[0])
+      if (parseRequest(entryModule.resource).resourcePath === resourcePath) {
+        currentName = name
+        break
+      }
+    }
+    JsonSideEffectInfo.appInfo = {
+      name: currentName,
+      resourcePath
+    }
+    JsonSideEffectInfo.subpackageEntriesMap = {}
+  } else {
+    currentName = componentsMap[resourcePath] || pagesMap[resourcePath]
+  }
+
+  const pushEntry = (entry, tarRoot = '') => {
+    if (tarRoot && JsonSideEffectInfo.subpackageEntriesMap) {
+      JsonSideEffectInfo.subpackageEntriesMap[tarRoot] = JsonSideEffectInfo.subpackageEntriesMap[tarRoot] || []
+      JsonSideEffectInfo.subpackageEntriesMap[tarRoot].push(entry)
+    } else {
+      JsonSideEffectInfo.entries.push(entry)
+    }
+  }
+
+
+  const currentPath = publicPath + currentName
+
   const isUrlRequest = r => isUrlRequestRaw(r, root, externals)
   const urlToRequest = r => loaderUtils.urlToRequest(r)
 
@@ -59,7 +93,6 @@ module.exports = function (raw) {
       new Error('[json compiler][' + this.resource + ']: ' + msg)
     )
   }
-
   const emitError = (msg) => {
     this.emitError(
       new Error('[json compiler][' + this.resource + ']: ' + msg)
@@ -67,30 +100,6 @@ module.exports = function (raw) {
   }
 
   const { getRequestString } = createHelpers(this)
-
-  let currentName
-
-  if (isApp) {
-    for (const [name, { dependencies }] of mainCompilation.entries) {
-      const entryModule = moduleGraph.getModule(dependencies[0])
-      if (parseRequest(entryModule.resource).resourcePath === resourcePath) {
-        currentName = name
-        break
-      }
-    }
-  } else {
-    currentName = componentsMap[resourcePath] || pagesMap[resourcePath]
-  }
-
-  const currentPath = publicPath + currentName
-
-  // json模块都是由.mpx或.js的入口模块引入，且引入关系为一对一，其issuer必为入口module
-  const entryModule = moduleGraph.getIssuer(this._module)
-  // 通过rawRequest关联entryNode和entryModule
-  const entryRequest = entryModule.rawRequest
-  const entryType = isApp ? 'App' : pagesMap[resourcePath] ? 'Page' : 'Component'
-
-  const currentEntry = getEntryNode(entryRequest, entryType, entryModule)
 
   const copydir = (dir, context, callback) => {
     fs.readdir(dir, (err, files) => {
@@ -125,48 +134,13 @@ module.exports = function (raw) {
     })
   }
 
-  let entryDeps = new Set()
-
-  let cacheCallback
-
-  const checkEntryDeps = (callback) => {
-    callback = callback || cacheCallback
-    if (callback && entryDeps.size === 0) {
-      callback()
-    } else {
-      cacheCallback = callback
-    }
-  }
-
-  const addEntrySafely = (resource, name, callback) => {
-    // 如果loader已经回调，就不再添加entry
-    if (callbacked) return callback()
-    const dep = EntryPlugin.createDependency(resource, { name })
-    entryDeps.add(dep)
-    this._compilation.addEntry(this._compiler.context, dep, { name }, (err, module) => {
-      entryDeps.delete(dep)
-      checkEntryDeps()
-      callback(err, module)
-    })
-  }
-
-  // const deleteEntry = (name) => {
-  //   const index = this._compilation._preparedEntrypoints.findIndex(slot => slot.name === name)
-  //   if (index >= 0) {
-  //     this._compilation._preparedEntrypoints.splice(index, 1)
-  //   }
-  // }
-
-  let callbacked = false
   const callback = (err, processOutput) => {
-    checkEntryDeps(() => {
-      callbacked = true
-      if (err) return nativeCallback(err)
-      let output = `var json = ${JSON.stringify(json, null, 2)};\n`
-      if (processOutput) output = processOutput(output)
-      output += `module.exports = JSON.stringify(json, null, 2);\n`
-      nativeCallback(null, output)
-    })
+    if (err) return rawCallback(err)
+    this._module.addPresentationalDependency(new JsonSideEffectDependency(JsonSideEffectInfo))
+    let output = `var json = ${JSON.stringify(json, null, 2)};\n`
+    if (processOutput) output = processOutput(output)
+    output += `module.exports = JSON.stringify(json, null, 2);\n`
+    rawCallback(null, output)
   }
 
   let json = {}
@@ -262,24 +236,25 @@ module.exports = function (raw) {
   const processComponents = (components, context, callback) => {
     if (components) {
       async.forEachOf(components, (component, name, callback) => {
-        processComponent(component, context, (componentPath) => {
-          if (useRelativePath === true) {
-            componentPath = toPosix(path.relative(path.dirname(currentPath), componentPath))
+        processComponent(component, context, {
+          rewritePath: (componentPath) => {
+            if (useRelativePath === true) {
+              componentPath = toPosix(path.relative(path.dirname(currentPath), componentPath))
+            }
+            components[name] = componentPath
           }
-          components[name] = componentPath
-        }, undefined, callback)
+        }, callback)
       }, callback)
     } else {
       callback()
     }
   }
 
-  const processComponent = (component, context, rewritePath, outputPath, callback) => {
+  const processComponent = (component, context, { rewritePath, outputPath, tarRoot }, callback) => {
     if (!isUrlRequest(component)) return callback()
     if (resolveMode === 'native') {
       component = urlToRequest(component)
     }
-
     resolve(context, component, (err, resource, info) => {
       if (err) return callback(err)
       const resourcePath = parseRequest(resource).resourcePath
@@ -307,7 +282,7 @@ module.exports = function (raw) {
           outputPath = path.join('components', componentName + pathHash(resourcePath), componentName)
         }
       }
-      const packageInfo = mpx.getPackageInfo(resource, {
+      const { packageName, outputPath: componentPath, alreadyOutputed } = mpx.getPackageInfo(resource, {
         outputPath,
         resourceType: 'components',
         warn: (err) => {
@@ -315,20 +290,23 @@ module.exports = function (raw) {
         }
       })
       // 此处query为了实现消除分包间模块缓存，以实现不同分包中引用的组件在不同分包中都能输出
-      resource = addQuery(resource, {
-        packageName: packageInfo.packageName
-      })
-      const componentPath = packageInfo.outputPath
-      rewritePath && rewritePath(publicPath + componentPath)
+      const queryObj = { packageName }
       if (ext === '.js') {
-        resource = '!!' + nativeLoaderPath + '!' + resource
+        queryObj.isNative = true
       }
-      currentEntry.addChild(getEntryNode(resource, 'Component'))
-      // 如果之前已经创建了入口，直接return
-      if (packageInfo.alreadyOutputed) {
-        return callback()
+      resource = addQuery(resource, queryObj)
+      rewritePath && rewritePath(publicPath + componentPath)
+      // currentEntry.addChild(getEntryNode(resource, 'Component'))
+      if (!alreadyOutputed) {
+        JsonSideEffectInfo.componentsMap[packageName] = JsonSideEffectInfo.componentsMap[packageName] || {}
+        JsonSideEffectInfo.componentsMap[packageName][resourcePath] = componentPath
+        pushEntry({
+          name: componentPath,
+          resource,
+          type: 'component'
+        }, tarRoot)
       }
-      addEntrySafely(resource, componentPath, callback)
+      callback()
     })
   }
 
@@ -341,11 +319,8 @@ module.exports = function (raw) {
   }
 
   if (isApp) {
-    if (!mpx.appInfo) {
-      mpx.appInfo = {
-        name: currentName,
-        resourcePath
-      }
+    if (!mpx.hasApp) {
+      mpx.hasApp = true
     } else {
       const issuer = getJsonIssuer(this._module)
       if (issuer) {
@@ -436,7 +411,7 @@ module.exports = function (raw) {
                   })
                 } else {
                   processSelfQueue.push((callback) => {
-                    processPages(content.pages, '', '', context, callback)
+                    processPages(content.pages, context, {}, callback)
                   })
                 }
               }
@@ -502,10 +477,10 @@ module.exports = function (raw) {
         mpx.subpackageModulesMap[tarRoot] = {}
         async.parallel([
           (callback) => {
-            processPages(subPackage.pages, srcRoot, tarRoot, context, callback)
+            processPages(subPackage.pages, context, { srcRoot, tarRoot }, callback)
           },
           (callback) => {
-            processPlugins(subPackage.plugins, srcRoot, tarRoot, context, callback)
+            processPlugins(subPackage.plugins, context, { srcRoot, tarRoot }, callback)
           }
         ], callback)
       } else {
@@ -529,7 +504,7 @@ module.exports = function (raw) {
       return path.join('pages', baseName + pathHash(resourcePath), baseName)
     }
 
-    const processPages = (pages, srcRoot = '', tarRoot = '', context, callback) => {
+    const processPages = (pages, context, { srcRoot = '', tarRoot = '' } = options, callback) => {
       if (pages) {
         context = path.join(context, srcRoot)
         async.forEach(pages, (page, callback) => {
@@ -577,16 +552,16 @@ module.exports = function (raw) {
               }
             }
             if (ext === '.js') {
-              resource = '!!' + nativeLoaderPath + '!' + resource
+              addQuery(resource, { isNative: true })
             }
             // 如果之前已经创建了页面入口，直接return，目前暂时不支持多个分包复用同一个页面
             if (pagesMap[resourcePath]) {
               emitWarning(`Current page [${resourcePath}] which is imported from [${this.resourcePath}] has been registered in pagesMap already, it will be ignored, please check it and remove the redundant page declaration!`)
               return callback()
             }
-            currentEntry.addChild(getEntryNode(resource, 'Page'))
-            pagesMap[resourcePath] = pageName
-            if (tarRoot && subPackagesCfg[tarRoot]) {
+            JsonSideEffectInfo.pagesMap[resourcePath] = pagesMap[resourcePath] = pageName
+            // 分包页面推到subpackageEntriesMap中，待make过程完成后（即主包资源全部处理完毕后），在finishMake钩子中进行处理
+            if (tarRoot) {
               subPackagesCfg[tarRoot].pages.push(toPosix(path.relative(tarRoot, pageName)))
             } else {
               // 确保首页
@@ -596,7 +571,12 @@ module.exports = function (raw) {
                 localPages.push(pageName)
               }
             }
-            addEntrySafely(resource, pageName, callback)
+            pushEntry({
+              name: pageName,
+              resource,
+              type: 'page'
+            }, tarRoot)
+            callback()
           })
         }, callback)
       } else {
@@ -657,34 +637,29 @@ module.exports = function (raw) {
 
     const processCustomTabBar = (tabBar, context, callback) => {
       if (tabBar && tabBar.custom) {
-        processComponent('./custom-tab-bar/index', context, undefined, 'custom-tab-bar/index', callback)
+        processComponent('./custom-tab-bar/index', context, { outputPath: 'custom-tab-bar/index' }, callback)
       } else {
         callback()
       }
     }
 
-    const addMiniToPluginModules = module => {
-      if (mpx.miniToPluginModules) {
-        mpx.miniToPluginModules.add(module)
-      } else {
-        mpx.miniToPluginModules = new Set([module])
-      }
-    }
-
-    const processPluginGenericsImplementation = (genericsImplementation, tarRoot, context, callback) => {
+    const processPluginGenericsImplementation = (genericsImplementation, context, tarRoot, callback) => {
       async.forEachOf(genericsImplementation, (genericComponents, name, callback) => {
         async.forEachOf(genericComponents, (genericComponentPath, name, callback) => {
-          processComponent(genericComponentPath, context, (componentPath) => {
-            if (useRelativePath === true) {
-              componentPath = toPosix(path.relative(publicPath + tarRoot, componentPath))
+          processComponent(genericComponentPath, context, {
+            tarRoot,
+            rewritePath: (componentPath) => {
+              if (useRelativePath === true) {
+                componentPath = toPosix(path.relative(publicPath + tarRoot, componentPath))
+              }
+              genericComponents[name] = componentPath
             }
-            genericComponents[name] = componentPath
-          }, undefined, callback)
+          }, callback)
         }, callback)
       }, callback)
     }
 
-    const processPluginExport = (plugin, tarRoot, context, callback) => {
+    const processPluginExport = (plugin, context, tarRoot, callback) => {
       if (!plugin.export) {
         return callback()
       }
@@ -702,30 +677,30 @@ module.exports = function (raw) {
           return callback(new Error(`The miniprogram plugins' export path ${plugin.export} must be in the context ${context}!`))
         }
         plugin.export = name + '.js'
-        addEntrySafely(resource, toPosix(tarRoot ? `${tarRoot}/${name}` : name), (err, module) => {
-          if (err) return callback(err)
-          addMiniToPluginModules(module)
-          currentEntry.addChild(getEntryNode(resource, 'PluginExport', module))
-          callback(err, module)
-        })
+        const exportPath = tarRoot ? `${tarRoot}/${name}` : name
+        pushEntry({
+          name: exportPath,
+          resource,
+          type: 'pluginExport'
+        }, tarRoot)
       })
     }
 
     /* 导出到插件 */
-    const processPlugins = (plugins, srcRoot = '', tarRoot = '', context, callback) => {
+    const processPlugins = (plugins, context, { srcRoot = '', tarRoot = '' }, callback) => {
       if (mpx.mode !== 'wx' || !plugins) return callback() // 目前只有微信支持导出到插件
       context = path.join(context, srcRoot)
       async.forEachOf(plugins, (plugin, name, callback) => {
         async.parallel([
           (callback) => {
             if (plugin.genericsImplementation) {
-              processPluginGenericsImplementation(plugin.genericsImplementation, tarRoot, context, callback)
+              processPluginGenericsImplementation(plugin.genericsImplementation, context, tarRoot, callback)
             } else {
               callback()
             }
           },
           (callback) => {
-            processPluginExport(plugin, tarRoot, context, callback)
+            processPluginExport(plugin, context, tarRoot, callback)
           }
         ], (err) => {
           callback(err)
@@ -740,10 +715,10 @@ module.exports = function (raw) {
       (callback) => {
         async.parallel([
           (callback) => {
-            processPlugins(json.plugins, '', '', this.context, callback)
+            processPlugins(json.plugins, this.context, {}, callback)
           },
           (callback) => {
-            processPages(json.pages, '', '', this.context, callback)
+            processPages(json.pages, this.context, {}, callback)
           },
           (callback) => {
             processComponents(json.usingComponents, this.context, callback)
@@ -766,13 +741,6 @@ module.exports = function (raw) {
           }
           callback()
         })
-      },
-      (callback) => {
-        if (mpx.appScriptPromise) {
-          mpx.appScriptPromise.then(callback)
-        } else {
-          callback()
-        }
       },
       (callback) => {
         async.series(processSubPackagesQueue, (err) => {
@@ -809,12 +777,14 @@ module.exports = function (raw) {
       if (generics) {
         async.forEachOf(generics, (generic, name, callback) => {
           if (generic.default) {
-            processComponent(generic.default, context, (componentPath) => {
-              if (useRelativePath === true) {
-                componentPath = toPosix(path.relative(path.dirname(currentPath), componentPath))
+            processComponent(generic.default, context, {
+              rewritePath: (componentPath) => {
+                if (useRelativePath === true) {
+                  componentPath = toPosix(path.relative(path.dirname(currentPath), componentPath))
+                }
+                generic.default = componentPath
               }
-              generic.default = componentPath
-            }, undefined, callback)
+            }, callback)
           } else {
             callback()
           }

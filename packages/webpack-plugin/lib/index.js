@@ -9,6 +9,7 @@ const ReplaceDependency = require('./dependencies/ReplaceDependency')
 const ChildCompileDependency = require('./dependencies/ChildCompileDependency')
 const NullFactory = require('webpack/lib/NullFactory')
 const NormalModule = require('webpack/lib/NormalModule')
+const EntryPlugin = require('webpack/lib/EntryPlugin')
 const JavascriptModulesPlugin = require('webpack/lib/javascript/JavascriptModulesPlugin')
 const normalize = require('./utils/normalize')
 const toPosix = require('./utils/to-posix')
@@ -36,6 +37,7 @@ const templateCompilerPath = normalize.lib('template-compiler/index')
 const jsonCompilerPath = normalize.lib('json-compiler/index')
 const jsonThemeCompilerPath = normalize.lib('json-compiler/theme')
 const extractorPath = normalize.lib('extractor')
+const nativeLoaderPath = normalize.lib('native-loader')
 const async = require('async')
 const MPX_PROCESSED_FLAG = 'processed'
 
@@ -307,7 +309,19 @@ class MpxWebpackPlugin {
 
     let mpx
 
-    compiler.hooks.compilation.tap('MpxWebpackPlugin ', (compilation, { normalModuleFactory }) => {
+    // 构建分包队列，在finishMake钩子当中最先执行，stage传递-1000
+    compiler.hooks.finishMake.tapAsync({
+        name: 'MpxWebpackPlugin',
+        stage: -1000
+      }, (compilation) => {
+        if (mpx.subpackagesEntriesQueue) {
+          async.eachSeries(mpx.subpackagesEntriesQueue, () => {
+          })
+        }
+      }
+    )
+
+    compiler.hooks.compilation.tap('MpxWebpackPlugin', (compilation, { normalModuleFactory }) => {
       NormalModule.getCompilationHooks(compilation).loader.tap('MpxWebpackPlugin', (loaderContext, module) => {
         // 设置loaderContext的minimize
         if (isProductionLikeMode(compiler.options)) {
@@ -361,9 +375,7 @@ class MpxWebpackPlugin {
             },
             // 记录独立分包
             independentSubpackagesMap: {},
-            // 当前机制下分包处理队列在app.json的json-compiler中进行，由于addEntry回调特性，无法保障app.js中引用的模块都被标记为主包，故重写processModuleDependencies获取app.js及其所有依赖处理完成的时机，在这之后再执行分包处理队列
-            appScriptRawRequest: '',
-            appScriptPromise: null,
+            subpackageEntriesQueue: [],
             // 记录entry依赖关系，用于体积分析
             entryNodesMap: {},
             // 记录entryModule与entryNode的对应关系，用于体积分析
@@ -401,6 +413,8 @@ class MpxWebpackPlugin {
             useRelativePath: this.options.useRelativePath,
             removedChunks: [],
             forceProxyEventRules: this.options.forceProxyEventRules,
+            pluginMainModule: null,
+            pluginExportModules: new Set(),
             getEntryNode: (request, type, module) => {
               const entryNodesMap = mpx.entryNodesMap
               const entryModulesMap = mpx.entryModulesMap
@@ -511,33 +525,42 @@ class MpxWebpackPlugin {
                 outputPath,
                 alreadyOutputed
               }
+            },
+            addEntry ({ resource, name, type }, callback) {
+              const dep = EntryPlugin.createDependency(resource, { name })
+              compilation.addEntry(compiler.context, dep, { name }, (err, module) => {
+                if (type === 'pluginExport') {
+                  mpx.pluginExportModules.add(module)
+                }
+                callback(err, module)
+              })
             }
           }
         }
 
         const rawProcessModuleDependencies = compilation.processModuleDependencies
         compilation.processModuleDependencies = (module, callback) => {
-          async.series([
-            (callback) => {
-              async.forEach(module.presentationalDependencies.filter((dep) => dep.mpxAction), (dep, callback) => {
-                dep.mpxAction(mpx, compilation, callback)
-              }, callback)
-            },
-            (callback) => {
-              // let proxyedCallback = callback
-              // if (module.rawRequest === mpx.appScriptRawRequest) {
-              //   // 避免模块request重名，只对第一次匹配到的模块进行代理
-              //   mpx.appScriptRawRequest = ''
-              //   mpx.appScriptPromise = new Promise((resolve) => {
-              //     proxyedCallback = (err) => {
-              //       resolve()
-              //       return callback(err)
-              //     }
-              //   })
-              // }
-              rawProcessModuleDependencies.call(compilation, module, callback)
-            }
-          ], callback)
+          let proxyCallback = (err) => {
+            if (err) return callback(err)
+
+            async.forEach(module.presentationalDependencies.filter((dep) => dep.mpxAction), (dep, callback) => {
+              dep.mpxAction(mpx, compilation, callback)
+            }, callback)
+
+          }
+
+          return rawProcessModuleDependencies.call(compilation, module, proxyCallback)
+          // if (module.rawRequest === mpx.appScriptRawRequest) {
+          //   // 避免模块request重名，只对第一次匹配到的模块进行代理
+          //   mpx.appScriptRawRequest = ''
+          //   mpx.appScriptPromise = new Promise((resolve) => {
+          //     proxyedCallback = (err) => {
+          //       resolve()
+          //       return callback(err)
+          //     }
+          //   })
+          // }
+
         }
 
         // 处理watch时缓存模块中的buildInfo
@@ -988,7 +1011,7 @@ try {
               if (mpx.pluginMainModule && chunk.entryModule && mpx.pluginMainModule === chunk.entryModule) {
                 source.add('module.exports =\n')
                 // mpx.miniToPluginExports is a Set
-              } else if (mpx.miniToPluginModules && chunk.entryModule && mpx.miniToPluginModules.has(chunk.entryModule)) {
+              } else if (mpx.pluginExportModules && chunk.entryModule && mpx.pluginExportModules.has(chunk.entryModule)) {
                 source.add('module.exports =\n')
               }
               source.add(originalSource)
@@ -1103,12 +1126,15 @@ try {
               loader: extractorPath
             })
           }
-
           createData.resource = addQuery(createData.resource, { mpx: MPX_PROCESSED_FLAG }, true)
           createData.request = addQuery(createData.request, { mpx: MPX_PROCESSED_FLAG }, true)
         }
-
-
+        // 添加native-loader
+        if (!queryObj.mpx && queryObj.isNative) {
+          loaders.unshift({
+            loader: nativeLoaderPath
+          })
+        }
         // const mpxStyleOptions = queryObj.mpxStyleOptions
         // const firstLoader = (data.loaders[0] && data.loaders[0].loader) || ''
         // const isPitcherRequest = firstLoader.includes('vue-loader/lib/loaders/pitcher.js')
