@@ -41,7 +41,7 @@ module.exports = function (content) {
 
   const getFile = (resourceRaw, type) => {
     const { resourcePath, queryObj } = parseRequest(resourceRaw)
-    const currentPackageName = queryObj.packageName || mpx.currentPackageRoot || 'main'
+    const currentPackageName = queryObj.packageRoot || mpx.currentPackageRoot || 'main'
     const componentsMap = mpx.componentsMap[currentPackageName]
     let filename = pagesMap[resourcePath] || componentsMap[resourcePath]
     if (!filename && resourcePath === rootResourcePath) {
