@@ -549,8 +549,7 @@ class MpxWebpackPlugin {
               } else {
                 currentResourceMap[resourcePath] = outputPath
               }
-            } else {
-              // todo 可能导致watch后无法正确获取资源路径
+            } else if (!currentResourceMap[resourcePath]) {
               currentResourceMap[resourcePath] = true
             }
 
