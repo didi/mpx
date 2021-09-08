@@ -44,9 +44,9 @@ ResolveDependency.Template = class ResolveDependencyTemplate {
       dep.compilation.errors.push(new Error(`Path ${dep.resource} is not a page/component/static resource, which is resolved from ${dep.issuerResource}!`))
     }
     // for tenon
-    // const issuerResource = pagesMap[parseRequest(dep.issuerResource).resourcePath]
-    // return JSON.stringify('./' + path.relative(path.dirname(`/${issuerResource}.js`), `/${resolved}.js`))
-    // return JSON.stringify('hummer://' + resolved)
+    if (dep.compilation.__mpx__.mode === 'tenon') {
+      return `getRelativePath(currentURL, ${JSON.stringify(resolved)}) + '.js'`
+    }
     return JSON.stringify(dep.publicPath + resolved)
   }
 }

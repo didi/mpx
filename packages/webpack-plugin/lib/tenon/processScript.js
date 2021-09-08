@@ -137,7 +137,8 @@ module.exports = function (script, options, callback) {
   global.getApp = function(){}
   global.__networkTimeout = ${JSON.stringify(jsonConfig.networkTimeout)}
   global.__style = ${JSON.stringify(jsonConfig.style || 'v1')}
-  global.__mpxPageConfig = ${JSON.stringify(jsonConfig.window)}\n`
+  global.__mpxPageConfig = ${JSON.stringify(jsonConfig.window)}\n
+  global.currentPagePath = ""\n`
       }
       // 注入wxs模块
       // content += '  const wxsModules = {}\n'
@@ -199,6 +200,8 @@ module.exports = function (script, options, callback) {
       // 获取pageConfig
       const pageConfig = {}
       if (ctorType === 'page') {
+        // 存储当前page路径
+        content += `  global.currentPagePath = ${JSON.stringify(loaderContext._compilation.__mpx__.pagesMap[loaderContext.resourcePath])}\n`
         const uselessOptions = new Set([
           'usingComponents',
           'style',

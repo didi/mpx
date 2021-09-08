@@ -79,6 +79,7 @@
   },
   "devDependencies": {
     "@types/babel-traverse": "^6.25.4",
-    "@types/babel-types": "^7.0.4"
+    "@types/babel-types": "^7.0.4",
+    "webpack": "^4.46.0"
   }
 }
