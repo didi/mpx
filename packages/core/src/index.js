@@ -150,9 +150,9 @@ if (__mpx_mode__ === 'web') {
     // createStoreWithThis,
     mixin: injectMixins,
     injectMixins,
-    // toPureObject, // todo 使用Vue3的方法
-    observable, // todo 使用V3 reactive
-    watch, // todo 使用Vue3的watch
+    toPureObject: Vue.toRaw,
+    observable: Vue.reactive,
+    watch: Vue.watch,
     use,
     set,
     delete: del,
