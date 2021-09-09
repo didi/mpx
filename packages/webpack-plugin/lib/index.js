@@ -464,7 +464,7 @@ class MpxWebpackPlugin {
                 const appInfo = mpx.appInfo
                 const pagesMap = mpx.pagesMap
                 const componentsMap = mpx.componentsMap[currentPackageName]
-                let filename = resourcePath === appInfo.resourcePath ? appInfo.name : (pagesMap[resourcePath] || componentsMap[resourcePath])
+                let filename = resource === appInfo.resource ? appInfo.name : (pagesMap[resourcePath] || componentsMap[resourcePath])
                 if (!filename) {
                   error && error('todo error missing filename')
                   filename = 'missing-filename'
@@ -526,14 +526,15 @@ class MpxWebpackPlugin {
                 alreadyOutputed
               }
             },
-            addEntry ({ resource, name, type }, callback) {
-              const dep = EntryPlugin.createDependency(resource, { name })
+            addEntry (request, name, type, callback) {
+              const dep = EntryPlugin.createDependency(request, { name })
               compilation.addEntry(compiler.context, dep, { name }, (err, module) => {
                 if (type === 'pluginExport') {
                   mpx.pluginExportModules.add(module)
                 }
                 callback(err, module)
               })
+              return dep
             }
           }
         }
@@ -544,7 +545,7 @@ class MpxWebpackPlugin {
             if (err) return callback(err)
 
             async.forEach(module.presentationalDependencies.filter((dep) => dep.mpxAction), (dep, callback) => {
-              dep.mpxAction(mpx, compilation, callback)
+              dep.mpxAction(module, compilation, callback)
             }, callback)
 
           }

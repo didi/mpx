@@ -15,7 +15,7 @@ const isUrlRequestRaw = require('../utils/is-url-request')
 const addQuery = require('../utils/add-query')
 const readJsonForSrc = require('../utils/read-json-for-src')
 const createHelpers = require('../helpers')
-const JsonSideEffectDependency = require('../dependencies/JsonSideEffectDependency')
+const AppEntryDependency = require('../dependencies/AppEntryDependency')
 
 module.exports = function (raw) {
   // 将addEntry和填充pages/componentsMap等副作用通过dep在loader外部进行，使json模块可缓存
@@ -59,21 +59,17 @@ module.exports = function (raw) {
   if (isApp) {
     for (const [name, { dependencies }] of this._compilation.entries) {
       const entryModule = moduleGraph.getModule(dependencies[0])
-      if (parseRequest(entryModule.resource).resourcePath === resourcePath) {
+      if (entryModule.resource === this.resource) {
         currentName = name
         break
       }
     }
-    JsonSideEffectInfo.appInfo = {
-      name: currentName,
-      resourcePath
-    }
-    JsonSideEffectInfo.subpackageEntriesMap = {}
+    this._module.addPresentationalDependency(new AppEntryDependency(this.resource, currentName))
   } else {
     currentName = componentsMap[resourcePath] || pagesMap[resourcePath]
   }
 
-  const pushEntry = (entry, tarRoot = '') => {
+  const addEntry = (entry, tarRoot = '') => {
     if (tarRoot && JsonSideEffectInfo.subpackageEntriesMap) {
       JsonSideEffectInfo.subpackageEntriesMap[tarRoot] = JsonSideEffectInfo.subpackageEntriesMap[tarRoot] || []
       JsonSideEffectInfo.subpackageEntriesMap[tarRoot].push(entry)
@@ -136,7 +132,6 @@ module.exports = function (raw) {
 
   const callback = (err, processOutput) => {
     if (err) return rawCallback(err)
-    this._module.addPresentationalDependency(new JsonSideEffectDependency(JsonSideEffectInfo))
     let output = `var json = ${JSON.stringify(json, null, 2)};\n`
     if (processOutput) output = processOutput(output)
     output += `module.exports = JSON.stringify(json, null, 2);\n`
