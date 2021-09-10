@@ -1,19 +1,23 @@
 import { error } from '../helper/log'
 import { implemented } from '../core/implement'
+import { CREATED } from '../core/innerLifecycle'
+import { mergeLifecycle } from './mergeLifecycle'
+import * as wxLifecycle from '../platform/patch/wx/lifecycle'
+import * as swanLifecycle from '../platform/patch/swan/lifecycle'
 
 const BEHAVIORS_MAP = {
   'wx://form-field': 'swan://form-field',
   'wx://component-export': 'swan://component-export'
 }
 
-const NOTSUPPORTS = ['moved', 'relations']
+const unsupported = ['moved', 'relations']
 
 function convertErrorDesc (key) {
   error(`Options.${key} is not supported in runtime conversion from wx to swan.`, global.currentResource)
 }
 
 function notSupportTip (options) {
-  NOTSUPPORTS.forEach(key => {
+  unsupported.forEach(key => {
     if (options[key]) {
       if (!implemented[key]) {
         process.env.NODE_ENV !== 'production' && convertErrorDesc(key)
@@ -26,6 +30,14 @@ function notSupportTip (options) {
 }
 
 export default {
+  lifecycle: mergeLifecycle(wxLifecycle.LIFECYCLE),
+  lifecycle2: mergeLifecycle(swanLifecycle.LIFECYCLE),
+  pageMode: 'blend',
+  support: true,
+  // wx输出swan时额外将onLoad代理到CREATED
+  lifecycleProxyMap: Object.assign({}, wxLifecycle.lifecycleProxyMap, {
+    [CREATED]: ['created', 'attached', 'onload'],
+  }),
   convert (options, type) {
     // todo fix swan onshow onload执行顺序
     if (options.behaviors) {
