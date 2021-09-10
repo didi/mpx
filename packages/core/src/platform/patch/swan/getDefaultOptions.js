@@ -1,5 +1,5 @@
 import mergeOptions from '../../../core/mergeOptions'
-import { getRootMixins, initProxy, filterOptions } from '../wx/getDefaultOptions'
+import { initProxy, filterOptions } from '../wx/getDefaultOptions'
 
 export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
   const hookNames = ['attached', 'ready', 'detached']
@@ -12,8 +12,7 @@ export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
     hookNames[1] = 'onReady'
     hookNames[2] = 'onUnload'
   }
-
-  const rootMixins = getRootMixins({
+  const rootMixins = [{
     [hookNames[0]] (...params) {
       if (!this.__mpxProxy) {
         initProxy(this, rawOptions, currentInject, params)
@@ -25,7 +24,7 @@ export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
     [hookNames[2]] () {
       this.__mpxProxy && this.__mpxProxy.destroyed()
     }
-  }, rawOptions.__pageCtor__)
+  }]
   rawOptions.mixins = rawOptions.mixins ? rootMixins.concat(rawOptions.mixins) : rootMixins
   rawOptions = mergeOptions(rawOptions, type, false)
   return filterOptions(rawOptions)

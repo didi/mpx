@@ -116,20 +116,6 @@ export function filterOptions (options) {
   return newOptions
 }
 
-export function getRootMixins (mixin, pageCtor) {
-  const supportBehavior = typeof Behavior !== 'undefined' && !pageCtor
-  const rootMixins = []
-  if (supportBehavior) {
-    rootMixins.push({
-      // eslint-disable-next-line no-undef
-      behaviors: [Behavior(mixin)]
-    })
-  } else {
-    rootMixins.push(mixin)
-  }
-  return rootMixins
-}
-
 export function initProxy (context, rawOptions, currentInject, params) {
   // 提供代理对象需要的api
   transformApiForProxy(context, currentInject)
@@ -149,8 +135,7 @@ export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
     hookNames[1] = 'onReady'
     hookNames[2] = 'onUnload'
   }
-
-  const rootMixins = getRootMixins({
+  const rootMixins = [{
     [hookNames[0]] (...params) {
       if (!this.__mpxProxy) {
         initProxy(this, rawOptions, currentInject, params)
@@ -162,7 +147,7 @@ export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
     [hookNames[2]] () {
       this.__mpxProxy && this.__mpxProxy.destroyed()
     }
-  }, rawOptions.__pageCtor__)
+  }]
   rawOptions.mixins = rawOptions.mixins ? rootMixins.concat(rawOptions.mixins) : rootMixins
   rawOptions = mergeOptions(rawOptions, type, false)
   return filterOptions(rawOptions)

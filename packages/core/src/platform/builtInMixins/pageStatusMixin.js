@@ -31,51 +31,37 @@ export default function pageStatusMixin (mixinType) {
     }
     return pageMixin
   } else {
-    if (__mpx_mode__ === 'ali') {
-      return {
-        watch: {
-          '$page.mpxPageStatus': {
-            handler (val) {
+    return {
+      [CREATED] () {
+        const options = this.$rawOptions
+        const hasPageShow = options.pageShow || options.pageHide
+        const needPageLifetimes = options.pageLifetimes && (__mpx_mode__ === 'ali' || __mpx_mode__ === 'tt')
+
+        if (hasPageShow || needPageLifetimes) {
+          let currentPage
+          if (__mpx_mode__ === 'ali') {
+            currentPage = this.$page
+          } else {
+            const pages = getCurrentPages()
+            currentPage = pages[pages.length - 1]
+          }
+          if (currentPage) {
+            this.$watch(() => currentPage.mpxPageStatus, (val) => {
               if (val) {
-                const options = this.$rawOptions
                 if (val === 'show' && typeof options.pageShow === 'function') options.pageShow.call(this)
                 if (val === 'hide' && typeof options.pageHide === 'function') options.pageHide.call(this)
-                const pageLifetimes = options.pageLifetimes
-                if (pageLifetimes) {
-                  if (val === 'show' && typeof pageLifetimes.show === 'function') pageLifetimes.show.call(this)
-                  if (val === 'hide' && typeof pageLifetimes.hide === 'function') pageLifetimes.hide.call(this)
-                  if (val === 'resize' && typeof pageLifetimes.resize === 'function') pageLifetimes.resize.call(this, this.$page.__resizeEvent)
-                }
-              }
-            },
-            sync: true,
-            immediate: true
-          }
-        }
-      }
-    } else {
-      return {
-        [CREATED] () {
-          const pages = getCurrentPages()
-          const currentPage = pages[pages.length - 1]
-          this.$watch(() => currentPage.mpxPageStatus, (val) => {
-            if (val) {
-              const options = this.$rawOptions
-              if (val === 'show' && typeof options.pageShow === 'function') options.pageShow.call(this)
-              if (val === 'hide' && typeof options.pageHide === 'function') options.pageHide.call(this)
-              if (__mpx_mode__ === 'tt') {
-                const pageLifetimes = this.$rawOptions.pageLifetimes
-                if (pageLifetimes) {
+                if (needPageLifetimes) {
+                  const pageLifetimes = options.pageLifetimes
                   if (val === 'show' && typeof pageLifetimes.show === 'function') pageLifetimes.show.call(this)
                   if (val === 'hide' && typeof pageLifetimes.hide === 'function') pageLifetimes.hide.call(this)
                   if (val === 'resize' && typeof pageLifetimes.resize === 'function') pageLifetimes.resize.call(this, currentPage.__resizeEvent)
                 }
               }
-            }
-          }, {
-            sync: true,
-            immediate: true
-          })
+            }, {
+              sync: true,
+              immediate: true
+            })
+          }
         }
       }
     }
