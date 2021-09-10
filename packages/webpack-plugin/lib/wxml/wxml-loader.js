@@ -21,13 +21,6 @@ module.exports = function (content) {
 
   const { resourcePath: filePath, queryObj } = parseRequest(this.resource)
   const moduleId = 'm' + mpx.pathHash(filePath)
-
-  const needCssSourceMap = (
-    !isProduction &&
-    this.sourceMap &&
-    options.cssSourceMap !== false
-  )
-
   const hasScoped = false
   const hasComment = false
   const isNative = true
@@ -50,7 +43,6 @@ module.exports = function (content) {
     hasScoped,
     hasComment,
     usingComponents,
-    needCssSourceMap,
     srcMode,
     isNative,
     projectRoot: options.root || ''

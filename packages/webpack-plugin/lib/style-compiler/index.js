@@ -5,6 +5,7 @@ const loadPostcssConfig = require('./load-postcss-config')
 
 const trim = require('./plugins/trim')
 const rpx = require('./plugins/rpx')
+const vw = require('./plugins/vw')
 const pluginCondStrip = require('./plugins/conditional-strip')
 const scopeId = require('./plugins/scope-id')
 const matchCondition = require('../utils/match-condition')
@@ -18,7 +19,7 @@ module.exports = function (css, map) {
   const mpx = mainCompilation.__mpx__
   const defs = mpx.defs
 
-  const transRpxRulesRaw = mpx.transRpxRules || loaderOptions.transRpx
+  const transRpxRulesRaw = mpx.transRpxRules
 
   const transRpxRules = transRpxRulesRaw ? (Array.isArray(transRpxRulesRaw) ? transRpxRulesRaw : [transRpxRulesRaw]) : []
 
@@ -27,7 +28,6 @@ module.exports = function (css, map) {
   }
 
   const inlineConfig = Object.assign({}, mpx.postcssInlineConfig, { defs })
-
   loadPostcssConfig(this, inlineConfig).then(config => {
     const plugins = config.plugins.concat(trim)
     const options = Object.assign(
@@ -40,7 +40,8 @@ module.exports = function (css, map) {
     )
 
     if (loaderOptions.scoped) {
-      plugins.push(scopeId({ id: loaderOptions.moduleId }))
+      const moduleId = loaderOptions.moduleId || loaderOptions.mid
+      plugins.push(scopeId({ id: moduleId }))
     }
 
     plugins.push(pluginCondStrip({
@@ -63,8 +64,11 @@ module.exports = function (css, map) {
       }
     }
 
+    if (mpx.mode === 'web') {
+      plugins.push(vw)
+    }
     // source map
-    if (loaderOptions.sourceMap && !options.map) {
+    if (this.sourceMap && !options.map) {
       options.map = {
         inline: false,
         annotation: false,

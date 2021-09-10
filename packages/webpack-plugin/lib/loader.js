@@ -26,7 +26,7 @@ module.exports = function (content) {
     return content
   }
   const { resourcePath, queryObj } = parseRequest(this.resource)
-  const packageName = queryObj.packageName || mpx.currentPackageRoot || 'main'
+  const packageName = queryObj.packageRoot || mpx.currentPackageRoot || 'main'
   const pagesMap = mpx.pagesMap
   const componentsMap = mpx.componentsMap[packageName]
   const resolveMode = mpx.resolveMode
@@ -90,12 +90,6 @@ module.exports = function (content) {
   const filePath = resourcePath
 
   const moduleId = 'm' + mpx.pathHash(filePath)
-
-  const needCssSourceMap = (
-    !isProduction &&
-    this.sourceMap &&
-    options.cssSourceMap !== false
-  )
 
   const parts = parseComponent(content, {
     filePath,
@@ -163,7 +157,6 @@ module.exports = function (content) {
         hasScoped,
         hasComment,
         usingComponents,
-        needCssSourceMap,
         srcMode,
         isNative,
         projectRoot
@@ -252,7 +245,8 @@ module.exports = function (content) {
               (callback) => {
                 processStyles(parts.styles, {
                   ctorType,
-                  autoScope
+                  autoScope,
+                  moduleId
                 }, callback)
               },
               (callback) => {

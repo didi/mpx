@@ -155,7 +155,8 @@
           probeType: 3,
           bounce: false,
           stopPropagation: true,
-          bindToWrapper: true
+          bindToWrapper: true,
+          eventPassthrough: (this.scrollX && 'vertical') || (this.scrollY && 'horizontal') || ''
         }
         if (this.refresherEnabled) {
           originBsOptions.bounce = true

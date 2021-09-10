@@ -33,4 +33,25 @@ describe('common spec case', function () {
     expect(output2).toBe(`<import-sjs module="__swanHelper__" src="~${wxsPath}"></import-sjs><view s-for='t1, t2 in __swanHelper__.processFor("strings") trackBy t1.u1'>123</view>`)
     expect(output3).toBe(`<import-sjs module="__swanHelper__" src="~${wxsPath}"></import-sjs><view s-for="t1, t2 in __swanHelper__.processFor(8) trackBy t1.u1">123</view>`)
   })
+
+  it('should wrap directive expression in swan', function () {
+    const input = `
+    <view s-if="show">
+      <view s-for="list">
+        <view>{{item}}</view>
+      </view>
+    </view>
+    `
+
+    const input2 = `
+    <view s-for="item,index in list">
+      <view s-if="item.show">{{item.value}}</view>
+    </view>
+    `
+    const output = compileAndParse(input, { srcMode: 'swan', mode: 'swan' })
+    const output2 = compileAndParse(input2, { srcMode: 'swan', mode: 'swan' })
+
+    expect(output).toBe('<view s-if="{{show}}"><view s-for="{{list}}"><view>{{item}}</view></view></view>')
+    expect(output2).toBe('<view s-for="item,index in list"><view s-if="{{item.show}}">{{item.value}}</view></view>')
+  })
 })

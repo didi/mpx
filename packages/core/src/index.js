@@ -217,6 +217,10 @@ function factory () {
 
   Object.assign(MPX, APIs)
   Object.assign(MPX.prototype, InstanceAPIs)
+  // 输出web时在mpx上挂载Vue对象
+  if (__mpx_mode__ === 'web') {
+    MPX.__vue = Vue
+  }
   return MPX
 }
 
