@@ -2,6 +2,7 @@ import transferOptions from '../../core/transferOptions'
 import getBuiltInMixins from '../builtInMixins/index'
 import { getDefaultOptions as getWxDefaultOptions } from './wx/getDefaultOptions'
 import { getDefaultOptions as getAliDefaultOptions } from './ali/getDefaultOptions'
+import { getDefaultOptions as getSwanDefaultOptions } from './swan/getDefaultOptions'
 import { getDefaultOptions as getWebDefaultOptions } from './web/getDefaultOptions'
 
 export default function createFactory (type) {
@@ -38,6 +39,8 @@ export default function createFactory (type) {
       getDefaultOptions = getWebDefaultOptions
     } else if (__mpx_mode__ === 'ali') {
       getDefaultOptions = getAliDefaultOptions
+    } else if (__mpx_mode__ === 'swan') {
+      getDefaultOptions = getSwanDefaultOptions
     } else {
       getDefaultOptions = getWxDefaultOptions
     }
