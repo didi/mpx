@@ -98,7 +98,7 @@ function transformApiForProxy (context, currentInject) {
   }
 }
 
-function filterOptions (options) {
+export function filterOptions (options) {
   const newOptions = {}
   Object.keys(options).forEach(key => {
     if (builtInKeysMap[key]) {

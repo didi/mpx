@@ -1,6 +1,5 @@
 import mergeOptions from '../../../core/mergeOptions'
-import { getRootMixins, initProxy } from '../wx/getDefaultOptions'
-
+import { getRootMixins, initProxy, filterOptions } from '../wx/getDefaultOptions'
 
 export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
   const hookNames = ['attached', 'ready', 'detached']

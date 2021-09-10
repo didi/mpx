@@ -34,7 +34,7 @@ export default {
   support: true,
   // wx输出web时额外将onLoad代理到CREATED
   lifecycleProxyMap: Object.assign({}, wxLifecycle.lifecycleProxyMap, {
-    [CREATED]: ['created', 'attached', 'onload'],
+    [CREATED]: ['created', 'attached', 'onload']
   }),
   convert (options) {
     const props = Object.assign({}, options.properties, options.props)

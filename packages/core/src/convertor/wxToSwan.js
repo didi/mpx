@@ -36,7 +36,7 @@ export default {
   support: true,
   // wx输出swan时额外将onLoad代理到CREATED
   lifecycleProxyMap: Object.assign({}, wxLifecycle.lifecycleProxyMap, {
-    [CREATED]: ['created', 'attached', 'onload'],
+    [CREATED]: ['created', 'attached', 'onload']
   }),
   convert (options, type) {
     // todo fix swan onshow onload执行顺序

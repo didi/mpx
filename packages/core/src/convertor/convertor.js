@@ -30,7 +30,6 @@ if (__mpx_mode__ === 'web') {
   pageMode = 'blend'
 }
 
-
 /**
  * 转换规则包含四点
  * lifecycle [object] 生命周期
@@ -52,11 +51,11 @@ const rulesMap = {
   default: defaultConvertRule,
   wxToWeb: wxToWebRule,
   wxToAli: wxToAliRule,
-  wxToSwan: wxToSwanRule ,
+  wxToSwan: wxToSwanRule,
   wxToQq: { ...defaultConvertRule, ...wxToQqRule },
   wxToTt: { ...defaultConvertRule, ...wxToTtRule },
   wxToDd: { ...defaultConvertRule, ...wxToDdRule },
-  wxToJd: { ...defaultConvertRule, ...wxToJdRule },
+  wxToJd: { ...defaultConvertRule, ...wxToJdRule }
 }
 
 export function getConvertRule (convertMode) {
