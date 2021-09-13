@@ -95,13 +95,10 @@ class Animation {
     this._collectData('rotationZ', `${parseFloat(value)}deg`)
     return this
   }
-  // 不支持分开设置x,y 相同比例缩放
   scale (...value) {
-    const [x, y] = value
-    if (typeof y === 'number') {
-      warn('scale只支持同比缩放')
-    }
-    this._collectData('scale', x)
+    const [x, y = x] = value
+    this._collectData('scaleX', x)
+    this._collectData('scaleY', y)
     return this
   }
   // 不支持
