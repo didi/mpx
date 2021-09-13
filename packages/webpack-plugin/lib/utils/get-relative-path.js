@@ -1,22 +1,22 @@
-function getRelativePath(source, target) {
+function getRelativePath (source, target) {
   source = source && source.replace(/\/[^/]*$/, ''); // get dirname
   // make sure source and target are absolute path
   /^\//.test(source) || (source = '/' + source);
-  /^\//.test(target) || (target = '/' + target);
+  /^\//.test(target) || (target = '/' + target)
   // check if source or target is root path
-  let sourceArr = source.split('/').filter((item, index) => index !== 0 && !!item);
-  let targetArr = target.split('/').filter((item, index) => index !== 0 && !!item);
-  let i = 0;
+  let sourceArr = source.split('/').filter((item, index) => index !== 0 && !!item)
+  let targetArr = target.split('/').filter((item, index) => index !== 0 && !!item)
+  let i = 0
   while (sourceArr[i] === targetArr[i] && i < sourceArr.length && i < targetArr.length) {
-    i++;
+    i++
   }
-  let relativePath = '';
+  let relativePath = ''
   for (let j = 0; j < sourceArr.length - i; j++) {
-    relativePath += '../';
+    relativePath += '../'
   }
-  relativePath += targetArr.slice(i).join('/');
+  relativePath += targetArr.slice(i).join('/')
   if (relativePath[0] !== '.') relativePath = './' + relativePath
-  return relativePath;
+  return relativePath
 }
 
 module.exports = {

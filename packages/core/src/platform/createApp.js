@@ -55,7 +55,7 @@ export default function createApp (option, config = {}) {
         }
       }
     })
-  } else if (__mpx_mode__ === 'tenon'){
+  } else if (__mpx_mode__ === 'tenon') {
     // todo add tenon mixins
     builtInMixins.push({
       onLaunch () {

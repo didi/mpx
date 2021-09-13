@@ -24,7 +24,12 @@ module.exports = {
     __mpx_mode__: 'readonly',
     __mpx_env__: 'readonly',
     getRegExp: 'readonly',
-    getCurrentPages: 'readonly'
+    getCurrentPages: 'readonly',
+    // tenon env
+    View: 'readonly',
+    Text: 'readonly',
+    Dialog: 'readonly',
+    __GLOBAL__: 'readonly',
   },
   rules: {
     'no-cond-assign': 0,

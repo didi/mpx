@@ -23,7 +23,6 @@ function makeMap (str, expectsLowerCase) {
     : val => map[val]
 }
 
-
 const isTenonTag = makeMap('h1,h2,h3,h4,h5,h6,i,small,span,strong,image,a')
 
 const isTenonTextTag = makeMap('h1,h2,h3,h4,h5,h6,i,small,span,strong')
@@ -38,7 +37,7 @@ const isUnaryTag = makeMap(
   'area,base,br,col,embed,frame,hr,img,input,isindex,keygen,' +
   'link,meta,param,source,track,wbr'
 )
-const isSpace = makeMap('ensp,emsp,nbsp')
+// const isSpace = makeMap('ensp,emsp,nbsp')
 
 function makeAttrsMap (attrs) {
   const map = {}
@@ -112,7 +111,7 @@ function parseHTML (html, options) {
       }
     }
     let text, rest, next
-    
+
     if (textEnd >= 0) {
       // 获取剩下的部分
       rest = html.slice(textEnd)
@@ -284,11 +283,11 @@ export function parse (template) {
   return nodes
 }
 
-function spaceTran (str, space) {
-  const sReg = /( |&emsp;|&ensp;|&nbsp;){1}/g
-  const setSpace = `&${space};`
-  return str.replace(sReg, setSpace)
-}
+// function spaceTran (str, space) {
+//   const sReg = /( |&emsp;|&ensp;|&nbsp;){1}/g
+//   const setSpace = `&${space};`
+//   return str.replace(sReg, setSpace)
+// }
 function TenonTagCreater (tagName) {
   if (this instanceof TenonTagCreater) {
     return new this[tagName]()
@@ -297,71 +296,71 @@ function TenonTagCreater (tagName) {
 }
 
 TenonTagCreater.prototype = {
-  h1: function() {
+  h1: function () {
     return {
       fontWeight: 'bold',
       fontSize: 28
     }
   },
-  h2: function() {
+  h2: function () {
     return {
       fontWeight: 'bold',
       fontSize: 21
     }
   },
-  h3: function() {
+  h3: function () {
     return {
       fontWeight: 'bold',
       fontSize: 16.38
     }
   },
-  h4: function() {
+  h4: function () {
     return {
-      fontWeight: 'bold',
+      fontWeight: 'bold'
     }
   },
-  h5: function() {
+  h5: function () {
     return {
       fontWeight: 'bold',
       fontSize: 11.62
     }
   },
-  h6: function() {
+  h6: function () {
     return {
       fontWeight: 'bold',
       fontSize: 10.5
     }
   },
-  i: function() {
+  i: function () {
     return {
       fontStyle: 'italic'
     }
   },
-  small: function() {
+  small: function () {
     return {
       fontSize: 11.62
     }
   },
-  span: function() {
+  span: function () {
     return {
 
     }
   },
-  strong: function() {
+  strong: function () {
     return {
       fontWeight: 'bold'
     }
   },
-  image: function() {
+  image: function () {
     return {
 
     }
   },
-  a: function() {
+  a: function () {
     return {
 
     }
-  },
+  }
 }
 
 export function htmlTranStr (template, space, parentNode) {
@@ -385,7 +384,6 @@ export function htmlTranStr (template, space, parentNode) {
       if (item.attrs) {
         const attrs = item.attrs
         for (const key in attrs) {
-
           const isUnEffAttr = (isTenonTextTag(name) && !isTextAttrs(key)) || (name === 'image' && !isImageAttrs(key)) || (name === 'a' && !isAAttrs(key))
           if (isUnEffAttr) {
             console.warn(`This ${key} attribute is not supported for ${name} tags contained in rich-text`)
@@ -399,7 +397,6 @@ export function htmlTranStr (template, space, parentNode) {
     } else {
       console.warn(`the rich-text is not support ${name} tag`)
     }
-
   })
   return richTextArray
 }

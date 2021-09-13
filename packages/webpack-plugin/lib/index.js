@@ -570,7 +570,7 @@ class MpxWebpackPlugin {
       const rawProcessModuleDependencies = compilation.processModuleDependencies
       compilation.processModuleDependencies = (module, callback) => {
         let proxyedCallback = callback
-        if(module.__has_tenon_entry) {
+        if (module.__has_tenon_entry) {
           let tasks = []
           module.dependencies.forEach(dep => {
             if (dep instanceof AddEntryDependency) {
@@ -884,7 +884,6 @@ class MpxWebpackPlugin {
           'set',
           'remove',
           'delete: del',
-          'setConvertRule',
           'getMixin',
           'getComputed',
           'implement'

@@ -157,8 +157,7 @@ if (__mpx_mode__ === 'web') {
     getMixin,
     implement
   }
-}
-else {
+} else {
   observable = function (obj) {
     observe(obj)
     return obj

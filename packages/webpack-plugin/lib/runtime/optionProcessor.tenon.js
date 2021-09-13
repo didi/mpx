@@ -1,4 +1,4 @@
-import { inBrowser } from '../utils/env'
+// import { inBrowser } from '../utils/env'
 
 export default function processOption (
   option,
@@ -308,19 +308,19 @@ export default function processOption (
       }
     }
 
-//     if (genericsInfo) {
-//       const genericHash = genericsInfo.hash
-//       global.__mpxGenericsMap[genericHash] = {}
-//       Object.keys(genericsInfo.map).forEach((genericValue) => {
-//         if (componentsMap[genericValue]) {
-//           global.__mpxGenericsMap[genericHash][genericValue] = componentsMap[genericValue]
-//         } else {
-//           console.log(option)
-//           console.warn(`[Mpx runtime warn]: generic value "${genericValue}" must be
-// registered in parent context!`)
-//         }
-//       })
-//     }
+    //     if (genericsInfo) {
+    //       const genericHash = genericsInfo.hash
+    //       global.__mpxGenericsMap[genericHash] = {}
+    //       Object.keys(genericsInfo.map).forEach((genericValue) => {
+    //         if (componentsMap[genericValue]) {
+    //           global.__mpxGenericsMap[genericHash][genericValue] = componentsMap[genericValue]
+    //         } else {
+    //           console.log(option)
+    //           console.warn(`[Mpx runtime warn]: generic value "${genericValue}" must be
+    // registered in parent context!`)
+    //         }
+    //       })
+    //     }
 
     // if (componentGenerics) {
     //   option.props = option.props || {}
@@ -342,14 +342,14 @@ export default function processOption (
     }
   }
 
-  if(mixin){
+  if (mixin) {
     if (option.mixins) {
       option.mixins.push(mixin)
     } else {
       option.mixins = [mixin]
     }
   }
-  
+
   if (componentId) {
     option.componentPath = '/' + componentId
   }

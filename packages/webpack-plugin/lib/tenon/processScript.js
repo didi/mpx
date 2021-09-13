@@ -6,8 +6,6 @@ const SingleEntryPlugin = require('webpack/lib/SingleEntryPlugin')
 const AddEntryDependency = require('../dependency/AddEntryDependency')
 const builtInLoaderPath = normalize.lib('built-in-loader')
 const optionProcessorPath = normalize.lib('runtime/optionProcessor')
-const tabBarContainerPath = normalize.lib('runtime/components/web/mpx-tab-bar-container.vue')
-const tabBarPath = normalize.lib('runtime/components/web/mpx-tab-bar.vue')
 
 function shallowStringify (obj) {
   let arr = []
@@ -38,11 +36,11 @@ module.exports = function (script, options, callback) {
   const isProduction = options.isProduction
   const componentId = options.componentId
   const getRequireForSrc = options.getRequireForSrc
-  const i18n = options.i18n
+  // const i18n = options.i18n
   const jsonConfig = options.jsonConfig
-  const tabBar = jsonConfig.tabBar
+  // const tabBar = jsonConfig.tabBar
   const tabBarMap = options.tabBarMap
-  const tabBarStr = options.tabBarStr
+  // const tabBarStr = options.tabBarStr
   const genericsInfo = options.genericsInfo
   const componentGenerics = options.componentGenerics
   const forceDisableBuiltInLoader = options.forceDisableBuiltInLoader
@@ -57,18 +55,6 @@ module.exports = function (script, options, callback) {
     }
   }
 
-  const addEntrySafely = (loaderContext, resource, name, callback = () => {}) => {
-    // 如果loader已经回调，就不再添加entry
-    if (callbacked) return callback()
-    const dep = SingleEntryPlugin.createDependency(resource, name)
-    entryDeps.add(dep)
-    loaderContext._compilation.addEntry(loaderContext._compiler.context, dep, name, (err, module) => {
-      entryDeps.delete(dep)
-      checkEntryDeps()
-      callback(err, module)
-    })
-  }
-
   const addEntryDep = (context, resource, name) => {
     // 如果loader已经回调，就不再添加entry
     if (callbacked) return
@@ -79,17 +65,18 @@ module.exports = function (script, options, callback) {
       dep,
       name
     })
+    /* eslint-disable camelcase */
     context._module.__has_tenon_entry = true
     context._module.addDependency(virtualModule)
     entryDeps.delete(dep)
     checkEntryDeps()
   }
 
-  const emitWarning = (msg) => {
-    loaderContext.emitWarning(
-      new Error('[script processor][' + loaderContext.resource + ']: ' + msg)
-    )
-  }
+  // const emitWarning = (msg) => {
+  //   loaderContext.emitWarning(
+  //     new Error('[script processor][' + loaderContext.resource + ']: ' + msg)
+  //   )
+  // }
 
   const stringifyRequest = r => loaderUtils.stringifyRequest(loaderContext, r)
   // let tabBarPagesMap = {}
@@ -171,12 +158,12 @@ module.exports = function (script, options, callback) {
       const componentsMap = {}
       Object.keys(localPagesMap).forEach((pagePath) => {
         const pageCfg = localPagesMap[pagePath]
-        const pageRequest = stringifyRequest(pageCfg.resource)
+        // const pageRequest = stringifyRequest(pageCfg.resource)
         addEntryDep(loaderContext, addQuery(pageCfg.resource, { tenon: true }), pagePath)
         // addEntrySafely(loaderContext, addQuery(pageCfg.resource, { tenon: true }), pagePath)
         // loaderContext.resolve(loaderContext._compiler.context, addQuery(pageCfg.resource, { tenon: true }), (err, resource) => {
         //   if(err) return callback(err)
-          
+
         // })
         // if (pageCfg.async) {
         //   pagesMap[pagePath] = `()=>import(${pageRequest}).then(res => getComponent(res, { __mpxPageRoute: ${JSON.stringify(pagePath)} }))`
@@ -250,15 +237,15 @@ module.exports = function (script, options, callback) {
     ${JSON.stringify(genericsInfo)},
     undefined`
 
-    //   if (ctorType === 'app') {
-    //     content += `,
-    // Vue,
-    // VueRouter`
-    //     if (i18n) {
-    //       content += `,
-    // i18n`
-    //     }
-    //   }
+      //   if (ctorType === 'app') {
+      //     content += `,
+      // Vue,
+      // VueRouter`
+      //     if (i18n) {
+      //       content += `,
+      // i18n`
+      //     }
+      //   }
       content += `\n  )\n`
       return content
     }

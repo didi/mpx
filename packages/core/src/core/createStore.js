@@ -128,6 +128,7 @@ class Store {
     Object.assign(this, mapStore(this))
     if (__mpx_mode__ === 'tenon') {
       plugins.push(createHummerPlugin({
+        /* eslint-disable camelcase */
         store_key: `MPX_STORE${options.__store_id}`
       }))
     }

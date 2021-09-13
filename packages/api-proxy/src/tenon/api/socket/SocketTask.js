@@ -1,103 +1,105 @@
-import { webHandleSuccess, webHandleFail, warn } from "../../../common/js";
-const { WebSocket } = __GLOBAL__;
+import { webHandleSuccess, webHandleFail, warn } from '../../../common/js'
+const { WebSocket } = __GLOBAL__
 
 class SocketTask {
-  constructor(url, protocols) {
-    this._openCb = null;
-    this._closeCb = null;
-    this._messageCb = null;
-    this._errorCb = null;
-    this._closeData = null;
+  constructor (url, protocols) {
+    this._openCb = null
+    this._closeCb = null
+    this._messageCb = null
+    this._errorCb = null
+    this._closeData = null
 
-    WebSocket.connect(url);
-    this.addListener(WebSocket);
+    WebSocket.connect(url)
+    this.addListener(WebSocket)
   }
 
-  get CONNECTING() {
-    warn("不支持CONNECTING");
+  get CONNECTING () {
+    warn('不支持CONNECTING')
   }
 
-  get OPEN() {
-    warn("不支持OPEN");
+  get OPEN () {
+    warn('不支持OPEN')
   }
 
-  get CLOSING() {
-    warn("不支持CLOSING");
+  get CLOSING () {
+    warn('不支持CLOSING')
   }
 
-  get CLOSED() {
-    warn("不支持CLOSED");
+  get CLOSED () {
+    warn('不支持CLOSED')
   }
 
-  get readyState() {
-    warn("不支持readyState");
+  get readyState () {
+    warn('不支持readyState')
   }
 
-  send(options) {
-    const { data = "", success, fail, complete } = options;
-    WebSocket.send(data);
-    const res = { errMsg: "sendSocketMessage:ok" };
-    webHandleSuccess(res, success, complete);
-    return Promise.resolve(res);
+  send (options) {
+    // todo fail options needs tobe convert
+    // const { data = '', success, fail, complete } = options
+    const { data = '', success, complete } = options
+    WebSocket.send(data)
+    const res = { errMsg: 'sendSocketMessage:ok' }
+    webHandleSuccess(res, success, complete)
+    return Promise.resolve(res)
   }
 
-  close(options) {
-    const { code = 1000, reason = "", success, fail, complete } = options;
+  close (options) {
+    const { code = 1000, reason = '', success, fail, complete } = options
     this._closeData = {
       code,
-      reason,
-    };
+      reason
+    }
     try {
-      WebSocket.close();
-      const res = { errMsg: "closeSocket:ok" };
-      webHandleSuccess(res, success, complete);
-      return Promise.resolve(res);
+      WebSocket.close()
+      const res = { errMsg: 'closeSocket:ok' }
+      webHandleSuccess(res, success, complete)
+      return Promise.resolve(res)
     } catch (err) {
-      const res = { errMsg: `closeSocket:fail ${err}` };
-      webHandleFail(res, fail, complete);
+      const res = { errMsg: `closeSocket:fail ${err}` }
+      webHandleFail(res, fail, complete)
       if (!fail) {
-        return Promise.reject(res);
+        return Promise.reject(res)
       }
     }
   }
 
-  addListener(socket) {
+  addListener (socket) {
     socket.onOpen((event) => {
-      typeof this._openCb === "function" && this._openCb(event);
-    });
+      typeof this._openCb === 'function' && this._openCb(event)
+    })
     socket.onMessage((event) => {
-      typeof this._messageCb === "function" && this._messageCb(event);
-    });
+      typeof this._messageCb === 'function' && this._messageCb(event)
+    })
     socket.onError((event) => {
-      typeof this._errorCb === "function" && this._errorCb(event);
-    });
+      typeof this._errorCb === 'function' && this._errorCb(event)
+    })
     socket.onClose((event) => {
-      if (typeof this._closeCb !== "function") {
-        return;
+      if (typeof this._closeCb !== 'function') {
+        return
       }
       if (this._closeData) {
-        this._closeCb(event);
+        this._closeCb(event)
       } else {
-        this._closeCb({ code: 2000, reason: `${event}` });
+        this._closeCb({ code: 2000, reason: `${event}` })
       }
-    });
+    })
   }
 
-  onOpen(cb) {
-    this._openCb = cb;
+  onOpen (cb) {
+    this._openCb = cb
   }
 
-  onMessage(cb) {
-    this._messageCb = cb;
+  onMessage (cb) {
+    this._messageCb = cb
   }
 
-  onError(cb) {
-    this._errorCb = cb;
+  onError (cb) {
+    this._errorCb = cb
   }
 
-  onClose(cb) {
-    this._closeCb = cb;
+  onClose (cb) {
+    this._closeCb = cb
   }
 }
 
-export default SocketTask;
+export default SocketTask

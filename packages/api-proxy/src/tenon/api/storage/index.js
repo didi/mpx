@@ -1,5 +1,5 @@
 import { webHandleSuccess, webHandleFail, warn } from '../../../common/js'
-const { Storage } = __GLOBAL__;
+const { Storage } = __GLOBAL__
 
 function setStorage (options = {}) {
   const { key, data, success, fail, complete } = options
@@ -108,7 +108,7 @@ function removeStorageSync (key) {
 }
 
 function clearStorage (options = {}) {
-  warn("不支持clearStorageSync");
+  warn('不支持clearStorageSync')
   // const { success, fail, complete } = options
 
   // try {
@@ -126,7 +126,7 @@ function clearStorage (options = {}) {
 
 function clearStorageSync () {
   // Storage.clear()
-  warn("不支持clearStorageSync");
+  warn('不支持clearStorageSync')
 }
 
 export {

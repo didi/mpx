@@ -10,13 +10,12 @@ function createDom (Element, attrs = {}, children = []) {
   return dom
 }
 
-
 export default class Toast {
-  constructor() {
+  constructor () {
     this.defaultOpts = {
-      title: "",
-      icon: "success",
-      image: "",
+      title: '',
+      icon: 'success',
+      image: '',
       duration: 1500,
       mask: false,
       success: () => {},
@@ -38,15 +37,15 @@ export default class Toast {
     ])
   }
 
-  show(options, type) {
+  show (options, type) {
     if (this.hideTimer) {
-      clearTimeout(this.hideTimer);
-      this.hideTimer = null;
+      clearTimeout(this.hideTimer)
+      this.hideTimer = null
     }
 
-    const opts = Object.assign({}, this.defaultOpts, options);
+    const opts = Object.assign({}, this.defaultOpts, options)
 
-    this.type = type;
+    this.type = type
 
     // if (opts.mask) {
     //   this.mask.class += 'show'
@@ -72,7 +71,7 @@ export default class Toast {
     this.title.text = opts.title || ''
 
     this.dialog = new Dialog()
-    this.dialog.cancelable = false;
+    this.dialog.cancelable = false
     opts.icon === 'loading'
       ? this.dialog.loading(opts.title || 'loading...') // 空字符串也被过滤
       : this.dialog.custom(this.toast)
@@ -84,17 +83,16 @@ export default class Toast {
     return Promise.resolve({ errMsg })
   }
 
-  hide(options = {}, type) {
- 
-    if (this.type !== type) return;
+  hide (options = {}, type) {
+    if (this.type !== type) return
 
-    const duration = options.duration || 0;
-    const errMsg = type === "loading" ? "hideLoading:ok" : "hideToast:ok";
-    webHandleSuccess({ errMsg }, options.success, options.complete);
+    const duration = options.duration || 0
+    const errMsg = type === 'loading' ? 'hideLoading:ok' : 'hideToast:ok'
+    webHandleSuccess({ errMsg }, options.success, options.complete)
 
     if (this.hideTimer) {
-      clearTimeout(this.hideTimer);
-      this.hideTimer = null;
+      clearTimeout(this.hideTimer)
+      this.hideTimer = null
     }
 
     this.hideTimer = setTimeout(() => { this.dialog.dismiss() }, duration)

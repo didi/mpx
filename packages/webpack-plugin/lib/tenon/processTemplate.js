@@ -3,23 +3,23 @@ const genComponentTag = require('../utils/gen-component-tag')
 const addQuery = require('../utils/add-query')
 const path = require('path')
 const parseRequest = require('../utils/parse-request')
-const getMainCompilation = require('../utils/get-main-compilation')
+// const getMainCompilation = require('../utils/get-main-compilation')
 
-function calculateRootEleChild (arr) {
-  if (!arr) {
-    return 0
-  }
-  return arr.reduce((total, item) => {
-    if (item.type === 1) {
-      if (item.tag === 'template') {
-        total += calculateRootEleChild(item.children)
-      } else {
-        total += 1
-      }
-    }
-    return total
-  }, 0)
-}
+// function calculateRootEleChild (arr) {
+//   if (!arr) {
+//     return 0
+//   }
+//   return arr.reduce((total, item) => {
+//     if (item.type === 1) {
+//       if (item.tag === 'template') {
+//         total += calculateRootEleChild(item.children)
+//       } else {
+//         total += 1
+//       }
+//     }
+//     return total
+//   }, 0)
+// }
 
 module.exports = function (template, options, callback) {
   const mode = options.mode
@@ -30,10 +30,10 @@ module.exports = function (template, options, callback) {
   const ctorType = options.ctorType
   const resourcePath = parseRequest(loaderContext.resource).resourcePath
   const builtInComponentsMap = {}
-  const compilation = loaderContext._compilation
-  const mainCompilation = getMainCompilation(compilation)
-  const mpx = mainCompilation.__mpx__
-  const wxsContentMap = mpx.wxsContentMap
+  // const compilation = loaderContext._compilation
+  // const mainCompilation = getMainCompilation(compilation)
+  // const mpx = mainCompilation.__mpx__
+  // const wxsContentMap = mpx.wxsContentMap
   let wxsModuleMap, genericsInfo
   let output = '/* template */\n'
 

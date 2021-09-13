@@ -42,7 +42,7 @@ module.exports = function (json, options, rawCallback) {
     )
   }
 
-  const stringifyRequest = r => loaderUtils.stringifyRequest(loaderContext, r)
+  // const stringifyRequest = r => loaderUtils.stringifyRequest(loaderContext, r)
 
   const callback = (err) => {
     return rawCallback(err, {
@@ -68,7 +68,7 @@ module.exports = function (json, options, rawCallback) {
   const fs = loaderContext._compiler.inputFileSystem
 
   const resolve = (context, request, callback) => {
-    const { queryObj } = parseRequest(request)
+    // const { queryObj } = parseRequest(request)
     // todo delete. parseRequest 不会返回 context 属性
     // context = queryObj.context || context
     return loaderContext.resolve(context, request, callback)
@@ -350,7 +350,7 @@ module.exports = function (json, options, rawCallback) {
     },
     (callback) => {
       processSubPackages(jsonObj.subPackages || jsonObj.subpackages, context, callback)
-    },
+    }
     // (callback) => {
     //   processGenerics(jsonObj.componentGenerics, context, callback)
     // },

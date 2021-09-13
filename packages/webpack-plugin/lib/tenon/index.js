@@ -5,7 +5,6 @@ const processTemplate = require('./processTemplate')
 
 const async = require('async')
 
-
 module.exports = function ({
   mpx,
   loaderContext,

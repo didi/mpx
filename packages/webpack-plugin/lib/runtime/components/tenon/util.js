@@ -9,7 +9,7 @@
  * @param {number} option.default 默认值,当传入的size有问题时返回
  * @returns {number} 处理后的数字宽高，单位px
  */
- export function processSize (size, option = {}) {
+export function processSize (size, option = {}) {
   const defaultValue = option.default || 0
   if (typeof size === 'number') {
     return size

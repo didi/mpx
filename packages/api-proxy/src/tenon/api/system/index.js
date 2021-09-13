@@ -1,7 +1,7 @@
-import { webHandleSuccess } from "../../../common/js";
-const { Hummer } = __GLOBAL__;
+import { webHandleSuccess } from '../../../common/js'
+const { Hummer } = __GLOBAL__
 
-function getSystemInfoSync() {
+function getSystemInfoSync () {
   const {
     platform,
     osVersion,
@@ -9,8 +9,8 @@ function getSystemInfoSync() {
     deviceHeight,
     availableWidth,
     availableHeight,
-    safeAreaBottom,
-  } = Hummer.env || {};
+    safeAreaBottom
+  } = Hummer.env || {}
   return {
     brand: platform,
     model: platform,
@@ -38,15 +38,15 @@ function getSystemInfoSync() {
     bluetoothEnabled: null,
     locationEnabled: null,
     wifiEnabled: null,
-    safeArea: safeAreaBottom,
-  };
+    safeArea: safeAreaBottom
+  }
 }
 
-function getSystemInfo(options = {}) {
-  const info = getSystemInfoSync();
-  const res = Object.assign({ errMsg: "getSystemInfo:ok" }, info);
-  webHandleSuccess(res, options.success, options.complete);
-  return Promise.resolve(res);
+function getSystemInfo (options = {}) {
+  const info = getSystemInfoSync()
+  const res = Object.assign({ errMsg: 'getSystemInfo:ok' }, info)
+  webHandleSuccess(res, options.success, options.complete)
+  return Promise.resolve(res)
 }
 
-export { getSystemInfo, getSystemInfoSync };
+export { getSystemInfo, getSystemInfoSync }
