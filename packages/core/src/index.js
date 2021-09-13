@@ -154,7 +154,6 @@ if (__mpx_mode__ === 'web') {
     use,
     set,
     delete: del,
-    setConvertRule,
     getMixin,
     implement
   }
