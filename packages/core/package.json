@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/core",
-  "version": "2.6.91",
+  "version": "2.6.92-alpha.0",
   "description": "mpx runtime core",
   "keywords": [
     "miniprogram",
@@ -22,8 +22,8 @@
     "miniprogram-api-typings": "^3.0.2"
   },
   "peerDependencies": {
-    "@hummer/tenon-vue": "^1.5.1",
     "@hummer/tenon-store": "^1.4.0",
+    "@hummer/tenon-vue": "^1.5.1",
     "vue": "^2.6.10",
     "vue-i18n": "^8.15.3"
   },
