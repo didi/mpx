@@ -2,12 +2,10 @@ import mergeOptions from '../../../core/mergeOptions'
 import { initProxy, filterOptions } from '../wx/getDefaultOptions'
 
 export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
-  const hookNames = ['attached', 'ready', 'detached']
+  let hookNames = ['attached', 'ready', 'detached']
   // 当用户传入page作为构造器构造页面时，修改所有关键hooks
   if (rawOptions.__pageCtor__) {
-    hookNames[0] = 'onLoad'
-    hookNames[1] = 'onReady'
-    hookNames[2] = 'onUnload'
+    hookNames = ['onLoad', 'onReady', 'onUnload']
   }
 
   const rootMixin = {
