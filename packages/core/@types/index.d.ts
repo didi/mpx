@@ -341,8 +341,6 @@ interface ImplementOptions {
   remove?: Boolean
 }
 
-export function setConvertRule (rule: ConvertRule): void
-
 export function toPureObject<T extends object> (obj: T): T
 
 export interface Mpx {
@@ -368,8 +366,6 @@ export interface Mpx {
   remove: typeof del
 
   delete: typeof del
-
-  setConvertRule: typeof setConvertRule
 
   config: MpxConfig
 

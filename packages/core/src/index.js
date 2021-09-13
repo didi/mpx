@@ -8,7 +8,6 @@ import createStore, {
 } from './core/createStore'
 import { injectMixins } from './core/injectMixins'
 import { extend, diffAndCloneA, makeMap, merge, hasOwn } from './helper/utils'
-import { setConvertRule } from './convertor/convertor'
 import { getMixin } from './core/mergeOptions'
 import { error } from './helper/log'
 import Vue from './vue'
@@ -127,7 +126,6 @@ if (__mpx_mode__ === 'web') {
     set,
     remove,
     delete: del,
-    setConvertRule,
     getMixin,
     implement
   }
@@ -195,7 +193,6 @@ else {
     set,
     remove,
     delete: del,
-    setConvertRule,
     getMixin,
     implement
   }

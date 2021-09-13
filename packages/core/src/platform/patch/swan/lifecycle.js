@@ -11,6 +11,7 @@ const APP_HOOKS = [
 ]
 
 const PAGE_HOOKS = [
+  'onInit',
   'onLoad',
   'onReady',
   'onShow',
@@ -39,8 +40,8 @@ const COMPONENT_HOOKS = [
 
 export const lifecycleProxyMap = {
   [BEFORECREATE]: ['beforeCreate'],
-  // 类微信平台中onLoad不能代理到CREATED上，否则Component构造页面时无法获取页面参数
-  [CREATED]: ['created', 'attached'],
+  // 为提升性能统一把onInit和onLoad都代理到CREATED中，由onInit触发
+  [CREATED]: ['onInit', 'created', 'attached', 'onLoad'],
   [UPDATED]: ['updated'],
   [BEFOREMOUNT]: ['beforeMount'],
   [MOUNTED]: ['ready', 'onReady'],

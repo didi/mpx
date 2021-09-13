@@ -57,7 +57,7 @@ export default class MPXProxy {
     }
   }
 
-  created (...params) {
+  created (params) {
     this.initApi()
     // todo tenon beforecreate
     __mpx_mode__ === 'tenon' || this.callUserHook(BEFORECREATE)
@@ -65,7 +65,7 @@ export default class MPXProxy {
       this.initState(this.options)
     }
     this.state = CREATED
-    this.callUserHook(CREATED, ...params)
+    this.callUserHook(CREATED, params)
     if (__mpx_mode__ !== 'web' && __mpx_mode__ !== 'tenon') {
       // 强制走小程序原生渲染逻辑
       this.options.__nativeRender__ ? this.doRender() : this.initRender()
@@ -233,11 +233,11 @@ export default class MPXProxy {
     }
   }
 
-  callUserHook (hookName, ...params) {
+  callUserHook (hookName, params) {
     const hook = this.options[hookName] || this.target[hookName]
     if (typeof hook === 'function') {
       try {
-        hook.call(this.target, ...params)
+        hook.apply(this.target, params)
       } catch (e) {
         if (typeof EXPORT_MPX.config.hookErrorHandler === 'function') {
           EXPORT_MPX.config.hookErrorHandler(e, this.target, hookName)

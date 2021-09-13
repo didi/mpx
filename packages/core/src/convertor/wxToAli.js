@@ -5,15 +5,16 @@ import { mergeToArray } from '../core/mergeOptions'
 import { error } from '../helper/log'
 import { implemented } from '../core/implement'
 import { hasOwn } from '../helper/utils'
+import { CREATED } from '../core/innerLifecycle'
 
-const NOTSUPPORTS = ['moved', 'definitionFilter']
+const unsupported = ['moved', 'definitionFilter']
 
 function convertErrorDesc (key) {
   error(`Options.${key} is not supported in runtime conversion from wx to ali.`, global.currentResource)
 }
 
 function notSupportTip (options) {
-  NOTSUPPORTS.forEach(key => {
+  unsupported.forEach(key => {
     if (options[key]) {
       if (!implemented[key]) {
         process.env.NODE_ENV !== 'production' && convertErrorDesc(key)
@@ -43,22 +44,25 @@ export default {
   lifecycle2: mergeLifecycle(aliLifecycle.LIFECYCLE),
   pageMode: 'blend',
   support: false,
-  lifecycleProxyMap: wxLifecycle.lifecycleProxyMap,
+  // wx输出ali时额外将onLoad代理到CREATED
+  lifecycleProxyMap: Object.assign({}, wxLifecycle.lifecycleProxyMap, {
+    [CREATED]: ['created', 'attached', 'onLoad']
+  }),
   convert (options) {
-    if (options.properties) {
-      const newProps = {}
-      Object.keys(options.properties).forEach(key => {
-        const prop = options.properties[key]
+    const props = Object.assign({}, options.properties, options.props)
+    if (props) {
+      Object.keys(props).forEach(key => {
+        const prop = props[key]
         if (prop) {
           if (hasOwn(prop, 'value')) {
-            newProps[key] = prop.value
+            props[key] = prop.value
           } else {
             const type = hasOwn(prop, 'type') ? prop.type : prop
-            if (typeof type === 'function') newProps[key] = type()
+            if (typeof type === 'function') props[key] = type()
           }
         }
       })
-      options.props = Object.assign(newProps, options.props)
+      options.props = props
       delete options.properties
     }
     if (options.onResize) {
