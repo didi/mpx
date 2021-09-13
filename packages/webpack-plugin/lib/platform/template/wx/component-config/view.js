@@ -21,6 +21,10 @@ module.exports = function ({ print }) {
         return 'div'
       }
     },
+    tenon (tag, { el }) {
+      el.isBuiltIn = true
+      return 'tenon-view'
+    },
     qa (tag) {
       return 'div'
     },

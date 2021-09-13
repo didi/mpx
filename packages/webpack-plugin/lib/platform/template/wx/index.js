@@ -24,6 +24,15 @@ module.exports = function getSpec ({ warn, error }) {
               value: parsed.result
             }
           }
+        },
+        tenon ({ name, value }) {
+          const parsed = parseMustache(value)
+          if (parsed.hasBinding) {
+            return {
+              name: name === 'animation' ? 'v-' + name : ':' + name,
+              value: parsed.result
+            }
+          }
         }
       }
     ],

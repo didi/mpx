@@ -19,6 +19,10 @@ module.exports = function ({ print }) {
         return 'span'
       }
     },
+    tenon (tag, { el }) {
+      el.isBuiltIn = true
+      return 'tenon-text'
+    },
     props: [
       {
         test: /^(decode|user-select)$/,

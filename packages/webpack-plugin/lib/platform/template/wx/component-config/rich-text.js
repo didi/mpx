@@ -12,6 +12,10 @@ module.exports = function ({ print }) {
       el.isBuiltIn = true
       return 'mpx-rich-text'
     },
+    tenon (tag, { el }) {
+      el.isBuiltIn = true
+      return 'tenon-rich-text'
+    },
     props: [
       {
         test: /^(space)$/,

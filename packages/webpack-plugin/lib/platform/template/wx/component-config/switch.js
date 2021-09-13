@@ -10,6 +10,10 @@ module.exports = function ({ print }) {
       el.isBuiltIn = true
       return 'mpx-switch'
     },
+    tenon (tag, { el }) {
+      el.isBuiltIn = true
+      return 'tenon-switch'
+    },
     props: [
       {
         test: /^type$/,

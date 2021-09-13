@@ -28,6 +28,8 @@ module.exports = function ({ print }) {
   const ttEventLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false, type: 'event' })
   const webPropLog = print({ platform: 'web', tag: TAG_NAME, isError: false })
   const webEventLog = print({ platform: 'web', tag: TAG_NAME, isError: false, type: 'event' })
+  const tenonPropLog = print({ platform: 'tenon', tag: TAG_NAME, isError: false })
+  const tenonEventLog = print({ platform: 'tenon', tag: TAG_NAME, isError: false, type: 'event' })
   const qaPropLog = print({ platform: 'qa', tag: TAG_NAME, isError: false })
   const wxPropValueLog = print({ platform: 'wx', tag: TAG_NAME, isError: false, type: 'value' })
 
@@ -36,6 +38,10 @@ module.exports = function ({ print }) {
     web (tag, { el }) {
       el.isBuiltIn = true
       return 'mpx-button'
+    },
+    tenon (tag, { el }) {
+      el.isBuiltIn = true
+      return 'tenon-button'
     },
     props: [
       {
@@ -131,11 +137,16 @@ module.exports = function ({ print }) {
       },
       {
         test: /^(open-type|lang|session-from|send-message-title|send-message-path|send-message-img|show-message-card|app-parameter)$/,
-        web: webPropLog
+        web: webPropLog,
+        tenon: tenonPropLog
       },
       {
         test: /^(size|type|plain|loading|form-type|hover-class|hover-stop-propagation|hover-start-time|hover-stay-time|use-built-in)$/,
         web (prop, { el }) {
+          // todo 这部分能力基于内部封装实现
+          el.isBuiltIn = true
+        },
+        tenon (prop, { el }) {
           // todo 这部分能力基于内部封装实现
           el.isBuiltIn = true
         }
@@ -174,7 +185,8 @@ module.exports = function ({ print }) {
       },
       {
         test: /^(getuserinfo|contact|error|launchapp|opensetting|getphonenumber)$/,
-        web: webEventLog
+        web: webEventLog,
+        tenon: tenonEventLog
       }
     ]
   }

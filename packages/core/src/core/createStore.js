@@ -4,6 +4,8 @@ import { initComputed } from '../observer/computed'
 
 import Vue from '../vue'
 
+import { createHummerPlugin } from '@hummer/tenon-store'
+
 import {
   proxy,
   getByPath
@@ -124,6 +126,11 @@ class Store {
     this.state = this.registerModule(options).state
     this.resetStoreVM()
     Object.assign(this, mapStore(this))
+    if (__mpx_mode__ === 'tenon') {
+      plugins.push(createHummerPlugin({
+        store_key: `MPX_STORE${options.__store_id}`
+      }))
+    }
     plugins.forEach(plugin => plugin(this))
   }
 
@@ -152,9 +159,9 @@ class Store {
 
   registerModule (module) {
     const state = module.state || {}
-    const reactiveModule = {
-      state
-    }
+    const reactiveModule = __mpx_mode__ === 'tenon'
+      ? Vue.reactive({ state })
+      : { state }
     if (module.getters) {
       reactiveModule.getters = transformGetters(module.getters, reactiveModule, this)
     }
@@ -194,12 +201,33 @@ class Store {
       const computedKeys = Object.keys(this.__wrappedGetters)
       proxy(this.getters, this._vm, computedKeys)
       proxy(this.getters, this.__depsGetters)
+    } else if (__mpx_mode__ === 'tenon') {
+      const computedObj = {}
+      Object.keys(this.__wrappedGetters).forEach(k => {
+        const getter = this.__wrappedGetters[k]
+        computedObj[k] = () => getter(this.state)
+        Object.defineProperty(this.getters, k, {
+          get: () => Vue.computed(() => computedObj[k]()).value,
+          enumerable: true // for local getters
+        })
+      })
     } else {
       this._vm = {}
       observe(this.state, true)
       initComputed(this._vm, this.getters, this.__wrappedGetters)
       proxy(this.getters, this.__depsGetters)
     }
+  }
+  /**
+   * 替换state，tenon环境中使用
+   */
+  replaceState (state) {
+    // todo 某些key可能无法删除
+    Object.assign(this.state, state)
+    // this.resetStoreVM()
+  }
+  _withCommit (fn) {
+    fn()
   }
 }
 

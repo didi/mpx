@@ -19,6 +19,10 @@ module.exports = function ({ print }) {
       el.isBuiltIn = true
       return 'mpx-scroll-view'
     },
+    tenon (tag, { el }) {
+      el.isBuiltIn = true
+      return 'tenon-scroll-view'
+    },
     props: [
       {
         test: /^(enable-flex|scroll-anchorin|refresher-enabled|refresher-threshold|refresher-default-style|refresher-background|refresher-triggered|enhanced|bounces|show-scrollbar|paging-enabled|fast-deceleratio)$/,

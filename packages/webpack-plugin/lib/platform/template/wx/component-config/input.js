@@ -20,6 +20,10 @@ module.exports = function ({ print }) {
       el.isBuiltIn = true
       return 'mpx-input'
     },
+    tenon (tag, { el }) {
+      el.isBuiltIn = true
+      return 'tenon-input'
+    },
     props: [
       {
         test: /^(cursor-spacing|auto-focus|adjust-position|hold-keyboard)$/,

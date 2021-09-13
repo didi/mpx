@@ -3,7 +3,7 @@ import { makeMap } from '../../helper/utils'
 
 let bulitInKeys
 
-if (__mpx_mode__ === 'web') {
+if (__mpx_mode__ === 'web' || __mpx_mode__ === 'tenon') {
   bulitInKeys = [
     'proto',
     'mixins',

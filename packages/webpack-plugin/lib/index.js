@@ -7,6 +7,7 @@ const ResolveDependency = require('./dependency/ResolveDependency')
 const InjectDependency = require('./dependency/InjectDependency')
 const ReplaceDependency = require('./dependency/ReplaceDependency')
 const ChildCompileDependency = require('./dependency/ChildCompileDependency')
+const AddEntryDependency = require('./dependency/AddEntryDependency')
 const NullFactory = require('webpack/lib/NullFactory')
 const normalize = require('./utils/normalize')
 const toPosix = require('./utils/to-posix')
@@ -293,6 +294,9 @@ class MpxWebpackPlugin {
       compilation.dependencyFactories.set(ChildCompileDependency, new NullFactory())
       compilation.dependencyTemplates.set(ChildCompileDependency, new ChildCompileDependency.Template())
 
+      compilation.dependencyFactories.set(AddEntryDependency, new NullFactory())
+      compilation.dependencyTemplates.set(AddEntryDependency, new AddEntryDependency.Template())
+
       compilation.dependencyFactories.set(RemovedModuleDependency, normalModuleFactory)
       compilation.dependencyTemplates.set(RemovedModuleDependency, new RemovedModuleDependency.Template())
 
@@ -566,6 +570,23 @@ class MpxWebpackPlugin {
       const rawProcessModuleDependencies = compilation.processModuleDependencies
       compilation.processModuleDependencies = (module, callback) => {
         let proxyedCallback = callback
+        if(module.__has_tenon_entry) {
+          let tasks = []
+          module.dependencies.forEach(dep => {
+            if (dep instanceof AddEntryDependency) {
+              tasks.push(new Promise(resolve => {
+                compilation.addEntry(...dep.__addEntryParams, (err) => {
+                  resolve(err)
+                })
+              }))
+            }
+          })
+          proxyedCallback = (error) => {
+            Promise.all(tasks).then(errs => {
+              callback(errs.filter(e => !!e)[0] || error)
+            })
+          }
+        }
         if (module.rawRequest === mpx.appScriptRawRequest) {
           // 避免模块request重名，只对第一次匹配到的模块进行代理
           mpx.appScriptRawRequest = ''
@@ -793,6 +814,27 @@ class MpxWebpackPlugin {
             }
           }
         })
+
+        // processing for tenon-store
+        if (mpx.mode === 'tenon') {
+          let TENON_STORE_ID = 0
+          parser.hooks.call.for('imported var').tap('MpxWebpackPlugin', (expr) => {
+            if (['createStore', 'createStoreWithThis'].includes(expr.callee.name)) {
+              const current = parser.state.current
+              const storeOptions = expr.arguments.length && expr.arguments[0]
+              if (storeOptions) {
+                current.addDependency(new InjectDependency({
+                  content: 'Object.assign(',
+                  index: storeOptions.range[0]
+                }))
+                current.addDependency(new InjectDependency({
+                  content: `, { __store_id: ${TENON_STORE_ID++} })`,
+                  index: storeOptions.range[1]
+                }))
+              }
+            }
+          })
+        }
 
         if (mpx.srcMode !== mpx.mode) {
           // 全量替换未声明的wx identifier

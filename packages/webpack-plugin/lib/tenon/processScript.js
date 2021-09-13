@@ -3,6 +3,7 @@ const loaderUtils = require('loader-utils')
 const addQuery = require('../utils/add-query')
 const normalize = require('../utils/normalize')
 const SingleEntryPlugin = require('webpack/lib/SingleEntryPlugin')
+const AddEntryDependency = require('../dependency/AddEntryDependency')
 const builtInLoaderPath = normalize.lib('built-in-loader')
 const optionProcessorPath = normalize.lib('runtime/optionProcessor')
 const tabBarContainerPath = normalize.lib('runtime/components/web/mpx-tab-bar-container.vue')
@@ -56,7 +57,7 @@ module.exports = function (script, options, callback) {
     }
   }
 
-  const addEntrySafely = (resource, name, callback = () => {}) => {
+  const addEntrySafely = (loaderContext, resource, name, callback = () => {}) => {
     // 如果loader已经回调，就不再添加entry
     if (callbacked) return callback()
     const dep = SingleEntryPlugin.createDependency(resource, name)
@@ -66,6 +67,22 @@ module.exports = function (script, options, callback) {
       checkEntryDeps()
       callback(err, module)
     })
+  }
+
+  const addEntryDep = (context, resource, name) => {
+    // 如果loader已经回调，就不再添加entry
+    if (callbacked) return
+    const dep = SingleEntryPlugin.createDependency(resource, name)
+    entryDeps.add(dep)
+    const virtualModule = new AddEntryDependency({
+      context: context._compiler.context,
+      dep,
+      name
+    })
+    context._module.__has_tenon_entry = true
+    context._module.addDependency(virtualModule)
+    entryDeps.delete(dep)
+    checkEntryDeps()
   }
 
   const emitWarning = (msg) => {
@@ -155,10 +172,12 @@ module.exports = function (script, options, callback) {
       Object.keys(localPagesMap).forEach((pagePath) => {
         const pageCfg = localPagesMap[pagePath]
         const pageRequest = stringifyRequest(pageCfg.resource)
-        loaderContext.resolve(loaderContext._compiler.context, addQuery(pageCfg.resource, { tenon: true }), (err, resource) => {
-          if(err) return callback(err)
-          addEntrySafely(resource, pagePath, () => {})
-        })
+        addEntryDep(loaderContext, addQuery(pageCfg.resource, { tenon: true }), pagePath)
+        // addEntrySafely(loaderContext, addQuery(pageCfg.resource, { tenon: true }), pagePath)
+        // loaderContext.resolve(loaderContext._compiler.context, addQuery(pageCfg.resource, { tenon: true }), (err, resource) => {
+        //   if(err) return callback(err)
+          
+        // })
         // if (pageCfg.async) {
         //   pagesMap[pagePath] = `()=>import(${pageRequest}).then(res => getComponent(res, { __mpxPageRoute: ${JSON.stringify(pagePath)} }))`
         // } else {
@@ -181,11 +200,11 @@ module.exports = function (script, options, callback) {
         }
       })
 
-      // Object.keys(builtInComponentsMap).forEach((componentName) => {
-      //   const componentCfg = builtInComponentsMap[componentName]
-      //   const componentRequest = forceDisableBuiltInLoader ? stringifyRequest(componentCfg.resource) : stringifyRequest('builtInComponent.vue!=!' + builtInLoaderPath + '!' + componentCfg.resource)
-      //   componentsMap[componentName] = `getComponent(require(${componentRequest}), { __mpxBuiltIn: true })`
-      // })
+      Object.keys(builtInComponentsMap).forEach((componentName) => {
+        const componentCfg = builtInComponentsMap[componentName]
+        const componentRequest = forceDisableBuiltInLoader ? stringifyRequest(componentCfg.resource) : stringifyRequest('builtInComponent.vue!=!' + builtInLoaderPath + '!' + componentCfg.resource)
+        componentsMap[componentName] = `getComponent(require(${componentRequest}), { __mpxBuiltIn: true })`
+      })
 
       content += `  global.currentSrcMode = ${JSON.stringify(scriptSrcMode)}\n`
       if (!isProduction) {
@@ -245,8 +264,10 @@ module.exports = function (script, options, callback) {
     }
   })
   output += '\n'
-
-  callback(null, {
-    output
+  checkEntryDeps(() => {
+    callbacked = true
+    callback(null, {
+      output
+    })
   })
 }

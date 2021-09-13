@@ -12,10 +12,6 @@ function filterOptions (options) {
     // Tenon 使用的Vue3 语法中 data 配置需要为一个函数
     if (key === 'data' || key === 'dataFn') {
       newOptions.data = function mergeFn () {
-        console.log(JSON.stringify(options.data))
-        console.log(JSON.stringify(diffAndCloneA(options.data || {}).clone))
-        console.log(JSON.stringify(options.dataFn))
-        // console.log(this, '====')
         return Object.assign(
           diffAndCloneA(options.data || {}).clone,
           options.dataFn && options.dataFn.call(this)

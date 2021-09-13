@@ -10,9 +10,9 @@ const readJsonForSrc = require('../utils/read-json-for-src')
 const isUrlRequest = require('../utils/is-url-request')
 
 module.exports = function (json, options, rawCallback) {
-  // const mode = options.mode
-  // const env = options.env
-  // const defs = options.defs
+  const mode = options.mode
+  const env = options.env
+  const defs = options.defs
   const loaderContext = options.loaderContext
   const resolveMode = options.resolveMode
   const pagesMap = options.pagesMap
@@ -99,93 +99,93 @@ module.exports = function (json, options, rawCallback) {
   //   callback()
   // }
 
-  // const processPackages = (packages, context, callback) => {
-  //   if (packages) {
-  //     async.forEach(packages, (packagePath, callback) => {
-  //       const parsed = parseRequest(packagePath)
-  //       const queryObj = parsed.queryObj
-  //       // readFile无法处理query
-  //       packagePath = parsed.resourcePath
-  //       async.waterfall([
-  //         (callback) => {
-  //           resolve(context, packagePath, (err, result) => {
-  //             callback(err, result)
-  //           })
-  //         },
-  //         (result, callback) => {
-  //           loaderContext.addDependency(result)
-  //           fs.readFile(result, (err, content) => {
-  //             if (err) return callback(err)
-  //             callback(err, result, content.toString('utf-8'))
-  //           })
-  //         },
-  //         (result, content, callback) => {
-  //           const filePath = result
-  //           const extName = path.extname(filePath)
-  //           if (extName === '.mpx' || extName === '.vue') {
-  //             const parts = parseComponent(content, {
-  //               filePath,
-  //               needMap: loaderContext.sourceMap,
-  //               mode,
-  //               defs,
-  //               env
-  //             })
-  //             const json = parts.json || {}
-  //             if (json.content) {
-  //               content = json.content
-  //             } else if (json.src) {
-  //               return readJsonForSrc(json.src, loaderContext, (content) => {
-  //                 callback(null, result, content)
-  //               })
-  //             }
-  //           }
-  //           callback(null, result, content)
-  //         },
-  //         (result, content, callback) => {
-  //           try {
-  //             content = JSON5.parse(content)
-  //           } catch (err) {
-  //             return callback(err)
-  //           }
+  const processPackages = (packages, context, callback) => {
+    if (packages) {
+      async.forEach(packages, (packagePath, callback) => {
+        const parsed = parseRequest(packagePath)
+        const queryObj = parsed.queryObj
+        // readFile无法处理query
+        packagePath = parsed.resourcePath
+        async.waterfall([
+          (callback) => {
+            resolve(context, packagePath, (err, result) => {
+              callback(err, result)
+            })
+          },
+          (result, callback) => {
+            loaderContext.addDependency(result)
+            fs.readFile(result, (err, content) => {
+              if (err) return callback(err)
+              callback(err, result, content.toString('utf-8'))
+            })
+          },
+          (result, content, callback) => {
+            const filePath = result
+            const extName = path.extname(filePath)
+            if (extName === '.mpx' || extName === '.vue') {
+              const parts = parseComponent(content, {
+                filePath,
+                needMap: loaderContext.sourceMap,
+                mode,
+                defs,
+                env
+              })
+              const json = parts.json || {}
+              if (json.content) {
+                content = json.content
+              } else if (json.src) {
+                return readJsonForSrc(json.src, loaderContext, (content) => {
+                  callback(null, result, content)
+                })
+              }
+            }
+            callback(null, result, content)
+          },
+          (result, content, callback) => {
+            try {
+              content = JSON5.parse(content)
+            } catch (err) {
+              return callback(err)
+            }
 
-  //           const processSelfQueue = []
-  //           const context = path.dirname(result)
+            const processSelfQueue = []
+            const context = path.dirname(result)
 
-  //           if (content.pages) {
-  //             let tarRoot = queryObj.root
-  //             if (tarRoot) {
-  //               delete queryObj.root
-  //               let subPackage = {
-  //                 tarRoot,
-  //                 pages: content.pages,
-  //                 ...queryObj
-  //               }
-  //               processSelfQueue.push((callback) => {
-  //                 processSubPackage(subPackage, context, callback)
-  //               })
-  //             } else {
-  //               processSelfQueue.push((callback) => {
-  //                 processPages(content.pages, '', '', context, callback)
-  //               })
-  //             }
-  //           }
-  //           if (content.packages) {
-  //             processSelfQueue.push((callback) => {
-  //               processPackages(content.packages, context, callback)
-  //             })
-  //           }
-  //           if (processSelfQueue.length) {
-  //             async.parallel(processSelfQueue, callback)
-  //           } else {
-  //             callback()
-  //           }
-  //         }
-  //       ], callback)
-  //     }, callback)
-  //   } else {
-  //     callback()
-  //   }
-  // }
+            if (content.pages) {
+              let tarRoot = queryObj.root
+              if (tarRoot) {
+                delete queryObj.root
+                let subPackage = {
+                  tarRoot,
+                  pages: content.pages,
+                  ...queryObj
+                }
+                processSelfQueue.push((callback) => {
+                  processSubPackage(subPackage, context, callback)
+                })
+              } else {
+                processSelfQueue.push((callback) => {
+                  processPages(content.pages, '', '', context, callback)
+                })
+              }
+            }
+            if (content.packages) {
+              processSelfQueue.push((callback) => {
+                processPackages(content.packages, context, callback)
+              })
+            }
+            if (processSelfQueue.length) {
+              async.parallel(processSelfQueue, callback)
+            } else {
+              callback()
+            }
+          }
+        ], callback)
+      }, callback)
+    } else {
+      callback()
+    }
+  }
 
   const getPageName = (resourcePath, ext) => {
     const baseName = path.basename(resourcePath, ext)
@@ -260,26 +260,26 @@ module.exports = function (json, options, rawCallback) {
     }
   }
 
-  // const processSubPackage = (subPackage, context, callback) => {
-  //   if (subPackage) {
-  //     let tarRoot = subPackage.tarRoot || subPackage.root || ''
-  //     let srcRoot = subPackage.srcRoot || subPackage.root || ''
-  //     if (!tarRoot) return callback()
-  //     processPages(subPackage.pages, srcRoot, tarRoot, context, callback)
-  //   } else {
-  //     callback()
-  //   }
-  // }
+  const processSubPackage = (subPackage, context, callback) => {
+    if (subPackage) {
+      let tarRoot = subPackage.tarRoot || subPackage.root || ''
+      let srcRoot = subPackage.srcRoot || subPackage.root || ''
+      if (!tarRoot) return callback()
+      processPages(subPackage.pages, srcRoot, tarRoot, context, callback)
+    } else {
+      callback()
+    }
+  }
 
-  // const processSubPackages = (subPackages, context, callback) => {
-  //   if (subPackages) {
-  //     async.forEach(subPackages, (subPackage, callback) => {
-  //       processSubPackage(subPackage, context, callback)
-  //     }, callback)
-  //   } else {
-  //     callback()
-  //   }
-  // }
+  const processSubPackages = (subPackages, context, callback) => {
+    if (subPackages) {
+      async.forEach(subPackages, (subPackage, callback) => {
+        processSubPackage(subPackage, context, callback)
+      }, callback)
+    } else {
+      callback()
+    }
+  }
 
   const processComponents = (components, context, callback) => {
     if (components) {
@@ -345,12 +345,12 @@ module.exports = function (json, options, rawCallback) {
     (callback) => {
       processComponents(jsonObj.usingComponents, context, callback)
     },
-    // (callback) => {
-    //   processPackages(jsonObj.packages, context, callback)
-    // },
-    // (callback) => {
-    //   processSubPackages(jsonObj.subPackages || jsonObj.subpackages, context, callback)
-    // },
+    (callback) => {
+      processPackages(jsonObj.packages, context, callback)
+    },
+    (callback) => {
+      processSubPackages(jsonObj.subPackages || jsonObj.subpackages, context, callback)
+    },
     // (callback) => {
     //   processGenerics(jsonObj.componentGenerics, context, callback)
     // },

@@ -342,12 +342,14 @@ export default function processOption (
     }
   }
 
-  if (option.mixins) {
-    option.mixins.push(mixin)
-  } else {
-    option.mixins = [mixin]
+  if(mixin){
+    if (option.mixins) {
+      option.mixins.push(mixin)
+    } else {
+      option.mixins = [mixin]
+    }
   }
-
+  
   if (componentId) {
     option.componentPath = '/' + componentId
   }

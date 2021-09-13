@@ -146,8 +146,8 @@ if (__mpx_mode__ === 'web') {
     createApp,
     createPage,
     createComponent,
-    // createStore, // todo 使用Hummer提供的store
-    // createStoreWithThis,
+    createStore,
+    createStoreWithThis,
     mixin: injectMixins,
     injectMixins,
     toPureObject: Vue.toRaw,

@@ -22,6 +22,11 @@ module.exports = function ({ print }) {
       el.isBuiltIn = true
       return 'mpx-textarea'
     },
+    tenon (tag, { el }) {
+      // form全量使用内建组件
+      el.isBuiltIn = true
+      return 'tenon-textarea'
+    },
     props: [
       {
         test: /^(auto-focus|fixed|cursor-spacing|cursor|show-confirm-bar|selection-start|selection-end|adjust-position|hold-keyboard|disable-default-padding|confirm-type)$/,

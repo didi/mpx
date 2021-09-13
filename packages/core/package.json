@@ -22,6 +22,8 @@
     "miniprogram-api-typings": "^3.0.2"
   },
   "peerDependencies": {
+    "@hummer/tenon-vue": "^1.5.1",
+    "@hummer/tenon-store": "^1.4.0",
     "vue": "^2.6.10",
     "vue-i18n": "^8.15.3"
   },

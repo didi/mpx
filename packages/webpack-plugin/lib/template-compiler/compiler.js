@@ -2102,7 +2102,7 @@ function processElement (el, root, options, meta) {
   }
   if (mode === 'tenon') {
     // 收集内建组件
-    // processBuiltInComponents(el, meta)
+    processBuiltInComponents(el, meta)
     // 预处理代码维度条件编译
     processIfForWeb(el)
     // processWebExternalClassesHack(el, options)

@@ -13,6 +13,10 @@ module.exports = function ({ print }) {
       el.isBuiltIn = true
       return 'mpx-image'
     },
+    tenon (tag, { el }) {
+      el.isBuiltIn = true
+      return 'tenon-image'
+    },
     props: [
       {
         test: /^show-menu-by-longpress$/,

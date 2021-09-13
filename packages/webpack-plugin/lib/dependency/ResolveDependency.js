@@ -1,6 +1,5 @@
 const NullDependency = require('webpack/lib/dependencies/NullDependency')
 const parseRequest = require('../utils/parse-request')
-const path = require('path')
 
 class ResolveDependency extends NullDependency {
   constructor (resource, packageName, pagesMap, componentsMap, staticResourcesMap, publicPath, range, issuerResource, compilation) {
