@@ -1,6 +1,5 @@
 import { error } from '../helper/log'
 import { implemented } from '../core/implement'
-import { CREATED } from '../core/innerLifecycle'
 import { mergeLifecycle } from './mergeLifecycle'
 import * as wxLifecycle from '../platform/patch/wx/lifecycle'
 import * as swanLifecycle from '../platform/patch/swan/lifecycle'

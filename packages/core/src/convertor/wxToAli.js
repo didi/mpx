@@ -5,7 +5,6 @@ import { mergeToArray } from '../core/mergeOptions'
 import { error } from '../helper/log'
 import { implemented } from '../core/implement'
 import { hasOwn } from '../helper/utils'
-import { CREATED } from '../core/innerLifecycle'
 
 const unsupported = ['moved', 'definitionFilter']
 
