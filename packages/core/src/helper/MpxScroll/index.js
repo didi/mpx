@@ -1,4 +1,3 @@
-import { error } from '../../helper/log'
 import { getOffsetTop, getElement, getScrollTop, preventDefault } from './dom'
 import EventEmitter from './EventEmitter'
 import EventRegister from './EventRegister'
@@ -198,10 +197,10 @@ export default class MpxScroll {
   }
 
   pageScrollTo ({
-    scrollTop,
-    selector,
-    duration = 300
-  }) {
+                  scrollTop,
+                  selector,
+                  duration = 300
+                }) {
     let _scrollTop
 
     if (isDef(scrollTop)) {
@@ -209,7 +208,7 @@ export default class MpxScroll {
     } else if (isDef(selector)) {
       _scrollTop = getOffsetTop(getElement(selector))
     } else {
-      return error('[pageScrollTo error]: scrollTop and selector are not defined')
+      return console.error('[pageScrollTo error]: scrollTop and selector are not defined')
     }
 
     if (duration === 0) {

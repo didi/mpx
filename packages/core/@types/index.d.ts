@@ -288,18 +288,6 @@ export function createActionsWithThis<S = {}, G = {}, M extends MutationsAndActi
 
 export function injectMixins (mixins: object | Array<object>, type?: 'page' | 'component' | 'app'): void
 
-declare class Watcher {
-  constructor (context: any, expr: string | (() => any), handler: WatchHandler | WatchOptWithHandler, options?: WatchOpt)
-
-  getValue (): any
-
-  update (): void
-
-  run (): void
-
-  destroy (): void
-}
-
 export function watch (expr: string | (() => any), handler: WatchHandler | WatchOptWithHandler, options?: WatchOpt): () => void
 
 interface AnyConstructor {
