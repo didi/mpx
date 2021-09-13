@@ -40,8 +40,7 @@ const COMPONENT_HOOKS = [
 
 export const lifecycleProxyMap = {
   [BEFORECREATE]: ['beforeCreate'],
-  // 为提升性能统一把onInit和onLoad都代理到CREATED中，由onInit触发
-  [CREATED]: ['onInit', 'created', 'attached', 'onLoad'],
+  [CREATED]: ['onInit', 'created', 'attached'],
   [UPDATED]: ['updated'],
   [BEFOREMOUNT]: ['beforeMount'],
   [MOUNTED]: ['ready', 'onReady'],

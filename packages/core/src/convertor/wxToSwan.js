@@ -34,10 +34,7 @@ export default {
   lifecycle2: mergeLifecycle(swanLifecycle.LIFECYCLE),
   pageMode: 'blend',
   support: true,
-  // wx输出swan时额外将onLoad代理到CREATED
-  lifecycleProxyMap: Object.assign({}, wxLifecycle.lifecycleProxyMap, {
-    [CREATED]: ['created', 'attached', 'onLoad']
-  }),
+  lifecycleProxyMap: wxLifecycle.lifecycleProxyMap,
   convert (options, type) {
     if (options.behaviors) {
       options.behaviors.forEach((behavior, idx) => {

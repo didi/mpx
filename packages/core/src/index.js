@@ -199,7 +199,7 @@ const EXPORT_MPX = factory()
 
 EXPORT_MPX.config = {
   useStrictDiff: false,
-  ignoreRenderError: false,
+  ignoreWarning: false,
   ignoreProxyWhiteList: ['id', 'dataset', 'data'],
   observeClassInstance: false,
   hookErrorHandler: null,

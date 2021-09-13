@@ -241,9 +241,7 @@ export default class MPXProxy {
         if (typeof EXPORT_MPX.config.hookErrorHandler === 'function') {
           EXPORT_MPX.config.hookErrorHandler(e, this.target, hookName)
         } else {
-          setTimeout(() => {
-            throw e
-          })
+          error(`User hook [${hookName}] exec error!`, this.options.mpxFileResource, e)
         }
       }
     }
@@ -415,9 +413,7 @@ export default class MPXProxy {
         try {
           return this.target.__injectedRender()
         } catch (e) {
-          if (!EXPORT_MPX.config.ignoreRenderError) {
-            warn(`Failed to execute render function, degrade to full-set-data mode.`, this.options.mpxFileResource, e)
-          }
+          warn(`Failed to execute render function, degrade to full-set-data mode.`, this.options.mpxFileResource, e)
           this.render()
         }
       }, noop)
@@ -446,7 +442,7 @@ export default class MPXProxy {
       this.forceUpdateData = data
       Object.keys(this.forceUpdateData).forEach(key => {
         if (!this.options.__nativeRender__ && !this.localKeysMap[getFirstKey(key)]) {
-          warn(`ForceUpdate data includes a props/computed key [${key}], which may yield a unexpected result!`, this.options.mpxFileResource)
+          warn(`ForceUpdate data includes a props/computed key [${key}], which may yield a unexpected result.`, this.options.mpxFileResource)
         }
         setByPath(this.data, key, this.forceUpdateData[key])
       })

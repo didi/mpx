@@ -38,6 +38,7 @@ export function getDefaultOptions (type, { rawOptions = {} }) {
       if (!this.__mpxProxy) {
         const query = (global.__mpxRouter && global.__mpxRouter.currentRoute && global.__mpxRouter.currentRoute.query) || {}
         initProxy(this, rawOptions, [query])
+        this.onLoad && this.onLoad(query)
       }
     },
     mounted () {
