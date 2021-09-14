@@ -2,13 +2,12 @@ const NullDependency = require('webpack/lib/dependencies/NullDependency')
 const makeSerializable = require('webpack/lib/util/makeSerializable')
 
 class DynamicEntryDependency extends NullDependency {
-  constructor (request, name, entryType, range, relative = false) {
+  constructor (request, name, entryType, range) {
     super()
     this.request = request
     this.name = name
     this.entryType = entryType
     this.range = range
-    this.relative = relative
   }
 
   get type () {
@@ -23,7 +22,6 @@ class DynamicEntryDependency extends NullDependency {
       const entryNode = mpx.getEntryNode(entryModule, this.entryType)
       parentEntryNode.addChild(entryNode)
       return callback(null, entryModule)
-
     })
   }
 
@@ -33,7 +31,6 @@ class DynamicEntryDependency extends NullDependency {
     write(this.name)
     write(this.entryType)
     write(this.range)
-    write(this.relative)
     super.serialize(context)
   }
 
@@ -43,7 +40,6 @@ class DynamicEntryDependency extends NullDependency {
     this.name = read()
     this.entryType = read()
     this.range = read()
-    this.relative = read()
     super.deserialize(context)
   }
 }

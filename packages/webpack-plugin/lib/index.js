@@ -357,6 +357,7 @@ class MpxWebpackPlugin {
           mpx = compilation.__mpx__ = {
             // app信息，便于获取appName
             appInfo: null,
+            entryCount: 0,
             // pages全局记录，无需区分主包分包
             pagesMap: {},
             // 记录pages对应的entry，处理多appEntry输出web多页项目时可能出现的pagePath冲突的问题，多appEntry输出目前仅web模式支持

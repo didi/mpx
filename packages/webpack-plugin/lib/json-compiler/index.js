@@ -1,11 +1,9 @@
 const async = require('async')
 const JSON5 = require('json5')
 const path = require('path')
-const EntryPlugin = require('webpack/lib/EntryPlugin')
 const loaderUtils = require('loader-utils')
 const parseComponent = require('../parser')
 const config = require('../config')
-
 const parseRequest = require('../utils/parse-request')
 const mpxJSON = require('../utils/mpx-json')
 const toPosix = require('../utils/to-posix')
@@ -18,7 +16,6 @@ const createHelpers = require('../helpers')
 const AppEntryDependency = require('../dependencies/AppEntryDependency')
 
 module.exports = function (raw) {
-  // 将addEntry和填充pages/componentsMap等副作用通过dep在loader外部进行，使json模块可缓存
   this.cacheable()
   const rawCallback = this.async()
   const moduleGraph = this._compilation.moduleGraph
@@ -68,16 +65,6 @@ module.exports = function (raw) {
   } else {
     currentName = componentsMap[resourcePath] || pagesMap[resourcePath]
   }
-
-  const addEntry = (entry, tarRoot = '') => {
-    if (tarRoot && JsonSideEffectInfo.subpackageEntriesMap) {
-      JsonSideEffectInfo.subpackageEntriesMap[tarRoot] = JsonSideEffectInfo.subpackageEntriesMap[tarRoot] || []
-      JsonSideEffectInfo.subpackageEntriesMap[tarRoot].push(entry)
-    } else {
-      JsonSideEffectInfo.entries.push(entry)
-    }
-  }
-
 
   const currentPath = publicPath + currentName
 
@@ -222,6 +209,14 @@ module.exports = function (raw) {
     rulesRunner(json)
   }
 
+  const getDynamicEntry = (request, name, type) => {
+    return `__mpx_dynamic_entry__(
+    ${JSON.stringify(request)},
+    ${JSON.stringify(name)},
+    ${JSON.stringify(type)},
+    )`
+  }
+
   const resolve = (context, request, callback) => {
     const { queryObj } = parseRequest(request)
     context = queryObj.context || context
@@ -230,13 +225,13 @@ module.exports = function (raw) {
 
   const processComponents = (components, context, callback) => {
     if (components) {
-      async.forEachOf(components, (component, name, callback) => {
-        processComponent(component, context, {
-          rewritePath: (componentPath) => {
-            if (useRelativePath === true) {
-              componentPath = toPosix(path.relative(path.dirname(currentPath), componentPath))
-            }
-            components[name] = componentPath
+      async.forEachOf(components, (request, name, callback) => {
+        processComponent(request, context, {
+          rewritePath: (outputPath) => {
+            // if (useRelativePath === true) {
+            //   outputPath = toPosix(path.relative(path.dirname(currentPath), outputPath))
+            // }
+            components[name] = outputPath
           }
         }, callback)
       }, callback)
@@ -245,12 +240,12 @@ module.exports = function (raw) {
     }
   }
 
-  const processComponent = (component, context, { rewritePath, outputPath, tarRoot }, callback) => {
-    if (!isUrlRequest(component)) return callback()
+  const processComponent = (request, context, { rewritePath, outputPath }, callback) => {
+    if (!isUrlRequest(request)) return callback()
     if (resolveMode === 'native') {
-      component = urlToRequest(component)
+      request = urlToRequest(request)
     }
-    resolve(context, component, (err, resource, info) => {
+    resolve(context, request, (err, resource, info) => {
       if (err) return callback(err)
       const resourcePath = parseRequest(resource).resourcePath
       const parsed = path.parse(resourcePath)
@@ -277,30 +272,11 @@ module.exports = function (raw) {
           outputPath = path.join('components', componentName + pathHash(resourcePath), componentName)
         }
       }
-      const { packageName, outputPath: componentPath, alreadyOutputed } = mpx.getPackageInfo(resource, {
-        outputPath,
-        resourceType: 'components',
-        warn: (err) => {
-          this.emitWarning(err)
-        }
-      })
-      // 此处query为了实现消除分包间模块缓存，以实现不同分包中引用的组件在不同分包中都能输出
-      const queryObj = { packageName }
       if (ext === '.js') {
-        queryObj.isNative = true
+        resource = addQuery(resource, { isNative: true })
       }
-      resource = addQuery(resource, queryObj)
-      rewritePath && rewritePath(publicPath + componentPath)
-      // currentEntry.addChild(getEntryNode(resource, 'Component'))
-      if (!alreadyOutputed) {
-        JsonSideEffectInfo.componentsMap[packageName] = JsonSideEffectInfo.componentsMap[packageName] || {}
-        JsonSideEffectInfo.componentsMap[packageName][resourcePath] = componentPath
-        pushEntry({
-          name: componentPath,
-          resource,
-          type: 'component'
-        }, tarRoot)
-      }
+      const dynamicEntry = getDynamicEntry(resource, outputPath, 'component')
+      rewritePath && rewritePath(dynamicEntry)
       callback()
     })
   }
@@ -499,7 +475,7 @@ module.exports = function (raw) {
       return path.join('pages', baseName + pathHash(resourcePath), baseName)
     }
 
-    const processPages = (pages, context, { srcRoot = '', tarRoot = '' } = options, callback) => {
+    const processPages = (pages, context, { srcRoot = '', tarRoot = '' }, callback) => {
       if (pages) {
         context = path.join(context, srcRoot)
         async.forEach(pages, (page, callback) => {
@@ -644,9 +620,9 @@ module.exports = function (raw) {
           processComponent(genericComponentPath, context, {
             tarRoot,
             rewritePath: (componentPath) => {
-              if (useRelativePath === true) {
-                componentPath = toPosix(path.relative(publicPath + tarRoot, componentPath))
-              }
+              // if (useRelativePath === true) {
+              //   componentPath = toPosix(path.relative(publicPath + tarRoot, componentPath))
+              // }
               genericComponents[name] = componentPath
             }
           }, callback)
