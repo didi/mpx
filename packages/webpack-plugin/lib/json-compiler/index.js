@@ -33,8 +33,7 @@ module.exports = function (raw) {
   // 微信插件下要求组件使用相对路径
   const useRelativePath = mpx.isPluginMode || mpx.useRelativePath
   const { resourcePath, queryObj } = parseRequest(this.resource)
-  const packageName = queryObj.packageName || mpx.currentPackageRoot || 'main'
-  const appsMap = mpx.appsMap
+  const packageName = queryObj.packageRoot || mpx.currentPackageRoot || 'main'
   const pagesMap = mpx.pagesMap
   const componentsMap = mpx.componentsMap[packageName]
   const getEntryNode = mpx.getEntryNode
@@ -190,9 +189,6 @@ module.exports = function (raw) {
       if (!json.usingComponents) {
         json.usingComponents = {}
       }
-      if (!json.component && mode === 'swan') {
-        json.component = true
-      }
     }
   } else if (componentsMap[resourcePath]) {
     // component
@@ -308,7 +304,7 @@ module.exports = function (raw) {
           outputPath = path.join('components', componentName + pathHash(resourcePath), componentName)
         }
       }
-      const packageInfo = mpx.getPackageInfo({
+      const { packageRoot, outputPath: componentPath, alreadyOutputed } = mpx.getPackageInfo({
         resource,
         outputPath,
         resourceType: 'components',
@@ -316,18 +312,18 @@ module.exports = function (raw) {
           this.emitWarning(err)
         }
       })
-      // 此处query为了实现消除分包间模块缓存，以实现不同分包中引用的组件在不同分包中都能输出
-      resource = addQuery(resource, {
-        packageName: packageInfo.packageName
-      })
-      const componentPath = packageInfo.outputPath
+      if (packageRoot) {
+        resource = addQuery(resource, {
+          packageRoot
+        })
+      }
       rewritePath && rewritePath(publicPath + componentPath)
       if (ext === '.js') {
         resource = '!!' + nativeLoaderPath + '!' + resource
       }
       currentEntry.addChild(getEntryNode(resource, 'Component'))
       // 如果之前已经创建了入口，直接return
-      if (packageInfo.alreadyOutputed) {
+      if (alreadyOutputed) {
         return callback()
       }
       addEntrySafely(resource, componentPath, callback)
@@ -589,6 +585,9 @@ module.exports = function (raw) {
             currentEntry.addChild(getEntryNode(resource, 'Page'))
             pagesMap[resourcePath] = pageName
             if (tarRoot && subPackagesCfg[tarRoot]) {
+              resource = addQuery(resource, {
+                packageRoot: tarRoot
+              })
               subPackagesCfg[tarRoot].pages.push(toPosix(path.relative(tarRoot, pageName)))
             } else {
               // 确保首页

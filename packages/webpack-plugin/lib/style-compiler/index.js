@@ -35,7 +35,8 @@ module.exports = function (css, map) {
     )
 
     if (queryObj.scoped) {
-      plugins.push(scopeId({ id: queryObj.moduleId }))
+      const id = queryObj.moduleId || queryObj.mid
+      plugins.push(scopeId({ id }))
     }
 
     plugins.push(pluginCondStrip({

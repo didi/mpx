@@ -101,7 +101,8 @@
           loop: this.circular,
           threshold: 0.5,
           speed: this.duration,
-          easing: this.easing
+          easing: this.easing,
+          autoplay: this.autoplay
         },
         momentum: false,
         bounce: false,
