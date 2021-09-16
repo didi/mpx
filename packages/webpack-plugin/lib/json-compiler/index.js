@@ -15,14 +15,13 @@ const getRulesRunner = require('../platform/index')
 const isUrlRequestRaw = require('../utils/is-url-request')
 const addQuery = require('../utils/add-query')
 const readJsonForSrc = require('../utils/read-json-for-src')
-const getMainCompilation = require('../utils/get-main-compilation')
 const createHelpers = require('../helpers')
+const AppEntryDependency = require('../dependencies/AppEntryDependency')
 
 module.exports = function (raw) {
   // 该loader中会在每次编译中动态添加entry，不能缓存，否则watch不好使
   this.cacheable(false)
   const nativeCallback = this.async()
-  const mainCompilation = getMainCompilation(this._compilation)
   const moduleGraph = this._compilation.moduleGraph
   const mpx = this.getMpx()
 
@@ -71,13 +70,14 @@ module.exports = function (raw) {
   let currentName
 
   if (isApp) {
-    for (const [name, { dependencies }] of mainCompilation.entries) {
+    for (const [name, { dependencies }] of this._compilation.entries) {
       const entryModule = moduleGraph.getModule(dependencies[0])
-      if (parseRequest(entryModule.resource).resourcePath === resourcePath) {
+      if (entryModule.resource === this.resource) {
         currentName = name
         break
       }
     }
+    this._module.addPresentationalDependency(new AppEntryDependency(this.resource, currentName))
   } else {
     currentName = componentsMap[resourcePath] || pagesMap[resourcePath]
   }
@@ -339,12 +339,7 @@ module.exports = function (raw) {
   }
 
   if (isApp) {
-    if (!mpx.appInfo) {
-      mpx.appInfo = {
-        name: currentName,
-        resourcePath
-      }
-    } else {
+    if (mpx.appInfo) {
       const issuer = getJsonIssuer(this._module)
       if (issuer) {
         emitError(`[json compiler]:Mpx单次构建中只能存在一个App，当前组件/页面[${this.resource}]通过[${issuer.resource}]非法引入，引用的资源将被忽略，请确保组件/页面资源通过usingComponents/pages配置引入！`)

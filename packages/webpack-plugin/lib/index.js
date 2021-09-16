@@ -36,6 +36,7 @@ const templateCompilerPath = normalize.lib('template-compiler/index')
 const jsonCompilerPath = normalize.lib('json-compiler/index')
 const jsonThemeCompilerPath = normalize.lib('json-compiler/theme')
 const extractorPath = normalize.lib('extractor')
+const async = require('async')
 const MPX_PROCESSED_FLAG = 'processed'
 
 const isProductionLikeMode = options => {
@@ -305,6 +306,18 @@ class MpxWebpackPlugin {
 
     let mpx
 
+    // 构建分包队列，在finishMake钩子当中最先执行，stage传递-1000
+    compiler.hooks.finishMake.tapAsync({
+        name: 'MpxWebpackPlugin',
+        stage: -1000
+      }, (compilation) => {
+        if (mpx.subpackagesEntriesMap) {
+          async.eachSeries(mpx.subpackagesEntriesMap, () => {
+          })
+        }
+      }
+    )
+
     compiler.hooks.compilation.tap('MpxWebpackPlugin ', (compilation, { normalModuleFactory }) => {
       NormalModule.getCompilationHooks(compilation).loader.tap('MpxWebpackPlugin', (loaderContext, module) => {
         // 设置loaderContext的minimize
@@ -359,6 +372,7 @@ class MpxWebpackPlugin {
             },
             // 记录独立分包
             independentSubpackagesMap: {},
+            subpackageEntriesMap: {},
             // 当前机制下分包处理队列在app.json的json-compiler中进行，由于addEntry回调特性，无法保障app.js中引用的模块都被标记为主包，故重写processModuleDependencies获取app.js及其所有依赖处理完成的时机，在这之后再执行分包处理队列
             appScriptRawRequest: '',
             appScriptPromise: null,
@@ -531,20 +545,15 @@ class MpxWebpackPlugin {
           }
         }
 
+
         const rawProcessModuleDependencies = compilation.processModuleDependencies
         compilation.processModuleDependencies = (module, callback) => {
-          let proxyedCallback = callback
-          if (module.rawRequest === mpx.appScriptRawRequest) {
-            // 避免模块request重名，只对第一次匹配到的模块进行代理
-            mpx.appScriptRawRequest = ''
-            mpx.appScriptPromise = new Promise((resolve) => {
-              proxyedCallback = (err) => {
-                resolve()
-                return callback(err)
-              }
-            })
-          }
-          return rawProcessModuleDependencies.call(compilation, module, proxyedCallback)
+          async.forEach(module.presentationalDependencies.filter((dep) => dep.mpxAction), (dep, callback) => {
+            dep.mpxAction(module, compilation, callback)
+          }, (err) => {
+            if (err) return callback(err)
+            rawProcessModuleDependencies.call(compilation, module, callback)
+          })
         }
 
         const rawFactorizeModule = compilation.factorizeModule
