@@ -59,8 +59,7 @@ export default class MPXProxy {
 
   created (params) {
     this.initApi()
-    // todo tenon beforecreate
-    __mpx_mode__ === 'tenon' || this.callUserHook(BEFORECREATE)
+    this.callUserHook(BEFORECREATE)
     if (__mpx_mode__ !== 'web' && __mpx_mode__ !== 'tenon') {
       this.initState(this.options)
     }

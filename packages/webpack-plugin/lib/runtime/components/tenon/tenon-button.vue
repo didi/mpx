@@ -63,13 +63,7 @@ export default (function(){
         default: 70,
       },
     },
-    mounted(){
-      console.log('button mounted', this.aaa)
-    },
     computed: {
-      aaa(){
-        return 'aaa'
-      },
       className() {
         if (this.hoverClass && this.hoverClass !== "none" && this.hover) {
           return this.hoverClass;

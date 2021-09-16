@@ -7,6 +7,7 @@ import { mergeLifecycle } from './mergeLifecycle'
 import { error } from '../helper/log'
 import wxToAliRule from './wxToAli'
 import wxToWebRule from './wxToWeb'
+import wxToTenonRule from './wxToTenon'
 import wxToSwanRule from './wxToSwan'
 import wxToQqRule from './wxToQq'
 import wxToTtRule from './wxToTt'
@@ -54,6 +55,7 @@ const rulesMap = {
   local: { ...defaultConvertRule },
   default: defaultConvertRule,
   wxToWeb: wxToWebRule,
+  wxToTenon: wxToTenonRule,
   wxToAli: wxToAliRule,
   wxToSwan: wxToSwanRule,
   wxToQq: { ...defaultConvertRule, ...wxToQqRule },

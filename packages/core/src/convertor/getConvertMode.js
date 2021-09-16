@@ -1,6 +1,7 @@
 const convertModes = {
   'wx-ali': 'wxToAli',
   'wx-web': 'wxToWeb',
+  'wx-tenon': 'wxToTenon',
   'wx-swan': 'wxToSwan',
   'wx-qq': 'wxToQq',
   'wx-tt': 'wxToTt',

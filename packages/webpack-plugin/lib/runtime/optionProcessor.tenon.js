@@ -338,6 +338,12 @@ export default function processOption (
     // }
 
     if (ctorType === 'page') {
+      (option.mixins ? option.mixins : (option.mixins = [])).push({
+        // cache page instance in tenon
+        created () {
+          global.__currentPageInstance = this
+        }
+      })
       option.__mpxPageConfig = Object.assign({}, global.__mpxPageConfig, pageConfig)
     }
   }

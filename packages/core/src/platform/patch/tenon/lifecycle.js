@@ -1,16 +1,16 @@
 const COMPONENT_HOOKS = [
-  // 'beforeCreate',
+  'beforeCreate',
   'created',
   'beforeMount',
   'mounted',
   'beforeUpdate',
   'updated',
-  'activated',
-  'deactivated',
+  // 'activated',
+  // 'deactivated',
   'beforeDestroy',
   'destroyed',
-  'errorCaptured',
-  'onPageNotFound'
+  'errorCaptured'
+  // 'onPageNotFound'
 ]
 
 const PAGE_HOOKS = [
@@ -19,12 +19,12 @@ const PAGE_HOOKS = [
   'onReady',
   'onShow',
   'onHide',
-  'onUnload',
-  'onPullDownRefresh',
-  'onReachBottom',
-  'onPageScroll',
-  'onTabItemTap',
-  'onResize'
+  'onUnload'
+  // 'onPullDownRefresh',
+  // 'onReachBottom',
+  // 'onPageScroll',
+  // 'onTabItemTap',
+  // 'onResize'
 ]
 
 const APP_HOOKS = [
@@ -32,10 +32,10 @@ const APP_HOOKS = [
   'onLaunch',
   'onShow',
   'onHide',
-  'onError',
-  'onPageNotFound',
-  'onUnhandledRejection',
-  'onThemeChange'
+  'onError'
+  // 'onPageNotFound',
+  // 'onUnhandledRejection',
+  // 'onThemeChange'
 ]
 
 export const LIFECYCLE = {
