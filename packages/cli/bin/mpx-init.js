@@ -50,7 +50,9 @@ program
  * Settings.
  */
 
-let template = 'mpx-template'
+// let template = 'mpx-template'
+// todo use branch master
+let template = 'mpx-template#feat_add_tenon'
 const rawName = program.args[0]
 const inPlace = !rawName || rawName === '.'
 const name = inPlace ? path.relative('../', process.cwd()) : rawName
