@@ -4,7 +4,7 @@ import { initComputed } from '../observer/computed'
 
 import Vue from '../vue'
 
-import { createHummerPlugin } from '@hummer/tenon-store'
+import createHummerPlugin from '../platform/builtInPlugins/hummerStorePlugin'
 
 import {
   proxy,
