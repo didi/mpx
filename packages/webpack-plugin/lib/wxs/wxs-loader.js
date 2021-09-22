@@ -3,6 +3,7 @@ const EntryPlugin = require('webpack/lib/EntryPlugin')
 const LimitChunkCountPlugin = require('webpack/lib/optimize/LimitChunkCountPlugin')
 const path = require('path')
 const WxsPlugin = require('./WxsPlugin')
+const RecordStaticResourceDependency = require('../dependencies/RecordStaticResourceDependency')
 // const ChildCompileDependency = require('../dependencies/ChildCompileDependency')
 const getMainCompilation = require('../utils/get-main-compilation')
 const parseRequest = require('../utils/parse-request')
@@ -38,18 +39,10 @@ module.exports = function () {
   if (wxsModule) {
     resourcePath = `${resourcePath}~${wxsModule}`
   }
-
+  const packageRoot = queryObj.packageRoot || ''
   const name = path.parse(resourcePath).name + mpx.pathHash(resourcePath)
-  let filename = path.join(/^\.([^.]+)/.exec(config[mode].wxs.ext)[1], `${name}${config[mode].wxs.ext}`)
-
-  filename = mpx.getPackageInfo({
-    resource: this.resource,
-    outputPath: filename,
-    resourceType: 'staticResources',
-    warn: (err) => {
-      this.emitWarning(err)
-    }
-  }).outputPath
+  const filename = toPosix(path.join(packageRoot, /^\.([^.]+)/.exec(config[mode].wxs.ext)[1], `${name}${config[mode].wxs.ext}`))
+  this._module.addPresentationalDependency(new RecordStaticResourceDependency(resourcePath, filename, packageRoot))
 
   const callback = (err) => {
     if (err) return nativeCallback(err)

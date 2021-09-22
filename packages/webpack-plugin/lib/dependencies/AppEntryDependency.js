@@ -38,7 +38,7 @@ class AppEntryDependency extends NullDependency {
   }
 }
 
-AppEntryDependency.Template = class JsonSideEffectDependencyTemplate {
+AppEntryDependency.Template = class AppEntryDependencyTemplate {
   apply (dependency, source, templateContext) {
   }
 }
