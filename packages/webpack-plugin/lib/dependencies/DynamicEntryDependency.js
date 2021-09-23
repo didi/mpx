@@ -25,7 +25,7 @@ class DynamicEntryDependency extends NullDependency {
     if (packageRoot && mpx.currentPackageRoot !== packageRoot) {
       mpx.subpackagesEntriesMap[packageRoot] = mpx.subpackagesEntriesMap[packageRoot] || []
       mpx.subpackagesEntriesMap[packageRoot].push(this)
-      this.module = module
+      this.tempModule = module
       return callback()
     } else {
       const { packageRoot, outputPath: filename, alreadyOutputed } = mpx.getPackageInfo({
@@ -44,11 +44,14 @@ class DynamicEntryDependency extends NullDependency {
       if (packageRoot) {
         resource = addQuery(resource, { packageRoot })
       }
-      this.module = null
+      this.tempModule = null
       this.filename = filename
       this.publicPath = compilation.outputOptions.publicPath || ''
-      mpx.addEntry(resource, filename, entryType, (err, entryModule) => {
+      mpx.addEntry(resource, filename, (err, entryModule) => {
         if (err) return callback(err)
+        if (entryType === 'pluginExport') {
+          mpx.pluginExportModules.add(entryModule)
+        }
         // todo entry的父子关系可以在这里建立
         return callback(null, entryModule)
       })
@@ -81,13 +84,11 @@ class DynamicEntryDependency extends NullDependency {
 DynamicEntryDependency.Template = class DynamicEntryDependencyTemplate {
   apply (dep, source) {
     const { filename, relativePath, range, publicPath } = dep
-    let result
+    let resultPath = publicPath + filename
     if (relativePath) {
-      result = toPosix(path.relative(relativePath, filename))
-    } else {
-      result = publicPath + filename
+      resultPath = toPosix(path.relative(relativePath, resultPath))
     }
-    source.replace(range[0], range[1] - 1, result)
+    source.replace(range[0], range[1] - 1, JSON.stringify(resultPath))
   }
 }
 

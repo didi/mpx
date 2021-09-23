@@ -6,9 +6,9 @@ const RawSource = require('webpack-sources').RawSource
 const ResolveDependency = require('./dependencies/ResolveDependency')
 const InjectDependency = require('./dependencies/InjectDependency')
 const ReplaceDependency = require('./dependencies/ReplaceDependency')
-const ChildCompileDependency = require('./dependencies/ChildCompileDependency')
 const NullFactory = require('webpack/lib/NullFactory')
 const NormalModule = require('webpack/lib/NormalModule')
+const EntryPlugin = require('webpack/lib/EntryPlugin')
 const JavascriptModulesPlugin = require('webpack/lib/javascript/JavascriptModulesPlugin')
 const normalize = require('./utils/normalize')
 const toPosix = require('./utils/to-posix')
@@ -22,6 +22,7 @@ const PackageEntryPlugin = require('./resolver/PackageEntryPlugin')
 // const HarmonyImportSideEffectDependency = require('webpack/lib/dependencies/HarmonyImportSideEffectDependency')
 // const RequireHeaderDependency = require('webpack/lib/dependencies/RequireHeaderDependency')
 const RemovedModuleDependency = require('./dependencies/RemovedModuleDependency')
+const AppEntryDependency = require('./dependencies/AppEntryDependency')
 const RecordStaticResourceDependency = require('./dependencies/RecordStaticResourceDependency')
 const DynamicEntryDependency = require('./dependencies/DynamicEntryDependency')
 const SplitChunksPlugin = require('webpack/lib/optimize/SplitChunksPlugin')
@@ -39,6 +40,7 @@ const jsonCompilerPath = normalize.lib('json-compiler/index')
 const jsonThemeCompilerPath = normalize.lib('json-compiler/theme')
 const extractorPath = normalize.lib('extractor')
 const async = require('async')
+
 const MPX_PROCESSED_FLAG = 'processed'
 
 const isProductionLikeMode = options => {
@@ -317,7 +319,7 @@ class MpxWebpackPlugin {
         async.eachOfSeries(mpx.subpackagesEntriesMap, (deps, packageRoot, callback) => {
           mpx.currentPackageRoot = packageRoot
           async.each(deps, (dep, callback) => {
-            dep.mpxAction(dep.module, compilation, callback)
+            dep.mpxAction(dep.tempModule, compilation, callback)
           }, callback)
 
         }, callback)
@@ -346,8 +348,14 @@ class MpxWebpackPlugin {
       compilation.dependencyFactories.set(ReplaceDependency, new NullFactory())
       compilation.dependencyTemplates.set(ReplaceDependency, new ReplaceDependency.Template())
 
-      compilation.dependencyFactories.set(ChildCompileDependency, new NullFactory())
-      compilation.dependencyTemplates.set(ChildCompileDependency, new ChildCompileDependency.Template())
+      compilation.dependencyFactories.set(AppEntryDependency, new NullFactory())
+      compilation.dependencyTemplates.set(AppEntryDependency, new AppEntryDependency.Template())
+
+      compilation.dependencyFactories.set(DynamicEntryDependency, new NullFactory())
+      compilation.dependencyTemplates.set(DynamicEntryDependency, new DynamicEntryDependency.Template())
+
+      compilation.dependencyFactories.set(RecordStaticResourceDependency, new NullFactory())
+      compilation.dependencyTemplates.set(RecordStaticResourceDependency, new RecordStaticResourceDependency.Template())
 
       compilation.dependencyFactories.set(RemovedModuleDependency, normalModuleFactory)
       compilation.dependencyTemplates.set(RemovedModuleDependency, new RemovedModuleDependency.Template())
@@ -446,9 +454,16 @@ class MpxWebpackPlugin {
               }
               return hash(resourcePath)
             },
-            extractedFilesMap: new Map(),
-            getExtractedFile: (loaderContext, { error } = {}) => {
-              const { resourcePath, queryObj } = parseRequest(loaderContext.resource)
+            addEntry (request, name, callback) {
+              const dep = EntryPlugin.createDependency(request, { name })
+              compilation.addEntry(compiler.context, dep, { name }, callback)
+              return dep
+            },
+            extractedFilesCache: new Map(),
+            getExtractedFile: (resource, { error } = {}) => {
+              const cache = mpx.extractedFilesCache.get(resource)
+              if (cache) return cache
+              const { resourcePath, queryObj } = parseRequest(resource)
               const type = queryObj.type
               const isStatic = queryObj.isStatic
               let file
@@ -456,7 +471,6 @@ class MpxWebpackPlugin {
                 const packageRoot = queryObj.packageRoot || ''
                 const resourceName = path.parse(resourcePath).name
                 file = toPosix(path.join(packageRoot, type, resourceName + mpx.pathHash(resourcePath) + typeExtMap[type]))
-                loaderContext._module.addPresentationalDependency(new RecordStaticResourceDependency(resourcePath, file, packageRoot))
               } else {
                 const appInfo = mpx.appInfo
                 const pagesMap = mpx.pagesMap
@@ -464,11 +478,12 @@ class MpxWebpackPlugin {
                 const componentsMap = mpx.componentsMap[packageName]
                 let filename = resourcePath === appInfo.resourcePath ? appInfo.name : (pagesMap[resourcePath] || componentsMap[resourcePath])
                 if (!filename) {
-                  error && error('todo error missing filename')
+                  error && error(new Error('Get extracted file error: missing filename!'))
                   filename = 'missing-filename'
                 }
                 file = filename + typeExtMap[type]
               }
+              mpx.extractedFilesCache.set(resource, file)
               return file
             },
             // 组件和静态资源的输出规则如下：
@@ -554,7 +569,8 @@ class MpxWebpackPlugin {
 
         const rawProcessModuleDependencies = compilation.processModuleDependencies
         compilation.processModuleDependencies = (module, callback) => {
-          async.forEach(module.presentationalDependencies.filter((dep) => dep.mpxAction), (dep, callback) => {
+          const presentationalDependencies = module.presentationalDependencies || []
+          async.forEach(presentationalDependencies.filter((dep) => dep.mpxAction), (dep, callback) => {
             dep.mpxAction(module, compilation, callback)
           }, (err) => {
             if (err) return callback(err)
@@ -575,7 +591,6 @@ class MpxWebpackPlugin {
             }
           }
           return rawFactorizeModule.call(compilation, options, proxyedCallback)
-
         }
 
         // 处理watch时缓存模块中的buildInfo

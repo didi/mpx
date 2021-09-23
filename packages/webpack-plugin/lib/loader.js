@@ -13,13 +13,13 @@ const processStyles = require('./web/processStyles')
 const processTemplate = require('./web/processTemplate')
 const readJsonForSrc = require('./utils/read-json-for-src')
 const normalize = require('./utils/normalize')
-const getMainCompilation = require('./utils/get-main-compilation')
+const getEntryName = require('./utils/get-entry-name')
+const AppEntryDependency = require('./dependencies/AppEntryDependency')
 
 module.exports = function (content) {
   this.cacheable()
 
-  const mainCompilation = getMainCompilation(this._compilation)
-  const mpx = mainCompilation.__mpx__
+  const mpx = this._compilation.__mpx__
   if (!mpx) {
     return content
   }
@@ -41,18 +41,11 @@ module.exports = function (content) {
 
   // 支持资源query传入page或component支持页面/组件单独编译
   if ((queryObj.component && !componentsMap[resourcePath]) || (queryObj.page && !pagesMap[resourcePath])) {
-    let entryChunkName
-    const rawRequest = this._module.rawRequest
-    for (const [, { options }] of mainCompilation.entries) {
-      if (rawRequest === options.request) {
-        entryChunkName = options.name
-        break
-      }
-    }
+    const entryName = getEntryName(this)
     if (queryObj.component) {
-      componentsMap[resourcePath] = entryChunkName || 'noEntryComponent'
+      componentsMap[resourcePath] = entryName || 'noEntryComponent'
     } else {
-      pagesMap[resourcePath] = entryChunkName || 'noEntryPage'
+      pagesMap[resourcePath] = entryName || 'noEntryPage'
     }
   }
 
@@ -63,6 +56,11 @@ module.exports = function (content) {
   } else if (componentsMap[resourcePath]) {
     // component
     ctorType = 'component'
+  }
+
+  if (ctorType === 'app') {
+    const appName = getEntryName(this)
+    this._module.addPresentationalDependency(new AppEntryDependency(resourcePath, appName))
   }
 
   const loaderContext = this

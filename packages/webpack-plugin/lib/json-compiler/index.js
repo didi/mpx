@@ -16,14 +16,9 @@ const isUrlRequestRaw = require('../utils/is-url-request')
 const addQuery = require('../utils/add-query')
 const readJsonForSrc = require('../utils/read-json-for-src')
 const createHelpers = require('../helpers')
-const AppEntryDependency = require('../dependencies/AppEntryDependency')
-const DynamicEntryDependency = require('../dependencies/DynamicEntryDependency')
 
 module.exports = function (raw) {
-  // 该loader中会在每次编译中动态添加entry，不能缓存，否则watch不好使
-  this.cacheable(false)
   const nativeCallback = this.async()
-  const moduleGraph = this._compilation.moduleGraph
   const mpx = this.getMpx()
 
   if (!mpx) {
@@ -36,6 +31,7 @@ module.exports = function (raw) {
   const packageName = queryObj.packageRoot || mpx.currentPackageRoot || 'main'
   const pagesMap = mpx.pagesMap
   const componentsMap = mpx.componentsMap[packageName]
+  const appInfo = mpx.appInfo
   const mode = mpx.mode
   const env = mpx.env
   const defs = mpx.defs
@@ -47,7 +43,7 @@ module.exports = function (raw) {
   const root = mpx.projectRoot
   const pathHash = mpx.pathHash
   const isApp = !(pagesMap[resourcePath] || componentsMap[resourcePath])
-  // const publicPath = this._compilation.outputOptions.publicPath || ''
+  const publicPath = this._compilation.outputOptions.publicPath || ''
   const fs = this._compiler.inputFileSystem
 
   const isUrlRequest = r => isUrlRequestRaw(r, root, externals)
@@ -70,14 +66,7 @@ module.exports = function (raw) {
   let currentName
 
   if (isApp) {
-    for (const [name, { dependencies }] of this._compilation.entries) {
-      const entryModule = moduleGraph.getModule(dependencies[0])
-      if (entryModule.resource === this.resource) {
-        currentName = name
-        break
-      }
-    }
-    this._module.addPresentationalDependency(new AppEntryDependency(this.resource, currentName))
+    currentName = appInfo.name
   } else {
     currentName = componentsMap[resourcePath] || pagesMap[resourcePath]
   }
@@ -115,47 +104,23 @@ module.exports = function (raw) {
     })
   }
 
-  // let entryDeps = new Set()
+  const dynamicEntryMap = new Map()
 
-  // let cacheCallback
-
-  // const checkEntryDeps = (callback) => {
-  //   callback = callback || cacheCallback
-  //   if (callback && entryDeps.size === 0) {
-  //     callback()
-  //   } else {
-  //     cacheCallback = callback
-  //   }
-  // }
-
-  // const addEntrySafely = (resource, name, callback) => {
-  //   // 如果loader已经回调，就不再添加entry
-  //   if (callbacked) return callback()
-  //   const dep = EntryPlugin.createDependency(resource, { name })
-  //   entryDeps.add(dep)
-  //   this._compilation.addEntry(this._compiler.context, dep, { name }, (err, module) => {
-  //     entryDeps.delete(dep)
-  //     checkEntryDeps()
-  //     callback(err, module)
-  //   })
-  // }
+  let dynamicEntryCount = 0
 
   const getDynamicEntry = (resource, type, outputPath = '', packageRoot = '', relativePath = '') => {
-    return `__mpx_dynamic_entry__(
-    ${JSON.stringify(resource)},
-    ${JSON.stringify(type)},
-    ${JSON.stringify(outputPath)},
-    ${JSON.stringify(packageRoot)},
-    ${JSON.stringify(relativePath)}
-    )`
+    const key = `mpx_dynamic_entry_${dynamicEntryCount++}`
+    const value = `__mpx_dynamic_entry__( ${JSON.stringify(resource)},${JSON.stringify(type)},${JSON.stringify(outputPath)},${JSON.stringify(packageRoot)},${JSON.stringify(relativePath)})`
+    dynamicEntryMap.set(key, value)
+    return key
   }
 
-  // const deleteEntry = (name) => {
-  //   const index = this._compilation._preparedEntrypoints.findIndex(slot => slot.name === name)
-  //   if (index >= 0) {
-  //     this._compilation._preparedEntrypoints.splice(index, 1)
-  //   }
-  // }
+  const processDynamicEntry = (output) => {
+    return output.replace(/"mpx_dynamic_entry_\d+"/, (match) => {
+      const key = match.slice(1, -1)
+      return dynamicEntryMap.get(key)
+    })
+  }
 
   const callback = (err, processOutput) => {
     if (err) return nativeCallback(err)
@@ -254,7 +219,7 @@ module.exports = function (raw) {
 
   const processComponents = (components, context, callback) => {
     if (components) {
-      const relativePath = useRelativePath ? path.dirname(currentName) : ''
+      const relativePath = useRelativePath ? publicPath + path.dirname(currentName) : ''
       async.eachOf(components, (component, name, callback) => {
         processComponent(component, context, { relativePath }, (err, entry) => {
           if (err) return callback(err)
@@ -293,8 +258,8 @@ module.exports = function (raw) {
               name = info.descriptionFileData.name.replace(/@/g, '')
             }
           }
-          let relativePath = path.relative(root, resourceName)
-          outputPath = path.join('components', name + pathHash(root), relativePath)
+          let relative = path.relative(root, resourceName)
+          outputPath = path.join('components', name + pathHash(root), relative)
         } else {
           let componentName = parsed.name
           outputPath = path.join('components', componentName + pathHash(resourcePath), componentName)
@@ -306,50 +271,10 @@ module.exports = function (raw) {
 
       const entry = getDynamicEntry(resource, 'component', outputPath, tarRoot, relativePath)
       callback(null, entry)
-
-      // if (packageRoot) {
-      //   resource = addQuery(resource, {
-      //     packageRoot
-      //   })
-      // }
-      // const { packageRoot, outputPath: componentPath, alreadyOutputed } = mpx.getPackageInfo({
-      //   resource,
-      //   outputPath,
-      //   type: 'component',
-      //   warn: (err) => {
-      //     this.emitWarning(err)
-      //   }
-      // })
-      //
-      // rewritePath && rewritePath(publicPath + componentPath)
-      //
-      // currentEntry.addChild(getEntryNode(resource, 'Component'))
-      // // 如果之前已经创建了入口，直接return
-      // if (alreadyOutputed) {
-      //   return callback()
-      // }
-      // addEntrySafely(resource, componentPath, callback)
     })
   }
 
-  // 由于json模块都是由mpx/js文件引入的，需要向上找两层issuer获取真实的引用源
-  const getJsonIssuer = (module) => {
-    const issuer = moduleGraph.getIssuer(module)
-    if (issuer) {
-      return moduleGraph.getIssuer(issuer)
-    }
-  }
-
   if (isApp) {
-    if (mpx.appInfo) {
-      const issuer = getJsonIssuer(this._module)
-      if (issuer) {
-        emitError(`[json compiler]:Mpx单次构建中只能存在一个App，当前组件/页面[${this.resource}]通过[${issuer.resource}]非法引入，引用的资源将被忽略，请确保组件/页面资源通过usingComponents/pages配置引入！`)
-      } else {
-        emitError(`[json compiler]:Mpx单次构建中只能存在一个App，请检查当前entry中的资源[${this.resource}]是否为组件/页面，通过添加?component/page查询字符串显式声明该资源是组件/页面！`)
-      }
-      return callback()
-    }
     // app.json
     const subPackagesCfg = {}
     const localPages = []
@@ -556,7 +481,7 @@ module.exports = function (raw) {
             if (ext === '.js') {
               resource = addQuery(resource, { isNative: true })
             }
-            const entry = getDynamicEntry(resource, 'page', outputPath, tarRoot, tarRoot)
+            const entry = getDynamicEntry(resource, 'page', outputPath, tarRoot, publicPath + tarRoot)
             if (tarRoot) {
               subPackagesCfg[tarRoot].pages.push(entry)
             } else {
@@ -643,7 +568,7 @@ module.exports = function (raw) {
     // }
 
     const processPluginGenericsImplementation = (genericsImplementation, context, tarRoot, callback) => {
-      const relativePath = useRelativePath ? tarRoot : ''
+      const relativePath = useRelativePath ? publicPath + tarRoot : ''
       async.eachOf(genericsImplementation, (genericComponents, name, callback) => {
         async.eachOf(genericComponents, (genericComponentPath, name, callback) => {
           processComponent(genericComponentPath, context, { tarRoot, relativePath }, (err, entry) => {
@@ -672,16 +597,8 @@ module.exports = function (raw) {
         }
 
         const outputPath = /^(.*?)(\.[^.]*)?$/.exec(relative)[1]
-        plugin.export = getDynamicEntry(resource, 'pluginExport', outputPath, tarRoot, tarRoot)
+        plugin.export = getDynamicEntry(resource, 'pluginExport', outputPath, tarRoot, publicPath + tarRoot)
         callback()
-
-
-        // addEntrySafely(resource, toPosix(tarRoot ? `${tarRoot}/${name}` : name), (err, module) => {
-        //   if (err) return callback(err)
-        //   addMiniToPluginModules(module)
-        //   currentEntry.addChild(getEntryNode(resource, 'PluginExport', module))
-        //   callback(err, module)
-        // })
       })
     }
 
@@ -740,6 +657,7 @@ module.exports = function (raw) {
         json.subPackages.push(subPackagesCfg[root])
       }
       const processOutput = (output) => {
+        output = processDynamicEntry(output)
         output = processTabBar(output)
         output = processOptionMenu(output)
         output = processThemeLocation(output)
@@ -751,7 +669,7 @@ module.exports = function (raw) {
     // page.json或component.json
     const processGenerics = (generics, context, callback) => {
       if (generics) {
-        const relativePath = useRelativePath ? path.dirname(currentName) : ''
+        const relativePath = useRelativePath ? publicPath + path.dirname(currentName) : ''
         async.eachOf(generics, (generic, name, callback) => {
           if (generic.default) {
             processComponent(generic.default, context, { relativePath }, (err, entry) => {
@@ -775,7 +693,7 @@ module.exports = function (raw) {
         processGenerics(json.componentGenerics, this.context, callback)
       }
     ], (err) => {
-      callback(err)
+      callback(err, processDynamicEntry)
     })
   }
 }

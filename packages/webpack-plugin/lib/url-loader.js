@@ -1,52 +1,34 @@
 const loaderUtils = require('loader-utils')
 const mime = require('mime')
+const parseRequest = require('./utils/parse-request')
 const getOptions = loaderUtils.getOptions
 const parseQuery = loaderUtils.parseQuery
 
 function isStyleRequest (request) {
-  let elements = request.replace(/^-?!+/, '').replace(/!!+/g, '!').split('!')
-  elements.pop()
-  for (let i = 0; i < elements.length; i++) {
-    let element = elements[i]
-    let queryString = '?'
-    let loaderString = element
-    let idx = element.indexOf('?')
-    if (idx >= 0) {
-      queryString = element.substr(idx)
-      loaderString = element.substr(0, idx)
-    }
-    if (/css-loader/.test(loaderString)) {
-      return true
-    }
-    if (/content-loader/.test(loaderString)) {
-      let query = parseQuery(queryString)
-      if (query.type === 'styles') {
-        return true
-      }
-    }
-  }
+  const { loaderString, queryObj } = parseRequest(request)
+  if (queryObj.type === 'styles') return true
+  if (/(css-loader|wxss\/loader)/.test(loaderString)) return true
   return false
 }
 
 module.exports = function (src) {
   let transBase64 = false
   const options = Object.assign({}, getOptions(this))
-  const filePath = this.resourcePath
-  const mimetype = options.mimetype || mime.getType(filePath)
+  const { resourcePath, queryObj } = parseRequest(this.resource)
+  const mimetype = options.mimetype || mime.getType(resourcePath)
   const moduleGraph = this._compilation.moduleGraph
   const issuer = moduleGraph.getIssuer(this._module)
   const publicPathScope = options.publicPathScope === 'all' ? 'all' : 'styleOnly'
-  const queryOption = parseQuery(this.resourceQuery || '?')
   const limit = options.limit
-  const useLocal = !limit || src.length < limit || queryOption.useLocal
-  const isStyle = (issuer && issuer.request && isStyleRequest(issuer.request)) || queryOption.isStyle
+  const useLocal = !limit || src.length < limit || queryObj.useLocal
+  const isStyle = (issuer && issuer.request && isStyleRequest(issuer.request)) || queryObj.isStyle
 
   if (isStyle) {
     if (options.publicPath) {
       if (useLocal) {
         transBase64 = true
       }
-      if (queryOption.fallback) {
+      if (queryObj.fallback) {
         transBase64 = false
       }
     } else {

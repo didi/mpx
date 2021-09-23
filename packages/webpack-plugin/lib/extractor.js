@@ -2,6 +2,8 @@ const path = require('path')
 const parseRequest = require('./utils/parse-request')
 const toPosix = require('./utils/to-posix')
 const fixRelative = require('./utils/fix-relative')
+const RecordStaticResourceDependency = require('./dependencies/RecordStaticResourceDependency')
+const normalize = require('./utils/normalize')
 
 const DEFAULT_RESULT_SOURCE = '// removed by extractor'
 
@@ -16,13 +18,6 @@ module.exports.pitch = async function (remainingRequest) {
   const isStatic = queryObj.isStatic
   const issuerFile = queryObj.issuerFile
   const fromImport = queryObj.fromImport
-  let content = await this.importModule(`!!${remainingRequest}`)
-  // 处理wxss-loader的返回
-  if (Array.isArray(content)) {
-    content = content.map((item) => {
-      return item[1]
-    }).join('\n')
-  }
   const file = mpx.getExtractedFile(this.resource, {
     warn: (err) => {
       this.emitWarning(err)
@@ -31,6 +26,21 @@ module.exports.pitch = async function (remainingRequest) {
       this.emitError(err)
     }
   })
+
+  let request = remainingRequest
+  // static的情况下需要添加recordLoader记录相关静态资源的输出路径
+  if (isStatic) {
+    const recordLoader = normalize.lib('record-loader')
+    request = `${recordLoader}!${remainingRequest}`
+  }
+
+  let content = await this.importModule(`!!${request}`)
+  // 处理wxss-loader的返回
+  if (Array.isArray(content)) {
+    content = content.map((item) => {
+      return item[1]
+    }).join('\n')
+  }
 
   let resultSource = DEFAULT_RESULT_SOURCE
 
