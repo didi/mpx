@@ -23,6 +23,7 @@ const PackageEntryPlugin = require('./resolver/PackageEntryPlugin')
 // const RequireHeaderDependency = require('webpack/lib/dependencies/RequireHeaderDependency')
 const RemovedModuleDependency = require('./dependencies/RemovedModuleDependency')
 const RecordStaticResourceDependency = require('./dependencies/RecordStaticResourceDependency')
+const DynamicEntryDependency = require('./dependencies/DynamicEntryDependency')
 const SplitChunksPlugin = require('webpack/lib/optimize/SplitChunksPlugin')
 const fixRelative = require('./utils/fix-relative')
 const parseRequest = require('./utils/parse-request')
@@ -746,6 +747,14 @@ class MpxWebpackPlugin {
               parser.state.current.addPresentationalDependency(dep)
               return true
             }
+          })
+
+          parser.hooks.call.for('__mpx_dynamic_entry__').tap('MpxWebpackPlugin', (expr) => {
+            const args = expr.arguments.map((i) => i.value)
+            args.push(expr.range)
+            const dep = new DynamicEntryDependency(...args)
+            parser.state.current.addPresentationalDependency(dep)
+            return true
           })
 
           const transHandler = (expr) => {

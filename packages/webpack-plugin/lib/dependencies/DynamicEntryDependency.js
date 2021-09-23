@@ -78,7 +78,7 @@ class DynamicEntryDependency extends NullDependency {
   }
 }
 
-DynamicEntryDependency.Template = class DynamicEntryDependency {
+DynamicEntryDependency.Template = class DynamicEntryDependencyTemplate {
   apply (dep, source) {
     const { filename, relativePath, range, publicPath } = dep
     let result
