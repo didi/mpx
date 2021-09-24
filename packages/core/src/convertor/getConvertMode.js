@@ -1,4 +1,4 @@
-const CONVERTMODES = {
+const convertModes = {
   'wx-ali': 'wxToAli',
   'wx-web': 'wxToWeb',
   'wx-swan': 'wxToSwan',
@@ -9,5 +9,5 @@ const CONVERTMODES = {
 }
 
 export function getConvertMode (srcMode) {
-  return CONVERTMODES[srcMode + '-' + __mpx_mode__]
+  return convertModes[srcMode + '-' + __mpx_mode__]
 }

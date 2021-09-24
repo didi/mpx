@@ -22,7 +22,7 @@ module.exports = function (raw) {
   const decodeHTMLText = mpx.decodeHTMLText
   const globalSrcMode = mpx.srcMode
   const localSrcMode = queryObj.mode
-  const packageName = queryObj.packageName || mpx.currentPackageRoot || 'main'
+  const packageName = queryObj.packageRoot || mpx.currentPackageRoot || 'main'
   const componentsMap = mpx.componentsMap[packageName]
   const wxsContentMap = mpx.wxsContentMap
 
@@ -106,7 +106,7 @@ ${e.stack}`)
   // todo 此处在loader中往其他模块addDep更加危险，考虑修改为通过抽取后的空模块的module.exports来传递信息
   let globalInjectCode = renderResult.code + '\n'
 
-  if (mode === 'tt' && renderResult.propKeys) {
+  if ((mode === 'tt' || mode === 'swan') && renderResult.propKeys) {
     globalInjectCode += `global.currentInject.propKeys = ${JSON.stringify(renderResult.propKeys)};\n`
   }
 

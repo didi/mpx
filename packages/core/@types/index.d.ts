@@ -44,10 +44,6 @@ type UnionToIntersection<U> = (U extends any
   ? I
   : never;
 
-type RemoveNeverProps<T> = Pick<T, {
-  [K in keyof T]: T[K] extends never ? never : K
-}[keyof T]>
-
 type ArrayType<T extends any[]> = T extends Array<infer R> ? R : never;
 
 // Mpx types
@@ -292,30 +288,7 @@ export function createActionsWithThis<S = {}, G = {}, M extends MutationsAndActi
 
 export function injectMixins (mixins: object | Array<object>, type?: 'page' | 'component' | 'app'): void
 
-declare class Watcher {
-  constructor (context: any, expr: string | (() => any), handler: WatchHandler | WatchOptWithHandler, options?: WatchOpt)
-
-  getValue (): any
-
-  update (): void
-
-  run (): void
-
-  destroy (): void
-}
-
 export function watch (expr: string | (() => any), handler: WatchHandler | WatchOptWithHandler, options?: WatchOpt): () => void
-
-type SupportedPlantforms = 'wx' | 'ali' | 'qq' | 'tt' | 'swan'
-
-interface ConvertRule {
-  lifecycle?: object
-  lifecycleTemplate?: SupportedPlantforms
-  lifecycleProxyMap?: object
-  pageMode?: 'blend' | ''
-  support?: boolean
-  convert?: (...args: any[]) => any
-}
 
 interface AnyConstructor {
   new (...args: any[]): any
@@ -324,10 +297,10 @@ interface AnyConstructor {
 }
 
 interface MpxConfig {
-  useStrictDiff: Boolean
-  ignoreRenderError: Boolean
+  useStrictDiff: boolean
+  ignoreWarning: boolean | string | RegExp | ((msg: string, location: string, e: Error) => boolean)
   ignoreConflictWhiteList: Array<string>
-  observeClassInstance: Boolean | Array<AnyConstructor>
+  observeClassInstance: boolean | Array<AnyConstructor>
   hookErrorHandler: (e: Error, target: ComponentIns<{}, {}, {}, {}, []>, hookName: string) => any | null
   proxyEventHandler: (e: Event) => any | null
   setDataHandler: (data: object, target: ComponentIns<{}, {}, {}, {}, []>) => any | null
@@ -338,10 +311,8 @@ type SupportedMode = 'wx' | 'ali' | 'qq' | 'swan' | 'tt' | 'web' | 'qa'
 interface ImplementOptions {
   modes?: Array<SupportedMode>
   processor?: () => any
-  remove?: Boolean
+  remove?: boolean
 }
-
-export function setConvertRule (rule: ConvertRule): void
 
 export function toPureObject<T extends object> (obj: T): T
 
@@ -368,8 +339,6 @@ export interface Mpx {
   remove: typeof del
 
   delete: typeof del
-
-  setConvertRule: typeof setConvertRule
 
   config: MpxConfig
 

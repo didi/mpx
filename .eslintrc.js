@@ -23,7 +23,8 @@ module.exports = {
     App: 'readonly',
     __mpx_mode__: 'readonly',
     __mpx_env__: 'readonly',
-    getRegExp: 'readonly'
+    getRegExp: 'readonly',
+    getCurrentPages: 'readonly'
   },
   rules: {
     'no-cond-assign': 0,

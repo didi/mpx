@@ -8,7 +8,6 @@ import createStore, {
 } from './core/createStore'
 import { injectMixins } from './core/injectMixins'
 import { extend, diffAndCloneA, makeMap, merge, hasOwn } from './helper/utils'
-import { setConvertRule } from './convertor/convertor'
 import { getMixin } from './core/mergeOptions'
 import { error } from './helper/log'
 import Vue from './vue'
@@ -127,7 +126,6 @@ if (__mpx_mode__ === 'web') {
     set,
     remove,
     delete: del,
-    setConvertRule,
     getMixin,
     implement
   }
@@ -169,7 +167,6 @@ if (__mpx_mode__ === 'web') {
     set,
     remove,
     delete: del,
-    setConvertRule,
     getMixin,
     implement
   }
@@ -191,6 +188,10 @@ function factory () {
 
   Object.assign(MPX, APIs)
   Object.assign(MPX.prototype, InstanceAPIs)
+  // 输出web时在mpx上挂载Vue对象
+  if (__mpx_mode__ === 'web') {
+    MPX.__vue = Vue
+  }
   return MPX
 }
 
@@ -198,7 +199,7 @@ const EXPORT_MPX = factory()
 
 EXPORT_MPX.config = {
   useStrictDiff: false,
-  ignoreRenderError: false,
+  ignoreWarning: false,
   ignoreProxyWhiteList: ['id', 'dataset', 'data'],
   observeClassInstance: false,
   hookErrorHandler: null,

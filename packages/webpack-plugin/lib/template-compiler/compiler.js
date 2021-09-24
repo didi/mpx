@@ -1071,15 +1071,6 @@ function stringify (str) {
 //   }
 // }
 
-function processPageStatus (el, options) {
-  if (isComponentNode(el, options)) {
-    addAttrs(el, [{
-      name: 'mpxPageStatus',
-      value: '{{mpxPageStatus}}'
-    }])
-  }
-}
-
 const genericRE = /^generic:(.+)$/
 
 function processComponentGenericsForWeb (el, options, meta) {
@@ -1765,7 +1756,8 @@ function processClass (el, meta) {
   const needEx = el.tag.startsWith('th-')
   const targetType = needEx ? 'ex-' + type : type
   let dynamicClass = getAndRemoveAttr(el, config[mode].directive.dynamicClass).val
-  let staticClass = getAndRemoveAttr(el, type).val
+  let staticClass = getAndRemoveAttr(el, type).val || ''
+  staticClass = staticClass.replace(/\s+/g, ' ')
   if (dynamicClass) {
     let staticClassExp = parseMustache(staticClass).result
     let dynamicClassExp = transDynamicClassExpr(parseMustache(dynamicClass).result)
@@ -1798,7 +1790,8 @@ function processStyle (el, meta) {
   const type = 'style'
   const targetType = el.tag.startsWith('th-') ? 'ex-' + type : type
   let dynamicStyle = getAndRemoveAttr(el, config[mode].directive.dynamicStyle).val
-  let staticStyle = getAndRemoveAttr(el, type).val
+  let staticStyle = getAndRemoveAttr(el, type).val || ''
+  staticStyle = staticStyle.replace(/\s+/g, ' ')
   if (dynamicStyle) {
     let staticStyleExp = parseMustache(staticStyle).result
     let dynamicStyleExp = parseMustache(dynamicStyle).result
@@ -2078,6 +2071,13 @@ function processNoTransAttrs (el) {
   }
 }
 
+function processMpxTagName (el) {
+  const mpxTagName = getAndRemoveAttr(el, 'mpxTagName').val
+  if (mpxTagName) {
+    el.tag = mpxTagName
+  }
+}
+
 function processElement (el, root, options, meta) {
   processAtMode(el)
   // 如果已经标记了这个元素要被清除，直接return跳过后续处理步骤
@@ -2093,6 +2093,8 @@ function processElement (el, root, options, meta) {
   processNoTransAttrs(el)
 
   processDuplicateAttrsList(el)
+
+  processMpxTagName(el)
 
   processInjectWxs(el, meta)
 
@@ -2133,9 +2135,6 @@ function processElement (el, root, options, meta) {
 
   if (!pass) {
     processBindEvent(el, options)
-    if (mode !== 'ali') {
-      processPageStatus(el, options)
-    }
     processComponentIs(el, options)
   }
 
