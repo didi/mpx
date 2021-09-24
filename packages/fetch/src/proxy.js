@@ -40,13 +40,14 @@ function doTest (config, test) {
     host: tHost = '',
     port: tPort = '',
     path: tPath = '',
+    search: tSearch = '',
     params: tParams = {},
     data: tData = {},
     header: tHeader = {},
     method: tMethod = ''
   } = test
 
-  const { baseUrl, protocol, hostname, port, path } = parseUrl(url)
+  const { baseUrl, protocol, hostname, port, path, search } = parseUrl(url)
 
   // 如果待匹配项为空，则认为匹配成功
   // url 匹配
@@ -54,13 +55,25 @@ function doTest (config, test) {
   let matchParams = {}
   if (tUrl) {
     // 处理协议头
-    const protocolReg = /^(http(s?):|:protocol)/
-    const reg = /^\/\//
-    const handleTUrl = protocolReg.test(tUrl) ? tUrl : (reg.test(tUrl) ? ':protocol' : ':protocol\\://') + tUrl
+    const protocolReg = /^\w+(\\)?:\/\//
+
+    const hasProtocol = protocolReg.exec(tUrl)
+
+    console.log(hasProtocol)
+
+    let handledTUrl = tUrl
+
+    if (hasProtocol) {
+      if (!hasProtocol[1]) {
+        handledTUrl = tUrl.replace(':', '\\:')
+      }
+    } else {
+      handledTUrl = (tUrl.startsWith('//') ? ':protocol' : ':protocol//') + tUrl
+    }
 
     try {
       // 匹配结果参数
-      const matcher = match(handleTUrl)
+      const matcher = match(handledTUrl)
       const result = matcher(baseUrl)
       urlMatched = !!result
       matchParams = result.params
@@ -79,7 +92,8 @@ function doTest (config, test) {
 
     urlMatched = protocolMatched && hostMatched && portMatched && pathMatched
   }
-
+  // search 匹配
+  const searchMatched = tSearch ? search.includes(tSearch) : true
   // params 匹配
   const paramsMatched = isNotEmptyObject(tParams) ? attrMatch(tParams, params) : true
   // data 匹配
@@ -99,7 +113,7 @@ function doTest (config, test) {
   }
 
   // 是否匹配
-  const matched = urlMatched && paramsMatched && dataMatched && headerMatched && methodMatched
+  const matched = urlMatched && searchMatched && paramsMatched && dataMatched && headerMatched && methodMatched
 
   return {
     matched,
@@ -124,6 +138,7 @@ function doProxy (config, proxy, matchParams) {
       host: pHost = '',
       port: pPort = '',
       path: pPath = '',
+      search: pSearch = '',
       params: pParams = {},
       data: pData = {},
       header: pHeader = {},
@@ -136,9 +151,9 @@ function doProxy (config, proxy, matchParams) {
       return custom(config, matchParams) || config
     }
 
-    let finalUrl = url
-    const { protocol, hostname, port, path } = parseUrl(url)
+    const { baseUrl, protocol, hostname, port, path, search } = parseUrl(url)
 
+    let finalUrl = baseUrl
     if (pUrl) {
       finalUrl = pUrl
       for (let k in matchParams) {
@@ -153,6 +168,7 @@ function doProxy (config, proxy, matchParams) {
       const compoPath = pPath || path
       finalUrl = compoProtocol + '//' + compoHost + (compoPort && ':' + compoPort) + compoPath
     }
+    finalUrl = finalUrl + pSearch || search
 
     const finalHeader = Object.assign(header, pHeader)
     const finalParams = deepMerge(params, pParams)

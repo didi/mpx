@@ -118,25 +118,18 @@ export function buildUrl (url, params = {}, serializer) {
 
 // 解析拆分 url 参数
 export function parseUrl (url) {
-  const match = /^(.*?)(?:\?(.*?))?(?:#(.*?))?$/.exec(url)
+  const match = /^(.*?)(\?.*?)?(#.*?)?$/.exec(url)
   const [fullUrl, baseUrl = '', search = '', hash = ''] = match
-
-  const u1 = baseUrl.split('//') // 分割出协议
-  const protocolReg = /^http(s?):/
-  const protocol = protocolReg.test(u1[0]) ? u1[0] : ''
+  const protocolReg = /^(\w+:)?\/\//
+  const result = protocolReg.exec(baseUrl)
+  const protocol = result && result
   const u2 = u1[1] || u1[0] // 可能没有协议
   const host = u2.substring(u2.indexOf('/'), 0) // 分割出主机名和端口号
   const path = u2.substring(u2.indexOf('/')) // 分割出路径
   const hostname = host.split(':')[0]
   const port = host.split(':')[1] || ''
 
-  // search 改为对象格式
-  const query = {}
-  search && search.split('&').forEach((item) => {
-    const [name, value] = item.split('=')
-    query[decode(name)] = decode(value)
-  })
-  return { fullUrl, baseUrl, protocol, hostname, port, host, path, query, hash }
+  return { fullUrl, baseUrl, protocol, hostname, port, host, path, search, hash }
 }
 
 export function getEnvObj () {
