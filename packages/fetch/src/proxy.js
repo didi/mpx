@@ -59,8 +59,6 @@ function doTest (config, test) {
 
     const hasProtocol = protocolReg.exec(tUrl)
 
-    console.log(hasProtocol)
-
     let handledTUrl = tUrl
 
     if (hasProtocol) {
@@ -154,6 +152,7 @@ function doProxy (config, proxy, matchParams) {
     const { baseUrl, protocol, hostname, port, path, search } = parseUrl(url)
 
     let finalUrl = baseUrl
+
     if (pUrl) {
       finalUrl = pUrl
       for (let k in matchParams) {
@@ -168,7 +167,13 @@ function doProxy (config, proxy, matchParams) {
       const compoPath = pPath || path
       finalUrl = compoProtocol + '//' + compoHost + (compoPort && ':' + compoPort) + compoPath
     }
-    finalUrl = finalUrl + pSearch || search
+
+    let finalSearch = pSearch || search
+    if (finalSearch && !finalSearch.startsWith('?')) {
+      finalSearch = '?' + finalSearch
+    }
+
+    finalUrl = finalUrl + finalSearch
 
     const finalHeader = Object.assign(header, pHeader)
     const finalParams = deepMerge(params, pParams)
