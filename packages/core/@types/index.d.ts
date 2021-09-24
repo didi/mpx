@@ -93,14 +93,14 @@ interface ObserversDefs {
 type GetDataType<T> = T extends () => any ? ReturnType<T> : T
 
 type PropValueType<Def> = Def extends {
-    type: (...args: any[]) => infer T;
-    optionalType?: ((...args: any[]) => infer T)[];
-    value?: infer T;
-  }
+  type: (...args: any[]) => infer T;
+  optionalType?: ((...args: any[]) => infer T)[];
+  value?: infer T;
+}
   ? T
   : Def extends (...args: any[]) => infer T
-    ? T
-    : any;
+  ? T
+  : any;
 
 type GetPropsType<T> = {
   readonly [K in keyof T]: PropValueType<T[K]>
@@ -146,7 +146,6 @@ interface ComponentOpt<D, P, C, M, Mi extends Array<any>> extends Partial<Wechat
 
   externalClasses?: string[]
 
-
   lifetimes?: Partial<WechatMiniprogram.Component.Lifetimes>
 
   pageLifetimes?: Partial<WechatMiniprogram.Component.PageLifetimes>
@@ -163,7 +162,6 @@ type PageOpt<D, P, C, M, Mi extends Array<any>> =
 type ThisTypedPageOpt<D, P, C, M, Mi extends Array<any>, O = {}> =
   PageOpt<D, P, C, M, Mi>
   & ThisType<ComponentIns<D, P, C, M, Mi, O>> & O
-
 
 type ThisTypedComponentOpt<D, P, C, M, Mi extends Array<any>, O = {}> =
   ComponentOpt<D, P, C, M, Mi>
@@ -286,7 +284,9 @@ export function createActionsWithThis<S = {}, G = {}, M extends MutationsAndActi
   deps?: D
 }): A
 
-export function injectMixins (mixins: object | Array<object>, type?: 'page' | 'component' | 'app'): void
+type MixinType = 'app' | 'page' | 'component'
+
+export function injectMixins (mixins: object | Array<object>, options?: { type?: MixinType | MixinType[], stage?: number }): void
 
 export function watch (expr: string | (() => any), handler: WatchHandler | WatchOptWithHandler, options?: WatchOpt): () => void
 

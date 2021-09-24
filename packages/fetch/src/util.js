@@ -120,14 +120,17 @@ export function buildUrl (url, params = {}, serializer) {
 export function parseUrl (url) {
   const match = /^(.*?)(\?.*?)?(#.*?)?$/.exec(url)
   const [fullUrl, baseUrl = '', search = '', hash = ''] = match
-  const protocolReg = /^(\w+:)?\/\//
-  const result = protocolReg.exec(baseUrl)
-  const protocol = result && result
+
+  const u1 = baseUrl.split('//') // 分割出协议
+  const protocolReg = /^\w+:$/
+  const protocol = protocolReg.test(u1[0]) ? u1[0] : ''
   const u2 = u1[1] || u1[0] // 可能没有协议
-  const host = u2.substring(u2.indexOf('/'), 0) // 分割出主机名和端口号
-  const path = u2.substring(u2.indexOf('/')) // 分割出路径
-  const hostname = host.split(':')[0]
-  const port = host.split(':')[1] || ''
+  const i = u2.indexOf('/')
+  const host = i > -1 ? u2.substring(0, i) : u2 // 分割出主机名和端口号
+  const path = i > -1 ? u2.substring(i) : '' // 分割出路径
+  const u3 = host.split(':')
+  const hostname = u3[0]
+  const port = u3[1] || ''
 
   return { fullUrl, baseUrl, protocol, hostname, port, host, path, search, hash }
 }
