@@ -286,7 +286,7 @@ export function createActionsWithThis<S = {}, G = {}, M extends MutationsAndActi
 
 type MixinType = 'app' | 'page' | 'component'
 
-export function injectMixins (mixins: object | Array<object>, options?: { type?: MixinType | MixinType[], stage?: number }): void
+export function injectMixins (mixins: object | Array<object>, options?: { types?: MixinType | MixinType[], stage?: number }): void
 
 export function watch (expr: string | (() => any), handler: WatchHandler | WatchOptWithHandler, options?: WatchOpt): () => void
 
