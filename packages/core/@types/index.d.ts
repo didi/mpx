@@ -93,14 +93,14 @@ interface ObserversDefs {
 type GetDataType<T> = T extends () => any ? ReturnType<T> : T
 
 type PropValueType<Def> = Def extends {
-  type: (...args: any[]) => infer T;
-  optionalType?: ((...args: any[]) => infer T)[];
-  value?: infer T;
-}
+    type: (...args: any[]) => infer T;
+    optionalType?: ((...args: any[]) => infer T)[];
+    value?: infer T;
+  }
   ? T
   : Def extends (...args: any[]) => infer T
-  ? T
-  : any;
+    ? T
+    : any;
 
 type GetPropsType<T> = {
   readonly [K in keyof T]: PropValueType<T[K]>
@@ -286,7 +286,7 @@ export function createActionsWithThis<S = {}, G = {}, M extends MutationsAndActi
 
 type MixinType = 'app' | 'page' | 'component'
 
-export function injectMixins (mixins: object | Array<object>, options?: { types?: MixinType | MixinType[], stage?: number }): void
+export function injectMixins (mixins: object | Array<object>, options?: MixinType | MixinType[] | { types?: MixinType | MixinType[], stage?: number }): void
 
 export function watch (expr: string | (() => any), handler: WatchHandler | WatchOptWithHandler, options?: WatchOpt): () => void
 
