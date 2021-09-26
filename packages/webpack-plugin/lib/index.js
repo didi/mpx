@@ -25,6 +25,7 @@ const RemovedModuleDependency = require('./dependencies/RemovedModuleDependency'
 const AppEntryDependency = require('./dependencies/AppEntryDependency')
 const RecordStaticResourceDependency = require('./dependencies/RecordStaticResourceDependency')
 const DynamicEntryDependency = require('./dependencies/DynamicEntryDependency')
+const ExtractorDependency = require('./dependencies/ExtractorDependency')
 const SplitChunksPlugin = require('webpack/lib/optimize/SplitChunksPlugin')
 const fixRelative = require('./utils/fix-relative')
 const parseRequest = require('./utils/parse-request')
@@ -353,6 +354,9 @@ class MpxWebpackPlugin {
 
       compilation.dependencyFactories.set(DynamicEntryDependency, new NullFactory())
       compilation.dependencyTemplates.set(DynamicEntryDependency, new DynamicEntryDependency.Template())
+
+      compilation.dependencyFactories.set(ExtractorDependency, new NullFactory())
+      compilation.dependencyTemplates.set(ExtractorDependency, new ExtractorDependency.Template())
 
       compilation.dependencyFactories.set(RecordStaticResourceDependency, new NullFactory())
       compilation.dependencyTemplates.set(RecordStaticResourceDependency, new RecordStaticResourceDependency.Template())
