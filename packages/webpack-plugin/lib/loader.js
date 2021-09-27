@@ -300,7 +300,9 @@ module.exports = function (content) {
           hasComment,
           isNative,
           moduleId,
-          usingComponents
+          usingComponents,
+          // template模块会返回render函数，需要经过babel处理
+          needBabel: true
         }
         if (template.src) extraOptions.resourcePath = resourcePath
         // 基于global.currentInject来注入模板渲染函数和refs等信息

@@ -25,7 +25,6 @@ const RemovedModuleDependency = require('./dependencies/RemovedModuleDependency'
 const AppEntryDependency = require('./dependencies/AppEntryDependency')
 const RecordStaticResourceDependency = require('./dependencies/RecordStaticResourceDependency')
 const DynamicEntryDependency = require('./dependencies/DynamicEntryDependency')
-const ExtractorDependency = require('./dependencies/ExtractorDependency')
 const SplitChunksPlugin = require('webpack/lib/optimize/SplitChunksPlugin')
 const fixRelative = require('./utils/fix-relative')
 const parseRequest = require('./utils/parse-request')
@@ -41,6 +40,7 @@ const jsonCompilerPath = normalize.lib('json-compiler/index')
 const jsonThemeCompilerPath = normalize.lib('json-compiler/theme')
 const extractorPath = normalize.lib('extractor')
 const async = require('async')
+const stringifyLoadersAndResource = require('./utils/stringify-loaders-resource')
 
 const MPX_PROCESSED_FLAG = 'processed'
 
@@ -354,9 +354,6 @@ class MpxWebpackPlugin {
 
       compilation.dependencyFactories.set(DynamicEntryDependency, new NullFactory())
       compilation.dependencyTemplates.set(DynamicEntryDependency, new DynamicEntryDependency.Template())
-
-      compilation.dependencyFactories.set(ExtractorDependency, new NullFactory())
-      compilation.dependencyTemplates.set(ExtractorDependency, new ExtractorDependency.Template())
 
       compilation.dependencyFactories.set(RecordStaticResourceDependency, new NullFactory())
       compilation.dependencyTemplates.set(RecordStaticResourceDependency, new RecordStaticResourceDependency.Template())
@@ -1160,7 +1157,7 @@ try {
           }
 
           createData.resource = addQuery(createData.resource, { mpx: MPX_PROCESSED_FLAG }, true)
-          createData.request = addQuery(createData.request, { mpx: MPX_PROCESSED_FLAG }, true)
+          createData.request = stringifyLoadersAndResource(loaders, createData.resource)
         }
 
 
