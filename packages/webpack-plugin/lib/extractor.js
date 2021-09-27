@@ -22,7 +22,6 @@ module.exports.pitch = async function (remainingRequest) {
   const fromImport = queryObj.fromImport
   const needBabel = queryObj.needBabel
 
-
   if (type === 'json' && !isStatic) {
     // 非static的json时不能缓存，这部分内容包含动态入口添加，需要确保importModule每次都执行
     this.cacheable(false)

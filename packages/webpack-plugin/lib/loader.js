@@ -301,7 +301,7 @@ module.exports = function (content) {
           isNative,
           moduleId,
           usingComponents,
-          // template模块会返回render函数，需要经过babel处理
+          // 添加babel处理渲染函数中可能包含的...展开运算符
           needBabel: true
         }
         if (template.src) extraOptions.resourcePath = resourcePath
