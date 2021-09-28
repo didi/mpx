@@ -65,7 +65,7 @@ module.exports = function createHelpers (loaderContext) {
         options.extract = true
     }
 
-    if (part.mode) options.mode = mode
+    if (part.mode) options.mode = part.mode
 
     if (src) {
       return loaderUtils.stringifyRequest(loaderContext, addQuery(src, options, true))

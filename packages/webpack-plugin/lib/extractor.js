@@ -7,7 +7,7 @@ const normalize = require('./utils/normalize')
 const addQuery = require('./utils/add-query')
 
 
-const DEFAULT_RESULT_SOURCE = '// removed by extractor'
+const DEFAULT_RESULT_SOURCE = ''
 
 module.exports = content => content
 
@@ -30,8 +30,8 @@ module.exports.pitch = async function (remainingRequest) {
   if (needBabel) {
     // 创建js request应用babel
     let request = addQuery(this.request, {}, true, ['needBabel'])
-    const fakeRequest = `${resourcePath}.js`
-    return `module.exports = require(${loaderUtils.stringifyRequest(this, `${fakeRequest}!=!${request}`)})`
+    const fakeRequest = addQuery(`${resourcePath}.js`, queryObj)
+    return `module.exports = require(${loaderUtils.stringifyRequest(this, `${fakeRequest}!=!${request}`)})\n`
   }
 
   const file = mpx.getExtractedFile(this.resource, {
@@ -84,11 +84,11 @@ module.exports.pitch = async function (remainingRequest) {
           let relativePath = toPosix(path.relative(path.dirname(issuerFile), file))
           relativePath = fixRelative(relativePath, mode)
           if (fromImport) {
-            resultSource += `module.exports = ${JSON.stringify(relativePath)};\n`
+            resultSource += `module.exports = ${JSON.stringify(relativePath)}\n`
           } else {
             this.emitFile(issuerFile, '', undefined, {
               extractedInfo: {
-                content: `@import "${relativePath}";\n`,
+                content: `@import "${relativePath}"\n`,
                 index: -1
               }
             })
@@ -96,11 +96,11 @@ module.exports.pitch = async function (remainingRequest) {
         }
         break
       case 'template':
-        resultSource += `module.exports = __webpack_public_path__ + ${JSON.stringify(file)};\n`
+        resultSource += `module.exports = __webpack_public_path__ + ${JSON.stringify(file)}\n`
         break
       case 'json':
         // 目前json为static时只有处理theme.json一种情况，该情况下返回的路径只能为不带有./或../开头的相对路径，否则微信小程序预览构建会报错，issue#622
-        resultSource += `module.exports = ${JSON.stringify(file)};\n`
+        resultSource += `module.exports = ${JSON.stringify(file)}\n`
         break
     }
   }
