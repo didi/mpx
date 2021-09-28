@@ -69,6 +69,14 @@ module.exports = function (raw) {
     }
   }
 
+  let resultSource = ''
+
+  for (let module in meta.wxsModuleMap) {
+    const src = loaderUtils.urlToRequest(meta.wxsModuleMap[module], root)
+    // 编译render函数只在mpx文件中运行，此处issuer的context一定等同于当前loader的context
+    resultSource += `const ${module} = require(${loaderUtils.stringifyRequest(this, src)});\n`
+  }
+
   let result = compiler.serialize(ast)
 
   if (isNative || mpx.forceDisableInject) {
@@ -103,7 +111,7 @@ ${e.stack}`)
     return result
   }
 
-  let resultSource = bindResult.code + '\n'
+  resultSource += bindResult.code + '\n'
 
   if ((mode === 'tt' || mode === 'swan') && bindResult.propKeys) {
     resultSource += `global.currentInject.propKeys = ${JSON.stringify(bindResult.propKeys)};\n`
@@ -127,26 +135,6 @@ global.currentInject.getRefsData = function () {
     skipEmit: true,
     extractedResultSource: resultSource
   })
-
-  // todo 处理wxs模块
-  // for (let module in meta.wxsModuleMap) {
-  //   isSync = false
-  //   const src = loaderUtils.urlToRequest(meta.wxsModuleMap[module], root)
-  //   // 编译render函数只在mpx文件中运行，此处issuer的context一定等同于当前loader的context
-  //   const expression = `require(${loaderUtils.stringifyRequest(this, src)})`
-  //   const deps = []
-  //   parser.parse(expression, {
-  //     current: {
-  //       addDependency: dep => {
-  //         dep.userRequest = module
-  //         deps.push(dep)
-  //       }
-  //     },
-  //     module: issuer
-  //   })
-  //   issuer.addVariable(module, expression, deps)
-  //   iterationOfArrayCallback(deps, addDependency)
-  // }
 
   return result
 }

@@ -243,7 +243,6 @@ module.exports = function (content) {
         getRequire,
       } = createHelpers(loaderContext)
 
-      // todo webpack5不再支持注入global
       // 注入模块id及资源路径
       output += `global.currentModuleId = ${JSON.stringify(moduleId)}\n`
       if (!isProduction) {
@@ -252,26 +251,11 @@ module.exports = function (content) {
       if (ctorType === 'app' && i18n) {
         output += `global.i18n = ${JSON.stringify({ locale: i18n.locale, version: 0 })}\n`
 
-
-        const i18nMethodsVar = 'i18nMethods'
         const i18nWxsPath = normalize.lib('runtime/i18n.wxs')
         const i18nWxsLoaderPath = normalize.lib('wxs/wxs-i18n-loader.js')
         const i18nWxsRequest = i18nWxsLoaderPath + '!' + i18nWxsPath
-        const expression = `require(${loaderUtils.stringifyRequest(loaderContext, i18nWxsRequest)})`
-        const deps = []
-        this._module.parser.parse(expression, {
-          current: {
-            addDependency: dep => {
-              dep.userRequest = i18nMethodsVar
-              deps.push(dep)
-            }
-          },
-          module: this._module
-        })
-        // todo webpack5中不再支持addVariable
-        this._module.addVariable(i18nMethodsVar, expression, deps)
 
-        output += `global.i18nMethods = ${i18nMethodsVar}\n`
+        output += `global.i18nMethods = require(${loaderUtils.stringifyRequest(loaderContext, i18nWxsRequest)})\n`
       }
       // 注入构造函数
       let ctor = 'App'
