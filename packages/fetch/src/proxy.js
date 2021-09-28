@@ -55,14 +55,14 @@ function doTest (config, test) {
   let matchParams = {}
   if (tUrl) {
     // 处理协议头
-    const protocolReg = /^\w+(\\)?:\/\//
+    const protocolReg = /^(?:\w+(\\)?:|(:\w+))\/\//
 
     const hasProtocol = protocolReg.exec(tUrl)
 
     let handledTUrl = tUrl
 
     if (hasProtocol) {
-      if (!hasProtocol[1]) {
+      if (!hasProtocol[1] && !hasProtocol[2]) {
         handledTUrl = tUrl.replace(':', '\\:')
       }
     } else {
