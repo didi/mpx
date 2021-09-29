@@ -436,7 +436,7 @@ class MpxWebpackPlugin {
           externalClasses: this.options.externalClasses,
           projectRoot: this.options.projectRoot,
           autoScopeRules: this.options.autoScopeRules,
-          autoVirtualHostRules: this.options.autoVirtualHostRules,// cwy-autoVirtualHostRules
+          autoVirtualHostRules: this.options.autoVirtualHostRules, // cwy-autoVirtualHostRules
           transRpxRules: this.options.transRpxRules,
           postcssInlineConfig: this.options.postcssInlineConfig,
           decodeHTMLText: this.options.decodeHTMLText,

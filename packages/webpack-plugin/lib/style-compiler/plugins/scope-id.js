@@ -39,12 +39,12 @@ module.exports = postcss.plugin('scope-id', ({ id, transHost }) => root => {
           if (n.type !== 'pseudo' && n.type !== 'combinator') {
             node = n
           }
-          if (transHost && /^:host$/.test(n.value)){
-            let compound_selectors = n.nodes
+          if (transHost && /^:host$/.test(n.value)) {
+            const compoundSelectors = n.nodes
             n.replaceWith(selectorParser.className({
               value: 'host-' + id
             }))
-            selector.insertAfter(n, compound_selectors)
+            selector.insertAfter(n, compoundSelectors)
           }
         })
         // 对于page selector不添加scope id

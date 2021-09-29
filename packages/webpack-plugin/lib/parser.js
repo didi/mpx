@@ -70,12 +70,12 @@ function generateSourceMap (filename, source, generated) {
   return map.toJSON()
 }
 // cwy-这里只做了style的兜底
-function addAssume(output,assume){
-  switch(assume.tag){
+function addAssume (output, assume) {
+  switch (assume.tag) {
     case 'style':
-      if (output.styles.length) return;
+      if (output.styles.length) return
       !output.styles && (output.styles = [])
       output.styles.push(assume)
-      break;
+      break
   }
 }

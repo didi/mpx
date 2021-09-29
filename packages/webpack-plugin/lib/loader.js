@@ -88,7 +88,7 @@ module.exports = function (content) {
   }
   const getAssume = () => {
     // cwy-兜底注入
-    if(ctorType === 'app' && mode === 'ali'){
+    if (ctorType === 'app' && mode === 'ali') {
       return {
         tag: 'style',
         content: '/** mpx全局样式 */\n',
@@ -133,7 +133,7 @@ module.exports = function (content) {
       // 只有ali才可能需要scoped
       const hasScoped = (parts.styles.some(({ scoped }) => scoped) || autoScope) && mode === 'ali'
       // cwy-是否渲染为虚拟节点，根据配置，true则不加外层，false则加外层
-      const hasVirtualHost = autoVirtualHost 
+      const hasVirtualHost = autoVirtualHost
       const templateAttrs = parts.template && parts.template.attrs
       const hasComment = templateAttrs && templateAttrs.comments
       const isNative = false

@@ -803,7 +803,7 @@ function parse (template, options) {
 
   function genTempRoot () {
     // 使用临时节点作为root，处理multi root的情况
-    root = currentParent = getVirtualHostRoot(options,meta)
+    root = currentParent = getVirtualHostRoot(options, meta)
     stack.push(root)
   }
 
@@ -1914,21 +1914,21 @@ function processAliStyleClassHack (el, options) {
   })
 }
 // cwy-处理虚拟节点
-function getVirtualHostRoot(options, meta){
+function getVirtualHostRoot (options, meta) {
   // 有virtualHost情况，wx注入virtualHost。或非ali环境、非组件，就跳过。
   if (mode === 'wx' && options.hasVirtualHost && options.isComponent) {
     !meta.options && (meta.options = {})
-     meta.options.virtualHost = true
+    meta.options.virtualHost = true
   }
-  if(mode === 'ali' && !options.hasVirtualHost && options.isComponent){
+  if (mode === 'ali' && !options.hasVirtualHost && options.isComponent) {
     return createASTElement('view', [
       {
-        name:'class',
-        value:`mpx-root-view host-${options.moduleId} ${options.hasScoped?options.moduleId:''} {{mpxClass||''}}`
+        name: 'class',
+        value: `mpx-root-view host-${options.moduleId} ${options.hasScoped ? options.moduleId : ''} {{mpxClass||''}}`
       },
       {
-        name:'style',
-        style:`{{mpxStyle||''}}`,
+        name: 'style',
+        style: `{{mpxStyle||''}}`
       }
     ])
   }
