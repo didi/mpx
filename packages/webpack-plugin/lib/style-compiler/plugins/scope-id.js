@@ -1,7 +1,7 @@
 const postcss = require('postcss')
 const selectorParser = require('postcss-selector-parser')
 
-module.exports = postcss.plugin('scope-id', ({ id }) => root => {
+module.exports = postcss.plugin('scope-id', ({ id, transHost }) => root => {
   const keyframes = Object.create(null)
 
   root.each(function rewriteSelector (node) {
@@ -38,6 +38,13 @@ module.exports = postcss.plugin('scope-id', ({ id }) => root => {
           }
           if (n.type !== 'pseudo' && n.type !== 'combinator') {
             node = n
+          }
+          if (transHost && /^:host$/.test(n.value)){
+            let compound_selectors = n.nodes
+            n.replaceWith(selectorParser.className({
+              value: 'host-' + id
+            }))
+            selector.insertAfter(n, compound_selectors)
           }
         })
         // 对于page selector不添加scope id

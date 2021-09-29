@@ -53,6 +53,7 @@ module.exports = function (raw) {
     decodeHTMLText,
     externalClasses,
     hasScoped: options.hasScoped,
+    hasVirtualHost: options.hasVirtualHost,
     moduleId: options.moduleId,
     filePath: this.resourcePath,
     i18n,
@@ -120,6 +121,10 @@ ${e.stack}`)
     globalInjectCode += `global.currentInject.getRefsData = function () {
   return ${JSON.stringify(meta.refs)};
   };\n`
+  }
+  // cwy-劫持option
+  if (meta.options) {
+    globalInjectCode += bindThis(`global.currentInject.injectOptions = ${JSON.stringify(meta.options)};`).code + '\n'
   }
 
   const issuer = this._module.issuer

@@ -8,6 +8,7 @@ const rpx = require('./plugins/rpx')
 const vw = require('./plugins/vw')
 const pluginCondStrip = require('./plugins/conditional-strip')
 const scopeId = require('./plugins/scope-id')
+const addSelector =  require('./plugins/add-selector')
 const matchCondition = require('../utils/match-condition')
 
 module.exports = function (css, map) {
@@ -41,9 +42,14 @@ module.exports = function (css, map) {
 
     if (loaderOptions.scoped) {
       const moduleId = loaderOptions.moduleId || loaderOptions.mid
-      plugins.push(scopeId({ id: moduleId }))
+      const transHost = mpx.mode==="ali" && !loaderOptions.hasVirtualHost
+      // cwy-add hasVirtualHost
+      plugins.push(scopeId({ id: moduleId, transHost: transHost }))
     }
-
+    // cwy-ali全局添加mpx-root-view抹平root表现差异, 放在scoped处理后面
+    if(mpx.mode==="ali" && loaderOptions.ctorType==='app'){
+      plugins.push(addSelector('\n.mpx-root-view { display: inline; line-height: normal; }\n'))
+    }
     plugins.push(pluginCondStrip({
       defs
     }))

@@ -6,7 +6,7 @@ const SourceMapGenerator = require('source-map').SourceMapGenerator
 const splitRE = /\r?\n/g
 const emptyRE = /^(?:\/\/)?\s*$/
 
-module.exports = (content, { filePath, needMap, mode, defs, env }) => {
+module.exports = (content, { filePath, needMap, mode, defs, env, assume }) => {
   // 缓存需要mode隔离，不同mode经过区块条件编译parseComponent得到的内容并不一致
   const cacheKey = hash(filePath + content + mode + env)
 
@@ -19,6 +19,8 @@ module.exports = (content, { filePath, needMap, mode, defs, env }) => {
     pad: 'line',
     env
   })
+  // cwy-兜底styles,没有style则新增
+  assume && addAssume(output, assume)
   if (needMap) {
     // 添加hash避免content被webpack的sourcemap覆盖
     const filename = filePath + '?' + cacheKey
@@ -66,4 +68,14 @@ function generateSourceMap (filename, source, generated) {
     }
   })
   return map.toJSON()
+}
+// cwy-这里只做了style的兜底
+function addAssume(output,assume){
+  switch(assume.tag){
+    case 'style':
+      if (output.styles.length) return;
+      !output.styles && (output.styles = [])
+      output.styles.push(assume)
+      break;
+  }
 }
