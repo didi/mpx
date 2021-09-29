@@ -95,7 +95,7 @@ function resolveLoaders ({ options, projectRoot }) {
     postLoaders: options.postLoaders || {}
   }
 }
-// cwy-add hasVirtualHost、ctorType
+
 module.exports = function createHelpers ({ loaderContext, options, moduleId, hasScoped, hasVirtualHost, ctorType, hasComment, usingComponents, srcMode, isNative, projectRoot }) {
   const rawRequest = getRawRequest(loaderContext, options.excludedPreLoaders)
   const {
@@ -254,8 +254,8 @@ module.exports = function createHelpers ({ loaderContext, options, moduleId, has
         JSON.stringify({
           moduleId,
           scoped: !!scoped,
-          ctorType: ctorType, // cwy-style处理传入页面类型
-          hasVirtualHost: !!hasVirtualHost // cwy-style处理传入hasVirtualHost
+          ctorType: ctorType,
+          hasVirtualHost: !!hasVirtualHost
         })
       // normalize scss/sass/postcss if no specific loaders have been provided
       if (!loaders[lang]) {
@@ -279,7 +279,7 @@ module.exports = function createHelpers ({ loaderContext, options, moduleId, has
       const templateCompilerOptions = {
         usingComponents,
         hasScoped,
-        hasVirtualHost, // cwy-add hasVirtualHost
+        hasVirtualHost, 
         hasComment,
         isNative,
         moduleId,

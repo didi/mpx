@@ -1913,9 +1913,8 @@ function processAliStyleClassHack (el, options) {
     }
   })
 }
-// cwy-处理虚拟节点
+// 有virtualHost情况wx组件注入virtualHost。无virtualHost阿里组件注入root-view。其他跳过。
 function getVirtualHostRoot (options, meta) {
-  // 有virtualHost情况，wx注入virtualHost。或非ali环境、非组件，就跳过。
   if (mode === 'wx' && options.hasVirtualHost && options.isComponent) {
     !meta.options && (meta.options = {})
     meta.options.virtualHost = true

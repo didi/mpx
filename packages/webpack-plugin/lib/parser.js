@@ -19,7 +19,7 @@ module.exports = (content, { filePath, needMap, mode, defs, env, assume }) => {
     pad: 'line',
     env
   })
-  // cwy-兜底styles,没有style则新增
+  // 兜底文件，没有则增加
   assume && addAssume(output, assume)
   if (needMap) {
     // 添加hash避免content被webpack的sourcemap覆盖
@@ -69,7 +69,7 @@ function generateSourceMap (filename, source, generated) {
   })
   return map.toJSON()
 }
-// cwy-这里只做了style的兜底
+// 暂时只做了style的兜底
 function addAssume (output, assume) {
   switch (assume.tag) {
     case 'style':

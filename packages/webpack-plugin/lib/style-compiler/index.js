@@ -43,10 +43,8 @@ module.exports = function (css, map) {
     if (loaderOptions.scoped) {
       const moduleId = loaderOptions.moduleId || loaderOptions.mid
       const transHost = mpx.mode === 'ali' && !loaderOptions.hasVirtualHost
-      // cwy-add hasVirtualHost
       plugins.push(scopeId({ id: moduleId, transHost: transHost }))
     }
-    // cwy-ali全局添加mpx-root-view抹平root表现差异, 放在scoped处理后面
     if (mpx.mode === 'ali' && loaderOptions.ctorType === 'app') {
       plugins.push(addSelector('\n.mpx-root-view { display: inline; line-height: normal; }\n'))
     }

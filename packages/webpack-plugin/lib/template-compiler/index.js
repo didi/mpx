@@ -122,7 +122,7 @@ ${e.stack}`)
   return ${JSON.stringify(meta.refs)};
   };\n`
   }
-  // cwy-劫持option
+
   if (meta.options) {
     globalInjectCode += bindThis(`global.currentInject.injectOptions = ${JSON.stringify(meta.options)};`).code + '\n'
   }

@@ -39,7 +39,7 @@ module.exports = function (content) {
   const srcMode = localSrcMode || globalSrcMode
   const vueContentCache = mpx.vueContentCache
   const autoScope = matchCondition(resourcePath, mpx.autoScopeRules)
-  const autoVirtualHost = matchCondition(resourcePath, mpx.autoVirtualHostRules)// cwy-是否自动加virtualHostRules
+  const autoVirtualHost = matchCondition(resourcePath, mpx.autoVirtualHostRules)
 
   // 支持资源query传入page或component支持页面/组件单独编译
   if ((queryObj.component && !componentsMap[resourcePath]) || (queryObj.page && !pagesMap[resourcePath])) {
@@ -86,8 +86,8 @@ module.exports = function (content) {
     }
     return addQuery(src, localQuery)
   }
+  // 当标签不存在时，注入文件
   const getAssume = () => {
-    // cwy-兜底注入
     if (ctorType === 'app' && mode === 'ali') {
       return {
         tag: 'style',
@@ -132,7 +132,7 @@ module.exports = function (content) {
       }
       // 只有ali才可能需要scoped
       const hasScoped = (parts.styles.some(({ scoped }) => scoped) || autoScope) && mode === 'ali'
-      // cwy-是否渲染为虚拟节点，根据配置，true则不加外层，false则加外层
+      // 是否渲染为虚拟节点
       const hasVirtualHost = autoVirtualHost
       const templateAttrs = parts.template && parts.template.attrs
       const hasComment = templateAttrs && templateAttrs.comments

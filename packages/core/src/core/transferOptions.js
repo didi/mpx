@@ -20,7 +20,7 @@ export default function transferOptions (options, type, builtInMixins = []) {
     options.computed = Object.assign({}, options.computed, currentInject.injectComputed)
   }
   if (currentInject && currentInject.injectOptions) {
-    // cwy-编译option注入,优先微信中的单独配置
+    // 编译option注入,优先微信中的单独配置
     options.options = Object.assign({}, currentInject.injectOptions, options.options)
   }
   // 转换mode
