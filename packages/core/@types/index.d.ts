@@ -146,7 +146,6 @@ interface ComponentOpt<D, P, C, M, Mi extends Array<any>> extends Partial<Wechat
 
   externalClasses?: string[]
 
-
   lifetimes?: Partial<WechatMiniprogram.Component.Lifetimes>
 
   pageLifetimes?: Partial<WechatMiniprogram.Component.PageLifetimes>
@@ -163,7 +162,6 @@ type PageOpt<D, P, C, M, Mi extends Array<any>> =
 type ThisTypedPageOpt<D, P, C, M, Mi extends Array<any>, O = {}> =
   PageOpt<D, P, C, M, Mi>
   & ThisType<ComponentIns<D, P, C, M, Mi, O>> & O
-
 
 type ThisTypedComponentOpt<D, P, C, M, Mi extends Array<any>, O = {}> =
   ComponentOpt<D, P, C, M, Mi>
@@ -236,11 +234,11 @@ type ComponentIns<D, P, C, M, Mi extends Array<any>, O = {}> =
   GetComputedType<C & UnboxMixinsField<Mi, 'computed'>> &
   WxComponentIns<D> & MpxComponentIns & MpxComProps<O>
 
-interface createConfig {
+interface CreateConfig {
   customCtor: any
 }
 
-export function createComponent<D extends Data = {}, P extends Properties = {}, C = {}, M extends Methods = {}, Mi extends Array<any> = [], O = {}> (opt: ThisTypedComponentOpt<D, P, C, M, Mi, O>, config?: createConfig): void
+export function createComponent<D extends Data = {}, P extends Properties = {}, C = {}, M extends Methods = {}, Mi extends Array<any> = [], O = {}> (opt: ThisTypedComponentOpt<D, P, C, M, Mi, O>, config?: CreateConfig): void
 
 export function getMixin<D extends Data = {}, P extends Properties = {}, C = {}, M extends Methods = {}, Mi extends Array<any> = [], O = {}> (opt: ThisTypedComponentOpt<D, P, C, M, Mi, O>): {
   data: GetDataType<D> & UnboxMixinsField<Mi, 'data'>
@@ -250,9 +248,9 @@ export function getMixin<D extends Data = {}, P extends Properties = {}, C = {},
   [index: string]: any
 }
 
-export function createPage<D extends Data = {}, P extends Properties = {}, C = {}, M extends Methods = {}, Mi extends Array<any> = [], O = {}> (opt: ThisTypedPageOpt<D, P, C, M, Mi, O>, config?: createConfig): void
+export function createPage<D extends Data = {}, P extends Properties = {}, C = {}, M extends Methods = {}, Mi extends Array<any> = [], O = {}> (opt: ThisTypedPageOpt<D, P, C, M, Mi, O>, config?: CreateConfig): void
 
-export function createApp<T extends WechatMiniprogram.IAnyObject> (opt: WechatMiniprogram.App.Options<T>, config?: createConfig): void
+export function createApp<T extends WechatMiniprogram.IAnyObject> (opt: WechatMiniprogram.App.Options<T>, config?: CreateConfig): void
 
 export function createStore<S, G extends Getters<S>, M extends Mutations<S>, A extends Actions<S, G>, D extends Deps = {}> (option: StoreOpt<S, G, M, A, D>): Store<S, G, M, A, D>
 
@@ -286,7 +284,9 @@ export function createActionsWithThis<S = {}, G = {}, M extends MutationsAndActi
   deps?: D
 }): A
 
-export function injectMixins (mixins: object | Array<object>, type?: 'page' | 'component' | 'app'): void
+type MixinType = 'app' | 'page' | 'component'
+
+export function injectMixins (mixins: object | Array<object>, options?: MixinType | MixinType[] | { types?: MixinType | MixinType[], stage?: number }): void
 
 export function watch (expr: string | (() => any), handler: WatchHandler | WatchOptWithHandler, options?: WatchOpt): () => void
 
