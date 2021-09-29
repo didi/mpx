@@ -247,16 +247,18 @@ export default function processOption (
       })
       // 处理visibilitychange时触发当前活跃页面组件的onshow/onhide
       if (inBrowser) {
-        const errorHandler = function (e) {
+        const errorHandler = function (e, fromVue) {
           if (global.__mpxAppCbs && global.__mpxAppCbs.error && global.__mpxAppCbs.error.length) {
             global.__mpxAppCbs.error.forEach((cb) => {
               cb(e)
             })
-          } else {
+          } else if (fromVue) {
             throw e
           }
         }
-        Vue.config.errorHandler = errorHandler
+        Vue.config.errorHandler = function (e) {
+          return errorHandler(e, true)
+        }
         window.addEventListener('error', errorHandler)
         window.addEventListener('unhandledrejection', event => {
           errorHandler(event.reason)
