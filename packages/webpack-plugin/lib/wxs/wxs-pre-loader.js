@@ -30,7 +30,7 @@ module.exports = function (content) {
       '  __mpx_args__[i] = arguments[i];\n' +
       '}'
     ).program.body
-    // todo Object.assign可能会覆盖，未来存在覆盖case时需要改进处理
+    // todo Object.assign可能会覆盖，未来存在非预期的覆盖case时需要改进处理
     Object.assign(visitor, {
       Identifier (path) {
         if (path.node.name === 'arguments') {
@@ -54,6 +54,20 @@ module.exports = function (content) {
         ) {
           const name = path.node.declaration.declarations[0].id.name
           path.replaceWith(t.exportNamedDeclaration(undefined, [t.exportSpecifier(t.identifier(name), t.identifier(name))]))
+        }
+      }
+    })
+  }
+
+  if (mode === 'dd') {
+    Object.assign(visitor, {
+      MemberExpression (path) {
+        const property = path.node.property
+        if (
+          (property.name === 'constructor' || property.value === 'constructor') &&
+          !(t.isMemberExpression(path.parent) && path.parentKey === 'object')
+        ) {
+          path.replaceWith(t.logicalExpression('||', t.memberExpression(path.node, t.identifier('name'), path.node)))
         }
       }
     })
