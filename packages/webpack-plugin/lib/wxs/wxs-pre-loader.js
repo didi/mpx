@@ -67,7 +67,8 @@ module.exports = function (content) {
           (property.name === 'constructor' || property.value === 'constructor') &&
           !(t.isMemberExpression(path.parent) && path.parentKey === 'object')
         ) {
-          path.replaceWith(t.logicalExpression('||', t.memberExpression(path.node, t.identifier('name'), path.node)))
+          path.replaceWith(t.logicalExpression('||', t.memberExpression(path.node, t.identifier('name')), path.node))
+          path.skip()
         }
       }
     })
@@ -82,6 +83,7 @@ module.exports = function (content) {
           !(t.isMemberExpression(path.parent) && path.parentKey === 'object')
         ) {
           path.replaceWith(t.memberExpression(path.node, t.identifier('name')))
+          path.skip()
         }
       },
       CallExpression (path) {
