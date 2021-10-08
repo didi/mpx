@@ -1,11 +1,11 @@
 const NodeTargetPlugin = require('webpack/lib/node/NodeTargetPlugin')
 const EntryPlugin = require('webpack/lib/EntryPlugin')
+const EnableLibraryPlugin = require('webpack/lib/library/EnableLibraryPlugin')
 const LimitChunkCountPlugin = require('webpack/lib/optimize/LimitChunkCountPlugin')
 const path = require('path')
 const WxsPlugin = require('./WxsPlugin')
 const RecordStaticResourceDependency = require('../dependencies/RecordStaticResourceDependency')
 // const ChildCompileDependency = require('../dependencies/ChildCompileDependency')
-const getMainCompilation = require('../utils/get-main-compilation')
 const parseRequest = require('../utils/parse-request')
 const toPosix = require('../utils/to-posix')
 const fixRelative = require('../utils/fix-relative')
@@ -13,13 +13,11 @@ const config = require('../config')
 
 module.exports = function () {
   const nativeCallback = this.async()
-  const mainCompilation = getMainCompilation(this._compilation)
   const moduleGraph = this._compilation.moduleGraph
-  const mpx = mainCompilation.__mpx__
-  const assetsInfo = mpx.assetsInfo
+  const mpx = this.getMpx()
   const mode = mpx.mode
   const wxsMap = mpx.wxsMap
-  const rootName = mainCompilation.entries.keys().next().value
+  const appInfo = mpx.appInfo
   let { resourcePath, queryObj } = parseRequest(this.resource)
   const issuer = moduleGraph.getIssuer(this._module)
   const { resourcePath: issuerResourcePath, queryObj: issuerQueryObj } = parseRequest(queryObj.issuerResource || issuer.resource)
@@ -27,7 +25,7 @@ module.exports = function () {
   const pagesMap = mpx.pagesMap
   const componentsMap = mpx.componentsMap[issuerPackageName]
   const staticResourcesMap = mpx.staticResourcesMap[issuerPackageName]
-  const issuerName = pagesMap[issuerResourcePath] || componentsMap[issuerResourcePath] || staticResourcesMap[issuerResourcePath] || rootName
+  const issuerName = issuerResourcePath === appInfo.resourcePath ? appInfo.name : (pagesMap[issuerResourcePath] || componentsMap[issuerResourcePath] || staticResourcesMap[issuerResourcePath])
   const issuerDir = path.dirname(issuerName)
 
   const getName = (raw) => {
@@ -65,7 +63,7 @@ module.exports = function () {
     filename
   }
   // wxs文件必须经过pre-loader
-  const request = `!${this.remainingRequest}`
+  const request = '!!' + this.remainingRequest
   const plugins = [
     new WxsPlugin({ mode }),
     new NodeTargetPlugin(),
@@ -73,26 +71,16 @@ module.exports = function () {
     new LimitChunkCountPlugin({ maxChunks: 1 })
   ]
 
-  const childCompiler = mainCompilation.createChildCompiler(request, outputOptions, plugins)
+  const childCompiler = this._compilation.createChildCompiler(resourcePath, outputOptions, plugins)
 
-  let entryModule
-  childCompiler.hooks.thisCompilation.tap('MpxWebpackPlugin ', (compilation) => {
-    compilation.hooks.succeedEntry.tap('MpxWebpackPlugin', (entry, name, module) => {
-      entryModule = module
-      // const dep = new ChildCompileDependency(entryModule)
-      // wxsMap[filename].dep = dep
-    })
-  })
-
-  childCompiler.hooks.afterCompile.tapAsync('MpxWebpackPlugin', (compilation, callback) => {
-    Object.keys(compilation.assets).forEach((name) => {
-      // 因为子编译会合并assetsInfo会互相覆盖，使用全局mpx对象收集完之后再合并到主assetsInfo中
-      const assetInfo = assetsInfo.get(name) || { modules: [] }
-      assetInfo.modules.push(entryModule)
-      assetsInfo.set(name, assetInfo)
-    })
-    callback()
-  })
+  // let entryModule
+  // childCompiler.hooks.thisCompilation.tap('MpxWebpackPlugin ', (compilation) => {
+  //   compilation.hooks.succeedEntry.tap('MpxWebpackPlugin', (entry, name, module) => {
+  //     entryModule = module
+  //     // const dep = new ChildCompileDependency(entryModule)
+  //     // wxsMap[filename].dep = dep
+  //   })
+  // })
 
   childCompiler.runAsChild((err, entries, compilation) => {
     if (err) return callback(err)
@@ -106,6 +94,12 @@ module.exports = function () {
     compilation.contextDependencies.forEach((dep) => {
       this.addContextDependency(dep)
     }, this)
+    compilation.missingDependencies.forEach((dep) => {
+      this.addMissingDependency(dep)
+    })
+    compilation.buildDependencies.forEach((dep) => {
+      this.addBuildDependency(dep)
+    })
     callback()
   })
 }

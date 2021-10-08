@@ -3,11 +3,13 @@ const bindThis = require('./bind-this').transform
 const parseRequest = require('../utils/parse-request')
 const matchCondition = require('../utils/match-condition')
 const path = require('path')
+const loaderUtils = require('loader-utils')
 
 module.exports = function (raw) {
   this.cacheable()
   const { resourcePath, queryObj } = parseRequest(this.resource)
   const mpx = this.getMpx()
+  const root = mpx.projectRoot
   const mode = mpx.mode
   const env = mpx.env
   const defs = mpx.defs
@@ -43,7 +45,6 @@ module.exports = function (raw) {
     usingComponents,
     hasComment,
     isNative,
-    basename: path.basename(resourcePath),
     isComponent: !!componentsMap[resourcePath],
     mode,
     env,
@@ -73,8 +74,7 @@ module.exports = function (raw) {
 
   for (let module in meta.wxsModuleMap) {
     const src = loaderUtils.urlToRequest(meta.wxsModuleMap[module], root)
-    // 编译render函数只在mpx文件中运行，此处issuer的context一定等同于当前loader的context
-    resultSource += `const ${module} = require(${loaderUtils.stringifyRequest(this, src)});\n`
+    resultSource += `var ${module} = require(${loaderUtils.stringifyRequest(this, src)});\n`
   }
 
   let result = compiler.serialize(ast)

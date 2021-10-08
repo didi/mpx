@@ -3,7 +3,7 @@ class WxsParserPlugin {
     this.options = options
   }
 
-  apply (parser, compilation) {
+  apply (parser) {
     parser.hooks.program.tap({
       name: 'WxsParserPlugin',
       // 放在最后面执行

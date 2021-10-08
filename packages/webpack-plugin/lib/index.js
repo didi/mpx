@@ -7,6 +7,7 @@ const ResolveDependency = require('./dependencies/ResolveDependency')
 const InjectDependency = require('./dependencies/InjectDependency')
 const ReplaceDependency = require('./dependencies/ReplaceDependency')
 const NullFactory = require('webpack/lib/NullFactory')
+const CommonJsVariableDependency = require('./dependencies/CommonJsVariableDependency')
 const NormalModule = require('webpack/lib/NormalModule')
 const EntryPlugin = require('webpack/lib/EntryPlugin')
 const JavascriptModulesPlugin = require('webpack/lib/javascript/JavascriptModulesPlugin')
@@ -34,6 +35,7 @@ const config = require('./config')
 const hash = require('hash-sum')
 const wxssLoaderPath = normalize.lib('wxss/loader')
 const wxmlLoaderPath = normalize.lib('wxml/loader')
+const wxsLoaderPath = normalize.lib('wxs/loader')
 const styleCompilerPath = normalize.lib('style-compiler/index')
 const templateCompilerPath = normalize.lib('template-compiler/index')
 const jsonCompilerPath = normalize.lib('json-compiler/index')
@@ -182,7 +184,7 @@ class MpxWebpackPlugin {
   }
 
   static wxsPreLoader (options = {}) {
-    return { loader: normalize.lib('wxs/wxs-pre-loader'), options }
+    return { loader: normalize.lib('wxs/pre-loader'), options }
   }
 
   static urlLoader (options = {}) {
@@ -360,6 +362,9 @@ class MpxWebpackPlugin {
 
       compilation.dependencyFactories.set(RemovedModuleDependency, normalModuleFactory)
       compilation.dependencyTemplates.set(RemovedModuleDependency, new RemovedModuleDependency.Template())
+
+      compilation.dependencyFactories.set(CommonJsVariableDependency, normalModuleFactory)
+      compilation.dependencyTemplates.set(CommonJsVariableDependency, new CommonJsVariableDependency.Template())
     })
 
     compiler.hooks.thisCompilation.tap('MpxWebpackPlugin', (compilation, { normalModuleFactory }) => {
@@ -370,7 +375,7 @@ class MpxWebpackPlugin {
           // init mpx
           mpx = compilation.__mpx__ = {
             // app信息，便于获取appName
-            appInfo: null,
+            appInfo: {},
             // pages全局记录，无需区分主包分包
             pagesMap: {},
             // 组件资源记录，依照所属包进行记录
@@ -796,31 +801,21 @@ class MpxWebpackPlugin {
             const type = target.name
 
             const name = type === 'wx' ? 'mpx' : 'createFactory'
-            const replaceContent = type === 'wx' ? '__webpack_require__.n(mpx)()' : `__webpack_require__.n(createFactory)()(${JSON.stringify(type)})`
+            const replaceContent = type === 'wx' ? 'mpx' : `createFactory(${JSON.stringify(type)})`
 
             const dep = new ReplaceDependency(replaceContent, target.range)
             current.addPresentationalDependency(dep)
 
             let needInject = true
-            for (let v of module.variables) {
-              if (v.name === name) {
+            for (let dep of module.dependencies) {
+              if (dep instanceof CommonJsVariableDependency && dep.name === name) {
                 needInject = false
                 break
               }
             }
             if (needInject) {
-              const expression = `require(${JSON.stringify(`@mpxjs/core/src/runtime/${name}`)})`
-              const deps = []
-              parser.parse(expression, {
-                current: {
-                  addDependency: dep => {
-                    dep.userRequest = name
-                    deps.push(dep)
-                  }
-                },
-                module
-              })
-              module.addVariable(name, expression, deps)
+              const dep = new CommonJsVariableDependency(`@mpxjs/core/src/runtime/${name}`, name)
+              module.addDependency(dep)
             }
           }
           // hack babel polyfill global
@@ -869,7 +864,7 @@ class MpxWebpackPlugin {
             //   }
             // })
             // // Trans for wx.xx, wx['xx'], wx.xx(), wx['xx']()
-            // parser.hooks.expressionAnyMember.for('wx').tap('MpxWebpackPlugin', transHandler)
+            // parser.hooks.expressionMemberChain.for('wx').tap('MpxWebpackPlugin', transHandler)
             // Proxy ctor for transMode
             if (!this.options.forceDisableProxyCtor) {
               parser.hooks.call.for('Page').tap('MpxWebpackPlugin', (expr) => {
@@ -938,9 +933,9 @@ class MpxWebpackPlugin {
           }
 
           if (mpx.srcMode !== mpx.mode) {
-            parser.hooks.callAnyMember.for('imported var').tap('MpxWebpackPlugin', handler)
-            parser.hooks.callAnyMember.for('mpx').tap('MpxWebpackPlugin', handler)
-            parser.hooks.callAnyMember.for('wx').tap('MpxWebpackPlugin', handler)
+            parser.hooks.callMemberChain.for('imported var').tap('MpxWebpackPlugin', handler)
+            parser.hooks.callMemberChain.for('mpx').tap('MpxWebpackPlugin', handler)
+            parser.hooks.callMemberChain.for('wx').tap('MpxWebpackPlugin', handler)
           }
         })
 
@@ -966,7 +961,8 @@ class MpxWebpackPlugin {
           }
 
           const processedChunk = new Set()
-          const rootName = compilation.entries.keys().next().value
+          // const rootName = compilation.entries.keys().next().value
+          const appName = mpx.appInfo.name
 
           function processChunk (chunk, isRuntime, relativeChunks) {
             const chunkFile = chunk.files.values().next().value
@@ -990,7 +986,7 @@ class MpxWebpackPlugin {
                 // 引用runtime
                 // 支付宝分包独立打包，通过全局context获取webpackJSONP
                 if (mpx.mode === 'ali' && !mpx.isPluginMode) {
-                  if (chunk.name === rootName) {
+                  if (chunk.name === appName) {
                     // 在rootChunk中挂载jsonpCallback
                     source.add('// process ali subpackages runtime in root chunk\n' +
                       'var context = (function() { return this })() || Function("return this")();\n\n')
@@ -1099,11 +1095,6 @@ try {
           // 此处的query用于将资源引用的当前包信息传递给resolveDependency
           const pathLoader = normalize.lib('path-loader')
           data.request = `!!${pathLoader}!${resource}`
-        } else if (queryObj.wxsModule) {
-          const wxsPreLoader = normalize.lib('wxs/wxs-pre-loader')
-          if (!/wxs-loader/.test(request)) {
-            data.request = `!!${wxsPreLoader}!${resource}`
-          }
         }
       })
 
@@ -1149,6 +1140,10 @@ try {
                 })
               }
               break
+            case 'wxs':
+              loaders.unshift({
+                loader: wxsLoaderPath
+              })
           }
           if (extract) {
             loaders.unshift({

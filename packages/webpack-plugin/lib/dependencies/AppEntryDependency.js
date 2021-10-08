@@ -16,8 +16,8 @@ class AppEntryDependency extends NullDependency {
   mpxAction (module, compilation, callback) {
     const mpx = compilation.__mpx__
     const moduleGraph = compilation.moduleGraph
-    
-    if (mpx.appInfo) {
+
+    if (mpx.appInfo.name) {
       const issuer = moduleGraph.getIssuer(module)
       const err = new Error(issuer ?
         `[json compiler]:Mpx单次构建中只能存在一个App，当前组件/页面[${module.resource}]通过[${issuer.resource}]非法引入，引用的资源将被忽略，请确保组件/页面资源通过usingComponents/pages配置引入！` :

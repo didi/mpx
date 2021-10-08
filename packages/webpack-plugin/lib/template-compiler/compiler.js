@@ -152,6 +152,9 @@ let forScopesMap = {}
 let hasI18n = false
 let i18nInjectableComputed = []
 let env
+let platformGetTagNamespace
+let filePath
+let refId
 
 function updateForScopesMap () {
   forScopes.forEach((scope) => {
@@ -178,9 +181,6 @@ const deleteErrorInResultMap = (node) => {
   rulesResultMap.delete(node)
   Array.isArray(node.children) && node.children.forEach(item => deleteErrorInResultMap(item))
 }
-let platformGetTagNamespace
-let basename
-let refId
 
 function baseWarn (msg) {
   console.warn(('[template compiler]: ' + msg))
@@ -209,7 +209,7 @@ function decode (value) {
 
 const i18nFuncNames = ['\\$(t)', '\\$(tc)', '\\$(te)', '\\$(d)', '\\$(n)']
 const i18nWxsPath = normalize.lib('runtime/i18n.wxs')
-const i18nWxsLoaderPath = normalize.lib('wxs/wxs-i18n-loader.js')
+const i18nWxsLoaderPath = normalize.lib('wxs/i18n-loader.js')
 // 添加~前缀避免wxs绝对路径在存在projectRoot时被拼接为错误路径
 const i18nWxsRequest = '~' + i18nWxsLoaderPath + '!' + i18nWxsPath
 const i18nModuleName = '__i18n__'
@@ -498,6 +498,7 @@ function parseComponent (content, options) {
   mode = options.mode || 'wx'
   defs = options.defs || {}
   env = options.env
+  filePath = options.filePath
 
   let sfc = {
     template: null,
@@ -617,7 +618,7 @@ function parseComponent (content, options) {
 
       // 对于<script name="json">的标签，传参调用函数，其返回结果作为json的内容
       if (currentBlock.tag === 'script' && !/^application\/json/.test(currentBlock.type) && currentBlock.name === 'json') {
-        text = mpxJSON.compileMPXJSONText({ source: text, defs, filePath: options.filePath })
+        text = mpxJSON.compileMPXJSONText({ source: text, defs, filePath })
       }
       currentBlock.content = text
       currentBlock = null
@@ -669,7 +670,7 @@ function parse (template, options) {
   defs = options.defs || {}
   srcMode = options.srcMode || mode
   isNative = options.isNative
-  basename = options.basename
+  filePath = options.filePath
   i18n = options.i18n
   refId = 0
 
@@ -1409,9 +1410,13 @@ function postProcessWxs (el, meta) {
         content = el.children.filter((child) => {
           return child.type === 3 && !child.isComment
         }).map(child => child.text).join('\n')
-        src = addQuery('./' + basename, {
+
+        const fakeRequest = filePath + config[mode].wxs.ext
+
+        src = addQuery(`~${fakeRequest}!=!${filePath}`, {
           wxsModule: module
         })
+
         addAttrs(el, [{
           name: config[mode].wxs.src,
           value: src
