@@ -304,6 +304,7 @@ interface MpxConfig {
   hookErrorHandler: (e: Error, target: ComponentIns<{}, {}, {}, {}, []>, hookName: string) => any | null
   proxyEventHandler: (e: Event) => any | null
   setDataHandler: (data: object, target: ComponentIns<{}, {}, {}, {}, []>) => any | null
+  forceRunWatcherSync: boolean
 }
 
 type SupportedMode = 'wx' | 'ali' | 'qq' | 'swan' | 'tt' | 'web' | 'qa'

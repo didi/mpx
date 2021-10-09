@@ -1,5 +1,6 @@
 import { asyncLock } from '../helper/utils'
 import { error } from '../helper/log'
+import EXPORT_MPX from '../index'
 
 const queue = []
 let has = {}
@@ -16,6 +17,8 @@ export function queueWatcher (watcher) {
       run: watcher
     }
   }
+  // 开启EXPORT_MPX.config.forceRunWatcherSync时，queueWatcher同步执行，便于调试排查问题
+  if (EXPORT_MPX.config.forceRunWatcherSync) return watcher.run()
   if (!has[watcher.id] || watcher.id === Infinity) {
     has[watcher.id] = true
     if (!flushing) {

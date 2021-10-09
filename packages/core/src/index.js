@@ -204,7 +204,8 @@ EXPORT_MPX.config = {
   observeClassInstance: false,
   hookErrorHandler: null,
   proxyEventHandler: null,
-  setDataHandler: null
+  setDataHandler: null,
+  forceRunWatcherSync: false
 }
 
 if (__mpx_mode__ === 'web') {
