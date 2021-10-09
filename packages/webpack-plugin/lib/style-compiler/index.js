@@ -8,6 +8,7 @@ const rpx = require('./plugins/rpx')
 const vw = require('./plugins/vw')
 const pluginCondStrip = require('./plugins/conditional-strip')
 const scopeId = require('./plugins/scope-id')
+const transSpecial = require('./plugins/trans-special')
 const addSelector = require('./plugins/add-selector')
 const matchCondition = require('../utils/match-condition')
 
@@ -39,14 +40,17 @@ module.exports = function (css, map) {
       },
       config.options
     )
-
+    // ali环境处理host选择器
+    if (mpx.mode === 'ali') {
+      plugins.push(transSpecial({ id: loaderOptions.moduleId || loaderOptions.mid }))
+    }
     if (loaderOptions.scoped) {
       const moduleId = loaderOptions.moduleId || loaderOptions.mid
-      const transHost = mpx.mode === 'ali' && !loaderOptions.hasVirtualHost
-      plugins.push(scopeId({ id: moduleId, transHost: transHost }))
+      plugins.push(scopeId({ id: moduleId }))
     }
+    // ali环境添加全局样式抹平root差异
     if (mpx.mode === 'ali' && loaderOptions.ctorType === 'app') {
-      plugins.push(addSelector('\n.mpx-root-view { display: inline; line-height: normal; }\n'))
+      loaderOptions.ctorType === 'app' && plugins.push(addSelector('\n.mpx-root-view { display: inline; line-height: normal; }\n'))
     }
     plugins.push(pluginCondStrip({
       defs

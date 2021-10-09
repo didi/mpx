@@ -53,7 +53,6 @@ module.exports = function (raw) {
     decodeHTMLText,
     externalClasses,
     hasScoped: options.hasScoped,
-    hasVirtualHost: options.hasVirtualHost,
     moduleId: options.moduleId,
     filePath: this.resourcePath,
     i18n,
@@ -61,7 +60,8 @@ module.exports = function (raw) {
     globalComponents: Object.keys(mpx.usingComponents),
     // deprecated option
     globalMpxAttrsFilter: mpx.globalMpxAttrsFilter,
-    forceProxyEvent: matchCondition(this.resourcePath, mpx.forceProxyEventRules)
+    forceProxyEvent: matchCondition(this.resourcePath, mpx.forceProxyEventRules),
+    hasVirtualHost: matchCondition(resourcePath, mpx.autoVirtualHostRules)
   })
 
   let ast = parsed.root

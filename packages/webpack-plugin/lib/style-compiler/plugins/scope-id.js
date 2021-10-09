@@ -1,9 +1,9 @@
 const postcss = require('postcss')
 const selectorParser = require('postcss-selector-parser')
 
-module.exports = postcss.plugin('scope-id', ({ id, transHost }) => root => {
+module.exports = postcss.plugin('scope-id', ({ id }) => root => {
   const keyframes = Object.create(null)
-
+  const ignoreReg = new RegExp('-' + id + '$')
   root.each(function rewriteSelector (node) {
     if (!node.selector) {
       // handle media queries
@@ -39,16 +39,9 @@ module.exports = postcss.plugin('scope-id', ({ id, transHost }) => root => {
           if (n.type !== 'pseudo' && n.type !== 'combinator') {
             node = n
           }
-          if (transHost && /^:host$/.test(n.value)) {
-            const compoundSelectors = n.nodes
-            n.replaceWith(selectorParser.className({
-              value: 'host-' + id
-            }))
-            selector.insertAfter(n, compoundSelectors)
-          }
         })
-        // 对于page selector不添加scope id
-        if (node && node.type === 'tag' && node.value === 'page') return
+        // 对于page selector、以-${id}结尾的选择器 不添加scope id
+        if (node && ((node.type === 'tag' && node.value === 'page') || ignoreReg.test(node.value))) return
         selector.insertAfter(node, selectorParser.className({
           value: id
         }))

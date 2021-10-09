@@ -96,7 +96,7 @@ function resolveLoaders ({ options, projectRoot }) {
   }
 }
 
-module.exports = function createHelpers ({ loaderContext, options, moduleId, hasScoped, hasVirtualHost, ctorType, hasComment, usingComponents, srcMode, isNative, projectRoot }) {
+module.exports = function createHelpers ({ loaderContext, options, moduleId, hasScoped, ctorType, hasComment, usingComponents, srcMode, isNative, projectRoot }) {
   const rawRequest = getRawRequest(loaderContext, options.excludedPreLoaders)
   const {
     defaultLoaders,
@@ -254,8 +254,7 @@ module.exports = function createHelpers ({ loaderContext, options, moduleId, has
         JSON.stringify({
           moduleId,
           scoped: !!scoped,
-          ctorType: ctorType,
-          hasVirtualHost: !!hasVirtualHost
+          ctorType: ctorType
         })
       // normalize scss/sass/postcss if no specific loaders have been provided
       if (!loaders[lang]) {
@@ -279,7 +278,6 @@ module.exports = function createHelpers ({ loaderContext, options, moduleId, has
       const templateCompilerOptions = {
         usingComponents,
         hasScoped,
-        hasVirtualHost, 
         hasComment,
         isNative,
         moduleId,

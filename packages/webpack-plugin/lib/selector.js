@@ -23,7 +23,9 @@ module.exports = function (content) {
   })
   let part = parts[query.type] || {}
   if (Array.isArray(part)) {
-    part = part[query.index]
+    part = part[query.index] || {
+      content: ''
+    }
   }
   this.callback(null, part.content, part.map)
 }
