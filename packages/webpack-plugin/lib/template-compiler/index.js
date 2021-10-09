@@ -79,7 +79,7 @@ module.exports = function (raw) {
 
   let result = compiler.serialize(ast)
 
-  if (isNative || mpx.forceDisableInject) {
+  if (isNative ) {
     return result
   }
 

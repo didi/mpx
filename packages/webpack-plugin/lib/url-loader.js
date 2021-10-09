@@ -2,7 +2,6 @@ const loaderUtils = require('loader-utils')
 const mime = require('mime')
 const parseRequest = require('./utils/parse-request')
 const getOptions = loaderUtils.getOptions
-const parseQuery = loaderUtils.parseQuery
 
 function isStyleRequest (request) {
   const { loaderString, queryObj } = parseRequest(request)

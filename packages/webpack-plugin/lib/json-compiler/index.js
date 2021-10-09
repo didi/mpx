@@ -1,28 +1,26 @@
 const async = require('async')
 const JSON5 = require('json5')
 const path = require('path')
-const EntryPlugin = require('webpack/lib/EntryPlugin')
 const loaderUtils = require('loader-utils')
 const parseComponent = require('../parser')
 const config = require('../config')
-const normalize = require('../utils/normalize')
-const nativeLoaderPath = normalize.lib('native-loader')
 const parseRequest = require('../utils/parse-request')
 const mpxJSON = require('../utils/mpx-json')
-const toPosix = require('../utils/to-posix')
 const fixUsingComponent = require('../utils/fix-using-component')
 const getRulesRunner = require('../platform/index')
 const isUrlRequestRaw = require('../utils/is-url-request')
 const addQuery = require('../utils/add-query')
 const readJsonForSrc = require('../utils/read-json-for-src')
 const createHelpers = require('../helpers')
+const normalize = require('../utils/normalize')
+const nativeLoaderPath = normalize.lib('native-loader')
 
-module.exports = function (raw) {
+module.exports = function (content) {
   const nativeCallback = this.async()
   const mpx = this.getMpx()
 
   if (!mpx) {
-    return nativeCallback(null, raw)
+    return nativeCallback(null, content)
   }
 
   // 微信插件下要求组件使用相对路径
@@ -135,9 +133,9 @@ module.exports = function (raw) {
     // 使用了MPXJSON的话先编译
     // 此处需要使用真实的resourcePath
     if (this.resourcePath.endsWith('.json.js')) {
-      json = JSON.parse(mpxJSON.compileMPXJSONText({ source: raw, defs, filePath: this.resourcePath }))
+      json = JSON.parse(mpxJSON.compileMPXJSONText({ source: content, defs, filePath: this.resourcePath }))
     } else {
-      json = JSON5.parse(raw || '{}')
+      json = JSON5.parse(content || '{}')
     }
   } catch (err) {
     return callback(err)
@@ -266,7 +264,7 @@ module.exports = function (raw) {
         }
       }
       if (ext === '.js') {
-        resource = addQuery(resource, { isNative: true })
+        resource = `!!${nativeLoaderPath}!${resource}`
       }
 
       const entry = getDynamicEntry(resource, 'component', outputPath, tarRoot, relativePath)
@@ -479,7 +477,7 @@ module.exports = function (raw) {
               }
             }
             if (ext === '.js') {
-              resource = addQuery(resource, { isNative: true })
+              resource = `!!${nativeLoaderPath}!${resource}`
             }
             const entry = getDynamicEntry(resource, 'page', outputPath, tarRoot, publicPath + tarRoot)
             if (tarRoot) {

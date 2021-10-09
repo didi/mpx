@@ -66,20 +66,6 @@ module.exports = function (content) {
   const loaderContext = this
   const stringifyRequest = r => loaderUtils.stringifyRequest(loaderContext, r)
   const isProduction = this.minimize || process.env.NODE_ENV === 'production'
-  // const processSrcQuery = (src, type) => {
-  //   const localQuery = Object.assign({}, queryObj)
-  //
-  //   if (type === 'styles') {
-  //     localQuery.isStatic = true
-  //     localQuery.issuerResource = this.resource
-  //   } else {
-  //     localQuery.resourcePath = resourcePath
-  //   }
-  //   if (type === 'json') {
-  //     localQuery.__component = true
-  //   }
-  //   return addQuery(src, localQuery)
-  // }
 
   const filePath = resourcePath
 
@@ -327,8 +313,6 @@ module.exports = function (content) {
         if (scriptSrcMode) output += `global.currentSrcMode = ${JSON.stringify(scriptSrcMode)}\n`
         const extraOptions = {}
         if (script.src) extraOptions.resourcePath = resourcePath
-        // todo 通过isAppScript标识当前模块，分包处理需要等该模块的依赖处理完成后才能进行，严谨来说也应该等待app.json和app.wxss处理完成后才能开始，后续优化
-        if (ctorType === 'app') extraOptions.isAppScript = true
         output += getRequire('script', script, extraOptions) + '\n'
       } else {
         switch (ctorType) {

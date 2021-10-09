@@ -410,7 +410,6 @@ class MpxWebpackPlugin {
             wxsMap: {},
             wxsContentMap: {},
             assetsInfo: new Map(),
-            forceDisableInject: this.options.forceDisableInject,
             forceUsePageCtor: this.options.forceUsePageCtor,
             resolveMode: this.options.resolveMode,
             mode: this.options.mode,

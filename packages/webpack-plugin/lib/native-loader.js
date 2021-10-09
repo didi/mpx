@@ -1,37 +1,27 @@
 const path = require('path')
 const JSON5 = require('json5')
 const parseRequest = require('./utils/parse-request')
-const loaderUtils = require('loader-utils')
 const config = require('./config')
 const createHelpers = require('./helpers')
-const InjectDependency = require('./dependencies/InjectDependency')
-const addQuery = require('./utils/add-query')
 const mpxJSON = require('./utils/mpx-json')
 const async = require('async')
 const matchCondition = require('./utils/match-condition')
 const fixUsingComponent = require('./utils/fix-using-component')
-const getMainCompilation = require('./utils/get-main-compilation')
 
 module.exports = function (content) {
   this.cacheable()
 
-  const mainCompilation = getMainCompilation(this._compilation)
-  const mpx = mainCompilation.__mpx__
+  const mpx = this._compilation.__mpx__
   if (!mpx) {
     return content
   }
 
   const nativeCallback = this.async()
-
   const loaderContext = this
   const isProduction = this.minimize || process.env.NODE_ENV === 'production'
-  const options = loaderUtils.getOptions(this)
-
   const filePath = this.resourcePath
-
   const moduleId = 'm' + mpx.pathHash(filePath)
   const { resourcePath, queryObj } = parseRequest(this.resource)
-  const projectRoot = mpx.projectRoot
   const mode = mpx.mode
   const defs = mpx.defs
   const globalSrcMode = mpx.srcMode
@@ -177,61 +167,52 @@ module.exports = function (content) {
         }
       } catch (e) {
       }
+
       const {
-        getRequireForSrc,
-        getNamedExportsForSrc
-      } = createHelpers({
-        loaderContext,
-        options,
-        moduleId,
-        hasScoped,
-        hasComment,
-        usingComponents,
-        srcMode,
-        isNative,
-        projectRoot
-      })
+        getRequire
+      } = createHelpers(loaderContext)
 
-      const getRequire = (type) => {
-        const localQuery = Object.assign({}, queryObj)
-        let src = typeResourceMap[type]
-        localQuery.resourcePath = resourcePath
-        if (type !== 'script') {
-          this.addDependency(src)
-        }
-        if (type === 'template' && isApp) {
-          return ''
-        }
-        if (type === 'json' && !useMPXJSON) {
-          localQuery.__component = true
-        }
-        src = addQuery(src, localQuery, true)
-        const partsOpts = { src }
+      const getRequireByType = (type) => {
+        const src = typeResourceMap[type]
+        const part = { src }
+        const extraOptions = Object.assign({}, queryObj, {
+          resourcePath
+        })
 
-        if (type === 'script') {
-          return getNamedExportsForSrc(type, partsOpts)
+        if (type !== 'script') this.addDependency(src)
+
+        switch (type) {
+          case 'template':
+            if (isApp) return ''
+            Object.assign(extraOptions, {
+              hasScoped,
+              hasComment,
+              isNative,
+              moduleId,
+              usingComponents
+            })
+            break
+          case 'styles':
+            if (cssLang) part.lang = cssLang
+            Object.assign(extraOptions, {
+              moduleId,
+              scoped: hasScoped
+            })
+            break
         }
-        if (type === 'styles') {
-          if (cssLang) {
-            partsOpts.lang = cssLang
-          }
-          if (hasScoped) {
-            return getRequireForSrc(type, partsOpts, 0, true)
-          }
-        }
-        return getRequireForSrc(type, partsOpts)
+        return getRequire(type, part, extraOptions)
       }
 
       // 注入模块id及资源路径
-      let globalInjectCode = `global.currentModuleId = ${JSON.stringify(moduleId)}\n`
+      let output = `global.currentModuleId = ${JSON.stringify(moduleId)}\n`
       if (!isProduction) {
-        globalInjectCode += `global.currentResource = ${JSON.stringify(filePath)}\n`
+        output += `global.currentResource = ${JSON.stringify(filePath)}\n`
       }
 
       // 注入构造函数
       let ctor = 'App'
       if (pagesMap[resourcePath]) {
-        if (mpx.forceUsePageCtor || mode === 'ali') {
+        if (mpx.forceUsePageCtor || mode === 'ali' || mode === 'swan') {
           ctor = 'Page'
         } else {
           ctor = 'Component'
@@ -239,28 +220,17 @@ module.exports = function (content) {
       } else if (componentsMap[resourcePath]) {
         ctor = 'Component'
       }
-      globalInjectCode += `global.currentCtor = ${ctor}\n`
-      globalInjectCode += `global.currentCtorType = ${JSON.stringify(ctor.replace(/^./, (match) => {
+      output += `global.currentCtor = ${ctor}\n`
+      output += `global.currentCtorType = ${JSON.stringify(ctor.replace(/^./, (match) => {
         return match.toLowerCase()
       }))}\n`
 
       if (srcMode) {
-        globalInjectCode += `global.currentSrcMode = ${JSON.stringify(srcMode)}\n`
+        output += `global.currentSrcMode = ${JSON.stringify(srcMode)}\n`
       }
-
-      if (!mpx.forceDisableInject) {
-        const dep = new InjectDependency({
-          content: globalInjectCode,
-          index: -3
-        })
-        this._module.addPresentationalDependency(dep)
-      }
-
-      // 触发webpack global var 注入
-      let output = 'global.currentModuleId;\n'
 
       for (let type in typeResourceMap) {
-        output += `/* ${type} */\n${getRequire(type)}\n\n`
+        output += `/* ${type} */\n${getRequireByType(type)}\n\n`
       }
 
       callback(null, output)
