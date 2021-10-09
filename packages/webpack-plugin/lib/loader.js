@@ -97,6 +97,7 @@ module.exports = function (content) {
     defs,
     env
   })
+
   let output = ''
   const callback = this.async()
 

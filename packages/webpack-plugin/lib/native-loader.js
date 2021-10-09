@@ -47,6 +47,7 @@ module.exports = function (content) {
   const typeExtMap = config[srcMode].typeExtMap
   const typeResourceMap = {}
   const autoScope = matchCondition(resourcePath, mpx.autoScopeRules)
+
   const EXT_MPX_JSON = '.json.js'
   const CSS_LANG_EXT_MAP = {
     less: '.less',
