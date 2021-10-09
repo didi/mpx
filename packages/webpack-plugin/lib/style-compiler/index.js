@@ -39,7 +39,6 @@ module.exports = function (css, map) {
       },
       config.options
     )
-    console.log('cwy-css', css)
     // ali环境处理host选择器
     if (mpx.mode === 'ali') {
       plugins.push(transSpecial({ id: loaderOptions.moduleId || loaderOptions.mid }))

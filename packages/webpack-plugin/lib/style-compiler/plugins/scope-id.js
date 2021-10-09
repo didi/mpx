@@ -3,6 +3,7 @@ const selectorParser = require('postcss-selector-parser')
 
 module.exports = postcss.plugin('scope-id', ({ id }) => root => {
   const keyframes = Object.create(null)
+
   root.each(function rewriteSelector (node) {
     if (!node.selector) {
       // handle media queries
@@ -39,7 +40,7 @@ module.exports = postcss.plugin('scope-id', ({ id }) => root => {
             node = n
           }
         })
-        // 对于page selector 不添加scope id
+        // 对于page selector不添加scope id
         if (node && node.type === 'tag' && node.value === 'page') return
         selector.insertAfter(node, selectorParser.className({
           value: id
