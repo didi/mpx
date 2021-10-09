@@ -3,7 +3,6 @@ const selectorParser = require('postcss-selector-parser')
 
 module.exports = postcss.plugin('scope-id', ({ id }) => root => {
   const keyframes = Object.create(null)
-  const ignoreReg = new RegExp('-' + id + '$')
   root.each(function rewriteSelector (node) {
     if (!node.selector) {
       // handle media queries
@@ -40,8 +39,8 @@ module.exports = postcss.plugin('scope-id', ({ id }) => root => {
             node = n
           }
         })
-        // 对于page selector、以-${id}结尾的选择器 不添加scope id
-        if (node && ((node.type === 'tag' && node.value === 'page') || ignoreReg.test(node.value))) return
+        // 对于page selector 不添加scope id
+        if (node && node.type === 'tag' && node.value === 'page') return
         selector.insertAfter(node, selectorParser.className({
           value: id
         }))

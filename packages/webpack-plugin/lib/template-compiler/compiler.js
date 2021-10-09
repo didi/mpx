@@ -1923,7 +1923,7 @@ function getVirtualHostRoot (options, meta) {
     return createASTElement('view', [
       {
         name: 'class',
-        value: `mpx-root-view host-${options.moduleId} {{mpxClass||''}}`
+        value: `mpx-root-view host-${options.moduleId} ${options.hasScoped ? options.moduleId : ''} {{mpxClass||''}}`
       },
       {
         name: 'style',
