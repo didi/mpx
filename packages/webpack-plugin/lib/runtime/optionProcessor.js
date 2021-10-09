@@ -247,19 +247,23 @@ export default function processOption (
       })
       // 处理visibilitychange时触发当前活跃页面组件的onshow/onhide
       if (inBrowser) {
-        const errorHandler = function (e) {
+        const errorHandler = function (args, fromVue) {
           if (global.__mpxAppCbs && global.__mpxAppCbs.error && global.__mpxAppCbs.error.length) {
             global.__mpxAppCbs.error.forEach((cb) => {
-              cb(e)
+              cb.apply(null, args)
             })
-          } else {
-            throw e
+          } else if (fromVue) {
+            throw args[0]
           }
         }
-        Vue.config.errorHandler = errorHandler
-        window.addEventListener('error', errorHandler)
-        window.addEventListener('unhandledrejection', event => {
-          errorHandler(event.reason)
+        Vue.config.errorHandler = (...args) => {
+          return errorHandler(args, true)
+        }
+        window.addEventListener('error', (event) => {
+          return errorHandler([event.error, event])
+        })
+        window.addEventListener('unhandledrejection', (event) => {
+          return errorHandler([event.reason, event])
         })
         document.addEventListener('visibilitychange', function () {
           const vnode = global.__mpxRouter && global.__mpxRouter.__mpxActiveVnode
