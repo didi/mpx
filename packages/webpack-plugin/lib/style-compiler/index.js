@@ -40,18 +40,22 @@ module.exports = function (css, map) {
       },
       config.options
     )
+
     // ali环境处理host选择器
     if (mpx.mode === 'ali') {
       plugins.push(transSpecial({ id: loaderOptions.moduleId || loaderOptions.mid }))
     }
+
     if (loaderOptions.scoped) {
       const moduleId = loaderOptions.moduleId || loaderOptions.mid
       plugins.push(scopeId({ id: moduleId }))
     }
+
     // ali环境添加全局样式抹平root差异
     if (mpx.mode === 'ali' && loaderOptions.ctorType === 'app') {
       loaderOptions.ctorType === 'app' && plugins.push(addSelector('\n.mpx-root-view { display: inline; line-height: normal; }\n'))
     }
+
     plugins.push(pluginCondStrip({
       defs
     }))
