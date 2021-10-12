@@ -106,16 +106,24 @@ module.exports = {
       description: '深度性能优化的增强型小程序开发框架'
     },
   },
-  plugins: {
-    '@vuepress/pwa': {
+  plugins: [
+    ['@vuepress/pwa', {
       serviceWorker: true,
       updatePopup: {
         message: '文档有更新啦！',
         buttonText: '刷新'
       }
-    }
-  },
+    }]
+  ],
   themeConfig: {
+    algolia: {
+			apiKey: '7849f511f78afc4383a81f0137a91c0f',
+			indexName: 'mpxjs',
+			algoliaOptions: {
+				hitsPerPage: 6,
+				facetFilters: ""
+			}
+		},
     sidebarDepth: 1,
     logo: '/logo.png',
     displayAllHeaders: false,

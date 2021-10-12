@@ -7,7 +7,10 @@
       <nav class="nav"><a class="nav-link" href="/api/config.html">API</a></nav>
       <nav class="nav"><a class="nav-link" href="/articles/">文章</a></nav>
       <div class="searchBox-wrapper">
-        <div class="searchBox"><SearchBox /></div>
+        <div class="searchBox">
+          <SearchBox />
+          <AlgoliaSearchBox v-if="isAlgoliaSearch" :options="algolia" />
+        </div>
       </div>
     </div>
     <img
@@ -27,10 +30,20 @@
 
 <script>
 import SearchBox from '@SearchBox'
+import AlgoliaSearchBox from "../components/AlgoliaSearchBox.vue"
 export default {
   components: {
-    SearchBox
+    SearchBox,
+    AlgoliaSearchBox
   },
+  computed: {
+    algolia () {
+      return this.$themeLocaleConfig.algolia || this.$site.themeConfig.algolia || {}
+    },
+    isAlgoliaSearch () {
+      return this.algolia && this.algolia.apiKey && this.algolia.indexName
+    }
+  }
 };
 </script>
 
