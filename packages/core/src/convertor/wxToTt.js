@@ -10,9 +10,5 @@ export default {
         }
       })
     }
-    if (options.pageLifetimes && options.pageLifetimes.resize) {
-      error(`Options.pageLifetimes.resize is not supported in tt environment!`, global.currentResource)
-      delete options.pageLifetimes.resize
-    }
   }
 }
