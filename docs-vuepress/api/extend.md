@@ -492,7 +492,7 @@ import mpx from "https://dpubstatic.udache.com/static/dpubimg/6MQOo-ocI4/2.2.43.
 | getEnv |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
 | postMessage |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
 | getLoadError |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| onMessage |:white_check_mark:|:white_check_mark:|:x:|
+| onMessage |:x:|:x:|:white_check_mark:|:x:|:x:|
 
 
 
@@ -534,7 +534,7 @@ import mpx from "https://dpubstatic.udache.com/static/dpubimg/6MQOo-ocI4/2.2.43.
 | getStorageInfo |:white_check_mark:|:white_check_mark:|:white_check_mark:|
 | startShare |:white_check_mark:|:white_check_mark:|:x:|
 | tradePay |:white_check_mark:|:white_check_mark:|:x:|
-| onMessage |:white_check_mark:|:white_check_mark:|:x:|
+| onMessage |:x:|:x:|:white_check_mark:|:x:|:x:|
 
 ::: warning
 这个库仅提供给 H5 使用，请勿在小程序环境引入

@@ -23,20 +23,22 @@ function filterOptions (options) {
   return newOptions
 }
 
-function initProxy (context, rawOptions) {
+function initProxy (context, rawOptions, params) {
   // 缓存options
   context.$rawOptions = rawOptions
   // 创建proxy对象
   const mpxProxy = new MPXProxy(rawOptions, context)
   context.__mpxProxy = mpxProxy
-  context.__mpxProxy.created()
+  context.__mpxProxy.created(params)
 }
 
 export function getDefaultOptions (type, { rawOptions = {} }) {
   const rootMixins = [{
     created () {
       if (!this.__mpxProxy) {
-        initProxy(this, rawOptions)
+        const query = (global.__mpxRouter && global.__mpxRouter.currentRoute && global.__mpxRouter.currentRoute.query) || {}
+        initProxy(this, rawOptions, [query])
+        this.onLoad && this.onLoad(query)
       }
     },
     mounted () {

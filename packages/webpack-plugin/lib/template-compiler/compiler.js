@@ -1071,15 +1071,6 @@ function stringify (str) {
 //   }
 // }
 
-function processPageStatus (el, options) {
-  if (isComponentNode(el, options)) {
-    addAttrs(el, [{
-      name: 'mpxPageStatus',
-      value: '{{mpxPageStatus}}'
-    }])
-  }
-}
-
 const genericRE = /^generic:(.+)$/
 
 function processComponentGenericsForWeb (el, options, meta) {
@@ -2080,6 +2071,13 @@ function processNoTransAttrs (el) {
   }
 }
 
+function processMpxTagName (el) {
+  const mpxTagName = getAndRemoveAttr(el, 'mpxTagName').val
+  if (mpxTagName) {
+    el.tag = mpxTagName
+  }
+}
+
 function processElement (el, root, options, meta) {
   processAtMode(el)
   // 如果已经标记了这个元素要被清除，直接return跳过后续处理步骤
@@ -2095,6 +2093,8 @@ function processElement (el, root, options, meta) {
   processNoTransAttrs(el)
 
   processDuplicateAttrsList(el)
+
+  processMpxTagName(el)
 
   processInjectWxs(el, meta)
 
@@ -2135,9 +2135,6 @@ function processElement (el, root, options, meta) {
 
   if (!pass) {
     processBindEvent(el, options)
-    if (mode !== 'ali') {
-      processPageStatus(el, options)
-    }
     processComponentIs(el, options)
   }
 

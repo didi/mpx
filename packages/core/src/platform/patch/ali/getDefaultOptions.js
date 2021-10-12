@@ -73,7 +73,7 @@ function filterOptions (options, type) {
       return
     }
     if (key === 'properties' || key === 'props') {
-      newOptions.props = Object.assign({}, options.properties, options.props)
+      newOptions.props = Object.assign({}, options.props, options.properties)
     } else if (key === 'methods' && type === 'page') {
       Object.assign(newOptions, options[key])
     } else {
@@ -83,7 +83,7 @@ function filterOptions (options, type) {
   return newOptions
 }
 
-function initProxy (context, rawOptions, currentInject) {
+function initProxy (context, rawOptions, currentInject, params) {
   // 提供代理对象需要的api
   transformApiForProxy(context, currentInject)
   // 缓存options
@@ -91,15 +91,15 @@ function initProxy (context, rawOptions, currentInject) {
   // 创建proxy对象
   const mpxProxy = new MPXProxy(rawOptions, context)
   context.__mpxProxy = mpxProxy
-  context.__mpxProxy.created()
+  context.__mpxProxy.created(params)
 }
 
 export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
   const hookNames = type === 'component' ? ['onInit', 'didMount', 'didUnmount'] : ['onLoad', 'onReady', 'onUnload']
   const rootMixins = [{
-    [hookNames[0]] () {
+    [hookNames[0]] (...params) {
       if (!this.__mpxProxy) {
-        initProxy(this, rawOptions, currentInject)
+        initProxy(this, rawOptions, currentInject, params)
       }
     },
     deriveDataFromProps (nextProps) {

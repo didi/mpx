@@ -102,7 +102,8 @@
           threshold: 0.5,
           speed: this.duration,
           easing: this.easing,
-          interval: this.interval
+          interval: this.interval,
+          autoplay: this.autoplay
         },
         momentum: false,
         bounce: false,
