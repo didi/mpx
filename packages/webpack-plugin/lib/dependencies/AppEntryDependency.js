@@ -48,7 +48,7 @@ class AppEntryDependency extends NullDependency {
 }
 
 AppEntryDependency.Template = class AppEntryDependencyTemplate {
-  apply (dependency, source, templateContext) {
+  apply () {
   }
 }
 

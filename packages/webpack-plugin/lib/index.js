@@ -180,7 +180,7 @@ class MpxWebpackPlugin {
   }
 
   static pluginLoader (options = {}) {
-    return { loader: normalize.lib('plugin-loader'), options }
+    return { loader: normalize.lib('json-compiler/plugin'), options }
   }
 
   static wxsPreLoader (options = {}) {
@@ -395,9 +395,8 @@ class MpxWebpackPlugin {
             // 记录独立分包
             independentSubpackagesMap: {},
             subpackagesEntriesMap: {},
-            // 当前机制下分包处理队列在app.json的json-compiler中进行，由于addEntry回调特性，无法保障app.js中引用的模块都被标记为主包，故重写processModuleDependencies获取app.js及其所有依赖处理完成的时机，在这之后再执行分包处理队列
-            appScriptRawRequest: '',
-            appScriptPromise: null,
+            pluginExportModules: new Set(),
+            pluginMainModule: null,
             // 记录entry依赖关系，用于体积分析
             entryNodesMap: {},
             // 记录entryModule与entryNode的对应关系，用于体积分析
@@ -1035,10 +1034,9 @@ try {
               source.add(originalSource)
               source.add(`\nmodule.exports = ${globalObject}[${JSON.stringify(chunkLoadingGlobal)}];\n`)
             } else {
-              if (mpx.pluginMainModule && chunk.entryModule && mpx.pluginMainModule === chunk.entryModule) {
+              if (chunk.entryModule && mpx.pluginMainModule === chunk.entryModule) {
                 source.add('module.exports =\n')
-                // mpx.miniToPluginExports is a Set
-              } else if (mpx.miniToPluginModules && chunk.entryModule && mpx.miniToPluginModules.has(chunk.entryModule)) {
+              } else if (chunk.entryModule && mpx.pluginExportModules.has(chunk.entryModule)) {
                 source.add('module.exports =\n')
               }
               source.add(originalSource)

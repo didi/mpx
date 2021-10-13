@@ -1,19 +1,16 @@
 const async = require('async')
 const JSON5 = require('json5')
 const path = require('path')
-const loaderUtils = require('loader-utils')
 const parseComponent = require('../parser')
 const config = require('../config')
 const parseRequest = require('../utils/parse-request')
 const mpxJSON = require('../utils/mpx-json')
 const fixUsingComponent = require('../utils/fix-using-component')
 const getRulesRunner = require('../platform/index')
-const isUrlRequestRaw = require('../utils/is-url-request')
 const addQuery = require('../utils/add-query')
 const readJsonForSrc = require('../utils/read-json-for-src')
 const createHelpers = require('../helpers')
-const normalize = require('../utils/normalize')
-const nativeLoaderPath = normalize.lib('native-loader')
+const createJSONHelper = require('./helper')
 
 module.exports = function (content) {
   const nativeCallback = this.async()
@@ -36,16 +33,10 @@ module.exports = function (content) {
   const globalSrcMode = mpx.srcMode
   const localSrcMode = queryObj.mode
   const srcMode = localSrcMode || globalSrcMode
-  const resolveMode = mpx.resolveMode
-  const externals = mpx.externals
-  const root = mpx.projectRoot
-  const pathHash = mpx.pathHash
+
   const isApp = !(pagesMap[resourcePath] || componentsMap[resourcePath])
   const publicPath = this._compilation.outputOptions.publicPath || ''
   const fs = this._compiler.inputFileSystem
-
-  const isUrlRequest = r => isUrlRequestRaw(r, root, externals)
-  const urlToRequest = r => loaderUtils.urlToRequest(r)
 
   const emitWarning = (msg) => {
     this.emitWarning(
@@ -59,6 +50,20 @@ module.exports = function (content) {
     )
   }
 
+  const {
+    resolve,
+    isUrlRequest,
+    urlToRequest,
+    processPage,
+    processDynamicEntry,
+    processComponent,
+    processPluginJs
+  } = createJSONHelper({
+    loaderContext: this,
+    emitWarning,
+    emitError
+  })
+
   const { getRequestString } = createHelpers(this)
 
   let currentName
@@ -68,6 +73,8 @@ module.exports = function (content) {
   } else {
     currentName = componentsMap[resourcePath] || pagesMap[resourcePath]
   }
+
+  const relativePath = useRelativePath ? publicPath + path.dirname(currentName) : ''
 
   const copydir = (dir, context, callback) => {
     fs.readdir(dir, (err, files) => {
@@ -99,24 +106,6 @@ module.exports = function (content) {
           }
         ], callback)
       }, callback)
-    })
-  }
-
-  const dynamicEntryMap = new Map()
-
-  let dynamicEntryCount = 0
-
-  const getDynamicEntry = (resource, type, outputPath = '', packageRoot = '', relativePath = '') => {
-    const key = `mpx_dynamic_entry_${dynamicEntryCount++}`
-    const value = `__mpx_dynamic_entry__( ${JSON.stringify(resource)},${JSON.stringify(type)},${JSON.stringify(outputPath)},${JSON.stringify(packageRoot)},${JSON.stringify(relativePath)})`
-    dynamicEntryMap.set(key, value)
-    return key
-  }
-
-  const processDynamicEntry = (output) => {
-    return output.replace(/"mpx_dynamic_entry_\d+"/, (match) => {
-      const key = match.slice(1, -1)
-      return dynamicEntryMap.get(key)
     })
   }
 
@@ -209,15 +198,8 @@ module.exports = function (content) {
     rulesRunner(json)
   }
 
-  const resolve = (context, request, callback) => {
-    const { queryObj } = parseRequest(request)
-    context = queryObj.context || context
-    return this.resolve(context, request, callback)
-  }
-
   const processComponents = (components, context, callback) => {
     if (components) {
-      const relativePath = useRelativePath ? publicPath + path.dirname(currentName) : ''
       async.eachOf(components, (component, name, callback) => {
         processComponent(component, context, { relativePath }, (err, entry) => {
           if (err) return callback(err)
@@ -230,58 +212,40 @@ module.exports = function (content) {
     }
   }
 
-  const processComponent = (component, context, { tarRoot = '', outputPath = '', relativePath = '' }, callback) => {
-    if (!isUrlRequest(component)) return callback()
-    if (resolveMode === 'native') {
-      component = urlToRequest(component)
-    }
-
-    resolve(context, component, (err, resource, info) => {
-      if (err) return callback(err)
-      const resourcePath = parseRequest(resource).resourcePath
-      const parsed = path.parse(resourcePath)
-      const ext = parsed.ext
-      const resourceName = path.join(parsed.dir, parsed.name)
-
-      if (!outputPath) {
-        if (ext === '.js' && resourceName.includes('node_modules')) {
-          let root = info.descriptionFileRoot
-          let name = 'nativeComponent'
-          if (info.descriptionFileData) {
-            if (info.descriptionFileData.miniprogram) {
-              root = path.join(root, info.descriptionFileData.miniprogram)
-            }
-            if (info.descriptionFileData.name) {
-              // 去掉name里面的@符号，因为支付宝不支持文件路径上有@
-              name = info.descriptionFileData.name.replace(/@/g, '')
-            }
-          }
-          let relative = path.relative(root, resourceName)
-          outputPath = path.join('components', name + pathHash(root), relative)
-        } else {
-          let componentName = parsed.name
-          outputPath = path.join('components', componentName + pathHash(resourcePath), componentName)
-        }
-      }
-      if (ext === '.js') {
-        resource = `!!${nativeLoaderPath}!${resource}`
-      }
-
-      const entry = getDynamicEntry(resource, 'component', outputPath, tarRoot, relativePath)
-      callback(null, entry)
-    })
-  }
-
   if (isApp) {
     // app.json
-    const subPackagesCfg = {}
     const localPages = []
+    const subPackagesCfg = {}
     // 添加首页标识
     if (json.pages && json.pages[0]) {
       if (typeof json.pages[0] !== 'string') {
         json.pages[0].src = addQuery(json.pages[0].src, { isFirst: true })
       } else {
         json.pages[0] = addQuery(json.pages[0], { isFirst: true })
+      }
+    }
+
+    const processPages = (pages, context, tarRoot = '', callback) => {
+      if (pages) {
+        async.each(pages, (page, callback) => {
+          const { queryObj } = parseRequest(page)
+          processPage(page, context, tarRoot, (err, entry) => {
+            if (err) return callback(err)
+            if (tarRoot && subPackagesCfg) {
+              subPackagesCfg[tarRoot].pages.push(entry)
+            } else {
+              // 确保首页
+              if (queryObj.isFirst) {
+                localPages.unshift(entry)
+              } else {
+                localPages.push(entry)
+              }
+            }
+            callback()
+          })
+        }, callback)
+      } else {
+        callback()
       }
     }
 
@@ -441,63 +405,6 @@ module.exports = function (content) {
       }
     }
 
-    const getPageName = (resourcePath, ext) => {
-      const baseName = path.basename(resourcePath, ext)
-      return path.join('pages', baseName + pathHash(resourcePath), baseName)
-    }
-
-    const processPages = (pages, context, tarRoot = '', callback) => {
-      if (pages) {
-        async.each(pages, (page, callback) => {
-
-          let aliasPath = ''
-          if (typeof page !== 'string') {
-            aliasPath = page.path
-            page = page.src
-          }
-          if (!isUrlRequest(page)) return callback()
-          if (resolveMode === 'native') {
-            page = urlToRequest(page)
-          }
-          resolve(context, page, (err, resource) => {
-            if (err) return callback(err)
-            const { resourcePath, queryObj } = parseRequest(resource)
-            const ext = path.extname(resourcePath)
-            let outputPath
-            if (aliasPath) {
-              outputPath = aliasPath
-            } else {
-              const relative = path.relative(context, resourcePath)
-              if (/^\./.test(relative)) {
-                // 如果当前page不存在于context中，对其进行重命名
-                outputPath = getPageName(resourcePath, ext)
-                emitWarning(`Current page [${resourcePath}] is not in current pages directory [${context}], the page path will be replaced with [${pageName}], use ?resolve to get the page path and navigate to it!`)
-              } else {
-                outputPath = /^(.*?)(\.[^.]*)?$/.exec(relative)[1]
-              }
-            }
-            if (ext === '.js') {
-              resource = `!!${nativeLoaderPath}!${resource}`
-            }
-            const entry = getDynamicEntry(resource, 'page', outputPath, tarRoot, publicPath + tarRoot)
-            if (tarRoot) {
-              subPackagesCfg[tarRoot].pages.push(entry)
-            } else {
-              // 确保首页
-              if (queryObj.isFirst) {
-                localPages.unshift(entry)
-              } else {
-                localPages.push(entry)
-              }
-            }
-            callback()
-          })
-        }, callback)
-      } else {
-        callback()
-      }
-    }
-
     const processTabBar = (output) => {
       let tabBarCfg = config[mode].tabBar
       let itemKey = tabBarCfg.itemKey
@@ -557,14 +464,6 @@ module.exports = function (content) {
       }
     }
 
-    // const addMiniToPluginModules = module => {
-    //   if (mpx.miniToPluginModules) {
-    //     mpx.miniToPluginModules.add(module)
-    //   } else {
-    //     mpx.miniToPluginModules = new Set([module])
-    //   }
-    // }
-
     const processPluginGenericsImplementation = (genericsImplementation, context, tarRoot, callback) => {
       const relativePath = useRelativePath ? publicPath + tarRoot : ''
       async.eachOf(genericsImplementation, (genericComponents, name, callback) => {
@@ -581,27 +480,14 @@ module.exports = function (content) {
       if (!plugin.export) {
         return callback()
       }
-      let pluginExport = plugin.export
-      if (resolveMode === 'native') {
-        pluginExport = urlToRequest(pluginExport)
-      }
-      resolve(context, pluginExport, (err, resource, info) => {
+      processPluginJs(plugin.export, context, { tarRoot, type: 'pluginExport' }, (err, entry) => {
         if (err) return callback(err)
-        const { resourcePath } = parseRequest(resource)
-        // 获取 export 的模块名
-        const relative = path.relative(context, resourcePath)
-        if (/^\./.test(relative)) {
-          return callback(new Error(`The miniprogram plugins' export path ${plugin.export} must be in the context ${context}!`))
-        }
-
-        const outputPath = /^(.*?)(\.[^.]*)?$/.exec(relative)[1]
-        plugin.export = getDynamicEntry(resource, 'pluginExport', outputPath, tarRoot, publicPath + tarRoot)
-        callback()
+        plugin.export = entry
       })
     }
 
     const processPlugins = (plugins, context, tarRoot = '', callback) => {
-      if (mpx.mode !== 'wx' || !plugins) return callback() // 目前只有微信支持导出到插件
+      if (mode !== 'wx' || !plugins) return callback() // 目前只有微信支持导出到插件
       async.eachOf(plugins, (plugin, name, callback) => {
         async.parallel([
           (callback) => {
@@ -667,7 +553,6 @@ module.exports = function (content) {
     // page.json或component.json
     const processGenerics = (generics, context, callback) => {
       if (generics) {
-        const relativePath = useRelativePath ? publicPath + path.dirname(currentName) : ''
         async.eachOf(generics, (generic, name, callback) => {
           if (generic.default) {
             processComponent(generic.default, context, { relativePath }, (err, entry) => {

@@ -11,7 +11,7 @@ const fixUsingComponent = require('./utils/fix-using-component')
 module.exports = function (content) {
   this.cacheable()
 
-  const mpx = this._compilation.__mpx__
+  const mpx = this.getMpx()
   if (!mpx) {
     return content
   }

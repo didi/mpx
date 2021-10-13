@@ -19,7 +19,7 @@ const AppEntryDependency = require('./dependencies/AppEntryDependency')
 module.exports = function (content) {
   this.cacheable()
 
-  const mpx = this._compilation.__mpx__
+  const mpx = this.getMpx()
   if (!mpx) {
     return content
   }
