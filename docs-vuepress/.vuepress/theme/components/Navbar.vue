@@ -1,17 +1,19 @@
 <template>
   <header class="header">
-    <img
-      class="banner"
-      width="60%"
-      src="https://dpubstatic.udache.com/static/dpubimg/RZO9xjPj0j/banner_bg.png"
-      alt="banner"
-    />
-    <img
-      class="banner"
-      width="50%"
-      src="https://dpubstatic.udache.com/static/dpubimg/u3KGxYyATw/banner_pic.png"
-      alt="banner"
-    />
+    <div class="head-container">
+      <h1 class="logo">Mpx</h1>
+      <div class="row">
+        <div class="header__line"></div>
+        <nav class="nav"><a class="nav-link" href="/guide/basic/start.html">指南</a></nav>
+        <nav class="nav"><a class="nav-link" href="/api/config.html">API</a></nav>
+        <nav class="nav"><a class="nav-link" href="/articles/">文章</a></nav>
+        <div class="searchBox-wrapper">
+          <div class="searchBox">
+            <AlgoliaSearchBox v-if="isAlgoliaSearch" :options="algolia" />
+          </div>
+        </div>
+      </div>
+    </div>
   </header>
 </template>
 
@@ -49,10 +51,25 @@ export default {
   display flex
   align-items center
 .header
-  padding 40px 0 0 30px
-  position relative
   display flex
   align-items center
+  justify-content center
+  z-index 100
+  padding 20px 30px
+  width 100%
+  height 35px
+  position fixed
+  top 0
+  left 0
+  background-color #ffffff
+  border-bottom 1px solid #eaecef
+  // backdrop-filter blur(3px)
+.head-container
+  width 100%
+  height 35px
+  display flex
+  align-items center
+  // justify-content center
 .nav-link
   color #3A495D
 .banner
@@ -64,7 +81,7 @@ export default {
   right 150px
   z-index 2
 .header__line
-  height 30px
+  height 33px
   opacity 0.1
   border 1px solid #3A495D
 </style>

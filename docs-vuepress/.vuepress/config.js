@@ -116,6 +116,7 @@ module.exports = {
     }]
   ],
   themeConfig: {
+    navbar: false,
     algolia: {
 			apiKey: '7849f511f78afc4383a81f0137a91c0f',
 			indexName: 'mpxjs',
