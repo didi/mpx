@@ -9,6 +9,16 @@
         <nav class="nav"><a class="nav-link" href="/guide/basic/start.html">指南</a></nav>
         <nav class="nav"><a class="nav-link" href="/api/config.html">API</a></nav>
         <nav class="nav"><a class="nav-link" href="/articles/">文章</a></nav>
+        <nav class="nav">
+          <a class="nav-link" href="https://github.com/didi/mpx/releases" target="_blank" rel="noopener noreferrer">
+          更新记录
+          </a>
+        </nav>
+        <nav class="nav">
+          <a class="nav-link" href="https://github.com/didi/mpx" target="_blank" rel="noopener noreferrer">
+          GitHub
+          </a>
+        </nav>
         <div class="searchBox-wrapper">
           <div class="searchBox">
             <AlgoliaSearchBox v-if="isAlgoliaSearch" :options="algolia" />
@@ -57,7 +67,7 @@ export default {
   align-items center
   justify-content center
   z-index 100
-  padding 0 3rem
+  padding 0.5rem 3rem
   width 100%
   height 3.5rem
   position fixed
@@ -65,6 +75,7 @@ export default {
   left 0
   backdrop-filter saturate(180%) blur(1rem)
   background-color hsla(0,0%,100%,.8)
+  box-shadow rgb(240 241 242) 0px 2px 8px
 .head-container
   width 100%
   height 3.5rem
