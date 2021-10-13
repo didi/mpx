@@ -120,7 +120,7 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning }) {
     })
   }
 
-  const processPluginJs = (js, context, { tarRoot = '', type }, callback) => {
+  const processJsExport = (js, context, tarRoot = '', callback) => {
     if (resolveMode === 'native') {
       js = urlToRequest(js)
     }
@@ -129,8 +129,7 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning }) {
       const { resourcePath } = parseRequest(resource)
       const relative = path.relative(context, resourcePath)
       if (/^\./.test(relative)) {
-        const err = type === 'pluginExport' ? new Error(`The plugin export path ${resourcePath} must be in the context ${context}!`) : new Error(`The plugin main path [${main}] must be in the context [${context}]!`)
-        return callback(err)
+        return callback(new Error(`The js export path ${resourcePath} must be in the context ${context}!`))
       }
       const outputPath = /^(.*?)(\.[^.]*)?$/.exec(relative)[1]
       const entry = getDynamicEntry(resource, type, outputPath, tarRoot, publicPath + tarRoot)
@@ -142,7 +141,7 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning }) {
     processComponent,
     processDynamicEntry,
     processPage,
-    processPluginJs,
+    processJsExport,
     resolve,
     isUrlRequest,
     urlToRequest

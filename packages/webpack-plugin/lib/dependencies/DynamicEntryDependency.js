@@ -49,8 +49,8 @@ class DynamicEntryDependency extends NullDependency {
       this.publicPath = compilation.outputOptions.publicPath || ''
       mpx.addEntry(resource, filename, (err, entryModule) => {
         if (err) return callback(err)
-        if (entryType === 'pluginExport') {
-          mpx.pluginExportModules.add(entryModule)
+        if (entryType === 'export') {
+          mpx.exportModules.add(entryModule)
         }
         // todo entry的父子关系可以在这里建立
         return callback(null, entryModule)

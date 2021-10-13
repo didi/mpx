@@ -57,7 +57,7 @@ module.exports = function (content) {
     processPage,
     processDynamicEntry,
     processComponent,
-    processPluginJs
+    processJsExport
   } = createJSONHelper({
     loaderContext: this,
     emitWarning,
@@ -480,9 +480,10 @@ module.exports = function (content) {
       if (!plugin.export) {
         return callback()
       }
-      processPluginJs(plugin.export, context, { tarRoot, type: 'pluginExport' }, (err, entry) => {
+      processJsExport(plugin.export, context, tarRoot, (err, entry) => {
         if (err) return callback(err)
         plugin.export = entry
+        callback()
       })
     }
 

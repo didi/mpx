@@ -40,6 +40,7 @@ const styleCompilerPath = normalize.lib('style-compiler/index')
 const templateCompilerPath = normalize.lib('template-compiler/index')
 const jsonCompilerPath = normalize.lib('json-compiler/index')
 const jsonThemeCompilerPath = normalize.lib('json-compiler/theme')
+const jsonPluginCompilerPath = normalize.lib('json-compiler/plugin')
 const extractorPath = normalize.lib('extractor')
 const async = require('async')
 const stringifyLoadersAndResource = require('./utils/stringify-loaders-resource')
@@ -395,8 +396,7 @@ class MpxWebpackPlugin {
             // 记录独立分包
             independentSubpackagesMap: {},
             subpackagesEntriesMap: {},
-            pluginExportModules: new Set(),
-            pluginMainModule: null,
+            exportModules: new Set(),
             // 记录entry依赖关系，用于体积分析
             entryNodesMap: {},
             // 记录entryModule与entryNode的对应关系，用于体积分析
@@ -1034,9 +1034,7 @@ try {
               source.add(originalSource)
               source.add(`\nmodule.exports = ${globalObject}[${JSON.stringify(chunkLoadingGlobal)}];\n`)
             } else {
-              if (chunk.entryModule && mpx.pluginMainModule === chunk.entryModule) {
-                source.add('module.exports =\n')
-              } else if (chunk.entryModule && mpx.pluginExportModules.has(chunk.entryModule)) {
+              if (chunk.entryModule && mpx.exportModules.has(chunk.entryModule)) {
                 source.add('module.exports =\n')
               }
               source.add(originalSource)
@@ -1130,6 +1128,10 @@ try {
               if (queryObj.isTheme) {
                 loaders.unshift({
                   loader: jsonThemeCompilerPath
+                })
+              } else if (queryObj.isPlugin) {
+                loaders.unshift({
+                  loader: jsonPluginCompilerPath
                 })
               } else {
                 loaders.unshift({
