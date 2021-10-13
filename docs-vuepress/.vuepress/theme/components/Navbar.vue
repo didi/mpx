@@ -1,7 +1,9 @@
 <template>
   <header class="header">
     <div class="head-container">
-      <h1 class="logo">Mpx</h1>
+      <a href="/">
+        <div class="logo">mpx</div>
+      </a>
       <div class="row">
         <div class="header__line"></div>
         <nav class="nav"><a class="nav-link" href="/guide/basic/start.html">指南</a></nav>
@@ -55,20 +57,20 @@ export default {
   align-items center
   justify-content center
   z-index 100
-  padding 20px 30px
+  padding 0 3rem
   width 100%
-  height 35px
+  height 3.5rem
   position fixed
   top 0
   left 0
-  background-color #ffffff
-  border-bottom 1px solid #eaecef
-  // backdrop-filter blur(3px)
+  backdrop-filter saturate(180%) blur(1rem)
+  background-color hsla(0,0%,100%,.8)
 .head-container
   width 100%
-  height 35px
+  height 3.5rem
   display flex
   align-items center
+  line-height 2.2rem
   // justify-content center
 .nav-link
   color #3A495D

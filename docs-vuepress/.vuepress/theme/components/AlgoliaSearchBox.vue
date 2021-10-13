@@ -172,7 +172,7 @@ export default {
 </style> -->
 
 <template>
-  <form id="search-form" class="algolia-search-wrapper search-box">
+  <form id="search-form" class="algolia-search-wrapper search-box" role="search">
     <input id="algolia-search-input" class="search-query">
   </form>
 </template>
@@ -206,7 +206,9 @@ export default {
 </script>
 
 <style lang="stylus">
-
+input:focus
+  cursor text
+  width 12.5rem
 .algolia-search-wrapper
   .algolia-autocomplete
     .ds-dropdown-menu
