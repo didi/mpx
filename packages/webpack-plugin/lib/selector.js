@@ -9,7 +9,7 @@ module.exports = function (content) {
   }
   const { queryObj } = parseRequest(this.resource)
   const type = queryObj.type
-  const index = queryObj.index
+  const index = queryObj.index || 0
   const mode = mpx.mode
   const env = mpx.env
   const defs = mpx.defs

@@ -470,8 +470,11 @@ class MpxWebpackPlugin {
               const { resourcePath, queryObj } = parseRequest(resource)
               const type = queryObj.type
               const isStatic = queryObj.isStatic
+              const isPlugin = queryObj.isPlugin
               let file
-              if (isStatic) {
+              if (isPlugin) {
+                file = 'plugin.json'
+              } else if (isStatic) {
                 const packageRoot = queryObj.packageRoot || ''
                 const resourceName = path.parse(resourcePath).name
                 file = toPosix(path.join(packageRoot, type, resourceName + mpx.pathHash(resourcePath) + typeExtMap[type]))

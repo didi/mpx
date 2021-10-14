@@ -119,7 +119,7 @@ function run () {
   } else {
     checkVersion(() => {
       // use official templates
-      const officialTemplate = 'mpx-ecology/' + template
+      const officialTemplate = 'mpx-ecology/' + template + '#feat-webpack5-adapt'
       downloadAndGenerate(officialTemplate)
     })
   }
