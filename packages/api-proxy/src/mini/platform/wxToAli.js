@@ -200,54 +200,6 @@ const getWxToAliApi = ({ optimize = false }) => {
       return ALI_OBJ.uploadFile(opts)
     },
 
-    connectSocket (options = {}) {
-      let socketTaskId
-
-      // socketTaskId && socketTaskId !== null ? socketTaskId : 0
-
-      const cacheSuc = options.success
-
-      options.success = function (res) {
-        cacheSuc.call(this, Object.assign(res, {
-          socketTaskId: socketTaskId++
-        }))
-      }
-
-      ALI_OBJ.connectSocket(options)
-
-      const socketTask = {
-        close (res) {
-          ALI_OBJ.closeSocket(res)
-          console.log('%c [ this.envObj.closeSocket() ]', 'font-size:13px; background:pink; color:#bf2c9f;', ALI_OBJ.closeSocket(res))
-        },
-
-        send (res) {
-          ALI_OBJ.sendSocketMessage(res)
-          console.log('%c [ ALI_OBJ.sendSocketMessage(res) ]', 'font-size:13px; background:pink; color:#bf2c9f;', ALI_OBJ.sendSocketMessage(res))
-        },
-
-        // 监听类事件未做到自动触发，待完善
-        onClose (res) {
-          // console.log('onclose option', options)
-          // ALI_OBJ.onSocketClose(res)
-        },
-
-        onError () {
-
-        },
-
-        onMessage () {
-
-        },
-
-        onOpen () {
-
-        }
-      }
-
-      return socketTask
-    },
-
     /**
      * 数据缓存
      */
