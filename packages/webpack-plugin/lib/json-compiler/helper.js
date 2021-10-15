@@ -1,3 +1,4 @@
+const path = require('path')
 const normalize = require('../utils/normalize')
 const nativeLoaderPath = normalize.lib('native-loader')
 const isUrlRequestRaw = require('../utils/is-url-request')

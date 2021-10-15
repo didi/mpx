@@ -47,15 +47,6 @@ module.exports = function (source) {
   // 最终输出中不需要为plugin.json产生chunk，而是使用extractor输出，删除plugin.json对应的entrypoint
   if (entryName) this._compilation.entries.delete(entryName)
 
-  // 新模式下plugin.json输出依赖于extractor
-  const callback = (err, processOutput) => {
-    if (err) return nativeCallback(err)
-    let output = `var json = ${JSON.stringify(json, null, 2)};\n`
-    if (processOutput) output = processOutput(output)
-    output += `module.exports = JSON.stringify(json, null, 2);\n`
-    nativeCallback(null, output)
-  }
-
   let pluginEntry
   try {
     pluginEntry = JSON5.parse(source)
@@ -63,6 +54,14 @@ module.exports = function (source) {
     return callback(err)
   }
 
+  // 新模式下plugin.json输出依赖于extractor
+  const callback = (err, processOutput) => {
+    if (err) return nativeCallback(err)
+    let output = `var pluginEntry = ${JSON.stringify(pluginEntry, null, 2)};\n`
+    if (processOutput) output = processOutput(output)
+    output += `module.exports = JSON.stringify(pluginEntry, null, 2);\n`
+    nativeCallback(null, output)
+  }
 
   const processMain = (main, callback) => {
     if (!main) return callback()
