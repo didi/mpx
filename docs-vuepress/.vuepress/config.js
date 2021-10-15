@@ -106,15 +106,15 @@ module.exports = {
       description: '深度性能优化的增强型小程序开发框架'
     },
   },
-  plugins: [
-    ['@vuepress/pwa', {
+  plugins: {
+    '@vuepress/pwa': {
       serviceWorker: true,
       updatePopup: {
         message: '文档有更新啦！',
         buttonText: '刷新'
       }
-    }]
-  ],
+    }
+  },
   themeConfig: {
     navbar: false,
     algolia: {
