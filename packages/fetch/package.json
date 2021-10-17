@@ -29,8 +29,5 @@
   },
   "dependencies": {
     "path-to-regexp": "^6.2.0"
-  },
-  "peerDependencies": {
-    "@mpxjs/core": "^2.3.0"
   }
 }
