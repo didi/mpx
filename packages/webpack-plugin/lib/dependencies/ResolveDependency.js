@@ -19,9 +19,10 @@ class ResolveDependency extends NullDependency {
     return 'mpx resolve'
   }
 
-  updateHash (hash) {
-    super.updateHash(hash)
+  updateHash (hash, context) {
+    // todo 完善hash
     hash.update(this.resource)
+    super.updateHash(hash, context)
   }
 }
 

@@ -12,9 +12,9 @@ class InjectDependency extends NullDependency {
     return 'mpx inject'
   }
 
-  updateHash (hash) {
-    super.updateHash(hash)
+  updateHash (hash, context) {
     hash.update(this.content)
+    super.updateHash(hash, context)
   }
 
   serialize (context) {

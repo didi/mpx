@@ -11,9 +11,9 @@ class ReplaceDependency extends NullDependency {
     return 'mpx replace'
   }
 
-  updateHash (hash) {
-    super.updateHash(hash)
+  updateHash (hash, context) {
     hash.update(this.replacement)
+    super.updateHash(hash, context)
   }
 }
 

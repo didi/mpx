@@ -39,7 +39,7 @@ class RecordStaticResourceDependency extends NullDependency {
 }
 
 RecordStaticResourceDependency.Template = class RecordStaticResourceDependencyTemplate {
-  apply (dependency, source, templateContext) {
+  apply () {
   }
 }
 

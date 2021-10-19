@@ -326,7 +326,11 @@ class MpxWebpackPlugin {
         async.eachOfSeries(mpx.subpackagesEntriesMap, (deps, packageRoot, callback) => {
           mpx.currentPackageRoot = packageRoot
           async.each(deps, (dep, callback) => {
-            mpx.replacePathMap[dep.key] = dep.addEntry(compilation, callback)
+            dep.addEntry(compilation, (err, { resultPath }) => {
+              if (err) return callback(err)
+              mpx.replacePathMap[dep.key] = resultPath
+              callback()
+            })
           }, callback)
         }, callback)
       } else {

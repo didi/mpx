@@ -38,7 +38,13 @@ class DynamicEntryDependency extends NullDependency {
       }
     })
 
-    if (alreadyOutputed) return callback()
+    const publicPath = compilation.outputOptions.publicPath || ''
+    let resultPath = publicPath + filename
+    if (relativePath) {
+      resultPath = toPosix(path.relative(relativePath, resultPath))
+    }
+
+    if (alreadyOutputed) return callback(null, { resultPath })
     if (packageRoot) {
       resource = addQuery(resource, { packageRoot })
     }
@@ -49,15 +55,11 @@ class DynamicEntryDependency extends NullDependency {
         mpx.exportModules.add(entryModule)
       }
       // todo entry的父子关系可以在这里建立
-      return callback(null, entryModule)
+      return callback(null, {
+        resultPath,
+        entryModule
+      })
     })
-
-    const publicPath = compilation.outputOptions.publicPath || ''
-    let resultPath = publicPath + filename
-    if (relativePath) {
-      resultPath = toPosix(path.relative(relativePath, resultPath))
-    }
-    return resultPath
   }
 
   mpxAction (module, compilation, callback) {
@@ -67,10 +69,22 @@ class DynamicEntryDependency extends NullDependency {
     if (packageRoot && mpx.currentPackageRoot !== packageRoot) {
       mpx.subpackagesEntriesMap[packageRoot] = mpx.subpackagesEntriesMap[packageRoot] || []
       mpx.subpackagesEntriesMap[packageRoot].push(this)
-      return callback()
+      callback()
     } else {
-      this.resultPath = this.addEntry(compilation, callback)
+      this.addEntry(compilation, (err, { resultPath }) => {
+        if (err) return callback(err)
+        this.resultPath = resultPath
+        callback()
+      })
     }
+  }
+
+  // hash会影响最终的codeGenerateResult是否走缓存，由于该dep中resultPath是动态变更的，需要将其更新到hash中，避免错误使用缓存
+  updateHash (hash, context) {
+    const { key, resultPath = '' } = this
+    hash.update(key)
+    hash.update(resultPath)
+    super.updateHash(hash, context)
   }
 
   serialize (context) {
