@@ -377,7 +377,6 @@ module.exports = function (content) {
           pages: [],
           ...otherConfig
         }
-        mpx.currentPackageRoot = tarRoot
         mpx.componentsMap[tarRoot] = {}
         mpx.staticResourcesMap[tarRoot] = {}
         mpx.subpackageModulesMap[tarRoot] = {}

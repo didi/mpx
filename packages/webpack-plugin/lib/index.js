@@ -1,8 +1,7 @@
 'use strict'
 
 const path = require('path')
-const ConcatSource = require('webpack-sources').ConcatSource
-const RawSource = require('webpack-sources').RawSource
+const { ConcatSource, RawSource } = require('webpack').sources
 const ResolveDependency = require('./dependencies/ResolveDependency')
 const InjectDependency = require('./dependencies/InjectDependency')
 const ReplaceDependency = require('./dependencies/ReplaceDependency')
@@ -14,6 +13,7 @@ const JavascriptModulesPlugin = require('webpack/lib/javascript/JavascriptModule
 const normalize = require('./utils/normalize')
 const toPosix = require('./utils/to-posix')
 const addQuery = require('./utils/add-query')
+const { every } = require('./utils/set')
 const DefinePlugin = require('webpack/lib/DefinePlugin')
 const ExternalsPlugin = require('webpack/lib/ExternalsPlugin')
 const AddModePlugin = require('./resolver/AddModePlugin')
@@ -68,8 +68,9 @@ function getPackageCacheGroup (packageName) {
     }
   } else {
     return {
-      test: (module, chunks) => {
-        return chunks.every((chunk) => {
+      test: (module, { chunkGraph }) => {
+        const chunks = chunkGraph.getModuleChunksIterable(module)
+        return chunks.size && every(chunks, (chunk) => {
           return isChunkInPackage(chunk.name, packageName)
         })
       },
@@ -320,13 +321,13 @@ class MpxWebpackPlugin {
       name: 'MpxWebpackPlugin',
       stage: -1000
     }, (compilation, callback) => {
-      if (mpx.subpackagesEntriesMap) {
+      const mpx = compilation.__mpx__
+      if (mpx && mpx.subpackagesEntriesMap) {
         async.eachOfSeries(mpx.subpackagesEntriesMap, (deps, packageRoot, callback) => {
           mpx.currentPackageRoot = packageRoot
           async.each(deps, (dep, callback) => {
-            dep.mpxAction(dep.tempModule, compilation, callback)
+            mpx.replacePathMap[dep.key] = dep.addEntry(compilation, callback)
           }, callback)
-
         }, callback)
       } else {
         callback()
@@ -400,6 +401,7 @@ class MpxWebpackPlugin {
             // 记录独立分包
             independentSubpackagesMap: {},
             subpackagesEntriesMap: {},
+            replacePathMap: {},
             exportModules: new Set(),
             // 记录entry依赖关系，用于体积分析
             entryNodesMap: {},
@@ -748,7 +750,15 @@ class MpxWebpackPlugin {
             const sortedExtractedAssets = extractedAssets.sort((a, b) => a.index - b.index)
             const source = new ConcatSource()
             sortedExtractedAssets.forEach(({ content }) => {
-              if (content) source.add(content)
+              if (content) {
+                // 处理replace path
+                if (/"mpx_replace_path_.*?"/.test(content)) {
+                  content = content.replace(/"mpx_replace_path_(.*?)"/g, (matched, key) => {
+                    return JSON.stringify(mpx.replacePathMap[key] || 'missing replace path')
+                  })
+                }
+                source.add(content)
+              }
             })
             compilation.emitAsset(filename, source)
           }
@@ -956,6 +966,8 @@ class MpxWebpackPlugin {
             chunkLoadingGlobal
           } = compilation.outputOptions
 
+          const { chunkGraph } = compilation
+
           function getTargetFile (file) {
             let targetFile = file
             const queryStringIdx = targetFile.indexOf('?')
@@ -1041,7 +1053,9 @@ try {
               source.add(originalSource)
               source.add(`\nmodule.exports = ${globalObject}[${JSON.stringify(chunkLoadingGlobal)}];\n`)
             } else {
-              if (chunk.entryModule && mpx.exportModules.has(chunk.entryModule)) {
+              const entryModules = chunkGraph.getChunkEntryModulesIterable(chunk)
+              const entryModule = entryModules && entryModules[0]
+              if (entryModule && mpx.exportModules.has(entryModule)) {
                 source.add('module.exports =\n')
               }
               source.add(originalSource)

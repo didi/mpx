@@ -58,12 +58,14 @@ module.exports.pitch = async function (remainingRequest) {
     }).join('\n')
   }
 
+  const extractedInfo = {
+    content,
+    index
+  }
+
   this.emitFile(file, '', undefined, {
     skipEmit: true,
-    extractedInfo: {
-      content,
-      index
-    }
+    extractedInfo
   })
 
   let resultSource = DEFAULT_RESULT_SOURCE

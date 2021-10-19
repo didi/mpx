@@ -33,7 +33,7 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning }) {
   }
 
   const processDynamicEntry = (output) => {
-    return output.replace(/"mpx_dynamic_entry_\d+"/, (match) => {
+    return output.replace(/"mpx_dynamic_entry_\d+"/g, (match) => {
       const key = match.slice(1, -1)
       return dynamicEntryMap.get(key)
     })
