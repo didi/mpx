@@ -5,7 +5,6 @@ const LimitChunkCountPlugin = require('webpack/lib/optimize/LimitChunkCountPlugi
 const path = require('path')
 const WxsPlugin = require('./WxsPlugin')
 const RecordStaticResourceDependency = require('../dependencies/RecordStaticResourceDependency')
-// const ChildCompileDependency = require('../dependencies/ChildCompileDependency')
 const parseRequest = require('../utils/parse-request')
 const toPosix = require('../utils/to-posix')
 const fixRelative = require('../utils/fix-relative')
@@ -81,6 +80,14 @@ module.exports = function () {
   //     // wxsMap[filename].dep = dep
   //   })
   // })
+
+  childCompiler.hooks.afterCompile.tap('MpxWebpackPlugin', (compilation) => {
+    // 持久化缓存，使用module.buildInfo.assets来输出文件
+    compilation.getAssets().forEach(({ name, source, info }) => {
+      this.emitFile(name, source.source(), undefined, info)
+    })
+    compilation.clearAssets()
+  })
 
   childCompiler.runAsChild((err, entries, compilation) => {
     if (err) return callback(err)
