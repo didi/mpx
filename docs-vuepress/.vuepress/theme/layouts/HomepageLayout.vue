@@ -1,6 +1,6 @@
 <template>
   <div class="container">
-    <div style="background: #f5f5f5;" v-if="small">
+    <div class="wrapper" style="background: #f5f5f5; min-width: 1190px; overflow-x: scroll;" v-if="!small">
       <Header />
       <Content />
       <Footer />
@@ -27,18 +27,22 @@ export default {
   data () {
     // const current = document.documentElement.clientWidth > 1020
     return {
-      small: true
+      small: false
     }
   },
   beforeMount () {
     window.onresize = () => {
-      const current = document.documentElement.clientWidth > 1020
-      this.small = current
+      function isMobile() {
+        return (/phone|pad|pod|iPhone|iPod|ios|iPad|Android|Mobile|BlackBerry|IEMobile|MQQBrowser|JUC|Fennec|wOSBrowser|BrowserNG|WebOS|Symbian|Windows Phone|webOS|android/i.test(navigator.userAgent))
+      }
+      this.small = isMobile()
     }
   }
 };
 </script>
 
 <style lang="stylus" scoped>
-
+// .wrapper
+//   width 1280px
+//   margin auto
 </style>
