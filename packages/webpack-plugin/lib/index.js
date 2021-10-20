@@ -22,7 +22,7 @@ const PackageEntryPlugin = require('./resolver/PackageEntryPlugin')
 // const CommonJsRequireDependency = require('webpack/lib/dependencies/CommonJsRequireDependency')
 // const HarmonyImportSideEffectDependency = require('webpack/lib/dependencies/HarmonyImportSideEffectDependency')
 // const RequireHeaderDependency = require('webpack/lib/dependencies/RequireHeaderDependency')
-const RemovedModuleDependency = require('./dependencies/RemovedModuleDependency')
+// const RemovedModuleDependency = require('./dependencies/RemovedModuleDependency')
 const AppEntryDependency = require('./dependencies/AppEntryDependency')
 const RecordStaticResourceDependency = require('./dependencies/RecordStaticResourceDependency')
 const DynamicEntryDependency = require('./dependencies/DynamicEntryDependency')
@@ -325,6 +325,9 @@ class MpxWebpackPlugin {
       if (mpx && mpx.subpackagesEntriesMap) {
         async.eachOfSeries(mpx.subpackagesEntriesMap, (deps, packageRoot, callback) => {
           mpx.currentPackageRoot = packageRoot
+          mpx.componentsMap[packageRoot] = {}
+          mpx.staticResourcesMap[packageRoot] = {}
+          mpx.subpackageModulesMap[packageRoot] = {}
           async.each(deps, (dep, callback) => {
             dep.addEntry(compilation, (err, { resultPath }) => {
               if (err) return callback(err)
@@ -369,9 +372,6 @@ class MpxWebpackPlugin {
 
       compilation.dependencyFactories.set(RecordStaticResourceDependency, new NullFactory())
       compilation.dependencyTemplates.set(RecordStaticResourceDependency, new RecordStaticResourceDependency.Template())
-
-      compilation.dependencyFactories.set(RemovedModuleDependency, normalModuleFactory)
-      compilation.dependencyTemplates.set(RemovedModuleDependency, new RemovedModuleDependency.Template())
 
       compilation.dependencyFactories.set(CommonJsVariableDependency, normalModuleFactory)
       compilation.dependencyTemplates.set(CommonJsVariableDependency, new CommonJsVariableDependency.Template())
@@ -688,36 +688,6 @@ class MpxWebpackPlugin {
           }
         })
 
-        // compilation.hooks.optimizeModules.tap('MpxWebpackPlugin', (modules) => {
-        //   modules.forEach((module) => {
-        //     if (module.needRemove) {
-        //       let removed = false
-        //       module.reasons.forEach((reason) => {
-        //         if (reason.module) {
-        //           if (reason.dependency instanceof HarmonyImportSideEffectDependency) {
-        //             reason.module.removeDependency(reason.dependency)
-        //             reason.module.addDependency(new RemovedModuleDependency(reason.dependency.request, module))
-        //             removed = true
-        //           } else if (reason.dependency instanceof CommonJsRequireDependency && reason.dependency.loc.range) {
-        //             let index = reason.module.dependencies.indexOf(reason.dependency)
-        //             if (index > -1 && reason.module.dependencies[index + 1] instanceof RequireHeaderDependency) {
-        //               reason.module.dependencies.splice(index, 2)
-        //               reason.module.addDependency(new RemovedModuleDependency(reason.dependency.request, module, reason.dependency.loc.range))
-        //               removed = true
-        //             }
-        //           }
-        //         }
-        //       })
-        //       if (removed) {
-        //         module.chunksIterable.forEach((chunk) => {
-        //           module.removeChunk(chunk)
-        //         })
-        //         module.disconnect()
-        //       }
-        //     }
-        //   })
-        // })
-
         JavascriptModulesPlugin.getCompilationHooks(compilation).renderModuleContent.tap('MpxWebpackPlugin', (source, module, renderContext) => {
           // 处理dll产生的external模块
           if (module.external && module.userRequest.startsWith('dll-reference ') && mpx.mode !== 'web') {
@@ -769,21 +739,13 @@ class MpxWebpackPlugin {
         })
 
         normalModuleFactory.hooks.parser.for('javascript/auto').tap('MpxWebpackPlugin', (parser) => {
-          // hack预处理，将expr.range写入loc中便于在CommonJsRequireDependency中获取，移除无效require
-          parser.hooks.call.for('require').tap({ name: 'MpxWebpackPlugin', stage: -100 }, (expr) => {
-            expr.loc.range = expr.range
-          })
-
           parser.hooks.call.for('__mpx_resolve_path__').tap('MpxWebpackPlugin', (expr) => {
             if (expr.arguments[0]) {
               const resource = expr.arguments[0].value
               const packageName = mpx.currentPackageRoot || 'main'
-              const pagesMap = mpx.pagesMap
-              const componentsMap = mpx.componentsMap
-              const staticResourcesMap = mpx.staticResourcesMap
-              const range = expr.range
               const issuerResource = moduleGraph.getIssuer(parser.state.module).resource
-              const dep = new ResolveDependency(resource, packageName, pagesMap, componentsMap, staticResourcesMap, publicPath, range, issuerResource, compilation)
+              const range = expr.range
+              const dep = new ResolveDependency(resource, packageName, issuerResource, range)
               parser.state.current.addPresentationalDependency(dep)
               return true
             }
@@ -1113,8 +1075,8 @@ try {
         let { queryObj, resource } = parseRequest(request)
         if (queryObj.resolve) {
           // 此处的query用于将资源引用的当前包信息传递给resolveDependency
-          const pathLoader = normalize.lib('path-loader')
-          data.request = `!!${pathLoader}!${resource}`
+          const resolveLoaderPath = normalize.lib('resolve-loader')
+          data.request = `!!${resolveLoaderPath}!${resource}`
         }
       })
 

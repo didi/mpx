@@ -19,6 +19,12 @@ class CommonJsVariableDependency extends ModuleDependency {
     super.deserialize(context)
   }
 
+  updateHash (hash, context) {
+    hash.update(this.request)
+    hash.update(this.name)
+    super.updateHash(hash, context)
+  }
+
   get type () {
     return 'mpx cjs variable'
   }
@@ -32,7 +38,7 @@ CommonJsVariableDependency.Template = class CommonJsVariableDependencyTemplate e
   ModuleDependency.Template
 ) {
   apply (
-    dependency,
+    dep,
     source,
     {
       module,
@@ -44,7 +50,6 @@ CommonJsVariableDependency.Template = class CommonJsVariableDependencyTemplate e
       initFragments
     }
   ) {
-    const dep = dependency
     if (!dep.name) return
     const importedModule = moduleGraph.getModule(dep)
     let requireExpr = runtimeTemplate.moduleExports({

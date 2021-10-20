@@ -377,9 +377,6 @@ module.exports = function (content) {
           pages: [],
           ...otherConfig
         }
-        mpx.componentsMap[tarRoot] = {}
-        mpx.staticResourcesMap[tarRoot] = {}
-        mpx.subpackageModulesMap[tarRoot] = {}
         context = path.join(context, srcRoot)
         async.parallel([
           (callback) => {

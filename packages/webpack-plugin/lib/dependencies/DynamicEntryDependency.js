@@ -25,7 +25,9 @@ class DynamicEntryDependency extends NullDependency {
 
   addEntry (compilation, callback) {
     const mpx = compilation.__mpx__
+    const publicPath = compilation.outputOptions.publicPath || ''
     let { resource, entryType, outputPath, relativePath } = this
+
     const { packageRoot, outputPath: filename, alreadyOutputed } = mpx.getPackageInfo({
       resource,
       outputPath,
@@ -38,7 +40,6 @@ class DynamicEntryDependency extends NullDependency {
       }
     })
 
-    const publicPath = compilation.outputOptions.publicPath || ''
     let resultPath = publicPath + filename
     if (relativePath) {
       resultPath = toPosix(path.relative(relativePath, resultPath))
@@ -81,9 +82,8 @@ class DynamicEntryDependency extends NullDependency {
 
   // hash会影响最终的codeGenerateResult是否走缓存，由于该dep中resultPath是动态变更的，需要将其更新到hash中，避免错误使用缓存
   updateHash (hash, context) {
-    const { key, resultPath = '' } = this
-    hash.update(key)
-    hash.update(resultPath)
+    const { resultPath } = this
+    if (resultPath) hash.update(resultPath)
     super.updateHash(hash, context)
   }
 
