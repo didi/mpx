@@ -12,12 +12,15 @@ features:
 - title: 高性能
   details: 以增强的方式将Vue中大量优良特性引入到小程序开发中，配合灵活强大的编译构建，大大提升了小程序开发体验和效率，同时提供了媲美原生开发的稳定性。
   icon: https://dpubstatic.udache.com/static/dpubimg/N7sc6TZnja/texing_icon_gao.png
+  micon: https://dpubstatic.udache.com/static/dpubimg/0S3n12uc1k/y_icon_gao.png
 - title: 优体验
   details: 框架自带深度的运行时性能优化及包体积优化，让开发者在大多数场景下只需专注于业务开发，就能生产出媲美原生的高性能小程序应用。
   icon: https://dpubstatic.udache.com/static/dpubimg/PsrcQ_igBl/texing_icon_you.png
+  micon: https://dpubstatic.udache.com/static/dpubimg/BBQBgCRCOl/y_icon_you.png
 - title: 跨平台
   details: 一份源码，多端运行，Mpx专注解决小程序跨端问题，以静态编译为主要手段，将业务源码输出到微信/支付宝/百度/头条/QQ小程序平台和web环境下运行。
   icon: https://dpubstatic.udache.com/static/dpubimg/bJMx84lznm/texing_icon_kua.png
+  micon: https://dpubstatic.udache.com/static/dpubimg/KPG_IXLuwU/y_icon_kua.png
 sixSection:
   title: 渐进迁移
   bg: https://dpubstatic.udache.com/static/dpubimg/sPhfwW2Git/kaifa_bg.png
@@ -62,6 +65,7 @@ fourSection:
   title: 极致性能
   details: 在方便使用框架提供的便捷特性的同时，也能享受到媲美原生开发的确定性和稳定性，完全没有框架太多坑，不如用原生的顾虑；不管是增强输出还是跨平台输出，最终的dist代码可读性极强，便于调试排查；
   img: https://dpubstatic.udache.com/static/dpubimg/jvACYsEQfm/jizhi_pic.png
+  mimg: https://dpubstatic.udache.com/static/dpubimg/G4RXehQ40n/y_pic_jizhi.png
   bg: https://dpubstatic.udache.com/static/dpubimg/arO1Eb5ill/jizhi_bg.png
   actionText: 点击进入
   actionLink: /guide/basic/start.html
@@ -69,12 +73,14 @@ fiveSection:
   title: 渐进迁移
   details: 极致的性能：得益于增强的设计思路，Mpx框架在运行时不需要做太多封装抹平转换的工作，框架的运行时部分极为轻量简洁，压缩+gzip后仅占用14KB；配合编译构建进行的包体积优化和基于模板渲染函数进行的数据依赖跟踪，Mpx框架在性能方面做到了业内最优(小程序框架运行时性能评测报告(opens new window))；
   img: https://dpubstatic.udache.com/static/dpubimg/k5Ft6oWF6F/jianjin_pic.png
+  mimg: https://dpubstatic.udache.com/static/dpubimg/Z0W_MvwJ8C/y_pic_jianjin.png
   bg: https://dpubstatic.udache.com/static/dpubimg/y4UyRKCYk2/jianjin_bg.png
   actionText: 点击进入
   actionLink: https://github.com/hiyuki/mp-framework-benchmark/blob/master/README.md
 threeSection:
   title: TodoMVC
   details: TodoMVC是一个示例项目，它使用目前流行的不同JavaScript框架的来实现同一个Demo，来帮助你熟悉和选择最合适的前端框架。官网地址：http://todomvc.com，学习框架最直接有效的方式就是上手练习，接下来我们将用Mpx.js来完成TodoMVC的示例。
+  mdetails: TodoMVC是一个示例项目，它使用目前流行的不同JavaScript框架的来实现同一个Demo，来帮助你熟悉和选择最合适的前端框架。
   actionText: 查看详情
   actionLink: https://dpubstatic.udache.com/static/dpubimg/c3b0d3bc-1bb0-4bee-b6da-4205a2744e21.html#/pages/index
   img: https://dpubstatic.udache.com/static/dpubimg/nYbrJSPSz7/anli_pic_phone.png
@@ -88,6 +94,19 @@ threeSection:
       icon1: https://gift-static.hongyibo.com.cn/static/kfpub/3547/todomvc_icon_alipay_normal.png
       icon2: https://gift-static.hongyibo.com.cn/static/kfpub/3547/todomvc_icon_alipay_active.png
       code: https://gift-static.hongyibo.com.cn/static/kfpub/3547/ali-qrcode.jpg
+  mlist:
+    - title: 微信
+      icon: https://dpubstatic.udache.com/static/dpubimg/ho5eKaVX5L/y_icon_wechat.png
+    - title: QQ
+      icon: https://dpubstatic.udache.com/static/dpubimg/IoQuifVymo/y_icon_qq.png
+    - title: 支付宝
+      icon: https://dpubstatic.udache.com/static/dpubimg/rMS51-MYUE/y_icon_zhifubao.png
+    - title: 百度
+      icon: https://dpubstatic.udache.com/static/dpubimg/nth1TOFUVA/y_icon_baidu.png
+    - title: 字节跳动
+      icon: https://dpubstatic.udache.com/static/dpubimg/JQBu676x6W/y_icon_zijie.png
+    - title: Web
+      icon: https://dpubstatic.udache.com/static/dpubimg/d4pVP4BUGU/y_icon_web.png
 sevenSection:
   title: 成功案例
   bg: https://dpubstatic.udache.com/static/dpubimg/2OIisHD1qa/anli_bg.png

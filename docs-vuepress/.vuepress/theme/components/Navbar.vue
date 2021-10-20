@@ -75,7 +75,7 @@ export default {
   left 0
   backdrop-filter saturate(180%) blur(1rem)
   background-color hsla(0,0%,100%,.8)
-  box-shadow rgb(240 241 242) 0px 2px 8px
+  // box-shadow rgb(240 241 242) 0px 2px 8px
 .head-container
   width 100%
   height 3.5rem

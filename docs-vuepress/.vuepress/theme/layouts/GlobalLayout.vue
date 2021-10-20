@@ -1,6 +1,8 @@
 <template>
   <div id="vuepress-theme-blog__global-layout">
-    <Navbar />
+    
+    <MobileHeader v-if="isMobile" @toggle-sidebar="isMobile = !isMobile" />
+    <Navbar v-else />
     <div class="content-wrapper">
       <DefaultGlobalLayout />
     </div>
@@ -11,8 +13,12 @@
 import GlobalLayout from '@app/components/GlobalLayout.vue'
 import Navbar from '@theme/components/Navbar.vue'
 
+import MobileHeader from '@theme/components/MobileHeader.vue'
+
 export default {
   components: {
+    MobileHeader,
+
     DefaultGlobalLayout: GlobalLayout,
     Navbar
   },
@@ -20,14 +26,34 @@ export default {
   data() {
     return {
       isMobileHeaderOpen: false,
+      isMobile: document.body.clientWidth < 1020
     }
   },
 
+  // computed: {
+  //   isMobile() {
+  //     console.log('%c [ document.documentElement.clientWidth ]', 'font-size:13px; background:pink; color:#bf2c9f;', document.documentElement.clientWidth)
+  //     return document.documentElement.clientWidth < 1020
+  //   }
+  // },
+
   mounted() {
-    this.$router.afterEach(() => {
-      this.isMobileHeaderOpen = false
-    })
+    // this.$router.afterEach(() => {
+    //   this.isMobile = false
+    // })
+
+    window.onresize = () => {
+      const tmp = document.body.clientWidth < 1020
+      return this.isMobile = tmp
+    }
   },
+
+  // beforeMount () {
+  //   window.onresize = () => {
+  //     this.isMobile = document.body.clientWidth > 1020
+  //     console.log('%c [ his.isMobile ]', 'font-size:13px; background:pink; color:#bf2c9f;', this.isMobile)
+  //   }
+  // }
 }
 </script>
 

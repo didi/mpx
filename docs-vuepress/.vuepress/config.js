@@ -122,6 +122,8 @@ module.exports = {
 			indexName: 'mpxjs',
 			algoliaOptions: {
 				hitsPerPage: 6,
+        // nbPages: 4,
+        page: 3,
 				facetFilters: ""
 			}
 		},
