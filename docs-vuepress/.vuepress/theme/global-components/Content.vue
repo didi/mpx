@@ -1,23 +1,28 @@
 <template>
-  <div>
+  <div style="position: relative; overflow: hidden;">
+    <div class="one-section__img1"></div>
+    <div class="one-section__img2"></div>
     <!-- 第一部分 -->
-    <section class="one-section one-section__content">
-      <div>
-        <h2 class="one-section__title">{{$page.frontmatter.heroText}}</h2>
-        <p class="one-section__desc">
-          {{$page.frontmatter.tagline}}
-        </p>
-        <button class="one-section__btn one-section__enter">
-          <a class="white-link" :href="$page.frontmatter.actionLink">
-            {{$page.frontmatter.actionText}}
-          </a>
-        </button>
-        <button class="one-section__btn one-section__github">
-          <a class="blue-link" :href="$page.frontmatter.githubLink">
-            {{$page.frontmatter.githubText}}
-          </a>
-        </button>
+    <section class="one-section">
+      <div class="one-section__inner one-section__content">
+        <div style="display: inline-block;">
+          <h2 class="one-section__title">{{$page.frontmatter.heroText}}</h2>
+          <p class="one-section__desc">
+            {{$page.frontmatter.tagline}}
+          </p>
+          <button class="one-section__btn one-section__enter">
+            <a class="white-link" :href="$page.frontmatter.actionLink">
+              {{$page.frontmatter.actionText}}
+            </a>
+          </button>
+          <button class="one-section__btn one-section__github">
+            <a class="blue-link" :href="$page.frontmatter.githubLink">
+              {{$page.frontmatter.githubText}}
+            </a>
+          </button>
+        </div>
       </div>
+      <div class="one-section__inner"></div>
     </section>
 
     <!-- 第二部分 -->
@@ -34,99 +39,108 @@
 
     <!-- 第三部分 -->
     <section class="three-section" :style="{ backgroundImage: `url(${$page.frontmatter.threeSection.bg})` }">
-      <div>
-        <div class="three-section__todo">
-          <div class="three-section__phone">
-            <img
-              width="410"
-              height="712"
-              src="https://dpubstatic.udache.com/static/dpubimg/Vx5n_3YCtP/anli_pic_phone.png"
-              alt="phone"
-              loading="lazy" />
-          </div>
-          <div class="three-section__iframe">
-            <div class="iframe_wrapper">
+      <div class="three-section__inner">
+        <div>
+          <div class="three-section__todo">
+            <div class="three-section__phone">
+              <img
+                width="410"
+                height="712"
+                src="https://dpubstatic.udache.com/static/dpubimg/Vx5n_3YCtP/anli_pic_phone.png"
+                alt="phone"
+                loading="lazy" />
+            </div>
+            <div class="three-section__iframe">
               <iframe
-              title="todo示例"
-              scrolling="no"
-              width="325"
-              height="617"
-              src="https://dpubstatic.udache.com/static/dpubimg/c3b0d3bc-1bb0-4bee-b6da-4205a2744e21.html"
-              frameborder="0">
-            </iframe>
+                title="todo示例"
+                scrolling="no"
+                width="325"
+                height="617"
+                src="https://dpubstatic.udache.com/static/dpubimg/c3b0d3bc-1bb0-4bee-b6da-4205a2744e21.html"
+                frameborder="0">
+              </iframe>
             </div>
           </div>
         </div>
-      </div>
-      <div class="three-section__mvc">
-        <div>
-          <span class="dot-inner" style="background: #fff; margin: 0 auto;"></span>
-          <p class="white-text title">{{$page.frontmatter.threeSection.title}}</p>
-          <p class="white-text desc">
-            {{$page.frontmatter.threeSection.details}}
-          </p>
+        <div class="three-section__mvc">
+          <div>
+            <span class="dot-inner" style="background: #fff; margin: 0 auto;"></span>
+            <p class="white-text title">{{$page.frontmatter.threeSection.title}}</p>
+            <p class="white-text desc">
+              {{$page.frontmatter.threeSection.details}}
+            </p>
+          </div>
+          <button class="three-section__btn btn">
+            <a :href="$page.frontmatter.threeSection.actionLink" class="blue-link">
+              {{$page.frontmatter.threeSection.actionText}}
+            </a>
+          </button>
+          <code-list :dataList="mvcList"></code-list>
         </div>
-        <button class="three-section__btn btn">
-          <a :href="$page.frontmatter.threeSection.actionLink" class="blue-link">
-            {{$page.frontmatter.threeSection.actionText}}
-          </a>
-        </button>
-        <code-list :dataList="mvcList"></code-list>
       </div>
     </section>
 
     <!-- 第四部分 -->
-    <section class="section">
+    <section class="section four-section">
       <div class="grow four-section__bg" :style="{ backgroundImage: `url(${$page.frontmatter.fourSection.bg})` }">
-        <img
+      </div>
+      <div class="four-section__inner">
+        <div class="grow" style="position: relative;">
+          <img
           width="412"
           :src="$page.frontmatter.fourSection.img"
           alt="svg"
           loading="lazy" />
-      </div>
-      <div class="grow">
-        <div class="four-section__text">
-          <div>
-            <span class="dot-inner"></span>
-            <p class="title">{{$page.frontmatter.fourSection.title}}</p>
-            <p class="desc">
-              {{$page.frontmatter.fourSection.details}}
-            </p>
+        </div>
+        <div class="four-section__text grow">
+          <div style="margin-left: 86px;">
+            <div>
+              <span class="dot-inner"></span>
+              <p class="title">{{$page.frontmatter.fourSection.title}}</p>
+              <p class="desc">
+                {{$page.frontmatter.fourSection.details}}
+              </p>
+            </div>
+            <button class="btn">
+              <a :href="$page.frontmatter.fourSection.actionLink" class="white-link">
+                {{$page.frontmatter.fourSection.actionText}}
+              </a>
+            </button>
           </div>
-          <button class="btn">
-            <a :href="$page.frontmatter.fourSection.actionLink" class="white-link">
-              {{$page.frontmatter.fourSection.actionText}}
-            </a>
-          </button>
         </div>
       </div>
     </section>
 
     <!-- 第五部分 -->
-    <section class="section">
-      <div class="grow">
-        <div class="five-section__text">
-          <div>
-            <span class="dot-inner"></span>
-            <p class="title">{{$page.frontmatter.fiveSection.title}}</p>
-            <p class="desc">
-              {{$page.frontmatter.fiveSection.details}}
-            </p>
+    <section class="section five-section">
+      <div class="grow five-section__bg" :style="{ backgroundImage: `url(${$page.frontmatter.fiveSection.bg})` }">
+      </div>
+      <div class="five-section__inner">
+        <div class="five-section__text grow">
+          <div style="margin-right: 86px;">
+            <div>
+              <span class="dot-inner"></span>
+              <p class="title">{{$page.frontmatter.fiveSection.title}}</p>
+              <p class="desc">
+                {{$page.frontmatter.fiveSection.details}}
+              </p>
+            </div>
+            <button class="btn">
+              <a :href="$page.frontmatter.fiveSection.actionLink"  class="white-link">
+                {{$page.frontmatter.fiveSection.actionText}}
+              </a>
+            </button>
           </div>
-          <button class="btn">
-            <a :href="$page.frontmatter.fiveSection.actionLink"  class="white-link">
-              {{$page.frontmatter.fiveSection.actionText}}
-            </a>
-          </button>
+        </div>
+        <div class="grow" style="position: relative; display: flex; justify-content: flex-end;">
+          <img
+            width="412"
+            :src="$page.frontmatter.fiveSection.img"
+            alt="svg"
+            loading="lazy" />
         </div>
       </div>
-      <div class="grow five-section__bg" :style="{ backgroundImage: `url(${$page.frontmatter.fiveSection.bg})` }">
-        <img
-          width="412"
-          :src="$page.frontmatter.fiveSection.img"
-          alt="svg"
-          loading="lazy" />
-      </div>
+      
     </section>
 
     <!-- 第六部分 -->
@@ -239,6 +253,9 @@ export default {
 <style lang="stylus" scoped>
 ul li
   list-style none
+section
+  position relative
+  z-index 2
 .row
   display flex
   align-items center
@@ -267,10 +284,37 @@ ul li
   font-size 14px
 
 .one-section__content
-  padding 0 200px
+  display flex
+  justify-content flex-end
+  // padding 0 200px
 
 .one-section
   padding-top 181px
+  position relative
+  display flex
+  // background url("https://dpubstatic.udache.com/static/dpubimg/tKlPfygfIM/banner_bg.png") no-repeat top right
+  // background-size auto 100%
+
+.one-section__img1
+  position absolute
+  top 0
+  left 45%
+  width 100%
+  height 100%
+  background url("https://dpubstatic.udache.com/static/dpubimg/RZO9xjPj0j/banner_bg.png") no-repeat top left
+  background-size auto 680px
+
+.one-section__img2
+  position absolute
+  top 20
+  left 53%
+  width 100%
+  height 100%
+  background url("https://dpubstatic.udache.com/static/dpubimg/u3KGxYyATw/banner_pic.png") no-repeat top left
+  background-size auto 550px
+
+.one-section__inner
+  flex 1
 
 .one-section__title
   margin-bottom 20px
@@ -363,10 +407,20 @@ ul li
   margin-top 183px
   display flex
   background-repeat no-repeat
-  background-size 100% 713px
-  padding 0 185px
+  background-size auto 100%
+  background-position center center
   height 713px
   align-items center
+  // padding 0 24px
+  position relative
+
+.three-section__inner
+  width 1190px
+  margin 0 auto
+  display flex
+  align-items center
+  box-sizing border-box
+  padding 0 40px
 
 .three-section__mvc 
   margin-left 60px
@@ -380,8 +434,11 @@ ul li
   top 0
 
 .three-section__iframe
+  display flex
+  align-items center
+  justify-content center
   position relative
-  display inline-block
+  // display inline-block
   width 375px
   height 672px
   left 20px
@@ -410,27 +467,56 @@ ul li
   height 520px
   box-sizing border-box
   margin-top 183px
+  position relative
+  justify-content center
 
 .grow 
   flex 1
 
+.four-section
+  // width 1190px
+
 .four-section__bg 
   background-repeat no-repeat   
-  background-size 100% 520px
-  height 100%
+  background-size auto 600px
+  height 600px
+  width 100%
   text-align center
+  position absolute
+  right 50%
+  background-position top right
 
 .four-section__text 
-  padding 0 200px 0 85px
+  // box-sizing border-box
+  // padding 0 24px 0 85px
+
+.four-section__inner
+  display flex
+  width 1190px
+  align-items center
+  padding 0 40px
+  box-sizing border-box
 
 .five-section__bg 
-  background-repeat no-repeat
-  background-size 100% 520px
-  height 100%
+  background-repeat no-repeat   
+  background-size auto 600px
+  height 600px
+  width 100%
   text-align center
+  position absolute
+  left 50%
+  background-position top left
  
 .five-section__text 
-  padding 0 85px 0 200px
+  // padding 0 85px 0 24px
+  // max-width 550px
+
+.five-section__inner
+  display flex
+  width 1190px
+  align-items center
+  padding 0 40px
+  box-sizing border-box
  
 .six-section 
   margin-top 140px
@@ -438,7 +524,8 @@ ul li
   align-items center
   justify-content center
   background-repeat no-repeat
-  background-size 100% 694px
+  background-size auto 100%
+  background-position center center
   height 694px
 
 .six-section__inner
@@ -484,7 +571,6 @@ ul li
 
 .seven-section 
   margin-top 113px
-  padding 0 200px
   text-align center
   background #f5f5f5
  

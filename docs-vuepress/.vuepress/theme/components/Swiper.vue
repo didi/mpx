@@ -161,7 +161,9 @@ export default {
 ::-webkit-scrollbar
   display none
 .swiper-container
+  max-width 1190px
   display flex
+  margin 0 auto
   .swiper-button
     width 140px
     margin-top 80px

@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="footer-container">
     <footer class="footer">
       <ul class="footer__list">
         <li class="grow">
@@ -71,18 +71,24 @@ export default {
 <style lang="stylus" scoped>
 ul li
   list-style none
+.footer-container
+  display flex
+  flex-direction column
+  justify-content flex-end
+  height 466px
+  background url("https://dpubstatic.udache.com/static/dpubimg/cSRXkZjG5W/footer_bg.png") no-repeat center center
+  background-size auto 100%
+  margin-top 60px
 
 .footer
-  margin-top 60px
   display flex
   text-align center
-  padding 0 200px
-  height 436px
-  background url("https://dpubstatic.udache.com/static/dpubimg/cSRXkZjG5W/footer_bg.png") no-repeat
-  background-size 100% 436px
+  max-width 1280px
+  margin 0 auto
+  width 100%
 
 .footer__list
-  margin-top 200px
+  margin-bottom 80px
   display flex
   flex 1
   text-align left

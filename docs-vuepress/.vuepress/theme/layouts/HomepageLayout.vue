@@ -1,12 +1,12 @@
 <template>
   <div class="container">
-    <div style="background: #f5f5f5;">
+    <div class="wrapper" style="background: #f5f5f5; min-width: 1190px; overflow-x: scroll;">
       <div v-if="isMobile">
         <MobileView />
       </div>
 
       <template v-else>
-        <Header />
+        <!-- <Header /> -->
         <Content />
         <Footer />
       </template>
@@ -18,7 +18,7 @@
 </template>
 
 <script>
-import Header from "../global-components/Header.vue";
+// import Header from "../global-components/Header.vue";
 import Content from "../global-components/Content.vue";
 import Footer from "../global-components/Footer.vue";
 import ParentLayout from '@parent-theme/layouts/Layout.vue'
@@ -26,7 +26,7 @@ import MobileView from "../components/MobileView.vue";
 
 export default {
   components: {
-    Header,
+    // Header,
     Content,
     Footer,
     ParentLayout,
@@ -46,12 +46,13 @@ export default {
       const tmp = document.body.clientWidth < 720
       console.log('%c [ tmp ]', 'font-size:13px; background:pink; color:#bf2c9f;', tmp)
       return that.isMobile = tmp
-      
     }
   }
 };
 </script>
 
 <style lang="stylus" scoped>
-
+// .wrapper
+//   width 1280px
+//   margin auto
 </style>
