@@ -11,6 +11,7 @@ const addQuery = require('../utils/add-query')
 const readJsonForSrc = require('../utils/read-json-for-src')
 const createHelpers = require('../helpers')
 const createJSONHelper = require('./helper')
+const { MPX_DISABLE_EXTRACTOR_CACHE } = require('../utils/const')
 
 module.exports = function (content) {
   const nativeCallback = this.async()
@@ -19,6 +20,8 @@ module.exports = function (content) {
   if (!mpx) {
     return nativeCallback(null, content)
   }
+  // json模块必须每次都创建（但并不是每次都需要build），用于动态添加编译入口，传递信息以禁用父级extractor的缓存
+  this.emitFile(MPX_DISABLE_EXTRACTOR_CACHE, '', undefined, { skipEmit: true })
 
   // 微信插件下要求组件使用相对路径
   const useRelativePath = mpx.isPluginMode || mpx.useRelativePath

@@ -46,10 +46,10 @@ class DynamicEntryDependency extends NullDependency {
     }
 
     if (alreadyOutputed) return callback(null, { resultPath })
+
     if (packageRoot) {
       resource = addQuery(resource, { packageRoot })
     }
-
     mpx.addEntry(resource, filename, (err, entryModule) => {
       if (err) return callback(err)
       if (entryType === 'export') {

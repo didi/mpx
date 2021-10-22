@@ -45,21 +45,35 @@ const jsonPluginCompilerPath = normalize.lib('json-compiler/plugin')
 const extractorPath = normalize.lib('extractor')
 const async = require('async')
 const stringifyLoadersAndResource = require('./utils/stringify-loaders-resource')
-
-const MPX_PROCESSED_FLAG = 'processed'
+const emitFile = require('./utils/emit-file')
+const { MPX_PROCESSED_FLAG, MPX_DISABLE_EXTRACTOR_CACHE } = require('./utils/const')
 
 const isProductionLikeMode = options => {
   return options.mode === 'production' || !options.mode
 }
 
+const isStaticModule = module => {
+  const { queryObj } = parseRequest(module.resource)
+  let isStatic = queryObj.isStatic || false
+  if (module.loaders) {
+    for (const loader of module.loaders) {
+      if (/(url-loader|file-loader)/.test(loader.loader)) {
+        isStatic = true
+        break
+      }
+    }
+  }
+  return isStatic
+}
+
 const outputFilename = '[name].js'
 const publicPath = '/'
 
-function isChunkInPackage (chunkName, packageName) {
+const isChunkInPackage = (chunkName, packageName) => {
   return (new RegExp(`^${packageName}\\/`)).test(chunkName)
 }
 
-function getPackageCacheGroup (packageName) {
+const getPackageCacheGroup = packageName => {
   if (packageName === 'main') {
     return {
       name: 'bundle',
@@ -601,7 +615,8 @@ class MpxWebpackPlugin {
           let proxyedCallback = callback
           if (originModule) {
             proxyedCallback = (err, module) => {
-              if (module) {
+              // 避免selfModuleFactory的情况
+              if (module && module !== originModule) {
                 module.issuerResource = originModule.resource
               }
               return callback(err, module)
@@ -617,20 +632,14 @@ class MpxWebpackPlugin {
           const issuerResource = module.issuerResource
           // 避免context module报错
           if (module.request && module.resource) {
-            const { queryObj, resourcePath } = parseRequest(module.resource)
-            let isStatic = queryObj.isStatic
-            if (module.loaders) {
-              module.loaders.forEach((loader) => {
-                if (/(url-loader|file-loader)/.test(loader.loader)) {
-                  isStatic = true
-                }
-              })
-            }
+            const isStatic = isStaticModule(module)
             const isIndependent = mpx.independentSubpackagesMap[mpx.currentPackageRoot]
 
             let needPackageQuery = isStatic || isIndependent
-            if (!needPackageQuery && matchCondition(resourcePath, this.options.subpackageModulesRules)) {
-              needPackageQuery = true
+
+            if (!needPackageQuery) {
+              const { resourcePath } = parseRequest(module.resource)
+              needPackageQuery = matchCondition(resourcePath, this.options.subpackageModulesRules)
             }
 
             if (needPackageQuery) {
@@ -662,6 +671,14 @@ class MpxWebpackPlugin {
           return rawEmitAsset.call(compilation, file, source, assetInfo)
         }
 
+        compilation.hooks.succeedModule.tap('MpxWebpackPlugin', (module) => {
+          // 静态资源模块由于输出结果的动态性，通过importModule会合并asset的特性，通过emitFile传递信息禁用父级extractor的缓存来保障父级的importModule每次都能被执行
+          if (isStaticModule(module)) {
+            emitFile(module, MPX_DISABLE_EXTRACTOR_CACHE, '', undefined, { skipEmit: true })
+          }
+        })
+
+        // todo 统一通过dep+mpx actions处理
         compilation.hooks.stillValidModule.tap('MpxWebpackPlugin', (module) => {
           const buildInfo = module.buildInfo
           if (buildInfo.pagesMap) {
@@ -706,7 +723,7 @@ class MpxWebpackPlugin {
           const extractedAssetsMap = new Map()
           for (const module of compilation.modules) {
             const assetsInfo = module.buildInfo.assetsInfo || new Map()
-            for (const [filename, { extractedInfo }] of assetsInfo) {
+            for (const [filename, { extractedInfo } = {}] of assetsInfo) {
               if (extractedInfo) {
                 let extractedAssets = extractedAssetsMap.get(filename)
                 if (!extractedAssets) {

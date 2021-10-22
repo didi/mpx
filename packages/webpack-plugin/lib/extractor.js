@@ -5,9 +5,7 @@ const toPosix = require('./utils/to-posix')
 const fixRelative = require('./utils/fix-relative')
 const normalize = require('./utils/normalize')
 const addQuery = require('./utils/add-query')
-
-
-const DEFAULT_RESULT_SOURCE = ''
+const { MPX_DISABLE_EXTRACTOR_CACHE, DEFAULT_RESULT_SOURCE } = require('./utils/const')
 
 module.exports = content => content
 
@@ -21,11 +19,6 @@ module.exports.pitch = async function (remainingRequest) {
   const issuerFile = queryObj.issuerFile
   const fromImport = queryObj.fromImport
   const needBabel = queryObj.needBabel
-
-  if (type === 'json' && !isStatic) {
-    // 非static的json时不能缓存，这部分内容包含动态入口添加，需要确保importModule每次都执行
-    this.cacheable(false)
-  }
 
   if (needBabel) {
     // 创建js request应用babel
@@ -71,6 +64,11 @@ module.exports.pitch = async function (remainingRequest) {
   let resultSource = DEFAULT_RESULT_SOURCE
 
   const { buildInfo } = this._module
+
+  // 如果importModule子模块中包含动态特性，比如动态添加入口和静态资源输出路径，则当前extractor模块不可缓存
+  if (buildInfo.assetsInfo.has(MPX_DISABLE_EXTRACTOR_CACHE)) {
+    this.cacheable(false)
+  }
 
   const assetInfo = buildInfo.assetsInfo && buildInfo.assetsInfo.get(resourcePath)
   if (assetInfo && assetInfo.extractedResultSource) {
