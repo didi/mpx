@@ -272,7 +272,8 @@ module.exports = function (content) {
           moduleId,
           usingComponents,
           // 添加babel处理渲染函数中可能包含的...展开运算符
-          needBabel: true
+          // 由于...运算符应用范围极小以及babel成本极高，先关闭此特性后续看情况打开
+          // needBabel: true
         }
         if (template.src) extraOptions.resourcePath = resourcePath
         // 基于global.currentInject来注入模板渲染函数和refs等信息
