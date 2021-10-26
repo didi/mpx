@@ -19,6 +19,10 @@ export default function transferOptions (options, type, builtInMixins = []) {
     // 编译计算属性注入
     options.computed = Object.assign({}, options.computed, currentInject.injectComputed)
   }
+  if (currentInject && currentInject.injectOptions) {
+    // 编译option注入,优先微信中的单独配置
+    options.options = Object.assign({}, currentInject.injectOptions, options.options)
+  }
   // 转换mode
   options.mpxConvertMode = options.mpxConvertMode || getConvertMode(global.currentSrcMode)
   const rawOptions = mergeOptions(options, type)
