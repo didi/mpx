@@ -15,7 +15,7 @@ const processTemplate = require('./web/processTemplate')
 const readJsonForSrc = require('./utils/read-json-for-src')
 const normalize = require('./utils/normalize')
 const getMainCompilation = require('./utils/get-main-compilation')
-
+let rootModuleId = ''
 module.exports = function (content) {
   this.cacheable()
 
@@ -66,7 +66,6 @@ module.exports = function (content) {
     // component
     ctorType = 'component'
   }
-
   const loaderContext = this
   const stringifyRequest = r => loaderUtils.stringifyRequest(loaderContext, r)
   const isProduction = this.minimize || process.env.NODE_ENV === 'production'
@@ -89,6 +88,10 @@ module.exports = function (content) {
   const filePath = resourcePath
 
   const moduleId = 'm' + mpx.pathHash(filePath)
+
+  if (ctorType === 'app') {
+    rootModuleId = moduleId
+  }
 
   const parts = parseComponent(content, {
     filePath,
@@ -121,7 +124,6 @@ module.exports = function (content) {
       }
       // 只有ali才可能需要scoped
       const hasScoped = (parts.styles.some(({ scoped }) => scoped) || autoScope) && mode === 'ali'
-      // 是否渲染为虚拟节点
       const templateAttrs = parts.template && parts.template.attrs
       const hasComment = templateAttrs && templateAttrs.comments
       const isNative = false
@@ -155,6 +157,7 @@ module.exports = function (content) {
         options,
         moduleId,
         hasScoped,
+        rootModuleId: (ctorType === 'page') ? rootModuleId : '',
         ctorType,
         hasComment,
         usingComponents,

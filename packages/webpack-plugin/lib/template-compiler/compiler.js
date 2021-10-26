@@ -1876,10 +1876,11 @@ function processWebExternalClassesHack (el, options) {
 function processScoped (el, options) {
   if (options.hasScoped && isRealNode(el)) {
     const moduleId = options.moduleId
+    const rootModuleId = options.rootModuleId // 处理全局样式对页面的影响
     const staticClass = getAndRemoveAttr(el, 'class').val
     addAttrs(el, [{
       name: 'class',
-      value: staticClass ? `${staticClass} ${moduleId}` : moduleId
+      value: `${staticClass || ''} ${moduleId} ${rootModuleId}`
     }])
   }
 }

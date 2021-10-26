@@ -96,7 +96,7 @@ function resolveLoaders ({ options, projectRoot }) {
   }
 }
 
-module.exports = function createHelpers ({ loaderContext, options, moduleId, hasScoped, ctorType, hasComment, usingComponents, srcMode, isNative, projectRoot }) {
+module.exports = function createHelpers ({ loaderContext, options, moduleId, rootModuleId, hasScoped, ctorType, hasComment, usingComponents, srcMode, isNative, projectRoot }) {
   const rawRequest = getRawRequest(loaderContext, options.excludedPreLoaders)
   const {
     defaultLoaders,
@@ -281,6 +281,7 @@ module.exports = function createHelpers ({ loaderContext, options, moduleId, has
         hasComment,
         isNative,
         moduleId,
+        rootModuleId,
         root: projectRoot
       }
       templateCompiler = templateCompilerPath + '?' + JSON.stringify(templateCompilerOptions)
