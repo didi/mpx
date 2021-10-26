@@ -184,6 +184,7 @@ module.exports = function (content) {
     }
   } else {
     // 保存全局注册组件
+    // todo 副作用dep化
     if (json.usingComponents) {
       mpx.usingComponents = {}
       Object.keys(json.usingComponents).forEach((key) => {
