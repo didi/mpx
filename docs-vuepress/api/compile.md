@@ -797,6 +797,23 @@ new MpxWebpackPlugin({
 
 - **参考**：[单元测试](../guide/tool/unit-test.md)
 
+### autoVirtualHostRules
+
+- **类型**：[`Rules`](#rules)
+- **详细**：批量配置是否虚拟化组件节点，对应微信中[`VirtualHost`](https://developers.weixin.qq.com/miniprogram/dev/framework/custom-component/wxml-wxss.html) 。默认不开启，开启后也将抹平支付宝小程序中的表现差异。提供 include 和 exclude 以精确控制对哪些文件开启VirtualHost，哪些不开启。和webpack的rules规则相同。
+- **背景**：默认情况下，自定义组件本身的那个节点是一个“普通”的节点，使用时可以在这个节点上设置 `class` 、`style` 、动画、 flex 布局等，就如同普通的 view 组件节点一样。但有些时候，自定义组件并不希望这个节点本身可以设置样式、响应 flex 布局等，而是希望自定义组件内部的第一层节点能够响应 flex 布局或者样式由自定义组件本身完全决定。这种情况下，可以将这个自定义组件设置为“虚拟的”。
+- **示例**：
+
+```js
+new MpxWebpackPlugin({
+  autoVirtualHostRules: {
+    include: [resolve('../src')],
+    exclude: [resolve('../components/other')] 
+  }
+})
+```
+## 
+
 ## MpxWebpackPlugin static methods
 
 `MpxWebpackPlugin` 通过静态方法暴露了以下五个内置 loader，详情如下：
