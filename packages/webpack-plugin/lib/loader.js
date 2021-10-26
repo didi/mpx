@@ -15,7 +15,6 @@ const processTemplate = require('./web/processTemplate')
 const readJsonForSrc = require('./utils/read-json-for-src')
 const normalize = require('./utils/normalize')
 const getMainCompilation = require('./utils/get-main-compilation')
-
 module.exports = function (content) {
   this.cacheable()
 
@@ -66,7 +65,6 @@ module.exports = function (content) {
     // component
     ctorType = 'component'
   }
-
   const loaderContext = this
   const stringifyRequest = r => loaderUtils.stringifyRequest(loaderContext, r)
   const isProduction = this.minimize || process.env.NODE_ENV === 'production'
@@ -88,7 +86,10 @@ module.exports = function (content) {
 
   const filePath = resourcePath
 
-  const moduleId = 'm' + mpx.pathHash(filePath)
+  let moduleId = 'm' + mpx.pathHash(filePath)
+  if (ctorType === 'app') {
+    moduleId = 'mpx-app-scope'
+  }
 
   const parts = parseComponent(content, {
     filePath,
@@ -154,6 +155,7 @@ module.exports = function (content) {
         options,
         moduleId,
         hasScoped,
+        ctorType,
         hasComment,
         usingComponents,
         srcMode,
@@ -394,6 +396,8 @@ module.exports = function (content) {
           }
         })
         output += styleInjectionCode + '\n'
+      } else if (ctorType === 'app' && mode === 'ali') {
+        output += getRequire('styles', {}) + '\n'
       }
 
       // json
