@@ -1,0 +1,19 @@
+function genRegExp (str, flags) {
+  if (!__mpx_wxs__) {
+    return new RegExp(str, flags)
+  } else {
+    return getRegExp(str, flags)
+  }
+}
+
+module.exports = {
+  /** wxs格式化：驼峰转中划线 */
+  humpToLine: function (str) {
+    if (!str) return
+    if (typeof str !== 'string') str += ''
+    var reg = genRegExp('[A-Z]', 'g')
+    return str.replace(reg, function (match) {
+      return '-' + match.toLowerCase()
+    })
+  }
+}

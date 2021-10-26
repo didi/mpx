@@ -41,9 +41,7 @@ describe('test toast', () => {
       expect(toast).toHaveAttribute('class', expect.not.stringContaining('show'))
       done()
     }, 2500)
-
     jest.runAllTimers()
-    expect(setTimeout).toHaveBeenCalledTimes(3)
   })
 
   test('should show image', () => {

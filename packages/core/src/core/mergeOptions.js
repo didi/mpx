@@ -215,8 +215,8 @@ function mergeMixins (parent, child) {
     } else if (/^behaviors|externalClasses$/.test(key)) {
       mergeArray(parent, child, key)
     } else if (key !== 'mixins' && key !== 'mpxCustomKeysForBlend') {
-      // 收集非函数的自定义属性，在Component创建的页面中挂载到this上，模拟Page创建页面的表现
-      if (curType === 'blend' && typeof child[key] !== 'function' && !builtInKeysMap[key]) {
+      // 收集非函数的自定义属性，在Component创建的页面中挂载到this上，模拟Page创建页面的表现，swan当中component构造器也能自动挂载自定义数据，不需要框架模拟挂载
+      if (curType === 'blend' && typeof child[key] !== 'function' && !builtInKeysMap[key] && __mpx_mode__ !== 'swan') {
         mpxCustomKeysMap[key] = true
       }
       mergeDefault(parent, child, key)

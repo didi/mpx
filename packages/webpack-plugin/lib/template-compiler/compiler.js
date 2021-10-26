@@ -794,7 +794,6 @@ function parse (template, options) {
   platformGetTagNamespace = options.getTagNamespace || no
 
   let stack = []
-  let preserveWhitespace = options.preserveWhitespace !== false
   let root
   let meta = {}
   let currentParent
@@ -804,7 +803,7 @@ function parse (template, options) {
 
   function genTempRoot () {
     // 使用临时节点作为root，处理multi root的情况
-    root = currentParent = getTempNode()
+    root = currentParent = getVirtualHostRoot(options, meta)
     stack.push(root)
   }
 
@@ -911,9 +910,6 @@ function parse (template, options) {
       let children = currentParent.children
       if (currentParent.tag !== 'text') {
         text = text.trim()
-          ? text.trim()
-          // only preserve whitespace if its not right after a starting tag
-          : preserveWhitespace && children.length ? ' ' : ''
       }
 
       if ((!config[mode].wxs || currentParent.tag !== config[mode].wxs.tag) && options.decodeHTMLText) {
@@ -1074,15 +1070,6 @@ function stringify (str) {
 //     }
 //   }
 // }
-
-function processPageStatus (el, options) {
-  if (isComponentNode(el, options)) {
-    addAttrs(el, [{
-      name: 'mpxPageStatus',
-      value: '{{mpxPageStatus}}'
-    }])
-  }
-}
 
 const genericRE = /^generic:(.+)$/
 
@@ -1344,7 +1331,10 @@ function processBindEvent (el, options) {
   }
 }
 
-// todo 暂时未考虑swan中不用{{}}包裹控制属性的情况
+function wrapMustache (val) {
+  return val && !tagRE.test(val) ? `{{${val}}}` : val
+}
+
 function parseMustache (raw = '') {
   let replaced = false
   if (tagRE.test(raw)) {
@@ -1427,12 +1417,14 @@ function addExp (el, exp, isProps) {
 function processIf (el) {
   let val = getAndRemoveAttr(el, config[mode].directive.if).val
   if (val) {
+    if (mode === 'swan') val = wrapMustache(val)
     let parsed = parseMustache(val)
     el.if = {
       raw: parsed.val,
       exp: parsed.result
     }
   } else if (val = getAndRemoveAttr(el, config[mode].directive.elseif).val) {
+    if (mode === 'swan') val = wrapMustache(val)
     let parsed = parseMustache(val)
     el.elseif = {
       raw: parsed.val,
@@ -1474,6 +1466,7 @@ function processFor (el) {
         index: matched[2] || 'index'
       }
     } else {
+      if (mode === 'swan') val = wrapMustache(val)
       let parsed = parseMustache(val)
       el.for = {
         raw: parsed.val,
@@ -1763,7 +1756,8 @@ function processClass (el, meta) {
   const needEx = el.tag.startsWith('th-')
   const targetType = needEx ? 'ex-' + type : type
   let dynamicClass = getAndRemoveAttr(el, config[mode].directive.dynamicClass).val
-  let staticClass = getAndRemoveAttr(el, type).val
+  let staticClass = getAndRemoveAttr(el, type).val || ''
+  staticClass = staticClass.replace(/\s+/g, ' ')
   if (dynamicClass) {
     let staticClassExp = parseMustache(staticClass).result
     let dynamicClassExp = transDynamicClassExpr(parseMustache(dynamicClass).result)
@@ -1796,7 +1790,8 @@ function processStyle (el, meta) {
   const type = 'style'
   const targetType = el.tag.startsWith('th-') ? 'ex-' + type : type
   let dynamicStyle = getAndRemoveAttr(el, config[mode].directive.dynamicStyle).val
-  let staticStyle = getAndRemoveAttr(el, type).val
+  let staticStyle = getAndRemoveAttr(el, type).val || ''
+  staticStyle = staticStyle.replace(/\s+/g, ' ')
   if (dynamicStyle) {
     let staticStyleExp = parseMustache(staticStyle).result
     let dynamicStyleExp = parseMustache(dynamicStyle).result
@@ -1881,10 +1876,11 @@ function processWebExternalClassesHack (el, options) {
 function processScoped (el, options) {
   if (options.hasScoped && isRealNode(el)) {
     const moduleId = options.moduleId
+    const rootModuleId = options.isComponent ? '' : 'mpx-app-scope' // 处理app全局样式对页面的影响
     const staticClass = getAndRemoveAttr(el, 'class').val
     addAttrs(el, [{
       name: 'class',
-      value: staticClass ? `${staticClass} ${moduleId}` : moduleId
+      value: `${staticClass || ''} ${moduleId} ${rootModuleId}`
     }])
   }
 }
@@ -1903,40 +1899,45 @@ function processBuiltInComponents (el, meta) {
   }
 }
 
-function processAliStyleClassHack (el, options, root) {
+function processAliStyleClassHack (el, options) {
+  if (!isComponentNode(el, options)) return
   ['style', 'class'].forEach((type) => {
     let exp = getAndRemoveAttr(el, type).val
-    let sep = type === 'style' ? ';' : ' '
-
     let typeName = 'mpx' + type.replace(/^./, (matched) => {
       return matched.toUpperCase()
     })
-
-    if (options.isComponent && el.parent === root && isRealNode(el)) {
-      if (exp !== undefined) {
-        exp = `{{${typeName}||''}}` + sep + exp
-      } else {
-        exp = `{{${typeName}||''}}`
-      }
-    }
     if (exp !== undefined) {
-      if (isComponentNode(el, options)) {
-        addAttrs(el, [{
-          name: typeName,
-          value: exp
-        }])
-      } else {
-        addAttrs(el, [{
-          name: type,
-          value: exp
-        }])
-      }
+      addAttrs(el, [{
+        name: typeName,
+        value: exp
+      }])
     }
   })
+}
+// 有virtualHost情况wx组件注入virtualHost。无virtualHost阿里组件注入root-view。其他跳过。
+function getVirtualHostRoot (options, meta) {
+  if (mode === 'wx' && options.hasVirtualHost && options.isComponent) {
+    !meta.options && (meta.options = {})
+    meta.options.virtualHost = true
+  }
+  if (mode === 'ali' && !options.hasVirtualHost && options.isComponent) {
+    return createASTElement('view', [
+      {
+        name: 'class',
+        value: `mpx-root-view host-${options.moduleId} ${options.hasScoped ? options.moduleId : ''} {{mpxClass||''}}`
+      },
+      {
+        name: 'style',
+        style: `{{mpxStyle||''}}`
+      }
+    ])
+  }
+  return getTempNode()
 }
 
 function processShow (el, options, root) {
   let show = getAndRemoveAttr(el, config[mode].directive.show).val
+  if (mode === 'swan') show = wrapMustache(show)
   if (options.isComponent && el.parent === root && isRealNode(el)) {
     if (show !== undefined) {
       show = `{{${parseMustache(show).result}&&mpxShow}}`
@@ -2058,7 +2059,7 @@ function processDuplicateAttrsList (el) {
 }
 
 // 处理wxs注入逻辑
-function processInjectWxs (meta, el) {
+function processInjectWxs (el, meta) {
   if (el.injectWxsProps && el.injectWxsProps.length) {
     el.injectWxsProps.forEach((injectWxsProp) => {
       const { injectWxsPath, injectWxsModuleName } = injectWxsProp
@@ -2075,6 +2076,13 @@ function processNoTransAttrs (el) {
   }
 }
 
+function processMpxTagName (el) {
+  const mpxTagName = getAndRemoveAttr(el, 'mpxTagName').val
+  if (mpxTagName) {
+    el.tag = mpxTagName
+  }
+}
+
 function processElement (el, root, options, meta) {
   processAtMode(el)
   // 如果已经标记了这个元素要被清除，直接return跳过后续处理步骤
@@ -2087,11 +2095,13 @@ function processElement (el, root, options, meta) {
     rulesRunner(el)
   }
 
-  processInjectWxs(meta, el)
-
   processNoTransAttrs(el)
 
   processDuplicateAttrsList(el)
+
+  processMpxTagName(el)
+
+  processInjectWxs(el, meta)
 
   const transAli = mode === 'ali' && srcMode === 'wx'
 
@@ -2130,9 +2140,6 @@ function processElement (el, root, options, meta) {
 
   if (!pass) {
     processBindEvent(el, options)
-    if (mode !== 'ali') {
-      processPageStatus(el, options)
-    }
     processComponentIs(el, options)
   }
 
