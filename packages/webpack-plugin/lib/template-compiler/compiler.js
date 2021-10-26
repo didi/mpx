@@ -1876,7 +1876,7 @@ function processWebExternalClassesHack (el, options) {
 function processScoped (el, options) {
   if (options.hasScoped && isRealNode(el)) {
     const moduleId = options.moduleId
-    const rootModuleId = options.rootModuleId // 处理全局样式对页面的影响
+    const rootModuleId = options.isComponent ? '' : 'mpx-app-scope' // 处理app全局样式对页面的影响
     const staticClass = getAndRemoveAttr(el, 'class').val
     addAttrs(el, [{
       name: 'class',

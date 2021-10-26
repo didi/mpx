@@ -15,7 +15,6 @@ const processTemplate = require('./web/processTemplate')
 const readJsonForSrc = require('./utils/read-json-for-src')
 const normalize = require('./utils/normalize')
 const getMainCompilation = require('./utils/get-main-compilation')
-let rootModuleId = ''
 module.exports = function (content) {
   this.cacheable()
 
@@ -87,10 +86,9 @@ module.exports = function (content) {
 
   const filePath = resourcePath
 
-  const moduleId = 'm' + mpx.pathHash(filePath)
-
+  let moduleId = 'm' + mpx.pathHash(filePath)
   if (ctorType === 'app') {
-    rootModuleId = moduleId
+    moduleId = 'mpx-app-scope'
   }
 
   const parts = parseComponent(content, {
@@ -157,7 +155,6 @@ module.exports = function (content) {
         options,
         moduleId,
         hasScoped,
-        rootModuleId: (ctorType === 'page') ? rootModuleId : '',
         ctorType,
         hasComment,
         usingComponents,

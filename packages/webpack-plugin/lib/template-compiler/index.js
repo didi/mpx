@@ -54,7 +54,6 @@ module.exports = function (raw) {
     externalClasses,
     hasScoped: options.hasScoped,
     moduleId: options.moduleId,
-    rootModuleId: options.rootModuleId,
     filePath: this.resourcePath,
     i18n,
     checkUsingComponents: mpx.checkUsingComponents,
