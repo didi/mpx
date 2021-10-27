@@ -950,6 +950,7 @@ try {
     context.setTimeout = setTimeout;
     context.JSON = JSON;
     context.Math = Math;
+    context.Date = Date;
     context.RegExp = RegExp;
     context.Infinity = Infinity;
     context.isFinite = isFinite;
