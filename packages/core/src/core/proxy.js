@@ -139,19 +139,16 @@ export default class MPXProxy {
     }
     if (__mpx_mode__ !== 'web') {
       // 挂载$watch
-      // this.target.$watch = (...rest) => this.watch(...rest)
-      this.target.$watch = (...rest) => {
-        console.log(...rest, 999222333)
-        this._userWatchers.push({
-          // key,
-          ...rest,
-          unwatch: this.watch(...rest)
-        })
-      }
-      
+      this.target.$watch = (...rest) => this.watch(...rest)
       // 强制执行render
       this.target.$forceUpdate = (...rest) => this.forceUpdate(...rest)
       this.target.$nextTick = fn => this.nextTick(fn)
+      this.target.$getUserWatchers = () => this._userWatchers || []
+      this.target.$getUserWatcher = (name) => {
+        if (!this._userWatchers || !this._userWatchers.length) return null
+        return this._userWatchers.find(watcher => watcher.name === name) || null
+      }
+      this.target.$getRenderWatcher = () => this._watcher || null
     }
   }
   
@@ -217,20 +214,10 @@ export default class MPXProxy {
         const handler = watch[key]
         if (Array.isArray(handler)) {
           for (let i = 0; i < handler.length; i++) {
-            // this.watch(key, handler[i])
-            this._userWatchers.push({
-              key,
-              ...(handler[i] || {}),
-              unwatch: this.watch(key, handler[i])
-            })
+            this.watch(key, handler[i])
           }
         } else {
-          // this.watch(key, handler)
-          this._userWatchers.push({
-            key,
-            ...(handler || {}),
-            unwatch: this.watch(key, handler)
-          })
+          this.watch(key, handler)
         }
       }
     }

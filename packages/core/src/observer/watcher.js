@@ -18,6 +18,7 @@ export default class Watcher {
   ) {
     this.vm = vm
     vm._watchers = vm._watchers || []
+    // console.log(this, 99991111)
     vm._watchers.push(this)
     // options
     if (options) {
@@ -39,6 +40,7 @@ export default class Watcher {
     this.depIds = new Set()
     this.newDepIds = new Set()
     this.expression = process.env.NODE_ENV !== 'production' ? expOrFn.toString() : ''
+    this.name = options && options.name || (typeof expOrFn === 'function' ? `function${this.id}` : expOrFn)
     // parse expression for getter
     if (typeof expOrFn === 'function') {
       this.getter = expOrFn
@@ -51,7 +53,7 @@ export default class Watcher {
       ? undefined
       : this.get()
   }
-
+  
   /**
    * Evaluate the getter, and re-collect dependencies.
    */
@@ -74,7 +76,7 @@ export default class Watcher {
     }
     return value
   }
-
+  
   /**
    * Add a dependency to this directive.
    */
@@ -88,7 +90,7 @@ export default class Watcher {
       }
     }
   }
-
+  
   /**
    * Clean up for dependency collection.
    */
@@ -109,7 +111,7 @@ export default class Watcher {
     this.newDeps = tmp
     this.newDeps.length = 0
   }
-
+  
   /**
    * Subscriber interface.
    * Will be called when a dependency changes.
@@ -132,7 +134,6 @@ export default class Watcher {
     this.paused = !!paused
   }
   
-  // 4 恢复状态
   resume () {
     // computed watcher 不考虑
     if (this.lazy) return
