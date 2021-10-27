@@ -31,6 +31,8 @@ export default class Watcher {
     this.id = ++uid // uid for batching
     this.active = true
     this.immediateAsync = false
+    // 1 是否暂停，默认为否
+    this.paused = false
     this.dirty = this.lazy // for lazy watchers
     this.deps = []
     this.newDeps = []
@@ -115,7 +117,7 @@ export default class Watcher {
   // 支持临时将某个异步watcher修改为sync执行，在模拟setData时使用
   update (sync) {
     /* istanbul ignore else */
-    if (this.lazy) {
+    if (this.lazy || this.paused) {
       this.dirty = true
     } else if (this.sync || sync) {
       if (sync) dequeueWatcher(this)
@@ -124,7 +126,22 @@ export default class Watcher {
       queueWatcher(this)
     }
   }
-
+  
+  // 3 设置暂停状态
+  pause (paused) {
+    this.paused = !!paused
+  }
+  
+  // 4 恢复状态
+  resume () {
+    // computed watcher 不考虑
+    if (this.lazy) return
+    // paused 阶段有触发，则恢复时执行一次
+    if (this.dirty) this.run()
+    this.pause(false)
+    this.dirty = false
+  }
+  
   /**
    * Scheduler job interface.
    * Will be called by the scheduler.
@@ -151,7 +168,7 @@ export default class Watcher {
       }
     }
   }
-
+  
   /**
    * Evaluate the value of the watcher.
    * This only gets called for lazy watchers.
@@ -160,7 +177,7 @@ export default class Watcher {
     this.value = this.get()
     this.dirty = false
   }
-
+  
   /**
    * Depend on all deps collected by this watcher.
    */
@@ -170,7 +187,7 @@ export default class Watcher {
       this.deps[i].depend()
     }
   }
-
+  
   /**
    * Remove self from all dependencies' subscriber list.
    */
