@@ -10,7 +10,6 @@ import pageScrollMixin from './pageScrollMixin'
 import componentGenericsMixin from './componentGenericsMixin'
 import getTabBarMixin from './getTabBarMixin'
 import pageRouteMixin from './pageRouteMixin'
-import watchPausedMixin from './watchPaused'
 
 export default function getBuiltInMixins (options, type) {
   let bulitInMixins = []
@@ -33,8 +32,7 @@ export default function getBuiltInMixins (options, type) {
       proxyEventMixin(),
       pageStatusMixin(type),
       refsMixin(),
-      relationsMixin(type),
-      watchPausedMixin(type)
+      relationsMixin(type)
     ]
     // 此为纯增强类mixins，原生模式下不需要注入
     if (!options.__nativeRender__) {
