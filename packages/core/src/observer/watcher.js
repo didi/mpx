@@ -41,7 +41,7 @@ export default class Watcher {
     this.depIds = new Set()
     this.newDepIds = new Set()
     this.expression = process.env.NODE_ENV !== 'production' ? expOrFn.toString() : ''
-    this.name = options && options.name || (typeof expOrFn === 'function' ? `function${this.id}` : expOrFn)
+    this.name = options.name || (typeof expOrFn === 'function' ? `function${this.id}` : expOrFn)
     // parse expression for getter
     if (typeof expOrFn === 'function') {
       this.getter = expOrFn
@@ -129,12 +129,10 @@ export default class Watcher {
       queueWatcher(this)
     }
   }
-  
   // 3 设置暂停状态
   pause () {
     this.paused = true
   }
-  
   resume () {
     // computed watcher 不考虑
     if (this.lazy) return
@@ -143,7 +141,6 @@ export default class Watcher {
     this.paused = false
     this.dirty = false
   }
-  
   /**
    * Scheduler job interface.
    * Will be called by the scheduler.
