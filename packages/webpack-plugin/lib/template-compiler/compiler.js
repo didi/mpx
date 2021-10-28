@@ -1776,6 +1776,7 @@ function processAliStyleClassHack (el, options) {
     }
   })
 }
+
 // 有virtualHost情况wx组件注入virtualHost。无virtualHost阿里组件注入root-view。其他跳过。
 function getVirtualHostRoot (options, meta) {
   if (mode === 'wx' && options.hasVirtualHost && options.isComponent) {
@@ -1790,7 +1791,7 @@ function getVirtualHostRoot (options, meta) {
       },
       {
         name: 'style',
-        style: `{{mpxStyle||''}}`
+        value: `{{mpxStyle||''}}`
       }
     ])
   }

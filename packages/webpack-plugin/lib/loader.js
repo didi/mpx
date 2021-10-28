@@ -297,6 +297,8 @@ module.exports = function (content) {
           }
           output += getRequire('styles', style, extraOptions, i) + '\n'
         })
+      } else if (ctorType === 'app' && mode === 'ali') {
+        output += getRequire('styles', {}) + '\n'
       }
 
       // json
