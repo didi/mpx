@@ -1,6 +1,6 @@
 const NullDependency = require('webpack/lib/dependencies/NullDependency')
 const makeSerializable = require('webpack/lib/util/makeSerializable')
-const addQuery = require('../utils/')
+const addQuery = require('../utils/add-query')
 
 class RecordGlobalComponentsDependency extends NullDependency {
   constructor (usingComponents, context) {
