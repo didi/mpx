@@ -57,7 +57,7 @@ export default class MPXProxy {
       this.curRenderTask = null
     }
   }
-  
+
   created (params) {
     this.initApi()
     this.callUserHook(BEFORECREATE)
@@ -71,7 +71,7 @@ export default class MPXProxy {
       this.options.__nativeRender__ ? this.doRender() : this.initRender()
     }
   }
-  
+
   renderTaskExecutor (isEmptyRender) {
     if ((!this.isMounted() && this.curRenderTask) || (this.isMounted() && isEmptyRender)) {
       return
@@ -89,11 +89,11 @@ export default class MPXProxy {
     // isMounted之前基于mounted触发，isMounted之后基于setData回调触发
     return this.isMounted() && this.curRenderTask.resolve
   }
-  
+
   isMounted () {
     return this.state === MOUNTED
   }
-  
+
   mounted () {
     if (this.state === CREATED) {
       this.state = MOUNTED
@@ -103,13 +103,13 @@ export default class MPXProxy {
       this.curRenderTask && this.curRenderTask.resolve()
     }
   }
-  
+
   updated () {
     if (this.isMounted()) {
       this.callUserHook(UPDATED)
     }
   }
-  
+
   destroyed () {
     this.state = DESTROYED
     if (__mpx_mode__ !== 'web') {
@@ -117,7 +117,7 @@ export default class MPXProxy {
     }
     this.callUserHook(DESTROYED)
   }
-  
+
   initApi () {
     // 挂载扩展属性到实例上
     proxy(this.target, this.options.proto, Object.keys(this.options.proto), true, (key) => {
@@ -146,12 +146,12 @@ export default class MPXProxy {
       this.target.$getUserWatchers = () => this._userWatchers || []
       this.target.$getUserWatcher = (name) => {
         if (!this._userWatchers || !this._userWatchers.length) return null
-        return this._userWatchers.find(watcher => watcher.name === name) || null
+        return this._userWatchers.filter(watcher => watcher.name === name) || []
       }
       this.target.$getRenderWatcher = () => this._watcher || null
     }
   }
-  
+
   initState () {
     const options = this.options
     const proxyedKeys = this.initData(options.data, options.dataFn)
@@ -167,14 +167,14 @@ export default class MPXProxy {
     })
     this.initWatch(options.watch)
   }
-  
+
   initComputed (computedOpt) {
     if (computedOpt) {
       this.collectLocalKeys(computedOpt)
       initComputed(this, this.data, computedOpt)
     }
   }
-  
+
   // 构建响应式data
   initData (data, dataFn) {
     let proxyedKeys = []
@@ -207,7 +207,7 @@ export default class MPXProxy {
     observe(this.data, true)
     return proxyedKeys
   }
-  
+
   initWatch (watch) {
     if (watch) {
       for (const key in watch) {
@@ -222,7 +222,7 @@ export default class MPXProxy {
       }
     }
   }
-  
+
   collectLocalKeys (data) {
     for (let key in data) {
       if (hasOwn(data, key)) {
@@ -230,7 +230,7 @@ export default class MPXProxy {
       }
     }
   }
-  
+
   nextTick (fn) {
     if (typeof fn === 'function') {
       queueWatcher(() => {
@@ -238,7 +238,7 @@ export default class MPXProxy {
       })
     }
   }
-  
+
   callUserHook (hookName, params) {
     const hook = this.options[hookName] || this.target[hookName]
     if (typeof hook === 'function') {
@@ -253,11 +253,11 @@ export default class MPXProxy {
       }
     }
   }
-  
+
   watch (expOrFn, cb, options) {
     return watch(this, expOrFn, cb, options)
   }
-  
+
   clearWatchers () {
     let i = this._watchers.length
     while (i--) {
@@ -269,20 +269,20 @@ export default class MPXProxy {
     const renderData = this.data
     this.doRender(this.processRenderDataWithStrictDiff(renderData))
   }
-  
+
   renderWithData () {
     const renderData = preProcessRenderData(this.renderData)
     this.doRender(this.processRenderDataWithStrictDiff(renderData))
     // 重置renderData准备下次收集
     this.renderData = {}
   }
-  
+
   processRenderDataWithDiffData (result, key, diffData) {
     Object.keys(diffData).forEach((subKey) => {
       result[key + subKey] = diffData[subKey]
     })
   }
-  
+
   processRenderDataWithStrictDiff (renderData) {
     const result = {}
     for (let key in renderData) {
@@ -367,7 +367,7 @@ export default class MPXProxy {
     }
     return result
   }
-  
+
   doRender (data, cb) {
     if (typeof this.target.__render !== 'function') {
       error('Please specify a [__render] function to render view.', this.options.mpxFileResource)
@@ -376,7 +376,7 @@ export default class MPXProxy {
     if (typeof cb !== 'function') {
       cb = undefined
     }
-    
+
     const isEmpty = isEmptyObject(data) && isEmptyObject(this.forceUpdateData)
     const resolve = this.renderTaskExecutor(isEmpty)
     
@@ -384,7 +384,7 @@ export default class MPXProxy {
       cb && cb()
       return
     }
-    
+
     // 使用forceUpdateData后清空
     if (!isEmptyObject(this.forceUpdateData)) {
       data = mergeData({}, data, this.forceUpdateData)
@@ -412,7 +412,7 @@ export default class MPXProxy {
     }
     this.target.__render(data, callback)
   }
-  
+
   initRender () {
     let renderWatcher
     if (this.target.__injectedRender) {
@@ -431,7 +431,7 @@ export default class MPXProxy {
     }
     this._watcher = renderWatcher
   }
-  
+
   forceUpdate (data, options, callback) {
     if (typeof data === 'function') {
       callback = data
@@ -444,7 +444,7 @@ export default class MPXProxy {
       callback = options
       options = {}
     }
-    
+
     if (isPlainObject(data)) {
       this.forceUpdateData = data
       Object.keys(this.forceUpdateData).forEach(key => {
@@ -456,7 +456,7 @@ export default class MPXProxy {
     } else {
       this.forceUpdateAll = true
     }
-    
+
     if (callback) {
       callback = callback.bind(this.target)
       this.nextTick(callback)
