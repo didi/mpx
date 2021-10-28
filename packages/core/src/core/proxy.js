@@ -145,7 +145,7 @@ export default class MPXProxy {
       this.target.$nextTick = fn => this.nextTick(fn)
       this.target.$getUserWatchers = () => this._userWatchers || []
       this.target.$getUserWatcher = (name) => {
-        if (!this._userWatchers || !this._userWatchers.length) return null
+        if (!this._userWatchers || !this._userWatchers.length) return []
         return this._userWatchers.filter(watcher => watcher.name === name) || []
       }
       this.target.$getRenderWatcher = () => this._watcher || null
