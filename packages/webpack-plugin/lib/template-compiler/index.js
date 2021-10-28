@@ -2,7 +2,6 @@ const compiler = require('./compiler')
 const bindThis = require('./bind-this').transform
 const parseRequest = require('../utils/parse-request')
 const matchCondition = require('../utils/match-condition')
-const path = require('path')
 const loaderUtils = require('loader-utils')
 
 module.exports = function (raw) {
@@ -79,7 +78,7 @@ module.exports = function (raw) {
 
   let result = compiler.serialize(ast)
 
-  if (isNative ) {
+  if (isNative) {
     return result
   }
 

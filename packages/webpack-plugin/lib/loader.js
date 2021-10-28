@@ -226,7 +226,7 @@ module.exports = function (content) {
       }
 
       const {
-        getRequire,
+        getRequire
       } = createHelpers(loaderContext)
 
       // 注入模块id及资源路径
@@ -270,7 +270,7 @@ module.exports = function (content) {
           hasComment,
           isNative,
           moduleId,
-          usingComponents,
+          usingComponents
           // 添加babel处理渲染函数中可能包含的...展开运算符
           // 由于...运算符应用范围极小以及babel成本极高，先关闭此特性后续看情况打开
           // needBabel: true

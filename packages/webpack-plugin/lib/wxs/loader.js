@@ -1,6 +1,5 @@
 const NodeTargetPlugin = require('webpack/lib/node/NodeTargetPlugin')
 const EntryPlugin = require('webpack/lib/EntryPlugin')
-const EnableLibraryPlugin = require('webpack/lib/library/EnableLibraryPlugin')
 const LimitChunkCountPlugin = require('webpack/lib/optimize/LimitChunkCountPlugin')
 const path = require('path')
 const WxsPlugin = require('./WxsPlugin')

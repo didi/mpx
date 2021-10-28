@@ -1,7 +1,6 @@
 const NullDependency = require('webpack/lib/dependencies/NullDependency')
 const makeSerializable = require('webpack/lib/util/makeSerializable')
 
-
 class RecordStaticResourceDependency extends NullDependency {
   constructor (resourcePath, outputPath, packageRoot = '') {
     super()

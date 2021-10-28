@@ -1,4 +1,3 @@
-const Template = require('webpack/lib/Template')
 const config = require('../config')
 const { ConcatSource } = require('webpack').sources
 const JavascriptModulesPlugin = require('webpack/lib/javascript/JavascriptModulesPlugin')

@@ -1,7 +1,6 @@
 const NullDependency = require('webpack/lib/dependencies/NullDependency')
 const makeSerializable = require('webpack/lib/util/makeSerializable')
 
-
 class FlagPluginDependency extends NullDependency {
   get type () {
     return 'mpx flag plugin'

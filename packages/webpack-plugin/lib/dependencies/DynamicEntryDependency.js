@@ -65,7 +65,7 @@ class DynamicEntryDependency extends NullDependency {
 
   mpxAction (module, compilation, callback) {
     const mpx = compilation.__mpx__
-    let { resource, entryType, outputPath, packageRoot } = this
+    const { packageRoot } = this
     // 分包构建在需要在主包构建完成后在finishMake中处理，返回的资源路径先用key来占位，在合成extractedAssets时再进行最终替换
     if (packageRoot && mpx.currentPackageRoot !== packageRoot) {
       mpx.subpackagesEntriesMap[packageRoot] = mpx.subpackagesEntriesMap[packageRoot] || []

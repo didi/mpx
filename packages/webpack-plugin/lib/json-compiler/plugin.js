@@ -47,13 +47,6 @@ module.exports = function (source) {
   // 最终输出中不需要为plugin.json产生chunk，而是使用extractor输出，删除plugin.json对应的entrypoint
   if (entryName) this._compilation.entries.delete(entryName)
 
-  let pluginEntry
-  try {
-    pluginEntry = JSON5.parse(source)
-  } catch (err) {
-    return callback(err)
-  }
-
   // 新模式下plugin.json输出依赖于extractor
   const callback = (err, processOutput) => {
     if (err) return nativeCallback(err)
@@ -61,6 +54,13 @@ module.exports = function (source) {
     if (processOutput) output = processOutput(output)
     output += `module.exports = JSON.stringify(pluginEntry, null, 2);\n`
     nativeCallback(null, output)
+  }
+
+  let pluginEntry
+  try {
+    pluginEntry = JSON5.parse(source)
+  } catch (err) {
+    return callback(err)
   }
 
   const processMain = (main, callback) => {
@@ -106,7 +106,7 @@ module.exports = function (source) {
     async.eachOf(pages, (page, key) => {
       processPage(page, context, '', (err, entry) => {
         if (err) return callback(err)
-        pages[index] = entry
+        pages[key] = entry
         if (mode === 'ali') {
           pluginEntry.pages.push(entry)
           if (!/^__private_page_\d+__$/.test(key)) {

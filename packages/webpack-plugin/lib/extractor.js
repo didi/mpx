@@ -106,6 +106,4 @@ module.exports.pitch = async function (remainingRequest) {
   }
 
   return resultSource
-
 }
-

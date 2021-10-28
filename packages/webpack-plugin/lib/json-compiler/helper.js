@@ -3,6 +3,7 @@ const normalize = require('../utils/normalize')
 const nativeLoaderPath = normalize.lib('native-loader')
 const isUrlRequestRaw = require('../utils/is-url-request')
 const parseRequest = require('../utils/parse-request')
+const loaderUtils = require('loader-utils')
 
 module.exports = function createJSONHelper ({ loaderContext, emitWarning }) {
   const mpx = loaderContext.getMpx()
@@ -134,7 +135,7 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning }) {
         return callback(new Error(`The js export path ${resourcePath} must be in the context ${context}!`))
       }
       const outputPath = /^(.*?)(\.[^.]*)?$/.exec(relative)[1]
-      const entry = getDynamicEntry(resource, type, outputPath, tarRoot, publicPath + tarRoot)
+      const entry = getDynamicEntry(resource, 'export', outputPath, tarRoot, publicPath + tarRoot)
       callback(null, entry)
     })
   }

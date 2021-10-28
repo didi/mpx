@@ -83,7 +83,6 @@ module.exports = function (content) {
 
     let requestString, extraOptions
 
-
     switch (link.tag) {
       case 'import':
       case 'include':

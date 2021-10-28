@@ -1,7 +1,6 @@
 const WxsTemplatePlugin = require('./WxsTemplatePlugin')
 const WxsParserPlugin = require('./WxsParserPlugin')
 
-
 class WxsPlugin {
   constructor (options = { mode: 'wx' }) {
     this.options = options
@@ -9,7 +8,6 @@ class WxsPlugin {
 
   apply (compiler) {
     compiler.hooks.thisCompilation.tap('WxsPlugin', (compilation, { normalModuleFactory }) => {
-
       new WxsTemplatePlugin(this.options).apply(compilation)
 
       compilation.hooks.buildModule.tap('WxsPlugin', (module) => {

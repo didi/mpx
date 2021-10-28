@@ -22,9 +22,8 @@ class ResolveDependency extends NullDependency {
   }
 
   getResolved () {
-    const { resource, packageName, issuerResource, range, compilation } = this
+    const { resource, packageName, compilation } = this
     if (!compilation) return ''
-    const publicPath = compilation.outputOptions.publicPath || ''
     const mpx = compilation.__mpx__
     if (!mpx) return ''
     const { pagesMap, componentsMap, staticResourcesMap } = mpx
