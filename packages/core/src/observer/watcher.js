@@ -18,13 +18,13 @@ export default class Watcher {
   ) {
     this.vm = vm
     vm._watchers = vm._watchers || []
-    // console.log(this, 99991111)
     vm._watchers.push(this)
     // options
     if (options) {
       this.deep = !!options.deep
       this.lazy = !!options.lazy
       this.sync = !!options.sync
+      // Todo check
       this.isPausedOnHide = !!options.isPausedOnHide
     } else {
       this.deep = this.lazy = this.sync = false
@@ -54,7 +54,7 @@ export default class Watcher {
       ? undefined
       : this.get()
   }
-  
+
   /**
    * Evaluate the getter, and re-collect dependencies.
    */
@@ -77,7 +77,7 @@ export default class Watcher {
     }
     return value
   }
-  
+
   /**
    * Add a dependency to this directive.
    */
@@ -91,7 +91,7 @@ export default class Watcher {
       }
     }
   }
-  
+
   /**
    * Clean up for dependency collection.
    */
@@ -112,7 +112,7 @@ export default class Watcher {
     this.newDeps = tmp
     this.newDeps.length = 0
   }
-  
+
   /**
    * Subscriber interface.
    * Will be called when a dependency changes.
@@ -170,7 +170,7 @@ export default class Watcher {
       }
     }
   }
-  
+
   /**
    * Evaluate the value of the watcher.
    * This only gets called for lazy watchers.
@@ -179,7 +179,7 @@ export default class Watcher {
     this.value = this.get()
     this.dirty = false
   }
-  
+
   /**
    * Depend on all deps collected by this watcher.
    */
@@ -189,7 +189,7 @@ export default class Watcher {
       this.deps[i].depend()
     }
   }
-  
+
   /**
    * Remove self from all dependencies' subscriber list.
    */

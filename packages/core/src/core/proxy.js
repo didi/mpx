@@ -264,7 +264,7 @@ export default class MPXProxy {
       this._watchers[i].teardown()
     }
   }
-  
+
   render () {
     const renderData = this.data
     this.doRender(this.processRenderDataWithStrictDiff(renderData))
@@ -379,7 +379,7 @@ export default class MPXProxy {
 
     const isEmpty = isEmptyObject(data) && isEmptyObject(this.forceUpdateData)
     const resolve = this.renderTaskExecutor(isEmpty)
-    
+
     if (isEmpty) {
       cb && cb()
       return
@@ -391,7 +391,7 @@ export default class MPXProxy {
       this.forceUpdateData = {}
       this.forceUpdateAll = false
     }
-    
+
     /**
      * mounted之后才接收回调来触发updated钩子，换言之mounted之前修改数据是不会触发updated的
      */
@@ -437,9 +437,9 @@ export default class MPXProxy {
       callback = data
       data = undefined
     }
-    
+
     options = options || {}
-    
+
     if (typeof options === 'function') {
       callback = options
       options = {}

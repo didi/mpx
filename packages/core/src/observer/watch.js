@@ -14,9 +14,9 @@ export function watch (vm, expOrFn, cb, options) {
       cb = noop
     }
   }
-  
+
   cb = cb || noop
-  
+
   options = options || {}
   options.user = true
   const watcher = new Watcher(vm, expOrFn, cb, options)
