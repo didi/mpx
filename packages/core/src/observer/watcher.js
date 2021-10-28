@@ -24,6 +24,7 @@ export default class Watcher {
       this.deep = !!options.deep
       this.lazy = !!options.lazy
       this.sync = !!options.sync
+      this.name = options.name
       // Todo check
       this.isPausedOnHide = !!options.isPausedOnHide
     } else {
@@ -41,7 +42,7 @@ export default class Watcher {
     this.depIds = new Set()
     this.newDepIds = new Set()
     this.expression = process.env.NODE_ENV !== 'production' ? expOrFn.toString() : ''
-    this.name = options.name || (typeof expOrFn === 'function' ? `function${this.id}` : expOrFn)
+    if (!this.name) this.name = typeof expOrFn === 'function' ? `function${this.id}` : expOrFn
     // parse expression for getter
     if (typeof expOrFn === 'function') {
       this.getter = expOrFn
