@@ -1,38 +1,63 @@
-const MIXINS_MAPS = {
-  app: [],
-  page: [],
-  component: []
+import flatten from 'lodash/flatten.js'
+
+const mixinsQueueMap = {
+  app: [[], []],
+  page: [[], []],
+  component: [[], []]
 }
 
-export function injectMixins (mixins, type) {
-  if (typeof type === 'string') {
-    type = [type]
-  } else {
-    type = ['app', 'page', 'component']
+export function clearInjectMixins () {
+  mixinsQueueMap.app = [[], []]
+  mixinsQueueMap.page = [[], []]
+  mixinsQueueMap.component = [[], []]
+}
+
+export function injectMixins (mixins, options = {}) {
+  if (typeof options === 'string' || Array.isArray(options)) {
+    options = {
+      types: options
+    }
+  }
+
+  let types = options.types || ['app', 'page', 'component']
+  let stage = options.stage || -1
+
+  if (typeof types === 'string') {
+    types = [types]
   }
 
   if (!Array.isArray(mixins)) {
     mixins = [mixins]
   }
-  type.forEach(key => {
-    const curMixins = MIXINS_MAPS[key]
-    if (curMixins) {
-      for (const mixin of mixins) {
-        curMixins.indexOf(mixin) === -1 && curMixins.push(mixin)
+
+  mixins.stage = stage
+
+  types.forEach(type => {
+    const mixinsQueue = stage < 0 ? mixinsQueueMap[type][0] : mixinsQueueMap[type][1]
+    for (let i = 0; i <= mixinsQueue.length; i++) {
+      if (i === mixinsQueue.length) {
+        mixinsQueue.push(mixins)
+        break
+      }
+      const item = mixinsQueue[i]
+      if (mixins === item) break
+      if (stage < item.stage) {
+        mixinsQueue.splice(i, 0, mixins)
+        break
       }
     }
   })
+
   return this
 }
 
-export function getInjectedMixins (type) {
-  return MIXINS_MAPS[type].slice(0)
-}
-
 export function mergeInjectedMixins (options, type) {
-  const injectedMixins = getInjectedMixins(type)
-  if (injectedMixins.length) {
-    options.mixins = options.mixins ? injectedMixins.concat(options.mixins) : injectedMixins
+  const before = flatten(mixinsQueueMap[type][0])
+  const middle = options.mixins || []
+  const after = flatten(mixinsQueueMap[type][1])
+  const mixins = before.concat(middle).concat(after)
+  if (mixins.length) {
+    options.mixins = mixins
   }
   return options
 }

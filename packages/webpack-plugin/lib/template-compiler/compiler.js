@@ -700,7 +700,7 @@ function parse (template, options) {
 
   function genTempRoot () {
     // 使用临时节点作为root，处理multi root的情况
-    root = currentParent = getTempNode()
+    root = currentParent = getVirtualHostRoot(options, meta)
     stack.push(root)
   }
 
@@ -1738,10 +1738,11 @@ function processWebExternalClassesHack (el, options) {
 function processScoped (el, options) {
   if (options.hasScoped && isRealNode(el)) {
     const moduleId = options.moduleId
+    const rootModuleId = options.isComponent ? '' : 'mpx-app-scope' // 处理app全局样式对页面的影响
     const staticClass = getAndRemoveAttr(el, 'class').val
     addAttrs(el, [{
       name: 'class',
-      value: staticClass ? `${staticClass} ${moduleId}` : moduleId
+      value: `${staticClass || ''} ${moduleId} ${rootModuleId}`
     }])
   }
 }
@@ -1760,36 +1761,40 @@ function processBuiltInComponents (el, meta) {
   }
 }
 
-function processAliStyleClassHack (el, options, root) {
+function processAliStyleClassHack (el, options) {
+  if (!isComponentNode(el, options)) return
   ['style', 'class'].forEach((type) => {
     let exp = getAndRemoveAttr(el, type).val
-    let sep = type === 'style' ? ';' : ' '
-
     let typeName = 'mpx' + type.replace(/^./, (matched) => {
       return matched.toUpperCase()
     })
-
-    if (options.isComponent && el.parent === root && isRealNode(el)) {
-      if (exp !== undefined) {
-        exp = `{{${typeName}||''}}` + sep + exp
-      } else {
-        exp = `{{${typeName}||''}}`
-      }
-    }
     if (exp !== undefined) {
-      if (isComponentNode(el, options)) {
-        addAttrs(el, [{
-          name: typeName,
-          value: exp
-        }])
-      } else {
-        addAttrs(el, [{
-          name: type,
-          value: exp
-        }])
-      }
+      addAttrs(el, [{
+        name: typeName,
+        value: exp
+      }])
     }
   })
+}
+// 有virtualHost情况wx组件注入virtualHost。无virtualHost阿里组件注入root-view。其他跳过。
+function getVirtualHostRoot (options, meta) {
+  if (mode === 'wx' && options.hasVirtualHost && options.isComponent) {
+    !meta.options && (meta.options = {})
+    meta.options.virtualHost = true
+  }
+  if (mode === 'ali' && !options.hasVirtualHost && options.isComponent) {
+    return createASTElement('view', [
+      {
+        name: 'class',
+        value: `mpx-root-view host-${options.moduleId} ${options.hasScoped ? options.moduleId : ''} {{mpxClass||''}}`
+      },
+      {
+        name: 'style',
+        style: `{{mpxStyle||''}}`
+      }
+    ])
+  }
+  return getTempNode()
 }
 
 function processShow (el, options, root) {

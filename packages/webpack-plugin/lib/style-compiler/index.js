@@ -5,15 +5,22 @@ const rpx = require('./plugins/rpx')
 const vw = require('./plugins/vw')
 const pluginCondStrip = require('./plugins/conditional-strip')
 const scopeId = require('./plugins/scope-id')
+const transSpecial = require('./plugins/trans-special')
 const matchCondition = require('../utils/match-condition')
 const parseRequest = require('../utils/parse-request')
 
 module.exports = function (css, map) {
   this.cacheable()
   const cb = this.async()
-  const { queryObj } = parseRequest(this.resource)
+  const { resourcePath, queryObj } = parseRequest(this.resource)
+  const id = queryObj.moduleId || queryObj.mid
   const mpx = this.getMpx()
   const defs = mpx.defs
+  const mode = mpx.mode
+  const packageName = queryObj.packageRoot || mpx.currentPackageRoot || 'main'
+  const componentsMap = mpx.componentsMap[packageName]
+  const pagesMap = mpx.pagesMap
+  const isApp = !(pagesMap[resourcePath] || componentsMap[resourcePath])
   const transRpxRulesRaw = mpx.transRpxRules
   const transRpxRules = transRpxRulesRaw ? (Array.isArray(transRpxRulesRaw) ? transRpxRulesRaw : [transRpxRulesRaw]) : []
 
@@ -32,9 +39,12 @@ module.exports = function (css, map) {
       },
       config.options
     )
+    // ali环境处理host选择器
+    if (mode === 'ali') {
+      plugins.push(transSpecial({ id }))
+    }
 
     if (queryObj.scoped) {
-      const id = queryObj.moduleId || queryObj.mid
       plugins.push(scopeId({ id }))
     }
 
@@ -73,6 +83,10 @@ module.exports = function (css, map) {
     return postcss(plugins)
       .process(css, options)
       .then(result => {
+        // ali环境添加全局样式抹平root差异
+        if (mode === 'ali' && isApp) {
+          result.css += '\n.mpx-root-view { display: inline; line-height: normal; }\n'
+        }
         if (result.messages) {
           result.messages.forEach(({ type, file }) => {
             if (type === 'dependency') {

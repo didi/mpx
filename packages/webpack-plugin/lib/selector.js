@@ -24,7 +24,9 @@ module.exports = function (content) {
   })
   let part = parts[type] || {}
   if (Array.isArray(part)) {
-    part = part[index]
+    part = part[index] || {
+      content: ''
+    }
   }
   this.callback(null, part.content, part.map)
 }

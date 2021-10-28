@@ -57,7 +57,8 @@ module.exports = function (raw) {
     i18n,
     checkUsingComponents: mpx.checkUsingComponents,
     globalComponents: Object.keys(mpx.usingComponents),
-    forceProxyEvent: matchCondition(this.resourcePath, mpx.forceProxyEventRules)
+    forceProxyEvent: matchCondition(this.resourcePath, mpx.forceProxyEventRules),
+    hasVirtualHost: matchCondition(this.resourcePath, mpx.autoVirtualHostRules)
   })
 
   let ast = parsed.root
