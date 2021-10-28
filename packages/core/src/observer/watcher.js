@@ -25,6 +25,7 @@ export default class Watcher {
       this.deep = !!options.deep
       this.lazy = !!options.lazy
       this.sync = !!options.sync
+      this.isPausedOnHide = !!options.isPausedOnHide
     } else {
       this.deep = this.lazy = this.sync = false
     }
@@ -130,8 +131,8 @@ export default class Watcher {
   }
   
   // 3 设置暂停状态
-  pause (paused) {
-    this.paused = !!paused
+  pause () {
+    this.paused = true
   }
   
   resume () {
@@ -139,7 +140,7 @@ export default class Watcher {
     if (this.lazy) return
     // paused 阶段有触发，则恢复时执行一次
     if (this.dirty) this.run()
-    this.pause(false)
+    this.paused = false
     this.dirty = false
   }
   
