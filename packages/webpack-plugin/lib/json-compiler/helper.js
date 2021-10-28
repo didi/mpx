@@ -15,6 +15,7 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning }) {
   const isUrlRequest = r => isUrlRequestRaw(r, root, externals)
   const urlToRequest = r => loaderUtils.urlToRequest(r)
 
+  // todo 提供不记录dependency的resolve方法，非必要的情况下不记录dependency，提升缓存利用率
   const resolve = (context, request, callback) => {
     const { queryObj } = parseRequest(request)
     context = queryObj.context || context

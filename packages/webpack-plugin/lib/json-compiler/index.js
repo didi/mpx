@@ -11,6 +11,7 @@ const addQuery = require('../utils/add-query')
 const readJsonForSrc = require('../utils/read-json-for-src')
 const createHelpers = require('../helpers')
 const createJSONHelper = require('./helper')
+const RecordGlobalComponentsDependency = require('../dependencies/RecordGlobalComponentsDependency')
 const { MPX_DISABLE_EXTRACTOR_CACHE } = require('../utils/const')
 
 module.exports = function (content) {
@@ -184,15 +185,8 @@ module.exports = function (content) {
     }
   } else {
     // 保存全局注册组件
-    // todo 副作用dep化
     if (json.usingComponents) {
-      mpx.usingComponents = {}
-      Object.keys(json.usingComponents).forEach((key) => {
-        const request = json.usingComponents[key]
-        mpx.usingComponents[key] = addQuery(request, {
-          context: this.context
-        })
-      })
+      this._module.addPresentationalDependency(new RecordGlobalComponentsDependency(json.usingComponents, this.context))
     }
   }
 

@@ -25,6 +25,7 @@ const PackageEntryPlugin = require('./resolver/PackageEntryPlugin')
 // const RemovedModuleDependency = require('./dependencies/RemovedModuleDependency')
 const AppEntryDependency = require('./dependencies/AppEntryDependency')
 const RecordStaticResourceDependency = require('./dependencies/RecordStaticResourceDependency')
+const RecordGlobalComponentsDependency = require('./dependencies/RecordGlobalComponentsDependency')
 const DynamicEntryDependency = require('./dependencies/DynamicEntryDependency')
 const FlagPluginDependency = require('./dependencies/FlagPluginDependency')
 const SplitChunksPlugin = require('webpack/lib/optimize/SplitChunksPlugin')
@@ -386,6 +387,9 @@ class MpxWebpackPlugin {
 
       compilation.dependencyFactories.set(RecordStaticResourceDependency, new NullFactory())
       compilation.dependencyTemplates.set(RecordStaticResourceDependency, new RecordStaticResourceDependency.Template())
+
+      compilation.dependencyFactories.set(RecordGlobalComponentsDependency, new NullFactory())
+      compilation.dependencyTemplates.set(RecordGlobalComponentsDependency, new RecordGlobalComponentsDependency.Template())
 
       compilation.dependencyFactories.set(CommonJsVariableDependency, normalModuleFactory)
       compilation.dependencyTemplates.set(CommonJsVariableDependency, new CommonJsVariableDependency.Template())
