@@ -25,8 +25,6 @@ export default class Watcher {
       this.lazy = !!options.lazy
       this.sync = !!options.sync
       this.name = options.name
-      // Todo check
-      this.isPausedOnHide = !!options.isPausedOnHide
     } else {
       this.deep = this.lazy = this.sync = false
     }
@@ -34,7 +32,7 @@ export default class Watcher {
     this.id = ++uid // uid for batching
     this.active = true
     this.immediateAsync = false
-    // 1 是否暂停，默认为否
+    // 是否暂停，默认为否
     this.paused = false
     this.dirty = this.lazy // for lazy watchers
     this.deps = []
@@ -42,7 +40,6 @@ export default class Watcher {
     this.depIds = new Set()
     this.newDepIds = new Set()
     this.expression = process.env.NODE_ENV !== 'production' ? expOrFn.toString() : ''
-    if (!this.name) this.name = typeof expOrFn === 'function' ? `function${this.id}` : expOrFn
     // parse expression for getter
     if (typeof expOrFn === 'function') {
       this.getter = expOrFn
@@ -130,14 +127,14 @@ export default class Watcher {
       queueWatcher(this)
     }
   }
-  // 3 设置暂停状态
+
   pause () {
     this.paused = true
   }
   resume () {
     // computed watcher 不考虑
     if (this.lazy) return
-    // paused 阶段有触发，则恢复时执行一次
+    // paused 阶段被触发，则 resume 后执行一次run
     if (this.dirty) this.run()
     this.paused = false
     this.dirty = false

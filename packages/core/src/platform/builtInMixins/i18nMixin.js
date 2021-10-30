@@ -16,7 +16,8 @@ export default function i18nMixin () {
         }, (locale) => {
           this.mpxLocale = this.$i18n.locale = locale
         }, {
-          sync: true
+          sync: true,
+          inMpx: true
         })
 
         this.$watch(() => {
@@ -24,7 +25,8 @@ export default function i18nMixin () {
         }, (locale) => {
           this.mpxLocale = locale
         }, {
-          sync: true
+          sync: true,
+          inMpx: true
         })
         // 挂载翻译方法
         if (global.i18nMethods) {

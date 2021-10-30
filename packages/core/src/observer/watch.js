@@ -21,7 +21,7 @@ export function watch (vm, expOrFn, cb, options) {
   options.user = true
   const watcher = new Watcher(vm, expOrFn, cb, options)
   if (!vm._userWatchers) vm._userWatchers = []
-  vm._userWatchers.push(watcher)
+  if (!options.inMpx) vm._userWatchers.push(watcher)
   if (options.immediate) {
     cb.call(vm.target, watcher.value)
   } else if (options.immediateAsync) {

@@ -143,12 +143,15 @@ export default class MPXProxy {
       // 强制执行render
       this.target.$forceUpdate = (...rest) => this.forceUpdate(...rest)
       this.target.$nextTick = fn => this.nextTick(fn)
-      this.target.$getUserWatchers = () => this._userWatchers || []
-      this.target.$getUserWatcher = (name) => {
-        if (!this._userWatchers || !this._userWatchers.length) return []
-        return this._userWatchers.filter(watcher => watcher.name === name) || []
+      this.target.$getWatchers = () => this._userWatchers
+      this.target.$getWatcherByName = (name) => {
+        if (!this._userWatchers || !this._userWatchers.length) return null
+        const watchers = this._userWatchers.filter(watcher => watcher.name === name)
+        const len = watchers.length
+        if (len > 1) error(`存在${len}个name为${name}的watcher实例，请检查！（$getWatcherByName方法默认返回最后一个name=${name}的watcher）`)
+        return this._userWatchers[len - 1] || null
       }
-      this.target.$getRenderWatcher = () => this._watcher || null
+      this.target.$getRenderWatcher = () => this._watcher
     }
   }
 
@@ -430,6 +433,7 @@ export default class MPXProxy {
       }, noop)
     }
     this._watcher = renderWatcher
+    this._userWatchers.push(renderWatcher)
   }
 
   forceUpdate (data, options, callback) {

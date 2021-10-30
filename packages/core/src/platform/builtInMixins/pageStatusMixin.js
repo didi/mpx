@@ -59,7 +59,8 @@ export default function pageStatusMixin (mixinType) {
               }
             }, {
               sync: true,
-              immediate: true
+              immediate: true,
+              inMpx: true
             })
           }
         }
