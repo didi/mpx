@@ -965,6 +965,9 @@ try {
     context.ArrayBuffer = ArrayBuffer;
     context.Symbol = Symbol;
     context.Reflect = Reflect;
+    context.Object = Object;
+    context.Error = Error;
+    context.Array = Array;
   }
 } catch(e){
 }\n`)
