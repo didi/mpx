@@ -54,6 +54,7 @@ const isProductionLikeMode = options => {
 }
 
 const isStaticModule = module => {
+  if (!module.resource) return false
   const { queryObj } = parseRequest(module.resource)
   let isStatic = queryObj.isStatic || false
   if (module.loaders) {
@@ -574,10 +575,14 @@ class MpxWebpackPlugin {
               currentResourceMap = resourceMap[packageName]
             }
 
-            let alreadyOutputed = currentResourceMap[resourcePath]
-            if (!alreadyOutputed) {
-              if (outputPath) {
-                outputPath = toPosix(path.join(packageRoot, outputPath))
+            let alreadyOutputed = false
+            if (outputPath) {
+              outputPath = toPosix(path.join(packageRoot, outputPath))
+              // 如果之前已经进行过输出，则不需要重复进行
+              if (currentResourceMap[resourcePath] === outputPath) {
+                alreadyOutputed = true
+              } else {
+                currentResourceMap[resourcePath] = outputPath
                 // 输出冲突检测只有page需要
                 if (resourceType === 'page') {
                   for (let key in currentResourceMap) {
@@ -587,10 +592,9 @@ class MpxWebpackPlugin {
                     }
                   }
                 }
-                currentResourceMap[resourcePath] = outputPath
-              } else {
-                currentResourceMap[resourcePath] = true
               }
+            } else if (!currentResourceMap[resourcePath]) {
+              currentResourceMap[resourcePath] = true
             }
 
             return {
