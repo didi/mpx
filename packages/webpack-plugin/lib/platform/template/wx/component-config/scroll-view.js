@@ -12,7 +12,8 @@ module.exports = function ({ print }) {
   const aliEventLog = print({ platform: 'ali', tag: TAG_NAME, isError: false, type: 'event' })
   const qqEventLog = print({ platform: 'qq', tag: TAG_NAME, isError: false, type: 'event' })
   const qqPropLog = print({ platform: 'qq', tag: TAG_NAME, isError: false })
-
+  const ksPropLog = print({ platform: 'ks', tag: TAG_NAME, isError: false })
+  const ksEventLog = print({ platform: 'ks', tag: TAG_NAME, isError: false, type:'event' })
   return {
     test: TAG_NAME,
     web (tag, { el }) {
@@ -39,6 +40,10 @@ module.exports = function ({ print }) {
       {
         test: /^(enable-back-to-top|enable-flex|scroll-anchoring|enhanced|bounces|show-scrollbar|paging-enabled|fast-deceleration|binddragstart|binddragging|binddragend)$/,
         qa: qaPropLog
+      },
+      {
+        test:/^(refresher-enabled|refresher-threshold|refresher-default-style|refresher-background|refresher-triggered|enhanced|bounces|show-scrollbar|paging-enabled|fast-deceleration)$/,
+        ks:ksPropLog
       }
     ],
     event: [
@@ -62,7 +67,8 @@ module.exports = function ({ print }) {
         ali: aliEventLog,
         tt: ttEventLog,
         qq: qqEventLog,
-        swan: baiduEventLog
+        swan: baiduEventLog,
+        ks:ksEventLog
       }
     ]
   }

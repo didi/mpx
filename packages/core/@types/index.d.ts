@@ -307,7 +307,7 @@ interface MpxConfig {
   forceRunWatcherSync: boolean
 }
 
-type SupportedMode = 'wx' | 'ali' | 'qq' | 'swan' | 'tt' | 'web' | 'qa'
+type SupportedMode = 'wx' | 'ali' | 'qq' | 'swan' | 'tt' | 'web' | 'qa' | 'ks'
 
 interface ImplementOptions {
   modes?: Array<SupportedMode>

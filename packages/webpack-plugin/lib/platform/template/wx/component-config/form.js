@@ -7,7 +7,7 @@ module.exports = function ({ print }) {
   const jdPropLog = print({ platform: 'jd', tag: TAG_NAME, isError: false })
   const webPropLog = print({ platform: 'web', tag: TAG_NAME, isError: false })
   const qaPropLog = print({ platform: 'qa', tag: TAG_NAME, isError: false })
-
+  const ksPropLog = print({ platform: 'ks', tag: TAG_NAME, isError: false })
   return {
     test: TAG_NAME,
     web (tag, { el }) {
@@ -26,7 +26,8 @@ module.exports = function ({ print }) {
       {
         test: /^(report-submit|report-submit-timeout)$/,
         web: webPropLog,
-        qa: qaPropLog
+        qa: qaPropLog,
+        ks: ksPropLog
       }
     ]
   }

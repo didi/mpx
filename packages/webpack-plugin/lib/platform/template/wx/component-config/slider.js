@@ -48,6 +48,14 @@ module.exports = function ({ print }) {
           }
           obj.name = propsMap[obj.name]
           return obj
+        },
+        ks (obj) {
+          const propsMap = {
+            'activeColor': 'active-color',
+            'backgroundColor': 'background-color'
+          }
+          obj.name = propsMap[obj.name]
+          return obj
         }
       }
     ]

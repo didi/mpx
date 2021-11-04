@@ -14,7 +14,7 @@ module.exports = function ({ print }) {
   const qqEventLog = print({ platform: 'qq', tag: TAG_NAME, isError: false, type: 'event' })
   const qqPropLog = print({ platform: 'qq', tag: TAG_NAME, isError: false })
   const baiduPropLog = print({ platform: 'baidu', tag: TAG_NAME, isError: false })
-
+  const ksPropLog = print({ platform: 'ks', tag: TAG_NAME, isError: false })
   return {
     test: TAG_NAME,
     web (tag, { el }) {
@@ -47,6 +47,10 @@ module.exports = function ({ print }) {
       {
         test: /^(fixed|cursor-spacing|show-confirm-bar|adjust-position|hold-keyboard|auto-height)$/,
         qa: qaPropLog
+      },
+      {
+        test:/^(placeholder-class|cursor-spacing|cursor|show-confirm-bar|selection-start|selection-end|disable-default-padding)$/,
+        ks: ksPropLog
       }
     ],
     event: [

@@ -11,6 +11,7 @@ import wxToQqRule from './wxToQq'
 import wxToTtRule from './wxToTt'
 import wxToDdRule from './wxToDd'
 import wxToJdRule from './wxToJd'
+import wxToKsRule from './wxToKs'
 
 // 根据当前环境获取的默认生命周期信息
 let lifecycleInfo
@@ -55,7 +56,8 @@ const rulesMap = {
   wxToQq: { ...defaultConvertRule, ...wxToQqRule },
   wxToTt: { ...defaultConvertRule, ...wxToTtRule },
   wxToDd: { ...defaultConvertRule, ...wxToDdRule },
-  wxToJd: { ...defaultConvertRule, ...wxToJdRule }
+  wxToJd: { ...defaultConvertRule, ...wxToJdRule },
+  wxToKs: { ...defaultConvertRule, ...wxToKsRule }
 }
 
 export function getConvertRule (convertMode) {

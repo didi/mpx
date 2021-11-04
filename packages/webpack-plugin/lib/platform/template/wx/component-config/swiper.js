@@ -10,7 +10,7 @@ module.exports = function ({ print }) {
   const jdEventLog = print({ platform: 'jd', tag: TAG_NAME, isError: false, type: 'event' })
   const jdPropLog = print({ platform: 'jd', tag: TAG_NAME, isError: false })
   const qaPropLog = print({ platform: 'qa', tag: TAG_NAME, isError: false })
-
+  const ksPropLog = print({ platform: 'ks', tag: TAG_NAME, isError: false })
   return {
     test: TAG_NAME,
     web (tag, { el }) {
@@ -45,6 +45,10 @@ module.exports = function ({ print }) {
       {
         test: /^(snap-to-edge|easing-function)$/,
         qa: qaPropLog
+      },
+      {
+        test: /^(snap-to-edge)$/,
+        ks: ksPropLog
       }
     ],
     event: [

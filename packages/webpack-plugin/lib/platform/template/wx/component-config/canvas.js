@@ -42,11 +42,27 @@ module.exports = function ({ print }) {
             'longtap': 'longTap'
           }
           return eventMap[eventName]
+        },
+        ks(eventName){
+          const eventMap = {
+            'touchstart': 'canvastouchstart',
+            'touchmove': 'canvastouchmove',
+            'touchend': 'canvastouchend',
+            'touchcancel': 'canvastouchcancel',
+            'longtap': 'canvaslongtap '
+          }
+          return eventMap[eventName]
         }
       },
       {
         test: /^(error)$/,
-        ali: aliEventLog
+        ali: aliEventLog,
+        ks(eventName){
+          const eventMap = {
+            'error': 'canvaserror',
+          }
+          return eventMap[eventName]
+        }
       },
       {
         test: /^(longtap|error)$/,

@@ -10,7 +10,8 @@ const TT_UNSUPPORTED_TAG_NAME_ARR = ['movable-view', 'cover-image', 'cover-view'
 const JD_UNSUPPORTED_TAG_NAME_ARR = ['functional-page-navigator', 'live-pusher', 'live-player', 'rich-text', 'audio', 'video', 'camera']
 // 快应用不支持的标签集合
 const QA_UNSUPPORTED_TAG_NAME_ARR = ['movable-view', 'movable-area', 'open-data', 'official-account', 'editor', 'functional-page-navigator', 'live-player', 'live-pusher', 'ad', 'cover-image']
-
+// 快手小程序不支持的标签集合
+const KS_UNSUPPORTED_TAG_NAME_ARR = ['functional-page-navigator', 'live-pusher', 'live-player',]
 /**
  * @param {function(object): function} print
  * @return {array}
@@ -22,14 +23,15 @@ module.exports = function ({ print }) {
   const ttUnsupportedTagError = print({ platform: 'bytedance', isError: true, type: 'tag' })
   const jdUnsupportedTagError = print({ platform: 'jd', isError: true, type: 'tag' })
   const qaUnsupportedTagError = print({ platform: 'qa', isError: true, type: 'tag' })
-
+  const ksUnsupportedTagError = print({ platform: 'ks', isError: true, type: 'tag' })
+  
   const aliUnsupportedExp = new RegExp('^(' + ALI_UNSUPPORTED_TAG_NAME_ARR.join('|') + ')$')
   const baiduUnsupportedExp = new RegExp('^(' + BAIDU_UNSUPPORTED_TAG_NAME_ARR.join('|') + ')$')
   const qqUnsupportedExp = new RegExp('^(' + QQ_UNSUPPORTED_TAG_NAME_ARR.join('|') + ')$')
   const ttUnsupportedExp = new RegExp('^(' + TT_UNSUPPORTED_TAG_NAME_ARR.join('|') + ')$')
   const jdUnsupportedExp = new RegExp('^(' + JD_UNSUPPORTED_TAG_NAME_ARR.join('|') + ')$')
   const qaUnsupportedExp = new RegExp('^(' + QA_UNSUPPORTED_TAG_NAME_ARR.join('|') + ')$')
-
+  const ksUnsupportedExp = new RegExp('^(' + KS_UNSUPPORTED_TAG_NAME_ARR.join('|') + ')$')
   return [
     {
       supportedModes: ['swan'],
@@ -60,6 +62,11 @@ module.exports = function ({ print }) {
       supportedModes: ['qa'],
       test: qaUnsupportedExp,
       qa: qaUnsupportedTagError
+    },
+    {
+      supportedModes: ['ks'],
+      test: ksUnsupportedExp,
+      qa: ksUnsupportedTagError
     }
   ]
 }

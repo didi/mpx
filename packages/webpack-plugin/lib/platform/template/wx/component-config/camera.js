@@ -13,6 +13,7 @@ module.exports = function ({ print }) {
   const qqEventLog = print({ platform: 'qq', tag: TAG_NAME, isError: false, type: 'event' })
   const qaPropLog = print({ platform: 'qa', tag: TAG_NAME, isError: false })
   const qaEventLog = print({ platform: 'qa', tag: TAG_NAME, isError: false, type: 'event' })
+  const ksPropLog = print({ platform: 'ks', tag: TAG_NAME, isError: false })
   return {
     test: TAG_NAME,
     props: [
@@ -46,7 +47,8 @@ module.exports = function ({ print }) {
       },
       {
         test: /^(resolution|frame-size)$/,
-        qq: qqPropLog
+        qq: qqPropLog,
+        ks: ksPropLog
       },
       {
         test: /^(frame-size|device-position)$/,

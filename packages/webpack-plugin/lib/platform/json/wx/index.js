@@ -39,7 +39,7 @@ module.exports = function getSpec ({ warn, error }) {
   }
 
   const spec = {
-    supportedModes: ['ali', 'swan', 'qq', 'tt', 'jd', 'qa', 'dd'],
+    supportedModes: ['ali', 'swan', 'qq', 'tt', 'jd', 'qa', 'dd', 'ks'],
     normalizeTest,
     page: [
       {
