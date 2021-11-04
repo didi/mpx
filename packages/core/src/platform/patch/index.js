@@ -4,6 +4,7 @@ import { getDefaultOptions as getWxDefaultOptions } from './wx/getDefaultOptions
 import { getDefaultOptions as getAliDefaultOptions } from './ali/getDefaultOptions'
 import { getDefaultOptions as getSwanDefaultOptions } from './swan/getDefaultOptions'
 import { getDefaultOptions as getWebDefaultOptions } from './web/getDefaultOptions'
+import { error } from '../../helper/log'
 
 export default function createFactory (type) {
   return (options, { isNative, customCtor, customCtorType } = {}) => {
@@ -22,6 +23,9 @@ export default function createFactory (type) {
           ctor = global.currentCtor
           if (global.currentCtorType === 'page') {
             options.__pageCtor__ = true
+          }
+          if (global.currentResourceType && global.currentResourceType !== type) {
+            error(`The ${global.currentResourceType} [${global.currentResource}] is not supported to be created by ${type} constructor.`)
           }
         } else {
           if (type === 'page') {
