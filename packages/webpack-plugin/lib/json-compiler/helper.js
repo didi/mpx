@@ -42,7 +42,7 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning }) {
   }
 
   const processComponent = (component, context, { tarRoot = '', outputPath = '', relativePath = '' }, callback) => {
-    if (!isUrlRequest(component)) return callback()
+    if (!isUrlRequest(component)) return callback(null, component) // 原样返回用户输入内容
     if (resolveMode === 'native') {
       component = urlToRequest(component)
     }
@@ -94,7 +94,7 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning }) {
       aliasPath = page.path
       page = page.src
     }
-    if (!isUrlRequest(page)) return callback()
+    if (!isUrlRequest(page)) return callback(null, page) // 原样返回用户输入内容
     if (resolveMode === 'native') {
       page = urlToRequest(page)
     }
