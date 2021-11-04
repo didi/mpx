@@ -968,6 +968,19 @@ try {
     context.Object = Object;
     context.Error = Error;
     context.Array = Array;
+    context.Float32Array = Float32Array;
+    context.Float64Array = Float64Array;
+    context.Int16Array = Int16Array;
+    context.Int32Array = Int32Array;
+    context.Int8Array = Int8Array;
+    context.Uint16Array = Uint16Array;
+    context.Uint32Array = Uint32Array;
+    context.Uint8ClampedArray = Uint8ClampedArray;
+    context.String = String;
+    context.Function = Function;
+    context.SyntaxError = SyntaxError;
+    context.decodeURIComponent = decodeURIComponent;
+    context.encodeURIComponent = encodeURIComponent;
   }
 } catch(e){
 }\n`)
