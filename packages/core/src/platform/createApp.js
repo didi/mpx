@@ -62,7 +62,8 @@ export default function createApp (option, config = {}) {
       }
     })
   }
-  const { rawOptions } = transferOptions(option, 'app', builtInMixins)
+  const { rawOptions } = transferOptions(option, 'app')
+  rawOptions.mixins = builtInMixins
   const defaultOptions = filterOptions(spreadProp(mergeOptions(rawOptions, 'app', false), 'methods'), appData)
 
   if (__mpx_mode__ === 'web') {
