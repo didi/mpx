@@ -25,7 +25,7 @@ export default function createFactory (type) {
             options.__pageCtor__ = true
           }
           if (global.currentResourceType && global.currentResourceType !== type) {
-            error(`${global.currentResourceType} ${global.currentResource} is not supported to be created using ${type} constructor`)
+            error(`the ${global.currentResourceType} [${global.currentResource}] is not supported to be created using ${type} constructor`)
           }
         } else {
           if (type === 'page') {
