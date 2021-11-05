@@ -226,14 +226,13 @@ module.exports = function (content) {
     const processPages = (pages, context, tarRoot = '', callback) => {
       if (pages) {
         async.each(pages, (page, callback) => {
-          const { queryObj } = parseRequest(page)
-          processPage(page, context, tarRoot, (err, entry) => {
+          processPage(page, context, tarRoot, (err, entry, { isFirst } = {}) => {
             if (err) return callback(err)
             if (tarRoot && subPackagesCfg) {
               subPackagesCfg[tarRoot].pages.push(entry)
             } else {
               // 确保首页
-              if (queryObj.isFirst) {
+              if (isFirst) {
                 localPages.unshift(entry)
               } else {
                 localPages.push(entry)

@@ -42,7 +42,7 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning }) {
   }
 
   const processComponent = (component, context, { tarRoot = '', outputPath = '', relativePath = '' }, callback) => {
-    if (!isUrlRequest(component)) return callback()
+    if (!isUrlRequest(component)) return callback(null, component)
     if (resolveMode === 'native') {
       component = urlToRequest(component)
     }
@@ -94,13 +94,13 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning }) {
       aliasPath = page.path
       page = page.src
     }
-    if (!isUrlRequest(page)) return callback()
+    if (!isUrlRequest(page)) return callback(null, page)
     if (resolveMode === 'native') {
       page = urlToRequest(page)
     }
     resolve(context, page, (err, resource) => {
       if (err) return callback(err)
-      const { resourcePath } = parseRequest(resource)
+      const { resourcePath, queryObj: { isFirst } } = parseRequest(resource)
       const ext = path.extname(resourcePath)
       let outputPath
       if (aliasPath) {
@@ -119,7 +119,7 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning }) {
         resource = `!!${nativeLoaderPath}!${resource}`
       }
       const entry = getDynamicEntry(resource, 'page', outputPath, tarRoot, publicPath + tarRoot)
-      callback(null, entry)
+      callback(null, entry, { isFirst })
     })
   }
 
