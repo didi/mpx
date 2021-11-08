@@ -499,9 +499,7 @@ class MpxWebpackPlugin {
             const cache = mpx.extractedFilesCache.get(resource)
             if (cache) return cache
             const { resourcePath, queryObj } = parseRequest(resource)
-            const type = queryObj.type
-            const isStatic = queryObj.isStatic
-            const isPlugin = queryObj.isPlugin
+            const { type, isStatic, isPlugin } = queryObj
             let file
             if (isPlugin) {
               file = 'plugin.json'

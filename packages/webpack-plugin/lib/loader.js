@@ -291,9 +291,10 @@ module.exports = function (content) {
           }
           // require style
           if (style.src) {
-            // style src会被特殊处理为全局复用样式，不添加resourcePath，添加isStatic及issuerResource
+            // style src会被特殊处理为全局复用样式，不添加resourcePath，添加isStatic及issuerFile
             extraOptions.isStatic = true
-            extraOptions.issuerFile = mpx.getExtractedFile(this.resource)
+            const issuerResource = addQuery(this.resource, { type: 'styles' }, true)
+            extraOptions.issuerFile = mpx.getExtractedFile(issuerResource)
           }
           output += getRequire('styles', style, extraOptions, i) + '\n'
         })

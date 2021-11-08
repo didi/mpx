@@ -87,6 +87,7 @@ module.exports.pitch = async function (remainingRequest) {
             resultSource += `module.exports = ${JSON.stringify(relativePath)};\n`
           } else {
             this.emitFile(issuerFile, '', undefined, {
+              skipEmit: true,
               extractedInfo: {
                 content: `@import "${relativePath}";\n`,
                 index: -1
