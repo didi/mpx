@@ -308,6 +308,7 @@ module.exports = function (content) {
         ctor = 'Component'
       }
       globalInjectCode += `global.currentCtor = ${ctor}\n`
+      globalInjectCode += `global.currentResourceType = '${ctorType}'\n`
       globalInjectCode += `global.currentCtorType = ${JSON.stringify(ctor.replace(/^./, (match) => {
         return match.toLowerCase()
       }))}\n`
