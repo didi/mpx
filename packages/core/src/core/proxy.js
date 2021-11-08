@@ -47,7 +47,7 @@ export default class MPXProxy {
     this.ignoreProxyMap = makeMap(EXPORT_MPX.config.ignoreProxyWhiteList)
     if (__mpx_mode__ !== 'web') {
       this._watchers = []
-      this._userWatchers = []
+      this._userWatchers = {}
       this._watcher = null
       this.localKeysMap = {} // 非props key
       this.renderData = {} // 渲染函数中收集的数据
@@ -143,13 +143,10 @@ export default class MPXProxy {
       // 强制执行render
       this.target.$forceUpdate = (...rest) => this.forceUpdate(...rest)
       this.target.$nextTick = fn => this.nextTick(fn)
-      this.target.$getWatchers = () => this._userWatchers
+      this.target.$getWatchers = () => this._watchers.filter(item => item.pausable)
       this.target.$getWatcherByName = (name) => {
-        if (!this._userWatchers || !this._userWatchers.length) return null
-        const watchers = this._userWatchers.filter(watcher => watcher.name === name)
-        const len = watchers.length
-        if (len > 1) error(`存在${len}个name为${name}的watcher实例，请检查！（$getWatcherByName方法默认返回最后一个name=${name}的watcher）`)
-        return this._userWatchers[len - 1] || null
+        if (!this._userWatchers) return null
+        return this._userWatchers[name] || null
       }
       this.target.$getRenderWatcher = () => this._watcher
     }
@@ -433,7 +430,6 @@ export default class MPXProxy {
       }, noop)
     }
     this._watcher = renderWatcher
-    this._userWatchers.push(renderWatcher)
   }
 
   forceUpdate (data, options, callback) {

@@ -34,6 +34,8 @@ export default class Watcher {
     this.immediateAsync = false
     // 是否暂停，默认为否
     this.paused = false
+    // 是否可被暂停，默认为是
+    this.pausable = options.pausable || true
     this.dirty = this.lazy // for lazy watchers
     this.deps = []
     this.newDeps = []
@@ -129,11 +131,13 @@ export default class Watcher {
   }
 
   pause () {
+    // pausable=false 不可暂停
+    if (!this.pausable) return
     this.paused = true
   }
   resume () {
-    // computed watcher 不考虑
-    if (this.lazy) return
+    // pausable=false 不可恢复
+    if (!this.pausable) return
     // paused 阶段被触发，则 resume 后执行一次run
     if (this.dirty) this.run()
     this.paused = false

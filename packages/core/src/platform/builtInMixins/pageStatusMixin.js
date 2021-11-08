@@ -1,18 +1,36 @@
 import { CREATED } from '../../core/innerLifecycle'
 
+function setPausedWatch (target, isHide) {
+  if (!target.$rawOptions.mpxConfig || !target.$rawOptions.mpxConfig.isPausedOnHide) return
+  const watchers = target.$getWatchers()
+  if (watchers && watchers.length) {
+    for (let i = 0; i < watchers.length; i++) {
+      const watcher = watchers[i]
+      isHide && watcher.pause()
+      !isHide && watcher.resume()
+    }
+  }
+}
+
 export default function pageStatusMixin (mixinType) {
   // 只有tt和ali没有pageLifeTimes支持，需要框架实现，其余平台一律使用原生pageLifeTimes
   // 由于业务上大量使用了pageShow进行初始化。。。下个版本再移除非必要的pageShow/Hide实现。。。
   if (mixinType === 'page') {
     const pageMixin = {
       data: {
-        mpxPageStatus: 'show'
+        mpxPageStatus: 'show',
+        _first: true
       },
       onShow () {
         this.mpxPageStatus = 'show'
+        // show 取消暂停状态
+        if (!this._first) setPausedWatch(this, false)
+        this._first = false
       },
       onHide () {
         this.mpxPageStatus = 'hide'
+        // hide 设置暂停状态
+        setPausedWatch(this, true)
       }
     }
     if (__mpx_mode__ === 'ali') {
@@ -32,10 +50,28 @@ export default function pageStatusMixin (mixinType) {
     return pageMixin
   } else {
     return {
+      data: {
+        _first: true
+      },
       [CREATED] () {
         const options = this.$rawOptions
         const hasPageShow = options.pageShow || options.pageHide
         const needPageLifetimes = options.pageLifetimes && (__mpx_mode__ === 'ali' || __mpx_mode__ === 'tt')
+        // 是否开启 isPausedOnHide
+        const isPausedOnHide = !!(options.mpxConfig && options.mpxConfig.isPausedOnHide)
+        if (isPausedOnHide) {
+          const pageShow = options.pageShow
+          options.pageShow = () => {
+            if (!this._first) setPausedWatch(this, false)
+            this._first = false
+            typeof pageShow === 'function' && pageShow.call(this)
+          }
+          const pageHide = options.pageHide
+          options.pageHide = () => {
+            setPausedWatch(this, true)
+            typeof pageHide === 'function' && pageHide.call(this)
+          }
+        }
 
         if (hasPageShow || needPageLifetimes) {
           let currentPage
@@ -60,7 +96,7 @@ export default function pageStatusMixin (mixinType) {
             }, {
               sync: true,
               immediate: true,
-              inMpx: true
+              pausable: false
             })
           }
         }

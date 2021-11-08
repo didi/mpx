@@ -18,7 +18,7 @@ export function initComputed (vm, target, computed) {
     watchers[key] = new Watcher(vm,
       getter || noop,
       noop,
-      { lazy: true }
+      { lazy: true, pausable: false  }
     )
     if (!(key in target)) {
       defineComputed(vm, target, key, userDef)
