@@ -3,7 +3,7 @@ const JSON5 = require('json5')
 const getEntryName = require('../utils/get-entry-name')
 const FlagPluginDependency = require('../dependencies/FlagPluginDependency')
 const createJSONHelper = require('./helper')
-const { RESOLVE_IGNORED_ERR } = require('../utils/const')
+const { MPX_DISABLE_EXTRACTOR_CACHE, RESOLVE_IGNORED_ERR } = require('../utils/const')
 
 module.exports = function (source) {
   // 该loader中会在每次编译中动态添加entry，不能缓存，否则watch不好使
@@ -14,6 +14,9 @@ module.exports = function (source) {
   if (!mpx) {
     return nativeCallback(null, source)
   }
+
+  // json模块必须每次都创建（但并不是每次都需要build），用于动态添加编译入口，传递信息以禁用父级extractor的缓存
+  this.emitFile(MPX_DISABLE_EXTRACTOR_CACHE, '', undefined, { skipEmit: true })
 
   this._module.addPresentationalDependency(new FlagPluginDependency())
 

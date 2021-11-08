@@ -505,7 +505,7 @@ module.exports = function (content) {
       async.eachOf(plugins, (plugin, name, callback) => {
         async.parallel([
           (callback) => {
-            processPluginGenericsImplementation(plugin.genericsImplementation, context, tarRoot, callback)
+            processPluginGenericsImplementation(plugin, context, tarRoot, callback)
           },
           (callback) => {
             processPluginExport(plugin, context, tarRoot, callback)
