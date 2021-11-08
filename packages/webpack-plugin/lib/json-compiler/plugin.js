@@ -3,6 +3,7 @@ const JSON5 = require('json5')
 const getEntryName = require('../utils/get-entry-name')
 const FlagPluginDependency = require('../dependencies/FlagPluginDependency')
 const createJSONHelper = require('./helper')
+const { RESOLVE_IGNORED_ERR } = require('../utils/const')
 
 module.exports = function (source) {
   // 该loader中会在每次编译中动态添加entry，不能缓存，否则watch不好使
@@ -66,6 +67,10 @@ module.exports = function (source) {
   const processMain = (main, callback) => {
     if (!main) return callback()
     processJsExport(main, context, '', (err, entry) => {
+      if (err === RESOLVE_IGNORED_ERR) {
+        delete pluginEntry.main
+        return callback()
+      }
       if (err) return callback(err)
       pluginEntry.main = entry
       callback()
@@ -76,8 +81,12 @@ module.exports = function (source) {
     if (!components) return callback()
     async.eachOf(components, (component, name, callback) => {
       processComponent(component, context, { relativePath }, (err, entry) => {
+        if (err === RESOLVE_IGNORED_ERR) {
+          delete components[name]
+          return callback()
+        }
         if (err) return callback(err)
-        pluginEntry.publicComponents[name] = entry
+        components[name] = entry
         callback()
       })
     }, callback)
@@ -105,15 +114,18 @@ module.exports = function (source) {
 
     async.eachOf(pages, (page, key) => {
       processPage(page, context, '', (err, entry) => {
+        if (err === RESOLVE_IGNORED_ERR) {
+          delete pages[key]
+          return callback()
+        }
         if (err) return callback(err)
-        pages[key] = entry
         if (mode === 'ali') {
           pluginEntry.pages.push(entry)
           if (!/^__private_page_\d+__$/.test(key)) {
             pluginEntry.publicPages[key] = entry
           }
         } else {
-          pluginEntry.pages[key] = entry
+          pages[key] = entry
         }
         callback()
       })
@@ -126,7 +138,7 @@ module.exports = function (source) {
     }, (callback) => {
       return processComponents(pluginEntry.publicComponents, callback)
     }, (callback) => {
-      return processPages(pluginEntry.publicPages, callback)
+      return processPages(pluginEntry.pages, callback)
     }
   ], (err) => {
     return callback(err, processDynamicEntry)

@@ -12,7 +12,7 @@ const readJsonForSrc = require('../utils/read-json-for-src')
 const createHelpers = require('../helpers')
 const createJSONHelper = require('./helper')
 const RecordGlobalComponentsDependency = require('../dependencies/RecordGlobalComponentsDependency')
-const { MPX_DISABLE_EXTRACTOR_CACHE } = require('../utils/const')
+const { MPX_DISABLE_EXTRACTOR_CACHE, RESOLVE_IGNORED_ERR } = require('../utils/const')
 
 module.exports = function (content) {
   const nativeCallback = this.async()
@@ -200,6 +200,10 @@ module.exports = function (content) {
     if (components) {
       async.eachOf(components, (component, name, callback) => {
         processComponent(component, context, { relativePath }, (err, entry) => {
+          if (err === RESOLVE_IGNORED_ERR) {
+            delete components[name]
+            return callback()
+          }
           if (err) return callback(err)
           components[name] = entry
           callback()
@@ -227,7 +231,7 @@ module.exports = function (content) {
       if (pages) {
         async.each(pages, (page, callback) => {
           processPage(page, context, tarRoot, (err, entry, { isFirst } = {}) => {
-            if (err) return callback(err)
+            if (err) return callback(err === RESOLVE_IGNORED_ERR ? null : err)
             if (tarRoot && subPackagesCfg) {
               subPackagesCfg[tarRoot].pages.push(entry)
             } else {
@@ -253,6 +257,7 @@ module.exports = function (content) {
           async.waterfall([
             (callback) => {
               resolve(context, packagePath, (err, result) => {
+                if (err) return callback(err)
                 const { rawResourcePath } = parseRequest(result)
                 callback(err, rawResourcePath)
               })
@@ -329,7 +334,9 @@ module.exports = function (content) {
                 callback()
               }
             }
-          ], callback)
+          ], (err) => {
+            callback(err === RESOLVE_IGNORED_ERR ? null : err)
+          })
         }, callback)
       } else {
         callback()
@@ -451,17 +458,28 @@ module.exports = function (content) {
 
     const processCustomTabBar = (tabBar, context, callback) => {
       if (tabBar && tabBar.custom) {
-        processComponent('./custom-tab-bar/index', context, { outputPath: 'custom-tab-bar/index' }, callback)
+        processComponent('./custom-tab-bar/index', context, { outputPath: 'custom-tab-bar/index' }, (err) => {
+          if (err === RESOLVE_IGNORED_ERR) {
+            delete tabBar.custom
+            return callback()
+          }
+          callback(err)
+        })
       } else {
         callback()
       }
     }
 
-    const processPluginGenericsImplementation = (genericsImplementation, context, tarRoot, callback) => {
+    const processPluginGenericsImplementation = (plugin, context, tarRoot, callback) => {
+      if (!plugin.genericsImplementation) return callback()
       const relativePath = useRelativePath ? publicPath + tarRoot : ''
-      async.eachOf(genericsImplementation, (genericComponents, name, callback) => {
+      async.eachOf(plugin.genericsImplementation, (genericComponents, name, callback) => {
         async.eachOf(genericComponents, (genericComponentPath, name, callback) => {
           processComponent(genericComponentPath, context, { tarRoot, relativePath }, (err, entry) => {
+            if (err === RESOLVE_IGNORED_ERR) {
+              delete genericComponents[name]
+              return callback()
+            }
             if (err) return callback(err)
             genericComponents[name] = entry
           })
@@ -470,10 +488,12 @@ module.exports = function (content) {
     }
 
     const processPluginExport = (plugin, context, tarRoot, callback) => {
-      if (!plugin.export) {
-        return callback()
-      }
+      if (!plugin.export) return callback()
       processJsExport(plugin.export, context, tarRoot, (err, entry) => {
+        if (err === RESOLVE_IGNORED_ERR) {
+          delete plugin.export
+          return callback()
+        }
         if (err) return callback(err)
         plugin.export = entry
         callback()
@@ -485,18 +505,12 @@ module.exports = function (content) {
       async.eachOf(plugins, (plugin, name, callback) => {
         async.parallel([
           (callback) => {
-            if (plugin.genericsImplementation) {
-              processPluginGenericsImplementation(plugin.genericsImplementation, context, tarRoot, callback)
-            } else {
-              callback()
-            }
+            processPluginGenericsImplementation(plugin.genericsImplementation, context, tarRoot, callback)
           },
           (callback) => {
             processPluginExport(plugin, context, tarRoot, callback)
           }
-        ], (err) => {
-          callback(err)
-        })
+        ], callback)
       }, callback)
     }
 
@@ -550,6 +564,10 @@ module.exports = function (content) {
         async.eachOf(generics, (generic, name, callback) => {
           if (generic.default) {
             processComponent(generic.default, context, { relativePath }, (err, entry) => {
+              if (err === RESOLVE_IGNORED_ERR) {
+                delete generic.default
+                return callback()
+              }
               if (err) return callback(err)
               generic.default = entry
               callback()

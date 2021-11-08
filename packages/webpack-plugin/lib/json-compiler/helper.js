@@ -4,6 +4,7 @@ const nativeLoaderPath = normalize.lib('native-loader')
 const isUrlRequestRaw = require('../utils/is-url-request')
 const parseRequest = require('../utils/parse-request')
 const loaderUtils = require('loader-utils')
+const { RESOLVE_IGNORED_ERR } = require('../utils/const')
 
 module.exports = function createJSONHelper ({ loaderContext, emitWarning }) {
   const mpx = loaderContext.getMpx()
@@ -20,7 +21,11 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning }) {
   const resolve = (context, request, callback) => {
     const { queryObj } = parseRequest(request)
     context = queryObj.context || context
-    return loaderContext.resolve(context, request, callback)
+    return loaderContext.resolve(context, request, (err, resource, info) => {
+      if (err) return callback(err)
+      if (resource === false) return callback(RESOLVE_IGNORED_ERR)
+      callback(null, resource, info)
+    })
   }
 
   const dynamicEntryMap = new Map()
