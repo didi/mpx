@@ -96,7 +96,7 @@ export default function pageStatusMixin (mixinType) {
             }, {
               sync: true,
               immediate: true,
-              pausable: false
+              unpausable: true
             })
           }
         }

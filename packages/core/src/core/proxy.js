@@ -143,7 +143,7 @@ export default class MPXProxy {
       // 强制执行render
       this.target.$forceUpdate = (...rest) => this.forceUpdate(...rest)
       this.target.$nextTick = fn => this.nextTick(fn)
-      this.target.$getWatchers = () => this._watchers.filter(item => item.pausable)
+      this.target.$getWatchers = () => this._watchers.filter(item => !item.unpausable)
       this.target.$getWatcherByName = (name) => {
         if (!this._userWatchers) return null
         return this._userWatchers[name] || null
