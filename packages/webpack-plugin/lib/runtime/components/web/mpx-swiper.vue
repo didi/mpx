@@ -93,9 +93,9 @@
     beforeCreate () {
       this.itemIds = []
     },
-	  activated() {
-		  this.refresh()
-	  },
+    activated() {
+    	this.refresh()
+    },
     mounted () {
       this.bs = new BScroll(this.$refs.wrapper, {
         scrollX: !this.vertical,
