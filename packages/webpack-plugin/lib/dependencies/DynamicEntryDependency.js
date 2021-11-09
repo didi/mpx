@@ -45,6 +45,9 @@ class DynamicEntryDependency extends NullDependency {
       resultPath = toPosix(path.relative(relativePath, resultPath))
     }
 
+    // export类型的resultPath需要添加.js后缀
+    if (entryType === 'export') resultPath += '.js'
+
     if (alreadyOutputed) return callback(null, { resultPath })
 
     if (packageRoot) {

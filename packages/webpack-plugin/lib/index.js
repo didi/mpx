@@ -28,6 +28,7 @@ const RecordStaticResourceDependency = require('./dependencies/RecordStaticResou
 const RecordGlobalComponentsDependency = require('./dependencies/RecordGlobalComponentsDependency')
 const DynamicEntryDependency = require('./dependencies/DynamicEntryDependency')
 const FlagPluginDependency = require('./dependencies/FlagPluginDependency')
+const RemoveEntryDependency = require('./dependencies/RemoveEntryDependency')
 const SplitChunksPlugin = require('webpack/lib/optimize/SplitChunksPlugin')
 const fixRelative = require('./utils/fix-relative')
 const parseRequest = require('./utils/parse-request')
@@ -386,6 +387,9 @@ class MpxWebpackPlugin {
 
       compilation.dependencyFactories.set(FlagPluginDependency, new NullFactory())
       compilation.dependencyTemplates.set(FlagPluginDependency, new FlagPluginDependency.Template())
+
+      compilation.dependencyFactories.set(RemoveEntryDependency, new NullFactory())
+      compilation.dependencyTemplates.set(RemoveEntryDependency, new RemoveEntryDependency.Template())
 
       compilation.dependencyFactories.set(RecordStaticResourceDependency, new NullFactory())
       compilation.dependencyTemplates.set(RecordStaticResourceDependency, new RecordStaticResourceDependency.Template())
@@ -1043,8 +1047,7 @@ try {
             source.add(originalSource)
             source.add(`\nmodule.exports = ${globalObject}[${JSON.stringify(chunkLoadingGlobal)}];\n`)
           } else {
-            const entryModules = chunkGraph.getChunkEntryModulesIterable(chunk)
-            const entryModule = entryModules && entryModules[0]
+            const entryModule = chunkGraph.getChunkEntryModulesIterable(chunk).next().value
             if (entryModule && mpx.exportModules.has(entryModule)) {
               source.add('module.exports =\n')
             }

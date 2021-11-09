@@ -2,6 +2,7 @@ const async = require('async')
 const JSON5 = require('json5')
 const getEntryName = require('../utils/get-entry-name')
 const FlagPluginDependency = require('../dependencies/FlagPluginDependency')
+const RemoveEntryDependency = require('../dependencies/RemoveEntryDependency')
 const createJSONHelper = require('./helper')
 const { MPX_DISABLE_EXTRACTOR_CACHE, RESOLVE_IGNORED_ERR } = require('../utils/const')
 
@@ -49,7 +50,7 @@ module.exports = function (source) {
   const srcMode = mpx.srcMode
   const entryName = getEntryName(this)
   // 最终输出中不需要为plugin.json产生chunk，而是使用extractor输出，删除plugin.json对应的entrypoint
-  if (entryName) this._compilation.entries.delete(entryName)
+  if (entryName) this._module.addPresentationalDependency(new RemoveEntryDependency(entryName))
 
   // 新模式下plugin.json输出依赖于extractor
   const callback = (err, processOutput) => {
