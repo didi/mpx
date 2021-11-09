@@ -1,10 +1,9 @@
 <template>
   <view class="wrapper">
-    <slot></slot>
-    <view>
-      this is ref-a component
+    <slot name="before"></slot>
+    <view bindtap="tap">
+      this is ref-c component
     </view>
-    <slot name="after"></slot>
   </view>
 </template>
 
@@ -16,17 +15,19 @@ createComponent({
     multipleSlots: true
   },
   data: {
-    ref: 'ref-a'
+    ref: 'ref-c'
   },
   attached () {
-    setTimeout(() => {
-      // console.log('aaaa', this.slots)
-    }, 1000)
+
   },
   methods: {
-    sayHello() {
-      console.log('[ref-a]: say hello')
-      return 'this is ref-a return val'
+    helloRefC() {
+      console.log('[ref-c]: say hello')
+      return 'this is ref-c return val'
+    },
+    tap() {
+      console.log('tap ref-c view')
+      this.triggerEvent('refctap')
     }
   }
 })
@@ -41,7 +42,6 @@ createComponent({
 
 <script type="application/json">
 {
-  "runtimeCompile": true,
   "usingComponents": {
   }
 }

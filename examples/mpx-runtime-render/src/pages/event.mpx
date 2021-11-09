@@ -7,12 +7,12 @@
     bind:tap="onViewTapBubble('b', $event)"
     bindtouchstart="onViewTouchStart"
   >
-    <view wx:for="{{ navigatorList }}">
+    <view wx:for="{{ navigatorList }}" wx:key="index">
       <view hoverClass="active" class="navigator-item" bindtap="jumpTo(item)">{{ item.name }}</view>
     </view>
   </view>
   <text wx:else>okok</text>
-  <!-- <view wx:for="{{ list }}">{{ item }}</view> -->
+  <!-- <view capture-bind:tap="onViewTapBubble">hello</view> -->
 </template>
 
 <script>
@@ -21,9 +21,13 @@ import { createPage } from '@mpxjs/core'
 createPage({
   data: {
     navigatorList: [
+      // {
+      //   name: 'template-render',
+      //   path: '/pages/template-render/index'
+      // },
       {
-        name: 'template-render',
-        path: '/pages/template-render/index'
+        name: 'custom-wrapper',
+        path: '/pages/custom-wrapper/index'
       },
       // {
       //   name: '新增wx:bind动态传参指令',
@@ -61,10 +65,10 @@ createPage({
       //   name: 'slot',
       //   path: '/pages/slot/index'
       // },
-      // {
-      //   name: 'wx:ref',
-      //   path: '/pages/ref/index'
-      // },
+      {
+        name: 'wx:ref',
+        path: '/pages/ref/index'
+      },
       // {
       //   name: 'global-runtime component',
       //   path: '/pages/global-component/index'
@@ -131,9 +135,9 @@ createPage({
 
 <script type="application/json">
 {
-  // "runtimeCompile": true,
+  "runtimeCompile": true,
   "usingComponents": {
-    "common-a": "../components/common-a/index.mpx"
+    // "common-a": "../components/common-a/index.mpx"
   }
 }
 </script>

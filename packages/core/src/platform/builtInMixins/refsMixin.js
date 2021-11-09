@@ -137,10 +137,27 @@ export default function getRefsMixin () {
       ...aliMethods,
       __getRefs () {
         // 运行时编译组件获取 ref 节点
-        if (this.vnodeData && this.vnodeData.refs) {
-          const ref = this.vnodeData.refs
-          const setRef = ref.type === 'node' ? setNodeRef : setComponentRef
-          setRef(this.vnodeRootContext, ref, this)
+        // TODO: this.refss 运行时组件里面的 slot 获取
+        const vnodeRootContext = this.vnodeRootContext || this._getRootContext(this.id)
+        if (vnodeRootContext) {
+          const needRuntimeRef = true
+          const refsArr = vnodeRootContext.__getRefsData && vnodeRootContext.__getRefsData(needRuntimeRef)
+          if (Array.isArray(refsArr)) {
+            refsArr.forEach((ref) => {
+              if (!vnodeRootContext.$refs[ref.key]) {
+                const refNode = this.__getRefNode(ref)
+                if (refNode) {
+                  Object.defineProperty(vnodeRootContext.$refs, ref.key, {
+                    enumerable: true,
+                    configurable: true,
+                    get: () => {
+                      return refNode
+                    }
+                  })
+                }
+              }
+            })
+          }
         }
         if (this.__getRefsData) {
           const refs = this.__getRefsData()

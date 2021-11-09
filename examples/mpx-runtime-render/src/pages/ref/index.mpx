@@ -1,20 +1,23 @@
 <template>
   <view>
     <view class="wrapper">
-      <view wx:ref="refView1">this is ref view</view>
+      <view>this is ref view</view>
     </view>
 
     <view class="wrapper">
-      <ref-a wx:ref="refA">
+      <ref-a>
         <view>this is ref-a slot content</view>
       </ref-a>
     </view>
 
     <view class="wrapper">
-      <ref-a wx:ref="refA2">
-        <ref-b wx:ref="refB">
-          <view>this is ref-b slot content</view>
+      <ref-a>
+        <ref-b wx:ref="refB" bindtapRefb="tapRefBComponent">
+          <view wx:ref="refView" slot="before" bindtap="tapRefBView">this is ref-b slot content</view>
         </ref-b>
+        <ref-c wx:ref="refC" bindrefctap="tapRefC" slot="after">
+          <view slot="before">this is ref-c slot content</view>
+        </ref-c>
       </ref-a>
     </view>
   </view>
@@ -29,12 +32,24 @@ createComponent({
   },
   attached() {
     setTimeout(() => {
-      console.log('the refView1 is:', this.$refs.refView1)
-      console.log('the refA is:', this.$refs.refA.sayHello())
+      // console.log('the ref is:', this.$refs)
+      // console.log('the refView1 is:', this.$refs.refView1)
+      // console.log('the refA is:', this.$refs.refA.sayHello())
       console.log('the refB is:', this.$refs.refB.helloRefB())
+      console.log('the refView is:', this.$refs.refView)
+      console.log('the refC is:', this.$refs.refC.helloRefC())
     }, 100)
   },
   methods: {
+    tapRefBComponent (e) {
+      console.log('on tapRefBComponent method in ref page', e.detail)
+    },
+    tapRefBView () {
+      console.log('tapRefB', this.ref)
+    },
+    tapRefC () {
+      console.log('tapRefC in ref page')
+    }
   }
 })
 </script>
@@ -48,10 +63,11 @@ createComponent({
 
 <script type="application/json">
 {
-  "runtimeCompile": true,
+  // "runtimeCompile": true,
   "usingComponents": {
     "ref-a": "./components/ref-a.mpx",
-    "ref-b": "./components/ref-b.mpx"
+    "ref-b": "./components/ref-b.mpx",
+    "ref-c": "./components/ref-c.mpx"
   }
 }
 </script>

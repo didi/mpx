@@ -1,6 +1,7 @@
 import { setByPath, collectDataset } from '../../helper/utils'
 import { error } from '../../helper/log'
 import EXPORT_MPX from '../../index'
+import contextMap from '../../vnode/context'
 
 export default function proxyEventMixin () {
   const methods = {
@@ -27,6 +28,7 @@ export default function proxyEventMixin () {
       }
       const eventConfigs = target.dataset.eventconfigs || {}
       const curEventConfig = eventConfigs[type] || eventConfigs[fallbackType] || []
+      const moduleId = target.id
       let returnedValue
       curEventConfig.forEach((item) => {
         const callbackName = item[0]
@@ -50,6 +52,9 @@ export default function proxyEventMixin () {
           }) : [$event]
           if (typeof this[callbackName] === 'function') {
             returnedValue = this[callbackName].apply(this, params)
+          } else if (contextMap.get(moduleId)) { // 获取运行时组件的上下文
+            const context = contextMap.get(moduleId)
+            returnedValue = context[callbackName].apply(context, params)
           } else {
             const location = this.__mpxProxy && this.__mpxProxy.options.mpxFileResource
             error(`Instance property [${callbackName}] is not function, please check.`, location)

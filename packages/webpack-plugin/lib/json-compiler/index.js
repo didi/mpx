@@ -178,11 +178,24 @@ module.exports = function (raw = '{}') {
     return callback(err)
   }
 
-  // 将 element 加入到编译的流程
+
   if (json.runtimeCompile) {
     if (!json.usingComponents) {
       json.usingComponents = {}
     }
+
+    // for (let name in json.usingComponents) {
+      // const aliasTags = getAliasTag()
+      // const absolutePath = path.resolve(path.dirname(this.resourcePath), json.usingComponents[name])
+      // if (aliasTags[absolutePath] && aliasTags[absolutePath].aliasTag) {
+      //   const aliasTag = aliasTags[absolutePath].aliasTag
+      //   const path = json.usingComponents[name]
+      //   delete json.usingComponents[name]
+      //   json.usingComponents[aliasTag] = path
+      // }
+    // }
+
+    // 将 element 加入到编译的流程
     if (!json.usingComponents['element']) {
       json.usingComponents['element'] = renderCustomElementPath
     }

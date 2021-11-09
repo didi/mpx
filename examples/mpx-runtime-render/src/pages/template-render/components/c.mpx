@@ -1,9 +1,10 @@
 <template>
   <view>
+    <view>this is c component</view>
     <slot name="before"></slot>
+    ooooo
     <slot></slot>
-    <view bindtap="tapView">this is slot-a(not runtimeCompile)</view>
-    <slot name="after"></slot>
+    -------------
   </view>
 </template>
 
@@ -14,16 +15,8 @@ createComponent({
   options: {
     multipleSlots: true
   },
-  data: {
-    componentName: 'a'
-  },
-  attached() {
-    console.log('the mpxShow is:', this.mpxShow)
-  },
-  methods: {
-    tapView () {
-      this.triggerEvent('tapslot')
-    }
+  attached () {
+    // console.log('-------c')
   }
 })
 </script>

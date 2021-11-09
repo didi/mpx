@@ -1,6 +1,8 @@
 <template>
   <view>
     <view bindtap="tap">this is common-a component</view>
+    <!-- 运行时组件的 slot 单独加个 custom-element 用以隔离？ -->
+    <slot></slot>
   </view>
 </template>
 
@@ -8,6 +10,9 @@
 import { createComponent } from '@mpxjs/core'
 
 createComponent({
+  options: {
+    // virtualHost: true
+  },
   properties: {
     a: {
       type: String,
@@ -31,14 +36,18 @@ createComponent({
     componentName: 'a'
   },
   attached () {
-    console.log('the a is:', this.a)
-    console.log('the b is:', this.b)
-    console.log('the gogo is:', this.gogo)
-    console.log('the camelCase is:', this.camelCase)
+    setTimeout(() => {
+      // console.log(this, this.selectComponent('.ref_refCommonOther_2'))
+    }, 1500)
+    // console.log('the a is:', this.a)
+    // console.log('the b is:', this.b)
+    // console.log('the gogo is:', this.gogo)
+    // console.log('the camelCase is:', this.camelCase)
   },
   methods: {
     tap () {
-      this.triggerEvent('commonaevent')
+      console.log('tap common-a and triggerEvent')
+      this.triggerEvent('commonaevent', { value: 123 })
     }
   }
 })

@@ -211,8 +211,8 @@ module.exports = function (raw) {
   }
 
   if (meta.refs) {
-    globalInjectCode += `global.currentInject.getRefsData = function () {
-  return ${JSON.stringify(meta.refs)};
+    globalInjectCode += `global.currentInject.getRefsData = function (needRuntimeRef) {
+  return ${JSON.stringify(meta.refs)}.filter(function (ref) { return !!ref.runtimeRef === !!needRuntimeRef });
   };\n`
   }
 
@@ -288,7 +288,7 @@ module.exports = function (raw) {
   // 运行时编译的组件直接返回动态模板的内容
   if (options.runtimeCompile) {
     const src = loaderUtils.stringifyRequest(this, require.resolve('../runtime-render/mpx-render-base.wxml'))
-    return `<import src=${src}/> <template is="{{r.nodeType || 'h-element'}}" data="{{ r: r }}"></template>`
+    return `<import src=${src}/> <template is="mpx_tmpl" data="{{ r: r }}"></template>`
   }
 
   if (isSync) {

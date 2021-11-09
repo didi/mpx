@@ -1,6 +1,7 @@
 <template>
   <global-a wx:bind="{{ { a: 'global page', b: true } }}">
     <view>this is global-a slot</view>
+    <view slot="after">this is global-a after slot</view>
   </global-a>
 </template>
 

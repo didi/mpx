@@ -1,7 +1,7 @@
 <template>
   <view>
     用以测试 base.wxml 原生组件的相关功能（待完善）
-    <!-- <runtime-swiper></runtime-swiper> -->
+    <runtime-swiper></runtime-swiper>
   </view>
 </template>
 

@@ -1,26 +1,18 @@
-const UnRecursiveTemplate = require('/Users/didi/project/taro/packages/shared/dist/template').UnRecursiveTemplate
+const UnRecursiveTemplate = require('/Users/didi/project/mpx-group/template-engine/dist/template').UnRecursiveTemplate
 
-const unRecursiveTemplate = new UnRecursiveTemplate()
+class Template extends UnRecursiveTemplate {
+  constructor () {
+    super()
+    // this.supportXS = true
+  }
 
-const baseTemplate = unRecursiveTemplate.buildBaseComponentTemplate('wxs')
+  // buildXsTemplate () {
+  //   return '<wxs module="xs" src="./utils.wxs" />'
+  // }
+}
 
-const template = unRecursiveTemplate.buildTemplate({
-  includes: new Set([
-    'view',
-    'catch-view',
-    'static-view',
-    'pure-view',
-    'scroll-view',
-    'image',
-    'static-image',
-    'text',
-    'static-text'
-  ]),
-  exclude: new Set(),
-  thirdPartyComponents: new Map(),
-  includeAll: false
-})
+const unRecursiveTemplate = new Template()
 
-const customWrapperTemplate = unRecursiveTemplate.buildCustomComponentTemplate('wxs')
-
-console.log('the customWrapperTemplate is:', template)
+module.exports = {
+  unRecursiveTemplate
+}

@@ -1,6 +1,6 @@
 <template>
   <import src="./mpx-render-base.wxml" />
-  <template is="{{r.nodeType || 'h-element'}}" data="{{ r: r }}"></template>
+  <template is="tmpl_0_container" data="{{ i: r }}"></template>
 </template>
 
 <script>
@@ -12,12 +12,14 @@ createComponent({
   options: {
     addGlobalClass: true,
     styleIsolation: 'shared',
-    virtualHost: true
+    // virtualHost: true
   },
   properties: {
     r: { // 递归渲染数据
       type: Object,
-      value: {}
+      value: {
+        nodeType: 'view'
+      }
     }
   },
   computed: {
@@ -32,20 +34,7 @@ createComponent({
       const moduleId = this.vnodeData.moduleId
       return this._getRootContext(moduleId)
     }
-  },
-  attached() {
-    // 动态绑定由 vnode 传递的事件
-    if (this.vnodeData.mpxbindevents) {
-      Object.keys(this.vnodeData.mpxbindevents).map(event => {
-        // 固定事件调用上下文
-        const rawEvent = this.vnodeData.mpxbindevents[event]
-        if (rawEvent && typeof rawEvent === 'function') {
-          this[event] = rawEvent.bind(this.vnodeRootContext)
-        }
-      })
-    }
-  },
-  methods: {}
+  }
 })
 </script>
 

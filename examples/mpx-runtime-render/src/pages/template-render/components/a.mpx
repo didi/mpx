@@ -1,9 +1,9 @@
 <template>
   <view>
+    <view>this is a component</view>
     <slot name="before"></slot>
     <slot></slot>
-    <view bindtap="tapView">this is slot-a(not runtimeCompile)</view>
-    <slot name="after"></slot>
+    -------------
   </view>
 </template>
 
@@ -14,16 +14,18 @@ createComponent({
   options: {
     multipleSlots: true
   },
-  data: {
-    componentName: 'a'
-  },
-  attached() {
-    console.log('the mpxShow is:', this.mpxShow)
-  },
-  methods: {
-    tapView () {
-      this.triggerEvent('tapslot')
+  properties: {
+    a: {
+      type: String,
+      value: 'this is a'
+    },
+    b: {
+      type: Number,
+      value: 100
     }
+  },
+  attached () {
+    console.log('-------a', this.a, ',', this.b)
   }
 })
 </script>
@@ -34,6 +36,7 @@ createComponent({
 
 <script type="application/json">
 {
+  "runtimeCompile": true,
   "usingComponents": {
 
   }

@@ -11,11 +11,11 @@
       <view>运行时组件 -> 嵌套运行时组件 -> 嵌套非运行时组件</view>
       <slot-b>
         <view slot="before">this is slot-b before slot</view>
-        <slot-a>
+        <slot-a bindtapslot="tapSlot">
           <view slot="before">this is slot-a before content slot</view>
-          <view slot="after">this is slot-a after content slot</view>
+          <view slot="after" bindtap="tapAfterSlot">this is slot-a after content slot</view>
         </slot-a>
-        <view slot="after">this is slot-b after slot</view>
+        <view slot="after" bindtap="tapAfterSlot">this is slot-b after slot</view>
       </slot-b>
     </view>
   </view>
@@ -24,7 +24,16 @@
 <script>
 import { createComponent } from '@mpxjs/core'
 
-createComponent({})
+createComponent({
+  methods: {
+    tapAfterSlot () {
+      console.log('tap after slot')
+    },
+    tapSlot () {
+      console.log('tap slot in slot page')
+    }
+  }
+})
 </script>
 
 <style lang="stylus">

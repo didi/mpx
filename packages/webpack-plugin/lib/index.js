@@ -27,12 +27,11 @@ const matchCondition = require('./utils/match-condition')
 const { preProcessDefs } = require('./utils/index')
 const hash = require('hash-sum')
 const {
-  genRuntimeTemplate,
-  getTemplateNodes,
   addCustomComponentWxss,
-  getInjectedComponentMap
+  getInjectedComponentMap,
+  componentConfig
 } = require('./runtime-render/utils')
-const baseWxml = require('./runtime-render/base-wxml')
+const { unRecursiveTemplate } = require('./runtime-render/wx-template')
 
 const isProductionLikeMode = options => {
   return options.mode === 'production' || !options.mode
@@ -625,12 +624,23 @@ class MpxWebpackPlugin {
             })
           }
 
+          if (/app\.json/.test(file)) {
+            let _content = JSON.parse(content.source())
+            if (!_content.usingComponents) {
+              _content.usingComponents = {}
+            }
+            Object.assign(_content.usingComponents, getInjectedComponentMap())
+            let res = new ConcatSource()
+            res.add(JSON.stringify(_content, null, 2))
+            content = res
+          }
           // 基础模板信息注入
           if (/mpx-render-base\w*\.wxml/.test(file)) {
-            const baseWxmlTemplate = baseWxml.generate()
-            const runtimeTemplate = genRuntimeTemplate(getTemplateNodes())
-            content.add(baseWxmlTemplate)
-            content.add(runtimeTemplate)
+            content.add(unRecursiveTemplate.buildTemplate(componentConfig))
+          }
+
+          if (/runtime-render-helper\w*\.wxs/.test(file)) {
+            content.add(unRecursiveTemplate.buildXScript())
           }
 
           // 运行时组件的样式注入

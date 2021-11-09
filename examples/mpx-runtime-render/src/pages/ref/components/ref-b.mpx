@@ -1,9 +1,9 @@
 <template>
   <view class="wrapper">
-    <view>
+    <slot name="before"></slot>
+    <view bindtap="tap">
       this is ref-b component
     </view>
-    <slot></slot>
   </view>
 </template>
 
@@ -14,10 +14,20 @@ createComponent({
   data: {
     ref: 'ref-b'
   },
+  attached () {
+    setTimeout(() => {
+      // console.log('this is', this)
+      // console.log('this slots', this.bigAttrs)
+    }, 1000)
+  },
   methods: {
     helloRefB() {
       console.log('[ref-b]: say hello')
       return 'this is ref-b return val'
+    },
+    tap() {
+      console.log('[ref-b]: tap b')
+      this.triggerEvent('tapRefb', { a: 1 })
     }
   }
 })
