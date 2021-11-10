@@ -41,13 +41,10 @@ CommonJsVariableDependency.Template = class CommonJsVariableDependencyTemplate e
     dep,
     source,
     {
-      module,
       runtimeTemplate,
       moduleGraph,
       chunkGraph,
-      runtimeRequirements,
-      runtime,
-      initFragments
+      runtimeRequirements
     }
   ) {
     if (!dep.name) return
