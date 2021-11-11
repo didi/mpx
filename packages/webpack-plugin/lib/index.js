@@ -730,6 +730,14 @@ class MpxWebpackPlugin {
         return source
       })
 
+      JavascriptModulesPlugin.getCompilationHooks(compilation).renderStartup.tap('MpxWebpackPlugin', (source, module) => {
+        if (module && mpx.exportModules.has(module)) {
+          source = new ConcatSource(source)
+          source.add('module.exports = __webpack_exports__;\n')
+        }
+        return source
+      })
+
       compilation.hooks.beforeModuleAssets.tap('MpxWebpackPlugin', () => {
         const extractedAssetsMap = new Map()
         for (const module of compilation.modules) {
@@ -1047,10 +1055,6 @@ try {
             source.add(originalSource)
             source.add(`\nmodule.exports = ${globalObject}[${JSON.stringify(chunkLoadingGlobal)}];\n`)
           } else {
-            const entryModule = chunkGraph.getChunkEntryModulesIterable(chunk).next().value
-            if (entryModule && mpx.exportModules.has(entryModule)) {
-              source.add('module.exports =\n')
-            }
             source.add(originalSource)
           }
 
