@@ -6,20 +6,11 @@ const parseRequest = require('../utils/parse-request')
 const toPosix = require('../utils/to-posix')
 const addQuery = require('../utils/add-query')
 const parseComponent = require('../parser')
-const readJsonForSrc = require('../utils/read-json-for-src')
+const getJSONContent = require('../utils/get-json-content')
 const isUrlRequest = require('../utils/is-url-request')
+const resolve = require('../utils/resolve')
 
-module.exports = function (json, options, rawCallback) {
-  const mode = options.mode
-  const env = options.env
-  const defs = options.defs
-  const loaderContext = options.loaderContext
-  const resolveMode = options.resolveMode
-  const pagesMap = options.pagesMap
-  const componentsMap = options.componentsMap
-  const pagesEntryMap = options.pagesEntryMap
-  const projectRoot = options.projectRoot
-  const pathHash = options.pathHash
+module.exports = function (json, { mode, env, loaderContext, resolveMode, pagesMap, componentsMap, pagesEntryMap, projectRoot, pathHash }, rawCallback) {
   const localPagesMap = {}
   const localComponentsMap = {}
   const buildInfo = loaderContext._module.buildInfo
@@ -67,12 +58,6 @@ module.exports = function (json, options, rawCallback) {
 
   const fs = loaderContext._compiler.inputFileSystem
 
-  const resolve = (context, request, callback) => {
-    const { queryObj } = parseRequest(request)
-    context = queryObj.context || context
-    return loaderContext.resolve(context, request, callback)
-  }
-
   const defaultTabbar = {
     borderStyle: 'black',
     position: 'bottom',
@@ -107,12 +92,11 @@ module.exports = function (json, options, rawCallback) {
         packagePath = parsed.resourcePath
         async.waterfall([
           (callback) => {
-            resolve(context, packagePath, (err, result) => {
+            resolve(context, packagePath, loaderContext, (err, result) => {
               callback(err, result)
             })
           },
           (result, callback) => {
-            loaderContext.addDependency(result)
             fs.readFile(result, (err, content) => {
               if (err) return callback(err)
               callback(err, result, content.toString('utf-8'))
@@ -126,19 +110,14 @@ module.exports = function (json, options, rawCallback) {
                 filePath,
                 needMap: loaderContext.sourceMap,
                 mode,
-                defs,
                 env
               })
-              const json = parts.json || {}
-              if (json.content) {
-                content = json.content
-              } else if (json.src) {
-                return readJsonForSrc(json.src, loaderContext, (content) => {
-                  callback(null, result, content)
-                })
-              }
+              getJSONContent(parts.json || {}, loaderContext, (err, content) => {
+                callback(err, result, content)
+              })
+            } else {
+              callback(null, result, content)
             }
-            callback(null, result, content)
           },
           (result, content, callback) => {
             try {
@@ -204,7 +183,7 @@ module.exports = function (json, options, rawCallback) {
         if (resolveMode === 'native') {
           page = loaderUtils.urlToRequest(page, projectRoot)
         }
-        resolve(context, page, (err, resource) => {
+        resolve(context, page, loaderContext, (err, resource) => {
           if (err) return callback(err)
           const { resourcePath, queryObj } = parseRequest(resource)
           const ext = path.extname(resourcePath)
@@ -297,7 +276,7 @@ module.exports = function (json, options, rawCallback) {
       component = loaderUtils.urlToRequest(component, projectRoot)
     }
 
-    resolve(context, component, (err, resource) => {
+    resolve(context, component, loaderContext, (err, resource) => {
       if (err) return callback(err)
       const { resourcePath, queryObj } = parseRequest(resource)
       const parsed = path.parse(resourcePath)

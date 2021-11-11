@@ -4,15 +4,16 @@ const path = require('path')
 const parseComponent = require('../parser')
 const config = require('../config')
 const parseRequest = require('../utils/parse-request')
-const mpxJSON = require('../utils/mpx-json')
+const evalJSONJS = require('../utils/eval-json-js')
 const fixUsingComponent = require('../utils/fix-using-component')
 const getRulesRunner = require('../platform/index')
 const addQuery = require('../utils/add-query')
-const readJsonForSrc = require('../utils/read-json-for-src')
+const getJSONContent = require('../utils/get-json-content')
 const createHelpers = require('../helpers')
 const createJSONHelper = require('./helper')
 const RecordGlobalComponentsDependency = require('../dependencies/RecordGlobalComponentsDependency')
-const { MPX_DISABLE_EXTRACTOR_CACHE, RESOLVE_IGNORED_ERR } = require('../utils/const')
+const { MPX_DISABLE_EXTRACTOR_CACHE, RESOLVE_IGNORED_ERR, JSON_JS_EXT } = require('../utils/const')
+const resolve = require('../utils/resolve')
 
 module.exports = function (content) {
   const nativeCallback = this.async()
@@ -27,13 +28,13 @@ module.exports = function (content) {
   // 微信插件下要求组件使用相对路径
   const useRelativePath = mpx.isPluginMode || mpx.useRelativePath
   const { resourcePath, queryObj } = parseRequest(this.resource)
+  const useJSONJS = queryObj.useJSONJS || this.resourcePath.endsWith(JSON_JS_EXT)
   const packageName = queryObj.packageRoot || mpx.currentPackageRoot || 'main'
   const pagesMap = mpx.pagesMap
   const componentsMap = mpx.componentsMap[packageName]
   const appInfo = mpx.appInfo
   const mode = mpx.mode
   const env = mpx.env
-  const defs = mpx.defs
   const globalSrcMode = mpx.srcMode
   const localSrcMode = queryObj.mode
   const srcMode = localSrcMode || globalSrcMode
@@ -55,7 +56,6 @@ module.exports = function (content) {
   }
 
   const {
-    resolve,
     isUrlRequest,
     urlToRequest,
     processPage,
@@ -121,12 +121,10 @@ module.exports = function (content) {
     nativeCallback(null, output)
   }
 
-  let json = {}
+  let json
   try {
-    // 使用了MPXJSON的话先编译
-    // 此处需要使用真实的resourcePath
-    if (this.resourcePath.endsWith('.json.js')) {
-      json = JSON.parse(mpxJSON.compileMPXJSONText({ source: content, defs, filePath: this.resourcePath }))
+    if (useJSONJS) {
+      json = evalJSONJS(content, this.resourcePath, this)
     } else {
       json = JSON5.parse(content || '{}')
     }
@@ -256,14 +254,13 @@ module.exports = function (content) {
           const { queryObj } = parseRequest(packagePath)
           async.waterfall([
             (callback) => {
-              resolve(context, packagePath, (err, result) => {
+              resolve(context, packagePath, this, (err, result) => {
                 if (err) return callback(err)
                 const { rawResourcePath } = parseRequest(result)
                 callback(err, rawResourcePath)
               })
             },
             (result, callback) => {
-              this.addDependency(result)
               fs.readFile(result, (err, content) => {
                 if (err) return callback(err)
                 callback(err, result, content.toString('utf-8'))
@@ -276,19 +273,14 @@ module.exports = function (content) {
                   filePath: result,
                   needMap: this.sourceMap,
                   mode,
-                  defs,
                   env
                 })
-                const json = parts.json || {}
-                if (json.content) {
-                  content = json.content
-                } else if (json.src) {
-                  return readJsonForSrc(json.src, this, (content) => {
-                    callback(null, result, content)
-                  })
-                }
+                getJSONContent(parts.json || {}, this, (err, content) => {
+                  callback(err, result, content)
+                })
+              } else {
+                callback(null, result, content)
               }
-              callback(null, result, content)
             },
             (result, content, callback) => {
               try {

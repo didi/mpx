@@ -11,7 +11,7 @@ const processJSON = require('./web/processJSON')
 const processScript = require('./web/processScript')
 const processStyles = require('./web/processStyles')
 const processTemplate = require('./web/processTemplate')
-const readJsonForSrc = require('./utils/read-json-for-src')
+const getJSONContent = require('./utils/get-json-content')
 const normalize = require('./utils/normalize')
 const getEntryName = require('./utils/get-entry-name')
 const AppEntryDependency = require('./dependencies/AppEntryDependency')
@@ -75,7 +75,6 @@ module.exports = function (content) {
     filePath,
     needMap: this.sourceMap,
     mode,
-    defs,
     env
   })
 
@@ -84,16 +83,11 @@ module.exports = function (content) {
 
   async.waterfall([
     (callback) => {
-      const json = parts.json || {}
-      if (json.src) {
-        readJsonForSrc(json.src, loaderContext, (err, result) => {
-          if (err) return callback(err)
-          json.content = result
-          callback()
-        })
-      } else {
+      getJSONContent(parts.json || {}, loaderContext, (err, content) => {
+        if (err) return callback(err)
+        if (parts.json) parts.json.content = content
         callback()
-      }
+      })
     },
     (callback) => {
       // web输出模式下没有任何inject，可以通过cache直接返回，由于读取src json可能会新增模块依赖，需要在之后返回缓存内容
@@ -175,7 +169,6 @@ module.exports = function (content) {
                 processJSON(parts.json, {
                   mode,
                   env,
-                  defs,
                   resolveMode,
                   loaderContext,
                   pagesMap,

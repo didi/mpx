@@ -3,10 +3,11 @@ const JSON5 = require('json5')
 const parseRequest = require('./utils/parse-request')
 const config = require('./config')
 const createHelpers = require('./helpers')
-const mpxJSON = require('./utils/mpx-json')
+const getJSONContent = require('./utils/get-json-content')
 const async = require('async')
 const matchCondition = require('./utils/match-condition')
 const fixUsingComponent = require('./utils/fix-using-component')
+const { JSON_JS_EXT } = require('./utils/const')
 
 module.exports = function (content) {
   this.cacheable()
@@ -23,7 +24,6 @@ module.exports = function (content) {
   const moduleId = 'm' + mpx.pathHash(filePath)
   const { resourcePath, queryObj } = parseRequest(this.resource)
   const mode = mpx.mode
-  const defs = mpx.defs
   const globalSrcMode = mpx.srcMode
   const localSrcMode = queryObj.mode
   const packageName = queryObj.packageRoot || mpx.currentPackageRoot || 'main'
@@ -33,12 +33,10 @@ module.exports = function (content) {
   const resourceName = path.join(parsed.dir, parsed.name)
   const isApp = !(pagesMap[resourcePath] || componentsMap[resourcePath])
   const srcMode = localSrcMode || globalSrcMode
-  const fs = this._compiler.inputFileSystem
   const typeExtMap = config[srcMode].typeExtMap
   const typeResourceMap = {}
   const autoScope = matchCondition(resourcePath, mpx.autoScopeRules)
 
-  const EXT_MPX_JSON = '.json.js'
   const CSS_LANG_EXT_MAP = {
     less: '.less',
     stylus: '.styl',
@@ -46,36 +44,14 @@ module.exports = function (content) {
     scss: '.scss'
   }
 
-  let useMPXJSON = false
+  let useJSONJS = false
   let cssLang = ''
   const hasScoped = (queryObj.scoped || autoScope) && mode === 'ali'
   const hasComment = false
   const isNative = true
 
-  const tryEvalMPXJSON = (callback) => {
-    const { rawResourcePath } = parseRequest(typeResourceMap['json'])
-    const _src = rawResourcePath
-    this.addDependency(_src)
-    fs.readFile(_src, (err, raw) => {
-      if (err) {
-        callback(err)
-      } else {
-        try {
-          const source = raw.toString('utf-8')
-          const text = mpxJSON.compileMPXJSONText({ source, defs, filePath: _src })
-          callback(null, text)
-        } catch (e) {
-          callback(e)
-        }
-      }
-    })
-  }
-
   const checkFileExists = (extName, callback) => {
-    this.resolve(parsed.dir, resourceName + extName, (err, result) => {
-      err = null
-      callback(err, result)
-    })
+    this.resolve(parsed.dir, resourceName + extName, callback)
   }
 
   function checkCSSLangFiles (callback) {
@@ -89,7 +65,7 @@ module.exports = function (content) {
         if (!err && result) {
           results[i] = result
         }
-        callback(err)
+        callback()
       })
     }, function (err) {
       for (let i = 0; i < langs.length; i++) {
@@ -103,14 +79,13 @@ module.exports = function (content) {
     })
   }
 
-  function checkMPXJSONFile (callback) {
-    // checkFileExists(EXT_MPX_JSON, (err, result) => {
-    checkFileExists(EXT_MPX_JSON, (err, result) => {
+  function checkJSONJSFile (callback) {
+    checkFileExists(JSON_JS_EXT, (err, result) => {
       if (!err && result) {
         typeResourceMap.json = result
-        useMPXJSON = true
+        useJSONJS = true
       }
-      callback(err)
+      callback()
     })
   }
 
@@ -119,55 +94,42 @@ module.exports = function (content) {
     (callback) => {
       async.parallel([
         checkCSSLangFiles,
-        checkMPXJSONFile
+        checkJSONJSFile
       ], (err) => {
         callback(err)
       })
     },
     (callback) => {
       async.forEachOf(typeExtMap, (ext, key, callback) => {
-        // 检测到mpxJson或cssLang时跳过对应类型文件检测
-        if ((key === 'json' && useMPXJSON) || (key === 'styles' && cssLang)) {
+        // 检测到jsonjs或cssLang时跳过对应类型文件检测
+        if (typeResourceMap[key]) {
           return callback()
         }
         checkFileExists(ext, (err, result) => {
           if (!err && result) {
             typeResourceMap[key] = result
           }
-          callback(err)
+          callback()
         })
       }, callback)
     },
     (callback) => {
-      // 对原生写法增强json写法，可以用js来写json，尝试找.json.js文件，找不到用回json的内容
-      if (useMPXJSON) {
-        tryEvalMPXJSON(callback)
-      } else {
-        if (typeResourceMap['json']) {
-          // eslint-disable-next-line handle-callback-err
-          const { rawResourcePath } = parseRequest(typeResourceMap['json'])
-          fs.readFile(rawResourcePath, (err, raw) => {
-            if (err) {
-              callback(err)
-            } else {
-              callback(null, raw.toString('utf-8'))
-            }
-          })
-        } else {
-          callback(null, '{}')
-        }
-      }
+      getJSONContent({
+        src: typeResourceMap.json,
+        useJSONJS
+      }, this, callback)
     }, (content, callback) => {
-      let usingComponents = [].concat(Object.keys(mpx.usingComponents))
+      let json
       try {
-        let ret = JSON5.parse(content)
-        if (ret.usingComponents) {
-          fixUsingComponent(ret.usingComponents, mode)
-          usingComponents = usingComponents.concat(Object.keys(ret.usingComponents))
-        }
+        json = JSON5.parse(content)
       } catch (e) {
+        return callback(e)
       }
-
+      let usingComponents = Object.keys(mpx.usingComponents)
+      if (json.usingComponents) {
+        fixUsingComponent(json.usingComponents, mode)
+        usingComponents = usingComponents.concat(Object.keys(json.usingComponents))
+      }
       const {
         getRequire
       } = createHelpers(loaderContext)
@@ -178,8 +140,6 @@ module.exports = function (content) {
         const extraOptions = Object.assign({}, queryObj, {
           resourcePath
         })
-
-        if (type !== 'script') this.addDependency(src)
 
         switch (type) {
           case 'template':
@@ -198,6 +158,9 @@ module.exports = function (content) {
               moduleId,
               scoped: hasScoped
             })
+            break
+          case 'json':
+            if (useJSONJS) part.useJSONJS = true
             break
         }
         return getRequire(type, part, extraOptions)

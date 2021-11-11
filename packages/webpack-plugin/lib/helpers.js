@@ -60,6 +60,7 @@ module.exports = function createHelpers (loaderContext) {
     switch (type) {
       case 'json':
         options.asScript = true
+        if (part.useJSONJS) options.useJSONJS = true
       // eslint-disable-next-line no-fallthrough
       case 'styles':
       case 'template':

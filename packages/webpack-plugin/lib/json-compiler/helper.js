@@ -4,7 +4,7 @@ const nativeLoaderPath = normalize.lib('native-loader')
 const isUrlRequestRaw = require('../utils/is-url-request')
 const parseRequest = require('../utils/parse-request')
 const loaderUtils = require('loader-utils')
-const { RESOLVE_IGNORED_ERR } = require('../utils/const')
+const resolve = require('../utils/resolve')
 
 module.exports = function createJSONHelper ({ loaderContext, emitWarning }) {
   const mpx = loaderContext.getMpx()
@@ -16,17 +16,6 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning }) {
 
   const isUrlRequest = r => isUrlRequestRaw(r, root, externals)
   const urlToRequest = r => loaderUtils.urlToRequest(r)
-
-  // todo 提供不记录dependency的resolve方法，非必要的情况下不记录dependency，提升缓存利用率
-  const resolve = (context, request, callback) => {
-    const { queryObj } = parseRequest(request)
-    context = queryObj.context || context
-    return loaderContext.resolve(context, request, (err, resource, info) => {
-      if (err) return callback(err)
-      if (resource === false) return callback(RESOLVE_IGNORED_ERR)
-      callback(null, resource, info)
-    })
-  }
 
   const dynamicEntryMap = new Map()
 
@@ -52,7 +41,7 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning }) {
       component = urlToRequest(component)
     }
 
-    resolve(context, component, (err, resource, info) => {
+    resolve(context, component, loaderContext, (err, resource, info) => {
       if (err) return callback(err)
       const resourcePath = parseRequest(resource).resourcePath
       const parsed = path.parse(resourcePath)
@@ -103,7 +92,7 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning }) {
     if (resolveMode === 'native') {
       page = urlToRequest(page)
     }
-    resolve(context, page, (err, resource) => {
+    resolve(context, page, loaderContext, (err, resource) => {
       if (err) return callback(err)
       const { resourcePath, queryObj: { isFirst } } = parseRequest(resource)
       const ext = path.extname(resourcePath)
@@ -132,7 +121,7 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning }) {
     if (resolveMode === 'native') {
       js = urlToRequest(js)
     }
-    resolve(context, js, (err, resource) => {
+    resolve(context, js, loaderContext, (err, resource) => {
       if (err) return callback(err)
       const { resourcePath } = parseRequest(resource)
       const relative = path.relative(context, resourcePath)
@@ -150,7 +139,6 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning }) {
     processDynamicEntry,
     processPage,
     processJsExport,
-    resolve,
     isUrlRequest,
     urlToRequest
   }
