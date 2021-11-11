@@ -968,8 +968,6 @@ class MpxWebpackPlugin {
           chunkLoadingGlobal
         } = compilation.outputOptions
 
-        const { chunkGraph } = compilation
-
         function getTargetFile (file) {
           let targetFile = file
           const queryStringIdx = targetFile.indexOf('?')
