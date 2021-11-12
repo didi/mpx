@@ -1,6 +1,7 @@
 const JSON5 = require('json5')
 const he = require('he')
 const config = require('../config')
+const { MPX_ROOT_VIEW, MPX_APP_MODULE_ID } = require('../staticConfig')
 const normalize = require('../utils/normalize')
 const isValidIdentifierStr = require('../utils/is-valid-identifier-str')
 const isEmptyObject = require('../utils/is-empty-object')
@@ -1876,7 +1877,7 @@ function processWebExternalClassesHack (el, options) {
 function processScoped (el, options) {
   if (options.hasScoped && isRealNode(el)) {
     const moduleId = options.moduleId
-    const rootModuleId = options.isComponent ? '' : 'mpx-app-scope' // 处理app全局样式对页面的影响
+    const rootModuleId = options.isComponent ? '' : MPX_APP_MODULE_ID // 处理app全局样式对页面的影响
     const staticClass = getAndRemoveAttr(el, 'class').val
     addAttrs(el, [{
       name: 'class',
@@ -1899,38 +1900,57 @@ function processBuiltInComponents (el, meta) {
   }
 }
 
-function processAliStyleClassHack (el, options) {
-  if (!isComponentNode(el, options)) return
+function processAliStyleClassHack (el, options, root) {
+  let processor
+  // 处理组件标签
+  if (isComponentNode(el, options)) processor = ({ value, typeName }) => [typeName, value]
+  // 处理组件根节点
+  if (options.isComponent && el === root && isRealNode(el)) {
+    processor = ({ name, value, typeName }) => {
+      let sep = name === 'style' ? ';' : ' '
+      value = value ? `{{${typeName}||''}}${sep}${value}` : `{{${typeName}||''}}`
+      return [ name, value ]
+    }
+  }
+  // 非上述两种不处理
+  if (!processor) return
+  // 处理style、class
   ['style', 'class'].forEach((type) => {
     let exp = getAndRemoveAttr(el, type).val
-    let typeName = 'mpx' + type.replace(/^./, (matched) => {
-      return matched.toUpperCase()
+    let typeName = 'mpx' + type.replace(/^./, (matched) => matched.toUpperCase())
+    let [newName, newValue] = processor({
+      name: type,
+      value: exp,
+      typeName
     })
-    if (exp !== undefined) {
+    if (newValue !== undefined) {
       addAttrs(el, [{
-        name: typeName,
-        value: exp
+        name: newName,
+        value: newValue
       }])
     }
   })
 }
 // 有virtualHost情况wx组件注入virtualHost。无virtualHost阿里组件注入root-view。其他跳过。
 function getVirtualHostRoot (options, meta) {
-  if (mode === 'wx' && options.hasVirtualHost && options.isComponent) {
-    !meta.options && (meta.options = {})
-    meta.options.virtualHost = true
-  }
-  if (mode === 'ali' && !options.hasVirtualHost && options.isComponent) {
-    return createASTElement('view', [
-      {
-        name: 'class',
-        value: `mpx-root-view host-${options.moduleId} ${options.hasScoped ? options.moduleId : ''} {{mpxClass||''}}`
-      },
-      {
-        name: 'style',
-        style: `{{mpxStyle||''}}`
-      }
-    ])
+  if (options.isComponent) {
+    // 处理组件时
+    if (mode === 'wx' && options.hasVirtualHost) {
+      // wx组件注入virtualHost配置
+      !meta.options && (meta.options = {})
+      meta.options.virtualHost = true
+    }
+    if (mode === 'ali' && !options.hasVirtualHost) {
+      // ali组件根节点实体化
+      let rootView = createASTElement('view', [
+        {
+          name: 'class',
+          value: `${MPX_ROOT_VIEW} host-${options.moduleId}`
+        }
+      ])
+      processElement(rootView, rootView, options, meta)
+      return rootView
+    }
   }
   return getTempNode()
 }
@@ -1938,7 +1958,10 @@ function getVirtualHostRoot (options, meta) {
 function processShow (el, options, root) {
   let show = getAndRemoveAttr(el, config[mode].directive.show).val
   if (mode === 'swan') show = wrapMustache(show)
-  if (options.isComponent && el.parent === root && isRealNode(el)) {
+  let processFlag = el.parent === root
+  // 当ali且未开启virtualHost时，mpxShow打到根节点上
+  if (mode === 'ali' && !options.hasVirtualHost) processFlag = el === root
+  if (options.isComponent && processFlag && isRealNode(el)) {
     if (show !== undefined) {
       show = `{{${parseMustache(show).result}&&mpxShow}}`
     } else {
