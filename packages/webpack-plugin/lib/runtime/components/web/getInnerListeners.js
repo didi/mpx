@@ -54,58 +54,64 @@ function processTap (listeners, context) {
   })
   if (isEmptyObject(listenerMap)) return
   context.__mpxTapInfo = context.__mpxTapInfo || {}
-  let events = {
-    touchstart (e) {
-      context.__mpxTapInfo.detail = {
-        x: e.changedTouches[0].pageX,
-        y: e.changedTouches[0].pageY
-      }
-      context.__mpxTapInfo.startTimer = null
-      context.__mpxTapInfo.needTap = true
-      context.__mpxTapInfo.hadTouch = true
-      if (listenerMap.longpress || listenerMap.longtap) {
-        context.__mpxTapInfo.startTimer = setTimeout(() => {
-          context.__mpxTapInfo.needTap = false
-          if (listenerMap.longpress) {
-            const re = inheritEvent('longpress', e, context.__mpxTapInfo.detail)
-            context.$emit('longpress', re)
-          }
-          if (listenerMap.longtap) {
-            const re = inheritEvent('longtap', e, context.__mpxTapInfo.detail)
-            context.$emit('longtap', re)
-          }
-        }, 350)
-      }
-    },
-    touchmove (e) {
-      const tapDetailInfo = context.__mpxTapInfo.detail || {}
-      const currentPageX = e.changedTouches[0].pageX
-      const currentPageY = e.changedTouches[0].pageY
-      if (Math.abs(currentPageX - tapDetailInfo.x) > 1 || Math.abs(currentPageY - tapDetailInfo.y) > 1) {
-        context.__mpxTapInfo.needTap = false
-        context.__mpxTapInfo.startTimer && clearTimeout(context.__mpxTapInfo.startTimer)
-        context.__mpxTapInfo.startTimer = null
-      }
-    },
-    touchend (e) {
-      context.__mpxTapInfo.startTimer && clearTimeout(context.__mpxTapInfo.startTimer)
-      if (listenerMap.tap && context.__mpxTapInfo.needTap) {
-        const re = inheritEvent('tap', e, context.__mpxTapInfo.detail)
-        context.$emit('tap', re)
-      }
-    },
-    click (e) {
-      if (listenerMap.tap && !context.__mpxTapInfo.hadTouch) {
+  const isTouchDevice = 'ontouchstart' in document.documentElement
+  let events
+  if (isTouchDevice) {
+    events = {
+      touchstart (e) {
         context.__mpxTapInfo.detail = {
-          x: e.pageX,
-          y: e.pageY
+          x: e.changedTouches[0].pageX,
+          y: e.changedTouches[0].pageY
         }
-        const re = inheritEvent('tap', e, context.__mpxTapInfo.detail)
-        context.$emit('tap', re)
+        context.__mpxTapInfo.startTimer = null
+        context.__mpxTapInfo.needTap = true
+        if (listenerMap.longpress || listenerMap.longtap) {
+          context.__mpxTapInfo.startTimer = setTimeout(() => {
+            context.__mpxTapInfo.needTap = false
+            if (listenerMap.longpress) {
+              const re = inheritEvent('longpress', e, context.__mpxTapInfo.detail)
+              context.$emit('longpress', re)
+            }
+            if (listenerMap.longtap) {
+              const re = inheritEvent('longtap', e, context.__mpxTapInfo.detail)
+              context.$emit('longtap', re)
+            }
+          }, 350)
+        }
+      },
+      touchmove (e) {
+        const tapDetailInfo = context.__mpxTapInfo.detail || {}
+        const currentPageX = e.changedTouches[0].pageX
+        const currentPageY = e.changedTouches[0].pageY
+        if (Math.abs(currentPageX - tapDetailInfo.x) > 1 || Math.abs(currentPageY - tapDetailInfo.y) > 1) {
+          context.__mpxTapInfo.needTap = false
+          context.__mpxTapInfo.startTimer && clearTimeout(context.__mpxTapInfo.startTimer)
+          context.__mpxTapInfo.startTimer = null
+        }
+      },
+      touchend (e) {
+        context.__mpxTapInfo.startTimer && clearTimeout(context.__mpxTapInfo.startTimer)
+        if (listenerMap.tap && context.__mpxTapInfo.needTap) {
+          const re = inheritEvent('tap', e, context.__mpxTapInfo.detail)
+          context.$emit('tap', re)
+        }
       }
-      context.__mpxTapInfo.hadTouch = false
+    }
+  } else {
+    events = {
+      click (e) {
+        if (listenerMap.tap) {
+          context.__mpxTapInfo.detail = {
+            x: e.pageX,
+            y: e.pageY
+          }
+          const re = inheritEvent('tap', e, context.__mpxTapInfo.detail)
+          context.$emit('tap', re)
+        }
+      }
     }
   }
+
   mergeListeners(listeners, events, {
     force: true
   })
