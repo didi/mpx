@@ -1,4 +1,5 @@
 import { isEmptyObject } from './util'
+const isTouchDevice = 'ontouchstart' in document.documentElement
 
 function processModel (listeners, context) {
   // 该函数只有wx:model的情况下才调用，而且默认e.detail.value有值
@@ -54,7 +55,6 @@ function processTap (listeners, context) {
   })
   if (isEmptyObject(listenerMap)) return
   context.__mpxTapInfo = context.__mpxTapInfo || {}
-  const isTouchDevice = 'ontouchstart' in document.documentElement
   let events
   if (isTouchDevice) {
     events = {
