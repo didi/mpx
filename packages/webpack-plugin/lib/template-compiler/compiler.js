@@ -1901,31 +1901,30 @@ function processBuiltInComponents (el, meta) {
 }
 
 function processAliStyleClassHack (el, options, root) {
-  let processType = 0
-  if (isComponentNode(el, options)) processType = 1 // 处理组件标签
-  if (options.isComponent && el === root && isRealNode(el)) processType = 2 // 处理组件根节点
-  if (!processType) return
+  let processor
+  // 处理组件标签
+  if (isComponentNode(el, options)) {
+    processor = (name, value) => {
+      name = 'mpx' + name.replace(/^./, (matched) => {
+        return matched.toUpperCase()
+      })
+      return [{ name, value }]
+    }
+  }
+  // 处理组件根节点
+  if (options.isComponent && el === root && isRealNode(el)) {
+    processor = (name, value) => {
+      let sep = name === 'style' ? ';' : ' '
+      value = value ? `{{${name}||''}}${sep}${value}` : `{{${name}||''}}`
+      return [{ name, value }]
+    }
+  }
+  // 非上述两种不处理
+  if (!processor) return
+  // 处理style、class
   ['style', 'class'].forEach((type) => {
     let exp = getAndRemoveAttr(el, type).val
-    let sep = type === 'style' ? ';' : ' '
-    let typeName = 'mpx' + type.replace(/^./, (matched) => {
-      return matched.toUpperCase()
-    })
-    switch (processType) {
-      case 1:
-        exp && addAttrs(el, [{
-          name: typeName,
-          value: exp
-        }])
-        break
-      case 2:
-        exp = exp ? `{{${typeName}||''}}${sep}${exp}` : `{{${typeName}||''}}`
-        addAttrs(el, [{
-          name: type,
-          value: exp
-        }])
-        break
-    }
+    addAttrs(el, processor(type, exp))
   })
 }
 // 有virtualHost情况wx组件注入virtualHost。无virtualHost阿里组件注入root-view。其他跳过。
@@ -1955,8 +1954,9 @@ function getVirtualHostRoot (options, meta) {
 function processShow (el, options, root) {
   let show = getAndRemoveAttr(el, config[mode].directive.show).val
   if (mode === 'swan') show = wrapMustache(show)
+  let processFlag = el.parent === root
   // 当ali且未开启virtualHost时，mpxShow打到根节点上
-  const processFlag = (options.mode === 'ali' && !options.hasVirtualHost) ? el === root : el.parent === root
+  if (mode === 'ali' && !options.hasVirtualHost) processFlag = el === root
   if (options.isComponent && processFlag && isRealNode(el)) {
     if (show !== undefined) {
       show = `{{${parseMustache(show).result}&&mpxShow}}`
