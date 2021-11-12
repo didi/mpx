@@ -252,6 +252,7 @@ module.exports = function (content) {
       output += `global.currentCtorType = ${JSON.stringify(ctor.replace(/^./, (match) => {
         return match.toLowerCase()
       }))}\n`
+      output += `global.currentResourceType = '${ctorType}'\n`
 
       // template
       output += '/* template */\n'
