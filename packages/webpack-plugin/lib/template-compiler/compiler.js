@@ -1903,20 +1903,13 @@ function processBuiltInComponents (el, meta) {
 function processAliStyleClassHack (el, options, root) {
   let processor
   // 处理组件标签
-  if (isComponentNode(el, options)) {
-    processor = (name, value) => {
-      name = 'mpx' + name.replace(/^./, (matched) => {
-        return matched.toUpperCase()
-      })
-      return [{ name, value }]
-    }
-  }
+  if (isComponentNode(el, options)) processor = ({ value, typeName }) => [typeName, value]
   // 处理组件根节点
   if (options.isComponent && el === root && isRealNode(el)) {
-    processor = (name, value) => {
+    processor = ({ name, value, typeName }) => {
       let sep = name === 'style' ? ';' : ' '
-      value = value ? `{{${name}||''}}${sep}${value}` : `{{${name}||''}}`
-      return [{ name, value }]
+      value = value ? `{{${typeName}||''}}${sep}${value}` : `{{${typeName}||''}}`
+      return [ name, value ]
     }
   }
   // 非上述两种不处理
@@ -1924,7 +1917,18 @@ function processAliStyleClassHack (el, options, root) {
   // 处理style、class
   ['style', 'class'].forEach((type) => {
     let exp = getAndRemoveAttr(el, type).val
-    addAttrs(el, processor(type, exp))
+    let typeName = 'mpx' + type.replace(/^./, (matched) => matched.toUpperCase())
+    let [newName, newValue] = processor({
+      name: type,
+      value: exp,
+      typeName
+    })
+    if (newValue !== undefined) {
+      addAttrs(el, [{
+        name: newName,
+        value: newValue
+      }])
+    }
   })
 }
 // 有virtualHost情况wx组件注入virtualHost。无virtualHost阿里组件注入root-view。其他跳过。
