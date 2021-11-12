@@ -57,9 +57,7 @@ CommonJsVariableDependency.Template = class CommonJsVariableDependencyTemplate e
       runtimeRequirements
     })
 
-    requireExpr = `/* mpx cjs variable */ var ${dep.name} = ` + requireExpr
-
-    source.insert(0, requireExpr)
+    source.insert(0, `/* mpx cjs variable */ var ${dep.name} = ${requireExpr};\n`)
   }
 }
 
