@@ -107,20 +107,20 @@ const externalsMap = {
 const warnings = []
 const errors = []
 
-class EntryNode {
-  constructor (options) {
-    this.request = options.request
-    this.type = options.type
-    this.module = null
-    this.parents = new Set()
-    this.children = new Set()
-  }
-
-  addChild (node) {
-    this.children.add(node)
-    node.parents.add(this)
-  }
-}
+// class EntryNode {
+//   constructor (options) {
+//     this.request = options.request
+//     this.type = options.type
+//     this.module = null
+//     this.parents = new Set()
+//     this.children = new Set()
+//   }
+//
+//   addChild (node) {
+//     this.children.add(node)
+//     node.parents.add(this)
+//   }
+// }
 
 class MpxWebpackPlugin {
   constructor (options = {}) {
@@ -596,18 +596,15 @@ class MpxWebpackPlugin {
               if (currentResourceMap[resourcePath] === outputPath) {
                 alreadyOutputed = true
               } else {
-                // 输出冲突检测只有页面需要，如果存在页面输出路径冲突，对页面路径进行重命名
-                if (resourceType === 'page') {
-                  for (let key in currentResourceMap) {
-                    if (currentResourceMap[key] === outputPath && key !== resourcePath) {
-                      outputPath = toPosix(path.join(packageRoot, mpx.getOutputPath(resourcePath, 'page')))
-                      warn && warn(new Error(`Current page [${resourcePath}] is registered with a conflict page path [${currentResourceMap[key]}] which is already existed in system, the page path will be replaced with [${outputPath}], use ?resolve to get the page path and navigate to it!`))
-                      break
-                    }
+                // 输出冲突检测，如果存在输出路径冲突，对输出路径进行重命名
+                for (let key in currentResourceMap) {
+                  if (currentResourceMap[key] === outputPath && key !== resourcePath) {
+                    outputPath = toPosix(path.join(packageRoot, mpx.getOutputPath(resourcePath, resourceType)))
+                    warn && warn(new Error(`Current page [${resourcePath}] is registered with a conflict outputPath [${currentResourceMap[key]}] which is already existed in system, the page path will be replaced with [${outputPath}], use ?resolve to get the real outputPath!`))
+                    break
                   }
                 }
                 currentResourceMap[resourcePath] = outputPath
-
               }
             } else if (!currentResourceMap[resourcePath]) {
               currentResourceMap[resourcePath] = true

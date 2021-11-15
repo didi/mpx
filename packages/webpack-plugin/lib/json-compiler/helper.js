@@ -65,7 +65,6 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning }) {
           let relative = path.relative(root, resourceName)
           outputPath = path.join('components', name + pathHash(root), relative)
         } else {
-          let componentName = parsed.name
           outputPath = getOutputPath(resourcePath, 'component')
         }
       }
