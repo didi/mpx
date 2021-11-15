@@ -15,6 +15,7 @@
     "@types",
     "README.md"
   ],
+  "main": "src/index.js",
   "repository": {
     "type": "git",
     "url": "git@github.com/didi/mpx.git"
