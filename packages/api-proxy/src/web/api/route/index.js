@@ -1,9 +1,14 @@
-import { webHandleSuccess, webHandleFail } from '../../../common/js'
+import { webHandleSuccess, webHandleFail, isTabBarPage } from '../../../common/js'
 import { EventChannel } from '../event-channel'
 
 function redirectTo (options = {}) {
   const router = global.__mpxRouter
   if (router) {
+    if (isTabBarPage(router, options)) {
+      const res = { errMsg: 'redirectTo:fail can not redirectTo a tabbar page' }
+      webHandleFail(res, options.fail, options.complete)
+      return Promise.reject(res)
+    }
     router.__mpxAction = { type: 'redirect' }
     return new Promise((resolve, reject) => {
       router.replace(
@@ -28,6 +33,11 @@ function redirectTo (options = {}) {
 function navigateTo (options = {}) {
   const router = global.__mpxRouter
   if (router) {
+    if (isTabBarPage(router, options)) {
+      const res = { errMsg: 'navigateTo:fail can not navigateTo a tabbar page' }
+      webHandleFail(res, options.fail, options.complete)
+      return Promise.reject(res)
+    }
     const eventChannel = new EventChannel()
     router.__mpxAction = {
       type: 'to',

@@ -124,7 +124,7 @@ class MpxWebpackPlugin {
     options.forceUsePageCtor = options.forceUsePageCtor || false
     options.postcssInlineConfig = options.postcssInlineConfig || {}
     options.transRpxRules = options.transRpxRules || null
-    options.webConfig = options.webConfig || null
+    options.webConfig = options.webConfig || {}
     options.auditResource = options.auditResource || false
     options.decodeHTMLText = options.decodeHTMLText || false
     options.nativeOptions = Object.assign({
