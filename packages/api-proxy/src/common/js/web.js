@@ -17,7 +17,7 @@ function isTabBarPage (router, options) {
       tabBarPath.push(item.path)
     }
   })
-  return !!tabBarPath.includes(toPath)
+  return tabBarPath.includes(toPath)
 }
 
 export {
