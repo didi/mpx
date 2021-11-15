@@ -216,6 +216,7 @@ module.exports = function (content) {
     // app.json
     const localPages = []
     const subPackagesCfg = {}
+    const pageKeySet = new Set()
     // 添加首页标识
     if (json.pages && json.pages[0]) {
       if (typeof json.pages[0] !== 'string') {
@@ -228,8 +229,10 @@ module.exports = function (content) {
     const processPages = (pages, context, tarRoot = '', callback) => {
       if (pages) {
         async.each(pages, (page, callback) => {
-          processPage(page, context, tarRoot, (err, entry, { isFirst } = {}) => {
+          processPage(page, context, tarRoot, (err, entry, { isFirst, key } = {}) => {
             if (err) return callback(err === RESOLVE_IGNORED_ERR ? null : err)
+            if (pageKeySet.has(key)) return callback()
+            pageKeySet.add(key)
             if (tarRoot && subPackagesCfg) {
               subPackagesCfg[tarRoot].pages.push(entry)
             } else {
@@ -467,7 +470,10 @@ module.exports = function (content) {
       const relativePath = useRelativePath ? publicPath + tarRoot : ''
       async.eachOf(plugin.genericsImplementation, (genericComponents, name, callback) => {
         async.eachOf(genericComponents, (genericComponentPath, name, callback) => {
-          processComponent(genericComponentPath, context, { tarRoot, relativePath }, (err, entry) => {
+          processComponent(genericComponentPath, context, {
+            tarRoot,
+            relativePath
+          }, (err, entry) => {
             if (err === RESOLVE_IGNORED_ERR) {
               delete genericComponents[name]
               return callback()

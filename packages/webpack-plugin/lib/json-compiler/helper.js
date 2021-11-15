@@ -13,6 +13,7 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning }) {
   const root = mpx.projectRoot
   const publicPath = loaderContext._compilation.outputOptions.publicPath || ''
   const pathHash = mpx.pathHash
+  const getOutputPath = mpx.getOutputPath
 
   const isUrlRequest = r => isUrlRequestRaw(r, root, externals)
   const urlToRequest = r => loaderUtils.urlToRequest(r)
@@ -65,7 +66,7 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning }) {
           outputPath = path.join('components', name + pathHash(root), relative)
         } else {
           let componentName = parsed.name
-          outputPath = path.join('components', componentName + pathHash(resourcePath), componentName)
+          outputPath = getOutputPath(resourcePath, 'component')
         }
       }
       if (ext === '.js') {
@@ -75,11 +76,6 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning }) {
       const entry = getDynamicEntry(resource, 'component', outputPath, tarRoot, relativePath)
       callback(null, entry)
     })
-  }
-
-  const getPageName = (resourcePath, ext) => {
-    const baseName = path.basename(resourcePath, ext)
-    return path.join('pages', baseName + pathHash(resourcePath), baseName)
   }
 
   const processPage = (page, context, tarRoot = '', callback) => {
@@ -103,7 +99,7 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning }) {
         const relative = path.relative(context, resourcePath)
         if (/^\./.test(relative)) {
           // 如果当前page不存在于context中，对其进行重命名
-          outputPath = getPageName(resourcePath, ext)
+          outputPath = getOutputPath(resourcePath, 'page')
           emitWarning(`Current page [${resourcePath}] is not in current pages directory [${context}], the page path will be replaced with [${outputPath}], use ?resolve to get the page path and navigate to it!`)
         } else {
           outputPath = /^(.*?)(\.[^.]*)?$/.exec(relative)[1]
@@ -113,7 +109,11 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning }) {
         resource = `!!${nativeLoaderPath}!${resource}`
       }
       const entry = getDynamicEntry(resource, 'page', outputPath, tarRoot, publicPath + tarRoot)
-      callback(null, entry, { isFirst })
+      const key = [resourcePath, outputPath, tarRoot].join('|')
+      callback(null, entry, {
+        isFirst,
+        key
+      })
     })
   }
 

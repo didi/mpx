@@ -178,6 +178,7 @@ class MpxWebpackPlugin {
     options.fileConditionRules = options.fileConditionRules || {
       include: () => true
     }
+    options.customOutputPath = options.customOutputPath || null
     this.options = options
   }
 
@@ -185,35 +186,59 @@ class MpxWebpackPlugin {
     if (options.transRpx) {
       warnings.push('Mpx loader option [transRpx] is deprecated now, please use mpx webpack plugin config [transRpxRules] instead!')
     }
-    return { loader: normalize.lib('loader'), options }
+    return {
+      loader: normalize.lib('loader'),
+      options
+    }
   }
 
   static nativeLoader (options = {}) {
-    return { loader: normalize.lib('native-loader'), options }
+    return {
+      loader: normalize.lib('native-loader'),
+      options
+    }
   }
 
   static wxssLoader (options) {
-    return { loader: normalize.lib('wxss/loader'), options }
+    return {
+      loader: normalize.lib('wxss/loader'),
+      options
+    }
   }
 
   static wxmlLoader (options) {
-    return { loader: normalize.lib('wxml/loader'), options }
+    return {
+      loader: normalize.lib('wxml/loader'),
+      options
+    }
   }
 
   static pluginLoader (options = {}) {
-    return { loader: normalize.lib('json-compiler/plugin'), options }
+    return {
+      loader: normalize.lib('json-compiler/plugin'),
+      options
+    }
   }
 
   static wxsPreLoader (options = {}) {
-    return { loader: normalize.lib('wxs/pre-loader'), options }
+    return {
+      loader: normalize.lib('wxs/pre-loader'),
+      options
+    }
   }
 
   static urlLoader (options = {}) {
-    return { loader: normalize.lib('url-loader'), options }
+    return {
+      loader: normalize.lib('url-loader'),
+      options
+    }
   }
 
   static fileLoader (options = {}) {
-    return { loader: normalize.lib('file-loader'), options }
+    return {
+      loader: normalize.lib('file-loader'),
+      options
+    }
   }
 
   runModeRules (data) {
@@ -440,7 +465,6 @@ class MpxWebpackPlugin {
           // todo es6 map读写性能高于object，之后会逐步替换
           vueContentCache: new Map(),
           currentPackageRoot: '',
-          wxsMap: {},
           wxsContentMap: {},
           assetsInfo: new Map(),
           forceUsePageCtor: this.options.forceUsePageCtor,
@@ -468,25 +492,6 @@ class MpxWebpackPlugin {
           useRelativePath: this.options.useRelativePath,
           removedChunks: [],
           forceProxyEventRules: this.options.forceProxyEventRules,
-          getEntryNode: (request, type, module) => {
-            const entryNodesMap = mpx.entryNodesMap
-            const entryModulesMap = mpx.entryModulesMap
-            if (!entryNodesMap[request]) {
-              entryNodesMap[request] = new EntryNode({
-                type,
-                request
-              })
-            }
-            const currentEntry = entryNodesMap[request]
-            if (currentEntry.type !== type) {
-              compilation.errors.push(`获取request为${request}的entryNode时类型与已有节点冲突, 当前获取的type为${type}, 已有节点的type为${currentEntry.type}!`)
-            }
-            if (module) {
-              currentEntry.module = module
-              entryModulesMap.set(module, currentEntry)
-            }
-            return currentEntry
-          },
           pathHash: (resourcePath) => {
             if (this.options.pathHashMode === 'relative' && this.options.projectRoot) {
               return hash(path.relative(this.options.projectRoot, resourcePath))
@@ -497,6 +502,14 @@ class MpxWebpackPlugin {
             const dep = EntryPlugin.createDependency(request, { name })
             compilation.addEntry(compiler.context, dep, { name }, callback)
             return dep
+          },
+          getOutputPath: (resourcePath, type, ext = '') => {
+            const name = path.parse(resourcePath).name
+            const hash = mpx.pathHash(resourcePath)
+            const customOutputPath = this.options.customOutputPath
+            if (typeof customOutputPath === 'function') return customOutputPath(type, name, hash, ext)
+            if (type === 'component' || type === 'page') return path.join(type + 's', name + hash, 'index' + ext)
+            return path.join(type, name + hash + ext)
           },
           extractedFilesCache: new Map(),
           getExtractedFile: (resource, { error } = {}) => {
@@ -509,8 +522,7 @@ class MpxWebpackPlugin {
               file = 'plugin.json'
             } else if (isStatic) {
               const packageRoot = queryObj.packageRoot || ''
-              const resourceName = path.parse(resourcePath).name
-              file = toPosix(path.join(packageRoot, type, resourceName + mpx.pathHash(resourcePath) + typeExtMap[type]))
+              file = toPosix(path.join(packageRoot, mpx.getOutputPath(resourcePath, type, typeExtMap[type])))
             } else {
               const appInfo = mpx.appInfo
               const pagesMap = mpx.pagesMap
@@ -584,16 +596,18 @@ class MpxWebpackPlugin {
               if (currentResourceMap[resourcePath] === outputPath) {
                 alreadyOutputed = true
               } else {
-                currentResourceMap[resourcePath] = outputPath
-                // 输出冲突检测只有page需要
+                // 输出冲突检测只有页面需要，如果存在页面输出路径冲突，对页面路径进行重命名
                 if (resourceType === 'page') {
                   for (let key in currentResourceMap) {
                     if (currentResourceMap[key] === outputPath && key !== resourcePath) {
-                      error && error(new Error(`Current ${resourceType} [${resourcePath}] registers a same output path [${outputPath}] with existed ${resourceType} [${key}], which is not allowed!`))
+                      outputPath = toPosix(path.join(packageRoot, mpx.getOutputPath(resourcePath, 'page')))
+                      warn && warn(new Error(`Current page [${resourcePath}] is registered with a conflict page path [${currentResourceMap[key]}] which is already existed in system, the page path will be replaced with [${outputPath}], use ?resolve to get the page path and navigate to it!`))
                       break
                     }
                   }
                 }
+                currentResourceMap[resourcePath] = outputPath
+
               }
             } else if (!currentResourceMap[resourcePath]) {
               currentResourceMap[resourcePath] = true

@@ -14,8 +14,8 @@ module.exports = function () {
   const moduleGraph = this._compilation.moduleGraph
   const mpx = this.getMpx()
   const mode = mpx.mode
-  const wxsMap = mpx.wxsMap
   const appInfo = mpx.appInfo
+  const getOutputPath = mpx.getOutputPath
   let { resourcePath, queryObj } = parseRequest(this.resource)
   const issuer = moduleGraph.getIssuer(this._module)
   const { resourcePath: issuerResourcePath, queryObj: issuerQueryObj } = parseRequest(queryObj.issuerResource || issuer.resource)
@@ -36,8 +36,8 @@ module.exports = function () {
     resourcePath = `${resourcePath}~${wxsModule}`
   }
   const packageRoot = queryObj.packageRoot || ''
-  const name = path.parse(resourcePath).name + mpx.pathHash(resourcePath)
-  const filename = toPosix(path.join(packageRoot, /^\.([^.]+)/.exec(config[mode].wxs.ext)[1], `${name}${config[mode].wxs.ext}`))
+  const ext = config[mode].wxs.ext
+  const filename = toPosix(path.join(packageRoot, getOutputPath(resourcePath, ext.slice(1), ext)))
   this._module.addPresentationalDependency(new RecordStaticResourceDependency(resourcePath, filename, packageRoot))
 
   const callback = (err) => {
@@ -45,16 +45,6 @@ module.exports = function () {
     let relativePath = toPosix(path.relative(issuerDir, filename))
     relativePath = fixRelative(relativePath, mode)
     nativeCallback(null, `module.exports = ${JSON.stringify(relativePath)};`)
-  }
-
-  if (wxsMap[filename]) {
-    wxsMap[filename].modules.push(this._module)
-    return callback()
-  }
-
-  wxsMap[filename] = {
-    dep: null,
-    modules: [this._module]
   }
 
   const outputOptions = {
@@ -70,15 +60,6 @@ module.exports = function () {
   ]
 
   const childCompiler = this._compilation.createChildCompiler(resourcePath, outputOptions, plugins)
-
-  // let entryModule
-  // childCompiler.hooks.thisCompilation.tap('MpxWebpackPlugin ', (compilation) => {
-  //   compilation.hooks.succeedEntry.tap('MpxWebpackPlugin', (entry, name, module) => {
-  //     entryModule = module
-  //     // const dep = new ChildCompileDependency(entryModule)
-  //     // wxsMap[filename].dep = dep
-  //   })
-  // })
 
   childCompiler.hooks.afterCompile.tap('MpxWebpackPlugin', (compilation) => {
     // 持久化缓存，使用module.buildInfo.assets来输出文件
