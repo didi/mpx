@@ -54,6 +54,7 @@ module.exports = function (source) {
   const context = this.context
   const packageName = 'main'
   const pagesMap = mpx.pagesMap
+  const getOutputPath = mpx.getOutputPath
   const componentsMap = mpx.componentsMap[packageName]
   const getEntryNode = mpx.getEntryNode
   const resolveMode = mpx.resolveMode
@@ -191,8 +192,9 @@ module.exports = function (source) {
             let relativePath = path.relative(root, resourceName)
             outputPath = path.join('components', name + pathHash(root), relativePath)
           } else {
-            let componentName = parsed.name
-            outputPath = path.join('components', componentName + pathHash(resourcePath), componentName)
+            // let componentName = parsed.name
+            // outputPath = path.join('components', componentName + pathHash(resourcePath), componentName)
+            outputPath = getOutputPath(resourcePath, 'component')
           }
           const componentPath = toPosix(outputPath)
           pluginEntry.publicComponents[name] = componentPath

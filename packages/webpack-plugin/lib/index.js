@@ -142,6 +142,7 @@ class MpxWebpackPlugin {
     options.fileConditionRules = options.fileConditionRules || {
       include: () => true
     }
+    options.customOutputPath = options.customOutputPath || null
     this.options = options
   }
 
@@ -483,6 +484,14 @@ class MpxWebpackPlugin {
               hashPath = pathHashMode(resourcePath, projectRoot) || resourcePath
             }
             return hash(hashPath)
+          },
+          getOutputPath: (resourcePath, type, ext = '') => {
+            const name = path.parse(resourcePath).name
+            const hash = mpx.pathHash(resourcePath)
+            const customOutputPath = this.options.customOutputPath
+            if (typeof customOutputPath === 'function') return customOutputPath(type, name, hash, ext)
+            if (type === 'component' || type === 'page') return path.join(type + 's', name + hash, 'index' + ext)
+            return path.join(type, name + hash + ext)
           },
           extract: (content, file, index, sideEffects) => {
             index = index === -1 ? 0 : index

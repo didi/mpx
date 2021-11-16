@@ -26,6 +26,7 @@ module.exports = function (raw = '{}') {
   const options = loaderUtils.getOptions(this) || {}
   const mainCompilation = getMainCompilation(this._compilation)
   const mpx = mainCompilation.__mpx__
+  const getOutputPath = mpx.getOutputPath
 
   const emitWarning = (msg) => {
     this.emitWarning(
@@ -298,7 +299,8 @@ module.exports = function (raw = '{}') {
           outputPath = path.join('components', name + pathHash(root), relativePath)
         } else {
           let componentName = parsed.name
-          outputPath = path.join('components', componentName + pathHash(resourcePath), componentName)
+          // outputPath = path.join('components', componentName + pathHash(resourcePath), componentName)
+          outputPath = getOutputPath(resourcePath, 'component')
         }
       }
       const { packageRoot, outputPath: componentPath, alreadyOutputed } = mpx.getPackageInfo({
@@ -515,10 +517,10 @@ module.exports = function (raw = '{}') {
       callback()
     }
 
-    const getPageName = (resourcePath, ext) => {
-      const baseName = path.basename(resourcePath, ext)
-      return path.join('pages', baseName + pathHash(resourcePath), baseName)
-    }
+    // const getPageName = (resourcePath, ext) => {
+    //   const baseName = path.basename(resourcePath, ext)
+    //   return path.join('pages', baseName + pathHash(resourcePath), baseName)
+    // }
 
     const processPages = (pages, srcRoot = '', tarRoot = '', context, callback) => {
       if (pages) {
@@ -552,7 +554,8 @@ module.exports = function (raw = '{}') {
               const relative = path.relative(context, resourcePath)
               if (/^\./.test(relative)) {
                 // 如果当前page不存在于context中，对其进行重命名
-                pageName = toPosix(path.join(tarRoot, getPageName(resourcePath, ext)))
+                // pageName = toPosix(path.join(tarRoot, getPageName(resourcePath, ext)))
+                pageName = getOutputPath(resourcePath, 'page')
                 emitWarning(`Current page [${resourcePath}] is not in current pages directory [${context}], the page path will be replaced with [${pageName}], use ?resolve to get the page path and navigate to it!`)
               } else {
                 pageName = toPosix(path.join(tarRoot, /^(.*?)(\.[^.]*)?$/.exec(relative)[1]))
@@ -560,7 +563,8 @@ module.exports = function (raw = '{}') {
                 for (let key in pagesMap) {
                   if (pagesMap[key] === pageName && key !== resourcePath) {
                     const pageNameRaw = pageName
-                    pageName = toPosix(path.join(tarRoot, getPageName(resourcePath, ext)))
+                    // pageName = toPosix(path.join(tarRoot, getPageName(resourcePath, ext)))
+                    pageName = getOutputPath(resourcePath, 'page')
                     emitWarning(`Current page [${resourcePath}] is registered with a conflict page path [${pageNameRaw}] which is already existed in system, the page path will be replaced with [${pageName}], use ?resolve to get the page path and navigate to it!`)
                     break
                   }
