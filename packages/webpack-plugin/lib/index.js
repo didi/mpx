@@ -485,7 +485,7 @@ class MpxWebpackPlugin {
             }
             return hash(hashPath)
           },
-          getOutputPath: (resourcePath, type, { ext = '', conflictPath = '' }) => {
+          getOutputPath: (resourcePath, type, { ext = '', conflictPath = '' } = {}) => {
             const name = path.parse(resourcePath).name
             const hash = mpx.pathHash(resourcePath)
             const customOutputPath = this.options.customOutputPath
