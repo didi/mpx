@@ -485,10 +485,11 @@ class MpxWebpackPlugin {
             }
             return hash(hashPath)
           },
-          getOutputPath: (resourcePath, type, ext = '') => {
+          getOutputPath: (resourcePath, type, { ext = '', conflictPath = '' }) => {
             const name = path.parse(resourcePath).name
             const hash = mpx.pathHash(resourcePath)
             const customOutputPath = this.options.customOutputPath
+            if (conflictPath) return conflictPath.replace(/(\.[^\\/]+)?$/, match => hash + match)
             if (typeof customOutputPath === 'function') return customOutputPath(type, name, hash, ext)
             if (type === 'component' || type === 'page') return path.join(type + 's', name + hash, 'index' + ext)
             return path.join(type, name + hash + ext)
@@ -558,6 +559,13 @@ class MpxWebpackPlugin {
               if (currentResourceMap[resourcePath] === outputPath) {
                 alreadyOutputed = true
               } else {
+                for (let key in currentResourceMap) {
+                  if (currentResourceMap[key] === outputPath && key !== resourcePath) {
+                    outputPath = toPosix(path.join(packageRoot, mpx.getOutputPath(resourcePath, resourceType, { conflictPath: outputPath })))
+                    warn && warn(new Error(`Current ${resourceType} [${resourcePath}] is registered with a conflict outputPath [${currentResourceMap[key]}] which is already existed in system, will be renamed with [${outputPath}], use ?resolve to get the real outputPath!`))
+                    break
+                  }
+                }
                 currentResourceMap[resourcePath] = outputPath
               }
             } else if (!currentResourceMap[resourcePath]) {

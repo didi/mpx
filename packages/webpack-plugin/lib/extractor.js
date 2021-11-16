@@ -26,7 +26,6 @@ module.exports = function (content) {
   const getOutputPath = mpx.getOutputPath
 
   const extract = mpx.extract
-  const pathHash = mpx.pathHash
   const extractedMap = mpx.extractedMap
   const mode = mpx.mode
   const typeExtMap = config[mode].typeExtMap
@@ -51,9 +50,7 @@ module.exports = function (content) {
     if (filename) {
       return filename + typeExtMap[type]
     } else {
-      const resourceName = path.parse(resourcePath).name
-      // const outputPath = path.join(type, resourceName + pathHash(resourcePath) + typeExtMap[type])
-      const outputPath = getOutputPath(resourcePath, type, typeExtMap[type])
+      const outputPath = getOutputPath(resourcePath, type, {ext: typeExtMap[type]})
       return mpx.getPackageInfo({
         resource: resourceRaw,
         outputPath,

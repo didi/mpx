@@ -39,16 +39,16 @@ module.exports = function () {
   }
   const packageRoot = queryObj.packageRoot || ''
   const ext = config[mode].wxs.ext
-  const filename = toPosix(path.join(packageRoot, getOutputPath(resourcePath, ext.slice(1), ext)))
+  let filename = toPosix(path.join(packageRoot, getOutputPath(resourcePath, ext.slice(1), {ext})))
 
-  // filename = mpx.getPackageInfo({
-  //   resource: this.resource,
-  //   outputPath: filename,
-  //   resourceType: 'staticResources',
-  //   warn: (err) => {
-  //     this.emitWarning(err)
-  //   }
-  // }).outputPath
+  filename = mpx.getPackageInfo({
+    resource: this.resource,
+    outputPath: filename,
+    resourceType: 'staticResources',
+    warn: (err) => {
+      this.emitWarning(err)
+    }
+  }).outputPath
 
   const callback = (err) => {
     if (err) return nativeCallback(err)

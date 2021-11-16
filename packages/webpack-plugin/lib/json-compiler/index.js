@@ -298,8 +298,6 @@ module.exports = function (raw = '{}') {
           let relativePath = path.relative(root, resourceName)
           outputPath = path.join('components', name + pathHash(root), relativePath)
         } else {
-          let componentName = parsed.name
-          // outputPath = path.join('components', componentName + pathHash(resourcePath), componentName)
           outputPath = getOutputPath(resourcePath, 'component')
         }
       }
@@ -554,20 +552,18 @@ module.exports = function (raw = '{}') {
               const relative = path.relative(context, resourcePath)
               if (/^\./.test(relative)) {
                 // 如果当前page不存在于context中，对其进行重命名
-                // pageName = toPosix(path.join(tarRoot, getPageName(resourcePath, ext)))
                 pageName = getOutputPath(resourcePath, 'page')
                 emitWarning(`Current page [${resourcePath}] is not in current pages directory [${context}], the page path will be replaced with [${pageName}], use ?resolve to get the page path and navigate to it!`)
               } else {
                 pageName = toPosix(path.join(tarRoot, /^(.*?)(\.[^.]*)?$/.exec(relative)[1]))
                 // 如果当前page与已有page存在命名冲突，也进行重命名
-                for (let key in pagesMap) {
-                  if (pagesMap[key] === pageName && key !== resourcePath) {
-                    const pageNameRaw = pageName
-                    // pageName = toPosix(path.join(tarRoot, getPageName(resourcePath, ext)))
-                    pageName = getOutputPath(resourcePath, 'page')
-                    emitWarning(`Current page [${resourcePath}] is registered with a conflict page path [${pageNameRaw}] which is already existed in system, the page path will be replaced with [${pageName}], use ?resolve to get the page path and navigate to it!`)
-                    break
-                  }
+              }
+              for (let key in pagesMap) {
+                if (pagesMap[key] === pageName && key !== resourcePath) {
+                  const pageNameRaw = pageName
+                  pageName = getOutputPath(resourcePath, 'page', { conflictPath: pageNameRaw })
+                  emitWarning(`Current page [${resourcePath}] is registered with a conflict page path [${pageNameRaw}] which is already existed in system, the page path will be replaced with [${pageName}], use ?resolve to get the page path and navigate to it!`)
+                  break
                 }
               }
             }
