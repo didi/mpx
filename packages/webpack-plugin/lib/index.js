@@ -503,10 +503,11 @@ class MpxWebpackPlugin {
             compilation.addEntry(compiler.context, dep, { name }, callback)
             return dep
           },
-          getOutputPath: (resourcePath, type, ext = '') => {
+          getOutputPath: (resourcePath, type, { ext = '', conflictPath = '' } = {}) => {
             const name = path.parse(resourcePath).name
             const hash = mpx.pathHash(resourcePath)
             const customOutputPath = this.options.customOutputPath
+            if (conflictPath) return conflictPath.replace(/(\.[^\\/]+)?$/, match => hash + match)
             if (typeof customOutputPath === 'function') return customOutputPath(type, name, hash, ext)
             if (type === 'component' || type === 'page') return path.join(type + 's', name + hash, 'index' + ext)
             return path.join(type, name + hash + ext)
@@ -522,7 +523,7 @@ class MpxWebpackPlugin {
               file = 'plugin.json'
             } else if (isStatic) {
               const packageRoot = queryObj.packageRoot || ''
-              file = toPosix(path.join(packageRoot, mpx.getOutputPath(resourcePath, type, typeExtMap[type])))
+              file = toPosix(path.join(packageRoot, mpx.getOutputPath(resourcePath, type, { ext: typeExtMap[type] })))
             } else {
               const appInfo = mpx.appInfo
               const pagesMap = mpx.pagesMap
@@ -599,8 +600,8 @@ class MpxWebpackPlugin {
                 // 输出冲突检测，如果存在输出路径冲突，对输出路径进行重命名
                 for (let key in currentResourceMap) {
                   if (currentResourceMap[key] === outputPath && key !== resourcePath) {
-                    outputPath = toPosix(path.join(packageRoot, mpx.getOutputPath(resourcePath, resourceType)))
-                    warn && warn(new Error(`Current page [${resourcePath}] is registered with a conflict outputPath [${currentResourceMap[key]}] which is already existed in system, the page path will be replaced with [${outputPath}], use ?resolve to get the real outputPath!`))
+                    outputPath = toPosix(path.join(packageRoot, mpx.getOutputPath(resourcePath, resourceType, { conflictPath: outputPath })))
+                    warn && warn(new Error(`Current ${resourceType} [${resourcePath}] is registered with a conflict outputPath [${currentResourceMap[key]}] which is already existed in system, will be renamed with [${outputPath}], use ?resolve to get the real outputPath!`))
                     break
                   }
                 }

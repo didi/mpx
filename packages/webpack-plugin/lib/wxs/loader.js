@@ -37,7 +37,7 @@ module.exports = function () {
   }
   const packageRoot = queryObj.packageRoot || ''
   const ext = config[mode].wxs.ext
-  const filename = toPosix(path.join(packageRoot, getOutputPath(resourcePath, ext.slice(1), ext)))
+  const filename = toPosix(path.join(packageRoot, getOutputPath(resourcePath, ext.slice(1), { ext })))
   this._module.addPresentationalDependency(new RecordStaticResourceDependency(resourcePath, filename, packageRoot))
 
   const callback = (err) => {
