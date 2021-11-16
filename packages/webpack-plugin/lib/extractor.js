@@ -50,7 +50,7 @@ module.exports = function (content) {
     if (filename) {
       return filename + typeExtMap[type]
     } else {
-      const outputPath = getOutputPath(resourcePath, type, {ext: typeExtMap[type]})
+      const outputPath = getOutputPath(resourcePath, type, { ext: typeExtMap[type] })
       return mpx.getPackageInfo({
         resource: resourceRaw,
         outputPath,

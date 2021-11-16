@@ -39,7 +39,7 @@ module.exports = function () {
   }
   const packageRoot = queryObj.packageRoot || ''
   const ext = config[mode].wxs.ext
-  let filename = toPosix(path.join(packageRoot, getOutputPath(resourcePath, ext.slice(1), {ext})))
+  let filename = toPosix(path.join(packageRoot, getOutputPath(resourcePath, ext.slice(1), { ext })))
 
   filename = mpx.getPackageInfo({
     resource: this.resource,
