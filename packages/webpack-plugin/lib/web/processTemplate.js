@@ -83,6 +83,8 @@ module.exports = function (template, options, callback) {
           defs,
           decodeHTMLText: options.decodeHTMLText,
           externalClasses: options.externalClasses,
+          // todo 后续输出web也采用mpx的scoped处理
+          // hasScoped:options.hasScoped,
           hasScoped: false,
           moduleId,
           filePath: loaderContext.resourcePath,

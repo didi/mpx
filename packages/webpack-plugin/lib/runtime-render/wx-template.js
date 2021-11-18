@@ -1,4 +1,4 @@
-const UnRecursiveTemplate = require('/Users/didi/project/mpx-group/template-engine/dist/template').UnRecursiveTemplate
+const UnRecursiveTemplate = require('@mpxjs/template-engine').UnRecursiveTemplate
 
 class Template extends UnRecursiveTemplate {
   constructor () {
@@ -6,6 +6,7 @@ class Template extends UnRecursiveTemplate {
     // this.supportXS = true
   }
 
+  // todo 优化 wxs 模块
   // buildXsTemplate () {
   //   return '<wxs module="xs" src="./utils.wxs" />'
   // }

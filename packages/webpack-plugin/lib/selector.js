@@ -1,18 +1,19 @@
 const parseComponent = require('./parser')
-const loaderUtils = require('loader-utils')
-const getMainCompilation = require('./utils/get-main-compilation')
+const parseRequest = require('./utils/parse-request')
 
 module.exports = function (content) {
   this.cacheable()
-  const mainCompilation = getMainCompilation(this._compilation)
-  const mpx = mainCompilation.__mpx__
+  // todo 移除mpx访问依赖，支持thread-loader
+  const mpx = this.getMpx()
   if (!mpx) {
     return content
   }
+  const { queryObj } = parseRequest(this.resource)
+  const type = queryObj.type
+  const index = queryObj.index || 0
   const mode = mpx.mode
   const env = mpx.env
   const defs = mpx.defs
-  const query = loaderUtils.getOptions(this) || {}
   const filePath = this.resourcePath
   const parts = parseComponent(content, {
     filePath,
@@ -21,9 +22,11 @@ module.exports = function (content) {
     defs,
     env
   })
-  let part = parts[query.type] || {}
+  let part = parts[type] || {}
   if (Array.isArray(part)) {
-    part = part[query.index]
+    part = part[index] || {
+      content: ''
+    }
   }
   this.callback(null, part.content, part.map)
 }

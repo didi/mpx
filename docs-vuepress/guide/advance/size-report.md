@@ -25,7 +25,7 @@ Mpx 在包体积控制上做了很多工作，主要包括：
 
 #### 安装插件
 ```
-npm i @didi/mpx-size-report --save-dev
+npm i @mpxjs/size-report --save-dev
 ```
 #### 配置插件
 在项目 webpack.config 文件中配置使用 `@mpxjs/size-report` 插件即可使用，简单示例如下：

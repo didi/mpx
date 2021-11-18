@@ -44,10 +44,6 @@ type UnionToIntersection<U> = (U extends any
   ? I
   : never;
 
-type RemoveNeverProps<T> = Pick<T, {
-  [K in keyof T]: T[K] extends never ? never : K
-}[keyof T]>
-
 type ArrayType<T extends any[]> = T extends Array<infer R> ? R : never;
 
 // Mpx types
@@ -150,7 +146,6 @@ interface ComponentOpt<D, P, C, M, Mi extends Array<any>> extends Partial<Wechat
 
   externalClasses?: string[]
 
-
   lifetimes?: Partial<WechatMiniprogram.Component.Lifetimes>
 
   pageLifetimes?: Partial<WechatMiniprogram.Component.PageLifetimes>
@@ -167,7 +162,6 @@ type PageOpt<D, P, C, M, Mi extends Array<any>> =
 type ThisTypedPageOpt<D, P, C, M, Mi extends Array<any>, O = {}> =
   PageOpt<D, P, C, M, Mi>
   & ThisType<ComponentIns<D, P, C, M, Mi, O>> & O
-
 
 type ThisTypedComponentOpt<D, P, C, M, Mi extends Array<any>, O = {}> =
   ComponentOpt<D, P, C, M, Mi>
@@ -240,11 +234,11 @@ type ComponentIns<D, P, C, M, Mi extends Array<any>, O = {}> =
   GetComputedType<C & UnboxMixinsField<Mi, 'computed'>> &
   WxComponentIns<D> & MpxComponentIns & MpxComProps<O>
 
-interface createConfig {
+interface CreateConfig {
   customCtor: any
 }
 
-export function createComponent<D extends Data = {}, P extends Properties = {}, C = {}, M extends Methods = {}, Mi extends Array<any> = [], O = {}> (opt: ThisTypedComponentOpt<D, P, C, M, Mi, O>, config?: createConfig): void
+export function createComponent<D extends Data = {}, P extends Properties = {}, C = {}, M extends Methods = {}, Mi extends Array<any> = [], O = {}> (opt: ThisTypedComponentOpt<D, P, C, M, Mi, O>, config?: CreateConfig): void
 
 export function getMixin<D extends Data = {}, P extends Properties = {}, C = {}, M extends Methods = {}, Mi extends Array<any> = [], O = {}> (opt: ThisTypedComponentOpt<D, P, C, M, Mi, O>): {
   data: GetDataType<D> & UnboxMixinsField<Mi, 'data'>
@@ -254,9 +248,9 @@ export function getMixin<D extends Data = {}, P extends Properties = {}, C = {},
   [index: string]: any
 }
 
-export function createPage<D extends Data = {}, P extends Properties = {}, C = {}, M extends Methods = {}, Mi extends Array<any> = [], O = {}> (opt: ThisTypedPageOpt<D, P, C, M, Mi, O>, config?: createConfig): void
+export function createPage<D extends Data = {}, P extends Properties = {}, C = {}, M extends Methods = {}, Mi extends Array<any> = [], O = {}> (opt: ThisTypedPageOpt<D, P, C, M, Mi, O>, config?: CreateConfig): void
 
-export function createApp<T extends WechatMiniprogram.IAnyObject> (opt: WechatMiniprogram.App.Options<T>, config?: createConfig): void
+export function createApp<T extends WechatMiniprogram.IAnyObject> (opt: WechatMiniprogram.App.Options<T>, config?: CreateConfig): void
 
 export function createStore<S, G extends Getters<S>, M extends Mutations<S>, A extends Actions<S, G>, D extends Deps = {}> (option: StoreOpt<S, G, M, A, D>): Store<S, G, M, A, D>
 
@@ -276,45 +270,25 @@ export function createMutationsWithThis<S = {}, D extends Deps = {}, M extends M
   deps?: D
 }): M
 
-export function createActionsWithThis<S = {}, G = {}, M extends MutationsAndActionsWithThis = {}, D extends Deps = {}, A extends MutationsAndActionsWithThis = {}> (actions: A & ThisType<{
+export function createActionsWithThis<S = {}, G = {}, M extends MutationsAndActionsWithThis = {}, D extends Deps = {}, A extends MutationsAndActionsWithThis = {}, OA extends MutationsAndActionsWithThis = {}> (actions: A & ThisType<{
   rootState: any,
   state: S & UnboxDepsField<D, 'state'>,
   getters: GetComputedType<G> & UnboxDepsField<D, 'getters'>,
-  dispatch: GetDispatchAndCommitWithThis<A, D, 'actions'>,
+  dispatch: GetDispatchAndCommitWithThis<A & OA, D, 'actions'>,
   commit: GetDispatchAndCommitWithThis<M, D, 'mutations'>
 } & MpxStore.CompatibleDispatch>, options?: {
   state?: S,
   getters?: G,
   mutations?: M,
+  actions?: OA,
   deps?: D
 }): A
 
-export function injectMixins (mixins: object | Array<object>, type?: 'page' | 'component' | 'app'): void
+type MixinType = 'app' | 'page' | 'component'
 
-declare class Watcher {
-  constructor (context: any, expr: string | (() => any), handler: WatchHandler | WatchOptWithHandler, options?: WatchOpt)
-
-  getValue (): any
-
-  update (): void
-
-  run (): void
-
-  destroy (): void
-}
+export function injectMixins (mixins: object | Array<object>, options?: MixinType | MixinType[] | { types?: MixinType | MixinType[], stage?: number }): void
 
 export function watch (expr: string | (() => any), handler: WatchHandler | WatchOptWithHandler, options?: WatchOpt): () => void
-
-type SupportedPlantforms = 'wx' | 'ali' | 'qq' | 'tt' | 'swan'
-
-interface ConvertRule {
-  lifecycle?: object
-  lifecycleTemplate?: SupportedPlantforms
-  lifecycleProxyMap?: object
-  pageMode?: 'blend' | ''
-  support?: boolean
-  convert?: (...args: any[]) => any
-}
 
 interface AnyConstructor {
   new (...args: any[]): any
@@ -323,13 +297,14 @@ interface AnyConstructor {
 }
 
 interface MpxConfig {
-  useStrictDiff: Boolean
-  ignoreRenderError: Boolean
+  useStrictDiff: boolean
+  ignoreWarning: boolean | string | RegExp | ((msg: string, location: string, e: Error) => boolean)
   ignoreConflictWhiteList: Array<string>
-  observeClassInstance: Boolean | Array<AnyConstructor>
+  observeClassInstance: boolean | Array<AnyConstructor>
   hookErrorHandler: (e: Error, target: ComponentIns<{}, {}, {}, {}, []>, hookName: string) => any | null
   proxyEventHandler: (e: Event) => any | null
   setDataHandler: (data: object, target: ComponentIns<{}, {}, {}, {}, []>) => any | null
+  forceRunWatcherSync: boolean
 }
 
 type SupportedMode = 'wx' | 'ali' | 'qq' | 'swan' | 'tt' | 'web' | 'qa'
@@ -337,10 +312,8 @@ type SupportedMode = 'wx' | 'ali' | 'qq' | 'swan' | 'tt' | 'web' | 'qa'
 interface ImplementOptions {
   modes?: Array<SupportedMode>
   processor?: () => any
-  remove?: Boolean
+  remove?: boolean
 }
-
-export function setConvertRule (rule: ConvertRule): void
 
 export function toPureObject<T extends object> (obj: T): T
 
@@ -367,8 +340,6 @@ export interface Mpx {
   remove: typeof del
 
   delete: typeof del
-
-  setConvertRule: typeof setConvertRule
 
   config: MpxConfig
 

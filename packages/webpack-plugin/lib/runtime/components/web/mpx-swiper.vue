@@ -101,7 +101,9 @@
           loop: this.circular,
           threshold: 0.5,
           speed: this.duration,
-          easing: this.easing
+          easing: this.easing,
+          interval: this.interval,
+          autoplay: this.autoplay
         },
         momentum: false,
         bounce: false,
@@ -142,25 +144,6 @@
         }
         this.changeSource = 'touch'
       })
-
-      if (this.autoplay) {
-        const next = () => {
-          this.autoplayTimer = setTimeout(() => {
-            if (this.bs) {
-              this.lastX = this.bs.x
-              this.lastY = this.bs.y
-            }
-            this.changeSource = 'autoplay'
-            this.bs && this.bs.next()
-            next()
-          }, this.interval)
-        }
-        next()
-        this.bs.on('beforeScrollStart', () => {
-          clearTimeout(this.autoplayTimer)
-        })
-        this.bs.on('touchEnd', next)
-      }
     },
     beforeDestroy () {
       this.bs && this.bs.destroy()

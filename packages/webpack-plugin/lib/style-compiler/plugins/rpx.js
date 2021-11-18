@@ -8,7 +8,6 @@ module.exports = postcss.plugin('rpx', (options = {}) => root => {
   const baseWidth = 750
   const designWidth = options.designWidth || 750
   const ratio = +(baseWidth / designWidth).toFixed(2)
-
   function isIgnoreComment (node) {
     let result = node && node.type === 'comment' && node.text.trim() === (options.comment || defaultIgnoreComment)
     if (result) {

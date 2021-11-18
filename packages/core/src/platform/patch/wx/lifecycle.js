@@ -39,7 +39,7 @@ const COMPONENT_HOOKS = [
 
 export const lifecycleProxyMap = {
   [BEFORECREATE]: ['beforeCreate'],
-  // onLoad需要获取页面query参数，不做代理，所有平台都与此保持一致。
+  // 类微信平台中onLoad不能代理到CREATED上，否则Component构造页面时无法获取页面参数
   [CREATED]: ['created', 'attached'],
   [UPDATED]: ['updated'],
   [BEFOREMOUNT]: ['beforeMount'],

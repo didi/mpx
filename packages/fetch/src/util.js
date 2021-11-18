@@ -1,53 +1,141 @@
-function type (a) {
-  return Object.prototype.toString.call(a).slice(8, -1)
+const toString = Object.prototype.toString
+
+// 是否为一个对象
+export function isObject (val) {
+  return toString.call(val) === '[object Object]'
 }
 
-function isThenable (obj) {
+// 是否为一个数组
+export function isArray (val) {
+  return toString.call(val) === '[object Array]'
+}
+
+// 是否为一个字符串
+export function isString (val) {
+  return toString.call(val) === '[object String]'
+}
+
+// 是否为 Date
+export function isDate (val) {
+  return toString.call(val) === '[object Date]'
+}
+
+// 是否为 Function
+export function isFunction (val) {
+  return toString.call(val) === '[object Function]'
+}
+
+export function isThenable (obj) {
   return obj && typeof obj.then === 'function'
 }
 
-function parseUrl (url) {
-  const query = {}
-  const arr = url.match(new RegExp('[\?\&][^\?\&]+=[^\?\&]+', 'g')) || [] /* eslint-disable-line no-useless-escape */
-  arr.forEach(function (item) {
-    let entry = item.substring(1).split('=')
-    let key = decodeURIComponent(entry[0])
-    let val = decodeURIComponent(entry[1])
-    query[key] = val
-  })
-
-  const queryIndex = url.indexOf('?')
-  return {
-    url: queryIndex === -1 ? url : url.slice(0, queryIndex),
-    query
-  }
+// 不为空对象
+export function isNotEmptyObject (obj) {
+  return obj && isObject(obj) && Object.keys(obj).length > 0
 }
 
-function buildUrl (url, query) {
-  if (!url) return ''
-  const params = Object.keys(query)
-    .map(item => `${encodeURIComponent(item)}=${encodeURIComponent(query[item])}`)
-    .join('&')
-  const flag = url.indexOf('?') > -1 ? '&' : '?'
-  return `${url}${flag}${params}`
+// 不为空数组
+export function isNotEmptyArray (ary) {
+  return ary && isArray(ary) && ary.length > 0
 }
 
-function filterUndefined (data) {
-  if (type(data) !== 'Object') {
-    return data
+export function isURLSearchParams (val) {
+  return typeof URLSearchParams !== 'undefined' && val instanceof URLSearchParams
+}
+
+export function encode (val) {
+  return encodeURIComponent(val).replace(/%40/gi, '@').replace(/%3A/gi, ':').replace(/%24/g, '$').replace(/%2C/gi, ',').replace(/%5B/gi, '[').replace(/%5D/gi, ']')
+}
+
+export function decode (val) {
+  return decodeURIComponent(val)
+}
+
+export function forEach (obj, fn) {
+  if (obj === null || typeof obj === 'undefined') {
+    return
   }
-  data = Object.assign({}, data)
-  Object.keys(data).forEach(key => {
-    if (data[key] === undefined) {
-      delete data[key]
-    } else if (data[key] === null) {
-      data[key] = ''
+
+  if (typeof obj !== 'object') {
+    obj = [obj]
+  }
+
+  if (isArray(obj)) {
+    for (let i = 0, l = obj.length; i < l; i++) {
+      fn(obj[i], i, obj)
     }
-  })
-  return data
+  } else {
+    for (let key in obj) {
+      if (Object.prototype.hasOwnProperty.call(obj, key)) {
+        fn(obj[key], key, obj)
+      }
+    }
+  }
 }
 
-function getEnvObj () {
+export function serialize (params) {
+  if (isURLSearchParams(params)) {
+    return params.toString()
+  }
+  const parts = []
+  forEach(params, (val, key) => {
+    if (typeof val === 'undefined' || val === null) {
+      return
+    }
+
+    if (isArray(val)) {
+      key = key + '[]'
+    }
+
+    if (!isArray(val)) {
+      val = [val]
+    }
+
+    forEach(val, function parseValue (v) {
+      if (isDate(v)) {
+        v = v.toISOString()
+      } else if (isObject(v)) {
+        v = JSON.stringify(v)
+      }
+      parts.push(encode(key) + '=' + encode(v))
+    })
+  })
+
+  return parts.join('&')
+}
+
+export function buildUrl (url, params = {}, serializer) {
+  if (!serializer) {
+    serializer = serialize
+  }
+  const serializedParams = serializer(params)
+  if (serializedParams) {
+    url += (url.indexOf('?') === -1 ? '?' : '&') + serializedParams
+  }
+
+  return url
+}
+
+// 解析拆分 url 参数
+export function parseUrl (url) {
+  const match = /^(.*?)(\?.*?)?(#.*?)?$/.exec(url)
+  const [fullUrl, baseUrl = '', search = '', hash = ''] = match
+
+  const u1 = baseUrl.split('//') // 分割出协议
+  const protocolReg = /^\w+:$/
+  const protocol = protocolReg.test(u1[0]) ? u1[0] : ''
+  const u2 = u1[1] || u1[0] // 可能没有协议
+  const i = u2.indexOf('/')
+  const host = i > -1 ? u2.substring(0, i) : u2 // 分割出主机名和端口号
+  const path = i > -1 ? u2.substring(i) : '' // 分割出路径
+  const u3 = host.split(':')
+  const hostname = u3[0]
+  const port = u3[1] || ''
+
+  return { fullUrl, baseUrl, protocol, hostname, port, host, path, search, hash }
+}
+
+export function getEnvObj () {
   if (__mpx_mode__ === 'wx') {
     return wx
   } else if (__mpx_mode__ === 'ali') {
@@ -63,4 +151,54 @@ function getEnvObj () {
   }
 }
 
-export { parseUrl, buildUrl, filterUndefined, type, isThenable, getEnvObj }
+export function transformReq (config) {
+  // 抹平wx & ali 请求参数
+  let header = config.header || config.headers
+  const descriptor = {
+    get () {
+      return header
+    },
+    set (val) {
+      header = val
+    },
+    enumerable: true,
+    configurable: true
+  }
+  Object.defineProperties(config, {
+    header: descriptor,
+    headers: descriptor
+  })
+}
+
+export function transformRes (res) {
+  // 抹平wx & ali 响应数据
+  if (res.status === undefined) {
+    res.status = res.statusCode
+  } else {
+    res.statusCode = res.status
+  }
+
+  if (res.header === undefined) {
+    res.header = res.headers
+  } else {
+    res.headers = res.header
+  }
+  return res
+}
+
+export function deepMerge () {
+  const result = {}
+
+  function assignValue (val, key) {
+    if (typeof result[key] === 'object' && typeof val === 'object') {
+      result[key] = deepMerge(result[key], val)
+    } else {
+      result[key] = val
+    }
+  }
+
+  for (let i = 0; i < arguments.length; i++) {
+    forEach(arguments[i], assignValue)
+  }
+  return result
+}

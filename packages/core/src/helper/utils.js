@@ -251,6 +251,16 @@ export function hasOwn (obj, key) {
 
 export const hasProto = '__proto__' in {}
 
+// 微信小程序插件环境2.8.3以下基础库protoAugment会失败，对环境进行测试按需降级为copyAugment
+function testArrayProtoAugment () {
+  const arr = []
+  /* eslint-disable no-proto, camelcase */
+  arr.__proto__ = { __array_proto_test__: '__array_proto_test__' }
+  return arr.__array_proto_test__ === '__array_proto_test__'
+}
+
+export const arrayProtoAugment = testArrayProtoAugment()
+
 export function isValidArrayIndex (val) {
   const n = parseFloat(String(val))
   return n >= 0 && Math.floor(n) === n && isFinite(val)

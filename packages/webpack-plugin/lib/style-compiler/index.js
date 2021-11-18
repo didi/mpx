@@ -1,13 +1,13 @@
-const getMainCompilation = require('../utils/get-main-compilation')
 const postcss = require('postcss')
-const loaderUtils = require('loader-utils')
 const loadPostcssConfig = require('./load-postcss-config')
-
 const trim = require('./plugins/trim')
 const rpx = require('./plugins/rpx')
+const vw = require('./plugins/vw')
 const pluginCondStrip = require('./plugins/conditional-strip')
 const scopeId = require('./plugins/scope-id')
+const transSpecial = require('./plugins/trans-special')
 const matchCondition = require('../utils/match-condition')
+const parseRequest = require('../utils/parse-request')
 
 module.exports = function (css, map) {
   if (/mpx-custom-element\.mpx/.test(this.resourcePath)) {
@@ -16,14 +16,16 @@ module.exports = function (css, map) {
     this.cacheable()
   }
   const cb = this.async()
-  const loaderOptions = loaderUtils.getOptions(this) || {}
-
-  const mainCompilation = getMainCompilation(this._compilation)
-  const mpx = mainCompilation.__mpx__
+  const { resourcePath, queryObj } = parseRequest(this.resource)
+  const id = queryObj.moduleId || queryObj.mid
+  const mpx = this.getMpx()
   const defs = mpx.defs
-
-  const transRpxRulesRaw = mpx.transRpxRules || loaderOptions.transRpx
-
+  const mode = mpx.mode
+  const packageName = queryObj.packageRoot || mpx.currentPackageRoot || 'main'
+  const componentsMap = mpx.componentsMap[packageName]
+  const pagesMap = mpx.pagesMap
+  const isApp = !(pagesMap[resourcePath] || componentsMap[resourcePath])
+  const transRpxRulesRaw = mpx.transRpxRules
   const transRpxRules = transRpxRulesRaw ? (Array.isArray(transRpxRulesRaw) ? transRpxRulesRaw : [transRpxRulesRaw]) : []
 
   const testResolveRange = (include = () => true, exclude) => {
@@ -31,7 +33,6 @@ module.exports = function (css, map) {
   }
 
   const inlineConfig = Object.assign({}, mpx.postcssInlineConfig, { defs })
-
   loadPostcssConfig(this, inlineConfig).then(config => {
     const plugins = config.plugins.concat(trim)
     const options = Object.assign(
@@ -42,9 +43,13 @@ module.exports = function (css, map) {
       },
       config.options
     )
+    // ali环境处理host选择器
+    if (mode === 'ali') {
+      plugins.push(transSpecial({ id }))
+    }
 
-    if (loaderOptions.scoped) {
-      plugins.push(scopeId({ id: loaderOptions.moduleId }))
+    if (queryObj.scoped) {
+      plugins.push(scopeId({ id }))
     }
 
     plugins.push(pluginCondStrip({
@@ -67,8 +72,11 @@ module.exports = function (css, map) {
       }
     }
 
+    if (mpx.mode === 'web') {
+      plugins.push(vw)
+    }
     // source map
-    if (loaderOptions.sourceMap && !options.map) {
+    if (this.sourceMap && !options.map) {
       options.map = {
         inline: false,
         annotation: false,
@@ -79,6 +87,10 @@ module.exports = function (css, map) {
     return postcss(plugins)
       .process(css, options)
       .then(result => {
+        // ali环境添加全局样式抹平root差异
+        if (mode === 'ali' && isApp) {
+          result.css += '\n.mpx-root-view { display: inline; line-height: normal; }\n'
+        }
         if (result.messages) {
           result.messages.forEach(({ type, file }) => {
             if (type === 'dependency') {

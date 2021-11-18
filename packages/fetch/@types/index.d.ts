@@ -19,7 +19,7 @@ interface CreateOption {
 }
 
 // @ts-ignore
-type fetchT = (option: fetchOption, priority?: 'normal' | 'low') => Promise<WechatMiniprogram.RequestSuccessCallbackResult & { requestConfig: fetchOption }>
+type fetchT = <T>(option: fetchOption, priority?: 'normal' | 'low') => Promise<WechatMiniprogram.RequestSuccessCallbackResult<T> & { requestConfig: fetchOption }>
 type addLowPriorityWhiteListT = (rules: string | RegExp | Array<string | RegExp>) => void
 type createT = (option?: CreateOption) => xfetch
 
@@ -38,16 +38,6 @@ export interface xfetch {
   CancelToken: CancelTokenClass
   create: createT
   interceptors: Interceptors
-}
-
-declare module '@mpxjs/core' {
-  interface Mpx {
-    xfetch: xfetch
-  }
-
-  interface MpxComponentIns {
-    $xfetch: xfetch
-  }
 }
 
 interface XFetchClass {

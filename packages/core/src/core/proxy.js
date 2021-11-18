@@ -57,14 +57,14 @@ export default class MPXProxy {
     }
   }
 
-  created (...params) {
+  created (params) {
     this.initApi()
     this.callUserHook(BEFORECREATE)
     if (__mpx_mode__ !== 'web') {
       this.initState(this.options)
     }
     this.state = CREATED
-    this.callUserHook(CREATED, ...params)
+    this.callUserHook(CREATED, params)
     if (__mpx_mode__ !== 'web') {
       // 强制走小程序原生渲染逻辑
       this.options.__nativeRender__ ? this.doRender() : this.initRender()
@@ -234,18 +234,16 @@ export default class MPXProxy {
     }
   }
 
-  callUserHook (hookName, ...params) {
+  callUserHook (hookName, params) {
     const hook = this.options[hookName] || this.target[hookName]
     if (typeof hook === 'function') {
       try {
-        hook.call(this.target, ...params)
+        hook.apply(this.target, params)
       } catch (e) {
         if (typeof EXPORT_MPX.config.hookErrorHandler === 'function') {
           EXPORT_MPX.config.hookErrorHandler(e, this.target, hookName)
         } else {
-          setTimeout(() => {
-            throw e
-          })
+          error(`User hook [${hookName}] exec error!`, this.options.mpxFileResource, e)
         }
       }
     }
@@ -439,9 +437,7 @@ export default class MPXProxy {
         try {
           return this.target.__injectedRender()
         } catch (e) {
-          if (!EXPORT_MPX.config.ignoreRenderError) {
-            warn(`Failed to execute render function, degrade to full-set-data mode.`, this.options.mpxFileResource, e)
-          }
+          warn(`Failed to execute render function, degrade to full-set-data mode.`, this.options.mpxFileResource, e)
           this.render()
         }
       }, noop)
@@ -470,7 +466,7 @@ export default class MPXProxy {
       this.forceUpdateData = data
       Object.keys(this.forceUpdateData).forEach(key => {
         if (!this.options.__nativeRender__ && !this.localKeysMap[getFirstKey(key)]) {
-          warn(`ForceUpdate data includes a props/computed key [${key}], which may yield a unexpected result!`, this.options.mpxFileResource)
+          warn(`ForceUpdate data includes a props/computed key [${key}], which may yield a unexpected result.`, this.options.mpxFileResource)
         }
         setByPath(this.data, key, this.forceUpdateData[key])
       })

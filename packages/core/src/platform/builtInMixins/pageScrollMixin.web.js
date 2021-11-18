@@ -18,7 +18,7 @@ function refreshMs (vm) {
 let loading = null
 
 function showLoading (vm) {
-  const { backgroundColor = '#fff', backgroundTextStyle = 'dark' } = vm.$options.__mpxPageConfig
+  const { backgroundColor = 'transparent', backgroundTextStyle = 'dark' } = vm.$options.__mpxPageConfig
   loading = document.createElement('div')
   loading.className = 'pull-down-loading'
   loading.style.cssText = `background-color: ${backgroundColor};`
