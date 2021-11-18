@@ -37,8 +37,13 @@ class ResolveDependency extends NullDependency {
 
   // resolved可能会动态变更，需用此更新hash
   updateHash (hash, context) {
-    const resolved = this.getResolved()
-    if (resolved) hash.update(resolved)
+    this.resolved = this.getResolved()
+    const { resource, issuerResource, compilation } = this
+    if (this.resolved) {
+      hash.update(this.resolved)
+    } else {
+      compilation.errors.push(new Error(`Path ${resource} is not a page/component/static resource, which is resolved from ${issuerResource}!`))
+    }
     super.updateHash(hash, context)
   }
 
@@ -68,12 +73,8 @@ ResolveDependency.Template = class ResolveDependencyTemplate {
   }
 
   getContent (dep) {
-    const { resource, issuerResource, compilation } = dep
+    const { resolved = '', compilation } = dep
     const publicPath = compilation.outputOptions.publicPath || ''
-    const resolved = dep.getResolved()
-    if (!resolved) {
-      compilation.errors.push(new Error(`Path ${resource} is not a page/component/static resource, which is resolved from ${issuerResource}!`))
-    }
     return JSON.stringify(publicPath + resolved)
   }
 }

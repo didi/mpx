@@ -1,5 +1,6 @@
 <script>
   import { inBrowser } from '../../../utils/env'
+
   function isDef (v) {
     return v !== undefined && v !== null
   }
@@ -30,7 +31,7 @@
 
   function getVnodeKey (vnode) {
     if (vnode && vnode.componentOptions) {
-      return vnode.key || vnode.componentOptions.Ctor.cid + (vnode.componentOptions.tag ? ('::' + (vnode.componentOptions.tag)) : '')
+      return vnode.componentOptions.Ctor.cid + (vnode.componentOptions.tag ? ('::' + (vnode.componentOptions.tag)) : '')
     }
   }
 
@@ -73,6 +74,8 @@
             const current = stack[i - 1]
             if (current.vnode && current.vnodeKey === vnodeKey && current.vnode.componentInstance) {
               vnode.componentInstance = current.vnode.componentInstance
+              // 避免组件实例复用但是vnode.key不一致带来的bad case
+              vnode.key = current.vnode.key
               break
             }
           }

@@ -71,11 +71,12 @@ function navigateBack (options = {}) {
   }
 }
 
+let reLaunchCount = 0
+
 function reLaunch (options = {}) {
   const router = global.__mpxRouter
   if (router) {
     const delta = router.stack.length - 1
-    let reLaunchCount = router.currentRoute.query.reLaunchCount || 0
     router.__mpxAction = {
       type: 'reLaunch',
       path: options.url,
