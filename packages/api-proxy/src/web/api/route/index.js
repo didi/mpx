@@ -76,6 +76,7 @@ let reLaunchCount = 0
 function reLaunch (options = {}) {
   const router = global.__mpxRouter
   if (router) {
+    if (reLaunchCount === 0 && router.currentRoute.query.reLaunchCount) reLaunchCount = router.currentRoute.query.reLaunchCount
     const delta = router.stack.length - 1
     router.__mpxAction = {
       type: 'reLaunch',
