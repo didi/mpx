@@ -6,7 +6,6 @@ class Template extends UnRecursiveTemplate {
     // this.supportXS = true
   }
 
-  // todo 优化 wxs 模块
   // buildXsTemplate () {
   //   return '<wxs module="xs" src="./utils.wxs" />'
   // }

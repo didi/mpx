@@ -122,6 +122,8 @@ module.exports = function (content) {
                   return callback(err)
                 }
                 componentsAbsolutePath[name] = absolutePath
+                // 保存到 mpx 对象上全局共享
+                mpx.componentsAbsolutePath[name] = absolutePath
                 // 以绝对路径缓存组件名
                 collectAliasTag(absolutePath, 'c' + mpx.pathHash(absolutePath))
                 cb(null, [name, absolutePath])
@@ -369,8 +371,7 @@ module.exports = function (content) {
           moduleId,
           usingComponents,
           runtimeCompile,
-          runtimeComponents,
-          componentsAbsolutePath
+          runtimeComponents
           // 添加babel处理渲染函数中可能包含的...展开运算符
           // 由于...运算符应用范围极小以及babel成本极高，先关闭此特性后续看情况打开
           // needBabel: true

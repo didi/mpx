@@ -2355,7 +2355,7 @@ const SPECIAL_NODES = ['view', 'text', 'image']
 // 节点收集，最终注入到 mpx-base-template.wxml 中
 function postProcessRuntime (el, options) {
   // 基础节点的收集
-  if (options.runtimeCompile || el.innerNormalElement && !el.isCustomComponent && !runtimeFilterTag.includes(el.tag)) {
+  if ((options.runtimeCompile || el.innerNormalElement) && !el.isCustomComponent && !runtimeFilterTag.includes(el.tag)) {
     const rawTag = el.tag
     let tag = rawTag
 

@@ -35,9 +35,9 @@ module.exports = function (raw) {
   const isNative = queryObj.isNative
   const hasScoped = queryObj.hasScoped
   const moduleId = queryObj.moduleId
-  const componentsAbsolutePath = queryObj.componentsAbsolutePath || {}
   const runtimeComponents = queryObj.runtimeComponents || []
   const runtimeCompile = queryObj.runtimeCompile
+  const componentsAbsolutePath = mpx.componentsAbsolutePath || {}
 
   const warn = (msg) => {
     this.emitWarning(

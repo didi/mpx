@@ -45,7 +45,7 @@ module.exports = function (content) {
   const localSrcMode = queryObj.mode
   const srcMode = localSrcMode || globalSrcMode
   const runtimeComponents = queryObj.runtimeComponents || []
-  const componentsAbsolutePath = queryObj.componentsAbsolutePath || {}
+  const componentsAbsolutePath = mpx.componentsAbsolutePath || {}
 
   const isApp = !(pagesMap[resourcePath] || componentsMap[resourcePath])
   const publicPath = this._compilation.outputOptions.publicPath || ''
@@ -247,14 +247,14 @@ module.exports = function (content) {
   const processComponents = (components, context, callback) => {
     if (components) {
       async.eachOf(components, (component, name, callback) => {
-        processComponent(component, context, { relativePath }, (err, entry) => {
+        processComponent(component, context, { relativePath }, (err, entry, { outputAbsolutePath }) => {
           if (err === RESOLVE_IGNORED_ERR) {
             delete components[name]
             return callback()
           }
           if (err) return callback(err)
           components[name] = entry
-          collectComponentInfoForRuntime(name, entry)
+          collectComponentInfoForRuntime(name, outputAbsolutePath)
           callback()
         })
       }, callback)

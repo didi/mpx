@@ -82,9 +82,9 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning }) {
       if (ext === '.js') {
         resource = `!!${nativeLoaderPath}!${resource}`
       }
-
+      const outputAbsolutePath = path.isAbsolute(outputPath) ? outputPath : `/${outputPath}`
       const entry = getDynamicEntry(resource, 'component', outputPath, tarRoot, relativePath)
-      callback(null, entry)
+      callback(null, entry, { outputAbsolutePath })
     })
   }
 

@@ -611,7 +611,9 @@ class MpxWebpackPlugin {
               outputPath,
               alreadyOutputed
             }
-          }
+          },
+          // 记录组件的绝对路径，用以运行时组件的匹配
+          componentsAbsolutePath: {}
         }
       }
 
