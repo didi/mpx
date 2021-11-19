@@ -17,7 +17,7 @@ jobs:
       - name: install deps
         run: npm i && npx lerna bootstrap --no-ci
 
-      - name: install e2e deps
+      - name: install e2e deps && build
         run: npm i --prefix test/e2e/example && npm run build:mini:cross --prefix test/e2e/example
 
       - name: exec unit test

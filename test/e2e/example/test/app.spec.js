@@ -1,5 +1,6 @@
 const fs = require('fs')
 const json5 = require('json5')
+const path = require('path')
 
 describe('test App instance', () => {
   const subpackage = [
@@ -12,6 +13,7 @@ describe('test App instance', () => {
   ]
 
   it('should wx App instance json is correct', function () {
+    console.log('=========', path.resolve('.'))
     const wxAppJsonStr = fs.readFileSync('dist/wx/app.json', 'utf-8')
     const wxAppJsonObj = json5.parse(wxAppJsonStr)
     const wxPages = wxAppJsonObj.pages
