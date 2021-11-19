@@ -1,6 +1,6 @@
 const rm = require('rimraf')
 const chalk = require('chalk')
-const webpack = require('webpack')
+const webpack = require('../../../../node_modules/webpack')
 const program = require('commander')
 const { userConf, supportedModes } = require('../config/index')
 const getWebpackConf = require('./getWebpackConf')

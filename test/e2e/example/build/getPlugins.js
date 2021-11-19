@@ -5,9 +5,9 @@ const CopyWebpackPlugin = require('copy-webpack-plugin')
 const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin
 const VueLoaderPlugin = require('vue-loader').VueLoaderPlugin
 const ProgressBarPlugin = require('progress-bar-webpack-plugin')
-const webpack = require('webpack')
+const webpack = require('../../../../node_modules/webpack')
 const path = require('path')
-const MpxWebpackPlugin = require('@mpxjs/webpack-plugin')
+const MpxWebpackPlugin = require('../../../../packages/webpack-plugin/lib/index')
 
 
 module.exports = function getPlugins (options) {
