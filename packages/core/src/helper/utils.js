@@ -660,3 +660,9 @@ export function spreadProp (obj, key) {
   }
   return obj
 }
+
+const propsConstructors = [String, Number, Boolean, Object, Array]
+
+export function findPropConstructor (type) {
+  return propsConstructors.find(item => item === type)
+}

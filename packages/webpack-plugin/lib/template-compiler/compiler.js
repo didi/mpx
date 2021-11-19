@@ -45,6 +45,11 @@ const no = function () {
   return false
 }
 
+const camelizeRE = /-(\w)/g
+const camelize = (str) => {
+  return str.replace(camelizeRE, (_, c) => (c ? c.toUpperCase() : ''))
+}
+
 // HTML5 tags https://html.spec.whatwg.org/multipage/indices.html#elements-3
 // Phrasing Content https://html.spec.whatwg.org/multipage/dom.html#phrasing-content
 const isNonPhrasingTag = makeMap(
@@ -2372,6 +2377,18 @@ function postProcessRuntime (el, options) {
   if ((options.runtimeCompile || el.innerElement) && el.isCustomComponent) {
     baseWxml.setCustomEle(el)
   }
+
+  if (!options.runtimeCompile && el.isRuntimeComponent && !el.innerElement) {
+    const res = stringifyAttrsMap(el, true)
+    if (!el.bigAttrs) {
+      getAndRemoveAttr(el, 'big-attrs')
+      addAttrs(el, [{
+        name: 'big-attrs',
+        value: res ? `{{ {${res}} }}` : ''
+      }])
+    }
+    console.log('the res is:', res, el.attrsMap)
+  }
 }
 
 function postProcessAtMode (el) {
@@ -2656,6 +2673,7 @@ function _genComponent (componentName, node) {
 }
 
 const ignoreKeysForBigAttrs = new Set([
+  'id',
   'is',
   'data',
   'mpxPageStatus',
@@ -2665,6 +2683,31 @@ const ignoreKeysForBigAttrs = new Set([
   'slots',
   'data-eventconfigs'
 ])
+
+function stringifyAttrsMap (node, forWxml = false) {
+  const res = []
+  let newKey = ''
+  Object.keys(node.attrsMap).map(key => {
+    // 内置指令、保留字段、事件 等属性过滤掉
+    if (!directivesSet.has(key) && !ignoreKeysForBigAttrs.has(key) && !config[mode].event.parseEvent(key)) {
+      // 模板里面 key 不能带单引号
+      const camelCaseKey = camelize(key)
+      newKey = forWxml ? camelCaseKey : `'${camelCaseKey}'`
+      // 单属性名定义 <view props1></view> 类型写法，默认将 props1 处理为 boolean 类型
+      if (node.attrsMap[key] === undefined) {
+        res.push(`${newKey}: true`)
+        return
+      }
+      const parsed = parseMustache(node.attrsMap[key])
+      res.push(`${newKey}: ${parsed.hasBinding ? parsed.result : `'${parsed.val}'`}`)
+
+      if (forWxml) {
+        getAndRemoveAttr(node, key)
+      }
+    }
+  })
+  return res.join(',')
+}
 
 function genHandlers (events) {
   const bindeventsKey = 'mpxbindevents:'
@@ -2765,28 +2808,12 @@ function _genData (node) {
    * case2: 枚举属性透传
    * case3: 混写，有个合并属性的流程
    */
-  function stringifyAttrsMap () {
-    let res = ''
-    Object.keys(node.attrsMap).map(key => {
-      if (!directivesSet.has(key) && !ignoreKeysForBigAttrs.has(key)) {
-        // 单属性名定义 <view props1></view> 类型写法，默认将 props1 处理为 boolean 类型
-        if (node.attrsMap[key] === undefined) {
-          res += `'${key}': true,`
-          return
-        }
-        const parsed = parseMustache(node.attrsMap[key])
-        res += `'${key}': ${parsed.hasBinding ? parsed.result : `'${parsed.val}'`},`
-      }
-    })
-    return res
-  }
-
   function stringifyBigAttrs () {
     if (node.bigAttrs) {
       bigAttrs += `${node.bigAttrs},`
       // getAndRemoveAttr(node, 'big-attrs')
     }
-    bigAttrs += `{${stringifyAttrsMap()}}`
+    bigAttrs += `{${stringifyAttrsMap(node)}}`
     data += `${bigAttrs}),`
   }
 
@@ -2794,12 +2821,12 @@ function _genData (node) {
     if (node.isRuntimeComponent) {
       stringifyBigAttrs()
     } else {
-      data += `${stringifyAttrsMap()}`
+      data += `${stringifyAttrsMap(node)},`
     }
   } else {
     // 非生产环境同时输出 bigAttrs 和 单个的属性值，主要是为了解决编译依赖的属性注入问题
     stringifyBigAttrs()
-    data += `${stringifyAttrsMap()}`
+    data += `${stringifyAttrsMap(node)},`
   }
 
   if (data === '{') {

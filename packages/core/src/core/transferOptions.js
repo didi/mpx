@@ -1,15 +1,24 @@
 import { mergeInjectedMixins } from './injectMixins'
 import mergeOptions from './mergeOptions'
 import { getConvertMode } from '../convertor/getConvertMode'
-import { findItem, hasOwn, hyphenate } from '../helper/utils'
+import { findItem, hasOwn, camelize, isPlainObject, findPropConstructor } from '../helper/utils'
 import { warn } from '../helper/log'
 
 function getPropDefaultValue (context, prop) {
-  if (!hasOwn(prop, 'value')) {
-    return undefined
+  if (hasOwn(prop, 'type')) {
+    const Constructor = findPropConstructor(prop.type)
+    return hasOwn(prop, 'value')
+      ? typeof prop.value === 'function'
+        ? prop.value.call(context)
+        : prop.value
+      : Constructor()
   }
-  const def = prop.value
-  return typeof def === 'function' ? def.call(context) : def
+  if (!isPlainObject(prop)) {
+    const Constructor = findPropConstructor(prop)
+    if (Constructor) {
+      return Constructor()
+    }
+  }
 }
 
 function composePropsToComputed (type, options = {}) {
@@ -25,10 +34,9 @@ function composePropsToComputed (type, options = {}) {
       // 将 properties 数据转为 computed
       Object.assign(options.computed, {
         [key] () {
-          // 驼峰 -> 连字符形式的字段名转化
-          const hyphenationKey = hyphenate(key)
-          let value = this.bigAttrs && (this.bigAttrs[key] || this.bigAttrs[hyphenationKey])
-          if (value === undefined) {
+          const camelCaseKey = camelize(key)
+          let value = this.bigAttrs && (this.bigAttrs[key] || this.bigAttrs[camelCaseKey]) || undefined
+          if (value === undefined || value === null) {
             value = getPropDefaultValue(this, props[key])
           }
           return value
@@ -39,12 +47,10 @@ function composePropsToComputed (type, options = {}) {
     delete options.props
     options.properties = {
       bigAttrs: {
-        type: Object,
-        value: {}
+        type: null
       },
       slots: {
-        type: Object,
-        value: {}
+        type: null
       }
     }
   }
