@@ -3,37 +3,37 @@
   Author Tobias Koppers @sokra
   Modified by @hiyuki
 */
-var formatCodeFrame = require('babel-code-frame')
-var Tokenizer = require('css-selector-tokenizer')
-var postcss = require('postcss')
-var loaderUtils = require('loader-utils')
-var assign = require('object-assign')
-var getLocalIdent = require('./getLocalIdent')
+const formatCodeFrame = require('@babel/code-frame')
+const Tokenizer = require('css-selector-tokenizer')
+const postcss = require('postcss')
+const loaderUtils = require('loader-utils')
+const assign = require('object-assign')
+const getLocalIdent = require('./getLocalIdent')
 
-var icssUtils = require('icss-utils')
-var localByDefault = require('postcss-modules-local-by-default')
-var extractImports = require('postcss-modules-extract-imports')
-var modulesScope = require('postcss-modules-scope')
-var modulesValues = require('postcss-modules-values')
-var valueParser = require('postcss-value-parser')
-var isUrlRequest = require('../utils/is-url-request')
+const icssUtils = require('icss-utils')
+const localByDefault = require('postcss-modules-local-by-default')
+const extractImports = require('postcss-modules-extract-imports')
+const modulesScope = require('postcss-modules-scope')
+const modulesValues = require('postcss-modules-values')
+const valueParser = require('postcss-value-parser')
+const isUrlRequest = require('../utils/is-url-request')
 
-var parserPlugin = postcss.plugin('css-loader-parser', function (options) {
+const parserPlugin = postcss.plugin('css-loader-parser', function (options) {
   return function (css) {
-    var imports = {}
-    var exports = {}
-    var importItems = []
-    var urlItems = []
+    const imports = {}
+    let exports = {}
+    const importItems = []
+    const urlItems = []
 
     function replaceImportsInString (str) {
       if (options.import) {
-        var tokens = valueParser(str)
+        const tokens = valueParser(str)
         tokens.walk(function (node) {
           if (node.type !== 'word') {
             return
           }
-          var token = node.value
-          var importIndex = imports['$' + token]
+          const token = node.value
+          const importIndex = imports['$' + token]
           if (typeof importIndex === 'number') {
             node.value = '___CSS_LOADER_IMPORT___' + importIndex + '___'
           }
@@ -45,8 +45,8 @@ var parserPlugin = postcss.plugin('css-loader-parser', function (options) {
 
     if (options.import) {
       css.walkAtRules(/^import$/i, function (rule) {
-        var values = Tokenizer.parseValues(rule.params)
-        var url = values.nodes[0].nodes[0]
+        const values = Tokenizer.parseValues(rule.params)
+        let url = values.nodes[0].nodes[0]
         if (url && url.type === 'url') {
           url = url.url
         } else if (url && url.type === 'string') {
@@ -56,7 +56,7 @@ var parserPlugin = postcss.plugin('css-loader-parser', function (options) {
           return
         }
         values.nodes[0].nodes.shift()
-        var mediaQuery = Tokenizer.stringifyValues(values)
+        const mediaQuery = Tokenizer.stringifyValues(values)
 
         if (isUrlRequest(url, options.root)) {
           url = loaderUtils.urlToRequest(url, options.root)
@@ -70,10 +70,10 @@ var parserPlugin = postcss.plugin('css-loader-parser', function (options) {
       })
     }
 
-    var icss = icssUtils.extractICSS(css)
+    const icss = icssUtils.extractICSS(css)
     exports = icss.icssExports
     Object.keys(icss.icssImports).forEach(function (key) {
-      var url = loaderUtils.parseString(key)
+      const url = loaderUtils.parseString(key)
       Object.keys(icss.icssImports[key]).forEach(function (prop) {
         imports['$' + prop] = importItems.length
         importItems.push({
@@ -101,7 +101,7 @@ var parserPlugin = postcss.plugin('css-loader-parser', function (options) {
           item.nodes.forEach(processNode)
           break
         case 'item':
-          var importIndex = imports['$' + item.name]
+          const importIndex = imports['$' + item.name]
           if (typeof importIndex === 'number') {
             item.name = '___CSS_LOADER_IMPORT___' + importIndex + '___'
           }
@@ -112,7 +112,7 @@ var parserPlugin = postcss.plugin('css-loader-parser', function (options) {
             item.stringType = ''
             delete item.innerSpacingBefore
             delete item.innerSpacingAfter
-            var url = item.url
+            const url = item.url
             item.url = '___CSS_LOADER_URL___' + urlItems.length + '___'
             urlItems.push({
               url: url
@@ -123,7 +123,7 @@ var parserPlugin = postcss.plugin('css-loader-parser', function (options) {
     }
 
     css.walkDecls(function (decl) {
-      var values = Tokenizer.parseValues(decl.value)
+      const values = Tokenizer.parseValues(decl.value)
       values.nodes.forEach(function (value) {
         value.nodes.forEach(processNode)
       })
@@ -142,17 +142,17 @@ var parserPlugin = postcss.plugin('css-loader-parser', function (options) {
 })
 
 module.exports = function processCss (inputSource, inputMap, options, callback) {
-  var query = options.query
-  var root = query.root && query.root.length > 0 ? query.root.replace(/\/$/, '') : query.root
-  var context = query.context
-  var localIdentName = query.localIdentName || '[hash:base64]'
-  var localIdentRegExp = query.localIdentRegExp
-  var forceMinimize = query.minimize
-  var minimize = typeof forceMinimize !== 'undefined' ? !!forceMinimize : options.minimize
+  const query = options.query
+  const root = query.root && query.root.length > 0 ? query.root.replace(/\/$/, '') : query.root
+  const context = query.context
+  const localIdentName = query.localIdentName || '[hash:base64]'
+  const localIdentRegExp = query.localIdentRegExp
+  const forceMinimize = query.minimize
+  const minimize = typeof forceMinimize !== 'undefined' ? !!forceMinimize : options.minimize
 
-  var customGetLocalIdent = query.getLocalIdent || getLocalIdent
+  const customGetLocalIdent = query.getLocalIdent || getLocalIdent
 
-  var parserOptions = {
+  const parserOptions = {
     root: root,
     mode: options.mode,
     url: query.url !== false,
@@ -160,7 +160,7 @@ module.exports = function processCss (inputSource, inputMap, options, callback) 
     resolve: options.resolve
   }
 
-  var pipeline = postcss([
+  const pipeline = postcss([
     modulesValues,
     localByDefault({
       mode: options.mode,
@@ -180,7 +180,7 @@ module.exports = function processCss (inputSource, inputMap, options, callback) 
     }),
     extractImports(),
     modulesScope({
-      generateScopedName: function generateScopedName (exportName) {
+      generateScopedName: function generateScopedName(exportName) {
         return customGetLocalIdent(options.loaderContext, localIdentName, exportName, {
           regExp: localIdentRegExp,
           hashPrefix: query.hashPrefix || '',
@@ -192,8 +192,8 @@ module.exports = function processCss (inputSource, inputMap, options, callback) 
   ])
 
   if (minimize) {
-    var cssnano = require('cssnano')
-    var minimizeOptions = assign({}, query.minimize);
+    const cssnano = require('cssnano')
+    const minimizeOptions = assign({}, query.minimize);
     ['zindex', 'normalizeUrl', 'discardUnused', 'mergeIdents', 'reduceIdents', 'autoprefixer', 'svgo'].forEach(function (name) {
       if (typeof minimizeOptions[name] === 'undefined') {
         minimizeOptions[name] = false
@@ -226,7 +226,7 @@ module.exports = function processCss (inputSource, inputMap, options, callback) 
     })
   }).catch(function (err) {
     if (err.name === 'CssSyntaxError') {
-      var wrappedError = new CSSLoaderError(
+      const wrappedError = new CSSLoaderError(
         'Syntax Error',
         err.reason,
         err.line != null && err.column != null
@@ -242,7 +242,7 @@ module.exports = function processCss (inputSource, inputMap, options, callback) 
 }
 
 function formatMessage (message, loc, source) {
-  var formatted = message
+  let formatted = message
   if (loc) {
     formatted = formatted +
       ' (' + loc.line + ':' + loc.column + ')'
@@ -260,7 +260,7 @@ function CSSLoaderError (name, message, loc, source, error) {
   this.name = name
   this.error = error
   this.message = formatMessage(message, loc, source)
-  this.hideStack = true
+  this.message = formatMessage(message, loc, source)
 }
 
 CSSLoaderError.prototype = Object.create(Error.prototype)
