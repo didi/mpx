@@ -180,7 +180,7 @@ module.exports = function processCss (inputSource, inputMap, options, callback) 
     }),
     extractImports(),
     modulesScope({
-      generateScopedName: function generateScopedName(exportName) {
+      generateScopedName: function generateScopedName (exportName) {
         return customGetLocalIdent(options.loaderContext, localIdentName, exportName, {
           regExp: localIdentRegExp,
           hashPrefix: query.hashPrefix || '',
