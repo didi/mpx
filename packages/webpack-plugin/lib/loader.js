@@ -38,6 +38,7 @@ module.exports = function (content) {
   const localSrcMode = queryObj.mode
   const srcMode = localSrcMode || globalSrcMode
   const vueContentCache = mpx.vueContentCache
+  const webRouteMode = mpx.webConfig.routeMode || 'hash'
   const autoScope = matchCondition(resourcePath, mpx.autoScopeRules)
 
   // 支持资源query传入page或component支持页面/组件单独编译
@@ -244,6 +245,7 @@ module.exports = function (content) {
               i18n,
               componentGenerics,
               projectRoot,
+              webRouteMode,
               jsonConfig: jsonRes.jsonObj,
               componentId: queryObj.componentId || '',
               tabBarMap: jsonRes.tabBarMap,

@@ -39,6 +39,7 @@ module.exports = function (script, options, callback) {
   const genericsInfo = options.genericsInfo
   const componentGenerics = options.componentGenerics
   const forceDisableBuiltInLoader = options.forceDisableBuiltInLoader
+  const webRouteMode = options.webRouteMode
 
   const emitWarning = (msg) => {
     loaderContext.emitWarning(
@@ -254,7 +255,8 @@ module.exports = function (script, options, callback) {
     ${JSON.stringify(tabBarMap)},
     ${JSON.stringify(componentGenerics)},
     ${JSON.stringify(genericsInfo)},
-    getWxsMixin(wxsModules)`
+    getWxsMixin(wxsModules),
+    ${JSON.stringify(webRouteMode)}`
 
       if (ctorType === 'app') {
         content += `,
