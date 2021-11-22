@@ -831,7 +831,6 @@ new MpxWebpackPlugin({
       return `${$1 * 0.025}rem`
     }
   }
-
 })
 ```
 ## 
