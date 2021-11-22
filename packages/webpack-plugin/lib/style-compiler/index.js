@@ -2,7 +2,7 @@ const getMainCompilation = require('../utils/get-main-compilation')
 const postcss = require('postcss')
 const loaderUtils = require('loader-utils')
 const loadPostcssConfig = require('./load-postcss-config')
-
+const { MPX_ROOT_VIEW } = require('../staticConfig')
 const trim = require('./plugins/trim')
 const rpx = require('./plugins/rpx')
 const vw = require('./plugins/vw')
@@ -10,15 +10,20 @@ const pluginCondStrip = require('./plugins/conditional-strip')
 const scopeId = require('./plugins/scope-id')
 const transSpecial = require('./plugins/trans-special')
 const matchCondition = require('../utils/match-condition')
+const parseRequest = require('../utils/parse-request')
 
 module.exports = function (css, map) {
   this.cacheable()
   const cb = this.async()
   const loaderOptions = loaderUtils.getOptions(this) || {}
-
   const mainCompilation = getMainCompilation(this._compilation)
   const mpx = mainCompilation.__mpx__
   const defs = mpx.defs
+  const { resourcePath, queryObj } = parseRequest(this.resource)
+  const packageName = queryObj.packageRoot || mpx.currentPackageRoot || 'main'
+  const componentsMap = mpx.componentsMap[packageName]
+  const pagesMap = mpx.pagesMap
+  const isApp = (!componentsMap[resourcePath] && !pagesMap[resourcePath])
 
   const transRpxRulesRaw = mpx.transRpxRules
 
@@ -85,8 +90,8 @@ module.exports = function (css, map) {
       .process(css, options)
       .then(result => {
         // ali环境添加全局样式抹平root差异
-        if (mpx.mode === 'ali' && loaderOptions.ctorType === 'app') {
-          result.css += '\n.mpx-root-view { display: inline; line-height: normal; }\n'
+        if (mpx.mode === 'ali' && isApp) {
+          result.css += `\n.${MPX_ROOT_VIEW} { display: inline; line-height: normal; }\n`
         }
         if (result.messages) {
           result.messages.forEach(({ type, file }) => {
