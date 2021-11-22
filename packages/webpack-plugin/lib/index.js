@@ -124,6 +124,7 @@ class MpxWebpackPlugin {
     options.forceUsePageCtor = options.forceUsePageCtor || false
     options.postcssInlineConfig = options.postcssInlineConfig || {}
     options.transRpxRules = options.transRpxRules || null
+    options.webConfig = options.webConfig || {}
     options.auditResource = options.auditResource || false
     options.decodeHTMLText = options.decodeHTMLText || false
     options.nativeOptions = Object.assign({
@@ -142,6 +143,7 @@ class MpxWebpackPlugin {
     options.fileConditionRules = options.fileConditionRules || {
       include: () => true
     }
+    options.customOutputPath = options.customOutputPath || null
     this.options = options
   }
 
@@ -438,6 +440,7 @@ class MpxWebpackPlugin {
           autoScopeRules: this.options.autoScopeRules,
           autoVirtualHostRules: this.options.autoVirtualHostRules,
           transRpxRules: this.options.transRpxRules,
+          webConfig: this.options.webConfig,
           postcssInlineConfig: this.options.postcssInlineConfig,
           decodeHTMLText: this.options.decodeHTMLText,
           // native文件专用相关配置
@@ -483,6 +486,15 @@ class MpxWebpackPlugin {
               hashPath = pathHashMode(resourcePath, projectRoot) || resourcePath
             }
             return hash(hashPath)
+          },
+          getOutputPath: (resourcePath, type, { ext = '', conflictPath = '' } = {}) => {
+            const name = path.parse(resourcePath).name
+            const hash = mpx.pathHash(resourcePath)
+            const customOutputPath = this.options.customOutputPath
+            if (conflictPath) return conflictPath.replace(/(\.[^\\/]+)?$/, match => hash + match)
+            if (typeof customOutputPath === 'function') return customOutputPath(type, name, hash, ext)
+            if (type === 'component' || type === 'page') return path.join(type + 's', name + hash, 'index' + ext)
+            return path.join(type, name + hash + ext)
           },
           extract: (content, file, index, sideEffects) => {
             index = index === -1 ? 0 : index
@@ -549,6 +561,13 @@ class MpxWebpackPlugin {
               if (currentResourceMap[resourcePath] === outputPath) {
                 alreadyOutputed = true
               } else {
+                for (let key in currentResourceMap) {
+                  if (currentResourceMap[key] === outputPath && key !== resourcePath) {
+                    outputPath = toPosix(path.join(packageRoot, mpx.getOutputPath(resourcePath, resourceType, { conflictPath: outputPath })))
+                    warn && warn(new Error(`Current ${resourceType} [${resourcePath}] is registered with a conflict outputPath [${currentResourceMap[key]}] which is already existed in system, will be renamed with [${outputPath}], use ?resolve to get the real outputPath!`))
+                    break
+                  }
+                }
                 currentResourceMap[resourcePath] = outputPath
               }
             } else if (!currentResourceMap[resourcePath]) {
