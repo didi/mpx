@@ -8,16 +8,11 @@ function webHandleFail (result, fail, complete) {
   typeof complete === 'function' && complete(result)
 }
 
-function isTabBarPage (router, options) {
-  const toRoute = router.match(options.url, router.history.current)
-  const toPath = toRoute.path
-  const tabBarPath = []
-  router.options && router.options.routes.forEach(item => {
-    if (item.component && item.component.components && item.component.components['mpx-tab-bar']) {
-      tabBarPath.push(item.path)
-    }
-  })
-  return tabBarPath.includes(toPath)
+function isTabBarPage (url, router) {
+  const tabBarPagesMap = global.__tabBarPagesMap
+  if (!tabBarPagesMap || !url) return false
+  const path = router.match(url, router.history.current).path
+  return !!tabBarPagesMap[path.slice(1)]
 }
 
 export {
