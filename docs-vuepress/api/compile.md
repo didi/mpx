@@ -812,6 +812,28 @@ new MpxWebpackPlugin({
   }
 })
 ```
+
+### webConfig
+
+- **类型**：`Object`
+  - `option.routeMode` 可选值有 hash/history，默认路由模式为 hash 模式
+  - `option.transRpxFn` 函数形式，web环境下，自定义 rpx 单位转换规则
+
+- **详细**：web 环境下的编译配置。Mpx 提供 webConfig 配置，通过定义 routeMode，可输出 hash 以及 history两种模式路由。
+Mpx 内置的transRpx能力在 web 环境默认将 px/rpx 转成 vw，通过配置 transRpxFn 可以自定义单位转换规则。 如果项目中直接使用 px 开发，Mpx 会优先将 px 转为 rpx，之后再调用外层传入的 transRpxFn 进行转换
+
+- **示例**：
+```js
+new MpxWebpackPlugin({
+  webConfig: {
+    routeMode: 'hash',
+    transRpxFn: (match, $1) => {
+      return `${$1 * 0.025}rem`
+    }
+  }
+
+})
+```
 ## 
 
 ## MpxWebpackPlugin static methods
