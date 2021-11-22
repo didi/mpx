@@ -93,9 +93,16 @@
     beforeCreate () {
       this.itemIds = []
     },
-    activated() {
-    	this.refresh()
-    },
+	  activated () {
+    	if (this.bs && this.autoplay) {
+		    this.bs.startPlay()
+      }
+	  },
+	  deactivated () {
+		  if (this.bs && this.autoplay) {
+			  this.bs.pausePlay()
+		  }
+	  },
     mounted () {
       this.bs = new BScroll(this.$refs.wrapper, {
         scrollX: !this.vertical,
