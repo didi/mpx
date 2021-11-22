@@ -17,6 +17,7 @@ module.exports = function () {
   const assetsInfo = mpx.assetsInfo
   const mode = mpx.mode
   const wxsMap = mpx.wxsMap
+  const getOutputPath = mpx.getOutputPath
   const rootName = mainCompilation._preparedEntrypoints[0].name
   let { resourcePath, queryObj } = parseRequest(this.resource)
   const { resourcePath: issuerResourcePath, queryObj: issuerQueryObj } = parseRequest(queryObj.issuerResource || this._module.issuer.resource)
@@ -36,9 +37,9 @@ module.exports = function () {
   if (wxsModule) {
     resourcePath = `${resourcePath}~${wxsModule}`
   }
-
-  const name = path.parse(resourcePath).name + mpx.pathHash(resourcePath)
-  let filename = path.join(/^\.([^.]+)/.exec(config[mode].wxs.ext)[1], `${name}${config[mode].wxs.ext}`)
+  const packageRoot = queryObj.packageRoot || ''
+  const ext = config[mode].wxs.ext
+  let filename = toPosix(path.join(packageRoot, getOutputPath(resourcePath, ext.slice(1), { ext })))
 
   filename = mpx.getPackageInfo({
     resource: this.resource,
