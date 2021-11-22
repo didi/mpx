@@ -1,7 +1,7 @@
-const babylon = require('babylon')
-const traverse = require('babel-traverse').default
-const t = require('babel-types')
-const generate = require('babel-generator').default
+const babylon = require('@babel/parser')
+const traverse = require('@babel/traverse').default
+const t = require('@babel/types')
+const generate = require('@babel/generator').default
 
 let names = 'Infinity,undefined,NaN,isFinite,isNaN,' +
   'parseFloat,parseInt,decodeURI,decodeURIComponent,encodeURI,encodeURIComponent,' +
