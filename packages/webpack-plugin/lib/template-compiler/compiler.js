@@ -11,7 +11,6 @@ const dash2hump = require('../utils/hump-dash').dash2hump
 const { inBrowser } = require('../utils/env')
 const hash = require('hash-sum')
 const {
-  setTemplateNodes,
   genSlots,
   transformSlotsToString,
   getAliasTag,
@@ -2621,11 +2620,6 @@ function addIfCondition (el, condition) {
 
 // TODO: 添加 trimEndingWhitespace 去除尾部 node 的函数
 function genElement (node) {
-  // 收集需要注入到 mpx-render-base.wxml 的节点 (只要被 hash 过的节点都需要被注入)
-  if (node.aliasTag || node.isGlobalComponent) {
-    setTemplateNodes(node)
-  }
-
   let code = ''
   if (node.type === 1) { // 元素节点
     if (node.tag !== 'import') {

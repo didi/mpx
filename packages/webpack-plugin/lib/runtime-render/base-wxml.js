@@ -1,5 +1,5 @@
 const { wx } = require('../config')
-const { componentConfig } = require('./utils')
+const injectComponentConfig = require('./inject-component-config')
 
 const directives = new Set(Object.keys(wx.directive).map(key => wx.directive[key]))
 
@@ -8,7 +8,7 @@ module.exports = {
   setCustomEle (el) {
     const tag = el.aliasTag || el.tag
     const attrKeys = Object.keys(el.attrsMap).filter(key => !directives.has(key))
-    const collection = el.isRuntimeComponent ? componentConfig.runtimeComponents : componentConfig.thirdPartyComponents
+    const collection = el.isRuntimeComponent ? injectComponentConfig.runtimeComponents : injectComponentConfig.thirdPartyComponents
     if (tag && !collection.get(tag)) {
       collection.set(tag, new Set(attrKeys))
     } else {
@@ -20,14 +20,14 @@ module.exports = {
   setBaseEle (el) {
     // 使用了一些特殊事件类型的基础节点包含 aliasTag
     const tag = el.aliasTag ? el.aliasTag : el.tag
-    componentConfig.includes.add(tag)
+    injectComponentConfig.includes.add(tag)
 
     // 基础节点属性收集
     const attrKeys = Object.keys(el.attrsMap).filter(key => !directives.has(key))
-    if (tag && !componentConfig.internalComponents[tag]) {
-      componentConfig.internalComponents[tag] = {}
+    if (tag && !injectComponentConfig.internalComponents[tag]) {
+      injectComponentConfig.internalComponents[tag] = {}
       if (el.aliasTag) {
-        componentConfig.internalComponents[tag]['rawTag'] = el.tag
+        injectComponentConfig.internalComponents[tag]['rawTag'] = el.tag
       }
     }
     attrKeys.map(key => {
@@ -35,7 +35,7 @@ module.exports = {
       if (eventObj) {
         key = `${eventObj.prefix}:${eventObj.eventName}`
       }
-      componentConfig.internalComponents[tag][key] = ''
+      injectComponentConfig.internalComponents[tag][key] = ''
     })
   }
 }

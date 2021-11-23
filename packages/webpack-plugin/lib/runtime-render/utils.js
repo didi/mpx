@@ -3,10 +3,8 @@ const isEmptyObject = require('../utils/is-empty-object')
 const customComponentWxssSet = new Set()
 const injectedPath = new Set()
 const runtimeCompileMap = {}
-let templateNodes = {}
-let pathAndAliasTagMap = {}
-let globalRuntimeComponent = {}
-let appJsonUsingComponents = {}
+const pathAndAliasTagMap = {}
+const globalRuntimeComponent = {}
 
 module.exports = {
   getGlobalRuntimeComponent () {
@@ -57,23 +55,6 @@ module.exports = {
   getAliasTag () {
     return pathAndAliasTagMap
   },
-  getTemplateNodes () {
-    return templateNodes
-  },
-  setTemplateNodes (node) {
-    const tag = node.aliasTag || node.tag
-    if (!templateNodes[tag]) {
-      templateNodes[tag] = {
-        node,
-        allAttrs: new Set()
-      }
-    }
-    if (node.attrsList.length > 0) {
-      node.attrsList.map(attr => {
-        templateNodes[tag].allAttrs.add(attr.name)
-      })
-    }
-  },
   collectCustomComponentWxss (path) {
     customComponentWxssSet.add(path)
   },
@@ -114,22 +95,5 @@ module.exports = {
     }
     res += '}'
     return res
-  },
-  componentConfig: {
-    includes: new Set(),
-    exclude: new Set(),
-    // 收集自定义组件元素节点
-    thirdPartyComponents: new Map(),
-    // 收集运行时组件元素节点
-    runtimeComponents: new Map(),
-    includeAll: false,
-    // 收集基础元素(小程序内置组件)节点
-    internalComponents: {}
-  },
-  setAppUsingComponents (name, path) {
-    appJsonUsingComponents[name] = path
-  },
-  getAppUsingComponents () {
-    return appJsonUsingComponents
   }
 }

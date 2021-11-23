@@ -39,8 +39,8 @@ const hash = require('hash-sum')
 const {
   addCustomComponentWxss,
   getInjectedComponentMap,
-  componentConfig
 } = require('./runtime-render/utils')
+const injectComponentConfig = require('./runtime-render/inject-component-config')
 const { unRecursiveTemplate } = require('./runtime-render/wx-template')
 const wxssLoaderPath = normalize.lib('wxss/loader')
 const wxmlLoaderPath = normalize.lib('wxml/loader')
@@ -803,7 +803,7 @@ class MpxWebpackPlugin {
           }
           // 基础模板信息注入
           if (/mpx-render-base\w*\.wxml/.test(filename)) {
-            source.add(unRecursiveTemplate.buildTemplate(componentConfig))
+            source.add(unRecursiveTemplate.buildTemplate(injectComponentConfig))
           }
 
           if (/runtime-render-helper\w*\.wxs/.test(filename)) {
