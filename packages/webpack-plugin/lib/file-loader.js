@@ -2,7 +2,7 @@ const path = require('path')
 const loaderUtils = require('loader-utils')
 const toPosix = require('./utils/to-posix')
 const parseRequest = require('./utils/parse-request')
-const RecordStaticResourceDependency = require('./dependencies/RecordStaticResourceDependency')
+const RecordResourceMapDependency = require('./dependencies/RecordResourceMapDependency')
 
 module.exports = function loader (content, prevOptions) {
   const options = prevOptions || loaderUtils.getOptions(this) || {}
@@ -28,7 +28,7 @@ module.exports = function loader (content, prevOptions) {
     const { resourcePath, queryObj } = parseRequest(this.resource)
     const packageRoot = queryObj.packageRoot || ''
     url = outputPath = toPosix(path.join(packageRoot, outputPath))
-    this._module.addPresentationalDependency(new RecordStaticResourceDependency(resourcePath, outputPath, packageRoot))
+    this._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, 'staticResource', outputPath, packageRoot))
   }
 
   let publicPath = `__webpack_public_path__ + ${JSON.stringify(url)}`

@@ -3,7 +3,7 @@ const EntryPlugin = require('webpack/lib/EntryPlugin')
 const LimitChunkCountPlugin = require('webpack/lib/optimize/LimitChunkCountPlugin')
 const path = require('path')
 const WxsPlugin = require('./WxsPlugin')
-const RecordStaticResourceDependency = require('../dependencies/RecordStaticResourceDependency')
+const RecordResourceMapDependency = require('../dependencies/RecordResourceMapDependency')
 const parseRequest = require('../utils/parse-request')
 const toPosix = require('../utils/to-posix')
 const fixRelative = require('../utils/fix-relative')
@@ -38,7 +38,7 @@ module.exports = function () {
   const packageRoot = queryObj.packageRoot || ''
   const ext = config[mode].wxs.ext
   const filename = toPosix(path.join(packageRoot, getOutputPath(resourcePath, ext.slice(1), { ext })))
-  this._module.addPresentationalDependency(new RecordStaticResourceDependency(resourcePath, filename, packageRoot))
+  this._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, 'staticResource', filename, packageRoot))
 
   const callback = (err) => {
     if (err) return nativeCallback(err)

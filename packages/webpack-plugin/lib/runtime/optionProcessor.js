@@ -4,7 +4,7 @@ export default function processOption (
   option,
   ctorType,
   firstPage,
-  componentId,
+  outputPath,
   pageConfig,
   pagesMap,
   componentsMap,
@@ -354,8 +354,8 @@ registered in parent context!`)
     option.mixins = [mixin]
   }
 
-  if (componentId) {
-    option.componentPath = '/' + componentId
+  if (outputPath) {
+    option.componentPath = '/' + outputPath
   }
 
   return option

@@ -6,7 +6,7 @@ const parseRequest = require('../utils/parse-request')
 const loaderUtils = require('loader-utils')
 const resolve = require('../utils/resolve')
 
-module.exports = function createJSONHelper ({ loaderContext, emitWarning }) {
+module.exports = function createJSONHelper ({ loaderContext, emitWarning, customGetDynamicEntry }) {
   const mpx = loaderContext.getMpx()
   const resolveMode = mpx.resolveMode
   const externals = mpx.externals
@@ -23,6 +23,7 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning }) {
   let dynamicEntryCount = 0
 
   const getDynamicEntry = (resource, type, outputPath = '', packageRoot = '', relativePath = '') => {
+    if (typeof customGetDynamicEntry === 'function') return customGetDynamicEntry(resource, type, outputPath, packageRoot, relativePath)
     const key = `mpx_dynamic_entry_${dynamicEntryCount++}`
     const value = `__mpx_dynamic_entry__( ${JSON.stringify(resource)},${JSON.stringify(type)},${JSON.stringify(outputPath)},${JSON.stringify(packageRoot)},${JSON.stringify(relativePath)})`
     dynamicEntryMap.set(key, value)

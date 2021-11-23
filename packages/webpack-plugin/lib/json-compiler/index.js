@@ -217,14 +217,6 @@ module.exports = function (content) {
     const localPages = []
     const subPackagesCfg = {}
     const pageKeySet = new Set()
-    // 添加首页标识
-    if (json.pages && json.pages[0]) {
-      if (typeof json.pages[0] !== 'string') {
-        json.pages[0].src = addQuery(json.pages[0].src, { isFirst: true })
-      } else {
-        json.pages[0] = addQuery(json.pages[0], { isFirst: true })
-      }
-    }
 
     const processPages = (pages, context, tarRoot = '', callback) => {
       if (pages) {
@@ -514,13 +506,21 @@ module.exports = function (content) {
 
     async.parallel([
       (callback) => {
-        processPlugins(json.plugins, this.context, '', callback)
-      },
-      (callback) => {
+        // 添加首页标识
+        if (json.pages && json.pages[0]) {
+          if (typeof json.pages[0] !== 'string') {
+            json.pages[0].src = addQuery(json.pages[0].src, { isFirst: true })
+          } else {
+            json.pages[0] = addQuery(json.pages[0], { isFirst: true })
+          }
+        }
         processPages(json.pages, this.context, '', callback)
       },
       (callback) => {
         processComponents(json.usingComponents, this.context, callback)
+      },
+      (callback) => {
+        processPlugins(json.plugins, this.context, '', callback)
       },
       (callback) => {
         processWorkers(json.workers, this.context, callback)

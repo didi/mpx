@@ -2279,5 +2279,6 @@ module.exports = {
   makeAttrsMap,
   stringifyAttr,
   parseMustache,
-  stringifyWithResolveComputed
+  stringifyWithResolveComputed,
+  addAttrs
 }

@@ -27,11 +27,8 @@ module.exports = function (content) {
   const packageName = queryObj.packageRoot || mpx.currentPackageRoot || 'main'
   const pagesMap = mpx.pagesMap
   const componentsMap = mpx.componentsMap[packageName]
-  const resolveMode = mpx.resolveMode
-  const projectRoot = mpx.projectRoot
   const mode = mpx.mode
   const env = mpx.env
-  const defs = mpx.defs
   const i18n = mpx.i18n
   const globalSrcMode = mpx.srcMode
   const localSrcMode = queryObj.mode
@@ -39,10 +36,10 @@ module.exports = function (content) {
   const vueContentCache = mpx.vueContentCache
   const autoScope = matchCondition(resourcePath, mpx.autoScopeRules)
 
-  // 支持资源query传入page或component支持页面/组件单独编译
-  if ((queryObj.component && !componentsMap[resourcePath]) || (queryObj.page && !pagesMap[resourcePath])) {
+  // 支持资源query传入isPage或isComponent支持页面/组件单独编译
+  if ((queryObj.isComponent && !componentsMap[resourcePath]) || (queryObj.isPage && !pagesMap[resourcePath])) {
     const entryName = getEntryName(this)
-    if (queryObj.component) {
+    if (queryObj.isComponent) {
       componentsMap[resourcePath] = entryName || 'noEntryComponent'
     } else {
       pagesMap[resourcePath] = entryName || 'noEntryPage'
@@ -120,8 +117,8 @@ module.exports = function (content) {
 
       // 处理mode为web时输出vue格式文件
       if (mode === 'web') {
-        if (ctorType === 'app' && !queryObj.app) {
-          const request = addQuery(this.resource, { app: true })
+        if (ctorType === 'app' && !queryObj.isApp) {
+          const request = addQuery(this.resource, { isApp: true })
           output += `
       import App from ${stringifyRequest(request)}
       import Vue from 'vue'
@@ -142,20 +139,15 @@ module.exports = function (content) {
             async.parallel([
               (callback) => {
                 processTemplate(parts.template, {
+                  loaderContext,
                   hasScoped,
                   hasComment,
                   isNative,
-                  mode,
                   srcMode,
-                  defs,
-                  loaderContext,
                   moduleId,
                   ctorType,
                   usingComponents,
-                  componentGenerics,
-                  decodeHTMLText: mpx.decodeHTMLText,
-                  externalClasses: mpx.externalClasses,
-                  checkUsingComponents: mpx.checkUsingComponents
+                  componentGenerics
                 }, callback)
               },
               (callback) => {
@@ -167,15 +159,9 @@ module.exports = function (content) {
               },
               (callback) => {
                 processJSON(parts.json, {
-                  mode,
-                  env,
-                  resolveMode,
                   loaderContext,
                   pagesMap,
-                  pagesEntryMap: mpx.pagesEntryMap,
-                  pathHash: mpx.pathHash,
-                  componentsMap,
-                  projectRoot
+                  componentsMap
                 }, callback)
               }
             ], (err, res) => {
@@ -191,23 +177,20 @@ module.exports = function (content) {
             }
 
             processScript(parts.script, {
+              loaderContext,
               ctorType,
               srcMode,
-              loaderContext,
               isProduction,
-              i18n,
               componentGenerics,
-              projectRoot,
               jsonConfig: jsonRes.jsonObj,
-              componentId: queryObj.componentId || '',
+              outputPath: queryObj.outputPath || '',
               tabBarMap: jsonRes.tabBarMap,
               tabBarStr: jsonRes.tabBarStr,
               builtInComponentsMap: templateRes.builtInComponentsMap,
               genericsInfo: templateRes.genericsInfo,
               wxsModuleMap: templateRes.wxsModuleMap,
               localComponentsMap: jsonRes.localComponentsMap,
-              localPagesMap: jsonRes.localPagesMap,
-              forceDisableBuiltInLoader: mpx.forceDisableBuiltInLoader
+              localPagesMap: jsonRes.localPagesMap
             }, callback)
           }
         ], (err, scriptRes) => {

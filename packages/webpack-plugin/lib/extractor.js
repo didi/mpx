@@ -3,9 +3,9 @@ const loaderUtils = require('loader-utils')
 const parseRequest = require('./utils/parse-request')
 const toPosix = require('./utils/to-posix')
 const fixRelative = require('./utils/fix-relative')
-const normalize = require('./utils/normalize')
 const addQuery = require('./utils/add-query')
 const { MPX_DISABLE_EXTRACTOR_CACHE, DEFAULT_RESULT_SOURCE } = require('./utils/const')
+const RecordResourceMapDependency = require('./dependencies/RecordResourceMapDependency')
 
 module.exports = content => content
 
@@ -37,10 +37,10 @@ module.exports.pitch = async function (remainingRequest) {
   })
 
   let request = remainingRequest
-  // static的情况下需要添加recordLoader记录相关静态资源的输出路径
+  // static的情况下需要记录相关静态资源的输出路径
   if (isStatic) {
-    const recordLoader = normalize.lib('record-loader')
-    request = `${recordLoader}!${remainingRequest}`
+    const packageRoot = queryObj.packageRoot || ''
+    this._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, 'staticResource', file, packageRoot))
   }
 
   let content = await this.importModule(`!!${request}`)

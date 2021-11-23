@@ -2,7 +2,6 @@ const genComponentTag = require('../utils/gen-component-tag')
 const loaderUtils = require('loader-utils')
 const addQuery = require('../utils/add-query')
 const normalize = require('../utils/normalize')
-const builtInLoaderPath = normalize.lib('built-in-loader')
 const optionProcessorPath = normalize.lib('runtime/optionProcessor')
 const tabBarContainerPath = normalize.lib('runtime/components/web/mpx-tab-bar-container.vue')
 const tabBarPath = normalize.lib('runtime/components/web/mpx-tab-bar.vue')
@@ -21,23 +20,29 @@ function shallowStringify (obj) {
   return `{${arr.join(',')}}`
 }
 
-module.exports = function (script, options, callback) {
-  const ctorType = options.ctorType
-  const builtInComponentsMap = options.builtInComponentsMap
-  const localComponentsMap = options.localComponentsMap
-  const localPagesMap = options.localPagesMap
-  const srcMode = options.srcMode
-  const loaderContext = options.loaderContext
-  const isProduction = options.isProduction
-  const componentId = options.componentId
-  const i18n = options.i18n
-  const jsonConfig = options.jsonConfig
+module.exports = function (script, {
+  loaderContext,
+  ctorType,
+  srcMode,
+  isProduction,
+  componentGenerics,
+  jsonConfig,
+  outputPath,
+  tabBarMap,
+  tabBarStr,
+  builtInComponentsMap,
+  genericsInfo,
+  wxsModuleMap,
+  localComponentsMap,
+  localPagesMap
+}, callback) {
+  const mpx = loaderContext.getMpx()
+  const {
+    i18n,
+    projectRoot
+  } = mpx
+
   const tabBar = jsonConfig.tabBar
-  const tabBarMap = options.tabBarMap
-  const tabBarStr = options.tabBarStr
-  const genericsInfo = options.genericsInfo
-  const componentGenerics = options.componentGenerics
-  const forceDisableBuiltInLoader = options.forceDisableBuiltInLoader
 
   const emitWarning = (msg) => {
     loaderContext.emitWarning(
@@ -49,7 +54,7 @@ module.exports = function (script, options, callback) {
   let tabBarPagesMap = {}
   if (tabBar && tabBarMap) {
     // 挂载tabBar组件
-    const tabBarRequest = stringifyRequest(addQuery(tabBar.custom ? './custom-tab-bar/index' : tabBarPath, { component: true }))
+    const tabBarRequest = stringifyRequest(addQuery(tabBar.custom ? './custom-tab-bar/index' : tabBarPath, { isComponent: true }))
     tabBarPagesMap['mpx-tab-bar'] = `getComponent(require(${tabBarRequest}))`
     // 挂载tabBar页面
     Object.keys(tabBarMap).forEach((pagePath) => {
@@ -161,9 +166,9 @@ module.exports = function (script, options, callback) {
       }
       // 注入wxs模块
       content += '  const wxsModules = {}\n'
-      if (options.wxsModuleMap) {
-        Object.keys(options.wxsModuleMap).forEach((module) => {
-          const src = loaderUtils.urlToRequest(options.wxsModuleMap[module], options.projectRoot)
+      if (wxsModuleMap) {
+        Object.keys(wxsModuleMap).forEach((module) => {
+          const src = loaderUtils.urlToRequest(wxsModuleMap[module], projectRoot)
           const expression = `require(${stringifyRequest(src)})`
           content += `  wxsModules.${module} = ${expression}\n`
         })
@@ -202,7 +207,7 @@ module.exports = function (script, options, callback) {
 
       Object.keys(builtInComponentsMap).forEach((componentName) => {
         const componentCfg = builtInComponentsMap[componentName]
-        const componentRequest = forceDisableBuiltInLoader ? stringifyRequest(componentCfg.resource) : stringifyRequest('builtInComponent.vue!=!' + builtInLoaderPath + '!' + componentCfg.resource)
+        const componentRequest = stringifyRequest(componentCfg.resource)
         componentsMap[componentName] = `getComponent(require(${componentRequest}), { __mpxBuiltIn: true })`
       })
 
@@ -245,7 +250,7 @@ module.exports = function (script, options, callback) {
     currentOption,
     ${JSON.stringify(ctorType)},
     ${JSON.stringify(firstPage)},
-    ${JSON.stringify(componentId)},
+    ${JSON.stringify(outputPath)},
     ${JSON.stringify(pageConfig)},
     // @ts-ignore
     ${shallowStringify(pagesMap)},

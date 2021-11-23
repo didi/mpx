@@ -7,18 +7,29 @@ const toPosix = require('../utils/to-posix')
 const addQuery = require('../utils/add-query')
 const parseComponent = require('../parser')
 const getJSONContent = require('../utils/get-json-content')
-const isUrlRequest = require('../utils/is-url-request')
 const resolve = require('../utils/resolve')
+const createJSONHelper = require('../json-compiler/helper')
+const { RESOLVE_IGNORED_ERR } = require('../utils/const')
+const RecordResourceMapDependency = require('../dependencies/RecordResourceMapDependency')
 
-module.exports = function (json, { mode, env, loaderContext, resolveMode, pagesMap, componentsMap, pagesEntryMap, projectRoot, pathHash }, rawCallback) {
+module.exports = function (json, {
+  loaderContext,
+  pagesMap,
+  componentsMap
+}, rawCallback) {
   const localPagesMap = {}
   const localComponentsMap = {}
-  const buildInfo = loaderContext._module.buildInfo
-
   let output = '/* json */\n'
   let jsonObj = {}
   let tabBarMap
   let tabBarStr
+  const mpx = loaderContext.getMpx()
+  const {
+    mode,
+    env,
+    projectRoot
+  } = mpx
+
   const context = loaderContext.context
 
   const emitWarning = (msg) => {
@@ -28,12 +39,30 @@ module.exports = function (json, { mode, env, loaderContext, resolveMode, pagesM
   }
 
   const emitError = (msg) => {
-    this.emitError(
-      new Error('[json compiler][' + this.resource + ']: ' + msg)
+    loaderContext.emitError(
+      new Error('[json compiler][' + loaderContext.resource + ']: ' + msg)
     )
   }
 
   const stringifyRequest = r => loaderUtils.stringifyRequest(loaderContext, r)
+
+  const {
+    isUrlRequest,
+    urlToRequest,
+    processPage,
+    processComponent
+  } = createJSONHelper({
+    loaderContext,
+    emitWarning,
+    emitError,
+    customGetDynamicEntry (resource, type, outputPath, packageRoot) {
+      return {
+        resource,
+        outputPath: toPosix(path.join(packageRoot, outputPath)),
+        packageRoot
+      }
+    }
+  })
 
   const callback = (err) => {
     return rawCallback(err, {
@@ -75,7 +104,7 @@ module.exports = function (json, { mode, env, loaderContext, resolveMode, pagesM
       tabBarStr = JSON.stringify(tabBar)
       tabBarStr = tabBarStr.replace(/"(iconPath|selectedIconPath)":"([^"]+)"/g, function (matched, $1, $2) {
         if (isUrlRequest($2, projectRoot)) {
-          return `"${$1}":require(${stringifyRequest(loaderUtils.urlToRequest($2, projectRoot))})`
+          return `"${$1}":require(${stringifyRequest(urlToRequest($2, projectRoot))})`
         }
         return matched
       })
@@ -85,15 +114,14 @@ module.exports = function (json, { mode, env, loaderContext, resolveMode, pagesM
 
   const processPackages = (packages, context, callback) => {
     if (packages) {
-      async.forEach(packages, (packagePath, callback) => {
-        const parsed = parseRequest(packagePath)
-        const queryObj = parsed.queryObj
-        // readFile无法处理query
-        packagePath = parsed.resourcePath
+      async.each(packages, (packagePath, callback) => {
+        const { queryObj } = parseRequest(packagePath)
         async.waterfall([
           (callback) => {
-            resolve(context, packagePath, loaderContext, (err, result) => {
-              callback(err, result)
+            resolve(context, packagePath, this, (err, result) => {
+              if (err) return callback(err)
+              const { rawResourcePath } = parseRequest(result)
+              callback(err, rawResourcePath)
             })
           },
           (result, callback) => {
@@ -103,16 +131,15 @@ module.exports = function (json, { mode, env, loaderContext, resolveMode, pagesM
             })
           },
           (result, content, callback) => {
-            const filePath = result
-            const extName = path.extname(filePath)
+            const extName = path.extname(result)
             if (extName === '.mpx' || extName === '.vue') {
               const parts = parseComponent(content, {
-                filePath,
-                needMap: loaderContext.sourceMap,
+                filePath: result,
+                needMap: this.sourceMap,
                 mode,
                 env
               })
-              getJSONContent(parts.json || {}, loaderContext, (err, content) => {
+              getJSONContent(parts.json || {}, this, (err, content) => {
                 callback(err, result, content)
               })
             } else {
@@ -138,12 +165,17 @@ module.exports = function (json, { mode, env, loaderContext, resolveMode, pagesM
                   pages: content.pages,
                   ...queryObj
                 }
+
+                if (content.plugins) {
+                  subPackage.plugins = content.plugins
+                }
+
                 processSelfQueue.push((callback) => {
                   processSubPackage(subPackage, context, callback)
                 })
               } else {
                 processSelfQueue.push((callback) => {
-                  processPages(content.pages, '', '', context, callback)
+                  processPages(content.pages, context, '', callback)
                 })
               }
             }
@@ -158,77 +190,36 @@ module.exports = function (json, { mode, env, loaderContext, resolveMode, pagesM
               callback()
             }
           }
-        ], callback)
+        ], (err) => {
+          callback(err === RESOLVE_IGNORED_ERR ? null : err)
+        })
       }, callback)
     } else {
       callback()
     }
   }
 
-  const getPageName = (resourcePath, ext) => {
-    const baseName = path.basename(resourcePath, ext)
-    return path.join('pages', baseName + pathHash(resourcePath), baseName)
-  }
-
-  const processPages = (pages, srcRoot = '', tarRoot = '', context, callback) => {
+  const processPages = (pages, context, tarRoot = '', callback) => {
     if (pages) {
-      context = path.join(context, srcRoot)
-      async.forEach(pages, (page, callback) => {
-        let aliasPath = ''
-        if (typeof page !== 'string') {
-          aliasPath = page.path
-          page = page.src
-        }
-        if (!isUrlRequest(page, projectRoot)) return callback()
-        if (resolveMode === 'native') {
-          page = loaderUtils.urlToRequest(page, projectRoot)
-        }
-        resolve(context, page, loaderContext, (err, resource) => {
-          if (err) return callback(err)
+      async.each(pages, (page, callback) => {
+        processPage(page, context, tarRoot, (err, { resource, outputPath }, { isFirst, key } = {}) => {
+          if (err) return callback(err === RESOLVE_IGNORED_ERR ? null : err)
           const { resourcePath, queryObj } = parseRequest(resource)
-          const ext = path.extname(resourcePath)
-          // 获取pageName
-          let pageName
-          if (aliasPath) {
-            pageName = toPosix(path.join(tarRoot, aliasPath))
-            // 判断 key 存在重复情况直接报错
-            for (let key in pagesMap) {
-              if (pagesMap[key] === pageName && key !== resourcePath) {
-                emitError(`Current page [${resourcePath}] registers a conflict page path [${pageName}] with existed page [${key}], which is not allowed, please rename it!`)
-                return callback()
-              }
-            }
-          } else {
-            const relative = path.relative(context, resourcePath)
-            if (/^\./.test(relative)) {
-              // 如果当前page不存在于context中，对其进行重命名
-              pageName = toPosix(path.join(tarRoot, getPageName(resourcePath, ext)))
-              emitWarning(`Current page [${resourcePath}] is not in current pages directory [${context}], the page path will be replaced with [${pageName}], use ?resolve to get the page path and navigate to it!`)
-            } else {
-              pageName = toPosix(path.join(tarRoot, /^(.*?)(\.[^.]*)?$/.exec(relative)[1]))
-              // 如果当前page与已有page存在命名冲突，也进行重命名
-              for (let key in pagesMap) {
-                // 此处引入pagesEntryMap确保相同entry下路由路径重复注册才报错，不同entry下的路由路径重复则无影响
-                if (pagesMap[key] === pageName && key !== resourcePath && pagesEntryMap[key] === loaderContext.resourcePath) {
-                  const pageNameRaw = pageName
-                  pageName = toPosix(path.join(tarRoot, getPageName(resourcePath, ext)))
-                  emitWarning(`Current page [${resourcePath}] is registered with a conflict page path [${pageNameRaw}] which is already existed in system, the page path will be replaced with [${pageName}], use ?resolve to get the page path and navigate to it!`)
-                  break
-                }
-              }
+          pagesMap[resourcePath] = outputPath
+          loaderContext._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, 'page', outputPath))
+
+          if (localPagesMap[outputPath]) {
+            const { resourcePath: oldResourcePath } = parseRequest(localPagesMap[outputPath].resource)
+            if (oldResourcePath !== resourcePath) {
+              emitError(`Current page [${resourcePath}] registers a conflict page path [${outputPath}] with existed page [${oldResourcePath}], which is not allowed, please rename it!`)
+              return callback()
             }
           }
-          if (pagesMap[resourcePath]) {
-            emitWarning(`Current page [${resourcePath}] which is imported from [${loaderContext.resourcePath}] has been registered in pagesMap already, it will be ignored, please check it and remove the redundant page declaration!`)
-            return callback()
-          }
-          buildInfo.pagesMap = buildInfo.pagesMap || {}
-          buildInfo.pagesMap[resourcePath] = pagesMap[resourcePath] = pageName
-          pagesEntryMap[resourcePath] = loaderContext.resourcePath
-          localPagesMap[pageName] = {
-            resource: addQuery(resource, { page: true }),
+
+          localPagesMap[outputPath] = {
+            resource: addQuery(resource, { isPage: true }),
             async: tarRoot || queryObj.async,
-            isFirst: queryObj.isFirst
+            isFirst
           }
           callback()
         })
@@ -240,10 +231,15 @@ module.exports = function (json, { mode, env, loaderContext, resolveMode, pagesM
 
   const processSubPackage = (subPackage, context, callback) => {
     if (subPackage) {
+      if (typeof subPackage.root === 'string' && subPackage.root.startsWith('.')) {
+        emitError(`Current subpackage root [${subPackage.root}] is not allow starts with '.'`)
+        return callback()
+      }
       let tarRoot = subPackage.tarRoot || subPackage.root || ''
       let srcRoot = subPackage.srcRoot || subPackage.root || ''
       if (!tarRoot) return callback()
-      processPages(subPackage.pages, srcRoot, tarRoot, context, callback)
+      context = path.join(context, srcRoot)
+      processPages(subPackage.pages, context, tarRoot, callback)
     } else {
       callback()
     }
@@ -251,7 +247,7 @@ module.exports = function (json, { mode, env, loaderContext, resolveMode, pagesM
 
   const processSubPackages = (subPackages, context, callback) => {
     if (subPackages) {
-      async.forEach(subPackages, (subPackage, callback) => {
+      async.each(subPackages, (subPackage, callback) => {
         processSubPackage(subPackage, context, callback)
       }, callback)
     } else {
@@ -261,37 +257,25 @@ module.exports = function (json, { mode, env, loaderContext, resolveMode, pagesM
 
   const processComponents = (components, context, callback) => {
     if (components) {
-      async.forEachOf(components, (component, name, callback) => {
-        processComponent(component, name, context, callback)
+      async.eachOf(components, (component, name, callback) => {
+        processComponent(component, context, {}, (err, { resource, outputPath }) => {
+          if (err === RESOLVE_IGNORED_ERR) {
+            return callback()
+          }
+          const { resourcePath, queryObj } = parseRequest(resource)
+          componentsMap[resourcePath] = outputPath
+          loaderContext._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, 'component', outputPath))
+
+          localComponentsMap[name] = {
+            resource: addQuery(resource, { isComponent: true, outputPath }),
+            async: queryObj.async
+          }
+          callback()
+        })
       }, callback)
     } else {
       callback()
     }
-  }
-
-  const processComponent = (component, name, context, callback) => {
-    if (!isUrlRequest(component, projectRoot)) return callback()
-
-    if (resolveMode === 'native') {
-      component = loaderUtils.urlToRequest(component, projectRoot)
-    }
-
-    resolve(context, component, loaderContext, (err, resource) => {
-      if (err) return callback(err)
-      const { resourcePath, queryObj } = parseRequest(resource)
-      const parsed = path.parse(resourcePath)
-      const componentId = parsed.name + pathHash(resourcePath)
-
-      buildInfo.packageName = 'main'
-      buildInfo.componentsMap = buildInfo.componentsMap || {}
-      buildInfo.componentsMap[resourcePath] = componentsMap[resourcePath] = componentId
-
-      localComponentsMap[name] = {
-        resource: addQuery(resource, { component: true, componentId }),
-        async: queryObj.async
-      }
-      callback()
-    })
   }
 
   const processGenerics = (generics, context, callback) => {
@@ -310,6 +294,7 @@ module.exports = function (json, { mode, env, loaderContext, resolveMode, pagesM
 
   async.parallel([
     (callback) => {
+      // 添加首页标识
       if (jsonObj.pages && jsonObj.pages[0]) {
         if (typeof jsonObj.pages[0] !== 'string') {
           jsonObj.pages[0].src = addQuery(jsonObj.pages[0].src, { isFirst: true })

@@ -38,7 +38,7 @@ module.exports = function (raw) {
     )
   }
 
-  const parsed = compiler.parse(raw, {
+  const { root: ast, meta } = compiler.parse(raw, {
     warn,
     error,
     usingComponents,
@@ -57,12 +57,9 @@ module.exports = function (raw) {
     i18n,
     checkUsingComponents: mpx.checkUsingComponents,
     globalComponents: Object.keys(mpx.usingComponents),
-    forceProxyEvent: matchCondition(this.resourcePath, mpx.forceProxyEventRules),
-    hasVirtualHost: matchCondition(this.resourcePath, mpx.autoVirtualHostRules)
+    forceProxyEvent: matchCondition(resourcePath, mpx.forceProxyEventRules),
+    hasVirtualHost: matchCondition(resourcePath, mpx.autoVirtualHostRules)
   })
-
-  let ast = parsed.root
-  let meta = parsed.meta
 
   if (meta.wxsContentMap) {
     for (let module in meta.wxsContentMap) {
