@@ -4,7 +4,6 @@ const config = require('../config')
 const normalize = require('../utils/normalize')
 const isValidIdentifierStr = require('../utils/is-valid-identifier-str')
 const isEmptyObject = require('../utils/is-empty-object')
-const mpxJSON = require('../utils/mpx-json')
 const getRulesRunner = require('../platform/index')
 const addQuery = require('../utils/add-query')
 const transDynamicClassExpr = require('./trans-dynamic-class-expr')
@@ -535,7 +534,6 @@ function parseHTML (html, options) {
 
 function parseComponent (content, options) {
   mode = options.mode || 'wx'
-  defs = options.defs || {}
   env = options.env
   filePath = options.filePath
 
@@ -586,6 +584,9 @@ function parseComponent (content, options) {
             // 支持type写为application\/json5
             if (/^application\/json/.test(currentBlock.type) || currentBlock.name === 'json') {
               tag = 'json'
+            }
+            if (currentBlock.name === 'json') {
+              currentBlock.useJSONJS = true
             }
           }
           if (currentBlock.mode && currentBlock.env) {
@@ -645,19 +646,14 @@ function parseComponent (content, options) {
     }
   }
 
-  function end (tag, start, end) {
+  function end (tag, start) {
     if (depth === 1 && currentBlock) {
       currentBlock.end = start
       let text = content.slice(currentBlock.start, currentBlock.end)
       // pad content so that linters and pre-processors can output correct
       // line numbers in errors and warnings
-      if (currentBlock.tag !== 'template' && options.pad) {
+      if (options.pad) {
         text = padContent(currentBlock, options.pad) + text
-      }
-
-      // 对于<script name="json">的标签，传参调用函数，其返回结果作为json的内容
-      if (currentBlock.tag === 'script' && !/^application\/json/.test(currentBlock.type) && currentBlock.name === 'json') {
-        text = mpxJSON.compileMPXJSONText({ source: text, defs, filePath })
       }
       currentBlock.content = text
       currentBlock = null

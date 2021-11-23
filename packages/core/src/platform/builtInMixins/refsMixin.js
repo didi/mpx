@@ -137,7 +137,6 @@ export default function getRefsMixin () {
       ...aliMethods,
       __getRefs () {
         // 运行时编译组件获取 ref 节点
-        // TODO: this.refss 运行时组件里面的 slot 获取
         const vnodeRootContext = this.vnodeRootContext || this._getRootContext(this.id)
         if (vnodeRootContext) {
           const needRuntimeRef = true

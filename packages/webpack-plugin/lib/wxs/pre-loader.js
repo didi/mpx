@@ -2,21 +2,20 @@ const babylon = require('babylon')
 const traverse = require('babel-traverse').default
 const t = require('babel-types')
 const generate = require('babel-generator').default
-const getMainCompilation = require('../utils/get-main-compilation')
 const parseRequest = require('../utils/parse-request')
 const isEmptyObject = require('../utils/is-empty-object')
 const parseQuery = require('loader-utils').parseQuery
 
 module.exports = function (content) {
   this.cacheable()
-  const mainCompilation = getMainCompilation(this._compilation)
+  const mpx = this.getMpx()
   const module = this._module
-  const mode = mainCompilation.__mpx__.mode
+  const mode = mpx.mode
   const wxsModule = parseQuery(this.resourceQuery || '?').wxsModule
 
   // 处理内联wxs
   if (wxsModule) {
-    const wxsContentMap = mainCompilation.__mpx__.wxsContentMap
+    const wxsContentMap = mpx.wxsContentMap
     const resourcePath = parseRequest(this.resource).resourcePath
     content = wxsContentMap[`${resourcePath}~${wxsModule}`] || content
   }

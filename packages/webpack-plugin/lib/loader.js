@@ -11,7 +11,7 @@ const processJSON = require('./web/processJSON')
 const processScript = require('./web/processScript')
 const processStyles = require('./web/processStyles')
 const processTemplate = require('./web/processTemplate')
-const readJsonForSrc = require('./utils/read-json-for-src')
+const getJSONContent = require('./utils/get-json-content')
 const normalize = require('./utils/normalize')
 const path = require('path')
 const {
@@ -81,7 +81,6 @@ module.exports = function (content) {
     filePath,
     needMap: this.sourceMap,
     mode,
-    defs,
     env
   })
 
@@ -93,16 +92,11 @@ module.exports = function (content) {
   let componentsAbsolutePath = Object.assign({}, globalRuntimeComponent)
   async.waterfall([
     (callback) => {
-      const json = parts.json || {}
-      if (json.src) {
-        readJsonForSrc(json.src, loaderContext, (err, result) => {
-          if (err) return callback(err)
-          json.content = result
-          callback()
-        })
-      } else {
+      getJSONContent(parts.json || {}, loaderContext, (err, content) => {
+        if (err) return callback(err)
+        if (parts.json) parts.json.content = content
         callback()
-      }
+      })
     },
     (callback) => {
       if (parts.json && parts.json.content) {
@@ -147,32 +141,27 @@ module.exports = function (content) {
                       filePath: absolutePath,
                       needMap: this.sourceMap,
                       mode,
-                      defs,
                       env
                     })
-                    // readJsonForSrc 会做缓存
-                    const json = parts.json || {}
-                    if (json.src) {
-                      readJsonForSrc(json.src, loaderContext, path.dirname(absolutePath), (err, content) => {
-                        if (err) {
-                          return callback(err)
-                        }
-                        const isRuntimeCompile = content && content.runtimeCompile
-                        if (isRuntimeCompile) {
-                          runtimeComponents.push(name)
-                        }
-                      })
-                    } else if (json.content) {
-                      try {
-                        const content = JSON5.parse(parts.json.content)
-                        const isRuntimeCompile = content && content.runtimeCompile
-                        if (isRuntimeCompile) {
-                          runtimeComponents.push(name)
-                        }
-                      } catch (e) {
-                        return callback(e)
+                    // getJSONContent 会做缓存
+                    getJSONContent(parts.json || {}, loaderContext, path.dirname(absolutePath), (err, content) => {
+                      if (err) {
+                        return callback(err)
                       }
-                    }
+                      if (content) {
+                        try {
+                          content = JSON5.parse(content)
+                          if (content.runtimeCompile) {
+                            runtimeComponents.push(name)
+                          }
+                        } catch (e) {
+                          return callback(e)
+                        }
+                      }
+                      if (content && content.runtimeCompile) {
+                        runtimeComponents.push(name)
+                      }
+                    })
                     cb()
                   }
                 })
@@ -269,7 +258,6 @@ module.exports = function (content) {
                 processJSON(parts.json, {
                   mode,
                   env,
-                  defs,
                   resolveMode,
                   loaderContext,
                   pagesMap,
@@ -358,6 +346,7 @@ module.exports = function (content) {
       output += `global.currentCtorType = ${JSON.stringify(ctor.replace(/^./, (match) => {
         return match.toLowerCase()
       }))}\n`
+      output += `global.currentResourceType = '${ctorType}'\n`
 
       // template
       output += '/* template */\n'

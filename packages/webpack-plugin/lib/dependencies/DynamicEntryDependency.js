@@ -20,7 +20,8 @@ class DynamicEntryDependency extends NullDependency {
   }
 
   get key () {
-    return `${this.resource}_${this.entryType}_${this.outputPath}_${this.packageRoot}_${this.relativePath}_${this.range[0]}_${this.range[1]}`
+    const { resource, entryType, outputPath, packageRoot, relativePath, range } = this
+    return [resource, entryType, outputPath, packageRoot, relativePath, ...range].join('|')
   }
 
   addEntry (compilation, callback) {

@@ -4,15 +4,16 @@ const path = require('path')
 const parseComponent = require('../parser')
 const config = require('../config')
 const parseRequest = require('../utils/parse-request')
-const mpxJSON = require('../utils/mpx-json')
+const evalJSONJS = require('../utils/eval-json-js')
 const fixUsingComponent = require('../utils/fix-using-component')
 const getRulesRunner = require('../platform/index')
 const addQuery = require('../utils/add-query')
-const readJsonForSrc = require('../utils/read-json-for-src')
+const getJSONContent = require('../utils/get-json-content')
 const createHelpers = require('../helpers')
 const createJSONHelper = require('./helper')
 const RecordGlobalComponentsDependency = require('../dependencies/RecordGlobalComponentsDependency')
-const { MPX_DISABLE_EXTRACTOR_CACHE, RESOLVE_IGNORED_ERR } = require('../utils/const')
+const { MPX_DISABLE_EXTRACTOR_CACHE, RESOLVE_IGNORED_ERR, JSON_JS_EXT } = require('../utils/const')
+const resolve = require('../utils/resolve')
 const {
   collectCustomComponentWxss,
   collectAliasComponentPath,
@@ -34,13 +35,13 @@ module.exports = function (content) {
   // 微信插件下要求组件使用相对路径
   const useRelativePath = mpx.isPluginMode || mpx.useRelativePath
   const { resourcePath, queryObj } = parseRequest(this.resource)
+  const useJSONJS = queryObj.useJSONJS || this.resourcePath.endsWith(JSON_JS_EXT)
   const packageName = queryObj.packageRoot || mpx.currentPackageRoot || 'main'
   const pagesMap = mpx.pagesMap
   const componentsMap = mpx.componentsMap[packageName]
   const appInfo = mpx.appInfo
   const mode = mpx.mode
   const env = mpx.env
-  const defs = mpx.defs
   const globalSrcMode = mpx.srcMode
   const localSrcMode = queryObj.mode
   const srcMode = localSrcMode || globalSrcMode
@@ -64,7 +65,6 @@ module.exports = function (content) {
   }
 
   const {
-    resolve,
     isUrlRequest,
     urlToRequest,
     processPage,
@@ -130,12 +130,10 @@ module.exports = function (content) {
     nativeCallback(null, output)
   }
 
-  let json = {}
+  let json
   try {
-    // 使用了MPXJSON的话先编译
-    // 此处需要使用真实的resourcePath
-    if (this.resourcePath.endsWith('.json.js')) {
-      json = JSON.parse(mpxJSON.compileMPXJSONText({ source: content, defs, filePath: this.resourcePath }))
+    if (useJSONJS) {
+      json = evalJSONJS(content, this.resourcePath, this)
     } else {
       json = JSON5.parse(content || '{}')
     }
@@ -143,22 +141,10 @@ module.exports = function (content) {
     return callback(err)
   }
 
-
   if (json.runtimeCompile) {
     if (!json.usingComponents) {
       json.usingComponents = {}
     }
-
-    // for (let name in json.usingComponents) {
-      // const aliasTags = getAliasTag()
-      // const absolutePath = path.resolve(path.dirname(this.resourcePath), json.usingComponents[name])
-      // if (aliasTags[absolutePath] && aliasTags[absolutePath].aliasTag) {
-      //   const aliasTag = aliasTags[absolutePath].aliasTag
-      //   const path = json.usingComponents[name]
-      //   delete json.usingComponents[name]
-      //   json.usingComponents[aliasTag] = path
-      // }
-    // }
 
     // 将 element 加入到编译的流程
     if (!json.usingComponents['element']) {
@@ -267,6 +253,7 @@ module.exports = function (content) {
     // app.json
     const localPages = []
     const subPackagesCfg = {}
+    const pageKeySet = new Set()
     // 添加首页标识
     if (json.pages && json.pages[0]) {
       if (typeof json.pages[0] !== 'string') {
@@ -279,8 +266,10 @@ module.exports = function (content) {
     const processPages = (pages, context, tarRoot = '', callback) => {
       if (pages) {
         async.each(pages, (page, callback) => {
-          processPage(page, context, tarRoot, (err, entry, { isFirst } = {}) => {
+          processPage(page, context, tarRoot, (err, entry, { isFirst, key } = {}) => {
             if (err) return callback(err === RESOLVE_IGNORED_ERR ? null : err)
+            if (pageKeySet.has(key)) return callback()
+            pageKeySet.add(key)
             if (tarRoot && subPackagesCfg) {
               subPackagesCfg[tarRoot].pages.push(entry)
             } else {
@@ -305,14 +294,13 @@ module.exports = function (content) {
           const { queryObj } = parseRequest(packagePath)
           async.waterfall([
             (callback) => {
-              resolve(context, packagePath, (err, result) => {
+              resolve(context, packagePath, this, (err, result) => {
                 if (err) return callback(err)
                 const { rawResourcePath } = parseRequest(result)
                 callback(err, rawResourcePath)
               })
             },
             (result, callback) => {
-              this.addDependency(result)
               fs.readFile(result, (err, content) => {
                 if (err) return callback(err)
                 callback(err, result, content.toString('utf-8'))
@@ -325,19 +313,14 @@ module.exports = function (content) {
                   filePath: result,
                   needMap: this.sourceMap,
                   mode,
-                  defs,
                   env
                 })
-                const json = parts.json || {}
-                if (json.content) {
-                  content = json.content
-                } else if (json.src) {
-                  return readJsonForSrc(json.src, this, (content) => {
-                    callback(null, result, content)
-                  })
-                }
+                getJSONContent(parts.json || {}, this, (err, content) => {
+                  callback(err, result, content)
+                })
+              } else {
+                callback(null, result, content)
               }
-              callback(null, result, content)
             },
             (result, content, callback) => {
               try {
@@ -524,7 +507,10 @@ module.exports = function (content) {
       const relativePath = useRelativePath ? publicPath + tarRoot : ''
       async.eachOf(plugin.genericsImplementation, (genericComponents, name, callback) => {
         async.eachOf(genericComponents, (genericComponentPath, name, callback) => {
-          processComponent(genericComponentPath, context, { tarRoot, relativePath }, (err, entry) => {
+          processComponent(genericComponentPath, context, {
+            tarRoot,
+            relativePath
+          }, (err, entry) => {
             if (err === RESOLVE_IGNORED_ERR) {
               delete genericComponents[name]
               return callback()

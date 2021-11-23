@@ -3,7 +3,6 @@ const genComponentTag = require('../utils/gen-component-tag')
 const addQuery = require('../utils/add-query')
 const path = require('path')
 const parseRequest = require('../utils/parse-request')
-const getMainCompilation = require('../utils/get-main-compilation')
 
 function calculateRootEleChild (arr) {
   if (!arr) {
@@ -30,9 +29,7 @@ module.exports = function (template, options, callback) {
   const ctorType = options.ctorType
   const resourcePath = parseRequest(loaderContext.resource).resourcePath
   const builtInComponentsMap = {}
-  const compilation = loaderContext._compilation
-  const mainCompilation = getMainCompilation(compilation)
-  const mpx = mainCompilation.__mpx__
+  const mpx = loaderContext.getMpx()
   const wxsContentMap = mpx.wxsContentMap
   let wxsModuleMap, genericsInfo
   let output = '/* template */\n'

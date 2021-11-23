@@ -1,10 +1,8 @@
 // 该loader用于将用户定义的messages注入到i18n.wxs中
-const getMainCompilation = require('../utils/get-main-compilation')
 const loaderUtils = require('loader-utils')
 
 module.exports = function (content) {
-  const mainCompilation = getMainCompilation(this._compilation)
-  const i18n = mainCompilation.__mpx__.i18n
+  const i18n = this.getMpx().i18n
   let prefix = 'var __mpx_messages__, __mpx_datetime_formats__, __mpx_number_formats__\n'
   if (i18n) {
     if (i18n.messages) {

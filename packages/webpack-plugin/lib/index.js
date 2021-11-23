@@ -113,20 +113,20 @@ const externalsMap = {
 const warnings = []
 const errors = []
 
-class EntryNode {
-  constructor (options) {
-    this.request = options.request
-    this.type = options.type
-    this.module = null
-    this.parents = new Set()
-    this.children = new Set()
-  }
-
-  addChild (node) {
-    this.children.add(node)
-    node.parents.add(this)
-  }
-}
+// class EntryNode {
+//   constructor (options) {
+//     this.request = options.request
+//     this.type = options.type
+//     this.module = null
+//     this.parents = new Set()
+//     this.children = new Set()
+//   }
+//
+//   addChild (node) {
+//     this.children.add(node)
+//     node.parents.add(this)
+//   }
+// }
 
 class MpxWebpackPlugin {
   constructor (options = {}) {
@@ -184,6 +184,7 @@ class MpxWebpackPlugin {
     options.fileConditionRules = options.fileConditionRules || {
       include: () => true
     }
+    options.customOutputPath = options.customOutputPath || null
     this.options = options
   }
 
@@ -191,35 +192,59 @@ class MpxWebpackPlugin {
     if (options.transRpx) {
       warnings.push('Mpx loader option [transRpx] is deprecated now, please use mpx webpack plugin config [transRpxRules] instead!')
     }
-    return { loader: normalize.lib('loader'), options }
+    return {
+      loader: normalize.lib('loader'),
+      options
+    }
   }
 
   static nativeLoader (options = {}) {
-    return { loader: normalize.lib('native-loader'), options }
+    return {
+      loader: normalize.lib('native-loader'),
+      options
+    }
   }
 
   static wxssLoader (options) {
-    return { loader: normalize.lib('wxss/loader'), options }
+    return {
+      loader: normalize.lib('wxss/loader'),
+      options
+    }
   }
 
   static wxmlLoader (options) {
-    return { loader: normalize.lib('wxml/loader'), options }
+    return {
+      loader: normalize.lib('wxml/loader'),
+      options
+    }
   }
 
   static pluginLoader (options = {}) {
-    return { loader: normalize.lib('json-compiler/plugin'), options }
+    return {
+      loader: normalize.lib('json-compiler/plugin'),
+      options
+    }
   }
 
   static wxsPreLoader (options = {}) {
-    return { loader: normalize.lib('wxs/pre-loader'), options }
+    return {
+      loader: normalize.lib('wxs/pre-loader'),
+      options
+    }
   }
 
   static urlLoader (options = {}) {
-    return { loader: normalize.lib('url-loader'), options }
+    return {
+      loader: normalize.lib('url-loader'),
+      options
+    }
   }
 
   static fileLoader (options = {}) {
-    return { loader: normalize.lib('file-loader'), options }
+    return {
+      loader: normalize.lib('file-loader'),
+      options
+    }
   }
 
   runModeRules (data) {
@@ -366,7 +391,7 @@ class MpxWebpackPlugin {
     })
 
     compiler.hooks.compilation.tap('MpxWebpackPlugin ', (compilation, { normalModuleFactory }) => {
-      NormalModule.getCompilationHooks(compilation).loader.tap('MpxWebpackPlugin', (loaderContext, module) => {
+      NormalModule.getCompilationHooks(compilation).loader.tap('MpxWebpackPlugin', (loaderContext) => {
         // 设置loaderContext的minimize
         if (isProductionLikeMode(compiler.options)) {
           loaderContext.minimize = true
@@ -446,7 +471,6 @@ class MpxWebpackPlugin {
           // todo es6 map读写性能高于object，之后会逐步替换
           vueContentCache: new Map(),
           currentPackageRoot: '',
-          wxsMap: {},
           wxsContentMap: {},
           assetsInfo: new Map(),
           forceUsePageCtor: this.options.forceUsePageCtor,
@@ -474,25 +498,6 @@ class MpxWebpackPlugin {
           useRelativePath: this.options.useRelativePath,
           removedChunks: [],
           forceProxyEventRules: this.options.forceProxyEventRules,
-          getEntryNode: (request, type, module) => {
-            const entryNodesMap = mpx.entryNodesMap
-            const entryModulesMap = mpx.entryModulesMap
-            if (!entryNodesMap[request]) {
-              entryNodesMap[request] = new EntryNode({
-                type,
-                request
-              })
-            }
-            const currentEntry = entryNodesMap[request]
-            if (currentEntry.type !== type) {
-              compilation.errors.push(`获取request为${request}的entryNode时类型与已有节点冲突, 当前获取的type为${type}, 已有节点的type为${currentEntry.type}!`)
-            }
-            if (module) {
-              currentEntry.module = module
-              entryModulesMap.set(module, currentEntry)
-            }
-            return currentEntry
-          },
           pathHash: (resourcePath) => {
             if (this.options.pathHashMode === 'relative' && this.options.projectRoot) {
               return hash(path.relative(this.options.projectRoot, resourcePath))
@@ -503,6 +508,15 @@ class MpxWebpackPlugin {
             const dep = EntryPlugin.createDependency(request, { name })
             compilation.addEntry(compiler.context, dep, { name }, callback)
             return dep
+          },
+          getOutputPath: (resourcePath, type, { ext = '', conflictPath = '' } = {}) => {
+            const name = path.parse(resourcePath).name
+            const hash = mpx.pathHash(resourcePath)
+            const customOutputPath = this.options.customOutputPath
+            if (conflictPath) return conflictPath.replace(/(\.[^\\/]+)?$/, match => hash + match)
+            if (typeof customOutputPath === 'function') return customOutputPath(type, name, hash, ext)
+            if (type === 'component' || type === 'page') return path.join(type + 's', name + hash, 'index' + ext)
+            return path.join(type, name + hash + ext)
           },
           extractedFilesCache: new Map(),
           getExtractedFile: (resource, { error } = {}) => {
@@ -515,8 +529,7 @@ class MpxWebpackPlugin {
               file = 'plugin.json'
             } else if (isStatic) {
               const packageRoot = queryObj.packageRoot || ''
-              const resourceName = path.parse(resourcePath).name
-              file = toPosix(path.join(packageRoot, type, resourceName + mpx.pathHash(resourcePath) + typeExtMap[type]))
+              file = toPosix(path.join(packageRoot, mpx.getOutputPath(resourcePath, type, { ext: typeExtMap[type] })))
             } else {
               const appInfo = mpx.appInfo
               const pagesMap = mpx.pagesMap
@@ -590,16 +603,15 @@ class MpxWebpackPlugin {
               if (currentResourceMap[resourcePath] === outputPath) {
                 alreadyOutputed = true
               } else {
-                currentResourceMap[resourcePath] = outputPath
-                // 输出冲突检测只有page需要
-                if (resourceType === 'page') {
-                  for (let key in currentResourceMap) {
-                    if (currentResourceMap[key] === outputPath && key !== resourcePath) {
-                      error && error(new Error(`Current ${resourceType} [${resourcePath}] registers a same output path [${outputPath}] with existed ${resourceType} [${key}], which is not allowed!`))
-                      break
-                    }
+                // 输出冲突检测，如果存在输出路径冲突，对输出路径进行重命名
+                for (let key in currentResourceMap) {
+                  if (currentResourceMap[key] === outputPath && key !== resourcePath) {
+                    outputPath = toPosix(path.join(packageRoot, mpx.getOutputPath(resourcePath, resourceType, { conflictPath: outputPath })))
+                    warn && warn(new Error(`Current ${resourceType} [${resourcePath}] is registered with a conflict outputPath [${currentResourceMap[key]}] which is already existed in system, will be renamed with [${outputPath}], use ?resolve to get the real outputPath!`))
+                    break
                   }
                 }
+                currentResourceMap[resourcePath] = outputPath
               }
             } else if (!currentResourceMap[resourcePath]) {
               currentResourceMap[resourcePath] = true
@@ -738,6 +750,14 @@ class MpxWebpackPlugin {
         return source
       })
 
+      JavascriptModulesPlugin.getCompilationHooks(compilation).renderStartup.tap('MpxWebpackPlugin', (source, module) => {
+        if (module && mpx.exportModules.has(module)) {
+          source = new ConcatSource(source)
+          source.add('module.exports = __webpack_exports__;\n')
+        }
+        return source
+      })
+
       compilation.hooks.beforeModuleAssets.tap('MpxWebpackPlugin', () => {
         const extractedAssetsMap = new Map()
         for (const module of compilation.modules) {
@@ -809,7 +829,6 @@ class MpxWebpackPlugin {
             res.add(JSON.stringify(_content, null, 2))
             source = res
           }
-          
           compilation.emitAsset(filename, source)
         }
       })
@@ -1008,8 +1027,6 @@ class MpxWebpackPlugin {
           chunkLoadingGlobal
         } = compilation.outputOptions
 
-        const { chunkGraph } = compilation
-
         function getTargetFile (file) {
           let targetFile = file
           const queryStringIdx = targetFile.indexOf('?')
@@ -1075,6 +1092,7 @@ try {
     context.setTimeout = setTimeout;
     context.JSON = JSON;
     context.Math = Math;
+    context.Date = Date;
     context.RegExp = RegExp;
     context.Infinity = Infinity;
     context.isFinite = isFinite;
@@ -1089,16 +1107,28 @@ try {
     context.ArrayBuffer = ArrayBuffer;
     context.Symbol = Symbol;
     context.Reflect = Reflect;
+    context.Object = Object;
+    context.Error = Error;
+    context.Array = Array;
+    context.Float32Array = Float32Array;
+    context.Float64Array = Float64Array;
+    context.Int16Array = Int16Array;
+    context.Int32Array = Int32Array;
+    context.Int8Array = Int8Array;
+    context.Uint16Array = Uint16Array;
+    context.Uint32Array = Uint32Array;
+    context.Uint8ClampedArray = Uint8ClampedArray;
+    context.String = String;
+    context.Function = Function;
+    context.SyntaxError = SyntaxError;
+    context.decodeURIComponent = decodeURIComponent;
+    context.encodeURIComponent = encodeURIComponent;
   }
 } catch(e){
 }\n`)
             source.add(originalSource)
             source.add(`\nmodule.exports = ${globalObject}[${JSON.stringify(chunkLoadingGlobal)}];\n`)
           } else {
-            const entryModule = chunkGraph.getChunkEntryModulesIterable(chunk).next().value
-            if (entryModule && mpx.exportModules.has(entryModule)) {
-              source.add('module.exports =\n')
-            }
             source.add(originalSource)
           }
 

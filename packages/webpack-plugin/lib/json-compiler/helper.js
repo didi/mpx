@@ -4,7 +4,7 @@ const nativeLoaderPath = normalize.lib('native-loader')
 const isUrlRequestRaw = require('../utils/is-url-request')
 const parseRequest = require('../utils/parse-request')
 const loaderUtils = require('loader-utils')
-const { RESOLVE_IGNORED_ERR } = require('../utils/const')
+const resolve = require('../utils/resolve')
 
 module.exports = function createJSONHelper ({ loaderContext, emitWarning }) {
   const mpx = loaderContext.getMpx()
@@ -13,20 +13,10 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning }) {
   const root = mpx.projectRoot
   const publicPath = loaderContext._compilation.outputOptions.publicPath || ''
   const pathHash = mpx.pathHash
+  const getOutputPath = mpx.getOutputPath
 
   const isUrlRequest = r => isUrlRequestRaw(r, root, externals)
   const urlToRequest = r => loaderUtils.urlToRequest(r)
-
-  // todo 提供不记录dependency的resolve方法，非必要的情况下不记录dependency，提升缓存利用率
-  const resolve = (context, request, callback) => {
-    const { queryObj } = parseRequest(request)
-    context = queryObj.context || context
-    return loaderContext.resolve(context, request, (err, resource, info) => {
-      if (err) return callback(err)
-      if (resource === false) return callback(RESOLVE_IGNORED_ERR)
-      callback(null, resource, info)
-    })
-  }
 
   const dynamicEntryMap = new Map()
 
@@ -52,7 +42,7 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning }) {
       component = urlToRequest(component)
     }
 
-    resolve(context, component, (err, resource, info) => {
+    resolve(context, component, loaderContext, (err, resource, info) => {
       if (err) return callback(err)
       const resourcePath = parseRequest(resource).resourcePath
       const parsed = path.parse(resourcePath)
@@ -75,8 +65,7 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning }) {
           let relative = path.relative(root, resourceName)
           outputPath = path.join('components', name + pathHash(root), relative)
         } else {
-          let componentName = parsed.name
-          outputPath = path.join('components', componentName + pathHash(resourcePath), componentName)
+          outputPath = getOutputPath(resourcePath, 'component')
         }
       }
       if (ext === '.js') {
@@ -86,11 +75,6 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning }) {
       const entry = getDynamicEntry(resource, 'component', outputPath, tarRoot, relativePath)
       callback(null, entry, { outputAbsolutePath })
     })
-  }
-
-  const getPageName = (resourcePath, ext) => {
-    const baseName = path.basename(resourcePath, ext)
-    return path.join('pages', baseName + pathHash(resourcePath), baseName)
   }
 
   const processPage = (page, context, tarRoot = '', callback) => {
@@ -103,7 +87,7 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning }) {
     if (resolveMode === 'native') {
       page = urlToRequest(page)
     }
-    resolve(context, page, (err, resource) => {
+    resolve(context, page, loaderContext, (err, resource) => {
       if (err) return callback(err)
       const { resourcePath, queryObj: { isFirst } } = parseRequest(resource)
       const ext = path.extname(resourcePath)
@@ -114,7 +98,7 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning }) {
         const relative = path.relative(context, resourcePath)
         if (/^\./.test(relative)) {
           // 如果当前page不存在于context中，对其进行重命名
-          outputPath = getPageName(resourcePath, ext)
+          outputPath = getOutputPath(resourcePath, 'page')
           emitWarning(`Current page [${resourcePath}] is not in current pages directory [${context}], the page path will be replaced with [${outputPath}], use ?resolve to get the page path and navigate to it!`)
         } else {
           outputPath = /^(.*?)(\.[^.]*)?$/.exec(relative)[1]
@@ -124,7 +108,11 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning }) {
         resource = `!!${nativeLoaderPath}!${resource}`
       }
       const entry = getDynamicEntry(resource, 'page', outputPath, tarRoot, publicPath + tarRoot)
-      callback(null, entry, { isFirst })
+      const key = [resourcePath, outputPath, tarRoot].join('|')
+      callback(null, entry, {
+        isFirst,
+        key
+      })
     })
   }
 
@@ -132,7 +120,7 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning }) {
     if (resolveMode === 'native') {
       js = urlToRequest(js)
     }
-    resolve(context, js, (err, resource) => {
+    resolve(context, js, loaderContext, (err, resource) => {
       if (err) return callback(err)
       const { resourcePath } = parseRequest(resource)
       const relative = path.relative(context, resourcePath)
@@ -150,7 +138,6 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning }) {
     processDynamicEntry,
     processPage,
     processJsExport,
-    resolve,
     isUrlRequest,
     urlToRequest
   }

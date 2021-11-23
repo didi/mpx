@@ -13,20 +13,17 @@ module.exports = function (content) {
   const index = queryObj.index || 0
   const mode = mpx.mode
   const env = mpx.env
-  const defs = mpx.defs
   const filePath = this.resourcePath
   const parts = parseComponent(content, {
     filePath,
     needMap: this.sourceMap,
     mode,
-    defs,
     env
   })
-  let part = parts[type] || {}
+  let part = parts[type]
   if (Array.isArray(part)) {
-    part = part[index] || {
-      content: ''
-    }
+    part = part[index]
   }
+  part = part || { content: '' }
   this.callback(null, part.content, part.map)
 }
