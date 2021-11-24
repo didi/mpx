@@ -1,4 +1,4 @@
-import mpx from '../dist/index'
+import mpx from '../../packages/vite-plugin-mpx/dist/index.js'
 
 export default {
   plugins: [
