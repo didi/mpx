@@ -32,9 +32,9 @@ interface Compiler {
 const compiler: Compiler = {
   parseComponent(template, options) {
     const descriptor = parseComponent(template, options) as SFCDescriptor
-    if(descriptor.script && descriptor.script.map){
+    if (descriptor.script && descriptor.script.map) {
       const sources = descriptor.script.map.sources || []
-      descriptor.script.map.sources = sources.map(v=> v.split('?')[0])
+      descriptor.script.map.sources = sources.map((v: any) => v.split('?')[0])
     }
     return descriptor
   },
