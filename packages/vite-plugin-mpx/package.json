@@ -1,0 +1,68 @@
+{
+  "name": "vite-plugin-mpx",
+  "version": "1.0.0-alpha.8",
+  "description": "Vite plugin of mpx convert to web",
+  "main": "dist/index.js",
+  "types": "temp/index.d.ts",
+  "author": "mater1996 <bxh8640@gmail.com>",
+  "license": "MIT",
+  "directories": {
+    "example": "example"
+  },
+  "files": [
+    "dist",
+    "temp",
+    "src"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:mater1996/vite-plugin-mpx.git"
+  },
+  "keywords": [
+    "vite",
+    "mpx"
+  ],
+  "scripts": {
+    "dev": "tsc -p . -w --incremental",
+    "build": "rimraf dist && npm run build-bundle && npm run build-types",
+    "build-bundle": "node ./scripts/build.js",
+    "build-types": "tsc -p . --emitDeclarationOnly --outDir temp",
+    "lint": "npx eslint --fix . --ext .ts",
+    "release": "release-it"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^15.0.0",
+    "@commitlint/config-conventional": "^15.0.0",
+    "@mpxjs/webpack-plugin": "^2.6.102",
+    "@release-it/conventional-changelog": "^3.3.0",
+    "@types/hash-sum": "^1.0.0",
+    "@types/node": "^16.11.6",
+    "@typescript-eslint/eslint-plugin": "^4.26.1",
+    "@typescript-eslint/parser": "^4.26.1",
+    "eslint": "^7.28.0",
+    "eslint-plugin-import": "^2.23.4",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^5.1.0",
+    "eslint-plugin-tsdoc": "^0.2.14",
+    "execa": "^5.1.1",
+    "release-it": "^14.11.7",
+    "typescript": "^4.3.2",
+    "vite": "^2.6.14"
+  },
+  "dependencies": {
+    "@rollup/plugin-commonjs": "^21.0.1",
+    "@rollup/plugin-replace": "^3.0.0",
+    "@rollup/pluginutils": "^4.1.1",
+    "@types/debug": "^4.1.7",
+    "debug": "^4.3.2",
+    "hash-sum": "^2.0.0",
+    "json5": "^2.2.0",
+    "rollup-plugin-polyfill-node": "^0.7.0",
+    "vite-plugin-vue2": "^1.9.0",
+    "vue-template-compiler": "^2.6.14"
+  },
+  "peerDependencies": {
+    "@mpxjs/webpack-plugin": "^2.6.102",
+    "vite": "^2.6.14"
+  }
+}

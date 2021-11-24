@@ -1,0 +1,16 @@
+{
+  "extends": "./tsconfig.json",
+  "include": [
+    "src",
+    "test",
+    "scripts",
+    "jest.config.js",
+    ".eslintrc.js",
+    "commitlint.config.js",
+    "rollup.config.js",
+    "**/*/__test__",
+    "__mocks__",
+    "types"
+  ],
+  "exclude": ["node_modules"]
+}

@@ -1,0 +1,25 @@
+<template>
+  <view class="div">123134777</view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+
+createComponent({
+  data:{
+    userInfo: {}
+  }
+})
+</script>
+
+<script type="application/json">
+{
+  "component": true
+}
+</script>
+
+<style scoped>
+.div{
+  color: red
+}
+</style>

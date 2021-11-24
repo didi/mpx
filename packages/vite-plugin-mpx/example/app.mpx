@@ -1,0 +1,34 @@
+<script>
+import mpx, { createApp } from '@mpxjs/core'
+
+createApp({
+  onLaunch (options) {
+
+  },
+  onShow (options = {}) {
+
+  },
+  methods: {
+
+  }
+})
+</script>
+
+<script name="json">
+// 可以写注释，通过defs注入的常量做一些判断之类的操作-->
+const pages = [
+  './pages/index/index.mpx',
+  './pages/index2/index.mpx'
+]
+
+module.exports = {
+  pages,
+  window: {
+    backgroundTextStyle: 'light',
+    navigationBarBackgroundColor: '#fff',
+    navigationBarTitleText: '滴滴司机招募',
+    navigationBarTextStyle: 'black',
+    renderingMode: 'mixed'
+  }
+}
+</script>

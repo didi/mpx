@@ -1,0 +1,38 @@
+<template>
+  <view>
+     <view style="text-align: center">{{index}}123</view>
+    <button bindtap="handleTap">add123</button>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+
+createComponent({
+  data:{
+    index: 0
+  },
+  methods:{
+    handleTap(val){
+      this.index++
+    }
+  }
+})
+</script>
+
+<script type="application/json">
+{
+  "usingComponents": {
+    "intro": "../../components/component.mpx"
+  }
+}
+</script>
+
+<style scoped>
+div{
+  color: red;
+}
+a{
+  color: red;
+}
+</style>
