@@ -2382,7 +2382,6 @@ function postProcessRuntime (el, options) {
         value: res ? `{{ {${res}} }}` : ''
       }])
     }
-    console.log('the res is:', res, el.attrsMap)
   }
 }
 

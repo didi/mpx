@@ -38,7 +38,7 @@ const config = require('./config')
 const hash = require('hash-sum')
 const {
   addCustomComponentWxss,
-  getInjectedComponentMap,
+  getInjectedComponentMap
 } = require('./runtime-render/utils')
 const injectComponentConfig = require('./runtime-render/inject-component-config')
 const { unRecursiveTemplate } = require('./runtime-render/wx-template')
