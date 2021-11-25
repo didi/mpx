@@ -7,5 +7,4 @@ package-lock.json
 .DS_Store
 docs-vuepress/.vuepress/dist
 elevate/
-.editorconfig
 .prettierrc.js
