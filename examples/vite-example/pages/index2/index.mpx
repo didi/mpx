@@ -1,0 +1,34 @@
+<template>
+<view>
+    123213
+</view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+createComponent({
+  data:{
+    index: 0
+  },
+  methods:{
+    handleTap(val){
+      this.index++
+    }
+  }
+})
+console.log('123')
+</script>
+
+<script type="application/json">
+{
+  "usingComponents": {
+    "intro": "../../components/component.mpx"
+  }
+}
+</script>
+
+<style>
+.a{
+  color: red;
+}
+</style>
