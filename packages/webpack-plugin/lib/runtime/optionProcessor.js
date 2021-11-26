@@ -12,6 +12,7 @@ export default function processOption (
   componentGenerics,
   genericsInfo,
   mixin,
+  webRouteMode,
   Vue,
   VueRouter,
   i18n
@@ -122,6 +123,7 @@ export default function processOption (
         })
       }
       global.__mpxRouter = option.router = new VueRouter({
+        mode: webRouteMode,
         routes: routes
       })
       global.__mpxRouter.stack = []
