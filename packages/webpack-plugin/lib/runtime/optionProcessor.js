@@ -12,7 +12,6 @@ export default function processOption (
   componentGenerics,
   genericsInfo,
   mixin,
-  webRouteMode,
   Vue,
   VueRouter,
   i18n
@@ -122,8 +121,9 @@ export default function processOption (
           redirect: '/' + firstPage
         })
       }
+      const webRouteConfig = global.__mpx.config.webRouteConfig
       global.__mpxRouter = option.router = new VueRouter({
-        mode: webRouteMode,
+        ...webRouteConfig,
         routes: routes
       })
       global.__mpxRouter.stack = []
