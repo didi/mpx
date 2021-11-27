@@ -170,6 +170,34 @@ module.exports = function (content) {
           output += `
       import App from ${stringifyRequest(request)}
       import Vue from 'vue'
+
+      Vue.filter('parseRpxStyle', function (style) {
+        const rpxRegExpG = /\\b(\\d+(\\.\\d+)?)\\s*rpx\\b/g
+        const rpx2vwRatio = +(100 / 750).toFixed(8)
+
+        function parseValue(val) {
+          if (typeof val === 'string' && val.indexOf('rpx') > 0) {
+            return val.replace(rpxRegExpG, function (match, $1) {
+              return '' + ($1 * rpx2vwRatio) + 'vw'
+            })
+          }
+
+          return val
+        }
+
+        if (typeof style === 'string') {
+          return parseValue(style)
+        }
+
+        if (typeof style === 'object') {
+          Object.keys(style).forEach(key => {
+            style[key] = parseValue(style[key])
+          })
+        }
+
+        return style
+      })
+
       new Vue({
         el: '#app',
         render: function(h){

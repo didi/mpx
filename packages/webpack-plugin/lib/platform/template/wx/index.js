@@ -8,6 +8,33 @@ const parseMustache = templateCompiler.parseMustache
 const stringifyWithResolveComputed = templateCompiler.stringifyWithResolveComputed
 const normalize = require('../../../utils/normalize')
 
+const rpxRegExpG = /\b(\d+(\.\d+)?)\s*rpx\b/g
+const rpx2vwRatio = +(100 / 750).toFixed(8)
+
+function parseRpxStyle (style) {
+  function parseValue (val) {
+    if (typeof val === 'string' && val.indexOf('rpx') > 0) {
+      return val.replace(rpxRegExpG, function (match, $1) {
+        return `${$1 * rpx2vwRatio}vw`
+      })
+    }
+
+    return val
+  }
+
+  if (typeof style === 'string') {
+    return parseValue(style)
+  }
+
+  if (typeof style === 'object') {
+    Object.keys(style).forEach(key => {
+      style[key] = parseValue(style[key])
+    })
+  }
+
+  return style
+}
+
 module.exports = function getSpec ({ warn, error }) {
   const spec = {
     supportedModes: ['ali', 'swan', 'qq', 'tt', 'web', 'qa', 'jd', 'dd'],
@@ -18,6 +45,21 @@ module.exports = function getSpec ({ warn, error }) {
       {
         web ({ name, value }) {
           const parsed = parseMustache(value)
+
+          if (name === 'style') {
+            if (!parsed.hasBinding && typeof parsed.val === 'string' && parsed.val.indexOf('rpx') !== -1) {
+              return {
+                name: 'style',
+                value: parseRpxStyle(parsed.result)
+              }
+            } else if (parsed.hasBinding) {
+              return {
+                name: 'style',
+                value: `(${parsed.result}) | parseRpxStyle`
+              }
+            }
+          }
+
           if (parsed.hasBinding) {
             return {
               name: name === 'animation' ? 'v-' + name : ':' + name,
@@ -187,6 +229,14 @@ module.exports = function getSpec ({ warn, error }) {
         web ({ name, value }) {
           const dir = this.test.exec(name)[1]
           const parsed = parseMustache(value)
+
+          if (dir === 'style') {
+            return {
+              name: ':style',
+              value: `(${parsed.result}) | parseRpxStyle`
+            }
+          }
+
           return {
             name: ':' + dir,
             value: parsed.result
