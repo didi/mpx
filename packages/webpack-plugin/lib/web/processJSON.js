@@ -202,7 +202,7 @@ module.exports = function (json, {
   const processPages = (pages, context, tarRoot = '', callback) => {
     if (pages) {
       async.each(pages, (page, callback) => {
-        processPage(page, context, tarRoot, (err, { resource, outputPath }, { isFirst } = {}) => {
+        processPage(page, context, tarRoot, (err, { resource, outputPath } = {}, { isFirst } = {}) => {
           if (err) return callback(err === RESOLVE_IGNORED_ERR ? null : err)
           const { resourcePath, queryObj } = parseRequest(resource)
           pagesMap[resourcePath] = outputPath
@@ -258,7 +258,7 @@ module.exports = function (json, {
   const processComponents = (components, context, callback) => {
     if (components) {
       async.eachOf(components, (component, name, callback) => {
-        processComponent(component, context, {}, (err, { resource, outputPath }) => {
+        processComponent(component, context, {}, (err, { resource, outputPath } = {}) => {
           if (err === RESOLVE_IGNORED_ERR) {
             return callback()
           }
@@ -280,13 +280,12 @@ module.exports = function (json, {
 
   const processGenerics = (generics, context, callback) => {
     if (generics) {
-      async.forEachOf(generics, (generic, name, callback) => {
-        if (generic.default) {
-          processComponent(generic.default, `${name}default`, context, callback)
-        } else {
-          callback()
-        }
-      }, callback)
+      const genericsComponents = {}
+      Object.keys(generics).forEach((name) => {
+        const generic = generics[name]
+        if (generic.default) genericsComponents[`${name}default`] = generic.default
+      })
+      processComponents(genericsComponents, context, callback)
     } else {
       callback()
     }
@@ -302,7 +301,7 @@ module.exports = function (json, {
           jsonObj.pages[0] = addQuery(jsonObj.pages[0], { isFirst: true })
         }
       }
-      processPages(jsonObj.pages, '', '', context, callback)
+      processPages(jsonObj.pages, context, '', callback)
     },
     (callback) => {
       processComponents(jsonObj.usingComponents, context, callback)

@@ -55,11 +55,6 @@ module.exports = function (content) {
     ctorType = 'component'
   }
 
-  if (ctorType === 'app') {
-    const appName = getEntryName(this)
-    this._module.addPresentationalDependency(new AppEntryDependency(resourcePath, appName))
-  }
-
   const loaderContext = this
   const stringifyRequest = r => loaderUtils.stringifyRequest(loaderContext, r)
   const isProduction = this.minimize || process.env.NODE_ENV === 'production'
@@ -199,6 +194,11 @@ module.exports = function (content) {
           vueContentCache.set(filePath, output)
           callback(null, output)
         })
+      }
+
+      if (ctorType === 'app') {
+        const appName = getEntryName(this)
+        this._module.addPresentationalDependency(new AppEntryDependency(resourcePath, appName))
       }
 
       const {

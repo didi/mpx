@@ -14,7 +14,6 @@ module.exports = function () {
   const moduleGraph = this._compilation.moduleGraph
   const mpx = this.getMpx()
   const mode = mpx.mode
-  const appInfo = mpx.appInfo
   const getOutputPath = mpx.getOutputPath
   let { resourcePath, queryObj } = parseRequest(this.resource)
   const issuer = moduleGraph.getIssuer(this._module)
@@ -23,7 +22,7 @@ module.exports = function () {
   const pagesMap = mpx.pagesMap
   const componentsMap = mpx.componentsMap[issuerPackageName]
   const staticResourcesMap = mpx.staticResourcesMap[issuerPackageName]
-  const issuerName = issuerResourcePath === appInfo.resourcePath ? appInfo.name : (pagesMap[issuerResourcePath] || componentsMap[issuerResourcePath] || staticResourcesMap[issuerResourcePath])
+  const issuerName = pagesMap[issuerResourcePath] || componentsMap[issuerResourcePath] || staticResourcesMap[issuerResourcePath]
   const issuerDir = path.dirname(issuerName)
 
   const getName = (raw) => {
