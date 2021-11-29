@@ -1148,7 +1148,7 @@ try {
                 if (loader.loader.includes(info[0])) {
                   loader.loader = info[1]
                 }
-                if (loader.loader === info[1]) {
+                if (loader.loader.includes(info[1])) {
                   insertBeforeIndex = index
                 }
               })
@@ -1183,41 +1183,43 @@ try {
               loader: extractorPath
             })
           }
-
           createData.resource = addQuery(createData.resource, { mpx: MPX_PROCESSED_FLAG }, true)
-          createData.request = stringifyLoadersAndResource(loaders, createData.resource)
         }
 
-        // const mpxStyleOptions = queryObj.mpxStyleOptions
-        // const firstLoader = (data.loaders[0] && data.loaders[0].loader) || ''
-        // const isPitcherRequest = firstLoader.includes('vue-loader/lib/loaders/pitcher.js')
-        // let cssLoaderIndex = -1
-        // let vueStyleLoaderIndex = -1
-        // let mpxStyleLoaderIndex = -1
-        // data.loaders.forEach((loader, index) => {
-        //   const currentLoader = loader.loader
-        //   if (currentLoader.includes('css-loader')) {
-        //     cssLoaderIndex = index
-        //   } else if (currentLoader.includes('vue-loader/lib/loaders/stylePostLoader.js')) {
-        //     vueStyleLoaderIndex = index
-        //   } else if (currentLoader.includes('@mpxjs/webpack-plugin/lib/style-compiler/index.js')) {
-        //     mpxStyleLoaderIndex = index
-        //   }
-        // })
-        // if (mpxStyleLoaderIndex === -1) {
-        //   let loaderIndex = -1
-        //   if (cssLoaderIndex > -1 && vueStyleLoaderIndex === -1) {
-        //     loaderIndex = cssLoaderIndex
-        //   } else if (cssLoaderIndex > -1 && vueStyleLoaderIndex > -1 && !isPitcherRequest) {
-        //     loaderIndex = vueStyleLoaderIndex
-        //   }
-        //   if (loaderIndex > -1) {
-        //     data.loaders.splice(loaderIndex + 1, 0, {
-        //       loader: normalize.lib('style-compiler/index.js'),
-        //       options: (mpxStyleOptions && JSON.parse(mpxStyleOptions)) || {}
-        //     })
-        //   }
-        // }
+        if (mpx.mode === 'web') {
+          const mpxStyleOptions = queryObj.mpxStyleOptions
+          const firstLoader = (loaders[0] && loaders[0].loader) || ''
+          const isPitcherRequest = firstLoader.includes('vue-loader/lib/loaders/pitcher')
+          let cssLoaderIndex = -1
+          let vueStyleLoaderIndex = -1
+          let mpxStyleLoaderIndex = -1
+          loaders.forEach((loader, index) => {
+            const currentLoader = loader.loader
+            if (currentLoader.includes('css-loader')) {
+              cssLoaderIndex = index
+            } else if (currentLoader.includes('vue-loader/lib/loaders/stylePostLoader')) {
+              vueStyleLoaderIndex = index
+            } else if (currentLoader.includes(styleCompilerPath)) {
+              mpxStyleLoaderIndex = index
+            }
+          })
+          if (mpxStyleLoaderIndex === -1) {
+            let loaderIndex = -1
+            if (cssLoaderIndex > -1 && vueStyleLoaderIndex === -1) {
+              loaderIndex = cssLoaderIndex
+            } else if (cssLoaderIndex > -1 && vueStyleLoaderIndex > -1 && !isPitcherRequest) {
+              loaderIndex = vueStyleLoaderIndex
+            }
+            if (loaderIndex > -1) {
+              loaders.splice(loaderIndex + 1, 0, {
+                loader: styleCompilerPath,
+                options: (mpxStyleOptions && JSON.parse(mpxStyleOptions)) || {}
+              })
+            }
+          }
+        }
+
+        createData.request = stringifyLoadersAndResource(loaders, createData.resource)
         // 根据用户传入的modeRules对特定资源添加mode query
         this.runModeRules(createData)
       })
