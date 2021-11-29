@@ -205,7 +205,8 @@ EXPORT_MPX.config = {
   hookErrorHandler: null,
   proxyEventHandler: null,
   setDataHandler: null,
-  forceRunWatcherSync: false
+  forceRunWatcherSync: false,
+  webRouteConfig: {}
 }
 
 global.__mpx = EXPORT_MPX

@@ -8,7 +8,15 @@ function webHandleFail (result, fail, complete) {
   typeof complete === 'function' && complete(result)
 }
 
+function isTabBarPage (url, router) {
+  const tabBarPagesMap = global.__tabBarPagesMap
+  if (!tabBarPagesMap || !url) return false
+  const path = router.match(url, router.history.current).path
+  return !!tabBarPagesMap[path.slice(1)]
+}
+
 export {
   webHandleSuccess,
-  webHandleFail
+  webHandleFail,
+  isTabBarPage
 }

@@ -15,6 +15,7 @@ const getJSONContent = require('./utils/get-json-content')
 const normalize = require('./utils/normalize')
 const getEntryName = require('./utils/get-entry-name')
 const AppEntryDependency = require('./dependencies/AppEntryDependency')
+const { MPX_APP_MODULE_ID } = require('./utils/const')
 
 module.exports = function (content) {
   this.cacheable()
@@ -58,10 +59,8 @@ module.exports = function (content) {
   const loaderContext = this
   const stringifyRequest = r => loaderUtils.stringifyRequest(loaderContext, r)
   const isProduction = this.minimize || process.env.NODE_ENV === 'production'
-
   const filePath = resourcePath
-
-  const moduleId = 'm' + mpx.pathHash(filePath)
+  const moduleId = ctorType === 'app' ? MPX_APP_MODULE_ID : 'm' + mpx.pathHash(filePath)
 
   const parts = parseComponent(content, {
     filePath,

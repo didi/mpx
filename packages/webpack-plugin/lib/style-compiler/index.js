@@ -1,5 +1,6 @@
 const postcss = require('postcss')
 const loadPostcssConfig = require('./load-postcss-config')
+const { MPX_ROOT_VIEW, MPX_APP_MODULE_ID } = require('../utils/const')
 const trim = require('./plugins/trim')
 const rpx = require('./plugins/rpx')
 const vw = require('./plugins/vw')
@@ -85,7 +86,7 @@ module.exports = function (css, map) {
       .then(result => {
         // ali环境添加全局样式抹平root差异
         if (mode === 'ali' && isApp) {
-          result.css += '\n.mpx-root-view { display: inline; line-height: normal; }\n'
+          result.css += `\n.${MPX_ROOT_VIEW} { display: initial }\n.${MPX_APP_MODULE_ID} { line-height: normal }`
         }
         if (result.messages) {
           result.messages.forEach(({ type, file }) => {
