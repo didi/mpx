@@ -16,12 +16,10 @@ module.exports = function (css, map) {
   const { resourcePath, queryObj } = parseRequest(this.resource)
   const id = queryObj.moduleId || queryObj.mid
   const mpx = this.getMpx()
+  const appInfo = mpx.appInfo
   const defs = mpx.defs
   const mode = mpx.mode
-  const packageName = queryObj.packageRoot || mpx.currentPackageRoot || 'main'
-  const componentsMap = mpx.componentsMap[packageName]
-  const pagesMap = mpx.pagesMap
-  const isApp = !(pagesMap[resourcePath] || componentsMap[resourcePath])
+  const isApp = resourcePath === appInfo.resourcePath
   const transRpxRulesRaw = mpx.transRpxRules
   const transRpxRules = transRpxRulesRaw ? (Array.isArray(transRpxRulesRaw) ? transRpxRulesRaw : [transRpxRulesRaw]) : []
 
