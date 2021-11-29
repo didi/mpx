@@ -202,7 +202,7 @@ module.exports = function (json, {
   const processPages = (pages, context, tarRoot = '', callback) => {
     if (pages) {
       async.each(pages, (page, callback) => {
-        processPage(page, context, tarRoot, (err, { resource, outputPath }, { isFirst, key } = {}) => {
+        processPage(page, context, tarRoot, (err, { resource, outputPath }, { isFirst } = {}) => {
           if (err) return callback(err === RESOLVE_IGNORED_ERR ? null : err)
           const { resourcePath, queryObj } = parseRequest(resource)
           pagesMap[resourcePath] = outputPath

@@ -701,17 +701,6 @@ class MpxWebpackPlugin {
         }
       })
 
-      // todo 统一通过dep+mpx actions处理
-      compilation.hooks.stillValidModule.tap('MpxWebpackPlugin', (module) => {
-        const buildInfo = module.buildInfo
-        if (buildInfo.pagesMap) {
-          Object.assign(mpx.pagesMap, buildInfo.pagesMap)
-        }
-        if (buildInfo.componentsMap && buildInfo.packageName) {
-          Object.assign(mpx.componentsMap[buildInfo.packageName], buildInfo.componentsMap)
-        }
-      })
-
       compilation.hooks.finishModules.tap('MpxWebpackPlugin', (modules) => {
         // 自动跟进分包配置修改splitChunksPlugin配置
         if (splitChunksPlugin) {
