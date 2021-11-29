@@ -54,7 +54,7 @@ module.exports = function getSpec ({ warn, error }) {
               }
             } else if (parsed.hasBinding) {
               return {
-                name: 'style',
+                name: ':style',
                 value: `(${parsed.result}) | parseRpxStyle`
               }
             }
