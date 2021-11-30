@@ -199,22 +199,27 @@ module.exports = function (json, {
     }
   }
 
+  const pageKeySet = new Set()
+
   const processPages = (pages, context, tarRoot = '', callback) => {
     if (pages) {
       async.each(pages, (page, callback) => {
-        processPage(page, context, tarRoot, (err, { resource, outputPath } = {}, { isFirst } = {}) => {
+        processPage(page, context, tarRoot, (err, { resource, outputPath } = {}, { isFirst, key } = {}) => {
           if (err) return callback(err === RESOLVE_IGNORED_ERR ? null : err)
+          if (pageKeySet.has(key)) return callback()
+          pageKeySet.add(key)
           const { resourcePath, queryObj } = parseRequest(resource)
-          pagesMap[resourcePath] = outputPath
-          loaderContext._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, 'page', outputPath))
-
           if (localPagesMap[outputPath]) {
             const { resourcePath: oldResourcePath } = parseRequest(localPagesMap[outputPath].resource)
             if (oldResourcePath !== resourcePath) {
-              emitError(`Current page [${resourcePath}] registers a conflict page path [${outputPath}] with existed page [${oldResourcePath}], which is not allowed, please rename it!`)
-              return callback()
+              const oldOutputPath = outputPath
+              outputPath = mpx.getOutputPath(resourcePath, 'page', { conflictPath: outputPath })
+              emitWarning(new Error(`Current page [${resourcePath}] is registered with a conflict outputPath [${oldOutputPath}] which is already existed in system, will be renamed with [${outputPath}], use ?resolve to get the real outputPath!`))
             }
           }
+
+          pagesMap[resourcePath] = outputPath
+          loaderContext._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, 'page', outputPath))
 
           localPagesMap[outputPath] = {
             resource: addQuery(resource, { isPage: true }),
@@ -267,7 +272,10 @@ module.exports = function (json, {
           loaderContext._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, 'component', outputPath))
 
           localComponentsMap[name] = {
-            resource: addQuery(resource, { isComponent: true, outputPath }),
+            resource: addQuery(resource, {
+              isComponent: true,
+              outputPath
+            }),
             async: queryObj.async
           }
           callback()
