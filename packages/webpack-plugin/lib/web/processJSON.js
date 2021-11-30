@@ -118,7 +118,7 @@ module.exports = function (json, {
         const { queryObj } = parseRequest(packagePath)
         async.waterfall([
           (callback) => {
-            resolve(context, packagePath, this, (err, result) => {
+            resolve(context, packagePath, loaderContext, (err, result) => {
               if (err) return callback(err)
               const { rawResourcePath } = parseRequest(result)
               callback(err, rawResourcePath)
@@ -135,11 +135,11 @@ module.exports = function (json, {
             if (extName === '.mpx' || extName === '.vue') {
               const parts = parseComponent(content, {
                 filePath: result,
-                needMap: this.sourceMap,
+                needMap: loaderContext.sourceMap,
                 mode,
                 env
               })
-              getJSONContent(parts.json || {}, this, (err, content) => {
+              getJSONContent(parts.json || {}, loaderContext, (err, content) => {
                 callback(err, result, content)
               })
             } else {
