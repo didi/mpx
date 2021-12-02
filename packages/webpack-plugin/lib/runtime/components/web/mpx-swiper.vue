@@ -37,7 +37,7 @@
         type: String,
         default: 'default'
       },
-	    scrollOptions: Object
+      scrollOptions: Object
     },
     data () {
       return {
@@ -85,25 +85,25 @@
       this.itemIds = []
     },
     mounted () {
-	    const originBsOptions = {
-		    scrollX: !this.vertical,
-		    scrollY: this.vertical,
-		    slide: {
-			    loop: this.circular,
-			    threshold: 0.5,
-			    speed: this.duration,
-			    easing: this.easing,
-			    interval: this.interval,
-			    autoplay: this.autoplay,
-			    startPageXIndex: this.vertical ? 0 : this.current,
-			    startPageYIndex: !this.vertical? 0 : this.current
-		    },
-		    momentum: false,
-		    bounce: false,
-		    probeType: 3,
-		    stopPropagation: true
+    	const originBsOptions = {
+        scrollX: !this.vertical,
+        scrollY: this.vertical,
+        slide: {
+          loop: this.circular,
+          threshold: 0.5,
+          speed: this.duration,
+          easing: this.easing,
+          interval: this.interval,
+          autoplay: this.autoplay,
+          startPageXIndex: this.vertical ? 0 : this.current,
+          startPageYIndex: !this.vertical? 0 : this.current
+        },
+        momentum: false,
+        bounce: false,
+        probeType: 3,
+        stopPropagation: true
       }
-	    const bsOptions = Object.assign({}, originBsOptions, this.scrollOptions)
+      const bsOptions = Object.assign({}, originBsOptions, this.scrollOptions)
       this.bs = new BScroll(this.$refs.wrapper, bsOptions)
       this.bs.on('slideWillChange', (page) => {
         this.currentIndex = this.vertical ? page.pageY : page.pageX
