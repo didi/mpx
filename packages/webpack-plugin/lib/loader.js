@@ -195,6 +195,14 @@ module.exports = function (content) {
         })
       }
 
+      const moduleGraph = this._compilation.moduleGraph
+
+      const issuer = moduleGraph.getIssuer(this._module)
+
+      if (issuer) {
+        return callback(new Error(`Current ${ctorType} [${this.resourcePath}] is issued by [${issuer.resource}], which is not allowed!`))
+      }
+
       if (ctorType === 'app') {
         const appName = getEntryName(this)
         this._module.addPresentationalDependency(new AppEntryDependency(resourcePath, appName))

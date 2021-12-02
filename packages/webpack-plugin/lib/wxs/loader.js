@@ -47,7 +47,24 @@ module.exports = function () {
   }
 
   const outputOptions = {
-    filename
+    filename,
+    // 避免输出的wxs中包含es语法
+    environment: {
+      // The environment supports arrow functions ('() => { ... }').
+      arrowFunction: false,
+      // The environment supports BigInt as literal (123n).
+      bigIntLiteral: false,
+      // The environment supports const and let for variable declarations.
+      const: false,
+      // The environment supports destructuring ('{ a, b } = obj').
+      destructuring: false,
+      // The environment supports an async import() function to import EcmaScript modules.
+      dynamicImport: false,
+      // The environment supports 'for of' iteration ('for (const x of array) { ... }').
+      forOf: false,
+      // The environment supports ECMAScript Module syntax to import ECMAScript modules (import ... from '...').
+      module: false
+    }
   }
   // wxs文件必须经过pre-loader
   const request = '!!' + this.remainingRequest
