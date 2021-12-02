@@ -85,7 +85,7 @@
       this.itemIds = []
     },
     mounted () {
-    	const originBsOptions = {
+      const originBsOptions = {
         scrollX: !this.vertical,
         scrollY: this.vertical,
         slide: {
