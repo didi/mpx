@@ -14,6 +14,7 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
   const publicPath = loaderContext._compilation.outputOptions.publicPath || ''
   const pathHash = mpx.pathHash
   const getOutputPath = mpx.getOutputPath
+  const mode = mpx.mode
 
   const isUrlRequest = r => isUrlRequestRaw(r, root, externals)
   const urlToRequest = r => loaderUtils.urlToRequest(r)
@@ -45,7 +46,9 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
 
     resolve(context, component, loaderContext, (err, resource, info) => {
       if (err) return callback(err)
-      const resourcePath = parseRequest(resource).resourcePath
+      const { resourcePath, queryObj } = parseRequest(resource)
+      // 目前只有微信支持分包异步化
+      if (queryObj.root && mode === 'wx') tarRoot = queryObj.root
       const parsed = path.parse(resourcePath)
       const ext = parsed.ext
       const resourceName = path.join(parsed.dir, parsed.name)

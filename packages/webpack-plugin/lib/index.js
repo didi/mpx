@@ -49,6 +49,7 @@ const async = require('async')
 const stringifyLoadersAndResource = require('./utils/stringify-loaders-resource')
 const emitFile = require('./utils/emit-file')
 const { MPX_PROCESSED_FLAG, MPX_DISABLE_EXTRACTOR_CACHE } = require('./utils/const')
+const isEmptyObject = require('./utils/is-empty-object')
 
 const isProductionLikeMode = options => {
   return options.mode === 'production' || !options.mode
@@ -359,18 +360,17 @@ class MpxWebpackPlugin {
 
     let mpx
 
-    // 构建分包队列，在finishMake钩子当中最先执行，stage传递-1000
-    compiler.hooks.finishMake.tapAsync({
-      name: 'MpxWebpackPlugin',
-      stage: -1000
-    }, (compilation, callback) => {
+    const processSubpackagesEntriesMap = (compilation, callback) => {
       const mpx = compilation.__mpx__
-      if (mpx && mpx.subpackagesEntriesMap) {
-        async.eachOfSeries(mpx.subpackagesEntriesMap, (deps, packageRoot, callback) => {
+      if (mpx && !isEmptyObject(mpx.subpackagesEntriesMap)) {
+        const subpackagesEntriesMap = mpx.subpackagesEntriesMap
+        // 执行分包队列前清空mpx.subpackagesEntriesMap
+        mpx.subpackagesEntriesMap = {}
+        async.eachOfSeries(subpackagesEntriesMap, (deps, packageRoot, callback) => {
           mpx.currentPackageRoot = packageRoot
-          mpx.componentsMap[packageRoot] = {}
-          mpx.staticResourcesMap[packageRoot] = {}
-          mpx.subpackageModulesMap[packageRoot] = {}
+          mpx.componentsMap[packageRoot] = mpx.componentsMap[packageRoot] || {}
+          mpx.staticResourcesMap[packageRoot] = mpx.staticResourcesMap[packageRoot] || {}
+          mpx.subpackageModulesMap[packageRoot] = mpx.subpackageModulesMap[packageRoot] || {}
           async.each(deps, (dep, callback) => {
             dep.addEntry(compilation, (err, { resultPath }) => {
               if (err) return callback(err)
@@ -378,10 +378,22 @@ class MpxWebpackPlugin {
               callback()
             })
           }, callback)
-        }, callback)
+        }, (err) => {
+          if (err) return callback(err)
+          // 如果执行完当前队列后产生了新的分包执行队列（一般由异步分包组件造成），则继续执行
+          processSubpackagesEntriesMap(compilation, callback)
+        })
       } else {
         callback()
       }
+    }
+
+    // 构建分包队列，在finishMake钩子当中最先执行，stage传递-1000
+    compiler.hooks.finishMake.tapAsync({
+      name: 'MpxWebpackPlugin',
+      stage: -1000
+    }, (compilation, callback) => {
+      processSubpackagesEntriesMap(compilation, callback)
     })
 
     compiler.hooks.compilation.tap('MpxWebpackPlugin ', (compilation, { normalModuleFactory }) => {
@@ -597,6 +609,7 @@ class MpxWebpackPlugin {
               if (currentResourceMap[resourcePath] === outputPath) {
                 alreadyOutputed = true
               } else {
+                // todo 用outputPathMap来检测冲突
                 // 输出冲突检测，如果存在输出路径冲突，对输出路径进行重命名
                 for (let key in currentResourceMap) {
                   if (currentResourceMap[key] === outputPath && key !== resourcePath) {
