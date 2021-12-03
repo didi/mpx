@@ -21,7 +21,7 @@ export default function proxyEventMixin () {
         // 地图的 regionchange 事件会派发 e.type 为 begin 和 end 的事件
         fallbackType = 'regionchange'
       } else if (__mpx_mode__ === 'ali') {
-        fallbackType = type.replace(/^./, i => i.toUpperCase())
+        fallbackType = type.replace(/^./, i => i.toLowerCase())
       }
       const target = $event.currentTarget || $event.target
       if (!target) {
