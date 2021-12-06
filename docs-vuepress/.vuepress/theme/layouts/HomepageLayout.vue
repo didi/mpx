@@ -1,15 +1,9 @@
 <template>
   <div class="container">
-    <div class="wrapper" style="background: #f5f5f5; min-width: 1190px; overflow-x: scroll;">
-      <div v-if="isMobile">
-        <MobileView />
-      </div>
-
-      <template v-else>
-        <!-- <Header /> -->
-        <Content />
-        <Footer />
-      </template>
+    <div style="background: #f5f5f5;" v-if="small">
+      <!-- <Navbar /> -->
+      <Content />
+      <Footer />
     </div>
     <!-- <template v-else>
       <ParentLayout />
@@ -18,32 +12,27 @@
 </template>
 
 <script>
+import Navbar from "../components/Navbar.vue";
 import Content from "../global-components/Content.vue";
 import Footer from "../global-components/Footer.vue";
 import ParentLayout from '@parent-theme/layouts/Layout.vue'
-import MobileView from "../components/MobileView.vue";
-
 export default {
   components: {
+    Navbar,
     Content,
     Footer,
-    ParentLayout,
-    MobileView
+    ParentLayout
   },
-  data() {
+  data () {
+    // const current = document.documentElement.clientWidth > 1020
     return {
-      isMobile: document.body.clientWidth < 720
+      small: true
     }
   },
-  mounted() {
-    console.log('mounted trigger======')
-    let that = this
-    console.log('%c [ this.isMobile ]', 'font-size:13px; background:pink; color:#bf2c9f;', this.isMobile)
+  beforeMount () {
     window.onresize = () => {
-      console.log('onresize trigger======')
-      const tmp = document.body.clientWidth < 720
-      console.log('%c [ tmp ]', 'font-size:13px; background:pink; color:#bf2c9f;', tmp)
-      return that.isMobile = tmp
+      const current = document.documentElement.clientWidth > 1020
+      this.small = current
     }
   }
 };

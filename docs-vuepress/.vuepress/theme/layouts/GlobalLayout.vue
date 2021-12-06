@@ -1,8 +1,6 @@
 <template>
   <div id="vuepress-theme-blog__global-layout">
-    
-    <MobileHeader v-if="isMobile" @toggle-sidebar="isMobile = !isMobile" />
-    <Navbar v-else />
+    <Navbar />
     <div class="content-wrapper">
       <DefaultGlobalLayout />
     </div>
@@ -13,12 +11,8 @@
 import GlobalLayout from '@app/components/GlobalLayout.vue'
 import Navbar from '@theme/components/Navbar.vue'
 
-import MobileHeader from '@theme/components/MobileHeader.vue'
-
 export default {
   components: {
-    MobileHeader,
-
     DefaultGlobalLayout: GlobalLayout,
     Navbar
   },
