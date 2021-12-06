@@ -305,6 +305,7 @@ module.exports = function (content) {
         if (script.src) extraOptions.resourcePath = resourcePath
         output += getRequire('script', script, extraOptions) + '\n'
       } else {
+        // todo 依然创建request在selector中进行补全或者将i18n通过CommonJsVariableDependency改造为initFragments的方式进行注入，否则在app.mpx中没有script区块的情况下无法保证i18n注入代码在@mpxjs/core之前执行
         switch (ctorType) {
           case 'app':
             output += 'import {createApp} from "@mpxjs/core"\n' +
