@@ -217,14 +217,16 @@ module.exports = function (content) {
       if (!isProduction) {
         output += `global.currentResource = ${JSON.stringify(filePath)}\n`
       }
-      if (ctorType === 'app' && i18n) {
-        output += `global.i18n = ${JSON.stringify({ locale: i18n.locale, version: 0 })}\n`
-
+      // 为app或独立分包页面注入i18n
+      if (i18n && (ctorType === 'app' || (ctorType === 'page' && queryObj.isIndependent))) {
         const i18nWxsPath = normalize.lib('runtime/i18n.wxs')
         const i18nWxsLoaderPath = normalize.lib('wxs/i18n-loader.js')
         const i18nWxsRequest = i18nWxsLoaderPath + '!' + i18nWxsPath
 
-        output += `global.i18nMethods = require(${loaderUtils.stringifyRequest(loaderContext, i18nWxsRequest)})\n`
+        output += `if (!global.i18n) {
+  global.i18n = ${JSON.stringify({ locale: i18n.locale, version: 0 })}
+  global.i18nMethods = require(${loaderUtils.stringifyRequest(loaderContext, i18nWxsRequest)})
+}\n`
       }
       // 注入构造函数
       let ctor = 'App'
