@@ -363,10 +363,12 @@ class MpxWebpackPlugin {
                 compilation.errors.push(e)
               }
             })
-            if (packageRoot) {
-              module.request = addQuery(module.request, { packageRoot })
-              module.resource = addQuery(module.resource, { packageRoot })
-            }
+            const queryObj = {}
+            if (packageRoot) queryObj.packageRoot = packageRoot
+            // todo 后续可以考虑用module.layer来隔离独立分包的模块
+            if (isIndependent) queryObj.isIndependent = true
+            module.request = addQuery(module.request, queryObj)
+            module.resource = addQuery(module.resource, queryObj)
           }
         }
 
