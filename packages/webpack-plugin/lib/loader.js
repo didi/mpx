@@ -329,7 +329,12 @@ module.exports = function (content) {
         }
         if (scriptRequestString) {
           output += 'export * from ' + scriptRequestString + '\n\n'
-          if (ctorType === 'app') mpx.appScriptRawRequest = JSON.parse(scriptRequestString)
+          if (ctorType === 'app') {
+            mpx.appScriptRawRequest = JSON.parse(scriptRequestString)
+            mpx.appScriptPromise = new Promise((resolve) => {
+              mpx.appScriptPromiseResolve = resolve
+            })
+          }
         }
       } else {
         switch (ctorType) {
