@@ -18,7 +18,6 @@
 </template>
 
 <script>
-// import Header from "../global-components/Header.vue";
 import Content from "../global-components/Content.vue";
 import Footer from "../global-components/Footer.vue";
 import ParentLayout from '@parent-theme/layouts/Layout.vue'
@@ -26,7 +25,6 @@ import MobileView from "../components/MobileView.vue";
 
 export default {
   components: {
-    // Header,
     Content,
     Footer,
     ParentLayout,
@@ -52,7 +50,4 @@ export default {
 </script>
 
 <style lang="stylus" scoped>
-// .wrapper
-//   width 1280px
-//   margin auto
 </style>

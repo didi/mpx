@@ -26,7 +26,7 @@ export default {
   data() {
     return {
       isMobileHeaderOpen: false,
-      isMobile: document.body.clientWidth < 1020
+      isMobile: document.body.clientWidth < 720
     }
   },
 
@@ -43,7 +43,8 @@ export default {
     // })
 
     window.onresize = () => {
-      const tmp = document.body.clientWidth < 1020
+      const tmp = document.body.clientWidth < 720
+      console.log('%c [ this.isMobile ]', 'font-size:13px; background:pink; color:#bf2c9f;', this.isMobile)
       return this.isMobile = tmp
     }
   },

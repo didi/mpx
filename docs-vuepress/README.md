@@ -23,6 +23,7 @@ features:
   micon: https://dpubstatic.udache.com/static/dpubimg/KPG_IXLuwU/y_icon_kua.png
 sixSection:
   title: 渐进迁移
+  mtitle: 开发生态
   bg: https://dpubstatic.udache.com/static/dpubimg/sPhfwW2Git/kaifa_bg.png
   details:
   - title: '@mpxjs/core'

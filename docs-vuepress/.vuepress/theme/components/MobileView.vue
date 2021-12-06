@@ -100,8 +100,44 @@
         loading="lazy"
       />
     </div>
-    <swiper-img :dataList="dataList" :currentIndex="currentIndex"></swiper-img>
-    <MobileSwiper :dataList="dataList" @change="handleChange"></MobileSwiper>
+
+    <div class="m-util-wrapper">
+      <div class="m-util-title">{{$page.frontmatter.sixSection.title}}</div>
+      <!-- <div class="m-util-list"></div> -->
+      <ul class="row six-section__row" v-for="(item, index) in list" :key="index">
+          <!-- <li v-for="(item, index) in current" :key="index"> -->
+            <a :href="item.actionLink" class="six-section__item six-section__step">
+              <div class="six-section__icon">
+                <img :src="item.icon" alt="svg" loading="lazy" width="50" height="50" />
+              </div>
+              <div class="six-section__list">
+                <div class="six-section__bold">{{item.title}}</div>
+                <div class="six-section__subtitle">{{item.details}}</div>
+              </div>
+            </a>
+          <!-- </li> -->
+        </ul>
+    </div>
+
+    <div class="m-example-wrapper">
+      <div class="m-example-title">{{$page.frontmatter.sevenSection.title}}</div>
+      <!-- <div class="m-example-contain"> -->
+        <div class="m-example-phone">
+          <img
+              width="318"
+              height="318"
+              src="https://dpubstatic.udache.com/static/dpubimg/xxjYvzgJdt/y_bg_phone.png"
+              alt="phone"/>
+          <div class="m-example-img-contain">
+            <mobile-swiper-img :dataList="dataList" :currentIndex="currentIndex"></mobile-swiper-img>
+          </div>
+        </div>
+        <MobileSwiper :dataList="dataList">
+          <!-- <slide-item>test</slide-item> -->
+        </MobileSwiper>
+        <!-- <MobileSwiper :data="dataList" @change="handleChange"></MobileSwiper> -->
+      <!-- </div> -->
+    </div>
     <MobileFooter />
   </div>
 </template>
@@ -109,12 +145,15 @@
 <script>
 import MobileFooter from "./MobileFooter.vue"
 import MobileSwiper from "./MobileSwiper.vue"
-import MobileSwiperImg from '../components/SwiperImg.vue'
+// import SlideItem from './slide-item.vue';
+import MobileSwiperImg from './MobileSwiperImg.vue'
 
 export default {
     components: {
     MobileSwiper,
-    MobileFooter
+    MobileFooter,
+    // MobileSwiperImg,
+    // SlideItem
   },
   data() {
       return {
@@ -123,6 +162,22 @@ export default {
       }
   },
   computed: {
+    list () {
+      // let result = []
+      // let details = this.$page.frontmatter.sixSection.details
+      // let current = []
+      // let i = 0
+      // while (i < details.length) {
+      //   if (i % 3 === 0) {
+      //     current = []
+      //     result.push(current)
+      //   }
+      //   current.push(details[i])
+      //   i++
+      // }
+      // return result
+      return this.$page.frontmatter.sixSection.details
+    },
     mvcList() {
       const mlist = this.$page.frontmatter.threeSection.mlist;
       return mlist;
@@ -156,7 +211,7 @@ export default {
     letter-spacing: 0;
     text-align: justify;
     font-weight: 500;
-    margin-top: 50px;
+    margin-top: 120px;
   }
 
   .m-subtitle {
@@ -242,7 +297,7 @@ export default {
   }
 }
 
-.mdemo-wrapper, .m-feature-wrapper {
+.mdemo-wrapper, .m-feature-wrapper, .m-util-wrapper, .m-example-wrapper {
   display: flex;
   flex-direction: column;
   // justify-content center
@@ -251,7 +306,7 @@ export default {
   background: #F7F7F7;
   margin-top: 50px;
 
-  .mdemo-title, .m-feature-title {
+  .mdemo-title, .m-feature-title, .m-util-title, .m-example-title {
     font-family: PingFangSC-Medium;
     font-size: 24px;
     color: #3A495D;
@@ -310,5 +365,63 @@ export default {
   .m-feature-pic {
     margin-top: 40px;
   }
+
+  .six-section__row {
+    margin-bottom: 0px
+    flex-wrap: wrap;
+    justify-content: center;
+
+    .six-section__item {
+      display: flex
+      align-items: center
+      background #ffffff
+      border 0 solid #EFEFEF
+      border-radius 4px
+      width 343px
+      height 72px
+      display flex
+      padding 11px 0 11px 24px
+      box-sizing border-box
+      box-shadow 0 11px 32px 0 rgba(49,188,127,0.06), 0 4px 10px 0 rgba(49,188,127,0.04)
+    }
+      .six-section__icon {
+        margin-right 9px
+      }
+      .six-section__list {
+        display flex
+        flex-direction column
+        justify-content space-between
+        color #3A495D
+        margin-left 10px
+        font-family PingFangSC-Medium
+      }
+      .six-section__bold {
+        font-size 15px
+        margin-right 9px
+        margin-bottom 4px
+      }
+      .six-section__subtitle {
+        font-size 13px
+      }
+    .six-section__step {
+      margin-right 16px
+    }
+  }
+
+  .m-example-phone {
+    width: 100%
+    display flex
+    justify-content center
+    position relative
+    margin-top: 30px
+    .m-example-img-contain {
+      position absolute
+      top 0
+      left 50%
+      transform translate3d(-50%, 0, 0)
+    }
+
+  }
+  
 }
 </style>

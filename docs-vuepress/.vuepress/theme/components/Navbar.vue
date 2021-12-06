@@ -34,6 +34,7 @@
           </a>
         </nav>
         <div class="searchBox-wrapper">
+          <!-- <SearchBox /> -->
           <div class="searchBox">
             <AlgoliaSearchBox v-if="isAlgoliaSearch" :options="algolia" />
           </div>

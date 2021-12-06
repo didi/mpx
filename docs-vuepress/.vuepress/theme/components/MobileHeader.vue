@@ -2,7 +2,10 @@
   <div id="mobile-header">
     <div class="mobile-header-bar">
       <div class="mobile-header-title">
-        <NavLink link="/" class="mobile-home-link">{{ $site.title }} </NavLink>
+        <!-- <NavLink link="/" class="mobile-home-link">{{ $site.title }} </NavLink> -->
+        <a href="/">
+          <div class="mobile-home-link">mpx</div>
+        </a>
         <!-- <component
           :is="isOpen ? 'XIcon' : 'MenuIcon'"
           @click="$emit('toggle-sidebar')"
@@ -36,13 +39,18 @@ export default {
 <style lang="stylus">
 .mobile-header-bar {
   font-family: PT Serif, Serif;
-  z-index: 12;
+  z-index: 100;
   position: fixed;
   top: 0;
+  left: 0;
   width: 100%;
+  height: 3.5rem;
   box-sizing: border-box;
-  background-color: $headerBgColor;
+  // background-color: $headerBgColor;
   margin: auto;
+  background-color: hsla(0, 0%, 100%, 0.8);
+  // background-color: #FFFFFF;
+  backdrop-filter: saturate(180%) blur(1rem);
   box-shadow: 0 5px 20px rgba(0, 0, 0, 0.03), 0 6px 6px rgba(0, 0, 0, 0.05);
   transition: all 1s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
