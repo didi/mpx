@@ -44,16 +44,6 @@
         currentIndex: this.current
       }
     },
-    watch: {
-      current (val) {
-        if (this.bs) {
-          this.lastX = this.bs.x
-          this.lastY = this.bs.y
-        }
-        this.changeSource = ''
-        this.goto(val)
-      }
-    },
     computed: {
       easing () {
         switch (this.easingFunction) {
@@ -89,6 +79,16 @@
           default:
             return
         }
+      }
+    },
+    watch: {
+      current (val) {
+        if (this.bs) {
+          this.lastX = this.bs.x
+          this.lastY = this.bs.y
+        }
+        this.changeSource = ''
+        this.goto(val)
       }
     },
     beforeCreate () {
