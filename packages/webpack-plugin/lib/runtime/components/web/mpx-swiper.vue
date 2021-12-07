@@ -44,6 +44,16 @@
         currentIndex: this.current
       }
     },
+    watch: {
+      current (val) {
+        if (this.bs) {
+          this.lastX = this.bs.x
+          this.lastY = this.bs.y
+        }
+        this.changeSource = ''
+        this.goto(val)
+      }
+    },
     computed: {
       easing () {
         switch (this.easingFunction) {
@@ -96,7 +106,7 @@
           interval: this.interval,
           autoplay: this.autoplay,
           startPageXIndex: this.vertical ? 0 : this.current,
-          startPageYIndex: !this.vertical? 0 : this.current
+          startPageYIndex: this.vertical? this.current : 0
         },
         momentum: false,
         bounce: false,
@@ -146,6 +156,11 @@
     methods: {
       refresh () {
         this.bs && this.bs.refresh()
+      },
+      goto (index) {
+        const x = this.vertical ? 0 : index
+        const y = this.vertical ? index : 0
+        this.bs && this.bs.goToPage(x, y)
       }
     },
     render (createElement) {
