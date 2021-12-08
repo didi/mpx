@@ -113,20 +113,19 @@ const externalsMap = {
 const warnings = []
 const errors = []
 
-// class EntryNode {
-//   constructor (options) {
-//     this.request = options.request
-//     this.type = options.type
-//     this.module = null
-//     this.parents = new Set()
-//     this.children = new Set()
-//   }
-//
-//   addChild (node) {
-//     this.children.add(node)
-//     node.parents.add(this)
-//   }
-// }
+class EntryNode {
+  constructor (module, type) {
+    this.module = module
+    this.type = type
+    this.parents = new Set()
+    this.children = new Set()
+  }
+
+  addChild (node) {
+    this.children.add(node)
+    node.parents.add(this)
+  }
+}
 
 class MpxWebpackPlugin {
   constructor (options = {}) {
@@ -473,10 +472,8 @@ class MpxWebpackPlugin {
           subpackagesEntriesMap: {},
           replacePathMap: {},
           exportModules: new Set(),
-          // 记录entry依赖关系，用于体积分析
-          entryNodesMap: {},
           // 记录entryModule与entryNode的对应关系，用于体积分析
-          entryModulesMap: new Map(),
+          entryNodeModulesMap: new Map(),
           extractedMap: {},
           usingComponents: {},
           // todo es6 map读写性能高于object，之后会逐步替换
@@ -519,6 +516,15 @@ class MpxWebpackPlugin {
             const dep = EntryPlugin.createDependency(request, { name })
             compilation.addEntry(compiler.context, dep, { name }, callback)
             return dep
+          },
+          getEntryNode: (module, type) => {
+            const entryNodeModulesMap = mpx.entryNodeModulesMap
+            let entryNode = entryNodeModulesMap.get(module)
+            if (!entryNode) {
+              entryNode = new EntryNode(module, type)
+              entryNodeModulesMap.set(module, entryNode)
+            }
+            return entryNode
           },
           getOutputPath: (resourcePath, type, { ext = '', conflictPath = '' } = {}) => {
             const name = path.parse(resourcePath).name

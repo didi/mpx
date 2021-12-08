@@ -113,12 +113,6 @@ module.exports = function (script, {
   import Vue from 'vue'
   import VueRouter from 'vue-router'
   Vue.use(VueRouter)
-  import BScroll from '@better-scroll/core'
-  import PullDown from '@better-scroll/pull-down'
-  import ObserveDOM from '@better-scroll/observe-dom'
-  BScroll.use(ObserveDOM)
-  BScroll.use(PullDown)
-  global.BScroll = BScroll
   global.getApp = function(){}
   global.getCurrentPages = function(){
     if(!global.__mpxRouter) return []
