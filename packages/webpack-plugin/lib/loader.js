@@ -15,6 +15,8 @@ const getJSONContent = require('./utils/get-json-content')
 const normalize = require('./utils/normalize')
 const getEntryName = require('./utils/get-entry-name')
 const AppEntryDependency = require('./dependencies/AppEntryDependency')
+const RecordResourceMapDependency = require('./dependencies/RecordResourceMapDependency')
+const CommonJsVariableDependency = require('./dependencies/CommonJsVariableDependency')
 const { MPX_APP_MODULE_ID } = require('./utils/const')
 
 module.exports = function (content) {
@@ -25,7 +27,9 @@ module.exports = function (content) {
     return content
   }
   const { resourcePath, queryObj } = parseRequest(this.resource)
-  const packageName = queryObj.packageRoot || mpx.currentPackageRoot || 'main'
+  const packageRoot = queryObj.packageRoot || mpx.currentPackageRoot
+  const packageName = packageRoot || 'main'
+  const isIndependent = queryObj.isIndependent
   const pagesMap = mpx.pagesMap
   const componentsMap = mpx.componentsMap[packageName]
   const mode = mpx.mode
@@ -37,16 +41,6 @@ module.exports = function (content) {
   const vueContentCache = mpx.vueContentCache
   const autoScope = matchCondition(resourcePath, mpx.autoScopeRules)
 
-  // 支持资源query传入isPage或isComponent支持页面/组件单独编译
-  if ((queryObj.isComponent && !componentsMap[resourcePath]) || (queryObj.isPage && !pagesMap[resourcePath])) {
-    const entryName = getEntryName(this)
-    if (queryObj.isComponent) {
-      componentsMap[resourcePath] = entryName || 'noEntryComponent'
-    } else {
-      pagesMap[resourcePath] = entryName || 'noEntryPage'
-    }
-  }
-
   let ctorType = 'app'
   if (pagesMap[resourcePath]) {
     // page
@@ -54,6 +48,13 @@ module.exports = function (content) {
   } else if (componentsMap[resourcePath]) {
     // component
     ctorType = 'component'
+  }
+
+  // 支持资源query传入isPage或isComponent支持页面/组件单独编译
+  if (queryObj.isComponent || queryObj.isPage) {
+    const entryName = getEntryName(this) || (queryObj.isComponent ? 'noEntryComponent' : 'noEntryPage')
+    ctorType = queryObj.isComponent ? 'component' : 'page'
+    this._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, ctorType, entryName, packageRoot))
   }
 
   const loaderContext = this
@@ -218,14 +219,19 @@ module.exports = function (content) {
         output += `global.currentResource = ${JSON.stringify(filePath)}\n`
       }
       // 为app或独立分包页面注入i18n
-      if (i18n && (ctorType === 'app' || (ctorType === 'page' && queryObj.isIndependent))) {
+      if (i18n && (ctorType === 'app' || (ctorType === 'page' && isIndependent))) {
         const i18nWxsPath = normalize.lib('runtime/i18n.wxs')
         const i18nWxsLoaderPath = normalize.lib('wxs/i18n-loader.js')
         const i18nWxsRequest = i18nWxsLoaderPath + '!' + i18nWxsPath
+        const i18nMethodsVar = 'i18nMethods'
+        this._module.addDependency(new CommonJsVariableDependency(i18nWxsRequest, i18nMethodsVar))
 
         output += `if (!global.i18n) {
-  global.i18n = ${JSON.stringify({ locale: i18n.locale, version: 0 })}
-  global.i18nMethods = require(${loaderUtils.stringifyRequest(loaderContext, i18nWxsRequest)})
+  global.i18n = ${JSON.stringify({
+          locale: i18n.locale,
+          version: 0
+        })}
+  global.i18nMethods = ${i18nMethodsVar}
 }\n`
       }
       // 注入构造函数
@@ -297,29 +303,17 @@ module.exports = function (content) {
       // script
       output += '/* script */\n'
       let scriptSrcMode = srcMode
-      const script = parts.script
+      // 给予script默认值, 确保生成js request以自动补全js
+      const script = parts.script || {}
       if (script) {
         scriptSrcMode = script.mode || scriptSrcMode
         if (scriptSrcMode) output += `global.currentSrcMode = ${JSON.stringify(scriptSrcMode)}\n`
-        const extraOptions = {}
+        // 传递ctorType以补全js内容
+        const extraOptions = {
+          ctorType
+        }
         if (script.src) extraOptions.resourcePath = resourcePath
         output += getRequire('script', script, extraOptions) + '\n'
-      } else {
-        // todo 依然创建request在selector中进行补全或者将i18n通过CommonJsVariableDependency改造为initFragments的方式进行注入，否则在app.mpx中没有script区块的情况下无法保证i18n注入代码在@mpxjs/core之前执行
-        switch (ctorType) {
-          case 'app':
-            output += 'import {createApp} from "@mpxjs/core"\n' +
-              'createApp({})\n'
-            break
-          case 'page':
-            output += 'import {createPage} from "@mpxjs/core"\n' +
-              'createPage({})\n'
-            break
-          case 'component':
-            output += 'import {createComponent} from "@mpxjs/core"\n' +
-              'createComponent({})\n'
-        }
-        output += '\n'
       }
       callback(null, output)
     }

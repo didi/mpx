@@ -12,6 +12,7 @@ const getJSONContent = require('../utils/get-json-content')
 const createHelpers = require('../helpers')
 const createJSONHelper = require('./helper')
 const RecordGlobalComponentsDependency = require('../dependencies/RecordGlobalComponentsDependency')
+const RecordIndependentDependency = require('../dependencies/RecordIndependentDependency')
 const { MPX_DISABLE_EXTRACTOR_CACHE, RESOLVE_IGNORED_ERR, JSON_JS_EXT } = require('../utils/const')
 const resolve = require('../utils/resolve')
 
@@ -360,7 +361,7 @@ module.exports = function (content) {
         const otherConfig = getOtherConfig(subPackage)
         // 支付宝不支持独立分包，无需处理
         if (otherConfig.independent && mode !== 'ali') {
-          mpx.independentSubpackagesMap[tarRoot] = true
+          this._module.addPresentationalDependency(new RecordIndependentDependency(tarRoot))
         }
 
         subPackagesCfg[tarRoot] = {

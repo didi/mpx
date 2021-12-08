@@ -26,6 +26,7 @@ const PackageEntryPlugin = require('./resolver/PackageEntryPlugin')
 const AppEntryDependency = require('./dependencies/AppEntryDependency')
 const RecordResourceMapDependency = require('./dependencies/RecordResourceMapDependency')
 const RecordGlobalComponentsDependency = require('./dependencies/RecordGlobalComponentsDependency')
+const RecordIndependentDependency = require('./dependencies/RecordIndependentDependency')
 const DynamicEntryDependency = require('./dependencies/DynamicEntryDependency')
 const FlagPluginDependency = require('./dependencies/FlagPluginDependency')
 const RemoveEntryDependency = require('./dependencies/RemoveEntryDependency')
@@ -75,35 +76,6 @@ const publicPath = '/'
 
 const isChunkInPackage = (chunkName, packageName) => {
   return (new RegExp(`^${packageName}\\/`)).test(chunkName)
-}
-
-const getPackageCacheGroup = packageName => {
-  if (packageName === 'main') {
-    return {
-      // 对于独立分包模块不应用该cacheGroup
-      test: (module) => {
-        const { queryObj } = parseRequest(module.resource)
-        return !queryObj.isIndependent
-      },
-      name: 'bundle',
-      minChunks: 2,
-      chunks: 'all'
-    }
-  } else {
-    return {
-      test: (module, { chunkGraph }) => {
-        const chunks = chunkGraph.getModuleChunksIterable(module)
-        return chunks.size && every(chunks, (chunk) => {
-          return isChunkInPackage(chunk.name, packageName)
-        })
-      },
-      name: `${packageName}/bundle`,
-      minChunks: 2,
-      minSize: 1000,
-      priority: 100,
-      chunks: 'all'
-    }
-  }
 }
 
 const externalsMap = {
@@ -364,6 +336,41 @@ class MpxWebpackPlugin {
 
     let mpx
 
+    const getPackageCacheGroup = packageName => {
+      if (packageName === 'main') {
+        return {
+          // 对于独立分包模块不应用该cacheGroup
+          test: (module) => {
+            let isIndependent = false
+            if (module.resource) {
+              const { queryObj } = parseRequest(module.resource)
+              isIndependent = queryObj.isIndependent
+            } else if (module._identifier && /\|isIndependent\|/.test(module._identifier)) {
+              isIndependent = true
+            }
+            return !isIndependent
+          },
+          name: 'bundle',
+          minChunks: 2,
+          chunks: 'all'
+        }
+      } else {
+        return {
+          test: (module, { chunkGraph }) => {
+            const chunks = chunkGraph.getModuleChunksIterable(module)
+            return chunks.size && every(chunks, (chunk) => {
+              return isChunkInPackage(chunk.name, packageName)
+            })
+          },
+          name: `${packageName}/bundle`,
+          minChunks: 2,
+          minSize: 1000,
+          priority: 100,
+          chunks: 'all'
+        }
+      }
+    }
+
     const processSubpackagesEntriesMap = (compilation, callback) => {
       const mpx = compilation.__mpx__
       if (mpx && !isEmptyObject(mpx.subpackagesEntriesMap)) {
@@ -437,6 +444,9 @@ class MpxWebpackPlugin {
 
       compilation.dependencyFactories.set(RecordGlobalComponentsDependency, new NullFactory())
       compilation.dependencyTemplates.set(RecordGlobalComponentsDependency, new RecordGlobalComponentsDependency.Template())
+
+      compilation.dependencyFactories.set(RecordIndependentDependency, new NullFactory())
+      compilation.dependencyTemplates.set(RecordIndependentDependency, new RecordIndependentDependency.Template())
 
       compilation.dependencyFactories.set(CommonJsVariableDependency, normalModuleFactory)
       compilation.dependencyTemplates.set(CommonJsVariableDependency, new CommonJsVariableDependency.Template())
@@ -678,10 +688,12 @@ class MpxWebpackPlugin {
       const rawAddModule = compilation.addModule
       compilation.addModule = (module, callback) => {
         const issuerResource = module.issuerResource
-        // 避免context module报错
-        if (module.request && module.resource) {
+        const currentPackageRoot = mpx.currentPackageRoot
+        const isIndependent = mpx.independentSubpackagesMap[currentPackageRoot]
+
+        if (module.resource) {
+          // NormalModule
           const isStatic = isStaticModule(module)
-          const isIndependent = mpx.independentSubpackagesMap[mpx.currentPackageRoot]
 
           let needPackageQuery = isStatic || isIndependent
 
@@ -702,15 +714,19 @@ class MpxWebpackPlugin {
                 compilation.errors.push(e)
               }
             })
-            const queryObj = {}
-            if (packageRoot) queryObj.packageRoot = packageRoot
-            // todo 后续可以考虑用module.layer来隔离独立分包的模块
-            if (isIndependent) queryObj.isIndependent = true
-            module.request = addQuery(module.request, queryObj)
-            module.resource = addQuery(module.resource, queryObj)
+            if (packageRoot) {
+              const queryObj = {
+                packageRoot
+              }
+              if (isIndependent) queryObj.isIndependent = true
+              module.request = addQuery(module.request, queryObj)
+              module.resource = addQuery(module.resource, queryObj)
+            }
           }
+        } else if (module._identifier && isIndependent) {
+          // ContextModule只在独立分包的情况下添加分包标记，其余默认不添加
+          module._identifier += `|isIndependent|${currentPackageRoot}`
         }
-
         return rawAddModule.call(compilation, module, callback)
       }
 
