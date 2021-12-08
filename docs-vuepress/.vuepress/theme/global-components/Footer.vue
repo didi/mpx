@@ -54,7 +54,10 @@
         </li>
       </ul>
     </footer>
-    <div class="copyright">Copyright 2020 滴滴出行</div>
+    <div class="copyright">
+      <div>备案号：<a href="https://beian.miit.gov.cn/">蜀ICP备15023364号-2</a></div>
+      <div>Copyright 2020 滴滴出行</div>
+    </div>
   </div>
 </template>
 
@@ -106,12 +109,12 @@ ul li
   font-weight 500
 
 .copyright
-  height 50px;
   font-size 12px
   color #ffffff
   background #3a495d
   text-align center
-  line-height 50px
+  line-height 30px
+  padding 10px 0
 
 .grow
   flex 1
