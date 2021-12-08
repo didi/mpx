@@ -866,19 +866,33 @@ function parse (template, options) {
 
       // multi root
       if (!currentParent) genTempRoot()
+      if (isComponentNode(element, options) && mode === 'ali' && !options.hasVirtualHost) {
+        const attrsListClone = cloneAttrsList(element.attrsList)
+        attrsListClone.push(
+          {
+            name: 'class',
+            value: `${MPX_ROOT_VIEW} host-${options.moduleId}`
+          }
+        )
+        let componentWrapView = createASTElement('view', attrsListClone)
+        processElementToStack(componentWrapView)
+      }
 
-      currentParent.children.push(element)
-      element.parent = currentParent
+      processElementToStack(element)
+      function processElementToStack (element) {
+        currentParent.children.push(element)
+        element.parent = currentParent
 
-      processElement(element, root, options, meta)
-      tagNames.add(element.tag)
+        processElement(element, root, options, meta)
+        tagNames.add(element.tag)
 
-      if (!unary) {
-        currentParent = element
-        stack.push(element)
-      } else {
-        element.unary = true
-        closeElement(element, meta)
+        if (!unary) {
+          currentParent = element
+          stack.push(element)
+        } else {
+          element.unary = true
+          closeElement(element, meta)
+        }
       }
     },
 
@@ -1981,17 +1995,17 @@ function getVirtualHostRoot (options, meta) {
       !meta.options && (meta.options = {})
       meta.options.virtualHost = true
     }
-    if (mode === 'ali' && !options.hasVirtualHost) {
-      // ali组件根节点实体化
-      let rootView = createASTElement('view', [
-        {
-          name: 'class',
-          value: `${MPX_ROOT_VIEW} host-${options.moduleId}`
-        }
-      ])
-      processElement(rootView, rootView, options, meta)
-      return rootView
-    }
+    // if (mode === 'ali' && !options.hasVirtualHost) {
+    //   // ali组件根节点实体化
+    //   let rootView = createASTElement('view', [
+    //     {
+    //       name: 'class',
+    //       value: `${MPX_ROOT_VIEW} host-${options.moduleId}`
+    //     }
+    //   ])
+    //   processElement(rootView, rootView, options, meta)
+    //   return rootView
+    // }
   }
   return getTempNode()
 }
