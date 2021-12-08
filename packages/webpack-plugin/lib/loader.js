@@ -228,9 +228,9 @@ module.exports = function (content) {
 
         output += `if (!global.i18n) {
   global.i18n = ${JSON.stringify({
-          locale: i18n.locale,
-          version: 0
-        })}
+    locale: i18n.locale,
+    version: 0
+  })}
   global.i18nMethods = ${i18nMethodsVar}
 }\n`
       }
