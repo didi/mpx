@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/api-proxy",
-  "version": "2.6.96",
+  "version": "2.6.107",
   "description": "convert miniprogram API at each end",
   "module": "src/index.js",
   "types": "@types/index.d.ts",
@@ -15,6 +15,7 @@
     "@types",
     "README.md"
   ],
+  "main": "src/index.js",
   "repository": {
     "type": "git",
     "url": "git@github.com/didi/mpx.git"

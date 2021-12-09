@@ -60,7 +60,8 @@ module.exports = function (raw) {
     globalComponents: Object.keys(mpx.usingComponents),
     // deprecated option
     globalMpxAttrsFilter: mpx.globalMpxAttrsFilter,
-    forceProxyEvent: matchCondition(this.resourcePath, mpx.forceProxyEventRules)
+    forceProxyEvent: matchCondition(this.resourcePath, mpx.forceProxyEventRules),
+    hasVirtualHost: matchCondition(resourcePath, mpx.autoVirtualHostRules)
   })
 
   let ast = parsed.root
@@ -120,6 +121,10 @@ ${e.stack}`)
     globalInjectCode += `global.currentInject.getRefsData = function () {
   return ${JSON.stringify(meta.refs)};
   };\n`
+  }
+
+  if (meta.options) {
+    globalInjectCode += bindThis(`global.currentInject.injectOptions = ${JSON.stringify(meta.options)};`).code + '\n'
   }
 
   const issuer = this._module.issuer

@@ -101,6 +101,7 @@ class MpxWebpackPlugin {
     options.resolveMode = options.resolveMode || 'webpack'
     options.writeMode = options.writeMode || 'changed'
     options.autoScopeRules = options.autoScopeRules || {}
+    options.autoVirtualHostRules = options.autoVirtualHostRules || {}
     options.forceDisableInject = options.forceDisableInject || false
     options.forceDisableProxyCtor = options.forceDisableProxyCtor || false
     options.transMpxRules = options.transMpxRules || {
@@ -123,6 +124,7 @@ class MpxWebpackPlugin {
     options.forceUsePageCtor = options.forceUsePageCtor || false
     options.postcssInlineConfig = options.postcssInlineConfig || {}
     options.transRpxRules = options.transRpxRules || null
+    options.webConfig = options.webConfig || {}
     options.auditResource = options.auditResource || false
     options.decodeHTMLText = options.decodeHTMLText || false
     options.nativeOptions = Object.assign({
@@ -141,6 +143,7 @@ class MpxWebpackPlugin {
     options.fileConditionRules = options.fileConditionRules || {
       include: () => true
     }
+    options.customOutputPath = options.customOutputPath || null
     this.options = options
   }
 
@@ -360,10 +363,12 @@ class MpxWebpackPlugin {
                 compilation.errors.push(e)
               }
             })
-            if (packageRoot) {
-              module.request = addQuery(module.request, { packageRoot })
-              module.resource = addQuery(module.resource, { packageRoot })
-            }
+            const queryObj = {}
+            if (packageRoot) queryObj.packageRoot = packageRoot
+            // todo 后续可以考虑用module.layer来隔离独立分包的模块
+            if (isIndependent) queryObj.isIndependent = true
+            module.request = addQuery(module.request, queryObj)
+            module.resource = addQuery(module.resource, queryObj)
           }
         }
 
@@ -410,6 +415,7 @@ class MpxWebpackPlugin {
           // 当前机制下分包处理队列在app.json的json-compiler中进行，由于addEntry回调特性，无法保障app.js中引用的模块都被标记为主包，故重写processModuleDependencies获取app.js及其所有依赖处理完成的时机，在这之后再执行分包处理队列
           appScriptRawRequest: '',
           appScriptPromise: null,
+          appScriptPromiseResolve: null,
           // 记录entry依赖关系，用于体积分析
           entryNodesMap: {},
           // 记录entryModule与entryNode的对应关系，用于体积分析
@@ -435,7 +441,9 @@ class MpxWebpackPlugin {
           externalClasses: this.options.externalClasses,
           projectRoot: this.options.projectRoot,
           autoScopeRules: this.options.autoScopeRules,
+          autoVirtualHostRules: this.options.autoVirtualHostRules,
           transRpxRules: this.options.transRpxRules,
+          webConfig: this.options.webConfig,
           postcssInlineConfig: this.options.postcssInlineConfig,
           decodeHTMLText: this.options.decodeHTMLText,
           // native文件专用相关配置
@@ -481,6 +489,15 @@ class MpxWebpackPlugin {
               hashPath = pathHashMode(resourcePath, projectRoot) || resourcePath
             }
             return hash(hashPath)
+          },
+          getOutputPath: (resourcePath, type, { ext = '', conflictPath = '' } = {}) => {
+            const name = path.parse(resourcePath).name
+            const hash = mpx.pathHash(resourcePath)
+            const customOutputPath = this.options.customOutputPath
+            if (conflictPath) return conflictPath.replace(/(\.[^\\/]+)?$/, match => hash + match)
+            if (typeof customOutputPath === 'function') return customOutputPath(type, name, hash, ext)
+            if (type === 'component' || type === 'page') return path.join(type + 's', name + hash, 'index' + ext)
+            return path.join(type, name + hash + ext)
           },
           extract: (content, file, index, sideEffects) => {
             index = index === -1 ? 0 : index
@@ -547,6 +564,13 @@ class MpxWebpackPlugin {
               if (currentResourceMap[resourcePath] === outputPath) {
                 alreadyOutputed = true
               } else {
+                for (let key in currentResourceMap) {
+                  if (currentResourceMap[key] === outputPath && key !== resourcePath) {
+                    outputPath = toPosix(path.join(packageRoot, mpx.getOutputPath(resourcePath, resourceType, { conflictPath: outputPath })))
+                    warn && warn(new Error(`Current ${resourceType} [${resourcePath}] is registered with a conflict outputPath [${currentResourceMap[key]}] which is already existed in system, will be renamed with [${outputPath}], use ?resolve to get the real outputPath!`))
+                    break
+                  }
+                }
                 currentResourceMap[resourcePath] = outputPath
               }
             } else if (!currentResourceMap[resourcePath]) {
@@ -569,12 +593,10 @@ class MpxWebpackPlugin {
         if (module.rawRequest === mpx.appScriptRawRequest) {
           // 避免模块request重名，只对第一次匹配到的模块进行代理
           mpx.appScriptRawRequest = ''
-          mpx.appScriptPromise = new Promise((resolve) => {
-            proxyedCallback = (err) => {
-              resolve()
-              return callback(err)
-            }
-          })
+          proxyedCallback = (err) => {
+            mpx.appScriptPromiseResolve()
+            return callback(err)
+          }
         }
         return rawProcessModuleDependencies.apply(compilation, [module, proxyedCallback])
       }
@@ -948,6 +970,7 @@ try {
     context.setTimeout = setTimeout;
     context.JSON = JSON;
     context.Math = Math;
+    context.Date = Date;
     context.RegExp = RegExp;
     context.Infinity = Infinity;
     context.isFinite = isFinite;
@@ -962,6 +985,22 @@ try {
     context.ArrayBuffer = ArrayBuffer;
     context.Symbol = Symbol;
     context.Reflect = Reflect;
+    context.Object = Object;
+    context.Error = Error;
+    context.Array = Array;
+    context.Float32Array = Float32Array;
+    context.Float64Array = Float64Array;
+    context.Int16Array = Int16Array;
+    context.Int32Array = Int32Array;
+    context.Int8Array = Int8Array;
+    context.Uint16Array = Uint16Array;
+    context.Uint32Array = Uint32Array;
+    context.Uint8ClampedArray = Uint8ClampedArray;
+    context.String = String;
+    context.Function = Function;
+    context.SyntaxError = SyntaxError;
+    context.decodeURIComponent = decodeURIComponent;
+    context.encodeURIComponent = encodeURIComponent;
   }
 } catch(e){
 }\n`)

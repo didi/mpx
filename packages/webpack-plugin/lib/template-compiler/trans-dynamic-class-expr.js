@@ -1,6 +1,6 @@
-const babylon = require('babylon')
-const t = require('babel-types')
-const generate = require('babel-generator').default
+const babylon = require('@babel/parser')
+const t = require('@babel/types')
+const generate = require('@babel/generator').default
 const dash2hump = require('../utils/hump-dash').dash2hump
 
 module.exports = function transDynamicClassExpr (expr) {

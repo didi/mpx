@@ -15,7 +15,7 @@ const processTemplate = require('./web/processTemplate')
 const readJsonForSrc = require('./utils/read-json-for-src')
 const normalize = require('./utils/normalize')
 const getMainCompilation = require('./utils/get-main-compilation')
-
+const { MPX_APP_MODULE_ID } = require('./staticConfig')
 module.exports = function (content) {
   this.cacheable()
 
@@ -66,7 +66,6 @@ module.exports = function (content) {
     // component
     ctorType = 'component'
   }
-
   const loaderContext = this
   const stringifyRequest = r => loaderUtils.stringifyRequest(loaderContext, r)
   const isProduction = this.minimize || process.env.NODE_ENV === 'production'
@@ -88,7 +87,10 @@ module.exports = function (content) {
 
   const filePath = resourcePath
 
-  const moduleId = 'm' + mpx.pathHash(filePath)
+  let moduleId = 'm' + mpx.pathHash(filePath)
+  if (ctorType === 'app') {
+    moduleId = MPX_APP_MODULE_ID
+  }
 
   const parts = parseComponent(content, {
     filePath,
@@ -271,9 +273,8 @@ module.exports = function (content) {
       if (!isProduction) {
         globalInjectCode += `global.currentResource = ${JSON.stringify(filePath)}\n`
       }
-      if (ctorType === 'app' && i18n && !mpx.forceDisableInject) {
-        globalInjectCode += `global.i18n = ${JSON.stringify({ locale: i18n.locale, version: 0 })}\n`
 
+      if (i18n && (ctorType === 'app' || (ctorType === 'page' && queryObj.isIndependent)) && !mpx.forceDisableInject) {
         const i18nMethodsVar = 'i18nMethods'
         const i18nWxsPath = normalize.lib('runtime/i18n.wxs')
         const i18nWxsLoaderPath = normalize.lib('wxs/wxs-i18n-loader.js')
@@ -291,7 +292,10 @@ module.exports = function (content) {
         })
         this._module.addVariable(i18nMethodsVar, expression, deps)
 
-        globalInjectCode += `global.i18nMethods = ${i18nMethodsVar}\n`
+        globalInjectCode += `if (!global.i18n) {
+  global.i18n = ${JSON.stringify({ locale: i18n.locale, version: 0 })}
+  global.i18nMethods = ${i18nMethodsVar}
+}\n`
       }
       // 注入构造函数
       let ctor = 'App'
@@ -306,6 +310,7 @@ module.exports = function (content) {
         ctor = 'Component'
       }
       globalInjectCode += `global.currentCtor = ${ctor}\n`
+      globalInjectCode += `global.currentResourceType = '${ctorType}'\n`
       globalInjectCode += `global.currentCtorType = ${JSON.stringify(ctor.replace(/^./, (match) => {
         return match.toLowerCase()
       }))}\n`
@@ -326,7 +331,12 @@ module.exports = function (content) {
         }
         if (scriptRequestString) {
           output += 'export * from ' + scriptRequestString + '\n\n'
-          if (ctorType === 'app') mpx.appScriptRawRequest = JSON.parse(scriptRequestString)
+          if (ctorType === 'app') {
+            mpx.appScriptRawRequest = JSON.parse(scriptRequestString)
+            mpx.appScriptPromise = new Promise((resolve) => {
+              mpx.appScriptPromiseResolve = resolve
+            })
+          }
         }
       } else {
         switch (ctorType) {
@@ -394,6 +404,8 @@ module.exports = function (content) {
           }
         })
         output += styleInjectionCode + '\n'
+      } else if (ctorType === 'app' && mode === 'ali') {
+        output += getRequire('styles', {}) + '\n'
       }
 
       // json
