@@ -345,8 +345,9 @@ class MpxWebpackPlugin {
             if (module.resource) {
               const { queryObj } = parseRequest(module.resource)
               isIndependent = queryObj.isIndependent
-            } else if (module._identifier && /\|isIndependent\|/.test(module._identifier)) {
-              isIndependent = true
+            } else {
+              const identifier = module.identifier()
+              isIndependent = /\|isIndependent\|/.test(identifier)
             }
             return !isIndependent
           },
@@ -723,9 +724,14 @@ class MpxWebpackPlugin {
               module.resource = addQuery(module.resource, queryObj)
             }
           }
-        } else if (module._identifier && isIndependent) {
-          // ContextModule只在独立分包的情况下添加分包标记，其余默认不添加
-          module._identifier += `|isIndependent|${currentPackageRoot}`
+        } else if (isIndependent) {
+          // ContextModule和RawModule只在独立分包的情况下添加分包标记，其余默认不添加
+          const postfix = `|isIndependent|${currentPackageRoot}`
+          if (module._identifier) {
+            module._identifier += postfix
+          } else if (module.identifierStr) {
+            module.identifierStr += postfix
+          }
         }
         return rawAddModule.call(compilation, module, callback)
       }

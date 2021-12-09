@@ -51,6 +51,10 @@ module.exports.pitch = async function (remainingRequest) {
     }).join('\n')
   }
 
+  let resultSource = DEFAULT_RESULT_SOURCE
+
+  if (typeof content !== 'string') return resultSource
+
   const extractedInfo = {
     content,
     index
@@ -60,8 +64,6 @@ module.exports.pitch = async function (remainingRequest) {
     skipEmit: true,
     extractedInfo
   })
-
-  let resultSource = DEFAULT_RESULT_SOURCE
 
   const { buildInfo } = this._module
 
