@@ -22,8 +22,6 @@ jobs:
 
       - name: test env git_diff
         run: |
-          npm i
-          npm run docs:build
           echo env.GIT_DIFF
 
       # 使用 https://github.com/appleboy/scp-action 进行部署，注意 strip_components 用于控制层级
