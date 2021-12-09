@@ -179,7 +179,7 @@ module.exports = function (content) {
           if (typeof val === 'string' && val.indexOf('rpx') > 0) {
             return val.replace(rpxRegExpG, function (match, $1) {
               return '' + ($1 * rpx2vwRatio) + 'vw'
-            })
+            }).replace(/"/g,"")
           }
 
           return val
