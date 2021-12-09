@@ -2,6 +2,7 @@
 
 ## component
 
+
 - **属性**：
 
   - ` is `  - string | ComponentName
