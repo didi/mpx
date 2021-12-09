@@ -5,7 +5,6 @@
 ## 该项目指南
 
 已安装依赖vuepress，并已经在package.json中新增写作和部署脚本
-已安装依赖vuepress，并已经在package.json中新增写作和部署脚本
 
 ``` sh
 # 写作时
