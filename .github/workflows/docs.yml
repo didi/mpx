@@ -4,12 +4,17 @@ on:
   push:
     branches:
       - master
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - uses: technote-space/get-diff-action@v4
+        with:
+          PATTERNS: |
+            +(docs|docs-vuepress)/**/*
+            +(docs|docs-vuepress)/.*/**/*
+
       - name: Use node v12
         uses: actions/setup-node@v1
         with:

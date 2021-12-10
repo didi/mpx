@@ -19,17 +19,15 @@ export default {
 
   data() {
     return {
-      isMobileHeaderOpen: false,
-      isMobile: document.body.clientWidth < 720
+      isMobileHeaderOpen: false
     }
   },
 
-  // computed: {
-  //   isMobile() {
-  //     console.log('%c [ document.documentElement.clientWidth ]', 'font-size:13px; background:pink; color:#bf2c9f;', document.documentElement.clientWidth)
-  //     return document.documentElement.clientWidth < 1020
-  //   }
-  // },
+  computed: {
+    isMobile() {
+      return document.documentElement.clientWidth < 720
+    }
+  },
 
   mounted() {
     // this.$router.afterEach(() => {
@@ -38,17 +36,9 @@ export default {
 
     window.onresize = () => {
       const tmp = document.body.clientWidth < 720
-      console.log('%c [ this.isMobile ]', 'font-size:13px; background:pink; color:#bf2c9f;', this.isMobile)
       return this.isMobile = tmp
     }
   },
-
-  // beforeMount () {
-  //   window.onresize = () => {
-  //     this.isMobile = document.body.clientWidth > 1020
-  //     console.log('%c [ his.isMobile ]', 'font-size:13px; background:pink; color:#bf2c9f;', this.isMobile)
-  //   }
-  // }
 }
 </script>
 
