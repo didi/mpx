@@ -13,7 +13,7 @@ jobs:
         with:
           PATTERNS: |
             +(docs|docs-vuepress)/**/*
-            +(docs|docs-vuepress)/.*/*
+            +(docs|docs-vuepress)/.*/**/*
 
       - name: Use node v12
         uses: actions/setup-node@v1
