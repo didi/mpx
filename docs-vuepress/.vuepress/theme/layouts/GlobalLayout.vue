@@ -1,5 +1,6 @@
 <template>
   <div id="vuepress-theme-blog__global-layout">
+
     <Navbar />
     <div class="content-wrapper">
       <DefaultGlobalLayout />
