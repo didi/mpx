@@ -2039,7 +2039,10 @@ function processElement (el, root, options, meta) {
 
   const pass = isNative || processTemplate(el) || processingTemplate
 
-  processScoped(el, options)
+  // 仅ali平台需要scoped模拟样式隔离
+  if (mode === 'ali') {
+    processScoped(el, options)
+  }
 
   if (transAli) {
     processAliExternalClassesHack(el, options)
