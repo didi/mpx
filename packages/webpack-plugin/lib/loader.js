@@ -218,8 +218,9 @@ module.exports = function (content) {
       if (!isProduction) {
         output += `global.currentResource = ${JSON.stringify(filePath)}\n`
       }
-      // 为app或独立分包页面注入i18n
-      if (i18n && (ctorType === 'app' || (ctorType === 'page' && isIndependent))) {
+      // todo 对于独立分包支持将app.mpx中的script block作为独立分包入口逻辑注入到所有页面和组件中，将独立分包i18n的注入也迁移到入口逻辑中
+      // 为app或独立分包入口注入i18n
+      if (i18n && (ctorType === 'app' || isIndependent)) {
         const i18nWxsPath = normalize.lib('runtime/i18n.wxs')
         const i18nWxsLoaderPath = normalize.lib('wxs/i18n-loader.js')
         const i18nWxsRequest = i18nWxsLoaderPath + '!' + i18nWxsPath
