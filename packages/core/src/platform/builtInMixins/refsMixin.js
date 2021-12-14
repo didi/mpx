@@ -2,6 +2,7 @@ import { BEFORECREATE, CREATED, BEFOREMOUNT, UPDATED, DESTROYED } from '../../co
 import { noop } from '../../helper/utils'
 import { error } from '../../helper/log'
 import { getEnvObj } from '../../helper/env'
+import contextMap from '../../vnode/context'
 
 const envObj = getEnvObj()
 
@@ -137,7 +138,7 @@ export default function getRefsMixin () {
       ...aliMethods,
       __getRefs () {
         // 运行时编译组件获取 ref 节点
-        const vnodeRootContext = this.vnodeRootContext || this._getRootContext(this.id)
+        const vnodeRootContext = this.vnodeRootContext || contextMap.get(this.id)
         if (vnodeRootContext) {
           const needRuntimeRef = true
           const refsArr = vnodeRootContext.__getRefsData && vnodeRootContext.__getRefsData(needRuntimeRef)

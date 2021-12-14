@@ -1,6 +1,7 @@
 'use strict'
 
 const path = require('path')
+const { AsyncSeriesHook, SyncHook } = require('tapable')
 const { ConcatSource, RawSource } = require('webpack').sources
 const ResolveDependency = require('./dependencies/ResolveDependency')
 const InjectDependency = require('./dependencies/InjectDependency')
@@ -55,6 +56,7 @@ const async = require('async')
 const stringifyLoadersAndResource = require('./utils/stringify-loaders-resource')
 const emitFile = require('./utils/emit-file')
 const { MPX_PROCESSED_FLAG, MPX_DISABLE_EXTRACTOR_CACHE } = require('./utils/const')
+const RuntimeRender = require('./runtime-render')
 
 const isProductionLikeMode = options => {
   return options.mode === 'production' || !options.mode
@@ -372,6 +374,7 @@ class MpxWebpackPlugin {
     }, (compilation, callback) => {
       const mpx = compilation.__mpx__
       if (mpx && mpx.subpackagesEntriesMap) {
+        // mpx.hooks.beforeProcessSubpackages.call()
         async.eachOfSeries(mpx.subpackagesEntriesMap, (deps, packageRoot, callback) => {
           mpx.currentPackageRoot = packageRoot
           mpx.componentsMap[packageRoot] = {}
@@ -384,7 +387,9 @@ class MpxWebpackPlugin {
               callback()
             })
           }, callback)
-        }, callback)
+        }, () => {
+          mpx.hooks.finishSubpackagesMake.callAsync(compilation, callback)
+        })
       } else {
         callback()
       }
@@ -624,10 +629,18 @@ class MpxWebpackPlugin {
               alreadyOutputed
             }
           },
-          // 记录组件的绝对路径，用以运行时组件的匹配
-          componentsAbsolutePath: {}
+          hooks: {
+            finishSubpackagesMake: new AsyncSeriesHook(['compilation']),
+            afterResolveDynamicEntryDependency: new SyncHook(['resultPath', 'resource'])
+          }
         }
       }
+
+      mpx.hooks.afterResolveDynamicEntryDependency.tap('MpxWebpackPlugin', (resultPath, resource) => {
+        // 收集所有产出路径
+        const { resourcePath } = parseRequest(resource)
+        RuntimeRender.setInjectedComponentsMap(resourcePath, { resultPath })
+      })
 
       const rawProcessModuleDependencies = compilation.processModuleDependencies
       compilation.processModuleDependencies = (module, callback) => {
@@ -796,7 +809,7 @@ class MpxWebpackPlugin {
             if (!_content.usingComponents) {
               _content.usingComponents = {}
             }
-            Object.assign(_content.usingComponents, getInjectedComponentMap())
+            Object.assign(_content.usingComponents, RuntimeRender.injectedComponentsMap)
             let res = new ConcatSource()
             res.add(JSON.stringify(_content, null, 2))
             source = res
@@ -804,10 +817,6 @@ class MpxWebpackPlugin {
           // 基础模板信息注入
           if (/mpx-render-base\w*\.wxml/.test(filename)) {
             source.add(unRecursiveTemplate.buildTemplate(injectComponentConfig))
-          }
-
-          if (/runtime-render-helper\w*\.wxs/.test(filename)) {
-            source.add(unRecursiveTemplate.buildXScript())
           }
 
           // 运行时组件的样式注入
@@ -818,17 +827,6 @@ class MpxWebpackPlugin {
             source = res
           }
 
-          // 运行时组件配置注入
-          if (/mpx-custom-element\.json/.test(filename)) {
-            let _content = JSON.parse(source.source())
-            if (!_content.usingComponents) {
-              _content.usingComponents = {}
-            }
-            Object.assign(_content.usingComponents, getInjectedComponentMap())
-            let res = new ConcatSource()
-            res.add(JSON.stringify(_content, null, 2))
-            source = res
-          }
           compilation.emitAsset(filename, source)
         }
       })

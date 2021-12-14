@@ -213,5 +213,6 @@ module.exports = {
     var normalizedDynamicStyle = normalizeDynamicStyle(dynamicStyle)
     var parsedStaticStyle = typeof staticStyle === 'string' ? parseStyleText(staticStyle) : {}
     return genStyleText(extend(parsedStaticStyle, normalizedDynamicStyle))
-  }
+  },
+  extend: extend
 }

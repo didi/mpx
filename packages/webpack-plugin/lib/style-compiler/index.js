@@ -10,11 +10,8 @@ const matchCondition = require('../utils/match-condition')
 const parseRequest = require('../utils/parse-request')
 
 module.exports = function (css, map) {
-  if (/mpx-custom-element\.mpx/.test(this.resourcePath)) {
-    this.cacheable(false)
-  } else {
-    this.cacheable()
-  }
+  this.cacheable()
+
   const cb = this.async()
   const { resourcePath, queryObj } = parseRequest(this.resource)
   const id = queryObj.moduleId || queryObj.mid

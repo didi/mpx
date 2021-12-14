@@ -6,6 +6,7 @@ const parseRequest = require('./utils/parse-request')
 const matchCondition = require('./utils/match-condition')
 const fixUsingComponent = require('./utils/fix-using-component')
 const addQuery = require('./utils/add-query')
+const checkIsRuntimeComponent = require('./utils/check-is-runtime')
 const async = require('async')
 const processJSON = require('./web/processJSON')
 const processScript = require('./web/processScript')
@@ -14,13 +15,9 @@ const processTemplate = require('./web/processTemplate')
 const getJSONContent = require('./utils/get-json-content')
 const normalize = require('./utils/normalize')
 const path = require('path')
-const {
-  collectAliasTag,
-  setGlobalRuntimeComponent,
-  getGlobalRuntimeComponent
-} = require('./runtime-render/utils')
 const getEntryName = require('./utils/get-entry-name')
 const AppEntryDependency = require('./dependencies/AppEntryDependency')
+const RuntimeRender = require('./runtime-render')
 
 module.exports = function (content) {
   this.cacheable()
@@ -87,9 +84,9 @@ module.exports = function (content) {
   let output = ''
   const callback = this.async()
 
-  const globalRuntimeComponent = getGlobalRuntimeComponent()
-  let runtimeComponents = Object.keys(globalRuntimeComponent)
-  let componentsAbsolutePath = Object.assign({}, globalRuntimeComponent)
+  const globalRuntimeComponents = RuntimeRender.globalRuntimeComponents
+  const runtimeComponents = [...globalRuntimeComponents]
+  const componentInfoForRuntime = [...globalRuntimeComponents]
   async.waterfall([
     (callback) => {
       getJSONContent(parts.json || {}, loaderContext, (err, content) => {
@@ -107,67 +104,30 @@ module.exports = function (content) {
           return callback(e)
         }
         if (json.usingComponents) {
-          let localComponents = json.usingComponents
+          let usingComponents = json.usingComponents
+          // 收集 runtime 组件 -> name:hashName:absolutePath -> template-compiler
           // 解析自定义组件路径
           async.parallel(
-            Object.keys(localComponents).map(name => cb => {
-              this.resolve(path.dirname(this.resource), localComponents[name], (err, absolutePath) => {
+            Object.keys(usingComponents).map(name => _callback => {
+              this.resolve(path.dirname(this.resource), usingComponents[name], (err, absolutePath) => {
                 if (err) {
                   return callback(err)
                 }
-                componentsAbsolutePath[name] = absolutePath
-                // 保存到 mpx 对象上全局共享
-                mpx.componentsAbsolutePath[name] = absolutePath
-                // 以绝对路径缓存组件名
-                collectAliasTag(absolutePath, 'c' + mpx.pathHash(absolutePath))
-                cb(null, [name, absolutePath])
+                if (checkIsRuntimeComponent(absolutePath)) {
+                  if (!RuntimeRender.hasSubpackageHook) {
+                    RuntimeRender.addFinishSubpackagesMakeHook(mpx)
+                  }
+                  runtimeComponents.push(name)
+                }
+                // 局部自定义组件都需要 hash，保证基础模板组件名唯一
+                const hashTag = 'c' + mpx.pathHash(absolutePath)
+                componentInfoForRuntime.push(`${name}:${hashTag}:${absolutePath}`)
+                _callback()
               })
             }),
-            (err, res) => {
-              if (err) {
-                return callback(err)
-              }
-              // 读取自定义组件配置
-              async.parallel(res.map(item => cb => {
-                const name = item[0]
-                const absolutePath = item[1]
-                this.fs.readFile(absolutePath, (err, buffer) => {
-                  if (err) {
-                    callback(err)
-                  } else {
-                    const content = buffer.toString('utf8')
-                    // parseComponent 会做缓存
-                    const parts = parseComponent(content, {
-                      filePath: absolutePath,
-                      needMap: this.sourceMap,
-                      mode,
-                      env
-                    })
-                    // getJSONContent 会做缓存
-                    getJSONContent(parts.json || {}, loaderContext, path.dirname(absolutePath), (err, content) => {
-                      if (err) {
-                        return callback(err)
-                      }
-                      if (content) {
-                        try {
-                          content = JSON5.parse(content)
-                          if (content.runtimeCompile) {
-                            runtimeComponents.push(name)
-                          }
-                        } catch (e) {
-                          return callback(e)
-                        }
-                      }
-                      if (content && content.runtimeCompile) {
-                        runtimeComponents.push(name)
-                      }
-                    })
-                    cb()
-                  }
-                })
-              }), () => {
-                callback()
-              })
+            (err) => {
+              if (err) return callback(err)
+              callback()
             }
           )
         } else {
@@ -189,12 +149,10 @@ module.exports = function (content) {
       let usingComponents = [].concat(Object.keys(mpx.usingComponents))
 
       let componentGenerics = {}
-      let runtimeCompile = false
 
       if (parts.json && parts.json.content) {
         try {
           let ret = JSON5.parse(parts.json.content)
-          runtimeCompile = !!ret.runtimeCompile
           if (ret.usingComponents) {
             fixUsingComponent(ret.usingComponents, mode)
             usingComponents = usingComponents.concat(Object.keys(ret.usingComponents))
@@ -311,9 +269,9 @@ module.exports = function (content) {
         getRequire
       } = createHelpers(loaderContext)
 
-      // 如果是全局的运行时组件，收集起来
+      // 收集全局运行时组件
       if (ctorType === 'app' && runtimeComponents.length > 0) {
-        setGlobalRuntimeComponent(componentsAbsolutePath)
+        RuntimeRender.setGlobalRuntimeComponents(runtimeComponents)
       }
 
       // 注入模块id及资源路径
@@ -359,8 +317,8 @@ module.exports = function (content) {
           isNative,
           moduleId,
           usingComponents,
-          runtimeCompile,
-          runtimeComponents
+          runtimeComponents,
+          componentInfoForRuntime
           // 添加babel处理渲染函数中可能包含的...展开运算符
           // 由于...运算符应用范围极小以及babel成本极高，先关闭此特性后续看情况打开
           // needBabel: true

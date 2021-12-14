@@ -1,6 +1,4 @@
-import { isObject, isPlainObject } from '../../helper/utils'
-import { stringifyClass, stringifyStyle } from '../../helper/stringify'
-import contextMap from '../../vnode/context'
+import { isObject } from '../../helper/utils'
 
 function simpleNormalizeChildren (children) {
   for (var i = 0; i < children.length; i++) {
@@ -83,23 +81,6 @@ export default function renderHelperMixin () {
         // 通过 props 传递的 slots 函数
         let nodes = (this.slots && this.slots[name]) || fallback
         return nodes
-      },
-      __sc (...args) {
-        return stringifyClass(...args)
-      },
-      __ss (...args) {
-        return stringifyStyle(...args)
-      },
-      __a (tag) {
-        console.log(this.__mpxProxy.target.__aliasTags)
-      },
-      __b (...args) {
-        return args.reduce((res, arg) => {
-          return isPlainObject(arg) ? Object.assign(res, arg) : res
-        }, {})
-      },
-      _getRootContext (id) {
-        return contextMap.get(id)
       }
     }
   }

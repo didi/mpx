@@ -36,8 +36,8 @@ function composePropsToComputed (type, options = {}) {
         [key] () {
           const camelCaseKey = camelize(key)
           let value
-          if (this.bigAttrs) {
-            value = this.bigAttrs[key] || this.bigAttrs[camelCaseKey]
+          if (this.mpxAttrs) {
+            value = this.mpxAttrs[key] || this.mpxAttrs[camelCaseKey]
           }
           if (value === undefined || value === null) {
             value = getPropDefaultValue(this, props[key])
@@ -49,7 +49,7 @@ function composePropsToComputed (type, options = {}) {
     delete options.properties
     delete options.props
     options.properties = {
-      bigAttrs: {
+      mpxAttrs: {
         type: null
       },
       slots: {
@@ -84,7 +84,7 @@ export default function transferOptions (options, type) {
   const rawOptions = mergeOptions(options, type)
 
   if (currentInject && currentInject.runtimeCompile) {
-    // 所有的 mixins 都处理完成后，合并 properties/props 为单 bigAttrs 属性
+    // 所有的 mixins 都处理完成后，合并 properties/props 为单 mpxAttrs 属性
     composePropsToComputed(type, rawOptions)
   }
 

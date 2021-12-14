@@ -46,7 +46,7 @@ createComponent({
 {
   "component": true,
   "usingComponents": {
-    "element": "./mpx-custom-element.mpx"
+    // "element": "./mpx-custom-element.mpx"
   }
 }
 </script>

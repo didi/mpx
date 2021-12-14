@@ -14,13 +14,6 @@ const createJSONHelper = require('./helper')
 const RecordGlobalComponentsDependency = require('../dependencies/RecordGlobalComponentsDependency')
 const { MPX_DISABLE_EXTRACTOR_CACHE, RESOLVE_IGNORED_ERR, JSON_JS_EXT } = require('../utils/const')
 const resolve = require('../utils/resolve')
-const {
-  collectCustomComponentWxss,
-  collectAliasComponentPath,
-  setRuntimeComponent
-} = require('../runtime-render/utils')
-
-const renderCustomElementPath = path.resolve(__dirname, '../runtime-render/mpx-custom-element.mpx')
 
 module.exports = function (content) {
   const nativeCallback = this.async()
@@ -45,8 +38,6 @@ module.exports = function (content) {
   const globalSrcMode = mpx.srcMode
   const localSrcMode = queryObj.mode
   const srcMode = localSrcMode || globalSrcMode
-  const runtimeComponents = queryObj.runtimeComponents || []
-  const componentsAbsolutePath = mpx.componentsAbsolutePath || {}
 
   const isApp = !(pagesMap[resourcePath] || componentsMap[resourcePath])
   const publicPath = this._compilation.outputOptions.publicPath || ''
@@ -141,26 +132,6 @@ module.exports = function (content) {
     return callback(err)
   }
 
-  if (json.runtimeCompile) {
-    if (!json.usingComponents) {
-      json.usingComponents = {}
-    }
-
-    // 将 element 加入到编译的流程
-    if (!json.usingComponents['element']) {
-      json.usingComponents['element'] = renderCustomElementPath
-    }
-  }
-
-  const processRuntimeComponent = (jsonConfig) => {
-    setRuntimeComponent(this.resourcePath, !!jsonConfig.runtimeCompile)
-    if (jsonConfig.runtimeCompile) {
-      delete jsonConfig.runtimeCompile
-    }
-  }
-
-  processRuntimeComponent(json)
-
   // json补全
   if (pagesMap[resourcePath]) {
     // page
@@ -223,24 +194,16 @@ module.exports = function (content) {
     rulesRunner(json)
   }
 
-  const collectComponentInfoForRuntime = (componentName, componentPath) => {
-    collectAliasComponentPath(componentsAbsolutePath[componentName], componentPath)
-    if (runtimeComponents.includes(componentName)) {
-      collectCustomComponentWxss(`${componentPath}.wxss`)
-    }
-  }
-
   const processComponents = (components, context, callback) => {
     if (components) {
       async.eachOf(components, (component, name, callback) => {
-        processComponent(component, context, { relativePath }, (err, entry, { outputAbsolutePath }) => {
+        processComponent(component, context, { relativePath }, (err, entry) => {
           if (err === RESOLVE_IGNORED_ERR) {
             delete components[name]
             return callback()
           }
           if (err) return callback(err)
           components[name] = entry
-          collectComponentInfoForRuntime(name, outputAbsolutePath)
           callback()
         })
       }, callback)
