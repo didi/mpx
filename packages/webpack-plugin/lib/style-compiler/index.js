@@ -1,5 +1,6 @@
 const postcss = require('postcss')
 const loadPostcssConfig = require('./load-postcss-config')
+const { MPX_ROOT_VIEW, MPX_APP_MODULE_ID } = require('../utils/const')
 const trim = require('./plugins/trim')
 const rpx = require('./plugins/rpx')
 const vw = require('./plugins/vw')
@@ -16,12 +17,10 @@ module.exports = function (css, map) {
   const { resourcePath, queryObj } = parseRequest(this.resource)
   const id = queryObj.moduleId || queryObj.mid
   const mpx = this.getMpx()
+  const appInfo = mpx.appInfo
   const defs = mpx.defs
   const mode = mpx.mode
-  const packageName = queryObj.packageRoot || mpx.currentPackageRoot || 'main'
-  const componentsMap = mpx.componentsMap[packageName]
-  const pagesMap = mpx.pagesMap
-  const isApp = !(pagesMap[resourcePath] || componentsMap[resourcePath])
+  const isApp = resourcePath === appInfo.resourcePath
   const transRpxRulesRaw = mpx.transRpxRules
   const transRpxRules = transRpxRulesRaw ? (Array.isArray(transRpxRulesRaw) ? transRpxRulesRaw : [transRpxRulesRaw]) : []
 
@@ -40,13 +39,12 @@ module.exports = function (css, map) {
       },
       config.options
     )
-    // ali环境处理host选择器
+    // ali平台下处理scoped和host选择器
     if (mode === 'ali') {
+      if (queryObj.scoped) {
+        plugins.push(scopeId({ id }))
+      }
       plugins.push(transSpecial({ id }))
-    }
-
-    if (queryObj.scoped) {
-      plugins.push(scopeId({ id }))
     }
 
     plugins.push(pluginCondStrip({
@@ -86,7 +84,7 @@ module.exports = function (css, map) {
       .then(result => {
         // ali环境添加全局样式抹平root差异
         if (mode === 'ali' && isApp) {
-          result.css += '\n.mpx-root-view { display: inline; line-height: normal; }\n'
+          result.css += `\n.${MPX_ROOT_VIEW} { display: initial }\n.${MPX_APP_MODULE_ID} { line-height: normal }`
         }
         if (result.messages) {
           result.messages.forEach(({ type, file }) => {

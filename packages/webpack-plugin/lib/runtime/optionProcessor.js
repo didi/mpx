@@ -4,7 +4,7 @@ export default function processOption (
   option,
   ctorType,
   firstPage,
-  componentId,
+  outputPath,
   pageConfig,
   pagesMap,
   componentsMap,
@@ -25,23 +25,6 @@ export default function processOption (
       }
     }
 
-    // 注册v-ex-classes自定义指令处理externalClasses
-    Vue.directive('ex-classes', (el, binding, vnode) => {
-      const context = vnode.context
-      if (context) {
-        const externalClasses = context.$options.externalClasses || []
-        const classList = el.classList
-        binding.value.forEach((className) => {
-          const actualExternalClassNames = context.$attrs[className]
-          if (externalClasses.indexOf(className) !== -1 && actualExternalClassNames) {
-            classList.remove(className)
-            actualExternalClassNames.split(/\s+/).forEach((actualExternalClassName) => {
-              if (actualExternalClassName) classList.add(actualExternalClassName)
-            })
-          }
-        })
-      }
-    })
     Vue.directive('animation', (el, binding) => {
       const newActions = binding && binding.value && binding.value.actions
       if (el.actions === newActions) {
@@ -121,7 +104,9 @@ export default function processOption (
           redirect: '/' + firstPage
         })
       }
+      const webRouteConfig = global.__mpx.config.webRouteConfig
       global.__mpxRouter = option.router = new VueRouter({
+        ...webRouteConfig,
         routes: routes
       })
       global.__mpxRouter.stack = []
@@ -354,8 +339,8 @@ registered in parent context!`)
     option.mixins = [mixin]
   }
 
-  if (componentId) {
-    option.componentPath = '/' + componentId
+  if (outputPath) {
+    option.componentPath = '/' + outputPath
   }
 
   return option

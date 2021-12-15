@@ -3,7 +3,7 @@ const EntryPlugin = require('webpack/lib/EntryPlugin')
 const LimitChunkCountPlugin = require('webpack/lib/optimize/LimitChunkCountPlugin')
 const path = require('path')
 const WxsPlugin = require('./WxsPlugin')
-const RecordStaticResourceDependency = require('../dependencies/RecordStaticResourceDependency')
+const RecordResourceMapDependency = require('../dependencies/RecordResourceMapDependency')
 const parseRequest = require('../utils/parse-request')
 const toPosix = require('../utils/to-posix')
 const fixRelative = require('../utils/fix-relative')
@@ -14,7 +14,6 @@ module.exports = function () {
   const moduleGraph = this._compilation.moduleGraph
   const mpx = this.getMpx()
   const mode = mpx.mode
-  const appInfo = mpx.appInfo
   const getOutputPath = mpx.getOutputPath
   let { resourcePath, queryObj } = parseRequest(this.resource)
   const issuer = moduleGraph.getIssuer(this._module)
@@ -23,7 +22,7 @@ module.exports = function () {
   const pagesMap = mpx.pagesMap
   const componentsMap = mpx.componentsMap[issuerPackageName]
   const staticResourcesMap = mpx.staticResourcesMap[issuerPackageName]
-  const issuerName = issuerResourcePath === appInfo.resourcePath ? appInfo.name : (pagesMap[issuerResourcePath] || componentsMap[issuerResourcePath] || staticResourcesMap[issuerResourcePath])
+  const issuerName = pagesMap[issuerResourcePath] || componentsMap[issuerResourcePath] || staticResourcesMap[issuerResourcePath]
   const issuerDir = path.dirname(issuerName)
 
   const getName = (raw) => {
@@ -38,7 +37,7 @@ module.exports = function () {
   const packageRoot = queryObj.packageRoot || ''
   const ext = config[mode].wxs.ext
   const filename = toPosix(path.join(packageRoot, getOutputPath(resourcePath, ext.slice(1), { ext })))
-  this._module.addPresentationalDependency(new RecordStaticResourceDependency(resourcePath, filename, packageRoot))
+  this._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, 'staticResource', filename, packageRoot))
 
   const callback = (err) => {
     if (err) return nativeCallback(err)
@@ -48,7 +47,24 @@ module.exports = function () {
   }
 
   const outputOptions = {
-    filename
+    filename,
+    // 避免输出的wxs中包含es语法
+    environment: {
+      // The environment supports arrow functions ('() => { ... }').
+      arrowFunction: false,
+      // The environment supports BigInt as literal (123n).
+      bigIntLiteral: false,
+      // The environment supports const and let for variable declarations.
+      const: false,
+      // The environment supports destructuring ('{ a, b } = obj').
+      destructuring: false,
+      // The environment supports an async import() function to import EcmaScript modules.
+      dynamicImport: false,
+      // The environment supports 'for of' iteration ('for (const x of array) { ... }').
+      forOf: false,
+      // The environment supports ECMAScript Module syntax to import ECMAScript modules (import ... from '...').
+      module: false
+    }
   }
   // wxs文件必须经过pre-loader
   const request = '!!' + this.remainingRequest

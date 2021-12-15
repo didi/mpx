@@ -3,8 +3,8 @@ const loaderUtils = require('loader-utils')
 const parseRequest = require('./utils/parse-request')
 const toPosix = require('./utils/to-posix')
 const fixRelative = require('./utils/fix-relative')
-const normalize = require('./utils/normalize')
 const addQuery = require('./utils/add-query')
+const normalize = require('./utils/normalize')
 const { MPX_DISABLE_EXTRACTOR_CACHE, DEFAULT_RESULT_SOURCE } = require('./utils/const')
 
 module.exports = content => content
@@ -37,7 +37,7 @@ module.exports.pitch = async function (remainingRequest) {
   })
 
   let request = remainingRequest
-  // static的情况下需要添加recordLoader记录相关静态资源的输出路径
+  // static的情况下需要用record-loader记录相关静态资源的输出路径，不能直接在这里记录，需要确保在子依赖开始构建前完成记录，因为子依赖构建时可能就需要访问当前资源的输出路径
   if (isStatic) {
     const recordLoader = normalize.lib('record-loader')
     request = `${recordLoader}!${remainingRequest}`
@@ -51,6 +51,10 @@ module.exports.pitch = async function (remainingRequest) {
     }).join('\n')
   }
 
+  let resultSource = DEFAULT_RESULT_SOURCE
+
+  if (typeof content !== 'string') return resultSource
+
   const extractedInfo = {
     content,
     index
@@ -60,8 +64,6 @@ module.exports.pitch = async function (remainingRequest) {
     skipEmit: true,
     extractedInfo
   })
-
-  let resultSource = DEFAULT_RESULT_SOURCE
 
   const { buildInfo } = this._module
 

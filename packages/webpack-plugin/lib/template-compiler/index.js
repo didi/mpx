@@ -46,7 +46,7 @@ module.exports = function (raw) {
     )
   }
 
-  const parsed = compiler.parse(raw, {
+  const { root: ast, meta } = compiler.parse(raw, {
     warn,
     error,
     componentInfoForRuntime,
@@ -72,9 +72,6 @@ module.exports = function (raw) {
     hasVirtualHost: matchCondition(this.resourcePath, mpx.autoVirtualHostRules),
     setRuntimeComponentsMap: mpx.runtimeRender.setComponentsMap.bind(mpx.runtimeRender)
   })
-
-  let ast = parsed.root
-  let meta = parsed.meta
 
   if (meta.wxsContentMap) {
     for (let module in meta.wxsContentMap) {

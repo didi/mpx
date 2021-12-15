@@ -16,6 +16,8 @@ class AppEntryDependency extends NullDependency {
     const mpx = compilation.__mpx__
     const moduleGraph = compilation.moduleGraph
 
+    mpx.getEntryNode(module, 'app')
+
     if (mpx.appInfo.name) {
       const issuer = moduleGraph.getIssuer(module)
       const err = new Error(issuer

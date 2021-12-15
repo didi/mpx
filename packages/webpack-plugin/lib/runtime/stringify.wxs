@@ -93,7 +93,7 @@ function isDef (v) {
   return v !== undefined && v !== null
 }
 
-function stringifyClass (value) {
+function stringifyDynamicClass (value) {
   if (!value) return ''
   if (likeArray(value)) {
     return stringifyArray(value)
@@ -111,7 +111,7 @@ function stringifyArray (value) {
   var res = ''
   var stringified
   for (var i = 0; i < value.length; i++) {
-    if (isDef(stringified = stringifyClass(value[i])) && stringified !== '') {
+    if (isDef(stringified = stringifyDynamicClass(value[i])) && stringified !== '') {
       if (res) res += ' '
       res += stringified
     }
@@ -207,7 +207,7 @@ module.exports = {
     if (typeof staticClass !== 'string') {
       return console.log('Template attr class must be a string!')
     }
-    return concat(staticClass, stringifyClass(dynamicClass))
+    return concat(staticClass, stringifyDynamicClass(dynamicClass))
   },
   stringifyStyle: function (staticStyle, dynamicStyle) {
     var normalizedDynamicStyle = normalizeDynamicStyle(dynamicStyle)

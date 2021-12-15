@@ -1,9 +1,14 @@
-import { webHandleSuccess, webHandleFail } from '../../../common/js'
+import { webHandleSuccess, webHandleFail, isTabBarPage } from '../../../common/js'
 import { EventChannel } from '../event-channel'
 
 function redirectTo (options = {}) {
   const router = global.__mpxRouter
   if (router) {
+    if (isTabBarPage(options.url, router)) {
+      const res = { errMsg: 'redirectTo:fail can not redirectTo a tabBar page' }
+      webHandleFail(res, options.fail, options.complete)
+      return Promise.reject(res)
+    }
     router.__mpxAction = { type: 'redirect' }
     return new Promise((resolve, reject) => {
       router.replace(
@@ -28,6 +33,11 @@ function redirectTo (options = {}) {
 function navigateTo (options = {}) {
   const router = global.__mpxRouter
   if (router) {
+    if (isTabBarPage(options.url, router)) {
+      const res = { errMsg: 'navigateTo:fail can not navigateTo a tabBar page' }
+      webHandleFail(res, options.fail, options.complete)
+      return Promise.reject(res)
+    }
     const eventChannel = new EventChannel()
     router.__mpxAction = {
       type: 'to',
@@ -76,6 +86,7 @@ let reLaunchCount = 0
 function reLaunch (options = {}) {
   const router = global.__mpxRouter
   if (router) {
+    if (reLaunchCount === 0 && router.currentRoute.query.reLaunchCount) reLaunchCount = router.currentRoute.query.reLaunchCount
     const delta = router.stack.length - 1
     router.__mpxAction = {
       type: 'reLaunch',
@@ -121,7 +132,7 @@ function switchTab (options = {}) {
     const toRoute = router.match(options.url, router.history.current)
     const currentRoute = router.currentRoute
     if (toRoute.path !== currentRoute.path) {
-      if (toRoute.redirectedFrom) {
+      if (!isTabBarPage(options.url, router)) {
         const res = { errMsg: 'switchTab:fail can not switch to no-tabBar page!' }
         webHandleFail(res, options.fail, options.complete)
         return Promise.reject(res)

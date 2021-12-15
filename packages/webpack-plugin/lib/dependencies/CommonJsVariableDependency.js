@@ -1,5 +1,6 @@
 const ModuleDependency = require('webpack/lib/dependencies/ModuleDependency')
 const makeSerializable = require('webpack/lib/util/makeSerializable')
+const InitFragment = require('webpack/lib//InitFragment')
 
 class CommonJsVariableDependency extends ModuleDependency {
   constructor (request, name) {
@@ -44,7 +45,8 @@ CommonJsVariableDependency.Template = class CommonJsVariableDependencyTemplate e
       runtimeTemplate,
       moduleGraph,
       chunkGraph,
-      runtimeRequirements
+      runtimeRequirements,
+      initFragments
     }
   ) {
     if (!dep.name) return
@@ -57,7 +59,14 @@ CommonJsVariableDependency.Template = class CommonJsVariableDependencyTemplate e
       runtimeRequirements
     })
 
-    source.insert(0, `/* mpx cjs variable */ var ${dep.name} = ${requireExpr};\n`)
+    initFragments.push(
+      new InitFragment(
+        `/* mpx cjs variable */ var ${dep.name} = ${requireExpr};\n`,
+        InitFragment.STAGE_CONSTANTS,
+        1,
+        `mpx cjs variable ${dep.name}`
+      )
+    )
   }
 }
 

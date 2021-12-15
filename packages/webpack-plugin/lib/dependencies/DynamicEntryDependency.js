@@ -21,13 +21,13 @@ class DynamicEntryDependency extends NullDependency {
 
   get key () {
     const { resource, entryType, outputPath, packageRoot, relativePath, range } = this
-    return [resource, entryType, outputPath, packageRoot, relativePath, ...range].join('|')
+    return toPosix([resource, entryType, outputPath, packageRoot, relativePath, ...range].join('|'))
   }
 
   addEntry (compilation, callback) {
     const mpx = compilation.__mpx__
     const publicPath = compilation.outputOptions.publicPath || ''
-    let { resource, entryType, outputPath, relativePath } = this
+    let { resource, entryType, outputPath, relativePath, originEntryNode } = this
 
     const { packageRoot, outputPath: filename, alreadyOutputed } = mpx.getPackageInfo({
       resource,
@@ -59,7 +59,7 @@ class DynamicEntryDependency extends NullDependency {
       if (entryType === 'export') {
         mpx.exportModules.add(entryModule)
       }
-      // todo entry的父子关系可以在这里建立
+      originEntryNode.addChild(mpx.getEntryNode(entryModule, entryType))
       return callback(null, {
         resultPath,
         entryModule
@@ -70,6 +70,7 @@ class DynamicEntryDependency extends NullDependency {
   mpxAction (module, compilation, callback) {
     const mpx = compilation.__mpx__
     const { packageRoot } = this
+    this.originEntryNode = mpx.getEntryNode(module)
     // 分包构建在需要在主包构建完成后在finishMake中处理，返回的资源路径先用key来占位，在合成extractedAssets时再进行最终替换
     if (packageRoot && mpx.currentPackageRoot !== packageRoot) {
       mpx.subpackagesEntriesMap[packageRoot] = mpx.subpackagesEntriesMap[packageRoot] || []

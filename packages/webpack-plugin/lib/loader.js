@@ -17,6 +17,9 @@ const normalize = require('./utils/normalize')
 const path = require('path')
 const getEntryName = require('./utils/get-entry-name')
 const AppEntryDependency = require('./dependencies/AppEntryDependency')
+const RecordResourceMapDependency = require('./dependencies/RecordResourceMapDependency')
+const CommonJsVariableDependency = require('./dependencies/CommonJsVariableDependency')
+const { MPX_APP_MODULE_ID } = require('./utils/const')
 
 module.exports = function (content) {
   this.cacheable()
@@ -26,14 +29,13 @@ module.exports = function (content) {
     return content
   }
   const { resourcePath, queryObj } = parseRequest(this.resource)
-  const packageName = queryObj.packageRoot || mpx.currentPackageRoot || 'main'
+  const packageRoot = queryObj.packageRoot || mpx.currentPackageRoot
+  const packageName = packageRoot || 'main'
+  const isIndependent = queryObj.isIndependent
   const pagesMap = mpx.pagesMap
   const componentsMap = mpx.componentsMap[packageName]
-  const resolveMode = mpx.resolveMode
-  const projectRoot = mpx.projectRoot
   const mode = mpx.mode
   const env = mpx.env
-  const defs = mpx.defs
   const i18n = mpx.i18n
   const globalSrcMode = mpx.srcMode
   const localSrcMode = queryObj.mode
@@ -41,16 +43,6 @@ module.exports = function (content) {
   const vueContentCache = mpx.vueContentCache
   const autoScope = matchCondition(resourcePath, mpx.autoScopeRules)
   const runtimeRender = mpx.runtimeRender
-
-  // 支持资源query传入page或component支持页面/组件单独编译
-  if ((queryObj.component && !componentsMap[resourcePath]) || (queryObj.page && !pagesMap[resourcePath])) {
-    const entryName = getEntryName(this)
-    if (queryObj.component) {
-      componentsMap[resourcePath] = entryName || 'noEntryComponent'
-    } else {
-      pagesMap[resourcePath] = entryName || 'noEntryPage'
-    }
-  }
 
   let ctorType = 'app'
   if (pagesMap[resourcePath]) {
@@ -61,18 +53,18 @@ module.exports = function (content) {
     ctorType = 'component'
   }
 
-  if (ctorType === 'app') {
-    const appName = getEntryName(this)
-    this._module.addPresentationalDependency(new AppEntryDependency(resourcePath, appName))
+  // 支持资源query传入isPage或isComponent支持页面/组件单独编译
+  if (queryObj.isComponent || queryObj.isPage) {
+    const entryName = getEntryName(this) || (queryObj.isComponent ? 'noEntryComponent' : 'noEntryPage')
+    ctorType = queryObj.isComponent ? 'component' : 'page'
+    this._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, ctorType, entryName, packageRoot))
   }
 
   const loaderContext = this
   const stringifyRequest = r => loaderUtils.stringifyRequest(loaderContext, r)
   const isProduction = this.minimize || process.env.NODE_ENV === 'production'
-
   const filePath = resourcePath
-
-  const moduleId = 'm' + mpx.pathHash(filePath)
+  const moduleId = ctorType === 'app' ? MPX_APP_MODULE_ID : 'm' + mpx.pathHash(filePath)
 
   const parts = parseComponent(content, {
     filePath,
@@ -163,8 +155,8 @@ module.exports = function (content) {
 
       // 处理mode为web时输出vue格式文件
       if (mode === 'web') {
-        if (ctorType === 'app' && !queryObj.app) {
-          const request = addQuery(this.resource, { app: true })
+        if (ctorType === 'app' && !queryObj.isApp) {
+          const request = addQuery(this.resource, { isApp: true })
           output += `
       import App from ${stringifyRequest(request)}
       import Vue from 'vue'
@@ -185,20 +177,15 @@ module.exports = function (content) {
             async.parallel([
               (callback) => {
                 processTemplate(parts.template, {
+                  loaderContext,
                   hasScoped,
                   hasComment,
                   isNative,
-                  mode,
                   srcMode,
-                  defs,
-                  loaderContext,
                   moduleId,
                   ctorType,
                   usingComponents,
-                  componentGenerics,
-                  decodeHTMLText: mpx.decodeHTMLText,
-                  externalClasses: mpx.externalClasses,
-                  checkUsingComponents: mpx.checkUsingComponents
+                  componentGenerics
                 }, callback)
               },
               (callback) => {
@@ -210,15 +197,9 @@ module.exports = function (content) {
               },
               (callback) => {
                 processJSON(parts.json, {
-                  mode,
-                  env,
-                  resolveMode,
                   loaderContext,
                   pagesMap,
-                  pagesEntryMap: mpx.pagesEntryMap,
-                  pathHash: mpx.pathHash,
-                  componentsMap,
-                  projectRoot
+                  componentsMap
                 }, callback)
               }
             ], (err, res) => {
@@ -234,23 +215,20 @@ module.exports = function (content) {
             }
 
             processScript(parts.script, {
+              loaderContext,
               ctorType,
               srcMode,
-              loaderContext,
               isProduction,
-              i18n,
               componentGenerics,
-              projectRoot,
               jsonConfig: jsonRes.jsonObj,
-              componentId: queryObj.componentId || '',
+              outputPath: queryObj.outputPath || '',
               tabBarMap: jsonRes.tabBarMap,
               tabBarStr: jsonRes.tabBarStr,
               builtInComponentsMap: templateRes.builtInComponentsMap,
               genericsInfo: templateRes.genericsInfo,
               wxsModuleMap: templateRes.wxsModuleMap,
               localComponentsMap: jsonRes.localComponentsMap,
-              localPagesMap: jsonRes.localPagesMap,
-              forceDisableBuiltInLoader: mpx.forceDisableBuiltInLoader
+              localPagesMap: jsonRes.localPagesMap
             }, callback)
           }
         ], (err, scriptRes) => {
@@ -259,6 +237,19 @@ module.exports = function (content) {
           vueContentCache.set(filePath, output)
           callback(null, output)
         })
+      }
+
+      const moduleGraph = this._compilation.moduleGraph
+
+      const issuer = moduleGraph.getIssuer(this._module)
+
+      if (issuer) {
+        return callback(new Error(`Current ${ctorType} [${this.resourcePath}] is issued by [${issuer.resource}], which is not allowed!`))
+      }
+
+      if (ctorType === 'app') {
+        const appName = getEntryName(this)
+        this._module.addPresentationalDependency(new AppEntryDependency(resourcePath, appName))
       }
 
       const {
@@ -279,14 +270,22 @@ module.exports = function (content) {
       if (!isProduction) {
         output += `global.currentResource = ${JSON.stringify(filePath)}\n`
       }
-      if (ctorType === 'app' && i18n) {
-        output += `global.i18n = ${JSON.stringify({ locale: i18n.locale, version: 0 })}\n`
-
+      // todo 对于独立分包支持将app.mpx中的script block作为独立分包入口逻辑注入到所有页面和组件中，将独立分包i18n的注入也迁移到入口逻辑中
+      // 为app或独立分包入口注入i18n
+      if (i18n && (ctorType === 'app' || isIndependent)) {
         const i18nWxsPath = normalize.lib('runtime/i18n.wxs')
         const i18nWxsLoaderPath = normalize.lib('wxs/i18n-loader.js')
         const i18nWxsRequest = i18nWxsLoaderPath + '!' + i18nWxsPath
+        const i18nMethodsVar = 'i18nMethods'
+        this._module.addDependency(new CommonJsVariableDependency(i18nWxsRequest, i18nMethodsVar))
 
-        output += `global.i18nMethods = require(${loaderUtils.stringifyRequest(loaderContext, i18nWxsRequest)})\n`
+        output += `if (!global.i18n) {
+  global.i18n = ${JSON.stringify({
+    locale: i18n.locale,
+    version: 0
+  })}
+  global.i18nMethods = ${i18nMethodsVar}
+}\n`
       }
       // 注入构造函数
       let ctor = 'App'
@@ -359,28 +358,17 @@ module.exports = function (content) {
       // script
       output += '/* script */\n'
       let scriptSrcMode = srcMode
-      const script = parts.script
+      // 给予script默认值, 确保生成js request以自动补全js
+      const script = parts.script || {}
       if (script) {
         scriptSrcMode = script.mode || scriptSrcMode
         if (scriptSrcMode) output += `global.currentSrcMode = ${JSON.stringify(scriptSrcMode)}\n`
-        const extraOptions = {}
+        // 传递ctorType以补全js内容
+        const extraOptions = {
+          ctorType
+        }
         if (script.src) extraOptions.resourcePath = resourcePath
         output += getRequire('script', script, extraOptions) + '\n'
-      } else {
-        switch (ctorType) {
-          case 'app':
-            output += 'import {createApp} from "@mpxjs/core"\n' +
-              'createApp({})\n'
-            break
-          case 'page':
-            output += 'import {createPage} from "@mpxjs/core"\n' +
-              'createPage({})\n'
-            break
-          case 'component':
-            output += 'import {createComponent} from "@mpxjs/core"\n' +
-              'createComponent({})\n'
-        }
-        output += '\n'
       }
       callback(null, output)
     }

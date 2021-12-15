@@ -9,6 +9,7 @@ class FlagPluginDependency extends NullDependency {
   mpxAction (module, compilation, callback) {
     const mpx = compilation.__mpx__
     mpx.isPluginMode = true
+    mpx.getEntryNode(module, 'plugin')
     return callback()
   }
 }
