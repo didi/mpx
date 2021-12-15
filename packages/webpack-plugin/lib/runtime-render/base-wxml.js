@@ -22,7 +22,6 @@ function setCustomEle (el) {
 }
 
 function setBaseEle (el) {
-  // injectComponentConfig.includes.add(tag)
   let aliasTag = ''
   let hasEvents = false
   let usingHashTag = false
@@ -37,7 +36,7 @@ function setBaseEle (el) {
     if (eventObj) { // 事件的格式化
       key = `${eventObj.prefix}:${eventObj.eventName}`
       hasEvents = true
-      // 使用了特殊事件的节点
+      // 使用了特殊事件的节点，单独生成一个 hashTag
       if (['catch', 'capture-bind', 'capture-catch'].includes(eventObj.prefix)) {
         usingHashTag = true
       }

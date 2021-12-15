@@ -27,9 +27,6 @@ createComponent({
       const data = this.r.data || {}
       return data
     },
-    vnodeId () {
-      return this.r.nodeId
-    },
     vnodeRootContext () {
       const moduleId = this.vnodeData.moduleId
       return this._getRootContext(moduleId)

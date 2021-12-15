@@ -69,7 +69,8 @@ module.exports = function (raw) {
     checkUsingComponents: mpx.checkUsingComponents,
     globalComponents: Object.keys(mpx.usingComponents),
     forceProxyEvent: matchCondition(this.resourcePath, mpx.forceProxyEventRules) || runtimeCompile,
-    hasVirtualHost: matchCondition(this.resourcePath, mpx.autoVirtualHostRules)
+    hasVirtualHost: matchCondition(this.resourcePath, mpx.autoVirtualHostRules),
+    setRuntimeComponentsMap: mpx.runtimeRender.setComponentsMap.bind(mpx.runtimeRender)
   })
 
   let ast = parsed.root
@@ -106,7 +107,7 @@ module.exports = function (raw) {
             injectSlots[key][slotTarget] = []
             slotRenderFn[slotTarget].map(rawFn => {
               const code = bindThis(rawFn, {
-                needCollect: true,
+                needCollect: false,
                 ignoreMap: meta.wxsModuleMap
               }).code
               injectSlots[key][slotTarget].push(code.slice(0, -1))
@@ -129,7 +130,7 @@ module.exports = function (raw) {
     let renderFn = compiler.genElement(ast)
     try {
       bindResult = bindThis(renderFn, {
-        needCollect: true,
+        needCollect: false,
         ignoreMap: meta.wxsModuleMap
       })
       bindResult.code = `global.currentInject = {
@@ -203,7 +204,7 @@ global.currentInject.injectComputed = {
   if (meta.refs) {
     resultSource += `
 global.currentInject.getRefsData = function (needRuntimeRef) {
-  return ${JSON.stringify(meta.refs)}.filter(function (ref) { return ref.runtimeRef === !!needRuntimeRef });
+  return ${JSON.stringify(meta.refs)};
 };\n`
   }
 

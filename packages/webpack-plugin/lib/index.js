@@ -1,7 +1,7 @@
 'use strict'
 
 const path = require('path')
-const { AsyncSeriesHook, SyncHook } = require('tapable')
+const { AsyncSeriesHook } = require('tapable')
 const { ConcatSource, RawSource } = require('webpack').sources
 const ResolveDependency = require('./dependencies/ResolveDependency')
 const InjectDependency = require('./dependencies/InjectDependency')
@@ -37,10 +37,6 @@ const matchCondition = require('./utils/match-condition')
 const { preProcessDefs } = require('./utils/index')
 const config = require('./config')
 const hash = require('hash-sum')
-const {
-  addCustomComponentWxss,
-  getInjectedComponentMap
-} = require('./runtime-render/utils')
 const injectComponentConfig = require('./runtime-render/inject-component-config')
 const { unRecursiveTemplate } = require('./runtime-render/wx-template')
 const wxssLoaderPath = normalize.lib('wxss/loader')
@@ -629,18 +625,13 @@ class MpxWebpackPlugin {
               alreadyOutputed
             }
           },
+          // 需要缓存每次的配置信息
+          runtimeRender: new RuntimeRender(compilation),
           hooks: {
-            finishSubpackagesMake: new AsyncSeriesHook(['compilation']),
-            afterResolveDynamicEntryDependency: new SyncHook(['resultPath', 'resource'])
+            finishSubpackagesMake: new AsyncSeriesHook(['compilation'])
           }
         }
       }
-
-      mpx.hooks.afterResolveDynamicEntryDependency.tap('MpxWebpackPlugin', (resultPath, resource) => {
-        // 收集所有产出路径
-        const { resourcePath } = parseRequest(resource)
-        RuntimeRender.setInjectedComponentsMap(resourcePath, { resultPath })
-      })
 
       const rawProcessModuleDependencies = compilation.processModuleDependencies
       compilation.processModuleDependencies = (module, callback) => {
@@ -804,25 +795,28 @@ class MpxWebpackPlugin {
             }
           })
 
-          if (/app\.json/.test(filename)) {
+          // 将 element 作为全局组件注入
+          // 将运行时组件注入 element 配置中，保证在其上下文中渲染
+          if (/(app|mpx-custom-element)\.json/.test(filename)) {
             let _content = JSON.parse(source.source())
             if (!_content.usingComponents) {
               _content.usingComponents = {}
             }
-            Object.assign(_content.usingComponents, RuntimeRender.injectedComponentsMap)
+            const isAppJson = filename.includes('app.json')
+            Object.assign(_content.usingComponents, mpx.runtimeRender.getInjectComponents(isAppJson))
             let res = new ConcatSource()
             res.add(JSON.stringify(_content, null, 2))
             source = res
           }
-          // 基础模板信息注入
+          // 动态生成基础模板信息并注入
           if (/mpx-render-base\w*\.wxml/.test(filename)) {
             source.add(unRecursiveTemplate.buildTemplate(injectComponentConfig))
           }
 
           // 运行时组件的样式注入
-          if (/mpx-custom-element\.wxss/.test(filename)) {
+          if (/mpx-custom-element\w*\.wxss/.test(filename)) {
             let res = new ConcatSource()
-            res.add(addCustomComponentWxss())
+            res.add(mpx.runtimeRender.injectedWxss)
             res.add(source.source())
             source = res
           }

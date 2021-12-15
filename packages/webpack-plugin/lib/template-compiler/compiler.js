@@ -10,7 +10,6 @@ const transDynamicClassExpr = require('./trans-dynamic-class-expr')
 const dash2hump = require('../utils/hump-dash').dash2hump
 const { inBrowser } = require('../utils/env')
 const hash = require('hash-sum')
-const RuntimeRender = require('../runtime-render/index')
 const { transformSlotsToString } = require('../runtime-render/utils')
 const setBaseWxml = require('../runtime-render/base-wxml')
 
@@ -1612,15 +1611,6 @@ function postProcessIf (el, options, currentParent) {
     }
   }
   if (attrs) {
-    /**
-     * 针对运行时组件或者是在非运行时组件内有运行时组件包裹的 slot，都需要走运行时编译
-     */
-    // if (options && options.runtimeCompile || hasRuntimeCompileWrapper(el)) {
-    //   const { name } = attrs[0]
-    //   if (name === config[mode].directive.elseif || name === config[mode].directive.else) {
-    //     return processIfConditions(el, currentParent)
-    //   }
-    // }
     addAttrs(el, attrs)
   }
 }
@@ -2185,13 +2175,13 @@ function postProcessRuntime (el, options, meta) {
 
   // 节点收集：运行时组件里面的节点都需要收集，或者是非运行时组件里面的运行时组件 slot 内容
   // 被注入到基础模板的节点，运行时渲染都需要唯一 tag
-  if (options.runtimeCompile || isInnerComponent) {
+  if (options.runtimeCompile || el.isRuntimeComponent || isInnerComponent) {
     const tag = el.tag
     const { hashName, absolutePath } = (options.componentInfoForRuntime && options.componentInfoForRuntime[tag]) || {}
     if (hashName && absolutePath) {
       el.aliasTag = hashName
       // 这里只收集绝对路径和 hashName，实际的产出路径在 addEntry 里面的钩子去收集
-      RuntimeRender.setComponentsMap(absolutePath, hashName)
+      options.setRuntimeComponentsMap(absolutePath, hashName)
     }
 
     setBaseWxml(el, isCustomComponent)

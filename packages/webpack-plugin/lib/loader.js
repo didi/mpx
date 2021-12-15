@@ -17,7 +17,6 @@ const normalize = require('./utils/normalize')
 const path = require('path')
 const getEntryName = require('./utils/get-entry-name')
 const AppEntryDependency = require('./dependencies/AppEntryDependency')
-const RuntimeRender = require('./runtime-render')
 
 module.exports = function (content) {
   this.cacheable()
@@ -41,6 +40,7 @@ module.exports = function (content) {
   const srcMode = localSrcMode || globalSrcMode
   const vueContentCache = mpx.vueContentCache
   const autoScope = matchCondition(resourcePath, mpx.autoScopeRules)
+  const runtimeRender = mpx.runtimeRender
 
   // 支持资源query传入page或component支持页面/组件单独编译
   if ((queryObj.component && !componentsMap[resourcePath]) || (queryObj.page && !pagesMap[resourcePath])) {
@@ -84,9 +84,8 @@ module.exports = function (content) {
   let output = ''
   const callback = this.async()
 
-  const globalRuntimeComponents = RuntimeRender.globalRuntimeComponents
-  const runtimeComponents = [...globalRuntimeComponents]
-  const componentInfoForRuntime = [...globalRuntimeComponents]
+  const runtimeComponents = []
+  const componentInfoForRuntime = []
   async.waterfall([
     (callback) => {
       getJSONContent(parts.json || {}, loaderContext, (err, content) => {
@@ -114,9 +113,6 @@ module.exports = function (content) {
                   return callback(err)
                 }
                 if (checkIsRuntimeComponent(absolutePath)) {
-                  if (!RuntimeRender.hasSubpackageHook) {
-                    RuntimeRender.addFinishSubpackagesMakeHook(mpx)
-                  }
                   runtimeComponents.push(name)
                 }
                 // 局部自定义组件都需要 hash，保证基础模板组件名唯一
@@ -271,7 +267,11 @@ module.exports = function (content) {
 
       // 收集全局运行时组件
       if (ctorType === 'app' && runtimeComponents.length > 0) {
-        RuntimeRender.setGlobalRuntimeComponents(runtimeComponents)
+        runtimeRender.setGlobalRuntimeComponents(runtimeComponents)
+      }
+      if (runtimeRender && runtimeRender.globalRuntimeComponents.length > 0) {
+        runtimeComponents.push(...runtimeRender.globalRuntimeComponents)
+        componentInfoForRuntime.push(...runtimeRender.globalRuntimeComponents)
       }
 
       // 注入模块id及资源路径
