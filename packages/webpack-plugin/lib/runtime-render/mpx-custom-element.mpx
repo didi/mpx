@@ -7,7 +7,6 @@
 // element 里面需要承载所有需要走运行时渲染的组件
 import { createComponent } from '@mpxjs/core'
 
-// 上层的 vnode 渲染好的时候，所有的事件已经被缓存，在 element 直接绑定全部缓存好的事件即可
 createComponent({
   options: {
     addGlobalClass: true,
@@ -18,18 +17,21 @@ createComponent({
     r: { // 递归渲染数据
       type: Object,
       value: {
-        nodeType: 'view'
+        nodeType: 'block'
       }
     }
+  },
+  data: {
+    // 运行时组件的标识
+    mpxCustomElement: true
   },
   computed: {
     vnodeData () {
       const data = this.r.data || {}
       return data
     },
-    vnodeRootContext () {
-      const moduleId = this.vnodeData.moduleId
-      return this._getRootContext(moduleId)
+    rootModuleId () {
+      return this.vnodeData.moduleId
     }
   }
 })
@@ -42,8 +44,6 @@ createComponent({
 <script type="application/json">
 {
   "component": true,
-  "usingComponents": {
-    // "element": "./mpx-custom-element.mpx"
-  }
+  "usingComponents": {}
 }
 </script>

@@ -95,9 +95,7 @@ module.exports = class RuntimeRender {
 
   getInjectComponents (isAppJson) {
     if (isAppJson) {
-      return {
-        element: this.outputPath + MPX_CUSTOM_ELEMENT
-      }
+      return this.hasSubpackageHook ? { element: this.outputPath + MPX_CUSTOM_ELEMENT } : {}
     } else {
       return this.injectedComponentsMap
     }

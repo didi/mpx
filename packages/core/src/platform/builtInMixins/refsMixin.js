@@ -137,27 +137,9 @@ export default function getRefsMixin () {
     methods: {
       ...aliMethods,
       __getRefs () {
-        // 运行时编译组件获取 ref 节点
-        const vnodeRootContext = this.vnodeRootContext || contextMap.get(this.id)
-        if (vnodeRootContext) {
-          const needRuntimeRef = true
-          const refsArr = vnodeRootContext.__getRefsData && vnodeRootContext.__getRefsData(needRuntimeRef)
-          if (Array.isArray(refsArr)) {
-            refsArr.forEach((ref) => {
-              if (!vnodeRootContext.$refs[ref.key]) {
-                const refNode = this.__getRefNode(ref)
-                if (refNode) {
-                  Object.defineProperty(vnodeRootContext.$refs, ref.key, {
-                    enumerable: true,
-                    configurable: true,
-                    get: () => {
-                      return refNode
-                    }
-                  })
-                }
-              }
-            })
-          }
+        // 如果是在运行时组件的上下文渲染
+        if (this.mpxCustomElement) {
+          this.__getRuntimeRefs()
         }
         if (this.__getRefsData) {
           const refs = this.__getRefsData()
@@ -185,6 +167,29 @@ export default function getRefsMixin () {
             })
           } else {
             return ref.all ? this.selectAllComponents(selector) : this.selectComponent(selector)
+          }
+        }
+      },
+      __getRuntimeRefs () {
+        // 获取这个运行时组件根上下文
+        const vnodeRootContext = contextMap.get(this.rootModuleId)
+        if (vnodeRootContext) {
+          const refsArr = vnodeRootContext.__getRefsData && vnodeRootContext.__getRefsData()
+          if (Array.isArray(refsArr)) {
+            refsArr.forEach((ref) => {
+              if (!vnodeRootContext.$refs[ref.key]) {
+                const refNode = this.__getRefNode(ref)
+                if (refNode) {
+                  Object.defineProperty(vnodeRootContext.$refs, ref.key, {
+                    enumerable: true,
+                    configurable: true,
+                    get: () => {
+                      return refNode
+                    }
+                  })
+                }
+              }
+            })
           }
         }
       }

@@ -1,11 +1,11 @@
 const { wx } = require('../config')
 const injectComponentConfig = require('./inject-component-config')
-const hasExtractAttrs = require('./has-extract-attrs')
+const { hasExtractAttr } = require('./utils')
 const hash = require('hash-sum')
 
-const directives = new Set(Object.keys(wx.directive).map(key => wx.directive[key]))
+const directives = new Set([...Object.keys(wx.directive).map(key => wx.directive[key]), 'slot'])
 
-const SPECIAL_NODES = ['view', 'text', 'image']
+const OPTIMIZE_NODES = ['view', 'text', 'image']
 
 let hashIndex = 0
 
@@ -14,7 +14,10 @@ function setCustomEle (el) {
   const attrKeys = Object.keys(el.attrsMap).filter(key => !directives.has(key))
   const collection = el.isRuntimeComponent ? injectComponentConfig.runtimeComponents : injectComponentConfig.thirdPartyComponents
   if (tag && !collection.get(tag)) {
-    collection.set(tag, new Set([...attrKeys, ...['slots', 'mpxAttrs']]))
+    if (el.isRuntimeComponent) {
+      attrKeys.push('slots', 'mpxAttrs')
+    }
+    collection.set(tag, new Set(attrKeys))
   } else {
     const attrs = collection.get(tag)
     attrKeys.map(key => attrs.add(key))
@@ -45,9 +48,9 @@ function setBaseEle (el) {
   })
 
   // 节点类型的优化
-  if (SPECIAL_NODES.includes(el.tag) && !hasEvents) {
+  if (OPTIMIZE_NODES.includes(el.tag) && !hasEvents) {
     aliasTag = `static-${rawTag}`
-    if (rawTag === 'view' && !hasExtractAttrs(el)) {
+    if (rawTag === 'view' && !hasExtractAttr(el)) {
       aliasTag = 'pure-view'
     }
   }

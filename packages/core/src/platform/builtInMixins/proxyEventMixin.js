@@ -27,8 +27,8 @@ export default function proxyEventMixin () {
         throw new Error(`[${type}] event object must have [currentTarget/target] property!`)
       }
       const eventConfigs = target.dataset.eventconfigs || {}
+      const rootModuleId = target.dataset.mid
       const curEventConfig = eventConfigs[type] || eventConfigs[fallbackType] || []
-      const moduleId = target.id
       let returnedValue
       curEventConfig.forEach((item) => {
         const callbackName = item[0]
@@ -52,8 +52,8 @@ export default function proxyEventMixin () {
           }) : [$event]
           if (typeof this[callbackName] === 'function') {
             returnedValue = this[callbackName].apply(this, params)
-          } else if (contextMap.get(moduleId)) { // 获取运行时组件的上下文
-            const context = contextMap.get(moduleId)
+          } else if (contextMap.get(rootModuleId)) { // 获取运行时组件的上下文
+            const context = contextMap.get(rootModuleId)
             returnedValue = context[callbackName].apply(context, params)
           } else {
             const location = this.__mpxProxy && this.__mpxProxy.options.mpxFileResource

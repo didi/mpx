@@ -6,9 +6,9 @@ const contextMap = {
   },
   get (id) {
     if (!id) {
-      return {}
+      return null
     }
-    return cache[id] || {}
+    return cache[id]
   }
 }
 

@@ -72,7 +72,7 @@ export default function renderHelperMixin () {
       // createEmptyVNode
       __e () {
         return {
-          nodeType: '',
+          nodeType: 'block',
           content: ''
         }
       },

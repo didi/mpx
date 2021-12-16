@@ -200,7 +200,7 @@ global.currentInject.injectComputed = {
 
   if (meta.refs) {
     resultSource += `
-global.currentInject.getRefsData = function (needRuntimeRef) {
+global.currentInject.getRefsData = function () {
   return ${JSON.stringify(meta.refs)};
 };\n`
   }

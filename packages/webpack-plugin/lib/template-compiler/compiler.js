@@ -11,7 +11,7 @@ const transDynamicClassExpr = require('./trans-dynamic-class-expr')
 const dash2hump = require('../utils/hump-dash').dash2hump
 const { inBrowser } = require('../utils/env')
 const hash = require('hash-sum')
-const { transformSlotsToString } = require('../runtime-render/utils')
+const { transformSlotsToString, isCommonAttr } = require('../runtime-render/utils')
 const setBaseWxml = require('../runtime-render/base-wxml')
 
 let hashIndex = 0
@@ -1408,8 +1408,7 @@ function processRef (el, options, meta) {
       key: val,
       selector: `.${refClassName}`,
       type,
-      all,
-      runtimeRef: hasRuntimeCompileWrapper(el) // 获取运行时组件的 ref
+      all
     })
   }
 
@@ -2246,7 +2245,7 @@ function postProcessRuntime (el, options, meta) {
     const { hashName, absolutePath } = (options.componentInfoForRuntime && options.componentInfoForRuntime[tag]) || {}
     if (hashName && absolutePath) {
       el.aliasTag = hashName
-      // 这里只收集绝对路径和 hashName，实际的产出路径在 addEntry 里面的钩子去收集
+      // 这里只收集绝对路径和 hashName，实际的产出路径在 mpx.componentsMap 当中获取
       options.setRuntimeComponentsMap(absolutePath, hashName)
     }
 
@@ -2267,36 +2266,10 @@ function postProcessRuntime (el, options, meta) {
 
   // 在非运行时组件里面使用运行时组件时，属性的聚合绑定处理
   if (!options.runtimeCompile && el.isRuntimeComponent && !isInnerComponent) {
-    const attr = 'mpxAttrs'
-    const { has, val } = getAndRemoveAttr(el, attr)
-    let composeAttrs = composeMpxAttrs(el)
-    if (composeAttrs) {
-      composeAttrs = `{${composeAttrs}}`
-      if (has) {
-        const { hasBinding, result } = parseMustache(val)
-        addAttrs(el, [{
-          name: attr,
-          value: `{{${stringifyModuleName}.extend(${composeAttrs}, ${hasBinding ? result : val})}}`
-        }])
-      } else {
-        addAttrs(el, [{
-          name: attr,
-          value: `{{ ${composeAttrs} }}`
-        }])
-      }
-    } else {
-      if (has) {
-        addAttrs(el, [{
-          name: attr,
-          value: val
-        }])
-      }
-    }
-
-    // 添加 id 标识
+    const composeAttrs = _genData(el, true)
     addAttrs(el, [{
-      name: 'id',
-      value: `${el.moduleId}`
+      name: 'mpxAttrs',
+      value: `{{ ${composeAttrs} }}`
     }])
   }
 }
@@ -2567,35 +2540,49 @@ function _genComponent (componentName, node) {
   })`
 }
 
-const ignoreKeysForMpxAttrs = new Set(['id', 'slots'])
-
 // 自定义属性的合并
-function composeMpxAttrs (node) {
-  const attrsArr = []
-  let newKey = ''
+function _genData (node, forWxml) {
+  const attrsArr = [`moduleId: "${node.moduleId}"`]
+  let mpxAttrs = null
+
+  // 非运行时组件里面注入的 runtimeSlots 需要单独生成 slotRenderFn 注入
+  if (node.isRuntimeComponent && hasRuntimeCompileWrapper(node) && node.children.length > 0) {
+    attrsArr.push(`slots: ${transformSlotsToString(_genSlotRenderFn(node.children))}`)
+    node.children = []
+  }
+
   Object.keys(node.attrsMap).map(key => {
     // 内置指令、保留字段、事件 等属性过滤掉
-    if (!directivesSet.has(key) && !ignoreKeysForMpxAttrs.has(key) && !config[mode].event.parseEvent(key)) {
-      // 模板里面 key 不能带单引号
-      newKey = camelize(key)
-      // newKey = forWxml ? camelCaseKey : `'${camelCaseKey}'`
-      // 单属性名定义 <view props1></view> 类型写法，默认将 props1 处理为 boolean 类型
-      if (node.attrsMap[key] === undefined) {
-        attrsArr.push(`${newKey}: true`)
-        return
-      }
+    if (directivesSet.has(key) || config[mode].event.parseEvent(key) || (forWxml && isCommonAttr(key))) {
+      return
+    }
+    const newKey = camelize(key)
+    const parsed = parseMustache(node.attrsMap[key])
+    let value = parsed.hasBinding ? parsed.result : `'${parsed.val}'`
 
-      const parsed = parseMustache(node.attrsMap[key])
-      let value = parsed.hasBinding ? parsed.result : `'${parsed.val}'`
-      attrsArr.push(`${newKey}: ${value}`)
+    if (key === 'mpxAttrs') {
+      mpxAttrs = value
+      getAndRemoveAttr(node, key)
+      return
+    }
 
-      // if (forWxml) {
-      //   getAndRemoveAttr(node, key)
-      // }
+    // 单属性名定义 <view prop></view> 类型写法，默认将 props1 处理为 boolean 类型
+    if (node.attrsMap[key] === undefined) {
+      value = true
+    }
+
+    attrsArr.push(`${newKey}: ${value}`)
+
+    if (forWxml) {
+      getAndRemoveAttr(node, key)
     }
   })
 
-  return `${attrsArr.join(',')}`
+  if (mpxAttrs) {
+    return `${stringifyModuleName}.extend({${attrsArr.join(',')}}, ${mpxAttrs})`
+  } else {
+    return `{${attrsArr.join(',')}}`
+  }
 }
 
 function _genSlotRenderFn (astNodes) {
@@ -2616,54 +2603,16 @@ function _genSlotRenderFn (astNodes) {
   return slots
 }
 
-function _genData (node, forWxml) {
-  const attrsArr = [`moduleId: "${node.moduleId}"`]
-  let newKey = ''
-  let mpxAttrs = null
-
-  // 非运行时组件里面注入的 runtimeSlots 需要单独生成 slotRenderFn 注入
-  if (node.isRuntimeComponent && hasRuntimeCompileWrapper(node) && node.children.length > 0) {
-    attrsArr.push(`slots: ${transformSlotsToString(_genSlotRenderFn(node.children))}`)
-    node.children = []
-  }
-
-  Object.keys(node.attrsMap).map(key => {
-    // 内置指令、事件 等属性过滤掉
-    if (!directivesSet.has(key) && !config[mode].event.parseEvent(key)) {
-      // 模板里面 key 不能带单引号
-      const camelCaseKey = camelize(key)
-      newKey = forWxml ? camelCaseKey : `'${camelCaseKey}'`
-
-      const parsed = parseMustache(node.attrsMap[key])
-      let value = parsed.hasBinding ? parsed.result : `'${parsed.val}'`
-
-      if (key === 'mpxAttrs') {
-        mpxAttrs = value
-        return
-      }
-
-      // 单属性名定义 <view props1></view> 类型写法，默认将 props1 处理为 boolean 类型
-      if (node.attrsMap[key] === undefined) {
-        value = true
-      }
-
-      attrsArr.push(`${newKey}: ${value}`)
-
-      if (forWxml) {
-        getAndRemoveAttr(node, key)
-      }
-    }
-  })
-
-  if (mpxAttrs) {
-    return `${stringifyModuleName}.extend({${attrsArr.join(',')}}, ${mpxAttrs})`
-  } else {
-    return `{${attrsArr.join(',')}}`
-  }
-}
-
 function _genBlock (node) {
-  return `this.__c('block', ${_genChildren(node)})`
+  let data = '{}'
+  // 如果是顶层根节点，获取当前所在的根 moduleId，用以保证上下文的正确性
+  // case1: 运行时包裹运行时
+  // case2: 非运行时包裹运行时
+  if (!node.parent && !node.moduleId && node.tag === 'temp-node') {
+    node.moduleId = node.children && node.children[0] && node.children[0].moduleId
+    data = `{ moduleId: this.mpxAttrs && this.mpxAttrs.moduleId ? this.mpxAttrs.moduleId : '${node.moduleId}' }`
+  }
+  return `this.__c('block', ${data}, ${_genChildren(node)})`
 }
 
 function _genFor (node) {
