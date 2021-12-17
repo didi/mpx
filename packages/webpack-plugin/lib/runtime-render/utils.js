@@ -1,5 +1,7 @@
 const isEmptyObject = require('../utils/is-empty-object')
+const config = require('../config')
 
+const directiveSet = new Set()
 const commonBaseAttrs = ['class', 'style', 'id', 'hidden']
 const commonMpxAttrs = ['mpxShow', 'slots']
 
@@ -45,5 +47,16 @@ module.exports = {
   },
   isCommonAttr (attr) {
     return genRegExp([...commonBaseAttrs, ...commonMpxAttrs]).test(attr) || attr.startsWith('data-')
+  },
+  isDirective (key) {
+    return directiveSet.has(key)
+  },
+  updateModeDirectiveSet (mode) {
+    const directiveMap = config[mode].directive
+    if (!isEmptyObject(directiveMap)) {
+      for (let key in directiveMap) {
+        directiveSet.add(directiveMap[key])
+      }
+    }
   }
 }

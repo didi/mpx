@@ -1,0 +1,33 @@
+{
+  "name": "@mpxjs/template-engine",
+  "version": "1.0.0",
+  "description": "template-engine for mpx runtime render",
+  "author": "xiaolei",
+  "homepage": "https://didi.github.io/mpx/",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:didi/mpx.git"
+  },
+  "scripts": {
+    "build": "rollup -c",
+    "dev": "rollup -c -w"
+  },
+  "bugs": {
+    "url": "https://github.com/didi/mpx/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "devDependencies": {
+    "@types/node": "^16.10.9",
+    "rollup": "^2.58.0",
+    "rollup-plugin-typescript2": "^0.30.0",
+    "typescript": "^4.4.4"
+  }
+}

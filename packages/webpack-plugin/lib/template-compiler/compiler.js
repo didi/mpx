@@ -11,7 +11,7 @@ const transDynamicClassExpr = require('./trans-dynamic-class-expr')
 const dash2hump = require('../utils/hump-dash').dash2hump
 const { inBrowser } = require('../utils/env')
 const hash = require('hash-sum')
-const { transformSlotsToString, isCommonAttr } = require('../runtime-render/utils')
+const { transformSlotsToString, isCommonAttr, updateModeDirectiveSet, isDirective } = require('../runtime-render/utils')
 const setBaseWxml = require('../runtime-render/base-wxml')
 
 let hashIndex = 0
@@ -161,15 +161,6 @@ let forScopesMap = {}
 let hasI18n = false
 let i18nInjectableComputed = []
 let env
-let directivesSet = new Set()
-
-function updateModeDirectives (directiveMap = {}) {
-  if (!isEmptyObject(directiveMap)) {
-    for (let key in directiveMap) {
-      directivesSet.add(directiveMap[key])
-    }
-  }
-}
 let platformGetTagNamespace
 let filePath
 let refId
@@ -709,7 +700,7 @@ function parse (template, options) {
     error: _error
   })
 
-  updateModeDirectives(config[mode].directive)
+  updateModeDirectiveSet(mode)
 
   injectNodes = []
   forScopes = []
@@ -1556,6 +1547,10 @@ function postProcessIf (el, options, currentParent) {
         delete el.if
         el._if = true
       } else {
+        // 对于运行时组件的 if 指令不走特殊优化流程
+        if (options.runtimeCompile || hasRuntimeCompileWrapper(el)) {
+          return
+        }
         replaceNode(el, getTempNode())._if = false
       }
     } else {
@@ -2105,11 +2100,6 @@ function processRuntime (el, options) {
       name: 'slots',
       value: `{{ runtimeSlots["${el.slotAlias}"] }}`
     }])
-    // const slotAlias = hash(`${++hashIndex}${el.tag}`)
-    // addAttrs(el, [{
-    //   name: 'slots',
-    //   value: slotAlias
-    // }])
   }
 }
 
@@ -2552,8 +2542,8 @@ function _genData (node, forWxml) {
   }
 
   Object.keys(node.attrsMap).map(key => {
-    // 内置指令、保留字段、事件 等属性过滤掉
-    if (directivesSet.has(key) || config[mode].event.parseEvent(key) || (forWxml && isCommonAttr(key))) {
+    // 内置指令、事件、基础属性 等过滤掉
+    if (isDirective(key) || config[mode].event.parseEvent(key) || (forWxml && isCommonAttr(key))) {
       return
     }
     const newKey = camelize(key)

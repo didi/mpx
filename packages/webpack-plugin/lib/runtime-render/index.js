@@ -24,7 +24,9 @@ module.exports = class RuntimeRender {
 
   init () {
     if (configCache.globalRuntimeComponents.length > 0 || !isEmptyObject(configCache.injectedComponentsMap)) {
-      Promise.resolve(this.addFinishSubpackagesMakeHook)
+      setImmediate(() => {
+        this.addFinishSubpackagesMakeHook()
+      })
     }
   }
 
