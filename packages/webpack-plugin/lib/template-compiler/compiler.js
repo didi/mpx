@@ -1539,6 +1539,8 @@ function evalExp (exp) {
 }
 
 function postProcessIf (el, options, currentParent) {
+  // 对于运行时组件的 if 指令不走特殊优化流程
+  const isRuntimeRenderMode = (options && options.runtimeCompile) || hasRuntimeCompileWrapper(el)
   let attrs, result, prevNode
   if (el.if) {
     result = evalExp(el.if.exp)
@@ -1547,8 +1549,7 @@ function postProcessIf (el, options, currentParent) {
         delete el.if
         el._if = true
       } else {
-        // 对于运行时组件的 if 指令不走特殊优化流程
-        if (options.runtimeCompile || hasRuntimeCompileWrapper(el)) {
+        if (isRuntimeRenderMode) {
           return
         }
         replaceNode(el, getTempNode())._if = false
@@ -1560,7 +1561,7 @@ function postProcessIf (el, options, currentParent) {
       }]
     }
   } else if (el.elseif) {
-    if (options.runtimeCompile || hasRuntimeCompileWrapper(el)) {
+    if (isRuntimeRenderMode) {
       return processIfConditions(el, currentParent)
     }
     prevNode = findPrevNode(el)
@@ -1590,7 +1591,7 @@ function postProcessIf (el, options, currentParent) {
       }
     }
   } else if (el.else) {
-    if (options.runtimeCompile || hasRuntimeCompileWrapper(el)) {
+    if (isRuntimeRenderMode) {
       return processIfConditions(el, currentParent)
     }
     prevNode = findPrevNode(el)
@@ -2616,6 +2617,9 @@ function _genFor (node) {
 }
 
 function _genIf (node) {
+  if (!node.ifConditions) {
+    node.ifConditions = []
+  }
   node.ifProcessed = true
   return _genIfConfitions(node.ifConditions.slice())
 }

@@ -100,6 +100,10 @@ module.exports = function (content) {
           // 解析自定义组件路径
           async.parallel(
             Object.keys(usingComponents).map(name => _callback => {
+              // 插件路径不需要解析
+              if (usingComponents[name].startsWith('plugin://')) {
+                return _callback()
+              }
               this.resolve(path.dirname(this.resource), usingComponents[name], (err, absolutePath) => {
                 if (err) {
                   return callback(err)

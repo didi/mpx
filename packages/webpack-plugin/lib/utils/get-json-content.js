@@ -4,16 +4,12 @@ const resolve = require('./resolve')
 const async = require('async')
 const { JSON_JS_EXT } = require('./const')
 
-module.exports = function getJSONContent (json, loaderContext, context, callback) {
-  if (typeof context === 'function') {
-    callback = context
-    context = loaderContext.context
-  }
+module.exports = function getJSONContent (json, loaderContext, callback) {
   const fs = loaderContext._compiler.inputFileSystem
   async.waterfall([
     (callback) => {
       if (json.src) {
-        resolve(context, json.src, loaderContext, (err, result) => {
+        resolve(loaderContext.context, json.src, loaderContext, (err, result) => {
           if (err) return callback(err)
           const { rawResourcePath: resourcePath } = parseRequest(result)
           fs.readFile(resourcePath, (err, content) => {
