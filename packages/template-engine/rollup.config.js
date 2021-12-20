@@ -10,7 +10,6 @@ const baseConfig = {
     {
       file: join(cwd, 'dist/index.js'),
       format: 'cjs',
-      sourcemap: true,
       exports: 'named'
     }
   ],

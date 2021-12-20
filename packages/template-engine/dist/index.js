@@ -1192,4 +1192,3 @@ exports.unbox = unbox;
 exports.unsupport = unsupport;
 exports.voidElements = voidElements;
 exports.warn = warn;
-//# sourceMappingURL=index.js.map
