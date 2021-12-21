@@ -363,10 +363,12 @@ class MpxWebpackPlugin {
                 compilation.errors.push(e)
               }
             })
-            if (packageRoot) {
-              module.request = addQuery(module.request, { packageRoot })
-              module.resource = addQuery(module.resource, { packageRoot })
-            }
+            const queryObj = {}
+            if (packageRoot) queryObj.packageRoot = packageRoot
+            // todo 后续可以考虑用module.layer来隔离独立分包的模块
+            if (isIndependent) queryObj.isIndependent = true
+            module.request = addQuery(module.request, queryObj)
+            module.resource = addQuery(module.resource, queryObj)
           }
         }
 
@@ -413,6 +415,7 @@ class MpxWebpackPlugin {
           // 当前机制下分包处理队列在app.json的json-compiler中进行，由于addEntry回调特性，无法保障app.js中引用的模块都被标记为主包，故重写processModuleDependencies获取app.js及其所有依赖处理完成的时机，在这之后再执行分包处理队列
           appScriptRawRequest: '',
           appScriptPromise: null,
+          appScriptPromiseResolve: null,
           // 记录entry依赖关系，用于体积分析
           entryNodesMap: {},
           // 记录entryModule与entryNode的对应关系，用于体积分析
@@ -590,12 +593,10 @@ class MpxWebpackPlugin {
         if (module.rawRequest === mpx.appScriptRawRequest) {
           // 避免模块request重名，只对第一次匹配到的模块进行代理
           mpx.appScriptRawRequest = ''
-          mpx.appScriptPromise = new Promise((resolve) => {
-            proxyedCallback = (err) => {
-              resolve()
-              return callback(err)
-            }
-          })
+          proxyedCallback = (err) => {
+            mpx.appScriptPromiseResolve()
+            return callback(err)
+          }
         }
         return rawProcessModuleDependencies.apply(compilation, [module, proxyedCallback])
       }
