@@ -133,7 +133,6 @@ module.exports = function (json, {
           (result, content, callback) => {
             const extName = path.extname(result)
             if (extName === '.mpx') {
-
               const parts = parseComponent(content, {
                 filePath: result,
                 needMap: loaderContext.sourceMap,

@@ -1,24 +1,8 @@
-const JSON5 = require('json5')
 const parseComponent = require('./parser')
 const createHelpers = require('./helpers')
-const loaderUtils = require('loader-utils')
-const parseRequest = require('./utils/parse-request')
-const matchCondition = require('./utils/match-condition')
-const fixUsingComponent = require('./utils/fix-using-component')
-const addQuery = require('./utils/add-query')
-const async = require('async')
-const processJSON = require('./web/processJSON')
-const processScript = require('./web/processScript')
-const processStyles = require('./web/processStyles')
-const processTemplate = require('./web/processTemplate')
-const getJSONContent = require('./utils/get-json-content')
-const normalize = require('./utils/normalize')
-const getEntryName = require('./utils/get-entry-name')
-const AppEntryDependency = require('./dependencies/AppEntryDependency')
-const RecordResourceMapDependency = require('./dependencies/RecordResourceMapDependency')
 const CommonJsVariableDependency = require('./dependencies/CommonJsVariableDependency')
-const { MPX_APP_MODULE_ID } = require('./utils/const')
 const path = require('path')
+const normalize = require('./utils/normalize')
 
 module.exports = function (content) {
   this.cacheable()
@@ -61,9 +45,9 @@ module.exports = function (content) {
 
     output += `if (!global.i18n) {
   global.i18n = ${JSON.stringify({
-      locale: i18n.locale,
-      version: 0
-    })}
+    locale: i18n.locale,
+    version: 0
+  })}
   global.i18nMethods = ${i18nMethodsVar}
 }\n`
   }
