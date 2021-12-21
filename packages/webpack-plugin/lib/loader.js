@@ -31,7 +31,7 @@ module.exports = function (content) {
   const { resourcePath, queryObj } = parseRequest(this.resource)
   const packageRoot = queryObj.packageRoot || mpx.currentPackageRoot
   const packageName = packageRoot || 'main'
-  const isIndependent = queryObj.isIndependent
+  const independent = queryObj.independent
   const pagesMap = mpx.pagesMap
   const componentsMap = mpx.componentsMap[packageName]
   const mode = mpx.mode
@@ -63,7 +63,7 @@ module.exports = function (content) {
   const loaderContext = this
   const stringifyRequest = r => loaderUtils.stringifyRequest(loaderContext, r)
   const isProduction = this.minimize || process.env.NODE_ENV === 'production'
-  const filePath = resourcePath
+  const filePath = this.resourcePath
   const moduleId = ctorType === 'app' ? MPX_APP_MODULE_ID : 'm' + mpx.pathHash(filePath)
 
   const parts = parseComponent(content, {
@@ -72,6 +72,10 @@ module.exports = function (content) {
     mode,
     env
   })
+
+  const {
+    getRequire
+  } = createHelpers(loaderContext)
 
   let output = ''
   const callback = this.async()
@@ -274,9 +278,9 @@ module.exports = function (content) {
       if (!isProduction) {
         output += `global.currentResource = ${JSON.stringify(filePath)}\n`
       }
-      // todo 对于独立分包支持将app.mpx中的script block作为独立分包入口逻辑注入到所有页面和组件中，将独立分包i18n的注入也迁移到入口逻辑中
-      // 为app或独立分包入口注入i18n
-      if (i18n && (ctorType === 'app' || isIndependent)) {
+
+      // 为app注入i18n
+      if (i18n && ctorType === 'app') {
         const i18nWxsPath = normalize.lib('runtime/i18n.wxs')
         const i18nWxsLoaderPath = normalize.lib('wxs/i18n-loader.js')
         const i18nWxsRequest = i18nWxsLoaderPath + '!' + i18nWxsPath
@@ -291,6 +295,14 @@ module.exports = function (content) {
   global.i18nMethods = ${i18nMethodsVar}
 }\n`
       }
+
+      // 为独立分包注入init module
+      if (independent && typeof independent === 'string') {
+        const independentLoader = normalize.lib('independent-loader.js')
+        const independentInitRequest = `!!${independentLoader}!${independent}`
+        this._module.addDependency(new CommonJsVariableDependency(independentInitRequest))
+      }
+
       // 注入构造函数
       let ctor = 'App'
       if (ctorType === 'page') {

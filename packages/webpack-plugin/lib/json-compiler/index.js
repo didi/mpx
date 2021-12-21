@@ -264,13 +264,17 @@ module.exports = function (content) {
             },
             (result, content, callback) => {
               const extName = path.extname(result)
-              if (extName === '.mpx' || extName === '.vue') {
+              if (extName === '.mpx') {
                 const parts = parseComponent(content, {
                   filePath: result,
                   needMap: this.sourceMap,
                   mode,
                   env
                 })
+                // 对于通过.mpx文件声明的独立分包，默认将其自身的script block视为init module
+                if (parts.script && queryObj.independent === true) {
+                  queryObj.independent = result
+                }
                 getJSONContent(parts.json || {}, this, (err, content) => {
                   callback(err, result, content)
                 })
@@ -347,6 +351,31 @@ module.exports = function (content) {
       return result
     }
 
+    const recordIndependent = (root, request) => {
+      this._module.addPresentationalDependency(new RecordIndependentDependency(root, request))
+    }
+
+    const processIndependent = (otherConfig, context, tarRoot, callback) => {
+      // 支付宝不支持独立分包，无需处理
+      const independent = otherConfig.independent
+      if (!independent || mode === 'ali') {
+        delete otherConfig.independent
+        return callback()
+      }
+      // independent配置为字符串时视为init module
+      if (typeof independent === 'string') {
+        otherConfig.independent = true
+        resolve(context, independent, this, (err, result) => {
+          if (err) return callback(err)
+          recordIndependent(tarRoot, result)
+          callback()
+        })
+      } else {
+        recordIndependent(tarRoot, true)
+        callback()
+      }
+    }
+
     // 为了获取资源的所属子包，该函数需串行执行
     const processSubPackage = (subPackage, context, callback) => {
       if (subPackage) {
@@ -358,26 +387,27 @@ module.exports = function (content) {
         let srcRoot = subPackage.srcRoot || subPackage.root || ''
         if (!tarRoot || subPackagesCfg[tarRoot]) return callback()
 
+        context = path.join(context, srcRoot)
         const otherConfig = getOtherConfig(subPackage)
-        // 支付宝不支持独立分包，无需处理
-        if (otherConfig.independent && mode !== 'ali') {
-          this._module.addPresentationalDependency(new RecordIndependentDependency(tarRoot))
-        }
-
         subPackagesCfg[tarRoot] = {
           root: tarRoot,
-          pages: [],
-          ...otherConfig
+          pages: []
         }
-        context = path.join(context, srcRoot)
         async.parallel([
+          (callback) => {
+            processIndependent(otherConfig, context, tarRoot, callback)
+          },
           (callback) => {
             processPages(subPackage.pages, context, tarRoot, callback)
           },
           (callback) => {
             processPlugins(subPackage.plugins, context, tarRoot, callback)
           }
-        ], callback)
+        ], (err) => {
+          if (err) return callback(err)
+          Object.assign(subPackagesCfg[tarRoot], otherConfig)
+          callback()
+        })
       } else {
         callback()
       }

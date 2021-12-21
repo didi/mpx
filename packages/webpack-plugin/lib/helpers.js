@@ -4,14 +4,6 @@ const selectorPath = normalize.lib('selector')
 const addQuery = require('./utils/add-query')
 const parseRequest = require('./utils/parse-request')
 
-function getRawRequest ({ resource, loaderIndex, loaders }, excludedPreLoaders = /eslint-loader/) {
-  return loaderUtils.getRemainingRequest({
-    resource: resource,
-    loaderIndex: loaderIndex,
-    loaders: loaders.filter(loader => !excludedPreLoaders.test(loader.path))
-  })
-}
-
 const defaultLang = {
   template: 'wxml',
   styles: 'wxss',
@@ -21,7 +13,7 @@ const defaultLang = {
 }
 
 module.exports = function createHelpers (loaderContext) {
-  const rawRequest = getRawRequest(loaderContext)
+  const rawRequest = loaderUtils.getRemainingRequest(loaderContext)
 
   function getRequire (type, part, extraOptions, index) {
     return 'require(' + getRequestString(type, part, extraOptions, index) + ')'
