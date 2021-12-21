@@ -29,7 +29,7 @@ module.exports = function (content) {
   const { resourcePath, queryObj } = parseRequest(this.resource)
   const packageRoot = queryObj.packageRoot || mpx.currentPackageRoot
   const packageName = packageRoot || 'main'
-  const isIndependent = queryObj.isIndependent
+  const independent = queryObj.independent
   const pagesMap = mpx.pagesMap
   const componentsMap = mpx.componentsMap[packageName]
   const mode = mpx.mode
@@ -60,7 +60,7 @@ module.exports = function (content) {
   const loaderContext = this
   const stringifyRequest = r => loaderUtils.stringifyRequest(loaderContext, r)
   const isProduction = this.minimize || process.env.NODE_ENV === 'production'
-  const filePath = resourcePath
+  const filePath = this.resourcePath
   const moduleId = ctorType === 'app' ? MPX_APP_MODULE_ID : 'm' + mpx.pathHash(filePath)
 
   const parts = parseComponent(content, {
@@ -69,6 +69,10 @@ module.exports = function (content) {
     mode,
     env
   })
+
+  const {
+    getRequire
+  } = createHelpers(loaderContext)
 
   let output = ''
   const callback = this.async()
@@ -209,17 +213,14 @@ module.exports = function (content) {
         this._module.addPresentationalDependency(new AppEntryDependency(resourcePath, appName))
       }
 
-      const {
-        getRequire
-      } = createHelpers(loaderContext)
-
       // 注入模块id及资源路径
       output += `global.currentModuleId = ${JSON.stringify(moduleId)}\n`
       if (!isProduction) {
         output += `global.currentResource = ${JSON.stringify(filePath)}\n`
       }
-      // 为app或独立分包页面注入i18n
-      if (i18n && (ctorType === 'app' || (ctorType === 'page' && isIndependent))) {
+
+      // 为app注入i18n
+      if (i18n && ctorType === 'app') {
         const i18nWxsPath = normalize.lib('runtime/i18n.wxs')
         const i18nWxsLoaderPath = normalize.lib('wxs/i18n-loader.js')
         const i18nWxsRequest = i18nWxsLoaderPath + '!' + i18nWxsPath
@@ -228,12 +229,20 @@ module.exports = function (content) {
 
         output += `if (!global.i18n) {
   global.i18n = ${JSON.stringify({
-    locale: i18n.locale,
-    version: 0
-  })}
+          locale: i18n.locale,
+          version: 0
+        })}
   global.i18nMethods = ${i18nMethodsVar}
 }\n`
       }
+
+      // 为独立分包注入init module
+      if (independent && typeof independent === 'string') {
+        const independentLoader = normalize.lib('independent-loader.js')
+        const independentInitRequest = `!!${independentLoader}!${independent}`
+        this._module.addDependency(new CommonJsVariableDependency(independentInitRequest))
+      }
+
       // 注入构造函数
       let ctor = 'App'
       if (ctorType === 'page') {

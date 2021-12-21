@@ -344,10 +344,10 @@ class MpxWebpackPlugin {
             let isIndependent = false
             if (module.resource) {
               const { queryObj } = parseRequest(module.resource)
-              isIndependent = queryObj.isIndependent
+              isIndependent = !!queryObj.independent
             } else {
               const identifier = module.identifier()
-              isIndependent = /\|isIndependent\|/.test(identifier)
+              isIndependent = /\|independent=/.test(identifier)
             }
             return !isIndependent
           },
@@ -586,7 +586,7 @@ class MpxWebpackPlugin {
             const { resourcePath } = parseRequest(resource)
             const currentPackageRoot = mpx.currentPackageRoot
             const currentPackageName = currentPackageRoot || 'main'
-            const isIndependent = mpx.independentSubpackagesMap[currentPackageRoot]
+            const isIndependent = !!mpx.independentSubpackagesMap[currentPackageRoot]
             const resourceMap = mpx[`${resourceType}sMap`] || mpx.otherResourcesMap
 
             if (!resourceMap.main) {
@@ -690,13 +690,13 @@ class MpxWebpackPlugin {
       compilation.addModule = (module, callback) => {
         const issuerResource = module.issuerResource
         const currentPackageRoot = mpx.currentPackageRoot
-        const isIndependent = mpx.independentSubpackagesMap[currentPackageRoot]
+        const independent = mpx.independentSubpackagesMap[currentPackageRoot]
 
         if (module.resource) {
           // NormalModule
           const isStatic = isStaticModule(module)
 
-          let needPackageQuery = isStatic || isIndependent
+          let needPackageQuery = isStatic || independent
 
           if (!needPackageQuery) {
             const { resourcePath } = parseRequest(module.resource)
@@ -719,14 +719,14 @@ class MpxWebpackPlugin {
               const queryObj = {
                 packageRoot
               }
-              if (isIndependent) queryObj.isIndependent = true
+              if (independent) queryObj.independent = independent
               module.request = addQuery(module.request, queryObj)
               module.resource = addQuery(module.resource, queryObj)
             }
           }
-        } else if (isIndependent) {
+        } else if (independent) {
           // ContextModule和RawModule只在独立分包的情况下添加分包标记，其余默认不添加
-          const postfix = `|isIndependent|${currentPackageRoot}`
+          const postfix = `|independent=${independent}|${currentPackageRoot}`
           if (module._identifier) {
             module._identifier += postfix
           } else if (module.identifierStr) {
