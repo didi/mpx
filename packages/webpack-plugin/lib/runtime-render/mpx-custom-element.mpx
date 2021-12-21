@@ -30,8 +30,8 @@ createComponent({
       const data = this.r.data || {}
       return data
     },
-    rootModuleId () {
-      return this.vnodeData.moduleId
+    rootUid () {
+      return this.vnodeData.uid
     }
   }
 })

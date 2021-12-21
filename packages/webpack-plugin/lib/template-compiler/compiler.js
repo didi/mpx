@@ -164,6 +164,7 @@ let env
 let platformGetTagNamespace
 let filePath
 let refId
+let hasInjectUidComputed = false
 
 function updateForScopesMap () {
   forScopes.forEach((scope) => {
@@ -666,6 +667,7 @@ function parse (template, options) {
   warn$1 = options.warn || baseWarn
   error$1 = options.error || baseError
   i18nInjectableComputed = []
+  hasInjectUidComputed = false
 
   const _warn = content => {
     const currentElementRuleResult = rulesResultMap.get(currentEl) || rulesResultMap.set(currentEl, {
@@ -2089,9 +2091,22 @@ function processBindProps (el, meta) {
 }
 
 // isRuntimeComponent -> 运行时组件
-function processRuntime (el, options) {
+function processRuntime (el, options, meta) {
   el.isRuntimeComponent = isRuntimeComponentNode(el, options)
-  el.moduleId = options.moduleId
+  // 对于在非运行时页面/组件里面使用运行时组件需要注入 uid 来保证上下文
+  if (!options.runtimeCompile && el.isRuntimeComponent) {
+    addAttrs(el, [{
+      name: 'uid',
+      value: '{{ uid }}'
+    }])
+    if (!hasInjectUidComputed) {
+      if (!meta.computed) {
+        meta.computed = []
+      }
+      meta.computed.push('uid: function() {return this.__mpxProxy.uid}')
+      hasInjectUidComputed = true
+    }
+  }
   // 如果是最外层的运行时组件
   if (el.isRuntimeComponent && !hasRuntimeCompileWrapper(el)) {
     // 从编译环节获取注入的 runtimeSlots，只有最外层的运行时组件才有这个属性
@@ -2533,7 +2548,10 @@ function _genComponent (componentName, node) {
 
 // 自定义属性的合并
 function _genData (node, forWxml) {
-  const attrsArr = [`moduleId: "${node.moduleId}"`]
+  const attrsArr = []
+  if (!forWxml) {
+    attrsArr.push('uid: this.__mpxProxy.uid')
+  }
   let mpxAttrs = null
 
   // 非运行时组件里面注入的 runtimeSlots 需要单独生成 slotRenderFn 注入
@@ -2580,6 +2598,11 @@ function _genSlotRenderFn (astNodes) {
   let slots = {}
   astNodes.map((node) => {
     let slotTarget = 'default'
+    // 文本节点没有属性集合，这里单独处理
+    if (node.type === 3) {
+      node.attrsList = []
+      node.attrsMap = {}
+    }
     const { has, val } = getAndRemoveAttr(node, 'slot')
     if (has && val !== undefined) {
       slotTarget = val
@@ -2596,12 +2619,11 @@ function _genSlotRenderFn (astNodes) {
 
 function _genBlock (node) {
   let data = '{}'
-  // 如果是顶层根节点，获取当前所在的根 moduleId，用以保证上下文的正确性
+  // 如果是顶层根节点，获取当前所在的根 uid，用以保证上下文的正确性
   // case1: 运行时包裹运行时
   // case2: 非运行时包裹运行时
-  if (!node.parent && !node.moduleId && node.tag === 'temp-node') {
-    node.moduleId = node.children && node.children[0] && node.children[0].moduleId
-    data = `{ moduleId: this.mpxAttrs && this.mpxAttrs.moduleId ? this.mpxAttrs.moduleId : '${node.moduleId}' }`
+  if (!node.parent && node.tag === 'temp-node') {
+    data = `{ uid: this.mpxAttrs && this.mpxAttrs.uid !== undefined ? this.mpxAttrs.uid : this.__mpxProxy.uid }`
   }
   return `this.__c('block', ${data}, ${_genChildren(node)})`
 }

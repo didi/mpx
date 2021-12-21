@@ -5,10 +5,12 @@ const contextMap = {
     cache[id] = context
   },
   get (id) {
-    if (!id) {
-      return null
-    }
     return cache[id]
+  },
+  remove (id) {
+    if (cache[id]) {
+      delete cache[id]
+    }
   }
 }
 

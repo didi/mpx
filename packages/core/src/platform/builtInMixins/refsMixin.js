@@ -172,7 +172,7 @@ export default function getRefsMixin () {
       },
       __getRuntimeRefs () {
         // 获取这个运行时组件根上下文
-        const vnodeRootContext = contextMap.get(this.rootModuleId)
+        const vnodeRootContext = contextMap.get(this.rootUid)
         if (vnodeRootContext) {
           const refsArr = vnodeRootContext.__getRefsData && vnodeRootContext.__getRefsData()
           if (Array.isArray(refsArr)) {

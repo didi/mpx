@@ -3,7 +3,6 @@ import MPXProxy from '../../../core/proxy'
 import builtInKeysMap from '../builtInKeysMap'
 import mergeOptions from '../../../core/mergeOptions'
 import { queueWatcher } from '../../../observer/scheduler'
-import contextMap from '../../../vnode/context'
 
 function transformProperties (properties) {
   if (!properties) {
@@ -116,9 +115,6 @@ function transformApiForProxy (context, currentInject) {
           configurable: false
         }
       })
-    }
-    if (currentInject.moduleId) {
-      contextMap.set(currentInject.moduleId, context)
     }
   }
 }

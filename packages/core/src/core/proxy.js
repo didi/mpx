@@ -32,6 +32,7 @@ import {
   DESTROYED
 } from './innerLifecycle'
 import { warn, error } from '../helper/log'
+import contextMap from '../vnode/context'
 
 let uid = 0
 
@@ -58,6 +59,8 @@ export default class MPXProxy {
   }
 
   created (params) {
+    // 缓存上下文，在 destoryed 阶段删除
+    contextMap.set(this.uid, this.target)
     this.initApi()
     this.callUserHook(BEFORECREATE)
     if (__mpx_mode__ !== 'web') {
@@ -110,6 +113,8 @@ export default class MPXProxy {
   }
 
   destroyed () {
+    // 页面/组件销毁清除上下文的缓存
+    contextMap.remove(this.uid)
     this.state = DESTROYED
     if (__mpx_mode__ !== 'web') {
       this.clearWatchers()
@@ -189,7 +194,7 @@ export default class MPXProxy {
     }
     this.collectLocalKeys(this.data)
     // 收集运行时渲染构造出的数据
-    if (this.options.$mpxAttrs) {
+    if (this.options.runtimeComponent) {
       this.collectLocalKeys(this.options.$mpxAttrs)
     }
     // 将 props 上的数据取出来放到 this.data 上

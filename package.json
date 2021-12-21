@@ -7,9 +7,10 @@
     "lint": "eslint --ext .js packages/",
     "fix": "eslint --fix --ext .js packages/",
     "test": "jest",
-    "release": "npm run lint && npm run test && npx lerna version",
+    "release": "npm run lint && npm run test && npm run build && npx lerna version",
     "docs:dev": "vuepress dev docs-vuepress",
     "docs:build": "vuepress build docs-vuepress",
+    "build": "lerna run build",
     "dev:template-engine": "lerna run dev --scope @mpxjs/template-engine"
   },
   "devDependencies": {

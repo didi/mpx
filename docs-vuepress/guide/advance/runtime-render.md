@@ -1,0 +1,25 @@
+# 运行时渲染（实验特性）
+
+### 介绍
+
+页面/组件基于[小程序 template 模板](https://developers.weixin.qq.com/miniprogram/dev/reference/wxml/template.html)渲染。
+
+对于开启了运行时渲染的组件，提供了增强的 `wx:bind` 指令，该指令的特性是接收聚合 `props` 对象透传至子组件，即子组件接收属性的方式可以更加简化。
+
+```html
+<!-- 普通组件 -->
+<btn-group inline bolder text="按钮组" open-type="getUserInfo"></btn-group>
+
+<!-- 运行时组件 -->
+<btn-group wx:bind="{{ btnGroupProps }}"></btn-group>
+```
+
+### 基本使用
+
+约定：使用 `.runtime.mpx` 作为后缀名的页面/组件开启运行时渲染。
+
+### 注意事项
+
+* 目前仅支持**微信**小程序平台，其他平台暂不支持；
+* 目前仅支持主包项目当中使用运行时页面/组件的特性；
+* 运行时页面/组件暂不支持 `<component is="xxx"></component>` 动态组件；
