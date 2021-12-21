@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/fetch",
-  "version": "2.7.0",
+  "version": "2.7.0-beta.14",
   "description": "mpx fetch lib",
   "author": "donghongping",
   "license": "ISC",
