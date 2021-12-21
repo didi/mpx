@@ -389,7 +389,10 @@ module.exports = function (content) {
 
         context = path.join(context, srcRoot)
         const otherConfig = getOtherConfig(subPackage)
-
+        subPackagesCfg[tarRoot] = {
+          root: tarRoot,
+          pages: []
+        }
         async.parallel([
           (callback) => {
             processIndependent(otherConfig, context, tarRoot, callback)
@@ -402,11 +405,7 @@ module.exports = function (content) {
           }
         ], (err) => {
           if (err) return callback(err)
-          subPackagesCfg[tarRoot] = {
-            root: tarRoot,
-            pages: [],
-            ...otherConfig
-          }
+          Object.assign(subPackagesCfg[tarRoot], otherConfig)
           callback()
         })
       } else {
