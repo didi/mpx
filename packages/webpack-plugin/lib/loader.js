@@ -258,16 +258,13 @@ module.exports = function (content) {
       if (ctorType === 'app') {
         const appName = getEntryName(this)
         this._module.addPresentationalDependency(new AppEntryDependency(resourcePath, appName))
+
+        // 收集全局运行时组件
+        if (runtimeRender && runtimeComponents.length > 0) {
+          runtimeRender.setGlobalRuntimeComponents(runtimeComponents)
+        }
       }
 
-      const {
-        getRequire
-      } = createHelpers(loaderContext)
-
-      // 收集全局运行时组件
-      if (ctorType === 'app' && runtimeComponents.length > 0) {
-        runtimeRender.setGlobalRuntimeComponents(runtimeComponents)
-      }
       if (runtimeRender && runtimeRender.globalRuntimeComponents.length > 0) {
         runtimeComponents.push(...runtimeRender.globalRuntimeComponents)
         componentInfoForRuntime.push(...runtimeRender.globalRuntimeComponents)

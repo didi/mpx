@@ -30,7 +30,12 @@ createComponent({
       const data = this.r.data || {}
       return data
     },
+    // 组件所处的根 uid
     rootUid () {
+      return this.vnodeData.rootUid
+    },
+    // 当前组件的 uid
+    uid () {
       return this.vnodeData.uid
     }
   }

@@ -2619,11 +2619,11 @@ function _genSlotRenderFn (astNodes) {
 
 function _genBlock (node) {
   let data = '{}'
-  // 如果是顶层根节点，获取当前所在的根 uid，用以保证上下文的正确性
+  // 如果是顶层根节点，获取当前所在的 rootUid，用以保证上下文的正确性
   // case1: 运行时包裹运行时
   // case2: 非运行时包裹运行时
   if (!node.parent && node.tag === 'temp-node') {
-    data = `{ uid: this.mpxAttrs && this.mpxAttrs.uid !== undefined ? this.mpxAttrs.uid : this.__mpxProxy.uid }`
+    data = `{ rootUid: this.mpxAttrs && this.mpxAttrs.uid !== undefined ? this.mpxAttrs.uid : this.__mpxProxy.uid, uid: this.__mpxProxy.uid }`
   }
   return `this.__c('block', ${data}, ${_genChildren(node)})`
 }

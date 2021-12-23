@@ -171,27 +171,33 @@ export default function getRefsMixin () {
         }
       },
       __getRuntimeRefs () {
-        // 获取这个运行时组件根上下文
-        const vnodeRootContext = contextMap.get(this.rootUid)
-        if (vnodeRootContext) {
-          const refsArr = vnodeRootContext.__getRefsData && vnodeRootContext.__getRefsData()
-          if (Array.isArray(refsArr)) {
-            refsArr.forEach((ref) => {
-              if (!vnodeRootContext.$refs[ref.key]) {
-                const refNode = this.__getRefNode(ref)
-                if (refNode) {
-                  Object.defineProperty(vnodeRootContext.$refs, ref.key, {
-                    enumerable: true,
-                    configurable: true,
-                    get: () => {
-                      return refNode
-                    }
-                  })
-                }
-              }
-            })
-          }
+        // uid 为当前上下文，rootUid 为根上下文
+        const contextUids = [this.uid]
+        if (this.rootUid !== this.uid) {
+          contextUids.push(this.rootUid)
         }
+        contextUids.forEach(uid => {
+          const vnodeRootContext = contextMap.get(uid)
+          if (vnodeRootContext) {
+            const refsArr = vnodeRootContext.__getRefsData && vnodeRootContext.__getRefsData()
+            if (Array.isArray(refsArr)) {
+              refsArr.forEach((ref) => {
+                if (!vnodeRootContext.$refs[ref.key]) {
+                  const refNode = this.__getRefNode(ref)
+                  if (refNode) {
+                    Object.defineProperty(vnodeRootContext.$refs, ref.key, {
+                      enumerable: true,
+                      configurable: true,
+                      get: () => {
+                        return refNode
+                      }
+                    })
+                  }
+                }
+              })
+            }
+          }
+        })
       }
     }
   }
