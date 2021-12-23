@@ -39,7 +39,6 @@ module.exports = function (script, options, callback) {
   const genericsInfo = options.genericsInfo
   const componentGenerics = options.componentGenerics
   const forceDisableBuiltInLoader = options.forceDisableBuiltInLoader
-  const webRouteMode = options.webRouteMode
 
   const emitWarning = (msg) => {
     loaderContext.emitWarning(
@@ -110,12 +109,6 @@ module.exports = function (script, options, callback) {
   import Vue from 'vue'
   import VueRouter from 'vue-router'
   Vue.use(VueRouter)
-  import BScroll from '@better-scroll/core'
-  import PullDown from '@better-scroll/pull-down'
-  import ObserveDOM from '@better-scroll/observe-dom'
-  BScroll.use(ObserveDOM)
-  BScroll.use(PullDown)
-  global.BScroll = BScroll
   global.getApp = function(){}
   global.getCurrentPages = function(){
     if(!global.__mpxRouter) return []
@@ -255,8 +248,7 @@ module.exports = function (script, options, callback) {
     ${JSON.stringify(tabBarMap)},
     ${JSON.stringify(componentGenerics)},
     ${JSON.stringify(genericsInfo)},
-    getWxsMixin(wxsModules),
-    ${JSON.stringify(webRouteMode)}`
+    getWxsMixin(wxsModules)`
 
       if (ctorType === 'app') {
         content += `,
