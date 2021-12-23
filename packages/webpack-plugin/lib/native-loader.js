@@ -55,7 +55,7 @@ module.exports = function (content) {
   }
 
   function checkCSSLangFiles (callback) {
-    const langs = mpx.nativeOptions.cssLangs || ['less', 'stylus', 'scss', 'sass']
+    const langs = mpx.nativeConfig.cssLangs || ['less', 'stylus', 'scss', 'sass']
     const results = []
     async.eachOf(langs, function (lang, i, callback) {
       if (!CSS_LANG_EXT_MAP[lang]) {

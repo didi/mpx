@@ -76,5 +76,8 @@
   "devDependencies": {
     "@types/babel-traverse": "^6.25.4",
     "@types/babel-types": "^7.0.4"
+  },
+  "engines": {
+    "node": ">=14.14.0"
   }
 }

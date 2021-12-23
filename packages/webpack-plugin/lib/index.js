@@ -139,9 +139,6 @@ class MpxWebpackPlugin {
     options.transRpxRules = options.transRpxRules || null
     options.auditResource = options.auditResource || false
     options.decodeHTMLText = options.decodeHTMLText || false
-    options.nativeOptions = Object.assign({
-      cssLangs: ['css', 'less', 'stylus', 'scss', 'sass']
-    }, options.nativeOptions)
     options.i18n = options.i18n || null
     options.checkUsingComponents = options.checkUsingComponents || false
     options.reportSize = options.reportSize || null
@@ -156,6 +153,10 @@ class MpxWebpackPlugin {
       include: () => true
     }
     options.customOutputPath = options.customOutputPath || null
+    options.nativeConfig = Object.assign({
+      cssLangs: ['css', 'less', 'stylus', 'scss', 'sass']
+    }, options.nativeConfig)
+    options.webConfig = options.webConfig || {}
     this.options = options
   }
 
@@ -315,6 +316,7 @@ class MpxWebpackPlugin {
         originalWriteFile(filePath, content, callback)
       }
     }
+
     const defs = this.options.defs
 
     const typeExtMap = config[this.options.mode].typeExtMap
@@ -504,8 +506,10 @@ class MpxWebpackPlugin {
           transRpxRules: this.options.transRpxRules,
           postcssInlineConfig: this.options.postcssInlineConfig,
           decodeHTMLText: this.options.decodeHTMLText,
-          // native文件专用相关配置
-          nativeOptions: this.options.nativeOptions,
+          // native文件专用配置
+          nativeConfig: this.options.nativeConfig,
+          // 输出web专用配置
+          webConfig: this.options.webConfig,
           tabBarMap: {},
           defs: preProcessDefs(this.options.defs),
           i18n: this.options.i18n,
@@ -1273,7 +1277,7 @@ try {
       })
     })
 
-    compiler.hooks.emit.tapAsync('MpxWebpackPlugin', (compilation, callback) => {
+    compiler.hooks.emit.tap('MpxWebpackPlugin', (compilation) => {
       if (this.options.generateBuildMap) {
         const pagesMap = compilation.__mpx__.pagesMap
         const componentsPackageMap = compilation.__mpx__.componentsMap
@@ -1290,7 +1294,31 @@ try {
           }
         }
       }
-      callback()
+    })
+
+    const clearFileCache = () => {
+      const fs = compiler.intermediateFileSystem
+      const cacheLocation = compiler.options.cache.cacheLocation
+      return new Promise((resolve, reject) => {
+        fs.rm(cacheLocation, {
+          recursive: true,
+          force: true
+        }, (err) => {
+          if (err) return reject(err)
+          resolve()
+        })
+      })
+    }
+
+    compiler.hooks.done.tapPromise('MpxWebpackPlugin', async () => {
+      const cache = compiler.getCache('MpxWebpackPlugin')
+      const cacheIsValid = await cache.getPromise('cacheIsValid', null)
+      if (!cacheIsValid) {
+        await Promise.all([
+          clearFileCache(),
+          cache.storePromise('cacheIsValid', null, true)
+        ])
+      }
     })
   }
 }
