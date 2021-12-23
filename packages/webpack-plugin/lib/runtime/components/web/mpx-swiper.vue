@@ -91,6 +91,16 @@
         this.goto(val)
       }
     },
+    activated () {
+      if (this.bs && this.autoplay) {
+        this.bs.startPlay()
+      }
+    },
+    deactivated () {
+      if (this.bs && this.autoplay) {
+        this.bs.pausePlay()
+      }
+    },
     beforeCreate () {
       this.itemIds = []
     },
