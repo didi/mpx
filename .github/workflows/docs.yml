@@ -14,11 +14,9 @@ jobs:
           PATTERNS: |
             +(docs|docs-vuepress)/**/*
             +(docs|docs-vuepress)/.*/**/*
-
-      - name: Use node v12
-        uses: actions/setup-node@v1
+      - uses: actions/setup-node@v1
         with:
-          node-version: '10.21.0'
+          node-version: '16'
 
       # vuepress生成最终文档
       - name: generate docs file
