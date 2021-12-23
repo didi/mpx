@@ -40,7 +40,6 @@ module.exports = function (content) {
             let results = targetPath.unshiftContainer('body', insertNodes) || []
             targetPath.inserted = true
             results.forEach((item) => {
-              item.stop()
               item.shouldStopTraverse = true
             })
           }
