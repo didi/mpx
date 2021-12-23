@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/template-engine",
-  "version": "1.0.0",
+  "version": "2.7.0",
   "description": "template-engine for mpx runtime render",
   "author": "xiaolei",
   "homepage": "https://didi.github.io/mpx/",
@@ -22,6 +22,7 @@
     "url": "https://github.com/didi/mpx/issues"
   },
   "publishConfig": {
+    "registry": "https://registry.npmjs.org",
     "access": "public"
   },
   "devDependencies": {
