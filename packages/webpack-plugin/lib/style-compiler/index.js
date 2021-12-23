@@ -24,6 +24,7 @@ module.exports = function (css, map) {
   const transRpxRulesRaw = mpx.transRpxRules
   const transRpxRules = transRpxRulesRaw ? (Array.isArray(transRpxRulesRaw) ? transRpxRulesRaw : [transRpxRulesRaw]) : []
 
+  const transRpxFn = mpx.webConfig.transRpxFn
   const testResolveRange = (include = () => true, exclude) => {
     return matchCondition(this.resourcePath, { include, exclude })
   }
@@ -68,7 +69,7 @@ module.exports = function (css, map) {
     }
 
     if (mpx.mode === 'web') {
-      plugins.push(vw)
+      plugins.push(vw({ transRpxFn }))
     }
     // source map
     if (this.sourceMap && !options.map) {
