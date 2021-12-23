@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - master
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -14,11 +13,10 @@ jobs:
         with:
           PATTERNS: |
             +(docs|docs-vuepress)/**/*
-
-      - name: Use node v12
-        uses: actions/setup-node@v1
+            +(docs|docs-vuepress)/.*/**/*
+      - uses: actions/setup-node@v1
         with:
-          node-version: '10.21.0'
+          node-version: '16'
 
       # vuepress生成最终文档
       - name: generate docs file

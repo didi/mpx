@@ -39,9 +39,14 @@ module.exports = function (content) {
             let results = targetPath.unshiftContainer('body', insertNodes) || []
             targetPath.inserted = true
             results.forEach((item) => {
-              item.stop()
+              item.shouldStopTraverse = true
             })
           }
+        }
+      },
+      ForStatement (path) {
+        if (path.shouldStopTraverse) {
+          path.stop()
         }
       },
       // 处理vant-aliapp中export var bem = bem;这种不被acorn支持的2b语法

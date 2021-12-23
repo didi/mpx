@@ -210,11 +210,11 @@ module.exports = function (script, {
         content += `  global.currentResource = ${JSON.stringify(loaderContext.resourcePath)}\n`
       }
       // 为了正确获取currentSrcMode便于运行时进行转换，对于src引入的组件script采用require方式引入(由于webpack会将import的执行顺序上升至最顶)，这意味着对于src引入脚本中的named export将不会生效，不过鉴于mpx和小程序中本身也没有在组件script中声明export的用法，所以应该没有影响
-      content += '\n\n\n/** ====== Source start ====== **/\n'
+      content += '\n\n\n/** Source start **/\n'
       content += script.src
         ? `require(${stringifyRequest(script.src)})\n`
         : script.content
-      content += '\n/**   ====== Source end ====== **/\n\n\n'
+      content += '\n/** Source end **/\n\n\n'
       // createApp/Page/Component执行完成后立刻获取当前的option并暂存
       content += `  const currentOption = global.currentOption\n`
       // 获取pageConfig
