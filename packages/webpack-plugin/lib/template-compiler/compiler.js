@@ -1095,7 +1095,8 @@ function stringifyWithResolveComputed (modelValue) {
 
 function processBindEvent (el, options) {
   const eventConfigMap = {}
-
+  // 运行时方案统一走事件 proxy 模式
+  const isRuntimeMode = options.runtimeCompile || hasRuntimeCompileWrapper(el)
   el.attrsList.forEach(function (attr) {
     let parsedEvent = config[mode].event.parseEvent(attr.name)
 
@@ -1111,7 +1112,7 @@ function processBindEvent (el, options) {
           }
         }
         eventConfigMap[type].configs.push(parsedFunc)
-        if (modifiers.indexOf('proxy') > -1 || options.forceProxyEvent || hasRuntimeCompileWrapper(el)) {
+        if (modifiers.indexOf('proxy') > -1 || options.forceProxyEvent || isRuntimeMode) {
           eventConfigMap[type].proxy = true
         }
       }

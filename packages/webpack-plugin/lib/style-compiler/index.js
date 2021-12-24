@@ -12,7 +12,6 @@ const parseRequest = require('../utils/parse-request')
 
 module.exports = function (css, map) {
   this.cacheable()
-
   const cb = this.async()
   const { resourcePath, queryObj } = parseRequest(this.resource)
   const id = queryObj.moduleId || queryObj.mid

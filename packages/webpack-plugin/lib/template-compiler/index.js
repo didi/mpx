@@ -7,10 +7,8 @@ const { normalizeHashTagAndPath } = require('../runtime-render/utils')
 const loaderUtils = require('loader-utils')
 
 module.exports = function (raw) {
-  const { resourcePath, queryObj } = parseRequest(this.resource)
-
   this.cacheable()
-
+  const { resourcePath, queryObj } = parseRequest(this.resource)
   const mpx = this.getMpx()
   const root = mpx.projectRoot
   const mode = mpx.mode
@@ -67,7 +65,7 @@ module.exports = function (raw) {
     i18n,
     checkUsingComponents: mpx.checkUsingComponents,
     globalComponents: Object.keys(mpx.usingComponents),
-    forceProxyEvent: matchCondition(this.resourcePath, mpx.forceProxyEventRules) || runtimeCompile,
+    forceProxyEvent: matchCondition(this.resourcePath, mpx.forceProxyEventRules),
     hasVirtualHost: matchCondition(this.resourcePath, mpx.autoVirtualHostRules),
     setRuntimeComponentsMap: mpx.runtimeRender.setComponentsMap.bind(mpx.runtimeRender)
   })
@@ -85,7 +83,7 @@ module.exports = function (raw) {
     resultSource += `var ${module} = require(${loaderUtils.stringifyRequest(this, src)});\n`
   }
 
-  let result = compiler.serialize(ast, meta)
+  let result = compiler.serialize(ast)
 
   if (isNative) {
     return result
