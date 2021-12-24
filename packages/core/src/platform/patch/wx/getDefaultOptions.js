@@ -96,26 +96,6 @@ function transformApiForProxy (context, currentInject) {
         }
       })
     }
-    if (currentInject.runtimeSlots) {
-      Object.defineProperties(context, {
-        __getRuntimeSlots: {
-          get () {
-            return currentInject.runtimeSlots
-          },
-          configurable: false
-        }
-      })
-    }
-    if (currentInject.aliasTags) {
-      Object.defineProperties(context, {
-        __aliasTags: {
-          get () {
-            return currentInject.aliasTags
-          },
-          configurable: false
-        }
-      })
-    }
   }
 }
 
@@ -142,12 +122,6 @@ export function initProxy (context, rawOptions, currentInject, params) {
   transformApiForProxy(context, currentInject)
   // 缓存options
   context.$rawOptions = rawOptions
-  if (context.__getRuntimeSlots) {
-    if (!rawOptions.computed) {
-      rawOptions.computed = {}
-    }
-    rawOptions.computed.runtimeSlots = context.__getRuntimeSlots
-  }
   // 创建proxy对象
   const mpxProxy = new MPXProxy(rawOptions, context)
   context.__mpxProxy = mpxProxy

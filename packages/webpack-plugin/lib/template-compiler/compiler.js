@@ -165,6 +165,7 @@ let platformGetTagNamespace
 let filePath
 let refId
 let hasInjectUidComputed = false
+let hasInjectRuntimeSlotComputed = false
 
 function updateForScopesMap () {
   forScopes.forEach((scope) => {
@@ -668,6 +669,7 @@ function parse (template, options) {
   error$1 = options.error || baseError
   i18nInjectableComputed = []
   hasInjectUidComputed = false
+  hasInjectRuntimeSlotComputed = false
 
   const _warn = content => {
     const currentElementRuleResult = rulesResultMap.get(currentEl) || rulesResultMap.set(currentEl, {
@@ -2094,28 +2096,23 @@ function processBindProps (el, meta) {
 function processRuntime (el, options, meta) {
   el.isRuntimeComponent = isRuntimeComponentNode(el, options)
   // 对于在非运行时页面/组件里面使用运行时组件需要注入 uid 来保证上下文
-  if (!options.runtimeCompile && el.isRuntimeComponent) {
+  if (!options.runtimeCompile && el.isRuntimeComponent && !hasRuntimeCompileWrapper(el)) {
     addAttrs(el, [{
       name: 'uid',
       value: '{{ uid }}'
     }])
+    el.slotAlias = hash(`${++hashIndex}${el.tag}`)
+    if (!meta.computed) {
+      meta.computed = []
+    }
     if (!hasInjectUidComputed) {
-      if (!meta.computed) {
-        meta.computed = []
-      }
       meta.computed.push('uid: function() {return this.__mpxProxy.uid}')
       hasInjectUidComputed = true
     }
-  }
-  // 如果是最外层的运行时组件
-  if (el.isRuntimeComponent && !hasRuntimeCompileWrapper(el)) {
-    // 从编译环节获取注入的 runtimeSlots，只有最外层的运行时组件才有这个属性
-    el.slotAlias = hash(`${++hashIndex}${el.tag}`)
-    // 在普通组件当中使用运行时组件
-    addAttrs(el, [{
-      name: 'slots',
-      value: `{{ runtimeSlots["${el.slotAlias}"] }}`
-    }])
+    if (!hasInjectRuntimeSlotComputed) {
+      meta.computed.push('runtimeSlots: function() {return {}}')
+      hasInjectRuntimeSlotComputed = true
+    }
   }
 }
 
@@ -2258,14 +2255,13 @@ function postProcessRuntime (el, options, meta) {
     setBaseWxml(el, isCustomComponent)
   }
 
-  // 收集 slotAlias，生成注入的 runtimeSlots renderFn
-  if (el.slotAlias) {
-    if (!meta.slotRenderFn) {
-      meta.slotRenderFn = {}
-    }
-    meta.slotRenderFn[el.slotAlias] = {}
-
-    Object.assign(meta.slotRenderFn[el.slotAlias], _genSlotRenderFn(el.children))
+  // 生成注入的 runtimeSlots renderFn
+  if (el.slotAlias && el.children.length > 0) {
+    addExp(el, `this._c("runtimeSlots.${el.slotAlias}", ${transformSlotsToString(_genSlotRenderFn(el.children))})`, true)
+    addAttrs(el, [{
+      name: 'slots',
+      value: `{{ runtimeSlots["${el.slotAlias}"] }}`
+    }])
     // 清空所有子节点，因为子节点都在这里已经生成了 slot renderFn 并注入到了运行时
     el.children = []
   }
@@ -2555,7 +2551,7 @@ function _genData (node, forWxml) {
   let mpxAttrs = null
 
   // 非运行时组件里面注入的 runtimeSlots 需要单独生成 slotRenderFn 注入
-  if (node.isRuntimeComponent && hasRuntimeCompileWrapper(node) && node.children.length > 0) {
+  if (node.isRuntimeComponent && node.children.length > 0) {
     attrsArr.push(`slots: ${transformSlotsToString(_genSlotRenderFn(node.children))}`)
     node.children = []
   }
@@ -2594,7 +2590,7 @@ function _genData (node, forWxml) {
   }
 }
 
-function _genSlotRenderFn (astNodes) {
+function _genSlotRenderFn (astNodes = []) {
   let slots = {}
   astNodes.map((node) => {
     let slotTarget = 'default'
