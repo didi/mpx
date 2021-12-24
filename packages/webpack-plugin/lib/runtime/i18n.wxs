@@ -6,7 +6,6 @@ function genRegExp (str, flags) {
   }
 }
 
-
 function likeArray (arr) {
   if (!__mpx_wxs__) {
     return Array.isArray(arr)
@@ -22,7 +21,6 @@ function isObject (obj) {
 function isDef (v) {
   return v !== undefined && v !== null
 }
-
 
 var RE_TOKEN_LIST_VALUE = genRegExp('^[0-9]+')
 var RE_TOKEN_NAMED_VALUE = genRegExp('^[A-Za-z0-9_]+')
@@ -40,7 +38,10 @@ function parseMessage (format) {
     var char = format[position++]
     if (char === '{') {
       if (text) {
-        tokens.push({ type: 'text', value: text })
+        tokens.push({
+          type: 'text',
+          value: text
+        })
       }
 
       text = ''
@@ -56,7 +57,10 @@ function parseMessage (format) {
         : isClosed && RE_TOKEN_NAMED_VALUE.test(sub)
           ? 'named'
           : 'unknown'
-      tokens.push({ value: sub, type: type })
+      tokens.push({
+        value: sub,
+        type: type
+      })
     } else if (char === '%') {
       // when found rails i18n syntax, skip text capture
       if (format[(position)] !== '{') {
@@ -67,7 +71,10 @@ function parseMessage (format) {
     }
   }
 
-  text && tokens.push({ type: 'text', value: text })
+  text && tokens.push({
+    type: 'text',
+    value: text
+  })
 
   return tokens
 }
@@ -349,10 +356,10 @@ if (!__mpx_wxs__) {
       locale: getLocale(),
       version: 0
     }
-    global.i18nMethods = Object.assign({
+    global.i18nMethods = Object.assign(module.exports, {
       __getMessages: getMessages,
       __getDateTimeFormats: getDateTimeFormats,
       __getNumberFormats: getNumberFormats
-    }, module.exports)
+    })
   }
 }
