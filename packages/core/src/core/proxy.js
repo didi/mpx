@@ -193,10 +193,6 @@ export default class MPXProxy {
       Object.assign(this.data, dataFn.call(this.target))
     }
     this.collectLocalKeys(this.data)
-    // 收集运行时渲染构造出的数据
-    if (this.options.runtimeComponent) {
-      this.collectLocalKeys(this.options.$mpxAttrs)
-    }
     // 将 props 上的数据取出来放到 this.data 上
     Object.keys(initialData).forEach((key) => {
       if (!hasOwn(this.data, key)) {
