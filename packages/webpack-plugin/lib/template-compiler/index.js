@@ -65,8 +65,8 @@ module.exports = function (raw) {
     i18n,
     checkUsingComponents: mpx.checkUsingComponents,
     globalComponents: Object.keys(mpx.usingComponents),
-    forceProxyEvent: matchCondition(this.resourcePath, mpx.forceProxyEventRules),
-    hasVirtualHost: matchCondition(this.resourcePath, mpx.autoVirtualHostRules),
+    forceProxyEvent: matchCondition(resourcePath, mpx.forceProxyEventRules),
+    hasVirtualHost: matchCondition(resourcePath, mpx.autoVirtualHostRules),
     setRuntimeComponentsMap: mpx.runtimeRender.setComponentsMap.bind(mpx.runtimeRender)
   })
 
