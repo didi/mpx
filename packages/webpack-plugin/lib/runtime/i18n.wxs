@@ -263,6 +263,11 @@ function exist (messages, locale, key) {
 var messages = {}
 var dateTimeFormats = {}
 var numberFormats = {}
+var locale = 'zh-CN'
+
+function getLocale () {
+  return __mpx_locale__ || locale
+}
 
 function getMessages () {
   // __mpx_messages__会在编译时通过lib/wxs/i18n-loader注入
@@ -339,7 +344,15 @@ module.exports = {
 }
 
 if (!__mpx_wxs__) {
-  module.exports.__getMessages = getMessages
-  module.exports.__getDateTimeFormats = getDateTimeFormats
-  module.exports.__getNumberFormats = getNumberFormats
+  if (!global.i18n) {
+    global.i18n = {
+      locale: getLocale(),
+      version: 0
+    }
+    global.i18nMethods = Object.assign({
+      __getMessages: getMessages,
+      __getDateTimeFormats: getDateTimeFormats,
+      __getNumberFormats: getNumberFormats
+    }, module.exports)
+  }
 }

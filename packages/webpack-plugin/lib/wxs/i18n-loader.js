@@ -3,7 +3,7 @@ const loaderUtils = require('loader-utils')
 
 module.exports = function (content) {
   const i18n = this.getMpx().i18n
-  let prefix = 'var __mpx_messages__, __mpx_datetime_formats__, __mpx_number_formats__\n'
+  let prefix = 'var __mpx_messages__, __mpx_datetime_formats__, __mpx_number_formats__, __mpx_locale__\n'
   if (i18n) {
     if (i18n.messages) {
       prefix += `__mpx_messages__ = ${JSON.stringify(i18n.messages)}\n`
@@ -19,6 +19,9 @@ module.exports = function (content) {
       prefix += `__mpx_number_formats__ = ${JSON.stringify(i18n.numberFormats)}\n`
     } else if (i18n.numberFormatsPath) {
       prefix += `__mpx_number_formats__ = require(${loaderUtils.stringifyRequest(this, i18n.numberFormatsPath)})\n`
+    }
+    if (i18n.locale) {
+      prefix += `__mpx_locale__ = ${JSON.stringify(i18n.locale)}\n`
     }
   }
   content = prefix + content

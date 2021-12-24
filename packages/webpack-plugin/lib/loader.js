@@ -224,16 +224,7 @@ module.exports = function (content) {
         const i18nWxsPath = normalize.lib('runtime/i18n.wxs')
         const i18nWxsLoaderPath = normalize.lib('wxs/i18n-loader.js')
         const i18nWxsRequest = i18nWxsLoaderPath + '!' + i18nWxsPath
-        const i18nMethodsVar = 'i18nMethods'
-        this._module.addDependency(new CommonJsVariableDependency(i18nWxsRequest, i18nMethodsVar))
-
-        output += `if (!global.i18n) {
-  global.i18n = ${JSON.stringify({
-    locale: i18n.locale,
-    version: 0
-  })}
-  global.i18nMethods = ${i18nMethodsVar}
-}\n`
+        this._module.addDependency(new CommonJsVariableDependency(i18nWxsRequest))
       }
 
       // 为独立分包注入init module

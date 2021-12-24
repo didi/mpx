@@ -487,13 +487,13 @@ class MpxWebpackPlugin {
           exportModules: new Set(),
           // 记录entryModule与entryNode的对应关系，用于体积分析
           entryNodeModulesMap: new Map(),
-          extractedMap: {},
+          // 记录与asset相关联的modules，用于体积分析
+          assetModulesMap: new Map(),
           usingComponents: {},
           // todo es6 map读写性能高于object，之后会逐步替换
           vueContentCache: new Map(),
           currentPackageRoot: '',
           wxsContentMap: {},
-          assetsInfo: new Map(),
           forceUsePageCtor: this.options.forceUsePageCtor,
           resolveMode: this.options.resolveMode,
           mode: this.options.mode,
@@ -792,6 +792,12 @@ class MpxWebpackPlugin {
         return source
       })
 
+      compilation.hooks.moduleAsset.tap('MpxWebpackPlugin', (module, filename) => {
+        const modules = mpx.assetModulesMap.get(filename) || new Set()
+        modules.add(module)
+        mpx.assetModulesMap.set(filename, modules)
+      })
+
       compilation.hooks.beforeModuleAssets.tap('MpxWebpackPlugin', () => {
         const extractedAssetsMap = new Map()
         for (const module of compilation.modules) {
@@ -804,8 +810,7 @@ class MpxWebpackPlugin {
                 extractedAssetsMap.set(filename, extractedAssets)
               }
               extractedAssets.push(extractedInfo)
-              // todo 后续计算体积时可以通过这个钩子关联静态assets和module
-              // compilation.hooks.moduleAsset.call(module, filename)
+              compilation.hooks.moduleAsset.call(module, filename)
             }
           }
         }
@@ -1032,7 +1037,6 @@ class MpxWebpackPlugin {
         }
 
         const processedChunk = new Set()
-        // const rootName = compilation.entries.keys().next().value
         const appName = mpx.appInfo.name
 
         function processChunk (chunk, isRuntime, relativeChunks) {
