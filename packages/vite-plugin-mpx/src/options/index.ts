@@ -1,11 +1,62 @@
-import { ResolvedOptions, Options } from '../index'
+import { ViteDevServer } from 'vite'
+
+export type Mode = 'wx' | 'web' | 'ali' | 'swan'
+
+export interface Options {
+  include?: string | RegExp | (string | RegExp)[]
+  exclude?: string | RegExp | (string | RegExp)[]
+  mode?: Mode
+  env?: string
+  srcMode?: Mode
+  externalClasses?: string[]
+  resolveMode?: 'webpack' | 'native'
+  writeMode?: 'changed' | 'full' | null
+  autoScopeRules?: Record<string, unknown>
+  autoVirtualHostRules?: Record<string, unknown>
+  forceDisableInject?: boolean
+  forceDisableProxyCtor?: boolean
+  transMpxRules?: Record<string, () => boolean>
+  defs?: Record<string, unknown>
+  modeRules?: Record<string, unknown>
+  generateBuildMap?: false
+  attributes?: string[]
+  externals?: string[] | RegExp[]
+  projectRoot?: string
+  forceUsePageCtor?: boolean
+  postcssInlineConfig?: Record<string, unknown>
+  transRpxRules?: null
+  auditResource?: boolean
+  decodeHTMLText?: boolean
+  nativeOptions?: Record<string, unknown>
+  i18n?: Record<string, string> | null
+  checkUsingComponents?: boolean
+  reportSize?: boolean | null
+  pathHashMode?:
+    | 'absolute'
+    | 'relative'
+    | ((resourcePath: string, projectRoot: string) => string)
+  forceDisableBuiltInLoader?: boolean
+  useRelativePath?: boolean
+  subpackageModulesRules?: Record<string, unknown>
+  forceMainPackageRules?: Record<string, unknown>
+  forceProxyEventRules?: Record<string, unknown>
+  miniNpmPackages?: string[]
+  fileConditionRules?: string | RegExp | (string | RegExp)[]
+}
+
+export interface ResolvedOptions extends Required<Options> {
+  sourceMap?: boolean
+  devServer?: ViteDevServer
+  root: string
+  isProduction: boolean
+}
 
 const externalsMap: Record<string, RegExp> = {
   weui: /^weui-miniprogram/
 }
 
-export default function processOptions(rawOptions: Options): ResolvedOptions {
-  rawOptions.include = rawOptions.include || /\.mpx$/
+export function processOptions(rawOptions: Options): ResolvedOptions {
+  rawOptions.include = rawOptions.include || [/\.mpx$/]
   rawOptions.exclude = rawOptions.exclude || []
   rawOptions.mode = rawOptions.mode || 'web'
   rawOptions.env = rawOptions.env || process.env.NODE_ENV || ''
@@ -71,14 +122,11 @@ export default function processOptions(rawOptions: Options): ResolvedOptions {
   rawOptions.forceMainPackageRules = rawOptions.forceMainPackageRules || {}
   rawOptions.forceProxyEventRules = rawOptions.forceProxyEventRules || {}
   rawOptions.miniNpmPackages = rawOptions.miniNpmPackages || []
-  rawOptions.fileConditionRules = rawOptions.fileConditionRules || {
-    include: () => true
-  }
+  rawOptions.fileConditionRules = rawOptions.fileConditionRules || [/\.mpx/]
   const options: ResolvedOptions = {
     ...(rawOptions as Required<Options>),
-    sourceMap: true,
-    root: '',
-    isProduction: process.env.NODE_ENV === 'production'
+    isProduction: process.env.NODE_ENV === 'production',
+    root: ''
   }
   return options
 }

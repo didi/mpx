@@ -1,8 +1,26 @@
-import { ResolvedOptions } from './index'
+import { ResolvedOptions } from './options'
+import mpxGlobal from './mpx'
 import { SFCDescriptor } from './compiler'
 import stringify from './utils/stringify'
+import addQuery from './utils/addQuery'
 
+export const ENTRY_HELPER_CODE = 'plugin-mpx:entry-helper'
 export const APP_HELPER_CODE = 'plugin-mpx:app-helper'
+
+export const renderPageRouteCode = (importer: string): string => {
+  return `export default ${stringify(mpxGlobal.pagesMap[importer])}`
+}
+
+export const renderEntryCode = (importer: string): string => `
+import App from ${stringify(addQuery(importer, { app: true }))}
+import Vue from 'vue'
+new Vue({
+  el: '#app',
+  render: function(h){
+    return h(App)
+  }
+})
+`
 
 export function renderAppHelpCode(
   descriptor: SFCDescriptor,
@@ -23,6 +41,7 @@ export function renderAppHelpCode(
     `Vue.use(VueRouter)`,
     `BScroll.use(ObserveDOM)`,
     `BScroll.use(PullDown)`,
+    `global.currentSrcMode = "${option.srcMode}"`,
     `global.BScroll = BScroll`,
     `global.getApp = function(){}`,
     `global.getCurrentPages = function(){
@@ -43,7 +62,7 @@ export function renderAppHelpCode(
     `global.__mpxPageConfig = ${stringify(jsonConfig.window || {})}`
   )
 
-  if (i18n) {
+  if (i18n && !option.forceDisableInject) {
     content.unshift(`import VueI18n from 'vue-i18n'`)
     content.push(`Vue.use(VueI18n)`)
     const i18nObj = Object.assign({}, i18n)

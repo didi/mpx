@@ -1,92 +1,50 @@
-import { Plugin, ViteDevServer } from 'vite'
+import { Plugin, UserConfig } from 'vite'
 import { createFilter } from '@rollup/pluginutils'
-import { createVuePlugin as vue } from 'vite-plugin-vue2'
+import { createVuePlugin } from 'vite-plugin-vue2'
 import replace from '@rollup/plugin-replace'
 import nodePolyfills from 'rollup-plugin-polyfill-node'
 import commonjs from '@rollup/plugin-commonjs'
 import mpxGlobal from './mpx'
-import transformMpx from './transformer/mpx'
-import addMode, { esbuildAddModePlugin } from './plugins/addModePlugin'
-import { renderAppHelpCode, APP_HELPER_CODE } from './helper'
-import parseRequest from './utils/parseRequest'
-import processOptions from './utils/processOptions'
-import { getDescriptor } from './utils/descriptorCache'
-import stringifyObject from './utils/stringifyObject'
+import { transformMain } from './transformer/main'
+import { transformTemplate } from './transformer/template'
+import { transformStyle } from './transformer/style'
 import handleHotUpdate from './handleHotUpdate'
+import {
+  APP_HELPER_CODE,
+  renderAppHelpCode,
+  renderPageRouteCode
+} from './helper'
+import { processOptions, Options, ResolvedOptions } from './options'
+import {
+  customExtensionsPlugin,
+  esbuildCustomExtensionsPlugin
+} from './plugins/addExtensionsPlugin'
+import mpxResolveEntryPlugin from './plugins/mpxResolveEntryPlugin'
+import parseRequest from './utils/parseRequest'
+import { getDescriptor } from './utils/descriptorCache'
+import { stringifyObject } from './utils/stringify'
+import ensureArray from './utils/ensureArray'
 
-export type Mode = 'wx' | 'web' | 'ali' | 'swan'
-
-export interface Options {
-  include?: string | RegExp | (string | RegExp)[]
-  exclude?: string | RegExp | (string | RegExp)[]
-  mode?: Mode
-  env?: string
-  srcMode?: Mode
-  externalClasses?: string[]
-  resolveMode?: 'webpack' | 'native'
-  writeMode?: 'changed' | 'full' | null
-  autoScopeRules?: Record<string, unknown>
-  autoVirtualHostRules?: Record<string, unknown>
-  forceDisableInject?: boolean
-  forceDisableProxyCtor?: boolean
-  transMpxRules?: Record<string, () => boolean>
-  defs?: Record<string, unknown>
-  modeRules?: Record<string, unknown>
-  generateBuildMap?: false
-  attributes?: string[]
-  externals?: string[] | RegExp[]
-  projectRoot?: string
-  forceUsePageCtor?: boolean
-  postcssInlineConfig?: Record<string, unknown>
-  transRpxRules?: null
-  auditResource?: boolean
-  decodeHTMLText?: boolean
-  nativeOptions?: Record<string, unknown>
-  i18n?: Record<string, string> | null
-  checkUsingComponents?: boolean
-  reportSize?: boolean | null
-  pathHashMode?:
-    | 'absolute'
-    | 'relative'
-    | ((resourcePath: string, projectRoot: string) => string)
-  forceDisableBuiltInLoader?: boolean
-  useRelativePath?: boolean
-  subpackageModulesRules?: Record<string, unknown>
-  forceMainPackageRules?: Record<string, unknown>
-  forceProxyEventRules?: Record<string, unknown>
-  miniNpmPackages?: string[]
-  fileConditionRules?: Record<string, () => boolean>
-}
-
-export interface ResolvedOptions extends Required<Options> {
-  sourceMap?: boolean
-  devServer?: ViteDevServer
-  isProduction: boolean
-  root: string
-}
-
-const MpxPluginName = 'vite:mpx'
-
-function mpx(options: ResolvedOptions): Plugin {
-  const { include = /\.mpx$/, exclude } = options
+function createMpxPlugin(
+  options: ResolvedOptions,
+  config?: UserConfig
+): Plugin {
+  const { include, exclude } = options
   const filter = createFilter(include, exclude)
 
+  const mpxVuePlugin = createVuePlugin({
+    include
+  })
+
   return {
-    name: MpxPluginName,
+    name: 'vite:mpx',
 
     config() {
-      return {
-        optimizeDeps: {
-          esbuildOptions: {
-            plugins: [
-              esbuildAddModePlugin({
-                include: /@mpxjs/, // prebuild for addMode
-                mode: options.mode
-              })
-            ]
-          }
-        }
-      }
+      return config
+    },
+
+    configureServer(server) {
+      options.devServer = server
     },
 
     configResolved(config) {
@@ -102,11 +60,12 @@ function mpx(options: ResolvedOptions): Plugin {
       return handleHotUpdate(ctx, options)
     },
 
-    async resolveId(id, importer) {
-      if (id === APP_HELPER_CODE && filter(importer)) {
-        mpxGlobal.entry = importer
+    async resolveId(id, ...args) {
+      if (id === APP_HELPER_CODE) {
         return id
       }
+      // return vue resolveId
+      return mpxVuePlugin.resolveId?.call(this, id, ...args)
     },
 
     load(id) {
@@ -115,44 +74,101 @@ function mpx(options: ResolvedOptions): Plugin {
         const descriptor = getDescriptor(filename)
         return descriptor && renderAppHelpCode(descriptor, options)
       }
+      const { filename, query } = parseRequest(id)
+      if (query.resolve !== undefined) {
+        return renderPageRouteCode(filename)
+      }
+      if (query.mpx !== undefined) {
+        const descriptor = getDescriptor(filename)
+        if (descriptor) {
+          let block
+          if (query.type === 'template') {
+            block = descriptor.template
+          } else if (query.type === 'style') {
+            block = descriptor.styles[Number(query.index)]
+          }
+          if (block) {
+            return block.content
+          }
+        }
+      }
+      // return vue load
+      return mpxVuePlugin.load?.call(this, id)
     },
 
     async transform(code, id) {
       const { filename, query } = parseRequest(id)
       if (!filter(filename)) return
-      if (!query.vue) {
+      if (query.resolve !== undefined) return
+      if (query.mpx === undefined) {
         // mpx file => vue file
-        return await transformMpx(code, filename, query, options, this)
+        return await transformMain(code, filename, query, options, this)
       } else {
-        // hot reload
         if (query.type === 'template') {
           // mpx template => vue template
           const descriptor = getDescriptor(filename)
-          return descriptor?.template.vueContent
+          if (descriptor) {
+            return await transformTemplate(
+              code,
+              filename,
+              descriptor,
+              options,
+              this
+            )
+          }
+        }
+        if (query.type === 'style') {
+          // mpx style => vue style
+          const descriptor = getDescriptor(filename)
+          if (descriptor) {
+            return await transformStyle(
+              code,
+              filename,
+              descriptor,
+              Number(query.index),
+              this
+            )
+          }
         }
       }
     }
   }
 }
 
-export default function (options: Options = {}): Plugin[] {
+export default function mpx(options: Options = {}): Plugin[] {
   const resolvedOptions = processOptions({ ...options })
+  const { mode, env, isProduction, defs, fileConditionRules } = resolvedOptions
 
   const plugins = [
-    mpx(resolvedOptions), // mpx => vue
-    addMode({
-      include: [/@mpxjs/, resolvedOptions.projectRoot], // *.* => *.{mode}.*
-      mode: resolvedOptions.mode
+    // mpx => vue
+    createMpxPlugin(resolvedOptions, {
+      optimizeDeps: {
+        esbuildOptions: {
+          plugins: [
+            // prebuild for addExtensions
+            esbuildCustomExtensionsPlugin({
+              include: /@mpxjs/,
+              extensions: [mode]
+            })
+          ]
+        }
+      }
     }),
-    vue({
-      include: /\.vue|\.mpx/ // mpx => vue transform
+    // add custom extensions
+    customExtensionsPlugin({
+      include: [...ensureArray(fileConditionRules), /@mpxjs/],
+      extensions: [mode, env, env && `${mode}.${env}`].filter(Boolean)
     }),
+    // ensure mpx entry point
+    mpxResolveEntryPlugin(),
+    // vue support for mpxjs/rumtime
+    createVuePlugin(),
     replace({
       preventAssignment: true,
       values: stringifyObject({
-        ...resolvedOptions.defs,
+        ...defs,
         'process.env.NODE_ENV': JSON.stringify(
-          resolvedOptions.isProduction ? 'production' : 'development'
+          isProduction ? 'production' : 'development'
         )
       })
     }),
@@ -162,10 +178,10 @@ export default function (options: Options = {}): Plugin[] {
     })
   ]
 
-  if (!resolvedOptions.isProduction) {
+  if (!isProduction) {
     plugins.push(
       commonjs({
-        include: [/@mpxjs\/webpack-plugin\/lib\/utils/]
+        include: [/@mpxjs\/webpack-plugin\/lib\/utils\/env/]
       })
     )
   }

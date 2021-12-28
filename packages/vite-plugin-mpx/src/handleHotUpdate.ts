@@ -1,15 +1,13 @@
 import { HmrContext, ModuleNode } from 'vite'
 import _debug from 'debug'
 import { SFCBlock } from './compiler'
-import { ResolvedOptions } from './index'
-import processTemplate, {
-  ProcessTemplateResult
-} from './transformer/web/processTemplate'
+import { ResolvedOptions } from './options'
 import {
   getDescriptor,
   setPrevDescriptor,
   createDescriptor
 } from './utils/descriptorCache'
+import { processTemplate } from './transformer/template'
 
 const debug = _debug('vite:hmr')
 
@@ -22,7 +20,7 @@ const debug = _debug('vite:hmr')
  * 4. remove scriptSetup
  */
 export default async function handleHotUpdate(
-  { modules, file, read }: HmrContext,
+  { modules, file, read, server }: HmrContext,
   options: ResolvedOptions
 ): Promise<ModuleNode[] | undefined> {
   const prevDescriptor = getDescriptor(file)
@@ -34,42 +32,61 @@ export default async function handleHotUpdate(
   const descriptor = createDescriptor(
     file,
     content,
+    // mock query
     {
-      app: prevDescriptor.app,
-      page: prevDescriptor.page,
-      component: prevDescriptor.component
+      page: prevDescriptor.page ? null : undefined,
+      component: prevDescriptor.component ? null : undefined
     },
     options
   )
-  descriptor.jsonConfig = prevDescriptor.jsonConfig
-
-  // TODO: optimize get builtInComponentsMap way
-  const templateResult = await processTemplate(descriptor, options)
-  descriptor.builtInComponentsMap = templateResult.builtInComponentsMap
 
   const updateType = []
   const affectedModules = new Set<ModuleNode | undefined>()
+
   const mainModule = modules.find(
     (m) => !/type=/.test(m.url) || /type=script/.test(m.url)
   )
+  const templateModule = modules.find((m) => /type=template/.test(m.url))
 
   if (
-    !isEqualBlock(descriptor.script, prevDescriptor.script) ||
-    !isEqualBuiltInComponent(
-      descriptor.builtInComponentsMap,
-      prevDescriptor.builtInComponentsMap
-    )
+    !isEqualBlock(descriptor.json, prevDescriptor.json) ||
+    descriptor.json?.src !== prevDescriptor.json?.src
   ) {
+    server.ws.send({
+      type: 'full-reload',
+      path: '*'
+    })
+    return []
+  } else {
+    // reused jsonConfig and processJson's data
+    descriptor.jsonConfig = prevDescriptor.jsonConfig
+    descriptor.pagesMap = prevDescriptor.pagesMap
+    descriptor.componentsMap = prevDescriptor.componentsMap
+    descriptor.tabBarMap = prevDescriptor.tabBarMap
+    descriptor.tabBarStr = prevDescriptor.tabBarStr
+  }
+
+  if (!isEqualBlock(descriptor.script, prevDescriptor.script)) {
     affectedModules.add(mainModule)
     updateType.push('script')
   }
 
   let needRerender = false
-  const templateModule = modules.find((m) => /type=template/.test(m.url))
-
   if (!isEqualBlock(descriptor.template, prevDescriptor.template)) {
-    affectedModules.add(templateModule)
     needRerender = true
+    affectedModules.add(templateModule)
+    processTemplate(descriptor, options) // recollect
+    if (
+      !isEqualObject(
+        descriptor.builtInComponentsMap,
+        prevDescriptor.builtInComponentsMap
+      )
+    ) {
+      affectedModules.add(mainModule)
+    }
+  } else {
+    descriptor.builtInComponentsMap = prevDescriptor.builtInComponentsMap
+    descriptor.genericsInfo = prevDescriptor.genericsInfo
   }
 
   let didUpdateStyle = false
@@ -120,6 +137,7 @@ export default async function handleHotUpdate(
   }
 
   if (didUpdateStyle) {
+    // update descriptor styles vue content
     updateType.push(`style`)
   }
 
@@ -130,9 +148,9 @@ export default async function handleHotUpdate(
   return [...affectedModules].filter(Boolean) as ModuleNode[]
 }
 
-export function isEqualBuiltInComponent(
-  a: ProcessTemplateResult['builtInComponentsMap'],
-  b: ProcessTemplateResult['builtInComponentsMap']
+export function isEqualObject(
+  a: Record<string, unknown>,
+  b: Record<string, unknown>
 ): boolean {
   const keysA = Object.keys(a)
   const keysB = Object.keys(b)

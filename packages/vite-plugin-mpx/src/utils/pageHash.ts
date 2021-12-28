@@ -1,6 +1,6 @@
 import hash from 'hash-sum'
 import path from 'path'
-import { ResolvedOptions } from '../index'
+import { ResolvedOptions } from '../options'
 
 export default function pathHash(
   resourcePath: string,

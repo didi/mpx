@@ -1,12 +1,58 @@
 import path from 'path'
 import slash from 'slash'
-import { ResolvedOptions } from '../index'
-import compiler, { SFCBlock, SFCDescriptor } from '../compiler'
 import { Query } from './parseRequest'
 import pathHash from './pageHash'
+import { ResolvedOptions } from '../options'
+import compiler, { SFCBlock, SFCDescriptor } from '../compiler'
+import ensureArray from './ensureArray'
 
 const cache = new Map<string, SFCDescriptor>()
 const prevCache = new Map<string, SFCDescriptor | undefined>()
+
+function genDescriptorTemplate() {
+  const template: SFCDescriptor['template'] = {
+    tag: 'template',
+    type: 'template',
+    content: '<div class="app"><router-view class="page"></router-view></div>',
+    attrs: {},
+    start: 0,
+    end: 0
+  }
+  return template
+}
+
+function genDescriptorScript(descriptor: SFCDescriptor) {
+  const script: SFCDescriptor['script'] = {
+    tag: 'script',
+    type: 'script',
+    content: '',
+    attrs: {},
+    start: 0,
+    end: 0
+  }
+  if (descriptor.app) {
+    script.content = `
+import { createApp } from "@mpxjs/core"
+createApp({})`
+  }
+  if (descriptor.page) {
+    script.content = `
+import { createPage } from "@mpxjs/core"
+createPage({})`
+  }
+  if (descriptor.component) {
+    script.content = `
+import { createComponent } from "@mpxjs/core"
+createComponent({})`
+  }
+  return script
+}
+
+function normalizeBlock(block: SFCBlock | SFCBlock[] | null) {
+  ensureArray(block).forEach((b) => {
+    b.content = '\n' + b.content.replace(/^\n*/m, '')
+  })
+}
 
 export function createDescriptor(
   filename: string,
@@ -28,22 +74,21 @@ export function createDescriptor(
   )
   descriptor.id = pathHash(normalizedPath + (isProduction ? code : ''))
   descriptor.filename = filename
-  descriptor.page = query.page ? true : false
-  descriptor.component = query.component ? true : false
-  descriptor.app = !query.page && !query.component ? true : false
+  descriptor.page = query.page !== undefined
+  descriptor.component = query.component !== undefined
+  descriptor.app = !(descriptor.page || descriptor.component)
+  if (descriptor.app) {
+    descriptor.template = genDescriptorTemplate()
+  }
+  if (!descriptor.script) {
+    descriptor.script = genDescriptorScript(descriptor)
+  }
+  normalizeBlock(descriptor.template)
+  normalizeBlock(descriptor.script)
+  normalizeBlock(descriptor.json)
+  normalizeBlock(descriptor.styles)
   cache.set(filename, descriptor)
-  normalizePart(descriptor.template)
-  normalizePart(descriptor.script)
-  normalizePart(descriptor.json)
-  normalizePart(descriptor.styles)
   return descriptor
-}
-
-function normalizePart(block: SFCBlock | SFCBlock[] | null) {
-  const blocks = block ? (Array.isArray(block) ? block : [block]) : []
-  blocks.forEach((b) => {
-    b.content = '\n' + b.content.replace(/^\n*/m, '')
-  })
 }
 
 export function getPrevDescriptor(filename: string): SFCDescriptor | undefined {

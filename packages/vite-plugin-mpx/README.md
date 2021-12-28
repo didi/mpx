@@ -34,11 +34,3 @@ new Vue({
   }
 })
 ```
-
-## Todo
-
-- Sourcemap
-- Packages
-- page?resolve
-- env
-- sdk 兼容

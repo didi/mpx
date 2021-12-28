@@ -1,8 +1,8 @@
 export interface Mpx {
   entry?: string
-  pagesMap: Record<string, unknown>
-  componentsMap: Record<string, unknown>
-  pagesEntryMap: Record<string, unknown>
+  pagesMap: Record<string, string>
+  componentsMap: Record<string, string>
+  pagesEntryMap: Record<string, string>
 }
 
 const mpx: Mpx = {
