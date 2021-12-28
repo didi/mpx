@@ -1303,45 +1303,39 @@ try {
     const clearFileCache = () => {
       const fs = compiler.intermediateFileSystem
       const cacheLocation = compiler.options.cache.cacheLocation
-      return new Promise((resolve, reject) => {
-        if (fs.rm) {
+      return new Promise((resolve) => {
+        if (typeof fs.rm === 'function') {
           fs.rm(cacheLocation, {
             recursive: true,
             force: true
-          }, (err) => {
-            if (err) return reject(err)
-            resolve()
-          })
+          }, resolve)
         } else {
           // polyfill fs.rm
-          const rmdir = (dir, callback) => {
-            fs.readdir(dir, (err, files) => {
-              if (err) return callback(err)
-              async.each(files, (file, callback) => {
-                file = path.join(dir, file)
-                async.waterfall([
-                  (callback) => {
-                    fs.stat(file, callback)
-                  },
-                  (stats, callback) => {
-                    if (stats.isDirectory()) {
-                      rmdir(file, callback)
-                    } else {
-                      fs.unlink(file, callback)
-                    }
-                  }
-                ], callback)
-              }, (err) => {
-                if (err) return callback(err)
-                fs.rmdir(dir, callback)
-              })
-            })
+          const rm = (file, callback) => {
+            async.waterfall([
+              (callback) => {
+                fs.stat(file, callback)
+              },
+              (stats, callback) => {
+                if (stats.isDirectory()) {
+                  const dir = file
+                  fs.readdir(dir, (err, files) => {
+                    if (err) return callback(err)
+                    async.each(files, (file, callback) => {
+                      file = path.join(dir, file)
+                      rm(file, callback)
+                    }, (err) => {
+                      if (err) return callback(err)
+                      fs.rmdir(dir, callback)
+                    })
+                  })
+                } else {
+                  fs.unlink(file, callback)
+                }
+              }
+            ], callback)
           }
-
-          rmdir(cacheLocation, (err) => {
-            if (err) return reject(err)
-            resolve()
-          })
+          rm(cacheLocation, resolve)
         }
       })
     }
