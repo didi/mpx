@@ -867,11 +867,30 @@ function parse (template, options) {
       // multi root
       if (!currentParent) genTempRoot()
       if (isComponentNode(element, options) && mode === 'ali' && !options.hasVirtualHost) {
-        const attrsListClone = cloneAttrsList(element.attrsList)
+        const needCloneAttrs = ['style', 'bindtap', /^data-/]
+        const appendAttrType = 'class'
+        let appendAttrTypeValue = `${MPX_ROOT_VIEW} host-${options.moduleId}`
+
+        let attrsListClone = cloneAttrsList(element.attrsList)
+        const getAppendAttrTypeStatus = getAndRemoveAttr(element, appendAttrType, false)
+        attrsListClone = attrsListClone.filter((attr) => {
+          return needCloneAttrs.some(condition => {
+            if (condition instanceof RegExp) {
+              return condition.test(attr.name)
+            } else if (typeof condition === 'string') {
+              return attr.name === condition
+            } else {
+              return false
+            }
+          })
+        })
+        if (getAppendAttrTypeStatus.has) {
+          appendAttrTypeValue = getAppendAttrTypeStatus.val + ' ' + appendAttrTypeValue
+        }
         attrsListClone.push(
           {
-            name: 'class',
-            value: `${MPX_ROOT_VIEW} host-${options.moduleId}`
+            name: appendAttrType,
+            value: appendAttrTypeValue
           }
         )
         let componentWrapView = createASTElement('view', attrsListClone)
