@@ -137,9 +137,10 @@ module.exports = function (content) {
       const getRequireByType = (type) => {
         const src = typeResourceMap[type]
         const part = { src }
-        const extraOptions = Object.assign({}, queryObj, {
+        const extraOptions = {
+          ...queryObj,
           resourcePath
-        })
+        }
 
         switch (type) {
           case 'template':

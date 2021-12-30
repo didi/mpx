@@ -258,6 +258,7 @@ module.exports = function (content) {
 
       if (template) {
         const extraOptions = {
+          ...template.src ? { ...queryObj, resourcePath } : null,
           hasScoped,
           hasComment,
           isNative,
@@ -278,16 +279,16 @@ module.exports = function (content) {
         parts.styles.forEach((style, i) => {
           const scoped = style.scoped || autoScope
           const extraOptions = {
+            // style src会被特殊处理为全局复用样式，不添加resourcePath，添加isStatic及issuerFile
+            ...style.src ? {
+              ...queryObj,
+              isStatic: true,
+              issuerFile: mpx.getExtractedFile(addQuery(this.resource, { type: 'styles' }, true))
+            } : null,
             moduleId,
             scoped
           }
           // require style
-          if (style.src) {
-            // style src会被特殊处理为全局复用样式，不添加resourcePath，添加isStatic及issuerFile
-            extraOptions.isStatic = true
-            const issuerResource = addQuery(this.resource, { type: 'styles' }, true)
-            extraOptions.issuerFile = mpx.getExtractedFile(issuerResource)
-          }
           output += getRequire('styles', style, extraOptions, i) + '\n'
         })
       } else if (ctorType === 'app' && mode === 'ali') {
@@ -298,7 +299,7 @@ module.exports = function (content) {
       output += '/* json */\n'
       // 给予json默认值, 确保生成json request以自动补全json
       const json = parts.json || {}
-      output += getRequire('json', json, json.src && { resourcePath }) + '\n'
+      output += getRequire('json', json, json.src && { ...queryObj, resourcePath }) + '\n'
 
       // script
       output += '/* script */\n'
@@ -310,9 +311,9 @@ module.exports = function (content) {
         if (scriptSrcMode) output += `global.currentSrcMode = ${JSON.stringify(scriptSrcMode)}\n`
         // 传递ctorType以补全js内容
         const extraOptions = {
+          ...script.src ? { ...queryObj, resourcePath } : null,
           ctorType
         }
-        if (script.src) extraOptions.resourcePath = resourcePath
         output += getRequire('script', script, extraOptions) + '\n'
       }
       callback(null, output)
