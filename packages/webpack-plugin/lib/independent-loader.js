@@ -41,6 +41,8 @@ module.exports = function (content) {
     const i18nWxsLoaderPath = normalize.lib('wxs/i18n-loader.js')
     const i18nWxsRequest = i18nWxsLoaderPath + '!' + i18nWxsPath
     this._module.addDependency(new CommonJsVariableDependency(i18nWxsRequest))
+    // 避免该模块被concatenate导致注入的i18n没有最先执行
+    this._module.buildInfo.moduleConcatenationBailout = 'i18n'
   }
   output += content
   output += '\n'

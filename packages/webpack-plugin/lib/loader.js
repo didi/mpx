@@ -225,6 +225,8 @@ module.exports = function (content) {
         const i18nWxsLoaderPath = normalize.lib('wxs/i18n-loader.js')
         const i18nWxsRequest = i18nWxsLoaderPath + '!' + i18nWxsPath
         this._module.addDependency(new CommonJsVariableDependency(i18nWxsRequest))
+        // 避免该模块被concatenate导致注入的i18n没有最先执行
+        this._module.buildInfo.moduleConcatenationBailout = 'i18n'
       }
 
       // 为独立分包注入init module
@@ -232,6 +234,8 @@ module.exports = function (content) {
         const independentLoader = normalize.lib('independent-loader.js')
         const independentInitRequest = `!!${independentLoader}!${independent}`
         this._module.addDependency(new CommonJsVariableDependency(independentInitRequest))
+        // 避免该模块被concatenate导致注入的independent init没有最先执行
+        this._module.buildInfo.moduleConcatenationBailout = 'independent init'
       }
 
       // 注入构造函数
@@ -258,7 +262,10 @@ module.exports = function (content) {
 
       if (template) {
         const extraOptions = {
-          ...template.src ? { ...queryObj, resourcePath } : null,
+          ...template.src ? {
+            ...queryObj,
+            resourcePath
+          } : null,
           hasScoped,
           hasComment,
           isNative,
@@ -299,7 +306,10 @@ module.exports = function (content) {
       output += '/* json */\n'
       // 给予json默认值, 确保生成json request以自动补全json
       const json = parts.json || {}
-      output += getRequire('json', json, json.src && { ...queryObj, resourcePath }) + '\n'
+      output += getRequire('json', json, json.src && {
+        ...queryObj,
+        resourcePath
+      }) + '\n'
 
       // script
       output += '/* script */\n'
@@ -311,7 +321,10 @@ module.exports = function (content) {
         if (scriptSrcMode) output += `global.currentSrcMode = ${JSON.stringify(scriptSrcMode)}\n`
         // 传递ctorType以补全js内容
         const extraOptions = {
-          ...script.src ? { ...queryObj, resourcePath } : null,
+          ...script.src ? {
+            ...queryObj,
+            resourcePath
+          } : null,
           ctorType
         }
         output += getRequire('script', script, extraOptions) + '\n'
