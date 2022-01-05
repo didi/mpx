@@ -1975,7 +1975,7 @@ function processAliAddComponentRootView (el, options, stack, currentParent) {
   // append attr
   let getNeedAppendAttrValue = el.attrsMap[needAppendAttr]
   if (getNeedAppendAttrValue) {
-    needAppendAttrValue = getNeedAppendAttrValue+' '+ needAppendAttrValue
+    needAppendAttrValue = getNeedAppendAttrValue + ' ' + needAppendAttrValue
   }
   // generate new el attrs
   newElAttrs = newElAttrs.concat(clonedAttrs).concat(movedAttrs)
