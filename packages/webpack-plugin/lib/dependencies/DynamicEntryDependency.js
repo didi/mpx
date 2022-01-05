@@ -29,7 +29,7 @@ class DynamicEntryDependency extends NullDependency {
     const publicPath = compilation.outputOptions.publicPath || ''
     let { resource, entryType, outputPath, relativePath, originEntryNode } = this
 
-    const { packageRoot, outputPath: filename, alreadyOutputed } = mpx.getPackageInfo({
+    const { packageRoot, outputPath: filename, alreadyOutputted } = mpx.getPackageInfo({
       resource,
       outputPath,
       resourceType: entryType,
@@ -49,7 +49,7 @@ class DynamicEntryDependency extends NullDependency {
     // export类型的resultPath需要添加.js后缀
     if (entryType === 'export') resultPath += '.js'
 
-    if (alreadyOutputed) return callback(null, { resultPath })
+    if (alreadyOutputted) return callback(null, { resultPath })
 
     if (packageRoot) {
       resource = addQuery(resource, { packageRoot })

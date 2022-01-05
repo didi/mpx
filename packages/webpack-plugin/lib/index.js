@@ -577,15 +577,42 @@ class MpxWebpackPlugin {
             mpx.extractedFilesCache.set(resource, file)
             return file
           },
+          recordResourceMap: ({ resourcePath, resourceType, outputPath, packageRoot = '', warn, error }) => {
+            const packageName = packageRoot || 'main'
+            const resourceMap = mpx[`${resourceType}sMap`] || mpx.otherResourcesMap
+            const currentResourceMap = resourceMap.main ? resourceMap[packageName] = resourceMap[packageName] || {} : resourceMap
+            if (outputPath) {
+              if (!currentResourceMap[resourcePath] || currentResourceMap[resourcePath] === true) {
+                // 输出路径冲突检测，如果存在输出路径冲突，对输出路径进行重命名
+                // todo 用outputPathMap来检测输出路径冲突
+                for (let key in currentResourceMap) {
+                  if (currentResourceMap[key] === outputPath && key !== resourcePath) {
+                    outputPath = mpx.getOutputPath(resourcePath, resourceType, { conflictPath: outputPath })
+                    warn && warn(new Error(`Current ${resourceType} [${resourcePath}] is registered with conflicted outputPath [${currentResourceMap[key]}] which is already existed in system, will be renamed with [${outputPath}], use ?resolve to get the real outputPath!`))
+                    break
+                  }
+                }
+                currentResourceMap[resourcePath] = outputPath
+              } else {
+                if (currentResourceMap[resourcePath] !== outputPath) {
+                  return true
+                } else {
+                  error && error(new Error(`Current ${resourceType} [${resourcePath}] is already registered with outputPath [${currentResourceMap[resourcePath]}], you can not register it with another outputPath [${outputPath}]!`))
+                }
+              }
+            } else if (!currentResourceMap[resourcePath]) {
+              currentResourceMap[resourcePath] = true
+            }
+            return false
+          },
           // 组件和静态资源的输出规则如下：
           // 1. 主包引用的资源输出至主包
           // 2. 分包引用且主包引用过的资源输出至主包，不在当前分包重复输出
           // 3. 分包引用且无其他包引用的资源输出至当前分包
           // 4. 分包引用且其他分包也引用过的资源，重复输出至当前分包
-          getPackageInfo: ({ resource, outputPath, resourceType, issuerResource, warn, error }) => {
+          getPackageInfo: ({ resource, resourceType, outputPath, issuerResource, warn, error }) => {
             let packageRoot = ''
             let packageName = 'main'
-            let currentResourceMap = {}
 
             const { resourcePath } = parseRequest(resource)
             const currentPackageRoot = mpx.currentPackageRoot
@@ -594,7 +621,6 @@ class MpxWebpackPlugin {
             const resourceMap = mpx[`${resourceType}sMap`] || mpx.otherResourcesMap
 
             if (!resourceMap.main) {
-              currentResourceMap = resourceMap
               packageRoot = currentPackageRoot
               packageName = currentPackageName
             } else {
@@ -625,36 +651,24 @@ class MpxWebpackPlugin {
                 }
               }
               resourceMap[packageName] = resourceMap[packageName] || {}
-              currentResourceMap = resourceMap[packageName]
             }
 
-            let alreadyOutputed = false
-            if (outputPath) {
-              outputPath = toPosix(path.join(packageRoot, outputPath))
-              // 如果之前已经进行过输出，则不需要重复进行
-              if (currentResourceMap[resourcePath] === outputPath) {
-                alreadyOutputed = true
-              } else {
-                // todo 用outputPathMap来检测冲突
-                // 输出冲突检测，如果存在输出路径冲突，对输出路径进行重命名
-                for (let key in currentResourceMap) {
-                  if (currentResourceMap[key] === outputPath && key !== resourcePath) {
-                    outputPath = toPosix(path.join(packageRoot, mpx.getOutputPath(resourcePath, resourceType, { conflictPath: outputPath })))
-                    warn && warn(new Error(`Current ${resourceType} [${resourcePath}] is registered with a conflict outputPath [${currentResourceMap[key]}] which is already existed in system, will be renamed with [${outputPath}], use ?resolve to get the real outputPath!`))
-                    break
-                  }
-                }
-                currentResourceMap[resourcePath] = outputPath
-              }
-            } else if (!currentResourceMap[resourcePath]) {
-              currentResourceMap[resourcePath] = true
-            }
+            if (outputPath) outputPath = toPosix(path.join(packageRoot, outputPath))
+
+            const alreadyOutputted = mpx.recordResourceMap({
+              resourcePath,
+              resourceType,
+              outputPath,
+              packageRoot,
+              warn,
+              error
+            })
 
             return {
               packageName,
               packageRoot,
               outputPath,
-              alreadyOutputed
+              alreadyOutputted
             }
           }
         }
