@@ -31,6 +31,7 @@ const DynamicEntryDependency = require('./dependencies/DynamicEntryDependency')
 const FlagPluginDependency = require('./dependencies/FlagPluginDependency')
 const RemoveEntryDependency = require('./dependencies/RemoveEntryDependency')
 const SplitChunksPlugin = require('webpack/lib/optimize/SplitChunksPlugin')
+const PartialCompilePlugin = require('./partial-compile/index')
 const fixRelative = require('./utils/fix-relative')
 const parseRequest = require('./utils/parse-request')
 const matchCondition = require('./utils/match-condition')
@@ -157,6 +158,7 @@ class MpxWebpackPlugin {
       cssLangs: ['css', 'less', 'stylus', 'scss', 'sass']
     }, options.nativeConfig)
     options.webConfig = options.webConfig || {}
+    options.partialCompile = options.mode !== 'web' && options.partialCompile
     this.options = options
   }
 
@@ -338,6 +340,10 @@ class MpxWebpackPlugin {
 
     let mpx
 
+    if (this.options.partialCompile) {
+      new PartialCompilePlugin(this.options.partialCompile).apply(compiler)
+    }
+  
     const getPackageCacheGroup = packageName => {
       if (packageName === 'main') {
         return {
