@@ -866,52 +866,21 @@ function parse (template, options) {
 
       // multi root
       if (!currentParent) genTempRoot()
+
+      currentParent.children.push(element)
+      element.parent = currentParent
+      processElement(element, root, options, meta)
       if (isComponentNode(element, options) && mode === 'ali' && !options.hasVirtualHost) {
-        const needCloneAttrs = ['style', 'bindtap', /^data-/]
-        const appendAttrType = 'class'
-        let appendAttrTypeValue = `${MPX_ROOT_VIEW} host-${options.moduleId}`
-
-        let attrsListClone = cloneAttrsList(element.attrsList)
-        const getAppendAttrTypeStatus = getAndRemoveAttr(element, appendAttrType, false)
-        attrsListClone = attrsListClone.filter((attr) => {
-          return needCloneAttrs.some(condition => {
-            if (condition instanceof RegExp) {
-              return condition.test(attr.name)
-            } else if (typeof condition === 'string') {
-              return attr.name === condition
-            } else {
-              return false
-            }
-          })
-        })
-        if (getAppendAttrTypeStatus.has) {
-          appendAttrTypeValue = getAppendAttrTypeStatus.val + ' ' + appendAttrTypeValue
-        }
-        attrsListClone.push(
-          {
-            name: appendAttrType,
-            value: appendAttrTypeValue
-          }
-        )
-        let componentWrapView = createASTElement('view', attrsListClone)
-        processElementToStack(componentWrapView)
+        processAliAddComponentRootView(element, options, stack, currentParent)
       }
+      tagNames.add(element.tag)
 
-      processElementToStack(element)
-      function processElementToStack (element) {
-        currentParent.children.push(element)
-        element.parent = currentParent
-
-        processElement(element, root, options, meta)
-        tagNames.add(element.tag)
-
-        if (!unary) {
-          currentParent = element
-          stack.push(element)
-        } else {
-          element.unary = true
-          closeElement(element, meta)
-        }
+      if (!unary) {
+        currentParent = element
+        stack.push(element)
+      } else {
+        element.unary = true
+        closeElement(element, meta)
       }
     },
 
@@ -1973,36 +1942,58 @@ function processBuiltInComponents (el, meta) {
   }
 }
 
-function processAliStyleClassHack (el, options, root) {
-  let processor
-  // 处理组件标签
-  if (isComponentNode(el, options)) processor = ({ value, typeName }) => [typeName, value]
-  // 处理组件根节点
-  if (options.isComponent && el === root && isRealNode(el)) {
-    processor = ({ name, value, typeName }) => {
-      let sep = name === 'style' ? ';' : ' '
-      value = value ? `{{${typeName}||''}}${sep}${value}` : `{{${typeName}||''}}`
-      return [name, value]
-    }
-  }
-  // 非上述两种不处理
-  if (!processor) return
-  // 处理style、class
-  ['style', 'class'].forEach((type) => {
-    let exp = getAndRemoveAttr(el, type).val
-    let typeName = 'mpx' + type.replace(/^./, (matched) => matched.toUpperCase())
-    let [newName, newValue] = processor({
-      name: type,
-      value: exp,
-      typeName
+function processAliAddComponentRootView (el, options, stack, currentParent) {
+  const needCloneAttrs = [/^(on|catch)Tap$/, /^(on|catch)TouchStart$/, /^(on|catch)TouchMove$/, /^(on|catch)TouchEnd$/, /^(on|catch)TouchCancel$/, /^(on|catch)LongTap$/, /^data-/]
+  const needMoveAttrs = ['style']
+  const needAppendAttr = 'class'
+  let needAppendAttrValue = `${MPX_ROOT_VIEW} host-${options.moduleId}`
+  let newElAttrs = []
+  let movedAttrs = []
+  let allAttrs = cloneAttrsList(el.attrsList)
+  // clone attrs
+  const clonedAttrs = allAttrs.filter((attr) => {
+    return needCloneAttrs.some(condition => {
+      if (condition instanceof RegExp) {
+        return condition.test(attr.name)
+      } else if (typeof condition === 'string') {
+        return attr.name === condition
+      } else {
+        return false
+      }
     })
-    if (newValue !== undefined) {
-      addAttrs(el, [{
-        name: newName,
-        value: newValue
-      }])
+  })
+  // move attrs
+  needMoveAttrs.forEach((attr) => {
+    let movedAttr = getAndRemoveAttr(el, attr)
+    if (movedAttr.has) {
+      movedAttrs.push({
+        name: attr,
+        value: movedAttr.val
+      })
     }
   })
+  // append attr
+  let getNeedAppendAttrValue = el.attrsMap[needAppendAttr]
+  if (getNeedAppendAttrValue) {
+    needAppendAttrValue = getNeedAppendAttrValue+' '+ needAppendAttrValue
+  }
+  // generate new el attrs
+  newElAttrs = newElAttrs.concat(clonedAttrs).concat(movedAttrs)
+  newElAttrs.push(
+    {
+      name: needAppendAttr,
+      value: needAppendAttrValue
+    }
+  )
+  // create new el
+  let componentWrapView = createASTElement('view', newElAttrs)
+  currentParent.children.pop()
+  currentParent.children.push(componentWrapView)
+  componentWrapView.parent = currentParent
+  componentWrapView.children.push(el)
+  el.parent = componentWrapView
+
+  el = componentWrapView
 }
 
 // 有virtualHost情况wx组件注入virtualHost。无virtualHost阿里组件注入root-view。其他跳过。
@@ -2228,11 +2219,6 @@ function processElement (el, root, options, meta) {
     processClass(el, meta)
     processStyle(el, meta)
     processShow(el, options, root)
-  }
-
-  // 当mode为ali不管是不是跨平台都需要进行此处理，以保障ali当中的refs相关增强能力正常运行
-  if (mode === 'ali') {
-    processAliStyleClassHack(el, options, root)
   }
 
   if (!pass) {
