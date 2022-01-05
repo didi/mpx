@@ -9,7 +9,7 @@ module.exports = function (content) {
   if (partialCompilePlugin.shouldRemoveSubPackagesField()){
     const ast = Parser.parse(content, {
       ranges: true,
-	    locations: true
+      locations: true
     })
     walk.simple(ast, {
       ObjectExpression (node) {
