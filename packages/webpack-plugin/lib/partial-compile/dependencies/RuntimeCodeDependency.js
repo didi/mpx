@@ -15,30 +15,30 @@ class RuntimeCodeDependency extends ModuleDependency {
 RuntimeCodeDependency.Template = class RuntimeCodeDependencyTemplate {
   apply (
     dependency,
-		source,
-		{
-			runtimeTemplate,
-			moduleGraph,
-			chunkGraph,
-			initFragments,
-			runtimeRequirements
-		}
+    source,
+    {
+      runtimeTemplate,
+      moduleGraph,
+      chunkGraph,
+      initFragments,
+      runtimeRequirements
+    }
   ) {
     const dep = dependency
-		initFragments.push(
-			new InitFragment(
+    initFragments.push(
+      new InitFragment(
         `/* mpx partial compile runtime dependency */${runtimeTemplate.moduleExports({
-					module: moduleGraph.getModule(dep),
-					chunkGraph,
-					request: dep.request,
-					runtimeRequirements
-				})}\n`
+          module: moduleGraph.getModule(dep),
+          chunkGraph,
+          request: dep.request,
+          runtimeRequirements
+        })}\n`
         ,
-				0,
-				-1,
-				`mpx partial compile ${dep.request}`
-			)
-		);
+        0,
+        -1,
+        `mpx partial compile ${dep.request}`
+      )
+    );
   }
 }
 
