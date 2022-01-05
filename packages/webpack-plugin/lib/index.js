@@ -594,7 +594,7 @@ class MpxWebpackPlugin {
                 }
                 currentResourceMap[resourcePath] = outputPath
               } else {
-                if (currentResourceMap[resourcePath] !== outputPath) {
+                if (currentResourceMap[resourcePath] === outputPath) {
                   return true
                 } else {
                   error && error(new Error(`Current ${resourceType} [${resourcePath}] is already registered with outputPath [${currentResourceMap[resourcePath]}], you can not register it with another outputPath [${outputPath}]!`))
