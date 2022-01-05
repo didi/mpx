@@ -43,5 +43,4 @@ RuntimeCodeDependency.Template = class RuntimeCodeDependencyTemplate {
 }
 
 makeSerializable(RuntimeCodeDependency, '@mpxjs/webpack-plugin/lib/partial-compile/dependencies/RuntimeCodeDependency')
-
 module.exports = RuntimeCodeDependency
