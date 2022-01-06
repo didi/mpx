@@ -860,37 +860,28 @@ new MpxWebpackPlugin({
 })
 ```
 
-### partialCompile
+### partialCompileCondition
 
-- **详细**：在大型的小程序开发当中，全量打包页面耗时非常长，往往在`开发过程`中仅仅只需用到几个 pages 而已，该配置项支持`开发环境下`打包指定的小程序页面。
+- **详细**：在大型的小程序开发当中，全量打包页面耗时非常长，往往在`开发过程`中仅仅只需用到几个 pages 而已，该配置项支持打包指定的小程序页面。
 
-- **类型**：`true | Object`
-  - `option.preprocessCondition`：`RegExp | string | (pageResourcePath) => boolean`
+- **类型**：`string | RegExp | Function | Array<string | RegExp | Function>`
 
 - **示例**：
 ```js
-// 开启特性，默认打包 json pages 的第一项以及 tabBar 对应的页面
+// 配置正则、字符串、函数、数组来指定打包所需的 page
 new MpxWebpackPlugin({
-  partialCompile: true
-})
-// 配置正则、字符串、函数来指定打包所需的 page
-new MpxWebpackPlugin({
-  partialCompile: {
-    preprocessCondition: '/project/pages', // 文件路径包含 '/project/pages' 的页面都会被打包
-    preprocessCondition: /pages\/internal/, // 文件路径能与正则匹配上的页面都会被打包
-    preprocessCondition (pageResourcePath) {
-      // pageResourcePath 小程序页面所在系统的文件路径
-      return pageResourcePath.includes('pages') // 文件路径包含 'pages' 的页面都会被打包
-    }
+  partialCompileCondition: '/project/pages', // 文件路径包含 '/project/pages' 的页面都会被打包
+  partialCompileCondition: /pages\/internal/, // 文件路径能与正则匹配上的页面都会被打包
+  partialCompileCondition (pageResourcePath) {
+    // pageResourcePath 小程序页面所在系统的文件路径
+    return pageResourcePath.includes('pages') // 文件路径包含 'pages' 的页面都会被打包
   }
+  partialCompileCondition: ['/project/pages', /pages\/internal/, (pageResourcePath) => pageResourcePath.includes('pages')] // 匹配任意条件的页面都会被打包
 })
-//
 ```
 
-- **进阶**：插件内部维护了**小型服务器**，用来监听你是否使用 `mpx[navigateTo|redirectTo|reLaunch]` 进行路由跳转，如果跳转的目标 page 尚未打包，插件内部会触发 webpack 重新编译进而打包目标 page。
-
 :::warning
-该特性只能用于**开发环境**，小程序设置务必勾选 `不校验合法域名`。
+该特性只能用于**开发环境**，默认情况下会阻止除去 `app.mpx` 的所有页面的打包。
 :::
 
 ## MpxWebpackPlugin static methods
