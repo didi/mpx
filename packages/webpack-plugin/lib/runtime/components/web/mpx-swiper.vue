@@ -41,7 +41,9 @@
     },
     data () {
       return {
-        currentIndex: this.current
+        currentIndex: this.current,
+        currentChildLength: 0,
+        lastChildLength: 0
       }
     },
     computed: {
@@ -81,6 +83,9 @@
         }
       }
     },
+    updated () {
+      this.currentChildLength = this.$children && this.$children.length
+    },
     watch: {
       current (val) {
         if (this.bs) {
@@ -89,6 +94,17 @@
         }
         this.changeSource = ''
         this.goto(val)
+      },
+      currentChildLength(val) {
+        if (!this.lastChildLength) {
+          this.lastChildLength = val
+          if (!this.autoplay) {
+            this.bs && this.bs.refresh()
+          }
+          return
+        }
+        this.lastChildLength = val
+        this.bs && this.bs.refresh()
       }
     },
     activated () {
