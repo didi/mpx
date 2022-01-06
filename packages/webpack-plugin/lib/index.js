@@ -158,7 +158,7 @@ class MpxWebpackPlugin {
       cssLangs: ['css', 'less', 'stylus', 'scss', 'sass']
     }, options.nativeConfig)
     options.webConfig = options.webConfig || {}
-    options.partialCompile = options.mode !== 'web' && options.partialCompile
+    options.partialCompileCondition = options.mode !== 'web' && options.partialCompileCondition
     this.options = options
   }
 
@@ -340,8 +340,8 @@ class MpxWebpackPlugin {
 
     let mpx
 
-    if (this.options.partialCompile) {
-      new PartialCompilePlugin(this.options.partialCompile).apply(compiler)
+    if (this.options.partialCompileCondition) {
+      new PartialCompilePlugin(this.options.partialCompileCondition).apply(compiler)
     }
   
     const getPackageCacheGroup = packageName => {
