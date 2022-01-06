@@ -32,21 +32,9 @@ export async function transformStyle(
 /**
  * generate style block
  * @param descriptor - SFCDescriptor
+ * @returns <template>descriptor.template.content</template>
  */
 export function genStylesBlock(descriptor: SFCDescriptor): { output: string } {
-  const output = []
   const { styles } = descriptor
-  if (styles && styles.length) {
-    styles.forEach((style) => {
-      output.push(
-        genComponentTag(style, {
-          content(style) {
-            return style.content
-          }
-        })
-      )
-    })
-    output.push('\n')
-  }
-  return { output: output.join('\n') }
+  return { output: styles.map(style => genComponentTag(style)).join('\n') }
 }

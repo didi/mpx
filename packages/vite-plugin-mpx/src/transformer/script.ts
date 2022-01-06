@@ -17,12 +17,12 @@ const tabBarPath = resolveMpxRuntime('components/web/mpx-tab-bar.vue')
 const customBarPath = './custom-tab-bar/index'
 
 /**
- * transfrom mpx script to vue script
+ * transfrom mpx script
  * @param code - mpx script content
  * @param descriptor - SFCDescriptor
  * @param options - ResolvedOptions
  * @param pluginContext - TransformPluginContext
- * @returns vue content
+ * @returns script content
  */
 export function transformScript(
   code: string,
