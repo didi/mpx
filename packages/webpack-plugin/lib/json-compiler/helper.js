@@ -5,6 +5,7 @@ const isUrlRequestRaw = require('../utils/is-url-request')
 const parseRequest = require('../utils/parse-request')
 const loaderUtils = require('loader-utils')
 const resolve = require('../utils/resolve')
+const addQuery = require('../utils/add-query')
 
 module.exports = function createJSONHelper ({ loaderContext, emitWarning, customGetDynamicEntry }) {
   const mpx = loaderContext.getMpx()
@@ -91,6 +92,8 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
     if (resolveMode === 'native') {
       page = urlToRequest(page)
     }
+    // 增加 page 标识, 提供给 partial-compile 阻止页面打包
+    page = addQuery(page, { resolveType: 'page' })
     resolve(context, page, loaderContext, (err, resource) => {
       if (err) return callback(err)
       const { resourcePath, queryObj: { isFirst } } = parseRequest(resource)
