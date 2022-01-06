@@ -96,15 +96,10 @@
         this.goto(val)
       },
       currentChildLength(val) {
-        if (!this.lastChildLength) {
-          this.lastChildLength = val
-          if (!this.autoplay) {
-            this.bs && this.bs.refresh()
-          }
-          return
+        if (this.lastChildLength || (!this.lastChildLength && !this.autoplay)) {
+          this.bs && this.bs.refresh()
         }
         this.lastChildLength = val
-        this.bs && this.bs.refresh()
       }
     },
     activated () {
