@@ -96,6 +96,9 @@
         this.goto(val)
       },
       currentChildLength(val) {
+        if (val < this.lastChildLength && val < this.currentIndex) {
+          this.goto(0, 0)
+        }
         if (this.lastChildLength || (!this.lastChildLength && !this.autoplay)) {
           this.bs && this.bs.refresh()
         }
@@ -178,10 +181,11 @@
       refresh () {
         this.bs && this.bs.refresh()
       },
-      goto (index) {
+      goto (index, time) {
         const x = this.vertical ? 0 : index
         const y = this.vertical ? index : 0
-        this.bs && this.bs.goToPage(x, y)
+        const speed = time === 0 ? 0 : this.duration
+        this.bs && this.bs.goToPage(x, y, speed)
       }
     },
     render (createElement) {
