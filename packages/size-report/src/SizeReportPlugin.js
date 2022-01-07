@@ -42,6 +42,10 @@ class SizeReportPlugin {
       const { moduleGraph, chunkGraph, __mpx__: mpx } = compilation
       if (!mpx) return
 
+      const logger = compilation.getLogger('SizeReportPlugin')
+
+      logger.time('compute size')
+
       function walkEntry (entryModule, sideEffect) {
         const modulesSet = new Set()
 
@@ -516,12 +520,13 @@ class SizeReportPlugin {
 
       await writeFilePromise(reportFilePath, JSON.stringify(reportData, null, 2))
 
-      const logger = compilation.getLogger('SizeReportPlugin')
       logger.info(`Size report is generated in ${reportFilePath}!`)
 
       if (this.options.server.enable) {
         startServer(JSON.stringify(reportData), Object.assign({ logger }, this.options.server))
       }
+
+      logger.timeEnd('compute size')
     })
   }
 }
