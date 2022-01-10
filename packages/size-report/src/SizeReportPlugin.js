@@ -34,6 +34,14 @@ class SizeReportPlugin {
       })
     })
 
+    compiler.hooks.thisCompilation.tap('SizeReportPlugin', (compilation) => {
+      compilation.hooks.assetPath.tap('SizeReportPlugin', (path, data, assetInfo) => {
+        if (data.chunk && assetInfo) {
+          assetInfo.chunkName = data.chunk.name
+        }
+      })
+    })
+
     compiler.hooks.emit.tapPromise({
       name: 'SizeReportPlugin',
       // 在最后assets稳定后执行
@@ -43,6 +51,7 @@ class SizeReportPlugin {
       if (!mpx) return
 
       const logger = compilation.getLogger('SizeReportPlugin')
+      const cache = compilation.getCache('SizeReportPlugin')
 
       logger.time('compute size')
 
@@ -291,7 +300,8 @@ class SizeReportPlugin {
       // Generate original size info
       for (let name in compilation.assets) {
         const packageName = getPackageName(name)
-        const assetModules = mpx.assetModulesMap.get(name)
+        const assetModules = mpx.assetsModulesMap.get(name)
+        const assetInfo = compilation.assetsInfo.get(name)
         if (assetModules) {
           const entryModules = new Set()
           const noEntryModules = new Set()
@@ -339,15 +349,26 @@ class SizeReportPlugin {
           fillPackagesSizeInfo(packageName, size)
           sizeSummary.staticSize += size
           sizeSummary.totalSize += size
-        } else if (/\.m?js$/i.test(name)) {
-          let parsedModules
-          try {
-            parsedModules = parseAsset(compilation.assets[name].source())
-          } catch (err) {
-            const msg = err.code === 'ENOENT' ? 'no such file' : err.message
-            compilation.errors.push(`Error parsing bundle asset "${name}": ${msg}`)
-            continue
+        } else if (/\.m?js$/i.test(name) && assetInfo.chunkName) {
+          const chunk = compilation.namedChunks.get(assetInfo.chunkName)
+          const etag = chunk ? chunk.contentHash.javascript : null
+          const content = compilation.assets[name].source()
+          const ast = mpx.assetsASTsMap.get(name)
+
+          let parsedLocations = etag && await cache.getPromise(name, etag)
+          if (!parsedLocations) {
+            try {
+              const result = parseAsset(content, ast)
+              parsedLocations = result.locations
+              mpx.assetsASTsMap.set(name, ast)
+              etag && await cache.storePromise(name, etag, parsedLocations)
+            } catch (err) {
+              const msg = err.code === 'ENOENT' ? 'no such file' : err.message
+              compilation.errors.push(`Error parsing bundle asset "${name}": ${msg}`)
+              continue
+            }
           }
+
           let size = compilation.assets[name].size()
           const chunkAssetInfo = {
             type: 'chunk',
@@ -361,9 +382,10 @@ class SizeReportPlugin {
           fillPackagesSizeInfo(packageName, size)
           sizeSummary.chunkSize += size
           sizeSummary.totalSize += size
-          for (let id in parsedModules) {
+          for (let id in parsedLocations) {
             const module = modulesMapById[id]
-            const moduleSize = Buffer.byteLength(parsedModules[id])
+            const { start, end } = parsedLocations[id]
+            const moduleSize = Buffer.byteLength(content.slice(start, end))
             const identifier = module.readableIdentifier(compilation.requestShortener)
             const entryModules = getModuleEntries(module)
             const noEntryModules = getModuleEntries(module, true)

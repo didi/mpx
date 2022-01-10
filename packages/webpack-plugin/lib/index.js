@@ -488,7 +488,9 @@ class MpxWebpackPlugin {
           // 记录entryModule与entryNode的对应关系，用于体积分析
           entryNodeModulesMap: new Map(),
           // 记录与asset相关联的modules，用于体积分析
-          assetModulesMap: new Map(),
+          assetsModulesMap: new Map(),
+          // 记录与asset相关联的ast，用于体积分析和esCheck，避免重复parse
+          assetsASTsMap: new Map(),
           usingComponents: {},
           // todo es6 map读写性能高于object，之后会逐步替换
           vueContentCache: new Map(),
@@ -807,9 +809,9 @@ class MpxWebpackPlugin {
       })
 
       compilation.hooks.moduleAsset.tap('MpxWebpackPlugin', (module, filename) => {
-        const modules = mpx.assetModulesMap.get(filename) || new Set()
+        const modules = mpx.assetsModulesMap.get(filename) || new Set()
         modules.add(module)
-        mpx.assetModulesMap.set(filename, modules)
+        mpx.assetsModulesMap.set(filename, modules)
       })
 
       compilation.hooks.beforeModuleAssets.tap('MpxWebpackPlugin', () => {
