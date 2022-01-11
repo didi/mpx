@@ -484,8 +484,8 @@ progress|是
 radio|是
 radio-group|是
 rich-text|是
-scroll-view|是|scroll-view 转 web 底层滚动依赖 BetterScroll 实现支持额外传入以下属性： <br/><br/>`scroll-options`: object <br/>可重写 BetterScroll 初始化基本配置<br/>若出现无法滚动，可尝试手动传入 `{ observeDOM: true }` <br/><br/> `update-refresh`: boolean <br/>Vue updated 钩子函数触发时，可用于重新计算 BetterScroll<br/><br/>tips: 当使用下拉刷新相关属性时，由于 Vue 数据响应机制的限制，在 web 侧可能出现下拉组件状态无法复原的问题，可尝试在 `refresherrefresh` 事件中，手动将 refresher-triggered 属性值设置为 true
-swiper|是
+scroll-view|是|scroll-view 输出 web 底层滚动依赖 BetterScroll，实现支持额外传入以下属性： <br/><br/>`scroll-options`: object <br/>可重写 BetterScroll 初始化基本配置<br/>若出现无法滚动，可尝试手动传入 `{ observeDOM: true }` <br/><br/> `update-refresh`: boolean <br/>Vue updated 钩子函数触发时，可用于重新计算 BetterScroll<br/><br/>tips: 当使用下拉刷新相关属性时，由于 Vue 数据响应机制的限制，在 web 侧可能出现下拉组件状态无法复原的问题，可尝试在 `refresherrefresh` 事件中，手动将 refresher-triggered 属性值设置为 true
+swiper|是|swiper 输出 web 底层滚动依赖 BetterScroll，实现支持额外传入以下属性： <br/><br/>`scroll-options`: object <br/>可重写 BetterScroll 初始化基本配置<br/>
 swiper-item|是
 switch|是
 slider|是
