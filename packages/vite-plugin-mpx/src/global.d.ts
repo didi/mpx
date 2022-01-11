@@ -5,6 +5,12 @@ declare module '@mpxjs/webpack-plugin/lib/web/processScript'
 declare module '@mpxjs/webpack-plugin/lib/utils/mpx-json'
 declare module '@mpxjs/webpack-plugin/lib/parser'
 declare module 'rollup-plugin-node-globals'
+declare module '@mpxjs/webpack-plugin/lib/style-compiler/load-postcss-config'
+declare module '@mpxjs/webpack-plugin/lib/style-compiler/plugins/trim'
+declare module '@mpxjs/webpack-plugin/lib/style-compiler/plugins/rpx'
+declare module '@mpxjs/webpack-plugin/lib/style-compiler/plugins/vw'
+declare module '@mpxjs/webpack-plugin/lib/style-compiler/plugins/conditional-strip'
+declare module '@mpxjs/webpack-plugin/lib/style-compiler/plugins/scope-id'
 
 declare module '@mpxjs/webpack-plugin/lib/utils/to-posix' {
   export default function (path: string): string

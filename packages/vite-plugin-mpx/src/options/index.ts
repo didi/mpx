@@ -1,4 +1,5 @@
 import { ViteDevServer } from 'vite'
+import { FilterPattern } from '@rollup/pluginutils'
 
 export type Mode = 'wx' | 'web' | 'ali' | 'swan'
 
@@ -11,7 +12,10 @@ export interface Options {
   externalClasses?: string[]
   resolveMode?: 'webpack' | 'native'
   writeMode?: 'changed' | 'full' | null
-  autoScopeRules?: Record<string, unknown>
+  autoScopeRules?: {
+    include?: FilterPattern
+    exclude?: FilterPattern
+  }
   autoVirtualHostRules?: Record<string, unknown>
   forceDisableInject?: boolean
   forceDisableProxyCtor?: boolean
@@ -85,11 +89,12 @@ export function processOptions(rawOptions: Options): ResolvedOptions {
     include: () => true
   }
   // 通过默认defs配置实现mode及srcMode的注入，简化内部处理逻辑
-  rawOptions.defs = Object.assign({}, rawOptions.defs, {
+  rawOptions.defs = {
+    ...rawOptions.defs,
     __mpx_mode__: rawOptions.mode,
     __mpx_src_mode__: rawOptions.srcMode,
     __mpx_env__: rawOptions.env
-  })
+  }
   // 批量指定源码mode
   rawOptions.modeRules = rawOptions.modeRules || {}
   rawOptions.generateBuildMap = rawOptions.generateBuildMap || false
@@ -105,12 +110,10 @@ export function processOptions(rawOptions: Options): ResolvedOptions {
   rawOptions.transRpxRules = rawOptions.transRpxRules || null
   rawOptions.auditResource = rawOptions.auditResource || false
   rawOptions.decodeHTMLText = rawOptions.decodeHTMLText || false
-  rawOptions.nativeOptions = Object.assign(
-    {
-      cssLangs: ['css', 'less', 'stylus', 'scss', 'sass']
-    },
-    rawOptions.nativeOptions
-  )
+  rawOptions.nativeOptions = {
+    cssLangs: ['css', 'less', 'stylus', 'scss', 'sass'],
+    ...rawOptions.nativeOptions
+  }
   rawOptions.i18n = rawOptions.i18n || null
   rawOptions.checkUsingComponents = rawOptions.checkUsingComponents || false
   rawOptions.reportSize = rawOptions.reportSize || null

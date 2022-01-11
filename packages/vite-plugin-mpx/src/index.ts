@@ -125,6 +125,7 @@ function createMpxPlugin(
               code,
               filename,
               descriptor,
+              options,
               Number(query.index),
               this
             )

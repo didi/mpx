@@ -65,7 +65,7 @@ export function renderAppHelpCode(
   if (i18n && !option.forceDisableInject) {
     content.unshift(`import VueI18n from 'vue-i18n'`)
     content.push(`Vue.use(VueI18n)`)
-    const i18nObj = Object.assign({}, i18n)
+    const i18nObj = {...i18n}
     const requestObj: Record<string, string> = {}
     const i18nKeys = ['messages', 'dateTimeFormats', 'numberFormats']
     i18nKeys.forEach((key) => {

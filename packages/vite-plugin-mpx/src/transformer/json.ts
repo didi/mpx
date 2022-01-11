@@ -138,7 +138,7 @@ export async function processJSON(
 
   const processTabBar = async (tabBar: JsonConfig['tabBar']) => {
     if (tabBar) {
-      tabBar = Object.assign({}, defaultTabbar, tabBar)
+      tabBar = { ...defaultTabbar, ...tabBar }
       tabBarMap = {}
       jsonConfig?.tabBar?.list?.forEach(({ pagePath }) => {
         tabBarMap[pagePath] = true

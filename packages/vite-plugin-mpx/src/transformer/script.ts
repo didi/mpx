@@ -90,13 +90,11 @@ export function transformScript(
   const tabBarPagesMap: Record<string, string> = {}
 
   if (tabBar && tabBarMap) {
-    // 挂载tabBar组件
     tabBarPagesMap['mpx-tab-bar'] = getComponent(
       '__mpxTabBar',
       tabBar.custom ? customBarPath : tabBarPath
     )
 
-    // 挂载tabBar页面
     Object.keys(tabBarMap).forEach((tarbarName, index) => {
       const tabBarId = localPagesMap[tarbarName]
       if (tabBarId) {
@@ -233,7 +231,7 @@ export async function genScriptBlock(
   return {
     output: genComponentTag(descriptor.script, {
       attrs(script) {
-        const attrs = Object.assign({}, script?.attrs)
+        const attrs = { ...script?.attrs }
         delete attrs.src
         return attrs
       },
