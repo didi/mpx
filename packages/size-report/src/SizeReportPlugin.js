@@ -360,7 +360,7 @@ class SizeReportPlugin {
             try {
               const result = parseAsset(content, ast)
               parsedLocations = result.locations
-              mpx.assetsASTsMap.set(name, ast)
+              mpx.assetsASTsMap.set(name, result.ast)
               etag && await cache.storePromise(name, etag, parsedLocations)
             } catch (err) {
               const msg = err.code === 'ENOENT' ? 'no such file' : err.message
