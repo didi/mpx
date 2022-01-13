@@ -1041,15 +1041,21 @@ module.exports = {
   - `limit` : 对内联文件作为数据 URL 的字节数限制
   - `publicPath` : 自定义 public 目录
   - `fallback` : 文件字节数大于限制时，为文件指定加载程序
+  
+
+todo 不应该放在这里，放到进阶里面起一个章节：自定义页面路径
 
 ## json增强
+
 ### 自定义 page 路径
 - **背景**: 用户在进行分包或主包的 pages 配置时，如果引用的页面不存在于当前 app.mpx 所在的上下文中，例如存在于 npm 包中，为避免和本地声明的其他 page 路径冲突，Mpx 会对路径进行 hash 化处理。这样一来，用户就无法使用之前定义的路径；此外部分用户也希望可以对引入的页面路径进行自定义。
 
 - **详细**: 在 json 中配置 pages 时，数组中支持放入 Object，对象中传入两个字段，src 字段表示页面地址，path 字段表示自定义页面路径
 
 - **示例**:
-```js
+
+object风格的页面声明
+```json5
 {
   // 主包中的声明
   "pages": [
@@ -1071,9 +1077,10 @@ module.exports = {
     }
   ]
 }
+```
 
-// 使用
-// 可以直接使用你自己声明的 path
+使用声明中配置的页面路径进行跳转
+```js
 mpx.navigateTo({
   url: '/pages/somNpmPackage/index'
 })
@@ -1082,6 +1089,7 @@ mpx.navigateTo({
   url: '/test/pages/somNpmPackage/test'
 })
 ```
+
 
 ## Request query
 
@@ -1108,76 +1116,10 @@ Mpx中允许用户在request中传递特定query执行特定逻辑，目前已�
     url: subPackageIndexPage
   })
   ```
-### ?packageName
-
-- **详细**：
-
-  指定当前 Page 或 Component 中引用的某个非 JS 静态资源被打包到对应的主包或分包目录下。分包之间不能相互引用对方包中的资源（比如图片和 js 脚本等），分包可以引用主包和自己包内的资源。
-
-- **示例**：
-
-  ``` javascript
-  // 入口 app.mpx 的 json 配置部分
-  module.exports = {
-    "pages": [
-      "./pages/index",
-      "./pages/list?root=list&name=listName"
-    ],
-    "packages": [
-      "./packageA/packageA.mpx?root=packageA",
-      "./packageB/packageB.mpx?root=packageB&name=packageSecond"
-    ]
-  }
-  ```
-
-  ``` html
-  <!-- packageA/cat.mpx -->
-  <template>
-    <view>
-      <view>hello packageA cat.mpx</view>
-      <image src="{{catAvatar}}"></image>
-    </view>
-  </template>
-
-  <script>
-    import{ createPage } from '@mpxjs/core'
-    // 没有配置 packageName，默认打包到当前模块所在的分包目录下
-    import catAvatar from 'static/images/cat.jpg'
-
-    createPage({
-      data: {
-        catAvatar
-      },
-      onLoad () {}
-    })
-  </script>
-  ```
-
-  ``` html
-  <!-- packageB/dog.mpx -->
-  <template>
-    <view>
-      <view>hello packageB dog.mpx</view>
-      <image src="{{dogAvatar}}"></image>
-    </view>
-  </template>
-
-  <script>
-    import{ createPage } from '@mpxjs/core'
-    // 指定 packageName=main 即使当前模块在分包 packageB 下，资源也会被打包到主包目录下
-    // 当前分包是 packageB，所以不能指定 resourceName 为 packageA 或其他分包
-    import dogAvatar from 'static/images/dog.jpg?packageName=main'
-
-    createPage({
-      data: {
-        dogAvatar
-      },
-      onLoad () {}
-    })
-  </script>
-  ```
 
 ### ?root
+
+todo 增加分包异步化用法描述 @薛干
 
 - **详细**：指定分包别名，Mpx 项目在编译构建后会输出该别名的分包，外部小程序或 H5 页面跳转时，可直接配置该分包别名下的资源路径。
 
@@ -1227,3 +1169,19 @@ const webpackConfig = {
   }
 </style>
 ```
+
+### ?useLocal
+
+todo 详情见url-loader @永芳
+
+### ?isStyle
+
+todo 详情见url-loader @永芳
+
+### ?isPage
+
+todo 独立构建页面，也可以通过MpxWebpackPlugin.getPageEntry生成 @薛干
+
+### ?isComponent
+
+todo 独立构建组件，也可以通过MpxWebpackPlugin.getComponentEntry生成 @薛干

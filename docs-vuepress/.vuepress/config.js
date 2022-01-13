@@ -63,6 +63,13 @@ const sidebar = {
         'understand/runtime',
         'understand/compile'
       ]
+    },
+    {
+      title: '迁移',
+      collapsable: false,
+      children: [
+        'migrate/2.7'
+      ]
     }
   ],
   '/api/': [
