@@ -477,7 +477,7 @@ new MpxWebpackPlugin({
 
 - **默认值**: `false`
 
-- **详细**: 在非支付宝小程序环境下，`Mpx` 会强行将 `Page` 转为 `Conponent` 处理；将该值设置为 `true` 时，`Page` 将不被转换。
+- **详细**: 为了获取更丰富的生命周期来进行更加完善的增强处理，在非支付宝小程序环境下，`Mpx` 默认会使用 `Conponent` 构造器来创建页面。将该值设置为 `true` 时，会强制使用 `Page` 构造器创建页面。
 
 - **示例**:
 ```js
@@ -486,9 +486,7 @@ new MpxWebpackPlugin({
 })
 ```
 
-:::tip
-// TODO 可以深入讲解下，为什么会被强转
-:::
+
 
 ### postcssInlineConfig
 
@@ -1043,7 +1041,7 @@ module.exports = {
   - `fallback` : 文件字节数大于限制时，为文件指定加载程序
   
 
-todo 不应该放在这里，放到进阶里面起一个章节：自定义页面路径
+todo 不应该放在这里，放到进阶里面起一个章节：自定义页面路径 @薛干
 
 ## json增强
 
