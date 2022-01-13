@@ -129,7 +129,9 @@ class SizeReportPlugin {
         })
         reportGroups.forEach((reportGroup) => {
           reportGroup.entryModules = reportGroup.entryModules || new Set()
-          if (reportGroup.entryRules && matchCondition(parseRequest(entryModule.resource).resourcePath, reportGroup.entryRules)) {
+          // 处理ConcatenatedModule
+          const resource = entryModule.resource || entryModule.rootModule.resource
+          if (resource && reportGroup.entryRules && matchCondition(parseRequest(resource).resourcePath, reportGroup.entryRules)) {
             reportGroup.entryModules.add(entryModule)
           }
         })
@@ -138,11 +140,9 @@ class SizeReportPlugin {
       if (reportGroupsWithNoEntryRules.length) {
         compilation.modules.forEach((module) => {
           reportGroupsWithNoEntryRules.forEach((reportGroup) => {
-            if ((module.resource && matchCondition(parseRequest(module.resource).resourcePath, reportGroup.noEntryRules)) ||
-              // 处理ConcatenatedModule
-              (module.modules && has(module.modules, (module) => {
-                return module.resource && matchCondition(parseRequest(module.resource).resourcePath, reportGroup.noEntryRules)
-              }))) {
+            // 处理ConcatenatedModule
+            const resource = module.resource || module.rootModule.resource
+            if (resource && matchCondition(parseRequest(resource).resourcePath, reportGroup.noEntryRules)) {
               reportGroup.noEntryModules = reportGroup.noEntryModules || new Set()
               reportGroup.noEntryModules.add(module)
               walkEntry(module, (module, noEntryModule) => {
