@@ -219,6 +219,24 @@ class MpxWebpackPlugin {
     }
   }
 
+  static getPageEntry (request) {
+    return addQuery(request, { isPage: true })
+  }
+
+  static getComponentEntry (request) {
+    return addQuery(request, { isComponent: true })
+  }
+
+  static getPluginEntry (request) {
+    return addQuery(request, {
+      mpx: true,
+      extract: true,
+      isPlugin: true,
+      asScript: true,
+      type: 'json'
+    })
+  }
+
   runModeRules (data) {
     const { resourcePath, queryObj } = parseRequest(data.resource)
     if (queryObj.mode) {
