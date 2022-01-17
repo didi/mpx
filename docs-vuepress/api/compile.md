@@ -486,8 +486,6 @@ new MpxWebpackPlugin({
 })
 ```
 
-
-
 ### postcssInlineConfig
 
 ### transRpxRules
