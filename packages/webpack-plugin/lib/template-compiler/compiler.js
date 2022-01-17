@@ -1853,24 +1853,64 @@ function processAliExternalClassesHack (el, options) {
   }
 }
 
+// externalClasses只能模拟静态传递
 function processWebExternalClassesHack (el, options) {
-  // todo 处理scoped的情况, 处理组件多层传递externalClass的情况，通过externalClass属性传递实际类名及scopeId信息，可以使用特殊的类名形式代表scopeId，如#idstring
-  let staticClass = el.attrsMap['class']
-  let dynamicClass = el.attrsMap[':class']
-  if (staticClass || dynamicClass) {
-    const externalClasses = []
+  const staticClass = getAndRemoveAttr(el, 'class').val
+  if (staticClass) {
+    const classNames = staticClass.split(/\s+/)
+    const replacements = []
     options.externalClasses.forEach((className) => {
-      const reg = new RegExp('\\b' + className + '\\b')
-      if (reg.test(staticClass) || reg.test(dynamicClass)) {
-        externalClasses.push(className)
+      const index = classNames.indexOf(className)
+      if (index > -1) {
+        replacements.push(`$attrs[${JSON.stringify(className)}]`)
+        classNames.splice(index, 1)
       }
     })
-    if (externalClasses.length) {
+
+    if (classNames.length) {
       addAttrs(el, [{
-        name: 'v-ex-classes',
-        value: JSON.stringify(externalClasses)
+        name: 'class',
+        value: classNames.join(' ')
       }])
     }
+
+    if (replacements.length) {
+      const dynamicClass = getAndRemoveAttr(el, ':class').val
+      if (dynamicClass) replacements.push(dynamicClass)
+
+      addAttrs(el, [{
+        name: ':class',
+        value: `[${replacements.join(',')}]`
+      }])
+    }
+  }
+
+  // 处理externalClasses多层透传
+  const isComponent = isComponentNode(el, options)
+  if (isComponent) {
+    options.externalClasses.forEach((classLikeAttrName) => {
+      let classLikeAttrValue = getAndRemoveAttr(el, classLikeAttrName).val
+      if (classLikeAttrValue) {
+        const classNames = classLikeAttrValue.split(/\s+/)
+        const replacements = []
+        options.externalClasses.forEach((className) => {
+          const index = classNames.indexOf(className)
+          if (index > -1) {
+            replacements.push(`$attrs[${JSON.stringify(className)}]`)
+            classNames.splice(index, 1)
+          }
+        })
+
+        if (classNames.length) {
+          replacements.unshift(JSON.stringify(classNames.join(' ')))
+        }
+
+        addAttrs(el, [{
+          name: ':' + classLikeAttrName,
+          value: `[${replacements.join(',')}].join(' ')`
+        }])
+      }
+    })
   }
 }
 
@@ -1909,7 +1949,7 @@ function processAliStyleClassHack (el, options, root) {
     processor = ({ name, value, typeName }) => {
       let sep = name === 'style' ? ';' : ' '
       value = value ? `{{${typeName}||''}}${sep}${value}` : `{{${typeName}||''}}`
-      return [ name, value ]
+      return [name, value]
     }
   }
   // 非上述两种不处理
@@ -1931,6 +1971,7 @@ function processAliStyleClassHack (el, options, root) {
     }
   })
 }
+
 // 有virtualHost情况wx组件注入virtualHost。无virtualHost阿里组件注入root-view。其他跳过。
 function getVirtualHostRoot (options, meta) {
   if (options.isComponent) {

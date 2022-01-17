@@ -2,7 +2,7 @@ const getMainCompilation = require('../utils/get-main-compilation')
 const postcss = require('postcss')
 const loaderUtils = require('loader-utils')
 const loadPostcssConfig = require('./load-postcss-config')
-const { MPX_ROOT_VIEW } = require('../staticConfig')
+const { MPX_ROOT_VIEW, MPX_APP_MODULE_ID } = require('../staticConfig')
 const trim = require('./plugins/trim')
 const rpx = require('./plugins/rpx')
 const vw = require('./plugins/vw')
@@ -29,6 +29,7 @@ module.exports = function (css, map) {
 
   const transRpxRules = transRpxRulesRaw ? (Array.isArray(transRpxRulesRaw) ? transRpxRulesRaw : [transRpxRulesRaw]) : []
 
+  const transRpxFn = mpx.webConfig.transRpxFn
   const testResolveRange = (include = () => true, exclude) => {
     return matchCondition(this.resourcePath, { include, exclude })
   }
@@ -75,7 +76,7 @@ module.exports = function (css, map) {
     }
 
     if (mpx.mode === 'web') {
-      plugins.push(vw)
+      plugins.push(vw({ transRpxFn }))
     }
     // source map
     if (this.sourceMap && !options.map) {
@@ -91,7 +92,7 @@ module.exports = function (css, map) {
       .then(result => {
         // ali环境添加全局样式抹平root差异
         if (mpx.mode === 'ali' && isApp) {
-          result.css += `\n.${MPX_ROOT_VIEW} { display: inline; line-height: normal; }\n`
+          result.css += `\n.${MPX_ROOT_VIEW} { display: initial }\n.${MPX_APP_MODULE_ID} { line-height: normal }`
         }
         if (result.messages) {
           result.messages.forEach(({ type, file }) => {
