@@ -3,16 +3,16 @@ const json5 = require('json5')
 const path = require('path')
 
 const readFileSyncInDist = (filePath, options) => {
-  const realPath = path.join('test/e2e/example/', filePath)
+  const realPath = path.join(path.resolve(), filePath)
   return fs.readFileSync(realPath, options)
 }
 
 describe('test App instance', () => {
   const subpackage = [
     {
-      "root": "test",
-      "pages": [
-        "pages/index",
+      'root': 'test',
+      'pages': [
+        'pages/index'
       ]
     }
   ]
@@ -22,7 +22,7 @@ describe('test App instance', () => {
     const wxAppJsonObj = json5.parse(wxAppJsonStr)
     const wxPages = wxAppJsonObj.pages
     const wxSubPackages = wxAppJsonObj.subPackages
-    expect(wxPages).toEqual(["pages/index", "pages/mode", "pages/alias", "pages/someEnv"])
+    expect(wxPages).toEqual(['pages/index', 'pages/mode', 'pages/alias', 'pages/someEnv'])
     expect(wxSubPackages).toEqual(subpackage)
   })
 
@@ -31,7 +31,7 @@ describe('test App instance', () => {
     const aliAppJsonObj = json5.parse(aliAppJsonStr)
     const aliPages = aliAppJsonObj.pages
     const aliSubPackages = aliAppJsonObj.subPackages
-    expect(aliPages).toEqual(['pages/index', "pages/mode", 'pages/alias'])
+    expect(aliPages).toEqual(['pages/index', 'pages/mode', 'pages/alias'])
     expect(aliSubPackages).toEqual(subpackage)
   })
 
@@ -40,7 +40,7 @@ describe('test App instance', () => {
     const ttAppJsonObj = json5.parse(ttAppJsonStr)
     const ttPages = ttAppJsonObj.pages
     const ttSubPackages = ttAppJsonObj.subPackages
-    expect(ttPages).toEqual(['pages/index', "pages/mode", 'pages/alias'])
+    expect(ttPages).toEqual(['pages/index', 'pages/mode', 'pages/alias'])
     expect(ttSubPackages).toEqual(subpackage)
   })
 
@@ -49,7 +49,7 @@ describe('test App instance', () => {
     const swanAppJsonObj = json5.parse(swanAppJsonStr)
     const swanPages = swanAppJsonObj.pages
     const swanSubPackages = swanAppJsonObj.subPackages
-    expect(swanPages).toEqual(['pages/index', "pages/mode", 'pages/alias'])
+    expect(swanPages).toEqual(['pages/index', 'pages/mode', 'pages/alias'])
     expect(swanSubPackages).toEqual(subpackage)
   })
 

@@ -9,7 +9,7 @@
     "build": "node ./build/build.js -p",
     "build:dev": "node ./build/build.js",
     "watch:cross": "npm run watch --modes=wx,ali,web",
-    "build:mini:cross": "npm run build --modes=wx,ali,tt,swan",
+    "build:cross": "npm run build --modes=wx,ali,tt,swan",
     "watch:web:serve": "npx npm-run-all --parallel watch:web serve",
     "watch:web": "npm run watch --mode=web",
     "serve": "npx http-server dist/web",
