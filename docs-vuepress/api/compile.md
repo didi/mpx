@@ -1170,11 +1170,44 @@ const webpackConfig = {
 
 ### ?useLocal
 
-todo 详情见url-loader @永芳
+- **类型**：`Boolean`
+
+- **详细**：Mpx 提供图像资源处理，支持 CDN 和 Base64 两种, 对于标识为Style的资源，如果在引用资源的末尾加上`?useLocal=true`，则资源将被强制转为 Base64。比如配置了通用的 CDN 策略，但如网络兜底资源需要强制走本地存储，则可配置useLocal。
+
+- **示例**：
+```css
+/* 单个图片资源设置为存储到本地 */
+<style>
+  .logo2 {
+    background-image: url('~images/logo.png?useLocal=true');
+  }
+</style>
+```
 
 ### ?isStyle
 
-todo 详情见url-loader @永芳
+- **类型**：`Boolean`
+
+- **详细**：将资源标识为Style资源。对于`<style>`中的资源默认会标识为Style资源, 而对于`<script>`中引入的图像资源默认不会走Style的处理方式。如让`<script>`中的图像资源也按照`<style>`进行处理，则可选择配置`?isStyle=true`
+
+- **示例**：
+```js
+/* 将script中的图像资源走本地Base64存储, wxml中直接image src设置为backImage */
+<script>
+  import { createComponent } from '@mpxjs/core'
+  import backImageStyle from '../images/car.jpg?isStyle=true'
+
+  createComponent({
+    data: {
+    },
+    computed: {
+      backImage() {
+        return backImageStyle
+      }
+    }
+  })
+</script>
+```
 
 ### ?isPage
 
