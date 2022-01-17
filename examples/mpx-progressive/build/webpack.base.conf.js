@@ -1,76 +1,46 @@
-var path = require('path')
-var MpxWebpackPlugin = require('@mpxjs/webpack-plugin')
+const { resolve } = require('./utils')
 
-function resolve (dir) {
-  return path.join(__dirname, '..', dir)
-}
-
-var webpackConf = {
-  module: {
-    rules: [
+module.exports = {
+  performance: {
+    hints: false
+  },
+  mode: 'none',
+  resolve: {
+    extensions: ['.mpx', '.js', '.wxml', '.vue', '.ts'],
+    modules: ['node_modules'],
+    alias: {
+      images: resolve('src/images')
+    }
+  },
+  cache: {
+    type: 'filesystem',
+    buildDependencies: {
+      build: [resolve('build/')],
+      config: [resolve('config/')]
+    },
+    cacheDirectory: resolve('.cache/')
+  },
+  snapshot: {
+    // 如果希望修改node_modules下的文件时对应的缓存可以失效，可以将此处的配置改为 managedPaths: []
+    managedPaths: [resolve('node_modules/')]
+  },
+  optimization: {
+    minimizer: [
       {
-        test: /\.mpx$/,
-        use: MpxWebpackPlugin.loader({
-          transRpx: {
-            mode: 'only',
-            comment: 'use rpx',
-            include: resolve('src')
-          }
-        })
-      },
-      {
-        test: /\.js$/,
-        loader: 'babel-loader',
-        include: [resolve('src'), resolve('test'), resolve('node_modules/@mpxjs')]
-      },
-      {
-        test: /\.json$/,
-        resourceQuery: /__component/,
-        type: 'javascript/auto'
-      },
-      {
-        test: /(\.wxs|\.sjs|\.filter\.js)$/,
-        use: MpxWebpackPlugin.wxsLoader(),
-        type: 'javascript/auto',
-        issuer: /(\.wxml|\.axml|\.swan|\.mpx|\.th)$/
-      },
-      {
-        test: /\.(png|jpe?g|gif|svg)$/,
-        loader: '@mpxjs/url-loader',
-        options: {
-          name: 'img/[name].[ext]',
-          limit: 1
+        apply: compiler => {
+          // Lazy load the Terser plugin
+          const TerserPlugin = require('terser-webpack-plugin')
+          new TerserPlugin({
+            // terserOptions参考 https://github.com/webpack-contrib/terser-webpack-plugin#terseroptions
+            terserOptions: {
+              // terser的默认行为会把某些对象方法转为箭头函数，导致ios9等不支持箭头函数的环境白屏，详情见 https://github.com/terser/terser#compress-options
+              compress: {
+                arrows: false
+              }
+            }
+          }).apply(compiler)
         }
       }
     ]
-  },
-  output: {
-    filename: '[name].js'
-  },
-  optimization: {
-    runtimeChunk: {
-      name: 'bundle'
-    },
-    splitChunks: {
-      cacheGroups: {
-        bundle: {
-          chunks: 'all',
-          name: 'bundle',
-          minChunks: 2
-        }
-      }
-    }
-  },
-  mode: 'none',
-  plugins: [
-    new MpxWebpackPlugin({
-      mode: 'wx'
-    })
-  ],
-  resolve: {
-    extensions: ['.js', '.mpx'],
-    modules: ['node_modules']
   }
 }
-
-module.exports = webpackConf

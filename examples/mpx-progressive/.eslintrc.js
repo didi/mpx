@@ -1,6 +1,7 @@
+const { userConf } = require('./config/index')
 module.exports = {
   root: true,
-  parser: 'babel-eslint',
+  parser: userConf.babel7Support ? '@babel/eslint-parser' : 'babel-eslint',
   parserOptions: {
     sourceType: 'module'
   },
@@ -14,6 +15,9 @@ module.exports = {
   'globals': {
     'wx': true,
     'getApp': true,
-    'App': true
+    'App': true,
+    'Page': true,
+    'Component': true,
+    'getCurrentPages': true
   }
 }
