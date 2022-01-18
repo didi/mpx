@@ -8,26 +8,32 @@ const readFileSyncInDist = (filePath, options) => {
 }
 
 describe('test App instance', () => {
-  const subpackage = [
-    {
-      'root': 'test2',
-      'pages': [
-        'pages/index'
-      ]
-    },
-    {
-      'root': 'test',
-      'pages': [
-        'pages/index'
-      ]
-    }
-  ]
+  let subpackage = []
+  beforeEach(() => {
+    subpackage = [
+      {
+        'root': 'test2',
+        'pages': [
+          'pages/index'
+        ]
+      },
+      {
+        'root': 'test',
+        'pages': [
+          'pages/index'
+        ]
+      }
+    ]
+  })
 
   it('should wx App instance json is correct', function () {
     const wxAppJsonStr = readFileSyncInDist('dist/wx/app.json', 'utf-8')
     const wxAppJsonObj = json5.parse(wxAppJsonStr)
     // const wxPages = wxAppJsonObj.pages
     const wxSubPackages = wxAppJsonObj.subPackages
+    if (subpackage[0].root !== wxSubPackages[0].root) {
+      subpackage.reverse()
+    }
     // expect(wxPages).toMatch(['pages/index', 'pages/mode', 'pages/alias', 'pages/someEnv'])
     expect(wxSubPackages).toEqual(subpackage)
   })
@@ -38,6 +44,9 @@ describe('test App instance', () => {
     const aliPages = aliAppJsonObj.pages
     const aliSubPackages = aliAppJsonObj.subPackages
     expect(aliPages).toEqual(['pages/index', 'pages/mode', 'pages/alias'])
+    if (subpackage[0].root !== aliSubPackages[0].root) {
+      subpackage.reverse()
+    }
     expect(aliSubPackages).toEqual(subpackage)
   })
 
@@ -47,6 +56,9 @@ describe('test App instance', () => {
     const ttPages = ttAppJsonObj.pages
     const ttSubPackages = ttAppJsonObj.subPackages
     expect(ttPages).toEqual(['pages/index', 'pages/mode', 'pages/alias'])
+    if (subpackage[0].root !== ttSubPackages[0].root) {
+      subpackage.reverse()
+    }
     expect(ttSubPackages).toEqual(subpackage)
   })
 
@@ -56,6 +68,9 @@ describe('test App instance', () => {
     const swanPages = swanAppJsonObj.pages
     const swanSubPackages = swanAppJsonObj.subPackages
     expect(swanPages).toEqual(['pages/index', 'pages/mode', 'pages/alias'])
+    if (subpackage[0].root !== swanSubPackages[0].root) {
+      subpackage.reverse()
+    }
     expect(swanSubPackages).toEqual(subpackage)
   })
 
@@ -70,7 +85,4 @@ describe('test App instance', () => {
     expect(ttPageEnvStr).toMatch(/\{\{\("tt"\)}}/)
     expect(wxPageEnvStr).toMatch(/\{\{\("wx"\)}}/)
   })
-  // it('should App use plugin display correct', function () {
-  //
-  // })
 })

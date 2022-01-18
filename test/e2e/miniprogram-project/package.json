@@ -18,7 +18,7 @@
     "test": "jest --no-cache"
   },
   "_moduleAliases": {
-    "@mpxjs/webpack-plugin"  : "../../packages/webpack-plugin"
+    "@mpxjs/webpack-plugin": "../../packages/webpack-plugin"
   },
   "author": "xuegan <xuegan@didiglobal.com>",
   "license": "ISC",
@@ -41,6 +41,7 @@
     "@mpxjs/mpx-jest": "0.0.13",
     "@typescript-eslint/eslint-plugin": "^2.27.0",
     "@typescript-eslint/parser": "^2.27.0",
+    "@mpxjs/webpack-plugin": "^2.6.112",
     "babel-eslint": "^10.0.1",
     "babel-jest": "^25.3.0",
     "babel-loader": "^8.1.0",
