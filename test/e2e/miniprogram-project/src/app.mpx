@@ -30,7 +30,8 @@ if (__mpx_env__ === 'someEnv' && __mpx_mode__ === 'wx') {
 module.exports = {
   pages: commonPages,
   packages: [
-    "./subpackage/test/app.mpx?root=test"
+    "./subpackage/test/app.mpx?root=test",
+    "./subpackage/test2/app.mpx?root=test2"
   ]
 }
 </script>
