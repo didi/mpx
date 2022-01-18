@@ -16,6 +16,9 @@
     "help": "node ./build/build.js --help",
     "test": "jest --no-cache"
   },
+  "_moduleAliases": {
+    "@mpxjs/webpack-plugin"  : "../../packages/webpack-plugin"
+  },
   "author": "xuegan <xuegan@didiglobal.com>",
   "license": "ISC",
   "dependencies": {
@@ -63,6 +66,7 @@
     "http-server": "^0.12.0",
     "jest": "^24.9.0",
     "json5": "^2.2.0",
+    "link-module-alias": "^1.2.0",
     "miniprogram-simulate": "^1.1.6",
     "npm-run-all": "^4.1.5",
     "path": "^0.12.7",
