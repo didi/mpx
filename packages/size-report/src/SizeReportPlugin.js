@@ -86,6 +86,8 @@ class SizeReportPlugin {
 
       const reportPages = this.options.reportPages
 
+      const reportRedundance = this.options.reportRedundance
+
       if (reportPages) {
         Object.entries(mpx.pagesMap).forEach(([resourcePath, name]) => {
           reportGroups.push({
@@ -271,6 +273,50 @@ class SizeReportPlugin {
         })
       }
 
+      const resourcePathMap = {}
+
+      function fillRedundanceReport (modules, packageName, fillInfo) {
+        if (reportRedundance) {
+          modules.forEach((module) => {
+            const parsed = parseRequest(module.resource || module.rootModule.resource)
+            if (!module.resource) {
+              fillRedundanceReport(module._modules, packageName, { partial: 1, ...fillInfo })
+            }
+            resourcePathMap[parsed.resourcePath] = resourcePathMap[parsed.resourcePath] || {}
+            resourcePathMap[parsed.resourcePath][packageName] = resourcePathMap[parsed.resourcePath][packageName] || []
+            resourcePathMap[parsed.resourcePath][packageName].push(fillInfo)
+          })
+        }
+      }
+      function updateRedundanceSizeInfo () {
+        const redundanceSizeInfo = []
+        for (let resourcePath in resourcePathMap) {
+          const packageKeys = Object.keys(resourcePathMap[resourcePath])
+          if (packageKeys.length > 1) {
+            const sizeInfoItem = {resourcePath, packages: [], size: 0}
+            packageKeys.forEach((packageName) => {
+              const packageItem = {packageName, size: 0, modules: []}
+              const filleInfos = resourcePathMap[resourcePath][packageName]
+              filleInfos.forEach((fillInfo) => {
+                sizeInfoItem.size += fillInfo.size
+                packageItem.size += fillInfo.size
+                fillInfo.size = formatSize(fillInfo.size)
+                if (fillInfo.partial) {
+                  packageItem.partial = 1
+                }
+                packageItem.modules.push(fillInfo)
+              })
+              packageItem.size = formatSize(packageItem.size)
+              sizeInfoItem.packages.push(packageItem)
+            })
+            let insertIndex = redundanceSizeInfo.findIndex((item) => { return sizeInfoItem.size > item.size })
+            if (insertIndex === -1) insertIndex = redundanceSizeInfo.length
+            sizeInfoItem.size = formatSize(sizeInfoItem.size)
+            redundanceSizeInfo.splice(insertIndex, 0, sizeInfoItem)
+          }
+        }
+        return redundanceSizeInfo
+      }
       const assetsSizeInfo = {
         assets: []
       }
@@ -323,7 +369,9 @@ class SizeReportPlugin {
           const size = compilation.assets[name].size()
           const identifierSet = new Set()
           let identifier = ''
+          let oneModule
           assetModules.forEach((module) => {
+            oneModule = module
             const moduleIdentifier = module.readableIdentifier(compilation.requestShortener)
             identifierSet.add(moduleIdentifier)
             if (!identifier) identifier = moduleIdentifier
@@ -331,6 +379,12 @@ class SizeReportPlugin {
           if (identifierSet.size > 1) identifier += ` + ${identifierSet.size - 1} modules`
 
           fillSizeReportGroups(entryModules, noEntryModules, packageName, 'assets', {
+            name,
+            identifier,
+            size
+          })
+
+          fillRedundanceReport([oneModule], packageName, {
             name,
             identifier,
             size
@@ -394,12 +448,19 @@ class SizeReportPlugin {
               identifier,
               size: moduleSize
             })
+            fillRedundanceReport([module], packageName, {
+              name,
+              identifier,
+              size: moduleSize
+            })
             chunkAssetInfo.modules.push({
               identifier,
               size: moduleSize
             })
             size -= moduleSize
           }
+
+
           // chunkAssetInfo.webpackTemplateSize = size
           // filter sourcemap
         } else if (!/\.m?js\.map$/i.test(name)) {
@@ -416,7 +477,6 @@ class SizeReportPlugin {
           sizeSummary.totalSize += size
         }
       }
-
       // Check threshold
       function normalizeThreshold (threshold) {
         if (typeof threshold === 'number') return threshold
@@ -532,8 +592,10 @@ class SizeReportPlugin {
         sizeSummary
       }
 
+      const redundanceSizeInfo = updateRedundanceSizeInfo()
       if (groupsSizeInfo.length) reportData.groupsSizeInfo = groupsSizeInfo
       if (pagesSizeInfo.length) reportData.pagesSizeInfo = pagesSizeInfo
+      if (redundanceSizeInfo.length) reportData.redundanceSizeInfo = redundanceSizeInfo
       if (this.options.reportAssets) reportData.assetsSizeInfo = assetsSizeInfo
 
       const reportFilePath = path.resolve(compiler.outputPath, this.options.filename || 'report.json')

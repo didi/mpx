@@ -1619,9 +1619,7 @@ function processClass (el, meta) {
   staticClass = staticClass.replace(/\s+/g, ' ')
   if (dynamicClass) {
     let staticClassExp = parseMustache(staticClass).result
-    let dynamicClassExp = transDynamicClassExpr(parseMustache(dynamicClass).result, {
-      error: error$1
-    })
+    let dynamicClassExp = transDynamicClassExpr(parseMustache(dynamicClass).result)
     addAttrs(el, [{
       name: targetType,
       // swan中externalClass是通过编译时静态实现，因此需要保留原有的staticClass形式避免externalClass失效
@@ -2109,13 +2107,17 @@ function cloneNode (el) {
   return clone
 }
 
-function cloneAttrsList (attrsList) {
-  return attrsList.map(({ name, value }) => {
-    return {
-      name,
-      value
+function cloneAttrsList (attrsList, ignoreAttrs = []) {
+  const clonedAttrs = []
+  attrsList.map(({ name, value }) => {
+    if (!ignoreAttrs.includes(name)) {
+      clonedAttrs.push({
+        name,
+        value
+      })
     }
   })
+  return clonedAttrs
 }
 
 function postProcessComponentIs (el) {
@@ -2130,8 +2132,16 @@ function postProcessComponentIs (el) {
     } else {
       tempNode = getTempNode()
     }
+    let range = []
+    if (el.attrsMap.range && !el.attrsMap.range.split(',').length) {
+      error$1('Dynamic component attr range should be an string splited with comma!')
+    } else {
+      range = el.attrsMap.range.split(',')
+    }
+
     el.components.forEach(function (component) {
-      let newChild = createASTElement(component, cloneAttrsList(el.attrsList), tempNode)
+      if (range.length > 0 && !range.includes(component)) return
+      let newChild = createASTElement(component, cloneAttrsList(el.attrsList, ['range']), tempNode)
       newChild.if = {
         raw: `{{${el.is} === ${stringify(component)}}}`,
         exp: `${el.is} === ${stringify(component)}`
