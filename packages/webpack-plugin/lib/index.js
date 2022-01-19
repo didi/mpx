@@ -763,12 +763,13 @@ class MpxWebpackPlugin {
             }
           }
         } else if (independent) {
-          // ContextModule和RawModule只在独立分包的情况下添加分包标记，其余默认不添加
+          // ContextModule/RawModule和ExternalModule等只在独立分包的情况下添加分包标记，其余默认不添加
           const postfix = `|independent=${independent}|${currentPackageRoot}`
-          if (module._identifier) {
-            module._identifier += postfix
-          } else if (module.identifierStr) {
-            module.identifierStr += postfix
+          const rawIdentifier = module.identifier
+          if (rawIdentifier) {
+            module.identifier = () => {
+              return rawIdentifier.call(module) + postfix
+            }
           }
         }
         return rawAddModule.call(compilation, module, callback)
