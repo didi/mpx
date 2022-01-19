@@ -53,7 +53,8 @@ module.exports = function (raw) {
     externalClasses,
     hasScoped,
     moduleId,
-    filePath: this.resourcePath,
+    // 这里需传递resourcePath和wxsContentMap保持一致
+    filePath: resourcePath,
     i18n,
     checkUsingComponents: mpx.checkUsingComponents,
     globalComponents: Object.keys(mpx.usingComponents),
