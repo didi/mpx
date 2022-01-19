@@ -259,14 +259,6 @@ new MpxWebpackPlugin({
 })
 ```
 
-### forceDisableInject
-
-- **类型**：`Boolean`
-
-- **默认值**： `false`
-
-- **详细**：Mpx会在项目编译构建过程中对运行时进行代码注入，以实现部分增强能力，包括 `refs`、`i18n` 和 `setData` 性能优化等。在不需要这些增强能力时，可配置 `forceDisableInject` 为 true，以消除编译时注入，来进一步减少包体积，但是这部分增强能力也就不再可用。
-
 ### forceDisableProxyCtor
 
 - **类型**：`Boolean`
@@ -486,8 +478,6 @@ new MpxWebpackPlugin({
 })
 ```
 
-### postcssInlineConfig
-
 ### transRpxRules
 
 - **类型**：`Array<Object> | Object`
@@ -644,6 +634,8 @@ new MpxWebpackPlugin({
 
 > `transRpx = only`模式下，只有两部分`rpx注释样式`会转rpx。
 
+### postcssInlineConfig
+
 - **类型**： `{options? : PostcssOptions, plugins? : PostcssPlugin[], ignoreConfigFile : Boolean}`
 
 - **详细**：使用类似于 postcss.config.js 的语法书写 postcss 的配置文件。用于定义 Mpx 对于组件/页面样式进行 postcss 处理时的配置， ignoreConfigFile 传递为 true 时会忽略项目中的 postcss 配置文件 。
@@ -673,19 +665,21 @@ new MpxWebpackPlugin {
 
 设置为 true 时在模板编译时对模板中的 text 内容进行 decode
 
-### nativeOptions
+### nativeConfig
 
-- **类型**：`object`
+- **类型**：`{}`
 
 - **详细**：为原生多文件写法添加css预处理语言支持，用于优先搜索预编译器后缀的文件，按声明顺序查找。默认按照 css , less , stylus ,  scss , sass 的顺序
 
 - **例子**
 
 ```js
-  nativeOptions: {
+  nativeConfig: {
     cssLangs: ['css', 'less', 'stylus', 'scss', 'sass']
   }
 ```
+
+
 
 
 ### i18n

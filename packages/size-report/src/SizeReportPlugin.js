@@ -130,7 +130,7 @@ class SizeReportPlugin {
         reportGroups.forEach((reportGroup) => {
           reportGroup.entryModules = reportGroup.entryModules || new Set()
           // 处理ConcatenatedModule
-          const resource = entryModule.resource || entryModule.rootModule.resource
+          const resource = entryModule.resource || (entryModule.rootModule && entryModule.rootModule.resource)
           if (resource && reportGroup.entryRules && matchCondition(parseRequest(resource).resourcePath, reportGroup.entryRules)) {
             reportGroup.entryModules.add(entryModule)
           }
@@ -141,7 +141,7 @@ class SizeReportPlugin {
         compilation.modules.forEach((module) => {
           reportGroupsWithNoEntryRules.forEach((reportGroup) => {
             // 处理ConcatenatedModule
-            const resource = module.resource || module.rootModule.resource
+            const resource = module.resource || (module.rootModule && module.rootModule.resource)
             if (resource && matchCondition(parseRequest(resource).resourcePath, reportGroup.noEntryRules)) {
               reportGroup.noEntryModules = reportGroup.noEntryModules || new Set()
               reportGroup.noEntryModules.add(module)
