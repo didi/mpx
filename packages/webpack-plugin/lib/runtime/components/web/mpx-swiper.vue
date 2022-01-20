@@ -36,7 +36,8 @@
       easingFunction: {
         type: String,
         default: 'default'
-      }
+      },
+      scrollOptions: Object
     },
     data () {
       return {
@@ -90,11 +91,21 @@
         this.goto(val)
       }
     },
+    activated () {
+      if (this.bs && this.autoplay) {
+        this.bs.startPlay()
+      }
+    },
+    deactivated () {
+      if (this.bs && this.autoplay) {
+        this.bs.pausePlay()
+      }
+    },
     beforeCreate () {
       this.itemIds = []
     },
     mounted () {
-      this.bs = new BScroll(this.$refs.wrapper, {
+      const originBsOptions = {
         scrollX: !this.vertical,
         scrollY: this.vertical,
         slide: {
@@ -102,14 +113,18 @@
           threshold: 0.5,
           speed: this.duration,
           easing: this.easing,
-          autoplay: this.autoplay
+          interval: this.interval,
+          autoplay: this.autoplay,
+          startPageXIndex: this.vertical ? 0 : this.current,
+          startPageYIndex: this.vertical? this.current : 0
         },
         momentum: false,
         bounce: false,
         probeType: 3,
         stopPropagation: true
-      })
-
+      }
+      const bsOptions = Object.assign({}, originBsOptions, this.scrollOptions)
+      this.bs = new BScroll(this.$refs.wrapper, bsOptions)
       this.bs.on('slideWillChange', (page) => {
         this.currentIndex = this.vertical ? page.pageY : page.pageX
         this.$emit('change', getCustomEvent('change', {
@@ -143,25 +158,6 @@
         }
         this.changeSource = 'touch'
       })
-
-      if (this.autoplay) {
-        const next = () => {
-          this.autoplayTimer = setTimeout(() => {
-            if (this.bs) {
-              this.lastX = this.bs.x
-              this.lastY = this.bs.y
-            }
-            this.changeSource = 'autoplay'
-            this.bs && this.bs.next()
-            next()
-          }, this.interval)
-        }
-        next()
-        this.bs.on('beforeScrollStart', () => {
-          clearTimeout(this.autoplayTimer)
-        })
-        this.bs.on('touchEnd', next)
-      }
     },
     beforeDestroy () {
       this.bs && this.bs.destroy()

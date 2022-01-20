@@ -228,12 +228,14 @@ EXPORT_MPX.config = {
   observeClassInstance: false,
   hookErrorHandler: null,
   proxyEventHandler: null,
-  setDataHandler: null
+  setDataHandler: null,
+  forceRunWatcherSync: false,
+  webRouteConfig: {}
 }
 
-if (__mpx_mode__ === 'web' || __mpx_mode__ === 'tenon') {
-  global.__mpx = EXPORT_MPX
-} else {
+global.__mpx = EXPORT_MPX
+
+if (__mpx_mode__ !== 'web') {
   if (global.i18n) {
     observe(global.i18n)
     // 挂载翻译方法

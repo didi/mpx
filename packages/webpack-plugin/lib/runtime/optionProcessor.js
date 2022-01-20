@@ -25,23 +25,6 @@ export default function processOption (
       }
     }
 
-    // 注册v-ex-classes自定义指令处理externalClasses
-    Vue.directive('ex-classes', (el, binding, vnode) => {
-      const context = vnode.context
-      if (context) {
-        const externalClasses = context.$options.externalClasses || []
-        const classList = el.classList
-        binding.value.forEach((className) => {
-          const actualExternalClassNames = context.$attrs[className]
-          if (externalClasses.indexOf(className) !== -1 && actualExternalClassNames) {
-            classList.remove(className)
-            actualExternalClassNames.split(/\s+/).forEach((actualExternalClassName) => {
-              if (actualExternalClassName) classList.add(actualExternalClassName)
-            })
-          }
-        })
-      }
-    })
     Vue.directive('animation', (el, binding) => {
       const newActions = binding && binding.value && binding.value.actions
       if (el.actions === newActions) {
@@ -121,7 +104,9 @@ export default function processOption (
           redirect: '/' + firstPage
         })
       }
+      const webRouteConfig = global.__mpx.config.webRouteConfig
       global.__mpxRouter = option.router = new VueRouter({
+        ...webRouteConfig,
         routes: routes
       })
       global.__mpxRouter.stack = []
@@ -247,17 +232,23 @@ export default function processOption (
       })
       // 处理visibilitychange时触发当前活跃页面组件的onshow/onhide
       if (inBrowser) {
-        const errorHandler = function (e) {
-          if (global.__mpxAppCbs && global.__mpxAppCbs.error) {
+        const errorHandler = function (args, fromVue) {
+          if (global.__mpxAppCbs && global.__mpxAppCbs.error && global.__mpxAppCbs.error.length) {
             global.__mpxAppCbs.error.forEach((cb) => {
-              cb(e)
+              cb.apply(null, args)
             })
+          } else if (fromVue) {
+            throw args[0]
           }
         }
-        Vue.config.errorHandler = errorHandler
-        window.addEventListener('error', errorHandler)
-        window.addEventListener('unhandledrejection', event => {
-          errorHandler(event.reason)
+        Vue.config.errorHandler = (...args) => {
+          return errorHandler(args, true)
+        }
+        window.addEventListener('error', (event) => {
+          return errorHandler([event.error, event])
+        })
+        window.addEventListener('unhandledrejection', (event) => {
+          return errorHandler([event.reason, event])
         })
         document.addEventListener('visibilitychange', function () {
           const vnode = global.__mpxRouter && global.__mpxRouter.__mpxActiveVnode

@@ -197,11 +197,13 @@ export default class MpxScroll {
     )
   }
 
-  pageScrollTo ({
-    scrollTop,
-    selector,
-    duration = 300
-  }) {
+  pageScrollTo (
+    {
+      scrollTop,
+      selector,
+      duration = 300
+    }
+  ) {
     let _scrollTop
 
     if (isDef(scrollTop)) {

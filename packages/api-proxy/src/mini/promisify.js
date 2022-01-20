@@ -26,7 +26,8 @@ const blackList = [
   'pageScrollTo',
   'reportAnalytics',
   'getMenuButtonBoundingClientRect',
-  'reportMonitor'
+  'reportMonitor',
+  'createOffscreenCanvas'
 ]
 
 function getMapFromList (list) {

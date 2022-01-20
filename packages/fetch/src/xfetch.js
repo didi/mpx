@@ -3,7 +3,7 @@ import CancelToken from './cancelToken'
 import InterceptorManager from './interceptorManager'
 import RequestQueue from './queue'
 import { requestProxy } from './proxy'
-import { isNotEmptyArray, isNotEmptyObject, transformReq, parseUrl } from './util'
+import { isNotEmptyArray, isNotEmptyObject, transformReq } from './util'
 
 export default class XFetch {
   constructor (options, MPX) {
@@ -39,10 +39,6 @@ export default class XFetch {
     }
 
     const params = config.params || {}
-    const { baseUrl, query } = parseUrl(config.url)
-
-    config.url = baseUrl
-    Object.assign(params, query)
 
     if (/^GET|DELETE|HEAD$/i.test(config.method)) {
       Object.assign(params, config.data)
