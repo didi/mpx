@@ -24,7 +24,7 @@ module.exports = function getPlugins (options) {
     plugins.push(new ESLintPlugin({
       context: resolve(),
       exclude: [resolve('node_modules')],
-      extensions: ['js', 'ts', 'mpx']
+      extensions: ['js', 'ts', 'mpx', 'wxml']
     }))
   }
 

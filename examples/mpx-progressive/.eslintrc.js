@@ -10,7 +10,8 @@ module.exports = {
     "html/html-extensions": [".html", ".mpx"],  // consider .html and .mpx files as HTML
   },
   plugins: [
-    'html'
+    'html',
+    'jsx'
   ],
   'globals': {
     'wx': true,
