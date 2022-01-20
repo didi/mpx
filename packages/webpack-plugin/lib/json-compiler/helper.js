@@ -97,7 +97,7 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
       const ext = path.extname(resourcePath)
       let outputPath
       if (aliasPath) {
-        outputPath = aliasPath
+        outputPath = aliasPath.replace(/^\//, '')
       } else {
         const relative = path.relative(context, resourcePath)
         if (/^\./.test(relative)) {
