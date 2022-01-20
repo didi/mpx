@@ -1163,7 +1163,7 @@ const webpackConfig = {
 /* png资源引入 */
 <style>
   .logo2 {
-    background-image: url('~images/logo.png?fallback=true'); /* 设置fallback=true，则使用如上方所配置的file-loader */
+    background-image: url('./images/logo.png?fallback=true'); /* 设置fallback=true，则使用如上方所配置的file-loader */
   }
 </style>
 ```
@@ -1172,14 +1172,14 @@ const webpackConfig = {
 
 - **类型**：`Boolean`
 
-- **详细**：Mpx 提供图像资源处理，支持 CDN 和 Base64 两种, 对于标识为Style的资源，如果在引用资源的末尾加上`?useLocal=true`，则资源将被强制转为 Base64。比如配置了通用的 CDN 策略，但如网络兜底资源需要强制走本地存储，则可配置useLocal。
+- **详细**：静态资源存放有两种方式：本地、远程（配置 publicPath ）。useLocal 是用于在配置了 publicPath 时声明部分资源输出到本地。比如配置了通用的 CDN 策略，但如网络兜底资源需要强制走本地存储，可在引用资源的末尾加上`?useLocal=true`
 
 - **示例**：
 ```css
 /* 单个图片资源设置为存储到本地 */
 <style>
   .logo2 {
-    background-image: url('~images/logo.png?useLocal=true');
+    background-image: url('./images/logo.png?useLocal=true');
   }
 </style>
 ```
@@ -1188,21 +1188,32 @@ const webpackConfig = {
 
 - **类型**：`Boolean`
 
-- **详细**：将资源标识为Style资源。对于`<style>`中的资源默认会标识为Style资源, 而对于`<script>`中引入的图像资源默认不会走Style的处理方式。如让`<script>`中的图像资源也按照`<style>`进行处理，则可选择配置`?isStyle=true`
+- **详细**：isStyle 是在非 style 模块中编写样式时，声明这部分引用的静态资源按照 style 环境来处理。如在 javascript 中 require 了一个图像资源，然后模版 template style 属性中进行引用， 则 require 资源时可选择配置`?isStyle=true`
 
 - **示例**：
+```html
+<template>
+  <view class="list">
+    <!-- isStyle 案例一：引用 javascript 中的数据 -->
+    <view style="{{testStyle}}">测试</view>
+    <!-- isStyle 案例二：设置资源按照style处理规则处理。style处理规则为: 默认走base64，除非同时配置了 publicPath 和 fallback -->
+    <image src="../images/car.jpg?isStyle=true"></image>
+    <!-- 普通非style模式，默认走 fallback 或者 file-loader 解析，输出到 publicPath 或者 本地img目录下 -->
+    <image src="../images/car.jpg"></image>
+  </view>
+</template>
+```
 ```js
-/* 将script中的图像资源走本地Base64存储, wxml中直接image src设置为backImage */
+/* 将 script 中的图像资源标识为 style 资源 */
 <script>
   import { createComponent } from '@mpxjs/core'
-  import backImageStyle from '../images/car.jpg?isStyle=true'
+  const backCar = require('../images/car.jpg?isStyle=true')
 
   createComponent({
-    data: {
-    },
+    data: {},
     computed: {
-      backImage() {
-        return backImageStyle
+      testStyle () {
+        return `background-image : url(${backCar}); width:100px; height: 100px`
       }
     }
   })
