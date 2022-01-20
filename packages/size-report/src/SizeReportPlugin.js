@@ -278,6 +278,7 @@ class SizeReportPlugin {
       function fillRedundanceReport (modules, packageName, fillInfo) {
         if (reportRedundance) {
           modules.forEach((module) => {
+            if (!module.resource && !module.rootModule) return
             const parsed = parseRequest(module.resource || module.rootModule.resource)
             if (!module.resource) {
               fillRedundanceReport(module._modules, packageName, { partial: 1, ...fillInfo })
@@ -288,6 +289,20 @@ class SizeReportPlugin {
           })
         }
       }
+
+      function formatAllSize (arr = []) {
+        arr.forEach((item) => {
+          if (Array.isArray(item)) formatAllSize(item)
+          if (Object.prototype.toString.call(item) === '[object Object]') {
+            for (let key in item) {
+              if (Array.isArray(item[key])) formatAllSize(item[key])
+              if (key === 'size') item[key] = formatSize(item.size)
+            }
+          }
+        })
+        return arr
+      }
+
       function updateRedundanceSizeInfo () {
         const redundanceSizeInfo = []
         for (let resourcePath in resourcePathMap) {
@@ -300,23 +315,21 @@ class SizeReportPlugin {
               filleInfos.forEach((fillInfo) => {
                 sizeInfoItem.size += fillInfo.size
                 packageItem.size += fillInfo.size
-                fillInfo.size = formatSize(fillInfo.size)
                 if (fillInfo.partial) {
                   packageItem.partial = 1
                 }
                 packageItem.modules.push(fillInfo)
               })
-              packageItem.size = formatSize(packageItem.size)
               sizeInfoItem.packages.push(packageItem)
             })
             let insertIndex = redundanceSizeInfo.findIndex((item) => { return sizeInfoItem.size > item.size })
             if (insertIndex === -1) insertIndex = redundanceSizeInfo.length
-            sizeInfoItem.size = formatSize(sizeInfoItem.size)
             redundanceSizeInfo.splice(insertIndex, 0, sizeInfoItem)
           }
         }
-        return redundanceSizeInfo
+        return formatAllSize(redundanceSizeInfo)
       }
+
       const assetsSizeInfo = {
         assets: []
       }
