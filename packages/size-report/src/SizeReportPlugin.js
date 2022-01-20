@@ -280,6 +280,7 @@ class SizeReportPlugin {
           modules.forEach((module) => {
             if (!module.resource && !module.rootModule) return
             const parsed = parseRequest(module.resource || module.rootModule.resource)
+            if (parsed.queryObj && parsed.queryObj.resolve) return
             if (!module.resource) {
               fillRedundanceReport(module._modules, packageName, { partial: 1, ...fillInfo })
             }
