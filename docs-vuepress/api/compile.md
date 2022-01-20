@@ -643,7 +643,7 @@ new MpxWebpackPlugin({
 - **示例**：
 
 ```js
-new MpxWebpackPlugin {
+new MpxWebpackPlugin ({
   postcssInlineConfig: {
     plugins: {
       // 'postcss-import': {},
@@ -652,7 +652,7 @@ new MpxWebpackPlugin {
       // 'autoprefixer': {}
     }
   }
-}
+})
 ```
 
 ### decodeHTMLText
@@ -667,16 +667,38 @@ new MpxWebpackPlugin {
 
 ### nativeConfig
 
-- **类型**：`{}`
+- **类型**：`{cssLangs: string[]}`
 
-- **详细**：为原生多文件写法添加css预处理语言支持，用于优先搜索预编译器后缀的文件，按声明顺序查找。默认按照 css , less , stylus ,  scss , sass 的顺序
+- **详细**：为原生多文件写法添加css预处理语言支持，用于优先搜索预编译器后缀的文件，按 cssLangs 中的声明顺序查找。默认按照 css , less , stylus ,  scss , sass 的顺序
 
 - **例子**
 
 ```js
+
+new MpxWebpackPlugin ({
   nativeConfig: {
     cssLangs: ['css', 'less', 'stylus', 'scss', 'sass']
   }
+})
+```
+
+### webConfig
+
+- **类型**：`{transRpxFn: (match:string, $1:number) => string}`
+
+- **详细**：transRpxFn 配置用于自定义输出 web 时对于 rpx 样式单位的转换逻辑，常见的方式有转换为 vw 或转换为 rem
+
+- **例子**
+
+```js
+new MpxWebpackPlugin ({
+  webConfig: {
+    transRpxFn: function (match, $1) {
+      if ($1 === '0') return $1
+      return `${$1 * +(100 / 750).toFixed(8)}vw`
+    }
+  }
+})
 ```
 
 
