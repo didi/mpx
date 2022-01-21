@@ -69,22 +69,6 @@ modes.forEach(({ mode, env }) => {
   webpackConfs.push(getWebpackConf(options))
 })
 
-if (userConf.isPlugin) {
-  // 目前支持的plugin构建平台
-  modes.filter(({ mode }) => ['wx', 'ali'].includes(mode)).forEach(({ mode, env }) => {
-    const options = Object.assign({}, userConf, {
-      plugin: true,
-      mode,
-      env,
-      production: program.production,
-      watch: program.watch,
-      report,
-      subDir: 'plugin'
-    })
-    webpackConfs.push(getWebpackConf(options))
-  })
-}
-
 if (webpackConfs.length === 1) {
   webpackConfs = webpackConfs[0]
 }

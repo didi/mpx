@@ -7,3 +7,4 @@ output/
 dist/
 .cache/
 .vscode/
+package-lock.json

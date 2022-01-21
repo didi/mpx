@@ -1,11 +1,8 @@
 let { mpxPluginConf, dllConf, supportedModes } = require('../config/index')
 const MpxWebpackPlugin = require('@mpxjs/webpack-plugin')
 const { resolve, resolveSrc, getConf, getRootPath } = require('./utils')
-const HtmlWebpackPlugin = require('html-webpack-plugin')
 const CopyWebpackPlugin = require('copy-webpack-plugin')
 const ESLintPlugin = require('eslint-webpack-plugin')
-const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin
-const VueLoaderPlugin = require('vue-loader').VueLoaderPlugin
 const webpack = require('webpack')
 const path = require('path')
 
@@ -24,7 +21,7 @@ module.exports = function getPlugins (options) {
     plugins.push(new ESLintPlugin({
       context: resolve(),
       exclude: [resolve('node_modules')],
-      extensions: ['js', 'ts', 'mpx', 'wxml']
+      extensions: ['js', 'ts', 'mpx']
     }))
   }
 
@@ -39,19 +36,6 @@ module.exports = function getPlugins (options) {
       NODE_ENV: production ? '"production"' : '"development"'
     }
   }))
-
-  if (mode === 'web') {
-    plugins.push(new VueLoaderPlugin())
-    plugins.push(new HtmlWebpackPlugin({
-      filename: 'index.html',
-      template: resolveSrc('index.html', subDir),
-      inject: true
-    }))
-  }
-
-  if (report) {
-    plugins.push(new BundleAnalyzerPlugin())
-  }
 
   return plugins
 }
