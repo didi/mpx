@@ -2,7 +2,7 @@
   "name": "root",
   "private": true,
   "scripts": {
-    "lerna:publish": "lerna publish from-package --yes",
+    "lerna:publish": "lerna publish from-package --yes --dist-tag alpha",
     "lint": "eslint --ext .js packages/",
     "fix": "eslint --fix --ext .js packages/",
     "test": "jest",
