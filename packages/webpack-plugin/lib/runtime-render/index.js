@@ -8,7 +8,6 @@ const addQuery = require('../utils/add-query')
 const loader = normalize.lib('runtime-render/loader')
 const stringifyLoadersAndResource = require('../utils/stringify-loaders-resource')
 const toPosix = require('../utils/to-posix')
-const runtimeRenderConfig = require('./config')
 const virtualTemplateString = require('./virtual-template')
 
 const configCache = {

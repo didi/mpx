@@ -24,7 +24,7 @@ module.exports = function (rawContent) {
   let content = ''
   if (type === 'template') {
     injectComponentConfig[currentPackageRoot].internalComponents = injectComponentConfig.internalComponents
-    content = '<template is=\"tmpl_0_container\" data=\"{{ i: r }}\"></template>\n' + unRecursiveTemplate.buildTemplate(injectComponentConfig[currentPackageRoot])
+    content = '<template is="tmpl_0_container" data="{{ i: r }}"></template>\n' + unRecursiveTemplate.buildTemplate(injectComponentConfig[currentPackageRoot])
   } else if (type === 'styles') {
     content = mpx.runtimeRender.getPackageInjectedWxss(currentPackageRoot)
   } else if (type === 'json') {

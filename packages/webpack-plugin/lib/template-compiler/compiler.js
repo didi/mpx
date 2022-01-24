@@ -1754,10 +1754,6 @@ function isRuntimeComponentNode (el, options) {
   return (options.runtimeComponents && options.runtimeComponents.includes(el.tag)) || false
 }
 
-function isGlobalComponent (el, options) {
-  return (options.globalComponents && options.globalComponents.includes(el.tag)) || false
-}
-
 function processAliExternalClassesHack (el, options) {
   const isComponent = isComponentNode(el, options)
   // 处理组件externalClass多层传递

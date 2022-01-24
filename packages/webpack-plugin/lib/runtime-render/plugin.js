@@ -7,7 +7,6 @@ const watchIgnorePlugin = new WatchIgnorePlugin({
 })
 
 module.exports = class RuntimeRenderPlugin {
-  constructor () {}
   apply (compiler) {
     virtualModules.apply(compiler)
     watchIgnorePlugin.apply(compiler)
