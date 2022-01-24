@@ -28,7 +28,8 @@
     "test": "echo \"Error: run tests from root\" && exit 1"
   },
   "dependencies": {
-    "path-to-regexp": "^6.2.0"
+    "path-to-regexp": "^6.2.0",
+    "url": "^0.11.0"
   },
   "peerDependencies": {
     "@mpxjs/core": "^2.3.0"

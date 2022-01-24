@@ -4,7 +4,10 @@ import InterceptorManager from './interceptorManager'
 import RequestQueue from './queue'
 import { requestProxy } from './proxy'
 import { isNotEmptyArray, isNotEmptyObject, transformReq } from './util'
-
+import {
+  normalized,
+  proxyUrl,
+  isValidProxyConfig } from './mock'
 export default class XFetch {
   constructor (options, MPX) {
     this.CancelToken = CancelToken
@@ -19,10 +22,35 @@ export default class XFetch {
       this.requestAdapter = (config) => requestAdapter(config, MPX)
     }
     if (options && options.proxy) this.setProxy(options.proxy)
+    if (options && options.isMock && options.proxyConfig && options.proxyConfig.proxy)  this.mock(options.proxyConfig)
     this.interceptors = {
       request: new InterceptorManager(),
       response: new InterceptorManager()
     }
+  }
+
+  mock( proxyConfig ) {
+    const { proxy, defaultDomain } = proxyConfig
+    
+    let rawRequestFetch = this.fetch.bind(this)
+    if (!isValidProxyConfig(proxy)) return
+    let nomallizeProxy = normalized(proxy, defaultDomain)
+    
+    Object.defineProperty(this, 'fetch', {
+      get() {
+        return  (options) => {
+          return new Promise((resolve, reject)=> {
+            try {
+              proxyUrl(nomallizeProxy, options)
+              let data = rawRequestFetch.call(this, options)
+              resolve(data)
+            } catch (err) {
+              reject(err)
+            }
+          })
+        }
+      }
+    })
   }
 
   static normalizeConfig (config) {
