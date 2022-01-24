@@ -2,9 +2,9 @@ const compiler = require('./compiler')
 const bindThis = require('./bind-this').transform
 const parseRequest = require('../utils/parse-request')
 const matchCondition = require('../utils/match-condition')
-const checkIsRuntimeComponent = require('../utils/check-is-runtime')
-const { normalizeHashTagAndPath } = require('../runtime-render/utils')
+const checkIsRuntimeMode = require('../utils/check-is-runtime')
 const loaderUtils = require('loader-utils')
+const runtimeRenderConfig = require('../runtime-render/config')
 
 module.exports = function (raw) {
   this.cacheable()
@@ -27,9 +27,11 @@ module.exports = function (raw) {
   const isNative = queryObj.isNative
   const hasScoped = queryObj.hasScoped
   const moduleId = queryObj.moduleId
-  const runtimeComponents = queryObj.runtimeComponents || []
-  const runtimeCompile = checkIsRuntimeComponent(resourcePath)
-  const componentInfoForRuntime = normalizeHashTagAndPath(queryObj.componentInfoForRuntime)
+  const runtimeCompile = checkIsRuntimeMode(resourcePath)
+
+  const componentInfo = runtimeRenderConfig.getComponentDependencyInfo(resourcePath)
+  const runtimeComponents = Object.keys(componentInfo).filter(c => componentInfo[c].isRuntimeComponent)
+  runtimeComponents.push(...mpx.runtimeRender.globalRuntimeComponents)
 
   const warn = (msg) => {
     this.emitWarning(
@@ -46,7 +48,8 @@ module.exports = function (raw) {
   const { root: ast, meta } = compiler.parse(raw, {
     warn,
     error,
-    componentInfoForRuntime,
+    packageName,
+    componentDependencyInfo: componentInfo,
     runtimeComponents,
     runtimeCompile,
     usingComponents,
@@ -75,6 +78,15 @@ module.exports = function (raw) {
       wxsContentMap[`${resourcePath}~${module}`] = meta.wxsContentMap[module]
     }
   }
+
+  // if (meta.runtimeBaseTag) {
+  //   const info = componentDependencyInfo[resourcePath]
+  //   for (let tag of meta.runtimeBaseTag) {
+  //     const componentPath = info[tag].resourcePath
+  //     const hashTag = 'c' + mpx.pathHash(componentPath)
+  //     mpx.runtimeRender.setComponentsMap(componentPath, hashTag, packageName)
+  //   }
+  // }
 
   let resultSource = ''
 
@@ -170,8 +182,7 @@ global.currentInject.getRefsData = function () {
 
   // 运行时编译的组件直接返回基础模板的内容
   if (runtimeCompile) {
-    const src = loaderUtils.stringifyRequest(this, require.resolve('../runtime-render/mpx-render-base.wxml'))
-    return `<import src=${src}/> <template is="mpx_tmpl" data="{{ r: r }}"></template>`
+    return `<template is="mpx_tmpl" data="{{ r: r }}"></template><template name="mpx_tmpl"><element r="{{r}}" wx:if="{{r}}"></element></template>`
   }
 
   return result

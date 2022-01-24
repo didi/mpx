@@ -6,7 +6,7 @@ const parseRequest = require('./utils/parse-request')
 const matchCondition = require('./utils/match-condition')
 const fixUsingComponent = require('./utils/fix-using-component')
 const addQuery = require('./utils/add-query')
-const checkIsRuntimeComponent = require('./utils/check-is-runtime')
+const checkIsRuntimeMode = require('./utils/check-is-runtime')
 const async = require('async')
 const processJSON = require('./web/processJSON')
 const processScript = require('./web/processScript')
@@ -14,7 +14,6 @@ const processStyles = require('./web/processStyles')
 const processTemplate = require('./web/processTemplate')
 const getJSONContent = require('./utils/get-json-content')
 const normalize = require('./utils/normalize')
-const path = require('path')
 const getEntryName = require('./utils/get-entry-name')
 const AppEntryDependency = require('./dependencies/AppEntryDependency')
 const RecordResourceMapDependency = require('./dependencies/RecordResourceMapDependency')
@@ -42,7 +41,6 @@ module.exports = function (content) {
   const srcMode = localSrcMode || globalSrcMode
   const vueContentCache = mpx.vueContentCache
   const autoScope = matchCondition(resourcePath, mpx.autoScopeRules)
-  const runtimeRender = mpx.runtimeRender
 
   let ctorType = 'app'
   if (pagesMap[resourcePath]) {
@@ -74,14 +72,13 @@ module.exports = function (content) {
   })
 
   const {
-    getRequire
+    getRequire,
+    getRequestString
   } = createHelpers(loaderContext)
 
   let output = ''
   const callback = this.async()
 
-  const runtimeComponents = []
-  const componentInfoForRuntime = []
   async.waterfall([
     (callback) => {
       getJSONContent(parts.json || {}, loaderContext, (err, content) => {
@@ -89,49 +86,6 @@ module.exports = function (content) {
         if (parts.json) parts.json.content = content
         callback()
       })
-    },
-    (callback) => {
-      if (parts.json && parts.json.content) {
-        let json = {}
-        try {
-          json = JSON5.parse(parts.json.content)
-        } catch (e) {
-          return callback(e)
-        }
-        if (json.usingComponents) {
-          let usingComponents = json.usingComponents
-          // 收集 runtime 组件 -> name:hashName:absolutePath -> template-compiler
-          // 解析自定义组件路径
-          async.parallel(
-            Object.keys(usingComponents).map(name => _callback => {
-              // 插件路径不需要解析
-              if (usingComponents[name].startsWith('plugin://')) {
-                return _callback()
-              }
-              this.resolve(path.dirname(this.resource), usingComponents[name], (err, absolutePath) => {
-                if (err) {
-                  return callback(err)
-                }
-                if (checkIsRuntimeComponent(absolutePath)) {
-                  runtimeComponents.push(name)
-                }
-                // 局部自定义组件都需要 hash，保证基础模板组件名唯一
-                const hashTag = 'c' + mpx.pathHash(absolutePath)
-                componentInfoForRuntime.push(`${name}:${hashTag}:${absolutePath}`)
-                _callback()
-              })
-            }),
-            (err) => {
-              if (err) return callback(err)
-              callback()
-            }
-          )
-        } else {
-          callback()
-        }
-      } else {
-        callback()
-      }
     },
     (callback) => {
       // web输出模式下没有任何inject，可以通过cache直接返回，由于读取src json可能会新增模块依赖，需要在之后返回缓存内容
@@ -258,16 +212,11 @@ module.exports = function (content) {
       if (ctorType === 'app') {
         const appName = getEntryName(this)
         this._module.addPresentationalDependency(new AppEntryDependency(resourcePath, appName))
-
-        // 收集全局运行时组件
-        if (runtimeRender && runtimeComponents.length > 0) {
-          runtimeRender.setGlobalRuntimeComponents(runtimeComponents)
-        }
       }
 
-      if (runtimeRender && runtimeRender.globalRuntimeComponents.length > 0) {
-        runtimeComponents.push(...runtimeRender.globalRuntimeComponents)
-        componentInfoForRuntime.push(...runtimeRender.globalRuntimeComponents)
+      if (checkIsRuntimeMode(this.resource)) {
+        mpx.runtimeRender.addUsingRuntimePackages(packageName)
+        mpx.runtimeRender.addRuntimeRenderHook()
       }
 
       // 注入模块id及资源路径
@@ -328,16 +277,15 @@ module.exports = function (content) {
           hasComment,
           isNative,
           moduleId,
-          usingComponents,
-          runtimeComponents,
-          componentInfoForRuntime
+          usingComponents
           // 添加babel处理渲染函数中可能包含的...展开运算符
           // 由于...运算符应用范围极小以及babel成本极高，先关闭此特性后续看情况打开
           // needBabel: true
         }
         if (template.src) extraOptions.resourcePath = resourcePath
         // 基于global.currentInject来注入模板渲染函数和refs等信息
-        output += getRequire('template', template, extraOptions) + '\n'
+        // output += getRequire('template', template, extraOptions) + '\n'
+        mpx.moduleTemplate[moduleId] = getRequestString('template', template, extraOptions)
       }
 
       // styles
@@ -366,7 +314,11 @@ module.exports = function (content) {
       output += '/* json */\n'
       // 给予json默认值, 确保生成json request以自动补全json
       const json = parts.json || {}
-      output += getRequire('json', json, json.src && { resourcePath }) + '\n'
+      const extraOptions = {
+        moduleId
+      }
+      if (json.src) extraOptions.resourcePath = resourcePath
+      output += getRequire('json', json, extraOptions) + '\n'
 
       // script
       output += '/* script */\n'

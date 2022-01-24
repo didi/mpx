@@ -27,18 +27,6 @@ module.exports = {
     res += '}'
     return res
   },
-  // todo: name/hashName -> tag/hashTag
-  normalizeHashTagAndPath (runtimeComponents = []) {
-    return runtimeComponents.reduce((preVal, curVal) => {
-      const [name, hashName, absolutePath] = curVal.split(':')
-      return Object.assign(preVal, {
-        [name]: {
-          hashName,
-          absolutePath
-        }
-      })
-    }, {})
-  },
   hasExtractAttr (el) {
     const res = Object.keys(el.attrsMap).find(attr => {
       return !(genRegExp(commonBaseAttrs).test(attr) || attr.startsWith('data-'))

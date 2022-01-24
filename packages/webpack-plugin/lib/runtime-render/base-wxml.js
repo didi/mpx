@@ -9,10 +9,16 @@ const OPTIMIZE_NODES = ['view', 'text', 'image']
 
 let hashIndex = 0
 
-function setCustomEle (el) {
+function setCustomEle (el, packageName) {
   const tag = el.aliasTag || el.tag
   const attrKeys = Object.keys(el.attrsMap).filter(key => !directives.has(key))
-  const collection = el.isRuntimeComponent ? injectComponentConfig.runtimeComponents : injectComponentConfig.thirdPartyComponents
+  if (!injectComponentConfig[packageName]) {
+    injectComponentConfig[packageName] = {
+      runtimeComponents: new Map(),
+      thirdPartyComponents: new Map()
+    }
+  }
+  const collection = el.isRuntimeComponent ? injectComponentConfig[packageName].runtimeComponents : injectComponentConfig[packageName].thirdPartyComponents
   if (tag && !collection.get(tag)) {
     if (el.isRuntimeComponent) {
       attrKeys.push('slots', 'mpxAttrs')
@@ -73,7 +79,7 @@ function setBaseEle (el) {
   Object.assign(injectComponentConfig.internalComponents[tag], renderAttrsMap)
 }
 
-module.exports = function setBaseWxml (el, isCustomComponent) {
+module.exports = function setBaseWxml (el, isCustomComponent, packageName) {
   const set = isCustomComponent ? setCustomEle : setBaseEle
-  set(el)
+  set(el, packageName)
 }

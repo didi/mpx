@@ -38,8 +38,6 @@ const matchCondition = require('./utils/match-condition')
 const { preProcessDefs } = require('./utils/index')
 const config = require('./config')
 const hash = require('hash-sum')
-const injectComponentConfig = require('./runtime-render/inject-component-config')
-const { unRecursiveTemplate } = require('./runtime-render/wx-template')
 const wxssLoaderPath = normalize.lib('wxss/loader')
 const wxmlLoaderPath = normalize.lib('wxml/loader')
 const wxsLoaderPath = normalize.lib('wxs/loader')
@@ -54,6 +52,7 @@ const stringifyLoadersAndResource = require('./utils/stringify-loaders-resource'
 const emitFile = require('./utils/emit-file')
 const { MPX_PROCESSED_FLAG, MPX_DISABLE_EXTRACTOR_CACHE } = require('./utils/const')
 const RuntimeRender = require('./runtime-render')
+const RuntimeRenderPlugin = require('./runtime-render/plugin')
 const isEmptyObject = require('./utils/is-empty-object')
 
 const isProductionLikeMode = options => {
@@ -263,6 +262,7 @@ class MpxWebpackPlugin {
       compiler.options.node.global = true
     }
 
+    new RuntimeRenderPlugin().apply(compiler)
     const addModePlugin = new AddModePlugin('before-file', this.options.mode, this.options.fileConditionRules, 'file')
     const addEnvPlugin = new AddEnvPlugin('before-file', this.options.env, this.options.fileConditionRules, 'file')
     const packageEntryPlugin = new PackageEntryPlugin('before-described-relative', this.options.miniNpmPackages, 'resolve')
@@ -413,7 +413,12 @@ class MpxWebpackPlugin {
     }, (compilation, callback) => {
       processSubpackagesEntriesMap(compilation, (err) => {
         if (err) return callback(err)
-        mpx.hooks.finishSubpackagesMake.callAsync(compilation, callback)
+        // 子编译也会触发这个 hook，所以需要判断下
+        if (!compilation.compiler.isChild()) {
+          mpx.hooks.finishSubpackagesMake.callAsync(compilation, callback)
+        } else {
+          callback()
+        }
       })
     })
 
@@ -668,7 +673,8 @@ class MpxWebpackPlugin {
           runtimeRender: new RuntimeRender(compilation),
           hooks: {
             finishSubpackagesMake: new AsyncSeriesHook(['compilation'])
-          }
+          },
+          moduleTemplate: {}
         }
       }
 
@@ -836,33 +842,6 @@ class MpxWebpackPlugin {
               source.add(content)
             }
           })
-
-          // 将 element 作为全局组件注入
-          // 将运行时组件注入 element 配置中，保证在其上下文中渲染
-          if (/(app|mpx-custom-element)\.json/.test(filename)) {
-            let _content = JSON.parse(source.source())
-            if (!_content.usingComponents) {
-              _content.usingComponents = {}
-            }
-            const isAppJson = filename.includes('app.json')
-            Object.assign(_content.usingComponents, mpx.runtimeRender.getInjectComponents(isAppJson))
-            let res = new ConcatSource()
-            res.add(JSON.stringify(_content, null, 2))
-            source = res
-          }
-          // 动态生成基础模板信息并注入
-          if (/mpx-render-base\w*\.wxml/.test(filename)) {
-            source.add(unRecursiveTemplate.buildTemplate(injectComponentConfig))
-          }
-
-          // 运行时组件的样式注入
-          if (/mpx-custom-element\w*\.wxss/.test(filename)) {
-            let res = new ConcatSource()
-            res.add(mpx.runtimeRender.injectedWxss)
-            res.add(source.source())
-            source = res
-          }
-
           compilation.emitAsset(filename, source)
         }
       })

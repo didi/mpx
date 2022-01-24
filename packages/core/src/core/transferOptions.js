@@ -27,10 +27,8 @@ function composePropsToComputed (type, options = {}) {
     if (!options.computed) {
       options.computed = {}
     }
-    options.$mpxAttrs = {}
     const props = Object.assign({}, options.properties || {}, options.props || {})
     Object.keys(props).map((key) => {
-      options.$mpxAttrs[key] = true
       // 将 properties 数据转为 computed
       Object.assign(options.computed, {
         [key] () {

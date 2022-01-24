@@ -15,8 +15,10 @@ const RecordGlobalComponentsDependency = require('../dependencies/RecordGlobalCo
 const RecordIndependentDependency = require('../dependencies/RecordIndependentDependency')
 const { MPX_DISABLE_EXTRACTOR_CACHE, RESOLVE_IGNORED_ERR, JSON_JS_EXT } = require('../utils/const')
 const resolve = require('../utils/resolve')
+const checkIsRuntimeMode = require('../utils/check-is-runtime')
+const runtimeRenderConfig = require('../runtime-render/config')
 
-module.exports = function (content) {
+module.exports = async function (content) {
   const nativeCallback = this.async()
   const mpx = this.getMpx()
 
@@ -39,6 +41,7 @@ module.exports = function (content) {
   const globalSrcMode = mpx.srcMode
   const localSrcMode = queryObj.mode
   const srcMode = localSrcMode || globalSrcMode
+  const moduleId = queryObj.moduleId
 
   const isApp = !(pagesMap[resourcePath] || componentsMap[resourcePath])
   const publicPath = this._compilation.outputOptions.publicPath || ''
@@ -195,16 +198,60 @@ module.exports = function (content) {
     rulesRunner(json)
   }
 
+  const processModuleTemplate = (callback) => {
+    if (mpx.moduleTemplate[moduleId]) {
+      // 使用 loadModule 获取 template 注入内容
+      this.loadModule(mpx.moduleTemplate[moduleId].slice(1, -1), (err, source, map, module) => {
+        if (err) return callback(err)
+        this.emitFile(resourcePath, '', undefined, {
+          skipEmit: true,
+          extractedResultSource: module._source._value
+        })
+        callback()
+      })
+    } else {
+      callback()
+    }
+  }
+
+  const processRuntimeMode = (usingComponents, callback) => {
+    if (checkIsRuntimeMode(this.resourcePath)) {
+      // todo  posix 的处理
+      let elementPath = `/mpx-custom-element-${packageName}`
+      if (packageName !== 'main') {
+        elementPath = '/' + packageName + elementPath
+      }
+      usingComponents.element = elementPath
+    }
+    callback()
+  }
+
+  const collectRuntimeInfo = (name, resource) => {
+    const isRuntimeComponent = checkIsRuntimeMode(resource)
+    // 全局组件
+    if (isApp) {
+      mpx.runtimeRender.addGlobalRuntimeComponents(name)
+    } else {
+      // page or component 局部组件
+      runtimeRenderConfig.addComponentDependencyInfo(resourcePath, name, {
+        isRuntimeComponent,
+        hashName: 'c' + mpx.pathHash(resource),
+        resourcePath: resource
+      })
+    }
+  }
+
   const processComponents = (components, context, callback) => {
     if (components) {
       async.eachOf(components, (component, name, callback) => {
-        processComponent(component, context, { relativePath }, (err, entry) => {
+        processComponent(component, context, { relativePath }, (err, entry, { resourcePath }) => {
           if (err === RESOLVE_IGNORED_ERR) {
             delete components[name]
             return callback()
           }
           if (err) return callback(err)
           components[name] = entry
+          collectRuntimeInfo(name, resourcePath)
           callback()
         })
       }, callback)
@@ -564,6 +611,9 @@ module.exports = function (content) {
       },
       (callback) => {
         processSubPackages(json.subPackages || json.subpackages, this.context, callback)
+      },
+      (callback) => {
+        processRuntimeMode(json.usingComponents, callback)
       }
     ], (err) => {
       if (err) return callback(err)
@@ -611,10 +661,16 @@ module.exports = function (content) {
     }
     async.parallel([
       (callback) => {
-        processComponents(json.usingComponents, this.context, callback)
+        processComponents(json.usingComponents, this.context, () => {
+          // todo 他们之间存在依赖关系
+          processModuleTemplate(callback)
+        })
       },
       (callback) => {
         processGenerics(json.componentGenerics, this.context, callback)
+      },
+      (callback) => {
+        processRuntimeMode(json.usingComponents, callback)
       }
     ], (err) => {
       callback(err, processDynamicEntry)

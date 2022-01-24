@@ -2232,13 +2232,21 @@ function closeElement (el, options, meta, currentParent) {
 // 部分节点类型不需要被收集
 const RUNTIME_FILTER_NODES = ['import', 'template', 'wxs', 'component', 'slot']
 
-// 节点收集，最终注入到 mpx-base-template.wxml 中
+// const addRuntimeElement = (meta, ele) => {
+//   if (!meta.runtimeElement) {
+//     meta.runtimeElement = []
+//   }
+//   meta.runtimeElement.push({ element })
+// }
+
+// 节点收集，最终注入到 mpx-custom-element-*.wxml 中
 function postProcessRuntime (el, options, meta) {
   if (RUNTIME_FILTER_NODES.includes(el.tag)) {
     return
   }
 
-  const isCustomComponent = isComponentNode(el, options) || isGlobalComponent(el, options) || false
+  const packageName = options.packageName
+  const isCustomComponent = isComponentNode(el, options) || false
   // 运行时组件所包含的子节点(普通节点 + 自定义节点)
   const isInnerComponent = hasRuntimeCompileWrapper(el)
 
@@ -2246,14 +2254,15 @@ function postProcessRuntime (el, options, meta) {
   // 被注入到基础模板的节点，运行时渲染都需要唯一 tag
   if (options.runtimeCompile || el.isRuntimeComponent || isInnerComponent) {
     const tag = el.tag
-    const { hashName, absolutePath } = (options.componentInfoForRuntime && options.componentInfoForRuntime[tag]) || {}
-    if (hashName && absolutePath) {
+    // todo 可以通过 meta 收集完数据放到 index.js 里面去处理?
+    const { hashName, resourcePath } = (options.componentDependencyInfo && options.componentDependencyInfo[tag]) || {}
+    if (hashName && resourcePath) {
       el.aliasTag = hashName
-      // 这里只收集绝对路径和 hashName，实际的产出路径在 mpx.componentsMap 当中获取
-      options.setRuntimeComponentsMap(absolutePath, hashName)
+      options.setRuntimeComponentsMap(resourcePath, hashName, packageName)
     }
 
-    setBaseWxml(el, isCustomComponent)
+    // 收集节点属性信息
+    setBaseWxml(el, isCustomComponent, packageName)
   }
 
   // 生成注入的 runtimeSlots renderFn

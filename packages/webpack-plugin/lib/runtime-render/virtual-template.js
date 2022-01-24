@@ -1,6 +1,6 @@
+module.exports = `
 <template>
-  <import src="./mpx-render-base.wxml" />
-  <template is="tmpl_0_container" data="{{ i: r }}"></template>
+  <view></view>
 </template>
 
 <script>
@@ -10,8 +10,7 @@ import { createComponent } from '@mpxjs/core'
 createComponent({
   options: {
     addGlobalClass: true,
-    styleIsolation: 'shared',
-    // virtualHost: true
+    styleIsolation: 'shared'
   },
   properties: {
     r: { // 递归渲染数据
@@ -42,13 +41,13 @@ createComponent({
 })
 </script>
 
-<style lang="stylus">
+<style>
 
 </style>
 
 <script type="application/json">
 {
-  "component": true,
-  "usingComponents": {}
+  component: true
 }
 </script>
+`
