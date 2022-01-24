@@ -222,6 +222,24 @@ class MpxWebpackPlugin {
     }
   }
 
+  static getPageEntry (request) {
+    return addQuery(request, { isPage: true })
+  }
+
+  static getComponentEntry (request) {
+    return addQuery(request, { isComponent: true })
+  }
+
+  static getPluginEntry (request) {
+    return addQuery(request, {
+      mpx: true,
+      extract: true,
+      isPlugin: true,
+      asScript: true,
+      type: 'json'
+    })
+  }
+
   runModeRules (data) {
     const { resourcePath, queryObj } = parseRequest(data.resource)
     if (queryObj.mode) {
@@ -499,13 +517,15 @@ class MpxWebpackPlugin {
           exportModules: new Set(),
           // 记录entryModule与entryNode的对应关系，用于体积分析
           entryNodeModulesMap: new Map(),
-          extractedMap: {},
+          // 记录与asset相关联的modules，用于体积分析
+          assetsModulesMap: new Map(),
+          // 记录与asset相关联的ast，用于体积分析和esCheck，避免重复parse
+          assetsASTsMap: new Map(),
           usingComponents: {},
           // todo es6 map读写性能高于object，之后会逐步替换
           vueContentCache: new Map(),
           currentPackageRoot: '',
           wxsContentMap: {},
-          assetsInfo: new Map(),
           forceUsePageCtor: this.options.forceUsePageCtor,
           resolveMode: this.options.resolveMode,
           mode: this.options.mode,
@@ -589,15 +609,49 @@ class MpxWebpackPlugin {
             mpx.extractedFilesCache.set(resource, file)
             return file
           },
+          recordResourceMap: ({ resourcePath, resourceType, outputPath, packageRoot = '', recordOnly, warn, error }) => {
+            const packageName = packageRoot || 'main'
+            const resourceMap = mpx[`${resourceType}sMap`] || mpx.otherResourcesMap
+            const currentResourceMap = resourceMap.main ? resourceMap[packageName] = resourceMap[packageName] || {} : resourceMap
+            let alreadyOutputted = false
+            if (outputPath) {
+              if (!currentResourceMap[resourcePath] || currentResourceMap[resourcePath] === true) {
+                if (!recordOnly) {
+                  // 在非recordOnly的模式下，进行输出路径冲突检测，如果存在输出路径冲突，则对输出路径进行重命名
+                  for (let key in currentResourceMap) {
+                    // todo 用outputPathMap来检测输出路径冲突
+                    if (currentResourceMap[key] === outputPath && key !== resourcePath) {
+                      outputPath = mpx.getOutputPath(resourcePath, resourceType, { conflictPath: outputPath })
+                      warn && warn(new Error(`Current ${resourceType} [${resourcePath}] is registered with conflicted outputPath [${currentResourceMap[key]}] which is already existed in system, will be renamed with [${outputPath}], use ?resolve to get the real outputPath!`))
+                      break
+                    }
+                  }
+                }
+                currentResourceMap[resourcePath] = outputPath
+              } else {
+                if (currentResourceMap[resourcePath] === outputPath) {
+                  alreadyOutputted = true
+                } else {
+                  error && error(new Error(`Current ${resourceType} [${resourcePath}] is already registered with outputPath [${currentResourceMap[resourcePath]}], you can not register it with another outputPath [${outputPath}]!`))
+                }
+              }
+            } else if (!currentResourceMap[resourcePath]) {
+              currentResourceMap[resourcePath] = true
+            }
+
+            return {
+              outputPath,
+              alreadyOutputted
+            }
+          },
           // 组件和静态资源的输出规则如下：
           // 1. 主包引用的资源输出至主包
           // 2. 分包引用且主包引用过的资源输出至主包，不在当前分包重复输出
           // 3. 分包引用且无其他包引用的资源输出至当前分包
           // 4. 分包引用且其他分包也引用过的资源，重复输出至当前分包
-          getPackageInfo: ({ resource, outputPath, resourceType, issuerResource, warn, error }) => {
+          getPackageInfo: ({ resource, resourceType, outputPath, issuerResource, warn, error }) => {
             let packageRoot = ''
             let packageName = 'main'
-            let currentResourceMap = {}
 
             const { resourcePath } = parseRequest(resource)
             const currentPackageRoot = mpx.currentPackageRoot
@@ -606,7 +660,6 @@ class MpxWebpackPlugin {
             const resourceMap = mpx[`${resourceType}sMap`] || mpx.otherResourcesMap
 
             if (!resourceMap.main) {
-              currentResourceMap = resourceMap
               packageRoot = currentPackageRoot
               packageName = currentPackageName
             } else {
@@ -637,36 +690,22 @@ class MpxWebpackPlugin {
                 }
               }
               resourceMap[packageName] = resourceMap[packageName] || {}
-              currentResourceMap = resourceMap[packageName]
             }
 
-            let alreadyOutputed = false
-            if (outputPath) {
-              outputPath = toPosix(path.join(packageRoot, outputPath))
-              // 如果之前已经进行过输出，则不需要重复进行
-              if (currentResourceMap[resourcePath] === outputPath) {
-                alreadyOutputed = true
-              } else {
-                // todo 用outputPathMap来检测冲突
-                // 输出冲突检测，如果存在输出路径冲突，对输出路径进行重命名
-                for (let key in currentResourceMap) {
-                  if (currentResourceMap[key] === outputPath && key !== resourcePath) {
-                    outputPath = toPosix(path.join(packageRoot, mpx.getOutputPath(resourcePath, resourceType, { conflictPath: outputPath })))
-                    warn && warn(new Error(`Current ${resourceType} [${resourcePath}] is registered with a conflict outputPath [${currentResourceMap[key]}] which is already existed in system, will be renamed with [${outputPath}], use ?resolve to get the real outputPath!`))
-                    break
-                  }
-                }
-                currentResourceMap[resourcePath] = outputPath
-              }
-            } else if (!currentResourceMap[resourcePath]) {
-              currentResourceMap[resourcePath] = true
-            }
+            if (outputPath) outputPath = toPosix(path.join(packageRoot, outputPath))
 
             return {
               packageName,
               packageRoot,
-              outputPath,
-              alreadyOutputed
+              // 返回outputPath及alreadyOutputted
+              ...mpx.recordResourceMap({
+                resourcePath,
+                resourceType,
+                outputPath,
+                packageRoot,
+                warn,
+                error
+              })
             }
           },
           // 需要缓存每次的配置信息
@@ -747,12 +786,13 @@ class MpxWebpackPlugin {
             }
           }
         } else if (independent) {
-          // ContextModule和RawModule只在独立分包的情况下添加分包标记，其余默认不添加
+          // ContextModule/RawModule和ExternalModule等只在独立分包的情况下添加分包标记，其余默认不添加
           const postfix = `|independent=${independent}|${currentPackageRoot}`
-          if (module._identifier) {
-            module._identifier += postfix
-          } else if (module.identifierStr) {
-            module.identifierStr += postfix
+          const rawIdentifier = module.identifier
+          if (rawIdentifier) {
+            module.identifier = () => {
+              return rawIdentifier.call(module) + postfix
+            }
           }
         }
         return rawAddModule.call(compilation, module, callback)
@@ -810,6 +850,12 @@ class MpxWebpackPlugin {
         return source
       })
 
+      compilation.hooks.moduleAsset.tap('MpxWebpackPlugin', (module, filename) => {
+        const modules = mpx.assetsModulesMap.get(filename) || new Set()
+        modules.add(module)
+        mpx.assetsModulesMap.set(filename, modules)
+      })
+
       compilation.hooks.beforeModuleAssets.tap('MpxWebpackPlugin', () => {
         const extractedAssetsMap = new Map()
         for (const module of compilation.modules) {
@@ -822,8 +868,7 @@ class MpxWebpackPlugin {
                 extractedAssetsMap.set(filename, extractedAssets)
               }
               extractedAssets.push(extractedInfo)
-              // todo 后续计算体积时可以通过这个钩子关联静态assets和module
-              // compilation.hooks.moduleAsset.call(module, filename)
+              compilation.hooks.moduleAsset.call(module, filename)
             }
           }
         }
@@ -1050,7 +1095,6 @@ class MpxWebpackPlugin {
         }
 
         const processedChunk = new Set()
-        // const rootName = compilation.entries.keys().next().value
         const appName = mpx.appInfo.name
 
         function processChunk (chunk, isRuntime, relativeChunks) {
@@ -1317,14 +1361,40 @@ try {
     const clearFileCache = () => {
       const fs = compiler.intermediateFileSystem
       const cacheLocation = compiler.options.cache.cacheLocation
-      return new Promise((resolve, reject) => {
-        fs.rm(cacheLocation, {
-          recursive: true,
-          force: true
-        }, (err) => {
-          if (err) return reject(err)
-          resolve()
-        })
+      return new Promise((resolve) => {
+        if (typeof fs.rm === 'function') {
+          fs.rm(cacheLocation, {
+            recursive: true,
+            force: true
+          }, resolve)
+        } else {
+          // polyfill fs.rm
+          const rm = (file, callback) => {
+            async.waterfall([
+              (callback) => {
+                fs.stat(file, callback)
+              },
+              (stats, callback) => {
+                if (stats.isDirectory()) {
+                  const dir = file
+                  fs.readdir(dir, (err, files) => {
+                    if (err) return callback(err)
+                    async.each(files, (file, callback) => {
+                      file = path.join(dir, file)
+                      rm(file, callback)
+                    }, (err) => {
+                      if (err) return callback(err)
+                      fs.rmdir(dir, callback)
+                    })
+                  })
+                } else {
+                  fs.unlink(file, callback)
+                }
+              }
+            ], callback)
+          }
+          rm(cacheLocation, resolve)
+        }
       })
     }
 

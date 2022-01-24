@@ -96,7 +96,7 @@ module.exports = function (template, {
           // todo 后续输出web也采用mpx的scoped处理
           hasScoped: false,
           moduleId,
-          filePath: loaderContext.resourcePath,
+          filePath: resourcePath,
           i18n: null,
           checkUsingComponents,
           // web模式下全局组件不会被合入usingComponents中，故globalComponents可以传空

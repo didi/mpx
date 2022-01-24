@@ -16,10 +16,20 @@ class RecordResourceMapDependency extends NullDependency {
 
   mpxAction (module, compilation, callback) {
     const mpx = compilation.__mpx__
-    const packageName = this.packageRoot || 'main'
-    const resourceMap = mpx[`${this.resourceType}sMap`] || mpx.otherResourcesMap
-    const subResourceMap = resourceMap.main ? resourceMap[packageName] : resourceMap
-    subResourceMap[this.resourcePath] = this.outputPath
+    const { resourcePath, resourceType, outputPath, packageRoot } = this
+    mpx.recordResourceMap({
+      resourcePath,
+      resourceType,
+      outputPath,
+      packageRoot,
+      recordOnly: true,
+      warn (e) {
+        compilation.warnings.push(e)
+      },
+      error (e) {
+        compilation.errors.push(e)
+      }
+    })
     return callback()
   }
 

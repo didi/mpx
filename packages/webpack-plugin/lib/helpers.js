@@ -14,6 +14,7 @@ const defaultLang = {
 
 module.exports = function createHelpers (loaderContext) {
   const rawRequest = loaderUtils.getRemainingRequest(loaderContext)
+  const { resourcePath, queryObj } = parseRequest(loaderContext.resource)
 
   function getRequire (type, part, extraOptions, index) {
     return 'require(' + getRequestString(type, part, extraOptions, index) + ')'
@@ -35,9 +36,9 @@ module.exports = function createHelpers (loaderContext) {
 
   function getFakeRequest (type, part) {
     const lang = part.lang || defaultLang[type] || type
-    const { resourcePath, queryObj } = parseRequest(loaderContext.resource)
-    if (lang === 'json') queryObj.asScript = true
-    return addQuery(`${resourcePath}.${lang}`, queryObj)
+    const options = { ...queryObj }
+    if (lang === 'json') options.asScript = true
+    return addQuery(`${resourcePath}.${lang}`, options)
   }
 
   function getRequestString (type, part, extraOptions = {}, index = 0) {

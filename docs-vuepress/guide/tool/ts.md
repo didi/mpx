@@ -1,4 +1,6 @@
-# Typescript支持
+todo 对于TS的工具方法的使用场景和类型推导能力描述充分一些，整体迁移到进阶里面 @志鹏
+
+# 使用TypeScript开发小程序
 
 ## 什么是TypeScript
 

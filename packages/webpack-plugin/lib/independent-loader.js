@@ -40,16 +40,9 @@ module.exports = function (content) {
     const i18nWxsPath = normalize.lib('runtime/i18n.wxs')
     const i18nWxsLoaderPath = normalize.lib('wxs/i18n-loader.js')
     const i18nWxsRequest = i18nWxsLoaderPath + '!' + i18nWxsPath
-    const i18nMethodsVar = 'i18nMethods'
-    this._module.addDependency(new CommonJsVariableDependency(i18nWxsRequest, i18nMethodsVar))
-
-    output += `if (!global.i18n) {
-  global.i18n = ${JSON.stringify({
-    locale: i18n.locale,
-    version: 0
-  })}
-  global.i18nMethods = ${i18nMethodsVar}
-}\n`
+    this._module.addDependency(new CommonJsVariableDependency(i18nWxsRequest))
+    // 避免该模块被concatenate导致注入的i18n没有最先执行
+    this._module.buildInfo.moduleConcatenationBailout = 'i18n'
   }
   output += content
   output += '\n'

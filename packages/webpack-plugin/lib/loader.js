@@ -52,7 +52,7 @@ module.exports = function (content) {
   }
 
   // 支持资源query传入isPage或isComponent支持页面/组件单独编译
-  if (queryObj.isComponent || queryObj.isPage) {
+  if (ctorType === 'app' && (queryObj.isComponent || queryObj.isPage)) {
     const entryName = getEntryName(this) || (queryObj.isComponent ? 'noEntryComponent' : 'noEntryPage')
     ctorType = queryObj.isComponent ? 'component' : 'page'
     this._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, ctorType, entryName, packageRoot))
@@ -230,16 +230,9 @@ module.exports = function (content) {
         const i18nWxsPath = normalize.lib('runtime/i18n.wxs')
         const i18nWxsLoaderPath = normalize.lib('wxs/i18n-loader.js')
         const i18nWxsRequest = i18nWxsLoaderPath + '!' + i18nWxsPath
-        const i18nMethodsVar = 'i18nMethods'
-        this._module.addDependency(new CommonJsVariableDependency(i18nWxsRequest, i18nMethodsVar))
-
-        output += `if (!global.i18n) {
-  global.i18n = ${JSON.stringify({
-    locale: i18n.locale,
-    version: 0
-  })}
-  global.i18nMethods = ${i18nMethodsVar}
-}\n`
+        this._module.addDependency(new CommonJsVariableDependency(i18nWxsRequest))
+        // 避免该模块被concatenate导致注入的i18n没有最先执行
+        this._module.buildInfo.moduleConcatenationBailout = 'i18n'
       }
 
       // 为独立分包注入init module
@@ -247,6 +240,8 @@ module.exports = function (content) {
         const independentLoader = normalize.lib('independent-loader.js')
         const independentInitRequest = `!!${independentLoader}!${independent}`
         this._module.addDependency(new CommonJsVariableDependency(independentInitRequest))
+        // 避免该模块被concatenate导致注入的independent init没有最先执行
+        this._module.buildInfo.moduleConcatenationBailout = 'independent init'
       }
 
       // 注入构造函数
@@ -273,6 +268,10 @@ module.exports = function (content) {
 
       if (template) {
         const extraOptions = {
+          ...template.src ? {
+            ...queryObj,
+            resourcePath
+          } : null,
           hasScoped,
           hasComment,
           isNative,
@@ -294,16 +293,16 @@ module.exports = function (content) {
         parts.styles.forEach((style, i) => {
           const scoped = style.scoped || autoScope
           const extraOptions = {
+            // style src会被特殊处理为全局复用样式，不添加resourcePath，添加isStatic及issuerFile
+            ...style.src ? {
+              ...queryObj,
+              isStatic: true,
+              issuerFile: mpx.getExtractedFile(addQuery(this.resource, { type: 'styles' }, true))
+            } : null,
             moduleId,
             scoped
           }
           // require style
-          if (style.src) {
-            // style src会被特殊处理为全局复用样式，不添加resourcePath，添加isStatic及issuerFile
-            extraOptions.isStatic = true
-            const issuerResource = addQuery(this.resource, { type: 'styles' }, true)
-            extraOptions.issuerFile = mpx.getExtractedFile(issuerResource)
-          }
           output += getRequire('styles', style, extraOptions, i) + '\n'
         })
       } else if (ctorType === 'app' && mode === 'ali') {
@@ -314,11 +313,11 @@ module.exports = function (content) {
       output += '/* json */\n'
       // 给予json默认值, 确保生成json request以自动补全json
       const json = parts.json || {}
-      const extraOptions = {
-        moduleId
-      }
-      if (json.src) extraOptions.resourcePath = resourcePath
-      output += getRequire('json', json, extraOptions) + '\n'
+      output += getRequire('json', json, json.src && {
+        ...queryObj,
+        moduleId,
+        resourcePath
+      }) + '\n'
 
       // script
       output += '/* script */\n'
@@ -330,9 +329,12 @@ module.exports = function (content) {
         if (scriptSrcMode) output += `global.currentSrcMode = ${JSON.stringify(scriptSrcMode)}\n`
         // 传递ctorType以补全js内容
         const extraOptions = {
+          ...script.src ? {
+            ...queryObj,
+            resourcePath
+          } : null,
           ctorType
         }
-        if (script.src) extraOptions.resourcePath = resourcePath
         output += getRequire('script', script, extraOptions) + '\n'
       }
       callback(null, output)

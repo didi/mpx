@@ -1,0 +1,48 @@
+{
+  "name": "@mpxjs/size-report",
+  "version": "2.7.1-beta.10",
+  "description": "mpx size report plugin",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint --ext .js src/",
+    "fix": "eslint --fix --ext .js src/"
+  },
+  "homepage": "https://github.com/mpx-ecology/mpx-size-report",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:mpx-ecology/mpx-size-report.git"
+  },
+  "keywords": [
+    "mpx",
+    "javascript",
+    "vue",
+    "miniprogram",
+    "sizeReport",
+    "bundle",
+    "analyzer"
+  ],
+  "author": "xuegan@didiglobal.com",
+  "license": "ISC",
+  "dependencies": {
+    "ejs": "^3.1.6",
+    "express": "^4.17.1",
+    "loader-utils": "^2.0.0",
+    "opener": "^1.5.2",
+    "ws": "^7.4.3"
+  },
+  "peerDependencies": {
+    "@mpxjs/webpack-plugin": "^2.7.1-beta.1"
+  },
+  "devDependencies": {
+    "babel-eslint": "^10.1.0",
+    "eslint": "^5.10.0",
+    "eslint-config-standard": "^12.0.0",
+    "eslint-plugin-html": "^5.0.0",
+    "eslint-plugin-import": "^2.14.0",
+    "eslint-plugin-jest": "^22.5.1",
+    "eslint-plugin-node": "^8.0.0",
+    "eslint-plugin-promise": "^4.0.1",
+    "eslint-plugin-standard": "^5.0.0"
+  }
+}

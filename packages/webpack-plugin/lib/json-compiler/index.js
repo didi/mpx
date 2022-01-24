@@ -319,9 +319,7 @@ module.exports = async function (content) {
                   env
                 })
                 // 对于通过.mpx文件声明的独立分包，默认将其自身的script block视为init module
-                if (parts.script && queryObj.independent === true) {
-                  queryObj.independent = result
-                }
+                if (queryObj.independent === true) queryObj.independent = result
                 getJSONContent(parts.json || {}, this, (err, content) => {
                   callback(err, result, content)
                 })
