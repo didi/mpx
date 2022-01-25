@@ -158,8 +158,8 @@ export default class XFetch {
       config = this.checkProxy(config) // proxy
       const checkRes = this.checkValidator(config)
       const validatorRes = isObject(checkRes) ? checkRes.valid : checkRes
-      if(typeof validatorRes !== 'undefined' && !validatorRes){
-        return Promise.reject(`xfetch参数校验错误 ${config.url} ${checkRes?.message?.length ? 'error:'+ checkRes.message.join(','):''}`)
+      if (typeof validatorRes !== 'undefined' && !validatorRes) {
+        return Promise.reject(new Error(`xfetch参数校验错误 ${config.url} ${checkRes?.message?.length ? 'error:' + checkRes.message.join(',') : ''}`))
       }
       return this.queue ? this.queue.request(config, priority) : this.requestAdapter(config)
     }

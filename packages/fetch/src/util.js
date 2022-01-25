@@ -1,3 +1,5 @@
+import { match } from 'path-to-regexp'
+
 const toString = Object.prototype.toString
 
 // 是否为一个对象
@@ -213,7 +215,7 @@ export function type (a) {
  * @param input 源对象
  * @returns {boolean}
  */
- function attrMatch (test = {}, input = {}) {
+function attrMatch (test = {}, input = {}) {
   let result = true
   for (const key in test) {
     // value 值为 true 时 key 存在即命中匹配
@@ -238,7 +240,7 @@ export function type (a) {
  * @param test 匹配配置
  * @returns {{matchParams, matched: boolean}}
  */
- export function doTest (config, test) {
+export function doTest (config, test) {
   const { url, params = {}, data = {}, header = {}, method = 'GET' } = config
   const {
     url: tUrl = '',
