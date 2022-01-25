@@ -120,12 +120,6 @@ module.exports = {
     algolia: {
 			apiKey: '7849f511f78afc4383a81f0137a91c0f',
 			indexName: 'mpxjs',
-			algoliaOptions: {
-				hitsPerPage: 6,
-        // nbPages: 4,
-        page: 3,
-				facetFilters: ""
-			}
 		},
     sidebarDepth: 1,
     logo: '/logo.png',

@@ -116,6 +116,14 @@ sevenSection:
     details: 写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧
     img: https://dpubstatic.udache.com/static/dpubimg/bcca3d10-01b7-4c08-951a-22418b2443d6.jpg
     demo: 'https://gift-static.hongyibo.com.cn/static/kfpub/3547/didi2.jpeg'
+  - title: 青桔单车
+    details: 写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧
+    img: https://dpubstatic.udache.com/static/dpubimg/pIM3h2vyj2/qingju.jpg
+    demo: 'https://dpubstatic.udache.com/static/dpubimg/b-eygroygt/qingju_demo.jpeg'
+  - title: 滴滴顺风车
+    details: 写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧
+    img: https://dpubstatic.udache.com/static/dpubimg/neOI_G6deQ/shunfengche.png
+    demo: 'https://dpubstatic.udache.com/static/dpubimg/a6ymwX1o6r/shunfengche_demo.jpeg'
   - title: 出行广场
     details: 写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧
     img: https://dpubstatic.udache.com/static/dpubimg/708d5579-81f0-480e-96b3-5f49e8022273.jpg
