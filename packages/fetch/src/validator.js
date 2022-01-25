@@ -12,7 +12,7 @@ export function doValidator (rules, config, url, greedy) {
   // warning的result length不为0的时候 也会发送请求 只是一个warning
   let warningResult = []
   let ruleBackUp = Object.assign({}, rules)
-  for (let key in config){
+  for (let key in config) {
     // 没添加校验规则但是参数里有这个属性但是无需校验所有参数
     if (!ruleBackUp[key] && typeof greedy !== 'undefined' && !greedy) {
       continue
@@ -50,7 +50,7 @@ export function doValidator (rules, config, url, greedy) {
             const vType = ruleBackUp[key].type.map((item) => {
               return item.toLowerCase()
             })
-            isNotEmptyArray(vType) ?  typeMatched = vType.indexOf(type(config[key]).toLowerCase()) > -1 : warningResult.push(`${key}属性校验type为空数组`)
+            isNotEmptyArray(vType) ? typeMatched = vType.indexOf(type(config[key]).toLowerCase()) > -1 : warningResult.push(`${key}属性校验type为空数组`)
           } else if (isString(ruleBackUp[key].type)) {
             typeMatched = type(config[key]).toLowerCase() === ruleBackUp[key].type.toLowerCase()
           }
@@ -59,16 +59,15 @@ export function doValidator (rules, config, url, greedy) {
           errorResult.push(err.toString())
         }
     }
-  
     ruleBackUp[key] && delete ruleBackUp[key]
   }
-// 添加了校验规则但是参数里没有的属性且require为true的情况
-  Object.keys(ruleBackUp).forEach(key=>{
+  // 添加了校验规则但是参数里没有的属性且require为true的情况
+  Object.keys(ruleBackUp).forEach(key => {
     if (ruleBackUp[key]?.require) {
       errorResult.push(`请添加必传的${key}属性`)
     }
   })
-  console.warn(' validator url ',url ,'warningResult',warningResult)
+  console.warn(' validator url ', url, 'warningResult', warningResult)
   return {
     valid: !errorResult.length,
     message: errorResult,
@@ -77,10 +76,10 @@ export function doValidator (rules, config, url, greedy) {
   }
 }
 // 请求拦截
-export function Validator(options, config) {
+export function Validator (options, config) {
   let result
   options?.length && options.some((item) => {
-    const { test, validator, waterfall, greedy } = item
+    const { test, validator, greedy } = item
     const matched = isFunction(test.custom) ? test.custom(config) : doTest(config, test).matched
     if (matched) {
       if (isFunction(validator.custom)) {
@@ -91,7 +90,7 @@ export function Validator(options, config) {
       const checkType = validator[Object.keys(validator)[0]] && Object.keys(validator[Object.keys(validator)[0]]).includes('type') && !isObject(validator[Object.keys(validator)[0]]?.type)
       const isPostMethod = /^POST|PUT$/i.test(config.method)
       if (checkType) {
-        result =  doValidator(validator, Object.assign({}, config.params, config.data), test.path, greedy)
+        result = doValidator(validator, Object.assign({}, config.params, config.data), test.path, greedy)
       } else {
         if (isPostMethod) {
           let dataRes = doValidator(validator.data, config.data, test.path, greedy)
