@@ -102,7 +102,7 @@ export function Validator (options, config) {
             warningResult: dataRes.warningResult.concat(paramsRes.warningResult).join(',')
           }
         } else {
-          result = doValidator(validator.params, config.params, test.path, greedy) 
+          result = doValidator(validator.params, config.params, test.path, greedy)
         }
       }
       return true
