@@ -1,0 +1,39 @@
+{
+  "presets": [
+    [
+      "@babel/env",
+      {
+        "modules": false,
+        "shippedProposals": true
+      }
+    ]
+  ],
+  "plugins": [
+    [
+      "@babel/transform-runtime",
+      {
+        "corejs": 3,
+        "version": "^7.12.5"
+      }
+    ],
+    [
+      "lodash"
+    ]
+  ],
+  "sourceType": "unambiguous",
+  "env": {
+    "test": {
+      "presets": [
+        [
+          "@babel/env",
+          {
+            "shippedProposals": true
+          }
+        ]
+      ],
+      "plugins": [
+        "transform-require-context"
+      ]
+    }
+  }
+}

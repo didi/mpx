@@ -17,7 +17,7 @@ npm i
 npm run watch:cross
 ```
 
-若只想看某一平台的，npm run watch --wx
+若只想看某一平台的，npm run watch --mode=wx
 
 目前支持的平台有 微信、支付宝、百度
 
