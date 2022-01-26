@@ -1131,7 +1131,7 @@ Mpx中允许用户在request中传递特定query执行特定逻辑，目前已�
 
 ### ?root
 
-todo 增加分包异步化用法描述 @薛干
+1. 声明分包别名
 
 - **详细**：指定分包别名，Mpx 项目在编译构建后会输出该别名的分包，外部小程序或 H5 页面跳转时，可直接配置该分包别名下的资源路径。
 
@@ -1147,7 +1147,28 @@ module.exports = {
 
 // 使用
 wx.navigateTo({url : '/test/homepage/index'})
+```
 
+2. 声明组件所属异步分包
+
+- **详细**：微信小程序新增 [分包异步化特性](https://developers.weixin.qq.com/miniprogram/dev/framework/subpackages/async.html) ，使跨分包的组件可以等待对应分包下载后异步使用, 在mpx中使用需通过?root声明组件所属异步分包即可使用，示例如下：
+
+- **示例**：
+
+```html
+<!--/packageA/pages/index.mpx-->
+// 这里在分包packageA中即可异步使用分包packageB中的hello组件
+<script type="application/json">
+  {
+    "usingComponents": {
+      "hello": "../../packageB/components/hello?root=packageB",
+      "simple-hello": "../components/hello"
+    },
+    "componentPlaceholder": {
+      "hello": "simple-hello"
+    }
+  }
+</script>
 ```
 
 ### ?fallback
