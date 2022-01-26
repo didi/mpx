@@ -12,7 +12,7 @@ declare module '*?resolve' {
   export default resourcePath
 }
 
-declare module 'vue-i18n/types/index' {
+declare module 'vue-i18n' {
   export default interface VueI18n {
     mergeMessages(messages: {[index: string]:VueI18n.LocaleMessageObject}): void;
   }
