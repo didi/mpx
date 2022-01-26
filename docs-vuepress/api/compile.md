@@ -1257,8 +1257,58 @@ const webpackConfig = {
 
 ### ?isPage
 
-todo 独立构建页面，也可以通过MpxWebpackPlugin.getPageEntry生成 @薛干
+- **类型**：`Boolean`
+
+- **详细**：在 webpack config entry 入口文件配置中，你可以在路径后追加 ?isPage 来声明独立页面构建，构建产物为该页面的独立原生代码，
+你可以提供该页面给其他小程序使用。
+
+- **示例**：
+```js
+/* webpack config option entry */
+// webpack.config.js
+module.exports = {
+  entry: {
+    index: '../src/pages/index.mpx?isPage'
+  }
+}
+```
+
+此外，独立页面构建也可以通过MpxWebpackPlugin.getPageEntry生成
+
+```js
+const MpxWebpackPlugin = require('@mpxjs/webpack-plugin')
+module.exports = {
+  entry: {
+    index: MpxWebpackPlugin.getPageEntry('./index.mpx')
+  }
+}
+```
 
 ### ?isComponent
 
-todo 独立构建组件，也可以通过MpxWebpackPlugin.getComponentEntry生成 @薛干
+- **类型**：`Boolean`
+
+- **详细**：在 webpack config entry 入口文件配置中，你可以在路径后追加 ?isComponent 来声明独立组件构建，构建产物为该组件的独立原生代码，
+  你可以提供该组件给其他小程序使用。
+
+- **示例**：
+```js
+/* webpack config option entry */
+// webpack.config.js
+module.exports = {
+  entry: {
+    index: '../src/components/list.mpx?isComponent'
+  }
+}
+```
+
+此外，独立组件构建也可以通过MpxWebpackPlugin.getComponentEntry生成
+
+```js
+const MpxWebpackPlugin = require('@mpxjs/webpack-plugin')
+module.exports = {
+  entry: {
+    index: MpxWebpackPlugin.getComponentEntry('./components/list.mpx')
+  }
+}
+```
