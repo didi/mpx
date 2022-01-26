@@ -170,10 +170,11 @@ Mpx目前已支持独立分包构建，使用 [packages](#packages) 语法声明
 }
 ```
 
-由于独立分包可以独立于主包和其他分包运行，从独立分包页面进入小程序时，主包中的相应初始化逻辑并不会执行，如果独立分包中多个页面需要某种通用初始化逻辑时就无法优雅的实现，
+需要注意的是，由于独立分包可以独立于主包和其他分包运行，从独立分包页面进入小程序时，主包中的相应初始化逻辑并不会执行，如果独立分包中多个页面需要某种通用初始化逻辑时就无法优雅的实现，
 Mpx框架针对独立分包场景提供了独立分包初始化逻辑执行能力。
 
-对于使用 packages 方式声明的独立分包，默认将 .mpx 文件自身的 script 块作为初始化逻辑执行
+对于使用 packages 方式声明的独立分包，默认将 .mpx 文件自身的 script 块作为初始化逻辑执行。
+
 ```html
 <!--src/packagesA/app.mpx，packageA 独立分包入口文件-->
 <script>
@@ -196,6 +197,7 @@ if (isIndependent) {
 }
 </script>
 ```
+
 上方代码中 独立分包 packageA 的入口文件 app.mpx 中的 script block 代码会默认在独立分包初始化时执行，Mpx 同时提供了全局变量 `isIndependent` 标识当前代码执行环境是否为独立分包来进行特定逻辑区分
 
 如果你不想走这个默认的初始化逻辑执行规则，想自定义一个 js 文件存储当前独立分包的初始化逻辑，我们支持 independent 配置项直接配置为初始化逻辑文件地址
@@ -242,7 +244,6 @@ if (isIndependent) {
 ### 分包预下载
 
 分包预下载是在 json中 新增一个 preloadRule 字段，mpx 打包时候会原封不动把这个部分放到 app.json 中，所以只需要按照 [微信小程序官方文档 - 分包预下载](https://developers.weixin.qq.com/miniprogram/dev/framework/subpackages/preload.html) 或者 [支付宝小程序官方文档 - 分包预下载](https://opendocs.alipay.com/mini/framework/subpackages) 配置即可。
-
 
 **示例：**
 
@@ -304,6 +305,28 @@ if (isIndependent) {
     }
   }  
 }
+```
+### 分包异步化
+
+微信小程序新增分包异步化特性，具体功能介绍和功能目的可 [点击查看](https://developers.weixin.qq.com/miniprogram/dev/framework/subpackages/async.html) ，使跨分包的自定义组件和 JS 代码可以等待对应分包下载后异步使用, Mpx对于该技术中最常用的`跨分包自定义组件引用`进行了完整支持，
+另一项`跨分包JS代码引用`能力在探索规划中，暂不支持，在Mpx中使用跨分包自定义组件引用通过?root声明组件所属异步分包即可使用，示例如下：
+
+- 注意项：目前仅微信平台支持，其他平台下该配置不生效
+
+```html
+<!--/packageA/pages/index.mpx-->
+// 这里在分包packageA中即可异步使用分包packageB中的hello组件
+<script type="application/json">
+  {
+    "usingComponents": {
+      "hello": "../../packageB/components/hello?root=packageB",
+      "simple-hello": "../components/hello"
+    },
+    "componentPlaceholder": {
+      "hello": "simple-hello"
+    }
+  }
+</script>
 ```
 
 ### 分包异步化
