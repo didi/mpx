@@ -793,34 +793,6 @@ new MpxWebpackPlugin({
 ```
 > tips: 该功能是将模块分别放入多个分包，模块状态不可复用，使用前要依据模块功能做好评估，例如全局store就不适用该功能
 
-### customOutputPath
-
-- **类型**：`Function`
-
-- **详细**：自定义组件和页面的输出路径，可使用该方法对非原生组件和非当前文件context的页面输出路径进行自定义，
-方法需要具有稳定性和唯一性，即同样的输入不管什么时候执行都要有同样的返回以及不同的的输入一定会得到不同的输出。
-
-- **背景**：Mpx 在处理主包和分包页面时，对于不在当前分包或主包文件夹下的页面路径会做 hash 化处理来防止路径冲突，
-同时处理组件路径时也会添加 hash 防止路径名冲突。hash 化处理后最终的文件名是原有 name+hash+ext 的格式，
-部分开发者希望能够进行整体路径自定义来将路径名缩短，故提供此方法。
-
-- **示例**：
-```js
-new MpxWebpackPlugin({
-  customOutputPath: (type, name, hash, ext) => {
-    // type: 资源类型(page | component | static)
-    // name: 资源原有文件名
-    // hash: 8位长度的hash串
-    // ext: 文件后缀(.js｜ .wxml | .json 等)
-
-    // 输出示例： pages/testax34dde3/index.js
-    return path.join(type + 's', name + hash, 'index' + ext)
-  },
-})
-```
-基于上方示例，你可以根据需要进行路径定制化，例如缩短hash、使用012代替文件名等各种花式路径
-
-
 ### generateBuildMap
 
 - **类型**：`boolean`
@@ -1053,55 +1025,6 @@ module.exports = {
   - `limit` : 对内联文件作为数据 URL 的字节数限制
   - `publicPath` : 自定义 public 目录
   - `fallback` : 文件字节数大于限制时，为文件指定加载程序
-  
-
-todo 不应该放在这里，放到进阶里面起一个章节：自定义页面路径 @薛干
-
-## json增强
-
-### 自定义 page 路径
-- **背景**: 用户在进行分包或主包的 pages 配置时，如果引用的页面不存在于当前 app.mpx 所在的上下文中，例如存在于 npm 包中，为避免和本地声明的其他 page 路径冲突，Mpx 会对路径进行 hash 化处理。这样一来，用户就无法使用之前定义的路径；此外部分用户也希望可以对引入的页面路径进行自定义。
-
-- **详细**: 在 json 中配置 pages 时，数组中支持放入 Object，对象中传入两个字段，src 字段表示页面地址，path 字段表示自定义页面路径
-
-- **示例**:
-
-object风格的页面声明
-```json5
-{
-  // 主包中的声明
-  "pages": [
-    {
-      "src": "@someGroup/someNpmPackage/pages/view/index.mpx",
-      "path": "pages/somNpmPackage/index" // 注意保持 path 的唯一性
-    }
-  ],
-  // 分包中的声明
-  "subPackages": [
-    {
-      "root": "test",
-      "pages": [
-         {
-           "src": "@someGroup/someNpmPackage/pages/view/test.mpx",
-           "path": "pages/somNpmPackage/test" // 注意保持 path 的唯一性
-         }
-      ]
-    }
-  ]
-}
-```
-
-使用声明中配置的页面路径进行跳转
-```js
-mpx.navigateTo({
-  url: '/pages/somNpmPackage/index'
-})
-
-mpx.navigateTo({
-  url: '/test/pages/somNpmPackage/test'
-})
-```
-
 
 ## Request query
 
@@ -1131,7 +1054,7 @@ Mpx中允许用户在request中传递特定query执行特定逻辑，目前已�
 
 ### ?root
 
-todo 增加分包异步化用法描述 @薛干
+1. 声明分包别名
 
 - **详细**：指定分包别名，Mpx 项目在编译构建后会输出该别名的分包，外部小程序或 H5 页面跳转时，可直接配置该分包别名下的资源路径。
 
@@ -1147,7 +1070,28 @@ module.exports = {
 
 // 使用
 wx.navigateTo({url : '/test/homepage/index'})
+```
 
+2. 声明组件所属异步分包
+
+- **详细**：微信小程序新增 [分包异步化特性](https://developers.weixin.qq.com/miniprogram/dev/framework/subpackages/async.html) ，使跨分包的组件可以等待对应分包下载后异步使用, 在mpx中使用需通过?root声明组件所属异步分包即可使用，示例如下：
+
+- **示例**：
+
+```html
+<!--/packageA/pages/index.mpx-->
+// 这里在分包packageA中即可异步使用分包packageB中的hello组件
+<script type="application/json">
+  {
+    "usingComponents": {
+      "hello": "../../packageB/components/hello?root=packageB",
+      "simple-hello": "../components/hello"
+    },
+    "componentPlaceholder": {
+      "hello": "simple-hello"
+    }
+  }
+</script>
 ```
 
 ### ?fallback
@@ -1236,8 +1180,58 @@ const webpackConfig = {
 
 ### ?isPage
 
-todo 独立构建页面，也可以通过MpxWebpackPlugin.getPageEntry生成 @薛干
+- **类型**：`Boolean`
+
+- **详细**：在 webpack config entry 入口文件配置中，你可以在路径后追加 ?isPage 来声明独立页面构建，构建产物为该页面的独立原生代码，
+你可以提供该页面给其他小程序使用。
+
+- **示例**：
+```js
+/* webpack config option entry */
+// webpack.config.js
+module.exports = {
+  entry: {
+    index: '../src/pages/index.mpx?isPage'
+  }
+}
+```
+
+此外，独立页面构建也可以通过MpxWebpackPlugin.getPageEntry生成
+
+```js
+const MpxWebpackPlugin = require('@mpxjs/webpack-plugin')
+module.exports = {
+  entry: {
+    index: MpxWebpackPlugin.getPageEntry('./index.mpx')
+  }
+}
+```
 
 ### ?isComponent
 
-todo 独立构建组件，也可以通过MpxWebpackPlugin.getComponentEntry生成 @薛干
+- **类型**：`Boolean`
+
+- **详细**：在 webpack config entry 入口文件配置中，你可以在路径后追加 ?isComponent 来声明独立组件构建，构建产物为该组件的独立原生代码，
+  你可以提供该组件给其他小程序使用。
+
+- **示例**：
+```js
+/* webpack config option entry */
+// webpack.config.js
+module.exports = {
+  entry: {
+    index: '../src/components/list.mpx?isComponent'
+  }
+}
+```
+
+此外，独立组件构建也可以通过MpxWebpackPlugin.getComponentEntry生成
+
+```js
+const MpxWebpackPlugin = require('@mpxjs/webpack-plugin')
+module.exports = {
+  entry: {
+    index: MpxWebpackPlugin.getComponentEntry('./components/list.mpx')
+  }
+}
+```
