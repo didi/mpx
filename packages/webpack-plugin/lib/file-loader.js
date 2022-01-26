@@ -1,14 +1,12 @@
 const path = require('path')
 const loaderUtils = require('loader-utils')
-const getMainCompilation = require('./utils/get-main-compilation')
 const toPosix = require('./utils/to-posix')
+const parseRequest = require('./utils/parse-request')
+const RecordResourceMapDependency = require('./dependencies/RecordResourceMapDependency')
 
 module.exports = function loader (content, prevOptions) {
   const options = prevOptions || loaderUtils.getOptions(this) || {}
   const context = options.context || this.rootContext
-  const mainCompilation = getMainCompilation(this._compilation)
-  const mpx = mainCompilation.__mpx__
-  const assetsInfo = mpx.assetsInfo
 
   let url = loaderUtils.interpolateName(this, options.name, {
     context,
@@ -16,10 +14,9 @@ module.exports = function loader (content, prevOptions) {
     regExp: options.regExp
   })
 
-  let outputPath
+  let outputPath = url
 
   if (options.publicPath) {
-    outputPath = url
     if (options.outputPathCDN) {
       if (typeof options.outputPathCDN === 'function') {
         outputPath = options.outputPathCDN(outputPath, this.resourcePath, context)
@@ -28,14 +25,10 @@ module.exports = function loader (content, prevOptions) {
       }
     }
   } else {
-    url = outputPath = mpx.getPackageInfo({
-      resource: this.resource,
-      outputPath: url,
-      resourceType: 'staticResources',
-      warn: (err) => {
-        this.emitWarning(err)
-      }
-    }).outputPath
+    const { resourcePath, queryObj } = parseRequest(this.resource)
+    const packageRoot = queryObj.packageRoot || ''
+    url = outputPath = toPosix(path.join(packageRoot, outputPath))
+    this._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, 'staticResource', outputPath, packageRoot))
   }
 
   let publicPath = `__webpack_public_path__ + ${JSON.stringify(url)}`
@@ -50,11 +43,6 @@ module.exports = function loader (content, prevOptions) {
     }
     publicPath = JSON.stringify(publicPath)
   }
-
-  // 因为子编译会合并assetsInfo会互相覆盖，使用全局mpx对象收集完之后再合并到主assetsInfo中
-  const assetInfo = assetsInfo.get(outputPath) || { modules: [] }
-  assetInfo.modules.push(this._module)
-  assetsInfo.set(outputPath, assetInfo)
 
   this.emitFile(outputPath, content)
 

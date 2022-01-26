@@ -188,11 +188,9 @@ Mpx的核心设计思路为增强，不同于业内大部分小程序框架将we
 
 ## 开发团队
 
-核心作者: [hiyuki](https://github.com/hiyuki)
+核心团队: [hiyuki](https://github.com/hiyuki), [Blackgan3](https://github.com/Blackgan3), [anotherso1a](https://github.com/anotherso1a), [CommanderXL](https://github.com/CommanderXL), [yandadaFreedom](https://github.com/yandadaFreedom), [wangxiaokou](https://github.com/wangxiaokou), [OnlyProbie](https://github.com/OnlyProbie), [pagnkelly](https://github.com/pagnkelly), [thuman](https://github.com/thuman), [theniceangel](https://github.com/theniceangel), [dolymood](https://github.com/dolymood)
 
-内部成员: [sky-admin](https://github.com/sky-admin), [httpsxiao](https://github.com/httpsxiao), [pkingwa](https://github.com/pkingwa), [xuehebinglan](https://github.com/xuehebinglan), [wangxiaokou](https://github.com/wangxiaokou), [zhaoyiming0803](https://github.com/zhaoyiming0803), [ctxrr](https://github.com/ctxrr), [yandadaFreedom](https://github.com/yandadaFreedom), [dolymood](https://github.com/dolymood) [tangminFE](https://github.com/tangminFE), [codepan](https://github.com/codepan)
-
-外部贡献者：[lsycxyj](https://github.com/lsycxyj), [okxiaoliang4](https://github.com/okxiaoliang4), [zqjimlove](https://github.com/zqjimlove), [JanssenZhang](https://github.com/JanssenZhang), [heiye9](https://github.com/heiye9), [lj0812](https://github.com/lj0812), [SuperHuangXu](https://github.com/SuperHuangXu), [twtylkmrh](https://github.com/twtylkmrh), [NineSwordsMonster](https://github.com/NineSwordsMonster)
+外部贡献者：[sky-admin](https://github.com/sky-admin), [pkingwa](https://github.com/pkingwa), [httpsxiao](https://github.com/httpsxiao), [lsycxyj](https://github.com/lsycxyj), [okxiaoliang4](https://github.com/okxiaoliang4), [tangminFE](https://github.com/tangminFE), [codepan](https://github.com/codepan), [zqjimlove](https://github.com/zqjimlove), [xuehebinglan](https://github.com/xuehebinglan), [wangxiaokou](https://github.com/wangxiaokou), [zhaoyiming0803](https://github.com/zhaoyiming0803), [ctxrr](https://github.com/ctxrr), [JanssenZhang](https://github.com/JanssenZhang), [heiye9](https://github.com/heiye9), [lj0812](https://github.com/lj0812), [SuperHuangXu](https://github.com/SuperHuangXu), [twtylkmrh](https://github.com/twtylkmrh), [NineSwordsMonster](https://github.com/NineSwordsMonster)
 
 ## 成功案例
 

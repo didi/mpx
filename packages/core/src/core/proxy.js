@@ -241,7 +241,7 @@ export default class MPXProxy {
         if (typeof EXPORT_MPX.config.hookErrorHandler === 'function') {
           EXPORT_MPX.config.hookErrorHandler(e, this.target, hookName)
         } else {
-          error(`User hook [${hookName}] exec error!`, this.options.mpxFileResource, e)
+          throw e
         }
       }
     }
