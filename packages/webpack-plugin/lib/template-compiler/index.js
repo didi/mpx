@@ -27,11 +27,9 @@ module.exports = function (raw) {
   const isNative = queryObj.isNative
   const hasScoped = queryObj.hasScoped
   const moduleId = queryObj.moduleId
-  const runtimeCompile = checkIsRuntimeMode(resourcePath)
 
-  const componentInfo = runtimeRenderConfig.getComponentDependencyInfo(resourcePath)
-  const runtimeComponents = Object.keys(componentInfo).filter(c => componentInfo[c].isRuntimeComponent)
-  runtimeComponents.push(...mpx.runtimeRender.globalRuntimeComponents)
+  const runtimeCompile = checkIsRuntimeMode(resourcePath)
+  const { componentDependencyInfo, runtimeComponents } = runtimeRenderConfig.getComponentDependencyInfo(resourcePath)
 
   const warn = (msg) => {
     this.emitWarning(
@@ -49,7 +47,7 @@ module.exports = function (raw) {
     warn,
     error,
     packageName,
-    componentDependencyInfo: componentInfo,
+    componentDependencyInfo,
     runtimeComponents,
     runtimeCompile,
     usingComponents,
@@ -79,15 +77,6 @@ module.exports = function (raw) {
       wxsContentMap[`${resourcePath}~${module}`] = meta.wxsContentMap[module]
     }
   }
-
-  // if (meta.runtimeBaseTag) {
-  //   const info = componentDependencyInfo[resourcePath]
-  //   for (let tag of meta.runtimeBaseTag) {
-  //     const componentPath = info[tag].resourcePath
-  //     const hashTag = 'c' + mpx.pathHash(componentPath)
-  //     mpx.runtimeRender.setComponentsMap(componentPath, hashTag, packageName)
-  //   }
-  // }
 
   let resultSource = ''
 

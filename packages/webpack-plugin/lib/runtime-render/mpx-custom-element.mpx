@@ -1,4 +1,3 @@
-module.exports = `
 <template>
   <view></view>
 </template>
@@ -13,7 +12,7 @@ createComponent({
     styleIsolation: 'shared'
   },
   properties: {
-    r: { // 递归渲染数据
+    r: { // vdom 数据
       type: Object,
       value: {
         nodeType: 'block'
@@ -47,7 +46,6 @@ createComponent({
 
 <script type="application/json">
 {
-  component: true
+  "component": true
 }
 </script>
-`

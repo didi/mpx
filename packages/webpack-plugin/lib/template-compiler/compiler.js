@@ -1546,6 +1546,12 @@ function evalExp (exp) {
 function postProcessIf (el, options, currentParent) {
   // 对于运行时组件的 if 指令不走特殊优化流程
   const isRuntimeRenderMode = (options && options.runtimeCompile) || hasRuntimeCompileWrapper(el)
+  if (isRuntimeRenderMode) {
+    if (el.elseif || el.else) {
+      processIfConditions(el, currentParent)
+    }
+    return
+  }
   let attrs, result, prevNode
   if (el.if) {
     result = evalExp(el.if.exp)
@@ -1554,9 +1560,6 @@ function postProcessIf (el, options, currentParent) {
         delete el.if
         el._if = true
       } else {
-        if (isRuntimeRenderMode) {
-          return
-        }
         replaceNode(el, getTempNode())._if = false
       }
     } else {
@@ -1566,9 +1569,6 @@ function postProcessIf (el, options, currentParent) {
       }]
     }
   } else if (el.elseif) {
-    if (isRuntimeRenderMode) {
-      return processIfConditions(el, currentParent)
-    }
     prevNode = findPrevNode(el)
     if (prevNode._if === true) {
       removeNode(el)
@@ -1596,9 +1596,6 @@ function postProcessIf (el, options, currentParent) {
       }
     }
   } else if (el.else) {
-    if (isRuntimeRenderMode) {
-      return processIfConditions(el, currentParent)
-    }
     prevNode = findPrevNode(el)
     if (prevNode._if === true) {
       removeNode(el)

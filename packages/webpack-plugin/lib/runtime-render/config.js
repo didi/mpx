@@ -1,4 +1,5 @@
 const componentDependencyInfo = {}
+const globalRuntimeComponents = []
 
 module.exports = {
   addComponentDependencyInfo (resourcePath, tag, options = {}) {
@@ -8,9 +9,24 @@ module.exports = {
     componentDependencyInfo[resourcePath][tag] = options
   },
   getComponentDependencyInfo (resourcePath) {
+    const runtimeComponents = [...globalRuntimeComponents]
     if (componentDependencyInfo[resourcePath]) {
-      return componentDependencyInfo[resourcePath]
+      const componentInfo = componentDependencyInfo[resourcePath]
+      runtimeComponents.push(...Object.keys(componentInfo).filter(c => componentInfo[c].isRuntimeComponent))
+      return {
+        componentDependencyInfo: componentInfo,
+        runtimeComponents
+      }
     }
-    return {}
+    return {
+      componentDependencyInfo: {},
+      runtimeComponents
+    }
+  },
+  addGlobalRuntimeComponents (name) {
+    globalRuntimeComponents.push(name)
+  },
+  getGlobalRuntimeComponents () {
+    return globalRuntimeComponents
   }
 }

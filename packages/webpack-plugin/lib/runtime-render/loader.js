@@ -2,11 +2,14 @@ const parseRequest = require('../utils/parse-request')
 const config = require('../config')
 const injectComponentConfig = require('./inject-component-config')
 const { unRecursiveTemplate } = require('./wx-template')
+const normalize = require('../utils/normalize')
+const selector = normalize.lib('selector')
+const loaderUtils = require('loader-utils')
+const addQuery = require('../utils/add-query')
 
 // 获取分包名，动态注入 template / style / json 配置
 module.exports = function (rawContent) {
   this.cacheable(false)
-  const callback = this.async()
   const mpx = this.getMpx()
   const { resourcePath, queryObj } = parseRequest(this.resource)
   const mode = mpx.mode
@@ -44,11 +47,15 @@ module.exports = function (rawContent) {
   })
 
   if (type === 'json' && mpx.moduleTemplate[moduleId]) {
-    this.loadModule(mpx.moduleTemplate[moduleId].slice(1, -1), (err) => {
-      if (err) return callback(err)
-      callback(null, '')
-    })
+    const templateQuery = {
+      type: 'template',
+      mpx: true,
+      mpxCustomElement: true,
+      packageRoot: currentPackageRoot
+    }
+    const request = loaderUtils.stringifyRequest(this, `${this.resourcePath}.wxml!=!${selector}!${addQuery(resourcePath, { ...queryObj, ...templateQuery })}`)
+    return `require(${request})`
   } else {
-    callback(null, '')
+    return ''
   }
 }

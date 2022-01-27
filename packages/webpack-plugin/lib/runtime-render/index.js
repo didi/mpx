@@ -2,16 +2,13 @@ const path = require('path')
 const normalize = require('../utils/normalize')
 const async = require('async')
 const parseRequest = require('../utils/parse-request')
-const { virtualModules } = require('./plugin')
 const { MPX_PROCESSED_FLAG } = require('../utils/const')
 const addQuery = require('../utils/add-query')
 const loader = normalize.lib('runtime-render/loader')
 const stringifyLoadersAndResource = require('../utils/stringify-loaders-resource')
 const toPosix = require('../utils/to-posix')
-const virtualTemplateString = require('./virtual-template')
 
 const configCache = {
-  globalRuntimeComponents: [],
   componentsMap: {},
   injectedComponentsMap: {},
   usingRuntimePackages: new Set()
@@ -20,17 +17,18 @@ const configCache = {
 const MPX_CUSTOM_ELEMENT = 'mpx-custom-element'
 
 const processMpxCustomElement = (mpx, packageName, callback) => {
-  const customElementPath = path.resolve(__dirname, `${MPX_CUSTOM_ELEMENT}-${packageName}.mpx`)
   let outputPath = `${MPX_CUSTOM_ELEMENT}-${packageName}`
   if (packageName !== 'main') {
     outputPath = toPosix(path.join(packageName, outputPath))
   }
+  const elementPath = path.resolve(__dirname, 'mpx-custom-element.mpx')
+  if (!mpx.componentsMap[packageName]) {
+    return callback()
+  }
   // 挂载组件信息至 componentsMap
-  mpx.componentsMap[packageName][customElementPath] = outputPath
-  // 创建虚拟模块
-  virtualModules.writeModule(customElementPath, virtualTemplateString)
+  mpx.componentsMap[packageName][elementPath] = outputPath
   // 添加自定义组件进入编译流程
-  mpx.addEntry(customElementPath + `?mpxCustomElement&packageRoot=${packageName}`, outputPath, (err, module) => {
+  mpx.addEntry(elementPath + `?mpxCustomElement&isComponent&packageRoot=${packageName}`, outputPath, (err, module) => {
     // 自定义容器组件不缓存
     module.invalidateBuild()
     if (err) return callback(err)
@@ -101,14 +99,6 @@ module.exports = class RuntimeRender {
 
   addUsingRuntimePackages (packageName) {
     configCache.usingRuntimePackages.add(packageName)
-  }
-
-  get globalRuntimeComponents () {
-    return configCache.globalRuntimeComponents
-  }
-
-  addGlobalRuntimeComponents (name) {
-    configCache.globalRuntimeComponents.push(name)
   }
 
   setComponentsMap (absolutePath, hashName, packageName) {

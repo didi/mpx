@@ -200,28 +200,10 @@ module.exports = async function (content) {
 
   const processModuleTemplate = (callback) => {
     if (mpx.moduleTemplate[moduleId]) {
-      // 使用 loadModule 获取 template 注入内容
-      this.loadModule(mpx.moduleTemplate[moduleId].slice(1, -1), (err, source, map, module) => {
-        if (err) return callback(err)
-        this.emitFile(resourcePath, '', undefined, {
-          skipEmit: true,
-          extractedResultSource: module._source._value
-        })
-        callback()
+      this.emitFile(resourcePath, '', undefined, {
+        skipEmit: true,
+        extractedResultSource: mpx.moduleTemplate[moduleId]
       })
-    } else {
-      callback()
-    }
-  }
-
-  const processRuntimeMode = (usingComponents, callback) => {
-    if (checkIsRuntimeMode(this.resourcePath)) {
-      // todo  posix 的处理
-      let elementPath = `/mpx-custom-element-${packageName}`
-      if (packageName !== 'main') {
-        elementPath = '/' + packageName + elementPath
-      }
-      usingComponents.element = elementPath
     }
     callback()
   }
@@ -230,7 +212,7 @@ module.exports = async function (content) {
     const isRuntimeComponent = checkIsRuntimeMode(resource)
     // 全局组件
     if (isApp) {
-      mpx.runtimeRender.addGlobalRuntimeComponents(name)
+      runtimeRenderConfig.addGlobalRuntimeComponents(name)
     } else {
       // page or component 局部组件
       runtimeRenderConfig.addComponentDependencyInfo(resourcePath, name, {
@@ -609,9 +591,6 @@ module.exports = async function (content) {
       },
       (callback) => {
         processSubPackages(json.subPackages || json.subpackages, this.context, callback)
-      },
-      (callback) => {
-        processRuntimeMode(json.usingComponents, callback)
       }
     ], (err) => {
       if (err) return callback(err)
@@ -659,16 +638,13 @@ module.exports = async function (content) {
     }
     async.parallel([
       (callback) => {
-        processComponents(json.usingComponents, this.context, () => {
-          // todo 他们之间存在依赖关系
-          processModuleTemplate(callback)
-        })
+        processComponents(json.usingComponents, this.context, callback)
       },
       (callback) => {
         processGenerics(json.componentGenerics, this.context, callback)
       },
       (callback) => {
-        processRuntimeMode(json.usingComponents, callback)
+        processModuleTemplate(callback)
       }
     ], (err) => {
       callback(err, processDynamicEntry)

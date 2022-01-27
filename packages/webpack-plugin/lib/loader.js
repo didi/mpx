@@ -72,8 +72,7 @@ module.exports = function (content) {
   })
 
   const {
-    getRequire,
-    getRequestString
+    getRequire
   } = createHelpers(loaderContext)
 
   let output = ''
@@ -284,7 +283,7 @@ module.exports = function (content) {
         if (template.src) extraOptions.resourcePath = resourcePath
         // 基于global.currentInject来注入模板渲染函数和refs等信息
         // output += getRequire('template', template, extraOptions) + '\n'
-        mpx.moduleTemplate[moduleId] = getRequestString('template', template, extraOptions)
+        mpx.moduleTemplate[moduleId] = getRequire('template', template, extraOptions)
       }
 
       // styles
@@ -313,11 +312,16 @@ module.exports = function (content) {
       output += '/* json */\n'
       // 给予json默认值, 确保生成json request以自动补全json
       const json = parts.json || {}
-      output += getRequire('json', json, json.src && {
-        ...queryObj,
-        moduleId,
-        resourcePath
-      }) + '\n'
+      const extraOptions = {
+        moduleId
+      }
+      if (json.src) {
+        Object.assign(extraOptions, {
+          ...queryObj,
+          resourcePath
+        })
+      }
+      output += getRequire('json', json, extraOptions) + '\n'
 
       // script
       output += '/* script */\n'

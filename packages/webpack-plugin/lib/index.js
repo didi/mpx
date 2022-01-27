@@ -52,7 +52,6 @@ const stringifyLoadersAndResource = require('./utils/stringify-loaders-resource'
 const emitFile = require('./utils/emit-file')
 const { MPX_PROCESSED_FLAG, MPX_DISABLE_EXTRACTOR_CACHE } = require('./utils/const')
 const RuntimeRender = require('./runtime-render')
-const RuntimeRenderPlugin = require('./runtime-render/plugin')
 const isEmptyObject = require('./utils/is-empty-object')
 
 const isProductionLikeMode = options => {
@@ -280,7 +279,6 @@ class MpxWebpackPlugin {
       compiler.options.node.global = true
     }
 
-    new RuntimeRenderPlugin().apply(compiler)
     const addModePlugin = new AddModePlugin('before-file', this.options.mode, this.options.fileConditionRules, 'file')
     const addEnvPlugin = new AddEnvPlugin('before-file', this.options.env, this.options.fileConditionRules, 'file')
     const packageEntryPlugin = new PackageEntryPlugin('before-described-relative', this.options.miniNpmPackages, 'resolve')
@@ -429,15 +427,15 @@ class MpxWebpackPlugin {
       name: 'MpxWebpackPlugin',
       stage: -1000
     }, (compilation, callback) => {
-      processSubpackagesEntriesMap(compilation, (err) => {
-        if (err) return callback(err)
-        // 子编译也会触发这个 hook，所以需要判断下
-        if (!compilation.compiler.isChild()) {
+      // 在主compiler里面进行分包的构建
+      if (!compilation.compiler.isChild()) {
+        processSubpackagesEntriesMap(compilation, (err) => {
+          if (err) return callback(err)
           mpx.hooks.finishSubpackagesMake.callAsync(compilation, callback)
-        } else {
-          callback()
-        }
-      })
+        })
+      } else {
+        callback()
+      }
     })
 
     compiler.hooks.compilation.tap('MpxWebpackPlugin ', (compilation, { normalModuleFactory }) => {
