@@ -15,7 +15,7 @@ module.exports = function transDynamicClassExpr (expr, { error } = {}) {
           const propertyName = property.key.name || property.key.value
           if (/-/.test(propertyName)) {
             if (/\$/.test(propertyName)) {
-              error(`Dynamic classname [${propertyName}] is not supported, which includes [-] char and [$] char at the same time.`)
+              error && error(`Dynamic classname [${propertyName}] is not supported, which includes [-] char and [$] char at the same time.`)
             } else {
               property.key = t.identifier(propertyName.replace(/-/g, '$$') + 'MpxDash')
             }

@@ -1,16 +1,16 @@
 Component({
-    externalClasses: ['i-class'],
+  externalClasses: ['i-class'],
 
-    relations: {
-        '../grid/index': {
-            type: 'parent'
-        },
-        '../grid-icon/index': {
-            type: 'child'
-        }
+  relations: {
+    '../grid/index': {
+      type: 'parent'
     },
-
-    data: {
-        width: '33.33%'
+    '../grid-icon/index': {
+      type: 'child'
     }
-});
+  },
+
+  data: {
+    width: '33.33%'
+  }
+})

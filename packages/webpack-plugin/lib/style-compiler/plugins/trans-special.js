@@ -1,21 +1,28 @@
-const postcss = require('postcss')
 const selectorParser = require('postcss-selector-parser')
+// trans-special
 
-module.exports = postcss.plugin('trans-special', ({ id }) => root => {
-  root.each(function rewriteSelector (node) {
-    if (!node.selector) return
-    node.selector = selectorParser(selectors => {
-      selectors.each(selector => {
-        selector.each(n => {
-          if (/^:host$/.test(n.value)) {
-            const compoundSelectors = n.nodes
-            n.replaceWith(selectorParser.className({
-              value: 'host-' + id
-            }))
-            selector.insertAfter(n, compoundSelectors)
-          }
-        })
+module.exports = ({ id }) => {
+  return {
+    postcssPlugin: 'trans-special',
+    Once: (root) => {
+      root.each(function rewriteSelector (node) {
+        if (!node.selector) return
+        node.selector = selectorParser(selectors => {
+          selectors.each(selector => {
+            selector.each(n => {
+              if (/^:host$/.test(n.value)) {
+                const compoundSelectors = n.nodes
+                n.replaceWith(selectorParser.className({
+                  value: 'host-' + id
+                }))
+                selector.insertAfter(n, compoundSelectors)
+              }
+            })
+          })
+        }).process(node.selector).result
       })
-    }).process(node.selector).result
-  })
-})
+    }
+  }
+}
+
+module.exports.postcss = true
