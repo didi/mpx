@@ -1,5 +1,3 @@
-todo 更新单元测试章节 @薛干
-
 # 单元测试
 
 Mpx 框架提供了 jest 转换器 mpx-jest，结合微信小程序提供的 [miniprogram-simulate](https://github.com/wechat-miniprogram/miniprogram-simulate) 来进行单元测试的工作。
