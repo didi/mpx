@@ -2107,15 +2107,13 @@ function cloneNode (el) {
   return clone
 }
 
-function cloneAttrsList (attrsList, ignoreAttrs = []) {
+function cloneAttrsList (attrsList) {
   const clonedAttrs = []
   attrsList.map(({ name, value }) => {
-    if (!ignoreAttrs.includes(name)) {
-      clonedAttrs.push({
-        name,
-        value
-      })
-    }
+    clonedAttrs.push({
+      name,
+      value
+    })
   })
   return clonedAttrs
 }
@@ -2133,15 +2131,12 @@ function postProcessComponentIs (el) {
       tempNode = getTempNode()
     }
     let range = []
-    if (el.attrsMap.range && !el.attrsMap.range.split(',').length) {
-      error$1('Dynamic component attr range should be an string splited with comma!')
-    } else {
-      range = el.attrsMap.range.split(',')
+    if (el.attrsMap.range) {
+      range = getAndRemoveAttr(el, 'range').val.split(',')
     }
-
     el.components.forEach(function (component) {
       if (range.length > 0 && !range.includes(component)) return
-      let newChild = createASTElement(component, cloneAttrsList(el.attrsList, ['range']), tempNode)
+      let newChild = createASTElement(component, cloneAttrsList(el.attrsList), tempNode)
       newChild.if = {
         raw: `{{${el.is} === ${stringify(component)}}}`,
         exp: `${el.is} === ${stringify(component)}`

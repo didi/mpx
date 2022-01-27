@@ -274,61 +274,94 @@ class SizeReportPlugin {
       }
 
       const resourcePathMap = {}
+      // {resourcePath: { packages: {pkA: xx, pkB: xx}, modules: [], redundantSize: xx, partial: 1 }}
 
-      function fillRedundanceReport (modules, packageName, fillInfo) {
+      function fillResourcePathMap (pathKey, packageName, fillInfo) {
+        resourcePathMap[pathKey] = resourcePathMap[pathKey] || { redundantSize: 0, packages: {}, modules: [] }
+        // concanatedModule的体积是部分而非全部, 对于只冗余部分的无法计算体积，所以只做展示
+        if (fillInfo.partial) {
+          resourcePathMap[pathKey].partial = 1
+        }
+        resourcePathMap[pathKey].packages[packageName] = resourcePathMap[pathKey].packages[packageName] || 0
+        resourcePathMap[pathKey].packages[packageName] += fillInfo.size
+        resourcePathMap[pathKey].modules.push(fillInfo)
+
+        const packageNames = Object.keys(resourcePathMap[pathKey].packages)
+        if (packageNames.length > 1) {
+          resourcePathMap[pathKey].redundantSize = (packageNames.length - 1) * resourcePathMap[pathKey].packages[packageNames[0]]
+        }
+      }
+      /**
+       *
+       * @param modules
+       * @param moduleType assetModules / 其它module
+       * @param packageName
+       * @param fillInfo
+       */
+      function fillRedundanceReport (modules, moduleType, packageName, fillInfo) {
         if (reportRedundance) {
-          modules.forEach((module) => {
-            if (!module.resource && !module.rootModule) return
-            const parsed = parseRequest(module.resource || module.rootModule.resource)
-            if (parsed.queryObj && parsed.queryObj.resolve) return
-            if (!module.resource) {
-              fillRedundanceReport(module._modules, packageName, { partial: 1, ...fillInfo })
-            }
-            resourcePathMap[parsed.resourcePath] = resourcePathMap[parsed.resourcePath] || {}
-            resourcePathMap[parsed.resourcePath][packageName] = resourcePathMap[parsed.resourcePath][packageName] || []
-            resourcePathMap[parsed.resourcePath][packageName].push(fillInfo)
-          })
-        }
-      }
-
-      function formatAllSize (arr = []) {
-        arr.forEach((item) => {
-          if (Array.isArray(item)) formatAllSize(item)
-          if (Object.prototype.toString.call(item) === '[object Object]') {
-            for (let key in item) {
-              if (Array.isArray(item[key])) formatAllSize(item[key])
-              if (key === 'size') item[key] = formatSize(item.size)
-            }
-          }
-        })
-        return arr
-      }
-
-      function updateRedundanceSizeInfo () {
-        const redundanceSizeInfo = []
-        for (let resourcePath in resourcePathMap) {
-          const packageKeys = Object.keys(resourcePathMap[resourcePath])
-          if (packageKeys.length > 1) {
-            const sizeInfoItem = {resourcePath, packages: [], size: 0}
-            packageKeys.forEach((packageName) => {
-              const packageItem = {packageName, size: 0, modules: []}
-              const filleInfos = resourcePathMap[resourcePath][packageName]
-              filleInfos.forEach((fillInfo) => {
-                sizeInfoItem.size += fillInfo.size
-                packageItem.size += fillInfo.size
-                if (fillInfo.partial) {
-                  packageItem.partial = 1
-                }
-                packageItem.modules.push(fillInfo)
-              })
-              sizeInfoItem.packages.push(packageItem)
+          if (moduleType === 'assetModules') {
+            const resourcePathArr = []
+            // assetModules包含的module需要取所有的module的resourcePath，排序拼接后作为key，完全一致才能确定是冗余数据。
+            // 对应场景 -> 一个组件里面有多个style标签, 最终合并成了一个资源文件
+            modules.forEach((module) => {
+              const parsed = parseRequest(module.resource)
+              resourcePathArr.push(parsed.resourcePath)
             })
-            let insertIndex = redundanceSizeInfo.findIndex((item) => { return sizeInfoItem.size > item.size })
-            if (insertIndex === -1) insertIndex = redundanceSizeInfo.length
-            redundanceSizeInfo.splice(insertIndex, 0, sizeInfoItem)
+            const resourcePathKey = resourcePathArr.sort().join(',')
+            fillResourcePathMap(resourcePathKey, packageName, fillInfo)
+          } else {
+            modules.forEach((module) => {
+              // 有些contextModule可忽略
+              if (!module.resource && !module.rootModule) return
+
+              let parsed = parseRequest(module.resource || module.rootModule.resource)
+              if (parsed.queryObj && parsed.queryObj.resolve) return
+
+              fillResourcePathMap(parsed.resourcePath, packageName, fillInfo)
+
+              // 对应concatenatedModule的处理逻辑
+              // 1、concatenatedModule可查看rootModule的资源归属。
+              // 2、如果rootModule本身不存在冗余，遍历rootModules里面的组成modules有没有冗余，对应场景： a.js -> b.js 但是a冗余输出到多分包，b并未冗余输出
+              if (!module.resource && module.rootModule.resource && (!resourcePathMap[parsed.resourcePath] || !resourcePathMap[parsed.resourcePath].redundantSize)) {
+                fillRedundanceReport(module._modules, '', packageName, { partial: 1, ...fillInfo })
+              }
+            })
           }
         }
-        return formatAllSize(redundanceSizeInfo)
+      }
+
+      function formatAllSize (toFormatData, exKeys = ['partial']) {
+        if (Array.isArray(toFormatData) || Object.prototype.toString.call(toFormatData) === '[object Object]') {
+          for (let key in toFormatData) {
+            if (Array.isArray(toFormatData[key]) || Object.prototype.toString.call(toFormatData[key]) === '[object Object]') formatAllSize(toFormatData[key], exKeys)
+            if (typeof toFormatData[key] === 'number' && !exKeys.includes(key)) toFormatData[key] = formatSize(toFormatData[key])
+          }
+        }
+        return toFormatData
+      }
+
+      function formatRedundanceReport () {
+        const formatedReport = []
+        for (let resourcePath in resourcePathMap) {
+          const redundantSize = resourcePathMap[resourcePath].redundantSize
+          const sizeInfoItem = {
+            resourcePath,
+            redundantSize: redundantSize,
+            packages: resourcePathMap[resourcePath].packages,
+            modules: resourcePathMap[resourcePath].modules
+          }
+          if (resourcePathMap[resourcePath].partial && redundantSize) {
+            sizeInfoItem.partial = 1
+            delete sizeInfoItem.redundantSize
+            formatedReport.push(sizeInfoItem)
+          } else if (redundantSize) {
+            let insertIndex = formatedReport.findIndex((item) => { return redundantSize > item.redundantSize })
+            if (insertIndex === -1) insertIndex = formatedReport.length
+            formatedReport.splice(insertIndex, 0, sizeInfoItem)
+          }
+        }
+        return formatAllSize(formatedReport, ['partial'])
       }
 
       const assetsSizeInfo = {
@@ -383,9 +416,7 @@ class SizeReportPlugin {
           const size = compilation.assets[name].size()
           const identifierSet = new Set()
           let identifier = ''
-          let oneModule
           assetModules.forEach((module) => {
-            oneModule = module
             const moduleIdentifier = module.readableIdentifier(compilation.requestShortener)
             identifierSet.add(moduleIdentifier)
             if (!identifier) identifier = moduleIdentifier
@@ -398,7 +429,7 @@ class SizeReportPlugin {
             size
           })
 
-          fillRedundanceReport([oneModule], packageName, {
+          fillRedundanceReport(assetModules, 'assetModules', packageName, {
             name,
             identifier,
             size
@@ -462,7 +493,7 @@ class SizeReportPlugin {
               identifier,
               size: moduleSize
             })
-            fillRedundanceReport([module], packageName, {
+            fillRedundanceReport([module], '', packageName, {
               name,
               identifier,
               size: moduleSize
@@ -473,7 +504,6 @@ class SizeReportPlugin {
             })
             size -= moduleSize
           }
-
 
           // chunkAssetInfo.webpackTemplateSize = size
           // filter sourcemap
@@ -606,7 +636,7 @@ class SizeReportPlugin {
         sizeSummary
       }
 
-      const redundanceSizeInfo = updateRedundanceSizeInfo()
+      const redundanceSizeInfo = formatRedundanceReport()
       if (groupsSizeInfo.length) reportData.groupsSizeInfo = groupsSizeInfo
       if (pagesSizeInfo.length) reportData.pagesSizeInfo = pagesSizeInfo
       if (redundanceSizeInfo.length) reportData.redundanceSizeInfo = redundanceSizeInfo
