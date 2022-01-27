@@ -1,11 +1,10 @@
 const JSON5 = require('json5')
 const he = require('he')
 const config = require('../config')
-const { MPX_ROOT_VIEW, MPX_APP_MODULE_ID } = require('../staticConfig')
+const { MPX_ROOT_VIEW, MPX_APP_MODULE_ID } = require('../utils/const')
 const normalize = require('../utils/normalize')
 const isValidIdentifierStr = require('../utils/is-valid-identifier-str')
 const isEmptyObject = require('../utils/is-empty-object')
-const mpxJSON = require('../utils/mpx-json')
 const getRulesRunner = require('../platform/index')
 const addQuery = require('../utils/add-query')
 const transDynamicClassExpr = require('./trans-dynamic-class-expr')
@@ -130,107 +129,6 @@ function isForbiddenTag (el) {
   )
 }
 
-// mpx special comments
-// example
-/*
-{
-  'tt,swan': {
-    remove: [
-      'open-type',
-      // src mode attr
-      'wx:if'
-    ],
-    add: {
-      type: 'primary',
-      // attr name only
-      foo: null,
-    }
-  }
-}
-*/
-let curMpxComment = null
-
-function evalMpxCommentExp (exp) {
-  /* eslint-disable no-new-func */
-  const f = new Function(`return ${exp};`)
-  return f()
-}
-
-function isMpxCommentAttrs (content) {
-  return /@mpx-attrs/.test(content)
-}
-
-function normalizePlatformMpxAttrsOpts (opts) {
-  const ret = {}
-  // Array to map for removing attributes
-  ret.remove = (opts.remove || []).reduce((acc, val) => {
-    acc[val] = true
-    return acc
-  }, {})
-  // Default adding map
-  ret.add = opts.add || {}
-  return ret
-}
-
-function produceMpxCommentAttrs (content) {
-  const exp = /@mpx-attrs[^(]*?\(([\s\S]*)\)/.exec(content)[1].trim()
-  const tmpOpts = evalMpxCommentExp(exp)
-  // normalize
-  Object.keys(tmpOpts).forEach(k => {
-    Object.assign(tmpOpts[k], normalizePlatformMpxAttrsOpts(tmpOpts[k]))
-
-    if (k.indexOf(',') > -1) {
-      const modes = k.split(',')
-      modes.forEach(mode => {
-        tmpOpts[mode] = tmpOpts[k]
-      })
-      delete tmpOpts[k]
-    }
-  })
-  curMpxComment = tmpOpts
-}
-
-function modifyAttrsFromCurMpxAttrOptions (attrs, curModeMpxComment) {
-  const removeMap = curModeMpxComment.remove
-  const addMap = curModeMpxComment.add
-
-  const newAttrs = []
-  attrs.forEach(attr => {
-    if (!removeMap[attr.name]) {
-      newAttrs.push(attr)
-    }
-  })
-
-  Object.keys(addMap).forEach(name => {
-    newAttrs.push({
-      name,
-      value: addMap[name]
-    })
-  })
-
-  return newAttrs
-}
-
-function consumeMpxCommentAttrs (attrs, mode) {
-  let ret = attrs
-  if (curMpxComment) {
-    const curModeMpxComment = curMpxComment[mode]
-    if (curModeMpxComment) {
-      ret = modifyAttrsFromCurMpxAttrOptions(attrs, curModeMpxComment)
-    }
-
-    // reset
-    curMpxComment = null
-  }
-  return ret
-}
-
-function assertMpxCommentAttrsEnd () {
-  if (curMpxComment) {
-    error$1('No target for @mpx-attrs!')
-  }
-}
-
 // Browser environment sniffing
 const UA = inBrowser && window.navigator.userAgent.toLowerCase()
 const isIE = UA && /msie|trident/.test(UA)
@@ -254,6 +152,9 @@ let forScopesMap = {}
 let hasI18n = false
 let i18nInjectableComputed = []
 let env
+let platformGetTagNamespace
+let filePath
+let refId
 
 function updateForScopesMap () {
   forScopes.forEach((scope) => {
@@ -280,9 +181,6 @@ const deleteErrorInResultMap = (node) => {
   rulesResultMap.delete(node)
   Array.isArray(node.children) && node.children.forEach(item => deleteErrorInResultMap(item))
 }
-let platformGetTagNamespace
-let basename
-let refId
 
 function baseWarn (msg) {
   console.warn(('[template compiler]: ' + msg))
@@ -311,7 +209,7 @@ function decode (value) {
 
 const i18nFuncNames = ['\\$(t)', '\\$(tc)', '\\$(te)', '\\$(d)', '\\$(n)']
 const i18nWxsPath = normalize.lib('runtime/i18n.wxs')
-const i18nWxsLoaderPath = normalize.lib('wxs/wxs-i18n-loader.js')
+const i18nWxsLoaderPath = normalize.lib('wxs/i18n-loader.js')
 // 添加~前缀避免wxs绝对路径在存在projectRoot时被拼接为错误路径
 const i18nWxsRequest = '~' + i18nWxsLoaderPath + '!' + i18nWxsPath
 const i18nModuleName = '__i18n__'
@@ -598,8 +496,8 @@ function parseHTML (html, options) {
 
 function parseComponent (content, options) {
   mode = options.mode || 'wx'
-  defs = options.defs || {}
   env = options.env
+  filePath = options.filePath
 
   let sfc = {
     template: null,
@@ -649,6 +547,9 @@ function parseComponent (content, options) {
             if (/^application\/json/.test(currentBlock.type) || currentBlock.name === 'json') {
               tag = 'json'
             }
+            if (currentBlock.name === 'json') {
+              currentBlock.useJSONJS = true
+            }
           }
           if (currentBlock.mode && currentBlock.env) {
             if (currentBlock.mode === mode && currentBlock.env === env) {
@@ -692,9 +593,6 @@ function parseComponent (content, options) {
       if (attr.name === 'scoped') {
         block.scoped = true
       }
-      if (attr.name === 'module') {
-        block.module = attr.value || true
-      }
       if (attr.name === 'src') {
         block.src = attr.value
       }
@@ -710,19 +608,14 @@ function parseComponent (content, options) {
     }
   }
 
-  function end (tag, start, end) {
+  function end (tag, start) {
     if (depth === 1 && currentBlock) {
       currentBlock.end = start
       let text = content.slice(currentBlock.start, currentBlock.end)
       // pad content so that linters and pre-processors can output correct
       // line numbers in errors and warnings
-      if (currentBlock.tag !== 'template' && options.pad) {
+      if (options.pad) {
         text = padContent(currentBlock, options.pad) + text
-      }
-
-      // 对于<script name="json">的标签，传参调用函数，其返回结果作为json的内容
-      if (currentBlock.tag === 'script' && !/^application\/json/.test(currentBlock.type) && currentBlock.name === 'json') {
-        text = mpxJSON.compileMPXJSONText({ source: text, defs, filePath: options.filePath })
       }
       currentBlock.content = text
       currentBlock = null
@@ -774,7 +667,7 @@ function parse (template, options) {
   defs = options.defs || {}
   srcMode = options.srcMode || mode
   isNative = options.isNative
-  basename = options.basename
+  filePath = options.filePath
   i18n = options.i18n
   refId = 0
 
@@ -825,16 +718,6 @@ function parse (template, options) {
         attrs = guardIESVGBug(attrs)
       }
 
-      if (options.globalMpxAttrsFilter) {
-        attrs = modifyAttrsFromCurMpxAttrOptions(attrs, normalizePlatformMpxAttrsOpts(options.globalMpxAttrsFilter({
-          tagName: tag,
-          attrs,
-          __mpx_mode__: mode,
-          filePath: options.filePath
-        }) || {}))
-      }
-      attrs = consumeMpxCommentAttrs(attrs, mode)
-
       let element = createASTElement(tag, attrs, currentParent)
       if (ns) {
         element.ns = ns
@@ -848,21 +731,6 @@ function parse (template, options) {
           '<' + tag + '>' + ', as they will not be parsed.'
         )
       }
-
-      // single root
-      // // gen root
-      // if (!root) {
-      //   root = element
-      // } else {
-      //   // mount element
-      //   if (currentParent) {
-      //     currentParent.children.push(element)
-      //     element.parent = currentParent
-      //   } else {
-      //     multiRootError = true
-      //     return
-      //   }
-      // }
 
       // multi root
       if (!currentParent) genTempRoot()
@@ -932,10 +800,7 @@ function parse (template, options) {
     },
     comment: function comment (text) {
       if (!currentParent) genTempRoot()
-      // special comments should not be output
-      if (isMpxCommentAttrs(text)) {
-        produceMpxCommentAttrs(text)
-      } else if (options.hasComment) {
+      if (options.hasComment) {
         currentParent.children.push({
           type: 3,
           text: text,
@@ -945,8 +810,6 @@ function parse (template, options) {
       }
     }
   })
-
-  assertMpxCommentAttrsEnd()
 
   if (multiRootError) {
     error$1('Template fields should has one single root, considering wrapping your template content with <view> or <text> tag!')
@@ -1136,15 +999,6 @@ function processComponentIs (el, options) {
     warn$1('<component> tag should have attrs[is].')
   }
 }
-
-// function processComponentDepth (el, options) {
-//   if (isComponentNode(el,options)) {
-//     addAttrs(el, [{
-//       name: 'mpxDepth',
-//       value: '{{mpxDepth + 1}}'
-//     }])
-//   }
-// }
 
 const eventIdentifier = '__mpx_event__'
 
@@ -1553,9 +1407,13 @@ function postProcessWxs (el, meta) {
         content = el.children.filter((child) => {
           return child.type === 3 && !child.isComment
         }).map(child => child.text).join('\n')
-        src = addQuery('./' + basename, {
+
+        const fakeRequest = filePath + config[mode].wxs.ext
+
+        src = addQuery(`~${fakeRequest}!=!${filePath}`, {
           wxsModule: module
         })
+
         addAttrs(el, [{
           name: config[mode].wxs.src,
           value: src
@@ -1636,9 +1494,9 @@ function postProcessFor (el) {
 }
 
 function evalExp (exp) {
-  // eslint-disable-next-line no-new-func
   let result = { success: false }
   try {
+    // eslint-disable-next-line no-new-func
     const fn = new Function(`return ${exp};`)
     result = {
       success: true,
@@ -2183,7 +2041,10 @@ function processElement (el, root, options, meta) {
 
   const pass = isNative || processTemplate(el) || processingTemplate
 
-  processScoped(el, options)
+  // 仅ali平台需要scoped模拟样式隔离
+  if (mode === 'ali') {
+    processScoped(el, options)
+  }
 
   if (transAli) {
     processAliExternalClassesHack(el, options)
@@ -2486,5 +2347,6 @@ module.exports = {
   makeAttrsMap,
   stringifyAttr,
   parseMustache,
-  stringifyWithResolveComputed
+  stringifyWithResolveComputed,
+  addAttrs
 }

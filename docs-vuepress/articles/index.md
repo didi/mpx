@@ -11,3 +11,4 @@ sidebarDepth: 0
 * [Mpx框架技术揭秘](mpx2.md)
 * [基于Mpx框架做体积优化](size-control.md)
 * [Mpx中基于 Typescript Template Literal Types 实现链式key的类型推导](ts-derivation.md)
+* [小程序跨端框架Mpx发布2.7版本，编译构建速度大幅提升，最高可达10倍](2.7-release.md)

@@ -6,7 +6,6 @@ function genRegExp (str, flags) {
   }
 }
 
-
 function likeArray (arr) {
   if (!__mpx_wxs__) {
     return Array.isArray(arr)
@@ -22,7 +21,6 @@ function isObject (obj) {
 function isDef (v) {
   return v !== undefined && v !== null
 }
-
 
 var RE_TOKEN_LIST_VALUE = genRegExp('^[0-9]+')
 var RE_TOKEN_NAMED_VALUE = genRegExp('^[A-Za-z0-9_]+')
@@ -40,7 +38,10 @@ function parseMessage (format) {
     var char = format[position++]
     if (char === '{') {
       if (text) {
-        tokens.push({ type: 'text', value: text })
+        tokens.push({
+          type: 'text',
+          value: text
+        })
       }
 
       text = ''
@@ -56,7 +57,10 @@ function parseMessage (format) {
         : isClosed && RE_TOKEN_NAMED_VALUE.test(sub)
           ? 'named'
           : 'unknown'
-      tokens.push({ value: sub, type: type })
+      tokens.push({
+        value: sub,
+        type: type
+      })
     } else if (char === '%') {
       // when found rails i18n syntax, skip text capture
       if (format[(position)] !== '{') {
@@ -67,7 +71,10 @@ function parseMessage (format) {
     }
   }
 
-  text && tokens.push({ type: 'text', value: text })
+  text && tokens.push({
+    type: 'text',
+    value: text
+  })
 
   return tokens
 }
@@ -263,19 +270,24 @@ function exist (messages, locale, key) {
 var messages = {}
 var dateTimeFormats = {}
 var numberFormats = {}
+var locale = 'zh-CN'
+
+function getLocale () {
+  return __mpx_locale__ || locale
+}
 
 function getMessages () {
-  // __mpx_messages__会在编译时通过lib/wxs/wxs-i18n-loader注入
+  // __mpx_messages__会在编译时通过lib/wxs/i18n-loader注入
   return __mpx_messages__ || messages
 }
 
 function getDateTimeFormats () {
-  // __mpx_datetime_formats__会在编译时通过lib/wxs/wxs-i18n-loader注入
+  // __mpx_datetime_formats__会在编译时通过lib/wxs/i18n-loader注入
   return __mpx_datetime_formats__ || dateTimeFormats
 }
 
 function getNumberFormats () {
-  // __mpx_number_formats__会在编译时通过lib/wxs/wxs-i18n-loader注入
+  // __mpx_number_formats__会在编译时通过lib/wxs/i18n-loader注入
   return __mpx_number_formats__ || numberFormats
 }
 
@@ -339,7 +351,15 @@ module.exports = {
 }
 
 if (!__mpx_wxs__) {
-  module.exports.__getMessages = getMessages
-  module.exports.__getDateTimeFormats = getDateTimeFormats
-  module.exports.__getNumberFormats = getNumberFormats
+  if (!global.i18n) {
+    global.i18n = {
+      locale: getLocale(),
+      version: 0
+    }
+    global.i18nMethods = Object.assign(module.exports, {
+      __getMessages: getMessages,
+      __getDateTimeFormats: getDateTimeFormats,
+      __getNumberFormats: getNumberFormats
+    })
+  }
 }
