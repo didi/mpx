@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/webpack-plugin",
-  "version": "2.7.1-beta.10",
+  "version": "2.7.2",
   "description": "mpx compile core",
   "keywords": [
     "mpx"
@@ -33,7 +33,7 @@
     "consolidate": "^0.15.1",
     "css": "^2.2.1",
     "css-selector-tokenizer": "^0.7.0",
-    "cssnano": "^3.10.0",
+    "cssnano": "^5.0.16",
     "de-indent": "^1.0.2",
     "fastparse": "^1.1.1",
     "hash-sum": "^1.0.2",
