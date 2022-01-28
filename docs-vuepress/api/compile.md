@@ -259,14 +259,6 @@ new MpxWebpackPlugin({
 })
 ```
 
-### forceDisableInject
-
-- **类型**：`Boolean`
-
-- **默认值**： `false`
-
-- **详细**：Mpx会在项目编译构建过程中对运行时进行代码注入，以实现部分增强能力，包括 `refs`、`i18n` 和 `setData` 性能优化等。在不需要这些增强能力时，可配置 `forceDisableInject` 为 true，以消除编译时注入，来进一步减少包体积，但是这部分增强能力也就不再可用。
-
 ### forceDisableProxyCtor
 
 - **类型**：`Boolean`
@@ -477,7 +469,7 @@ new MpxWebpackPlugin({
 
 - **默认值**: `false`
 
-- **详细**: 在非支付宝小程序环境下，`Mpx` 会强行将 `Page` 转为 `Conponent` 处理；将该值设置为 `true` 时，`Page` 将不被转换。
+- **详细**: 为了获取更丰富的生命周期来进行更加完善的增强处理，在非支付宝小程序环境下，`Mpx` 默认会使用 `Conponent` 构造器来创建页面。将该值设置为 `true` 时，会强制使用 `Page` 构造器创建页面。
 
 - **示例**:
 ```js
@@ -485,12 +477,6 @@ new MpxWebpackPlugin({
   forceUsePageCtor: true
 })
 ```
-
-:::tip
-// TODO 可以深入讲解下，为什么会被强转
-:::
-
-### postcssInlineConfig
 
 ### transRpxRules
 
@@ -648,6 +634,8 @@ new MpxWebpackPlugin({
 
 > `transRpx = only`模式下，只有两部分`rpx注释样式`会转rpx。
 
+### postcssInlineConfig
+
 - **类型**： `{options? : PostcssOptions, plugins? : PostcssPlugin[], ignoreConfigFile : Boolean}`
 
 - **详细**：使用类似于 postcss.config.js 的语法书写 postcss 的配置文件。用于定义 Mpx 对于组件/页面样式进行 postcss 处理时的配置， ignoreConfigFile 传递为 true 时会忽略项目中的 postcss 配置文件 。
@@ -655,7 +643,7 @@ new MpxWebpackPlugin({
 - **示例**：
 
 ```js
-new MpxWebpackPlugin {
+new MpxWebpackPlugin ({
   postcssInlineConfig: {
     plugins: {
       // 'postcss-import': {},
@@ -664,7 +652,7 @@ new MpxWebpackPlugin {
       // 'autoprefixer': {}
     }
   }
-}
+})
 ```
 
 ### decodeHTMLText
@@ -677,19 +665,43 @@ new MpxWebpackPlugin {
 
 设置为 true 时在模板编译时对模板中的 text 内容进行 decode
 
-### nativeOptions
+### nativeConfig
 
-- **类型**：`object`
+- **类型**：`{cssLangs: string[]}`
 
-- **详细**：为原生多文件写法添加css预处理语言支持，用于优先搜索预编译器后缀的文件，按声明顺序查找。默认按照 css , less , stylus ,  scss , sass 的顺序
+- **详细**：为原生多文件写法添加css预处理语言支持，用于优先搜索预编译器后缀的文件，按 cssLangs 中的声明顺序查找。默认按照 css , less , stylus ,  scss , sass 的顺序
 
 - **例子**
 
 ```js
-  nativeOptions: {
+
+new MpxWebpackPlugin ({
+  nativeConfig: {
     cssLangs: ['css', 'less', 'stylus', 'scss', 'sass']
   }
+})
 ```
+
+### webConfig
+
+- **类型**：`{transRpxFn: (match:string, $1:number) => string}`
+
+- **详细**：transRpxFn 配置用于自定义输出 web 时对于 rpx 样式单位的转换逻辑，常见的方式有转换为 vw 或转换为 rem
+
+- **例子**
+
+```js
+new MpxWebpackPlugin ({
+  webConfig: {
+    transRpxFn: function (match, $1) {
+      if ($1 === '0') return $1
+      return `${$1 * +(100 / 750).toFixed(8)}vw`
+    }
+  }
+})
+```
+
+
 
 
 ### i18n
@@ -780,34 +792,6 @@ new MpxWebpackPlugin({
 })
 ```
 > tips: 该功能是将模块分别放入多个分包，模块状态不可复用，使用前要依据模块功能做好评估，例如全局store就不适用该功能
-
-### customOutputPath
-
-- **类型**：`Function`
-
-- **详细**：自定义组件和页面的输出路径，可使用该方法对非原生组件和非当前文件context的页面输出路径进行自定义，
-方法需要具有稳定性和唯一性，即同样的输入不管什么时候执行都要有同样的返回以及不同的的输入一定会得到不同的输出。
-
-- **背景**：Mpx 在处理主包和分包页面时，对于不在当前分包或主包文件夹下的页面路径会做 hash 化处理来防止路径冲突，
-同时处理组件路径时也会添加 hash 防止路径名冲突。hash 化处理后最终的文件名是原有 name+hash+ext 的格式，
-部分开发者希望能够进行整体路径自定义来将路径名缩短，故提供此方法。
-
-- **示例**：
-```js
-new MpxWebpackPlugin({
-  customOutputPath: (type, name, hash, ext) => {
-    // type: 资源类型(page | component | static)
-    // name: 资源原有文件名
-    // hash: 8位长度的hash串
-    // ext: 文件后缀(.js｜ .wxml | .json 等)
-
-    // 输出示例： pages/testax34dde3/index.js
-    return path.join(type + 's', name + hash, 'index' + ext)
-  },
-})
-```
-基于上方示例，你可以根据需要进行路径定制化，例如缩短hash、使用012代替文件名等各种花式路径
-
 
 ### generateBuildMap
 
@@ -1042,47 +1026,6 @@ module.exports = {
   - `publicPath` : 自定义 public 目录
   - `fallback` : 文件字节数大于限制时，为文件指定加载程序
 
-## json增强
-### 自定义 page 路径
-- **背景**: 用户在进行分包或主包的 pages 配置时，如果引用的页面不存在于当前 app.mpx 所在的上下文中，例如存在于 npm 包中，为避免和本地声明的其他 page 路径冲突，Mpx 会对路径进行 hash 化处理。这样一来，用户就无法使用之前定义的路径；此外部分用户也希望可以对引入的页面路径进行自定义。
-
-- **详细**: 在 json 中配置 pages 时，数组中支持放入 Object，对象中传入两个字段，src 字段表示页面地址，path 字段表示自定义页面路径
-
-- **示例**:
-```js
-{
-  // 主包中的声明
-  "pages": [
-    {
-      "src": "@someGroup/someNpmPackage/pages/view/index.mpx",
-      "path": "pages/somNpmPackage/index" // 注意保持 path 的唯一性
-    }
-  ],
-  // 分包中的声明
-  "subPackages": [
-    {
-      "root": "test",
-      "pages": [
-         {
-           "src": "@someGroup/someNpmPackage/pages/view/test.mpx",
-           "path": "pages/somNpmPackage/test" // 注意保持 path 的唯一性
-         }
-      ]
-    }
-  ]
-}
-
-// 使用
-// 可以直接使用你自己声明的 path
-mpx.navigateTo({
-  url: '/pages/somNpmPackage/index'
-})
-
-mpx.navigateTo({
-  url: '/test/pages/somNpmPackage/test'
-})
-```
-
 ## Request query
 
 Mpx中允许用户在request中传递特定query执行特定逻辑，目前已支持的query如下：
@@ -1108,76 +1051,10 @@ Mpx中允许用户在request中传递特定query执行特定逻辑，目前已�
     url: subPackageIndexPage
   })
   ```
-### ?packageName
-
-- **详细**：
-
-  指定当前 Page 或 Component 中引用的某个非 JS 静态资源被打包到对应的主包或分包目录下。分包之间不能相互引用对方包中的资源（比如图片和 js 脚本等），分包可以引用主包和自己包内的资源。
-
-- **示例**：
-
-  ``` javascript
-  // 入口 app.mpx 的 json 配置部分
-  module.exports = {
-    "pages": [
-      "./pages/index",
-      "./pages/list?root=list&name=listName"
-    ],
-    "packages": [
-      "./packageA/packageA.mpx?root=packageA",
-      "./packageB/packageB.mpx?root=packageB&name=packageSecond"
-    ]
-  }
-  ```
-
-  ``` html
-  <!-- packageA/cat.mpx -->
-  <template>
-    <view>
-      <view>hello packageA cat.mpx</view>
-      <image src="{{catAvatar}}"></image>
-    </view>
-  </template>
-
-  <script>
-    import{ createPage } from '@mpxjs/core'
-    // 没有配置 packageName，默认打包到当前模块所在的分包目录下
-    import catAvatar from 'static/images/cat.jpg'
-
-    createPage({
-      data: {
-        catAvatar
-      },
-      onLoad () {}
-    })
-  </script>
-  ```
-
-  ``` html
-  <!-- packageB/dog.mpx -->
-  <template>
-    <view>
-      <view>hello packageB dog.mpx</view>
-      <image src="{{dogAvatar}}"></image>
-    </view>
-  </template>
-
-  <script>
-    import{ createPage } from '@mpxjs/core'
-    // 指定 packageName=main 即使当前模块在分包 packageB 下，资源也会被打包到主包目录下
-    // 当前分包是 packageB，所以不能指定 resourceName 为 packageA 或其他分包
-    import dogAvatar from 'static/images/dog.jpg?packageName=main'
-
-    createPage({
-      data: {
-        dogAvatar
-      },
-      onLoad () {}
-    })
-  </script>
-  ```
 
 ### ?root
+
+1. 声明分包别名
 
 - **详细**：指定分包别名，Mpx 项目在编译构建后会输出该别名的分包，外部小程序或 H5 页面跳转时，可直接配置该分包别名下的资源路径。
 
@@ -1193,7 +1070,28 @@ module.exports = {
 
 // 使用
 wx.navigateTo({url : '/test/homepage/index'})
+```
 
+2. 声明组件所属异步分包
+
+- **详细**：微信小程序新增 [分包异步化特性](https://developers.weixin.qq.com/miniprogram/dev/framework/subpackages/async.html) ，使跨分包的组件可以等待对应分包下载后异步使用, 在mpx中使用需通过?root声明组件所属异步分包即可使用，示例如下：
+
+- **示例**：
+
+```html
+<!--/packageA/pages/index.mpx-->
+// 这里在分包packageA中即可异步使用分包packageB中的hello组件
+<script type="application/json">
+  {
+    "usingComponents": {
+      "hello": "../../packageB/components/hello?root=packageB",
+      "simple-hello": "../components/hello"
+    },
+    "componentPlaceholder": {
+      "hello": "simple-hello"
+    }
+  }
+</script>
 ```
 
 ### ?fallback
@@ -1223,7 +1121,117 @@ const webpackConfig = {
 /* png资源引入 */
 <style>
   .logo2 {
-    background-image: url('~images/logo.png?fallback=true'); /* 设置fallback=true，则使用如上方所配置的file-loader */
+    background-image: url('./images/logo.png?fallback=true'); /* 设置fallback=true，则使用如上方所配置的file-loader */
   }
 </style>
+```
+
+### ?useLocal
+
+- **类型**：`Boolean`
+
+- **详细**：静态资源存放有两种方式：本地、远程（配置 publicPath ）。useLocal 是用于在配置了 publicPath 时声明部分资源输出到本地。比如配置了通用的 CDN 策略，但如网络兜底资源需要强制走本地存储，可在引用资源的末尾加上`?useLocal=true`
+
+- **示例**：
+```css
+/* 单个图片资源设置为存储到本地 */
+<style>
+  .logo2 {
+    background-image: url('./images/logo.png?useLocal=true');
+  }
+</style>
+```
+
+### ?isStyle
+
+- **类型**：`Boolean`
+
+- **详细**：isStyle 是在非 style 模块中编写样式时，声明这部分引用的静态资源按照 style 环境来处理。如在 javascript 中 require 了一个图像资源，然后模版 template style 属性中进行引用， 则 require 资源时可选择配置`?isStyle=true`
+
+- **示例**：
+```html
+<template>
+  <view class="list">
+    <!-- isStyle 案例一：引用 javascript 中的数据 -->
+    <view style="{{testStyle}}">测试</view>
+    <!-- isStyle 案例二：设置资源按照style处理规则处理。style处理规则为: 默认走base64，除非同时配置了 publicPath 和 fallback -->
+    <image src="../images/car.jpg?isStyle=true"></image>
+    <!-- 普通非style模式，默认走 fallback 或者 file-loader 解析，输出到 publicPath 或者 本地img目录下 -->
+    <image src="../images/car.jpg"></image>
+  </view>
+</template>
+```
+```js
+/* 将 script 中的图像资源标识为 style 资源 */
+<script>
+  import { createComponent } from '@mpxjs/core'
+  const backCar = require('../images/car.jpg?isStyle=true')
+
+  createComponent({
+    data: {},
+    computed: {
+      testStyle () {
+        return `background-image : url(${backCar}); width:100px; height: 100px`
+      }
+    }
+  })
+</script>
+```
+
+### ?isPage
+
+- **类型**：`Boolean`
+
+- **详细**：在 webpack config entry 入口文件配置中，你可以在路径后追加 ?isPage 来声明独立页面构建，构建产物为该页面的独立原生代码，
+你可以提供该页面给其他小程序使用。
+
+- **示例**：
+```js
+/* webpack config option entry */
+// webpack.config.js
+module.exports = {
+  entry: {
+    index: '../src/pages/index.mpx?isPage'
+  }
+}
+```
+
+此外，独立页面构建也可以通过MpxWebpackPlugin.getPageEntry生成
+
+```js
+const MpxWebpackPlugin = require('@mpxjs/webpack-plugin')
+module.exports = {
+  entry: {
+    index: MpxWebpackPlugin.getPageEntry('./index.mpx')
+  }
+}
+```
+
+### ?isComponent
+
+- **类型**：`Boolean`
+
+- **详细**：在 webpack config entry 入口文件配置中，你可以在路径后追加 ?isComponent 来声明独立组件构建，构建产物为该组件的独立原生代码，
+  你可以提供该组件给其他小程序使用。
+
+- **示例**：
+```js
+/* webpack config option entry */
+// webpack.config.js
+module.exports = {
+  entry: {
+    index: '../src/components/list.mpx?isComponent'
+  }
+}
+```
+
+此外，独立组件构建也可以通过MpxWebpackPlugin.getComponentEntry生成
+
+```js
+const MpxWebpackPlugin = require('@mpxjs/webpack-plugin')
+module.exports = {
+  entry: {
+    index: MpxWebpackPlugin.getComponentEntry('./components/list.mpx')
+  }
+}
 ```

@@ -1,89 +1,99 @@
-const ora = require('ora')
 const rm = require('rimraf')
-const path = require('path')
 const chalk = require('chalk')
 const webpack = require('webpack')
-const merge = require('webpack-merge')
 const program = require('commander')
-const CopyWebpackPlugin = require('copy-webpack-plugin')
-const MpxWebpackPlugin = require('@mpxjs/webpack-plugin')
-const mpxWebpackPluginConfig = require('./mpx.webpack.conf')
-
-let webpackMainConfig = require('./webpack.conf')
-
-const mainSubDir = ''
-function resolveDist (file, subPathStr = mainSubDir) {
-  return path.resolve(__dirname, '../dist', subPathStr, file || '')
-}
-
-const webpackConfigArr = []
-const userSelectedMode = 'wx'
-
-// 微信小程序需要拷贝project.config.json，如果npm script参数里有--wx，拷贝到/dist下，如果指定--wx，拷贝到/dist/wx下
-const webpackWxConfig = merge(webpackMainConfig, {
-  plugins: [
-    new CopyWebpackPlugin([
-      {
-        from: path.resolve(__dirname, '../project.config.json'),
-        to: path.resolve(__dirname, '../dist/wx/project.config.json')
-      }
-    ])
-  ]
-})
-
-// 支持的平台，若后续@mpxjs/webpack-plugin支持了更多平台，补充在此即可
-const supportedCrossMode = ['wx', 'ali', 'swan', 'qq', 'tt']
-// 提供npm argv找到期望构建的平台，必须在上面支持的平台列表里
-const npmConfigArgvOriginal = (process.env.npm_config_argv && JSON.parse(process.env.npm_config_argv).original) || []
-const modeArr = npmConfigArgvOriginal.filter(item => typeof item === 'string').map(item => item.replace('--', '')).filter(item => supportedCrossMode.includes(item))
-
-if (modeArr.length === 0) modeArr.push(userSelectedMode)
-
-modeArr.forEach(item => {
-  const webpackCrossConfig = merge(item === 'wx' ? webpackWxConfig : webpackMainConfig, {
-    name: item + '-compiler',
-    output: {
-      path: resolveDist('', item)
-    },
-    plugins: [
-      new MpxWebpackPlugin(Object.assign({
-        mode: item,
-        srcMode: userSelectedMode
-      }, mpxWebpackPluginConfig))
-    ]
-  })
-  webpackConfigArr.push(webpackCrossConfig)
-})
+const { userConf, supportedModes } = require('../config/index')
+const getWebpackConf = require('./getWebpackConf')
+const { resolveDist, getRootPath } = require('./utils')
 
 program
   .option('-w, --watch', 'watch mode')
   .option('-p, --production', 'production release')
   .parse(process.argv)
 
-function runWebpack (cfg) {
-  if (program.production || program.watch) {
-    const extendCfg = program.production ? { mode: 'production' } : { cache: true }
-    if (Array.isArray(cfg)) {
-      cfg = cfg.map(item => merge(item, extendCfg))
-    } else {
-      cfg = merge(cfg, extendCfg)
+const env = process.env
+
+const modeStr = env.npm_config_mode || env.npm_config_modes || ''
+
+const report = env.npm_config_report
+
+const modes = modeStr.split(/[,|]/)
+  .map((mode) => {
+    const modeArr = mode.split(':')
+    if (supportedModes.includes(modeArr[0])) {
+      return {
+        mode: modeArr[0],
+        env: modeArr[1]
+      }
     }
-  }
-  if (process.env.npm_config_report) {
-    var BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin
-    var mainCfg = Array.isArray(cfg) ? cfg[0] : cfg
-    mainCfg.plugins.push(new BundleAnalyzerPlugin())
-  }
-  if (program.watch) {
-    webpack(cfg).watch({}, callback)
-  } else {
-    webpack(cfg, callback)
+  }).filter((item) => item)
+
+if (!modes.length) {
+  modes.push({
+    mode: userConf.srcMode
+  })
+}
+
+// 开启子进程
+if (userConf.openChildProcess && modes.length > 1) {
+  let scriptType = ''
+  const isProduct = program.production
+  const isWatch = program.watch
+  if (!isProduct && isWatch) scriptType = 'watch'
+  if (isProduct && !isWatch) scriptType = 'build'
+  if (isProduct && isWatch) scriptType = 'watch:prod'
+  if (!isProduct && !isWatch) scriptType = 'build:dev'
+
+  const spawn = require('child_process').spawn
+  while (modes.length > 1) {
+    const modeObj = modes.pop()
+    const modeAndEnv = modeObj.env ? `${modeObj.mode}:${modeObj.env}` : modeObj.mode
+    const ls = spawn('npm', ['run', scriptType, `--modes=${modeAndEnv}`, `--mode=${modeAndEnv}`], { stdio: 'inherit' })
+    ls.on('close', (code) => {
+      process.exitCode = code
+    })
   }
 }
 
+let webpackConfs = []
+
+modes.forEach(({ mode, env }) => {
+  const options = Object.assign({}, userConf, {
+    mode,
+    env,
+    production: program.production,
+    watch: program.watch,
+    report,
+    subDir: (userConf.isPlugin || userConf.cloudFunc) ? 'miniprogram' : ''
+  })
+  webpackConfs.push(getWebpackConf(options))
+})
+
+if (webpackConfs.length === 1) {
+  webpackConfs = webpackConfs[0]
+}
+
+
+try {
+  modes.forEach(({ mode, env }) => {
+    rm.sync(resolveDist(getRootPath(mode, env), '*'))
+  })
+} catch (e) {
+  console.error(e)
+  console.log('\n\n删除dist文件夹遇到了一些问题，如果遇到问题请手工删除dist重来\n\n')
+}
+
+if (program.watch) {
+  webpack(webpackConfs).watch(undefined, callback)
+} else {
+  webpack(webpackConfs, callback)
+}
+
 function callback (err, stats) {
-  spinner.stop()
-  if (err) return console.error(err)
+  if (err) {
+    process.exitCode = 1
+    return console.error(err)
+  }
   if (Array.isArray(stats.stats)) {
     stats.stats.forEach(item => {
       console.log(item.compilation.name + '打包结果：')
@@ -107,26 +117,11 @@ function callback (err, stats) {
     }) + '\n\n')
   }
 
-  console.log(chalk.cyan('  Build complete.\n'))
-  if (program.watch) {
-    console.log(chalk.cyan(`  ${new Date()} build finished.\n  Still watching...\n`))
+  if (stats.hasErrors()) {
+    console.log(chalk.red('  Build failed with errors.\n'))
+  } else if (program.watch) {
+    console.log(chalk.cyan(`  Build complete at ${new Date()}.\n  Still watching...\n`))
+  } else {
+    console.log(chalk.cyan('  Build complete.\n'))
   }
-}
-
-var spinner = ora('building...')
-spinner.start()
-
-try {
-  modeArr.forEach(item => {
-    rm.sync(path.resolve(__dirname, `../dist/${item}/*`))
-  })
-} catch (e) {
-  console.error(e)
-  console.log('\n\n删除dist文件夹遇到了一些问题，如果遇到问题请手工删除dist重来\n\n')
-}
-
-if (webpackConfigArr.length === 1) {
-  runWebpack(webpackConfigArr[0])
-} else {
-  runWebpack(webpackConfigArr)
 }
