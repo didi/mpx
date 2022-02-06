@@ -37,4 +37,3 @@ jobs:
           source: "./docs-vuepress/.vuepress/dist/"
           strip_components: 4
           target: "${{ secrets.DOCS_SERVER_DIR }}"
-
