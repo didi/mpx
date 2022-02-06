@@ -85,6 +85,10 @@
       animation: {
         type: Boolean,
         default: true
+      },
+      speed: {
+        type: Number,
+        default: 1500
       }
     },
     watch: {
@@ -96,7 +100,7 @@
         if (newVal < this.bs.maxScrollX) {
           newVal = this.bs.maxScrollX
         }
-        this.bs.scrollTo(newVal, this.bs.y)
+        this.bs.scrollTo(newVal, this.bs.y, this.speed)
       },
       y (newVal) {
         this.source = ''
@@ -106,7 +110,7 @@
         if (newVal < this.bs.maxScrollY) {
           newVal = this.bs.maxScrollY
         }
-        this.bs.scrollTo(this.bs.x, newVal)
+        this.bs.scrollTo(this.bs.x, newVal, this.speed)
       },
       scaleValue (newVal) {
         this.isZooming = true
