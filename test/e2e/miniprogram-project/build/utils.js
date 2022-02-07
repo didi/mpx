@@ -1,15 +1,15 @@
 const path = require('path')
 
 function resolveSrc (file, subDir = '') {
-  return path.resolve(__dirname, '../src', subDir, file || '')
+  return path.join(__dirname, '../src', subDir, file || '')
 }
 
 function resolveDist (platform, subDir = '') {
-  return path.resolve(__dirname, '../dist', platform, subDir)
+  return path.join(__dirname, '../dist', platform, subDir)
 }
 
 function resolve (file) {
-  return path.resolve(__dirname, '..', file || '')
+  return path.join(__dirname, '..', file || '')
 }
 
 function normalizeArr (arrCfg) {
@@ -21,8 +21,12 @@ function normalizeArr (arrCfg) {
   return []
 }
 
-function getRootPath (mode, env) {
-  return env ? `${mode}:${env}` : mode
+function getRootPath (...args) {
+  return args.filter(item => item).join('_')
+}
+
+function getConf (conf, options) {
+  return typeof conf === 'function' ? conf(options) : conf
 }
 
 module.exports = {
@@ -30,5 +34,6 @@ module.exports = {
   resolveSrc,
   resolveDist,
   normalizeArr,
-  getRootPath
+  getRootPath,
+  getConf
 }

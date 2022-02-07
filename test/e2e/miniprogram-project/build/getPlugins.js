@@ -1,28 +1,23 @@
 let { mpxPluginConf, dllConf, supportedModes } = require('../config/index')
-const { resolve, resolveSrc } = require('./utils')
+const MpxWebpackPlugin = require('@mpxjs/webpack-plugin')
+const { resolve, resolveSrc, getConf } = require('./utils')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 const CopyWebpackPlugin = require('copy-webpack-plugin')
+const ESLintPlugin = require('eslint-webpack-plugin')
 const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin
 const VueLoaderPlugin = require('vue-loader').VueLoaderPlugin
-const ProgressBarPlugin = require('progress-bar-webpack-plugin')
 const webpack = require('webpack')
 const path = require('path')
-const MpxWebpackPlugin = require('@mpxjs/webpack-plugin')
-
 
 module.exports = function getPlugins (options) {
-  const { mode, env, srcMode, subDir, production, report } = options
+  const { mode, srcMode, env, subDir, production, report, cloudFunc, needDll, needEslint } = options
   const plugins = []
   const copyIgnoreArr = supportedModes.map((item) => {
     return `**/${item}/**`
   })
 
-  let currentMpxPluginConf
-  if (typeof mpxPluginConf === 'function') {
-    currentMpxPluginConf = mpxPluginConf(options)
-  } else {
-    currentMpxPluginConf = mpxPluginConf
-  }
+  const currentMpxPluginConf = getConf(mpxPluginConf, options)
+
   plugins.push(new MpxWebpackPlugin(Object.assign({}, currentMpxPluginConf, {
     mode,
     srcMode
@@ -32,27 +27,29 @@ module.exports = function getPlugins (options) {
     {
       context: resolve(`static/${mode}`),
       from: '**/*',
-      to: subDir ? '..' : ''
+      to: subDir ? '..' : '',
+      noErrorOnMissing: true
     },
     {
-      context: resolve(`static`),
+      context: resolve('static'),
       from: '**/*',
       to: subDir ? '..' : '',
       globOptions: {
         ignore: copyIgnoreArr
-      }
+      },
+      noErrorOnMissing: true
     }
   ]
 
-  if (options.cloudFunc) {
+  if (cloudFunc) {
     copyList.push({
-      context: resolve(`src/functions`),
+      context: resolve('src/functions'),
       from: '**/*',
       to: '../functions/'
     })
   }
 
-  if (options.needDll) {
+  if (needDll) {
     const getDllManifests = require('./getDllManifests')
     const dllManifests = getDllManifests(production)
     const localDllManifests = dllManifests.filter((manifest) => {
@@ -71,7 +68,18 @@ module.exports = function getPlugins (options) {
       })
     })
   }
-  plugins.push(new CopyWebpackPlugin(copyList))
+
+  if (needEslint) {
+    plugins.push(new ESLintPlugin({
+      context: resolve(),
+      exclude: [resolve('node_modules')],
+      extensions: ['js', 'ts', 'mpx']
+    }))
+  }
+
+  plugins.push(new CopyWebpackPlugin({
+    patterns: copyList
+  }))
 
   plugins.push(new webpack.DefinePlugin({
     'process.env': {
@@ -88,7 +96,7 @@ module.exports = function getPlugins (options) {
     }))
   }
 
-  plugins.push(new ProgressBarPlugin())
+  plugins.push(new webpack.ProgressPlugin())
 
   if (report) {
     plugins.push(new BundleAnalyzerPlugin())

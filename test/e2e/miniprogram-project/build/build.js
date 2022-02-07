@@ -5,7 +5,6 @@ const program = require('commander')
 const { userConf, supportedModes } = require('../config/index')
 const getWebpackConf = require('./getWebpackConf')
 const { resolveDist, getRootPath } = require('./utils')
-
 program
   .option('-w, --watch', 'watch mode')
   .option('-p, --production', 'production release')
