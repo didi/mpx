@@ -838,6 +838,23 @@ class MpxWebpackPlugin {
         mpx.assetsModulesMap.set(filename, modules)
       })
 
+      const fillExtractedAssetsMap = (assetsMap, { index, content }, filename) => {
+        if (assetsMap.has(index)) {
+          if (assetsMap.get(index) !== content) {
+            compilation.errors.push(new Error(`The extracted file [${filename}] is filled with same index [${index}] and different content:
+            old content: ${assetsMap.get(index)}
+            new content: ${content}
+            please check!`))
+          }
+        } else {
+          assetsMap.set(index, content)
+        }
+      }
+
+      const sortExtractedAssetsMap = (assetsMap) => {
+        return [...assetsMap.entries()].sort((a, b) => a[0] - b[0]).map(item => item[1])
+      }
+
       compilation.hooks.beforeModuleAssets.tap('MpxWebpackPlugin', () => {
         const extractedAssetsMap = new Map()
         for (const module of compilation.modules) {
@@ -846,19 +863,19 @@ class MpxWebpackPlugin {
             if (extractedInfo) {
               let extractedAssets = extractedAssetsMap.get(filename)
               if (!extractedAssets) {
-                extractedAssets = []
+                extractedAssets = [new Map(), new Map()]
                 extractedAssetsMap.set(filename, extractedAssets)
               }
-              extractedAssets.push(extractedInfo)
+              fillExtractedAssetsMap(extractedInfo.pre ? extractedAssets[0] : extractedAssets[1], extractedInfo, filename)
               compilation.hooks.moduleAsset.call(module, filename)
             }
           }
         }
 
-        for (const [filename, extractedAssets] of extractedAssetsMap) {
-          const sortedExtractedAssets = extractedAssets.sort((a, b) => a.index - b.index)
+        for (const [filename, [pre, normal]] of extractedAssetsMap) {
+          const sortedExtractedAssets = [...sortExtractedAssetsMap(pre), ...sortExtractedAssetsMap(normal)]
           const source = new ConcatSource()
-          sortedExtractedAssets.forEach(({ content }) => {
+          sortedExtractedAssets.forEach((content) => {
             if (content) {
               // 处理replace path
               if (/"mpx_replace_path_.*?"/.test(content)) {
@@ -1344,6 +1361,7 @@ try {
       const fs = compiler.intermediateFileSystem
       const cacheLocation = compiler.options.cache.cacheLocation
       return new Promise((resolve) => {
+        if (!cacheLocation) return resolve()
         if (typeof fs.rm === 'function') {
           fs.rm(cacheLocation, {
             recursive: true,
