@@ -1,5 +1,5 @@
 import { match } from 'path-to-regexp'
-import { isArray, isFunction, isNotEmptyArray, isNotEmptyObject, isString, parseUrl, deepMerge } from './util'
+import { isArray, isFunction, isNotEmptyArray, isNotEmptyObject, isString, parseUrl, deepMerge, isEmptyObjectAttr } from './util'
 
 /**
  * 匹配项所有属性值，在源对象都能找到匹配
@@ -46,6 +46,9 @@ function doTest (config, test) {
     header: tHeader = {},
     method: tMethod = ''
   } = test
+
+  // 判断custom以外的属性值为空
+  if(isEmptyObjectAttr(test, ['custom'])) return false
 
   const { baseUrl, protocol, hostname, port, path, search } = parseUrl(url)
 
@@ -194,22 +197,24 @@ function doProxy (config, proxy, matchParams) {
 }
 
 // 请求拦截
-export function requestProxy (options, config) {
+export function requestProxy (options=[], config) {
   const configBackup = Object.assign({}, config) // 备份请求配置
 
   let newConfig = config
 
-  options && options.some((item) => {
+  for (let item of options) {
     const { test, proxy, waterfall } = item
     const { matched, matchParams } = doTest(configBackup, test)
     if ((isFunction(test.custom) && test.custom(configBackup)) || matched) {
+      // mock response
+      if (test.response && typeof(test.response) === 'function')  return Promise.resolve(test.response())
       // 匹配时
       newConfig = doProxy(newConfig, proxy, matchParams)
 
       // waterfall 模式
-      return !waterfall
+      if (!waterfall) break
     }
-  })
+  }
 
   return Object.assign({}, configBackup, newConfig)
 }

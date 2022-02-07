@@ -1,0 +1,25 @@
+{
+    "presets": [
+      [
+        "@babel/env",
+        {
+          "modules": false,
+          "shippedProposals": true
+        }
+      ]
+    ],
+    "sourceType": "unambiguous",
+    "env": {
+      "test": {
+        "presets": [
+          [
+            "@babel/env",
+            {
+              "shippedProposals": true
+            }
+          ]
+        ]
+      }
+    }
+  }
+  

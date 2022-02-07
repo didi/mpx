@@ -3,7 +3,7 @@ import CancelToken from './cancelToken'
 import InterceptorManager from './interceptorManager'
 import RequestQueue from './queue'
 import { requestProxy } from './proxy'
-import { isNotEmptyArray, isNotEmptyObject, transformReq } from './util'
+import { isNotEmptyArray, isNotEmptyObject, transformReq, isThenable } from './util'
 
 export default class XFetch {
   constructor (options, MPX) {
@@ -134,7 +134,10 @@ export default class XFetch {
       // 6. 对于类POST请求将config.emulateJSON实现为config.header['content-type'] = 'application/x-www-form-urlencoded'
       // 后续请求处理都应基于正规化后的config进行处理(proxy/mock/validate/serialize)
       XFetch.normalizeConfig(config)
-      config = this.checkProxy(config) // proxy
+      if ( this.proxyOptions ) {
+        config = this.checkProxy(config) // proxy
+        if ( isThenable(config) ) return config
+      }
       return this.queue ? this.queue.request(config, priority) : this.requestAdapter(config)
     }
 

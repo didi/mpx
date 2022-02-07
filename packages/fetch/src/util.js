@@ -29,6 +29,14 @@ export function isThenable (obj) {
   return obj && typeof obj.then === 'function'
 }
 
+// 排除一些特定属性，是否为空对象
+export function isEmptyObjectAttr (obj, excludeAttrs = []) {
+  return !(obj && isObject(obj) && Object.keys(obj).some(key => {
+    if(~excludeAttrs.indexOf(key)) return false
+    return !!obj[key]
+  }))
+}
+
 // 不为空对象
 export function isNotEmptyObject (obj) {
   return obj && isObject(obj) && Object.keys(obj).length > 0
