@@ -1,5 +1,5 @@
-const userConf = require('./user.conf')
 const resolve = require('../build/utils').resolve
+const path = require('path')
 
 // 可以在此配置mpx webpack plugin
 // 配置项文档： https://www.mpxjs.cn/api/compile.html#mpxwebpackplugin-options
@@ -12,6 +12,8 @@ module.exports = {
 
   // 可选值 full / changed，不传默认为change，当设置为changed时在watch模式下将只会对内容发生变化的文件进行写入，以提升小程序开发者工具编译性能
   writeMode: 'changed',
+
+  env: 'someEnv',
 
   // 是否需要对样式加scope，因为只有ali平台没有样式隔离，只对ali平台生效，提供include和exclude，和webpack的rules规则相同
   // autoScopeRules: {
@@ -26,38 +28,67 @@ module.exports = {
   },
 
   // 定义一些全局环境变量，可在JS/模板/样式/JSON中使用
-  defs: {},
+  defs: {
+    __black__: 'blackgan test'
+  },
 
   // 是否转换px到rpx
   transRpxRules: [
     {
-      mode: 'only',
+      mode: 'all',
       comment: 'use rpx',
+      designWidth: 1280,
       include: resolve('src')
-    },
+    }
   ],
+
+  decodeHTMLText: true,
+
+  transMpxRules: {
+    include: () => true,
+    exclude: ['@mpxjs']
+  },
+
+  autoScopeRules: {
+    include: [resolve('src')]
+  },
+
+  generateBuildMap: true,
 
   // 输出web时，vue-loader版本<15时需要将该配置关闭
   forceDisableBuiltInLoader: true,
 
-  // 是否生成用于测试的源文件/dist的映射表
-  generateBuildMap: userConf.needUnitTest
+  subpackageModulesRules: {
+    include: [/utils\/common/]
+  },
 
   // 多语言i18n能力 以下是简单示例，更多详情请参考文档：https://didi.github.io/mpx/i18n.html
-  // i18n: {
-  //   locale: 'en-US',
-  //   // messages既可以通过对象字面量传入，也可以通过messagesPath指定一个js模块路径，在该模块中定义配置并导出，dateTimeFormats/dateTimeFormatsPath和numberFormats/numberFormatsPath同理
-  //   messages: {
-  //     'en-US': {
-  //       message: {
-  //         hello: '{msg} world'
-  //       }
-  //     },
-  //     'zh-CN': {
-  //       message: {
-  //         hello: '{msg} 世界'
-  //       }
-  //     }
-  //   }
-  // }
+  i18n: {
+    locale: 'en-US',
+    // messages既可以通过对象字面量传入，也可以通过messagesPath指定一个js模块路径，在该模块中定义配置并导出，dateTimeFormats/dateTimeFormatsPath和numberFormats/numberFormatsPath同理
+    messages: {
+      'en-US': {
+        message: {
+          hello: '{msg} world'
+        }
+      },
+      'zh-CN': {
+        message: {
+          hello: '{msg} 世界'
+        }
+      }
+    }
+  },
+  customOutputPath: (type, name, hash, ext) => {
+    // type: 资源类型(page | component | static)
+    // name: 资源原有文件名
+    // hash: 8位长度的hash串
+    // ext: 文件后缀(.js｜ .wxml | .json 等)
+    if (name === 'customOutputCom') {
+      return path.join(type + 's', name, 'index' + ext)
+    }
+    // 输出示例： pages/testax34dde3/index.js
+    return path.join(type + 's', name + hash, 'index' + ext)
+  }
+
 }
