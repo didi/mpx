@@ -8,15 +8,6 @@
       }
     ]
   ],
-  "plugins": [
-    [
-      "@babel/transform-runtime",
-      {
-        "corejs": 3,
-        "version": "^7.10.4"
-      }
-    ]
-  ],
   "sourceType": "unambiguous",
   "env": {
     "test": {
