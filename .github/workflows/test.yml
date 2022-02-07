@@ -15,10 +15,13 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: install deps
-        run: npm i --legacy-peer-deps && npm i --prefix packages/api-proxy --legacy-peer-deps && npm i --prefix test/e2e/miniprogram-project --legacy-peer-deps && npx lerna bootstrap --no-ci
+        run: npm i --legacy-peer-deps && npm i --prefix packages/api-proxy --legacy-peer-deps && npm i --prefix test/e2e/miniprogram-project --legacy-peer-deps && npm i --prefix test/e2e/plugin-project --legacy-peer-deps && npx lerna bootstrap --no-ci
 
-      - name: build
+      - name: build-miniprogram
         run: npm run copyPlugin --prefix test/e2e/miniprogram-project && npm run build:cross --prefix test/e2e/miniprogram-project
 
+      - name: build-plugin
+        run: npm run copyPlugin --prefix test/e2e/plugin-project && npm run build --prefix test/e2e/plugin-project
+
       - name: exec unit test
-        run: npm t && npm t --prefix test/e2e/miniprogram-project
+        run: npm t && npm t --prefix test/e2e/miniprogram-project && npm t --prefix test/e2e/plugin-project
