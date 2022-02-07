@@ -207,7 +207,7 @@ export function requestProxy (options=[], config) {
     const { matched, matchParams } = doTest(configBackup, test)
     if ((isFunction(test.custom) && test.custom(configBackup)) || matched) {
       // mock response
-      if (test.response && typeof(test.response) === 'function')  return Promise.resolve(test.response())
+      if (test.response && typeof(test.response) === 'function')  return Promise.resolve(test.response(config))
       // 匹配时
       newConfig = doProxy(newConfig, proxy, matchParams)
 
