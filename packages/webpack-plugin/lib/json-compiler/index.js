@@ -200,9 +200,14 @@ module.exports = async function (content) {
 
   const processModuleTemplate = (callback) => {
     if (mpx.moduleTemplate[moduleId]) {
+      const requestString = mpx.moduleTemplate[moduleId]
+      let usingComponents = Object.keys(mpx.usingComponents)
+      if (json.usingComponents) {
+        usingComponents = usingComponents.concat(Object.keys(json.usingComponents))
+      }
       this.emitFile(resourcePath, '', undefined, {
         skipEmit: true,
-        extractedResultSource: mpx.moduleTemplate[moduleId]
+        extractedResultSource: 'require("' + addQuery(requestString, { usingComponents }) + '")'
       })
     }
     callback()
@@ -226,7 +231,7 @@ module.exports = async function (content) {
   const processComponents = (components, context, callback) => {
     if (components) {
       async.eachOf(components, (component, name, callback) => {
-        processComponent(component, context, { relativePath }, (err, entry, { resourcePath }) => {
+        processComponent(component, context, { relativePath }, (err, entry, { resourcePath } = {}) => {
           if (err === RESOLVE_IGNORED_ERR) {
             delete components[name]
             return callback()
