@@ -117,7 +117,8 @@ module.exports.pitch = async function (remainingRequest) {
               skipEmit: true,
               extractedInfo: {
                 content: `@import "${relativePath}";\n`,
-                index: -1
+                index,
+                pre: true
               }
             })
           }
