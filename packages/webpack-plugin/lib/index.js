@@ -587,7 +587,7 @@ class MpxWebpackPlugin {
               const pagesMap = mpx.pagesMap
               const packageName = queryObj.packageRoot || mpx.currentPackageRoot || 'main'
               const componentsMap = mpx.componentsMap[packageName]
-              let filename = resourcePath === appInfo.resourcePath ? appInfo.name : (pagesMap[resourcePath] || componentsMap[resourcePath])
+              let filename = queryObj.appName || (resourcePath === appInfo.resourcePath ? appInfo.name : (pagesMap[resourcePath] || componentsMap[resourcePath]))
               if (!filename) {
                 error && error(new Error('Get extracted file error: missing filename!'))
                 filename = 'missing-filename'

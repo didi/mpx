@@ -208,8 +208,9 @@ module.exports = function (content) {
         return callback(new Error(`Current ${ctorType} [${this.resourcePath}] is issued by [${issuer.resource}], which is not allowed!`))
       }
 
+      let appName = ''
       if (ctorType === 'app') {
-        const appName = getEntryName(this)
+        appName = getEntryName(this)
         this._module.addPresentationalDependency(new AppEntryDependency(resourcePath, appName))
       }
 
@@ -290,7 +291,7 @@ module.exports = function (content) {
             ...style.src ? {
               ...queryObj,
               isStatic: true,
-              issuerFile: mpx.getExtractedFile(addQuery(this.resource, { type: 'styles' }, true))
+              issuerFile: mpx.getExtractedFile(addQuery(this.resource, ctorType === 'app' ? { type: 'styles', appName } : {type: 'styles'}, true))
             } : null,
             moduleId,
             scoped
