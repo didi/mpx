@@ -99,7 +99,7 @@ module.exports = function (content) {
       case config[mode].wxs.tag:
         // 显式传递issuerResource避免模块缓存以及提供给wxs-loader计算相对路径
         extraOptions = {
-          issuerFile: mpx.getExtractedFile(this.resource),
+          issuerFile: this.resource,
           isStatic: true
         }
         requestString = getRequestString('wxs', { src, mode: localSrcMode }, extraOptions)

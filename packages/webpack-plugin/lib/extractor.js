@@ -83,12 +83,13 @@ module.exports.pitch = async function (remainingRequest) {
       // 为了支持持久化缓存，.mpx中使用src引用样式对issueFile asset产生的副作用迁移到ExtractDependency中处理
       case 'styles':
         if (issuerFile) {
-          let relativePath = toPosix(path.relative(path.dirname(issuerFile), file))
+          const issuerFilePath = mpx.getExtractedFile(issuerFile)
+          let relativePath = toPosix(path.relative(path.dirname(issuerFilePath), file))
           relativePath = fixRelative(relativePath, mode)
           if (fromImport) {
             resultSource += `module.exports = ${JSON.stringify(relativePath)};\n`
           } else {
-            this.emitFile(issuerFile, '', undefined, {
+            this.emitFile(issuerFilePath, '', undefined, {
               skipEmit: true,
               extractedInfo: {
                 content: `@import "${relativePath}";\n`,
