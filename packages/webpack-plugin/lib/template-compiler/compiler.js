@@ -1326,7 +1326,7 @@ function processBindEvent (el, options) {
   if (!isEmptyObject(eventConfigMap)) {
     addAttrs(el, [{
       name: 'data-eventconfigs',
-      value: `{{${config[mode].event.shallowStringify(eventConfigMap)}}}`
+      value: `${config[mode].event.shallowStringify(eventConfigMap)}`
     }])
   }
 }
