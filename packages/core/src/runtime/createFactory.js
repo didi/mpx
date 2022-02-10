@@ -1,6 +1,6 @@
-import mpx from '../index'
+const mpx = require('../index').default
 
-export default (type) => (...args) => {
+module.exports = (type) => (...args) => {
   if (type === 'Behavior') {
     if (args[0]) {
       Object.defineProperty(args[0], '__mpx_behaviors_to_mixins__', {

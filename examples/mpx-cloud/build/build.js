@@ -1,88 +1,115 @@
-const ora = require('ora')
 const rm = require('rimraf')
-const path = require('path')
 const chalk = require('chalk')
 const webpack = require('webpack')
-const merge = require('webpack-merge')
 const program = require('commander')
-const CopyWebpackPlugin = require('copy-webpack-plugin')
-const MpxWebpackPlugin = require('@mpxjs/webpack-plugin')
-const mpxWebpackPluginConfig = require('./mpx.webpack.conf')
-
-let webpackMainConfig = require('./webpack.conf')
-
-var prodEnv = require('../config/prod.env')
-var devEnv = require('../config/dev.env')
-
-const mainSubDir = 'miniprogram'
-function resolveDist (file, subPathStr = mainSubDir) {
-  return path.resolve(__dirname, '../dist', subPathStr, file || '')
-}
-
-const webpackConfigArr = []
-const userSelectedMode = 'wx'
-
-// 微信小程序需要拷贝project.config.json，如果npm script参数里有--wx，拷贝到/dist下，如果指定--wx，拷贝到/dist/wx下
-const webpackWxConfig = merge(webpackMainConfig, {
-  plugins: [
-    new CopyWebpackPlugin([
-      {
-        from: path.resolve(__dirname, '../project.config.json'),
-        to: path.resolve(__dirname, '../dist/project.config.json')
-      },
-      {
-        from: path.resolve(__dirname, '../functions'),
-        to: path.resolve(__dirname, '../dist/functions')
-      }
-    ])
-  ]
-})
-
-webpackConfigArr.push(merge(webpackWxConfig, {
-  output: {
-    path: resolveDist()
-  },
-  plugins: [
-    new MpxWebpackPlugin(Object.assign({mode: userSelectedMode}, mpxWebpackPluginConfig))
-  ]
-}))
+const { userConf, supportedModes } = require('../config/index')
+const getWebpackConf = require('./getWebpackConf')
+const { resolveDist, getRootPath } = require('./utils')
 
 program
   .option('-w, --watch', 'watch mode')
   .option('-p, --production', 'production release')
   .parse(process.argv)
 
-function runWebpack (cfg) {
-  // env
-  if (Array.isArray(cfg)) {
-    cfg.forEach(item => item.plugins.unshift(new webpack.DefinePlugin(program.production ? prodEnv : devEnv)))
-  } else {
-    cfg.plugins.unshift(new webpack.DefinePlugin(program.production ? prodEnv : devEnv))
-  }
+const env = process.env
 
-  if (program.production || program.watch) {
-    const extendCfg = program.production ? { mode: 'production' } : { cache: true }
-    if (Array.isArray(cfg)) {
-      cfg = cfg.map(item => merge(item, extendCfg))
-    } else {
-      cfg = merge(cfg, extendCfg)
+const modeStr = env.npm_config_mode || env.npm_config_modes || ''
+
+const report = env.npm_config_report
+
+const modes = modeStr.split(/[,|]/)
+  .map((mode) => {
+    const modeArr = mode.split(':')
+    if (supportedModes.includes(modeArr[0])) {
+      return {
+        mode: modeArr[0],
+        env: modeArr[1]
+      }
     }
-  }
-  if (process.env.npm_config_report) {
-    var BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin
-    var mainCfg = Array.isArray(cfg) ? cfg[0] : cfg
-    mainCfg.plugins.push(new BundleAnalyzerPlugin())
-  }
-  if (program.watch) {
-    webpack(cfg).watch({}, callback)
-  } else {
-    webpack(cfg, callback)
+  }).filter((item) => item)
+
+if (!modes.length) {
+  modes.push({
+    mode: userConf.srcMode
+  })
+}
+
+// 开启子进程
+if (userConf.openChildProcess && modes.length > 1) {
+  let scriptType = ''
+  const isProduct = program.production
+  const isWatch = program.watch
+  if (!isProduct && isWatch) scriptType = 'watch'
+  if (isProduct && !isWatch) scriptType = 'build'
+  if (isProduct && isWatch) scriptType = 'watch:prod'
+  if (!isProduct && !isWatch) scriptType = 'build:dev'
+
+  const spawn = require('child_process').spawn
+  while (modes.length > 1) {
+    const modeObj = modes.pop()
+    const modeAndEnv = modeObj.env ? `${modeObj.mode}:${modeObj.env}` : modeObj.mode
+    const ls = spawn('npm', ['run', scriptType, `--modes=${modeAndEnv}`, `--mode=${modeAndEnv}`], { stdio: 'inherit' })
+    ls.on('close', (code) => {
+      process.exitCode = code
+    })
   }
 }
 
+let webpackConfs = []
+
+modes.forEach(({ mode, env }) => {
+  const options = Object.assign({}, userConf, {
+    mode,
+    env,
+    production: program.production,
+    watch: program.watch,
+    report,
+    subDir: (userConf.isPlugin || userConf.cloudFunc) ? 'miniprogram' : ''
+  })
+  webpackConfs.push(getWebpackConf(options))
+})
+
+if (userConf.isPlugin) {
+  // 目前支持的plugin构建平台
+  modes.filter(({ mode }) => ['wx', 'ali'].includes(mode)).forEach(({ mode, env }) => {
+    const options = Object.assign({}, userConf, {
+      plugin: true,
+      mode,
+      env,
+      production: program.production,
+      watch: program.watch,
+      report,
+      subDir: 'plugin'
+    })
+    webpackConfs.push(getWebpackConf(options))
+  })
+}
+
+if (webpackConfs.length === 1) {
+  webpackConfs = webpackConfs[0]
+}
+
+
+try {
+  modes.forEach(({ mode, env }) => {
+    rm.sync(resolveDist(getRootPath(mode, env), '*'))
+  })
+} catch (e) {
+  console.error(e)
+  console.log('\n\n删除dist文件夹遇到了一些问题，如果遇到问题请手工删除dist重来\n\n')
+}
+
+if (program.watch) {
+  webpack(webpackConfs).watch(undefined, callback)
+} else {
+  webpack(webpackConfs, callback)
+}
+
 function callback (err, stats) {
-  spinner.stop()
-  if (err) return console.error(err)
+  if (err) {
+    process.exitCode = 1
+    return console.error(err)
+  }
   if (Array.isArray(stats.stats)) {
     stats.stats.forEach(item => {
       console.log(item.compilation.name + '打包结果：')
@@ -106,29 +133,11 @@ function callback (err, stats) {
     }) + '\n\n')
   }
 
-  if (!program.watch && stats.hasErrors()) {
+  if (stats.hasErrors()) {
     console.log(chalk.red('  Build failed with errors.\n'))
-    process.exit(1)
+  } else if (program.watch) {
+    console.log(chalk.cyan(`  Build complete at ${new Date()}.\n  Still watching...\n`))
+  } else {
+    console.log(chalk.cyan('  Build complete.\n'))
   }
-
-  console.log(chalk.cyan('  Build complete.\n'))
-  if (program.watch) {
-    console.log(chalk.cyan(`  ${new Date()} build finished.\n  Still watching...\n`))
-  }
-}
-
-var spinner = ora('building...')
-spinner.start()
-
-try {
-  rm.sync(path.resolve(__dirname, `../dist/*`))
-} catch (e) {
-  console.error(e)
-  console.log('\n\n删除dist文件夹遇到了一些问题，如果遇到问题请手工删除dist重来\n\n')
-}
-
-if (webpackConfigArr.length === 1) {
-  runWebpack(webpackConfigArr[0])
-} else {
-  runWebpack(webpackConfigArr)
 }

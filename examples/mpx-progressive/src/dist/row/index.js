@@ -1,9 +1,9 @@
 Component({
-    externalClasses: ['i-class'],
+  externalClasses: ['i-class'],
 
-    relations: {
-        '../col/index': {
-            type: 'child'
-        }
+  relations: {
+    '../col/index': {
+      type: 'child'
     }
-});
+  }
+})
