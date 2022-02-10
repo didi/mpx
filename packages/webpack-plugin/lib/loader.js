@@ -290,7 +290,7 @@ module.exports = function (content) {
             ...style.src ? {
               ...queryObj,
               isStatic: true,
-              issuerFile: addQuery(this.resource, { type: 'styles' }, true)
+              issuerResource: addQuery(this.resource, { type: 'styles' }, true)
             } : null,
             moduleId,
             scoped
