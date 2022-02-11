@@ -48,7 +48,7 @@ function doTest (config, test) {
   } = test
 
   // 判断custom以外的属性值为空
-  if(isEmptyObjectAttr(test, ['custom'])) return false
+  if (isEmptyObjectAttr(test, ['custom'])) return false
 
   const { baseUrl, protocol, hostname, port, path, search } = parseUrl(url)
 
@@ -197,7 +197,7 @@ function doProxy (config, proxy, matchParams) {
 }
 
 // 请求拦截
-export function requestProxy (options=[], config) {
+export function requestProxy (options = [], config) {
   const configBackup = Object.assign({}, config) // 备份请求配置
 
   let newConfig = config
@@ -207,7 +207,7 @@ export function requestProxy (options=[], config) {
     const { matched, matchParams } = doTest(configBackup, test)
     if ((isFunction(test.custom) && test.custom(configBackup)) || matched) {
       // mock response
-      if (test.response && typeof(test.response) === 'function')  return Promise.resolve(test.response(config))
+      if (test.response && typeof (test.response) === 'function') return Promise.resolve(test.response(config))
       // 匹配时
       newConfig = doProxy(newConfig, proxy, matchParams)
 

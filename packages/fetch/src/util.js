@@ -32,7 +32,7 @@ export function isThenable (obj) {
 // 排除一些特定属性，是否为空对象
 export function isEmptyObjectAttr (obj, excludeAttrs = []) {
   return !(obj && isObject(obj) && Object.keys(obj).some(key => {
-    if(~excludeAttrs.indexOf(key)) return false
+    if (~excludeAttrs.indexOf(key)) return false
     return !!obj[key]
   }))
 }

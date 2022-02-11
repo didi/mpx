@@ -134,9 +134,9 @@ export default class XFetch {
       // 6. 对于类POST请求将config.emulateJSON实现为config.header['content-type'] = 'application/x-www-form-urlencoded'
       // 后续请求处理都应基于正规化后的config进行处理(proxy/mock/validate/serialize)
       XFetch.normalizeConfig(config)
-      if ( this.proxyOptions ) {
+      if (this.proxyOptions) {
         config = this.checkProxy(config) // proxy
-        if ( isThenable(config) ) return config
+        if (isThenable(config)) return config
       }
       return this.queue ? this.queue.request(config, priority) : this.requestAdapter(config)
     }
