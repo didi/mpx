@@ -73,7 +73,7 @@ module.exports = function (content, map) {
       } else {
         const requestString = getRequestString('styles', { src: imp.url }, {
           isStatic: true,
-          issuerFile: mpx.getExtractedFile(this.resource),
+          issuerResource: this.resource,
           fromImport: true
         }, i)
         return 'exports.push([module.id, ' +
