@@ -117,7 +117,9 @@ class DynamicEntryDependency extends NullDependency {
 
 DynamicEntryDependency.Template = class DynamicEntryDependencyTemplate {
   apply (dep, source) {
-    const { resultPath, range, key } = dep
+    const { resultPath, range, key, outputPath } = dep
+    // judgement for /custom-tab-bar/index
+    if (outputPath === 'custom-tab-bar/index') return source.replace(range[0], range[1] - 1, 'true')
     if (resultPath) {
       source.replace(range[0], range[1] - 1, JSON.stringify(resultPath))
     } else {
