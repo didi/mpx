@@ -474,11 +474,12 @@ module.exports = function (content) {
 
     const processCustomTabBar = (tabBar, context, callback) => {
       if (tabBar && tabBar.custom) {
-        processComponent('./custom-tab-bar/index', context, { outputPath: 'custom-tab-bar/index' }, (err) => {
+        processComponent('./custom-tab-bar/index', context, { outputPath: 'custom-tab-bar/index' }, (err, entry) => {
           if (err === RESOLVE_IGNORED_ERR) {
             delete tabBar.custom
             return callback()
           }
+          tabBar.custom = entry // hack for javascript parser call hook.
           callback(err)
         })
       } else {
