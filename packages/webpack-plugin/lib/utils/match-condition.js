@@ -7,7 +7,7 @@ const orMatcher = items => {
   }
 }
 
-const normalizeCondition = (condition) => {
+export const normalizeCondition = (condition) => {
   if (!condition) throw new Error('Expected condition but got falsy value')
   if (typeof condition === 'string') {
     return str => str.indexOf(condition) !== -1

@@ -3,6 +3,7 @@ const he = require('he')
 const config = require('../config')
 const { MPX_ROOT_VIEW, MPX_APP_MODULE_ID } = require('../staticConfig')
 const normalize = require('../utils/normalize')
+const { normalizeCondition } = require('../utils/match-condition')
 const isValidIdentifierStr = require('../utils/is-valid-identifier-str')
 const isEmptyObject = require('../utils/is-empty-object')
 const mpxJSON = require('../utils/mpx-json')
@@ -11,7 +12,6 @@ const addQuery = require('../utils/add-query')
 const transDynamicClassExpr = require('./trans-dynamic-class-expr')
 const dash2hump = require('../utils/hump-dash').dash2hump
 const { inBrowser } = require('../utils/env')
-
 /**
  * Make a map and return a function for checking if a key
  * is in that map.
@@ -1943,48 +1943,60 @@ function processBuiltInComponents (el, meta) {
 }
 
 function processAliAddComponentRootView (el, options, stack, currentParent) {
-  const needCloneAttrs = [/^(on|catch)Tap$/, /^(on|catch)TouchStart$/, /^(on|catch)TouchMove$/, /^(on|catch)TouchEnd$/, /^(on|catch)TouchCancel$/, /^(on|catch)LongTap$/, /^data-/]
-  const needMoveAttrs = ['style']
-  const needAppendAttr = 'class'
-  let needAppendAttrValue = `${MPX_ROOT_VIEW} host-${options.moduleId}`
+  const processAttrsConditions = [
+    { condition: /^(on|catch)Tap$/, action: 'clone' },
+    { condition: /^(on|catch)TouchStart$/, action: 'clone' },
+    { condition: /^(on|catch)TouchMove$/, action: 'clone' },
+    { condition: /^(on|catch)TouchEnd$/, action: 'clone' },
+    { condition: /^(on|catch)TouchCancel$/, action: 'clone' },
+    { condition: /^(on|catch)LongTap$/, action: 'clone' },
+    { condition: /^data-/, action: 'clone' },
+    { condition: 'style', action: 'move' },
+    { condition: 'class', action: 'append', value: `${MPX_ROOT_VIEW} host-${options.moduleId}` }
+  ]
   let newElAttrs = []
-  let movedAttrs = []
   let allAttrs = cloneAttrsList(el.attrsList)
-  // clone attrs
-  const clonedAttrs = allAttrs.filter((attr) => {
-    return needCloneAttrs.some(condition => {
-      if (condition instanceof RegExp) {
-        return condition.test(attr.name)
-      } else if (typeof condition === 'string') {
-        return attr.name === condition
-      } else {
-        return false
-      }
-    })
-  })
-  // move attrs
-  needMoveAttrs.forEach((attr) => {
-    let movedAttr = getAndRemoveAttr(el, attr)
+
+  function processClone (attr) {
+    newElAttrs.push(attr)
+  }
+
+  function processMove (attr) {
+    let movedAttr = getAndRemoveAttr(el, attr.name)
     if (movedAttr.has) {
-      movedAttrs.push({
+      newElAttrs.push({
         name: attr,
         value: movedAttr.val
       })
     }
-  })
-  // append attr
-  let getNeedAppendAttrValue = el.attrsMap[needAppendAttr]
-  if (getNeedAppendAttrValue) {
-    needAppendAttrValue = getNeedAppendAttrValue + ' ' + needAppendAttrValue
   }
-  // generate new el attrs
-  newElAttrs = newElAttrs.concat(clonedAttrs).concat(movedAttrs)
-  newElAttrs.push(
-    {
-      name: needAppendAttr,
-      value: needAppendAttrValue
+
+  function processAppend (attr, item) {
+    const getNeedAppendAttrValue = el.attrsMap[attr.name]
+    if (getNeedAppendAttrValue) {
+      item.value = getNeedAppendAttrValue + ' ' + item.value
     }
-  )
+    newElAttrs.push({
+      name: item.name,
+      value: item.value
+    })
+  }
+
+  processAttrsConditions.forEach(item => {
+    const matcher = normalizeCondition(item.condition)
+    allAttrs.forEach((attr) => {
+      if (matcher(attr.name)) {
+        if (item.action === 'clone') {
+          processClone(attr)
+        } else if (item.action === 'move') {
+          processMove(attr)
+        } else if (item.action === 'append') {
+          processAppend(attr, item)
+        }
+      }
+    })
+  })
+
   // create new el
   let componentWrapView = createASTElement('view', newElAttrs)
   currentParent.children.pop()
