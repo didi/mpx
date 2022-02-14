@@ -191,12 +191,6 @@ mpx.xfetch.interceptors.response.use(function(res) {
             ::: warning
             如果设置了此项，匹配结果以此项为准，以上规则均不再生效。
             :::
-        - response
-
-
-            类型：`function`
-
-            详细：自定义响应的mock数据，参数注入原始的请求配置，返回结果为请求的mock数据。
 
 
     - **proxy**

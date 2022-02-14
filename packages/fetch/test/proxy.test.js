@@ -51,9 +51,9 @@ describe('test proxy method.', () => {
       proxy: {},
       waterfall: true
     })
-    expect(JSON.stringify(xfetch.getProxy())).toBe(JSON.stringify(optionsProxy.proxy))
+    expect(xfetch.getProxy()).toBe(optionsProxy.proxy)
     xfetch.clearProxy()
-    expect(JSON.stringify(xfetch.getProxy())).toBe(undefined)
+    expect(xfetch.getProxy()).toBe(undefined)
   })
 })
 
@@ -131,46 +131,5 @@ describe('request proxy test.', () => {
     const options = { url: 'http://10.11.11.123:8000/api/getlist' }
     let config = xfetch.checkProxy(options)
     expect(config.url).toBe('http://10.11.11.123:8000/api/getlist')
-  })
-})
-
-describe('response mock data proxy test.', () => {
-  const xfetch = new XFetch({
-    proxy: [{
-      test: {
-        protocol: 'http:',
-        host: '10.11.11.123',
-        port: '8000',
-        path: '/api/user',
-        response () {
-          return {
-            code: 200,
-            msg: 'succes',
-            data: {
-              name: 'qy'
-            }
-          }
-        }
-      },
-      proxy: {
-        host: 'test.didi.com',
-        port: 8001,
-        path: '/api/group/1'
-      }
-    }]
-  })
-  it('custom response data', () => {
-    // // request url
-    const options = { url: 'http://10.11.11.123:8000/api/user' }
-    let result = {
-      code: 200,
-      msg: 'succes',
-      data: {
-        name: 'qy'
-      }
-    }
-    xfetch.fetch(options).then((data) => {
-      expect(JSON.stringify(data)).toBe(JSON.stringify(result))
-    })
   })
 })

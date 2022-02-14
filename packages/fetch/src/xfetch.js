@@ -2,7 +2,7 @@ import requestAdapter from './request'
 import CancelToken from './cancelToken'
 import InterceptorManager from './interceptorManager'
 import RequestQueue from './queue'
-import { requestProxy } from './proxy'
+import { requestProxy, requestMock } from './proxy'
 import { isNotEmptyArray, isNotEmptyObject, transformReq, isThenable } from './util'
 
 export default class XFetch {
@@ -19,6 +19,7 @@ export default class XFetch {
       this.requestAdapter = (config) => requestAdapter(config, MPX)
     }
     if (options && options.proxy) this.setProxy(options.proxy)
+    if (options && options.mock) this.setMock(options.mock)
     this.interceptors = {
       request: new InterceptorManager(),
       response: new InterceptorManager()
@@ -81,6 +82,24 @@ export default class XFetch {
     }
   }
 
+  setMock (options) {
+    if (isNotEmptyArray(options)) {
+      this.mockOptions = options
+    } else if (isNotEmptyObject(options)) {
+      this.mockOptions = [options]
+    } else {
+      console.error('仅支持不为空的对象或数组')
+    }
+  }
+
+  getMock () {
+    return this.mockOptions
+  }
+
+  clearMock () {
+    this.mockOptions = undefined
+  }
+
   getProxy () {
     // 返回代理配置
     return this.proxyOptions
@@ -135,8 +154,12 @@ export default class XFetch {
       // 后续请求处理都应基于正规化后的config进行处理(proxy/mock/validate/serialize)
       XFetch.normalizeConfig(config)
       if (this.proxyOptions) {
-        config = this.checkProxy(config) // proxy
-        if (isThenable(config)) return config
+        config = this.checkProxy(config)
+      }
+
+      if (this.mockOptions) {
+        let mockData = requestMock(this.mockOptions, config)
+        if (isThenable(mockData)) return mockData
       }
       return this.queue ? this.queue.request(config, priority) : this.requestAdapter(config)
     }

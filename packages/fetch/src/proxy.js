@@ -197,24 +197,40 @@ function doProxy (config, proxy, matchParams) {
 }
 
 // 请求拦截
-export function requestProxy (options = [], config) {
+export function requestProxy (options, config) {
   const configBackup = Object.assign({}, config) // 备份请求配置
 
   let newConfig = config
 
-  for (let item of options) {
+  options && options.some((item) => {
     const { test, proxy, waterfall } = item
     const { matched, matchParams } = doTest(configBackup, test)
     if ((isFunction(test.custom) && test.custom(configBackup)) || matched) {
-      // mock response
-      if (test.response && typeof (test.response) === 'function') return Promise.resolve(test.response(config))
       // 匹配时
       newConfig = doProxy(newConfig, proxy, matchParams)
 
       // waterfall 模式
-      if (!waterfall) break
+      return !waterfall
     }
-  }
+  })
 
   return Object.assign({}, configBackup, newConfig)
+}
+
+// mock
+export function requestMock (options = [], config) {
+  return new Promise((resolve, reject) => {
+    const configBackup = Object.assign({}, config) // 备份请求配置
+
+    for (let item of options) {
+      const { test, mock: callback } = item
+      // custom不存在时，进行url参数匹配
+      const matched = (!test.custom) && doTest(configBackup, test).matched
+      if (isFunction(callback) && ((isFunction(test.custom) && test.custom(configBackup)) || matched)) {
+        let data = callback.call(config)
+        return resolve(data)
+      }
+    }
+    reject(new Error('no url matched'))
+  })
 }
