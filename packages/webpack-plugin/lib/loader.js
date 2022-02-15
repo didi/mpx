@@ -19,6 +19,7 @@ const AppEntryDependency = require('./dependencies/AppEntryDependency')
 const RecordResourceMapDependency = require('./dependencies/RecordResourceMapDependency')
 const CommonJsVariableDependency = require('./dependencies/CommonJsVariableDependency')
 const RecordModuleTemplateDependency = require('./dependencies/RecordModuleTemplateDependency')
+const RuntimeRenderPackageDependency = require('./dependencies/RuntimeRenderPackageDependency')
 const { MPX_APP_MODULE_ID } = require('./utils/const')
 
 module.exports = function (content) {
@@ -212,8 +213,7 @@ module.exports = function (content) {
   }
 
   if (checkIsRuntimeMode(this.resource)) {
-    mpx.runtimeRender.addUsingRuntimePackages(packageName)
-    mpx.runtimeRender.addRuntimeRenderHook()
+    this._module.addPresentationalDependency(new RuntimeRenderPackageDependency(packageName))
   }
 
   // 注入模块id及资源路径

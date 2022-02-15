@@ -13,10 +13,11 @@ const createHelpers = require('../helpers')
 const createJSONHelper = require('./helper')
 const RecordGlobalComponentsDependency = require('../dependencies/RecordGlobalComponentsDependency')
 const RecordIndependentDependency = require('../dependencies/RecordIndependentDependency')
+const RecordComponentInfoDependency = require('../dependencies/RecordComponentInfoDependency')
+
 const { MPX_DISABLE_EXTRACTOR_CACHE, RESOLVE_IGNORED_ERR, JSON_JS_EXT } = require('../utils/const')
 const resolve = require('../utils/resolve')
 const checkIsRuntimeMode = require('../utils/check-is-runtime')
-const runtimeRenderConfig = require('../runtime-render/config')
 
 module.exports = async function (content) {
   const nativeCallback = this.async()
@@ -214,17 +215,10 @@ module.exports = async function (content) {
   }
 
   const collectRuntimeInfo = (name, resource) => {
-    const isRuntimeComponent = checkIsRuntimeMode(resource)
-    // 全局组件
-    if (isApp) {
-      runtimeRenderConfig.addGlobalRuntimeComponents(name)
-    } else {
-      // page or component 局部组件
-      runtimeRenderConfig.addComponentDependencyInfo(resourcePath, name, {
-        isRuntimeComponent,
-        hashName: 'c' + mpx.pathHash(resource),
-        resourcePath: resource
-      })
+    if (!isApp) {
+      const isRuntimeComponent = checkIsRuntimeMode(resource)
+      const hashName = 'c' + mpx.pathHash(resource)
+      this._module.addPresentationalDependency(new RecordComponentInfoDependency(resourcePath, name, isRuntimeComponent, hashName, resource))
     }
   }
 

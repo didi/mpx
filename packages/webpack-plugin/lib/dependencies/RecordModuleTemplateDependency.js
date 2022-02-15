@@ -8,6 +8,10 @@ class RecordModuleTemplateDependency extends NullDependency {
     this.requestString = requestString
   }
 
+  get type () {
+    return 'mpx record module template'
+  }
+
   mpxAction (module, compilation, callback) {
     const mpx = compilation.__mpx__
     mpx.moduleTemplate[this.moduleId] = this.requestString

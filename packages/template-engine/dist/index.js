@@ -759,7 +759,7 @@ class BaseTemplate {
 `;
     }
     buildThirdPartyAttr(attrs) {
-        return Array.from(attrs).reduce((str, attr) => {
+        return Object.keys(attrs).reduce((str, attr) => {
             if (attr.startsWith('@')) {
                 // vue2
                 let value = attr.slice(1);
@@ -900,7 +900,8 @@ class BaseTemplate {
         const data = !isSupportRecursive && supportXS
             ? `${this.dataKeymap('i:item,l:l')}`
             : this.dataKeymap('i:item');
-        componentConfig.thirdPartyComponents.forEach((attrs, compName) => {
+        for (let compName in componentConfig.normalComponents) {
+            const attrs = componentConfig.normalComponents[compName];
             if (compName === 'custom-wrapper') {
                 template += `
 <template name="tmpl_${level}_${compName}">
@@ -933,8 +934,9 @@ class BaseTemplate {
 </template>
   `;
             }
-        });
-        componentConfig.runtimeComponents.forEach((attrs, compName) => {
+        }
+        for (let compName in componentConfig.runtimeComponents) {
+            const attrs = componentConfig.runtimeComponents[compName];
             if (!isSupportRecursive && supportXS && nestElements.has(compName) && level + 1 > nestElements.get(compName))
                 return;
             template += `
@@ -942,7 +944,7 @@ class BaseTemplate {
   <${compName} ${this.buildThirdPartyAttr(attrs)} data-mpxuid="{{i.data.uid}}"></${compName}>
 </template>
   `;
-        });
+        }
         return template;
     }
     buildBlockTemplate(level) {
@@ -1102,7 +1104,7 @@ class UnRecursiveTemplate extends BaseTemplate {
     buildXSTmplName() {
         const isLoopComps = [
             ...Array.from(this.nestElements.keys()),
-            ...Array.from(this.componentConfig.thirdPartyComponents.keys()),
+            ...Array.from(this.componentConfig.normalComponents.keys()),
             ...Array.from(this.componentConfig.runtimeComponents.keys())
         ];
         const isLoopCompsSet = new Set(isLoopComps); // 可递归循环的组件

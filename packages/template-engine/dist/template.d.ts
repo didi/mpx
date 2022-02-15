@@ -8,10 +8,10 @@ interface Components {
 interface ComponentConfig {
     includes: Set<string>;
     exclude: Set<string>;
-    thirdPartyComponents: Map<string, Set<string>>;
-    runtimeComponents: Map<string, Set<string>>;
+    normalComponents: Map<string, Record<string, string>>;
+    runtimeComponents: Map<string, Record<string, string>>;
     includeAll: boolean;
-    internalComponents: Map<string, Set<string>>;
+    internalComponents: Map<string, Array<string>>;
 }
 export interface IAdapter {
     if: string;
@@ -47,13 +47,13 @@ export declare class BaseTemplate {
     protected replacePropName(name: string, value: string, _componentName?: string): string;
     protected createMiniComponents(components: any): any;
     protected buildBaseTemplate(): string;
-    protected buildThirdPartyAttr(attrs: Set<string>): string;
+    protected buildThirdPartyAttr(attrs: Record<string, string>): string;
     protected buildComponentTemplate(comp: Component, level: number): string;
     private getChildren;
     protected buildFocusComponentTemplte(comp: Component, level: number): string;
     protected buildStandardComponentTemplate(comp: Component, level: number): string;
     protected buildPlainTextTemplate(level: number): string;
-    protected buildThirdPartyTemplate(level: number, componentConfig: ComponentConfig): string;
+    protected buildThirdPartyTemplate(level: number, componentConfig: ComponentConfig): string | undefined;
     protected buildBlockTemplate(level: number): string;
     protected buildContainerTemplate(level: number, restart?: boolean): string;
     protected dataKeymap(keymap: string): string;

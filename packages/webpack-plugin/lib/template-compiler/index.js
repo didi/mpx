@@ -4,7 +4,8 @@ const parseRequest = require('../utils/parse-request')
 const matchCondition = require('../utils/match-condition')
 const checkIsRuntimeMode = require('../utils/check-is-runtime')
 const loaderUtils = require('loader-utils')
-const runtimeRenderConfig = require('../runtime-render/config')
+const RecordTemplateRuntimeInfoDependency = require('../dependencies/RecordTemplateRuntimeInfoDependency')
+const { MPX_DISABLE_EXTRACTOR_CACHE } = require('../utils/const')
 
 module.exports = function (raw) {
   this.cacheable()
@@ -29,7 +30,7 @@ module.exports = function (raw) {
   const moduleId = queryObj.moduleId
 
   const runtimeCompile = checkIsRuntimeMode(resourcePath)
-  const { componentDependencyInfo, runtimeComponents } = runtimeRenderConfig.getComponentDependencyInfo(resourcePath)
+  const { componentDependencyInfo, runtimeComponents } = mpx.getComponentDependencyInfo(resourcePath)
 
   const warn = (msg) => {
     this.emitWarning(
@@ -46,7 +47,6 @@ module.exports = function (raw) {
   const { root: ast, meta } = compiler.parse(raw, {
     warn,
     error,
-    packageName,
     componentDependencyInfo,
     runtimeComponents,
     runtimeCompile,
@@ -68,9 +68,15 @@ module.exports = function (raw) {
     checkUsingComponents: mpx.checkUsingComponents,
     globalComponents: Object.keys(mpx.usingComponents),
     forceProxyEvent: matchCondition(resourcePath, mpx.forceProxyEventRules),
-    hasVirtualHost: matchCondition(resourcePath, mpx.autoVirtualHostRules),
-    setRuntimeComponentsMap: mpx.runtimeRender.setComponentsMap.bind(mpx.runtimeRender)
+    hasVirtualHost: matchCondition(resourcePath, mpx.autoVirtualHostRules)
   })
+
+  if (meta.runtimeInfo) {
+    // 包含了运行时组件的template模块必须每次都创建（但并不是每次都需要build），用于收集组件节点信息，传递信息以禁用父级extractor的缓存
+    this.emitFile(MPX_DISABLE_EXTRACTOR_CACHE, '', undefined, { skipEmit: true })
+    // 以 package 为维度存储，meta 上的数据也只是存储了这个组件的 template 上获取的信息，需要在 dependency 里面再次进行合并操作
+    this._module.addPresentationalDependency(new RecordTemplateRuntimeInfoDependency(packageName, resourcePath, meta.runtimeInfo))
+  }
 
   if (meta.wxsContentMap) {
     for (let module in meta.wxsContentMap) {

@@ -1,5 +1,4 @@
 const { wx } = require('../config')
-const injectComponentConfig = require('./inject-component-config')
 const { hasExtractAttr } = require('./utils')
 const hash = require('hash-sum')
 
@@ -9,28 +8,25 @@ const OPTIMIZE_NODES = ['view', 'text', 'image']
 
 let hashIndex = 0
 
-function setCustomEle (el, packageName) {
+function makeAttrsMap (attrKeys = []) {
+  return attrKeys.reduce((preVal, curVal) => Object.assign(preVal, { [curVal]: '' }), {})
+}
+
+function setCustomEle (el, meta) {
   const tag = el.aliasTag || el.tag
   const attrKeys = Object.keys(el.attrsMap).filter(key => !directives.has(key))
-  if (!injectComponentConfig[packageName]) {
-    injectComponentConfig[packageName] = {
-      runtimeComponents: new Map(),
-      thirdPartyComponents: new Map()
-    }
-  }
-  const collection = el.isRuntimeComponent ? injectComponentConfig[packageName].runtimeComponents : injectComponentConfig[packageName].thirdPartyComponents
-  if (tag && !collection.get(tag)) {
+
+  const eleAttrsMap = el.isRuntimeComponent ? meta.runtimeInfo.runtimeComponents : meta.runtimeInfo.normalComponents
+  if (tag && !eleAttrsMap[tag]) {
+    eleAttrsMap[tag] = {}
     if (el.isRuntimeComponent) {
       attrKeys.push('slots', 'mpxAttrs')
     }
-    collection.set(tag, new Set(attrKeys))
-  } else {
-    const attrs = collection.get(tag)
-    attrKeys.map(key => attrs.add(key))
   }
+  Object.assign(eleAttrsMap[tag], makeAttrsMap(attrKeys))
 }
 
-function setBaseEle (el) {
+function setBaseEle (el, meta) {
   let aliasTag = ''
   let hasEvents = false
   let usingHashTag = false
@@ -72,14 +68,14 @@ function setBaseEle (el) {
     el.aliasTag = aliasTag
   }
 
-  if (tag && !injectComponentConfig.internalComponents[tag]) {
-    injectComponentConfig.internalComponents[tag] = {}
+  if (!meta.runtimeInfo.internalComponents[tag]) {
+    meta.runtimeInfo.internalComponents[tag] = {}
   }
 
-  Object.assign(injectComponentConfig.internalComponents[tag], renderAttrsMap)
+  Object.assign(meta.runtimeInfo.internalComponents[tag], renderAttrsMap)
 }
 
-module.exports = function setBaseWxml (el, isCustomComponent, packageName) {
+module.exports = function setBaseWxml (el, isCustomComponent, meta) {
   const set = isCustomComponent ? setCustomEle : setBaseEle
-  set(el, packageName)
+  set(el, meta)
 }

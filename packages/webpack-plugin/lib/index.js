@@ -32,6 +32,9 @@ const DynamicEntryDependency = require('./dependencies/DynamicEntryDependency')
 const FlagPluginDependency = require('./dependencies/FlagPluginDependency')
 const RemoveEntryDependency = require('./dependencies/RemoveEntryDependency')
 const RecordModuleTemplateDependency = require('./dependencies/RecordModuleTemplateDependency')
+const RuntimeRenderPackageDependency = require('./dependencies/RuntimeRenderPackageDependency')
+const RecordComponentInfoDependency = require('./dependencies/RecordComponentInfoDependency')
+const RecordTemplateRuntimeInfoDependency = require('./dependencies/RecordTemplateRuntimeInfoDependency')
 const SplitChunksPlugin = require('webpack/lib/optimize/SplitChunksPlugin')
 const fixRelative = require('./utils/fix-relative')
 const parseRequest = require('./utils/parse-request')
@@ -52,7 +55,7 @@ const async = require('async')
 const stringifyLoadersAndResource = require('./utils/stringify-loaders-resource')
 const emitFile = require('./utils/emit-file')
 const { MPX_PROCESSED_FLAG, MPX_DISABLE_EXTRACTOR_CACHE } = require('./utils/const')
-const RuntimeRender = require('./runtime-render')
+const RuntimeRenderPlugin = require('./runtime-render/plugin')
 const isEmptyObject = require('./utils/is-empty-object')
 
 const isProductionLikeMode = options => {
@@ -280,6 +283,7 @@ class MpxWebpackPlugin {
       compiler.options.node.global = true
     }
 
+    new RuntimeRenderPlugin().apply(compiler)
     const addModePlugin = new AddModePlugin('before-file', this.options.mode, this.options.fileConditionRules, 'file')
     const addEnvPlugin = new AddEnvPlugin('before-file', this.options.env, this.options.fileConditionRules, 'file')
     const packageEntryPlugin = new PackageEntryPlugin('before-described-relative', this.options.miniNpmPackages, 'resolve')
@@ -485,6 +489,15 @@ class MpxWebpackPlugin {
 
       compilation.dependencyFactories.set(RecordModuleTemplateDependency, new NullFactory())
       compilation.dependencyTemplates.set(RecordModuleTemplateDependency, new RecordModuleTemplateDependency.Template())
+
+      compilation.dependencyFactories.set(RuntimeRenderPackageDependency, new NullFactory())
+      compilation.dependencyTemplates.set(RuntimeRenderPackageDependency, new RuntimeRenderPackageDependency.Template())
+
+      compilation.dependencyFactories.set(RecordComponentInfoDependency, new NullFactory())
+      compilation.dependencyTemplates.set(RecordComponentInfoDependency, new RecordComponentInfoDependency.Template())
+
+      compilation.dependencyFactories.set(RecordTemplateRuntimeInfoDependency, new NullFactory())
+      compilation.dependencyTemplates.set(RecordTemplateRuntimeInfoDependency, new RecordTemplateRuntimeInfoDependency.Template())
     })
 
     compiler.hooks.thisCompilation.tap('MpxWebpackPlugin', (compilation, { normalModuleFactory }) => {
@@ -710,8 +723,6 @@ class MpxWebpackPlugin {
               })
             }
           },
-          // 需要缓存每次的配置信息
-          runtimeRender: new RuntimeRender(compilation),
           hooks: {
             finishSubpackagesMake: new AsyncSeriesHook(['compilation'])
           },

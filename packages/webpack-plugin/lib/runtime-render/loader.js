@@ -1,6 +1,5 @@
 const parseRequest = require('../utils/parse-request')
 const config = require('../config')
-const injectComponentConfig = require('./inject-component-config')
 const { unRecursiveTemplate } = require('./wx-template')
 const normalize = require('../utils/normalize')
 const selector = normalize.lib('selector')
@@ -26,14 +25,13 @@ module.exports = function (rawContent) {
 
   let content = ''
   if (type === 'template') {
-    injectComponentConfig[currentPackageRoot].internalComponents = injectComponentConfig.internalComponents
-    content = '<template is="tmpl_0_container" data="{{ i: r }}"></template>\n' + unRecursiveTemplate.buildTemplate(injectComponentConfig[currentPackageRoot])
+    content = '<template is="tmpl_0_container" data="{{ i: r }}"></template>\n' + unRecursiveTemplate.buildTemplate(mpx.runtimeInfo[currentPackageRoot])
   } else if (type === 'styles') {
-    content = mpx.runtimeRender.getPackageInjectedWxss(currentPackageRoot)
+    content = mpx.getPackageInjectedWxss(currentPackageRoot)
   } else if (type === 'json') {
     const jsonBlock = {
       component: true,
-      usingComponents: mpx.runtimeRender.getPackageInjectedComponentsMap(currentPackageRoot)
+      usingComponents: mpx.getPackageInjectedComponentsMap(currentPackageRoot)
     }
     content = JSON.stringify(jsonBlock, null, 2)
   }
