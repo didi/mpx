@@ -22,6 +22,7 @@ class RecordResourceMapDependency extends NullDependency {
       resourceType,
       outputPath,
       packageRoot,
+      recordOnly: true,
       warn (e) {
         compilation.warnings.push(e)
       },

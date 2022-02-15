@@ -65,7 +65,7 @@ module.exports = function (content, map) {
         alreadyImported[imp.url] = true
       }
       return true
-    }).map((imp) => {
+    }).map((imp, i) => {
       if (!isUrlRequest(imp.url, root, externals)) {
         return 'exports.push([module.id, ' +
           JSON.stringify('@import url(' + imp.url + ');') + ', ' +
@@ -73,9 +73,9 @@ module.exports = function (content, map) {
       } else {
         const requestString = getRequestString('styles', { src: imp.url }, {
           isStatic: true,
-          issuerFile: mpx.getExtractedFile(this.resource),
+          issuerResource: this.resource,
           fromImport: true
-        })
+        }, i)
         return 'exports.push([module.id, ' +
           JSON.stringify('@import "') +
           '+ require(' + requestString + ') +' +

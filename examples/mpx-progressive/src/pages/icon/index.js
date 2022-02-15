@@ -1,277 +1,277 @@
 Page({
-    data: {
-        list: ['accessory'
+  data: {
+    list: ['accessory',
 
-            ,'activity'
+      'activity',
 
-            ,'activity_fill'
+      'activity_fill',
 
-            ,'add'
+      'add',
 
-            ,'addressbook_fill'
+      'addressbook_fill',
 
-            ,'addressbook'
+      'addressbook',
 
-            ,'barrage_fill'
+      'barrage_fill',
 
-            ,'barrage'
+      'barrage',
 
-            ,'browse_fill'
+      'browse_fill',
 
-            ,'browse'
+      'browse',
 
-            ,'brush'
+      'brush',
 
-            ,'brush_fill'
+      'brush_fill',
 
-            ,'businesscard_fill'
+      'businesscard_fill',
 
-            ,'businesscard'
+      'businesscard',
 
-            ,'camera_fill'
+      'camera_fill',
 
-            ,'camera'
+      'camera',
 
-            ,'clock_fill'
+      'clock_fill',
 
-            ,'clock'
+      'clock',
 
-            ,'close'
+      'close',
 
-            ,'collection_fill'
+      'collection_fill',
 
-            ,'collection'
+      'collection',
 
-            ,'computer_fill'
+      'computer_fill',
 
-            ,'computer'
+      'computer',
 
-            ,'coordinates_fill'
+      'coordinates_fill',
 
-            ,'coordinates'
+      'coordinates',
 
-            ,'coupons_fill'
+      'coupons_fill',
 
-            ,'coupons'
+      'coupons',
 
-            ,'createtask_fill'
+      'createtask_fill',
 
-            ,'createtask'
+      'createtask',
 
-            ,'customerservice_fill'
+      'customerservice_fill',
 
-            ,'customerservice'
+      'customerservice',
 
-            ,'delete_fill'
+      'delete_fill',
 
-            ,'delete'
+      'delete',
 
-            ,'document'
+      'document',
 
-            ,'document_fill'
+      'document_fill',
 
-            ,'dynamic_fill'
+      'dynamic_fill',
 
-            ,'dynamic'
+      'dynamic',
 
-            ,'editor'
+      'editor',
 
-            ,'eit'
+      'eit',
 
-            ,'emoji_fill'
+      'emoji_fill',
 
-            ,'emoji'
+      'emoji',
 
-            ,'enter'
+      'enter',
 
-            ,'enterinto'
+      'enterinto',
 
-            ,'enterinto_fill'
+      'enterinto_fill',
 
-            ,'feedback_fill'
+      'feedback_fill',
 
-            ,'feedback'
+      'feedback',
 
-            ,'flag_fill'
+      'flag_fill',
 
-            ,'flag'
+      'flag',
 
-            ,'flashlight'
+      'flashlight',
 
-            ,'flashlight_fill'
+      'flashlight_fill',
 
-            ,'fullscreen'
+      'fullscreen',
 
-            ,'group'
+      'group',
 
-            ,'group_fill'
+      'group_fill',
 
-            ,'homepage_fill'
+      'homepage_fill',
 
-            ,'homepage'
+      'homepage',
 
-            ,'integral_fill'
+      'integral_fill',
 
-            ,'integral'
+      'integral',
 
-            ,'interactive_fill'
+      'interactive_fill',
 
-            ,'interactive'
+      'interactive',
 
-            ,'keyboard'
+      'keyboard',
 
-            ,'label'
+      'label',
 
-            ,'label_fill'
+      'label_fill',
 
-            ,'like_fill'
+      'like_fill',
 
-            ,'like'
+      'like',
 
-            ,'live_fill'
+      'live_fill',
 
-            ,'live'
+      'live',
 
-            ,'lock_fill'
+      'lock_fill',
 
-            ,'lock'
+      'lock',
 
-            ,'mail'
+      'mail',
 
-            ,'mail_fill'
+      'mail_fill',
 
-            ,'message'
+      'message',
 
-            ,'message_fill'
+      'message_fill',
 
-            ,'mine'
+      'mine',
 
-            ,'mine_fill'
+      'mine_fill',
 
-            ,'mobilephone_fill'
+      'mobilephone_fill',
 
-            ,'mobilephone'
+      'mobilephone',
 
-            ,'more'
+      'more',
 
-            ,'narrow'
+      'narrow',
 
-            ,'offline_fill'
+      'offline_fill',
 
-            ,'offline'
+      'offline',
 
-            ,'other'
+      'other',
 
-            ,'picture_fill'
+      'picture_fill',
 
-            ,'picture'
+      'picture',
 
-            ,'play'
+      'play',
 
-            ,'play_fill'
+      'play_fill',
 
-            ,'playon_fill'
+      'playon_fill',
 
-            ,'playon'
+      'playon',
 
-            ,'praise_fill'
+      'praise_fill',
 
-            ,'praise'
+      'praise',
 
-            ,'prompt_fill'
+      'prompt_fill',
 
-            ,'prompt'
+      'prompt',
 
-            ,'redpacket_fill'
+      'redpacket_fill',
 
-            ,'redpacket'
+      'redpacket',
 
-            ,'refresh'
+      'refresh',
 
-            ,'remind_fill'
+      'remind_fill',
 
-            ,'remind'
+      'remind',
 
-            ,'return'
+      'return',
 
-            ,'right'
+      'right',
 
-            ,'scan'
+      'scan',
 
-            ,'send'
+      'send',
 
-            ,'service_fill'
+      'service_fill',
 
-            ,'service'
+      'service',
 
-            ,'setup_fill'
+      'setup_fill',
 
-            ,'setup'
+      'setup',
 
-            ,'share_fill'
+      'share_fill',
 
-            ,'share'
+      'share',
 
-            ,'success_fill'
+      'success_fill',
 
-            ,'success'
+      'success',
 
-            ,'suspend'
+      'suspend',
 
-            ,'switch'
+      'switch',
 
-            ,'systemprompt_fill'
+      'systemprompt_fill',
 
-            ,'systemprompt'
+      'systemprompt',
 
-            ,'tailor'
+      'tailor',
 
-            ,'task'
+      'task',
 
-            ,'task_fill'
+      'task_fill',
 
-            ,'tasklist_fill'
+      'tasklist_fill',
 
-            ,'tasklist'
+      'tasklist',
 
-            ,'time_fill'
+      'time_fill',
 
-            ,'time'
+      'time',
 
-            ,'translation_fill'
+      'translation_fill',
 
-            ,'translation'
+      'translation',
 
-            ,'trash'
+      'trash',
 
-            ,'trash_fill'
+      'trash_fill',
 
-            ,'undo'
+      'undo',
 
-            ,'video'
+      'video',
 
-            ,'video_fill'
+      'video_fill',
 
-            ,'warning_fill'
+      'warning_fill',
 
-            ,'warning'
+      'warning',
 
-            ,'search'
+      'search',
 
-            ,'searchfill'
+      'searchfill',
 
-            ,'publishgoods_fill'
+      'publishgoods_fill',
 
-            ,'shop_fill'
+      'shop_fill',
 
-            ,'transaction_fill'
+      'transaction_fill',
 
-            ,'packup'
+      'packup',
 
-            ,'unfold'
+      'unfold',
 
-            ,'financial_fill'
+      'financial_fill',
 
-            ,'commodity']
-    }
-});
+      'commodity']
+  }
+})

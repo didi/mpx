@@ -279,7 +279,7 @@ class MpxWebpackPlugin {
 
     const addModePlugin = new AddModePlugin('before-file', this.options.mode, this.options.fileConditionRules, 'file')
     const addEnvPlugin = new AddEnvPlugin('before-file', this.options.env, this.options.fileConditionRules, 'file')
-    const packageEntryPlugin = new PackageEntryPlugin('before-described-relative', this.options.miniNpmPackages, 'resolve')
+    const packageEntryPlugin = new PackageEntryPlugin('before-file', this.options.miniNpmPackages, 'file')
     if (Array.isArray(compiler.options.resolve.plugins)) {
       compiler.options.resolve.plugins.push(addModePlugin)
     } else {
@@ -566,7 +566,7 @@ class MpxWebpackPlugin {
             const hash = mpx.pathHash(resourcePath)
             const customOutputPath = this.options.customOutputPath
             if (conflictPath) return conflictPath.replace(/(\.[^\\/]+)?$/, match => hash + match)
-            if (typeof customOutputPath === 'function') return customOutputPath(type, name, hash, ext)
+            if (typeof customOutputPath === 'function') return customOutputPath(type, name, hash, ext).replace(/^\//, '')
             if (type === 'component' || type === 'page') return path.join(type + 's', name + hash, 'index' + ext)
             return path.join(type, name + hash + ext)
           },
@@ -597,25 +597,28 @@ class MpxWebpackPlugin {
             mpx.extractedFilesCache.set(resource, file)
             return file
           },
-          recordResourceMap: ({ resourcePath, resourceType, outputPath, packageRoot = '', warn, error }) => {
+          recordResourceMap: ({ resourcePath, resourceType, outputPath, packageRoot = '', recordOnly, warn, error }) => {
             const packageName = packageRoot || 'main'
             const resourceMap = mpx[`${resourceType}sMap`] || mpx.otherResourcesMap
             const currentResourceMap = resourceMap.main ? resourceMap[packageName] = resourceMap[packageName] || {} : resourceMap
+            let alreadyOutputted = false
             if (outputPath) {
               if (!currentResourceMap[resourcePath] || currentResourceMap[resourcePath] === true) {
-                // 输出路径冲突检测，如果存在输出路径冲突，对输出路径进行重命名
-                // todo 用outputPathMap来检测输出路径冲突
-                for (let key in currentResourceMap) {
-                  if (currentResourceMap[key] === outputPath && key !== resourcePath) {
-                    outputPath = mpx.getOutputPath(resourcePath, resourceType, { conflictPath: outputPath })
-                    warn && warn(new Error(`Current ${resourceType} [${resourcePath}] is registered with conflicted outputPath [${currentResourceMap[key]}] which is already existed in system, will be renamed with [${outputPath}], use ?resolve to get the real outputPath!`))
-                    break
+                if (!recordOnly) {
+                  // 在非recordOnly的模式下，进行输出路径冲突检测，如果存在输出路径冲突，则对输出路径进行重命名
+                  for (let key in currentResourceMap) {
+                    // todo 用outputPathMap来检测输出路径冲突
+                    if (currentResourceMap[key] === outputPath && key !== resourcePath) {
+                      outputPath = mpx.getOutputPath(resourcePath, resourceType, { conflictPath: outputPath })
+                      warn && warn(new Error(`Current ${resourceType} [${resourcePath}] is registered with conflicted outputPath [${currentResourceMap[key]}] which is already existed in system, will be renamed with [${outputPath}], use ?resolve to get the real outputPath!`))
+                      break
+                    }
                   }
                 }
                 currentResourceMap[resourcePath] = outputPath
               } else {
                 if (currentResourceMap[resourcePath] === outputPath) {
-                  return true
+                  alreadyOutputted = true
                 } else {
                   error && error(new Error(`Current ${resourceType} [${resourcePath}] is already registered with outputPath [${currentResourceMap[resourcePath]}], you can not register it with another outputPath [${outputPath}]!`))
                 }
@@ -623,7 +626,11 @@ class MpxWebpackPlugin {
             } else if (!currentResourceMap[resourcePath]) {
               currentResourceMap[resourcePath] = true
             }
-            return false
+
+            return {
+              outputPath,
+              alreadyOutputted
+            }
           },
           // 组件和静态资源的输出规则如下：
           // 1. 主包引用的资源输出至主包
@@ -675,20 +682,18 @@ class MpxWebpackPlugin {
 
             if (outputPath) outputPath = toPosix(path.join(packageRoot, outputPath))
 
-            const alreadyOutputted = mpx.recordResourceMap({
-              resourcePath,
-              resourceType,
-              outputPath,
-              packageRoot,
-              warn,
-              error
-            })
-
             return {
               packageName,
               packageRoot,
-              outputPath,
-              alreadyOutputted
+              // 返回outputPath及alreadyOutputted
+              ...mpx.recordResourceMap({
+                resourcePath,
+                resourceType,
+                outputPath,
+                packageRoot,
+                warn,
+                error
+              })
             }
           }
         }
@@ -833,6 +838,23 @@ class MpxWebpackPlugin {
         mpx.assetsModulesMap.set(filename, modules)
       })
 
+      const fillExtractedAssetsMap = (assetsMap, { index, content }, filename) => {
+        if (assetsMap.has(index)) {
+          if (assetsMap.get(index) !== content) {
+            compilation.errors.push(new Error(`The extracted file [${filename}] is filled with same index [${index}] and different content:
+            old content: ${assetsMap.get(index)}
+            new content: ${content}
+            please check!`))
+          }
+        } else {
+          assetsMap.set(index, content)
+        }
+      }
+
+      const sortExtractedAssetsMap = (assetsMap) => {
+        return [...assetsMap.entries()].sort((a, b) => a[0] - b[0]).map(item => item[1])
+      }
+
       compilation.hooks.beforeModuleAssets.tap('MpxWebpackPlugin', () => {
         const extractedAssetsMap = new Map()
         for (const module of compilation.modules) {
@@ -841,19 +863,19 @@ class MpxWebpackPlugin {
             if (extractedInfo) {
               let extractedAssets = extractedAssetsMap.get(filename)
               if (!extractedAssets) {
-                extractedAssets = []
+                extractedAssets = [new Map(), new Map()]
                 extractedAssetsMap.set(filename, extractedAssets)
               }
-              extractedAssets.push(extractedInfo)
+              fillExtractedAssetsMap(extractedInfo.pre ? extractedAssets[0] : extractedAssets[1], extractedInfo, filename)
               compilation.hooks.moduleAsset.call(module, filename)
             }
           }
         }
 
-        for (const [filename, extractedAssets] of extractedAssetsMap) {
-          const sortedExtractedAssets = extractedAssets.sort((a, b) => a.index - b.index)
+        for (const [filename, [pre, normal]] of extractedAssetsMap) {
+          const sortedExtractedAssets = [...sortExtractedAssetsMap(pre), ...sortExtractedAssetsMap(normal)]
           const source = new ConcatSource()
-          sortedExtractedAssets.forEach(({ content }) => {
+          sortedExtractedAssets.forEach((content) => {
             if (content) {
               // 处理replace path
               if (/"mpx_replace_path_.*?"/.test(content)) {
@@ -1339,6 +1361,7 @@ try {
       const fs = compiler.intermediateFileSystem
       const cacheLocation = compiler.options.cache.cacheLocation
       return new Promise((resolve) => {
+        if (!cacheLocation) return resolve()
         if (typeof fs.rm === 'function') {
           fs.rm(cacheLocation, {
             recursive: true,
