@@ -18,7 +18,7 @@ module.exports.pitch = async function (remainingRequest) {
   const type = queryObj.type
   const index = queryObj.index || 0
   const isStatic = queryObj.isStatic
-  const issuerFile = queryObj.issuerFile
+  const issuerResource = queryObj.issuerResource
   const fromImport = queryObj.fromImport
   const needBabel = queryObj.needBabel
 
@@ -107,7 +107,8 @@ module.exports.pitch = async function (remainingRequest) {
       // styles为static就两种情况，一种是.mpx中使用src引用样式，第二种为css-loader中处理@import
       // 为了支持持久化缓存，.mpx中使用src引用样式对issueFile asset产生的副作用迁移到ExtractDependency中处理
       case 'styles':
-        if (issuerFile) {
+        if (issuerResource) {
+          const issuerFile = mpx.getExtractedFile(issuerResource)
           let relativePath = toPosix(path.relative(path.dirname(issuerFile), file))
           relativePath = fixRelative(relativePath, mode)
           if (fromImport) {
