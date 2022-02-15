@@ -2,7 +2,8 @@ import requestAdapter from './request'
 import CancelToken from './cancelToken'
 import InterceptorManager from './interceptorManager'
 import RequestQueue from './queue'
-import { requestProxy, requestMock } from './proxy'
+import { requestProxy } from './proxy'
+import { requestMock } from './mock'
 import { isNotEmptyArray, isNotEmptyObject, transformReq, isThenable } from './util'
 
 export default class XFetch {

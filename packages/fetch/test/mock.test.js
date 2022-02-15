@@ -37,7 +37,7 @@ describe('response mock data proxy test.', () => {
     mock: [{
       test: {
         custom (origin) {
-          return ~origin.url.indexOf('/api/getlist')
+          return ~(origin.url || origin.path).indexOf('/api/getlist')
         }
       },
       mock: () => {
@@ -83,7 +83,7 @@ describe('response mock data proxy test.', () => {
         port: '8000',
         path: '/api/getType',
         custom (origin) {
-          return ~origin.url.indexOf('/api/getConfig')
+          return ~(origin.url || origin.path).indexOf('/api/getConfig')
         }
       },
       mock: () => {
@@ -100,7 +100,7 @@ describe('response mock data proxy test.', () => {
     }]
   })
   it('custom function match test', () => {
-  // request url
+    // request url
     let options = { url: 'http://10.11.11.123:8000/api/getlist' }
     let result = {
       code: 200,
@@ -128,10 +128,7 @@ describe('response mock data proxy test.', () => {
       params: {
         a: 1
       },
-      protocol: 'http:',
-      host: '10.11.11.123',
-      port: '8000',
-      path: '/api/user'
+      url: 'http://10.11.11.123:8000/api/user'
     }
     let result = {
       code: 200,
@@ -157,10 +154,6 @@ describe('response mock data proxy test.', () => {
     }
     xfetch.fetch({ url: 'http://10.11.11.123:8000/api/getConfig' }).then((data) => {
       expect(JSON.stringify(data)).toBe(JSON.stringify(result))
-    })
-
-    xfetch.fetch({ url: 'http://10.11.11.123:8000/api/getType' }).catch((res) => {
-      expect(JSON.stringify(res)).toBe(JSON.stringify(new Error('no url matched')))
     })
   })
 })

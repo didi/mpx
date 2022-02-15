@@ -1,3 +1,6 @@
+
+import { match } from 'path-to-regexp'
+
 const toString = Object.prototype.toString
 
 // 是否为一个对象
@@ -209,4 +212,125 @@ export function deepMerge () {
     forEach(arguments[i], assignValue)
   }
   return result
+}
+
+/**
+ * 匹配项所有属性值，在源对象都能找到匹配
+ * @param test 匹配项
+ * @param input 源对象
+ * @returns {boolean}
+ */
+function attrMatch (test = {}, input = {}) {
+  let result = true
+  for (const key in test) {
+    // value 值为 true 时 key 存在即命中匹配
+    if (test.hasOwnProperty(key) && input.hasOwnProperty(key)) {
+      if (test[key] === true) continue
+      // value 如果不是字符串需要进行序列化之后再匹配
+      const testValue = isString(test[key]) ? test[key] : JSON.stringify(test[key])
+      const inputValue = isString(input[key]) ? input[key] : JSON.stringify(input[key])
+      if (testValue !== inputValue) {
+        result = false
+      }
+    } else {
+      result = false
+    }
+  }
+  return result
+}
+
+/**
+ * 匹配 rule 中的对应项
+ * @param config 原请求配置项attrMatch
+ * @param test 匹配配置
+ * @returns {{matchParams, matched: boolean}}
+ */
+export function doTest (config, test) {
+  const { url, params = {}, data = {}, header = {}, method = 'GET' } = config
+  const {
+    url: tUrl = '',
+    protocol: tProtocol = '',
+    host: tHost = '',
+    port: tPort = '',
+    path: tPath = '',
+    search: tSearch = '',
+    params: tParams = {},
+    data: tData = {},
+    header: tHeader = {},
+    method: tMethod = ''
+  } = test
+
+  // 判断custom以外的属性值为空
+  if (isEmptyObjectAttr(test, ['custom'])) return false
+
+  const { baseUrl, protocol, hostname, port, path, search } = parseUrl(url)
+
+  // 如果待匹配项为空，则认为匹配成功
+  // url 匹配
+  let urlMatched = false
+  let matchParams = {}
+  if (tUrl) {
+    // 处理协议头
+    const protocolReg = /^(?:\w+(\\)?:|(:\w+))\/\//
+
+    const hasProtocol = protocolReg.exec(tUrl)
+
+    let handledTUrl = tUrl
+
+    if (hasProtocol) {
+      if (!hasProtocol[1] && !hasProtocol[2]) {
+        handledTUrl = tUrl.replace(':', '\\:')
+      }
+    } else {
+      handledTUrl = (tUrl.startsWith('//') ? ':protocol' : ':protocol//') + tUrl
+    }
+
+    try {
+      // 匹配结果参数
+      const matcher = match(handledTUrl)
+      const result = matcher(baseUrl)
+      urlMatched = !!result
+      matchParams = result.params
+    } catch (error) {
+      console.error('Test url 不符合规范，test url 中存在 : 或者 ? 等保留字符，请在前面添加 \\ 进行转义，如 https\\://baidu.com/xxx.')
+    }
+  } else {
+    // protocol 匹配
+    const protocolMatched = tProtocol ? tProtocol === protocol : true
+    // host 匹配
+    const hostMatched = tHost ? tHost === hostname : true
+    // port 匹配
+    const portMatched = tPort ? tPort === port : true
+    // path 匹配
+    const pathMatched = tPath ? tPath === path : true
+
+    urlMatched = protocolMatched && hostMatched && portMatched && pathMatched
+  }
+  // search 匹配
+  const searchMatched = tSearch ? search.includes(tSearch) : true
+  // params 匹配
+  const paramsMatched = isNotEmptyObject(tParams) ? attrMatch(tParams, params) : true
+  // data 匹配
+  const likeGet = /^GET|DELETE|HEAD$/i.test(method)
+  const dataMatched = isNotEmptyObject(tData) ? attrMatch(tData, likeGet ? params : data) : true
+  // header 匹配
+  const headerMatched = isNotEmptyObject(tHeader) ? attrMatch(tHeader, header) : true
+  // method 匹配
+  let methodMatched = false
+  if (isArray(tMethod)) {
+    const tMethodUpper = tMethod.map((item) => {
+      return item.toUpperCase()
+    })
+    methodMatched = isNotEmptyArray(tMethodUpper) ? tMethodUpper.indexOf(method) > -1 : true
+  } else if (isString(tMethod)) {
+    methodMatched = tMethod ? tMethod.toUpperCase() === method : true
+  }
+
+  // 是否匹配
+  const matched = urlMatched && searchMatched && paramsMatched && dataMatched && headerMatched && methodMatched
+
+  return {
+    matched,
+    matchParams
+  }
 }

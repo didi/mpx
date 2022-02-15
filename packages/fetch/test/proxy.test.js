@@ -1,7 +1,7 @@
 import XFetch from '../src/xfetch'
 
 describe('test proxy method.', () => {
-  let optionsProxy = {
+  let options = {
     proxy: [{
       test: { // 自定义匹配规则
         header: {
@@ -39,7 +39,7 @@ describe('test proxy method.', () => {
       }
     }]
   }
-  const xfetch = new XFetch(optionsProxy)
+  const xfetch = new XFetch(options)
   it('test proxy parameters method.', () => {
     xfetch.appendProxy({
       test: {},
@@ -51,7 +51,7 @@ describe('test proxy method.', () => {
       proxy: {},
       waterfall: true
     })
-    expect(xfetch.getProxy()).toBe(optionsProxy.proxy)
+    expect(xfetch.getProxy()).toBe(options.proxy)
     xfetch.clearProxy()
     expect(xfetch.getProxy()).toBe(undefined)
   })
