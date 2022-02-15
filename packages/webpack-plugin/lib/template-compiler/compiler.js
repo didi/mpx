@@ -1977,7 +1977,7 @@ function processAliAddComponentRootView (el, options, stack, currentParent) {
       item.value = getNeedAppendAttrValue + ' ' + item.value
     }
     newElAttrs.push({
-      name: item.name,
+      name: attr.name,
       value: item.value
     })
   }

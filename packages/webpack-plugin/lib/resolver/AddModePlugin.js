@@ -1,7 +1,7 @@
 const path = require('path')
 const stringifyQuery = require('../utils/stringify-query')
 const parseQuery = require('loader-utils').parseQuery
-const matchCondition = require('../utils/match-condition')
+const { matchCondition } = require('../utils/match-condition')
 const addInfix = require('../utils/add-infix')
 
 module.exports = class AddModePlugin {

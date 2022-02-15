@@ -2,7 +2,7 @@ const path = require('path')
 const stringifyQuery = require('../utils/stringify-query')
 const parseQuery = require('loader-utils').parseQuery
 const addInfix = require('../utils/add-infix')
-const matchCondition = require('../utils/match-condition')
+const { matchCondition } = require('../utils/match-condition')
 
 module.exports = class AddEnvPlugin {
   constructor (source, env, fileConditionRules, target) {

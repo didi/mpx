@@ -8,7 +8,7 @@ const InjectDependency = require('./dependency/InjectDependency')
 const addQuery = require('./utils/add-query')
 const mpxJSON = require('./utils/mpx-json')
 const async = require('async')
-const matchCondition = require('./utils/match-condition')
+const { matchCondition } = require('./utils/match-condition')
 const fixUsingComponent = require('./utils/fix-using-component')
 const getMainCompilation = require('./utils/get-main-compilation')
 

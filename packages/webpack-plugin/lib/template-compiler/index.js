@@ -4,7 +4,7 @@ const bindThis = require('./bind-this').transform
 const InjectDependency = require('../dependency/InjectDependency')
 const parseRequest = require('../utils/parse-request')
 const getMainCompilation = require('../utils/get-main-compilation')
-const matchCondition = require('../utils/match-condition')
+const { matchCondition } = require('../utils/match-condition')
 const path = require('path')
 
 module.exports = function (raw) {

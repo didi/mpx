@@ -7,7 +7,7 @@ const orMatcher = items => {
   }
 }
 
-export const normalizeCondition = (condition) => {
+const normalizeCondition = (condition) => {
   if (!condition) throw new Error('Expected condition but got falsy value')
   if (typeof condition === 'string') {
     return str => str.indexOf(condition) !== -1
@@ -45,4 +45,7 @@ const matchCondition = (resourcePath, condition = {}) => {
   return matched
 }
 
-module.exports = matchCondition
+module.exports = {
+  matchCondition,
+  normalizeCondition
+}
