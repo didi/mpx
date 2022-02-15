@@ -1,0 +1,25 @@
+<template>
+  <view>subpackage test pages index</view>
+</template>
+
+<script>
+import { createPage } from '@mpxjs/core'
+import {commonName} from "../../../utils/common"
+
+createPage({
+  onLoad () {
+  },
+  methods: {
+  },
+  data: {
+    commonName: commonName
+  }
+})
+</script>
+
+<script type="application/json">
+{
+  "usingComponents": {
+  }
+}
+</script>
