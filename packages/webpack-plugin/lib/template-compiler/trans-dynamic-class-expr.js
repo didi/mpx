@@ -21,6 +21,8 @@ module.exports = function transDynamicClassExpr (expr, { error } = {}) {
               } else {
                 property.key = t.identifier(propertyName.replace(/-/g, '$$') + 'MpxDash')
               }
+            } else {
+              property.key = t.identifier(propertyName)
             }
           }
         })
