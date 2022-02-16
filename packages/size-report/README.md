@@ -82,7 +82,9 @@ const MpxSizeReportPlugin = require('@mpxjs/size-report')
       // 是否收集页面维度体积详情，默认 false
       reportPages: true,
       // 是否收集资源维度体积详情，默认 false
-      reportAssets: true
+      reportAssets: true,
+      // 是否收集冗余资源，默认 false
+      reportRedundance: true
     })
 
   ]

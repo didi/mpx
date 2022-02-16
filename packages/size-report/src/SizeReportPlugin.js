@@ -86,6 +86,8 @@ class SizeReportPlugin {
 
       const reportPages = this.options.reportPages
 
+      const reportRedundance = this.options.reportRedundance
+
       if (reportPages) {
         Object.entries(mpx.pagesMap).forEach(([resourcePath, name]) => {
           reportGroups.push({
@@ -271,6 +273,101 @@ class SizeReportPlugin {
         })
       }
 
+      const resourcePathMap = {}
+      // {resourcePath: { packages: {pkA: xx, pkB: xx}, redundantSize: xx, partial: true }}
+
+      function fillResourcePathMap (pathKey, packageName, fillInfo) {
+        resourcePathMap[pathKey] = resourcePathMap[pathKey] || { redundantSize: 0, packages: {} }
+        // concanatedModule的体积是部分而非全部, 对于只冗余部分的无法计算体积，所以只做展示
+        if (fillInfo.partial) {
+          resourcePathMap[pathKey].partial = true
+        }
+        resourcePathMap[pathKey].packages[packageName] = resourcePathMap[pathKey].packages[packageName] || 0
+        resourcePathMap[pathKey].packages[packageName] += fillInfo.size
+        // 如果需要查看modules明细可以打开看这个
+        // resourcePathMap[pathKey].modules = resourcePathMap[pathKey].modules || []
+        // resourcePathMap[pathKey].modules.push(fillInfo)
+
+        const packageNames = Object.keys(resourcePathMap[pathKey].packages)
+        if (packageNames.length > 1) {
+          resourcePathMap[pathKey].redundantSize = (packageNames.length - 1) * resourcePathMap[pathKey].packages[packageNames[0]]
+        }
+      }
+      /**
+       *
+       * @param modules
+       * @param moduleType assetModules / 其它module
+       * @param packageName
+       * @param fillInfo
+       */
+      function fillRedundanceReport (modules, moduleType, packageName, fillInfo) {
+        if (reportRedundance) {
+          if (moduleType === 'assetModules') {
+            const resourcePathArr = []
+            // assetModules包含的module需要取所有的module的resourcePath，排序拼接后作为key，完全一致才能确定是冗余数据。
+            // 对应场景 -> 一个组件里面有多个style标签, 最终合并成了一个资源文件
+            modules.forEach((module) => {
+              const parsed = parseRequest(module.resource)
+              resourcePathArr.push(parsed.resourcePath)
+            })
+            const resourcePathKey = resourcePathArr.sort().join(',')
+            fillResourcePathMap(resourcePathKey, packageName, fillInfo)
+          } else {
+            modules.forEach((module) => {
+              // 有些contextModule可忽略
+              if (!module.resource && !module.rootModule) return
+
+              let parsed = parseRequest(module.resource || module.rootModule.resource)
+              if (parsed.queryObj && parsed.queryObj.resolve) return
+
+              fillResourcePathMap(parsed.resourcePath, packageName, fillInfo)
+
+              // 对应concatenatedModule的处理逻辑
+              // 1、concatenatedModule可查看rootModule的资源归属。
+              // 2、如果rootModule本身不存在冗余，遍历rootModules里面的组成modules有没有冗余，对应场景： a.js -> b.js 但是a冗余输出到多分包，b并未冗余输出
+              if (!module.resource && module.rootModule.resource && (!resourcePathMap[parsed.resourcePath] || !resourcePathMap[parsed.resourcePath].redundantSize)) {
+                fillRedundanceReport(module.modules.filter((item) => {
+                  return item !== module.rootModule
+                }), '', packageName, { partial: true, ...fillInfo })
+              }
+            })
+          }
+        }
+      }
+
+      function formatAllSize (toFormatData) {
+        if (Array.isArray(toFormatData) || Object.prototype.toString.call(toFormatData) === '[object Object]') {
+          for (let key in toFormatData) {
+            if (Array.isArray(toFormatData[key]) || Object.prototype.toString.call(toFormatData[key]) === '[object Object]') formatAllSize(toFormatData[key])
+            if (typeof toFormatData[key] === 'number') toFormatData[key] = formatSize(toFormatData[key])
+          }
+        }
+        return toFormatData
+      }
+
+      function formatRedundanceReport () {
+        const formatedReport = []
+        for (let resourcePath in resourcePathMap) {
+          const redundantSize = resourcePathMap[resourcePath].redundantSize
+          const sizeInfoItem = {
+            resourcePath,
+            redundantSize: redundantSize,
+            packages: resourcePathMap[resourcePath].packages
+            // modules: resourcePathMap[resourcePath].modules
+          }
+          if (resourcePathMap[resourcePath].partial && redundantSize) {
+            sizeInfoItem.partial = true
+            delete sizeInfoItem.redundantSize
+            formatedReport.push(sizeInfoItem)
+          } else if (redundantSize) {
+            let insertIndex = formatedReport.findIndex((item) => { return redundantSize > item.redundantSize })
+            if (insertIndex === -1) insertIndex = formatedReport.length
+            formatedReport.splice(insertIndex, 0, sizeInfoItem)
+          }
+        }
+        return formatAllSize(formatedReport)
+      }
+
       const assetsSizeInfo = {
         assets: []
       }
@@ -335,6 +432,12 @@ class SizeReportPlugin {
             identifier,
             size
           })
+
+          fillRedundanceReport(assetModules, 'assetModules', packageName, {
+            name,
+            identifier,
+            size
+          })
           assetsSizeInfo.assets.push({
             type: 'static',
             name,
@@ -394,12 +497,18 @@ class SizeReportPlugin {
               identifier,
               size: moduleSize
             })
+            fillRedundanceReport([module], '', packageName, {
+              name,
+              identifier,
+              size: moduleSize
+            })
             chunkAssetInfo.modules.push({
               identifier,
               size: moduleSize
             })
             size -= moduleSize
           }
+
           // chunkAssetInfo.webpackTemplateSize = size
           // filter sourcemap
         } else if (!/\.m?js\.map$/i.test(name)) {
@@ -416,7 +525,6 @@ class SizeReportPlugin {
           sizeSummary.totalSize += size
         }
       }
-
       // Check threshold
       function normalizeThreshold (threshold) {
         if (typeof threshold === 'number') return threshold
@@ -532,8 +640,10 @@ class SizeReportPlugin {
         sizeSummary
       }
 
+      const redundanceSizeInfo = formatRedundanceReport()
       if (groupsSizeInfo.length) reportData.groupsSizeInfo = groupsSizeInfo
       if (pagesSizeInfo.length) reportData.pagesSizeInfo = pagesSizeInfo
+      if (redundanceSizeInfo.length) reportData.redundanceSizeInfo = redundanceSizeInfo
       if (this.options.reportAssets) reportData.assetsSizeInfo = assetsSizeInfo
 
       const reportFilePath = path.resolve(compiler.outputPath, this.options.filename || 'report.json')
