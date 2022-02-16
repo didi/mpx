@@ -6,7 +6,7 @@ import { isString, isArray, isFunction, isObject, isNotEmptyArray, type, doTest 
  * @param config 参数实例
  * @returns {boolean}
  */
-export function doValidator (rules, config, url, greedy) {
+export function doValidate (rules, config, url, greedy) {
   // 错误的result length不为0的时候 不发送请求
   let errorResult = []
   // warning的result length不为0的时候 也会发送请求 只是一个warning
@@ -76,7 +76,7 @@ export function doValidator (rules, config, url, greedy) {
   }
 }
 // 请求拦截
-export function Validator (options, config) {
+export function validate (options, config) {
   let result
   options?.length && options.some((item) => {
     const { test, validator, greedy } = item
@@ -90,11 +90,11 @@ export function Validator (options, config) {
       const checkType = validator[Object.keys(validator)[0]] && Object.keys(validator[Object.keys(validator)[0]]).includes('type') && !isObject(validator[Object.keys(validator)[0]]?.type)
       const isPostMethod = /^POST|PUT$/i.test(config.method)
       if (checkType) {
-        result = doValidator(validator, Object.assign({}, config.params, config.data), test.path, greedy)
+        result = doValidate(validator, Object.assign({}, config.params, config.data), test.path, greedy)
       } else {
         if (isPostMethod) {
-          let dataRes = doValidator(validator.data, config.data, test.path, greedy)
-          let paramsRes = doValidator(validator.params, config.params, test.path, greedy)
+          let dataRes = doValidate(validator.data, config.data, test.path, greedy)
+          let paramsRes = doValidate(validator.params, config.params, test.path, greedy)
           result = {
             valid: dataRes.valid && paramsRes.valid,
             message: dataRes.message.concat(paramsRes.message),
@@ -102,7 +102,7 @@ export function Validator (options, config) {
             warningResult: dataRes.warningResult.concat(paramsRes.warningResult).join(',')
           }
         } else {
-          result = doValidator(validator.params, config.params, test.path, greedy)
+          result = doValidate(validator.params, config.params, test.path, greedy)
         }
       }
       return true

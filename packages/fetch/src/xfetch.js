@@ -3,7 +3,7 @@ import CancelToken from './cancelToken'
 import InterceptorManager from './interceptorManager'
 import RequestQueue from './queue'
 import { requestProxy } from './proxy'
-import { Validator } from './validator'
+import { validate } from './validator'
 import { isNotEmptyArray, isNotEmptyObject, transformReq, isObject } from './util'
 
 export default class XFetch {
@@ -110,7 +110,7 @@ export default class XFetch {
 
   // 校验参数规则
   checkValidator (config) {
-    return Validator(this.validatorOptions, config)
+    return validate(this.validatorOptions, config)
   }
   // 向前追加代理规则
   prependProxy (proxyRules) {
