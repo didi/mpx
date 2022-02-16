@@ -326,7 +326,9 @@ class SizeReportPlugin {
               // 1、concatenatedModule可查看rootModule的资源归属。
               // 2、如果rootModule本身不存在冗余，遍历rootModules里面的组成modules有没有冗余，对应场景： a.js -> b.js 但是a冗余输出到多分包，b并未冗余输出
               if (!module.resource && module.rootModule.resource && (!resourcePathMap[parsed.resourcePath] || !resourcePathMap[parsed.resourcePath].redundantSize)) {
-                fillRedundanceReport([...module._modules].slice(1), '', packageName, { partial: true, ...fillInfo })
+                fillRedundanceReport(module.modules.filter((item) => {
+                  return item !== module.rootModule
+                }), '', packageName, { partial: true, ...fillInfo })
               }
             })
           }
