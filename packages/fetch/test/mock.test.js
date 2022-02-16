@@ -4,7 +4,7 @@ import XFetch from '../src/xfetch'
 describe('test mock method.', () => {
   const xfetch = new XFetch()
   it('custom function match test', () => {
-    let mockOptions = [{
+    let options = [{
       mock: [{
         test: {
           custom (origin) {
@@ -26,8 +26,8 @@ describe('test mock method.', () => {
         }
       }]
     }]
-    xfetch.setMock(mockOptions)
-    expect(xfetch.getMock()).toBe(mockOptions)
+    xfetch.setMock(options)
+    expect(xfetch.getMock()).toBe(options)
     expect(xfetch.clearMock()).toBe(undefined)
   })
 })
@@ -119,7 +119,7 @@ describe('response mock data proxy test.', () => {
     })
   })
   it('detailed url parameter matching test', () => {
-  // // request url
+    // request url
     const options = {
       header: {
         'content-type': 'application/x-www-form-urlencoded'
