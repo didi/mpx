@@ -387,6 +387,80 @@ console.log(mpx.xfetch.getProxy())
 mpx.xfetch.clearProxy()
 ```
 
+
+### mock 数据模拟
+
+> 为用户提供本地mock功能，可用于开发阶段或单测等场景。
+
+##### setMock
+> 配置模拟数据，可以传入一个数组或者一个对象，按照顺序依次匹配
+
+- **参数：**
+
+    类型： `{Array | Object}`
+    - **test**
+
+        与setProxy的test属性保持一致 
+
+    - **mock**
+
+        类型： `{Function}`
+
+        表示自定义的mock函数，其返回值为接口mock数据。this代表fetch的第一个参数。
+        
+- **示例：**
+```js
+mpx.xfetch.setMock([{
+    test: {
+        custom(origin) {
+            return ~origin.url.indexOf('/api/getlist')
+        }
+    },
+    mock: () => {
+        return {
+            code: 200,
+            msg: 'succes',
+            data: [{
+                id: '1',
+                name: 'qy'
+            }, {
+                id: '2',
+                name: 'wl'
+            }]
+        }
+    }
+}, {
+    test: {
+        header: {
+            'content-type': 'application/x-www-form-urlencoded'
+        },
+        method: 'GET',
+        params: {
+            a: 1
+        },
+        protocol: 'http:',
+        host: '10.11.11.123',
+        port: '8000',
+        path: '/api/user'
+    },
+    mock: () => {
+        return {
+            code: 200,
+            msg: 'succes',
+            data: {
+                name: 'qy'
+            }
+        }
+    }
+}])
+```
+
+#### getMock
+> 查看已有的mock配置
+
+#### clearMock
+> 清除所有的mock配置
+
 ## api-proxy
  Mpx目前已经支持的API转换列表，供参考
 
