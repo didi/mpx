@@ -1619,7 +1619,9 @@ function processClass (el, meta) {
   staticClass = staticClass.replace(/\s+/g, ' ')
   if (dynamicClass) {
     let staticClassExp = parseMustache(staticClass).result
-    let dynamicClassExp = transDynamicClassExpr(parseMustache(dynamicClass).result)
+    let dynamicClassExp = transDynamicClassExpr(parseMustache(dynamicClass).result, {
+      error: error$1
+    })
     addAttrs(el, [{
       name: targetType,
       // swan中externalClass是通过编译时静态实现，因此需要保留原有的staticClass形式避免externalClass失效
@@ -2108,14 +2110,12 @@ function cloneNode (el) {
 }
 
 function cloneAttrsList (attrsList) {
-  const clonedAttrs = []
-  attrsList.map(({ name, value }) => {
-    clonedAttrs.push({
+  return attrsList.map(({ name, value }) => {
+    return {
       name,
       value
-    })
+    }
   })
-  return clonedAttrs
 }
 
 function postProcessComponentIs (el) {

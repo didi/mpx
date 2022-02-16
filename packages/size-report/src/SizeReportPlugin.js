@@ -274,17 +274,19 @@ class SizeReportPlugin {
       }
 
       const resourcePathMap = {}
-      // {resourcePath: { packages: {pkA: xx, pkB: xx}, modules: [], redundantSize: xx, partial: 1 }}
+      // {resourcePath: { packages: {pkA: xx, pkB: xx}, redundantSize: xx, partial: true }}
 
       function fillResourcePathMap (pathKey, packageName, fillInfo) {
-        resourcePathMap[pathKey] = resourcePathMap[pathKey] || { redundantSize: 0, packages: {}, modules: [] }
+        resourcePathMap[pathKey] = resourcePathMap[pathKey] || { redundantSize: 0, packages: {} }
         // concanatedModule的体积是部分而非全部, 对于只冗余部分的无法计算体积，所以只做展示
         if (fillInfo.partial) {
-          resourcePathMap[pathKey].partial = 1
+          resourcePathMap[pathKey].partial = true
         }
         resourcePathMap[pathKey].packages[packageName] = resourcePathMap[pathKey].packages[packageName] || 0
         resourcePathMap[pathKey].packages[packageName] += fillInfo.size
-        resourcePathMap[pathKey].modules.push(fillInfo)
+        // 如果需要查看modules明细可以打开看这个
+        // resourcePathMap[pathKey].modules = resourcePathMap[pathKey].modules || []
+        // resourcePathMap[pathKey].modules.push(fillInfo)
 
         const packageNames = Object.keys(resourcePathMap[pathKey].packages)
         if (packageNames.length > 1) {
@@ -324,18 +326,18 @@ class SizeReportPlugin {
               // 1、concatenatedModule可查看rootModule的资源归属。
               // 2、如果rootModule本身不存在冗余，遍历rootModules里面的组成modules有没有冗余，对应场景： a.js -> b.js 但是a冗余输出到多分包，b并未冗余输出
               if (!module.resource && module.rootModule.resource && (!resourcePathMap[parsed.resourcePath] || !resourcePathMap[parsed.resourcePath].redundantSize)) {
-                fillRedundanceReport(module._modules, '', packageName, { partial: 1, ...fillInfo })
+                fillRedundanceReport(module._modules, '', packageName, { partial: true, ...fillInfo })
               }
             })
           }
         }
       }
 
-      function formatAllSize (toFormatData, exKeys = ['partial']) {
+      function formatAllSize (toFormatData) {
         if (Array.isArray(toFormatData) || Object.prototype.toString.call(toFormatData) === '[object Object]') {
           for (let key in toFormatData) {
-            if (Array.isArray(toFormatData[key]) || Object.prototype.toString.call(toFormatData[key]) === '[object Object]') formatAllSize(toFormatData[key], exKeys)
-            if (typeof toFormatData[key] === 'number' && !exKeys.includes(key)) toFormatData[key] = formatSize(toFormatData[key])
+            if (Array.isArray(toFormatData[key]) || Object.prototype.toString.call(toFormatData[key]) === '[object Object]') formatAllSize(toFormatData[key])
+            if (typeof toFormatData[key] === 'number') toFormatData[key] = formatSize(toFormatData[key])
           }
         }
         return toFormatData
@@ -352,7 +354,7 @@ class SizeReportPlugin {
             modules: resourcePathMap[resourcePath].modules
           }
           if (resourcePathMap[resourcePath].partial && redundantSize) {
-            sizeInfoItem.partial = 1
+            sizeInfoItem.partial = true
             delete sizeInfoItem.redundantSize
             formatedReport.push(sizeInfoItem)
           } else if (redundantSize) {
@@ -361,7 +363,7 @@ class SizeReportPlugin {
             formatedReport.splice(insertIndex, 0, sizeInfoItem)
           }
         }
-        return formatAllSize(formatedReport, ['partial'])
+        return formatAllSize(formatedReport)
       }
 
       const assetsSizeInfo = {
