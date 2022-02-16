@@ -2130,7 +2130,12 @@ function postProcessComponentIs (el) {
     } else {
       tempNode = getTempNode()
     }
+    let range = []
+    if (el.attrsMap.range) {
+      range = getAndRemoveAttr(el, 'range').val.split(',')
+    }
     el.components.forEach(function (component) {
+      if (range.length > 0 && !range.includes(component)) return
       let newChild = createASTElement(component, cloneAttrsList(el.attrsList), tempNode)
       newChild.if = {
         raw: `{{${el.is} === ${stringify(component)}}}`,
