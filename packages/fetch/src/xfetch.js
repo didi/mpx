@@ -163,7 +163,7 @@ export default class XFetch {
       if (this.proxyOptions) {
         config = this.checkProxy(config)
       }
-      
+
       return this.queue ? this.queue.request(config, priority) : this.requestAdapter(config)
     }
 
