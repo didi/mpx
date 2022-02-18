@@ -3,7 +3,8 @@ import CancelToken from './cancelToken'
 import InterceptorManager from './interceptorManager'
 import RequestQueue from './queue'
 import { requestProxy } from './proxy'
-import { isNotEmptyArray, isNotEmptyObject, transformReq } from './util'
+import { validate } from './validator'
+import { isNotEmptyArray, isNotEmptyObject, transformReq, isObject } from './util'
 
 export default class XFetch {
   constructor (options, MPX) {
@@ -91,6 +92,26 @@ export default class XFetch {
     this.proxyOptions = undefined
   }
 
+  setValidator (options) {
+    // 添加校验配置
+    if (isNotEmptyArray(options)) {
+      this.validatorOptions = options
+    } else if (isNotEmptyObject(options)) {
+      this.validatorOptions = [options]
+    } else {
+      console.error('仅支持不为空的对象或数组')
+    }
+  }
+
+  getValidator () {
+    // 返回校验配置
+    return this.validatorOptions
+  }
+
+  // 校验参数规则
+  checkValidator (config) {
+    return validate(this.validatorOptions, config)
+  }
   // 向前追加代理规则
   prependProxy (proxyRules) {
     if (isNotEmptyArray(proxyRules)) {
@@ -134,6 +155,11 @@ export default class XFetch {
       // 6. 对于类POST请求将config.emulateJSON实现为config.header['content-type'] = 'application/x-www-form-urlencoded'
       // 后续请求处理都应基于正规化后的config进行处理(proxy/mock/validate/serialize)
       XFetch.normalizeConfig(config)
+      const checkRes = this.checkValidator(config)
+      const validatorRes = isObject(checkRes) ? checkRes.valid : checkRes
+      if (typeof validatorRes !== 'undefined' && !validatorRes) {
+        return Promise.reject(new Error(`xfetch参数校验错误 ${config.url} ${checkRes?.message?.length ? 'error:' + checkRes.message.join(',') : ''}`))
+      }
       config = this.checkProxy(config) // proxy
       return this.queue ? this.queue.request(config, priority) : this.requestAdapter(config)
     }
