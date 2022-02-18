@@ -1,5 +1,6 @@
 {
   "name": "mpx-monorepo",
+  "description": "mpx monorepo",
   "private": true,
   "scripts": {
     "lerna:publish": "lerna publish from-package --yes",
