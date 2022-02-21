@@ -84,7 +84,9 @@ const MpxSizeReportPlugin = require('@mpxjs/size-report')
       // 是否收集资源维度体积详情，默认 false
       reportAssets: true,
       // 是否收集冗余资源，默认 false
-      reportRedundance: true
+      reportRedundance: true,
+      // 展示某些分包资源的入口引用来源信息，默认为 []
+      showEntrysPackages: ['main']
     })
 
   ]
@@ -158,7 +160,26 @@ const MpxSizeReportPlugin = require('@mpxjs/size-report')
             "size": "",
             "modules": []
         }]
-    }
+    },
+    // 项目的冗余资源信息
+    "redundanceSizeInfo": [
+      {
+        "resourcePath": "/Users/human/DidiPro/WebApp/mp-apphome/node_modules/@didi/common-pay-cashier-ui2mpx/src/components/cashier-index/index.mpx",
+        "redundantSize": "154.05KiB",
+        "packages": {
+          "estimate": "17.12KiB",
+          "homepage": "17.12KiB",
+          "gulfstream": "17.14KiB",
+          "freight": "17.11KiB",
+          "family-pay": "17.14KiB",
+          "cashier-page": "17.16KiB",
+          "transit": "17.11KiB",
+          "freight-order": "17.17KiB",
+          "cashier-ui": "17.13KiB",
+          "qingju": "17.10KiB"
+        }
+      }
+    ]
 }
 ```
 与此同时，如果你开启了本地可视化平台服务，可以直接通过可视化平台查看项目体积构成。默认开启自动打开平台网页或者手动打开后，整体页面展示如下图：

@@ -88,6 +88,8 @@ class SizeReportPlugin {
 
       const reportRedundance = this.options.reportRedundance
 
+      const showEntrysPackages = this.options.showEntrysPackages || []
+
       if (reportPages) {
         Object.entries(mpx.pagesMap).forEach(([resourcePath, name]) => {
           reportGroups.push({
@@ -402,13 +404,20 @@ class SizeReportPlugin {
         if (assetModules) {
           const entryModules = new Set()
           const noEntryModules = new Set()
-          // 循环 modules，存储到 entryModules 和 noEntryModules 中
+          const size = compilation.assets[name].size()
+          const identifierSet = new Set()
+          const entryModulePathSet = new Set()
+
+          let identifier = ''
+
           assetModules.forEach((module) => {
+            // 循环 modules，存储到 entryModules 和 noEntryModules 中
             const _entryModules = getModuleEntries(module)
             const _noEntryModules = getModuleEntries(module, true)
             if (_entryModules) {
               _entryModules.forEach((entryModule) => {
                 entryModules.add(entryModule)
+                entryModulePathSet.add(parseRequest(entryModule.resource).resourcePath)
               })
             }
             if (_noEntryModules) {
@@ -416,15 +425,11 @@ class SizeReportPlugin {
                 noEntryModules.add(noEntryModule)
               })
             }
-          })
-          const size = compilation.assets[name].size()
-          const identifierSet = new Set()
-          let identifier = ''
-          assetModules.forEach((module) => {
             const moduleIdentifier = module.readableIdentifier(compilation.requestShortener)
             identifierSet.add(moduleIdentifier)
             if (!identifier) identifier = moduleIdentifier
           })
+
           if (identifierSet.size > 1) identifier += ` + ${identifierSet.size - 1} modules`
 
           fillSizeReportGroups(entryModules, noEntryModules, packageName, 'assets', {
@@ -444,9 +449,13 @@ class SizeReportPlugin {
             packageName,
             size,
             modules: mapToArr(identifierSet, (identifier) => {
-              return {
+              const retModule = {
                 identifier
               }
+              if (showEntrysPackages.includes(packageName)) {
+                retModule.entryModulePaths = [...entryModulePathSet]
+              }
+              return retModule
             })
           })
           fillPackagesSizeInfo(packageName, size)
@@ -492,6 +501,11 @@ class SizeReportPlugin {
             const identifier = module.readableIdentifier(compilation.requestShortener)
             const entryModules = getModuleEntries(module)
             const noEntryModules = getModuleEntries(module, true)
+            const entryModulePathSet = new Set()
+
+            entryModules.forEach((module) => {
+              entryModulePathSet.add(parseRequest(module.resource).resourcePath)
+            })
             fillSizeReportGroups(entryModules, noEntryModules, packageName, 'modules', {
               name,
               identifier,
@@ -502,10 +516,14 @@ class SizeReportPlugin {
               identifier,
               size: moduleSize
             })
-            chunkAssetInfo.modules.push({
+            const moduleData = {
               identifier,
               size: moduleSize
-            })
+            }
+            if (showEntrysPackages.includes(packageName)) {
+              moduleData.entryModulePaths = [...entryModulePathSet]
+            }
+            chunkAssetInfo.modules.push(moduleData)
             size -= moduleSize
           }
 
