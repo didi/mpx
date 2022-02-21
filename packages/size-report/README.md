@@ -164,19 +164,12 @@ const MpxSizeReportPlugin = require('@mpxjs/size-report')
     // 项目的冗余资源信息
     "redundanceSizeInfo": [
       {
-        "resourcePath": "/Users/human/DidiPro/WebApp/mp-apphome/node_modules/@didi/common-pay-cashier-ui2mpx/src/components/cashier-index/index.mpx",
-        "redundantSize": "154.05KiB",
+        "resourcePath": "src/components/index.mpx",
+        "redundantSize": "8.24KiB",
         "packages": {
-          "estimate": "17.12KiB",
-          "homepage": "17.12KiB",
-          "gulfstream": "17.14KiB",
-          "freight": "17.11KiB",
-          "family-pay": "17.14KiB",
-          "cashier-page": "17.16KiB",
-          "transit": "17.11KiB",
-          "freight-order": "17.17KiB",
-          "cashier-ui": "17.13KiB",
-          "qingju": "17.10KiB"
+          "package1": "4.12KiB",
+          "package2": "4.12KiB",
+          "package3": "4.12KiB"
         }
       }
     ]
