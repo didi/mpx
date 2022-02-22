@@ -49,7 +49,7 @@ const extractorPath = normalize.lib('extractor')
 const async = require('async')
 const stringifyLoadersAndResource = require('./utils/stringify-loaders-resource')
 const emitFile = require('./utils/emit-file')
-const { MPX_PROCESSED_FLAG, MPX_DISABLE_EXTRACTOR_CACHE } = require('./utils/const')
+const { MPX_PROCESSED_FLAG, MPX_DISABLE_EXTRACTOR_CACHE, MPX_CURRENT_CHUNK } = require('./utils/const')
 const isEmptyObject = require('./utils/is-empty-object')
 
 const isProductionLikeMode = options => {
@@ -406,7 +406,8 @@ class MpxWebpackPlugin {
           async.each(deps, (dep, callback) => {
             dep.addEntry(compilation, (err, { resultPath }) => {
               if (err) return callback(err)
-              mpx.replacePathMap[dep.key] = resultPath
+              if (dep.applied) mpx.replacePathMap[dep.key] = resultPath
+              dep.resultPath = resultPath
               callback()
             })
           }, callback)
@@ -910,6 +911,27 @@ class MpxWebpackPlugin {
           parser.state.current.addPresentationalDependency(dep)
           return true
         })
+
+        parser.hooks.callMemberChainOfCallMemberChain
+          .for('require')
+          .tap({
+            name: 'MpxWebpackPlugin',
+            stage: -1000
+          }, (expr, calleeMembers, callExpr, members) => {
+            if (calleeMembers[0] === 'async' && members[0] === 'then') {
+              let request = callExpr.arguments[0].value
+              const range = callExpr.arguments[0].range
+              const context = parser.state.module.context
+              const { queryObj } = parseRequest(request)
+              if (queryObj.root) {
+                // 删除root query
+                request = addQuery(request, {}, false, ['root'])
+                const dep = new DynamicEntryDependency(request, 'export', '', queryObj.root, MPX_CURRENT_CHUNK, context, range)
+                parser.state.current.addPresentationalDependency(dep)
+                return true
+              }
+            }
+          })
 
         const transHandler = (expr) => {
           const module = parser.state.module
