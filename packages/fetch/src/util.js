@@ -327,3 +327,23 @@ export function doTest (config, test) {
     matchParams
   }
 }
+
+export function sortObject(obj) {
+  if (!isObject(obj)) return obj
+  const newObj = {}
+  Object.keys(obj).sort().forEach(key => {
+    newObj[key] = obj[key]
+  })
+  return newObj
+}
+
+export function formatCacheKey(url) {
+  if (typeof url !== 'string' || !url.includes('//')) return url
+  return url.split('//')[1].split('?')[0]
+}
+
+export function checkCacheConfig(thisConfig, catchData) {
+  return JSON.stringify(sortObject(thisConfig.data)) === JSON.stringify(catchData.data) &&
+    JSON.stringify(sortObject(thisConfig.params)) === JSON.stringify(catchData.params) &&
+    thisConfig.method === catchData.method
+}
