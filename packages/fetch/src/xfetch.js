@@ -138,17 +138,18 @@ export default class XFetch {
   checkProxy (config) {
     return requestProxy(this.proxyOptions, config)
   }
-  
-  checkPreCache(config) {
+
+  checkPreCache (config) {
     const cacheKey = formatCacheKey(config.url)
     const cacheRequestData = this.cacheRequestData[cacheKey]
     if (cacheRequestData) {
       delete this.cacheRequestData[cacheKey]
       const cacheInvalidationTime = config.cacheInvalidationTime || 5000
       // 缓存是否过期 >5s 则算过期
-      if (Date.now() - cacheRequestData.lastTime <= cacheInvalidationTime
-        && checkCacheConfig(config, cacheRequestData))
+      if (Date.now() - cacheRequestData.lastTime <= cacheInvalidationTime &&
+        checkCacheConfig(config, cacheRequestData)) {
         return cacheRequestData.responsePromise
+      }
     } else if (config.isPre) {
       this.cacheRequestData[cacheKey] = {
         cacheKey,
@@ -165,7 +166,7 @@ export default class XFetch {
     // 检查缓存
     const responsePromise = this.checkPreCache(config)
     if (responsePromise) return responsePromise
-    
+
     config.timeout = config.timeout || global.__networkTimeout
     // middleware chain
     const chain = []
@@ -204,12 +205,12 @@ export default class XFetch {
     while (chain.length) {
       promise = promise.then(chain.shift(), chain.shift())
     }
-    
+
     if (config.isPre) {
       const cacheKey = formatCacheKey(config.url)
       this.cacheRequestData[cacheKey] && (this.cacheRequestData[cacheKey].responsePromise = promise)
     }
-    
+
     return promise
   }
 }
