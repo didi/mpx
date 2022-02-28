@@ -159,6 +159,9 @@ module.exports = function getSpec ({ warn, error }) {
         },
         web () {
           return false
+        },
+        tenon () {
+          return false
         }
       },
       {

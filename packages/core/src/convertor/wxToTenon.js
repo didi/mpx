@@ -4,7 +4,7 @@ import { mergeLifecycle } from './mergeLifecycle'
 import { error } from '../helper/log'
 import { isObject, diffAndCloneA, hasOwn } from '../helper/utils'
 import { implemented } from '../core/implement'
-import { CREATED } from '../core/innerLifecycle'
+import { CREATED, DESTROYED } from '../core/innerLifecycle'
 
 // 暂不支持的wx选项，后期需要各种花式支持
 const unsupported = [
@@ -49,7 +49,8 @@ export default {
   support: true,
   // wx输出tenon时额外将onLoad代理到CREATED
   lifecycleProxyMap: Object.assign({}, wxLifecycle.lifecycleProxyMap, {
-    [CREATED]: ['created', 'attached', 'onLoad']
+    [CREATED]: ['created', 'attached', 'onLoad'],
+    [DESTROYED]: ['destroyed', 'detached', 'onUnload', 'unmounted'],
   }),
   convert (options) {
     const props = Object.assign({}, options.properties, options.props)

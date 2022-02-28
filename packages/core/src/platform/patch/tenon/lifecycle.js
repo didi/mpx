@@ -9,7 +9,9 @@ const COMPONENT_HOOKS = [
   // 'deactivated',
   'beforeDestroy',
   'destroyed',
-  'errorCaptured'
+  'errorCaptured',
+  'beforeUnmount',
+  'unmounted'
   // 'onPageNotFound'
 ]
 
@@ -19,7 +21,8 @@ const PAGE_HOOKS = [
   'onReady',
   'onShow',
   'onHide',
-  'onUnload'
+  'onUnload',
+  // 'onBack',
   // 'onPullDownRefresh',
   // 'onReachBottom',
   // 'onPageScroll',
