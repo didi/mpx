@@ -20,13 +20,13 @@
 
 推荐使用 mpx 官方脚手架 @mpxjs/cli 创建一个小程序插件项目来快速的进入插件开发阶段，首先全局安装 @mpxjs/cli
 
-```js
+```html
 npm i -g @mpxjs/cli
 ```
 
 然后使用 cli 初始化项目
 
-```js
+```html
 mpx init
 ```
 
@@ -58,7 +58,7 @@ mpx init
 
 **代码示例：**
 
-```js
+```html
 {
   "publicComponents": {
     "list": "./components/list" // 使用mpx 中的webpack 路径引入规范
