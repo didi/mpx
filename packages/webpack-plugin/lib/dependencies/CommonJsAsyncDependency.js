@@ -1,6 +1,5 @@
 const ModuleDependency = require('webpack/lib/dependencies/ModuleDependency')
 const makeSerializable = require('webpack/lib/util/makeSerializable')
-const InitFragment = require('webpack/lib//InitFragment')
 
 class CommonJsAsyncDependency extends ModuleDependency {
   constructor (request, range) {
