@@ -7,6 +7,7 @@ const RecordResourceMapDependency = require('../dependencies/RecordResourceMapDe
 const parseRequest = require('../utils/parse-request')
 const toPosix = require('../utils/to-posix')
 const fixRelative = require('../utils/fix-relative')
+const addQuery = require('../utils/add-query')
 const config = require('../config')
 
 module.exports = function () {
@@ -46,63 +47,82 @@ module.exports = function () {
     nativeCallback(null, `module.exports = ${JSON.stringify(relativePath)};`)
   }
 
-  const outputOptions = {
-    filename,
-    // 避免输出的wxs中包含es语法
-    environment: {
-      // The environment supports arrow functions ('() => { ... }').
-      arrowFunction: false,
-      // The environment supports BigInt as literal (123n).
-      bigIntLiteral: false,
-      // The environment supports const and let for variable declarations.
-      const: false,
-      // The environment supports destructuring ('{ a, b } = obj').
-      destructuring: false,
-      // The environment supports an async import() function to import EcmaScript modules.
-      dynamicImport: false,
-      // The environment supports 'for of' iteration ('for (const x of array) { ... }').
-      forOf: false,
-      // The environment supports ECMAScript Module syntax to import ECMAScript modules (import ... from '...').
-      module: false
-    }
+  // 清空issuerResource query避免文件内容输出报错并进行子编译缓存优化
+  const request = '!!' + addQuery(this.remainingRequest, {}, false, ['issuerResource'])
+
+  // request中已经包含全量构成filename的信息，故可以直接使用request作为key来进行缓存
+  if (!mpx.wxsAssetsCache.has(request)) {
+    mpx.wxsAssetsCache.set(request, new Promise((resolve, reject) => {
+      const outputOptions = {
+        filename,
+        // 避免输出的wxs中包含es语法
+        environment: {
+          // The environment supports arrow functions ('() => { ... }').
+          arrowFunction: false,
+          // The environment supports BigInt as literal (123n).
+          bigIntLiteral: false,
+          // The environment supports const and let for variable declarations.
+          const: false,
+          // The environment supports destructuring ('{ a, b } = obj').
+          destructuring: false,
+          // The environment supports an async import() function to import EcmaScript modules.
+          dynamicImport: false,
+          // The environment supports 'for of' iteration ('for (const x of array) { ... }').
+          forOf: false,
+          // The environment supports ECMAScript Module syntax to import ECMAScript modules (import ... from '...').
+          module: false
+        }
+      }
+
+      const plugins = [
+        new WxsPlugin({ mode }),
+        new NodeTargetPlugin(),
+        new EntryPlugin(this.context, request, { name: getName(filename) }),
+        new LimitChunkCountPlugin({ maxChunks: 1 })
+      ]
+
+      const childCompiler = this._compilation.createChildCompiler(resourcePath, outputOptions, plugins)
+
+      let assets = []
+
+      childCompiler.hooks.afterCompile.tap('MpxWebpackPlugin', (compilation) => {
+        // 持久化缓存，使用module.buildInfo.assets来输出文件
+        assets = compilation.getAssets()
+        compilation.clearAssets()
+      })
+
+      childCompiler.runAsChild((err, entries, compilation) => {
+        if (err) return reject(err)
+        if (compilation.errors.length > 0) {
+          return reject(compilation.errors[0])
+        }
+        resolve({
+          assets,
+          fileDependencies: compilation.fileDependencies,
+          contextDependencies: compilation.contextDependencies,
+          missingDependencies: compilation.missingDependencies,
+          buildDependencies: compilation.buildDependencies
+        })
+      })
+    }))
   }
-  // wxs文件必须经过pre-loader
-  const request = '!!' + this.remainingRequest
-  const plugins = [
-    new WxsPlugin({ mode }),
-    new NodeTargetPlugin(),
-    new EntryPlugin(this.context, request, { name: getName(filename) }),
-    new LimitChunkCountPlugin({ maxChunks: 1 })
-  ]
 
-  const childCompiler = this._compilation.createChildCompiler(resourcePath, outputOptions, plugins)
-
-  childCompiler.hooks.afterCompile.tap('MpxWebpackPlugin', (compilation) => {
-    // 持久化缓存，使用module.buildInfo.assets来输出文件
-    compilation.getAssets().forEach(({ name, source, info }) => {
+  mpx.wxsAssetsCache.get(request).then(({ assets, fileDependencies, contextDependencies, missingDependencies, buildDependencies }) => {
+    assets.forEach(({ name, source, info }) => {
       this.emitFile(name, source.source(), undefined, info)
     })
-    compilation.clearAssets()
-  })
-
-  childCompiler.runAsChild((err, entries, compilation) => {
-    if (err) return callback(err)
-    if (compilation.errors.length > 0) {
-      return callback(compilation.errors[0])
-    }
-
-    compilation.fileDependencies.forEach((dep) => {
+    fileDependencies.forEach((dep) => {
       this.addDependency(dep)
-    }, this)
-    compilation.contextDependencies.forEach((dep) => {
+    })
+    contextDependencies.forEach((dep) => {
       this.addContextDependency(dep)
-    }, this)
-    compilation.missingDependencies.forEach((dep) => {
+    })
+    missingDependencies.forEach((dep) => {
       this.addMissingDependency(dep)
     })
-    compilation.buildDependencies.forEach((dep) => {
+    buildDependencies.forEach((dep) => {
       this.addBuildDependency(dep)
     })
     callback()
-  })
+  }).catch(callback)
 }

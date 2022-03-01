@@ -7,6 +7,7 @@ const InjectDependency = require('./dependencies/InjectDependency')
 const ReplaceDependency = require('./dependencies/ReplaceDependency')
 const NullFactory = require('webpack/lib/NullFactory')
 const CommonJsVariableDependency = require('./dependencies/CommonJsVariableDependency')
+const CommonJsAsyncDependency = require('./dependencies/CommonJsAsyncDependency')
 const NormalModule = require('webpack/lib/NormalModule')
 const EntryPlugin = require('webpack/lib/EntryPlugin')
 const JavascriptModulesPlugin = require('webpack/lib/javascript/JavascriptModulesPlugin')
@@ -472,6 +473,9 @@ class MpxWebpackPlugin {
 
       compilation.dependencyFactories.set(CommonJsVariableDependency, normalModuleFactory)
       compilation.dependencyTemplates.set(CommonJsVariableDependency, new CommonJsVariableDependency.Template())
+
+      compilation.dependencyFactories.set(CommonJsAsyncDependency, normalModuleFactory)
+      compilation.dependencyTemplates.set(CommonJsAsyncDependency, new CommonJsAsyncDependency.Template())
     })
 
     compiler.hooks.thisCompilation.tap('MpxWebpackPlugin', (compilation, { normalModuleFactory }) => {
@@ -513,6 +517,7 @@ class MpxWebpackPlugin {
           usingComponents: {},
           // todo es6 map读写性能高于object，之后会逐步替换
           vueContentCache: new Map(),
+          wxsAssetsCache: new Map(),
           currentPackageRoot: '',
           wxsContentMap: {},
           forceUsePageCtor: this.options.forceUsePageCtor,
@@ -912,26 +917,42 @@ class MpxWebpackPlugin {
           return true
         })
 
+        const requireAsyncHandler = (expr, members) => {
+          if (members[0] === 'async') {
+            let request = expr.arguments[0].value
+            const range = expr.arguments[0].range
+            const context = parser.state.module.context
+            const { queryObj } = parseRequest(request)
+            if (queryObj.root) {
+              // 删除root query
+              request = addQuery(request, {}, false, ['root'])
+              // 目前仅wx支持require.async，其余平台使用CommonJsAsyncDependency进行模拟抹平
+              if (mpx.mode === 'wx') {
+                const dep = new DynamicEntryDependency(request, 'export', '', queryObj.root, MPX_CURRENT_CHUNK, context, range)
+                parser.state.current.addPresentationalDependency(dep)
+              } else {
+                const range = expr.range
+                const dep = new CommonJsAsyncDependency(request, range)
+                parser.state.current.addDependency(dep)
+              }
+              return true
+            }
+          }
+        }
+
+        parser.hooks.callMemberChain
+          .for('require')
+          .tap({
+            name: 'MpxWebpackPlugin',
+            stage: -1000
+          }, (expr, members) => requireAsyncHandler(expr, members))
+
         parser.hooks.callMemberChainOfCallMemberChain
           .for('require')
           .tap({
             name: 'MpxWebpackPlugin',
             stage: -1000
-          }, (expr, calleeMembers, callExpr, members) => {
-            if (calleeMembers[0] === 'async' && members[0] === 'then') {
-              let request = callExpr.arguments[0].value
-              const range = callExpr.arguments[0].range
-              const context = parser.state.module.context
-              const { queryObj } = parseRequest(request)
-              if (queryObj.root) {
-                // 删除root query
-                request = addQuery(request, {}, false, ['root'])
-                const dep = new DynamicEntryDependency(request, 'export', '', queryObj.root, MPX_CURRENT_CHUNK, context, range)
-                parser.state.current.addPresentationalDependency(dep)
-                return true
-              }
-            }
-          })
+          }, (expr, calleeMembers, callExpr) => requireAsyncHandler(callExpr, calleeMembers))
 
         const transHandler = (expr) => {
           const module = parser.state.module
