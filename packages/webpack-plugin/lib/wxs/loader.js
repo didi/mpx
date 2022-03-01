@@ -1,5 +1,6 @@
 const NodeTargetPlugin = require('webpack/lib/node/NodeTargetPlugin')
 const EntryPlugin = require('webpack/lib/EntryPlugin')
+const LazySet = require('webpack/lib/util/LazySet')
 const LimitChunkCountPlugin = require('webpack/lib/optimize/LimitChunkCountPlugin')
 const path = require('path')
 const WxsPlugin = require('./WxsPlugin')
@@ -10,7 +11,9 @@ const fixRelative = require('../utils/fix-relative')
 const addQuery = require('../utils/add-query')
 const config = require('../config')
 
-module.exports = function () {
+module.exports = content => content
+
+module.exports.pitch = function (remainingRequest) {
   const nativeCallback = this.async()
   const moduleGraph = this._compilation.moduleGraph
   const mpx = this.getMpx()
@@ -48,7 +51,7 @@ module.exports = function () {
   }
 
   // 清空issuerResource query避免文件内容输出报错并进行子编译缓存优化
-  const request = '!!' + addQuery(this.remainingRequest, {}, false, ['issuerResource'])
+  const request = '!!' + addQuery(remainingRequest, {}, false, ['issuerResource'])
 
   // request中已经包含全量构成filename的信息，故可以直接使用request作为key来进行缓存
   if (!mpx.wxsAssetsCache.has(request)) {
@@ -93,15 +96,24 @@ module.exports = function () {
 
       childCompiler.runAsChild((err, entries, compilation) => {
         if (err) return reject(err)
-        if (compilation.errors.length > 0) {
-          return reject(compilation.errors[0])
-        }
+        const fileDependencies = new LazySet()
+        const contextDependencies = new LazySet()
+        const missingDependencies = new LazySet()
+        const buildDependencies = new LazySet()
+        compilation.modules.forEach((module) => {
+          module.addCacheDependencies(
+            fileDependencies,
+            contextDependencies,
+            missingDependencies,
+            buildDependencies
+          )
+        })
         resolve({
           assets,
-          fileDependencies: compilation.fileDependencies,
-          contextDependencies: compilation.contextDependencies,
-          missingDependencies: compilation.missingDependencies,
-          buildDependencies: compilation.buildDependencies
+          fileDependencies,
+          contextDependencies,
+          missingDependencies,
+          buildDependencies
         })
       })
     }))
