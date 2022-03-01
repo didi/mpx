@@ -39,7 +39,7 @@ export default {
         class: this.className,
         ...getInnerListeners(this, { mergeAfter }),
       },
-      this.$slots.default()
+      this.$slots.default && this.$slots.default() || ''
     );
   },
   data() {

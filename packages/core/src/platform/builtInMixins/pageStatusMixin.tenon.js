@@ -8,9 +8,14 @@ export default function pageStatusMixin (mixinType) {
       },
       onShow () {
         this.mpxPageStatus = 'show'
+        this.onShow && this.onShow()
       },
       onHide () {
         this.mpxPageStatus = 'hide'
+        this.onHide && this.onHide()
+      },
+      onBack () {
+        this.onBack && this.onBack()
       }
     }
   }
