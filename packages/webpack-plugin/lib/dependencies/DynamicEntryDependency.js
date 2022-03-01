@@ -95,7 +95,6 @@ class DynamicEntryDependency extends NullDependency {
     const { packageRoot, context } = this
     this.originEntryNode = mpx.getEntryNode(module)
     this.publicPath = compilation.outputOptions.publicPath || ''
-    this.applied = false
     if (context) this.resolver = compilation.resolverFactory.get('normal', module.resolveOptions)
     // 分包构建在需要在主包构建完成后在finishMake中处理，返回的资源路径先用key来占位，在合成extractedAssets时再进行最终替换
     if (packageRoot && mpx.currentPackageRoot !== packageRoot) {
@@ -113,8 +112,9 @@ class DynamicEntryDependency extends NullDependency {
 
   // hash会影响最终的codeGenerateResult是否走缓存，由于该dep中resultPath是动态变更的，需要将其更新到hash中，避免错误使用缓存
   updateHash (hash, context) {
-    const { resultPath } = this
+    const { resultPath, relativePath } = this
     if (resultPath) hash.update(resultPath)
+    if (relativePath === MPX_CURRENT_CHUNK) hash.update(Math.random())
     super.updateHash(hash, context)
   }
 
@@ -162,7 +162,6 @@ DynamicEntryDependency.Template = class DynamicEntryDependencyTemplate {
       const replaceRange = `mpx_replace_path_${key}`
       source.replace(range[0], range[1] - 1, JSON.stringify(replaceRange))
     }
-    dep.applied = true
   }
 }
 

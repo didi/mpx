@@ -407,8 +407,7 @@ class MpxWebpackPlugin {
           async.each(deps, (dep, callback) => {
             dep.addEntry(compilation, (err, { resultPath }) => {
               if (err) return callback(err)
-              if (dep.applied) mpx.replacePathMap[dep.key] = resultPath
-              dep.resultPath = resultPath
+              dep.resultPath = mpx.replacePathMap[dep.key] = resultPath
               callback()
             })
           }, callback)
