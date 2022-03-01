@@ -114,7 +114,8 @@ class DynamicEntryDependency extends NullDependency {
   updateHash (hash, context) {
     const { resultPath, relativePath } = this
     if (resultPath) hash.update(resultPath)
-    if (relativePath === MPX_CURRENT_CHUNK) hash.update(Math.random())
+    // relativePath为MPX_CURRENT_CHUNK时，插入随机数hash使当前module的codeGeneration cache失效，以执行dep.apply动态获取当前module所属的chunk路径
+    if (relativePath === MPX_CURRENT_CHUNK) hash.update('' + Math.random())
     super.updateHash(hash, context)
   }
 
