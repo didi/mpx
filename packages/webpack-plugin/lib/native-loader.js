@@ -175,7 +175,9 @@ module.exports = function (content) {
 
       // 注入构造函数
       let ctor = 'App'
+      let ctorType = 'app'
       if (pagesMap[resourcePath]) {
+        ctorType = 'page'
         if (mpx.forceUsePageCtor || mode === 'ali' || mode === 'swan') {
           ctor = 'Page'
         } else {
@@ -183,11 +185,13 @@ module.exports = function (content) {
         }
       } else if (componentsMap[resourcePath]) {
         ctor = 'Component'
+        ctorType = 'component'
       }
       output += `global.currentCtor = ${ctor}\n`
       output += `global.currentCtorType = ${JSON.stringify(ctor.replace(/^./, (match) => {
         return match.toLowerCase()
       }))}\n`
+      output += `global.currentResourceType = ${JSON.stringify(ctorType)}\n`
 
       if (srcMode) {
         output += `global.currentSrcMode = ${JSON.stringify(srcMode)}\n`
