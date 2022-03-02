@@ -1,7 +1,7 @@
 const compiler = require('./compiler')
 const bindThis = require('./bind-this').transform
 const parseRequest = require('../utils/parse-request')
-const matchCondition = require('../utils/match-condition')
+const { matchCondition } = require('../utils/match-condition')
 const loaderUtils = require('loader-utils')
 
 module.exports = function (raw) {
