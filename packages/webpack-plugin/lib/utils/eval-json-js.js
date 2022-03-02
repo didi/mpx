@@ -7,8 +7,6 @@ module.exports = function evalJSONJS (source, filename, loaderContext) {
   const defValues = defKeys.map((key) => {
     return defs[key]
   })
-  // 记录依赖
-  loaderContext.addDependency(filename)
   const dirname = path.dirname(filename)
   // eslint-disable-next-line no-new-func
   const func = new Function('module', 'exports', 'require', '__filename', '__dirname', ...defKeys, source)
