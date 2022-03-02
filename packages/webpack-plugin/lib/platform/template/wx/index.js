@@ -8,6 +8,7 @@ const parseMustache = templateCompiler.parseMustache
 const stringifyWithResolveComputed = templateCompiler.stringifyWithResolveComputed
 const normalize = require('../../../utils/normalize')
 
+
 module.exports = function getSpec ({ warn, error }) {
   const spec = {
     supportedModes: ['ali', 'swan', 'qq', 'tt', 'web', 'qa', 'jd', 'dd'],
@@ -18,6 +19,12 @@ module.exports = function getSpec ({ warn, error }) {
       {
         web ({ name, value }) {
           const parsed = parseMustache(value)
+          if (name === 'style') {
+            return {
+              name: ':style',
+              value: `(${parsed.result}) | transRpxStyle`
+            }
+          }
           if (parsed.hasBinding) {
             return {
               name: name === 'animation' ? 'v-' + name : ':' + name,
@@ -187,6 +194,12 @@ module.exports = function getSpec ({ warn, error }) {
         web ({ name, value }) {
           const dir = this.test.exec(name)[1]
           const parsed = parseMustache(value)
+          if (dir === 'style') {
+            return {
+              name: ':style',
+              value: `(${parsed.result}) | transRpxStyle`
+            }
+          }
           return {
             name: ':' + dir,
             value: parsed.result
