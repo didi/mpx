@@ -1,5 +1,5 @@
 <script>
-  import getInnerListeners from './getInnerListeners'
+  import getInnerListeners, { extendEvent } from './getInnerListeners'
 
   export default {
     name: 'mpx-image',
@@ -23,6 +23,13 @@
     beforeCreate () {
       this.image = new Image()
       this.image.onload = (e) => {
+        extendEvent(e, {
+          detail: {
+            width: this.image.width,
+            height: this.image.height
+          }
+        })
+        
         this.$emit('load', e)
       }
       this.image.onerror = (e) => {

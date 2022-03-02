@@ -2,7 +2,6 @@ const JSON5 = require('json5')
 const parseComponent = require('./parser')
 const createHelpers = require('./helpers')
 const loaderUtils = require('loader-utils')
-const InjectDependency = require('./dependency/InjectDependency')
 const parseRequest = require('./utils/parse-request')
 const { matchCondition } = require('./utils/match-condition')
 const fixUsingComponent = require('./utils/fix-using-component')
@@ -12,51 +11,35 @@ const processJSON = require('./web/processJSON')
 const processScript = require('./web/processScript')
 const processStyles = require('./web/processStyles')
 const processTemplate = require('./web/processTemplate')
-const readJsonForSrc = require('./utils/read-json-for-src')
+const getJSONContent = require('./utils/get-json-content')
 const normalize = require('./utils/normalize')
-const getMainCompilation = require('./utils/get-main-compilation')
-const { MPX_APP_MODULE_ID } = require('./staticConfig')
+const getEntryName = require('./utils/get-entry-name')
+const AppEntryDependency = require('./dependencies/AppEntryDependency')
+const RecordResourceMapDependency = require('./dependencies/RecordResourceMapDependency')
+const CommonJsVariableDependency = require('./dependencies/CommonJsVariableDependency')
+const { MPX_APP_MODULE_ID } = require('./utils/const')
+
 module.exports = function (content) {
   this.cacheable()
 
-  const mainCompilation = getMainCompilation(this._compilation)
-  const mpx = mainCompilation.__mpx__
+  const mpx = this.getMpx()
   if (!mpx) {
     return content
   }
   const { resourcePath, queryObj } = parseRequest(this.resource)
-  const packageName = queryObj.packageRoot || mpx.currentPackageRoot || 'main'
+  const packageRoot = queryObj.packageRoot || mpx.currentPackageRoot
+  const packageName = packageRoot || 'main'
+  const independent = queryObj.independent
   const pagesMap = mpx.pagesMap
   const componentsMap = mpx.componentsMap[packageName]
-  const resolveMode = mpx.resolveMode
-  const projectRoot = mpx.projectRoot
   const mode = mpx.mode
   const env = mpx.env
-  const defs = mpx.defs
   const i18n = mpx.i18n
   const globalSrcMode = mpx.srcMode
   const localSrcMode = queryObj.mode
   const srcMode = localSrcMode || globalSrcMode
   const vueContentCache = mpx.vueContentCache
   const autoScope = matchCondition(resourcePath, mpx.autoScopeRules)
-
-  // 支持资源query传入page或component支持页面/组件单独编译
-  if ((queryObj.component && !componentsMap[resourcePath]) || (queryObj.page && !pagesMap[resourcePath])) {
-    let entryChunkName
-    const rawRequest = this._module.rawRequest
-    const _preparedEntrypoints = this._compilation._preparedEntrypoints
-    for (let i = 0; i < _preparedEntrypoints.length; i++) {
-      if (rawRequest === _preparedEntrypoints[i].request) {
-        entryChunkName = _preparedEntrypoints[i].name
-        break
-      }
-    }
-    if (queryObj.component) {
-      componentsMap[resourcePath] = entryChunkName || 'noEntryComponent'
-    } else {
-      pagesMap[resourcePath] = entryChunkName || 'noEntryPage'
-    }
-  }
 
   let ctorType = 'app'
   if (pagesMap[resourcePath]) {
@@ -66,63 +49,48 @@ module.exports = function (content) {
     // component
     ctorType = 'component'
   }
+
+  // 支持资源query传入isPage或isComponent支持页面/组件单独编译
+  if (ctorType === 'app' && (queryObj.isComponent || queryObj.isPage)) {
+    const entryName = getEntryName(this) || (queryObj.isComponent ? 'noEntryComponent' : 'noEntryPage')
+    ctorType = queryObj.isComponent ? 'component' : 'page'
+    this._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, ctorType, entryName, packageRoot))
+  }
+
   const loaderContext = this
   const stringifyRequest = r => loaderUtils.stringifyRequest(loaderContext, r)
   const isProduction = this.minimize || process.env.NODE_ENV === 'production'
-  const options = loaderUtils.getOptions(this) || {}
-  const processSrcQuery = (src, type) => {
-    const localQuery = Object.assign({}, queryObj)
-    // style src会被特殊处理为全局复用样式，不添加resourcePath，添加isStatic及issuerResource
-    if (type === 'styles') {
-      localQuery.isStatic = true
-      localQuery.issuerResource = this.resource
-    } else {
-      localQuery.resourcePath = resourcePath
-    }
-    if (type === 'json') {
-      localQuery.__component = true
-    }
-    return addQuery(src, localQuery)
-  }
-
-  const filePath = resourcePath
-
-  let moduleId = 'm' + mpx.pathHash(filePath)
-  if (ctorType === 'app') {
-    moduleId = MPX_APP_MODULE_ID
-  }
+  const filePath = this.resourcePath
+  const moduleId = ctorType === 'app' ? MPX_APP_MODULE_ID : 'm' + mpx.pathHash(filePath)
 
   const parts = parseComponent(content, {
     filePath,
     needMap: this.sourceMap,
     mode,
-    defs,
     env
   })
+
+  const {
+    getRequire
+  } = createHelpers(loaderContext)
 
   let output = ''
   const callback = this.async()
 
   async.waterfall([
     (callback) => {
-      const json = parts.json || {}
-      if (json.src) {
-        readJsonForSrc(json.src, loaderContext, (err, result) => {
-          if (err) return callback(err)
-          json.content = result
-          callback()
-        })
-      } else {
+      getJSONContent(parts.json || {}, loaderContext, (err, content) => {
+        if (err) return callback(err)
+        if (parts.json) parts.json.content = content
         callback()
-      }
+      })
     },
     (callback) => {
       // web输出模式下没有任何inject，可以通过cache直接返回，由于读取src json可能会新增模块依赖，需要在之后返回缓存内容
       if (vueContentCache.has(filePath)) {
         return callback(null, vueContentCache.get(filePath))
       }
-      // 只有ali才可能需要scoped
-      const hasScoped = (parts.styles.some(({ scoped }) => scoped) || autoScope) && mode === 'ali'
+      const hasScoped = parts.styles.some(({ scoped }) => scoped) || autoScope
       const templateAttrs = parts.template && parts.template.attrs
       const hasComment = templateAttrs && templateAttrs.comments
       const isNative = false
@@ -146,27 +114,10 @@ module.exports = function (content) {
         }
       }
 
-      const {
-        getRequire,
-        getRequireForSrc,
-        getRequestString,
-        getSrcRequestString
-      } = createHelpers({
-        loaderContext,
-        options,
-        moduleId,
-        hasScoped,
-        hasComment,
-        usingComponents,
-        srcMode,
-        isNative,
-        projectRoot
-      })
-
       // 处理mode为web时输出vue格式文件
       if (mode === 'web') {
-        if (ctorType === 'app' && !queryObj.app) {
-          const request = addQuery(this.resource, { app: true })
+        if (ctorType === 'app' && !queryObj.isApp) {
+          const request = addQuery(this.resource, { isApp: true })
           output += `
       import App from ${stringifyRequest(request)}
       import Vue from 'vue'
@@ -187,19 +138,15 @@ module.exports = function (content) {
             async.parallel([
               (callback) => {
                 processTemplate(parts.template, {
+                  loaderContext,
+                  hasScoped,
                   hasComment,
                   isNative,
-                  mode,
                   srcMode,
-                  defs,
-                  loaderContext,
                   moduleId,
                   ctorType,
                   usingComponents,
-                  componentGenerics,
-                  decodeHTMLText: mpx.decodeHTMLText,
-                  externalClasses: mpx.externalClasses,
-                  checkUsingComponents: mpx.checkUsingComponents
+                  componentGenerics
                 }, callback)
               },
               (callback) => {
@@ -211,16 +158,9 @@ module.exports = function (content) {
               },
               (callback) => {
                 processJSON(parts.json, {
-                  mode,
-                  env,
-                  defs,
-                  resolveMode,
                   loaderContext,
                   pagesMap,
-                  pagesEntryMap: mpx.pagesEntryMap,
-                  pathHash: mpx.pathHash,
-                  componentsMap,
-                  projectRoot
+                  componentsMap
                 }, callback)
               }
             ], (err, res) => {
@@ -236,24 +176,20 @@ module.exports = function (content) {
             }
 
             processScript(parts.script, {
+              loaderContext,
               ctorType,
               srcMode,
-              loaderContext,
               isProduction,
-              getRequireForSrc,
-              i18n,
               componentGenerics,
-              projectRoot,
               jsonConfig: jsonRes.jsonObj,
-              componentId: queryObj.componentId || '',
+              outputPath: queryObj.outputPath || '',
               tabBarMap: jsonRes.tabBarMap,
               tabBarStr: jsonRes.tabBarStr,
               builtInComponentsMap: templateRes.builtInComponentsMap,
               genericsInfo: templateRes.genericsInfo,
               wxsModuleMap: templateRes.wxsModuleMap,
               localComponentsMap: jsonRes.localComponentsMap,
-              localPagesMap: jsonRes.localPagesMap,
-              forceDisableBuiltInLoader: mpx.forceDisableBuiltInLoader
+              localPagesMap: jsonRes.localPagesMap
             }, callback)
           }
         ], (err, scriptRes) => {
@@ -264,39 +200,44 @@ module.exports = function (content) {
         })
       }
 
-      // 触发webpack global var 注入
-      output += 'global.currentModuleId\n'
+      const moduleGraph = this._compilation.moduleGraph
 
-      // todo loader中inject dep比较危险，watch模式下不一定靠谱，可考虑将import改为require然后通过修改loader内容注入
+      const issuer = moduleGraph.getIssuer(this._module)
+
+      if (issuer) {
+        return callback(new Error(`Current ${ctorType} [${this.resourcePath}] is issued by [${issuer.resource}], which is not allowed!`))
+      }
+
+      if (ctorType === 'app') {
+        const appName = getEntryName(this)
+        this._module.addPresentationalDependency(new AppEntryDependency(resourcePath, appName))
+      }
+
       // 注入模块id及资源路径
-      let globalInjectCode = `global.currentModuleId = ${JSON.stringify(moduleId)}\n`
+      output += `global.currentModuleId = ${JSON.stringify(moduleId)}\n`
       if (!isProduction) {
-        globalInjectCode += `global.currentResource = ${JSON.stringify(filePath)}\n`
+        output += `global.currentResource = ${JSON.stringify(filePath)}\n`
       }
 
-      if (i18n && (ctorType === 'app' || (ctorType === 'page' && queryObj.isIndependent)) && !mpx.forceDisableInject) {
-        const i18nMethodsVar = 'i18nMethods'
+      // 为app注入i18n
+      if (i18n && ctorType === 'app') {
         const i18nWxsPath = normalize.lib('runtime/i18n.wxs')
-        const i18nWxsLoaderPath = normalize.lib('wxs/wxs-i18n-loader.js')
+        const i18nWxsLoaderPath = normalize.lib('wxs/i18n-loader.js')
         const i18nWxsRequest = i18nWxsLoaderPath + '!' + i18nWxsPath
-        const expression = `require(${loaderUtils.stringifyRequest(loaderContext, i18nWxsRequest)})`
-        const deps = []
-        this._module.parser.parse(expression, {
-          current: {
-            addDependency: dep => {
-              dep.userRequest = i18nMethodsVar
-              deps.push(dep)
-            }
-          },
-          module: this._module
-        })
-        this._module.addVariable(i18nMethodsVar, expression, deps)
-
-        globalInjectCode += `if (!global.i18n) {
-  global.i18n = ${JSON.stringify({ locale: i18n.locale, version: 0 })}
-  global.i18nMethods = ${i18nMethodsVar}
-}\n`
+        this._module.addDependency(new CommonJsVariableDependency(i18nWxsRequest))
+        // 避免该模块被concatenate导致注入的i18n没有最先执行
+        this._module.buildInfo.moduleConcatenationBailout = 'i18n'
       }
+
+      // 为独立分包注入init module
+      if (independent && typeof independent === 'string') {
+        const independentLoader = normalize.lib('independent-loader.js')
+        const independentInitRequest = `!!${independentLoader}!${independent}`
+        this._module.addDependency(new CommonJsVariableDependency(independentInitRequest))
+        // 避免该模块被concatenate导致注入的independent init没有最先执行
+        this._module.buildInfo.moduleConcatenationBailout = 'independent init'
+      }
+
       // 注入构造函数
       let ctor = 'App'
       if (ctorType === 'page') {
@@ -309,101 +250,54 @@ module.exports = function (content) {
       } else if (ctorType === 'component') {
         ctor = 'Component'
       }
-      globalInjectCode += `global.currentCtor = ${ctor}\n`
-      globalInjectCode += `global.currentResourceType = '${ctorType}'\n`
-      globalInjectCode += `global.currentCtorType = ${JSON.stringify(ctor.replace(/^./, (match) => {
+      output += `global.currentCtor = ${ctor}\n`
+      output += `global.currentCtorType = ${JSON.stringify(ctor.replace(/^./, (match) => {
         return match.toLowerCase()
       }))}\n`
+      output += `global.currentResourceType = ${JSON.stringify(ctorType)}\n`
 
-      // <script>
-      output += '/* script */\n'
-      let scriptSrcMode = srcMode
-      const script = parts.script
-      if (script) {
-        scriptSrcMode = script.mode || scriptSrcMode
-        let scriptRequestString
-        if (script.src) {
-          // 传入resourcePath以确保后续处理中能够识别src引入的资源为组件主资源
-          script.src = processSrcQuery(script.src, 'script')
-          scriptRequestString = getSrcRequestString('script', script)
-        } else {
-          scriptRequestString = getRequestString('script', script)
-        }
-        if (scriptRequestString) {
-          output += 'export * from ' + scriptRequestString + '\n\n'
-          if (ctorType === 'app') {
-            mpx.appScriptRawRequest = JSON.parse(scriptRequestString)
-            mpx.appScriptPromise = new Promise((resolve) => {
-              mpx.appScriptPromiseResolve = resolve
-            })
-          }
-        }
-      } else {
-        switch (ctorType) {
-          case 'app':
-            output += 'import {createApp} from "@mpxjs/core"\n' +
-              'createApp({})\n'
-            break
-          case 'page':
-            output += 'import {createPage} from "@mpxjs/core"\n' +
-              'createPage({})\n'
-            break
-          case 'component':
-            output += 'import {createComponent} from "@mpxjs/core"\n' +
-              'createComponent({})\n'
-        }
-        output += '\n'
-      }
+      // template
+      output += '/* template */\n'
+      const template = parts.template
 
-      if (scriptSrcMode) {
-        globalInjectCode += `global.currentSrcMode = ${JSON.stringify(scriptSrcMode)}\n`
+      if (template) {
+        const extraOptions = {
+          ...template.src ? {
+            ...queryObj,
+            resourcePath
+          } : null,
+          hasScoped,
+          hasComment,
+          isNative,
+          moduleId,
+          usingComponents
+          // 添加babel处理渲染函数中可能包含的...展开运算符
+          // 由于...运算符应用范围极小以及babel成本极高，先关闭此特性后续看情况打开
+          // needBabel: true
+        }
+        if (template.src) extraOptions.resourcePath = resourcePath
+        // 基于global.currentInject来注入模板渲染函数和refs等信息
+        output += getRequire('template', template, extraOptions) + '\n'
       }
 
       // styles
       output += '/* styles */\n'
-      let cssModules
       if (parts.styles.length) {
-        let styleInjectionCode = ''
         parts.styles.forEach((style, i) => {
-          let scoped = hasScoped ? (style.scoped || autoScope) : false
-          let requireString
+          const scoped = style.scoped || autoScope
+          const extraOptions = {
+            // style src会被特殊处理为全局复用样式，不添加resourcePath，添加isStatic及issuerFile
+            ...style.src ? {
+              ...queryObj,
+              isStatic: true,
+              issuerResource: addQuery(this.resource, { type: 'styles' }, true)
+            } : null,
+            moduleId,
+            scoped
+          }
           // require style
-          if (style.src) {
-            style.src = processSrcQuery(style.src, 'styles')
-            requireString = getRequireForSrc('styles', style, -1, scoped)
-          } else {
-            requireString = getRequire('styles', style, i, scoped)
-          }
-          const hasStyleLoader = requireString.indexOf('style-loader') > -1
-          const invokeStyle = code => `${code}\n`
-
-          const moduleName = style.module === true ? '$style' : style.module
-          // setCssModule
-          if (moduleName) {
-            if (!cssModules) {
-              cssModules = {}
-            }
-            if (moduleName in cssModules) {
-              loaderContext.emitError(
-                'CSS module name "' + moduleName + '" is not unique!'
-              )
-              styleInjectionCode += invokeStyle(requireString)
-            } else {
-              cssModules[moduleName] = true
-
-              if (!hasStyleLoader) {
-                requireString += '.locals'
-              }
-
-              styleInjectionCode += invokeStyle(
-                'this["' + moduleName + '"] = ' + requireString
-              )
-            }
-          } else {
-            styleInjectionCode += invokeStyle(requireString)
-          }
+          output += getRequire('styles', style, extraOptions, i) + '\n'
         })
-        output += styleInjectionCode + '\n'
       } else if (ctorType === 'app' && mode === 'ali') {
         output += getRequire('styles', {}) + '\n'
       }
@@ -412,34 +306,29 @@ module.exports = function (content) {
       output += '/* json */\n'
       // 给予json默认值, 确保生成json request以自动补全json
       const json = parts.json || {}
-      if (json.src) {
-        json.src = processSrcQuery(json.src, 'json')
-        output += getRequireForSrc('json', json) + '\n\n'
-      } else {
-        output += getRequire('json', json) + '\n\n'
-      }
+      output += getRequire('json', json, json.src && {
+        ...queryObj,
+        resourcePath
+      }) + '\n'
 
-      // template
-      output += '/* template */\n'
-      const template = parts.template
-
-      if (template) {
-        if (template.src) {
-          template.src = processSrcQuery(template.src, 'template')
-          output += getRequireForSrc('template', template) + '\n\n'
-        } else {
-          output += getRequire('template', template) + '\n\n'
+      // script
+      output += '/* script */\n'
+      let scriptSrcMode = srcMode
+      // 给予script默认值, 确保生成js request以自动补全js
+      const script = parts.script || {}
+      if (script) {
+        scriptSrcMode = script.mode || scriptSrcMode
+        if (scriptSrcMode) output += `global.currentSrcMode = ${JSON.stringify(scriptSrcMode)}\n`
+        // 传递ctorType以补全js内容
+        const extraOptions = {
+          ...script.src ? {
+            ...queryObj,
+            resourcePath
+          } : null,
+          ctorType
         }
+        output += getRequire('script', script, extraOptions) + '\n'
       }
-
-      if (!mpx.forceDisableInject) {
-        const dep = new InjectDependency({
-          content: globalInjectCode,
-          index: -3
-        })
-        this._module.addDependency(dep)
-      }
-
       callback(null, output)
     }
   ], callback)

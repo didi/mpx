@@ -36,11 +36,14 @@
       easingFunction: {
         type: String,
         default: 'default'
-      }
+      },
+      scrollOptions: Object
     },
     data () {
       return {
-        currentIndex: this.current
+        currentIndex: this.current,
+        currentChildLength: 0,
+        lastChildLength: 0
       }
     },
     computed: {
@@ -80,6 +83,9 @@
         }
       }
     },
+    updated () {
+      this.currentChildLength = this.$children && this.$children.length
+    },
     watch: {
       current (val) {
         if (this.bs) {
@@ -88,13 +94,32 @@
         }
         this.changeSource = ''
         this.goto(val)
+      },
+      currentChildLength(val) {
+        if (val < this.lastChildLength && val < this.currentIndex) {
+          this.goto(0, 0)
+        }
+        if (this.lastChildLength || (!this.lastChildLength && !this.autoplay)) {
+          this.bs && this.bs.refresh()
+        }
+        this.lastChildLength = val
+      }
+    },
+    activated () {
+      if (this.bs && this.autoplay) {
+        this.bs.startPlay()
+      }
+    },
+    deactivated () {
+      if (this.bs && this.autoplay) {
+        this.bs.pausePlay()
       }
     },
     beforeCreate () {
       this.itemIds = []
     },
     mounted () {
-      this.bs = new BScroll(this.$refs.wrapper, {
+      const originBsOptions = {
         scrollX: !this.vertical,
         scrollY: this.vertical,
         slide: {
@@ -103,14 +128,17 @@
           speed: this.duration,
           easing: this.easing,
           interval: this.interval,
-          autoplay: this.autoplay
+          autoplay: this.autoplay,
+          startPageXIndex: this.vertical ? 0 : this.current,
+          startPageYIndex: this.vertical? this.current : 0
         },
         momentum: false,
         bounce: false,
         probeType: 3,
         stopPropagation: true
-      })
-
+      }
+      const bsOptions = Object.assign({}, originBsOptions, this.scrollOptions)
+      this.bs = new BScroll(this.$refs.wrapper, bsOptions)
       this.bs.on('slideWillChange', (page) => {
         this.currentIndex = this.vertical ? page.pageY : page.pageX
         this.$emit('change', getCustomEvent('change', {
@@ -153,10 +181,11 @@
       refresh () {
         this.bs && this.bs.refresh()
       },
-      goto (index) {
+      goto (index, time) {
         const x = this.vertical ? 0 : index
         const y = this.vertical ? index : 0
-        this.bs && this.bs.goToPage(x, y)
+        const speed = time === 0 ? 0 : this.duration
+        this.bs && this.bs.goToPage(x, y, speed)
       }
     },
     render (createElement) {

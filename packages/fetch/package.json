@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/fetch",
-  "version": "2.6.103",
+  "version": "2.7.9",
   "description": "mpx fetch lib",
   "author": "donghongping",
   "license": "ISC",
@@ -29,8 +29,5 @@
   },
   "dependencies": {
     "path-to-regexp": "^6.2.0"
-  },
-  "peerDependencies": {
-    "@mpxjs/core": "^2.3.0"
   }
 }

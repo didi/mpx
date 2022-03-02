@@ -3,6 +3,7 @@ const stringifyQuery = require('../utils/stringify-query')
 const parseQuery = require('loader-utils').parseQuery
 const { matchCondition } = require('../utils/match-condition')
 const addInfix = require('../utils/add-infix')
+const { JSON_JS_EXT } = require('../utils/const')
 
 module.exports = class AddModePlugin {
   constructor (source, mode, fileConditionRules, target) {
@@ -24,8 +25,8 @@ module.exports = class AddModePlugin {
       }
       const resourcePath = request.path
       let extname = ''
-      if (resourcePath.endsWith('.json.js')) {
-        extname = '.json.js'
+      if (resourcePath.endsWith(JSON_JS_EXT)) {
+        extname = JSON_JS_EXT
       } else {
         extname = path.extname(resourcePath)
       }

@@ -1,9 +1,11 @@
 .idea/
 .vscode/
+.cache/
 .gitconfig
 node_modules/
 *.log
 package-lock.json
+pnpm-lock.yaml
 .DS_Store
 docs-vuepress/.vuepress/dist
 elevate/
