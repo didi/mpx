@@ -47,7 +47,7 @@ export default class MPXProxy {
     this.ignoreProxyMap = makeMap(EXPORT_MPX.config.ignoreProxyWhiteList)
     if (__mpx_mode__ !== 'web') {
       this._watchers = []
-      this._userWatchers = {}
+      this._namedWatchers = {}
       this._watcher = null
       this.localKeysMap = {} // 非props key
       this.renderData = {} // 渲染函数中收集的数据
@@ -143,10 +143,10 @@ export default class MPXProxy {
       // 强制执行render
       this.target.$forceUpdate = (...rest) => this.forceUpdate(...rest)
       this.target.$nextTick = fn => this.nextTick(fn)
-      this.target.$getWatchers = () => this._watchers.filter(item => !item.unpausable)
+      this.target.$getPausableWatchers = () => this._watchers.filter(item => item.pausable)
       this.target.$getWatcherByName = (name) => {
-        if (!this._userWatchers) return null
-        return this._userWatchers[name] || null
+        if (!this._namedWatchers) return null
+        return this._namedWatchers[name] || null
       }
       this.target.$getRenderWatcher = () => this._watcher
     }
@@ -423,11 +423,11 @@ export default class MPXProxy {
           warn(`Failed to execute render function, degrade to full-set-data mode.`, this.options.mpxFileResource, e)
           this.render()
         }
-      }, noop)
+      }, noop, { pausable: true })
     } else {
       renderWatcher = new Watcher(this, () => {
         this.render()
-      }, noop)
+      }, noop, { pausable: true })
     }
     this._watcher = renderWatcher
   }

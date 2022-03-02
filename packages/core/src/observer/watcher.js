@@ -34,8 +34,8 @@ export default class Watcher {
     this.immediateAsync = false
     // 是否暂停，默认为否
     this.paused = false
-    // 是否不可被暂停，默认为否（即默认可被暂停）
-    this.unpausable = !!(options && options.unpausable) || false
+    // 是否可被暂停，默认为否，不可被暂停
+    this.pausable = !!(options && options.pausable) || false
     this.dirty = this.lazy // for lazy watchers
     this.deps = []
     this.newDeps = []
@@ -131,17 +131,19 @@ export default class Watcher {
   }
 
   pause () {
-    // unpausable=true 不可暂停
-    if (this.unpausable) return
+    // pausable=false 不可暂停
+    if (!this.pausable) return
     this.paused = true
   }
   resume () {
-    // unpausable=false 不可恢复
-    if (this.unpausable) return
+    // pausable=false 不可恢复
+    if (!this.pausable) return
     // paused 阶段被触发，则 resume 后执行一次run
-    if (this.dirty) this.run()
-    this.paused = false
-    this.dirty = false
+    if (this.dirty) {
+      this.paused = false
+      this.dirty = false
+      this.run()
+    }
   }
   /**
    * Scheduler job interface.
