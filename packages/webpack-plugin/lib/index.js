@@ -1300,10 +1300,11 @@ try {
               let insertBeforeIndex = -1
               const info = typeLoaderProcessInfo[type]
               loaders.forEach((loader, index) => {
-                if (loader.loader.includes(info[0])) {
+                const currentLoader = toPosix(loader.loader)
+                if (currentLoader.includes(info[0])) {
                   loader.loader = info[1]
                 }
-                if (loader.loader.includes(info[1])) {
+                if (currentLoader.includes(info[1])) {
                   insertBeforeIndex = index
                 }
               })
@@ -1343,13 +1344,13 @@ try {
 
         if (mpx.mode === 'web') {
           const mpxStyleOptions = queryObj.mpxStyleOptions
-          const firstLoader = (loaders[0] && loaders[0].loader) || ''
+          const firstLoader = toPosix(loaders[0] && loaders[0].loader) || ''
           const isPitcherRequest = firstLoader.includes('vue-loader/lib/loaders/pitcher')
           let cssLoaderIndex = -1
           let vueStyleLoaderIndex = -1
           let mpxStyleLoaderIndex = -1
           loaders.forEach((loader, index) => {
-            const currentLoader = loader.loader
+            const currentLoader = toPosix(loader.loader)
             if (currentLoader.includes('css-loader')) {
               cssLoaderIndex = index
             } else if (currentLoader.includes('vue-loader/lib/loaders/stylePostLoader')) {
