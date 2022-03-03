@@ -1,33 +1,15 @@
 const pathModule = require('path')
-
-const normalizeCondition = (partialCompileCondition) => {
-  const checkCondition = (condition, pageResourcePath) => {
-    if (typeof condition === 'string') {
-      return pageResourcePath.includes(condition)
-    } else if (condition instanceof RegExp) {
-      return condition.test(pageResourcePath)
-    } else if (typeof condition === 'function') {
-      return condition(pageResourcePath)
-    } else if (Array.isArray(condition)) {
-      for (let i = 0; i < condition.length; i++) {
-        if (checkCondition(condition[i], pageResourcePath)) {
-          return true
-        }
-      }
-    }
-  }
-  return (pageResourcePath) => checkCondition(partialCompileCondition, pageResourcePath)
-}
+const matchCondition = require('../utils/match-condition')
 
 class MpxPartialCompilePlugin {
-  constructor (partialCompileCondition) {
-    this.matchCondition = normalizeCondition(partialCompileCondition)
+  constructor (condition) {
+    this.condition = condition
   }
 
   isResolvingPage (obj) {
     const { query, path } = obj
     const extName = pathModule.extname(path)
-    return (extName === '.mpx' && query.includes('resolveType=page'))
+    return (extName === '.mpx' && query.includes('isPage'))
   }
 
   apply (compiler) {
@@ -38,8 +20,7 @@ class MpxPartialCompilePlugin {
             name: "MpxPartialCompilePlugin",
             stage: -100
           },  (obj, resolverContext, callback) => {
-            // 阻止未匹配上的页面打包
-            if (this.isResolvingPage(obj) && !this.matchCondition(obj.path)) {
+            if (this.isResolvingPage(obj) && !matchCondition(obj.path, this.condition)) {
               obj.path = false
             }
             callback(null, obj)
