@@ -1,5 +1,5 @@
 const pathModule = require('path')
-const matchCondition = require('../utils/match-condition')
+const { matchCondition } = require('../utils/match-condition')
 
 class MpxPartialCompilePlugin {
   constructor (condition) {
