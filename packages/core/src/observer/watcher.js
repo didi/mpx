@@ -139,8 +139,8 @@ export default class Watcher {
     // pausable=false 不可恢复
     if (!this.pausable) return
     // paused 阶段被触发，则 resume 后执行一次run
+    this.paused = false
     if (this.dirty) {
-      this.paused = false
       this.dirty = false
       this.run()
     }
