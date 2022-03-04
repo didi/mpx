@@ -1353,7 +1353,7 @@ try {
 
         if (mpx.mode === 'web') {
           const mpxStyleOptions = queryObj.mpxStyleOptions
-          const firstLoader = toPosix(loaders[0] && loaders[0].loader) || ''
+          const firstLoader = loaders[0] ? toPosix(loaders[0].loader) : ''
           const isPitcherRequest = firstLoader.includes('vue-loader/lib/loaders/pitcher')
           let cssLoaderIndex = -1
           let vueStyleLoaderIndex = -1
