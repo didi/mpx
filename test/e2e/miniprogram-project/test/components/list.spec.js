@@ -68,11 +68,13 @@ describe('component list', () => {
     // 测试 transRpxRules 功能是否正常
     const listComponentWxPath = getBuildOutFilePath('src/components/list.mpx', 'wx')
     const listComponentWxCss = readFile(listComponentWxPath + '.wxss')
+    console.log('listComponentWxCss====>>>>>>', listComponentWxCss)
     expect(listComponentWxCss.includes('width: 118rpx;')).toBeTruthy()
   })
 
   it('should decodeHtmlText feature correctly', function () {
     // 测试decodeHTMLText功能是否正常
+    console.log('comp.querySelector .dom.innerHTML', comp.querySelector('.test_decodeText').dom.innerHTML)
     expect(comp.querySelector('.test_decodeText').dom.innerHTML).toBe('foo © bar ≠ baz 𝌆 qux')
   })
 

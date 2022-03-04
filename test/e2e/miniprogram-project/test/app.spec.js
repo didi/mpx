@@ -80,6 +80,7 @@ describe('test App instance', () => {
     const aliPageEnvStr = readFileSyncInDist('dist/ali/pages/mode.axml', 'utf-8')
     const ttPageEnvStr = readFileSyncInDist('dist/tt/pages/mode.ttml', 'utf-8')
     const wxPageEnvStr = readFileSyncInDist('dist/wx/pages/mode.wxml', 'utf-8')
+    console.log('swanPageEnvStr ====>>>>> ', swanPageEnvStr)
     expect(swanPageEnvStr).toMatch(/\{\{\("swan"\)}}/)
     expect(aliPageEnvStr).toMatch(/\{\{\("ali"\)}}/)
     expect(ttPageEnvStr).toMatch(/\{\{\("tt"\)}}/)
