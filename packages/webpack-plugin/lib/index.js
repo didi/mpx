@@ -11,6 +11,7 @@ const CommonJsAsyncDependency = require('./dependencies/CommonJsAsyncDependency'
 const NormalModule = require('webpack/lib/NormalModule')
 const EntryPlugin = require('webpack/lib/EntryPlugin')
 const JavascriptModulesPlugin = require('webpack/lib/javascript/JavascriptModulesPlugin')
+const FileSystemInfo = require('webpack/lib/FileSystemInfo')
 const normalize = require('./utils/normalize')
 const toPosix = require('./utils/to-posix')
 const addQuery = require('./utils/add-query')
@@ -159,6 +160,14 @@ class MpxWebpackPlugin {
     }, options.nativeConfig)
     options.webConfig = options.webConfig || {}
     this.options = options
+    // Hack for buildDependencies
+    const rawResolveBuildDependencies = FileSystemInfo.prototype.resolveBuildDependencies
+    FileSystemInfo.prototype.resolveBuildDependencies = function (context, deps, rawCallback) {
+      return rawResolveBuildDependencies.call(this, context, deps, (err, result) => {
+        if (result && typeof options.hackResolveBuildDependencies === 'function') options.hackResolveBuildDependencies(result)
+        return rawCallback(err, result)
+      })
+    }
   }
 
   static loader (options = {}) {
@@ -1303,8 +1312,8 @@ try {
                 const currentLoader = toPosix(loader.loader)
                 if (currentLoader.includes(info[0])) {
                   loader.loader = info[1]
-                }
-                if (currentLoader.includes(info[1])) {
+                  insertBeforeIndex = index
+                } else if (currentLoader.includes(info[1])) {
                   insertBeforeIndex = index
                 }
               })
