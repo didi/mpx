@@ -738,9 +738,6 @@ function parse (template, options) {
       currentParent.children.push(element)
       element.parent = currentParent
       processElement(element, root, options, meta)
-      if (isComponentNode(element, options) && mode === 'ali' && !options.hasVirtualHost) {
-        processAliAddComponentRootView(element, options, stack, currentParent)
-      }
       tagNames.add(element.tag)
 
       if (!unary) {
@@ -748,7 +745,7 @@ function parse (template, options) {
         stack.push(element)
       } else {
         element.unary = true
-        closeElement(element, meta)
+        closeElement(element, meta, options)
       }
     },
 
@@ -763,7 +760,7 @@ function parse (template, options) {
         // pop stack
         stack.pop()
         currentParent = stack[stack.length - 1]
-        closeElement(element, meta)
+        closeElement(element, meta, options)
       }
     },
 
@@ -1802,7 +1799,16 @@ function processBuiltInComponents (el, meta) {
   }
 }
 
-function processAliAddComponentRootView (el, options, stack, currentParent) {
+function postProcessAliComponent (el, options) {
+  if (isComponentNode(el, options) && !options.hasVirtualHost) {
+    return processAliAddComponentRootView(el, options)
+  } else if (el.is && el.components) {
+    return postProcessComponentIs(el)
+  }
+  return el
+}
+
+function processAliAddComponentRootView (el, options) {
   const processAttrsConditions = [
     { condition: /^(on|catch)Tap$/, action: 'clone' },
     { condition: /^(on|catch)TouchStart$/, action: 'clone' },
@@ -1859,13 +1865,23 @@ function processAliAddComponentRootView (el, options, stack, currentParent) {
 
   // create new el
   let componentWrapView = createASTElement('view', newElAttrs)
-  currentParent.children.pop()
-  currentParent.children.push(componentWrapView)
-  componentWrapView.parent = currentParent
-  componentWrapView.children.push(el)
-  el.parent = componentWrapView
 
-  el = componentWrapView
+  componentWrapView.for = el.for
+  componentWrapView.if = el.if
+  componentWrapView.elseif = el.elseif
+  componentWrapView.else = el.else
+  delete el.for
+  delete el.if
+  delete el.elseif
+  delete el.else
+
+  if (el.is && el.components) {
+    el = postProcessComponentIs(el)
+  }
+
+  replaceNode(el, componentWrapView)
+  addChild(componentWrapView, el)
+  return componentWrapView
 }
 
 // 有virtualHost情况wx组件注入virtualHost。无virtualHost阿里组件注入root-view。其他跳过。
@@ -2104,7 +2120,7 @@ function processElement (el, root, options, meta) {
   processAttrs(el, options)
 }
 
-function closeElement (el, meta) {
+function closeElement (el, meta, options) {
   postProcessAtMode(el)
   if (mode === 'web') {
     postProcessWxs(el, meta)
@@ -2114,8 +2130,9 @@ function closeElement (el, meta) {
   }
   const pass = isNative || postProcessTemplate(el) || processingTemplate
   postProcessWxs(el, meta)
+
   if (!pass) {
-    el = postProcessComponentIs(el)
+    el = mode === 'ali' ? postProcessAliComponent(el, options) : postProcessComponentIs(el)
   }
   postProcessFor(el)
   postProcessIf(el)
