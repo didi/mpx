@@ -903,6 +903,19 @@ function modifyAttr (el, name, val) {
   }
 }
 
+function moveBaseDirective (target, from, isDelete = true) {
+  target.for = from.for
+  target.if = from.if
+  target.elseif = from.elseif
+  target.else = from.else
+  if (isDelete) {
+    delete from.for
+    delete from.if
+    delete from.elseif
+    delete from.else
+  }
+}
+
 function stringify (str) {
   return JSON.stringify(str)
 }
@@ -1799,8 +1812,8 @@ function processBuiltInComponents (el, meta) {
   }
 }
 
-function postProcessAliComponent (el, options) {
-  if (isComponentNode(el, options) && !options.hasVirtualHost) {
+function postProcessComponentIsAndAliComponent (el, options) {
+  if (isComponentNode(el, options) && !options.hasVirtualHost && mode === 'ali') {
     return processAliAddComponentRootView(el, options)
   } else if (el.is && el.components) {
     return postProcessComponentIs(el)
@@ -1817,8 +1830,10 @@ function processAliAddComponentRootView (el, options) {
     { condition: /^(on|catch)TouchCancel$/, action: 'clone' },
     { condition: /^(on|catch)LongTap$/, action: 'clone' },
     { condition: /^data-/, action: 'clone' },
-    { condition: 'style', action: 'move' },
-    { condition: 'class', action: 'append', value: `${MPX_ROOT_VIEW} host-${options.moduleId}` }
+    { condition: 'style', action: 'move' }
+  ]
+  const processAppendAttrsRules = [
+    { name: 'class', value: `${MPX_ROOT_VIEW} host-${options.moduleId}` }
   ]
   let newElAttrs = []
   let allAttrs = cloneAttrsList(el.attrsList)
@@ -1837,14 +1852,14 @@ function processAliAddComponentRootView (el, options) {
     }
   }
 
-  function processAppend (attr, item) {
-    const getNeedAppendAttrValue = el.attrsMap[attr.name]
-    if (getNeedAppendAttrValue) {
-      item.value = getNeedAppendAttrValue + ' ' + item.value
-    }
-    newElAttrs.push({
-      name: attr.name,
-      value: item.value
+  function processAppendRules (el) {
+    processAppendAttrsRules.forEach((rule) => {
+      const getNeedAppendAttrValue = el.attrsMap[rule.name]
+      const value = getNeedAppendAttrValue ? getNeedAppendAttrValue + ' ' + rule.value : rule.value
+      newElAttrs.push({
+        name: rule.name,
+        value
+      })
     })
   }
 
@@ -1856,30 +1871,19 @@ function processAliAddComponentRootView (el, options) {
           processClone(attr)
         } else if (item.action === 'move') {
           processMove(attr)
-        } else if (item.action === 'append') {
-          processAppend(attr, item)
         }
       }
     })
   })
 
-  // create new el
+  processAppendRules(el)
   let componentWrapView = createASTElement('view', newElAttrs)
-
-  componentWrapView.for = el.for
-  componentWrapView.if = el.if
-  componentWrapView.elseif = el.elseif
-  componentWrapView.else = el.else
-  delete el.for
-  delete el.if
-  delete el.elseif
-  delete el.else
-
+  moveBaseDirective(componentWrapView, el)
   if (el.is && el.components) {
     el = postProcessComponentIs(el)
   }
 
-  replaceNode(el, componentWrapView)
+  replaceNode(el, componentWrapView, true)
   addChild(componentWrapView, el)
   return componentWrapView
 }
@@ -2132,7 +2136,7 @@ function closeElement (el, meta, options) {
   postProcessWxs(el, meta)
 
   if (!pass) {
-    el = mode === 'ali' ? postProcessAliComponent(el, options) : postProcessComponentIs(el)
+    el = postProcessComponentIsAndAliComponent(el, options)
   }
   postProcessFor(el)
   postProcessIf(el)
@@ -2171,10 +2175,7 @@ function postProcessComponentIs (el) {
     let tempNode
     if (el.for || el.if || el.elseif || el.else) {
       tempNode = createASTElement('block', [])
-      tempNode.for = el.for
-      tempNode.if = el.if
-      tempNode.elseif = el.elseif
-      tempNode.else = el.else
+      moveBaseDirective(tempNode, el)
     } else {
       tempNode = getTempNode()
     }
