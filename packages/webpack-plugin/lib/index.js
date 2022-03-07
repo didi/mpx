@@ -130,7 +130,7 @@ class MpxWebpackPlugin {
     })
     // 批量指定源码mode
     options.modeRules = options.modeRules || {}
-    // options.generateBuildMap = options.generateBuildMap || false
+    options.generateBuildMap = options.generateBuildMap || false
     options.attributes = options.attributes || []
     options.externals = (options.externals || []).map((external) => {
       return externalsMap[external] || external
@@ -1130,22 +1130,16 @@ class MpxWebpackPlugin {
       }, () => {
         if (mpx.mode === 'web') return
 
-        // if (this.options.generateBuildMap) {
-        //   const pagesMap = compilation.__mpx__.pagesMap
-        //   const componentsPackageMap = compilation.__mpx__.componentsMap
-        //   const componentsMap = Object.keys(componentsPackageMap).map(item => componentsPackageMap[item]).reduce((pre, cur) => {
-        //     return { ...pre, ...cur }
-        //   }, {})
-        //   const outputMap = JSON.stringify({ ...pagesMap, ...componentsMap })
-        //   compilation.assets['../outputMap.json'] = {
-        //     source: () => {
-        //       return outputMap
-        //     },
-        //     size: () => {
-        //       return Buffer.byteLength(outputMap, 'utf8')
-        //     }
-        //   }
-        // }
+        if (this.options.generateBuildMap) {
+          const pagesMap = compilation.__mpx__.pagesMap
+          const componentsPackageMap = compilation.__mpx__.componentsMap
+          const componentsMap = Object.keys(componentsPackageMap).map(item => componentsPackageMap[item]).reduce((pre, cur) => {
+            return { ...pre, ...cur }
+          }, {})
+          const outputMap = JSON.stringify({ ...pagesMap, ...componentsMap })
+          const filename = this.options.generateBuildMap.filename || 'outputMap.json'
+          compilation.assets[filename] = new RawSource(outputMap)
+        }
 
         const {
           globalObject,
