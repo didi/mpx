@@ -1,0 +1,5 @@
+{
+  "name": "config",
+  "version": "1.0.0",
+  "description": "避免webpack通过分析目录依赖错误地将项目package.json中声明的dependencies作为buildDependencies，请勿删除该文件！"
+}

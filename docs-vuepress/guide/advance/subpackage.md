@@ -308,10 +308,9 @@ if (isIndependent) {
 ```
 ### 分包异步化
 
-微信小程序新增分包异步化特性，具体功能介绍和功能目的可 [点击查看](https://developers.weixin.qq.com/miniprogram/dev/framework/subpackages/async.html) ，使跨分包的自定义组件和 JS 代码可以等待对应分包下载后异步使用, Mpx对于该技术中最常用的`跨分包自定义组件引用`进行了完整支持，
-另一项`跨分包JS代码引用`能力在探索规划中，暂不支持，在Mpx中使用跨分包自定义组件引用通过?root声明组件所属异步分包即可使用，示例如下：
+微信小程序新增分包异步化特性，具体功能介绍和功能目的可 [点击查看](https://developers.weixin.qq.com/miniprogram/dev/framework/subpackages/async.html) ，使跨分包的自定义组件和 JS 代码可以等待对应分包下载后异步使用, Mpx对于该技术中最常用的`跨分包自定义组件引用`进行了完整支持，在Mpx中使用跨分包自定义组件引用通过?root声明组件所属异步分包即可使用，示例如下：
 
-- 注意项：目前仅微信平台支持，其他平台下该配置不生效
+- 注意项：目前该能力仅微信平台下支持，其他平台下将会自动降级
 
 ```html
 <!--/packageA/pages/index.mpx-->
@@ -329,9 +328,7 @@ if (isIndependent) {
 </script>
 ```
 
-### 分包异步化
-
-todo @薛干
+另一项`跨分包JS代码引用`能力在探索规划中，暂不支持，
 
 ### 分包注意事项
 

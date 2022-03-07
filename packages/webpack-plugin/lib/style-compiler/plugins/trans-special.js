@@ -19,7 +19,7 @@ module.exports = ({ id }) => {
               }
             })
           })
-        }).process(node.selector).result
+        }).processSync(node.selector)
       })
     }
   }

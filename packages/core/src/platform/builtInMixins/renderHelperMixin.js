@@ -1,32 +1,86 @@
 import { isObject } from '../../helper/utils'
 
+function simpleNormalizeChildren (children) {
+  for (var i = 0; i < children.length; i++) {
+    if (Array.isArray(children[i])) {
+      return Array.prototype.concat.apply([], children)
+    }
+  }
+  return children
+}
+
 export default function renderHelperMixin () {
   return {
     methods: {
       _i (val, handler) {
-        let i, l, keys, key
+        let ret, i, l, keys, key
         if (Array.isArray(val) || typeof val === 'string') {
+          ret = new Array(val.length)
           for (i = 0, l = val.length; i < l; i++) {
-            handler.call(this, val[i], i)
+            ret[i] = handler.call(this, val[i], i)
           }
         } else if (typeof val === 'number') {
+          ret = new Array(val)
           for (i = 0; i < val; i++) {
-            handler.call(this, i + 1, i)
+            ret[i] = handler.call(this, i + 1, i)
           }
         } else if (isObject(val)) {
           keys = Object.keys(val)
+          ret = new Array(keys.length)
           for (i = 0, l = keys.length; i < l; i++) {
             key = keys[i]
-            handler.call(this, val[key], key, i)
+            ret[i] = handler.call(this, val[key], key, i)
           }
         }
+
+        return ret
       },
       _c (key, value) {
         this.__mpxProxy.renderData[key] = value
         return value
       },
-      _r () {
-        this.__mpxProxy.renderWithData()
+      _r (vnode) {
+        this.__mpxProxy.renderWithData(vnode)
+      },
+      // createElement
+      __c (tag, data = {}, children = []) {
+        if (Array.isArray(data)) {
+          children = data
+          data = {}
+        }
+        if (typeof tag === 'object') {
+          return tag
+        }
+
+        children = simpleNormalizeChildren(children)
+
+        // 用以渲染的 vnode 维持最小数据状态
+        const vnode = {
+          nodeType: tag || '',
+          data,
+          children
+        }
+        return vnode
+      },
+      // createTextVNode
+      __v (content) {
+        return {
+          nodeType: '#text',
+          content
+        }
+      },
+      // createEmptyVNode
+      __e () {
+        return {
+          nodeType: 'block',
+          content: ''
+        }
+      },
+      // resolveSlot
+      __t (name, fallback = []) {
+        // 通过 props 传递的 slots 函数
+        let nodes = (this.slots && this.slots[name]) || fallback
+        return nodes
       }
     }
   }

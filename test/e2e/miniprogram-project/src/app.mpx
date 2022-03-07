@@ -1,0 +1,37 @@
+<script>
+import mpx, {createApp} from '@mpxjs/core'
+import apiProxy from '@mpxjs/api-proxy'
+
+mpx.use(apiProxy, {usePromise: true})
+
+createApp({
+  onLaunch() {
+  }
+})
+</script>
+
+<style>
+/*此处编写全局样式*/
+</style>
+
+<script name="json">
+// 可以写注释，通过defs注入的常量做一些判断之类的操作
+const commonPages = [
+  "./pages/index",
+  "./pages/mode",
+  {
+    "src": "./pages/testPageAlias",
+    "path": "pages/alias"
+  }
+]
+if (__mpx_env__ === 'someEnv' && __mpx_mode__ === 'wx') {
+  commonPages.push('./pages/someEnv')
+}
+module.exports = {
+  pages: commonPages,
+  packages: [
+    "./subpackage/test/app.mpx?root=test",
+    "./subpackage/test2/app.mpx?root=test2"
+  ]
+}
+</script>

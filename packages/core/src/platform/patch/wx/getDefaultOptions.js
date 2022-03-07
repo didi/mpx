@@ -24,6 +24,7 @@ function transformProperties (properties) {
     } else {
       newFiled = Object.assign({}, rawFiled)
     }
+    // wx 挂载 observer 监听
     newFiled.observer = function (value, oldValue) {
       if (this.__mpxProxy) {
         this[key] = value

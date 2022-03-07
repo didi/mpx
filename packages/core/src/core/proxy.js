@@ -32,6 +32,7 @@ import {
   DESTROYED
 } from './innerLifecycle'
 import { warn, error } from '../helper/log'
+import contextMap from '../vnode/context'
 
 let uid = 0
 
@@ -58,6 +59,8 @@ export default class MPXProxy {
   }
 
   created (params) {
+    // 缓存上下文，在 destoryed 阶段删除
+    contextMap.set(this.uid, this.target)
     this.initApi()
     this.callUserHook(BEFORECREATE)
     if (__mpx_mode__ !== 'web') {
@@ -110,6 +113,8 @@ export default class MPXProxy {
   }
 
   destroyed () {
+    // 页面/组件销毁清除上下文的缓存
+    contextMap.remove(this.uid)
     this.state = DESTROYED
     if (__mpx_mode__ !== 'web') {
       this.clearWatchers()
@@ -174,7 +179,7 @@ export default class MPXProxy {
     // 获取包含data/props在内的初始数据，包含初始原生微信转换支付宝时合并props进入data的逻辑
     const initialData = this.target.__getInitialData(this.options) || {}
     // 之所以没有直接使用initialData，而是通过对原始dataOpt进行深clone获取初始数据对象，主要是为了避免小程序自身序列化时错误地转换数据对象，比如将promise转为普通object
-    this.data = diffAndCloneA(data || {}).clone
+    this.data = diffAndCloneA(data || {}).clone // this.data 目前仅包含 options.data 上的数据，还没将 props 上的数据合进来
     if (dataFn) {
       proxyedKeys = Object.keys(initialData)
       // 预先将initialData代理到this.target中，便于data函数访问
@@ -188,6 +193,7 @@ export default class MPXProxy {
       Object.assign(this.data, dataFn.call(this.target))
     }
     this.collectLocalKeys(this.data)
+    // 将 props 上的数据取出来放到 this.data 上
     Object.keys(initialData).forEach((key) => {
       if (!hasOwn(this.data, key)) {
         // 除了data函数返回的数据外深拷贝切断引用关系，避免后续watch由于小程序内部对data赋值重复触发watch
@@ -263,7 +269,10 @@ export default class MPXProxy {
     this.doRender(this.processRenderDataWithStrictDiff(renderData))
   }
 
-  renderWithData () {
+  renderWithData (vnode) {
+    if (vnode) {
+      return this.doRenderWithVNode(vnode)
+    }
     const renderData = preProcessRenderData(this.renderData)
     this.doRender(this.processRenderDataWithStrictDiff(renderData))
     // 重置renderData准备下次收集
@@ -282,7 +291,7 @@ export default class MPXProxy {
       if (hasOwn(renderData, key)) {
         const data = renderData[key]
         const firstKey = getFirstKey(key)
-        if (!this.localKeysMap[firstKey]) {
+        if (!this.localKeysMap[firstKey]) { // 如果是 props 数据的话，直接略过(但是 props 数据更新了还是会触发 render 函数)
           continue
         }
         // 外部clone，用于只需要clone的场景
@@ -359,6 +368,25 @@ export default class MPXProxy {
       }
     }
     return result
+  }
+
+  doRenderWithVNode (vnode) {
+    if (!this._vnode) {
+      this.target.__render({ r: vnode })
+    } else {
+      let diffPath = diffAndCloneA(vnode, this._vnode).diffData
+      if (!isEmptyObject(diffPath)) {
+        // 构造 diffPath 数据
+        diffPath = Object.keys(diffPath).reduce((preVal, curVal) => {
+          const key = 'r' + curVal
+          preVal[key] = diffPath[curVal]
+          return preVal
+        }, {})
+        this.target.__render(diffPath)
+      }
+    }
+    // 缓存本地的 vnode 用以下一次 diff
+    this._vnode = vnode
   }
 
   doRender (data, cb) {

@@ -642,6 +642,16 @@ export function delChainKeyOfObj (obj = {}, key = '') {
   }, obj)
 }
 
+const camelizeRE = /-(\w)/g
+export const camelize = (str) => {
+  return str.replace(camelizeRE, (_, c) => (c ? c.toUpperCase() : ''))
+}
+
+const hyphenateRE = /\B([A-Z])/g
+export const hyphenate = (str) => {
+  return str.replace(hyphenateRE, '-$1').toLowerCase()
+}
+
 export function spreadProp (obj, key) {
   if (hasOwn(obj, key)) {
     const temp = obj[key]
@@ -649,4 +659,10 @@ export function spreadProp (obj, key) {
     Object.assign(obj, temp)
   }
   return obj
+}
+
+const propsConstructors = [String, Number, Boolean, Object, Array]
+
+export function findPropConstructor (type) {
+  return propsConstructors.find(item => item === type)
 }

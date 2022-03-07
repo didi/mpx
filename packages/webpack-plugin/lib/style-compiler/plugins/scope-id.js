@@ -49,7 +49,7 @@ module.exports = ({ id }) => {
               value: id
             }))
           })
-        }).process(node.selector).result
+        }).processSync(node.selector)
       })
 
       // If keyframes are found in this <style>, find and rewrite animation names

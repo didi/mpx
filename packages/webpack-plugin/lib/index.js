@@ -1,6 +1,7 @@
 'use strict'
 
 const path = require('path')
+const { AsyncSeriesHook } = require('tapable')
 const { ConcatSource, RawSource } = require('webpack').sources
 const ResolveDependency = require('./dependencies/ResolveDependency')
 const InjectDependency = require('./dependencies/InjectDependency')
@@ -30,6 +31,10 @@ const RecordIndependentDependency = require('./dependencies/RecordIndependentDep
 const DynamicEntryDependency = require('./dependencies/DynamicEntryDependency')
 const FlagPluginDependency = require('./dependencies/FlagPluginDependency')
 const RemoveEntryDependency = require('./dependencies/RemoveEntryDependency')
+const RecordModuleTemplateDependency = require('./dependencies/RecordModuleTemplateDependency')
+const RuntimeRenderPackageDependency = require('./dependencies/RuntimeRenderPackageDependency')
+const RecordComponentInfoDependency = require('./dependencies/RecordComponentInfoDependency')
+const RecordTemplateRuntimeInfoDependency = require('./dependencies/RecordTemplateRuntimeInfoDependency')
 const SplitChunksPlugin = require('webpack/lib/optimize/SplitChunksPlugin')
 const PartialCompilePlugin = require('./partial-compile/index')
 const fixRelative = require('./utils/fix-relative')
@@ -51,6 +56,7 @@ const async = require('async')
 const stringifyLoadersAndResource = require('./utils/stringify-loaders-resource')
 const emitFile = require('./utils/emit-file')
 const { MPX_PROCESSED_FLAG, MPX_DISABLE_EXTRACTOR_CACHE } = require('./utils/const')
+const RuntimeRenderPlugin = require('./runtime-render/plugin')
 const isEmptyObject = require('./utils/is-empty-object')
 
 const isProductionLikeMode = options => {
@@ -279,9 +285,10 @@ class MpxWebpackPlugin {
       compiler.options.node.global = true
     }
 
+    new RuntimeRenderPlugin().apply(compiler)
     const addModePlugin = new AddModePlugin('before-file', this.options.mode, this.options.fileConditionRules, 'file')
     const addEnvPlugin = new AddEnvPlugin('before-file', this.options.env, this.options.fileConditionRules, 'file')
-    const packageEntryPlugin = new PackageEntryPlugin('before-described-relative', this.options.miniNpmPackages, 'resolve')
+    const packageEntryPlugin = new PackageEntryPlugin('before-file', this.options.miniNpmPackages, 'file')
     if (Array.isArray(compiler.options.resolve.plugins)) {
       compiler.options.resolve.plugins.push(addModePlugin)
     } else {
@@ -431,7 +438,15 @@ class MpxWebpackPlugin {
       name: 'MpxWebpackPlugin',
       stage: -1000
     }, (compilation, callback) => {
-      processSubpackagesEntriesMap(compilation, callback)
+      // 在主compiler里面进行分包的构建
+      if (!compilation.compiler.isChild()) {
+        processSubpackagesEntriesMap(compilation, (err) => {
+          if (err) return callback(err)
+          mpx.hooks.finishSubpackagesMake.callAsync(compilation, callback)
+        })
+      } else {
+        callback()
+      }
     })
 
     compiler.hooks.compilation.tap('MpxWebpackPlugin ', (compilation, { normalModuleFactory }) => {
@@ -477,6 +492,18 @@ class MpxWebpackPlugin {
 
       compilation.dependencyFactories.set(CommonJsVariableDependency, normalModuleFactory)
       compilation.dependencyTemplates.set(CommonJsVariableDependency, new CommonJsVariableDependency.Template())
+
+      compilation.dependencyFactories.set(RecordModuleTemplateDependency, new NullFactory())
+      compilation.dependencyTemplates.set(RecordModuleTemplateDependency, new RecordModuleTemplateDependency.Template())
+
+      compilation.dependencyFactories.set(RuntimeRenderPackageDependency, new NullFactory())
+      compilation.dependencyTemplates.set(RuntimeRenderPackageDependency, new RuntimeRenderPackageDependency.Template())
+
+      compilation.dependencyFactories.set(RecordComponentInfoDependency, new NullFactory())
+      compilation.dependencyTemplates.set(RecordComponentInfoDependency, new RecordComponentInfoDependency.Template())
+
+      compilation.dependencyFactories.set(RecordTemplateRuntimeInfoDependency, new NullFactory())
+      compilation.dependencyTemplates.set(RecordTemplateRuntimeInfoDependency, new RecordTemplateRuntimeInfoDependency.Template())
     })
 
     compiler.hooks.thisCompilation.tap('MpxWebpackPlugin', (compilation, { normalModuleFactory }) => {
@@ -701,7 +728,11 @@ class MpxWebpackPlugin {
                 error
               })
             }
-          }
+          },
+          hooks: {
+            finishSubpackagesMake: new AsyncSeriesHook(['compilation'])
+          },
+          moduleTemplate: {}
         }
       }
 
@@ -844,6 +875,23 @@ class MpxWebpackPlugin {
         mpx.assetsModulesMap.set(filename, modules)
       })
 
+      const fillExtractedAssetsMap = (assetsMap, { index, content }, filename) => {
+        if (assetsMap.has(index)) {
+          if (assetsMap.get(index) !== content) {
+            compilation.errors.push(new Error(`The extracted file [${filename}] is filled with same index [${index}] and different content:
+            old content: ${assetsMap.get(index)}
+            new content: ${content}
+            please check!`))
+          }
+        } else {
+          assetsMap.set(index, content)
+        }
+      }
+
+      const sortExtractedAssetsMap = (assetsMap) => {
+        return [...assetsMap.entries()].sort((a, b) => a[0] - b[0]).map(item => item[1])
+      }
+
       compilation.hooks.beforeModuleAssets.tap('MpxWebpackPlugin', () => {
         const extractedAssetsMap = new Map()
         for (const module of compilation.modules) {
@@ -852,19 +900,19 @@ class MpxWebpackPlugin {
             if (extractedInfo) {
               let extractedAssets = extractedAssetsMap.get(filename)
               if (!extractedAssets) {
-                extractedAssets = []
+                extractedAssets = [new Map(), new Map()]
                 extractedAssetsMap.set(filename, extractedAssets)
               }
-              extractedAssets.push(extractedInfo)
+              fillExtractedAssetsMap(extractedInfo.pre ? extractedAssets[0] : extractedAssets[1], extractedInfo, filename)
               compilation.hooks.moduleAsset.call(module, filename)
             }
           }
         }
 
-        for (const [filename, extractedAssets] of extractedAssetsMap) {
-          const sortedExtractedAssets = extractedAssets.sort((a, b) => a.index - b.index)
+        for (const [filename, [pre, normal]] of extractedAssetsMap) {
+          const sortedExtractedAssets = [...sortExtractedAssetsMap(pre), ...sortExtractedAssetsMap(normal)]
           const source = new ConcatSource()
-          sortedExtractedAssets.forEach(({ content }) => {
+          sortedExtractedAssets.forEach((content) => {
             if (content) {
               // 处理replace path
               if (/"mpx_replace_path_.*?"/.test(content)) {
@@ -1350,6 +1398,7 @@ try {
       const fs = compiler.intermediateFileSystem
       const cacheLocation = compiler.options.cache.cacheLocation
       return new Promise((resolve) => {
+        if (!cacheLocation) return resolve()
         if (typeof fs.rm === 'function') {
           fs.rm(cacheLocation, {
             recursive: true,

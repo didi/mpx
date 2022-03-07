@@ -5,5 +5,7 @@
   "moduleNameMapper": {
     "\\.(css|styl)$": "identity-obj-proxy"
   },
-  "testEnvironment": "jsdom"
+  "testEnvironment": "jsdom",
+  "testMatch": ["**/packages/**/?(*.)+(spec|test).[jt]s?(x)"],
+  "testPathIgnorePatterns": ["dist", "node_modules"]
 }

@@ -2,6 +2,7 @@ import { BEFORECREATE, CREATED, BEFOREMOUNT, UPDATED, DESTROYED } from '../../co
 import { noop } from '../../helper/utils'
 import { error } from '../../helper/log'
 import { getEnvObj } from '../../helper/env'
+import contextMap from '../../vnode/context'
 
 const envObj = getEnvObj()
 
@@ -79,6 +80,10 @@ export default function getRefsMixin () {
       selectAllComponents (selector) {
         return this.selectComponent(selector, true)
       },
+      // mode = ali 每个组件都通过 mixin 混入了 __updateRef 方法来通知父组件有个子组件被创建了
+      // 父组件在编译 template 的过程当中去查找哪些组件带有 wx:ref 指令
+      // 带有 wx:ref 指令的组件会被动态添加 onUpdateRef: __handleUpdateRef key/value 属性，用来响应子组件触发的 updateRef 方法
+      // 这样就完成 ref 语法糖的功能
       __updateRef (destroyed) {
         this.triggerEvent && this.triggerEvent('updateRef', {
           component: this,
@@ -132,6 +137,10 @@ export default function getRefsMixin () {
     methods: {
       ...aliMethods,
       __getRefs () {
+        // 如果是在运行时组件的上下文渲染
+        if (this.mpxCustomElement) {
+          this.__getRuntimeRefs()
+        }
         if (this.__getRefsData) {
           const refs = this.__getRefsData()
 
@@ -160,6 +169,35 @@ export default function getRefsMixin () {
             return ref.all ? this.selectAllComponents(selector) : this.selectComponent(selector)
           }
         }
+      },
+      __getRuntimeRefs () {
+        // uid 为当前上下文，rootUid 为根上下文
+        const contextUids = [this.uid]
+        if (this.rootUid !== this.uid) {
+          contextUids.push(this.rootUid)
+        }
+        contextUids.forEach(uid => {
+          const vnodeRootContext = contextMap.get(uid)
+          if (vnodeRootContext) {
+            const refsArr = vnodeRootContext.__getRefsData && vnodeRootContext.__getRefsData()
+            if (Array.isArray(refsArr)) {
+              refsArr.forEach((ref) => {
+                if (!vnodeRootContext.$refs[ref.key]) {
+                  const refNode = this.__getRefNode(ref)
+                  if (refNode) {
+                    Object.defineProperty(vnodeRootContext.$refs, ref.key, {
+                      enumerable: true,
+                      configurable: true,
+                      get: () => {
+                        return refNode
+                      }
+                    })
+                  }
+                }
+              })
+            }
+          }
+        })
       }
     }
   }

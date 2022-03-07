@@ -10,7 +10,11 @@ const addQuery = require('../utils/add-query')
 const transDynamicClassExpr = require('./trans-dynamic-class-expr')
 const dash2hump = require('../utils/hump-dash').dash2hump
 const { inBrowser } = require('../utils/env')
+const hash = require('hash-sum')
+const { transformSlotsToString, isCommonAttr, updateModeDirectiveSet, isDirective } = require('../runtime-render/utils')
+const setBaseWxml = require('../runtime-render/base-wxml')
 
+let hashIndex = 0
 /**
  * Make a map and return a function for checking if a key
  * is in that map.
@@ -32,6 +36,11 @@ function makeMap (str, expectsLowerCase) {
 
 const no = function () {
   return false
+}
+
+const camelizeRE = /-(\w)/g
+const camelize = (str) => {
+  return str.replace(camelizeRE, (_, c) => (c ? c.toUpperCase() : ''))
 }
 
 // HTML5 tags https://html.spec.whatwg.org/multipage/indices.html#elements-3
@@ -155,6 +164,8 @@ let env
 let platformGetTagNamespace
 let filePath
 let refId
+let hasInjectUidComputed = false
+let hasInjectRuntimeSlotComputed = false
 
 function updateForScopesMap () {
   forScopes.forEach((scope) => {
@@ -641,11 +652,24 @@ function parseComponent (content, options) {
   return sfc
 }
 
+function hasRuntimeCompileWrapper (el) {
+  let parent = el.parent
+  while (parent) {
+    if (parent.isRuntimeComponent) {
+      return true
+    }
+    parent = parent.parent
+  }
+  return false
+}
+
 function parse (template, options) {
   rulesResultMap.clear()
   warn$1 = options.warn || baseWarn
   error$1 = options.error || baseError
   i18nInjectableComputed = []
+  hasInjectUidComputed = false
+  hasInjectRuntimeSlotComputed = false
 
   const _warn = content => {
     const currentElementRuleResult = rulesResultMap.get(currentEl) || rulesResultMap.set(currentEl, {
@@ -679,6 +703,8 @@ function parse (template, options) {
     warn: _warn,
     error: _error
   })
+
+  updateModeDirectiveSet(mode)
 
   injectNodes = []
   forScopes = []
@@ -719,6 +745,7 @@ function parse (template, options) {
       }
 
       let element = createASTElement(tag, attrs, currentParent)
+
       if (ns) {
         element.ns = ns
       }
@@ -746,7 +773,7 @@ function parse (template, options) {
         stack.push(element)
       } else {
         element.unary = true
-        closeElement(element, meta)
+        closeElement(element, options, meta, currentParent)
       }
     },
 
@@ -761,7 +788,7 @@ function parse (template, options) {
         // pop stack
         stack.pop()
         currentParent = stack[stack.length - 1]
-        closeElement(element, meta)
+        closeElement(element, options, meta, currentParent)
       }
     },
 
@@ -1019,6 +1046,7 @@ function parseFuncStr2 (str) {
       }
     }
     return {
+      funcName,
       hasArgs,
       expStr: `[${funcName + args}]`
     }
@@ -1067,6 +1095,8 @@ function stringifyWithResolveComputed (modelValue) {
 
 function processBindEvent (el, options) {
   const eventConfigMap = {}
+  // 运行时方案统一走事件 proxy 模式
+  const isRuntimeMode = options.runtimeCompile || hasRuntimeCompileWrapper(el)
   el.attrsList.forEach(function (attr) {
     let parsedEvent = config[mode].event.parseEvent(attr.name)
 
@@ -1082,7 +1112,7 @@ function processBindEvent (el, options) {
           }
         }
         eventConfigMap[type].configs.push(parsedFunc)
-        if (modifiers.indexOf('proxy') > -1 || options.forceProxyEvent) {
+        if (modifiers.indexOf('proxy') > -1 || options.forceProxyEvent || isRuntimeMode) {
           eventConfigMap[type].proxy = true
         }
       }
@@ -1129,6 +1159,7 @@ function processBindEvent (el, options) {
         hasArgs: true,
         expStr: `[${stringify('__model')},${stringifiedModelValue},${stringify(eventIdentifier)},${stringify(modelValuePathArr)},${stringify(modelFilter)}]`
       })
+
       addAttrs(el, [
         {
           name: modelProp,
@@ -1245,6 +1276,7 @@ function parseMustache (raw = '') {
     } else {
       result = `(${ret.join('+')})`
     }
+
     return {
       result,
       hasBinding: true,
@@ -1278,6 +1310,10 @@ function processIf (el) {
       raw: parsed.val,
       exp: parsed.result
     }
+    addIfCondition(el, {
+      exp: parsed.result,
+      block: el
+    })
   } else if (val = getAndRemoveAttr(el, config[mode].directive.elseif).val) {
     if (mode === 'swan') val = wrapMustache(val)
     let parsed = parseMustache(val)
@@ -1324,8 +1360,8 @@ function processFor (el) {
       if (mode === 'swan') val = wrapMustache(val)
       let parsed = parseMustache(val)
       el.for = {
-        raw: parsed.val,
-        exp: parsed.result
+        raw: parsed.val, // template 上写的 {{ xxx }} 原始值
+        exp: parsed.result // 处理过后的 xxx 表达式的值
       }
       if (val = getAndRemoveAttr(el, config[mode].directive.forIndex).val) {
         el.for.index = val
@@ -1507,7 +1543,15 @@ function evalExp (exp) {
   return result
 }
 
-function postProcessIf (el) {
+function postProcessIf (el, options, currentParent) {
+  // 对于运行时组件的 if 指令不走特殊优化流程
+  const isRuntimeRenderMode = (options && options.runtimeCompile) || hasRuntimeCompileWrapper(el)
+  if (isRuntimeRenderMode) {
+    if (el.elseif || el.else) {
+      processIfConditions(el, currentParent)
+    }
+    return
+  }
   let attrs, result, prevNode
   if (el.if) {
     result = evalExp(el.if.exp)
@@ -1566,6 +1610,28 @@ function postProcessIf (el) {
   }
   if (attrs) {
     addAttrs(el, attrs)
+  }
+}
+
+function processIfConditions (el, parent) {
+  removeNode(el)
+  const prev = findPrevElement(parent.children)
+  if (prev && (prev.if || prev._if)) {
+    addIfCondition(prev, {
+      exp: el.elseif ? el.elseif.exp : '',
+      block: el
+    })
+  }
+}
+
+function findPrevElement (children) {
+  let i = children.length
+  while (i--) {
+    if (children[i].type === 1) {
+      return children[i]
+    } else {
+      children.pop()
+    }
   }
 }
 
@@ -1679,6 +1745,10 @@ function isRealNode (el) {
 
 function isComponentNode (el, options) {
   return options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component'
+}
+
+function isRuntimeComponentNode (el, options) {
+  return (options.runtimeComponents && options.runtimeComponents.includes(el.tag)) || false
 }
 
 function processAliExternalClassesHack (el, options) {
@@ -1832,6 +1902,25 @@ function processAliStyleClassHack (el, options, root) {
   })
 }
 
+// 暂时不考虑动态绑定数据的情况
+// function getBindingAttr(el, name, getStatic) {
+//   // const dynamicValue =
+//   //   getAndRemoveAttr(el, ':' + name) ||
+//   //   getAndRemoveAttr(el, 'v-bind:' + name)
+//   // if (dynamicValue != null) {
+//   //   return parseFilters(dynamicValue)
+//   // } else if (getStatic !== false) {
+//   //   const staticValue = getAndRemoveAttr(el, name)
+//   //   if (staticValue != null) {
+//   //     return JSON.stringify(staticValue)
+//   //   }
+//   // }
+//   const staticValue = getAndRemoveAttr(el, name)
+//   if (staticValue != null) {
+//     return JSON.stringify(staticValue)
+//   }
+// }
+
 // 有virtualHost情况wx组件注入virtualHost。无virtualHost阿里组件注入root-view。其他跳过。
 function getVirtualHostRoot (options, meta) {
   if (options.isComponent) {
@@ -1858,6 +1947,7 @@ function getVirtualHostRoot (options, meta) {
 
 function processShow (el, options, root) {
   let show = getAndRemoveAttr(el, config[mode].directive.show).val
+  // 如果是根节点，那么需要添加 mpxShow 变量
   if (mode === 'swan') show = wrapMustache(show)
   let processFlag = el.parent === root
   // 当ali且未开启virtualHost时，mpxShow打到根节点上
@@ -1869,7 +1959,9 @@ function processShow (el, options, root) {
       show = '{{mpxShow}}'
     }
   }
+
   if (show !== undefined) {
+    // 自定义组件节点将 show 作为属性传递下去
     if (isComponentNode(el, options)) {
       if (show === '') {
         show = '{{false}}'
@@ -1879,6 +1971,7 @@ function processShow (el, options, root) {
         value: show
       }])
     } else {
+      // 普通元素节点
       const showExp = parseMustache(show).result
       let oldStyle = getAndRemoveAttr(el, 'style').val
       oldStyle = oldStyle ? oldStyle + ';' : ''
@@ -1982,6 +2075,43 @@ function processDuplicateAttrsList (el) {
   el.attrsList = attrsList
 }
 
+function processBindProps (el, meta) {
+  if (el.isRuntimeComponent) {
+    const { has, val } = getAndRemoveAttr(el, config[mode].directive.bind)
+    if (has) {
+      injectWxs(meta, stringifyModuleName, stringifyWxsPath)
+      addAttrs(el, [{
+        name: 'mpxAttrs',
+        value: val
+      }])
+    }
+  }
+}
+
+// isRuntimeComponent -> 运行时组件
+function processRuntime (el, options, meta) {
+  el.isRuntimeComponent = isRuntimeComponentNode(el, options)
+  // 对于在非运行时页面/组件里面使用运行时组件需要注入 uid 来保证上下文
+  if (!options.runtimeCompile && el.isRuntimeComponent && !hasRuntimeCompileWrapper(el)) {
+    addAttrs(el, [{
+      name: 'uid',
+      value: '{{ uid }}'
+    }])
+    el.slotAlias = hash(`${++hashIndex}${el.tag}`)
+    if (!meta.computed) {
+      meta.computed = []
+    }
+    if (!hasInjectUidComputed) {
+      meta.computed.push('uid: function() {return this.__mpxProxy.uid}')
+      hasInjectUidComputed = true
+    }
+    if (!hasInjectRuntimeSlotComputed) {
+      meta.computed.push('runtimeSlots: function() {return {}}')
+      hasInjectRuntimeSlotComputed = true
+    }
+  }
+}
+
 // 处理wxs注入逻辑
 function processInjectWxs (el, meta) {
   if (el.injectWxsProps && el.injectWxsProps.length) {
@@ -2008,6 +2138,9 @@ function processMpxTagName (el) {
 }
 
 function processElement (el, root, options, meta) {
+  processRuntime(el, options, meta)
+  // wx:bind 指令
+  processBindProps(el, meta)
   processAtMode(el)
   // 如果已经标记了这个元素要被清除，直接return跳过后续处理步骤
   if (el._atModeStatus === 'mismatch') {
@@ -2073,7 +2206,7 @@ function processElement (el, root, options, meta) {
   processAttrs(el, options)
 }
 
-function closeElement (el, meta) {
+function closeElement (el, options, meta, currentParent) {
   postProcessAtMode(el)
   if (mode === 'web') {
     postProcessWxs(el, meta)
@@ -2084,10 +2217,67 @@ function closeElement (el, meta) {
   const pass = isNative || postProcessTemplate(el) || processingTemplate
   postProcessWxs(el, meta)
   if (!pass) {
-    el = postProcessComponentIs(el)
+    el = postProcessComponentIs(el, options)
   }
   postProcessFor(el)
-  postProcessIf(el)
+  postProcessIf(el, options, currentParent)
+  postProcessRuntime(el, options, meta)
+}
+
+// 部分节点类型不需要被收集
+const RUNTIME_FILTER_NODES = ['import', 'template', 'wxs', 'component', 'slot']
+
+// 节点收集，最终注入到 mpx-custom-element-*.wxml 中
+function postProcessRuntime (el, options, meta) {
+  if (RUNTIME_FILTER_NODES.includes(el.tag)) {
+    return
+  }
+
+  const isCustomComponent = isComponentNode(el, options) || false
+  // 运行时组件所包含的子节点(普通节点 + 自定义节点)
+  const isInnerComponent = hasRuntimeCompileWrapper(el)
+
+  // 节点收集：运行时组件里面的节点都需要收集，或者是非运行时组件里面的运行时组件 slot 内容
+  // 被注入到基础模板的节点，运行时渲染都需要唯一 tag
+  if (options.runtimeCompile || el.isRuntimeComponent || isInnerComponent) {
+    if (!meta.runtimeInfo) {
+      meta.runtimeInfo = {
+        resourceHashNameMap: {},
+        internalComponents: {},
+        runtimeComponents: {},
+        normalComponents: {}
+      }
+    }
+    const tag = el.tag
+    const { hashName, resourcePath } = (options.componentDependencyInfo && options.componentDependencyInfo[tag]) || {}
+    if (hashName && resourcePath) {
+      el.aliasTag = hashName
+      meta.runtimeInfo.resourceHashNameMap[resourcePath] = hashName
+    }
+
+    // 收集节点属性信息，存储到 meta 后到外层处理
+    setBaseWxml(el, isCustomComponent, meta)
+  }
+
+  // 生成注入的 runtimeSlots renderFn
+  if (el.slotAlias && el.children.length > 0) {
+    addExp(el, `this._c("runtimeSlots.${el.slotAlias}", ${transformSlotsToString(_genSlotRenderFn(el.children))})`, true)
+    addAttrs(el, [{
+      name: 'slots',
+      value: `{{ runtimeSlots["${el.slotAlias}"] }}`
+    }])
+    // 清空所有子节点，因为子节点都在这里已经生成了 slot renderFn 并注入到了运行时
+    el.children = []
+  }
+
+  // 在非运行时组件里面使用运行时组件时，属性的聚合绑定处理
+  if (!options.runtimeCompile && el.isRuntimeComponent && !isInnerComponent) {
+    const composeAttrs = _genData(el, true)
+    addAttrs(el, [{
+      name: 'mpxAttrs',
+      value: `{{ ${composeAttrs} }}`
+    }])
+  }
 }
 
 function postProcessAtMode (el) {
@@ -2130,6 +2320,7 @@ function postProcessComponentIs (el) {
     } else {
       tempNode = getTempNode()
     }
+    // 手动创建新的需要动态渲染的 node 出来
     el.components.forEach(function (component) {
       let newChild = createASTElement(component, cloneAttrsList(el.attrsList), tempNode)
       newChild.if = {
@@ -2301,14 +2492,231 @@ function genFor (node) {
   return `this._i(${node.for.exp}, function(${item},${index}){\n${genNode(node)}});\n`
 }
 
+function addIfCondition (el, condition) {
+  if (!el.ifConditions) {
+    el.ifConditions = []
+  }
+  el.ifConditions.push(condition)
+}
+
+function genElement (node) {
+  let code = ''
+  if (node.type === 1) { // 元素节点
+    if (node.tag !== 'import') {
+      if (node.for && !node.forProcessed) {
+        return _genFor(node)
+      } else if (node.if && !node.ifProcessed) {
+        return _genIf(node)
+      } else if (node.tag === 'slot') {
+        return _genSlot(node)
+      } else if (node.tag === 'temp-node') {
+        // 临时节点通过 block 来承接渲染
+        return _genBlock(node)
+      } else if (node.tag === 'wxs') {
+        // do nothing
+      } else {
+        // <component is="{{ xxx }}">
+        if (node.is) {
+          code = _genComponent(node.is, node)
+        } else {
+          let data = _genData(node)
+          const children = _genChildren(node)
+          code = `this.__c('${node.aliasTag || node.tag}' ${data ? `,${data}` : ''} ${
+            children ? `,${children}` : ''
+          })`
+        }
+
+        return code
+      }
+    } else {
+      return _genChildren(node)
+    }
+  } else if (node.type === 3) { // 文本节点
+    return _genText(node)
+  }
+}
+
+// rawTag -> aliasTag
+function _genComponent (componentName, node) {
+  // error$1('is directive is invalidly in runtime mode now')
+  // return 'this.__e()'
+  const children = _genChildren(node)
+  return `this.__c(this.__a(${componentName}), ${_genData(node)}${
+    children ? `,${children}` : ''
+  })`
+}
+
+// 自定义属性的合并
+function _genData (node, forWxml) {
+  const attrsArr = []
+  if (!forWxml) {
+    attrsArr.push('uid: this.__mpxProxy.uid')
+  }
+  let mpxAttrs = null
+
+  // 非运行时组件里面注入的 runtimeSlots 需要单独生成 slotRenderFn 注入
+  if (node.isRuntimeComponent && node.children.length > 0) {
+    attrsArr.push(`slots: ${transformSlotsToString(_genSlotRenderFn(node.children))}`)
+    node.children = []
+  }
+
+  Object.keys(node.attrsMap).map(key => {
+    // 内置指令、事件、基础属性 等过滤掉
+    if (isDirective(key) || config[mode].event.parseEvent(key) || (forWxml && isCommonAttr(key))) {
+      return
+    }
+    const newKey = camelize(key)
+    const parsed = parseMustache(node.attrsMap[key])
+    let value = parsed.hasBinding ? parsed.result : `'${parsed.val}'`
+
+    if (key === 'mpxAttrs') {
+      mpxAttrs = value
+      getAndRemoveAttr(node, key)
+      return
+    }
+
+    // 单属性名定义 <view prop></view> 类型写法，默认将 props1 处理为 boolean 类型
+    if (node.attrsMap[key] === undefined) {
+      value = true
+    }
+
+    attrsArr.push(`${newKey}: ${value}`)
+
+    if (forWxml) {
+      getAndRemoveAttr(node, key)
+    }
+  })
+
+  if (mpxAttrs) {
+    return `${stringifyModuleName}.extend({${attrsArr.join(',')}}, ${mpxAttrs})`
+  } else {
+    return `{${attrsArr.join(',')}}`
+  }
+}
+
+function _genSlotRenderFn (astNodes = []) {
+  let slots = {}
+  astNodes.map((node) => {
+    let slotTarget = 'default'
+    // 文本节点没有属性集合，这里单独处理
+    if (node.type === 3) {
+      node.attrsList = []
+      node.attrsMap = {}
+    }
+    const { has, val } = getAndRemoveAttr(node, 'slot')
+    if (has && val !== undefined) {
+      slotTarget = val
+    }
+    slotTarget = stringify(slotTarget)
+    if (!slots[slotTarget]) {
+      slots[slotTarget] = []
+    }
+    const rawRenderFn = genElement(node)
+    slots[slotTarget].push(rawRenderFn)
+  })
+  return slots
+}
+
+function _genBlock (node) {
+  let data = '{}'
+  // 如果是顶层根节点，获取当前所在的 rootUid，用以保证上下文的正确性
+  // case1: 运行时包裹运行时
+  // case2: 非运行时包裹运行时
+  if (!node.parent && node.tag === 'temp-node') {
+    data = `{ rootUid: this.mpxAttrs && this.mpxAttrs.uid !== undefined ? this.mpxAttrs.uid : this.__mpxProxy.uid, uid: this.__mpxProxy.uid }`
+  }
+  return `this.__c('block', ${data}, ${_genChildren(node)})`
+}
+
+function _genFor (node) {
+  node.forProcessed = true
+  const index = node.for.index || 'index'
+  const item = node.for.item || 'item'
+
+  return `this._i(${node.for.exp}, function(${item}, ${index}) {
+    return ${genElement(node)}
+  })`
+}
+
+function _genIf (node) {
+  if (!node.ifConditions) {
+    node.ifConditions = []
+  }
+  node.ifProcessed = true
+  return _genIfConfitions(node.ifConditions.slice())
+}
+
+function _genChildren (node) {
+  const children = node.children
+  if (children.length) {
+    return `[${children.map(c => _genNode(c)).filter(t => !!t).join(',')}]`
+  }
+}
+
+// 目前仅考虑最简单的情况
+function _genSlot (node) {
+  const { has, val } = getAndRemoveAttr(node, 'name', false)
+  const slotName = stringify(has ? val : 'default')
+  const children = _genChildren(node)
+  let res = `this.__t(${slotName}${children ? `,${children}` : ''})`
+  return res
+}
+
+function _genIfConfitions (conditions) {
+  if (!conditions.length) {
+    return 'this.__e()'
+  }
+
+  const condition = conditions.shift()
+  if (condition.exp) {
+    return `(${condition.exp})?${genElement(condition.block)}:${_genIfConfitions(conditions)}`
+  } else {
+    return genElement(condition.block)
+  }
+}
+
+function _genNode (node) {
+  if (node.type === 1) {
+    return genElement(node)
+  } else if (node.type === 3 && node.isComment) {
+    return ''
+    // TODO: 注释暂不处理
+    // return _genComment(node)
+  } else {
+    return _genText(node) // 文本节点统一通过 _genText 来生成，type = 2(带有表达式的文本，在 mpx 统一处理为了3) || type = 3(纯文本，非注释)
+  }
+}
+
+function _genText (node) {
+  // mpx 对于纯文本节点的处理和带有表达式的文本节点的处理存放字段不同
+  let exp = ''
+  if (node.exps && node.exps[0]) {
+    exp = node.exps[0].exp
+    return `this.__v(${exp})`
+  } else if (node.text && node.text !== ' ') {
+    exp = transformSpecialNewlines(JSON.stringify(node.text))
+    return `this.__v(${exp})`
+  } else {
+    return ''
+  }
+}
+
+function transformSpecialNewlines (text) {
+  return text
+    .replace(/\u2028/g, '\\u2028')
+    .replace(/\u2029/g, '\\u2029')
+}
+
 function genNode (node) {
   let exp = ''
   if (node) {
+    // type=3 为文本节点，可能为文本注释节点，也可能为非注释节点，通过 isComment 来标识
     if (node.type === 3) {
       if (node.exps && !node.isComment) {
         exp += genExps(node)
       }
     }
+    // type=1 为元素节点
     if (node.type === 1) {
       if (node.tag !== 'temp-node') {
         if (node.for && !node.forProcessed) {
@@ -2344,6 +2752,7 @@ module.exports = {
   parse,
   serialize,
   genNode,
+  genElement,
   makeAttrsMap,
   stringifyAttr,
   parseMustache,

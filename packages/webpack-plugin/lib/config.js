@@ -63,7 +63,8 @@ module.exports = {
       dynamicClass: 'wx:class',
       dynamicStyle: 'wx:style',
       ref: 'wx:ref',
-      show: 'wx:show'
+      show: 'wx:show',
+      bind: 'wx:bind'
     }
   },
   ali: {

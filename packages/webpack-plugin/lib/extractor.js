@@ -6,6 +6,7 @@ const fixRelative = require('./utils/fix-relative')
 const addQuery = require('./utils/add-query')
 const normalize = require('./utils/normalize')
 const { MPX_DISABLE_EXTRACTOR_CACHE, DEFAULT_RESULT_SOURCE } = require('./utils/const')
+const checkIsRuntimeMode = require('./utils/check-is-runtime')
 
 module.exports = content => content
 
@@ -13,12 +14,25 @@ module.exports.pitch = async function (remainingRequest) {
   const mpx = this.getMpx()
   const mode = mpx.mode
   const { resourcePath, queryObj } = parseRequest(this.resource)
+  const packageName = queryObj.packageRoot || mpx.currentPackageRoot || 'main'
   const type = queryObj.type
   const index = queryObj.index || 0
   const isStatic = queryObj.isStatic
-  const issuerFile = queryObj.issuerFile
+  const issuerResource = queryObj.issuerResource
   const fromImport = queryObj.fromImport
   const needBabel = queryObj.needBabel
+
+  const processRuntimeMode = (usingComponents) => {
+    const moduleGraph = this._compilation.moduleGraph
+    const issuer = moduleGraph.getIssuer(this._module)
+    if (checkIsRuntimeMode(this.resourcePath) || checkIsRuntimeMode(issuer.resource)) {
+      let elementPath = `/mpx-custom-element-${packageName}`
+      if (packageName !== 'main') {
+        elementPath = '/' + packageName + elementPath
+      }
+      usingComponents.element = elementPath
+    }
+  }
 
   if (needBabel) {
     // 创建js request应用babel
@@ -44,6 +58,17 @@ module.exports.pitch = async function (remainingRequest) {
   }
 
   let content = await this.importModule(`!!${request}`)
+
+  // 使用运行时渲染的 page / component 会动态注入 mpx-custom-element
+  if (type === 'json') {
+    try {
+      content = JSON.parse(content)
+      if (!content.usingComponents) content.usingComponents = {}
+      processRuntimeMode(content.usingComponents)
+      content = JSON.stringify(content, null, 2)
+    } catch (e) {}
+  }
+
   // 处理wxss-loader的返回
   if (Array.isArray(content)) {
     content = content.map((item) => {
@@ -82,7 +107,8 @@ module.exports.pitch = async function (remainingRequest) {
       // styles为static就两种情况，一种是.mpx中使用src引用样式，第二种为css-loader中处理@import
       // 为了支持持久化缓存，.mpx中使用src引用样式对issueFile asset产生的副作用迁移到ExtractDependency中处理
       case 'styles':
-        if (issuerFile) {
+        if (issuerResource) {
+          const issuerFile = mpx.getExtractedFile(issuerResource)
           let relativePath = toPosix(path.relative(path.dirname(issuerFile), file))
           relativePath = fixRelative(relativePath, mode)
           if (fromImport) {
@@ -92,7 +118,8 @@ module.exports.pitch = async function (remainingRequest) {
               skipEmit: true,
               extractedInfo: {
                 content: `@import "${relativePath}";\n`,
-                index: -1
+                index,
+                pre: true
               }
             })
           }

@@ -1,0 +1,23 @@
+<template>
+  <view>
+    <list></list>
+    <customOutputComp></customOutputComp>
+  </view>
+</template>
+
+<script>
+  import { createPage } from '@mpxjs/core'
+
+  createPage({
+    onLoad () {}
+  })
+</script>
+
+<script type="application/json">
+  {
+    "usingComponents": {
+      "list": "../components/list",
+      "customOutputComp": "../components/customOutputCom.mpx"
+    }
+  }
+</script>

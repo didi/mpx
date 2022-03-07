@@ -1,0 +1,18 @@
+{
+  "miniprogramRoot": "miniprogram",
+  "pluginRoot": "plugin",
+  "compileType": "plugin",
+  "setting": {
+    "newFeature": true,
+    "urlCheck": true,
+    "es6": false,
+    "postcss": false,
+    "minified": false,
+    "checkSiteMap": false,
+    "autoAudits": false
+  },
+  "appid": "touristappid",
+  "projectname": "mpx-webpack5-plugin-project",
+  "description": "A mpx project",
+  "condition": {}
+}

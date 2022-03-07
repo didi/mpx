@@ -4,6 +4,7 @@ import { getConvertMode } from '../convertor/getConvertMode'
 import { findItem } from '../helper/utils'
 import { warn } from '../helper/log'
 
+// 运行时和编译结果融合的过程
 export default function transferOptions (options, type) {
   let currentInject
   if (global.currentInject && global.currentInject.moduleId === global.currentModuleId) {
@@ -26,7 +27,6 @@ export default function transferOptions (options, type) {
   // 转换mode
   options.mpxConvertMode = options.mpxConvertMode || getConvertMode(global.currentSrcMode)
   const rawOptions = mergeOptions(options, type)
-
   if (currentInject && currentInject.propKeys) {
     const computedKeys = Object.keys(rawOptions.computed || {})
     // 头条和百度小程序由于props传递为异步操作，通过props向子组件传递computed数据时，子组件无法在初始时(created/attached)获取到computed数据，如需进一步处理数据建议通过watch获取
