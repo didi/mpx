@@ -140,9 +140,17 @@ module.exports = function (content) {
           return transRpxStyleFn(style)
         }
         if (typeof style === 'object') {
-           Object.keys(style).forEach(key => {
-            style[key] = transRpxStyleFn(style[key])
-          })
+          if (Array.isArray(style)) {
+            style.forEach(item => {
+              Object.keys(item).forEach(key => {
+                item[key] = transRpxStyleFn(item[key])
+              })
+            })
+          } else {
+            Object.keys(style).forEach(key => {
+              style[key] = transRpxStyleFn(style[key])
+            })
+          }
         }
         return style
       })

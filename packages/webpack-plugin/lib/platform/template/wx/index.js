@@ -8,7 +8,6 @@ const parseMustache = templateCompiler.parseMustache
 const stringifyWithResolveComputed = templateCompiler.stringifyWithResolveComputed
 const normalize = require('../../../utils/normalize')
 
-
 module.exports = function getSpec ({ warn, error }) {
   const spec = {
     supportedModes: ['ali', 'swan', 'qq', 'tt', 'web', 'qa', 'jd', 'dd'],
@@ -19,12 +18,6 @@ module.exports = function getSpec ({ warn, error }) {
       {
         web ({ name, value }) {
           const parsed = parseMustache(value)
-          if (name === 'style') {
-            return {
-              name: ':style',
-              value: `(${parsed.result}) | transRpxStyle`
-            }
-          }
           if (parsed.hasBinding) {
             return {
               name: name === 'animation' ? 'v-' + name : ':' + name,
@@ -189,17 +182,45 @@ module.exports = function getSpec ({ warn, error }) {
         }
       },
       {
+        // style样式绑定
+        test: /^(style|wx:style)$/,
+        web ({ value }, { el }) {
+          let staticStyle = ''
+          let styleBinding = ''
+          el.attrsList.map((item, index) => {
+            const parsed = parseMustache(item.value)
+            if (item.name === 'style') {
+              if (parsed.hasBinding) {
+                styleBinding += `${parsed.result} | transRpxStyle`
+              } else {
+                staticStyle = item.value
+              }
+            } else {
+              styleBinding += `${parsed.result} | transRpxStyle`
+            }
+          })
+          const styleArr = []
+          if (styleBinding) {
+            styleArr.push({
+              name: ':style',
+              value: styleBinding
+            })
+          }
+          if (staticStyle) {
+            styleArr.push({
+              name: 'style',
+              value: staticStyle
+            })
+          }
+          return styleArr
+        }
+      },
+      {
         // 样式类名绑定
-        test: /^wx:(class|style)$/,
+        test: /^wx:class$/,
         web ({ name, value }) {
           const dir = this.test.exec(name)[1]
           const parsed = parseMustache(value)
-          if (dir === 'style') {
-            return {
-              name: ':style',
-              value: `(${parsed.result}) | transRpxStyle`
-            }
-          }
           return {
             name: ':' + dir,
             value: parsed.result
