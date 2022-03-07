@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/api-proxy",
-  "version": "2.6.96",
+  "version": "2.7.1",
   "description": "convert miniprogram API at each end",
   "module": "src/index.js",
   "types": "@types/index.d.ts",
@@ -15,6 +15,7 @@
     "@types",
     "README.md"
   ],
+  "main": "src/index.js",
   "repository": {
     "type": "git",
     "url": "git@github.com/didi/mpx.git"
@@ -35,10 +36,6 @@
     "url": "https://github.com/didi/mpx/issues"
   },
   "homepage": "https://github.com/didi/mpx#readme",
-  "peerDependencies": {
-    "@mpxjs/core": "^2.2.27",
-    "miniprogram-api-typings": "^2.9.0"
-  },
   "dependencies": {
     "axios": "^0.21.1"
   }

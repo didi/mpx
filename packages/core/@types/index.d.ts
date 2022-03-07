@@ -7,7 +7,13 @@
 /// <reference path="./mpx-store.d.ts" />
 /// <reference path="./global.d.ts" />
 /// <reference path="./node.d.ts" />
+import VueI18n from 'vue-i18n'
 
+declare module 'vue-i18n' {
+  export default interface VueI18n {
+    mergeMessages(messages: {[index: string]:VueI18n.LocaleMessageObject}): void;
+  }
+}
 // declare Store types
 type StoreOpt<S, G, M, A, D extends MpxStore.Deps> = MpxStore.StoreOpt<S, G, M, A, D>
 
@@ -304,7 +310,8 @@ interface MpxConfig {
   hookErrorHandler: (e: Error, target: ComponentIns<{}, {}, {}, {}, []>, hookName: string) => any | null
   proxyEventHandler: (e: Event) => any | null
   setDataHandler: (data: object, target: ComponentIns<{}, {}, {}, {}, []>) => any | null
-  forceRunWatcherSync: boolean
+  forceRunWatcherSync: boolean,
+  webRouteConfig: object
 }
 
 type SupportedMode = 'wx' | 'ali' | 'qq' | 'swan' | 'tt' | 'web' | 'qa'

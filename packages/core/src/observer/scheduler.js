@@ -60,10 +60,7 @@ function flushQueue () {
         }
       }
     }
-    // 如果已经销毁，就不再执行
-    if (!watcher.destroyed) {
-      watcher.run()
-    }
+    watcher.run()
   }
   resetQueue()
 }

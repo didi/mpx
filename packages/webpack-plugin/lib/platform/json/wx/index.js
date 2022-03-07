@@ -73,7 +73,12 @@ module.exports = function getSpec ({ warn, error }) {
         swan: deletePath()
       },
       {
-        test: 'onReachBottomDistance|disableScroll',
+        test: 'onReachBottomDistance',
+        qq: deletePath(),
+        jd: deletePath()
+      },
+      {
+        test: 'disableScroll',
         ali: deletePath(),
         qq: deletePath(),
         jd: deletePath()
@@ -84,7 +89,7 @@ module.exports = function getSpec ({ warn, error }) {
         swan: deletePath()
       },
       {
-        test: 'navigationBarTextStyle|navigationStyle|backgroundColor|backgroundTextStyle',
+        test: 'navigationBarTextStyle|navigationStyle|backgroundTextStyle',
         ali: deletePath()
       },
       {

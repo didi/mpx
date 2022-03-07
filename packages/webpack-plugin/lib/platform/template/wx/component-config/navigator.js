@@ -44,7 +44,7 @@ module.exports = function ({ print }) {
             // 如果是个变量，报warning~
             aliPropLog(attr)
           } else {
-            let supportedList = ['navigate', 'redirect', 'switchTab', 'navigateBack', 'reLaunch']
+            let supportedList = ['navigate', 'redirect', 'switchTab', 'navigateBack', 'reLaunch', 'exit']
             if (supportedList.indexOf(attr.value) === -1) {
               aliValueLogError(attr)
             }

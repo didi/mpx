@@ -4,6 +4,7 @@ import { getDefaultOptions as getWxDefaultOptions } from './wx/getDefaultOptions
 import { getDefaultOptions as getAliDefaultOptions } from './ali/getDefaultOptions'
 import { getDefaultOptions as getSwanDefaultOptions } from './swan/getDefaultOptions'
 import { getDefaultOptions as getWebDefaultOptions } from './web/getDefaultOptions'
+import { error } from '../../helper/log'
 
 export default function createFactory (type) {
   return (options, { isNative, customCtor, customCtorType } = {}) => {
@@ -22,6 +23,9 @@ export default function createFactory (type) {
           ctor = global.currentCtor
           if (global.currentCtorType === 'page') {
             options.__pageCtor__ = true
+          }
+          if (global.currentResourceType && global.currentResourceType !== type) {
+            error(`The ${global.currentResourceType} [${global.currentResource}] is not supported to be created by ${type} constructor.`)
           }
         } else {
           if (type === 'page') {
@@ -45,9 +49,10 @@ export default function createFactory (type) {
       getDefaultOptions = getWxDefaultOptions
     }
 
-    // 获取内建的mixins
-    const builtInMixins = getBuiltInMixins(options, type)
-    const { rawOptions, currentInject } = transferOptions(options, type, builtInMixins)
+    const { rawOptions, currentInject } = transferOptions(options, type)
+    // 注入内建的mixins, 内建mixin是按原始平台编写的，所以合并规则和rootMixins保持一致
+    // 将合并后的用户定义的rawOptions传入获取当前应该注入的内建mixins
+    rawOptions.mixins = getBuiltInMixins(rawOptions, type)
     const defaultOptions = getDefaultOptions(type, { rawOptions, currentInject })
     if (__mpx_mode__ === 'web') {
       global.currentOption = defaultOptions

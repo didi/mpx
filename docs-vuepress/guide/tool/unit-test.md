@@ -1,13 +1,39 @@
 # 单元测试
 
-Mpx 会生成源码与最终产物包的映射关系，结合微信小程序提供的 [miniprogram-simulate](https://github.com/wechat-miniprogram/miniprogram-simulate) 来进行单元测试的工作。
+Mpx 框架提供了 jest 转换器 mpx-jest，结合微信小程序提供的 [miniprogram-simulate](https://github.com/wechat-miniprogram/miniprogram-simulate) 来进行单元测试的工作。
 
 > 因为目前仅微信提供了仿真工具，暂时只支持微信小程序平台的单元测试。如果需要 E2E 测试，则和框架无关了，可参考微信的[小程序自动化](https://developers.weixin.qq.com/miniprogram/dev/devtools/auto/)。
 
+如果是初始化项目，单元测试相关的项目依赖和配置可以通过 @mpx/cli 创建项目时选择使用单元测试选项自动生成，如果时旧项目需要使用，可以按照下方步骤安装依赖和添加配置。
+
+## 安装依赖
+```html
+npm i -D @mpxjs/mpx-jest @mpxjs/miniprogram-simulate jest babel-jest
+
+// 如果项目使用了ts，则还需要安装
+npm i -D ts-jest
+```
+## jest 相关配置
+首先在项目根目录创建 jest.config.js 配置文件，并加入以下关键配置
+
+```html
+  testEnvironment: 'jsdom', // 使用 jsdom 环境
+  transform: {
+    '^.+\\.js$': '<rootDir>/node_modules/babel-jest',
+    '^.+\\.mpx$': '<rootDir>/node_modules/@mpxjs/mpx-jest',
+    '^.+\\.ts$': '<rootDir>/node_modules/ts-jest' // 如果没使用 ts 可不用添加
+  },
+  setupFiles: ['<rootDir>/test/setup'], // test 文件夹下声明 setup，路径可以随意定义，可以为每一个单测添加相应的配置
+  transformIgnorePatterns: ['node_modules/(?!(@mpxjs))'], // 定义node_modules 中需要进行 transform 的内容
+
+```
+
+
 ## 简单的断言
 
-组件必须是被项目真实使用的，且经过一次构建才可被测试。构建时 MpxPlugin 的配置信息中要将 [generateBuildMap](../../api/compile.md#generatebuildmap) 属性置为 `true` 来生成源码与最终代码的映射关系。
+暂时进行一个简单的组件单元测试书写，对于复杂组件以及通用测试逻辑的总结我们会在后续进行发布。
 
+示例如下：
 ```html
 <template>
   <view>{{ message }}</view>
@@ -26,27 +52,15 @@ Mpx 会生成源码与最终产物包的映射关系，结合微信小程序提�
 </script>
 ```
 
-然后通过辅助方法读取 dist/outputMap.json 以获取源码最终生成的组件dist的路径，再配合 [miniprogram-simulate](https://github.com/wechat-miniprogram/miniprogram-simulate) 进行测试。你可以使用许多常见的断言 (这里我们使用的是 Jest 风格的 expect 断言作为示例)：
-
+对应的 hello-world.spec.js 
 ```js
-const simulate = require('miniprogram-simulate')
-
-function resolveDist (dir) {
-  return path.join(__dirname, '../dist/wx', dir)
-}
-// 辅助方法，通过源码获取最终的dist路径，让simulate工具以正确load
-function loadComponent (componentPathStr) {
-  const outputMap = require(resolveDist('../outputMap.json'))
-  const componentPath = resolve(componentPathStr)
-  const realComponentPath = resolveDist(outputMap[componentPath])
-  return simulate.load(realComponentPath, undefined, {rootPath: resolveDist('')})
-}
+const simulate = require('@mpxjs/miniprogram-simulate')
 
 // 这里是一些 Jasmine 2.0 的测试，你也可以使用你喜欢的任何断言库或测试工具。
 describe('MyComponent', () => {
   let id
   beforeAll(() => {
-    id = loadComponent('src/components/hello-world.mpx')
+    id = simulate.loadMpx('<rootDir>/src/components/hello-world.mpx')
   })
 
   // 检查 mount 中的组件实例
@@ -93,12 +107,12 @@ describe('MyComponent', () => {
 你可以在不同的 properties 中，通过 simulate.render 的第二个参数控制组件的输出：
 
 ```js
-const simulate = require('miniprogram-simulate')
+const simulate = require('@mpxjs/miniprogram-simulate')
 
 // 省略辅助方法
 describe('MyComponent', () => {
   it('renders correctly with different props', () => {
-    const id = loadComponent('src/components/hello-world.mpx')
+    const id = simulate.loadMpx('<rootDir>/src/components/hello-world.mpx')
     const comp1 = simulate.render(id, { msg: 'hello' })
     const parent1 = document.createElement('parent-wrapper')
     comp1.attach(parent1)
@@ -114,14 +128,14 @@ describe('MyComponent', () => {
 
 ## 断言异步更新
 
-小程序视图层的更新是异步的，一些依赖视图更新结果的断言必须 await simulate.sleep() 后进行：
+小程序视图层的更新是异步的，一些依赖视图更新结果的断言必须 await simulate.sleep() 或者 await comp.instance.$nextTick() 后进行：
 
 ```js
-const simulate = require('miniprogram-simulate')
+const simulate = require('@mpxjs/miniprogram-simulate')
 
 // 省略辅助方法
 it('updates the rendered message when vm.message updates', async () => {
-  const id = loadComponent('src/components/hello-world.mpx')
+  const id = simulate.loadMpx('<rootDir>/src/components/hello-world.mpx')
   const comp = simulate.render(id)
   const parent = document.createElement('parent-wrapper')
   comp.attach(parent)

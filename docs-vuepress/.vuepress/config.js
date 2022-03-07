@@ -34,7 +34,8 @@ const sidebar = {
         'advance/plugin',
         'advance/platform',
         'advance/size-report',
-        'advance/dll-plugin'
+        'advance/dll-plugin',
+        'advance/custom-output-path',
       ]
     },
     {
@@ -63,6 +64,13 @@ const sidebar = {
         'understand/runtime',
         'understand/compile'
       ]
+    },
+    {
+      title: '迁移',
+      collapsable: false,
+      children: [
+        'migrate/2.7'
+      ]
     }
   ],
   '/api/': [
@@ -82,6 +90,7 @@ const sidebar = {
     { title: 'Mpx框架技术揭秘', path: 'mpx2' },
     { title: '基于Mpx的小程序体积优化', path: 'size-control' },
     { title: 'Mpx中基于 Typescript Template Literal Types 实现链式key的类型推导', path: 'ts-derivation' },
+    { title: 'Mpx2.7版本正式发布，大幅提升编译构建速度', path: '2.7-release' }
   ]
 }
 
@@ -116,6 +125,11 @@ module.exports = {
     }
   },
   themeConfig: {
+    navbar: false,
+    algolia: {
+			apiKey: '7849f511f78afc4383a81f0137a91c0f',
+			indexName: 'mpxjs',
+		},
     sidebarDepth: 1,
     logo: '/logo.png',
     displayAllHeaders: false,

@@ -1,16 +1,16 @@
 const JSON5 = require('json5')
 const he = require('he')
 const config = require('../config')
+const { MPX_ROOT_VIEW, MPX_APP_MODULE_ID } = require('../utils/const')
 const normalize = require('../utils/normalize')
+const { normalizeCondition } = require('../utils/match-condition')
 const isValidIdentifierStr = require('../utils/is-valid-identifier-str')
 const isEmptyObject = require('../utils/is-empty-object')
-const mpxJSON = require('../utils/mpx-json')
 const getRulesRunner = require('../platform/index')
 const addQuery = require('../utils/add-query')
 const transDynamicClassExpr = require('./trans-dynamic-class-expr')
 const dash2hump = require('../utils/hump-dash').dash2hump
 const { inBrowser } = require('../utils/env')
-
 /**
  * Make a map and return a function for checking if a key
  * is in that map.
@@ -129,107 +129,6 @@ function isForbiddenTag (el) {
   )
 }
 
-// mpx special comments
-// example
-/*
-{
-  'tt,swan': {
-    remove: [
-      'open-type',
-      // src mode attr
-      'wx:if'
-    ],
-    add: {
-      type: 'primary',
-      // attr name only
-      foo: null,
-    }
-  }
-}
-*/
-let curMpxComment = null
-
-function evalMpxCommentExp (exp) {
-  /* eslint-disable no-new-func */
-  const f = new Function(`return ${exp};`)
-  return f()
-}
-
-function isMpxCommentAttrs (content) {
-  return /@mpx-attrs/.test(content)
-}
-
-function normalizePlatformMpxAttrsOpts (opts) {
-  const ret = {}
-  // Array to map for removing attributes
-  ret.remove = (opts.remove || []).reduce((acc, val) => {
-    acc[val] = true
-    return acc
-  }, {})
-  // Default adding map
-  ret.add = opts.add || {}
-  return ret
-}
-
-function produceMpxCommentAttrs (content) {
-  const exp = /@mpx-attrs[^(]*?\(([\s\S]*)\)/.exec(content)[1].trim()
-  const tmpOpts = evalMpxCommentExp(exp)
-  // normalize
-  Object.keys(tmpOpts).forEach(k => {
-    Object.assign(tmpOpts[k], normalizePlatformMpxAttrsOpts(tmpOpts[k]))
-
-    if (k.indexOf(',') > -1) {
-      const modes = k.split(',')
-      modes.forEach(mode => {
-        tmpOpts[mode] = tmpOpts[k]
-      })
-      delete tmpOpts[k]
-    }
-  })
-  curMpxComment = tmpOpts
-}
-
-function modifyAttrsFromCurMpxAttrOptions (attrs, curModeMpxComment) {
-  const removeMap = curModeMpxComment.remove
-  const addMap = curModeMpxComment.add
-
-  const newAttrs = []
-  attrs.forEach(attr => {
-    if (!removeMap[attr.name]) {
-      newAttrs.push(attr)
-    }
-  })
-
-  Object.keys(addMap).forEach(name => {
-    newAttrs.push({
-      name,
-      value: addMap[name]
-    })
-  })
-
-  return newAttrs
-}
-
-function consumeMpxCommentAttrs (attrs, mode) {
-  let ret = attrs
-  if (curMpxComment) {
-    const curModeMpxComment = curMpxComment[mode]
-    if (curModeMpxComment) {
-      ret = modifyAttrsFromCurMpxAttrOptions(attrs, curModeMpxComment)
-    }
-
-    // reset
-    curMpxComment = null
-  }
-  return ret
-}
-
-function assertMpxCommentAttrsEnd () {
-  if (curMpxComment) {
-    error$1('No target for @mpx-attrs!')
-  }
-}
-
 // Browser environment sniffing
 const UA = inBrowser && window.navigator.userAgent.toLowerCase()
 const isIE = UA && /msie|trident/.test(UA)
@@ -253,6 +152,9 @@ let forScopesMap = {}
 let hasI18n = false
 let i18nInjectableComputed = []
 let env
+let platformGetTagNamespace
+let filePath
+let refId
 
 function updateForScopesMap () {
   forScopes.forEach((scope) => {
@@ -279,9 +181,6 @@ const deleteErrorInResultMap = (node) => {
   rulesResultMap.delete(node)
   Array.isArray(node.children) && node.children.forEach(item => deleteErrorInResultMap(item))
 }
-let platformGetTagNamespace
-let basename
-let refId
 
 function baseWarn (msg) {
   console.warn(('[template compiler]: ' + msg))
@@ -310,7 +209,7 @@ function decode (value) {
 
 const i18nFuncNames = ['\\$(t)', '\\$(tc)', '\\$(te)', '\\$(d)', '\\$(n)']
 const i18nWxsPath = normalize.lib('runtime/i18n.wxs')
-const i18nWxsLoaderPath = normalize.lib('wxs/wxs-i18n-loader.js')
+const i18nWxsLoaderPath = normalize.lib('wxs/i18n-loader.js')
 // 添加~前缀避免wxs绝对路径在存在projectRoot时被拼接为错误路径
 const i18nWxsRequest = '~' + i18nWxsLoaderPath + '!' + i18nWxsPath
 const i18nModuleName = '__i18n__'
@@ -597,8 +496,8 @@ function parseHTML (html, options) {
 
 function parseComponent (content, options) {
   mode = options.mode || 'wx'
-  defs = options.defs || {}
   env = options.env
+  filePath = options.filePath
 
   let sfc = {
     template: null,
@@ -648,6 +547,9 @@ function parseComponent (content, options) {
             if (/^application\/json/.test(currentBlock.type) || currentBlock.name === 'json') {
               tag = 'json'
             }
+            if (currentBlock.name === 'json') {
+              currentBlock.useJSONJS = true
+            }
           }
           if (currentBlock.mode && currentBlock.env) {
             if (currentBlock.mode === mode && currentBlock.env === env) {
@@ -691,9 +593,6 @@ function parseComponent (content, options) {
       if (attr.name === 'scoped') {
         block.scoped = true
       }
-      if (attr.name === 'module') {
-        block.module = attr.value || true
-      }
       if (attr.name === 'src') {
         block.src = attr.value
       }
@@ -709,19 +608,14 @@ function parseComponent (content, options) {
     }
   }
 
-  function end (tag, start, end) {
+  function end (tag, start) {
     if (depth === 1 && currentBlock) {
       currentBlock.end = start
       let text = content.slice(currentBlock.start, currentBlock.end)
       // pad content so that linters and pre-processors can output correct
       // line numbers in errors and warnings
-      if (currentBlock.tag !== 'template' && options.pad) {
+      if (options.pad) {
         text = padContent(currentBlock, options.pad) + text
-      }
-
-      // 对于<script name="json">的标签，传参调用函数，其返回结果作为json的内容
-      if (currentBlock.tag === 'script' && !/^application\/json/.test(currentBlock.type) && currentBlock.name === 'json') {
-        text = mpxJSON.compileMPXJSONText({ source: text, defs, filePath: options.filePath })
       }
       currentBlock.content = text
       currentBlock = null
@@ -773,7 +667,7 @@ function parse (template, options) {
   defs = options.defs || {}
   srcMode = options.srcMode || mode
   isNative = options.isNative
-  basename = options.basename
+  filePath = options.filePath
   i18n = options.i18n
   refId = 0
 
@@ -803,7 +697,7 @@ function parse (template, options) {
 
   function genTempRoot () {
     // 使用临时节点作为root，处理multi root的情况
-    root = currentParent = getTempNode()
+    root = currentParent = getVirtualHostRoot(options, meta)
     stack.push(root)
   }
 
@@ -824,16 +718,6 @@ function parse (template, options) {
         attrs = guardIESVGBug(attrs)
       }
 
-      if (options.globalMpxAttrsFilter) {
-        attrs = modifyAttrsFromCurMpxAttrOptions(attrs, normalizePlatformMpxAttrsOpts(options.globalMpxAttrsFilter({
-          tagName: tag,
-          attrs,
-          __mpx_mode__: mode,
-          filePath: options.filePath
-        }) || {}))
-      }
-      attrs = consumeMpxCommentAttrs(attrs, mode)
-
       let element = createASTElement(tag, attrs, currentParent)
       if (ns) {
         element.ns = ns
@@ -848,28 +732,15 @@ function parse (template, options) {
         )
       }
 
-      // single root
-      // // gen root
-      // if (!root) {
-      //   root = element
-      // } else {
-      //   // mount element
-      //   if (currentParent) {
-      //     currentParent.children.push(element)
-      //     element.parent = currentParent
-      //   } else {
-      //     multiRootError = true
-      //     return
-      //   }
-      // }
-
       // multi root
       if (!currentParent) genTempRoot()
 
       currentParent.children.push(element)
       element.parent = currentParent
-
       processElement(element, root, options, meta)
+      if (isComponentNode(element, options) && mode === 'ali' && !options.hasVirtualHost) {
+        processAliAddComponentRootView(element, options, stack, currentParent)
+      }
       tagNames.add(element.tag)
 
       if (!unary) {
@@ -931,10 +802,7 @@ function parse (template, options) {
     },
     comment: function comment (text) {
       if (!currentParent) genTempRoot()
-      // special comments should not be output
-      if (isMpxCommentAttrs(text)) {
-        produceMpxCommentAttrs(text)
-      } else if (options.hasComment) {
+      if (options.hasComment) {
         currentParent.children.push({
           type: 3,
           text: text,
@@ -944,8 +812,6 @@ function parse (template, options) {
       }
     }
   })
-
-  assertMpxCommentAttrsEnd()
 
   if (multiRootError) {
     error$1('Template fields should has one single root, considering wrapping your template content with <view> or <text> tag!')
@@ -1135,15 +1001,6 @@ function processComponentIs (el, options) {
     warn$1('<component> tag should have attrs[is].')
   }
 }
-
-// function processComponentDepth (el, options) {
-//   if (isComponentNode(el,options)) {
-//     addAttrs(el, [{
-//       name: 'mpxDepth',
-//       value: '{{mpxDepth + 1}}'
-//     }])
-//   }
-// }
 
 const eventIdentifier = '__mpx_event__'
 
@@ -1552,9 +1409,13 @@ function postProcessWxs (el, meta) {
         content = el.children.filter((child) => {
           return child.type === 3 && !child.isComment
         }).map(child => child.text).join('\n')
-        src = addQuery('./' + basename, {
+
+        const fakeRequest = filePath + config[mode].wxs.ext
+
+        src = addQuery(`~${fakeRequest}!=!${filePath}`, {
           wxsModule: module
         })
+
         addAttrs(el, [{
           name: config[mode].wxs.src,
           value: src
@@ -1635,9 +1496,9 @@ function postProcessFor (el) {
 }
 
 function evalExp (exp) {
-  // eslint-disable-next-line no-new-func
   let result = { success: false }
   try {
+    // eslint-disable-next-line no-new-func
     const fn = new Function(`return ${exp};`)
     result = {
       success: true,
@@ -1760,7 +1621,9 @@ function processClass (el, meta) {
   staticClass = staticClass.replace(/\s+/g, ' ')
   if (dynamicClass) {
     let staticClassExp = parseMustache(staticClass).result
-    let dynamicClassExp = transDynamicClassExpr(parseMustache(dynamicClass).result)
+    let dynamicClassExp = transDynamicClassExpr(parseMustache(dynamicClass).result, {
+      error: error$1
+    })
     addAttrs(el, [{
       name: targetType,
       // swan中externalClass是通过编译时静态实现，因此需要保留原有的staticClass形式避免externalClass失效
@@ -1852,34 +1715,75 @@ function processAliExternalClassesHack (el, options) {
   }
 }
 
+// externalClasses只能模拟静态传递
 function processWebExternalClassesHack (el, options) {
-  // todo 处理scoped的情况, 处理组件多层传递externalClass的情况，通过externalClass属性传递实际类名及scopeId信息，可以使用特殊的类名形式代表scopeId，如#idstring
-  let staticClass = el.attrsMap['class']
-  let dynamicClass = el.attrsMap[':class']
-  if (staticClass || dynamicClass) {
-    const externalClasses = []
+  const staticClass = getAndRemoveAttr(el, 'class').val
+  if (staticClass) {
+    const classNames = staticClass.split(/\s+/)
+    const replacements = []
     options.externalClasses.forEach((className) => {
-      const reg = new RegExp('\\b' + className + '\\b')
-      if (reg.test(staticClass) || reg.test(dynamicClass)) {
-        externalClasses.push(className)
+      const index = classNames.indexOf(className)
+      if (index > -1) {
+        replacements.push(`$attrs[${JSON.stringify(className)}]`)
+        classNames.splice(index, 1)
       }
     })
-    if (externalClasses.length) {
+
+    if (classNames.length) {
       addAttrs(el, [{
-        name: 'v-ex-classes',
-        value: JSON.stringify(externalClasses)
+        name: 'class',
+        value: classNames.join(' ')
       }])
     }
+
+    if (replacements.length) {
+      const dynamicClass = getAndRemoveAttr(el, ':class').val
+      if (dynamicClass) replacements.push(dynamicClass)
+
+      addAttrs(el, [{
+        name: ':class',
+        value: `[${replacements.join(',')}]`
+      }])
+    }
+  }
+
+  // 处理externalClasses多层透传
+  const isComponent = isComponentNode(el, options)
+  if (isComponent) {
+    options.externalClasses.forEach((classLikeAttrName) => {
+      let classLikeAttrValue = getAndRemoveAttr(el, classLikeAttrName).val
+      if (classLikeAttrValue) {
+        const classNames = classLikeAttrValue.split(/\s+/)
+        const replacements = []
+        options.externalClasses.forEach((className) => {
+          const index = classNames.indexOf(className)
+          if (index > -1) {
+            replacements.push(`$attrs[${JSON.stringify(className)}]`)
+            classNames.splice(index, 1)
+          }
+        })
+
+        if (classNames.length) {
+          replacements.unshift(JSON.stringify(classNames.join(' ')))
+        }
+
+        addAttrs(el, [{
+          name: ':' + classLikeAttrName,
+          value: `[${replacements.join(',')}].join(' ')`
+        }])
+      }
+    })
   }
 }
 
 function processScoped (el, options) {
   if (options.hasScoped && isRealNode(el)) {
     const moduleId = options.moduleId
+    const rootModuleId = options.isComponent ? '' : MPX_APP_MODULE_ID // 处理app全局样式对页面的影响
     const staticClass = getAndRemoveAttr(el, 'class').val
     addAttrs(el, [{
       name: 'class',
-      value: staticClass ? `${staticClass} ${moduleId}` : moduleId
+      value: `${staticClass || ''} ${moduleId} ${rootModuleId}`
     }])
   }
 }
@@ -1898,42 +1802,103 @@ function processBuiltInComponents (el, meta) {
   }
 }
 
-function processAliStyleClassHack (el, options, root) {
-  ['style', 'class'].forEach((type) => {
-    let exp = getAndRemoveAttr(el, type).val
-    let sep = type === 'style' ? ';' : ' '
+function processAliAddComponentRootView (el, options, stack, currentParent) {
+  const processAttrsConditions = [
+    { condition: /^(on|catch)Tap$/, action: 'clone' },
+    { condition: /^(on|catch)TouchStart$/, action: 'clone' },
+    { condition: /^(on|catch)TouchMove$/, action: 'clone' },
+    { condition: /^(on|catch)TouchEnd$/, action: 'clone' },
+    { condition: /^(on|catch)TouchCancel$/, action: 'clone' },
+    { condition: /^(on|catch)LongTap$/, action: 'clone' },
+    { condition: /^data-/, action: 'clone' },
+    { condition: 'style', action: 'move' },
+    { condition: 'class', action: 'append', value: `${MPX_ROOT_VIEW} host-${options.moduleId}` }
+  ]
+  let newElAttrs = []
+  let allAttrs = cloneAttrsList(el.attrsList)
 
-    let typeName = 'mpx' + type.replace(/^./, (matched) => {
-      return matched.toUpperCase()
+  function processClone (attr) {
+    newElAttrs.push(attr)
+  }
+
+  function processMove (attr) {
+    let movedAttr = getAndRemoveAttr(el, attr.name)
+    if (movedAttr.has) {
+      newElAttrs.push({
+        name: attr,
+        value: movedAttr.val
+      })
+    }
+  }
+
+  function processAppend (attr, item) {
+    const getNeedAppendAttrValue = el.attrsMap[attr.name]
+    if (getNeedAppendAttrValue) {
+      item.value = getNeedAppendAttrValue + ' ' + item.value
+    }
+    newElAttrs.push({
+      name: attr.name,
+      value: item.value
     })
+  }
 
-    if (options.isComponent && el.parent === root && isRealNode(el)) {
-      if (exp !== undefined) {
-        exp = `{{${typeName}||''}}` + sep + exp
-      } else {
-        exp = `{{${typeName}||''}}`
+  processAttrsConditions.forEach(item => {
+    const matcher = normalizeCondition(item.condition)
+    allAttrs.forEach((attr) => {
+      if (matcher(attr.name)) {
+        if (item.action === 'clone') {
+          processClone(attr)
+        } else if (item.action === 'move') {
+          processMove(attr)
+        } else if (item.action === 'append') {
+          processAppend(attr, item)
+        }
       }
-    }
-    if (exp !== undefined) {
-      if (isComponentNode(el, options)) {
-        addAttrs(el, [{
-          name: typeName,
-          value: exp
-        }])
-      } else {
-        addAttrs(el, [{
-          name: type,
-          value: exp
-        }])
-      }
-    }
+    })
   })
+
+  // create new el
+  let componentWrapView = createASTElement('view', newElAttrs)
+  currentParent.children.pop()
+  currentParent.children.push(componentWrapView)
+  componentWrapView.parent = currentParent
+  componentWrapView.children.push(el)
+  el.parent = componentWrapView
+
+  el = componentWrapView
+}
+
+// 有virtualHost情况wx组件注入virtualHost。无virtualHost阿里组件注入root-view。其他跳过。
+function getVirtualHostRoot (options, meta) {
+  if (options.isComponent) {
+    // 处理组件时
+    if (mode === 'wx' && options.hasVirtualHost) {
+      // wx组件注入virtualHost配置
+      !meta.options && (meta.options = {})
+      meta.options.virtualHost = true
+    }
+    // if (mode === 'ali' && !options.hasVirtualHost) {
+    //   // ali组件根节点实体化
+    //   let rootView = createASTElement('view', [
+    //     {
+    //       name: 'class',
+    //       value: `${MPX_ROOT_VIEW} host-${options.moduleId}`
+    //     }
+    //   ])
+    //   processElement(rootView, rootView, options, meta)
+    //   return rootView
+    // }
+  }
+  return getTempNode()
 }
 
 function processShow (el, options, root) {
   let show = getAndRemoveAttr(el, config[mode].directive.show).val
   if (mode === 'swan') show = wrapMustache(show)
-  if (options.isComponent && el.parent === root && isRealNode(el)) {
+  let processFlag = el.parent === root
+  // 当ali且未开启virtualHost时，mpxShow打到根节点上
+  if (mode === 'ali' && !options.hasVirtualHost) processFlag = el === root
+  if (options.isComponent && processFlag && isRealNode(el)) {
     if (show !== undefined) {
       show = `{{${parseMustache(show).result}&&mpxShow}}`
     } else {
@@ -2112,7 +2077,10 @@ function processElement (el, root, options, meta) {
 
   const pass = isNative || processTemplate(el) || processingTemplate
 
-  processScoped(el, options)
+  // 仅ali平台需要scoped模拟样式隔离
+  if (mode === 'ali') {
+    processScoped(el, options)
+  }
 
   if (transAli) {
     processAliExternalClassesHack(el, options)
@@ -2126,11 +2094,6 @@ function processElement (el, root, options, meta) {
     processClass(el, meta)
     processStyle(el, meta)
     processShow(el, options, root)
-  }
-
-  // 当mode为ali不管是不是跨平台都需要进行此处理，以保障ali当中的refs相关增强能力正常运行
-  if (mode === 'ali') {
-    processAliStyleClassHack(el, options, root)
   }
 
   if (!pass) {
@@ -2198,7 +2161,12 @@ function postProcessComponentIs (el) {
     } else {
       tempNode = getTempNode()
     }
+    let range = []
+    if (el.attrsMap.range) {
+      range = getAndRemoveAttr(el, 'range').val.split(',')
+    }
     el.components.forEach(function (component) {
+      if (range.length > 0 && !range.includes(component)) return
       let newChild = createASTElement(component, cloneAttrsList(el.attrsList), tempNode)
       newChild.if = {
         raw: `{{${el.is} === ${stringify(component)}}}`,
@@ -2415,5 +2383,6 @@ module.exports = {
   makeAttrsMap,
   stringifyAttr,
   parseMustache,
-  stringifyWithResolveComputed
+  stringifyWithResolveComputed,
+  addAttrs
 }
