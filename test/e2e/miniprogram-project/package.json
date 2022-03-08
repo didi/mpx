@@ -11,7 +11,6 @@
     "watch:cross": "npm run watch --modes=wx,ali,web",
     "build:cross": "npm run build --modes=wx,ali,tt,swan",
     "copyPlugin": "node ./copyWebpackPlugin.js",
-    "ls-plugin": "node ./ls-plugin.js",
     "watch:web:serve": "npx npm-run-all --parallel watch:web serve",
     "watch:web": "npm run watch --mode=web",
     "serve": "npx http-server dist/web",
