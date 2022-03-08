@@ -11,6 +11,7 @@ const addQuery = require('../utils/add-query')
 const transDynamicClassExpr = require('./trans-dynamic-class-expr')
 const dash2hump = require('../utils/hump-dash').dash2hump
 const { inBrowser } = require('../utils/env')
+
 /**
  * Make a map and return a function for checking if a key
  * is in that map.
@@ -2196,7 +2197,7 @@ function postProcessComponentIs (el) {
     if (!el.parent) {
       error$1('Dynamic component can not be the template root, considering wrapping it with <view> or <text> tag!')
     } else {
-      el = replaceNode(el, tempNode) || el
+      el = replaceNode(el, tempNode, true) || el
     }
   }
   return el
