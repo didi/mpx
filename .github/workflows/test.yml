@@ -17,8 +17,11 @@ jobs:
       - name: install deps
         run: npm i && npm i --prefix test/e2e/miniprogram-project && npm i --prefix test/e2e/plugin-project  && npx lerna bootstrap --no-ci
 
+      - name: copy-webpack-plugin
+        run: npm run copyPlugin --prefix test/e2e/miniprogram-project
+
       - name: build-miniprogram
-        run: npm run copyPlugin --prefix test/e2e/miniprogram-project && npm run build:cross --prefix test/e2e/miniprogram-project
+        run: npm run build:cross --prefix test/e2e/miniprogram-project
 
       - name: build-plugin
         run: npm run copyPlugin --prefix test/e2e/plugin-project && npm run build --prefix test/e2e/plugin-project
