@@ -3,7 +3,6 @@ const fs = require('fs')
 const { resolveDist, resolve } = require('../util')
 
 function loadComponent (componentPathStr) {
-  console.log(resolveDist('outputMap.json', 'wx'))
   const outputMap = require(resolveDist('outputMap.json', 'wx'))
   const componentPath = resolve(componentPathStr)
   const realComponentPath = resolveDist(outputMap[componentPath], 'wx')
