@@ -739,9 +739,6 @@ function parse (template, options) {
       currentParent.children.push(element)
       element.parent = currentParent
       processElement(element, root, options, meta)
-      if (isComponentNode(element, options) && mode === 'ali' && !options.hasVirtualHost) {
-        processAliAddComponentRootView(element, options, stack, currentParent)
-      }
       tagNames.add(element.tag)
 
       if (!unary) {
@@ -749,7 +746,7 @@ function parse (template, options) {
         stack.push(element)
       } else {
         element.unary = true
-        closeElement(element, meta)
+        closeElement(element, meta, options)
       }
     },
 
@@ -764,7 +761,7 @@ function parse (template, options) {
         // pop stack
         stack.pop()
         currentParent = stack[stack.length - 1]
-        closeElement(element, meta)
+        closeElement(element, meta, options)
       }
     },
 
@@ -904,6 +901,19 @@ function modifyAttr (el, name, val) {
       list[i].value = val
       break
     }
+  }
+}
+
+function moveBaseDirective (target, from, isDelete = true) {
+  target.for = from.for
+  target.if = from.if
+  target.elseif = from.elseif
+  target.else = from.else
+  if (isDelete) {
+    delete from.for
+    delete from.if
+    delete from.elseif
+    delete from.else
   }
 }
 
@@ -1803,7 +1813,7 @@ function processBuiltInComponents (el, meta) {
   }
 }
 
-function processAliAddComponentRootView (el, options, stack, currentParent) {
+function processAliAddComponentRootView (el, options) {
   const processAttrsConditions = [
     { condition: /^(on|catch)Tap$/, action: 'clone' },
     { condition: /^(on|catch)TouchStart$/, action: 'clone' },
@@ -1812,8 +1822,10 @@ function processAliAddComponentRootView (el, options, stack, currentParent) {
     { condition: /^(on|catch)TouchCancel$/, action: 'clone' },
     { condition: /^(on|catch)LongTap$/, action: 'clone' },
     { condition: /^data-/, action: 'clone' },
-    { condition: 'style', action: 'move' },
-    { condition: 'class', action: 'append', value: `${MPX_ROOT_VIEW} host-${options.moduleId}` }
+    { condition: 'style', action: 'move' }
+  ]
+  const processAppendAttrsRules = [
+    { name: 'class', value: `${MPX_ROOT_VIEW} host-${options.moduleId}` }
   ]
   let newElAttrs = []
   let allAttrs = cloneAttrsList(el.attrsList)
@@ -1832,14 +1844,14 @@ function processAliAddComponentRootView (el, options, stack, currentParent) {
     }
   }
 
-  function processAppend (attr, item) {
-    const getNeedAppendAttrValue = el.attrsMap[attr.name]
-    if (getNeedAppendAttrValue) {
-      item.value = getNeedAppendAttrValue + ' ' + item.value
-    }
-    newElAttrs.push({
-      name: attr.name,
-      value: item.value
+  function processAppendRules (el) {
+    processAppendAttrsRules.forEach((rule) => {
+      const getNeedAppendAttrValue = el.attrsMap[rule.name]
+      const value = getNeedAppendAttrValue ? getNeedAppendAttrValue + ' ' + rule.value : rule.value
+      newElAttrs.push({
+        name: rule.name,
+        value
+      })
     })
   }
 
@@ -1851,22 +1863,21 @@ function processAliAddComponentRootView (el, options, stack, currentParent) {
           processClone(attr)
         } else if (item.action === 'move') {
           processMove(attr)
-        } else if (item.action === 'append') {
-          processAppend(attr, item)
         }
       }
     })
   })
 
-  // create new el
+  processAppendRules(el)
   let componentWrapView = createASTElement('view', newElAttrs)
-  currentParent.children.pop()
-  currentParent.children.push(componentWrapView)
-  componentWrapView.parent = currentParent
-  componentWrapView.children.push(el)
-  el.parent = componentWrapView
+  moveBaseDirective(componentWrapView, el)
+  if (el.is && el.components) {
+    el = postProcessComponentIs(el)
+  }
 
-  el = componentWrapView
+  replaceNode(el, componentWrapView, true)
+  addChild(componentWrapView, el)
+  return componentWrapView
 }
 
 // 有virtualHost情况wx组件注入virtualHost。无virtualHost阿里组件注入root-view。其他跳过。
@@ -2105,7 +2116,7 @@ function processElement (el, root, options, meta) {
   processAttrs(el, options)
 }
 
-function closeElement (el, meta) {
+function closeElement (el, meta, options) {
   postProcessAtMode(el)
   if (mode === 'web') {
     postProcessWxs(el, meta)
@@ -2115,8 +2126,13 @@ function closeElement (el, meta) {
   }
   const pass = isNative || postProcessTemplate(el) || processingTemplate
   postProcessWxs(el, meta)
+
   if (!pass) {
-    el = postProcessComponentIs(el)
+    if (isComponentNode(el, options) && !options.hasVirtualHost && mode === 'ali') {
+      el = processAliAddComponentRootView(el, options)
+    } else {
+      el = postProcessComponentIs(el)
+    }
   }
   postProcessFor(el)
   postProcessIf(el)
@@ -2155,10 +2171,7 @@ function postProcessComponentIs (el) {
     let tempNode
     if (el.for || el.if || el.elseif || el.else) {
       tempNode = createASTElement('block', [])
-      tempNode.for = el.for
-      tempNode.if = el.if
-      tempNode.elseif = el.elseif
-      tempNode.else = el.else
+      moveBaseDirective(tempNode, el)
     } else {
       tempNode = getTempNode()
     }
