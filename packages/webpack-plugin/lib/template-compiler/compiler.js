@@ -3,6 +3,7 @@ const he = require('he')
 const config = require('../config')
 const { MPX_ROOT_VIEW, MPX_APP_MODULE_ID } = require('../utils/const')
 const normalize = require('../utils/normalize')
+const { normalizeCondition } = require('../utils/match-condition')
 const isValidIdentifierStr = require('../utils/is-valid-identifier-str')
 const isEmptyObject = require('../utils/is-empty-object')
 const getRulesRunner = require('../platform/index')
@@ -737,8 +738,10 @@ function parse (template, options) {
 
       currentParent.children.push(element)
       element.parent = currentParent
-
       processElement(element, root, options, meta)
+      if (isComponentNode(element, options) && mode === 'ali' && !options.hasVirtualHost) {
+        processAliAddComponentRootView(element, options, stack, currentParent)
+      }
       tagNames.add(element.tag)
 
       if (!unary) {
@@ -1800,36 +1803,70 @@ function processBuiltInComponents (el, meta) {
   }
 }
 
-function processAliStyleClassHack (el, options, root) {
-  let processor
-  // 处理组件标签
-  if (isComponentNode(el, options)) processor = ({ value, typeName }) => [typeName, value]
-  // 处理组件根节点
-  if (options.isComponent && el === root && isRealNode(el)) {
-    processor = ({ name, value, typeName }) => {
-      let sep = name === 'style' ? ';' : ' '
-      value = value ? `{{${typeName}||''}}${sep}${value}` : `{{${typeName}||''}}`
-      return [name, value]
+function processAliAddComponentRootView (el, options, stack, currentParent) {
+  const processAttrsConditions = [
+    { condition: /^(on|catch)Tap$/, action: 'clone' },
+    { condition: /^(on|catch)TouchStart$/, action: 'clone' },
+    { condition: /^(on|catch)TouchMove$/, action: 'clone' },
+    { condition: /^(on|catch)TouchEnd$/, action: 'clone' },
+    { condition: /^(on|catch)TouchCancel$/, action: 'clone' },
+    { condition: /^(on|catch)LongTap$/, action: 'clone' },
+    { condition: /^data-/, action: 'clone' },
+    { condition: 'style', action: 'move' },
+    { condition: 'class', action: 'append', value: `${MPX_ROOT_VIEW} host-${options.moduleId}` }
+  ]
+  let newElAttrs = []
+  let allAttrs = cloneAttrsList(el.attrsList)
+
+  function processClone (attr) {
+    newElAttrs.push(attr)
+  }
+
+  function processMove (attr) {
+    let movedAttr = getAndRemoveAttr(el, attr.name)
+    if (movedAttr.has) {
+      newElAttrs.push({
+        name: attr,
+        value: movedAttr.val
+      })
     }
   }
-  // 非上述两种不处理
-  if (!processor) return
-  // 处理style、class
-  ['style', 'class'].forEach((type) => {
-    let exp = getAndRemoveAttr(el, type).val
-    let typeName = 'mpx' + type.replace(/^./, (matched) => matched.toUpperCase())
-    let [newName, newValue] = processor({
-      name: type,
-      value: exp,
-      typeName
-    })
-    if (newValue !== undefined) {
-      addAttrs(el, [{
-        name: newName,
-        value: newValue
-      }])
+
+  function processAppend (attr, item) {
+    const getNeedAppendAttrValue = el.attrsMap[attr.name]
+    if (getNeedAppendAttrValue) {
+      item.value = getNeedAppendAttrValue + ' ' + item.value
     }
+    newElAttrs.push({
+      name: attr.name,
+      value: item.value
+    })
+  }
+
+  processAttrsConditions.forEach(item => {
+    const matcher = normalizeCondition(item.condition)
+    allAttrs.forEach((attr) => {
+      if (matcher(attr.name)) {
+        if (item.action === 'clone') {
+          processClone(attr)
+        } else if (item.action === 'move') {
+          processMove(attr)
+        } else if (item.action === 'append') {
+          processAppend(attr, item)
+        }
+      }
+    })
   })
+
+  // create new el
+  let componentWrapView = createASTElement('view', newElAttrs)
+  currentParent.children.pop()
+  currentParent.children.push(componentWrapView)
+  componentWrapView.parent = currentParent
+  componentWrapView.children.push(el)
+  el.parent = componentWrapView
+
+  el = componentWrapView
 }
 
 // 有virtualHost情况wx组件注入virtualHost。无virtualHost阿里组件注入root-view。其他跳过。
@@ -1841,17 +1878,17 @@ function getVirtualHostRoot (options, meta) {
       !meta.options && (meta.options = {})
       meta.options.virtualHost = true
     }
-    if (mode === 'ali' && !options.hasVirtualHost) {
-      // ali组件根节点实体化
-      let rootView = createASTElement('view', [
-        {
-          name: 'class',
-          value: `${MPX_ROOT_VIEW} host-${options.moduleId}`
-        }
-      ])
-      processElement(rootView, rootView, options, meta)
-      return rootView
-    }
+    // if (mode === 'ali' && !options.hasVirtualHost) {
+    //   // ali组件根节点实体化
+    //   let rootView = createASTElement('view', [
+    //     {
+    //       name: 'class',
+    //       value: `${MPX_ROOT_VIEW} host-${options.moduleId}`
+    //     }
+    //   ])
+    //   processElement(rootView, rootView, options, meta)
+    //   return rootView
+    // }
   }
   return getTempNode()
 }
@@ -2060,11 +2097,6 @@ function processElement (el, root, options, meta) {
     processShow(el, options, root)
   }
 
-  // 当mode为ali不管是不是跨平台都需要进行此处理，以保障ali当中的refs相关增强能力正常运行
-  if (mode === 'ali') {
-    processAliStyleClassHack(el, options, root)
-  }
-
   if (!pass) {
     processBindEvent(el, options)
     processComponentIs(el, options)
@@ -2152,7 +2184,7 @@ function postProcessComponentIs (el) {
     if (!el.parent) {
       error$1('Dynamic component can not be the template root, considering wrapping it with <view> or <text> tag!')
     } else {
-      el = replaceNode(el, tempNode) || el
+      el = replaceNode(el, tempNode, true) || el
     }
   }
   return el

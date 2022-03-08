@@ -3,7 +3,7 @@ const parseComponent = require('./parser')
 const createHelpers = require('./helpers')
 const loaderUtils = require('loader-utils')
 const parseRequest = require('./utils/parse-request')
-const matchCondition = require('./utils/match-condition')
+const { matchCondition } = require('./utils/match-condition')
 const fixUsingComponent = require('./utils/fix-using-component')
 const addQuery = require('./utils/add-query')
 const async = require('async')
@@ -254,7 +254,7 @@ module.exports = function (content) {
       output += `global.currentCtorType = ${JSON.stringify(ctor.replace(/^./, (match) => {
         return match.toLowerCase()
       }))}\n`
-      output += `global.currentResourceType = '${ctorType}'\n`
+      output += `global.currentResourceType = ${JSON.stringify(ctorType)}\n`
 
       // template
       output += '/* template */\n'

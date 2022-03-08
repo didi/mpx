@@ -18,16 +18,16 @@
 
 ### 如何编写一个插件
 
-推荐使用 mpx 官方脚手架 mpx-cli 创建一个小程序插件项目来快速的进入插件开发阶段，首先全局安装 mpx-cli
+推荐使用 mpx 官方脚手架 @mpxjs/cli 创建一个小程序插件项目来快速的进入插件开发阶段，首先全局安装 @mpxjs/cli
 
-```js
-npm i mpx-cli -g
+```html
+npm i -g @mpxjs/cli
 ```
 
 然后使用 cli 初始化项目
 
-```js
-mpx-cli init
+```html
+mpx init
 ```
 
 我们以开发微信小程序插件为例，弹框会询问是否在当前文件目录下创建项目，选择yes，在问询步骤中选择插件模式(**注意跨平台输出选项需要选择否**)，是否使用 TypeScript，Babel，ESlint，Dll，单元测试这些可根据自身情况选择，同时注意**由于插件需要 appid 才能工作，请填入一个 appid；**
@@ -58,7 +58,7 @@ mpx-cli init
 
 **代码示例：**
 
-```js
+```html
 {
   "publicComponents": {
     "list": "./components/list" // 使用mpx 中的webpack 路径引入规范
