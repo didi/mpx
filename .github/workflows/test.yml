@@ -24,7 +24,7 @@ jobs:
         run: npm run copyPlugin --prefix test/e2e/plugin-project && npm run build --prefix test/e2e/plugin-project
 
       - name: ls-plugin
-        run: npm run ls-plugin --prefix test/e2e/plugin-project
+        run: npm run ls-plugin --prefix test/e2e/miniprogram-project
 
       - name: exec unit test
         run: npm t && npm t --prefix test/e2e/miniprogram-project && npm t --prefix test/e2e/plugin-project
