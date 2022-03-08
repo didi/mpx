@@ -1822,7 +1822,9 @@ function processAliAddComponentRootView (el, options) {
     { condition: /^(on|catch)TouchCancel$/, action: 'clone' },
     { condition: /^(on|catch)LongTap$/, action: 'clone' },
     { condition: /^data-/, action: 'clone' },
-    { condition: 'style', action: 'move' }
+    { condition: 'style', action: 'move' },
+    { condition: 'slot', action: 'move' }
+
   ]
   const processAppendAttrsRules = [
     { name: 'class', value: `${MPX_ROOT_VIEW} host-${options.moduleId}` }
@@ -1835,13 +1837,8 @@ function processAliAddComponentRootView (el, options) {
   }
 
   function processMove (attr) {
-    let movedAttr = getAndRemoveAttr(el, attr.name)
-    if (movedAttr.has) {
-      newElAttrs.push({
-        name: attr,
-        value: movedAttr.val
-      })
-    }
+    getAndRemoveAttr(el, attr.name)
+    newElAttrs.push(attr)
   }
 
   function processAppendRules (el) {
