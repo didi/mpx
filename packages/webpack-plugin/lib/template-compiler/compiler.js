@@ -1812,15 +1812,6 @@ function processBuiltInComponents (el, meta) {
   }
 }
 
-function postProcessComponentIsAndAliComponent (el, options) {
-  if (isComponentNode(el, options) && !options.hasVirtualHost && mode === 'ali') {
-    return processAliAddComponentRootView(el, options)
-  } else if (el.is && el.components) {
-    return postProcessComponentIs(el)
-  }
-  return el
-}
-
 function processAliAddComponentRootView (el, options) {
   const processAttrsConditions = [
     { condition: /^(on|catch)Tap$/, action: 'clone' },
@@ -2136,7 +2127,11 @@ function closeElement (el, meta, options) {
   postProcessWxs(el, meta)
 
   if (!pass) {
-    el = postProcessComponentIsAndAliComponent(el, options)
+    if (isComponentNode(el, options) && !options.hasVirtualHost && mode === 'ali') {
+      el = processAliAddComponentRootView(el, options)
+    } else {
+      el = postProcessComponentIs(el)
+    }
   }
   postProcessFor(el)
   postProcessIf(el)
