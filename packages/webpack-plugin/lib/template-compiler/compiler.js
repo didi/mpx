@@ -1822,9 +1822,8 @@ function processAliAddComponentRootView (el, options) {
     { condition: /^(on|catch)TouchCancel$/, action: 'clone' },
     { condition: /^(on|catch)LongTap$/, action: 'clone' },
     { condition: /^data-/, action: 'clone' },
-    { condition: 'style', action: 'move' },
-    { condition: 'slot', action: 'move' }
-
+    { condition: /^style$/, action: 'move' },
+    { condition: /^slot$/, action: 'move' }
   ]
   const processAppendAttrsRules = [
     { name: 'class', value: `${MPX_ROOT_VIEW} host-${options.moduleId}` }
