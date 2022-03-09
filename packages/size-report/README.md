@@ -84,7 +84,9 @@ const MpxSizeReportPlugin = require('@mpxjs/size-report')
       // 是否收集资源维度体积详情，默认 false
       reportAssets: true,
       // 是否收集冗余资源，默认 false
-      reportRedundance: true
+      reportRedundance: true,
+      // 展示某些分包资源的引用来源信息，默认为 []
+      showEntrysPackages: ['main']
     })
 
   ]
@@ -158,7 +160,19 @@ const MpxSizeReportPlugin = require('@mpxjs/size-report')
             "size": "",
             "modules": []
         }]
-    }
+    },
+    // 项目的冗余资源信息
+    "redundanceSizeInfo": [
+      {
+        "resourcePath": "src/components/index.mpx",
+        "redundantSize": "8.24KiB",
+        "packages": {
+          "package1": "4.12KiB",
+          "package2": "4.12KiB",
+          "package3": "4.12KiB"
+        }
+      }
+    ]
 }
 ```
 与此同时，如果你开启了本地可视化平台服务，可以直接通过可视化平台查看项目体积构成。默认开启自动打开平台网页或者手动打开后，整体页面展示如下图：
