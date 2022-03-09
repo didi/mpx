@@ -1130,6 +1130,17 @@ class MpxWebpackPlugin {
       }, () => {
         if (mpx.mode === 'web') return
 
+        if (this.options.generateBuildMap) {
+          const pagesMap = compilation.__mpx__.pagesMap
+          const componentsPackageMap = compilation.__mpx__.componentsMap
+          const componentsMap = Object.keys(componentsPackageMap).map(item => componentsPackageMap[item]).reduce((pre, cur) => {
+            return { ...pre, ...cur }
+          }, {})
+          const outputMap = JSON.stringify({ ...pagesMap, ...componentsMap })
+          const filename = this.options.generateBuildMap.filename || 'outputMap.json'
+          compilation.assets[filename] = new RawSource(outputMap)
+        }
+
         const {
           globalObject,
           chunkLoadingGlobal
@@ -1353,7 +1364,7 @@ try {
 
         if (mpx.mode === 'web') {
           const mpxStyleOptions = queryObj.mpxStyleOptions
-          const firstLoader = toPosix(loaders[0] && loaders[0].loader) || ''
+          const firstLoader = loaders[0] ? toPosix(loaders[0].loader) : ''
           const isPitcherRequest = firstLoader.includes('vue-loader/lib/loaders/pitcher')
           let cssLoaderIndex = -1
           let vueStyleLoaderIndex = -1
@@ -1388,25 +1399,6 @@ try {
         // 根据用户传入的modeRules对特定资源添加mode query
         this.runModeRules(createData)
       })
-    })
-
-    compiler.hooks.emit.tap('MpxWebpackPlugin', (compilation) => {
-      if (this.options.generateBuildMap) {
-        const pagesMap = compilation.__mpx__.pagesMap
-        const componentsPackageMap = compilation.__mpx__.componentsMap
-        const componentsMap = Object.keys(componentsPackageMap).map(item => componentsPackageMap[item]).reduce((pre, cur) => {
-          return { ...pre, ...cur }
-        }, {})
-        const outputMap = JSON.stringify({ ...pagesMap, ...componentsMap })
-        compilation.assets['../outputMap.json'] = {
-          source: () => {
-            return outputMap
-          },
-          size: () => {
-            return Buffer.byteLength(outputMap, 'utf8')
-          }
-        }
-      }
     })
 
     const clearFileCache = () => {
