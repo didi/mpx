@@ -17,9 +17,9 @@ class MpxPartialCompilePlugin {
       factory: (type, hook) => {
         hook.tap('MpxPartialCompilePlugin', (resolver) => {
           resolver.hooks.result.tapAsync({
-            name: "MpxPartialCompilePlugin",
+            name: 'MpxPartialCompilePlugin',
             stage: -100
-          },  (obj, resolverContext, callback) => {
+          }, (obj, resolverContext, callback) => {
             if (this.isResolvingPage(obj) && !matchCondition(obj.path, this.condition)) {
               obj.path = false
             }
