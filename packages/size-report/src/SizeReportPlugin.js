@@ -406,7 +406,7 @@ class SizeReportPlugin {
           const noEntryModules = new Set()
           const size = compilation.assets[name].size()
           const identifierSet = new Set()
-          const entryModulePathSet = new Set()
+          const entryModulePathMap = new Map()
 
           let identifier = ''
 
@@ -414,6 +414,7 @@ class SizeReportPlugin {
             // 循环 modules，存储到 entryModules 和 noEntryModules 中
             const _entryModules = getModuleEntries(module)
             const _noEntryModules = getModuleEntries(module, true)
+            const entryModulePathSet = new Set()
             if (_entryModules) {
               _entryModules.forEach((entryModule) => {
                 entryModules.add(entryModule)
@@ -427,6 +428,7 @@ class SizeReportPlugin {
             }
             const moduleIdentifier = module.readableIdentifier(compilation.requestShortener)
             identifierSet.add(moduleIdentifier)
+            entryModulePathMap.set(moduleIdentifier, entryModulePathSet)
             if (!identifier) identifier = moduleIdentifier
           })
 
@@ -453,7 +455,7 @@ class SizeReportPlugin {
                 identifier
               }
               if (showEntrysPackages.includes(packageName)) {
-                retModule.entryModulePaths = [...entryModulePathSet]
+                retModule.entryModulePaths = [...entryModulePathMap.get(identifier)]
               }
               return retModule
             })

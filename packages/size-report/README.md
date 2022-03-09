@@ -85,7 +85,7 @@ const MpxSizeReportPlugin = require('@mpxjs/size-report')
       reportAssets: true,
       // 是否收集冗余资源，默认 false
       reportRedundance: true,
-      // 展示某些分包资源的入口引用来源信息，默认为 []
+      // 展示某些分包资源的引用来源信息，默认为 []
       showEntrysPackages: ['main']
     })
 
