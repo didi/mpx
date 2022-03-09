@@ -1,5 +1,5 @@
-const pathModule = require('path')
 const { matchCondition } = require('../utils/match-condition')
+const { parseQuery } = require('loader-utils')
 
 class MpxPartialCompilePlugin {
   constructor (condition) {
@@ -7,9 +7,9 @@ class MpxPartialCompilePlugin {
   }
 
   isResolvingPage (obj) {
-    const { query, path } = obj
-    const extName = pathModule.extname(path)
-    return (extName === '.mpx' && query.includes('isPage'))
+    // valid query should start with '?'
+    const query = obj.query || '?'
+    return parseQuery(query).isPage
   }
 
   apply (compiler) {
