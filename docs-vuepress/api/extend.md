@@ -40,6 +40,12 @@ mpx-fetch提供了一个实例**xfetch** ，该实例包含以下api
             类型：`Boolean`
         
             设置为 true 时，等价于 header = {'content-type': 'application/x-www-form-urlencoded'}
+        - **isPre**
+            类型：`Boolean`
+            预请求开关，设置为 true 时会在配置校验完全一致且在有效期范围内返回上一次请求的结果
+        - **cacheInvalidationTime**
+            类型： `number`
+            预请求缓存有效时长，单位 ms，默认为 5000ms。当两次请求时间间隔超过设置时长后再发起二次请求时，上一次的请求缓存会失效然后重新发起请求
 
 - **示例：**
 
@@ -57,7 +63,9 @@ mpx.xfetch.fetch({
 	data: {
 		name: 'test'
 	},
-	emulateJSON: true 
+	emulateJSON: true,
+    isPre: true,
+    cacheInvalidationTime: 3000
 }).then(res => {
 	console.log(res.data)
 })
