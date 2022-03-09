@@ -825,25 +825,6 @@ new MpxWebpackPlugin({
 })
 ```
 
-### webConfig
-
-- **类型**：`Object`
-  - `option.transRpxFn` 函数形式，web环境下，自定义 rpx 单位转换规则
-
-- **详细**：web 环境下的编译配置。
-Mpx 内置的transRpx能力在 web 环境默认将 rpx 转成 vw，通过配置 transRpxFn 可以自定义单位转换规则
-
-- **示例**：
-```js
-new MpxWebpackPlugin({
-  webConfig: {
-    transRpxFn: (match, $1) => {
-      return `${$1 * 0.025}rem`
-    }
-  }
-})
-```
-
 ### partialCompile
 
 - **详细**：在大型的小程序开发当中，全量打包页面耗时非常长，往往在`开发过程`中仅仅只需用到几个 pages 而已，该配置项支持打包指定的小程序页面。
