@@ -45,4 +45,7 @@ const matchCondition = (resourcePath, condition = {}) => {
   return matched
 }
 
-module.exports = matchCondition
+module.exports = {
+  matchCondition,
+  normalizeCondition
+}

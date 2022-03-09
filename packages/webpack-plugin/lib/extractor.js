@@ -36,6 +36,11 @@ module.exports.pitch = async function (remainingRequest) {
     }
   })
 
+  if (issuerResource) {
+    // 清空issuerResource/index query避免importModule对于不同的issuer无法复用模块缓存
+    remainingRequest = addQuery(remainingRequest, {}, false, ['issuerResource', 'index'])
+  }
+
   let request = remainingRequest
   // static的情况下需要用record-loader记录相关静态资源的输出路径，不能直接在这里记录，需要确保在子依赖开始构建前完成记录，因为子依赖构建时可能就需要访问当前资源的输出路径
   if (isStatic) {
