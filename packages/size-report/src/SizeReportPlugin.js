@@ -1,6 +1,6 @@
 const startServer = require('./server')
 const path = require('path')
-const matchCondition = require('@mpxjs/webpack-plugin/lib/utils/match-condition')
+const matchCondition = require('@mpxjs/webpack-plugin/lib/utils/match-condition').matchCondition
 const parseRequest = require('@mpxjs/webpack-plugin/lib/utils/parse-request')
 const toPosix = require('@mpxjs/webpack-plugin/lib/utils/to-posix')
 const { every, has, map, filter, concat, mapToArr } = require('@mpxjs/webpack-plugin/lib/utils/set')
