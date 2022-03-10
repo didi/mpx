@@ -185,34 +185,24 @@ module.exports = function getSpec ({ warn, error }) {
         // style样式绑定
         test: /^(style|wx:style)$/,
         web ({ value }, { el }) {
-          let staticStyle = ''
-          let styleBinding = ''
+          let styleBinding = []
           el.attrsList.map((item, index) => {
             const parsed = parseMustache(item.value)
-            if (item.name === 'style') {
-              if (parsed.hasBinding) {
-                styleBinding += `${parsed.result} | transRpxStyle`
-              } else {
-                staticStyle = item.value
-              }
-            } else {
-              styleBinding += `${parsed.result} | transRpxStyle`
-            }
+            styleBinding.push(parsed.result)
+            // if (item.name === 'style') {
+            //   if (parsed.hasBinding || parsed.result.indexOf('rpx') > -1) {
+            //     styleBinding.push(parseMustache(item.value).result)
+            //   } else {
+            //     styleBinding.push(parseMustache(item.value).result)
+            //   }
+            // } else if (item.name === 'wx:style'){
+            //   styleBinding.push(parseMustache(item.value).result)
+            // }
           })
-          const styleArr = []
-          if (styleBinding) {
-            styleArr.push({
-              name: ':style',
-              value: styleBinding
-            })
+          return {
+            name: ':style',
+            value: `[${styleBinding}] | transRpxStyle`
           }
-          if (staticStyle) {
-            styleArr.push({
-              name: 'style',
-              value: staticStyle
-            })
-          }
-          return styleArr
         }
       },
       {

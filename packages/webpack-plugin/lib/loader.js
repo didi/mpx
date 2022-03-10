@@ -128,31 +128,43 @@ module.exports = function (content) {
       import App from ${stringifyRequest(request)}
       import Vue from 'vue'
       Vue.filter('transRpxStyle', function (style) {
-          const rpxRegExpG = /\\b(\\d+(\\.\\d+)?)\\s*rpx\\b/g
-          const transRpxStyleFn = function (val) {
-            if (typeof val === 'string' && val.indexOf('rpx') > 0) {
-              return val.replace(rpxRegExpG, ${transRpxFnRaw}).replace(/"/g,"")
-            }
-            return val
-          }
-
-        if (typeof style === 'string') {
-          return transRpxStyleFn(style)
-        }
-        if (typeof style === 'object') {
-          if (Array.isArray(style)) {
-            style.forEach(item => {
-              Object.keys(item).forEach(key => {
-                item[key] = transRpxStyleFn(item[key])
+        let parsedStyleObj = {} 
+        const rpxRegExpG = /\\b(\\d+(\\.\\d+)?)\\s*rpx\\b/g
+        const styleArr = []
+        const parseStyleText = function (cssText) {
+          const listDelimiter = /;(?![^(]*\\))/g
+          const propertyDelimiter = /:(.+)/
+          if (typeof cssText === 'string') {
+            cssText.split(listDelimiter).forEach(function (item) {
+              if (item) {
+                var tmp = item.split(propertyDelimiter)
+                tmp.length > 1 && (parsedStyleObj[tmp[0].trim()] = tmp[1].trim())
+              }
+            })
+          } else if (typeof cssText === 'object') {
+            if (Array.isArray(cssText)) {
+              cssText.forEach(cssItem => {
+                parseStyleText(cssItem)
               })
-            })
-          } else {
-            Object.keys(style).forEach(key => {
-              style[key] = transRpxStyleFn(style[key])
-            })
+            } else {
+              Object.assign(parsedStyleObj, cssText)
+            }
           }
         }
-        return style
+        const transRpxStyleFn = function (val) {
+          if (typeof val === 'string' && val.indexOf('rpx') > 0) {
+            return val.replace(rpxRegExpG, ${transRpxFnRaw}).replace(/"/g,"")
+          }
+            return val
+        }
+        style.forEach(item => {
+          parseStyleText(item)
+          for (let key in parsedStyleObj) {
+            parsedStyleObj[key] = transRpxStyleFn(parsedStyleObj[key])
+          }
+          styleArr.push(parsedStyleObj)
+        })
+          return styleArr
       })
       new Vue({
         el: '#app',
