@@ -158,6 +158,7 @@ module.exports = function (content) {
             return val
         }
         style.forEach(item => {
+          parsedStyleObj = {}
           parseStyleText(item)
           for (let key in parsedStyleObj) {
             parsedStyleObj[key] = transRpxStyleFn(parsedStyleObj[key])

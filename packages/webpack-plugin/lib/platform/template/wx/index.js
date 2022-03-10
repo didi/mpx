@@ -188,16 +188,15 @@ module.exports = function getSpec ({ warn, error }) {
           let styleBinding = []
           el.attrsList.map((item, index) => {
             const parsed = parseMustache(item.value)
-            styleBinding.push(parsed.result)
-            // if (item.name === 'style') {
-            //   if (parsed.hasBinding || parsed.result.indexOf('rpx') > -1) {
-            //     styleBinding.push(parseMustache(item.value).result)
-            //   } else {
-            //     styleBinding.push(parseMustache(item.value).result)
-            //   }
-            // } else if (item.name === 'wx:style'){
-            //   styleBinding.push(parseMustache(item.value).result)
-            // }
+            if (item.name === 'style') {
+              if (parsed.hasBinding || parsed.result.indexOf('rpx') > -1) {
+                styleBinding.push(parseMustache(item.value).result)
+              } else {
+                styleBinding.push(JSON.stringify(item.value))
+              }
+            } else if (item.name === 'wx:style') {
+              styleBinding.push(parseMustache(item.value).result)
+            }
           })
           return {
             name: ':style',
