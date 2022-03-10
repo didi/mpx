@@ -110,8 +110,8 @@
   ```
 - **选项**：pausable
 
-    可在选项参数中指定 pausable: true 来声明一个可被暂停的 watcher，配置好之后可以通过 this.$getPausableWatchers() 来获取当前实例下所有可被暂停的 watcher，
-    然后根据具体是业务场景通过 watcher.pause() 或者 watcher.resume() 来暂停或者恢复 watcher 的监听。
+    可在选项参数中指定 pausable: true 来声明一个可被暂停的 Watcher 实例，配置好之后可以通过 this.$getPausableWatchers() 来获取当前组件或者页面下定义的所有可被暂停的 Watcher 实例，
+    然后根据具体是业务场景通过 watcher.pause() 或者 watcher.resume() 来暂停或者恢复 watch 的监听。
     比如说在小程序页面 hide 时不需要执行的 watch 可以配置为 pausable: true，在页面 hide 时调用 watcher.pause() 暂停监听，在页面 show 时调用 watcher.resume() 来恢复监听。
 
   ``` javascript
@@ -131,7 +131,8 @@
   ```
 - **选项**：name
 
-  为了方便获取用户定义的 watcher，可在选项参数中配置 name 来声明当前 watcher 的名称，配置好后可通过 this.$getWatcherByName(name) 在实例中获取当前 watcher（注意当存在多个 name 相同 watcher 时，this.$getWatcherByName 获取的是最后创建的 watcher。）
+  为了方便获取用户定义的 Watcher 实例，可在选项参数增加配置 name 来设置当前 Watcher 的名称，配置 name 后可通过 this.$getWatcherByName(name) 在实例中获取到命名为 name 的 Watcher 实例（注意当存在多个 name 相同 watcher 时，this.$getWatcherByName 获取的最后一个使用该 name
+  创建的 Watcher 实例，所以为了避免混淆，请避免在多个 watch 中配置同一个 name。）
 
   ``` javascript
   this.$watch('someObject', callback, {
@@ -317,6 +318,7 @@
     })
   ```
   ## $getRenderWatcher
+* **返回值**：Watcher 实例
 * **用法：** 
   用来获取当前实例的 renderWatcher
 * **示例：** 
@@ -334,9 +336,31 @@ createPage({
   }
 })
   ```
-  ## $getPausableWatchers
+## $getWatcherByName
+* **参数**：
+  - `{string} name` 
+* **返回值**：Watcher 实例
 * **用法：** 
-  用来获取当前实例中所有声明了 pausable: true 的 watcher，获取之后可在页面 hide 时调用 watcher.pause() 暂停监听，在页面 show 时调用 watcher.resume() 来恢复监听。
+  用来获取当前实例下命名为 name 的 Watcher 实例
+* **示例：** 
+ ``` js
+import {createComponent} from '@mpxjs/core'
+createPage({
+  ready () {
+    this.renderWatcher = this.getRenderWatcher()
+  },
+  show() {
+    this.renderWatcher.resume()
+  },
+  hide() {
+    this.renderWatcher.pause()
+  }
+})
+  ```
+  ## $getPausableWatchers
+* **返回值**：Watcher 实例
+* **用法：** 
+  用来获取当前实例中所有设置了选项 pausable: true 的 Watcher 实例，获取之后可在页面 hide 时调用 watcher.pause() 暂停监听，在页面 show 时调用 watcher.resume() 来恢复监听。
 * **示例：** 
  ``` js
 import {createComponent} from '@mpxjs/core'
