@@ -17,6 +17,7 @@ const getEntryName = require('./utils/get-entry-name')
 const AppEntryDependency = require('./dependencies/AppEntryDependency')
 const RecordResourceMapDependency = require('./dependencies/RecordResourceMapDependency')
 const CommonJsVariableDependency = require('./dependencies/CommonJsVariableDependency')
+const optionProcessorPath = normalize.lib('runtime/optionProcessor')
 const { MPX_APP_MODULE_ID } = require('./utils/const')
 
 module.exports = function (content) {
@@ -127,43 +128,8 @@ module.exports = function (content) {
           output += `
       import App from ${stringifyRequest(request)}
       import Vue from 'vue'
-      Vue.filter('transRpxStyle', function (style) {
-        const parsedStyleObj = {} 
-        const rpxRegExpG = /\\b(\\d+(\\.\\d+)?)\\s*rpx\\b/g
-        const parseStyleText = function (cssText) {
-          const listDelimiter = /;(?![^(]*\\))/g
-          const propertyDelimiter = /:(.+)/
-          if (typeof cssText === 'string') {
-            cssText.split(listDelimiter).forEach(function (item) {
-              if (item) {
-                var tmp = item.split(propertyDelimiter)
-                tmp.length > 1 && (parsedStyleObj[tmp[0].trim()] = tmp[1].trim())
-              }
-            })
-          } else if (typeof cssText === 'object') {
-            if (Array.isArray(cssText)) {
-              cssText.forEach(cssItem => {
-                parseStyleText(cssItem)
-              })
-            } else {
-              Object.assign(parsedStyleObj, cssText)
-            }
-          }
-        }
-        const transRpxStyleFn = function (val) {
-          if (typeof val === 'string' && val.indexOf('rpx') > 0) {
-            return val.replace(rpxRegExpG, ${transRpxFnRaw}).replace(/"/g,"")
-          }
-            return val
-        }
-        style.forEach(item => {
-          parseStyleText(item)
-          for (let key in parsedStyleObj) {
-            parsedStyleObj[key] = transRpxStyleFn(parsedStyleObj[key])
-          }
-        })
-        return parsedStyleObj
-      })
+      import { transRpxFilter } from ${stringifyRequest(optionProcessorPath)}
+      transRpxFilter(Vue, ${transRpxFnRaw}) 
       new Vue({
         el: '#app',
         render: function(h){
