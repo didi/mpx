@@ -11,6 +11,7 @@ const CommonJsAsyncDependency = require('./dependencies/CommonJsAsyncDependency'
 const NormalModule = require('webpack/lib/NormalModule')
 const EntryPlugin = require('webpack/lib/EntryPlugin')
 const JavascriptModulesPlugin = require('webpack/lib/javascript/JavascriptModulesPlugin')
+const FileSystemInfo = require('webpack/lib/FileSystemInfo')
 const normalize = require('./utils/normalize')
 const toPosix = require('./utils/to-posix')
 const addQuery = require('./utils/add-query')
@@ -32,9 +33,10 @@ const DynamicEntryDependency = require('./dependencies/DynamicEntryDependency')
 const FlagPluginDependency = require('./dependencies/FlagPluginDependency')
 const RemoveEntryDependency = require('./dependencies/RemoveEntryDependency')
 const SplitChunksPlugin = require('webpack/lib/optimize/SplitChunksPlugin')
+const PartialCompilePlugin = require('./partial-compile/index')
 const fixRelative = require('./utils/fix-relative')
 const parseRequest = require('./utils/parse-request')
-const matchCondition = require('./utils/match-condition')
+const { matchCondition } = require('./utils/match-condition')
 const { preProcessDefs } = require('./utils/index')
 const config = require('./config')
 const hash = require('hash-sum')
@@ -158,7 +160,16 @@ class MpxWebpackPlugin {
       cssLangs: ['css', 'less', 'stylus', 'scss', 'sass']
     }, options.nativeConfig)
     options.webConfig = options.webConfig || {}
+    options.partialCompile = options.mode !== 'web' && options.partialCompile
     this.options = options
+    // Hack for buildDependencies
+    const rawResolveBuildDependencies = FileSystemInfo.prototype.resolveBuildDependencies
+    FileSystemInfo.prototype.resolveBuildDependencies = function (context, deps, rawCallback) {
+      return rawResolveBuildDependencies.call(this, context, deps, (err, result) => {
+        if (result && typeof options.hackResolveBuildDependencies === 'function') options.hackResolveBuildDependencies(result)
+        return rawCallback(err, result)
+      })
+    }
   }
 
   static loader (options = {}) {
@@ -356,6 +367,10 @@ class MpxWebpackPlugin {
     new ExternalsPlugin('commonjs2', this.options.externals).apply(compiler)
 
     let mpx
+
+    if (this.options.partialCompile) {
+      new PartialCompilePlugin(this.options.partialCompile).apply(compiler)
+    }
 
     const getPackageCacheGroup = packageName => {
       if (packageName === 'main') {
@@ -1121,6 +1136,17 @@ class MpxWebpackPlugin {
       }, () => {
         if (mpx.mode === 'web') return
 
+        if (this.options.generateBuildMap) {
+          const pagesMap = compilation.__mpx__.pagesMap
+          const componentsPackageMap = compilation.__mpx__.componentsMap
+          const componentsMap = Object.keys(componentsPackageMap).map(item => componentsPackageMap[item]).reduce((pre, cur) => {
+            return { ...pre, ...cur }
+          }, {})
+          const outputMap = JSON.stringify({ ...pagesMap, ...componentsMap })
+          const filename = this.options.generateBuildMap.filename || 'outputMap.json'
+          compilation.assets[filename] = new RawSource(outputMap)
+        }
+
         const {
           globalObject,
           chunkLoadingGlobal
@@ -1300,10 +1326,11 @@ try {
               let insertBeforeIndex = -1
               const info = typeLoaderProcessInfo[type]
               loaders.forEach((loader, index) => {
-                if (loader.loader.includes(info[0])) {
+                const currentLoader = toPosix(loader.loader)
+                if (currentLoader.includes(info[0])) {
                   loader.loader = info[1]
-                }
-                if (loader.loader.includes(info[1])) {
+                  insertBeforeIndex = index
+                } else if (currentLoader.includes(info[1])) {
                   insertBeforeIndex = index
                 }
               })
@@ -1343,13 +1370,13 @@ try {
 
         if (mpx.mode === 'web') {
           const mpxStyleOptions = queryObj.mpxStyleOptions
-          const firstLoader = (loaders[0] && loaders[0].loader) || ''
+          const firstLoader = loaders[0] ? toPosix(loaders[0].loader) : ''
           const isPitcherRequest = firstLoader.includes('vue-loader/lib/loaders/pitcher')
           let cssLoaderIndex = -1
           let vueStyleLoaderIndex = -1
           let mpxStyleLoaderIndex = -1
           loaders.forEach((loader, index) => {
-            const currentLoader = loader.loader
+            const currentLoader = toPosix(loader.loader)
             if (currentLoader.includes('css-loader')) {
               cssLoaderIndex = index
             } else if (currentLoader.includes('vue-loader/lib/loaders/stylePostLoader')) {
@@ -1378,25 +1405,6 @@ try {
         // 根据用户传入的modeRules对特定资源添加mode query
         this.runModeRules(createData)
       })
-    })
-
-    compiler.hooks.emit.tap('MpxWebpackPlugin', (compilation) => {
-      if (this.options.generateBuildMap) {
-        const pagesMap = compilation.__mpx__.pagesMap
-        const componentsPackageMap = compilation.__mpx__.componentsMap
-        const componentsMap = Object.keys(componentsPackageMap).map(item => componentsPackageMap[item]).reduce((pre, cur) => {
-          return { ...pre, ...cur }
-        }, {})
-        const outputMap = JSON.stringify({ ...pagesMap, ...componentsMap })
-        compilation.assets['../outputMap.json'] = {
-          source: () => {
-            return outputMap
-          },
-          size: () => {
-            return Buffer.byteLength(outputMap, 'utf8')
-          }
-        }
-      }
     })
 
     const clearFileCache = () => {

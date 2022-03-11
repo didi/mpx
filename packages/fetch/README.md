@@ -213,3 +213,18 @@ mpx.xfetch.setValidator([
   }
 ])
 ```
+### 支持缓存请求
+xfetch 支持配置 isPre=true 来缓存请求结果。设置 isPre=true 并发出首次请求后，在有效时间内的下一次请求，若参数和请求方法一致，则会直接返回上次请求的结果。参数或者请求方法不一致，以及不在有效时间内，都会重新请求并返回。默认缓存有效时间为 5000ms，也可通过 cacheInvalidationTime 配置。 
+```js
+mpx.xfetch.fetch({
+    url: 'http://xxx.com',
+    method: 'POST',
+    data: {
+        name: 'test'
+    },
+    // 是否缓存请求
+    isPre: true,
+    // 缓存有效时长
+    cacheInvalidationTime: 3000
+})
+```

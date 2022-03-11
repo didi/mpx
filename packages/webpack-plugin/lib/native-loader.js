@@ -5,7 +5,7 @@ const config = require('./config')
 const createHelpers = require('./helpers')
 const getJSONContent = require('./utils/get-json-content')
 const async = require('async')
-const matchCondition = require('./utils/match-condition')
+const { matchCondition } = require('./utils/match-condition')
 const fixUsingComponent = require('./utils/fix-using-component')
 const { JSON_JS_EXT } = require('./utils/const')
 

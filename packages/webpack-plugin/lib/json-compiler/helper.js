@@ -97,6 +97,8 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
     if (resolveMode === 'native') {
       page = urlToRequest(page)
     }
+    // 增加 page 标识
+    page = addQuery(page, { isPage: true })
     resolve(context, page, loaderContext, (err, resource) => {
       if (err) return callback(err)
       const { resourcePath, queryObj: { isFirst } } = parseRequest(resource)

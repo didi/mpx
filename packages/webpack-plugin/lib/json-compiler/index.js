@@ -571,10 +571,14 @@ module.exports = function (content) {
       delete json.subPackages
       json.pages = localPages
       for (let root in subPackagesCfg) {
-        if (!json.subPackages) {
-          json.subPackages = []
+        const subPackageCfg = subPackagesCfg[root]
+        // 分包不存在 pages，输出 subPackages 字段会报错
+        if (subPackageCfg.pages.length) {
+          if (!json.subPackages) {
+            json.subPackages = []
+          }
+          json.subPackages.push(subPackageCfg)
         }
-        json.subPackages.push(subPackagesCfg[root])
       }
       const processOutput = (output) => {
         output = processDynamicEntry(output)
