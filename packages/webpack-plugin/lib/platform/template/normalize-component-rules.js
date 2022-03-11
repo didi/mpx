@@ -25,30 +25,28 @@ module.exports = function normalizeComponentRules (cfgs, spec) {
           data
         }
         el.attrsList.forEach((attr) => {
-          if (!(el.isStyleParsed && (/^(style|wx:style)/.test(attr.name)))) {
-            const meta = {}
-            let rAttr = runRules(spec.directive, attr, {
-              ...options,
-              meta
-            })
-            // 指令未匹配到时说明为props，因为目前所有的指令都需要转换
-            if (!meta.processed) {
-              rAttr = runRules(spec.preProps, rAttr, options)
-              rAttr = runRules(cfg.props, rAttr, options)
-              if (Array.isArray(rAttr)) {
-                rAttr = rAttr.map((attr) => {
-                  return runRules(spec.postProps, attr, options)
-                })
-              } else if (rAttr !== false) {
-                rAttr = runRules(spec.postProps, rAttr, options)
-              }
-            }
-            // 生成目标attrsList
+          const meta = {}
+          let rAttr = runRules(spec.directive, attr, {
+            ...options,
+            meta
+          })
+          // 指令未匹配到时说明为props，因为目前所有的指令都需要转换
+          if (!meta.processed) {
+            rAttr = runRules(spec.preProps, rAttr, options)
+            rAttr = runRules(cfg.props, rAttr, options)
             if (Array.isArray(rAttr)) {
-              rAttrsList = rAttrsList.concat(rAttr)
+              rAttr = rAttr.map((attr) => {
+                return runRules(spec.postProps, attr, options)
+              })
             } else if (rAttr !== false) {
-              rAttrsList.push(rAttr)
+              rAttr = runRules(spec.postProps, rAttr, options)
             }
+          }
+          // 生成目标attrsList
+          if (Array.isArray(rAttr)) {
+            rAttrsList = rAttrsList.concat(rAttr)
+          } else if (rAttr !== false) {
+            rAttrsList.push(rAttr)
           }
         })
         el.attrsList = rAttrsList

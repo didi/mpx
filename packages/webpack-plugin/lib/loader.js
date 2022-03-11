@@ -130,7 +130,6 @@ module.exports = function (content) {
       Vue.filter('transRpxStyle', function (style) {
         let parsedStyleObj = {} 
         const rpxRegExpG = /\\b(\\d+(\\.\\d+)?)\\s*rpx\\b/g
-        const styleArr = []
         const parseStyleText = function (cssText) {
           const listDelimiter = /;(?![^(]*\\))/g
           const propertyDelimiter = /:(.+)/
@@ -158,14 +157,12 @@ module.exports = function (content) {
             return val
         }
         style.forEach(item => {
-          parsedStyleObj = {}
           parseStyleText(item)
           for (let key in parsedStyleObj) {
             parsedStyleObj[key] = transRpxStyleFn(parsedStyleObj[key])
           }
-          styleArr.push(parsedStyleObj)
         })
-          return styleArr
+        return parsedStyleObj
       })
       new Vue({
         el: '#app',
