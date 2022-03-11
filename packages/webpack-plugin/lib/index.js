@@ -8,6 +8,7 @@ const ReplaceDependency = require('./dependencies/ReplaceDependency')
 const NullFactory = require('webpack/lib/NullFactory')
 const CommonJsVariableDependency = require('./dependencies/CommonJsVariableDependency')
 const CommonJsAsyncDependency = require('./dependencies/CommonJsAsyncDependency')
+const harmonySpecifierTag = require('webpack/lib/dependencies/HarmonyImportDependencyParserPlugin').harmonySpecifierTag
 const NormalModule = require('webpack/lib/NormalModule')
 const EntryPlugin = require('webpack/lib/EntryPlugin')
 const JavascriptModulesPlugin = require('webpack/lib/javascript/JavascriptModulesPlugin')
@@ -1123,7 +1124,7 @@ class MpxWebpackPlugin {
         }
 
         if (mpx.srcMode !== mpx.mode) {
-          parser.hooks.callMemberChain.for('imported var').tap('MpxWebpackPlugin', handler)
+          parser.hooks.callMemberChain.for(harmonySpecifierTag).tap('MpxWebpackPlugin', handler)
           parser.hooks.callMemberChain.for('mpx').tap('MpxWebpackPlugin', handler)
           parser.hooks.callMemberChain.for('wx').tap('MpxWebpackPlugin', handler)
         }
