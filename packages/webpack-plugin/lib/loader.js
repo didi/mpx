@@ -128,7 +128,7 @@ module.exports = function (content) {
       import App from ${stringifyRequest(request)}
       import Vue from 'vue'
       Vue.filter('transRpxStyle', function (style) {
-        let parsedStyleObj = {} 
+        const parsedStyleObj = {} 
         const rpxRegExpG = /\\b(\\d+(\\.\\d+)?)\\s*rpx\\b/g
         const parseStyleText = function (cssText) {
           const listDelimiter = /;(?![^(]*\\))/g
