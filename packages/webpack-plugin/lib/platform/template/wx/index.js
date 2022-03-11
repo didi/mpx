@@ -185,6 +185,9 @@ module.exports = function getSpec ({ warn, error }) {
         // style样式绑定
         test: /^(style|wx:style)$/,
         web ({ value }, { el }) {
+          if (!el.isStyleParsed) {
+            el.isStyleParsed = true
+          }
           let styleBinding = []
           el.attrsList.map((item, index) => {
             const parsed = parseMustache(item.value)
