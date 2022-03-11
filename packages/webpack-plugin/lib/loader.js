@@ -306,8 +306,10 @@ module.exports = function (content) {
           // require style
           output += getRequire('styles', style, extraOptions, i) + '\n'
         })
-      } else if (ctorType === 'app' && mode === 'ali') {
-        output += getRequire('styles', {}) + '\n'
+      }
+
+      if (parts.styles.filter(style => !style.src).length === 0 && ctorType === 'app' && mode === 'ali') {
+        output += getRequire('styles', {}, {}, parts.styles.length) + '\n'
       }
 
       // json
