@@ -129,8 +129,8 @@ module.exports = function (script, {
   global.__networkTimeout = ${JSON.stringify(jsonConfig.networkTimeout)}
   global.__mpxGenericsMap = {}
   global.__style = ${JSON.stringify(jsonConfig.style || 'v1')}
-  global.__mpxPageConfig = ${JSON.stringify(jsonConfig.window)}\n`
-
+  global.__mpxPageConfig = ${JSON.stringify(jsonConfig.window)}
+  global.__mpxTransRpxFn = ${mpx.webConfig.transRpxFn}\n`
         if (i18n) {
           const i18nObj = Object.assign({}, i18n)
           content += `  import VueI18n from 'vue-i18n'

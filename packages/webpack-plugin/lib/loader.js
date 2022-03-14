@@ -119,17 +119,9 @@ module.exports = function (content) {
       if (mode === 'web') {
         if (ctorType === 'app' && !queryObj.isApp) {
           const request = addQuery(this.resource, { isApp: true })
-          const transRpxFn = mpx.webConfig && mpx.webConfig.transRpxFn && `${mpx.webConfig.transRpxFn}`
-          const defaultTransRpxFn = function (match, $1) {
-            const rpx2vwRatio = +(100 / 750).toFixed(8)
-            return '' + ($1 * rpx2vwRatio) + 'vw'
-          }
-          const transRpxFnRaw = transRpxFn || defaultTransRpxFn
           output += `
       import App from ${stringifyRequest(request)}
       import Vue from 'vue'
-      import { transRpxFilter } from ${stringifyRequest(optionProcessorPath)}
-      transRpxFilter(Vue, ${transRpxFnRaw}) 
       new Vue({
         el: '#app',
         render: function(h){
