@@ -90,7 +90,7 @@ export default function processOption (
         const rpx2vwRatio = +(100 / 750).toFixed(8)
         return '' + ($1 * rpx2vwRatio) + 'vw'
       }
-      const transRpxFnRaw =  global.__mpxTransRpxFn || defaultTransRpxFn
+      const transRpxFn = global.__mpxTransRpxFn || defaultTransRpxFn
       const parsedStyleObj = {}
       const rpxRegExpG = /\b(\d+(\.\d+)?)rpx\b/g
       const parseStyleText = (cssText) => {
@@ -115,7 +115,7 @@ export default function processOption (
       }
       const transRpxStyleFn = (val) => {
         if (typeof val === 'string' && val.indexOf('rpx') > 0) {
-          return val.replace(rpxRegExpG, transRpxFnRaw).replace(/"/g, '')
+          return val.replace(rpxRegExpG, transRpxFn).replace(/"/g, '')
         }
         return val
       }
