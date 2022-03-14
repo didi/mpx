@@ -17,7 +17,6 @@ const getEntryName = require('./utils/get-entry-name')
 const AppEntryDependency = require('./dependencies/AppEntryDependency')
 const RecordResourceMapDependency = require('./dependencies/RecordResourceMapDependency')
 const CommonJsVariableDependency = require('./dependencies/CommonJsVariableDependency')
-const optionProcessorPath = normalize.lib('runtime/optionProcessor')
 const { MPX_APP_MODULE_ID } = require('./utils/const')
 
 module.exports = function (content) {
