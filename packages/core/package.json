@@ -42,5 +42,6 @@
   "bugs": {
     "url": "https://github.com/didi/mpx/issues"
   },
-  "sideEffects": false
+  "sideEffects": false,
+  "gitHead": "c343d0ec9b5595b336a567f311eb1bd4d0f4a1e0"
 }

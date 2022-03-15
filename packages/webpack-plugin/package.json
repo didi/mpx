@@ -84,5 +84,6 @@
     "@types/babel-traverse": "^6.25.4",
     "@types/babel-types": "^7.0.4",
     "webpack": "^4.46.0"
-  }
+  },
+  "gitHead": "c343d0ec9b5595b336a567f311eb1bd4d0f4a1e0"
 }
