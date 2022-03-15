@@ -50,7 +50,7 @@ export default {
   // wx输出tenon时额外将onLoad代理到CREATED
   lifecycleProxyMap: Object.assign({}, wxLifecycle.lifecycleProxyMap, {
     [CREATED]: ['created', 'attached', 'onLoad'],
-    [DESTROYED]: ['destroyed', 'detached', 'onUnload', 'unmounted'],
+    [DESTROYED]: ['destroyed', 'detached', 'onUnload', 'unmounted']
   }),
   convert (options) {
     const props = Object.assign({}, options.properties, options.props)

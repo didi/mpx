@@ -64,7 +64,7 @@ function createTouch (context, hasLongTap, __mpxTapInfo) {
   })
 }
 
-function processOriginEvent(listeners) {
+function processOriginEvent (listeners) {
   // 给event添加_originEvent属性
   const ignoreEvents = ['onTap', 'onFocus', 'onChange', 'onBlur', 'onConfirm']
   Object.keys(listeners).forEach((key) => {
@@ -72,7 +72,7 @@ function processOriginEvent(listeners) {
       const listener = listeners[key]
       listeners[key] = function (e) {
         if (e) {
-          e._originEvent = {...e}
+          e._originEvent = { ...e }
         }
         listener.call(this, e)
       }

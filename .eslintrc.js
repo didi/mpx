@@ -26,6 +26,7 @@ module.exports = {
     getRegExp: 'readonly',
     getCurrentPages: 'readonly',
     // tenon env
+    Hummer: 'readonly',
     View: 'readonly',
     Text: 'readonly',
     Dialog: 'readonly',
