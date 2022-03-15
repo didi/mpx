@@ -30,7 +30,7 @@ function initProxy (context, rawOptions) {
   // 创建proxy对象
   const mpxProxy = new MPXProxy(rawOptions, context)
   context.__mpxProxy = mpxProxy
-  context.__mpxProxy.created()
+  context.__mpxProxy.created(Hummer.pageInfo && Hummer.pageInfo.params && [Hummer.pageInfo.params])
 }
 
 export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
@@ -42,7 +42,7 @@ export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
       }
     },
     [hookNames[1]] () {
-      this.__mpxProxy && this.__mpxProxy.mounted()
+      this.__mpxProxy && this.__mpxProxy.mounted(Hummer.pageInfo && Hummer.pageInfo.params && [Hummer.pageInfo.params])
     },
     updated () {
       this.__mpxProxy && this.__mpxProxy.updated()
