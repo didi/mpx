@@ -208,7 +208,7 @@ class Store {
         const getter = this.__wrappedGetters[k]
         computedObj[k] = () => getter(this.state)
         Object.defineProperty(this.getters, k, {
-          get: () => Vue.computed(() => computedObj[k]()).value,
+          get: () => computedObj[k](),
           enumerable: true // for local getters
         })
       })
