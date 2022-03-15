@@ -66,8 +66,9 @@ function createTouch (context, hasLongTap, __mpxTapInfo) {
 
 function processOriginEvent(listeners) {
   // 给event添加_originEvent属性
+  const ignoreEvents = ['onTap', 'onFocus', 'onChange', 'onBlur', 'onConfirm']
   Object.keys(listeners).forEach((key) => {
-    if (key !== 'onTap') {
+    if (!ignoreEvents.includes(key)) {
       const listener = listeners[key]
       listeners[key] = function (e) {
         if (e) {
