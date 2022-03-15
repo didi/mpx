@@ -64,6 +64,22 @@ function createTouch (context, hasLongTap, __mpxTapInfo) {
   })
 }
 
+function processOriginEvent(listeners) {
+  // 给event添加_originEvent属性
+  const ignoreEvents = ['onTap', 'onFocus', 'onChange', 'onBlur', 'onConfirm']
+  Object.keys(listeners).forEach((key) => {
+    if (!ignoreEvents.includes(key)) {
+      const listener = listeners[key]
+      listeners[key] = function (e) {
+        if (e) {
+          e._originEvent = {...e}
+        }
+        listener.call(this, e)
+      }
+    }
+  })
+}
+
 function processModel (listeners, context) {
   // 该函数只有wx:model的情况下才调用，而且默认e.detail.value有值
   // 该函数必须在产生merge前执行
@@ -165,7 +181,6 @@ function mergeListeners (listeners, otherListeners, options = {}, context, __mpx
       }
     } else {
       rawListener = listeners[key]
-
       if (!rawListener) {
         if (options.force) {
           listeners[key] = listener
@@ -281,6 +296,7 @@ export default function getInnerListeners (context, options = {}) {
     mergeAfterOptions.force = mergeAfter.force
     mergeAfter = mergeAfter.listeners
   }
+  processOriginEvent(listeners)
   processModel(listeners, context)
   processTouchAndLtap(listeners, context, __mpxTapInfo)
   mergeListeners(listeners, mergeBefore, mergeBeforeOptions, context, __mpxTapInfo)

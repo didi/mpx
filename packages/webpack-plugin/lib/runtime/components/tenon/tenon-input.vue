@@ -38,6 +38,11 @@ export default {
       default: -1,
     },
   },
+  computed: {
+    originRef() {
+      return this.$refs["mpx-input"]
+    }
+  },
   render() {
     let inputType = "";
     if (this.password) {
@@ -59,6 +64,7 @@ export default {
       class: "mpx-input",
       value: this.value,
       focus: this.focus,
+      ref: "mpx-input",
       placeholder: this.placeholder,
       maxLength: this.maxLength,
       type: inputType,
@@ -85,11 +91,9 @@ export default {
     border 0
     font inherit
     display block
-    height 1.4rem
     text-overflow clip
     overflow hidden
     white-space nowrap
     font-family UICTFontTextStyleBody
-    min-height 1.4rem
 
 </style>

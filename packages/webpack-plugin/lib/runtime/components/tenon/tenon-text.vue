@@ -21,7 +21,7 @@ export default {
   render() {
     let text = "";
     let classNames = ["mpx-text"];
-    const nodes = this.$slots.default();
+    const nodes = this.$slots.default && this.$slots.default() || []
     nodes.forEach((item) => {
       if (item.shapeFlag === 8 && item.children) {
         text += item.children;
