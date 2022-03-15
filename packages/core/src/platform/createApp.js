@@ -89,4 +89,3 @@ export default function createApp (option, config = {}) {
     ctor(defaultOptions)
   }
 }
-
