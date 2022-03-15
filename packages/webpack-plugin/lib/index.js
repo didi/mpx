@@ -950,6 +950,9 @@ class MpxWebpackPlugin {
                 parser.state.current.addDependency(dep)
               }
               return true
+            } else {
+              compilation.errors.push(new Error(`The require async JS [${request}] need to declare subpackage name by root`))
+              return true
             }
           }
         }
