@@ -13,6 +13,6 @@ module.exports = {
     new mpxWebpackPlugin({
       mode: 'wx'
     })
-  ],
+  ]
 }
 ```
