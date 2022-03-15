@@ -38,6 +38,7 @@ export default {
       {
         class: this.className,
         ...getInnerListeners(this, { mergeAfter }),
+        ref: "mpx-view"
       },
       this.$slots.default && this.$slots.default() || ''
     );
@@ -63,6 +64,9 @@ export default {
       }
       return result;
     },
+    originRef() {
+      return this.$refs["mpx-view"]
+    }
   },
   pageConfig: {
     canScroll: false,
