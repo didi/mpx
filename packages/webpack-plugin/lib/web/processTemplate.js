@@ -2,8 +2,7 @@ const templateCompiler = require('../template-compiler/compiler')
 const genComponentTag = require('../utils/gen-component-tag')
 const addQuery = require('../utils/add-query')
 const parseRequest = require('../utils/parse-request')
-
-// const matchCondition = require('../utils/match-condition')
+// const { matchCondition } = require('../utils/match-condition')
 
 function calculateRootEleChild (arr) {
   if (!arr) {

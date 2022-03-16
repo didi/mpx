@@ -3,6 +3,7 @@ const normalize = require('../utils/normalize')
 const nativeLoaderPath = normalize.lib('native-loader')
 const isUrlRequestRaw = require('../utils/is-url-request')
 const parseRequest = require('../utils/parse-request')
+const addQuery = require('../utils/add-query')
 const loaderUtils = require('loader-utils')
 const resolve = require('../utils/resolve')
 
@@ -23,10 +24,10 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
 
   let dynamicEntryCount = 0
 
-  const getDynamicEntry = (resource, type, outputPath = '', packageRoot = '', relativePath = '') => {
-    if (typeof customGetDynamicEntry === 'function') return customGetDynamicEntry(resource, type, outputPath, packageRoot, relativePath)
+  const getDynamicEntry = (request, type, outputPath = '', packageRoot = '', relativePath = '', context = '') => {
+    if (typeof customGetDynamicEntry === 'function') return customGetDynamicEntry(request, type, outputPath, packageRoot, relativePath, context)
     const key = `mpx_dynamic_entry_${dynamicEntryCount++}`
-    const value = `__mpx_dynamic_entry__( ${JSON.stringify(resource)},${JSON.stringify(type)},${JSON.stringify(outputPath)},${JSON.stringify(packageRoot)},${JSON.stringify(relativePath)})`
+    const value = `__mpx_dynamic_entry__( ${JSON.stringify(request)},${JSON.stringify(type)},${JSON.stringify(outputPath)},${JSON.stringify(packageRoot)},${JSON.stringify(relativePath)},${JSON.stringify(context)})`
     dynamicEntryMap.set(key, value)
     return key
   }
@@ -47,8 +48,13 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
     resolve(context, component, loaderContext, (err, resource, info) => {
       if (err) return callback(err)
       const { resourcePath, queryObj } = parseRequest(resource)
-      // 目前只有微信支持分包异步化
-      if (queryObj.root && mode === 'wx') tarRoot = queryObj.root
+
+      if (queryObj.root) {
+        // 删除root query
+        resource = addQuery(resource, {}, false, ['root'])
+        // 目前只有微信支持分包异步化
+        if (mode === 'wx') tarRoot = queryObj.root
+      }
       const parsed = path.parse(resourcePath)
       const ext = parsed.ext
       const resourceName = path.join(parsed.dir, parsed.name)
@@ -91,6 +97,8 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
     if (resolveMode === 'native') {
       page = urlToRequest(page)
     }
+    // 增加 page 标识
+    page = addQuery(page, { isPage: true })
     resolve(context, page, loaderContext, (err, resource) => {
       if (err) return callback(err)
       const { resourcePath, queryObj: { isFirst } } = parseRequest(resource)

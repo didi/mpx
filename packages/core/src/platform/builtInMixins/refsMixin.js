@@ -91,7 +91,7 @@ export default function getRefsMixin () {
         }
         const component = e.detail.component
         const destroyed = e.detail.destroyed
-        const className = component.props.mpxClass || component.className
+        const className = component.props.className || component.className
         const identifiers = className ? className.trim().split(/\s+/).map(item => {
           return `.${item}`
         }) : []

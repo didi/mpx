@@ -1,9 +1,13 @@
 [![mpx-logo](https://dpubstatic.udache.com/static/dpubimg/41413d7a-8249-46e6-bf68-709dc511fce2.png)](https://mpxjs.cn)
 
-Mpx, 一款具有优秀开发体验和深度性能优化的增强型跨端小程序框架。
+[Mpx](https://mpxjs.cn), 一款具有优秀开发体验和深度性能优化的增强型跨端小程序框架。
 
 ![test-status](https://github.com/didi/mpx/workflows/test/badge.svg)
 ![docs-status](https://github.com/didi/mpx/workflows/docs/badge.svg)
+
+## 官网及文档
+
+欢迎访问[https://mpxjs.cn](https://mpxjs.cn)，跟随我们提供的文档指南使用Mpx进行跨端小程序开发。
 
 ## 近期更新
 
@@ -30,11 +34,10 @@ Mpx具有以下功能特性：
 * [TypeScript支持](https://www.mpxjs.cn/guide/tool/ts.html) (基于ThisType实现了完善的类型推导)
 * [I18n国际化](https://www.mpxjs.cn/guide/tool/i18n.html)
 * [单元测试支持](https://www.mpxjs.cn/guide/tool/unit-test.html)
-
 * [组件维度运行时渲染方案](https://github.com/didi/mpx/pull/919) (即将到来)
 * E2E测试支持 (即将到来)
 
-## 安装使用
+## 快速开始
 
 ```bash
 # 安装mpx脚手架工具
@@ -58,7 +61,7 @@ npm run build
 
 使用小程序开发者工具打开项目文件夹下dist中对应平台的文件夹即可预览效果。
 
-## 简单示例
+## 使用示例
 
 ```html
 <template>
@@ -166,11 +169,6 @@ npm run build
 ```
 
 更多示例请查看[官方示例项目](https://github.com/didi/mpx/tree/master/examples)
-
-
-## 文档
-
-https://mpxjs.cn/
 
 ## 设计思路
 

@@ -3,7 +3,7 @@ const parseComponent = require('./parser')
 const createHelpers = require('./helpers')
 const loaderUtils = require('loader-utils')
 const parseRequest = require('./utils/parse-request')
-const matchCondition = require('./utils/match-condition')
+const { matchCondition } = require('./utils/match-condition')
 const fixUsingComponent = require('./utils/fix-using-component')
 const addQuery = require('./utils/add-query')
 const async = require('async')
@@ -18,15 +18,23 @@ const AppEntryDependency = require('./dependencies/AppEntryDependency')
 const RecordResourceMapDependency = require('./dependencies/RecordResourceMapDependency')
 const CommonJsVariableDependency = require('./dependencies/CommonJsVariableDependency')
 const { MPX_APP_MODULE_ID } = require('./utils/const')
+const path = require('path')
 
 module.exports = function (content) {
   this.cacheable()
+
+  // 兼容处理处理ts-loader中watch-run/updateFile逻辑，直接跳过当前loader及后续的vue-loader返回内容
+  if (path.extname(this.resourcePath) === '.ts') {
+    this.loaderIndex -= 2
+    return content
+  }
 
   const mpx = this.getMpx()
   if (!mpx) {
     return content
   }
   const { resourcePath, queryObj } = parseRequest(this.resource)
+
   const packageRoot = queryObj.packageRoot || mpx.currentPackageRoot
   const packageName = packageRoot || 'main'
   const independent = queryObj.independent
@@ -254,7 +262,7 @@ module.exports = function (content) {
       output += `global.currentCtorType = ${JSON.stringify(ctor.replace(/^./, (match) => {
         return match.toLowerCase()
       }))}\n`
-      output += `global.currentResourceType = '${ctorType}'\n`
+      output += `global.currentResourceType = ${JSON.stringify(ctorType)}\n`
 
       // template
       output += '/* template */\n'
@@ -298,8 +306,10 @@ module.exports = function (content) {
           // require style
           output += getRequire('styles', style, extraOptions, i) + '\n'
         })
-      } else if (ctorType === 'app' && mode === 'ali') {
-        output += getRequire('styles', {}) + '\n'
+      }
+
+      if (parts.styles.filter(style => !style.src).length === 0 && ctorType === 'app' && mode === 'ali') {
+        output += getRequire('styles', {}, {}, parts.styles.length) + '\n'
       }
 
       // json

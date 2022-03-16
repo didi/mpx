@@ -1,4 +1,3 @@
-
 import { match } from 'path-to-regexp'
 
 const toString = Object.prototype.toString
@@ -214,6 +213,10 @@ export function deepMerge () {
   return result
 }
 
+export function type (a) {
+  return toString.call(a).slice(8, -1)
+}
+
 /**
  * 匹配项所有属性值，在源对象都能找到匹配
  * @param test 匹配项
@@ -241,7 +244,7 @@ function attrMatch (test = {}, input = {}) {
 
 /**
  * 匹配 rule 中的对应项
- * @param config 原请求配置项attrMatch
+ * @param config 原请求配置项
  * @param test 匹配配置
  * @returns {{matchParams, matched: boolean}}
  */
@@ -306,6 +309,7 @@ export function doTest (config, test) {
 
     urlMatched = protocolMatched && hostMatched && portMatched && pathMatched
   }
+
   // search 匹配
   const searchMatched = tSearch ? search.includes(tSearch) : true
   // params 匹配
@@ -333,4 +337,24 @@ export function doTest (config, test) {
     matched,
     matchParams
   }
+}
+
+export function sortObject (obj) {
+  if (!isObject(obj)) return obj
+  const newObj = {}
+  Object.keys(obj).sort().forEach(key => {
+    newObj[key] = obj[key]
+  })
+  return newObj
+}
+
+export function formatCacheKey (url) {
+  if (typeof url !== 'string' || !url.includes('//')) return url
+  return url.split('//')[1].split('?')[0]
+}
+
+export function checkCacheConfig (thisConfig, catchData) {
+  return JSON.stringify(sortObject(thisConfig.data)) === JSON.stringify(catchData.data) &&
+    JSON.stringify(sortObject(thisConfig.params)) === JSON.stringify(catchData.params) &&
+    thisConfig.method === catchData.method
 }
