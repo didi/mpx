@@ -1929,7 +1929,7 @@ function processShow (el, options, root) {
     processShowStyle()
   }
 
-  function processShowStyle() {
+  function processShowStyle () {
     if (show !== undefined) {
       const showExp = parseMustache(show).result
       let oldStyle = getAndRemoveAttr(el, 'style').val
