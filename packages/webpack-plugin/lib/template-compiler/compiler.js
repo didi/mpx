@@ -1899,22 +1899,22 @@ function getVirtualHostRoot (options, meta) {
   }
   return getTempNode()
 }
+
 function processShow (el, options, root) {
   // 开启 virtualhost 全部走 props 传递处理
   // 未开启 virtualhost 直接绑定 display:none 到节点上
   let show = getAndRemoveAttr(el, config[mode].directive.show).val
   if (mode === 'swan') show = wrapMustache(show)
-  let processFlag = el.parent === root
 
   if (options.hasVirtualHost) {
-    if (options.isComponent && processFlag && isRealNode(el)) {
+    if (options.isComponent && el.parent === root && isRealNode(el)) {
       if (show !== undefined) {
         show = `{{${parseMustache(show).result}&&mpxShow}}`
       } else {
         show = '{{mpxShow}}'
       }
     }
-    if (show !== undefined && isComponentNode(el, options)) {
+    if (isComponentNode(el, options) && show !== undefined) {
       if (show === '') {
         show = '{{false}}'
       }
@@ -1922,8 +1922,14 @@ function processShow (el, options, root) {
         name: 'mpxShow',
         value: show
       }])
+    } else {
+      processShowStyle()
     }
   } else {
+    processShowStyle()
+  }
+
+  function processShowStyle() {
     if (show !== undefined) {
       const showExp = parseMustache(show).result
       let oldStyle = getAndRemoveAttr(el, 'style').val
