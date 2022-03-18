@@ -8,6 +8,7 @@ const ReplaceDependency = require('./dependencies/ReplaceDependency')
 const NullFactory = require('webpack/lib/NullFactory')
 const CommonJsVariableDependency = require('./dependencies/CommonJsVariableDependency')
 const CommonJsAsyncDependency = require('./dependencies/CommonJsAsyncDependency')
+const harmonySpecifierTag = require('webpack/lib/dependencies/HarmonyImportDependencyParserPlugin').harmonySpecifierTag
 const NormalModule = require('webpack/lib/NormalModule')
 const EntryPlugin = require('webpack/lib/EntryPlugin')
 const JavascriptModulesPlugin = require('webpack/lib/javascript/JavascriptModulesPlugin')
@@ -971,46 +972,6 @@ class MpxWebpackPlugin {
             stage: -1000
           }, (expr, calleeMembers, callExpr) => requireAsyncHandler(callExpr, calleeMembers))
 
-        const transHandler = (expr) => {
-          const module = parser.state.module
-          const current = parser.state.current
-          const { queryObj, resourcePath } = parseRequest(module.resource)
-          const localSrcMode = queryObj.mode
-          const globalSrcMode = mpx.srcMode
-          const srcMode = localSrcMode || globalSrcMode
-          const mode = mpx.mode
-
-          let target
-
-          if (expr.type === 'Identifier') {
-            target = expr
-          } else if (expr.type === 'MemberExpression') {
-            target = expr.object
-          }
-          if (!matchCondition(resourcePath, this.options.transMpxRules) || resourcePath.indexOf('@mpxjs') !== -1 || !target || mode === srcMode) {
-            return
-          }
-
-          const type = target.name
-
-          const name = type === 'wx' ? 'mpx' : 'createFactory'
-          const replaceContent = type === 'wx' ? 'mpx' : `createFactory(${JSON.stringify(type)})`
-
-          const dep = new ReplaceDependency(replaceContent, target.range)
-          current.addPresentationalDependency(dep)
-
-          let needInject = true
-          for (let dep of module.dependencies) {
-            if (dep instanceof CommonJsVariableDependency && dep.name === name) {
-              needInject = false
-              break
-            }
-          }
-          if (needInject) {
-            const dep = new CommonJsVariableDependency(`@mpxjs/core/src/runtime/${name}`, name)
-            module.addDependency(dep)
-          }
-        }
         // hack babel polyfill global
         parser.hooks.statementIf.tap('MpxWebpackPlugin', (expr) => {
           if (/core-js.+microtask/.test(parser.state.module.resource)) {
@@ -1045,90 +1006,119 @@ class MpxWebpackPlugin {
           }
         })
 
+        // 处理跨平台转换
         if (mpx.srcMode !== mpx.mode) {
-          // 全量替换未声明的wx identifier
-          parser.hooks.expression.for('wx').tap('MpxWebpackPlugin', transHandler)
+          // 处理跨平台全局对象转换
+          const transGlobalObject = (expr) => {
+            const module = parser.state.module
+            const current = parser.state.current
+            const { queryObj, resourcePath } = parseRequest(module.resource)
+            const localSrcMode = queryObj.mode
+            const globalSrcMode = mpx.srcMode
+            const srcMode = localSrcMode || globalSrcMode
+            const mode = mpx.mode
 
-          // parser.hooks.evaluate.for('MemberExpression').tap('MpxWebpackPlugin', (expr) => {
-          //   // Undeclared varible for wx[identifier]()
-          //   // TODO Unable to handle wx[identifier]
-          //   if (expr.object.name === 'wx' && !parser.scope.definitions.has('wx')) {
-          //     transHandler(expr)
-          //   }
-          // })
-          // // Trans for wx.xx, wx['xx'], wx.xx(), wx['xx']()
-          // parser.hooks.expressionMemberChain.for('wx').tap('MpxWebpackPlugin', transHandler)
+            let target
+            if (expr.type === 'Identifier') {
+              target = expr
+            } else if (expr.type === 'MemberExpression') {
+              target = expr.object
+            }
+
+            if (!matchCondition(resourcePath, this.options.transMpxRules) || resourcePath.indexOf('@mpxjs') !== -1 || !target || mode === srcMode) return
+
+            const type = target.name
+            const name = type === 'wx' ? 'mpx' : 'createFactory'
+            const replaceContent = type === 'wx' ? 'mpx' : `createFactory(${JSON.stringify(type)})`
+
+            const dep = new ReplaceDependency(replaceContent, target.range)
+            current.addPresentationalDependency(dep)
+
+            let needInject = true
+            for (let dep of module.dependencies) {
+              if (dep instanceof CommonJsVariableDependency && dep.name === name) {
+                needInject = false
+                break
+              }
+            }
+            if (needInject) {
+              const dep = new CommonJsVariableDependency(`@mpxjs/core/src/runtime/${name}`, name)
+              module.addDependency(dep)
+            }
+          }
+
+          // 转换wx全局对象
+          parser.hooks.expression.for('wx').tap('MpxWebpackPlugin', transGlobalObject)
           // Proxy ctor for transMode
           if (!this.options.forceDisableProxyCtor) {
             parser.hooks.call.for('Page').tap('MpxWebpackPlugin', (expr) => {
-              transHandler(expr.callee)
+              transGlobalObject(expr.callee)
             })
             parser.hooks.call.for('Component').tap('MpxWebpackPlugin', (expr) => {
-              transHandler(expr.callee)
+              transGlobalObject(expr.callee)
             })
             parser.hooks.call.for('App').tap('MpxWebpackPlugin', (expr) => {
-              transHandler(expr.callee)
+              transGlobalObject(expr.callee)
             })
             if (mpx.mode === 'ali' || mpx.mode === 'web') {
               // 支付宝和web不支持Behaviors
               parser.hooks.call.for('Behavior').tap('MpxWebpackPlugin', (expr) => {
-                transHandler(expr.callee)
+                transGlobalObject(expr.callee)
               })
             }
           }
-        }
 
-        const apiBlackListMap = [
-          'createApp',
-          'createPage',
-          'createComponent',
-          'createStore',
-          'createStoreWithThis',
-          'mixin',
-          'injectMixins',
-          'toPureObject',
-          'observable',
-          'watch',
-          'use',
-          'set',
-          'remove',
-          'delete: del',
-          'setConvertRule',
-          'getMixin',
-          'getComputed',
-          'implement'
-        ].reduce((map, api) => {
-          map[api] = true
-          return map
-        }, {})
+          // 为跨平台api调用注入srcMode参数指导api运行时转换
+          const apiBlackListMap = [
+            'createApp',
+            'createPage',
+            'createComponent',
+            'createStore',
+            'createStoreWithThis',
+            'mixin',
+            'injectMixins',
+            'toPureObject',
+            'observable',
+            'watch',
+            'use',
+            'set',
+            'remove',
+            'delete',
+            'setConvertRule',
+            'getMixin',
+            'getComputed',
+            'implement'
+          ].reduce((map, api) => {
+            map[api] = true
+            return map
+          }, {})
 
-        const handler = (expr) => {
-          const callee = expr.callee
-          const args = expr.arguments
-          const name = callee.object.name
-          const { queryObj, resourcePath } = parseRequest(parser.state.module.resource)
-          const localSrcMode = queryObj.mode
-          const globalSrcMode = mpx.srcMode
-          const srcMode = localSrcMode || globalSrcMode
+          const injectSrcModeForTransApi = (expr, members) => {
+            // members为空数组时，callee并不是memberExpression
+            if (!members.length) return
+            const callee = expr.callee
+            const args = expr.arguments
+            const name = callee.object.name
+            const { queryObj, resourcePath } = parseRequest(parser.state.module.resource)
+            const localSrcMode = queryObj.mode
+            const globalSrcMode = mpx.srcMode
+            const srcMode = localSrcMode || globalSrcMode
 
-          if (srcMode === globalSrcMode || apiBlackListMap[callee.property.name || callee.property.value] || (name !== 'mpx' && name !== 'wx') || (name === 'wx' && !matchCondition(resourcePath, this.options.transMpxRules))) {
-            return
+            if (srcMode === globalSrcMode || apiBlackListMap[callee.property.name || callee.property.value] || (name !== 'mpx' && name !== 'wx') || (name === 'wx' && !matchCondition(resourcePath, this.options.transMpxRules))) return
+
+            const srcModeString = `__mpx_src_mode_${srcMode}__`
+            const dep = new InjectDependency({
+              content: args.length
+                ? `, ${JSON.stringify(srcModeString)}`
+                : JSON.stringify(srcModeString),
+              index: expr.end - 1
+            })
+            parser.state.current.addPresentationalDependency(dep)
           }
 
-          const srcModeString = `__mpx_src_mode_${srcMode}__`
-          const dep = new InjectDependency({
-            content: args.length
-              ? `, ${JSON.stringify(srcModeString)}`
-              : JSON.stringify(srcModeString),
-            index: expr.end - 1
-          })
-          parser.state.current.addPresentationalDependency(dep)
-        }
-
-        if (mpx.srcMode !== mpx.mode) {
-          parser.hooks.callMemberChain.for('imported var').tap('MpxWebpackPlugin', handler)
-          parser.hooks.callMemberChain.for('mpx').tap('MpxWebpackPlugin', handler)
-          parser.hooks.callMemberChain.for('wx').tap('MpxWebpackPlugin', handler)
+          parser.hooks.callMemberChain.for(harmonySpecifierTag).tap('MpxWebpackPlugin', injectSrcModeForTransApi)
+          parser.hooks.callMemberChain.for('mpx').tap('MpxWebpackPlugin', injectSrcModeForTransApi)
+          parser.hooks.callMemberChain.for('wx').tap('MpxWebpackPlugin', injectSrcModeForTransApi)
         }
       })
 

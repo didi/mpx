@@ -29,7 +29,7 @@
             height: this.image.height
           }
         })
-        
+
         this.$emit('load', e)
       }
       this.image.onerror = (e) => {
@@ -45,14 +45,22 @@
       }
     },
     render (createElement) {
-      if (this.mode === 'widthFix') {
+      if (this.mode === 'widthFix' || this.mode === 'heightFix') {
+        let style
+        if (this.mode === 'widthFix') {
+           style = {
+             height: 'auto'
+           }
+        } else {
+          style = {
+            width: 'auto'
+          }
+        }
         const domProps = {}
         if (this.src) domProps.src = this.src
         return createElement('img', {
           domProps,
-          style: {
-            height: 'auto'
-          },
+          style,
           class: ['mpx-image'],
           on: getInnerListeners(this, { ignoredListeners: ['load', 'error'] })
         })
