@@ -31,6 +31,11 @@ export function isThenable (obj) {
   return obj && typeof obj.then === 'function'
 }
 
+// 普通的检查是否为Promise
+export function isPlainPromise (val) {
+  return toString.call(val) === '[object Promise]'
+}
+
 // 不为空对象
 export function isNotEmptyObject (obj) {
   return obj && isObject(obj) && Object.keys(obj).length > 0
@@ -48,6 +53,11 @@ export function isURLSearchParams (val) {
 export function encode (val) {
   return encodeURIComponent(val).replace(/%40/gi, '@').replace(/%3A/gi, ':').replace(/%24/g, '$').replace(/%2C/gi, ',').replace(/%5B/gi, '[').replace(/%5D/gi, ']')
 }
+
+// 是否为Promise
+export function isPromise (val) {
+  return (isObject(val) || isPlainPromise(val)) && isFunction(val.then) && isFunction(val.catch)
+};
 
 export function decode (val) {
   return decodeURIComponent(val)

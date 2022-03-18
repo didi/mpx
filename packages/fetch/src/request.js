@@ -1,5 +1,5 @@
 /* eslint-disable no-undef */
-import { buildUrl, getEnvObj, serialize, transformRes } from './util'
+import { buildUrl, getEnvObj, serialize, transformRes, isPromise } from './util'
 
 export default function request (config, mpx) {
   return new Promise((resolve, reject) => {
@@ -23,7 +23,7 @@ export default function request (config, mpx) {
     let requestTask
     let cancelMsg
     const cancelToken = config.cancelToken
-    if (cancelToken) {
+    if (cancelToken && isPromise(cancelToken)) {
       cancelToken.then((msg) => {
         cancelMsg = msg
         requestTask && requestTask.abort()
