@@ -745,3 +745,180 @@ mpx.xfetch.setValidator([
   }
 ])
 ```
+
+
+## size-report
+Mpx框架项目包体积可以进行分组、分包、页面、冗余Npm包等维度的分析和对比，详细[请见](/advance/size-report.html)
+
+### 插件配置项
+
+- **server**
+
+  类型：`object`
+
+  详细：本地可视化服务相关配置
+
+- **filename**
+
+  类型：`string`
+
+  详细：构建生成的包体积详细输出文件地址
+
+- **threshold**
+
+  类型：`object`
+
+  详细：配置项目总体积和分包体积阈值，包含两个字段，size 为项目总体积阈值，packages 为分包体积阈值
+
+  示例:
+  ```html
+  {
+     size: '16MB', // 项目总包体积限额 16M
+     packages: '2MB' // 项目每个分包体积限额 2M
+  }
+  ```
+
+- **groups**
+
+  类型：`Array<object>`
+
+  详细：配置体积计算分组，以输入分组为维度对体积进行分析，当没有该配置时结果中将不会包含分组体积信息
+  
+  - name
+  
+    类型：`string`
+
+    详细：分组名称
+
+  - threshold
+  
+    类型：`string | object`
+
+    详细：分组相关体积阈值，若不配置则该分组不校验体积阈值，同时也支持对分组中占各分包体积阈值
+
+    示例：
+    ```html
+    // 分组体积限额 500KB
+    threshold: '500KB'
+    // 或者如下方，分组体积限额500KB，分组占主包体积限额160KB
+    threshold: {
+      size: '500KB',
+      packages: {
+        main: '160KB'
+      }
+    }
+    ```
+    
+  - entryRules
+  
+    类型：`object`
+  
+    详细：配置分组 entry 匹配规则，小程序中所有的页面和组件都可被视为 entry
+  
+      - include: 包含符合条件的入口文件，默认为空数组，规则数组中支持函数、正则、字符串
+      - exclude: 剔除符合条件的入口文件，默认为空数组，规则数组中支持函数、正则、字符串
+    
+    示例：
+    ```html
+    include: [/@someGroup\/some-npm-package/],
+    exclude: [/@someGroup\/some-two-pack/]
+    ```
+    
+  - noEntryRules
+
+    类型：`object`
+
+    详细：配置计算分组中纯 js 入口引入的体积（不包含组件和页面）
+  
+      - include: 包含符合条件的 js 文件，默认为空数组，规则数组中支持函数、正则、字符串
+      - exclude: 剔除符合条件的 js 文件，默认为空数组，规则数组中支持函数、正则、字符串
+    
+    示例：
+    ```html
+    include: [/@someGroup\/some-npm-package/],
+    exclude: [/@someGroup\/some-two-pack/]
+    ```
+
+- **reportPages**
+
+  类型：`boolean`
+
+  详细：是否收集页面维度体积详情，默认 false
+
+- **reportAssets**
+
+  类型：`boolean`
+
+  详细：是否收集资源维度体积详情，默认 false
+
+- **reportRedundance**
+
+  类型：`boolean`
+
+  详细：是否收集冗余资源，默认 false
+
+- **showEntrysPackages**
+
+  类型：`Array<string>`
+
+  详细：展示某些分包资源的引用来源信息，例如 ['main'] 为查看主包资源的引用来源信息，默认为 []
+
+
+配置使用示例：
+
+```html
+{
+  // 本地可视化服务相关配置
+  server: {
+    enable: true, // 是否启动本地服务，非必填，默认 true
+    autoOpenBrowser: true, // 是否自动打开可视化平台页面，非必填，默认 true
+    port: 0, // 本地服务端口，非必填，默认 0(随机端口)
+    host: '127.0.0.1', // 本地服务host，非必填
+  },
+  // 体积报告生成后输出的文件地址名，路径相对为 dist/wx 或者 dist/ali
+  filename: '../report.json',
+  // 配置阈值，此处代表总包体积阈值为 16MB，分包体积阈值为 2MB，超出将会触发编译报错提醒，该报错不阻断构建
+  threshold: {
+    size: '16MB',
+    packages: '2MB'
+  },
+  // 配置体积计算分组，以输入分组为维度对体积进行分析，当没有该配置时结果中将不会包含分组体积信息
+  groups: [
+    {
+      // 分组名称
+      name: 'vant',
+      // 配置分组 entry 匹配规则，小程序中所有的页面和组件都可被视为 entry，如下所示的分组配置将计算项目中引入的 vant 组件带来的体积占用
+      entryRules: {
+        include: '@vant/weapp'
+      }
+    },
+    {
+      name: 'pageGroup',
+      // 每个分组中可分别配置阈值，如果不配置则表示
+      threshold: '500KB',
+      entryRules: {
+        include: ['src/pages/index', 'src/pages/user']
+      }
+    },
+    {
+      name: 'someSdk',
+      entryRules: {
+        include: ['@somegroup/someSdk/index', '@somegroup/someSdk2/index']
+      },
+      // 有的时候你可能希望计算纯 js 入口引入的体积（不包含组件和页面），这种情况下需要使用 noEntryModules
+      noEntryModules: {
+        include: 'src/lib/sdk.js'
+      }
+    }
+  ],
+  // 是否收集页面维度体积详情，默认 false
+  reportPages: true,
+  // 是否收集资源维度体积详情，默认 false
+  reportAssets: true,
+  // 是否收集冗余资源，默认 false
+  reportRedundance: true,
+  // 展示某些分包资源的引用来源信息，默认为 []
+  showEntrysPackages: ['main']
+}
+```
+
