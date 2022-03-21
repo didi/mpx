@@ -26,12 +26,21 @@ export default function proxyEventMixin () {
   return {
     beforeCreate () {
       const modelEvent = this.$attrs.mpxModelEvent
-      if (modelEvent) {
-        this.$on(modelEvent, (e) => {
+      const modelEventId = this.$attrs.mpxModelEventId
+      if (modelEvent && modelEventId) {
+        Hummer.notifyCenter.addEventListener(modelEventId, (e)=> {
           this.$emit('mpxModel', e)
-        })
+        });
       }
     },
+    beforeDestroy() {
+      const modelEvent = this.$attrs.mpxModelEvent
+      const modelEventId = this.$attrs.mpxModelEventId
+      if (modelEvent && modelEventId) {
+        Hummer.notifyCenter.removeEventListener(modelEventId);
+      }
+    },
+
     methods
   }
 }

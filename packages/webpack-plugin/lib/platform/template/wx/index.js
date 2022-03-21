@@ -238,6 +238,10 @@ module.exports = function getSpec ({ warn, error }) {
                 value: modelEvent
               },
               {
+                name: 'mpxModelEventId',
+                value: Math.random().toString(36).substr(3, 8)
+              },
+              {
                 name: '@mpxModel',
                 value: `__model(${stringifyWithResolveComputed(modelValue)}, $event, ${stringify(modelValuePathArr)}, ${stringify(modelFilter)})`
               }
