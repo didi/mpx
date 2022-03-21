@@ -5,7 +5,8 @@ const SDK_URL_MAP = {
   qq: 'https://qqq.gtimg.cn/miniprogram/webview_jssdk/qqjssdk-1.0.0.js',
   ali: 'https://appx/web-view.min.js',
   baidu: 'https://b.bdstatic.com/searchbox/icms/searchbox/js/swan-2.0.4.js',
-  tt: 'https://s3.pstatp.com/toutiao/tmajssdk/jssdk.js'
+  tt: 'https://s3.pstatp.com/toutiao/tmajssdk/jssdk.js',
+  ...window.sdkUrlMAP
 }
 
 const ENV_PATH_MAP = {
