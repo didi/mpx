@@ -96,6 +96,7 @@ module.exports = function (content) {
             } else {
               fs.readFile(file, (err, content) => {
                 if (err) return callback(err)
+                if (!this._compilation) return callback()
                 let targetPath = path.relative(context, file)
                 this._compilation.assets[targetPath] = {
                   size: function size () {
@@ -350,7 +351,7 @@ module.exports = function (content) {
     }
 
     const recordIndependent = (root, request) => {
-      this._module.addPresentationalDependency(new RecordIndependentDependency(root, request))
+      this._module?.addPresentationalDependency(new RecordIndependentDependency(root, request))
     }
 
     const processIndependent = (otherConfig, context, tarRoot, callback) => {
