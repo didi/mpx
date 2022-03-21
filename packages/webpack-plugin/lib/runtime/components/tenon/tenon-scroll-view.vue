@@ -9,6 +9,11 @@ export default {
     scrollX: Boolean,
     // 允许纵向滚动
     scrollY: Boolean,
+    // 滚动方向
+    scrollDirection: {
+      type: String,
+      default: "horizontal",
+    },
     // 距顶部/左边多远时，触发 scrolltoupper 事件
     upperThreshold: {
       type: [Number, String],
@@ -100,7 +105,7 @@ export default {
   },
   methods: {},
   render() {
-    let scrollDirection = "vertical";
+    let scrollDirection = this.scrollDirection;
     if (!this.scrollY && this.scrollX) {
       scrollDirection = "horizontal";
     }
@@ -109,7 +114,8 @@ export default {
       {
         ref: "scroll",
         scrollDirection,
-        showScrollBar: true,
+        showScrollBar: false,
+        ...getInnerListeners(this, {})
       },
       this.$slots.default()
     );
