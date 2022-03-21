@@ -351,7 +351,7 @@ module.exports = function (content) {
     }
 
     const recordIndependent = (root, request) => {
-      this._module?.addPresentationalDependency(new RecordIndependentDependency(root, request))
+      this._module && this._module.addPresentationalDependency(new RecordIndependentDependency(root, request))
     }
 
     const processIndependent = (otherConfig, context, tarRoot, callback) => {
