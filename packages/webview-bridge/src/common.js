@@ -1,12 +1,22 @@
 import loadScript from './loadscript'
 
 const SDK_URL_MAP = {
-  wx: 'https://res.wx.qq.com/open/js/jweixin-1.3.2.js',
-  qq: 'https://qqq.gtimg.cn/miniprogram/webview_jssdk/qqjssdk-1.0.0.js',
-  ali: 'https://appx/web-view.min.js',
-  baidu: 'https://b.bdstatic.com/searchbox/icms/searchbox/js/swan-2.0.4.js',
-  tt: 'https://s3.pstatp.com/toutiao/tmajssdk/jssdk.js',
-  ...window.sdkUrlMAP
+  wx: {
+    url: 'https://res.wx.qq.com/open/js/jweixin-1.3.2.js'
+  },
+  qq: {
+    url: 'https://qqq.gtimg.cn/miniprogram/webview_jssdk/qqjssdk-1.0.0.js'
+  },
+  ali: {
+    url: 'https://appx/web-view.min.js'
+  },
+  baidu: {
+    url: 'https://b.bdstatic.com/searchbox/icms/searchbox/js/swan-2.0.4.js'
+  },
+  tt: {
+    url: 'https://s3.pstatp.com/toutiao/tmajssdk/jssdk.js'
+  },
+  ...window.sdkUrlMap
 }
 
 const ENV_PATH_MAP = {
@@ -105,7 +115,7 @@ const initWebviewBridge = () => {
     getWebviewApi()
     return
   }
-  const sdkReady = !window[env] ? SDK_URL_MAP[env] ? loadScript(SDK_URL_MAP[env]) : Promise.reject(new Error('未找到对应的sdk')) : Promise.resolve()
+  const sdkReady = !window[env] ? SDK_URL_MAP[env]['url'] ? loadScript(SDK_URL_MAP[env]['url'], { crossOrigin: !!SDK_URL_MAP[env]['crossOrigin'] }) : Promise.reject(new Error('未找到对应的sdk')) : Promise.resolve()
   getWebviewApi(sdkReady)
 }
 

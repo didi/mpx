@@ -1,4 +1,4 @@
-function loadScript (url, { time = 5000, crossOrigin = true } = {}) {
+function loadScript (url, { time = 5000, crossOrigin = false } = {}) {
   function request () {
     return new Promise((resolve, reject) => {
       let sc = document.createElement('script')
