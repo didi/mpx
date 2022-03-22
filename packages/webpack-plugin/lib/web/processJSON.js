@@ -219,8 +219,7 @@ module.exports = function (json, {
           }
 
           pagesMap[resourcePath] = outputPath
-          loaderContext._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, 'page', outputPath))
-
+          loaderContext._module && loaderContext._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, 'page', outputPath))
           localPagesMap[outputPath] = {
             resource: addQuery(resource, { isPage: true }),
             async: tarRoot || queryObj.async,
@@ -269,8 +268,7 @@ module.exports = function (json, {
           }
           const { resourcePath, queryObj } = parseRequest(resource)
           componentsMap[resourcePath] = outputPath
-          loaderContext._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, 'component', outputPath))
-
+          loaderContext._module && loaderContext._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, 'component', outputPath))
           localComponentsMap[name] = {
             resource: addQuery(resource, {
               isComponent: true,

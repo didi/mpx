@@ -1,8 +1,34 @@
 /**
- * mpxjs webview bridge v2.6.61
- * (c) 2021 @mpxjs team
+ * mpxjs webview bridge v2.7.20
+ * (c) 2022 @mpxjs team
  * @license Apache
  */
+function ownKeys(object, enumerableOnly) {
+  var keys = Object.keys(object);
+
+  if (Object.getOwnPropertySymbols) {
+    var symbols = Object.getOwnPropertySymbols(object);
+    enumerableOnly && (symbols = symbols.filter(function (sym) {
+      return Object.getOwnPropertyDescriptor(object, sym).enumerable;
+    })), keys.push.apply(keys, symbols);
+  }
+
+  return keys;
+}
+
+function _objectSpread2(target) {
+  for (var i = 1; i < arguments.length; i++) {
+    var source = null != arguments[i] ? arguments[i] : {};
+    i % 2 ? ownKeys(Object(source), !0).forEach(function (key) {
+      _defineProperty(target, key, source[key]);
+    }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) {
+      Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key));
+    });
+  }
+
+  return target;
+}
+
 function _defineProperty(obj, key, value) {
   if (key in obj) {
     Object.defineProperty(obj, key, {
@@ -18,31 +44,12 @@ function _defineProperty(obj, key, value) {
   return obj;
 }
 
-function _objectSpread(target) {
-  for (var i = 1; i < arguments.length; i++) {
-    var source = arguments[i] != null ? arguments[i] : {};
-    var ownKeys = Object.keys(source);
-
-    if (typeof Object.getOwnPropertySymbols === 'function') {
-      ownKeys = ownKeys.concat(Object.getOwnPropertySymbols(source).filter(function (sym) {
-        return Object.getOwnPropertyDescriptor(source, sym).enumerable;
-      }));
-    }
-
-    ownKeys.forEach(function (key) {
-      _defineProperty(target, key, source[key]);
-    });
-  }
-
-  return target;
-}
-
 function loadScript(url) {
   var _ref = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {},
       _ref$time = _ref.time,
       time = _ref$time === void 0 ? 5000 : _ref$time,
       _ref$crossOrigin = _ref.crossOrigin,
-      crossOrigin = _ref$crossOrigin === void 0 ? false : _ref$crossOrigin;
+      crossOrigin = _ref$crossOrigin === void 0 ? true : _ref$crossOrigin;
 
   function request() {
     return new Promise(function (resolve, reject) {
@@ -82,13 +89,14 @@ function loadScript(url) {
   return Promise.race([request(), timeout()]);
 }
 
-var SDK_URL_MAP = {
+var SDK_URL_MAP = _objectSpread2({
   wx: 'https://res.wx.qq.com/open/js/jweixin-1.3.2.js',
   qq: 'https://qqq.gtimg.cn/miniprogram/webview_jssdk/qqjssdk-1.0.0.js',
   ali: 'https://appx/web-view.min.js',
   baidu: 'https://b.bdstatic.com/searchbox/icms/searchbox/js/swan-2.0.4.js',
   tt: 'https://s3.pstatp.com/toutiao/tmajssdk/jssdk.js'
-};
+}, window.sdkUrlMAP);
+
 var ENV_PATH_MAP = {
   wx: ['wx', 'miniProgram'],
   qq: ['qq', 'miniProgram'],
@@ -407,7 +415,7 @@ var getAdvancedApi = function getAdvancedApi(config, mpx) {
 
 initWebviewBridge();
 
-var bridgeFunction = _objectSpread({}, webviewApiList, {
+var bridgeFunction = _objectSpread2(_objectSpread2({}, webviewApiList), {}, {
   getAdvancedApi: getAdvancedApi,
   mpxEnv: env
 });
