@@ -1,9 +1,9 @@
 /**
- * mpxjs webview bridge v2.6.61
- * (c) 2021 @mpxjs team
+ * mpxjs webview bridge v2.7.20
+ * (c) 2022 @mpxjs team
  * @license Apache
  */
-function loadScript (url, { time = 5000, crossOrigin = false } = {}) {
+function loadScript (url, { time = 5000, crossOrigin = true } = {}) {
   function request () {
     return new Promise((resolve, reject) => {
       let sc = document.createElement('script');
@@ -48,7 +48,8 @@ const SDK_URL_MAP = {
   qq: 'https://qqq.gtimg.cn/miniprogram/webview_jssdk/qqjssdk-1.0.0.js',
   ali: 'https://appx/web-view.min.js',
   baidu: 'https://b.bdstatic.com/searchbox/icms/searchbox/js/swan-2.0.4.js',
-  tt: 'https://s3.pstatp.com/toutiao/tmajssdk/jssdk.js'
+  tt: 'https://s3.pstatp.com/toutiao/tmajssdk/jssdk.js',
+  ...window.sdkUrlMAP
 };
 
 const ENV_PATH_MAP = {
