@@ -14,6 +14,18 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - name: Cache node modules
+        uses: actions/cache@v2
+        env:
+          cache-name: cache-node-modules
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package.json') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
+
       - name: install deps
         run: npm i && npm i --prefix test/e2e/miniprogram-project && npm i --prefix test/e2e/plugin-project  && npx lerna bootstrap --no-ci
 
