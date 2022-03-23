@@ -22,6 +22,7 @@ const ExternalsPlugin = require('webpack/lib/ExternalsPlugin')
 const AddModePlugin = require('./resolver/AddModePlugin')
 const AddEnvPlugin = require('./resolver/AddEnvPlugin')
 const PackageEntryPlugin = require('./resolver/PackageEntryPlugin')
+const FixDescriptionInfoPlugin = require('./resolver/FixDescriptionInfoPlugin')
 // const CommonJsRequireDependency = require('webpack/lib/dependencies/CommonJsRequireDependency')
 // const HarmonyImportSideEffectDependency = require('webpack/lib/dependencies/HarmonyImportSideEffectDependency')
 // const RequireHeaderDependency = require('webpack/lib/dependencies/RequireHeaderDependency')
@@ -302,6 +303,7 @@ class MpxWebpackPlugin {
       compiler.options.resolve.plugins.push(addEnvPlugin)
     }
     compiler.options.resolve.plugins.push(packageEntryPlugin)
+    compiler.options.resolve.plugins.push(new FixDescriptionInfoPlugin())
 
     let splitChunksPlugin
     let splitChunksOptions
