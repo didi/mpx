@@ -1,5 +1,5 @@
 /**
- * mpxjs webview bridge v2.7.20
+ * mpxjs webview bridge v2.7.22
  * (c) 2022 @mpxjs team
  * @license Apache
  */
@@ -49,7 +49,7 @@ function loadScript(url) {
       _ref$time = _ref.time,
       time = _ref$time === void 0 ? 5000 : _ref$time,
       _ref$crossOrigin = _ref.crossOrigin,
-      crossOrigin = _ref$crossOrigin === void 0 ? true : _ref$crossOrigin;
+      crossOrigin = _ref$crossOrigin === void 0 ? false : _ref$crossOrigin;
 
   function request() {
     return new Promise(function (resolve, reject) {
@@ -90,12 +90,22 @@ function loadScript(url) {
 }
 
 var SDK_URL_MAP = _objectSpread2({
-  wx: 'https://res.wx.qq.com/open/js/jweixin-1.3.2.js',
-  qq: 'https://qqq.gtimg.cn/miniprogram/webview_jssdk/qqjssdk-1.0.0.js',
-  ali: 'https://appx/web-view.min.js',
-  baidu: 'https://b.bdstatic.com/searchbox/icms/searchbox/js/swan-2.0.4.js',
-  tt: 'https://s3.pstatp.com/toutiao/tmajssdk/jssdk.js'
-}, window.sdkUrlMAP);
+  wx: {
+    url: 'https://res.wx.qq.com/open/js/jweixin-1.3.2.js'
+  },
+  qq: {
+    url: 'https://qqq.gtimg.cn/miniprogram/webview_jssdk/qqjssdk-1.0.0.js'
+  },
+  ali: {
+    url: 'https://appx/web-view.min.js'
+  },
+  baidu: {
+    url: 'https://b.bdstatic.com/searchbox/icms/searchbox/js/swan-2.0.4.js'
+  },
+  tt: {
+    url: 'https://s3.pstatp.com/toutiao/tmajssdk/jssdk.js'
+  }
+}, window.sdkUrlMap);
 
 var ENV_PATH_MAP = {
   wx: ['wx', 'miniProgram'],
@@ -205,7 +215,9 @@ var initWebviewBridge = function initWebviewBridge() {
     return;
   }
 
-  var sdkReady = !window[env] ? SDK_URL_MAP[env] ? loadScript(SDK_URL_MAP[env]) : Promise.reject(new Error('未找到对应的sdk')) : Promise.resolve();
+  var sdkReady = !window[env] ? SDK_URL_MAP[env]['url'] ? loadScript(SDK_URL_MAP[env]['url'], {
+    crossOrigin: !!SDK_URL_MAP[env]['crossOrigin']
+  }) : Promise.reject(new Error('未找到对应的sdk')) : Promise.resolve();
   getWebviewApi(sdkReady);
 };
 
