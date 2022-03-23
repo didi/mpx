@@ -750,7 +750,6 @@ class MpxWebpackPlugin {
         return rawFactorizeModule.call(compilation, options, proxyedCallback)
       }
 
-
       // 处理watch时缓存模块中的buildInfo
       // 在调用addModule前对module添加分包信息，以控制分包输出及消除缓存，该操作由afterResolve钩子迁移至此是由于dependencyCache的存在，watch状态下afterResolve钩子并不会对所有模块执行，而模块的packageName在watch过程中是可能发生变更的，如新增删除一个分包资源的主包引用
       const rawAddModule = compilation.addModule
