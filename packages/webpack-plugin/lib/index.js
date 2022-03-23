@@ -750,6 +750,7 @@ class MpxWebpackPlugin {
         return rawFactorizeModule.call(compilation, options, proxyedCallback)
       }
 
+
       // 处理watch时缓存模块中的buildInfo
       // 在调用addModule前对module添加分包信息，以控制分包输出及消除缓存，该操作由afterResolve钩子迁移至此是由于dependencyCache的存在，watch状态下afterResolve钩子并不会对所有模块执行，而模块的packageName在watch过程中是可能发生变更的，如新增删除一个分包资源的主包引用
       const rawAddModule = compilation.addModule
@@ -791,13 +792,24 @@ class MpxWebpackPlugin {
             }
           }
         } else if (independent) {
-          // ContextModule/RawModule和ExternalModule等只在独立分包的情况下添加分包标记，其余默认不添加
-          const postfix = `|independent=${independent}|${currentPackageRoot}`
-          const rawIdentifier = module.identifier
-          if (rawIdentifier) {
-            module.identifier = () => {
-              return rawIdentifier.call(module) + postfix
+          // ContextModule/RawModule/ExternalModule等只在独立分包的情况下添加分包标记，其余默认不添加
+          const hackModuleIdentifier = (module) => {
+            const postfix = `|independent=${independent}|${currentPackageRoot}`
+            const rawIdentifier = module.identifier
+            if (rawIdentifier && !rawIdentifier.__mpxHacked) {
+              module.identifier = () => {
+                return rawIdentifier.call(module) + postfix
+              }
+              module.identifier.__mpxHacked = true
             }
+          }
+          hackModuleIdentifier(module)
+          const rawCallback = callback
+          callback = (err, module) => {
+            // 因为文件缓存的存在，前面hack identifier的行为对于从文件缓存中创建得到的module并不生效，因此需要在回调中进行二次hack处理
+            if (err) return rawCallback(err)
+            hackModuleIdentifier(module)
+            rawCallback(null, module)
           }
         }
         return rawAddModule.call(compilation, module, callback)
