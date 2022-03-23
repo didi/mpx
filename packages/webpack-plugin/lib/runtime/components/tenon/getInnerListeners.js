@@ -87,13 +87,20 @@ function processModel (listeners, context) {
   // todo 访问$listeners也会导致上述现象，但是为了事件代理还必须访问$listeners，待后续思考处理
 
   const modelEvent = context.$attrs.mpxModelEvent
-  const modelEventId = context.$attrs.mpxModelEvent.modelEventId
+  const modelEventId = context.$attrs.mpxModelEventId
   if (modelEvent && modelEventId) {
     // 对于modelEvent，内部获得时间后向外部转发，触发外部listener的同时转发为mpxModel事件
-    listeners[modelEvent] = function (e) {
-      // context.$emit(modelEvent, e)
-      Hummer.notifyCenter.triggerEvent(modelEventId, e);
-      context.$emit('mpxModel', e)
+
+    const listener = listeners['onInput']
+
+    listeners['onInput'] = function (e) {
+      Hummer.notifyCenter.triggerEvent(modelEventId, {
+        detail: e
+      });
+      context.$emit('mpxModel', {
+        detail: e
+      })
+      listener && listener.call(this, e)
     }
     // 内部listener不需要mpxModel
     delete listeners.mpxModel
