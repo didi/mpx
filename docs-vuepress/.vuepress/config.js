@@ -105,7 +105,8 @@ const nav = [
 module.exports = {
   base: '/',
   head: [
-    ['link', { rel: 'icon', href: '/favicon.ico' }]
+    ['link', { rel: 'icon', href: '/favicon.ico' }],
+    ['meta', { name: 'baidu-site-verification', content: 'code-vMhDq4ZCKn' }]
   ],
   title: 'Mpx框架',
   locales: {
@@ -122,7 +123,10 @@ module.exports = {
         message: '文档有更新啦！',
         buttonText: '刷新'
       }
-    }
+    },
+    'sitemap': {
+      hostname: 'https://mpxjs.cn'
+    },
   },
   themeConfig: {
     navbar: false,

@@ -3,7 +3,7 @@ name: docs
 on:
   push:
     branches:
-      - master
+      - feat-upgrade-seo
 jobs:
   deploy:
     runs-on: ubuntu-latest
