@@ -18,7 +18,7 @@ export default {
     docsearch({
       container: '#docsearch-container',
       appId: 'DZ8S6HN0MP',
-      apiKey: '7849f511f78afc4383a81f0137a91c0f',
+      apiKey: 'a34809e24ae1eb13ca3afc255d0a0cef',
       indexName: 'mpxjs',
       })
     }
