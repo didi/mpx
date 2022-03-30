@@ -222,7 +222,7 @@ module.exports = function (json, {
           loaderContext._module && loaderContext._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, 'page', outputPath))
           localPagesMap[outputPath] = {
             resource: addQuery(resource, { isPage: true }),
-            async: tarRoot || queryObj.async,
+            async: queryObj.async || tarRoot,
             isFirst
           }
           callback()
