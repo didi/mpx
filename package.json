@@ -38,8 +38,5 @@
     "typescript": "^4.1.3",
     "vue": "^2.6.12",
     "vuepress": "^1.8.0"
-  },
-  "dependencies": {
-    "latest": "^0.2.0"
   }
 }
