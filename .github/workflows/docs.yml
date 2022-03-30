@@ -3,7 +3,7 @@ name: docs
 on:
   push:
     branches:
-      - master
+      - fix-algolia-search
 jobs:
   deploy:
     runs-on: ubuntu-latest
