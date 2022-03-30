@@ -106,7 +106,7 @@ module.exports = {
   base: '/',
   head: [
     ['link', { rel: 'icon', href: '/favicon.ico' }],
-    ['meta', { name: 'baidu-site-verification', content: 'code-vMhDq4ZCKn' }]
+    ['meta', { name: 'google-site-verification', content: 'NMrYnhnf-4O2bFmB8pVAWd4smG7XCXsZFO8d3QapS2g' }]
   ],
   title: 'Mpx框架',
   locales: {
