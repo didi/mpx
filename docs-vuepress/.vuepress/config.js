@@ -109,6 +109,7 @@ module.exports = {
     ['meta', { name: 'google-site-verification', content: 'NMrYnhnf-4O2bFmB8pVAWd4smG7XCXsZFO8d3QapS2g' }]
   ],
   title: 'Mpx框架',
+  description: '深度性能优化的增强型小程序开发框架',
   locales: {
     '/': {
       lang: 'zh-CN', // 将会被设置为 <html> 的 lang 属性
@@ -127,6 +128,15 @@ module.exports = {
     'sitemap': {
       hostname: 'https://mpxjs.cn'
     },
+    'seo': {
+      siteTitle: (_, $site) => 'Mpx框架',
+      title: $page => $page.title,
+      description: $page => $page.frontmatter.description,
+      author: (_, $site) => 'Mpx',
+      type: $page => 'article',
+      url: (_, $site, path) => 'https://mpxjs.cn' + path,
+      image: ($page, $site) => "https://dpubstatic.udache.com/static/dpubimg/imdk1FF2QF/logo_color.png",
+    }
   },
   themeConfig: {
     navbar: false,
