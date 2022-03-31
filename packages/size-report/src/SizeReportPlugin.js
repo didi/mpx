@@ -34,6 +34,10 @@ class SizeReportPlugin {
       })
     })
 
+    function getRelativePathToProject(resourcePath){
+      return './' + path.posix.relative(compiler.context, resourcePath)
+    }
+
     compiler.hooks.thisCompilation.tap('SizeReportPlugin', (compilation) => {
       compilation.hooks.assetPath.tap('SizeReportPlugin', (path, data, assetInfo) => {
         if (data.chunk && assetInfo) {
@@ -352,7 +356,7 @@ class SizeReportPlugin {
         for (let resourcePath in resourcePathMap) {
           const redundantSize = resourcePathMap[resourcePath].redundantSize
           const sizeInfoItem = {
-            resourcePath,
+            resourcePath: getRelativePathToProject(resourcePath),
             redundantSize: redundantSize,
             packages: resourcePathMap[resourcePath].packages
             // modules: resourcePathMap[resourcePath].modules
@@ -418,7 +422,7 @@ class SizeReportPlugin {
             if (_entryModules) {
               _entryModules.forEach((entryModule) => {
                 entryModules.add(entryModule)
-                entryModulePathSet.add(parseRequest(entryModule.resource).resourcePath)
+                entryModulePathSet.add(getRelativePathToProject(parseRequest(entryModule.resource).resourcePath))
               })
             }
             if (_noEntryModules) {
@@ -506,7 +510,7 @@ class SizeReportPlugin {
             const entryModulePathSet = new Set()
 
             entryModules.forEach((module) => {
-              entryModulePathSet.add(parseRequest(module.resource).resourcePath)
+              entryModulePathSet.add(getRelativePathToProject(parseRequest(module.resource).resourcePath))
             })
             fillSizeReportGroups(entryModules, noEntryModules, packageName, 'modules', {
               name,
