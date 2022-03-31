@@ -3,7 +3,7 @@ import {
   getByPath
 } from '../helper/utils'
 
-import { warn } from '../helper/log'
+import { warn, error } from '../helper/log'
 
 function mapFactory (type, store) {
   return function (depPath, maps) {
@@ -41,11 +41,53 @@ function mapFactory (type, store) {
   }
 }
 
+function checkMapInstance (maps, context, errorStr) {
+  if (!context) {
+    context = maps
+    maps = null
+  }
+  if (Object.prototype.toString.call(context) != '[object Object]') {
+    error(`调用${errorStr}时请传入当前component实例`)
+  }
+  return {
+    context,
+    maps
+  }
+}
+
 export default function (store) {
   return {
     mapGetters: mapFactory('getters', store),
     mapMutations: mapFactory('mutations', store),
     mapActions: mapFactory('actions', store),
-    mapState: mapFactory('state', store)
+    mapState: mapFactory('state', store),
+    // 以下是map**ToInstance用于异步store的map：depPath, maps, context
+    mapStateToInstance: (depPath, mapsNs, contextComp) => {
+      let { context, maps } = checkMapInstance(mapsNs, contextComp, 'mapStateToInstance')
+      const mapStateFun =  mapFactory('state', store)
+      const result = mapStateFun(depPath, maps)
+      // 将result挂载到mpxProxy实例属性上
+      const mpxProxyIns = context.__mpxProxy.options.computed || {}
+      Object.assign(mpxProxyIns, result)
+    },
+    mapGettersToInstance: (depPath, mapsNs, contextComp) => {
+      const { context, maps } = checkMapInstance(mapsNs, contextComp, 'mapGettersToInstance')
+      const mapGet = mapFactory('getters', store)
+      const result = mapGet(depPath, maps)
+      const mpxProxyIns = context.__mpxProxy.options.computed || {}
+      Object.assign(mpxProxyIns, result)
+    },
+    mapMutationsToInstance: (depPath, mapsNs, contextComp) => {
+      const { context, maps } = checkMapInstance(mapsNs, contextComp, 'mapMutationsToInstance')
+      const mapMutation = mapFactory('mutations', store)
+      const result = mapMutation(depPath, maps)
+      Object.assign(context, result)
+    },
+    mapActionsToInstance: (depPath, mapsNs, contextComp) => {
+      const { context, maps } = checkMapInstance(mapsNs, contextComp, 'mapActionsToInstance')
+      const mapAction = mapFactory('actions', store)
+      const result = mapAction(depPath, maps)
+      Object.assign(context, result)
+    }
   }
 }
