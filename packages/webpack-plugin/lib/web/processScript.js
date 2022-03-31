@@ -20,6 +20,13 @@ function shallowStringify (obj) {
   return `{${arr.join(',')}}`
 }
 
+function getAsyncChunkName (chunkName) {
+  if (chunkName && typeof chunkName !== 'boolean') {
+    return `/* webpackChunkName: "${chunkName}" */`
+  }
+  return ''
+}
+
 module.exports = function (script, {
   loaderContext,
   ctorType,
@@ -62,7 +69,7 @@ module.exports = function (script, {
       if (pageCfg) {
         const pageRequest = stringifyRequest(pageCfg.resource)
         if (pageCfg.async) {
-          tabBarPagesMap[pagePath] = `()=>import(${pageRequest}).then(res => getComponent(res, { __mpxPageRoute: ${JSON.stringify(pagePath)} }))`
+          tabBarPagesMap[pagePath] = `()=>import(${getAsyncChunkName(pageCfg.async)}${pageRequest}).then(res => getComponent(res, { __mpxPageRoute: ${JSON.stringify(pagePath)} }))`
         } else {
           tabBarPagesMap[pagePath] = `getComponent(require(${pageRequest}), { __mpxPageRoute: ${JSON.stringify(pagePath)} })`
         }
@@ -177,7 +184,7 @@ module.exports = function (script, {
           pagesMap[pagePath] = `getComponent(require(${stringifyRequest(tabBarContainerPath)}), { __mpxBuiltIn: true })`
         } else {
           if (pageCfg.async) {
-            pagesMap[pagePath] = `()=>import(${pageRequest}).then(res => getComponent(res, { __mpxPageRoute: ${JSON.stringify(pagePath)} }))`
+            pagesMap[pagePath] = `()=>import(${getAsyncChunkName(pageCfg.async)} ${pageRequest}).then(res => getComponent(res, { __mpxPageRoute: ${JSON.stringify(pagePath)} }))`
           } else {
             // 为了保持小程序中app->page->component的js执行顺序，所有的page和component都改为require引入
             pagesMap[pagePath] = `getComponent(require(${pageRequest}), { __mpxPageRoute: ${JSON.stringify(pagePath)} })`
@@ -193,7 +200,7 @@ module.exports = function (script, {
         const componentCfg = localComponentsMap[componentName]
         const componentRequest = stringifyRequest(componentCfg.resource)
         if (componentCfg.async) {
-          componentsMap[componentName] = `()=>import(${componentRequest}).then(res => getComponent(res))`
+          componentsMap[componentName] = `()=>import(${getAsyncChunkName(componentCfg.async)}${componentRequest}).then(res => getComponent(res))`
         } else {
           componentsMap[componentName] = `getComponent(require(${componentRequest}))`
         }
