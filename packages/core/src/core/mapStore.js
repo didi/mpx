@@ -30,10 +30,9 @@ function mapFactory (type, store) {
               getterVal = ''
             }
             return getterVal
-
           case 'mutations':
             return store.commit(value, payload)
-          case  'actions':
+          case 'actions':
             return store.dispatch(value, payload)
         }
       }
