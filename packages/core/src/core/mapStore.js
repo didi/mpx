@@ -46,7 +46,7 @@ function checkMapInstance (maps, context, errorStr) {
     context = maps
     maps = null
   }
-  if (Object.prototype.toString.call(context) != '[object Object]') {
+  if (Object.prototype.toString.call(context) !== '[object Object]') {
     error(`调用${errorStr}时请传入当前component实例`)
   }
   return {
