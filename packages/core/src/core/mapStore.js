@@ -65,7 +65,7 @@ export default function (store) {
     // 以下是map**ToInstance用于异步store的,参数args：depPath, maps, context
     mapStateToInstance: (...args) => {
       const { context, restParams } = checkMapInstance(...args)
-      const mapStateFun =  mapFactory('state', store)
+      const mapStateFun = mapFactory('state', store)
       const result = mapStateFun(...restParams)
       // 将result挂载到mpxProxy实例属性上
       const mpxProxyIns = context.__mpxProxy.options.computed || {}
