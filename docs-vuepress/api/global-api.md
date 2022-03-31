@@ -583,6 +583,7 @@ const a = observable(object)
   - `{Function | Object} callback`
   - `{Object} [options]`
     - `{boolean} deep`
+    - `{boolean} once`
     - `{boolean} immediate`
 
 - **返回值**：`{Function} unwatch`
@@ -629,6 +630,9 @@ unwatch()
   this.someObject.nestedValue = 123
   // callback is fired
   ```
+- **选项**：once
+
+  在选项参数中指定 `once: true` 该回调方法只会执行一次，后续的改变将不会触发回调。
 
 - **选项**：immediate
 
