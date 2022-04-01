@@ -27,9 +27,9 @@ export function watch (vm, expOrFn, cb, options) {
       ? options.once
       : function () { return true }
     cb = function (...args) {
-      const res = onceCb.apply(vm.target, args)
+      const res = onceCb.apply(this, args)
       if (res) watcher.teardown()
-      _cb.apply(vm.target, args)
+      _cb.apply(this, args)
     }
   }
 
