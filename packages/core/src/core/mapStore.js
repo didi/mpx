@@ -41,7 +41,7 @@ function mapFactory (type, store) {
   }
 }
 
-function checkMapInstance (...args) {
+function checkMapInstance (args) {
   const context = args[args.length - 1]
   const isValid = context && typeof context === 'object' && context.__mpxProxy
   if (!isValid) {
@@ -64,28 +64,28 @@ export default function (store) {
     mapState: mapFactory('state', store),
     // 以下是map**ToInstance用于异步store的,参数args：depPath, maps, context
     mapStateToInstance: (...args) => {
-      const { context, restParams } = checkMapInstance(...args)
+      const { context, restParams } = checkMapInstance(args)
       const mapStateFun = mapFactory('state', store)
       const result = mapStateFun(...restParams)
       // 将result挂载到mpxProxy实例属性上
-      const mpxProxyIns = context.__mpxProxy.options.computed || {}
-      Object.assign(mpxProxyIns, result)
+      context.__mpxProxy.options.computed = context.__mpxProxy.options.computed || {}
+      Object.assign(context.__mpxProxy.options.computed, result)
     },
     mapGettersToInstance: (...args) => {
-      const { context, restParams } = checkMapInstance(...args)
+      const { context, restParams } = checkMapInstance(args)
       const mapGetFun = mapFactory('getters', store)
       const result = mapGetFun(...restParams)
-      const mpxProxyIns = context.__mpxProxy.options.computed || {}
-      Object.assign(mpxProxyIns, result)
+      context.__mpxProxy.options.computed = context.__mpxProxy.options.computed || {}
+      Object.assign(context.__mpxProxy.options.computed, result)
     },
     mapMutationsToInstance: (...args) => {
-      const { context, restParams } = checkMapInstance(...args)
+      const { context, restParams } = checkMapInstance(args)
       const mapMutationFun = mapFactory('mutations', store)
       const result = mapMutationFun(...restParams)
       Object.assign(context, result)
     },
     mapActionsToInstance: (...args) => {
-      const { context, restParams } = checkMapInstance(...args)
+      const { context, restParams } = checkMapInstance(args)
       const mapActionFun = mapFactory('actions', store)
       const result = mapActionFun(...restParams)
       Object.assign(context, result)
