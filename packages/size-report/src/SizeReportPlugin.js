@@ -34,9 +34,6 @@ class SizeReportPlugin {
       })
     })
 
-    function getRelativePathToProject(resourcePath){
-      return './' + path.posix.relative(compiler.context, resourcePath)
-    }
 
     compiler.hooks.thisCompilation.tap('SizeReportPlugin', (compilation) => {
       compilation.hooks.assetPath.tap('SizeReportPlugin', (path, data, assetInfo) => {
@@ -58,6 +55,10 @@ class SizeReportPlugin {
       const cache = compilation.getCache('SizeReportPlugin')
 
       logger.time('compute size')
+
+      function getRelativePathToProject(resourcePath){
+        return './' + path.posix.relative(mpx.projectRoot, resourcePath)
+      }
 
       function walkEntry (entryModule, sideEffect) {
         const modulesSet = new Set()
@@ -314,6 +315,8 @@ class SizeReportPlugin {
             // 对应场景 -> 一个组件里面有多个style标签, 最终合并成了一个资源文件
             modules.forEach((module) => {
               const parsed = parseRequest(module.resource)
+              // 处理为相对路径以减少体积
+              parsed.resourcePath = getRelativePathToProject(parsed.resourcePath)
               resourcePathArr.push(parsed.resourcePath)
             })
             const resourcePathKey = resourcePathArr.sort().join(',')
@@ -324,6 +327,8 @@ class SizeReportPlugin {
               if (!module.resource && !module.rootModule) return
 
               let parsed = parseRequest(module.resource || module.rootModule.resource)
+              // 处理为相对路径以减少体积
+              parsed.resourcePath = getRelativePathToProject(parsed.resourcePath)
               if (parsed.queryObj && parsed.queryObj.resolve) return
 
               fillResourcePathMap(parsed.resourcePath, packageName, fillInfo)
@@ -356,7 +361,7 @@ class SizeReportPlugin {
         for (let resourcePath in resourcePathMap) {
           const redundantSize = resourcePathMap[resourcePath].redundantSize
           const sizeInfoItem = {
-            resourcePath: getRelativePathToProject(resourcePath),
+            resourcePath,
             redundantSize: redundantSize,
             packages: resourcePathMap[resourcePath].packages
             // modules: resourcePathMap[resourcePath].modules

@@ -8,10 +8,10 @@
     "lint": "eslint --ext .js src/",
     "fix": "eslint --fix --ext .js src/"
   },
-  "homepage": "https://github.com/mpx-ecology/mpx-size-report",
+  "homepage": "https://www.mpxjs.cn/guide/advance/size-report.html",
   "repository": {
     "type": "git",
-    "url": "git@github.com:mpx-ecology/mpx-size-report.git"
+    "url": "https://github.com/didi/mpx"
   },
   "keywords": [
     "mpx",
