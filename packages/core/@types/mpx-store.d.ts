@@ -98,7 +98,7 @@ declare namespace MpxStore {
     mapStateToInstance(depPath: string, maps: string[], context: compContext): void
 
     // mapState support object
-    mapState<T extends { [key: string]: keyof GetAllMapKeys<S, D, 'state'> }>(obj: T, context: compContext): void
+    mapStateToInstance<T extends { [key: string]: keyof GetAllMapKeys<S, D, 'state'> }>(obj: T, context: compContext): void
 
     mapGettersToInstance<K extends keyof G>(maps: K[], context: compContext): void
     mapGettersToInstance(depPath: string, maps: string[], context: compContext): void
@@ -301,23 +301,23 @@ declare namespace MpxStore {
     mapStateToInstance<T extends { [key: string]: keyof S }>(obj: T, context: compContext): void
     mapStateToInstance<T extends { [key: string]: string }>(obj: T, context: compContext): void
 
-    mapGetters<K extends keyof G>(maps: K[], context: compContext): void
-    mapGetters<T extends string, P extends string>(depPath: P, maps: readonly T[], context: compContext): void
+    mapGettersToInstance<K extends keyof G>(maps: K[], context: compContext): void
+    mapGettersToInstance<T extends string, P extends string>(depPath: P, maps: readonly T[], context: compContext): void
     // Support chain derivation
-    mapGetters<T extends { [key: string]: keyof GetAllMapKeys<GetComputedType<G>, D, 'getters'> }>(obj: T, context: compContext): void
-    mapGetters<T extends { [key: string]: keyof G }>(obj: T, context: compContext): void
+    mapGettersToInstance<T extends { [key: string]: keyof GetAllMapKeys<GetComputedType<G>, D, 'getters'> }>(obj: T, context: compContext): void
+    mapGettersToInstance<T extends { [key: string]: keyof G }>(obj: T, context: compContext): void
     // When importing js in ts file, use this method to be compatible
-    mapGetters<T extends { [key: string]: string }>(obj: T, context: compContext): void
+    mapGettersToInstance<T extends { [key: string]: string }>(obj: T, context: compContext): void
 
-    mapMutations<K extends keyof M>(maps: K[], context: compContext): void
-    mapMutations<T extends string, P extends string>(depPath: P, maps: readonly T[], context: compContext): void
-    mapMutations<T extends { [key: string]: keyof M }>(obj: T, context: compContext): void
-    mapMutations<T extends { [key: string]: string }>(obj: T, context: compContext): void
+    mapMutationsToInstance<K extends keyof M>(maps: K[], context: compContext): void
+    mapMutationsToInstance<T extends string, P extends string>(depPath: P, maps: readonly T[], context: compContext): void
+    mapMutationsToInstance<T extends { [key: string]: keyof M }>(obj: T, context: compContext): void
+    mapMutationsToInstance<T extends { [key: string]: string }>(obj: T, context: compContext): void
 
-    mapActions<K extends keyof A>(maps: K[], context: compContext): void
-    mapActions<T extends string, P extends string>(depPath: P, maps: readonly T[], context: compContext): void
-    mapActions<T extends { [key: string]: keyof A }>(obj: T, context: compContext): void
-    mapActions<T extends { [key: string]: string }>(obj: T, context: compContext): void
+    mapActionsToInstance<K extends keyof A>(maps: K[], context: compContext): void
+    mapActionsToInstance<T extends string, P extends string>(depPath: P, maps: readonly T[], context: compContext): void
+    mapActionsToInstance<T extends { [key: string]: keyof A }>(obj: T, context: compContext): void
+    mapActionsToInstance<T extends { [key: string]: string }>(obj: T, context: compContext): void
   }
 
   type StoreWithThis<S = {}, G = {}, M = {}, A = {}, D extends Deps = {}> = IStoreWithThis<S, G, M, A, D> & CompatibleDispatch
