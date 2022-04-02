@@ -1246,3 +1246,38 @@ module.exports = {
   }
 }
 ```
+
+### ?async
+
+- **类型**：`Boolean || string`
+
+- **详细**：输出 H5 时 Vue Router 的路由懒加载功能，Mpx框架默认会对分包开启路由懒加载功能并将分包所有页面都打入同一个Chunk
+，如果你希望对于部分主包页面或者分包页面配置路由懒加载并想自定义Chunk Name，则可以使用该功能。
+
+- **示例**：
+```html
+// app.mpx 
+<script type="application/json">
+  {
+    "pages": [
+      "./pages/index?async", // 主包页面配置路由懒加载，Chunk Name 为随机数字
+      "./pages/index2?async=app_pages2"，// 主包页面配置路由懒加载，Chunk Name 自定义为 app_pages2
+    ],
+    "packages": [
+      "./packages/sub1/app.mpx?root=sub1"
+    ]
+  }
+</script>
+
+// packages/sub1/app.mpx
+
+<script type="application/json">
+  {
+    "pages": [
+      "./pages/index?async=sub1_pages_index", // 分包中页面设置路由懒加载并设置自定义Chunk Name
+      "./pages/index2?async=sub2_pages_index2" // 分包中页面设置路由懒加载并设置自定义Chunk Name
+    ]
+  }
+</script>
+
+```
