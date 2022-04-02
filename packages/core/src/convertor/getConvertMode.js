@@ -5,7 +5,8 @@ const convertModes = {
   'wx-qq': 'wxToQq',
   'wx-tt': 'wxToTt',
   'wx-jd': 'wxToJd',
-  'wx-dd': 'wxToDd'
+  'wx-dd': 'wxToDd',
+  'wx-ks':'wxToKs'
 }
 
 export function getConvertMode (srcMode) {

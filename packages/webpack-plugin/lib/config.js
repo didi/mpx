@@ -556,5 +556,63 @@ module.exports = {
       ref: 'dd:ref',
       show: 'dd:show'
     }
+  },
+  ks:{
+    typeExtMap: {
+      json: '.json',
+      script: '.js',
+      template: '.ksml',
+      styles: '.css'
+    },
+    tabBar: {
+      itemKey: 'list',
+      iconKey: 'iconPath',
+      activeIconKey: 'selectedIconPath'
+    },
+    event: {
+      parseEvent (attr) {
+        let match = /^(bind|catch|capture-bind|capture-catch):?(.*?)(?:\.(.*))?$/.exec(attr)
+        if (match) {
+          return {
+            prefix: match[1],
+            eventName: match[2],
+            modifier: match[3]
+          }
+        }
+      },
+      getEvent (eventName, prefix = 'bind') {
+        return prefix + eventName
+      },
+      defaultModelProp: 'value',
+      defaultModelEvent: 'input',
+      defaultModelValuePath: 'value',
+      shallowStringify (obj) {
+        let arr = []
+        for (let key in obj) {
+          let value = obj[key]
+          if (Array.isArray(value)) {
+            value = `[${value.join(',')}]`
+          }
+          arr.push(`${key}:${value}`)
+        }
+        return ` {${arr.join(',')}} `
+      }
+    },
+    wxs: {},
+    directive: {
+      if: 'ks:if',
+      elseif: 'ks:elif',
+      else: 'ks:else',
+      for: 'ks:for',
+      dynamicClass: 'class',
+      dynamicStyle: 'style',
+      ref: 'ks:ref',
+      show: 'ks:show',
+      model: 'ks:model',
+      modelProp: 'ks:model-prop',
+      modelEvent: 'ks:model-event',
+      modelValuePath: 'ks:model-value-path',
+      modelFilter: 'ks:model-filter'
+    }
   }
 }

@@ -16,5 +16,7 @@ export function getEnvObj () {
       return qa
     case 'dd':
       return dd
+    case 'ks':
+      return ks
   }
 }

@@ -18,6 +18,7 @@ module.exports = {
     jd: 'readonly',
     qa: 'readonly',
     dd: 'readonly',
+    ks: 'readonly',
     Component: 'readonly',
     Page: 'readonly',
     App: 'readonly',

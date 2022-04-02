@@ -113,7 +113,7 @@ module.exports = {
       MemberExpression: {
         exit (path) {
           if (path.collectPath) {
-            path.replaceWith(t.callExpression(t.memberExpression(t.thisExpression(), t.identifier('_c')), [path.collectPath, path.node]))
+            path.replaceWith(t.callExpression(t.memberExpression(t.thisExpression(), t.identifier('c')), [path.collectPath, path.node]))
             delete path.collectPath
           }
         }
