@@ -5,7 +5,7 @@ import RequestQueue from './queue'
 import { requestProxy } from './proxy'
 import { requestMock } from './mock'
 import { validate } from './validator'
-import { isNotEmptyArray, isNotEmptyObject, transformReq, isThenable, formatCacheKey, checkCacheConfig, sortObject } from './util'
+import { isNotEmptyArray, isNotEmptyObject, transformReq, isThenable, formatCacheKey, checkCacheConfig, sortObject, isObject } from './util'
 
 export default class XFetch {
   constructor (options, MPX) {
@@ -74,22 +74,22 @@ export default class XFetch {
     this.queue && this.queue.addLowPriorityWhiteList(rules)
   }
 
+  setMock (options) {
+    if (isNotEmptyArray(options)) {
+      this.mockOptions = options
+    } else if (isNotEmptyObject(options)) {
+      this.mockOptions = [options]
+    } else {
+      console.error('仅支持不为空的对象或数组')
+    }
+  }
+
   setProxy (options) {
     // 代理配置
     if (isNotEmptyArray(options)) {
       this.proxyOptions = options
     } else if (isNotEmptyObject(options)) {
       this.proxyOptions = [options]
-    } else {
-      console.error('仅支持不为空的对象或数组')
-    }
-  }
-
-  setMock (options) {
-    if (isNotEmptyArray(options)) {
-      this.mockOptions = options
-    } else if (isNotEmptyObject(options)) {
-      this.mockOptions = [options]
     } else {
       console.error('仅支持不为空的对象或数组')
     }

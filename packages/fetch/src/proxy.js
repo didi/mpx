@@ -83,7 +83,7 @@ export function requestProxy (options, config) {
   options && options.some((item) => {
     const { test, proxy, waterfall } = item
     const { matched, matchParams } = doTest(configBackup, test)
-    if ((isFunction(test.custom) && test.custom(configBackup)) || matched) {
+    if (matched) {
       // 匹配时
       newConfig = doProxy(newConfig, proxy, matchParams)
 

@@ -99,26 +99,17 @@ describe('response mock data proxy test.', () => {
       }
     }]
   })
-  it('custom function match test', () => {
+  it('custom function match test', (done) => {
     // request url
     let options = { url: 'http://10.11.11.123:8000/api/getlist' }
-    let result = {
-      code: 200,
-      msg: 'succes',
-      data: [{
-        id: '1',
-        name: 'qy'
-      }, {
-        id: '2',
-        name: 'wl'
-      }]
-    }
+    let result = '{"header":{"Content-Type":"text/plain; charset=utf-8"},"data":{"code":200,"msg":"succes","data":[{"id":"1","name":"qy"},{"id":"2","name":"wl"}]},"cookies":[],"statusCode":200,"status":200,"headers":{"Content-Type":"text/plain; charset=utf-8"}}'
 
     xfetch.fetch(options).then((data) => {
-      expect(JSON.stringify(data)).toBe(JSON.stringify(result))
+      expect(JSON.stringify(data)).toBe(result)
+      done()
     })
   })
-  it('detailed url parameter matching test', () => {
+  it('detailed url parameter matching test', (done) => {
     // request url
     const options = {
       header: {
@@ -130,30 +121,18 @@ describe('response mock data proxy test.', () => {
       },
       url: 'http://10.11.11.123:8000/api/user'
     }
-    let result = {
-      code: 200,
-      msg: 'succes',
-      data: {
-        name: 'qy'
-      }
-    }
+    let result = '{"header":{"Content-Type":"text/plain; charset=utf-8"},"data":{"code":200,"msg":"succes","data":{"name":"qy"}},"cookies":[],"statusCode":200,"status":200,"headers":{"Content-Type":"text/plain; charset=utf-8"}}'
     xfetch.fetch(options).then((data) => {
-      expect(JSON.stringify(data)).toBe(JSON.stringify(result))
+      expect(JSON.stringify(data)).toBe(result)
+      done()
     })
   })
 
-  it('custom priority test', () => {
-    let result = {
-      code: 200,
-      msg: 'succes',
-      data: {
-        color: 'red',
-        bg: 'white',
-        fontSize: 12
-      }
-    }
+  it('custom priority test', (done) => {
+    let result = '{"header":{"Content-Type":"text/plain; charset=utf-8"},"data":{"code":200,"msg":"succes","data":{"color":"red","bg":"white","fontSize":12}},"cookies":[],"statusCode":200,"status":200,"headers":{"Content-Type":"text/plain; charset=utf-8"}}'
     xfetch.fetch({ url: 'http://10.11.11.123:8000/api/getConfig' }).then((data) => {
-      expect(JSON.stringify(data)).toBe(JSON.stringify(result))
+      expect(JSON.stringify(data)).toBe(result)
+      done()
     })
   })
 })

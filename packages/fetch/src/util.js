@@ -260,11 +260,9 @@ export function doTest (config, test) {
     params: tParams = {},
     data: tData = {},
     header: tHeader = {},
-    method: tMethod = ''
+    method: tMethod = '',
+    custom: tCustom = ''
   } = test
-
-  // 判断custom以外的属性值为空
-  if (isEmptyObjectAttr(test, ['custom'])) return false
 
   const { baseUrl, protocol, hostname, port, path, search } = parseUrl(url)
 
@@ -310,6 +308,12 @@ export function doTest (config, test) {
     urlMatched = protocolMatched && hostMatched && portMatched && pathMatched
   }
 
+  // 判断custom以外的属性值为空
+  urlMatched = isEmptyObjectAttr(test, ['custom']) ? false : urlMatched
+
+  // 自定义匹配函数
+  let customMatched = isFunction(tCustom) && tCustom(config)
+
   // search 匹配
   const searchMatched = tSearch ? search.includes(tSearch) : true
   // params 匹配
@@ -331,7 +335,7 @@ export function doTest (config, test) {
   }
 
   // 是否匹配
-  const matched = urlMatched && searchMatched && paramsMatched && dataMatched && headerMatched && methodMatched
+  let matched = (urlMatched && searchMatched && paramsMatched && dataMatched && headerMatched && methodMatched) || customMatched
 
   return {
     matched,
@@ -357,4 +361,17 @@ export function checkCacheConfig (thisConfig, catchData) {
   return JSON.stringify(sortObject(thisConfig.data)) === JSON.stringify(catchData.data) &&
     JSON.stringify(sortObject(thisConfig.params)) === JSON.stringify(catchData.params) &&
     thisConfig.method === catchData.method
+}
+
+export function buildResponse (data) {
+  let response = {
+    header: {
+      'Content-Type': 'text/plain; charset=utf-8'
+    },
+    data: {},
+    cookies: []
+  }
+
+  if (!data.hasOwnProperty('statusCode') && !data.hasOwnProperty('status')) return Object.assign(response, { data: data, statusCode: 200 })
+  return data
 }
