@@ -427,14 +427,14 @@ module.exports = function (content) {
       let itemKey = tabBarCfg.itemKey
       let iconKey = tabBarCfg.iconKey
       let activeIconKey = tabBarCfg.activeIconKey
-
+      let noPublicPath = mode === 'ks'
       if (json.tabBar && json.tabBar[itemKey]) {
         json.tabBar[itemKey].forEach((item, index) => {
           if (item[iconKey] && isUrlRequest(item[iconKey])) {
-            output += `json.tabBar.${itemKey}[${index}].${iconKey} = require("${addQuery(urlToRequest(item[iconKey]), { useLocal: true })}");\n`
+            output += `json.tabBar.${itemKey}[${index}].${iconKey} = require("${addQuery(urlToRequest(item[iconKey]), { useLocal: true, noPublicPath })}");\n`
           }
           if (item[activeIconKey] && isUrlRequest(item[activeIconKey])) {
-            output += `json.tabBar.${itemKey}[${index}].${activeIconKey} = require("${addQuery(urlToRequest(item[activeIconKey]), { useLocal: true })}");\n`
+            output += `json.tabBar.${itemKey}[${index}].${activeIconKey} = require("${addQuery(urlToRequest(item[activeIconKey]), { useLocal: true, noPublicPath })}");\n`
           }
         })
       }
