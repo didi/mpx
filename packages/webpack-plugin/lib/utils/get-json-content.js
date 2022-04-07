@@ -5,7 +5,6 @@ const async = require('async')
 const { JSON_JS_EXT } = require('./const')
 
 module.exports = function getJSONContent (json, loaderContext, callback) {
-  // error process
   if (!loaderContext._compiler) return callback(null, '{}')
   const fs = loaderContext._compiler.inputFileSystem
   async.waterfall([

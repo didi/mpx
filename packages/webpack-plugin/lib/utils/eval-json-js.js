@@ -1,6 +1,7 @@
 const path = require('path')
 
 module.exports = function evalJSONJS (source, filename, loaderContext) {
+  if (!loaderContext._compiler) return {}
   const fs = loaderContext._compiler.inputFileSystem
   const defs = loaderContext.getMpx().defs
   const defKeys = Object.keys(defs)
