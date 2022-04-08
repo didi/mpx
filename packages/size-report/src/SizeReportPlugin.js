@@ -57,7 +57,7 @@ class SizeReportPlugin {
       logger.time('compute size')
 
       function getRelativePathToProject(resourcePath){
-        return './' + path.posix.relative(mpx.projectRoot, resourcePath)
+        return toPosix(path.relative(mpx.projectRoot, resourcePath))
       }
 
       function walkEntry (entryModule, sideEffect) {
@@ -643,7 +643,7 @@ class SizeReportPlugin {
       const pagesSizeInfo = reportGroups.filter(item => item.isPage).map((reportGroup) => {
         const readableInfo = {}
         readableInfo.name = reportGroup.name || 'anonymous page'
-        readableInfo.resourcePath = reportGroup.resourcePath
+        readableInfo.resourcePath = getRelativePathToProject(reportGroup.resourcePath)
         // readableInfo.selfEntryModules = mapModulesReadable(reportGroup.selfEntryModules)
         // readableInfo.sharedEntryModules = mapModulesReadable(reportGroup.sharedEntryModules)
         readableInfo.selfSize = formatSize(reportGroup.selfSize)
