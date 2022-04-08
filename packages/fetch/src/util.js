@@ -309,7 +309,7 @@ export function doTest (config, test) {
   }
 
   // 判断custom以外的属性值为空
-  urlMatched = isEmptyObjectAttr(test, ['custom']) ? false : urlMatched
+  const urlParamsExist = !isEmptyObjectAttr(test, ['custom'])
 
   // 自定义匹配函数
   let customMatched = isFunction(tCustom) && tCustom(config)
@@ -335,7 +335,7 @@ export function doTest (config, test) {
   }
 
   // 是否匹配
-  let matched = (urlMatched && searchMatched && paramsMatched && dataMatched && headerMatched && methodMatched) || customMatched
+  let matched = (urlParamsExist && urlMatched && searchMatched && paramsMatched && dataMatched && headerMatched && methodMatched) || customMatched
 
   return {
     matched,
