@@ -341,6 +341,52 @@ require.async('../commonPackage/index.js?root=subPackageB').then(pkg => {
 ```
 - 注意项：目前该能力仅微信平台下支持，其他平台下框架将会自动降级，跨分包异步引用JS代码功能暂不支持异步引用Store
 
+在 Mpx 中跨分包异步引用 Store 代码，分为三个步骤
+- 页面或父组件在 beforeCreate 钩子加载异步 Store
+- 异步 Store 加载完成后再渲染使用异步 Store 的组件
+- 子组件在 beforeCreate 钩子中动态注入 computed 和 methods
+```html
+<!--pages/index/index.mpx-->
+<template>
+  <store-list wx:if="{{showStoreList}}"></store-list>
+</template>
+
+<script>
+  import { createPage } from '@mpxjs/core'
+  createPage({
+    data: {
+      showStoreList: false
+    },
+    beforeCreate () {
+      require.async('../subpackages/sub2/store?root=sub2').then(store => {
+        getApp().asyncStore.sub2 = store.default
+        // 当异步 Store 加载完成后再渲染使用异步 Store 的组件
+        this.showStoreList = true
+      })
+    }
+  })
+</script>
+
+<!-- 子组件:store-list -->
+<script>
+  import { createComponent } from '@mpxjs/core'
+  createComponent({
+    // 在 beforeCreate 钩子中动态注入 options
+    beforeCreate () {
+      // 获取异步 Store实例
+      const subStore = getApp().asyncStore.sub2
+      // computed 中 mapState、mapGetters 替换为 mapStateToInstance、mapGettersToInstance，最后一个参数必须传当前 component 实例 this
+      subStore.mapStateToInstance(['pagename'], this)
+      subStore.mapGettersToInstance(['pageDataGetter'], this)
+      // methods 中 mapActions、mapMutations 替换为 mapMutationsToInstance、mapActionsToInstance，最后一个参数必须传当前 component 实例 this
+      subStore.mapMutationsToInstance(['updatePageData'], this)
+      subStore.mapActionsToInstance(['updatePageName'], this)
+    }
+  })
+</script>
+```
+
+
 ### 分包注意事项
 
 当我们使用分包加载时，依赖包内的跳转路径需注意，比如要跳转到other2页面  
