@@ -17,7 +17,7 @@ export default function transferOptions (options, type) {
   }
   if (currentInject && currentInject.injectComputed) {
     // 编译计算属性注入
-    options.computed = Object.assign({}, options.computed, currentInject.injectComputed)
+    options.computed = Object.assign({}, currentInject.injectComputed, options.computed)
   }
   if (currentInject && currentInject.injectOptions) {
     // 编译option注入,优先微信中的单独配置
