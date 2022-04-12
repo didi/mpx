@@ -34,7 +34,6 @@ class SizeReportPlugin {
       })
     })
 
-
     compiler.hooks.thisCompilation.tap('SizeReportPlugin', (compilation) => {
       compilation.hooks.assetPath.tap('SizeReportPlugin', (path, data, assetInfo) => {
         if (data.chunk && assetInfo) {
@@ -56,8 +55,8 @@ class SizeReportPlugin {
 
       logger.time('compute size')
 
-      function getRelativePathToProject(resourcePath){
-        return toPosix(path.relative(mpx.projectRoot, resourcePath))
+      function getRelativePathToProject (resourcePath) {
+        return './' + toPosix(path.relative(mpx.projectRoot, resourcePath))
       }
 
       function walkEntry (entryModule, sideEffect) {
@@ -281,6 +280,7 @@ class SizeReportPlugin {
       }
 
       const resourcePathMap = {}
+
       // {resourcePath: { packages: {pkA: xx, pkB: xx}, redundantSize: xx, partial: true }}
 
       function fillResourcePathMap (pathKey, packageName, fillInfo) {
@@ -300,6 +300,7 @@ class SizeReportPlugin {
           resourcePathMap[pathKey].redundantSize = (packageNames.length - 1) * resourcePathMap[pathKey].packages[packageNames[0]]
         }
       }
+
       /**
        *
        * @param modules
@@ -371,7 +372,9 @@ class SizeReportPlugin {
             delete sizeInfoItem.redundantSize
             formatedReport.push(sizeInfoItem)
           } else if (redundantSize) {
-            let insertIndex = formatedReport.findIndex((item) => { return redundantSize > item.redundantSize })
+            let insertIndex = formatedReport.findIndex((item) => {
+              return redundantSize > item.redundantSize
+            })
             if (insertIndex === -1) insertIndex = formatedReport.length
             formatedReport.splice(insertIndex, 0, sizeInfoItem)
           }
@@ -554,6 +557,7 @@ class SizeReportPlugin {
           sizeSummary.totalSize += size
         }
       }
+
       // Check threshold
       function normalizeThreshold (threshold) {
         if (typeof threshold === 'number') return threshold
