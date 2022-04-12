@@ -1,6 +1,11 @@
 declare namespace MpxStore {
   type UnboxDepField<D, F> = F extends keyof D ? D[F] : {}
 
+  interface  compContext{
+    __mpxProxy: object;
+    [key: string]: any
+  }
+
   interface Deps {
     [key: string]: Store | StoreWithThis
   }
@@ -88,7 +93,21 @@ declare namespace MpxStore {
     mapActions(depPath: string, maps: string[]): {
       [key: string]: (...payloads: any[]) => any
     }
+    // 下面是新增的异步store的接口类型
+    mapStateToInstance<K extends keyof S>(maps: K[], context: compContext): void
+    mapStateToInstance(depPath: string, maps: string[], context: compContext): void
 
+    // mapState support object
+    mapStateToInstance<T extends { [key: string]: keyof GetAllMapKeys<S, D, 'state'> }>(obj: T, context: compContext): void
+
+    mapGettersToInstance<K extends keyof G>(maps: K[], context: compContext): void
+    mapGettersToInstance(depPath: string, maps: string[], context: compContext): void
+
+    mapMutationsToInstance<K extends keyof M>(maps: K[], context: compContext): Pick<GetMutations<M>, K>
+    mapMutationsToInstance(depPath: string, maps: string[], context: compContext): void
+
+    mapActionsToInstance<K extends keyof A>(maps: K[], context: compContext): Pick<GetActions<A>, K>
+    mapActionsToInstance(depPath: string, maps: string[], context: compContext): void
   }
   type GetComputedSetKeys<T> = {
     [K in keyof T]: T[K] extends {
@@ -273,6 +292,32 @@ declare namespace MpxStore {
     mapActions<T extends { [key: string]: string }>(obj: T): {
       [I in keyof T]: (...payloads: any[]) => any
     }
+    // 异步store api
+    mapStateToInstance<K extends keyof S>(maps: K[], context: compContext): void
+    mapStateToInstance<T extends string, P extends string>(depPath: P, maps: readonly T[], context: compContext):void
+    mapStateToInstance<T extends mapStateFunctionType<S & UnboxDepsField<D, 'state'>, GetComputedType<G> & UnboxDepsField<D, 'getters'>>>(obj: ThisType<any> & T, context: compContext): void
+    // Support chain derivation
+    mapStateToInstance<T extends { [key: string]: keyof GetAllMapKeys<S, D, 'state'> }>(obj: T, context: compContext): void
+    mapStateToInstance<T extends { [key: string]: keyof S }>(obj: T, context: compContext): void
+    mapStateToInstance<T extends { [key: string]: string }>(obj: T, context: compContext): void
+
+    mapGettersToInstance<K extends keyof G>(maps: K[], context: compContext): void
+    mapGettersToInstance<T extends string, P extends string>(depPath: P, maps: readonly T[], context: compContext): void
+    // Support chain derivation
+    mapGettersToInstance<T extends { [key: string]: keyof GetAllMapKeys<GetComputedType<G>, D, 'getters'> }>(obj: T, context: compContext): void
+    mapGettersToInstance<T extends { [key: string]: keyof G }>(obj: T, context: compContext): void
+    // When importing js in ts file, use this method to be compatible
+    mapGettersToInstance<T extends { [key: string]: string }>(obj: T, context: compContext): void
+
+    mapMutationsToInstance<K extends keyof M>(maps: K[], context: compContext): void
+    mapMutationsToInstance<T extends string, P extends string>(depPath: P, maps: readonly T[], context: compContext): void
+    mapMutationsToInstance<T extends { [key: string]: keyof M }>(obj: T, context: compContext): void
+    mapMutationsToInstance<T extends { [key: string]: string }>(obj: T, context: compContext): void
+
+    mapActionsToInstance<K extends keyof A>(maps: K[], context: compContext): void
+    mapActionsToInstance<T extends string, P extends string>(depPath: P, maps: readonly T[], context: compContext): void
+    mapActionsToInstance<T extends { [key: string]: keyof A }>(obj: T, context: compContext): void
+    mapActionsToInstance<T extends { [key: string]: string }>(obj: T, context: compContext): void
   }
 
   type StoreWithThis<S = {}, G = {}, M = {}, A = {}, D extends Deps = {}> = IStoreWithThis<S, G, M, A, D> & CompatibleDispatch

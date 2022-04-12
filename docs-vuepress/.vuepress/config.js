@@ -34,7 +34,7 @@ const sidebar = {
         'advance/plugin',
         'advance/platform',
         'advance/size-report',
-        'advance/dll-plugin',
+        // 'advance/dll-plugin',
         'advance/custom-output-path',
       ]
     },
