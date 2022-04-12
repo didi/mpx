@@ -3,7 +3,7 @@ import {
   getByPath
 } from '../helper/utils'
 
-import { warn } from '../helper/log'
+import { warn, error } from '../helper/log'
 
 function mapFactory (type, store) {
   return function (depPath, maps) {
@@ -41,11 +41,54 @@ function mapFactory (type, store) {
   }
 }
 
+function checkMapInstance (args) {
+  const context = args[args.length - 1]
+  const isValid = context && typeof context === 'object' && context.__mpxProxy
+  if (!isValid) {
+    error(`调用map**ToInstance时必须传入当前component实例this`)
+  }
+
+  args.splice(-1)
+
+  return {
+    restParams: args,
+    context
+  }
+}
+
 export default function (store) {
   return {
     mapGetters: mapFactory('getters', store),
     mapMutations: mapFactory('mutations', store),
     mapActions: mapFactory('actions', store),
-    mapState: mapFactory('state', store)
+    mapState: mapFactory('state', store),
+    // 以下是map**ToInstance用于异步store的,参数args：depPath, maps, context
+    mapStateToInstance: (...args) => {
+      const { context, restParams } = checkMapInstance(args)
+      const mapStateFun = mapFactory('state', store)
+      const result = mapStateFun(...restParams)
+      // 将result挂载到mpxProxy实例属性上
+      context.__mpxProxy.options.computed = context.__mpxProxy.options.computed || {}
+      Object.assign(context.__mpxProxy.options.computed, result)
+    },
+    mapGettersToInstance: (...args) => {
+      const { context, restParams } = checkMapInstance(args)
+      const mapGetFun = mapFactory('getters', store)
+      const result = mapGetFun(...restParams)
+      context.__mpxProxy.options.computed = context.__mpxProxy.options.computed || {}
+      Object.assign(context.__mpxProxy.options.computed, result)
+    },
+    mapMutationsToInstance: (...args) => {
+      const { context, restParams } = checkMapInstance(args)
+      const mapMutationFun = mapFactory('mutations', store)
+      const result = mapMutationFun(...restParams)
+      Object.assign(context, result)
+    },
+    mapActionsToInstance: (...args) => {
+      const { context, restParams } = checkMapInstance(args)
+      const mapActionFun = mapFactory('actions', store)
+      const result = mapActionFun(...restParams)
+      Object.assign(context, result)
+    }
   }
 }
