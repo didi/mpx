@@ -34,6 +34,7 @@ class SizeReportPlugin {
       })
     })
 
+
     compiler.hooks.thisCompilation.tap('SizeReportPlugin', (compilation) => {
       compilation.hooks.assetPath.tap('SizeReportPlugin', (path, data, assetInfo) => {
         if (data.chunk && assetInfo) {
@@ -54,6 +55,10 @@ class SizeReportPlugin {
       const cache = compilation.getCache('SizeReportPlugin')
 
       logger.time('compute size')
+
+      function getRelativePathToProject(resourcePath){
+        return toPosix(path.relative(mpx.projectRoot, resourcePath))
+      }
 
       function walkEntry (entryModule, sideEffect) {
         const modulesSet = new Set()
@@ -310,6 +315,8 @@ class SizeReportPlugin {
             // 对应场景 -> 一个组件里面有多个style标签, 最终合并成了一个资源文件
             modules.forEach((module) => {
               const parsed = parseRequest(module.resource)
+              // 处理为相对路径以减少体积
+              parsed.resourcePath = getRelativePathToProject(parsed.resourcePath)
               resourcePathArr.push(parsed.resourcePath)
             })
             const resourcePathKey = resourcePathArr.sort().join(',')
@@ -320,6 +327,8 @@ class SizeReportPlugin {
               if (!module.resource && !module.rootModule) return
 
               let parsed = parseRequest(module.resource || module.rootModule.resource)
+              // 处理为相对路径以减少体积
+              parsed.resourcePath = getRelativePathToProject(parsed.resourcePath)
               if (parsed.queryObj && parsed.queryObj.resolve) return
 
               fillResourcePathMap(parsed.resourcePath, packageName, fillInfo)
@@ -418,7 +427,7 @@ class SizeReportPlugin {
             if (_entryModules) {
               _entryModules.forEach((entryModule) => {
                 entryModules.add(entryModule)
-                entryModulePathSet.add(parseRequest(entryModule.resource).resourcePath)
+                entryModulePathSet.add(getRelativePathToProject(parseRequest(entryModule.resource).resourcePath))
               })
             }
             if (_noEntryModules) {
@@ -506,7 +515,7 @@ class SizeReportPlugin {
             const entryModulePathSet = new Set()
 
             entryModules.forEach((module) => {
-              entryModulePathSet.add(parseRequest(module.resource).resourcePath)
+              entryModulePathSet.add(getRelativePathToProject(parseRequest(module.resource).resourcePath))
             })
             fillSizeReportGroups(entryModules, noEntryModules, packageName, 'modules', {
               name,
@@ -634,7 +643,7 @@ class SizeReportPlugin {
       const pagesSizeInfo = reportGroups.filter(item => item.isPage).map((reportGroup) => {
         const readableInfo = {}
         readableInfo.name = reportGroup.name || 'anonymous page'
-        readableInfo.resourcePath = reportGroup.resourcePath
+        readableInfo.resourcePath = getRelativePathToProject(reportGroup.resourcePath)
         // readableInfo.selfEntryModules = mapModulesReadable(reportGroup.selfEntryModules)
         // readableInfo.sharedEntryModules = mapModulesReadable(reportGroup.sharedEntryModules)
         readableInfo.selfSize = formatSize(reportGroup.selfSize)
