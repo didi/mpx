@@ -20,6 +20,19 @@ export function watch (vm, expOrFn, cb, options) {
 
   options = options || {}
   options.user = true
+
+  if (options.once) {
+    const _cb = cb
+    const onceCb = typeof options.once === 'function'
+      ? options.once
+      : function () { return true }
+    cb = function (...args) {
+      const res = onceCb.apply(this, args)
+      if (res) watcher.teardown()
+      _cb.apply(this, args)
+    }
+  }
+
   const watcher = new Watcher(vm, expOrFn, cb, options)
   if (!vm._namedWatchers) vm._namedWatchers = {}
   const name = options.name
