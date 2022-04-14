@@ -122,6 +122,7 @@ class MpxWebpackPlugin {
     options.autoScopeRules = options.autoScopeRules || {}
     options.autoVirtualHostRules = options.autoVirtualHostRules || {}
     options.forceDisableProxyCtor = options.forceDisableProxyCtor || false
+    options.fallthroughEventAttrsRules = options.fallthroughEventAttrsRules || []
     options.transMpxRules = options.transMpxRules || {
       include: () => true
     }
@@ -564,6 +565,7 @@ class MpxWebpackPlugin {
           useRelativePath: this.options.useRelativePath,
           removedChunks: [],
           forceProxyEventRules: this.options.forceProxyEventRules,
+          fallthroughEventAttrsRules: this.options.fallthroughEventAttrsRules,
           pathHash: (resourcePath) => {
             if (this.options.pathHashMode === 'relative' && this.options.projectRoot) {
               return hash(path.relative(this.options.projectRoot, resourcePath))

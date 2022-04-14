@@ -11,6 +11,7 @@ const addQuery = require('../utils/add-query')
 const transDynamicClassExpr = require('./trans-dynamic-class-expr')
 const dash2hump = require('../utils/hump-dash').dash2hump
 const { inBrowser } = require('../utils/env')
+const { matchCondition } = require("../utils/match-condition");
 
 /**
  * Make a map and return a function for checking if a key
@@ -1813,24 +1814,74 @@ function processBuiltInComponents (el, meta) {
   }
 }
 
+function processAliEventHack (el, options, root) {
+  const { fallthroughEventAttrsRules } = options
+  // 如果禁止了支付宝环境事件透传，直接返回
+  // if (!fallthroughEventAttrsRules.enable) return
+  let fallThroughEvents = ['onTap']
+  // 判断当前文件是否在范围中
+  const filePath = options.filePath
+
+  for (let item of fallthroughEventAttrsRules) {
+    const {
+      include,
+      exclude
+    } = item || {}
+
+    if (matchCondition(filePath, {
+      include,
+      exclude
+    })) {
+      const eventsRaw = item.events
+      const events = Array.isArray(eventsRaw)? eventsRaw: [eventsRaw]
+      // 添加用户透传绑定事件是否合规校验
+      fallThroughEvents = fallThroughEvents.concat(events)
+      break
+    }
+  }
+
+
+  const rootViewProcessor = ({ name, value, typeName }) => {
+    value = `__proxyEvent`
+    return [ name, value ]
+  }
+
+  const getTypeNameProcess = (type) => {
+    return type
+  }
+
+  processAliAttrsHack(el, options, root, fallThroughEvents, rootViewProcessor, getTypeNameProcess)
+}
+
 function processAliStyleClassHack (el, options, root) {
+
+  const rootViewProcessor = ({ name, value, typeName }) => {
+    let sep = name === 'style' ? ';' : ' '
+    value = value ? `{{${typeName}||''}}${sep}${value}` : `{{${typeName}||''}}`
+    return [ name, value ]
+  }
+  const getTypeNameProcess = (type) => {
+    return 'mpx' + type.replace(/^./, (matched) => matched.toUpperCase())
+  }
+
+  processAliAttrsHack(el, options, root, ['style', 'class'], rootViewProcessor, getTypeNameProcess)
+}
+
+function processAliAttrsHack (el, options, root, attrs, rootViewProcess, getTypeNameProcess) {
   let processor
   // 处理组件标签
   if (isComponentNode(el, options)) processor = ({ value, typeName }) => [typeName, value]
+
   // 处理组件根节点
   if (options.isComponent && el === root && isRealNode(el)) {
-    processor = ({ name, value, typeName }) => {
-      let sep = name === 'style' ? ';' : ' '
-      value = value ? `{{${typeName}||''}}${sep}${value}` : `{{${typeName}||''}}`
-      return [ name, value ]
-    }
+    processor = rootViewProcess
   }
+
   // 非上述两种不处理
   if (!processor) return
-  // 处理style、class
-  ['style', 'class'].forEach((type) => {
+  attrs.forEach((type) => {
     let exp = getAndRemoveAttr(el, type).val
-    let typeName = 'mpx' + type.replace(/^./, (matched) => matched.toUpperCase())
+    let typeName = getTypeNameProcess(type)
     let [newName, newValue] = processor({
       name: type,
       value: exp,
@@ -1843,6 +1894,7 @@ function processAliStyleClassHack (el, options, root) {
       }])
     }
   })
+
 }
 // 有virtualHost情况wx组件注入virtualHost。无virtualHost阿里组件注入root-view。其他跳过。
 function getVirtualHostRoot (options, meta) {
@@ -2075,6 +2127,7 @@ function processElement (el, root, options, meta) {
   // 当mode为ali不管是不是跨平台都需要进行此处理，以保障ali当中的refs相关增强能力正常运行
   if (mode === 'ali') {
     processAliStyleClassHack(el, options, root)
+    processAliEventHack(el, options, root)
   }
 
   if (!pass) {
