@@ -335,7 +335,7 @@ export function doTest (config, test) {
   }
 
   // 是否匹配
-  let matched = (urlParamsExist && urlMatched && searchMatched && paramsMatched && dataMatched && headerMatched && methodMatched) || customMatched
+  let matched = customMatched || (urlParamsExist && urlMatched && searchMatched && paramsMatched && dataMatched && headerMatched && methodMatched)
 
   return {
     matched,
