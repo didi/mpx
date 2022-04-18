@@ -1,28 +1,33 @@
 # github action of publish package to npm via lerna
 name: lerna-publish-package
 
-on:
-  push:
-    tags:
-      - v*
+on: [push]
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - id: get_version
+        run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
+      - run: echo "GITHUB_REF is ${GITHUB_REF/refs\/tags\//}"
+      - run: echo "CIRCLE_TAG is $CIRCLE_TAG"
+      - run: echo "steps.get_version.outputs.VERSION is ${steps.get_version.outputs.VERSION}"
 #  发布任务不检查代码风格
 #  lint:
 #    runs-on: ubuntu-latest
 #    steps:
 #      - uses: actions/checkout@v2
 #      - run: npm run lint
-  publish:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v1
-      with:
-        node-version: '16'
-    - run: |
-        npm i
-        echo "//registry.npmjs.org/:_authToken=\${NODE_AUTH_TOKEN}" >> $HOME/.npmrc 2> /dev/null
-        npm run lerna:publish
-      env:
-        NODE_AUTH_TOKEN: ${{secrets.npm_token}}
+  # publish:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #   - uses: actions/checkout@v2
+  #   - uses: actions/setup-node@v1
+  #     with:
+  #       node-version: '16'
+  #   - run: |
+  #       npm i
+  #       echo "//registry.npmjs.org/:_authToken=\${NODE_AUTH_TOKEN}" >> $HOME/.npmrc 2> /dev/null
+  #       npm run lerna:publish
+  #     env:
+  #       NODE_AUTH_TOKEN: ${{secrets.npm_token}}
