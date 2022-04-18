@@ -55,6 +55,10 @@ class SizeReportPlugin {
 
       logger.time('compute size')
 
+      function getRelativePathToProject (resourcePath) {
+        return './' + toPosix(path.relative(mpx.projectRoot, resourcePath))
+      }
+
       function walkEntry (entryModule, sideEffect) {
         const modulesSet = new Set()
 
@@ -276,6 +280,7 @@ class SizeReportPlugin {
       }
 
       const resourcePathMap = {}
+
       // {resourcePath: { packages: {pkA: xx, pkB: xx}, redundantSize: xx, partial: true }}
 
       function fillResourcePathMap (pathKey, packageName, fillInfo) {
@@ -295,6 +300,7 @@ class SizeReportPlugin {
           resourcePathMap[pathKey].redundantSize = (packageNames.length - 1) * resourcePathMap[pathKey].packages[packageNames[0]]
         }
       }
+
       /**
        *
        * @param modules
@@ -310,6 +316,8 @@ class SizeReportPlugin {
             // 对应场景 -> 一个组件里面有多个style标签, 最终合并成了一个资源文件
             modules.forEach((module) => {
               const parsed = parseRequest(module.resource)
+              // 处理为相对路径以减少体积
+              parsed.resourcePath = getRelativePathToProject(parsed.resourcePath)
               resourcePathArr.push(parsed.resourcePath)
             })
             const resourcePathKey = resourcePathArr.sort().join(',')
@@ -320,6 +328,8 @@ class SizeReportPlugin {
               if (!module.resource && !module.rootModule) return
 
               let parsed = parseRequest(module.resource || module.rootModule.resource)
+              // 处理为相对路径以减少体积
+              parsed.resourcePath = getRelativePathToProject(parsed.resourcePath)
               if (parsed.queryObj && parsed.queryObj.resolve) return
 
               fillResourcePathMap(parsed.resourcePath, packageName, fillInfo)
@@ -362,7 +372,9 @@ class SizeReportPlugin {
             delete sizeInfoItem.redundantSize
             formatedReport.push(sizeInfoItem)
           } else if (redundantSize) {
-            let insertIndex = formatedReport.findIndex((item) => { return redundantSize > item.redundantSize })
+            let insertIndex = formatedReport.findIndex((item) => {
+              return redundantSize > item.redundantSize
+            })
             if (insertIndex === -1) insertIndex = formatedReport.length
             formatedReport.splice(insertIndex, 0, sizeInfoItem)
           }
@@ -418,7 +430,7 @@ class SizeReportPlugin {
             if (_entryModules) {
               _entryModules.forEach((entryModule) => {
                 entryModules.add(entryModule)
-                entryModulePathSet.add(parseRequest(entryModule.resource).resourcePath)
+                entryModulePathSet.add(getRelativePathToProject(parseRequest(entryModule.resource).resourcePath))
               })
             }
             if (_noEntryModules) {
@@ -506,7 +518,7 @@ class SizeReportPlugin {
             const entryModulePathSet = new Set()
 
             entryModules.forEach((module) => {
-              entryModulePathSet.add(parseRequest(module.resource).resourcePath)
+              entryModulePathSet.add(getRelativePathToProject(parseRequest(module.resource).resourcePath))
             })
             fillSizeReportGroups(entryModules, noEntryModules, packageName, 'modules', {
               name,
@@ -545,6 +557,7 @@ class SizeReportPlugin {
           sizeSummary.totalSize += size
         }
       }
+
       // Check threshold
       function normalizeThreshold (threshold) {
         if (typeof threshold === 'number') return threshold
@@ -634,7 +647,7 @@ class SizeReportPlugin {
       const pagesSizeInfo = reportGroups.filter(item => item.isPage).map((reportGroup) => {
         const readableInfo = {}
         readableInfo.name = reportGroup.name || 'anonymous page'
-        readableInfo.resourcePath = reportGroup.resourcePath
+        readableInfo.resourcePath = getRelativePathToProject(reportGroup.resourcePath)
         // readableInfo.selfEntryModules = mapModulesReadable(reportGroup.selfEntryModules)
         // readableInfo.sharedEntryModules = mapModulesReadable(reportGroup.sharedEntryModules)
         readableInfo.selfSize = formatSize(reportGroup.selfSize)

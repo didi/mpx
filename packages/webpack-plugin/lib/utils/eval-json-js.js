@@ -22,6 +22,7 @@ module.exports = function evalJSONJS (source, filename, loaderContext) {
       request = path.join(dirname, request)
     }
     const filename = require.resolve(request)
+    loaderContext.addDependency(filename)
     const source = fs.readFileSync(filename).toString('utf-8')
     return evalJSONJS(source, filename, loaderContext)
   }, filename, dirname, ...defValues)
