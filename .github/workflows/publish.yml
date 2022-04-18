@@ -1,7 +1,10 @@
 # github action of publish package to npm via lerna
 name: lerna-publish-package
 
-on: [push]
+on:
+  push:
+    tags:
+      - 'test*'
 
 jobs:
   test:
@@ -11,7 +14,8 @@ jobs:
         run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
       - run: echo "GITHUB_REF is ${GITHUB_REF/refs\/tags\//}"
       - run: echo "CIRCLE_TAG is $CIRCLE_TAG"
-      - run: echo "steps.get_version.outputs.VERSION is ${steps.get_version.outputs.VERSION}"
+      - run: env
+
 #  发布任务不检查代码风格
 #  lint:
 #    runs-on: ubuntu-latest
