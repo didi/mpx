@@ -21,7 +21,7 @@ const PAGE_HOOKS = [
   'onReady',
   'onShow',
   'onHide',
-  'onUnload',
+  'onUnload'
   // 'onBack',
   // 'onPullDownRefresh',
   // 'onReachBottom',
