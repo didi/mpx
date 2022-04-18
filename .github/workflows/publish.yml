@@ -15,7 +15,6 @@ jobs:
       - run: echo "GITHUB_REF is ${GITHUB_REF/refs\/tags\//}"
       - run: echo "CIRCLE_TAG is $CIRCLE_TAG"
       - run: env
-
 #  发布任务不检查代码风格
 #  lint:
 #    runs-on: ubuntu-latest
