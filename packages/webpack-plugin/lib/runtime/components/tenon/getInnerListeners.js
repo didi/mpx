@@ -96,7 +96,7 @@ function processModel (listeners, context) {
     listeners['onInput'] = function (e) {
       Hummer.notifyCenter.triggerEvent(modelEventId, {
         detail: e
-      });
+      })
       context.$emit('mpxModel', {
         detail: e
       })
