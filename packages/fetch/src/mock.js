@@ -9,7 +9,7 @@ export function requestMock (options = [], config) {
     // custom不存在时，进行url参数匹配
     const matched = doTest(configBackup, test).matched
     if (isFunction(callback) && matched) {
-      let data = transformRes(buildResponse(callback(config)))
+      let data =  Object.assign({ requestConfig: config }, transformRes(buildResponse(callback(config))))
       return Promise.resolve(data)
     }
   }
