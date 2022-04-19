@@ -29,7 +29,7 @@ module.exports = function (css, map) {
 
   const transRpxRules = transRpxRulesRaw ? (Array.isArray(transRpxRulesRaw) ? transRpxRulesRaw : [transRpxRulesRaw]) : []
 
-  const transRpxFn = mpx.webConfig.transRpxFn
+  const transRpxFn = mpx.webConfig && mpx.webConfig.transRpxFn
   const testResolveRange = (include = () => true, exclude) => {
     return matchCondition(this.resourcePath, { include, exclude })
   }
