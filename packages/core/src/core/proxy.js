@@ -85,6 +85,9 @@ export default class MPXProxy {
     if (__mpx_mode__ !== 'web') {
       this.initRender()
     }
+    this.nextTick(() => {
+      this.mounted()
+    })
   }
 
   renderTaskExecutor (isEmptyRender) {
