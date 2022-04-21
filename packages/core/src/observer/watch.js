@@ -3,6 +3,18 @@ import { error } from '../helper/log'
 import Watcher from './watcher'
 import { queueWatcher } from './scheduler'
 
+export function watchEffect () {
+  
+}
+
+export function watchPostEffect () {
+  
+}
+
+export function watchPostEffect () {
+  
+}
+
 export function watch (vm, expOrFn, cb, options) {
   if (isObject(cb)) {
     options = cb

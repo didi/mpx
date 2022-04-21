@@ -1,4 +1,4 @@
-import { observe } from '../observer/index'
+import { observe } from '../observer/reactive'
 
 import { initComputed } from '../observer/computed'
 
@@ -196,7 +196,7 @@ class Store {
       proxy(this.getters, this.__depsGetters)
     } else {
       this._vm = {}
-      observe(this.state, true)
+      observe(this.state, false, true)
       initComputed(this._vm, this.getters, this.__wrappedGetters)
       proxy(this.getters, this.__depsGetters)
     }
@@ -225,12 +225,15 @@ export default function createStore (options) {
 export function createStateWithThis (state) {
   return state
 }
+
 export function createGettersWithThis (getters, options = {}) {
   return getters
 }
+
 export function createMutationsWithThis (mutations, options = {}) {
   return mutations
 }
+
 export function createActionsWithThis (actions, options = {}) {
   return actions
 }

@@ -1,4 +1,4 @@
-import { observe } from '../observer/index'
+import { observe } from '../observer/reactive'
 import Watcher from '../observer/watcher'
 import { watch } from '../observer/watch'
 import { initComputed } from '../observer/computed'
@@ -204,7 +204,7 @@ export default class MPXProxy {
     // mpxCid 解决支付宝环境selector为全局问题
     this.data.mpxCid = this.uid
     this.localKeysMap.mpxCid = true
-    observe(this.data, true)
+    observe(this.data, false, true)
     return proxyedKeys
   }
 
