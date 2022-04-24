@@ -14,8 +14,8 @@ module.exports = function (css, map) {
   this.cacheable()
   const cb = this.async()
   const { resourcePath, queryObj } = parseRequest(this.resource)
-  const id = queryObj.moduleId || queryObj.mid
   const mpx = this.getMpx()
+  const id = queryObj.moduleId || queryObj.mid || 'm' + mpx.pathHash(resourcePath)
   const appInfo = mpx.appInfo
   const defs = mpx.defs
   const mode = mpx.mode
