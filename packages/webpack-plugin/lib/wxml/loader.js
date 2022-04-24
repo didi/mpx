@@ -17,12 +17,9 @@ module.exports = function (content) {
   const externals = mpx.externals
 
   const { queryObj } = parseRequest(this.resource)
-  const moduleId = queryObj.moduleId
   const hasScoped = false
   const hasComment = false
   const isNative = true
-
-  const usingComponents = []
 
   const mode = mpx.mode
   const localSrcMode = queryObj.mode
@@ -90,8 +87,6 @@ module.exports = function (content) {
           hasScoped,
           hasComment,
           isNative,
-          moduleId,
-          usingComponents,
           isStatic: true
         }
         requestString = getRequestString('template', { src, mode: localSrcMode }, extraOptions)
