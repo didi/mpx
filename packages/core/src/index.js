@@ -184,7 +184,8 @@ EXPORT_MPX.config = {
   proxyEventHandler: null,
   setDataHandler: null,
   forceRunWatcherSync: false,
-  webRouteConfig: {}
+  webRouteConfig: {},
+  builtInMixinRules: {}
 }
 
 global.__mpx = EXPORT_MPX

@@ -13,6 +13,10 @@ import pageRouteMixin from './pageRouteMixin'
 
 export default function getBuiltInMixins (options, type) {
   let bulitInMixins = []
+
+  const builtInMixinRules = global.__mpx.config.builtInMixinRules
+  const pageStatusEnable = builtInMixinRules.pageStatus !== false
+  
   if (__mpx_mode__ === 'web') {
     bulitInMixins = [
       proxyEventMixin(),
@@ -30,7 +34,7 @@ export default function getBuiltInMixins (options, type) {
     // 此为差异抹平类mixins，原生模式下也需要注入也抹平平台差异
     bulitInMixins = [
       proxyEventMixin(),
-      pageStatusMixin(type),
+      pageStatusEnable && pageStatusMixin(type),
       refsMixin(),
       relationsMixin(type)
     ]
