@@ -84,23 +84,24 @@ function filterOptions (options, type) {
 }
 
 function initProxy (context, rawOptions, currentInject, params) {
-  // 提供代理对象需要的api
-  transformApiForProxy(context, currentInject)
-  // 缓存options
-  context.$rawOptions = rawOptions
-  // 创建proxy对象
-  const mpxProxy = new MPXProxy(rawOptions, context)
-  context.__mpxProxy = mpxProxy
-  context.__mpxProxy.created(params)
+  if (!context.__mpxProxy) {
+    // 提供代理对象需要的api
+    transformApiForProxy(context, currentInject)
+    // 缓存options
+    context.$rawOptions = rawOptions
+    // 创建proxy对象
+    context.__mpxProxy = new MPXProxy(rawOptions, context)
+    context.__mpxProxy.created(params)
+  } else if (context.__mpxProxy.isDestroyed()) {
+    context.__mpxProxy.reCreated(params)
+  }
 }
 
 export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
   const hookNames = type === 'component' ? ['onInit', 'didMount', 'didUnmount'] : ['onLoad', 'onReady', 'onUnload']
   const rootMixins = [{
     [hookNames[0]] (...params) {
-      if (!this.__mpxProxy) {
-        initProxy(this, rawOptions, currentInject, params)
-      }
+      initProxy(this, rawOptions, currentInject, params)
     },
     deriveDataFromProps (nextProps) {
       if (this.__mpxProxy && this.__mpxProxy.isMounted() && nextProps && nextProps !== this.props) {
@@ -130,6 +131,7 @@ export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
     },
     didUpdate () {
       if (this.__mpxProxy) {
+        // todo: lockTask必要性待验证，属性更新触发自身setData时，updated执行与wx对齐，updated触发机制也考虑与wx对齐（props update && setData callback）
         this.__mpxProxy.lockTask(() => {
           this.__mpxProxy.updated()
         })
@@ -143,7 +145,7 @@ export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
       }
     },
     [hookNames[2]] () {
-      this.__mpxProxy && this.__mpxProxy.destroyed()
+      if (this.__mpxProxy) this.__mpxProxy.destroyed()
     }
   }]
   rawOptions.mixins = rawOptions.mixins ? rootMixins.concat(rawOptions.mixins) : rootMixins

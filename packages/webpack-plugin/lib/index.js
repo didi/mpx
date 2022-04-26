@@ -958,6 +958,8 @@ class MpxWebpackPlugin {
               if (mpx.mode === 'wx') {
                 const dep = new DynamicEntryDependency(request, 'export', '', queryObj.root, MPX_CURRENT_CHUNK, context, range)
                 parser.state.current.addPresentationalDependency(dep)
+                // 包含require.async的模块不能被concatenate，避免DynamicEntryDependency中无法获取模块chunk以计算相对路径
+                parser.state.module.buildInfo.moduleConcatenationBailout = 'require async'
               } else {
                 const range = expr.range
                 const dep = new CommonJsAsyncDependency(request, range)

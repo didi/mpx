@@ -7,6 +7,8 @@
 /// <reference path="./mpx-store.d.ts" />
 /// <reference path="./global.d.ts" />
 /// <reference path="./node.d.ts" />
+
+// @ts-ignore
 import VueI18n from 'vue-i18n'
 
 declare module 'vue-i18n' {
