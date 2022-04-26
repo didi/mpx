@@ -315,8 +315,9 @@ class SizeReportPlugin {
             // assetModules包含的module需要取所有的module的resourcePath，排序拼接后作为key，完全一致才能确定是冗余数据。
             // 对应场景 -> 一个组件里面有多个style标签, 最终合并成了一个资源文件
             modules.forEach((module) => {
-              if (module.resource) {
-                const parsed = parseRequest(module.resource)
+              const resource = module.resource || (module.rootModule && module.rootModule.resource)
+              if (resource) {
+                const parsed = parseRequest(resource)
                 // 处理为相对路径以减少体积
                 parsed.resourcePath = getRelativePathToProject(parsed.resourcePath)
                 resourcePathArr.push(parsed.resourcePath)
@@ -431,9 +432,10 @@ class SizeReportPlugin {
             const entryModulePathSet = new Set()
             if (_entryModules) {
               _entryModules.forEach((entryModule) => {
-                if (entryModule.resource) {
+                const resource = entryModule.resource || (entryModule.rootModule && entryModule.rootModule.resource)
+                if (resource) {
                   entryModules.add(entryModule)
-                  entryModulePathSet.add(getRelativePathToProject(parseRequest(entryModule.resource).resourcePath))
+                  entryModulePathSet.add(getRelativePathToProject(parseRequest(resource).resourcePath))
                 }
               })
             }
@@ -522,8 +524,9 @@ class SizeReportPlugin {
             const entryModulePathSet = new Set()
 
             entryModules.forEach((module) => {
-              if (module.resource) {
-                entryModulePathSet.add(getRelativePathToProject(parseRequest(module.resource).resourcePath))
+              const resource = module.resource || (module.rootModule && module.rootModule.resource)
+              if (resource) {
+                entryModulePathSet.add(getRelativePathToProject(parseRequest(resource).resourcePath))
               }
             })
             fillSizeReportGroups(entryModules, noEntryModules, packageName, 'modules', {
