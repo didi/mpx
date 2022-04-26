@@ -315,10 +315,12 @@ class SizeReportPlugin {
             // assetModules包含的module需要取所有的module的resourcePath，排序拼接后作为key，完全一致才能确定是冗余数据。
             // 对应场景 -> 一个组件里面有多个style标签, 最终合并成了一个资源文件
             modules.forEach((module) => {
-              const parsed = parseRequest(module.resource)
-              // 处理为相对路径以减少体积
-              parsed.resourcePath = getRelativePathToProject(parsed.resourcePath)
-              resourcePathArr.push(parsed.resourcePath)
+              if (module.resource) {
+                const parsed = parseRequest(module.resource)
+                // 处理为相对路径以减少体积
+                parsed.resourcePath = getRelativePathToProject(parsed.resourcePath)
+                resourcePathArr.push(parsed.resourcePath)
+              }
             })
             const resourcePathKey = resourcePathArr.sort().join(',')
             fillResourcePathMap(resourcePathKey, packageName, fillInfo)
@@ -336,7 +338,7 @@ class SizeReportPlugin {
 
               // 对应concatenatedModule的处理逻辑
               // 1、concatenatedModule可查看rootModule的资源归属。
-              // 2、如果rootModule本身不存在冗余，遍历rootModules里面的组成modules有没有冗余，对应场景： a.js -> b.js 但是a冗余输出到多分包，b并未冗余输出
+              // 2、如果rootModule本身不存在冗余，遍历rootModules里面的组成modules有没有冗余，对应场景： a.js -> b.js 但是a冗余输出到多分包，b并未冗余输出(配置subpackageModulesRules)
               if (!module.resource && module.rootModule.resource && (!resourcePathMap[parsed.resourcePath] || !resourcePathMap[parsed.resourcePath].redundantSize)) {
                 fillRedundanceReport(module.modules.filter((item) => {
                   return item !== module.rootModule
@@ -429,8 +431,10 @@ class SizeReportPlugin {
             const entryModulePathSet = new Set()
             if (_entryModules) {
               _entryModules.forEach((entryModule) => {
-                entryModules.add(entryModule)
-                entryModulePathSet.add(getRelativePathToProject(parseRequest(entryModule.resource).resourcePath))
+                if (entryModule.resource) {
+                  entryModules.add(entryModule)
+                  entryModulePathSet.add(getRelativePathToProject(parseRequest(entryModule.resource).resourcePath))
+                }
               })
             }
             if (_noEntryModules) {
@@ -518,7 +522,9 @@ class SizeReportPlugin {
             const entryModulePathSet = new Set()
 
             entryModules.forEach((module) => {
-              entryModulePathSet.add(getRelativePathToProject(parseRequest(module.resource).resourcePath))
+              if (module.resource) {
+                entryModulePathSet.add(getRelativePathToProject(parseRequest(module.resource).resourcePath))
+              }
             })
             fillSizeReportGroups(entryModules, noEntryModules, packageName, 'modules', {
               name,
