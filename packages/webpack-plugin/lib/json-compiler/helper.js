@@ -7,7 +7,7 @@ const addQuery = require('../utils/add-query')
 const loaderUtils = require('loader-utils')
 const resolve = require('../utils/resolve')
 
-module.exports = function createJSONHelper ({ loaderContext, emitWarning, customGetDynamicEntry }) {
+module.exports = function createJSONHelper ({ loaderContext, emitWarning, emitError, customGetDynamicEntry }) {
   const mpx = loaderContext.getMpx()
   const resolveMode = mpx.resolveMode
   const externals = mpx.externals
@@ -53,7 +53,13 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
         // 删除root query
         resource = addQuery(resource, {}, false, ['root'])
         // 目前只有微信支持分包异步化
-        if (mode === 'wx') tarRoot = queryObj.root
+        if (mode === 'wx') {
+          tarRoot = queryObj.root
+          // 检测是否注册了分包
+          if (!mpx.subpackageModulesMap[tarRoot]) {
+            emitError('[app json]: 未注册分包:' +  tarRoot)
+          }
+        }
       }
       const parsed = path.parse(resourcePath)
       const ext = parsed.ext
