@@ -60,7 +60,7 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
       const resourceName = path.join(parsed.dir, parsed.name)
 
       if (!outputPath) {
-        if (ext === '.js' && resourceName.includes('node_modules')) {
+        if (ext === '.js' && resourceName.includes('node_modules') && mode !== 'web') {
           let root = info.descriptionFileRoot
           let name = 'nativeComponent'
           if (info.descriptionFileData) {
@@ -78,7 +78,7 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
           outputPath = getOutputPath(resourcePath, 'component')
         }
       }
-      if (ext === '.js') {
+      if (ext === '.js' && mode !== 'web') {
         resource = `!!${nativeLoaderPath}!${resource}`
       }
 
@@ -116,7 +116,7 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
           outputPath = /^(.*?)(\.[^.]*)?$/.exec(relative)[1]
         }
       }
-      if (ext === '.js') {
+      if (ext === '.js' && mode !== 'web') {
         resource = `!!${nativeLoaderPath}!${resource}`
       }
       const entry = getDynamicEntry(resource, 'page', outputPath, tarRoot, publicPath + tarRoot)
