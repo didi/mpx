@@ -57,7 +57,7 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, emitEr
           tarRoot = queryObj.root
           // 检测是否注册了分包
           if (!mpx.subpackageModulesMap[tarRoot]) {
-            emitError('[app json]: 未注册分包:' +  tarRoot)
+            emitError('[app json]: 未注册分包:' + tarRoot)
           }
         }
       }
