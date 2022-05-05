@@ -20,10 +20,12 @@ export function initComputed (vm, target, computed) {
       noop,
       { lazy: true }
     )
-    if (!(key in target)) {
-      defineComputed(vm, target, key, userDef)
-    } else {
-      error(`The computed key [${key}] is duplicated with data/props, please check.`, vm.options.mpxFileResource)
+    if (target) {
+      if (!(key in target)) {
+        defineComputed(vm, target, key, userDef)
+      } else {
+        error(`The computed key [${key}] is duplicated with data/props, please check.`, vm.options.mpxFileResource)
+      }
     }
   }
 }
