@@ -1,18 +1,79 @@
 import { isObject, noop } from '../helper/utils'
-import { error } from '../helper/log'
-import Watcher from './watcher'
+import { error, warn } from '../helper/log'
+import ReactiveEffect from './effect'
+import { isRef } from './ref'
+import { isReactive } from './reactive'
 import { queueWatcher } from './scheduler'
+import { callWithErrorHandling } from '../helper/errorHandling'
+import { currentInstance } from '../core/proxy'
 
-export function watchEffect () {
-  
+export function watchEffect (effect, options) {
+  return doWatch(effect, null, options)
 }
 
-export function watchPostEffect () {
-  
+export function watchPostEffect (effect, options) {
+  return doWatch(effect, null, { ...options, flush: 'post' })
 }
 
-export function watchPostEffect () {
-  
+export function watchSyncEffect (effect, options) {
+  doWatch(effect, null, { ...options, flush: 'sync' })
+}
+
+const warnInvalidSource = (s) => {
+  warn(`Invalid watch source: ${s}\nA watch source can only be a getter/effect function, a ref, a reactive object, or an array of these types.`)
+}
+
+
+function doWatch (source, cb, options) {
+  const instance = currentInstance
+  let getter
+  let isMultiSource = false
+  if (isRef(source)) {
+    getter = () => source.value
+  } else if (isReactive(source)) {
+    getter = () => traverse(source)
+  } else if (isArray(source)) {
+    isMultiSource = true
+    getter = () =>
+      source.map(s => {
+        if (isRef(s)) {
+          return s.value
+        } else if (isReactive(s)) {
+          return traverse(s)
+        } else if (isFunction(s)) {
+          return callWithErrorHandling(s, instance, 'watch getter')
+        } else {
+          warnInvalidSource(s)
+        }
+      })
+  } else if (isFunction(source)) {
+    if (cb) {
+      // getter with cb
+      getter = () =>
+        callWithErrorHandling(source, instance, 'watch getter')
+    } else {
+      // no cb -> simple effect
+      getter = () => {
+        if (instance && instance.isDestroyed()) {
+          return
+        }
+        if (cleanup) {
+          cleanup()
+        }
+        return callWithAsyncErrorHandling(
+          source,
+          instance,
+          ErrorCodes.WATCH_CALLBACK,
+          [onCleanup]
+        )
+      }
+    }
+  } else {
+    getter = noop
+    warnInvalidSource(source)
+  }
+
+
 }
 
 export function watch (vm, expOrFn, cb, options) {
@@ -37,7 +98,9 @@ export function watch (vm, expOrFn, cb, options) {
     const _cb = cb
     const onceCb = typeof options.once === 'function'
       ? options.once
-      : function () { return true }
+      : function () {
+        return true
+      }
     cb = function (...args) {
       const res = onceCb.apply(this, args)
       if (res) watcher.teardown()

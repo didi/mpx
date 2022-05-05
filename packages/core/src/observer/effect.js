@@ -25,18 +25,14 @@ export default class ReactiveEffect {
 
   // run fn and return value
   run () {
-    if (!this.active) return
+    if (!this.active) return this.fn()
     pushTarget(this)
-    let value
     try {
-      value = this.fn()
-    } catch (e) {
-      throw e
+      return this.fn()
     } finally {
       popTarget()
       this.cleanupDeps()
     }
-    return value
   }
 
   // add dependency to this

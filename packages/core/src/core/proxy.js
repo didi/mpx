@@ -32,10 +32,11 @@ import {
   DESTROYED
 } from './innerLifecycle'
 import { warn, error } from '../helper/log'
+import { callWithErrorHandling } from '../helper/errorHandling'
 
 let uid = 0
 
-export default class MPXProxy {
+export default class MpxProxy {
   constructor (options, target) {
     this.target = target
     this.uid = uid++
@@ -108,6 +109,10 @@ export default class MPXProxy {
     if (this.isMounted()) {
       this.callUserHook(UPDATED)
     }
+  }
+
+  isDestroyed () {
+    return this.state === DESTROYED
   }
 
   destroyed () {
@@ -192,7 +197,7 @@ export default class MPXProxy {
         }
         error(`The props/data key [${key}] exist in the component instance already, please check and rename it!`, this.options.mpxFileResource)
       })
-      Object.assign(this.data, dataFn.call(this.target))
+      Object.assign(this.data, callWithErrorHandling(dataFn, this, 'data function'))
     }
     this.collectLocalKeys(this.data)
     Object.keys(initialData).forEach((key) => {
@@ -241,17 +246,7 @@ export default class MPXProxy {
 
   callUserHook (hookName, params) {
     const hook = this.options[hookName] || this.target[hookName]
-    if (typeof hook === 'function') {
-      try {
-        hook.apply(this.target, params)
-      } catch (e) {
-        if (typeof EXPORT_MPX.config.hookErrorHandler === 'function') {
-          EXPORT_MPX.config.hookErrorHandler(e, this.target, hookName)
-        } else {
-          throw e
-        }
-      }
-    }
+    callWithErrorHandling(hook, this, `${hookName} hook`, params)
   }
 
   watch (expOrFn, cb, options) {
@@ -476,4 +471,18 @@ export default class MPXProxy {
       })
     }
   }
+}
+
+export let currentInstance = null
+
+export const getCurrentInstance = () => currentInstance
+
+export const setCurrentInstance = (instance) => {
+  currentInstance = instance
+  instance.scope.on()
+}
+
+export const unsetCurrentInstance = () => {
+  currentInstance && currentInstance.scope.off()
+  currentInstance = null
 }

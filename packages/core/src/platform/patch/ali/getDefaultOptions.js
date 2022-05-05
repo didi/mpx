@@ -1,4 +1,4 @@
-import MPXProxy from '../../../core/proxy'
+import MpxProxy from '../../../core/proxy'
 import builtInKeysMap from '../builtInKeysMap'
 import mergeOptions from '../../../core/mergeOptions'
 import { error } from '../../../helper/log'
@@ -89,7 +89,7 @@ function initProxy (context, rawOptions, currentInject, params) {
   // 缓存options
   context.$rawOptions = rawOptions
   // 创建proxy对象
-  const mpxProxy = new MPXProxy(rawOptions, context)
+  const mpxProxy = new MpxProxy(rawOptions, context)
   context.__mpxProxy = mpxProxy
   context.__mpxProxy.created(params)
 }

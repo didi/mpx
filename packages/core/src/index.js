@@ -180,7 +180,7 @@ EXPORT_MPX.config = {
   ignoreWarning: false,
   ignoreProxyWhiteList: ['id', 'dataset', 'data'],
   observeClassInstance: false,
-  hookErrorHandler: null,
+  errorHandler: null,
   proxyEventHandler: null,
   setDataHandler: null,
   forceRunWatcherSync: false,
