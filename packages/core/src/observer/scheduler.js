@@ -10,6 +10,15 @@ let curIndex = 0
 const lockTask = asyncLock()
 const MAX_UPDATE_COUNT = 100
 
+
+export function queuePreFlushCb () {
+
+}
+
+export function queuePostFlushCb () {
+
+}
+
 export function queueWatcher (watcher) {
   if (!watcher.id && typeof watcher === 'function') {
     watcher = {

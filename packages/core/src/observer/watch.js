@@ -1,9 +1,9 @@
-import { isObject, noop } from '../helper/utils'
+import { isObject, noop, remove } from '../helper/utils'
 import { error, warn } from '../helper/log'
 import ReactiveEffect from './effect'
 import { isRef } from './ref'
 import { isReactive } from './reactive'
-import { queueWatcher } from './scheduler'
+import { queueWatcher, queuePreFlushCb, queuePostFlushCb } from './scheduler'
 import { callWithErrorHandling } from '../helper/errorHandling'
 import { currentInstance } from '../core/proxy'
 
@@ -23,15 +23,17 @@ const warnInvalidSource = (s) => {
   warn(`Invalid watch source: ${s}\nA watch source can only be a getter/effect function, a ref, a reactive object, or an array of these types.`)
 }
 
+const shouldTrigger = (value, oldValue) => !Object.is(value, oldValue) || isObject(value)
 
-function doWatch (source, cb, options) {
+function doWatch (source, cb, { immediate, deep, flush }) {
   const instance = currentInstance
   let getter
   let isMultiSource = false
   if (isRef(source)) {
     getter = () => source.value
   } else if (isReactive(source)) {
-    getter = () => traverse(source)
+    getter = () => source
+    deep = true
   } else if (isArray(source)) {
     isMultiSource = true
     getter = () =>
@@ -60,12 +62,7 @@ function doWatch (source, cb, options) {
         if (cleanup) {
           cleanup()
         }
-        return callWithAsyncErrorHandling(
-          source,
-          instance,
-          ErrorCodes.WATCH_CALLBACK,
-          [onCleanup]
-        )
+        return callWithErrorHandling(source, instance, 'watch callback', [onCleanup])
       }
     }
   } else {
@@ -73,8 +70,85 @@ function doWatch (source, cb, options) {
     warnInvalidSource(source)
   }
 
+  if (cb && deep) {
+    const baseGetter = getter
+    getter = () => traverse(baseGetter())
+  }
 
+  let cleanup
+  let onCleanup = (fn) => {
+    cleanup = effect.onStop = () => {
+      callWithErrorHandling(fn, instance, 'watch cleanup')
+    }
+  }
+
+  let oldValue = isMultiSource ? [] : undefined
+  const job = () => {
+    if (!effect.active) return
+    if (cb) {
+      const newValue = effect.run()
+      if (
+        deep ||
+        (isMultiSource
+          ? newValue.some((v, i) => shouldTrigger(v, oldValue[i]))
+          : shouldTrigger(newValue, oldValue))
+      ) {
+        // cleanup before running cb again
+        if (cleanup) {
+          cleanup()
+        }
+        callWithErrorHandling(cb, instance, 'watch callback', [newValue, oldValue, onCleanup])
+        oldValue = newValue
+      }
+    } else {
+      // watchEffect
+      effect.run()
+    }
+  }
+
+  job.allowRecurse = !!cb
+
+  let scheduler
+  if (flush === 'sync') {
+    // the scheduler function gets called directly
+    scheduler = job
+  } else if (flush === 'post') {
+    scheduler = () => queuePostFlushCb(job)
+  } else {
+    // default: 'pre'
+    scheduler = () => {
+      if (!instance || instance.isMounted()) {
+        queuePreFlushCb(job)
+      } else {
+        // with 'pre' option, the first call must happen before
+        // the component is mounted so it is called synchronously.
+        job()
+      }
+    }
+  }
+
+  const effect = new ReactiveEffect(getter, scheduler)
+
+  if (cb) {
+    if (immediate) {
+      job()
+    } else {
+      oldValue = effect.run()
+    }
+  } else if (flush === 'post') {
+    queuePostFlushCb(effect.run.bind(effect))
+  } else {
+    effect.run()
+  }
+
+  return () => {
+    effect.stop()
+    if (instance && instance.scope) {
+      remove(instance.scope.effects, effect)
+    }
+  }
 }
+
 
 export function watch (vm, expOrFn, cb, options) {
   if (isObject(cb)) {

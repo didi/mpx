@@ -1,5 +1,5 @@
 import { queueWatcher, dequeueWatcher } from './scheduler'
-import { pushTarget, popTarget } from './dep'
+import Dep, { pushTarget, popTarget } from './dep'
 import { getByPath, isObject, remove } from '../helper/utils'
 import { getObserver } from './reactive'
 import { recordEffectScope } from './effectScope'
@@ -31,7 +31,7 @@ export default class ReactiveEffect {
       return this.fn()
     } finally {
       popTarget()
-      this.cleanupDeps()
+      this.deferStop ? this.stop() : this.cleanupDeps()
     }
   }
 
@@ -81,11 +81,14 @@ export default class ReactiveEffect {
 
   // Remove self from all dependencies' subscriber list.
   stop () {
-    if (this.active) {
+    if (Dep.target === this) {
+      this.deferStop = true
+    } else if (this.active) {
       let i = this.deps.length
       while (i--) {
         this.deps[i].removeSub(this)
       }
+      typeof this.onStop === 'function' && this.onStop()
       this.active = false
     }
   }
