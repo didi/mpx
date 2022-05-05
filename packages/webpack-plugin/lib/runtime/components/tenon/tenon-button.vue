@@ -150,7 +150,7 @@ export default (function(){
 
 
 
-<style lang="stylus">
+<style lang="stylus" scoped>
 .mpx-button-versionv2
     width: 184px
     line-height 1.41176471

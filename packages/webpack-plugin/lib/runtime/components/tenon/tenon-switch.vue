@@ -80,7 +80,7 @@ export default {
 };
 </script>
 
-<style lang="stylus">
+<style lang="stylus" scoped>
 .mpx-switch-wrap
   .mpx-switch-label
     border-radius 16hm

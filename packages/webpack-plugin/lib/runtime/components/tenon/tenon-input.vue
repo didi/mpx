@@ -83,7 +83,7 @@ export default {
   methods: {},
 };
 </script>
-<style lang="stylus">
+<style lang="stylus" scoped>
   .mpx-input
     cursor auto
     width 100%

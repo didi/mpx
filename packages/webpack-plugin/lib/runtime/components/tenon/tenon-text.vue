@@ -55,7 +55,7 @@ export default {
   },
 };
 </script>
-<style lang="stylus">
+<style lang="stylus" scoped>
 .mpx-text
   user-select none
   &.selectable

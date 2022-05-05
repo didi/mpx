@@ -53,7 +53,7 @@ export default {
   },
 };
 </script>
-<style lang="stylus">
+<style lang="stylus" scoped>
 .mpx-image
   width 300px
   height 225px

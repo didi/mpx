@@ -51,7 +51,7 @@ export default {
   methods: {},
 };
 </script>
-<style lang="stylus">
+<style lang="stylus" scoped>
 .mpx-textarea
   font inherit
   cursor auto
