@@ -3,7 +3,6 @@ const he = require('he')
 const config = require('../config')
 const { MPX_ROOT_VIEW, MPX_APP_MODULE_ID } = require('../utils/const')
 const normalize = require('../utils/normalize')
-const { normalizeCondition } = require('../utils/match-condition')
 const isValidIdentifierStr = require('../utils/is-valid-identifier-str')
 const isEmptyObject = require('../utils/is-empty-object')
 const getRulesRunner = require('../platform/index')
@@ -11,7 +10,7 @@ const addQuery = require('../utils/add-query')
 const transDynamicClassExpr = require('./trans-dynamic-class-expr')
 const dash2hump = require('../utils/hump-dash').dash2hump
 const { inBrowser } = require('../utils/env')
-const { matchCondition } = require("../utils/match-condition");
+const { matchCondition } = require('../utils/match-condition')
 
 /**
  * Make a map and return a function for checking if a key
@@ -1833,13 +1832,11 @@ function processAliEventHack (el, options, root) {
       exclude
     })) {
       const eventsRaw = item.events
-      const events = Array.isArray(eventsRaw)? eventsRaw: [eventsRaw]
-      // 添加用户透传绑定事件是否合规校验
+      const events = Array.isArray(eventsRaw) ? eventsRaw : [eventsRaw]
       fallThroughEvents = fallThroughEvents.concat(events)
       break
     }
   }
-
 
   const rootViewProcessor = ({ name, value, typeName }) => {
     value = `__proxyEvent`
@@ -1854,7 +1851,6 @@ function processAliEventHack (el, options, root) {
 }
 
 function processAliStyleClassHack (el, options, root) {
-
   const rootViewProcessor = ({ name, value, typeName }) => {
     let sep = name === 'style' ? ';' : ' '
     value = value ? `{{${typeName}||''}}${sep}${value}` : `{{${typeName}||''}}`
@@ -1894,7 +1890,6 @@ function processAliAttrsHack (el, options, root, attrs, rootViewProcess, getType
       }])
     }
   })
-
 }
 // 有virtualHost情况wx组件注入virtualHost。无virtualHost阿里组件注入root-view。其他跳过。
 function getVirtualHostRoot (options, meta) {

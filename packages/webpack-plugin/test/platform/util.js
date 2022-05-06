@@ -17,7 +17,8 @@ function compileAndParse (input, { srcMode, mode, env } = { srcMode: 'wx', mode:
       '__mpx_mode__': mode,
       '__mpx_src_mode__': srcMode,
       '__mpx_env__': env
-    }
+    },
+    fallthroughEventAttrsRules: []
   })
   const ast = parsed.root
   return compiler.serialize(ast)
