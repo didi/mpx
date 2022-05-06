@@ -210,7 +210,7 @@ module.exports = function getSpec ({ warn, error }) {
       },
       {
         // 样式类名绑定
-        test: /^wx:class$/,
+        test: /^wx:(class)$/,
         web ({ name, value }) {
           const dir = this.test.exec(name)[1]
           const parsed = parseMustache(value)
