@@ -85,6 +85,11 @@ export default function getRefsMixin () {
           destroyed
         })
       },
+      __proxyEvent (e) {
+        this.triggerEvent && this.triggerEvent(e.type, {
+          component: this
+        })
+      },
       __handleUpdateRef (e) {
         if (!this.__children__) {
           this.__children__ = []
