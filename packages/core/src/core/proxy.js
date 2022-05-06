@@ -3,6 +3,7 @@ import Watcher from '../observer/watcher'
 import { watch } from '../observer/watch'
 import { initComputed } from '../observer/computed'
 import { queueWatcher } from '../observer/scheduler'
+import { isFunction } from '../helper/utils'
 import EXPORT_MPX from '../index'
 import {
   noop,
@@ -214,7 +215,7 @@ export default class MpxProxy {
     const initialData = this.target.__getInitialData(this.options) || {}
     // 之所以没有直接使用initialData，而是通过对原始dataOpt进行深clone获取初始数据对象，主要是为了避免小程序自身序列化时错误地转换数据对象，比如将promise转为普通object
     this.data = diffAndCloneA(data || {}).clone
-    if (dataFn) {
+    if (isFunction(dataFn)) {
       proxyedKeys = Object.keys(initialData)
       // 预先将initialData代理到this.target中，便于data函数访问
       proxy(this.target, initialData, proxyedKeys, undefined, (key) => {
@@ -224,7 +225,7 @@ export default class MpxProxy {
         }
         error(`The props/data key [${key}] exist in the component instance already, please check and rename it!`, this.options.mpxFileResource)
       })
-      Object.assign(this.data, callWithErrorHandling(dataFn, this, 'data function'))
+      Object.assign(this.data, callWithErrorHandling(dataFn.bind(this.target), this, 'data function'))
     }
     // 此时data中不包括props数据
     this.collectLocalKeys(this.data)
@@ -275,7 +276,9 @@ export default class MpxProxy {
 
   callUserHook (hookName, params) {
     const hook = this.options[hookName] || this.target[hookName]
-    callWithErrorHandling(hook, this, `${hookName} hook`, params)
+    if (isFunction(hook)) {
+      callWithErrorHandling(hook.bind(this.target), this, `${hookName} hook`, params)
+    }
   }
 
   watch (expOrFn, cb, options) {

@@ -134,28 +134,6 @@ export function getByPath (data, pathStrOrArr, defaultVal, errTip) {
   return results.length > 1 ? results : results[0]
 }
 
-export function defineGetterSetter (target, key, getValue, setValue, context) {
-  let get
-  let set
-  if (typeof getValue === 'function') {
-    get = context ? getValue.bind(context) : getValue
-  } else {
-    get = function () {
-      return getValue
-    }
-  }
-  if (typeof setValue === 'function') {
-    set = context ? setValue.bind(context) : setValue
-  }
-  let descriptor = {
-    get,
-    configurable: true,
-    enumerable: true
-  }
-  if (set) descriptor.set = set
-  Object.defineProperty(target, key, descriptor)
-}
-
 export function proxy (target, source, keys, readonly, onConflict) {
   keys = keys || Object.keys(source)
   keys.forEach((key) => {
@@ -221,6 +199,14 @@ export function merge (target, ...sources) {
 
 export function isObject (obj) {
   return obj !== null && typeof obj === 'object'
+}
+
+export function isString (str) {
+  return typeof str === 'string'
+}
+
+export function isFunction (fn) {
+  return typeof fn === 'function'
 }
 
 export function isPlainObject (value) {
@@ -613,33 +599,6 @@ export function makeMap (arr) {
     obj[item] = true
     return obj
   }, {})
-}
-
-/**
- * Get object values by chaining-key
- * @param {Object} obj target Object
- * @param {String} key chaining-key, e.g.: 'a.b.c'
- */
-export function getChainKeyOfObj (obj = {}, key = '') {
-  return key.split('.').reduce((o, k) => o && o[k], obj)
-}
-
-/**
- * Delete object values by chaining-key
- * @param {Object} obj target object
- * @param {String} key chaining-key
- */
-export function delChainKeyOfObj (obj = {}, key = '') {
-  return key.split('.').reduce((o, k, index, arr) => {
-    if (arr.length === index + 1) {
-      try {
-        return delete o[k]
-      } catch (e) { // undefined
-        return false
-      }
-    }
-    return o && o[k]
-  }, obj)
 }
 
 export function spreadProp (obj, key) {

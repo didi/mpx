@@ -20,10 +20,12 @@ export function setForceTrigger (val) {
  * collect dependencies and dispatches updates.
  */
 export class Observer {
+  dep = new Dep()
+  vmCount = 0
+  value
+
   constructor (value, shallow) {
     this.value = value
-    this.dep = new Dep()
-    this.vmCount = 0
     def(value, ObKey, this)
     if (Array.isArray(value)) {
       const augment = hasProto && arrayProtoAugment

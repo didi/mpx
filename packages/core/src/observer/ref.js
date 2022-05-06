@@ -3,15 +3,14 @@ import { RefKey } from '../helper/const'
 import { hasOwn, isPlainObject } from '../helper/utils'
 import { warn } from '../helper/log'
 
-class RefImpl {
-  constructor (options, isComputed) {
-    Object.defineProperty(this, 'value', options)
-    if (isComputed) this.effect = true
+export class RefImpl {
+  constructor (options) {
+    Object.defineProperty(this, 'value', { enumerable: true, ...options })
   }
 }
 
-export function createRef (options, isComputed) {
-  const ref = new RefImpl(options, isComputed)
+export function createRef (options) {
+  const ref = new RefImpl(options)
   return Object.seal(ref)
 }
 

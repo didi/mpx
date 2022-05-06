@@ -1,12 +1,20 @@
-import { queueWatcher, dequeueWatcher } from './scheduler'
 import Dep, { pushTarget, popTarget } from './dep'
-import { getByPath, isObject, remove } from '../helper/utils'
+import { isObject, } from '../helper/utils'
 import { getObserver } from './reactive'
 import { recordEffectScope } from './effectScope'
 
 let uid = 0
 
-export default class ReactiveEffect {
+export class ReactiveEffect {
+  id
+  fn
+  scheduler
+  active = true
+  deps = []
+  newDeps = []
+  depIds = new Set()
+  newDepIds = new Set()
+
   constructor (
     fn,
     scheduler,
@@ -15,11 +23,6 @@ export default class ReactiveEffect {
     this.id = ++uid
     this.fn = fn
     this.scheduler = scheduler
-    this.active = true
-    this.deps = []
-    this.newDeps = []
-    this.depIds = new Set()
-    this.newDepIds = new Set()
     recordEffectScope(this, scope)
   }
 
