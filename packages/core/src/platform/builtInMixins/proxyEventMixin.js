@@ -94,6 +94,11 @@ export default function proxyEventMixin () {
           }
           handler.call(this, eventObj)
         }
+      },
+      __proxyEvent (e) {
+        this.triggerEvent && this.triggerEvent(e.type, {
+          component: this
+        })
       }
     })
   }
