@@ -97,7 +97,8 @@ export default function proxyEventMixin () {
       },
       __proxyEvent (e) {
         const type = e.type
-        const handler = this.props && (this.props['on' + type] || this.props['catch' + type])
+        const handlerName = type.replace(/^./, matched => matched.toUpperCase()).replace(/-([a-z])/g, (match, p1) => p1.toUpperCase())
+        const handler = this.props && (this.props['on' + handlerName] || this.props['catch' + handlerName])
         if (handler && typeof handler === 'function') {
           const dataset = collectDataset(this.props)
           const originTarget = e.target || {}
