@@ -1814,9 +1814,11 @@ function processBuiltInComponents (el, meta) {
 }
 
 function processAliEventHack (el, options, root) {
+  // 只处理组件根节点
+  if (!(options.isComponent && el === root && isRealNode(el))) {
+    return
+  }
   const { fallthroughEventAttrsRules } = options
-  // 如果禁止了支付宝环境事件透传，直接返回
-  // if (!fallthroughEventAttrsRules.enable) return
   let fallThroughEvents = ['onTap']
   // 判断当前文件是否在范围中
   const filePath = options.filePath
@@ -1832,40 +1834,29 @@ function processAliEventHack (el, options, root) {
       exclude
     })) {
       const eventsRaw = item.events
-      const events = Array.isArray(eventsRaw) ? eventsRaw : [eventsRaw]
-      fallThroughEvents = fallThroughEvents.concat(events)
+      const events = Array.isArray(eventsRaw)? eventsRaw: [eventsRaw]
+      fallThroughEvents = Array.from(new Set(fallThroughEvents.concat(events)))
       break
     }
   }
 
-  const rootViewProcessor = ({ name, value, typeName }) => {
-    value = `__proxyEvent`
-    return [ name, value ]
-  }
-
-  const getTypeNameProcess = (type) => {
-    return type
-  }
-
-  processAliAttrsHack(el, options, root, fallThroughEvents, rootViewProcessor, getTypeNameProcess)
+  fallThroughEvents.forEach((type) => {
+    addAttrs(el, [{
+      name: type,
+      value: '__proxyEvent'
+    }])
+  })
 }
 
 function processAliStyleClassHack (el, options, root) {
-  const rootViewProcessor = ({ name, value, typeName }) => {
+  let processor
+
+  const rootViewProcess = ({ name, value, typeName }) => {
     let sep = name === 'style' ? ';' : ' '
     value = value ? `{{${typeName}||''}}${sep}${value}` : `{{${typeName}||''}}`
     return [ name, value ]
   }
-  const getTypeNameProcess = (type) => {
-    return 'mpx' + type.replace(/^./, (matched) => matched.toUpperCase())
-  }
 
-  processAliAttrsHack(el, options, root, ['style', 'class'], rootViewProcessor, getTypeNameProcess)
-}
-
-function processAliAttrsHack (el, options, root, attrs, rootViewProcess, getTypeNameProcess) {
-  let processor
-  // 处理组件标签
   if (isComponentNode(el, options)) processor = ({ value, typeName }) => [typeName, value]
 
   // 处理组件根节点
@@ -1875,9 +1866,10 @@ function processAliAttrsHack (el, options, root, attrs, rootViewProcess, getType
 
   // 非上述两种不处理
   if (!processor) return
-  attrs.forEach((type) => {
+
+  ['style', 'class'].forEach((type) => {
     let exp = getAndRemoveAttr(el, type).val
-    let typeName = getTypeNameProcess(type)
+    let typeName = type === 'class'? 'className': type
     let [newName, newValue] = processor({
       name: type,
       value: exp,
@@ -1891,6 +1883,7 @@ function processAliAttrsHack (el, options, root, attrs, rootViewProcess, getType
     }
   })
 }
+
 // 有virtualHost情况wx组件注入virtualHost。无virtualHost阿里组件注入root-view。其他跳过。
 function getVirtualHostRoot (options, meta) {
   if (options.isComponent) {

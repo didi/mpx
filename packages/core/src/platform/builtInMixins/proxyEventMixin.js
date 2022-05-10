@@ -96,9 +96,40 @@ export default function proxyEventMixin () {
         }
       },
       __proxyEvent (e) {
-        this.triggerEvent && this.triggerEvent(e.type, {
-          component: this
-        })
+        const type = e.type
+        const handler = this.props && (this.props['on' + type] || this.props['catch' + type])
+        if (handler && typeof handler === 'function') {
+          const dataset = collectDataset(this.props)
+          const originTarget = e.target || {}
+          const detail = e.detail || {}
+          const id = this.props.id || ''
+          const timeStamp = e.timeStamp || +new Date()
+          const targetData = {
+            id,
+            dataset,
+            offsetLeft: originTarget.offsetLeft,
+            offsetTop: originTarget.offsetTop
+          }
+          const detailData = {
+            x: detail.pageX,
+            y: detail.pageY,
+            ...detail
+          }
+          const eventObj = {
+            type,
+            timeStamp,
+            target: targetData,
+            currentTarget: targetData,
+            detail: detailData
+          }
+          if (e.touches) {
+            eventObj.touches = e.touches
+          }
+          if (e.changedTouches) {
+            eventObj.changedTouches = e.changedTouches
+          }
+          handler.call(this, eventObj)
+        }
       }
     })
   }
