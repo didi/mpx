@@ -1834,7 +1834,7 @@ function processAliEventHack (el, options, root) {
       exclude
     })) {
       const eventsRaw = item.events
-      const events = Array.isArray(eventsRaw)? eventsRaw: [eventsRaw]
+      const events = Array.isArray(eventsRaw) ? eventsRaw : [eventsRaw]
       fallThroughEvents = Array.from(new Set(fallThroughEvents.concat(events)))
       break
     }
@@ -1869,7 +1869,7 @@ function processAliStyleClassHack (el, options, root) {
 
   ['style', 'class'].forEach((type) => {
     let exp = getAndRemoveAttr(el, type).val
-    let typeName = type === 'class'? 'className': type
+    let typeName = type === 'class' ? 'className' : type
     let [newName, newValue] = processor({
       name: type,
       value: exp,
