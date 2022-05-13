@@ -279,7 +279,7 @@
   我们可以把一个数组传给 `wx:class`，以应用一个 class 列表：
 
   ``` html
-  <view wx:class="[{{activeClass}},{{errorClass}}]">
+  <view wx:class="{{[activeClass, errorClass]}}">
     这是一段测试文字
   </view>
   ```
@@ -345,9 +345,11 @@
     import {createComponent} from '@mpxjs/core'
 
     createComponent({
-      styleObject: {
-        color: 'red',
-        fontWeight: 'bold'
+      data: {
+        styleObject: {
+          color: 'red',
+          fontWeight: 'bold'
+        }
       },
     })
   </script>
@@ -388,7 +390,7 @@
   `wx:style` 的数组语法可以将多个样式对象应用到同一个元素上
 
   ``` html
-  <view wx:style="[baseStyles, overridingStyles]">
+  <view wx:style="{{[baseStyles, overridingStyles]}}">
     这是一段测试文字
   </view>
   ```
