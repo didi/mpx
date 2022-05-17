@@ -10,7 +10,6 @@ const getRulesRunner = require('../platform/index')
 const addQuery = require('../utils/add-query')
 const transDynamicClassExpr = require('./trans-dynamic-class-expr')
 const dash2hump = require('../utils/hump-dash').dash2hump
-const { inBrowser } = require('../utils/env')
 
 /**
  * Make a map and return a function for checking if a key
@@ -82,28 +81,9 @@ const splitRE = /\r?\n/g
 const replaceRE = /./g
 const isSpecialTag = makeMap('script,style,template,json', true)
 
-const ieNSBug = /^xmlns:NS\d+/
-const ieNSPrefix = /^NS\d+:/
-
-/* istanbul ignore next */
-function guardIESVGBug (attrs) {
-  let res = []
-  for (let i = 0; i < attrs.length; i++) {
-    let attr = attrs[i]
-    if (!ieNSBug.test(attr.name)) {
-      attr.name = attr.name.replace(ieNSPrefix, '')
-      res.push(attr)
-    }
-  }
-  return res
-}
-
 function makeAttrsMap (attrs) {
   let map = {}
   for (let i = 0, l = attrs.length; i < l; i++) {
-    // if (map[attrs[i].name] && !isIE && !isEdge) {
-    //   warn$1('duplicate attribute: ' + attrs[i].name)
-    // }
     map[attrs[i].name] = attrs[i].value
   }
   return map
@@ -129,11 +109,6 @@ function isForbiddenTag (el) {
     ))
   )
 }
-
-// Browser environment sniffing
-const UA = inBrowser && window.navigator.userAgent.toLowerCase()
-const isIE = UA && /msie|trident/.test(UA)
-// const isEdge = UA && UA.indexOf('edge/') > 0
 
 // configurable state
 // 由于template处理为纯同步过程，采用闭包变量存储各种状态方便全局访问
@@ -713,12 +688,6 @@ function parse (template, options) {
       // inherit parent ns if there is one
       let ns = (currentParent && currentParent.ns) || platformGetTagNamespace(tag)
 
-      // handle IE svg bug
-      /* istanbul ignore if */
-      if (isIE && ns === 'svg') {
-        attrs = guardIESVGBug(attrs)
-      }
-
       let element = createASTElement(tag, attrs, currentParent)
       if (ns) {
         element.ns = ns
@@ -767,14 +736,6 @@ function parse (template, options) {
 
     chars: function chars (text) {
       if (!currentParent) genTempRoot()
-      // IE textarea placeholder bug
-      /* istanbul ignore if */
-      if (isIE &&
-        currentParent.tag === 'textarea' &&
-        currentParent.attrsMap.placeholder === text
-      ) {
-        return
-      }
 
       let children = currentParent.children
       if (currentParent.tag !== 'text') {
@@ -886,9 +847,6 @@ function addAttrs (el, attrs) {
   const map = el.attrsMap
   for (let i = 0, l = attrs.length; i < l; i++) {
     list.push(attrs[i])
-    // if (map[attrs[i].name] && !isIE && !isEdge) {
-    //   warn$1('duplicate attribute: ' + attrs[i].name)
-    // }
     map[attrs[i].name] = attrs[i].value
   }
 }

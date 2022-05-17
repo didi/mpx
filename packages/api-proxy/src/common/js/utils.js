@@ -31,6 +31,7 @@ function changeOpts (options, updateOrRemoveOpt = {}, extraOpt = {}) {
 /**
  * @param {Object} opts 原参数
  * @param {Function} getOptions 获取 success 回调修改后的参数
+ * @param {Object} thisObj this对象
  */
 const handleSuccess = (opts, getOptions = noop, thisObj) => {
   if (!opts.success) {
@@ -92,7 +93,7 @@ function makeMap (arr) {
   }, {})
 }
 
-const inBrowser = typeof window !== 'undefined'
+const isBrowser = typeof window !== 'undefined'
 
 export {
   changeOpts,
@@ -103,5 +104,5 @@ export {
   warn,
   noop,
   makeMap,
-  inBrowser
+  isBrowser
 }

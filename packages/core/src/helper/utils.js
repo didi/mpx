@@ -1,38 +1,12 @@
-import Vue from '../vue'
-
 import _getByPath from './getByPath'
 
-import { error } from './log'
-
-import { set } from '../observer/index'
+import { isRef } from '../observer/ref'
 
 import EXPORT_MPX from '../index'
 
 // type在支付宝环境下不一定准确，判断是普通对象优先使用isPlainObject（新版支付宝不复现，issue #644 修改isPlainObject实现与type等价）
 export function type (n) {
   return Object.prototype.toString.call(n).slice(8, -1)
-}
-
-/**
- * 判断当前环境是否是浏览器环境
- */
-export const inBrowser = typeof window !== 'undefined'
-
-export function asyncLock () {
-  let lock = false
-  return (fn, onerror) => {
-    if (!lock) {
-      lock = true
-      Promise.resolve().then(() => {
-        lock = false
-        typeof fn === 'function' && fn()
-      }).catch(e => {
-        lock = false
-        error('Something wrong in mpx asyncLock func execution, please check.', undefined, e)
-        typeof onerror === 'function' && onerror()
-      })
-    }
-  }
 }
 
 export function aliasReplace (options = {}, alias, target) {
@@ -96,11 +70,7 @@ export function isExistAttr (obj, attr) {
 export function setByPath (data, pathStrOrArr, value) {
   _getByPath(data, pathStrOrArr, (current, key, meta) => {
     if (meta.isEnd) {
-      if (__mpx_mode__ === 'web') {
-        Vue.set(current, key, value)
-      } else {
-        set(current, key, value)
-      }
+      EXPORT_MPX.set(current, key, value)
     } else if (!current[key]) {
       current[key] = {}
     }
@@ -139,14 +109,20 @@ export function proxy (target, source, keys, readonly, onConflict) {
   keys.forEach((key) => {
     const descriptor = {
       get () {
-        return source[key]
+        const val = source[key]
+        return isRef(val) ? val.value : val
       },
       configurable: true,
       enumerable: true
     }
-    !readonly && (descriptor.set = function (val) {
-      source[key] = val
-    })
+    descriptor.set = readonly ? noop : function (val) {
+      const oldVal = source[key]
+      if (isRef(oldVal) && !isRef(val)) {
+        oldVal.value = val
+      } else {
+        source[key] = val
+      }
+    }
     if (onConflict) {
       if (key in target) {
         if (onConflict(key) === false) return
@@ -452,8 +428,7 @@ export function processUndefined (obj) {
   return result
 }
 
-export function noop () {
-
+export const noop = () => {
 }
 
 export function diffAndCloneA (a, b) {

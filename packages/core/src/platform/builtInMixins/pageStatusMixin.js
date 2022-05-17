@@ -1,4 +1,4 @@
-import { CREATED } from '../../core/innerLifecycle'
+import { CREATED, ONLOAD } from '../../core/innerLifecycle'
 
 export default function pageStatusMixin (mixinType) {
   // 只有tt和ali没有pageLifeTimes支持，需要框架实现，其余平台一律使用原生pageLifeTimes
@@ -13,6 +13,9 @@ export default function pageStatusMixin (mixinType) {
       },
       onHide () {
         this.mpxPageStatus = 'hide'
+      },
+      onLoad () {
+        this.__mpxProxy.callUserHook(ONLOAD, params, true)
       }
     }
     if (__mpx_mode__ === 'ali') {
@@ -33,7 +36,7 @@ export default function pageStatusMixin (mixinType) {
   } else {
     return {
       [CREATED] () {
-        const options = this.$rawOptions
+        const options = this.__mpxProxy.options
         const hasPageShow = options.pageShow || options.pageHide
         const needPageLifetimes = options.pageLifetimes && __mpx_mode__ === 'ali'
 

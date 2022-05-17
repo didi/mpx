@@ -24,7 +24,7 @@ function transformProperties (properties) {
     } else {
       newFiled = Object.assign({}, rawFiled)
     }
-    newFiled.observer = function (value, oldValue) {
+    newFiled.observer = function (value) {
       if (this.__mpxProxy) {
         this[key] = value
         queueWatcher(() => {
@@ -46,10 +46,25 @@ function transformApiForProxy (context, currentInject) {
     setData: {
       get () {
         return function (data, callback) {
-          return this.__mpxProxy.forceUpdate(data, { sync: true }, callback)
+          return context.__mpxProxy.forceUpdate(data, { sync: true }, callback)
         }
       },
       configurable: true
+    },
+    __getProps:{
+      get(){
+        return (options)=>{
+          const props = {}
+          const validProps = Object.assign({}, options.properties, options.props)
+          Object.keys(context.data).forEach((key)=>{
+            if (hasOwn(validProps, key)) {
+              props[key] = context.data[key]
+            }
+          })
+          return props
+        }
+      },
+      configurable: false
     },
     __getInitialData: {
       get () {
@@ -57,7 +72,7 @@ function transformApiForProxy (context, currentInject) {
           const data = {}
           const validData = Object.assign({}, options.data, options.properties, options.props)
           for (const key in context.data) {
-            if (hasOwn(context.data, key) && hasOwn(validData, key)) {
+            if (hasOwn(validData, key)) {
               data[key] = context.data[key]
             }
           }
@@ -120,8 +135,6 @@ export function initProxy (context, rawOptions, currentInject, params) {
   if (!context.__mpxProxy) {
     // 提供代理对象需要的api
     transformApiForProxy(context, currentInject)
-    // 缓存options
-    context.$rawOptions = rawOptions
     // 创建proxy对象
     context.__mpxProxy = new MpxProxy(rawOptions, context)
     context.__mpxProxy.created(params)

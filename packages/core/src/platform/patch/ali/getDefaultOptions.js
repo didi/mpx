@@ -20,17 +20,24 @@ function transformApiForProxy (context, currentInject) {
     __getInitialData: {
       get () {
         return (options) => {
+          const data = {}
+          // 微信原生转支付宝时，该函数兼顾首次将props数据合入data中的功能
+          const tempData = options.__nativeRender__ ? context.data : Object.assign({}, context.data)
+          const validProps = Object.assign({}, options.props, options.properties)
           if (context.props) {
-            const newData = context.$rawOptions.__nativeRender__ ? context.data : Object.assign({}, context.data)
-            const validProps = Object.assign({}, options.props, options.properties)
-            Object.keys(context.props).forEach((key) => {
+            for (const key in context.props) {
               if (hasOwn(validProps, key) && typeof context.props[key] !== 'function') {
-                newData[key] = context.props[key]
+                tempData[key] = context.props[key]
               }
-            })
-            return newData
+            }
           }
-          return context.data
+          const validData = Object.assign({}, options.data, validProps)
+          for (const key in tempData) {
+            if (hasOwn(validData, key)) {
+              data[key] = tempData[key]
+            }
+          }
+          return data
         }
       },
       configurable: false
@@ -87,8 +94,6 @@ function initProxy (context, rawOptions, currentInject, params) {
   if (!context.__mpxProxy) {
     // 提供代理对象需要的api
     transformApiForProxy(context, currentInject)
-    // 缓存options
-    context.$rawOptions = rawOptions
     // 创建proxy对象
     context.__mpxProxy = new MpxProxy(rawOptions, context)
     context.__mpxProxy.created(params)
@@ -101,12 +106,20 @@ export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
   const hookNames = type === 'component' ? ['onInit', 'didMount', 'didUnmount'] : ['onLoad', 'onReady', 'onUnload']
   const rootMixins = [{
     [hookNames[0]] (...params) {
+      if(rawOptions.__nativeRender__ && this.props){
+        const validProps = Object.assign({}, rawOptions.props, rawOptions.properties)
+        Object.keys(this.props).forEach((key) => {
+          if (hasOwn(validProps, key) && typeof this.props[key] !== 'function') {
+            this.data[key] = this.props[key]
+          }
+        })
+      }
       initProxy(this, rawOptions, currentInject, params)
     },
     deriveDataFromProps (nextProps) {
       if (this.__mpxProxy && this.__mpxProxy.isMounted() && nextProps && nextProps !== this.props) {
-        const validProps = Object.assign({}, this.$rawOptions.props, this.$rawOptions.properties)
-        if (this.$rawOptions.__nativeRender__) {
+        const validProps = Object.assign({}, rawOptions.props, rawOptions.properties)
+        if (rawOptions.__nativeRender__) {
           const newData = {}
           // 微信原生转换支付宝时，每次props更新将其设置进data模拟微信表现
           Object.keys(nextProps).forEach((key) => {
@@ -122,7 +135,7 @@ export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
           Object.keys(nextProps).forEach(key => {
             if (hasOwn(validProps, key) && typeof nextProps[key] !== 'function') {
               const { diff, clone } = diffAndCloneA(nextProps[key], this.props[key])
-              // 由于支付宝中透传父级setData的值，此处进行深copy后赋值避免父级存储的miniRenderData部分数据在此处被响应化，在子组件对props赋值时触发父组件的render
+              // 由于支付宝中透传父级setData的值，此处进行深clone后赋值避免父级存储的miniRenderData部分数据在此处被响应化，在子组件对props赋值时触发父组件的render
               if (diff) this[key] = clone
             }
           })

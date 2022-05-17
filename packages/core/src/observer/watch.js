@@ -39,14 +39,18 @@ export function instanceWatch (instance, source, cb, options) {
 
   cb = cb || noop
 
+
   const cur = currentInstance
-  setCurrentInstance(instance)
+  const isCur = instance === cur
+  if (!isCur) setCurrentInstance(instance)
+
   const res = doWatch(getter, cb.bind(target), options)
-  if (cur) {
-    setCurrentInstance(cur)
-  } else {
-    unsetCurrentInstance()
+
+  if (!isCur) {
+    if (cur) setCurrentInstance(cur)
+    else unsetCurrentInstance()
   }
+
   return res
 }
 

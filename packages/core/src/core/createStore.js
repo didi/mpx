@@ -1,4 +1,4 @@
-import { observe } from '../observer/reactive'
+import { reactive } from '../observer/reactive'
 
 import { initComputed } from '../observer/computed'
 
@@ -196,7 +196,7 @@ class Store {
       proxy(this.getters, this.__depsGetters)
     } else {
       this._vm = {}
-      observe(this.state, false, true)
+      reactive(this.state, false, true)
       initComputed(this._vm, this.getters, this.__wrappedGetters)
       proxy(this.getters, this.__depsGetters)
     }

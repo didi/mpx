@@ -25,8 +25,6 @@ function filterOptions (options) {
 
 function initProxy (context, rawOptions, params) {
   if (!context.__mpxProxy) {
-    // 缓存options
-    context.$rawOptions = rawOptions
     // 创建proxy对象
     context.__mpxProxy = new MpxProxy(rawOptions, context)
     context.__mpxProxy.created(params)

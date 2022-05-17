@@ -4,9 +4,6 @@ export class EffectScope {
   active = true
   effects = []
   cleanups = []
-  parent
-  scopes
-  index
 
   constructor (detached) {
     if (!detached && activeEffectScope) {
@@ -15,7 +12,7 @@ export class EffectScope {
     }
   }
 
-  run () {
+  run (fn) {
     if (this.active) {
       const currentEffectScope = activeEffectScope
       try {

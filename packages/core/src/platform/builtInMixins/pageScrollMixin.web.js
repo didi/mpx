@@ -4,14 +4,13 @@ import { getScrollTop } from '../../helper/MpxScroll/dom'
 
 let ms
 
-function refreshMs (vm) {
+function refreshMs () {
   if (ms) ms.destroy()
   try {
     global.__ms = ms = new MpxScroll()
     return true
   } catch (e) {
-    const location = vm.__mpxProxy && vm.__mpxProxy.options.mpxFileResource
-    error(`MpxScroll init error, please check.`, location, e)
+    error(`MpxScroll init error, please check.`, undefined, e)
   }
 }
 
@@ -44,7 +43,7 @@ export default function pageScrollMixin (mixinType) {
       this.__lastScrollY = 0
     },
     activated () {
-      if (!refreshMs(this)) {
+      if (!refreshMs()) {
         return
       }
 

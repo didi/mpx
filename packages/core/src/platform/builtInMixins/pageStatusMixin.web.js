@@ -1,5 +1,5 @@
 import { CREATED } from '../../core/innerLifecycle'
-import { inBrowser } from '../../helper/utils'
+import { isBrowser } from '../../helper/env'
 
 let systemInfo = {}
 
@@ -40,7 +40,7 @@ function onResize () {
 }
 
 // listen resize
-if (inBrowser) {
+if (isBrowser) {
   window.addEventListener('resize', onResize)
 }
 
@@ -68,7 +68,7 @@ export default function pageStatusMixin (mixinType) {
         () => pageInstance.mpxPageStatus,
         status => {
           if (!status) return
-          const pageLifetimes = (this.$rawOptions && this.$rawOptions.pageLifetimes) || {}
+          const pageLifetimes = this.__mpxProxy.options.pageLifetimes || {}
           // resize
           if (/^resize[0-9]*$/.test(status) && typeof pageLifetimes.resize === 'function') return pageLifetimes.resize.call(this, systemInfo)
           // show & hide

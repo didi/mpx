@@ -138,8 +138,9 @@ export default function relationsMixin (mixinType) {
         }
       },
       onInit () {
-        if (this.$rawOptions.relations) {
-          this.$mpxRelations = transferPath(this.$rawOptions.relations, this.is)
+        const options = this.__mpxProxy.options
+        if (options.relations) {
+          this.$mpxRelations = transferPath(options.relations, this.is)
           this.$relationNodesMap = {}
         }
         if (curTarget && this.props.$mpxIsSlot) {
@@ -188,7 +189,7 @@ export default function relationsMixin (mixinType) {
       },
       methods: {
         __mpxCollectRelations () {
-          const relations = this.$rawOptions.relations
+          const relations = this.__mpxProxy.options.relations
           if (!relations) return
           Object.keys(relations).forEach(path => {
             const relation = relations[path]
@@ -208,7 +209,7 @@ export default function relationsMixin (mixinType) {
 
           // 当前组件在target的slots当中
           if ((type === 'parent' || type === 'ancestor') && target.$vnode.context === this.$vnode.context) {
-            const targetRelation = target.$rawOptions && target.$rawOptions.relations && target.$rawOptions.relations[this.$options.componentPath]
+            const targetRelation = target?.__mpxProxy.options.relations?.[this.$options.componentPath]
             if (
               targetRelation &&
               targetRelation.type === relationTypeMap[type] &&

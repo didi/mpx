@@ -11,7 +11,7 @@ import { extend, diffAndCloneA, makeMap, merge, hasOwn } from './helper/utils'
 import { getMixin } from './core/mergeOptions'
 import { error } from './helper/log'
 import Vue from './vue'
-import { observe, set, del } from './observer/index'
+import { reactive, set, del } from './observer/reactive'
 import { watch as watchWithVm } from './observer/watch'
 import implement from './core/implement'
 
@@ -122,10 +122,7 @@ if (__mpx_mode__ === 'web') {
     implement
   }
 } else {
-  observable = function (obj) {
-    observe(obj)
-    return obj
-  }
+  observable = reactive
 
   const vm = {}
   watch = function (expOrFn, cb, options) {
@@ -183,7 +180,7 @@ EXPORT_MPX.config = {
   errorHandler: null,
   proxyEventHandler: null,
   setDataHandler: null,
-  forceRunWatcherSync: false,
+  forceFlushSync: false,
   webRouteConfig: {}
 }
 
@@ -191,7 +188,7 @@ global.__mpx = EXPORT_MPX
 
 if (__mpx_mode__ !== 'web') {
   if (global.i18n) {
-    observe(global.i18n)
+    reactive(global.i18n)
     // 挂载翻译方法
     if (global.i18nMethods) {
       Object.keys(global.i18nMethods).forEach((methodName) => {

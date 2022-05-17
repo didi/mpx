@@ -1,5 +1,5 @@
 import { BEFORECREATE } from '../../core/innerLifecycle'
-import { observe } from '../../observer/index'
+import { reactive } from '../../observer/reactive'
 
 export default function i18nMixin () {
   if (global.i18n) {
@@ -10,7 +10,7 @@ export default function i18nMixin () {
       },
       [BEFORECREATE] () {
         this.$i18n = { locale: global.i18n.locale }
-        observe(this.$i18n)
+        reactive(this.$i18n)
         this.$watch(() => {
           return global.i18n.locale
         }, (locale) => {

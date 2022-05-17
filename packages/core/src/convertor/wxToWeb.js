@@ -4,6 +4,7 @@ import { mergeLifecycle } from './mergeLifecycle'
 import { error } from '../helper/log'
 import { isObject, diffAndCloneA, hasOwn } from '../helper/utils'
 import { implemented } from '../core/implement'
+import { isDev } from '../helper/env'
 
 // 暂不支持的wx选项，后期需要各种花式支持
 const unsupported = ['moved', 'definitionFilter', 'onShareAppMessage', 'pageShow', 'pageHide']
@@ -16,7 +17,7 @@ function notSupportTip (options) {
   unsupported.forEach(key => {
     if (options[key]) {
       if (!implemented[key]) {
-        process.env.NODE_ENV !== 'production' && convertErrorDesc(key)
+        isDev && convertErrorDesc(key)
         delete options[key]
       } else if (implemented[key].remove) {
         delete options[key]

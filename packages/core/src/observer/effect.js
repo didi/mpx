@@ -6,9 +6,6 @@ import { recordEffectScope } from './effectScope'
 let uid = 0
 
 export class ReactiveEffect {
-  id
-  fn
-  scheduler
   active = true
   deps = []
   newDeps = []
@@ -94,41 +91,5 @@ export class ReactiveEffect {
       typeof this.onStop === 'function' && this.onStop()
       this.active = false
     }
-  }
-}
-
-/**
- * Recursively traverse an object to evoke all converted
- * getters, so that every nested property inside the object
- * is collected as a "deep" dependency.
- */
-const seenObjects = new Set()
-
-function traverse (val) {
-  seenObjects.clear()
-  _traverse(val, seenObjects)
-}
-
-function _traverse (val, seen) {
-  let i, keys
-  const isA = Array.isArray(val)
-  if ((!isA && !isObject(val)) || !Object.isExtensible(val)) {
-    return
-  }
-  const ob = getObserver(val)
-  if (ob) {
-    const depId = ob.dep.id
-    if (seen.has(depId)) {
-      return
-    }
-    seen.add(depId)
-  }
-  if (isA) {
-    i = val.length
-    while (i--) _traverse(val[i], seen)
-  } else {
-    keys = Object.keys(val)
-    i = keys.length
-    while (i--) _traverse(val[keys[i]], seen)
   }
 }

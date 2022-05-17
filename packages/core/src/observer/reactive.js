@@ -21,8 +21,6 @@ export function setForceTrigger (val) {
  */
 export class Observer {
   dep = new Dep()
-  vmCount = 0
-  value
 
   constructor (value, shallow) {
     this.value = value
@@ -87,16 +85,13 @@ function copyAugment (target, src, keys) {
  * returns the new observer if successfully observed,
  * or the existing observer if the value already has one.
  */
-export function observe (value, shallow, asRootData) {
+function observe (value, shallow) {
   if (!isObject(value)) {
     return
   }
   let ob = getObserver(value)
   if (!ob && (Array.isArray(value) || isPlainObject(value)) && Object.isExtensible(value)) {
     ob = new Observer(value, shallow)
-  }
-  if (asRootData && ob) {
-    ob.vmCount++
   }
   return ob
 }
@@ -168,10 +163,6 @@ export function set (target, key, val) {
     return val
   }
   const ob = getObserver(target)
-  if (ob && ob.vmCount) {
-    warn('Avoid adding reactive properties to the root data at runtime, declare it upfront in the data option!')
-    return val
-  }
   if (!ob) {
     target[key] = val
     return val
@@ -190,10 +181,6 @@ export function del (target, key) {
     return
   }
   const ob = getObserver(target)
-  if (ob && ob.vmCount) {
-    warn('Avoid deleting properties on the root data, just set it to null!')
-    return
-  }
   if (!hasOwn(target, key)) {
     return
   }

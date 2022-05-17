@@ -5,6 +5,7 @@ import { mergeToArray } from '../core/mergeOptions'
 import { error } from '../helper/log'
 import { implemented } from '../core/implement'
 import { hasOwn } from '../helper/utils'
+import { isDev } from '../helper/env'
 
 const unsupported = ['moved', 'definitionFilter']
 
@@ -16,7 +17,7 @@ function notSupportTip (options) {
   unsupported.forEach(key => {
     if (options[key]) {
       if (!implemented[key]) {
-        process.env.NODE_ENV !== 'production' && convertErrorDesc(key)
+        isDev && convertErrorDesc(key)
         delete options[key]
       } else if (implemented[key].remove) {
         delete options[key]

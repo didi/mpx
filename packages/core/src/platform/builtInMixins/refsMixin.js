@@ -72,7 +72,7 @@ export default function getRefsMixin () {
           }
         }
         if (selector.lastIndexOf('.') > 0) {
-          const location = this.__mpxProxy && this.__mpxProxy.options.mpxFileResource
+          const location = this.__mpxProxy.options.mpxFileResource
           error('The selectComponent or selectAllComponents only supports the single selector, a composed selector is not supported.', location)
         }
         return all ? result : result[0]
@@ -111,6 +111,11 @@ export default function getRefsMixin () {
     }
   }
   return {
+    data () {
+      return {
+        mpxCid: this.__mpxProxy.uid
+      }
+    },
     [BEFORECREATE] () {
       this.$refs = {}
       if (__mpx_mode__ === 'tt') {

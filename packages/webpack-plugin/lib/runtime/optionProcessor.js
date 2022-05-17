@@ -1,4 +1,4 @@
-import { inBrowser } from '../utils/env'
+import { isBrowser } from './env'
 
 export default function processOption (
   option,
@@ -276,7 +276,7 @@ export default function processOption (
         next()
       })
       // 处理visibilitychange时触发当前活跃页面组件的onshow/onhide
-      if (inBrowser) {
+      if (isBrowser) {
         const errorHandler = function (args, fromVue) {
           if (global.__mpxAppCbs && global.__mpxAppCbs.error && global.__mpxAppCbs.error.length) {
             global.__mpxAppCbs.error.forEach((cb) => {

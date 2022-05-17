@@ -1,4 +1,5 @@
 import EXPORT_MPX from '../index'
+import { isDev } from './env'
 
 export function warn (msg, location, e) {
   const condition = EXPORT_MPX.config.ignoreWarning
@@ -20,7 +21,7 @@ export function error (msg, location, e) {
 }
 
 function log (type, msg, location, e) {
-  if (process.env.NODE_ENV !== 'production') {
+  if (isDev) {
     let header = `[Mpx runtime ${type}]: `
     if (location) {
       header = `[Mpx runtime ${type} at ${location}]: `

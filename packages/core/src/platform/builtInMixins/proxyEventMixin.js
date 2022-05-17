@@ -53,7 +53,7 @@ export default function proxyEventMixin () {
           if (typeof this[callbackName] === 'function') {
             returnedValue = this[callbackName].apply(this, params)
           } else {
-            const location = this.__mpxProxy && this.__mpxProxy.options.mpxFileResource
+            const location = this.__mpxProxy.options.mpxFileResource
             error(`Instance property [${callbackName}] is not function, please check.`, location)
           }
         }
