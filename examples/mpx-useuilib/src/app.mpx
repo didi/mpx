@@ -1,7 +1,9 @@
 <script>
   import mpx from '@mpxjs/core'
   import apiProxy from '@mpxjs/api-proxy'
-
+  if (__mpx_mode__ === 'web') {
+    require('vant/lib/index.css')
+  }
   mpx.use(apiProxy)
   // app.js
   App({})
