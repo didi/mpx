@@ -12,6 +12,7 @@ const harmonySpecifierTag = require('webpack/lib/dependencies/HarmonyImportDepen
 const NormalModule = require('webpack/lib/NormalModule')
 const EntryPlugin = require('webpack/lib/EntryPlugin')
 const JavascriptModulesPlugin = require('webpack/lib/javascript/JavascriptModulesPlugin')
+const FlagEntryExportAsUsedPlugin = require('webpack/lib/FlagEntryExportAsUsedPlugin')
 const FileSystemInfo = require('webpack/lib/FileSystemInfo')
 const normalize = require('./utils/normalize')
 const toPosix = require('./utils/to-posix')
@@ -273,6 +274,9 @@ class MpxWebpackPlugin {
     } else {
       errors.push('Multiple MpxWebpackPlugin instances exist in webpack compiler, please check webpack plugins config!')
     }
+
+    // 将entry export标记为used且不可mangle，避免require.async生成的js chunk在生产环境下报错
+    new FlagEntryExportAsUsedPlugin(true, 'entry').apply(compiler)
 
     if (this.options.mode !== 'web') {
       // 强制设置publicPath为'/'
