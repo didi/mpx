@@ -1149,7 +1149,7 @@ try {
             }
           })
           if (mpx.mode === 'tenon' && mpxStyleLoaderIndex === -1) {
-            if(tenonStyleLoaderIndex > -1 && !isPitcherRequest){
+            if (tenonStyleLoaderIndex > -1 && !isPitcherRequest) {
               data.loaders.splice(tenonStyleLoaderIndex + 1, 0, {
                 loader: normalize.lib('style-compiler/index.js'),
                 options: (mpxStyleOptions && JSON.parse(mpxStyleOptions)) || {}
