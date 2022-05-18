@@ -178,9 +178,8 @@ export default class XFetch {
       // 1. 检查config.url存在
       // 2. 抹平微信/支付宝header/headers字段差异
       // 3. 填充默认method为GET, method大写化
-      // 4. 抽取url中query合并至config.params
-      // 5. 对于类GET请求将config.data移动合并至config.params(最终发送请求前进行统一序列化并拼接至config.url上)
-      // 6. 对于类POST请求将config.emulateJSON实现为config.header['content-type'] = 'application/x-www-form-urlencoded'
+      // 4. 对于类GET请求将config.data移动合并至config.params(最终发送请求前进行统一序列化并拼接至config.url上)
+      // 5. 对于类POST请求将config.emulateJSON实现为config.header['content-type'] = 'application/x-www-form-urlencoded'
       // 后续请求处理都应基于正规化后的config进行处理(proxy/mock/validate/serialize)
       XFetch.normalizeConfig(config)
       const checkRes = this.checkValidator(config)

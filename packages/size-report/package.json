@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/size-report",
-  "version": "2.7.16",
+  "version": "2.7.33",
   "description": "mpx size report plugin",
   "main": "src/index.js",
   "scripts": {
@@ -8,10 +8,10 @@
     "lint": "eslint --ext .js src/",
     "fix": "eslint --fix --ext .js src/"
   },
-  "homepage": "https://github.com/mpx-ecology/mpx-size-report",
+  "homepage": "https://www.mpxjs.cn/guide/advance/size-report.html",
   "repository": {
     "type": "git",
-    "url": "git@github.com:mpx-ecology/mpx-size-report.git"
+    "url": "https://github.com/didi/mpx"
   },
   "keywords": [
     "mpx",

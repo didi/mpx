@@ -6,7 +6,7 @@ const baseRules = [
   {
     test: /\.js$/,
     loader: 'babel-loader',
-    include: [resolve('src'), resolve('node_modules/@mpxjs')]
+    include: [/\.mpx\.js/, resolve('src'), resolve('test'), resolve('node_modules/@mpxjs')]
   },
   {
     test: /\.json$/,
@@ -29,22 +29,10 @@ const baseRules = [
     ]
   },
   {
-    test: /\.styl(us)?$/,
+    test: /\.less$/,
     use: [
       'css-loader',
-      'stylus-loader'
-    ]
-  },
-  {
-    test: /\.(wxss|acss|css|qss|ttss|jxss|ddss)$/,
-    use: [
-      'css-loader'
-    ]
-  },
-  {
-    test: /\.(wxml|axml|swan|qml|ttml|qxml|jxml|ddml)$/,
-    use: [
-      'html-loader'
+      'less-loader'
     ]
   }
 ]
@@ -63,7 +51,7 @@ const tsRule = {
 }
 
 module.exports = function getRules (options) {
-  const { tsSupport } = options
+  const { mode, tsSupport } = options
 
   let rules = baseRules.slice()
 
@@ -72,9 +60,69 @@ module.exports = function getRules (options) {
   }
 
   const currentMpxLoaderConf = getConf(mpxLoaderConf, options)
-  rules.push({
-    test: /\.mpx$/,
-    use: MpxWebpackPlugin.loader(currentMpxLoaderConf)
-  })
+
+  if (mode === 'web') {
+    rules = rules.concat([
+      {
+        test: /\.mpx$/,
+        use: [
+          {
+            loader: 'vue-loader',
+            options: {
+              transformToRequire: {
+                'mpx-image': 'src',
+                'mpx-audio': 'src',
+                'mpx-video': 'src'
+              }
+            }
+          },
+          MpxWebpackPlugin.loader(currentMpxLoaderConf)
+        ]
+      },
+      {
+        test: /\.vue$/,
+        loader: 'vue-loader'
+      },
+      // 如输出web时需要支持其他预编译语言，可以在此添加rule配置
+      {
+        test: /\.styl(us)?$/,
+        use: [
+          'vue-style-loader',
+          'css-loader',
+          'stylus-loader'
+        ]
+      },
+      {
+        test: /\.css$/,
+        use: [
+          'vue-style-loader',
+          'css-loader'
+        ]
+      }
+    ])
+  } else {
+    rules = rules.concat([
+      {
+        test: /\.mpx$/,
+        use: MpxWebpackPlugin.loader(currentMpxLoaderConf)
+      },
+      {
+        test: /\.styl(us)?$/,
+        use: [
+          MpxWebpackPlugin.wxssLoader(),
+          'stylus-loader'
+        ]
+      },
+      {
+        test: /\.(wxss|acss|css|qss|ttss|jxss|ddss)$/,
+        use: MpxWebpackPlugin.wxssLoader()
+      },
+      {
+        test: /\.(wxml|axml|swan|qml|ttml|qxml|jxml|ddml)$/,
+        use: MpxWebpackPlugin.wxmlLoader()
+      }
+    ])
+  }
+
   return rules
 }
