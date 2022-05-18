@@ -1125,11 +1125,13 @@ try {
         if (data.loaders) {
           const { queryObj } = parseRequest(data.request)
           const mpxStyleOptions = queryObj.mpxStyleOptions
+          // todo 本套逻辑可能需要根据mode来提前判断以做编译优化
           const firstLoader = (data.loaders[0] && data.loaders[0].loader) || ''
-          const isPitcherRequest = firstLoader.includes('vue-loader/lib/loaders/pitcher.js')
+          const isPitcherRequest = firstLoader.includes('vue-loader/lib/loaders/pitcher.js') || firstLoader.includes('@hummer/tenon-loader/dist/pitcher.js')
           let cssLoaderIndex = -1
           let vueStyleLoaderIndex = -1
           let mpxStyleLoaderIndex = -1
+          let tenonStyleLoaderIndex = -1
           data.loaders.forEach((loader, index) => {
             const currentLoader = loader.loader
             if (currentLoader.includes('ts-loader')) {
@@ -1140,11 +1142,20 @@ try {
               cssLoaderIndex = index
             } else if (currentLoader.includes('vue-loader/lib/loaders/stylePostLoader.js')) {
               vueStyleLoaderIndex = index
+            } else if (currentLoader.includes('@hummer/tenon-style-loader/dist/index.js')) {
+              tenonStyleLoaderIndex = index
             } else if (currentLoader.includes('@mpxjs/webpack-plugin/lib/style-compiler/index.js')) {
               mpxStyleLoaderIndex = index
             }
           })
-          if (mpxStyleLoaderIndex === -1) {
+          if (mpx.mode === 'tenon' && mpxStyleLoaderIndex === -1) {
+            if(tenonStyleLoaderIndex > -1 && !isPitcherRequest){
+              data.loaders.splice(tenonStyleLoaderIndex + 1, 0, {
+                loader: normalize.lib('style-compiler/index.js'),
+                options: (mpxStyleOptions && JSON.parse(mpxStyleOptions)) || {}
+              })
+            }
+          } else if (mpxStyleLoaderIndex === -1) {
             let loaderIndex = -1
             if (cssLoaderIndex > -1 && vueStyleLoaderIndex === -1) {
               loaderIndex = cssLoaderIndex
