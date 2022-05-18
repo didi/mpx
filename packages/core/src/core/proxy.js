@@ -1,9 +1,9 @@
 import { reactive } from '../observer/reactive'
 import { ReactiveEffect } from '../observer/effect'
 import { EffectScope } from '../observer/effectScope'
-import { watch, instanceWatch } from '../observer/watch'
+import { instanceWatch } from '../observer/watch'
 import { computed } from '../observer/computed'
-import { queueJob } from '../observer/scheduler'
+import { queueJob, queuePostFlushCb, nextTick } from '../observer/scheduler'
 import { isFunction } from '../helper/utils'
 import EXPORT_MPX from '../index'
 import {
@@ -26,13 +26,14 @@ import {
   isFunction
 } from '../helper/utils'
 import _getByPath from '../helper/getByPath'
-import { getRenderCallBack } from '../platform/patch'
+import { onRenderCallBack } from '../platform/patch'
 import {
   BEFORECREATE,
   CREATED,
   BEFOREMOUNT,
   MOUNTED,
   UPDATED,
+  BEFOREDESTROY,
   DESTROYED,
   ONLOAD
 } from './innerLifecycle'
@@ -68,7 +69,7 @@ export default class MpxProxy {
       this.forceUpdateData = {}
       // 下次是否需要强制更新全部渲染数据
       this.forceUpdateAll = false
-      this.curRenderTask = null
+      this.currentRenderTask = null
     }
   }
 
@@ -78,11 +79,13 @@ export default class MpxProxy {
       setCurrentInstance(this)
       this.initProps()
       this.initSetup()
+      unsetCurrentInstance()
     }
     // beforeCreate需要在setup执行过后执行
     this.callUserHook(BEFORECREATE)
 
     if (__mpx_mode__ !== 'web') {
+      setCurrentInstance(this)
       this.initData()
       this.initComputed()
       this.initWatch()
@@ -98,39 +101,36 @@ export default class MpxProxy {
   }
 
   reCreated (params) {
-    const options = this.options
-    this.state = BEFORECREATE
-    this.callUserHook(BEFORECREATE)
-    if (__mpx_mode__ !== 'web') {
-      this.initComputed(options.computed, true)
-      this.initWatch(options.watch)
-    }
-    this.state = CREATED
-    this.callUserHook(CREATED, params)
-    if (__mpx_mode__ !== 'web') {
-      this.initRender()
-    }
-    this.nextTick(() => {
-      this.mounted()
-    })
+    // const options = this.options
+    // this.state = BEFORECREATE
+    // this.callUserHook(BEFORECREATE)
+    // if (__mpx_mode__ !== 'web') {
+    //   this.initComputed(options.computed, true)
+    //   this.initWatch(options.watch)
+    // }
+    // this.state = CREATED
+    // this.callUserHook(CREATED, params)
+    // if (__mpx_mode__ !== 'web') {
+    //   this.initRender()
+    // }
+    // nextTick(this.mounted.bind(this), this)
   }
 
   renderTaskExecutor (isEmptyRender) {
-    if ((!this.isMounted() && this.curRenderTask) || (this.isMounted() && isEmptyRender)) {
+    if ((!this.isMounted() && this.currentRenderTask) || (this.isMounted() && isEmptyRender)) {
       return
     }
-    this.curRenderTask = {
+    this.currentRenderTask = {
       state: 'pending'
     }
-    const promise = new Promise(resolve => {
-      this.curRenderTask.resolve = (res) => {
-        this.curRenderTask.state = 'finished'
+    this.currentRenderTask.promise = new Promise(resolve => {
+      this.currentRenderTask.resolve = (res) => {
+        this.currentRenderTask.state = 'finished'
         resolve(res)
       }
     })
-    this.curRenderTask.promise = promise
     // isMounted之前基于mounted触发，isMounted之后基于setData回调触发
-    return this.isMounted() && this.curRenderTask.resolve
+    return this.isMounted() && this.currentRenderTask.resolve
   }
 
   isMounted () {
@@ -143,7 +143,7 @@ export default class MpxProxy {
       // 用于处理refs等前置工作
       this.callUserHook(BEFOREMOUNT)
       this.callUserHook(MOUNTED)
-      this.curRenderTask && this.curRenderTask.resolve()
+      this.currentRenderTask && this.currentRenderTask.resolve()
     }
   }
 
@@ -154,11 +154,12 @@ export default class MpxProxy {
   }
 
   destroyed () {
-    this.state = DESTROYED
+    this.callUserHook(BEFOREDESTROY)
     if (__mpx_mode__ !== 'web') {
-      this.clearWatchers()
+      this.scope.stop()
     }
     this.callUserHook(DESTROYED)
+    this.state = DESTROYED
   }
 
   isDestroyed () {
@@ -177,17 +178,17 @@ export default class MpxProxy {
 
   initApi () {
     // 挂载扩展属性到实例上
-    proxy(this.target, this.options.proto, undefined, true, this.createProxyConflictHandler('mpx.prototype'))
+    proxy(this.target, EXPORT_MPX.prototype, undefined, true, this.createProxyConflictHandler('mpx.prototype'))
     // 挂载混合模式下createPage中的自定义属性，模拟原生Page构造器的表现
     if (this.options.__type__ === 'page' && !this.options.__pageCtor__) {
       proxy(this.target, this.options, this.options.mpxCustomKeysForBlend, false, this.createProxyConflictHandler('page options'))
     }
     if (__mpx_mode__ !== 'web') {
       // 挂载$watch
-      this.target.$watch = (...rest) => this.watch(...rest)
+      this.target.$watch = (...args) => instanceWatch(this, ...args)
       // 强制执行render
-      this.target.$forceUpdate = (...rest) => this.forceUpdate(...rest)
-      this.target.$nextTick = fn => this.nextTick(fn)
+      this.target.$forceUpdate = (...args) => this.forceUpdate(...args)
+      this.target.$nextTick = fn => nextTick(fn, this)
     }
   }
 
@@ -246,7 +247,6 @@ export default class MpxProxy {
 
         computedObj[key] = computed({ get, set })
       })
-
       this.collectLocalKeys(computedObj)
       proxy(this.target, computedObj, undefined, false, this.createProxyConflictHandler('computed'))
     }
@@ -259,10 +259,10 @@ export default class MpxProxy {
       Object.entries(watch).forEach(([key, handler]) => {
         if (Array.isArray(handler)) {
           for (let i = 0; i < handler.length; i++) {
-            this.watch(key, handler[i])
+            instanceWatch(this, key, handler[i])
           }
         } else {
-          this.watch(key, handler)
+          instanceWatch(this, key, handler)
         }
       })
     }
@@ -274,14 +274,6 @@ export default class MpxProxy {
     })
   }
 
-  nextTick (fn) {
-    if (typeof fn === 'function') {
-      queueWatcher(() => {
-        this.curRenderTask ? this.curRenderTask.promise.then(fn) : fn()
-      })
-    }
-  }
-
   callUserHook (hookName, params, hooksOnly) {
     const hook = this.options[hookName] || this.target[hookName]
     const hooks = this.hooks[hookName] || []
@@ -290,21 +282,9 @@ export default class MpxProxy {
       result = callWithErrorHandling(hook.bind(this.target), this, `${hookName} hook`, params)
     }
     hooks.forEach((hook) => {
-      result = callWithErrorHandling(hook.bind(this.target), this, `${hookName} hook`, params)
+      result = hook(...params)
     })
     return result
-  }
-
-  watch (expOrFn, cb, options) {
-    return instanceWatch(this, expOrFn, cb, options)
-  }
-
-  clearWatchers () {
-    let i = this._watchers.length
-    while (i--) {
-      this._watchers[i].teardown()
-    }
-    this._watchers.length = 0
   }
 
   render () {
@@ -440,7 +420,7 @@ export default class MpxProxy {
     let callback = cb
     if (this.isMounted()) {
       callback = () => {
-        getRenderCallBack(this)()
+        onRenderCallBack(this)
         cb && cb()
         resolve && resolve()
       }
@@ -477,14 +457,14 @@ export default class MpxProxy {
   }
 
   forceUpdate (data, options, callback) {
-    if (typeof data === 'function') {
+    if (isFunction(data)) {
       callback = data
       data = undefined
     }
 
     options = options || {}
 
-    if (typeof options === 'function') {
+    if (isFunction(options)) {
       callback = options
       options = {}
     }
@@ -501,12 +481,10 @@ export default class MpxProxy {
       this.forceUpdateAll = true
     }
 
-    if (callback) {
-      callback = callback.bind(this.target)
-      this.nextTick(callback)
-    }
+    callback && nextTick(callback.bind(this.target), this)
+
     if (this.effect) {
-      this.effect.run()
+      options.sync ? this.effect.run() : this.effect.update()
     } else {
       if (this.forceUpdateAll) {
         Object.keys(this.data).forEach((key) => {
@@ -515,16 +493,14 @@ export default class MpxProxy {
           }
         })
       }
-      options.sync ? this.doRender() : queueWatcher(() => {
-        this.doRender()
-      })
+      options.sync ? this.doRender() : queueJob(this.doRender.bind(this))
     }
   }
 }
 
 export let currentInstance = null
 
-export const getCurrentInstance = () => currentInstance
+export const getCurrentInstance = () => currentInstance?.target
 
 export const setCurrentInstance = (instance) => {
   currentInstance = instance
@@ -538,7 +514,16 @@ export const unsetCurrentInstance = () => {
 
 
 export const injectHook = (hookName, hook, instance = currentInstance) => {
-  if (isFunction(hook) && instance?.hooks) (instance.hooks[hookName] || (instance.hooks[hookName] = [])).push(hook)
+  if (instance) {
+    const wrappedHook = (...args) => {
+      if (instance.isDestroyed()) return
+      setCurrentInstance(instance)
+      const res = callWithErrorHandling(hook, instance, `${hookName} hook`, args)
+      unsetCurrentInstance()
+      return res
+    }
+    if (isFunction(hook)) (instance.hooks[hookName] || (instance.hooks[hookName] = [])).push(wrappedHook)
+  }
 }
 
 export const onBeforeCreate = (fn) => injectHook(BEFORECREATE, fn)
@@ -546,6 +531,7 @@ export const onCreated = (fn) => injectHook(CREATED, fn)
 export const onBeforeMount = (fn) => injectHook(BEFOREMOUNT, fn)
 export const onMounted = (fn) => injectHook(MOUNTED, fn)
 export const onUpdated = (fn) => injectHook(UPDATED, fn)
+export const onBeforeDestroy = (fn) => injectHook(BEFOREDESTROY, fn)
 export const onDestroyed = (fn) => injectHook(DESTROYED, fn)
 export const onLoad = (fn) => injectHook(ONLOAD, fn)
 

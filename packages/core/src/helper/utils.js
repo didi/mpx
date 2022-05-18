@@ -142,19 +142,6 @@ export function enumerableKeys (obj) {
   return keys
 }
 
-// 此函数用于合并mpx插件挂载到mpx.prototype中的实例属性，因此需要进行原型链属性的合并
-export function extend (target, ...sources) {
-  for (const source of sources) {
-    if (isObject(source)) {
-      // 合并原型链属性
-      for (const key in source) {
-        target[key] = source[key]
-      }
-    }
-  }
-  return target
-}
-
 // deepMerge 用于合并i18n语言集
 export function merge (target, ...sources) {
   if (isObject(target)) {

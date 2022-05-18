@@ -2,7 +2,7 @@ import { hasOwn } from '../../../helper/utils'
 import MpxProxy from '../../../core/proxy'
 import builtInKeysMap from '../builtInKeysMap'
 import mergeOptions from '../../../core/mergeOptions'
-import { queueWatcher } from '../../../observer/scheduler'
+import { queuePostFlushCb } from '../../../observer/scheduler'
 
 function transformProperties (properties) {
   if (!properties) {
@@ -27,9 +27,9 @@ function transformProperties (properties) {
     newFiled.observer = function (value) {
       if (this.__mpxProxy) {
         this[key] = value
-        queueWatcher(() => {
+        queuePostFlushCb(() => {
           // 只有当当前没有渲染任务时，属性更新才需要单独触发updated，否则可以由渲染任务结束后触发updated
-          if (this.__mpxProxy.curRenderTask && this.__mpxProxy.curRenderTask.state === 'finished') {
+          if (this.__mpxProxy.currentRenderTask && this.__mpxProxy.currentRenderTask.state === 'finished') {
             this.__mpxProxy.updated()
           }
         })

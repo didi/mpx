@@ -33,7 +33,7 @@ export default function createApp (option, config = {}) {
   if (__mpx_mode__ === 'web') {
     builtInMixins.push({
       created () {
-        Object.assign(this, option.proto)
+        Object.assign(this, EXPORT_MPX.prototype)
         Object.assign(this, appData)
         const current = (global.__mpxRouter && global.__mpxRouter.currentRoute) || {}
         const options = {
@@ -64,7 +64,7 @@ export default function createApp (option, config = {}) {
   } else {
     builtInMixins.push({
       onLaunch () {
-        Object.assign(this, option.proto)
+        Object.assign(this, EXPORT_MPX.prototype)
       }
     })
   }

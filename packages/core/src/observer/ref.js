@@ -57,11 +57,13 @@ export function toRefs (obj) {
   return result
 }
 
-export function customRef () {
+export function customRef (factory) {
   const version = ref(0)
   return createRef(
     factory(
+      // track
       () => version.value,
+      // trigger
       () => {
         version.value++
       }

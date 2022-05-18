@@ -1,7 +1,5 @@
 import { reactive } from '../observer/reactive'
-
-import { initComputed } from '../observer/computed'
-
+import { computed } from '../observer/computed'
 import Vue from '../vue'
 
 import {
@@ -185,19 +183,22 @@ class Store {
 
   resetStoreVM () {
     if (__mpx_mode__ === 'web') {
-      this._vm = new Vue({
+      const vm = new Vue({
         data: {
           __mpxState: this.state
         },
         computed: this.__wrappedGetters
       })
       const computedKeys = Object.keys(this.__wrappedGetters)
-      proxy(this.getters, this._vm, computedKeys)
+      proxy(this.getters, vm, computedKeys)
       proxy(this.getters, this.__depsGetters)
     } else {
-      this._vm = {}
-      reactive(this.state, false, true)
-      initComputed(this._vm, this.getters, this.__wrappedGetters)
+      reactive(this.state)
+      const computedObj = {}
+      Object.entries(this.__wrappedGetters).forEach(([key, value]) => {
+        computedObj[key] = computed(value)
+      })
+      proxy(this.getters, computedObj)
       proxy(this.getters, this.__depsGetters)
     }
   }
@@ -217,7 +218,7 @@ function genericSubscribe (fn, subs, options) {
   }
 }
 
-export default function createStore (options) {
+export function createStore (options) {
   return new Store(options)
 }
 

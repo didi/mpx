@@ -62,10 +62,8 @@ export default function createFactory (type) {
   }
 }
 
-export function getRenderCallBack (context) {
-  return () => {
-    if (__mpx_mode__ !== 'ali' || context.options.__type__ === 'page') {
-      context.updated()
-    }
+export function onRenderCallBack (context) {
+  if (__mpx_mode__ !== 'ali' || context.options.__type__ === 'page') {
+    context.updated()
   }
 }

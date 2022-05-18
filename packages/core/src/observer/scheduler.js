@@ -2,6 +2,7 @@ import { warn } from '../helper/log'
 import EXPORT_MPX from '../index'
 import { isDev } from '../helper/env'
 import { callWithErrorHandling } from '../helper/errorHandling'
+import { currentInstance } from '../core/proxy'
 
 let isFlushing = false
 let isFlushPending = false
@@ -39,8 +40,9 @@ function findInsertionIndex (id) {
   return start
 }
 
-export function nextTick (fn) {
-  const p = currentFlushPromise || resolvedPromise
+export function nextTick (fn, instance = currentInstance) {
+  queuePostFlushCb()
+  const p = (currentFlushPromise || resolvedPromise).then(() => instance?.currentRenderTask?.promise)
   return fn ? p.then(fn) : p
 }
 
@@ -50,6 +52,14 @@ export function queuePreFlushCb (cb) {
 
 export function queuePostFlushCb (cb) {
   queueCb(cb, activePostFlushCbs, pendingPostFlushCbs, postFlushIndex)
+}
+
+export function queuePostRenderEffect (cb, instance) {
+  if (instance) {
+    nextTick(() => queuePostFlushCb(cb), instance)
+  } else {
+    queuePostFlushCb(cb)
+  }
 }
 
 function queueCb (cb, activeQueue, pendingQueue, index) {

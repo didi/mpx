@@ -2,7 +2,7 @@ import { warn } from '../helper/log'
 import { ReactiveEffect } from './effect'
 import { isRef } from './ref'
 import { isReactive } from './reactive'
-import { queuePreFlushCb, queuePostFlushCb } from './scheduler'
+import { queuePreFlushCb, queuePostRenderEffect } from './scheduler'
 import { callWithErrorHandling } from '../helper/errorHandling'
 import { currentInstance, setCurrentInstance, unsetCurrentInstance } from '../core/proxy'
 import { getByPath, isString, isFunction, isObject, noop, remove, isPlainObject } from '../helper/utils'
@@ -38,7 +38,6 @@ export function instanceWatch (instance, source, cb, options) {
   }
 
   cb = cb || noop
-
 
   const cur = currentInstance
   const isCur = instance === cur
@@ -154,7 +153,7 @@ function doWatch (source, cb, options = {}) {
     // the scheduler function gets called directly
     scheduler = job
   } else if (flush === 'post') {
-    scheduler = () => queuePostFlushCb(job)
+    scheduler = () => queuePostRenderEffect(job, instance)
   } else {
     // default: 'pre'
     scheduler = () => queuePreFlushCb(job)
@@ -170,7 +169,7 @@ function doWatch (source, cb, options = {}) {
       oldValue = effect.run()
     }
   } else if (flush === 'post') {
-    queuePostFlushCb(effect.run.bind(effect))
+    queuePostRenderEffect(effect.run.bind(effect), instance)
   } else {
     effect.run()
   }
@@ -201,55 +200,3 @@ export function traverse (value, seen) {
   }
   return value
 }
-
-
-// export function watch (vm, expOrFn, cb, options) {
-//   if (isObject(cb)) {
-//     options = cb
-//     cb = cb.handler
-//   }
-//   if (typeof cb === 'string') {
-//     if (vm.target && vm.target[cb]) {
-//       cb = vm.target[cb]
-//     } else {
-//       cb = noop
-//     }
-//   }
-//
-//   cb = cb || noop
-//
-//   options = options || {}
-//   options.user = true
-//
-//   if (options.once) {
-//     const _cb = cb
-//     const onceCb = typeof options.once === 'function'
-//       ? options.once
-//       : function () {
-//         return true
-//       }
-//     cb = function (...args) {
-//       const res = onceCb.apply(this, args)
-//       if (res) watcher.teardown()
-//       _cb.apply(this, args)
-//     }
-//   }
-//
-//   const watcher = new Watcher(vm, expOrFn, cb, options)
-//   if (!vm._namedWatchers) vm._namedWatchers = {}
-//   const name = options.name
-//   if (name) {
-//     if (vm._namedWatchers[name]) error(`已存在name=${name} 的 watcher，当存在多个 name 相同 watcher 时仅保留当次创建的 watcher，如需都保留请使用不同的 name！`)
-//     vm._namedWatchers[name] = watcher
-//   }
-//   if (options.immediate) {
-//     cb.call(vm.target, watcher.value)
-//   } else if (options.immediateAsync) {
-//     watcher.immediateAsync = true
-//     queueWatcher(watcher)
-//   }
-//
-//   return function unwatchFn () {
-//     watcher.teardown()
-//   }
-// }

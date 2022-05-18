@@ -1,34 +1,8 @@
-import * as platform from './platform'
-import createStore, {
-  createStoreWithThis,
-  createStateWithThis,
-  createGettersWithThis,
-  createMutationsWithThis,
-  createActionsWithThis
-} from './core/createStore'
-import { injectMixins } from './core/injectMixins'
-import { extend, diffAndCloneA, makeMap, merge, hasOwn } from './helper/utils'
-import { getMixin } from './core/mergeOptions'
-import { error } from './helper/log'
-import Vue from './vue'
-import { reactive, set, del } from './observer/reactive'
-import { watch as watchWithVm } from './observer/watch'
-import implement from './core/implement'
-
-export function createApp (config, ...rest) {
-  const mpx = new EXPORT_MPX()
-  platform.createApp(Object.assign({ proto: mpx.proto }, config), ...rest)
-}
-
-export function createPage (config, ...rest) {
-  const mpx = new EXPORT_MPX()
-  platform.createPage(Object.assign({ proto: mpx.proto }, config), ...rest)
-}
-
-export function createComponent (config, ...rest) {
-  const mpx = new EXPORT_MPX()
-  platform.createComponent(Object.assign({ proto: mpx.proto }, config), ...rest)
-}
+export {
+  createApp,
+  createPage,
+  createComponent
+} from './platform/index'
 
 export {
   createStore,
@@ -36,9 +10,76 @@ export {
   createStateWithThis,
   createGettersWithThis,
   createMutationsWithThis,
-  createActionsWithThis,
-  getMixin
-}
+  createActionsWithThis
+} from './core/createStore'
+
+export {
+  watchEffect,
+  watchSyncEffect,
+  watchPostEffect,
+  watch,
+} from './observer/watch'
+
+export {
+  reactive,
+  isReactive,
+  shallowReactive,
+  set,
+  del
+} from './observer/reactive'
+
+export {
+  ref,
+  unref,
+  toRef,
+  toRefs,
+  isRef,
+  customRef,
+  shallowRef,
+  triggerRef
+} from './observer/ref'
+
+export {
+  computed
+} from './observer/computed'
+
+export {
+  effectScope,
+  getCurrentScope,
+  onScopeDispose
+} from './observer/effectScope'
+
+export {
+  onBeforeCreate,
+  onCreated,
+  onBeforeMount,
+  onMounted,
+  onUpdated,
+  onBeforeDestroy,
+  onDestroyed,
+  onLoad,
+  getCurrentInstance
+} from './core/proxy'
+
+export { getMixin } from './core/mergeOptions'
+
+export { injectMixins } from './core/injectMixins'
+
+import {
+  watch
+} from './observer/watch'
+
+import {
+  reactive,
+  set,
+  del
+} from './observer/reactive'
+
+import { injectMixins } from './core/injectMixins'
+import { diffAndCloneA, makeMap, merge, hasOwn } from './helper/utils'
+import { error } from './helper/log'
+import Vue from './vue'
+import implement from './core/implement'
 
 export function toPureObject (obj) {
   return diffAndCloneA(obj).clone
@@ -95,55 +136,31 @@ let APIs = {}
 // 实例属性
 let InstanceAPIs = {}
 
-let observable
-let watch
 
 if (__mpx_mode__ === 'web') {
   const vm = new Vue()
-  observable = Vue.observable.bind(Vue)
-  watch = vm.$watch.bind(vm)
+  const observable = Vue.observable.bind(Vue)
+  const watch = vm.$watch.bind(vm)
   const set = Vue.set.bind(Vue)
   const del = Vue.delete.bind(Vue)
   APIs = {
-    createApp,
-    createPage,
-    createComponent,
-    createStore,
-    createStoreWithThis,
     mixin: injectMixins,
-    injectMixins,
-    toPureObject,
     observable,
     watch,
     use,
     set,
     delete: del,
-    getMixin,
     implement
   }
 } else {
-  observable = reactive
-
-  const vm = {}
-  watch = function (expOrFn, cb, options) {
-    return watchWithVm(vm, expOrFn, cb, options)
-  }
 
   APIs = {
-    createApp,
-    createPage,
-    createComponent,
-    createStore,
-    createStoreWithThis,
     mixin: injectMixins,
-    injectMixins,
-    toPureObject,
-    observable,
+    observable: reactive,
     watch,
     use,
     set,
     delete: del,
-    getMixin,
     implement
   }
 
@@ -153,12 +170,9 @@ if (__mpx_mode__ === 'web') {
   }
 }
 
-export { watch, observable }
-
 function factory () {
   // 作为原型挂载属性的中间层
   function MPX () {
-    this.proto = extend({}, this)
   }
 
   Object.assign(MPX, APIs)
