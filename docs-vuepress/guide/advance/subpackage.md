@@ -6,7 +6,7 @@
 
 后来微信原生增加了 [分包加载](https://developers.weixin.qq.com/miniprogram/dev/framework/subpackages.html) 能力，支持多人协作场景和包体积控制。
 
-## packages
+## 多人合作packages
 
 我们提供的 packages 概念实际上是对业务的拆分合并，即开发的时候可以各自开发，打包的时候合为一个，和微信的分包不相同，推荐在此基础上进一步使用平台原生分包能力，可以更好地控制小程序体积。
 
@@ -74,21 +74,11 @@ project
         │   ...
 ```
 
-## 分包
+## 使用分包
 
 作为一个对 performance 极度重视的框架，分包作为提升小程序体验的重要能力，是必须支持的。
 
-微信文档中有以下三种分包，mpx 对这些能力都做了较好的支持。
-
 > 分包是小程序平台提供的原生能力，mpx是对该能力做了部分加强，目前各大主流小程序平台都已支持分包，且框架在可能的情况下进行了抹平。
-
-- [普通分包](#普通分包)
-- [独立分包](#独立分包)
-- [分包预下载](#分包预下载)
-- [分包异步化](#分包异步化)
-- [分包注意事项](#分包注意事项)
-
-### 普通分包
 
 mpx 中会将 app.mpx（入口文件，也不一定非要叫app.mpx） 中 packages 域下的路径带 root 为 key 的 query 则被解析认为是使用分包加载。
 
@@ -138,7 +128,7 @@ mpx 中会将 app.mpx（入口文件，也不一定非要叫app.mpx） 中 packa
 
 分包加载的好处详见微信的文档。路径冲突的概率也大大降低，只需要保证root不同即可。
 
-### 独立分包
+## 独立分包
 
 Mpx目前已支持独立分包构建，使用 [packages](#packages) 语法声明分包时只需要在后面添加 `independent=true` query 即可，同时也支持原生语法声明。
 如下方示例声明 packageA 分包为独立分包
@@ -241,7 +231,7 @@ if (isIndependent) {
 
 注意上方配置 independent 为初始化逻辑文件地址时，路径相对地址上下文为 packageA
 
-### 分包预下载
+## 分包预下载
 
 分包预下载是在 json中 新增一个 preloadRule 字段，mpx 打包时候会原封不动把这个部分放到 app.json 中，所以只需要按照 [微信小程序官方文档 - 分包预下载](https://developers.weixin.qq.com/miniprogram/dev/framework/subpackages/preload.html) 或者 [支付宝小程序官方文档 - 分包预下载](https://opendocs.alipay.com/mini/framework/subpackages) 配置即可。
 
@@ -306,10 +296,11 @@ if (isIndependent) {
   }  
 }
 ```
-### 分包异步化
+## 分包异步化
 
 微信小程序新增分包异步化特性，具体功能介绍和功能目的可 [点击查看](https://developers.weixin.qq.com/miniprogram/dev/framework/subpackages/async.html) ，使跨分包的自定义组件和 JS 代码可以等待对应分包下载后异步使用, Mpx对于分包异步化功能进行了完整支持
 
+### 跨分包自定义组件引用
 在 Mpx 中使用跨分包自定义组件引用通过?root声明组件所属异步分包即可使用，示例如下：
 ```html
 <!--/packageA/pages/index.mpx-->
@@ -327,8 +318,9 @@ if (isIndependent) {
 </script>
 ```
 
+### 跨分包 JS 代码引用
 在 Mpx 中跨分包异步引用 JS 代码时，**需要在引用的 JS 路径后拼接 JS 模块所在的分包名**，示例如下：
-```html
+```js
 // subPackageA/index.js
 // 使用回调函数风格的调用
 require('../subPackageB/utils.js?root=subPackageB', utils => {
@@ -341,6 +333,7 @@ require.async('../commonPackage/index.js?root=subPackageB').then(pkg => {
 ```
 - 注意项：目前该能力仅微信平台下支持，其他平台下框架将会自动降级，跨分包异步引用JS代码功能暂不支持异步引用Store
 
+### 跨分包 Store 引用
 在 Mpx 中跨分包异步引用 Store 代码，分为三个步骤
 - 页面或父组件在 beforeCreate 钩子加载异步 Store
 - 异步 Store 加载完成后再渲染使用异步 Store 的组件
@@ -386,8 +379,7 @@ require.async('../commonPackage/index.js?root=subPackageB').then(pkg => {
 </script>
 ```
 
-
-### 分包注意事项
+## 分包注意事项
 
 当我们使用分包加载时，依赖包内的跳转路径需注意，比如要跳转到other2页面  
 不用分包时会是：wx.jump/pages/other/other2  
