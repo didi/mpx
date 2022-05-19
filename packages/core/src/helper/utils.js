@@ -233,7 +233,7 @@ export function def (obj, key, val, enumerable) {
   })
 }
 
-export function likeArray (arr) {
+export function isArray (arr) {
   return Array.isArray(arr)
 }
 

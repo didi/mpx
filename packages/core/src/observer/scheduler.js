@@ -21,7 +21,6 @@ let postFlushIndex = 0
 const resolvedPromise = Promise.resolve()
 let currentFlushPromise = null
 
-
 const RECURSION_LIMIT = 100
 
 const getId = (job) => job.id == null ? Infinity : job.id
@@ -103,7 +102,6 @@ function queueFlush () {
   }
 }
 
-
 export function flushPreFlushCbs (seen) {
   if (pendingPreFlushCbs.length) {
     activePreFlushCbs = [...new Set(pendingPreFlushCbs)]
@@ -123,7 +121,6 @@ export function flushPreFlushCbs (seen) {
     flushPreFlushCbs(seen)
   }
 }
-
 
 export function flushPostFlushCbs (seen) {
   if (pendingPostFlushCbs.length) {
@@ -146,7 +143,6 @@ export function flushPostFlushCbs (seen) {
     flushPostFlushCbs(seen)
   }
 }
-
 
 function flushJobs (seen) {
   isFlushPending = false
@@ -185,7 +181,6 @@ function flushJobs (seen) {
     }
   }
 }
-
 
 function checkRecursiveUpdates (seen, fn) {
   if (!seen.has(fn)) {

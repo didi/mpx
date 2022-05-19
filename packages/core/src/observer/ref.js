@@ -22,7 +22,6 @@ export function unref (ref) {
   return isRef(ref) ? ref.value : ref
 }
 
-
 export function ref (raw) {
   if (isRef(raw)) return raw
   const wrapper = reactive({ [RefKey]: raw })
@@ -85,8 +84,7 @@ export function shallowRef (raw) {
 export function triggerRef (ref) {
   if (!isRef(ref)) return
   setForceTrigger(true)
+  /* eslint-disable no-self-assign */
   ref.value = ref.value
   setForceTrigger(false)
 }
-
-

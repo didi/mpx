@@ -3,8 +3,7 @@ import { ReactiveEffect } from '../observer/effect'
 import { EffectScope } from '../observer/effectScope'
 import { instanceWatch } from '../observer/watch'
 import { computed } from '../observer/computed'
-import { queueJob, queuePostFlushCb, nextTick } from '../observer/scheduler'
-import { isFunction } from '../helper/utils'
+import { queueJob, nextTick } from '../observer/scheduler'
 import EXPORT_MPX from '../index'
 import {
   type,

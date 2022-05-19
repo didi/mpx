@@ -1,7 +1,6 @@
 import Dep from './dep'
 import { arrayMethods } from './array'
 import { def, isPlainObject, isObject, hasProto, hasOwn, isValidArrayIndex, arrayProtoAugment } from '../helper/utils'
-import { warn } from '../helper/log'
 import { ObKey } from '../helper/const'
 import { isRef } from './ref'
 
@@ -64,7 +63,6 @@ export class Observer {
 function protoAugment (target, src, keys) {
   /* eslint-disable no-proto */
   target.__proto__ = src
-  /* eslint-enable no-proto */
 }
 
 /**

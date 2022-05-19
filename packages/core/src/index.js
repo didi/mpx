@@ -1,3 +1,19 @@
+import {
+  watch
+} from './observer/watch'
+
+import {
+  reactive,
+  set,
+  del
+} from './observer/reactive'
+
+import { injectMixins } from './core/injectMixins'
+import { diffAndCloneA, makeMap, merge, hasOwn } from './helper/utils'
+import { error } from './helper/log'
+import Vue from './vue'
+import implement from './core/implement'
+
 export {
   createApp,
   createPage,
@@ -17,7 +33,7 @@ export {
   watchEffect,
   watchSyncEffect,
   watchPostEffect,
-  watch,
+  watch
 } from './observer/watch'
 
 export {
@@ -64,22 +80,6 @@ export {
 export { getMixin } from './core/mergeOptions'
 
 export { injectMixins } from './core/injectMixins'
-
-import {
-  watch
-} from './observer/watch'
-
-import {
-  reactive,
-  set,
-  del
-} from './observer/reactive'
-
-import { injectMixins } from './core/injectMixins'
-import { diffAndCloneA, makeMap, merge, hasOwn } from './helper/utils'
-import { error } from './helper/log'
-import Vue from './vue'
-import implement from './core/implement'
 
 export function toPureObject (obj) {
   return diffAndCloneA(obj).clone
@@ -136,7 +136,6 @@ let APIs = {}
 // 实例属性
 let InstanceAPIs = {}
 
-
 if (__mpx_mode__ === 'web') {
   const vm = new Vue()
   const observable = Vue.observable.bind(Vue)
@@ -153,7 +152,6 @@ if (__mpx_mode__ === 'web') {
     implement
   }
 } else {
-
   APIs = {
     mixin: injectMixins,
     observable: reactive,

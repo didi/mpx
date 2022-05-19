@@ -6,7 +6,7 @@ function genRegExp (str, flags) {
   }
 }
 
-function likeArray (arr) {
+function isArray (arr) {
   if (!__mpx_wxs__) {
     return Array.isArray(arr)
   } else {
@@ -83,7 +83,7 @@ function compile (tokens, values) {
   var compiled = []
   var index = 0
 
-  var mode = likeArray(values)
+  var mode = isArray(values)
     ? 'list'
     : isObject(values)
       ? 'named'
@@ -151,7 +151,7 @@ function outPutByPath (context, path) {
     var key
     var item = path[index]
     if (result) {
-      if (likeArray(item)) {
+      if (isArray(item)) {
         // 获取子数组的输出结果作为当前key
         key = outPutByPath(context, item)
       } else if (genRegExp('^__mpx_str_').test(item)) {

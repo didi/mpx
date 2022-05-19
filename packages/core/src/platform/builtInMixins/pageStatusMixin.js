@@ -14,7 +14,7 @@ export default function pageStatusMixin (mixinType) {
       onHide () {
         this.mpxPageStatus = 'hide'
       },
-      onLoad () {
+      onLoad (params) {
         this.__mpxProxy.callUserHook(ONLOAD, params, true)
       }
     }

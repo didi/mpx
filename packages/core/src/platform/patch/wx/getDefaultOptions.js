@@ -51,12 +51,12 @@ function transformApiForProxy (context, currentInject) {
       },
       configurable: true
     },
-    __getProps:{
-      get(){
-        return (options)=>{
+    __getProps: {
+      get () {
+        return (options) => {
           const props = {}
           const validProps = Object.assign({}, options.properties, options.props)
-          Object.keys(context.data).forEach((key)=>{
+          Object.keys(context.data).forEach((key) => {
             if (hasOwn(validProps, key)) {
               props[key] = context.data[key]
             }

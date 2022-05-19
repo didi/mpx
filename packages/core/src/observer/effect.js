@@ -1,6 +1,4 @@
 import Dep, { pushTarget, popTarget } from './dep'
-import { isObject, } from '../helper/utils'
-import { getObserver } from './reactive'
 import { recordEffectScope } from './effectScope'
 
 let uid = 0

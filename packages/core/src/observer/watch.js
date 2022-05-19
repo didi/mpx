@@ -5,7 +5,7 @@ import { isReactive } from './reactive'
 import { queuePreFlushCb, queuePostRenderEffect } from './scheduler'
 import { callWithErrorHandling } from '../helper/errorHandling'
 import { currentInstance, setCurrentInstance, unsetCurrentInstance } from '../core/proxy'
-import { getByPath, isString, isFunction, isObject, noop, remove, isPlainObject } from '../helper/utils'
+import { getByPath, isString, isFunction, isObject, isArray, noop, remove, isPlainObject } from '../helper/utils'
 
 export function watchEffect (effect, options) {
   return doWatch(effect, null, options)
