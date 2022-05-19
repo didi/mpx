@@ -166,7 +166,7 @@ export default class MpxProxy {
   }
 
   createProxyConflictHandler (owner) {
-    return () => {
+    return (key) => {
       if (this.ignoreProxyMap[key]) {
         error(`The ${owner} key [${key}] is a reserved keyword of miniprogram, please check and rename it.`, this.options.mpxFileResource)
         return false
@@ -250,7 +250,6 @@ export default class MpxProxy {
       proxy(this.target, computedObj, undefined, false, this.createProxyConflictHandler('computed'))
     }
   }
-
 
   initWatch () {
     const watch = this.options.watch
@@ -511,7 +510,6 @@ export const unsetCurrentInstance = () => {
   currentInstance = null
 }
 
-
 export const injectHook = (hookName, hook, instance = currentInstance) => {
   if (instance) {
     const wrappedHook = (...args) => {
@@ -533,5 +531,3 @@ export const onUpdated = (fn) => injectHook(UPDATED, fn)
 export const onBeforeDestroy = (fn) => injectHook(BEFOREDESTROY, fn)
 export const onDestroyed = (fn) => injectHook(DESTROYED, fn)
 export const onLoad = (fn) => injectHook(ONLOAD, fn)
-
-
