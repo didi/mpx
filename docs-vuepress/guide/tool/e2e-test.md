@@ -16,14 +16,14 @@
 
 ## 安装依赖
 ```html
-npm i -D miniprogram-automator jest @types/jest
+npm i -D miniprogram-automator jest @types/jest @mpxjs/e2e @mpxjs/e2e-scripts
 
 // 如果项目使用了ts，则还需要安装
 npm i -D ts-jest
 ```
 ## jest 相关配置
 
-首先在项目根目录创建 jest.config.js 配置文件，并加入以下关键配置
+首先在项目根目录创建 jest.config.js 配置文件，并加入以下关键配置：
 
 ```html
 module.exports = {
@@ -32,6 +32,15 @@ module.exports = {
   testTimeout: 1000000000
 }
 ```
+
+在 package.json 加入以下关键配置：
+```js
+<script>
+  "test:e2e": "npx e2e-runner"
+  ...
+</script>
+```
+@mpxjs/e2e-scripts 提供 e2e 测试中需要的命令脚本，为了串行执行 spec 文件特别提供了 `e2e-runner` 命令。
 
 关于环境配置，请确保小程序模拟器打开服务端口，如图
 
@@ -230,3 +239,31 @@ un();
 Automator.removeMockFromMap (path:string): void
 ```
 
+## E2E runner
+
+提供 E2E 测试中需要的命令脚本：`e2e-runner`
+
+
+**注意这个命令不支持全局调用**
+
+调用这个命令需要在小程序项目根目录下执行，另外此目录要求存在 `.e2erc.js` 配置文件，配置文件形如：
+
+```javascript
+module.exports = {
+  sequence: [ // spec 文件顺序
+    // 'bHomeToCancelOrder',
+    // 'BHomeToPayment',
+    'CHomeToCancelOrder',
+    'CHomeToPayment',
+    // 'BHomeToCancelOrderBooking'
+  ],
+  reportsDir: 'test/reports', // 测试报告存放文件夹
+  testSuitsDir: 'test/e2e/suits/', // spec 文件存放目录
+  record: true // 是否需要记录运行时间日志，为 true 时会在项目目录中创建 e2e-record.txt 文件
+}
+
+```
+调用
+```shell script
+npx e2e-runner
+```
