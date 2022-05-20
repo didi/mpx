@@ -1,16 +1,14 @@
-# 端到端 (E2E) 测试
-
-端到端测试对于测试更长的 case 流程非常有用，特别是例如登录或注册等特别重要的业务。对于这些测试，你可能会希望测试真机或微信开发者工具如何渲染整个应用、从真实的 API 端获取数据、使用 storage 以及在不同的链接间跳转等功能。你可能还希望不仅在  WXML 状态上进行断言，而同时也在后端数据上进行校验（例如 AB 测试）。
+# E2E自动化测试
 
 微信小程序的官方文档推荐 [miniprogram-automator](https://developers.weixin.qq.com/miniprogram/dev/devtools/auto/quick-start.html)，其与小程序IDE的关系，正如 Google 与 UiAutomator、selenium 与 webdriver 一样；它是最契合小程序的。
 
-虽然微信小程序提供了 automator + ide 的 E2E 的解决方案，但该项目维护频率低且 case 编写效率低、API 不够友好等问题，所以基于 Mpx 生态增强了小程序 E2E 方案。
+虽然微信小程序提供了 automator + ide 的 E2E 的解决方案，但该项目维护频率低且 case 编写效率低、API 不够友好等问题，所以基于 Mpx 生态，我们提供了小程序 E2E 自动化测试的能力增强。
 
 小程序自动化 SDK 为开发者提供了一套通过外部脚本操控小程序的方案，从而实现小程序自动化测试的目的。
 
-如果你之前使用过 Selenium WebDriver 或者 Puppeteer，那你可以很容易快速上手。小程序自动化 SDK 与它们的工作原理是类似的，主要区别在于控制对象由浏览器换成了小程序。
+> 如果你之前使用过 Selenium WebDriver 或者 Puppeteer，那你可以很容易快速上手。小程序自动化 SDK 与它们的工作原理是类似的，主要区别在于控制对象由浏览器换成了小程序。
 
-如果是初始化项目，端到端 (E2E) 测试相关的项目依赖和配置可以通过 @mpx/cli 创建项目时选择使用 E2E 测试选项自动生成，如果时旧项目需要使用，可以按照下方步骤安装依赖和添加配置。
+如果是初始化项目，自动化测试相关的项目依赖和配置可以通过 @mpx/cli 创建项目时选择使用 E2E 测试选项自动生成，如果时旧项目需要使用，可以按照下方步骤安装依赖和添加配置。
 
 
 
@@ -241,21 +239,18 @@ Automator.removeMockFromMap (path:string): void
 
 ## E2E runner
 
-提供 E2E 测试中需要的命令脚本：`e2e-runner`
+提供 E2E 测试中需要的命令脚本：执行命令 `e2e-runner`
 
+主要用与复杂的业务体系，给开发同学提供自行组织case串行执行顺序的能力
+> 注意这个命令不支持全局调用
 
-**注意这个命令不支持全局调用**
-
-调用这个命令需要在小程序项目根目录下执行，另外此目录要求存在 `.e2erc.js` 配置文件，配置文件形如：
+执行该命令需要在小程序项目根目录下执行，另外此目录要求存在 `.e2erc.js` 配置文件，配置文件形如：
 
 ```javascript
 module.exports = {
-  sequence: [ // spec 文件顺序
-    // 'bHomeToCancelOrder',
-    // 'BHomeToPayment',
-    'CHomeToCancelOrder',
-    'CHomeToPayment',
-    // 'BHomeToCancelOrderBooking'
+  sequence: [ // spec 文件执行顺序
+    'aTob',
+    'bToc',
   ],
   reportsDir: 'test/reports', // 测试报告存放文件夹
   testSuitsDir: 'test/e2e/suits/', // spec 文件存放目录
@@ -267,3 +262,6 @@ module.exports = {
 ```shell script
 npx e2e-runner
 ```
+
+微信对于小程序自动化测试能力也在不断增强，我们会不断基于微信的基础能力去完善MPX E2E, 比如结合WX导出的用例json转成可执行spec，
+持续增强断言能力；通过支持录制/回放稳定运行自动化流程；并通过快照/截图比对进行结果判断；以及完善测试报告的可视化呈现。
