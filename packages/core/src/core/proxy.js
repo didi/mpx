@@ -280,13 +280,16 @@ export default class MpxProxy {
       result = callWithErrorHandling(hook.bind(this.target), this, `${hookName} hook`, params)
     }
     hooks.forEach((hook) => {
-      result = hook(...params)
+      result = params ? hook(...params) : hook()
     })
     return result
   }
 
   render () {
-    const renderData = this.data
+    const renderData = {}
+    Object.keys(this.localKeysMap).forEach((key) => {
+      renderData[key] = this.target[key]
+    })
     this.doRender(this.processRenderDataWithStrictDiff(renderData))
   }
 

@@ -5,7 +5,7 @@ import { isFunction } from './utils'
 export function callWithErrorHandling (fn, instance, info, args) {
   if (!isFunction(fn)) return
   try {
-    return fn(...args)
+    return args ? fn(...args) : fn()
   } catch (e) {
     if (isFunction(EXPORT_MPX.config.errorHandler)) {
       EXPORT_MPX.config.errorHandler(e, instance, info)

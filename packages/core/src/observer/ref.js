@@ -1,4 +1,4 @@
-import { reactive, shallowReactive, set, isReactive, setForceTrigger } from 'reactive'
+import { reactive, shallowReactive, set, isReactive, setForceTrigger } from './reactive'
 import { RefKey } from '../helper/const'
 import { hasOwn, isPlainObject } from '../helper/utils'
 import { warn } from '../helper/log'
@@ -9,8 +9,12 @@ export class RefImpl {
   }
 }
 
-export function createRef (options) {
+export function createRef (options, effect) {
   const ref = new RefImpl(options)
+  if (effect) {
+    ref.effect = effect
+    effect.computed = ref
+  }
   return Object.seal(ref)
 }
 

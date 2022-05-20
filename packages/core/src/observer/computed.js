@@ -19,10 +19,11 @@ export function computed (getterOrOptions) {
     dirty = true
   })
 
-  const ref = createRef({
+  return createRef({
     get: () => {
       if (dirty) {
         value = effect.run()
+        dirty = false
       }
       if (Dep.target) {
         effect.depend()
@@ -32,8 +33,5 @@ export function computed (getterOrOptions) {
     set: (val) => {
       setter(val)
     }
-  })
-
-  ref.effect = effect
-  ref.effect.computed = ref
+  }, effect)
 }
