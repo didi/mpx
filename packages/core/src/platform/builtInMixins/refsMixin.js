@@ -37,6 +37,7 @@ export default function getRefsMixin () {
     const proxyMethods = ['boundingClientRect', 'scrollOffset']
 
     aliMethods = {
+      // todo 支付宝基础库升级至2.7.4以上可去除
       createSelectorQuery (...rest) {
         const selectorQuery = my.createSelectorQuery(...rest)
         const cbs = []

@@ -34,7 +34,9 @@ import {
   UPDATED,
   BEFOREDESTROY,
   DESTROYED,
-  ONLOAD
+  ONLOAD,
+  ONSHOW,
+  ONHIDE
 } from './innerLifecycle'
 import { warn, error } from '../helper/log'
 import { callWithErrorHandling } from '../helper/errorHandling'
@@ -72,7 +74,7 @@ export default class MpxProxy {
     }
   }
 
-  created (params) {
+  created () {
     this.initApi()
     if (__mpx_mode__ !== 'web') {
       setCurrentInstance(this)
@@ -81,7 +83,7 @@ export default class MpxProxy {
       unsetCurrentInstance()
     }
     // beforeCreate需要在setup执行过后执行
-    this.callUserHook(BEFORECREATE)
+    this.callHook(BEFORECREATE)
 
     if (__mpx_mode__ !== 'web') {
       setCurrentInstance(this)
@@ -92,23 +94,23 @@ export default class MpxProxy {
     }
 
     this.state = CREATED
-    this.callUserHook(CREATED, params)
+    this.callHook(CREATED)
 
     if (__mpx_mode__ !== 'web') {
       this.initRender()
     }
   }
 
-  reCreated (params) {
+  reCreated () {
     // const options = this.options
     // this.state = BEFORECREATE
-    // this.callUserHook(BEFORECREATE)
+    // this.callHook(BEFORECREATE)
     // if (__mpx_mode__ !== 'web') {
     //   this.initComputed(options.computed, true)
     //   this.initWatch(options.watch)
     // }
     // this.state = CREATED
-    // this.callUserHook(CREATED, params)
+    // this.callHook(CREATED)
     // if (__mpx_mode__ !== 'web') {
     //   this.initRender()
     // }
@@ -140,24 +142,24 @@ export default class MpxProxy {
     if (this.state === CREATED) {
       this.state = MOUNTED
       // 用于处理refs等前置工作
-      this.callUserHook(BEFOREMOUNT)
-      this.callUserHook(MOUNTED)
+      this.callHook(BEFOREMOUNT)
+      this.callHook(MOUNTED)
       this.currentRenderTask && this.currentRenderTask.resolve()
     }
   }
 
   updated () {
     if (this.isMounted()) {
-      this.callUserHook(UPDATED)
+      this.callHook(UPDATED)
     }
   }
 
   destroyed () {
-    this.callUserHook(BEFOREDESTROY)
+    this.callHook(BEFOREDESTROY)
     if (__mpx_mode__ !== 'web') {
       this.scope.stop()
     }
-    this.callUserHook(DESTROYED)
+    this.callHook(DESTROYED)
     this.state = DESTROYED
   }
 
@@ -272,8 +274,8 @@ export default class MpxProxy {
     })
   }
 
-  callUserHook (hookName, params, hooksOnly) {
-    const hook = this.options[hookName] || this.target[hookName]
+  callHook (hookName, params, hooksOnly) {
+    const hook = this.options[hookName]
     const hooks = this.hooks[hookName] || []
     let result
     if (isFunction(hook) && !hooksOnly) {
@@ -283,6 +285,10 @@ export default class MpxProxy {
       result = params ? hook(...params) : hook()
     })
     return result
+  }
+
+  hasHook (hookName) {
+    return !!(this.options[hookName] || this.hooks[hookName])
   }
 
   render () {
@@ -534,3 +540,5 @@ export const onUpdated = (fn) => injectHook(UPDATED, fn)
 export const onBeforeDestroy = (fn) => injectHook(BEFOREDESTROY, fn)
 export const onDestroyed = (fn) => injectHook(DESTROYED, fn)
 export const onLoad = (fn) => injectHook(ONLOAD, fn)
+export const onShow = (fn) => injectHook(ONSHOW, fn)
+export const onHide = (fn) => injectHook(ONHIDE, fn)

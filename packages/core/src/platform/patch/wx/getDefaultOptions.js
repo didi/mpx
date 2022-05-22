@@ -131,15 +131,15 @@ export function filterOptions (options) {
   return newOptions
 }
 
-export function initProxy (context, rawOptions, currentInject, params) {
+export function initProxy (context, rawOptions, currentInject) {
   if (!context.__mpxProxy) {
     // 提供代理对象需要的api
     transformApiForProxy(context, currentInject)
     // 创建proxy对象
     context.__mpxProxy = new MpxProxy(rawOptions, context)
-    context.__mpxProxy.created(params)
+    context.__mpxProxy.created()
   } else if (context.__mpxProxy.isDestroyed()) {
-    context.__mpxProxy.reCreated(params)
+    context.__mpxProxy.reCreated()
   }
 }
 
@@ -150,8 +150,8 @@ export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
     hookNames = ['onLoad', 'onReady', 'onUnload']
   }
   const rootMixins = [{
-    [hookNames[0]] (...params) {
-      initProxy(this, rawOptions, currentInject, params)
+    [hookNames[0]] () {
+      initProxy(this, rawOptions, currentInject)
     },
     [hookNames[1]] () {
       if (this.__mpxProxy) this.__mpxProxy.mounted()

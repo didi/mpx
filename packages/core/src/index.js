@@ -74,6 +74,9 @@ export {
   onBeforeDestroy,
   onDestroyed,
   onLoad,
+  onShow,
+  onHide,
+  injectHook,
   getCurrentInstance
 } from './core/proxy'
 

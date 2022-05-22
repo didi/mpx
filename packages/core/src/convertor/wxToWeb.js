@@ -7,7 +7,7 @@ import { implemented } from '../core/implement'
 import { isDev } from '../helper/env'
 
 // 暂不支持的wx选项，后期需要各种花式支持
-const unsupported = ['moved', 'definitionFilter', 'onShareAppMessage', 'pageShow', 'pageHide']
+const unsupported = ['moved', 'definitionFilter', 'onShareAppMessage']
 
 function convertErrorDesc (key) {
   error(`Options.${key} is not supported in runtime conversion from wx to web.`, global.currentResource)

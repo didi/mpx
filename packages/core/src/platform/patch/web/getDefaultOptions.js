@@ -23,23 +23,20 @@ function filterOptions (options) {
   return newOptions
 }
 
-function initProxy (context, rawOptions, params) {
+function initProxy (context, rawOptions) {
   if (!context.__mpxProxy) {
     // 创建proxy对象
     context.__mpxProxy = new MpxProxy(rawOptions, context)
-    context.__mpxProxy.created(params)
+    context.__mpxProxy.created()
   } else if (context.__mpxProxy.isDestroyed()) {
-    context.__mpxProxy.reCreated(params)
+    context.__mpxProxy.reCreated()
   }
 }
 
 export function getDefaultOptions (type, { rawOptions = {} }) {
   const rootMixins = [{
     created () {
-      const query = (global.__mpxRouter && global.__mpxRouter.currentRoute && global.__mpxRouter.currentRoute.query) || {}
-      initProxy(this, rawOptions, [query])
-      // web中单独触发onLoad
-      this.onLoad && this.onLoad(query)
+      initProxy(this, rawOptions)
     },
     mounted () {
       if (this.__mpxProxy) this.__mpxProxy.mounted()

@@ -6,6 +6,8 @@ export const UPDATED = '__updated__'
 export const BEFOREDESTROY = '__beforeDestroy__'
 export const DESTROYED = '__destroyed__'
 export const ONLOAD = '__onLoad__'
+export const ONSHOW = '__onShow__'
+export const ONHIDE = '__onHide__'
 
 export const INNER_LIFECYCLES = [
   BEFORECREATE,
@@ -15,5 +17,7 @@ export const INNER_LIFECYCLES = [
   UPDATED,
   BEFOREDESTROY,
   DESTROYED,
-  ONLOAD
+  ONLOAD,
+  ONSHOW,
+  ONHIDE
 ]

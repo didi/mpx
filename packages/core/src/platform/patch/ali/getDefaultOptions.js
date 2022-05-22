@@ -90,22 +90,22 @@ function filterOptions (options, type) {
   return newOptions
 }
 
-function initProxy (context, rawOptions, currentInject, params) {
+function initProxy (context, rawOptions, currentInject) {
   if (!context.__mpxProxy) {
     // 提供代理对象需要的api
     transformApiForProxy(context, currentInject)
     // 创建proxy对象
     context.__mpxProxy = new MpxProxy(rawOptions, context)
-    context.__mpxProxy.created(params)
+    context.__mpxProxy.created()
   } else if (context.__mpxProxy.isDestroyed()) {
-    context.__mpxProxy.reCreated(params)
+    context.__mpxProxy.reCreated()
   }
 }
 
 export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
   const hookNames = type === 'component' ? ['onInit', 'didMount', 'didUnmount'] : ['onLoad', 'onReady', 'onUnload']
   const rootMixins = [{
-    [hookNames[0]] (...params) {
+    [hookNames[0]] () {
       if (rawOptions.__nativeRender__ && this.props) {
         const validProps = Object.assign({}, rawOptions.props, rawOptions.properties)
         Object.keys(this.props).forEach((key) => {
@@ -114,7 +114,7 @@ export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
           }
         })
       }
-      initProxy(this, rawOptions, currentInject, params)
+      initProxy(this, rawOptions, currentInject)
     },
     deriveDataFromProps (nextProps) {
       if (this.__mpxProxy && this.__mpxProxy.isMounted() && nextProps && nextProps !== this.props) {

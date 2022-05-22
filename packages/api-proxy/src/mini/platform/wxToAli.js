@@ -620,6 +620,7 @@ const getWxToAliApi = ({ optimize = false }) => {
      * WXML
      */
 
+    // todo 支付宝基础库升级至2.7.4以上可去除
     createSelectorQuery (options = {}) {
       const selectorQuery = ALI_OBJ.createSelectorQuery(options)
       const proxyMethods = ['boundingClientRect', 'scrollOffset']

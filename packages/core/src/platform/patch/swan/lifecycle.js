@@ -1,4 +1,14 @@
-import { BEFORECREATE, CREATED, DESTROYED, MOUNTED, UPDATED, BEFOREMOUNT } from '../../../core/innerLifecycle'
+import {
+  BEFORECREATE,
+  CREATED,
+  DESTROYED,
+  MOUNTED,
+  UPDATED,
+  BEFOREMOUNT,
+  ONSHOW,
+  ONHIDE,
+  ONLOAD
+} from '../../../core/innerLifecycle'
 
 const APP_HOOKS = [
   'onLaunch',
@@ -44,7 +54,10 @@ export const lifecycleProxyMap = {
   [UPDATED]: ['updated'],
   [BEFOREMOUNT]: ['beforeMount'],
   [MOUNTED]: ['ready', 'onReady'],
-  [DESTROYED]: ['detached', 'onUnload']
+  [DESTROYED]: ['detached', 'onUnload'],
+  [ONSHOW]: ['pageShow', 'onShow'],
+  [ONHIDE]: ['pageHide', 'onHide'],
+  [ONLOAD]: ['onLoad']
 }
 
 export const LIFECYCLE = {
