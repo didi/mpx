@@ -76,6 +76,7 @@ export {
   onLoad,
   onShow,
   onHide,
+  onResize,
   injectHook,
   getCurrentInstance
 } from './core/proxy'

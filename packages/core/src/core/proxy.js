@@ -36,7 +36,8 @@ import {
   DESTROYED,
   ONLOAD,
   ONSHOW,
-  ONHIDE
+  ONHIDE,
+  ONRESIZE
 } from './innerLifecycle'
 import { warn, error } from '../helper/log'
 import { callWithErrorHandling } from '../helper/errorHandling'
@@ -542,3 +543,4 @@ export const onDestroyed = (fn) => injectHook(DESTROYED, fn)
 export const onLoad = (fn) => injectHook(ONLOAD, fn)
 export const onShow = (fn) => injectHook(ONSHOW, fn)
 export const onHide = (fn) => injectHook(ONHIDE, fn)
+export const onResize = (fn) => injectHook(ONRESIZE, fn)

@@ -8,6 +8,7 @@ export const DESTROYED = '__destroyed__'
 export const ONLOAD = '__onLoad__'
 export const ONSHOW = '__onShow__'
 export const ONHIDE = '__onHide__'
+export const ONRESIZE = '__onResize__'
 
 export const INNER_LIFECYCLES = [
   BEFORECREATE,
@@ -19,5 +20,6 @@ export const INNER_LIFECYCLES = [
   DESTROYED,
   ONLOAD,
   ONSHOW,
-  ONHIDE
+  ONHIDE,
+  ONRESIZE
 ]

@@ -17,7 +17,8 @@ const setNodeRef = function (target, ref, context) {
 
 const setComponentRef = function (target, ref, context, isAsync) {
   let cacheRef = null
-  const targetRefs = isAsync ? target.$asyncRefs : target.$refs
+  // 为保障访问一致，去除$asyncRefs
+  const targetRefs = target.$refs
   Object.defineProperty(targetRefs, ref.key, {
     enumerable: true,
     configurable: true,

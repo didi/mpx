@@ -1,72 +1,89 @@
-import { CREATED, ONLOAD, ONSHOW, ONHIDE } from '../../core/innerLifecycle'
-import { isFunction } from '../../helper/utils'
+import { CREATED, ONLOAD, ONSHOW, ONHIDE, ONRESIZE } from '../../core/innerLifecycle'
 
 export default function pageStatusMixin (mixinType) {
-  // 只有tt和ali没有pageLifeTimes支持，需要框架实现，其余平台一律使用原生pageLifeTimes
-  // 由于业务上大量使用了pageShow进行初始化。。。下个版本再移除非必要的pageShow/Hide实现。。。
   if (mixinType === 'page') {
     const pageMixin = {
-      data: {
-        mpxPageStatus: 'show'
-      },
       onShow () {
-        this.mpxPageStatus = 'show'
         this.__mpxProxy.callHook(ONSHOW)
       },
       onHide () {
-        this.mpxPageStatus = 'hide'
         this.__mpxProxy.callHook(ONHIDE)
       },
-      onLoad (params) {
-        this.__mpxProxy.callHook(ONLOAD, params)
+      onResize (e) {
+        this.__mpxProxy.callHook(ONRESIZE, [e])
+      },
+      onLoad (query) {
+        this.__mpxProxy.callHook(ONLOAD, [query])
       }
     }
     if (__mpx_mode__ === 'ali') {
       let count = 0
-      pageMixin.events = {
-        onResize (e) {
-          this.__resizeEvent = e
-          this.mpxPageStatus = `resize${count++}`
+      Object.assign(pageMixin, {
+        data: {
+          mpxPageStatus: null
+        },
+        onShow () {
+          this.mpxPageStatus = 'show'
+          this.__mpxProxy.callHook(ONSHOW)
+        },
+        onHide () {
+          this.mpxPageStatus = 'hide'
+          this.__mpxProxy.callHook(ONHIDE)
+        },
+        events: {
+          onResize (e) {
+            this.__resizeEvent = e
+            this.mpxPageStatus = `resize${count++}`
+            this.__mpxProxy.callHook(ONRESIZE, [e])
+          }
         }
-      }
+      })
+      delete pageMixin.onResize
     }
     return pageMixin
   } else {
-    return {
-      // todo 时序待确认
-      [CREATED] () {
-        const options = this.__mpxProxy.options
-        const hasShowHooks = this.__mpxProxy.hasHook(ONSHOW) || this.__mpxProxy.hasHook(ONHIDE)
-        const needPageLifetimes = options.pageLifetimes && __mpx_mode__ === 'ali'
+    if (__mpx_mode__ === 'ali') {
+      return {
+        [CREATED] () {
+          const options = this.__mpxProxy.options
+          const hasHook = this.__mpxProxy.hasHook.bind(this.__mpxProxy)
+          const hasHooks = hasHook(ONSHOW) || hasHook(ONHIDE) || hasHook(ONRESIZE)
+          const pageLifetimes = options.pageLifetimes
+          const currentPage = this.$page
 
-        if (hasShowHooks || needPageLifetimes) {
-          let currentPage
-          if (__mpx_mode__ === 'ali') {
-            currentPage = this.$page
-          } else {
-            const pages = getCurrentPages()
-            currentPage = pages[pages.length - 1]
-          }
-          if (currentPage) {
-            // 初始第一次执行ONSHOW
-            this.__mpxProxy.callHook(ONSHOW)
+          if ((hasHooks || pageLifetimes) && currentPage) {
             this.$watch(() => currentPage.mpxPageStatus, (val) => {
               if (!val) return
-              if (val === 'show') this.__mpxProxy.callHook(ONSHOW)
-              if (val === 'hide') this.__mpxProxy.callHook(ONHIDE)
-              if (needPageLifetimes) {
-                const pageLifetimes = options.pageLifetimes
-                if (/^resize/.test(val) && isFunction(pageLifetimes.resize)) {
-                  // resize
-                  pageLifetimes.resize.call(this, currentPage.__resizeEvent)
-                } else if (isFunction(pageLifetimes[val])) {
-                  // show & hide
-                  pageLifetimes[val].call(this)
-                }
+              if (val === 'show') {
+                this.__mpxProxy.callHook(ONSHOW)
+                return pageLifetimes?.show?.call(this)
+              }
+              if (val === 'hide') {
+                this.__mpxProxy.callHook(ONHIDE)
+                return pageLifetimes?.hide?.call(this)
+              }
+              if (/^resize/.test(val)) {
+                const e = currentPage.__resizeEvent
+                this.__mpxProxy.callHook(ONRESIZE, [e])
+                return pageLifetimes?.resize?.call(this, e)
               }
             }, {
               sync: true
             })
+          }
+        }
+      }
+    } else {
+      return {
+        pageLifetimes: {
+          show () {
+            this.__mpxProxy.callHook(ONSHOW)
+          },
+          hide () {
+            this.__mpxProxy.callHook(ONHIDE)
+          },
+          resize (e) {
+            this.__mpxProxy.callHook(ONRESIZE, [e])
           }
         }
       }
