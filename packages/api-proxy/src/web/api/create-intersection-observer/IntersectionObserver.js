@@ -14,11 +14,14 @@ class WebIntersectionObserver {
     if (this.observer) {
       this.observer = null
     }
+    // eslint-disable-next-line no-undef
     this.observer = new IntersectionObserver((entries, observer) => {
       const initialRatio = this._options.initialRatio || 0
       const thresholds = this._options.thresholds || [0]
+      const thresholdsSortArr = thresholds.sort((a, b) => { return a - b })
+      const minthresholds = thresholdsSortArr[0]
       entries.forEach(entry => {
-        if (!isInit || (isInit && (entry.intersectionRatio !== initialRatio && thresholds.includes(entry.intersectionRatio)))) {
+        if (!isInit || (isInit && (entry.intersectionRatio !== initialRatio && (minthresholds <= entry.intersectionRatio)))) {
           Object.defineProperty(entry, 'relativeRect', {
             value: entry.rootBounds || {},
             writable: false,
@@ -45,7 +48,7 @@ class WebIntersectionObserver {
   observe (targetSelector, callback) {
     nextTick(() => {
       if (!targetSelector) {
-        const res = { errMsg: 'observe:targetSelector can not empty' }
+        const res = { errMsg: 'observe:targetSelector can not be empty' }
         return Promise.reject(res)
       }
       this.callback = callback
@@ -75,8 +78,8 @@ class WebIntersectionObserver {
     nextTick(() => {
       const { left = 0, right = 0, top = 0, bottom = 0 } = margins
       const root = document.querySelector('.app')
-      const screenWidth = window.screen.width || window.innerWidth
-      const screenHeight = window.screen.height || window.innerHeight
+      const screenWidth = window.innerWidth
+      const screenHeight = window.innerHeight
       const rootWidth = root.offsetWidth || 0
       const rootHeight = root.offsetHeight || 0
       let rootMargin = ''
