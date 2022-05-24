@@ -23,8 +23,8 @@ export function watch (source, cb, options) {
   return doWatch(source, cb, options)
 }
 
-export function instanceWatch (instance, source, cb, options) {
-  const target = instance.target
+export function instanceWatch (source, cb, options) {
+  const target = this.target
   const getter = isString(source)
     ? () => getByPath(target, source)
     : source.bind(target)
@@ -33,6 +33,7 @@ export function instanceWatch (instance, source, cb, options) {
     options = cb
     cb = cb.handler
   }
+
   if (isString(cb) && target[cb]) {
     cb = target[cb]
   }
@@ -40,15 +41,12 @@ export function instanceWatch (instance, source, cb, options) {
   cb = cb || noop
 
   const cur = currentInstance
-  const isCur = instance === cur
-  if (!isCur) setCurrentInstance(instance)
+  setCurrentInstance(this)
 
   const res = doWatch(getter, cb.bind(target), options)
 
-  if (!isCur) {
-    if (cur) setCurrentInstance(cur)
-    else unsetCurrentInstance()
-  }
+  if (cur) setCurrentInstance(cur)
+  else unsetCurrentInstance()
 
   return res
 }

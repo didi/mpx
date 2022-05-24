@@ -1,31 +1,31 @@
-import { BEFORECREATE, CREATED, BEFOREMOUNT, UPDATED, DESTROYED } from '../../core/innerLifecycle'
+import { CREATED, BEFOREMOUNT, UPDATED, DESTROYED } from '../../core/innerLifecycle'
 import { noop } from '../../helper/utils'
 import { error } from '../../helper/log'
 import { getEnvObj } from '../../helper/env'
 
 const envObj = getEnvObj()
 
-const setNodeRef = function (target, ref, context) {
+const setNodeRef = function (target, ref) {
   Object.defineProperty(target.$refs, ref.key, {
     enumerable: true,
     configurable: true,
     get () {
-      return context.__getRefNode(ref) // for nodes, every time being accessed, returns as a new selector context.
+      // for nodes, every time being accessed, returns as a new selector.
+      return target.__getRefNode(ref)
     }
   })
 }
 
-const setComponentRef = function (target, ref, context, isAsync) {
+const setComponentRef = function (target, ref, isAsync) {
   let cacheRef = null
-  // 为保障访问一致，去除$asyncRefs
-  const targetRefs = target.$refs
+  const targetRefs = isAsync ? (target.$asyncRefs || (target.$asyncRefs = {})) : target.$refs
   Object.defineProperty(targetRefs, ref.key, {
     enumerable: true,
     configurable: true,
     get () {
-      // wx由于分包异步化的存在，每次访问refs都需要重新执行selectComponen，避免一直拿到缓存中的placeholder
+      // wx由于分包异步化的存在，每次访问refs都需要重新执行selectComponent，避免一直拿到缓存中的placeholder
       if (__mpx_mode__ === 'wx' || !cacheRef) {
-        return (cacheRef = context.__getRefNode(ref, isAsync))
+        return (cacheRef = target.__getRefNode(ref, isAsync))
       }
       return cacheRef
     }
@@ -39,8 +39,8 @@ export default function getRefsMixin () {
 
     aliMethods = {
       // todo 支付宝基础库升级至2.7.4以上可去除
-      createSelectorQuery (...rest) {
-        const selectorQuery = my.createSelectorQuery(...rest)
+      createSelectorQuery (...args) {
+        const selectorQuery = envObj.createSelectorQuery(...args)
         const cbs = []
         proxyMethods.forEach((name) => {
           const originalMethod = selectorQuery[name]
@@ -61,6 +61,10 @@ export default function getRefsMixin () {
           return originalExec.call(this, cb)
         }
         return selectorQuery
+      },
+      // todo 支付宝基础库升级至2.7.4以上可去除
+      createIntersectionObserver (...args) {
+        return envObj.createIntersectionObserver(...args)
       },
       selectComponent (selector, all) {
         const children = this.__children__ || []
@@ -118,12 +122,6 @@ export default function getRefsMixin () {
         mpxCid: this.__mpxProxy.uid
       }
     },
-    [BEFORECREATE] () {
-      this.$refs = {}
-      if (__mpx_mode__ === 'tt') {
-        this.$asyncRefs = {}
-      }
-    },
     [CREATED] () {
       this.__updateRef && this.__updateRef()
     },
@@ -145,10 +143,10 @@ export default function getRefsMixin () {
 
           refs.forEach(ref => {
             const setRef = ref.type === 'node' ? setNodeRef : setComponentRef
-            setRef(this, ref, this)
+            setRef(this, ref)
 
             if (__mpx_mode__ === 'tt' && ref.type === 'component') {
-              setComponentRef(this, ref, this, true)
+              setComponentRef(this, ref, true)
             }
           })
         }

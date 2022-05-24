@@ -187,9 +187,9 @@ export default class MpxProxy {
     }
     if (__mpx_mode__ !== 'web') {
       // 挂载$watch
-      this.target.$watch = (...args) => instanceWatch(this, ...args)
+      this.target.$watch = instanceWatch.bind(this)
       // 强制执行render
-      this.target.$forceUpdate = (...args) => this.forceUpdate(...args)
+      this.target.$forceUpdate = this.forceUpdate.bind(this)
       this.target.$nextTick = fn => nextTick(fn, this)
     }
   }
@@ -206,7 +206,14 @@ export default class MpxProxy {
       const setupResult = callWithErrorHandling(setup, this, 'setup function', [
         this.props,
         {
-          triggerEvent: this.target.triggerEvent.bind(this.target)
+          triggerEvent: this.target.triggerEvent.bind(this.target),
+          refs: this.target.$refs || (this.target.$refs = {}),
+          nextTick: fn => nextTick(fn, this),
+          forceUpdate: this.forceUpdate.bind(this),
+          selectComponent: this.target.selectComponent.bind(this.target),
+          selectAllComponents: this.target.selectAllComponents.bind(this.target),
+          createSelectorQuery: this.target.createSelectorQuery.bind(this.target),
+          createIntersectionObserver: this.target.createIntersectionObserver.bind(this.target)
         }
       ])
       if (!isObject(setupResult)) {
@@ -260,10 +267,10 @@ export default class MpxProxy {
       Object.entries(watch).forEach(([key, handler]) => {
         if (Array.isArray(handler)) {
           for (let i = 0; i < handler.length; i++) {
-            instanceWatch(this, key, handler[i])
+            instanceWatch.call(this, key, handler[i])
           }
         } else {
-          instanceWatch(this, key, handler)
+          instanceWatch.call(this, key, handler)
         }
       })
     }
