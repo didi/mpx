@@ -1,7 +1,7 @@
 import { reactive } from '../observer/reactive'
 import { ReactiveEffect } from '../observer/effect'
 import { EffectScope } from '../observer/effectScope'
-import { instanceWatch } from '../observer/watch'
+import { watch } from '../observer/watch'
 import { computed } from '../observer/computed'
 import { queueJob, nextTick } from '../observer/scheduler'
 import EXPORT_MPX from '../index'
@@ -22,7 +22,8 @@ import {
   makeMap,
   hasOwn,
   isObject,
-  isFunction
+  isFunction,
+  isString
 } from '../helper/utils'
 import _getByPath from '../helper/getByPath'
 import { onRenderCallBack } from '../platform/patch'
@@ -187,7 +188,7 @@ export default class MpxProxy {
     }
     if (__mpx_mode__ !== 'web') {
       // 挂载$watch
-      this.target.$watch = instanceWatch.bind(this)
+      this.target.$watch = this.watch.bind(this)
       // 强制执行render
       this.target.$forceUpdate = this.forceUpdate.bind(this)
       this.target.$nextTick = fn => nextTick(fn, this)
@@ -267,13 +268,41 @@ export default class MpxProxy {
       Object.entries(watch).forEach(([key, handler]) => {
         if (Array.isArray(handler)) {
           for (let i = 0; i < handler.length; i++) {
-            instanceWatch.call(this, key, handler[i])
+            this.watch(key, handler[i])
           }
         } else {
-          instanceWatch.call(this, key, handler)
+          this.watch(key, handler)
         }
       })
     }
+  }
+
+  watch (source, cb, options) {
+    const target = this.target
+    const getter = isString(source)
+      ? () => getByPath(target, source)
+      : source.bind(target)
+
+    if (isObject(cb)) {
+      options = cb
+      cb = cb.handler
+    }
+
+    if (isString(cb) && target[cb]) {
+      cb = target[cb]
+    }
+
+    cb = cb || noop
+
+    const cur = currentInstance
+    setCurrentInstance(this)
+
+    const res = watch(getter, cb.bind(target), options)
+
+    if (cur) setCurrentInstance(cur)
+    else unsetCurrentInstance()
+
+    return res
   }
 
   collectLocalKeys (data, filter = () => true) {

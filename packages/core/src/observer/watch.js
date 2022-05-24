@@ -4,51 +4,19 @@ import { isRef } from './ref'
 import { isReactive } from './reactive'
 import { queuePreFlushCb, queuePostRenderEffect } from './scheduler'
 import { callWithErrorHandling } from '../helper/errorHandling'
-import { currentInstance, setCurrentInstance, unsetCurrentInstance } from '../core/proxy'
-import { getByPath, isString, isFunction, isObject, isArray, noop, remove, isPlainObject } from '../helper/utils'
+import { currentInstance } from '../core/proxy'
+import { isFunction, isObject, isArray, noop, remove, isPlainObject } from '../helper/utils'
 
 export function watchEffect (effect, options) {
-  return doWatch(effect, null, options)
+  return watch(effect, null, options)
 }
 
 export function watchPostEffect (effect, options) {
-  return doWatch(effect, null, { ...options, flush: 'post' })
+  return watch(effect, null, { ...options, flush: 'post' })
 }
 
 export function watchSyncEffect (effect, options) {
-  return doWatch(effect, null, { ...options, flush: 'sync' })
-}
-
-export function watch (source, cb, options) {
-  return doWatch(source, cb, options)
-}
-
-export function instanceWatch (source, cb, options) {
-  const target = this.target
-  const getter = isString(source)
-    ? () => getByPath(target, source)
-    : source.bind(target)
-
-  if (isObject(cb)) {
-    options = cb
-    cb = cb.handler
-  }
-
-  if (isString(cb) && target[cb]) {
-    cb = target[cb]
-  }
-
-  cb = cb || noop
-
-  const cur = currentInstance
-  setCurrentInstance(this)
-
-  const res = doWatch(getter, cb.bind(target), options)
-
-  if (cur) setCurrentInstance(cur)
-  else unsetCurrentInstance()
-
-  return res
+  return watch(effect, null, { ...options, flush: 'sync' })
 }
 
 const warnInvalidSource = (s) => {
@@ -65,7 +33,7 @@ const processWatchOptionsCompat = (options) => {
   return newOptions
 }
 
-function doWatch (source, cb, options = {}) {
+export function watch (source, cb, options = {}) {
   let { immediate, deep, flush } = processWatchOptionsCompat(options)
   const instance = currentInstance
   let getter
