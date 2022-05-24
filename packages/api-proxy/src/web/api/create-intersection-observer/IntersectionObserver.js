@@ -19,9 +19,9 @@ class WebIntersectionObserver {
       const initialRatio = this._options.initialRatio || 0
       const thresholds = this._options.thresholds || [0]
       const thresholdsSortArr = thresholds.sort((a, b) => { return a - b })
-      const minthresholds = thresholdsSortArr[0]
+      const minThreshold = thresholdsSortArr[0]
       entries.forEach(entry => {
-        if (!isInit || (isInit && (entry.intersectionRatio !== initialRatio && (minthresholds <= entry.intersectionRatio)))) {
+        if (!isInit || (isInit && (entry.intersectionRatio !== initialRatio && (minThreshold <= entry.intersectionRatio)))) {
           Object.defineProperty(entry, 'relativeRect', {
             value: entry.rootBounds || {},
             writable: false,
