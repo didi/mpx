@@ -78,13 +78,13 @@ class WebIntersectionObserver {
     nextTick(() => {
       const { left = 0, right = 0, top = 0, bottom = 0 } = margins
       const root = document.querySelector('.app')
-      const screenWidth = window.innerWidth
-      const screenHeight = window.innerHeight
+      const viewportWidth = window.innerWidth || document.documentElement.clientWidth
+      const viewportHeight = window.innerHeight || document.documentElement.clientHeight
       const rootWidth = root.offsetWidth || 0
       const rootHeight = root.offsetHeight || 0
       let rootMargin = ''
-      if (rootHeight >= screenHeight) {
-        rootMargin = `${top}px ${screenWidth - rootWidth + right}px ${screenHeight - rootHeight + bottom}px ${left}px`
+      if (rootHeight >= viewportHeight) {
+        rootMargin = `${top}px ${viewportWidth - rootWidth + right}px ${viewportHeight - rootHeight + bottom}px ${left}px`
       } else {
         rootMargin = `${top}px ${right}px ${bottom}px ${left}px`
       }
