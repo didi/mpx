@@ -89,7 +89,7 @@ export function watch (source, cb, options = {}) {
   }
 
   let oldValue = isMultiSource ? [] : undefined
-  const job = () => {
+  let job = () => {
     if (!effect.active) return
     if (cb) {
       const newValue = effect.run()
@@ -112,8 +112,6 @@ export function watch (source, cb, options = {}) {
     }
   }
 
-  job.allowRecurse = !!cb
-
   let scheduler
   if (flush === 'sync') {
     // the scheduler function gets called directly
@@ -124,6 +122,8 @@ export function watch (source, cb, options = {}) {
     // default: 'pre'
     scheduler = () => queuePreFlushCb(job)
   }
+
+  job.allowRecurse = !!cb
 
   const effect = new ReactiveEffect(getter, scheduler)
 

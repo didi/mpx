@@ -66,6 +66,7 @@ export class ReactiveEffect {
 
   // same as trigger
   update () {
+    if (Dep.target === this) return
     this.scheduler ? this.scheduler() : this.run()
   }
 
