@@ -45,6 +45,18 @@ import { callWithErrorHandling } from '../helper/errorHandling'
 
 let uid = 0
 
+class RenderTask {
+  state = 'pending'
+  constructor () {
+    this.promise = new Promise((resolve) => {
+      this.resolve = (res) => {
+        this.state = 'finished'
+        resolve(res)
+      }
+    })
+  }
+}
+
 export default class MpxProxy {
   constructor (options, target) {
     this.target = target
@@ -119,21 +131,12 @@ export default class MpxProxy {
     // nextTick(this.mounted.bind(this), this)
   }
 
-  renderTaskExecutor (isEmptyRender) {
+  createRenderTask (isEmptyRender) {
     if ((!this.isMounted() && this.currentRenderTask) || (this.isMounted() && isEmptyRender)) {
       return
     }
-    this.currentRenderTask = {
-      state: 'pending'
-    }
-    this.currentRenderTask.promise = new Promise(resolve => {
-      this.currentRenderTask.resolve = (res) => {
-        this.currentRenderTask.state = 'finished'
-        resolve(res)
-      }
-    })
-    // isMounted之前基于mounted触发，isMounted之后基于setData回调触发
-    return this.isMounted() && this.currentRenderTask.resolve
+    this.currentRenderTask = new RenderTask()
+    return this.currentRenderTask
   }
 
   isMounted () {
@@ -444,7 +447,7 @@ export default class MpxProxy {
     }
 
     const isEmpty = isEmptyObject(data) && isEmptyObject(this.forceUpdateData)
-    const resolve = this.renderTaskExecutor(isEmpty)
+    const renderTask = this.createRenderTask(isEmpty)
 
     if (isEmpty) {
       cb && cb()
@@ -464,9 +467,9 @@ export default class MpxProxy {
     let callback = cb
     if (this.isMounted()) {
       callback = () => {
-        onRenderCallBack(this)
         cb && cb()
-        resolve && resolve()
+        onRenderCallBack(this)
+        renderTask && renderTask.resolve()
       }
     }
     data = processUndefined(data)
