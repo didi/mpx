@@ -6,7 +6,8 @@ class WebIntersectionObserver {
   constructor (_component, options) {
     this._component = _component
     this._options = options || {}
-    this._disconnected = true
+    this._disconnected = false
+    this._relativeInfo = []
     this.callback = null
   }
 
@@ -18,15 +19,37 @@ class WebIntersectionObserver {
     this.observer = new IntersectionObserver((entries, observer) => {
       const initialRatio = this._options.initialRatio || 0
       const thresholds = this._options.thresholds || [0]
-      const thresholdsSortArr = thresholds.sort((a, b) => { return a - b })
+      const thresholdsSortArr = thresholds.sort((a, b) => {
+        return a - b
+      })
       const minThreshold = thresholdsSortArr[0]
       entries.forEach(entry => {
         if (!isInit || (isInit && (entry.intersectionRatio !== initialRatio && (minThreshold <= entry.intersectionRatio)))) {
-          Object.defineProperty(entry, 'relativeRect', {
-            value: entry.rootBounds || {},
-            writable: false,
-            enumerable: true,
-            configurable: true
+          Object.defineProperties(entry, {
+            id: {
+              value: entry.target.getAttribute('id') || '',
+              writable: false,
+              enumerable: true,
+              configurable: true
+            },
+            dataset: {
+              value: entry.target.dataset || {},
+              writable: false,
+              enumerable: true,
+              configurable: true
+            },
+            relativeRect: {
+              value: entry.rootBounds || {},
+              writable: false,
+              enumerable: true,
+              configurable: true
+            },
+            time: {
+              value: new Date().valueOf(),
+              writable: false,
+              enumerable: true,
+              configurable: true
+            }
           })
           this.callback && this.callback(entry)
         }
@@ -69,6 +92,7 @@ class WebIntersectionObserver {
       const { left = 0, right = 0, top = 0, bottom = 0 } = margins
       const root = document.querySelector(selector)
       const rootMargin = `${top}px ${right}px ${bottom}px ${left}px`
+      this._relativeInfo.push({selector, margins})
       this.initObserver(root, rootMargin)
     })
     return this
@@ -88,6 +112,7 @@ class WebIntersectionObserver {
       } else {
         rootMargin = `${top}px ${right}px ${bottom}px ${left}px`
       }
+      this._relativeInfo.push({ selector: null, margins })
       this.initObserver(root, rootMargin)
     })
     return this
