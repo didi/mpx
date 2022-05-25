@@ -507,13 +507,13 @@ export default class MpxProxy {
     }
 
     if (isPlainObject(data)) {
-      this.forceUpdateData = data
-      Object.keys(this.forceUpdateData).forEach(key => {
+      Object.keys(data).forEach(key => {
         if (!this.options.__nativeRender__ && !this.localKeysMap[getFirstKey(key)]) {
           warn(`ForceUpdate data includes a props key [${key}], which may yield a unexpected result.`, this.options.mpxFileResource)
         }
-        setByPath(this.target, key, this.forceUpdateData[key])
+        setByPath(this.target, key, data[key])
       })
+      this.forceUpdateData = data
     } else {
       this.forceUpdateAll = true
     }

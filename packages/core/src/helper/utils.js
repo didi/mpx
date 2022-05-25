@@ -2,6 +2,8 @@ import _getByPath from './getByPath'
 
 import { isRef } from '../observer/ref'
 
+import { set } from '../observer/reactive'
+
 import EXPORT_MPX from '../index'
 
 // type在支付宝环境下不一定准确，判断是普通对象优先使用isPlainObject（新版支付宝不复现，issue #644 修改isPlainObject实现与type等价）
@@ -70,7 +72,7 @@ export function isExistAttr (obj, attr) {
 export function setByPath (data, pathStrOrArr, value) {
   _getByPath(data, pathStrOrArr, (current, key, meta) => {
     if (meta.isEnd) {
-      EXPORT_MPX.set(current, key, value)
+      set(current, key, value)
     } else if (!current[key]) {
       current[key] = {}
     }
