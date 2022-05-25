@@ -76,7 +76,7 @@ class WebIntersectionObserver {
       this._callback = callback
       let targetElement = []
       if (this._options.observeAll) {
-        targetElement = document.querySelectorAll(targetSelector)
+        targetElement = [...document.querySelectorAll(targetSelector)]
       } else {
         targetElement = [document.querySelector(targetSelector)]
       }
