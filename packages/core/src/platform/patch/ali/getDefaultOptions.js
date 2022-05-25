@@ -2,7 +2,7 @@ import MpxProxy from '../../../core/proxy'
 import builtInKeysMap from '../builtInKeysMap'
 import mergeOptions from '../../../core/mergeOptions'
 import { error } from '../../../helper/log'
-import { diffAndCloneA, hasOwn } from '../../../helper/utils'
+import { diffAndCloneA, hasOwn, isFunction } from '../../../helper/utils'
 
 function transformApiForProxy (context, currentInject) {
   const rawSetData = context.setData.bind(context)
@@ -17,27 +17,23 @@ function transformApiForProxy (context, currentInject) {
     })
   }
   Object.defineProperties(context, {
-    __getInitialData: {
+    __getProps: {
       get () {
         return (options) => {
-          const data = {}
-          // 微信原生转支付宝时，该函数兼顾首次将props数据合入data中的功能
-          const tempData = options.__nativeRender__ ? context.data : Object.assign({}, context.data)
-          const validProps = Object.assign({}, options.props, options.properties)
+          const props = {}
+          const validProps = Object.assign({}, options.properties, options.props)
           if (context.props) {
-            for (const key in context.props) {
-              if (hasOwn(validProps, key) && typeof context.props[key] !== 'function') {
-                tempData[key] = context.props[key]
+            Object.keys(context.props).forEach((key) => {
+              if (hasOwn(validProps, key) && isFunction(context.props[key])) {
+                props[key] = context.props[key]
               }
-            }
+            })
           }
-          const validData = Object.assign({}, options.data, validProps)
-          for (const key in tempData) {
-            if (hasOwn(validData, key)) {
-              data[key] = tempData[key]
-            }
+          if (options.__nativeRender__) {
+            // 微信原生转支付宝时，首次将非函数props数据合入data中
+            Object.assign(context.data, props)
           }
-          return data
+          return props
         }
       },
       configurable: false

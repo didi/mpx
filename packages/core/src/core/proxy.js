@@ -183,6 +183,8 @@ export default class MpxProxy {
       // 强制执行render
       this.target.$forceUpdate = this.forceUpdate.bind(this)
       this.target.$nextTick = fn => nextTick(fn, this)
+      // 挂载$refs对象
+      this.target.$refs = {}
     }
   }
 
@@ -199,7 +201,7 @@ export default class MpxProxy {
         this.props,
         {
           triggerEvent: this.target.triggerEvent.bind(this.target),
-          refs: this.target.$refs || (this.target.$refs = {}),
+          refs: this.target.$refs,
           nextTick: fn => nextTick(fn, this),
           forceUpdate: this.forceUpdate.bind(this),
           selectComponent: this.target.selectComponent.bind(this.target),
@@ -508,28 +510,25 @@ export default class MpxProxy {
       this.forceUpdateData = data
       Object.keys(this.forceUpdateData).forEach(key => {
         if (!this.options.__nativeRender__ && !this.localKeysMap[getFirstKey(key)]) {
-          warn(`ForceUpdate data includes a props/computed key [${key}], which may yield a unexpected result.`, this.options.mpxFileResource)
+          warn(`ForceUpdate data includes a props key [${key}], which may yield a unexpected result.`, this.options.mpxFileResource)
         }
-        setByPath(this.data, key, this.forceUpdateData[key])
+        setByPath(this.target, key, this.forceUpdateData[key])
       })
     } else {
       this.forceUpdateAll = true
     }
 
-    callback && nextTick(callback.bind(this.target), this)
-
     if (this.effect) {
       options.sync ? this.effect.run() : this.effect.update()
     } else {
       if (this.forceUpdateAll) {
-        Object.keys(this.data).forEach((key) => {
-          if (this.localKeysMap[key]) {
-            this.forceUpdateData[key] = diffAndCloneA(this.data[key]).clone
-          }
+        Object.keys(this.localKeysMap).forEach((key) => {
+          this.forceUpdateData[key] = diffAndCloneA(this.target[key]).clone
         })
       }
       options.sync ? this.doRender() : queueJob(this.doRender.bind(this))
     }
+    callback && nextTick(callback.bind(this.target), this)
   }
 }
 

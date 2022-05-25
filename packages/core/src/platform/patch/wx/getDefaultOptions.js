@@ -66,21 +66,6 @@ function transformApiForProxy (context, currentInject) {
       },
       configurable: false
     },
-    __getInitialData: {
-      get () {
-        return (options) => {
-          const data = {}
-          const validData = Object.assign({}, options.data, options.properties, options.props)
-          for (const key in context.data) {
-            if (hasOwn(validData, key)) {
-              data[key] = context.data[key]
-            }
-          }
-          return data
-        }
-      },
-      configurable: false
-    },
     __render: {
       get () {
         return rawSetData
