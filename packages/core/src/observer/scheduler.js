@@ -52,20 +52,17 @@ export function queuePostFlushCb (cb) {
   queueCb(cb, activePostFlushCbs, pendingPostFlushCbs, postFlushIndex)
 }
 
-function queueRenderTask (cb, instance) {
-  const renderTask = instance.flushingRenderTask || instance.currentRenderTask
-  if (renderTask && renderTask.state !== 'finished') {
-    renderTask.queueCb(cb)
-    return true
-  }
-  return false
-}
-
 export function queuePostRenderEffect (cb, instance) {
   if (instance) {
-    if (!queueRenderTask(cb, instance)) {
+    if (instance.flushingRenderTask) {
+      instance.flushingRenderTask.queueCb(cb)
+    } else {
       queuePostFlushCb(() => {
-        if (!queueRenderTask(cb, instance)) queuePostFlushCb(cb)
+        if (instance.currentRenderTask?.state === 'pending') {
+          instance.currentRenderTask.queueCb(cb)
+        } else {
+          queuePostFlushCb(cb)
+        }
       })
     }
   } else {
