@@ -20,7 +20,6 @@ let activePostFlushCbs = null
 let postFlushIndex = 0
 
 const resolvedPromise = Promise.resolve()
-let currentFlushPromise = null
 
 const RECURSION_LIMIT = 100
 
@@ -41,7 +40,7 @@ function findInsertionIndex (id) {
 }
 
 export function nextTick (fn, instance = currentInstance) {
-  const p = (currentFlushPromise || resolvedPromise).then(() => instance?.currentRenderTask?.promise)
+  const p = new Promise((resolve) => queuePostFlushCb(resolve)).then(() => instance?.currentRenderTask?.promise)
   return fn ? p.then(fn) : p
 }
 
@@ -51,6 +50,24 @@ export function queuePreFlushCb (cb) {
 
 export function queuePostFlushCb (cb) {
   queueCb(cb, activePostFlushCbs, pendingPostFlushCbs, postFlushIndex)
+}
+
+export function queuePostRenderEffect (cb, instance) {
+  if (instance) {
+    if (instance.flushingRenderTask) {
+      instance.flushingRenderTask.queueCb(cb)
+    } else {
+      queuePostFlushCb(() => {
+        if (instance.currentRenderTask?.state === 'pending') {
+          instance.currentRenderTask.queueCb(cb)
+        } else {
+          queuePostFlushCb(cb)
+        }
+      })
+    }
+  } else {
+    queuePostFlushCb(cb)
+  }
 }
 
 function queueCb (cb, activeQueue, pendingQueue, index) {
@@ -91,7 +108,7 @@ function queueFlush () {
     if (EXPORT_MPX.config.forceFlushSync) {
       flushJobs()
     } else {
-      currentFlushPromise = resolvedPromise.then(flushJobs)
+      resolvedPromise.then(flushJobs)
     }
   }
 }
@@ -163,7 +180,6 @@ function flushJobs (seen) {
     flushPostFlushCbs(seen)
 
     isFlushing = false
-    currentFlushPromise = null
     // some postFlushCb queued jobs!
     // keep flushing until it drains.
     if (
@@ -190,5 +206,48 @@ function checkRecursiveUpdates (seen, fn) {
     } else {
       seen.set(fn, count + 1)
     }
+  }
+}
+
+export class RenderTask {
+  state = 'pending'
+  index = 0
+  queue = []
+
+  constructor (instance) {
+    this.instance = instance
+    instance.currentRenderTask = this
+    this.promise = new Promise((resolve) => {
+      this.resolve = (res) => {
+        this.flush()
+        resolve(res)
+      }
+    })
+  }
+
+  queueCb (cb) {
+    if (this.state === 'finished') return
+    if (
+      !this.queue.length ||
+      !this.queue.includes(cb, this.state === 'flushing' && cb.allowRecurse ? this.index + 1 : this.index)
+    ) {
+      this.queue.push(cb)
+    }
+  }
+
+  flush (seen) {
+    if (this.state === 'finished') return
+    this.state = 'flushing'
+    this.instance.flushingRenderTask = this
+
+    if (isDev) seen = seen || new Map()
+
+    for (; this.index < this.queue.length; this.index++) {
+      const cb = this.queue[this.index]
+      if (isDev && checkRecursiveUpdates(seen, cb)) continue
+      cb()
+    }
+    this.instance.flushingRenderTask = null
+    this.state = 'finished'
   }
 }

@@ -29,7 +29,7 @@ function transformProperties (properties) {
         this[key] = value
         queuePostFlushCb(() => {
           // 只有当当前没有渲染任务时，属性更新才需要单独触发updated，否则可以由渲染任务结束后触发updated
-          if (this.__mpxProxy.currentRenderTask && this.__mpxProxy.currentRenderTask.state === 'finished') {
+          if (this.__mpxProxy.currentRenderTask?.state === 'finished') {
             this.__mpxProxy.updated()
           }
         })

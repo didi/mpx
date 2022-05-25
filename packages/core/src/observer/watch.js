@@ -2,7 +2,7 @@ import { warn } from '../helper/log'
 import { ReactiveEffect } from './effect'
 import { isRef } from './ref'
 import { isReactive } from './reactive'
-import { queuePreFlushCb, queuePostFlushCb, nextTick } from './scheduler'
+import { queuePreFlushCb, queuePostRenderEffect } from './scheduler'
 import { callWithErrorHandling } from '../helper/errorHandling'
 import { currentInstance } from '../core/proxy'
 import { isFunction, isObject, isArray, noop, remove, isPlainObject } from '../helper/utils'
@@ -32,8 +32,6 @@ const processWatchOptionsCompat = (options) => {
   }
   return newOptions
 }
-
-const wrapPostFlushCb = (job, instance) => instance ? () => nextTick(job, instance) : job
 
 export function watch (source, cb, options = {}) {
   let { immediate, deep, flush } = processWatchOptionsCompat(options)
@@ -119,8 +117,7 @@ export function watch (source, cb, options = {}) {
     // the scheduler function gets called directly
     scheduler = job
   } else if (flush === 'post') {
-    job = wrapPostFlushCb(job, instance)
-    scheduler = () => queuePostFlushCb(job)
+    scheduler = () => queuePostRenderEffect(job, instance)
   } else {
     // default: 'pre'
     scheduler = () => queuePreFlushCb(job)
@@ -138,7 +135,7 @@ export function watch (source, cb, options = {}) {
       oldValue = effect.run()
     }
   } else if (flush === 'post') {
-    queuePostFlushCb(wrapPostFlushCb(effect.run.bind(effect), instance))
+    queuePostRenderEffect(effect.run.bind(effect), instance)
   } else {
     effect.run()
   }

@@ -3,7 +3,7 @@ import { ReactiveEffect } from '../observer/effect'
 import { EffectScope } from '../observer/effectScope'
 import { watch } from '../observer/watch'
 import { computed } from '../observer/computed'
-import { queueJob, nextTick } from '../observer/scheduler'
+import { queueJob, nextTick, RenderTask } from '../observer/scheduler'
 import EXPORT_MPX from '../index'
 import {
   type,
@@ -45,18 +45,6 @@ import { callWithErrorHandling } from '../helper/errorHandling'
 
 let uid = 0
 
-class RenderTask {
-  state = 'pending'
-  constructor () {
-    this.promise = new Promise((resolve) => {
-      this.resolve = (res) => {
-        this.state = 'finished'
-        resolve(res)
-      }
-    })
-  }
-}
-
 export default class MpxProxy {
   constructor (options, target) {
     this.target = target
@@ -85,6 +73,7 @@ export default class MpxProxy {
       // 下次是否需要强制更新全部渲染数据
       this.forceUpdateAll = false
       this.currentRenderTask = null
+      this.flushingRenderTask = null
     }
   }
 
@@ -135,8 +124,7 @@ export default class MpxProxy {
     if ((!this.isMounted() && this.currentRenderTask) || (this.isMounted() && isEmptyRender)) {
       return
     }
-    this.currentRenderTask = new RenderTask()
-    return this.currentRenderTask
+    return new RenderTask(this)
   }
 
   isMounted () {
