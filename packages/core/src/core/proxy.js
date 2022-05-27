@@ -3,7 +3,7 @@ import { ReactiveEffect } from '../observer/effect'
 import { EffectScope } from '../observer/effectScope'
 import { watch } from '../observer/watch'
 import { computed } from '../observer/computed'
-import { queueJob, nextTick, RenderTask } from '../observer/scheduler'
+import { queueJob, queuePostFlushCb, nextTick, RenderTask } from '../observer/scheduler'
 import EXPORT_MPX from '../index'
 import {
   type,
@@ -46,8 +46,9 @@ import { callWithErrorHandling } from '../helper/errorHandling'
 let uid = 0
 
 export default class MpxProxy {
-  constructor (options, target) {
+  constructor (options, target, reCreated) {
     this.target = target
+    this.reCreated = reCreated
     this.uid = uid++
     this.name = options.name || ''
     this.options = options
@@ -102,22 +103,11 @@ export default class MpxProxy {
     if (__mpx_mode__ !== 'web') {
       this.initRender()
     }
-  }
 
-  reCreated () {
-    // const options = this.options
-    // this.state = BEFORECREATE
-    // this.callHook(BEFORECREATE)
-    // if (__mpx_mode__ !== 'web') {
-    //   this.initComputed(options.computed, true)
-    //   this.initWatch(options.watch)
-    // }
-    // this.state = CREATED
-    // this.callHook(CREATED)
-    // if (__mpx_mode__ !== 'web') {
-    //   this.initRender()
-    // }
-    // nextTick(this.mounted.bind(this), this)
+    if (this.reCreated) {
+      nextTick(this.mounted.bind(this), this)
+      // queuePostFlushCb(this.mounted.bind(this))
+    }
   }
 
   createRenderTask (isEmptyRender) {
@@ -163,10 +153,10 @@ export default class MpxProxy {
   createProxyConflictHandler (owner) {
     return (key) => {
       if (this.ignoreProxyMap[key]) {
-        error(`The ${owner} key [${key}] is a reserved keyword of miniprogram, please check and rename it.`, this.options.mpxFileResource)
+        !this.reCreated && error(`The ${owner} key [${key}] is a reserved keyword of miniprogram, please check and rename it.`, this.options.mpxFileResource)
         return false
       }
-      error(`The ${owner} key [${key}] exist in the current instance already, please check and rename it.`, this.options.mpxFileResource)
+      !this.reCreated && error(`The ${owner} key [${key}] exist in the current instance already, please check and rename it.`, this.options.mpxFileResource)
     }
   }
 

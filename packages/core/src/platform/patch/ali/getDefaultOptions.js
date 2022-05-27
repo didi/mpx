@@ -94,7 +94,8 @@ function initProxy (context, rawOptions, currentInject) {
     context.__mpxProxy = new MpxProxy(rawOptions, context)
     context.__mpxProxy.created()
   } else if (context.__mpxProxy.isDestroyed()) {
-    context.__mpxProxy.reCreated()
+    context.__mpxProxy = new MpxProxy(rawOptions, context, true)
+    context.__mpxProxy.created()
   }
 }
 

@@ -33,11 +33,67 @@ const setComponentRef = function (target, ref, isAsync) {
 }
 
 export default function getRefsMixin () {
-  let aliMethods
+  const refsMixin = {
+    [BEFOREMOUNT] () {
+      this.__getRefs()
+    },
+    [UPDATED] () {
+      this.__getRefs()
+    },
+    methods: {
+      __getRefs () {
+        if (this.__getRefsData) {
+          const refs = this.__getRefsData()
+
+          refs.forEach(ref => {
+            const setRef = ref.type === 'node' ? setNodeRef : setComponentRef
+            setRef(this, ref)
+
+            if (__mpx_mode__ === 'tt' && ref.type === 'component') {
+              setComponentRef(this, ref, true)
+            }
+          })
+        }
+      },
+      __getRefNode (ref, isAsync) {
+        if (!ref) return
+        let selector = ref.selector.replace(/{{mpxCid}}/g, this.__mpxProxy.uid)
+        if (ref.type === 'node') {
+          const query = this.createSelectorQuery ? this.createSelectorQuery() : envObj.createSelectorQuery()
+          return query && (ref.all ? query.selectAll(selector) : query.select(selector))
+        } else if (ref.type === 'component') {
+          if (isAsync) {
+            return new Promise((resolve) => {
+              ref.all ? this.selectAllComponents(selector, resolve) : this.selectComponent(selector, resolve)
+            })
+          } else {
+            return ref.all ? this.selectAllComponents(selector) : this.selectComponent(selector)
+          }
+        }
+      }
+    }
+  }
+
+
   if (__mpx_mode__ === 'ali') {
+    Object.assign(refsMixin, {
+      data () {
+        return {
+          mpxCid: this.__mpxProxy.uid
+        }
+      },
+      [CREATED] () {
+        this.__updateRef()
+      },
+      [DESTROYED] () {
+        // 销毁ref
+        this.__updateRef(true)
+      }
+    })
+
     const proxyMethods = ['boundingClientRect', 'scrollOffset']
 
-    aliMethods = {
+    Object.assign(refsMixin.methods, {
       // todo 支付宝基础库升级至2.7.4以上可去除
       createSelectorQuery (...args) {
         const selectorQuery = envObj.createSelectorQuery(...args)
@@ -114,59 +170,8 @@ export default function getRefsMixin () {
           })
         }
       }
-    }
+    })
   }
-  return {
-    data () {
-      return {
-        mpxCid: this.__mpxProxy.uid
-      }
-    },
-    [CREATED] () {
-      this.__updateRef && this.__updateRef()
-    },
-    [BEFOREMOUNT] () {
-      this.__getRefs()
-    },
-    [UPDATED] () {
-      this.__getRefs()
-    },
-    [DESTROYED] () {
-      // 销毁ref
-      this.__updateRef && this.__updateRef(true)
-    },
-    methods: {
-      ...aliMethods,
-      __getRefs () {
-        if (this.__getRefsData) {
-          const refs = this.__getRefsData()
 
-          refs.forEach(ref => {
-            const setRef = ref.type === 'node' ? setNodeRef : setComponentRef
-            setRef(this, ref)
-
-            if (__mpx_mode__ === 'tt' && ref.type === 'component') {
-              setComponentRef(this, ref, true)
-            }
-          })
-        }
-      },
-      __getRefNode (ref, isAsync) {
-        if (!ref) return
-        let selector = ref.selector.replace(/{{mpxCid}}/g, this.mpxCid)
-        if (ref.type === 'node') {
-          const query = this.createSelectorQuery ? this.createSelectorQuery() : envObj.createSelectorQuery()
-          return query && (ref.all ? query.selectAll(selector) : query.select(selector))
-        } else if (ref.type === 'component') {
-          if (isAsync) {
-            return new Promise((resolve) => {
-              ref.all ? this.selectAllComponents(selector, resolve) : this.selectComponent(selector, resolve)
-            })
-          } else {
-            return ref.all ? this.selectAllComponents(selector) : this.selectComponent(selector)
-          }
-        }
-      }
-    }
-  }
+  return refsMixin
 }
