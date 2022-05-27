@@ -1,7 +1,8 @@
 import {
   BEFORECREATE,
   CREATED,
-  DESTROYED,
+  BEFOREUNMOUNT,
+  UNMOUNTED,
   MOUNTED,
   UPDATED,
   BEFOREMOUNT,
@@ -54,7 +55,8 @@ export const lifecycleProxyMap = {
   [UPDATED]: ['updated'],
   [BEFOREMOUNT]: ['beforeMount'],
   [MOUNTED]: ['ready', 'onReady'],
-  [DESTROYED]: ['detached', 'onUnload'],
+  [BEFOREUNMOUNT]: ['beforeUnmount'],
+  [UNMOUNTED]: ['detached', 'onUnload'],
   [ONSHOW]: ['pageShow', 'onShow'],
   [ONHIDE]: ['pageHide', 'onHide'],
   [ONLOAD]: ['onLoad']

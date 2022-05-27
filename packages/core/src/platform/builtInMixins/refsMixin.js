@@ -1,4 +1,4 @@
-import { CREATED, BEFOREMOUNT, UPDATED, DESTROYED } from '../../core/innerLifecycle'
+import { CREATED, BEFOREMOUNT, UPDATED, UNMOUNTED } from '../../core/innerLifecycle'
 import { noop } from '../../helper/utils'
 import { error } from '../../helper/log'
 import { getEnvObj } from '../../helper/env'
@@ -74,7 +74,6 @@ export default function getRefsMixin () {
     }
   }
 
-
   if (__mpx_mode__ === 'ali') {
     Object.assign(refsMixin, {
       data () {
@@ -85,7 +84,7 @@ export default function getRefsMixin () {
       [CREATED] () {
         this.__updateRef()
       },
-      [DESTROYED] () {
+      [UNMOUNTED] () {
         // 销毁ref
         this.__updateRef(true)
       }

@@ -123,7 +123,7 @@ export function initProxy (context, rawOptions, currentInject) {
     // 创建proxy对象
     context.__mpxProxy = new MpxProxy(rawOptions, context)
     context.__mpxProxy.created()
-  } else if (context.__mpxProxy.isDestroyed()) {
+  } else if (context.__mpxProxy.isUnmounted()) {
     context.__mpxProxy = new MpxProxy(rawOptions, context, true)
     context.__mpxProxy.created()
   }
@@ -143,7 +143,7 @@ export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
       if (this.__mpxProxy) this.__mpxProxy.mounted()
     },
     [hookNames[2]] () {
-      if (this.__mpxProxy) this.__mpxProxy.destroyed()
+      if (this.__mpxProxy) this.__mpxProxy.unmounted()
     }
   }]
   rawOptions.mixins = rawOptions.mixins ? rootMixins.concat(rawOptions.mixins) : rootMixins

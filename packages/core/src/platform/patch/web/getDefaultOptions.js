@@ -28,7 +28,7 @@ function initProxy (context, rawOptions) {
     // 创建proxy对象
     context.__mpxProxy = new MpxProxy(rawOptions, context)
     context.__mpxProxy.created()
-  } else if (context.__mpxProxy.isDestroyed()) {
+  } else if (context.__mpxProxy.isUnmounted()) {
     context.__mpxProxy = new MpxProxy(rawOptions, context, true)
     context.__mpxProxy.created()
   }
@@ -46,7 +46,7 @@ export function getDefaultOptions (type, { rawOptions = {} }) {
       if (this.__mpxProxy) this.__mpxProxy.updated()
     },
     destroyed () {
-      if (this.__mpxProxy) this.__mpxProxy.destroyed()
+      if (this.__mpxProxy) this.__mpxProxy.unmounted()
     }
   }]
   // 为了在builtMixin中可以使用某些rootMixin实现的特性（如数据响应等），此处builtInMixin在rootMixin之后执行，但是当builtInMixin使用存在对应内建生命周期的目标平台声明周期写法时，可能会出现用户生命周期比builtInMixin中的生命周期先执行的情况，为了避免这种情况发生，builtInMixin应该尽可能使用内建生命周期来编写

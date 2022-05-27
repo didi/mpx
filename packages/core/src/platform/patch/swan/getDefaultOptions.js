@@ -16,7 +16,7 @@ export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
       if (this.__mpxProxy) this.__mpxProxy.mounted()
     },
     [hookNames[2]] () {
-      if (this.__mpxProxy) this.__mpxProxy.destroyed()
+      if (this.__mpxProxy) this.__mpxProxy.unmounted()
     }
   }
 

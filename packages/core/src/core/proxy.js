@@ -33,8 +33,8 @@ import {
   BEFOREMOUNT,
   MOUNTED,
   UPDATED,
-  BEFOREDESTROY,
-  DESTROYED,
+  BEFOREUNMOUNT,
+  UNMOUNTED,
   ONLOAD,
   ONSHOW,
   ONHIDE,
@@ -52,7 +52,7 @@ export default class MpxProxy {
     this.uid = uid++
     this.name = options.name || ''
     this.options = options
-    // beforeCreate -> created -> mounted -> destroyed
+    // beforeCreate -> created -> mounted -> unmounted
     this.state = BEFORECREATE
     this.ignoreProxyMap = makeMap(EXPORT_MPX.config.ignoreProxyWhiteList)
     if (__mpx_mode__ !== 'web') {
@@ -105,8 +105,7 @@ export default class MpxProxy {
     }
 
     if (this.reCreated) {
-      nextTick(this.mounted.bind(this), this)
-      // queuePostFlushCb(this.mounted.bind(this))
+      queuePostFlushCb(this.mounted.bind(this))
     }
   }
 
@@ -137,17 +136,17 @@ export default class MpxProxy {
     }
   }
 
-  destroyed () {
-    this.callHook(BEFOREDESTROY)
+  unmounted () {
+    this.callHook(BEFOREUNMOUNT)
     if (__mpx_mode__ !== 'web') {
       this.scope.stop()
     }
-    this.callHook(DESTROYED)
-    this.state = DESTROYED
+    this.callHook(UNMOUNTED)
+    this.state = UNMOUNTED
   }
 
-  isDestroyed () {
-    return this.state === DESTROYED
+  isUnmounted () {
+    return this.state === UNMOUNTED
   }
 
   createProxyConflictHandler (owner) {
@@ -539,7 +538,7 @@ export const unsetCurrentInstance = () => {
 export const injectHook = (hookName, hook, instance = currentInstance) => {
   if (instance) {
     const wrappedHook = (...args) => {
-      if (instance.isDestroyed()) return
+      if (instance.isUnmounted()) return
       setCurrentInstance(instance)
       const res = callWithErrorHandling(hook, instance, `${hookName} hook`, args)
       unsetCurrentInstance()
@@ -554,8 +553,8 @@ export const onCreated = (fn) => injectHook(CREATED, fn)
 export const onBeforeMount = (fn) => injectHook(BEFOREMOUNT, fn)
 export const onMounted = (fn) => injectHook(MOUNTED, fn)
 export const onUpdated = (fn) => injectHook(UPDATED, fn)
-export const onBeforeDestroy = (fn) => injectHook(BEFOREDESTROY, fn)
-export const onDestroyed = (fn) => injectHook(DESTROYED, fn)
+export const onBeforeUnmount = (fn) => injectHook(BEFOREUNMOUNT, fn)
+export const onUnmounted = (fn) => injectHook(UNMOUNTED, fn)
 export const onLoad = (fn) => injectHook(ONLOAD, fn)
 export const onShow = (fn) => injectHook(ONSHOW, fn)
 export const onHide = (fn) => injectHook(ONHIDE, fn)

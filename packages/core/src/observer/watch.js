@@ -64,7 +64,7 @@ export function watch (source, cb, options = {}) {
     } else {
       // no cb -> simple effect
       getter = () => {
-        if (instance && instance.isDestroyed()) {
+        if (instance && instance.isUnmounted()) {
           return
         }
         if (cleanup) {
