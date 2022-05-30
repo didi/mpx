@@ -1859,7 +1859,7 @@ function processAliStyleClassHack (el, options, root) {
 
     ['style', 'class'].forEach((type) => {
       let exp = getAndRemoveAttr(el, type).val
-      let typeName = type === 'class' ? 'className': type
+      let typeName = type === 'class' ? 'className' : type
       let [newName, newValue] = processor({
         name: type,
         value: exp,
