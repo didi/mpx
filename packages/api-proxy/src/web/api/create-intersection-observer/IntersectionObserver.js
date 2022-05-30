@@ -12,6 +12,7 @@ class WebIntersectionObserver {
     this._root = null
     this._rootMargin = ''
     this._disconnected = false
+    this._minThreshold = this.getMinThreshold()
   }
 
   initObserver () {
@@ -22,13 +23,8 @@ class WebIntersectionObserver {
     // eslint-disable-next-line no-undef
     return new IntersectionObserver((entries, observer) => {
       const initialRatio = this._options.initialRatio || 0
-      const thresholds = this._options.thresholds || [0]
-      const thresholdsSortArr = thresholds.sort((a, b) => {
-        return a - b
-      })
-      const minThreshold = thresholdsSortArr[0]
       entries.forEach(entry => {
-        if (!isInit || (isInit && (entry.intersectionRatio !== initialRatio && (minThreshold <= entry.intersectionRatio)))) {
+        if (!isInit || (isInit && (entry.intersectionRatio !== initialRatio && (this._minThreshold <= entry.intersectionRatio)))) {
           Object.defineProperties(entry, {
             id: {
               value: entry.target.getAttribute('id') || '',
@@ -119,6 +115,12 @@ class WebIntersectionObserver {
   disconnect () {
     this._disconnected = true
     this._observer.disconnect()
+  }
+
+  getMinThreshold () {
+    const thresholds = this._options.thresholds || [0]
+    const thresholdsSortArr = thresholds.sort((a, b) => a - b)
+    return thresholdsSortArr[0] || 0
   }
 }
 
