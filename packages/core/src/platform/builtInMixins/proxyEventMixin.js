@@ -101,34 +101,22 @@ export default function proxyEventMixin () {
         const handler = this.props && (this.props['on' + handlerName] || this.props['catch' + handlerName])
         if (handler && typeof handler === 'function') {
           const dataset = collectDataset(this.props)
-          const originTarget = e.target || {}
-          const detail = e.detail || {}
           const id = this.props.id || ''
-          const timeStamp = e.timeStamp || +new Date()
-          const targetData = {
+          const targetData = Object.assign({}, e.target || {}, {
             id,
-            dataset,
-            offsetLeft: originTarget.offsetLeft,
-            offsetTop: originTarget.offsetTop
-          }
-          const detailData = {
-            x: detail.pageX,
-            y: detail.pageY,
-            ...detail
-          }
-          const eventObj = {
-            type,
-            timeStamp,
+            dataset
+          })
+
+          const currentTargetData = Object.assign({}, e.currentTarget || {}, {
+            id,
+            dataset
+          })
+
+          const eventObj = Object.assign({}, e, {
             target: targetData,
-            currentTarget: targetData,
-            detail: detailData
-          }
-          if (e.touches) {
-            eventObj.touches = e.touches
-          }
-          if (e.changedTouches) {
-            eventObj.changedTouches = e.changedTouches
-          }
+            currentTarget: currentTargetData
+          })
+
           handler.call(this, eventObj)
         }
       }

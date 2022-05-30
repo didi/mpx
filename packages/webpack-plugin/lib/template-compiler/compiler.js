@@ -1849,39 +1849,30 @@ function processAliEventHack (el, options, root) {
 }
 
 function processAliStyleClassHack (el, options, root) {
-  let processor
-
-  const rootViewProcess = ({ name, value, typeName }) => {
-    let sep = name === 'style' ? ';' : ' '
-    value = value ? `{{${typeName}||''}}${sep}${value}` : `{{${typeName}||''}}`
-    return [ name, value ]
-  }
-
-  if (isComponentNode(el, options)) processor = ({ value, typeName }) => [typeName, value]
-
   // 处理组件根节点
   if (options.isComponent && el === root && isRealNode(el)) {
-    processor = rootViewProcess
-  }
-
-  // 非上述两种不处理
-  if (!processor) return
-
-  ['style', 'class'].forEach((type) => {
-    let exp = getAndRemoveAttr(el, type).val
-    let typeName = type === 'class' ? 'className' : type
-    let [newName, newValue] = processor({
-      name: type,
-      value: exp,
-      typeName
-    })
-    if (newValue !== undefined) {
-      addAttrs(el, [{
-        name: newName,
-        value: newValue
-      }])
+    const processor = ({ name, value, typeName }) => {
+      let sep = name === 'style' ? ';' : ' '
+      value = value ? `{{${typeName}||''}}${sep}${value}` : `{{${typeName}||''}}`
+      return [ name, value ]
     }
-  })
+
+    ['style', 'class'].forEach((type) => {
+      let exp = getAndRemoveAttr(el, type).val
+      let typeName = type === 'class'? 'className': type
+      let [newName, newValue] = processor({
+        name: type,
+        value: exp,
+        typeName
+      })
+      if (newValue !== undefined) {
+        addAttrs(el, [{
+          name: newName,
+          value: newValue
+        }])
+      }
+    })
+  }
 }
 
 // 有virtualHost情况wx组件注入virtualHost。无virtualHost阿里组件注入root-view。其他跳过。
@@ -2113,7 +2104,7 @@ function processElement (el, root, options, meta) {
   }
 
   // 当mode为ali不管是不是跨平台都需要进行此处理，以保障ali当中的refs相关增强能力正常运行
-  if (mode === 'ali') {
+  if (transAli) {
     processAliStyleClassHack(el, options, root)
     processAliEventHack(el, options, root)
   }
