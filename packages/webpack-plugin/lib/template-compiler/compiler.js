@@ -1822,7 +1822,6 @@ function processAliEventHack (el, options, root) {
   let fallThroughEvents = ['onTap']
   // 判断当前文件是否在范围中
   const filePath = options.filePath
-
   for (let item of fallthroughEventAttrsRules) {
     const {
       include,

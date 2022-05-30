@@ -164,6 +164,19 @@ class MpxWebpackPlugin {
     }, options.nativeConfig)
     options.webConfig = options.webConfig || {}
     options.partialCompile = options.mode !== 'web' && options.partialCompile
+    if (options.mode !== 'web') {
+      let fallthroughEventAttrsRules = [
+        {
+          include: () => true,
+          events: ['onTap']
+        }
+      ]
+      const fallthroughEventAttrsRulesRaw = options.fallthroughEventAttrsRules
+      if (fallthroughEventAttrsRulesRaw) {
+        fallthroughEventAttrsRules = (Array.isArray(fallthroughEventAttrsRulesRaw) ? fallthroughEventAttrsRulesRaw : [fallthroughEventAttrsRulesRaw]).concat(fallthroughEventAttrsRules)
+      }
+      options.fallthroughEventAttrsRules = fallthroughEventAttrsRules
+    }
     this.options = options
     // Hack for buildDependencies
     const rawResolveBuildDependencies = FileSystemInfo.prototype.resolveBuildDependencies
