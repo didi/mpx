@@ -122,7 +122,6 @@ class MpxWebpackPlugin {
     options.autoScopeRules = options.autoScopeRules || {}
     options.autoVirtualHostRules = options.autoVirtualHostRules || {}
     options.forceDisableProxyCtor = options.forceDisableProxyCtor || false
-    options.fallthroughEventAttrsRules = options.fallthroughEventAttrsRules || []
     options.transMpxRules = options.transMpxRules || {
       include: () => true
     }
