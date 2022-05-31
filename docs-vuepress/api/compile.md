@@ -855,6 +855,45 @@ new MpxWebpackPlugin({
 该特性只能用于**开发环境**，默认情况下会阻止所有页面(**入口 app.mpx 除外**)的打包。
 :::
 
+### proxyComponentEventsRules
+
+- **类型**：`Array<Object> | Object`
+  - `option.include` 同webpack的include规则
+  - `option.exclude` 同webpack的exclude规则
+  - `option.events` 需要在支付宝环境代理的事件，数组形式的支付宝事件名，例如['onTap', 'onTouchMove']
+
+- **详细**：微信转支付宝场景下，由于支付宝默认不支持自定义组件节点绑定事件，当你需要在支付宝环境中自定义组件根节点上绑定事件时，需要配置此
+规则来告诉框架需要帮你代理抹平哪些事件
+
+- **示例**：
+
+当我们在小程序开发时存在以下代码时
+```html
+<!--自定义组件list-->
+<!--src/packageA/pages/index.mpx-->
+<list bindtap="tapHandler"></list>
+```
+支付宝环境的自定义组件节点绑定事件并不会触发，但微信环境可以，若想在支付宝环境下使用该功能，则需配置此规则
+```js
+const path = require('path')
+
+new MpxWebpackPlugin({
+  proxyComponentEventsRules: [
+    {
+      include: path.resolve('src/packageA'), // 输出支付宝时，对src/packageA文件夹中的所有自定义组件添加 onTap, onToucheMove 事件代理
+      exclude: path.resolve('lib'),
+      events: ['onTap', 'onTouchMove']
+    },
+    {
+      include: path.resolve('src/packageB'), // 输出支付宝时，对src/packageB文件夹中的所有自定义组件添加 onTap, onLongTap 事件代理
+      events: ['onTap', 'onLongTap']
+    },
+  ]
+})
+```
+
+> tips: 无论是否配置该规则，框架默认对所有自定义组件节点的 onTap 事件进行了抹平代理
+
 ## MpxWebpackPlugin static methods
 
 `MpxWebpackPlugin` 通过静态方法暴露了以下五个内置 loader，详情如下：
