@@ -12,6 +12,7 @@ const harmonySpecifierTag = require('webpack/lib/dependencies/HarmonyImportDepen
 const NormalModule = require('webpack/lib/NormalModule')
 const EntryPlugin = require('webpack/lib/EntryPlugin')
 const JavascriptModulesPlugin = require('webpack/lib/javascript/JavascriptModulesPlugin')
+const FlagEntryExportAsUsedPlugin = require('webpack/lib/FlagEntryExportAsUsedPlugin')
 const FileSystemInfo = require('webpack/lib/FileSystemInfo')
 const normalize = require('./utils/normalize')
 const toPosix = require('./utils/to-posix')
@@ -163,6 +164,12 @@ class MpxWebpackPlugin {
     }, options.nativeConfig)
     options.webConfig = options.webConfig || {}
     options.partialCompile = options.mode !== 'web' && options.partialCompile
+    let proxyComponentEventsRules = []
+    const proxyComponentEventsRulesRaw = options.proxyComponentEventsRules
+    if (proxyComponentEventsRulesRaw) {
+      proxyComponentEventsRules = Array.isArray(proxyComponentEventsRulesRaw) ? proxyComponentEventsRulesRaw : [proxyComponentEventsRulesRaw]
+    }
+    options.proxyComponentEventsRules = proxyComponentEventsRules
     this.options = options
     // Hack for buildDependencies
     const rawResolveBuildDependencies = FileSystemInfo.prototype.resolveBuildDependencies
@@ -273,6 +280,9 @@ class MpxWebpackPlugin {
     } else {
       errors.push('Multiple MpxWebpackPlugin instances exist in webpack compiler, please check webpack plugins config!')
     }
+
+    // 将entry export标记为used且不可mangle，避免require.async生成的js chunk在生产环境下报错
+    new FlagEntryExportAsUsedPlugin(true, 'entry').apply(compiler)
 
     if (this.options.mode !== 'web') {
       // 强制设置publicPath为'/'
@@ -564,6 +574,7 @@ class MpxWebpackPlugin {
           useRelativePath: this.options.useRelativePath,
           removedChunks: [],
           forceProxyEventRules: this.options.forceProxyEventRules,
+          proxyComponentEventsRules: this.options.proxyComponentEventsRules,
           pathHash: (resourcePath) => {
             if (this.options.pathHashMode === 'relative' && this.options.projectRoot) {
               return hash(path.relative(this.options.projectRoot, resourcePath))
