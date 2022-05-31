@@ -34,7 +34,7 @@ const processWatchOptionsCompat = (options) => {
 }
 
 export function watch (source, cb, options = {}) {
-  let { immediate, deep, flush } = processWatchOptionsCompat(options)
+  let { immediate, deep, flush, immediateAsync } = processWatchOptionsCompat(options)
   const instance = currentInstance
   let getter
   let isMultiSource = false
@@ -129,8 +129,9 @@ export function watch (source, cb, options = {}) {
 
   if (cb) {
     if (immediate) {
-      // todo 实现immediateAsync
       job()
+    } else if (immediateAsync) {
+      queuePreFlushCb(job)
     } else {
       oldValue = effect.run()
     }
