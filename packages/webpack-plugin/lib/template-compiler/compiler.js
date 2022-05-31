@@ -3,7 +3,6 @@ const he = require('he')
 const config = require('../config')
 const { MPX_ROOT_VIEW, MPX_APP_MODULE_ID } = require('../utils/const')
 const normalize = require('../utils/normalize')
-const { normalizeCondition } = require('../utils/match-condition')
 const isValidIdentifierStr = require('../utils/is-valid-identifier-str')
 const isEmptyObject = require('../utils/is-empty-object')
 const getRulesRunner = require('../platform/index')
@@ -11,6 +10,7 @@ const addQuery = require('../utils/add-query')
 const transDynamicClassExpr = require('./trans-dynamic-class-expr')
 const dash2hump = require('../utils/hump-dash').dash2hump
 const { inBrowser } = require('../utils/env')
+const { matchCondition } = require('../utils/match-condition')
 
 /**
  * Make a map and return a function for checking if a key
@@ -746,7 +746,7 @@ function parse (template, options) {
         stack.push(element)
       } else {
         element.unary = true
-        closeElement(element, meta, options)
+        closeElement(element, meta)
       }
     },
 
@@ -761,7 +761,7 @@ function parse (template, options) {
         // pop stack
         stack.pop()
         currentParent = stack[stack.length - 1]
-        closeElement(element, meta, options)
+        closeElement(element, meta)
       }
     },
 
@@ -1813,67 +1813,57 @@ function processBuiltInComponents (el, meta) {
   }
 }
 
-function processAliAddComponentRootView (el, options) {
-  const processAttrsConditions = [
-    { condition: /^(on|catch)Tap$/, action: 'clone' },
-    { condition: /^(on|catch)TouchStart$/, action: 'clone' },
-    { condition: /^(on|catch)TouchMove$/, action: 'clone' },
-    { condition: /^(on|catch)TouchEnd$/, action: 'clone' },
-    { condition: /^(on|catch)TouchCancel$/, action: 'clone' },
-    { condition: /^(on|catch)LongTap$/, action: 'clone' },
-    { condition: /^data-/, action: 'clone' },
-    { condition: /^style$/, action: 'move' },
-    { condition: /^slot$/, action: 'move' }
-  ]
-  const processAppendAttrsRules = [
-    { name: 'class', value: `${MPX_ROOT_VIEW} host-${options.moduleId}` }
-  ]
-  let newElAttrs = []
-  let allAttrs = cloneAttrsList(el.attrsList)
+function processAliEventHack (el, options, root) {
+  // 只处理组件根节点
+  if (!(options.isComponent && el === root && isRealNode(el))) {
+    return
+  }
+  const { proxyComponentEventsRules } = options
+  let fallThroughEvents = ['onTap']
+  // 判断当前文件是否在范围中
+  const filePath = options.filePath
+  for (let item of proxyComponentEventsRules) {
+    const {
+      include,
+      exclude
+    } = item || {}
 
-  function processClone (attr) {
-    newElAttrs.push(attr)
+    if (matchCondition(filePath, {
+      include,
+      exclude
+    })) {
+      const eventsRaw = item.events
+      const events = Array.isArray(eventsRaw) ? eventsRaw : [eventsRaw]
+      fallThroughEvents = Array.from(new Set(fallThroughEvents.concat(events)))
+      break
+    }
   }
 
-  function processMove (attr) {
-    getAndRemoveAttr(el, attr.name)
-    newElAttrs.push(attr)
-  }
+  fallThroughEvents.forEach((type) => {
+    addAttrs(el, [{
+      name: type,
+      value: '__proxyEvent'
+    }])
+  })
+}
 
-  function processAppendRules (el) {
-    processAppendAttrsRules.forEach((rule) => {
-      const getNeedAppendAttrValue = el.attrsMap[rule.name]
-      const value = getNeedAppendAttrValue ? getNeedAppendAttrValue + ' ' + rule.value : rule.value
-      newElAttrs.push({
-        name: rule.name,
-        value
-      })
-    })
-  }
+function processAliStyleClassHack (el, options, root) {
+  // 处理组件根节点
+  if (options.isComponent && el === root && isRealNode(el)) {
+    ['style', 'class'].forEach((type) => {
+      let exp = getAndRemoveAttr(el, type).val
+      let typeName = type === 'class' ? 'className' : type
+      let sep = type === 'style' ? ';' : ' '
+      let newValue = exp ? `{{${typeName}||''}}${sep}${exp}` : `{{${typeName}||''}}`
 
-  processAttrsConditions.forEach(item => {
-    const matcher = normalizeCondition(item.condition)
-    allAttrs.forEach((attr) => {
-      if (matcher(attr.name)) {
-        if (item.action === 'clone') {
-          processClone(attr)
-        } else if (item.action === 'move') {
-          processMove(attr)
-        }
+      if (newValue !== undefined) {
+        addAttrs(el, [{
+          name: type,
+          value: newValue
+        }])
       }
     })
-  })
-
-  processAppendRules(el)
-  let componentWrapView = createASTElement('view', newElAttrs)
-  moveBaseDirective(componentWrapView, el)
-  if (el.is && el.components) {
-    el = postProcessComponentIs(el)
   }
-
-  replaceNode(el, componentWrapView, true)
-  addChild(componentWrapView, el)
-  return componentWrapView
 }
 
 // 有virtualHost情况wx组件注入virtualHost。无virtualHost阿里组件注入root-view。其他跳过。
@@ -1885,36 +1875,36 @@ function getVirtualHostRoot (options, meta) {
       !meta.options && (meta.options = {})
       meta.options.virtualHost = true
     }
-    // if (mode === 'ali' && !options.hasVirtualHost) {
-    //   // ali组件根节点实体化
-    //   let rootView = createASTElement('view', [
-    //     {
-    //       name: 'class',
-    //       value: `${MPX_ROOT_VIEW} host-${options.moduleId}`
-    //     }
-    //   ])
-    //   processElement(rootView, rootView, options, meta)
-    //   return rootView
-    // }
+    if (mode === 'ali' && !options.hasVirtualHost) {
+      // ali组件根节点实体化
+      let rootView = createASTElement('view', [
+        {
+          name: 'class',
+          value: `${MPX_ROOT_VIEW} host-${options.moduleId}`
+        }
+      ])
+      processElement(rootView, rootView, options, meta)
+      return rootView
+    }
   }
   return getTempNode()
 }
 
 function processShow (el, options, root) {
-  // 开启 virtualhost 全部走 props 传递处理
-  // 未开启 virtualhost 直接绑定 display:none 到节点上
   let show = getAndRemoveAttr(el, config[mode].directive.show).val
   if (mode === 'swan') show = wrapMustache(show)
-
-  if (options.hasVirtualHost) {
-    if (options.isComponent && el.parent === root && isRealNode(el)) {
-      if (show !== undefined) {
-        show = `{{${parseMustache(show).result}&&mpxShow}}`
-      } else {
-        show = '{{mpxShow}}'
-      }
+  let processFlag = el.parent === root
+  // 当ali且未开启virtualHost时，mpxShow打到根节点上
+  if (mode === 'ali' && !options.hasVirtualHost) processFlag = el === root
+  if (options.isComponent && processFlag && isRealNode(el)) {
+    if (show !== undefined) {
+      show = `{{${parseMustache(show).result}&&mpxShow}}`
+    } else {
+      show = '{{mpxShow}}'
     }
-    if (isComponentNode(el, options) && show !== undefined) {
+  }
+  if (show !== undefined) {
+    if (isComponentNode(el, options)) {
       if (show === '') {
         show = '{{false}}'
       }
@@ -1923,14 +1913,6 @@ function processShow (el, options, root) {
         value: show
       }])
     } else {
-      processShowStyle()
-    }
-  } else {
-    processShowStyle()
-  }
-
-  function processShowStyle () {
-    if (show !== undefined) {
       const showExp = parseMustache(show).result
       let oldStyle = getAndRemoveAttr(el, 'style').val
       oldStyle = oldStyle ? oldStyle + ';' : ''
@@ -2112,6 +2094,11 @@ function processElement (el, root, options, meta) {
     processShow(el, options, root)
   }
 
+  if (transAli) {
+    processAliStyleClassHack(el, options, root)
+    processAliEventHack(el, options, root)
+  }
+
   if (!pass) {
     processBindEvent(el, options)
     processComponentIs(el, options)
@@ -2120,7 +2107,7 @@ function processElement (el, root, options, meta) {
   processAttrs(el, options)
 }
 
-function closeElement (el, meta, options) {
+function closeElement (el, meta) {
   postProcessAtMode(el)
   if (mode === 'web') {
     postProcessWxs(el, meta)
@@ -2130,13 +2117,8 @@ function closeElement (el, meta, options) {
   }
   const pass = isNative || postProcessTemplate(el) || processingTemplate
   postProcessWxs(el, meta)
-
   if (!pass) {
-    if (isComponentNode(el, options) && !options.hasVirtualHost && mode === 'ali') {
-      el = processAliAddComponentRootView(el, options)
-    } else {
-      el = postProcessComponentIs(el)
-    }
+    el = postProcessComponentIs(el)
   }
   postProcessFor(el)
   postProcessIf(el)

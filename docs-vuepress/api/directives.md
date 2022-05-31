@@ -506,7 +506,7 @@ wx:model 默认监听 `input` 事件，可以使用 `wx:model-event` 定义 wx:m
 ## wx:model-value-path
 
 指定 wx:model 双向绑定时的取值路径；
-并非所有的组件都会按微信的标注格式 `event.target.value` 来传值，例如 vant 的 input 组件，值是通过抛出 `event.target` 本身传递的，这时我们可以使用 `wx:model-value-path` 重新指定取值路径。
+并非所有的组件都会按微信的标注格式 `event.detail.value` 来传值，例如 vant 的 input 组件，值是通过抛出 `event.detail` 本身传递的，这时我们可以使用 `wx:model-value-path="[]"` 重新指定取值路径。
 
 ```html
 <vant-field wx:model-value-path="[]" wx:model="{{a}}"></vant-field>

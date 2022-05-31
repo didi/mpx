@@ -116,7 +116,7 @@ module.exports = function (source) {
       pluginEntry.pages = []
     }
 
-    async.eachOf(pages, (page, key) => {
+    async.eachOf(pages, (page, key, callback) => {
       processPage(page, context, '', (err, entry) => {
         if (err === RESOLVE_IGNORED_ERR) {
           delete pages[key]
@@ -133,7 +133,7 @@ module.exports = function (source) {
         }
         callback()
       })
-    })
+    }, callback)
   }
 
   async.parallel([
