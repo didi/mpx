@@ -44,7 +44,8 @@ const sidebar = {
       children: [
         'tool/ts',
         'tool/i18n',
-        'tool/unit-test'
+        'tool/unit-test',
+        'tool/e2e-test'
       ]
     },
     {
