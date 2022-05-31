@@ -1850,7 +1850,6 @@ function processAliEventHack (el, options, root) {
 function processAliStyleClassHack (el, options, root) {
   // 处理组件根节点
   if (options.isComponent && el === root && isRealNode(el)) {
-
     ['style', 'class'].forEach((type) => {
       let exp = getAndRemoveAttr(el, type).val
       let typeName = type === 'class' ? 'className' : type
