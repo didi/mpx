@@ -2,6 +2,7 @@ const NodeTargetPlugin = require('webpack/lib/node/NodeTargetPlugin')
 const EntryPlugin = require('webpack/lib/EntryPlugin')
 const LazySet = require('webpack/lib/util/LazySet')
 const LimitChunkCountPlugin = require('webpack/lib/optimize/LimitChunkCountPlugin')
+const FlagEntryExportAsUsedPlugin = require('webpack/lib/FlagEntryExportAsUsedPlugin')
 const path = require('path')
 const WxsPlugin = require('./WxsPlugin')
 const RecordResourceMapDependency = require('../dependencies/RecordResourceMapDependency')
@@ -22,7 +23,7 @@ module.exports.pitch = function (remainingRequest) {
   let { resourcePath, queryObj } = parseRequest(this.resource)
   const issuer = moduleGraph.getIssuer(this._module)
   const { resourcePath: issuerResourcePath, queryObj: issuerQueryObj } = parseRequest(queryObj.issuerResource || issuer.resource)
-  const issuerPackageName = issuerQueryObj.packageRoot || mpx.currentPackageRoot || 'main'
+  const issuerPackageName = issuerQueryObj.packageRoot || 'main'
   const pagesMap = mpx.pagesMap
   const componentsMap = mpx.componentsMap[issuerPackageName]
   const staticResourcesMap = mpx.staticResourcesMap[issuerPackageName]
@@ -81,7 +82,8 @@ module.exports.pitch = function (remainingRequest) {
         new WxsPlugin({ mode }),
         new NodeTargetPlugin(),
         new EntryPlugin(this.context, request, { name: getName(filename) }),
-        new LimitChunkCountPlugin({ maxChunks: 1 })
+        new LimitChunkCountPlugin({ maxChunks: 1 }),
+        new FlagEntryExportAsUsedPlugin(true, 'entry')
       ]
 
       const childCompiler = this._compilation.createChildCompiler(resourcePath, outputOptions, plugins)

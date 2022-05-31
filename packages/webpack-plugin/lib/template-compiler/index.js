@@ -24,7 +24,7 @@ module.exports = function (raw) {
   const hasComment = queryObj.hasComment
   const isNative = queryObj.isNative
   const hasScoped = queryObj.hasScoped
-  const moduleId = queryObj.moduleId
+  const moduleId = queryObj.moduleId || 'm' + mpx.pathHash(resourcePath)
 
   const warn = (msg) => {
     this.emitWarning(
@@ -59,7 +59,8 @@ module.exports = function (raw) {
     checkUsingComponents: mpx.checkUsingComponents,
     globalComponents: Object.keys(mpx.usingComponents),
     forceProxyEvent: matchCondition(resourcePath, mpx.forceProxyEventRules),
-    hasVirtualHost: matchCondition(resourcePath, mpx.autoVirtualHostRules)
+    hasVirtualHost: matchCondition(resourcePath, mpx.autoVirtualHostRules),
+    proxyComponentEventsRules: mpx.proxyComponentEventsRules
   })
 
   if (meta.wxsContentMap) {

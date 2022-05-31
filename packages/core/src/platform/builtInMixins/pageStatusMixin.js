@@ -35,7 +35,7 @@ export default function pageStatusMixin (mixinType) {
       [CREATED] () {
         const options = this.$rawOptions
         const hasPageShow = options.pageShow || options.pageHide
-        const needPageLifetimes = options.pageLifetimes && (__mpx_mode__ === 'ali' || __mpx_mode__ === 'tt')
+        const needPageLifetimes = options.pageLifetimes && __mpx_mode__ === 'ali'
 
         if (hasPageShow || needPageLifetimes) {
           let currentPage

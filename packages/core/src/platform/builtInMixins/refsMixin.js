@@ -22,7 +22,8 @@ const setComponentRef = function (target, ref, context, isAsync) {
     enumerable: true,
     configurable: true,
     get () {
-      if (!cacheRef) {
+      // wx由于分包异步化的存在，每次访问refs都需要重新执行selectComponen，避免一直拿到缓存中的placeholder
+      if (__mpx_mode__ === 'wx' || !cacheRef) {
         return (cacheRef = context.__getRefNode(ref, isAsync))
       }
       return cacheRef
