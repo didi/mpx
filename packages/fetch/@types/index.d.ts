@@ -40,6 +40,16 @@ export interface xfetch {
   interceptors: Interceptors
 }
 
+declare module '@mpxjs/core' {
+  interface Mpx {
+    xfetch: xfetch
+  }
+
+  interface MpxComponentIns {
+    $xfetch: xfetch
+  }
+}
+
 interface XFetchClass {
   new (option?: CreateOption): {
     create: createT

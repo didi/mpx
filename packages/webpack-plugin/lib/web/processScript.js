@@ -119,6 +119,7 @@ module.exports = function (script, {
         content += `  import '@mpxjs/webpack-plugin/lib/runtime/base.styl'
   import Vue from 'vue'
   import VueRouter from 'vue-router'
+  import Mpx from '@mpxjs/core'
   Vue.use(VueRouter)
   global.getApp = function(){}
   global.getCurrentPages = function(){
@@ -160,9 +161,8 @@ module.exports = function (script, {
       i18n.mergeLocaleMessage(locale, newMessages[locale])
     })
   }
-  if(global.__mpx) {
-    global.__mpx.i18n = i18n
-  }\n`
+  Mpx.i18n = i18n
+  \n`
         }
       }
       // 注入wxs模块
