@@ -163,14 +163,12 @@ class MpxWebpackPlugin {
     }, options.nativeConfig)
     options.webConfig = options.webConfig || {}
     options.partialCompile = options.mode !== 'web' && options.partialCompile
-    if (options.mode !== 'web') {
-      let fallthroughEventAttrsRules = []
-      const fallthroughEventAttrsRulesRaw = options.fallthroughEventAttrsRules
-      if (fallthroughEventAttrsRulesRaw) {
-        fallthroughEventAttrsRules = Array.isArray(fallthroughEventAttrsRulesRaw) ? fallthroughEventAttrsRulesRaw : [fallthroughEventAttrsRulesRaw]
-      }
-      options.fallthroughEventAttrsRules = fallthroughEventAttrsRules
+    let proxyComponentEventsRules = []
+    const proxyComponentEventsRulesRaw = options.proxyComponentEventsRules
+    if (proxyComponentEventsRulesRaw) {
+      proxyComponentEventsRules = Array.isArray(proxyComponentEventsRulesRaw) ? proxyComponentEventsRulesRaw : [proxyComponentEventsRulesRaw]
     }
+    options.proxyComponentEventsRules = proxyComponentEventsRules
     this.options = options
     // Hack for buildDependencies
     const rawResolveBuildDependencies = FileSystemInfo.prototype.resolveBuildDependencies
@@ -572,7 +570,7 @@ class MpxWebpackPlugin {
           useRelativePath: this.options.useRelativePath,
           removedChunks: [],
           forceProxyEventRules: this.options.forceProxyEventRules,
-          fallthroughEventAttrsRules: this.options.fallthroughEventAttrsRules,
+          proxyComponentEventsRules: this.options.proxyComponentEventsRules,
           pathHash: (resourcePath) => {
             if (this.options.pathHashMode === 'relative' && this.options.projectRoot) {
               return hash(path.relative(this.options.projectRoot, resourcePath))

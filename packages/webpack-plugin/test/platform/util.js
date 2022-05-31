@@ -18,7 +18,7 @@ function compileAndParse (input, { srcMode, mode, env } = { srcMode: 'wx', mode:
       '__mpx_src_mode__': srcMode,
       '__mpx_env__': env
     },
-    fallthroughEventAttrsRules: []
+    proxyComponentEventsRules: []
   })
   const ast = parsed.root
   return compiler.serialize(ast)

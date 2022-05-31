@@ -70,10 +70,13 @@ export default function proxyEventMixin () {
     }
   }
   if (__mpx_mode__ === 'ali') {
+    const getHandler = (eventName, props) => {
+      const handlerName = eventName.replace(/^./, matched => matched.toUpperCase()).replace(/-([a-z])/g, (match, p1) => p1.toUpperCase())
+      return props && (props['on' + handlerName] || props['catch' + handlerName])
+    }
     Object.assign(methods, {
       triggerEvent (eventName, eventDetail) {
-        const handlerName = eventName.replace(/^./, matched => matched.toUpperCase()).replace(/-([a-z])/g, (match, p1) => p1.toUpperCase())
-        const handler = this.props && (this.props['on' + handlerName] || this.props['catch' + handlerName])
+        const handler = getHandler(eventName, this.props)
         if (handler && typeof handler === 'function') {
           const dataset = collectDataset(this.props)
           const id = this.props.id || ''
@@ -97,8 +100,8 @@ export default function proxyEventMixin () {
       },
       __proxyEvent (e) {
         const type = e.type
-        const handlerName = type.replace(/^./, matched => matched.toUpperCase()).replace(/-([a-z])/g, (match, p1) => p1.toUpperCase())
-        const handler = this.props && (this.props['on' + handlerName] || this.props['catch' + handlerName])
+        const handler = getHandler(type, this.props)
+
         if (handler && typeof handler === 'function') {
           const dataset = collectDataset(this.props)
           const id = this.props.id || ''

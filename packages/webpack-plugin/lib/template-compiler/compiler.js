@@ -1818,11 +1818,11 @@ function processAliEventHack (el, options, root) {
   if (!(options.isComponent && el === root && isRealNode(el))) {
     return
   }
-  const { fallthroughEventAttrsRules } = options
+  const { proxyComponentEventsRules } = options
   let fallThroughEvents = ['onTap']
   // 判断当前文件是否在范围中
   const filePath = options.filePath
-  for (let item of fallthroughEventAttrsRules) {
+  for (let item of proxyComponentEventsRules) {
     const {
       include,
       exclude
@@ -1850,23 +1850,16 @@ function processAliEventHack (el, options, root) {
 function processAliStyleClassHack (el, options, root) {
   // 处理组件根节点
   if (options.isComponent && el === root && isRealNode(el)) {
-    const processor = ({ name, value, typeName }) => {
-      let sep = name === 'style' ? ';' : ' '
-      value = value ? `{{${typeName}||''}}${sep}${value}` : `{{${typeName}||''}}`
-      return [ name, value ]
-    }
 
     ['style', 'class'].forEach((type) => {
       let exp = getAndRemoveAttr(el, type).val
       let typeName = type === 'class' ? 'className' : type
-      let [newName, newValue] = processor({
-        name: type,
-        value: exp,
-        typeName
-      })
+      let sep = type === 'style' ? ';' : ' '
+      let newValue = exp ? `{{${typeName}||''}}${sep}${exp}` : `{{${typeName}||''}}`
+
       if (newValue !== undefined) {
         addAttrs(el, [{
-          name: newName,
+          name: type,
           value: newValue
         }])
       }
@@ -2102,7 +2095,6 @@ function processElement (el, root, options, meta) {
     processShow(el, options, root)
   }
 
-  // 当mode为ali不管是不是跨平台都需要进行此处理，以保障ali当中的refs相关增强能力正常运行
   if (transAli) {
     processAliStyleClassHack(el, options, root)
     processAliEventHack(el, options, root)

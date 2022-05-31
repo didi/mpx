@@ -855,7 +855,7 @@ new MpxWebpackPlugin({
 该特性只能用于**开发环境**，默认情况下会阻止所有页面(**入口 app.mpx 除外**)的打包。
 :::
 
-### fallthroughEventAttrsRules
+### proxyComponentEventsRules
 
 - **类型**：`Array<Object> | Object`
   - `option.include` 同webpack的include规则
@@ -878,7 +878,7 @@ new MpxWebpackPlugin({
 const path = require('path')
 
 new MpxWebpackPlugin({
-  fallthroughEventAttrsRules: [
+  proxyComponentEventsRules: [
     {
       include: path.resolve('src/packageA'), // 输出支付宝时，对src/packageA文件夹中的所有自定义组件添加 onTap, onToucheMove 事件代理
       exclude: path.resolve('lib'),
