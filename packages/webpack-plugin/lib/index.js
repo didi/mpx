@@ -164,15 +164,10 @@ class MpxWebpackPlugin {
     options.webConfig = options.webConfig || {}
     options.partialCompile = options.mode !== 'web' && options.partialCompile
     if (options.mode !== 'web') {
-      let fallthroughEventAttrsRules = [
-        {
-          include: () => true,
-          events: ['onTap']
-        }
-      ]
+      let fallthroughEventAttrsRules = []
       const fallthroughEventAttrsRulesRaw = options.fallthroughEventAttrsRules
       if (fallthroughEventAttrsRulesRaw) {
-        fallthroughEventAttrsRules = (Array.isArray(fallthroughEventAttrsRulesRaw) ? fallthroughEventAttrsRulesRaw : [fallthroughEventAttrsRulesRaw]).concat(fallthroughEventAttrsRules)
+        fallthroughEventAttrsRules = Array.isArray(fallthroughEventAttrsRulesRaw) ? fallthroughEventAttrsRulesRaw : [fallthroughEventAttrsRulesRaw]
       }
       options.fallthroughEventAttrsRules = fallthroughEventAttrsRules
     }
