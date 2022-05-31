@@ -28,6 +28,7 @@ const sidebar = {
         'advance/mixin',
         'advance/npm',
         'advance/subpackage',
+        'advance/async-subpackage',
         'advance/image-process',
         'advance/progressive',
         'advance/ability-compatible',
