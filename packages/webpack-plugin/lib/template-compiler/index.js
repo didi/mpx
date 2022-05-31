@@ -24,7 +24,7 @@ module.exports = function (raw) {
   const hasComment = queryObj.hasComment
   const isNative = queryObj.isNative
   const hasScoped = queryObj.hasScoped
-  const moduleId = queryObj.moduleId
+  const moduleId = queryObj.moduleId || 'm' + mpx.pathHash(resourcePath)
 
   const warn = (msg) => {
     this.emitWarning(

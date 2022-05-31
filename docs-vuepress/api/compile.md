@@ -645,12 +645,12 @@ new MpxWebpackPlugin({
 ```js
 new MpxWebpackPlugin ({
   postcssInlineConfig: {
-    plugins: {
-      // 'postcss-import': {},
-      // 'postcss-preset-env': {},
-      // 'cssnano': {},
-      // 'autoprefixer': {}
-    }
+    plugins: [
+      // require('postcss-import'),
+      // require('postcss-preset-env'),
+      // require('cssnano'),
+      // require('autoprefixer')
+    ]
   }
 })
 ```

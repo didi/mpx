@@ -12,6 +12,7 @@ const harmonySpecifierTag = require('webpack/lib/dependencies/HarmonyImportDepen
 const NormalModule = require('webpack/lib/NormalModule')
 const EntryPlugin = require('webpack/lib/EntryPlugin')
 const JavascriptModulesPlugin = require('webpack/lib/javascript/JavascriptModulesPlugin')
+const FlagEntryExportAsUsedPlugin = require('webpack/lib/FlagEntryExportAsUsedPlugin')
 const FileSystemInfo = require('webpack/lib/FileSystemInfo')
 const normalize = require('./utils/normalize')
 const toPosix = require('./utils/to-posix')
@@ -279,6 +280,9 @@ class MpxWebpackPlugin {
     } else {
       errors.push('Multiple MpxWebpackPlugin instances exist in webpack compiler, please check webpack plugins config!')
     }
+
+    // 将entry export标记为used且不可mangle，避免require.async生成的js chunk在生产环境下报错
+    new FlagEntryExportAsUsedPlugin(true, 'entry').apply(compiler)
 
     if (this.options.mode !== 'web') {
       // 强制设置publicPath为'/'
@@ -965,6 +969,8 @@ class MpxWebpackPlugin {
               if (mpx.mode === 'wx') {
                 const dep = new DynamicEntryDependency(request, 'export', '', queryObj.root, MPX_CURRENT_CHUNK, context, range)
                 parser.state.current.addPresentationalDependency(dep)
+                // 包含require.async的模块不能被concatenate，避免DynamicEntryDependency中无法获取模块chunk以计算相对路径
+                parser.state.module.buildInfo.moduleConcatenationBailout = 'require async'
               } else {
                 const range = expr.range
                 const dep = new CommonJsAsyncDependency(request, range)
