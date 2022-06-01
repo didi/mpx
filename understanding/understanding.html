@@ -1,0 +1,1385 @@
+
+<!DOCTYPE HTML>
+<html lang="" >
+    <head>
+        <meta charset="UTF-8">
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <title>mpx运行机制 · mpx文档</title>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="description" content="">
+        <meta name="generator" content="GitBook 3.2.3">
+        <meta name="author" content="滴滴出行webapp团队">
+        
+        
+    
+    <link rel="stylesheet" href="../gitbook/style.css">
+
+    
+            
+                
+                <link rel="stylesheet" href="../gitbook/gitbook-plugin-anchors/plugin.css">
+                
+            
+                
+                <link rel="stylesheet" href="../gitbook/gitbook-plugin-expandable-chapters-small/expandable-chapters-small.css">
+                
+            
+                
+                <link rel="stylesheet" href="../gitbook/gitbook-plugin-insert-logo/plugin.css">
+                
+            
+                
+                <link rel="stylesheet" href="../gitbook/gitbook-plugin-highlight/website.css">
+                
+            
+                
+                <link rel="stylesheet" href="../gitbook/gitbook-plugin-search/search.css">
+                
+            
+                
+                <link rel="stylesheet" href="../gitbook/gitbook-plugin-fontsettings/website.css">
+                
+            
+        
+
+    
+
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+
+        
+    
+    
+    
+    <meta name="HandheldFriendly" content="true"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../gitbook/images/apple-touch-icon-precomposed-152.png">
+    <link rel="shortcut icon" href="../gitbook/images/favicon.ico" type="image/x-icon">
+
+    
+    <link rel="next" href="understanding.html" />
+    
+    
+    <link rel="prev" href="../extend/" />
+    
+
+    <style>
+    @media only screen and (max-width: 640px) {
+        .book-header .hidden-mobile {
+            display: none;
+        }
+    }
+    </style>
+    <script>
+        window["gitbook-plugin-github-buttons"] = {"buttons":[{"user":"didi","repo":"mpx","type":"star","size":"small","count":true},{"user":"didi","repo":"mpx","type":"fork","size":"small","count":true}]};
+    </script>
+
+    </head>
+    <body>
+        
+<div class="book">
+    <div class="book-summary">
+        
+            
+<div id="book-search-input" role="search">
+    <input type="text" placeholder="Type to search" />
+</div>
+
+            
+                <nav role="navigation">
+                
+
+
+<ul class="summary">
+    
+    
+
+    
+
+    
+        
+        
+    
+        <li class="chapter " data-level="1.1" data-path="../">
+            
+                <a href="../">
+            
+                    
+                    Introduction
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2" data-path="../start.html">
+            
+                <a href="../start.html">
+            
+                    
+                    开始
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.3" data-path="../single/what-is-single-file.html">
+            
+                <a href="../single/what-is-single-file.html#单文件">
+            
+                    
+                    单文件
+            
+                </a>
+            
+
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="1.3.1" data-path="../single/what-is-single-file.html">
+            
+                <a href="../single/what-is-single-file.html#介绍">
+            
+                    
+                    什么是单文件
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.3.2" data-path="../single/what-is-single-file.html">
+            
+                <a href="../single/what-is-single-file.html#编辑器ide高亮、提示">
+            
+                    
+                    编辑器/IDE配置
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="1.4" data-path="../single/template-enhance.html">
+            
+                <a href="../single/template-enhance.html#template增强特性">
+            
+                    
+                    template增强特性
+            
+                </a>
+            
+
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="1.4.1" data-path="../single/template-enhance.html">
+            
+                <a href="../single/template-enhance.html#class与style绑定">
+            
+                    
+                    class与style绑定
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.4.2" data-path="../single/template-enhance.html">
+            
+                <a href="../single/template-enhance.html#内联事件绑定">
+            
+                    
+                    内联事件绑定
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.4.3" data-path="../single/template-enhance.html">
+            
+                <a href="../single/template-enhance.html#动态组件">
+            
+                    
+                    动态组件
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.4.4" data-path="../single/template-enhance.html">
+            
+                <a href="../single/template-enhance.html#双向绑定">
+            
+                    
+                    双向绑定
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.4.5" data-path="../single/template-enhance.html">
+            
+                <a href="../single/template-enhance.html#refs">
+            
+                    
+                    获取节点
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="1.5" data-path="../single/script-enhance.html">
+            
+                <a href="../single/script-enhance.html#script增强特性">
+            
+                    
+                    script增强特性
+            
+                </a>
+            
+
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="1.5.1" data-path="../single/script-enhance.html">
+            
+                <a href="../single/script-enhance.html#computed">
+            
+                    
+                    computed
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.5.2" data-path="../single/script-enhance.html">
+            
+                <a href="../single/script-enhance.html#watch">
+            
+                    
+                    watch
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.5.3" data-path="../single/script-enhance.html">
+            
+                <a href="../single/script-enhance.html#mixins">
+            
+                    
+                    mixins
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.5.4" data-path="../single/script-enhance.html">
+            
+                <a href="../single/script-enhance.html#页面生命周期">
+            
+                    
+                    lifeCycle
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="1.6" data-path="../single/style-enhance.html">
+            
+                <a href="../single/style-enhance.html#style增强特性">
+            
+                    
+                    style增强特性
+            
+                </a>
+            
+
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="1.6.1" data-path="../single/style-enhance.html">
+            
+                <a href="../single/style-enhance.html#css预处理器">
+            
+                    
+                    预处理支持
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.6.2" data-path="../single/style-enhance.html">
+            
+                <a href="../single/style-enhance.html#样式引用">
+            
+                    
+                    样式引用
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.6.3" data-path="../single/style-enhance.html">
+            
+                <a href="../single/style-enhance.html#rpx转换">
+            
+                    
+                    rpx转换
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="1.7" data-path="../single/json-enhance.html">
+            
+                <a href="../single/json-enhance.html#JSON增强特性">
+            
+                    
+                    JSON增强特性
+            
+                </a>
+            
+
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="1.7.1" data-path="../single/json-enhance.html">
+            
+                <a href="../single/json-enhance.html#packages">
+            
+                    
+                    packages
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.7.2" data-path="../single/json-enhance.html">
+            
+                <a href="../single/json-enhance.html#分包">
+            
+                    
+                    分包
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.7.3" data-path="../single/json-enhance.html">
+            
+                <a href="../single/json-enhance.html#自定义tabbar">
+            
+                    
+                    自定义tabbar
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="1.8" data-path="../store/">
+            
+                <a href="../store/#数据管理">
+            
+                    
+                    数据管理
+            
+                </a>
+            
+
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="1.8.1" data-path="../store/">
+            
+                <a href="../store/#开始">
+            
+                    
+                    开始
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.8.2" data-path="../store/">
+            
+                <a href="../store/#state">
+            
+                    
+                    state
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.8.3" data-path="../store/">
+            
+                <a href="../store/#getter">
+            
+                    
+                    getter
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.8.4" data-path="../store/">
+            
+                <a href="../store/#mutation">
+            
+                    
+                    mutation
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.8.5" data-path="../store/">
+            
+                <a href="../store/#action">
+            
+                    
+                    action
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.8.6" data-path="../store/">
+            
+                <a href="../store/#module">
+            
+                    
+                    子模块
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.8.7" data-path="../store/">
+            
+                <a href="../store/#多实例">
+            
+                    
+                    多实例store
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="1.9" data-path="../compilationEnhance/">
+            
+                <a href="../compilationEnhance/">
+            
+                    
+                    构建配置
+            
+                </a>
+            
+
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="1.9.1" data-path="../compilationEnhance/">
+            
+                <a href="../compilationEnhance/#自动配置">
+            
+                    
+                    自动配置
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.9.2" data-path="../compilationEnhance/">
+            
+                <a href="../compilationEnhance/#手动配置">
+            
+                    
+                    手动配置
+            
+                </a>
+            
+
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="1.9.2.1" data-path="../compilationEnhance/">
+            
+                <a href="../compilationEnhance/#mpxjswebpack-plugin">
+            
+                    
+                    @mpxjs/webpack-plugin
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.9.2.2" data-path="../compilationEnhance/">
+            
+                <a href="../compilationEnhance/#mpxwebpackpluginloader">
+            
+                    
+                    MpxWebpackPlugin.loader
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.9.2.3" data-path="../compilationEnhance/">
+            
+                <a href="../compilationEnhance/#mpxjsurl-loader">
+            
+                    
+                    @mpxjs/url-loader
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.9.2.4" data-path="../compilationEnhance/">
+            
+                <a href="../compilationEnhance/#outputfilename">
+            
+                    
+                    output.filename
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.9.2.5" data-path="../compilationEnhance/">
+            
+                <a href="../compilationEnhance/#optimization">
+            
+                    
+                    optimization
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="1.10" data-path="../platform.html">
+            
+                <a href="../platform.html">
+            
+                    
+                    多平台支持
+            
+                </a>
+            
+
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="1.10.1" data-path="../platform.html">
+            
+                <a href="../platform.html#多平台支持">
+            
+                    
+                    多平台支持
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.10.2" data-path="../platform.html">
+            
+                <a href="../platform.html#跨平台编译">
+            
+                    
+                    跨平台编译
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.10.3" data-path="../platform.html">
+            
+                <a href="../platform.html#跨平台输出web">
+            
+                    
+                    跨平台输出web
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="1.11" data-path="../ts.html">
+            
+                <a href="../ts.html">
+            
+                    
+                    TS支持
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.12" data-path="../i18n.html">
+            
+                <a href="../i18n.html">
+            
+                    
+                    国际化i18n
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.13" data-path="../progressive.html">
+            
+                <a href="../progressive.html">
+            
+                    
+                    渐进接入
+            
+                </a>
+            
+
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="1.13.1" data-path="../progressive.html">
+            
+                <a href="../progressive.html#原生自定义组件支持">
+            
+                    
+                    原生组件支持
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.13.2" data-path="../progressive.html">
+            
+                <a href="../progressive.html#原生page支持">
+            
+                    
+                    原生page支持
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.13.3" data-path="../progressive.html">
+            
+                <a href="../progressive.html#导出原生">
+            
+                    
+                    导出原生
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="1.14" data-path="../api.html">
+            
+                <a href="../api.html">
+            
+                    
+                    API参考
+            
+                </a>
+            
+
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="1.14.1" data-path="../api.html">
+            
+                <a href="../api.html#createapp">
+            
+                    
+                    createApp
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.14.2" data-path="../api.html">
+            
+                <a href="../api.html#createpage">
+            
+                    
+                    createPage
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.14.3" data-path="../api.html">
+            
+                <a href="../api.html#createcomponent">
+            
+                    
+                    createComponent
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.14.4" data-path="../api.html">
+            
+                <a href="../api.html#createstore">
+            
+                    
+                    createStore
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.14.5" data-path="../api.html">
+            
+                <a href="../api.html#topureobject">
+            
+                    
+                    toPureObject
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.14.6" data-path="../api.html">
+            
+                <a href="../api.html#observable">
+            
+                    
+                    observable
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.14.7" data-path="../api.html">
+            
+                <a href="../api.html#extendobservable">
+            
+                    
+                    extendObservable
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.14.8" data-path="../api.html">
+            
+                <a href="../api.html#watchcontext-expr-handler">
+            
+                    
+                    watch
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.14.9" data-path="../api.html">
+            
+                <a href="../api.html#mpxuse">
+            
+                    
+                    use
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.14.10" data-path="../api.html">
+            
+                <a href="../api.html#mpxmixin">
+            
+                    
+                    mixin
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.14.11" data-path="../instance-api.html">
+            
+                <a href="../instance-api.html">
+            
+                    
+                    实例API
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="1.15" data-path="../extend/">
+            
+                <a href="../extend/">
+            
+                    
+                    拓展能力
+            
+                </a>
+            
+
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="1.15.1" data-path="../extend/">
+            
+                <a href="../extend/#fetch">
+            
+                    
+                    fetch
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.15.2" data-path="../extend/">
+            
+                <a href="../extend/#api-proxy">
+            
+                    
+                    api-proxy
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.15.3" data-path="../extend/">
+            
+                <a href="../extend/#mock">
+            
+                    
+                    mock
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter active" data-level="1.16" data-path="understanding.html">
+            
+                <a href="understanding.html">
+            
+                    
+                    mpx运行机制
+            
+                </a>
+            
+
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="1.16.1" data-path="understanding.html">
+            
+                <a href="understanding.html#数据响应与性能优化">
+            
+                    
+                    数据响应与性能优化
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.16.2" data-path="understanding.html">
+            
+                <a href="understanding.html#编译构建">
+            
+                    
+                    编译构建
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.16.3" data-path="resource.html">
+            
+                <a href="resource.html#图像资源处理">
+            
+                    
+                    图像资源处理
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="1.17" >
+            
+                <a target="_blank" href="https://github.com/didi/mpx/releases">
+            
+                    
+                    更新记录
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.18" data-path="../migrate.html">
+            
+                <a href="../migrate.html">
+            
+                    
+                    2.0迁移指南
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.19" data-path="../articles/">
+            
+                <a href="../articles/">
+            
+                    
+                    相关文章
+            
+                </a>
+            
+
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="1.19.1" data-path="../articles/1.0.html">
+            
+                <a href="../articles/1.0.html">
+            
+                    
+                    1.0
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.19.2" data-path="../articles/2.0.html">
+            
+                <a href="../articles/2.0.html">
+            
+                    
+                    2.0
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.19.3" data-path="../articles/mpx1.html">
+            
+                <a href="../articles/mpx1.html">
+            
+                    
+                    mpx使用
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+
+    
+
+    <li class="divider"></li>
+
+    <li>
+        <a href="https://www.gitbook.com" target="blank" class="gitbook-link">
+            Published with GitBook
+        </a>
+    </li>
+</ul>
+
+
+                </nav>
+            
+        
+    </div>
+
+    <div class="book-body">
+        
+            <div class="body-inner">
+                
+                    
+
+<div class="book-header" role="navigation">
+    
+
+    <!-- Title -->
+    <h1>
+        <i class="fa fa-circle-o-notch fa-spin"></i>
+        <a href=".." >mpx运行机制</a>
+    </h1>
+</div>
+
+
+
+
+                    <div class="page-wrapper" tabindex="-1" role="main">
+                        <div class="page-inner">
+                            
+<div id="book-search-results">
+    <div class="search-noresults">
+    
+                                <section class="normal markdown-section">
+                                
+                                <p align="center" style="background-color: #42b983; height: 50px; line-height: 50px; font-size: 18px; font-weight: 600">
+  <span style="color: #d6ffec">&#x60A8;&#x5F53;&#x524D;&#x6D4F;&#x89C8;&#x7684;&#x662F;&#x65E7;&#x7248;&#x6587;&#x6863;&#xFF0C;&#x4E0D;&#x518D;&#x7EF4;&#x62A4;&#x66F4;&#x65B0;&#xFF0C;&#x70B9;&#x51FB;<a href="https://mpxjs.cn/" style="color: white" target="_blank">&#x8FD9;&#x91CC;</a>&#x8DF3;&#x8F6C;Mpx&#x5168;&#x65B0;&#x5B98;&#x7F51;</span>
+</p>
+
+<h1 id="mpx&#x8FD0;&#x884C;&#x673A;&#x5236;"><a name="mpx&#x8FD0;&#x884C;&#x673A;&#x5236;" class="plugin-anchor" href="#mpx&#x8FD0;&#x884C;&#x673A;&#x5236;"><i class="fa fa-link" aria-hidden="true"></i></a>mpx&#x8FD0;&#x884C;&#x673A;&#x5236;</h1>
+<p>&#x4E0B;&#x9762;&#x6211;&#x4EEC;&#x5206;&#x522B;&#x4ECE;&#x8FD0;&#x884C;&#x65F6;&#x548C;&#x7F16;&#x8BD1;&#x4E24;&#x4E2A;&#x65B9;&#x9762;&#x4ECB;&#x7ECD;mpx&#x7684;&#x5B9E;&#x73B0;&#x673A;&#x5236;</p>
+<h2 id="&#x6570;&#x636E;&#x54CD;&#x5E94;&#x4E0E;&#x6027;&#x80FD;&#x4F18;&#x5316;"><a name="&#x6570;&#x636E;&#x54CD;&#x5E94;&#x4E0E;&#x6027;&#x80FD;&#x4F18;&#x5316;" class="plugin-anchor" href="#&#x6570;&#x636E;&#x54CD;&#x5E94;&#x4E0E;&#x6027;&#x80FD;&#x4F18;&#x5316;"><i class="fa fa-link" aria-hidden="true"></i></a>&#x6570;&#x636E;&#x54CD;&#x5E94;&#x4E0E;&#x6027;&#x80FD;&#x4F18;&#x5316;</h2>
+<p>&#x6570;&#x636E;&#x54CD;&#x5E94;&#x4F5C;&#x4E3A;Vue&#x6700;&#x6838;&#x5FC3;&#x7684;&#x7279;&#x6027;&#xFF0C;&#x5728;&#x6211;&#x4EEC;&#x7684;&#x65E5;&#x5E38;&#x5F00;&#x53D1;&#x4E2D;&#x88AB;&#x5927;&#x91CF;&#x4F7F;&#x7528;&#xFF0C;&#x80FD;&#x591F;&#x6781;&#x5927;&#x5730;&#x63D0;&#x9AD8;&#x524D;&#x7AEF;&#x5F00;&#x53D1;&#x4F53;&#x9A8C;&#x548C;&#x6548;&#x7387;&#xFF0C;&#x6211;&#x4EEC;&#x5728;&#x6846;&#x67B6;&#x8BBE;&#x8BA1;&#x521D;&#x671F;&#x6700;&#x65E9;&#x8003;&#x8651;&#x7684;&#x5C31;&#x662F;&#x5982;&#x4F55;&#x5C06;&#x6570;&#x636E;&#x54CD;&#x5E94;&#x7279;&#x6027;&#x52A0;&#x5165;&#x5230;&#x5C0F;&#x7A0B;&#x5E8F;&#x5F00;&#x53D1;&#x4E2D;&#x3002;&#x5728;&#x6570;&#x636E;&#x54CD;&#x5E94;&#x7684;&#x5B9E;&#x73B0;&#x4E0A;&#xFF0C;&#x6211;&#x4EEC;&#x5F15;&#x5165;&#x4E86;MobX&#xFF0C;&#x4E00;&#x4E2A;&#x5B9E;&#x73B0;&#x4E86;&#x7EAF;&#x7CB9;&#x6570;&#x636E;&#x54CD;&#x5E94;&#x80FD;&#x529B;&#x7684;&#x77E5;&#x540D;&#x5F00;&#x6E90;&#x9879;&#x76EE;&#x3002;&#x501F;&#x52A9;MobX&#x548C;mixins&#xFF0C;&#x6211;&#x4EEC;&#x5728;&#x5C0F;&#x7A0B;&#x5E8F;&#x7EC4;&#x4EF6;&#x521B;&#x5EFA;&#x521D;&#x671F;&#x5EFA;&#x7ACB;&#x4E86;&#x4E00;&#x4E2A;&#x54CD;&#x5E94;&#x5F0F;&#x6570;&#x636E;&#x7BA1;&#x7406;&#x7CFB;&#x7EDF;&#xFF0C;&#x8BE5;&#x7CFB;&#x7EDF;&#x89C2;&#x5BDF;&#x7740;&#x5C0F;&#x7A0B;&#x5E8F;&#x7EC4;&#x4EF6;&#x4E2D;&#x7684;&#x6240;&#x6709;&#x6570;&#x636E;(data/props/computed)&#x5E76;&#x57FA;&#x4E8E;&#x6570;&#x636E;&#x7684;&#x53D8;&#x66F4;&#x9A71;&#x52A8;&#x89C6;&#x56FE;&#x7684;&#x6E32;&#x67D3;(setData)&#x53CA;&#x7528;&#x6237;&#x6CE8;&#x518C;&#x7684;watch&#x56DE;&#x8C03;&#xFF0C;&#x5B9E;&#x73B0;&#x4E86;Vue&#x4E2D;&#x7684;&#x6570;&#x636E;&#x54CD;&#x5E94;&#x7F16;&#x7A0B;&#x4F53;&#x9A8C;&#x3002;&#x4E0E;&#x6B64;&#x540C;&#x65F6;&#xFF0C;&#x6211;&#x4EEC;&#x57FA;&#x4E8E;MobX&#x5C01;&#x88C5;&#x5B9E;&#x73B0;&#x4E86;&#x4E00;&#x4E2A;Vuex&#x89C4;&#x8303;&#x7684;&#x6570;&#x636E;&#x7BA1;&#x7406;store&#xFF0C;&#x80FD;&#x591F;&#x65B9;&#x4FBF;&#x5730;&#x6CE8;&#x5165;&#x7EC4;&#x4EF6;&#x8FDB;&#x884C;&#x5168;&#x5C40;&#x6570;&#x636E;&#x7BA1;&#x7406;&#x3002;&#x4E3A;&#x4E86;&#x63D0;&#x9AD8;&#x8DE8;&#x56E2;&#x961F;&#x5F00;&#x53D1;&#x7684;&#x4F53;&#x9A8C;&#xFF0C;&#x6211;&#x4EEC;&#x5BF9;store&#x6DFB;&#x52A0;&#x4E86;&#x591A;&#x5B9E;&#x4F8B;&#x53EF;&#x5408;&#x5E76;&#x7684;&#x7279;&#x6027;&#xFF0C;&#x4E0D;&#x540C;&#x56E2;&#x961F;&#x7EF4;&#x62A4;&#x81EA;&#x5DF1;&#x7684;store&#xFF0C;&#x5728;&#x9700;&#x8981;&#x65F6;&#x80FD;&#x591F;&#x5408;&#x5E76;&#x4ED6;&#x4EBA;&#x6216;&#x8005;&#x516C;&#x5171;&#x7684;store&#x751F;&#x6210;&#x65B0;&#x7684;store&#x5B9E;&#x4F8B;&#xFF0C;&#x6211;&#x4EEC;&#x8BA4;&#x4E3A;&#x8FD9;&#x662F;&#x4E00;&#x79CD;&#x6BD4;Vuex&#x4E2D;modules&#x66F4;&#x52A0;&#x7075;&#x6D3B;&#x4FBF;&#x6377;&#x7684;&#x8DE8;&#x56E2;&#x961F;&#x6570;&#x636E;&#x7BA1;&#x7406;&#x6A21;&#x5F0F;</p>
+<p>&#x4F5C;&#x4E3A;&#x4E00;&#x4E2A;&#x63A5;&#x7BA1;&#x4E86;&#x5C0F;&#x7A0B;&#x5E8F;setData&#x7684;&#x6570;&#x636E;&#x54CD;&#x5E94;&#x5F00;&#x53D1;&#x6846;&#x67B6;&#xFF0C;&#x6211;&#x4EEC;&#x9AD8;&#x5EA6;&#x91CD;&#x89C6;Mpx&#x7684;&#x6E32;&#x67D3;&#x6027;&#x80FD;&#xFF0C;&#x901A;&#x8FC7;&#x5C0F;&#x7A0B;&#x5E8F;&#x5B98;&#x65B9;&#x6587;&#x6863;&#x4E2D;&#x63D0;&#x5230;&#x7684;&#x6027;&#x80FD;&#x4F18;&#x5316;&#x5EFA;&#x8BAE;&#x53EF;&#x4EE5;&#x5F97;&#x77E5;&#xFF0C;setData&#x5BF9;&#x4E8E;&#x5C0F;&#x7A0B;&#x5E8F;&#x6027;&#x80FD;&#x6765;&#x8BF4;&#x662F;&#x91CD;&#x4E2D;&#x4E4B;&#x91CD;&#xFF0C;setData&#x4F18;&#x5316;&#x7684;&#x65B9;&#x5411;&#x4E3B;&#x8981;&#x6709;&#x4E24;&#x4E2A;&#xFF1A;</p>
+<ol>
+<li>&#x5C3D;&#x53EF;&#x80FD;&#x51CF;&#x5C11;setData&#x8C03;&#x7528;&#x7684;&#x9891;&#x6B21;</li>
+<li>&#x5C3D;&#x53EF;&#x80FD;&#x51CF;&#x5C11;&#x5355;&#x6B21;setData&#x4F20;&#x8F93;&#x7684;&#x6570;&#x636E;</li>
+</ol>
+<p>&#x4E3A;&#x4E86;&#x5B9E;&#x73B0;&#x4EE5;&#x4E0A;&#x4E24;&#x4E2A;&#x4F18;&#x5316;&#x65B9;&#x5411;&#xFF0C;&#x6211;&#x4EEC;&#x505A;&#x4E86;&#x4EE5;&#x4E0B;&#x51E0;&#x9879;&#x5DE5;&#x4F5C;&#xFF1A;</p>
+<ul>
+<li>&#x5C06;&#x7EC4;&#x4EF6;&#x7684;&#x9759;&#x6001;&#x6A21;&#x677F;&#x7F16;&#x8BD1;&#x4E3A;&#x53EF;&#x6267;&#x884C;&#x7684;render&#x51FD;&#x6570;&#xFF0C;&#x901A;&#x8FC7;render&#x51FD;&#x6570;&#x6536;&#x96C6;&#x6A21;&#x677F;&#x6570;&#x636E;&#x4F9D;&#x8D56;&#xFF0C;&#x53EA;&#x6709;&#x5F53;render&#x51FD;&#x6570;&#x4E2D;&#x7684;&#x4F9D;&#x8D56;&#x6570;&#x636E;&#x53D1;&#x751F;&#x53D8;&#x5316;&#x65F6;&#x624D;&#x4F1A;&#x89E6;&#x53D1;&#x5C0F;&#x7A0B;&#x5E8F;&#x7EC4;&#x4EF6;&#x7684;setData&#xFF0C;&#x540C;&#x65F6;&#x901A;&#x8FC7;&#x4E00;&#x4E2A;&#x5F02;&#x6B65;&#x961F;&#x5217;&#x786E;&#x4FDD;&#x4E00;&#x4E2A;tick&#x4E2D;&#x6700;&#x591A;&#x53EA;&#x4F1A;&#x8FDB;&#x884C;&#x4E00;&#x6B21;setData&#xFF0C;&#x8FD9;&#x4E2A;&#x673A;&#x5236;&#x548C;Vue&#x4E2D;&#x7684;render&#x673A;&#x5236;&#x975E;&#x5E38;&#x7C7B;&#x4F3C;&#xFF0C;&#x5927;&#x5927;&#x964D;&#x4F4E;&#x4E86;setData&#x7684;&#x8C03;&#x7528;&#x9891;&#x6B21;&#xFF1B;</li>
+<li>&#x5C06;&#x6A21;&#x677F;&#x7F16;&#x8BD1;render&#x51FD;&#x6570;&#x7684;&#x8FC7;&#x7A0B;&#x4E2D;&#xFF0C;&#x6211;&#x4EEC;&#x8FD8;&#x8BB0;&#x5F55;&#x8F93;&#x51FA;&#x4E86;&#x6A21;&#x677F;&#x4E2D;&#x4F7F;&#x7528;&#x7684;&#x6570;&#x636E;&#x8DEF;&#x5F84;&#xFF0C;&#x5728;&#x6BCF;&#x6B21;&#x9700;&#x8981;setData&#x65F6;&#x4F1A;&#x6839;&#x636E;&#x8FD9;&#x4E9B;&#x6570;&#x636E;&#x8DEF;&#x5F84;&#x4E0E;&#x4E0A;&#x4E00;&#x6B21;&#x7684;&#x6570;&#x636E;&#x8FDB;&#x884C;diff&#xFF0C;&#x4EC5;&#x5C06;&#x53D1;&#x751F;&#x53D8;&#x5316;&#x7684;&#x6570;&#x636E;&#x901A;&#x8FC7;&#x6570;&#x636E;&#x8DEF;&#x5F84;&#x7684;&#x65B9;&#x5F0F;&#x8FDB;&#x884C;setData&#xFF0C;&#x8FD9;&#x6837;&#x786E;&#x4FDD;&#x4E86;&#x6BCF;&#x6B21;setData&#x4F20;&#x8F93;&#x7684;&#x6570;&#x636E;&#x91CF;&#x6700;&#x4F4E;&#xFF0C;&#x540C;&#x65F6;&#x907F;&#x514D;&#x4E86;&#x4E0D;&#x5FC5;&#x8981;&#x7684;setData&#x64CD;&#x4F5C;&#xFF0C;&#x8FDB;&#x4E00;&#x6B65;&#x964D;&#x4F4E;&#x4E86;setData&#x7684;&#x9891;&#x6B21;&#x3002;</li>
+</ul>
+<p><img src="https://dpubstatic.udache.com/static/dpubimg/4cb54489-b99d-4560-97aa-68f756730131.jpeg" alt="Mpx&#x6570;&#x636E;&#x54CD;&#x5E94;&#x673A;&#x5236;&#x6D41;&#x7A0B;&#x793A;&#x610F;&#x56FE;"></p>
+<p><em>Mpx&#x6570;&#x636E;&#x54CD;&#x5E94;&#x673A;&#x5236;&#x6D41;&#x7A0B;&#x793A;&#x610F;&#x56FE;</em></p>
+<h2 id="&#x7F16;&#x8BD1;&#x6784;&#x5EFA;"><a name="&#x7F16;&#x8BD1;&#x6784;&#x5EFA;" class="plugin-anchor" href="#&#x7F16;&#x8BD1;&#x6784;&#x5EFA;"><i class="fa fa-link" aria-hidden="true"></i></a>&#x7F16;&#x8BD1;&#x6784;&#x5EFA;</h2>
+<p>&#x6211;&#x4EEC;&#x5E0C;&#x671B;&#x4F7F;&#x7528;&#x76EE;&#x524D;&#x8BBE;&#x8BA1;&#x6700;&#x5F3A;&#x5927;&#x3001;&#x751F;&#x6001;&#x6700;&#x5B8C;&#x5584;&#x7684;&#x7F16;&#x8BD1;&#x6784;&#x5EFA;&#x5DE5;&#x5177;Webpack&#x6765;&#x5B9E;&#x73B0;&#x5C0F;&#x7A0B;&#x5E8F;&#x7684;&#x7F16;&#x8BD1;&#x6784;&#x5EFA;&#xFF0C;&#x8BA9;&#x7528;&#x6237;&#x5F97;&#x5230;web&#x5F00;&#x53D1;&#x4E2D;&#x5148;&#x8FDB;&#x5F3A;&#x5927;&#x7684;&#x5DE5;&#x7A0B;&#x5316;&#x5F00;&#x53D1;&#x4F53;&#x9A8C;&#x3002;&#x4F7F;&#x7528;&#x8FC7;Webpack&#x7684;&#x540C;&#x5B66;&#x90FD;&#x77E5;&#x9053;&#xFF0C;&#x901A;&#x5E38;&#x6765;&#x8BF4;Webpack&#x90FD;&#x662F;&#x5C06;&#x9879;&#x76EE;&#x4E2D;&#x4F7F;&#x7528;&#x5230;&#x7684;&#x4E00;&#x7CFB;&#x5217;&#x788E;&#x7247;&#x5316;&#x6A21;&#x5757;&#x6253;&#x5305;&#x4E3A;&#x4E00;&#x4E2A;&#x6216;&#x51E0;&#x4E2A;bundle&#xFF0C;&#x800C;&#x5C0F;&#x7A0B;&#x5E8F;&#x6240;&#x9700;&#x8981;&#x7684;&#x6587;&#x4EF6;&#x7ED3;&#x6784;&#x662F;&#x975E;&#x5E38;&#x79BB;&#x6563;&#x5316;&#x7684;&#xFF0C;&#x5982;&#x4F55;&#x8C03;&#x89E3;&#x8FD9;&#x4E24;&#x8005;&#x7684;&#x77DB;&#x76FE;&#x6210;&#x4E3A;&#x4E86;&#x6211;&#x4EEC;&#x6700;&#x5927;&#x7684;&#x96BE;&#x9898;&#x3002;&#x4E00;&#x79CD;&#x975E;&#x5E38;&#x76F4;&#x89C2;&#x7B80;&#x5355;&#x7684;&#x601D;&#x8DEF;&#x5728;&#x4E8E;&#x904D;&#x5386;&#x6574;&#x4E2A;src&#x76EE;&#x5F55;&#xFF0C;&#x5C06;&#x5176;&#x4E2D;&#x7684;&#x6BCF;&#x4E00;&#x4E2A;.mpx&#x6587;&#x4EF6;&#x90FD;&#x4F5C;&#x4E3A;&#x4E00;&#x4E2A;entry&#x52A0;&#x5165;&#x5230;Webpack&#x4E2D;&#x8FDB;&#x884C;&#x5904;&#x7406;&#xFF0C;&#x8FD9;&#x6837;&#x505A;&#x7684;&#x95EE;&#x9898;&#x4E3B;&#x8981;&#x6709;&#x4E24;&#x4E2A;&#xFF1A;</p>
+<ol>
+<li>src&#x76EE;&#x5F55;&#x4E2D;&#x7528;&#x4E0D;&#x5230;&#x7684;.mpx&#x6587;&#x4EF6;&#x4E5F;&#x4F1A;&#x88AB;&#x7F16;&#x8BD1;&#x8F93;&#x51FA;&#xFF0C;&#x6700;&#x7EC8;&#x4E5F;&#x4F1A;&#x88AB;&#x5C0F;&#x7A0B;&#x5E8F;&#x6253;&#x5305;&#x8FDB;&#x9879;&#x76EE;&#x5305;&#x4E2D;&#xFF0C;&#x65E0;&#x610F;&#x4E49;&#x5730;&#x589E;&#x52A0;&#x4E86;&#x5305;&#x4F53;&#x79EF;&#xFF1B;</li>
+<li>&#x5BF9;&#x4E8E;node_modules&#x4E0B;&#x7684;.mpx&#x6587;&#x4EF6;&#xFF0C;&#x6211;&#x4EEC;&#x4E0D;&#x8BA4;&#x4E3A;&#x904D;&#x5386;node_modules&#x662F;&#x4E00;&#x4E2A;&#x597D;&#x7684;&#x9009;&#x62E9;&#x3002;</li>
+</ol>
+<p>&#x6700;&#x7EC8;&#x6211;&#x4EEC;&#x91C7;&#x7528;&#x4E86;&#x4E00;&#x79CD;&#x57FA;&#x4E8E;&#x4F9D;&#x8D56;&#x5206;&#x6790;&#x548C;&#x52A8;&#x6001;&#x6DFB;&#x52A0;entry&#x7684;&#x65B9;&#x5F0F;&#x6765;&#x8FDB;&#x884C;&#x5B9E;&#x73B0;&#xFF0C;&#x7528;&#x6237;&#x5728;Webpack&#x914D;&#x7F6E;&#x4E2D;&#x53EA;&#x9700;&#x8981;&#x914D;&#x7F6E;&#x4E00;&#x4E2A;&#x5165;&#x53E3;&#x6587;&#x4EF6;app.mpx&#xFF0C;loader&#x5728;&#x89E3;&#x6790;&#x5230;json&#x65F6;&#x4F1A;&#x89E3;&#x6790;json&#x4E2D;pages&#x57DF;&#x548C;usingComponents&#x57DF;&#x4E2D;&#x58F0;&#x660E;&#x7684;&#x8DEF;&#x5F84;&#xFF0C;&#x901A;&#x8FC7;&#x52A8;&#x6001;&#x6DFB;&#x52A0;entry&#x7684;&#x65B9;&#x5F0F;&#x5C06;&#x8FD9;&#x4E9B;&#x6587;&#x4EF6;&#x6DFB;&#x52A0;&#x5230;Webpack&#x7684;&#x6784;&#x5EFA;&#x7CFB;&#x7EDF;&#x5F53;&#x4E2D;&#xFF08;&#x6CE8;&#x610F;&#x8FD9;&#x91CC;&#x662F;&#x6DFB;&#x52A0;entry&#x800C;&#x4E0D;&#x662F;&#x6DFB;&#x52A0;&#x4F9D;&#x8D56;&#xFF0C;&#x56E0;&#x4E3A;&#x53EA;&#x6709;entry&#x80FD;&#x751F;&#x6210;&#x72EC;&#x7ACB;&#x7684;&#x6587;&#x4EF6;&#xFF0C;&#x6EE1;&#x8DB3;&#x5C0F;&#x7A0B;&#x5E8F;&#x7684;&#x79BB;&#x6563;&#x5316;&#x6587;&#x4EF6;&#x7ED3;&#x6784;&#xFF09;&#xFF0C;&#x5E76;&#x9012;&#x5F52;&#x6267;&#x884C;&#x8FD9;&#x4E2A;&#x8FC7;&#x7A0B;&#xFF0C;&#x76F4;&#x5230;&#x6574;&#x4E2A;&#x9879;&#x76EE;&#x4E2D;&#x6240;&#x6709;&#x7528;&#x5230;&#x7684;.mpx&#x6587;&#x4EF6;&#x90FD;&#x52A0;&#x5165;&#x8FDB;&#x6765;&#xFF0C;&#x5728;&#x8F93;&#x51FA;&#x524D;&#xFF0C;&#x6211;&#x4EEC;&#x501F;&#x52A9;&#x4E86;CommonsChunkPlugin/SplitChunksPlugin&#x7684;&#x80FD;&#x529B;&#x5C06;&#x590D;&#x7528;&#x7684;&#x6A21;&#x5757;&#x62BD;&#x53D6;&#x5230;&#x4E00;&#x4E2A;&#x5916;&#x90E8;&#x7684;bundle&#x4E2D;&#xFF0C;&#x786E;&#x4FDD;&#x6700;&#x7EC8;&#x751F;&#x6210;&#x7684;&#x5305;&#x4E2D;&#x4E0D;&#x5305;&#x542B;&#x91CD;&#x590D;&#x6A21;&#x5757;&#x3002;&#x6211;&#x4EEC;&#x63D0;&#x4F9B;&#x4E86;&#x4E00;&#x4E2A;Webpack&#x63D2;&#x4EF6;&#x548C;&#x4E00;&#x4E2A;.mpx&#x6587;&#x4EF6;&#x5BF9;&#x5E94;&#x7684;loader&#x6765;&#x5B9E;&#x73B0;&#x4E0A;&#x8FF0;&#x64CD;&#x4F5C;&#xFF0C;&#x7528;&#x6237;&#x53EA;&#x9700;&#x8981;&#x5C06;&#x5176;&#x6DFB;&#x52A0;&#x5230;Webpack&#x914D;&#x7F6E;&#x4E2D;&#x5C31;&#x53EF;&#x4EE5;&#x4EE5;&#x6253;&#x5305;web&#x9879;&#x76EE;&#x7684;&#x65B9;&#x5F0F;&#x6B63;&#x5E38;&#x6253;&#x5305;&#x5C0F;&#x7A0B;&#x5E8F;&#xFF0C;&#x6CA1;&#x6709;&#x4EFB;&#x4F55;&#x7684;&#x524D;&#x7F6E;&#x548C;&#x540E;&#x7F6E;&#x64CD;&#x4F5C;&#xFF0C;&#x652F;&#x6301;Webpack&#x672C;&#x8EAB;&#x7684;&#x5B8C;&#x6574;&#x751F;&#x6001;&#x3002;</p>
+<p><img src="https://dpubstatic.udache.com/static/dpubimg/ce6d470c-0a4c-486e-a2f5-ad225c289832.jpeg" alt="Mpx&#x7F16;&#x8BD1;&#x6784;&#x5EFA;&#x673A;&#x5236;&#x6D41;&#x7A0B;&#x793A;&#x610F;&#x56FE;"></p>
+<p><em>Mpx&#x7F16;&#x8BD1;&#x6784;&#x5EFA;&#x673A;&#x5236;&#x6D41;&#x7A0B;&#x793A;&#x610F;&#x56FE;</em></p>
+<h3 id="&#x5206;&#x5305;&#x5904;&#x7406;&#x7EC6;&#x8282;"><a name="&#x5206;&#x5305;&#x5904;&#x7406;&#x7EC6;&#x8282;" class="plugin-anchor" href="#&#x5206;&#x5305;&#x5904;&#x7406;&#x7EC6;&#x8282;"><i class="fa fa-link" aria-hidden="true"></i></a>&#x5206;&#x5305;&#x5904;&#x7406;&#x7EC6;&#x8282;</h3>
+<p>&#x6784;&#x5EFA;&#x65F6;&#x5BF9;&#x4E8E;&#x975E;JS&#x8D44;&#x6E90;&#xFF0C;&#x662F;&#x6240;&#x6709;&#x7684;&#x5305;&#x4E32;&#x884C;&#x5904;&#x7406;&#xFF0C;&#x8D44;&#x6E90;map&#x4F1A;&#x7CBE;&#x786E;&#x8BB0;&#x5F55;&#x6BCF;&#x4E2A;&#x5305;&#x4E2D;&#x5F15;&#x7528;&#x4E86;&#x54EA;&#x4E9B;&#x8D44;&#x6E90;&#x3002;</p>
+<p>&#x5728;&#x4E3B;&#x5305;&#x7684;&#x5904;&#x7406;&#x8FC7;&#x7A0B;&#x4E2D;&#xFF0C;&#x5C06;&#x4E3B;&#x5305;&#x9875;&#x9762;&#x4E2D;&#x5F15;&#x7528;&#x7684;&#x6240;&#x6709;&#x975E;js&#x8D44;&#x6E90;(&#x7EC4;&#x4EF6;&#x3001;&#x5916;&#x90E8;&#x6837;&#x5F0F;&#x3001;&#x5916;&#x90E8;&#x6A21;&#x677F;&#x3001;wxs&#xFF0C;&#x56FE;&#x50CF;&#x5A92;&#x4F53;&#x7B49;)&#x90FD;&#x8BB0;&#x5F55;&#x4E0B;&#x6765;&#xFF0C;&#x5728;&#x5904;&#x7406;&#x5206;&#x5305;&#x65F6;&#xFF0C;&#x5BF9;&#x5206;&#x5305;&#x5185;&#x5F15;&#x7528;&#x7684;&#x975E;js&#x8D44;&#x6E90;&#x90FD;&#x8FDB;&#x884C;&#x68C0;&#x67E5;&#xFF0C;&#x5982;&#x679C;&#x88AB;&#x4E3B;&#x5305;&#x5F15;&#x7528;&#x8FC7;&#x5219;&#x8F93;&#x51FA;&#x5230;&#x4E3B;&#x5305;&#x4E2D;&#xFF0C;&#x5426;&#x5219;&#x6807;&#x8BB0;&#x4E3A;&#x5206;&#x5305;only&#x7684;&#x8D44;&#x6E90;&#x8F93;&#x51FA;&#x5230;&#x5206;&#x5305;&#x76EE;&#x5F55;&#x4E0B;&#x3002;</p>
+<p>&#x7531;&#x4E8E;&#x4E3B;&#x5305;&#x548C;&#x5206;&#x5305;&#x9650;&#x5236;&#x76F8;&#x540C;&#xFF0C;&#x4E00;&#x822C;&#x60C5;&#x51B5;&#x4E0B;&#x5206;&#x5305;&#x4F53;&#x79EF;&#x8FDC;&#x5C0F;&#x4E8E;&#x4E3B;&#x5305;&#x4F53;&#x79EF;
+&#xFF0C;&#x800C;&#x5FAE;&#x4FE1;&#x5C0F;&#x7A0B;&#x5E8F;&#x7684;&#x4F53;&#x79EF;&#x9650;&#x5236;&#x7B56;&#x7565;&#x4E3B;&#x8981;&#x5361;&#x4E3B;&#x5305;&#x4F53;&#x79EF;&#x4E0D;&#x5F97;&#x8D85;&#x8FC7;2M&#xFF0C;&#x56E0;&#x6B64;&#xFF0C;Mpx&#x8BBE;&#x5B9A;&#x7684;&#x662F;&#x4E3B;&#x5305;&#x4F53;&#x79EF;&#x4F18;&#x5148;&#x7B56;&#x7565;&#xFF0C;&#x5373;&#x5C3D;&#x53EF;&#x80FD;&#x51CF;&#x5C0F;&#x4E3B;&#x5305;&#x4F53;&#x79EF;&#xFF0C;&#x4E3A;&#x6B64;&#xFF0C;&#x4F1A;&#x5C06;&#x5206;&#x5305;&#x8D44;&#x6E90;&#x5C3D;&#x53EF;&#x80FD;&#x6253;&#x5230;&#x5206;&#x5305;&#x53BB;&#x3002;</p>
+<p>&#x7EC4;&#x4EF6;&#x548C;&#x9759;&#x6001;&#x8D44;&#x6E90;&#x7684;&#x8F93;&#x51FA;&#x89C4;&#x5219;&#x5982;&#x4E0B;&#xFF1A;</p>
+<ol>
+<li>&#x4E3B;&#x5305;&#x5F15;&#x7528;&#x7684;&#x8D44;&#x6E90;&#x8F93;&#x51FA;&#x81F3;&#x4E3B;&#x5305;</li>
+<li>&#x5206;&#x5305;&#x5F15;&#x7528;&#x4E14;&#x4E3B;&#x5305;&#x5F15;&#x7528;&#x8FC7;&#x7684;&#x8D44;&#x6E90;&#x8F93;&#x51FA;&#x81F3;&#x4E3B;&#x5305;&#xFF0C;&#x4E0D;&#x5728;&#x5F53;&#x524D;&#x5206;&#x5305;&#x91CD;&#x590D;&#x8F93;&#x51FA;</li>
+<li>&#x5206;&#x5305;&#x5F15;&#x7528;&#x4E14;&#x65E0;&#x5176;&#x4ED6;&#x5305;&#x5F15;&#x7528;&#x7684;&#x8D44;&#x6E90;&#x8F93;&#x51FA;&#x81F3;&#x5F53;&#x524D;&#x5206;&#x5305;</li>
+<li>&#x5206;&#x5305;&#x5F15;&#x7528;&#x4E14;&#x5176;&#x4ED6;&#x5206;&#x5305;&#x4E5F;&#x5F15;&#x7528;&#x8FC7;&#x7684;&#x8D44;&#x6E90;&#xFF0C;&#x91CD;&#x590D;&#x8F93;&#x51FA;&#x81F3;&#x5F53;&#x524D;&#x5206;&#x5305;</li>
+<li>&#x5F53;&#x7528;&#x6237;&#x901A;&#x8FC7;packageName query&#x663E;&#x5F0F;&#x6307;&#x5B9A;&#x4E86;&#x8D44;&#x6E90;&#x7684;&#x6240;&#x5C5E;&#x5305;&#x65F6;&#xFF0C;&#x8F93;&#x51FA;&#x81F3;&#x6307;&#x5B9A;&#x7684;&#x5305;</li>
+</ol>
+<p>&#x5982;&#x6B64;&#x590D;&#x6742;&#x7684;&#x5206;&#x5305;&#x7B56;&#x7565;&#x4E5F;&#x5B8C;&#x5168;&#x662F;&#x4E3A;&#x4E86;&#x5C3D;&#x53EF;&#x80FD;&#x826F;&#x597D;&#x5730;&#x652F;&#x6301;&#x5904;&#x7406;&#x5206;&#x5305;&#x5F15;&#x7528;npm&#x8D44;&#x6E90;&#xFF0C;&#x56E0;&#x6B64;&#x4E0D;&#x7BA1;&#x5728;&#x4E3B;&#x5305;&#x8FD8;&#x662F;&#x5206;&#x5305;&#x4E2D;&#xFF0C;&#x4F7F;&#x7528;Mpx&#x6846;&#x67B6;&#x5F00;&#x53D1;&#x5C0F;&#x7A0B;&#x5E8F;&#xFF0C;&#x53EF;&#x4EE5;&#x4EAB;&#x53D7;&#x6700;&#x8212;&#x9002;&#x6700;&#x81EA;&#x7136;&#x6700;&#x597D;&#x7528;&#x7684;npm&#x673A;&#x5236;&#x3002;</p>
+<p>&#x800C;&#x5C0F;&#x7A0B;&#x5E8F;&#x539F;&#x751F;&#x7684;&#x5206;&#x5305;&#x662F;&#x4E0D;&#x5177;&#x5907;&#x8FD9;&#x4E2A;&#x80FD;&#x529B;&#xFF0C;&#x53EA;&#x80FD;&#x5F15;&#x7528;&#x81EA;&#x5DF1;&#x5206;&#x5305;&#x4E0B;&#x7684;&#x8D44;&#x6E90;&#xFF0C;&#x540C;&#x65F6;&#x5927;&#x90E8;&#x5206;&#x57FA;&#x4E8E;web&#x6280;&#x672F;&#x800C;&#x6765;&#x7684;&#x8F6C;&#x8BD1;&#x578B;&#x6846;&#x67B6;&#x5E94;&#x8BE5;&#x4E5F;&#x90FD;&#x662F;&#x4E0D;&#x4F1A;&#x8003;&#x8651;&#x8FD9;&#x4E2A;&#x90E8;&#x5206;&#x7684;&#x3002;</p>
+<p>&#x751A;&#x81F3;&#x5982;&#x679C;&#x51FA;&#x73B0;&#x8FD9;&#x79CD;&#x573A;&#x666F;&#xFF1A;&#x540C;&#x4E00;&#x4E2A;&#x7EC4;&#x4EF6;&#x5728;A&#x5206;&#x5305;&#x548C;B&#x5206;&#x5305;&#x4E2D;&#x90FD;&#x6709;&#x4F7F;&#x7528;&#xFF0C;&#x4F46;&#x672A;&#x5728;&#x4E3B;&#x5305;&#x4F7F;&#x7528;&#xFF0C;&#x4F1A;&#x5C06;&#x8FD9;&#x4E2A;&#x7EC4;&#x4EF6;&#x5206;&#x522B;&#x653E;&#x5165;A&#x5206;&#x5305;&#x548C;B&#x5206;&#x5305;&#x800C;&#x4E0D;&#x662F;&#x4E3B;&#x5305;&#x3002;&#xFF08;&#x662F;&#x5426;&#x9700;&#x8981;&#x8FD9;&#x6837;&#x53EF;&#x81EA;&#x884C;&#x659F;&#x914C;&#xFF0C;&#x5982;&#x679C;&#x4E0D;&#x5E0C;&#x671B;&#x51FA;&#x73B0;&#x8FD9;&#x79CD;&#x60C5;&#x51B5;&#xFF0C;&#x53EF;&#x5728;&#x4E3B;&#x5305;&#x4E2D;&#x5F15;&#x5165;&#x4E00;&#x6B21;&#x8BE5;&#x7EC4;&#x4EF6;&#x5C31;&#x4F1A;&#x88AB;&#x6536;&#x5230;&#x4E3B;&#x5305;&#x53BB;&#xFF0C;&#x5168;&#x5C40;&#x5C31;&#x8FD9;&#x4E00;&#x4EFD;&#x4E86;&#xFF09;</p>
+<p>&#x603B;&#x7ED3;&#x4E00;&#x4E0B;&#xFF1A;</p>
+<p>&#x5BF9;&#x4E8E;&#x7EC4;&#x4EF6;&#xFF0C;&#x82E5;&#x540C;&#x65F6;&#x88AB;&#x591A;&#x4E2A;&#x5206;&#x5305;&#x5F15;&#x7528;&#xFF0C;&#x4E3B;&#x5305;&#x672A;&#x5F15;&#x7528;&#xFF0C;&#x4F1A;&#x6709;&#x591A;&#x4EFD;&#x5206;&#x5305;&#x5B58;&#x5728;&#x4E8E;&#x5404;&#x5206;&#x5305;&#x4E2D;&#x3002;&#x4E00;&#x65E6;&#x88AB;&#x4E3B;&#x5305;&#x4F7F;&#x7528;&#xFF0C;&#x5C31;&#x4EC5;&#x6709;&#x4E00;&#x4EFD;&#x5B58;&#x5728;&#x4E8E;&#x4E3B;&#x5305;&#x4E2D;&#x3002;</p>
+<p>&#x5BF9;&#x4E8E;&#x8D44;&#x6E90;&#xFF08;&#x4F8B;&#x5982;&#x7EAF;JS&#x6A21;&#x5757;&#xFF09;&#xFF0C;&#x82E5;&#x88AB;&#x4E3B;&#x5305;&#x4F7F;&#x7528;&#xFF0C;&#x4F1A;&#x88AB;&#x6536;&#x96C6;&#x5230;&#x4E3B;&#x5305;&#x91CC;&#x3002;&#x82E5;&#x88AB;&#x591A;&#x4E2A;&#x5206;&#x5305;&#x4F7F;&#x7528;&#xFF0C;&#x4F1A;&#x88AB;&#x6536;&#x96C6;&#x8FDB;&#x4E3B;&#x5305;&#x7684;bundle&#x91CC;&#x3002;&#x82E5;&#x4EC5;&#x88AB;&#x67D0;&#x5206;&#x5305;&#x4F7F;&#x7528;&#xFF0C;&#x5C31;&#x4F1A;&#x5728;&#x5206;&#x5305;&#x7684;bundle.js&#x91CC;&#xFF08;&#x89C6;&#x6A21;&#x5757;&#x5927;&#x5C0F;&#x53CA;&#x5F15;&#x7528;&#x6B21;&#x6570;&#x4E5F;&#x53EF;&#x80FD;&#x88AB;&#x5185;&#x8054;&#x5230;&#x67D0;&#x4E2A;&#x7EC4;&#x4EF6;JS&#x91CC;&#xFF09;&#x3002;</p>
+<p>&#x8FDB;&#x9636;&#x7528;&#x6237;&#x6709;&#x66F4;&#x82B1;&#x5F0F;&#x7684;&#x9700;&#x6C42;&#x53EF;&#x901A;&#x8FC7;packageName query&#x6765;&#x663E;&#x793A;&#x6307;&#x5B9A;&#x8F93;&#x51FA;&#x3002;</p>
+
+                                
+                                </section>
+                            
+    </div>
+    <div class="search-results">
+        <div class="has-results">
+            
+            <h1 class="search-results-title"><span class='search-results-count'></span> results matching "<span class='search-query'></span>"</h1>
+            <ul class="search-results-list"></ul>
+            
+        </div>
+        <div class="no-results">
+            
+            <h1 class="search-results-title">No results matching "<span class='search-query'></span>"</h1>
+            
+        </div>
+    </div>
+</div>
+
+                        </div>
+                    </div>
+                
+            </div>
+
+            
+                
+                <a href="../extend/#mock" class="navigation navigation-prev " aria-label="Previous page: mock">
+                    <i class="fa fa-angle-left"></i>
+                </a>
+                
+                
+                <a href="understanding.html#数据响应与性能优化" class="navigation navigation-next " aria-label="Next page: 数据响应与性能优化">
+                    <i class="fa fa-angle-right"></i>
+                </a>
+                
+            
+        
+    </div>
+
+    <script>
+        var gitbook = gitbook || [];
+        gitbook.push(function() {
+            gitbook.page.hasChanged({"page":{"title":"mpx运行机制","level":"1.16","depth":1,"next":{"title":"数据响应与性能优化","level":"1.16.1","depth":2,"anchor":"#数据响应与性能优化","path":"understanding/understanding.md","ref":"understanding/understanding.md#数据响应与性能优化","articles":[]},"previous":{"title":"mock","level":"1.15.3","depth":2,"anchor":"#mock","path":"extend/index.md","ref":"extend/index.md#mock","articles":[]},"dir":"ltr"},"config":{"plugins":["github","edit-link","anchors","copy-code-button","github-buttons","expandable-chapters-small","insert-logo","custom-favicon"],"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"pluginsConfig":{"github":{"url":"https://github.com/didi/mpx"},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"fontsettings":{"theme":"white","family":"sans","size":2},"highlight":{},"favicon":"favicon.ico","github-buttons":{"buttons":[{"user":"didi","repo":"mpx","type":"star","size":"small","count":true},{"user":"didi","repo":"mpx","type":"fork","size":"small","count":true}]},"custom-favicon":{},"expandable-chapters-small":{},"copy-code-button":{},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"edit-link":{"label":"完善文档","base":"https://github.com/didi/mpx/tree/master/docs"},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false},"anchors":{},"insert-logo":{"style":"background: none; width: 200px","url":"https://dpubstatic.udache.com/static/dpubimg/cd8de8e4-e4f4-4f0a-9c53-f833bc30ba69.png"}},"theme":"default","author":"滴滴出行webapp团队","pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"structure":{"langs":"LANGS.md","readme":"intro","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"variables":{},"title":"mpx文档","gitbook":"*","description":"mpx是一款增强型小程序框架，极致性能优化，提供双向数据绑定，样式绑定，方法内联传参等方便开发者使用的特性。"},"file":{"path":"understanding/understanding.md","mtime":"2022-06-01T06:39:56.901Z","type":"markdown"},"gitbook":{"version":"3.2.3","time":"2022-06-01T06:51:32.015Z"},"basePath":"..","book":{"language":""}});
+        });
+    </script>
+</div>
+
+        
+    <script src="../gitbook/gitbook.js"></script>
+    <script src="../gitbook/theme.js"></script>
+    
+        
+        <script src="../gitbook/gitbook-plugin-github/plugin.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-edit-link/plugin.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-copy-code-button/toggle.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-github-buttons/plugin.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-expandable-chapters-small/expandable-chapters-small.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-insert-logo/plugin.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-search/search-engine.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-search/search.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-lunr/lunr.min.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-lunr/search-lunr.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-sharing/buttons.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-fontsettings/fontsettings.js"></script>
+        
+    
+
+    </body>
+</html>
+
