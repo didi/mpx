@@ -1,3 +1,7 @@
+<p align="center" style="background-color: #42b983; height: 50px; line-height: 50px; font-size: 18px; font-weight: 600">
+  <span style="color: #d6ffec">您当前浏览的是旧版文档，不再维护更新，点击<a href="https://mpxjs.cn/" style="color: white">这里</a>跳转Mpx全新官网</span>
+</p>
+
 #### 文件维度条件编译
 
 文件维度条件编译让用户能够以文件为维度进行跨平台差异代码的编写，例如在微信转支付宝的项目中存在框架无法转换的组件map.mpx，用户可以在相同的目录下创建map.ali.mpx文件作为patch，在该文件中使用支付宝的技术标准来源组件map.mpx中必要的功能，在项目mode为ali时Mpx会加载map.ali.mpx来代替原有map.mpx文件。

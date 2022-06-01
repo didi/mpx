@@ -1,3 +1,7 @@
+<p align="center" style="background-color: #42b983; height: 50px; line-height: 50px; font-size: 18px; font-weight: 600">
+  <span style="color: #d6ffec">您当前浏览的是旧版文档，不再维护更新，点击<a href="https://mpxjs.cn/" style="color: white">这里</a>跳转Mpx全新官网</span>
+</p>
+
 # 图像资源处理
 
 小程序对于图片资源存在一些限制，使得习惯开发web应用的开发者面对小程序时无法理解差异性

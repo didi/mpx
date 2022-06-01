@@ -1,3 +1,7 @@
+<p align="center" style="background-color: #42b983; height: 50px; line-height: 50px; font-size: 18px; font-weight: 600">
+  <span style="color: #d6ffec">您当前浏览的是旧版文档，不再维护更新，点击<a href="https://mpxjs.cn/" style="color: white">这里</a>跳转Mpx全新官网</span>
+</p>
+
 历时4个多月迭代开发，mpx正式成长为2.0版本，在专注提高小程序开发体验的道路上又前进了一大步，感谢相关同学的努力与付出，@pkingwa，@sky-admin，@httpsxiao，@xuehebinglan
 
 ## Features
