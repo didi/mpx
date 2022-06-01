@@ -1,3 +1,7 @@
+<p align="center" style="background-color: #42b983; height: 50px; line-height: 50px; font-size: 18px; font-weight: 600">
+  <span style="color: #d6ffec">您当前浏览的是旧版文档，不再维护更新，点击<a href="https://mpxjs.cn/" style="color: white">这里</a>跳转Mpx全新官网</span>
+</p>
+
 <p align="center">
   <a href="https://didi.github.io/mpx/">
     <img alt="MPX" src="https://dpubstatic.udache.com/static/dpubimg/34b5079c-0399-406d-8d2e-b8624678f7ff.png" width="546">
