@@ -24,7 +24,7 @@ function transformApiForProxy (context, currentInject) {
           const validProps = Object.assign({}, options.properties, options.props)
           if (context.props) {
             Object.keys(context.props).forEach((key) => {
-              if (hasOwn(validProps, key) && isFunction(context.props[key])) {
+              if (hasOwn(validProps, key) && !isFunction(context.props[key])) {
                 props[key] = context.props[key]
               }
             })
@@ -136,15 +136,8 @@ export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
               if (diff) this[key] = clone
             }
           })
+          this.__mpxProxy.propsUpdated()
         }
-      }
-    },
-    didUpdate () {
-      if (this.__mpxProxy) {
-        // todo lockTask必要性待验证，属性更新触发自身setData时，updated执行与wx对齐，updated触发机制也考虑与wx对齐（props update && setData callback）
-        this.__mpxProxy.lockTask(() => {
-          this.__mpxProxy.updated()
-        })
       }
     },
     [hookNames[1]] () {

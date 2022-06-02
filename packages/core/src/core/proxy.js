@@ -26,7 +26,6 @@ import {
   isString
 } from '../helper/utils'
 import _getByPath from '../helper/getByPath'
-import { onRenderCallBack } from '../platform/patch'
 import {
   BEFORECREATE,
   CREATED,
@@ -128,6 +127,16 @@ export default class MpxProxy {
       this.callHook(MOUNTED)
       this.currentRenderTask && this.currentRenderTask.resolve()
     }
+  }
+
+  propsUpdated () {
+    const updateJob = this.updateJob || (this.updateJob = () => {
+      // 只有当前没有渲染任务时，属性更新才需要单独触发updated，否则可以由渲染任务结束后触发updated
+      if (this.currentRenderTask?.state === 'finished') {
+        this.updated()
+      }
+    })
+    queuePostFlushCb(updateJob)
   }
 
   updated () {
@@ -447,7 +456,7 @@ export default class MpxProxy {
     if (this.isMounted()) {
       callback = () => {
         cb && cb()
-        onRenderCallBack(this)
+        this.updated()
         renderTask && renderTask.resolve()
       }
     }
@@ -483,6 +492,7 @@ export default class MpxProxy {
   }
 
   forceUpdate (data, options, callback) {
+    if (this.isUnmounted()) return
     if (isFunction(data)) {
       callback = data
       data = undefined

@@ -101,19 +101,19 @@ module.exports = function (content) {
       },
       CallExpression (path) {
         const callee = path.node.callee
-        const arguments = path.node.arguments
+        const args = path.node.arguments
         const transMap = {
           getDate: 'Date',
           getRegExp: 'RegExp'
         }
         if (t.isIdentifier(callee) && transMap[callee.name]) {
           if (callee.name === 'getRegExp') {
-            const arg = arguments[0]
+            const arg = args[0]
             if (t.isStringLiteral(arg)) {
-              arguments[0] = t.stringLiteral(arg.extra.raw.slice(1, -1))
+              args[0] = t.stringLiteral(arg.extra.raw.slice(1, -1))
             }
           }
-          path.replaceWith(t.newExpression(t.identifier(transMap[callee.name]), arguments))
+          path.replaceWith(t.newExpression(t.identifier(transMap[callee.name]), args))
         }
       }
     })

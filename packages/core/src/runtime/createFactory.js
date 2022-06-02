@@ -1,4 +1,8 @@
-const mpx = require('../index').default
+var factoryMap = {
+  App: require('../index').createApp,
+  Page: require('../index').createPage,
+  Component: require('../index').createComponent
+}
 
 module.exports = (type) => (...args) => {
   if (type === 'Behavior') {
@@ -13,5 +17,5 @@ module.exports = (type) => (...args) => {
     }
     return args[0]
   }
-  return mpx[`create${type}`] && mpx[`create${type}`].apply(null, args.concat({ isNative: true }))
+  return factoryMap[type].apply(null, args.concat({ isNative: true }))
 }
