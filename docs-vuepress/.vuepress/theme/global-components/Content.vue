@@ -75,11 +75,11 @@
               查看。
             </p>
           </div>
-          <button class="three-section__btn btn">
+          <!-- <button class="three-section__btn btn">
             <a :href="$page.frontmatter.threeSection.actionLink" class="blue-link">
               {{$page.frontmatter.threeSection.actionText}}
             </a>
-          </button>
+          </button> -->
           <code-list :dataList="mvcList"></code-list>
         </div>
       </div>

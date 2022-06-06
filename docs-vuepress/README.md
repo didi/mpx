@@ -22,7 +22,7 @@ features:
   icon: https://dpubstatic.udache.com/static/dpubimg/bJMx84lznm/texing_icon_kua.png
   micon: https://dpubstatic.udache.com/static/dpubimg/KPG_IXLuwU/y_icon_kua.png
 threeSection:
-  title: 示例项目(原todomvc)
+  title: 示例项目
   details: 扫码查看使用Mpx开发的todoMVC项目在各个小程序平台及web下的运行情况，更多示例项目代码可点击这里查看。
   mdetails: TodoMVC是一个示例项目，它使用目前流行的不同JavaScript框架的来实现同一个Demo，来帮助你熟悉和选择最合适的前端框架。
   actionText: 查看详情
