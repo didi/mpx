@@ -22,7 +22,7 @@ features:
   icon: https://dpubstatic.udache.com/static/dpubimg/bJMx84lznm/texing_icon_kua.png
   micon: https://dpubstatic.udache.com/static/dpubimg/KPG_IXLuwU/y_icon_kua.png
 sixSection:
-  title: 渐进迁移
+  title: 开发生态
   mtitle: 开发生态
   bg: https://dpubstatic.udache.com/static/dpubimg/sPhfwW2Git/kaifa_bg.png
   details:
@@ -63,7 +63,7 @@ sixSection:
     icon: https://dpubstatic.udache.com/static/dpubimg/2pa_xoKoeL/kaifa_icon_9.png
     actionLink: /guide/advance/size-report.html
 fourSection:
-  title: 极致性能
+  title: 良好的开发体验
   details: 在方便使用框架提供的便捷特性的同时，也能享受到媲美原生开发的确定性和稳定性，完全没有框架太多坑，不如用原生的顾虑；不管是增强输出还是跨平台输出，最终的dist代码可读性极强，便于调试排查；
   img: https://dpubstatic.udache.com/static/dpubimg/jvACYsEQfm/jizhi_pic.png
   mimg: https://dpubstatic.udache.com/static/dpubimg/G4RXehQ40n/y_pic_jizhi.png
@@ -71,8 +71,8 @@ fourSection:
   actionText: 点击进入
   actionLink: /guide/basic/start.html
 fiveSection:
-  title: 渐进迁移
-  details: 极致的性能：得益于增强的设计思路，Mpx框架在运行时不需要做太多封装抹平转换的工作，框架的运行时部分极为轻量简洁，压缩+gzip后仅占用14KB；配合编译构建进行的包体积优化和基于模板渲染函数进行的数据依赖跟踪，Mpx框架在性能方面做到了业内最优(小程序框架运行时性能评测报告(opens new window))；
+  title: 极致性能
+  details: 极致的性能：得益于增强的设计思路，Mpx框架在运行时不需要做太多封装抹平转换的工作，框架的运行时部分极为轻量简洁，压缩+gzip后仅占用14KB；配合编译构建进行的包体积优化和基于模板渲染函数进行的数据依赖跟踪，Mpx框架在性能方面做到了业内最优( [小程序框架运行时性能评测报告](https://mpxjs.cn/articles/performance.html) )；
   img: https://dpubstatic.udache.com/static/dpubimg/k5Ft6oWF6F/jianjin_pic.png
   mimg: https://dpubstatic.udache.com/static/dpubimg/Z0W_MvwJ8C/y_pic_jianjin.png
   bg: https://dpubstatic.udache.com/static/dpubimg/y4UyRKCYk2/jianjin_bg.png
