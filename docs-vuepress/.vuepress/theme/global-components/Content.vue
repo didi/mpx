@@ -68,11 +68,11 @@
             <p class="white-text title">{{$page.frontmatter.threeSection.title}}</p>
             <p class="white-text desc">
               <!-- {{$page.frontmatter.threeSection.details}} -->
-              扫码查看使用Mpx开发的
-              <a class="target-link" href="https://github.com/didi/mpx/tree/master/examples/mpx-todoMVC">todoMVC项目</a>
-              在各个小程序平台及web下的运行情况，更多示例项目代码可点击
+              扫码体验Mpx版本的
+              <a class="target-link" href="https://github.com/didi/mpx/tree/master/examples/mpx-todoMVC">todoMVC</a>
+              在各个小程序平台和web中的一致表现 ，更多示例项目可点击
               <a class="target-link" href="https://github.com/didi/mpx/tree/master/examples">这里</a>
-              查看。
+              进入查看。
             </p>
           </div>
           <!-- <button class="three-section__btn btn">
