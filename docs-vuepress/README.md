@@ -9,11 +9,11 @@ actionLink: /guide/basic/start.html
 githubText: Github
 githubLink: https://github.com/didi/mpx
 features:
-- title: 高性能
+- title: 优体验
   details: 以增强的方式将Vue中大量优良特性引入到小程序开发中，配合灵活强大的编译构建，大大提升了小程序开发体验和效率，同时提供了媲美原生开发的稳定性。
   icon: https://dpubstatic.udache.com/static/dpubimg/N7sc6TZnja/texing_icon_gao.png
   micon: https://dpubstatic.udache.com/static/dpubimg/0S3n12uc1k/y_icon_gao.png
-- title: 优体验
+- title: 高性能
   details: 框架自带深度的运行时性能优化及包体积优化，让开发者在大多数场景下只需专注于业务开发，就能生产出媲美原生的高性能小程序应用。
   icon: https://dpubstatic.udache.com/static/dpubimg/PsrcQ_igBl/texing_icon_you.png
   micon: https://dpubstatic.udache.com/static/dpubimg/BBQBgCRCOl/y_icon_you.png
