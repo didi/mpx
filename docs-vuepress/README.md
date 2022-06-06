@@ -10,15 +10,15 @@ githubText: Github
 githubLink: https://github.com/didi/mpx
 features:
 - title: 优体验
-  details: 以增强的方式将Vue中大量优良特性引入到小程序开发中，配合灵活强大的编译构建，大大提升了小程序开发体验和效率，同时提供了媲美原生开发的稳定性。
+  details: 以增强的方式将Vue中优良的开发特性引入到小程序开发中，如数据响应、组合式api等，配合强大的工程化能力，大大提升了小程序开发的体验与效率，同时保障了框架开发的可维护性与可预期性。
   icon: https://dpubstatic.udache.com/static/dpubimg/N7sc6TZnja/texing_icon_gao.png
   micon: https://dpubstatic.udache.com/static/dpubimg/0S3n12uc1k/y_icon_gao.png
 - title: 高性能
-  details: 框架自带深度的运行时性能优化及包体积优化，让开发者在大多数场景下只需专注于业务开发，就能生产出媲美原生的高性能小程序应用。
+  details: Mpx高度关注小程序性能与包体积，深度整合了运行时性能优化与包体积分析优化能力，让开发者在大部分场景下只需专注于业务开发，就能生产出媲美甚至超出原生的高性能小程序应用。
   icon: https://dpubstatic.udache.com/static/dpubimg/PsrcQ_igBl/texing_icon_you.png
   micon: https://dpubstatic.udache.com/static/dpubimg/BBQBgCRCOl/y_icon_you.png
 - title: 跨平台
-  details: 一份源码，多端运行，Mpx专注解决小程序跨端问题，以静态编译为主要手段，将业务源码输出到微信/支付宝/百度/头条/QQ小程序平台和web环境下运行。
+  details: Mpx专注解决小程序跨端问题，通过静态转译与运行时适配结合，将一份源码跨端输出到所有开放的小程序平台和web环境下运行，同时最大限度减少跨端带来的性能与包体积损失。
   icon: https://dpubstatic.udache.com/static/dpubimg/bJMx84lznm/texing_icon_kua.png
   micon: https://dpubstatic.udache.com/static/dpubimg/KPG_IXLuwU/y_icon_kua.png
 sixSection:
@@ -63,21 +63,21 @@ sixSection:
     icon: https://dpubstatic.udache.com/static/dpubimg/2pa_xoKoeL/kaifa_icon_9.png
     actionLink: /guide/advance/size-report.html
 fourSection:
-  title: 良好的开发体验
-  details: 在方便使用框架提供的便捷特性的同时，也能享受到媲美原生开发的确定性和稳定性，完全没有框架太多坑，不如用原生的顾虑；不管是增强输出还是跨平台输出，最终的dist代码可读性极强，便于调试排查；
+  title: 极致性能
+  details: 得益于增强的设计思路，Mpx在运行时没有复杂的封装抹平逻辑，而是专注于实现数据响应，setData优化和Composition api等关键增强能力，压缩后体积占用仅为60KB；配合编译构建中灵活强大的包体积分析优化能力，Mpx在性能与包体积方面做到了业内最优。
   img: https://dpubstatic.udache.com/static/dpubimg/jvACYsEQfm/jizhi_pic.png
   mimg: https://dpubstatic.udache.com/static/dpubimg/G4RXehQ40n/y_pic_jizhi.png
   bg: https://dpubstatic.udache.com/static/dpubimg/arO1Eb5ill/jizhi_bg.png
   actionText: 点击进入
   actionLink: /guide/basic/start.html
 fiveSection:
-  title: 极致性能
-  details: 极致的性能：得益于增强的设计思路，Mpx框架在运行时不需要做太多封装抹平转换的工作，框架的运行时部分极为轻量简洁，压缩+gzip后仅占用14KB；配合编译构建进行的包体积优化和基于模板渲染函数进行的数据依赖跟踪，Mpx框架在性能方面做到了业内最优( [小程序框架运行时性能评测报告](https://mpxjs.cn/articles/performance.html) )；
+  title: 渐进迁移
+  details: 同样得益于增强的设计思路，Mpx能够完整兼容小程序原生技术规范，并以较低的成本进行持续跟进；借助框架提供的渐进迁移能力，小程序开发者可以方便地在Mpx项目中使用已有的原生开发生态，如组件库，统计工具等，同时也能将Mpx开发的组件输出到原生小程序项目中使用。
   img: https://dpubstatic.udache.com/static/dpubimg/k5Ft6oWF6F/jianjin_pic.png
   mimg: https://dpubstatic.udache.com/static/dpubimg/Z0W_MvwJ8C/y_pic_jianjin.png
   bg: https://dpubstatic.udache.com/static/dpubimg/y4UyRKCYk2/jianjin_bg.png
   actionText: 点击进入
-  actionLink: https://github.com/hiyuki/mp-framework-benchmark/blob/master/README.md
+  actionLink: /guide/basic/start.html
 threeSection:
   title: TodoMVC
   details: TodoMVC是一个示例项目，它使用目前流行的不同JavaScript框架的来实现同一个Demo，来帮助你熟悉和选择最合适的前端框架。官网地址：http://todomvc.com，学习框架最直接有效的方式就是上手练习，接下来我们将用Mpx.js来完成TodoMVC的示例。

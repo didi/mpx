@@ -30,7 +30,7 @@
       <ul class="row">
         <li class="two-section__item" v-for="(item, index) in $page.frontmatter.features" :key="index">
           <img :src="item.icon" alt="svg" loading="lazy" width="80" height="80" />
-          <p class="two-section__title">{{item.item}}</p>
+          <p class="two-section__title">{{item.title}}</p>
           <p class="two-section__desc">{{item.details}}</p>
           <div class="two-section__line"></div>
         </li>
@@ -367,8 +367,8 @@ section
 
 .two-section__item 
   width 280px
-  height 344px
-  padding 40px 18px 46px 18px
+  // height 344px
+  padding 40px 18px 40px 18px
   box-sizing border-box
   background #ffffff
   border 0 solid #efefef
