@@ -67,7 +67,12 @@
             <span class="dot-inner" style="background: #fff; margin: 0 auto;"></span>
             <p class="white-text title">{{$page.frontmatter.threeSection.title}}</p>
             <p class="white-text desc">
-              {{$page.frontmatter.threeSection.details}}
+              <!-- {{$page.frontmatter.threeSection.details}} -->
+              扫码查看使用Mpx开发的
+              <a class="target-link" href="https://github.com/didi/mpx/tree/master/examples/mpx-todoMVC">todoMVC项目</a>
+              在各个小程序平台及web下的运行情况，更多示例项目代码可点击
+              <a class="target-link" href="https://github.com/didi/mpx/tree/master/examples">这里</a>
+              查看。
             </p>
           </div>
           <button class="three-section__btn btn">
@@ -359,6 +364,11 @@ section
   display flex
   align-items center
   justify-content center
+
+.target-link
+  color #ffffff
+  font-weight 600
+  text-decoration underline
 
 .two-section
   padding-top 240px

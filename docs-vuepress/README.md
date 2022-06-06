@@ -21,6 +21,52 @@ features:
   details: Mpx专注解决小程序跨端问题，通过静态转译与运行时适配结合，将一份源码跨端输出到所有开放的小程序平台和web环境下运行，同时最大限度减少跨端带来的性能与包体积损失。
   icon: https://dpubstatic.udache.com/static/dpubimg/bJMx84lznm/texing_icon_kua.png
   micon: https://dpubstatic.udache.com/static/dpubimg/KPG_IXLuwU/y_icon_kua.png
+threeSection:
+  title: 示例项目(原todomvc)
+  details: 扫码查看使用Mpx开发的todoMVC项目在各个小程序平台及web下的运行情况，更多示例项目代码可点击这里查看。
+  mdetails: TodoMVC是一个示例项目，它使用目前流行的不同JavaScript框架的来实现同一个Demo，来帮助你熟悉和选择最合适的前端框架。
+  actionText: 查看详情
+  actionLink: https://dpubstatic.udache.com/static/dpubimg/c3b0d3bc-1bb0-4bee-b6da-4205a2744e21.html#/pages/index
+  img: https://dpubstatic.udache.com/static/dpubimg/nYbrJSPSz7/anli_pic_phone.png
+  bg: https://dpubstatic.udache.com/static/dpubimg/BoL0N8E-JA/todomvc_bg.png
+  list:
+    - title: 微信
+      icon1: https://gift-static.hongyibo.com.cn/static/kfpub/3547/todomvc_icon_wechat_normal.png
+      icon2: https://gift-static.hongyibo.com.cn/static/kfpub/3547/todomvc_icon_wechat_active.png
+      code: https://gift-static.hongyibo.com.cn/static/kfpub/3547/wx-qrcode.jpg
+    - title: 支付宝
+      icon1: https://gift-static.hongyibo.com.cn/static/kfpub/3547/todomvc_icon_alipay_normal.png
+      icon2: https://gift-static.hongyibo.com.cn/static/kfpub/3547/todomvc_icon_alipay_active.png
+      code: https://gift-static.hongyibo.com.cn/static/kfpub/3547/ali-qrcode.jpg
+  mlist:
+    - title: 微信
+      icon: https://dpubstatic.udache.com/static/dpubimg/ho5eKaVX5L/y_icon_wechat.png
+    - title: QQ
+      icon: https://dpubstatic.udache.com/static/dpubimg/IoQuifVymo/y_icon_qq.png
+    - title: 支付宝
+      icon: https://dpubstatic.udache.com/static/dpubimg/rMS51-MYUE/y_icon_zhifubao.png
+    - title: 百度
+      icon: https://dpubstatic.udache.com/static/dpubimg/nth1TOFUVA/y_icon_baidu.png
+    - title: 字节跳动
+      icon: https://dpubstatic.udache.com/static/dpubimg/JQBu676x6W/y_icon_zijie.png
+    - title: Web
+      icon: https://dpubstatic.udache.com/static/dpubimg/d4pVP4BUGU/y_icon_web.png
+fourSection:
+  title: 极致性能
+  details: 得益于增强的设计思路，Mpx在运行时没有复杂的封装抹平逻辑，而是专注于实现数据响应，setData优化和Composition api等关键增强能力，压缩后体积占用仅为60KB；配合编译构建中灵活强大的包体积分析优化能力，Mpx在性能与包体积方面做到了业内最优。
+  img: https://dpubstatic.udache.com/static/dpubimg/jvACYsEQfm/jizhi_pic.png
+  mimg: https://dpubstatic.udache.com/static/dpubimg/G4RXehQ40n/y_pic_jizhi.png
+  bg: https://dpubstatic.udache.com/static/dpubimg/arO1Eb5ill/jizhi_bg.png
+  actionText: 点击进入
+  actionLink: /guide/basic/start.html
+fiveSection:
+  title: 渐进迁移
+  details: 同样得益于增强的设计思路，Mpx能够完整兼容小程序原生技术规范，并以较低的成本进行持续跟进；借助框架提供的渐进迁移能力，小程序开发者可以方便地在Mpx项目中使用已有的原生开发生态，如组件库，统计工具等，同时也能将Mpx开发的组件输出到原生小程序项目中使用。
+  img: https://dpubstatic.udache.com/static/dpubimg/k5Ft6oWF6F/jianjin_pic.png
+  mimg: https://dpubstatic.udache.com/static/dpubimg/Z0W_MvwJ8C/y_pic_jianjin.png
+  bg: https://dpubstatic.udache.com/static/dpubimg/y4UyRKCYk2/jianjin_bg.png
+  actionText: 点击进入
+  actionLink: /guide/basic/start.html
 sixSection:
   title: 开发生态
   mtitle: 开发生态
@@ -62,52 +108,6 @@ sixSection:
     details: 包体积分析工具
     icon: https://dpubstatic.udache.com/static/dpubimg/2pa_xoKoeL/kaifa_icon_9.png
     actionLink: /guide/advance/size-report.html
-fourSection:
-  title: 极致性能
-  details: 得益于增强的设计思路，Mpx在运行时没有复杂的封装抹平逻辑，而是专注于实现数据响应，setData优化和Composition api等关键增强能力，压缩后体积占用仅为60KB；配合编译构建中灵活强大的包体积分析优化能力，Mpx在性能与包体积方面做到了业内最优。
-  img: https://dpubstatic.udache.com/static/dpubimg/jvACYsEQfm/jizhi_pic.png
-  mimg: https://dpubstatic.udache.com/static/dpubimg/G4RXehQ40n/y_pic_jizhi.png
-  bg: https://dpubstatic.udache.com/static/dpubimg/arO1Eb5ill/jizhi_bg.png
-  actionText: 点击进入
-  actionLink: /guide/basic/start.html
-fiveSection:
-  title: 渐进迁移
-  details: 同样得益于增强的设计思路，Mpx能够完整兼容小程序原生技术规范，并以较低的成本进行持续跟进；借助框架提供的渐进迁移能力，小程序开发者可以方便地在Mpx项目中使用已有的原生开发生态，如组件库，统计工具等，同时也能将Mpx开发的组件输出到原生小程序项目中使用。
-  img: https://dpubstatic.udache.com/static/dpubimg/k5Ft6oWF6F/jianjin_pic.png
-  mimg: https://dpubstatic.udache.com/static/dpubimg/Z0W_MvwJ8C/y_pic_jianjin.png
-  bg: https://dpubstatic.udache.com/static/dpubimg/y4UyRKCYk2/jianjin_bg.png
-  actionText: 点击进入
-  actionLink: /guide/basic/start.html
-threeSection:
-  title: TodoMVC
-  details: TodoMVC是一个示例项目，它使用目前流行的不同JavaScript框架的来实现同一个Demo，来帮助你熟悉和选择最合适的前端框架。官网地址：http://todomvc.com，学习框架最直接有效的方式就是上手练习，接下来我们将用Mpx.js来完成TodoMVC的示例。
-  mdetails: TodoMVC是一个示例项目，它使用目前流行的不同JavaScript框架的来实现同一个Demo，来帮助你熟悉和选择最合适的前端框架。
-  actionText: 查看详情
-  actionLink: https://dpubstatic.udache.com/static/dpubimg/c3b0d3bc-1bb0-4bee-b6da-4205a2744e21.html#/pages/index
-  img: https://dpubstatic.udache.com/static/dpubimg/nYbrJSPSz7/anli_pic_phone.png
-  bg: https://dpubstatic.udache.com/static/dpubimg/BoL0N8E-JA/todomvc_bg.png
-  list:
-    - title: 微信
-      icon1: https://gift-static.hongyibo.com.cn/static/kfpub/3547/todomvc_icon_wechat_normal.png
-      icon2: https://gift-static.hongyibo.com.cn/static/kfpub/3547/todomvc_icon_wechat_active.png
-      code: https://gift-static.hongyibo.com.cn/static/kfpub/3547/wx-qrcode.jpg
-    - title: 支付宝
-      icon1: https://gift-static.hongyibo.com.cn/static/kfpub/3547/todomvc_icon_alipay_normal.png
-      icon2: https://gift-static.hongyibo.com.cn/static/kfpub/3547/todomvc_icon_alipay_active.png
-      code: https://gift-static.hongyibo.com.cn/static/kfpub/3547/ali-qrcode.jpg
-  mlist:
-    - title: 微信
-      icon: https://dpubstatic.udache.com/static/dpubimg/ho5eKaVX5L/y_icon_wechat.png
-    - title: QQ
-      icon: https://dpubstatic.udache.com/static/dpubimg/IoQuifVymo/y_icon_qq.png
-    - title: 支付宝
-      icon: https://dpubstatic.udache.com/static/dpubimg/rMS51-MYUE/y_icon_zhifubao.png
-    - title: 百度
-      icon: https://dpubstatic.udache.com/static/dpubimg/nth1TOFUVA/y_icon_baidu.png
-    - title: 字节跳动
-      icon: https://dpubstatic.udache.com/static/dpubimg/JQBu676x6W/y_icon_zijie.png
-    - title: Web
-      icon: https://dpubstatic.udache.com/static/dpubimg/d4pVP4BUGU/y_icon_web.png
 sevenSection:
   title: 成功案例
   bg: https://dpubstatic.udache.com/static/dpubimg/2OIisHD1qa/anli_bg.png
