@@ -30,7 +30,7 @@
       <ul class="row">
         <li class="two-section__item" v-for="(item, index) in $page.frontmatter.features" :key="index">
           <img :src="item.icon" alt="svg" loading="lazy" width="80" height="80" />
-          <p class="two-section__title">{{item.item}}</p>
+          <p class="two-section__title">{{item.title}}</p>
           <p class="two-section__desc">{{item.details}}</p>
           <div class="two-section__line"></div>
         </li>
@@ -67,14 +67,19 @@
             <span class="dot-inner" style="background: #fff; margin: 0 auto;"></span>
             <p class="white-text title">{{$page.frontmatter.threeSection.title}}</p>
             <p class="white-text desc">
-              {{$page.frontmatter.threeSection.details}}
+              <!-- {{$page.frontmatter.threeSection.details}} -->
+              扫码体验Mpx版本的
+              <a class="target-link" href="https://github.com/didi/mpx/tree/master/examples/mpx-todoMVC">todoMVC</a>
+              在各个小程序平台和web中的一致表现 ，更多示例项目可点击
+              <a class="target-link" href="https://github.com/didi/mpx/tree/master/examples">这里</a>
+              进入查看。
             </p>
           </div>
-          <button class="three-section__btn btn">
+          <!-- <button class="three-section__btn btn">
             <a :href="$page.frontmatter.threeSection.actionLink" class="blue-link">
               {{$page.frontmatter.threeSection.actionText}}
             </a>
-          </button>
+          </button> -->
           <code-list :dataList="mvcList"></code-list>
         </div>
       </div>
@@ -360,6 +365,11 @@ section
   align-items center
   justify-content center
 
+.target-link
+  color #ffffff
+  font-weight 600
+  text-decoration underline
+
 .two-section
   padding-top 240px
   display flex
@@ -367,8 +377,8 @@ section
 
 .two-section__item 
   width 280px
-  height 344px
-  padding 40px 18px 46px 18px
+  // height 344px
+  padding 40px 18px 40px 18px
   box-sizing border-box
   background #ffffff
   border 0 solid #efefef
