@@ -77,7 +77,6 @@ export {
   onShow,
   onHide,
   onResize,
-  injectHook,
   getCurrentInstance
 } from './core/proxy'
 
@@ -147,6 +146,7 @@ if (__mpx_mode__ === 'web') {
   const set = Vue.set.bind(Vue)
   const del = Vue.delete.bind(Vue)
   APIs = {
+    injectMixins,
     mixin: injectMixins,
     observable,
     watch,
@@ -157,6 +157,7 @@ if (__mpx_mode__ === 'web') {
   }
 } else {
   APIs = {
+    injectMixins,
     mixin: injectMixins,
     observable: reactive,
     watch,
