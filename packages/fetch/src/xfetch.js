@@ -3,8 +3,9 @@ import CancelToken from './cancelToken'
 import InterceptorManager from './interceptorManager'
 import RequestQueue from './queue'
 import { requestProxy } from './proxy'
+import { requestMock } from './mock'
 import { validate } from './validator'
-import { isNotEmptyArray, isNotEmptyObject, transformReq, isObject, formatCacheKey, checkCacheConfig, sortObject } from './util'
+import { isNotEmptyArray, isNotEmptyObject, transformReq, isThenable, formatCacheKey, checkCacheConfig, sortObject, isObject } from './util'
 
 export default class XFetch {
   constructor (options, MPX) {
@@ -21,6 +22,7 @@ export default class XFetch {
       this.requestAdapter = (config) => requestAdapter(config, MPX)
     }
     if (options && options.proxy) this.setProxy(options.proxy)
+    if (options && options.mock) this.setMock(options.mock)
     this.interceptors = {
       request: new InterceptorManager(),
       response: new InterceptorManager()
@@ -72,6 +74,16 @@ export default class XFetch {
     this.queue && this.queue.addLowPriorityWhiteList(rules)
   }
 
+  setMock (options) {
+    if (isNotEmptyArray(options)) {
+      this.mockOptions = options
+    } else if (isNotEmptyObject(options)) {
+      this.mockOptions = [options]
+    } else {
+      console.error('仅支持不为空的对象或数组')
+    }
+  }
+
   setProxy (options) {
     // 代理配置
     if (isNotEmptyArray(options)) {
@@ -81,6 +93,14 @@ export default class XFetch {
     } else {
       console.error('仅支持不为空的对象或数组')
     }
+  }
+
+  getMock () {
+    return this.mockOptions
+  }
+
+  clearMock () {
+    this.mockOptions = undefined
   }
 
   getProxy () {
@@ -178,16 +198,27 @@ export default class XFetch {
       // 1. 检查config.url存在
       // 2. 抹平微信/支付宝header/headers字段差异
       // 3. 填充默认method为GET, method大写化
-      // 4. 对于类GET请求将config.data移动合并至config.params(最终发送请求前进行统一序列化并拼接至config.url上)
-      // 5. 对于类POST请求将config.emulateJSON实现为config.header['content-type'] = 'application/x-www-form-urlencoded'
+      // 4. 抽取url中query合并至config.params
+      // 5. 对于类GET请求将config.data移动合并至config.params(最终发送请求前进行统一序列化并拼接至config.url上)
+      // 6. 对于类POST请求将config.emulateJSON实现为config.header['content-type'] = 'application/x-www-form-urlencoded'
       // 后续请求处理都应基于正规化后的config进行处理(proxy/mock/validate/serialize)
+      // 参数校验 > 接口mock > 接口代理
       XFetch.normalizeConfig(config)
+
       const checkRes = this.checkValidator(config)
       const validatorRes = isObject(checkRes) ? checkRes.valid : checkRes
       if (typeof validatorRes !== 'undefined' && !validatorRes) {
         return Promise.reject(new Error(`xfetch参数校验错误 ${config.url} ${checkRes?.message?.length ? 'error:' + checkRes.message.join(',') : ''}`))
       }
-      config = this.checkProxy(config) // proxy
+
+      if (this.mockOptions) {
+        let mockData = requestMock(this.mockOptions, config)
+        if (isThenable(mockData)) return mockData
+      }
+
+      if (this.proxyOptions) {
+        config = this.checkProxy(config)
+      }
       return this.queue ? this.queue.request(config, priority) : this.requestAdapter(config)
     }
 

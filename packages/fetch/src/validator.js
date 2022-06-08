@@ -81,6 +81,7 @@ export function validate (options, config) {
   options?.length && options.some((item) => {
     const { test, validator, greedy } = item
     const matched = isFunction(test.custom) ? test.custom(config) : doTest(config, test).matched
+
     if (matched) {
       if (isFunction(validator.custom)) {
         result = validator.custom(config)

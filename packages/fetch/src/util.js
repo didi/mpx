@@ -31,6 +31,14 @@ export function isThenable (obj) {
   return obj && typeof obj.then === 'function'
 }
 
+// 排除一些特定属性，是否为空对象
+export function isEmptyObjectAttr (obj, excludeAttrs = []) {
+  return !(obj && isObject(obj) && Object.keys(obj).some(key => {
+    if (~excludeAttrs.indexOf(key)) return false
+    return !!obj[key]
+  }))
+}
+
 // 不为空对象
 export function isNotEmptyObject (obj) {
   return obj && isObject(obj) && Object.keys(obj).length > 0
@@ -252,7 +260,8 @@ export function doTest (config, test) {
     params: tParams = {},
     data: tData = {},
     header: tHeader = {},
-    method: tMethod = ''
+    method: tMethod = '',
+    custom: tCustom = ''
   } = test
 
   const { baseUrl, protocol, hostname, port, path, search } = parseUrl(url)
@@ -299,6 +308,12 @@ export function doTest (config, test) {
     urlMatched = protocolMatched && hostMatched && portMatched && pathMatched
   }
 
+  // 判断custom以外的属性值为空
+  const urlParamsExist = !isEmptyObjectAttr(test, ['custom'])
+
+  // 自定义匹配函数
+  let customMatched = isFunction(tCustom) && tCustom(config)
+
   // search 匹配
   const searchMatched = tSearch ? search.includes(tSearch) : true
   // params 匹配
@@ -320,7 +335,7 @@ export function doTest (config, test) {
   }
 
   // 是否匹配
-  const matched = urlMatched && searchMatched && paramsMatched && dataMatched && headerMatched && methodMatched
+  let matched = customMatched || (urlParamsExist && urlMatched && searchMatched && paramsMatched && dataMatched && headerMatched && methodMatched)
 
   return {
     matched,
@@ -346,4 +361,17 @@ export function checkCacheConfig (thisConfig, catchData) {
   return JSON.stringify(sortObject(thisConfig.data)) === JSON.stringify(catchData.data) &&
     JSON.stringify(sortObject(thisConfig.params)) === JSON.stringify(catchData.params) &&
     thisConfig.method === catchData.method
+}
+
+export function buildResponse (data) {
+  let response = {
+    header: {
+      'Content-Type': 'text/plain; charset=utf-8'
+    },
+    data: {},
+    cookies: []
+  }
+
+  if (!data.hasOwnProperty('statusCode') && !data.hasOwnProperty('status')) return Object.assign(response, { data: data, statusCode: 200 })
+  return data
 }
