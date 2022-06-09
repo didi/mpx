@@ -1,5 +1,6 @@
 const parseComponent = require('./parser')
 const parseRequest = require('./utils/parse-request')
+const {compileScriptSetup} = require('./compiler-script-setup')
 
 module.exports = function (content) {
   this.cacheable()
@@ -24,6 +25,11 @@ module.exports = function (content) {
   let part = parts[type]
   if (Array.isArray(part)) {
     part = part[index]
+  }
+  if (part && part.attrs && part.attrs.setup) {
+    // script setup
+    const scriptSetupContent = part.content
+    const content = compileScriptSetup(scriptSetupContent)
   }
   if (!part) {
     let content = ''
