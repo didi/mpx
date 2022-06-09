@@ -66,6 +66,10 @@ export {
 } from './observer/effectScope'
 
 export {
+  nextTick
+} from './observer/scheduler'
+
+export {
   onBeforeCreate,
   onCreated,
   onBeforeMount,
