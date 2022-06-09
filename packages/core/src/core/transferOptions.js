@@ -3,6 +3,7 @@ import mergeOptions from './mergeOptions'
 import { getConvertMode } from '../convertor/getConvertMode'
 import { findItem } from '../helper/utils'
 import { warn } from '../helper/log'
+import { getCurrentInstance } from './proxy'
 
 export default function transferOptions (options, type) {
   let currentInject
@@ -35,6 +36,18 @@ export default function transferOptions (options, type) {
         warn(`由于平台机制原因，子组件无法在初始时(created/attached)获取到通过props传递的计算属性[${key}]，该问题一般不影响渲染，如需进一步处理数据建议通过watch获取。`, global.currentResource)
       }
     })
+  }
+  const rawSetup = options.setup
+  if (__mpx_mode__ === 'web' && rawSetup) {
+    options.setup = (props, context) => {
+      const _this = getCurrentInstance()
+      return rawSetup(props, {
+        triggerEvent: _this.triggerEvent,
+        createSelectorQuery: _this.createSelectorQuery,
+        selectComponent: _this.selectComponent,
+        selectAllComponents: _this.selectAllComponents
+      })
+    }
   }
   return {
     rawOptions,

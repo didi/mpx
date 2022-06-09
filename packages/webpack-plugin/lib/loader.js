@@ -129,6 +129,8 @@ module.exports = function (content) {
           output += `
       import App from ${stringifyRequest(request)}
       import Vue from 'vue'
+      import VueCompositionAPI from '@vue/composition-api'
+      Vue.use(VueCompositionAPI)
       new Vue({
         el: '#app',
         render: function(h){

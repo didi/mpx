@@ -118,6 +118,7 @@ module.exports = function (script, {
       if (ctorType === 'app') {
         content += `  import '@mpxjs/webpack-plugin/lib/runtime/base.styl'
   import Vue from 'vue'
+  import { ref, reactive } from '@vue/composition-api'
   import VueRouter from 'vue-router'
   import Mpx from '@mpxjs/core'
   Vue.use(VueRouter)

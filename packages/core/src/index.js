@@ -13,6 +13,7 @@ import { diffAndCloneA, makeMap, merge, hasOwn } from './helper/utils'
 import { error } from './helper/log'
 import Vue from './vue'
 import implement from './core/implement'
+import vuePlugin from './runtime/vuePlugin'
 
 export {
   createApp,
@@ -145,6 +146,8 @@ if (__mpx_mode__ === 'web') {
   const watch = vm.$watch.bind(vm)
   const set = Vue.set.bind(Vue)
   const del = Vue.delete.bind(Vue)
+  // 挂载methods方法
+  Vue.use(vuePlugin)
   APIs = {
     injectMixins,
     mixin: injectMixins,
