@@ -1,7 +1,9 @@
 import Dep, { pushTarget, popTarget } from './dep'
 import { recordEffectScope } from './effectScope'
+import { PausedState } from '../helper/const'
 
 let uid = 0
+
 
 export class ReactiveEffect {
   active = true
@@ -18,6 +20,7 @@ export class ReactiveEffect {
     this.id = ++uid
     this.fn = fn
     this.scheduler = scheduler
+    this.pausedState = PausedState.resumed
     recordEffectScope(this, scope)
   }
 
@@ -66,8 +69,13 @@ export class ReactiveEffect {
 
   // same as trigger
   update () {
+    // avoid dead cycle
     if (Dep.target === this) return
-    this.scheduler ? this.scheduler() : this.run()
+    if (this.pausedState !== PausedState.resumed) {
+      this.pausedState = PausedState.dirty
+    } else {
+      this.scheduler ? this.scheduler() : this.run()
+    }
   }
 
   // pass through deps for computed
@@ -89,6 +97,18 @@ export class ReactiveEffect {
       }
       typeof this.onStop === 'function' && this.onStop()
       this.active = false
+    }
+  }
+
+  pause () {
+    this.pausedState = PausedState.paused
+  }
+
+  resume () {
+    const lastPausedState = this.pausedState
+    this.pausedState = PausedState.resumed
+    if (lastPausedState === PausedState.dirty) {
+      this.scheduler ? this.scheduler() : this.run()
     }
   }
 }
