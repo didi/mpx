@@ -4,7 +4,6 @@ import { PausedState } from '../helper/const'
 
 let uid = 0
 
-
 export class ReactiveEffect {
   active = true
   deps = []
