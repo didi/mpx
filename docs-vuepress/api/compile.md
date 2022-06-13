@@ -129,7 +129,7 @@ MpxWebpackPlugin支持传入以下配置：
 
 - **详细**：
 
-mode 为 Mpx 编译的目标平台， 目前支持的有微信小程序(wx)\支付宝小程序(ali)\百度小程序(swan)\头条小程序(tt)\ QQ 小程序(qq)\ H5 页面(web)
+mode 为 Mpx 编译的目标平台， 目前支持的有微信小程序(wx)、支付宝小程序(ali)、百度小程序(swan)、头条小程序(tt)、 QQ 小程序(qq)、H5 页面(web)
 
 ### srcMode
 
@@ -246,7 +246,7 @@ new MpxWebpackPlugin({
 
 - **类型**：[`Rules`](#rules)
 
-- **详细**：是否需要对样式加 scope ，目前只有支付宝小程序平台没有样式隔离，因此该部分内容也只对支付宝小程序平台生效。提供 include 和 exclude 以精确控制对哪些文件进行样式隔离，哪些不隔离，和webpack的rules规则相同。也可以通过在 style 代码块上声明 scoped 进行。
+- **详细**：是否需要对样式加 scope ，目前只有支付宝小程序平台没有样式隔离，因此该部分内容也只对支付宝小程序平台生效。提供 include 和 exclude 来精确控制对哪些文件进行样式隔离，哪些不隔离，和webpack的rules规则相同。也可以通过在 style 代码块上声明 scoped 进行。
 
 - **示例**：
 

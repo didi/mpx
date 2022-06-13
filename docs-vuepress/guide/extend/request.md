@@ -3,8 +3,12 @@
 
 >Mpx提供了网络请求库fetch，抹平了微信，阿里等平台请求参数及响应数据的差异；同时支持请求拦截器，请求取消等
 
+## 安装
+```sh
+npm i @mpxjs/fetch
+```
 
-### 使用说明
+## 使用说明
 
 ```js
 import mpx from '@mpxjs/core'
