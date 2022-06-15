@@ -1,20 +1,9 @@
 import {
-  watch
-} from './observer/watch'
-
-import {
   reactive,
-  set,
-  del
 } from './observer/reactive'
-
-import { injectMixins } from './core/injectMixins'
 import { diffAndCloneA, makeMap, merge, hasOwn } from './helper/utils'
 import { error } from './helper/log'
-import Vue from './vue'
-import implement from './core/implement'
-import vuePlugin from './runtime/vuePlugin'
-
+import {  Vue, APIs, InstanceAPIs } from './platform/export/index'
 export {
   createApp,
   createPage,
@@ -31,21 +20,18 @@ export {
 } from './core/createStore'
 
 export {
+  // watch
   watchEffect,
   watchSyncEffect,
   watchPostEffect,
-  watch
-} from './observer/watch'
-
-export {
+  watch,
+  // reactive
   reactive,
   isReactive,
   shallowReactive,
   set,
-  del
-} from './observer/reactive'
-
-export {
+  del,
+  // ref环节
   ref,
   unref,
   toRef,
@@ -53,18 +39,16 @@ export {
   isRef,
   customRef,
   shallowRef,
-  triggerRef
-} from './observer/ref'
-
-export {
-  computed
-} from './observer/computed'
-
-export {
+  triggerRef,
+  // computed
+  computed,
+  // advanced
   effectScope,
   getCurrentScope,
-  onScopeDispose
-} from './observer/effectScope'
+  onScopeDispose,
+  // instance
+  getCurrentInstance
+} from './platform/export/index'
 
 export {
   onBeforeCreate,
@@ -78,12 +62,11 @@ export {
   onShow,
   onHide,
   onResize,
-  getCurrentInstance
+  // getCurrentInstance
 } from './core/proxy'
 
 export { getMixin } from './core/mergeOptions'
 
-export { injectMixins } from './core/injectMixins'
 
 export function toPureObject (obj) {
   return diffAndCloneA(obj).clone
@@ -135,46 +118,7 @@ function use (plugin, options = {}) {
   return this
 }
 
-let APIs = {}
-
-// 实例属性
-let InstanceAPIs = {}
-
-if (__mpx_mode__ === 'web') {
-  const vm = new Vue()
-  const observable = Vue.observable.bind(Vue)
-  const watch = vm.$watch.bind(vm)
-  const set = Vue.set.bind(Vue)
-  const del = Vue.delete.bind(Vue)
-  // 挂载methods方法
-  Vue.use(vuePlugin)
-  APIs = {
-    injectMixins,
-    mixin: injectMixins,
-    observable,
-    watch,
-    use,
-    set,
-    delete: del,
-    implement
-  }
-} else {
-  APIs = {
-    injectMixins,
-    mixin: injectMixins,
-    observable: reactive,
-    watch,
-    use,
-    set,
-    delete: del,
-    implement
-  }
-
-  InstanceAPIs = {
-    $set: set,
-    $delete: del
-  }
-}
+APIs.use = use
 
 function factory () {
   // 作为原型挂载属性的中间层

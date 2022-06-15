@@ -8,7 +8,6 @@ const vuePlugin = {
           detail: eventDetail
         })
       }
-      // 这里的this是访问vue 实例vm，这里能挂上么？待确认
       Vue.prototype.createSelectorQuery = function () {
         return new SelectQuery().in(this)
       }

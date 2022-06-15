@@ -3,15 +3,6 @@ import { error } from '../../helper/log'
 import { SelectQuery } from '../../helper/vueUtils'
 
 
-function getIdentifier (vnode) {
-  let identifier = ''
-  if (vnode && vnode.data) {
-    if (vnode.data.attrs && vnode.data.attrs.id) identifier += `#${vnode.data.attrs.id}`
-    if (vnode.data.staticClass) identifier += `.${vnode.data.staticClass.split(' ').join('.')}`
-  }
-  return identifier
-}
-
 function getEl (ref) {
   if (ref && ref.nodeType === 1) return ref
   if (ref && ref.$options && ref.$options.__mpxBuiltIn) return ref.$el

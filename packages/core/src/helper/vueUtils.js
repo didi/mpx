@@ -238,6 +238,14 @@ class NodesRef {
   }
 }
 
+function getIdentifier (vnode) {
+  let identifier = ''
+  if (vnode && vnode.data) {
+    if (vnode.data.attrs && vnode.data.attrs.id) identifier += `#${vnode.data.attrs.id}`
+    if (vnode.data.staticClass) identifier += `.${vnode.data.staticClass.split(' ').join('.')}`
+  }
+  return identifier
+}
 
 function walkChildren (vm, selector, context, result, all) {
   if (vm.$children && vm.$children.length) {
