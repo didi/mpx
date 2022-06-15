@@ -50,143 +50,10 @@ const BindingTypes = {
   OPTIONS: 'options'
 }
 
-function isCallOf(
-    node,
-    test
+function compileScriptSetup(
+    content,
+    ctorType
 ) {
-  return !!(
-      node &&
-      node.type === 'CallExpression' &&
-      node.callee.type === 'Identifier' &&
-      (typeof test === 'string'
-          ? node.callee.name === test
-          : test(node.callee.name))
-  )
-}
-
-// TODO add 注释
-function canNeverBeRef(node, userReactiveImport) {
-  if (isCallOf(node, userReactiveImport)) {
-    return true
-  }
-  switch (node.type) {
-    case 'UnaryExpression':
-    case 'BinaryExpression':
-    case 'ArrayExpression':
-    case 'ObjectExpression':
-    case 'FunctionExpression':
-    case 'ArrowFunctionExpression':
-    case 'UpdateExpression':
-    case 'ClassExpression':
-    case 'TaggedTemplateExpression':
-      return true
-    case 'SequenceExpression':
-      return canNeverBeRef(
-          node.expressions[node.expressions.length - 1],
-          userReactiveImport
-      )
-    default:
-      if (node.type.endsWith('Literal')) {
-        return true
-      }
-      return false
-  }
-}
-
-function isCompilerMacro(c) {
-  return c === DEFINE_PROPS || c === DEFINE_OPTIONS || c === USE_CONTEXT
-}
-
-function registerBinding(bindings, node, type) {
-  bindings[node.name] = type
-}
-
-function walkDeclaration(node, bindings, userImportAlias) {
-  if (node.type === 'VariableDeclaration') {
-    const isConst = node.kind === 'const'
-    for (const { id, init } of node.declarations) {
-      const isDefineCall = !!(
-          isConst &&
-          isCallOf(
-              init,
-              isCompilerMacro
-          )
-      )
-      if (id.type === 'Identifier') {
-        let bindingType
-        const userReactiveBinding = userImportAlias['reactive'] || 'reactive'
-        // 是否是 reactive init
-        if (isCallOf(init, userReactiveBinding)) {
-          bindingType = isConst
-              ? BindingTypes.SETUP_REACTIVE_CONST
-              : BindingTypes.SETUP_LET
-        } else if(
-            isDefineCall ||
-            (isConst && canNeverBeRef(init, userReactiveBinding))
-        ) {
-          bindingType = isCallOf(init, DEFINE_PROPS)
-              ? BindingTypes.SETUP_REACTIVE_CONST
-              : BindingTypes.SETUP_CONST
-        } else if (isConst) {
-          if (isCallOf(init, userImportAlias['ref'] || 'ref')) {
-            bindingType = BindingTypes.SETUP_REF
-          } else {
-            bindingType = BindingTypes.SETUP_MAYBE_REF
-          }
-        } else {
-          bindingType = BindingTypes.SETUP_LET
-        }
-        registerBinding(bindings, id, bindingType)
-      } else {
-        if (isCallOf(init, DEFINE_PROPS)) {
-          // skip walking props destructure
-          return
-        }
-        if (id.type === 'ObjectPattern') {
-          walkObjectPattern(id, bindings, isConst, isDefineCall)
-        } else if (id.type === 'ArrayPattern') {
-          walkArrayPattern(id, bindings, isConst, isDefineCall)
-        }
-      }
-    }
-  } else if (
-      node.type === 'TSEnumDeclaration' ||
-      node.type === 'FunctionDeclaration' ||
-      node.type === 'ClassDeclaration'
-  ) {
-    bindings[node.id.name] = BindingTypes.SETUP_CONST
-  }
-
-}
-
-function walkObjectPattern(node, bindings, isConst, isDefineCall = false) {
-  for (const p of node.properties) {
-    if (p.type === 'ObjectProperty') {
-      if (p.key.type === 'Identifier' && p.key === p.value) {
-        // shorthand: const { x } = ...
-        const type = isDefineCall ? BindingTypes.SETUP_CONST : isConst ? BindingTypes.SETUP_MAYBE_REF : BindingTypes.SETUP_LET
-        registerBinding(bindings, p.key, type)
-      } else {
-        // TODO
-        //walkPattern(p.value, bindings, isConst, isDefineCall)
-      }
-    }
-  }
-}
-
-function walkArrayPattern(
-    node,
-    bindings,
-    isConst,
-    isDefineCall = false
-) {
-  for (const e of node.elements) {
-    // TODO
-    // e && walkPattern(e, bindings, isConst, isDefineCall)
-  }
-}
-
-function compileScriptSetup(content, options) {
   const _s = new MagicString(content)
   const scriptBindings = Object.create(null)
   const setupBindings = Object.create(null)
@@ -197,10 +64,21 @@ function compileScriptSetup(content, options) {
   let endOffset = 0
   let hasAwait = false
   let hasDefinePropsCall = false
+  let hasUseContextCall = false
 
   let propsRuntimeDecl
   let propsTypeDeclRaw
   let propsTypeDecl
+  let propsIdentifier
+  let propsDestructureRestId
+
+  let isTS = false
+
+
+  // props/emits declared via types
+  const bindingMetadata = {}
+  const typeDeclaredProps = {}
+  const declaredTypes = {}
 
   function registerUserImport(
       source,
@@ -222,7 +100,19 @@ function compileScriptSetup(content, options) {
     }
   }
 
-  function processDefineProps (node) {
+  function processUseContext (node) {    // add useContext 去重逻辑
+    // add useContext 去重提示逻辑
+    if (isCallOf(node, USE_CONTEXT)) {
+      _s.overwrite(node.start, node.end, '__context')
+      hasUseContextCall = true
+    }
+    // useContext().refs
+    if (node.type === 'MemberExpression') {
+      processUseContext(node.object)
+    }
+  }
+
+  function processDefineProps (node, declId) {
     if (!isCallOf(node, DEFINE_PROPS)) {
       return false
     }
@@ -263,11 +153,63 @@ function compileScriptSetup(content, options) {
       }
     }
 
+    // 处理 VariableDeclaration declarations id
+    if (declId) {
+      propsIdentifier = content.slice(declId.start, declId.end)
+    }
     return true
   }
 
   function resolveQualifiedType(node, qualifier) {
-    // TODO
+    if (qualifier(node)) {
+      return node
+    }
+    //TSTypeReference defineProps<Props>()
+    if (node.type === 'TSTypeReference' && node.typeName.type === 'Identifier') {
+      const refName = node.typeName.name
+      const isQualifiedType = (node) => {
+        // interface Props TSInterfaceDeclaration
+        if (node.type === 'TSInterfaceDeclaration' && node.id.name === refName) {
+          return node.body
+        }
+        // type Props TSTypeAliasDeclaration
+        if (node.type === 'TSTypeAliasDeclaration' && node.id.name === refName && qualifier(node.typeAnnotation)) {
+          return node.typeAnnotation
+        }
+        // export type Props
+        if (node.type === 'ExportNamedDeclaration' && node.declaration) {
+          return isQualifiedType(node.declaration)
+        }
+      }
+      const body = scriptSetupAst.body
+      for (const node of body) {
+        const qualified = isQualifiedType(node)
+        if (qualified) {
+          return qualified
+        }
+      }
+    }
+  }
+
+  function genRuntimeProps() {
+
+  }
+
+  function checkInvalidScopeReference(node, method) {
+    if (!node) return
+    // TODO add walkIdentifiers
+    // walkIdentifiers(node, id => {
+    //   if (setupBindings[id.name]) {
+    //     console.error(
+    //       `\`${method}()\` in <script setup> cannot reference locally ` +
+    //       `declared variables because it will be hoisted outside of the ` +
+    //       `setup() function. If your component options require initialization ` +
+    //       `in the module scope, use a separate normal <script> to export ` +
+    //       `the options instead.`,
+    //       id
+    //     )
+    //   }
+    // })
   }
 
   const scriptSetupAst = babylon.parse(content, {
@@ -341,22 +283,24 @@ function compileScriptSetup(content, options) {
           const isDefineProps = processDefineProps(decl.init, decl.id)
           if (isDefineProps) {
             if (left === 1) {
-              _s.remove(node.start + startOffset, node.end + startOffset)
+              _s.remove(node.start, node.end)
             } else {
-              let start = decl.start + startOffset
-              let end = decl.end + startOffset
+              // let a,b = defineProps({})
+              let start = decl.start
+              let end = decl.end
               if (i < total - 1) {
                 // not the last one, locate the start of the next
-                end = node.declarations[i + 1].start + startOffset
+                end = node.declarations[i + 1].start
               } else {
                 // last one, locate the end of the prev
-                start = node.declarations[i - 1].end + startOffset
+                start = node.declarations[i - 1].end
               }
               _s.remove(start, end)
               left--
             }
           }
-
+          // 处理 useContext
+          processUseContext(decl.init, decl.id)
         }
       }
     }
@@ -371,17 +315,71 @@ function compileScriptSetup(content, options) {
     }
     endOffset = node.loc.end.index
   }
+  // 响应性语法糖, 暂无
   // 3. Apply reactivity transform
 
   // 4. extract runtime props/emits code from setup context type
   if (propsTypeDecl) {
+    // TS defineProps 提取Props
     extractRuntimeProps(propsTypeDecl, typeDeclaredProps, declaredTypes, isProd)
   }
 
+  // 5. check useOptions args to make sure it doesn't reference setup scope
+  checkInvalidScopeReference(propsRuntimeDecl, DEFINE_PROPS)
+
+  // 6. remove non-script content，check <script></script> and remove
+
+  // 7. analyze binding metadata
+  if (propsRuntimeDecl) {
+    for (const key of getObjectOrArrayExpressionKeys(propsRuntimeDecl)) {
+      bindingMetadata[key] = BindingTypes.PROPS
+    }
+  }
+
+  for (const key in typeDeclaredProps) {
+    bindingMetadata[key] = BindingTypes.PROPS
+  }
+
+  for (const [key, { isType, imported, source }] of Object.entries(userImports)) {
+    if (isType) continue
+    bindingMetadata[key] = imported === '*' || (imported === 'default' && source.endsWith('.mpx')) || source === MPX_CORE
+        ? BindingTypes.SETUP_CONST
+        : BindingTypes.SETUP_MAYBE_REF
+  }
+
+  for (const key in setupBindings) {
+    bindingMetadata[key] = setupBindings[key]
+  }
+
+  // 8. inject `useCssVars` calls
+
+
   // 9. finalize setup() argument signature
   let args = `__props`
+  if (propsTypeDecl) {
+    args += `: any`
+  }
+  // inject user assignment of props
+  if (propsIdentifier) {
+    // TODO add ts 类型声明
+    _s.prependLeft(
+        startOffset,
+        `\nconst ${propsIdentifier} = __props\n`
+    )
+  }
 
-  let exposeCall = ''
+  // args 添加 __context
+  if (hasUseContextCall) {
+    args += `, __context`
+  }
+
+  if (propsDestructureRestId) {
+    // TODO
+  }
+
+  if (hasAwait) {
+    // TODO
+  }
 
   // 10. generate return statement
   let returned
@@ -390,28 +388,255 @@ function compileScriptSetup(content, options) {
     ...setupBindings
   };
   for (const key in userImports) {
-    if (!userImports[key].isType && userImports[key].isUsedInTemplate) {
-      allBindings[key] = true;
+    // import 进的的变量或方法，非mpxjs/core中的，暂时都进行return
+    if (!userImports[key].isType && !userImportAlias[key]) {
+      allBindings[key] = true
     }
   }
-  returned = `{ ${Object.keys(allBindings).join(', ')} }`;
-
-
-  let runtimeOptions = ``
-
+  returned = `{ ${Object.keys(allBindings).join(', ')} }`
 
   _s.appendRight(endOffset, `\nreturn ${returned}\n}\n\n`)
 
-  _s.prependLeft(
-      startOffset,
-      `\ncreateComponent ({${runtimeOptions}\n  ` +
-      `${hasAwait ? `async ` : ``}setup(${args}) {\n${exposeCall}`
-  )
-  _s.appendRight(endOffset, `})`)
+  // 11. finalize default export
+  let runtimeOptions = ``
+  if (propsRuntimeDecl) {
+    let declCode = content.slice(propsRuntimeDecl.start, propsRuntimeDecl.end).trim()
+    runtimeOptions += `\n  properties: ${declCode},`
+  } else if (propsTypeDecl) {
+    // TODO genRuntimeProps 待完善
+    runtimeOptions += genRuntimeProps(typeDeclaredProps)
+  }
+
+  let exposeCall = ''
+  if (isTS) {
+    // TODO
+  } else {
+    // import {createComponent} from '@mpxjs/core' 添加是否已有import判断
+    const ctor = getCtor(ctorType)
+    _s.prependLeft(
+        startOffset,
+        `\nimport {${ctor}} from '${MPX_CORE}'\n${getCtor(ctorType)} ({${runtimeOptions}\n  ` +
+        `setup(${args}) {\n`
+    )
+    _s.appendRight(endOffset, `})`)
+  }
 
   return {
     content: _s.toString()
   }
+}
+
+function isCallOf(
+    node,
+    test
+) {
+  return !!(
+      node &&
+      node.type === 'CallExpression' &&
+      node.callee.type === 'Identifier' &&
+      (typeof test === 'string'
+          ? node.callee.name === test
+          : test(node.callee.name))
+  )
+}
+
+// TODO add 注释
+function canNeverBeRef(
+    node,
+    userReactiveImport
+) {
+  if (isCallOf(node, userReactiveImport)) {
+    return true
+  }
+  switch (node.type) {
+    case 'UnaryExpression':
+    case 'BinaryExpression':
+    case 'ArrayExpression':
+    case 'ObjectExpression':
+    case 'FunctionExpression':
+    case 'ArrowFunctionExpression':
+    case 'UpdateExpression':
+    case 'ClassExpression':
+    case 'TaggedTemplateExpression':
+      return true
+    case 'SequenceExpression':
+      return canNeverBeRef(
+          node.expressions[node.expressions.length - 1],
+          userReactiveImport
+      )
+    default:
+      if (node.type.endsWith('Literal')) {
+        return true
+      }
+      return false
+  }
+}
+
+function getObjectOrArrayExpressionKeys(value) {
+  if (value.type === 'ArrayExpression') {
+    return getArrayExpressionKeys(value)
+  }
+  if (value.type === 'ObjectExpression') {
+    return getObjectExpressionKeys(value)
+  }
+  return []
+}
+
+function getArrayExpressionKeys(node) {
+  const keys = []
+  for (const element of node.elements) {
+    if (element && element.type === 'StringLiteral') {
+      keys.push(element.value)
+    }
+  }
+  return keys
+}
+
+function getObjectExpressionKeys(node) {
+  const keys = []
+  for (const prop of node.properties) {
+    if (
+        (prop.type === 'ObjectProperty' || prop.type === 'ObjectMethod') &&
+        !prop.computed
+    ) {
+      if (prop.key.type === 'Identifier') {
+        keys.push(prop.key.name)
+      } else if (prop.key.type === 'StringLiteral') {
+        keys.push(prop.key.value)
+      }
+    }
+  }
+  return keys
+}
+
+function isCompilerMacro(c) {
+  return c === DEFINE_PROPS || c === DEFINE_OPTIONS || c === USE_CONTEXT
+}
+
+function registerBinding(
+    bindings,
+    node,
+    type
+) {
+  bindings[node.name] = type
+}
+
+function walkDeclaration(
+    node,
+    bindings,
+    userImportAlias
+) {
+  if (node.type === 'VariableDeclaration') {
+    const isConst = node.kind === 'const'
+    for (const { id, init } of node.declarations) {
+      const isDefineCall = !!(
+          isConst &&
+          isCallOf(
+              init,
+              isCompilerMacro
+          )
+      )
+      if (id.type === 'Identifier') {
+        let bindingType
+        const userReactiveBinding = userImportAlias['reactive'] || 'reactive'
+        // 是否是 reactive init
+        if (isCallOf(init, userReactiveBinding)) {
+          bindingType = isConst
+              ? BindingTypes.SETUP_REACTIVE_CONST
+              : BindingTypes.SETUP_LET
+        } else if(
+            isDefineCall ||
+            (isConst && canNeverBeRef(init, userReactiveBinding))
+        ) {
+          bindingType = isCallOf(init, DEFINE_PROPS)
+              ? BindingTypes.SETUP_REACTIVE_CONST
+              : BindingTypes.SETUP_CONST
+        } else if (isConst) {
+          if (isCallOf(init, userImportAlias['ref'] || 'ref')) {
+            bindingType = BindingTypes.SETUP_REF
+          } else {
+            bindingType = BindingTypes.SETUP_MAYBE_REF
+          }
+        } else {
+          bindingType = BindingTypes.SETUP_LET
+        }
+        registerBinding(bindings, id, bindingType)
+      } else {
+        if (isCallOf(init, DEFINE_PROPS)) {
+          // skip walking props destructure
+          return
+        }
+        if (id.type === 'ObjectPattern') {
+          walkObjectPattern(id, bindings, isConst, isDefineCall)
+        } else if (id.type === 'ArrayPattern') {
+          walkArrayPattern(id, bindings, isConst, isDefineCall)
+        }
+      }
+    }
+  } else if (
+      node.type === 'TSEnumDeclaration' ||
+      node.type === 'FunctionDeclaration' ||
+      node.type === 'ClassDeclaration'
+  ) {
+    bindings[node.id.name] = BindingTypes.SETUP_CONST
+  }
+
+}
+
+function walkObjectPattern(
+    node,
+    bindings,
+    isConst,
+    isDefineCall = false
+) {
+  for (const p of node.properties) {
+    if (p.type === 'ObjectProperty') {
+      if (p.key.type === 'Identifier' && p.key === p.value) {
+        // shorthand: const { x } = ...
+        const type = isDefineCall ? BindingTypes.SETUP_CONST : isConst ? BindingTypes.SETUP_MAYBE_REF : BindingTypes.SETUP_LET
+        registerBinding(bindings, p.key, type)
+      } else {
+        // TODO
+        //walkPattern(p.value, bindings, isConst, isDefineCall)
+      }
+    }
+  }
+}
+
+function walkArrayPattern(
+    node,
+    bindings,
+    isConst,
+    isDefineCall = false
+) {
+  for (const e of node.elements) {
+    // TODO
+    // e && walkPattern(e, bindings, isConst, isDefineCall)
+  }
+}
+
+// 取出 runtime props
+function extractRuntimeProps(
+    node,
+    props,
+    declaredTypes,
+    isProd
+) {
+  const members = node.type === 'TSTypeLiteral' ? node.members : node.body
+  // TODO
+}
+
+function getCtor(ctorType) {
+  let ctor = 'createComponent'
+  switch (ctorType) {
+    case 'app':
+      ctor = 'createApp'
+      break
+    case 'page':
+      ctor = 'createPage'
+      break
+  }
+  return ctor
 }
 
 module.exports = {
