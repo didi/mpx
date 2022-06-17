@@ -4,6 +4,7 @@ var MagicString = require('magic-string')
 // Special compiler macros
 const DEFINE_PROPS = 'defineProps'
 const DEFINE_OPTIONS = 'defineOptions'
+const DEFINE_RETURNS = 'defineReturns'
 const USE_CONTEXT = 'useContext'
 
 const MPX_CORE = '@mpxjs/core'
@@ -65,12 +66,17 @@ function compileScriptSetup(
   let hasAwait = false
   let hasDefinePropsCall = false
   let hasUseContextCall = false
+  let hasDefineOptionsCall = false
+  let hasDefineReturnsCall = false
 
   let propsRuntimeDecl
   let propsTypeDeclRaw
   let propsTypeDecl
   let propsIdentifier
   let propsDestructureRestId
+  let optionsRuntimeDecl
+  let optionsIdentifier
+  let returnsRuntimeDecl
 
   let isTS = false
 
@@ -100,17 +106,61 @@ function compileScriptSetup(
     }
   }
 
-  function processUseContext (node) {    // add useContext 去重逻辑
+  function processUseContext (node) {
     // add useContext 去重提示逻辑
-    if (isCallOf(node, USE_CONTEXT)) {
-      _s.overwrite(node.start, node.end, '__context')
-      hasUseContextCall = true
-    }
-    // useContext().refs
-    if (node.type === 'MemberExpression') {
-      processUseContext(node.object)
-    }
+    // if (isCallOf(node, USE_CONTEXT)) {
+    //   // _s.overwrite(node.start, node.end, '__context')
+    //   hasUseContextCall = true
+    // }
   }
+
+  function processDefineReturns (node, declId) {
+    if (!isCallOf(node, DEFINE_RETURNS)) {
+      return false
+    }
+    if (hasDefineReturnsCall) {
+      console.error(`duplicate ${DEFINE_RETURNS}() call`, node)
+    }
+    hasDefineReturnsCall = true
+    returnsRuntimeDecl = node.arguments[0]
+
+    if (node.typeParameters) {
+      console.error(`${DEFINE_RETURNS} is not support type parameters`, node)
+    }
+
+    if (declId) {
+      // TODO
+    }
+
+    return true
+  }
+
+  function processDefineOptions (node, declId) {
+    if (!isCallOf(node, DEFINE_OPTIONS)) {
+      return false
+    }
+    if (hasDefineOptionsCall) {
+      console.error(`duplicate ${DEFINE_OPTIONS}() call`, node)
+    }
+    hasDefineOptionsCall = true
+    const arg0 = node.arguments[0]
+    if (arg0.type === 'ObjectExpression') {
+      optionsRuntimeDecl = arg0.properties
+    } else {
+      console.error(`${DEFINE_OPTIONS} input parameter must be an object`)
+    }
+
+    if (node.typeParameters) {
+      console.error(`${DEFINE_OPTIONS} is not support type parameters`, node)
+    }
+
+    if (declId) {
+      optionsIdentifier = content.slice(declId.start, declId.end)
+      console.warn(`${DEFINE_OPTIONS} no return value, please check it`, declId)
+    }
+    return true
+  }
+
 
   function processDefineProps (node, declId) {
     if (!isCallOf(node, DEFINE_PROPS)) {
@@ -267,9 +317,9 @@ function compileScriptSetup(
       startOffset = node.loc.end.index
     }
 
-    // process defineProps defineOptions useContext 等编译宏
+    // process defineProps defineOptions 等编译宏
     if (node.type === 'ExpressionStatement') {
-      if (processDefineProps(node.expression)) {
+      if (processDefineProps(node.expression) || processDefineOptions(node.expression) || processDefineReturns(node.expression)) {
         _s.remove(node.start, node.end)
       }
     }
@@ -281,7 +331,8 @@ function compileScriptSetup(
         const decl = node.declarations[i]
         if (decl.init) {
           const isDefineProps = processDefineProps(decl.init, decl.id)
-          if (isDefineProps) {
+          const isDefineOptions = processDefineOptions(decl.init, decl.id)
+          if (isDefineProps || isDefineOptions) {
             if (left === 1) {
               _s.remove(node.start, node.end)
             } else {
@@ -330,26 +381,26 @@ function compileScriptSetup(
   // 6. remove non-script content，check <script></script> and remove
 
   // 7. analyze binding metadata
-  if (propsRuntimeDecl) {
-    for (const key of getObjectOrArrayExpressionKeys(propsRuntimeDecl)) {
-      bindingMetadata[key] = BindingTypes.PROPS
-    }
-  }
-
-  for (const key in typeDeclaredProps) {
-    bindingMetadata[key] = BindingTypes.PROPS
-  }
-
-  for (const [key, { isType, imported, source }] of Object.entries(userImports)) {
-    if (isType) continue
-    bindingMetadata[key] = imported === '*' || (imported === 'default' && source.endsWith('.mpx')) || source === MPX_CORE
-        ? BindingTypes.SETUP_CONST
-        : BindingTypes.SETUP_MAYBE_REF
-  }
-
-  for (const key in setupBindings) {
-    bindingMetadata[key] = setupBindings[key]
-  }
+  // if (propsRuntimeDecl) {
+  //   for (const key of getObjectOrArrayExpressionKeys(propsRuntimeDecl)) {
+  //     bindingMetadata[key] = BindingTypes.PROPS
+  //   }
+  // }
+  //
+  // for (const key in typeDeclaredProps) {
+  //   bindingMetadata[key] = BindingTypes.PROPS
+  // }
+  //
+  // for (const [key, { isType, imported, source }] of Object.entries(userImports)) {
+  //   if (isType) continue
+  //   bindingMetadata[key] = imported === '*' || (imported === 'default' && source.endsWith('.mpx')) || source === MPX_CORE
+  //     ? BindingTypes.SETUP_CONST
+  //     : BindingTypes.SETUP_MAYBE_REF
+  // }
+  //
+  // for (const key in setupBindings) {
+  //   bindingMetadata[key] = setupBindings[key]
+  // }
 
   // 8. inject `useCssVars` calls
 
@@ -383,18 +434,22 @@ function compileScriptSetup(
 
   // 10. generate return statement
   let returned
-  const allBindings = {
-    ...scriptBindings,
-    ...setupBindings
-  };
-  for (const key in userImports) {
-    // import 进的的变量或方法，非mpxjs/core中的，暂时都进行return
-    if (!userImports[key].isType && !userImportAlias[key]) {
-      allBindings[key] = true
+  if (hasDefineReturnsCall && returnsRuntimeDecl) {
+    let declCode = content.slice(returnsRuntimeDecl.start, returnsRuntimeDecl.end).trim()
+    returned = `${declCode}`
+  } else {
+    const allBindings = {
+      ...scriptBindings,
+      ...setupBindings
+    };
+    for (const key in userImports) {
+      // import 进的的变量或方法，非mpxjs/core中的，暂时都进行return
+      if (!userImports[key].isType && !userImportAlias[key]) {
+        allBindings[key] = true
+      }
     }
+    returned = `{ ${Object.keys(allBindings).join(', ')} }`
   }
-  returned = `{ ${Object.keys(allBindings).join(', ')} }`
-
   _s.appendRight(endOffset, `\nreturn ${returned}\n}\n\n`)
 
   // 11. finalize default export
@@ -405,6 +460,17 @@ function compileScriptSetup(
   } else if (propsTypeDecl) {
     // TODO genRuntimeProps 待完善
     runtimeOptions += genRuntimeProps(typeDeclaredProps)
+  }
+
+  if (optionsRuntimeDecl) {
+    for (let node of optionsRuntimeDecl) {
+      if (node.key.name === 'properties' && hasDefinePropsCall) {
+        console.warn(`${DEFINE_PROPS} has been called, ${DEFINE_OPTIONS} set properties will be ignored`)
+      } else {
+        let declCode = content.slice(node.value.start, node.value.end).trim()
+        runtimeOptions += `\n ${node.key.name}: ${declCode},`
+      }
+    }
   }
 
   let exposeCall = ''
@@ -510,7 +576,7 @@ function getObjectExpressionKeys(node) {
 }
 
 function isCompilerMacro(c) {
-  return c === DEFINE_PROPS || c === DEFINE_OPTIONS || c === USE_CONTEXT
+  return c === DEFINE_PROPS || c === DEFINE_OPTIONS || c === DEFINE_RETURNS
 }
 
 function registerBinding(
