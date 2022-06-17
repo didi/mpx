@@ -1,5 +1,6 @@
 <template>
-  <div style="position: relative; overflow: hidden;">
+<!-- style="background: #f5f5f5;" -->
+  <div style="position: relative; overflow: hidden; min-width: 950px; background: #f5f5f5;">
     <div class="one-section__img1"></div>
     <div class="one-section__img2"></div>
     <!-- 第一部分 -->
