@@ -73,7 +73,6 @@ export default class MpxProxy {
       // 下次是否需要强制更新全部渲染数据
       this.forceUpdateAll = false
       this.currentRenderTask = null
-      this.flushingRenderTask = null
     }
   }
 
@@ -132,7 +131,7 @@ export default class MpxProxy {
   propsUpdated () {
     const updateJob = this.updateJob || (this.updateJob = () => {
       // 只有当前没有渲染任务时，属性更新才需要单独触发updated，否则可以由渲染任务结束后触发updated
-      if (this.currentRenderTask?.state === 'finished') {
+      if (this.currentRenderTask?.resolved) {
         this.updated()
       }
     })
@@ -180,7 +179,7 @@ export default class MpxProxy {
       this.target.$watch = this.watch.bind(this)
       // 强制执行render
       this.target.$forceUpdate = this.forceUpdate.bind(this)
-      this.target.$nextTick = fn => nextTick(fn, this)
+      this.target.$nextTick = nextTick
       // 挂载$refs对象
       this.target.$refs = {}
     }
@@ -200,7 +199,6 @@ export default class MpxProxy {
         {
           triggerEvent: this.target.triggerEvent.bind(this.target),
           refs: this.target.$refs,
-          nextTick: fn => nextTick(fn, this),
           forceUpdate: this.forceUpdate.bind(this),
           selectComponent: this.target.selectComponent.bind(this.target),
           selectAllComponents: this.target.selectAllComponents.bind(this.target),
@@ -527,7 +525,7 @@ export default class MpxProxy {
       }
       options.sync ? this.doRender() : queueJob(this.doRender.bind(this))
     }
-    callback && nextTick(callback.bind(this.target), this)
+    callback && nextTick(callback.bind(this.target))
   }
 }
 

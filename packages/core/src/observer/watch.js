@@ -117,7 +117,7 @@ export function watch (source, cb, options = {}) {
     // the scheduler function gets called directly
     scheduler = job
   } else if (flush === 'post') {
-    scheduler = () => queuePostRenderEffect(job, instance)
+    scheduler = () => queuePostRenderEffect(job)
   } else {
     // default: 'pre'
     scheduler = () => queuePreFlushCb(job)
@@ -136,7 +136,7 @@ export function watch (source, cb, options = {}) {
       oldValue = effect.run()
     }
   } else if (flush === 'post') {
-    queuePostRenderEffect(effect.run.bind(effect), instance)
+    queuePostRenderEffect(effect.run.bind(effect))
   } else {
     effect.run()
   }

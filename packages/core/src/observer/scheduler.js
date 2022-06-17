@@ -2,7 +2,6 @@ import { warn } from '../helper/log'
 import EXPORT_MPX from '../index'
 import { isDev } from '../helper/env'
 import { callWithErrorHandling } from '../helper/errorHandling'
-import { currentInstance } from '../core/proxy'
 import { isArray } from '../helper/utils'
 
 let isFlushing = false
@@ -39,8 +38,8 @@ function findInsertionIndex (id) {
   return start
 }
 
-export function nextTick (fn, instance = currentInstance) {
-  const p = new Promise((resolve) => queuePostFlushCb(resolve)).then(() => instance?.currentRenderTask?.promise)
+export function nextTick (fn) {
+  const p = new Promise((resolve) => queuePostRenderEffect(resolve))
   return fn ? p.then(fn) : p
 }
 
@@ -50,24 +49,6 @@ export function queuePreFlushCb (cb) {
 
 export function queuePostFlushCb (cb) {
   queueCb(cb, activePostFlushCbs, pendingPostFlushCbs, postFlushIndex)
-}
-
-export function queuePostRenderEffect (cb, instance) {
-  if (instance) {
-    if (instance.flushingRenderTask) {
-      instance.flushingRenderTask.queueCb(cb)
-    } else {
-      queuePostFlushCb(() => {
-        if (instance.currentRenderTask?.state === 'pending') {
-          instance.currentRenderTask.queueCb(cb)
-        } else {
-          queuePostFlushCb(cb)
-        }
-      })
-    }
-  } else {
-    queuePostFlushCb(cb)
-  }
 }
 
 function queueCb (cb, activeQueue, pendingQueue, index) {
@@ -209,45 +190,70 @@ function checkRecursiveUpdates (seen, fn) {
   }
 }
 
-export class RenderTask {
-  state = 'pending'
-  index = 0
-  queue = []
+const pendingPostRenderEffects = []
+let postRenderEffectsFlushIndex = 0
+let activePostRenderEffects = null
+let isPostRenderEffectsPending = false
+const currentRenderTasksPromise = new Set()
 
-  constructor (instance) {
-    this.instance = instance
-    instance.currentRenderTask = this
-    this.promise = new Promise((resolve) => {
-      this.resolve = (res) => {
-        this.flush()
-        resolve(res)
-      }
-    })
-  }
-
-  queueCb (cb) {
-    if (this.state === 'finished') return
+export function queuePostRenderEffect (cb) {
+  if (activePostRenderEffects) {
     if (
-      !this.queue.length ||
-      !this.queue.includes(cb, this.state === 'flushing' && cb.allowRecurse ? this.index + 1 : this.index)
+      !activePostRenderEffects.length ||
+      !activePostRenderEffects.includes(cb, cb.allowRecurse ? postRenderEffectsFlushIndex + 1 : postRenderEffectsFlushIndex)
     ) {
-      this.queue.push(cb)
+      activePostRenderEffects.push(cb)
+    }
+  } else {
+    pendingPostRenderEffects.push(cb)
+    if (!isPostRenderEffectsPending) {
+      isPostRenderEffectsPending = true
+      queuePostFlushCb(flushPostRenderEffects)
     }
   }
+}
 
-  flush (seen) {
-    if (this.state === 'finished') return
-    this.state = 'flushing'
-    this.instance.flushingRenderTask = this
+function flushPostRenderEffects () {
+  isPostRenderEffectsPending = false
+  if (currentRenderTasksPromise.size) {
+    // 对当前的postRenderEffects进行克隆快照
+    const pendingPostRenderEffectsClone = pendingPostRenderEffects.slice(0)
+    Promise.all(currentRenderTasksPromise).then(() => {
+      doFlushPostRenderEffects(pendingPostRenderEffectsClone)
+    })
+  } else {
+    doFlushPostRenderEffects(pendingPostRenderEffects)
+  }
+  pendingPostRenderEffects.length = 0
+}
 
+function doFlushPostRenderEffects (queue, seen) {
+  if (queue.length) {
+    activePostRenderEffects = [...new Set(queue)]
     if (isDev) seen = seen || new Map()
-
-    for (; this.index < this.queue.length; this.index++) {
-      const cb = this.queue[this.index]
+    for (postRenderEffectsFlushIndex = 0; postRenderEffectsFlushIndex < activePostRenderEffects.length; postRenderEffectsFlushIndex++) {
+      const cb = activePostRenderEffects[postRenderEffectsFlushIndex]
       if (isDev && checkRecursiveUpdates(seen, cb)) continue
       cb()
     }
-    this.instance.flushingRenderTask = null
-    this.state = 'finished'
+    activePostRenderEffects = null
+    postRenderEffectsFlushIndex = 0
+  }
+}
+
+export class RenderTask {
+  resolved = false
+
+  constructor (instance) {
+    instance.currentRenderTask = this
+    this.promise = new Promise((resolve) => {
+      this.resolve = resolve
+      // renderTask最多200ms超时返回
+      setTimeout(resolve, 200)
+    }).then(() => {
+      this.resolved = true
+      currentRenderTasksPromise.delete(this.promise)
+    })
+    currentRenderTasksPromise.add(this.promise)
   }
 }
