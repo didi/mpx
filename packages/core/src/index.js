@@ -51,6 +51,10 @@ export {
 } from './platform/export/index'
 
 export {
+  nextTick
+} from './observer/scheduler'
+
+export {
   onBeforeCreate,
   onCreated,
   onBeforeMount,

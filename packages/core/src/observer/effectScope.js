@@ -58,6 +58,34 @@ export class EffectScope {
       this.active = false
     }
   }
+
+  pause () {
+    if (this.active) {
+      let i, l
+      for (i = 0, l = this.effects.length; i < l; i++) {
+        this.effects[i].pause()
+      }
+      if (this.scopes) {
+        for (i = 0, l = this.scopes.length; i < l; i++) {
+          this.scopes[i].pause()
+        }
+      }
+    }
+  }
+
+  resume () {
+    if (this.active) {
+      let i, l
+      for (i = 0, l = this.effects.length; i < l; i++) {
+        this.effects[i].resume()
+      }
+      if (this.scopes) {
+        for (i = 0, l = this.scopes.length; i < l; i++) {
+          this.scopes[i].resume()
+        }
+      }
+    }
+  }
 }
 
 export function effectScope (detached) {

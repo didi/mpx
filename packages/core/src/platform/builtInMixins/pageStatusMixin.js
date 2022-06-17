@@ -18,13 +18,21 @@ export default function pageStatusMixin (mixinType) {
     }
     if (__mpx_mode__ === 'ali') {
       let count = 0
+      const resolvedPromise = Promise.resolve()
       Object.assign(pageMixin, {
         data: {
           mpxPageStatus: null
         },
         onShow () {
-          this.mpxPageStatus = 'show'
-          this.__mpxProxy.callHook(ONSHOW)
+          if (this.mpxPageStatus === null) {
+            resolvedPromise.then(() => {
+              this.mpxPageStatus = 'show'
+              this.__mpxProxy.callHook(ONSHOW)
+            })
+          } else {
+            this.mpxPageStatus = 'show'
+            this.__mpxProxy.callHook(ONSHOW)
+          }
         },
         onHide () {
           this.mpxPageStatus = 'hide'

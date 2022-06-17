@@ -2,7 +2,7 @@ import { changeOpts, getEnvObj } from '../../common/js'
 
 const QQ_OBJ = getEnvObj()
 
-const getWxToQqApi = ({ optimize = false }) => {
+const getWxToQqApi = () => {
   return {
     /**
      * 订阅消息
