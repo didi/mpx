@@ -1,5 +1,7 @@
 const babylon = require('@babel/parser')
-var MagicString = require('magic-string')
+const MagicString = require('magic-string')
+const traverse = require('@babel/traverse').default
+const t = require('@babel/types')
 
 // Special compiler macros
 const DEFINE_PROPS = 'defineProps'
@@ -52,14 +54,16 @@ const BindingTypes = {
 }
 
 function compileScriptSetup(
-    content,
+    scriptSetup,
     ctorType
 ) {
+  const content = scriptSetup.content
   const _s = new MagicString(content)
   const scriptBindings = Object.create(null)
   const setupBindings = Object.create(null)
   const userImportAlias = Object.create(null)
   const userImports = Object.create(null)
+  const genSourceMap = false
 
   let startOffset = 0
   let endOffset = 0
@@ -78,8 +82,13 @@ function compileScriptSetup(
   let optionsIdentifier
   let returnsRuntimeDecl
 
-  let isTS = false
+  const scriptSetupLang = scriptSetup && scriptSetup.lang
+  const isTS =
+      scriptSetupLang === 'ts' ||
+      scriptSetupLang === 'tsx'
+  const plugins = []
 
+  if (isTS) plugins.push('typescript', 'decorators-legacy')
 
   // props/emits declared via types
   const bindingMetadata = {}
@@ -161,7 +170,6 @@ function compileScriptSetup(
     return true
   }
 
-
   function processDefineProps (node, declId) {
     if (!isCallOf(node, DEFINE_PROPS)) {
       return false
@@ -210,6 +218,11 @@ function compileScriptSetup(
     return true
   }
 
+  function checkInvalidScopeReference (node, method) {
+    if (!node) return
+
+  }
+
   function resolveQualifiedType(node, qualifier) {
     if (qualifier(node)) {
       return node
@@ -247,30 +260,51 @@ function compileScriptSetup(
 
   function checkInvalidScopeReference(node, method) {
     if (!node) return
-    // TODO add walkIdentifiers
-    // walkIdentifiers(node, id => {
-    //   if (setupBindings[id.name]) {
-    //     console.error(
-    //       `\`${method}()\` in <script setup> cannot reference locally ` +
-    //       `declared variables because it will be hoisted outside of the ` +
-    //       `setup() function. If your component options require initialization ` +
-    //       `in the module scope, use a separate normal <script> to export ` +
-    //       `the options instead.`,
-    //       id
-    //     )
-    //   }
-    // })
+    walkIdentifiers(node, id => {
+      if (setupBindings[id.name]) {
+        console.error(
+            `\`${method}()\` in <script setup> cannot reference locally ` +
+            `declared variables because it will be hoisted outside of the ` +
+            `setup() function.`,
+            id
+        )
+      }
+    })
   }
 
+  // 1. process normal <script> first if it exists
+
+  // 2. parse <script setup> and  walk over top level statements
   const scriptSetupAst = babylon.parse(content, {
     plugins: [
+      ...plugins,
       'topLevelAwait'
     ],
     sourceType: 'module'
   })
   for (const node of scriptSetupAst.program.body) {
+    const start = node.start + startOffset
+    let end = node.end + startOffset
+
+    // 定位comment，例如 var a= 1; // a为属性
+    if (node.trailingComments && node.trailingComments.length > 0) {
+      const lastCommentNode =
+          node.trailingComments[node.trailingComments.length - 1]
+      end = lastCommentNode.end + startOffset
+    }
+
+    // locate the end of whitespace between this statement and the next
+    while (end <= content.length) {
+      if (!/\s/.test(content.charAt(end))) {
+        break
+      }
+      end++
+    }
+
+
     if (node.type === 'ImportDeclaration') {
-      //TODO: import declarations are moved to top
+      //import declarations are moved to top
+      _s.move(start, end, 0)
       // dedupe imports
       let removed = 0
       const removeSpecifier = (i) => {
@@ -288,11 +322,14 @@ function compileScriptSetup(
       for (let i = 0; i < node.specifiers.length; i++) {
         const specifier = node.specifiers[i]
         const imported = specifier.type === 'ImportSpecifier' && specifier.imported.type === 'Identifier' && specifier.imported.name
+        if (specifier.type === 'ImportNamespaceSpecifier') {
+          imported = '*'
+        }
         const local = specifier.local.name
         const source = node.source.value
         const existing = userImports[local]
         if (source === MPX_CORE && isCompilerMacro(imported)) {
-          console.warn('`\\`${imported}\\` is a compiler macro and no longer needs to be imported.`')
+          console.warn(`${imported} is a compiler macro and no longer needs to be imported.`)
           // 不需要经过
           removeSpecifier(i)
         } else if(existing) {
@@ -314,12 +351,19 @@ function compileScriptSetup(
           )
         }
       }
+      if (node.specifiers.length && removed === node.specifiers.length) {
+        _s.remove(node.start, node.end)
+      }
       startOffset = node.loc.end.index
     }
 
     // process defineProps defineOptions 等编译宏
     if (node.type === 'ExpressionStatement') {
-      if (processDefineProps(node.expression) || processDefineOptions(node.expression) || processDefineReturns(node.expression)) {
+      if (
+          processDefineProps(node.expression) ||
+          processDefineOptions(node.expression) ||
+          processDefineReturns(node.expression))
+      {
         _s.remove(node.start, node.end)
       }
     }
@@ -356,6 +400,7 @@ function compileScriptSetup(
       }
     }
 
+    // walk declarations to record declared bindings
     if (
         (node.type === 'VariableDeclaration' ||
             node.type === 'FunctionDeclaration' ||
@@ -364,12 +409,65 @@ function compileScriptSetup(
     ) {
       walkDeclaration(node, setupBindings, userImportAlias)
     }
+
+    // walk statements & named exports / variable declarations for top level
+    // await，when find await will throw error
+    // { await someFunc ()}
+    if (
+        (node.type === 'VariableDeclaration' && !node.declare) ||
+        node.type.endsWith('Statement')
+    ) {
+      const scope = [scriptSetupAst.body]
+      traverse(node, {
+        enter(path){
+          if (isFunctionType(path.node)) {
+            path.skip()
+          }
+          if (t.isBlockStatement(path.node)) {
+            scope.push(path.node.body)
+          }
+          if (t.isAwaitExpression(path.node)) {
+            hasAwait = true
+            // error
+            console.error(`if the await expression is an expression statement and is in the root scope or is not the first statement in a nested block scope, this is not support in miniprogram`)
+          }
+        },
+        exit(path){
+          if (t.isBlockStatement(path.node)) scope.pop()
+        }
+      })
+    }
+
+    if (
+        (node.type === 'ExportNamedDeclaration' && node.exportKind !== 'type') ||
+        node.type === 'ExportAllDeclaration' ||
+        node.type === 'ExportDefaultDeclaration'
+    ) {
+      console.error(
+          `<script setup> cannot contain ES module exports. `,
+          node
+      )
+    }
+
+    // working with TS code
+    if (isTS) {
+      if (
+          node.type.startsWith('TS') ||
+          (node.type === 'ExportNamedDeclaration' &&
+              node.exportKind === 'type') ||
+          (node.type === 'VariableDeclaration' && node.declare)
+      ) {
+        recordType(node, declaredTypes)
+        _s.move(start, end, 0)
+      }
+    }
+
     endOffset = node.loc.end.index
   }
   // 响应性语法糖, 暂无
   // 3. Apply reactivity transform
 
-  // 4. extract runtime props/emits code from setup context type
+  // 4. extract runtime props code from setup context type
   if (propsTypeDecl) {
     // TS defineProps 提取Props
     extractRuntimeProps(propsTypeDecl, typeDeclaredProps, declaredTypes, isProd)
@@ -506,7 +604,6 @@ function isCallOf(
   )
 }
 
-// TODO add 注释
 function canNeverBeRef(
     node,
     userReactiveImport
@@ -587,6 +684,105 @@ function registerBinding(
   bindings[node.name] = type
 }
 
+function walkIdentifiers(
+    root,
+    onIdentifier,
+    parentStack = [],
+    knownIds = Object.create(null)
+) {
+  const rootExp =
+      root.type === 'Program' &&
+      root.body[0].type === 'ExpressionStatement' &&
+      root.body[0].expression
+  traverse(root, {
+    enter(path) {
+      const {node, parent} = path
+      if (
+          parent &&
+          parent.type.startsWith('TS') &&
+          parent.type !== 'TSAsExpression' &&
+          parent.type !== 'TSNonNullExpression' &&
+          parent.type !== 'TSTypeAssertion'
+      ) {
+        return path.skip()
+      }
+      if (node.type === 'Identifier') {
+        const isLocal = knownIds[node.name]
+        const isRefed = isReferencedIdentifier(node, parent, parentStack)
+        if (isRefed && !isLocal) {
+          onIdentifier(node, parent, parentStack, isRefed, isLocal)
+        }
+      } else if (
+          node.type === 'ObjectProperty' &&
+          parent.type === 'ObjectPattern'
+      ){
+        node.inPattern = true
+      } else if (isFunctionType(node)) {
+        walkFunctionParams(node, id => markScopeIdentifier(node, id, knownIds))
+      } else if (node.type === 'BlockStatement') {
+        walkBlockDeclarations(node, id =>
+            markScopeIdentifier(node, id, knownIds)
+        )
+      }
+    },
+    exit(path) {
+      const {node, parent} = path
+      parent && parentStack.pop()
+      if (node !== rootExp && node.scopeIds) {
+        for (const id of node.scopeIds) {
+          knownIds[id]--
+          if (knownIds[id] === 0) {
+            delete knownIds[id]
+          }
+        }
+      }
+    }
+  })
+}
+
+function isReferencedIdentifier() {
+  // TODO
+}
+
+function walkFunctionParams(
+    node,
+    onIdent
+) {
+  for (const p of node.params) {
+    for (const id of extractIdentifiers(p)) {
+      onIdent(id)
+    }
+  }
+}
+
+function walkBlockDeclarations(
+    block,
+    onIndent
+) {
+  for (const stmt of block.body) {
+    if (stmt.type === 'VariableDeclaration') {
+      if (stmt.declare) continue
+      for (const decl of stmt.declarations) {
+        for (const id of extractIdentifiers(decl.id)) {
+          onIdent(id)
+        }
+      }
+    } else if (
+        stmt.type === 'FunctionDeclaration' ||
+        stmt.type === 'ClassDeclaration'
+    ) {
+      if (stmt.declare || !stmt.id) continue
+      onIdent(stmt.id)
+    }
+  }
+}
+
+function markScopeIdentifier(
+) {
+
+  // TODO
+}
+
 function walkDeclaration(
     node,
     bindings,
@@ -646,7 +842,6 @@ function walkDeclaration(
   ) {
     bindings[node.id.name] = BindingTypes.SETUP_CONST
   }
-
 }
 
 function walkObjectPattern(
@@ -662,9 +857,12 @@ function walkObjectPattern(
         const type = isDefineCall ? BindingTypes.SETUP_CONST : isConst ? BindingTypes.SETUP_MAYBE_REF : BindingTypes.SETUP_LET
         registerBinding(bindings, p.key, type)
       } else {
-        // TODO
-        //walkPattern(p.value, bindings, isConst, isDefineCall)
+        walkPattern(p.value, bindings, isConst, isDefineCall)
       }
+    } else {
+      // ...rest
+      const type = isConst ? BindingTypes.SETUP_CONST : BindingTypes.SETUP_LET
+      registerBinding(bindings, p.argument, type)
     }
   }
 }
@@ -676,20 +874,209 @@ function walkArrayPattern(
     isDefineCall = false
 ) {
   for (const e of node.elements) {
-    // TODO
-    // e && walkPattern(e, bindings, isConst, isDefineCall)
+    e && walkPattern(e, bindings, isConst, isDefineCall)
   }
 }
 
-// 取出 runtime props
+function walkPattern (
+    node,
+    bindings,
+    isConst,
+    isDefineCall = false
+) {
+  if (node.type === 'Identifier') {
+    const type = isDefineCall
+        ? BindingTypes.SETUP_CONST
+        : isConst
+            ? BindingTypes.SETUP_MAYBE_REF
+            : BindingTypes.SETUP_LET
+    registerBinding(bindings, node, type)
+  } else if (node.type === 'RestElement') {
+    const type = isConst ? BindingTypes.SETUP_CONST : BindingTypes.SETUP_LET
+    registerBinding(bindings, node.argument, type)
+  } else if (node.type === 'ObjectPattern') {
+    walkObjectPattern(node, bindings, isConst)
+  } else if (node.type === 'ArrayPattern') {
+    walkArrayPattern(node, bindings, isConst)
+  } else if (node.type === 'AssignmentPattern') {
+    // const {propsA:c=2} = defineProps
+    if (node.left.type === 'Identifier') {
+      const type = isDefineCall
+          ? BindingTypes.SETUP_CONST
+          : isConst
+              ? BindingTypes.SETUP_MAYBE_REF
+              : BindingTypes.SETUP_LET
+      registerBinding(bindings, node.left, type)
+    } else {
+      walkPattern(node.left, bindings, isConst)
+    }
+  }
+}
+
+function recordType (node, declaredTypes) {
+  if (node.type === 'TSInterfaceDeclaration') {
+    declaredTypes[node.id.name] = [`Object`]
+  } else if (node.type === 'TSTypeAliasDeclaration') {
+    declaredTypes[node.id.name] = inferRuntimeType(
+        node.typeAnnotation,
+        declaredTypes
+    )
+  } else if (node.type === 'ExportNamedDeclaration' && node.declaration) {
+    recordType(node.declaration, declaredTypes)
+  }
+}
+
+function extractIdentifiers(
+    param,
+    nodes
+){
+  switch (param.type) {
+    case 'Identifier':
+      nodes.push(param)
+      break
+
+    case 'MemberExpression':
+      let object = param
+      while (object.type === 'MemberExpression') {
+        object = object.object
+      }
+      nodes.push(object)
+      break
+
+    case 'ObjectPattern':
+      for (const prop of param.properties) {
+        if (prop.type === 'RestElement') {
+          extractIdentifiers(prop.argument, nodes)
+        } else {
+          extractIdentifiers(prop.value, nodes)
+        }
+      }
+      break
+
+    case 'ArrayPattern':
+      param.elements.forEach(element => {
+        if (element) extractIdentifiers(element, nodes)
+      })
+      break
+
+    case 'RestElement':
+      extractIdentifiers(param.argument, nodes)
+      break
+
+    case 'AssignmentPattern':
+      extractIdentifiers(param.left, nodes)
+      break
+  }
+
+  return nodes
+}
+
+// extract runtime props from ts types
 function extractRuntimeProps(
     node,
     props,
-    declaredTypes,
-    isProd
+    declaredTypes
 ) {
   const members = node.type === 'TSTypeLiteral' ? node.members : node.body
-  // TODO
+  for (const m of members) {
+    if (
+        (m.type === 'TSPropertySignature' || m.type === 'TSMethodSignature') &&
+        m.key.type === 'Identifier'
+    ) {
+      let type
+      if (m.type === 'TSMethodSignature') {
+        // TODO 记得检查type Function是否可用
+        type = ['Function']
+      } else if (m.typeAnnotation) {
+        type = inferRuntimeType(m.typeAnnotation.typeAnnotation, declaredTypes)
+      }
+      props[m.key.name] = {
+        key: m.key.name,
+        required: !m.optional,
+        type: type || [`null`]
+      }
+    }
+  }
+}
+
+function inferRuntimeType(
+    node,
+    declaredTypes
+) {
+  switch (node.type) {
+    case 'TSStringKeyword':
+      return ['String']
+    case 'TSNumberKeyword':
+      return ['Number']
+    case 'TSBooleanKeyword':
+      return ['Boolean']
+    case 'TSObjectKeyword':
+      return ['Object']
+    case 'TSFunctionType':
+      return ['Function']
+    case 'TSArrayType':
+    case 'TSTupleType':
+      return ['Array']
+    case 'TSLiteralType':
+      switch (node.literal.type) {
+        case 'StringLiteral':
+          return ['String']
+        case 'BooleanLiteral':
+          return ['Boolean']
+        case 'NumericLiteral':
+        case 'BigIntLiteral':
+          return ['Number']
+        default:
+          return [`null`]
+      }
+
+    case 'TSTypeReference':
+      if (node.typeName.type === 'Identifier') {
+        if (declaredTypes[node.typeName.name]) {
+          return declaredTypes[node.typeName.name]
+        }
+        switch (node.typeName.name) {
+          case 'Array':
+          case 'Function':
+          case 'Object':
+          case 'Set':
+          case 'Map':
+          case 'WeakSet':
+          case 'WeakMap':
+          case 'Date':
+          case 'Promise':
+            return [node.typeName.name]
+          case 'Record':
+          case 'Partial':
+          case 'Readonly':
+          case 'Pick':
+          case 'Omit':
+          case 'Exclude':
+          case 'Extract':
+          case 'Required':
+          case 'InstanceType':
+            return ['Object']
+        }
+      }
+      return [`null`]
+
+    case 'TSParenthesizedType':
+      return inferRuntimeType(node.typeAnnotation, declaredTypes)
+
+    case 'TSUnionType':
+      return [
+        ...new Set(
+            [].concat(
+                ...(node.types.map(t => inferRuntimeType(t, declaredTypes)))
+            )
+        )
+      ]
+    case 'TSIntersectionType':
+      return ['Object']
+
+    default:
+      return [`null`]
+  }
 }
 
 function getCtor(ctorType) {
@@ -703,6 +1090,10 @@ function getCtor(ctorType) {
       break
   }
   return ctor
+}
+
+function isFunctionType (node) {
+  return /Function(?:Expression|Declaration)$|Method$/.test(node.type)
 }
 
 module.exports = {
