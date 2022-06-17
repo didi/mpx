@@ -88,7 +88,6 @@ export default class MpxProxy {
       this.initSetup()
       unsetCurrentInstance()
     }
-    
     // beforeCreate需要在setup执行过后执行
     this.callHook(BEFORECREATE)
 

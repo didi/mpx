@@ -1,3 +1,9 @@
+
+// 判断是不是canvas元素
+function isCanvas (el) {
+  return el.nodeName && el.nodeName.toLowerCase() === 'canvas'
+}
+
 class SelectQuery {
   constructor () {
     this._component = null

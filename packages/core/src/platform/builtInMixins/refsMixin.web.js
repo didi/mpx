@@ -1,7 +1,5 @@
 import { BEFOREMOUNT, UPDATED } from '../../core/innerLifecycle'
-import { error } from '../../helper/log'
 import { SelectQuery } from '../../helper/vueUtils'
-
 
 function getEl (ref) {
   if (ref && ref.nodeType === 1) return ref
@@ -40,9 +38,4 @@ export default function getRefsMixin () {
       processRefs(this.$refs || {})
     }
   }
-}
-
-// 判断是不是canvas元素
-function isCanvas (el) {
-  return el.nodeName && el.nodeName.toLowerCase() === 'canvas'
 }

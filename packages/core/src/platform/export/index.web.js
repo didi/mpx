@@ -1,10 +1,8 @@
 
 import Vue from '../../vue'
 import implement from '../../core/implement'
-import { set, del, reactive } from '../../observer/reactive'
-import { watch } from '../../observer/watch'
+import { set, del } from '../../observer/reactive'
 import { injectMixins } from '../../core/injectMixins'
-
 
 function initApi () {
   const vm = new Vue()

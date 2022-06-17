@@ -1,9 +1,9 @@
 import {
-  reactive,
+  reactive
 } from './observer/reactive'
 import { diffAndCloneA, makeMap, merge, hasOwn } from './helper/utils'
 import { error } from './helper/log'
-import {  Vue, APIs, InstanceAPIs } from './platform/export/index'
+import { Vue, APIs, InstanceAPIs } from './platform/export/index'
 export {
   createApp,
   createPage,
@@ -65,11 +65,10 @@ export {
   onLoad,
   onShow,
   onHide,
-  onResize,
+  onResize
 } from './core/proxy'
 
 export { getMixin } from './core/mergeOptions'
-
 
 export function toPureObject (obj) {
   return diffAndCloneA(obj).clone

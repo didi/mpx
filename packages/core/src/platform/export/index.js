@@ -27,7 +27,6 @@ export {
   InstanceAPIs
 }
 
-
 export {
   watchEffect,
   watchSyncEffect,
