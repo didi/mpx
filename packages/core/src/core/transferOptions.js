@@ -3,7 +3,7 @@ import mergeOptions from './mergeOptions'
 import { getConvertMode } from '../convertor/getConvertMode'
 import { findItem } from '../helper/utils'
 import { warn } from '../helper/log'
-import { getCurrentInstance } from './proxy'
+import { getCurrentInstance } from '@vue/composition-api'
 
 export default function transferOptions (options, type) {
   let currentInject
@@ -39,14 +39,16 @@ export default function transferOptions (options, type) {
   }
   const rawSetup = options.setup
   if (__mpx_mode__ === 'web' && rawSetup) {
-    options.setup = (props, context) => {
+    rawOptions.setup = (props, context) => {
       const _this = getCurrentInstance()
-      return rawSetup(props, {
-        triggerEvent: _this.triggerEvent,
-        createSelectorQuery: _this.createSelectorQuery,
-        selectComponent: _this.selectComponent,
-        selectAllComponents: _this.selectAllComponents
+      const instance = _this.proxy
+      const newContext = Object.assign(instance, {
+        triggerEvent: instance.triggerEvent,
+        createSelectorQuery: instance.createSelectorQuery,
+        selectComponent: instance.selectComponent,
+        selectAllComponents: instance.selectAllComponents
       })
+      return rawSetup(props, newContext)
     }
   }
   return {
