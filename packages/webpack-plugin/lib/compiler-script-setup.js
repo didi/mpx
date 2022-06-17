@@ -53,9 +53,9 @@ const BindingTypes = {
   OPTIONS: 'options'
 }
 
-function compileScriptSetup(
-    scriptSetup,
-    ctorType
+function compileScriptSetup (
+  scriptSetup,
+  ctorType
 ) {
   const content = scriptSetup.content
   const _s = new MagicString(content)
@@ -63,7 +63,6 @@ function compileScriptSetup(
   const setupBindings = Object.create(null)
   const userImportAlias = Object.create(null)
   const userImports = Object.create(null)
-  const genSourceMap = false
 
   let startOffset = 0
   let endOffset = 0
@@ -95,13 +94,13 @@ function compileScriptSetup(
   const typeDeclaredProps = {}
   const declaredTypes = {}
 
-  function registerUserImport(
-      source,
-      local,
-      imported = false,
-      isType,
-      isFromSetup = true,
-      needTemplateUsageCheck
+  function registerUserImport (
+    source,
+    local,
+    imported = false,
+    isType,
+    isFromSetup = true,
+    needTemplateUsageCheck
   ) {
     if (source === MPX_CORE && imported) {
       userImportAlias[imported] = local
@@ -189,24 +188,24 @@ function compileScriptSetup(
     if (node.typeParameters) {
       if (propsRuntimeDecl) {
         console.error(
-            `${DEFINE_PROPS}() cannot accept both type and non-type arguments ` +
+          `${DEFINE_PROPS}() cannot accept both type and non-type arguments ` +
             `at the same time. Use one or the other.`,
-            node
+          node
         )
       }
 
       propsTypeDeclRaw = node.typeParameters.params[0]
 
       propsTypeDecl = resolveQualifiedType(
-          propsTypeDeclRaw,
-          node => node.type === 'TSFunctionType' || node.type === 'TSTypeLiteral'
+        propsTypeDeclRaw,
+        node => node.type === 'TSFunctionType' || node.type === 'TSTypeLiteral'
       )
 
       if (!propsTypeDecl) {
         console.error(
-            `type argument passed to ${DEFINE_PROPS}() must be a literal type, ` +
+          `type argument passed to ${DEFINE_PROPS}() must be a literal type, ` +
             `or a reference to an interface or literal type.`,
-            propsTypeDeclRaw
+          propsTypeDeclRaw
         )
       }
     }
@@ -220,14 +219,13 @@ function compileScriptSetup(
 
   function checkInvalidScopeReference (node, method) {
     if (!node) return
-
   }
 
-  function resolveQualifiedType(node, qualifier) {
+  function resolveQualifiedType (node, qualifier) {
     if (qualifier(node)) {
       return node
     }
-    //TSTypeReference defineProps<Props>()
+    // TSTypeReference defineProps<Props>()
     if (node.type === 'TSTypeReference' && node.typeName.type === 'Identifier') {
       const refName = node.typeName.name
       const isQualifiedType = (node) => {
@@ -254,19 +252,19 @@ function compileScriptSetup(
     }
   }
 
-  function genRuntimeProps() {
+  function genRuntimeProps () {
 
   }
 
-  function checkInvalidScopeReference(node, method) {
+  function checkInvalidScopeReference (node, method) {
     if (!node) return
     walkIdentifiers(node, id => {
       if (setupBindings[id.name]) {
         console.error(
-            `\`${method}()\` in <script setup> cannot reference locally ` +
+          `\`${method}()\` in <script setup> cannot reference locally ` +
             `declared variables because it will be hoisted outside of the ` +
             `setup() function.`,
-            id
+          id
         )
       }
     })
@@ -301,9 +299,8 @@ function compileScriptSetup(
       end++
     }
 
-
     if (node.type === 'ImportDeclaration') {
-      //import declarations are moved to top
+      // import declarations are moved to top
       _s.move(start, end, 0)
       // dedupe imports
       let removed = 0
@@ -313,8 +310,8 @@ function compileScriptSetup(
         const current = node.specifiers[i]
         const next = node.specifiers[i + 1]
         _s.remove(
-            removeLeft ? node.specifiers[i - 1].end + startOffset : current.start + startOffset,
-            next && !removeLeft ? next.start + startOffset : current.end + startOffset
+          removeLeft ? node.specifiers[i - 1].end + startOffset : current.start + startOffset,
+          next && !removeLeft ? next.start + startOffset : current.end + startOffset
         )
       }
       // 判断defineProps等是否有被引入
@@ -332,7 +329,7 @@ function compileScriptSetup(
           console.warn(`${imported} is a compiler macro and no longer needs to be imported.`)
           // 不需要经过
           removeSpecifier(i)
-        } else if(existing) {
+        } else if (existing) {
           if (existing.source === source && existing.imported === imported) {
             // already imported in <script setup>, dedupe
             removeSpecifier(i)
@@ -341,13 +338,13 @@ function compileScriptSetup(
           }
         } else {
           registerUserImport(
-              node.source.value,
-              specifier.local.name,
-              imported,
-              node.importKind === 'type' ||
+            node.source.value,
+            specifier.local.name,
+            imported,
+            node.importKind === 'type' ||
               (specifier.type === 'ImportSpecifier' &&
                   specifier.importKind === 'type'),
-              true
+            true
           )
         }
       }
@@ -360,10 +357,9 @@ function compileScriptSetup(
     // process defineProps defineOptions 等编译宏
     if (node.type === 'ExpressionStatement') {
       if (
-          processDefineProps(node.expression) ||
+        processDefineProps(node.expression) ||
           processDefineOptions(node.expression) ||
-          processDefineReturns(node.expression))
-      {
+          processDefineReturns(node.expression)) {
         _s.remove(node.start, node.end)
       }
     }
@@ -371,7 +367,7 @@ function compileScriptSetup(
     if (node.type === 'VariableDeclaration' && !node.declare) {
       const total = node.declarations.length
       let left = total
-      for (let i =0; i < total; i++) {
+      for (let i = 0; i < total; i++) {
         const decl = node.declarations[i]
         if (decl.init) {
           const isDefineProps = processDefineProps(decl.init, decl.id)
@@ -402,7 +398,7 @@ function compileScriptSetup(
 
     // walk declarations to record declared bindings
     if (
-        (node.type === 'VariableDeclaration' ||
+      (node.type === 'VariableDeclaration' ||
             node.type === 'FunctionDeclaration' ||
             node.type === 'ClassDeclaration') &&
         !node.declare
@@ -414,12 +410,12 @@ function compileScriptSetup(
     // await，when find await will throw error
     // { await someFunc ()}
     if (
-        (node.type === 'VariableDeclaration' && !node.declare) ||
+      (node.type === 'VariableDeclaration' && !node.declare) ||
         node.type.endsWith('Statement')
     ) {
       const scope = [scriptSetupAst.body]
       traverse(node, {
-        enter(path){
+        enter (path) {
           if (isFunctionType(path.node)) {
             path.skip()
           }
@@ -432,27 +428,27 @@ function compileScriptSetup(
             console.error(`if the await expression is an expression statement and is in the root scope or is not the first statement in a nested block scope, this is not support in miniprogram`)
           }
         },
-        exit(path){
+        exit (path) {
           if (t.isBlockStatement(path.node)) scope.pop()
         }
       })
     }
 
     if (
-        (node.type === 'ExportNamedDeclaration' && node.exportKind !== 'type') ||
+      (node.type === 'ExportNamedDeclaration' && node.exportKind !== 'type') ||
         node.type === 'ExportAllDeclaration' ||
         node.type === 'ExportDefaultDeclaration'
     ) {
       console.error(
-          `<script setup> cannot contain ES module exports. `,
-          node
+        `<script setup> cannot contain ES module exports. `,
+        node
       )
     }
 
     // working with TS code
     if (isTS) {
       if (
-          node.type.startsWith('TS') ||
+        node.type.startsWith('TS') ||
           (node.type === 'ExportNamedDeclaration' &&
               node.exportKind === 'type') ||
           (node.type === 'VariableDeclaration' && node.declare)
@@ -470,7 +466,7 @@ function compileScriptSetup(
   // 4. extract runtime props code from setup context type
   if (propsTypeDecl) {
     // TS defineProps 提取Props
-    extractRuntimeProps(propsTypeDecl, typeDeclaredProps, declaredTypes, isProd)
+    extractRuntimeProps(propsTypeDecl, typeDeclaredProps, declaredTypes)
   }
 
   // 5. check useOptions args to make sure it doesn't reference setup scope
@@ -502,7 +498,6 @@ function compileScriptSetup(
 
   // 8. inject `useCssVars` calls
 
-
   // 9. finalize setup() argument signature
   let args = `__props`
   if (propsTypeDecl) {
@@ -512,8 +507,8 @@ function compileScriptSetup(
   if (propsIdentifier) {
     // TODO add ts 类型声明
     _s.prependLeft(
-        startOffset,
-        `\nconst ${propsIdentifier} = __props\n`
+      startOffset,
+      `\nconst ${propsIdentifier} = __props\n`
     )
   }
 
@@ -539,7 +534,7 @@ function compileScriptSetup(
     const allBindings = {
       ...scriptBindings,
       ...setupBindings
-    };
+    }
     for (const key in userImports) {
       // import 进的的变量或方法，非mpxjs/core中的，暂时都进行return
       if (!userImports[key].isType && !userImportAlias[key]) {
@@ -578,8 +573,8 @@ function compileScriptSetup(
     // import {createComponent} from '@mpxjs/core' 添加是否已有import判断
     const ctor = getCtor(ctorType)
     _s.prependLeft(
-        startOffset,
-        `\nimport {${ctor}} from '${MPX_CORE}'\n${getCtor(ctorType)} ({${runtimeOptions}\n  ` +
+      startOffset,
+      `\nimport {${ctor}} from '${MPX_CORE}'\n${getCtor(ctorType)} ({${runtimeOptions}\n  ` +
         `setup(${args}) {\n`
     )
     _s.appendRight(endOffset, `})`)
@@ -590,23 +585,23 @@ function compileScriptSetup(
   }
 }
 
-function isCallOf(
-    node,
-    test
+function isCallOf (
+  node,
+  test
 ) {
   return !!(
-      node &&
+    node &&
       node.type === 'CallExpression' &&
       node.callee.type === 'Identifier' &&
       (typeof test === 'string'
-          ? node.callee.name === test
-          : test(node.callee.name))
+        ? node.callee.name === test
+        : test(node.callee.name))
   )
 }
 
-function canNeverBeRef(
-    node,
-    userReactiveImport
+function canNeverBeRef (
+  node,
+  userReactiveImport
 ) {
   if (isCallOf(node, userReactiveImport)) {
     return true
@@ -624,8 +619,8 @@ function canNeverBeRef(
       return true
     case 'SequenceExpression':
       return canNeverBeRef(
-          node.expressions[node.expressions.length - 1],
-          userReactiveImport
+        node.expressions[node.expressions.length - 1],
+        userReactiveImport
       )
     default:
       if (node.type.endsWith('Literal')) {
@@ -635,7 +630,7 @@ function canNeverBeRef(
   }
 }
 
-function getObjectOrArrayExpressionKeys(value) {
+function getObjectOrArrayExpressionKeys (value) {
   if (value.type === 'ArrayExpression') {
     return getArrayExpressionKeys(value)
   }
@@ -645,7 +640,7 @@ function getObjectOrArrayExpressionKeys(value) {
   return []
 }
 
-function getArrayExpressionKeys(node) {
+function getArrayExpressionKeys (node) {
   const keys = []
   for (const element of node.elements) {
     if (element && element.type === 'StringLiteral') {
@@ -655,11 +650,11 @@ function getArrayExpressionKeys(node) {
   return keys
 }
 
-function getObjectExpressionKeys(node) {
+function getObjectExpressionKeys (node) {
   const keys = []
   for (const prop of node.properties) {
     if (
-        (prop.type === 'ObjectProperty' || prop.type === 'ObjectMethod') &&
+      (prop.type === 'ObjectProperty' || prop.type === 'ObjectMethod') &&
         !prop.computed
     ) {
       if (prop.key.type === 'Identifier') {
@@ -672,33 +667,33 @@ function getObjectExpressionKeys(node) {
   return keys
 }
 
-function isCompilerMacro(c) {
+function isCompilerMacro (c) {
   return c === DEFINE_PROPS || c === DEFINE_OPTIONS || c === DEFINE_RETURNS
 }
 
-function registerBinding(
-    bindings,
-    node,
-    type
+function registerBinding (
+  bindings,
+  node,
+  type
 ) {
   bindings[node.name] = type
 }
 
-function walkIdentifiers(
-    root,
-    onIdentifier,
-    parentStack = [],
-    knownIds = Object.create(null)
+function walkIdentifiers (
+  root,
+  onIdentifier,
+  parentStack = [],
+  knownIds = Object.create(null)
 ) {
   const rootExp =
       root.type === 'Program' &&
       root.body[0].type === 'ExpressionStatement' &&
       root.body[0].expression
   traverse(root, {
-    enter(path) {
-      const {node, parent} = path
+    enter (path) {
+      const { node, parent } = path
       if (
-          parent &&
+        parent &&
           parent.type.startsWith('TS') &&
           parent.type !== 'TSAsExpression' &&
           parent.type !== 'TSNonNullExpression' &&
@@ -713,20 +708,20 @@ function walkIdentifiers(
           onIdentifier(node, parent, parentStack, isRefed, isLocal)
         }
       } else if (
-          node.type === 'ObjectProperty' &&
+        node.type === 'ObjectProperty' &&
           parent.type === 'ObjectPattern'
-      ){
+      ) {
         node.inPattern = true
       } else if (isFunctionType(node)) {
         walkFunctionParams(node, id => markScopeIdentifier(node, id, knownIds))
       } else if (node.type === 'BlockStatement') {
         walkBlockDeclarations(node, id =>
-            markScopeIdentifier(node, id, knownIds)
+          markScopeIdentifier(node, id, knownIds)
         )
       }
     },
-    exit(path) {
-      const {node, parent} = path
+    exit (path) {
+      const { node, parent } = path
       parent && parentStack.pop()
       if (node !== rootExp && node.scopeIds) {
         for (const id of node.scopeIds) {
@@ -740,13 +735,13 @@ function walkIdentifiers(
   })
 }
 
-function isReferencedIdentifier() {
+function isReferencedIdentifier () {
   // TODO
 }
 
-function walkFunctionParams(
-    node,
-    onIdent
+function walkFunctionParams (
+  node,
+  onIdent
 ) {
   for (const p of node.params) {
     for (const id of extractIdentifiers(p)) {
@@ -755,9 +750,9 @@ function walkFunctionParams(
   }
 }
 
-function walkBlockDeclarations(
-    block,
-    onIndent
+function walkBlockDeclarations (
+  block,
+  onIndent
 ) {
   for (const stmt of block.body) {
     if (stmt.type === 'VariableDeclaration') {
@@ -768,7 +763,7 @@ function walkBlockDeclarations(
         }
       }
     } else if (
-        stmt.type === 'FunctionDeclaration' ||
+      stmt.type === 'FunctionDeclaration' ||
         stmt.type === 'ClassDeclaration'
     ) {
       if (stmt.declare || !stmt.id) continue
@@ -777,25 +772,25 @@ function walkBlockDeclarations(
   }
 }
 
-function markScopeIdentifier(
+function markScopeIdentifier (
 ) {
 
   // TODO
 }
 
-function walkDeclaration(
-    node,
-    bindings,
-    userImportAlias
+function walkDeclaration (
+  node,
+  bindings,
+  userImportAlias
 ) {
   if (node.type === 'VariableDeclaration') {
     const isConst = node.kind === 'const'
     for (const { id, init } of node.declarations) {
       const isDefineCall = !!(
-          isConst &&
+        isConst &&
           isCallOf(
-              init,
-              isCompilerMacro
+            init,
+            isCompilerMacro
           )
       )
       if (id.type === 'Identifier') {
@@ -804,15 +799,15 @@ function walkDeclaration(
         // 是否是 reactive init
         if (isCallOf(init, userReactiveBinding)) {
           bindingType = isConst
-              ? BindingTypes.SETUP_REACTIVE_CONST
-              : BindingTypes.SETUP_LET
-        } else if(
-            isDefineCall ||
+            ? BindingTypes.SETUP_REACTIVE_CONST
+            : BindingTypes.SETUP_LET
+        } else if (
+          isDefineCall ||
             (isConst && canNeverBeRef(init, userReactiveBinding))
         ) {
           bindingType = isCallOf(init, DEFINE_PROPS)
-              ? BindingTypes.SETUP_REACTIVE_CONST
-              : BindingTypes.SETUP_CONST
+            ? BindingTypes.SETUP_REACTIVE_CONST
+            : BindingTypes.SETUP_CONST
         } else if (isConst) {
           if (isCallOf(init, userImportAlias['ref'] || 'ref')) {
             bindingType = BindingTypes.SETUP_REF
@@ -836,7 +831,7 @@ function walkDeclaration(
       }
     }
   } else if (
-      node.type === 'TSEnumDeclaration' ||
+    node.type === 'TSEnumDeclaration' ||
       node.type === 'FunctionDeclaration' ||
       node.type === 'ClassDeclaration'
   ) {
@@ -844,11 +839,11 @@ function walkDeclaration(
   }
 }
 
-function walkObjectPattern(
-    node,
-    bindings,
-    isConst,
-    isDefineCall = false
+function walkObjectPattern (
+  node,
+  bindings,
+  isConst,
+  isDefineCall = false
 ) {
   for (const p of node.properties) {
     if (p.type === 'ObjectProperty') {
@@ -867,11 +862,11 @@ function walkObjectPattern(
   }
 }
 
-function walkArrayPattern(
-    node,
-    bindings,
-    isConst,
-    isDefineCall = false
+function walkArrayPattern (
+  node,
+  bindings,
+  isConst,
+  isDefineCall = false
 ) {
   for (const e of node.elements) {
     e && walkPattern(e, bindings, isConst, isDefineCall)
@@ -879,17 +874,17 @@ function walkArrayPattern(
 }
 
 function walkPattern (
-    node,
-    bindings,
-    isConst,
-    isDefineCall = false
+  node,
+  bindings,
+  isConst,
+  isDefineCall = false
 ) {
   if (node.type === 'Identifier') {
     const type = isDefineCall
-        ? BindingTypes.SETUP_CONST
-        : isConst
-            ? BindingTypes.SETUP_MAYBE_REF
-            : BindingTypes.SETUP_LET
+      ? BindingTypes.SETUP_CONST
+      : isConst
+        ? BindingTypes.SETUP_MAYBE_REF
+        : BindingTypes.SETUP_LET
     registerBinding(bindings, node, type)
   } else if (node.type === 'RestElement') {
     const type = isConst ? BindingTypes.SETUP_CONST : BindingTypes.SETUP_LET
@@ -902,10 +897,10 @@ function walkPattern (
     // const {propsA:c=2} = defineProps
     if (node.left.type === 'Identifier') {
       const type = isDefineCall
-          ? BindingTypes.SETUP_CONST
-          : isConst
-              ? BindingTypes.SETUP_MAYBE_REF
-              : BindingTypes.SETUP_LET
+        ? BindingTypes.SETUP_CONST
+        : isConst
+          ? BindingTypes.SETUP_MAYBE_REF
+          : BindingTypes.SETUP_LET
       registerBinding(bindings, node.left, type)
     } else {
       walkPattern(node.left, bindings, isConst)
@@ -918,18 +913,18 @@ function recordType (node, declaredTypes) {
     declaredTypes[node.id.name] = [`Object`]
   } else if (node.type === 'TSTypeAliasDeclaration') {
     declaredTypes[node.id.name] = inferRuntimeType(
-        node.typeAnnotation,
-        declaredTypes
+      node.typeAnnotation,
+      declaredTypes
     )
   } else if (node.type === 'ExportNamedDeclaration' && node.declaration) {
     recordType(node.declaration, declaredTypes)
   }
 }
 
-function extractIdentifiers(
-    param,
-    nodes
-){
+function extractIdentifiers (
+  param,
+  nodes
+) {
   switch (param.type) {
     case 'Identifier':
       nodes.push(param)
@@ -972,15 +967,15 @@ function extractIdentifiers(
 }
 
 // extract runtime props from ts types
-function extractRuntimeProps(
-    node,
-    props,
-    declaredTypes
+function extractRuntimeProps (
+  node,
+  props,
+  declaredTypes
 ) {
   const members = node.type === 'TSTypeLiteral' ? node.members : node.body
   for (const m of members) {
     if (
-        (m.type === 'TSPropertySignature' || m.type === 'TSMethodSignature') &&
+      (m.type === 'TSPropertySignature' || m.type === 'TSMethodSignature') &&
         m.key.type === 'Identifier'
     ) {
       let type
@@ -999,9 +994,9 @@ function extractRuntimeProps(
   }
 }
 
-function inferRuntimeType(
-    node,
-    declaredTypes
+function inferRuntimeType (
+  node,
+  declaredTypes
 ) {
   switch (node.type) {
     case 'TSStringKeyword':
@@ -1066,9 +1061,9 @@ function inferRuntimeType(
     case 'TSUnionType':
       return [
         ...new Set(
-            [].concat(
-                ...(node.types.map(t => inferRuntimeType(t, declaredTypes)))
-            )
+          [].concat(
+            ...(node.types.map(t => inferRuntimeType(t, declaredTypes)))
+          )
         )
       ]
     case 'TSIntersectionType':
@@ -1079,7 +1074,7 @@ function inferRuntimeType(
   }
 }
 
-function getCtor(ctorType) {
+function getCtor (ctorType) {
   let ctor = 'createComponent'
   switch (ctorType) {
     case 'app':
