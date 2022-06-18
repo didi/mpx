@@ -1,7 +1,7 @@
 import { SelectQuery, walkChildren } from '../helper/vueUtils'
 import { error } from '../helper/log'
 
-const vuePlugin = {
+const vuePlugin = {    
   install (Vue) {
     Vue.prototype.triggerEvent = function (eventName, eventDetail) {
       return this.$emit(eventName, {
