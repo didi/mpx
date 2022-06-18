@@ -1,6 +1,6 @@
 const parseComponent = require('./parser')
 const parseRequest = require('./utils/parse-request')
-const {compileScriptSetup} = require('./compiler-script-setup')
+const { compileScriptSetup } = require('./compiler-script-setup')
 
 module.exports = function (content) {
   this.cacheable()
