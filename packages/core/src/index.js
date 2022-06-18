@@ -77,7 +77,8 @@ export {
   onShow,
   onHide,
   onResize,
-  getCurrentInstance
+  getCurrentInstance,
+  useContext
 } from './core/proxy'
 
 export { getMixin } from './core/mergeOptions'

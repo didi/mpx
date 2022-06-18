@@ -28,8 +28,7 @@ module.exports = function (content) {
   }
   if (part && part.attrs && part.attrs.setup) {
     // script setup
-    const scriptSetupContent = part.content
-    const content = compileScriptSetup(scriptSetupContent)
+    part.content = compileScriptSetup(part, ctorType, filePath).content
   }
   if (!part) {
     let content = ''
