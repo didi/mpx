@@ -91,7 +91,7 @@ export default class MpxProxy {
     }
     // 将injectHook挂载的生命周期钩子挂载到proxy的hooks对象上
     if (__mpx_mode__ === 'web') {
-      this.hooks = this.vueInstance && this.vueInstance.hooks || {}
+      this.hooks = (this.vueInstance && this.vueInstance.hooks) || {}
     }
     // beforeCreate需要在setup执行过后执行
     this.callHook(BEFORECREATE)
