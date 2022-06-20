@@ -85,6 +85,14 @@ export { getMixin } from './core/mergeOptions'
 
 export { injectMixins } from './core/injectMixins'
 
+export { defineStore } from './store/index'
+export { storeToRefs } from './store/storeToRefs'
+export {
+  mapState,
+  mapGetters,
+  mapActions
+} from './store/mapHelper'
+
 export function toPureObject (obj) {
   return diffAndCloneA(obj).clone
 }

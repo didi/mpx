@@ -2,7 +2,7 @@ import { EffectScope } from '../observer/effectScope'
 import { ref } from '../observer/ref'
 
 /**
- * @description: create mpxStore instance, only called once in entire lifecycle of miniApp
+ * @description: create mpxStore instance, only called once through entire lifecycle of miniApp
  * @return {*} store instance
  */
 export default function createStore() {
