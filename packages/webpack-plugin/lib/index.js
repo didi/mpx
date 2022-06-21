@@ -870,7 +870,8 @@ class MpxWebpackPlugin {
       })
 
       JavascriptModulesPlugin.getCompilationHooks(compilation).renderStartup.tap('MpxWebpackPlugin', (source, module) => {
-        if (module && mpx.exportModules.has(module)) {
+        const realModule = (module && module.rootModule) || module
+        if (realModule && mpx.exportModules.has(realModule)) {
           source = new ConcatSource(source)
           source.add('module.exports = __webpack_exports__;\n')
         }
