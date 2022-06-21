@@ -16,6 +16,8 @@ module.exports = function createHelpers (loaderContext) {
   const rawRequest = loaderUtils.getRemainingRequest(loaderContext)
   const { resourcePath, queryObj } = parseRequest(loaderContext.resource)
 
+  const { mode, env } = loaderContext.getMpx() || {}
+
   function getRequire (type, part, extraOptions, index) {
     return 'require(' + getRequestString(type, part, extraOptions, index) + ')'
   }
@@ -66,7 +68,7 @@ module.exports = function createHelpers (loaderContext) {
       return loaderUtils.stringifyRequest(loaderContext, addQuery(src, options, true))
     } else {
       const fakeRequest = getFakeRequest(type, part)
-      const request = `${selectorPath}!${addQuery(rawRequest, options, true)}`
+      const request = `${selectorPath}?mode=${mode}&env=${env}!${addQuery(rawRequest, options, true)}`
       return loaderUtils.stringifyRequest(loaderContext, `${fakeRequest}!=!${request}`)
     }
   }
