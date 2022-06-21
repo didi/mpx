@@ -7,13 +7,15 @@ import { isRef } from '../observer/ref'
  * @return {*} store[key]
  */
 export function mapState(store, keys) {
-  console.error('mapState-global.mpxStore', global.mpxStore)
   // @todo get instance failed here
   const instance = getCurrentInstance()
   return Array.isArray(keys)
     ? keys.reduce((reduced, key) => {
         reduced[key] = function () {
           // @todo tobe checked
+          if (typeof store(global.mpxStore)[key] === 'function') {
+            return store(global.mpxStore)[key]()
+          }
           return isRef(store(global.mpxStore)[key].value) ? (store(global.mpxStore)[key].value).value : store(global.mpxStore)[key].value
         }
         return reduced
@@ -22,9 +24,9 @@ export function mapState(store, keys) {
         reduced[key] = function () {
           const _store = store(global.mpxStore)
           const storeKey = keys[key]
-          return typeof storeKey === 'function'
-            ? storeKey.call(_store, _store).value
-            : _store[storeKey].value
+          return typeof _store[storeKey] === 'function'
+            ? _store[storeKey].call(_store, _store)
+            : isRef(_store[storeKey].value) ? _store[storeKey].value.value : _store[storeKey].value
         }
         return reduced
       }, {})
