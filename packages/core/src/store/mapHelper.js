@@ -7,6 +7,7 @@ import { isRef } from '../observer/ref'
  * @return {*} store[key]
  */
 export function mapState(store, keys) {
+  console.error('mapState-global.mpxStore', global.mpxStore)
   // @todo get instance failed here
   const instance = getCurrentInstance()
   return Array.isArray(keys)

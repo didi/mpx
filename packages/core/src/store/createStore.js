@@ -8,7 +8,9 @@ import { ref } from '../observer/ref'
 export default function createStore() {
   // create scope for current instance
   const scope = new EffectScope(true)
-  const state = scope.run(() => { ref({}) })
+  // @todo need scope.run() ?
+  // const state = scope.run(() => { ref({}) })
+  const state = ref({})
 
   // let _p = []
   // let toBeInstalled = []
@@ -34,6 +36,5 @@ export default function createStore() {
     _s: new Map(),
     state
   }
-
   return mpxStore
 }
