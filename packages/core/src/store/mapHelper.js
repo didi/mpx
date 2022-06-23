@@ -1,58 +1,120 @@
-import { getCurrentInstance } from '../core/proxy'
-import { isRef } from '../observer/ref'
 /**
- * @description: for mapping state/getters from store
- * @param {*} store target store
- * @param {*} keys keys
+ * @description: allow use state/getters of a store in computed field
+ * @param {*} useStore store to map from
+ * @param {*} keysOrMapper array or object
  * @return {*} store[key]
  */
-export function mapState(store, keys) {
-  // @todo get instance failed here
-  const instance = getCurrentInstance()
-  return Array.isArray(keys)
-    ? keys.reduce((reduced, key) => {
+function mapState(useStore, keysOrMapper) {
+  return Array.isArray(keysOrMapper)
+    ? keysOrMapper.reduce((reduced, key) => {
         reduced[key] = function () {
-          // @todo tobe checked
-          if (typeof store(global.mpxStore)[key] === 'function') {
-            return store(global.mpxStore)[key]()
-          }
-          return isRef(store(global.mpxStore)[key].value) ? (store(global.mpxStore)[key].value).value : store(global.mpxStore)[key].value
+          const store = useStore(this.$pinia)
+          return typeof store[key] === 'function'
+              ? store[key].call(this.$pinia, store)
+              : store[key]
         }
         return reduced
-      }, {})
-    : Object.keys(keys).reduce((reduced, key) => {
+    }, {})
+    : Object.keys(keysOrMapper).reduce((reduced, key) => {
         reduced[key] = function () {
-          const _store = store(global.mpxStore)
-          const storeKey = keys[key]
-          return typeof _store[storeKey] === 'function'
-            ? _store[storeKey].call(_store, _store)
-            : isRef(_store[storeKey].value) ? _store[storeKey].value.value : _store[storeKey].value
+            const store = useStore(this.$pinia)
+            const storeKey = keysOrMapper[key]
+            return typeof store[storeKey] === 'function'
+                ? store[storeKey].call(store, store)
+                : store[storeKey]
         }
         return reduced
-      }, {})
+    }, {})
 }
 
-export const mapGetters = mapState
+const mapGetters = mapState
 
 /**
- * @description: for mapping actions from store
- * @param {*} store target store
- * @param {*} keys keys
+ * @description: allow to use actions of a store in computed field
+ * @param {*} useStore store to map from
+ * @param {*} keysOrMapper array or object
  * @return {*} store[key]
  */
-export function mapActions(store, keys) {
-  // const instance = getCurrentInstance()
-  return Array.isArray(keys)
-    ? keys.reduce((reduced, key) => {
+function mapActions(useStore, keysOrMapper) {
+  return Array.isArray(keysOrMapper)
+    ? keysOrMapper.reduce((reduced, key) => {
         reduced[key] = function (...args) {
-          return store(global.mpxStore)[key](...args)
+            return useStore(this.$pinia)[key](...args)
         }
         return reduced
-      }, {})
-    : Object.keys(keys).reduce((reduced, key) => {
+    }, {})
+    : Object.keys(keysOrMapper).reduce((reduced, key) => {
         reduced[key] = function (...args) {
-          return store(global.mpxStore)[keys[key]](...args)
+            return useStore(this.$pinia)[keysOrMapper[key]](...args)
         }
         return reduced
-      }, {})
+    }, {})
+}
+/**
+  *@description: allow to use writable state/getters of a store in computed field
+  * @param useStore - store to map from
+  * @param keysOrMapper - array or object
+  */
+function mapWritableState(useStore, keysOrMapper) {
+  return Array.isArray(keysOrMapper)
+    ? keysOrMapper.reduce((reduced, key) => {
+      reduced[key] = {
+        get() {
+          return useStore(this.$pinia)[key]
+        },
+        set(value) {
+          return (useStore(this.$pinia)[key] = value)
+        }
+      }
+      return reduced
+    }, {})
+    : Object.keys(keysOrMapper).reduce((reduced, key) => {
+      reduced[key] = {
+        get() {
+          return useStore(this.$pinia)[keysOrMapper[key]]
+        },
+        set(value) {
+          return (useStore(this.$pinia)[keysOrMapper[key]] = value)
+        }
+      }
+      return reduced
+    }, {})
+ }
+
+ let mapStoreSuffix = 'Store'
+ /**
+  * @description: Defaults to `"Store"`, change the suffix added by mapStores()
+  * @param suffix - new suffix
+  */
+ function setMapStoreSuffix(suffix) {
+     mapStoreSuffix = suffix
+ }
+/**
+ * @description: allow to stores in computed field, to avoid writing too much props by calling mapstate/getter
+ * @param stores - list of stores to map to an object
+ */
+function mapStores(...stores) {
+  if ((process.env.NODE_ENV !== 'production') && Array.isArray(stores[0])) {
+    console.warn(`[🍍]: Directly pass all stores to "mapStores()" without putting them in an array:\n` +
+        `Replace\n` +
+        `\tmapStores([useAuthStore, useCartStore])\n` +
+        `with\n` +
+        `\tmapStores(useAuthStore, useCartStore)\n` +
+        `This will fail in production if not fixed.`)
+    stores = stores[0]
+  }
+  return stores.reduce((reduced, useStore) => {
+    reduced[useStore.$id + mapStoreSuffix] = function () {
+      return useStore(this.$pinia)
+    }
+    return reduced
+}, {})
+ }
+export {
+  mapStores,
+  setMapStoreSuffix,
+  mapState,
+  mapGetters,
+  mapActions,
+  mapWritableState
 }

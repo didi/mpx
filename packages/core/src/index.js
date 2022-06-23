@@ -85,13 +85,19 @@ export { getMixin } from './core/mergeOptions'
 
 export { injectMixins } from './core/injectMixins'
 
-export { defineStore } from './store/index'
-export { storeToRefs } from './store/storeToRefs'
-export {
+export { 
+  createPinia,
+  defineStore,
+  getActivePinia,
+  setActivePinia,
+  mapStores,
+  setMapStoreSuffix,
   mapState,
   mapGetters,
-  mapActions
-} from './store/mapHelper'
+  mapActions,
+  mapWritableState,
+  storeToRefs
+} from './store/index'
 
 export function toPureObject (obj) {
   return diffAndCloneA(obj).clone

@@ -1,10 +1,9 @@
-import createStore from './createStore'
+import { createPinia } from './createPinia'
 import { computed } from '../observer/computed'
+import { getCurrentInstance } from '../core/proxy'
 import {
-  ref,
   toRefs,
   isRef,
-  toRef
 } from '../observer/ref'
 import { 
   set,
@@ -12,116 +11,335 @@ import {
   isReactive 
 } from '../observer/reactive'
 import { effectScope } from '../observer/effectScope'
-import { isEmptyObject } from '../helper/utils'
-import { isComputed } from './util'
+import { watch } from '../observer/watch'
+import { noop } from '../helper/utils'
+import { 
+  isComputed,
+  mergeReactiveObjects,
+  activePinia,
+  getActivePinia,
+  setActivePinia } from './util'
+import { nextTick } from '../observer/scheduler'
+import { MutationType } from './const'
+import { addSubscription, triggerSubscriptions } from './subscription'
+import {
+  mapStores,
+  setMapStoreSuffix,
+  mapState,
+  mapGetters,
+  mapActions,
+  mapWritableState
+} from './mapHelper'
+import { storeToRefs } from './storeToRefs'
 
 const { assign } = Object
+let pinia = createPinia()
 
-/**
+const skipHydrateMap = /*#__PURE__*/ new WeakMap()
+function skipHydrate(obj) {
+    return skipHydrateMap.set(obj, 1) && obj
+}
+function shouldHydrate(obj) {
+  return !skipHydrateMap.has(obj)
+}
+
+ /**
  * @description: create options store
  * @param id: store id
  * @param options: storeOptions
- * @param mpxStore: global mpxStore instance
+ * @param pinia: global pinia
  * @return {*} options store
  */
-function createOptionsStore (id, options, mpxStore) {
+function createOptionsStore(id, options, pinia) {
   const { state, actions, getters } = options
-  // @todo sometimes ref state transfered is not reactive, its wired
-  const initialState = mpxStore.state?.value[id]
+  const initialState = pinia.state.value[id]
   let store
 
-  const setup = () => {
+  function setupFn() {
     if (!initialState) {
-      // to create ref state for current store instance to build state tree
-      const _buildState = state ? state() : {}
-      mpxStore.state[id] = _buildState
+      // init state
+      set(pinia.state.value, id, state ? state() : {})
     }
-    // to get local state
-    const localState = state ? toRefs(state()) : toRefs({})
-    // wrap getters with computed
-    const computedGetters = Object.keys(getters || {}).reduce((cGetters, name) => {
-      cGetters[name] = computed(() => {
-          const store = mpxStore._s.get(id)
-          return getters[name].call(store, store)
-        })
-      return cGetters
-    }, {})
-    return assign(
-      localState,
-      actions,
-      computedGetters
-    )
+    // to make state reactive
+    const localState = toRefs(pinia.state.value[id])
+    return assign(localState, actions, Object.keys(getters || {}).reduce((computedGetters, name) => {
+      // to wrap getters with computed to be reactive
+      computedGetters[name] = computed(() => {
+        setActivePinia(pinia)
+        const store = pinia._s.get(id)
+        return getters[name].call(store, store)
+      })
+      return computedGetters
+      }, {}))
   }
-  store = createSetupStore(id ,setup, options, mpxStore)
-  console.error('createOptionsStore-return', store, mpxStore)
+  store = createSetupStore(id, setupFn, options, pinia, true)
+  store.$reset = function $reset() {
+    const newState = state ? state() : {}
+    this.$patch(($state) => {
+      assign($state, newState)
+    })
+  }
   return store
 }
 
-/**
+ /**
  * @description: create setup store
  * @param id: store id
  * @param setup: function
  * @param options: storeOptions
- * @param mpxStore: global mpxStore instance
+ * @param pinia: global pinia
+ * @param isOptionsStore to create options store
  * @return {*} setup store
  */
-function createSetupStore($id, _setup, options = {}, mpxStore) {
+ function createSetupStore($id, setup, options = {}, pinia, isOptionsStore = false) {
   let scope
-  const buildState = options?.state || {}
-  const optionsForPlugin = assign({actions: {}}, options)
-  const initialState = mpxStore.state[$id]
-  const tempObj = new Object()
-  tempObj[$id] = {}
-  if (!initialState) mpxStore.state = assign({}, tempObj)
-  // component store
-  const partialStore = {
-    _mpxStore: mpxStore,
-    $id
+  const optionsForPlugin = assign({ actions: {} }, options)
+  if ((process.env.NODE_ENV !== 'production') && !pinia._e.active) {
+    throw new Error('Pinia destroyed')
   }
-  // set store reactive and store it in global mpxStore
-  const store = reactive(assign({}, partialStore))
-  mpxStore._s.set($id, store)
+  const $subscribeOptions = {
+    deep: true,
+    // flush: 'post',
+  }
+  if ((process.env.NODE_ENV !== 'production')) {
+    $subscribeOptions.onTrigger = (event) => {
+      if (isListening) {
+        debuggerEvents = event
+      } else if (isListening == false) {
+        if (Array.isArray(debuggerEvents)) {
+          debuggerEvents.push(event)
+        } else {
+          console.error('🍍 debuggerEvents should be an array. This is most likely an internal Pinia bug.')
+        }
+      }
+    }
+  }
 
-  const setupStore = mpxStore._e.run(() => {
-    // to set child scope
+  // internal state
+  let isListening
+  let isSyncListening
+  let subscriptions = []
+  let actionSubscriptions = []
+  let debuggerEvents
+  const initialState = pinia.state.value[$id]
+  if (!isOptionsStore && !initialState) {
+    set(pinia.state.value, $id, {})
+  }
+
+  let activeListener
+  function $patch(stateOrMutator) {
+    if (isOptionsStore) {
+      if (this && this.$id === $id) {
+        this && Object.assign({}, this)
+      }
+    }
+    let subscriptionMutation
+    isListening = isSyncListening = false
+    // reset the debugger events since patches are sync
+    if ((process.env.NODE_ENV !== 'production')) {
+      debuggerEvents = []
+    }
+    if (typeof stateOrMutator === 'function') {
+      stateOrMutator(pinia.state.value[$id])
+      subscriptionMutation = {
+        type: MutationType.patchFunction,
+        storeId: $id,
+        events: debuggerEvents
+      }
+    } else {
+      mergeReactiveObjects(pinia.state.value[$id], stateOrMutator)
+      subscriptionMutation = {
+        type: MutationType.patchObject,
+        payload: stateOrMutator,
+        storeId: $id,
+        events: debuggerEvents
+      }
+    }
+    const myListenerId = (activeListener = Symbol())
+    isSyncListening = true
+    nextTick().then(() => {
+      if (activeListener === myListenerId) {
+        isListening = true
+      }
+    })
+    triggerSubscriptions(subscriptions, subscriptionMutation, pinia.state.value[$id])
+  }
+
+  const $reset = (process.env.NODE_ENV !== 'production')
+  ? () => {
+      throw new Error(`🍍: Store "${$id}" is build using the setup syntax and does not implement $reset().`)
+    } : noop
+
+  function $dispose() {
+    scope.stop()
+    // clean data
+    subscriptions = []
+    actionSubscriptions = []
+    pinia._s.delete($id)
+  }
+  /**
+  * Wraps an action to handle subscriptions.
+  * @param name - name of the action
+  * @param action - action to wrap
+  * @returns a wrapped action to handle subscriptions
+  */
+  function wrapAction(name, action) {
+    return function () {
+      setActivePinia(pinia)
+      const args = Array.from(arguments)
+      const afterCallbackList = []
+      const onErrorCallbackList = []
+      function after(callback) {
+        afterCallbackList.push(callback)
+      }
+      function onError(callback) {
+        onErrorCallbackList.push(callback)
+      }
+      triggerSubscriptions(actionSubscriptions, {
+        args,
+        name,
+        store,
+        after,
+        onError
+      })
+      let ret
+      try {
+        ret = action.apply(this && this.$id === $id ? this : store, args)
+        // handle sync errors
+      } catch (error) {
+        triggerSubscriptions(onErrorCallbackList, error)
+        throw error
+      }
+      if (ret instanceof Promise) {
+        return ret.then((value) => {
+          triggerSubscriptions(afterCallbackList, value)
+          return value
+        }).catch((error) => {
+          triggerSubscriptions(onErrorCallbackList, error)
+          return Promise.reject(error)
+        })
+      }
+      // allow the afterCallback to override the return value
+      triggerSubscriptions(afterCallbackList, ret)
+      return ret
+    }
+  }
+  const partialStore = {
+  //  _p: pinia  // open after markRaw provided
+    _s: scope,
+    $id,
+    $onAction: addSubscription.bind(null, actionSubscriptions),
+    $patch,
+    $reset,
+    $subscribe(callback, options = {}) {
+      const removeSubscription = addSubscription(subscriptions, callback, options.detached, () => stopWatcher())
+      const stopWatcher = scope.run(() => 
+        watch(() => pinia.state.value[$id], (state) => {
+          if (options.flush === 'sync' ? isSyncListening : isListening) {
+            callback({
+              storeId: $id,
+              type: MutationType.direct,
+              events: debuggerEvents
+            }, state)
+          }
+        }, assign({}, $subscribeOptions, options))
+      )
+      return removeSubscription
+    },
+    $dispose
+  }
+  const store = reactive(assign({}, partialStore))
+  // remove after markRaw provided
+  store._p = pinia
+  // store the partial store now so the setup of stores can instantiate each other before they are finished without
+  // creating infinite loops.
+  pinia._s.set($id, store)
+  const setupStore = pinia._e.run(() => {
     scope = effectScope()
-    return scope.run(() => _setup())
+    return scope.run(() => setup())
   })
   for (const key in setupStore) {
     const prop = setupStore[key]
-    // @todo isComputed
-    if (isRef(prop)) {
-      mpxStore.state[$id][key] = prop
+    if ((isRef(prop) && !isComputed(prop)) || isReactive(prop)) {
+      if (!isOptionsStore) {
+        // in setup stores we must hydrate the state and sync pinia state tree with the refs the user just created
+        if (initialState && shouldHydrate(prop)) {
+          if (isRef(prop)) {
+            prop.value = initialState[key]
+          } else {
+            // composition style ordinarily create ref or reactive prop
+            mergeReactiveObjects(prop, initialState[key])
+          }
+        }
+        // sync pinia
+        set(pinia.state.value[$id], key, prop)
+      }
     } else if (typeof prop === 'function') {
-      // @todo wrapAction
-      const actionValue = prop
-      setupStore[key] = actionValue
+      const actionValue = wrapAction(key, prop)
+      set(setupStore, key, actionValue)
       optionsForPlugin.actions[key] = prop
     }
   }
-  assign(store, setupStore)
-  console.error('createSetupStore-return', store, mpxStore)
-  return store
-}
-
-/**
- * @description: create options|setup store
- * @param idOrOptions: store id should be unique, required
- * @param setup: optional
- * @param setupOptions: optional
- * @return {*} mpxStore instance
- */
-export function defineStore(idOrOptions, setup, setupOptions) {
-  let id = ''
-  let options = Object.create({})
-  const isSetupStore = typeof setup === 'function'
-
-   // create global mpxStore
-   if (!global.mpxStore) {
-    global.mpxStore = createStore()
+  // add props to store
+  Object.keys(setupStore).forEach((key) => {
+    set(store, key, setupStore[key])
+  })
+  // define $state
+  Object.defineProperty(store, '$state', {
+    get: () => pinia.state.value[$id],
+    set: (state) => {
+      $patch(($state) => {
+        assign($state, state)
+      })
+    }
+  })
+  // apply all plugins
+  pinia._p.forEach((extender) => {
+    if ((process.env.NODE_ENV !== 'production')) {
+      const extensions = scope.run(() => extender({
+        store,
+        app: pinia._a || getCurrentInstance(),
+        pinia,
+        options: optionsForPlugin
+      }))
+      assign(store, extensions)
+    }
+    else {
+      assign(store, scope.run(() => extender({
+        store,
+        app: pinia._a || getCurrentInstance(),
+        pinia,
+        options: optionsForPlugin
+      })))
+    }
+  })
+  if ((process.env.NODE_ENV !== 'production') &&
+    store.$state &&
+    typeof store.$state === 'object' &&
+    typeof store.$state.constructor === 'function' &&
+    !store.$state.constructor.toString().includes('[native code]')) {
+    console.warn(`[🍍]: The "state" must be a plain object. It cannot be\n` +
+        `\tstate: () => new MyClass()\n` +
+        `Found in store "${store.$id}".`)
   }
+  // only apply hydrate to option stores with an initial state in pinia
+  if (initialState &&
+      isOptionsStore &&
+      options.hydrate) {
+      options.hydrate(store.$state, initialState)
+  }
+  isListening = true
+  isSyncListening = true
+  nextTick().then(() => {
+    isListening = true
+  })
 
-  // get config info of id/options 
+  return store
+ }
+ function defineStore (idOrOptions, setup, setupOptions) {
+  let id
+  let options
+  const isSetupStore = typeof setup === 'function'
   if (typeof idOrOptions === 'string') {
     id = idOrOptions
     options = isSetupStore ? setupOptions : setup
@@ -129,22 +347,45 @@ export function defineStore(idOrOptions, setup, setupOptions) {
     options = idOrOptions
     id = idOrOptions.id
   }
-  /**
-   * @description: to create store
-   * @return generic store
-   */  
-  function useStore () {
-    if (!global.mpxStore._s.has(id)) {
+  function useStore() {
+    if (pinia) setActivePinia(pinia)
+    if ((process.env.NODE_ENV !== 'production') && !activePinia) {
+      throw new Error(`[🍍]: getActivePinia was called with no active Pinia. Did you forget to install pinia?\n` +
+          `\tconst pinia = createPinia()\n` +
+          `\tapp.use(pinia)\n` +
+          `This will fail in production.`)
+    }
+    pinia = activePinia
+    if (!pinia._s.has(id)) {
       if (isSetupStore) {
-        createSetupStore(id, setup, options, global.mpxStore)
-      } else {
-        createOptionsStore(id, options, global.mpxStore)
+          createSetupStore(id, setup, options, pinia)
+      }
+      else {
+          createOptionsStore(id, options, pinia)
+      }
+      if ((process.env.NODE_ENV !== 'production')) {
+          useStore._pinia = pinia
       }
     }
-    const store = global.mpxStore._s.get(id)
+    const store = pinia._s.get(id)
     return store
   }
+
   useStore.$id = id
-  console.error('defineStore-global.mpxStore', global.mpxStore)
   return useStore
+ }
+ 
+export { 
+  createPinia,
+  defineStore,
+  getActivePinia,
+  setActivePinia,
+  mapStores,
+  setMapStoreSuffix,
+  mapState,
+  mapGetters,
+  mapActions,
+  mapWritableState,
+  storeToRefs
 }
+ 
