@@ -24,7 +24,7 @@ console.log(obj.count) // 2
 ```
 
 ::: warning 重要
-当将 [ref](./refs-api.html#ref) 分配给 `reactive` property 时，ref 将被自动解包。
+当将 `ref` 分配给 `reactive` property 时，ref 将被自动解包。
 
 ```ts
 const count = ref(1)
@@ -36,13 +36,55 @@ console.log(obj.count) // 1
 console.log(obj.count === count.value) // true
 ```
 
+当访问到某个响应式数组或 Map 这样的原生集合类型中的 ref 元素时，不会执行 ref 的解包
+
+```js
+const refArr = ref([ref(2)])
+const state = reactive({
+    count: 1,
+    refArr
+})
+
+// 无需.vlaue
+console.log(state.refArr)
+// 这里需要.value
+console.log(state.refArr[0].value)
+```
+当需要给响应式对象新增属性时，需要使用set，并且新增属性的响应式对象需要为 ref 或者做为其他响应性对象的key
+
+```js
+const state = reactive({
+    count: 1
+})
+const stateRef = ref({
+    count: 1
+})
+const stateRefWrap = reactive({
+    data: {
+        count: 1
+    }
+})
+
+onLoad(() => {
+    setTimeout(() => {
+        set(state, 'foo', 1) // 不生效
+        set(stateRef.value, 'foo', 1) // 生效
+        set(stateRefWrap.data, 'foo', 1) // 生效
+    }, 2000)
+})
+
+return {
+    state,
+    stateRef,
+    stateRefWrap
+}
+```
+
 ## isReactive
 检查对象是否是由 reactive 创建的响应式代理。
 
-
-
 ## shallowReactive
-reactive() 的浅层作用形式。
+reactive() 的浅层作用形式，只跟踪自身 property 的响应性，但不执行嵌套对象的深层响应式转换(返回原始值)
 
 **注意：**
 
