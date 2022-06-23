@@ -795,6 +795,7 @@ function parse (template, options) {
           }
           children.push(el)
           processText(el)
+          processPlainTextShow(el, root, options, meta)
         }
       }
     },
@@ -1896,12 +1897,18 @@ function processShow (el, options, root) {
   let processFlag = el.parent === root
   // 当ali且未开启virtualHost时，mpxShow打到根节点上
   if (mode === 'ali' && !options.hasVirtualHost) processFlag = el === root
-  if (options.isComponent && processFlag && isRealNode(el)) {
+  // 组件内 实例根节点和block都合并一下show
+  if (options.isComponent && processFlag && (isRealNode(el) || el.tag === 'block')) {
     if (show !== undefined) {
       show = `{{${parseMustache(show).result}&&mpxShow}}`
     } else {
       show = '{{mpxShow}}'
     }
+  }
+  // 当父级是block时，合并父级的show
+  if (el.parent.show && el.parent.tag === 'block') {
+    if (show !== undefined) show = `{{${parseMustache(show).result}&&${el.parent.show.result}}}`
+    else show = el.parent.show.raw
   }
   if (show !== undefined) {
     if (isComponentNode(el, options)) {
@@ -1912,6 +1919,12 @@ function processShow (el, options, root) {
         name: 'mpxShow',
         value: show
       }])
+    } else if (el.tag === 'block') {
+      const parsed = parseMustache(show)
+      el.show = {
+        raw: parsed.val,
+        result: parsed.result
+      }
     } else {
       const showExp = parseMustache(show).result
       let oldStyle = getAndRemoveAttr(el, 'style').val
@@ -2122,6 +2135,19 @@ function closeElement (el, meta) {
   }
   postProcessFor(el)
   postProcessIf(el)
+}
+// 处理 block/组件根节点 下纯文本节点 的show
+function processPlainTextShow (el, root, options, meta) {
+  if (el.type !== 3) return
+  const parent = el.parent
+  // 非文本节点 或 父级实例节点 不处理
+  const isTempNode = (parent === root && options.isComponent)
+  const isBlockNode = !isRealNode(parent) && parent.show
+  if (!isTempNode && !isBlockNode) return
+  const textNode = createASTElement('text', [])
+  addChild(textNode, cloneNode(el))
+  replaceNode(el, textNode, true)
+  processElement(textNode, root, options, meta)
 }
 
 function postProcessAtMode (el) {
