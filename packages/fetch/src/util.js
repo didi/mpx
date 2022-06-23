@@ -372,7 +372,7 @@ export function compareParams (params, cacheParams, ignoreParamKeys = []) {
     } else if (toString.call(params[key]) !== toString.call(cacheParams[key])) {
       // value 类型不一致
       return false
-    } else if (isObject(params[key]) || isArray(params[key])){
+    } else if (isObject(params[key]) || isArray(params[key])) {
       // value 对象&数组
       return JSON.stringify(params[key]) === JSON.stringify(cacheParams[key])
     } else {

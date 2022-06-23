@@ -4,7 +4,7 @@ import InterceptorManager from './interceptorManager'
 import RequestQueue from './queue'
 import { requestProxy } from './proxy'
 import { validate } from './validator'
-import { isNotEmptyArray, isNotEmptyObject, transformReq, isObject, formatCacheKey, checkCacheConfig, sortObject } from './util'
+import { isNotEmptyArray, isNotEmptyObject, transformReq, isObject, formatCacheKey, checkCacheConfig } from './util'
 
 export default class XFetch {
   constructor (options, MPX) {
@@ -170,7 +170,7 @@ export default class XFetch {
     if (responsePromise) {
       return responsePromise
     }
-  
+
     config.timeout = config.timeout || global.__networkTimeout
     // middleware chain
     const chain = []
