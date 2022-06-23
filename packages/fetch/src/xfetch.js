@@ -140,6 +140,8 @@ export default class XFetch {
   }
 
   checkPreCache (config) {
+    // 未设置预请求 则直接 return
+    if (!config.usePre) return false
     const cacheKey = formatCacheKey(config.url)
     const cacheRequestData = this.cacheRequestData[cacheKey]
     if (cacheRequestData) {
