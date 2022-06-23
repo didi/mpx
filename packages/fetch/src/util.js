@@ -328,22 +328,55 @@ export function doTest (config, test) {
   }
 }
 
-export function sortObject (obj) {
-  if (!isObject(obj)) return obj
-  const newObj = {}
-  Object.keys(obj).sort().forEach(key => {
-    newObj[key] = obj[key]
-  })
-  return newObj
-}
-
 export function formatCacheKey (url) {
   if (typeof url !== 'string' || !url.includes('//')) return url
   return url.split('//')[1].split('?')[0]
 }
 
 export function checkCacheConfig (thisConfig, catchData) {
-  return JSON.stringify(sortObject(thisConfig.data)) === JSON.stringify(catchData.data) &&
-    JSON.stringify(sortObject(thisConfig.params)) === JSON.stringify(catchData.params) &&
+  return compareParams(thisConfig.params, catchData.params, thisConfig.ignorePreParamKeys) &&
+    compareParams(thisConfig.data, catchData.data, thisConfig.ignorePreParamKeys) &&
     thisConfig.method === catchData.method
+}
+
+export function compareParams (params, cacheParams, ignoreParamKeys = []) {
+  // 类型不一致
+  if (toString.call(params) !== toString.call(cacheParams)) {
+    return false
+  }
+  // params 不为对象，则直接判断是否相等
+  if (!isObject(params)) {
+    return params === cacheParams
+  }
+  // ignoreParamKeys 类型应为字符串&字符串数组 否则 ignoreParamKeys = [] 不考虑 ignoreParamKeys
+  if (!(isString(ignoreParamKeys) || isArray(ignoreParamKeys))) {
+    console.error(`compareParams: ignoreParamKeys 不合法, ignoreParamKeys 只支持字符串和数组类型，请检查！！！`)
+    ignoreParamKeys = []
+  } else if (isString(ignoreParamKeys)) {
+    // ignoreParamKeys 字符串数组化
+    ignoreParamKeys = ignoreParamKeys.trim().split(',')
+  }
+  const paramsKeys = Object.keys(params)
+  const cacheParamsKeys = Object.keys(cacheParams)
+  // key长度不等
+  if (paramsKeys.length !== cacheParamsKeys.length) {
+    return false
+  }
+  return paramsKeys.every(key => {
+    if (!cacheParamsKeys.includes(key)) {
+      // 缓存参数中不存在当前key
+      return false
+    } else if (ignoreParamKeys.includes(key)) {
+      // 忽略对比参数值 则直接返回true
+      return true
+    } else if (toString.call(params[key]) !== toString.call(cacheParams[key])) {
+      // value 类型不一致
+      return false
+    } else if (isObject(params[key]) || isArray(params[key])){
+      // value 对象&数组
+      return JSON.stringify(params[key]) === JSON.stringify(cacheParams[key])
+    } else {
+      return params[key] === cacheParams[key]
+    }
+  })
 }

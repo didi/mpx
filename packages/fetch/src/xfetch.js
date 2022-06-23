@@ -144,29 +144,33 @@ export default class XFetch {
     const cacheRequestData = this.cacheRequestData[cacheKey]
     if (cacheRequestData) {
       delete this.cacheRequestData[cacheKey]
-      const cacheInvalidationTime = config.cacheInvalidationTime || 5000
-      // 缓存是否过期 >5s 则算过期
+      const cacheInvalidationTime = config.cacheInvalidationTime || 3000
+      // 缓存是否过期 >3s 则算过期
       if (Date.now() - cacheRequestData.lastTime <= cacheInvalidationTime &&
-        checkCacheConfig(config, cacheRequestData)) {
+        checkCacheConfig(config, cacheRequestData) &&
+        cacheRequestData.responsePromise) {
         return cacheRequestData.responsePromise
       }
-    } else if (config.isPre) {
-      this.cacheRequestData[cacheKey] = {
-        cacheKey,
-        data: sortObject(config.data),
-        params: sortObject(config.params),
-        method: config.method || '',
-        responsePromise: null,
-        lastTime: Date.now()
-      }
     }
+    const { params, data, method } = config
+    this.cacheRequestData[cacheKey] = {
+      cacheKey,
+      params,
+      data,
+      method,
+      lastTime: Date.now(),
+      responsePromise: null
+    }
+    return false
   }
 
   fetch (config, priority) {
     // 检查缓存
     const responsePromise = this.checkPreCache(config)
-    if (responsePromise) return responsePromise
-
+    if (responsePromise) {
+      return responsePromise
+    }
+  
     config.timeout = config.timeout || global.__networkTimeout
     // middleware chain
     const chain = []
@@ -205,7 +209,7 @@ export default class XFetch {
       promise = promise.then(chain.shift(), chain.shift())
     }
 
-    if (config.isPre) {
+    if (config.usePre) {
       const cacheKey = formatCacheKey(config.url)
       this.cacheRequestData[cacheKey] && (this.cacheRequestData[cacheKey].responsePromise = promise)
     }
