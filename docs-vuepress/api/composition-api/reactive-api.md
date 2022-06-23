@@ -6,8 +6,6 @@
 const obj = reactive({ count: 0 })
 obj.count++
 ```
-返回的 proxy 是不等于原始对象的。建议只使用响应式 proxy，避免依赖原始对象。
-
 响应式转换是“深层”的：它会影响到所有嵌套的 property。一个响应式对象也将深层地解包任何 ref property，同时保持响应性。
 
 ```js

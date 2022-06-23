@@ -37,10 +37,11 @@
 	</tr>
     <tr>
         <td>moved</td>
-	    <td rowspan="2">onUnmounted</td>
+	    <td>无对应</td>
 	</tr>
     <tr>
         <td>detached</td>
+	    <td rowspan="2">onUnmounted</td>
 	</tr>
 </table>
 
