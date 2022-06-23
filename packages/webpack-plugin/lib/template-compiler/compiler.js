@@ -1893,20 +1893,21 @@ function getVirtualHostRoot (options, meta) {
 
 function processShow (el, options, root) {
   let show = getAndRemoveAttr(el, config[mode].directive.show).val
+  const isBlock = (el.tag === 'block')
+  if (isBlock) show = undefined // block 不支持 show，在这里清除自身的show，祛除代码可以使block支持show
   if (mode === 'swan') show = wrapMustache(show)
   let processFlag = el.parent === root
   // 当ali且未开启virtualHost时，mpxShow打到根节点上
   if (mode === 'ali' && !options.hasVirtualHost) processFlag = el === root
-  // 组件内 实例根节点和block都合并一下show
-  if (options.isComponent && processFlag && (isRealNode(el) || el.tag === 'block')) {
+  if (options.isComponent && processFlag && (isRealNode(el) || isBlock)) {
     if (show !== undefined) {
       show = `{{${parseMustache(show).result}&&mpxShow}}`
     } else {
       show = '{{mpxShow}}'
     }
   }
-  // 当父级是block时，合并父级的show
-  if (el.parent.show && el.parent.tag === 'block') {
+  // 当父级是block(有show）时，合并父级的show(父亲自身不带show)
+  if (el.parent && el.parent.show) {
     if (show !== undefined) show = `{{${parseMustache(show).result}&&${el.parent.show.result}}}`
     else show = el.parent.show.raw
   }
@@ -1919,7 +1920,7 @@ function processShow (el, options, root) {
         name: 'mpxShow',
         value: show
       }])
-    } else if (el.tag === 'block') {
+    } else if (isBlock) {
       const parsed = parseMustache(show)
       el.show = {
         raw: parsed.val,
@@ -2144,7 +2145,10 @@ function processPlainTextShow (el, root, options, meta) {
   const isTempNode = (parent === root && options.isComponent)
   const isBlockNode = !isRealNode(parent) && parent.show
   if (!isTempNode && !isBlockNode) return
-  const textNode = createASTElement('text', [])
+  const textNode = createASTElement('view', [{
+    name: 'style',
+    value: 'display:inline'
+  }])
   addChild(textNode, cloneNode(el))
   replaceNode(el, textNode, true)
   processElement(textNode, root, options, meta)
