@@ -1204,7 +1204,7 @@ class MpxWebpackPlugin {
             if (index === 0) {
               // 引用runtime
               // 支付宝分包独立打包，通过全局context获取webpackJSONP
-              if (mpx.mode === 'ali' && !mpx.isPluginMode) {
+              if (mpx.mode === 'ali' && !mpx.isPluginMode && !compilation.options.entry[chunk.name]) {
                 if (chunk.name === appName) {
                   // 在rootChunk中挂载jsonpCallback
                   source.add('// process ali subpackages runtime in root chunk\n' +
