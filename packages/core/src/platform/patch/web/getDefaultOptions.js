@@ -42,6 +42,9 @@ export function getDefaultOptions (type, { rawOptions = {} }) {
     mounted () {
       if (this.__mpxProxy) this.__mpxProxy.mounted()
     },
+    beforeUpdate () {
+      if (this.__mpxProxy) this.__mpxProxy.beforeUpdate()
+    },
     updated () {
       if (this.__mpxProxy) this.__mpxProxy.updated()
     },
