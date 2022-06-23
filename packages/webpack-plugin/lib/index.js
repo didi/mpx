@@ -1182,7 +1182,6 @@ class MpxWebpackPlugin {
         }
 
         const processedChunk = new Set()
-        const appName = mpx.appInfo.name
 
         function processChunk (chunk, isRuntime, relativeChunks) {
           const chunkFile = chunk.files.values().next().value
@@ -1206,7 +1205,7 @@ class MpxWebpackPlugin {
               // 引用runtime
               // 支付宝分包独立打包，通过全局context获取webpackJSONP
               if (mpx.mode === 'ali' && !mpx.isPluginMode) {
-                if (chunk.name === appName) {
+                if (compilation.options.entry[chunk.name]) {
                   // 在rootChunk中挂载jsonpCallback
                   source.add('// process ali subpackages runtime in root chunk\n' +
                     'var context = (function() { return this })() || Function("return this")();\n\n')
