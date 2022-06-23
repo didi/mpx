@@ -21,7 +21,6 @@ console.log(count.value) // 2
 console.log(obj.count) // 2
 ```
 
-::: warning 重要
 当将 `ref` 分配给 `reactive` property 时，ref 将被自动解包。
 
 ```ts

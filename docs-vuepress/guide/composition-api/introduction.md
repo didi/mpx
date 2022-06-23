@@ -201,6 +201,7 @@ setup 选项接收 props 和 context 两个参数，
 
 ### 响应性API
 setup 声明响应式状态时需要用到响应性API，例如 ref、reactive 等
+[传送门](/api/composition-api/refs-api.html)
 
 ### 在 setup 内注册生命周期钩子
 在 setup 中，为了使组合式 API 的功能和选项式 API 一样完整，我们还需要一种在 setup 中注册生命周期钩子的方法，
@@ -219,5 +220,5 @@ createComponent({
 })
 ```
 ### watch 和 computed
-[传送门](api/composition-api/computed-watch-api.html)
+[传送门](/api/composition-api/computed-watch-api.html)
 
