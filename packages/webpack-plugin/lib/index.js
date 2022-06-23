@@ -1026,7 +1026,7 @@ class MpxWebpackPlugin {
               }))
             }
           }
-          if (/regenerator-runtime/.test(parser.state.module.resource)) {
+          if (/regenerator/.test(parser.state.module.resource)) {
             if (callee.name === 'Function' && arg0 && arg0.value === 'r' && arg1 && arg1.value === 'regeneratorRuntime = r') {
               current.addPresentationalDependency(new ReplaceDependency('(function () {})', expr.range))
             }
