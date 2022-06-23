@@ -1181,7 +1181,6 @@ class MpxWebpackPlugin {
         }
 
         const processedChunk = new Set()
-        const appName = mpx.appInfo.name
 
         function processChunk (chunk, isRuntime, relativeChunks) {
           const chunkFile = chunk.files.values().next().value
