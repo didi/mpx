@@ -15,7 +15,7 @@ Mpx@2.7版本正式发布，编译构建升级至`webpack5`，完整支持持久
 
 ## 简介
 
-Mpx是一款致力于提升小程序开发体验和用户体验的增强型小程序跨端框架，通过Mpx，我们能够以最先进的开发理念高效优雅地构筑出高性能跨端小程序应用，在所有开放的小程序平台及web平台中运行。
+Mpx是一款致力于提升小程序开发体验和用户体验的增强型小程序跨端框架，通过Mpx，我们能够以最新的web开发理念高效优雅地构筑出高性能跨端小程序应用，在所有开放的小程序平台及web平台中运行。
 
 Mpx具有以下功能特性：
 * [数据响应](https://www.mpxjs.cn/guide/basic/reactive.html) (赋值响应 / [watch](https://www.mpxjs.cn/api/global-api.html#watch) / computed)
