@@ -97,7 +97,7 @@ export {
   mapActions,
   mapWritableState,
   storeToRefs
-} from './store/index'
+} from './pinia'
 
 export function toPureObject (obj) {
   return diffAndCloneA(obj).clone

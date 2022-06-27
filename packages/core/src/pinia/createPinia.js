@@ -11,8 +11,11 @@ import { setActivePinia } from './util'
   // create ref state
   const state = scope.run(() => ref({}))
   let _p = []
-  setActivePinia(pinia)
   const pinia = {
+      install() {
+        setActivePinia(pinia)
+        console.error('pinia===', pinia)
+      },
       use(plugin) {
         _p.push(plugin)
           return this

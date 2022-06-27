@@ -31,9 +31,12 @@ import {
   mapWritableState
 } from './mapHelper'
 import { storeToRefs } from './storeToRefs'
+import * as webPinia from 'pinia'
+import * as VueDemi from 'vue-demi'
 
+let __pinia = createPinia()
+let isPiniaInitializedOnWeb = false
 const { assign } = Object
-let pinia = createPinia()
 
 const skipHydrateMap = /*#__PURE__*/ new WeakMap()
 function skipHydrate(obj) {
@@ -347,7 +350,20 @@ function createOptionsStore(id, options, pinia) {
     options = idOrOptions
     id = idOrOptions.id
   }
-  function useStore() {
+  if (__mpx_mode__ === 'web' && !isPiniaInitializedOnWeb) {
+      
+    isPiniaInitializedOnWeb = true
+  }
+  function useStore(pinia) {
+    if (__mpx_mode__ === 'web') {
+      pinia =
+      // in test mode, ignore the argument provided as we can always retrieve a
+      // pinia instance with getActivePinia()
+      (__TEST__ && activePinia && activePinia._testing ? null : pinia) ||
+      (currentInstance && inject(piniaSymbol))
+    } else {
+      pinia = pinia || __pinia
+    }
     if (pinia) setActivePinia(pinia)
     if ((process.env.NODE_ENV !== 'production') && !activePinia) {
       throw new Error(`[🍍]: getActivePinia was called with no active Pinia. Did you forget to install pinia?\n` +
@@ -376,7 +392,6 @@ function createOptionsStore(id, options, pinia) {
  }
  
 export { 
-  createPinia,
   defineStore,
   getActivePinia,
   setActivePinia,
