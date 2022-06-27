@@ -175,7 +175,7 @@ function createOptionsStore(id, options, pinia) {
     // clean data
     subscriptions = []
     actionSubscriptions = []
-    pinia._s.delete($id)
+    // pinia._s.delete($id)
   }
   /**
   * Wraps an action to handle subscriptions.
