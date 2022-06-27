@@ -22,4 +22,4 @@ export {
   mapActions,
   mapWritableState,
   storeToRefs
-} from 'pinia'
+}
