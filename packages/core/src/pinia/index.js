@@ -32,7 +32,7 @@ import {
 } from './mapHelper'
 import { storeToRefs } from './storeToRefs'
 import * as webPinia from 'pinia'
-import * as VueDemi from 'vue-demi'
+import Vue from '../vue'
 
 let __pinia = createPinia()
 let isPiniaInitializedOnWeb = false
@@ -350,20 +350,16 @@ function createOptionsStore(id, options, pinia) {
     options = idOrOptions
     id = idOrOptions.id
   }
-  if (__mpx_mode__ === 'web' && !isPiniaInitializedOnWeb) {
-      
-    isPiniaInitializedOnWeb = true
+  if (__mpx_mode__ === 'web') {
+    if (!isPiniaInitializedOnWeb) {
+      const p = webPinia.createPinia()
+      webPinia.setActivePinia(p)
+      isPiniaInitializedOnWeb =  true
+    }
+    return webPinia.defineStore(idOrOptions, setup, setupOptions)
   }
   function useStore(pinia) {
-    if (__mpx_mode__ === 'web') {
-      pinia =
-      // in test mode, ignore the argument provided as we can always retrieve a
-      // pinia instance with getActivePinia()
-      (__TEST__ && activePinia && activePinia._testing ? null : pinia) ||
-      (currentInstance && inject(piniaSymbol))
-    } else {
-      pinia = pinia || __pinia
-    }
+    pinia = pinia || __pinia || activePinia
     if (pinia) setActivePinia(pinia)
     if ((process.env.NODE_ENV !== 'production') && !activePinia) {
       throw new Error(`[🍍]: getActivePinia was called with no active Pinia. Did you forget to install pinia?\n` +
