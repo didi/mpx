@@ -4,26 +4,24 @@
  * @param {*} keysOrMapper array or object
  * @return {*} store[key]
  */
-function mapState(useStore, keysOrMapper) {
+function mapState (useStore, keysOrMapper) {
   return Array.isArray(keysOrMapper)
     ? keysOrMapper.reduce((reduced, key) => {
-        reduced[key] = function () {
-          const store = useStore(this.$pinia)
-          return typeof store[key] === 'function'
-              ? store[key].call(this.$pinia, store)
-              : store[key]
-        }
-        return reduced
+      reduced[key] = function () {
+        return useStore(this.$pinia)[key]
+      }
+      return reduced
     }, {})
     : Object.keys(keysOrMapper).reduce((reduced, key) => {
-        reduced[key] = function () {
-            const store = useStore(this.$pinia)
-            const storeKey = keysOrMapper[key]
-            return typeof store[storeKey] === 'function'
-                ? store[storeKey].call(store, store)
-                : store[storeKey]
-        }
-        return reduced
+      reduced[key] = function () {
+        const store = useStore(this.$pinia)
+        const storeKey = keysOrMapper[key]
+        return typeof store[storeKey] === 'function'
+          // eslint-disable-next-line
+          ? store[storeKey].call(store, store)
+          : store[storeKey]
+      }
+      return reduced
     }, {})
 }
 
@@ -35,19 +33,19 @@ const mapGetters = mapState
  * @param {*} keysOrMapper array or object
  * @return {*} store[key]
  */
-function mapActions(useStore, keysOrMapper) {
+function mapActions (useStore, keysOrMapper) {
   return Array.isArray(keysOrMapper)
     ? keysOrMapper.reduce((reduced, key) => {
-        reduced[key] = function (...args) {
-            return useStore(this.$pinia)[key](...args)
-        }
-        return reduced
+      reduced[key] = function (...args) {
+        return useStore(this.$pinia)[key](...args)
+      }
+      return reduced
     }, {})
     : Object.keys(keysOrMapper).reduce((reduced, key) => {
-        reduced[key] = function (...args) {
-            return useStore(this.$pinia)[keysOrMapper[key]](...args)
-        }
-        return reduced
+      reduced[key] = function (...args) {
+        return useStore(this.$pinia)[keysOrMapper[key]](...args)
+      }
+      return reduced
     }, {})
 }
 /**
@@ -55,14 +53,14 @@ function mapActions(useStore, keysOrMapper) {
   * @param useStore - store to map from
   * @param keysOrMapper - array or object
   */
-function mapWritableState(useStore, keysOrMapper) {
+function mapWritableState (useStore, keysOrMapper) {
   return Array.isArray(keysOrMapper)
     ? keysOrMapper.reduce((reduced, key) => {
       reduced[key] = {
-        get() {
+        get () {
           return useStore(this.$pinia)[key]
         },
-        set(value) {
+        set (value) {
           return (useStore(this.$pinia)[key] = value)
         }
       }
@@ -70,30 +68,30 @@ function mapWritableState(useStore, keysOrMapper) {
     }, {})
     : Object.keys(keysOrMapper).reduce((reduced, key) => {
       reduced[key] = {
-        get() {
+        get () {
           return useStore(this.$pinia)[keysOrMapper[key]]
         },
-        set(value) {
+        set (value) {
           return (useStore(this.$pinia)[keysOrMapper[key]] = value)
         }
       }
       return reduced
     }, {})
- }
+}
 
- let mapStoreSuffix = 'Store'
- /**
+let mapStoreSuffix = 'Store'
+/**
   * @description: Defaults to `"Store"`, change the suffix added by mapStores()
   * @param suffix - new suffix
   */
- function setMapStoreSuffix(suffix) {
-     mapStoreSuffix = suffix
- }
+function setMapStoreSuffix (suffix) {
+  mapStoreSuffix = suffix
+}
 /**
  * @description: allow to stores in computed field, to avoid writing too much props by calling mapstate/getter
  * @param stores - list of stores to map to an object
  */
-function mapStores(...stores) {
+function mapStores (...stores) {
   if ((process.env.NODE_ENV !== 'production') && Array.isArray(stores[0])) {
     console.warn(`[🍍]: Directly pass all stores to "mapStores()" without putting them in an array:\n` +
         `Replace\n` +
@@ -108,8 +106,8 @@ function mapStores(...stores) {
       return useStore(this.$pinia)
     }
     return reduced
-}, {})
- }
+  }, {})
+}
 export {
   mapStores,
   setMapStoreSuffix,

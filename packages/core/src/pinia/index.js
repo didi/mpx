@@ -3,17 +3,17 @@ import { computed } from '../observer/computed'
 import { getCurrentInstance } from '../core/proxy'
 import {
   toRefs,
-  isRef,
+  isRef
 } from '../observer/ref'
-import { 
+import {
   set,
   reactive,
-  isReactive 
+  isReactive
 } from '../observer/reactive'
 import { effectScope } from '../observer/effectScope'
 import { watch } from '../observer/watch'
 import { noop } from '../helper/utils'
-import { 
+import {
   isComputed,
   mergeReactiveObjects,
   activePinia,
@@ -32,33 +32,29 @@ import {
 } from './mapHelper'
 import { storeToRefs } from './storeToRefs'
 import * as webPinia from 'pinia'
-import Vue from '../vue'
 
 let __pinia = createPinia()
 let isPiniaInitializedOnWeb = false
 const { assign } = Object
 
-const skipHydrateMap = /*#__PURE__*/ new WeakMap()
-function skipHydrate(obj) {
-    return skipHydrateMap.set(obj, 1) && obj
-}
-function shouldHydrate(obj) {
+const skipHydrateMap = /* #__PURE__ */ new WeakMap()
+function shouldHydrate (obj) {
   return !skipHydrateMap.has(obj)
 }
 
- /**
+/**
  * @description: create options store
  * @param id: store id
  * @param options: storeOptions
  * @param pinia: global pinia
  * @return {*} options store
  */
-function createOptionsStore(id, options, pinia) {
+function createOptionsStore (id, options, pinia) {
   const { state, actions, getters } = options
   const initialState = pinia.state.value[id]
   let store
 
-  function setupFn() {
+  function setupFn () {
     if (!initialState) {
       // init state
       set(pinia.state.value, id, state ? state() : {})
@@ -73,10 +69,10 @@ function createOptionsStore(id, options, pinia) {
         return getters[name].call(store, store)
       })
       return computedGetters
-      }, {}))
+    }, {}))
   }
   store = createSetupStore(id, setupFn, options, pinia, true)
-  store.$reset = function $reset() {
+  store.$reset = function $reset () {
     const newState = state ? state() : {}
     this.$patch(($state) => {
       assign($state, newState)
@@ -85,7 +81,7 @@ function createOptionsStore(id, options, pinia) {
   return store
 }
 
- /**
+/**
  * @description: create setup store
  * @param id: store id
  * @param setup: function
@@ -94,21 +90,21 @@ function createOptionsStore(id, options, pinia) {
  * @param isOptionsStore to create options store
  * @return {*} setup store
  */
- function createSetupStore($id, setup, options = {}, pinia, isOptionsStore = false) {
+function createSetupStore ($id, setup, options = {}, pinia, isOptionsStore = false) {
   let scope
   const optionsForPlugin = assign({ actions: {} }, options)
   if ((process.env.NODE_ENV !== 'production') && !pinia._e.active) {
     throw new Error('Pinia destroyed')
   }
   const $subscribeOptions = {
-    deep: true,
+    deep: true
     // flush: 'post',
   }
   if ((process.env.NODE_ENV !== 'production')) {
     $subscribeOptions.onTrigger = (event) => {
       if (isListening) {
         debuggerEvents = event
-      } else if (isListening == false) {
+      } else if (isListening === false) {
         if (Array.isArray(debuggerEvents)) {
           debuggerEvents.push(event)
         } else {
@@ -130,7 +126,7 @@ function createOptionsStore(id, options, pinia) {
   }
 
   let activeListener
-  function $patch(stateOrMutator) {
+  function $patch (stateOrMutator) {
     if (isOptionsStore) {
       if (this && this.$id === $id) {
         this && Object.assign({}, this)
@@ -158,6 +154,7 @@ function createOptionsStore(id, options, pinia) {
         events: debuggerEvents
       }
     }
+    // eslint-disable-next-line
     const myListenerId = (activeListener = Symbol())
     isSyncListening = true
     nextTick().then(() => {
@@ -169,11 +166,11 @@ function createOptionsStore(id, options, pinia) {
   }
 
   const $reset = (process.env.NODE_ENV !== 'production')
-  ? () => {
+    ? () => {
       throw new Error(`🍍: Store "${$id}" is build using the setup syntax and does not implement $reset().`)
     } : noop
 
-  function $dispose() {
+  function $dispose () {
     scope.stop()
     // clean data
     subscriptions = []
@@ -186,16 +183,16 @@ function createOptionsStore(id, options, pinia) {
   * @param action - action to wrap
   * @returns a wrapped action to handle subscriptions
   */
-  function wrapAction(name, action) {
+  function wrapAction (name, action) {
     return function () {
       setActivePinia(pinia)
       const args = Array.from(arguments)
       const afterCallbackList = []
       const onErrorCallbackList = []
-      function after(callback) {
+      function after (callback) {
         afterCallbackList.push(callback)
       }
-      function onError(callback) {
+      function onError (callback) {
         onErrorCallbackList.push(callback)
       }
       triggerSubscriptions(actionSubscriptions, {
@@ -234,11 +231,12 @@ function createOptionsStore(id, options, pinia) {
     $onAction: addSubscription.bind(null, actionSubscriptions),
     $patch,
     $reset,
-    $subscribe(callback, options = {}) {
+    $subscribe (callback, options = {}) {
       const removeSubscription = addSubscription(subscriptions, callback, options.detached, () => stopWatcher())
-      const stopWatcher = scope.run(() => 
+      const stopWatcher = scope.run(() =>
         watch(() => pinia.state.value[$id], (state) => {
           if (options.flush === 'sync' ? isSyncListening : isListening) {
+            // eslint-disable-next-line
             callback({
               storeId: $id,
               type: MutationType.direct,
@@ -306,8 +304,7 @@ function createOptionsStore(id, options, pinia) {
         options: optionsForPlugin
       }))
       assign(store, extensions)
-    }
-    else {
+    } else {
       assign(store, scope.run(() => extender({
         store,
         app: pinia._a || getCurrentInstance(),
@@ -329,7 +326,7 @@ function createOptionsStore(id, options, pinia) {
   if (initialState &&
       isOptionsStore &&
       options.hydrate) {
-      options.hydrate(store.$state, initialState)
+    options.hydrate(store.$state, initialState)
   }
   isListening = true
   isSyncListening = true
@@ -338,8 +335,8 @@ function createOptionsStore(id, options, pinia) {
   })
 
   return store
- }
- function defineStore (idOrOptions, setup, setupOptions) {
+}
+function defineStore (idOrOptions, setup, setupOptions) {
   let id
   let options
   const isSetupStore = typeof setup === 'function'
@@ -354,11 +351,11 @@ function createOptionsStore(id, options, pinia) {
     if (!isPiniaInitializedOnWeb) {
       const p = webPinia.createPinia()
       webPinia.setActivePinia(p)
-      isPiniaInitializedOnWeb =  true
+      isPiniaInitializedOnWeb = true
     }
     return webPinia.defineStore(idOrOptions, setup, setupOptions)
   }
-  function useStore(pinia) {
+  function useStore (pinia) {
     pinia = pinia || __pinia || activePinia
     if (pinia) setActivePinia(pinia)
     if ((process.env.NODE_ENV !== 'production') && !activePinia) {
@@ -370,13 +367,12 @@ function createOptionsStore(id, options, pinia) {
     pinia = activePinia
     if (!pinia._s.has(id)) {
       if (isSetupStore) {
-          createSetupStore(id, setup, options, pinia)
-      }
-      else {
-          createOptionsStore(id, options, pinia)
+        createSetupStore(id, setup, options, pinia)
+      } else {
+        createOptionsStore(id, options, pinia)
       }
       if ((process.env.NODE_ENV !== 'production')) {
-          useStore._pinia = pinia
+        useStore._pinia = pinia
       }
     }
     const store = pinia._s.get(id)
@@ -385,9 +381,9 @@ function createOptionsStore(id, options, pinia) {
 
   useStore.$id = id
   return useStore
- }
- 
-export { 
+}
+
+export {
   defineStore,
   getActivePinia,
   setActivePinia,
@@ -399,4 +395,3 @@ export {
   mapWritableState,
   storeToRefs
 }
- 

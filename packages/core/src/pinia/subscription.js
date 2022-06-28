@@ -8,7 +8,6 @@ export function addSubscription (
   onCleanup = noop
 ) {
   subscriptions.push(callback)
-
   const removeSubscription = () => {
     const idx = subscriptions.indexOf(callback)
     if (idx > -1) {
@@ -16,19 +15,15 @@ export function addSubscription (
       onCleanup()
     }
   }
-
   if (!detached && getCurrentInstance()) {
     onUnmounted(removeSubscription)
   }
-
   return removeSubscription
 }
 
-export function triggerSubscriptions (
-  subscriptions,
-  ...args
-) {
+export function triggerSubscriptions (subscriptions, ...args) {
   subscriptions.slice().forEach((callback) => {
+    // eslint-disable-next-line
     callback(...args)
   })
 }

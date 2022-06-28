@@ -85,7 +85,7 @@ export { getMixin } from './core/mergeOptions'
 
 export { injectMixins } from './core/injectMixins'
 
-export { 
+export {
   createPinia,
   defineStore,
   getActivePinia,

@@ -1,4 +1,4 @@
-export { 
+export {
   defineStore,
   getActivePinia,
   setActivePinia,
