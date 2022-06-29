@@ -18,7 +18,8 @@ import {
   mergeReactiveObjects,
   activePinia,
   getActivePinia,
-  setActivePinia } from './util'
+  setActivePinia
+} from './util'
 import { nextTick } from '../observer/scheduler'
 import { MutationType } from './const'
 import { addSubscription, triggerSubscriptions } from './subscription'
@@ -356,15 +357,14 @@ function defineStore (idOrOptions, setup, setupOptions) {
     return webPinia.defineStore(idOrOptions, setup, setupOptions)
   }
   function useStore (pinia) {
-    pinia = pinia || __pinia || activePinia
-    if (pinia) setActivePinia(pinia)
     if ((process.env.NODE_ENV !== 'production') && !activePinia) {
       throw new Error(`[🍍]: getActivePinia was called with no active Pinia. Did you forget to install pinia?\n` +
           `\tconst pinia = createPinia()\n` +
           `\tapp.use(pinia)\n` +
           `This will fail in production.`)
     }
-    pinia = activePinia
+    pinia = pinia || __pinia || activePinia
+    if (pinia) setActivePinia(pinia)
     if (!pinia._s.has(id)) {
       if (isSetupStore) {
         createSetupStore(id, setup, options, pinia)
