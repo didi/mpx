@@ -9,20 +9,50 @@ Mpx在事件处理上基于原生小程序，支持原生小程序的全部事�
 
 示例如下：
 
+#### 原生小程序语法，dataset传参
 ```html
 <template>
-  <view>
-    <!--原生小程序语法，通过dataset进行传参-->
     <button data-name="a" bindtap="handleTap">a</button>
-    <!--Mpx增强语法，模板内联传参，方便简洁-->
-    <button bindtap="handleTapInline('b')">b</button>
-    <!--参数支持传递字面量和组件数据-->
-    <button bindtap="handleTapInline(name)"></button>
-    <!--参数同样支持传递for作用域下的item/index-->
-    <button wx:for="{{names}}" bindtap="handleTapInline(item)">{{item}}</button>
-    <!--需要使用原始事件对象时可以传递$event特殊关键字-->
-    <button bindtap="handleTapInlineWithEvent('g', $event)">g</button>
-  </view>
+</template>
+
+<script>
+  import { createComponent } from '@mpxjs/core'
+
+  createComponent({
+    methods: {
+      handleTap (e) {
+        console.log('name:', e.target.dataset.name)
+      }
+    }
+  })
+</script>
+```
+
+
+#### Mpx增强语法，模板内联传参
+```html
+<template>
+   <button bindtap="handleTapInline('b')">b</button>
+</template>
+
+<script>
+  import { createComponent } from '@mpxjs/core'
+
+  createComponent({
+    methods: {
+      // 直接通过参数获取数据，直观方便
+      handleTapInline (name) {
+        console.log('name:', name)
+      }
+    }
+  })
+</script>
+```
+
+#### 参数支持传递字面量和组件数据
+```html
+<template>
+  <button bindtap="handleTapInline(name)"></button>
 </template>
 
 <script>
@@ -30,17 +60,52 @@ Mpx在事件处理上基于原生小程序，支持原生小程序的全部事�
 
   createComponent({
     data: {
-      name: 'c',
-      names: ['d', 'e', 'f']
+      name: 'a'
     },
     methods: {
-      handleTap (e) {
-        console.log('name:', e.target.dataset.name)
-      },
       // 直接通过参数获取数据，直观方便
       handleTapInline (name) {
         console.log('name:', name)
-      },
+      }
+    }
+  })
+</script>
+```
+#### 参数支持传递for作用域下的item/index
+```html
+<template>
+    <button wx:for="{{names}}" bindtap="handleTapInline(item)">{{item}}</button>
+</template>
+
+<script>
+  import { createComponent } from '@mpxjs/core'
+
+  createComponent({
+    data: {
+      names: ['d', 'e', 'f']
+    },
+    methods: {
+      // 直接通过参数获取数据，直观方便
+      handleTapInline (name) {
+        console.log('name:', name)
+      }
+    }
+  })
+</script>
+```
+
+#### $event特殊关键字传参
+```html
+<template>
+    <!-- 需要使用原始事件对象时可以传递$event特殊关键字 -->
+    <button bindtap="handleTapInlineWithEvent('g', $event)">g</button>
+</template>
+
+<script>
+  import { createComponent } from '@mpxjs/core'
+
+  createComponent({
+    methods: {
       handleTapInlineWithEvent (name, e) {
         console.log('name:', name)
         console.log('event:', e)
@@ -49,5 +114,3 @@ Mpx在事件处理上基于原生小程序，支持原生小程序的全部事�
   })
 </script>
 ```
-
-
