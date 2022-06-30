@@ -27,7 +27,8 @@ const blackList = [
   'reportAnalytics',
   'getMenuButtonBoundingClientRect',
   'reportMonitor',
-  'createOffscreenCanvas'
+  'createOffscreenCanvas',
+  'reportEvent'
 ]
 
 function getMapFromList (list) {
