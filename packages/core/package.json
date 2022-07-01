@@ -20,8 +20,7 @@
   "main": "src/index.js",
   "dependencies": {
     "lodash": "^4.1.1",
-    "miniprogram-api-typings": "^3.0.2",
-    "pinia": "^2.0.14"
+    "miniprogram-api-typings": "^3.0.2"
   },
   "peerDependencies": {
     "vue": "^2.6.10",
