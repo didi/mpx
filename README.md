@@ -30,7 +30,7 @@ Mpx具有以下功能特性：
 * [周边能力支持](https://www.mpxjs.cn/guide/extend/) (fetch / api增强 / mock / webview-bridge)
 * 脚手架支持
 * 多平台增强 (支持在微信、支付宝、百度、qq、头条小程序平台中进行增强开发)
-* [跨平台编译](https://www.mpxjs.cn/guide/advance/platform.html) (一套代码跨端输出到微信、支付宝、百度、字节、QQ、京东、快应用(web) 和 [web平台](https://www.mpxjs.cn/guide/advance/platform.html#%E8%B7%A8%E5%B9%B3%E5%8F%B0%E8%BE%93%E5%87%BAweb) 中运行)
+* [跨平台编译](https://www.mpxjs.cn/guide/advance/platform-compile.html) (一套代码跨端输出到微信、支付宝、百度、字节、QQ、京东、快应用(web) 和 [web平台](https://www.mpxjs.cn/guide/advance/platform-web.html) 中运行)
 * [TypeScript支持](https://www.mpxjs.cn/guide/tool/ts.html) (基于ThisType实现了完善的类型推导)
 * [I18n国际化](https://www.mpxjs.cn/guide/tool/i18n.html)
 * [单元测试支持](https://www.mpxjs.cn/guide/tool/unit-test.html)

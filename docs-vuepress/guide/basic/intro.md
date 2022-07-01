@@ -69,7 +69,7 @@ Mpx的编译构建以webpack为基础，针对小程序项目结构深度定制�
 
 ### 跨平台能力
 
-Mpx支持全部小程序平台(微信，支付宝，百度，头条，qq)的增强开发，同时支持将一份基于微信增强的业务源码输出到全部的小程序平台和web平台中运行，也即将支持输出快应用的能力，更多详情请[查看这里](../advance/platform.md)
+Mpx支持全部小程序平台(微信，支付宝，百度，头条，qq)的增强开发，同时支持将一份基于微信增强的业务源码输出到全部的小程序平台和web平台中运行，也即将支持输出快应用的能力，更多详情请[查看这里](../advance/platform-support.md)
 
 ### 完善的周边能力
 
@@ -96,8 +96,8 @@ Mpx具有以下功能特性：
 * 逻辑复用 ([mixins](../advance/mixin.md))
 * [周边能力支持](../extend/) (fetch / api增强 / mock / webview-bridge)
 * 脚手架支持
-* [多平台增强](../advance/platform.md#多平台支持) (支持在微信、支付宝、百度、qq、头条小程序平台中进行增强开发)
-* [跨平台编译](../advance/platform.md#跨平台编译) (支持以微信为base，将一套代码转换输出到支付宝、百度、qq、头条小程序平台和[web平台](../advance/platform.md#跨平台输出web)中运行)
+* [多平台增强](../advance/platform-support.md#多平台支持) (支持在微信、支付宝、百度、qq、头条小程序平台中进行增强开发)
+* [跨平台编译](../advance/platform-support.md#跨平台编译) (支持以微信为base，将一套代码转换输出到支付宝、百度、qq、头条小程序平台和[web平台](../advance/platform-support.md#跨平台输出web)中运行)
 * [TypeScript支持](../tool/ts.md) (基于ThisType实现了完善的类型推导)
 * [I18n国际化](../tool/i18n.md)
 * 单元测试支持 (即将到来)

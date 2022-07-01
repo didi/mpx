@@ -162,7 +162,7 @@ json区块完全支持小程序原生的[app.json配置](https://developers.weix
 npm run build:cross
 ```
 
-关于跨平台能力的更多详情请查看[这里](../advance/platform.md)
+关于跨平台能力的更多详情请查看[这里](../advance/platform-support.md)
 
 
 
