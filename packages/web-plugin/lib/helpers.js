@@ -16,24 +16,6 @@ module.exports = function createHelpers (loaderContext) {
   const rawRequest = loaderUtils.getRemainingRequest(loaderContext)
   const { resourcePath, queryObj } = parseRequest(loaderContext.resource)
 
-  function getRequire (type, part, extraOptions, index) {
-    return 'require(' + getRequestString(type, part, extraOptions, index) + ')'
-  }
-
-  function getImport (type, part, extraOptions, index) {
-    return (
-      'import __' + type + '__ from ' +
-      getRequestString(type, part, extraOptions, index)
-    )
-  }
-
-  function getNamedExports (type, part, extraOptions, index) {
-    return (
-      'export * from ' +
-      getRequestString(type, part, extraOptions, index)
-    )
-  }
-
   function getFakeRequest (type, part) {
     const lang = part.lang || defaultLang[type] || type
     const options = { ...queryObj }
@@ -72,9 +54,6 @@ module.exports = function createHelpers (loaderContext) {
   }
 
   return {
-    getRequire,
-    getImport,
-    getNamedExports,
     getRequestString
   }
 }

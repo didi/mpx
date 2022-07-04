@@ -13,7 +13,7 @@ const EntryPlugin = require('webpack/lib/EntryPlugin')
 const JavascriptModulesPlugin = require('webpack/lib/javascript/JavascriptModulesPlugin')
 const FlagEntryExportAsUsedPlugin = require('webpack/lib/FlagEntryExportAsUsedPlugin')
 const FileSystemInfo = require('webpack/lib/FileSystemInfo')
-const normalize = require('@mpxjs/webpack-plugin/lib/utils/normalize')
+const normalize = require('./utils/normalize')
 const toPosix = require('@mpxjs/webpack-plugin/lib/utils/to-posix')
 const addQuery = require('@mpxjs/webpack-plugin/lib/utils/add-query')
 const DefinePlugin = require('webpack/lib/DefinePlugin')
@@ -33,10 +33,10 @@ const { matchCondition } = require('@mpxjs/webpack-plugin/lib/utils/match-condit
 const { preProcessDefs } = require('@mpxjs/webpack-plugin/lib/utils/index')
 const config = require('./config')
 const hash = require('hash-sum')
+const styleCompilerPath = normalize.webLib('style-compiler/index')
 const wxssLoaderPath = normalize.lib('wxss/loader')
 const wxmlLoaderPath = normalize.lib('wxml/loader')
 const wxsLoaderPath = normalize.lib('wxs/loader')
-const styleCompilerPath = normalize.lib('style-compiler/index')
 const templateCompilerPath = normalize.lib('template-compiler/index')
 const jsonCompilerPath = normalize.lib('json-compiler/index')
 const jsonThemeCompilerPath = normalize.lib('json-compiler/theme')
@@ -124,6 +124,7 @@ class MpxWebpackPlugin {
     options.postcssInlineConfig = options.postcssInlineConfig || {}
     options.transRpxRules = options.transRpxRules || null
     options.decodeHTMLText = options.decodeHTMLText || false
+    options.autoScope = options.autoScope || false
     options.i18n = options.i18n || null
     options.checkUsingComponents = options.checkUsingComponents || false
     options.pathHashMode = options.pathHashMode || 'absolute'
@@ -159,14 +160,6 @@ class MpxWebpackPlugin {
       options
     }
   }
-
-  static nativeLoader (options = {}) {
-    return {
-      loader: normalize.lib('native-loader'),
-      options
-    }
-  }
-
   static wxssLoader (options) {
     return {
       loader: normalize.lib('wxss/loader'),
@@ -180,53 +173,12 @@ class MpxWebpackPlugin {
       options
     }
   }
-
-  static pluginLoader (options = {}) {
-    return {
-      loader: normalize.lib('json-compiler/plugin'),
-      options
-    }
-  }
-
   static wxsPreLoader (options = {}) {
     return {
       loader: normalize.lib('wxs/pre-loader'),
       options
     }
   }
-
-  static urlLoader (options = {}) {
-    return {
-      loader: normalize.lib('url-loader'),
-      options
-    }
-  }
-
-  static fileLoader (options = {}) {
-    return {
-      loader: normalize.lib('file-loader'),
-      options
-    }
-  }
-
-  static getPageEntry (request) {
-    return addQuery(request, { isPage: true })
-  }
-
-  static getComponentEntry (request) {
-    return addQuery(request, { isComponent: true })
-  }
-
-  static getPluginEntry (request) {
-    return addQuery(request, {
-      mpx: true,
-      extract: true,
-      isPlugin: true,
-      asScript: true,
-      type: 'json'
-    })
-  }
-
   runModeRules (data) {
     const { resourcePath, queryObj } = parseRequest(data.resource)
     if (queryObj.mode) {
@@ -614,39 +566,36 @@ class MpxWebpackPlugin {
           createData.resource = addQuery(createData.resource, { mpx: MPX_PROCESSED_FLAG }, true)
         }
 
-        if (mpx.mode === 'web') {
-          const mpxStyleOptions = queryObj.mpxStyleOptions
-          const firstLoader = loaders[0] ? toPosix(loaders[0].loader) : ''
-          const isPitcherRequest = firstLoader.includes('vue-loader/lib/loaders/pitcher')
-          let cssLoaderIndex = -1
-          let vueStyleLoaderIndex = -1
-          let mpxStyleLoaderIndex = -1
-          loaders.forEach((loader, index) => {
-            const currentLoader = toPosix(loader.loader)
-            if (currentLoader.includes('css-loader')) {
-              cssLoaderIndex = index
-            } else if (currentLoader.includes('vue-loader/lib/loaders/stylePostLoader')) {
-              vueStyleLoaderIndex = index
-            } else if (currentLoader.includes(styleCompilerPath)) {
-              mpxStyleLoaderIndex = index
-            }
-          })
-          if (mpxStyleLoaderIndex === -1) {
-            let loaderIndex = -1
-            if (cssLoaderIndex > -1 && vueStyleLoaderIndex === -1) {
-              loaderIndex = cssLoaderIndex
-            } else if (cssLoaderIndex > -1 && vueStyleLoaderIndex > -1 && !isPitcherRequest) {
-              loaderIndex = vueStyleLoaderIndex
-            }
-            if (loaderIndex > -1) {
-              loaders.splice(loaderIndex + 1, 0, {
-                loader: styleCompilerPath,
-                options: (mpxStyleOptions && JSON.parse(mpxStyleOptions)) || {}
-              })
-            }
+        const mpxStyleOptions = queryObj.mpxStyleOptions
+        const firstLoader = loaders[0] ? toPosix(loaders[0].loader) : ''
+        const isPitcherRequest = firstLoader.includes('vue-loader/lib/loaders/pitcher')
+        let cssLoaderIndex = -1
+        let vueStyleLoaderIndex = -1
+        let mpxStyleLoaderIndex = -1
+        loaders.forEach((loader, index) => {
+          const currentLoader = toPosix(loader.loader)
+          if (currentLoader.includes('css-loader')) {
+            cssLoaderIndex = index
+          } else if (currentLoader.includes('vue-loader/lib/loaders/stylePostLoader')) {
+            vueStyleLoaderIndex = index
+          } else if (currentLoader.includes(styleCompilerPath)) {
+            mpxStyleLoaderIndex = index
+          }
+        })
+        if (mpxStyleLoaderIndex === -1) {
+          let loaderIndex = -1
+          if (cssLoaderIndex > -1 && vueStyleLoaderIndex === -1) {
+            loaderIndex = cssLoaderIndex
+          } else if (cssLoaderIndex > -1 && vueStyleLoaderIndex > -1 && !isPitcherRequest) {
+            loaderIndex = vueStyleLoaderIndex
+          }
+          if (loaderIndex > -1) {
+            loaders.splice(loaderIndex + 1, 0, {
+              loader: styleCompilerPath,
+              options: (mpxStyleOptions && JSON.parse(mpxStyleOptions)) || {}
+            })
           }
         }
-
         createData.request = stringifyLoadersAndResource(loaders, createData.resource)
         // 根据用户传入的modeRules对特定资源添加mode query
         this.runModeRules(createData)

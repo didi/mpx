@@ -1,25 +1,16 @@
 const postcss = require('postcss')
-const loadPostcssConfig = require('./load-postcss-config')
-const { MPX_ROOT_VIEW, MPX_APP_MODULE_ID } = require('../utils/const')
-const trim = require('./plugins/trim')
-const rpx = require('./plugins/rpx')
 const vw = require('./plugins/vw')
-const pluginCondStrip = require('./plugins/conditional-strip')
-const scopeId = require('./plugins/scope-id')
-const transSpecial = require('./plugins/trans-special')
-const { matchCondition } = require('../utils/match-condition')
-const parseRequest = require('../utils/parse-request')
+const loadPostcssConfig = require('@mpxjs/webpack-plugin/lib/style-compiler/load-postcss-config')
+const trim = require('@mpxjs/webpack-plugin/lib/style-compiler/plugins/trim')
+const rpx = require('@mpxjs/webpack-plugin/lib/style-compiler/plugins/rpx')
+const pluginCondStrip = require('@mpxjs/webpack-plugin/lib/plugins/conditional-strip')
+const { matchCondition } = require('@mpxjs/webpack-plugin/lib/utils/match-condition')
 
 module.exports = function (css, map) {
   this.cacheable()
   const cb = this.async()
-  const { resourcePath, queryObj } = parseRequest(this.resource)
   const mpx = this.getMpx()
-  const id = queryObj.moduleId || queryObj.mid || 'm' + mpx.pathHash(resourcePath)
-  const appInfo = mpx.appInfo
   const defs = mpx.defs
-  const mode = mpx.mode
-  const isApp = resourcePath === appInfo.resourcePath
   const transRpxRulesRaw = mpx.transRpxRules
   const transRpxRules = transRpxRulesRaw ? (Array.isArray(transRpxRulesRaw) ? transRpxRulesRaw : [transRpxRulesRaw]) : []
 
@@ -39,13 +30,6 @@ module.exports = function (css, map) {
       },
       config.options
     )
-    // ali平台下处理scoped和host选择器
-    if (mode === 'ali') {
-      if (queryObj.scoped) {
-        plugins.push(scopeId({ id }))
-      }
-      plugins.push(transSpecial({ id }))
-    }
 
     plugins.push(pluginCondStrip({
       defs
@@ -67,9 +51,7 @@ module.exports = function (css, map) {
       }
     }
 
-    if (mpx.mode === 'web') {
-      plugins.push(vw({ transRpxFn }))
-    }
+    plugins.push(vw({ transRpxFn }))
     // source map
     if (this.sourceMap && !options.map) {
       options.map = {
@@ -82,10 +64,6 @@ module.exports = function (css, map) {
     return postcss(plugins)
       .process(css, options)
       .then(result => {
-        // ali环境添加全局样式抹平root差异
-        if (mode === 'ali' && isApp) {
-          result.css += `\n.${MPX_ROOT_VIEW} { display: initial }\n.${MPX_APP_MODULE_ID} { line-height: normal }`
-        }
         if (result.messages) {
           result.messages.forEach(({ type, file }) => {
             if (type === 'dependency') {
