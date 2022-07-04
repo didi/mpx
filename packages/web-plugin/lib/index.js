@@ -1,36 +1,36 @@
 'use strict'
 
 const path = require('path')
-const ResolveDependency = require('./dependencies/ResolveDependency')
-const InjectDependency = require('./dependencies/InjectDependency')
-const ReplaceDependency = require('./dependencies/ReplaceDependency')
+const { ConcatSource } = require('webpack').sources
+const ResolveDependency = require('@mpxjs/webpack-plugin/lib/dependencies/ResolveDependency')
+const InjectDependency = require('@mpxjs/webpack-plugin/lib/dependencies/InjectDependency')
+const ReplaceDependency = require('@mpxjs/webpack-plugin/lib/dependencies/ReplaceDependency')
 const NullFactory = require('webpack/lib/NullFactory')
-const CommonJsVariableDependency = require('./dependencies/CommonJsVariableDependency')
-const CommonJsAsyncDependency = require('./dependencies/CommonJsAsyncDependency')
+const CommonJsVariableDependency = require('@mpxjs/webpack-plugin/lib/dependencies/CommonJsVariableDependency')
+const CommonJsAsyncDependency = require('@mpxjs/webpack-plugin/lib/dependencies/CommonJsAsyncDependency')
 const NormalModule = require('webpack/lib/NormalModule')
 const EntryPlugin = require('webpack/lib/EntryPlugin')
+const JavascriptModulesPlugin = require('webpack/lib/javascript/JavascriptModulesPlugin')
 const FlagEntryExportAsUsedPlugin = require('webpack/lib/FlagEntryExportAsUsedPlugin')
 const FileSystemInfo = require('webpack/lib/FileSystemInfo')
-const normalize = require('./utils/normalize')
-const toPosix = require('./utils/to-posix')
-const addQuery = require('./utils/add-query')
+const normalize = require('@mpxjs/webpack-plugin/lib/utils/normalize')
+const toPosix = require('@mpxjs/webpack-plugin/lib/utils/to-posix')
+const addQuery = require('@mpxjs/webpack-plugin/lib/utils/add-query')
 const DefinePlugin = require('webpack/lib/DefinePlugin')
 const ExternalsPlugin = require('webpack/lib/ExternalsPlugin')
-const AddModePlugin = require('./resolver/AddModePlugin')
-const AddEnvPlugin = require('./resolver/AddEnvPlugin')
-const PackageEntryPlugin = require('./resolver/PackageEntryPlugin')
-const FixDescriptionInfoPlugin = require('./resolver/FixDescriptionInfoPlugin')
-const AppEntryDependency = require('./dependencies/AppEntryDependency')
-const RecordResourceMapDependency = require('./dependencies/RecordResourceMapDependency')
-const RecordGlobalComponentsDependency = require('./dependencies/RecordGlobalComponentsDependency')
-const RecordIndependentDependency = require('./dependencies/RecordIndependentDependency')
-const DynamicEntryDependency = require('./dependencies/DynamicEntryDependency')
-const FlagPluginDependency = require('./dependencies/FlagPluginDependency')
-const RemoveEntryDependency = require('./dependencies/RemoveEntryDependency')
-const PartialCompilePlugin = require('./partial-compile/index')
-const parseRequest = require('./utils/parse-request')
-const { matchCondition } = require('./utils/match-condition')
-const { preProcessDefs } = require('./utils/index')
+const AddModePlugin = require('@mpxjs/webpack-plugin/lib/resolver/AddModePlugin')
+const AddEnvPlugin = require('@mpxjs/webpack-plugin/lib/resolver/AddEnvPlugin')
+const FixDescriptionInfoPlugin = require('@mpxjs/webpack-plugin/lib/resolver/FixDescriptionInfoPlugin')
+const AppEntryDependency = require('@mpxjs/webpack-plugin/lib/dependencies/AppEntryDependency')
+const RecordResourceMapDependency = require('@mpxjs/webpack-plugin/lib/dependencies/RecordResourceMapDependency')
+const RecordGlobalComponentsDependency = require('@mpxjs/webpack-plugin/lib/dependencies/RecordGlobalComponentsDependency')
+const RecordIndependentDependency = require('@mpxjs/webpack-plugin/lib/dependencies/RecordIndependentDependency')
+const DynamicEntryDependency = require('@mpxjs/webpack-plugin/lib/dependencies/DynamicEntryDependency')
+const FlagPluginDependency = require('@mpxjs/webpack-plugin/lib/dependencies/FlagPluginDependency')
+const RemoveEntryDependency = require('@mpxjs/webpack-plugin/lib/dependencies/RemoveEntryDependency')
+const parseRequest = require('@mpxjs/webpack-plugin/lib/utils/parse-request')
+const { matchCondition } = require('@mpxjs/webpack-plugin/lib/utils/match-condition')
+const { preProcessDefs } = require('@mpxjs/webpack-plugin/lib/utils/index')
 const config = require('./config')
 const hash = require('hash-sum')
 const wxssLoaderPath = normalize.lib('wxss/loader')
@@ -43,9 +43,9 @@ const jsonThemeCompilerPath = normalize.lib('json-compiler/theme')
 const jsonPluginCompilerPath = normalize.lib('json-compiler/plugin')
 const extractorPath = normalize.lib('extractor')
 const async = require('async')
-const stringifyLoadersAndResource = require('./utils/stringify-loaders-resource')
-const emitFile = require('./utils/emit-file')
-const { MPX_PROCESSED_FLAG, MPX_DISABLE_EXTRACTOR_CACHE } = require('./utils/const')
+const stringifyLoadersAndResource = require('@mpxjs/webpack-plugin/lib/utils/stringify-loaders-resource')
+const emitFile = require('@mpxjs/webpack-plugin/lib/utils/emit-file')
+const { MPX_PROCESSED_FLAG, MPX_DISABLE_EXTRACTOR_CACHE } = require('@mpxjs/webpack-plugin/lib/utils/const')
 
 const isProductionLikeMode = options => {
   return options.mode === 'production' || !options.mode
@@ -65,7 +65,6 @@ const isStaticModule = module => {
   }
   return isStatic
 }
-
 
 const externalsMap = {
   weui: /^weui-miniprogram/
@@ -103,7 +102,6 @@ class MpxWebpackPlugin {
     options.externalClasses = options.externalClasses || ['custom-class', 'i-class']
     options.resolveMode = options.resolveMode || 'webpack'
     options.writeMode = options.writeMode || 'changed'
-    options.autoScopeRules = options.autoScopeRules || {}
     options.forceDisableProxyCtor = options.forceDisableProxyCtor || false
     options.transMpxRules = options.transMpxRules || {
       include: () => true
@@ -125,17 +123,14 @@ class MpxWebpackPlugin {
     options.forceUsePageCtor = options.forceUsePageCtor || false
     options.postcssInlineConfig = options.postcssInlineConfig || {}
     options.transRpxRules = options.transRpxRules || null
-    options.auditResource = options.auditResource || false
     options.decodeHTMLText = options.decodeHTMLText || false
     options.i18n = options.i18n || null
     options.checkUsingComponents = options.checkUsingComponents || false
-    options.reportSize = options.reportSize || null
     options.pathHashMode = options.pathHashMode || 'absolute'
     options.forceDisableBuiltInLoader = options.forceDisableBuiltInLoader || false
     options.useRelativePath = options.useRelativePath || false
-    options.subpackageModulesRules = options.subpackageModulesRules || {}
-    options.forceMainPackageRules = options.forceMainPackageRules || {}
     options.forceProxyEventRules = options.forceProxyEventRules || {}
+    options.miniNpmPackages = options.miniNpmPackages || []
     options.fileConditionRules = options.fileConditionRules || {
       include: () => true
     }
@@ -144,13 +139,6 @@ class MpxWebpackPlugin {
       cssLangs: ['css', 'less', 'stylus', 'scss', 'sass']
     }, options.nativeConfig)
     options.webConfig = options.webConfig || {}
-    options.partialCompile = options.mode !== 'web' && options.partialCompile
-    let proxyComponentEventsRules = []
-    const proxyComponentEventsRulesRaw = options.proxyComponentEventsRules
-    if (proxyComponentEventsRulesRaw) {
-      proxyComponentEventsRules = Array.isArray(proxyComponentEventsRulesRaw) ? proxyComponentEventsRulesRaw : [proxyComponentEventsRulesRaw]
-    }
-    options.proxyComponentEventsRules = proxyComponentEventsRules
     this.options = options
     // Hack for buildDependencies
     const rawResolveBuildDependencies = FileSystemInfo.prototype.resolveBuildDependencies
@@ -168,6 +156,13 @@ class MpxWebpackPlugin {
     }
     return {
       loader: normalize.lib('loader'),
+      options
+    }
+  }
+
+  static nativeLoader (options = {}) {
+    return {
+      loader: normalize.lib('native-loader'),
       options
     }
   }
@@ -214,6 +209,24 @@ class MpxWebpackPlugin {
     }
   }
 
+  static getPageEntry (request) {
+    return addQuery(request, { isPage: true })
+  }
+
+  static getComponentEntry (request) {
+    return addQuery(request, { isComponent: true })
+  }
+
+  static getPluginEntry (request) {
+    return addQuery(request, {
+      mpx: true,
+      extract: true,
+      isPlugin: true,
+      asScript: true,
+      type: 'json'
+    })
+  }
+
   runModeRules (data) {
     const { resourcePath, queryObj } = parseRequest(data.resource)
     if (queryObj.mode) {
@@ -255,7 +268,6 @@ class MpxWebpackPlugin {
     if (this.options.env) {
       compiler.options.resolve.plugins.push(addEnvPlugin)
     }
-    compiler.options.resolve.plugins.push(packageEntryPlugin)
     compiler.options.resolve.plugins.push(new FixDescriptionInfoPlugin())
 
     // 代理writeFile
@@ -292,10 +304,6 @@ class MpxWebpackPlugin {
     new ExternalsPlugin('commonjs2', this.options.externals).apply(compiler)
 
     let mpx
-
-    if (this.options.partialCompile) {
-      new PartialCompilePlugin(this.options.partialCompile).apply(compiler)
-    }
 
     compiler.hooks.compilation.tap('MpxWebpackPlugin ', (compilation, { normalModuleFactory }) => {
       NormalModule.getCompilationHooks(compilation).loader.tap('MpxWebpackPlugin', (loaderContext) => {
@@ -348,7 +356,6 @@ class MpxWebpackPlugin {
     compiler.hooks.thisCompilation.tap('MpxWebpackPlugin', (compilation, { normalModuleFactory }) => {
       compilation.warnings = compilation.warnings.concat(warnings)
       compilation.errors = compilation.errors.concat(errors)
-      const moduleGraph = compilation.moduleGraph
       if (!compilation.__mpx__) {
         // init mpx
         mpx = compilation.__mpx__ = {
@@ -364,15 +371,8 @@ class MpxWebpackPlugin {
           staticResourcesMap: {
             main: {}
           },
-          // 用于记录命中subpackageModulesRules的js模块分包归属，用于js多分包冗余输出
-          subpackageModulesMap: {
-            main: {}
-          },
           // 记录其他资源，如pluginMain、pluginExport，无需区分主包分包
           otherResourcesMap: {},
-          // 记录独立分包
-          independentSubpackagesMap: {},
-          subpackagesEntriesMap: {},
           replacePathMap: {},
           exportModules: new Set(),
           // 记录entryModule与entryNode的对应关系，用于体积分析
@@ -394,7 +394,6 @@ class MpxWebpackPlugin {
           env: this.options.env,
           externalClasses: this.options.externalClasses,
           projectRoot: this.options.projectRoot,
-          autoScopeRules: this.options.autoScopeRules,
           transRpxRules: this.options.transRpxRules,
           postcssInlineConfig: this.options.postcssInlineConfig,
           decodeHTMLText: this.options.decodeHTMLText,
@@ -413,7 +412,6 @@ class MpxWebpackPlugin {
           useRelativePath: this.options.useRelativePath,
           removedChunks: [],
           forceProxyEventRules: this.options.forceProxyEventRules,
-          proxyComponentEventsRules: this.options.proxyComponentEventsRules,
           pathHash: (resourcePath) => {
             if (this.options.pathHashMode === 'relative' && this.options.projectRoot) {
               return hash(path.relative(this.options.projectRoot, resourcePath))
@@ -504,70 +502,6 @@ class MpxWebpackPlugin {
               outputPath,
               alreadyOutputted
             }
-          },
-          // 组件和静态资源的输出规则如下：
-          // 1. 主包引用的资源输出至主包
-          // 2. 分包引用且主包引用过的资源输出至主包，不在当前分包重复输出
-          // 3. 分包引用且无其他包引用的资源输出至当前分包
-          // 4. 分包引用且其他分包也引用过的资源，重复输出至当前分包
-          getPackageInfo: ({ resource, resourceType, outputPath, issuerResource, warn, error }) => {
-            let packageRoot = ''
-            let packageName = 'main'
-
-            const { resourcePath } = parseRequest(resource)
-            const currentPackageRoot = mpx.currentPackageRoot
-            const currentPackageName = currentPackageRoot || 'main'
-            const isIndependent = !!mpx.independentSubpackagesMap[currentPackageRoot]
-            const resourceMap = mpx[`${resourceType}sMap`] || mpx.otherResourcesMap
-
-            if (!resourceMap.main) {
-              packageRoot = currentPackageRoot
-              packageName = currentPackageName
-            } else {
-              // 主包中有引用一律使用主包中资源，不再额外输出
-              // 资源路径匹配到forceMainPackageRules规则时强制输出到主包，降低分包资源冗余
-              // 如果存在issuer且issuerPackageRoot与当前packageRoot不一致，也输出到主包
-              // todo forceMainPackageRules规则目前只能处理当前资源，不能处理资源子树，配置不当有可能会导致资源引用错误
-              let isMain = resourceMap.main[resourcePath] || matchCondition(resourcePath, this.options.forceMainPackageRules)
-              if (issuerResource) {
-                const { queryObj } = parseRequest(issuerResource)
-                const issuerPackageRoot = queryObj.packageRoot || ''
-                if (issuerPackageRoot !== currentPackageRoot) {
-                  warn && warn(new Error(`当前模块[${resource}]的引用者[${issuerResource}]不带有分包标记或分包标记与当前分包不符，模块资源将被输出到主包，可以尝试将引用者加入到subpackageModulesRules来解决这个问题！`))
-                  isMain = true
-                }
-              }
-              if (!isMain || isIndependent) {
-                packageRoot = currentPackageRoot
-                packageName = currentPackageName
-                if (this.options.auditResource && resourceType !== 'subpackageModule' && !isIndependent) {
-                  if (this.options.auditResource !== 'component' || resourceType === 'component') {
-                    Object.keys(resourceMap).filter(key => key !== 'main').forEach((key) => {
-                      if (resourceMap[key][resourcePath] && key !== packageName) {
-                        warn && warn(new Error(`当前${resourceType === 'component' ? '组件' : '静态'}资源${resourcePath}在分包${key}和分包${packageName}中都有引用，会分别输出到两个分包中，为了总体积最优，可以在主包中建立引用声明以消除资源输出冗余！`))
-                      }
-                    })
-                  }
-                }
-              }
-              resourceMap[packageName] = resourceMap[packageName] || {}
-            }
-
-            if (outputPath) outputPath = toPosix(path.join(packageRoot, outputPath))
-
-            return {
-              packageName,
-              packageRoot,
-              // 返回outputPath及alreadyOutputted
-              ...mpx.recordResourceMap({
-                resourcePath,
-                resourceType,
-                outputPath,
-                packageRoot,
-                warn,
-                error
-              })
-            }
           }
         }
       }
@@ -584,11 +518,27 @@ class MpxWebpackPlugin {
         })
       }
 
+      const rawEmitAsset = compilation.emitAsset
+
+      compilation.emitAsset = (file, source, assetInfo) => {
+        if (assetInfo && assetInfo.skipEmit) return
+        return rawEmitAsset.call(compilation, file, source, assetInfo)
+      }
+
       compilation.hooks.succeedModule.tap('MpxWebpackPlugin', (module) => {
         // 静态资源模块由于输出结果的动态性，通过importModule会合并asset的特性，通过emitFile传递信息禁用父级extractor的缓存来保障父级的importModule每次都能被执行
         if (isStaticModule(module)) {
           emitFile(module, MPX_DISABLE_EXTRACTOR_CACHE, '', undefined, { skipEmit: true })
         }
+      })
+
+      JavascriptModulesPlugin.getCompilationHooks(compilation).renderStartup.tap('MpxWebpackPlugin', (source, module) => {
+        const realModule = (module && module.rootModule) || module
+        if (realModule && mpx.exportModules.has(realModule)) {
+          source = new ConcatSource(source)
+          source.add('module.exports = __webpack_exports__;\n')
+        }
+        return source
       })
     })
 

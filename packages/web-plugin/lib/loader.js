@@ -1,23 +1,17 @@
 const JSON5 = require('json5')
-const parseComponent = require('./parser')
-const createHelpers = require('./helpers')
+const parseComponent = require('@mpxjs/webpack-plugin/lib/parser')
 const loaderUtils = require('loader-utils')
-const parseRequest = require('./utils/parse-request')
-const { matchCondition } = require('./utils/match-condition')
-const fixUsingComponent = require('./utils/fix-using-component')
-const addQuery = require('./utils/add-query')
+const parseRequest = require('@mpxjs/webpack-plugin/lib/utils/parse-request')
+const { matchCondition } = require('@mpxjs/webpack-plugin/lib/utils/match-condition')
+const fixUsingComponent = require('@mpxjs/webpack-plugin/lib/utils/fix-using-component')
+const addQuery = require('@mpxjs/webpack-plugin/lib/utils/add-query')
 const async = require('async')
-const processJSON = require('./web/processJSON')
-const processScript = require('./web/processScript')
-const processStyles = require('./web/processStyles')
-const processTemplate = require('./web/processTemplate')
-const getJSONContent = require('./utils/get-json-content')
-const normalize = require('./utils/normalize')
-const getEntryName = require('./utils/get-entry-name')
-const AppEntryDependency = require('./dependencies/AppEntryDependency')
-const RecordResourceMapDependency = require('./dependencies/RecordResourceMapDependency')
-const CommonJsVariableDependency = require('./dependencies/CommonJsVariableDependency')
-const { MPX_APP_MODULE_ID } = require('./utils/const')
+const processJSON = require('../lib/web/processJSON')
+const processScript = require('../lib/web/processScript')
+const processStyles = require('../lib/web/processStyles')
+const processTemplate = require('../lib/web/processTemplate')
+const getJSONContent = require('@mpxjs/webpack-plugin/lib/utils/get-json-content')
+const { MPX_APP_MODULE_ID } = require('@mpxjs/webpack-plugin/lib/utils/const')
 const path = require('path')
 
 module.exports = function (content) {
@@ -37,12 +31,10 @@ module.exports = function (content) {
 
   const packageRoot = queryObj.packageRoot || mpx.currentPackageRoot
   const packageName = packageRoot || 'main'
-  const independent = queryObj.independent
   const pagesMap = mpx.pagesMap
   const componentsMap = mpx.componentsMap[packageName]
   const mode = mpx.mode
   const env = mpx.env
-  const i18n = mpx.i18n
   const globalSrcMode = mpx.srcMode
   const localSrcMode = queryObj.mode
   const srcMode = localSrcMode || globalSrcMode
@@ -57,14 +49,6 @@ module.exports = function (content) {
     // component
     ctorType = 'component'
   }
-
-  // 支持资源query传入isPage或isComponent支持页面/组件单独编译
-  if (ctorType === 'app' && (queryObj.isComponent || queryObj.isPage)) {
-    const entryName = getEntryName(this) || (queryObj.isComponent ? 'noEntryComponent' : 'noEntryPage')
-    ctorType = queryObj.isComponent ? 'component' : 'page'
-    this._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, ctorType, entryName, packageRoot))
-  }
-
   const loaderContext = this
   const stringifyRequest = r => loaderUtils.stringifyRequest(loaderContext, r)
   const isProduction = this.minimize || process.env.NODE_ENV === 'production'
@@ -77,10 +61,6 @@ module.exports = function (content) {
     mode,
     env
   })
-
-  const {
-    getRequire
-  } = createHelpers(loaderContext)
 
   let output = ''
   const callback = this.async()
@@ -123,10 +103,9 @@ module.exports = function (content) {
       }
 
       // 处理mode为web时输出vue格式文件
-      if (mode === 'web') {
-        if (ctorType === 'app' && !queryObj.isApp) {
-          const request = addQuery(this.resource, { isApp: true })
-          output += `
+      if (ctorType === 'app' && !queryObj.isApp) {
+        const request = addQuery(this.resource, { isApp: true })
+        output += `
       import App from ${stringifyRequest(request)}
       import Vue from 'vue'
       new Vue({
@@ -136,210 +115,76 @@ module.exports = function (content) {
         }
       })\n
       `
-          // 直接结束loader进入parse
-          this.loaderIndex = -1
-          return callback(null, output)
-        }
+        // 直接结束loader进入parse
+        this.loaderIndex = -1
+        return callback(null, output)
+      }
 
-        return async.waterfall([
-          (callback) => {
-            async.parallel([
-              (callback) => {
-                processTemplate(parts.template, {
-                  loaderContext,
-                  hasScoped,
-                  hasComment,
-                  isNative,
-                  srcMode,
-                  moduleId,
-                  ctorType,
-                  usingComponents,
-                  componentGenerics
-                }, callback)
-              },
-              (callback) => {
-                processStyles(parts.styles, {
-                  ctorType,
-                  autoScope,
-                  moduleId
-                }, callback)
-              },
-              (callback) => {
-                processJSON(parts.json, {
-                  loaderContext,
-                  pagesMap,
-                  componentsMap
-                }, callback)
-              }
-            ], (err, res) => {
-              callback(err, res)
-            })
-          },
-          ([templateRes, stylesRes, jsonRes], callback) => {
-            output += templateRes.output
-            output += stylesRes.output
-            output += jsonRes.output
-            if (ctorType === 'app' && jsonRes.jsonObj.window && jsonRes.jsonObj.window.navigationBarTitleText) {
-              mpx.appTitle = jsonRes.jsonObj.window.navigationBarTitleText
+      return async.waterfall([
+        (callback) => {
+          async.parallel([
+            (callback) => {
+              processTemplate(parts.template, {
+                loaderContext,
+                hasScoped,
+                hasComment,
+                isNative,
+                srcMode,
+                moduleId,
+                ctorType,
+                usingComponents,
+                componentGenerics
+              }, callback)
+            },
+            (callback) => {
+              processStyles(parts.styles, {
+                ctorType,
+                autoScope,
+                moduleId
+              }, callback)
+            },
+            (callback) => {
+              processJSON(parts.json, {
+                loaderContext,
+                pagesMap,
+                componentsMap
+              }, callback)
             }
-
-            processScript(parts.script, {
-              loaderContext,
-              ctorType,
-              srcMode,
-              isProduction,
-              componentGenerics,
-              jsonConfig: jsonRes.jsonObj,
-              outputPath: queryObj.outputPath || '',
-              tabBarMap: jsonRes.tabBarMap,
-              tabBarStr: jsonRes.tabBarStr,
-              builtInComponentsMap: templateRes.builtInComponentsMap,
-              genericsInfo: templateRes.genericsInfo,
-              wxsModuleMap: templateRes.wxsModuleMap,
-              localComponentsMap: jsonRes.localComponentsMap,
-              localPagesMap: jsonRes.localPagesMap
-            }, callback)
+          ], (err, res) => {
+            callback(err, res)
+          })
+        },
+        ([templateRes, stylesRes, jsonRes], callback) => {
+          output += templateRes.output
+          output += stylesRes.output
+          output += jsonRes.output
+          if (ctorType === 'app' && jsonRes.jsonObj.window && jsonRes.jsonObj.window.navigationBarTitleText) {
+            mpx.appTitle = jsonRes.jsonObj.window.navigationBarTitleText
           }
-        ], (err, scriptRes) => {
-          if (err) return callback(err)
-          output += scriptRes.output
-          vueContentCache.set(filePath, output)
-          callback(null, output)
-        })
-      }
 
-      const moduleGraph = this._compilation.moduleGraph
-
-      const issuer = moduleGraph.getIssuer(this._module)
-
-      if (issuer) {
-        return callback(new Error(`Current ${ctorType} [${this.resourcePath}] is issued by [${issuer.resource}], which is not allowed!`))
-      }
-
-      if (ctorType === 'app') {
-        const appName = getEntryName(this)
-        this._module.addPresentationalDependency(new AppEntryDependency(resourcePath, appName))
-      }
-
-      // 注入模块id及资源路径
-      output += `global.currentModuleId = ${JSON.stringify(moduleId)}\n`
-      if (!isProduction) {
-        output += `global.currentResource = ${JSON.stringify(filePath)}\n`
-      }
-
-      // 为app注入i18n
-      if (i18n && ctorType === 'app') {
-        const i18nWxsPath = normalize.lib('runtime/i18n.wxs')
-        const i18nWxsLoaderPath = normalize.lib('wxs/i18n-loader.js')
-        const i18nWxsRequest = i18nWxsLoaderPath + '!' + i18nWxsPath
-        this._module.addDependency(new CommonJsVariableDependency(i18nWxsRequest))
-        // 避免该模块被concatenate导致注入的i18n没有最先执行
-        this._module.buildInfo.moduleConcatenationBailout = 'i18n'
-      }
-
-      // 为独立分包注入init module
-      if (independent && typeof independent === 'string') {
-        const independentLoader = normalize.lib('independent-loader.js')
-        const independentInitRequest = `!!${independentLoader}!${independent}`
-        this._module.addDependency(new CommonJsVariableDependency(independentInitRequest))
-        // 避免该模块被concatenate导致注入的independent init没有最先执行
-        this._module.buildInfo.moduleConcatenationBailout = 'independent init'
-      }
-
-      // 注入构造函数
-      let ctor = 'App'
-      if (ctorType === 'page') {
-        // swan也默认使用Page构造器
-        if (mpx.forceUsePageCtor || mode === 'ali' || mode === 'swan') {
-          ctor = 'Page'
-        } else {
-          ctor = 'Component'
+          processScript(parts.script, {
+            loaderContext,
+            ctorType,
+            srcMode,
+            isProduction,
+            componentGenerics,
+            jsonConfig: jsonRes.jsonObj,
+            outputPath: queryObj.outputPath || '',
+            tabBarMap: jsonRes.tabBarMap,
+            tabBarStr: jsonRes.tabBarStr,
+            builtInComponentsMap: templateRes.builtInComponentsMap,
+            genericsInfo: templateRes.genericsInfo,
+            wxsModuleMap: templateRes.wxsModuleMap,
+            localComponentsMap: jsonRes.localComponentsMap,
+            localPagesMap: jsonRes.localPagesMap
+          }, callback)
         }
-      } else if (ctorType === 'component') {
-        ctor = 'Component'
-      }
-      output += `global.currentCtor = ${ctor}\n`
-      output += `global.currentCtorType = ${JSON.stringify(ctor.replace(/^./, (match) => {
-        return match.toLowerCase()
-      }))}\n`
-      output += `global.currentResourceType = ${JSON.stringify(ctorType)}\n`
-
-      // template
-      output += '/* template */\n'
-      const template = parts.template
-
-      if (template) {
-        const extraOptions = {
-          ...template.src ? {
-            ...queryObj,
-            resourcePath
-          } : null,
-          hasScoped,
-          hasComment,
-          isNative,
-          moduleId,
-          usingComponents
-          // 添加babel处理渲染函数中可能包含的...展开运算符
-          // 由于...运算符应用范围极小以及babel成本极高，先关闭此特性后续看情况打开
-          // needBabel: true
-        }
-        if (template.src) extraOptions.resourcePath = resourcePath
-        // 基于global.currentInject来注入模板渲染函数和refs等信息
-        output += getRequire('template', template, extraOptions) + '\n'
-      }
-
-      // styles
-      output += '/* styles */\n'
-      if (parts.styles.length) {
-        parts.styles.forEach((style, i) => {
-          const scoped = style.scoped || autoScope
-          const extraOptions = {
-            // style src会被特殊处理为全局复用样式，不添加resourcePath，添加isStatic及issuerFile
-            ...style.src ? {
-              ...queryObj,
-              isStatic: true,
-              issuerResource: addQuery(this.resource, { type: 'styles' }, true)
-            } : null,
-            moduleId,
-            scoped
-          }
-          // require style
-          output += getRequire('styles', style, extraOptions, i) + '\n'
-        })
-      }
-
-      if (parts.styles.filter(style => !style.src).length === 0 && ctorType === 'app' && mode === 'ali') {
-        output += getRequire('styles', {}, {}, parts.styles.length) + '\n'
-      }
-
-      // json
-      output += '/* json */\n'
-      // 给予json默认值, 确保生成json request以自动补全json
-      const json = parts.json || {}
-      output += getRequire('json', json, json.src && {
-        ...queryObj,
-        resourcePath
-      }) + '\n'
-
-      // script
-      output += '/* script */\n'
-      let scriptSrcMode = srcMode
-      // 给予script默认值, 确保生成js request以自动补全js
-      const script = parts.script || {}
-      if (script) {
-        scriptSrcMode = script.mode || scriptSrcMode
-        if (scriptSrcMode) output += `global.currentSrcMode = ${JSON.stringify(scriptSrcMode)}\n`
-        // 传递ctorType以补全js内容
-        const extraOptions = {
-          ...script.src ? {
-            ...queryObj,
-            resourcePath
-          } : null,
-          ctorType
-        }
-        output += getRequire('script', script, extraOptions) + '\n'
-      }
-      callback(null, output)
+      ], (err, scriptRes) => {
+        if (err) return callback(err)
+        output += scriptRes.output
+        vueContentCache.set(filePath, output)
+        callback(null, output)
+      })
     }
   ], callback)
 }

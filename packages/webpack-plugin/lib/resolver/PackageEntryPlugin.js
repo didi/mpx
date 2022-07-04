@@ -1,5 +1,5 @@
 const path = require('path')
-const toPosix = require('../utils/to-posix')
+const toPosix = require('../../../web-plugin/lib/utils/to-posix')
 
 module.exports = class PackageEntryPlugin {
   constructor (source, miniNpmPackages, target) {
