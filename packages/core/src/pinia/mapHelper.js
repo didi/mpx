@@ -1,3 +1,4 @@
+import { getActivePinia } from './util'
 /**
  * @description: allow use state/getters of a store in computed field
  * @param {*} useStore store to map from
@@ -5,16 +6,18 @@
  * @return {*} store[key]
  */
 function mapState (useStore, keysOrMapper) {
+  const pinia = getActivePinia()
   return Array.isArray(keysOrMapper)
     ? keysOrMapper.reduce((reduced, key) => {
       reduced[key] = function () {
-        return useStore(this.$pinia)[key]
+        return useStore(pinia)[key]
       }
+      console.error('wferfref', reduced)
       return reduced
     }, {})
     : Object.keys(keysOrMapper).reduce((reduced, key) => {
       reduced[key] = function () {
-        const store = useStore(this.$pinia)
+        const store = useStore(pinia)
         const storeKey = keysOrMapper[key]
         return typeof store[storeKey] === 'function'
           // eslint-disable-next-line
@@ -34,16 +37,17 @@ const mapGetters = mapState
  * @return {*} store[key]
  */
 function mapActions (useStore, keysOrMapper) {
+  const pinia = getActivePinia()
   return Array.isArray(keysOrMapper)
     ? keysOrMapper.reduce((reduced, key) => {
       reduced[key] = function (...args) {
-        return useStore(this.$pinia)[key](...args)
+        return useStore(pinia)[key](...args)
       }
       return reduced
     }, {})
     : Object.keys(keysOrMapper).reduce((reduced, key) => {
       reduced[key] = function (...args) {
-        return useStore(this.$pinia)[keysOrMapper[key]](...args)
+        return useStore(pinia)[keysOrMapper[key]](...args)
       }
       return reduced
     }, {})
@@ -54,14 +58,15 @@ function mapActions (useStore, keysOrMapper) {
   * @param keysOrMapper - array or object
   */
 function mapWritableState (useStore, keysOrMapper) {
+  const pinia = getActivePinia()
   return Array.isArray(keysOrMapper)
     ? keysOrMapper.reduce((reduced, key) => {
       reduced[key] = {
         get () {
-          return useStore(this.$pinia)[key]
+          return useStore(pinia)[key]
         },
         set (value) {
-          return (useStore(this.$pinia)[key] = value)
+          return (useStore(pinia)[key] = value)
         }
       }
       return reduced
@@ -69,10 +74,10 @@ function mapWritableState (useStore, keysOrMapper) {
     : Object.keys(keysOrMapper).reduce((reduced, key) => {
       reduced[key] = {
         get () {
-          return useStore(this.$pinia)[keysOrMapper[key]]
+          return useStore(pinia)[keysOrMapper[key]]
         },
         set (value) {
-          return (useStore(this.$pinia)[keysOrMapper[key]] = value)
+          return (useStore(pinia)[keysOrMapper[key]] = value)
         }
       }
       return reduced
@@ -92,6 +97,7 @@ function setMapStoreSuffix (suffix) {
  * @param stores - list of stores to map to an object
  */
 function mapStores (...stores) {
+  const pinia = getActivePinia()
   if ((process.env.NODE_ENV !== 'production') && Array.isArray(stores[0])) {
     console.warn(`[🍍]: Directly pass all stores to "mapStores()" without putting them in an array:\n` +
         `Replace\n` +
@@ -103,7 +109,7 @@ function mapStores (...stores) {
   }
   return stores.reduce((reduced, useStore) => {
     reduced[useStore.$id + mapStoreSuffix] = function () {
-      return useStore(this.$pinia)
+      return useStore(pinia)
     }
     return reduced
   }, {})
