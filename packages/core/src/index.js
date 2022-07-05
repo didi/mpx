@@ -1,19 +1,9 @@
 import {
-  watch
-} from './observer/watch'
-
-import {
-  reactive,
-  set,
-  del
+  reactive
 } from './observer/reactive'
-
-import { injectMixins } from './core/injectMixins'
 import { diffAndCloneA, makeMap, merge, hasOwn } from './helper/utils'
 import { error } from './helper/log'
-import Vue from './vue'
-import implement from './core/implement'
-
+import { Vue, APIs, InstanceAPIs } from './platform/export/index'
 export {
   createApp,
   createPage,
@@ -30,21 +20,18 @@ export {
 } from './core/createStore'
 
 export {
+  // watch
   watchEffect,
   watchSyncEffect,
   watchPostEffect,
-  watch
-} from './observer/watch'
-
-export {
+  watch,
+  // reactive
   reactive,
   isReactive,
   shallowReactive,
   set,
-  del
-} from './observer/reactive'
-
-export {
+  del,
+  // ref环节
   ref,
   unref,
   toRef,
@@ -52,18 +39,20 @@ export {
   isRef,
   customRef,
   shallowRef,
-  triggerRef
-} from './observer/ref'
-
-export {
-  computed
-} from './observer/computed'
-
-export {
+  triggerRef,
+  // computed
+  computed,
+  // advanced
   effectScope,
   getCurrentScope,
-  onScopeDispose
-} from './observer/effectScope'
+  onScopeDispose,
+  // instance
+  getCurrentInstance
+} from './platform/export/index'
+
+export {
+  nextTick
+} from './observer/scheduler'
 
 export {
   onBeforeCreate,
@@ -76,9 +65,7 @@ export {
   onLoad,
   onShow,
   onHide,
-  onResize,
-  injectHook,
-  getCurrentInstance
+  onResize
 } from './core/proxy'
 
 export { getMixin } from './core/mergeOptions'
@@ -148,42 +135,7 @@ function use (plugin, options = {}) {
   return this
 }
 
-let APIs = {}
-
-// 实例属性
-let InstanceAPIs = {}
-
-if (__mpx_mode__ === 'web') {
-  const vm = new Vue()
-  const observable = Vue.observable.bind(Vue)
-  const watch = vm.$watch.bind(vm)
-  const set = Vue.set.bind(Vue)
-  const del = Vue.delete.bind(Vue)
-  APIs = {
-    mixin: injectMixins,
-    observable,
-    watch,
-    use,
-    set,
-    delete: del,
-    implement
-  }
-} else {
-  APIs = {
-    mixin: injectMixins,
-    observable: reactive,
-    watch,
-    use,
-    set,
-    delete: del,
-    implement
-  }
-
-  InstanceAPIs = {
-    $set: set,
-    $delete: del
-  }
-}
+APIs.use = use
 
 function factory () {
   // 作为原型挂载属性的中间层

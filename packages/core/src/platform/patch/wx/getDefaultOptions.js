@@ -35,7 +35,7 @@ function transformProperties (properties) {
 }
 
 function transformApiForProxy (context, currentInject) {
-  const rawSetData = context.setData.bind(context)
+  const rawSetData = context.setData
   Object.defineProperties(context, {
     setData: {
       get () {
@@ -67,13 +67,27 @@ function transformApiForProxy (context, currentInject) {
       configurable: false
     }
   })
+
+  // // 抹平处理tt不支持驼峰事件名的问题
+  // if (__mpx_mode__ === 'tt') {
+  //   const rawTriggerEvent = context.triggerEvent
+  //   Object.defineProperty(context, 'triggerEvent', {
+  //     get () {
+  //       return function (eventName, eventDetail) {
+  //         return rawTriggerEvent.call(this, eventName.toLowerCase(), eventDetail)
+  //       }
+  //     },
+  //     configurable: true
+  //   })
+  // }
+
   // 绑定注入的render
   if (currentInject) {
     if (currentInject.render) {
       Object.defineProperties(context, {
         __injectedRender: {
           get () {
-            return currentInject.render.bind(context)
+            return currentInject.render
           },
           configurable: false
         }
