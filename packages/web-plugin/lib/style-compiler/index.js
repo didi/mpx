@@ -3,7 +3,7 @@ const vw = require('./plugins/vw')
 const loadPostcssConfig = require('@mpxjs/webpack-plugin/lib/style-compiler/load-postcss-config')
 const trim = require('@mpxjs/webpack-plugin/lib/style-compiler/plugins/trim')
 const rpx = require('@mpxjs/webpack-plugin/lib/style-compiler/plugins/rpx')
-const pluginCondStrip = require('@mpxjs/webpack-plugin/lib/plugins/conditional-strip')
+const pluginCondStrip = require('@mpxjs/webpack-plugin/lib/style-compiler/plugins/conditional-strip')
 const { matchCondition } = require('@mpxjs/webpack-plugin/lib/utils/match-condition')
 
 module.exports = function (css, map) {

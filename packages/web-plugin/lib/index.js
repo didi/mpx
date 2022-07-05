@@ -41,29 +41,12 @@ const templateCompilerPath = normalize.lib('template-compiler/index')
 const jsonCompilerPath = normalize.lib('json-compiler/index')
 const jsonThemeCompilerPath = normalize.lib('json-compiler/theme')
 const jsonPluginCompilerPath = normalize.lib('json-compiler/plugin')
-const extractorPath = normalize.lib('extractor')
 const async = require('async')
 const stringifyLoadersAndResource = require('@mpxjs/webpack-plugin/lib/utils/stringify-loaders-resource')
-const emitFile = require('@mpxjs/webpack-plugin/lib/utils/emit-file')
-const { MPX_PROCESSED_FLAG, MPX_DISABLE_EXTRACTOR_CACHE } = require('@mpxjs/webpack-plugin/lib/utils/const')
+const { MPX_PROCESSED_FLAG } = require('@mpxjs/webpack-plugin/lib/utils/const')
 
 const isProductionLikeMode = options => {
   return options.mode === 'production' || !options.mode
-}
-
-const isStaticModule = module => {
-  if (!module.resource) return false
-  const { queryObj } = parseRequest(module.resource)
-  let isStatic = queryObj.isStatic || false
-  if (module.loaders) {
-    for (const loader of module.loaders) {
-      if (/(url-loader|file-loader)/.test(loader.loader)) {
-        isStatic = true
-        break
-      }
-    }
-  }
-  return isStatic
 }
 
 const externalsMap = {
@@ -393,33 +376,6 @@ class MpxWebpackPlugin {
             if (type === 'component' || type === 'page') return path.join(type + 's', name + hash, 'index' + ext)
             return path.join(type, name + hash + ext)
           },
-          extractedFilesCache: new Map(),
-          getExtractedFile: (resource, { error } = {}) => {
-            const cache = mpx.extractedFilesCache.get(resource)
-            if (cache) return cache
-            const { resourcePath, queryObj } = parseRequest(resource)
-            const { type, isStatic, isPlugin } = queryObj
-            let file
-            if (isPlugin) {
-              file = 'plugin.json'
-            } else if (isStatic) {
-              const packageRoot = queryObj.packageRoot || ''
-              file = toPosix(path.join(packageRoot, mpx.getOutputPath(resourcePath, type, { ext: typeExtMap[type] })))
-            } else {
-              const appInfo = mpx.appInfo
-              const pagesMap = mpx.pagesMap
-              const packageName = queryObj.packageRoot || mpx.currentPackageRoot || 'main'
-              const componentsMap = mpx.componentsMap[packageName]
-              let filename = resourcePath === appInfo.resourcePath ? appInfo.name : (pagesMap[resourcePath] || componentsMap[resourcePath])
-              if (!filename) {
-                error && error(new Error('Get extracted file error: missing filename!'))
-                filename = 'missing-filename'
-              }
-              file = filename + typeExtMap[type]
-            }
-            mpx.extractedFilesCache.set(resource, file)
-            return file
-          },
           recordResourceMap: ({ resourcePath, resourceType, outputPath, packageRoot = '', recordOnly, warn, error }) => {
             const packageName = packageRoot || 'main'
             const resourceMap = mpx[`${resourceType}sMap`] || mpx.otherResourcesMap
@@ -477,13 +433,6 @@ class MpxWebpackPlugin {
         return rawEmitAsset.call(compilation, file, source, assetInfo)
       }
 
-      compilation.hooks.succeedModule.tap('MpxWebpackPlugin', (module) => {
-        // 静态资源模块由于输出结果的动态性，通过importModule会合并asset的特性，通过emitFile传递信息禁用父级extractor的缓存来保障父级的importModule每次都能被执行
-        if (isStaticModule(module)) {
-          emitFile(module, MPX_DISABLE_EXTRACTOR_CACHE, '', undefined, { skipEmit: true })
-        }
-      })
-
       JavascriptModulesPlugin.getCompilationHooks(compilation).renderStartup.tap('MpxWebpackPlugin', (source, module) => {
         const realModule = (module && module.rootModule) || module
         if (realModule && mpx.exportModules.has(realModule)) {
@@ -517,7 +466,6 @@ class MpxWebpackPlugin {
         const loaders = createData.loaders
         if (queryObj.mpx && queryObj.mpx !== MPX_PROCESSED_FLAG) {
           const type = queryObj.type
-          const extract = queryObj.extract
           switch (type) {
             case 'styles':
             case 'template':
@@ -557,11 +505,6 @@ class MpxWebpackPlugin {
               loaders.unshift({
                 loader: wxsLoaderPath
               })
-          }
-          if (extract) {
-            loaders.unshift({
-              loader: extractorPath
-            })
           }
           createData.resource = addQuery(createData.resource, { mpx: MPX_PROCESSED_FLAG }, true)
         }
