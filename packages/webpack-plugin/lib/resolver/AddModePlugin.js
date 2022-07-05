@@ -1,9 +1,9 @@
 const path = require('path')
-const stringifyQuery = require('../../../web-plugin/lib/utils/stringify-query')
+const stringifyQuery = require('../utils/stringify-query')
 const parseQuery = require('loader-utils').parseQuery
-const { matchCondition } = require('../../../web-plugin/lib/utils/match-condition')
-const addInfix = require('../../../web-plugin/lib/utils/add-infix')
-const { JSON_JS_EXT } = require('../../../web-plugin/lib/utils/const')
+const { matchCondition } = require('../utils/match-condition')
+const addInfix = require('../utils/add-infix')
+const { JSON_JS_EXT } = require('../utils/const')
 
 module.exports = class AddModePlugin {
   constructor (source, mode, fileConditionRules, target) {
