@@ -12,7 +12,6 @@ function mapState (useStore, keysOrMapper) {
       reduced[key] = function () {
         return useStore(pinia)[key]
       }
-      console.error('wferfref', reduced)
       return reduced
     }, {})
     : Object.keys(keysOrMapper).reduce((reduced, key) => {
@@ -22,7 +21,7 @@ function mapState (useStore, keysOrMapper) {
         return typeof store[storeKey] === 'function'
           // eslint-disable-next-line
           ? store[storeKey].call(store, store)
-          : store[storeKey]
+          : __mpx_mode__ === 'web' ? unRef(store[storeKey]) : store[storeKey]
       }
       return reduced
     }, {})

@@ -165,6 +165,14 @@ module.exports = function (script, {
   \n`
         }
       }
+      // 注入PiniaVuePlugin
+      let piniaImport = ''
+      if (script.content.indexOf('createPinia') > -1) {
+        piniaImport = `
+        import { PiniaVuePlugin } from 'pinia'
+        Vue.use(PiniaVuePlugin)\n`
+      }
+      content += piniaImport
       // 注入wxs模块
       content += '  const wxsModules = {}\n'
       if (wxsModuleMap) {

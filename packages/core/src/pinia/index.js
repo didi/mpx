@@ -34,7 +34,6 @@ import {
 import { storeToRefs } from './storeToRefs'
 import * as webPinia from 'pinia'
 
-let __pinia = createPinia()
 let isPiniaInitializedOnWeb = false
 const { assign } = Object
 
@@ -348,14 +347,6 @@ function defineStore (idOrOptions, setup, setupOptions) {
     options = idOrOptions
     id = idOrOptions.id
   }
-  if (__mpx_mode__ === 'web') {
-    if (!isPiniaInitializedOnWeb) {
-      const p = webPinia.createPinia()
-      webPinia.setActivePinia(p)
-      isPiniaInitializedOnWeb = true
-    }
-    return webPinia.defineStore(idOrOptions, setup, setupOptions)
-  }
   function useStore (pinia) {
     if ((process.env.NODE_ENV !== 'production') && !activePinia) {
       throw new Error(`[🍍]: getActivePinia was called with no active Pinia. Did you forget to install pinia?\n` +
@@ -363,7 +354,7 @@ function defineStore (idOrOptions, setup, setupOptions) {
           `\tapp.use(pinia)\n` +
           `This will fail in production.`)
     }
-    pinia = pinia || __pinia || activePinia
+    pinia = pinia || activePinia
     if (pinia) setActivePinia(pinia)
     if (!pinia._s.has(id)) {
       if (isSetupStore) {
@@ -384,6 +375,7 @@ function defineStore (idOrOptions, setup, setupOptions) {
 }
 
 export {
+  createPinia,
   defineStore,
   getActivePinia,
   setActivePinia,

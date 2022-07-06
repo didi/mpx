@@ -1,4 +1,5 @@
 export {
+  createPinia,
   defineStore,
   getActivePinia,
   setActivePinia,
