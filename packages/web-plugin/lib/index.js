@@ -37,7 +37,6 @@ const FlagPluginDependency = require('./dependencies/FlagPluginDependency')
 const RemoveEntryDependency = require('./dependencies/RemoveEntryDependency')
 const SplitChunksPlugin = require('webpack/lib/optimize/SplitChunksPlugin')
 const PartialCompilePlugin = require('./partial-compile/index')
-const fixRelative = require('./utils/fix-relative')
 const parseRequest = require('./utils/parse-request')
 const { matchCondition } = require('./utils/match-condition')
 const { preProcessDefs } = require('./utils/index')
@@ -76,9 +75,6 @@ const isStaticModule = module => {
   }
   return isStatic
 }
-
-const outputFilename = '[name].js'
-const publicPath = '/'
 
 const isChunkInPackage = (chunkName, packageName) => {
   return (new RegExp(`^${packageName}\\/`)).test(chunkName)
@@ -198,20 +194,6 @@ class MpxWebpackPlugin {
     }
   }
 
-  static wxssLoader (options) {
-    return {
-      loader: normalize.lib('wxss/loader'),
-      options
-    }
-  }
-
-  static wxmlLoader (options) {
-    return {
-      loader: normalize.lib('wxml/loader'),
-      options
-    }
-  }
-
   static pluginLoader (options = {}) {
     return {
       loader: normalize.lib('json-compiler/plugin'),
@@ -284,18 +266,6 @@ class MpxWebpackPlugin {
     // 将entry export标记为used且不可mangle，避免require.async生成的js chunk在生产环境下报错
     new FlagEntryExportAsUsedPlugin(true, 'entry').apply(compiler)
 
-    if (this.options.mode !== 'web') {
-      // 强制设置publicPath为'/'
-      if (compiler.options.output.publicPath && compiler.options.output.publicPath !== publicPath) {
-        warnings.push(`webpack options: MpxWebpackPlugin accept options.output.publicPath to be ${publicPath} only, custom options.output.publicPath will be ignored!`)
-      }
-      compiler.options.output.publicPath = publicPath
-      if (compiler.options.output.filename && compiler.options.output.filename !== outputFilename) {
-        warnings.push(`webpack options: MpxWebpackPlugin accept options.output.filename to be ${outputFilename} only, custom options.output.filename will be ignored!`)
-      }
-      compiler.options.output.filename = compiler.options.output.chunkFilename = outputFilename
-    }
-
     if (!compiler.options.node || !compiler.options.node.global) {
       compiler.options.node = compiler.options.node || {}
       compiler.options.node.global = true
@@ -317,34 +287,6 @@ class MpxWebpackPlugin {
 
     let splitChunksPlugin
     let splitChunksOptions
-
-    if (this.options.mode !== 'web') {
-      const optimization = compiler.options.optimization
-      optimization.runtimeChunk = {
-        name: (entrypoint) => {
-          for (let packageName in mpx.independentSubpackagesMap) {
-            if (mpx.independentSubpackagesMap.hasOwnProperty(packageName) && isChunkInPackage(entrypoint.name, packageName)) {
-              return `${packageName}/bundle`
-            }
-          }
-          return 'bundle'
-        }
-      }
-      splitChunksOptions = Object.assign({
-        defaultSizeTypes: ['javascript', 'unknown'],
-        chunks: 'all',
-        usedExports: optimization.usedExports === true,
-        minChunks: 1,
-        minSize: 1000,
-        enforceSizeThreshold: Infinity,
-        maxAsyncRequests: 30,
-        maxInitialRequests: 30,
-        automaticNameDelimiter: '-'
-      }, optimization.splitChunks)
-      delete optimization.splitChunks
-      splitChunksPlugin = new SplitChunksPlugin(splitChunksOptions)
-      splitChunksPlugin.apply(compiler)
-    }
 
     // 代理writeFile
     if (this.options.writeMode === 'changed') {
@@ -1147,171 +1089,6 @@ class MpxWebpackPlugin {
           parser.hooks.callMemberChain.for('mpx').tap('MpxWebpackPlugin', injectSrcModeForTransApi)
           parser.hooks.callMemberChain.for('wx').tap('MpxWebpackPlugin', injectSrcModeForTransApi)
         }
-      })
-
-      // 为了正确生成sourceMap，将该步骤由原来的compile.hooks.emit迁移到compilation.hooks.processAssets
-      compilation.hooks.processAssets.tap({
-        name: 'MpxWebpackPlugin',
-        stage: compilation.PROCESS_ASSETS_STAGE_ADDITIONS
-      }, () => {
-        if (mpx.mode === 'web') return
-
-        if (this.options.generateBuildMap) {
-          const pagesMap = compilation.__mpx__.pagesMap
-          const componentsPackageMap = compilation.__mpx__.componentsMap
-          const componentsMap = Object.keys(componentsPackageMap).map(item => componentsPackageMap[item]).reduce((pre, cur) => {
-            return { ...pre, ...cur }
-          }, {})
-          const outputMap = JSON.stringify({ ...pagesMap, ...componentsMap })
-          const filename = this.options.generateBuildMap.filename || 'outputMap.json'
-          compilation.assets[filename] = new RawSource(outputMap)
-        }
-
-        const {
-          globalObject,
-          chunkLoadingGlobal
-        } = compilation.outputOptions
-
-        function getTargetFile (file) {
-          let targetFile = file
-          const queryStringIdx = targetFile.indexOf('?')
-          if (queryStringIdx >= 0) {
-            targetFile = targetFile.substr(0, queryStringIdx)
-          }
-          return targetFile
-        }
-
-        const processedChunk = new Set()
-
-        function processChunk (chunk, isRuntime, relativeChunks) {
-          const chunkFile = chunk.files.values().next().value
-          if (!chunkFile || processedChunk.has(chunk)) {
-            return
-          }
-
-          let originalSource = compilation.assets[chunkFile]
-          const source = new ConcatSource()
-          source.add(`\nvar ${globalObject} = ${globalObject} || {};\n\n`)
-
-          relativeChunks.forEach((relativeChunk, index) => {
-            const relativeChunkFile = relativeChunk.files.values().next().value
-            if (!relativeChunkFile) return
-            let chunkPath = getTargetFile(chunkFile)
-            let relativePath = getTargetFile(relativeChunkFile)
-            relativePath = path.relative(path.dirname(chunkPath), relativePath)
-            relativePath = fixRelative(relativePath, mpx.mode)
-            relativePath = toPosix(relativePath)
-            if (index === 0) {
-              // 引用runtime
-              // 支付宝分包独立打包，通过全局context获取webpackJSONP
-              if (mpx.mode === 'ali' && !mpx.isPluginMode) {
-                if (compilation.options.entry[chunk.name]) {
-                  // 在rootChunk中挂载jsonpCallback
-                  source.add('// process ali subpackages runtime in root chunk\n' +
-                    'var context = (function() { return this })() || Function("return this")();\n\n')
-                  source.add(`context[${JSON.stringify(chunkLoadingGlobal)}] = ${globalObject}[${JSON.stringify(chunkLoadingGlobal)}] = require("${relativePath}");\n`)
-                } else {
-                  // 其余chunk中通过context全局传递runtime
-                  source.add('// process ali subpackages runtime in other chunk\n' +
-                    'var context = (function() { return this })() || Function("return this")();\n\n')
-                  source.add(`${globalObject}[${JSON.stringify(chunkLoadingGlobal)}] = context[${JSON.stringify(chunkLoadingGlobal)}];\n`)
-                }
-              } else {
-                source.add(`${globalObject}[${JSON.stringify(chunkLoadingGlobal)}] = require("${relativePath}");\n`)
-              }
-            } else {
-              source.add(`require("${relativePath}");\n`)
-            }
-          })
-
-          if (isRuntime) {
-            source.add('var context = (function() { return this })() || Function("return this")();\n')
-            source.add(`
-// Fix babel runtime in some quirky environment like ali & qq dev.
-try {
-  if(!context.console){
-    context.console = console;
-    context.setInterval = setInterval;
-    context.setTimeout = setTimeout;
-    context.JSON = JSON;
-    context.Math = Math;
-    context.Date = Date;
-    context.RegExp = RegExp;
-    context.Infinity = Infinity;
-    context.isFinite = isFinite;
-    context.parseFloat = parseFloat;
-    context.parseInt = parseInt;
-    context.Promise = Promise;
-    context.WeakMap = WeakMap;
-    context.RangeError = RangeError;
-    context.TypeError = TypeError;
-    context.Uint8Array = Uint8Array;
-    context.DataView = DataView;
-    context.ArrayBuffer = ArrayBuffer;
-    context.Symbol = Symbol;
-    context.Reflect = Reflect;
-    context.Object = Object;
-    context.Error = Error;
-    context.Array = Array;
-    context.Float32Array = Float32Array;
-    context.Float64Array = Float64Array;
-    context.Int16Array = Int16Array;
-    context.Int32Array = Int32Array;
-    context.Int8Array = Int8Array;
-    context.Uint16Array = Uint16Array;
-    context.Uint32Array = Uint32Array;
-    context.Uint8ClampedArray = Uint8ClampedArray;
-    context.String = String;
-    context.Function = Function;
-    context.SyntaxError = SyntaxError;
-    context.decodeURIComponent = decodeURIComponent;
-    context.encodeURIComponent = encodeURIComponent;
-  }
-} catch(e){
-}\n`)
-            source.add(originalSource)
-            source.add(`\nmodule.exports = ${globalObject}[${JSON.stringify(chunkLoadingGlobal)}];\n`)
-          } else {
-            source.add(originalSource)
-          }
-
-          compilation.assets[chunkFile] = source
-          processedChunk.add(chunk)
-        }
-
-        compilation.chunkGroups.forEach((chunkGroup) => {
-          if (!chunkGroup.isInitial()) {
-            return
-          }
-
-          let runtimeChunk, entryChunk
-          let middleChunks = []
-
-          let chunksLength = chunkGroup.chunks.length
-
-          chunkGroup.chunks.forEach((chunk, index) => {
-            if (index === 0) {
-              runtimeChunk = chunk
-            } else if (index === chunksLength - 1) {
-              entryChunk = chunk
-            } else {
-              middleChunks.push(chunk)
-            }
-          })
-
-          if (runtimeChunk) {
-            processChunk(runtimeChunk, true, [])
-            if (middleChunks.length) {
-              middleChunks.forEach((middleChunk) => {
-                processChunk(middleChunk, false, [runtimeChunk])
-              })
-            }
-            if (entryChunk) {
-              middleChunks.unshift(runtimeChunk)
-              processChunk(entryChunk, false, middleChunks)
-            }
-          }
-        })
       })
     })
 
