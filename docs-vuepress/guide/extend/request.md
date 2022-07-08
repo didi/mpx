@@ -29,15 +29,108 @@ mpx.createApp({
 })
 ```
 
-### 导出说明
+## 导出说明
 
 mpx-fetch提供了一个实例 **xfetch** ，该实例包含以下api
 
-- fetch(config)， 正常的promisify风格的请求方法
-- CancelToken，实例属性，用于创建一个取消请求的凭证。
-- interceptors，实例属性，用于添加拦截器，包含两个属性，request & response
+### fetch(config)， 正常的promisify风格的请求方法
+#### emulateJSON
+设置为 true 时，等价于 header = {'content-type': 'application/x-www-form-urlencoded'}
+
+```js
+mpx.xfetch.fetch({
+	url: 'http://xxx.com',
+	method: 'POST',
+	data: {
+		name: 'test'
+	},
+	emulateJSON: true
+})
+```
+#### timeout
+设置超时时间
+
+```js
+mpx.xfetch.fetch({
+	url: 'http://xxx.com',
+	method: 'POST',
+	data: {
+		name: 'test'
+	},
+	timeout: 10000
+})
+```
+
+#### params
+设置请求参数，参数会以 Query String 的形式进行传递
+```js
+mpx.xfetch.fetch({
+	url: 'http://xxx.com',
+	method: 'POST',
+	params: {
+		age: 10
+	},
+	emulateJSON: true
+})
+```
+
+#### data
+设置请求参数，参数会在 body 中进行传递
+```js
+mpx.xfetch.fetch({
+	url: 'http://xxx.com',
+	method: 'POST',
+	data: {
+		name: 'test'
+	},
+	emulateJSON: true 
+})
+```
+
+#### isPre
+设置预请求开关，若设置为 true，则两次请求间隔在有效期内且请求参数和请求方式完全一致的情况下，返回上一次请求的结果
+```js
+mpx.xfetch.fetch({
+	url: 'http://xxx.com',
+	method: 'POST',
+	params: {
+		age: 10
+	},
+	isPre: true
+})
+```
+
+#### cacheInvalidationTime
+设置预请求缓存有效时长，默认为 5000ms
+```js
+
+mpx.xfetch.fetch({
+	url: 'http://xxx.com',
+	method: 'POST',
+	params: {
+		age: 10
+	},
+	cacheInvalidationTime: 3000
+})
+```
+
+### 请求中断
+CancelToken，实例属性，用于创建一个取消请求的凭证。
+
+```js
+const cancelToken = new mpx.xfetch.CancelToken()
+mpx.xfetch.fetch({
+	url: 'http://xxx.com',
+	data: {
+		name: 'test'
+	},
+	cancelToken: cancelToken.token
+})
+cancelToken.exec('手动取消请求') // 执行后请求中断，返回abort fail
+```
 
 ### 请求拦截器
+interceptors，实例属性，用于添加拦截器，包含两个属性，request & response
 
 ```js
 mpx.xfetch.interceptors.request.use(function(config) {
@@ -52,62 +145,35 @@ mpx.xfetch.interceptors.response.use(function(res) {
 })
 ```
 
-### 请求中断
+### 请求代理
+porxy，实例属性，用于添加拦截器，包含两个属性，request & response
 
 ```js
-const cancelToken = new mpx.xfetch.CancelToken()
-mpx.xfetch.fetch({
-	url: 'http://xxx.com',
-	data: {
-		name: 'test'
-	},
-	cancelToken: cancelToken.token
+mpx.xfetch.interceptors.request.use(function(config) {
+	console.log(config)
+	// 也可以返回promise
+	return config
 })
-cancelToken.exec('手动取消请求') // 执行后请求中断，返回abort fail
-```
-### 支持 emulateJSON
-
-```js
-mpx.xfetch.fetch({
-	url: 'http://xxx.com',
-	method: 'POST',
-	data: {
-		name: 'test'
-	},
-	emulateJSON: true // 等价于header = {'content-type': 'application/x-www-form-urlencoded'}
-})
-```
-### 支持 timeout
-
-```js
-mpx.xfetch.fetch({
-	url: 'http://xxx.com',
-	method: 'POST',
-	data: {
-		name: 'test'
-	},
-	timeout: 10000 // 超时时间
+mpx.xfetch.interceptors.response.use(function(res) {
+	console.log(res)
+	// 也可以返回promise
+	return res
 })
 ```
 
-### 支持 params
-```js
-mpx.xfetch.fetch({
-	url: 'http://xxx.com',
-	params: {
-		name: 'test'
-	}
-})
 
-mpx.xfetch.fetch({
-	url: 'http://xxx.com',
-	method: 'POST',
-	params: {
-		age: 10
-	},
-	data: {
-		name: 'test'
-	},
-	emulateJSON: true // 等价于header = {'content-type': 'application/x-www-form-urlencoded'}
+### 请求参数校验
+Validator
+
+```js
+mpx.xfetch.interceptors.request.use(function(config) {
+	console.log(config)
+	// 也可以返回promise
+	return config
+})
+mpx.xfetch.interceptors.response.use(function(res) {
+	console.log(res)
+	// 也可以返回promise
+	return res
 })
 ```
