@@ -76,7 +76,6 @@ Mpx支持全部小程序平台(微信，支付宝，百度，头条，qq)的增�
 除了上述的核心能力外，Mpx还提供了丰富的周边能力支持，主要包括以下能力：
 
 * [网络请求](../extend/request.md)
-* [数据mock](../extend/mock.md)
 * [api增强抹平](../extend/api-proxy.md)
 * [webview抹平](../../api/extend.md#webview-bridge)
 * [Typescript支持](../tool/ts.md)
