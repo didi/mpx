@@ -93,7 +93,7 @@ Mpx具有以下功能特性：
 * [状态管理](../advance/store.md) (Vuex规范 / 支持多实例Store)
 * 跨团队开发 ([packages](../advance/subpackage.md#packages))
 * 逻辑复用 ([mixins](../advance/mixin.md))
-* [周边能力支持](../extend/) (fetch / api增强 / mock / webview-bridge)
+* [周边能力支持](../extend/) (fetch / api增强 / webview-bridge)
 * 脚手架支持
 * [多平台增强](../advance/platform-support.md#多平台支持) (支持在微信、支付宝、百度、qq、头条小程序平台中进行增强开发)
 * [跨平台编译](../advance/platform-support.md#跨平台编译) (支持以微信为base，将一套代码转换输出到支付宝、百度、qq、头条小程序平台和[web平台](../advance/platform-support.md#跨平台输出web)中运行)
