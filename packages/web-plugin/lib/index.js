@@ -477,6 +477,7 @@ class MpxWebpackPlugin {
       compilation.dependencyFactories.set(ReplaceDependency, new NullFactory())
       compilation.dependencyTemplates.set(ReplaceDependency, new ReplaceDependency.Template())
 
+      // TODO:
       compilation.dependencyFactories.set(AppEntryDependency, new NullFactory())
       compilation.dependencyTemplates.set(AppEntryDependency, new AppEntryDependency.Template())
 
@@ -498,6 +499,7 @@ class MpxWebpackPlugin {
       compilation.dependencyFactories.set(RecordIndependentDependency, new NullFactory())
       compilation.dependencyTemplates.set(RecordIndependentDependency, new RecordIndependentDependency.Template())
 
+      // TODO: 
       compilation.dependencyFactories.set(CommonJsVariableDependency, normalModuleFactory)
       compilation.dependencyTemplates.set(CommonJsVariableDependency, new CommonJsVariableDependency.Template())
 

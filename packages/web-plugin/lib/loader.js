@@ -1,10 +1,10 @@
 const JSON5 = require('json5')
 const parseComponent = require('./parser')
-const createHelpers = require('./helpers')
+// const createHelpers = require('./helpers')
 const loaderUtils = require('loader-utils')
 const parseRequest = require('./utils/parse-request')
 const { matchCondition } = require('./utils/match-condition')
-const fixUsingComponent = require('./utils/fix-using-component')
+// const fixUsingComponent = require('./utils/fix-using-component')
 const addQuery = require('./utils/add-query')
 const async = require('async')
 const processJSON = require('./web/processJSON')
@@ -12,16 +12,16 @@ const processScript = require('./web/processScript')
 const processStyles = require('./web/processStyles')
 const processTemplate = require('./web/processTemplate')
 const getJSONContent = require('./utils/get-json-content')
-const normalize = require('./utils/normalize')
+// const normalize = require('./utils/normalize')
 const getEntryName = require('./utils/get-entry-name')
-const AppEntryDependency = require('./dependencies/AppEntryDependency')
+// const AppEntryDependency = require('./dependencies/AppEntryDependency')
 const RecordResourceMapDependency = require('./dependencies/RecordResourceMapDependency')
-const CommonJsVariableDependency = require('./dependencies/CommonJsVariableDependency')
+// const CommonJsVariableDependency = require('./dependencies/CommonJsVariableDependency')
 const { MPX_APP_MODULE_ID } = require('./utils/const')
 const path = require('path')
 
 module.exports = function (content) {
-  this.cacheable()
+  // this.cacheable()
 
   // 兼容处理处理ts-loader中watch-run/updateFile逻辑，直接跳过当前loader及后续的vue-loader返回内容
   if (path.extname(this.resourcePath) === '.ts') {
@@ -37,12 +37,12 @@ module.exports = function (content) {
 
   const packageRoot = queryObj.packageRoot || mpx.currentPackageRoot
   const packageName = packageRoot || 'main'
-  const independent = queryObj.independent
+  // const independent = queryObj.independent
   const pagesMap = mpx.pagesMap
   const componentsMap = mpx.componentsMap[packageName]
   const mode = mpx.mode
   const env = mpx.env
-  const i18n = mpx.i18n
+  // const i18n = mpx.i18n
   const globalSrcMode = mpx.srcMode
   const localSrcMode = queryObj.mode
   const srcMode = localSrcMode || globalSrcMode
@@ -71,6 +71,7 @@ module.exports = function (content) {
   const filePath = this.resourcePath
   const moduleId = ctorType === 'app' ? MPX_APP_MODULE_ID : 'm' + mpx.pathHash(filePath)
 
+  // 将mpx文件 分成四部分
   const parts = parseComponent(content, {
     filePath,
     needMap: this.sourceMap,
@@ -78,9 +79,9 @@ module.exports = function (content) {
     env
   })
 
-  const {
-    getRequire
-  } = createHelpers(loaderContext)
+  // const {
+  //   getRequire
+  // } = createHelpers(loaderContext)
 
   let output = ''
   const callback = this.async()
@@ -111,7 +112,7 @@ module.exports = function (content) {
         try {
           let ret = JSON5.parse(parts.json.content)
           if (ret.usingComponents) {
-            fixUsingComponent(ret.usingComponents, mode)
+            // fixUsingComponent(ret.usingComponents, mode)
             usingComponents = usingComponents.concat(Object.keys(ret.usingComponents))
           }
           if (ret.componentGenerics) {
@@ -208,138 +209,138 @@ module.exports = function (content) {
         })
       }
 
-      const moduleGraph = this._compilation.moduleGraph
+      // const moduleGraph = this._compilation.moduleGraph
 
-      const issuer = moduleGraph.getIssuer(this._module)
+      // const issuer = moduleGraph.getIssuer(this._module)
 
-      if (issuer) {
-        return callback(new Error(`Current ${ctorType} [${this.resourcePath}] is issued by [${issuer.resource}], which is not allowed!`))
-      }
+      // if (issuer) {
+      //   return callback(new Error(`Current ${ctorType} [${this.resourcePath}] is issued by [${issuer.resource}], which is not allowed!`))
+      // }
 
-      if (ctorType === 'app') {
-        const appName = getEntryName(this)
-        this._module.addPresentationalDependency(new AppEntryDependency(resourcePath, appName))
-      }
+      // if (ctorType === 'app') {
+      //   const appName = getEntryName(this)
+      //   this._module.addPresentationalDependency(new AppEntryDependency(resourcePath, appName))
+      // }
 
-      // 注入模块id及资源路径
-      output += `global.currentModuleId = ${JSON.stringify(moduleId)}\n`
-      if (!isProduction) {
-        output += `global.currentResource = ${JSON.stringify(filePath)}\n`
-      }
+      // // 注入模块id及资源路径
+      // output += `global.currentModuleId = ${JSON.stringify(moduleId)}\n`
+      // if (!isProduction) {
+      //   output += `global.currentResource = ${JSON.stringify(filePath)}\n`
+      // }
 
-      // 为app注入i18n
-      if (i18n && ctorType === 'app') {
-        const i18nWxsPath = normalize.lib('runtime/i18n.wxs')
-        const i18nWxsLoaderPath = normalize.lib('wxs/i18n-loader.js')
-        const i18nWxsRequest = i18nWxsLoaderPath + '!' + i18nWxsPath
-        this._module.addDependency(new CommonJsVariableDependency(i18nWxsRequest))
-        // 避免该模块被concatenate导致注入的i18n没有最先执行
-        this._module.buildInfo.moduleConcatenationBailout = 'i18n'
-      }
+      // // 为app注入i18n
+      // if (i18n && ctorType === 'app') {
+      //   const i18nWxsPath = normalize.lib('runtime/i18n.wxs')
+      //   const i18nWxsLoaderPath = normalize.lib('wxs/i18n-loader.js')
+      //   const i18nWxsRequest = i18nWxsLoaderPath + '!' + i18nWxsPath
+      //   this._module.addDependency(new CommonJsVariableDependency(i18nWxsRequest))
+      //   // 避免该模块被concatenate导致注入的i18n没有最先执行
+      //   this._module.buildInfo.moduleConcatenationBailout = 'i18n'
+      // }
 
-      // 为独立分包注入init module
-      if (independent && typeof independent === 'string') {
-        const independentLoader = normalize.lib('independent-loader.js')
-        const independentInitRequest = `!!${independentLoader}!${independent}`
-        this._module.addDependency(new CommonJsVariableDependency(independentInitRequest))
-        // 避免该模块被concatenate导致注入的independent init没有最先执行
-        this._module.buildInfo.moduleConcatenationBailout = 'independent init'
-      }
+      // // 为独立分包注入init module
+      // if (independent && typeof independent === 'string') {
+      //   const independentLoader = normalize.lib('independent-loader.js')
+      //   const independentInitRequest = `!!${independentLoader}!${independent}`
+      //   this._module.addDependency(new CommonJsVariableDependency(independentInitRequest))
+      //   // 避免该模块被concatenate导致注入的independent init没有最先执行
+      //   this._module.buildInfo.moduleConcatenationBailout = 'independent init'
+      // }
 
-      // 注入构造函数
-      let ctor = 'App'
-      if (ctorType === 'page') {
-        // swan也默认使用Page构造器
-        if (mpx.forceUsePageCtor || mode === 'ali' || mode === 'swan') {
-          ctor = 'Page'
-        } else {
-          ctor = 'Component'
-        }
-      } else if (ctorType === 'component') {
-        ctor = 'Component'
-      }
-      output += `global.currentCtor = ${ctor}\n`
-      output += `global.currentCtorType = ${JSON.stringify(ctor.replace(/^./, (match) => {
-        return match.toLowerCase()
-      }))}\n`
-      output += `global.currentResourceType = ${JSON.stringify(ctorType)}\n`
+      // // 注入构造函数
+      // let ctor = 'App'
+      // if (ctorType === 'page') {
+      //   // swan也默认使用Page构造器
+      //   if (mpx.forceUsePageCtor || mode === 'ali' || mode === 'swan') {
+      //     ctor = 'Page'
+      //   } else {
+      //     ctor = 'Component'
+      //   }
+      // } else if (ctorType === 'component') {
+      //   ctor = 'Component'
+      // }
+      // output += `global.currentCtor = ${ctor}\n`
+      // output += `global.currentCtorType = ${JSON.stringify(ctor.replace(/^./, (match) => {
+      //   return match.toLowerCase()
+      // }))}\n`
+      // output += `global.currentResourceType = ${JSON.stringify(ctorType)}\n`
 
-      // template
-      output += '/* template */\n'
-      const template = parts.template
+      // // template
+      // output += '/* template */\n'
+      // const template = parts.template
 
-      if (template) {
-        const extraOptions = {
-          ...template.src ? {
-            ...queryObj,
-            resourcePath
-          } : null,
-          hasScoped,
-          hasComment,
-          isNative,
-          moduleId,
-          usingComponents
-          // 添加babel处理渲染函数中可能包含的...展开运算符
-          // 由于...运算符应用范围极小以及babel成本极高，先关闭此特性后续看情况打开
-          // needBabel: true
-        }
-        if (template.src) extraOptions.resourcePath = resourcePath
-        // 基于global.currentInject来注入模板渲染函数和refs等信息
-        output += getRequire('template', template, extraOptions) + '\n'
-      }
+      // if (template) {
+      //   const extraOptions = {
+      //     ...template.src ? {
+      //       ...queryObj,
+      //       resourcePath
+      //     } : null,
+      //     hasScoped,
+      //     hasComment,
+      //     isNative,
+      //     moduleId,
+      //     usingComponents
+      //     // 添加babel处理渲染函数中可能包含的...展开运算符
+      //     // 由于...运算符应用范围极小以及babel成本极高，先关闭此特性后续看情况打开
+      //     // needBabel: true
+      //   }
+      //   if (template.src) extraOptions.resourcePath = resourcePath
+      //   // 基于global.currentInject来注入模板渲染函数和refs等信息
+      //   output += getRequire('template', template, extraOptions) + '\n'
+      // }
 
       // styles
-      output += '/* styles */\n'
-      if (parts.styles.length) {
-        parts.styles.forEach((style, i) => {
-          const scoped = style.scoped || autoScope
-          const extraOptions = {
-            // style src会被特殊处理为全局复用样式，不添加resourcePath，添加isStatic及issuerFile
-            ...style.src ? {
-              ...queryObj,
-              isStatic: true,
-              issuerResource: addQuery(this.resource, { type: 'styles' }, true)
-            } : null,
-            moduleId,
-            scoped
-          }
-          // require style
-          output += getRequire('styles', style, extraOptions, i) + '\n'
-        })
-      }
+      // output += '/* styles */\n'
+      // if (parts.styles.length) {
+      //   parts.styles.forEach((style, i) => {
+      //     const scoped = style.scoped || autoScope
+      //     const extraOptions = {
+      //       // style src会被特殊处理为全局复用样式，不添加resourcePath，添加isStatic及issuerFile
+      //       ...style.src ? {
+      //         ...queryObj,
+      //         isStatic: true,
+      //         issuerResource: addQuery(this.resource, { type: 'styles' }, true)
+      //       } : null,
+      //       moduleId,
+      //       scoped
+      //     }
+      //     // require style
+      //     output += getRequire('styles', style, extraOptions, i) + '\n'
+      //   })
+      // }
 
-      if (parts.styles.filter(style => !style.src).length === 0 && ctorType === 'app' && mode === 'ali') {
-        output += getRequire('styles', {}, {}, parts.styles.length) + '\n'
-      }
+      // if (parts.styles.filter(style => !style.src).length === 0 && ctorType === 'app' && mode === 'ali') {
+      //   output += getRequire('styles', {}, {}, parts.styles.length) + '\n'
+      // }
 
       // json
-      output += '/* json */\n'
-      // 给予json默认值, 确保生成json request以自动补全json
-      const json = parts.json || {}
-      output += getRequire('json', json, json.src && {
-        ...queryObj,
-        resourcePath
-      }) + '\n'
+      // output += '/* json */\n'
+      // // 给予json默认值, 确保生成json request以自动补全json
+      // const json = parts.json || {}
+      // output += getRequire('json', json, json.src && {
+      //   ...queryObj,
+      //   resourcePath
+      // }) + '\n'
 
-      // script
-      output += '/* script */\n'
-      let scriptSrcMode = srcMode
-      // 给予script默认值, 确保生成js request以自动补全js
-      const script = parts.script || {}
-      if (script) {
-        scriptSrcMode = script.mode || scriptSrcMode
-        if (scriptSrcMode) output += `global.currentSrcMode = ${JSON.stringify(scriptSrcMode)}\n`
-        // 传递ctorType以补全js内容
-        const extraOptions = {
-          ...script.src ? {
-            ...queryObj,
-            resourcePath
-          } : null,
-          ctorType
-        }
-        output += getRequire('script', script, extraOptions) + '\n'
-      }
-      callback(null, output)
+      // // script
+      // output += '/* script */\n'
+      // let scriptSrcMode = srcMode
+      // // 给予script默认值, 确保生成js request以自动补全js
+      // const script = parts.script || {}
+      // if (script) {
+      //   scriptSrcMode = script.mode || scriptSrcMode
+      //   if (scriptSrcMode) output += `global.currentSrcMode = ${JSON.stringify(scriptSrcMode)}\n`
+      //   // 传递ctorType以补全js内容
+      //   const extraOptions = {
+      //     ...script.src ? {
+      //       ...queryObj,
+      //       resourcePath
+      //     } : null,
+      //     ctorType
+      //   }
+      //   output += getRequire('script', script, extraOptions) + '\n'
+      // }
+      // callback(null, output)
     }
   ], callback)
 }
