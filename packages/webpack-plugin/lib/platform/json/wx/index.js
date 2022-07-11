@@ -246,7 +246,7 @@ module.exports = function getSpec ({ warn, error }) {
         jd: deletePath()
       },
       {
-        test: 'navigateToMiniProgramAppIdList|networkTimeout|permission',
+        test: 'navigateToMiniProgramAppIdList|networkTimeout',
         ali: deletePath(),
         jd: deletePath()
       },

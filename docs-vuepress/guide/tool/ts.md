@@ -1,4 +1,4 @@
-# Typescript支持
+# 使用TypeScript开发小程序
 
 ## 什么是TypeScript
 

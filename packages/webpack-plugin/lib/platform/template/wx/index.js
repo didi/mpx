@@ -266,13 +266,39 @@ module.exports = function getSpec ({ warn, error }) {
         }
       },
       {
+        // style样式绑定
+        test: /^(style|wx:style)$/,
+        web ({ value }, { el }) {
+          if (el.isStyleParsed) {
+            return false
+          }
+          let styleBinding = []
+          el.isStyleParsed = true
+          el.attrsList.map((item, index) => {
+            const parsed = parseMustache(item.value)
+            if (item.name === 'style') {
+              if (parsed.hasBinding || parsed.result.indexOf('rpx') > -1) {
+                styleBinding.push(parseMustache(item.value).result)
+              } else {
+                styleBinding.push(JSON.stringify(item.value))
+              }
+            } else if (item.name === 'wx:style') {
+              styleBinding.push(parseMustache(item.value).result)
+            }
+          })
+          return {
+            name: ':style',
+            value: `[${styleBinding}] | transRpxStyle`
+          }
+        }
+      },
+      {
         // 样式类名绑定
-        test: /^wx:(class|style)$/,
-        web ({ name, value }) {
-          const dir = this.test.exec(name)[1]
+        test: /^wx:(class)$/,
+        web ({ value }) {
           const parsed = parseMustache(value)
           return {
-            name: ':' + dir,
+            name: ':class',
             value: parsed.result
           }
         },

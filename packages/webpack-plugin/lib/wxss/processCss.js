@@ -17,129 +17,133 @@ const modulesScope = require('postcss-modules-scope')
 const modulesValues = require('postcss-modules-values')
 const valueParser = require('postcss-value-parser')
 const isUrlRequest = require('../utils/is-url-request')
+// css-loader-parser
 
-const parserPlugin = postcss.plugin('css-loader-parser', function (options) {
-  return function (css) {
-    const imports = {}
-    let exports = {}
-    const importItems = []
-    const urlItems = []
+const parserPlugin = function (options) {
+  return {
+    postcssPlugin: 'css-loader-parser',
+    Once (css) {
+      const imports = {}
+      let exports = {}
+      const importItems = []
+      const urlItems = []
 
-    function replaceImportsInString (str) {
+      function replaceImportsInString (str) {
+        if (options.import) {
+          const tokens = valueParser(str)
+          tokens.walk(function (node) {
+            if (node.type !== 'word') {
+              return
+            }
+            const token = node.value
+            const importIndex = imports['$' + token]
+            if (typeof importIndex === 'number') {
+              node.value = '___CSS_LOADER_IMPORT___' + importIndex + '___'
+            }
+          })
+          return tokens.toString()
+        }
+        return str
+      }
+
       if (options.import) {
-        const tokens = valueParser(str)
-        tokens.walk(function (node) {
-          if (node.type !== 'word') {
+        css.walkAtRules(/^import$/i, function (rule) {
+          const values = Tokenizer.parseValues(rule.params)
+          let url = values.nodes[0].nodes[0]
+          if (url && url.type === 'url') {
+            url = url.url
+          } else if (url && url.type === 'string') {
+            url = url.value
+          } else throw rule.error('Unexpected format ' + rule.params)
+          if (!url.replace(/\s/g, '').length) {
             return
           }
-          const token = node.value
-          const importIndex = imports['$' + token]
-          if (typeof importIndex === 'number') {
-            node.value = '___CSS_LOADER_IMPORT___' + importIndex + '___'
-          }
-        })
-        return tokens.toString()
-      }
-      return str
-    }
+          values.nodes[0].nodes.shift()
+          const mediaQuery = Tokenizer.stringifyValues(values)
 
-    if (options.import) {
-      css.walkAtRules(/^import$/i, function (rule) {
-        const values = Tokenizer.parseValues(rule.params)
-        let url = values.nodes[0].nodes[0]
-        if (url && url.type === 'url') {
-          url = url.url
-        } else if (url && url.type === 'string') {
-          url = url.value
-        } else throw rule.error('Unexpected format ' + rule.params)
-        if (!url.replace(/\s/g, '').length) {
-          return
+          if (isUrlRequest(url, options.root)) {
+            url = loaderUtils.urlToRequest(url, options.root)
+          }
+
+          importItems.push({
+            url: url,
+            mediaQuery: mediaQuery
+          })
+          rule.remove()
+        })
+      }
+
+      const icss = icssUtils.extractICSS(css)
+      exports = icss.icssExports
+      Object.keys(icss.icssImports).forEach(function (key) {
+        const url = loaderUtils.parseString(key)
+        Object.keys(icss.icssImports[key]).forEach(function (prop) {
+          imports['$' + prop] = importItems.length
+          importItems.push({
+            url: url,
+            export: icss.icssImports[key][prop]
+          })
+        })
+      })
+
+      Object.keys(exports).forEach(function (exportName) {
+        exports[exportName] = replaceImportsInString(exports[exportName])
+      })
+
+      function isAlias (url) {
+        // Handle alias starting by / and root disabled
+        return url !== options.resolve(url)
+      }
+
+      function processNode (item) {
+        switch (item.type) {
+          case 'value':
+            item.nodes.forEach(processNode)
+            break
+          case 'nested-item':
+            item.nodes.forEach(processNode)
+            break
+          case 'item':
+            const importIndex = imports['$' + item.name]
+            if (typeof importIndex === 'number') {
+              item.name = '___CSS_LOADER_IMPORT___' + importIndex + '___'
+            }
+            break
+          case 'url':
+            if (options.url && item.url.replace(/\s/g, '').length && !/^#/.test(item.url) && (isAlias(item.url) || isUrlRequest(item.url, options.root))) {
+              // Strip quotes, they will be re-added if the module needs them
+              item.stringType = ''
+              delete item.innerSpacingBefore
+              delete item.innerSpacingAfter
+              const url = item.url
+              item.url = '___CSS_LOADER_URL___' + urlItems.length + '___'
+              urlItems.push({
+                url: url
+              })
+            }
+            break
         }
-        values.nodes[0].nodes.shift()
-        const mediaQuery = Tokenizer.stringifyValues(values)
+      }
 
-        if (isUrlRequest(url, options.root)) {
-          url = loaderUtils.urlToRequest(url, options.root)
+      css.walkDecls(function (decl) {
+        const values = Tokenizer.parseValues(decl.value)
+        values.nodes.forEach(function (value) {
+          value.nodes.forEach(processNode)
+        })
+        decl.value = Tokenizer.stringifyValues(values)
+      })
+      css.walkAtRules(function (atrule) {
+        if (typeof atrule.params === 'string') {
+          atrule.params = replaceImportsInString(atrule.params)
         }
-
-        importItems.push({
-          url: url,
-          mediaQuery: mediaQuery
-        })
-        rule.remove()
       })
+
+      options.importItems = importItems
+      options.urlItems = urlItems
+      options.exports = exports
     }
-
-    const icss = icssUtils.extractICSS(css)
-    exports = icss.icssExports
-    Object.keys(icss.icssImports).forEach(function (key) {
-      const url = loaderUtils.parseString(key)
-      Object.keys(icss.icssImports[key]).forEach(function (prop) {
-        imports['$' + prop] = importItems.length
-        importItems.push({
-          url: url,
-          export: icss.icssImports[key][prop]
-        })
-      })
-    })
-
-    Object.keys(exports).forEach(function (exportName) {
-      exports[exportName] = replaceImportsInString(exports[exportName])
-    })
-
-    function isAlias (url) {
-      // Handle alias starting by / and root disabled
-      return url !== options.resolve(url)
-    }
-
-    function processNode (item) {
-      switch (item.type) {
-        case 'value':
-          item.nodes.forEach(processNode)
-          break
-        case 'nested-item':
-          item.nodes.forEach(processNode)
-          break
-        case 'item':
-          const importIndex = imports['$' + item.name]
-          if (typeof importIndex === 'number') {
-            item.name = '___CSS_LOADER_IMPORT___' + importIndex + '___'
-          }
-          break
-        case 'url':
-          if (options.url && item.url.replace(/\s/g, '').length && !/^#/.test(item.url) && (isAlias(item.url) || isUrlRequest(item.url, options.root))) {
-            // Strip quotes, they will be re-added if the module needs them
-            item.stringType = ''
-            delete item.innerSpacingBefore
-            delete item.innerSpacingAfter
-            const url = item.url
-            item.url = '___CSS_LOADER_URL___' + urlItems.length + '___'
-            urlItems.push({
-              url: url
-            })
-          }
-          break
-      }
-    }
-
-    css.walkDecls(function (decl) {
-      const values = Tokenizer.parseValues(decl.value)
-      values.nodes.forEach(function (value) {
-        value.nodes.forEach(processNode)
-      })
-      decl.value = Tokenizer.stringifyValues(values)
-    })
-    css.walkAtRules(function (atrule) {
-      if (typeof atrule.params === 'string') {
-        atrule.params = replaceImportsInString(atrule.params)
-      }
-    })
-
-    options.importItems = importItems
-    options.urlItems = urlItems
-    options.exports = exports
   }
-})
+}
 
 module.exports = function processCss (inputSource, inputMap, options, callback) {
   const query = options.query

@@ -4,7 +4,7 @@ const runRules = require('../run-rules')
  * @desc 针对每一个组件(属性，event，指令等)执行规则判断
  * @params cfgs [{test: 'camera', props:[], event: []}] 组件配置列表
  * @params spec ../index.js中公共的spec
-*/
+ */
 module.exports = function normalizeComponentRules (cfgs, spec) {
   return cfgs.map((cfg) => {
     const result = {}
@@ -25,9 +25,8 @@ module.exports = function normalizeComponentRules (cfgs, spec) {
           data
         }
         el.attrsList.forEach((attr) => {
-          let rAttr = runRules(spec.preAttrs, attr, options)
           const meta = {}
-          rAttr = runRules(spec.directive, rAttr, {
+          let rAttr = runRules(spec.directive, attr, {
             ...options,
             meta
           })

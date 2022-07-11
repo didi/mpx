@@ -5,7 +5,6 @@
 */
 var loaderUtils = require('loader-utils')
 var processCss = require('./processCss')
-var getImportPrefix = require('./getImportPrefix')
 var compileExports = require('./compile-exports')
 var createResolver = require('./createResolver')
 
@@ -26,14 +25,11 @@ module.exports = function (content) {
   }, function (err, result) {
     if (err) return callback(err)
 
-    // for importing CSS
-    var importUrlPrefix = getImportPrefix(this, query)
-
     function importItemMatcher (item) {
       var match = result.importItemRegExp.exec(item)
       var idx = +match[1]
       var importItem = result.importItems[idx]
-      var importUrl = importUrlPrefix + importItem.url
+      var importUrl = importItem.url
       return '" + require(' + loaderUtils.stringifyRequest(this, importUrl) + ')' +
         '[' + JSON.stringify(importItem.export) + '] + "'
     }

@@ -2,7 +2,6 @@ const genComponentTag = require('../utils/gen-component-tag')
 const loaderUtils = require('loader-utils')
 const addQuery = require('../utils/add-query')
 const normalize = require('../utils/normalize')
-const builtInLoaderPath = normalize.lib('built-in-loader')
 const optionProcessorPath = normalize.lib('runtime/optionProcessor')
 const tabBarContainerPath = normalize.lib('runtime/components/web/mpx-tab-bar-container.vue')
 const tabBarPath = normalize.lib('runtime/components/web/mpx-tab-bar.vue')
@@ -21,24 +20,36 @@ function shallowStringify (obj) {
   return `{${arr.join(',')}}`
 }
 
-module.exports = function (script, options, callback) {
-  const ctorType = options.ctorType
-  const builtInComponentsMap = options.builtInComponentsMap
-  const localComponentsMap = options.localComponentsMap
-  const localPagesMap = options.localPagesMap
-  const srcMode = options.srcMode
-  const loaderContext = options.loaderContext
-  const isProduction = options.isProduction
-  const componentId = options.componentId
-  const getRequireForSrc = options.getRequireForSrc
-  const i18n = options.i18n
-  const jsonConfig = options.jsonConfig
+function getAsyncChunkName (chunkName) {
+  if (chunkName && typeof chunkName !== 'boolean') {
+    return `/* webpackChunkName: "${chunkName}" */`
+  }
+  return ''
+}
+
+module.exports = function (script, {
+  loaderContext,
+  ctorType,
+  srcMode,
+  isProduction,
+  componentGenerics,
+  jsonConfig,
+  outputPath,
+  tabBarMap,
+  tabBarStr,
+  builtInComponentsMap,
+  genericsInfo,
+  wxsModuleMap,
+  localComponentsMap,
+  localPagesMap
+}, callback) {
+  const mpx = loaderContext.getMpx()
+  const {
+    i18n,
+    projectRoot
+  } = mpx
+
   const tabBar = jsonConfig.tabBar
-  const tabBarMap = options.tabBarMap
-  const tabBarStr = options.tabBarStr
-  const genericsInfo = options.genericsInfo
-  const componentGenerics = options.componentGenerics
-  const forceDisableBuiltInLoader = options.forceDisableBuiltInLoader
 
   const emitWarning = (msg) => {
     loaderContext.emitWarning(
@@ -50,7 +61,7 @@ module.exports = function (script, options, callback) {
   let tabBarPagesMap = {}
   if (tabBar && tabBarMap) {
     // 挂载tabBar组件
-    const tabBarRequest = stringifyRequest(addQuery(tabBar.custom ? './custom-tab-bar/index' : tabBarPath, { component: true }))
+    const tabBarRequest = stringifyRequest(addQuery(tabBar.custom ? './custom-tab-bar/index' : tabBarPath, { isComponent: true }))
     tabBarPagesMap['mpx-tab-bar'] = `getComponent(require(${tabBarRequest}))`
     // 挂载tabBar页面
     Object.keys(tabBarMap).forEach((pagePath) => {
@@ -58,7 +69,7 @@ module.exports = function (script, options, callback) {
       if (pageCfg) {
         const pageRequest = stringifyRequest(pageCfg.resource)
         if (pageCfg.async) {
-          tabBarPagesMap[pagePath] = `()=>import(${pageRequest}).then(res => getComponent(res, { __mpxPageRoute: ${JSON.stringify(pagePath)} }))`
+          tabBarPagesMap[pagePath] = `()=>import(${getAsyncChunkName(pageCfg.async)}${pageRequest}).then(res => getComponent(res, { __mpxPageRoute: ${JSON.stringify(pagePath)} }))`
         } else {
           tabBarPagesMap[pagePath] = `getComponent(require(${pageRequest}), { __mpxPageRoute: ${JSON.stringify(pagePath)} })`
         }
@@ -108,6 +119,7 @@ module.exports = function (script, options, callback) {
         content += `  import '@mpxjs/webpack-plugin/lib/runtime/base.styl'
   import Vue from 'vue'
   import VueRouter from 'vue-router'
+  import Mpx from '@mpxjs/core'
   Vue.use(VueRouter)
   global.getApp = function(){}
   global.getCurrentPages = function(){
@@ -125,8 +137,8 @@ module.exports = function (script, options, callback) {
   global.__networkTimeout = ${JSON.stringify(jsonConfig.networkTimeout)}
   global.__mpxGenericsMap = {}
   global.__style = ${JSON.stringify(jsonConfig.style || 'v1')}
-  global.__mpxPageConfig = ${JSON.stringify(jsonConfig.window)}\n`
-
+  global.__mpxPageConfig = ${JSON.stringify(jsonConfig.window)}
+  global.__mpxTransRpxFn = ${mpx.webConfig.transRpxFn}\n`
         if (i18n) {
           const i18nObj = Object.assign({}, i18n)
           content += `  import VueI18n from 'vue-i18n'
@@ -149,16 +161,15 @@ module.exports = function (script, options, callback) {
       i18n.mergeLocaleMessage(locale, newMessages[locale])
     })
   }
-  if(global.__mpx) {
-    global.__mpx.i18n = i18n
-  }\n`
+  Mpx.i18n = i18n
+  \n`
         }
       }
       // 注入wxs模块
       content += '  const wxsModules = {}\n'
-      if (options.wxsModuleMap) {
-        Object.keys(options.wxsModuleMap).forEach((module) => {
-          const src = loaderUtils.urlToRequest(options.wxsModuleMap[module], options.projectRoot)
+      if (wxsModuleMap) {
+        Object.keys(wxsModuleMap).forEach((module) => {
+          const src = loaderUtils.urlToRequest(wxsModuleMap[module], projectRoot)
           const expression = `require(${stringifyRequest(src)})`
           content += `  wxsModules.${module} = ${expression}\n`
         })
@@ -173,7 +184,7 @@ module.exports = function (script, options, callback) {
           pagesMap[pagePath] = `getComponent(require(${stringifyRequest(tabBarContainerPath)}), { __mpxBuiltIn: true })`
         } else {
           if (pageCfg.async) {
-            pagesMap[pagePath] = `()=>import(${pageRequest}).then(res => getComponent(res, { __mpxPageRoute: ${JSON.stringify(pagePath)} }))`
+            pagesMap[pagePath] = `()=>import(${getAsyncChunkName(pageCfg.async)} ${pageRequest}).then(res => getComponent(res, { __mpxPageRoute: ${JSON.stringify(pagePath)} }))`
           } else {
             // 为了保持小程序中app->page->component的js执行顺序，所有的page和component都改为require引入
             pagesMap[pagePath] = `getComponent(require(${pageRequest}), { __mpxPageRoute: ${JSON.stringify(pagePath)} })`
@@ -189,7 +200,7 @@ module.exports = function (script, options, callback) {
         const componentCfg = localComponentsMap[componentName]
         const componentRequest = stringifyRequest(componentCfg.resource)
         if (componentCfg.async) {
-          componentsMap[componentName] = `()=>import(${componentRequest}).then(res => getComponent(res))`
+          componentsMap[componentName] = `()=>import(${getAsyncChunkName(componentCfg.async)}${componentRequest}).then(res => getComponent(res))`
         } else {
           componentsMap[componentName] = `getComponent(require(${componentRequest}))`
         }
@@ -197,7 +208,7 @@ module.exports = function (script, options, callback) {
 
       Object.keys(builtInComponentsMap).forEach((componentName) => {
         const componentCfg = builtInComponentsMap[componentName]
-        const componentRequest = forceDisableBuiltInLoader ? stringifyRequest(componentCfg.resource) : stringifyRequest('builtInComponent.vue!=!' + builtInLoaderPath + '!' + componentCfg.resource)
+        const componentRequest = stringifyRequest(componentCfg.resource)
         componentsMap[componentName] = `getComponent(require(${componentRequest}), { __mpxBuiltIn: true })`
       })
 
@@ -206,9 +217,11 @@ module.exports = function (script, options, callback) {
         content += `  global.currentResource = ${JSON.stringify(loaderContext.resourcePath)}\n`
       }
       // 为了正确获取currentSrcMode便于运行时进行转换，对于src引入的组件script采用require方式引入(由于webpack会将import的执行顺序上升至最顶)，这意味着对于src引入脚本中的named export将不会生效，不过鉴于mpx和小程序中本身也没有在组件script中声明export的用法，所以应该没有影响
+      content += '\n\n\n/** Source start **/\n'
       content += script.src
-        ? (getRequireForSrc('script', script) + '\n')
-        : (script.content + '\n') + '\n'
+        ? `require(${stringifyRequest(script.src)})\n`
+        : script.content
+      content += '\n/** Source end **/\n\n\n'
       // createApp/Page/Component执行完成后立刻获取当前的option并暂存
       content += `  const currentOption = global.currentOption\n`
       // 获取pageConfig
@@ -239,7 +252,7 @@ module.exports = function (script, options, callback) {
     currentOption,
     ${JSON.stringify(ctorType)},
     ${JSON.stringify(firstPage)},
-    ${JSON.stringify(componentId)},
+    ${JSON.stringify(outputPath)},
     ${JSON.stringify(pageConfig)},
     // @ts-ignore
     ${shallowStringify(pagesMap)},

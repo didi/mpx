@@ -104,13 +104,6 @@ if (__mpx_mode__ === 'web') {
   watch = vm.$watch.bind(vm)
   const set = Vue.set.bind(Vue)
   const del = Vue.delete.bind(Vue)
-  const remove = function (...args) {
-    if (process.env.NODE_ENV !== 'production') {
-      error('$remove will be removed in next minor version, please use $delete instead!', this.$rawOptions && this.$rawOptions.mpxFileResource)
-    }
-    return del.apply(this, args)
-  }
-  // todo 补齐web必要api
   APIs = {
     createApp,
     createPage,
@@ -124,7 +117,6 @@ if (__mpx_mode__ === 'web') {
     watch,
     use,
     set,
-    remove,
     delete: del,
     getMixin,
     implement
@@ -164,16 +156,8 @@ if (__mpx_mode__ === 'web') {
   }
 
   const vm = {}
-
   watch = function (expOrFn, cb, options) {
     return watchWithVm(vm, expOrFn, cb, options)
-  }
-
-  const remove = function (...args) {
-    if (process.env.NODE_ENV !== 'production') {
-      error('$remove will be removed in next minor version, please use $delete instead!', this.$rawOptions && this.$rawOptions.mpxFileResource)
-    }
-    return del.apply(this, args)
   }
 
   APIs = {
@@ -189,7 +173,6 @@ if (__mpx_mode__ === 'web') {
     watch,
     use,
     set,
-    remove,
     delete: del,
     getMixin,
     implement
@@ -197,7 +180,6 @@ if (__mpx_mode__ === 'web') {
 
   InstanceAPIs = {
     $set: set,
-    $remove: remove,
     $delete: del
   }
 }

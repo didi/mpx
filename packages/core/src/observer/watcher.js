@@ -24,6 +24,7 @@ export default class Watcher {
       this.deep = !!options.deep
       this.lazy = !!options.lazy
       this.sync = !!options.sync
+      this.name = options.name
     } else {
       this.deep = this.lazy = this.sync = false
     }
@@ -31,6 +32,10 @@ export default class Watcher {
     this.id = ++uid // uid for batching
     this.active = true
     this.immediateAsync = false
+    // 是否暂停，默认为否
+    this.paused = false
+    // 是否可被暂停，默认为否，不可被暂停
+    this.pausable = !!(options && options.pausable) || false
     this.dirty = this.lazy // for lazy watchers
     this.deps = []
     this.newDeps = []
@@ -115,7 +120,7 @@ export default class Watcher {
   // 支持临时将某个异步watcher修改为sync执行，在模拟setData时使用
   update (sync) {
     /* istanbul ignore else */
-    if (this.lazy) {
+    if (this.lazy || this.paused) {
       this.dirty = true
     } else if (this.sync || sync) {
       if (sync) dequeueWatcher(this)
@@ -125,6 +130,21 @@ export default class Watcher {
     }
   }
 
+  pause () {
+    // pausable=false 不可暂停
+    if (!this.pausable) return
+    this.paused = true
+  }
+  resume () {
+    // pausable=false 不可恢复
+    if (!this.pausable) return
+    // paused 阶段被触发，则 resume 后执行一次run
+    this.paused = false
+    if (this.dirty) {
+      this.dirty = false
+      this.run()
+    }
+  }
   /**
    * Scheduler job interface.
    * Will be called by the scheduler.

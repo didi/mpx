@@ -41,12 +41,14 @@ export default class MPXProxy {
     this.uid = uid++
     this.name = options.name || ''
     this.options = options
-    // initial -> created -> mounted -> destroyed
-    this.state = 'initial'
+    // beforeCreate -> created -> mounted -> destroyed
+    this.state = BEFORECREATE
     this.lockTask = asyncLock()
     this.ignoreProxyMap = makeMap(EXPORT_MPX.config.ignoreProxyWhiteList)
     if (__mpx_mode__ !== 'web' && __mpx_mode__ !== 'tenon') {
       this._watchers = []
+      this._namedWatchers = {}
+      this._computedWatchers = {}
       this._watcher = null
       this.localKeysMap = {} // 非props key
       this.renderData = {} // 渲染函数中收集的数据
@@ -61,14 +63,31 @@ export default class MPXProxy {
     this.initApi()
     this.callUserHook(BEFORECREATE)
     if (__mpx_mode__ !== 'web' && __mpx_mode__ !== 'tenon') {
-      this.initState(this.options)
+      this.initState()
     }
     this.state = CREATED
     this.callUserHook(CREATED, params)
     if (__mpx_mode__ !== 'web' && __mpx_mode__ !== 'tenon') {
-      // 强制走小程序原生渲染逻辑
-      this.options.__nativeRender__ ? this.doRender() : this.initRender()
+      this.initRender()
     }
+  }
+
+  reCreated (params) {
+    const options = this.options
+    this.state = BEFORECREATE
+    this.callUserHook(BEFORECREATE)
+    if (__mpx_mode__ !== 'web') {
+      this.initComputed(options.computed, true)
+      this.initWatch(options.watch)
+    }
+    this.state = CREATED
+    this.callUserHook(CREATED, params)
+    if (__mpx_mode__ !== 'web') {
+      this.initRender()
+    }
+    this.nextTick(() => {
+      this.mounted()
+    })
   }
 
   renderTaskExecutor (isEmptyRender) {
@@ -117,6 +136,10 @@ export default class MPXProxy {
     this.callUserHook(DESTROYED)
   }
 
+  isDestroyed () {
+    return this.state === DESTROYED
+  }
+
   initApi () {
     // 挂载扩展属性到实例上
     proxy(this.target, this.options.proto, Object.keys(this.options.proto), true, (key) => {
@@ -142,6 +165,12 @@ export default class MPXProxy {
       // 强制执行render
       this.target.$forceUpdate = (...rest) => this.forceUpdate(...rest)
       this.target.$nextTick = fn => this.nextTick(fn)
+      this.target.$getPausableWatchers = () => this._watchers.filter(item => item.pausable)
+      this.target.$getWatcherByName = (name) => {
+        if (!this._namedWatchers) return null
+        return this._namedWatchers[name] || null
+      }
+      this.target.$getRenderWatcher = () => this._watcher
     }
   }
 
@@ -161,10 +190,15 @@ export default class MPXProxy {
     this.initWatch(options.watch)
   }
 
-  initComputed (computedOpt) {
+  initComputed (computedOpt, reInit) {
     if (computedOpt) {
-      this.collectLocalKeys(computedOpt)
-      initComputed(this, this.data, computedOpt)
+      if (reInit) {
+        // target传递null以跳过computed挂载，仅重新初始化watchers
+        initComputed(this, null, computedOpt)
+      } else {
+        this.collectLocalKeys(computedOpt)
+        initComputed(this, this.data, computedOpt)
+      }
     }
   }
 
@@ -187,7 +221,9 @@ export default class MPXProxy {
       })
       Object.assign(this.data, dataFn.call(this.target))
     }
+    // 此时data中不包括props数据
     this.collectLocalKeys(this.data)
+    // 将props数据合并到data中
     Object.keys(initialData).forEach((key) => {
       if (!hasOwn(this.data, key)) {
         // 除了data函数返回的数据外深拷贝切断引用关系，避免后续watch由于小程序内部对data赋值重复触发watch
@@ -241,9 +277,7 @@ export default class MPXProxy {
         if (typeof EXPORT_MPX.config.hookErrorHandler === 'function') {
           EXPORT_MPX.config.hookErrorHandler(e, this.target, hookName)
         } else {
-          setTimeout(() => {
-            throw e
-          })
+          throw e
         }
       }
     }
@@ -258,6 +292,7 @@ export default class MPXProxy {
     while (i--) {
       this._watchers[i].teardown()
     }
+    this._watchers.length = 0
   }
 
   render () {
@@ -409,9 +444,10 @@ export default class MPXProxy {
   }
 
   initRender () {
-    let renderWatcher
+    if (this.options.__nativeRender__) return this.doRender()
+
     if (this.target.__injectedRender) {
-      renderWatcher = new Watcher(this, () => {
+      this._watcher = new Watcher(this, () => {
         try {
           return this.target.__injectedRender()
         } catch (e) {
@@ -420,13 +456,12 @@ export default class MPXProxy {
           }
           this.render()
         }
-      }, noop)
+      }, noop, { pausable: true })
     } else {
-      renderWatcher = new Watcher(this, () => {
+      this._watcher = new Watcher(this, () => {
         this.render()
-      }, noop)
+      }, noop, { pausable: true })
     }
-    this._watcher = renderWatcher
   }
 
   forceUpdate (data, options, callback) {

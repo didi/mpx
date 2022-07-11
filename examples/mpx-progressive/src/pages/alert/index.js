@@ -1,5 +1,5 @@
 Page({
-    handleClick() {
-        console.log('alert-close');
-    }
-});
+  handleClick () {
+    console.log('alert-close')
+  }
+})

@@ -16,6 +16,10 @@ function stringifyQuery (obj, useJSON) {
       return
     }
 
+    if (val === true) {
+      return key
+    }
+
     if (Array.isArray(val)) {
       const key2 = `${key}[]`
       const result = []

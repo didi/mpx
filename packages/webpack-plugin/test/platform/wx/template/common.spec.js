@@ -1,4 +1,4 @@
-const { compileAndParse, warnFn, errorFn, resolve } = require('../../util')
+const { compileAndParse, warnFn, errorFn, lib } = require('../../util')
 
 describe('common spec case', function () {
   afterEach(() => {
@@ -28,7 +28,7 @@ describe('common spec case', function () {
     const output1 = compileAndParse(input1, { srcMode: 'wx', mode: 'swan' })
     const output2 = compileAndParse(input2, { srcMode: 'wx', mode: 'swan' })
     const output3 = compileAndParse(input3, { srcMode: 'wx', mode: 'swan' })
-    const wxsPath = resolve('../lib/runtime/swanHelper.wxs')
+    const wxsPath = lib('runtime/swanHelper.wxs')
     expect(output1).toBe(`<import-sjs module="__swanHelper__" src="~${wxsPath}"></import-sjs><view s-for="t1, t2 in __swanHelper__.processFor(list) trackBy t1.u1">123</view>`)
     expect(output2).toBe(`<import-sjs module="__swanHelper__" src="~${wxsPath}"></import-sjs><view s-for='t1, t2 in __swanHelper__.processFor("strings") trackBy t1.u1'>123</view>`)
     expect(output3).toBe(`<import-sjs module="__swanHelper__" src="~${wxsPath}"></import-sjs><view s-for="t1, t2 in __swanHelper__.processFor(8) trackBy t1.u1">123</view>`)

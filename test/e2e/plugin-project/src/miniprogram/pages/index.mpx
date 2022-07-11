@@ -1,0 +1,16 @@
+<template>
+  <view>
+    <list generic:mp-view="comp-from-miniprogram" />
+  </view>
+</template>
+
+<script lang="ts" src="./index.ts"></script>
+
+<script type="application/json">
+  {
+    "usingComponents": {
+      "list": "plugin://myPlugin/list",
+      "comp-from-miniprogram": "../components/list"
+    }
+  }
+</script>
