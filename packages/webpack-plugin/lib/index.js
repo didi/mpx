@@ -749,24 +749,6 @@ class MpxWebpackPlugin {
       compilation.factorizeModule = (options, callback) => {
         const originModule = options.originModule
         let proxyedCallback = callback
-        // todo 改写注释部分
-        // if (module.__has_tenon_entry) {
-        //   let tasks = []
-        //   module.dependencies.forEach(dep => {
-        //     if (dep instanceof AddEntryDependency) {
-        //       tasks.push(new Promise(resolve => {
-        //         compilation.addEntry(...dep.__addEntryParams, (err) => {
-        //           resolve(err)
-        //         })
-        //       }))
-        //     }
-        //   })
-        //   proxyedCallback = (error) => {
-        //     Promise.all(tasks).then(errs => {
-        //       callback(errs.filter(e => !!e)[0] || error)
-        //     })
-        //   }
-        // }
         if (originModule) {
           proxyedCallback = (err, module) => {
             // 避免selfModuleFactory的情况

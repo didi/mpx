@@ -16,7 +16,6 @@ module.exports = function ({
   autoScope,
   componentsMap,
   projectRoot,
-  getRequireForSrc,
   vueContentCache,
   moduleId,
   callback
@@ -89,7 +88,6 @@ module.exports = function ({
         srcMode,
         loaderContext,
         isProduction,
-        getRequireForSrc,
         projectRoot,
         jsonConfig: jsonRes.jsonObj,
         componentId: queryObj.componentId || '',

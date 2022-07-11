@@ -9,7 +9,6 @@ function filterOptions (options) {
     if (builtInKeysMap[key]) {
       return
     }
-    // Tenon 使用的Vue3 语法中 data 配置需要为一个函数
     if (key === 'data' || key === 'dataFn') {
       newOptions.data = function mergeFn () {
         return Object.assign(
@@ -28,8 +27,7 @@ function initProxy (context, rawOptions) {
   // 缓存options
   context.$rawOptions = rawOptions
   // 创建proxy对象
-  const mpxProxy = new MPXProxy(rawOptions, context)
-  context.__mpxProxy = mpxProxy
+  context.__mpxProxy = new MPXProxy(rawOptions, context)
   context.__mpxProxy.created(Hummer.pageInfo && Hummer.pageInfo.params && [Hummer.pageInfo.params])
 }
 
@@ -38,7 +36,7 @@ export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
   const rootMixins = [{
     [hookNames[0]] (...params) {
       if (!this.__mpxProxy) {
-        initProxy(this, rawOptions, currentInject, params)
+        initProxy(this, rawOptions, currentInject, params) // todo 确认参数是否需要
       }
     },
     [hookNames[1]] () {

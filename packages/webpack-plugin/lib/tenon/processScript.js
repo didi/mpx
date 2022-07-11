@@ -2,10 +2,11 @@ const genComponentTag = require('../utils/gen-component-tag')
 const loaderUtils = require('loader-utils')
 const addQuery = require('../utils/add-query')
 const normalize = require('../utils/normalize')
-const SingleEntryPlugin = require('webpack/lib/SingleEntryPlugin')
-const AddEntryDependency = require('../dependency/AddEntryDependency')
+// const SingleEntryPlugin = require('webpack/lib/SingleEntryPlugin')
+// const AddEntryDependency = require('../dependency/AddEntryDependency')
 const builtInLoaderPath = normalize.lib('built-in-loader')
 const optionProcessorPath = normalize.lib('runtime/optionProcessor')
+const createJSONHelper = require('../json-compiler/helper')
 
 function shallowStringify (obj) {
   let arr = []
@@ -21,10 +22,10 @@ function shallowStringify (obj) {
   return `{${arr.join(',')}}`
 }
 
-let entryDeps = new Set()
+// let entryDeps = new Set()
 
-let callbacked = false
-let cacheCallback
+// let callbacked = false
+// let cacheCallback
 
 module.exports = function (script, options, callback) {
   const ctorType = options.ctorType
@@ -35,7 +36,6 @@ module.exports = function (script, options, callback) {
   const loaderContext = options.loaderContext
   const isProduction = options.isProduction
   const componentId = options.componentId
-  const getRequireForSrc = options.getRequireForSrc
   // const i18n = options.i18n
   const jsonConfig = options.jsonConfig
   // const tabBar = jsonConfig.tabBar
@@ -46,37 +46,51 @@ module.exports = function (script, options, callback) {
   const forceDisableBuiltInLoader = options.forceDisableBuiltInLoader
 
   // add entry
-  const checkEntryDeps = (callback) => {
-    callback = callback || cacheCallback
-    if (callback && entryDeps.size === 0) {
-      callback()
-    } else {
-      cacheCallback = callback
-    }
-  }
-
-  const addEntryDep = (context, resource, name) => {
-    // 如果loader已经回调，就不再添加entry
-    if (callbacked) return
-    const dep = SingleEntryPlugin.createDependency(resource, name)
-    entryDeps.add(dep)
-    const virtualModule = new AddEntryDependency({
-      context: context._compiler.context,
-      dep,
-      name
-    })
-    /* eslint-disable camelcase */
-    context._module.__has_tenon_entry = true
-    context._module.addDependency(virtualModule)
-    entryDeps.delete(dep)
-    checkEntryDeps()
-  }
-
-  // const emitWarning = (msg) => {
-  //   loaderContext.emitWarning(
-  //     new Error('[script processor][' + loaderContext.resource + ']: ' + msg)
-  //   )
+  // const checkEntryDeps = (callback) => {
+  //   callback = callback || cacheCallback
+  //   if (callback && entryDeps.size === 0) {
+  //     callback()
+  //   } else {
+  //     cacheCallback = callback
+  //   }
   // }
+
+  // const addEntryDep = (context, resource, name) => {
+  //   // 如果loader已经回调，就不再添加entry
+  //   if (callbacked) return
+  //   const dep = SingleEntryPlugin.createDependency(resource, name)
+  //   entryDeps.add(dep)
+  //   const virtualModule = new AddEntryDependency({
+  //     context: context._compiler.context,
+  //     dep,
+  //     name
+  //   })
+  //   /* eslint-disable camelcase */
+  //   context._module.__has_tenon_entry = true
+  //   context._module.addDependency(virtualModule)
+  //   entryDeps.delete(dep)
+  //   checkEntryDeps()
+  // }
+
+  const emitWarning = (msg) => {
+    loaderContext.emitWarning(
+      new Error('[tenon script processor][' + loaderContext.resource + ']: ' + msg)
+    )
+  }
+
+  const emitError = (msg) => {
+    loaderContext.emitError(
+      new Error('[tenon script processor][' + loaderContext.resource + ']: ' + msg)
+    )
+  }
+
+  const {
+    processJsExport
+  } = createJSONHelper({
+    loaderContext,
+    emitWarning,
+    emitError
+  })
 
   const stringifyRequest = r => loaderUtils.stringifyRequest(loaderContext, r)
   // let tabBarPagesMap = {}
@@ -159,7 +173,8 @@ module.exports = function (script, options, callback) {
       Object.keys(localPagesMap).forEach((pagePath) => {
         const pageCfg = localPagesMap[pagePath]
         // const pageRequest = stringifyRequest(pageCfg.resource)
-        addEntryDep(loaderContext, addQuery(pageCfg.resource, { tenon: true }), pagePath)
+        processJsExport(addQuery(pageCfg.resource, { tenon: true }), loaderContext.context, '', () => {})
+        // addEntryDep(loaderContext, addQuery(pageCfg.resource, { tenon: true }), pagePath)
         // addEntrySafely(loaderContext, addQuery(pageCfg.resource, { tenon: true }), pagePath)
         // loaderContext.resolve(loaderContext._compiler.context, addQuery(pageCfg.resource, { tenon: true }), (err, resource) => {
         //   if(err) return callback(err)
@@ -199,7 +214,7 @@ module.exports = function (script, options, callback) {
       }
       // 为了正确获取currentSrcMode便于运行时进行转换，对于src引入的组件script采用require方式引入(由于webpack会将import的执行顺序上升至最顶)，这意味着对于src引入脚本中的named export将不会生效，不过鉴于mpx和小程序中本身也没有在组件script中声明export的用法，所以应该没有影响
       content += script.src
-        ? (getRequireForSrc('script', script) + '\n')
+        ? `require(${stringifyRequest(script.src)})\n`
         : (script.content + '\n') + '\n'
       // createApp/Page/Component执行完成后立刻获取当前的option并暂存
       content += `  const currentOption = global.currentOption\n`
@@ -251,10 +266,7 @@ module.exports = function (script, options, callback) {
     }
   })
   output += '\n'
-  checkEntryDeps(() => {
-    callbacked = true
-    callback(null, {
-      output
-    })
+  callback(null, {
+    output
   })
 }

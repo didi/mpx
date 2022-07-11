@@ -75,6 +75,10 @@ ResolveDependency.Template = class ResolveDependencyTemplate {
   getContent (dep) {
     const { resolved = '', compilation } = dep
     const publicPath = compilation.outputOptions.publicPath || ''
+    // for tenon
+    if (dep.compilation.__mpx__.mode === 'tenon') {
+      return `getRelativePath(currentURL, ${JSON.stringify(resolved)}) + '.js'`
+    }
     return JSON.stringify(publicPath + resolved)
   }
 }
