@@ -2094,7 +2094,7 @@ function processElement (el, root, options, meta) {
     processShow(el, options, root)
   }
 
-  if (transAli) {
+  if (transAli || (srcMode === 'ali' && mode === 'ali')) {
     processAliStyleClassHack(el, options, root)
     processAliEventHack(el, options, root)
   }
