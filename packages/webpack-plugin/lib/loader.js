@@ -156,7 +156,6 @@ module.exports = function (content) {
           ctorType,
           autoScope,
           componentsMap,
-          projectRoot,
           vueContentCache,
           moduleId,
           callback

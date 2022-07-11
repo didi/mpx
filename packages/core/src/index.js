@@ -121,10 +121,6 @@ if (__mpx_mode__ === 'web') {
     getMixin,
     implement
   }
-
-  InstanceAPIs = {
-    $remove: remove
-  }
 } else if (__mpx_mode__ === 'tenon') {
   const set = (target, key, value) => {
     return Reflect.set(target, key, value)

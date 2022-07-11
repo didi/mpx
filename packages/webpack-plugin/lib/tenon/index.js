@@ -15,7 +15,6 @@ module.exports = function ({
   queryObj,
   autoScope,
   componentsMap,
-  projectRoot,
   vueContentCache,
   moduleId,
   callback
@@ -28,6 +27,7 @@ module.exports = function ({
   const defs = mpx.defs
   const resolveMode = mpx.resolveMode
   const pagesMap = mpx.pagesMap
+  const projectRoot = mpx.projectRoot
 
   let output = ''
   let usingComponents = [].concat(Object.keys(mpx.usingComponents))
