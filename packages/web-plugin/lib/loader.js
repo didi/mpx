@@ -55,13 +55,13 @@ module.exports = function (content) {
   const filePath = this.resourcePath
   const moduleId = ctorType === 'app' ? MPX_APP_MODULE_ID : 'm' + mpx.pathHash(filePath)
 
+  // 将mpx文件 分成四部分
   const parts = parseComponent(content, {
     filePath,
     needMap: this.sourceMap,
     mode,
     env
   })
-
   let output = ''
   const callback = this.async()
 

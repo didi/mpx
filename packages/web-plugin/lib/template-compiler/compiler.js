@@ -494,6 +494,7 @@ function parseHTML (html, options) {
     }
   }
 }
+// TODO: ProcessJson used
 
 function parseComponent (content, options) {
   mode = options.mode || 'wx'
@@ -1199,9 +1200,9 @@ function processBindEvent (el, options) {
   }
 }
 
-function wrapMustache (val) {
-  return val && !tagRE.test(val) ? `{{${val}}}` : val
-}
+// function wrapMustache (val) {
+//   return val && !tagRE.test(val) ? `{{${val}}}` : val
+// }
 
 function parseMustache (raw = '') {
   let replaced = false
@@ -1285,14 +1286,14 @@ function addExp (el, exp, isProps) {
 function processIf (el) {
   let val = getAndRemoveAttr(el, config[mode].directive.if).val
   if (val) {
-    if (mode === 'swan') val = wrapMustache(val)
+    // if (mode === 'swan') val = wrapMustache(val)
     let parsed = parseMustache(val)
     el.if = {
       raw: parsed.val,
       exp: parsed.result
     }
   } else if (val = getAndRemoveAttr(el, config[mode].directive.elseif).val) {
-    if (mode === 'swan') val = wrapMustache(val)
+    // if (mode === 'swan') val = wrapMustache(val)
     let parsed = parseMustache(val)
     el.elseif = {
       raw: parsed.val,
@@ -1327,14 +1328,14 @@ function processFor (el) {
   if (val) {
     let matched
     if (mode === 'swan' && (matched = swanForInRe.exec(val))) {
-      el.for = {
-        raw: val,
-        exp: matched[3],
-        item: matched[1] || 'item',
-        index: matched[2] || 'index'
-      }
+      // el.for = {
+      //   raw: val,
+      //   exp: matched[3],
+      //   item: matched[1] || 'item',
+      //   index: matched[2] || 'index'
+      // }
     } else {
-      if (mode === 'swan') val = wrapMustache(val)
+      // if (mode === 'swan') val = wrapMustache(val)
       let parsed = parseMustache(val)
       el.for = {
         raw: parsed.val,
@@ -1368,9 +1369,9 @@ function processRef (el, options, meta) {
     // swan的page中进行selectComponent匹配时会将类名前面的__去除掉，refClassName用__开头会导致swan在page中的组件refs失效
     let refClassName = `ref_${val}_${++refId}`
     // 支付宝中对于node进行的my.createSelectorQuery是在全局范围内进行的，需添加运行时组件id确保selector唯一
-    if (type === 'node' && mode === 'ali') {
-      refClassName += '_{{mpxCid}}'
-    }
+    // if (type === 'node' && mode === 'ali') {
+    //   refClassName += '_{{mpxCid}}'
+    // }
     let className = getAndRemoveAttr(el, 'class').val
     className = className ? className + ' ' + refClassName : refClassName
     addAttrs(el, [{
@@ -1385,12 +1386,12 @@ function processRef (el, options, meta) {
     })
   }
 
-  if (type === 'component' && mode === 'ali') {
-    addAttrs(el, [{
-      name: 'onUpdateRef',
-      value: '__handleUpdateRef'
-    }])
-  }
+  // if (type === 'component' && mode === 'ali') {
+  //   addAttrs(el, [{
+  //     name: 'onUpdateRef',
+  //     value: '__handleUpdateRef'
+  //   }])
+  // }
 }
 
 function addWxsModule (meta, module, src) {
@@ -1459,52 +1460,52 @@ function processAttrs (el, options) {
   })
 }
 
-function postProcessFor (el) {
-  if (el.for) {
-    /*
-      对百度小程序同时带有if和for的指令外套一层block，并将for放到外层
-      这个操作主要是因为百度小程序不支持这两个directive在同级使用
-     */
-    if (el.if && mode === 'swan') {
-      const block = createASTElement('block', [])
-      replaceNode(el, block, true)
-      block.for = el.for
-      delete el.for
-      addChild(block, el)
-      el = block
-    }
+// function postProcessFor (el) {
+//   if (el.for) {
+//     /*
+//       对百度小程序同时带有if和for的指令外套一层block，并将for放到外层
+//       这个操作主要是因为百度小程序不支持这两个directive在同级使用
+//      */
+//     if (el.if && mode === 'swan') {
+//       const block = createASTElement('block', [])
+//       replaceNode(el, block, true)
+//       block.for = el.for
+//       delete el.for
+//       addChild(block, el)
+//       el = block
+//     }
 
-    let attrs = [
-      {
-        name: config[mode].directive.for,
-        value: el.for.raw
-      }
-    ]
-    // 对于swan的for in进行特殊处理
-    if (mode !== 'swan' || !swanForInRe.test(el.for.raw)) {
-      if (el.for.index) {
-        attrs.push({
-          name: config[mode].directive.forIndex,
-          value: el.for.index
-        })
-      }
-      if (el.for.item) {
-        attrs.push({
-          name: config[mode].directive.forItem,
-          value: el.for.item
-        })
-      }
-      if (el.for.key) {
-        attrs.push({
-          name: config[mode].directive.key,
-          value: el.for.key
-        })
-      }
-    }
-    addAttrs(el, attrs)
-    popForScopes()
-  }
-}
+//     let attrs = [
+//       {
+//         name: config[mode].directive.for,
+//         value: el.for.raw
+//       }
+//     ]
+//     // 对于swan的for in进行特殊处理
+//     if (mode !== 'swan' || !swanForInRe.test(el.for.raw)) {
+//       if (el.for.index) {
+//         attrs.push({
+//           name: config[mode].directive.forIndex,
+//           value: el.for.index
+//         })
+//       }
+//       if (el.for.item) {
+//         attrs.push({
+//           name: config[mode].directive.forItem,
+//           value: el.for.item
+//         })
+//       }
+//       if (el.for.key) {
+//         attrs.push({
+//           name: config[mode].directive.key,
+//           value: el.for.key
+//         })
+//       }
+//     }
+//     addAttrs(el, attrs)
+//     popForScopes()
+//   }
+// }
 
 function evalExp (exp) {
   let result = { success: false }
@@ -1638,7 +1639,8 @@ function processClass (el, meta) {
     addAttrs(el, [{
       name: targetType,
       // swan中externalClass是通过编译时静态实现，因此需要保留原有的staticClass形式避免externalClass失效
-      value: mode === 'swan' && staticClass ? `${staticClass} {{${stringifyModuleName}.stringifyClass('', ${dynamicClassExp})}}` : `{{${stringifyModuleName}.stringifyClass(${staticClassExp}, ${dynamicClassExp})}}`
+      // value: mode === 'swan' && staticClass ? `${staticClass} {{${stringifyModuleName}.stringifyClass('', ${dynamicClassExp})}}` : `{{${stringifyModuleName}.stringifyClass(${staticClassExp}, ${dynamicClassExp})}}`
+      value: `{{${stringifyModuleName}.stringifyClass(${staticClassExp}, ${dynamicClassExp})}}`
     }])
     injectWxs(meta, stringifyModuleName, stringifyWxsPath)
   } else if (staticClass) {
@@ -1694,37 +1696,37 @@ function isComponentNode (el, options) {
   return options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component'
 }
 
-function processAliExternalClassesHack (el, options) {
-  const isComponent = isComponentNode(el, options)
-  // 处理组件externalClass多层传递
-  const classLikeAttrNames = isComponent ? ['class'].concat(options.externalClasses) : ['class']
-  classLikeAttrNames.forEach((classLikeAttrName) => {
-    let classLikeAttrValue = getAndRemoveAttr(el, classLikeAttrName).val
-    if (classLikeAttrValue) {
-      options.externalClasses.forEach((className) => {
-        const reg = new RegExp('\\b' + className + '\\b', 'g')
-        const replacement = dash2hump(className)
-        classLikeAttrValue = classLikeAttrValue.replace(reg, `{{${replacement}||''}}`)
-      })
-      addAttrs(el, [{
-        name: classLikeAttrName,
-        value: classLikeAttrValue
-      }])
-    }
-  })
+// function processAliExternalClassesHack (el, options) {
+//   const isComponent = isComponentNode(el, options)
+//   // 处理组件externalClass多层传递
+//   const classLikeAttrNames = isComponent ? ['class'].concat(options.externalClasses) : ['class']
+//   classLikeAttrNames.forEach((classLikeAttrName) => {
+//     let classLikeAttrValue = getAndRemoveAttr(el, classLikeAttrName).val
+//     if (classLikeAttrValue) {
+//       options.externalClasses.forEach((className) => {
+//         const reg = new RegExp('\\b' + className + '\\b', 'g')
+//         const replacement = dash2hump(className)
+//         classLikeAttrValue = classLikeAttrValue.replace(reg, `{{${replacement}||''}}`)
+//       })
+//       addAttrs(el, [{
+//         name: classLikeAttrName,
+//         value: classLikeAttrValue
+//       }])
+//     }
+//   })
 
-  if (options.hasScoped && isComponent) {
-    options.externalClasses.forEach((className) => {
-      let externalClass = getAndRemoveAttr(el, className).val
-      if (externalClass) {
-        addAttrs(el, [{
-          name: className,
-          value: `${externalClass} ${options.moduleId}`
-        }])
-      }
-    })
-  }
-}
+//   if (options.hasScoped && isComponent) {
+//     options.externalClasses.forEach((className) => {
+//       let externalClass = getAndRemoveAttr(el, className).val
+//       if (externalClass) {
+//         addAttrs(el, [{
+//           name: className,
+//           value: `${externalClass} ${options.moduleId}`
+//         }])
+//       }
+//     })
+//   }
+// }
 
 // externalClasses只能模拟静态传递
 function processWebExternalClassesHack (el, options) {
@@ -1787,17 +1789,17 @@ function processWebExternalClassesHack (el, options) {
   }
 }
 
-function processScoped (el, options) {
-  if (options.hasScoped && isRealNode(el)) {
-    const moduleId = options.moduleId
-    const rootModuleId = options.isComponent ? '' : MPX_APP_MODULE_ID // 处理app全局样式对页面的影响
-    const staticClass = getAndRemoveAttr(el, 'class').val
-    addAttrs(el, [{
-      name: 'class',
-      value: `${staticClass || ''} ${moduleId} ${rootModuleId}`
-    }])
-  }
-}
+// function processScoped (el, options) {
+//   if (options.hasScoped && isRealNode(el)) {
+//     const moduleId = options.moduleId
+//     const rootModuleId = options.isComponent ? '' : MPX_APP_MODULE_ID // 处理app全局样式对页面的影响
+//     const staticClass = getAndRemoveAttr(el, 'class').val
+//     addAttrs(el, [{
+//       name: 'class',
+//       value: `${staticClass || ''} ${moduleId} ${rootModuleId}`
+//     }])
+//   }
+// }
 
 const builtInComponentsPrefix = '@mpxjs/webpack-plugin/lib/runtime/components'
 
@@ -1813,89 +1815,89 @@ function processBuiltInComponents (el, meta) {
   }
 }
 
-function processAliEventHack (el, options, root) {
-  // 只处理组件根节点
-  if (!(options.isComponent && el === root && isRealNode(el))) {
-    return
-  }
-  const { proxyComponentEventsRules } = options
-  let fallThroughEvents = ['onTap']
-  // 判断当前文件是否在范围中
-  const filePath = options.filePath
-  for (let item of proxyComponentEventsRules) {
-    const {
-      include,
-      exclude
-    } = item || {}
+// function processAliEventHack (el, options, root) {
+//   // 只处理组件根节点
+//   if (!(options.isComponent && el === root && isRealNode(el))) {
+//     return
+//   }
+//   const { proxyComponentEventsRules } = options
+//   let fallThroughEvents = ['onTap']
+//   // 判断当前文件是否在范围中
+//   const filePath = options.filePath
+//   for (let item of proxyComponentEventsRules) {
+//     const {
+//       include,
+//       exclude
+//     } = item || {}
 
-    if (matchCondition(filePath, {
-      include,
-      exclude
-    })) {
-      const eventsRaw = item.events
-      const events = Array.isArray(eventsRaw) ? eventsRaw : [eventsRaw]
-      fallThroughEvents = Array.from(new Set(fallThroughEvents.concat(events)))
-      break
-    }
-  }
+//     if (matchCondition(filePath, {
+//       include,
+//       exclude
+//     })) {
+//       const eventsRaw = item.events
+//       const events = Array.isArray(eventsRaw) ? eventsRaw : [eventsRaw]
+//       fallThroughEvents = Array.from(new Set(fallThroughEvents.concat(events)))
+//       break
+//     }
+//   }
 
-  fallThroughEvents.forEach((type) => {
-    addAttrs(el, [{
-      name: type,
-      value: '__proxyEvent'
-    }])
-  })
-}
+//   fallThroughEvents.forEach((type) => {
+//     addAttrs(el, [{
+//       name: type,
+//       value: '__proxyEvent'
+//     }])
+//   })
+// }
 
-function processAliStyleClassHack (el, options, root) {
-  // 处理组件根节点
-  if (options.isComponent && el === root && isRealNode(el)) {
-    ['style', 'class'].forEach((type) => {
-      let exp = getAndRemoveAttr(el, type).val
-      let typeName = type === 'class' ? 'className' : type
-      let sep = type === 'style' ? ';' : ' '
-      let newValue = exp ? `{{${typeName}||''}}${sep}${exp}` : `{{${typeName}||''}}`
+// function processAliStyleClassHack (el, options, root) {
+//   // 处理组件根节点
+//   if (options.isComponent && el === root && isRealNode(el)) {
+//     ['style', 'class'].forEach((type) => {
+//       let exp = getAndRemoveAttr(el, type).val
+//       let typeName = type === 'class' ? 'className' : type
+//       let sep = type === 'style' ? ';' : ' '
+//       let newValue = exp ? `{{${typeName}||''}}${sep}${exp}` : `{{${typeName}||''}}`
 
-      if (newValue !== undefined) {
-        addAttrs(el, [{
-          name: type,
-          value: newValue
-        }])
-      }
-    })
-  }
-}
+//       if (newValue !== undefined) {
+//         addAttrs(el, [{
+//           name: type,
+//           value: newValue
+//         }])
+//       }
+//     })
+//   }
+// }
 
 // 有virtualHost情况wx组件注入virtualHost。无virtualHost阿里组件注入root-view。其他跳过。
 function getVirtualHostRoot (options, meta) {
   if (options.isComponent) {
     // 处理组件时
-    if (mode === 'wx' && options.hasVirtualHost) {
-      // wx组件注入virtualHost配置
-      !meta.options && (meta.options = {})
-      meta.options.virtualHost = true
-    }
-    if (mode === 'ali' && !options.hasVirtualHost) {
-      // ali组件根节点实体化
-      let rootView = createASTElement('view', [
-        {
-          name: 'class',
-          value: `${MPX_ROOT_VIEW} host-${options.moduleId}`
-        }
-      ])
-      processElement(rootView, rootView, options, meta)
-      return rootView
-    }
+    // if (mode === 'wx' && options.hasVirtualHost) {
+    //   // wx组件注入virtualHost配置
+    //   !meta.options && (meta.options = {})
+    //   meta.options.virtualHost = true
+    // }
+    // if (mode === 'ali' && !options.hasVirtualHost) {
+    //   // ali组件根节点实体化
+    //   let rootView = createASTElement('view', [
+    //     {
+    //       name: 'class',
+    //       value: `${MPX_ROOT_VIEW} host-${options.moduleId}`
+    //     }
+    //   ])
+    //   processElement(rootView, rootView, options, meta)
+    //   return rootView
+    // }
   }
   return getTempNode()
 }
 
 function processShow (el, options, root) {
   let show = getAndRemoveAttr(el, config[mode].directive.show).val
-  if (mode === 'swan') show = wrapMustache(show)
+  // if (mode === 'swan') show = wrapMustache(show)
   let processFlag = el.parent === root
   // 当ali且未开启virtualHost时，mpxShow打到根节点上
-  if (mode === 'ali' && !options.hasVirtualHost) processFlag = el === root
+  // if (mode === 'ali' && !options.hasVirtualHost) processFlag = el === root
   if (options.isComponent && processFlag && isRealNode(el)) {
     if (show !== undefined) {
       show = `{{${parseMustache(show).result}&&mpxShow}}`
@@ -1932,12 +1934,12 @@ function processTemplate (el) {
   }
 }
 
-function postProcessTemplate (el) {
-  if (el.isTemplate) {
-    processingTemplate = false
-    return true
-  }
-}
+// function postProcessTemplate (el) {
+//   if (el.isTemplate) {
+//     processingTemplate = false
+//     return true
+//   }
+// }
 
 const isValidMode = makeMap('wx,ali,swan,tt,qq,web,qa,jd,dd')
 
@@ -2061,7 +2063,7 @@ function processElement (el, root, options, meta) {
 
   processInjectWxs(el, meta)
 
-  const transAli = mode === 'ali' && srcMode === 'wx'
+  // const transAli = mode === 'ali' && srcMode === 'wx'
 
   if (mode === 'web') {
     // 收集内建组件
@@ -2076,13 +2078,13 @@ function processElement (el, root, options, meta) {
   const pass = isNative || processTemplate(el) || processingTemplate
 
   // 仅ali平台需要scoped模拟样式隔离
-  if (mode === 'ali') {
-    processScoped(el, options)
-  }
+  // if (mode === 'ali') {
+  //   processScoped(el, options)
+  // }
 
-  if (transAli) {
-    processAliExternalClassesHack(el, options)
-  }
+  // if (transAli) {
+  //   processAliExternalClassesHack(el, options)
+  // }
 
   processIf(el)
   processFor(el)
@@ -2094,10 +2096,10 @@ function processElement (el, root, options, meta) {
     processShow(el, options, root)
   }
 
-  if (transAli) {
-    processAliStyleClassHack(el, options, root)
-    processAliEventHack(el, options, root)
-  }
+  // if (transAli) {
+  //   processAliStyleClassHack(el, options, root)
+  //   processAliEventHack(el, options, root)
+  // }
 
   if (!pass) {
     processBindEvent(el, options)
@@ -2115,13 +2117,13 @@ function closeElement (el, meta) {
     postProcessIf(el)
     return
   }
-  const pass = isNative || postProcessTemplate(el) || processingTemplate
-  postProcessWxs(el, meta)
-  if (!pass) {
-    el = postProcessComponentIs(el)
-  }
-  postProcessFor(el)
-  postProcessIf(el)
+  // const pass = isNative || postProcessTemplate(el) || processingTemplate
+  // postProcessWxs(el, meta)
+  // if (!pass) {
+  //   el = postProcessComponentIs(el)
+  // }
+  // postProcessFor(el)
+  // postProcessIf(el)
 }
 
 function postProcessAtMode (el) {

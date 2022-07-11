@@ -1,6 +1,8 @@
+// TODO: ProcessJson used
+
 const path = require('path')
 const normalize = require('../utils/normalize')
-const nativeLoaderPath = normalize.lib('native-loader')
+// const nativeLoaderPath = normalize.lib('native-loader')
 const isUrlRequestRaw = require('../utils/is-url-request')
 const parseRequest = require('../utils/parse-request')
 const addQuery = require('../utils/add-query')
@@ -13,7 +15,7 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
   const externals = mpx.externals
   const root = mpx.projectRoot
   const publicPath = (loaderContext._compilation && loaderContext._compilation.outputOptions.publicPath) || ''
-  const pathHash = mpx.pathHash
+  // const pathHash = mpx.pathHash
   const getOutputPath = mpx.getOutputPath
   const mode = mpx.mode
 
@@ -53,7 +55,7 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
         // 删除root query
         resource = addQuery(resource, {}, false, ['root'])
         // 目前只有微信支持分包异步化
-        if (mode === 'wx') tarRoot = queryObj.root
+        // if (mode === 'wx') tarRoot = queryObj.root
       }
       const parsed = path.parse(resourcePath)
       const ext = parsed.ext
@@ -61,26 +63,26 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
 
       if (!outputPath) {
         if (ext === '.js' && resourceName.includes('node_modules') && mode !== 'web') {
-          let root = info.descriptionFileRoot
-          let name = 'nativeComponent'
-          if (info.descriptionFileData) {
-            if (info.descriptionFileData.miniprogram) {
-              root = path.join(root, info.descriptionFileData.miniprogram)
-            }
-            if (info.descriptionFileData.name) {
-              // 去掉name里面的@符号，因为支付宝不支持文件路径上有@
-              name = info.descriptionFileData.name.replace(/@/g, '')
-            }
-          }
-          let relative = path.relative(root, resourceName)
-          outputPath = path.join('components', name + pathHash(root), relative)
+          // let root = info.descriptionFileRoot
+          // let name = 'nativeComponent'
+          // if (info.descriptionFileData) {
+          //   if (info.descriptionFileData.miniprogram) {
+          //     root = path.join(root, info.descriptionFileData.miniprogram)
+          //   }
+          //   if (info.descriptionFileData.name) {
+          //     // 去掉name里面的@符号，因为支付宝不支持文件路径上有@
+          //     name = info.descriptionFileData.name.replace(/@/g, '')
+          //   }
+          // }
+          // let relative = path.relative(root, resourceName)
+          // outputPath = path.join('components', name + pathHash(root), relative)
         } else {
           outputPath = getOutputPath(resourcePath, 'component')
         }
       }
-      if (ext === '.js' && mode !== 'web') {
-        resource = `!!${nativeLoaderPath}!${resource}`
-      }
+      // if (ext === '.js' && mode !== 'web') {
+      //   resource = `!!${nativeLoaderPath}!${resource}`
+      // }
 
       const entry = getDynamicEntry(resource, 'component', outputPath, tarRoot, relativePath)
       callback(null, entry)
@@ -116,9 +118,9 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
           outputPath = /^(.*?)(\.[^.]*)?$/.exec(relative)[1]
         }
       }
-      if (ext === '.js' && mode !== 'web') {
-        resource = `!!${nativeLoaderPath}!${resource}`
-      }
+      // if (ext === '.js' && mode !== 'web') {
+      //   resource = `!!${nativeLoaderPath}!${resource}`
+      // }
       const entry = getDynamicEntry(resource, 'page', outputPath, tarRoot, publicPath + tarRoot)
       const key = [resourcePath, outputPath, tarRoot].join('|')
       callback(null, entry, {

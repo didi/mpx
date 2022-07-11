@@ -57,6 +57,6 @@ RecordResourceMapDependency.Template = class RecordResourceMapDependencyTemplate
   }
 }
 
-makeSerializable(RecordResourceMapDependency, '@mpxjs/webpack-plugin/lib/dependencies/RecordResourceMapDependency')
+makeSerializable(RecordResourceMapDependency, '@mpxjs/web-plugin/lib/dependencies/RecordResourceMapDependency')
 
 module.exports = RecordResourceMapDependency
