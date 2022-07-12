@@ -32,9 +32,7 @@ import {
   mapWritableState
 } from './mapHelper'
 import { storeToRefs } from './storeToRefs'
-import * as webPinia from 'pinia'
 
-let isPiniaInitializedOnWeb = false
 const { assign } = Object
 
 const skipHydrateMap = /* #__PURE__ */ new WeakMap()

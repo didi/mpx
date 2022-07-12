@@ -21,7 +21,7 @@ function mapState (useStore, keysOrMapper) {
         return typeof store[storeKey] === 'function'
           // eslint-disable-next-line
           ? store[storeKey].call(store, store)
-          : __mpx_mode__ === 'web' ? unRef(store[storeKey]) : store[storeKey]
+          : store[storeKey]
       }
       return reduced
     }, {})

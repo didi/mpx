@@ -12,7 +12,7 @@ export function createPinia () {
   const state = scope.run(() => ref({}))
   let _p = []
   const pinia = {
-    install() {
+    install () {
       setActivePinia(pinia)
     },
     use (plugin) {
