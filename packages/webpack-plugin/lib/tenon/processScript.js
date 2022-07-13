@@ -2,11 +2,10 @@ const genComponentTag = require('../utils/gen-component-tag')
 const loaderUtils = require('loader-utils')
 const addQuery = require('../utils/add-query')
 const normalize = require('../utils/normalize')
-// const SingleEntryPlugin = require('webpack/lib/SingleEntryPlugin')
-// const AddEntryDependency = require('../dependency/AddEntryDependency')
 const builtInLoaderPath = normalize.lib('built-in-loader')
 const optionProcessorPath = normalize.lib('runtime/optionProcessor')
 const createJSONHelper = require('../json-compiler/helper')
+const async = require('async')
 
 function shallowStringify (obj) {
   let arr = []
@@ -22,10 +21,6 @@ function shallowStringify (obj) {
   return `{${arr.join(',')}}`
 }
 
-// let entryDeps = new Set()
-
-// let callbacked = false
-// let cacheCallback
 
 module.exports = function (script, options, callback) {
   const ctorType = options.ctorType
@@ -85,7 +80,8 @@ module.exports = function (script, options, callback) {
   }
 
   const {
-    processJsExport
+    processPage,
+    processDynamicEntry
   } = createJSONHelper({
     loaderContext,
     emitWarning,
@@ -170,27 +166,6 @@ module.exports = function (script, options, callback) {
       let firstPage = ''
       const pagesMap = {}
       const componentsMap = {}
-      Object.keys(localPagesMap).forEach((pagePath) => {
-        const pageCfg = localPagesMap[pagePath]
-        // const pageRequest = stringifyRequest(pageCfg.resource)
-        processJsExport(addQuery(pageCfg.resource, { tenon: true }), loaderContext.context, '', () => {})
-        // addEntryDep(loaderContext, addQuery(pageCfg.resource, { tenon: true }), pagePath)
-        // addEntrySafely(loaderContext, addQuery(pageCfg.resource, { tenon: true }), pagePath)
-        // loaderContext.resolve(loaderContext._compiler.context, addQuery(pageCfg.resource, { tenon: true }), (err, resource) => {
-        //   if(err) return callback(err)
-
-        // })
-        // if (pageCfg.async) {
-        //   pagesMap[pagePath] = `()=>import(${pageRequest}).then(res => getComponent(res, { __mpxPageRoute: ${JSON.stringify(pagePath)} }))`
-        // } else {
-        //   // 为了保持小程序中app->page->component的js执行顺序，所有的page和component都改为require引入
-        //   pagesMap[pagePath] = `getComponent(require(${pageRequest}), { __mpxPageRoute: ${JSON.stringify(pagePath)} })`
-        // }
-
-        // if (pageCfg.isFirst) {
-        //   firstPage = pagePath
-        // }
-      })
 
       Object.keys(localComponentsMap).forEach((componentName) => {
         const componentCfg = localComponentsMap[componentName]
@@ -261,12 +236,26 @@ module.exports = function (script, options, callback) {
       // i18n`
       //     }
       //   }
-      content += `\n  )\n`
+      content += `\n  )\n__dynamic_page_slot__\n`
       return content
     }
   })
   output += '\n'
-  callback(null, {
-    output
+  // 处理pages
+  const pageSet = new Set()
+  let dynamicPageStr = ''
+  async.each(localPagesMap, (pageCfg, callback) => {
+    processPage(addQuery(pageCfg.resource, { tenon: true }), loaderContext.context, '', (err, entry, { key }) => {
+      if(err) return callback()
+      if(pageSet.has(key)) return callback()
+      pageSet.add(key)
+      dynamicPageStr += `\n"${entry}"`
+      callback()
+    })
+  }, () => {
+    output = output.replace('__dynamic_page_slot__', processDynamicEntry(dynamicPageStr) || '')
+    callback(null, {
+      output
+    })
   })
 }

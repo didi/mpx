@@ -6,7 +6,7 @@ const parseRequest = require('../utils/parse-request')
 const toPosix = require('../utils/to-posix')
 const addQuery = require('../utils/add-query')
 const parseComponent = require('../parser')
-const readJsonForSrc = require('../utils/read-json-for-src')
+const getJSONContent = require('../utils/get-json-content')
 const isUrlRequest = require('../utils/is-url-request')
 
 module.exports = function (json, options, rawCallback) {
@@ -17,7 +17,6 @@ module.exports = function (json, options, rawCallback) {
   const resolveMode = options.resolveMode
   const pagesMap = options.pagesMap
   const componentsMap = options.componentsMap
-  const pagesEntryMap = options.pagesEntryMap
   const projectRoot = options.projectRoot
   const pathHash = options.pathHash
   const localPagesMap = {}
@@ -134,8 +133,8 @@ module.exports = function (json, options, rawCallback) {
               if (json.content) {
                 content = json.content
               } else if (json.src) {
-                return readJsonForSrc(json.src, loaderContext, (content) => {
-                  callback(null, result, content)
+                return getJSONContent(json || {}, loaderContext, (err, content) => {
+                  callback(err, result, content)
                 })
               }
             }
@@ -230,8 +229,8 @@ module.exports = function (json, options, rawCallback) {
               pageName = toPosix(path.join(tarRoot, /^(.*?)(\.[^.]*)?$/.exec(relative)[1]))
               // 如果当前page与已有page存在命名冲突，也进行重命名
               for (let key in pagesMap) {
-                // 此处引入pagesEntryMap确保相同entry下路由路径重复注册才报错，不同entry下的路由路径重复则无影响
-                if (pagesMap[key] === pageName && key !== resourcePath && pagesEntryMap[key] === loaderContext.resourcePath) {
+                // 此处引入pagesMap确保相同entry下路由路径重复注册才报错，不同entry下的路由路径重复则无影响
+                if (pagesMap[key] === pageName && key !== resourcePath && pagesMap[key] === loaderContext.resourcePath) {
                   const pageNameRaw = pageName
                   pageName = toPosix(path.join(tarRoot, getPageName(resourcePath, ext)))
                   emitWarning(`Current page [${resourcePath}] is registered with a conflict page path [${pageNameRaw}] which is already existed in system, the page path will be replaced with [${pageName}], use ?resolve to get the page path and navigate to it!`)
@@ -244,9 +243,9 @@ module.exports = function (json, options, rawCallback) {
             emitWarning(`Current page [${resourcePath}] which is imported from [${loaderContext.resourcePath}] has been registered in pagesMap already, it will be ignored, please check it and remove the redundant page declaration!`)
             return callback()
           }
-          buildInfo.pagesMap = buildInfo.pagesMap || {}
-          buildInfo.pagesMap[resourcePath] = pagesMap[resourcePath] = pageName
-          pagesEntryMap[resourcePath] = loaderContext.resourcePath
+          // buildInfo.pagesMap = buildInfo.pagesMap || {}
+          // buildInfo.pagesMap[resourcePath] = pagesMap[resourcePath] = pageName
+          // pagesMap[resourcePath] = loaderContext.resourcePath
           localPagesMap[pageName] = {
             resource: addQuery(resource, { page: true }),
             async: tarRoot || queryObj.async,

@@ -65,7 +65,6 @@ module.exports = function ({
             resolveMode,
             loaderContext,
             pagesMap,
-            pagesEntryMap: mpx.pagesEntryMap,
             pathHash: mpx.pathHash,
             componentsMap,
             projectRoot
