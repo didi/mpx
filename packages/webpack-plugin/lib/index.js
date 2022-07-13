@@ -819,10 +819,23 @@ class MpxWebpackPlugin {
             // 因为文件缓存的存在，前面hack identifier的行为对于从文件缓存中创建得到的module并不生效，因此需要在回调中进行二次hack处理
             if (err) return rawCallback(err)
             hackModuleIdentifier(module)
-            rawCallback(null, module)
+            return rawCallback(null, module)
           }
         }
         return rawAddModule.call(compilation, module, callback)
+      }
+
+
+      // hack process https://github.com/webpack/webpack/issues/16045
+      const _handleModuleBuildAndDependenciesRaw = compilation._handleModuleBuildAndDependencies
+
+      compilation._handleModuleBuildAndDependencies = (originModule, module, recursive, callback) => {
+        const rawCallback = callback
+        callback = (err) => {
+          if (err) return rawCallback(err)
+          return rawCallback(null, module)
+        }
+        return _handleModuleBuildAndDependenciesRaw.call(compilation, originModule, module, recursive, callback)
       }
 
       const rawEmitAsset = compilation.emitAsset
@@ -957,7 +970,7 @@ class MpxWebpackPlugin {
           return true
         })
 
-        const requireAsyncHandler = (expr, members) => {
+        const requireAsyncHandler = (expr, members, args) => {
           if (members[0] === 'async') {
             let request = expr.arguments[0].value
             const range = expr.arguments[0].range
@@ -977,10 +990,10 @@ class MpxWebpackPlugin {
                 const dep = new CommonJsAsyncDependency(request, range)
                 parser.state.current.addDependency(dep)
               }
+              if (args) parser.walkExpressions(args)
               return true
             } else {
               compilation.errors.push(new Error(`The require async JS [${request}] need to declare subpackage name by root`))
-              return true
             }
           }
         }
@@ -997,7 +1010,7 @@ class MpxWebpackPlugin {
           .tap({
             name: 'MpxWebpackPlugin',
             stage: -1000
-          }, (expr, calleeMembers, callExpr) => requireAsyncHandler(callExpr, calleeMembers))
+          }, (expr, calleeMembers, callExpr) => requireAsyncHandler(callExpr, calleeMembers, expr.arguments))
 
         // hack babel polyfill global
         parser.hooks.statementIf.tap('MpxWebpackPlugin', (expr) => {
