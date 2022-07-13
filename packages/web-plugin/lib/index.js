@@ -1,17 +1,17 @@
 'use strict'
 
 const path = require('path')
-const { ConcatSource, RawSource } = require('webpack').sources
+// const { ConcatSource, RawSource } = require('webpack').sources
 const ResolveDependency = require('./dependencies/ResolveDependency')
 const InjectDependency = require('./dependencies/InjectDependency')
-const ReplaceDependency = require('./dependencies/ReplaceDependency')
+// const ReplaceDependency = require('./dependencies/ReplaceDependency')
 const NullFactory = require('webpack/lib/NullFactory')
-const CommonJsVariableDependency = require('./dependencies/CommonJsVariableDependency')
-const CommonJsAsyncDependency = require('./dependencies/CommonJsAsyncDependency')
-const harmonySpecifierTag = require('webpack/lib/dependencies/HarmonyImportDependencyParserPlugin').harmonySpecifierTag
+// const CommonJsVariableDependency = require('./dependencies/CommonJsVariableDependency')
+// const CommonJsAsyncDependency = require('./dependencies/CommonJsAsyncDependency')
+// const harmonySpecifierTag = require('webpack/lib/dependencies/HarmonyImportDependencyParserPlugin').harmonySpecifierTag
 const NormalModule = require('webpack/lib/NormalModule')
 // const EntryPlugin = require('webpack/lib/EntryPlugin')
-const JavascriptModulesPlugin = require('webpack/lib/javascript/JavascriptModulesPlugin')
+// const JavascriptModulesPlugin = require('webpack/lib/javascript/JavascriptModulesPlugin')
 const FlagEntryExportAsUsedPlugin = require('webpack/lib/FlagEntryExportAsUsedPlugin')
 const FileSystemInfo = require('webpack/lib/FileSystemInfo')
 const normalize = require('./utils/normalize')
@@ -28,33 +28,33 @@ const FixDescriptionInfoPlugin = require('./resolver/FixDescriptionInfoPlugin')
 // const HarmonyImportSideEffectDependency = require('webpack/lib/dependencies/HarmonyImportSideEffectDependency')
 // const RequireHeaderDependency = require('webpack/lib/dependencies/RequireHeaderDependency')
 // const RemovedModuleDependency = require('./dependencies/RemovedModuleDependency')
-const AppEntryDependency = require('./dependencies/AppEntryDependency')
+// const AppEntryDependency = require('./dependencies/AppEntryDependency')
 const RecordResourceMapDependency = require('./dependencies/RecordResourceMapDependency')
-const RecordGlobalComponentsDependency = require('./dependencies/RecordGlobalComponentsDependency')
+// const RecordGlobalComponentsDependency = require('./dependencies/RecordGlobalComponentsDependency')
 // const RecordIndependentDependency = require('./dependencies/RecordIndependentDependency')
 // const DynamicEntryDependency = require('./dependencies/DynamicEntryDependency')
-const FlagPluginDependency = require('./dependencies/FlagPluginDependency')
-const RemoveEntryDependency = require('./dependencies/RemoveEntryDependency')
+// const FlagPluginDependency = require('./dependencies/FlagPluginDependency')
+// const RemoveEntryDependency = require('./dependencies/RemoveEntryDependency')
 // const SplitChunksPlugin = require('webpack/lib/optimize/SplitChunksPlugin')
 // const PartialCompilePlugin = require('./partial-compile/index')
 // const fixRelative = require('./utils/fix-relative')
 const parseRequest = require('./utils/parse-request')
 const { matchCondition } = require('./utils/match-condition')
 const { preProcessDefs } = require('./utils/index')
-const config = require('./config')
+// const config = require('./config')
 const hash = require('hash-sum')
-// const wxssLoaderPath = normalize.lib('wxss/loader')
-// const wxmlLoaderPath = normalize.lib('wxml/loader')
-// const wxsLoaderPath = normalize.lib('wxs/loader')
+const wxssLoaderPath = normalize.lib('wxss/loader')
+const wxmlLoaderPath = normalize.lib('wxml/loader')
+const wxsLoaderPath = normalize.lib('wxs/loader')
 const styleCompilerPath = normalize.lib('style-compiler/index')
-// const templateCompilerPath = normalize.lib('template-compiler/index')
-// const jsonCompilerPath = normalize.lib('json-compiler/index')
-// const jsonThemeCompilerPath = normalize.lib('json-compiler/theme')
-// const jsonPluginCompilerPath = normalize.lib('json-compiler/plugin')
-// const extractorPath = normalize.lib('extractor')
-const async = require('async')
+const templateCompilerPath = normalize.lib('template-compiler/index')
+const jsonCompilerPath = normalize.lib('json-compiler/index')
+const jsonThemeCompilerPath = normalize.lib('json-compiler/theme')
+const jsonPluginCompilerPath = normalize.lib('json-compiler/plugin')
+const extractorPath = normalize.lib('extractor')
+// const async = require('async')
 const stringifyLoadersAndResource = require('./utils/stringify-loaders-resource')
-const emitFile = require('./utils/emit-file')
+// const emitFile = require('./utils/emit-file')
 const { MPX_PROCESSED_FLAG, MPX_DISABLE_EXTRACTOR_CACHE, MPX_CURRENT_CHUNK } = require('./utils/const')
 // const isEmptyObject = require('./utils/is-empty-object')
 
@@ -62,20 +62,20 @@ const isProductionLikeMode = options => {
   return options.mode === 'production' || !options.mode
 }
 
-const isStaticModule = module => {
-  if (!module.resource) return false
-  const { queryObj } = parseRequest(module.resource)
-  let isStatic = queryObj.isStatic || false
-  if (module.loaders) {
-    for (const loader of module.loaders) {
-      if (/(url-loader|file-loader)/.test(loader.loader)) {
-        isStatic = true
-        break
-      }
-    }
-  }
-  return isStatic
-}
+// const isStaticModule = module => {
+//   if (!module.resource) return false
+//   const { queryObj } = parseRequest(module.resource)
+//   let isStatic = queryObj.isStatic || false
+//   if (module.loaders) {
+//     for (const loader of module.loaders) {
+//       if (/(url-loader|file-loader)/.test(loader.loader)) {
+//         isStatic = true
+//         break
+//       }
+//     }
+//   }
+//   return isStatic
+// }
 
 // const outputFilename = '[name].js'
 // const publicPath = '/'
@@ -134,7 +134,8 @@ class MpxWebpackPlugin {
     })
     // 批量指定源码mode
     options.modeRules = options.modeRules || {}
-    options.generateBuildMap = options.generateBuildMap || false
+    // options.generateBuildMap = options.generateBuildMap || false
+    // todo
     options.attributes = options.attributes || []
     options.externals = (options.externals || []).map((external) => {
       return externalsMap[external] || external
@@ -143,18 +144,20 @@ class MpxWebpackPlugin {
     options.forceUsePageCtor = options.forceUsePageCtor || false
     options.postcssInlineConfig = options.postcssInlineConfig || {}
     options.transRpxRules = options.transRpxRules || null
-    options.auditResource = options.auditResource || false
+    // options.auditResource = options.auditResource || false
     options.decodeHTMLText = options.decodeHTMLText || false
     options.i18n = options.i18n || null
     options.checkUsingComponents = options.checkUsingComponents || false
-    options.reportSize = options.reportSize || null
+    // todo
+    // options.reportSize = options.reportSize || null
     options.pathHashMode = options.pathHashMode || 'absolute'
     options.forceDisableBuiltInLoader = options.forceDisableBuiltInLoader || false
     options.useRelativePath = options.useRelativePath || false
-    options.subpackageModulesRules = options.subpackageModulesRules || {}
-    options.forceMainPackageRules = options.forceMainPackageRules || {}
-    options.forceProxyEventRules = options.forceProxyEventRules || {}
-    options.miniNpmPackages = options.miniNpmPackages || []
+    // options.subpackageModulesRules = options.subpackageModulesRules || {}
+    // options.forceMainPackageRules = options.forceMainPackageRules || {}
+    // options.forceProxyEventRules = options.forceProxyEventRules || {}
+    // options.miniNpmPackages = options.miniNpmPackages || []
+    // 文件条件编译
     options.fileConditionRules = options.fileConditionRules || {
       include: () => true
     }
@@ -362,7 +365,7 @@ class MpxWebpackPlugin {
 
     const defs = this.options.defs
 
-    const typeExtMap = config[this.options.mode].typeExtMap
+    // const typeExtMap = config[this.options.mode].typeExtMap
 
     const defsOpt = {
       '__mpx_wxs__': DefinePlugin.runtimeValue(({ module }) => {
@@ -473,38 +476,38 @@ class MpxWebpackPlugin {
 
       compilation.dependencyFactories.set(InjectDependency, new NullFactory())
       compilation.dependencyTemplates.set(InjectDependency, new InjectDependency.Template())
-
-      compilation.dependencyFactories.set(ReplaceDependency, new NullFactory())
-      compilation.dependencyTemplates.set(ReplaceDependency, new ReplaceDependency.Template())
+      //
+      // compilation.dependencyFactories.set(ReplaceDependency, new NullFactory())
+      // compilation.dependencyTemplates.set(ReplaceDependency, new ReplaceDependency.Template())
 
       // TODO:
-      compilation.dependencyFactories.set(AppEntryDependency, new NullFactory())
-      compilation.dependencyTemplates.set(AppEntryDependency, new AppEntryDependency.Template())
+      // compilation.dependencyFactories.set(AppEntryDependency, new NullFactory())
+      // compilation.dependencyTemplates.set(AppEntryDependency, new AppEntryDependency.Template())
 
       // compilation.dependencyFactories.set(DynamicEntryDependency, new NullFactory())
       // compilation.dependencyTemplates.set(DynamicEntryDependency, new DynamicEntryDependency.Template())
 
-      compilation.dependencyFactories.set(FlagPluginDependency, new NullFactory())
-      compilation.dependencyTemplates.set(FlagPluginDependency, new FlagPluginDependency.Template())
-
-      compilation.dependencyFactories.set(RemoveEntryDependency, new NullFactory())
-      compilation.dependencyTemplates.set(RemoveEntryDependency, new RemoveEntryDependency.Template())
-
+      // compilation.dependencyFactories.set(FlagPluginDependency, new NullFactory())
+      // compilation.dependencyTemplates.set(FlagPluginDependency, new FlagPluginDependency.Template())
+      //
+      // compilation.dependencyFactories.set(RemoveEntryDependency, new NullFactory())
+      // compilation.dependencyTemplates.set(RemoveEntryDependency, new RemoveEntryDependency.Template())
+      //
       compilation.dependencyFactories.set(RecordResourceMapDependency, new NullFactory())
       compilation.dependencyTemplates.set(RecordResourceMapDependency, new RecordResourceMapDependency.Template())
-
-      // TODO:
-      compilation.dependencyFactories.set(RecordGlobalComponentsDependency, new NullFactory())
-      compilation.dependencyTemplates.set(RecordGlobalComponentsDependency, new RecordGlobalComponentsDependency.Template())
+      //
+      // // TODO:
+      // compilation.dependencyFactories.set(RecordGlobalComponentsDependency, new NullFactory())
+      // compilation.dependencyTemplates.set(RecordGlobalComponentsDependency, new RecordGlobalComponentsDependency.Template())
 
       // compilation.dependencyFactories.set(RecordIndependentDependency, new NullFactory())
       // compilation.dependencyTemplates.set(RecordIndependentDependency, new RecordIndependentDependency.Template())
 
-      compilation.dependencyFactories.set(CommonJsVariableDependency, normalModuleFactory)
-      compilation.dependencyTemplates.set(CommonJsVariableDependency, new CommonJsVariableDependency.Template())
-
-      compilation.dependencyFactories.set(CommonJsAsyncDependency, normalModuleFactory)
-      compilation.dependencyTemplates.set(CommonJsAsyncDependency, new CommonJsAsyncDependency.Template())
+      // compilation.dependencyFactories.set(CommonJsVariableDependency, normalModuleFactory)
+      // compilation.dependencyTemplates.set(CommonJsVariableDependency, new CommonJsVariableDependency.Template())
+      //
+      // compilation.dependencyFactories.set(CommonJsAsyncDependency, normalModuleFactory)
+      // compilation.dependencyTemplates.set(CommonJsAsyncDependency, new CommonJsAsyncDependency.Template())
     })
 
     compiler.hooks.thisCompilation.tap('MpxWebpackPlugin', (compilation, { normalModuleFactory }) => {
@@ -523,22 +526,22 @@ class MpxWebpackPlugin {
             main: {}
           },
           // 静态资源(图片，字体，独立样式)等，依照所属包进行记录
-          staticResourcesMap: {
-            main: {}
-          },
+          // staticResourcesMap: {
+          //   main: {}
+          // },
           // 用于记录命中subpackageModulesRules的js模块分包归属，用于js多分包冗余输出
-          subpackageModulesMap: {
-            main: {}
-          },
+          // subpackageModulesMap: {
+          //   main: {}
+          // },
           // 记录其他资源，如pluginMain、pluginExport，无需区分主包分包
           otherResourcesMap: {},
           // 记录独立分包
-          independentSubpackagesMap: {},
-          subpackagesEntriesMap: {},
+          // independentSubpackagesMap: {},
+          // subpackagesEntriesMap: {},
           replacePathMap: {},
           exportModules: new Set(),
           // 记录entryModule与entryNode的对应关系，用于体积分析
-          entryNodeModulesMap: new Map(),
+          // entryNodeModulesMap: new Map(),
           // 记录与asset相关联的modules，用于体积分析
           // assetsModulesMap: new Map(),
           // 记录与asset相关联的ast，用于体积分析和esCheck，避免重复parse
@@ -562,7 +565,7 @@ class MpxWebpackPlugin {
           postcssInlineConfig: this.options.postcssInlineConfig,
           decodeHTMLText: this.options.decodeHTMLText,
           // native文件专用配置
-          nativeConfig: this.options.nativeConfig,
+          // nativeConfig: this.options.nativeConfig,
           // 输出web专用配置
           webConfig: this.options.webConfig,
           tabBarMap: {},
@@ -574,7 +577,7 @@ class MpxWebpackPlugin {
           attributes: this.options.attributes,
           externals: this.options.externals,
           useRelativePath: this.options.useRelativePath,
-          removedChunks: [],
+          // removedChunks: [],
           forceProxyEventRules: this.options.forceProxyEventRules,
           proxyComponentEventsRules: this.options.proxyComponentEventsRules,
           pathHash: (resourcePath) => {
@@ -606,33 +609,33 @@ class MpxWebpackPlugin {
             if (type === 'component' || type === 'page') return path.join(type + 's', name + hash, 'index' + ext)
             return path.join(type, name + hash + ext)
           },
-          extractedFilesCache: new Map(),
-          getExtractedFile: (resource, { error } = {}) => {
-            const cache = mpx.extractedFilesCache.get(resource)
-            if (cache) return cache
-            const { resourcePath, queryObj } = parseRequest(resource)
-            const { type, isStatic, isPlugin } = queryObj
-            let file
-            if (isPlugin) {
-              file = 'plugin.json'
-            } else if (isStatic) {
-              const packageRoot = queryObj.packageRoot || ''
-              file = toPosix(path.join(packageRoot, mpx.getOutputPath(resourcePath, type, { ext: typeExtMap[type] })))
-            } else {
-              const appInfo = mpx.appInfo
-              const pagesMap = mpx.pagesMap
-              const packageName = queryObj.packageRoot || mpx.currentPackageRoot || 'main'
-              const componentsMap = mpx.componentsMap[packageName]
-              let filename = resourcePath === appInfo.resourcePath ? appInfo.name : (pagesMap[resourcePath] || componentsMap[resourcePath])
-              if (!filename) {
-                error && error(new Error('Get extracted file error: missing filename!'))
-                filename = 'missing-filename'
-              }
-              file = filename + typeExtMap[type]
-            }
-            mpx.extractedFilesCache.set(resource, file)
-            return file
-          },
+          // extractedFilesCache: new Map(),
+          // getExtractedFile: (resource, { error } = {}) => {
+          //   const cache = mpx.extractedFilesCache.get(resource)
+          //   if (cache) return cache
+          //   const { resourcePath, queryObj } = parseRequest(resource)
+          //   const { type, isStatic, isPlugin } = queryObj
+          //   let file
+          //   if (isPlugin) {
+          //     file = 'plugin.json'
+          //   } else if (isStatic) {
+          //     const packageRoot = queryObj.packageRoot || ''
+          //     file = toPosix(path.join(packageRoot, mpx.getOutputPath(resourcePath, type, { ext: typeExtMap[type] })))
+          //   } else {
+          //     const appInfo = mpx.appInfo
+          //     const pagesMap = mpx.pagesMap
+          //     const packageName = queryObj.packageRoot || mpx.currentPackageRoot || 'main'
+          //     const componentsMap = mpx.componentsMap[packageName]
+          //     let filename = resourcePath === appInfo.resourcePath ? appInfo.name : (pagesMap[resourcePath] || componentsMap[resourcePath])
+          //     if (!filename) {
+          //       error && error(new Error('Get extracted file error: missing filename!'))
+          //       filename = 'missing-filename'
+          //     }
+          //     file = filename + typeExtMap[type]
+          //   }
+          //   mpx.extractedFilesCache.set(resource, file)
+          //   return file
+          // },
           recordResourceMap: ({ resourcePath, resourceType, outputPath, packageRoot = '', recordOnly, warn, error }) => {
             const packageName = packageRoot || 'main'
             const resourceMap = mpx[`${resourceType}sMap`] || mpx.otherResourcesMap
@@ -735,109 +738,109 @@ class MpxWebpackPlugin {
         }
       }
 
-      const rawProcessModuleDependencies = compilation.processModuleDependencies
-      compilation.processModuleDependencies = (module, callback) => {
-        const presentationalDependencies = module.presentationalDependencies || []
-        async.forEach(presentationalDependencies.filter((dep) => dep.mpxAction), (dep, callback) => {
-          dep.mpxAction(module, compilation, callback)
-        }, (err) => {
-          rawProcessModuleDependencies.call(compilation, module, (innerErr) => {
-            return callback(err || innerErr)
-          })
-        })
-      }
-
-      const rawFactorizeModule = compilation.factorizeModule
-      compilation.factorizeModule = (options, callback) => {
-        const originModule = options.originModule
-        let proxyedCallback = callback
-        if (originModule) {
-          proxyedCallback = (err, module) => {
-            // 避免selfModuleFactory的情况
-            if (module && module !== originModule) {
-              module.issuerResource = originModule.resource
-            }
-            return callback(err, module)
-          }
-        }
-        return rawFactorizeModule.call(compilation, options, proxyedCallback)
-      }
+      // const rawProcessModuleDependencies = compilation.processModuleDependencies
+      // compilation.processModuleDependencies = (module, callback) => {
+      //   const presentationalDependencies = module.presentationalDependencies || []
+      //   async.forEach(presentationalDependencies.filter((dep) => dep.mpxAction), (dep, callback) => {
+      //     dep.mpxAction(module, compilation, callback)
+      //   }, (err) => {
+      //     rawProcessModuleDependencies.call(compilation, module, (innerErr) => {
+      //       return callback(err || innerErr)
+      //     })
+      //   })
+      // }
+      //
+      // const rawFactorizeModule = compilation.factorizeModule
+      // compilation.factorizeModule = (options, callback) => {
+      //   const originModule = options.originModule
+      //   let proxyedCallback = callback
+      //   if (originModule) {
+      //     proxyedCallback = (err, module) => {
+      //       // 避免selfModuleFactory的情况
+      //       if (module && module !== originModule) {
+      //         module.issuerResource = originModule.resource
+      //       }
+      //       return callback(err, module)
+      //     }
+      //   }
+      //   return rawFactorizeModule.call(compilation, options, proxyedCallback)
+      // }
 
       // 处理watch时缓存模块中的buildInfo
       // 在调用addModule前对module添加分包信息，以控制分包输出及消除缓存，该操作由afterResolve钩子迁移至此是由于dependencyCache的存在，watch状态下afterResolve钩子并不会对所有模块执行，而模块的packageName在watch过程中是可能发生变更的，如新增删除一个分包资源的主包引用
-      const rawAddModule = compilation.addModule
-      compilation.addModule = (module, callback) => {
-        // const issuerResource = module.issuerResource
-        // const currentPackageRoot = mpx.currentPackageRoot
-        // const independent = mpx.independentSubpackagesMap[currentPackageRoot]
-        //
-        // if (module.resource) {
-        //   // NormalModule
-        //   const isStatic = isStaticModule(module)
-        //
-        //   let needPackageQuery = isStatic || independent
-        //   if (!needPackageQuery) {
-        //     const { resourcePath } = parseRequest(module.resource)
-        //     needPackageQuery = matchCondition(resourcePath, this.options.subpackageModulesRules)
-        //   }
-        //   if (needPackageQuery) {
-        //     const { packageRoot } = mpx.getPackageInfo({
-        //       resource: module.resource,
-        //       resourceType: isStatic ? 'staticResource' : 'subpackageModule',
-        //       issuerResource,
-        //       warn (e) {
-        //         compilation.warnings.push(e)
-        //       },
-        //       error (e) {
-        //         compilation.errors.push(e)
-        //       }
-        //     })
-        //     if (packageRoot) {
-        //       const queryObj = {
-        //         packageRoot
-        //       }
-        //       if (independent) queryObj.independent = independent
-        //       module.request = addQuery(module.request, queryObj)
-        //       module.resource = addQuery(module.resource, queryObj)
-        //     }
-        //   }
-        // } else if (independent) {
-        // ContextModule/RawModule/ExternalModule等只在独立分包的情况下添加分包标记，其余默认不添加
-        // const hackModuleIdentifier = (module) => {
-        //   const postfix = `|independent=${independent}|${currentPackageRoot}`
-        //   const rawIdentifier = module.identifier
-        //   if (rawIdentifier && !rawIdentifier.__mpxHacked) {
-        //     module.identifier = () => {
-        //       return rawIdentifier.call(module) + postfix
-        //     }
-        //     module.identifier.__mpxHacked = true
-        //   }
-        // }
-        // hackModuleIdentifier(module)
-        // const rawCallback = callback
-        // callback = (err, module) => {
-        //   // 因为文件缓存的存在，前面hack identifier的行为对于从文件缓存中创建得到的module并不生效，因此需要在回调中进行二次hack处理
-        //   if (err) return rawCallback(err)
-        //   hackModuleIdentifier(module)
-        //   rawCallback(null, module)
-        // }
-        // }
-        return rawAddModule.call(compilation, module, callback)
-      }
+      // const rawAddModule = compilation.addModule
+      // compilation.addModule = (module, callback) => {
+      // const issuerResource = module.issuerResource
+      // const currentPackageRoot = mpx.currentPackageRoot
+      // const independent = mpx.independentSubpackagesMap[currentPackageRoot]
+      //
+      // if (module.resource) {
+      //   // NormalModule
+      //   const isStatic = isStaticModule(module)
+      //
+      //   let needPackageQuery = isStatic || independent
+      //   if (!needPackageQuery) {
+      //     const { resourcePath } = parseRequest(module.resource)
+      //     needPackageQuery = matchCondition(resourcePath, this.options.subpackageModulesRules)
+      //   }
+      //   if (needPackageQuery) {
+      //     const { packageRoot } = mpx.getPackageInfo({
+      //       resource: module.resource,
+      //       resourceType: isStatic ? 'staticResource' : 'subpackageModule',
+      //       issuerResource,
+      //       warn (e) {
+      //         compilation.warnings.push(e)
+      //       },
+      //       error (e) {
+      //         compilation.errors.push(e)
+      //       }
+      //     })
+      //     if (packageRoot) {
+      //       const queryObj = {
+      //         packageRoot
+      //       }
+      //       if (independent) queryObj.independent = independent
+      //       module.request = addQuery(module.request, queryObj)
+      //       module.resource = addQuery(module.resource, queryObj)
+      //     }
+      //   }
+      // } else if (independent) {
+      // ContextModule/RawModule/ExternalModule等只在独立分包的情况下添加分包标记，其余默认不添加
+      // const hackModuleIdentifier = (module) => {
+      //   const postfix = `|independent=${independent}|${currentPackageRoot}`
+      //   const rawIdentifier = module.identifier
+      //   if (rawIdentifier && !rawIdentifier.__mpxHacked) {
+      //     module.identifier = () => {
+      //       return rawIdentifier.call(module) + postfix
+      //     }
+      //     module.identifier.__mpxHacked = true
+      //   }
+      // }
+      // hackModuleIdentifier(module)
+      // const rawCallback = callback
+      // callback = (err, module) => {
+      //   // 因为文件缓存的存在，前面hack identifier的行为对于从文件缓存中创建得到的module并不生效，因此需要在回调中进行二次hack处理
+      //   if (err) return rawCallback(err)
+      //   hackModuleIdentifier(module)
+      //   rawCallback(null, module)
+      // }
+      // }
+      //   return rawAddModule.call(compilation, module, callback)
+      // }
+      //
+      // const rawEmitAsset = compilation.emitAsset
 
-      const rawEmitAsset = compilation.emitAsset
+      // compilation.emitAsset = (file, source, assetInfo) => {
+      //   if (assetInfo && assetInfo.skipEmit) return
+      //   return rawEmitAsset.call(compilation, file, source, assetInfo)
+      // }
 
-      compilation.emitAsset = (file, source, assetInfo) => {
-        if (assetInfo && assetInfo.skipEmit) return
-        return rawEmitAsset.call(compilation, file, source, assetInfo)
-      }
-
-      compilation.hooks.succeedModule.tap('MpxWebpackPlugin', (module) => {
-        // 静态资源模块由于输出结果的动态性，通过importModule会合并asset的特性，通过emitFile传递信息禁用父级extractor的缓存来保障父级的importModule每次都能被执行
-        if (isStaticModule(module)) {
-          emitFile(module, MPX_DISABLE_EXTRACTOR_CACHE, '', undefined, { skipEmit: true })
-        }
-      })
+      // compilation.hooks.succeedModule.tap('MpxWebpackPlugin', (module) => {
+      //   // 静态资源模块由于输出结果的动态性，通过importModule会合并asset的特性，通过emitFile传递信息禁用父级extractor的缓存来保障父级的importModule每次都能被执行
+      //   if (isStaticModule(module)) {
+      //     emitFile(module, MPX_DISABLE_EXTRACTOR_CACHE, '', undefined, { skipEmit: true })
+      //   }
+      // })
 
       // compilation.hooks.finishModules.tap('MpxWebpackPlugin', (modules) => {
       //   // 自动跟进分包配置修改splitChunksPlugin配置
@@ -869,14 +872,14 @@ class MpxWebpackPlugin {
       //   return source
       // })
 
-      JavascriptModulesPlugin.getCompilationHooks(compilation).renderStartup.tap('MpxWebpackPlugin', (source, module) => {
-        const realModule = (module && module.rootModule) || module
-        if (realModule && mpx.exportModules.has(realModule)) {
-          source = new ConcatSource(source)
-          source.add('module.exports = __webpack_exports__;\n')
-        }
-        return source
-      })
+      // JavascriptModulesPlugin.getCompilationHooks(compilation).renderStartup.tap('MpxWebpackPlugin', (source, module) => {
+      //   const realModule = (module && module.rootModule) || module
+      //   if (realModule && mpx.exportModules.has(realModule)) {
+      //     source = new ConcatSource(source)
+      //     source.add('module.exports = __webpack_exports__;\n')
+      //   }
+      //   return source
+      // })
 
       // compilation.hooks.moduleAsset.tap('MpxWebpackPlugin', (module, filename) => {
       //   const modules = mpx.assetsModulesMap.get(filename) || new Set()
@@ -884,270 +887,270 @@ class MpxWebpackPlugin {
       //   mpx.assetsModulesMap.set(filename, modules)
       // })
 
-      const fillExtractedAssetsMap = (assetsMap, { index, content }, filename) => {
-        if (assetsMap.has(index)) {
-          if (assetsMap.get(index) !== content) {
-            compilation.errors.push(new Error(`The extracted file [${filename}] is filled with same index [${index}] and different content:
-            old content: ${assetsMap.get(index)}
-            new content: ${content}
-            please check!`))
-          }
-        } else {
-          assetsMap.set(index, content)
-        }
-      }
+      // const fillExtractedAssetsMap = (assetsMap, { index, content }, filename) => {
+      //   if (assetsMap.has(index)) {
+      //     if (assetsMap.get(index) !== content) {
+      //       compilation.errors.push(new Error(`The extracted file [${filename}] is filled with same index [${index}] and different content:
+      //       old content: ${assetsMap.get(index)}
+      //       new content: ${content}
+      //       please check!`))
+      //     }
+      //   } else {
+      //     assetsMap.set(index, content)
+      //   }
+      // }
+      //
+      // const sortExtractedAssetsMap = (assetsMap) => {
+      //   return [...assetsMap.entries()].sort((a, b) => a[0] - b[0]).map(item => item[1])
+      // }
 
-      const sortExtractedAssetsMap = (assetsMap) => {
-        return [...assetsMap.entries()].sort((a, b) => a[0] - b[0]).map(item => item[1])
-      }
+      // compilation.hooks.beforeModuleAssets.tap('MpxWebpackPlugin', () => {
+      //   const extractedAssetsMap = new Map()
+      //   for (const module of compilation.modules) {
+      //     const assetsInfo = module.buildInfo.assetsInfo || new Map()
+      //     for (const [filename, { extractedInfo } = {}] of assetsInfo) {
+      //       if (extractedInfo) {
+      //         let extractedAssets = extractedAssetsMap.get(filename)
+      //         if (!extractedAssets) {
+      //           extractedAssets = [new Map(), new Map()]
+      //           extractedAssetsMap.set(filename, extractedAssets)
+      //         }
+      //         fillExtractedAssetsMap(extractedInfo.pre ? extractedAssets[0] : extractedAssets[1], extractedInfo, filename)
+      //         compilation.hooks.moduleAsset.call(module, filename)
+      //       }
+      //     }
+      //   }
+      //
+      //   for (const [filename, [pre, normal]] of extractedAssetsMap) {
+      //     const sortedExtractedAssets = [...sortExtractedAssetsMap(pre), ...sortExtractedAssetsMap(normal)]
+      //     const source = new ConcatSource()
+      //     sortedExtractedAssets.forEach((content) => {
+      //       if (content) {
+      //         // 处理replace path
+      //         if (/"mpx_replace_path_.*?"/.test(content)) {
+      //           content = content.replace(/"mpx_replace_path_(.*?)"/g, (matched, key) => {
+      //             return JSON.stringify(mpx.replacePathMap[key] || 'missing replace path')
+      //           })
+      //         }
+      //         source.add(content)
+      //       }
+      //     })
+      //     compilation.emitAsset(filename, source)
+      //   }
+      // })
 
-      compilation.hooks.beforeModuleAssets.tap('MpxWebpackPlugin', () => {
-        const extractedAssetsMap = new Map()
-        for (const module of compilation.modules) {
-          const assetsInfo = module.buildInfo.assetsInfo || new Map()
-          for (const [filename, { extractedInfo } = {}] of assetsInfo) {
-            if (extractedInfo) {
-              let extractedAssets = extractedAssetsMap.get(filename)
-              if (!extractedAssets) {
-                extractedAssets = [new Map(), new Map()]
-                extractedAssetsMap.set(filename, extractedAssets)
-              }
-              fillExtractedAssetsMap(extractedInfo.pre ? extractedAssets[0] : extractedAssets[1], extractedInfo, filename)
-              compilation.hooks.moduleAsset.call(module, filename)
-            }
-          }
-        }
-
-        for (const [filename, [pre, normal]] of extractedAssetsMap) {
-          const sortedExtractedAssets = [...sortExtractedAssetsMap(pre), ...sortExtractedAssetsMap(normal)]
-          const source = new ConcatSource()
-          sortedExtractedAssets.forEach((content) => {
-            if (content) {
-              // 处理replace path
-              if (/"mpx_replace_path_.*?"/.test(content)) {
-                content = content.replace(/"mpx_replace_path_(.*?)"/g, (matched, key) => {
-                  return JSON.stringify(mpx.replacePathMap[key] || 'missing replace path')
-                })
-              }
-              source.add(content)
-            }
-          })
-          compilation.emitAsset(filename, source)
-        }
-      })
-
-      normalModuleFactory.hooks.parser.for('javascript/auto').tap('MpxWebpackPlugin', (parser) => {
-        parser.hooks.call.for('__mpx_resolve_path__').tap('MpxWebpackPlugin', (expr) => {
-          if (expr.arguments[0]) {
-            const resource = expr.arguments[0].value
-            const packageName = mpx.currentPackageRoot || 'main'
-            const issuerResource = moduleGraph.getIssuer(parser.state.module).resource
-            const range = expr.range
-            const dep = new ResolveDependency(resource, packageName, issuerResource, range)
-            parser.state.current.addPresentationalDependency(dep)
-            return true
-          }
-        })
-
-        // parser.hooks.call.for('__mpx_dynamic_entry__').tap('MpxWebpackPlugin', (expr) => {
-        //   const args = expr.arguments.map((i) => i.value)
-        //   args.push(expr.range)
-        //   const dep = new DynamicEntryDependency(...args)
-        //   parser.state.current.addPresentationalDependency(dep)
-        //   return true
-        // })
-
-        const requireAsyncHandler = (expr, members) => {
-          if (members[0] === 'async') {
-            let request = expr.arguments[0].value
-            // const range = expr.arguments[0].range
-            // const context = parser.state.module.context
-            const { queryObj } = parseRequest(request)
-            if (queryObj.root) {
-              // 删除root query
-              request = addQuery(request, {}, false, ['root'])
-              // 目前仅wx支持require.async，其余平台使用CommonJsAsyncDependency进行模拟抹平
-              if (mpx.mode === 'wx') {
-                // const dep = new DynamicEntryDependency(request, 'export', '', queryObj.root, MPX_CURRENT_CHUNK, context, range)
-                // parser.state.current.addPresentationalDependency(dep)
-                // // 包含require.async的模块不能被concatenate，避免DynamicEntryDependency中无法获取模块chunk以计算相对路径
-                // parser.state.module.buildInfo.moduleConcatenationBailout = 'require async'
-              } else {
-                const range = expr.range
-                const dep = new CommonJsAsyncDependency(request, range)
-                parser.state.current.addDependency(dep)
-              }
-              return true
-            } else {
-              compilation.errors.push(new Error(`The require async JS [${request}] need to declare subpackage name by root`))
-              return true
-            }
-          }
-        }
-
-        parser.hooks.callMemberChain
-          .for('require')
-          .tap({
-            name: 'MpxWebpackPlugin',
-            stage: -1000
-          }, (expr, members) => requireAsyncHandler(expr, members))
-
-        parser.hooks.callMemberChainOfCallMemberChain
-          .for('require')
-          .tap({
-            name: 'MpxWebpackPlugin',
-            stage: -1000
-          }, (expr, calleeMembers, callExpr) => requireAsyncHandler(callExpr, calleeMembers))
-
-        // hack babel polyfill global
-        parser.hooks.statementIf.tap('MpxWebpackPlugin', (expr) => {
-          if (/core-js.+microtask/.test(parser.state.module.resource)) {
-            if (expr.test.left && (expr.test.left.name === 'Observer' || expr.test.left.name === 'MutationObserver')) {
-              const current = parser.state.current
-              current.addPresentationalDependency(new InjectDependency({
-                content: 'document && ',
-                index: expr.test.range[0]
-              }))
-            }
-          }
-        })
-
-        parser.hooks.evaluate.for('CallExpression').tap('MpxWebpackPlugin', (expr) => {
-          const current = parser.state.current
-          const arg0 = expr.arguments[0]
-          const arg1 = expr.arguments[1]
-          const callee = expr.callee
-          // todo 该逻辑在corejs3中不需要，等corejs3比较普及之后可以干掉
-          if (/core-js.+global/.test(parser.state.module.resource)) {
-            if (callee.name === 'Function' && arg0 && arg0.value === 'return this') {
-              current.addPresentationalDependency(new InjectDependency({
-                content: '(function() { return this })() || ',
-                index: expr.range[0]
-              }))
-            }
-          }
-          if (/regenerator/.test(parser.state.module.resource)) {
-            if (callee.name === 'Function' && arg0 && arg0.value === 'r' && arg1 && arg1.value === 'regeneratorRuntime = r') {
-              current.addPresentationalDependency(new ReplaceDependency('(function () {})', expr.range))
-            }
-          }
-        })
-
-        // 处理跨平台转换
-        if (mpx.srcMode !== mpx.mode) {
-          // 处理跨平台全局对象转换
-          const transGlobalObject = (expr) => {
-            const module = parser.state.module
-            const current = parser.state.current
-            const { queryObj, resourcePath } = parseRequest(module.resource)
-            const localSrcMode = queryObj.mode
-            const globalSrcMode = mpx.srcMode
-            const srcMode = localSrcMode || globalSrcMode
-            const mode = mpx.mode
-
-            let target
-            if (expr.type === 'Identifier') {
-              target = expr
-            } else if (expr.type === 'MemberExpression') {
-              target = expr.object
-            }
-
-            if (!matchCondition(resourcePath, this.options.transMpxRules) || resourcePath.indexOf('@mpxjs') !== -1 || !target || mode === srcMode) return
-
-            const type = target.name
-            const name = type === 'wx' ? 'mpx' : 'createFactory'
-            const replaceContent = type === 'wx' ? 'mpx' : `createFactory(${JSON.stringify(type)})`
-
-            const dep = new ReplaceDependency(replaceContent, target.range)
-            current.addPresentationalDependency(dep)
-
-            let needInject = true
-            for (let dep of module.dependencies) {
-              if (dep instanceof CommonJsVariableDependency && dep.name === name) {
-                needInject = false
-                break
-              }
-            }
-            if (needInject) {
-              const dep = new CommonJsVariableDependency(`@mpxjs/core/src/runtime/${name}`, name)
-              module.addDependency(dep)
-            }
-          }
-
-          // 转换wx全局对象
-          parser.hooks.expression.for('wx').tap('MpxWebpackPlugin', transGlobalObject)
-          // Proxy ctor for transMode
-          if (!this.options.forceDisableProxyCtor) {
-            parser.hooks.call.for('Page').tap('MpxWebpackPlugin', (expr) => {
-              transGlobalObject(expr.callee)
-            })
-            parser.hooks.call.for('Component').tap('MpxWebpackPlugin', (expr) => {
-              transGlobalObject(expr.callee)
-            })
-            parser.hooks.call.for('App').tap('MpxWebpackPlugin', (expr) => {
-              transGlobalObject(expr.callee)
-            })
-            if (mpx.mode === 'ali' || mpx.mode === 'web') {
-              // 支付宝和web不支持Behaviors
-              parser.hooks.call.for('Behavior').tap('MpxWebpackPlugin', (expr) => {
-                transGlobalObject(expr.callee)
-              })
-            }
-          }
-
-          // 为跨平台api调用注入srcMode参数指导api运行时转换
-          const apiBlackListMap = [
-            'createApp',
-            'createPage',
-            'createComponent',
-            'createStore',
-            'createStoreWithThis',
-            'mixin',
-            'injectMixins',
-            'toPureObject',
-            'observable',
-            'watch',
-            'use',
-            'set',
-            'remove',
-            'delete',
-            'setConvertRule',
-            'getMixin',
-            'getComputed',
-            'implement'
-          ].reduce((map, api) => {
-            map[api] = true
-            return map
-          }, {})
-
-          const injectSrcModeForTransApi = (expr, members) => {
-            // members为空数组时，callee并不是memberExpression
-            if (!members.length) return
-            const callee = expr.callee
-            const args = expr.arguments
-            const name = callee.object.name
-            const { queryObj, resourcePath } = parseRequest(parser.state.module.resource)
-            const localSrcMode = queryObj.mode
-            const globalSrcMode = mpx.srcMode
-            const srcMode = localSrcMode || globalSrcMode
-
-            if (srcMode === globalSrcMode || apiBlackListMap[callee.property.name || callee.property.value] || (name !== 'mpx' && name !== 'wx') || (name === 'wx' && !matchCondition(resourcePath, this.options.transMpxRules))) return
-
-            const srcModeString = `__mpx_src_mode_${srcMode}__`
-            const dep = new InjectDependency({
-              content: args.length
-                ? `, ${JSON.stringify(srcModeString)}`
-                : JSON.stringify(srcModeString),
-              index: expr.end - 1
-            })
-            parser.state.current.addPresentationalDependency(dep)
-          }
-
-          parser.hooks.callMemberChain.for(harmonySpecifierTag).tap('MpxWebpackPlugin', injectSrcModeForTransApi)
-          parser.hooks.callMemberChain.for('mpx').tap('MpxWebpackPlugin', injectSrcModeForTransApi)
-          parser.hooks.callMemberChain.for('wx').tap('MpxWebpackPlugin', injectSrcModeForTransApi)
-        }
-      })
+      // normalModuleFactory.hooks.parser.for('javascript/auto').tap('MpxWebpackPlugin', (parser) => {
+      //   parser.hooks.call.for('__mpx_resolve_path__').tap('MpxWebpackPlugin', (expr) => {
+      //     if (expr.arguments[0]) {
+      //       const resource = expr.arguments[0].value
+      //       const packageName = mpx.currentPackageRoot || 'main'
+      //       const issuerResource = moduleGraph.getIssuer(parser.state.module).resource
+      //       const range = expr.range
+      //       const dep = new ResolveDependency(resource, packageName, issuerResource, range)
+      //       parser.state.current.addPresentationalDependency(dep)
+      //       return true
+      //     }
+      //   })
+      //
+      //   // parser.hooks.call.for('__mpx_dynamic_entry__').tap('MpxWebpackPlugin', (expr) => {
+      //   //   const args = expr.arguments.map((i) => i.value)
+      //   //   args.push(expr.range)
+      //   //   const dep = new DynamicEntryDependency(...args)
+      //   //   parser.state.current.addPresentationalDependency(dep)
+      //   //   return true
+      //   // })
+      //
+      //   const requireAsyncHandler = (expr, members) => {
+      //     if (members[0] === 'async') {
+      //       let request = expr.arguments[0].value
+      //       // const range = expr.arguments[0].range
+      //       // const context = parser.state.module.context
+      //       const { queryObj } = parseRequest(request)
+      //       if (queryObj.root) {
+      //         // 删除root query
+      //         request = addQuery(request, {}, false, ['root'])
+      //         // 目前仅wx支持require.async，其余平台使用CommonJsAsyncDependency进行模拟抹平
+      //         if (mpx.mode === 'wx') {
+      //           // const dep = new DynamicEntryDependency(request, 'export', '', queryObj.root, MPX_CURRENT_CHUNK, context, range)
+      //           // parser.state.current.addPresentationalDependency(dep)
+      //           // // 包含require.async的模块不能被concatenate，避免DynamicEntryDependency中无法获取模块chunk以计算相对路径
+      //           // parser.state.module.buildInfo.moduleConcatenationBailout = 'require async'
+      //         } else {
+      //           const range = expr.range
+      //           const dep = new CommonJsAsyncDependency(request, range)
+      //           parser.state.current.addDependency(dep)
+      //         }
+      //         return true
+      //       } else {
+      //         compilation.errors.push(new Error(`The require async JS [${request}] need to declare subpackage name by root`))
+      //         return true
+      //       }
+      //     }
+      //   }
+      //
+      //   parser.hooks.callMemberChain
+      //     .for('require')
+      //     .tap({
+      //       name: 'MpxWebpackPlugin',
+      //       stage: -1000
+      //     }, (expr, members) => requireAsyncHandler(expr, members))
+      //
+      //   parser.hooks.callMemberChainOfCallMemberChain
+      //     .for('require')
+      //     .tap({
+      //       name: 'MpxWebpackPlugin',
+      //       stage: -1000
+      //     }, (expr, calleeMembers, callExpr) => requireAsyncHandler(callExpr, calleeMembers))
+      //
+      //   // hack babel polyfill global
+      //   // parser.hooks.statementIf.tap('MpxWebpackPlugin', (expr) => {
+      //   //   if (/core-js.+microtask/.test(parser.state.module.resource)) {
+      //   //     if (expr.test.left && (expr.test.left.name === 'Observer' || expr.test.left.name === 'MutationObserver')) {
+      //   //       const current = parser.state.current
+      //   //       current.addPresentationalDependency(new InjectDependency({
+      //   //         content: 'document && ',
+      //   //         index: expr.test.range[0]
+      //   //       }))
+      //   //     }
+      //   //   }
+      //   // })
+      //
+      //   // parser.hooks.evaluate.for('CallExpression').tap('MpxWebpackPlugin', (expr) => {
+      //   //   const current = parser.state.current
+      //   //   const arg0 = expr.arguments[0]
+      //   //   const arg1 = expr.arguments[1]
+      //   //   const callee = expr.callee
+      //   //   // todo 该逻辑在corejs3中不需要，等corejs3比较普及之后可以干掉
+      //   //   if (/core-js.+global/.test(parser.state.module.resource)) {
+      //   //     if (callee.name === 'Function' && arg0 && arg0.value === 'return this') {
+      //   //       current.addPresentationalDependency(new InjectDependency({
+      //   //         content: '(function() { return this })() || ',
+      //   //         index: expr.range[0]
+      //   //       }))
+      //   //     }
+      //   //   }
+      //   //   if (/regenerator/.test(parser.state.module.resource)) {
+      //   //     if (callee.name === 'Function' && arg0 && arg0.value === 'r' && arg1 && arg1.value === 'regeneratorRuntime = r') {
+      //   //       current.addPresentationalDependency(new ReplaceDependency('(function () {})', expr.range))
+      //   //     }
+      //   //   }
+      //   // })
+      //
+      //   // 处理跨平台转换
+      //   if (mpx.srcMode !== mpx.mode) {
+      //     // 处理跨平台全局对象转换
+      //     const transGlobalObject = (expr) => {
+      //       const module = parser.state.module
+      //       const current = parser.state.current
+      //       const { queryObj, resourcePath } = parseRequest(module.resource)
+      //       const localSrcMode = queryObj.mode
+      //       const globalSrcMode = mpx.srcMode
+      //       const srcMode = localSrcMode || globalSrcMode
+      //       const mode = mpx.mode
+      //
+      //       let target
+      //       if (expr.type === 'Identifier') {
+      //         target = expr
+      //       } else if (expr.type === 'MemberExpression') {
+      //         target = expr.object
+      //       }
+      //
+      //       if (!matchCondition(resourcePath, this.options.transMpxRules) || resourcePath.indexOf('@mpxjs') !== -1 || !target || mode === srcMode) return
+      //       //
+      //       // const type = target.name
+      //       // const name = type === 'wx' ? 'mpx' : 'createFactory'
+      //       // const replaceContent = type === 'wx' ? 'mpx' : `createFactory(${JSON.stringify(type)})`
+      //
+      //       // const dep = new ReplaceDependency(replaceContent, target.range)
+      //       // current.addPresentationalDependency(dep)
+      //       //
+      //       // let needInject = true
+      //       // for (let dep of module.dependencies) {
+      //       //   if (dep instanceof CommonJsVariableDependency && dep.name === name) {
+      //       //     needInject = false
+      //       //     break
+      //       //   }
+      //       // }
+      //       // if (needInject) {
+      //       //   const dep = new CommonJsVariableDependency(`@mpxjs/core/src/runtime/${name}`, name)
+      //       //   module.addDependency(dep)
+      //       // }
+      //     }
+      //
+      //     // 转换wx全局对象
+      //     parser.hooks.expression.for('wx').tap('MpxWebpackPlugin', transGlobalObject)
+      //     // Proxy ctor for transMode
+      //     if (!this.options.forceDisableProxyCtor) {
+      //       parser.hooks.call.for('Page').tap('MpxWebpackPlugin', (expr) => {
+      //         transGlobalObject(expr.callee)
+      //       })
+      //       parser.hooks.call.for('Component').tap('MpxWebpackPlugin', (expr) => {
+      //         transGlobalObject(expr.callee)
+      //       })
+      //       parser.hooks.call.for('App').tap('MpxWebpackPlugin', (expr) => {
+      //         transGlobalObject(expr.callee)
+      //       })
+      //       if (mpx.mode === 'ali' || mpx.mode === 'web') {
+      //         // 支付宝和web不支持Behaviors
+      //         parser.hooks.call.for('Behavior').tap('MpxWebpackPlugin', (expr) => {
+      //           transGlobalObject(expr.callee)
+      //         })
+      //       }
+      //     }
+      //
+      //     // 为跨平台api调用注入srcMode参数指导api运行时转换
+      //     const apiBlackListMap = [
+      //       'createApp',
+      //       'createPage',
+      //       'createComponent',
+      //       'createStore',
+      //       'createStoreWithThis',
+      //       'mixin',
+      //       'injectMixins',
+      //       'toPureObject',
+      //       'observable',
+      //       'watch',
+      //       'use',
+      //       'set',
+      //       'remove',
+      //       'delete',
+      //       'setConvertRule',
+      //       'getMixin',
+      //       'getComputed',
+      //       'implement'
+      //     ].reduce((map, api) => {
+      //       map[api] = true
+      //       return map
+      //     }, {})
+      //
+      //     const injectSrcModeForTransApi = (expr, members) => {
+      //       // members为空数组时，callee并不是memberExpression
+      //       if (!members.length) return
+      //       const callee = expr.callee
+      //       const args = expr.arguments
+      //       const name = callee.object.name
+      //       const { queryObj, resourcePath } = parseRequest(parser.state.module.resource)
+      //       const localSrcMode = queryObj.mode
+      //       const globalSrcMode = mpx.srcMode
+      //       const srcMode = localSrcMode || globalSrcMode
+      //
+      //       if (srcMode === globalSrcMode || apiBlackListMap[callee.property.name || callee.property.value] || (name !== 'mpx' && name !== 'wx') || (name === 'wx' && !matchCondition(resourcePath, this.options.transMpxRules))) return
+      //
+      //       const srcModeString = `__mpx_src_mode_${srcMode}__`
+      //       const dep = new InjectDependency({
+      //         content: args.length
+      //           ? `, ${JSON.stringify(srcModeString)}`
+      //           : JSON.stringify(srcModeString),
+      //         index: expr.end - 1
+      //       })
+      //       parser.state.current.addPresentationalDependency(dep)
+      //     }
+      //
+      //     parser.hooks.callMemberChain.for(harmonySpecifierTag).tap('MpxWebpackPlugin', injectSrcModeForTransApi)
+      //     parser.hooks.callMemberChain.for('mpx').tap('MpxWebpackPlugin', injectSrcModeForTransApi)
+      //     parser.hooks.callMemberChain.for('wx').tap('MpxWebpackPlugin', injectSrcModeForTransApi)
+      //   }
+      // })
 
       // 为了正确生成sourceMap，将该步骤由原来的compile.hooks.emit迁移到compilation.hooks.processAssets
 //       compilation.hooks.processAssets.tap({
@@ -1327,65 +1330,65 @@ class MpxWebpackPlugin {
         }
       })
 
-      // const typeLoaderProcessInfo = {
-      //   styles: ['css-loader', wxssLoaderPath, styleCompilerPath],
-      //   template: ['html-loader', wxmlLoaderPath, templateCompilerPath]
-      // }
+      const typeLoaderProcessInfo = {
+        styles: ['css-loader', wxssLoaderPath, styleCompilerPath],
+        template: ['html-loader', wxmlLoaderPath, templateCompilerPath]
+      }
 
       // 应用过rules后，注入mpx相关资源编译loader
       normalModuleFactory.hooks.afterResolve.tap('MpxWebpackPlugin', ({ createData }) => {
         const { queryObj } = parseRequest(createData.request)
         const loaders = createData.loaders
-        // if (queryObj.mpx && queryObj.mpx !== MPX_PROCESSED_FLAG) {
-        //   const type = queryObj.type
-        //   const extract = queryObj.extract
-        //   switch (type) {
-        //     case 'styles':
-        //     case 'template':
-        //       let insertBeforeIndex = -1
-        //       const info = typeLoaderProcessInfo[type]
-        //       loaders.forEach((loader, index) => {
-        //         const currentLoader = toPosix(loader.loader)
-        //         if (currentLoader.includes(info[0])) {
-        //           loader.loader = info[1]
-        //           insertBeforeIndex = index
-        //         } else if (currentLoader.includes(info[1])) {
-        //           insertBeforeIndex = index
-        //         }
-        //       })
-        //       if (insertBeforeIndex > -1) {
-        //         loaders.splice(insertBeforeIndex + 1, 0, {
-        //           loader: info[2]
-        //         })
-        //       }
-        //       break
-        //     case 'json':
-        //       if (queryObj.isTheme) {
-        //         loaders.unshift({
-        //           loader: jsonThemeCompilerPath
-        //         })
-        //       } else if (queryObj.isPlugin) {
-        //         loaders.unshift({
-        //           loader: jsonPluginCompilerPath
-        //         })
-        //       } else {
-        //         loaders.unshift({
-        //           loader: jsonCompilerPath
-        //         })
-        //       }
-        //       break
-        //     case 'wxs':
-        //       loaders.unshift({
-        //         loader: wxsLoaderPath
-        //       })
-        //   }
-        //   if (extract) {
-        //     loaders.unshift({
-        //       loader: extractorPath
-        //     })
-        //   }
-        //   createData.resource = addQuery(createData.resource, { mpx: MPX_PROCESSED_FLAG }, true)
-        // }
+        if (queryObj.mpx && queryObj.mpx !== MPX_PROCESSED_FLAG) {
+          const type = queryObj.type
+          const extract = queryObj.extract
+          switch (type) {
+            case 'styles':
+            case 'template':
+              let insertBeforeIndex = -1
+              const info = typeLoaderProcessInfo[type]
+              loaders.forEach((loader, index) => {
+                const currentLoader = toPosix(loader.loader)
+                if (currentLoader.includes(info[0])) {
+                  loader.loader = info[1]
+                  insertBeforeIndex = index
+                } else if (currentLoader.includes(info[1])) {
+                  insertBeforeIndex = index
+                }
+              })
+              if (insertBeforeIndex > -1) {
+                loaders.splice(insertBeforeIndex + 1, 0, {
+                  loader: info[2]
+                })
+              }
+              break
+            case 'json':
+              if (queryObj.isTheme) {
+                loaders.unshift({
+                  loader: jsonThemeCompilerPath
+                })
+              } else if (queryObj.isPlugin) {
+                loaders.unshift({
+                  loader: jsonPluginCompilerPath
+                })
+              } else {
+                loaders.unshift({
+                  loader: jsonCompilerPath
+                })
+              }
+              break
+            case 'wxs':
+              loaders.unshift({
+                loader: wxsLoaderPath
+              })
+          }
+          if (extract) {
+            loaders.unshift({
+              loader: extractorPath
+            })
+          }
+          createData.resource = addQuery(createData.resource, { mpx: MPX_PROCESSED_FLAG }, true)
+        }
 
         if (mpx.mode === 'web') {
           const mpxStyleOptions = queryObj.mpxStyleOptions
@@ -1426,57 +1429,57 @@ class MpxWebpackPlugin {
       })
     })
 
-    const clearFileCache = () => {
-      const fs = compiler.intermediateFileSystem
-      const cacheLocation = compiler.options.cache.cacheLocation
-      return new Promise((resolve) => {
-        if (!cacheLocation) return resolve()
-        if (typeof fs.rm === 'function') {
-          fs.rm(cacheLocation, {
-            recursive: true,
-            force: true
-          }, resolve)
-        } else {
-          // polyfill fs.rm
-          const rm = (file, callback) => {
-            async.waterfall([
-              (callback) => {
-                fs.stat(file, callback)
-              },
-              (stats, callback) => {
-                if (stats.isDirectory()) {
-                  const dir = file
-                  fs.readdir(dir, (err, files) => {
-                    if (err) return callback(err)
-                    async.each(files, (file, callback) => {
-                      file = path.join(dir, file)
-                      rm(file, callback)
-                    }, (err) => {
-                      if (err) return callback(err)
-                      fs.rmdir(dir, callback)
-                    })
-                  })
-                } else {
-                  fs.unlink(file, callback)
-                }
-              }
-            ], callback)
-          }
-          rm(cacheLocation, resolve)
-        }
-      })
-    }
-
-    compiler.hooks.done.tapPromise('MpxWebpackPlugin', async () => {
-      const cache = compiler.getCache('MpxWebpackPlugin')
-      const cacheIsValid = await cache.getPromise('cacheIsValid', null)
-      if (!cacheIsValid) {
-        await Promise.all([
-          clearFileCache(),
-          cache.storePromise('cacheIsValid', null, true)
-        ])
-      }
-    })
+    // const clearFileCache = () => {
+    //   const fs = compiler.intermediateFileSystem
+    //   const cacheLocation = compiler.options.cache.cacheLocation
+    //   return new Promise((resolve) => {
+    //     if (!cacheLocation) return resolve()
+    //     if (typeof fs.rm === 'function') {
+    //       fs.rm(cacheLocation, {
+    //         recursive: true,
+    //         force: true
+    //       }, resolve)
+    //     } else {
+    //       // polyfill fs.rm
+    //       const rm = (file, callback) => {
+    //         async.waterfall([
+    //           (callback) => {
+    //             fs.stat(file, callback)
+    //           },
+    //           (stats, callback) => {
+    //             if (stats.isDirectory()) {
+    //               const dir = file
+    //               fs.readdir(dir, (err, files) => {
+    //                 if (err) return callback(err)
+    //                 async.each(files, (file, callback) => {
+    //                   file = path.join(dir, file)
+    //                   rm(file, callback)
+    //                 }, (err) => {
+    //                   if (err) return callback(err)
+    //                   fs.rmdir(dir, callback)
+    //                 })
+    //               })
+    //             } else {
+    //               fs.unlink(file, callback)
+    //             }
+    //           }
+    //         ], callback)
+    //       }
+    //       rm(cacheLocation, resolve)
+    //     }
+    //   })
+    // }
+    //
+    // compiler.hooks.done.tapPromise('MpxWebpackPlugin', async () => {
+    //   const cache = compiler.getCache('MpxWebpackPlugin')
+    //   const cacheIsValid = await cache.getPromise('cacheIsValid', null)
+    //   if (!cacheIsValid) {
+    //     await Promise.all([
+    //       clearFileCache(),
+    //       cache.storePromise('cacheIsValid', null, true)
+    //     ])
+    //   }
+    // })
   }
 }
 
