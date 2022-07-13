@@ -21,7 +21,6 @@ function shallowStringify (obj) {
   return `{${arr.join(',')}}`
 }
 
-
 module.exports = function (script, options, callback) {
   const ctorType = options.ctorType
   const builtInComponentsMap = options.builtInComponentsMap
@@ -246,8 +245,8 @@ module.exports = function (script, options, callback) {
   let dynamicPageStr = ''
   async.each(localPagesMap, (pageCfg, callback) => {
     processPage(addQuery(pageCfg.resource, { tenon: true }), loaderContext.context, '', (err, entry, { key }) => {
-      if(err) return callback()
-      if(pageSet.has(key)) return callback()
+      if (err) return callback()
+      if (pageSet.has(key)) return callback()
       pageSet.add(key)
       dynamicPageStr += `\n"${entry}"`
       callback()
