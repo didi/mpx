@@ -2111,7 +2111,7 @@ function processElement (el, root, options, meta) {
     processStyle(el, meta)
     processShow(el, options, root)
   }
-  
+
   if (!pass) {
     processBindEvent(el, options)
     processComponentIs(el, options)
