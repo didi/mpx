@@ -40,12 +40,16 @@ mpx-fetch提供了一个实例**xfetch** ，该实例包含以下api
             类型：`Boolean`
         
             设置为 true 时，等价于 header = {'content-type': 'application/x-www-form-urlencoded'}
-        - **isPre**
+        - **usePre**
             类型：`Boolean`
-            预请求开关，若设置为 true，则两次请求间隔在有效期内且请求参数和请求方式完全一致的情况下，返回上一次请求的结果
+            预请求开关，若设置为 true，则两次请求间隔在有效期内且请求参数和请求方式对比一致的情况下，会返回上一次的请求结果
         - **cacheInvalidationTime**
             类型： `number`
             预请求缓存有效时长，单位 ms，默认为 5000ms。当两次请求时间间隔超过设置时长后再发起二次请求时，上一次的请求缓存会失效然后重新发起请求
+        - **ignorePreParamKeys**
+            类型： `array` | `string`
+            在判断缓存请求是否可用对比前后两次请求参数时，默认对比的是 options 传入的所有参数（包括 params 和 data ）。但在具体业务场景下某些参数不一致时的缓存结果依旧可使用（比如参数中带有时间戳），所以提供 ignorePreParamKeys 来设置对比参数过程中可忽略的参数的 key，支持字符串数组和字符串（字符串传多个 key 时使用英文逗号分隔）类型。
+            配置后在进行参数对比时，不会对比在 ignorePreParamKeys 设置的参数。
 
 - **示例：**
 
@@ -64,8 +68,9 @@ mpx.xfetch.fetch({
         name: 'test'
     },
     emulateJSON: true,
-    isPre: true,
-    cacheInvalidationTime: 3000
+    usePre: true,
+    cacheInvalidationTime: 3000,
+    ignorePreParamKeys: ['timestamp']
 }).then(res => {
 	console.log(res.data)
 })

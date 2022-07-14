@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/core",
-  "version": "2.7.37",
+  "version": "2.7.43",
   "description": "mpx runtime core",
   "keywords": [
     "miniprogram",
@@ -24,7 +24,8 @@
   },
   "peerDependencies": {
     "vue": "^2.6.10",
-    "vue-i18n": "^8.15.3"
+    "vue-i18n": "^8.15.3",
+    "@mpxjs/api-proxy": "^2.7.29"
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org"
