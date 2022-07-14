@@ -1,39 +1,29 @@
 <template>
   <header class="header">
-    <div class="head-container">
+    <div class="header-menu" v-if="smallMode">
       <a href="/">
+        <img style="vertical-align: middle;" height="20" src="https://gift-static.hongyibo.com.cn/static/kfpub/3547/logo_color.png" alt="logo">
+      </a>
+      <div style="display: flex; align-items: center;">
+        <AlgoliaSearchBox v-if="isAlgoliaSearch" :options="algolia" />
+        <span class="header-menu-icon">
+          <img @click="toggleSidebar" height="14" src="https://gift-static.hongyibo.com.cn/static/kfpub/3547/y_icon_liebiao.png" alt="menu">
+        </span>
+      </div>
+    </div>
+    <div class="head-container" :style="calculateStyle">
+      <a href="/" v-if="!smallMode">
         <div class="logo">mpx</div>
       </a>
       <div class="row">
-        <div class="header__line"></div>
-        <nav class="nav">
-          <a class="nav-link" href="/guide/basic/start.html">指南</a>
-        </nav>
-        <nav class="nav">
-          <a class="nav-link" href="/api/config.html">API</a>
-        </nav>
-        <nav class="nav"><a class="nav-link" href="/articles/">文章</a></nav>
-        <nav class="nav">
-          <a
-            class="nav-link"
-            href="https://github.com/didi/mpx/releases"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            更新记录
+        <div class="header__line" v-if="!smallMode"></div>
+        <nav class="nav" v-for="(item, index) in list" :key="index">
+          <a class="nav-link" :href="item.link">
+            {{item.title}}
+            <img v-if="smallMode" width="16" src="https://gift-static.hongyibo.com.cn/static/kfpub/3547/y_icon_jinru.png" alt="arrow">
           </a>
         </nav>
-        <nav class="nav">
-          <a
-            class="nav-link"
-            href="https://github.com/didi/mpx"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            GitHub
-          </a>
-        </nav>
-        <div class="searchBox-wrapper">
+        <div class="searchBox-wrapper" v-if="!smallMode">
           <!-- <SearchBox /> -->
           <div class="searchBox">
             <AlgoliaSearchBox v-if="isAlgoliaSearch" :options="algolia" />
@@ -41,6 +31,7 @@
         </div>
       </div>
     </div>
+    <div @click="toggleSidebar" v-if="isSidebarOpen" class="head-mask"></div>
   </header>
 </template>
 
@@ -50,7 +41,20 @@ import AlgoliaSearchBox from "../components/AlgoliaSearchBox.vue";
 export default {
   components: {
     SearchBox,
-    AlgoliaSearchBox,
+    AlgoliaSearchBox
+  },
+  data () {
+    return {
+      smallMode: false,
+      isSidebarOpen: false,
+      list: [
+        { title: '指南', link: '/guide/basic/start.html' },
+        { title: 'API', link: '/api/config.html' },
+        { title: '文章', link: '/articles/' },
+        { title: '更新记录', link: 'https://github.com/didi/mpx/releases' },
+        { title: 'GitHub', link: 'https://github.com/didi/mpx' }
+      ]
+    }
   },
   computed: {
     algolia() {
@@ -61,7 +65,36 @@ export default {
     isAlgoliaSearch() {
       return this.algolia && this.algolia.apiKey && this.algolia.indexName;
     },
+    calculateStyle() {
+      if (this.$page.path !== '/') {
+        return ''
+      }
+      return this.isSidebarOpen ? 'transform: translateY(0);' : ''
+    }
   },
+  mounted () {
+    const MOBILE_DESKTOP_BREAKPOINT = 719
+    const handleLinksWrapWidth = () => {
+      if (document.documentElement.clientWidth < MOBILE_DESKTOP_BREAKPOINT) {
+        this.smallMode = true
+      } else {
+        this.smallMode = false
+      }
+    }
+    handleLinksWrapWidth()
+    window.addEventListener('resize', handleLinksWrapWidth, false)
+    this.$router.afterEach(() => {
+      this.isSidebarOpen = false
+    })
+  },
+  methods: {
+    toggleSidebar (to) {
+      this.isSidebarOpen = typeof to === 'boolean' ? to : !this.isSidebarOpen
+      if (this.$page.path !== '/') {
+        this.$emit('toggle-sidebar')
+      }
+    }
+  }
 };
 </script>
 
@@ -85,20 +118,24 @@ export default {
   align-items: center;
 }
 
-.header {
+.header-menu {
+  width: 100%;
   display: flex;
   align-items: center;
-  justify-content: center;
-  z-index: 100;
-  padding: 0.5rem 3rem;
-  width: 100%;
-  height: 3.5rem;
+  justify-content: space-between;
+  z-index: 101;
   position: fixed;
-  top: 0;
   left: 0;
-  backdrop-filter: saturate(180%) blur(1rem);
-  background-color: hsla(0, 0%, 100%, 0.8);
-  // box-shadow rgb(240 241 242) 0px 2px 8px
+  top: 0;
+  line-height: 60px;
+  padding: 0 16px;
+  box-sizing: border-box;
+  background: #F6F6F6;
+}
+
+.header-menu-icon {
+  display: inline-block;
+  padding-left: 12px;
 }
 
 .head-container {
@@ -107,11 +144,23 @@ export default {
   display: flex;
   align-items: center;
   line-height: 2.2rem;
+  z-index: 100;
+  position: fixed;
+  left: 0;
+  top: 0;
+  backdrop-filter: saturate(180%) blur(1rem);
+  background-color: hsla(0, 0%, 100%, 0.8);
+  box-shadow rgb(240 241 242) 0px 2px 8px
+  padding: 0.5rem 3rem;
   // justify-content center
 }
 
 .nav-link {
   color: #3A495D;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  justify-content: space-between;
 }
 
 .banner {
@@ -140,5 +189,44 @@ export default {
 .header-nav {
   position: relative;
   z-index: 5;
+}
+
+.head-mask {
+  width: 100vw;
+  height: 100vh;
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 9;
+}
+
+@media (max-width: 719px) {
+  .head-container {
+    width: 100vw;
+    max-height: 100vh;
+    background: #fff;
+    align-items: start;
+    padding: 16px 0;
+    height: auto;
+    top: 60px;
+    transform: translateY(-100%);
+    transition: transform 0.3s;
+  }
+  .row {
+    flex-direction: column;
+    align-items: start;
+    width: 100%;
+  }
+  .nav {
+    width: 100%;
+    height: 60px;
+    line-height: 60px;
+    padding: 0 16px;
+    display: flex
+    align-items: center;
+    justify-content: space-between;
+    box-sizing: border-box;
+    margin: 0;
+  }
 }
 </style>
