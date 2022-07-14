@@ -825,7 +825,6 @@ class MpxWebpackPlugin {
         return rawAddModule.call(compilation, module, callback)
       }
 
-
       // hack process https://github.com/webpack/webpack/issues/16045
       const _handleModuleBuildAndDependenciesRaw = compilation._handleModuleBuildAndDependencies
 
