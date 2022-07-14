@@ -209,7 +209,7 @@ export default class MpxProxy {
         {
           triggerEvent: this.target.triggerEvent.bind(this.target),
           refs: this.target.$refs,
-          nextTick: fn => nextTick(fn, this),
+          // nextTick: fn => nextTick(fn, this),
           forceUpdate: this.forceUpdate.bind(this),
           selectComponent: this.target.selectComponent.bind(this.target),
           selectAllComponents: this.target.selectAllComponents.bind(this.target),
