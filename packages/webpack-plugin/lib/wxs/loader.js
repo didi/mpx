@@ -2,6 +2,7 @@ const NodeTargetPlugin = require('webpack/lib/node/NodeTargetPlugin')
 const EntryPlugin = require('webpack/lib/EntryPlugin')
 const LazySet = require('webpack/lib/util/LazySet')
 const LimitChunkCountPlugin = require('webpack/lib/optimize/LimitChunkCountPlugin')
+const FlagEntryExportAsUsedPlugin = require('webpack/lib/FlagEntryExportAsUsedPlugin')
 const path = require('path')
 const WxsPlugin = require('./WxsPlugin')
 const RecordResourceMapDependency = require('../dependencies/RecordResourceMapDependency')
@@ -81,7 +82,8 @@ module.exports.pitch = function (remainingRequest) {
         new WxsPlugin({ mode }),
         new NodeTargetPlugin(),
         new EntryPlugin(this.context, request, { name: getName(filename) }),
-        new LimitChunkCountPlugin({ maxChunks: 1 })
+        new LimitChunkCountPlugin({ maxChunks: 1 }),
+        new FlagEntryExportAsUsedPlugin(true, 'entry')
       ]
 
       const childCompiler = this._compilation.createChildCompiler(resourcePath, outputOptions, plugins)
