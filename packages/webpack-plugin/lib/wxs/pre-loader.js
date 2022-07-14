@@ -44,6 +44,15 @@ module.exports = function (content) {
           }
         }
       },
+      CallExpression (path) {
+        const callee = path.node.callee
+        if (t.isIdentifier(callee) && callee.name === 'getRegExp') {
+          const argPath = path.get('arguments')[0]
+          if (argPath.isStringLiteral()) {
+            argPath.replaceWith(t.stringLiteral(argPath.node.extra.raw.slice(1, -1)))
+          }
+        }
+      },
       ForStatement (path) {
         if (path.shouldStopTraverse) {
           path.stop()
@@ -92,12 +101,19 @@ module.exports = function (content) {
       },
       CallExpression (path) {
         const callee = path.node.callee
+        const args = path.node.arguments
         const transMap = {
           getDate: 'Date',
           getRegExp: 'RegExp'
         }
         if (t.isIdentifier(callee) && transMap[callee.name]) {
-          path.replaceWith(t.newExpression(t.identifier(transMap[callee.name]), path.node.arguments))
+          if (callee.name === 'getRegExp') {
+            const arg = args[0]
+            if (t.isStringLiteral(arg)) {
+              args[0] = t.stringLiteral(arg.extra.raw.slice(1, -1))
+            }
+          }
+          path.replaceWith(t.newExpression(t.identifier(transMap[callee.name]), args))
         }
       }
     })

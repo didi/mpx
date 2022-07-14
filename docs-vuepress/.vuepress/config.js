@@ -28,6 +28,7 @@ const sidebar = {
         'advance/mixin',
         'advance/npm',
         'advance/subpackage',
+        'advance/async-subpackage',
         'advance/image-process',
         'advance/progressive',
         'advance/ability-compatible',
@@ -44,7 +45,8 @@ const sidebar = {
       children: [
         'tool/ts',
         'tool/i18n',
-        'tool/unit-test'
+        'tool/unit-test',
+        'tool/e2e-test'
       ]
     },
     {
