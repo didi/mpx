@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/core",
-  "version": "2.7.37",
+  "version": "2.7.44",
   "description": "mpx runtime core",
   "keywords": [
     "miniprogram",
@@ -23,6 +23,7 @@
     "miniprogram-api-typings": "^3.0.2"
   },
   "peerDependencies": {
+    "@mpxjs/api-proxy": "^2.7.44",
     "vue": "^2.6.10",
     "vue-i18n": "^8.15.3"
   },

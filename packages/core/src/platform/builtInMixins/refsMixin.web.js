@@ -1,5 +1,4 @@
 import { BEFOREMOUNT, UPDATED } from '../../core/innerLifecycle'
-import { SelectQuery } from '../../helper/vueUtils'
 
 function getEl (ref) {
   if (ref && ref.nodeType === 1) return ref
@@ -14,13 +13,13 @@ function processRefs (refs) {
       const ref = refs[key]
       if (Array.isArray(ref)) {
         if (getEl(ref[0])) {
-          refs[rKey] = new SelectQuery().in(this).selectAll(ref.map(getEl))
+          refs[rKey] = webApi.createSelectorQuery().in(this).selectAll(ref.map(getEl))
         } else {
           refs[rKey] = ref
         }
       } else {
         if (getEl(ref)) {
-          refs[rKey] = new SelectQuery().in(this).select(getEl(ref))
+          refs[rKey] = webApi.createSelectorQuery().in(this).select(getEl(ref))
         } else {
           refs[rKey] = ref
         }
