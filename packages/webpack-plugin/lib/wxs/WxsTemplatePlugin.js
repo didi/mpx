@@ -1,6 +1,49 @@
 const config = require('../config')
 const { ConcatSource } = require('webpack').sources
 const JavascriptModulesPlugin = require('webpack/lib/javascript/JavascriptModulesPlugin')
+const RuntimeGlobals = require('webpack/lib/RuntimeGlobals')
+const HelperRuntimeModule = require('webpack/lib/runtime/HelperRuntimeModule')
+const Template = require('webpack/lib/Template')
+
+class MakeNamespaceObjectRuntimeModule extends HelperRuntimeModule {
+  constructor () {
+    super('make namespace object')
+  }
+
+  generate () {
+    const { runtimeTemplate } = this.compilation
+    const fn = RuntimeGlobals.makeNamespaceObject
+    return Template.asString([
+      '// define __esModule on exports',
+      `${fn} = ${runtimeTemplate.basicFunction('exports', [
+        'exports.__esModule = true;'
+      ])};`
+    ])
+  }
+}
+
+class CompatGetDefaultExportRuntimeModule extends HelperRuntimeModule {
+  constructor () {
+    super('compat get default export')
+  }
+
+  generate () {
+    const { runtimeTemplate } = this.compilation
+    const fn = RuntimeGlobals.compatGetDefaultExport
+    return Template.asString([
+      '// getDefaultExport function for compatibility with non-harmony modules',
+      `${fn} = ${runtimeTemplate.basicFunction('module', [
+        'var getter = module && module.__esModule ?',
+        Template.indent([
+          `${runtimeTemplate.returningFunction('module.default')} :`,
+          `${runtimeTemplate.returningFunction('module')};`
+        ]),
+        'getter.a = getter();',
+        'return getter;'
+      ])};`
+    ])
+  }
+}
 
 module.exports = class WxsTemplatePlugin {
   constructor (options = { mode: 'wx' }) {
@@ -20,7 +63,34 @@ module.exports = class WxsTemplatePlugin {
       return new ConcatSource(prefix, source)
     })
 
-    // todo webpack5的新的代码生成模式下完美支持.d.r.n的成本较高，暂不处理，wxs暂时只支持wx源码形式
+    // __webpack_require__.r
+    compilation.hooks.runtimeRequirementInTree
+      .for(RuntimeGlobals.makeNamespaceObject)
+      .tap({
+        name: 'WxsTemplatePlugin',
+        stage: -1000
+      }, chunk => {
+        compilation.addRuntimeModule(
+          chunk,
+          new MakeNamespaceObjectRuntimeModule()
+        )
+        return true
+      })
+
+    // __webpack_require__.n
+    compilation.hooks.runtimeRequirementInTree
+      .for(RuntimeGlobals.compatGetDefaultExport)
+      .tap({
+        name: 'WxsTemplatePlugin',
+        stage: -1000
+      }, chunk => {
+        compilation.addRuntimeModule(
+          chunk,
+          new CompatGetDefaultExportRuntimeModule()
+        )
+        return true
+      })
+
     // mainTemplate.hooks.requireExtensions.tap(
     //   'WxsMainTemplatePlugin',
     //   () => {
