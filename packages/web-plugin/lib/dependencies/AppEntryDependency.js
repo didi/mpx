@@ -53,6 +53,6 @@ AppEntryDependency.Template = class AppEntryDependencyTemplate {
   }
 }
 
-makeSerializable(AppEntryDependency, '@mpxjs/webpack-plugin/lib/dependencies/AppEntryDependency')
+makeSerializable(AppEntryDependency, '@mpxjs/web-plugin/lib/dependencies/AppEntryDependency')
 
 module.exports = AppEntryDependency

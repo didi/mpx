@@ -38,6 +38,6 @@ ReplaceDependency.Template = class ReplaceDependencyTemplate {
   }
 }
 
-makeSerializable(ReplaceDependency, '@mpxjs/webpack-plugin/lib/dependencies/ReplaceDependency')
+makeSerializable(ReplaceDependency, '@mpxjs/web-plugin/lib/dependencies/ReplaceDependency')
 
 module.exports = ReplaceDependency

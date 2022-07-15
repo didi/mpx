@@ -10,30 +10,29 @@ const ReplaceDependency = require('./dependencies/ReplaceDependency')
 const harmonySpecifierTag = require('webpack/lib/dependencies/HarmonyImportDependencyParserPlugin').harmonySpecifierTag
 const FlagEntryExportAsUsedPlugin = require('webpack/lib/FlagEntryExportAsUsedPlugin')
 const FileSystemInfo = require('webpack/lib/FileSystemInfo')
-const normalize = require('./utils/normalize')
-const toPosix = require('./utils/to-posix')
-const addQuery = require('./utils/add-query')
+const normalize = require('@mpxjs/utils/normalize')
+const toPosix = require(normalize.utils('to-posix'))
+const addQuery = require(normalize.utils('add-query'))
 const DefinePlugin = require('webpack/lib/DefinePlugin')
 const ExternalsPlugin = require('webpack/lib/ExternalsPlugin')
 const AddModePlugin = require('./resolver/AddModePlugin')
 const AddEnvPlugin = require('./resolver/AddEnvPlugin')
-const FixDescriptionInfoPlugin = require('./resolver/FixDescriptionInfoPlugin')
 const RecordResourceMapDependency = require('./dependencies/RecordResourceMapDependency')
-const parseRequest = require('./utils/parse-request')
-const { matchCondition } = require('./utils/match-condition')
-const { preProcessDefs } = require('./utils/index')
+const parseRequest = require(normalize.utils('parse-request'))
+const { matchCondition } = require(normalize.utils('match-condition'))
+const { preProcessDefs } = require(normalize.utils('index'))
 const hash = require('hash-sum')
-const wxssLoaderPath = normalize.lib('wxss/loader')
-const wxmlLoaderPath = normalize.lib('wxml/loader')
-const wxsLoaderPath = normalize.lib('wxs/loader')
-const styleCompilerPath = normalize.lib('style-compiler/index')
-const templateCompilerPath = normalize.lib('template-compiler/index')
-const jsonCompilerPath = normalize.lib('json-compiler/index')
-const jsonThemeCompilerPath = normalize.lib('json-compiler/theme')
-const jsonPluginCompilerPath = normalize.lib('json-compiler/plugin')
-const extractorPath = normalize.lib('extractor')
-const stringifyLoadersAndResource = require('./utils/stringify-loaders-resource')
-const { MPX_PROCESSED_FLAG, MPX_DISABLE_EXTRACTOR_CACHE, MPX_CURRENT_CHUNK } = require('./utils/const')
+const wxssLoaderPath = normalize.webLib('wxss/loader')
+const wxmlLoaderPath = normalize.webLib('wxml/loader')
+const wxsLoaderPath = normalize.webLib('wxs/loader')
+const styleCompilerPath = normalize.webLib('style-compiler/index')
+const templateCompilerPath = normalize.webLib('template-compiler/index')
+const jsonCompilerPath = normalize.webLib('json-compiler/index')
+const jsonThemeCompilerPath = normalize.webLib('json-compiler/theme')
+const jsonPluginCompilerPath = normalize.webLib('json-compiler/plugin')
+const extractorPath = normalize.webLib('extractor')
+const stringifyLoadersAndResource = require(normalize.utils('stringify-loaders-resource'))
+const { MPX_PROCESSED_FLAG } = require('./utils/const')
 
 const isProductionLikeMode = options => {
   return options.mode === 'production' || !options.mode
@@ -94,9 +93,6 @@ class MpxWebpackPlugin {
       include: () => true
     }
     options.customOutputPath = options.customOutputPath || null
-    options.nativeConfig = Object.assign({
-      cssLangs: ['css', 'less', 'stylus', 'scss', 'sass']
-    }, options.nativeConfig)
     options.webConfig = options.webConfig || {}
     let proxyComponentEventsRules = []
     const proxyComponentEventsRulesRaw = options.proxyComponentEventsRules
@@ -120,76 +116,44 @@ class MpxWebpackPlugin {
       warnings.push('Mpx loader option [transRpx] is deprecated now, please use mpx webpack plugin config [transRpxRules] instead!')
     }
     return {
-      loader: normalize.lib('loader'),
-      options
-    }
-  }
-
-  static nativeLoader (options = {}) {
-    return {
-      loader: normalize.lib('native-loader'),
+      loader: normalize.webLib('loader'),
       options
     }
   }
 
   static wxssLoader (options) {
     return {
-      loader: normalize.lib('wxss/loader'),
+      loader: normalize.webLib('wxss/loader'),
       options
     }
   }
 
   static wxmlLoader (options) {
     return {
-      loader: normalize.lib('wxml/loader'),
-      options
-    }
-  }
-
-  static pluginLoader (options = {}) {
-    return {
-      loader: normalize.lib('json-compiler/plugin'),
+      loader: normalize.webLib('wxml/loader'),
       options
     }
   }
 
   static wxsPreLoader (options = {}) {
     return {
-      loader: normalize.lib('wxs/pre-loader'),
+      loader: normalize.webLib('wxs/pre-loader'),
       options
     }
   }
 
   static urlLoader (options = {}) {
     return {
-      loader: normalize.lib('url-loader'),
+      loader: normalize.webLib('url-loader'),
       options
     }
   }
 
   static fileLoader (options = {}) {
     return {
-      loader: normalize.lib('file-loader'),
+      loader: normalize.webLib('file-loader'),
       options
     }
-  }
-
-  static getPageEntry (request) {
-    return addQuery(request, { isPage: true })
-  }
-
-  static getComponentEntry (request) {
-    return addQuery(request, { isComponent: true })
-  }
-
-  static getPluginEntry (request) {
-    return addQuery(request, {
-      mpx: true,
-      extract: true,
-      isPlugin: true,
-      asScript: true,
-      type: 'json'
-    })
   }
 
   runModeRules (data) {
@@ -232,7 +196,6 @@ class MpxWebpackPlugin {
     if (this.options.env) {
       compiler.options.resolve.plugins.push(addEnvPlugin)
     }
-    compiler.options.resolve.plugins.push(new FixDescriptionInfoPlugin())
     // 代理writeFile
     if (this.options.writeMode === 'changed') {
       const writedFileContentMap = new Map()
@@ -562,7 +525,7 @@ class MpxWebpackPlugin {
         let { queryObj, resource } = parseRequest(request)
         if (queryObj.resolve) {
           // 此处的query用于将资源引用的当前包信息传递给resolveDependency
-          const resolveLoaderPath = normalize.lib('resolve-loader')
+          const resolveLoaderPath = normalize.webLib('resolve-loader')
           data.request = `!!${resolveLoaderPath}!${resource}`
         }
       })

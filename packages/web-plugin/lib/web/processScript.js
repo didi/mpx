@@ -1,10 +1,10 @@
-const genComponentTag = require('../utils/gen-component-tag')
 const loaderUtils = require('loader-utils')
-const addQuery = require('../utils/add-query')
-const normalize = require('../utils/normalize')
-const optionProcessorPath = normalize.lib('runtime/optionProcessor')
-const tabBarContainerPath = normalize.lib('runtime/components/web/mpx-tab-bar-container.vue')
-const tabBarPath = normalize.lib('runtime/components/web/mpx-tab-bar.vue')
+const normalize = require('@mpxjs/utils/normalize')
+const addQuery = require(normalize.utils('add-query'))
+const genComponentTag = require(normalize.utils('gen-component-tag'))
+const optionProcessorPath = normalize.webLib('runtime/optionProcessor')
+const tabBarContainerPath = normalize.webLib('runtime/components/web/mpx-tab-bar-container.vue')
+const tabBarPath = normalize.webLib('runtime/components/web/mpx-tab-bar.vue')
 
 function shallowStringify (obj) {
   let arr = []
@@ -19,7 +19,6 @@ function shallowStringify (obj) {
   }
   return `{${arr.join(',')}}`
 }
-
 function getAsyncChunkName (chunkName) {
   if (chunkName && typeof chunkName !== 'boolean') {
     return `/* webpackChunkName: "${chunkName}" */`
