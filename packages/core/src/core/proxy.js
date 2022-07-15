@@ -32,6 +32,7 @@ import {
   CREATED,
   BEFOREMOUNT,
   MOUNTED,
+  BEFOREUPDATE,
   UPDATED,
   BEFOREUNMOUNT,
   UNMOUNTED,
@@ -139,12 +140,20 @@ export default class MpxProxy {
 
   propsUpdated () {
     const updateJob = this.updateJob || (this.updateJob = () => {
-      // 只有当前没有渲染任务时，属性更新才需要单独触发updated，否则可以由渲染任务结束后触发updated
+      // 只有当前没有渲染任务时，属性更新才需要单独触发beforeUpdate/updated，否则可以由渲染任务触发beforeUpdate/updated
       if (this.currentRenderTask?.state === 'finished') {
+        // todo props更新时非渲染任务触发的beforeUpdate/updated不够严谨，没有正确地表征视图更新前及更新后
+        this.beforeUpdate()
         this.updated()
       }
     })
     queuePostFlushCb(updateJob)
+  }
+
+  beforeUpdate () {
+    if (this.isMounted()) {
+      this.callHook(BEFOREUPDATE)
+    }
   }
 
   updated () {
@@ -208,7 +217,7 @@ export default class MpxProxy {
         {
           triggerEvent: this.target.triggerEvent.bind(this.target),
           refs: this.target.$refs,
-          nextTick: fn => nextTick(fn, this),
+          // nextTick: fn => nextTick(fn, this),
           forceUpdate: this.forceUpdate.bind(this),
           selectComponent: this.target.selectComponent.bind(this.target),
           selectAllComponents: this.target.selectAllComponents.bind(this.target),
@@ -467,6 +476,7 @@ export default class MpxProxy {
         this.updated()
         renderTask && renderTask.resolve()
       }
+      this.beforeUpdate()
     }
     data = processUndefined(data)
     if (typeof EXPORT_MPX.config.setDataHandler === 'function') {
@@ -584,6 +594,7 @@ export const onBeforeCreate = (fn) => injectHook(BEFORECREATE, fn)
 export const onCreated = (fn) => injectHook(CREATED, fn)
 export const onBeforeMount = (fn) => injectHook(BEFOREMOUNT, fn)
 export const onMounted = (fn) => injectHook(MOUNTED, fn)
+export const onBeforeUpdate = (fn) => injectHook(BEFOREUPDATE, fn)
 export const onUpdated = (fn) => injectHook(UPDATED, fn)
 export const onBeforeUnmount = (fn) => injectHook(BEFOREUNMOUNT, fn)
 export const onUnmounted = (fn) => injectHook(UNMOUNTED, fn)

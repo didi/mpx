@@ -23,11 +23,13 @@ const sidebar = {
     {
       title: '进阶',
       collapsable: false,
+      // sidebarDepth: 2,
       children: [
         'advance/store',
         'advance/mixin',
         'advance/npm',
         'advance/subpackage',
+        'advance/async-subpackage',
         'advance/image-process',
         'advance/progressive',
         'advance/ability-compatible',
@@ -44,7 +46,8 @@ const sidebar = {
       children: [
         'tool/ts',
         'tool/i18n',
-        'tool/unit-test'
+        'tool/unit-test',
+        'tool/e2e-test'
       ]
     },
     {
@@ -125,7 +128,7 @@ module.exports = {
     }
   },
   themeConfig: {
-    navbar: false,
+    // navbar: false,
     algolia: {
 			apiKey: '7849f511f78afc4383a81f0137a91c0f',
 			indexName: 'mpxjs',
@@ -139,5 +142,8 @@ module.exports = {
   chainWebpack: (config, isServer) => {
     // 添加node_modules避免resolve错误
     config.resolve.modules.add('node_modules')
+  },
+  markdown: {
+    // extractHeaders: [ 'h2', 'h3', 'h4' ]
   }
 }

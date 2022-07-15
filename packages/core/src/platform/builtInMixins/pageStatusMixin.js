@@ -24,6 +24,7 @@ export default function pageStatusMixin (mixinType) {
           mpxPageStatus: null
         },
         onShow () {
+          // 支付宝首次延时触发，确保同步组件的onShow能够执行
           if (this.mpxPageStatus === null) {
             resolvedPromise.then(() => {
               this.mpxPageStatus = 'show'

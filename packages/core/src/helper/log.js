@@ -1,5 +1,6 @@
 import EXPORT_MPX from '../index'
 import { isDev } from './env'
+import { isFunction } from './utils'
 
 export function warn (msg, location, e) {
   const condition = EXPORT_MPX.config.ignoreWarning
@@ -17,6 +18,9 @@ export function warn (msg, location, e) {
 }
 
 export function error (msg, location, e) {
+  if (isFunction(EXPORT_MPX.config.errorHandler)) {
+    EXPORT_MPX.config.errorHandler(msg, location, e)
+  }
   return log('error', msg, location, e)
 }
 

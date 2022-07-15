@@ -125,13 +125,14 @@ module.exports = function (content) {
       if (mode === 'web') {
         if (ctorType === 'app' && !queryObj.isApp) {
           const request = addQuery(this.resource, { isApp: true })
+          const el = mpx.webConfig.el || '#app'
           output += `
       import App from ${stringifyRequest(request)}
       import Vue from 'vue'
       import VueCompositionAPI from '@vue/composition-api'
       Vue.use(VueCompositionAPI)
       new Vue({
-        el: '#app',
+        el: '${el}',
         render: function(h){
           return h(App)
         }
