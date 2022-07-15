@@ -11,10 +11,12 @@ export default function proxyEventMixin () {
         } catch (e) {
         }
       }
+      const location = this.__mpxProxy.options.mpxFileResource
       const type = $event.type
       const emitMode = $event.detail && $event.detail.mpxEmit
       if (!type) {
-        throw new Error('Event object must have [type] property!')
+        error('Event object must have [type] property!', location)
+        return
       }
       let fallbackType = ''
       if (type === 'begin' || type === 'end') {
@@ -25,7 +27,8 @@ export default function proxyEventMixin () {
       }
       const target = $event.currentTarget || $event.target
       if (!target) {
-        throw new Error(`[${type}] event object must have [currentTarget/target] property!`)
+        error(`[${type}] event object must have [currentTarget/target] property!`, location)
+        return
       }
       const eventConfigs = target.dataset.eventconfigs || {}
       const curEventConfig = eventConfigs[type] || eventConfigs[fallbackType] || []
@@ -53,7 +56,6 @@ export default function proxyEventMixin () {
           if (typeof this[callbackName] === 'function') {
             returnedValue = this[callbackName].apply(this, params)
           } else {
-            const location = this.__mpxProxy.options.mpxFileResource
             error(`Instance property [${callbackName}] is not function, please check.`, location)
           }
         }
