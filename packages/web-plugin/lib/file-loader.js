@@ -1,7 +1,7 @@
 const path = require('path')
 const loaderUtils = require('loader-utils')
-const toPosix = require('./utils/to-posix')
-const parseRequest = require('./utils/parse-request')
+const toPosix = require('@mpxjs/utils/to-posix')
+const parseRequest = require('@mpxjs/utils/parse-request')
 const RecordResourceMapDependency = require('./dependencies/RecordResourceMapDependency')
 
 module.exports = function loader (content, prevOptions) {

@@ -3,8 +3,8 @@ const loaderUtils = require('loader-utils')
 const url = require('url')
 const config = require('../config')
 const createHelpers = require('../helpers')
-const isUrlRequest = require('../utils/is-url-request')
-const parseRequest = require('../utils/parse-request')
+const isUrlRequest = require('@mpxjs/utils/is-url-request')
+const parseRequest = require('@mpxjs/utils/parse-request')
 
 function randomIdent () {
   return 'xxxHTMLLINKxxx' + Math.random() + Math.random() + 'xxx'

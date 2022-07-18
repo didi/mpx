@@ -1,4 +1,5 @@
-const parseRequest = require('./parse-request')
+const normalize = require('@mpxjs/utils/normalize')
+const parseRequest = require(normalize.utils('parse-request'))
 const { RESOLVE_IGNORED_ERR } = require('./const')
 
 // todo 提供不记录dependency的resolve方法，非必要的情况下不记录dependency，提升缓存利用率

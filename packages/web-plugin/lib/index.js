@@ -22,17 +22,8 @@ const parseRequest = require(normalize.utils('parse-request'))
 const { matchCondition } = require(normalize.utils('match-condition'))
 const { preProcessDefs } = require(normalize.utils('index'))
 const hash = require('hash-sum')
-const wxssLoaderPath = normalize.webLib('wxss/loader')
-const wxmlLoaderPath = normalize.webLib('wxml/loader')
-const wxsLoaderPath = normalize.webLib('wxs/loader')
 const styleCompilerPath = normalize.webLib('style-compiler/index')
-const templateCompilerPath = normalize.webLib('template-compiler/index')
-const jsonCompilerPath = normalize.webLib('json-compiler/index')
-const jsonThemeCompilerPath = normalize.webLib('json-compiler/theme')
-const jsonPluginCompilerPath = normalize.webLib('json-compiler/plugin')
-const extractorPath = normalize.webLib('extractor')
 const stringifyLoadersAndResource = require(normalize.utils('stringify-loaders-resource'))
-const { MPX_PROCESSED_FLAG } = require('./utils/const')
 
 const isProductionLikeMode = options => {
   return options.mode === 'production' || !options.mode
@@ -352,21 +343,21 @@ class MpxWebpackPlugin {
               outputPath,
               alreadyOutputted
             }
-          },
+          }
         }
       }
       normalModuleFactory.hooks.parser.for('javascript/auto').tap('MpxWebpackPlugin', (parser) => {
-        parser.hooks.call.for('__mpx_resolve_path__').tap('MpxWebpackPlugin', (expr) => {
-          if (expr.arguments[0]) {
-            const resource = expr.arguments[0].value
-            const packageName = mpx.currentPackageRoot || 'main'
-            const issuerResource = moduleGraph.getIssuer(parser.state.module).resource
-            const range = expr.range
-            const dep = new ResolveDependency(resource, packageName, issuerResource, range)
-            parser.state.current.addPresentationalDependency(dep)
-            return true
-          }
-        })
+        // parser.hooks.call.for('__mpx_resolve_path__').tap('MpxWebpackPlugin', (expr) => {
+        //   if (expr.arguments[0]) {
+        //     const resource = expr.arguments[0].value
+        //     const packageName = mpx.currentPackageRoot || 'main'
+        //     const issuerResource = moduleGraph.getIssuer(parser.state.module).resource
+        //     const range = expr.range
+        //     const dep = new ResolveDependency(resource, packageName, issuerResource, range)
+        //     parser.state.current.addPresentationalDependency(dep)
+        //     return true
+        //   }
+        // })
         // hack babel polyfill global
         parser.hooks.statementIf.tap('MpxWebpackPlugin', (expr) => {
           if (/core-js.+microtask/.test(parser.state.module.resource)) {
@@ -529,67 +520,10 @@ class MpxWebpackPlugin {
           data.request = `!!${resolveLoaderPath}!${resource}`
         }
       })
-
-      const typeLoaderProcessInfo = {
-        styles: ['css-loader', wxssLoaderPath, styleCompilerPath],
-        template: ['html-loader', wxmlLoaderPath, templateCompilerPath]
-      }
-
       // 应用过rules后，注入mpx相关资源编译loader
       normalModuleFactory.hooks.afterResolve.tap('MpxWebpackPlugin', ({ createData }) => {
         const { queryObj } = parseRequest(createData.request)
         const loaders = createData.loaders
-        if (queryObj.mpx && queryObj.mpx !== MPX_PROCESSED_FLAG) {
-          const type = queryObj.type
-          const extract = queryObj.extract
-          switch (type) {
-            case 'styles':
-            case 'template':
-              let insertBeforeIndex = -1
-              const info = typeLoaderProcessInfo[type]
-              loaders.forEach((loader, index) => {
-                const currentLoader = toPosix(loader.loader)
-                if (currentLoader.includes(info[0])) {
-                  loader.loader = info[1]
-                  insertBeforeIndex = index
-                } else if (currentLoader.includes(info[1])) {
-                  insertBeforeIndex = index
-                }
-              })
-              if (insertBeforeIndex > -1) {
-                loaders.splice(insertBeforeIndex + 1, 0, {
-                  loader: info[2]
-                })
-              }
-              break
-            case 'json':
-              if (queryObj.isTheme) {
-                loaders.unshift({
-                  loader: jsonThemeCompilerPath
-                })
-              } else if (queryObj.isPlugin) {
-                loaders.unshift({
-                  loader: jsonPluginCompilerPath
-                })
-              } else {
-                loaders.unshift({
-                  loader: jsonCompilerPath
-                })
-              }
-              break
-            case 'wxs':
-              loaders.unshift({
-                loader: wxsLoaderPath
-              })
-          }
-          if (extract) {
-            loaders.unshift({
-              loader: extractorPath
-            })
-          }
-          createData.resource = addQuery(createData.resource, { mpx: MPX_PROCESSED_FLAG }, true)
-        }
-
         if (mpx.mode === 'web') {
           const mpxStyleOptions = queryObj.mpxStyleOptions
           const firstLoader = loaders[0] ? toPosix(loaders[0].loader) : ''

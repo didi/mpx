@@ -1,12 +1,12 @@
-const runRules = require('../../run-rules')
 const JSON5 = require('json5')
+const normalize = require('@mpxjs/utils/normalize')
+const isValidIdentifierStr = require(normalize.utils('is-valid-identifier-str'))
+const runRules = require('../../run-rules')
 const getComponentConfigs = require('./component-config')
 const normalizeComponentRules = require('../normalize-component-rules')
-const isValidIdentifierStr = require('../../../utils/is-valid-identifier-str')
-const templateCompiler = require('../../../template-compiler/compiler')
+const templateCompiler = require('../../../compiler')
 const parseMustache = templateCompiler.parseMustache
 const stringifyWithResolveComputed = templateCompiler.stringifyWithResolveComputed
-const normalize = require('../../../utils/normalize')
 
 module.exports = function getSpec ({ warn, error }) {
   const spec = {

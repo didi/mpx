@@ -7,8 +7,8 @@ const vw = require('./plugins/vw')
 const pluginCondStrip = require('./plugins/conditional-strip')
 const scopeId = require('./plugins/scope-id')
 const transSpecial = require('./plugins/trans-special')
-const { matchCondition } = require('../utils/match-condition')
-const parseRequest = require('../utils/parse-request')
+const { matchCondition } = require('@mpxjs/utils/match-condition')
+const parseRequest = require('@mpxjs/utils/parse-request')
 
 module.exports = function (css, map) {
   this.cacheable()

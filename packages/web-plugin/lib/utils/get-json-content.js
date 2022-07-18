@@ -1,4 +1,4 @@
-const parseRequest = require('./parse-request')
+const parseRequest = require('@mpxjs/utils/parse-request')
 const evalJSONJS = require('./eval-json-js')
 const resolve = require('./resolve')
 const async = require('async')

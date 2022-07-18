@@ -1,6 +1,6 @@
 const loaderUtils = require('loader-utils')
 const mime = require('mime')
-const parseRequest = require('./utils/parse-request')
+const parseRequest = require('@mpxjs/utils/parse-request')
 const getOptions = loaderUtils.getOptions
 
 function isStyleRequest (request) {

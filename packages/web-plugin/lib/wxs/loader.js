@@ -6,10 +6,10 @@ const FlagEntryExportAsUsedPlugin = require('webpack/lib/FlagEntryExportAsUsedPl
 const path = require('path')
 const WxsPlugin = require('./WxsPlugin')
 const RecordResourceMapDependency = require('../dependencies/RecordResourceMapDependency')
-const parseRequest = require('../utils/parse-request')
-const toPosix = require('../utils/to-posix')
-const fixRelative = require('../utils/fix-relative')
-const addQuery = require('../utils/add-query')
+const parseRequest = require('mpxjs/utils/parse-request')
+const toPosix = require('mpxjs/utils/to-posix')
+const fixRelative = require('mpxjs/utils/fix-relative')
+const addQuery = require('@mpxjs/utils/add-query')
 const config = require('../config')
 
 module.exports = content => content

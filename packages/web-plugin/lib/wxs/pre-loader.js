@@ -2,8 +2,8 @@ const babylon = require('@babel/parser')
 const traverse = require('@babel/traverse').default
 const t = require('@babel/types')
 const generate = require('@babel/generator').default
-const parseRequest = require('../utils/parse-request')
-const isEmptyObject = require('../utils/is-empty-object')
+const parseRequest = require('@mpxjs/utils/parse-request')
+const isEmptyObject = require('@mpxjs/utils/is-empty-object')
 const parseQuery = require('loader-utils').parseQuery
 
 module.exports = function (content) {

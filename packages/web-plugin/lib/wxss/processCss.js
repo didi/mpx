@@ -16,7 +16,7 @@ const extractImports = require('postcss-modules-extract-imports')
 const modulesScope = require('postcss-modules-scope')
 const modulesValues = require('postcss-modules-values')
 const valueParser = require('postcss-value-parser')
-const isUrlRequest = require('../utils/is-url-request')
+const isUrlRequest = require('@mpxjs/utils/is-url-request')
 // css-loader-parser
 
 const parserPlugin = function (options) {

@@ -115,7 +115,7 @@ module.exports = function (script, {
       let content = `\n  import processOption, { getComponent, getWxsMixin } from ${stringifyRequest(optionProcessorPath)}\n`
       // add import
       if (ctorType === 'app') {
-        content += `  import '@mpxjs/webpack-plugin/lib/runtime/base.styl'
+        content += `  import '@mpxjs/web-plugin/lib/runtime/base.styl'
   import Vue from 'vue'
   import VueRouter from 'vue-router'
   import Mpx from '@mpxjs/core'

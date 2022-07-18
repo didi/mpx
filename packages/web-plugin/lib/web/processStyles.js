@@ -1,4 +1,4 @@
-const genComponentTag = require('../utils/gen-component-tag')
+const genComponentTag = require('@mpxjs/utils/gen-component-tag')
 
 module.exports = function (styles, options, callback) {
   let output = '/* styles */\n'

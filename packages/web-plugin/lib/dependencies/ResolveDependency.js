@@ -1,5 +1,5 @@
 const NullDependency = require('webpack/lib/dependencies/NullDependency')
-const parseRequest = require('../utils/parse-request')
+const parseRequest = require('@mpxjs/utils/parse-request')
 const makeSerializable = require('webpack/lib/util/makeSerializable')
 
 class ResolveDependency extends NullDependency {

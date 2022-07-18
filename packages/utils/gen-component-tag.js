@@ -1,5 +1,5 @@
 const normalize = require('@mpxjs/utils/normalize')
-const stringifyAttr = require(normalize.webLib('template-compiler/compiler')).stringifyAttr
+const stringifyAttr = require('@mpxjs/template-compiler/compiler').stringifyAttr
 const type = require('./type')
 
 function stringifyAttrs (attrs) {

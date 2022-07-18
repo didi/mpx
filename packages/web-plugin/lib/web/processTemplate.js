@@ -1,8 +1,9 @@
-const templateCompiler = require('../template-compiler/compiler')
-const genComponentTag = require('../utils/gen-component-tag')
-const addQuery = require('../utils/add-query')
-const parseRequest = require('../utils/parse-request')
-// const { matchCondition } = require('../utils/match-condition')
+const normalize = require('@mpxjs/utils/normalize')
+const genComponentTag = require(normalize.utils('gen-component-tag'))
+const addQuery = require(normalize.utils('add-query'))
+const parseRequest = require(normalize.utils('parse-request'))
+const templateCompiler = require('@mpxjs/template-compiler/compiler')
+// const { matchCondition } = require(normalize.utils('match-condition')）
 
 function calculateRootEleChild (arr) {
   if (!arr) {
@@ -53,7 +54,7 @@ module.exports = function (template, {
       content: '<div class="app"><mpx-keep-alive><router-view class="page"></router-view></mpx-keep-alive></div>'
     }
     builtInComponentsMap['mpx-keep-alive'] = {
-      resource: addQuery('@mpxjs/webpack-plugin/lib/runtime/components/web/mpx-keep-alive.vue', { isComponent: true })
+      resource: addQuery('@mpxjs/web-plugin/lib/runtime/components/web/mpx-keep-alive.vue', { isComponent: true })
     }
   }
 

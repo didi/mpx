@@ -7,7 +7,7 @@ const loaderUtils = require('loader-utils')
 const processCss = require('./processCss')
 const compileExports = require('./compile-exports')
 const createResolver = require('./createResolver')
-const isUrlRequest = require('../utils/is-url-request')
+const isUrlRequest = require('@mpxjs/utils/is-url-request')
 const createHelpers = require('../helpers')
 
 module.exports = function (content, map) {

@@ -1,4 +1,4 @@
-const { isMustache } = require('../../../../utils/string')
+const { isMustache } = require('@mpxjs/utils/string')
 
 const TAG_NAME = 'navigator'
 

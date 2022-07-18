@@ -1,4 +1,4 @@
-const { capitalToHyphen } = require('../../../../utils/string')
+const { capitalToHyphen } = require('@mpxjs/utils/string')
 
 module.exports = function () {
   function convertTagName (name) {

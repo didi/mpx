@@ -1,6 +1,6 @@
 const cache = require('lru-cache')(100)
 const hash = require('hash-sum')
-const compiler = require('./template-compiler/compiler')
+const compiler = require('@mpxjs/template-compiler/compiler')
 const SourceMapGenerator = require('source-map').SourceMapGenerator
 
 const splitRE = /\r?\n/g
