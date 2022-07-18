@@ -1379,6 +1379,7 @@ try {
               loaders.unshift({
                 loader: wxsLoaderPath
               })
+              break
             case 'script':
               if (queryObj.setup) {
                 let selectorIndex = 0
