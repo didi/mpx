@@ -35,7 +35,7 @@ class CompatGetDefaultExportRuntimeModule extends HelperRuntimeModule {
       `${fn} = ${runtimeTemplate.basicFunction('module', [
         'var getter = module && module.__esModule ?',
         Template.indent([
-          `${runtimeTemplate.returningFunction('module.default')} :`,
+          `${runtimeTemplate.returningFunction('module["default"]')} :`,
           `${runtimeTemplate.returningFunction('module')};`
         ]),
         'getter.a = getter();',
