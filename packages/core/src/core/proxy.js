@@ -3,7 +3,7 @@ import { ReactiveEffect } from '../observer/effect'
 import { EffectScope } from '../observer/effectScope'
 import { watch } from '../observer/watch'
 import { computed } from '../observer/computed'
-import { queueJob, queuePostFlushCb, nextTick, RenderTask } from '../observer/scheduler'
+import { queueJob, nextTick } from '../observer/scheduler'
 import EXPORT_MPX from '../index'
 import {
   type,
@@ -45,6 +45,19 @@ import { callWithErrorHandling } from '../helper/errorHandling'
 
 let uid = 0
 
+class RenderTask {
+  resolved = false
+
+  constructor (instance) {
+    instance.currentRenderTask = this
+    this.promise = new Promise((resolve) => {
+      this.resolve = resolve
+    }).then(() => {
+      this.resolved = true
+    })
+  }
+}
+
 export default class MpxProxy {
   constructor (options, target, reCreated) {
     this.target = target
@@ -74,7 +87,6 @@ export default class MpxProxy {
       // 下次是否需要强制更新全部渲染数据
       this.forceUpdateAll = false
       this.currentRenderTask = null
-      this.flushingRenderTask = null
     }
   }
 
@@ -105,7 +117,7 @@ export default class MpxProxy {
     }
 
     if (this.reCreated) {
-      queuePostFlushCb(this.mounted.bind(this))
+      nextTick(this.mounted.bind(this))
     }
   }
 
@@ -133,13 +145,13 @@ export default class MpxProxy {
   propsUpdated () {
     const updateJob = this.updateJob || (this.updateJob = () => {
       // 只有当前没有渲染任务时，属性更新才需要单独触发beforeUpdate/updated，否则可以由渲染任务触发beforeUpdate/updated
-      if (this.currentRenderTask?.state === 'finished') {
+      if (this.currentRenderTask?.resolved) {
         // todo props更新时非渲染任务触发的beforeUpdate/updated不够严谨，没有正确地表征视图更新前及更新后
         this.beforeUpdate()
         this.updated()
       }
     })
-    queuePostFlushCb(updateJob)
+    nextTick(updateJob)
   }
 
   beforeUpdate () {
@@ -189,7 +201,7 @@ export default class MpxProxy {
       this.target.$watch = this.watch.bind(this)
       // 强制执行render
       this.target.$forceUpdate = this.forceUpdate.bind(this)
-      this.target.$nextTick = fn => nextTick(fn, this)
+      this.target.$nextTick = nextTick
       // 挂载$refs对象
       this.target.$refs = {}
     }
@@ -209,7 +221,6 @@ export default class MpxProxy {
         {
           triggerEvent: this.target.triggerEvent.bind(this.target),
           refs: this.target.$refs,
-          // nextTick: fn => nextTick(fn, this),
           forceUpdate: this.forceUpdate.bind(this),
           selectComponent: this.target.selectComponent.bind(this.target),
           selectAllComponents: this.target.selectAllComponents.bind(this.target),
@@ -537,7 +548,18 @@ export default class MpxProxy {
       }
       options.sync ? this.doRender() : queueJob(this.doRender.bind(this))
     }
-    callback && nextTick(callback.bind(this.target), this)
+
+    if (callback) {
+      callback = callback.bind(this.target)
+      const doCallback = () => {
+        if (this.currentRenderTask?.resolved === false) {
+          this.currentRenderTask.promise.then(callback)
+        } else {
+          callback()
+        }
+      }
+      options.sync ? doCallback() : nextTick(doCallback)
+    }
   }
 }
 
