@@ -335,6 +335,7 @@ module.exports = function (content) {
             ...queryObj,
             resourcePath
           } : null,
+          ...script.attrs,
           ctorType
         }
         output += getRequire('script', script, extraOptions) + '\n'
