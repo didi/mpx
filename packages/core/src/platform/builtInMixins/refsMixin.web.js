@@ -1,4 +1,5 @@
 import { BEFOREMOUNT, UPDATED } from '../../core/innerLifecycle'
+import * as webApi from '@mpxjs/api-proxy/src/web/api'
 
 function getEl (ref) {
   if (ref && ref.nodeType === 1) return ref

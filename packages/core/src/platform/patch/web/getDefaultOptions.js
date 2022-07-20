@@ -1,9 +1,8 @@
 import builtInKeysMap from '../builtInKeysMap'
 import mergeOptions from '../../../core/mergeOptions'
-import MpxProxy from '../../../core/proxy'
 import { diffAndCloneA } from '../../../helper/utils'
-import { getCurrentInstance as getVueCurrentInstance} from '../../export/index'
-import { setCurrentInstance, unsetCurrentInstance } from '../../../core/proxy'
+import { getCurrentInstance as getVueCurrentInstance } from '../../export/index'
+import { MpxProxy, setCurrentInstance, unsetCurrentInstance } from '../../../core/proxy'
 
 function filterOptions (options) {
   const newOptions = {}

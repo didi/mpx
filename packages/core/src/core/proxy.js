@@ -79,7 +79,7 @@ export default class MpxProxy {
     if (__mpx_mode__ === 'web') {
       // 收集setup中生命周期钩子,动态注册的hooks
       this.hooks = {}
-      this.scope = new EffectScope(this)
+      this.scope = new EffectScope(true)
     }
   }
 
