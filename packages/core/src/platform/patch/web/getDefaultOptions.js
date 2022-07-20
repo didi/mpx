@@ -28,8 +28,6 @@ function initProxy (context, rawOptions) {
   if (!context.__mpxProxy) {
     // 创建proxy对象
     context.__mpxProxy = new MpxProxy(rawOptions, context)
-    // proxy上挂载当前vue实例，在调用created的时候可以通过该实例拿到注册到实例上的hooks钩子供调用
-    // context.__mpxProxy.vueInstance = context
     context.__mpxProxy.created()
   } else if (context.__mpxProxy.isUnmounted()) {
     context.__mpxProxy = new MpxProxy(rawOptions, context, true)
