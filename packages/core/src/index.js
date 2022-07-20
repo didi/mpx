@@ -1,9 +1,11 @@
 import {
   reactive
 } from './observer/reactive'
+import Vue from './vue'
 import { diffAndCloneA, makeMap, merge, hasOwn } from './helper/utils'
 import { error } from './helper/log'
-import { Vue, APIs, InstanceAPIs } from './platform/export/index'
+import { APIs, InstanceAPIs } from './platform/export/api'
+export * from './platform/export/index'
 export {
   createApp,
   createPage,
@@ -18,38 +20,6 @@ export {
   createMutationsWithThis,
   createActionsWithThis
 } from './core/createStore'
-
-export {
-  // watch
-  watchEffect,
-  watchSyncEffect,
-  watchPostEffect,
-  watch,
-  // reactive
-  reactive,
-  isReactive,
-  shallowReactive,
-  markRaw,
-  set,
-  del,
-  // ref环节
-  ref,
-  unref,
-  toRef,
-  toRefs,
-  isRef,
-  customRef,
-  shallowRef,
-  triggerRef,
-  // computed
-  computed,
-  // advanced
-  effectScope,
-  getCurrentScope,
-  onScopeDispose,
-  // instance
-  getCurrentInstance
-} from './platform/export/index'
 
 export {
   nextTick

@@ -1,11 +1,10 @@
 import { reactive } from '../observer/reactive'
 import { ReactiveEffect } from '../observer/effect'
-import { EffectScope } from '../observer/effectScope'
+import { EffectScope } from '../platform/export/index'
 import { watch } from '../observer/watch'
 import { computed } from '../observer/computed'
 import { queueJob, queuePostFlushCb, nextTick, RenderTask } from '../observer/scheduler'
 import EXPORT_MPX from '../index'
-import { getCurrentInstance as getVueCurrentInstance } from '@vue/composition-api'
 import {
   type,
   noop,
@@ -78,7 +77,9 @@ export default class MpxProxy {
       this.flushingRenderTask = null
     }
     if (__mpx_mode__ === 'web') {
-      this.vueInstance = null
+      // 收集setup中生命周期钩子,动态注册的hooks
+      this.hooks = {}
+      this.scope = new EffectScope(this)
     }
   }
 
@@ -89,10 +90,6 @@ export default class MpxProxy {
       this.initProps()
       this.initSetup()
       unsetCurrentInstance()
-    }
-    // 将injectHook挂载的生命周期钩子挂载到proxy的hooks对象上
-    if (__mpx_mode__ === 'web') {
-      this.hooks = (this.vueInstance && this.vueInstance.hooks) || {}
     }
     // beforeCreate需要在setup执行过后执行
     this.callHook(BEFORECREATE)
@@ -574,22 +571,8 @@ export const injectHook = (hookName, hook, instance = currentInstance) => {
     }
     if (isFunction(hook)) (instance.hooks[hookName] || (instance.hooks[hookName] = [])).push(wrappedHook)
   }
-  // 将inject的生命周期钩子挂载到vue实例上
-  if (__mpx_mode__ === 'web') {
-    let vueInstance = getVueCurrentInstance().proxy
-    if (vueInstance._isDestroyed) return
-    if (vueInstance && isFunction(hook)) {
-      const wrappedVueHook = (...args) => {
-        const resVue = callWithErrorHandling(hook, vueInstance, `${hookName} hook`, args)
-        return resVue
-      }
-      vueInstance.hooks = vueInstance.hooks || {}
-      vueInstance.hooks[hookName] = vueInstance.hooks[hookName] || []
-      vueInstance.hooks[hookName].push(wrappedVueHook)
-    }
-  }
 }
-
+// 在代码中调用以下生命周期钩子时, 将生命周期钩子注入到mpxProxy实例上
 export const onBeforeCreate = (fn) => injectHook(BEFORECREATE, fn)
 export const onCreated = (fn) => injectHook(CREATED, fn)
 export const onBeforeMount = (fn) => injectHook(BEFOREMOUNT, fn)

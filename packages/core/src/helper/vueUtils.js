@@ -51,7 +51,6 @@ function walkChildren (vm, selectorGroups, context, result, all) {
 }
 
 export {
-  SelectQuery,
   walkChildren,
   parseSelector
 }
