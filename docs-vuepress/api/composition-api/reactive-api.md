@@ -1,7 +1,7 @@
-# 响应式基础
+# 响应式基础 API
 
 ## reactive
-返回对象的响应式副本
+将对象处理为响应性对象。
 ```js
 const obj = reactive({ count: 0 })
 obj.count++
@@ -78,7 +78,56 @@ return {
 ```
 
 ## isReactive
-检查对象是否是由 reactive 创建的响应式代理。
+检查对象是否是由 reactive 创建的响应式对象。
+
+**示例：**
+```js
+import { createComponent, reactive, isReactive } from '@mpxjs/core'
+
+createComponent({
+    setup(){
+        const state = reactive({
+            count: 1
+        })
+        console.log(isReactive(state)) // -> true
+        return {
+            state
+        }
+    }
+})
+```
+## markRaw
+标记一个对象，使其永远不会被抓换为响应性对象，并返回对象本身
+
+**示例：**
+
+```js
+import { markRaw, reactive, isReactive } from '@mpxjs/core'
+
+const foo = markRaw({
+    count: 1
+})
+const state = reactive({
+    foo
+})
+console.log(isReactive(state.foo)) // -> false
+```
+**注意：**
+
+如果将标记对象内部的未标记对象添加进响应性对象，然后再次访问该响应性对象，就会得到该原始对象的可响应性对象
+```js
+import { markRaw, reactive, isReactive } from '@mpxjs/core'
+
+const foo = markRaw({
+    nested: {}
+})
+
+const bar = reactive({
+    nested: foo.nested
+})
+
+console.log(foo.nested === bar.nested) // -> true
+```
 
 ## shallowReactive
 reactive() 的浅层作用形式，只跟踪自身 property 的响应性，但不执行嵌套对象的深层响应式转换(返回原始值)
@@ -90,6 +139,8 @@ reactive() 的浅层作用形式，只跟踪自身 property 的响应性，但�
 **示例：**
 
 ```js
+import { shallowReactive } from '@mpxjs/core'
+
 const count = ref(0)
 const state = shallowReactive({
   foo: 1,

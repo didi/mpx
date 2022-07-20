@@ -1,4 +1,4 @@
-# effect-scope
+# Effect 作用域 API
 
 ## effectScope
 

@@ -21,11 +21,24 @@ interface Ref<T> {
 }
 function ref<T>(value: T): Ref<T>
 ```
+
 **注意事项：**
 
 1.所有对 .value 的操作都将被追踪，并且写操作会触发与之相关的副作用。
 
-2.如果将一个对象赋值给 ref，那么这个对象将通过 reactive() 转为具有深层次响应式的对象。这也意味着如果对象中包含了嵌套的 ref，它们将被深层地解包。
+2.如果将一个对象赋值给 ref，那么这个对象将被 reactive 转为具有深层次响应式的对象。这也意味着如果对象中包含了嵌套的 ref，它们将被深层地解包。
+```js
+import { ref } from '@mpxjs/core'
+const foo = ref(0)
+const state = ref({
+    count: 1,
+    foo
+})
+// 获取count
+console.log(state.value.count)
+// 获取foo
+console.log(state.value.foo)
+```
 
 ## unref
 
@@ -33,10 +46,11 @@ function ref<T>(value: T): Ref<T>
 
 **示例：**
 ```js
-function useFoo(x: number | Ref<number>) {
-    const unwrapped = unref(x)     // unwrapped 现在保证为 number 类型
-}
+import { ref, unref } from '@mpxjs/core'
+const count = ref(0)
+const foo = unref(count)
 
+console.log(foo === 0) // -> true
 ```
 ## toRef
 用于为响应式对象上的property 创建 ref。创建的 ref 与其源 property 保持同步：改变源 property 
@@ -70,9 +84,9 @@ console.log(fooRef.value) // 3
 console.log(blackRef.value) // 3
 ```
 **注意：**
-* toRef 只可作用于响应式对象
-* 即使源 property 当前不存在，toRef() 也会返回一个可用的 ref，而 toRefs 则不会，这让它在处理可选properties的时候
-非常有用。
+
+即使源 property 当前不存在，toRef() 也会返回一个可用的 ref，而 toRefs 则不会，这在处理可选properties的时候
+非常有用
 
 ## toRefs
 将一个响应式对象转换为一个普通对象，这个普通对象的每个 property 都是指向源对象相应 property 的 ref。每个单独的 ref 都是 `toRef` 创建的
@@ -114,7 +128,7 @@ const {black, white} = useFeatX()
 
 ## isRef
 
-检查某个值是否为 ref。
+检查某个值是否为 ref，返回true/false。
 
 ## customRef
 创建一个自定义 ref，可对其进行依赖项跟踪和更新触发显示控制。需要一个工厂函数，该函数接收 `track` 和 `trigger`
@@ -149,9 +163,21 @@ function useDebouncedRef(value, delay = 200) {
 // text 的每次改变都只在最近一次set后的200ms后调用
 const text = useDebouncedRef('hello')
 ```
+**类型声明：**
+```ts
+function customRef<T>(factory: CustomRefFactory<T>): Ref<T>
+
+type CustomRefFactory<T> = (
+    track: () => void,
+    trigger: () => void
+) => {
+    get: () => T,
+    set: (value: T) => void
+}
+```
 
 ## shallowRef
-`ref()` 的浅层作用形式，创建一个仅跟踪自身 `.value` 变化的 ref，其他值都不是响应式的
+`ref()` 的浅层作用形式，创建一个仅跟踪自身 `.value` 变化的 ref，其他值不做任何处理都为非响应式
 
 **示例：**
 ```js
@@ -188,7 +214,7 @@ watchEffect(() => {
 // 这次变更不应触发副作用，因为这个 ref 是浅层的
 shallow.value.greet = 'Hello, universe'
 
-// 打印 "Hello, universe"
+// 手动执行该 shallowRef 关联的副作用，打印 "Hello, universe"
 triggerRef(shallow)
 
 ```
