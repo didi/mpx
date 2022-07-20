@@ -2,7 +2,7 @@ import { warn } from '../helper/log'
 import { ReactiveEffect } from './effect'
 import { isRef } from './ref'
 import { isReactive } from './reactive'
-import { queuePreFlushCb, queuePostRenderEffect } from './scheduler'
+import { queuePreFlushCb, queuePostFlushCb } from './scheduler'
 import { callWithErrorHandling } from '../helper/errorHandling'
 import { currentInstance } from '../core/proxy'
 import { isFunction, isObject, isArray, noop, remove, isPlainObject } from '../helper/utils'
@@ -117,7 +117,7 @@ export function watch (source, cb, options = {}) {
     // the scheduler function gets called directly
     scheduler = job
   } else if (flush === 'post') {
-    scheduler = () => queuePostRenderEffect(job, instance)
+    scheduler = () => queuePostFlushCb(job)
   } else {
     // default: 'pre'
     scheduler = () => queuePreFlushCb(job)
@@ -136,7 +136,7 @@ export function watch (source, cb, options = {}) {
       oldValue = effect.run()
     }
   } else if (flush === 'post') {
-    queuePostRenderEffect(effect.run.bind(effect), instance)
+    queuePostFlushCb(effect.run.bind(effect))
   } else {
     effect.run()
   }

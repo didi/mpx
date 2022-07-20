@@ -293,10 +293,42 @@ module.exports = function getSpec ({ warn, error }) {
             value
           }
         },
+        swan ({ name, value }, { eventRules }) {
+          const match = this.test.exec(name)
+          const eventName = match[2]
+          runRules(eventRules, eventName, { mode: 'swan' })
+        },
+        qq ({ name, value }, { eventRules }) {
+          const match = this.test.exec(name)
+          const eventName = match[2]
+          runRules(eventRules, eventName, { mode: 'qq' })
+        },
         jd ({ name, value }, { eventRules }) {
           const match = this.test.exec(name)
           const eventName = match[2]
           runRules(eventRules, eventName, { mode: 'jd' })
+        },
+        // tt ({ name, value }, { eventRules }) {
+        //   const match = this.test.exec(name)
+        //   const prefix = match[1]
+        //   const eventName = match[2]
+        //   const modifierStr = match[3] || ''
+        //   const rEventName = runRules(eventRules, eventName, { mode: 'tt' })
+        //   return {
+        //     // 字节将所有事件转为小写
+        //     name: prefix + rEventName.toLowerCase() + modifierStr,
+        //     value
+        //   }
+        // },
+        tt ({ name, value }, { eventRules }) {
+          const match = this.test.exec(name)
+          const eventName = match[2]
+          runRules(eventRules, eventName, { mode: 'tt' })
+        },
+        dd ({ name, value }, { eventRules }) {
+          const match = this.test.exec(name)
+          const eventName = match[2]
+          runRules(eventRules, eventName, { mode: 'dd' })
         },
         web ({ name, value }, { eventRules, el }) {
           const match = this.test.exec(name)

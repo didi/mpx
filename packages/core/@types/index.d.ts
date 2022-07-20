@@ -80,6 +80,7 @@ interface WatchOpt {
   immediateAsync?: boolean
   deep?: boolean
   sync?: boolean
+  once?: boolean | ((newVal: any, oldVal: any) => boolean)
 }
 
 interface WatchOptWithHandler extends WatchOpt {

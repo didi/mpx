@@ -54,7 +54,7 @@ const getWxToAliApi = ({ optimize = false }) => {
     },
 
     nextTick (fn) {
-      setTimeout(fn)
+      Promise.resolve().then(fn)
     },
 
     /**

@@ -47,6 +47,7 @@ export default {
   mounted () {
     this.$nextTick(() => {
       const list = this.$refs.list
+      if (!list.length) return
       const resut = []
       let allWidth = 0
       for (let i = 0; i < list.length; i++) {
@@ -93,6 +94,7 @@ export default {
     handleClick (index) {
       this.current = index
       const list = this.$refs.list
+      if (!list.length) return
       list.forEach(item => {
         item.style.transition = 'none'
         item.style.transform = 'scale(1)'

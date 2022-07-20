@@ -40,6 +40,7 @@ export {
   reactive,
   isReactive,
   shallowReactive,
+  markRaw,
   set,
   del
 } from './observer/reactive'
@@ -64,6 +65,10 @@ export {
   getCurrentScope,
   onScopeDispose
 } from './observer/effectScope'
+
+export {
+  nextTick
+} from './observer/scheduler'
 
 export {
   onBeforeCreate,

@@ -15,7 +15,7 @@ Mpx@2.7版本正式发布，编译构建升级至`webpack5`，完整支持持久
 
 ## 简介
 
-Mpx是一款致力于提高小程序开发体验和开发效率的增强型小程序框架，通过Mpx，我们能够高效优雅地开发出具有极致性能的优质小程序应用，并将其输出到各大小程序平台和web平台中运行。
+Mpx是一款致力于提升小程序开发体验和用户体验的增强型小程序跨端框架，通过Mpx，我们能够以最新的web开发理念高效优雅地构筑出高性能跨端小程序应用，在所有开放的小程序平台及web平台中运行。
 
 Mpx具有以下功能特性：
 * [数据响应](https://www.mpxjs.cn/guide/basic/reactive.html) (赋值响应 / [watch](https://www.mpxjs.cn/api/global-api.html#watch) / computed)
@@ -34,8 +34,9 @@ Mpx具有以下功能特性：
 * [TypeScript支持](https://www.mpxjs.cn/guide/tool/ts.html) (基于ThisType实现了完善的类型推导)
 * [I18n国际化](https://www.mpxjs.cn/guide/tool/i18n.html)
 * [单元测试支持](https://www.mpxjs.cn/guide/tool/unit-test.html)
+* [E2E测试支持](https://www.mpxjs.cn/guide/tool/e2e-test.html)
 * [组件维度运行时渲染方案](https://github.com/didi/mpx/pull/919) (即将到来)
-* E2E测试支持 (即将到来)
+* Composition api (即将到来)
 
 ## 快速开始
 
@@ -200,17 +201,17 @@ Mpx的核心设计思路为增强，不同于业内大部分小程序框架将we
 
 微信小程序
 
-![滴滴出行](https://dpubstatic.udache.com/static/dpubimg/bcca3d10-01b7-4c08-951a-22418b2443d6.jpg)|  ![出行广场](https://dpubstatic.udache.com/static/dpubimg/708d5579-81f0-480e-96b3-5f49e8022273.jpg)   |  ![滴滴公交](https://dpubstatic.udache.com/static/dpubimg/69a08787-d3a1-4c51-b182-0fcb96960b56.jpg)   |![滴滴金融](https://dpubstatic.udache.com/static/dpubimg/8c25bec8-938e-452d-96f9-5e524092a8ee.png)|![滴滴外卖](https://dpubstatic.udache.com/static/dpubimg/8fdd04ed-a74b-4b87-be6e-652550fb843f.png)|![司机招募](https://dpubstatic.udache.com/static/dpubimg/d3b62a33-7dbd-45ea-a4aa-f30ad61965f2.jpg)|![小桔加油](https://dpubstatic.udache.com/static/dpubimg/988099b3-9930-4c54-abd7-75e70134d649.png)|
-|:---:|:-------------------------------------------------------------------------------------------------:|:-------------------------------------------------------------------------------------------------:|:---:|:---:|:---:|:---:|
+![滴滴出行](https://dpubstatic.udache.com/static/dpubimg/bcca3d10-01b7-4c08-951a-22418b2443d6.jpg)|  ![出行广场](https://dpubstatic.udache.com/static/dpubimg/708d5579-81f0-480e-96b3-5f49e8022273.jpg)   |  ![滴滴公交](https://dpubstatic.udache.com/static/dpubimg/69a08787-d3a1-4c51-b182-0fcb96960b56.jpg)   |                                     ![滴滴金融](https://dpubstatic.udache.com/static/dpubimg/8c25bec8-938e-452d-96f9-5e524092a8ee.png)                                     |  ![滴滴外卖](https://dpubstatic.udache.com/static/dpubimg/8fdd04ed-a74b-4b87-be6e-652550fb843f.png)   |![司机招募](https://dpubstatic.udache.com/static/dpubimg/d3b62a33-7dbd-45ea-a4aa-f30ad61965f2.jpg)|![小桔加油](https://dpubstatic.udache.com/static/dpubimg/988099b3-9930-4c54-abd7-75e70134d649.png)|
+|:---:|:-------------------------------------------------------------------------------------------------:|:-------------------------------------------------------------------------------------------------:|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------:|:-------------------------------------------------------------------------------------------------:|:---:|:---:|
 |滴滴出行|出行广场|滴滴公交|滴滴金融|滴滴外卖|司机招募|小桔加油|
-|![彗星英语](https://dpubstatic.udache.com/static/dpubimg/d8ff5697-17f2-4177-9d8b-269e1af6c04a.jpg)|  ![番薯借阅](https://dpubstatic.udache.com/static/dpubimg/79573ef6-2a66-462e-8cc7-63eb983168f8.jpg)   |  ![疫查查应用](https://dpubstatic.udache.com/static/dpubimg/8932c3c2-b6da-4da2-8661-5554fe2bd4a3.jpg)  |![小桔养车](https://dpubstatic.udache.com/static/dpubimg/b6507fca-1e1f-4922-9240-d0f172bea6de.jpg)|![学而思直播课](https://dpubstatic.udache.com/static/dpubimg/40fd646b-10d0-4383-a576-e1d425a8c05d.jpeg)|![小猴启蒙课](https://dpubstatic.udache.com/static/dpubimg/6833dbdb-1dc8-4929-bd41-6d71069b0714.jpeg)|![科创书店](https://dpubstatic.udache.com/static/dpubimg/8627f48d-cf64-4511-8b2f-ede8e54186a7.png)|
-|彗星英语|番薯借阅|疫查查应用|小桔养车|学而思直播课|小猴启蒙课|科创书店|
-|![在武院](https://dpubstatic.udache.com/static/dpubimg/421bf49b-a9cb-4d54-90d7-e21b80ab21b3.jpg)| ![三股绳Lite](https://dpubstatic.udache.com/static/dpubimg/46ee136b-0791-4069-98b0-35566d5ef394.jpg) | ![学而思优选课](https://dpubstatic.udache.com/static/dpubimg/eab48487-5ca2-4368-9080-a6b843097e67.jpeg) |![食享会](https://dpubstatic.udache.com/static/dpubimg/lY7eYSppkW/68747470733a2f2f73686978682e636f6d2f73686571752f696d672f7172636f64655f322e37343664373562342e706e67.png)|![青铜安全医生](https://dpubstatic.udache.com/static/dpubimg/58cdbcc5-1f00-4da9-89c6-e638b2f77b19.png)|![青铜安全培训](https://dpubstatic.udache.com/static/dpubimg/a9d60600-40c0-4b66-934e-3bb176d3f07a.png)|![视穹云机械](https://dpubstatic.udache.com/static/dpubimg/0a816842-dda4-4e30-8c14-e951fb1a8131.jpeg)|
-|在武院|三股绳Lite|学而思优选课|食享会|青铜安全医生|青铜安全培训|视穹云机械|
-|![店有生意通](https://dpubstatic.udache.com/static/dpubimg/7f1b5f22-d765-4142-862a-999c1ed9d10f.png)|            ![花小猪打车](https://dpubstatic.udache.com/static/dpubimg/JzHnEyu8VT/aaa.jpeg)             |  ![橙心优选](https://dpubstatic.udache.com/static/dpubimg/37222642-c508-4a67-8cbc-036a66985bfc.jpeg)  |![小二押镖](https://dpubstatic.udache.com/static/dpubimg/nB6-p3WzIQ/xiaoeryabiao.png)|![顺鑫官方微商城](https://dpubstatic.udache.com/static/dpubimg/nY2bg3A1L_/shunxin.jpg)|![嘀嗒出行](https://dpubstatic.udache.com/static/dpubimg/DO3m0Iflq1/didachuxing.jpeg)|![汉行通Pro](https://dpubstatic.udache.com/static/dpubimg/86cd89be-de29-48ad-8cb0-72c432446e7b.jpg)|
-|店有生意通|花小猪打车|橙心优选|小二押镖|顺鑫官方微商城|嘀嗒出行|汉行通Pro|
-|![交圈](https://dpubstatic.udache.com/static/dpubimg/eaf24702-6d49-4853-9cab-cce7240dda85.png)|  ![青桔单车](https://dpubstatic.udache.com/static/dpubimg/pIM3h2vyj2/qingju.jpg)   |  ![滴滴顺风车](https://dpubstatic.udache.com/static/dpubimg/neOI_G6deQ/shunfengche.png)  |||||
-|交圈|青桔单车|滴滴顺风车|||||
+|![彗星英语](https://dpubstatic.udache.com/static/dpubimg/d8ff5697-17f2-4177-9d8b-269e1af6c04a.jpg)|  ![番薯借阅](https://dpubstatic.udache.com/static/dpubimg/79573ef6-2a66-462e-8cc7-63eb983168f8.jpg)   |  ![疫查查应用](https://dpubstatic.udache.com/static/dpubimg/8932c3c2-b6da-4da2-8661-5554fe2bd4a3.jpg)  |                                     ![小桔养车](https://dpubstatic.udache.com/static/dpubimg/b6507fca-1e1f-4922-9240-d0f172bea6de.jpg)                                     | ![学而思直播课](https://dpubstatic.udache.com/static/dpubimg/40fd646b-10d0-4383-a576-e1d425a8c05d.jpeg) |![小猴启蒙课](https://dpubstatic.udache.com/static/dpubimg/6833dbdb-1dc8-4929-bd41-6d71069b0714.jpeg)|![科创书店](https://dpubstatic.udache.com/static/dpubimg/8627f48d-cf64-4511-8b2f-ede8e54186a7.png)|
+|彗星英语|番薯借阅|疫查查应用|                                                                                  小桔养车                                                                                  |                                              学而思直播课                                               |小猴启蒙课|科创书店|
+|![在武院](https://dpubstatic.udache.com/static/dpubimg/421bf49b-a9cb-4d54-90d7-e21b80ab21b3.jpg)| ![三股绳Lite](https://dpubstatic.udache.com/static/dpubimg/46ee136b-0791-4069-98b0-35566d5ef394.jpg) | ![学而思优选课](https://dpubstatic.udache.com/static/dpubimg/eab48487-5ca2-4368-9080-a6b843097e67.jpeg) | ![食享会](https://dpubstatic.udache.com/static/dpubimg/lY7eYSppkW/68747470733a2f2f73686978682e636f6d2f73686571752f696d672f7172636f64655f322e37343664373562342e706e67.png) | ![青铜安全医生](https://dpubstatic.udache.com/static/dpubimg/58cdbcc5-1f00-4da9-89c6-e638b2f77b19.png)  |![青铜安全培训](https://dpubstatic.udache.com/static/dpubimg/a9d60600-40c0-4b66-934e-3bb176d3f07a.png)|![视穹云机械](https://dpubstatic.udache.com/static/dpubimg/0a816842-dda4-4e30-8c14-e951fb1a8131.jpeg)|
+|在武院|三股绳Lite|学而思优选课|                                                                                  食享会                                                                                   |                                              青铜安全医生                                               |青铜安全培训|视穹云机械|
+|![店有生意通](https://dpubstatic.udache.com/static/dpubimg/7f1b5f22-d765-4142-862a-999c1ed9d10f.png)|            ![花小猪打车](https://dpubstatic.udache.com/static/dpubimg/JzHnEyu8VT/aaa.jpeg)             |  ![橙心优选](https://dpubstatic.udache.com/static/dpubimg/37222642-c508-4a67-8cbc-036a66985bfc.jpeg)  |                                           ![小二押镖](https://dpubstatic.udache.com/static/dpubimg/nB6-p3WzIQ/xiaoeryabiao.png)                                            |          ![顺鑫官方微商城](https://dpubstatic.udache.com/static/dpubimg/nY2bg3A1L_/shunxin.jpg)          |![嘀嗒出行](https://dpubstatic.udache.com/static/dpubimg/DO3m0Iflq1/didachuxing.jpeg)|![汉行通Pro](https://dpubstatic.udache.com/static/dpubimg/86cd89be-de29-48ad-8cb0-72c432446e7b.jpg)|
+|店有生意通|花小猪打车|橙心优选|                                                                                  小二押镖                                                                                  |                                              顺鑫官方微商城                                              |嘀嗒出行|汉行通Pro|
+|![交圈](https://dpubstatic.udache.com/static/dpubimg/eaf24702-6d49-4853-9cab-cce7240dda85.png)|  ![青桔单车](https://dpubstatic.udache.com/static/dpubimg/pIM3h2vyj2/qingju.jpg)   |  ![滴滴顺风车](https://dpubstatic.udache.com/static/dpubimg/neOI_G6deQ/shunfengche.png)  |![滴滴代驾](https://dpubstatic.udache.com/static/dpubimg/cn2A4-zw30i8YB8lb75X5.jpg)|          ![新桔代驾](https://dpubstatic.udache.com/static/dpubimg/vVBnrKlgI4OGe3bdpTbbD.jpg)          |||
+|交圈|青桔单车|滴滴顺风车|滴滴代驾|新桔代驾|||
 
 其他平台小程序：
 
