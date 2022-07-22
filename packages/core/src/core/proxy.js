@@ -38,6 +38,12 @@ import {
   ONLOAD,
   ONSHOW,
   ONHIDE,
+  ONPULLDOWNREFRESH,
+  ONREACHBOTTOM,
+  ONSHAREAPPMESSAGE,
+  ONSHARETIMELINE,
+  ONADDTOFAVORITES,
+  ONPAGESCROLL,
   ONRESIZE
 } from './innerLifecycle'
 import { warn, error } from '../helper/log'
@@ -580,3 +586,9 @@ export const onLoad = (fn) => injectHook(ONLOAD, fn)
 export const onShow = (fn) => injectHook(ONSHOW, fn)
 export const onHide = (fn) => injectHook(ONHIDE, fn)
 export const onResize = (fn) => injectHook(ONRESIZE, fn)
+export const onPullDownRefresh = (fn) => injectHook(ONPULLDOWNREFRESH, fn)
+export const onReachBottom = (fn) => injectHook(ONREACHBOTTOM, fn)
+export const onShareAppMessage = (fn) => injectHook(ONSHAREAPPMESSAGE, fn)
+export const onShareTimeline = (fn) => injectHook(ONSHARETIMELINE, fn)
+export const onAddToFavorites = (fn) => injectHook(ONADDTOFAVORITES, fn)
+export const onPageScroll = (fn) => injectHook(ONPAGESCROLL, fn)

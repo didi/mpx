@@ -82,6 +82,12 @@ export {
   onShow,
   onHide,
   onResize,
+  onPullDownRefresh,
+  onReachBottom,
+  onShareAppMessage,
+  onShareTimeline,
+  onAddToFavorites,
+  onPageScroll,
   getCurrentInstance
 } from './core/proxy'
 

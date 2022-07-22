@@ -10,6 +10,12 @@ export const ONLOAD = '__onLoad__'
 export const ONSHOW = '__onShow__'
 export const ONHIDE = '__onHide__'
 export const ONRESIZE = '__onResize__'
+export const ONPULLDOWNREFRESH = '__onPullDownRefresh__'
+export const ONREACHBOTTOM = '__onReachBottom__'
+export const ONSHAREAPPMESSAGE = '__onShareAppMessage__'
+export const ONSHARETIMELINE = '__onShareTimeline__'
+export const ONADDTOFAVORITES = '__onAddToFavorites__'
+export const ONPAGESCROLL = '__onPageScroll__'
 
 export const INNER_LIFECYCLES = [
   BEFORECREATE,
@@ -23,5 +29,11 @@ export const INNER_LIFECYCLES = [
   ONLOAD,
   ONSHOW,
   ONHIDE,
+  ONPULLDOWNREFRESH,
+  ONREACHBOTTOM,
+  ONSHAREAPPMESSAGE,
+  ONSHARETIMELINE,
+  ONADDTOFAVORITES,
+  ONPAGESCROLL,
   ONRESIZE
 ]
