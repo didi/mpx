@@ -63,13 +63,14 @@ module.exports = ({ types }) => {
       },
       Property: {
         exit (path, state) {
-          const node =  path.node
+          const node = path.node
           if (types.isIdentifier(node.key) && node.key.name === 'setup' && types.isFunctionExpression(node.value) && state.sideEffectHooks.length) {
             state.sideEffectHooks.forEach(item => {
               const newAst = getCodeAst(types, item)
               path.insertAfter(newAst)
             })
           }
+          path.skip()
         }
       },
       Program (path, state) {

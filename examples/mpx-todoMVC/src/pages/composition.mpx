@@ -8,7 +8,7 @@
 </template>
 
 <script>
-  import { createPage, ref, reactive, onShareAppMessage, onReachBottom } from '@mpxjs/core'
+  import { createPage, ref, reactive, onShareAppMessage, onReachBottom, onPageScroll } from '@mpxjs/core'
 
   createPage({
     setup () {
@@ -38,6 +38,10 @@
 
       onReachBottom(() => {
         console.log('Test ===> onReachBottom!')
+      })
+
+      onPageScroll(() => {
+        console.log('Test ===> onPageScroll!')
       })
 
       // 暴露给模板
