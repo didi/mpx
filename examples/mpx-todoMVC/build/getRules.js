@@ -9,7 +9,7 @@ const baseRules = [
       loader: 'babel-loader',
       options: {
         // 发包后替换path
-        plugins: [resolve('../../packages/inject-composition-api-page-event-function')]
+        plugins: [resolve('../../packages/babel-plugin-inject-page-event-function')]
       }
     }
   },
