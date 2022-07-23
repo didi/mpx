@@ -25,8 +25,25 @@ const plusOne = computed({
 plusOne.value = 1
 console.log(count.value) // 0
 ```
+**类型声明：**
+```ts
+// 只读形式
+function computed<T>(
+    getter: () => T
+): Readonly<Ref<Readonly<T>>>
+
+// 可写形式
+function computed<T>(
+    options: {
+        get: () => T
+        set: (value: T) => void
+    }
+): Ref<T>
+```
+
 ## watchEffect
-立即执行传入的一个函数，同时响应式追踪其依赖，并在其依赖变更时重新运行该函数。
+
+立即执行传入的函数，同时对其依赖进行响应式追踪，并在其依赖变更时重新运行该函数。
 ```js
 const count = ref(0)
 
@@ -40,7 +57,6 @@ setTimeout(() => {
 ```
 * 停止侦听
 
-// Mpx中待确认
 ```js
 const stop = watchEffect(() => {
   /* ... */
@@ -87,16 +103,68 @@ watchEffect(callback, {
 })
 ```
 
+**类型声明：**
+```ts
+function watchEffect(
+  effect: (onInvalidate: InvalidateCbRegistrator) => void,
+  options?: WatchEffectOptions
+): StopHandle
+
+interface WatchEffectOptions {
+    flush?: 'pre' | 'post' | 'sync' // 默认：'pre'
+}
+
+type InvalidateCbRegistrator = (invalidate: () => void) => void
+
+type StopHandle = () => void
+```
+
+## watchSyncEffect
+watchEffect 的别名，带有 flush: 'sync' 选项。
+
+## watchPostEffect
+watchEffect 的别名，带有 flush: 'post' 选项。
+
 ## watch
 该 API 与选项式 API 中的 watch 基本等效，watch 需要侦听特定的数据源，并在单独的回调函数中执行副作用。默认情况下
-是惰性的。
+是惰性的——即回调仅在侦听源发生变化时被调用。
 
 与 watchEffect 比较，watch 允许我们：
 * 懒执行副作用；
 * 更具体地说明什么状态应该触发侦听器重新运行；
 * 访问侦听状态变化前后的值。
 
-**示例：**
+**类型声明：**
+
+```ts
+// 侦听单一源
+function watch<T>(
+    source: WatcherSource<T>,
+    callback: (
+        value: T,
+        oldValue: T,
+        onInvalidate: InvalidateCbRegistrator
+    ) => void,
+    options?: WatchOptions
+): StopHandle
+
+// 侦听多个源
+
+type WatcherSource<T> = Ref<T> | (() => T)
+
+type InvalidateCbRegistrator = (invalidate: () => void) => void
+
+type StopHandle = () => void
+
+interface WatchOptions extends WatchEffectOptions {
+    immediate?: boolean // 默认：false
+    deep?: boolean // 默认：false
+    immediateAsync: boolean // 默认：false
+}
+```
+
+### 侦听单一源
+watch 可以侦听一个具有返回值的 getter，也可以直接是一个 ref
 ```js
 // 侦听一个 getter
 const state = reactive({ count: 0 })
@@ -113,9 +181,21 @@ watch(count, (count, prevCount) => {
   /* ... */
 })
 ```
+### 侦听多个源
 
-## watchSyncEffect
-watchEffect 的别名，带有 flush: 'sync' 选项。
+还可以使用数组的形式同时侦听多个数据源：
+```js
+import { watch } from '@mpxjs/core'
 
-## watchPostEffect
-watchEffect 的别名，带有 flush: 'post' 选项。
+watch([aRef, bRef], ([a, b], [prevA, prevB]) => {
+    /* ... */
+})
+```
+
+### 与 watchEffect 相同的行为
+
+**watch** 与 **watchEffect** 在手动停止侦听、清除副作用、副作用刷新时机方面有相同的行为。
+
+### watch 选项
+参考 全局 API 章节中的 watch
+
