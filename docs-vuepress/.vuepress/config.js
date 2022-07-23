@@ -97,10 +97,10 @@ const sidebar = {
       title: '响应性 API',
       collapsable: false,
       children: [
-        'composition-api/reactive-api',
-        'composition-api/refs-api',
-        'composition-api/computed-watch-api',
-        'composition-api/effect-scope'
+        'reactivity-api/basic-reactivity',
+        'reactivity-api/refs-api',
+        'reactivity-api/computed-watch-api',
+        'reactivity-api/effect-scope'
       ]
     }
   ],
