@@ -6,10 +6,11 @@
 
 下表包含如何在 [setup ()](composition-api-setup.html) 内部调用生命周期钩子：
 
-首先看下微信小程序组件生命周期在 **setup()** 中的变化
+新版本的生命周期钩子我们基本上和 Vue 中的生命周期钩子对齐，下方表格我们列出微信中生命周期
+和我们 **setup()** 中新的生命周期对应关系以及变化
 <table>
 	<tr>
-	    <th>微信组件生命周期</th>
+	    <th>微信生命周期</th>
 	    <th>setup 中生命周期</th>
 	</tr >
 	<tr >
@@ -32,6 +33,10 @@
 	    <td>onMounted</td>
 	</tr>
     <tr>
+	    <td>无对应</td>
+	    <td>onUpdated</td>
+	</tr>
+    <tr>
         <td>无对应</td>
 	    <td>onBeforeUnmount</td>
 	</tr>
@@ -41,17 +46,9 @@
 	</tr>
     <tr>
         <td>detached</td>
-	    <td rowspan="2">onUnmounted</td>
+	    <td>onUnmounted</td>
 	</tr>
-</table>
-
-再看下微信小程序页面生命周期在 **setup()** 中的变化
-<table>
-	<tr>
-	    <th>微信页面生命周期</th>
-	    <th>setup 中生命周期</th>
-	</tr >
-	<tr >
+    <tr>
 	    <td>onLoad</td>
 	    <td>onLoad</td>
 	</tr>

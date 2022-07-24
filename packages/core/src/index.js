@@ -75,6 +75,7 @@ export {
   onCreated,
   onBeforeMount,
   onMounted,
+  onBeforeUpdate,
   onUpdated,
   onBeforeUnmount,
   onUnmounted,

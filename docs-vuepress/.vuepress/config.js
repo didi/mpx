@@ -102,7 +102,8 @@ const sidebar = {
         'reactivity-api/computed-watch-api',
         'reactivity-api/effect-scope'
       ]
-    }
+    },
+    'composition-api'
   ],
   '/articles/': [
     { title: '滴滴开源小程序框架Mpx', path: '1.0' },
