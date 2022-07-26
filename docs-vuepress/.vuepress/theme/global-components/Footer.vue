@@ -2,7 +2,7 @@
   <div class="footer-container">
     <footer class="footer">
       <ul class="footer__list">
-        <li class="grow">
+        <li class="grow" v-if="!smallMode">
           <img
             width="180"
             src="https://dpubstatic.udache.com/static/dpubimg/T1R-u2N8nn/footer_logo.png"
@@ -10,7 +10,7 @@
           />
         </li>
         <li class="grow">
-          <ul>
+          <ul class="footer-inner">
             <li class="footer__wrap">
               <span class="footer__text footer__title">{{$page.frontmatter.resourcesList.title}}</span>
             </li>
@@ -20,7 +20,7 @@
           </ul>
         </li>
         <li class="grow">
-          <ul>
+          <ul class="footer-inner">
             <li class="footer__wrap">
               <span class="footer__text footer__title">{{$page.frontmatter.communityList.title}}</span>
             </li>
@@ -33,7 +33,7 @@
           </ul>
         </li>
         <li class="grow">
-          <ul>
+          <ul class="footer-inner">
             <li class="footer__wrap">
               <span class="footer__text footer__title">{{$page.frontmatter.helpList.title}}</span>
             </li>
@@ -43,7 +43,7 @@
           </ul>
         </li>
         <li class="grow">
-          <ul>
+          <ul class="footer-inner">
             <li class="footer__wrap">
               <span class="footer__text footer__title">{{$page.frontmatter.moreList.title}}</span>
             </li>
@@ -65,8 +65,25 @@
 import Popover from '../components/Popover.vue'
 
 export default {
+  data () {
+    return {
+      smallMode: false
+    }
+  },
   components: {
     Popover
+  },
+  mounted () {
+    const MOBILE_DESKTOP_BREAKPOINT = 719
+    const handleLinksWrapWidth = () => {
+      if (document.documentElement.clientWidth < MOBILE_DESKTOP_BREAKPOINT) {
+        this.smallMode = true
+      } else {
+        this.smallMode = false
+      }
+    }
+    handleLinksWrapWidth()
+    window.addEventListener('resize', handleLinksWrapWidth, false)
   }
 };
 </script>
@@ -131,4 +148,32 @@ ul li
   top 0
   display none
 
+@media (max-width: 750px) {
+  .footer__list {
+    margin-bottom 16px  
+  }
+
+  .footer__text {
+    font-size 12px
+  }
+
+  .footer__title {
+    font-size 12px
+    color #979797
+  }
+
+  .footer__wrap {
+    margin-bottom 0
+  }
+
+  .footer-container {
+    background #606D7C 
+    height auto
+    margin-top 0
+  }
+
+  .footer-inner {
+    padding-left 6px
+  }
+}
 </style>

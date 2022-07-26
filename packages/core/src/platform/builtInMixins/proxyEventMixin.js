@@ -70,13 +70,10 @@ export default function proxyEventMixin () {
     }
   }
   if (__mpx_mode__ === 'ali') {
-    const getHandler = (eventName, props) => {
-      const handlerName = eventName.replace(/^./, matched => matched.toUpperCase()).replace(/-([a-z])/g, (match, p1) => p1.toUpperCase())
-      return props && (props['on' + handlerName] || props['catch' + handlerName])
-    }
     Object.assign(methods, {
       triggerEvent (eventName, eventDetail) {
-        const handler = getHandler(eventName, this.props)
+        const handlerName = eventName.replace(/^./, matched => matched.toUpperCase()).replace(/-([a-z])/g, (match, p1) => p1.toUpperCase())
+        const handler = this.props && (this.props['on' + handlerName] || this.props['catch' + handlerName])
         if (handler && typeof handler === 'function') {
           const dataset = collectDataset(this.props)
           const id = this.props.id || ''
@@ -95,31 +92,6 @@ export default function proxyEventMixin () {
             },
             detail: eventDetail
           }
-          handler.call(this, eventObj)
-        }
-      },
-      __proxyEvent (e) {
-        const type = e.type
-        const handler = getHandler(type, this.props)
-
-        if (handler && typeof handler === 'function') {
-          const dataset = collectDataset(this.props)
-          const id = this.props.id || ''
-          const targetData = Object.assign({}, e.target || {}, {
-            id,
-            dataset
-          })
-
-          const currentTargetData = Object.assign({}, e.currentTarget || {}, {
-            id,
-            dataset
-          })
-
-          const eventObj = Object.assign({}, e, {
-            target: targetData,
-            currentTarget: currentTargetData
-          })
-
           handler.call(this, eventObj)
         }
       }

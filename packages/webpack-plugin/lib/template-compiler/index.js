@@ -59,8 +59,7 @@ module.exports = function (raw) {
     checkUsingComponents: mpx.checkUsingComponents,
     globalComponents: Object.keys(mpx.usingComponents),
     forceProxyEvent: matchCondition(resourcePath, mpx.forceProxyEventRules),
-    hasVirtualHost: matchCondition(resourcePath, mpx.autoVirtualHostRules),
-    proxyComponentEventsRules: mpx.proxyComponentEventsRules
+    hasVirtualHost: matchCondition(resourcePath, mpx.autoVirtualHostRules)
   })
 
   if (meta.wxsContentMap) {
