@@ -1,9 +1,9 @@
 const postcss = require('postcss')
 const loadPostcssConfig = require('./load-postcss-config')
-const trim = require('./plugins/trim')
-const rpx = require('./plugins/rpx')
-const vw = require('./plugins/vw')
-const pluginCondStrip = require('./plugins/conditional-strip')
+const trim = require('@mpxjs/compiler/style-compiler/plugins/trim')
+const rpx = require('@mpxjs/compiler/style-compiler/plugins/rpx')
+const vw = require('@mpxjs/compiler/style-compiler/plugins/vw')
+const pluginCondStrip = require('@mpxjs/compiler/style-compiler/plugins/conditional-strip')
 const { matchCondition } = require('@mpxjs/utils/match-condition')
 
 module.exports = function (css, map) {

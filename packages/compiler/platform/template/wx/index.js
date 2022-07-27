@@ -4,7 +4,7 @@ const isValidIdentifierStr = require(normalize.utils('is-valid-identifier-str'))
 const runRules = require('../../run-rules')
 const getComponentConfigs = require('./component-config')
 const normalizeComponentRules = require('../normalize-component-rules')
-const templateCompiler = require('../../../compiler')
+const templateCompiler = require('../../../template-compiler/compiler')
 const parseMustache = templateCompiler.parseMustache
 const stringifyWithResolveComputed = templateCompiler.stringifyWithResolveComputed
 

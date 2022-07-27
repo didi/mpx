@@ -2,7 +2,7 @@ const normalize = require('@mpxjs/utils/normalize')
 const genComponentTag = require(normalize.utils('gen-component-tag'))
 const addQuery = require(normalize.utils('add-query'))
 const parseRequest = require(normalize.utils('parse-request'))
-const templateCompiler = require('@mpxjs/template-compiler/compiler')
+const templateCompiler = require('@mpxjs/compiler/template-compiler/compiler')
 // const { matchCondition } = require(normalize.utils('match-condition')）
 
 function calculateRootEleChild (arr) {

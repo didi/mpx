@@ -111,21 +111,6 @@ class MpxWebpackPlugin {
       options
     }
   }
-
-  static wxssLoader (options) {
-    return {
-      loader: normalize.webLib('wxss/loader'),
-      options
-    }
-  }
-
-  static wxmlLoader (options) {
-    return {
-      loader: normalize.webLib('wxml/loader'),
-      options
-    }
-  }
-
   static wxsPreLoader (options = {}) {
     return {
       loader: normalize.webLib('wxs/pre-loader'),
