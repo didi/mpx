@@ -941,7 +941,7 @@ class MpxWebpackPlugin {
         }
       })
 
-      normalModuleFactory.hooks.parser.for('javascript/auto').tap('MpxWebpackPlugin', (parser) => {
+      const normalModuleFactoryParserCallback = (parser) => {
         parser.hooks.call.for('__mpx_resolve_path__').tap('MpxWebpackPlugin', (expr) => {
           if (expr.arguments[0]) {
             const resource = expr.arguments[0].value
@@ -1152,7 +1152,10 @@ class MpxWebpackPlugin {
           parser.hooks.callMemberChain.for('mpx').tap('MpxWebpackPlugin', injectSrcModeForTransApi)
           parser.hooks.callMemberChain.for('wx').tap('MpxWebpackPlugin', injectSrcModeForTransApi)
         }
-      })
+      }
+      normalModuleFactory.hooks.parser.for('javascript/auto').tap('MpxWebpackPlugin', normalModuleFactoryParserCallback)
+      normalModuleFactory.hooks.parser.for('javascript/dynamic').tap('MpxWebpackPlugin', normalModuleFactoryParserCallback)
+      normalModuleFactory.hooks.parser.for('javascript/esm').tap('MpxWebpackPlugin', normalModuleFactoryParserCallback)
 
       // 为了正确生成sourceMap，将该步骤由原来的compile.hooks.emit迁移到compilation.hooks.processAssets
       compilation.hooks.processAssets.tap({
