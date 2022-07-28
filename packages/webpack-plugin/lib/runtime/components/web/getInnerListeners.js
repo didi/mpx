@@ -1,5 +1,6 @@
 import { isEmptyObject } from './util'
-const isTouchDevice = 'ontouchstart' in document.documentElement
+import { inBrowser } from '../../../utils/env'
+const isTouchDevice = inBrowser && ('ontouchstart' in document.documentElement)
 
 function processModel (listeners, context) {
   // 该函数只有wx:model的情况下才调用，而且默认e.detail.value有值
