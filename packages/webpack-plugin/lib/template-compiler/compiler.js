@@ -183,7 +183,7 @@ function decode (value) {
   }
 }
 
-const i18nFuncNames = ['\\$(t)', '\\$(tc)', '\\$(te)', '\\$(d)', '\\$(n)']
+const i18nFuncNames = ['\\$(t)', '\\$(tc)', '\\$(te)', '\\$(tm)', 't', 'tc', 'te', 'tm']
 const i18nWxsPath = normalize.lib('runtime/i18n.wxs')
 const i18nWxsLoaderPath = normalize.lib('wxs/i18n-loader.js')
 // 添加~前缀避免wxs绝对路径在存在projectRoot时被拼接为错误路径
@@ -777,11 +777,8 @@ function parse (template, options) {
   }
 
   if (hasI18n) {
-    if (i18n.useComputed) {
-      if (!meta.computed) {
-        meta.computed = []
-      }
-      meta.computed = meta.computed.concat(i18nInjectableComputed)
+    if (i18nInjectableComputed.length) {
+      meta.computed = (meta.computed || []).concat(i18nInjectableComputed)
     } else {
       injectWxs(meta, i18nModuleName, i18nWxsRequest)
     }
@@ -1186,21 +1183,22 @@ function parseMustache (raw = '') {
       })
 
       if (i18n) {
-        i18nFuncNames.forEach((i18nFuncName) => {
+        for (const i18nFuncName of i18nFuncNames) {
           const funcNameRE = new RegExp(`${i18nFuncName}\\(`)
           const funcNameREG = new RegExp(`${i18nFuncName}\\(`, 'g')
           if (funcNameRE.test(exp)) {
-            if (i18n.useComputed) {
+            if (i18n.useComputed || !i18nFuncName.startsWith('\\$')) {
               const i18nInjectComputedKey = `_i${i18nInjectableComputed.length + 1}`
-              i18nInjectableComputed.push(`${i18nInjectComputedKey}: function(){\nreturn ${exp.trim()}}`)
+              i18nInjectableComputed.push(`${i18nInjectComputedKey} () {\nreturn ${exp.trim()}}`)
               exp = i18nInjectComputedKey
             } else {
-              exp = exp.replace(funcNameREG, `${i18nModuleName}.$1(mpxLocale, `)
+              exp = exp.replace(funcNameREG, `${i18nModuleName}.$1(null, _l, _fl, `)
             }
             hasI18n = true
             replaced = true
+            break
           }
-        })
+        }
       }
 
       ret.push(`(${exp.trim()})`)

@@ -41,6 +41,15 @@ const sidebar = {
       ]
     },
     {
+      title: '组合式API',
+      collapsable: false,
+      children: [
+        'composition-api/introduction',
+        'composition-api/lifecycle-hooks',
+        'composition-api/setup'
+      ]
+    },
+    {
       title: '工具',
       collapsable: false,
       children: [
@@ -83,7 +92,18 @@ const sidebar = {
     'directives',
     'compile',
     'builtIn',
-    'extend'
+    'extend',
+    {
+      title: '响应性 API',
+      collapsable: false,
+      children: [
+        'reactivity-api/basic-reactivity',
+        'reactivity-api/refs-api',
+        'reactivity-api/computed-watch-api',
+        'reactivity-api/effect-scope'
+      ]
+    },
+    'composition-api'
   ],
   '/articles/': [
     { title: '滴滴开源小程序框架Mpx', path: '1.0' },
