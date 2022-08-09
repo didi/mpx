@@ -144,24 +144,17 @@ export default class MpxProxy {
 
   propsUpdated () {
     const updateJob = this.updateJob || (this.updateJob = () => {
-      // 只有当前没有渲染任务时，属性更新才需要单独触发beforeUpdate/updated，否则可以由渲染任务触发beforeUpdate/updated
+      // 只有当前没有渲染任务时，属性更新才需要单独触发updated，否则可以由渲染任务触发updated
       if (this.currentRenderTask?.resolved) {
-        // todo props更新时非渲染任务触发的beforeUpdate/updated不够严谨，没有正确地表征视图更新前及更新后
-        this.beforeUpdate()
         this.updated()
       }
     })
     nextTick(updateJob)
   }
 
-  beforeUpdate () {
-    if (this.isMounted()) {
-      this.callHook(BEFOREUPDATE)
-    }
-  }
-
   updated () {
     if (this.isMounted()) {
+      this.callHook(BEFOREUPDATE)
       this.callHook(UPDATED)
     }
   }
@@ -479,7 +472,6 @@ export default class MpxProxy {
         this.updated()
         renderTask && renderTask.resolve()
       }
-      this.beforeUpdate()
     }
     data = processUndefined(data)
     if (typeof EXPORT_MPX.config.setDataHandler === 'function') {
@@ -590,15 +582,17 @@ export const injectHook = (hookName, hook, instance = currentInstance) => {
   }
 }
 
-export const onBeforeCreate = (fn) => injectHook(BEFORECREATE, fn)
-export const onCreated = (fn) => injectHook(CREATED, fn)
-export const onBeforeMount = (fn) => injectHook(BEFOREMOUNT, fn)
-export const onMounted = (fn) => injectHook(MOUNTED, fn)
-export const onBeforeUpdate = (fn) => injectHook(BEFOREUPDATE, fn)
-export const onUpdated = (fn) => injectHook(UPDATED, fn)
-export const onBeforeUnmount = (fn) => injectHook(BEFOREUNMOUNT, fn)
-export const onUnmounted = (fn) => injectHook(UNMOUNTED, fn)
-export const onLoad = (fn) => injectHook(ONLOAD, fn)
-export const onShow = (fn) => injectHook(ONSHOW, fn)
-export const onHide = (fn) => injectHook(ONHIDE, fn)
-export const onResize = (fn) => injectHook(ONRESIZE, fn)
+export const createHook = (hookName) => (hook, instance) => injectHook(hookName, hook, instance)
+
+export const onBeforeCreate = createHook(BEFORECREATE)
+export const onCreated = createHook(CREATED)
+export const onBeforeMount = createHook(BEFOREMOUNT)
+export const onMounted = createHook(MOUNTED)
+export const onBeforeUpdate = createHook(BEFOREUPDATE)
+export const onUpdated = createHook(UPDATED)
+export const onBeforeUnmount = createHook(BEFOREUNMOUNT)
+export const onUnmounted = createHook(UNMOUNTED)
+export const onLoad = createHook(ONLOAD)
+export const onShow = createHook(ONSHOW)
+export const onHide = createHook(ONHIDE)
+export const onResize = createHook(ONRESIZE)

@@ -10,18 +10,11 @@ module.exports = function (content) {
     } else if (i18n.messagesPath) {
       prefix += `__mpx_messages__ = require(${loaderUtils.stringifyRequest(this, i18n.messagesPath)})\n`
     }
-    if (i18n.dateTimeFormats) {
-      prefix += `__mpx_datetime_formats__ = ${JSON.stringify(i18n.dateTimeFormats)}\n`
-    } else if (i18n.dateTimeFormatsPath) {
-      prefix += `__mpx_datetime_formats__ = require(${loaderUtils.stringifyRequest(this, i18n.dateTimeFormatsPath)})\n`
-    }
-    if (i18n.numberFormats) {
-      prefix += `__mpx_number_formats__ = ${JSON.stringify(i18n.numberFormats)}\n`
-    } else if (i18n.numberFormatsPath) {
-      prefix += `__mpx_number_formats__ = require(${loaderUtils.stringifyRequest(this, i18n.numberFormatsPath)})\n`
-    }
     if (i18n.locale) {
       prefix += `__mpx_locale__ = ${JSON.stringify(i18n.locale)}\n`
+    }
+    if (i18n.fallbackLocale) {
+      prefix += `__mpx_fallback_locale__ = ${JSON.stringify(i18n.fallbackLocale)}\n`
     }
   }
   content = prefix + content
