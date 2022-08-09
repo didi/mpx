@@ -2,8 +2,7 @@ import { BEFORECREATE } from '../../core/innerLifecycle'
 import { merge, isEmptyObject, isPlainObject, isNumber } from '../../helper/utils'
 import { DefaultLocale } from '../../helper/const'
 import { error } from '../../helper/log'
-import { ref } from '../../observer/ref'
-import { set } from '../../observer/reactive'
+import { ref, shallowRef, triggerRef } from '../../observer/ref'
 import { watch } from '../../observer/watch'
 import { effectScope } from '../../observer/effectScope'
 import { getCurrentInstance, onUnmounted } from '../../core/proxy'
@@ -68,7 +67,7 @@ function createComposer (options) {
       : (options.fallbackLocale || DefaultLocale)
   )
 
-  const messages = ref(
+  const messages = shallowRef(
     isPlainObject(options.messages)
       ? options.messages
       : { [locale]: {} }
@@ -81,7 +80,7 @@ function createComposer (options) {
       // Pluralization
       ret = i18nMethods.tc(messages.value, locale.value, fallbackLocale.value, ...args)
     } else {
-      ret = i18nMethods.t(messages.value, locale.value, fallbackLocale.value)
+      ret = i18nMethods.t(messages.value, locale.value, fallbackLocale.value, ...args)
     }
     if (!ret && fallbackRoot && __root) {
       ret = __root.t(...args)
@@ -98,12 +97,13 @@ function createComposer (options) {
   const getLocaleMessage = (locale) => messages.value[locale]
 
   const setLocaleMessage = (locale, message) => {
-    set(messages.value, locale, message)
+    messages.value[locale] = message
+    triggerRef(messages)
   }
 
   const mergeLocaleMessage = (locale, message) => {
-    message = merge({}, messages.value[locale], message)
-    set(messages.value, locale, message)
+    messages.value[locale] = merge(messages.value[locale] || {}, message)
+    triggerRef(messages)
   }
 
   if (__root) {
@@ -193,6 +193,22 @@ export default function i18nMixin () {
         }
       },
       [BEFORECREATE] () {
+        // 挂载$i18n
+        this.$i18n = {
+          get locale () {
+            return i18n.global.locale.value || DefaultLocale
+          },
+          set locale (val) {
+            i18n.global.locale.value = val
+          },
+          get fallbackLocale () {
+            return i18n.global.fallbackLocale.value || DefaultLocale
+          },
+          set fallbackLocale (val) {
+            i18n.global.fallbackLocale.value = val
+          }
+        }
+
         // 挂载翻译方法，$t等注入方法只能使用global scope
         Object.keys(i18nMethods).forEach((methodName) => {
           this['$' + methodName] = (...args) => {

@@ -777,11 +777,8 @@ function parse (template, options) {
   }
 
   if (hasI18n) {
-    if (i18n.useComputed) {
-      if (!meta.computed) {
-        meta.computed = []
-      }
-      meta.computed = meta.computed.concat(i18nInjectableComputed)
+    if (i18nInjectableComputed.length) {
+      meta.computed = (meta.computed || []).concat(i18nInjectableComputed)
     } else {
       injectWxs(meta, i18nModuleName, i18nWxsRequest)
     }
@@ -1186,11 +1183,11 @@ function parseMustache (raw = '') {
       })
 
       if (i18n) {
-        i18nFuncNames.forEach((i18nFuncName) => {
+        for (const i18nFuncName of i18nFuncNames) {
           const funcNameRE = new RegExp(`${i18nFuncName}\\(`)
           const funcNameREG = new RegExp(`${i18nFuncName}\\(`, 'g')
           if (funcNameRE.test(exp)) {
-            if (i18n.useComputed || !i18nFuncName.startsWith('$')) {
+            if (i18n.useComputed || !i18nFuncName.startsWith('\\$')) {
               const i18nInjectComputedKey = `_i${i18nInjectableComputed.length + 1}`
               i18nInjectableComputed.push(`${i18nInjectComputedKey} () {\nreturn ${exp.trim()}}`)
               exp = i18nInjectComputedKey
@@ -1199,8 +1196,9 @@ function parseMustache (raw = '') {
             }
             hasI18n = true
             replaced = true
+            break
           }
-        })
+        }
       }
 
       ret.push(`(${exp.trim()})`)

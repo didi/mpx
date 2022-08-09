@@ -3,7 +3,7 @@ const loaderUtils = require('loader-utils')
 
 module.exports = function (content) {
   const i18n = this.getMpx().i18n
-  let prefix = 'var __mpx_messages__, __mpx_datetime_formats__, __mpx_number_formats__, __mpx_locale__\n'
+  let prefix = 'var __mpx_messages__, __mpx_locale__, __mpx_fallback_locale__\n'
   if (i18n) {
     if (i18n.messages) {
       prefix += `__mpx_messages__ = ${JSON.stringify(i18n.messages)}\n`
