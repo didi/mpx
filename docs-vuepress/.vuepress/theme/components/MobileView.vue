@@ -8,12 +8,12 @@
 
       <div class="m-banner-btn-wrapper">
         <button class="m-banner-btn m-banner-btn-enter">
-          <a class="white-link" :href="$page.frontmatter.actionLink">
+          <a style="font-size: 15px;" :href="$page.frontmatter.actionLink">
             {{ $page.frontmatter.actionText }}
           </a>
         </button>
         <div class="m-banner-btn m-banner-btn-jump">
-          <a class="blue-link" :href="$page.frontmatter.githubLink">
+          <a class="white-link" :href="$page.frontmatter.githubLink">
             {{ $page.frontmatter.githubText }}
           </a>
         </div>
@@ -40,25 +40,19 @@
 
     <div class="mdemo-wrapper">
       <div class="mdemo-title">{{ $page.frontmatter.threeSection.title }}</div>
-      <div class="mdemo-subtitle">
-        {{ $page.frontmatter.threeSection.mdetails }}
-      </div>
-      <div class="mdemo-btn">
+      <p class="mdemo-subtitle">
+        扫码体验Mpx版本的
+        <a class="target-link" href="https://github.com/didi/mpx/tree/master/examples/mpx-todoMVC">todoMVC</a>
+        在各个小程序平台和web中的一致表现 ，更多示例项目可点击
+        <a class="target-link" href="https://github.com/didi/mpx/tree/master/examples">这里</a>
+        进入查看。
+      </p>
+      <!-- <a class="mdemo-btn" href="/">
         {{ $page.frontmatter.threeSection.actionText }}
-      </div>
+      </a> -->
       <div class="mdemo-icon-wrapper">
-        <div v-for="(item, index) in mvcList" :key="index">
-          <div class="mdemo-icon-card">
-            <img
-              class="mdemo-icon-img"
-              width="60"
-              height="60"
-              :src="item.icon"
-              alt="platform"
-              loading="lazy"
-            />
-            <div class="mdemo-icon-title">{{ item.title }}</div>
-          </div>
+        <div style="margin: 0 6px;" v-for="(item, index) in mvcList" :key="index">
+          <img width="130" height="150" :src="item.code" alt="code" loading="lazy" />
         </div>
       </div>
     </div>
@@ -70,9 +64,9 @@
       <div class="m-feature-subtitle">
         {{ $page.frontmatter.fourSection.details }}
       </div>
-      <div class="m-feature-btn">
+      <a class="m-feature-btn" :href="$page.frontmatter.fourSection.actionLink">
         {{ $page.frontmatter.fourSection.actionText }}
-      </div>
+      </a>
       <img
         class="m-feature-pic"
         width="100%"
@@ -88,9 +82,9 @@
       <div class="m-feature-subtitle">
         {{ $page.frontmatter.fiveSection.details }}
       </div>
-      <div class="m-feature-btn">
+      <a class="m-feature-btn" :href="$page.frontmatter.fourSection.actionLink">
         {{ $page.frontmatter.fiveSection.actionText }}
-      </div>
+      </a>
       <img
         class="m-feature-pic"
         width="100%"
@@ -103,25 +97,19 @@
 
     <div class="m-util-wrapper">
       <div class="m-util-title">{{$page.frontmatter.sixSection.title}}</div>
-      <!-- <div class="m-util-list"></div> -->
       <ul class="row six-section__row" v-for="(item, index) in list" :key="index">
-          <!-- <li v-for="(item, index) in current" :key="index"> -->
-            <a :href="item.actionLink" class="six-section__item six-section__step">
-              <div class="six-section__icon">
-                <img :src="item.icon" alt="svg" loading="lazy" width="50" height="50" />
-              </div>
-              <div class="six-section__list">
-                <div class="six-section__bold">{{item.title}}</div>
-                <div class="six-section__subtitle">{{item.details}}</div>
-              </div>
-            </a>
-          <!-- </li> -->
-        </ul>
+        <a :href="item.actionLink" class="six-section__item six-section__step">
+          <img class="six-section__icon" :src="item.icon" alt="svg" loading="lazy" width="50" height="50" />
+          <div class="six-section__list">
+            <div class="six-section__bold">{{item.title}}</div>
+            <div class="six-section__subtitle">{{item.details}}</div>
+          </div>
+        </a>
+      </ul>
     </div>
 
     <div class="m-example-wrapper">
       <div class="m-example-title">{{$page.frontmatter.sevenSection.title}}</div>
-      <!-- <div class="m-example-contain"> -->
         <div class="m-example-phone">
           <img
               width="318"
@@ -129,77 +117,109 @@
               src="https://dpubstatic.udache.com/static/dpubimg/xxjYvzgJdt/y_bg_phone.png"
               alt="phone"/>
           <div class="m-example-img-contain">
-            <mobile-swiper-img :dataList="dataList" :currentIndex="currentIndex"></mobile-swiper-img>
+            <mobile-swiper ref="multiImg" :height="390" :dataList="dataList" @change="handleChange">
+              <template v-slot="slotProps">
+                <div class="m-example-swiper">
+                  <img style="border-radius: 20px;" width="180" :src="slotProps.item.demo" alt="demo">
+                </div>
+              </template>
+            </mobile-swiper>
           </div>
         </div>
-        <MobileSwiper :dataList="dataList">
-          <!-- <slide-item>test</slide-item> -->
-        </MobileSwiper>
-        <!-- <MobileSwiper :data="dataList" @change="handleChange"></MobileSwiper> -->
-      <!-- </div> -->
+        <mobile-swiper :height="200" :dot="true" @change="handlePage" :autoPlay="false" :dataList="multiList" ref="multiPage">
+          <template v-slot="slotProps">
+            <div class="m-example-swiper">
+              <div :class="{ active: currentIndex === index }" class="m-example-name"  v-for="(current, index) in slotProps.item" :key="index" @click="handleSelect(index)">
+                {{current.title}}
+              </div>
+            </div>
+          </template>
+        </mobile-swiper>
     </div>
-    <MobileFooter />
   </div>
 </template>
 
 <script>
-import MobileFooter from "./MobileFooter.vue"
 import MobileSwiper from "./MobileSwiper.vue"
-// import SlideItem from './slide-item.vue';
-import MobileSwiperImg from './MobileSwiperImg.vue'
 
 export default {
-    components: {
-    MobileSwiper,
-    MobileFooter,
-    // MobileSwiperImg,
-    // SlideItem
+  components: {
+    MobileSwiper
   },
   data() {
-      return {
-          // data: document.body.clientWidth < 1020
-          currentIndex: 0
-      }
+    return {
+      currentIndex: 0,
+      pageIndex: 0,
+      tempIndex: 0
+    }
   },
   computed: {
     list () {
-      // let result = []
-      // let details = this.$page.frontmatter.sixSection.details
-      // let current = []
-      // let i = 0
-      // while (i < details.length) {
-      //   if (i % 3 === 0) {
-      //     current = []
-      //     result.push(current)
-      //   }
-      //   current.push(details[i])
-      //   i++
-      // }
-      // return result
       return this.$page.frontmatter.sixSection.details
     },
+    multiList () {
+      const list = this.$page.frontmatter.sevenSection.details
+      const result = []
+      let temp = []
+      for (let i = 0; i < list.length; i++) {
+        if (i % 4 === 0) {
+          if (temp.length) result.push(temp)
+          temp = []
+        }
+        temp.push(list[i])
+      }
+      if (temp.length) result.push(temp)
+      return result
+    },
     mvcList() {
-      const mlist = this.$page.frontmatter.threeSection.mlist;
-      return mlist;
+      const list = this.$page.frontmatter.threeSection.list
+      return list
     },
     dataList () {
       const list = this.$page.frontmatter.sevenSection.details
       return list
-    },
+    }
   },
   methods: {
     handleChange (index) {
+      if (index > 3) {
+        this.currentIndex = index % 4
+      } else {
+        this.currentIndex = index
+      }
+      if (index > 2) {
+        if (index % 4 === 0 && index > this.tempIndex) {
+          this.$refs.multiPage.handleNext('off')
+          this.currentIndex = 0
+        }
+        if ((index + 1) % 4 === 0 && index < this.tempIndex) {
+          this.$refs.multiPage.handlePrev('off')
+          this.currentIndex = 3
+        }
+      }
+      this.tempIndex = index
+    },
+    handleSelect (index) {
+      let num = this.pageIndex * 4 + index
+      this.tempIndex = num
       this.currentIndex = index
+      this.$refs.multiImg.handleSelect(num)
+    },
+    handlePage (index) {
+      this.pageIndex = index
+      this.handleSelect(0)
     }
   }
 };
 </script>
 
-<style lang="stylus">
+<style lang="stylus" scoped>
+.active {
+  border: 2px solid #00BD81 !important;
+}
 .m-banner {
   display: flex;
   flex-direction: column;
-  // justify-content center
   align-items: center;
   height: 468px;
   background-image: linear-gradient(0deg, #50BE97 4%, #31BC7F 83%);
@@ -247,10 +267,14 @@ export default {
     }
 
     .m-banner-btn-jump {
-      border: 0 solid #FFFFFF;
-      box-shadow: -3px 12px 35px 0 rgba(49, 188, 127, 0.2);
+      border: 1px solid #FFFFFF;
       margin-left: 15px;
-      background-color: rgba(0, 0, 0, 0.2);
+      color: #fff;
+      box-sizing: border-box;
+    }
+
+    .white-link {
+      color: #fff;
     }
   }
 
@@ -297,14 +321,32 @@ export default {
   }
 }
 
+.m-example-swiper {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  border-radius: 4px;
+}
+
+.m-example-name {
+  width: 166px;
+  height: 60px;
+  margin: 6px;
+  border: 2px solid #EDEDED;
+  box-shadow: 0 11px 32px 0 rgba(49,188,127,0.06), 0 4px 10px 0 rgba(49,188,127,0.04);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #FFFFFF;
+}
+
 .mdemo-wrapper, .m-feature-wrapper, .m-util-wrapper, .m-example-wrapper {
   display: flex;
   flex-direction: column;
-  // justify-content center
   align-items: center;
-//   height: 535px;
   background: #F7F7F7;
-  margin-top: 50px;
 
   .mdemo-title, .m-feature-title, .m-util-title, .m-example-title {
     font-family: PingFangSC-Medium;
@@ -314,6 +356,7 @@ export default {
     text-align: justify;
     font-weight: 500;
     margin-top: 50px;
+    margin-bottom: 20px;
   }
 
   .mdemo-subtitle, .m-feature-subtitle {
@@ -324,7 +367,7 @@ export default {
     text-align: center;
     line-height: 22px;
     font-weight: 400;
-    margin: 20px 30px 0;
+    padding 0 30px
   }
 
   .mdemo-btn, .m-feature-btn {
@@ -344,9 +387,8 @@ export default {
   }
 
   .mdemo-icon-wrapper {
-    margin: 5px 23px 0;
+    margin: 10px 0 40px 0;
     display: flex;
-    // flex-direction: column;
     flex-wrap: wrap;
     justify-content: space-around;
     align-items: center;
@@ -367,9 +409,12 @@ export default {
   }
 
   .six-section__row {
-    margin-bottom: 0px
+    margin: 0 0 10px 0
     flex-wrap: wrap;
     justify-content: center;
+    padding: 0 16px
+    width: 100%
+    box-sizing: border-box
 
     .six-section__item {
       display: flex
@@ -377,7 +422,6 @@ export default {
       background #ffffff
       border 0 solid #EFEFEF
       border-radius 4px
-      width 343px
       height 72px
       display flex
       padding 11px 0 11px 24px
@@ -403,9 +447,6 @@ export default {
       .six-section__subtitle {
         font-size 13px
       }
-    .six-section__step {
-      margin-right 16px
-    }
   }
 
   .m-example-phone {
@@ -413,15 +454,33 @@ export default {
     display flex
     justify-content center
     position relative
-    margin-top: 30px
+    height 450px
+    align-items center
     .m-example-img-contain {
       position absolute
       top 0
       left 50%
       transform translate3d(-50%, 0, 0)
+      width 100%
+      width 190px
+      height 390px
+      background url("https://dpubstatic.udache.com/static/dpubimg/Vx5n_3YCtP/anli_pic_phone.png") no-repeat center center
+      background-size contain
+      padding 12px
     }
-
   }
-  
+}
+
+.m-feature-wrapper {
+  background: #fff;
+  padding-bottom: 50px;
+}
+
+.m-example-wrapper {
+  background: #fff;
+}
+
+.m-util-wrapper {
+  padding-bottom: 20px;
 }
 </style>

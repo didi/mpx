@@ -6,6 +6,8 @@ import { isRef } from './ref'
 
 const arrayKeys = Object.getOwnPropertyNames(arrayMethods)
 
+const rawSet = new WeakSet()
+
 let isForceTrigger = false
 
 export function setForceTrigger (val) {
@@ -84,7 +86,7 @@ function copyAugment (target, src, keys) {
  * or the existing observer if the value already has one.
  */
 function observe (value, shallow) {
-  if (!isObject(value)) {
+  if (!isObject(value) || rawSet.has(value)) {
     return
   }
   let ob = getObserver(value)
@@ -220,4 +222,11 @@ export function isReactive (value) {
 
 export function getObserver (value) {
   if (isReactive(value)) return value[ObKey]
+}
+
+export function markRaw (value) {
+  if (isObject(value)) {
+    rawSet.add(value)
+  }
+  return value
 }

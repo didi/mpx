@@ -165,12 +165,6 @@ class MpxWebpackPlugin {
     }, options.nativeConfig)
     options.webConfig = options.webConfig || {}
     options.partialCompile = options.mode !== 'web' && options.partialCompile
-    let proxyComponentEventsRules = []
-    const proxyComponentEventsRulesRaw = options.proxyComponentEventsRules
-    if (proxyComponentEventsRulesRaw) {
-      proxyComponentEventsRules = Array.isArray(proxyComponentEventsRulesRaw) ? proxyComponentEventsRulesRaw : [proxyComponentEventsRulesRaw]
-    }
-    options.proxyComponentEventsRules = proxyComponentEventsRules
     this.options = options
     // Hack for buildDependencies
     const rawResolveBuildDependencies = FileSystemInfo.prototype.resolveBuildDependencies
@@ -575,7 +569,6 @@ class MpxWebpackPlugin {
           useRelativePath: this.options.useRelativePath,
           removedChunks: [],
           forceProxyEventRules: this.options.forceProxyEventRules,
-          proxyComponentEventsRules: this.options.proxyComponentEventsRules,
           pathHash: (resourcePath) => {
             if (this.options.pathHashMode === 'relative' && this.options.projectRoot) {
               return hash(path.relative(this.options.projectRoot, resourcePath))
@@ -820,10 +813,22 @@ class MpxWebpackPlugin {
             // 因为文件缓存的存在，前面hack identifier的行为对于从文件缓存中创建得到的module并不生效，因此需要在回调中进行二次hack处理
             if (err) return rawCallback(err)
             hackModuleIdentifier(module)
-            rawCallback(null, module)
+            return rawCallback(null, module)
           }
         }
         return rawAddModule.call(compilation, module, callback)
+      }
+
+      // hack process https://github.com/webpack/webpack/issues/16045
+      const _handleModuleBuildAndDependenciesRaw = compilation._handleModuleBuildAndDependencies
+
+      compilation._handleModuleBuildAndDependencies = (originModule, module, recursive, callback) => {
+        const rawCallback = callback
+        callback = (err) => {
+          if (err) return rawCallback(err)
+          return rawCallback(null, module)
+        }
+        return _handleModuleBuildAndDependenciesRaw.call(compilation, originModule, module, recursive, callback)
       }
 
       const rawEmitAsset = compilation.emitAsset
@@ -871,7 +876,8 @@ class MpxWebpackPlugin {
       })
 
       JavascriptModulesPlugin.getCompilationHooks(compilation).renderStartup.tap('MpxWebpackPlugin', (source, module) => {
-        if (module && mpx.exportModules.has(module)) {
+        const realModule = (module && module.rootModule) || module
+        if (realModule && mpx.exportModules.has(realModule)) {
           source = new ConcatSource(source)
           source.add('module.exports = __webpack_exports__;\n')
         }
@@ -957,7 +963,7 @@ class MpxWebpackPlugin {
           return true
         })
 
-        const requireAsyncHandler = (expr, members) => {
+        const requireAsyncHandler = (expr, members, args) => {
           if (members[0] === 'async') {
             let request = expr.arguments[0].value
             const range = expr.arguments[0].range
@@ -977,10 +983,10 @@ class MpxWebpackPlugin {
                 const dep = new CommonJsAsyncDependency(request, range)
                 parser.state.current.addDependency(dep)
               }
+              if (args) parser.walkExpressions(args)
               return true
             } else {
               compilation.errors.push(new Error(`The require async JS [${request}] need to declare subpackage name by root`))
-              return true
             }
           }
         }
@@ -997,7 +1003,7 @@ class MpxWebpackPlugin {
           .tap({
             name: 'MpxWebpackPlugin',
             stage: -1000
-          }, (expr, calleeMembers, callExpr) => requireAsyncHandler(callExpr, calleeMembers))
+          }, (expr, calleeMembers, callExpr) => requireAsyncHandler(callExpr, calleeMembers, expr.arguments))
 
         // hack babel polyfill global
         parser.hooks.statementIf.tap('MpxWebpackPlugin', (expr) => {
@@ -1026,7 +1032,7 @@ class MpxWebpackPlugin {
               }))
             }
           }
-          if (/regenerator-runtime/.test(parser.state.module.resource)) {
+          if (/regenerator/.test(parser.state.module.resource)) {
             if (callee.name === 'Function' && arg0 && arg0.value === 'r' && arg1 && arg1.value === 'regeneratorRuntime = r') {
               current.addPresentationalDependency(new ReplaceDependency('(function () {})', expr.range))
             }
@@ -1182,7 +1188,6 @@ class MpxWebpackPlugin {
         }
 
         const processedChunk = new Set()
-        const appName = mpx.appInfo.name
 
         function processChunk (chunk, isRuntime, relativeChunks) {
           const chunkFile = chunk.files.values().next().value
@@ -1206,7 +1211,7 @@ class MpxWebpackPlugin {
               // 引用runtime
               // 支付宝分包独立打包，通过全局context获取webpackJSONP
               if (mpx.mode === 'ali' && !mpx.isPluginMode) {
-                if (chunk.name === appName) {
+                if (compilation.options.entry[chunk.name]) {
                   // 在rootChunk中挂载jsonpCallback
                   source.add('// process ali subpackages runtime in root chunk\n' +
                     'var context = (function() { return this })() || Function("return this")();\n\n')

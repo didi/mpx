@@ -1,42 +1,221 @@
 import { BEFORECREATE } from '../../core/innerLifecycle'
-import { reactive } from '../../observer/reactive'
+import { merge, isEmptyObject, isPlainObject, isNumber } from '../../helper/utils'
+import { DefaultLocale } from '../../helper/const'
+import { error } from '../../helper/log'
+import { ref, shallowRef, triggerRef } from '../../observer/ref'
+import { watch } from '../../observer/watch'
+import { effectScope } from '../../observer/effectScope'
+import { getCurrentInstance, onUnmounted } from '../../core/proxy'
+
+let i18n = null
+
+let i18nMethods = null
+
+export function createI18n (options) {
+  if (!options) {
+    error('CreateI18n() can not be called with null or undefined.')
+  }
+  i18nMethods = options.methods
+  const [globalScope, _global] = createGlobal(options)
+  const __instances = new WeakMap()
+  i18n = {
+    get global () {
+      return _global
+    },
+    dispose () {
+      globalScope.stop()
+    },
+    __instances,
+    __getInstance (instance) {
+      return __instances.get(instance)
+    },
+    __setInstance (instance, composer) {
+      __instances.set(instance, composer)
+
+    },
+    __deleteInstance (instance) {
+      __instances.delete(instance)
+    }
+  }
+  return i18n
+}
+
+function createGlobal (options) {
+  const scope = effectScope()
+  const obj = scope.run(() => createComposer(options))
+  return [scope, obj]
+}
+
+let id = 0
+
+function createComposer (options) {
+  if (i18nMethods == null) {
+    error('CreateI18n() should be called before useI18n() calling.')
+    return
+  }
+  let { __root, inheritLocale = true, fallbackRoot = true } = options
+
+  const locale = ref(
+    __root && inheritLocale
+      ? __root.locale.value
+      : (options.locale || DefaultLocale)
+  )
+
+  const fallbackLocale = ref(
+    __root && inheritLocale
+      ? __root.fallbackLocale.value
+      : (options.fallbackLocale || DefaultLocale)
+  )
+
+  const messages = shallowRef(
+    isPlainObject(options.messages)
+      ? options.messages
+      : { [locale]: {} }
+  )
+
+  // t && tc
+  const t = (...args) => {
+    let ret
+    if (isNumber(args[1])) {
+      // Pluralization
+      ret = i18nMethods.tc(messages.value, locale.value, fallbackLocale.value, ...args)
+    } else {
+      ret = i18nMethods.t(messages.value, locale.value, fallbackLocale.value, ...args)
+    }
+    if (!ret && fallbackRoot && __root) {
+      ret = __root.t(...args)
+    }
+    return ret
+  }
+
+  // te
+  const te = (...args) => i18nMethods.te(messages.value, locale.value, fallbackLocale.value, ...args)
+
+  // tm
+  const tm = (...args) => i18nMethods.tm(messages.value, locale.value, fallbackLocale.value, ...args)
+
+  const getLocaleMessage = (locale) => messages.value[locale]
+
+  const setLocaleMessage = (locale, message) => {
+    messages.value[locale] = message
+    triggerRef(messages)
+  }
+
+  const mergeLocaleMessage = (locale, message) => {
+    messages.value[locale] = merge(messages.value[locale] || {}, message)
+    triggerRef(messages)
+  }
+
+  if (__root) {
+    watch([__root.locale, __root.fallbackLocale], ([l, fl]) => {
+      if (inheritLocale) {
+        locale.value = l
+        fallbackLocale.value = fl
+      }
+    })
+  }
+
+  return {
+    id: id++,
+    locale,
+    fallbackLocale,
+    get messages () {
+      return messages
+    },
+    get isGlobal () {
+      return __root === undefined
+    },
+    get inheritLocale () {
+      return inheritLocale
+    },
+    set inheritLocale (val) {
+      inheritLocale = val
+      if (val && __root) {
+        locale.value = __root.locale.value
+        fallbackLocale.value = __root.fallbackLocale.value
+      }
+    },
+    get fallbackRoot () {
+      return fallbackRoot
+    },
+    set fallbackRoot (val) {
+      fallbackRoot = val
+    },
+    t,
+    te,
+    tm,
+    getLocaleMessage,
+    setLocaleMessage,
+    mergeLocaleMessage
+  }
+}
+
+function getScope (options) {
+  return isEmptyObject(options) ? 'global' : 'local'
+}
+
+function setupLifeCycle (instance) {
+  onUnmounted(() => {
+    i18n.__deleteInstance(instance)
+  }, instance)
+}
+
+export function useI18n (options) {
+  const instance = getCurrentInstance()
+  if (instance == null) {
+    error('UseI18n() must be called in setup top.')
+    return
+  }
+  const scope = getScope(options)
+  const global = i18n.global
+  if (scope === 'global') return global
+
+  let composer = i18n.__getInstance(instance)
+  if (composer == null) {
+    const composerOptions = Object.assign({}, options)
+    if (global) composerOptions.__root = global
+    composer = createComposer(composerOptions)
+    setupLifeCycle(instance)
+    i18n.__setInstance(instance, composer)
+  }
+  return composer
+}
 
 export default function i18nMixin () {
-  if (global.i18n) {
+  if (i18n) {
     return {
-      // 替换为dataFn注入，再每次组件创建时重新执行获取，处理reLaunch后无法拿到更新后语言的问题
-      data () {
-        return { mpxLocale: global.i18n.locale || 'zh-CN' }
+      computed: {
+        _l () {
+          return i18n.global.locale.value || DefaultLocale
+        },
+        _fl () {
+          return i18n.global.fallbackLocale.value || DefaultLocale
+        }
       },
       [BEFORECREATE] () {
-        this.$i18n = { locale: global.i18n.locale }
-        reactive(this.$i18n)
-        this.$watch(() => {
-          return global.i18n.locale
-        }, (locale) => {
-          this.mpxLocale = this.$i18n.locale = locale
-        }, {
-          sync: true
-        })
-
-        this.$watch(() => {
-          return this.$i18n.locale
-        }, (locale) => {
-          this.mpxLocale = locale
-        }, {
-          sync: true
-        })
-        // 挂载翻译方法
-        if (global.i18nMethods) {
-          Object.keys(global.i18nMethods).forEach((methodName) => {
-            if (/^__/.test(methodName)) return
-            this['$' + methodName] = (...args) => {
-              // tap i18n.version
-              args.unshift((global.i18n.version, this.mpxLocale))
-              return global.i18nMethods[methodName].apply(this, args)
-            }
-          })
+        // 挂载$i18n
+        this.$i18n = {
+          get locale () {
+            return i18n.global.locale.value || DefaultLocale
+          },
+          set locale (val) {
+            i18n.global.locale.value = val
+          },
+          get fallbackLocale () {
+            return i18n.global.fallbackLocale.value || DefaultLocale
+          },
+          set fallbackLocale (val) {
+            i18n.global.fallbackLocale.value = val
+          }
         }
+
+        // 挂载翻译方法，$t等注入方法只能使用global scope
+        Object.keys(i18nMethods).forEach((methodName) => {
+          this['$' + methodName] = (...args) => {
+            if (methodName === 'tc') methodName = 't'
+            return i18n.global[methodName](...args)
+          }
+        })
       }
     }
   }
