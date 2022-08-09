@@ -31,7 +31,6 @@ export function createI18n (options) {
     },
     __setInstance (instance, composer) {
       __instances.set(instance, composer)
-
     },
     __deleteInstance (instance) {
       __instances.delete(instance)
