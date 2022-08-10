@@ -9,6 +9,13 @@ import {
   useI18n
 } from './platform/builtInMixins/i18nMixin'
 
+import { 
+  APIs, 
+  InstanceAPIs 
+} from './platform/export/api'
+
+export * from './platform/export/index'
+
 export {
   createI18n,
   useI18n
