@@ -889,7 +889,7 @@ class MpxWebpackPlugin {
         mpx.assetsModulesMap.set(filename, modules)
       })
 
-      const fillExtractedAssetsMap = (assetsMap, { index, content }, filename) => {
+      const fillPreExtractedAssetsMap = (assetsMap, { index, content }, filename) => {
         if (assetsMap.has(index)) {
           if (assetsMap.get(index) !== content) {
             compilation.errors.push(new Error(`The extracted file [${filename}] is filled with same index [${index}] and different content:
@@ -902,12 +902,21 @@ class MpxWebpackPlugin {
         }
       }
 
+      const fillNormalExtractedAssetsMap = (assetsMap, { index, content }, filename, tempMap) => {
+        if (!tempMap.get(filename)) {
+          tempMap.set(filename, true)
+          assetsMap.set(index, content)
+        }
+      }
+
       const sortExtractedAssetsMap = (assetsMap) => {
         return [...assetsMap.entries()].sort((a, b) => a[0] - b[0]).map(item => item[1])
       }
 
       compilation.hooks.beforeModuleAssets.tap('MpxWebpackPlugin', () => {
         const extractedAssetsMap = new Map()
+        const normalAssetsTempMap = new Map()
+
         for (const module of compilation.modules) {
           const assetsInfo = module.buildInfo.assetsInfo || new Map()
           for (const [filename, { extractedInfo } = {}] of assetsInfo) {
@@ -917,7 +926,11 @@ class MpxWebpackPlugin {
                 extractedAssets = [new Map(), new Map()]
                 extractedAssetsMap.set(filename, extractedAssets)
               }
-              fillExtractedAssetsMap(extractedInfo.pre ? extractedAssets[0] : extractedAssets[1], extractedInfo, filename)
+              if (extractedInfo.pre) {
+                fillPreExtractedAssetsMap(extractedAssets[0], extractedInfo, filename)
+              } else {
+                fillNormalExtractedAssetsMap(extractedAssets[1], extractedInfo, filename, normalAssetsTempMap)
+              }
               compilation.hooks.moduleAsset.call(module, filename)
             }
           }
