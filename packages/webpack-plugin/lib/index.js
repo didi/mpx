@@ -537,7 +537,6 @@ class MpxWebpackPlugin {
           assetsASTsMap: new Map(),
           usingComponents: {},
           // todo es6 map读写性能高于object，之后会逐步替换
-          vueContentCache: new Map(),
           wxsAssetsCache: new Map(),
           currentPackageRoot: '',
           wxsContentMap: {},
