@@ -296,7 +296,7 @@ type MixinType = 'app' | 'page' | 'component'
 
 export function injectMixins (mixins: object | Array<object>, options?: MixinType | MixinType[] | { types?: MixinType | MixinType[], stage?: number }): void
 
-export function watch (expr: string | (() => any), handler: WatchHandler | WatchOptWithHandler, options?: WatchOpt): () => void
+// export function watch (expr: string | (() => any), handler: WatchHandler | WatchOptWithHandler, options?: WatchOpt): () => void
 
 interface AnyConstructor {
   new (...args: any[]): any
@@ -338,7 +338,7 @@ export interface Mpx {
   toPureObject: typeof toPureObject
   observable: typeof observable
 
-  watch: typeof watch
+  // watch: typeof watch
 
   use (plugin: ((...args: any) => any) | { install: (...args: any) => any, [key: string]: any }, ...rest: any): Mpx
 
@@ -370,3 +370,60 @@ type GetFunctionKey<T> = {
 declare let mpx: Mpx & Pick<WechatMiniprogram.Wx, GetFunctionKey<WechatMiniprogram.Wx>>
 
 export default mpx
+
+// composition api
+
+export {
+  // ref api
+  ref,
+  unref,
+  toRef,
+  toRefs,
+  isRef,
+  customRef,
+  shallowRef,
+  triggerRef,
+  // computed api
+  computed,
+  // reactive api
+  reactive,
+  isReactive,
+  shallowReactive,
+  set,
+  del,
+  // watcher api
+  watchEffect,
+  watchSyncEffect,
+  watchPostEffect,
+  watch,
+  // next tick
+  nextTick,
+  // effect scope
+  effectScope,
+  getCurrentScope,
+  onScopeDispose,
+  // life circles
+  onBeforeCreate,
+  onCreated,
+  onBeforeMount,
+  onMounted,
+  onUpdated,
+  onBeforeUnmount,
+  onUnmounted,
+  onLoad,
+  onShow,
+  onHide,
+  onResize,
+  getCurrentInstance,
+  // inner types
+  Ref,
+  RefUnwrapBailTypes,
+  UnwrapRef,
+  UnwrapRefSimple,
+  ToRef,
+  ToRefs,
+  CustomRefFactory,
+  ShallowRef,
+  UnwrapNestedRefs,
+  WritableComputedOptions
+} from './composition-api'
