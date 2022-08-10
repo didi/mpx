@@ -43,8 +43,18 @@ export default function pageStatusMixin (mixinType) {
             currentPage = this.$page
           } else {
             const pages = getCurrentPages()
-            currentPage = pages[pages.length - 1]
+            if (typeof this.getPageId === 'function') {
+              const currentPageId = this.getPageId()
+              for (let page of pages) {
+                if (typeof page.getPageId === 'function' && currentPageId === page.getPageId()) {
+                  currentPage = page
+                  break
+                }
+              }
+            }
+            currentPage = currentPage || pages[pages.length - 1]
           }
+
           if (currentPage) {
             this.$watch(() => currentPage.mpxPageStatus, (val) => {
               if (val) {
