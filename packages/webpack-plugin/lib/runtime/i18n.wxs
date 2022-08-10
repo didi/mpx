@@ -10,8 +10,12 @@ function isArray (arr) {
   if (!__mpx_wxs__) {
     return Array.isArray(arr)
   } else {
-    return arr && arr.constructor === 'Array'
+    return isDef(arr) && arr.constructor === 'Array'
   }
+}
+
+function isString (str) {
+  return typeof str === 'string'
 }
 
 function isObject (obj) {
@@ -245,50 +249,43 @@ function parsePath (pathStr) {
   return curStack.value
 }
 
-function translate (messages, locale, key, values) {
-  var res = ''
-  if (messages && messages[locale] && key) {
-    var message = getPathValue(messages[locale], key)
-    if (isDef(message)) {
-      res = render(message, values)
-    }
+function translate (messages, locale, fallbackLocale, key, values) {
+  var message = getMessage(messages, locale, fallbackLocale, key)
+  if (isString(message)) {
+    return render(message, values)
   }
-  return res
+  return ''
 }
 
 function exist (messages, locale, key) {
-  var res = false
-  if (messages && messages[locale] && key) {
-    var message = getPathValue(messages[locale], key)
-    if (isDef(message)) {
-      res = true
-    }
-  }
-  return res
+  return isDef(resolve(messages, locale, key))
 }
 
-var messages = {}
-var dateTimeFormats = {}
-var numberFormats = {}
-var locale = 'zh-CN'
+function getMessage (messages, locale, fallbackLocale, key) {
+  var locales = [locale, fallbackLocale]
+  for (var i = 0; i < locales.length; i++) {
+    var message = resolve(messages, locales[i], key)
+    if (isDef(message)) return message
+  }
+}
+
+function resolve (messages, locale, key) {
+  if (messages && messages[locale] && key) {
+    return getPathValue(messages[locale], key)
+  }
+}
 
 function getLocale () {
-  return __mpx_locale__ || locale
+  return __mpx_locale__ || 'zh-CN'
 }
 
-function getMessages () {
+function getFallbackLocale () {
+  return __mpx_fallback_locale__ || 'zh-CN'
+}
+
+function getMessages (messages) {
   // __mpx_messages__会在编译时通过lib/wxs/i18n-loader注入
-  return __mpx_messages__ || messages
-}
-
-function getDateTimeFormats () {
-  // __mpx_datetime_formats__会在编译时通过lib/wxs/i18n-loader注入
-  return __mpx_datetime_formats__ || dateTimeFormats
-}
-
-function getNumberFormats () {
-  // __mpx_number_formats__会在编译时通过lib/wxs/i18n-loader注入
-  return __mpx_number_formats__ || numberFormats
+  return messages || __mpx_messages__ || {}
 }
 
 function fetchChoice (message, choice) {
@@ -307,46 +304,17 @@ function getChoiceIndex (choice, choicesLength) {
 }
 
 module.exports = {
-  t: function (locale, key, values) {
-    return translate(getMessages(), locale, key, values)
+  t: function (messages, locale, fallbackLocale, key, values) {
+    return translate(getMessages(messages), locale, fallbackLocale, key, values)
   },
-  tc: function (locale, key, choice, values) {
-    return fetchChoice(translate(getMessages(), locale, key, values), choice)
+  tc: function (messages, locale, fallbackLocale, key, choice, values) {
+    return fetchChoice(translate(getMessages(messages), locale, fallbackLocale, key, values), choice)
   },
-  te: function (locale, key) {
-    return exist(getMessages(), locale, key)
+  te: function (messages, locale, fallbackLocale, key) {
+    return exist(getMessages(messages), locale, key)
   },
-  d: function (locale, value, key) {
-    // if (__mpx_wxs__) {
-    console.log('Datetime localization is not supported!')
-    return value
-    // } else {
-    //   if (!key) {
-    //     return new Intl.DateTimeFormat(locale).format(value)
-    //   }
-    //   var formats = getDateTimeFormats()[locale]
-    //   if (isDef(formats)) {
-    //     var format = formats[key]
-    //     return new Intl.DateTimeFormat(locale, format).format(value)
-    //   }
-    //   return value
-    // }
-  },
-  n: function (locale, value, key, options) {
-    // if (__mpx_wxs__) {
-    console.log('Number localization is not supported!')
-    return value
-    // } else {
-    //   if (!key) {
-    //     return new Intl.NumberFormat(locale, options).format(value)
-    //   }
-    //   var formats = getNumberFormats()[locale]
-    //   if (isDef(formats)) {
-    //     var format = formats[key]
-    //     return new Intl.NumberFormat(locale, Object.assign({}, format, options)).format(value)
-    //   }
-    //   return value
-    // }
+  tm: function (messages, locale, fallbackLocale, key) {
+    return getMessage(getMessages(messages), locale, fallbackLocale, key)
   }
 }
 
@@ -354,12 +322,9 @@ if (!__mpx_wxs__) {
   if (!global.i18n) {
     global.i18n = {
       locale: getLocale(),
-      version: 0
+      fallbackLocale: getFallbackLocale(),
+      messages: getMessages(),
+      methods: module.exports
     }
-    global.i18nMethods = Object.assign(module.exports, {
-      __getMessages: getMessages,
-      __getDateTimeFormats: getDateTimeFormats,
-      __getNumberFormats: getNumberFormats
-    })
   }
 }

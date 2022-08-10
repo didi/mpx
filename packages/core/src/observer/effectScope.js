@@ -1,6 +1,6 @@
 let activeEffectScope
 
-export class EffectScope {
+class EffectScope {
   active = true
   effects = []
   cleanups = []

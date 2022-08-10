@@ -1,4 +1,4 @@
-import { walkChildren, parseSelector } from '../helper/vueUtils'
+import { walkChildren, parseSelector } from '../helper/element'
 import { error } from '../helper/log'
 import * as webApi from '@mpxjs/api-proxy/src/web/api'
 

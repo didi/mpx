@@ -174,6 +174,14 @@ export function isFunction (fn) {
   return typeof fn === 'function'
 }
 
+export function isBoolean (bool) {
+  return typeof bool === 'boolean'
+}
+
+export function isNumber (num) {
+  return typeof num === 'number'
+}
+
 export function isPlainObject (value) {
   if (value === null || typeof value !== 'object' || type(value) !== 'Object') return false
   const proto = Object.getPrototypeOf(value)
