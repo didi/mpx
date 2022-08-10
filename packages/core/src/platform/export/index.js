@@ -30,7 +30,6 @@ export {
 } from '../../observer/computed'
 
 export {
-  EffectScope,
   effectScope,
   getCurrentScope,
   onScopeDispose
