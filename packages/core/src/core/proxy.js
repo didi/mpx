@@ -1,6 +1,6 @@
 import { reactive } from '../observer/reactive'
 import { ReactiveEffect } from '../observer/effect'
-import { EffectScope } from '../observer/effectScope'
+import { effectScope } from '../observer/effectScope'
 import { watch } from '../observer/watch'
 import { computed } from '../observer/computed'
 import { queueJob, nextTick } from '../observer/scheduler'
@@ -69,7 +69,7 @@ export default class MpxProxy {
     this.state = BEFORECREATE
     this.ignoreProxyMap = makeMap(EXPORT_MPX.config.ignoreProxyWhiteList)
     if (__mpx_mode__ !== 'web') {
-      this.scope = new EffectScope(true)
+      this.scope = effectScope(true)
       // props响应式数据代理
       this.props = {}
       // data响应式数据代理
