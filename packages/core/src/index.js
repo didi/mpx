@@ -2,20 +2,13 @@ import Vue from './vue'
 import { diffAndCloneA, makeMap, hasOwn } from './helper/utils'
 import { error } from './helper/log'
 import { APIs, InstanceAPIs } from './platform/export/api'
-export * from './platform/export/index'
 
 import {
   createI18n,
   useI18n
 } from './platform/builtInMixins/i18nMixin'
 
-import { 
-  APIs, 
-  InstanceAPIs 
-} from './platform/export/api'
-
 export * from './platform/export/index'
-
 export {
   createI18n,
   useI18n
