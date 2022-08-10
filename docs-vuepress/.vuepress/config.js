@@ -23,11 +23,13 @@ const sidebar = {
     {
       title: '进阶',
       collapsable: false,
+      // sidebarDepth: 2,
       children: [
         'advance/store',
         'advance/mixin',
         'advance/npm',
         'advance/subpackage',
+        'advance/async-subpackage',
         'advance/image-process',
         'advance/progressive',
         'advance/ability-compatible',
@@ -39,12 +41,22 @@ const sidebar = {
       ]
     },
     {
+      title: '组合式API',
+      collapsable: false,
+      children: [
+        'composition-api/introduction',
+        'composition-api/lifecycle-hooks',
+        'composition-api/setup'
+      ]
+    },
+    {
       title: '工具',
       collapsable: false,
       children: [
         'tool/ts',
         'tool/i18n',
-        'tool/unit-test'
+        'tool/unit-test',
+        'tool/e2e-test'
       ]
     },
     {
@@ -80,7 +92,18 @@ const sidebar = {
     'directives',
     'compile',
     'builtIn',
-    'extend'
+    'extend',
+    {
+      title: '响应性 API',
+      collapsable: false,
+      children: [
+        'reactivity-api/basic-reactivity',
+        'reactivity-api/refs-api',
+        'reactivity-api/computed-watch-api',
+        'reactivity-api/effect-scope'
+      ]
+    },
+    'composition-api'
   ],
   '/articles/': [
     { title: '滴滴开源小程序框架Mpx', path: '1.0' },
@@ -125,7 +148,7 @@ module.exports = {
     }
   },
   themeConfig: {
-    navbar: false,
+    // navbar: false,
     algolia: {
 			apiKey: '7849f511f78afc4383a81f0137a91c0f',
 			indexName: 'mpxjs',
@@ -139,5 +162,8 @@ module.exports = {
   chainWebpack: (config, isServer) => {
     // 添加node_modules避免resolve错误
     config.resolve.modules.add('node_modules')
+  },
+  markdown: {
+    // extractHeaders: [ 'h2', 'h3', 'h4' ]
   }
 }

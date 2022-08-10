@@ -13,7 +13,7 @@ import VueI18n from 'vue-i18n'
 
 declare module 'vue-i18n' {
   export default interface VueI18n {
-    mergeMessages(messages: {[index: string]:VueI18n.LocaleMessageObject}): void;
+    mergeMessages (messages: { [index: string]: VueI18n.LocaleMessageObject }): void;
   }
 }
 // declare Store types
@@ -80,6 +80,7 @@ interface WatchOpt {
   immediateAsync?: boolean
   deep?: boolean
   sync?: boolean
+  once?: boolean | ((newVal: any, oldVal: any) => boolean)
 }
 
 interface WatchOptWithHandler extends WatchOpt {
@@ -191,6 +192,8 @@ declare function tc (key: string, choice: number, values?: I18nValues): string
 
 declare function te (key: string): boolean
 
+declare function tm (key: string): any
+
 export function observable<T extends object> (obj: T): T
 
 type MpxComProps<O> = { $rawOptions: O }
@@ -211,15 +214,13 @@ export interface MpxComponentIns {
 
   $nextTick (fn: () => void): void
 
-  $i18n: {
-    locale: string
-  }
-
   $t: typeof t
 
   $tc: typeof tc
 
   $te: typeof te
+
+  $tm: typeof tm
 
   [k: string]: any
 }

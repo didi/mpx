@@ -8,11 +8,33 @@ import {
   del
 } from './observer/reactive'
 
-import { injectMixins } from './core/injectMixins'
-import { diffAndCloneA, makeMap, merge, hasOwn } from './helper/utils'
-import { error } from './helper/log'
+import {
+  injectMixins
+} from './core/injectMixins'
+
+import {
+  diffAndCloneA,
+  makeMap,
+  hasOwn
+} from './helper/utils'
+
+import {
+  error
+} from './helper/log'
+
 import Vue from './vue'
+
 import implement from './core/implement'
+
+import {
+  createI18n,
+  useI18n
+} from './platform/builtInMixins/i18nMixin'
+
+export {
+  createI18n,
+  useI18n
+}
 
 export {
   createApp,
@@ -40,6 +62,7 @@ export {
   reactive,
   isReactive,
   shallowReactive,
+  markRaw,
   set,
   del
 } from './observer/reactive'
@@ -74,6 +97,7 @@ export {
   onCreated,
   onBeforeMount,
   onMounted,
+  onBeforeUpdate,
   onUpdated,
   onBeforeUnmount,
   onUnmounted,
@@ -209,32 +233,7 @@ global.__mpx = EXPORT_MPX
 
 if (__mpx_mode__ !== 'web') {
   if (global.i18n) {
-    reactive(global.i18n)
-    // 挂载翻译方法
-    if (global.i18nMethods) {
-      Object.keys(global.i18nMethods).forEach((methodName) => {
-        if (/^__/.test(methodName)) return
-        global.i18n[methodName] = (...args) => {
-          // tap i18n.version
-          args.unshift((global.i18n.version, global.i18n.locale))
-          return global.i18nMethods[methodName].apply(this, args)
-        }
-      })
-
-      if (global.i18nMethods.__getMessages) {
-        const messages = global.i18nMethods.__getMessages()
-        global.i18n.mergeMessages = (newMessages) => {
-          merge(messages, newMessages)
-          global.i18n.version++
-        }
-        global.i18n.mergeLocaleMessage = (locale, message) => {
-          messages[locale] = messages[locale] || {}
-          merge(messages[locale], message)
-          global.i18n.version++
-        }
-      }
-    }
-    EXPORT_MPX.i18n = global.i18n
+    EXPORT_MPX.i18n = createI18n(global.i18n)
   }
 }
 

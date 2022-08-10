@@ -1,4 +1,4 @@
-import { CREATED, BEFOREMOUNT, UPDATED, UNMOUNTED } from '../../core/innerLifecycle'
+import { CREATED, BEFOREMOUNT, BEFOREUPDATE, UNMOUNTED } from '../../core/innerLifecycle'
 import { noop } from '../../helper/utils'
 import { error } from '../../helper/log'
 import { getEnvObj } from '../../helper/env'
@@ -37,7 +37,7 @@ export default function getRefsMixin () {
     [BEFOREMOUNT] () {
       this.__getRefs()
     },
-    [UPDATED] () {
+    [BEFOREUPDATE] () {
       this.__getRefs()
     },
     methods: {
