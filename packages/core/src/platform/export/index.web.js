@@ -21,7 +21,6 @@ export {
   computed,
   // advanced
   effectScope,
-  EffectScope,
   getCurrentScope,
   onScopeDispose,
   // instance
