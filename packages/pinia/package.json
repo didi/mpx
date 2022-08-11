@@ -1,0 +1,27 @@
+{
+  "name": "@mpxjs/pinia",
+  "version": "1.0.0",
+  "description": "A pinia style store in miniprogram",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/didi/mpx.git"
+  },
+  "keywords": [
+    "mpx",
+    "pinia",
+    "store"
+  ],
+  "author": "donghongping",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/didi/mpx/issues"
+  },
+  "homepage": "https://github.com/didi/mpx#readme",
+  "dependencies": {
+    "@mpxjs/core": "^2.7.44"
+  }
+}
