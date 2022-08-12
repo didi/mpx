@@ -2,7 +2,7 @@
   "name": "@mpxjs/pinia",
   "version": "1.0.0",
   "description": "A pinia style store in miniprogram",
-  "main": "index.js",
+  "main": "src/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -21,7 +21,7 @@
     "url": "https://github.com/didi/mpx/issues"
   },
   "homepage": "https://github.com/didi/mpx#readme",
-  "dependencies": {
+  "peerDependencies": {
     "@mpxjs/core": "^2.7.44"
   }
 }
