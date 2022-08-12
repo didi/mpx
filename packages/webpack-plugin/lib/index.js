@@ -55,7 +55,7 @@ const extractorPath = normalize.lib('extractor')
 const async = require('async')
 const stringifyLoadersAndResource = require('./utils/stringify-loaders-resource')
 const emitFile = require('./utils/emit-file')
-const { MPX_PROCESSED_FLAG, MPX_DISABLE_EXTRACTOR_CACHE, MPX_CURRENT_CHUNK } = require('./utils/const')
+const { MPX_PROCESSED_FLAG, MPX_DISABLE_EXTRACTOR_CACHE } = require('./utils/const')
 const isEmptyObject = require('./utils/is-empty-object')
 
 const isProductionLikeMode = options => {
@@ -164,6 +164,7 @@ class MpxWebpackPlugin {
     }, options.nativeConfig)
     options.webConfig = options.webConfig || {}
     options.partialCompile = options.mode !== 'web' && options.partialCompile
+    options.retryRequireAsync = options.retryRequireAsync || false
     this.options = options
     // Hack for buildDependencies
     const rawResolveBuildDependencies = FileSystemInfo.prototype.resolveBuildDependencies
@@ -956,7 +957,15 @@ class MpxWebpackPlugin {
         parser.hooks.call.for('__mpx_dynamic_entry__').tap('MpxWebpackPlugin', (expr) => {
           const args = expr.arguments.map((i) => i.value)
           args.push(expr.range)
+
           const dep = new DynamicEntryDependency(...args)
+          if (args[2] === 'custom-tab-bar/index') {
+            // replace with true for custom-tab-bar
+            dep.customApply = (dep, source) => {
+              const { range } = dep
+              source.replace(range[0], range[1] - 1, 'true')
+            }
+          }
           parser.state.current.addPresentationalDependency(dep)
           return true
         })
@@ -972,7 +981,21 @@ class MpxWebpackPlugin {
               request = addQuery(request, {}, false, ['root'])
               // 目前仅wx支持require.async，其余平台使用CommonJsAsyncDependency进行模拟抹平
               if (mpx.mode === 'wx') {
-                const dep = new DynamicEntryDependency(request, 'export', '', queryObj.root, MPX_CURRENT_CHUNK, context, range)
+                const dep = new DynamicEntryDependency(request, 'export', '', queryObj.root, '', context, range)
+                dep.customApply = (dep, source, { module, chunkGraph }) => {
+                  let { publicPath, resultPath } = dep
+                  if (resultPath) {
+                    const relativePath = publicPath + path.dirname(chunkGraph.getModuleChunks(module)[0].name)
+                    resultPath = toPosix(path.relative(relativePath, resultPath))
+                    let replaceContent = JSON.stringify(resultPath)
+                    if (this.options.retryRequireAsync) {
+                      replaceContent += `).catch(function (e) {
+  return require.async(${JSON.stringify(resultPath)});
+}`
+                    }
+                    source.replace(range[0], range[1] - 1, replaceContent)
+                  }
+                }
                 parser.state.current.addPresentationalDependency(dep)
                 // 包含require.async的模块不能被concatenate，避免DynamicEntryDependency中无法获取模块chunk以计算相对路径
                 parser.state.module.buildInfo.moduleConcatenationBailout = 'require async'
