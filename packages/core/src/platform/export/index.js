@@ -1,7 +1,7 @@
 
 import Vue from '../../vue'
 import implement from '../../core/implement'
-import { set, del, reactive } from '../../observer/reactive'
+import { set, del, reactive, markRaw } from '../../observer/reactive'
 import { watch } from '../../observer/watch'
 import { injectMixins } from '../../core/injectMixins'
 
@@ -66,3 +66,7 @@ export {
 export {
   getCurrentInstance
 } from '../../core/proxy'
+
+export {
+  markRaw
+}

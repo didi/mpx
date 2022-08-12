@@ -27,9 +27,9 @@ export {
   watch,
   // reactive
   reactive,
+  markRaw,
   isReactive,
   shallowReactive,
-  markRaw,
   set,
   del,
   // ref环节
@@ -72,20 +72,6 @@ export {
 export { getMixin } from './core/mergeOptions'
 
 export { injectMixins } from './core/injectMixins'
-
-export {
-  createPinia,
-  defineStore,
-  getActivePinia,
-  setActivePinia,
-  mapStores,
-  setMapStoreSuffix,
-  mapState,
-  mapGetters,
-  mapActions,
-  mapWritableState,
-  storeToRefs
-} from './pinia/index'
 
 export function toPureObject (obj) {
   return diffAndCloneA(obj).clone
