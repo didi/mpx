@@ -416,17 +416,54 @@ createComponent({
 
 `refs` 是有状态的对象，它会随组件本身的更新而更新。这意味着你应该避免对其进行解构，并始终以 refs.x 的方式访问 NodesRef 或组件实例。与 props 不同，refs 是非响应式的。如果你打算根据 refs 的更改应用副作用，那么应该在 onUpdated 生命周期钩子中执行此操作。
 
-### 访问组件的property
-除了 `props` 和 `context` 中包含的内容，执行 `setup` 时将**无法访问**其他的组件选项，包括：
+### 访问组件的 property
+除了 `props` 和 `context` 中包含的内容，执行 `setup` 时将**无法访问**部分组件选项，包括：
 * data
 * computed
-* methods
-* 其他插件挂载在 `this` 上的属性
 
 ### 结合模板使用
 
+如果 `setup` 返回一个对象，那么该对象的 property 可以在模板中访问到：
 
-### 使用渲染函数
+```html
+<template>
+  <div>{{ collectionName }}: {{ readersNumber }} {{ book.title }}</div>
+</template>
+
+<script>
+  import { createComponent, ref, reactive } from '@mpxjs/core'
+
+  createComponent({
+    properties: {
+      collectionName: String
+    },
+    setup(props) {
+      const readersNumber = ref(0)
+      const book = reactive({ title: 'Mpx' })
+
+      // 暴露给 template
+      return {
+        readersNumber,
+        book
+      }
+    }
+  })
+</script>
+```
+
+
+### 使用 `this`
+
+**在 `setup()` 内部，`this` 不是当前组件的引用**，因为 `setup()` 是在解析其它组件选项之前被调用的，所以 `setup()` 内部的 `this` 的行为与其它选项中的 `this` 完全不同。这使得 `setup()`  在和其它选项式 API 一起使用时可能会导致混淆。
+
+## 生命周期钩子
+
+组合式 API 中
+
+Mpx 作为一个跨端小程序框架，需要兼容不同小程序平台不同的生命周期，在选项式 API 中，我们内置了一套生命周期转换规则，用于转换映射不同小程序平台不同的生命周期，如微信小程序中的 `attached` 钩子在输出支付宝时会被映射到支付宝小程序的 `onInit` 中执行，但是在组合式 API 的写法中，我们不太可能把不同小程序平台的全量生命周期钩子函数都提供出来，因此我们在组合式 API 版本中，参考 Vue 提供了一套标准统一的生命周期钩子，在不同的小程序平台中进行抹平映射，下表展示了不同小程序平台生命周期与组合式 API 暴露的生命周期函数的对应关系：
+
+
+
 
 
 
