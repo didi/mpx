@@ -164,12 +164,6 @@ class MpxWebpackPlugin {
     }, options.nativeConfig)
     options.webConfig = options.webConfig || {}
     options.partialCompile = options.mode !== 'web' && options.partialCompile
-    let proxyComponentEventsRules = []
-    const proxyComponentEventsRulesRaw = options.proxyComponentEventsRules
-    if (proxyComponentEventsRulesRaw) {
-      proxyComponentEventsRules = Array.isArray(proxyComponentEventsRulesRaw) ? proxyComponentEventsRulesRaw : [proxyComponentEventsRulesRaw]
-    }
-    options.proxyComponentEventsRules = proxyComponentEventsRules
     this.options = options
     // Hack for buildDependencies
     const rawResolveBuildDependencies = FileSystemInfo.prototype.resolveBuildDependencies
@@ -543,7 +537,6 @@ class MpxWebpackPlugin {
           assetsASTsMap: new Map(),
           usingComponents: {},
           // todo es6 map读写性能高于object，之后会逐步替换
-          vueContentCache: new Map(),
           wxsAssetsCache: new Map(),
           currentPackageRoot: '',
           wxsContentMap: {},
@@ -574,7 +567,6 @@ class MpxWebpackPlugin {
           useRelativePath: this.options.useRelativePath,
           removedChunks: [],
           forceProxyEventRules: this.options.forceProxyEventRules,
-          proxyComponentEventsRules: this.options.proxyComponentEventsRules,
           pathHash: (resourcePath) => {
             if (this.options.pathHashMode === 'relative' && this.options.projectRoot) {
               return hash(path.relative(this.options.projectRoot, resourcePath))
@@ -819,10 +811,22 @@ class MpxWebpackPlugin {
             // 因为文件缓存的存在，前面hack identifier的行为对于从文件缓存中创建得到的module并不生效，因此需要在回调中进行二次hack处理
             if (err) return rawCallback(err)
             hackModuleIdentifier(module)
-            rawCallback(null, module)
+            return rawCallback(null, module)
           }
         }
         return rawAddModule.call(compilation, module, callback)
+      }
+
+      // hack process https://github.com/webpack/webpack/issues/16045
+      const _handleModuleBuildAndDependenciesRaw = compilation._handleModuleBuildAndDependencies
+
+      compilation._handleModuleBuildAndDependencies = (originModule, module, recursive, callback) => {
+        const rawCallback = callback
+        callback = (err) => {
+          if (err) return rawCallback(err)
+          return rawCallback(null, module)
+        }
+        return _handleModuleBuildAndDependenciesRaw.call(compilation, originModule, module, recursive, callback)
       }
 
       const rawEmitAsset = compilation.emitAsset
@@ -936,7 +940,7 @@ class MpxWebpackPlugin {
         }
       })
 
-      normalModuleFactory.hooks.parser.for('javascript/auto').tap('MpxWebpackPlugin', (parser) => {
+      const normalModuleFactoryParserCallback = (parser) => {
         parser.hooks.call.for('__mpx_resolve_path__').tap('MpxWebpackPlugin', (expr) => {
           if (expr.arguments[0]) {
             const resource = expr.arguments[0].value
@@ -957,7 +961,7 @@ class MpxWebpackPlugin {
           return true
         })
 
-        const requireAsyncHandler = (expr, members) => {
+        const requireAsyncHandler = (expr, members, args) => {
           if (members[0] === 'async') {
             let request = expr.arguments[0].value
             const range = expr.arguments[0].range
@@ -977,10 +981,10 @@ class MpxWebpackPlugin {
                 const dep = new CommonJsAsyncDependency(request, range)
                 parser.state.current.addDependency(dep)
               }
+              if (args) parser.walkExpressions(args)
               return true
             } else {
               compilation.errors.push(new Error(`The require async JS [${request}] need to declare subpackage name by root`))
-              return true
             }
           }
         }
@@ -997,7 +1001,7 @@ class MpxWebpackPlugin {
           .tap({
             name: 'MpxWebpackPlugin',
             stage: -1000
-          }, (expr, calleeMembers, callExpr) => requireAsyncHandler(callExpr, calleeMembers))
+          }, (expr, calleeMembers, callExpr) => requireAsyncHandler(callExpr, calleeMembers, expr.arguments))
 
         // hack babel polyfill global
         parser.hooks.statementIf.tap('MpxWebpackPlugin', (expr) => {
@@ -1147,7 +1151,10 @@ class MpxWebpackPlugin {
           parser.hooks.callMemberChain.for('mpx').tap('MpxWebpackPlugin', injectSrcModeForTransApi)
           parser.hooks.callMemberChain.for('wx').tap('MpxWebpackPlugin', injectSrcModeForTransApi)
         }
-      })
+      }
+      normalModuleFactory.hooks.parser.for('javascript/auto').tap('MpxWebpackPlugin', normalModuleFactoryParserCallback)
+      normalModuleFactory.hooks.parser.for('javascript/dynamic').tap('MpxWebpackPlugin', normalModuleFactoryParserCallback)
+      normalModuleFactory.hooks.parser.for('javascript/esm').tap('MpxWebpackPlugin', normalModuleFactoryParserCallback)
 
       // 为了正确生成sourceMap，将该步骤由原来的compile.hooks.emit迁移到compilation.hooks.processAssets
       compilation.hooks.processAssets.tap({

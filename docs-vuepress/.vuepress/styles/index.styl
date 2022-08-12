@@ -5,10 +5,13 @@
 //   top 3.5rem !important
 
 aside.sidebar
-  top 4rem !important
+  // top 4rem !important
 
 main.page
-  margin-top 3.5rem !important
+  // margin-top 3.5rem !important
+
+a
+  word-break: break-all
 
 :root {
   --c-brand: #3eaf7c;
@@ -39,4 +42,10 @@ main.page
   --docsearch-hit-shadow: 0 1px 3px 0 var(--c-border-dark);
   --docsearch-footer-background: var(--c-bg);
 }
+}
+
+@media (max-width: 719px) {
+  :root {
+    --c-bg-lighter: none;
+  }
 }
