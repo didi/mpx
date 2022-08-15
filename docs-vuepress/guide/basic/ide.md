@@ -108,7 +108,7 @@
 
 ![image](https://gift-static.hongyibo.com.cn/static/kfpub/6168/QQ20210728-202133@2x.png)
 
-部分二可参照此[链接](https://github.com/mpx-ecology/vscode-mpx/issues/35)配置
+部分二可参照此[链接](https://mpx-ecology.github.io/eslint-plugin-mpx/)配置
 
 #### 代码格式化
 

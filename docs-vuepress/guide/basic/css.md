@@ -47,7 +47,7 @@ rules: [
     {
         test: /\.scss$/,
         use: [
-            'css-loader',
+            'MpxWebpackPlugin.wxssLoader()',
             'sass-loader'
         ]
     }
@@ -75,7 +75,7 @@ rules: [
     {
         test: /\.less$/,
         use: [
-            'css-loader',
+            'MpxWebpackPlugin.wxssLoader()',
             'less-loader'
         ]
     }
