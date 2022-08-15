@@ -427,7 +427,7 @@ createComponent({
 
 ```html
 <template>
-  <div>{{ collectionName }}: {{ readersNumber }} {{ book.title }}</div>
+  <view>{{ collectionName }}: {{ readersNumber }} {{ book.title }}</view>
 </template>
 
 <script>
@@ -451,16 +451,73 @@ createComponent({
 </script>
 ```
 
-
 ### 使用 `this`
 
 **在 `setup()` 内部，`this` 不是当前组件的引用**，因为 `setup()` 是在解析其它组件选项之前被调用的，所以 `setup()` 内部的 `this` 的行为与其它选项中的 `this` 完全不同。这使得 `setup()`  在和其它选项式 API 一起使用时可能会导致混淆。
 
 ## 生命周期钩子
 
-组合式 API 中
+组合式 API 中，我们通过 `on${Hookname}(fn)` 的方式注册访问生命周期钩子。
 
 Mpx 作为一个跨端小程序框架，需要兼容不同小程序平台不同的生命周期，在选项式 API 中，我们内置了一套生命周期转换规则，用于转换映射不同小程序平台不同的生命周期，如微信小程序中的 `attached` 钩子在输出支付宝时会被映射到支付宝小程序的 `onInit` 中执行，但是在组合式 API 的写法中，我们不太可能把不同小程序平台的全量生命周期钩子函数都提供出来，因此我们在组合式 API 版本中，参考 Vue 提供了一套标准统一的生命周期钩子，在不同的小程序平台中进行抹平映射，下表展示了不同小程序平台生命周期与组合式 API 暴露的生命周期函数的对应关系：
+
+组件生命周期
+
+|Hook inside `setup`|微信|支付宝|
+|:----|:-----|:-------------------|
+|onBeforeCreate/onCreated|attached|onInit|
+|onBeforeMount/onMounted|ready|didMount|
+|onBeforeUpdate/onUpdated|`setData` callback|`setData` callback|
+|onBeforeUnmount/onUnmounted|detached|didUnmount|
+
+> 除支付宝外的小程序平台支持使用Component构建页面，在页面中使用组件生命周期钩子与在组件中完全一致，并且框架在支付宝环境也进行了抹平实现。
+
+页面生命周期
+
+|Hook inside `setup`|微信|支付宝|
+|:----|:-----|:-------------------|
+|onLoad|onLoad|onLoad|
+|onShow|onShow|onShow|
+|onHide|onHide|onHide|
+|onResize|onResize|events.onResize|
+
+组件中访问页面生命周期
+
+|Hook inside `setup`|微信|支付宝|
+|:----|:-----|:-------------------|
+|onShow|pageLifetimes.show|框架抹平实现|
+|onHide|pageLifetimes.hide|框架抹平实现|
+|onResize|pageLifetimes.resize|框架抹平实现|
+
+下面是简单的使用示例：
+
+```js
+import { createComponent, onMounted, onUnmounted } from '@mpxjs/core'
+
+createComponent({
+  setup () {
+    // mounted
+    onMounted(()=>{
+      console.log('Component mounted.')
+    })
+    // unmounted
+    onUnmounted(()=>{
+      console.log('Component unmounted.')
+    })
+    return {}
+  }
+})
+```
+
+## 模板引用
+
+在 Vue3 的组合式 API 中，我们可以在 `setup` 函数中使用 `ref()` 创建引用数据获取模板中绑定了 `ref` 属性的组件或 DOM 节点，优雅地将响应式引用和模板引用进行了关联统一，但在 Mpx 中，受限于小程序的技术限制，我们无法在低性能损耗下实现相同的设计，因此我们在 setup 的 context 参数中提供了 refs 对象，使用方式与选项式 API 中的 $refs 保持一致。
+
+下面是简单的使用示例：
+
+
+
+
 
 
 
