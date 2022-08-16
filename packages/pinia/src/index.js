@@ -8,6 +8,7 @@ import {
   effectScope,
   watch,
   nextTick,
+  markRaw,
   getCurrentInstance
 } from '@mpxjs/core'
 import { createPinia } from './createPinia'
@@ -223,7 +224,7 @@ function createSetupStore ($id, setup, options = {}, pinia, isOptionsStore = fal
     }
   }
   const partialStore = {
-  //  _p: pinia  // open after markRaw provided
+    _p: pinia,  // open after markRaw provided
     _s: scope,
     $id,
     $onAction: addSubscription.bind(null, actionSubscriptions),
@@ -249,7 +250,7 @@ function createSetupStore ($id, setup, options = {}, pinia, isOptionsStore = fal
   }
   const store = reactive(assign({}, partialStore))
   // remove after markRaw provided
-  store._p = pinia
+  // store._p = pinia
   // store the partial store now so the setup of stores can instantiate each other before they are finished without
   // creating infinite loops.
   pinia._s.set($id, store)
