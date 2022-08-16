@@ -110,6 +110,17 @@ module.exports = {
           }
         }
       },
+      StringLiteral (path) {
+        if (!t.isIfStatement(path.parentPath?.parent) &&
+          !t.isCallExpression(path.parent)) {
+          path.node.value = ''
+        }
+      },
+      'BooleanLiteral|NumericLiteral' (path) {
+        if (path.parentPath.type === 'ExpressionStatement') { // 纯Boolean或数字值
+          path.remove()
+        }
+      },
       MemberExpression: {
         exit (path) {
           if (path.collectPath) {
