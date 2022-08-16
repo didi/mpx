@@ -12,6 +12,7 @@ const getJSONContent = require('../utils/get-json-content')
 const createJSONHelper = require('../json-compiler/helper')
 const { RESOLVE_IGNORED_ERR } = require('../utils/const')
 const RecordResourceMapDependency = require('../dependencies/RecordResourceMapDependency')
+const mpx = require('../mpx')
 
 module.exports = function (json, {
   loaderContext,
@@ -24,7 +25,6 @@ module.exports = function (json, {
   let jsonObj = {}
   let tabBarMap
   let tabBarStr
-  const mpx = loaderContext.getMpx()
   const {
     mode,
     env,

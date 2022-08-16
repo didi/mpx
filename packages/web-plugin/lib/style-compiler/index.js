@@ -5,11 +5,11 @@ const rpx = require('@mpxjs/compiler/style-compiler/plugins/rpx')
 const vw = require('@mpxjs/compiler/style-compiler/plugins/vw')
 const pluginCondStrip = require('@mpxjs/compiler/style-compiler/plugins/conditional-strip')
 const { matchCondition } = require('@mpxjs/utils/match-condition')
+const mpx = require('../mpx')
 
 module.exports = function (css, map) {
   this.cacheable()
   const cb = this.async()
-  const mpx = this.getMpx()
   const defs = mpx.defs
   const transRpxRulesRaw = mpx.transRpxRules
   const transRpxRules = transRpxRulesRaw ? (Array.isArray(transRpxRulesRaw) ? transRpxRulesRaw : [transRpxRulesRaw]) : []

@@ -10,9 +10,11 @@ const processScript = require('./web/processScript')
 const processStyles = require('./web/processStyles')
 const processTemplate = require('./web/processTemplate')
 const getJSONContent = require('./utils/get-json-content')
+const getEntryName = require('./utils/get-entry-name')
+const RecordResourceMapDependency = require('./dependencies/RecordResourceMapDependency')
 const { MPX_APP_MODULE_ID } = require('./utils/const')
 const path = require('path')
-
+const mpx = require('./mpx')
 module.exports = function (content) {
   this.cacheable()
 
@@ -21,8 +23,6 @@ module.exports = function (content) {
     this.loaderIndex -= 2
     return content
   }
-
-  const mpx = this.getMpx()
   if (!mpx) {
     return content
   }
@@ -51,10 +51,16 @@ module.exports = function (content) {
 
   const loaderContext = this
   const stringifyRequest = r => loaderUtils.stringifyRequest(loaderContext, r)
-  const isProduction = this.minimize || process.env.NODE_ENV === 'production'
+  const isProduction = mpx.minimize || process.env.NODE_ENV === 'production'
   const filePath = this.resourcePath
   const moduleId = ctorType === 'app' ? MPX_APP_MODULE_ID : 'm' + mpx.pathHash(filePath)
 
+  // 支持资源query传入isPage或isComponent支持页面/组件单独编译
+  if (ctorType === 'app' && (queryObj.isComponent || queryObj.isPage)) {
+    const entryName = getEntryName(this) || (queryObj.isComponent ? 'noEntryComponent' : 'noEntryPage')
+    ctorType = queryObj.isComponent ? 'component' : 'page'
+    this._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, ctorType, entryName, packageRoot))
+  }
   // 将mpx文件 分成四部分
   const parts = parseComponent(content, {
     filePath,

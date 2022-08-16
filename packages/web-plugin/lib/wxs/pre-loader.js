@@ -5,10 +5,10 @@ const generate = require('@babel/generator').default
 const parseRequest = require('@mpxjs/utils/parse-request')
 const isEmptyObject = require('@mpxjs/utils/is-empty-object')
 const parseQuery = require('loader-utils').parseQuery
+const mpx = require('./mpx')
 
 module.exports = function (content) {
   this.cacheable()
-  const mpx = this.getMpx()
   const module = this._module
   const mode = mpx.mode
   const wxsModule = parseQuery(this.resourceQuery || '?').wxsModule

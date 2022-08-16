@@ -2,6 +2,7 @@ const loaderUtils = require('loader-utils')
 const normalize = require('@mpxjs/utils/normalize')
 const addQuery = require(normalize.utils('add-query'))
 const genComponentTag = require(normalize.utils('gen-component-tag'))
+const mpx = require('../mpx')
 const optionProcessorPath = normalize.webLib('runtime/optionProcessor')
 const tabBarContainerPath = normalize.webLib('runtime/components/web/mpx-tab-bar-container.vue')
 const tabBarPath = normalize.webLib('runtime/components/web/mpx-tab-bar.vue')
@@ -42,7 +43,6 @@ module.exports = function (script, {
   localComponentsMap,
   localPagesMap
 }, callback) {
-  const mpx = loaderContext.getMpx()
   const {
     i18n,
     projectRoot

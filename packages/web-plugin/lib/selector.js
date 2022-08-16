@@ -1,10 +1,10 @@
 const parseComponent = require('./parser')
 const parseRequest = require('./utils/parse-request')
+// todo 移除mpx访问依赖，支持thread-loader
+const mpx = require('./mpx')
 
 module.exports = function (content) {
   this.cacheable()
-  // todo 移除mpx访问依赖，支持thread-loader
-  const mpx = this.getMpx()
   if (!mpx) {
     return content
   }

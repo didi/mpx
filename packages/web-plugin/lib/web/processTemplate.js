@@ -3,6 +3,7 @@ const genComponentTag = require(normalize.utils('gen-component-tag'))
 const addQuery = require(normalize.utils('add-query'))
 const parseRequest = require(normalize.utils('parse-request'))
 const templateCompiler = require('@mpxjs/compiler/template-compiler/compiler')
+const mpx = require('../mpx')
 // const { matchCondition } = require(normalize.utils('match-condition')）
 
 function calculateRootEleChild (arr) {
@@ -32,7 +33,6 @@ module.exports = function (template, {
   usingComponents,
   componentGenerics
 }, callback) {
-  const mpx = loaderContext.getMpx()
   const {
     mode,
     defs,
@@ -40,7 +40,6 @@ module.exports = function (template, {
     decodeHTMLText,
     externalClasses,
     checkUsingComponents
-    // autoVirtualHostRules
   } = mpx
   const { resourcePath } = parseRequest(loaderContext.resource)
   const builtInComponentsMap = {}
@@ -103,8 +102,6 @@ module.exports = function (template, {
           globalComponents: [],
           // web模式下实现抽象组件
           componentGenerics
-          // todo 后续输出web也基于autoVirtualHostRules决定是否添加root wrapper
-          // hasVirtualHost: matchCondition(resourcePath, autoVirtualHostRules)
         })
         if (meta.wxsModuleMap) {
           wxsModuleMap = meta.wxsModuleMap

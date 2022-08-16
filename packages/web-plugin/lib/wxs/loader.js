@@ -11,13 +11,13 @@ const toPosix = require('mpxjs/utils/to-posix')
 const fixRelative = require('mpxjs/utils/fix-relative')
 const addQuery = require('@mpxjs/utils/add-query')
 const config = require('../config')
+const mpx = require('../mpx')
 
 module.exports = content => content
 
 module.exports.pitch = function (remainingRequest) {
   const nativeCallback = this.async()
   const moduleGraph = this._compilation.moduleGraph
-  const mpx = this.getMpx()
   const mode = mpx.mode
   const getOutputPath = mpx.getOutputPath
   let { resourcePath, queryObj } = parseRequest(this.resource)

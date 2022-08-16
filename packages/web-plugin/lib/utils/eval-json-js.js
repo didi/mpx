@@ -1,9 +1,10 @@
 const path = require('path')
+const mpx = require('../mpx')
 
 module.exports = function evalJSONJS (source, filename, loaderContext) {
   if (!loaderContext._compiler) return {}
   const fs = loaderContext._compiler.inputFileSystem
-  const defs = loaderContext.getMpx().defs
+  const defs = mpx.defs
   const defKeys = Object.keys(defs)
   const defValues = defKeys.map((key) => {
     return defs[key]

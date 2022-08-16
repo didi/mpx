@@ -5,9 +5,9 @@ const parseRequest = require(normalize.utils('parse-request'))
 const loaderUtils = require('loader-utils')
 const resolve = require('../utils/resolve')
 const isUrlRequestRaw = require('@mpxjs/utils/is-url-request')
+const mpx = require('../mpx')
 
 module.exports = function createJSONHelper ({ loaderContext, emitWarning, customGetDynamicEntry }) {
-  const mpx = loaderContext.getMpx()
   const externals = mpx.externals
   const root = mpx.projectRoot
   const publicPath = (loaderContext._compilation && loaderContext._compilation.outputOptions.publicPath) || ''
