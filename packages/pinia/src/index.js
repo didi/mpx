@@ -8,7 +8,6 @@ import {
   effectScope,
   watch,
   nextTick,
-  markRaw,
   getCurrentInstance
 } from '@mpxjs/core'
 import { createPinia } from './createPinia'
@@ -224,7 +223,7 @@ function createSetupStore ($id, setup, options = {}, pinia, isOptionsStore = fal
     }
   }
   const partialStore = {
-    _p: pinia,  // open after markRaw provided
+    _p: pinia, // open after markRaw provided
     _s: scope,
     $id,
     $onAction: addSubscription.bind(null, actionSubscriptions),

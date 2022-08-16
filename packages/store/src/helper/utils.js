@@ -1,6 +1,10 @@
 import { isRef } from '@mpxjs/core'
 import _getByPath from './getByPath'
 
+const noop = () => {}
+function isObject (obj) {
+  return obj !== null && typeof obj === 'object'
+}
 function isExistAttr (obj, attr) {
   const type = typeof obj
   const isNullOrUndefined = obj === null || obj === undefined
