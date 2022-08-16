@@ -106,6 +106,8 @@ module.exports = {
                 current = current.parentPath
               }
               last.collectPath = t.stringLiteral(keyPath)
+              const { bindings, references, globals } = path.scope
+              console.log(keyPath, bindings, references, globals)
             }
           }
         }
