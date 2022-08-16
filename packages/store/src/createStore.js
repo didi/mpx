@@ -1,13 +1,6 @@
-import { reactive } from '../observer/reactive'
-import { computed } from '../observer/computed'
-import Vue from '../vue'
-
-import {
-  proxy,
-  getByPath
-} from '../helper/utils'
-
-import { warn } from '../helper/log'
+import EXPORT_MPX, { reactive, computed } from '@mpxjs/core'
+import { proxy, getByPath } from './helper/utils'
+import { warn } from './helper/log'
 
 // 兼容在web和小程序平台中创建表现一致的store
 
@@ -183,6 +176,7 @@ class Store {
 
   resetStoreVM () {
     if (__mpx_mode__ === 'web') {
+      const Vue = EXPORT_MPX.__vue
       const vm = new Vue({
         data: {
           __mpxState: this.state

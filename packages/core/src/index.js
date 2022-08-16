@@ -11,15 +11,6 @@ export {
 } from './platform/index'
 
 export {
-  createStore,
-  createStoreWithThis,
-  createStateWithThis,
-  createGettersWithThis,
-  createMutationsWithThis,
-  createActionsWithThis
-} from './core/createStore'
-
-export {
   // watch
   watchEffect,
   watchSyncEffect,

@@ -1,9 +1,5 @@
-import {
-  normalizeMap,
-  getByPath
-} from '../helper/utils'
-
-import { warn, error } from '../helper/log'
+import { normalizeMap, getByPath } from './helper/utils'
+import { warn, error } from './helper/log'
 
 function mapFactory (type, store) {
   return function (depPath, maps) {

@@ -1,0 +1,26 @@
+{
+  "name": "@mpxjs/store",
+  "version": "1.0.0",
+  "description": "A store for mpx framework",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/didi/mpx.git"
+  },
+  "keywords": [
+    "mpx",
+    "store"
+  ],
+  "author": "donghongping",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/didi/mpx/issues"
+  },
+  "homepage": "https://github.com/didi/mpx#readme",
+  "peerDependencies": {
+    "@mpxjs/core": "^2.7.44"
+  }
+}
