@@ -118,10 +118,8 @@ module.exports = {
         }
       },
       StringLiteral (path) {
-        if (!(t.isBinaryExpression(path.parentPath) && t.isIfStatement(path.parentPath.parent)) &&
-          !t.isIfStatement(path.parent) &&
-          !t.isCallExpression(path.parent) &&
-          !(t.isBinaryExpression(path.parentPath) && path.parentPath.parent.type === 'ConditionalExpression')) {
+        if ((t.isBinaryExpression(path.parent) && t.isExpressionStatement(path.parentPath.parent)) ||
+          path.key === 'consequent') {
           path.node.value = ''
         }
       },
