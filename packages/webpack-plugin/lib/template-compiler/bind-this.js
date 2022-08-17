@@ -32,6 +32,7 @@ module.exports = {
 
     const propKeys = []
     let isProps = false
+    const collectedConst = {}
 
     let bindThisVisitor = {
       // 标记收集props数据
@@ -105,16 +106,22 @@ module.exports = {
                 last = current
                 current = current.parentPath
               }
-              last.collectPath = t.stringLiteral(keyPath)
-              const { bindings, references, globals } = path.scope
-              console.log(keyPath, bindings, references, globals)
+              if (collectedConst[keyPath] &&
+                t.isExpressionStatement(path.parent)) {
+                path.remove()
+              } else {
+                collectedConst[keyPath] = path
+                last.collectPath = t.stringLiteral(keyPath)
+              }
             }
           }
         }
       },
       StringLiteral (path) {
-        if (!t.isIfStatement(path.parentPath?.parent) &&
-          !t.isCallExpression(path.parent)) {
+        if (!(t.isBinaryExpression(path.parentPath) && t.isIfStatement(path.parentPath.parent)) &&
+          !t.isIfStatement(path.parent) &&
+          !t.isCallExpression(path.parent) &&
+          !(t.isBinaryExpression(path.parentPath) && path.parentPath.parent.type === 'ConditionalExpression')) {
           path.node.value = ''
         }
       },
