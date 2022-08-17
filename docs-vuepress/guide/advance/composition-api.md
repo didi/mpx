@@ -511,9 +511,50 @@ createComponent({
 
 ## 模板引用
 
-在 Vue3 的组合式 API 中，我们可以在 `setup` 函数中使用 `ref()` 创建引用数据获取模板中绑定了 `ref` 属性的组件或 DOM 节点，优雅地将响应式引用和模板引用进行了关联统一，但在 Mpx 中，受限于小程序的技术限制，我们无法在低性能损耗下实现相同的设计，因此我们在 setup 的 context 参数中提供了 refs 对象，使用方式与选项式 API 中的 $refs 保持一致。
+在 Vue3 的组合式 API 中，我们可以在 `setup` 函数中使用 `ref()` 创建引用数据获取模板中绑定了 `ref` 属性的组件或 DOM 节点，优雅地将**响应式引用**和**模板引用**进行了关联统一，但在 Mpx 中，受限于小程序的技术限制，我们无法在低性能损耗下实现相同的设计，因此我们在 setup 的 context 参数中提供了 refs 对象，结合模板中的`wx:ref`指令使用，与选项式 API 中的 $refs 保持一致。
 
-下面是简单的使用示例：
+下面是组合式 API 中进行模板引用的使用示例：
+
+```html
+<template>
+  <view bindtap="handleHello" wx:ref="hello">hello</view>
+  <view wx:if="{{showWorld}}" wx:ref="world">world</view>
+  <view wx:for="{{list}}" wx:ref="list">{{item}}</view>
+</template>
+
+<script>
+  import { createComponent, ref, onMounted, nextTick } from '@mpxjs/core'
+
+  createComponent({
+    setup (props, { refs }) {
+      const showWorld = ref(false)
+      const list = ref(['手机', '电视', '电脑'])
+
+      onMounted(() => {
+        // 最早在 onMounted 中才能访问refs，对于节点返回 NodesRef 对象，对于组件返回组件实例
+        console.log('hello ref:', refs.hello)
+        // 在循环中定义 wx:ref，对应的 refs 返回数组
+        console.log('list ref:', refs.list)
+      })
+
+      const handleHello = () => {
+        showWorld.value = true
+        nextTick(() => {
+          // 数据变更后要在 nextTick 中访问更新后的视图数据
+          console.log('world ref:', refs.world)
+        })
+      }
+      
+      // 暴露给 template
+      return {
+        showWorld,
+        handleHello,
+        list
+      }
+    }
+  })
+</script>
+```
 
 
 
