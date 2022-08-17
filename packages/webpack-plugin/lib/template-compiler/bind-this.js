@@ -106,12 +106,17 @@ module.exports = {
                 last = current
                 current = current.parentPath
               }
-              if (collectedConst[keyPath] &&
-                t.isExpressionStatement(path.parent)) {
-                path.remove()
+              last.collectPath = t.stringLiteral(keyPath)
+              if (collectedConst[keyPath]) {
+                if (t.isExpressionStatement(path.parent) ||
+                  (t.isMemberExpression(path.parent) && t.isExpressionStatement(path.parentPath.parent)) // (layout['order'])
+                ) {
+                  last.remove()
+                } else {
+                  collectedConst[keyPath] = path
+                }
               } else {
                 collectedConst[keyPath] = path
-                last.collectPath = t.stringLiteral(keyPath)
               }
             }
           }
