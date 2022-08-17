@@ -90,10 +90,16 @@ class DynamicEntryDependency extends NullDependency {
   }
 
   mpxAction (module, compilation, callback) {
-    const mpx = compilation.__mpx__
-    const { packageRoot, context } = this
-    this.originEntryNode = mpx.getEntryNode(module)
+    const { __mpx__: mpx, moduleGraph } = compilation
+    let entryModule = module
+    while (true) {
+      const issuer = moduleGraph.getIssuer(entryModule)
+      if (issuer) entryModule = issuer
+      else break
+    }
+    this.originEntryNode = mpx.getEntryNode(entryModule)
     this.publicPath = compilation.outputOptions.publicPath || ''
+    const { packageRoot, context } = this
     if (context) this.resolver = compilation.resolverFactory.get('normal', module.resolveOptions)
     // 分包构建在需要在主包构建完成后在finishMake中处理，返回的资源路径先用key来占位，在合成extractedAssets时再进行最终替换
     if (packageRoot && mpx.currentPackageRoot !== packageRoot) {
