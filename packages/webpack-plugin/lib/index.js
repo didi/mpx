@@ -585,6 +585,11 @@ class MpxWebpackPlugin {
             if (!entryNode) {
               entryNode = new EntryNode(module, type)
               entryNodeModulesMap.set(module, entryNode)
+            } else if (type) {
+              if (entryNode.type && entryNode.type !== type) {
+                compilation.errors.push(`获取request为${module.request}的entryNode时类型与已有节点冲突, 当前注册的type为${type}, 已有节点的type为${entryNode.type}!`)
+              }
+              entryNode.type = type
             }
             return entryNode
           },
