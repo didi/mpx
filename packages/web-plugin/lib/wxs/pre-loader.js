@@ -5,12 +5,11 @@ const generate = require('@babel/generator').default
 const parseRequest = require('@mpxjs/utils/parse-request')
 const isEmptyObject = require('@mpxjs/utils/is-empty-object')
 const parseQuery = require('loader-utils').parseQuery
-const mpx = require('./mpx')
+const mpx = require('../mpx')
 
 module.exports = function (content) {
   this.cacheable()
   const module = this._module
-  const mode = mpx.mode
   const wxsModule = parseQuery(this.resourceQuery || '?').wxsModule
 
   // 处理内联wxs
@@ -21,72 +20,6 @@ module.exports = function (content) {
   }
 
   const visitor = {}
-
-  if (module.wxs && mode === 'ali') {
-    let insertNodes = babylon.parse(
-      'var __mpx_args__ = [];\n' +
-      'for (var i = 0; i < arguments.length; i++) {\n' +
-      '  __mpx_args__[i] = arguments[i];\n' +
-      '}'
-    ).program.body
-    // todo Object.assign可能会覆盖，未来存在非预期的覆盖case时需要改进处理
-    Object.assign(visitor, {
-      Identifier (path) {
-        if (path.node.name === 'arguments') {
-          path.node.name = '__mpx_args__'
-          const targetPath = path.getFunctionParent().get('body')
-          if (!targetPath.inserted) {
-            let results = targetPath.unshiftContainer('body', insertNodes) || []
-            targetPath.inserted = true
-            results.forEach((item) => {
-              item.shouldStopTraverse = true
-            })
-          }
-        }
-      },
-      CallExpression (path) {
-        const callee = path.node.callee
-        if (t.isIdentifier(callee) && callee.name === 'getRegExp') {
-          const argPath = path.get('arguments')[0]
-          if (argPath.isStringLiteral()) {
-            argPath.replaceWith(t.stringLiteral(argPath.node.extra.raw.slice(1, -1)))
-          }
-        }
-      },
-      ForStatement (path) {
-        if (path.shouldStopTraverse) {
-          path.stop()
-        }
-      },
-      // 处理vant-aliapp中export var bem = bem;这种不被acorn支持的2b语法
-      ExportNamedDeclaration (path) {
-        if (
-          path.node.declaration &&
-          path.node.declaration.declarations.length === 1 &&
-          path.node.declaration.declarations[0].id.name === path.node.declaration.declarations[0].init.name
-        ) {
-          const name = path.node.declaration.declarations[0].id.name
-          path.replaceWith(t.exportNamedDeclaration(undefined, [t.exportSpecifier(t.identifier(name), t.identifier(name))]))
-        }
-      }
-    })
-  }
-
-  if (mode === 'dd') {
-    Object.assign(visitor, {
-      MemberExpression (path) {
-        const property = path.node.property
-        if (
-          (property.name === 'constructor' || property.value === 'constructor') &&
-          !(t.isMemberExpression(path.parent) && path.parentKey === 'object')
-        ) {
-          path.replaceWith(t.logicalExpression('||', t.memberExpression(path.node, t.identifier('name')), path.node))
-          path.skip()
-        }
-      }
-    })
-  }
-
   if (!module.wxs) {
     Object.assign(visitor, {
       MemberExpression (path) {
