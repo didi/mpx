@@ -19,6 +19,18 @@ dangerousKeys.split(',').forEach((key) => {
   dangerousKeyMap[key] = true
 })
 
+function testInIf (node) {
+  let current = node
+  while (current.parentPath) {
+    if (current.parentPath.type === 'IfStatement' &&
+      current.key === 'test') {
+      return true
+    }
+    current = current.parentPath
+  }
+  return false
+}
+
 module.exports = {
   transform (code, {
     needCollect = false,
@@ -125,11 +137,13 @@ module.exports = {
       StringLiteral (path) {
         if ((t.isBinaryExpression(path.parent) && t.isExpressionStatement(path.parentPath.parent)) ||
           path.key === 'consequent') {
-          path.node.value = ''
+          if (!testInIf(path.parentPath)) {
+            path.node.value = ''
+          }
         }
       },
       'BooleanLiteral|NumericLiteral' (path) {
-        if (path.parentPath.type === 'ExpressionStatement') { // 纯Boolean或数字值
+        if (path.parentPath.type === 'ExpressionStatement' && !testInIf(path.parentPath)) { // 纯Boolean或数字值
           path.remove()
         }
       },
