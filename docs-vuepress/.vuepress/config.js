@@ -164,6 +164,13 @@ module.exports = {
     config.resolve.modules.add('node_modules')
   },
   markdown: {
-    // extractHeaders: [ 'h2', 'h3', 'h4' ]
+    // markdown-it-anchor 的选项
+    anchor: { permalink: false },
+    // markdown-it-toc 的选项
+    toc: { includeLevel: [1, 2] },
+    extendMarkdown: md => {
+      // 使用更多的 markdown-it 插件!
+      md.use(require('markdown-it-xxx'))
+    }
   }
 }
