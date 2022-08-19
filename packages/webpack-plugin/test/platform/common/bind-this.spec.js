@@ -74,6 +74,6 @@ function render() {
 }
 `
     // expect(output).toBe(res)
-    expect(res).toBe(output)
+    expect(res).toBe(output) // TODO 改用快照
   })
 })
