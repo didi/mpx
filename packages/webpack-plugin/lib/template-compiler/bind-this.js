@@ -120,8 +120,13 @@ module.exports = {
               }
               last.collectPath = t.stringLiteral(keyPath)
               if (collectedConst[keyPath]) {
-                if (t.isExpressionStatement(path.parent) ||
-                  (t.isMemberExpression(path.parent) && t.isExpressionStatement(path.parentPath.parent)) // (layout['order'])
+                if (
+                  (
+                    t.isExpressionStatement(last.parent) ||
+                    (t.isMemberExpression(last.parent) && t.isExpressionStatement(last.parentPath.parent)) &&
+                    !t.isThisExpression(last.node.object)
+                  ) &&
+                  !testInIf(last)
                 ) {
                   last.remove()
                 } else {
@@ -135,11 +140,19 @@ module.exports = {
         }
       },
       StringLiteral (path) {
-        if ((t.isBinaryExpression(path.parent) && t.isExpressionStatement(path.parentPath.parent)) ||
-          path.key === 'consequent') {
+        if (
+          (t.isBinaryExpression(path.parent) && t.isExpressionStatement(path.parentPath.parent)) ||
+          path.key === 'consequent' ||
+          path.key === 'alternate'
+        ) {
           if (!testInIf(path.parentPath)) {
             path.node.value = ''
           }
+        } else if (
+          t.isExpressionStatement(path.parent) &&
+          !testInIf(path)
+        ) {
+          path.remove()
         }
       },
       'BooleanLiteral|NumericLiteral' (path) {
