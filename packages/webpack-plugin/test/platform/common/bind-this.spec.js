@@ -18,7 +18,8 @@ function render() {
   str2 + 'right';
   'left' + str3 + 'right';
   'repeat' + str3; // TODO 确认是否应该删除
-  if('str') {}
+  if('str4') {}
+  if('str5' + str5) {}
 
   size === 'big1' ? 'big1' : small;
   size === big2 ? 'big2' : 'small2';
@@ -41,7 +42,7 @@ function render() {
 }
 `
     const res = bindThis(input, { needCollect: true }).code
-    console.log(res)
+    // console.log(res)
     const output = `
 function render() {
   if (true) {}
@@ -53,7 +54,9 @@ function render() {
   'left' + this._c("str3", this.str3) + "";
   "" + this._c("str3", this.str3); // TODO 确认是否应该删除
 
-  if ('str') {}
+  if ('str4') {}
+  
+  if ('str5' + this._c("str5", this.str5)) {}
 
   this._c("size", this.size) === 'big' ? "" : this._c("small", this.small);
   this._c("size", this.size) === this._c("big2", this.big2) ? "" : "";

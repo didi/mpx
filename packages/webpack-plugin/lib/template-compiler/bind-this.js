@@ -149,9 +149,14 @@ module.exports = {
       },
       StringLiteral (path) {
         if (
-          (t.isBinaryExpression(path.parent) && t.isExpressionStatement(path.parentPath.parent)) ||
           path.key === 'consequent' ||
-          path.key === 'alternate'
+          path.key === 'alternate' ||
+          (
+            (t.isBinaryExpression(path.parent) &&
+              (t.isExpressionStatement(path.parentPath.parent) ||
+              t.isBinaryExpression(path.parentPath.parent))
+            )
+          )
         ) {
           if (!testInIf(path.parentPath)) {
             path.node.value = ''
