@@ -20,7 +20,7 @@ function render() {
   'repeat' + str3; // TODO 确认是否应该删除
   if('str') {}
 
-  size === 'big' ? 'big1' : small;
+  size === 'big1' ? 'big1' : small;
   size === big2 ? 'big2' : 'small2';
   size;
   small;
@@ -32,12 +32,12 @@ function render() {
       : 'level2'
     : 'small4'
 
-  name;
-  name;
-  person;
-  person.age;
-  person[sex];
-  person['grade'];
+  a;
+  a;
+  a.b;
+  a['b'];
+  a.b[c];
+  if (a.b) {}
 }
 `
     const res = bindThis(input, { needCollect: true }).code
@@ -62,15 +62,13 @@ function render() {
 
   this._c("size", this.size) === 'big4' ? this._c("level", this.level) === 4 ? "" : "" : "";
 
-  this._c("name", this.name);
+  this._c("a", this.a);
 
-  this._c("person", this.person);
+  this._c("a.b", this.a.b);
 
-  this._c("person.age", this.person.age);
+  this._c("a.b", this.a.b)[this._c("c", this.c)];
 
-  this._c("person", this.person)[this._c("sex", this.sex)];
-
-  this._c("person.grade", this.person['grade']);
+  if (this._c("a.b", this.a.b)) {}
 }
 `
     // expect(output).toBe(res)

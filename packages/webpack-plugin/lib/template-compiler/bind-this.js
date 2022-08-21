@@ -95,8 +95,10 @@ module.exports = {
               current = path.parentPath
               last = path
               let keyPath = '' + path.node.property.name
+              let hasProp = false
               while (current.isMemberExpression() && last.parentKey !== 'property') {
                 if (current.node.computed) {
+                  hasProp = true
                   if (t.isLiteral(current.node.property)) {
                     if (t.isStringLiteral(current.node.property)) {
                       if (dangerousKeyMap[current.node.property.value]) {
@@ -110,6 +112,7 @@ module.exports = {
                     break
                   }
                 } else {
+                  hasProp = true
                   if (dangerousKeyMap[current.node.property.name]) {
                     break
                   }
@@ -124,11 +127,16 @@ module.exports = {
                   (
                     t.isExpressionStatement(last.parent) ||
                     (t.isMemberExpression(last.parent) && t.isExpressionStatement(last.parentPath.parent)) &&
-                    !t.isThisExpression(last.node.object)
+                    !t.isThisExpression(last.node.object) &&
+                    !hasProp
                   ) &&
                   !testInIf(last)
                 ) {
-                  last.remove()
+                  try {
+                    last.remove()
+                  } catch (e) {
+                    console.log(keyPath)
+                  }
                 } else {
                   collectedConst[keyPath] = path
                 }
