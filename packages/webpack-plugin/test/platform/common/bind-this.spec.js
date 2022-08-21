@@ -2,7 +2,7 @@ const bindThis = require('../../../lib/template-compiler/bind-this').transform
 
 describe('render function simplify should correct', function () {
 
-  it('streamline function', function () {
+  it('should simplify render function correct', function () {
     const input = `
 function render() {
 
@@ -42,7 +42,6 @@ function render() {
 }
 `
     const res = bindThis(input, { needCollect: true }).code
-    // console.log(res)
     const output = `
 function render() {
   if (true) {}
@@ -74,7 +73,6 @@ function render() {
   if (this._c("a.b", this.a.b)) {}
 }
 `
-    // expect(output).toBe(res)
-    expect(res).toBe(output) // TODO 改用快照
+    expect(res).toMatchSnapshot(output)
   })
 })
