@@ -20,6 +20,7 @@ function render() {
   'repeat' + str3; // TODO 确认是否应该删除
   if('str4') {}
   if('str5' + str5) {}
+  str6 && str6.name || '同意并授权'
 
   size === 'big1' ? 'big1' : small;
   size === big2 ? 'big2' : 'small2';
@@ -32,6 +33,7 @@ function render() {
       ? 'level1'
       : 'level2'
     : 'small4'
+  ((false)||(false)===undefined?'':'display:none;');
 
   a;
   a;
@@ -39,6 +41,10 @@ function render() {
   a['b'];
   a.b[c];
   if (a.b) {}
+  
+  tip;
+  this._p(tip)
+  this._p(tip && msg || 'str')
 }
 `
     const res = bindThis(input, { needCollect: true }).code
@@ -56,6 +62,8 @@ function render() {
   if ('str4') {}
   
   if ('str5' + this._c("str5", this.str5)) {}
+  
+  this._c("str6", this.str6) && this._c("str6.name", this.str6.name) || '同意并授权';
 
   this._c("size", this.size) === 'big' ? "" : this._c("small", this.small);
   this._c("size", this.size) === this._c("big2", this.big2) ? "" : "";
@@ -63,6 +71,8 @@ function render() {
   if (this._c("size", this.size) === 'big3' ? 'left3' : 'right3') {}
 
   this._c("size", this.size) === 'big4' ? this._c("level", this.level) === 4 ? "" : "" : "";
+  
+  false || false === undefined ? '' : "";
 
   this._c("a", this.a);
 
@@ -71,6 +81,10 @@ function render() {
   this._c("a.b", this.a.b)[this._c("c", this.c)];
 
   if (this._c("a.b", this.a.b)) {}
+  
+  this._c("tip", this.tip);
+  
+  this._c("tip", this.tip) && this._c("msg", this.msg) || 'str';
 }
 `
     expect(res).toMatchSnapshot(output)

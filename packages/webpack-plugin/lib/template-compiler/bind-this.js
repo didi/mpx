@@ -56,8 +56,22 @@ module.exports = {
             t.isThisExpression(callee.object) &&
             (callee.property.name === '_p' || callee.property.value === '_p')
           ) {
-            isProps = true
-            path.isProps = true
+            const args = path.node.arguments
+            let flag
+            for (let i = 0; i < args.length; i++) {
+              const node = args[i]
+              if (!t.isIdentifier(node) || !collectedConst[node.name]) {
+                flag = false
+                break
+              }
+              flag = true
+            }
+            if (flag) {
+              path.remove()
+            } else {
+              isProps = true
+              path.isProps = true
+            }
           }
         },
         exit (path) {
