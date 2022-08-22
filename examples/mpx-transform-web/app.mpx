@@ -1,0 +1,17 @@
+<script>
+  import { createApp } from '@mpxjs/core'
+
+  createApp({
+    onShow(options = {}) {
+      // console.log(this.$t('btn_cancelorder_confirm_cancel'))
+    }
+  })
+</script>
+
+<script type="application/json">
+  {
+    "pages": [
+      "./src/pages/index"
+    ]
+  }
+</script>
