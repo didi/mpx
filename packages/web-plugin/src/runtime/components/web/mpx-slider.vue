@@ -1,5 +1,5 @@
 <script>
-  import getInnerListeners, { getCustomEvent } from '@mpxjs/web-plugin/lib/runtime/components/web/getInnerListeners'
+  import getInnerListeners, { getCustomEvent } from '@mpxjs/web-plugin/src/runtime/components/web/getInnerListeners'
 
 
   export default {

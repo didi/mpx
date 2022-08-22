@@ -22,7 +22,7 @@ const parseRequest = require(normalize.utils('parse-request'))
 const { matchCondition } = require(normalize.utils('match-condition'))
 const { preProcessDefs } = require(normalize.utils('index'))
 const hash = require('hash-sum')
-const styleCompilerPath = normalize.webLib('style-compiler/index')
+const styleCompilerPath = normalize.webLib('webpack/style-compiler/index')
 const stringifyLoadersAndResource = require(normalize.utils('stringify-loaders-resource'))
 const async = require('async')
 let mpx = require('./mpx')
@@ -97,27 +97,27 @@ class MpxWebpackPlugin {
       warnings.push('Mpx loader option [transRpx] is deprecated now, please use mpx webpack plugin config [transRpxRules] instead!')
     }
     return {
-      loader: normalize.webLib('loader'),
+      loader: normalize.webLib('webpack/loader'),
       options
     }
   }
   static wxsPreLoader (options = {}) {
     return {
-      loader: normalize.webLib('wxs/pre-loader'),
+      loader: normalize.webLib('webpack/wxs/pre-loader'),
       options
     }
   }
 
   static urlLoader (options = {}) {
     return {
-      loader: normalize.webLib('url-loader'),
+      loader: normalize.webLib('webpack/url-loader'),
       options
     }
   }
 
   static fileLoader (options = {}) {
     return {
-      loader: normalize.webLib('file-loader'),
+      loader: normalize.webLib('webpack/file-loader'),
       options
     }
   }
@@ -482,7 +482,7 @@ class MpxWebpackPlugin {
         let { queryObj, resource } = parseRequest(request)
         if (queryObj.resolve) {
           // 此处的query用于将资源引用的当前包信息传递给resolveDependency
-          const resolveLoaderPath = normalize.webLib('resolve-loader')
+          const resolveLoaderPath = normalize.webLib('webpack/resolve-loader')
           data.request = `!!${resolveLoaderPath}!${resource}`
         }
       })

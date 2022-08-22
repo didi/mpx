@@ -53,7 +53,7 @@ module.exports = function (template, {
       content: '<div class="app"><mpx-keep-alive><router-view class="page"></router-view></mpx-keep-alive></div>'
     }
     builtInComponentsMap['mpx-keep-alive'] = {
-      resource: addQuery('@mpxjs/web-plugin/lib/runtime/components/web/mpx-keep-alive.vue', { isComponent: true })
+      resource: addQuery('@mpxjs/web-plugin/src/runtime/components/web/mpx-keep-alive.vue', { isComponent: true })
     }
   }
 
