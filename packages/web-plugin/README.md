@@ -1,11 +1,11 @@
-# `mpx-web-plugin`
+# `@mpxjs/web-plugin`
 
-> a plugin for mpx compile
+> a plugin for mpx web compile
 
 ## Usage
 
 ```js
-const mpxWebWebpackPlugin = require('@mpxjs/webpack-plugin/webpack');
+const mpxWebWebpackPlugin = require('@mpxjs/web-plugin/webpack');
 // webpack.conf.js
 module.exports = {
   plugins: [
@@ -17,7 +17,7 @@ module.exports = {
 ```
 
 ```js
-const mpxWebVitePlugin = require('@mpxjs/webpack-plugin/vite');
+const mpxWebVitePlugin = require('@mpxjs/web-plugin/vite');
 // vite.config.js
 module.exports = {
   plugins: [
