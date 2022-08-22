@@ -108,7 +108,9 @@
 
 ![image](https://gift-static.hongyibo.com.cn/static/kfpub/6168/QQ20210728-202133@2x.png)
 
-部分二可参照此[链接](https://mpx-ecology.github.io/eslint-plugin-mpx/)配置
+部分二可参照此
+[集成化配置](https://github.com/mpx-ecology/eslint-config)
+也可以[自定义配置](https://mpx-ecology.github.io/eslint-plugin-mpx/)
 
 #### 代码格式化
 
