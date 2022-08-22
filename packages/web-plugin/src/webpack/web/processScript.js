@@ -3,9 +3,9 @@ const normalize = require('@mpxjs/utils/normalize')
 const addQuery = require(normalize.utils('add-query'))
 const genComponentTag = require(normalize.utils('gen-component-tag'))
 const mpx = require('../mpx')
-const optionProcessorPath = normalize.webLib('runtime/optionProcessor')
-const tabBarContainerPath = normalize.webLib('runtime/components/web/mpx-tab-bar-container.vue')
-const tabBarPath = normalize.webLib('runtime/components/web/mpx-tab-bar.vue')
+const optionProcessorPath = normalize.webPlugin('runtime/optionProcessor')
+const tabBarContainerPath = normalize.webPlugin('runtime/components/web/mpx-tab-bar-container.vue')
+const tabBarPath = normalize.webPlugin('runtime/components/web/mpx-tab-bar.vue')
 
 function shallowStringify (obj) {
   let arr = []
