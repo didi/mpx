@@ -1900,14 +1900,20 @@ function getVirtualHostRoot (options, meta) {
   }
   return getTempNode()
 }
-
+// 是否存在实例祖先节点
+function hasRealAncestorNode (el, options, root) {
+  if (!el) return false
+  if (!el.parent || (el.parent === root && options.isComponent)) return false
+  if (isRealNode(el.parent)) return true
+  return hasRealAncestorNode(el.parent, options, root)
+}
 function processShow (el, options, root) {
   // 开启 virtualhost 全部走 props 传递处理
   // 未开启 virtualhost 直接绑定 display:none 到节点上
   let show = getAndRemoveAttr(el, config[mode].directive.show).val
   if (mode === 'swan') show = wrapMustache(show)
   if (options.hasVirtualHost) {
-    if (options.isComponent && el.parent === root && isRealNode(el)) {
+    if (options.isComponent && isRealNode(el) && !hasRealAncestorNode(el, options, root)) {
       if (show !== undefined) {
         show = `{{${parseMustache(show).result}&&mpxShow}}`
       } else {
@@ -1922,12 +1928,6 @@ function processShow (el, options, root) {
         name: 'mpxShow',
         value: show
       }])
-    } else if (isBlock) {
-      const parsed = parseMustache(show)
-      el.show = {
-        raw: parsed.val,
-        result: parsed.result
-      }
     } else {
       processShowStyle()
     }
@@ -1936,7 +1936,7 @@ function processShow (el, options, root) {
   }
 
   function processShowStyle () {
-    if (show !== undefined) {
+    if (isRealNode(el) && show !== undefined) {
       const showExp = parseMustache(show).result
       let oldStyle = getAndRemoveAttr(el, 'style').val
       oldStyle = oldStyle ? oldStyle + ';' : ''
@@ -2149,12 +2149,8 @@ function closeElement (el, meta, options) {
 }
 // 处理 block/组件根节点 下纯文本节点 的show
 function processPlainTextShow (el, root, options, meta) {
-  if (el.type !== 3) return
-  const parent = el.parent
-  // 非文本节点 或 父级实例节点 不处理
-  const isTempNode = (parent === root && options.isComponent)
-  const isBlockNode = !isRealNode(parent) && parent.show
-  if (!isTempNode && !isBlockNode) return
+  // 非文本节点 或 非 VirtualHost 或 祖先存在实例节点 不处理
+  if (el.type !== 3 || !options.hasVirtualHost || hasRealAncestorNode(el, options, root)) return
   const textNode = createASTElement('view', [{
     name: 'style',
     value: 'display:inline'
