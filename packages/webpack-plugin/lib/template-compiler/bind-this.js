@@ -56,22 +56,8 @@ module.exports = {
             t.isThisExpression(callee.object) &&
             (callee.property.name === '_p' || callee.property.value === '_p')
           ) {
-            const args = path.node.arguments
-            let flag
-            for (let i = 0; i < args.length; i++) {
-              const node = args[i]
-              if (!t.isIdentifier(node) || !collectedConst[node.name]) {
-                flag = false
-                break
-              }
-              flag = true
-            }
-            if (flag) {
-              path.remove()
-            } else {
-              isProps = true
-              path.isProps = true
-            }
+            isProps = true
+            path.isProps = true
           }
         },
         exit (path) {
@@ -140,9 +126,9 @@ module.exports = {
                 if (
                   (
                     t.isExpressionStatement(last.parent) ||
-                    (t.isMemberExpression(last.parent) && t.isExpressionStatement(last.parentPath.parent)) &&
-                    !t.isThisExpression(last.node.object) &&
-                    !hasProp
+                    (t.isMemberExpression(last.parent) && t.isExpressionStatement(last.parentPath.parent) && // a['b']
+                    !t.isThisExpression(last.node.object) && // a[b]
+                    !hasProp) // a.b[c]
                   ) &&
                   !testInIf(last)
                 ) {
@@ -176,14 +162,26 @@ module.exports = {
             path.node.value = ''
           }
         } else if (
-          t.isExpressionStatement(path.parent) &&
+          (
+            t.isExpressionStatement(path.parent) || // ('str');
+            (
+              path.listKey === 'elements' && // ['abc']
+              path.parent.type === 'ArrayExpression'
+            )
+          ) &&
           !testInIf(path)
         ) {
           path.remove()
         }
       },
       'BooleanLiteral|NumericLiteral' (path) {
-        if (path.parentPath.type === 'ExpressionStatement' && !testInIf(path.parentPath)) { // 纯Boolean或数字值
+        if (
+          (
+            t.isExpressionStatement(path.parentPath) || // 纯Boolean或数字值
+            (path.listKey === 'elements' && path.parent.type === 'ArrayExpression') // [123, true]
+          ) &&
+          !testInIf(path.parentPath)
+        ) {
           path.remove()
         }
       },

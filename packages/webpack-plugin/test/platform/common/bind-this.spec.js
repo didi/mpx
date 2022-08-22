@@ -45,6 +45,8 @@ function render() {
   tip;
   this._p(tip)
   this._p(tip && msg || 'str')
+  
+  ({tap:[["handler",true, 123]],click:[["handler",handlerName]]});
 }
 `
     const res = bindThis(input, { needCollect: true }).code
@@ -85,6 +87,11 @@ function render() {
   this._c("tip", this.tip);
   
   this._c("tip", this.tip) && this._c("msg", this.msg) || 'str';
+  
+  ({
+    tap: [[]],
+    click: [[this._c("handlerName", this.handlerName)]]
+  });
 }
 `
     expect(res).toMatchSnapshot(output)
