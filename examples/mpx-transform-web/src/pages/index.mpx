@@ -1,0 +1,39 @@
+<template>
+  <view bindtap="reload">__UNPLUGIN__</view>
+  <text wx:if="{{a === 1}}">test</text>
+  <view>{{$t('message')}}</view>
+<!--  <text wx:elseif="{{a === 2}}">w22223</text>-->
+<!--  <list list-class="list"></list>-->
+<!--  <scroll-view></scroll-view>-->
+</template>
+
+<script lang="ts">
+  import { createPage } from '@mpxjs/core'
+
+  createPage({
+    data: {
+      a: 1
+    },
+    onLoad () {
+      console.log(233)
+    },
+    methods: {
+      reload () {
+        window.location.reload()
+      }
+    }
+  })
+</script>
+<style scoped>
+  .list {
+    background: red;
+    height: 200rpx;
+  }
+</style>
+<script type="application/json">
+  {
+    "usingComponents": {
+      "list": "../components/list.mpx"
+    }
+  }
+</script>

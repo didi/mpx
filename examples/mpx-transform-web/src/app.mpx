@@ -1,0 +1,49 @@
+<script lang="ts">
+  import mpx from '@mpxjs/core'
+  import apiProxy from '@mpxjs/api-proxy'
+  import { createApp } from '@mpxjs/core'
+  // import Vconsole from 'vconsole'
+  // const vconsole = new Vconsole()
+  mpx.use(apiProxy, { usePromise: true })
+  createApp({})
+</script>
+
+<style>
+  /*此处编写全局样式*/
+  body {
+    box-sizing: border-box;
+    color: #333999;
+  }
+</style>
+
+<script type="application/json">
+  {
+    "pages": [
+      "./pages/index",
+      "./pages/wxs?async=app_pages2"
+    ],
+    "subpackages": [
+      {
+        "root": "packageA",
+        "pages": [
+          "./pages/picker",
+          "./pages/swiper"
+        ],
+        "independent": true
+      }
+    ],
+    "tabBar": {
+      "custom": true,
+      "color": "red",
+      "selectedColor": "blue",
+      "backgroundColor": "#fff",
+      "list": [{
+        "pagePath": "pages/index",
+        "text": "page1"
+      }, {
+        "pagePath": "pages/wxs",
+        "text": "page2"
+      }]
+    }
+  }
+</script>

@@ -1,0 +1,99 @@
+<template>
+  <view>
+    <view bindtap="jump"> jump to swiper</view>
+    <picker bindchange="bindPickerChange" value="{{index}}" range="{{array}}">
+      <view class="picker">
+        当前选择：{{array[index]}}
+      </view>
+    </picker>
+    <picker-view indicator-style="height: 50px;" style="width: 100%; height: 375px;" value="{{value}}" bindchange="bindChange">
+      <picker-view-column>
+        <view wx:for="{{years}}" wx:key="{{years}}" style="line-height: 50px; text-align: center;">{{item}}年</view>
+      </picker-view-column>
+      <picker-view-column>
+        <view wx:for="{{months}}" wx:key="{{months}}" style="line-height: 50px; text-align: center;">{{item}}月</view>
+      </picker-view-column>
+      <picker-view-column>
+        <view wx:for="{{days}}" wx:key="{{days}}" style="line-height: 50px; text-align: center;">{{item}}日</view>
+      </picker-view-column>
+    </picker-view>
+  </view>
+
+</template>
+
+<script>
+  import mpx, { createPage } from '@mpxjs/core'
+  import swiperPage from './swiper.mpx?resolve'
+  const date = new Date()
+  const years = []
+  const months = []
+  const days = []
+
+  for (let i = 1990; i <= date.getFullYear(); i++) {
+    years.push(i)
+  }
+
+  for (let i = 1; i <= 12; i++) {
+    months.push(i)
+  }
+
+  for (let i = 1; i <= 31; i++) {
+    days.push(i)
+  }
+  createPage({
+    data: {
+      index: 0,
+      array: ['美国', '中国', '巴西', '日本'],
+      years,
+      year: date.getFullYear(),
+      months,
+      month: 2,
+      days,
+      day: 2,
+      value: [0, 0, 0],
+      isDaytime: true
+    },
+    methods: {
+      bindPickerChange: function(e) {
+        console.log('picker发送选择改变，携带值为', e.detail.value)
+        this.index = e.detail.value
+      },
+      bindChange(e) {
+        const val = e.detail.value
+      },
+	    jump () {
+		    mpx.navigateTo({
+			    url: swiperPage
+		    })
+      }
+    },
+    ready () {
+      console.log('---进入picker页面')
+      wx.showToast({
+	      title: '成功',
+	      icon: 'success',
+	      duration: 2000
+      })
+    }
+  })
+</script>
+
+
+<style lang="stylus" scoped>
+  page
+    height 100%
+  .app
+    height: auto
+  .p-container-h
+    width: 100%
+    background pink
+    /*overflow: hidden;*/
+    .scroll-container
+      width: 100%
+      height: 500px
+    /*height: 100%*/
+    .item
+      width: 100%
+      height: 250px
+</style>
+
