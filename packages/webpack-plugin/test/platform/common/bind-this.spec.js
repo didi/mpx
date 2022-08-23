@@ -47,6 +47,8 @@ function render() {
   this._p(tip && msg || 'str')
   
   ({tap:[["handler",true, 123]],click:[["handler",handlerName]]});
+  [1, inArr, 'bb', true];
+  if([1, inArr, 'bb', true].length){}
 }
 `
     const res = bindThis(input, { needCollect: true }).code
@@ -92,6 +94,9 @@ function render() {
     tap: [[]],
     click: [[this._c("handlerName", this.handlerName)]]
   });
+  [this._c("inArr", this.inArr)];
+
+  if ([1, this._c("inArr", this.inArr), 'bb', true].length) {}
 }
 `
     expect(res).toMatchSnapshot(output)
