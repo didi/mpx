@@ -3,7 +3,8 @@ const { mergeWithCustomize, customizeObject } = require('webpack-merge')
 const getRules = require('./getRules')
 const getPlugins = require('./getPlugins')
 const { resolveSrc, resolveDist, getRootPath } = require('./utils')
-const MpxWebpackPlugin = require('../../../packages/web-plugin/src/webpack')
+const MpxWebpackPlugin = require('@mpxjs/web-plugin/src/webpack')
+// const MpxWebpackPlugin = require('@mpxjs/webpack-plugin')
 
 module.exports = function getWebpackConfs (options) {
   const { plugin, subDir, mode, env, production, watch } = options
