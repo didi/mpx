@@ -132,11 +132,9 @@ module.exports = {
                   ) &&
                   !testInIf(last)
                 ) {
-                  try {
-                    last.remove()
-                  } catch (e) {
-                    console.log(keyPath)
-                  }
+                  last.remove()
+                } else if (t.isObjectProperty(last.parent)) { // { name: a.b }
+                  last.parentPath.remove()
                 } else {
                   collectedConst[keyPath] = path
                 }
@@ -152,22 +150,17 @@ module.exports = {
           path.key === 'consequent' ||
           path.key === 'alternate' ||
           (
-            (t.isBinaryExpression(path.parent) &&
-              (t.isExpressionStatement(path.parentPath.parent) ||
-              t.isBinaryExpression(path.parentPath.parent))
-            )
+            t.isBinaryExpression(path.parent) &&
+            (t.isExpressionStatement(path.parentPath.parent) || t.isBinaryExpression(path.parentPath.parent))
           )
         ) {
-          if (!testInIf(path.parentPath)) {
+          if (!testInIf(path)) {
             path.node.value = ''
           }
         } else if (
           (
             t.isExpressionStatement(path.parent) || // ('str');
-            (
-              path.listKey === 'elements' && // ['abc']
-              path.parent.type === 'ArrayExpression'
-            )
+            (path.listKey === 'elements' && path.parent.type === 'ArrayExpression') // ['abc']
           ) &&
           !testInIf(path)
         ) {
@@ -178,9 +171,22 @@ module.exports = {
         if (
           (
             t.isExpressionStatement(path.parentPath) || // 纯Boolean或数字值
-            (path.listKey === 'elements' && path.parent.type === 'ArrayExpression') // [123, true]
+            (path.listKey === 'elements' && path.parent.type === 'ArrayExpression') // [true, 123]
           ) &&
-          !testInIf(path.parentPath)
+          !testInIf(path)
+        ) {
+          path.remove()
+        }
+      },
+      ObjectProperty (path) {
+        const canDelType = ['StringLiteral', 'NumericLiteral', 'BooleanLiteral']
+        const value = path.node.value
+        if (
+          canDelType.includes(value.type) ||
+          (
+            t.isIdentifier(value) &&
+            collectedConst[value.name]
+          )
         ) {
           path.remove()
         }

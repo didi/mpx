@@ -48,7 +48,21 @@ function render() {
   
   ({tap:[["handler",true, 123]],click:[["handler",handlerName]]});
   [1, inArr, 'bb', true];
-  if([1, inArr, 'bb', true].length){}
+  if([1, inArr, 'bb', true].length){};
+
+  grade;
+  ({
+    name: 'zzh',
+    age: 12,
+    sex: true,
+    grade: grade
+  });
+  grade.name;
+  ({
+    grade: grade[index],
+    grade1: grade.name,
+    grade2: grade['name']
+   })
 }
 `
     const res = bindThis(input, { needCollect: true }).code
@@ -97,6 +111,16 @@ function render() {
   [this._c("inArr", this.inArr)];
 
   if ([1, this._c("inArr", this.inArr), 'bb', true].length) {}
+
+  this._c("grade", this.grade);
+
+  ({});
+  
+  this._c("grade.name", this.grade.name);
+
+  ({
+    grade: this._c("grade", this.grade)[this._c("index", this.index)]
+  });
 }
 `
     expect(res).toMatchSnapshot(output)
