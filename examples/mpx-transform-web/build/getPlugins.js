@@ -14,9 +14,9 @@ module.exports = function getPlugins (options) {
   plugins.push(new MpxWebpackPlugin(Object.assign({}, currentMpxPluginConf, {
     mode,
     srcMode,
-    webConfig: {
-      routeMode: 'history'
-    },
+    // webConfig: {
+    //   routeMode: 'history'
+    // },
     externalClasses: ['list-class'],
   }, env && { env })))
 

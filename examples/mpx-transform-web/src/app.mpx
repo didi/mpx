@@ -5,9 +5,6 @@
   // import Vconsole from 'vconsole'
   // const vconsole = new Vconsole()
   mpx.use(apiProxy, { usePromise: true })
-  mpx.config.webRouteConfig = {
-    mode: 'history'
-  }
   createApp({})
 </script>
 
