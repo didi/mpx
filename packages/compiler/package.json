@@ -1,0 +1,34 @@
+{
+  "name": "@mpxjs/compiler",
+  "version": "2.7.40",
+  "description": "mpx compile",
+  "keywords": [
+    "mpx"
+  ],
+  "author": "lareinayanyu",
+  "license": "ISC",
+  "dependencies": {
+    "@babel/generator": "^7.16.0",
+    "@babel/parser": "^7.16.2",
+    "@babel/traverse": "^7.16.0",
+    "@babel/types": "^7.16.0",
+    "he": "^1.1.1",
+    "json5": "^2.1.3",
+    "loader-utils": "^2.0.2",
+    "postcss-selector-parser": "^6.0.8"
+  },
+  "peerDependencies": {
+    "webpack": "^5.48.0"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:didi/mpx.git"
+  },
+  "homepage": "https://didi.github.io/mpx/",
+  "bugs": {
+    "url": "https://github.com/didi/mpx/issues"
+  }
+}
