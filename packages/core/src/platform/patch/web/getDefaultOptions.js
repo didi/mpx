@@ -40,10 +40,9 @@ function initProxy (context, rawOptions) {
 
 export function getDefaultOptions (type, { rawOptions = {} }) {
   const rawSetup = rawOptions.setup
-  let instance = null
   if (rawSetup) {
-    rawOptions.setup = (props, context) => {
-      instance = getVueCurrentInstance().proxy
+    rawOptions.setup = (props) => {
+      const instance = getVueCurrentInstance().proxy
       instance.__mpxProxy = new MpxProxy(rawOptions, instance)
       setCurrentInstance(instance.__mpxProxy)
       const newContext = {
