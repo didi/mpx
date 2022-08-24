@@ -23,6 +23,14 @@ class WxsPlugin {
       normalModuleFactory.hooks.parser
         .for('javascript/auto')
         .tap('WxsPlugin', handler)
+
+      normalModuleFactory.hooks.parser
+        .for('javascript/dynamic')
+        .tap('WxsPlugin', handler)
+
+      normalModuleFactory.hooks.parser
+        .for('javascript/esm')
+        .tap('WxsPlugin', handler)
     })
   }
 }
