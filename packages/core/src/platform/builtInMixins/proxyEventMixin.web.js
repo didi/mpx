@@ -2,12 +2,6 @@ import { setByPath } from '../../helper/utils'
 
 export default function proxyEventMixin () {
   const methods = {
-    triggerEvent (eventName, eventDetail) {
-      return this.$emit(eventName, {
-        type: eventName,
-        detail: eventDetail
-      })
-    },
     __model (expr, $event, valuePath = ['value'], filterMethod) {
       const innerFilter = {
         trim: val => typeof val === 'string' && val.trim()

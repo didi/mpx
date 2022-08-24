@@ -1,7 +1,8 @@
 import builtInKeysMap from '../builtInKeysMap'
 import mergeOptions from '../../../core/mergeOptions'
-import MpxProxy from '../../../core/proxy'
 import { diffAndCloneA } from '../../../helper/utils'
+import { getCurrentInstance as getVueCurrentInstance } from '../../export/index'
+import MpxProxy, { setCurrentInstance, unsetCurrentInstance } from '../../../core/proxy'
 
 function filterOptions (options) {
   const newOptions = {}
@@ -31,10 +32,31 @@ function initProxy (context, rawOptions) {
   } else if (context.__mpxProxy.isUnmounted()) {
     context.__mpxProxy = new MpxProxy(rawOptions, context, true)
     context.__mpxProxy.created()
+  } else if (context.__mpxProxy && rawOptions.setup) {
+    // 因setup是在created之前执行, 注册生命周期钩子时需要mpxProxy已经实例化
+    context.__mpxProxy.created()
   }
 }
 
 export function getDefaultOptions (type, { rawOptions = {} }) {
+  const rawSetup = rawOptions.setup
+  let instance = null
+  if (rawSetup) {
+    rawOptions.setup = (props, context) => {
+      instance = getVueCurrentInstance().proxy
+      instance.__mpxProxy = new MpxProxy(rawOptions, instance)
+      setCurrentInstance(instance.__mpxProxy)
+      const newContext = {
+        triggerEvent: instance.triggerEvent.bind(instance),
+        createSelectorQuery: instance.createSelectorQuery.bind(instance),
+        selectComponent: instance.selectComponent.bind(instance),
+        selectAllComponents: instance.selectAllComponents.bind(instance)
+      }
+      const setupRes = rawSetup(props, newContext)
+      unsetCurrentInstance(instance.__mpxProxy)
+      return setupRes
+    }
+  }
   const rootMixins = [{
     created () {
       initProxy(this, rawOptions)

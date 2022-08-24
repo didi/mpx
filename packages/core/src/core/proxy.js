@@ -1,6 +1,6 @@
 import { reactive } from '../observer/reactive'
 import { ReactiveEffect } from '../observer/effect'
-import { effectScope } from '../observer/effectScope'
+import { effectScope } from '../platform/export/index'
 import { watch } from '../observer/watch'
 import { computed } from '../observer/computed'
 import { queueJob, nextTick } from '../observer/scheduler'
@@ -87,6 +87,11 @@ export default class MpxProxy {
       // 下次是否需要强制更新全部渲染数据
       this.forceUpdateAll = false
       this.currentRenderTask = null
+    }
+    if (__mpx_mode__ === 'web') {
+      // 收集setup中生命周期钩子,动态注册的hooks
+      this.hooks = {}
+      this.scope = effectScope(true)
     }
   }
 
@@ -583,7 +588,7 @@ export const injectHook = (hookName, hook, instance = currentInstance) => {
 }
 
 export const createHook = (hookName) => (hook, instance) => injectHook(hookName, hook, instance)
-
+// 在代码中调用以下生命周期钩子时, 将生命周期钩子注入到mpxProxy实例上
 export const onBeforeCreate = createHook(BEFORECREATE)
 export const onCreated = createHook(CREATED)
 export const onBeforeMount = createHook(BEFOREMOUNT)
