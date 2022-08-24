@@ -1,3 +1,5 @@
+const { headerPlugin } = require('./headerMdPlugin')
+
 const sidebar = {
   '/guide/': [
     {
@@ -164,6 +166,10 @@ module.exports = {
     config.resolve.modules.add('node_modules')
   },
   markdown: {
-    // extractHeaders: [ 'h2', 'h3', 'h4' ]
+    // markdown-it-toc 的选项
+    extendMarkdown: md => {
+      // 使用更多的 markdown-it 插件!
+      md.use(headerPlugin)
+    }
   }
 }
