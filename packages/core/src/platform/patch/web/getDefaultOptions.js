@@ -32,6 +32,9 @@ function initProxy (context, rawOptions) {
   } else if (context.__mpxProxy.isUnmounted()) {
     context.__mpxProxy = new MpxProxy(rawOptions, context, true)
     context.__mpxProxy.created()
+  } else if (context.__mpxProxy && rawOptions.setup) {
+    // 因setup是在created之前执行, 注册生命周期钩子时需要mpxProxy已经实例化
+    context.__mpxProxy.created()
   }
 }
 
@@ -56,12 +59,7 @@ export function getDefaultOptions (type, { rawOptions = {} }) {
   }
   const rootMixins = [{
     created () {
-      // 因setup是在created之前执行, 注册生命周期钩子时需要mpxProxy已经实例化
-      if (rawSetup) {
-        instance.__mpxProxy.created()
-      } else {
-        initProxy(this, rawOptions)
-      }
+      initProxy(this, rawOptions)
     },
     mounted () {
       if (this.__mpxProxy) this.__mpxProxy.mounted()
