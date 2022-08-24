@@ -9,6 +9,7 @@ const { resolveDist, getRootPath } = require('./utils')
 program
   .option('-w, --watch', 'watch mode')
   .option('-p, --production', 'production release')
+  .option('-link, --preserve-symlinks', 'symlinks')
   .parse(process.argv)
 
 const env = process.env

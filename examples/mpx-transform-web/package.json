@@ -6,7 +6,7 @@
   "scripts": {
     "vite:dev": "vite",
     "vite:build": "vite build",
-    "watch": "node build/build.js -w",
+    "watch": "node build/build.js -w -link",
     "watch:prod": "node build/build.js -w -p",
     "build": "npm run prod --modes=web",
     "prod": "node build/build.js -p",
@@ -37,8 +37,6 @@
     "@babel/runtime-corejs3": "^7.10.4",
     "@mpxjs/webpack-plugin": "^2.7.40",
     "@mpxjs/web-plugin": "file:../../packages/web-plugin",
-    "@mpxjs/utils": "file:../../packages/utils",
-    "@mpxjs/compiler": "file:../../packages/compiler",
     "@originjs/vite-plugin-commonjs": "^1.0.3",
     "@typescript-eslint/eslint-plugin": "^5.2.0",
     "@typescript-eslint/parser": "^5.2.0",
