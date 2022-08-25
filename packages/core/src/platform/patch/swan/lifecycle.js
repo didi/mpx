@@ -1,24 +1,19 @@
 import {
-  BEFORECREATE,
   CREATED,
-  BEFOREUNMOUNT,
   UNMOUNTED,
   MOUNTED,
-  UPDATED,
-  BEFOREMOUNT,
   ONSHOW,
   ONHIDE,
   ONLOAD
 } from '../../../core/innerLifecycle'
 
 const APP_HOOKS = [
+  'onLogin',
   'onLaunch',
   'onShow',
   'onHide',
   'onError',
-  'onPageNotFound',
-  'onUnhandledRejection',
-  'onThemeChange'
+  'onPageNotFound'
 ]
 
 const PAGE_HOOKS = [
@@ -30,32 +25,25 @@ const PAGE_HOOKS = [
   'onUnload',
   'onPullDownRefresh',
   'onReachBottom',
-  'onShareAppMessage',
   'onPageScroll',
+  'onShareAppMessage',
   'onTabItemTap',
+  'onURLQueryChange',
   'onResize'
 ]
 
 const COMPONENT_HOOKS = [
-  'beforeCreate',
   'created',
   'attached',
   'ready',
-  'moved',
   'detached',
-  'updated',
   'pageShow',
-  'pageHide',
-  'definitionFilter'
+  'pageHide'
 ]
 
 export const lifecycleProxyMap = {
-  [BEFORECREATE]: ['beforeCreate'],
   [CREATED]: ['onInit', 'created', 'attached'],
-  [UPDATED]: ['updated'],
-  [BEFOREMOUNT]: ['beforeMount'],
   [MOUNTED]: ['ready', 'onReady'],
-  [BEFOREUNMOUNT]: ['beforeUnmount'],
   [UNMOUNTED]: ['detached', 'onUnload'],
   [ONSHOW]: ['pageShow', 'onShow'],
   [ONHIDE]: ['pageHide', 'onHide'],
