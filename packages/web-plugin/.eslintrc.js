@@ -4,7 +4,7 @@ module.exports = {
   parserOptions: {
     sourceType: 'module',
     ecmaVersion: 2021,
-    project: 'tsconfig.eslint.json'
+    project: './packages/web-plugin/tsconfig.eslint.json'
   },
   env: {
     es6: true,
