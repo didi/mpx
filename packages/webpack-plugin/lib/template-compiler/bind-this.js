@@ -31,6 +31,20 @@ function testInIf (node) {
   return false
 }
 
+function getMemberExp (node) {
+  if (!t.isMemberExpression(node)) return ''
+  let current = node
+  let keyPath = current.property.name
+  while (t.isMemberExpression(current.object)) {
+    keyPath = node.object.property.name + `.${keyPath}`
+    current = current.object
+  }
+  if (t.isIdentifier(current.object)) {
+    keyPath = current.object.name + `.${keyPath}`
+  }
+  return keyPath
+}
+
 module.exports = {
   transform (code, {
     needCollect = false,
@@ -56,8 +70,17 @@ module.exports = {
             t.isThisExpression(callee.object) &&
             (callee.property.name === '_p' || callee.property.value === '_p')
           ) {
-            isProps = true
-            path.isProps = true
+            const arg = path.node.arguments[0]
+            const keyPath = getMemberExp(arg)
+            if (
+              collectedConst[keyPath] ||
+              arg.type === 'Identifier' && collectedConst[arg.name]
+            ) {
+              path.remove()
+            } else {
+              isProps = true
+              path.isProps = true
+            }
           }
         },
         exit (path) {
@@ -95,10 +118,10 @@ module.exports = {
               current = path.parentPath
               last = path
               let keyPath = '' + path.node.property.name
-              let hasProp = false
+              let hasComputed = false
               while (current.isMemberExpression() && last.parentKey !== 'property') {
                 if (current.node.computed) {
-                  hasProp = true
+                  hasComputed = true
                   if (t.isLiteral(current.node.property)) {
                     if (t.isStringLiteral(current.node.property)) {
                       if (dangerousKeyMap[current.node.property.value]) {
@@ -112,7 +135,6 @@ module.exports = {
                     break
                   }
                 } else {
-                  hasProp = true
                   if (dangerousKeyMap[current.node.property.name]) {
                     break
                   }
@@ -128,7 +150,7 @@ module.exports = {
                     t.isExpressionStatement(last.parent) ||
                     (t.isMemberExpression(last.parent) && t.isExpressionStatement(last.parentPath.parent) && // a['b']
                     !t.isThisExpression(last.node.object) && // a[b]
-                    !hasProp) // a.b[c]
+                    !hasComputed) // a.b[c]
                   ) &&
                   !testInIf(last)
                 ) {

@@ -21,6 +21,7 @@ function render() {
   if('str4') {}
   if('str5' + str5) {}
   str6 && str6.name || '同意并授权'
+  "mod-fee-confirm "+(isOldP && 'old-person')
 
   size === 'big1' ? 'big1' : small;
   size === big2 ? 'big2' : 'small2';
@@ -82,6 +83,8 @@ function render() {
   if ('str5' + this._c("str5", this.str5)) {}
   
   this._c("str6", this.str6) && this._c("str6.name", this.str6.name) || '同意并授权';
+
+  "" + (this._c("isOldP", this.isOldP) && 'old-person');
 
   this._c("size", this.size) === 'big' ? "" : this._c("small", this.small);
   this._c("size", this.size) === this._c("big2", this.big2) ? "" : "";
