@@ -1,11 +1,10 @@
 import { reactive } from '../observer/reactive'
 import { ReactiveEffect } from '../observer/effect'
-import { EffectScope } from '../observer/effectScope'
+import { effectScope } from '../platform/export/index'
 import { watch } from '../observer/watch'
 import { computed } from '../observer/computed'
-import { queueJob, queuePostFlushCb, nextTick, RenderTask } from '../observer/scheduler'
+import { queueJob, nextTick } from '../observer/scheduler'
 import EXPORT_MPX from '../index'
-import { getCurrentInstance as getVueCurrentInstance } from '@vue/composition-api'
 import {
   type,
   noop,
@@ -46,6 +45,19 @@ import { callWithErrorHandling } from '../helper/errorHandling'
 
 let uid = 0
 
+class RenderTask {
+  resolved = false
+
+  constructor (instance) {
+    instance.currentRenderTask = this
+    this.promise = new Promise((resolve) => {
+      this.resolve = resolve
+    }).then(() => {
+      this.resolved = true
+    })
+  }
+}
+
 export default class MpxProxy {
   constructor (options, target, reCreated) {
     this.target = target
@@ -57,7 +69,7 @@ export default class MpxProxy {
     this.state = BEFORECREATE
     this.ignoreProxyMap = makeMap(EXPORT_MPX.config.ignoreProxyWhiteList)
     if (__mpx_mode__ !== 'web') {
-      this.scope = new EffectScope(true)
+      this.scope = effectScope(true)
       // props响应式数据代理
       this.props = {}
       // data响应式数据代理
@@ -75,10 +87,11 @@ export default class MpxProxy {
       // 下次是否需要强制更新全部渲染数据
       this.forceUpdateAll = false
       this.currentRenderTask = null
-      this.flushingRenderTask = null
     }
     if (__mpx_mode__ === 'web') {
-      this.vueInstance = null
+      // 收集setup中生命周期钩子,动态注册的hooks
+      this.hooks = {}
+      this.scope = effectScope(true)
     }
   }
 
@@ -89,10 +102,6 @@ export default class MpxProxy {
       this.initProps()
       this.initSetup()
       unsetCurrentInstance()
-    }
-    // 将injectHook挂载的生命周期钩子挂载到proxy的hooks对象上
-    if (__mpx_mode__ === 'web') {
-      this.hooks = (this.vueInstance && this.vueInstance.hooks) || {}
     }
     // beforeCreate需要在setup执行过后执行
     this.callHook(BEFORECREATE)
@@ -113,7 +122,7 @@ export default class MpxProxy {
     }
 
     if (this.reCreated) {
-      queuePostFlushCb(this.mounted.bind(this))
+      nextTick(this.mounted.bind(this))
     }
   }
 
@@ -140,24 +149,17 @@ export default class MpxProxy {
 
   propsUpdated () {
     const updateJob = this.updateJob || (this.updateJob = () => {
-      // 只有当前没有渲染任务时，属性更新才需要单独触发beforeUpdate/updated，否则可以由渲染任务触发beforeUpdate/updated
-      if (this.currentRenderTask?.state === 'finished') {
-        // todo props更新时非渲染任务触发的beforeUpdate/updated不够严谨，没有正确地表征视图更新前及更新后
-        this.beforeUpdate()
+      // 只有当前没有渲染任务时，属性更新才需要单独触发updated，否则可以由渲染任务触发updated
+      if (this.currentRenderTask?.resolved) {
         this.updated()
       }
     })
-    queuePostFlushCb(updateJob)
-  }
-
-  beforeUpdate () {
-    if (this.isMounted()) {
-      this.callHook(BEFOREUPDATE)
-    }
+    nextTick(updateJob)
   }
 
   updated () {
     if (this.isMounted()) {
+      this.callHook(BEFOREUPDATE)
       this.callHook(UPDATED)
     }
   }
@@ -197,7 +199,7 @@ export default class MpxProxy {
       this.target.$watch = this.watch.bind(this)
       // 强制执行render
       this.target.$forceUpdate = this.forceUpdate.bind(this)
-      this.target.$nextTick = fn => nextTick(fn, this)
+      this.target.$nextTick = nextTick
       // 挂载$refs对象
       this.target.$refs = {}
     }
@@ -217,7 +219,6 @@ export default class MpxProxy {
         {
           triggerEvent: this.target.triggerEvent.bind(this.target),
           refs: this.target.$refs,
-          // nextTick: fn => nextTick(fn, this),
           forceUpdate: this.forceUpdate.bind(this),
           selectComponent: this.target.selectComponent.bind(this.target),
           selectAllComponents: this.target.selectAllComponents.bind(this.target),
@@ -476,7 +477,6 @@ export default class MpxProxy {
         this.updated()
         renderTask && renderTask.resolve()
       }
-      this.beforeUpdate()
     }
     data = processUndefined(data)
     if (typeof EXPORT_MPX.config.setDataHandler === 'function') {
@@ -545,7 +545,18 @@ export default class MpxProxy {
       }
       options.sync ? this.doRender() : queueJob(this.doRender.bind(this))
     }
-    callback && nextTick(callback.bind(this.target), this)
+
+    if (callback) {
+      callback = callback.bind(this.target)
+      const doCallback = () => {
+        if (this.currentRenderTask?.resolved === false) {
+          this.currentRenderTask.promise.then(callback)
+        } else {
+          callback()
+        }
+      }
+      options.sync ? doCallback() : nextTick(doCallback)
+    }
   }
 }
 
@@ -574,31 +585,19 @@ export const injectHook = (hookName, hook, instance = currentInstance) => {
     }
     if (isFunction(hook)) (instance.hooks[hookName] || (instance.hooks[hookName] = [])).push(wrappedHook)
   }
-  // 将inject的生命周期钩子挂载到vue实例上
-  if (__mpx_mode__ === 'web') {
-    let vueInstance = getVueCurrentInstance().proxy
-    if (vueInstance._isDestroyed) return
-    if (vueInstance && isFunction(hook)) {
-      const wrappedVueHook = (...args) => {
-        const resVue = callWithErrorHandling(hook, vueInstance, `${hookName} hook`, args)
-        return resVue
-      }
-      vueInstance.hooks = vueInstance.hooks || {}
-      vueInstance.hooks[hookName] = vueInstance.hooks[hookName] || []
-      vueInstance.hooks[hookName].push(wrappedVueHook)
-    }
-  }
 }
 
-export const onBeforeCreate = (fn) => injectHook(BEFORECREATE, fn)
-export const onCreated = (fn) => injectHook(CREATED, fn)
-export const onBeforeMount = (fn) => injectHook(BEFOREMOUNT, fn)
-export const onMounted = (fn) => injectHook(MOUNTED, fn)
-export const onBeforeUpdate = (fn) => injectHook(BEFOREUPDATE, fn)
-export const onUpdated = (fn) => injectHook(UPDATED, fn)
-export const onBeforeUnmount = (fn) => injectHook(BEFOREUNMOUNT, fn)
-export const onUnmounted = (fn) => injectHook(UNMOUNTED, fn)
-export const onLoad = (fn) => injectHook(ONLOAD, fn)
-export const onShow = (fn) => injectHook(ONSHOW, fn)
-export const onHide = (fn) => injectHook(ONHIDE, fn)
-export const onResize = (fn) => injectHook(ONRESIZE, fn)
+export const createHook = (hookName) => (hook, instance) => injectHook(hookName, hook, instance)
+// 在代码中调用以下生命周期钩子时, 将生命周期钩子注入到mpxProxy实例上
+export const onBeforeCreate = createHook(BEFORECREATE)
+export const onCreated = createHook(CREATED)
+export const onBeforeMount = createHook(BEFOREMOUNT)
+export const onMounted = createHook(MOUNTED)
+export const onBeforeUpdate = createHook(BEFOREUPDATE)
+export const onUpdated = createHook(UPDATED)
+export const onBeforeUnmount = createHook(BEFOREUNMOUNT)
+export const onUnmounted = createHook(UNMOUNTED)
+export const onLoad = createHook(ONLOAD)
+export const onShow = createHook(ONSHOW)
+export const onHide = createHook(ONHIDE)
+export const onResize = createHook(ONRESIZE)

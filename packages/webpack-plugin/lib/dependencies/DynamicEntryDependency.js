@@ -5,7 +5,6 @@ const addQuery = require('../utils/add-query')
 const toPosix = require('../utils/to-posix')
 const async = require('async')
 const parseRequest = require('../utils/parse-request')
-const { MPX_CURRENT_CHUNK } = require('../utils/const')
 
 class DynamicEntryDependency extends NullDependency {
   constructor (request, entryType, outputPath = '', packageRoot = '', relativePath = '', context = '', range) {
@@ -61,7 +60,7 @@ class DynamicEntryDependency extends NullDependency {
         })
 
         let resultPath = publicPath + filename
-        if (relativePath && relativePath !== MPX_CURRENT_CHUNK) {
+        if (relativePath) {
           resultPath = toPosix(path.relative(relativePath, resultPath))
         }
 
@@ -91,10 +90,16 @@ class DynamicEntryDependency extends NullDependency {
   }
 
   mpxAction (module, compilation, callback) {
-    const mpx = compilation.__mpx__
-    const { packageRoot, context } = this
-    this.originEntryNode = mpx.getEntryNode(module)
+    const { __mpx__: mpx, moduleGraph } = compilation
+    let entryModule = module
+    while (true) {
+      const issuer = moduleGraph.getIssuer(entryModule)
+      if (issuer) entryModule = issuer
+      else break
+    }
+    this.originEntryNode = mpx.getEntryNode(entryModule)
     this.publicPath = compilation.outputOptions.publicPath || ''
+    const { packageRoot, context } = this
     if (context) this.resolver = compilation.resolverFactory.get('normal', module.resolveOptions)
     // 分包构建在需要在主包构建完成后在finishMake中处理，返回的资源路径先用key来占位，在合成extractedAssets时再进行最终替换
     if (packageRoot && mpx.currentPackageRoot !== packageRoot) {
@@ -112,10 +117,10 @@ class DynamicEntryDependency extends NullDependency {
 
   // hash会影响最终的codeGenerateResult是否走缓存，由于该dep中resultPath是动态变更的，需要将其更新到hash中，避免错误使用缓存
   updateHash (hash, context) {
-    const { resultPath, relativePath } = this
+    const { resultPath, customApply } = this
     if (resultPath) hash.update(resultPath)
-    // relativePath为MPX_CURRENT_CHUNK时，插入随机hash使当前module的codeGeneration cache失效，从而执行dep.apply动态获取当前module所属的chunk路径
-    if (relativePath === MPX_CURRENT_CHUNK) hash.update('' + (+new Date()) + Math.random())
+    // 当存在customApply时，插入随机hash使当前module的codeGeneration cache失效，从而执行dep.apply动态获取当前module所属的chunk路径
+    if (typeof customApply === 'function') hash.update('' + (+new Date()) + Math.random())
     super.updateHash(hash, context)
   }
 
@@ -145,19 +150,14 @@ class DynamicEntryDependency extends NullDependency {
 }
 
 DynamicEntryDependency.Template = class DynamicEntryDependencyTemplate {
-  apply (dep, source, {
-    module,
-    chunkGraph
-  }) {
-    let { resultPath, range, key, outputPath, relativePath, publicPath } = dep
-    if (outputPath === 'custom-tab-bar/index') {
-      // replace with true for custom-tab-bar
-      source.replace(range[0], range[1] - 1, 'true')
-    } else if (resultPath) {
-      if (relativePath === MPX_CURRENT_CHUNK) {
-        relativePath = publicPath + path.dirname(chunkGraph.getModuleChunks(module)[0].name)
-        resultPath = toPosix(path.relative(relativePath, resultPath))
-      }
+  apply (dep, source, options) {
+    const { resultPath, range, key, customApply } = dep
+
+    if (typeof customApply === 'function') {
+      return customApply(dep, source, options)
+    }
+
+    if (resultPath) {
       source.replace(range[0], range[1] - 1, JSON.stringify(resultPath))
     } else {
       const replaceRange = `mpx_replace_path_${key}`

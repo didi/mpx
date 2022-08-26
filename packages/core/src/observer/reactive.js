@@ -228,4 +228,5 @@ export function markRaw (value) {
   if (isObject(value)) {
     rawSet.add(value)
   }
+  return value
 }

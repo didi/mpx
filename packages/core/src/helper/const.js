@@ -6,3 +6,5 @@ export const PausedState = {
   dirty: 1,
   resumed: 2
 }
+
+export const DefaultLocale = 'zh-CN'

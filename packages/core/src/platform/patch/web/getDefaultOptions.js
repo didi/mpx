@@ -1,7 +1,8 @@
 import builtInKeysMap from '../builtInKeysMap'
 import mergeOptions from '../../../core/mergeOptions'
-import MpxProxy from '../../../core/proxy'
 import { diffAndCloneA } from '../../../helper/utils'
+import { getCurrentInstance as getVueCurrentInstance } from '../../export/index'
+import MpxProxy, { setCurrentInstance, unsetCurrentInstance } from '../../../core/proxy'
 
 function filterOptions (options) {
   const newOptions = {}
@@ -27,25 +28,40 @@ function initProxy (context, rawOptions) {
   if (!context.__mpxProxy) {
     // 创建proxy对象
     context.__mpxProxy = new MpxProxy(rawOptions, context)
-    // proxy上挂载当前vue实例，在调用created的时候可以通过该实例拿到注册到实例上的hooks钩子供调用
-    context.__mpxProxy.vueInstance = context
     context.__mpxProxy.created()
   } else if (context.__mpxProxy.isUnmounted()) {
     context.__mpxProxy = new MpxProxy(rawOptions, context, true)
+    context.__mpxProxy.created()
+  } else if (context.__mpxProxy && rawOptions.setup) {
+    // 因setup是在created之前执行, 注册生命周期钩子时需要mpxProxy已经实例化
     context.__mpxProxy.created()
   }
 }
 
 export function getDefaultOptions (type, { rawOptions = {} }) {
+  const rawSetup = rawOptions.setup
+  if (rawSetup) {
+    rawOptions.setup = (props) => {
+      const instance = getVueCurrentInstance().proxy
+      instance.__mpxProxy = new MpxProxy(rawOptions, instance)
+      setCurrentInstance(instance.__mpxProxy)
+      const newContext = {
+        triggerEvent: instance.triggerEvent.bind(instance),
+        createSelectorQuery: instance.createSelectorQuery.bind(instance),
+        selectComponent: instance.selectComponent.bind(instance),
+        selectAllComponents: instance.selectAllComponents.bind(instance)
+      }
+      const setupRes = rawSetup(props, newContext)
+      unsetCurrentInstance(instance.__mpxProxy)
+      return setupRes
+    }
+  }
   const rootMixins = [{
     created () {
       initProxy(this, rawOptions)
     },
     mounted () {
       if (this.__mpxProxy) this.__mpxProxy.mounted()
-    },
-    beforeUpdate () {
-      if (this.__mpxProxy) this.__mpxProxy.beforeUpdate()
     },
     updated () {
       if (this.__mpxProxy) this.__mpxProxy.updated()
