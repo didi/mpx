@@ -1,4 +1,4 @@
-import EXPORT_MPX, { reactive, computed } from '@mpxjs/core'
+import { reactive, computed } from '@mpxjs/core'
 import { proxy, getByPath } from './helper/utils'
 import { warn } from './helper/log'
 
@@ -176,7 +176,7 @@ class Store {
 
   resetStoreVM () {
     if (__mpx_mode__ === 'web') {
-      const Vue = EXPORT_MPX.__vue
+      const Vue = global.__mpx.__vue
       const vm = new Vue({
         data: {
           __mpxState: this.state
