@@ -28,3 +28,7 @@ export {
   set,
   del
 } from 'vue'
+
+export {
+  useI18n
+} from 'vue-i18n-bridge'

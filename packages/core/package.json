@@ -24,8 +24,10 @@
   },
   "peerDependencies": {
     "@mpxjs/api-proxy": "^2.7.44",
-    "vue": "^2.6.10",
-    "vue-i18n": "^8.15.3"
+    "vue": "^2.7.10",
+    "vue-demi": "^0.13.11",
+    "vue-i18n": "^8.27.2",
+    "vue-i18n-bridge": "^9.2.2"
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org"
