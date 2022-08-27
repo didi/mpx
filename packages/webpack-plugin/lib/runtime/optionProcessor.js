@@ -13,8 +13,7 @@ export default function processOption (
   genericsInfo,
   mixin,
   Vue,
-  VueRouter,
-  i18n
+  VueRouter
 ) {
   if (ctorType === 'app') {
     // 对于app中的组件需要全局注册
@@ -327,10 +326,6 @@ export default function processOption (
         // 初始化length
         global.__mpxRouter.__mpxHistoryLength = global.history.length
       }
-    }
-
-    if (i18n) {
-      option.i18n = i18n
     }
   } else {
     // 局部注册页面和组件中依赖的组件

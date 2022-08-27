@@ -1,0 +1,79 @@
+{
+  "id": "3562009",
+  "name": "呼我小程序",
+  "font_family": "iconfont",
+  "css_prefix_text": "icon-",
+  "description": "呼我字体图标",
+  "glyphs": [
+    {
+      "icon_id": "1166151",
+      "name": "方向盘",
+      "font_class": "iconfontzhizuobiaozhun023150",
+      "unicode": "e698",
+      "unicode_decimal": 59032
+    },
+    {
+      "icon_id": "5912736",
+      "name": "座位",
+      "font_class": "zuowei",
+      "unicode": "e613",
+      "unicode_decimal": 58899
+    },
+    {
+      "icon_id": "82754",
+      "name": "删除2",
+      "font_class": "shanchu2",
+      "unicode": "e601",
+      "unicode_decimal": 58881
+    },
+    {
+      "icon_id": "5387571",
+      "name": "箭头_列表向右",
+      "font_class": "jiantou_liebiaoxiangyou",
+      "unicode": "eb03",
+      "unicode_decimal": 60163
+    },
+    {
+      "icon_id": "5387574",
+      "name": "箭头_列表向左",
+      "font_class": "jiantou_liebiaoxiangzuo",
+      "unicode": "eb04",
+      "unicode_decimal": 60164
+    },
+    {
+      "icon_id": "4395676",
+      "name": "单箭头",
+      "font_class": "single_arrow",
+      "unicode": "e623",
+      "unicode_decimal": 58915
+    },
+    {
+      "icon_id": "6250630",
+      "name": "清除",
+      "font_class": "qingchu",
+      "unicode": "e713",
+      "unicode_decimal": 59155
+    },
+    {
+      "icon_id": "29236665",
+      "name": "路线明确",
+      "font_class": "luxianmingque",
+      "unicode": "e600",
+      "unicode_decimal": 58880
+    },
+    {
+      "icon_id": "18012210",
+      "name": "交易所",
+      "font_class": "jiaoyisuo",
+      "unicode": "e61b",
+      "unicode_decimal": 58907
+    },
+    {
+      "icon_id": "584025",
+      "name": "定位",
+      "font_class": "dingwei",
+      "unicode": "e60e",
+      "unicode_decimal": 58894
+    }
+  ]
+}

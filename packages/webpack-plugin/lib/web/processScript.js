@@ -144,7 +144,9 @@ module.exports = function (script, {
         if (i18n) {
           const i18nObj = Object.assign({}, i18n)
           content += `  import VueI18n from 'vue-i18n'
-  Vue.use(VueI18n)\n`
+  import { createI18n } from 'vue-i18n-bridge'
+  
+  Vue.use(VueI18n , { bridge: true })\n`
           const requestObj = {}
           const i18nKeys = ['messages', 'dateTimeFormats', 'numberFormats']
           i18nKeys.forEach((key) => {
@@ -157,12 +159,9 @@ module.exports = function (script, {
           Object.keys(requestObj).forEach((key) => {
             content += `  i18nCfg.${key} = require(${requestObj[key]})\n`
           })
-          content += `  const i18n = new VueI18n(i18nCfg)
-  i18n.mergeMessages = (newMessages) => {
-    Object.keys(newMessages).forEach((locale) => {
-      i18n.mergeLocaleMessage(locale, newMessages[locale])
-    })
-  }
+          content += `  i18nCfg.legacy = false\n`
+          content += `  const i18n = createI18n(i18nCfg, VueI18n)
+  Vue.use(i18n)
   Mpx.i18n = i18n
   \n`
         }
@@ -270,10 +269,6 @@ module.exports = function (script, {
         content += `,
     Vue,
     VueRouter`
-        if (i18n) {
-          content += `,
-    i18n`
-        }
       }
       content += `\n  )\n`
       return content

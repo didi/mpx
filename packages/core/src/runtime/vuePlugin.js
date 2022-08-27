@@ -10,12 +10,6 @@ const vuePlugin = {
         detail: eventDetail
       })
     }
-    Vue.prototype.createSelectorQuery = function () {
-      return webApi.createSelectorQuery().in(this)
-    }
-    Vue.prototype.createIntersectionObserver = function (component, options) {
-      return webApi.createIntersectionObserver(component, options)
-    }
     Vue.prototype.selectComponent = function (selector, all) {
       const result = []
       if (/[>\s]/.test(selector)) {
@@ -29,6 +23,12 @@ const vuePlugin = {
     }
     Vue.prototype.selectAllComponents = function (selector) {
       return this.selectComponent(selector, true)
+    }
+    Vue.prototype.createSelectorQuery = function () {
+      return webApi.createSelectorQuery().in(this)
+    }
+    Vue.prototype.createIntersectionObserver = function (component, options) {
+      return webApi.createIntersectionObserver(component, options)
     }
   }
 }
