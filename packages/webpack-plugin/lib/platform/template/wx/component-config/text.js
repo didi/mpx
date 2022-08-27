@@ -6,7 +6,7 @@ module.exports = function ({ print }) {
   const aliPropLog = print({ platform: 'ali', tag: TAG_NAME, isError: false })
   const ttPropLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false })
   const qqPropLog = print({ platform: 'qq', tag: TAG_NAME, isError: false })
-
+  const ksPropLog = print({ platform: 'ks', tag: TAG_NAME, isError: false })
   return {
     test: TAG_NAME,
     web (tag, { el }) {
@@ -29,7 +29,8 @@ module.exports = function ({ print }) {
         ali: aliPropLog,
         tt: ttPropLog,
         qq: qqPropLog,
-        qa: qaPropLog
+        qa: qaPropLog,
+        ks: ksPropLog
       },
       {
         test: /^(selectable|space|decode|use-built-in)$/,

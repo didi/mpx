@@ -10,7 +10,8 @@ const TT_UNSUPPORTED_TAG_NAME_ARR = ['movable-view', 'cover-image', 'cover-view'
 const JD_UNSUPPORTED_TAG_NAME_ARR = ['functional-page-navigator', 'live-pusher', 'live-player', 'rich-text', 'audio', 'video', 'camera']
 // 快应用不支持的标签集合
 const QA_UNSUPPORTED_TAG_NAME_ARR = ['movable-view', 'movable-area', 'open-data', 'official-account', 'editor', 'functional-page-navigator', 'live-player', 'live-pusher', 'ad', 'cover-image']
-
+// 快手小程序不支持的标签集合
+const KS_UNSUPPORTED_TAG_NAME_ARR = ['functional-page-navigator', 'live-pusher', 'live-player']
 /**
  * @param {function(object): function} print
  * @return {array}

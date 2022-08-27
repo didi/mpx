@@ -86,7 +86,7 @@ global.currentInject = {
   moduleId: ${JSON.stringify(moduleId)},
   render: function () {
     ${compiler.genNode(ast)}
-    this._r();
+    this.r();
   }
 };\n`
 

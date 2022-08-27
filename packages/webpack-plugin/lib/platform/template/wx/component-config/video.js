@@ -11,6 +11,8 @@ module.exports = function ({ print }) {
   const aliEventLogError = print({ platform: 'ali', tag: TAG_NAME, isError: false, type: 'event' })
   const qaPropLog = print({ platform: 'qa', tag: TAG_NAME, isError: false })
   const qaEventLogError = print({ platform: 'qa', tag: TAG_NAME, isError: false, type: 'event' })
+  const ksPropLog = print({ platform: 'ks', tag: TAG_NAME, isError: false })
+  const ksEventLogError = print({ platform: 'ks', tag: TAG_NAME, isError: false, type: 'event' })
   return {
     test: TAG_NAME,
     web (tag, { el }) {
@@ -48,6 +50,10 @@ module.exports = function ({ print }) {
       {
         test: /^(duration|danmu-list|danmu-btn|enable-danmu|muted|initial-time|page-gesture|direction|show-progress|show-center-play-btn|enable-progress-gesture|show-mute-btn|enable-play-gesture|auto-pause-if-navigate|auto-pause-if-open-native|vslide-gesture|vslide-gesture-in-fullscreen|ad-unit-id|poster-for-crawler|show-casting-button|picture-in-picture-mode|picture-in-picture-show-progress|enable-auto-rotation|show-screen-lock-button|show-snapshot-button)$/,
         qa: qaPropLog
+      },
+      {
+        test:/^(enable-auto-rotation|show-snapshot-button|show-background-playback-button|background-poster|referrer-policy|is-drm|provision-url|certificate-url|license-url)$/,
+        ks: ksPropLog
       }
     ],
     event: [
@@ -82,6 +88,10 @@ module.exports = function ({ print }) {
       {
         test: /^(progress|enterpictureinpicture|leavepictureinpicture|controlstoggle|loadedmetadata|seekcomplete)$/,
         qa: qaEventLogError
+      },
+      {
+        test:/^(waiting|progress|loadedmetadata|controlstoggle|enterpictureinpicture|leavepictureinpicture|seekcomplete)$/,
+        ks: ksEventLogError
       }
     ]
   }

@@ -3,7 +3,7 @@ import { isObject } from '../../helper/utils'
 export default function renderHelperMixin () {
   return {
     methods: {
-      _i (val, handler) {
+      i (val, handler) {
         let i, l, keys, key
         if (Array.isArray(val) || typeof val === 'string') {
           for (i = 0, l = val.length; i < l; i++) {
@@ -21,11 +21,11 @@ export default function renderHelperMixin () {
           }
         }
       },
-      _c (key, value) {
+      c (key, value) {
         this.__mpxProxy.renderData[key] = value
         return value
       },
-      _r () {
+      r () {
         this.__mpxProxy.renderWithData()
       }
     }

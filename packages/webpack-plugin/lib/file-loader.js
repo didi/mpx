@@ -31,7 +31,7 @@ module.exports = function loader (content, prevOptions) {
     this._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, 'staticResource', outputPath, packageRoot))
   }
 
-  let publicPath = `__webpack_public_path__ + ${JSON.stringify(url)}`
+  let publicPath = queryObj?.noPublicPath ? JSON.stringify(url) :`__webpack_public_path__ + ${JSON.stringify(url)}`
 
   if (options.publicPath) {
     if (typeof options.publicPath === 'function') {

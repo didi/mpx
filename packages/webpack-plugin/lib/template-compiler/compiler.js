@@ -1194,7 +1194,7 @@ function processBindEvent (el, options) {
   if (!isEmptyObject(eventConfigMap)) {
     addAttrs(el, [{
       name: 'data-eventconfigs',
-      value: `{{${config[mode].event.shallowStringify(eventConfigMap)}}}`
+      value: mode === "ks" ? config[mode].event.shallowStringify(eventConfigMap) : `{{${config[mode].event.shallowStringify(eventConfigMap)}}}`
     }])
   }
 }
@@ -1233,7 +1233,7 @@ function parseMustache (raw = '') {
           const funcNameREG = new RegExp(`${i18nFuncName}\\(`, 'g')
           if (funcNameRE.test(exp)) {
             if (i18n.useComputed) {
-              const i18nInjectComputedKey = `_i${i18nInjectableComputed.length + 1}`
+              const i18nInjectComputedKey = `i${i18nInjectableComputed.length + 1}`
               i18nInjectableComputed.push(`${i18nInjectComputedKey}: function(){\nreturn ${exp.trim()}}`)
               exp = i18nInjectComputedKey
             } else {
@@ -1410,6 +1410,7 @@ function addWxsContent (meta, module, content) {
 }
 
 function postProcessWxs (el, meta) {
+  if(mode === 'ks') return
   if (el.tag === config[mode].wxs.tag) {
     let module = el.attrsMap[config[mode].wxs.module]
     if (module) {
@@ -1607,6 +1608,7 @@ function processText (el) {
 // }
 
 function injectWxs (meta, module, src) {
+  if(mode === 'ks') return
   if (addWxsModule(meta, module, src)) {
     return
   }
@@ -1624,6 +1626,7 @@ function injectWxs (meta, module, src) {
 }
 
 function processClass (el, meta) {
+  if(mode === 'ks') return
   const type = 'class'
   const needEx = el.tag.startsWith('th-')
   const targetType = needEx ? 'ex-' + type : type
@@ -1661,6 +1664,7 @@ function processClass (el, meta) {
 }
 
 function processStyle (el, meta) {
+  if(mode === 'ks') return
   const type = 'style'
   const targetType = el.tag.startsWith('th-') ? 'ex-' + type : type
   let dynamicStyle = getAndRemoveAttr(el, config[mode].directive.dynamicStyle).val
@@ -1683,7 +1687,8 @@ function processStyle (el, meta) {
 }
 
 function isRealNode (el) {
-  const virtualNodeTagMap = ['block', 'template', 'import', config[mode].wxs.tag].reduce((map, item) => {
+  let tagList = mode === 'ks' ? ['block', 'template', 'import'] : ['block', 'template', 'import', config[mode].wxs.tag]
+  const virtualNodeTagMap = tagList.reduce((map, item) => {
     map[item] = true
     return map
   }, {})
@@ -1957,7 +1962,7 @@ function postProcessTemplate (el) {
   }
 }
 
-const isValidMode = makeMap('wx,ali,swan,tt,qq,web,qa,jd,dd')
+const isValidMode = makeMap('wx,ali,swan,tt,qq,web,qa,jd,dd,ks')
 
 const wrapRE = /^\((.*)\)$/
 
@@ -2352,7 +2357,7 @@ function genFor (node) {
   node.forProcessed = true
   let index = node.for.index || 'index'
   let item = node.for.item || 'item'
-  return `this._i(${node.for.exp}, function(${item},${index}){\n${genNode(node)}});\n`
+  return `this.i(${node.for.exp}, function(${item},${index}){\n${genNode(node)}});\n`
 }
 
 function genNode (node) {
