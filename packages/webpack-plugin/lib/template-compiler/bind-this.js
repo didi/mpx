@@ -74,7 +74,7 @@ module.exports = {
             const keyPath = getMemberExp(arg)
             if (
               collectedConst[keyPath] ||
-              arg.type === 'Identifier' && collectedConst[arg.name]
+              (arg.type === 'Identifier' && collectedConst[arg.name])
             ) {
               path.remove()
             } else {
