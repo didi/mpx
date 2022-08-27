@@ -173,4 +173,176 @@ getCurrentInstance 只暴露给高阶使用场景，典型的比如在库中。�
 
 getCurrentInstance 只能在 setup 或生命周期钩子中调用。
 
+## useI18n
+
+组合式 API 中使用，用来获取 i18n 实例。
+
+### 参数选项
+
+#### locale
+
+* **类型：** `Locale`
+
+设置语言环境
+
+**注意：** 只传 locale，不传 messages 属性时不起作用
+
+#### fallbackLocale
+
+* **类型：** `Locale`
+
+预设的语言环境，找不到语言环境时进行回退。
+
+#### messages
+
+* **类型：** `LocaleMessages`
+
+本地化的语言环境信息。
+
+### 返回实例属性和方法
+
+#### locale
+* **类型：** `WritableComputedRef<Locale>`
+
+可响应性的 ref 对象，表示当前 i18n 实例所使用的 locale。
+
+修改 ref 值会对局部或者全局语言集的 locale 进行更改，并触发翻译方法重新执行。
+
+#### fallbackRoot
+* **类型：** `Boolean`
+
+本地化失败时是否回归到全局作用域。
+
+#### getLocaleMessage( locale )
+
+* **参数：**
+  * `{Locale} locale`
+* **返回值：** `LocaleMessageObject`
+    
+获取语言环境的 `locale` 信息。
+
+#### setLocaleMessage( locale, message )
+
+* **参数：**
+
+  * `{Locale} locale`
+  * `{LocaleMessageObject} message`
+
+设置语言环境的 `locale` 信息。
+
+#### mergeLocaleMessage( locale, message )
+
+* **参数：**
+
+  * `{Locale} locale`
+  * `{LocaleMessageObject} message`
+
+将语言环境信息 `locale` 合并到已注册的语言环境信息中。
+
+#### messages
+
+* **类型：**
+```ts
+readonly messages: ComputedRef<{
+   [K in keyof Messages]: Messages[K];
+}>;
+```
+
+* **只读**
+
+局部或者全局的语言环境信息。
+
+#### isGlobal
+* **类型：**`Boolean`
+
+是否是全局 i18n 实例。
+
+#### t
+
+文案翻译函数
+
+* **参数：**
+
+  * {Path} key：必填
+  * {number} choice：可选
+  * {Array | Object} values：可选
+
+* **返回值：** TranslateResult
+
+根据传入的 key 以及当前 locale 环境获取对应文案，文案来源是全局作用域还是本地作用域取决于 `useI18n` 执行时是否传入对应的 `messages、locale` 等值。
+
+**choice 参数可选** ，当传入 choice 时，t 函数的表现为使用复数进行翻译，和老版本中的 tc 函数表现一致。
+
+```html
+<template>
+  <view>{{t('car', 1)}}</view>
+  <view>{{t('car', 2)}}</view>
+
+  <view>{{t('apple', 0)}}</view>
+  <view>{{t('apple', 1)}}</view>
+  <view>{{t('apple', 10, {count: 10})}}</view>
+</template>
+
+<script>
+  // 语言环境信息如下：
+  const messages = {
+    en: {
+      car: 'car | cars',
+      apple: 'no apples | one apple | {count} apples'
+    }
+  }
+</script>
+```
+输入如下：
+```html
+<view>car</view>
+<view>cars</view>
+
+<view>no apples</view>
+<view>one apple</view>
+<view>10 apples</view>
+```
+关于复数的更多信息可以点击[查看](https://kazupon.github.io/vue-i18n/zh/guide/pluralization.html#%E5%A4%8D%E6%95%B0)
+
+**values 参数可选** ，如果需要对文案信息即逆行格式化处理，则需要传入 values。
+
+```html
+<template>
+  // 模版输出 hello world
+  <view>{{t('message.hello', { msg: 'hello'})}}</view>
+</template>
+<script>
+  import {createComponent, useI18n} from "@mpxjs/core"
+
+  const messages = {
+    en: {
+      message: {
+        hello: '{msg} world'
+      }
+    }
+  }
+  
+  createComponent({
+    setup(){
+        const { t } = useI18n({
+          messages: {
+              'en-US': en
+          }
+        })
+      return {t}
+    }
+  })
+
+</script>
+```
+
+#### te
+* **参数：**
+
+  * {Path} key：必填
+* **返回值：** boolean
+
+检查 key 是否存在。
+
+
 
