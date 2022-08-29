@@ -1,11 +1,16 @@
-import { warn } from '../helper/log'
 import { ReactiveEffect } from './effect'
 import { isRef } from './ref'
 import { isReactive } from './reactive'
 import { queuePreFlushCb, queuePostFlushCb } from './scheduler'
 import { callWithErrorHandling } from '../helper/errorHandling'
 import { currentInstance } from '../core/proxy'
-import { isFunction, isObject, isArray, noop, remove, isPlainObject } from '../helper/utils'
+import { isFunction, isArray, remove } from '../helper/utils'
+import {
+  noop,
+  isObject,
+  isPlainObject,
+  warn
+} from '@mpxjs/utils'
 
 export function watchEffect (effect, options) {
   return watch(effect, null, options)

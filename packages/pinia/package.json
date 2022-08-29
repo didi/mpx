@@ -22,6 +22,7 @@
   },
   "homepage": "https://github.com/didi/mpx#readme",
   "peerDependencies": {
-    "@mpxjs/core": "^2.7.44"
+    "@mpxjs/core": "^2.7.44",
+    "@mpxjs/utils": "^1.0.0"
   }
 }

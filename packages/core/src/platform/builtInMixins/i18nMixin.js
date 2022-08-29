@@ -1,11 +1,14 @@
 import { BEFORECREATE } from '../../core/innerLifecycle'
-import { merge, isEmptyObject, isPlainObject, isNumber } from '../../helper/utils'
+import { merge, isEmptyObject, isNumber } from '../../helper/utils'
 import { DefaultLocale } from '../../helper/const'
-import { error } from '../../helper/log'
 import { ref, shallowRef, triggerRef } from '../../observer/ref'
 import { watch } from '../../observer/watch'
 import { effectScope } from '../../observer/effectScope'
 import { getCurrentInstance, onUnmounted } from '../../core/proxy'
+import {
+  error,
+  isPlainObject
+} from '@mpxjs/utils'
 
 let i18n = null
 

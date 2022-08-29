@@ -41,5 +41,8 @@
   "bugs": {
     "url": "https://github.com/didi/mpx/issues"
   },
-  "sideEffects": false
+  "sideEffects": false,
+  "peerDependencies": {
+    "@mpxjs/utils": "^1.0.0"
+  }
 }

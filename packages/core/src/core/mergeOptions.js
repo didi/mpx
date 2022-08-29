@@ -1,8 +1,12 @@
-import { isObject, aliasReplace, findItem, makeMap } from '../helper/utils'
+import { aliasReplace, findItem, makeMap } from '../helper/utils'
 import { getConvertRule } from '../convertor/convertor'
-import { error, warn } from '../helper/log'
 import builtInKeysMap from '../platform/patch/builtInKeysMap'
 import { implemented } from './implement'
+import {
+  isObject,
+  error,
+  warn
+} from '@mpxjs/utils'
 
 let currentHooksMap = {}
 let curType

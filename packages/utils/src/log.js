@@ -1,3 +1,4 @@
+import EXPORT_MPX from '@mpxjs/core'
 const isDev = process.env.NODE_ENV !== 'production'
 
 function isFunction (fn) {
@@ -5,7 +6,7 @@ function isFunction (fn) {
 }
 
 export function warn (msg, location, e) {
-  const condition = global.__mpx?.config.ignoreWarning
+  const condition = EXPORT_MPX.config.ignoreWarning
   let ignore = false
   if (typeof condition === 'boolean') {
     ignore = condition
@@ -20,8 +21,8 @@ export function warn (msg, location, e) {
 }
 
 export function error (msg, location, e) {
-  if (isFunction( global.__mpx?.config.errorHandler)) {
-    global.__mpx?.config.errorHandler(msg, location, e)
+  if (isFunction(EXPORT_MPX.config.errorHandler)) {
+    EXPORT_MPX.config.errorHandler(msg, location, e)
   }
   return log('error', msg, location, e)
 }

@@ -1,10 +1,12 @@
-import _getByPath from './getByPath'
-
 import { isRef } from '../observer/ref'
 
 import { set } from '../observer/reactive'
 
-import EXPORT_MPX from '../index'
+import _getByPath, {
+  noop,
+  isObject,
+  isPlainObject
+} from '@mpxjs/utils'
 
 // type在支付宝环境下不一定准确，判断是普通对象优先使用isPlainObject（新版支付宝不复现，issue #644 修改isPlainObject实现与type等价）
 export function type (n) {
@@ -162,10 +164,6 @@ export function merge (target, ...sources) {
   return target
 }
 
-export function isObject (obj) {
-  return obj !== null && typeof obj === 'object'
-}
-
 export function isString (str) {
   return typeof str === 'string'
 }
@@ -180,26 +178,6 @@ export function isBoolean (bool) {
 
 export function isNumber (num) {
   return typeof num === 'number'
-}
-
-export function isPlainObject (value) {
-  if (value === null || typeof value !== 'object' || type(value) !== 'Object') return false
-  const proto = Object.getPrototypeOf(value)
-  if (proto === null) return true
-  // 处理支付宝接口返回数据对象的__proto__与js中创建对象的__proto__不一致的问题，判断value.__proto__.__proto__ === null时也认为是plainObject
-  const innerProto = Object.getPrototypeOf(proto)
-  if (proto === Object.prototype || innerProto === null) return true
-  // issue #644
-  if (EXPORT_MPX.config.observeClassInstance) {
-    if (Array.isArray(EXPORT_MPX.config.observeClassInstance)) {
-      for (let i = 0; i < EXPORT_MPX.config.observeClassInstance.length; i++) {
-        if (proto === EXPORT_MPX.config.observeClassInstance[i].prototype) return true
-      }
-    } else {
-      return true
-    }
-  }
-  return false
 }
 
 const hasOwnProperty = Object.prototype.hasOwnProperty
@@ -423,9 +401,6 @@ export function processUndefined (obj) {
     }
   }
   return result
-}
-
-export const noop = () => {
 }
 
 export function diffAndCloneA (a, b) {

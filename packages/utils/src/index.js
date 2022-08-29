@@ -1,3 +1,4 @@
+import _getByPath from './getByPath'
 export {
   warn,
   error
@@ -5,7 +6,11 @@ export {
 
 export {
   noop,
+  type,
   isObject,
+  isPlainObject,
   getByPath,
   normalizeMap
 } from './common'
+
+export default _getByPath

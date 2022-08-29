@@ -6,11 +6,8 @@ import { computed } from '../observer/computed'
 import { queueJob, nextTick } from '../observer/scheduler'
 import EXPORT_MPX from '../index'
 import {
-  type,
-  noop,
   proxy,
   isEmptyObject,
-  isPlainObject,
   processUndefined,
   setByPath,
   getByPath,
@@ -21,11 +18,15 @@ import {
   getFirstKey,
   makeMap,
   hasOwn,
-  isObject,
   isFunction,
   isString
 } from '../helper/utils'
-import _getByPath from '../helper/getByPath'
+import _getByPath, {
+  noop,
+  type,
+  isObject,
+  isPlainObject
+} from '@mpxjs/utils'
 import {
   BEFORECREATE,
   CREATED,
