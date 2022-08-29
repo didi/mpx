@@ -1,27 +1,52 @@
-const NullDependency = require('webpack/lib/dependencies/NullDependency')
-const parseRequest = require('@mpxjs/utils/parse-request')
-const makeSerializable = require('webpack/lib/util/makeSerializable')
+import parseRequest from '@mpxjs/utils/parse-request'
+import makeSerializable from 'webpack/lib/util/makeSerializable'
+import {
+  Compilation,
+  dependencies,
+  Module,
+  sources,
+  WebpackError
+} from 'webpack'
+import {
+  NullDeserializeContext,
+  NullHash,
+  NullSerializeContext,
+  NullUpdateHashContext
+} from './dependency'
 
-class ResolveDependency extends NullDependency {
-  constructor (resource, packageName, issuerResource, range) {
+class ResolveDependency extends dependencies.NullDependency {
+  resource: string
+  packageName: string
+  issuerResource: string
+  range: number[]
+  compilation?: Compilation
+  resolved?: string
+
+  constructor(
+    resource: string,
+    packageName: string,
+    issuerResource: string,
+    range: number[]
+  ) {
     super()
     this.resource = resource
     this.packageName = packageName
     this.issuerResource = issuerResource
     this.range = range
-    this.compilation = null
   }
 
-  get type () {
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  override get type() {
     return 'mpx resolve'
   }
 
-  mpxAction (module, compilation, callback) {
+  mpxAction(module: Module, compilation: Compilation, callback: () => void) {
     this.compilation = compilation
     return callback()
   }
 
-  getResolved () {
+  getResolved(): string {
     const { resource, packageName, compilation } = this
     if (!compilation) return ''
     const mpx = compilation.__mpx__
@@ -32,22 +57,33 @@ class ResolveDependency extends NullDependency {
     const mainComponentsMap = componentsMap.main
     const currentStaticResourcesMap = staticResourcesMap[packageName]
     const mainStaticResourcesMap = staticResourcesMap.main
-    return pagesMap[resourcePath] || currentComponentsMap[resourcePath] || mainComponentsMap[resourcePath] || currentStaticResourcesMap[resourcePath] || mainStaticResourcesMap[resourcePath] || ''
+    return (
+      pagesMap[resourcePath] ||
+      currentComponentsMap[resourcePath] ||
+      mainComponentsMap[resourcePath] ||
+      currentStaticResourcesMap[resourcePath] ||
+      mainStaticResourcesMap[resourcePath] ||
+      ''
+    )
   }
 
   // resolved可能会动态变更，需用此更新hash
-  updateHash (hash, context) {
+  override updateHash(hash: NullHash, context: NullUpdateHashContext) {
     this.resolved = this.getResolved()
     const { resource, issuerResource, compilation } = this
     if (this.resolved) {
       hash.update(this.resolved)
     } else {
-      compilation.errors.push(new Error(`Path ${resource} is not a page/component/static resource, which is resolved from ${issuerResource}!`))
+      compilation?.errors.push(
+        new WebpackError(
+          `Path ${resource} is not a page/component/static resource, which is resolved from ${issuerResource}!`
+        )
+      )
     }
     super.updateHash(hash, context)
   }
 
-  serialize (context) {
+  override serialize(context: NullSerializeContext) {
     const { write } = context
     write(this.resource)
     write(this.packageName)
@@ -56,7 +92,7 @@ class ResolveDependency extends NullDependency {
     super.serialize(context)
   }
 
-  deserialize (context) {
+  override deserialize(context: NullDeserializeContext) {
     const { read } = context
     this.resource = read()
     this.packageName = read()
@@ -67,18 +103,21 @@ class ResolveDependency extends NullDependency {
 }
 
 ResolveDependency.Template = class ResolveDependencyTemplate {
-  apply (dep, source) {
+  apply(dep: ResolveDependency, source: sources.ReplaceSource) {
     const content = this.getContent(dep)
     source.replace(dep.range[0], dep.range[1] - 1, content)
   }
 
-  getContent (dep) {
+  getContent(dep: ResolveDependency) {
     const { resolved = '', compilation } = dep
-    const publicPath = compilation.outputOptions.publicPath || ''
+    const publicPath = compilation?.outputOptions.publicPath || ''
     return JSON.stringify(publicPath + resolved)
   }
 }
 
-makeSerializable(ResolveDependency, '@mpxjs/web-plugin/src/webpack/dependencies/ResolveDependency')
+makeSerializable(
+  ResolveDependency,
+  '@mpxjs/web-plugin/src/webpack/dependencies/ResolveDependency'
+)
 
 module.exports = ResolveDependency

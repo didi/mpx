@@ -3,8 +3,8 @@ import path from 'path'
 export function evalJSONJS(
   source: string,
   filename: string,
-  fs: any,
   defs: Record<string, any>,
+  fs: any,
   callback: (filename: string) => void
 ): Record<string, { exports: any }> {
   const defKeys = Object.keys(defs)

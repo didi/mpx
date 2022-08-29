@@ -1,9 +1,19 @@
-const normalize = require('@mpxjs/utils/normalize')
+import normalize from '@mpxjs/utils/normalize'
+import { LoaderContext } from 'webpack'
+import { RESOLVE_IGNORED_ERR } from '../../constants/index'
+
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const parseRequest = require(normalize.utils('parse-request'))
-const { RESOLVE_IGNORED_ERR } = require('./const')
+
+type LoaderContextResolveCallback = Parameters<LoaderContext<null>['resolve']>[2]
 
 // todo 提供不记录dependency的resolve方法，非必要的情况下不记录dependency，提升缓存利用率
-module.exports = (context, request, loaderContext, callback) => {
+export default (
+  context: string,
+  request: string,
+  loaderContext: LoaderContext<null>,
+  callback: LoaderContextResolveCallback
+): any => {
   const { queryObj } = parseRequest(request)
   context = queryObj.context || context
   return loaderContext.resolve(context, request, (err, resource, info) => {

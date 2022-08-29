@@ -1,56 +1,66 @@
-const ModuleDependency = require('webpack/lib/dependencies/ModuleDependency')
-const makeSerializable = require('webpack/lib/util/makeSerializable')
-const InitFragment = require('webpack/lib//InitFragment')
+import makeSerializable from 'webpack/lib/util/makeSerializable'
+import InitFragment from 'webpack/lib/InitFragment'
+import { dependencies, sources } from 'webpack'
+import {
+  ModuleDeserializeContext,
+  ModuleHash,
+  ModuleSerializeContext,
+  ModuleUpdateHashContext
+} from './dependency'
+class CommonJsVariableDependency extends dependencies.ModuleDependency {
+  name: string
 
-class CommonJsVariableDependency extends ModuleDependency {
-  constructor (request, name = '') {
+  constructor(request: string, name = '') {
     super(request)
     this.name = name
   }
 
-  serialize (context) {
+  override serialize(context: ModuleSerializeContext) {
     const { write } = context
     write(this.name)
     super.serialize(context)
   }
 
-  deserialize (context) {
+  override deserialize(context: ModuleDeserializeContext) {
     const { read } = context
     this.name = read()
     super.deserialize(context)
   }
 
-  updateHash (hash, context) {
+  override updateHash(hash: ModuleHash, context: ModuleUpdateHashContext) {
     hash.update(this.request)
     hash.update(this.name)
     super.updateHash(hash, context)
   }
 
-  get type () {
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  get type() {
     return 'mpx cjs variable'
   }
 
-  get category () {
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  get category() {
     return 'commonjs'
   }
 }
-
 CommonJsVariableDependency.Template = class CommonJsVariableDependencyTemplate extends (
-  ModuleDependency.Template
+  dependencies.ModuleDependency.Template
 ) {
-  apply (
-    dep,
-    source,
+  override apply(
+    dep: CommonJsVariableDependency,
+    source: sources.ReplaceSource,
     {
       runtimeTemplate,
       moduleGraph,
       chunkGraph,
       runtimeRequirements,
       initFragments
-    }
+    }: any
   ) {
     const importedModule = moduleGraph.getModule(dep)
-    let requireExpr = runtimeTemplate.moduleExports({
+    const requireExpr = runtimeTemplate.moduleExports({
       module: importedModule,
       chunkGraph,
       request: dep.request,
@@ -63,12 +73,7 @@ CommonJsVariableDependency.Template = class CommonJsVariableDependencyTemplate e
     expr += requireExpr + ';\n'
 
     initFragments.push(
-      new InitFragment(
-        expr,
-        InitFragment.STAGE_CONSTANTS,
-        1,
-        dep.request
-      )
+      new InitFragment(expr, InitFragment.STAGE_CONSTANTS, 1, dep.request)
     )
   }
 }

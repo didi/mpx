@@ -1,30 +1,46 @@
-const NullDependency = require('webpack/lib/dependencies/NullDependency')
-const makeSerializable = require('webpack/lib/util/makeSerializable')
+import makeSerializable from 'webpack/lib/util/makeSerializable'
+import { dependencies, sources } from 'webpack'
+import {
+  NullDeserializeContext,
+  NullHash,
+  NullSerializeContext,
+  NullUpdateHashContext
+} from './dependency'
 
-class InjectDependency extends NullDependency {
-  constructor (options = {}) {
+class InjectDependency extends dependencies.NullDependency {
+  content: string
+  index: number
+
+  constructor(
+    options: { content: string; index: number } = {
+      content: '',
+      index: 0
+    }
+  ) {
     super()
     this.content = options.content
     this.index = options.index || 0
   }
 
-  get type () {
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  override get type() {
     return 'mpx inject'
   }
 
-  updateHash (hash, context) {
+  override updateHash(hash: NullHash, context: NullUpdateHashContext) {
     hash.update(this.content)
     super.updateHash(hash, context)
   }
 
-  serialize (context) {
+  override serialize(context: NullSerializeContext) {
     const { write } = context
     write(this.content)
     write(this.index)
     super.serialize(context)
   }
 
-  deserialize (context) {
+  override deserialize(context: NullDeserializeContext) {
     const { read } = context
     this.content = read()
     this.index = read()
@@ -33,11 +49,14 @@ class InjectDependency extends NullDependency {
 }
 
 InjectDependency.Template = class InjectDependencyTemplate {
-  apply (dep, source) {
+  apply(dep: InjectDependency, source: sources.ReplaceSource) {
     source.insert(dep.index, '/* mpx inject */ ' + dep.content)
   }
 }
 
-makeSerializable(InjectDependency, '@mpxjs/web-plugin/src/webpack/dependencies/InjectDependency')
+makeSerializable(
+  InjectDependency,
+  '@mpxjs/web-plugin/src/webpack/dependencies/InjectDependency'
+)
 
 module.exports = InjectDependency

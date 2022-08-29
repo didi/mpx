@@ -1,8 +1,22 @@
-const NullDependency = require('webpack/lib/dependencies/NullDependency')
-const makeSerializable = require('webpack/lib/util/makeSerializable')
+import makeSerializable from 'webpack/lib/util/makeSerializable'
+import { Compilation, dependencies, Module, WebpackError } from 'webpack'
+import {
+  NullDeserializeContext,
+  NullSerializeContext
+} from './dependency'
 
-class RecordResourceMapDependency extends NullDependency {
-  constructor (resourcePath, resourceType, outputPath, packageRoot = '') {
+class RecordResourceMapDependency extends dependencies.NullDependency {
+  resourcePath: string
+  resourceType: string
+  outputPath: string
+  packageRoot: string
+
+  constructor(
+    resourcePath: string,
+    resourceType: string,
+    outputPath: string,
+    packageRoot = ''
+  ) {
     super()
     this.resourcePath = resourcePath
     this.resourceType = resourceType
@@ -10,11 +24,13 @@ class RecordResourceMapDependency extends NullDependency {
     this.packageRoot = packageRoot
   }
 
-  get type () {
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  override get type() {
     return 'mpx record resource map'
   }
 
-  mpxAction (module, compilation, callback) {
+  mpxAction(module: Module, compilation: Compilation, callback: () => void) {
     const mpx = compilation.__mpx__
     const { resourcePath, resourceType, outputPath, packageRoot } = this
     mpx.recordResourceMap({
@@ -23,17 +39,17 @@ class RecordResourceMapDependency extends NullDependency {
       outputPath,
       packageRoot,
       recordOnly: true,
-      warn (e) {
+      warn(e: WebpackError) {
         compilation.warnings.push(e)
       },
-      error (e) {
+      error(e: WebpackError) {
         compilation.errors.push(e)
       }
     })
     return callback()
   }
 
-  serialize (context) {
+  override serialize(context: NullSerializeContext) {
     const { write } = context
     write(this.resourcePath)
     write(this.resourceType)
@@ -42,7 +58,7 @@ class RecordResourceMapDependency extends NullDependency {
     super.serialize(context)
   }
 
-  deserialize (context) {
+  override deserialize(context: NullDeserializeContext) {
     const { read } = context
     this.resourcePath = read()
     this.resourceType = read()
@@ -53,10 +69,14 @@ class RecordResourceMapDependency extends NullDependency {
 }
 
 RecordResourceMapDependency.Template = class RecordResourceMapDependencyTemplate {
-  apply () {
+  apply() {
+    return
   }
 }
 
-makeSerializable(RecordResourceMapDependency, '@mpxjs/web-plugin/src/webpack/dependencies/RecordResourceMapDependency')
+makeSerializable(
+  RecordResourceMapDependency,
+  '@mpxjs/web-plugin/src/webpack/dependencies/RecordResourceMapDependency'
+)
 
 module.exports = RecordResourceMapDependency
