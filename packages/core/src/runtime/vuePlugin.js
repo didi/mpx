@@ -1,5 +1,5 @@
 import { walkChildren, parseSelector } from '../helper/element'
-import { error } from '../helper/log'
+import { error } from '@mpxjs/utils'
 import * as webApi from '@mpxjs/api-proxy/src/web/api'
 
 const vuePlugin = {

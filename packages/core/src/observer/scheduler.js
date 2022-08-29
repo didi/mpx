@@ -1,4 +1,4 @@
-import { warn } from '../helper/log'
+import { warn } from '@mpxjs/utils'
 import EXPORT_MPX from '../index'
 import { isDev } from '../helper/env'
 import { callWithErrorHandling } from '../helper/errorHandling'

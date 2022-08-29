@@ -1,6 +1,6 @@
 import Vue from './vue'
 import { diffAndCloneA, makeMap, hasOwn } from './helper/utils'
-import { error } from './helper/log'
+import { error } from '@mpxjs/utils'
 import { APIs, InstanceAPIs } from './platform/export/api'
 
 import {

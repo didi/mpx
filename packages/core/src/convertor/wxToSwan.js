@@ -1,4 +1,4 @@
-import { error } from '../helper/log'
+import { error } from '@mpxjs/utils'
 import { implemented } from '../core/implement'
 import { mergeLifecycle } from './mergeLifecycle'
 import * as wxLifecycle from '../platform/patch/wx/lifecycle'

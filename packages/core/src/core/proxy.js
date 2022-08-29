@@ -25,7 +25,9 @@ import _getByPath, {
   noop,
   type,
   isObject,
-  isPlainObject
+  isPlainObject,
+  warn,
+  error
 } from '@mpxjs/utils'
 import {
   BEFORECREATE,
@@ -41,7 +43,6 @@ import {
   ONHIDE,
   ONRESIZE
 } from './innerLifecycle'
-import { warn, error } from '../helper/log'
 import { callWithErrorHandling } from '../helper/errorHandling'
 
 let uid = 0

@@ -1,4 +1,4 @@
-import { error } from './log'
+import { error } from '@mpxjs/utils'
 import { isFunction } from './utils'
 
 export function callWithErrorHandling (fn, instance, info, args) {

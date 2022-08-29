@@ -1,4 +1,5 @@
 import { getActivePinia } from './util'
+import { warn } from '@mpxjs/utils'
 /**
  * @description: allow use state/getters of a store in computed field
  * @param {*} useStore store to map from
@@ -98,7 +99,7 @@ function setMapStoreSuffix (suffix) {
 function mapStores (...stores) {
   const pinia = getActivePinia()
   if ((process.env.NODE_ENV !== 'production') && Array.isArray(stores[0])) {
-    console.warn(`[🍍]: Directly pass all stores to "mapStores()" without putting them in an array:\n` +
+    warn(`[🍍]: Directly pass all stores to "mapStores()" without putting them in an array:\n` +
         `Replace\n` +
         `\tmapStores([useAuthStore, useCartStore])\n` +
         `with\n` +

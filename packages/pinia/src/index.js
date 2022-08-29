@@ -10,6 +10,7 @@ import {
   nextTick,
   getCurrentInstance
 } from '@mpxjs/core'
+import { error, warn } from '@mpxjs/utils'
 import { createPinia } from './createPinia'
 import { MutationType } from './const'
 import {
@@ -106,7 +107,7 @@ function createSetupStore ($id, setup, options = {}, pinia, isOptionsStore = fal
         if (Array.isArray(debuggerEvents)) {
           debuggerEvents.push(event)
         } else {
-          console.error('🍍 debuggerEvents should be an array. This is most likely an internal Pinia bug.')
+          error('🍍 debuggerEvents should be an array. This is most likely an internal Pinia bug.')
         }
       }
     }
@@ -316,7 +317,7 @@ function createSetupStore ($id, setup, options = {}, pinia, isOptionsStore = fal
     typeof store.$state === 'object' &&
     typeof store.$state.constructor === 'function' &&
     !store.$state.constructor.toString().includes('[native code]')) {
-    console.warn(`[🍍]: The "state" must be a plain object. It cannot be\n` +
+    warn(`[🍍]: The "state" must be a plain object. It cannot be\n` +
         `\tstate: () => new MyClass()\n` +
         `Found in store "${store.$id}".`)
   }
