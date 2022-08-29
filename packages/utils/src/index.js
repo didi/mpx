@@ -1,4 +1,6 @@
 import _getByPath from './getByPath'
+
+export default _getByPath
 export {
   warn,
   error
@@ -12,5 +14,3 @@ export {
   getByPath,
   normalizeMap
 } from './common'
-
-export default _getByPath

@@ -8,11 +8,6 @@ import _getByPath, {
   isPlainObject
 } from '@mpxjs/utils'
 
-// type在支付宝环境下不一定准确，判断是普通对象优先使用isPlainObject（新版支付宝不复现，issue #644 修改isPlainObject实现与type等价）
-export function type (n) {
-  return Object.prototype.toString.call(n).slice(8, -1)
-}
-
 export function aliasReplace (options = {}, alias, target) {
   if (options[alias]) {
     if (Array.isArray(options[alias])) {
@@ -34,29 +29,6 @@ export function findItem (arr = [], key) {
     }
   }
   return false
-}
-
-export function normalizeMap (prefix, arr) {
-  if (typeof prefix !== 'string') {
-    arr = prefix
-    prefix = ''
-  }
-  if (Array.isArray(arr)) {
-    const map = {}
-    arr.forEach(value => {
-      map[value] = prefix ? `${prefix}.${value}` : value
-    })
-    return map
-  }
-  if (prefix && isObject(arr)) {
-    arr = Object.assign({}, arr)
-    Object.keys(arr).forEach(key => {
-      if (typeof arr[key] === 'string') {
-        arr[key] = `${prefix}.${arr[key]}`
-      }
-    })
-  }
-  return arr
 }
 
 export function isExistAttr (obj, attr) {

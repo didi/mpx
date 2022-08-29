@@ -1,5 +1,5 @@
 import { isRef } from '@mpxjs/core'
-import { noop, isObject } from '@mpxjs/utils'
+import { noop } from '@mpxjs/utils'
 
 export function proxy (target, source, keys, readonly, onConflict) {
   keys = keys || Object.keys(source)
@@ -28,27 +28,4 @@ export function proxy (target, source, keys, readonly, onConflict) {
     Object.defineProperty(target, key, descriptor)
   })
   return target
-}
-
-export function normalizeMap (prefix, arr) {
-  if (typeof prefix !== 'string') {
-    arr = prefix
-    prefix = ''
-  }
-  if (Array.isArray(arr)) {
-    const map = {}
-    arr.forEach(value => {
-      map[value] = prefix ? `${prefix}.${value}` : value
-    })
-    return map
-  }
-  if (prefix && isObject(arr)) {
-    arr = Object.assign({}, arr)
-    Object.keys(arr).forEach(key => {
-      if (typeof arr[key] === 'string') {
-        arr[key] = `${prefix}.${arr[key]}`
-      }
-    })
-  }
-  return arr
 }
