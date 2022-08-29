@@ -63,6 +63,7 @@
     "@commitlint/cli": "^15.0.0",
     "@commitlint/config-conventional": "^15.0.0",
     "@mpxjs/webpack-plugin": "^2.6.102",
+    "@mpxjs/utils": "^2.7.40",
     "@release-it/conventional-changelog": "^3.3.0",
     "@types/babel-traverse": "^6.25.4",
     "@types/babel-types": "^7.0.4",

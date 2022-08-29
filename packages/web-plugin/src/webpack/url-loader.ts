@@ -1,26 +1,31 @@
-const loaderUtils = require('loader-utils')
-const mime = require('mime')
-const parseRequest = require('@mpxjs/utils/parse-request')
+import loaderUtils from 'loader-utils'
+import mime from 'mime'
+import parseRequest from '@mpxjs/utils/parse-request'
+import { LoaderDefinition } from 'webpack'
+
 const getOptions = loaderUtils.getOptions
 
-function isStyleRequest (request) {
+function isStyleRequest(request) {
   const { loaderString, queryObj } = parseRequest(request)
   if (queryObj.type === 'styles') return true
   if (/(css-loader|wxss\/loader)/.test(loaderString)) return true
   return false
 }
 
-module.exports = function (src) {
+const urlLoader: LoaderDefinition = function urlLoader(src: string): string {
   let transBase64 = false
   const options = Object.assign({}, getOptions(this))
   const { resourcePath, queryObj } = parseRequest(this.resource)
   const mimetype = options.mimetype || mime.getType(resourcePath)
-  const moduleGraph = this._compilation.moduleGraph
-  const issuer = moduleGraph.getIssuer(this._module)
-  const publicPathScope = options.publicPathScope === 'all' ? 'all' : 'styleOnly'
+  const moduleGraph = this._compilation?.moduleGraph
+  const issuer = moduleGraph?.getIssuer(this._module!)
+  const publicPathScope =
+    options.publicPathScope === 'all' ? 'all' : 'styleOnly'
   const limit = options.limit
   const useLocal = !limit || src.length < limit || queryObj.useLocal
-  const isStyle = (issuer && issuer.request && isStyleRequest(issuer.request)) || queryObj.isStyle
+  const isStyle =
+    (issuer && issuer.request && isStyleRequest(issuer.request)) ||
+    queryObj.isStyle
 
   if (isStyle) {
     if (options.publicPath) {
@@ -47,9 +52,11 @@ module.exports = function (src) {
       `data:${mimetype || ''};base64,${src.toString('base64')}`
     )}`
   } else {
-    const fallback = require(options.fallback ? options.fallback : './file-loader')
+    const fallback = require(options.fallback
+      ? options.fallback
+      : './file-loader')
     return fallback.call(this, src, options)
   }
 }
 
-module.exports.raw = true
+urlLoader.raw = true

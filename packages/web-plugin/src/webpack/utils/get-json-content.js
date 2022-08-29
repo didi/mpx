@@ -1,5 +1,6 @@
 const parseRequest = require('@mpxjs/utils/parse-request')
-const evalJSONJS = require('./eval-json-js')
+const mpx = require('../mpx')
+const { evalJSONJS } = require('../../utils/evalJsonJs')
 const resolve = require('./resolve')
 const async = require('async')
 const { JSON_JS_EXT } = require('./const')
@@ -34,7 +35,9 @@ module.exports = function getJSONContent (json, loaderContext, callback) {
     ({ content, useJSONJS, filename }, callback) => {
       if (!content) return callback(null, '{}')
       if (useJSONJS) {
-        content = JSON.stringify(evalJSONJS(content, filename, loaderContext))
+        content = JSON.stringify(evalJSONJS(content, filename, mpx.defs, loaderContext._compiler.inputFileSystem, (filename) => {
+          loaderContext.addDependency(filename)
+        }))
       }
       callback(null, content)
     }

@@ -3,7 +3,6 @@ import { normalizePath } from 'vite'
 import fs from 'fs'
 import json5 from 'json5'
 import mpxJSON from '@mpxjs/webpack-plugin/lib/utils/mpx-json'
-import evalJSONJS from '@mpxjs/webpack-plugin/lib/utils/eval-json-js'
 import path from 'path'
 import { ResolvedOptions } from '../options'
 import { SFCDescriptor } from '../compiler'
@@ -14,6 +13,7 @@ import resolveModuleContext from '../utils/resolveModuleContext'
 import addQuery from '../utils/addQuery'
 import { createDescriptor } from '../utils/descriptorCache'
 import stringify from '../utils/stringify'
+import { evalJSONJS } from '../../utils/evalJsonJs'
 
 /**
  * wechat miniprogram app/page/component config type
@@ -92,16 +92,8 @@ export async function resolveJson(
 
   if (json?.useJSONJS) {
     content = JSON.stringify(
-      evalJSONJS(content, descriptor.filename, {
-        getMpx() {
-          return {
-            defs: options.defs
-          }
-        },
-        addDependency: pluginContext.addWatchFile.bind(pluginContext),
-        _compiler: {
-          inputFileSystem: fs
-        }
+      evalJSONJS(content, descriptor.filename, options.defs, fs, filename => {
+        pluginContext.addWatchFile(filename)
       })
     )
   }
