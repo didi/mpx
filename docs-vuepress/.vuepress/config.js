@@ -32,6 +32,7 @@ const sidebar = {
         'advance/npm',
         'advance/subpackage',
         'advance/async-subpackage',
+        'advance/composition-api',
         'advance/image-process',
         'advance/progressive',
         'advance/ability-compatible',

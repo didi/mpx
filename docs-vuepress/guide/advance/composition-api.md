@@ -454,6 +454,62 @@ createComponent({
 
 **在 `setup()` 内部，`this` 不是当前组件的引用**，因为 `setup()` 是在解析其它组件选项之前被调用的，所以 `setup()` 内部的 `this` 的行为与其它选项中的 `this` 完全不同。这使得 `setup()`  在和其它选项式 API 一起使用时可能会导致混淆。
 
+## 单文件组件 `<script setup>`
+
+和 Vue 一样，`<script setup>` 是在 Mpx 单文件组件中使用组合式 API 时的编译时语法糖。相较于普通的 `<script>` 语法，它具有一些优势：
+* 更少的样板内容，更简洁的代码。
+* 能够使用纯 TypeScript 声明 props 和自定义事件。
+* 更好的 IDE 类型推导性能。
+
+### 基本语法
+
+启用该语法需要在 `<script>` 代码块上添加 `setup` attribute:
+
+```html
+<script setup>
+    console.log('hello Mpx script setup')
+</script>
+```
+`<script>` 里边的代码会被编译成组件 `setup()` 函数的内容。
+
+### 顶层的绑定会被暴露给模版
+和 Vue 一样，当使用 `<script setup>` 时，任何在 `<script setup>` 声明的顶层的绑定（包括变量，函数声明，以及 import 导入的内容） 都能在模版中直接使用：
+```html
+<script setup>
+    const msg = 'hello';
+    function log() {
+        console.log(msg)
+    }
+</script>
+<template>
+    <view>msg: {{msg}}</view>
+    <view ontap="log">click</view>
+</template>
+```
+import 导入的内容也会以同样的方式暴露。这意味着我们可以直接在模版中使用引入的相关方法，而不需要通过 `methods` 选项来暴露:
+```html
+<template>
+    <view ontap="clickTrigger">click</view>
+</template>
+<script setup>
+    import { clickTrigger } from './utils'
+</script>
+```
+### 响应式
+和 Vue 中一样，响应式状态需要明确使用响应性 API 来创建。和 `setup()` 函数的返回值一样，ref 在模版中使用的时候会自动解包：
+```html
+<template>
+    <button ontap="addCount">{{count}}</button>
+</template>
+<script setup>
+    import { ref } from '@mpxjs/core'
+    const count = ref(0)
+    function addCount() {
+        count.value++
+    }
+</script>
+```
+
 ## 生命周期钩子
 
 组合式 API 中，我们通过 `on${Hookname}(fn)` 的方式注册访问生命周期钩子。
