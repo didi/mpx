@@ -509,6 +509,26 @@ import 导入的内容也会以同样的方式暴露。这意味着我们可以�
     }
 </script>
 ```
+### `defineProps()` 
+和 Vue 类似，为了在声明小程序组件 `properties` 选项时获得完整的类型推导支持，在 `<script setup>` 中，我们需要使用 `defineProps` API，它默认在 `<script setup>` 中可用：
+```html
+<script setup>
+    const props = defineProps({
+        testA: String
+    })
+    
+</script>
+```
+
+### `defineReturns()`
+
+### `useContext()`
+
+### 针对 TypeScript 的功能
+
+### 限制
+
+### 注意事项
 
 ## 生命周期钩子
 
