@@ -15,7 +15,6 @@
     "lib"
   ],
   "dependencies": {
-    "@babel/types": "^7.16.0",
     "@better-scroll/core": "^2.2.1",
     "@better-scroll/movable": "^2.2.1",
     "@better-scroll/observe-dom": "^2.2.1",
@@ -23,8 +22,8 @@
     "@better-scroll/slide": "^2.2.1",
     "@better-scroll/wheel": "^2.2.1",
     "@better-scroll/zoom": "^2.2.1",
-    "@mpxjs/utils": "file:../utils",
-    "@mpxjs/compiler": "file:../compiler",
+    "@mpxjs/utils": "^2.7.40",
+    "@mpxjs/compiler": "^2.7.40",
     "@rollup/plugin-commonjs": "^21.0.1",
     "@rollup/plugin-replace": "^3.0.0",
     "async": "^2.6.0",
@@ -60,6 +59,7 @@
     "test": "echo \"Error: run tests from root\" && exit 1"
   },
   "devDependencies": {
+    "@babel/types": "^7.16.0",
     "@commitlint/cli": "^15.0.0",
     "@commitlint/config-conventional": "^15.0.0",
     "@mpxjs/webpack-plugin": "^2.6.102",

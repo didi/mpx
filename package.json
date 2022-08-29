@@ -2,6 +2,9 @@
   "name": "mpx-monorepo",
   "description": "mpx monorepo",
   "private": true,
+  "workspaces": [
+    "packages/**"
+  ],
   "scripts": {
     "lerna:publish": "lerna publish from-package --yes",
     "lint": "eslint --ext .js packages/",

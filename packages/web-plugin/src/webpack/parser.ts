@@ -1,7 +1,9 @@
-const cache = require('lru-cache')(100)
-const hash = require('hash-sum')
-const compiler = require('@mpxjs/compiler/template-compiler/compiler')
-const SourceMapGenerator = require('source-map').SourceMapGenerator
+import LruCache from 'lru-cache'
+import hash from 'hash-sum'
+import compiler from '@mpxjs/compiler/template-compiler/compiler'
+import { SourceMapGenerator } from 'source-map'
+
+const cache = LruCache(100)
 
 const splitRE = /\r?\n/g
 const emptyRE = /^(?:\/\/)?\s*$/
@@ -32,11 +34,7 @@ module.exports = (content, { filePath, needMap, mode, env }) => {
     if (output.styles) {
       output.styles.forEach(style => {
         if (!style.src) {
-          style.map = generateSourceMap(
-            filename,
-            content,
-            style.content
-          )
+          style.map = generateSourceMap(filename, content, style.content)
         }
       })
     }
@@ -46,7 +44,7 @@ module.exports = (content, { filePath, needMap, mode, env }) => {
   return output
 }
 
-function generateSourceMap (filename, source, generated) {
+function generateSourceMap(filename, source, generated) {
   const map = new SourceMapGenerator()
   map.setSourceContent(filename, source)
   generated.split(splitRE).forEach((line, index) => {

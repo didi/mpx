@@ -59,4 +59,6 @@ const urlLoader: LoaderDefinition = function urlLoader(src: string): string {
   }
 }
 
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
 urlLoader.raw = true

@@ -1,7 +1,7 @@
-const parseComponent = require('./parser')
-const parseRequest = require('./utils/parse-request')
+import parseComponent from './parser'
+import parseRequest from './utils/parse-request'
 // todo 移除mpx访问依赖，支持thread-loader
-const mpx = require('./mpx')
+import mpx from './mpx'
 
 module.exports = function (content) {
   this.cacheable()
