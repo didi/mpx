@@ -13,7 +13,7 @@ import {
   renderAppHelpCode,
   renderPageRouteCode
 } from './helper'
-import { processOptions, Options, ResolvedOptions } from './options'
+import { processOptions, Options, ResolvedOptions } from '../options'
 import {
   customExtensionsPlugin,
   esbuildCustomExtensionsPlugin

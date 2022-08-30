@@ -25,7 +25,7 @@ const hash = require('hash-sum')
 const styleCompilerPath = normalize.webPlugin('webpack/style-compiler/index')
 const stringifyLoadersAndResource = require(normalize.utils('stringify-loaders-resource'))
 const async = require('async')
-let mpx = require('./mpx')
+const mpx = require('./mpx')
 
 const isProductionLikeMode = options => {
   return options.mode === 'production' || !options.mode
@@ -277,7 +277,7 @@ class MpxWebpackPlugin {
               if (!currentResourceMap[resourcePath] || currentResourceMap[resourcePath] === true) {
                 if (!recordOnly) {
                   // 在非recordOnly的模式下，进行输出路径冲突检测，如果存在输出路径冲突，则对输出路径进行重命名
-                  for (let key in currentResourceMap) {
+                  for (const key in currentResourceMap) {
                     // todo 用outputPathMap来检测输出路径冲突
                     if (currentResourceMap[key] === outputPath && key !== resourcePath) {
                       outputPath = mpx.getOutputPath(resourcePath, resourceType, { conflictPath: outputPath })
@@ -390,7 +390,7 @@ class MpxWebpackPlugin {
             current.addPresentationalDependency(dep)
 
             let needInject = true
-            for (let dep of module.dependencies) {
+            for (const dep of module.dependencies) {
               if (dep instanceof CommonJsVariableDependency && dep.name === name) {
                 needInject = false
                 break
@@ -478,8 +478,8 @@ class MpxWebpackPlugin {
     compiler.hooks.normalModuleFactory.tap('MpxWebpackPlugin', (normalModuleFactory) => {
       // resolve前修改原始request
       normalModuleFactory.hooks.beforeResolve.tap('MpxWebpackPlugin', (data) => {
-        let request = data.request
-        let { queryObj, resource } = parseRequest(request)
+        const request = data.request
+        const { queryObj, resource } = parseRequest(request)
         if (queryObj.resolve) {
           // 此处的query用于将资源引用的当前包信息传递给resolveDependency
           const resolveLoaderPath = normalize.webPlugin('webpack/resolve-loader')

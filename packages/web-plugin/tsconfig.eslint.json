@@ -4,7 +4,8 @@
     "src",
     ".eslintrc.js",
     "**/*/__test__",
-    "types"
+    "types",
+    "scripts"
   ],
   "exclude": ["node_modules"]
 }
