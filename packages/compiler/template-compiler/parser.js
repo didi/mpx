@@ -1,14 +1,12 @@
-import LruCache from 'lru-cache'
-import hash from 'hash-sum'
-import compiler from '@mpxjs/compiler/template-compiler/compiler'
-import { SourceMapGenerator } from 'source-map'
-
-const cache = LruCache(100)
+const cache = require('lru-cache')(100)
+const hash = require('hash-sum')
+const compiler = require('./compiler')
+const SourceMapGenerator = require('source-map').SourceMapGenerator
 
 const splitRE = /\r?\n/g
 const emptyRE = /^(?:\/\/)?\s*$/
 
-export default function parseComponent (content, { filePath, needMap, mode, env }) {
+module.exports = (content, { filePath, needMap, mode, env }) => {
   // 缓存需要mode隔离，不同mode经过区块条件编译parseComponent得到的内容并不一致
   const cacheKey = hash(filePath + content + mode + env)
 
@@ -34,7 +32,11 @@ export default function parseComponent (content, { filePath, needMap, mode, env 
     if (output.styles) {
       output.styles.forEach(style => {
         if (!style.src) {
-          style.map = generateSourceMap(filename, content, style.content)
+          style.map = generateSourceMap(
+            filename,
+            content,
+            style.content
+          )
         }
       })
     }
@@ -44,7 +46,7 @@ export default function parseComponent (content, { filePath, needMap, mode, env 
   return output
 }
 
-function generateSourceMap(filename, source, generated) {
+function generateSourceMap (filename, source, generated) {
   const map = new SourceMapGenerator()
   map.setSourceContent(filename, source)
   generated.split(splitRE).forEach((line, index) => {

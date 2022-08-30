@@ -1,8 +1,8 @@
-const loaderUtils = require('loader-utils')
-const normalize = require('./utils/normalize')
-const selectorPath = normalize.lib('selector')
-const addQuery = require('./utils/add-query')
-const parseRequest = require('./utils/parse-request')
+import loaderUtils from 'loader-utils'
+import normalize from '@mpxjs/utils/normalize'
+const selectorPath = normalize.webPlugin('webpack/selector')
+import addQuery from '@mpxjs/utils/add-query'
+import parseRequest from '@mpxjs/utils/parse-request'
 
 const defaultLang = {
   template: 'wxml',

@@ -12,7 +12,7 @@ module.exports = {
       activeIconKey: 'selectedIconPath'
     },
     event: {
-      parseEvent (attr) {
+      parseEvent (attr:string) {
         let match = /^(bind|catch|capture-bind|capture-catch):?(.*?)(?:\.(.*))?$/.exec(attr)
         if (match) {
           return {
@@ -22,13 +22,13 @@ module.exports = {
           }
         }
       },
-      getEvent (eventName, prefix = 'bind') {
+      getEvent (eventName:string, prefix = 'bind') {
         return prefix + eventName
       },
       defaultModelProp: 'value',
       defaultModelEvent: 'input',
       defaultModelValuePath: 'value',
-      shallowStringify (obj) {
+      shallowStringify (obj:any) {
         let arr = []
         for (let key in obj) {
           let value = obj[key]
@@ -82,7 +82,7 @@ module.exports = {
       iconKey: 'icon'
     },
     event: {
-      parseEvent (attr) {
+      parseEvent (attr:string) {
         let match = /^(on|catch)([A-Z].*?)(?:\.(.*))?$/.exec(attr)
         if (match) {
           return {
@@ -94,7 +94,7 @@ module.exports = {
           }
         }
       },
-      getEvent (eventName, prefix = 'on') {
+      getEvent (eventName:string, prefix = 'on') {
         return prefix + eventName.replace(/^./, (matched) => {
           return matched.toUpperCase()
         })
@@ -102,7 +102,7 @@ module.exports = {
       defaultModelProp: 'value',
       defaultModelEvent: 'input',
       defaultModelValuePath: 'value',
-      shallowStringify (obj) {
+      shallowStringify (obj: any) {
         let arr = []
         for (let key in obj) {
           let value = obj[key]
@@ -164,13 +164,13 @@ module.exports = {
           }
         }
       },
-      getEvent (eventName, prefix = 'bind') {
+      getEvent (eventName: string, prefix = 'bind') {
         return prefix + eventName
       },
       defaultModelProp: 'value',
       defaultModelEvent: 'input',
       defaultModelValuePath: 'value',
-      shallowStringify (obj) {
+      shallowStringify (obj: any) {
         let arr = []
         for (let key in obj) {
           let value = obj[key]
@@ -221,7 +221,7 @@ module.exports = {
       activeIconKey: 'selectedIconPath'
     },
     event: {
-      parseEvent (attr) {
+      parseEvent (attr: string) {
         let match = /^(bind|catch|capture-bind|capture-catch):?(.*?)(?:\.(.*))?$/.exec(attr)
         if (match) {
           return {
@@ -231,13 +231,13 @@ module.exports = {
           }
         }
       },
-      getEvent (eventName, prefix = 'bind') {
+      getEvent (eventName: string, prefix = 'bind') {
         return prefix + eventName
       },
       defaultModelProp: 'value',
       defaultModelEvent: 'input',
       defaultModelValuePath: 'value',
-      shallowStringify (obj) {
+      shallowStringify (obj: any) {
         let arr = []
         for (let key in obj) {
           let value = obj[key]
@@ -288,7 +288,7 @@ module.exports = {
       activeIconKey: 'selectedIconPath'
     },
     event: {
-      parseEvent (attr) {
+      parseEvent (attr:string) {
         let match = /^(bind|catch|capture-bind|capture-catch):?(.*?)(?:\.(.*))?$/.exec(attr)
         if (match) {
           return {
@@ -298,13 +298,13 @@ module.exports = {
           }
         }
       },
-      getEvent (eventName, prefix = 'bind') {
+      getEvent (eventName:string, prefix = 'bind') {
         return prefix + eventName
       },
       defaultModelProp: 'value',
       defaultModelEvent: 'input',
       defaultModelValuePath: 'value',
-      shallowStringify (obj) {
+      shallowStringify (obj: any) {
         let arr = []
         for (let key in obj) {
           let value = obj[key]
@@ -369,7 +369,7 @@ module.exports = {
       activeIconKey: 'selectedIconPath'
     },
     event: {
-      parseEvent (attr) {
+      parseEvent (attr: string) {
         let match = /^(bind|catch|capture-bind|capture-catch):?(.*?)(?:\.(.*))?$/.exec(attr)
         if (match) {
           return {
@@ -379,13 +379,13 @@ module.exports = {
           }
         }
       },
-      getEvent (eventName, prefix = 'bind') {
+      getEvent (eventName: string, prefix = 'bind') {
         return prefix + eventName
       },
       defaultModelProp: 'value',
       defaultModelEvent: 'input',
       defaultModelValuePath: 'value',
-      shallowStringify (obj) {
+      shallowStringify (obj: any) {
         let arr = []
         for (let key in obj) {
           let value = obj[key]
@@ -436,7 +436,7 @@ module.exports = {
       activeIconKey: 'selectedIconPath'
     },
     event: {
-      parseEvent (attr) {
+      parseEvent (attr:string) {
         let match = /^(bind|catch|capture-bind|capture-catch):?(.*?)(?:\.(.*))?$/.exec(attr)
         if (match) {
           return {
@@ -446,13 +446,13 @@ module.exports = {
           }
         }
       },
-      getEvent (eventName, prefix = 'bind') {
+      getEvent (eventName:string, prefix = 'bind') {
         return prefix + eventName
       },
       defaultModelProp: 'value',
       defaultModelEvent: 'input',
       defaultModelValuePath: 'value',
-      shallowStringify (obj) {
+      shallowStringify (obj: any) {
         let arr = []
         for (let key in obj) {
           let value = obj[key]
@@ -503,7 +503,7 @@ module.exports = {
       activeIconKey: 'selectedIconPath'
     },
     event: {
-      parseEvent (attr) {
+      parseEvent (attr: string) {
         let match = /^(bind|catch|capture-bind|capture-catch):?(.*?)(?:\.(.*))?$/.exec(attr)
         if (match) {
           return {
@@ -513,13 +513,13 @@ module.exports = {
           }
         }
       },
-      getEvent (eventName, prefix = 'bind') {
+      getEvent (eventName:string, prefix = 'bind') {
         return prefix + eventName
       },
       defaultModelProp: 'value',
       defaultModelEvent: 'input',
       defaultModelValuePath: 'value',
-      shallowStringify (obj) {
+      shallowStringify (obj: any) {
         let arr = []
         for (let key in obj) {
           let value = obj[key]

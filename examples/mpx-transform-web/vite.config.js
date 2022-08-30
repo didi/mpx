@@ -1,5 +1,6 @@
 import path from 'path'
-import mpx from '@mpxjs/web-plugin/src/vite/index.ts'
+import mpx from '@mpxjs/web-plugin/vite'
+
 export default {
   plugins: [
     mpx({
