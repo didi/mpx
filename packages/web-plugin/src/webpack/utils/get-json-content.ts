@@ -6,7 +6,7 @@ import async from 'async'
 import { JSON_JS_EXT } from '../../constants'
 import { LoaderContext } from 'webpack'
 
-module.exports = function getJSONContent(
+export default function getJSONContent(
   json: {
     src?: string
     content: string
@@ -14,7 +14,7 @@ module.exports = function getJSONContent(
   },
   loaderContext: LoaderContext<any>,
   callback: (err?: Error | null, content?: string) => void
-) {
+): void {
   if (!loaderContext._compiler) return callback(null, '{}')
   const fs = loaderContext._compiler.inputFileSystem
   async.waterfall(

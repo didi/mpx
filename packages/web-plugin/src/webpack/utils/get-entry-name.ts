@@ -1,6 +1,6 @@
-import { LoaderContext } from "webpack"
+import { LoaderContext } from 'webpack'
 
-module.exports = function (loaderContext: LoaderContext<any>) {
+export default function (loaderContext: LoaderContext<any>): string {
   if (!loaderContext._compilation) return ''
   const moduleGraph = loaderContext._compilation.moduleGraph
   let entryName = ''

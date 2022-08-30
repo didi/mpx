@@ -6,7 +6,7 @@ import { matchCondition } from '@mpxjs/utils/match-condition'
 import { JSON_JS_EXT } from '../../constants'
 import { Resolver } from 'webpack'
 
-module.exports = class AddModePlugin {
+export default class AddModePlugin {
   source: string
   target: string
   mode: string
