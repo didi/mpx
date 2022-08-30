@@ -5,7 +5,7 @@ import { LoaderDefinition } from 'webpack'
 
 const getOptions = loaderUtils.getOptions
 
-function isStyleRequest(request) {
+function isStyleRequest(request:string) {
   const { loaderString, queryObj } = parseRequest(request)
   if (queryObj.type === 'styles') return true
   if (/(css-loader|wxss\/loader)/.test(loaderString)) return true
@@ -52,9 +52,7 @@ const urlLoader: LoaderDefinition = function urlLoader(src: string): string {
       `data:${mimetype || ''};base64,${src.toString('base64')}`
     )}`
   } else {
-    const fallback = require(options.fallback
-      ? options.fallback
-      : './file-loader')
+    const fallback = require(options.fallback ? options.fallback : './file-loader')
     return fallback.call(this, src, options)
   }
 }

@@ -8,7 +8,7 @@ const cache = LruCache(100)
 const splitRE = /\r?\n/g
 const emptyRE = /^(?:\/\/)?\s*$/
 
-module.exports = (content, { filePath, needMap, mode, env }) => {
+export default function parseComponent (content, { filePath, needMap, mode, env }) {
   // 缓存需要mode隔离，不同mode经过区块条件编译parseComponent得到的内容并不一致
   const cacheKey = hash(filePath + content + mode + env)
 

@@ -7,7 +7,7 @@ import NullFactory from 'webpack/lib/NullFactory'
 import NormalModule from 'webpack/lib/NormalModule'
 import CommonJsVariableDependency from './dependencies/CommonJsVariableDependency'
 import ReplaceDependency from './dependencies/ReplaceDependency'
-const harmonySpecifierTag = require('webpack/lib/dependencies/HarmonyImportDependencyParserPlugin').harmonySpecifierTag
+import harmonySpecifierTag from 'webpack/lib/dependencies/HarmonyImportDependencyParserPlugin'
 import FlagEntryExportAsUsedPlugin from 'webpack/lib/FlagEntryExportAsUsedPlugin'
 import FileSystemInfo from 'webpack/lib/FileSystemInfo'
 import normalize from '@mpxjs/utils/normalize'
@@ -22,11 +22,10 @@ import parseRequest from '@mpxjs/utils/parse-request'
 import { matchCondition } from '@mpxjs/utils/match-condition'
 import { preProcessDefs } from '@mpxjs/utils/index'
 import hash from 'hash-sum'
-const styleCompilerPath = normalize.webPlugin('webpack/style-compiler/index')
-const stringifyLoadersAndResource = require(normalize.utils('stringify-loaders-resource'))
+import stringifyLoadersAndResource from '@mpxjs/utils/stringify-loaders-resource'
 import async from 'async'
 import mpx from './mpx'
-
+const styleCompilerPath = normalize.webPlugin('webpack/style-compiler/index')
 const isProductionLikeMode = options => {
   return options.mode === 'production' || !options.mode
 }
