@@ -519,10 +519,46 @@ import 导入的内容也会以同样的方式暴露。这意味着我们可以�
     
 </script>
 ```
+* `defineProps` 是只能在 `<script setup>` 中使用的**编译宏**，不需要手动导入，会跟随 `<script setup>` 的处理过程一同被编译掉。
+* `defineProps` 接收与小程序 `properties` 选项相同的值。
+* 传入到 `defineProps` 的选项会从 setup 中提升到模块的作用域。因此传入的选项不能引用在 setup 作用域中声明的局部变量，否则会导致编译错误，不过可以引入导入的绑定。
 
 ### `defineReturns()`
+在 `<script setup>` 声明的顶层的绑定(包括变量，函数声明，以及 import 导入的内容)，编译后在 `setup()` 都会统一被 return 出去，当开发者想对 `setup()` 中暴露给模版的变量和方法进行自定义，可以使用 `defineReturns` 编译宏进行定义。
+```html
+<script setup>
+    const count = ref(0)
+    const name = ref('black')
+    defineReturns({
+        name
+    })
+</script>
+<template>
+    <!--正确渲染 black-->
+    <view>{{name}}</view>
+    <!--找不到对应变量，无内容-->
+    <view>{{count}}</view>
+</template>
+```
+
+### `defineOptions()`
+此编译宏相较于 Vue 是 Mpx 中独有的，主要是当开发者想在 `<script setup>` 中使用一些微信小程序中特有的选项式，例如 relations、moved 等，可以使用该编译宏进行定义。
+```html
+<script setup>
+    defineOptions({
+        pageLifetimes: {
+            // 组件所在页面的生命周期函数
+            resize: function () { }
+        }
+    })
+</script>
+```
+* `defineOptions` 是只能在 `<script setup>` 中使用的**编译宏**，不需要手动导入，会跟随 `<script setup>` 的处理过程一同被编译掉。
+* `defineOptions` 无返回值。
+* `defineOptions` 中的选项会无脑提升至组件或页面构造器的选项之中，因此不可引用 setup 中的局部变量。
 
 ### `useContext()`
+在 `<script setup>z`
 
 ### 针对 TypeScript 的功能
 
