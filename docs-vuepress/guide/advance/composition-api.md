@@ -558,13 +558,17 @@ import 导入的内容也会以同样的方式暴露。这意味着我们可以�
 * `defineOptions` 中的选项会无脑提升至组件或页面构造器的选项之中，因此不可引用 setup 中的局部变量。
 
 ### `useContext()`
-在 `<script setup>z`
+在 `<script setup>` 中，当我们想要使用 `context` 时，可以使用 `useContext()` 来获 `context` 对象。
 
-### 针对 TypeScript 的功能
-
+```html
+<script setup>
+    const context = useContext()
+    // 获取 NodesRef/组件实例，等价于 this.$refs
+    console.log(context.refs)
+</script>
+```
 ### 限制
-
-### 注意事项
+由于模块执行语义的差异，`<script setup>` 中的代码依赖单文件组件的上下文，如果将其移动到外部的 `.js` 或者 `.ts` 的时候，对于开发者可工具来说都十分混乱。因此 `<script setup>` 不能和 `src` attribute 一起使用。
 
 ## 生命周期钩子
 
