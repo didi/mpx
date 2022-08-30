@@ -1,20 +1,19 @@
-const async = require('async')
-const path = require('path')
-const JSON5 = require('json5')
-const loaderUtils = require('loader-utils')
-const normalize = require('@mpxjs/utils/normalize')
-const parseRequest = require(normalize.utils('parse-request'))
-const toPosix = require(normalize.utils('to-posix'))
-const addQuery = require(normalize.utils('add-query'))
-const resolve = require('../utils/resolve')
-const parseComponent = require('../parser')
-const getJSONContent = require('../utils/get-json-content')
-const createJSONHelper = require('../json-compiler/helper')
-const { RESOLVE_IGNORED_ERR } = require('../utils/const')
-const RecordResourceMapDependency = require('../dependencies/RecordResourceMapDependency')
-const mpx = require('../mpx')
+import { each, waterfall, parallel, eachOf } from 'async'
+import { join, extname, dirname } from 'path'
+import { parse } from 'json5'
+import { stringifyRequest as _stringifyRequest } from 'loader-utils'
+import parseRequest from '@mpxjs/utils/parse-request'
+import toPosix from '@mpxjs/utils/to-posix'
+import addQuery from '@mpxjs/utils/add-query'
+import resolve from '../utils/resolve'
+import parseComponent from '../parser'
+import getJSONContent from '../utils/get-json-content'
+import createJSONHelper from '../json-compiler/helper'
+import { RESOLVE_IGNORED_ERR } from '../../constants'
+import RecordResourceMapDependency from '../dependencies/RecordResourceMapDependency'
+import mpx from '../mpx'
 
-module.exports = function (json, {
+export default function (json, {
   loaderContext,
   pagesMap,
   componentsMap
@@ -45,7 +44,7 @@ module.exports = function (json, {
     )
   }
 
-  const stringifyRequest = r => loaderUtils.stringifyRequest(loaderContext, r)
+  const stringifyRequest = r => _stringifyRequest(loaderContext, r)
 
   const {
     isUrlRequest,
@@ -59,7 +58,7 @@ module.exports = function (json, {
     customGetDynamicEntry (resource, type, outputPath, packageRoot) {
       return {
         resource,
-        outputPath: toPosix(path.join(packageRoot, outputPath)),
+        outputPath: toPosix(join(packageRoot, outputPath)),
         packageRoot
       }
     }
@@ -81,7 +80,7 @@ module.exports = function (json, {
   }
   // 由于json需要提前读取在template处理中使用，src的场景已经在loader中处理了，此处无需考虑json.src的场景
   try {
-    jsonObj = JSON5.parse(json.content)
+    jsonObj = parse(json.content)
   } catch (e) {
     return callback(e)
   }
@@ -115,9 +114,9 @@ module.exports = function (json, {
 
   const processPackages = (packages, context, callback) => {
     if (packages) {
-      async.each(packages, (packagePath, callback) => {
+      each(packages, (packagePath, callback) => {
         const { queryObj } = parseRequest(packagePath)
-        async.waterfall([
+        waterfall([
           (callback) => {
             resolve(context, packagePath, loaderContext, (err, result) => {
               if (err) return callback(err)
@@ -132,7 +131,7 @@ module.exports = function (json, {
             })
           },
           (result, content, callback) => {
-            const extName = path.extname(result)
+            const extName = extname(result)
             if (extName === '.mpx') {
               const parts = parseComponent(content, {
                 filePath: result,
@@ -149,13 +148,13 @@ module.exports = function (json, {
           },
           (result, content, callback) => {
             try {
-              content = JSON5.parse(content)
+              content = parse(content)
             } catch (err) {
               return callback(err)
             }
 
             const processSelfQueue = []
-            const context = path.dirname(result)
+            const context = dirname(result)
 
             if (content.pages) {
               let tarRoot = queryObj.root
@@ -186,7 +185,7 @@ module.exports = function (json, {
               })
             }
             if (processSelfQueue.length) {
-              async.parallel(processSelfQueue, callback)
+              parallel(processSelfQueue, callback)
             } else {
               callback()
             }
@@ -204,7 +203,7 @@ module.exports = function (json, {
 
   const processPages = (pages, context, tarRoot = '', callback) => {
     if (pages) {
-      async.each(pages, (page, callback) => {
+      each(pages, (page, callback) => {
         processPage(page, context, tarRoot, (err, { resource, outputPath } = {}, { isFirst, key } = {}) => {
           if (err) return callback(err === RESOLVE_IGNORED_ERR ? null : err)
           if (pageKeySet.has(key)) return callback()
@@ -243,7 +242,7 @@ module.exports = function (json, {
       let tarRoot = subPackage.tarRoot || subPackage.root || ''
       let srcRoot = subPackage.srcRoot || subPackage.root || ''
       if (!tarRoot) return callback()
-      context = path.join(context, srcRoot)
+      context = join(context, srcRoot)
       processPages(subPackage.pages, context, tarRoot, callback)
     } else {
       callback()
@@ -252,7 +251,7 @@ module.exports = function (json, {
 
   const processSubPackages = (subPackages, context, callback) => {
     if (subPackages) {
-      async.each(subPackages, (subPackage, callback) => {
+      each(subPackages, (subPackage, callback) => {
         processSubPackage(subPackage, context, callback)
       }, callback)
     } else {
@@ -262,7 +261,7 @@ module.exports = function (json, {
 
   const processComponents = (components, context, callback) => {
     if (components) {
-      async.eachOf(components, (component, name, callback) => {
+      eachOf(components, (component, name, callback) => {
         processComponent(component, context, {}, (err, { resource, outputPath } = {}) => {
           if (err === RESOLVE_IGNORED_ERR) {
             return callback()
@@ -298,7 +297,7 @@ module.exports = function (json, {
     }
   }
 
-  async.parallel([
+  parallel([
     (callback) => {
       // 添加首页标识
       if (jsonObj.pages && jsonObj.pages[0]) {

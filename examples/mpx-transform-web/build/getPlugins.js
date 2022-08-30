@@ -1,6 +1,5 @@
 let { mpxPluginConf } = require('../config/index')
-const MpxWebpackPlugin = require('@mpxjs/web-plugin/src/webpack')
-// const MpxWebpackPlugin = require('@mpxjs/webpack-plugin')
+const MpxWebpackPlugin = require('@mpxjs/web-plugin/webpack').default
 const { resolveSrc, getConf } = require('./utils')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin
