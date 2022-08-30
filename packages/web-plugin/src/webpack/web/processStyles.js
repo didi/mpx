@@ -1,6 +1,6 @@
-const genComponentTag = require('@mpxjs/utils/gen-component-tag')
+import genComponentTag from '@mpxjs/utils/gen-component-tag'
 
-module.exports = function (styles, options, callback) {
+export default function (styles, options, callback) {
   let output = '/* styles */\n'
   if (styles.length) {
     styles.forEach((style) => {

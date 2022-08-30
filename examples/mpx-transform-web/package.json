@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "A mpx project",
   "main": "index.js",
-"type": "module",
+  "type": "module",
   "scripts": {
     "vite:dev": "vite",
     "vite:build": "vite build",

@@ -1,8 +1,9 @@
-const loaderUtils = require('loader-utils')
-const normalize = require('@mpxjs/utils/normalize')
-const addQuery = require(normalize.utils('add-query'))
-const genComponentTag = require(normalize.utils('gen-component-tag'))
-const mpx = require('../mpx')
+import { stringifyRequest as _stringifyRequest, urlToRequest } from 'loader-utils'
+import normalize from '@mpxjs/utils/normalize'
+import addQuery from '@mpxjs/utils/add-query'
+import genComponentTag from '@mpxjs/utils/gen-component-tag'
+import mpx from '../mpx'
+
 const optionProcessorPath = normalize.webPlugin('runtime/optionProcessor')
 const tabBarContainerPath = normalize.webPlugin('runtime/components/web/mpx-tab-bar-container.vue')
 const tabBarPath = normalize.webPlugin('runtime/components/web/mpx-tab-bar.vue')
@@ -20,6 +21,7 @@ function shallowStringify (obj) {
   }
   return `{${arr.join(',')}}`
 }
+
 function getAsyncChunkName (chunkName) {
   if (chunkName && typeof chunkName !== 'boolean') {
     return `/* webpackChunkName: "${chunkName}" */`
@@ -27,7 +29,7 @@ function getAsyncChunkName (chunkName) {
   return ''
 }
 
-module.exports = function (script, {
+export default function (script, {
   loaderContext,
   ctorType,
   srcMode,
@@ -56,7 +58,7 @@ module.exports = function (script, {
     )
   }
 
-  const stringifyRequest = r => loaderUtils.stringifyRequest(loaderContext, r)
+  const stringifyRequest = r => _stringifyRequest(loaderContext, r)
   let tabBarPagesMap = {}
   if (tabBar && tabBarMap) {
     // 挂载tabBar组件
@@ -168,7 +170,7 @@ module.exports = function (script, {
       content += '  const wxsModules = {}\n'
       if (wxsModuleMap) {
         Object.keys(wxsModuleMap).forEach((module) => {
-          const src = loaderUtils.urlToRequest(wxsModuleMap[module], projectRoot)
+          const src = urlToRequest(wxsModuleMap[module], projectRoot)
           const expression = `require(${stringifyRequest(src)})`
           content += `  wxsModules.${module} = ${expression}\n`
         })

@@ -1,10 +1,8 @@
-const normalize = require('@mpxjs/utils/normalize')
-const genComponentTag = require(normalize.utils('gen-component-tag'))
-const addQuery = require(normalize.utils('add-query'))
-const parseRequest = require(normalize.utils('parse-request'))
+import genComponentTag from '@mpxjs/utils/gen-component-tag'
+import addQuery from '@mpxjs/utils/add-query'
+import parseRequest from '@mpxjs/utils/parse-request'
+import mpx from '../mpx'
 const templateCompiler = require('@mpxjs/compiler/template-compiler/compiler')
-const mpx = require('../mpx')
-// const { matchCondition } = require(normalize.utils('match-condition')）
 
 function calculateRootEleChild (arr) {
   if (!arr) {
@@ -22,7 +20,7 @@ function calculateRootEleChild (arr) {
   }, 0)
 }
 
-module.exports = function (template, {
+export default function (template, {
   loaderContext,
   // hasScoped,
   hasComment,
