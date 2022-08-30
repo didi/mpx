@@ -458,6 +458,122 @@ createComponent({
 
 **在 `setup()` 内部，`this` 不是当前组件的引用**，因为 `setup()` 是在解析其它组件选项之前被调用的，所以 `setup()` 内部的 `this` 的行为与其它选项中的 `this` 完全不同。这使得 `setup()`  在和其它选项式 API 一起使用时可能会导致混淆。
 
+## 单文件组件 `<script setup>`
+
+和 Vue 一样，`<script setup>` 是在 Mpx 单文件组件中使用组合式 API 时的编译时语法糖。相较于普通的 `<script>` 语法，它具有一些优势：
+* 更少的样板内容，更简洁的代码。
+* 能够使用纯 TypeScript 声明 props 和自定义事件。
+* 更好的 IDE 类型推导性能。
+
+### 基本语法
+
+启用该语法需要在 `<script>` 代码块上添加 `setup` attribute:
+
+```html
+<script setup>
+    console.log('hello Mpx script setup')
+</script>
+```
+`<script>` 里边的代码会被编译成组件 `setup()` 函数的内容。
+
+### 顶层的绑定会被暴露给模版
+和 Vue 一样，当使用 `<script setup>` 时，任何在 `<script setup>` 声明的顶层的绑定（包括变量，函数声明，以及 import 导入的内容） 都能在模版中直接使用：
+```html
+<script setup>
+    const msg = 'hello';
+    function log() {
+        console.log(msg)
+    }
+</script>
+<template>
+    <view>msg: {{msg}}</view>
+    <view ontap="log">click</view>
+</template>
+```
+import 导入的内容也会以同样的方式暴露。这意味着我们可以直接在模版中使用引入的相关方法，而不需要通过 `methods` 选项来暴露:
+```html
+<template>
+    <view ontap="clickTrigger">click</view>
+</template>
+<script setup>
+    import { clickTrigger } from './utils'
+</script>
+```
+### 响应式
+和 Vue 中一样，响应式状态需要明确使用响应性 API 来创建。和 `setup()` 函数的返回值一样，ref 在模版中使用的时候会自动解包：
+```html
+<template>
+    <button ontap="addCount">{{count}}</button>
+</template>
+<script setup>
+    import { ref } from '@mpxjs/core'
+    const count = ref(0)
+    function addCount() {
+        count.value++
+    }
+</script>
+```
+### `defineProps()` 
+和 Vue 类似，为了在声明小程序组件 `properties` 选项时获得完整的类型推导支持，在 `<script setup>` 中，我们需要使用 `defineProps` API，它默认在 `<script setup>` 中可用：
+```html
+<script setup>
+    const props = defineProps({
+        testA: String
+    })
+    
+</script>
+```
+* `defineProps` 是只能在 `<script setup>` 中使用的**编译宏**，不需要手动导入，会跟随 `<script setup>` 的处理过程一同被编译掉。
+* `defineProps` 接收与小程序 `properties` 选项相同的值。
+* 传入到 `defineProps` 的选项会从 setup 中提升到模块的作用域。因此传入的选项不能引用在 setup 作用域中声明的局部变量，否则会导致编译错误，不过可以引入导入的绑定。
+
+### `defineReturns()`
+在 `<script setup>` 声明的顶层的绑定(包括变量，函数声明，以及 import 导入的内容)，编译后在 `setup()` 都会统一被 return 出去，当开发者想对 `setup()` 中暴露给模版的变量和方法进行自定义，可以使用 `defineReturns` 编译宏进行定义。
+```html
+<script setup>
+    const count = ref(0)
+    const name = ref('black')
+    defineReturns({
+        name
+    })
+</script>
+<template>
+    <!--正确渲染 black-->
+    <view>{{name}}</view>
+    <!--找不到对应变量，无内容-->
+    <view>{{count}}</view>
+</template>
+```
+
+### `defineOptions()`
+此编译宏相较于 Vue 是 Mpx 中独有的，主要是当开发者想在 `<script setup>` 中使用一些微信小程序中特有的选项式，例如 relations、moved 等，可以使用该编译宏进行定义。
+```html
+<script setup>
+    defineOptions({
+        pageLifetimes: {
+            // 组件所在页面的生命周期函数
+            resize: function () { }
+        }
+    })
+</script>
+```
+* `defineOptions` 是只能在 `<script setup>` 中使用的**编译宏**，不需要手动导入，会跟随 `<script setup>` 的处理过程一同被编译掉。
+* `defineOptions` 无返回值。
+* `defineOptions` 中的选项会无脑提升至组件或页面构造器的选项之中，因此不可引用 setup 中的局部变量。
+
+### `useContext()`
+在 `<script setup>` 中，当我们想要使用 `context` 时，可以使用 `useContext()` 来获 `context` 对象。
+
+```html
+<script setup>
+    const context = useContext()
+    // 获取 NodesRef/组件实例，等价于 this.$refs
+    console.log(context.refs)
+</script>
+```
+### 限制
+由于模块执行语义的差异，`<script setup>` 中的代码依赖单文件组件的上下文，如果将其移动到外部的 `.js` 或者 `.ts` 的时候，对于开发者可工具来说都十分混乱。因此 `<script setup>` 不能和 `src` attribute 一起使用。
+
 ## 生命周期钩子
 
 组合式 API 中，我们通过 `on${Hookname}(fn)` 的方式注册访问生命周期钩子。
