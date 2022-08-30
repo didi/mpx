@@ -5,7 +5,7 @@ import {
   ONLOAD
 } from '../../core/innerLifecycle'
 import { isBrowser } from '../../helper/env'
-import { isFunction } from '../../helper/utils'
+import { isFunction } from '@mpxjs/utils'
 
 let systemInfo = {}
 

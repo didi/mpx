@@ -18,12 +18,12 @@ import {
   getFirstKey,
   makeMap,
   hasOwn,
-  isFunction,
   isString
 } from '../helper/utils'
 import _getByPath, {
   noop,
   type,
+  isFunction,
   isObject,
   isPlainObject,
   warn,

@@ -9,6 +9,7 @@ export {
 export {
   noop,
   type,
+  isFunction,
   isObject,
   isPlainObject,
   getByPath,

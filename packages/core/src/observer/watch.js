@@ -4,9 +4,10 @@ import { isReactive } from './reactive'
 import { queuePreFlushCb, queuePostFlushCb } from './scheduler'
 import { callWithErrorHandling } from '../helper/errorHandling'
 import { currentInstance } from '../core/proxy'
-import { isFunction, isArray, remove } from '../helper/utils'
+import { isArray, remove } from '../helper/utils'
 import {
   noop,
+  isFunction,
   isObject,
   isPlainObject,
   warn

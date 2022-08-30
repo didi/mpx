@@ -1,5 +1,4 @@
-import { error } from '@mpxjs/utils'
-import { isFunction } from './utils'
+import { isFunction, error } from '@mpxjs/utils'
 
 export function callWithErrorHandling (fn, instance, info, args) {
   if (!isFunction(fn)) return

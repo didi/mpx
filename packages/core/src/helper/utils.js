@@ -140,10 +140,6 @@ export function isString (str) {
   return typeof str === 'string'
 }
 
-export function isFunction (fn) {
-  return typeof fn === 'function'
-}
-
 export function isBoolean (bool) {
   return typeof bool === 'boolean'
 }

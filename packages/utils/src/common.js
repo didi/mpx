@@ -3,6 +3,10 @@ import _getByPath from './getByPath'
 
 const noop = () => {}
 
+function isFunction (fn) {
+  return typeof fn === 'function'
+}
+
 function isObject (obj) {
   return obj !== null && typeof obj === 'object'
 }
@@ -97,6 +101,7 @@ function normalizeMap (prefix, arr) {
 export {
   noop,
   type,
+  isFunction,
   isObject,
   isPlainObject,
   getByPath,

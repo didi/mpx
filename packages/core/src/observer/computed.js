@@ -1,5 +1,4 @@
-import { isFunction } from '../helper/utils'
-import { noop } from '@mpxjs/utils'
+import { isFunction, noop } from '@mpxjs/utils'
 import Dep from './dep'
 import { createRef } from './ref'
 import { ReactiveEffect } from './effect'

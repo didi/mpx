@@ -1,9 +1,7 @@
 import EXPORT_MPX from '@mpxjs/core'
-const isDev = process.env.NODE_ENV !== 'production'
+import { isFunction } from './common'
 
-function isFunction (fn) {
-  return typeof fn === 'function'
-}
+const isDev = process.env.NODE_ENV !== 'production'
 
 export function warn (msg, location, e) {
   const condition = EXPORT_MPX.config.ignoreWarning
