@@ -1,7 +1,7 @@
 import { TransformPluginContext, TransformResult } from 'rollup'
 import { createFilter } from 'vite'
 import postcss from 'postcss'
-import { transformStyle as vueTransformStyle } from 'vite-plugin-vue2/dist/style'
+import { transformStyle as vueTransformStyle } from 'vite-plugin-vue2/dist/style.js'
 import genComponentTag from '@mpxjs/utils/gen-component-tag'
 import { styleCompiler } from '@mpxjs/compiler'
 import { SFCDescriptor } from '../compiler'

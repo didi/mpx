@@ -1,9 +1,11 @@
-import path from 'path'
-import mpx from '@mpxjs/web-plugin/vite'
+const path = require('path')
+const mpx = require('@mpxjs/web-plugin/dist/vite/index.js')
 
-export default {
+console.log(mpx)
+
+module.exports = {
   plugins: [
-    mpx({
+    mpx.default({
       env: 'didi'
       // i18n: {
       //   locale: 'zh-CN',

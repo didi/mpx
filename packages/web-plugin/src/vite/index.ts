@@ -181,7 +181,7 @@ export default function mpx (options: Options = {}): Plugin[] {
   if (!isProduction) {
     plugins.push(
       commonjs({
-        include: [/@mpxjs\/webpack-plugin\/lib\/utils\/env/]
+        include: [/@mpxjs\/utils/]
       })
     )
   }

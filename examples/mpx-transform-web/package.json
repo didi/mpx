@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "description": "A mpx project",
   "main": "index.js",
-"type": "module",
   "scripts": {
     "vite:dev": "vite",
     "vite:build": "vite build",
@@ -21,6 +20,9 @@
   "dependencies": {
     "@mpxjs/api-proxy": "^2.7.28",
     "@mpxjs/core": "^2.7.37",
+    "@mpxjs/web-plugin": "../../packages/web-plugin",
+    "@mpxjs/utils": "../../packages/utils",
+    "@mpxjs/compiler": "../../packages/compiler",
     "mime": "^2.6.0",
     "vue": "^2.6.10",
     "vue-i18n": "^8.15.3"
@@ -65,7 +67,7 @@
     "vue-style-loader": "^4.1.2",
     "vue-template-compiler": "^2.6.10",
     "webpack": "^5.69.1",
-    "vite": "^2.9.13",
+    "vite": "^3.0.0",
     "webpack-bundle-analyzer": "^4.5.0",
     "webpack-merge": "^5.8.0"
   }

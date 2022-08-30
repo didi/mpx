@@ -3,7 +3,7 @@ import { TransformPluginContext } from 'rollup'
 import { TransformResult } from 'vite'
 import genComponentTag from '@mpxjs/utils/gen-component-tag'
 import { ParseHtmlNode } from '@mpxjs/compiler'
-import { compileSFCTemplate as vueTransformTemplate } from 'vite-plugin-vue2/dist/template'
+import { compileSFCTemplate as vueTransformTemplate } from 'vite-plugin-vue2/dist/template.js'
 import { ResolvedOptions } from '../../options'
 import templateCompiler, { SFCDescriptor } from '../compiler'
 import { resolveMpxRuntime } from '../../utils/resolveMpxRuntime'
@@ -114,6 +114,7 @@ export function processTemplate(
       })
 
       if (parsed.meta.builtInComponentsMap) {
+        console.log(11111, parsed.meta.builtInComponentsMap)
         Object.entries(parsed.meta.builtInComponentsMap).forEach(
           ([name, resource]) => addBuildComponent(name, resource)
         )

@@ -1,5 +1,5 @@
 import { TransformPluginContext, TransformResult } from 'rollup'
-import { transformMain as vueTransformMain } from 'vite-plugin-vue2/dist/main'
+import { transformMain as vueTransformMain } from 'vite-plugin-vue2/dist/main.js'
 import { genScriptBlock, transformScript } from './script'
 import { genTemplateBlock, processTemplate } from './template'
 import { genStylesBlock } from './style'
@@ -43,6 +43,7 @@ export async function transformMain(
     // replace "*.mpx?vue" to "*.mpx?mpx"
     // this way mpx does not enter the logic of the Vueplugin
     // replace all \/\/\n for sourceMap
+    console.log(vueCode)
     return {
       code: vueCode
         .replace(/(\.mpx)(\?vue)/g, `$1?mpx`)

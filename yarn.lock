@@ -2724,13 +2724,20 @@
   resolved "http://artifactory.intra.xiaojukeji.com/artifactory/api/npm/npm/@types/linkify-it/-/linkify-it-3.0.2.tgz?dl=https%3A%2F%2Fregistry.npmmirror.com%2F%40types%2Flinkify-it%2F-%2Flinkify-it-3.0.2.tgz#fd2cd2edbaa7eaac7e7f3c1748b52a19143846c9"
   integrity sha1-/SzS7bqn6qx+fzwXSLUqGRQ4Rsk=
 
-"@types/loader-utils@^2.0.2":
+"@types/loader-utils@^2.0.3":
   version "2.0.3"
   resolved "http://artifactory.intra.xiaojukeji.com/artifactory/api/npm/npm/@types/loader-utils/-/loader-utils-2.0.3.tgz?dl=https%3A%2F%2Fregistry.npmmirror.com%2F%40types%2Floader-utils%2F-%2Floader-utils-2.0.3.tgz#fbc2337358f8f4a7dc532ac0a3646c74275edf2d"
   integrity sha1-+8Izc1j49KfcUyrAo2RsdCde3y0=
   dependencies:
     "@types/node" "*"
     "@types/webpack" "^4"
+
+"@types/lru-cache@^7.10.10":
+  version "7.10.10"
+  resolved "http://artifactory.intra.xiaojukeji.com/artifactory/api/npm/npm/@types/lru-cache/-/lru-cache-7.10.10.tgz?dl=https%3A%2F%2Fregistry.npmmirror.com%2F%40types%2Flru-cache%2F-%2Flru-cache-7.10.10.tgz#3fa937c35ff4b3f6753d5737915c9bf8e693a713"
+  integrity sha1-P6k3w1/0s/Z1PVc3kVyb+OaTpxM=
+  dependencies:
+    lru-cache "*"
 
 "@types/markdown-it@^10.0.0":
   version "10.0.3"
@@ -10593,6 +10600,11 @@ lowercase-keys@^2.0.0:
   version "2.0.0"
   resolved "http://artifactory.intra.xiaojukeji.com/artifactory/api/npm/npm/lowercase-keys/-/lowercase-keys-2.0.0.tgz?dl=https%3A%2F%2Fregistry.npmmirror.com%2Flowercase-keys%2F-%2Flowercase-keys-2.0.0.tgz#2603e78b7b4b0006cbca2fbcc8a3202558ac9479"
   integrity sha1-JgPni3tLAAbLyi+8yKMgJVislHk=
+
+lru-cache@*:
+  version "7.14.0"
+  resolved "http://artifactory.intra.xiaojukeji.com/artifactory/api/npm/npm/lru-cache/-/lru-cache-7.14.0.tgz?dl=https%3A%2F%2Fregistry.npmmirror.com%2Flru-cache%2F-%2Flru-cache-7.14.0.tgz#21be64954a4680e303a09e9468f880b98a0b3c7f"
+  integrity sha1-Ib5klUpGgOMDoJ6UaPiAuYoLPH8=
 
 lru-cache@^4.0.1, lru-cache@^4.1.2:
   version "4.1.5"
