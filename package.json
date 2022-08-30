@@ -12,7 +12,8 @@
     "test": "jest",
     "release": "npm run lint && npm run test && npx lerna version",
     "docs:dev": "vuepress dev docs-vuepress",
-    "docs:build": "vuepress build docs-vuepress"
+    "docs:build": "vuepress build docs-vuepress",
+    "dev": "node scripts/dev.js"
   },
   "devDependencies": {
     "@babel/core": "^7.8.7",

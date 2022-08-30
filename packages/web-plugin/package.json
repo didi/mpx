@@ -33,7 +33,7 @@
     "@babel/types": "^7.16.0",
     "@mpxjs/webpack-plugin": "^2.6.102",
     "@mpxjs/utils": "^2.7.40",
-    "@types/async": "^2.6.0",
+    "@types/async": "^2.4.2",
     "@types/babel-traverse": "^6.25.4",
     "@types/babel-types": "^7.0.4",
     "@types/debug": "^4.1.7",
