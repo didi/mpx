@@ -15,19 +15,22 @@ class CommonJsVariableDependency extends dependencies.ModuleDependency {
     this.name = name
   }
 
-  override serialize(context: ModuleSerializeContext) {
+  override serialize(context: ModuleSerializeContext): void {
     const { write } = context
     write(this.name)
     super.serialize(context)
   }
 
-  override deserialize(context: ModuleDeserializeContext) {
+  override deserialize(context: ModuleDeserializeContext): void {
     const { read } = context
     this.name = read()
     super.deserialize(context)
   }
 
-  override updateHash(hash: ModuleHash, context: ModuleUpdateHashContext) {
+  override updateHash(
+    hash: ModuleHash,
+    context: ModuleUpdateHashContext
+  ): void {
     hash.update(this.request)
     hash.update(this.name)
     super.updateHash(hash, context)
@@ -35,13 +38,13 @@ class CommonJsVariableDependency extends dependencies.ModuleDependency {
 
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
-  get type() {
+  get type(): string {
     return 'mpx cjs variable'
   }
 
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
-  get category() {
+  get category(): string {
     return 'commonjs'
   }
 }

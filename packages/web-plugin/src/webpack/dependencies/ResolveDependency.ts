@@ -37,11 +37,15 @@ class ResolveDependency extends dependencies.NullDependency {
 
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
-  override get type() {
+  override get type(): string {
     return 'mpx resolve'
   }
 
-  mpxAction(module: Module, compilation: Compilation, callback: () => void) {
+  mpxAction(
+    module: Module,
+    compilation: Compilation,
+    callback: () => void
+  ): void {
     this.compilation = compilation
     return callback()
   }
@@ -68,7 +72,7 @@ class ResolveDependency extends dependencies.NullDependency {
   }
 
   // resolved可能会动态变更，需用此更新hash
-  override updateHash(hash: NullHash, context: NullUpdateHashContext) {
+  override updateHash(hash: NullHash, context: NullUpdateHashContext): void {
     this.resolved = this.getResolved()
     const { resource, issuerResource, compilation } = this
     if (this.resolved) {
@@ -83,7 +87,7 @@ class ResolveDependency extends dependencies.NullDependency {
     super.updateHash(hash, context)
   }
 
-  override serialize(context: NullSerializeContext) {
+  override serialize(context: NullSerializeContext): void {
     const { write } = context
     write(this.resource)
     write(this.packageName)
@@ -92,7 +96,7 @@ class ResolveDependency extends dependencies.NullDependency {
     super.serialize(context)
   }
 
-  override deserialize(context: NullDeserializeContext) {
+  override deserialize(context: NullDeserializeContext): void {
     const { read } = context
     this.resource = read()
     this.packageName = read()

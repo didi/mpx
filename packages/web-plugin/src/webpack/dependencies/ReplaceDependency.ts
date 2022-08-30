@@ -19,23 +19,23 @@ class ReplaceDependency extends dependencies.NullDependency {
 
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
-  override get type() {
+  override get type(): string {
     return 'mpx replace'
   }
 
-  override updateHash(hash: NullHash, context: NullUpdateHashContext) {
+  override updateHash(hash: NullHash, context: NullUpdateHashContext): void {
     hash.update(this.replacement)
     super.updateHash(hash, context)
   }
 
-  override serialize(context: NullSerializeContext) {
+  override serialize(context: NullSerializeContext): void {
     const { write } = context
     write(this.replacement)
     write(this.range)
     super.serialize(context)
   }
 
-  override deserialize(context: NullDeserializeContext) {
+  override deserialize(context: NullDeserializeContext): void {
     const { read } = context
     this.replacement = read()
     this.range = read()

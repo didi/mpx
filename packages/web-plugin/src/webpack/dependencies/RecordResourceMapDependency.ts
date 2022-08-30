@@ -1,9 +1,6 @@
 import makeSerializable from 'webpack/lib/util/makeSerializable'
 import { Compilation, dependencies, Module, WebpackError } from 'webpack'
-import {
-  NullDeserializeContext,
-  NullSerializeContext
-} from './dependency'
+import { NullDeserializeContext, NullSerializeContext } from './dependency'
 
 class RecordResourceMapDependency extends dependencies.NullDependency {
   resourcePath: string
@@ -26,11 +23,15 @@ class RecordResourceMapDependency extends dependencies.NullDependency {
 
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
-  override get type() {
+  override get type(): string {
     return 'mpx record resource map'
   }
 
-  mpxAction(module: Module, compilation: Compilation, callback: () => void) {
+  mpxAction(
+    module: Module,
+    compilation: Compilation,
+    callback: () => void
+  ): void {
     const mpx = compilation.__mpx__
     const { resourcePath, resourceType, outputPath, packageRoot } = this
     mpx.recordResourceMap({
@@ -49,7 +50,7 @@ class RecordResourceMapDependency extends dependencies.NullDependency {
     return callback()
   }
 
-  override serialize(context: NullSerializeContext) {
+  override serialize(context: NullSerializeContext): void {
     const { write } = context
     write(this.resourcePath)
     write(this.resourceType)
@@ -58,7 +59,7 @@ class RecordResourceMapDependency extends dependencies.NullDependency {
     super.serialize(context)
   }
 
-  override deserialize(context: NullDeserializeContext) {
+  override deserialize(context: NullDeserializeContext): void {
     const { read } = context
     this.resourcePath = read()
     this.resourceType = read()

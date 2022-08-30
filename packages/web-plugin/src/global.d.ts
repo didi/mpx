@@ -1,7 +1,16 @@
-declare module 'webpack/lib/InitFragment' {}
-declare module 'webpack/lib/util/makeSerializable' {}
+declare module 'webpack/lib/InitFragment' {
+  export default class InitFragment {
+    static STAGE_CONSTANTS: any
+    constructor(...args: any[])
+  }
+}
+declare module 'webpack/lib/util/makeSerializable' {
+  export default function makeSerializable(...args: any[]): any
+}
 declare module 'webpack/lib/dependencies/ModuleDependency' {}
-declare module '@mpxjs/utils/parse-request' {}
+declare module '@mpxjs/utils/parse-request' {
+  export default function parseRequest(...args: any[]): any
+}
 declare module '@mpxjs/utils/normalize' {}
 declare module '@mpxjs/utils/is-url-request' {}
 declare module '@mpxjs/utils/match-condition' {
@@ -11,9 +20,7 @@ declare module '@mpxjs/utils/match-condition' {
 declare module '@mpxjs/utils/add-infix' {}
 declare module '@mpxjs/utils/stringify-query' {}
 declare module '@mpxjs/utils/is-empty-object' {}
-declare module '@mpxjs/utils/mpx-json' {
-  
-}
+declare module '@mpxjs/utils/mpx-json' {}
 
 declare module '@mpxjs/compiler/template-compiler/parser' {
   export default function parser(...args: any[]): any
@@ -35,4 +42,3 @@ declare module '@mpxjs/utils/gen-component-tag' {
       | ((part: T) => string) = {}
   ): string
 }
-

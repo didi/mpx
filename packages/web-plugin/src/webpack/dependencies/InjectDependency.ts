@@ -24,23 +24,23 @@ class InjectDependency extends dependencies.NullDependency {
 
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
-  override get type() {
+  override get type(): string {
     return 'mpx inject'
   }
 
-  override updateHash(hash: NullHash, context: NullUpdateHashContext) {
+  override updateHash(hash: NullHash, context: NullUpdateHashContext): void {
     hash.update(this.content)
     super.updateHash(hash, context)
   }
 
-  override serialize(context: NullSerializeContext) {
+  override serialize(context: NullSerializeContext): void {
     const { write } = context
     write(this.content)
     write(this.index)
     super.serialize(context)
   }
 
-  override deserialize(context: NullDeserializeContext) {
+  override deserialize(context: NullDeserializeContext): void {
     const { read } = context
     this.content = read()
     this.index = read()
