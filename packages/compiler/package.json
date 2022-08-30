@@ -5,6 +5,8 @@
   "keywords": [
     "mpx"
   ],
+  "main": "index.js",
+  "types": "@types/index.d.ts",
   "author": "lareinayanyu",
   "license": "ISC",
   "dependencies": {

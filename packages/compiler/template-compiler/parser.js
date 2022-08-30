@@ -1,10 +1,12 @@
-const cache = require('lru-cache')(100)
+const LruCache = require('lru-cache')
 const hash = require('hash-sum')
 const compiler = require('./compiler')
 const SourceMapGenerator = require('source-map').SourceMapGenerator
 
 const splitRE = /\r?\n/g
 const emptyRE = /^(?:\/\/)?\s*$/
+
+const cache = new LruCache(100)
 
 module.exports = (content, { filePath, needMap, mode, env }) => {
   // 缓存需要mode隔离，不同mode经过区块条件编译parseComponent得到的内容并不一致

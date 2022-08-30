@@ -19,12 +19,12 @@
     "./vite": {
       "types": "./dist/vite.d.ts",
       "require": "./dist/vite.js",
-      "import": "./dist/vite.js"
+      "import": "./dist/vite.mjs"
     },
     "./webpack": {
       "types": "./dist/webpack.d.ts",
       "require": "./dist/webpack.js",
-      "import": "./dist/webpack.js"
+      "import": "./dist/webpack.mjs"
     }
   },
   "scripts": {
