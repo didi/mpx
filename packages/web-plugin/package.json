@@ -36,7 +36,7 @@
   "scripts": {
     "test": "echo \"Error: run tests from root\" && exit 1",
     "dev": "tsup src/*.ts --watch src",
-    "build": "tsup src/*.ts --format cjs,esm --dts --splitting --clean --external @mpxjs/*"
+    "build": "tsup src/*.ts --format cjs,esm --dts --splitting --clean"
   },
   "directories": {
     "lib": "lib"
