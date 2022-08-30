@@ -38,14 +38,19 @@ const preLoader: LoaderDefinition = function (content) {
       CallExpression(path) {
         const callee = path.node.callee
         const args = path.node.arguments
-        const transMap = {
+        const transMap: Record<string, string> = {
           getDate: 'Date',
           getRegExp: 'RegExp'
         }
         if (t.isIdentifier(callee) && transMap[callee.name]) {
           if (callee.name === 'getRegExp') {
             const arg = args[0]
-            if (t.isStringLiteral(arg)) {
+            if (
+              t.isStringLiteral(arg) &&
+              arg.extra &&
+              arg.extra.raw &&
+              typeof arg.extra.raw === 'string'
+            ) {
               args[0] = t.stringLiteral(arg.extra.raw.slice(1, -1))
             }
           }

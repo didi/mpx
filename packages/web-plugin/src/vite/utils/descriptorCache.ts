@@ -2,7 +2,7 @@ import path from 'path'
 import slash from 'slash'
 import { Query } from './parseRequest'
 import pathHash from './pageHash'
-import { ResolvedOptions } from '../options'
+import { ResolvedOptions } from '../../options'
 import compiler, { SFCDescriptor } from '../compiler'
 
 const cache = new Map<string, SFCDescriptor>()

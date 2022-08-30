@@ -1,12 +1,12 @@
 import postcss from 'postcss'
-import loadPostcssConfig from './load-postcss-config'
+import { LoaderDefinition } from 'webpack'
 import trim from '@mpxjs/compiler/style-compiler/plugins/trim'
 import rpx from '@mpxjs/compiler/style-compiler/plugins/rpx'
 import vw from '@mpxjs/compiler/style-compiler/plugins/vw'
 import pluginCondStrip from '@mpxjs/compiler/style-compiler/plugins/conditional-strip'
 import { matchCondition } from '@mpxjs/utils/match-condition'
 import mpx from '../mpx'
-import { LoaderDefinition } from 'webpack'
+import loadPostcssConfig from '../../utils/loadPostcssConfig'
 
 const StyleCompiler: LoaderDefinition = function (css: string, map) {
   this.cacheable()
@@ -24,27 +24,16 @@ const StyleCompiler: LoaderDefinition = function (css: string, map) {
     return matchCondition(this.resourcePath, { include, exclude })
   }
 
-  const inlineConfig = Object.assign({}, mpx.postcssInlineConfig, { defs })
-  loadPostcssConfig(this, inlineConfig)
+  const inlineConfig = Object.assign({}, mpx.postcssInlineConfig)
+  loadPostcssConfig(
+    {
+      webpack: this,
+      defs
+    },
+    inlineConfig
+  )
     .then(config => {
       const plugins = config.plugins.concat(trim)
-      const options: {
-        map:
-          | {
-              inline: boolean
-              annotation: boolean
-              prev: typeof map
-            }
-          | boolean
-      } = Object.assign(
-        {
-          to: this.resourcePath,
-          from: this.resourcePath,
-          map: false
-        },
-        config.options
-      )
-
       plugins.push(
         pluginCondStrip({
           defs
@@ -64,17 +53,21 @@ const StyleCompiler: LoaderDefinition = function (css: string, map) {
       if (mpx.mode === 'web') {
         plugins.push(vw({ transRpxFn }))
       }
-      // source map
-      if (this.sourceMap && !options.map) {
-        options.map = {
-          inline: false,
-          annotation: false,
-          prev: map
-        }
-      }
 
       return postcss(plugins)
-        .process(css, options)
+        .process(css, {
+          to: this.resourcePath,
+          from: this.resourcePath,
+          map: this.sourceMap
+            ? {
+                inline: false,
+                annotation: false,
+                prev: map
+              }
+            : false,
+          ...config.options
+        })
+
         .then(result => {
           if (result.messages) {
             result.messages.forEach(({ type, file }) => {

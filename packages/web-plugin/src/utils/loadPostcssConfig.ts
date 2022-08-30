@@ -1,25 +1,21 @@
-import { LoaderContext, WebpackError } from 'webpack'
-import load, { ResultPlugin } from 'postcss-load-config'
-import { Mpx } from '../mpx'
-
-type Options = Record<string, any>
+import load from 'postcss-load-config'
 
 export default function loadPostcssConfig(
-  loaderContext: LoaderContext<any>,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  context: Record<string, any>,
   inlineConfig: {
     config?: {
       path: string
-      plugins: ResultPlugin[]
-      options: Options
     }
     ignoreConfigFile?: boolean
-    defs?: Mpx['defs']
-    plugins?: ResultPlugin[]
-    options?: Options
+    plugins?: load.Result['plugins']
+    options?: load.Result['options']
   } = {}
-): Promise<{ plugins: ResultPlugin[]; options: Options }> {
+): Promise<load.Result> {
+
   if (inlineConfig.ignoreConfigFile) {
     return Promise.resolve({
+      file: '',
       plugins: [],
       options: {}
     })
@@ -27,9 +23,8 @@ export default function loadPostcssConfig(
 
   const config = inlineConfig.config
   const ctx = {
-    webpack: loaderContext,
-    defs: inlineConfig.defs || {}
-  } as any
+    ...context
+  }
 
   return load(ctx, config?.path, {
     loaders: { '.json': (_, content) => JSON.parse(content) }
@@ -40,13 +35,12 @@ export default function loadPostcssConfig(
       if (err.message.indexOf('No PostCSS Config found') >= 0) {
         return
       }
-      loaderContext.emitWarning(
-        new WebpackError(`Error loading PostCSS config: ${err.message}`)
-      )
+      throw new Error(`Error loading PostCSS config: ${err.message}`)
     })
     .then(config => {
       let plugins = inlineConfig.plugins || []
       let options = inlineConfig.options || {}
+      let file = ''
 
       // merge postcss config file
       if (config && config.plugins) {
@@ -55,8 +49,12 @@ export default function loadPostcssConfig(
       if (config && config.options) {
         options = Object.assign({}, config.options, options)
       }
+      if(config && config.file){
+        file = config.file
+      }
 
       return {
+        file,
         plugins,
         options
       }

@@ -1,12 +1,12 @@
 import path from 'path'
 import { TransformPluginContext } from 'rollup'
 import { TransformResult } from 'vite'
-import genComponentTag from '@mpxjs/webpack-plugin/lib/utils/gen-component-tag'
-import { ParseHtmlNode } from '@mpxjs/webpack-plugin/lib/template-compiler/compiler'
+import genComponentTag from '@mpxjs/utils/gen-component-tag'
+import { ParseHtmlNode } from '@mpxjs/compiler/template-compiler'
 import { compileSFCTemplate as vueTransformTemplate } from 'vite-plugin-vue2/dist/template'
-import { ResolvedOptions } from '../options'
+import { ResolvedOptions } from '../../options'
 import templateCompiler, { SFCDescriptor } from '../compiler'
-import { resolveMpxRuntime } from '../utils/resolveMpx'
+import { resolveMpxRuntime } from '../../utils/resolveMpxRuntime'
 
 const templateTransformCache: Record<string, string> = {}
 

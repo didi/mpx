@@ -1,11 +1,11 @@
 import mpxCompiler, {
   CompilerResult,
   ParseResult
-} from '@mpxjs/webpack-plugin/lib/template-compiler/compiler'
+} from '@mpxjs/compiler/template-compiler'
 import parseComponent from '@mpxjs/webpack-plugin/lib/parser'
 import { JsonConfig } from './transformer/json'
 
-export * from '@mpxjs/webpack-plugin/lib/template-compiler/compiler'
+export * from '@mpxjs/compiler/template-compiler'
 
 type MpxCompiler = typeof mpxCompiler
 

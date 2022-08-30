@@ -1,7 +1,7 @@
 import { HmrContext, ModuleNode } from 'vite'
 import _debug from 'debug'
 import { SFCBlock } from './compiler'
-import { ResolvedOptions } from './options'
+import { ResolvedOptions } from '../options'
 import {
   getDescriptor,
   setPrevDescriptor,

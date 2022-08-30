@@ -4,7 +4,7 @@ import { genScriptBlock, transformScript } from './script'
 import { genTemplateBlock, processTemplate } from './template'
 import { genStylesBlock } from './style'
 import { processJSON } from './json'
-import { ResolvedOptions } from '../options'
+import { ResolvedOptions } from '../../options'
 import { createDescriptor } from '../utils/descriptorCache'
 import { Query } from '../utils/parseRequest'
 

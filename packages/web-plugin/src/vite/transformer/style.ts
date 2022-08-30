@@ -1,17 +1,16 @@
 import { TransformPluginContext, TransformResult } from 'rollup'
 import { createFilter } from 'vite'
-import genComponentTag from '@mpxjs/webpack-plugin/lib/utils/gen-component-tag'
-import { transformStyle as vueTransformStyle } from 'vite-plugin-vue2/dist/style'
 import postcss from 'postcss'
-import loadPostcssConfig from '@mpxjs/webpack-plugin/lib/style-compiler/load-postcss-config'
-import trim from '@mpxjs/webpack-plugin/lib/style-compiler/plugins/trim'
-import rpx from '@mpxjs/webpack-plugin/lib/style-compiler/plugins/rpx'
-import vw from '@mpxjs/webpack-plugin/lib/style-compiler/plugins/vw'
-import pluginCondStrip from '@mpxjs/webpack-plugin/lib/style-compiler/plugins/conditional-strip'
-import scopeId from '@mpxjs/webpack-plugin/lib/style-compiler/plugins/scope-id'
-
+import { transformStyle as vueTransformStyle } from 'vite-plugin-vue2/dist/style'
+import genComponentTag from '@mpxjs/utils/gen-component-tag'
+import trim from '@mpxjs/compiler/style-compiler/plugins/trim'
+import rpx from '@mpxjs/compiler/style-compiler/plugins/rpx'
+import vw from '@mpxjs/compiler/style-compiler/plugins/vw'
+import pluginCondStrip from '@mpxjs/compiler/style-compiler/plugins/conditional-strip'
+import scopeId from '@mpxjs/compiler/style-compiler/plugins/scope-id'
 import { SFCDescriptor } from '../compiler'
-import { ResolvedOptions } from '../options'
+import { ResolvedOptions } from '../../options'
+import loadPostcssConfig from '../../utils/loadPostcssConfig'
 
 async function mpxTransformStyle(
   code: string,
@@ -28,15 +27,10 @@ async function mpxTransformStyle(
       ? transRpxRulesRaw
       : [transRpxRulesRaw]
     : []
-  const inlineConfig = { ...options.postcssInlineConfig, defs }
-  const config = await loadPostcssConfig({}, inlineConfig)
+  const inlineConfig = { ...options.postcssInlineConfig }
+  const config = await loadPostcssConfig({ webpack: {}, defs }, inlineConfig)
   const plugins = config.plugins.concat(trim)
-  const postCssOptions = {
-    to: filename,
-    from: filename,
-    map: false,
-    ...config.options
-  }
+
   if (autoScope) {
     const moduleId = descriptor.id
     plugins.push(scopeId({ id: moduleId }))
@@ -59,15 +53,19 @@ async function mpxTransformStyle(
   if (options.mode === 'web') {
     plugins.push(vw)
   }
-  // source map
-  if (options.sourceMap && !postCssOptions.map) {
-    postCssOptions.map = {
-      inline: false,
-      annotation: false
-    }
-  }
 
-  const result = await postcss(plugins).process(code, postCssOptions)
+  const result = await postcss(plugins).process(code, {
+    to: filename,
+    from: filename,
+    map: options.sourceMap
+      ? {
+          inline: false,
+          annotation: false
+        }
+      : false,
+    ...config.options
+  })
+
   if (result.messages) {
     result.messages.forEach(({ type, file }) => {
       if (type === 'dependency') {
@@ -122,5 +120,5 @@ export async function transformStyle(
  */
 export function genStylesBlock(descriptor: SFCDescriptor): { output: string } {
   const { styles } = descriptor
-  return { output: styles.map((style) => genComponentTag(style)).join('\n') }
+  return { output: styles.map(style => genComponentTag(style)).join('\n') }
 }

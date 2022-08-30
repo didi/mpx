@@ -1,4 +1,4 @@
-import { ResolvedOptions } from './options'
+import { ResolvedOptions } from '../options'
 import mpxGlobal from './mpx'
 import { SFCDescriptor } from './compiler'
 import stringify from './utils/stringify'
