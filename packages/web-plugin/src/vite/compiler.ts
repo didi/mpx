@@ -1,13 +1,14 @@
-import mpxCompiler, {
+import  {
   CompilerResult,
-  ParseResult
-} from '@mpxjs/compiler/template-compiler'
+  ParseResult,
+  templateCompiler
+} from '@mpxjs/compiler'
 import parseComponent from '@mpxjs/compiler/template-compiler/parser'
 import { JsonConfig } from './transformer/json'
 
-export * from '@mpxjs/compiler/template-compiler'
+export * from '@mpxjs/compiler'
 
-type MpxCompiler = typeof mpxCompiler
+type MpxCompiler = typeof templateCompiler
 
 export interface SFCDescriptor extends CompilerResult {
   id: string
@@ -50,10 +51,10 @@ const compiler: Compiler = {
     return descriptor
   },
   parse(template, options) {
-    return mpxCompiler.parse(template, options)
+    return templateCompiler.parse(template, options)
   },
   serialize(root) {
-    return mpxCompiler.serialize(root)
+    return templateCompiler.serialize(root)
   }
 }
 

@@ -81,7 +81,7 @@ export async function resolveJson(
       pluginContext.addWatchFile(resolution.id)
       content = await fs.promises.readFile(resolution.id, 'utf-8')
       if (resolution.id.endsWith('.json.js')) {
-        content = mpxJSON.compileMPXJSONText({
+        content = (mpxJSON as any).compileMPXJSONText({
           source: content,
           defs,
           filePath: resolution.id
