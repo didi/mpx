@@ -582,11 +582,6 @@ export const injectHook = (hookName, hook, instance = currentInstance) => {
   }
 }
 
-export const useContext = () => {
-  /* eslint-disable  no-undef */
-  return __context
-}
-
 export const createHook = (hookName) => (hook, instance) => injectHook(hookName, hook, instance)
 
 export const onBeforeCreate = createHook(BEFORECREATE)

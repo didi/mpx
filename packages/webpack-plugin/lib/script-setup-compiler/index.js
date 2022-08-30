@@ -604,7 +604,7 @@ function compileScriptSetup (
   _s.prependLeft(
     startOffset,
     `\nimport {${ctor}} from '${MPX_CORE}'\n${getCtor(ctorType)} ({${runtimeOptions}\n  ` +
-        `setup(${args}) {\n`
+      `setup(${args}) {\n const useContext = () => { return __context }`
   )
   _s.appendRight(endOffset, `})`)
 
