@@ -79,4 +79,4 @@ makeSerializable(
   '@mpxjs/web-plugin/src/webpack/dependencies/RecordResourceMapDependency'
 )
 
-module.exports = RecordResourceMapDependency
+export default RecordResourceMapDependency

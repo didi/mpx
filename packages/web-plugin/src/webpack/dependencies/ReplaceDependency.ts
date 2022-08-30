@@ -58,4 +58,4 @@ makeSerializable(
   '@mpxjs/web-plugin/src/webpack/dependencies/ReplaceDependency'
 )
 
-module.exports = ReplaceDependency
+export default ReplaceDependency

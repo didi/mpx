@@ -1,20 +1,20 @@
-const JSON5 = require('json5')
-const parseComponent = require('./parser')
-const loaderUtils = require('loader-utils')
-const parseRequest = require('@mpxjs/utils/parse-request')
-const { matchCondition } = require('@mpxjs/utils/match-condition')
-const addQuery = require('@mpxjs/utils/add-query')
-const async = require('async')
-const processJSON = require('./web/processJSON')
-const processScript = require('./web/processScript')
-const processStyles = require('./web/processStyles')
-const processTemplate = require('./web/processTemplate')
-const getJSONContent = require('./utils/get-json-content')
-const getEntryName = require('./utils/get-entry-name')
-const RecordResourceMapDependency = require('./dependencies/RecordResourceMapDependency')
-const { MPX_APP_MODULE_ID } = require('./utils/const')
-const path = require('path')
-const mpx = require('./mpx')
+import JSON5 from 'json5'
+import parseComponent from './parser'
+import loaderUtils from 'loader-utils'
+import parseRequest from '@mpxjs/utils/parse-request'
+import { matchCondition } from '@mpxjs/utils/match-condition'
+import addQuery from '@mpxjs/utils/add-query'
+import async from 'async'
+import processJSON from './web/processJSON'
+import processScript from './web/processScript'
+import processStyles from './web/processStyles'
+import processTemplate from './web/processTemplate'
+import getJSONContent from './utils/get-json-content'
+import getEntryName from './utils/get-entry-name'
+import RecordResourceMapDependency from './dependencies/RecordResourceMapDependency'
+import { MPX_APP_MODULE_ID } from '../constants/index'
+import path from 'path'
+import mpx from './mpx'
 module.exports = function (content) {
   this.cacheable()
 

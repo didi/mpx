@@ -1,31 +1,31 @@
 'use strict'
 
-const path = require('path')
-const ResolveDependency = require('./dependencies/ResolveDependency')
-const InjectDependency = require('./dependencies/InjectDependency')
-const NullFactory = require('webpack/lib/NullFactory')
-const NormalModule = require('webpack/lib/NormalModule')
-const CommonJsVariableDependency = require('./dependencies/CommonJsVariableDependency')
-const ReplaceDependency = require('./dependencies/ReplaceDependency')
+import path from 'path'
+import ResolveDependency from './dependencies/ResolveDependency'
+import InjectDependency from './dependencies/InjectDependency'
+import NullFactory from 'webpack/lib/NullFactory'
+import NormalModule from 'webpack/lib/NormalModule'
+import CommonJsVariableDependency from './dependencies/CommonJsVariableDependency'
+import ReplaceDependency from './dependencies/ReplaceDependency'
 const harmonySpecifierTag = require('webpack/lib/dependencies/HarmonyImportDependencyParserPlugin').harmonySpecifierTag
-const FlagEntryExportAsUsedPlugin = require('webpack/lib/FlagEntryExportAsUsedPlugin')
-const FileSystemInfo = require('webpack/lib/FileSystemInfo')
-const normalize = require('@mpxjs/utils/normalize')
-const toPosix = require(normalize.utils('to-posix'))
-const addQuery = require(normalize.utils('add-query'))
-const DefinePlugin = require('webpack/lib/DefinePlugin')
-const ExternalsPlugin = require('webpack/lib/ExternalsPlugin')
-const AddModePlugin = require('./resolver/AddModePlugin')
-const AddEnvPlugin = require('./resolver/AddEnvPlugin')
-const RecordResourceMapDependency = require('./dependencies/RecordResourceMapDependency')
-const parseRequest = require(normalize.utils('parse-request'))
-const { matchCondition } = require(normalize.utils('match-condition'))
-const { preProcessDefs } = require(normalize.utils('index'))
-const hash = require('hash-sum')
+import FlagEntryExportAsUsedPlugin from 'webpack/lib/FlagEntryExportAsUsedPlugin'
+import FileSystemInfo from 'webpack/lib/FileSystemInfo'
+import normalize from '@mpxjs/utils/normalize'
+import toPosix from '@mpxjs/utils/to-posix'
+import addQuery from '@mpxjs/utils/add-query'
+import DefinePlugin from 'webpack/lib/DefinePlugin'
+import ExternalsPlugin from 'webpack/lib/ExternalsPlugin'
+import AddModePlugin from './resolver/AddModePlugin'
+import AddEnvPlugin from './resolver/AddEnvPlugin'
+import RecordResourceMapDependency from './dependencies/RecordResourceMapDependency'
+import parseRequest from '@mpxjs/utils/parse-request'
+import { matchCondition } from '@mpxjs/utils/match-condition'
+import { preProcessDefs } from '@mpxjs/utils/index'
+import hash from 'hash-sum'
 const styleCompilerPath = normalize.webPlugin('webpack/style-compiler/index')
 const stringifyLoadersAndResource = require(normalize.utils('stringify-loaders-resource'))
-const async = require('async')
-const mpx = require('./mpx')
+import async from 'async'
+import mpx from './mpx'
 
 const isProductionLikeMode = options => {
   return options.mode === 'production' || !options.mode
