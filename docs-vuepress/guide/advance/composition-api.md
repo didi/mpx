@@ -319,6 +319,10 @@ createComponent({
 
 ## Setup
 
+`setup` 函数在组件创建时执行，返回组件所需的数据和方法，是组合式 API 的核心。
+
+> 注意，`setup` 函数不可被混入，所有定义在 `mixin` 中的 `setup` 都将被丢弃。
+
 ### 参数
 
 `setup` 函数接受两个参数，分别是 `props` 和 `context`。
@@ -458,35 +462,41 @@ createComponent({
 
 组合式 API 中，我们通过 `on${Hookname}(fn)` 的方式注册访问生命周期钩子。
 
-Mpx 作为一个跨端小程序框架，需要兼容不同小程序平台不同的生命周期，在选项式 API 中，我们内置了一套生命周期转换规则，用于转换映射不同小程序平台不同的生命周期，如微信小程序中的 `attached` 钩子在输出支付宝时会被映射到支付宝小程序的 `onInit` 中执行，但是在组合式 API 的写法中，我们不太可能把不同小程序平台的全量生命周期钩子函数都提供出来，因此我们在组合式 API 版本中，参考 Vue 提供了一套标准统一的生命周期钩子，在不同的小程序平台中进行抹平映射，下表展示了不同小程序平台生命周期与组合式 API 暴露的生命周期函数的对应关系：
+Mpx 作为一个跨端小程序框架，需要兼容不同小程序平台不同的生命周期，在选项式 API 中，我们在框架中内置了一套统一的生命周期，将不同小程序平台的生命周期转换映射为内置生命周期后再进行统一的驱动，以抹平不同小程序平台生命周期钩子的差异，如微信小程序的 `attached` 钩子和支付宝小程序的 `onInit` 钩子，在组合式 API 中，我们基于框架内置的生命周期暴露了一套统一的生命周期钩子函数，下表展示了框架内置生命周期/组合式 API 生命周期函数与不同小程序平台原生生命周期的对应关系：
 
 组件生命周期
 
-|Hook inside `setup`|微信|支付宝|
-|:----|:-----|:-------------------|
-|onBeforeCreate/onCreated|attached|onInit|
-|onBeforeMount/onMounted|ready|didMount|
-|onBeforeUpdate/onUpdated|`setData` callback|`setData` callback|
-|onBeforeUnmount/onUnmounted|detached|didUnmount|
+|框架内置生命周期|Hook inside `setup`|微信原生|支付宝原生|
+|:------------|:------------------|:-----|:-------|
+| BEFORECREATE | `null` |attached（数据响应初始化前）|onInit（数据响应初始化前）|
+| CREATED | `null` |attached（数据响应初始化后）|onInit（数据响应初始化后）|
+| BEFOREMOUNT | onBeforeMount |ready（`MOUNTED` 执行前）|didMount（`MOUNTED` 执行前）| 
+| MOUNTED | onMounted |ready（`BEFOREMOUNT` 执行后）|didMount（`BEFOREMOUNT` 执行后）| 
+| BEFOREUPDATE | onBeforeUpdate |`null`（`setData` 执行前）|`null`（`setData` 执行前）|
+| UPDATED | onUpdated |`null`（`setData` callback）|`null`（`setData` callback）|
+| BEFOREUNMOUNT | onBeforeUnmount |detached（数据响应销毁前）|didUnmount（数据响应销毁前）|
+| UNMOUNTED | onUnmounted |detached（数据响应销毁后）|didUnmount（数据响应销毁后）|
+
+> 同 Vue3 一样，组合式 API 中没有提供 `BEFORECREATE` 和 `CREATED` 对应的生命周期钩子函数，用户可以直接在 `setup` 中编写相关逻辑。
 
 > 除支付宝外的小程序平台支持使用Component构建页面，在页面中使用组件生命周期钩子与在组件中完全一致，并且框架在支付宝环境也进行了抹平实现。
 
 页面生命周期
 
-|Hook inside `setup`|微信|支付宝|
-|:----|:-----|:-------------------|
-|onLoad|onLoad|onLoad|
-|onShow|onShow|onShow|
-|onHide|onHide|onHide|
-|onResize|onResize|events.onResize|
+|框架内置生命周期|Hook inside `setup`|微信原生|支付宝原生|
+|:------------|:------------------|:-----|:-------|
+|ONLOAD|onLoad|onLoad|onLoad|
+|ONSHOW|onShow|onShow|onShow|
+|ONHIDE|onHide|onHide|onHide|
+|ONRESIZE|onResize|onResize|events.onResize|
 
 组件中访问页面生命周期
 
-|Hook inside `setup`|微信|支付宝|
-|:----|:-----|:-------------------|
-|onShow|pageLifetimes.show|框架抹平实现|
-|onHide|pageLifetimes.hide|框架抹平实现|
-|onResize|pageLifetimes.resize|框架抹平实现|
+|框架内置生命周期|Hook inside `setup`|微信原生|支付宝原生|
+|:------------|:------------------|:-----|:-------|
+|ONSHOW|onShow|pageLifetimes.show|`null`（框架抹平实现）|
+|ONHIDE|onHide|pageLifetimes.hide|`null`（框架抹平实现）|
+|ONRESIZE|onResize|pageLifetimes.resize|`null`（框架抹平实现）|
 
 下面是简单的使用示例：
 
@@ -507,6 +517,28 @@ createComponent({
   }
 })
 ```
+
+### 框架内置生命周期
+
+从上面可以看到我们在框架内部内置了一套统一的生命周期来抹平不同平台生命周期的差异，由于存在数据响应机制，这套内置生命周期与小程序原生的生命周期不完全一一对应，反而与 Vue 的生命周期更加相似，在过去的版本中，我们没有显式地暴露出 `BEFORECREATE` 这这类框架内置的生命周期，更多都在框架内部使用，但是在组合式 API 版本中，为了使选项式 API 的生命周期能力与之对齐，我们将框架内置的生命周期显式导出，让用户在选项式 API 开发环境下也能正常使用这些能力，简单使用示例如下：
+
+```js
+import { createComponent, BEFORECREATE } from '@mpxjs/core'
+
+createComponent({
+  [BEFORECREATE] () {
+    console.log('beforeCreate exec.')
+  },
+  created () {
+    // 原生的 created 会被映射为框架内部的 CREATED 执行，此处逻辑在 BEFORECREATE 后执行
+    console.log('created exec.')
+  }
+})
+```
+
+### 具有副作用的生命周期钩子
+
+todo cr
 
 ## 模板引用
 
