@@ -59,4 +59,4 @@ makeSerializable(
   '@mpxjs/web-plugin/src/webpack/dependencies/InjectDependency'
 )
 
-module.exports = InjectDependency
+export default InjectDependency

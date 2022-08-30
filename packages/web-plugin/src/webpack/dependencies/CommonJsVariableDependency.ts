@@ -83,4 +83,4 @@ makeSerializable(
   '@mpxjs/web-plugin/src/webpack/dependencies/CommonJsVariableDependency'
 )
 
-module.exports = CommonJsVariableDependency
+export default CommonJsVariableDependency

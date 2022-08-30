@@ -120,4 +120,4 @@ makeSerializable(
   '@mpxjs/web-plugin/src/webpack/dependencies/ResolveDependency'
 )
 
-module.exports = ResolveDependency
+export default ResolveDependency

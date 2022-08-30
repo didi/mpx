@@ -1,25 +1,28 @@
-declare module 'webpack/lib/InitFragment'
-declare module 'webpack/lib/util/makeSerializable'
-declare module 'webpack/lib/dependencies/ModuleDependency'
-declare module '@mpxjs/utils/parse-request'
-declare module '@mpxjs/utils/normalize'
-declare module '@mpxjs/utils/is-url-request'
-declare module '@mpxjs/utils/match-condition'
-declare module '@mpxjs/utils/add-infix'
-declare module '@mpxjs/utils/stringify-query'
-declare module '@mpxjs/compiler/style-compiler/plugins/vw'
-declare module '@mpxjs/compiler/style-compiler/plugins/rpx'
-declare module '@mpxjs/compiler/style-compiler/plugins/trim'
-declare module '@mpxjs/compiler/style-compiler/plugins/conditional-strip'
-declare module '@mpxjs/compiler/style-compiler/plugins/scope-id'
-declare module '@mpxjs/utils/is-empty-object'
-declare module '@mpxjs/utils/mpx-json'
+declare module 'webpack/lib/InitFragment' {}
+declare module 'webpack/lib/util/makeSerializable' {}
+declare module 'webpack/lib/dependencies/ModuleDependency' {}
+declare module '@mpxjs/utils/parse-request' {}
+declare module '@mpxjs/utils/normalize' {}
+declare module '@mpxjs/utils/is-url-request' {}
+declare module '@mpxjs/utils/match-condition' {}
+declare module '@mpxjs/utils/add-infix' {}
+declare module '@mpxjs/utils/stringify-query' {}
+declare module '@mpxjs/compiler/style-compiler/plugins/vw' {}
+declare module '@mpxjs/compiler/style-compiler/plugins/rpx' {}
+declare module '@mpxjs/compiler/style-compiler/plugins/trim' {}
+declare module '@mpxjs/compiler/style-compiler/plugins/conditional-strip' {}
+declare module '@mpxjs/compiler/style-compiler/plugins/scope-id' {}
+declare module '@mpxjs/utils/is-empty-object' {}
+declare module '@mpxjs/utils/mpx-json' {}
+declare module '@mpxjs/compiler/template-compiler/parser' {
+  export default function parser(...args: any[]): any
+}
 
 declare module '@mpxjs/utils/to-posix' {
-  export default function (path: string): string
+  export default function toPosix(path: string): string
 }
-declare module '@mpxjs/utils/gen-component-tag'{
-  function genComponentTag<T>(
+declare module '@mpxjs/utils/gen-component-tag' {
+  export default function genComponentTag<T>(
     part: T,
     processor:
       | {
@@ -29,8 +32,6 @@ declare module '@mpxjs/utils/gen-component-tag'{
         }
       | ((part: T) => string) = {}
   ): string
-
-  export default genComponentTag
 }
 
 declare module '@mpxjs/compiler/template-compiler' {

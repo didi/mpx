@@ -2,7 +2,7 @@ import mpxCompiler, {
   CompilerResult,
   ParseResult
 } from '@mpxjs/compiler/template-compiler'
-import parseComponent from '@mpxjs/webpack-plugin/lib/parser'
+import parseComponent from '@mpxjs/compiler/template-compiler/parser'
 import { JsonConfig } from './transformer/json'
 
 export * from '@mpxjs/compiler/template-compiler'
