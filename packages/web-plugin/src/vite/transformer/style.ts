@@ -3,11 +3,7 @@ import { createFilter } from 'vite'
 import postcss from 'postcss'
 import { transformStyle as vueTransformStyle } from 'vite-plugin-vue2/dist/style'
 import genComponentTag from '@mpxjs/utils/gen-component-tag'
-import trim from '@mpxjs/compiler/style-compiler/plugins/trim'
-import rpx from '@mpxjs/compiler/style-compiler/plugins/rpx'
-import vw from '@mpxjs/compiler/style-compiler/plugins/vw'
-import pluginCondStrip from '@mpxjs/compiler/style-compiler/plugins/conditional-strip'
-import scopeId from '@mpxjs/compiler/style-compiler/plugins/scope-id'
+import { styleCompiler } from '@mpxjs/compiler'
 import { SFCDescriptor } from '../compiler'
 import { ResolvedOptions } from '../../options'
 import loadPostcssConfig from '../../utils/loadPostcssConfig'
@@ -29,15 +25,15 @@ async function mpxTransformStyle(
     : []
   const inlineConfig = { ...options.postcssInlineConfig }
   const config = await loadPostcssConfig({ webpack: {}, defs }, inlineConfig)
-  const plugins = config.plugins.concat(trim)
+  const plugins = config.plugins.concat(styleCompiler.trim())
 
   if (autoScope) {
     const moduleId = descriptor.id
-    plugins.push(scopeId({ id: moduleId }))
+    plugins.push(styleCompiler.scopeId({ id: moduleId }))
   }
 
   plugins.push(
-    pluginCondStrip({
+    styleCompiler.pluginCondStrip({
       defs
     })
   )
@@ -46,12 +42,12 @@ async function mpxTransformStyle(
     const { mode, comment, designWidth, include, exclude } = item || {}
     const filter = createFilter(include, exclude)
     if (filter(filename)) {
-      plugins.push(rpx({ mode, comment, designWidth }))
+      plugins.push(styleCompiler.rpx({ mode, comment, designWidth }))
     }
   }
 
   if (options.mode === 'web') {
-    plugins.push(vw)
+    plugins.push(styleCompiler.vw())
   }
 
   const result = await postcss(plugins).process(code, {

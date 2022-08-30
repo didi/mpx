@@ -1,9 +1,6 @@
 import postcss from 'postcss'
 import { LoaderDefinition } from 'webpack'
-import trim from '@mpxjs/compiler/style-compiler/plugins/trim'
-import rpx from '@mpxjs/compiler/style-compiler/plugins/rpx'
-import vw from '@mpxjs/compiler/style-compiler/plugins/vw'
-import pluginCondStrip from '@mpxjs/compiler/style-compiler/plugins/conditional-strip'
+import {styleCompiler} from '@mpxjs/compiler'
 import { matchCondition } from '@mpxjs/utils/match-condition'
 import mpx from '../mpx'
 import loadPostcssConfig from '../../utils/loadPostcssConfig'
@@ -33,9 +30,9 @@ const StyleCompiler: LoaderDefinition = function (css: string, map) {
     inlineConfig
   )
     .then(config => {
-      const plugins = config.plugins.concat(trim)
+      const plugins = config.plugins.concat(styleCompiler.trim())
       plugins.push(
-        pluginCondStrip({
+        styleCompiler.pluginCondStrip({
           defs
         })
       )
@@ -45,13 +42,13 @@ const StyleCompiler: LoaderDefinition = function (css: string, map) {
 
         if (testResolveRange(include, exclude)) {
           // 对同一个资源一旦匹配到，推入一个rpx插件后就不再继续推了
-          plugins.push(rpx({ mode, comment, designWidth }))
+          plugins.push(styleCompiler.rpx({ mode, comment, designWidth }))
           break
         }
       }
 
       if (mpx.mode === 'web') {
-        plugins.push(vw({ transRpxFn }))
+        plugins.push(styleCompiler.vw({ transRpxFn }))
       }
 
       return postcss(plugins)

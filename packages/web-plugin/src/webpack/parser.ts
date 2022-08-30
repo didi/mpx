@@ -3,7 +3,7 @@ import hash from 'hash-sum'
 import compiler from '@mpxjs/compiler/template-compiler/compiler'
 import { SourceMapGenerator } from 'source-map'
 
-const cache = LruCache(100)
+const cache = new LruCache(100)
 
 const splitRE = /\r?\n/g
 const emptyRE = /^(?:\/\/)?\s*$/
