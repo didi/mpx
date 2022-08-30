@@ -254,7 +254,7 @@ function translate (messages, locale, fallbackLocale, key, values) {
   if (isString(message)) {
     return render(message, values)
   }
-  return ''
+  return key
 }
 
 function exist (messages, locale, key) {

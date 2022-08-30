@@ -3,16 +3,9 @@ import { diffAndCloneA, makeMap, hasOwn } from './helper/utils'
 import { error } from '@mpxjs/utils'
 import { APIs, InstanceAPIs } from './platform/export/api'
 
-import {
-  createI18n,
-  useI18n
-} from './platform/builtInMixins/i18nMixin'
+import { createI18n } from './platform/builtInMixins/i18nMixin'
 
 export * from './platform/export/index'
-export {
-  createI18n,
-  useI18n
-}
 
 export {
   createApp,

@@ -1,11 +1,7 @@
 import {
-  BEFORECREATE,
   CREATED,
-  BEFOREUNMOUNT,
   UNMOUNTED,
   MOUNTED,
-  UPDATED,
-  BEFOREMOUNT,
   ONSHOW,
   ONHIDE,
   ONLOAD
@@ -29,33 +25,29 @@ const PAGE_HOOKS = [
   'onUnload',
   'onPullDownRefresh',
   'onReachBottom',
-  'onShareAppMessage',
   'onPageScroll',
+  'onAddToFavorites',
+  'onShareAppMessage',
+  'onShareTimeline',
+  'onResize',
   'onTabItemTap',
-  'onResize'
+  'onSaveExitState'
 ]
 
 const COMPONENT_HOOKS = [
-  'beforeCreate',
   'created',
   'attached',
   'ready',
   'moved',
   'detached',
-  'updated',
   'pageShow',
-  'pageHide',
-  'definitionFilter'
+  'pageHide'
 ]
 
 export const lifecycleProxyMap = {
-  [BEFORECREATE]: ['beforeCreate'],
   // 类微信平台中onLoad不能代理到CREATED上，否则Component构造页面时无法获取页面参数
   [CREATED]: ['created', 'attached'],
-  [UPDATED]: ['updated'],
-  [BEFOREMOUNT]: ['beforeMount'],
   [MOUNTED]: ['ready', 'onReady'],
-  [BEFOREUNMOUNT]: ['beforeUnmount'],
   [UNMOUNTED]: ['detached', 'onUnload'],
   [ONSHOW]: ['pageShow', 'onShow'],
   [ONHIDE]: ['pageHide', 'onHide'],

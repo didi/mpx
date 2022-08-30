@@ -1,5 +1,5 @@
 import { isObject } from '@mpxjs/utils'
-import { CREATED, MOUNTED } from '../../core/innerLifecycle'
+import { CREATED, MOUNTED, BEFOREUNMOUNT } from '../../core/innerLifecycle'
 
 const targets = []
 let curTarget = null
@@ -184,7 +184,7 @@ export default function relationsMixin (mixinType) {
         this.__mpxCollectRelations()
         this.__mpxExecRelations('linked')
       },
-      beforeDestroy () {
+      [BEFOREUNMOUNT] () {
         this.__mpxExecRelations('unlinked')
       },
       methods: {

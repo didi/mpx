@@ -7,7 +7,7 @@ const async = require('async')
 const parseRequest = require('../utils/parse-request')
 
 class DynamicEntryDependency extends NullDependency {
-  constructor (request, entryType, outputPath = '', packageRoot = '', relativePath = '', context = '', range) {
+  constructor (request, entryType, outputPath = '', packageRoot = '', relativePath = '', context = '', range, extraOptions = {}) {
     super()
     this.request = request
     this.entryType = entryType
@@ -16,6 +16,7 @@ class DynamicEntryDependency extends NullDependency {
     this.relativePath = relativePath
     this.context = context
     this.range = range
+    this.extraOptions = extraOptions
   }
 
   get type () {
@@ -117,10 +118,10 @@ class DynamicEntryDependency extends NullDependency {
 
   // hash会影响最终的codeGenerateResult是否走缓存，由于该dep中resultPath是动态变更的，需要将其更新到hash中，避免错误使用缓存
   updateHash (hash, context) {
-    const { resultPath, customApply } = this
+    const { resultPath, extraOptions } = this
     if (resultPath) hash.update(resultPath)
-    // 当存在customApply时，插入随机hash使当前module的codeGeneration cache失效，从而执行dep.apply动态获取当前module所属的chunk路径
-    if (typeof customApply === 'function') hash.update('' + (+new Date()) + Math.random())
+    // 当处理require.async时，插入随机hash使当前module的codeGeneration cache失效，从而执行dep.apply动态获取当前module所属的chunk路径
+    if (extraOptions.isRequireAsync) hash.update('' + (+new Date()) + Math.random())
     super.updateHash(hash, context)
   }
 
@@ -133,6 +134,7 @@ class DynamicEntryDependency extends NullDependency {
     write(this.relativePath)
     write(this.context)
     write(this.range)
+    write(this.extraOptions)
     super.serialize(context)
   }
 
@@ -145,24 +147,40 @@ class DynamicEntryDependency extends NullDependency {
     this.relativePath = read()
     this.context = read()
     this.range = read()
+    this.extraOptions = read()
     super.deserialize(context)
   }
 }
 
 DynamicEntryDependency.Template = class DynamicEntryDependencyTemplate {
-  apply (dep, source, options) {
-    const { resultPath, range, key, customApply } = dep
+  apply (dep, source, {
+    module,
+    chunkGraph
+  }) {
+    const { resultPath, range, key, outputPath, publicPath, extraOptions } = dep
 
-    if (typeof customApply === 'function') {
-      return customApply(dep, source, options)
-    }
+    let replaceContent = ''
 
-    if (resultPath) {
-      source.replace(range[0], range[1] - 1, JSON.stringify(resultPath))
+    if (outputPath === 'custom-tab-bar/index') {
+      // replace with true for custom-tab-bar
+      replaceContent = JSON.stringify(true)
+    } else if (resultPath) {
+      if (extraOptions.isRequireAsync) {
+        const relativePath = toPosix(path.relative(publicPath + path.dirname(chunkGraph.getModuleChunks(module)[0].name), resultPath))
+        replaceContent = JSON.stringify(relativePath)
+        if (extraOptions.retryRequireAsync) {
+          replaceContent += `).catch(function (e) {
+  return require.async(${JSON.stringify(relativePath)});
+}`
+        }
+      } else {
+        replaceContent = JSON.stringify(resultPath)
+      }
     } else {
-      const replaceRange = `mpx_replace_path_${key}`
-      source.replace(range[0], range[1] - 1, JSON.stringify(replaceRange))
+      replaceContent = JSON.stringify(`mpx_replace_path_${key}`)
     }
+
+    if (replaceContent) source.replace(range[0], range[1] - 1, replaceContent)
   }
 }
 

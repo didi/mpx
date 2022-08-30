@@ -42,3 +42,7 @@ export {
 export {
   markRaw
 } from '../../observer/reactive'
+
+export {
+  useI18n
+} from '../../platform/builtInMixins/i18nMixin'
