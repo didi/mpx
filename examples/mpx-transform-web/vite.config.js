@@ -1,9 +1,10 @@
 const path = require('path')
-const mpx = require('@mpxjs/web-plugin/dist/vite/index.js')
+const mpx = require('@mpxjs/web-plugin/vite')
+const { defineConfig } = require('vite')
 
 console.log(mpx)
 
-module.exports = {
+module.exports = defineConfig({
   plugins: [
     mpx.default({
       env: 'didi'
@@ -25,4 +26,4 @@ module.exports = {
     sourcemap: true,
     minify: false
   }
-}
+})

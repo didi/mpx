@@ -114,7 +114,6 @@ export function processTemplate(
       })
 
       if (parsed.meta.builtInComponentsMap) {
-        console.log(11111, parsed.meta.builtInComponentsMap)
         Object.entries(parsed.meta.builtInComponentsMap).forEach(
           ([name, resource]) => addBuildComponent(name, resource)
         )
