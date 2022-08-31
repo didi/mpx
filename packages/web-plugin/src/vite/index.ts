@@ -1,7 +1,6 @@
 import { Plugin, UserConfig, createFilter } from 'vite'
 import { createVuePlugin } from 'vite-plugin-vue2'
 import replace from '@rollup/plugin-replace'
-import commonjs from '@rollup/plugin-commonjs'
 import nodePolyfills from 'rollup-plugin-polyfill-node'
 import mpxGlobal from './mpx'
 import { transformMain } from './transformer/main'
@@ -177,14 +176,6 @@ export default function mpx (options: Options = {}): Plugin[] {
       exclude: [/polyfill-nodeglobal/] // ignore polyfill self
     })
   ]
-
-  if (!isProduction) {
-    plugins.push(
-      commonjs({
-        include: [/@mpxjs\/utils/]
-      })
-    )
-  }
 
   return plugins
 }

@@ -1,5 +1,5 @@
 <script>
-	import { inBrowser } from '@mpxjs/utils/env'
+	import { inBrowser } from '@mpxjs/utils/env.mjs'
 
   function isDef (v) {
     return v !== undefined && v !== null

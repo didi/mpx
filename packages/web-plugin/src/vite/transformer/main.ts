@@ -43,7 +43,6 @@ export async function transformMain(
     // replace "*.mpx?vue" to "*.mpx?mpx"
     // this way mpx does not enter the logic of the Vueplugin
     // replace all \/\/\n for sourceMap
-    console.log(vueCode)
     return {
       code: vueCode
         .replace(/(\.mpx)(\?vue)/g, `$1?mpx`)

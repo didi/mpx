@@ -1,4 +1,4 @@
-import { inBrowser } from '@mpxjs/utils/env'
+import { inBrowser } from '@mpxjs/utils/env.mjs'
 
 export default function processOption (
   option,
