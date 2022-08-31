@@ -3,7 +3,7 @@ const path = require('path')
 const JSON5 = require('json5')
 const loaderUtils = require('loader-utils')
 const parseRequest = require('../utils/parse-request')
-const toPosix = require('../utils/to-posix')
+// const toPosix = require('../utils/to-posix')
 const addQuery = require('../utils/add-query')
 const parseComponent = require('../parser')
 const getJSONContent = require('../utils/get-json-content')
@@ -15,7 +15,7 @@ module.exports = function (json, options, rawCallback) {
   const defs = options.defs
   const loaderContext = options.loaderContext
   const resolveMode = options.resolveMode
-  const pagesMap = options.pagesMap
+  // const pagesMap = options.pagesMap
   const componentsMap = options.componentsMap
   const projectRoot = options.projectRoot
   const pathHash = options.pathHash
@@ -29,17 +29,17 @@ module.exports = function (json, options, rawCallback) {
   let tabBarStr
   const context = loaderContext.context
 
-  const emitWarning = (msg) => {
-    loaderContext.emitWarning(
-      new Error('[json processor][' + loaderContext.resource + ']: ' + msg)
-    )
-  }
+  // const emitWarning = (msg) => {
+  //   loaderContext.emitWarning(
+  //     new Error('[json processor][' + loaderContext.resource + ']: ' + msg)
+  //   )
+  // }
 
-  const emitError = (msg) => {
-    this.emitError(
-      new Error('[json compiler][' + this.resource + ']: ' + msg)
-    )
-  }
+  // const emitError = (msg) => {
+  //   this.emitError(
+  //     new Error('[json compiler][' + this.resource + ']: ' + msg)
+  //   )
+  // }
 
   // const stringifyRequest = r => loaderUtils.stringifyRequest(loaderContext, r)
 
@@ -186,73 +186,69 @@ module.exports = function (json, options, rawCallback) {
     }
   }
 
-  const getPageName = (resourcePath, ext) => {
-    const baseName = path.basename(resourcePath, ext)
-    return path.join('pages', baseName + pathHash(resourcePath), baseName)
-  }
+  // const getPageName = (resourcePath, ext) => {
+  //   const baseName = path.basename(resourcePath, ext)
+  //   return path.join('pages', baseName + pathHash(resourcePath), baseName)
+  // }
 
   const processPages = (pages, srcRoot = '', tarRoot = '', context, callback) => {
     if (pages) {
       context = path.join(context, srcRoot)
       async.forEach(pages, (page, callback) => {
-        let aliasPath = ''
+        let pagePath = page
         if (typeof page !== 'string') {
-          aliasPath = page.path
-          page = page.src
+          pagePath = page.src
         }
-        if (!isUrlRequest(page, projectRoot)) return callback()
-        if (resolveMode === 'native') {
-          page = loaderUtils.urlToRequest(page, projectRoot)
-        }
-        resolve(context, page, (err, resource) => {
-          if (err) return callback(err)
-          const { resourcePath, queryObj } = parseRequest(resource)
-          const ext = path.extname(resourcePath)
-          // 获取pageName
-          let pageName
-          if (aliasPath) {
-            pageName = toPosix(path.join(tarRoot, aliasPath))
-            // 判断 key 存在重复情况直接报错
-            for (let key in pagesMap) {
-              if (pagesMap[key] === pageName && key !== resourcePath) {
-                emitError(`Current page [${resourcePath}] registers a conflict page path [${pageName}] with existed page [${key}], which is not allowed, please rename it!`)
-                return callback()
-              }
-            }
-          } else {
-            const relative = path.relative(context, resourcePath)
-            if (/^\./.test(relative)) {
-              // 如果当前page不存在于context中，对其进行重命名
-              pageName = toPosix(path.join(tarRoot, getPageName(resourcePath, ext)))
-              emitWarning(`Current page [${resourcePath}] is not in current pages directory [${context}], the page path will be replaced with [${pageName}], use ?resolve to get the page path and navigate to it!`)
-            } else {
-              pageName = toPosix(path.join(tarRoot, /^(.*?)(\.[^.]*)?$/.exec(relative)[1]))
-              // 如果当前page与已有page存在命名冲突，也进行重命名
-              for (let key in pagesMap) {
-                // 此处引入pagesMap确保相同entry下路由路径重复注册才报错，不同entry下的路由路径重复则无影响
-                if (pagesMap[key] === pageName && key !== resourcePath && pagesMap[key] === loaderContext.resourcePath) {
-                  const pageNameRaw = pageName
-                  pageName = toPosix(path.join(tarRoot, getPageName(resourcePath, ext)))
-                  emitWarning(`Current page [${resourcePath}] is registered with a conflict page path [${pageNameRaw}] which is already existed in system, the page path will be replaced with [${pageName}], use ?resolve to get the page path and navigate to it!`)
-                  break
-                }
-              }
-            }
-          }
-          if (pagesMap[resourcePath]) {
-            emitWarning(`Current page [${resourcePath}] which is imported from [${loaderContext.resourcePath}] has been registered in pagesMap already, it will be ignored, please check it and remove the redundant page declaration!`)
-            return callback()
-          }
-          // buildInfo.pagesMap = buildInfo.pagesMap || {}
-          // buildInfo.pagesMap[resourcePath] = pagesMap[resourcePath] = pageName
-          // pagesMap[resourcePath] = loaderContext.resourcePath
-          localPagesMap[pageName] = {
-            resource: addQuery(resource, { page: true }),
-            async: tarRoot || queryObj.async,
-            isFirst: queryObj.isFirst
-          }
-          callback()
-        })
+        // if (!isUrlRequest(page, projectRoot)) return callback()
+        // if (resolveMode === 'native') {
+        //   page = loaderUtils.urlToRequest(page, projectRoot)
+        // }
+        // resolve(context, page, (err, resource) => {
+        //   if (err) return callback(err)
+        //   const { resourcePath, queryObj } = parseRequest(resource)
+        //   const ext = path.extname(resourcePath)
+        //   // 获取pageName
+        //   let pageName
+        //   if (aliasPath) {
+        //     pageName = toPosix(path.join(tarRoot, aliasPath))
+        //     // 判断 key 存在重复情况直接报错
+        //     for (let key in pagesMap) {
+        //       if (pagesMap[key] === pageName && key !== resourcePath) {
+        //         emitError(`Current page [${resourcePath}] registers a conflict page path [${pageName}] with existed page [${key}], which is not allowed, please rename it!`)
+        //         return callback()
+        //       }
+        //     }
+        //   } else {
+        //     const relative = path.relative(context, resourcePath)
+        //     if (/^\./.test(relative)) {
+        //       // 如果当前page不存在于context中，对其进行重命名
+        //       pageName = toPosix(path.join(tarRoot, getPageName(resourcePath, ext)))
+        //       emitWarning(`Current page [${resourcePath}] is not in current pages directory [${context}], the page path will be replaced with [${pageName}], use ?resolve to get the page path and navigate to it!`)
+        //     } else {
+        //       pageName = toPosix(path.join(tarRoot, /^(.*?)(\.[^.]*)?$/.exec(relative)[1]))
+        //       // 如果当前page与已有page存在命名冲突，也进行重命名
+        //       for (let key in pagesMap) {
+        //         // 此处引入pagesMap确保相同entry下路由路径重复注册才报错，不同entry下的路由路径重复则无影响
+        //         if (pagesMap[key] === pageName && key !== resourcePath && pagesMap[key] === loaderContext.resourcePath) {
+        //           const pageNameRaw = pageName
+        //           pageName = toPosix(path.join(tarRoot, getPageName(resourcePath, ext)))
+        //           emitWarning(`Current page [${resourcePath}] is registered with a conflict page path [${pageNameRaw}] which is already existed in system, the page path will be replaced with [${pageName}], use ?resolve to get the page path and navigate to it!`)
+        //           break
+        //         }
+        //       }
+        //     }
+        //   }
+        //   if (pagesMap[resourcePath]) {
+        //     emitWarning(`Current page [${resourcePath}] which is imported from [${loaderContext.resourcePath}] has been registered in pagesMap already, it will be ignored, please check it and remove the redundant page declaration!`)
+        //     return callback()
+        //   }
+        // buildInfo.pagesMap = buildInfo.pagesMap || {}
+        // buildInfo.pagesMap[resourcePath] = pagesMap[resourcePath] = pageName
+        // pagesMap[resourcePath] = loaderContext.resourcePath
+        localPagesMap[pagePath] = page
+        //   callback()
+        // })
+        callback()
       }, callback)
     } else {
       callback()

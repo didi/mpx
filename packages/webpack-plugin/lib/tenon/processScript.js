@@ -244,7 +244,8 @@ module.exports = function (script, options, callback) {
   const pageSet = new Set()
   let dynamicPageStr = ''
   async.each(localPagesMap, (pageCfg, callback) => {
-    processPage(addQuery(pageCfg.resource, { tenon: true }), loaderContext.context, '', (err, entry, { key }) => {
+    if (typeof pageCfg !== 'string') pageCfg.src = addQuery(pageCfg.src, { tenon: true })
+    processPage(pageCfg, loaderContext.context, '', (err, entry, { key }) => {
       if (err) return callback()
       if (pageSet.has(key)) return callback()
       pageSet.add(key)
