@@ -46,15 +46,6 @@ export function createI18n (options) {
     get tm () {
       return _global.tm
     },
-    get getLocaleMessage () {
-      return _global.getLocaleMessage
-    },
-    get setLocaleMessage () {
-      return _global.setLocaleMessage
-    },
-    get mergeLocaleMessage () {
-      return _global.mergeLocaleMessage
-    },
     dispose () {
       globalScope.stop()
     },
@@ -69,14 +60,6 @@ export function createI18n (options) {
       __instances.delete(instance)
     }
   }
-
-  // 挂载翻译方法，$t等注入方法只能使用global scope
-  Object.keys(i18nMethods).forEach((methodName) => {
-    this['$' + methodName] = (...args) => {
-      if (methodName === 'tc') methodName = 't'
-      return i18n.global[methodName](...args)
-    }
-  })
   return i18n
 }
 
@@ -122,7 +105,7 @@ function createComposer (options) {
     } else {
       ret = i18nMethods.t(messages.value, locale.value, fallbackLocale.value, ...args)
     }
-    if (!ret && fallbackRoot && __root) {
+    if (ret === args[0] && fallbackRoot && __root) {
       ret = __root.t(...args)
     }
     return ret

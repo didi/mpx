@@ -122,9 +122,7 @@ function compile (tokens, values) {
 }
 
 function interpolate (message, values) {
-  if (!values) {
-    return [message]
-  }
+  values = values || {}
   var tokens = _tokenCaches[message]
   if (!tokens) {
     tokens = parseMessage(message)
