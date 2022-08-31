@@ -22,6 +22,39 @@ export function createI18n (options) {
     get global () {
       return _global
     },
+    get locale () {
+      return _global.locale.value || DefaultLocale
+    },
+    set locale (val) {
+      _global.locale.value = val
+    },
+    get fallbackLocale () {
+      return _global.fallbackLocale.value || DefaultLocale
+    },
+    set fallbackLocale (val) {
+      _global.fallbackLocale.value = val
+    },
+    get t () {
+      return _global.t
+    },
+    get tc () {
+      return _global.t
+    },
+    get te () {
+      return _global.te
+    },
+    get tm () {
+      return _global.tm
+    },
+    get getLocaleMessage () {
+      return _global.getLocaleMessage
+    },
+    get setLocaleMessage () {
+      return _global.setLocaleMessage
+    },
+    get mergeLocaleMessage () {
+      return _global.mergeLocaleMessage
+    },
     dispose () {
       globalScope.stop()
     },
@@ -36,6 +69,14 @@ export function createI18n (options) {
       __instances.delete(instance)
     }
   }
+
+  // 挂载翻译方法，$t等注入方法只能使用global scope
+  Object.keys(i18nMethods).forEach((methodName) => {
+    this['$' + methodName] = (...args) => {
+      if (methodName === 'tc') methodName = 't'
+      return i18n.global[methodName](...args)
+    }
+  })
   return i18n
 }
 
