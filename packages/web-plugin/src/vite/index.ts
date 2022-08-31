@@ -1,7 +1,6 @@
 import { Plugin, UserConfig, createFilter } from 'vite'
 import { createVuePlugin } from 'vite-plugin-vue2'
 import replace from '@rollup/plugin-replace'
-import nodePolyfills from 'rollup-plugin-polyfill-node'
 import mpxGlobal from './mpx'
 import { transformMain } from './transformer/main'
 import { transformTemplate } from './transformer/template'
@@ -12,7 +11,9 @@ import {
   I18N_HELPER_CODE,
   renderAppHelpCode,
   renderI18nCode,
-  renderPageRouteCode
+  renderPageRouteCode,
+  renderTabBarPageCode,
+  TAB_BAR_PAGE_HELPER_CODE
 } from './helper'
 import { processOptions, Options, ResolvedOptions } from '../options'
 import {
@@ -66,7 +67,11 @@ function createMpxPlugin(
     },
 
     async resolveId(id, ...args) {
-      if (id === APP_HELPER_CODE || id === I18N_HELPER_CODE) {
+      if (
+        id === APP_HELPER_CODE ||
+        id === I18N_HELPER_CODE ||
+        id === TAB_BAR_PAGE_HELPER_CODE
+      ) {
         return id
       }
       // return vue resolveId
@@ -78,7 +83,14 @@ function createMpxPlugin(
         const { filename } = parseRequest(mpxGlobal.entry)
         const descriptor = getDescriptor(filename)
         if (descriptor) {
-          return renderAppHelpCode(descriptor)
+          return renderAppHelpCode(options, descriptor)
+        }
+      }
+      if (id === TAB_BAR_PAGE_HELPER_CODE && mpxGlobal.entry) {
+        const { filename } = parseRequest(mpxGlobal.entry)
+        const descriptor = getDescriptor(filename)
+        if (descriptor) {
+          return renderTabBarPageCode(options, descriptor, this)
         }
       }
       if (id === I18N_HELPER_CODE) {
@@ -186,10 +198,6 @@ export default function mpx(options: Options = {}): Plugin[] {
         )
       })
     }) as Plugin
-    // nodePolyfills({
-    //   include: [/@mpxjs/, /\.mpx/, /plugin-mpx:/, /polyfill-node/],
-    //   exclude: [/polyfill-nodeglobal/] // ignore polyfill self
-    // }) as Plugin
   ]
 
   return plugins
