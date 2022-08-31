@@ -171,8 +171,6 @@ export const renderTabBarPageCode = async (
       const tabBarId = localPagesMap[tarbarName]
       if (tabBarId) {
         const { query } = parseRequest(tabBarId)
-        console.log(query)
-
         tabBarPagesMap[tarbarName] = getTabBar(
           `__mpx_tabBar__${index}`,
           tabBarId,
