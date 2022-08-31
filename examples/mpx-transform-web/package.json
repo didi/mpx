@@ -6,7 +6,7 @@
   "scripts": {
     "vite:dev": "vite",
     "vite:build": "vite build",
-    "watch": "node build/build.js -w -link",
+    "watch": "node build/build.js -w",
     "watch:prod": "node build/build.js -w -p",
     "build": "npm run prod --modes=web",
     "prod": "node build/build.js -p",
