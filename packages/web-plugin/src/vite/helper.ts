@@ -1,12 +1,17 @@
+import { PluginContext } from 'rollup'
+import parseRequest from '../utils/parseRequest'
 import { ResolvedOptions } from '../options'
-import mpxGlobal from './mpx'
-import { SFCDescriptor } from './compiler'
-import stringify from '../utils/stringify'
 import addQuery from '../utils/addQuery'
+import { resolveMpxRuntime } from '../utils/resolveMpxRuntime'
+import stringify, { shallowStringify } from '../utils/stringify'
+import { SFCDescriptor } from './compiler'
+import mpxGlobal from './mpx'
+import { getResource } from './transformer/script'
 
-export const ENTRY_HELPER_CODE = 'plugin-mpx:entry-helper'
-export const APP_HELPER_CODE = 'plugin-mpx:app-helper'
-export const I18N_HELPER_CODE = 'plugin-mpx:i18n-helper'
+export const ENTRY_HELPER_CODE = '\0/vite/mpx-entry-helper'
+export const APP_HELPER_CODE = '\0/vite/mpx-app-helper'
+export const I18N_HELPER_CODE = '\0/vite/mpx-i18n-helper'
+export const TAB_BAR_PAGE_HELPER_CODE = '\0/vite/mpx-tab-bar-page'
 
 export const renderPageRouteCode = (importer: string): string => {
   return `export default ${stringify(mpxGlobal.pagesMap[importer])}`
@@ -31,22 +36,7 @@ export const renderEntryCode = (
     `Vue.use(VueRouter)`,
     `BScroll.use(ObserveDOM)`,
     `BScroll.use(PullDown)`,
-    `global.currentSrcMode = "${options.srcMode}"`,
-    `global.BScroll = BScroll`,
-    `global.getApp = function(){}`,
-    `global.getCurrentPages = function(){
-      if(!global.__mpxRouter) return []
-      // @ts-ignore
-      return global.__mpxRouter.stack.map(item => {
-        let page
-        const vnode = item.vnode
-        if(vnode && vnode.componentInstance) {
-          page = vnode.tag.endsWith('mpx-tab-bar-container') ? vnode.componentInstance.$refs.tabBarPage : vnode.componentInstance
-        }
-        return page || { route: item.path.slice(1) }
-      })
-    }`,
-    `global.__mpxGenericsMap = {}`
+    `global.BScroll = BScroll`
   )
   content.push(`new Vue({
     el: '#app',
@@ -98,13 +88,121 @@ export function renderI18nCode(options: ResolvedOptions): string {
   return content.join('\n')
 }
 
-export function renderAppHelpCode(descriptor: SFCDescriptor): string {
-  const { jsonConfig } = descriptor
+/**
+ * app初始化代码，主要是初始化所有的global对象
+ * @param descriptor - SFCDescriptor
+ * @returns
+ */
+export function renderAppHelpCode(
+  options: ResolvedOptions,
+  descriptor: SFCDescriptor
+): string {
+  const { jsonConfig, tabBarStr } = descriptor
   const content = []
   content.push(
     `global.__networkTimeout = ${stringify(jsonConfig.networkTimeout)}`,
     `global.__style = ${stringify(jsonConfig.style || 'v1')}`,
-    `global.__mpxPageConfig = ${stringify(jsonConfig.window || {})}`
+    `global.__mpxPageConfig = ${stringify(jsonConfig.window || {})}`,
+    `global.__tabBar = ${tabBarStr}`,
+    `global.currentSrcMode = "${options.srcMode}"`,
+    `global.getApp = function(){}`,
+    `global.getCurrentPages = function(){
+      if(!global.__mpxRouter) return []
+      // @ts-ignore
+      return global.__mpxRouter.stack.map(item => {
+        let page
+        const vnode = item.vnode
+        if(vnode && vnode.componentInstance) {
+          page = vnode.tag.endsWith('mpx-tab-bar-container') ? vnode.componentInstance.$refs.tabBarPage : vnode.componentInstance
+        }
+        return page || { route: item.path.slice(1) }
+      })
+    }`,
+    `global.__mpxGenericsMap = {}`
   )
+  return content.join('\n')
+}
+
+/**
+ * TabBar，mpx-tab-bar-container依赖global.__tabBarPagesMap
+ * @param options - 
+ * @param descriptor -
+ * @param pluginContext -
+ * @returns
+ */
+export const renderTabBarPageCode = async (
+  options: ResolvedOptions,
+  descriptor: SFCDescriptor,
+  pluginContext: PluginContext
+): Promise<string> => {
+  const optionProcessorPath = resolveMpxRuntime('optionProcessor')
+  const tabBarPath = resolveMpxRuntime('components/web/mpx-tab-bar.vue')
+  const customBarPath = './custom-tab-bar/index?component'
+  const tabBars: string[] = []
+  const isProduction = options.isProduction
+  const {
+    filename,
+    tabBarStr,
+    jsonConfig,
+    tabBarMap,
+    pagesMap: localPagesMap
+  } = descriptor
+  const { tabBar } = jsonConfig
+
+  const tabBarPagesMap: Record<string, string> = {}
+  const getTabBar = getResource(tabBars)
+
+  const emitWarning = (msg: string) => {
+    pluginContext.warn(
+      new Error('[script processor][' + filename + ']: ' + msg)
+    )
+  }
+
+  if (tabBar && tabBarMap) {
+    const customBarPathResolved = await pluginContext.resolve(customBarPath)
+    tabBarPagesMap['mpx-tab-bar'] = getTabBar(
+      '__mpxTabBar',
+      tabBar.custom && customBarPathResolved
+        ? customBarPathResolved.id
+        : tabBarPath
+    )
+
+    Object.keys(tabBarMap).forEach((tarbarName, index) => {
+      const tabBarId = localPagesMap[tarbarName]
+      if (tabBarId) {
+        const { query } = parseRequest(tabBarId)
+        console.log(query)
+
+        tabBarPagesMap[tarbarName] = getTabBar(
+          `__mpx_tabBar__${index}`,
+          tabBarId,
+          {
+            async: !!query.async
+          },
+          {
+            __mpxPageroute: tarbarName
+          }
+        )
+      } else {
+        emitWarning(
+          `TabBar page path ${tarbarName} is not exist in local page map, please check!`
+        )
+      }
+    })
+  }
+
+  const content = [
+    `import Vue from 'vue'`,
+    `import processOption, { getComponent, getWxsMixin } from "${optionProcessorPath}"`,
+    tabBars.join('\n'),
+    !isProduction && `global.currentResource = ${stringify(filename)}`,
+    tabBarStr &&
+      tabBarPagesMap &&
+      [
+        `Vue.observable(global.__tabBar)`,
+        `// @ts-ignore`,
+        `global.__tabBarPagesMap = ${shallowStringify(tabBarPagesMap)}`
+      ].join('\n')
+  ]
   return content.join('\n')
 }
