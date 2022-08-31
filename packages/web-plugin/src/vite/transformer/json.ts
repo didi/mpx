@@ -7,12 +7,12 @@ import mpxJSON from '@mpxjs/utils/mpx-json'
 import { ResolvedOptions } from '../../options'
 import { SFCDescriptor } from '../compiler'
 import mpxGlobal from '../mpx'
-import parseRequest from '../utils/parseRequest'
+import parseRequest from '../../utils/parseRequest'
 import pathHash from '../utils/pageHash'
-import resolveModuleContext from '../utils/resolveModuleContext'
-import addQuery from '../utils/addQuery'
+import resolveModuleContext from '../../utils/resolveModuleContext'
+import addQuery from '../../utils/addQuery'
 import { createDescriptor } from '../utils/descriptorCache'
-import stringify from '../utils/stringify'
+import stringify from '../../utils/stringify'
 import { evalJSONJS } from '../../utils/evalJsonJs'
 
 /**
@@ -81,6 +81,7 @@ export async function resolveJson(
       pluginContext.addWatchFile(resolution.id)
       content = await fs.promises.readFile(resolution.id, 'utf-8')
       if (resolution.id.endsWith('.json.js')) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         content = (mpxJSON as any).compileMPXJSONText({
           source: content,
           defs,

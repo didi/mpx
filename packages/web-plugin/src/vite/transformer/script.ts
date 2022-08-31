@@ -8,9 +8,9 @@ import { ResolvedOptions } from '../../options'
 import { SFCDescriptor } from '../compiler'
 import { APP_HELPER_CODE } from '../helper'
 import { resolveMpxRuntime } from '../../utils/resolveMpxRuntime'
-import omit from '../utils/omit'
-import stringify, { shallowStringify } from '../utils/stringify'
-import parseRequest from '../utils/parseRequest'
+import omit from '../../utils/omit'
+import stringify, { shallowStringify } from '../../utils/stringify'
+import parseRequest from '../../utils/parseRequest'
 
 const optionProcessorPath = resolveMpxRuntime('optionProcessor')
 const tabBarContainerPath = resolveMpxRuntime(

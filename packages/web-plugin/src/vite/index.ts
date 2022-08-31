@@ -18,10 +18,10 @@ import {
   esbuildCustomExtensionsPlugin
 } from './plugins/addExtensionsPlugin'
 import mpxResolveEntryPlugin from './plugins/mpxResolveEntryPlugin'
-import parseRequest from './utils/parseRequest'
+import parseRequest from '../utils/parseRequest'
 import { getDescriptor } from './utils/descriptorCache'
-import { stringifyObject } from './utils/stringify'
-import ensureArray from './utils/ensureArray'
+import { stringifyObject } from '../utils/stringify'
+import ensureArray from '../utils/ensureArray'
 
 function createMpxPlugin (
   options: ResolvedOptions,
@@ -170,11 +170,11 @@ export default function mpx (options: Options = {}): Plugin[] {
           isProduction ? 'production' : 'development'
         )
       })
-    }),
+    }) as Plugin,
     nodePolyfills({
       include: [/@mpxjs/, /\.mpx/, /plugin-mpx:/, /polyfill-node/],
       exclude: [/polyfill-nodeglobal/] // ignore polyfill self
-    })
+    }) as Plugin
   ]
 
   return plugins

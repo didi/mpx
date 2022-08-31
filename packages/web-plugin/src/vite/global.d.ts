@@ -1,1 +1,0 @@
-declare module 'rollup-plugin-polyfill-node'

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 declare module 'webpack/lib/InitFragment' {
   export default class InitFragment {
     static STAGE_CONSTANTS: any

@@ -1,6 +1,6 @@
 import { Plugin, createFilter } from 'vite'
 import mpxGlobal from '../mpx'
-import parseRequest from '../utils/parseRequest'
+import parseRequest from '../../utils/parseRequest'
 
 export default function resolveEntryPlugin(): Plugin {
   const filter = createFilter([/\.mpx/])

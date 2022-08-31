@@ -6,7 +6,7 @@ import { genStylesBlock } from './style'
 import { processJSON } from './json'
 import { ResolvedOptions } from '../../options'
 import { createDescriptor } from '../utils/descriptorCache'
-import { Query } from '../utils/parseRequest'
+import { Query } from '../../utils/parseRequest'
 
 export async function transformMain(
   code: string,
