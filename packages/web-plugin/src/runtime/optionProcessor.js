@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { inBrowser } from '@mpxjs/utils/env.mjs'
 
 export default function processOption (
