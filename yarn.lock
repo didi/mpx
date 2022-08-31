@@ -1181,6 +1181,11 @@
     "@docsearch/css" "3.2.1"
     algoliasearch "^4.0.0"
 
+"@esbuild-plugins/node-globals-polyfill@0.1.1":
+  version "0.1.1"
+  resolved "https://registry.npmmirror.com/@esbuild-plugins/node-globals-polyfill/-/node-globals-polyfill-0.1.1.tgz#a313ab3efbb2c17c8ce376aa216c627c9b40f9d7"
+  integrity sha512-MR0oAA+mlnJWrt1RQVQ+4VYuRJW/P2YmRTv1AsplObyvuBMnPHiizUF95HHYiSsMGLhyGtWufaq2XQg6+iurBg==
+
 "@esbuild/linux-loong64@0.14.54":
   version "0.14.54"
   resolved "http://artifactory.intra.xiaojukeji.com/artifactory/api/npm/npm/@esbuild/linux-loong64/-/linux-loong64-0.14.54.tgz?dl=https%3A%2F%2Fregistry.npmmirror.com%2F%40esbuild%2Flinux-loong64%2F-%2Flinux-loong64-0.14.54.tgz#de2a4be678bd4d0d1ffbb86e6de779cde5999028"
@@ -2413,19 +2418,6 @@
   integrity sha1-5Y73jXhZbS+335xiWYAkZLX4SgQ=
   dependencies:
     "@octokit/openapi-types" "^12.11.0"
-
-"@rollup/plugin-commonjs@^21.0.1":
-  version "21.1.0"
-  resolved "http://artifactory.intra.xiaojukeji.com/artifactory/api/npm/npm/@rollup/plugin-commonjs/-/plugin-commonjs-21.1.0.tgz?dl=https%3A%2F%2Fregistry.npmmirror.com%2F%40rollup%2Fplugin-commonjs%2F-%2Fplugin-commonjs-21.1.0.tgz#45576d7b47609af2db87f55a6d4b46e44fc3a553"
-  integrity sha1-RVdte0dgmvLbh/VabUtG5E/DpVM=
-  dependencies:
-    "@rollup/pluginutils" "^3.1.0"
-    commondir "^1.0.1"
-    estree-walker "^2.0.1"
-    glob "^7.1.6"
-    is-reference "^1.2.1"
-    magic-string "^0.25.7"
-    resolve "^1.17.0"
 
 "@rollup/plugin-inject@^4.0.0":
   version "4.0.4"
@@ -9445,13 +9437,6 @@ is-redirect@^1.0.0:
   resolved "http://artifactory.intra.xiaojukeji.com/artifactory/api/npm/npm/is-redirect/-/is-redirect-1.0.0.tgz?dl=https%3A%2F%2Fregistry.npmmirror.com%2Fis-redirect%2F-%2Fis-redirect-1.0.0.tgz#1d03dded53bd8db0f30c26e4f95d36fc7c87dc24"
   integrity sha1-HQPd7VO9jbDzDCbk+V02/HyH3CQ=
 
-is-reference@^1.2.1:
-  version "1.2.1"
-  resolved "http://artifactory.intra.xiaojukeji.com/artifactory/api/npm/npm/is-reference/-/is-reference-1.2.1.tgz?dl=https%3A%2F%2Fregistry.npmmirror.com%2Fis-reference%2F-%2Fis-reference-1.2.1.tgz#8b2dac0b371f4bc994fdeaba9eb542d03002d0b7"
-  integrity sha1-iy2sCzcfS8mU/eq6nrVC0DAC0Lc=
-  dependencies:
-    "@types/estree" "*"
-
 is-regex@^1.0.4, is-regex@^1.1.4:
   version "1.1.4"
   resolved "http://artifactory.intra.xiaojukeji.com/artifactory/api/npm/npm/is-regex/-/is-regex-1.1.4.tgz?dl=https%3A%2F%2Fregistry.npmmirror.com%2Fis-regex%2F-%2Fis-regex-1.1.4.tgz#eef5663cd59fa4c0ae339505323df6854bb15958"
@@ -13487,7 +13472,7 @@ resolve.exports@^1.1.0:
   resolved "http://artifactory.intra.xiaojukeji.com/artifactory/api/npm/npm/resolve.exports/-/resolve.exports-1.1.0.tgz?dl=https%3A%2F%2Fregistry.npmmirror.com%2Fresolve.exports%2F-%2Fresolve.exports-1.1.0.tgz#5ce842b94b05146c0e03076985d1d0e7e48c90c9"
   integrity sha1-XOhCuUsFFGwOAwdphdHQ5+SMkMk=
 
-resolve@^1.10.0, resolve@^1.10.1, resolve@^1.11.1, resolve@^1.12.0, resolve@^1.14.2, resolve@^1.17.0, resolve@^1.20.0, resolve@^1.22.0, resolve@^1.22.1, resolve@^1.8.1:
+resolve@^1.10.0, resolve@^1.10.1, resolve@^1.11.1, resolve@^1.12.0, resolve@^1.14.2, resolve@^1.20.0, resolve@^1.22.0, resolve@^1.22.1, resolve@^1.8.1:
   version "1.22.1"
   resolved "http://artifactory.intra.xiaojukeji.com/artifactory/api/npm/npm/resolve/-/resolve-1.22.1.tgz?dl=https%3A%2F%2Fregistry.npmmirror.com%2Fresolve%2F-%2Fresolve-1.22.1.tgz#27cb2ebb53f91abb49470a928bba7558066ac177"
   integrity sha1-J8suu1P5GrtJRwqSi7p1WAZqwXc=

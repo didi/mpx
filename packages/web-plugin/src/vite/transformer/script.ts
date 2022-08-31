@@ -6,7 +6,7 @@ import path from 'path'
 import genComponentTag from '@mpxjs/utils/gen-component-tag'
 import { ResolvedOptions } from '../../options'
 import { SFCDescriptor } from '../compiler'
-import { APP_HELPER_CODE } from '../helper'
+import { APP_HELPER_CODE, I18N_HELPER_CODE } from '../helper'
 import { resolveMpxRuntime } from '../../utils/resolveMpxRuntime'
 import omit from '../../utils/omit'
 import stringify, { shallowStringify } from '../../utils/stringify'
@@ -14,10 +14,10 @@ import parseRequest from '../../utils/parseRequest'
 
 const optionProcessorPath = resolveMpxRuntime('optionProcessor')
 const tabBarContainerPath = resolveMpxRuntime(
-  'components/web/mpx-tab-bar-container.vue'
+  'components/web/mpx-tab-bar-container-fn.vue'
 )
 const tabBarPath = resolveMpxRuntime('components/web/mpx-tab-bar.vue')
-const customBarPath = './custom-tab-bar/index'
+const customBarPath = './custom-tab-bar/index?component'
 
 const APP_CODE = [
   `import "${APP_HELPER_CODE}"`,
@@ -25,7 +25,7 @@ const APP_CODE = [
   `import VueRouter from "vue-router"`
 ].join('\n')
 
-const I18N_CODE = `import { i18n } from "${APP_HELPER_CODE}"`
+const I18N_CODE = `import { i18n } from "${I18N_HELPER_CODE}"`
 
 const OPTION_PROCESSOR_CODE = `import processOption, { getComponent, getWxsMixin } from "${optionProcessorPath}"`
 
@@ -78,15 +78,15 @@ export async function transformScript(
   const getComponent = (
     varString: string,
     resource: string,
-    async = false,
-    options: unknown = {}
+    { async = false } = {},
+    params: unknown = {}
   ) => {
     if (!async) {
       components.push(`import ${varString} from ${stringify(resource)}`)
-      return `getComponent(${varString}, ${stringify(options)})`
+      return `getComponent(${varString}, ${stringify(params)})`
     } else {
       return `() => import("${resource}").then(${varString} => getComponent(${varString}.default, ${stringify(
-        options
+        params
       )})
       )`
     }
@@ -109,7 +109,9 @@ export async function transformScript(
         tabBarPagesMap[tarbarName] = getComponent(
           `__mpx_tabBar__${index}`,
           tabBarId,
-          !!query.async,
+          {
+            async: !!query.async
+          },
           {
             __mpxPageroute: tarbarName
           }
@@ -125,15 +127,29 @@ export async function transformScript(
   Object.keys(localPagesMap).forEach((pagePath, index) => {
     const pageVar = `__mpx__page__${index}`
     if (tabBarMap && tabBarMap[pagePath]) {
-      pagesMap[pagePath] = getComponent(pageVar, tabBarContainerPath, false, {
-        __mpxBuiltIn: true
-      })
+      pagesMap[pagePath] = getComponent(
+        pageVar,
+        tabBarContainerPath,
+        {
+          async: false
+        },
+        {
+          __mpxBuiltIn: true
+        }
+      )
     } else {
       const pageId = localPagesMap[pagePath]
       const { query } = parseRequest(pageId)
-      pagesMap[pagePath] = getComponent(pageVar, pageId, !!query.async, {
-        __mpxPageRoute: pagePath
-      })
+      pagesMap[pagePath] = getComponent(
+        pageVar,
+        pageId,
+        {
+          async: !!query.async
+        },
+        {
+          __mpxPageRoute: pagePath
+        }
+      )
     }
   })
 
@@ -143,7 +159,9 @@ export async function transformScript(
     componentsMap[componentName] = getComponent(
       `__mpx__component__${index}`,
       componentId,
-      !!query.async
+      {
+        async: !!query.async
+      }
     )
   })
 
@@ -152,7 +170,7 @@ export async function transformScript(
     componentsMap[componentName] = getComponent(
       `__mpx__builtInComponent__${index}`,
       componentCfg.resource,
-      false,
+      {},
       { __mpxBuiltIn: true }
     )
   })

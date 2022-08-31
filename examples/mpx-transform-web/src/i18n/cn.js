@@ -2,4 +2,4 @@
 const cn = {
   'page_title': '测试'
 }
-module.exports = cn
+export default cn

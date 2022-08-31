@@ -1,8 +1,10 @@
 import { Plugin, createFilter } from 'vite'
 import mpxGlobal from '../mpx'
 import parseRequest from '../../utils/parseRequest'
+import { ENTRY_HELPER_CODE, renderEntryCode } from '../helper'
+import { ResolvedOptions } from '../../options'
 
-export default function resolveEntryPlugin(): Plugin {
+export default function resolveEntryPlugin(options: ResolvedOptions): Plugin {
   const filter = createFilter([/\.mpx/])
   return {
     name: 'vite:mpx-resolve-entry',
@@ -22,8 +24,13 @@ export default function resolveEntryPlugin(): Plugin {
           skipSelf: true,
           ...options
         })
-        if (resolution) return (mpxGlobal.entry = resolution.id)
+        if (resolution) mpxGlobal.entry = resolution.id
+        return ENTRY_HELPER_CODE
       }
+    },
+    load(id) {
+      if (id === ENTRY_HELPER_CODE)
+        return renderEntryCode(mpxGlobal.entry!, options)
     }
   }
 }

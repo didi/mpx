@@ -88,6 +88,7 @@
     "@better-scroll/slide": "^2.2.1",
     "@better-scroll/wheel": "^2.2.1",
     "@better-scroll/zoom": "^2.2.1",
+    "@esbuild-plugins/node-globals-polyfill": "0.1.1",
     "@rollup/plugin-replace": "^3.0.0",
     "async": "^2.6.0",
     "debug": "^4.3.2",

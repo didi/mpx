@@ -2,4 +2,4 @@
 const en = {
   'page_title': 'test'
 }
-module.exports = en
+export default en

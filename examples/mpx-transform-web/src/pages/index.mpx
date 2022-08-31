@@ -1,7 +1,7 @@
 <template>
   <view bindtap="reload">__UNPLUGIN__</view>
-  <text wx:if="{{a === 1}}">test</text>
-  <!-- <view>{{$t('message')}}</view> -->
+  <text wx:if="{{a === 1}}">test123344</text>
+  <view>{{$t('message')}}</view>
 <!--  <text wx:elseif="{{a === 2}}">w22223</text>-->
 <!--  <list list-class="list"></list>-->
 <!--  <scroll-view></scroll-view>-->
@@ -15,7 +15,7 @@
       a: 1
     },
     onLoad () {
-      console.log(233)
+      console.log(2334)
     },
     methods: {
       reload () {

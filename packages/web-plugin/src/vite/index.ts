@@ -9,7 +9,9 @@ import { transformStyle } from './transformer/style'
 import handleHotUpdate from './handleHotUpdate'
 import {
   APP_HELPER_CODE,
+  I18N_HELPER_CODE,
   renderAppHelpCode,
+  renderI18nCode,
   renderPageRouteCode
 } from './helper'
 import { processOptions, Options, ResolvedOptions } from '../options'
@@ -23,7 +25,7 @@ import { getDescriptor } from './utils/descriptorCache'
 import { stringifyObject } from '../utils/stringify'
 import ensureArray from '../utils/ensureArray'
 
-function createMpxPlugin (
+function createMpxPlugin(
   options: ResolvedOptions,
   config?: UserConfig
 ): Plugin {
@@ -37,15 +39,20 @@ function createMpxPlugin (
   return {
     name: 'vite:mpx',
 
-    config () {
-      return config
+    config() {
+      return {
+        ...config,
+        define: {
+          global: 'globalThis'
+        }
+      }
     },
 
-    configureServer (server) {
+    configureServer(server) {
       options.devServer = server
     },
 
-    configResolved (config) {
+    configResolved(config) {
       Object.assign(options, {
         ...options,
         root: config.root,
@@ -54,23 +61,28 @@ function createMpxPlugin (
       })
     },
 
-    handleHotUpdate (ctx) {
+    handleHotUpdate(ctx) {
       return handleHotUpdate(ctx, options)
     },
 
-    async resolveId (id, ...args) {
-      if (id === APP_HELPER_CODE) {
+    async resolveId(id, ...args) {
+      if (id === APP_HELPER_CODE || id === I18N_HELPER_CODE) {
         return id
       }
       // return vue resolveId
       return mpxVuePlugin.resolveId?.call(this, id, ...args)
     },
 
-    load (id) {
+    load(id) {
       if (id === APP_HELPER_CODE && mpxGlobal.entry) {
         const { filename } = parseRequest(mpxGlobal.entry)
         const descriptor = getDescriptor(filename)
-        return descriptor && renderAppHelpCode(descriptor, options)
+        if (descriptor) {
+          return renderAppHelpCode(descriptor)
+        }
+      }
+      if (id === I18N_HELPER_CODE) {
+        return renderI18nCode(options)
       }
       const { filename, query } = parseRequest(id)
       if (query.resolve !== undefined) {
@@ -94,7 +106,7 @@ function createMpxPlugin (
       return mpxVuePlugin.load?.call(this, id)
     },
 
-    async transform (code, id) {
+    async transform(code, id) {
       const { filename, query } = parseRequest(id)
       if (!filter(filename)) return
       if (query.resolve !== undefined) return
@@ -134,7 +146,7 @@ function createMpxPlugin (
   }
 }
 
-export default function mpx (options: Options = {}): Plugin[] {
+export default function mpx(options: Options = {}): Plugin[] {
   const resolvedOptions = processOptions({ ...options })
   const { mode, env, isProduction, defs, fileConditionRules } = resolvedOptions
 
@@ -143,6 +155,9 @@ export default function mpx (options: Options = {}): Plugin[] {
     createMpxPlugin(resolvedOptions, {
       optimizeDeps: {
         esbuildOptions: {
+          define: {
+            global: 'globalThis'
+          },
           plugins: [
             // prebuild for addExtensions
             esbuildCustomExtensionsPlugin({
@@ -159,7 +174,7 @@ export default function mpx (options: Options = {}): Plugin[] {
       extensions: [mode, env, env && `${mode}.${env}`].filter(Boolean)
     }),
     // ensure mpx entry point
-    mpxResolveEntryPlugin(),
+    mpxResolveEntryPlugin(resolvedOptions),
     // vue support for mpxjs/rumtime
     createVuePlugin(),
     replace({
@@ -170,11 +185,11 @@ export default function mpx (options: Options = {}): Plugin[] {
           isProduction ? 'production' : 'development'
         )
       })
-    }) as Plugin,
-    nodePolyfills({
-      include: [/@mpxjs/, /\.mpx/, /plugin-mpx:/, /polyfill-node/],
-      exclude: [/polyfill-nodeglobal/] // ignore polyfill self
     }) as Plugin
+    // nodePolyfills({
+    //   include: [/@mpxjs/, /\.mpx/, /plugin-mpx:/, /polyfill-node/],
+    //   exclude: [/polyfill-nodeglobal/] // ignore polyfill self
+    // }) as Plugin
   ]
 
   return plugins
