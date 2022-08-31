@@ -24,7 +24,7 @@ export default class AddModePlugin {
     this.fileConditionRules = fileConditionRules
   }
 
-  apply(resolver: Resolver) {
+  apply(resolver: Resolver): void {
     const target = resolver.ensureHook(this.target)
     const mode = this.mode
     resolver

@@ -25,7 +25,7 @@ const preLoader: LoaderDefinition = function (content) {
     visitor = {
       ...visitor,
       MemberExpression(path) {
-        const property = path.node.property
+        const property = path.node.property as any
         if (
           (property.name === 'constructor' ||
             property.value === 'constructor') &&

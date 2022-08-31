@@ -1,9 +1,6 @@
-import normalize from '@mpxjs/utils/normalize'
+import parseRequest from '@mpxjs/utils/parse-request'
 import { LoaderContext } from 'webpack'
 import { RESOLVE_IGNORED_ERR } from '../../constants/index'
-
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const parseRequest = require(normalize.utils('parse-request'))
 
 type LoaderContextResolveCallback = Parameters<LoaderContext<null>['resolve']>[2]
 

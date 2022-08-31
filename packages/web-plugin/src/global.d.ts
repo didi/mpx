@@ -13,14 +13,22 @@ declare module '@mpxjs/utils/parse-request' {
   export default function parseRequest(...args: any[]): any
 }
 declare module '@mpxjs/utils/normalize' {}
-declare module '@mpxjs/utils/is-url-request' {}
+declare module '@mpxjs/utils/is-url-request' {
+  export default function isUrlRequest(...args: any[]): any
+}
 declare module '@mpxjs/utils/match-condition' {
   export function matchCondition(...args: any[]): any
 }
 
-declare module '@mpxjs/utils/add-infix' {}
-declare module '@mpxjs/utils/stringify-query' {}
-declare module '@mpxjs/utils/is-empty-object' {}
+declare module '@mpxjs/utils/add-infix' {
+  export default function addInfix(...args: any[]): any
+}
+declare module '@mpxjs/utils/stringify-query' {
+  export default function stringifyQuery(...args: any[]): any
+}
+declare module '@mpxjs/utils/is-empty-object' {
+  export default function isEmptyObject(...args: any[]): any
+}
 declare module '@mpxjs/utils/mpx-json' {}
 
 declare module '@mpxjs/compiler/template-compiler/parser' {
@@ -42,4 +50,8 @@ declare module '@mpxjs/utils/gen-component-tag' {
         }
       | ((part: T) => string) = {}
   ): string
+}
+
+declare module '@mpxjs/utils/add-query' {
+  export default function addQuery(...args: any[]): string
 }

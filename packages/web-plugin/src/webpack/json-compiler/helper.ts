@@ -1,15 +1,11 @@
 import path from 'path'
-import normalize from '@mpxjs/utils/normalize'
+import addQuery from '@mpxjs/utils/add-query'
+import parseRequest from '@mpxjs/utils/parse-request'
 import loaderUtils from 'loader-utils'
 import isUrlRequestRaw from '@mpxjs/utils/is-url-request'
 import mpx from '../mpx'
 import resolve from '../utils/resolve'
 import { LoaderContext } from 'webpack'
-
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const addQuery = require(normalize.utils('add-query'))
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const parseRequest = require(normalize.utils('parse-request'))
 
 interface EntryType {
   resource: string
