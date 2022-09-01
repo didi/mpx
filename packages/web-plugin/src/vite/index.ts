@@ -168,9 +168,6 @@ export default function mpx(options: Options = {}): Plugin[] {
     createMpxPlugin(resolvedOptions, {
       optimizeDeps: {
         esbuildOptions: {
-          define: {
-            global: 'globalThis'
-          },
           plugins: [
             // prebuild for addExtensions
             esbuildCustomExtensionsPlugin({
