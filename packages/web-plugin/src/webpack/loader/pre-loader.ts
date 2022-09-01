@@ -1,6 +1,6 @@
-import babylon from '@babel/parser'
+import * as babylon from '@babel/parser'
 import traverse, { Visitor } from '@babel/traverse'
-import t from '@babel/types'
+import * as t from '@babel/types'
 import generate from '@babel/generator'
 import parseRequest from '@mpxjs/utils/parse-request'
 import isEmptyObject from '@mpxjs/utils/is-empty-object'
