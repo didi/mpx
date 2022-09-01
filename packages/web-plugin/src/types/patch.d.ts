@@ -1,16 +1,8 @@
-interface CacheContent {
-  src: string,
-  content: string;
-  map?: string;
-}
 declare module 'lru-cache' {
   class LruCache {
     constructor(cache: number);
 
-    get(cacheKey: string): {
-      script: CacheContent,
-      styles: Array<CacheContent>
-    };
+    get(cacheKey: string): T;
 
     set(cacheKey: string, content: string): void;
   }
