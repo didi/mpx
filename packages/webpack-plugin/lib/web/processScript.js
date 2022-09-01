@@ -2,15 +2,16 @@ const genComponentTag = require('../utils/gen-component-tag')
 const loaderUtils = require('loader-utils')
 const addQuery = require('../utils/add-query')
 const normalize = require('../utils/normalize')
+const hasOwn = require('../utils/has-own')
 const parseRequest = require('../utils/parse-request')
 const optionProcessorPath = normalize.lib('runtime/optionProcessor')
 const tabBarContainerPath = normalize.lib('runtime/components/web/mpx-tab-bar-container.vue')
 const tabBarPath = normalize.lib('runtime/components/web/mpx-tab-bar.vue')
 
 function shallowStringify (obj) {
-  let arr = []
-  for (let key in obj) {
-    if (obj.hasOwnProperty(key)) {
+  const arr = []
+  for (const key in obj) {
+    if (hasOwn(obj, key)) {
       let value = obj[key]
       if (Array.isArray(value)) {
         value = `[${value.join(',')}]`
@@ -60,7 +61,7 @@ module.exports = function (script, {
   }
 
   const stringifyRequest = r => loaderUtils.stringifyRequest(loaderContext, r)
-  let tabBarPagesMap = {}
+  const tabBarPagesMap = {}
   if (tabBar && tabBarMap) {
     // 挂载tabBar组件
     const tabBarRequest = stringifyRequest(addQuery(tabBar.custom ? './custom-tab-bar/index' : tabBarPath, { isComponent: true }))
@@ -159,7 +160,7 @@ module.exports = function (script, {
           Object.keys(requestObj).forEach((key) => {
             content += `  i18nCfg.${key} = require(${requestObj[key]})\n`
           })
-          content += `  i18nCfg.legacy = false\n`
+          content += '  i18nCfg.legacy = false\n'
           content += `  const i18n = createI18n(i18nCfg, VueI18n)
   Vue.use(i18n)
   Mpx.i18n = i18n
@@ -225,7 +226,7 @@ module.exports = function (script, {
         : script.content
       content += '\n/** Source end **/\n\n\n'
       // createApp/Page/Component执行完成后立刻获取当前的option并暂存
-      content += `  const currentOption = global.currentOption\n`
+      content += '  const currentOption = global.currentOption\n'
       // 获取pageConfig
       const pageConfig = {}
       if (ctorType === 'page') {
@@ -270,7 +271,7 @@ module.exports = function (script, {
     Vue,
     VueRouter`
       }
-      content += `\n  )\n`
+      content += '\n  )\n'
       return content
     }
   })

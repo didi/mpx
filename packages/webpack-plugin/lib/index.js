@@ -17,6 +17,7 @@ const FileSystemInfo = require('webpack/lib/FileSystemInfo')
 const normalize = require('./utils/normalize')
 const toPosix = require('./utils/to-posix')
 const addQuery = require('./utils/add-query')
+const hasOwn = require('./utils/has-own')
 const { every } = require('./utils/set')
 const DefinePlugin = require('webpack/lib/DefinePlugin')
 const ExternalsPlugin = require('webpack/lib/ExternalsPlugin')
@@ -40,7 +41,7 @@ const PartialCompilePlugin = require('./partial-compile/index')
 const fixRelative = require('./utils/fix-relative')
 const parseRequest = require('./utils/parse-request')
 const { matchCondition } = require('./utils/match-condition')
-const { preProcessDefs } = require('./utils/index')
+const processDefs = require('./utils/process-defs')
 const config = require('./config')
 const hash = require('hash-sum')
 const wxssLoaderPath = normalize.lib('wxss/loader')
@@ -128,9 +129,9 @@ class MpxWebpackPlugin {
     }
     // 通过默认defs配置实现mode及srcMode的注入，简化内部处理逻辑
     options.defs = Object.assign({}, options.defs, {
-      '__mpx_mode__': options.mode,
-      '__mpx_src_mode__': options.srcMode,
-      '__mpx_env__': options.env
+      __mpx_mode__: options.mode,
+      __mpx_src_mode__: options.srcMode,
+      __mpx_env__: options.env
     })
     // 批量指定源码mode
     options.modeRules = options.modeRules || {}
@@ -317,8 +318,8 @@ class MpxWebpackPlugin {
       const optimization = compiler.options.optimization
       optimization.runtimeChunk = {
         name: (entrypoint) => {
-          for (let packageName in mpx.independentSubpackagesMap) {
-            if (mpx.independentSubpackagesMap.hasOwnProperty(packageName) && isChunkInPackage(entrypoint.name, packageName)) {
+          for (const packageName in mpx.independentSubpackagesMap) {
+            if (hasOwn(mpx.independentSubpackagesMap, packageName) && isChunkInPackage(entrypoint.name, packageName)) {
               return `${packageName}/bundle`
             }
           }
@@ -360,7 +361,7 @@ class MpxWebpackPlugin {
     const typeExtMap = config[this.options.mode].typeExtMap
 
     const defsOpt = {
-      '__mpx_wxs__': DefinePlugin.runtimeValue(({ module }) => {
+      __mpx_wxs__: DefinePlugin.runtimeValue(({ module }) => {
         return JSON.stringify(!!module.wxs)
       })
     }
@@ -558,7 +559,7 @@ class MpxWebpackPlugin {
           // 输出web专用配置
           webConfig: this.options.webConfig,
           tabBarMap: {},
-          defs: preProcessDefs(this.options.defs),
+          defs: processDefs(this.options.defs),
           i18n: this.options.i18n,
           checkUsingComponents: this.options.checkUsingComponents,
           forceDisableBuiltInLoader: this.options.forceDisableBuiltInLoader,
@@ -638,7 +639,7 @@ class MpxWebpackPlugin {
               if (!currentResourceMap[resourcePath] || currentResourceMap[resourcePath] === true) {
                 if (!recordOnly) {
                   // 在非recordOnly的模式下，进行输出路径冲突检测，如果存在输出路径冲突，则对输出路径进行重命名
-                  for (let key in currentResourceMap) {
+                  for (const key in currentResourceMap) {
                     // todo 用outputPathMap来检测输出路径冲突
                     if (currentResourceMap[key] === outputPath && key !== resourcePath) {
                       outputPath = mpx.getOutputPath(resourcePath, resourceType, { conflictPath: outputPath })
@@ -854,7 +855,7 @@ class MpxWebpackPlugin {
         if (splitChunksPlugin) {
           let needInit = false
           Object.keys(mpx.componentsMap).forEach((packageName) => {
-            if (!splitChunksOptions.cacheGroups.hasOwnProperty(packageName)) {
+            if (!hasOwn(splitChunksOptions.cacheGroups, packageName)) {
               needInit = true
               splitChunksOptions.cacheGroups[packageName] = getPackageCacheGroup(packageName)
             }
@@ -1077,7 +1078,7 @@ class MpxWebpackPlugin {
             current.addPresentationalDependency(dep)
 
             let needInject = true
-            for (let dep of module.dependencies) {
+            for (const dep of module.dependencies) {
               if (dep instanceof CommonJsVariableDependency && dep.name === name) {
                 needInject = false
                 break
@@ -1207,14 +1208,14 @@ class MpxWebpackPlugin {
             return
           }
 
-          let originalSource = compilation.assets[chunkFile]
+          const originalSource = compilation.assets[chunkFile]
           const source = new ConcatSource()
           source.add(`\nvar ${globalObject} = ${globalObject} || {};\n\n`)
 
           relativeChunks.forEach((relativeChunk, index) => {
             const relativeChunkFile = relativeChunk.files.values().next().value
             if (!relativeChunkFile) return
-            let chunkPath = getTargetFile(chunkFile)
+            const chunkPath = getTargetFile(chunkFile)
             let relativePath = getTargetFile(relativeChunkFile)
             relativePath = path.relative(path.dirname(chunkPath), relativePath)
             relativePath = fixRelative(relativePath, mpx.mode)
@@ -1303,9 +1304,9 @@ try {
           }
 
           let runtimeChunk, entryChunk
-          let middleChunks = []
+          const middleChunks = []
 
-          let chunksLength = chunkGroup.chunks.length
+          const chunksLength = chunkGroup.chunks.length
 
           chunkGroup.chunks.forEach((chunk, index) => {
             if (index === 0) {
@@ -1336,8 +1337,8 @@ try {
     compiler.hooks.normalModuleFactory.tap('MpxWebpackPlugin', (normalModuleFactory) => {
       // resolve前修改原始request
       normalModuleFactory.hooks.beforeResolve.tap('MpxWebpackPlugin', (data) => {
-        let request = data.request
-        let { queryObj, resource } = parseRequest(request)
+        const request = data.request
+        const { queryObj, resource } = parseRequest(request)
         if (queryObj.resolve) {
           // 此处的query用于将资源引用的当前包信息传递给resolveDependency
           const resolveLoaderPath = normalize.lib('resolve-loader')
@@ -1359,7 +1360,7 @@ try {
           const extract = queryObj.extract
           switch (type) {
             case 'styles':
-            case 'template':
+            case 'template': {
               let insertBeforeIndex = -1
               const info = typeLoaderProcessInfo[type]
               loaders.forEach((loader, index) => {
@@ -1377,6 +1378,7 @@ try {
                 })
               }
               break
+            }
             case 'json':
               if (queryObj.isTheme) {
                 loaders.unshift({

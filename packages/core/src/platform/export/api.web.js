@@ -21,7 +21,7 @@ function initApi () {
   return APIs
 }
 let APIs = initApi()
-let InstanceAPIs = {}
+const InstanceAPIs = {}
 export {
   APIs,
   InstanceAPIs

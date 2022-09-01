@@ -7,25 +7,25 @@ describe('template should transform correct', function () {
   })
 
   it('same attr with or without at mode', function () {
-    const input1 = `<view class="normal" class@ali="ali" >123</view>`
+    const input1 = '<view class="normal" class@ali="ali" >123</view>'
     const output1 = compileAndParse(input1)
     expect(output1).toBe('<view class="ali">123</view>')
-    const input2 = `<view class="normal" class@wx="wx" >123</view>`
+    const input2 = '<view class="normal" class@wx="wx" >123</view>'
     const output2 = compileAndParse(input2)
     expect(output2).toBe('<view class="normal">123</view>')
   })
 
   it('work correct in wx mode', function () {
-    const input1 = `<view @wx>123</view>`
+    const input1 = '<view @wx>123</view>'
     const output1 = compileAndParse(input1)
     expect(output1).toBe('')
-    const input2 = `<view t1@wx="ttt">123</view>`
+    const input2 = '<view t1@wx="ttt">123</view>'
     const output2 = compileAndParse(input2, { mode: 'wx' })
     expect(output2).toBe('<view t1="ttt">123</view>')
   })
 
   it('only keep it when mode be ali', function () {
-    const input = `<ali-view @ali test@ali="ttt">123</ali-view>`
+    const input = '<ali-view @ali test@ali="ttt">123</ali-view>'
     const output1 = compileAndParse(input)
     expect(output1).toBe('<ali-view test="ttt">123</ali-view>')
     const output2 = compileAndParse(input, { mode: 'wx' })
@@ -33,19 +33,19 @@ describe('template should transform correct', function () {
   })
 
   it('will remove with child node if mode not match', function () {
-    const input = `<ali-view @ali|swan test@ali="ttt"><ttt bindtap="handleTap">123</ttt></ali-view>`
+    const input = '<ali-view @ali|swan test@ali="ttt"><ttt bindtap="handleTap">123</ttt></ali-view>'
     const output = compileAndParse(input, { mode: 'wx' })
     expect(output).toBe('')
   })
 
   it('will no trans child node if parent is matched mode', function () {
-    const input = `<ali-view @ali test@ali="ttt"><ttt bindtap="handleTap">123</ttt></ali-view>`
+    const input = '<ali-view @ali test@ali="ttt"><ttt bindtap="handleTap">123</ttt></ali-view>'
     const output = compileAndParse(input)
     expect(output).toBe('<ali-view test="ttt"><ttt bindtap="handleTap">123</ttt></ali-view>')
   })
 
   it('work correct with multi mode', function () {
-    const input = `<ali-view @ali|swan test@ali="ttt"><ttt bindtap="handleTap">123</ttt></ali-view>`
+    const input = '<ali-view @ali|swan test@ali="ttt"><ttt bindtap="handleTap">123</ttt></ali-view>'
 
     const aliOutput = compileAndParse(input, { mode: 'ali' })
     expect(aliOutput).toBe('<ali-view test="ttt"><ttt bindtap="handleTap">123</ttt></ali-view>')
@@ -55,7 +55,7 @@ describe('template should transform correct', function () {
   })
 
   it('without error report when use condition syntax', function () {
-    const input = `<button open-type@ali="{{testVal}}" scope@ali="phoneNumber" onGetAuthorize@ali="alipayPhonenumberLogin" onError@ali="onGetPhoneNumberError">手机号授权登录</button>`
+    const input = '<button open-type@ali="{{testVal}}" scope@ali="phoneNumber" onGetAuthorize@ali="alipayPhonenumberLogin" onError@ali="onGetPhoneNumberError">手机号授权登录</button>'
     const output = compileAndParse(input)
     expect(warnFn).not.toHaveBeenCalled()
     expect(output).toBe('<button open-type="{{testVal}}" scope="phoneNumber" onGetAuthorize="alipayPhonenumberLogin" onError="onGetPhoneNumberError">手机号授权登录</button>')

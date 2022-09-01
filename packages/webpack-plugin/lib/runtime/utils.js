@@ -1,8 +1,4 @@
 /**
- @file web运行时组件抹平中需要用到的一些工具方法
- */
-
-/**
  * 处理字符串类型的宽高数值，兼容rpx
  * @param {object | number} size 宽高
  * @param {object} option 配置项，目前仅支持配置默认值
@@ -37,8 +33,15 @@ export function isEmptyObject (obj) {
   if (!obj) {
     return true
   }
-  for (let key in obj) {
+  /* eslint-disable no-unreachable-loop */
+  for (const key in obj) {
     return false
   }
   return true
+}
+
+const hasOwnProperty = Object.prototype.hasOwnProperty
+
+export function hasOwn (obj, key) {
+  return hasOwnProperty.call(obj, key)
 }

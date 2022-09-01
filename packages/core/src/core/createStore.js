@@ -15,7 +15,7 @@ import mapStore from './mapStore'
 
 function transformGetters (getters, module, store) {
   const newGetters = {}
-  for (let key in getters) {
+  for (const key in getters) {
     if (key in store.getters) {
       warn(`Duplicate getter type: ${key}.`)
     }
@@ -36,7 +36,7 @@ function transformGetters (getters, module, store) {
 
 function transformMutations (mutations, module, store) {
   const newMutations = {}
-  for (let key in mutations) {
+  for (const key in mutations) {
     if (store.mutations[key]) {
       warn(`Duplicate mutation type: ${key}.`)
     }
@@ -55,7 +55,7 @@ function transformMutations (mutations, module, store) {
 
 function transformActions (actions, module, store) {
   const newActions = {}
-  for (let key in actions) {
+  for (const key in actions) {
     if (store.actions[key]) {
       warn(`Duplicate action type: ${key}.`)
     }

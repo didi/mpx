@@ -341,7 +341,7 @@ export default class MpxProxy {
 
   processRenderDataWithStrictDiff (renderData) {
     const result = {}
-    for (let key in renderData) {
+    for (const key in renderData) {
       if (hasOwn(renderData, key)) {
         const data = renderData[key]
         const firstKey = getFirstKey(key)
@@ -478,7 +478,7 @@ export default class MpxProxy {
         try {
           return this.target.__injectedRender()
         } catch (e) {
-          warn(`Failed to execute render function, degrade to full-set-data mode.`, this.options.mpxFileResource, e)
+          warn('Failed to execute render function, degrade to full-set-data mode.', this.options.mpxFileResource, e)
           this.render()
         }
       } else {

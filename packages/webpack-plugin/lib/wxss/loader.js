@@ -108,7 +108,7 @@ module.exports = function (content, map) {
         const url = resolve(urlItem.url)
         idx = url.indexOf('?#')
         if (idx < 0) idx = url.indexOf('#')
-        var urlRequest
+        let urlRequest
         if (idx > 0) { // idx === 0 is catched by isUrlRequest
           // in cases like url('webfont.eot?#iefix')
           urlRequest = url.substr(0, idx)

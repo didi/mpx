@@ -17,10 +17,10 @@ module.exports = function ({ print }) {
         test: /^(color|selected-color|activeColor|backgroundColor|block-size|block-color)$/,
         ali (obj) {
           const propsMap = {
-            'color': 'background-color',
+            color: 'background-color',
             'selected-color': 'active-color',
-            'activeColor': 'active-color',
-            'backgroundColor': 'background-color',
+            activeColor: 'active-color',
+            backgroundColor: 'background-color',
             'block-size': 'handle-size',
             'block-color': 'handle-color'
           }
@@ -32,7 +32,7 @@ module.exports = function ({ print }) {
         test: /^(color|selected-color)$/,
         swan (obj) {
           const propsMap = {
-            'color': 'backgroundColor',
+            color: 'backgroundColor',
             'selected-color': 'activeColor'
           }
           obj.name = propsMap[obj.name]
@@ -43,8 +43,8 @@ module.exports = function ({ print }) {
         test: /^(activeColor|backgroundColor)$/,
         tt (obj) {
           const propsMap = {
-            'activeColor': 'active-color',
-            'backgroundColor': 'background-color'
+            activeColor: 'active-color',
+            backgroundColor: 'background-color'
           }
           obj.name = propsMap[obj.name]
           return obj

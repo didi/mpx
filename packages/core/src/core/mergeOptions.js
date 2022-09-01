@@ -203,7 +203,7 @@ function extractPageHooks (options) {
 }
 
 function mergeMixins (parent, child) {
-  for (let key in child) {
+  for (const key in child) {
     if (currentHooksMap[key]) {
       mergeHooks(parent, child, key)
     } else if (/^(data|dataFn)$/.test(key)) {
@@ -247,7 +247,7 @@ export function mergeShallowObj (parent, child, key) {
 
 function mergeDataFn (parent, child, key) {
   let parentVal = parent[key]
-  let childVal = child[key]
+  const childVal = child[key]
 
   if (typeof parentVal === 'function' && key === 'data') {
     parent.dataFn = parentVal

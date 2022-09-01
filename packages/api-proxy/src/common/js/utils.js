@@ -12,12 +12,17 @@
  *  d: 4 // 增加 d
  * })
  */
+const hasOwnProperty = Object.prototype.hasOwnProperty
+
+function hasOwn (obj, key) {
+  return hasOwnProperty.call(obj, key)
+}
 
 function changeOpts (options, updateOrRemoveOpt = {}, extraOpt = {}) {
   let opts = {}
 
   Object.keys(options).forEach(key => {
-    let myKey = updateOrRemoveOpt.hasOwnProperty(key) ? updateOrRemoveOpt[key] : key
+    const myKey = hasOwn(updateOrRemoveOpt, key) ? updateOrRemoveOpt[key] : key
     if (myKey !== '') {
       opts[myKey] = options[key]
     }
@@ -104,5 +109,6 @@ export {
   warn,
   noop,
   makeMap,
-  isBrowser
+  isBrowser,
+  hasOwn
 }
