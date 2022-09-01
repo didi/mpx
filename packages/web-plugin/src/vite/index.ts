@@ -43,7 +43,7 @@ function createMpxPlugin(
       return {
         ...config,
         define: {
-          global: 'globalThis',
+          global: 'globalThis', // polyfill node global
           'process.env.NODE_ENV': JSON.stringify(
             options.isProduction ? '"production"' : '"development"'
           ),
