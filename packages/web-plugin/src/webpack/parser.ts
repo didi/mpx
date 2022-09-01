@@ -8,6 +8,12 @@ const cache = new LruCache(100)
 const splitRE = /\r?\n/g
 const emptyRE = /^(?:\/\/)?\s*$/
 
+interface CacheContent {
+  src: string,
+  content: string;
+  map?: string;
+}
+
 export default function parseComponent (content: string, options) {
   const { filePath, needMap, mode, env } = options
   // 缓存需要mode隔离，不同mode经过区块条件编译parseComponent得到的内容并不一致
@@ -33,7 +39,7 @@ export default function parseComponent (content: string, options) {
       )
     }
     if (output.styles) {
-      output.styles.forEach(style => {
+      output.styles.forEach((style:CacheContent) => {
         if (!style.src) {
           style.map = generateSourceMap(filename, content, style.content)
         }
@@ -63,5 +69,6 @@ function generateSourceMap(filename:string, source:string, generated: string) {
       })
     }
   })
+  // @ts-ignore
   return map.toJSON()
 }
