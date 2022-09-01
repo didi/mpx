@@ -16,3 +16,13 @@ declare module 'lru-cache' {
   }
   export default LruCache
 }
+type preProcessDefsOptType = {
+  [k: string]: any;
+  __mpx_mode__: string;
+  __mpx_src_mode__: string;
+  __mpx_env__: string;
+}
+declare module '@mpxjs/utils/index' {
+  export function preProcessDefs (option: preProcessDefsOptType): any {
+  }
+}

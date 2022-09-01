@@ -21,12 +21,14 @@ export interface Mpx {
   }): void
   externals: (string | RegExp)[]
   projectRoot: string
-  getOutputPath: (path: string, type: string) => string
+  getOutputPath: (path: string, type: string, option: {conflictPath: any}) => string
   defs: Record<string, any>
   transRpxRules: any,
 	webConfig: any,
 	postcssInlineConfig: any
 	mode: any
+  pathHash: (resourcePath: string) => string
+  [k: string]: any
 }
 
 const mpx: Mpx = {
@@ -56,7 +58,8 @@ const mpx: Mpx = {
   transRpxRules: {},
 	webConfig: {},
 	postcssInlineConfig: {},
-	mode: ''
+	mode: '',
+  pathHash: (resourcePath) => ''
 }
 
 export default mpx
