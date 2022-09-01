@@ -1,6 +1,5 @@
 import { Plugin, UserConfig, createFilter } from 'vite'
 import { createVuePlugin } from 'vite-plugin-vue2'
-import replace from '@rollup/plugin-replace'
 import mpxGlobal from './mpx'
 import { transformMain } from './transformer/main'
 import { transformTemplate } from './transformer/template'
@@ -45,7 +44,11 @@ function createMpxPlugin(
         ...config,
         define: {
           global: 'globalThis',
-          ...config?.define
+          'process.env.NODE_ENV': JSON.stringify(
+            options.isProduction ? '"production"' : '"development"'
+          ),
+          ...config?.define,
+          ...stringifyObject(options.defs)
         }
       }
     },
@@ -161,7 +164,7 @@ function createMpxPlugin(
 
 export default function mpx(options: Options = {}): Plugin[] {
   const resolvedOptions = processOptions({ ...options })
-  const { mode, env, isProduction, defs, fileConditionRules } = resolvedOptions
+  const { mode, env, fileConditionRules } = resolvedOptions
 
   const plugins = [
     // mpx => vue
@@ -186,16 +189,7 @@ export default function mpx(options: Options = {}): Plugin[] {
     // ensure mpx entry point
     mpxResolveEntryPlugin(resolvedOptions),
     // vue support for mpxjs/rumtime
-    createVuePlugin(),
-    replace({
-      preventAssignment: true,
-      values: stringifyObject({
-        ...defs,
-        'process.env.NODE_ENV': JSON.stringify(
-          isProduction ? 'production' : 'development'
-        )
-      })
-    }) as Plugin
+    createVuePlugin()
   ]
 
   return plugins
