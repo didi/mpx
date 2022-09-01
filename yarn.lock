@@ -1181,11 +1181,6 @@
     "@docsearch/css" "3.2.1"
     algoliasearch "^4.0.0"
 
-"@esbuild-plugins/node-globals-polyfill@0.1.1":
-  version "0.1.1"
-  resolved "https://registry.npmmirror.com/@esbuild-plugins/node-globals-polyfill/-/node-globals-polyfill-0.1.1.tgz#a313ab3efbb2c17c8ce376aa216c627c9b40f9d7"
-  integrity sha512-MR0oAA+mlnJWrt1RQVQ+4VYuRJW/P2YmRTv1AsplObyvuBMnPHiizUF95HHYiSsMGLhyGtWufaq2XQg6+iurBg==
-
 "@esbuild/linux-loong64@0.14.54":
   version "0.14.54"
   resolved "http://artifactory.intra.xiaojukeji.com/artifactory/api/npm/npm/@esbuild/linux-loong64/-/linux-loong64-0.14.54.tgz?dl=https%3A%2F%2Fregistry.npmmirror.com%2F%40esbuild%2Flinux-loong64%2F-%2Flinux-loong64-0.14.54.tgz#de2a4be678bd4d0d1ffbb86e6de779cde5999028"
@@ -2419,32 +2414,6 @@
   dependencies:
     "@octokit/openapi-types" "^12.11.0"
 
-"@rollup/plugin-inject@^4.0.0":
-  version "4.0.4"
-  resolved "http://artifactory.intra.xiaojukeji.com/artifactory/api/npm/npm/@rollup/plugin-inject/-/plugin-inject-4.0.4.tgz?dl=https%3A%2F%2Fregistry.npmmirror.com%2F%40rollup%2Fplugin-inject%2F-%2Fplugin-inject-4.0.4.tgz#fbeee66e9a700782c4f65c8b0edbafe58678fbc2"
-  integrity sha1-++7mbppwB4LE9lyLDtuv5YZ4+8I=
-  dependencies:
-    "@rollup/pluginutils" "^3.1.0"
-    estree-walker "^2.0.1"
-    magic-string "^0.25.7"
-
-"@rollup/plugin-replace@^3.0.0":
-  version "3.1.0"
-  resolved "http://artifactory.intra.xiaojukeji.com/artifactory/api/npm/npm/@rollup/plugin-replace/-/plugin-replace-3.1.0.tgz?dl=https%3A%2F%2Fregistry.npmmirror.com%2F%40rollup%2Fplugin-replace%2F-%2Fplugin-replace-3.1.0.tgz#d31e3a90c6b47064f3c9f2ce0ded5bcf0d3b82f6"
-  integrity sha1-0x46kMa0cGTzyfLODe1bzw07gvY=
-  dependencies:
-    "@rollup/pluginutils" "^3.1.0"
-    magic-string "^0.25.7"
-
-"@rollup/pluginutils@^3.1.0":
-  version "3.1.0"
-  resolved "http://artifactory.intra.xiaojukeji.com/artifactory/api/npm/npm/@rollup/pluginutils/-/pluginutils-3.1.0.tgz?dl=https%3A%2F%2Fregistry.npmmirror.com%2F%40rollup%2Fpluginutils%2F-%2Fpluginutils-3.1.0.tgz#706b4524ee6dc8b103b3c995533e5ad680c02b9b"
-  integrity sha1-cGtFJO5tyLEDs8mVUz5a1oDAK5s=
-  dependencies:
-    "@types/estree" "0.0.39"
-    estree-walker "^1.0.1"
-    picomatch "^2.2.2"
-
 "@rollup/pluginutils@^4.2.1":
   version "4.2.1"
   resolved "http://artifactory.intra.xiaojukeji.com/artifactory/api/npm/npm/@rollup/pluginutils/-/pluginutils-4.2.1.tgz?dl=https%3A%2F%2Fregistry.npmmirror.com%2F%40rollup%2Fpluginutils%2F-%2Fpluginutils-4.2.1.tgz#e6c6c3aba0744edce3fb2074922d3776c0af2a6d"
@@ -2604,11 +2573,6 @@
   version "1.0.0"
   resolved "http://artifactory.intra.xiaojukeji.com/artifactory/api/npm/npm/@types/estree/-/estree-1.0.0.tgz?dl=https%3A%2F%2Fregistry.npmmirror.com%2F%40types%2Festree%2F-%2Festree-1.0.0.tgz#5fb2e536c1ae9bf35366eed879e827fa59ca41c2"
   integrity sha1-X7LlNsGum/NTZu7Yeegn+lnKQcI=
-
-"@types/estree@0.0.39":
-  version "0.0.39"
-  resolved "http://artifactory.intra.xiaojukeji.com/artifactory/api/npm/npm/@types/estree/-/estree-0.0.39.tgz?dl=https%3A%2F%2Fregistry.npmmirror.com%2F%40types%2Festree%2F-%2Festree-0.0.39.tgz#e177e699ee1b8c22d23174caaa7422644389509f"
-  integrity sha1-4Xfmme4bjCLSMXTKqnQiZEOJUJ8=
 
 "@types/estree@^0.0.51":
   version "0.0.51"
@@ -7364,11 +7328,6 @@ estree-walker@^0.6.1:
   resolved "http://artifactory.intra.xiaojukeji.com/artifactory/api/npm/npm/estree-walker/-/estree-walker-0.6.1.tgz?dl=https%3A%2F%2Fregistry.npmmirror.com%2Festree-walker%2F-%2Festree-walker-0.6.1.tgz#53049143f40c6eb918b23671d1fe3219f3a1b362"
   integrity sha1-UwSRQ/QMbrkYsjZx0f4yGfOhs2I=
 
-estree-walker@^1.0.1:
-  version "1.0.1"
-  resolved "http://artifactory.intra.xiaojukeji.com/artifactory/api/npm/npm/estree-walker/-/estree-walker-1.0.1.tgz?dl=https%3A%2F%2Fregistry.npmmirror.com%2Festree-walker%2F-%2Festree-walker-1.0.1.tgz#31bc5d612c96b704106b477e6dd5d8aa138cb700"
-  integrity sha1-MbxdYSyWtwQQa0d+bdXYqhOMtwA=
-
 estree-walker@^2.0.1:
   version "2.0.2"
   resolved "http://artifactory.intra.xiaojukeji.com/artifactory/api/npm/npm/estree-walker/-/estree-walker-2.0.2.tgz?dl=https%3A%2F%2Fregistry.npmmirror.com%2Festree-walker%2F-%2Festree-walker-2.0.2.tgz#52f010178c2a4c117a7757cfe942adb7d2da4cac"
@@ -10618,7 +10577,7 @@ macos-release@^2.2.0:
   resolved "http://artifactory.intra.xiaojukeji.com/artifactory/api/npm/npm/macos-release/-/macos-release-2.5.0.tgz?dl=https%3A%2F%2Fregistry.npmmirror.com%2Fmacos-release%2F-%2Fmacos-release-2.5.0.tgz#067c2c88b5f3fb3c56a375b2ec93826220fa1ff2"
   integrity sha1-BnwsiLXz+zxWo3Wy7JOCYiD6H/I=
 
-magic-string@^0.25.2, magic-string@^0.25.7:
+magic-string@^0.25.2:
   version "0.25.9"
   resolved "http://artifactory.intra.xiaojukeji.com/artifactory/api/npm/npm/magic-string/-/magic-string-0.25.9.tgz?dl=https%3A%2F%2Fregistry.npmmirror.com%2Fmagic-string%2F-%2Fmagic-string-0.25.9.tgz#de7f9faf91ef8a1c91d02c2e5314c8277dbcdd1c"
   integrity sha1-3n+fr5HvihyR0CwuUxTIJ3283Rw=
@@ -13581,13 +13540,6 @@ rollup-plugin-node-resolve@^5.0.0:
     is-module "^1.0.0"
     resolve "^1.11.1"
     rollup-pluginutils "^2.8.1"
-
-rollup-plugin-polyfill-node@^0.8.0:
-  version "0.8.0"
-  resolved "http://artifactory.intra.xiaojukeji.com/artifactory/api/npm/npm/rollup-plugin-polyfill-node/-/rollup-plugin-polyfill-node-0.8.0.tgz?dl=https%3A%2F%2Fregistry.npmmirror.com%2Frollup-plugin-polyfill-node%2F-%2Frollup-plugin-polyfill-node-0.8.0.tgz#859c070822f5e38d221e5b4238cb34aa894c2b19"
-  integrity sha1-hZwHCCL1440iHltCOMs0qolMKxk=
-  dependencies:
-    "@rollup/plugin-inject" "^4.0.0"
 
 rollup-plugin-replace@^2.2.0:
   version "2.2.0"

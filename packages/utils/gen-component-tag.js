@@ -22,7 +22,7 @@ function genComponentTag (part, processor = {}) {
   }
   if (part.content) {
     // unpad
-    part.content = '\n' + part.content.replace(/^\n*/m, '')
+    // part.content = '\n' + part.content.replace(/^\n*/m, '')
   }
 
   const tag = processor.tag ? processor.tag(part) : part.tag

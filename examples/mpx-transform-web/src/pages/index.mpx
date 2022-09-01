@@ -1,6 +1,6 @@
 <template>
   <view bindtap="reload">__UNPLUGIN__</view>
-  <text wx:if="{{a === 1}}">test123344</text>
+  <text wx:if="{{a === 1}}">test12331343342111</text>
   <view>{{$t('message')}}</view>
 <!--  <text wx:elseif="{{a === 2}}">w22223</text>-->
 <!--  <list list-class="list"></list>-->

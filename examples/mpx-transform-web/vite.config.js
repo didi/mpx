@@ -2,8 +2,6 @@ const path = require('path')
 const mpx = require('../../packages/web-plugin/dist/vite')
 const { defineConfig } = require('vite')
 
-console.log(mpx)
-
 module.exports = defineConfig({
   plugins: [
     mpx.default({
@@ -22,9 +20,6 @@ module.exports = defineConfig({
     extensions: ['.mpx', '.mjs', '.js', '.ts', '.jsx', '.tsx', '.json']
   },
   build: {
-    rollupOptions: {
-      input: './app.mpx'
-    },
     target: ['es2015'],
     sourcemap: true,
     minify: false
