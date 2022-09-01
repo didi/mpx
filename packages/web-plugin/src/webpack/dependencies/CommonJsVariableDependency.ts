@@ -83,7 +83,7 @@ CommonJsVariableDependency.Template = class CommonJsVariableDependencyTemplate e
 
 makeSerializable(
   CommonJsVariableDependency,
-  '@mpxjs/web-plugin/src/webpack/dependencies/CommonJsVariableDependency'
+  '@mpxjs/web-plugin/dist/webpack/dependencies/CommonJsVariableDependency'
 )
 
 export default CommonJsVariableDependency

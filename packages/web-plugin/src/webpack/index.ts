@@ -11,7 +11,6 @@ import ReplaceDependency from './dependencies/ReplaceDependency'
 import harmonySpecifierTag from 'webpack/lib/dependencies/HarmonyImportDependencyParserPlugin'
 import FlagEntryExportAsUsedPlugin from 'webpack/lib/FlagEntryExportAsUsedPlugin'
 import FileSystemInfo from 'webpack/lib/FileSystemInfo'
-import normalize from '@mpxjs/utils/normalize'
 import toPosix from '@mpxjs/utils/to-posix'
 import addQuery from '@mpxjs/utils/add-query'
 import DefinePlugin from 'webpack/lib/DefinePlugin'
@@ -26,7 +25,7 @@ import hash from 'hash-sum'
 import stringifyLoadersAndResource from '@mpxjs/utils/stringify-loaders-resource'
 import async from 'async'
 import mpx from './mpx'
-const styleCompilerPath = normalize.webPlugin('webpack/style-compiler/index')
+const styleCompilerPath = '@mpxjs/web-plugin/dist/webpack/loader/style-loader.js'
 const isProductionLikeMode = options => {
   return options.mode === 'production' || !options.mode
 }
@@ -120,27 +119,27 @@ class MpxWebpackPlugin {
       )
     }
     return {
-      loader: normalize.webPlugin('webpack/loader'),
+      loader: '@mpxjs/web-plugin/dist/webpack/loader/mpx-loader',
       options
     }
   }
   static wxsPreLoader(options = {}) {
     return {
-      loader: normalize.webPlugin('webpack/wxs/pre-loader'),
+      loader: '@mpxjs/web-plugin/dist/webpack/loader/pre-loader',
       options
     }
   }
 
   static urlLoader(options = {}) {
     return {
-      loader: normalize.webPlugin('webpack/url-loader'),
+      loader: '@mpxjs/web-plugin/dist/webpack/loader/url-loader',
       options
     }
   }
 
   static fileLoader(options = {}) {
     return {
-      loader: normalize.webPlugin('webpack/file-loader'),
+      loader: '@mpxjs/web-plugin/dist/webpack/loader/file-loader',
       options
     }
   }
@@ -682,9 +681,7 @@ class MpxWebpackPlugin {
             const { queryObj, resource } = parseRequest(request)
             if (queryObj.resolve) {
               // 此处的query用于将资源引用的当前包信息传递给resolveDependency
-              const resolveLoaderPath = normalize.webPlugin(
-                'webpack/resolve-loader'
-              )
+              const resolveLoaderPath = '@mpxjs/web-plugin/dist/webpack/loader/resolve-loader'
               data.request = `!!${resolveLoaderPath}!${resource}`
             }
           }

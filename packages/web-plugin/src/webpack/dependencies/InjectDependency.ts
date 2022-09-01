@@ -56,7 +56,7 @@ InjectDependency.Template = class InjectDependencyTemplate {
 
 makeSerializable(
   InjectDependency,
-  '@mpxjs/web-plugin/src/webpack/dependencies/InjectDependency'
+  '@mpxjs/web-plugin/dist/webpack/dependencies/InjectDependency'
 )
 
 export default InjectDependency

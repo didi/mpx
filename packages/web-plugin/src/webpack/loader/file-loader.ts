@@ -2,7 +2,7 @@ import path from 'path'
 import loaderUtils from 'loader-utils'
 import toPosix from '@mpxjs/utils/to-posix'
 import parseRequest from '@mpxjs/utils/parse-request'
-import RecordResourceMapDependency from './dependencies/RecordResourceMapDependency'
+import RecordResourceMapDependency from '../dependencies/RecordResourceMapDependency'
 
 module.exports = function loader (content, prevOptions) {
   const options = prevOptions || loaderUtils.getOptions(this) || {}

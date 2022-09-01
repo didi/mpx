@@ -1,6 +1,5 @@
 import loaderUtils from 'loader-utils'
-import normalize from '@mpxjs/utils/normalize'
-const selectorPath = normalize.webPlugin('webpack/selector')
+const selectorPath = '@mpxjs/web-plugin/dist/webpack/selector'
 import addQuery from '@mpxjs/utils/add-query'
 import parseRequest from '@mpxjs/utils/parse-request'
 

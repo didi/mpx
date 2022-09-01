@@ -121,7 +121,7 @@ ResolveDependency.Template = class ResolveDependencyTemplate {
 
 makeSerializable(
   ResolveDependency,
-  '@mpxjs/web-plugin/src/webpack/dependencies/ResolveDependency'
+  '@mpxjs/web-plugin/dist/webpack/dependencies/ResolveDependency'
 )
 
 export default ResolveDependency

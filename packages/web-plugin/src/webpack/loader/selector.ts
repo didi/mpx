@@ -1,7 +1,7 @@
-import parseComponent from './parser'
+import parseComponent from '../parser'
 import parseRequest from '@mpxjs/utils/parse-request'
 // todo 移除mpx访问依赖，支持thread-loader
-import mpx from './mpx'
+import mpx from '../mpx'
 
 export default function selector (content) {
   this.cacheable()

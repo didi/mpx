@@ -35,7 +35,7 @@
   },
   "scripts": {
     "test": "echo \"Error: run tests from root\" && exit 1",
-    "dev": "tsup src/*.ts --watch src",
+    "dev": "tsup src/*.ts src/webpack/loader/*.ts src/webpack/dependencies/*.ts  --watch --splitting",
     "build": "tsup src/*.ts --format cjs,esm --dts --splitting --clean"
   },
   "directories": {
@@ -56,7 +56,6 @@
     "url": "https://github.com/didi/mpx/issues"
   },
   "devDependencies": {
-    "@babel/types": "^7.16.0",
     "@mpxjs/compiler": "^2.7.40",
     "@mpxjs/utils": "^2.7.40",
     "@types/async": "^2.4.2",
@@ -81,6 +80,10 @@
     "vite": "^3.0.0"
   },
   "dependencies": {
+    "@babel/generator": "^7.16.0",
+    "@babel/parser": "^7.16.2",
+    "@babel/traverse": "^7.16.0",
+    "@babel/types": "^7.16.0",
     "@better-scroll/core": "^2.2.1",
     "@better-scroll/movable": "^2.2.1",
     "@better-scroll/observe-dom": "^2.2.1",
