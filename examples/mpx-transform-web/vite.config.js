@@ -22,9 +22,6 @@ module.exports = defineConfig({
     extensions: ['.mpx', '.mjs', '.js', '.ts', '.jsx', '.tsx', '.json']
   },
   build: {
-    rollupOptions: {
-      input: './app.mpx'
-    },
     target: ['es2015'],
     sourcemap: true,
     minify: false
