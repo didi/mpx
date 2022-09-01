@@ -2,8 +2,6 @@ const path = require('path')
 const mpx = require('../../packages/web-plugin/dist/vite')
 const { defineConfig } = require('vite')
 
-console.log(mpx)
-
 module.exports = defineConfig({
   plugins: [
     mpx.default({
