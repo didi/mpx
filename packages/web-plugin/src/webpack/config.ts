@@ -22,7 +22,7 @@ module.exports = {
           }
         }
       },
-      getEvent (eventName:string, prefix = 'bind') {
+      getEvent (eventName:string, prefix:string = 'bind') {
         return prefix + eventName
       },
       defaultModelProp: 'value',
@@ -94,7 +94,7 @@ module.exports = {
           }
         }
       },
-      getEvent (eventName:string, prefix = 'on') {
+      getEvent (eventName:string, prefix:string = 'on') {
         return prefix + eventName.replace(/^./, (matched) => {
           return matched.toUpperCase()
         })
@@ -154,7 +154,7 @@ module.exports = {
       activeIconKey: 'selectedIconPath'
     },
     event: {
-      parseEvent (attr) {
+      parseEvent (attr:string) {
         let match = /^(bind|catch|capture-bind|capture-catch):?(.*?)(?:\.(.*))?$/.exec(attr)
         if (match) {
           return {
@@ -164,7 +164,7 @@ module.exports = {
           }
         }
       },
-      getEvent (eventName: string, prefix = 'bind') {
+      getEvent (eventName: string, prefix: string = 'bind') {
         return prefix + eventName
       },
       defaultModelProp: 'value',
@@ -231,7 +231,7 @@ module.exports = {
           }
         }
       },
-      getEvent (eventName: string, prefix = 'bind') {
+      getEvent (eventName: string, prefix:string = 'bind') {
         return prefix + eventName
       },
       defaultModelProp: 'value',
@@ -298,7 +298,7 @@ module.exports = {
           }
         }
       },
-      getEvent (eventName:string, prefix = 'bind') {
+      getEvent (eventName:string, prefix:string = 'bind') {
         return prefix + eventName
       },
       defaultModelProp: 'value',
@@ -379,7 +379,7 @@ module.exports = {
           }
         }
       },
-      getEvent (eventName: string, prefix = 'bind') {
+      getEvent (eventName: string, prefix:string = 'bind') {
         return prefix + eventName
       },
       defaultModelProp: 'value',
@@ -446,7 +446,7 @@ module.exports = {
           }
         }
       },
-      getEvent (eventName:string, prefix = 'bind') {
+      getEvent (eventName:string, prefix:string = 'bind') {
         return prefix + eventName
       },
       defaultModelProp: 'value',
@@ -513,7 +513,7 @@ module.exports = {
           }
         }
       },
-      getEvent (eventName:string, prefix = 'bind') {
+      getEvent (eventName:string, prefix:string = 'bind') {
         return prefix + eventName
       },
       defaultModelProp: 'value',

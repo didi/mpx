@@ -8,7 +8,8 @@ const cache = new LruCache(100)
 const splitRE = /\r?\n/g
 const emptyRE = /^(?:\/\/)?\s*$/
 
-export default function parseComponent (content, { filePath, needMap, mode, env }) {
+export default function parseComponent (content: string, options) {
+  const { filePath, needMap, mode, env } = options
   // 缓存需要mode隔离，不同mode经过区块条件编译parseComponent得到的内容并不一致
   const cacheKey = hash(filePath + content + mode + env)
 
@@ -44,7 +45,7 @@ export default function parseComponent (content, { filePath, needMap, mode, env 
   return output
 }
 
-function generateSourceMap(filename, source, generated) {
+function generateSourceMap(filename:string, source:string, generated: string) {
   const map = new SourceMapGenerator()
   map.setSourceContent(filename, source)
   generated.split(splitRE).forEach((line, index) => {
