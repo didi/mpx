@@ -44,7 +44,8 @@ function createMpxPlugin(
       return {
         ...config,
         define: {
-          global: 'globalThis'
+          global: 'globalThis',
+          ...config?.define
         }
       }
     },
