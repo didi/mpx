@@ -5,7 +5,6 @@ import path from 'path'
 import ResolveDependency from './dependencies/ResolveDependency'
 import InjectDependency from './dependencies/InjectDependency'
 import NullFactory from 'webpack/lib/NullFactory'
-import NormalModule from 'webpack/lib/NormalModule'
 import CommonJsVariableDependency from './dependencies/CommonJsVariableDependency'
 import ReplaceDependency from './dependencies/ReplaceDependency'
 import harmonySpecifierTag from 'webpack/lib/dependencies/HarmonyImportDependencyParserPlugin'
@@ -13,8 +12,6 @@ import FlagEntryExportAsUsedPlugin from 'webpack/lib/FlagEntryExportAsUsedPlugin
 import FileSystemInfo from 'webpack/lib/FileSystemInfo'
 import toPosix from '@mpxjs/utils/to-posix'
 import addQuery from '@mpxjs/utils/add-query'
-import DefinePlugin from 'webpack/lib/DefinePlugin'
-import ExternalsPlugin from 'webpack/lib/ExternalsPlugin'
 import AddModePlugin from './resolver/AddModePlugin'
 import AddEnvPlugin from './resolver/AddEnvPlugin'
 import RecordResourceMapDependency from './dependencies/RecordResourceMapDependency'
@@ -23,22 +20,57 @@ import { matchCondition } from '@mpxjs/utils/match-condition'
 import { preProcessDefs } from '@mpxjs/utils/index'
 import hash from 'hash-sum'
 import stringifyLoadersAndResource from '@mpxjs/utils/stringify-loaders-resource'
-import async from 'async'
+import async, { any } from 'async'
 import mpx from './mpx'
+import { NormalModule, DefinePlugin, ExternalsPlugin, Compiler, Dependency, Module } from 'webpack'
+
+
+
 const styleCompilerPath = '@mpxjs/web-plugin/dist/webpack/loader/style-loader.js'
-const isProductionLikeMode = options => {
+const isProductionLikeMode = (options: any) => {
   return options.mode === 'production' || !options.mode
 }
 
 const externalsMap = {
   weui: /^weui-miniprogram/
+} as any
+
+const warnings = [] as any[]
+const errors = [] as any[]
+
+type MpxWebpackPluginOptType = {
+  mode: string
+  env: string
+  srcMode: string
+  externalClasses: string[]
+  writeMode: string
+  autoScopeRules: Record<string, any>
+  forceDisableProxyCtor: boolean
+  transMpxRules: Record<string, any>
+  defs: {
+    __mpx_mode__: string
+    __mpx_src_mode__: string
+    __mpx_env__: string
+    [k: string]: any
+  }
+  modeRules: Record<string, any>
+  externals: Array<any>
+  projectRoot: string
+  postcssInlineConfig: Record<string, any>
+  transRpxRules: Object
+  decodeHTMLText: boolean
+  i18n: Object
+  checkUsingComponents: boolean
+  pathHashMode: string
+  fileConditionRules: Record<string, any>
+  customOutputPath: Object
+  webConfig: Record<string, any>
 }
-
-const warnings = []
-const errors = []
-
 class MpxWebpackPlugin {
-  constructor(options = {}) {
+  options:MpxWebpackPluginOptType
+
+  constructor(options: MpxWebpackPluginOptType) {
+    options = options || {}
     options.mode = options.mode || 'wx'
     options.env = options.env || ''
 
@@ -90,7 +122,7 @@ class MpxWebpackPlugin {
     this.options = options
     // Hack for buildDependencies
     const rawResolveBuildDependencies =
-      FileSystemInfo.prototype.resolveBuildDependencies
+    FileSystemInfo.prototype.resolveBuildDependencies
     FileSystemInfo.prototype.resolveBuildDependencies = function (
       context,
       deps,
@@ -112,7 +144,7 @@ class MpxWebpackPlugin {
     }
   }
 
-  static loader(options = {}) {
+  static loader(options: {[k: string]: any}) {
     if (options.transRpx) {
       warnings.push(
         'Mpx loader option [transRpx] is deprecated now, please use mpx webpack plugin config [transRpxRules] instead!'
@@ -144,7 +176,7 @@ class MpxWebpackPlugin {
     }
   }
 
-  runModeRules(data) {
+  runModeRules(data: {[k: string]: any}) {
     const { resourcePath, queryObj } = parseRequest(data.resource)
     if (queryObj.mode) {
       return
@@ -160,7 +192,7 @@ class MpxWebpackPlugin {
     }
   }
 
-  apply(compiler) {
+  apply(compiler: {[k: string]: any} & Compiler ) {
     if (!compiler.__mpx__) {
       compiler.__mpx__ = true
     } else {
@@ -200,7 +232,7 @@ class MpxWebpackPlugin {
     if (this.options.writeMode === 'changed') {
       const writedFileContentMap = new Map()
       const originalWriteFile = compiler.outputFileSystem.writeFile
-      compiler.outputFileSystem.writeFile = (filePath, content, callback) => {
+      compiler.outputFileSystem.writeFile = (filePath: string, content: any, callback: () => any) => {
         const lastContent = writedFileContentMap.get(filePath)
         if (
           Buffer.isBuffer(lastContent)
@@ -211,12 +243,13 @@ class MpxWebpackPlugin {
         }
         writedFileContentMap.set(filePath, content)
         originalWriteFile(filePath, content, callback)
+        return ''
       }
     }
 
     const defs = this.options.defs
 
-    const defsOpt = {
+    const defsOpt: {[k: string]: any} = {
       __mpx_wxs__: DefinePlugin.runtimeValue(({ module }) => {
         return JSON.stringify(!!module.wxs)
       })
@@ -326,7 +359,7 @@ class MpxWebpackPlugin {
             checkUsingComponents: this.options.checkUsingComponents,
             appTitle: 'Mpx homepage',
             externals: this.options.externals,
-            pathHash: resourcePath => {
+            pathHash: (resourcePath: string) => {
               if (
                 this.options.pathHashMode === 'relative' &&
                 this.options.projectRoot
@@ -338,8 +371,8 @@ class MpxWebpackPlugin {
               return hash(resourcePath)
             },
             getOutputPath: (
-              resourcePath,
-              type,
+              resourcePath: string,
+              type: 'component' | 'page',
               { ext = '', conflictPath = '' } = {}
             ) => {
               const name = path.parse(resourcePath).name
@@ -367,7 +400,7 @@ class MpxWebpackPlugin {
               recordOnly,
               warn,
               error
-            }) => {
+            }: Record<string, any>) => {
               const packageName = packageRoot || 'main'
               const resourceMap = mpx[`${resourceType}sMap`]
               const currentResourceMap = resourceMap.main
@@ -424,9 +457,10 @@ class MpxWebpackPlugin {
                 alreadyOutputted
               }
             }
-          }
+            // TODO: 
+          } as Record<string, any>
           const initAttrs = Object.keys(initMpxData)
-          initAttrs.forEach(key => {
+          initAttrs.forEach((key: string) => {
             mpx[key] = initMpxData[key]
           })
           compilation.__mpx__ = mpx
@@ -437,8 +471,8 @@ class MpxWebpackPlugin {
           const presentationalDependencies =
             module.presentationalDependencies || []
           async.forEach(
-            presentationalDependencies.filter(dep => dep.mpxAction),
-            (dep, callback) => {
+            presentationalDependencies.filter((dep: Dependency & {[k: string]: any}) => dep.mpxAction),
+            (dep: Dependency & {[k: string]: any}, callback) => {
               dep.mpxAction(module, compilation, callback)
             },
             err => {
@@ -446,7 +480,8 @@ class MpxWebpackPlugin {
                 compilation,
                 module,
                 innerErr => {
-                  return callback(err || innerErr)
+                  const cbError: any = err || innerErr
+                  return callback(cbError)
                 }
               )
             }
@@ -454,16 +489,17 @@ class MpxWebpackPlugin {
         }
         normalModuleFactory.hooks.parser
           .for('javascript/auto')
-          .tap('MpxWebpackPlugin', parser => {
+          .tap('MpxWebpackPlugin', (parser: any) => {
             parser.hooks.call
               .for('__mpx_resolve_path__')
-              .tap('MpxWebpackPlugin', expr => {
+              .tap('MpxWebpackPlugin', (expr: Record<string, any>) => {
                 if (expr.arguments[0]) {
                   const resource = expr.arguments[0].value
                   const packageName = mpx.currentPackageRoot || 'main'
-                  const issuerResource = moduleGraph.getIssuer(
-                    parser.state.module
-                  ).resource
+                  const module: Module = parser.state.module
+                  const moduleGraphReturn = moduleGraph.getIssuer(module) as Module & {resource: any}
+                  const resource1: string = moduleGraphReturn.resource
+                  const issuerResource = resource1
                   const range = expr.range
                   const dep = new ResolveDependency(
                     resource,
@@ -476,7 +512,7 @@ class MpxWebpackPlugin {
                 }
               })
             // hack babel polyfill global
-            parser.hooks.statementIf.tap('MpxWebpackPlugin', expr => {
+            parser.hooks.statementIf.tap('MpxWebpackPlugin', (expr: any) => {
               if (/core-js.+microtask/.test(parser.state.module.resource)) {
                 if (
                   expr.test.left &&
@@ -496,7 +532,7 @@ class MpxWebpackPlugin {
 
             parser.hooks.evaluate
               .for('CallExpression')
-              .tap('MpxWebpackPlugin', expr => {
+              .tap('MpxWebpackPlugin', (expr: any) => {
                 const current = parser.state.current
                 const arg0 = expr.arguments[0]
                 const callee = expr.callee
@@ -520,7 +556,7 @@ class MpxWebpackPlugin {
             // 处理跨平台转换
             if (mpx.srcMode !== mpx.mode) {
               // 处理跨平台全局对象转换
-              const transGlobalObject = expr => {
+              const transGlobalObject = (expr: any) => {
                 const module = parser.state.module
                 const current = parser.state.current
                 const { queryObj, resourcePath } = parseRequest(module.resource)
@@ -579,20 +615,20 @@ class MpxWebpackPlugin {
                 .tap('MpxWebpackPlugin', transGlobalObject)
               // Proxy ctor for transMode
               if (!this.options.forceDisableProxyCtor) {
-                parser.hooks.call.for('Page').tap('MpxWebpackPlugin', expr => {
+                parser.hooks.call.for('Page').tap('MpxWebpackPlugin', (expr: any) => {
                   transGlobalObject(expr.callee)
                 })
                 parser.hooks.call
                   .for('Component')
-                  .tap('MpxWebpackPlugin', expr => {
+                  .tap('MpxWebpackPlugin', (expr: any) => {
                     transGlobalObject(expr.callee)
                   })
-                parser.hooks.call.for('App').tap('MpxWebpackPlugin', expr => {
+                parser.hooks.call.for('App').tap('MpxWebpackPlugin', (expr: any) => {
                   transGlobalObject(expr.callee)
                 })
                 parser.hooks.call
                   .for('Behavior')
-                  .tap('MpxWebpackPlugin', expr => {
+                  .tap('MpxWebpackPlugin', (expr: any) => {
                     transGlobalObject(expr.callee)
                   })
               }
@@ -617,12 +653,12 @@ class MpxWebpackPlugin {
                 'getMixin',
                 'getComputed',
                 'implement'
-              ].reduce((map, api) => {
+              ].reduce((map: Record<string, any>, api: string) => {
                 map[api] = true
                 return map
               }, {})
 
-              const injectSrcModeForTransApi = (expr, members) => {
+              const injectSrcModeForTransApi = (expr: any, members: Array<any>) => {
                 // members为空数组时，callee并不是memberExpression
                 if (!members.length) return
                 const callee = expr.callee
@@ -693,14 +729,14 @@ class MpxWebpackPlugin {
             const { queryObj } = parseRequest(createData.request)
             const loaders = createData.loaders
             const mpxStyleOptions = queryObj.mpxStyleOptions
-            const firstLoader = loaders[0] ? toPosix(loaders[0].loader) : ''
+            const firstLoader = loaders && loaders[0] ? toPosix(loaders[0].loader) : ''
             const isPitcherRequest = firstLoader.includes(
               'vue-loader/lib/loaders/pitcher'
             )
             let cssLoaderIndex = -1
             let vueStyleLoaderIndex = -1
             let mpxStyleLoaderIndex = -1
-            loaders.forEach((loader, index) => {
+            loaders && loaders.forEach((loader, index) => {
               const currentLoader = toPosix(loader.loader)
               if (currentLoader.includes('css-loader')) {
                 cssLoaderIndex = index
@@ -724,10 +760,13 @@ class MpxWebpackPlugin {
                 loaderIndex = vueStyleLoaderIndex
               }
               if (loaderIndex > -1) {
-                loaders.splice(loaderIndex + 1, 0, {
+                // TODO: 
+                loaders && loaders.splice(loaderIndex + 1, 0, {
                   loader: styleCompilerPath,
                   options:
-                    (mpxStyleOptions && JSON.parse(mpxStyleOptions)) || {}
+                    (mpxStyleOptions && JSON.parse(mpxStyleOptions)) || {},
+                  type: '',
+                  ident: ''
                 })
               }
             }

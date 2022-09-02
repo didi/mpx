@@ -6,7 +6,7 @@ import parseRequest from '@mpxjs/utils/parse-request'
 import toPosix from '@mpxjs/utils/to-posix'
 import addQuery from '@mpxjs/utils/add-query'
 import resolve from '../utils/resolve'
-import parseComponent from '../parser'
+import parser from '@mpxjs/compiler/template-compiler/parser'
 import getJSONContent from '../utils/get-json-content'
 import createJSONHelper from '../json-compiler/helper'
 import { RESOLVE_IGNORED_ERR } from '../../constants'
@@ -133,7 +133,7 @@ export default function (json, {
           (result, content, callback) => {
             const extName = extname(result)
             if (extName === '.mpx') {
-              const parts = parseComponent(content, {
+              const parts = parser(content, {
                 filePath: result,
                 needMap: loaderContext.sourceMap,
                 mode,

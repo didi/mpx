@@ -1,4 +1,4 @@
-import parseComponent from '../parser'
+import parser from '@mpxjs/compiler/template-compiler/parser'
 import parseRequest from '@mpxjs/utils/parse-request'
 // todo 移除mpx访问依赖，支持thread-loader
 import mpx from '../mpx'
@@ -15,7 +15,7 @@ export default function selector (content) {
   const mode = mpx.mode
   const env = mpx.env
   const filePath = this.resourcePath
-  const parts = parseComponent(content, {
+  const parts = parser(content, {
     filePath,
     needMap: this.sourceMap,
     mode,

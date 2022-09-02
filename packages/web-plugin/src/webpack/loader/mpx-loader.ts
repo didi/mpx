@@ -1,5 +1,5 @@
 import JSON5 from 'json5'
-import parseComponent from '../parser'
+import parser from '@mpxjs/compiler/template-compiler/parser'
 import loaderUtils from 'loader-utils'
 import parseRequest from '@mpxjs/utils/parse-request'
 import { matchCondition } from '@mpxjs/utils/match-condition'
@@ -62,7 +62,7 @@ module.exports = function (content) {
     this._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, ctorType, entryName, packageRoot))
   }
   // 将mpx文件 分成四部分
-  const parts = parseComponent(content, {
+  const parts = parser(content, {
     filePath,
     needMap: this.sourceMap,
     mode,
