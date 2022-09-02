@@ -41,7 +41,7 @@ export async function transformMain(
       pluginContext
     )
     // replace "*.mpx?vue" to "*.mpx?mpx"
-    // this way mpx does not enter the logic of the Vueplugin
+    // this way mpx does not enter the logic of the VuePlugin
     // replace all \/\/\n for sourceMap
     return {
       code: vueCode

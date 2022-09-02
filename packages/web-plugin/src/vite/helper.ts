@@ -12,7 +12,7 @@ import { OPTION_PROCESSOR_PATH, TAB_BAR_PATH } from 'src/constants'
 export const ENTRY_HELPER_CODE = '\0/vite/mpx-entry-helper'
 export const APP_HELPER_CODE = '\0/vite/mpx-app-helper'
 export const I18N_HELPER_CODE = '\0/vite/mpx-i18n-helper'
-export const TAB_BAR_PAGE_HELPER_CODE = '\0/vite/mpx-tab-bar-page'
+export const TAB_BAR_PAGE_HELPER_CODE = '\0/vite/mpx-tab-bar-page-helper'
 
 export const renderPageRouteCode = (importer: string): string => {
   return `export default ${stringify(mpxGlobal.pagesMap[importer])}`
@@ -168,12 +168,13 @@ export const renderTabBarPageCode = async (
       if (tabBarId) {
         const varName = `__mpx_tabBar__${index}`
         const { query } = parseRequest(tabBarId)
-        tabBars.push(genImport(tabBarId, varName))
+        const async = query.async !== undefined
+        !async && tabBars.push(genImport(tabBarId, varName))
         tabBarPagesMap[tarbarName] = genComponentCode(
           varName,
           tabBarId,
           {
-            async: !!query.async
+            async
           },
           {
             __mpxPageroute: tarbarName

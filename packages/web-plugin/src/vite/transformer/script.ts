@@ -78,24 +78,25 @@ export async function transformScript(
   const pagesMap: Record<string, string> = {}
   const componentsMap: Record<string, string> = {}
 
-  Object.keys(localPagesMap).forEach((pagePath, index) => {
+  Object.keys(localPagesMap).forEach((pageName, index) => {
     const varName = `__mpx__page__${index}`
-    const isTabBar = tabBarMap && tabBarMap[pagePath]
+    const isTabBar = tabBarMap && tabBarMap[pageName]
     const newPagePath = isTabBar
       ? TAB_BAR_CONTAINER_PATH
-      : localPagesMap[pagePath]
-    s.append(genImport(newPagePath, varName))
+      : localPagesMap[pageName]
     const { query } = parseRequest(newPagePath)
-    pagesMap[pagePath] = genComponentCode(
+    const async = query.async !== undefined
+    !async && s.append(genImport(newPagePath, varName))
+    pagesMap[pageName] = genComponentCode(
       varName,
       newPagePath,
       {
-        async: !!query.async
+        async
       },
       isTabBar
         ? { __mpxBuiltIn: true }
         : {
-            __mpxPageRoute: pagePath
+            __mpxPageRoute: pageName
           }
     )
   })
@@ -104,9 +105,10 @@ export async function transformScript(
     const componentId = localComponentsMap[componentName]
     const { query } = parseRequest(componentId)
     const varName = `__mpx__component__${index}`
-    s.append(genImport(componentId, varName))
+    const async = query.async !== undefined
+    !async && s.append(genImport(componentId, varName))
     componentsMap[componentName] = genComponentCode(varName, componentId, {
-      async: !!query.async
+      async
     })
   })
 
