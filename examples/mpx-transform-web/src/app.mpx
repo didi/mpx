@@ -20,7 +20,8 @@
   {
     "pages": [
       "./pages/index",
-      "./pages/wxs?async=app_pages2"
+      "./pages/wxs?async=app_pages2",
+      "./pages/index2?async"
     ],
     "subpackages": [
       {
