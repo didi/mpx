@@ -1,7 +1,7 @@
 <template>
   <view class="p-container-h">
     <wxs module="foo">
-      var some_msg = "hello world";
+      var some_msg = "hello1344445521242142";
       module.exports = {
       msg : some_msg,
       }

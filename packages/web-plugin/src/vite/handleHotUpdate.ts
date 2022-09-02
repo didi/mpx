@@ -44,9 +44,9 @@ export default async function handleHotUpdate(
   const affectedModules = new Set<ModuleNode | undefined>()
 
   const mainModule = modules.find(
-    (m) => !/type=/.test(m.url) || /type=script/.test(m.url)
+    m => !/type=/.test(m.url) || /type=script/.test(m.url)
   )
-  const templateModule = modules.find((m) => /type=template/.test(m.url))
+  const templateModule = modules.find(m => /type=template/.test(m.url))
 
   if (
     !isEqualBlock(descriptor.json, prevDescriptor.json) ||
@@ -80,11 +80,14 @@ export default async function handleHotUpdate(
       !isEqualObject(
         descriptor.builtInComponentsMap,
         prevDescriptor.builtInComponentsMap
-      )
+      ) ||
+      !isEqualObject(descriptor.wxsContentMap, prevDescriptor.wxsContentMap)
     ) {
       affectedModules.add(mainModule)
+      updateType.push('script')
     }
   } else {
+    descriptor.wxsContentMap = prevDescriptor.wxsContentMap
     descriptor.builtInComponentsMap = prevDescriptor.builtInComponentsMap
     descriptor.genericsInfo = prevDescriptor.genericsInfo
   }
@@ -95,8 +98,8 @@ export default async function handleHotUpdate(
 
   // force reload if scoped status has changed
   if (
-    prevStyles.some((s) => s.attrs.scoped) !==
-    nextStyles.some((s) => s.attrs.scoped)
+    prevStyles.some(s => s.attrs.scoped) !==
+    nextStyles.some(s => s.attrs.scoped)
   ) {
     // template needs to be invalidated as well
     affectedModules.add(templateModule)
@@ -111,7 +114,7 @@ export default async function handleHotUpdate(
     if (!prev || !isEqualBlock(prev, next)) {
       didUpdateStyle = true
       const mod = modules.find(
-        (m) =>
+        m =>
           m.url.includes(`type=style&index=${i}`) &&
           m.url.endsWith(`.${next.attrs.lang || 'css'}`)
       )
@@ -157,7 +160,7 @@ export function isEqualObject(
   if (keysA.length !== keysB.length) {
     return false
   }
-  return keysA.every((key) => b[key])
+  return keysA.every(key => b[key] === a[key])
 }
 
 export function isEqualBlock(a: SFCBlock | null, b: SFCBlock | null): boolean {
@@ -171,5 +174,5 @@ export function isEqualBlock(a: SFCBlock | null, b: SFCBlock | null): boolean {
   if (keysA.length !== keysB.length) {
     return false
   }
-  return keysA.every((key) => a.attrs[key] === b.attrs[key])
+  return keysA.every(key => a.attrs[key] === b.attrs[key])
 }
