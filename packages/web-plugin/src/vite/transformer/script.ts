@@ -15,30 +15,27 @@ import { resolveMpxRuntime } from '../../utils/resolveMpxRuntime'
 import omit from '../../utils/omit'
 import stringify, { shallowStringify } from '../../utils/stringify'
 import parseRequest from '../../utils/parseRequest'
+import { genImport } from '../../utils/genCode'
 
-const optionProcessorPath = resolveMpxRuntime('optionProcessor')
+const OPTION_PROCESSOR_PATH = resolveMpxRuntime('optionProcessor')
 const tabBarContainerPath = resolveMpxRuntime(
   'components/web/mpx-tab-bar-container.vue'
 )
 
-export const getResource =
-  (resourceMap: string[] = []) =>
-  (
-    varString: string,
-    resource: string,
-    { async = false } = {},
-    params: unknown = {}
-  ): string => {
-    if (!async) {
-      resourceMap.push(`import ${varString} from ${stringify(resource)}`)
-      return `getComponent(${varString}, ${stringify(params)})`
-    } else {
-      return `() => import("${resource}").then(${varString} => getComponent(${varString}.default, ${stringify(
-        params
-      )})
-  )`
-    }
+export const genComponentCode = (
+  varName: string,
+  resource: string,
+  { async = false } = {},
+  params: unknown = {}
+): string => {
+  if (!async) {
+    return `getComponent(${varName}, ${stringify(params)})`
+  } else {
+    return `() => import(${stringify(resource)}).then(${varName} => 
+          getComponent(${varName}.default, ${stringify(params)})
+        )`
   }
+}
 
 /**
  * transfrom mpx script
@@ -62,31 +59,36 @@ export async function transformScript(
     pluginContext
   )
   const s = new MagicString(code)
-  const { id: componentId, app, page, jsonConfig, script } = descriptor
-  const tabBarMap = descriptor.tabBarMap
-  const localPagesMap = descriptor.pagesMap
-  const localComponentsMap = descriptor.componentsMap
-  const builtInComponentsMap = descriptor.builtInComponentsMap
-  const genericsInfo = descriptor.genericsInfo
+  const {
+    id: componentId,
+    app,
+    page,
+    jsonConfig,
+    script,
+    wxsModuleMap,
+    wxsContentMap,
+    tabBarMap,
+    builtInComponentsMap,
+    genericsInfo,
+    pagesMap: localPagesMap,
+    componentsMap: localComponentsMap
+  } = descriptor
 
   const ctorType = app ? 'app' : page ? 'page' : 'component'
 
-  const i18n = options.i18n
+  const { i18n, isProduction } = options
 
   const componentGenerics = jsonConfig.componentGenerics
-
-  const components: string[] = []
-
-  const getComponent = getResource(components)
 
   const pagesMap: Record<string, string> = {}
   const componentsMap: Record<string, string> = {}
 
   Object.keys(localPagesMap).forEach((pagePath, index) => {
-    const pageVar = `__mpx__page__${index}`
+    const varName = `__mpx__page__${index}`
     if (tabBarMap && tabBarMap[pagePath]) {
-      pagesMap[pagePath] = getComponent(
-        pageVar,
+      s.append(genImport(tabBarContainerPath, varName))
+      pagesMap[pagePath] = genComponentCode(
+        varName,
         tabBarContainerPath,
         {
           async: false
@@ -98,8 +100,9 @@ export async function transformScript(
     } else {
       const pageId = localPagesMap[pagePath]
       const { query } = parseRequest(pageId)
-      pagesMap[pagePath] = getComponent(
-        pageVar,
+      s.append(genImport(pageId, varName))
+      pagesMap[pagePath] = genComponentCode(
+        varName,
         pageId,
         {
           async: !!query.async
@@ -114,19 +117,19 @@ export async function transformScript(
   Object.keys(localComponentsMap).forEach((componentName, index) => {
     const componentId = localComponentsMap[componentName]
     const { query } = parseRequest(componentId)
-    componentsMap[componentName] = getComponent(
-      `__mpx__component__${index}`,
-      componentId,
-      {
-        async: !!query.async
-      }
-    )
+    const varName = `__mpx__component__${index}`
+    s.append(genImport(componentId, varName))
+    componentsMap[componentName] = genComponentCode(varName, componentId, {
+      async: !!query.async
+    })
   })
 
   Object.keys(builtInComponentsMap).forEach((componentName, index) => {
     const componentCfg = builtInComponentsMap[componentName]
-    componentsMap[componentName] = getComponent(
-      `__mpx__builtInComponent__${index}`,
+    const varName = `__mpx__builtInComponent__${index}`
+    s.append(genImport(componentCfg.resource, varName))
+    componentsMap[componentName] = genComponentCode(
+      varName,
       componentCfg.resource,
       {},
       { __mpxBuiltIn: true }
@@ -141,18 +144,54 @@ export async function transformScript(
 
   s.prepend(
     [
+      !isProduction && `global.currentResource = ${stringify(filename)}`,
       app &&
-        `import "${APP_HELPER_CODE}"
-      import Vue from "vue"
-      import VueRouter from "vue-router"`,
-      i18n && `import { i18n } from "${I18N_HELPER_CODE}"`,
-      `import ${stringify(TAB_BAR_PAGE_HELPER_CODE)}`,
-      `import processOption, { getComponent, getWxsMixin } from "${optionProcessorPath}"`,
-      components.join('\n')
+        `${genImport(APP_HELPER_CODE)}
+        ${genImport(TAB_BAR_PAGE_HELPER_CODE)}
+        ${genImport('vue', 'Vue')}
+        ${genImport('vue-router', 'VueRouter')}`,
+      i18n && genImport(I18N_HELPER_CODE, '{ i18n }'),
+      genImport(
+        OPTION_PROCESSOR_PATH,
+        'processOption, { getComponent, getWxsMixin }'
+      )
     ]
       .filter(Boolean)
       .join('\n') + '\n'
   )
+
+  s.append(`\nconst wxsModules = {}\n`)
+
+  if (wxsModuleMap) {
+    const wxsModuleKeys = Object.keys(wxsModuleMap)
+    for (let i = 0; i < wxsModuleKeys.length; i++) {
+      const key = wxsModuleKeys[i]
+      const wxsModuleId = wxsModuleMap[key]
+      // inline wxs module, transform to iife
+      if (wxsModuleId.startsWith('~')) {
+        const mpxWxsPath = wxsModuleId.split('!=!')[1]
+        const { filename, query } = parseRequest(mpxWxsPath)
+        const wxsContent = wxsContentMap[`${filename}~${query.wxsModule}`]
+        if (wxsContent) {
+          const varName = `__mpx__wxs__${i}`
+          const result = await transformWithEsbuild(wxsContent, '', {
+            globalName: varName,
+            format: 'iife'
+          })
+          s.append(result.code)
+          s.append(`wxsModules.${key} = ${varName}\n`)
+        }
+      } else {
+        // wxs file, tranfrom to esm with wxsPlugin
+        const resolved = await pluginContext.resolve(wxsModuleId, filename)
+        if (resolved) {
+          const varName = `__mpx__wxs__${i}`
+          s.append(genImport(resolved.id, varName))
+          s.append(`wxsModules.${key} = ${varName}\n`)
+        }
+      }
+    }
+  }
 
   s.append(
     [
@@ -167,7 +206,7 @@ export async function transformScript(
       `  ${stringify(tabBarMap)},`,
       `  ${stringify(componentGenerics)},`,
       `  ${stringify(genericsInfo)},`,
-      `  getWxsMixin({}),`,
+      `  getWxsMixin(wxsModules),`,
       `  ${app ? `Vue, VueRouter` : i18n ? 'i18n' : ''}`,
       `)`
     ].join('\n')

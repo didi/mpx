@@ -24,6 +24,7 @@ import parseRequest from '../utils/parseRequest'
 import { getDescriptor } from './utils/descriptorCache'
 import { stringifyObject } from '../utils/stringify'
 import ensureArray from '../utils/ensureArray'
+import { createWxsPlugin } from './plugins/wxsPlugin'
 
 function createMpxPlugin(
   options: ResolvedOptions,
@@ -181,6 +182,7 @@ export default function mpx(options: Options = {}): Plugin[] {
         }
       }
     }),
+    createWxsPlugin(),
     // add custom extensions
     customExtensionsPlugin({
       include: [...ensureArray(fileConditionRules), /@mpxjs/],

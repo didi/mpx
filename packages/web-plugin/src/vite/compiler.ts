@@ -26,6 +26,8 @@ export interface SFCDescriptor extends CompilerResult {
   genericsInfo?: Record<string, unknown>
   pagesMap: Record<string, string>
   componentsMap: Record<string, string>
+  wxsModuleMap: Record<string, string>
+  wxsContentMap: Record<string, string>
   tabBarMap: Record<string, unknown>
   tabBarStr: string
 }

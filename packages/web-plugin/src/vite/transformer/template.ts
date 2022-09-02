@@ -74,6 +74,8 @@ export function processTemplate(
   const { usingComponents = {}, componentGenerics = {} } = jsonConfig
   const builtInComponentsMap: SFCDescriptor['builtInComponentsMap'] = {}
   let genericsInfo: SFCDescriptor['genericsInfo']
+  const wxsContentMap: SFCDescriptor['wxsContentMap'] = {}
+  let wxsModuleMap: SFCDescriptor['wxsModuleMap'] = {}
 
   if (template) {
     function addBuildComponent(name: string, resource: string) {
@@ -113,6 +115,25 @@ export function processTemplate(
         globalComponents: []
       })
 
+      /**
+       * 
+       * {
+  '/Users/materbxh/Program/CodeRead/mpx-web/examples/mpx-transform-web/src/pages/wxs.mpx~foo': 'var some_msg = "hello world";\n' +
+    '      module.exports = {\n' +
+    '        msg : some_msg,\n' +
+    '      }'
+}
+       *  {
+  foo: '~/Users/materbxh/Program/CodeRead/mpx-web/examples/mpx-transform-web/src/pages/wxs.mpx.wxs!=!/Users/materbxh/Program/CodeRead/mpx-web/examples/mpx-transform-web/src/pages/wxs.mpx?wxsModule=foo',
+  hello: '../components/hello.wxs'
+}
+       *   import processOption, { getComponent, getWxsMixin } from "@mpxjs/web-plugin/src/runtime/optionProcessor"
+  const wxsModules = {}
+  wxsModules.foo = require("./wxs.mpx.wxs!=!./wxs.mpx?wxsModule=foo")
+  wxsModules.hello = require("../components/hello.wxs")
+       */
+      
+
       if (parsed.meta.builtInComponentsMap) {
         Object.entries(parsed.meta.builtInComponentsMap).forEach(
           ([name, resource]) => addBuildComponent(name, resource)
@@ -128,10 +149,22 @@ export function processTemplate(
         }
       }
 
+      if (parsed.meta.wxsModuleMap) {
+        wxsModuleMap = parsed.meta.wxsModuleMap
+      }
+      
+      if (parsed.meta.wxsContentMap) {
+        for (const module in parsed.meta.wxsContentMap) {
+          wxsContentMap[`${filename}~${module}`] = parsed.meta.wxsContentMap[module]
+        }
+      }
+
       templateTransformCache[filename] = templateCompiler.serialize(parsed.root)
     }
   }
 
+  descriptor.wxsModuleMap = wxsModuleMap
+  descriptor.wxsContentMap = wxsContentMap
   descriptor.genericsInfo = genericsInfo
   descriptor.builtInComponentsMap = builtInComponentsMap
 }

@@ -58,6 +58,8 @@ export interface ParseHtmlNode {
 export interface ParseResult {
   meta: {
     builtInComponentsMap?: Record<string, string>
+    wxsModuleMap?: Record<string, string>
+    wxsContentMap?: Record<string, string>
     genericsInfo?: Record<string, unknown>
   }
   root: ParseHtmlNode

@@ -5,7 +5,7 @@ import { ENTRY_HELPER_CODE, renderEntryCode } from '../helper'
 import { ResolvedOptions } from '../../options'
 
 export default function resolveEntryPlugin(options: ResolvedOptions): Plugin {
-  const filter = createFilter([/\.mpx/])
+  const filter = createFilter([/\.mpx$/])
   return {
     name: 'vite:mpx-resolve-entry',
     enforce: 'pre',
@@ -29,8 +29,8 @@ export default function resolveEntryPlugin(options: ResolvedOptions): Plugin {
       }
     },
     load(id) {
-      if (id === ENTRY_HELPER_CODE)
-        return renderEntryCode(mpxGlobal.entry!, options)
+      if (id === ENTRY_HELPER_CODE && mpxGlobal.entry)
+        return renderEntryCode(mpxGlobal.entry, options)
     }
   }
 }

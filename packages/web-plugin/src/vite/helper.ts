@@ -2,11 +2,12 @@ import { PluginContext } from 'rollup'
 import parseRequest from '../utils/parseRequest'
 import { ResolvedOptions } from '../options'
 import addQuery from '../utils/addQuery'
-import { resolveMpxRuntime } from '../utils/resolveMpxRuntime'
 import stringify, { shallowStringify } from '../utils/stringify'
 import { SFCDescriptor } from './compiler'
 import mpxGlobal from './mpx'
-import { getResource } from './transformer/script'
+import { genComponentCode } from './transformer/script'
+import { genImport } from '../utils/genCode'
+import { OPTION_PROCESSOR_PATH, TAB_BAR_PATH } from 'src/constants'
 
 export const ENTRY_HELPER_CODE = '\0/vite/mpx-entry-helper'
 export const APP_HELPER_CODE = '\0/vite/mpx-app-helper'
@@ -21,31 +22,27 @@ export const renderEntryCode = (
   importer: string,
   options: ResolvedOptions
 ): string => {
-  const content = []
-  content.unshift(
-    `import App from ${stringify(addQuery(importer, { app: true }))}`,
-    `import '@mpxjs/web-plugin/src/runtime/base.styl'`,
-    `import Vue from 'vue'`,
-    `import { i18n } from ${stringify(I18N_HELPER_CODE)}`,
-    `import VueRouter from 'vue-router'`,
-    `import BScroll from '@better-scroll/core'`,
-    `import PullDown from '@better-scroll/pull-down'`,
-    `import ObserveDOM from '@better-scroll/observe-dom'`
-  )
-  content.push(
-    `Vue.use(VueRouter)`,
-    `BScroll.use(ObserveDOM)`,
-    `BScroll.use(PullDown)`,
-    `global.BScroll = BScroll`
-  )
-  content.push(`new Vue({
-    el: '#app',
-    ${options.i18n && !options.forceDisableInject ? `i18n,` : ''}
-    render: function(h){
-      return h(App)
-    }
-  })`)
-  return content.join('\n')
+  return `
+    ${genImport(addQuery(importer, { app: true }), 'App')}
+    ${genImport('@mpxjs/web-plugin/src/runtime/base.styl')}
+    ${genImport('vue', 'Vue')}
+    ${genImport(I18N_HELPER_CODE, '{ i18n }')}
+    ${genImport('vue-router', 'VueRouter')}
+    ${genImport('@better-scroll/core', 'BScroll')}
+    ${genImport('@better-scroll/pull-down', 'PullDown')}
+    ${genImport('@better-scroll/observe-dom', 'ObserveDOM')}
+    Vue.use(VueRouter)
+    BScroll.use(ObserveDOM)
+    BScroll.use(PullDown)
+    global.BScroll = BScroll
+    new Vue({
+      el: '#app',
+      ${options.i18n && !options.forceDisableInject ? `i18n,` : ''}
+      render: function(h){
+        return h(App)
+      }
+    })
+  `
 }
 
 export function renderI18nCode(options: ResolvedOptions): string {
@@ -125,7 +122,7 @@ export function renderAppHelpCode(
 
 /**
  * TabBar，mpx-tab-bar-container依赖global.__tabBarPagesMap
- * @param options - 
+ * @param options -
  * @param descriptor -
  * @param pluginContext -
  * @returns
@@ -135,11 +132,8 @@ export const renderTabBarPageCode = async (
   descriptor: SFCDescriptor,
   pluginContext: PluginContext
 ): Promise<string> => {
-  const optionProcessorPath = resolveMpxRuntime('optionProcessor')
-  const tabBarPath = resolveMpxRuntime('components/web/mpx-tab-bar.vue')
   const customBarPath = './custom-tab-bar/index?component'
   const tabBars: string[] = []
-  const isProduction = options.isProduction
   const {
     filename,
     tabBarStr,
@@ -150,7 +144,6 @@ export const renderTabBarPageCode = async (
   const { tabBar } = jsonConfig
 
   const tabBarPagesMap: Record<string, string> = {}
-  const getTabBar = getResource(tabBars)
 
   const emitWarning = (msg: string) => {
     pluginContext.warn(
@@ -159,20 +152,22 @@ export const renderTabBarPageCode = async (
   }
 
   if (tabBar && tabBarMap) {
-    const customBarPathResolved = await pluginContext.resolve(customBarPath)
-    tabBarPagesMap['mpx-tab-bar'] = getTabBar(
-      '__mpxTabBar',
-      tabBar.custom && customBarPathResolved
-        ? customBarPathResolved.id
-        : tabBarPath
-    )
-
+    const varName = '__mpxTabBar'
+    let tabBarPath = TAB_BAR_PATH
+    if (tabBar.custom) {
+      const customBarPathResolved = await pluginContext.resolve(customBarPath)
+      tabBarPath = customBarPathResolved?.id || TAB_BAR_PATH
+    }
+    tabBars.push(genImport(tabBarPath, varName))
+    tabBarPagesMap['mpx-tab-bar'] = genComponentCode(varName, tabBarPath)
     Object.keys(tabBarMap).forEach((tarbarName, index) => {
       const tabBarId = localPagesMap[tarbarName]
       if (tabBarId) {
+        const varName = `__mpx_tabBar__${index}`
         const { query } = parseRequest(tabBarId)
-        tabBarPagesMap[tarbarName] = getTabBar(
-          `__mpx_tabBar__${index}`,
+        tabBars.push(genImport(tabBarId, varName))
+        tabBarPagesMap[tarbarName] = genComponentCode(
+          varName,
           tabBarId,
           {
             async: !!query.async
@@ -190,17 +185,14 @@ export const renderTabBarPageCode = async (
   }
 
   const content = [
-    `import Vue from 'vue'`,
-    `import processOption, { getComponent, getWxsMixin } from "${optionProcessorPath}"`,
+    genImport('vue', 'Vue'),
+    genImport(OPTION_PROCESSOR_PATH, 'processOption, { getComponent }'),
     tabBars.join('\n'),
-    !isProduction && `global.currentResource = ${stringify(filename)}`,
     tabBarStr &&
       tabBarPagesMap &&
-      [
-        `Vue.observable(global.__tabBar)`,
-        `// @ts-ignore`,
-        `global.__tabBarPagesMap = ${shallowStringify(tabBarPagesMap)}`
-      ].join('\n')
+      `Vue.observable(global.__tabBar)
+      // @ts-ignore
+      global.__tabBarPagesMap = ${shallowStringify(tabBarPagesMap)}`
   ]
   return content.join('\n')
 }
