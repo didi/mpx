@@ -34,7 +34,7 @@ export function esbuildCustomExtensionsPlugin(
   return {
     name: 'esbuild:mpx-custom-estensions',
     setup(build) {
-      build.onLoad({ filter: options.include }, async (args) => {
+      build.onLoad({ filter: options.include }, async args => {
         for (const extendsion of options.extensions) {
           try {
             const filePath = genExtensionsFilePath(args.path, extendsion)
@@ -60,22 +60,14 @@ export function customExtensionsPlugin(
   const filter = createFilter(options.include, options.exclude)
   return {
     name: 'vite:mpx-custom-estensions',
-    // https://github.com/vitejs/vite/issues/3705
-    // resolveId() is hookFirst - first non-null result is returned.
-    enforce: 'pre',
-    async resolveId(source, importer, o) {
-      if (!filter(source)) return
-      const resolution = await this.resolve(source, importer, {
-        skipSelf: true,
-        ...o
-      })
-      if (resolution) {
-        const [filename, rawQuery] = resolution.id.split('?', 2)
+    async load(id) {
+      if (!filter(id)) return
+      if (id) {
+        const [filename] = id.split('?', 2)
         for (const extendsion of options.extensions) {
           try {
             const filePath = genExtensionsFilePath(filename, extendsion)
-            await fs.promises.access(filePath)
-            return `${filePath}${rawQuery ? `?${rawQuery}` : ''}`
+            return await fs.promises.readFile(filePath, 'utf-8')
           } catch {}
         }
       }

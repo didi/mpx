@@ -166,7 +166,8 @@ function createMpxPlugin(
 export default function mpx(options: Options = {}): Plugin[] {
   const resolvedOptions = processOptions({ ...options })
   const { mode, env, fileConditionRules } = resolvedOptions
-
+  const customExtensions = [mode, env, env && `${mode}.${env}`].filter(Boolean)
+  
   const plugins = [
     // mpx => vue
     createMpxPlugin(resolvedOptions, {
@@ -176,7 +177,7 @@ export default function mpx(options: Options = {}): Plugin[] {
             // prebuild for addExtensions
             esbuildCustomExtensionsPlugin({
               include: /@mpxjs/,
-              extensions: [mode]
+              extensions: customExtensions
             })
           ]
         }
@@ -186,7 +187,7 @@ export default function mpx(options: Options = {}): Plugin[] {
     // add custom extensions
     customExtensionsPlugin({
       include: [...ensureArray(fileConditionRules), /@mpxjs/],
-      extensions: [mode, env, env && `${mode}.${env}`].filter(Boolean)
+      extensions: customExtensions
     }),
     // ensure mpx entry point
     mpxResolveEntryPlugin(resolvedOptions),
