@@ -9,7 +9,8 @@ export function createWxsPlugin(): Plugin {
       const { filename } = parseRequest(id)
       if (!filter(filename)) return
       return await transformWithEsbuild(code, '', {
-        format: 'esm'
+        format: 'esm',
+        sourcefile: filename
       })
     }
   }
