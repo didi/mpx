@@ -57,7 +57,11 @@
     data () {
       return {
         isLoading: false,
-        isAutoPullDown: true
+        isAutoPullDown: true,
+        wrapperWidth: 0,
+        wrapperHeight: 0,
+        contentWidth: 0,
+        contentHeight: 0
       }
     },
     computed: {
@@ -147,6 +151,10 @@
       init () {
         if (this.bs) return
         this.initLayerComputed()
+        if ((this.scrollX && this.wrapperWidth >= this.contentWidth) || (this.scrollY && this.wrapperHeight >= this.contentHeight)) {
+          console.error('Please set the correct width and height for the container')
+          return
+        }
         const originBsOptions = {
           startX: -this._scrollLeft,
           startY: -this._scrollTop,
@@ -260,13 +268,12 @@
       },
       initLayerComputed () {
         const wrapper = this.$refs.wrapper
-        const wrapperWidth = wrapper.offsetWidth
-        const wrapperHeight = wrapper.offsetHeight
-        this.$refs.innerWrapper.style.width = `${wrapperWidth}px`
-        this.$refs.innerWrapper.style.height = `${wrapperHeight}px`
+        this.wrapperWidth = wrapper.offsetWidth
+        this.wrapperHeight = wrapper.offsetHeight
+        this.$refs.innerWrapper.style.width = `${this.wrapperWidth}px`
+        this.$refs.innerWrapper.style.height = `${this.wrapperHeight}px`
         const innerWrapper = this.$refs.innerWrapper
         const childrenArr = Array.from(innerWrapper.children)
-
         const getMinLength = (min, value) => {
           if (min === undefined) {
             min = value
@@ -296,11 +303,10 @@
           maxRight = getMaxLength(maxRight, temp.right)
           maxBottom = getMaxLength(maxBottom, temp.bottom)
         })
-
-        const width = maxRight - minLeft
-        const height = maxBottom - minTop
-        this.$refs.scrollContent.style.width = `${width}px`
-        this.$refs.scrollContent.style.height = `${height}px`
+        this.contentWidth = maxRight - minLeft
+        this.contentHeight = maxBottom - minTop
+        this.$refs.scrollContent.style.width = `${this.contentWidth}px`
+        this.$refs.scrollContent.style.height = `${this.contentHeight}px`
       },
       refresh () {
         if (this.__mpx_deactivated) {
