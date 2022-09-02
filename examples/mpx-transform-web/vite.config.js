@@ -6,6 +6,7 @@ module.exports = defineConfig({
   plugins: [
     mpx.default({
       env: 'didi',
+      externalClasses: ['list-class'],
       i18n: {
         locale: 'zh-CN',
         // messages既可以通过对象字面量传入，也可以通过messagesPath指定一个js模块路径，在该模块中定义配置并导出，dateTimeFormats/dateTimeFormatsPath和numberFormats/numberFormatsPath同理
@@ -23,5 +24,8 @@ module.exports = defineConfig({
     target: ['es2015'],
     sourcemap: true,
     minify: false
+  },
+  optimizeDeps: {
+    include: ['lodash/throttle']
   }
 })
