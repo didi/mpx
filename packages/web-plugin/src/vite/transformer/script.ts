@@ -11,16 +11,11 @@ import {
   I18N_HELPER_CODE,
   TAB_BAR_PAGE_HELPER_CODE
 } from '../helper'
-import { resolveMpxRuntime } from '../../utils/resolveMpxRuntime'
 import omit from '../../utils/omit'
 import stringify, { shallowStringify } from '../../utils/stringify'
 import parseRequest from '../../utils/parseRequest'
 import { genImport } from '../../utils/genCode'
-
-const OPTION_PROCESSOR_PATH = resolveMpxRuntime('optionProcessor')
-const tabBarContainerPath = resolveMpxRuntime(
-  'components/web/mpx-tab-bar-container.vue'
-)
+import { OPTION_PROCESSOR_PATH, TAB_BAR_CONTAINER_PATH } from '../../constants'
 
 export const genComponentCode = (
   varName: string,
@@ -85,33 +80,24 @@ export async function transformScript(
 
   Object.keys(localPagesMap).forEach((pagePath, index) => {
     const varName = `__mpx__page__${index}`
-    if (tabBarMap && tabBarMap[pagePath]) {
-      s.append(genImport(tabBarContainerPath, varName))
-      pagesMap[pagePath] = genComponentCode(
-        varName,
-        tabBarContainerPath,
-        {
-          async: false
-        },
-        {
-          __mpxBuiltIn: true
-        }
-      )
-    } else {
-      const pageId = localPagesMap[pagePath]
-      const { query } = parseRequest(pageId)
-      s.append(genImport(pageId, varName))
-      pagesMap[pagePath] = genComponentCode(
-        varName,
-        pageId,
-        {
-          async: !!query.async
-        },
-        {
-          __mpxPageRoute: pagePath
-        }
-      )
-    }
+    const isTabBar = tabBarMap && tabBarMap[pagePath]
+    const newPagePath = isTabBar
+      ? TAB_BAR_CONTAINER_PATH
+      : localPagesMap[pagePath]
+    s.append(genImport(newPagePath, varName))
+    const { query } = parseRequest(newPagePath)
+    pagesMap[pagePath] = genComponentCode(
+      varName,
+      newPagePath,
+      {
+        async: !!query.async
+      },
+      isTabBar
+        ? { __mpxBuiltIn: true }
+        : {
+            __mpxPageRoute: pagePath
+          }
+    )
   })
 
   Object.keys(localComponentsMap).forEach((componentName, index) => {

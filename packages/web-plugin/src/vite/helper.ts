@@ -155,7 +155,10 @@ export const renderTabBarPageCode = async (
     const varName = '__mpxTabBar'
     let tabBarPath = TAB_BAR_PATH
     if (tabBar.custom) {
-      const customBarPathResolved = await pluginContext.resolve(customBarPath)
+      const customBarPathResolved = await pluginContext.resolve(
+        customBarPath,
+        filename
+      )
       tabBarPath = customBarPathResolved?.id || TAB_BAR_PATH
     }
     tabBars.push(genImport(tabBarPath, varName))

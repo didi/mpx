@@ -12,3 +12,6 @@ export const MPX_CURRENT_CHUNK = 'mpx_current_chunk'
 export const OPTION_PROCESSOR_PATH = resolveMpxRuntime('optionProcessor')
 export const TAB_BAR_PATH = resolveMpxRuntime('components/web/mpx-tab-bar.vue')
 export const CUSTOM_BAR_RELATIVE_PATH = './custom-tab-bar/index?component'
+export const TAB_BAR_CONTAINER_PATH = resolveMpxRuntime(
+  'components/web/mpx-tab-bar-container.vue'
+)
