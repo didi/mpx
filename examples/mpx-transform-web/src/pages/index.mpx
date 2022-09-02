@@ -4,8 +4,14 @@
   <view>{{$t('page_title')}}</view>
 <!--  <text wx:elseif="{{a === 2}}">w22223</text>-->
  <list list-class="list"></list>
- <switch>123</switch>
+ <switch></switch>123
  <scroll-view></scroll-view>
+ <input></input>
+ <picker value="{{index}}" range="{{array}}">
+    <view class="picker">
+      当前选择：{{array[index]}}
+    </view>
+  </picker>
 </template>
 
 <script lang="ts">
@@ -13,7 +19,9 @@
 
   createPage({
     data: {
-      a: 1
+      a: 1,
+      index: 0,
+      array: ['美国', '中国', '巴西', '日本'],
     },
     onLoad () {
       console.log(2334)

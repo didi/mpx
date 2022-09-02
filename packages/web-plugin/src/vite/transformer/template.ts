@@ -115,25 +115,6 @@ export function processTemplate(
         globalComponents: []
       })
 
-      /**
-       * 
-       * {
-  '/Users/materbxh/Program/CodeRead/mpx-web/examples/mpx-transform-web/src/pages/wxs.mpx~foo': 'var some_msg = "hello world";\n' +
-    '      module.exports = {\n' +
-    '        msg : some_msg,\n' +
-    '      }'
-}
-       *  {
-  foo: '~/Users/materbxh/Program/CodeRead/mpx-web/examples/mpx-transform-web/src/pages/wxs.mpx.wxs!=!/Users/materbxh/Program/CodeRead/mpx-web/examples/mpx-transform-web/src/pages/wxs.mpx?wxsModule=foo',
-  hello: '../components/hello.wxs'
-}
-       *   import processOption, { getComponent, getWxsMixin } from "@mpxjs/web-plugin/src/runtime/optionProcessor"
-  const wxsModules = {}
-  wxsModules.foo = require("./wxs.mpx.wxs!=!./wxs.mpx?wxsModule=foo")
-  wxsModules.hello = require("../components/hello.wxs")
-       */
-      
-
       if (parsed.meta.builtInComponentsMap) {
         Object.entries(parsed.meta.builtInComponentsMap).forEach(
           ([name, resource]) => addBuildComponent(name, resource)
