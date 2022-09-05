@@ -46,7 +46,7 @@ export interface JsonConfig {
     uploadFile: number
     downloadFile: number
   }
-  subPackages: {
+  subpackages: {
     root?: 'string'
     pages: JsonConfig['pages']
   }[]
@@ -167,21 +167,23 @@ export async function processJSON(
   const processPages = async (
     pages: JsonConfig['pages'] = [],
     importer: string,
-    root?: string
+    root = '.'
   ) => {
     const context = resolveModuleContext(importer)
     for (const page of pages) {
       const customPage = !(typeof page === 'string')
       const pageSrc = !customPage ? page : page.src
       const pageModule = await pluginContext.resolve(
-        addQuery(pageSrc, { page: null }),
-        importer
+        addQuery(path.resolve(context, root, pageSrc), {
+          page: null
+        }),
+        path.join(context, root)
       )
       if (pageModule) {
         const pageId = pageModule.id
         const { filename: pageFileName } = parseRequest(pageModule.id)
         const pageRoute = !customPage
-          ? genPageRoute(pageFileName, context, root)
+          ? genPageRoute(pageFileName, context)
           : page.path
         if (pagesMap[pageRoute]) {
           emitWarning(
@@ -267,7 +269,7 @@ export async function processJSON(
   }
 
   const processSubPackages = async (
-    subPackages: JsonConfig['subPackages'] = [],
+    subPackages: JsonConfig['subpackages'] = [],
     context: string
   ) => {
     for (const subPackage of subPackages) {
@@ -278,7 +280,7 @@ export async function processJSON(
   try {
     await processPages(jsonConfig.pages, filename)
     await processPackages(jsonConfig.packages, filename)
-    await processSubPackages(jsonConfig.subPackages, filename)
+    await processSubPackages(jsonConfig.subpackages, filename)
     await processComponents(jsonConfig.usingComponents, filename)
     await processGenerics(jsonConfig.componentGenerics, filename)
     await processTabBar(jsonConfig.tabBar)
