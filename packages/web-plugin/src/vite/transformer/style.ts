@@ -2,6 +2,7 @@ import { TransformPluginContext, TransformResult } from 'rollup'
 import { createFilter } from 'vite'
 import postcss from 'postcss'
 import { transformStyle as vueTransformStyle } from 'vite-plugin-vue2/dist/style.js'
+import { getDescriptor } from 'vite-plugin-vue2/dist/utils/descriptorCache'
 import genComponentTag from '@mpxjs/utils/gen-component-tag'
 import { styleCompiler } from '@mpxjs/compiler'
 import { SFCDescriptor } from '../compiler'
@@ -102,11 +103,12 @@ export async function transformStyle(
   const vueStyle = await vueTransformStyle(
     mpxStyle.code,
     filename,
-    descriptor,
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    getDescriptor(descriptor.filename)!,
     index,
     pluginContext
   )
-  return vueStyle?.code
+  return vueStyle
 }
 
 /**
