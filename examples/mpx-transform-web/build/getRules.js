@@ -1,5 +1,5 @@
 let { mpxLoaderConf } = require('../config/index')
-const MpxWebpackPlugin = require('@mpxjs/web-plugin/webpack').default
+const MpxWebpackPlugin = require('@mpxjs/web-plugin/webpack')
 // const MpxWebpackPlugin = require('@mpxjs/webpack-plugin')
 const { resolve, getConf } = require('./utils')
 

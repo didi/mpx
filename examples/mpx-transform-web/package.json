@@ -18,7 +18,7 @@
   "author": "yandadaFreedom <525966780@qq.com>",
   "license": "ISC",
   "dependencies": {
-    "@mpxjs/api-proxy": "^2.7.28",
+    "@mpxjs/api-proxy": "^2.7.44",
     "@mpxjs/compiler": "^2.7.40",
     "@mpxjs/core": "^2.7.37",
     "@mpxjs/utils": "^2.7.40",
@@ -38,6 +38,13 @@
     "@babel/plugin-transform-typescript": "^7.16.1",
     "@babel/preset-env": "^7.10.4",
     "@babel/runtime-corejs3": "^7.10.4",
+    "@better-scroll/core": "^2.2.1",
+    "@better-scroll/movable": "^2.2.1",
+    "@better-scroll/observe-dom": "^2.2.1",
+    "@better-scroll/pull-down": "^2.2.1",
+    "@better-scroll/slide": "^2.2.1",
+    "@better-scroll/wheel": "^2.2.1",
+    "@better-scroll/zoom": "^2.2.1",
     "@originjs/vite-plugin-commonjs": "^1.0.3",
     "@typescript-eslint/eslint-plugin": "^5.2.0",
     "@typescript-eslint/parser": "^5.2.0",
@@ -69,6 +76,7 @@
     "vue-template-compiler": "^2.6.10",
     "webpack": "^5.69.1",
     "webpack-bundle-analyzer": "^4.5.0",
-    "webpack-merge": "^5.8.0"
+    "webpack-merge": "^5.8.0",
+    "lodash": "^4.1.1"
   }
 }

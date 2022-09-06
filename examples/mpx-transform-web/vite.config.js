@@ -5,7 +5,7 @@ const { defineConfig } = require('vite')
 module.exports = defineConfig({
 
   plugins: [
-    mpx.default({
+    mpx({
       env: 'didi',
       externalClasses: ['list-class'],
       // 定义一些全局环境变量，可在JS/模板/样式/JSON中使用
