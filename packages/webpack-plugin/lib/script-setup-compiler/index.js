@@ -190,7 +190,7 @@ function compileScriptSetup (
       if (propsRuntimeDecl) {
         error(
           `${DEFINE_PROPS}() cannot accept both type and non-type arguments ` +
-                    `at the same time. Use one or the other.`,
+                    'at the same time. Use one or the other.',
           node
         )
       }
@@ -204,7 +204,7 @@ function compileScriptSetup (
       if (!propsTypeDecl) {
         error(
           `type argument passed to ${DEFINE_PROPS}() must be a literal type, ` +
-                    `or a reference to an interface or literal type.`,
+                    'or a reference to an interface or literal type.',
           propsTypeDeclRaw
         )
       }
@@ -293,11 +293,11 @@ function compileScriptSetup (
   function genRuntimeProps (props) {
     const keys = Object.keys(props)
     if (!keys.length) {
-      return ``
+      return ''
     }
     const hasStaticDefaults = hasStaticWithDefaults()
     const scriptSetupSource = content
-    let propsDecls = `{
+    const propsDecls = `{
     ${keys.map(key => {
     let defaultString
     if (hasStaticDefaults) {
@@ -317,11 +317,11 @@ function compileScriptSetup (
     const propRuntimeTypes = toRuntimeTypeString(type)
     if (propRuntimeTypes.optionalTypes) {
       return `${key}: { type: ${propRuntimeTypes.type}, optionalTypes: ${propRuntimeTypes.optionalTypes}${
-        defaultString ? `, ${defaultString}` : ``
+        defaultString ? `, ${defaultString}` : ''
       } }`
     } else {
       return `${key}: { type: ${propRuntimeTypes.type}${
-        defaultString ? `, ${defaultString}` : ``
+        defaultString ? `, ${defaultString}` : ''
       } }`
     }
   }).join(',\n    ')}
@@ -336,8 +336,8 @@ function compileScriptSetup (
       if (setupBindings[id.name]) {
         error(
           `\`${method}()\` in <script setup> cannot reference locally ` +
-                    `declared variables because it will be hoisted outside of the ` +
-                    `setup() function.`,
+                    'declared variables because it will be hoisted outside of the ' +
+                    'setup() function.',
           id
         )
       }
@@ -406,7 +406,7 @@ function compileScriptSetup (
             // already imported in <script setup>, dedupe
             removeSpecifier(i)
           } else {
-            error(`different imports aliased to same local name.`, specifier)
+            error('different imports aliased to same local name.', specifier)
           }
         } else {
           registerUserImport(
@@ -496,7 +496,7 @@ function compileScriptSetup (
           }
           if (t.isAwaitExpression(path.node)) {
             // error
-            error(`if the await expression is an expression statement and is in the root scope or is not the first statement in a nested block scope, this is not support in miniprogram`)
+            error('if the await expression is an expression statement and is in the root scope or is not the first statement in a nested block scope, this is not support in miniprogram')
           }
         },
         exit (path) {
@@ -512,7 +512,7 @@ function compileScriptSetup (
             node.type === 'ExportDefaultDeclaration'
     ) {
       error(
-        `<script setup> cannot contain ES module exports. `,
+        '<script setup> cannot contain ES module exports. ',
         node
       )
     }
@@ -544,25 +544,25 @@ function compileScriptSetup (
   checkInvalidScopeReference(optionsRuntimeDecl, DEFINE_OPTIONS)
 
   // 4. finalize setup() argument signature
-  let args = `__props`
+  let args = '__props'
   if (propsTypeDecl) {
-    args += `: any`
+    args += ': any'
   }
   // inject user assignment of props
   if (propsIdentifier) {
     _s.prependLeft(
       startOffset,
       `\nconst ${propsIdentifier} = __props${
-        propsTypeDecl ? ` as any` : ``
+        propsTypeDecl ? ' as any' : ''
       }\n`)
   }
   // args 添加 __context
-  args += `, __context${isTS ? `: any` : ``}`
+  args += `, __context${isTS ? ': any' : ''}`
 
   // 5. generate return statement
   let returned
   if (hasDefineReturnsCall && returnsRuntimeDecl) {
-    let declCode = content.slice(returnsRuntimeDecl.start, returnsRuntimeDecl.end).trim()
+    const declCode = content.slice(returnsRuntimeDecl.start, returnsRuntimeDecl.end).trim()
     returned = `${declCode}`
   } else {
     const allBindings = {
@@ -580,20 +580,20 @@ function compileScriptSetup (
   _s.appendRight(endOffset, `\nreturn ${returned}\n}\n\n`)
 
   // 6. finalize default export
-  let runtimeOptions = ``
+  let runtimeOptions = ''
   if (propsRuntimeDecl) {
-    let declCode = content.slice(propsRuntimeDecl.start, propsRuntimeDecl.end).trim()
+    const declCode = content.slice(propsRuntimeDecl.start, propsRuntimeDecl.end).trim()
     runtimeOptions += `\n  properties: ${declCode},`
   } else if (propsTypeDecl) {
     runtimeOptions += genRuntimeProps(typeDeclaredProps)
   }
 
   if (optionsRuntimeDecl) {
-    for (let node of optionsRuntimeDecl) {
+    for (const node of optionsRuntimeDecl) {
       if (node.key.name === 'properties' && hasDefinePropsCall) {
         console.warn(`${DEFINE_PROPS} has been called, ${DEFINE_OPTIONS} set properties will be ignored`)
       } else {
-        let declCode = content.slice(node.value.start, node.value.end).trim()
+        const declCode = content.slice(node.value.start, node.value.end).trim()
         runtimeOptions += `\n ${node.key.name}: ${declCode},`
       }
     }
@@ -606,7 +606,7 @@ function compileScriptSetup (
     `\nimport {${ctor}} from '${MPX_CORE}'\n${getCtor(ctorType)} ({${runtimeOptions}\n  ` +
       `setup(${args}) {\n const useContext = () => { return __context }`
   )
-  _s.appendRight(endOffset, `})`)
+  _s.appendRight(endOffset, '})')
 
   return {
     content: _s.toString()
@@ -687,7 +687,7 @@ function walkDeclaration (
       )
       if (id.type === 'Identifier') {
         let bindingType
-        const userReactiveBinding = userImportAlias['reactive'] || 'reactive'
+        const userReactiveBinding = userImportAlias.reactive || 'reactive'
         // 是否是 reactive init
         if (isCallOf(init, userReactiveBinding)) {
           bindingType = isConst
@@ -701,7 +701,7 @@ function walkDeclaration (
             ? BindingTypes.SETUP_REACTIVE_CONST
             : BindingTypes.SETUP_CONST
         } else if (isConst) {
-          if (isCallOf(init, userImportAlias['ref'] || 'ref')) {
+          if (isCallOf(init, userImportAlias.ref || 'ref')) {
             bindingType = BindingTypes.SETUP_REF
           } else {
             bindingType = BindingTypes.SETUP_MAYBE_REF
@@ -802,7 +802,7 @@ function walkPattern (
 
 function recordType (node, declaredTypes) {
   if (node.type === 'TSInterfaceDeclaration') {
-    declaredTypes[node.id.name] = [`Object`]
+    declaredTypes[node.id.name] = ['Object']
   } else if (node.type === 'TSTypeAliasDeclaration') {
     declaredTypes[node.id.name] = inferRuntimeType(
       node.typeAnnotation,
@@ -841,7 +841,7 @@ function extractRuntimeProps (
       props[m.key.name] = {
         key: m.key.name,
         required: !m.optional,
-        type: type || [`null`]
+        type: type || ['null']
       }
     }
   }
@@ -875,7 +875,7 @@ function inferRuntimeType (
         case 'BigIntLiteral':
           return ['Number']
         default:
-          return [`null`]
+          return ['null']
       }
 
     case 'TSTypeReference':
@@ -906,7 +906,7 @@ function inferRuntimeType (
             return ['Object']
         }
       }
-      return [`null`]
+      return ['null']
 
     case 'TSParenthesizedType':
       return inferRuntimeType(node.typeAnnotation, declaredTypes)
@@ -923,7 +923,7 @@ function inferRuntimeType (
       return ['Object']
 
     default:
-      return [`null`]
+      return ['null']
   }
 }
 
@@ -1074,13 +1074,14 @@ function extractIdentifiers (
       nodes.push(param)
       break
 
-    case 'MemberExpression':
+    case 'MemberExpression': {
       let object = param
       while (object.type === 'MemberExpression') {
         object = object.object
       }
       nodes.push(object)
       break
+    }
 
     case 'ObjectPattern':
       for (const prop of param.properties) {
