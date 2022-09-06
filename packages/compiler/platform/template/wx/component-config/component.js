@@ -1,4 +1,4 @@
-const templateCompiler = require('@mpxjs/compiler/template-compiler/compiler')
+const templateCompiler = require('../../../../template-compiler/compiler')
 const parseMustache = templateCompiler.parseMustache
 const normalize = require('@mpxjs/utils/normalize')
 const TAG_NAME = 'component'

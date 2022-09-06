@@ -7,7 +7,7 @@ import { SFCDescriptor } from './compiler'
 import mpxGlobal from './mpx'
 import { genComponentCode } from './transformer/script'
 import { genImport } from '../utils/genCode'
-import { OPTION_PROCESSOR_PATH, TAB_BAR_PATH } from 'src/constants'
+import { OPTION_PROCESSOR_PATH, TAB_BAR_PATH } from '../constants'
 
 export const ENTRY_HELPER_CODE = '\0/vite/mpx-entry-helper'
 export const APP_HELPER_CODE = '\0/vite/mpx-app-helper'
@@ -18,10 +18,11 @@ export const renderPageRouteCode = (importer: string): string => {
   return `export default ${stringify(mpxGlobal.pagesMap[importer])}`
 }
 
-export const renderEntryCode = (
+export const renderEntryCode = async (
   importer: string,
-  options: ResolvedOptions
-): string => {
+  options: ResolvedOptions,
+  pluginContext: PluginContext
+): Promise<string> => {
   return `
     ${genImport(addQuery(importer, { app: true }), 'App')}
     ${genImport('@mpxjs/web-plugin/src/runtime/base.styl')}

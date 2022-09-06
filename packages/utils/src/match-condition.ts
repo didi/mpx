@@ -1,5 +1,5 @@
-const orMatcher = items => {
-  return str => {
+const orMatcher = (items: string | any[]) => {
+  return (str: any) => {
     for (let i = 0; i < items.length; i++) {
       if (items[i](str)) return true
     }
@@ -7,10 +7,10 @@ const orMatcher = items => {
   }
 }
 
-const normalizeCondition = (condition) => {
+const normalizeCondition = (condition: any): any => {
   if (!condition) throw new Error('Expected condition but got falsy value')
   if (typeof condition === 'string') {
-    return str => str.indexOf(condition) !== -1
+    return (str: string | string[]) => str.indexOf(condition) !== -1
   }
   if (typeof condition === 'function') {
     return condition
@@ -24,18 +24,20 @@ const normalizeCondition = (condition) => {
   }
   throw Error(
     'Unexcepted ' +
-    typeof condition +
-    ' when condition was expected (' +
-    condition +
-    ')'
+      typeof condition +
+      ' when condition was expected (' +
+      condition +
+      ')'
   )
 }
 
 // 匹配规则为include匹配到且未被exclude匹配到的资源为true，其余资源全部为false，如果需要实现不传include为全部匹配的话可以将include的默认值设置为()=>true进行传入
-const matchCondition = (resourcePath, condition = {}) => {
+const matchCondition = (resourcePath: any, condition: any = {}) => {
   let matched = false
-  const includeMatcher = condition.include && normalizeCondition(condition.include)
-  const excludeMatcher = condition.exclude && normalizeCondition(condition.exclude)
+  const includeMatcher =
+    condition.include && normalizeCondition(condition.include)
+  const excludeMatcher =
+    condition.exclude && normalizeCondition(condition.exclude)
   if (includeMatcher && includeMatcher(resourcePath)) {
     matched = true
   }
@@ -45,7 +47,4 @@ const matchCondition = (resourcePath, condition = {}) => {
   return matched
 }
 
-module.exports = {
-  matchCondition,
-  normalizeCondition
-}
+export { matchCondition, normalizeCondition }

@@ -274,7 +274,8 @@ export async function genScriptBlock(
   code: string
 ): Promise<{ output: string }> {
   return {
-    output: genComponentTag(descriptor.script, {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    output: genComponentTag(descriptor.script!, {
       attrs() {
         return {}
       },

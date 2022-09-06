@@ -1,7 +1,7 @@
-const stringifyAttr = require('@mpxjs/compiler/template-compiler/compiler').stringifyAttr
-const type = require('./type')
+import { stringifyAttr } from '@mpxjs/compiler/template-compiler/compiler'
+import t from './type'
 
-function stringifyAttrs (attrs) {
+function stringifyAttrs(attrs: { [x: string]: any }) {
   let result = ''
   Object.keys(attrs).forEach(function (name) {
     result += ' ' + name
@@ -13,9 +13,12 @@ function stringifyAttrs (attrs) {
   return result
 }
 
-function genComponentTag (part, processor = {}) {
+export default function genComponentTag(
+  part: { content: any; tag: any; attrs: any },
+  processor: any = {}
+) {
   // normalize
-  if (type(processor) === 'Function') {
+  if (t(processor) === 'Function') {
     processor = {
       content: processor
     }
@@ -42,5 +45,3 @@ function genComponentTag (part, processor = {}) {
   }
   return result
 }
-
-module.exports = genComponentTag

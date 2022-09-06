@@ -19,7 +19,11 @@
     "loader-utils": "^2.0.2",
     "postcss-selector-parser": "^6.0.8"
   },
+  "devDependencies": {
+    "@mpxjs/utils": "^2.7.40"
+  },
   "peerDependencies": {
+    "@mpxjs/utils": "^2.7.40",
     "webpack": "^5.48.0"
   },
   "publishConfig": {

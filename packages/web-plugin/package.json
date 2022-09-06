@@ -7,7 +7,9 @@
   ],
   "author": "donghongping",
   "license": "Apache",
-  "main": "lib/index.js",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
   "typesVersions": {
     "*": {
       "*": [
@@ -18,8 +20,8 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "require": "./dist/index.cjs",
-      "import": "./dist/index.js"
+      "require": "./dist/index.js",
+      "import": "./dist/index.mjs"
     },
     "./*": "./*",
     "./vite": {
@@ -35,8 +37,8 @@
   },
   "scripts": {
     "test": "echo \"Error: run tests from root\" && exit 1",
-    "dev": "tsup src/*.ts src/webpack/loader/*.ts src/webpack/dependencies/*.ts  --watch --splitting",
-    "build": "tsup src/*.ts --format cjs,esm --dts --splitting --clean"
+    "dev": "tsup --watch",
+    "build": "tsup --env.NODE_ENV production"
   },
   "directories": {
     "lib": "lib"
@@ -76,6 +78,7 @@
     "eslint-plugin-promise": "^5.1.0",
     "eslint-plugin-tsdoc": "^0.2.14",
     "rollup": "^2.60.2",
+    "tsup": "^6.2.2",
     "typescript": "^4.3.2",
     "vite": "^3.0.0",
     "webpack": "^5.48.0"
@@ -85,13 +88,6 @@
     "@babel/parser": "^7.16.2",
     "@babel/traverse": "^7.16.0",
     "@babel/types": "^7.16.0",
-    "@better-scroll/core": "^2.2.1",
-    "@better-scroll/movable": "^2.2.1",
-    "@better-scroll/observe-dom": "^2.2.1",
-    "@better-scroll/pull-down": "^2.2.1",
-    "@better-scroll/slide": "^2.2.1",
-    "@better-scroll/wheel": "^2.2.1",
-    "@better-scroll/zoom": "^2.2.1",
     "async": "^2.6.0",
     "debug": "^4.3.2",
     "hash-sum": "^1.0.2",
@@ -105,12 +101,19 @@
     "qs": "^6.10.1",
     "slash": "^3.0.0",
     "source-list-map": "^2.0.0",
-    "tsup": "^6.2.2",
     "vite-plugin-vue2": "^2.0.0"
   },
   "peerDependencies": {
+    "@better-scroll/core": "^2.2.1",
+    "@better-scroll/movable": "^2.2.1",
+    "@better-scroll/observe-dom": "^2.2.1",
+    "@better-scroll/pull-down": "^2.2.1",
+    "@better-scroll/slide": "^2.2.1",
+    "@better-scroll/wheel": "^2.2.1",
+    "@better-scroll/zoom": "^2.2.1",
     "@mpxjs/compiler": "^2.7.40",
     "@mpxjs/utils": "^2.7.40",
+    "lodash": "^4.17.15",
     "webpack": "^5.48.0",
     "vite": "^3.0.0"
   },

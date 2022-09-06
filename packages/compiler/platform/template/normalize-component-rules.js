@@ -50,7 +50,7 @@ module.exports = function normalizeComponentRules (cfgs, spec) {
           }
         })
         el.attrsList = rAttrsList
-        el.attrsMap = require('@mpxjs/compiler/template-compiler/compiler').makeAttrsMap(rAttrsList)
+        el.attrsMap = require('../../template-compiler/compiler').makeAttrsMap(rAttrsList)
         // 前置处理attrs,便于携带信息用于tag的处理
         const rTag = cfg[mode] && cfg[mode].call(this, el.tag, data)
         if (rTag) {

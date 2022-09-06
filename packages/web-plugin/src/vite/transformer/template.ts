@@ -159,6 +159,7 @@ export function genTemplateBlock(descriptor: SFCDescriptor): {
   output: string
 } {
   return {
-    output: genComponentTag(descriptor.template)
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    output: genComponentTag(descriptor.template!)
   }
 }

@@ -12,13 +12,14 @@
     "fix": "eslint --fix --ext .js packages/",
     "test": "jest",
     "release": "npm run lint && npm run test && npx lerna version",
-    "dev": "node scripts/dev.js"
+    "dev": "node script/dev.js"
   },
   "devDependencies": {
     "@babel/core": "^7.8.7",
     "@docsearch/css": "^3.0.0",
     "@docsearch/js": "^3.0.0",
     "@testing-library/jest-dom": "^4.2.4",
+    "@types/node": "^14.7.15",
     "@types/jest": "^27.0.1",
     "babel-eslint": "^10.0.1",
     "eslint": "^5.10.0",

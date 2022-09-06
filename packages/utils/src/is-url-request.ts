@@ -1,7 +1,7 @@
 const isUrlRequestRaw = require('loader-utils').isUrlRequest
 const tagRE = /\{\{((?:.|\n|\r)+?)\}\}(?!})/
 
-module.exports = function isUrlRequest (url, root, externals) {
+export default function isUrlRequest (url: string, root: any, externals: any[]) {
   // 对于非字符串或空字符串url直接返回false
   if (!url || typeof url !== 'string') return false
   // 对于@开头且后续字符串为合法标识符的情况也返回false，识别为theme变量

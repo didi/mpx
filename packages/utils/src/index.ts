@@ -7,11 +7,11 @@
  * @param {object} defs 待处理的常量
  * @returns {object} 处理完毕的常量对象
  */
-function preProcessDefs (defs) {
-  const newDefs = {}
+function preProcessDefs(defs: any) {
+  const newDefs: any = {}
   Object.keys(defs).map(key => {
     if (typeof key === 'string' && key.indexOf('.') !== -1) {
-      key.split('.').reduce((prev, curr, index, arr) => {
+      key.split('.').reduce((prev: any, curr, index, arr) => {
         if (index === arr.length - 1) {
           prev[curr] = defs[key]
         } else {
@@ -26,6 +26,6 @@ function preProcessDefs (defs) {
   return newDefs
 }
 
-module.exports = {
+export {
   preProcessDefs
 }
