@@ -46,7 +46,7 @@ export function watch (source, cb, options = {}) {
   } else if (isArray(source)) {
     isMultiSource = true
     getter = () =>
-      source.map(s => {
+      source.forEach(s => {
         if (isRef(s)) {
           return s.value
         } else if (isReactive(s)) {
@@ -84,12 +84,12 @@ export function watch (source, cb, options = {}) {
   }
 
   let cleanup
-  let onCleanup = (fn) => {
+  const onCleanup = (fn) => {
     cleanup = effect.onStop = () => callWithErrorHandling(fn, instance, 'watch cleanup')
   }
 
   let oldValue = isMultiSource ? [] : undefined
-  let job = () => {
+  const job = () => {
     if (!effect.active) return
     if (cb) {
       const newValue = effect.run()

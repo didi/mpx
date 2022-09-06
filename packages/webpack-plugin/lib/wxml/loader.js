@@ -48,7 +48,7 @@ module.exports = function (content) {
     if (link.value.indexOf('mailto:') > -1) return
 
     // eslint-disable-next-line node/no-deprecated-api
-    let uri = url.parse(link.value)
+    const uri = url.parse(link.value)
     if (uri.hash !== null && uri.hash !== undefined) {
       uri.hash = null
       link.value = uri.format()
@@ -60,7 +60,7 @@ module.exports = function (content) {
       ident = randomIdent()
     } while (data[ident])
     data[ident] = link
-    let x = content.pop()
+    const x = content.pop()
     content.push(x.substr(link.start + link.length))
     content.push(ident)
     content.push(x.substr(0, link.start))
@@ -76,7 +76,7 @@ module.exports = function (content) {
 
     const link = data[match]
 
-    let src = loaderUtils.urlToRequest(link.value, root)
+    const src = loaderUtils.urlToRequest(link.value, root)
 
     let requestString, extraOptions
 

@@ -1,7 +1,7 @@
 # 组合式 API
 
 ## 什么是组合式 API
-组合式 API 是 Vue3 中包含的最重要的特性之一，主要由 `setup` 函数及一系列响应式 API 及生命周期钩子函数组成， 与传统的选项式 API 相比，组合式 API 具备以下优势：
+组合式 API 是 Vue3 中包含的最重要的特性之一，主要由 `setup` 函数及一系列响应式 API 及生命周期钩子函数组成，与传统的选项式 API 相比，组合式 API 具备以下优势：
 
 * 更好的逻辑复用，通过函数包装复用逻辑，显式引入调用，方便简洁且符合直觉，规避消除了 mixins 复用中存在的缺陷；
 * 更灵活的代码组织，相比于选项式 API 提前规定了代码的组织方式，组合式 API 在这方面几乎没有做任何限制与规定，更加灵活自由，在功能复杂的庞大组件中，我们能够通过组合式 API 让我们的功能代码更加内聚且有条理，不过这也会对开发者自身的代码规范意识提出更高要求；
@@ -11,8 +11,7 @@
 
 更多关于组合式 API 的说明可以查看 [Vue3 官方文档](https://vuejs.org/guide/extras/composition-api-faq.html)。
 
-## Mpx中的组合式 API
-Mpx 是一个小程序优先的增强型跨端框架，因此我们在为 Mpx 设计实现组合式 API 的过程中，并不追求与 Vue3 中的组合式 API 完全一致，我们更多是借鉴 Vue3 中组合式 API 的设计思想，将其与目前 Mpx 及小程序中的开发模式结合起来，而非完全照搬其实现。因此在 Mpx 中一些具体的 API 设计实现会与 Vue3 存在差异，我们会在后续相关的文档中进行标注说明，如果你想查看 Mpx 与 Vue3 在组合式 API中的全部差异，可以跳转到[这里](todo Mpx vs Vue3)查看。 
+Mpx 是一个小程序优先的增强型跨端框架，因此我们在为 Mpx 设计实现组合式 API 的过程中，并不追求与 Vue3 中的组合式 API 完全一致，我们更多是借鉴 Vue3 中组合式 API 的设计思想，将其与目前 Mpx 及小程序中的开发模式结合起来，而非完全照搬其实现。因此在 Mpx 中一些具体的 API 设计实现会与 Vue3 存在差异，我们会在后续相关的文档中进行标注说明，如果你想查看 Mpx 与 Vue3 在组合式 API 中的差异，可以跳转到[这里](#组合式-API-与-Vue3-中的区别)查看。 
 
 ## 组合式 API 基础
 
@@ -20,7 +19,7 @@ Mpx 是一个小程序优先的增强型跨端框架，因此我们在为 Mpx �
 
 同 Vue3 一样，在 Mpx 当中 `setup` 函数是组合式 API 的基础，我们可以在 `createPage` 和 `createComponent` 中声明 `setup` 函数。
 
-`setup` 函数接收 `props` 和 `context` 两个参数，其中 `context` 参数与 Vue3 中存在差别，详情可以查看[这里](todo setup)。
+`setup` 函数接收 `props` 和 `context` 两个参数，其中 `context` 参数与 Vue3 中存在差别，详情可以查看[这里](#Setup)。
 
 我们参考 Vue3 中的示例实现一个小程序版本，可以看到它和 Vue3 中的实现基本一致，包含以下功能：
 
@@ -95,7 +94,7 @@ createComponent({
 
 ### 在 `setup` 中注册生命周期钩子
 
-为了完整实现选项式 API 中的能力，我们需要支持在 `setup` 中注册生命周期钩子，同 Vue3 类似，我们也提供了一系列生命周期钩子的注册函数，这些函数都以 `on` 开头，不过由于 Mpx 的跨平台特性，我们不可能针对不同的平台提供不同的生命周期钩子函数，因此我们提供了一份抹平跨平台差异后统一的生命周期钩子，与小程序原生生命周期的映射关系可查看[这里](todo 生命周期钩子)。
+为了完整实现选项式 API 中的能力，我们需要支持在 `setup` 中注册生命周期钩子，同 Vue3 类似，我们也提供了一系列生命周期钩子的注册函数，这些函数都以 `on` 开头，不过由于 Mpx 的跨平台特性，我们不可能针对不同的平台提供不同的生命周期钩子函数，因此我们提供了一份抹平跨平台差异后统一的生命周期钩子，与小程序原生生命周期的映射关系可查看[这里](#生命周期钩子)。
 
 我们希望在组件挂载时调用 `getUserRepositories`，可以使用 `onMounted` 钩子来实现，注意这里不是 `onReady`，不过它确实对应于微信小程序中组件的 `ready` 钩子：
 
@@ -316,9 +315,13 @@ createComponent({
 })
 ```
 
-现在我们使用组合式 API 完成了仓库列表组件的开发，它看上去相当清晰且易于维护。想要了解更多组合式 API 的信息，请继续查看本页接下来的章节，想要了解新的响应性 API 的使用，请跳转查看[响应性 API](todo 响应性 API)章节。
+现在我们使用组合式 API 完成了仓库列表组件的开发，它看上去相当清晰且易于维护。想要了解更多组合式 API 的信息，请继续查看本页接下来的章节，想要了解新的响应式 API 的使用，请跳转查看[响应式 API](reactive-api.md)章节。
 
 ## Setup
+
+`setup` 函数在组件创建时执行，返回组件所需的数据和方法，是组合式 API 的核心。
+
+> 注意，`setup` 函数不可被混入，所有定义在 `mixin` 中的 `setup` 都将被丢弃。
 
 ### 参数
 
@@ -416,18 +419,298 @@ createComponent({
 
 `refs` 是有状态的对象，它会随组件本身的更新而更新。这意味着你应该避免对其进行解构，并始终以 refs.x 的方式访问 NodesRef 或组件实例。与 props 不同，refs 是非响应式的。如果你打算根据 refs 的更改应用副作用，那么应该在 onUpdated 生命周期钩子中执行此操作。
 
-### 访问组件的property
-除了 `props` 和 `context` 中包含的内容，执行 `setup` 时将**无法访问**其他的组件选项，包括：
+### 访问组件的 property
+除了 `props` 和 `context` 中包含的内容，执行 `setup` 时将**无法访问**部分组件选项，包括：
 * data
 * computed
-* methods
-* 其他插件挂载在 `this` 上的属性
 
 ### 结合模板使用
 
+如果 `setup` 返回一个对象，那么该对象的 property 可以在模板中访问到：
 
-### 使用渲染函数
+```html
+<template>
+  <view>{{ collectionName }}: {{ readersNumber }} {{ book.title }}</view>
+</template>
 
+<script>
+  import { createComponent, ref, reactive } from '@mpxjs/core'
 
+  createComponent({
+    properties: {
+      collectionName: String
+    },
+    setup(props) {
+      const readersNumber = ref(0)
+      const book = reactive({ title: 'Mpx' })
 
+      // 暴露给 template
+      return {
+        readersNumber,
+        book
+      }
+    }
+  })
+</script>
+```
 
+### 使用 `this`
+
+**在 `setup()` 内部，`this` 不是当前组件的引用**，因为 `setup()` 是在解析其它组件选项之前被调用的，所以 `setup()` 内部的 `this` 的行为与其它选项中的 `this` 完全不同。这使得 `setup()`  在和其它选项式 API 一起使用时可能会导致混淆。
+
+## 单文件组件 `<script setup>`
+
+和 Vue 一样，`<script setup>` 是在 Mpx 单文件组件中使用组合式 API 时的编译时语法糖。相较于普通的 `<script>` 语法，它具有一些优势：
+* 更少的样板内容，更简洁的代码。
+* 能够使用纯 TypeScript 声明 props 和自定义事件。
+* 更好的 IDE 类型推导性能。
+
+### 基本语法
+
+启用该语法需要在 `<script>` 代码块上添加 `setup` attribute:
+
+```html
+<script setup>
+    console.log('hello Mpx script setup')
+</script>
+```
+`<script>` 里边的代码会被编译成组件 `setup()` 函数的内容。
+
+### 顶层的绑定会被暴露给模版
+和 Vue 一样，当使用 `<script setup>` 时，任何在 `<script setup>` 声明的顶层的绑定（包括变量，函数声明，以及 import 导入的内容） 都能在模版中直接使用：
+```html
+<script setup>
+    const msg = 'hello';
+    function log() {
+        console.log(msg)
+    }
+</script>
+<template>
+    <view>msg: {{msg}}</view>
+    <view ontap="log">click</view>
+</template>
+```
+import 导入的内容也会以同样的方式暴露。这意味着我们可以直接在模版中使用引入的相关方法，而不需要通过 `methods` 选项来暴露:
+```html
+<template>
+    <view ontap="clickTrigger">click</view>
+</template>
+<script setup>
+    import { clickTrigger } from './utils'
+</script>
+```
+### 响应式
+和 Vue 中一样，响应式状态需要明确使用响应性 API 来创建。和 `setup()` 函数的返回值一样，ref 在模版中使用的时候会自动解包：
+```html
+<template>
+    <button ontap="addCount">{{count}}</button>
+</template>
+<script setup>
+    import { ref } from '@mpxjs/core'
+    const count = ref(0)
+    function addCount() {
+        count.value++
+    }
+</script>
+```
+### `defineProps()` 
+和 Vue 类似，为了在声明小程序组件 `properties` 选项时获得完整的类型推导支持，在 `<script setup>` 中，我们需要使用 `defineProps` API，它默认在 `<script setup>` 中可用：
+```html
+<script setup>
+    const props = defineProps({
+        testA: String
+    })
+    
+</script>
+```
+* `defineProps` 是只能在 `<script setup>` 中使用的**编译宏**，不需要手动导入，会跟随 `<script setup>` 的处理过程一同被编译掉。
+* `defineProps` 接收与小程序 `properties` 选项相同的值。
+* 传入到 `defineProps` 的选项会从 setup 中提升到模块的作用域。因此传入的选项不能引用在 setup 作用域中声明的局部变量，否则会导致编译错误，不过可以引入导入的绑定。
+
+### `defineReturns()`
+在 `<script setup>` 声明的顶层的绑定(包括变量，函数声明，以及 import 导入的内容)，编译后在 `setup()` 都会统一被 return 出去，当开发者想对 `setup()` 中暴露给模版的变量和方法进行自定义，可以使用 `defineReturns` 编译宏进行定义。
+```html
+<script setup>
+    const count = ref(0)
+    const name = ref('black')
+    defineReturns({
+        name
+    })
+</script>
+<template>
+    <!--正确渲染 black-->
+    <view>{{name}}</view>
+    <!--找不到对应变量，无内容-->
+    <view>{{count}}</view>
+</template>
+```
+
+### `defineOptions()`
+此编译宏相较于 Vue 是 Mpx 中独有的，主要是当开发者想在 `<script setup>` 中使用一些微信小程序中特有的选项式，例如 relations、moved 等，可以使用该编译宏进行定义。
+```html
+<script setup>
+    defineOptions({
+        pageLifetimes: {
+            // 组件所在页面的生命周期函数
+            resize: function () { }
+        }
+    })
+</script>
+```
+* `defineOptions` 是只能在 `<script setup>` 中使用的**编译宏**，不需要手动导入，会跟随 `<script setup>` 的处理过程一同被编译掉。
+* `defineOptions` 无返回值。
+* `defineOptions` 中的选项会无脑提升至组件或页面构造器的选项之中，因此不可引用 setup 中的局部变量。
+
+### `useContext()`
+在 `<script setup>` 中，当我们想要使用 `context` 时，可以使用 `useContext()` 来获 `context` 对象。
+
+```html
+<script setup>
+    const context = useContext()
+    // 获取 NodesRef/组件实例，等价于 this.$refs
+    console.log(context.refs)
+</script>
+```
+### 限制
+由于模块执行语义的差异，`<script setup>` 中的代码依赖单文件组件的上下文，如果将其移动到外部的 `.js` 或者 `.ts` 的时候，对于开发者可工具来说都十分混乱。因此 `<script setup>` 不能和 `src` attribute 一起使用。
+
+## 生命周期钩子
+
+组合式 API 中，我们通过 `on${Hookname}(fn)` 的方式注册访问生命周期钩子。
+
+Mpx 作为一个跨端小程序框架，需要兼容不同小程序平台不同的生命周期，在选项式 API 中，我们在框架中内置了一套统一的生命周期，将不同小程序平台的生命周期转换映射为内置生命周期后再进行统一的驱动，以抹平不同小程序平台生命周期钩子的差异，如微信小程序的 `attached` 钩子和支付宝小程序的 `onInit` 钩子，在组合式 API 中，我们基于框架内置的生命周期暴露了一套统一的生命周期钩子函数，下表展示了框架内置生命周期/组合式 API 生命周期函数与不同小程序平台原生生命周期的对应关系：
+
+组件生命周期
+
+|框架内置生命周期|Hook inside `setup`|微信原生|支付宝原生|
+|:------------|:------------------|:-----|:-------|
+| BEFORECREATE | `null` |attached（数据响应初始化前）|onInit（数据响应初始化前）|
+| CREATED | `null` |attached（数据响应初始化后）|onInit（数据响应初始化后）|
+| BEFOREMOUNT | onBeforeMount |ready（`MOUNTED` 执行前）|didMount（`MOUNTED` 执行前）| 
+| MOUNTED | onMounted |ready（`BEFOREMOUNT` 执行后）|didMount（`BEFOREMOUNT` 执行后）| 
+| BEFOREUPDATE | onBeforeUpdate |`null`（`setData` 执行前）|`null`（`setData` 执行前）|
+| UPDATED | onUpdated |`null`（`setData` callback）|`null`（`setData` callback）|
+| BEFOREUNMOUNT | onBeforeUnmount |detached（数据响应销毁前）|didUnmount（数据响应销毁前）|
+| UNMOUNTED | onUnmounted |detached（数据响应销毁后）|didUnmount（数据响应销毁后）|
+
+> 同 Vue3 一样，组合式 API 中没有提供 `BEFORECREATE` 和 `CREATED` 对应的生命周期钩子函数，用户可以直接在 `setup` 中编写相关逻辑。
+
+> 除支付宝外的小程序平台支持使用Component构建页面，在页面中使用组件生命周期钩子与在组件中完全一致，并且框架在支付宝环境也进行了抹平实现。
+
+页面生命周期
+
+|框架内置生命周期|Hook inside `setup`|微信原生|支付宝原生|
+|:------------|:------------------|:-----|:-------|
+|ONLOAD|onLoad|onLoad|onLoad|
+|ONSHOW|onShow|onShow|onShow|
+|ONHIDE|onHide|onHide|onHide|
+|ONRESIZE|onResize|onResize|events.onResize|
+
+组件中访问页面生命周期
+
+|框架内置生命周期|Hook inside `setup`|微信原生|支付宝原生|
+|:------------|:------------------|:-----|:-------|
+|ONSHOW|onShow|pageLifetimes.show|`null`（框架抹平实现）|
+|ONHIDE|onHide|pageLifetimes.hide|`null`（框架抹平实现）|
+|ONRESIZE|onResize|pageLifetimes.resize|`null`（框架抹平实现）|
+
+下面是简单的使用示例：
+
+```js
+import { createComponent, onMounted, onUnmounted } from '@mpxjs/core'
+
+createComponent({
+  setup () {
+    // mounted
+    onMounted(()=>{
+      console.log('Component mounted.')
+    })
+    // unmounted
+    onUnmounted(()=>{
+      console.log('Component unmounted.')
+    })
+    return {}
+  }
+})
+```
+
+### 框架内置生命周期
+
+从上面可以看到我们在框架内部内置了一套统一的生命周期来抹平不同平台生命周期的差异，由于存在数据响应机制，这套内置生命周期与小程序原生的生命周期不完全一一对应，反而与 Vue 的生命周期更加相似，在过去的版本中，我们没有显式地暴露出 `BEFORECREATE` 这这类框架内置的生命周期，更多都在框架内部使用，但是在组合式 API 版本中，为了使选项式 API 的生命周期能力与之对齐，我们将框架内置的生命周期显式导出，让用户在选项式 API 开发环境下也能正常使用这些能力，简单使用示例如下：
+
+```js
+import { createComponent, BEFORECREATE } from '@mpxjs/core'
+
+createComponent({
+  [BEFORECREATE] () {
+    console.log('beforeCreate exec.')
+  },
+  created () {
+    // 原生的 created 会被映射为框架内部的 CREATED 执行，此处逻辑在 BEFORECREATE 后执行
+    console.log('created exec.')
+  }
+})
+```
+
+### 具有副作用的生命周期钩子
+
+todo cr
+
+## 模板引用
+
+在 Vue3 的组合式 API 中，我们可以在 `setup` 函数中使用 `ref()` 创建引用数据获取模板中绑定了 `ref` 属性的组件或 DOM 节点，优雅地将**响应式引用**和**模板引用**进行了关联统一，但在 Mpx 中，受限于小程序的技术限制，我们无法在低性能损耗下实现相同的设计，因此我们在 setup 的 context 参数中提供了 refs 对象，结合模板中的`wx:ref`指令使用，与选项式 API 中的 $refs 保持一致。
+
+下面是组合式 API 中进行模板引用的使用示例：
+
+```html
+<template>
+  <view bindtap="handleHello" wx:ref="hello">hello</view>
+  <view wx:if="{{showWorld}}" wx:ref="world">world</view>
+  <view wx:for="{{list}}" wx:ref="list">{{item}}</view>
+</template>
+
+<script>
+  import { createComponent, ref, onMounted, nextTick } from '@mpxjs/core'
+
+  createComponent({
+    setup (props, { refs }) {
+      const showWorld = ref(false)
+      const list = ref(['手机', '电视', '电脑'])
+
+      onMounted(() => {
+        // 最早在 onMounted 中才能访问refs，对于节点返回 NodesRef 对象，对于组件返回组件实例
+        console.log('hello ref:', refs.hello)
+        // 在循环中定义 wx:ref，对应的 refs 返回数组
+        console.log('list ref:', refs.list)
+      })
+
+      const handleHello = () => {
+        showWorld.value = true
+        nextTick(() => {
+          // 数据变更后要在 nextTick 中访问更新后的视图数据
+          console.log('world ref:', refs.world)
+        })
+      }
+      
+      // 暴露给 template
+      return {
+        showWorld,
+        handleHello,
+        list
+      }
+    }
+  })
+</script>
+```
+
+## 组合式 API 与 Vue3 中的区别
+
+下面我们来总结一下 Mpx 中组合式 API 与 Vue3 中的区别：
+
+* `setup` 的 `context` 参数不同，详见[这里](#Context)
+* `setup` 不支持返回**渲染函数**
+* `setup` 不能是异步函数
+* `<script setup>` 提供的宏方法不同，详见[这里](#todo-script-setup)
+* `<script setup>` 不支持 `import` 快捷引入组件
+* 支持的生命周期钩子不同，详见[这里](#生命周期钩子)
+* 模板引用的方式不同，详见[这里](#模板引用)

@@ -18,9 +18,9 @@ function transformApi (options) {
   const wxToQqApi = getWxToQqApi()
   const wxToTtApi = getWxToTtApi()
   const platformMap = {
-    'wx_ali': wxToAliApi,
-    'wx_qq': wxToQqApi,
-    'wx_tt': wxToTtApi
+    wx_ali: wxToAliApi,
+    wx_qq: wxToQqApi,
+    wx_tt: wxToTtApi
   }
   const needProxy = Object.create(null)
   const excludeMap = makeMap(options.exclude)

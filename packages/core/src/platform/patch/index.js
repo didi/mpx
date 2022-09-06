@@ -51,8 +51,8 @@ export default function createFactory (type) {
 
     const { setup } = options
     const { rawOptions, currentInject } = transferOptions(options, type)
-    // 不接受mixin中的setup配置
     rawOptions.setup = setup
+    // 不接受mixin中的setup配置
     // 注入内建的mixins, 内建mixin是按原始平台编写的，所以合并规则和rootMixins保持一致
     // 将合并后的用户定义的rawOptions传入获取当前应该注入的内建mixins
     rawOptions.mixins = getBuiltInMixins(rawOptions, type)

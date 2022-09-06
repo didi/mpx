@@ -5,10 +5,9 @@ const addQuery = require('../utils/add-query')
 const toPosix = require('../utils/to-posix')
 const async = require('async')
 const parseRequest = require('../utils/parse-request')
-const { MPX_CURRENT_CHUNK } = require('../utils/const')
 
 class DynamicEntryDependency extends NullDependency {
-  constructor (request, entryType, outputPath = '', packageRoot = '', relativePath = '', context = '', range) {
+  constructor (request, entryType, outputPath = '', packageRoot = '', relativePath = '', context = '', range, extraOptions = {}) {
     super()
     this.request = request
     this.entryType = entryType
@@ -17,6 +16,7 @@ class DynamicEntryDependency extends NullDependency {
     this.relativePath = relativePath
     this.context = context
     this.range = range
+    this.extraOptions = extraOptions
   }
 
   get type () {
@@ -61,7 +61,7 @@ class DynamicEntryDependency extends NullDependency {
         })
 
         let resultPath = publicPath + filename
-        if (relativePath && relativePath !== MPX_CURRENT_CHUNK) {
+        if (relativePath) {
           resultPath = toPosix(path.relative(relativePath, resultPath))
         }
 
@@ -91,10 +91,16 @@ class DynamicEntryDependency extends NullDependency {
   }
 
   mpxAction (module, compilation, callback) {
-    const mpx = compilation.__mpx__
-    const { packageRoot, context } = this
-    this.originEntryNode = mpx.getEntryNode(module)
+    const { __mpx__: mpx, moduleGraph } = compilation
+    let entryModule = module
+    while (true) {
+      const issuer = moduleGraph.getIssuer(entryModule)
+      if (issuer) entryModule = issuer
+      else break
+    }
+    this.originEntryNode = mpx.getEntryNode(entryModule)
     this.publicPath = compilation.outputOptions.publicPath || ''
+    const { packageRoot, context } = this
     if (context) this.resolver = compilation.resolverFactory.get('normal', module.resolveOptions)
     // 分包构建在需要在主包构建完成后在finishMake中处理，返回的资源路径先用key来占位，在合成extractedAssets时再进行最终替换
     if (packageRoot && mpx.currentPackageRoot !== packageRoot) {
@@ -112,10 +118,10 @@ class DynamicEntryDependency extends NullDependency {
 
   // hash会影响最终的codeGenerateResult是否走缓存，由于该dep中resultPath是动态变更的，需要将其更新到hash中，避免错误使用缓存
   updateHash (hash, context) {
-    const { resultPath, relativePath } = this
+    const { resultPath, extraOptions } = this
     if (resultPath) hash.update(resultPath)
-    // relativePath为MPX_CURRENT_CHUNK时，插入随机hash使当前module的codeGeneration cache失效，从而执行dep.apply动态获取当前module所属的chunk路径
-    if (relativePath === MPX_CURRENT_CHUNK) hash.update('' + (+new Date()) + Math.random())
+    // 当处理require.async时，插入随机hash使当前module的codeGeneration cache失效，从而执行dep.apply动态获取当前module所属的chunk路径
+    if (extraOptions.isRequireAsync) hash.update('' + (+new Date()) + Math.random())
     super.updateHash(hash, context)
   }
 
@@ -128,6 +134,7 @@ class DynamicEntryDependency extends NullDependency {
     write(this.relativePath)
     write(this.context)
     write(this.range)
+    write(this.extraOptions)
     super.serialize(context)
   }
 
@@ -140,6 +147,7 @@ class DynamicEntryDependency extends NullDependency {
     this.relativePath = read()
     this.context = read()
     this.range = read()
+    this.extraOptions = read()
     super.deserialize(context)
   }
 }
@@ -149,20 +157,30 @@ DynamicEntryDependency.Template = class DynamicEntryDependencyTemplate {
     module,
     chunkGraph
   }) {
-    let { resultPath, range, key, outputPath, relativePath, publicPath } = dep
+    const { resultPath, range, key, outputPath, publicPath, extraOptions } = dep
+
+    let replaceContent = ''
+
     if (outputPath === 'custom-tab-bar/index') {
       // replace with true for custom-tab-bar
-      source.replace(range[0], range[1] - 1, 'true')
+      replaceContent = JSON.stringify(true)
     } else if (resultPath) {
-      if (relativePath === MPX_CURRENT_CHUNK) {
-        relativePath = publicPath + path.dirname(chunkGraph.getModuleChunks(module)[0].name)
-        resultPath = toPosix(path.relative(relativePath, resultPath))
+      if (extraOptions.isRequireAsync) {
+        const relativePath = toPosix(path.relative(publicPath + path.dirname(chunkGraph.getModuleChunks(module)[0].name), resultPath))
+        replaceContent = JSON.stringify(relativePath)
+        if (extraOptions.retryRequireAsync) {
+          replaceContent += `).catch(function (e) {
+  return require.async(${JSON.stringify(relativePath)});
+}`
+        }
+      } else {
+        replaceContent = JSON.stringify(resultPath)
       }
-      source.replace(range[0], range[1] - 1, JSON.stringify(resultPath))
     } else {
-      const replaceRange = `mpx_replace_path_${key}`
-      source.replace(range[0], range[1] - 1, JSON.stringify(replaceRange))
+      replaceContent = JSON.stringify(`mpx_replace_path_${key}`)
     }
+
+    if (replaceContent) source.replace(range[0], range[1] - 1, replaceContent)
   }
 }
 

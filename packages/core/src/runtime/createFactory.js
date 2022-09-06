@@ -1,4 +1,4 @@
-var factoryMap = {
+const factoryMap = {
   App: require('../index').createApp,
   Page: require('../index').createPage,
   Component: require('../index').createComponent
