@@ -7,5 +7,5 @@ node_modules/
 package-lock.json
 pnpm-lock.yaml
 .DS_Store
-docs-vuepress/.vuepress/dist
+docs-vuepress/docs/.vuepress/dist
 elevate/

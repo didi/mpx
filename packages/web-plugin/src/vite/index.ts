@@ -80,6 +80,8 @@ function createMpxPlugin(
         return id
       }
       // return vue resolveId
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
       return mpxVuePlugin.resolveId?.call(this, id, ...args)
     },
 
@@ -120,6 +122,8 @@ function createMpxPlugin(
         }
       }
       // return vue load
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
       return mpxVuePlugin.load?.call(this, id)
     },
 

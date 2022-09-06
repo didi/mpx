@@ -12,6 +12,7 @@
       "dom.iterable"
     ]
   },
+  "include": ["src"],
   "exclude": [
     "build",
     "dist",
