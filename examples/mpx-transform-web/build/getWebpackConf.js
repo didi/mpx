@@ -20,6 +20,7 @@ module.exports = function getWebpackConfs (options) {
   }
   const name = plugin ? `${rootPath}-plugin-compiler` : `${rootPath}-compiler`
   const rules = getRules(options)
+  // console.log(rules);
   const plugins = getPlugins(options)
   const extendConfs = {}
   if (production) {

@@ -1,8 +1,9 @@
 const path = require('path')
-const mpx = require('../../packages/web-plugin/dist/vite')
+const mpx = require('@mpxjs/web-plugin/vite')
 const { defineConfig } = require('vite')
 
 module.exports = defineConfig({
+
   plugins: [
     mpx.default({
       env: 'didi',
@@ -29,6 +30,7 @@ module.exports = defineConfig({
     })
   ],
   resolve: {
+    preserveSymlinks: true, // for dev linked packages
     alias: {
       '@': path.resolve('.')
     },
