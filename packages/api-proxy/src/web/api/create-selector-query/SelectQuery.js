@@ -38,29 +38,34 @@ class SelectQuery {
       const { selector, component, single, fields } = item
 
       let curComponent = document
-
       if (component && component.$el) {
         curComponent = component.$el
       } else if (component && component.nodeType === 1) {
         curComponent = component
       }
-
-      const selectSelf =
-        curComponent === document
-          ? false
-          : Array
-            .from(curComponent.parentNode.querySelectorAll(selector))
-            .every(item => item === curComponent)
-
-      if (single) {
-        const el = selectSelf ? curComponent : curComponent.querySelector(selector)
-        res.push(handleFields(fields, el, selector))
+      if (this._isEl(selector)) {
+        if (single) {
+          res.push(handleFields(fields, selector, null))
+        } else {
+          res.push(selector.map(el => handleFields(fields, el, null)))
+        }
       } else {
-        const els = selectSelf
-          ? [curComponent]
-          : curComponent.querySelectorAll(selector)
-        const elsArr = Array.from(els).map(el => handleFields(fields, el, null))
-        res.push(elsArr)
+        const selectSelf =
+          curComponent === document
+            ? false
+            : Array
+              .from(curComponent.parentNode.querySelectorAll(selector))
+              .every(item => item === curComponent)
+        if (single) {
+          const el = selectSelf ? curComponent : curComponent.querySelector(selector)
+          res.push(handleFields(fields, el, selector))
+        } else {
+          const els = selectSelf
+            ? [curComponent]
+            : curComponent.querySelectorAll(selector)
+          const elsArr = Array.from(els).map(el => handleFields(fields, el, null))
+          res.push(elsArr)
+        }
       }
     })
     res.forEach((item, idx) => {
@@ -161,6 +166,10 @@ class SelectQuery {
       fields
     })
     this._queueCb.push(callback)
+  }
+  _isEl (selector) {
+    if (Array.isArray(selector)) return this._isEl(selector[0])
+    return selector && selector.nodeType === 1
   }
 }
 
