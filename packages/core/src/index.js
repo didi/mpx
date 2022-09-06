@@ -7,6 +7,8 @@ import { createI18n } from './platform/builtInMixins/i18nMixin'
 
 export * from './platform/export/index'
 
+export * from '@mpxjs/store'
+
 export {
   createApp,
   createPage,
