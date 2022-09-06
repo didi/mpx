@@ -9,7 +9,7 @@ export function createPinia () {
   const scope = effectScope(true)
   // create ref state
   const state = scope.run(() => ref({}))
-  let _p = []
+  const _p = []
   const pinia = {
     install () {
       setActivePinia(pinia)

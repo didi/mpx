@@ -15,12 +15,12 @@ function isComputed (obj) {
 
 function mergeReactiveObjects (target, patchToApply) {
   for (const key in patchToApply) {
-    if (!patchToApply.hasOwnProperty(key)) continue
+    if (!Object.prototype.hasOwnProperty.call(patchToApply, key)) continue
     const subPatch = patchToApply[key]
     const targetValue = target[key]
     if (isPlainObject(targetValue) &&
       isPlainObject(subPatch) &&
-      target.hasOwnProperty(key) &&
+      Object.prototype.hasOwnProperty.call(target, key) &&
       !isRef(subPatch) &&
       !isReactive(subPatch)) {
       target[key] = mergeReactiveObjects(targetValue, subPatch)

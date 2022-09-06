@@ -12,14 +12,16 @@ export function proxy (target, source, keys, readonly, onConflict) {
       configurable: true,
       enumerable: true
     }
-    descriptor.set = readonly ? noop : function (val) {
-      const oldVal = source[key]
-      if (isRef(oldVal) && !isRef(val)) {
-        oldVal.value = val
-      } else {
-        source[key] = val
+    descriptor.set = readonly
+      ? noop
+      : function (val) {
+        const oldVal = source[key]
+        if (isRef(oldVal) && !isRef(val)) {
+          oldVal.value = val
+        } else {
+          source[key] = val
+        }
       }
-    }
     if (onConflict) {
       if (key in target) {
         if (onConflict(key) === false) return

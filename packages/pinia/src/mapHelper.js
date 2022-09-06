@@ -99,12 +99,12 @@ function setMapStoreSuffix (suffix) {
 function mapStores (...stores) {
   const pinia = getActivePinia()
   if ((process.env.NODE_ENV !== 'production') && Array.isArray(stores[0])) {
-    warn(`[🍍]: Directly pass all stores to "mapStores()" without putting them in an array:\n` +
-        `Replace\n` +
-        `\tmapStores([useAuthStore, useCartStore])\n` +
-        `with\n` +
-        `\tmapStores(useAuthStore, useCartStore)\n` +
-        `This will fail in production if not fixed.`)
+    warn('[🍍]: Directly pass all stores to "mapStores()" without putting them in an array:\n' +
+        'Replace\n' +
+        '\tmapStores([useAuthStore, useCartStore])\n' +
+        'with\n' +
+        '\tmapStores(useAuthStore, useCartStore)\n' +
+        'This will fail in production if not fixed.')
     stores = stores[0]
   }
   return stores.reduce((reduced, useStore) => {

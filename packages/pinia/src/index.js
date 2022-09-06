@@ -51,7 +51,7 @@ function shouldHydrate (obj) {
 function createOptionsStore (id, options, pinia) {
   const { state, actions, getters } = options
   const initialState = pinia.state.value[id]
-  let store
+  let store = {}
 
   function setupFn () {
     if (!initialState) {
@@ -166,8 +166,9 @@ function createSetupStore ($id, setup, options = {}, pinia, isOptionsStore = fal
 
   const $reset = (process.env.NODE_ENV !== 'production')
     ? () => {
-      throw new Error(`🍍: Store "${$id}" is build using the setup syntax and does not implement $reset().`)
-    } : () => {}
+        throw new Error(`🍍: Store "${$id}" is build using the setup syntax and does not implement $reset().`)
+      }
+    : () => {}
 
   function $dispose () {
     scope.stop()
@@ -317,8 +318,8 @@ function createSetupStore ($id, setup, options = {}, pinia, isOptionsStore = fal
     typeof store.$state === 'object' &&
     typeof store.$state.constructor === 'function' &&
     !store.$state.constructor.toString().includes('[native code]')) {
-    warn(`[🍍]: The "state" must be a plain object. It cannot be\n` +
-        `\tstate: () => new MyClass()\n` +
+    warn('[🍍]: The "state" must be a plain object. It cannot be\n' +
+        '\tstate: () => new MyClass()\n' +
         `Found in store "${store.$id}".`)
   }
   // only apply hydrate to option stores with an initial state in pinia
@@ -348,10 +349,10 @@ function defineStore (idOrOptions, setup, setupOptions) {
   }
   function useStore (pinia) {
     if ((process.env.NODE_ENV !== 'production') && !activePinia) {
-      throw new Error(`[🍍]: getActivePinia was called with no active Pinia. Did you forget to install pinia?\n` +
-          `\tconst pinia = createPinia()\n` +
-          `\tapp.use(pinia)\n` +
-          `This will fail in production.`)
+      throw new Error('[🍍]: getActivePinia was called with no active Pinia. Did you forget to install pinia?\n' +
+          '\tconst pinia = createPinia()\n' +
+          '\tapp.use(pinia)\n' +
+          'This will fail in production.')
     }
     pinia = pinia || activePinia
     if (pinia) setActivePinia(pinia)
