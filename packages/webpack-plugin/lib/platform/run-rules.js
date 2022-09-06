@@ -1,7 +1,7 @@
 const type = require('../utils/type')
 
 function defaultNormalizeTest (rawTest, context) {
-  let testType = type(rawTest)
+  const testType = type(rawTest)
   switch (testType) {
     case 'Function':
       return rawTest.bind(context)
@@ -27,7 +27,7 @@ module.exports = function runRules (rules = [], input, options = {}) {
       mode
     })
     if (tester(testInput, meta) && processor) {
-      let result = processor.call(rule, input, data, meta)
+      const result = processor.call(rule, input, data, meta)
       meta.processed = true
       if (result !== undefined) {
         input = result

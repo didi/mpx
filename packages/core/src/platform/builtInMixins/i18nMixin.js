@@ -25,6 +25,30 @@ export function createI18n (options) {
     get global () {
       return _global
     },
+    get locale () {
+      return _global.locale.value || DefaultLocale
+    },
+    set locale (val) {
+      _global.locale.value = val
+    },
+    get fallbackLocale () {
+      return _global.fallbackLocale.value || DefaultLocale
+    },
+    set fallbackLocale (val) {
+      _global.fallbackLocale.value = val
+    },
+    get t () {
+      return _global.t
+    },
+    get tc () {
+      return _global.t
+    },
+    get te () {
+      return _global.te
+    },
+    get tm () {
+      return _global.tm
+    },
     dispose () {
       globalScope.stop()
     },
@@ -84,7 +108,7 @@ function createComposer (options) {
     } else {
       ret = i18nMethods.t(messages.value, locale.value, fallbackLocale.value, ...args)
     }
-    if (!ret && fallbackRoot && __root) {
+    if (ret === args[0] && fallbackRoot && __root) {
       ret = __root.t(...args)
     }
     return ret

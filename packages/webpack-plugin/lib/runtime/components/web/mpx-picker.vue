@@ -36,7 +36,7 @@
 <script type="text/ecmascript-6">
   import BScroll from '@better-scroll/core'
   import Wheel from '@better-scroll/wheel'
-  import { type } from './util'
+  import { type } from '../../utils'
   import { getCustomEvent } from './getInnerListeners'
 
   const startYear = 1970

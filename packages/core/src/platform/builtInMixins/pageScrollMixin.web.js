@@ -10,7 +10,7 @@ function refreshMs () {
     global.__ms = ms = new MpxScroll()
     return true
   } catch (e) {
-    error(`MpxScroll init error, please check.`, undefined, e)
+    error('MpxScroll init error, please check.', undefined, e)
   }
 }
 

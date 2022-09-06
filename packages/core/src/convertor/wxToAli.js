@@ -25,7 +25,7 @@ function notSupportTip (options) {
     }
   })
   // relations部分支持
-  const relations = options['relations']
+  const relations = options.relations
   if (relations) {
     Object.keys(relations).forEach(path => {
       const item = relations[path]

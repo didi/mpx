@@ -104,7 +104,7 @@ module.exports = function (content) {
 
       if (parts.json && parts.json.content) {
         try {
-          let ret = JSON5.parse(parts.json.content)
+          const ret = JSON5.parse(parts.json.content)
           if (ret.usingComponents) {
             fixUsingComponent(ret.usingComponents, mode)
             usingComponents = usingComponents.concat(Object.keys(ret.usingComponents))
@@ -264,10 +264,12 @@ module.exports = function (content) {
 
       if (template) {
         const extraOptions = {
-          ...template.src ? {
-            ...queryObj,
-            resourcePath
-          } : null,
+          ...template.src
+            ? {
+                ...queryObj,
+                resourcePath
+              }
+            : null,
           hasScoped,
           hasComment,
           isNative,
@@ -289,11 +291,13 @@ module.exports = function (content) {
           const scoped = style.scoped || autoScope
           const extraOptions = {
             // style src会被特殊处理为全局复用样式，不添加resourcePath，添加isStatic及issuerFile
-            ...style.src ? {
-              ...queryObj,
-              isStatic: true,
-              issuerResource: addQuery(this.resource, { type: 'styles' }, true)
-            } : null,
+            ...style.src
+              ? {
+                  ...queryObj,
+                  isStatic: true,
+                  issuerResource: addQuery(this.resource, { type: 'styles' }, true)
+                }
+              : null,
             moduleId,
             scoped
           }
@@ -325,10 +329,12 @@ module.exports = function (content) {
         if (scriptSrcMode) output += `global.currentSrcMode = ${JSON.stringify(scriptSrcMode)}\n`
         // 传递ctorType以补全js内容
         const extraOptions = {
-          ...script.src ? {
-            ...queryObj,
-            resourcePath
-          } : null,
+          ...script.src
+            ? {
+                ...queryObj,
+                resourcePath
+              }
+            : null,
           ctorType
         }
         output += getRequire('script', script, extraOptions) + '\n'

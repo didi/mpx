@@ -23,13 +23,14 @@ function mapFactory (type, store) {
               }
               return stateVal
             }
-          case 'getters':
+          case 'getters': {
             let getterVal = getByPath(store.getters, value, '', '__NOTFOUND__')
             if (getterVal === '__NOTFOUND__') {
               warn(`Unknown getter named [${value}].`)
               getterVal = ''
             }
             return getterVal
+          }
           case 'mutations':
             return store.commit(value, payload)
           case 'actions':
@@ -45,7 +46,7 @@ function checkMapInstance (args) {
   const context = args[args.length - 1]
   const isValid = context && typeof context === 'object' && context.__mpxProxy
   if (!isValid) {
-    error(`调用map**ToInstance时必须传入当前component实例this`)
+    error('调用map**ToInstance时必须传入当前component实例this')
   }
 
   args.splice(-1)

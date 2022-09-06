@@ -39,20 +39,22 @@ export default function proxyEventMixin () {
           $event = $event.detail.data
         }
         if (callbackName) {
-          const params = item.length > 1 ? item.slice(1).map(item => {
-            // 暂不支持$event.xxx的写法
-            // if (/^\$event/.test(item)) {
-            //   this.__mpxTempEvent = $event
-            //   const value = getByPath(this, item.replace('$event', '__mpxTempEvent'))
-            //   // 删除临时变量
-            //   delete this.__mpxTempEvent
-            //   return value
-            if (item === '__mpx_event__') {
-              return $event
-            } else {
-              return item
-            }
-          }) : [$event]
+          const params = item.length > 1
+            ? item.slice(1).map(item => {
+              // 暂不支持$event.xxx的写法
+              // if (/^\$event/.test(item)) {
+              //   this.__mpxTempEvent = $event
+              //   const value = getByPath(this, item.replace('$event', '__mpxTempEvent'))
+              //   // 删除临时变量
+              //   delete this.__mpxTempEvent
+              //   return value
+              if (item === '__mpx_event__') {
+                return $event
+              } else {
+                return item
+              }
+            })
+            : [$event]
           if (typeof this[callbackName] === 'function') {
             returnedValue = this[callbackName].apply(this, params)
           } else {

@@ -41,7 +41,7 @@ export function ref (raw) {
 }
 
 export function toRef (obj, key) {
-  if (!isReactive(obj)) warn(`toRef() expects a reactive object but received a plain one.`)
+  if (!isReactive(obj)) warn('toRef() expects a reactive object but received a plain one.')
   if (!hasOwn(obj, key)) set(obj, key)
   const val = obj[key]
   if (isRef(val)) return val
@@ -54,7 +54,7 @@ export function toRef (obj, key) {
 }
 
 export function toRefs (obj) {
-  if (!isReactive(obj)) warn(`toRefs() expects a reactive object but received a plain one.`)
+  if (!isReactive(obj)) warn('toRefs() expects a reactive object but received a plain one.')
   if (!isPlainObject(obj)) return obj
   const result = {}
   Object.keys(obj).forEach((key) => {

@@ -59,7 +59,7 @@ const rulesMap = {
 }
 
 export function getConvertRule (convertMode) {
-  let rule = rulesMap[convertMode]
+  const rule = rulesMap[convertMode]
   if (!rule || !rule.lifecycle) {
     error(`Absence of convert rule for ${convertMode}, please check.`)
   } else {

@@ -120,7 +120,7 @@ export function defineReactive (obj, key, val, shallow) {
     enumerable: true,
     configurable: true,
     get: function reactiveGetter () {
-      let value = getter ? getter.call(obj) : val
+      const value = getter ? getter.call(obj) : val
       if (Dep.target) {
         dep.depend()
         if (childOb) {

@@ -68,7 +68,7 @@ describe('test storage', () => {
     })
 
     expect(success.mock.calls.length).toBe(1)
-    expect(success.mock.calls[0][0]['data']).toEqual(storageSyncValue)
+    expect(success.mock.calls[0][0].data).toEqual(storageSyncValue)
     expect(fail.mock.calls.length).toBe(0)
     expect(complete.mock.calls.length).toBe(1)
   })
@@ -93,7 +93,7 @@ describe('test storage', () => {
     })
 
     expect(success.mock.calls.length).toBe(1)
-    expect(success.mock.calls[0][0]['keys']).toEqual([storageKey, storageSyncKey])
+    expect(success.mock.calls[0][0].keys).toEqual([storageKey, storageSyncKey])
     expect(fail.mock.calls.length).toBe(0)
     expect(complete.mock.calls.length).toBe(1)
   })

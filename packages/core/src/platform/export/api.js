@@ -4,7 +4,7 @@ import { set, del, reactive } from '../../observer/reactive'
 import { watch } from '../../observer/watch'
 import { injectMixins } from '../../core/injectMixins'
 
-let APIs = {
+const APIs = {
   injectMixins,
   mixin: injectMixins,
   observable: reactive,
@@ -15,7 +15,7 @@ let APIs = {
   implement
 }
 
-let InstanceAPIs = {
+const InstanceAPIs = {
   $set: set,
   $delete: del
 }

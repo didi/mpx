@@ -108,7 +108,7 @@ class SizeReportPlugin {
       }
 
       const reportGroupsWithNoEntryRules = reportGroups.filter((reportGroup) => {
-        return reportGroup.hasOwnProperty('noEntryRules')
+        return !!reportGroup.noEntryRules
       })
 
       const moduleEntriesMap = new Map()
@@ -166,7 +166,7 @@ class SizeReportPlugin {
 
       function getPackageName (fileName) {
         fileName = toPosix(fileName)
-        for (let packageName of subpackages) {
+        for (const packageName of subpackages) {
           if (fileName.startsWith(packageName + '/')) return packageName
         }
         return 'main'
@@ -331,7 +331,7 @@ class SizeReportPlugin {
               // 有些contextModule可忽略
               if (!module.resource && !module.rootModule) return
 
-              let parsed = parseRequest(module.resource || module.rootModule.resource)
+              const parsed = parseRequest(module.resource || module.rootModule.resource)
               // 处理为相对路径以减少体积
               parsed.resourcePath = getRelativePathToProject(parsed.resourcePath)
               if (parsed.queryObj && parsed.queryObj.resolve) return
@@ -353,7 +353,7 @@ class SizeReportPlugin {
 
       function formatAllSize (toFormatData) {
         if (Array.isArray(toFormatData) || Object.prototype.toString.call(toFormatData) === '[object Object]') {
-          for (let key in toFormatData) {
+          for (const key in toFormatData) {
             if (Array.isArray(toFormatData[key]) || Object.prototype.toString.call(toFormatData[key]) === '[object Object]') formatAllSize(toFormatData[key])
             if (typeof toFormatData[key] === 'number') toFormatData[key] = formatSize(toFormatData[key])
           }
@@ -363,7 +363,7 @@ class SizeReportPlugin {
 
       function formatRedundanceReport () {
         const formatedReport = []
-        for (let resourcePath in resourcePathMap) {
+        for (const resourcePath in resourcePathMap) {
           const redundantSize = resourcePathMap[resourcePath].redundantSize
           const sizeInfoItem = {
             resourcePath,
@@ -413,7 +413,7 @@ class SizeReportPlugin {
       })
 
       // Generate original size info
-      for (let name in compilation.assets) {
+      for (const name in compilation.assets) {
         const packageName = getPackageName(name)
         const assetModules = mpx.assetsModulesMap.get(name)
         const assetInfo = compilation.assetsInfo.get(name)
@@ -515,7 +515,7 @@ class SizeReportPlugin {
           fillPackagesSizeInfo(packageName, size)
           sizeSummary.chunkSize += size
           sizeSummary.totalSize += size
-          for (let id in parsedLocations) {
+          for (const id in parsedLocations) {
             const module = modulesMapById[id]
             const { start, end } = parsedLocations[id]
             const moduleSize = Buffer.byteLength(content.slice(start, end))

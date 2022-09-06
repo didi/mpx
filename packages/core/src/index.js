@@ -20,8 +20,21 @@ export {
 } from './observer/scheduler'
 
 export {
-  onBeforeCreate,
-  onCreated,
+  BEFORECREATE,
+  CREATED,
+  BEFOREMOUNT,
+  MOUNTED,
+  BEFOREUPDATE,
+  UPDATED,
+  BEFOREUNMOUNT,
+  UNMOUNTED,
+  ONLOAD,
+  ONSHOW,
+  ONHIDE,
+  ONRESIZE
+} from './core/innerLifecycle'
+
+export {
   onBeforeMount,
   onMounted,
   onBeforeUpdate,

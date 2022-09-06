@@ -152,7 +152,7 @@ interface ComponentOpt<D, P, C, M, Mi extends Array<any>, S extends Record<any, 
   setup?: (props: GetPropsType<P & UnboxMixinsField<Mi, 'properties'>>, context: {
     triggerEvent: WechatMiniprogram.Component.InstanceMethods<Record<string, any>>['triggerEvent']
     refs: ObjectOf<WechatMiniprogram.NodesRef & ComponentIns<{}, {}, {}, {}, []>>
-    forceUpdate(params?: object, callback?: () => void): void
+    forceUpdate (params?: object, callback?: () => void): void
     selectComponent: ReplaceWxComponentIns['selectComponent']
     selectAllComponents: ReplaceWxComponentIns['selectAllComponents']
     createSelectorQuery: WechatMiniprogram.Component.InstanceMethods<Record<string, any>>['createSelectorQuery']
@@ -365,7 +365,7 @@ export interface Mpx {
 
   i18n: {
     readonly global: UseI18n
-    dispose(): void
+    dispose (): void
   }
 }
 
@@ -392,7 +392,7 @@ export interface Ref<T = any> {
    * We need this to be in public d.ts but don't want it to show up in IDE
    * autocomplete, so we use a private Symbol instead.
    */
-  [RefSymbol]: true
+    [RefSymbol]: true
 }
 
 type CollectionTypes = IterableCollections | WeakCollections
@@ -416,7 +416,8 @@ type WeakCollections = WeakMap<any, any> | WeakSet<any>
  * augmentations in its generated d.ts, so we have to manually append them
  * to the final generated d.ts in our build process.
  */
-export interface RefUnwrapBailTypes { }
+export interface RefUnwrapBailTypes {
+}
 
 export type UnwrapRef<T> = T extends ShallowRef<infer V>
   ? V
@@ -424,18 +425,17 @@ export type UnwrapRef<T> = T extends ShallowRef<infer V>
     ? UnwrapRefSimple<V>
     : UnwrapRefSimple<T>
 
-export type UnwrapRefSimple<T> = T extends
-  | Function
+export type UnwrapRefSimple<T> = T extends | Function
   | CollectionTypes
   | string | number | boolean
   | Ref
   | RefUnwrapBailTypes[keyof RefUnwrapBailTypes]
-    ? T
-    : T extends Array<any>
-      ? { [K in keyof T]: UnwrapRefSimple<T[K]> }
-      : T extends object & { [ShallowReactiveMarker]?: never } // not a shallowReactive
-        ? { [P in keyof T]: P extends symbol ? T[P] : UnwrapRef<T[P]> }
-        : T
+  ? T
+  : T extends Array<any>
+    ? { [K in keyof T]: UnwrapRefSimple<T[K]> }
+    : T extends object & { [ShallowReactiveMarker]?: never } // not a shallowReactive
+      ? { [P in keyof T]: P extends symbol ? T[P] : UnwrapRef<T[P]> }
+      : T
 
 // If the the type T accepts type "any", output type Y, otherwise output type N.
 // https://stackoverflow.com/questions/49927523/disallow-call-with-any/49928360#49928360
@@ -501,13 +501,13 @@ interface WatchOptions extends WatchEffectOptions {
 }
 
 interface EffectScope {
-  run<T>(fn: () => T): T | undefined // 如果作用域不活跃就为 undefined
-  stop(): void
+  run<T> (fn: () => T): T | undefined // 如果作用域不活跃就为 undefined
+  stop (): void
 }
 
 
 type StringObj = {
-  [k: string] : string | StringObj
+  [k: string]: string | StringObj
 }
 
 interface UseI18n {
@@ -518,132 +518,160 @@ interface UseI18n {
   readonly isGlobal: boolean
   inheritLocale: boolean
   fallbackRoot: boolean
+
   t (key: string, values?: I18nValues): string
+
   t (key: string, choice: number, values?: I18nValues): string
+
   te (key: string): boolean
+
   tm (key: string): any
+
   getLocaleMessage (locale: string): StringObj
+
   setLocaleMessage (locale: string, messages: StringObj): void
+
   mergeLocaleMessage (locale: string, messages: StringObj): void
 }
 
 
-export function ref<T extends object>(
+export function ref<T extends object> (
   value: T
 ): [T] extends [Ref] ? T : Ref<UnwrapRef<T>>
-export function ref<T>(value: T): Ref<UnwrapRef<T>>
-export function ref<T = any>(): Ref<T | undefined>
+export function ref<T> (value: T): Ref<UnwrapRef<T>>
+export function ref<T = any> (): Ref<T | undefined>
 
-export function unref<T>(ref: T | Ref<T>): T
+export function unref<T> (ref: T | Ref<T>): T
 
-export function toRef<T extends object, K extends keyof T>(object: T, key: K): ToRef<T[K]>
-export function toRef<T extends object, K extends keyof T>(object: T, key: K, defaultValue: T[K]): ToRef<Exclude<T[K], undefined>>
+export function toRef<T extends object, K extends keyof T> (object: T, key: K): ToRef<T[K]>
+export function toRef<T extends object, K extends keyof T> (object: T, key: K, defaultValue: T[K]): ToRef<Exclude<T[K], undefined>>
 
-export function toRefs<T extends object>(object: T): ToRefs<T>
+export function toRefs<T extends object> (object: T): ToRefs<T>
 
-export function isRef<T>(r: Ref<T> | unknown): r is Ref<T>
-export function isRef(r: any): r is Ref
+export function isRef<T> (r: Ref<T> | unknown): r is Ref<T>
+export function isRef (r: any): r is Ref
 
-export function customRef<T>(factory: CustomRefFactory<T>): Ref<T>
+export function customRef<T> (factory: CustomRefFactory<T>): Ref<T>
 
-export function shallowRef<T extends object>(value: T): T extends Ref ? T : ShallowRef<T>
-export function shallowRef<T>(value: T): ShallowRef<T>
-export function shallowRef<T = any>(): ShallowRef<T | undefined>
+export function shallowRef<T extends object> (value: T): T extends Ref ? T : ShallowRef<T>
+export function shallowRef<T> (value: T): ShallowRef<T>
+export function shallowRef<T = any> (): ShallowRef<T | undefined>
 
-export function triggerRef(ref: Ref): void
+export function triggerRef (ref: Ref): void
 
-export function reactive<T extends object>(target: T): Reactive<T>
+export function reactive<T extends object> (target: T): Reactive<T>
 
-export function isReactive(value: unknown): boolean
+export function isReactive (value: unknown): boolean
 
 /**
  * Return a shallowly-reactive copy of the original object, where only the root
  * level properties are reactive. It also does not auto-unwrap refs (even at the
  * root level).
  */
-export function shallowReactive<T extends object>(target: T): ShallowReactive<T>
+export function shallowReactive<T extends object> (target: T): ShallowReactive<T>
 
-export function computed<T>(
+export function computed<T> (
   getter: (...args: any[]) => T
 ): ComputedRef<T>
-export function computed<T>(
+export function computed<T> (
   options: WritableComputedOptions<T>
 ): WritableComputedRef<T>
 
 
-export function watchEffect(
+export function watchEffect (
   effect: (onCleanup: (cleanupFn: () => void) => void) => void,
   options?: WatchEffectOptions
 ): () => void
 
-export function watchSyncEffect(
+export function watchSyncEffect (
   effect: (onCleanup: (cleanupFn: () => void) => void) => void,
   options?: WatchEffectOptions
 ): void
 
-export function watchPostEffect(
+export function watchPostEffect (
   effect: (onCleanup: (cleanupFn: () => void) => void) => void,
   options?: WatchEffectOptions
 ): void
 
-export function watch<T extends MultiWatchSources>(
+export function watch<T extends MultiWatchSources> (
   sources: [...T],
   callback: WatchCallback<T>,
   options?: WatchOptions
 ): () => void
-export function watch<T extends Readonly<MultiWatchSources>>(
+export function watch<T extends Readonly<MultiWatchSources>> (
   sources: T,
   callback: WatchCallback<T>,
   options?: WatchOptions
 ): () => void
-export function watch<T>( // for single watcher
+export function watch<T> ( // for single watcher
   source: WatchSource<T>,
   callback: WatchCallback<T>,
   options?: WatchOptions
 ): () => void
-export function watch<T extends Reactive<object>>( // for reactive value
+export function watch<T extends Reactive<object>> ( // for reactive value
   source: T,
   callback: WatchCallback<T>,
   options?: WatchOptions
 ): () => void
 
-export function effectScope(detached?: boolean): EffectScope
+export function effectScope (detached?: boolean): EffectScope
 
-export function getCurrentScope(): EffectScope | undefined
+export function getCurrentScope (): EffectScope | undefined
 
-export function onScopeDispose(fn: () => void): void
+export function onScopeDispose (fn: () => void): void
 
-export function set<T extends object>(target: T, key: string | number, value: any): void
+export function set<T extends object> (target: T, key: string | number, value: any): void
 
-export function del<T extends object>(target: T, key: keyof T): void
+export function del<T extends object> (target: T, key: keyof T): void
 
 // nextTick
-export function nextTick(fn: () => any): void
+export function nextTick (fn: () => any): void
 
-// Life Circle
-export function onBeforeCreate(callback: () => void): void
-export function onCreated(callback: () => void): void
-export function onBeforeMount(callback: () => void): void
-export function onMounted(callback: () => void): void
-export function onUpdated(callback: () => void): void
-export function onBeforeUnmount(callback: () => void): void
-export function onUnmounted(callback: () => void): void
-export function onLoad<T extends object>(callback: (query: T) => void): void
-export function onShow(callback: () => void): void
-export function onHide(callback: () => void): void
-export function onResize(callback: () => void): void
+// lifecycle
+export function onBeforeMount (callback: () => void): void
+
+export function onMounted (callback: () => void): void
+
+export function onBeforeUpdate (callback: () => void): void
+
+export function onUpdated (callback: () => void): void
+
+export function onBeforeUnmount (callback: () => void): void
+
+export function onUnmounted (callback: () => void): void
+
+export function onLoad<T extends object> (callback: (query: T) => void): void
+
+export function onShow (callback: () => void): void
+
+export function onHide (callback: () => void): void
+
+export function onResize (callback: () => void): void
 
 // get instance
-export function getCurrentInstance<T extends object>(): { target: T }
+export function getCurrentInstance<T extends object> (): { target: T }
 
 // I18n
-
 export function useI18n<Options extends {
   inheritLocale?: boolean
   fallbackRoot?: boolean
   locale?: string
   fallbackLocale?: string
   messages: StringObj
-}>(
+}> (
   options?: Options
 ): UseI18n
+
+// inner lifecycle
+export const BEFORECREATE: string
+export const CREATED: string
+export const BEFOREMOUNT: string
+export const MOUNTED: string
+export const BEFOREUPDATE: string
+export const UPDATED: string
+export const BEFOREUNMOUNT: string
+export const UNMOUNTED: string
+export const ONLOAD: string
+export const ONSHOW: string
+export const ONHIDE: string
+export const ONRESIZE: string

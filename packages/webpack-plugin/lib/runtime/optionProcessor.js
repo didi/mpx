@@ -1,4 +1,5 @@
 import { isBrowser } from './env'
+import { hasOwn } from './utils'
 
 export default function processOption (
   option,
@@ -18,7 +19,7 @@ export default function processOption (
   if (ctorType === 'app') {
     // 对于app中的组件需要全局注册
     for (const componentName in componentsMap) {
-      if (componentsMap.hasOwnProperty(componentName)) {
+      if (hasOwn(componentsMap, componentName)) {
         const component = componentsMap[componentName]
         Vue.component(componentName, component)
       }
@@ -49,11 +50,12 @@ export default function processOption (
           }
           animates.forEach((itemAnimation) => {
             switch (itemAnimation.type) {
-              case 'style':
+              case 'style': {
                 const [key, value] = itemAnimation.args
                 dynamicStyle[key] = value
                 property.push(key)
                 break
+              }
               default:
                 dynamicStyle.transform += `${itemAnimation.type}(${itemAnimation.args}) `
                 if (!property.includes('transform')) {
@@ -98,7 +100,7 @@ export default function processOption (
         if (typeof cssText === 'string') {
           cssText.split(listDelimiter).forEach((item) => {
             if (item) {
-              var tmp = item.split(propertyDelimiter)
+              const tmp = item.split(propertyDelimiter)
               tmp.length > 1 && (parsedStyleObj[tmp[0].trim()] = tmp[1].trim())
             }
           })
@@ -121,7 +123,7 @@ export default function processOption (
       if (style) {
         style.forEach(item => {
           parseStyleText(item)
-          for (let key in parsedStyleObj) {
+          for (const key in parsedStyleObj) {
             parsedStyleObj[key] = transRpxStyleFn(parsedStyleObj[key])
           }
         })
@@ -132,7 +134,7 @@ export default function processOption (
     const routes = []
 
     for (const pagePath in pagesMap) {
-      if (pagesMap.hasOwnProperty(pagePath)) {
+      if (hasOwn(pagesMap, pagePath)) {
         const page = pagesMap[pagePath]
         routes.push({
           path: '/' + pagePath,
@@ -312,7 +314,7 @@ export default function processOption (
               if (global.__mpxAppCbs && global.__mpxAppCbs.show) {
                 global.__mpxAppCbs.show.forEach((cb) => {
                   // todo 实现app.onShow参数
-                  /* eslint-disable standard/no-callback-literal */
+                  /* eslint-disable node/no-callback-literal */
                   cb({})
                 })
               }
@@ -330,7 +332,7 @@ export default function processOption (
   } else {
     // 局部注册页面和组件中依赖的组件
     for (const componentName in componentsMap) {
-      if (componentsMap.hasOwnProperty(componentName)) {
+      if (hasOwn(componentsMap, componentName)) {
         const component = componentsMap[componentName]
         if (!option.components) {
           option.components = {}
