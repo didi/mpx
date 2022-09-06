@@ -8,7 +8,7 @@ const parseRequest = require('../utils/parse-request')
 // Special compiler macros
 const DEFINE_PROPS = 'defineProps'
 const DEFINE_OPTIONS = 'defineOptions'
-const DEFINE_RETURNS = 'defineReturns'
+const DEFINE_EXPOSE = 'defineExpose'
 const WITH_DEFAULTS = 'withDefaults'
 
 const MPX_CORE = '@mpxjs/core'
@@ -68,7 +68,7 @@ function compileScriptSetup (
   let endOffset = 0
   let hasDefinePropsCall = false
   let hasDefineOptionsCall = false
-  let hasDefineReturnsCall = false
+  let hasDefineExposeCall = false
 
   let propsRuntimeDecl
   let propsRuntimeDefaults
@@ -76,7 +76,7 @@ function compileScriptSetup (
   let propsTypeDecl
   let propsIdentifier
   let optionsRuntimeDecl
-  let returnsRuntimeDecl
+  let exposeRuntimeDecl
 
   const scriptSetupLang = scriptSetup && scriptSetup.lang
   const isTS =
@@ -124,18 +124,18 @@ function compileScriptSetup (
     }
   }
 
-  function processDefineReturns (node, declId) {
-    if (!isCallOf(node, DEFINE_RETURNS)) {
+  function processDefineExpose (node, declId) {
+    if (!isCallOf(node, DEFINE_EXPOSE)) {
       return false
     }
-    if (hasDefineReturnsCall) {
-      error(`duplicate ${DEFINE_RETURNS}() call`, node)
+    if (hasDefineExposeCall) {
+      error(`duplicate ${DEFINE_EXPOSE}() call`, node)
     }
-    hasDefineReturnsCall = true
-    returnsRuntimeDecl = node.arguments[0]
+    hasDefineExposeCall = true
+    exposeRuntimeDecl = node.arguments[0]
 
     if (node.typeParameters) {
-      error(`${DEFINE_RETURNS} is not support type parameters`, node)
+      error(`${DEFINE_EXPOSE} is not support type parameters`, node)
     }
 
     if (declId) {
@@ -431,7 +431,7 @@ function compileScriptSetup (
       if (
         processDefineProps(node.expression) ||
                 processDefineOptions(node.expression) ||
-                processDefineReturns(node.expression) ||
+                processDefineExpose(node.expression) ||
                 processWithDefaults(node.expression)
       ) {
         _s.remove(node.start, node.end)
@@ -561,8 +561,8 @@ function compileScriptSetup (
 
   // 5. generate return statement
   let returned
-  if (hasDefineReturnsCall && returnsRuntimeDecl) {
-    const declCode = content.slice(returnsRuntimeDecl.start, returnsRuntimeDecl.end).trim()
+  if (hasDefineExposeCall && exposeRuntimeDecl) {
+    const declCode = content.slice(exposeRuntimeDecl.start, exposeRuntimeDecl.end).trim()
     returned = `${declCode}`
   } else {
     const allBindings = {
@@ -659,7 +659,7 @@ function canNeverBeRef (
 }
 
 function isCompilerMacro (c) {
-  return c === DEFINE_PROPS || c === DEFINE_OPTIONS || c === DEFINE_RETURNS
+  return c === DEFINE_PROPS || c === DEFINE_OPTIONS || c === DEFINE_EXPOSE
 }
 
 function registerBinding (
