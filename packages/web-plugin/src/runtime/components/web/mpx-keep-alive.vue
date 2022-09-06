@@ -1,5 +1,5 @@
 <script>
-	import { inBrowser } from '../../utils'
+  import { inBrowser } from '../../utils'
 
   function isDef (v) {
     return v !== undefined && v !== null
