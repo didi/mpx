@@ -1402,10 +1402,10 @@ try {
               break
             case 'script':
               if (queryObj.setup) {
-                let selectorIndex = 0
+                let selectorIndex = -1
                 loaders.forEach((loader, index) => {
                   const currentLoader = toPosix(loader.loader)
-                  if (currentLoader.includes('selector')) {
+                  if (currentLoader.includes('selector') && selectorIndex === -1) {
                     selectorIndex = index
                   }
                 })

@@ -336,7 +336,7 @@ module.exports = function (content) {
                 resourcePath
               }
             : null,
-          ...script.attrs,
+          setup: script.attrs.setup,
           ctorType
         }
         output += getRequire('script', script, extraOptions) + '\n'
