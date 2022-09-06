@@ -20,7 +20,8 @@ import { matchCondition } from '@mpxjs/utils/match-condition'
 import { preProcessDefs } from '@mpxjs/utils/index'
 import hash from 'hash-sum'
 import stringifyLoadersAndResource from '@mpxjs/utils/stringify-loaders-resource'
-import async, { any } from 'async'
+import async from 'async'
+import { processOptions, Options } from '../options'
 import mpx from './mpx'
 import { NormalModule, DefinePlugin, ExternalsPlugin, Compiler, Dependency, Module } from 'webpack'
 
@@ -31,95 +32,15 @@ const isProductionLikeMode = (options: any) => {
   return options.mode === 'production' || !options.mode
 }
 
-const externalsMap = {
-  weui: /^weui-miniprogram/
-} as any
-
 const warnings = [] as any[]
 const errors = [] as any[]
 
-type MpxWebpackPluginOptType = {
-  mode: string
-  env: string
-  srcMode: string
-  externalClasses: string[]
-  writeMode: string
-  autoScopeRules: Record<string, any>
-  forceDisableProxyCtor: boolean
-  transMpxRules: Record<string, any>
-  defs: {
-    __mpx_mode__: string
-    __mpx_src_mode__: string
-    __mpx_env__: string
-    [k: string]: any
-  }
-  modeRules: Record<string, any>
-  externals: Array<any>
-  projectRoot: string
-  postcssInlineConfig: Record<string, any>
-  transRpxRules: Object
-  decodeHTMLText: boolean
-  i18n: Object
-  checkUsingComponents: boolean
-  pathHashMode: string
-  fileConditionRules: Record<string, any>
-  customOutputPath: Object
-  webConfig: Record<string, any>
-}
 class MpxWebpackPlugin {
-  options:MpxWebpackPluginOptType
+  options: Options
 
-  constructor(options: MpxWebpackPluginOptType) {
+  constructor(options: Options) {
     options = options || {}
-    options.mode = options.mode || 'wx'
-    options.env = options.env || ''
-
-    options.srcMode = options.srcMode || options.mode
-    if (options.mode !== options.srcMode && options.srcMode !== 'wx') {
-      errors.push(
-        'MpxWebpackPlugin supports srcMode to be "wx" only temporarily!'
-      )
-    }
-    if (options.mode === 'web' && options.srcMode !== 'wx') {
-      errors.push(
-        'MpxWebpackPlugin supports mode to be "web" only when srcMode is set to "wx"!'
-      )
-    }
-    options.externalClasses = options.externalClasses || [
-      'custom-class',
-      'i-class'
-    ]
-    options.writeMode = options.writeMode || 'changed'
-    options.autoScopeRules = options.autoScopeRules || {}
-    options.forceDisableProxyCtor = options.forceDisableProxyCtor || false
-    options.transMpxRules = options.transMpxRules || {
-      include: () => true
-    }
-    // 通过默认defs配置实现mode及srcMode的注入，简化内部处理逻辑
-    options.defs = Object.assign({}, options.defs, {
-      __mpx_mode__: options.mode,
-      __mpx_src_mode__: options.srcMode,
-      __mpx_env__: options.env
-    })
-    // 批量指定源码mode
-    options.modeRules = options.modeRules || {}
-    options.externals = (options.externals || []).map(external => {
-      return externalsMap[external] || external
-    })
-    options.projectRoot = options.projectRoot || process.cwd()
-    options.postcssInlineConfig = options.postcssInlineConfig || {}
-    options.transRpxRules = options.transRpxRules || null
-    options.decodeHTMLText = options.decodeHTMLText || false
-    options.i18n = options.i18n || null
-    options.checkUsingComponents = options.checkUsingComponents || false
-    options.pathHashMode = options.pathHashMode || 'absolute'
-    // 文件条件编译
-    options.fileConditionRules = options.fileConditionRules || {
-      include: () => true
-    }
-    options.customOutputPath = options.customOutputPath || null
-    options.webConfig = options.webConfig || {}
-    this.options = options
+    this.options = processOptions(options)
     // Hack for buildDependencies
     const rawResolveBuildDependencies =
     FileSystemInfo.prototype.resolveBuildDependencies
@@ -249,11 +170,7 @@ class MpxWebpackPlugin {
 
     const defs = this.options.defs
 
-    const defsOpt: {[k: string]: any} = {
-      __mpx_wxs__: DefinePlugin.runtimeValue(({ module }) => {
-        return JSON.stringify(!!module.wxs)
-      })
-    }
+    const defsOpt: {[k: string]: any} = {}
 
     Object.keys(defs).forEach(key => {
       defsOpt[key] = JSON.stringify(defs[key])
@@ -337,8 +254,6 @@ class MpxWebpackPlugin {
               main: {}
             },
             usingComponents: {},
-            // todo es6 map读写性能高于object，之后会逐步替换
-            vueContentCache: new Map(),
             wxsAssetsCache: new Map(),
             currentPackageRoot: '',
             wxsContentMap: {},
@@ -457,7 +372,7 @@ class MpxWebpackPlugin {
                 alreadyOutputted
               }
             }
-            // TODO: 
+            // TODO:
           } as Record<string, any>
           const initAttrs = Object.keys(initMpxData)
           initAttrs.forEach((key: string) => {
@@ -760,7 +675,7 @@ class MpxWebpackPlugin {
                 loaderIndex = vueStyleLoaderIndex
               }
               if (loaderIndex > -1) {
-                // TODO: 
+                // TODO:
                 loaders && loaders.splice(loaderIndex + 1, 0, {
                   loader: styleCompilerPath,
                   options:

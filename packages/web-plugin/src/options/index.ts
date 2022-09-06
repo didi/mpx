@@ -15,22 +15,14 @@ export interface Options {
     include?: FilterPattern
     exclude?: FilterPattern
   }
-  autoVirtualHostRules?: Record<string, unknown>
-  forceDisableInject?: boolean
-  forceDisableProxyCtor?: boolean
   transMpxRules?: Record<string, () => boolean>
   defs?: Record<string, unknown>
   modeRules?: Record<string, unknown>
-  generateBuildMap?: false
-  attributes?: string[]
   externals?: string[] | RegExp[]
   projectRoot?: string
-  forceUsePageCtor?: boolean
   postcssInlineConfig?: Record<string, unknown>
   transRpxRules?: null
-  auditResource?: boolean
   decodeHTMLText?: boolean
-  nativeOptions?: Record<string, unknown>
   i18n?: Record<string, string> | null
   checkUsingComponents?: boolean
   reportSize?: boolean | null
@@ -38,13 +30,9 @@ export interface Options {
     | 'absolute'
     | 'relative'
     | ((resourcePath: string, projectRoot: string) => string)
-  forceDisableBuiltInLoader?: boolean
-  useRelativePath?: boolean
-  subpackageModulesRules?: Record<string, unknown>
-  forceMainPackageRules?: Record<string, unknown>
-  forceProxyEventRules?: Record<string, unknown>
-  miniNpmPackages?: string[]
-  fileConditionRules?: string | RegExp | (string | RegExp)[]
+  fileConditionRules?: Record<string, () => boolean>
+  customOutputPath?: Function | null
+  webConfig?:Record<string, unknown>
 }
 
 export interface ResolvedOptions extends Required<Options> {
@@ -78,12 +66,8 @@ export function processOptions(rawOptions: Options): ResolvedOptions {
     'custom-class',
     'i-class'
   ]
-  rawOptions.resolveMode = rawOptions.resolveMode || 'webpack'
   rawOptions.writeMode = rawOptions.writeMode || 'changed'
   rawOptions.autoScopeRules = rawOptions.autoScopeRules || {}
-  rawOptions.autoVirtualHostRules = rawOptions.autoVirtualHostRules || {}
-  rawOptions.forceDisableInject = rawOptions.forceDisableInject || false
-  rawOptions.forceDisableProxyCtor = rawOptions.forceDisableProxyCtor || false
   rawOptions.transMpxRules = rawOptions.transMpxRules || {
     include: () => true
   }
@@ -96,35 +80,23 @@ export function processOptions(rawOptions: Options): ResolvedOptions {
   }
   // 批量指定源码mode
   rawOptions.modeRules = rawOptions.modeRules || {}
-  rawOptions.generateBuildMap = rawOptions.generateBuildMap || false
-  rawOptions.attributes = rawOptions.attributes || []
   rawOptions.externals = (rawOptions.externals || []).map((external) => {
     return typeof external === 'string'
       ? externalsMap[external] || external
       : external
   })
   rawOptions.projectRoot = rawOptions.projectRoot || process.cwd()
-  rawOptions.forceUsePageCtor = rawOptions.forceUsePageCtor || false
   rawOptions.postcssInlineConfig = rawOptions.postcssInlineConfig || {}
   rawOptions.transRpxRules = rawOptions.transRpxRules || null
-  rawOptions.auditResource = rawOptions.auditResource || false
   rawOptions.decodeHTMLText = rawOptions.decodeHTMLText || false
-  rawOptions.nativeOptions = {
-    cssLangs: ['css', 'less', 'stylus', 'scss', 'sass'],
-    ...rawOptions.nativeOptions
-  }
   rawOptions.i18n = rawOptions.i18n || null
   rawOptions.checkUsingComponents = rawOptions.checkUsingComponents || false
-  rawOptions.reportSize = rawOptions.reportSize || null
   rawOptions.pathHashMode = rawOptions.pathHashMode || 'absolute'
-  rawOptions.forceDisableBuiltInLoader =
-    rawOptions.forceDisableBuiltInLoader || false
-  rawOptions.useRelativePath = rawOptions.useRelativePath || false
-  rawOptions.subpackageModulesRules = rawOptions.subpackageModulesRules || {}
-  rawOptions.forceMainPackageRules = rawOptions.forceMainPackageRules || {}
-  rawOptions.forceProxyEventRules = rawOptions.forceProxyEventRules || {}
-  rawOptions.miniNpmPackages = rawOptions.miniNpmPackages || []
-  rawOptions.fileConditionRules = rawOptions.fileConditionRules || [/\.mpx/]
+  rawOptions.fileConditionRules = rawOptions.fileConditionRules || {
+    include: () => true
+  }
+  rawOptions.customOutputPath = rawOptions.customOutputPath || null
+  rawOptions.webConfig = rawOptions.webConfig || {}
   const options: ResolvedOptions = {
     ...(rawOptions as Required<Options>),
     isProduction: process.env.NODE_ENV === 'production',
