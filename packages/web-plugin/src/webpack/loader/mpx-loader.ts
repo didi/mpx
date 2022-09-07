@@ -26,7 +26,6 @@ module.exports = function (content) {
   if (!mpx) {
     return content
   }
-  console.log(2222, mpx)
   const { resourcePath, queryObj } = parseRequest(this.resource)
 
   const packageRoot = queryObj.packageRoot || mpx.currentPackageRoot
