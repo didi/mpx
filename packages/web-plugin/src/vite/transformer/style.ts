@@ -48,7 +48,7 @@ async function mpxTransformStyle(
   }
 
   if (options.mode === 'web') {
-    plugins.push(styleCompiler.vw())
+    plugins.push(styleCompiler.vw({ transRpxFn: options.webConfig.transRpxFn }))
   }
 
   const result = await postcss(plugins).process(code, {

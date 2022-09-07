@@ -20,8 +20,7 @@ export const renderPageRouteCode = (importer: string): string => {
 
 export const renderEntryCode = async (
   importer: string,
-  options: ResolvedOptions,
-  pluginContext: PluginContext
+  options: ResolvedOptions
 ): Promise<string> => {
   return `
     ${genImport(addQuery(importer, { app: true }), 'App')}
@@ -37,8 +36,8 @@ export const renderEntryCode = async (
     BScroll.use(PullDown)
     global.BScroll = BScroll
     new Vue({
-      el: '#app',
-      ${options.i18n && !options.forceDisableInject ? `i18n,` : ''}
+      el: ${options.webConfig.el || '"#app"'},
+      ${options.i18n ? `i18n,` : ''}
       render: function(h){
         return h(App)
       }
@@ -49,7 +48,7 @@ export const renderEntryCode = async (
 export function renderI18nCode(options: ResolvedOptions): string {
   const content = []
   const { i18n } = options
-  if (i18n && !options.forceDisableInject) {
+  if (i18n) {
     content.unshift(`import Vue from 'vue'`)
     content.unshift(`import VueI18n from 'vue-i18n'`)
     content.push(`Vue.use(VueI18n)`)
