@@ -30,7 +30,7 @@
     }
   },
   "scripts": {
-    "dev": "tsup --watch",
+    "dev": "tsup --watch --dts",
     "build": "tsup --env.NODE_ENV production"
   },
   "directories": {

@@ -23,7 +23,6 @@ import mpxResolveEntryPlugin from './plugins/mpxResolveEntryPlugin'
 import parseRequest from '../utils/parseRequest'
 import { getDescriptor } from './utils/descriptorCache'
 import { stringifyObject } from '../utils/stringify'
-import ensureArray from '../utils/ensureArray'
 import { createWxsPlugin } from './plugins/wxsPlugin'
 
 function createMpxPlugin(
@@ -181,6 +180,7 @@ export default function mpx(options: Options = {}): Plugin[] {
             // prebuild for addExtensions
             esbuildCustomExtensionsPlugin({
               include: /@mpxjs/,
+              fileConditionRules,
               extensions: customExtensions
             })
           ]
@@ -190,7 +190,8 @@ export default function mpx(options: Options = {}): Plugin[] {
     createWxsPlugin(),
     // add custom extensions
     customExtensionsPlugin({
-      include: [...ensureArray(fileConditionRules), /@mpxjs/],
+      include: [/@mpxjs/],
+      fileConditionRules,
       extensions: customExtensions
     }),
     // ensure mpx entry point
