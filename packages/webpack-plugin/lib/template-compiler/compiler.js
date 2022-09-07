@@ -1990,9 +1990,13 @@ function processAtMode (el) {
     }
 
     const conditionMap = {}
+    let hasDefineMode = false
 
     modeStr.split('|').forEach(item => {
       const arr = item.split(':')
+      if (arr[0]) {
+        hasDefineMode = true
+      }
       const key = arr[0] || mode
       conditionMap[key] = arr.slice(1)
     })
@@ -2006,7 +2010,9 @@ function processAtMode (el) {
       const processedAttr = { name: replacedAttrName, value: attrValue }
       if (modeArr.includes(mode) && (!conditionMap[mode].length || conditionMap[mode].includes(env))) {
         if (!replacedAttrName) {
-          el._atModeStatus = 'match'
+          if (hasDefineMode) {
+            el._atModeStatus = 'match'
+          }
         } else {
           // 如果命中了指定的mode，则先存在el上，等跑完转换后再挂回去
           el.noTransAttrs ? el.noTransAttrs.push(processedAttr) : el.noTransAttrs = [processedAttr]
