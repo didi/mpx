@@ -5,6 +5,7 @@ export default defineConfig({
   sourcemap: false,
   minify: false,
   clean: true,
+  format: ['esm', 'cjs'],
   esbuildOptions: (options, context) => {
     // eslint-disable-next-line no-param-reassign
     if (context.format === 'cjs') {
