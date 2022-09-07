@@ -9,13 +9,19 @@ import processJSON from '../web/processJSON'
 import processScript from '../web/processScript'
 import processStyles from '../web/processStyles'
 import processTemplate from '../web/processTemplate'
-import getJSONContent from '../utils/get-json-content'
+import getJSONContent from '../../utils/get-json-content'
 import getEntryName from '../utils/get-entry-name'
 import RecordResourceMapDependency from '../dependencies/RecordResourceMapDependency'
 import { MPX_APP_MODULE_ID } from '../../constants'
 import path from 'path'
 import mpx from '../mpx'
-module.exports = function (content) {
+import { proxyPluginContext } from '../../pluginContextProxy'
+import { LoaderContext } from 'webpack'
+
+export default function (
+  this: LoaderContext<null>,
+  content: string
+): string | undefined {
   this.cacheable()
 
   // 兼容处理处理ts-loader中watch-run/updateFile逻辑，直接跳过当前loader及后续的vue-loader返回内容
@@ -48,17 +54,32 @@ module.exports = function (content) {
     ctorType = 'component'
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-this-alias
   const loaderContext = this
-  const stringifyRequest = r => loaderUtils.stringifyRequest(loaderContext, r)
+  const stringifyRequest = (r: string) =>
+    loaderUtils.stringifyRequest(loaderContext, r)
   const isProduction = mpx.minimize || process.env.NODE_ENV === 'production'
   const filePath = this.resourcePath
-  const moduleId = ctorType === 'app' ? MPX_APP_MODULE_ID : 'm' + mpx.pathHash(filePath)
+  const moduleId =
+    ctorType === 'app' ? MPX_APP_MODULE_ID : 'm' + mpx.pathHash(filePath)
 
   // 支持资源query传入isPage或isComponent支持页面/组件单独编译
   if (ctorType === 'app' && (queryObj.isComponent || queryObj.isPage)) {
-    const entryName = getEntryName(this) || mpx.getOutputPath(resourcePath, queryObj.isComponent ? 'component' : 'page')
+    const entryName =
+      getEntryName(this) ||
+      mpx.getOutputPath(
+        resourcePath,
+        queryObj.isComponent ? 'component' : 'page'
+      )
     ctorType = queryObj.isComponent ? 'component' : 'page'
-    this._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, ctorType, entryName, packageRoot))
+    this._module?.addPresentationalDependency(
+      new RecordResourceMapDependency(
+        resourcePath,
+        ctorType,
+        entryName,
+        packageRoot
+      )
+    )
   }
   // 将mpx文件 分成四部分
   const parts = parser(content, {
@@ -70,43 +91,54 @@ module.exports = function (content) {
   let output = ''
   const callback = this.async()
 
-  async.waterfall([
-    (callback) => {
-      getJSONContent(parts.json || {}, loaderContext, (err, content) => {
-        if (err) return callback(err)
-        if (parts.json) parts.json.content = content
-        callback()
-      })
-    },
-    (callback) => {
-      const hasScoped = parts.styles.some(({ scoped }) => scoped) || autoScope
-      const templateAttrs = parts.template && parts.template.attrs
-      const hasComment = templateAttrs && templateAttrs.comments
-      const isNative = false
+  async.waterfall(
+    [
+      (callback: any) => {
+        getJSONContent(
+          parts.json || {},
+          loaderContext.context,
+          proxyPluginContext(loaderContext),
+          mpx.defs,
+          loaderContext._compilation?.inputFileSystem
+        )
+          .then(res => {
+            if (parts.json) parts.json.content = res
+            callback()
+          })
+          .catch(callback)
+      },
+      (callback: any) => {
+        const hasScoped =
+          parts.styles.some(({ scoped }: any) => scoped) || autoScope
+        const templateAttrs = parts.template && parts.template.attrs
+        const hasComment = templateAttrs && templateAttrs.comments
+        const isNative = false
 
-      let usingComponents = [].concat(Object.keys(mpx.usingComponents))
+        let usingComponents = Object.keys(mpx.usingComponents)
 
-      let componentGenerics = {}
+        let componentGenerics = {}
 
-      if (parts.json && parts.json.content) {
-        try {
-          let ret = JSON5.parse(parts.json.content)
-          if (ret.usingComponents) {
-            usingComponents = usingComponents.concat(Object.keys(ret.usingComponents))
+        if (parts.json && parts.json.content) {
+          try {
+            const ret = JSON5.parse(parts.json.content)
+            if (ret.usingComponents) {
+              usingComponents = usingComponents.concat(
+                Object.keys(ret.usingComponents)
+              )
+            }
+            if (ret.componentGenerics) {
+              componentGenerics = Object.assign({}, ret.componentGenerics)
+            }
+          } catch (e) {
+            return callback(e)
           }
-          if (ret.componentGenerics) {
-            componentGenerics = Object.assign({}, ret.componentGenerics)
-          }
-        } catch (e) {
-          return callback(e)
         }
-      }
 
-      // 处理mode为web时输出vue格式文件
-      if (ctorType === 'app' && !queryObj.isApp) {
-        const request = addQuery(this.resource, { isApp: true })
-        const el = mpx.webConfig.el || '#app'
-        output += `
+        // 处理mode为web时输出vue格式文件
+        if (ctorType === 'app' && !queryObj.isApp) {
+          const request = addQuery(this.resource, { isApp: true })
+          const el = mpx.webConfig.el || '#app'
+          output += `
       import App from ${stringifyRequest(request)}
       import Vue from 'vue'
       new Vue({
@@ -116,75 +148,103 @@ module.exports = function (content) {
         }
       })\n
       `
-        // 直接结束loader进入parse
-        this.loaderIndex = -1
-        return callback(null, output)
-      }
-
-      return async.waterfall([
-        (callback) => {
-          async.parallel([
-            (callback) => {
-              processTemplate(parts.template, {
-                loaderContext,
-                hasScoped,
-                hasComment,
-                isNative,
-                srcMode,
-                moduleId,
-                ctorType,
-                usingComponents,
-                componentGenerics
-              }, callback)
-            },
-            (callback) => {
-              processStyles(parts.styles, {
-                ctorType,
-                autoScope,
-                moduleId
-              }, callback)
-            },
-            (callback) => {
-              processJSON(parts.json, {
-                loaderContext,
-                pagesMap,
-                componentsMap
-              }, callback)
-            }
-          ], (err, res) => {
-            callback(err, res)
-          })
-        },
-        ([templateRes, stylesRes, jsonRes], callback) => {
-          output += templateRes.output
-          output += stylesRes.output
-          output += jsonRes.output
-          if (ctorType === 'app' && jsonRes.jsonObj.window && jsonRes.jsonObj.window.navigationBarTitleText) {
-            mpx.appTitle = jsonRes.jsonObj.window.navigationBarTitleText
-          }
-
-          processScript(parts.script, {
-            loaderContext,
-            ctorType,
-            srcMode,
-            isProduction,
-            componentGenerics,
-            jsonConfig: jsonRes.jsonObj,
-            outputPath: queryObj.outputPath || '',
-            tabBarMap: jsonRes.tabBarMap,
-            tabBarStr: jsonRes.tabBarStr,
-            builtInComponentsMap: templateRes.builtInComponentsMap,
-            genericsInfo: templateRes.genericsInfo,
-            wxsModuleMap: templateRes.wxsModuleMap,
-            localComponentsMap: jsonRes.localComponentsMap,
-            localPagesMap: jsonRes.localPagesMap
-          }, callback)
+          // 直接结束loader进入parse
+          this.loaderIndex = -1
+          return callback(null, output)
         }
-      ], (err, scriptRes) => {
-        if (err) return callback(err)
-        output += scriptRes.output
-        callback(null, output)
-      })
-    }
-  ], callback)
+
+        return async.waterfall(
+          [
+            (callback: any) => {
+              async.parallel(
+                [
+                  callback => {
+                    processTemplate(
+                      parts.template,
+                      {
+                        loaderContext,
+                        hasScoped,
+                        hasComment,
+                        isNative,
+                        srcMode,
+                        moduleId,
+                        ctorType,
+                        usingComponents,
+                        componentGenerics
+                      },
+                      callback
+                    )
+                  },
+                  callback => {
+                    processStyles(
+                      parts.styles,
+                      {
+                        ctorType,
+                        autoScope,
+                        moduleId
+                      },
+                      callback
+                    )
+                  },
+                  callback => {
+                    processJSON(
+                      parts.json,
+                      {
+                        loaderContext,
+                        pagesMap,
+                        componentsMap
+                      },
+                      callback
+                    )
+                  }
+                ],
+                (err, res) => {
+                  callback(err, res)
+                }
+              )
+            },
+            ([templateRes, stylesRes, jsonRes]: any, callback: any) => {
+              output += templateRes.output
+              output += stylesRes.output
+              output += jsonRes.output
+              if (
+                ctorType === 'app' &&
+                jsonRes.jsonObj.window &&
+                jsonRes.jsonObj.window.navigationBarTitleText
+              ) {
+                mpx.appTitle = jsonRes.jsonObj.window.navigationBarTitleText
+              }
+
+              processScript(
+                parts.script,
+                {
+                  loaderContext,
+                  ctorType,
+                  srcMode,
+                  isProduction,
+                  componentGenerics,
+                  jsonConfig: jsonRes.jsonObj,
+                  outputPath: queryObj.outputPath || '',
+                  tabBarMap: jsonRes.tabBarMap,
+                  tabBarStr: jsonRes.tabBarStr,
+                  builtInComponentsMap: templateRes.builtInComponentsMap,
+                  genericsInfo: templateRes.genericsInfo,
+                  wxsModuleMap: templateRes.wxsModuleMap,
+                  localComponentsMap: jsonRes.localComponentsMap,
+                  localPagesMap: jsonRes.localPagesMap
+                },
+                callback
+              )
+            }
+          ],
+          (err, scriptRes: any) => {
+            if (err) return callback(err)
+            output += scriptRes.output
+            callback(null, output)
+          }
+        )
+      }
+    ],
+    callback
+  )
 }

@@ -21,7 +21,7 @@ export interface Mpx {
   }): void
   externals: (string | RegExp)[]
   projectRoot: string
-  getOutputPath: (path: string, type: string, option: {conflictPath: any}) => string
+  getOutputPath: (path: string, type: string, option?: {conflictPath: any}) => string
   defs: Record<string, any>
   transRpxRules: any,
 	webConfig: any,

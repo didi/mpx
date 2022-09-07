@@ -6,8 +6,8 @@ import t from './type'
 export default function addQuery(
   request: any,
   data: any = {},
-  force: any,
-  removeKeys: any[]
+  force?: any,
+  removeKeys?: any[]
 ) {
   const {
     rawResourcePath: resourcePath,

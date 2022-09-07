@@ -4,14 +4,8 @@ import { Plugin as EsbuildPlugin } from 'esbuild'
 import { Plugin, createFilter } from 'vite'
 import { matchCondition } from '@mpxjs/utils/match-condition'
 import { ResolvedOptions } from '../../options'
-export interface CustomExtensionsOptions {
-  include: string | RegExp | (string | RegExp)[]
-  exclude?: string | RegExp | (string | RegExp)[]
-  extensions: string[]
-  fileConditionRules: ResolvedOptions['fileConditionRules']
-}
 
-export interface EsbuildCustomExtensionsOptions {
+export interface CustomExtensionsOptions {
   include: RegExp
   extensions: string[]
   fileConditionRules: ResolvedOptions['fileConditionRules']
@@ -33,7 +27,7 @@ function genExtensionsFilePath(filename: string, extendsion: string): string {
 }
 
 export function esbuildCustomExtensionsPlugin(
-  options: EsbuildCustomExtensionsOptions
+  options: CustomExtensionsOptions
 ): EsbuildPlugin {
   return {
     name: 'esbuild:mpx-custom-estensions',
@@ -62,7 +56,7 @@ export function esbuildCustomExtensionsPlugin(
 export function customExtensionsPlugin(
   options: CustomExtensionsOptions
 ): Plugin {
-  const filter = createFilter(options.include, options.exclude)
+  const filter = createFilter(options.include)
   return {
     name: 'vite:mpx-custom-estensions',
     async load(id) {
@@ -72,6 +66,7 @@ export function customExtensionsPlugin(
         for (const extendsion of options.extensions) {
           try {
             const filePath = genExtensionsFilePath(filename, extendsion)
+            await fs.promises.access(filePath)
             return await fs.promises.readFile(filePath, 'utf-8')
           } catch {}
         }

@@ -22,7 +22,7 @@ function calculateRootEleChild (arr) {
 
 export default function (template, {
   loaderContext,
-  // hasScoped,
+  hasScoped,
   hasComment,
   isNative,
   srcMode,
