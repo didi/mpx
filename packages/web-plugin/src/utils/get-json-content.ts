@@ -1,6 +1,6 @@
 import parseRequest from '@mpxjs/utils/parse-request'
-import { promisify } from 'util'
 import path from 'path'
+import { promisify } from 'util'
 import { JSON_JS_EXT } from '../constants'
 import { PluginContext } from '../pluginContextProxy'
 

@@ -1,12 +1,12 @@
 import { TransformPluginContext, TransformResult } from 'rollup'
 import { transformMain as vueTransformMain } from 'vite-plugin-vue2/dist/main.js'
-import { genScriptBlock, transformScript } from './script'
-import { genTemplateBlock, processTemplate } from './template'
-import { genStylesBlock } from './style'
-import { processJSON } from './json'
 import { ResolvedOptions } from '../../options'
-import { createDescriptor } from '../utils/descriptorCache'
 import { Query } from '../../utils/parseRequest'
+import { createDescriptor } from '../utils/descriptorCache'
+import { processJSON } from './json'
+import { genScriptBlock, transformScript } from './script'
+import { genStylesBlock } from './style'
+import { genTemplateBlock, processTemplate } from './template'
 
 export async function transformMain(
   code: string,

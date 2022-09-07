@@ -1,4 +1,4 @@
-import  {
+import {
   CompilerResult,
   ParseResult,
   templateCompiler

@@ -1,13 +1,12 @@
-import { HmrContext, ModuleNode } from 'vite'
 import _debug from 'debug'
-import { SFCBlock } from './compiler'
+import { HmrContext, ModuleNode } from 'vite'
 import { ResolvedOptions } from '../options'
-import {
-  getDescriptor,
-  setPrevDescriptor,
-  createDescriptor
-} from './utils/descriptorCache'
+import { SFCBlock } from './compiler'
 import { processTemplate } from './transformer/template'
+import {
+  createDescriptor, getDescriptor,
+  setPrevDescriptor
+} from './utils/descriptorCache'
 
 const debug = _debug('vite:hmr')
 

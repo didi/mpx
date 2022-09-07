@@ -1,9 +1,8 @@
-import { Plugin, UserConfig, createFilter } from 'vite'
+import { createFilter, Plugin, UserConfig } from 'vite'
 import { createVuePlugin } from 'vite-plugin-vue2'
-import mpxGlobal from './mpx'
-import { transformMain } from './transformer/main'
-import { transformTemplate } from './transformer/template'
-import { transformStyle } from './transformer/style'
+import { Options, processOptions, ResolvedOptions } from '../options'
+import parseRequest from '../utils/parseRequest'
+import { stringifyObject } from '../utils/stringify'
 import handleHotUpdate from './handleHotUpdate'
 import {
   APP_HELPER_CODE,
@@ -14,16 +13,17 @@ import {
   renderTabBarPageCode,
   TAB_BAR_PAGE_HELPER_CODE
 } from './helper'
-import { processOptions, Options, ResolvedOptions } from '../options'
+import mpxGlobal from './mpx'
 import {
   customExtensionsPlugin,
   esbuildCustomExtensionsPlugin
 } from './plugins/addExtensionsPlugin'
 import mpxResolveEntryPlugin from './plugins/mpxResolveEntryPlugin'
-import parseRequest from '../utils/parseRequest'
-import { getDescriptor } from './utils/descriptorCache'
-import { stringifyObject } from '../utils/stringify'
 import { createWxsPlugin } from './plugins/wxsPlugin'
+import { transformMain } from './transformer/main'
+import { transformStyle } from './transformer/style'
+import { transformTemplate } from './transformer/template'
+import { getDescriptor } from './utils/descriptorCache'
 
 function createMpxPlugin(
   options: ResolvedOptions,
@@ -190,7 +190,7 @@ export default function mpx(options: Options = {}): Plugin[] {
     createWxsPlugin(),
     // add custom extensions
     customExtensionsPlugin({
-      include: [/@mpxjs/],
+      include: /@mpxjs/,
       fileConditionRules,
       extensions: customExtensions
     }),

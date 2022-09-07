@@ -1,8 +1,8 @@
-import path from 'path'
-import fs from 'fs'
-import { Plugin as EsbuildPlugin } from 'esbuild'
-import { Plugin, createFilter } from 'vite'
 import { matchCondition } from '@mpxjs/utils/match-condition'
+import { Plugin as EsbuildPlugin } from 'esbuild'
+import fs from 'fs'
+import path from 'path'
+import { createFilter, Plugin } from 'vite'
 import { ResolvedOptions } from '../../options'
 
 export interface CustomExtensionsOptions {

@@ -1,7 +1,7 @@
 import path from 'path'
 import slash from 'slash'
-import { Query } from '../../utils/parseRequest'
 import { ResolvedOptions } from '../../options'
+import { Query } from '../../utils/parseRequest'
 import compiler, { SFCDescriptor } from '../compiler'
 import pathHash from './pageHash'
 

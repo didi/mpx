@@ -1,12 +1,12 @@
+import { ParseHtmlNode } from '@mpxjs/compiler'
+import genComponentTag from '@mpxjs/utils/gen-component-tag'
 import path from 'path'
 import { TransformPluginContext } from 'rollup'
 import { TransformResult } from 'vite'
-import genComponentTag from '@mpxjs/utils/gen-component-tag'
-import { ParseHtmlNode } from '@mpxjs/compiler'
 import { compileSFCTemplate as vueTransformTemplate } from 'vite-plugin-vue2/dist/template.js'
 import { ResolvedOptions } from '../../options'
-import templateCompiler, { SFCDescriptor } from '../compiler'
 import { resolveMpxRuntime } from '../../utils/resolveMpxRuntime'
+import templateCompiler, { SFCDescriptor } from '../compiler'
 
 const templateTransformCache: Record<string, string> = {}
 
@@ -88,13 +88,11 @@ export function processTemplate(
       templateTransformCache[filename] = template.content
     } else {
       const parsed = templateCompiler.parse(template.content, {
-        warn: (msg) => {
-          pluginContext?.warn(
-            new Error('[template compiler][' + filename + ']: ' + msg)
-          )
+        warn: msg => {
+          pluginContext?.warn('[template compiler]: ' + msg)
         },
-        error: (msg) => {
-          pluginContext?.error('[template compiler][' + filename + ']: ' + msg)
+        error: msg => {
+          pluginContext?.error('[template compiler]: ' + msg)
         },
         usingComponents: Object.keys(usingComponents),
         componentGenerics,
@@ -133,10 +131,11 @@ export function processTemplate(
       if (parsed.meta.wxsModuleMap) {
         wxsModuleMap = parsed.meta.wxsModuleMap
       }
-      
+
       if (parsed.meta.wxsContentMap) {
         for (const module in parsed.meta.wxsContentMap) {
-          wxsContentMap[`${filename}~${module}`] = parsed.meta.wxsContentMap[module]
+          wxsContentMap[`${filename}~${module}`] =
+            parsed.meta.wxsContentMap[module]
         }
       }
 

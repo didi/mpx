@@ -1,19 +1,19 @@
-import { TransformPluginContext } from 'rollup'
-import { normalizePath } from 'vite'
 import fs from 'fs'
 import json5 from 'json5'
 import path from 'path'
+import { TransformPluginContext } from 'rollup'
+import { normalizePath } from 'vite'
 import { ResolvedOptions } from '../../options'
+import { proxyPluginContext } from '../../pluginContextProxy'
+import addQuery from '../../utils/addQuery'
+import getJSONContent from '../../utils/get-json-content'
+import parseRequest from '../../utils/parseRequest'
+import resolveModuleContext from '../../utils/resolveModuleContext'
+import stringify from '../../utils/stringify'
 import { SFCDescriptor } from '../compiler'
 import mpxGlobal from '../mpx'
-import parseRequest from '../../utils/parseRequest'
-import pathHash from '../utils/pageHash'
-import resolveModuleContext from '../../utils/resolveModuleContext'
-import addQuery from '../../utils/addQuery'
 import { createDescriptor } from '../utils/descriptorCache'
-import stringify from '../../utils/stringify'
-import getJSONContent from '../../utils/get-json-content'
-import { proxyPluginContext } from '../../pluginContextProxy'
+import pathHash from '../utils/pageHash'
 
 /**
  * wechat miniprogram app/page/component config type
@@ -115,7 +115,7 @@ export async function processJSON(
   }
 
   function emitWarning(msg: string) {
-    pluginContext.warn(new Error('[json processor][' + filename + ']: ' + msg))
+    pluginContext.warn('[json processor]: ' + msg)
   }
 
   /**
