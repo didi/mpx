@@ -1957,7 +1957,7 @@ function postProcessTemplate (el) {
   }
 }
 
-const isValidMode = makeMap('wx,ali,swan,tt,qq,web,qa,jd,dd')
+const isValidMode = makeMap('wx,ali,swan,tt,qq,web,qa,jd,dd,noMode')
 
 const wrapRE = /^\((.*)\)$/
 
@@ -1996,7 +1996,7 @@ function processAtMode (el) {
       conditionMap.set(key, arr.slice(1))
     })
 
-    const modeArr = Object.keys(conditionMap)
+    const modeArr = [...conditionMap.keys()]
 
     if (modeArr.every(i => isValidMode(i))) {
       const attrValue = getAndRemoveAttr(el, attrName).val
@@ -2007,6 +2007,7 @@ function processAtMode (el) {
         if (defineMode === 'noMode' || defineMode === mode) {
           // 命中 env 规则(没有定义env 或者定义的envArr包含当前env)
           if (!defineEnvArr.length || defineEnvArr.includes(env)) {
+            el._atModeStatus = ''
             if (!replacedAttrName) {
               // 若defineMode 为 noMode，则不论是element，还是attr，都需要经过规则转换
               if (defineMode !== 'noMode') {
