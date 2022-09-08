@@ -2016,11 +2016,14 @@ function processAtMode (el) {
               // 如果命中了指定的mode，则先存在el上，等跑完转换后再挂回去
               el.noTransAttrs ? el.noTransAttrs.push(processedAttr) : el.noTransAttrs = [processedAttr]
             }
-            // 完成匹配，直接退出
+            // 命中mode，命中env，完成匹配，直接退出
             break
+          } else if (!replacedAttrName) {
+            // 命中mode规则，没有命中当前env规则，设置为 'mismatch'
+            el._atModeStatus = 'mismatch'
           }
         } else if (!replacedAttrName) {
-          // 没有命中当前规则，设置为 'mismatch'
+          // 没有命中当前mode规则，设置为 'mismatch'
           el._atModeStatus = 'mismatch'
         } else {
           // 如果没命中指定的mode，则该属性删除
