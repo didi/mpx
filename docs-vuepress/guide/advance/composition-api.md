@@ -480,9 +480,10 @@ createComponent({
 和 Vue 一样，当使用 `<script setup>` 时，任何在 `<script setup>` 声明的顶层的绑定（包括变量，函数声明，以及 import 导入的内容） 都能在模版中直接使用：
 ```html
 <script setup>
-    const msg = 'hello';
+    import { ref } from '@mpxjs/core'
+    const msg = ref('hello');
     function log() {
-        console.log(msg)
+        console.log(msg.value)
     }
 </script>
 <template>
@@ -490,7 +491,9 @@ createComponent({
     <view ontap="log">click</view>
 </template>
 ```
-import 导入的内容也会以同样的方式暴露。这意味着我们可以直接在模版中使用引入的相关方法，而不需要通过 `methods` 选项来暴露:
+
+import 导入的内容，除了从 `@mpxjs/core` 中导入的变量或方法，其他模块导入的属性和方法全部都会暴露给模版。这意味着我们可以直接在模版中使用引入的相关方法，而不需要通过 `methods` 选项来暴露：
+
 ```html
 <template>
     <view ontap="clickTrigger">click</view>
@@ -499,6 +502,8 @@ import 导入的内容也会以同样的方式暴露。这意味着我们可以�
     import { clickTrigger } from './utils'
 </script>
 ```
+- 注意项：如果你 `script setup` 中有较多对象或方法的声明和引入，比如全局 store 这种十分复杂的对象，走默认逻辑暴露给模版会造成性能问题，因此建议使用 `defineExpose` 来手动定义暴露给模版的方法或变量。
+
 ### 响应式
 和 Vue 中一样，响应式状态需要明确使用响应性 API 来创建。和 `setup()` 函数的返回值一样，ref 在模版中使用的时候会自动解包：
 ```html
