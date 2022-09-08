@@ -2007,14 +2007,14 @@ function processAtMode (el) {
         if (defineMode === 'noMode' || defineMode === mode) {
           // 命中 env 规则(没有定义env 或者定义的envArr包含当前env)
           if (!defineEnvArr.length || defineEnvArr.includes(env)) {
-            // 若defineMode 为 noMode，则不论是element，还是attr，都需要经过规则转换
-            if (defineMode !== 'noMode') {
-              if (!replacedAttrName) {
+            if (!replacedAttrName) {
+              // 若defineMode 为 noMode，则不论是element，还是attr，都需要经过规则转换
+              if (defineMode !== 'noMode') {
                 el._atModeStatus = 'match'
-              } else {
-                // 如果命中了指定的mode，则先存在el上，等跑完转换后再挂回去
-                el.noTransAttrs ? el.noTransAttrs.push(processedAttr) : el.noTransAttrs = [processedAttr]
               }
+            } else {
+              // 如果命中了指定的mode，则先存在el上，等跑完转换后再挂回去
+              el.noTransAttrs ? el.noTransAttrs.push(processedAttr) : el.noTransAttrs = [processedAttr]
             }
             // 完成匹配，直接退出
             break
