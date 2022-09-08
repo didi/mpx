@@ -17,6 +17,7 @@ export interface Options {
   }
   transMpxRules?: Record<string, () => boolean>
   defs?: Record<string, unknown>
+  forceDisableProxyCtor?: boolean,
   modeRules?: Record<string, unknown>
   externals?: string[] | RegExp[]
   projectRoot?: string
@@ -32,7 +33,8 @@ export interface Options {
     | ((resourcePath: string, projectRoot: string) => string)
   fileConditionRules?: Record<string, () => boolean>
   customOutputPath?: Function | null
-  webConfig?:Record<string, unknown>
+  webConfig?:Record<string, unknown>,
+  hackResolveBuildDependencies?: (result?: string) => void
 }
 
 export interface ResolvedOptions extends Required<Options> {
@@ -85,6 +87,7 @@ export function processOptions(rawOptions: Options): ResolvedOptions {
       ? externalsMap[external] || external
       : external
   })
+  rawOptions.forceDisableProxyCtor = rawOptions.forceDisableProxyCtor || false
   rawOptions.projectRoot = rawOptions.projectRoot || process.cwd()
   rawOptions.postcssInlineConfig = rawOptions.postcssInlineConfig || {}
   rawOptions.transRpxRules = rawOptions.transRpxRules || null

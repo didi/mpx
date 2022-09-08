@@ -4,11 +4,15 @@
 import path from 'path'
 import ResolveDependency from './dependencies/ResolveDependency'
 import InjectDependency from './dependencies/InjectDependency'
+// @ts-ignore
 import NullFactory from 'webpack/lib/NullFactory'
 import CommonJsVariableDependency from './dependencies/CommonJsVariableDependency'
 import ReplaceDependency from './dependencies/ReplaceDependency'
+// @ts-ignore
 import harmonySpecifierTag from 'webpack/lib/dependencies/HarmonyImportDependencyParserPlugin'
+// @ts-ignore
 import FlagEntryExportAsUsedPlugin from 'webpack/lib/FlagEntryExportAsUsedPlugin'
+// @ts-ignore
 import FileSystemInfo from 'webpack/lib/FileSystemInfo'
 import toPosix from '@mpxjs/utils/to-posix'
 import addQuery from '@mpxjs/utils/add-query'
@@ -45,15 +49,15 @@ class MpxWebpackPlugin {
     const rawResolveBuildDependencies =
     FileSystemInfo.prototype.resolveBuildDependencies
     FileSystemInfo.prototype.resolveBuildDependencies = function (
-      context,
-      deps,
-      rawCallback
+      context: string,
+      deps: any,
+      rawCallback: (err: string, result: string) => void
     ) {
       return rawResolveBuildDependencies.call(
         this,
         context,
         deps,
-        (err, result) => {
+        (err: string, result:string) => {
           if (
             result &&
             typeof options.hackResolveBuildDependencies === 'function'
@@ -103,7 +107,7 @@ class MpxWebpackPlugin {
       return
     }
     const mode = this.options.mode
-    const modeRule = this.options.modeRules[mode]
+    const modeRule = this.options?.modeRules?.mode
     if (!modeRule) {
       return
     }
@@ -131,13 +135,13 @@ class MpxWebpackPlugin {
 
     const addModePlugin = new AddModePlugin(
       'before-file',
-      this.options.mode,
+      this.options.mode || 'web',
       this.options.fileConditionRules,
       'file'
     )
     const addEnvPlugin = new AddEnvPlugin(
       'before-file',
-      this.options.env,
+      this.options.env || '',
       this.options.fileConditionRules,
       'file'
     )
@@ -168,7 +172,7 @@ class MpxWebpackPlugin {
       }
     }
 
-    const defs = this.options.defs
+    const defs = this.options.defs || {}
 
     const defsOpt: {[k: string]: any} = {}
 
@@ -179,7 +183,7 @@ class MpxWebpackPlugin {
     // define mode & defs
     new DefinePlugin(defsOpt).apply(compiler)
 
-    new ExternalsPlugin('commonjs2', this.options.externals).apply(compiler)
+    new ExternalsPlugin('commonjs2', this.options.externals || []).apply(compiler)
 
     compiler.hooks.compilation.tap(
       'MpxWebpackPlugin ',
@@ -641,7 +645,7 @@ class MpxWebpackPlugin {
         normalModuleFactory.hooks.afterResolve.tap(
           'MpxWebpackPlugin',
           ({ createData }) => {
-            const { queryObj } = parseRequest(createData.request)
+            const { queryObj } = parseRequest(createData.request || '')
             const loaders = createData.loaders
             const mpxStyleOptions = queryObj.mpxStyleOptions
             const firstLoader = loaders && loaders[0] ? toPosix(loaders[0].loader) : ''
@@ -688,7 +692,7 @@ class MpxWebpackPlugin {
 
             createData.request = stringifyLoadersAndResource(
               loaders,
-              createData.resource
+              createData.resource || ''
             )
             // 根据用户传入的modeRules对特定资源添加mode query
             this.runModeRules(createData)
