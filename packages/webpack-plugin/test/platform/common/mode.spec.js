@@ -40,7 +40,7 @@ describe('template should transform correct', function () {
 
   it('will no trans child node if parent is matched mode', function () {
     const input = `<ali-view @ali test@ali="ttt"><ttt bindtap="handleTap">123</ttt></ali-view>`
-    const output = compileAndParse(input)
+    const output = compileAndParse(input, { mode: 'ali' })
     expect(output).toBe('<ali-view test="ttt"><ttt bindtap="handleTap">123</ttt></ali-view>')
   })
 
@@ -48,7 +48,7 @@ describe('template should transform correct', function () {
     const input = `<ali-view @ali|swan test@ali="ttt"><ttt bindtap="handleTap">123</ttt></ali-view>`
 
     const aliOutput = compileAndParse(input, { mode: 'ali' })
-    expect(aliOutput).toBe('<ali-view test="ttt"><ttt onTap="handleTap">123</ttt></ali-view>')
+    expect(aliOutput).toBe('<ali-view test="ttt"><ttt bindtap="handleTap">123</ttt></ali-view>')
 
     const swanOutput = compileAndParse(input, { mode: 'swan' })
     expect(swanOutput).toBe('<ali-view><ttt bindtap="handleTap">123</ttt></ali-view>')
