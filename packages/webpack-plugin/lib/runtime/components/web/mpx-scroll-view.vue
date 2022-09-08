@@ -152,7 +152,6 @@
         if (this.bs) return
         this.initLayerComputed()
         if ((this.scrollX && this.wrapperWidth >= this.contentWidth) || (this.scrollY && this.wrapperHeight >= this.contentHeight)) {
-          console.error('Please set the correct width and height for the container')
           return
         }
         const originBsOptions = {
