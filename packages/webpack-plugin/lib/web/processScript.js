@@ -3,6 +3,7 @@ const loaderUtils = require('loader-utils')
 const addQuery = require('../utils/add-query')
 const normalize = require('../utils/normalize')
 const parseRequest = require('../utils/parse-request')
+const createHelpers = require('../helpers')
 const optionProcessorPath = normalize.lib('runtime/optionProcessor')
 const tabBarContainerPath = normalize.lib('runtime/components/web/mpx-tab-bar-container.vue')
 const tabBarPath = normalize.lib('runtime/components/web/mpx-tab-bar.vue')
@@ -44,13 +45,14 @@ module.exports = function (script, {
   localComponentsMap,
   localPagesMap
 }, callback) {
-  const mpx = loaderContext.getMpx()
   const {
     i18n,
-    projectRoot
-  } = mpx
+    projectRoot,
+    webConfig
+  } = loaderContext.getMpx()
 
-  const { queryObj } = parseRequest(loaderContext.resource)
+  const { getRequire } = createHelpers(loaderContext)
+  const { resourcePath, queryObj } = parseRequest(loaderContext.resource)
   const tabBar = jsonConfig.tabBar
 
   const emitWarning = (msg) => {
@@ -87,23 +89,7 @@ module.exports = function (script, {
   if (script) {
     scriptSrcMode = script.mode || scriptSrcMode
   } else {
-    script = {
-      tag: 'script',
-      content: ''
-    }
-    switch (ctorType) {
-      case 'app':
-        script.content = 'import {createApp} from "@mpxjs/core"\n' +
-          'createApp({})\n'
-        break
-      case 'page':
-        script.content = 'import {createPage} from "@mpxjs/core"\n' +
-          'createPage({})\n'
-        break
-      case 'component':
-        script.content = 'import {createComponent} from "@mpxjs/core"\n' +
-          'createComponent({})\n'
-    }
+    script = { tag: 'script' }
   }
   output += genComponentTag(script, {
     attrs (script) {
@@ -140,7 +126,7 @@ module.exports = function (script, {
   global.__mpxGenericsMap = {}
   global.__style = ${JSON.stringify(jsonConfig.style || 'v1')}
   global.__mpxPageConfig = ${JSON.stringify(jsonConfig.window)}
-  global.__mpxTransRpxFn = ${mpx.webConfig.transRpxFn}\n`
+  global.__mpxTransRpxFn = ${webConfig.transRpxFn}\n`
         if (i18n) {
           const i18nObj = Object.assign({}, i18n)
           content += `  import VueI18n from 'vue-i18n'
@@ -218,13 +204,20 @@ module.exports = function (script, {
       if (!isProduction) {
         content += `  global.currentResource = ${JSON.stringify(loaderContext.resourcePath)}\n`
       }
-      // 为了正确获取currentSrcMode便于运行时进行转换，对于src引入的组件script采用require方式引入(由于webpack会将import的执行顺序上升至最顶)，这意味着对于src引入脚本中的named export将不会生效，不过鉴于mpx和小程序中本身也没有在组件script中声明export的用法，所以应该没有影响
-      content += '\n\n\n/** Source start **/\n'
-      content += script.src
-        // 继承单文件组件query避免多个单文件模块实例引用一个src模块，因模块缓存导致createComponent不执行的问题
-        ? `require(${stringifyRequest(addQuery(script.src, queryObj))})\n`
-        : script.content
-      content += '\n/** Source end **/\n\n\n'
+
+      content += '\n/** script content **/\n'
+
+      // 传递ctorType以补全js内容
+      const extraOptions = {
+        ...script.src ? {
+          ...queryObj,
+          resourcePath
+        } : null,
+        ctorType
+      }
+
+      content += getRequire('script', script, extraOptions) + '\n'
+
       // createApp/Page/Component执行完成后立刻获取当前的option并暂存
       content += `  const currentOption = global.currentOption\n`
       // 获取pageConfig
