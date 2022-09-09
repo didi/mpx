@@ -480,9 +480,10 @@ createComponent({
 和 Vue 一样，当使用 `<script setup>` 时，任何在 `<script setup>` 声明的顶层的绑定（包括变量，函数声明，以及 import 导入的内容） 都能在模版中直接使用：
 ```html
 <script setup>
-    const msg = 'hello';
+    import ref from '@mpxjs/core'
+    const msg = ref('hello')
     function log() {
-        console.log(msg)
+        console.log(msg.value)
     }
 </script>
 <template>
@@ -529,6 +530,7 @@ import 导入的内容也会以同样的方式暴露。这意味着我们可以�
 
 ### `defineReturns()`
 在 `<script setup>` 声明的顶层的绑定(包括变量，函数声明，以及 import 导入的内容)，编译后在 `setup()` 都会统一被 return 出去，当开发者想对 `setup()` 中暴露给模版的变量和方法进行自定义，可以使用 `defineReturns` 编译宏进行定义。
+
 ```html
 <script setup>
     const count = ref(0)
@@ -714,3 +716,11 @@ todo cr
 * `<script setup>` 不支持 `import` 快捷引入组件
 * 支持的生命周期钩子不同，详见[这里](#生命周期钩子)
 * 模板引用的方式不同，详见[这里](#模板引用)
+
+## 组合式 API 周边生态能力的使用
+
+我们对 Mpx 提供的周边生态能力也都进行了组合式 API 适配升级，详情如下：
+
+* `store` 在组合式 API 中使用，详见[这里](#todo-pinia-store)
+* `fetch` 在组合式 API 中使用，详见[这里](#todo-composition-api-fetch)
+* `i18n` 在组合式 API 中使用，详见[这里](#todo-composition-api-i18n)
