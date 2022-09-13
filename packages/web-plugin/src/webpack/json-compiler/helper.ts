@@ -75,6 +75,7 @@ export default function createJSONHelper({
 
     resolve(context, component, loaderContext, (err, resource) => {
       if (err) return callback(err)
+      if (!resource) return callback(null)
       const { resourcePath, queryObj } = parseRequest(resource)
 
       if (queryObj.root) {
@@ -120,6 +121,7 @@ export default function createJSONHelper({
     page = addQuery(page, { isPage: true })
     resolve(context, page as string, loaderContext, (err, resource) => {
       if (err) return callback(err)
+      if (!resource) return callback(null)
       const {
         resourcePath,
         queryObj: { isFirst }
