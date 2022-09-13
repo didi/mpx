@@ -1,6 +1,6 @@
 # 单元测试
 
-Index 框架提供了 jest 转换器 mpx-jest，结合微信小程序提供的 [miniprogram-simulate](https://github.com/wechat-miniprogram/miniprogram-simulate) 来进行单元测试的工作。
+Mpx 框架提供了 jest 转换器 mpx-jest，结合微信小程序提供的 [miniprogram-simulate](https://github.com/wechat-miniprogram/miniprogram-simulate) 来进行单元测试的工作。
 
 > 因为目前仅微信提供了仿真工具，暂时只支持微信小程序平台的单元测试。如果需要 E2E 测试，则和框架无关了，可参考微信的[小程序自动化](https://developers.weixin.qq.com/miniprogram/dev/devtools/auto/)。
 
@@ -52,7 +52,7 @@ npm i -D ts-jest
 </script>
 ```
 
-对应的 hello-world.spec.js
+对应的 hello-world.spec.js 
 ```js
 const simulate = require('@mpxjs/miniprogram-simulate')
 
@@ -67,10 +67,10 @@ describe('MyComponent', () => {
   it('correctly sets the message when component attached', () => {
     const comp = simulate.render(id)
     const instance = comp.instance
-
+    
     // Mpx提供的数据响应是发生在组件挂载时的，未挂载前只能通过实例上的data访问数据
     expect(instance.data.message).toBe('hello!')
-
+    
     const parent = document.createElement('parent-wrapper') // 创建容器节点
     comp.attach(parent) // 将组件插入到容器节点中，会触发 attached 生命周期
     // 挂载后则可以直接通过实例访问
@@ -117,7 +117,7 @@ describe('MyComponent', () => {
     const parent1 = document.createElement('parent-wrapper')
     comp1.attach(parent1)
     expect(comp1.dom.innerHTML).toBe('<wx-view>hello</wx-view>')
-
+    
     const comp2 = simulate.render(id, { msg: 'bye' })
     const parent2 = document.createElement('parent-wrapper')
     comp2.attach(parent2)
@@ -145,4 +145,4 @@ it('updates the rendered message when vm.message updates', async () => {
 })
 ```
 
-更深入的 Index 单元测试的内容将在以后持续更新……
+更深入的 Mpx 单元测试的内容将在以后持续更新……

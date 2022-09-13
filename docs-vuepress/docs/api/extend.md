@@ -11,34 +11,34 @@ mpx-fetch提供了一个实例**xfetch** ，该实例包含以下api
 
         config 可指定以下属性：
         - **url**
-
+        
             类型：`string`
-
+        
             设置请求url
         - **method**
-
+    
             类型：`string`
-
+        
             设置请求方式，默认为GET
         - **data**
-
+    
             类型：`Object`
-
+        
             设置请求参数
         - **params**
-
+    
             类型：`Object`
-
+        
             设置请求参数，参数会以 Query String 的形式进行传递
         - **timeout**
-
+                            
             类型：`Number`
-
+                            
             单位为毫秒。若不传，默认读取app.json文件中__networkTimeout属性。 对于超时的处理可在 catch 方法中进行
         - **emulateJSON**
-
+        
             类型：`Boolean`
-
+        
             设置为 true 时，等价于 header = {'content-type': 'application/x-www-form-urlencoded'}
         - **usePre**
             类型：`Boolean`
@@ -460,11 +460,11 @@ mpx.xfetch.clearProxy()
 | base64ToArrayBuffer |:x:|:x:|:white_check_mark:|
 
 ## webview-bridge
-Index 支持小程序跨平台后，多个平台的小程序里都提供了 webview 组件，webview 打开的 H5 页面可以通过小程序提供的 API 来与小程序通信以及调用一些小程序的能力，但是各家小程序对于 webview 提供的API是不一样的。
+Mpx 支持小程序跨平台后，多个平台的小程序里都提供了 webview 组件，webview 打开的 H5 页面可以通过小程序提供的 API 来与小程序通信以及调用一些小程序的能力，但是各家小程序对于 webview 提供的API是不一样的。
 
 比如微信的 webview 打开的 H5 页面里是通过调用 wx.miniProgram.navigateTo 来跳转到原生小程序页面的，而在支付宝是通过调用 my.navigateTo 来实现跳转的，那么我们开发 H5 时候为了让 H5 能适应各家小程序平台就需要写多份对应逻辑。
 
-为解决这个问题，Index 提供了抹平平台差异的bridge库：@mpxjs/webview-bridge。
+为解决这个问题，Mpx 提供了抹平平台差异的bridge库：@mpxjs/webview-bridge。
 
 **安装：**
 ```js
@@ -566,11 +566,11 @@ import mpx from "https://dpubstatic.udache.com/static/dpubimg/6MQOo-ocI4/2.2.43.
 > 配置校验规则，可以自定义，也可以根据以下规则传入一个数组
 
 - **参数：**
-
+    
     类型  `Array`
-
+  
     - **test**
-
+  
     - 类型：`{object | function}`
 
         - url
@@ -645,7 +645,7 @@ import mpx from "https://dpubstatic.udache.com/static/dpubimg/6MQOo-ocI4/2.2.43.
         ::: warning
         object类型有两种配置方式，第一种是区分params(一般对应get请求)和data(一般对应post/put请求)分别配置，第二种不区分两种请求配置，如果不分开配置所有参数不区分请求方式全部校验，详情请看以下示例。
         function类型为自定义配置,第一个参数是接口请求的参数以及url,请求方法等
-        注：post请求会校验params和data get请求会校验params
+        注：post请求会校验params和data get请求会校验params 
         :::
         - params
             类型：`object`
@@ -687,7 +687,7 @@ import mpx from "https://dpubstatic.udache.com/static/dpubimg/6MQOo-ocI4/2.2.43.
               valid: boolean,
               message: Array<string>
             }
-
+            
             const validatorCustom = (config:Config) => boolean｜ValidatorRes
             ```
     - **greedy**
@@ -788,15 +788,15 @@ Mpx框架项目包体积可以进行分组、分包、页面、冗余Npm包等�
   类型：`Array<object>`
 
   详细：配置体积计算分组，以输入分组为维度对体积进行分析，当没有该配置时结果中将不会包含分组体积信息
-
+  
   - name
-
+  
     类型：`string`
 
     详细：分组名称
 
   - threshold
-
+  
     类型：`string | object`
 
     详细：分组相关体积阈值，若不配置则该分组不校验体积阈值，同时也支持对分组中占各分包体积阈值
@@ -813,31 +813,31 @@ Mpx框架项目包体积可以进行分组、分包、页面、冗余Npm包等�
       }
     }
     ```
-
+    
   - entryRules
-
+  
     类型：`object`
-
+  
     详细：配置分组 entry 匹配规则，小程序中所有的页面和组件都可被视为 entry
-
+  
       - include: 包含符合条件的入口文件，默认为空数组，规则数组中支持函数、正则、字符串
       - exclude: 剔除符合条件的入口文件，默认为空数组，规则数组中支持函数、正则、字符串
-
+    
     示例：
     ```html
     include: [/@someGroup\/some-npm-package/],
     exclude: [/@someGroup\/some-two-pack/]
     ```
-
+    
   - noEntryRules
 
     类型：`object`
 
     详细：配置计算分组中纯 js 入口引入的体积（不包含组件和页面）
-
+  
       - include: 包含符合条件的 js 文件，默认为空数组，规则数组中支持函数、正则、字符串
       - exclude: 剔除符合条件的 js 文件，默认为空数组，规则数组中支持函数、正则、字符串
-
+    
     示例：
     ```html
     include: [/@someGroup\/some-npm-package/],

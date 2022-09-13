@@ -1,6 +1,6 @@
 # 使用 mixin
 
-Index 提供了一套完善的 mixin 机制，有人可能要问，原生小程序中已经支持了 behaviors，为何我们还需要提供 mixin 呢？主要有以下两点原因：
+Mpx 提供了一套完善的 mixin 机制，有人可能要问，原生小程序中已经支持了 behaviors，为何我们还需要提供 mixin 呢？主要有以下两点原因：
 1. Behaviors 是平台限度的，只有在部分小程序平台中可以使用，而且内置 behaviors 承载了除了 mixin 外的其他功能，框架提供的 mixin 是一个与平台无关的基础能力；
 2. Behaviors 只有组件支持使用，页面不支持，而且只支持局部声明，框架提供的 mixin 与组件页面无关，且支持全局 mixin 声明。
 
@@ -52,7 +52,7 @@ component ready: 手机
 
 ## 全局 Mixin
 
-Index 中可以使用 `mpx.injectMixins` 方法配置全局 mixin，能够按照 App / 组件 / 页面维度自由配置，简单示例如下：
+Mpx 中可以使用 `mpx.injectMixins` 方法配置全局 mixin，能够按照 App / 组件 / 页面维度自由配置，简单示例如下：
 
 ```js
 import mpx from '@mpxjs/core'

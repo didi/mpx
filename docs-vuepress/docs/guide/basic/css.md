@@ -2,7 +2,7 @@
 
 ## CSS 预编译
 
-Index 支持 CSS 预编译处理，你可以通过在 style 标签上设置 `lang` 属性，来指定使用的 CSS 预处理器，此外需要在对应的 webpack 配置文件中
+Mpx 支持 CSS 预编译处理，你可以通过在 style 标签上设置 `lang` 属性，来指定使用的 CSS 预处理器，此外需要在对应的 webpack 配置文件中
 加入对应的 loader 配置
 
 ```html
@@ -85,7 +85,7 @@ rules: [
 
 ## 公共样式复用
 
-为了达到最大限度的样式复用，Index 提供了以下两种方式实现公共样式抽离，但是最终打包的效果有所区别。
+为了达到最大限度的样式复用，Mpx 提供了以下两种方式实现公共样式抽离，但是最终打包的效果有所区别。
 
 ``` styl
 // styles/mixin.styl
@@ -109,7 +109,7 @@ rules: [
 <style lang="stylus" src="../styles/common.styl"></style>
 ```
 
-Index 将 common.styl 中的代码经过 loader 编译后生成一份单独的 wxss 文件，这样既实现了样式抽离，又能节省打包后的代码体积。
+Mpx 将 common.styl 中的代码经过 loader 编译后生成一份单独的 wxss 文件，这样既实现了样式抽离，又能节省打包后的代码体积。
 
 ### @import 复用
 

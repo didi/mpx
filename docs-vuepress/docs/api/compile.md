@@ -5,7 +5,7 @@ sidebarDepth: 2
 # 编译构建
 
 ## webpack配置
-下图是采用 Index 开发小程序时，一个简短的 webpack 配置。配置说明可参考图中注释以及子项说明。
+下图是采用 Mpx 开发小程序时，一个简短的 webpack 配置。配置说明可参考图中注释以及子项说明。
 ```js
 module.exports = {
   entry: {
@@ -24,7 +24,7 @@ module.exports = {
     rules: [
       {
         test: /\.mpx$/,
-        // 以 .mpx 结尾的文件需要使用 Index 提供的 loader 进行解析，处理 .mpx 文件包含的template，script, style, json等各个部分
+        // 以 .mpx 结尾的文件需要使用 Mpx 提供的 loader 进行解析，处理 .mpx 文件包含的template，script, style, json等各个部分
         use: MpxWebpackPlugin.loader({
           // 自定义 loaders
           loaders: {
@@ -58,7 +58,7 @@ module.exports = {
       },
       {
         test: /\.(png|jpe?g|gif|svg)$/,
-        // Index 提供图像资源处理，支持 CDN 和 Base64 两种
+        // Mpx 提供图像资源处理，支持 CDN 和 Base64 两种
         loader: MpxWebpackPlugin.urlLoader({
           name: 'img/[name][hash].[ext]'
         })
@@ -77,10 +77,10 @@ module.exports = {
   ]
 }
 ```
-- 下面是对 webpack 自带的配置，在 Index 中特殊配置的具体说明。
+- 下面是对 webpack 自带的配置，在 Mpx 中特殊配置的具体说明。
 ### output.publicPath
 
-由于 Index 内部框架实现的原因(如分包路径)，publicPath 必须设置为'/'，默认为'/'。
+由于 Mpx 内部框架实现的原因(如分包路径)，publicPath 必须设置为'/'，默认为'/'。
 如是图像或文件需要设置 publicPath，可配置在 loader options 中。
 
 ### output.filename
@@ -90,10 +90,10 @@ module.exports = {
 因此 output.filename 中必须写为 [name].js，基于 chunk id 或者 hash name 的 filename 都会导致编译后的文件无法被小程序识别。
 
 ### node.global
-在 Node 环境中 global 标识全局对象，Index 中需要依赖 global 进行运行时注入。
+在 Node 环境中 global 标识全局对象，Mpx 中需要依赖 global 进行运行时注入。
 
 ### rule.resourceQuery
-Index 内部会对通过 script src 引入的 json 文件，在解析的时候加上 `__component` 标识，同时设置 `type` 为 `javascript/auto` 以防止走 webpack 内建的 json 解析。
+Mpx 内部会对通过 script src 引入的 json 文件，在解析的时候加上 `__component` 标识，同时设置 `type` 为 `javascript/auto` 以防止走 webpack 内建的 json 解析。
 
 因为 webpack json 解析时，抽取内容的占位内容必须为合法 json，否则会在 parse 阶段报错
 
@@ -129,7 +129,7 @@ MpxWebpackPlugin支持传入以下配置：
 
 - **详细**：
 
-mode 为 Index 编译的目标平台， 目前支持的有微信小程序(wx)\支付宝小程序(ali)\百度小程序(swan)\头条小程序(tt)\ QQ 小程序(qq)\ H5 页面(web)
+mode 为 Mpx 编译的目标平台， 目前支持的有微信小程序(wx)\支付宝小程序(ali)\百度小程序(swan)\头条小程序(tt)\ QQ 小程序(qq)\ H5 页面(web)
 
 ### srcMode
 
@@ -232,7 +232,7 @@ new MpxWebpackPlugin({
 
 - **默认值**： `'change'`
 
-- **详细**：webpack 的输出默认是全量输出，而小程序开发者工具不关心文件是否真正发生了变化。设置为 change 时，Index 在 watch 模式下将内部 diff 一次，只会对内容发生变化的文件进行写入，以提升小程序开发者工具编译性能。
+- **详细**：webpack 的输出默认是全量输出，而小程序开发者工具不关心文件是否真正发生了变化。设置为 change 时，Mpx 在 watch 模式下将内部 diff 一次，只会对内容发生变化的文件进行写入，以提升小程序开发者工具编译性能。
 
 - **示例**：
 
@@ -271,7 +271,7 @@ new MpxWebpackPlugin({
 
 - **类型**：`Rules`
 
-- **详细**：是否转换 wx / my 等全局对象为 Index 对象，
+- **详细**：是否转换 wx / my 等全局对象为 Mpx 对象，
 
 - **示例**：
 
@@ -351,7 +351,7 @@ const env = __env__;
 
 - **默认值**：`['image:src', 'audio:src', 'video:src', 'cover-image:src', 'import:src', 'include:src']`
 
-- **详细**：`Index` 提供了可以给自定义标签设置资源的功能，配置该属性后，即可在目标标签中使用 `:src` 加载相应资源文件
+- **详细**：`Mpx` 提供了可以给自定义标签设置资源的功能，配置该属性后，即可在目标标签中使用 `:src` 加载相应资源文件
 
 - **示例**：
 ```js
@@ -372,12 +372,12 @@ new MpxWebpackPlugin({
 
 - **详细**：
 
-  目前仅支持微信小程序 weui 组件库通过 useExtendedLib 扩展库的方式引入，这种方式引入的组件将不会计入代码包大小。配置 externals 选项，Index 将不会解析 weui 组件的路径并打包。
+  目前仅支持微信小程序 weui 组件库通过 useExtendedLib 扩展库的方式引入，这种方式引入的组件将不会计入代码包大小。配置 externals 选项，Mpx 将不会解析 weui 组件的路径并打包。
 
 - **示例**：
 
   ``` javascript
-  // Index 配置文件中添加如下配置：
+  // Mpx 配置文件中添加如下配置：
   {
     externals: ['weui']
   }
@@ -449,9 +449,9 @@ new MpxWebpackPlugin({
 
 - **详细**: 微信小程序官方提供了[发布小程序 npm 包的约束](https://developers.weixin.qq.com/miniprogram/dev/devtools/npm.html)。
 部分小程序npm包，如[vant组件库](https://vant-contrib.gitee.io/vant-weapp/#/quickstart)官方文档使用说明，引用资源并不会包含miniprogram所指定的目录
-如 "@vant/weapp/button/index"，导致 `Index` 解析路径失败。
-`Index`为解决这个问题，提供miniNpmPackage字段供用户配置需要解析的小程序npm包。miniNpmPackage对应的数组值为npm包对应的package.json中的name字段。
-`Index`解析规则如下:
+如 "@vant/weapp/button/index"，导致 `Mpx` 解析路径失败。
+`Mpx`为解决这个问题，提供miniNpmPackage字段供用户配置需要解析的小程序npm包。miniNpmPackage对应的数组值为npm包对应的package.json中的name字段。
+`Mpx`解析规则如下:
   1. 如package.json中有miniprogram字段，则会默认拼接miniprogram对应的值到资源路径中
   2. 如package.json中无miniprogram字段，但配置了miniNpmPackage，则默认会拼接miniprogram_dist目录
 
@@ -469,7 +469,7 @@ new MpxWebpackPlugin({
 
 - **默认值**: `false`
 
-- **详细**: 为了获取更丰富的生命周期来进行更加完善的增强处理，在非支付宝小程序环境下，`Index` 默认会使用 `Conponent` 构造器来创建页面。将该值设置为 `true` 时，会强制使用 `Page` 构造器创建页面。
+- **详细**: 为了获取更丰富的生命周期来进行更加完善的增强处理，在非支付宝小程序环境下，`Mpx` 默认会使用 `Conponent` 构造器来创建页面。将该值设置为 `true` 时，会强制使用 `Page` 构造器创建页面。
 
 - **示例**:
 ```js
@@ -487,7 +487,7 @@ new MpxWebpackPlugin({
   - `option.exclude` 同webpack的exclude规则
   - `option.comment` rpx注释，建议使用 'use px'/'use rpx'，当 mode 为 all 时默认值为 use px，mode 为 only 时默认值为 'use rpx'
 
-- **详细**：为了处理某些IDE中不支持`rpx`单位的问题，Index 提供了一个将 px 转换为 rpx 的功能。支持通过注释控制行级、块级的是否转换，支持局部使用，支持不同依赖分别使用不用的转换规则等灵活的能力。`transRpxRules`可以是一个对象，也可以是多个这种对象组成的数组。
+- **详细**：为了处理某些IDE中不支持`rpx`单位的问题，Mpx 提供了一个将 px 转换为 rpx 的功能。支持通过注释控制行级、块级的是否转换，支持局部使用，支持不同依赖分别使用不用的转换规则等灵活的能力。`transRpxRules`可以是一个对象，也可以是多个这种对象组成的数组。
 
 - **示例**：
 
@@ -638,7 +638,7 @@ new MpxWebpackPlugin({
 
 - **类型**： `{options? : PostcssOptions, plugins? : PostcssPlugin[], ignoreConfigFile : Boolean}`
 
-- **详细**：使用类似于 postcss.config.js 的语法书写 postcss 的配置文件。用于定义 Index 对于组件/页面样式进行 postcss 处理时的配置， ignoreConfigFile 传递为 true 时会忽略项目中的 postcss 配置文件 。
+- **详细**：使用类似于 postcss.config.js 的语法书写 postcss 的配置文件。用于定义 Mpx 对于组件/页面样式进行 postcss 处理时的配置， ignoreConfigFile 传递为 true 时会忽略项目中的 postcss 配置文件 。
 
 - **示例**：
 
@@ -727,7 +727,7 @@ new MpxWebpackPlugin({
 })
 ```
 
-- **详细**：Index 支持国际化，底层实现依赖类`wxs`能力，通过指定语言标识和语言包，可实现多语言之间的动态切换。可配置项包括locale、messages、messagesPath。
+- **详细**：Mpx 支持国际化，底层实现依赖类`wxs`能力，通过指定语言标识和语言包，可实现多语言之间的动态切换。可配置项包括locale、messages、messagesPath。
 
 #### i18n.locale   `String`
 
@@ -735,7 +735,7 @@ new MpxWebpackPlugin({
 
 #### i18n.messages   `Object`
 
-通过配置 messages 属性，可以指定项目语言包，Index 会依据语言包对象定义进行转换，示例如下：
+通过配置 messages 属性，可以指定项目语言包，Mpx 会依据语言包对象定义进行转换，示例如下：
 ```js
 messages: {
   'en-US': {
@@ -755,7 +755,7 @@ messages: {
 
 #### i18n.messagesPath   `String`
 
-为便于开发，Index 还支持配置语言包资源路径 messagesPath 来代替 messages 属性，Index 会从该路径下的 js 文件导出语言包对象。如果同时配置 messages 和 messagesPath 属性，Index 会优先设定 messages 为 i18n 语言包资源。
+为便于开发，Mpx 还支持配置语言包资源路径 messagesPath 来代替 messages 属性，Mpx 会从该路径下的 js 文件导出语言包对象。如果同时配置 messages 和 messagesPath 属性，Mpx 会优先设定 messages 为 i18n 语言包资源。
 
 详细介绍及使用见[工具-国际化i18n](../guide/tool/i18n.md)一节。
 
@@ -940,7 +940,7 @@ pug.render(template, options.templateOption)
 ### MpxWebpackPlugin.pluginLoader
 
 :::tip
-该 loader 仅在开发**小程序插件**时使用，可在使用 Index 脚手架进行项目初始化时选择进行组件开发来生成对应的配置文件。
+该 loader 仅在开发**小程序插件**时使用，可在使用 Mpx 脚手架进行项目初始化时选择进行组件开发来生成对应的配置文件。
 :::
 
 `MpxWebpackPlugin.pluginLoader` 用于根据开发者编写的`plugin.json`文件内容，将特定的小程序组件、页面以及 js 文件进行构建，最终以小程序插件的形式输出。
@@ -1049,7 +1049,7 @@ Mpx中允许用户在request中传递特定query执行特定逻辑，目前已�
 
 - **背景**:
 
-  Index 在处理页面路径时会把对应的分包名作为 root 加在路径前。处理组件路径时会添加 hash，防止路径名冲突。直接写资源相对路径可能与最终输出的资源路径不符。
+  Mpx 在处理页面路径时会把对应的分包名作为 root 加在路径前。处理组件路径时会添加 hash，防止路径名冲突。直接写资源相对路径可能与最终输出的资源路径不符。
 
   编写代码时使用 import 引入页面地址后加上 `?resolve`，这个地址在编译时会被处理成正确的绝对路径，即资源的最终输出位置。
 
@@ -1067,7 +1067,7 @@ Mpx中允许用户在request中传递特定query执行特定逻辑，目前已�
 
 1. 声明分包别名
 
-- **详细**：指定分包别名，Index 项目在编译构建后会输出该别名的分包，外部小程序或 H5 页面跳转时，可直接配置该分包别名下的资源路径。
+- **详细**：指定分包别名，Mpx 项目在编译构建后会输出该别名的分包，外部小程序或 H5 页面跳转时，可直接配置该分包别名下的资源路径。
 
 - **示例**：
 
@@ -1256,7 +1256,7 @@ module.exports = {
 
 - **示例**：
 ```html
-// app.mpx
+// app.mpx 
 <script type="application/json">
   {
     "pages": [

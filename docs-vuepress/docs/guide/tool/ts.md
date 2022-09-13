@@ -40,7 +40,7 @@ TypeScript 是一个开源的编程语言，通过在 JavaScript（世界上最�
 
 ### .mpx中编写ts（推荐）
 
-目前 Index 已经支持在.mpx文件的 script 标签中编写 ts 代码，需要在 script 标签上添加 ` lang="ts" ` 属性，在编译时会自动这部分 script 中的内容进行 ts 类型检查。
+目前 Mpx 已经支持在.mpx文件的 script 标签中编写 ts 代码，需要在 script 标签上添加 ` lang="ts" ` 属性，在编译时会自动这部分 script 中的内容进行 ts 类型检查。
 
 ```html
 <script lang="ts">
@@ -48,7 +48,7 @@ TypeScript 是一个开源的编程语言，通过在 JavaScript（世界上最�
 </script>
 ```
 
-当然，由于大部分IDE对 ts 的语法支持都只对 .ts 和 .d.ts 文件生效，因此 Index 也支持创建一个 .ts 文件进行 ts 代码编写，在.mpx文件中，通过 src 的方式引入。
+当然，由于大部分IDE对 ts 的语法支持都只对 .ts 和 .d.ts 文件生效，因此 Mpx 也支持创建一个 .ts 文件进行 ts 代码编写，在.mpx文件中，通过 src 的方式引入。
 
 ```html
 <script lang="ts" src="./index.ts"></script>
@@ -70,7 +70,7 @@ TypeScript 是一个开源的编程语言，通过在 JavaScript（世界上最�
 
 ### 编写tsconfig.json文件
 
-对相关配置不熟悉的同学可以直接采用下面配置，能够最大限度发挥 Index 中强大的 ts 类型推导能力
+对相关配置不熟悉的同学可以直接采用下面配置，能够最大限度发挥 Mpx 中强大的 ts 类型推导能力
 
 ```json
 {
@@ -92,18 +92,18 @@ TypeScript 是一个开源的编程语言，通过在 JavaScript（世界上最�
 
 ### 增强类型
 
-如果需要增加 Index 的属性和选项，可以自定义声明 `TypeScript` 补充现有的类型。
+如果需要增加 Mpx 的属性和选项，可以自定义声明 `TypeScript` 补充现有的类型。
 
 例如，首先创建一个 types.d.ts 文件
 
 ```ts
 // types.d.ts
 
-import { Index } from '@mpxjs/core'
+import { Mpx } from '@mpxjs/core'
 
 declare module '@mpxjs/core' {
-  // 声明为 Index 补充的属性
-  interface Index {
+  // 声明为 Mpx 补充的属性
+  interface Mpx {
     $myProperty: string
   }
 }
@@ -122,7 +122,7 @@ mpx.$myProperty = 'my-property'
 
 ## 类型推导及注意事项
 
-Index 基于泛型函数提供了非常方便用户使用的反向类型推导能力，简单来说，就是用户可以用非常接近于 js 的方式调用 Index 提供的 api ，就能够获得大量基于用户输入参数反向推导得到的类型提示及检查。但是由于 ts 本身的能力限制，我们在 Index 的运行时中添加了少量辅助函数和变种api，便于用户最大程度地享受反向类型推导带来的便利性，简单的使用示例如下：
+Mpx 基于泛型函数提供了非常方便用户使用的反向类型推导能力，简单来说，就是用户可以用非常接近于 js 的方式调用 Mpx 提供的 api ，就能够获得大量基于用户输入参数反向推导得到的类型提示及检查。但是由于 ts 本身的能力限制，我们在 Mpx 的运行时中添加了少量辅助函数和变种api，便于用户最大程度地享受反向类型推导带来的便利性，简单的使用示例如下：
 
 ```typescript
 import {createComponent, getMixin, createStoreWithThis} from '@mpxjs/core'

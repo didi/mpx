@@ -65,24 +65,24 @@ module.exports = [
 ]
 ```
 
-DllPlugin 的配置项详见[文档](https://webpack.docschina.org/plugins/dll-plugin/)，Index 中相关配置项依据小程序环境做了相关调整。
+DllPlugin 的配置项详见[文档](https://webpack.docschina.org/plugins/dll-plugin/)，Mpx 中相关配置项依据小程序环境做了相关调整。
 - **cacheGroups**
     - 类型: `Array<object>`
         - entries
-            - 类型: `Array`dll
-
+            - 类型: `Array`dll 
+            
               构建入 dll 的文件入口
         - name
             - 类型: `String`
-
+                
               生成的 dll 文件名
         - root
             - 类型: `String`
-
+               
               生成的 dll 文件夹名
 - **modes**
     - 类型: `Array`
-
+        
       构建 dll 产物对应的平台
       ```js
       // 配置多平台输出，例如：
@@ -93,30 +93,30 @@ DllPlugin 的配置项详见[文档](https://webpack.docschina.org/plugins/dll-p
       ```
 - **entryOnly**
     - 类型: `Boolean`
-
+     
       如果为true，则仅暴露入口
-
+      
       这里建立使用entryOnly: true 配置
-      > 如果为 false 时，dllPlugin 中的 tree shakeing 功能就不再起作用
-
+      > 如果为 false 时，dllPlugin 中的 tree shakeing 功能就不再起作用 
+      
       另外如果为false，如果是将分包资源打入dll bundle，会存在将全局方法打入分包 dll 中的可能性，这样主包在使用该方法被映射到 dll bundle 中时，会因为分包未加载而报错
 - **webpackCfg**
     - 类型: `Object`
-
+    
       构建 dll 时可添加其他的 webpack 配置
-
-
+      
+      
 - **format**
     - 类型: `Boolean`
-
+    
       生成的 manifest json 文件 是否进行格式化
 
 
-### Index 中对 DllPlugin 配置所做的相关处理
+### Mpx 中对 DllPlugin 配置所做的相关处理
 
 正常使用 DllPlugin 是单独创建一个 webpack 配置文件，配置文件中加入 DllPlugin，然后运行 webpack 编译构建生成 dll 文件。
 
-考虑到 Index 在编译时需要跨平台输出，所以 Index 的配置项是 `Array<object>` 类型，同时增加了 modes 配置项，可以自主控制输出不同平台版本 dll 文件。
+考虑到 Mpx 在编译时需要跨平台输出，所以 Mpx 的配置项是 `Array<object>` 类型，同时增加了 modes 配置项，可以自主控制输出不同平台版本 dll 文件。
 
 构建生成 dll bundle 的主要逻辑在 buildDll.js 中，通过对 dll.config 中数组的循环处理，生成 webpackCfgs 数组。
 
@@ -168,4 +168,4 @@ DllReferencePlugin 的其他配置项详见[文档](https://webpack.docschina.or
 
 
 ### 总结
-综上所述，在 Index 中使用 dllPlugin 时，只需要进行 build/dll.config.js 文件的配置，然后通过 build:dll 命令生成 dll bundle，之后就可以正常的进行代码的 build 了。不过每次 build 需要检查下项目中使用的 npm 包版本与 dll bundle 中的 npm 包版本是否一致，避免因为包版本的滞后更新导致线上 bug，这里我们后续也会提供相应的包版本比对插件。
+综上所述，在 Mpx 中使用 dllPlugin 时，只需要进行 build/dll.config.js 文件的配置，然后通过 build:dll 命令生成 dll bundle，之后就可以正常的进行代码的 build 了。不过每次 build 需要检查下项目中使用的 npm 包版本与 dll bundle 中的 npm 包版本是否一致，避免因为包版本的滞后更新导致线上 bug，这里我们后续也会提供相应的包版本比对插件。

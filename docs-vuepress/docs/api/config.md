@@ -1,6 +1,6 @@
 # 全局配置
 
-`Index.config` 是一个对象，包含 Index 的全局配置。可以在启动应用之前修改下列 property：
+`Mpx.config` 是一个对象，包含 Mpx 的全局配置。可以在启动应用之前修改下列 property：
 
 ## useStrictDiff
 
@@ -80,7 +80,7 @@ mpx.config.ignoreRenderError = true
 
 - **用法**：
 
-Index 实例上的 key（包括data、computed、methods）如果有重名冲突，在`ignoreConflictWhiteList`配置中的属性会被最新的覆盖；而不在`ignoreConflictWhiteList`配置中的属性，不会被覆盖。
+Mpx 实例上的 key（包括data、computed、methods）如果有重名冲突，在`ignoreConflictWhiteList`配置中的属性会被最新的覆盖；而不在`ignoreConflictWhiteList`配置中的属性，不会被覆盖。
 
 > 只要有重名冲突均会有报错提示。
 

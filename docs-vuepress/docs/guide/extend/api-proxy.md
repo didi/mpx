@@ -14,7 +14,7 @@ mpx.use(apiProxy, options)
 ```
 
 ```js
-// 脱离 Index 单独使用
+// 脱离 Mpx 单独使用
 import { getProxy } from '@mpxjs/api-proxy'
 // proxy 即为target 实例
 const proxy = getProxy(options)

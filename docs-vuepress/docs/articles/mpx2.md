@@ -2,7 +2,7 @@
 sidebarDepth: 2
 ---
 
-# Index 小程序框架技术揭秘
+# Mpx 小程序框架技术揭秘
 
 > 作者：[CommanderXL](https://github.com/CommanderXL)
 
@@ -90,14 +90,14 @@ if (isApp) {
 
 这里需要解释说明下有关 webpack 提供的 SingleEntryPlugin 插件。这个插件是 webpack 提供的一个内置插件，当这个插件被挂载到 webpack 的编译流程的过程中是，会绑定`compiler.hooks.make.tapAsync`hook，当这个 hook 触发后会调用这个插件上的 SingleEntryPlugin.createDependency 静态方法去创建一个入口依赖，然后调用`compilation.addEntry`将这个依赖加入到编译的流程当中，这个是单入口文件的编译流程的最开始的一个步骤(具体可以参见 [Webpack SingleEntryPlugin 源码](https://github.com/webpack/webpack/blob/master/lib/SingleEntryPlugin.js))。
 
-Index 正是利用了 webpack 提供的这样一种能力，在遵照小程序的自定义组件的规范的前提下，解析 mpx json 配置文件的过程中，手动的调用 SingleEntryPlugin 相关的方法去完成动态入口的添加工作。这样也就串联起了所有的 mpx 文件的编译工作。
+Mpx 正是利用了 webpack 提供的这样一种能力，在遵照小程序的自定义组件的规范的前提下，解析 mpx json 配置文件的过程中，手动的调用 SingleEntryPlugin 相关的方法去完成动态入口的添加工作。这样也就串联起了所有的 mpx 文件的编译工作。
 
 
 ### Render Function
 
-Render Function 这块的内容我觉得是 Index 设计上的一大亮点内容。Index 引入 Render Function 主要解决的问题是性能优化方向相关的，因为小程序的架构设计，逻辑层和渲染层是2个独立的。
+Render Function 这块的内容我觉得是 Mpx 设计上的一大亮点内容。Mpx 引入 Render Function 主要解决的问题是性能优化方向相关的，因为小程序的架构设计，逻辑层和渲染层是2个独立的。
 
-这里直接引用 Index 有关 Render Function 对于性能优化相关开发工作的描述：
+这里直接引用 Mpx 有关 Render Function 对于性能优化相关开发工作的描述：
 
 > 作为一个接管了小程序setData的数据响应开发框架，我们高度重视Mpx的渲染性能，通过小程序官方文档中提到的性能优化建议可以得知，setData对于小程序性能来说是重中之重，setData优化的方向主要有两个：
 
@@ -109,7 +109,7 @@ Render Function 这块的内容我觉得是 Index 设计上的一大亮点内容
 
 > 将模板编译render函数的过程中，我们还记录输出了模板中使用的数据路径，在每次需要setData时会根据这些数据路径与上一次的数据进行diff，仅将发生变化的数据通过数据路径的方式进行setData，这样确保了每次setData传输的数据量最低，同时避免了不必要的setData操作，进一步降低了setData的频次。
 
-接下来我们看下 Index 是如何实现 Render Function 的。这里我们从一个简单的 demo 来说起：
+接下来我们看下 Mpx 是如何实现 Render Function 的。这里我们从一个简单的 demo 来说起：
 
 ```html
 <template>
@@ -483,11 +483,11 @@ module.exports = function (content) {
 
 ## 运行时环节
 
-以上几个章节主要是分析了几个 Index 在编译构建环节所做的工作。接下来我们来看下 Index 在运行时环节做了哪些工作。
+以上几个章节主要是分析了几个 Mpx 在编译构建环节所做的工作。接下来我们来看下 Mpx 在运行时环节做了哪些工作。
 
 ### 响应式系统
 
-小程序也是通过数据去驱动视图的渲染，需要手动的调用`setData`去完成这样一个动作。同时小程序的视图层也提供了用户交互的响应事件系统，在 js 代码中可以去注册相关的事件回调并在回调中去更改相关数据的值。Index 使用 Mobx 作为响应式数据工具并引入到小程序当中，使得小程序也有一套完成的响应式的系统，让小程序的开发有了更好的体验。
+小程序也是通过数据去驱动视图的渲染，需要手动的调用`setData`去完成这样一个动作。同时小程序的视图层也提供了用户交互的响应事件系统，在 js 代码中可以去注册相关的事件回调并在回调中去更改相关数据的值。Mpx 使用 Mobx 作为响应式数据工具并引入到小程序当中，使得小程序也有一套完成的响应式的系统，让小程序的开发有了更好的体验。
 
 还是从组件的角度开始分析 mpx 的整个响应式的系统。每次通过`createComponent`方法去创建一个新的组件，这个方法将原生的小程序创造组件的方法`Component`做了一层代理，例如在 attched 的生命周期钩子函数内部会注入一个 mixin：
 
@@ -719,7 +719,7 @@ mpx 在构建这个响应式的系统当中，主要有2个大的环节，其一
 
 ### 尽可能的减少 setData 传输的数据
 
-Index 在这个方面所做的工作之一就是基于数据路径的 diff。这也是官方所推荐的 setData 的方式。每次响应式数据发生了变化，调用 setData 方法的时候确保传递的数据都为 diff 过后的最小数据集，这样来减少 setData 传输的数据。
+Mpx 在这个方面所做的工作之一就是基于数据路径的 diff。这也是官方所推荐的 setData 的方式。每次响应式数据发生了变化，调用 setData 方法的时候确保传递的数据都为 diff 过后的最小数据集，这样来减少 setData 传输的数据。
 
 接下来我们就来看下这个优化手段的具体实现思路，首先还是从一个简单的 demo 来看：
 
@@ -776,7 +776,7 @@ class MPXProxy {
       this.miniRenderData = {}
       for (let key in renderData) { // 遍历数据访问路径
         if (renderData.hasOwnProperty(key)) {
-          let item = renderData[key]
+          let item = renderData[key] 
           let data = item[0]
           let firstKey = item[1] // 某个字段 path 的第一个 key 值
           if (this.localKeys.indexOf(firstKey) > -1) {
@@ -817,7 +817,7 @@ class MPXProxy {
  * @param {Object} renderData
  * @return {Object} processedRenderData
  */
-export function preprocessRenderData (renderData) {
+export function preprocessRenderData (renderData) { 
   // method for get key path array
   const processKeyPathMap = (keyPathMap) => {
     let keyPath = Object.keys(keyPathMap)
@@ -851,7 +851,7 @@ export function preprocessRenderData (renderData) {
 
 1. 响应式的数据发生了变化，触发 Render Function 重新执行，获取最新的 renderData；
 2. renderData 的预处理，主要是用以剔除通过路径访问时同时有父、子路径情况下的子路径的 key；
-3. 判断是否存在 miniRenderData 最小数据渲染集，如果没有那么 Index 完成 miniRenderData 最小渲染数据集的收集，如果有那么使用处理后的 renderData 和 miniRenderData 进行数据的 diff 工作(diffAndCloneA)，并更新最新的 miniRenderData 的值；
+3. 判断是否存在 miniRenderData 最小数据渲染集，如果没有那么 Mpx 完成 miniRenderData 最小渲染数据集的收集，如果有那么使用处理后的 renderData 和 miniRenderData 进行数据的 diff 工作(diffAndCloneA)，并更新最新的 miniRenderData 的值；
 4. 调用 doRender 方法，进入到 setData 阶段
 
 相关参阅文档：
