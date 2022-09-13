@@ -518,6 +518,7 @@ import 导入的内容，除了从 `@mpxjs/core` 中导入的变量或方法，�
     }
 </script>
 ```
+
 ### `defineProps()` 
 和 Vue 类似，为了在声明小程序组件 `properties` 选项时获得完整的类型推导支持，在 `<script setup>` 中，我们需要使用 `defineProps` API，它默认在 `<script setup>` 中可用：
 ```html
@@ -532,13 +533,13 @@ import 导入的内容，除了从 `@mpxjs/core` 中导入的变量或方法，�
 * `defineProps` 接收与小程序 `properties` 选项相同的值。
 * 传入到 `defineProps` 的选项会从 setup 中提升到模块的作用域。因此传入的选项不能引用在 setup 作用域中声明的局部变量，否则会导致编译错误，不过可以引入导入的绑定。
 
-### `defineReturns()`
-在 `<script setup>` 声明的顶层的绑定(包括变量，函数声明，以及 import 导入的内容)，编译后在 `setup()` 都会统一被 return 出去，当开发者想对 `setup()` 中暴露给模版的变量和方法进行自定义，可以使用 `defineReturns` 编译宏进行定义。
+### `defineExpose()`
+在 `<script setup>` 声明的顶层的绑定(包括变量，函数声明，以及 import 导入的内容)，编译后在 `setup()` 中都会统一被 return 出去，当开发者想自定义暴露给模版的变量和方法，可以使用 `defineExpose` 编译宏进行定义。
 ```html
 <script setup>
     const count = ref(0)
     const name = ref('black')
-    defineReturns({
+    defineExpose({
         name
     })
 </script>
@@ -549,6 +550,11 @@ import 导入的内容，除了从 `@mpxjs/core` 中导入的变量或方法，�
     <view>{{count}}</view>
 </template>
 ```
+
+Mpx 中的 defineExpose 和 Vue3 中的不尽相同，在 Vue3 中，使用 `<scrip setup>` 的组件默认是关闭的-即通过模版引用或者 `$parent` 链获取到的组件实例中不会暴露任何在`<script setup>` 中声明的绑定。
+
+在 Mpx 中，`<script setup>` 中的声明绑定都会挂载到组件实例中，都可以通过组件实例来访问，Mpx `defineExpose` 更大的左右是假如你在 `<scrip setup>` 中引入了一些 store 实例，这些 store 实例默认会挂载到组件实例中，会导致后续的响应式处理以及组件更新速度变慢，这里我们就可以使用
+`defineExpose` 来规避掉这个问题。
 
 ### `defineOptions()`
 此编译宏相较于 Vue 是 Mpx 中独有的，主要是当开发者想在 `<script setup>` 中使用一些微信小程序中特有的选项式，例如 relations、moved 等，可以使用该编译宏进行定义。
