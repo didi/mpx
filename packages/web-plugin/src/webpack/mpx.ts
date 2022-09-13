@@ -1,6 +1,6 @@
 import { WebpackError } from 'webpack'
 
-export interface Index {
+export interface Mpx {
   pagesMap: any
   componentsMap: any
   usingComponents: any
@@ -31,7 +31,7 @@ export interface Index {
   [k: string]: any
 }
 
-const mpx: Index = {
+const mpx: Mpx = {
   // pages全局记录，无需区分主包分包
   pagesMap: {},
   // 组件资源记录，依照所属包进行记录
