@@ -582,6 +582,54 @@ Mpx 中的 defineExpose 和 Vue3 中的不尽相同，在 Vue3 中，使用 `<sc
     console.log(context.refs)
 </script>
 ```
+
+### 针对 TypeScript 的功能
+
+#### 类型 props 的声明
+props 可以通过给 `defineProps` 传递纯类型函数的方式来声明：
+
+```ts
+    const props = defineProps<{
+        foo: string
+        bar: number
+    }>
+
+    // 构建转换为
+    {
+        properties: {
+            foo: {
+                type: String
+            },
+            bar: {
+                type: Number
+            }
+        }
+    }
+```
+* `defineProps` 要么使用运行时声明，要么使用类型声明。同时使用两种方式会导致编译报错。
+* 小程序中 `defineProps` 类型声明若有 optional 不会生效，因为小程序的 props 只要声明则一定会存在
+* 类型声明参数必须是一下内容之一，以确保正确的静态分析：
+  * 类型字面量
+  * 在同一文件中的接口或者类型字面量的引用
+
+#### 使用类型声明时的默认 props 值
+和 Vue3 一样，针对类型的 `defineProps` 声明的不足，它无法给 props 提供默认值。为了解决这个问题，我们也支持了 `withDefaults` 编译宏：
+
+```ts
+export interface Props {
+  msg: string
+  labels: string
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  msg: 'hello',
+  labels: 'world'
+})
+```
+上边代码会被编译为等价的运行时 props 的 `value` 选项。
+
+* 小程序 properties 定义中的 optionalTypes 和 observer 字段，无法使用 TypeScript 类型声明的方式定义，如果需要定义这两个字段，目前需要使用运行时的方式来定义。
+
 ### 限制
 由于模块执行语义的差异，`<script setup>` 中的代码依赖单文件组件的上下文，如果将其移动到外部的 `.js` 或者 `.ts` 的时候，对于开发者可工具来说都十分混乱。因此 `<script setup>` 不能和 `src` attribute 一起使用。
 
