@@ -1,5 +1,5 @@
 import { isObject } from '../../helper/utils'
-import { CREATED, MOUNTED } from '../../core/innerLifecycle'
+import { CREATED, MOUNTED, BEFOREUNMOUNT } from '../../core/innerLifecycle'
 
 const targets = []
 let curTarget = null
@@ -57,7 +57,7 @@ export default function relationsMixin (mixinType) {
               if (child && child.props) {
                 if (child.props.$isCustomComponent) {
                   // 只有relations中声明为后代的节点才能被作为有效子节点
-                  let relation = this.$mpxRelations[child.type.displayName]
+                  const relation = this.$mpxRelations[child.type.displayName]
                   if (relation && (relation.type === 'child' || relation.type === 'descendant')) {
                     child.props.$mpxIsSlot = true
                     list.push(child)
@@ -120,7 +120,7 @@ export default function relationsMixin (mixinType) {
         },
         mpxPropagateFindRelation (child) {
           let cur = this
-          let contexts = []
+          const contexts = []
           let depth = 1
           // 向上查找所有可能匹配的父级relation上下文
           while (cur) {
@@ -184,7 +184,7 @@ export default function relationsMixin (mixinType) {
         this.__mpxCollectRelations()
         this.__mpxExecRelations('linked')
       },
-      beforeDestroy () {
+      [BEFOREUNMOUNT] () {
         this.__mpxExecRelations('unlinked')
       },
       methods: {

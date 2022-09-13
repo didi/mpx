@@ -46,7 +46,6 @@ module.exports = function (content) {
   const globalSrcMode = mpx.srcMode
   const localSrcMode = queryObj.mode
   const srcMode = localSrcMode || globalSrcMode
-  const vueContentCache = mpx.vueContentCache
   const autoScope = matchCondition(resourcePath, mpx.autoScopeRules)
 
   let ctorType = 'app'
@@ -60,7 +59,7 @@ module.exports = function (content) {
 
   // 支持资源query传入isPage或isComponent支持页面/组件单独编译
   if (ctorType === 'app' && (queryObj.isComponent || queryObj.isPage)) {
-    const entryName = getEntryName(this) || (queryObj.isComponent ? 'noEntryComponent' : 'noEntryPage')
+    const entryName = getEntryName(this) || mpx.getOutputPath(resourcePath, queryObj.isComponent ? 'component' : 'page')
     ctorType = queryObj.isComponent ? 'component' : 'page'
     this._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, ctorType, entryName, packageRoot))
   }
@@ -94,10 +93,6 @@ module.exports = function (content) {
       })
     },
     (callback) => {
-      // web输出模式下没有任何inject，可以通过cache直接返回，由于读取src json可能会新增模块依赖，需要在之后返回缓存内容
-      if (vueContentCache.has(filePath)) {
-        return callback(null, vueContentCache.get(filePath))
-      }
       const hasScoped = parts.styles.some(({ scoped }) => scoped) || autoScope
       const templateAttrs = parts.template && parts.template.attrs
       const hasComment = templateAttrs && templateAttrs.comments
@@ -109,7 +104,7 @@ module.exports = function (content) {
 
       if (parts.json && parts.json.content) {
         try {
-          let ret = JSON5.parse(parts.json.content)
+          const ret = JSON5.parse(parts.json.content)
           if (ret.usingComponents) {
             fixUsingComponent(ret.usingComponents, mode)
             usingComponents = usingComponents.concat(Object.keys(ret.usingComponents))
@@ -204,7 +199,6 @@ module.exports = function (content) {
         ], (err, scriptRes) => {
           if (err) return callback(err)
           output += scriptRes.output
-          vueContentCache.set(filePath, output)
           callback(null, output)
         })
       }
@@ -271,10 +265,12 @@ module.exports = function (content) {
 
       if (template) {
         const extraOptions = {
-          ...template.src ? {
-            ...queryObj,
-            resourcePath
-          } : null,
+          ...template.src
+            ? {
+                ...queryObj,
+                resourcePath
+              }
+            : null,
           hasScoped,
           hasComment,
           isNative,
@@ -296,11 +292,13 @@ module.exports = function (content) {
           const scoped = style.scoped || autoScope
           const extraOptions = {
             // style src会被特殊处理为全局复用样式，不添加resourcePath，添加isStatic及issuerFile
-            ...style.src ? {
-              ...queryObj,
-              isStatic: true,
-              issuerResource: addQuery(this.resource, { type: 'styles' }, true)
-            } : null,
+            ...style.src
+              ? {
+                  ...queryObj,
+                  isStatic: true,
+                  issuerResource: addQuery(this.resource, { type: 'styles' }, true)
+                }
+              : null,
             moduleId,
             scoped
           }
@@ -332,10 +330,12 @@ module.exports = function (content) {
         if (scriptSrcMode) output += `global.currentSrcMode = ${JSON.stringify(scriptSrcMode)}\n`
         // 传递ctorType以补全js内容
         const extraOptions = {
-          ...script.src ? {
-            ...queryObj,
-            resourcePath
-          } : null,
+          ...script.src
+            ? {
+                ...queryObj,
+                resourcePath
+              }
+            : null,
           ctorType
         }
         output += getRequire('script', script, extraOptions) + '\n'

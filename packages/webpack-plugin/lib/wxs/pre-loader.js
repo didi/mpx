@@ -37,7 +37,7 @@ module.exports = function (content) {
             path.node.name = '__mpx_args__'
             const targetPath = path.getFunctionParent().get('body')
             if (!targetPath.inserted) {
-              let results = targetPath.unshiftContainer('body', insertNodes) || []
+              const results = targetPath.unshiftContainer('body', insertNodes) || []
               targetPath.inserted = true
               results.forEach((item) => {
                 item.shouldStopTraverse = true

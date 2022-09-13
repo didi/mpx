@@ -1,4 +1,4 @@
-import { CREATED, BEFOREMOUNT, UPDATED, UNMOUNTED } from '../../core/innerLifecycle'
+import { CREATED, BEFOREMOUNT, BEFOREUPDATE, UNMOUNTED } from '../../core/innerLifecycle'
 import { noop } from '../../helper/utils'
 import { error } from '../../helper/log'
 import { getEnvObj } from '../../helper/env'
@@ -37,7 +37,7 @@ export default function getRefsMixin () {
     [BEFOREMOUNT] () {
       this.__getRefs()
     },
-    [UPDATED] () {
+    [BEFOREUPDATE] () {
       this.__getRefs()
     },
     methods: {
@@ -57,7 +57,7 @@ export default function getRefsMixin () {
       },
       __getRefNode (ref, isAsync) {
         if (!ref) return
-        let selector = ref.selector.replace(/{{mpxCid}}/g, this.__mpxProxy.uid)
+        const selector = ref.selector.replace(/{{mpxCid}}/g, this.__mpxProxy.uid)
         if (ref.type === 'node') {
           const query = this.createSelectorQuery ? this.createSelectorQuery() : envObj.createSelectorQuery()
           return query && (ref.all ? query.selectAll(selector) : query.select(selector))
@@ -154,9 +154,11 @@ export default function getRefsMixin () {
         const component = e.detail.component
         const destroyed = e.detail.destroyed
         const className = component.props.className || component.className
-        const identifiers = className ? className.trim().split(/\s+/).map(item => {
-          return `.${item}`
-        }) : []
+        const identifiers = className
+          ? className.trim().split(/\s+/).map(item => {
+            return `.${item}`
+          })
+          : []
         if (component.props.id) {
           identifiers.push(`#${component.props.id}`)
         }

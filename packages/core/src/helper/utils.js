@@ -117,14 +117,16 @@ export function proxy (target, source, keys, readonly, onConflict) {
       configurable: true,
       enumerable: true
     }
-    descriptor.set = readonly ? noop : function (val) {
-      const oldVal = source[key]
-      if (isRef(oldVal) && !isRef(val)) {
-        oldVal.value = val
-      } else {
-        source[key] = val
+    descriptor.set = readonly
+      ? noop
+      : function (val) {
+        const oldVal = source[key]
+        if (isRef(oldVal) && !isRef(val)) {
+          oldVal.value = val
+        } else {
+          source[key] = val
+        }
       }
-    }
     if (onConflict) {
       if (key in target) {
         if (onConflict(key) === false) return
@@ -138,7 +140,7 @@ export function proxy (target, source, keys, readonly, onConflict) {
 // 包含原型链上属性keys
 export function enumerableKeys (obj) {
   const keys = []
-  for (let key in obj) {
+  for (const key in obj) {
     keys.push(key)
   }
   return keys
@@ -172,6 +174,14 @@ export function isString (str) {
 
 export function isFunction (fn) {
   return typeof fn === 'function'
+}
+
+export function isBoolean (bool) {
+  return typeof bool === 'boolean'
+}
+
+export function isNumber (num) {
+  return typeof num === 'number'
 }
 
 export function isPlainObject (value) {
@@ -301,7 +311,7 @@ export function parseStyleText (cssText) {
   const propertyDelimiter = /:(.+)/
   cssText.split(listDelimiter).forEach(function (item) {
     if (item) {
-      let tmp = item.split(propertyDelimiter)
+      const tmp = item.split(propertyDelimiter)
       tmp.length > 1 && (res[dash2hump(tmp[0].trim())] = tmp[1].trim())
     }
   })
@@ -310,9 +320,9 @@ export function parseStyleText (cssText) {
 
 export function genStyleText (styleObj) {
   let res = ''
-  for (let key in styleObj) {
+  for (const key in styleObj) {
     if (hasOwn(styleObj, key)) {
-      let item = styleObj[key]
+      const item = styleObj[key]
       res += `${hump2dash(key)}:${item};`
     }
   }
@@ -343,7 +353,8 @@ export function isEmptyObject (obj) {
   if (!obj) {
     return true
   }
-  for (let key in obj) {
+  /* eslint-disable no-unreachable-loop */
+  for (const key in obj) {
     return false
   }
   return true
@@ -351,7 +362,7 @@ export function isEmptyObject (obj) {
 
 export function aIsSubPathOfB (a, b) {
   if (a.startsWith(b) && a !== b) {
-    let nextChar = a[b.length]
+    const nextChar = a[b.length]
     if (nextChar === '.') {
       return a.slice(b.length + 1)
     } else if (nextChar === '[') {
@@ -404,8 +415,8 @@ export function mergeData (target, ...sources) {
 }
 
 export function processUndefined (obj) {
-  let result = {}
-  for (let key in obj) {
+  const result = {}
+  for (const key in obj) {
     if (hasOwn(obj, key)) {
       if (obj[key] !== undefined) {
         result[key] = obj[key]
@@ -511,13 +522,13 @@ export function isNumberStr (str) {
   return /^\d+$/.test(str)
 }
 
-let datasetReg = /^data-(.+)$/
+const datasetReg = /^data-(.+)$/
 
 export function collectDataset (props) {
-  let dataset = {}
-  for (let key in props) {
+  const dataset = {}
+  for (const key in props) {
     if (hasOwn(props, key)) {
-      let matched = datasetReg.exec(key)
+      const matched = datasetReg.exec(key)
       if (matched) {
         dataset[matched[1]] = props[key]
       }
@@ -534,11 +545,11 @@ export function collectDataset (props) {
 export function preProcessRenderData (renderData) {
   // method for get key path array
   const processKeyPathMap = (keyPathMap) => {
-    let keyPath = Object.keys(keyPathMap)
+    const keyPath = Object.keys(keyPathMap)
     return keyPath.filter((keyA) => {
       return keyPath.every((keyB) => {
         if (keyA.startsWith(keyB) && keyA !== keyB) {
-          let nextChar = keyA[keyB.length]
+          const nextChar = keyA[keyB.length]
           if (nextChar === '.' || nextChar === '[') {
             return false
           }

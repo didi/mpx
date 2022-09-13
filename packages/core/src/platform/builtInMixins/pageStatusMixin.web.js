@@ -12,7 +12,7 @@ let systemInfo = {}
 let count = 0
 
 function getCurrentPageInstance () {
-  let vnode = global.__mpxRouter && global.__mpxRouter.__mpxActiveVnode
+  const vnode = global.__mpxRouter && global.__mpxRouter.__mpxActiveVnode
   let pageInstance
   if (vnode && vnode.componentInstance) {
     pageInstance = vnode.tag.endsWith('mpx-tab-bar-container') ? vnode.componentInstance.$children[1] : vnode.componentInstance
@@ -71,7 +71,7 @@ export default function pageStatusMixin (mixinType) {
   }
   return {
     [CREATED] () {
-      let pageInstance = getCurrentPageInstance()
+      const pageInstance = getCurrentPageInstance()
       if (!pageInstance) {
         this.$watch(() => pageInstance.mpxPageStatus, status => {
           if (!status) return

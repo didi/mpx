@@ -1,6 +1,6 @@
 import { reactive } from '../observer/reactive'
 import { ReactiveEffect } from '../observer/effect'
-import { EffectScope } from '../observer/effectScope'
+import { effectScope } from '../platform/export/index'
 import { watch } from '../observer/watch'
 import { computed } from '../observer/computed'
 import { queueJob, nextTick } from '../observer/scheduler'
@@ -74,16 +74,16 @@ export default class MpxProxy {
     // beforeCreate -> created -> mounted -> unmounted
     this.state = BEFORECREATE
     this.ignoreProxyMap = makeMap(EXPORT_MPX.config.ignoreProxyWhiteList)
+    // 收集setup中动态注册的hooks，小程序与web环境都需要
+    this.hooks = {}
     if (__mpx_mode__ !== 'web') {
-      this.scope = new EffectScope(true)
+      this.scope = effectScope(true)
       // props响应式数据代理
       this.props = {}
       // data响应式数据代理
       this.data = {}
       // 非props key
       this.localKeysMap = {}
-      // 收集setup中动态注册的hooks
-      this.hooks = {}
       // 渲染函数中收集的数据
       this.renderData = {}
       // 最小渲染数据
@@ -94,21 +94,15 @@ export default class MpxProxy {
       this.forceUpdateAll = false
       this.currentRenderTask = null
     }
+    this.initApi()
+    this.callHook(BEFORECREATE)
   }
 
   created () {
-    this.initApi()
     if (__mpx_mode__ !== 'web') {
       setCurrentInstance(this)
       this.initProps()
       this.initSetup()
-      unsetCurrentInstance()
-    }
-    // beforeCreate需要在setup执行过后执行
-    this.callHook(BEFORECREATE)
-
-    if (__mpx_mode__ !== 'web') {
-      setCurrentInstance(this)
       this.initData()
       this.initComputed()
       this.initWatch()
@@ -150,33 +144,18 @@ export default class MpxProxy {
 
   propsUpdated () {
     const updateJob = this.updateJob || (this.updateJob = () => {
-      // 只有当前没有渲染任务时，属性更新才需要单独触发beforeUpdate/updated，否则可以由渲染任务触发beforeUpdate/updated
-      if (this.currentRenderTask?.resolved) {
-        // todo props更新时非渲染任务触发的beforeUpdate/updated不够严谨，没有正确地表征视图更新前及更新后
-        this.beforeUpdate()
-        this.updated()
+      // 只有当前没有渲染任务时，属性更新才需要单独触发updated，否则可以由渲染任务触发updated
+      if (this.currentRenderTask?.resolved && this.isMounted()) {
+        this.callHook(BEFOREUPDATE)
+        this.callHook(UPDATED)
       }
     })
     nextTick(updateJob)
   }
 
-  beforeUpdate () {
-    if (this.isMounted()) {
-      this.callHook(BEFOREUPDATE)
-    }
-  }
-
-  updated () {
-    if (this.isMounted()) {
-      this.callHook(UPDATED)
-    }
-  }
-
   unmounted () {
     this.callHook(BEFOREUNMOUNT)
-    if (__mpx_mode__ !== 'web') {
-      this.scope.stop()
-    }
+    this.scope?.stop()
     this.callHook(UNMOUNTED)
     this.state = UNMOUNTED
   }
@@ -368,7 +347,7 @@ export default class MpxProxy {
 
   processRenderDataWithStrictDiff (renderData) {
     const result = {}
-    for (let key in renderData) {
+    for (const key in renderData) {
       if (hasOwn(renderData, key)) {
         const data = renderData[key]
         const firstKey = getFirstKey(key)
@@ -480,12 +459,12 @@ export default class MpxProxy {
      */
     let callback = cb
     if (this.isMounted()) {
+      this.callHook(BEFOREUPDATE)
       callback = () => {
         cb && cb()
-        this.updated()
+        this.callHook(UPDATED)
         renderTask && renderTask.resolve()
       }
-      this.beforeUpdate()
     }
     data = processUndefined(data)
     if (typeof EXPORT_MPX.config.setDataHandler === 'function') {
@@ -505,7 +484,7 @@ export default class MpxProxy {
         try {
           return this.target.__injectedRender()
         } catch (e) {
-          warn(`Failed to execute render function, degrade to full-set-data mode.`, this.options.mpxFileResource, e)
+          warn('Failed to execute render function, degrade to full-set-data mode.', this.options.mpxFileResource, e)
           this.render()
         }
       } else {
@@ -575,11 +554,11 @@ export const getCurrentInstance = () => currentInstance
 
 export const setCurrentInstance = (instance) => {
   currentInstance = instance
-  instance.scope.on()
+  instance?.scope?.on()
 }
 
 export const unsetCurrentInstance = () => {
-  currentInstance && currentInstance.scope.off()
+  currentInstance?.scope?.off()
   currentInstance = null
 }
 
@@ -596,21 +575,22 @@ export const injectHook = (hookName, hook, instance = currentInstance) => {
   }
 }
 
-export const onBeforeCreate = (fn) => injectHook(BEFORECREATE, fn)
-export const onCreated = (fn) => injectHook(CREATED, fn)
-export const onBeforeMount = (fn) => injectHook(BEFOREMOUNT, fn)
-export const onMounted = (fn) => injectHook(MOUNTED, fn)
-export const onBeforeUpdate = (fn) => injectHook(BEFOREUPDATE, fn)
-export const onUpdated = (fn) => injectHook(UPDATED, fn)
-export const onBeforeUnmount = (fn) => injectHook(BEFOREUNMOUNT, fn)
-export const onUnmounted = (fn) => injectHook(UNMOUNTED, fn)
-export const onLoad = (fn) => injectHook(ONLOAD, fn)
-export const onShow = (fn) => injectHook(ONSHOW, fn)
-export const onHide = (fn) => injectHook(ONHIDE, fn)
-export const onResize = (fn) => injectHook(ONRESIZE, fn)
+export const createHook = (hookName) => (hook, instance) => injectHook(hookName, hook, instance)
+// 在代码中调用以下生命周期钩子时, 将生命周期钩子注入到mpxProxy实例上
+export const onBeforeMount = createHook(BEFOREMOUNT)
+export const onMounted = createHook(MOUNTED)
+export const onBeforeUpdate = createHook(BEFOREUPDATE)
+export const onUpdated = createHook(UPDATED)
+export const onBeforeUnmount = createHook(BEFOREUNMOUNT)
+export const onUnmounted = createHook(UNMOUNTED)
+export const onLoad = createHook(ONLOAD)
+export const onShow = createHook(ONSHOW)
+export const onHide = createHook(ONHIDE)
+export const onResize = createHook(ONRESIZE)
 export const onPullDownRefresh = (fn) => injectHook(ONPULLDOWNREFRESH, fn)
 export const onReachBottom = (fn) => injectHook(ONREACHBOTTOM, fn)
 export const onShareAppMessage = (fn) => injectHook(ONSHAREAPPMESSAGE, fn)
 export const onShareTimeline = (fn) => injectHook(ONSHARETIMELINE, fn)
 export const onAddToFavorites = (fn) => injectHook(ONADDTOFAVORITES, fn)
 export const onPageScroll = (fn) => injectHook(ONPAGESCROLL, fn)
+

@@ -1,3 +1,5 @@
+const { headerPlugin } = require('./headerMdPlugin')
+
 const sidebar = {
   '/guide/': [
     {
@@ -30,6 +32,7 @@ const sidebar = {
         'advance/npm',
         'advance/subpackage',
         'advance/async-subpackage',
+        'advance/composition-api',
         'advance/image-process',
         'advance/progressive',
         'advance/ability-compatible',
@@ -38,6 +41,15 @@ const sidebar = {
         'advance/size-report',
         // 'advance/dll-plugin',
         'advance/custom-output-path',
+      ]
+    },
+    {
+      title: '组合式API',
+      collapsable: false,
+      children: [
+        'composition-api/introduction',
+        'composition-api/lifecycle-hooks',
+        'composition-api/setup'
       ]
     },
     {
@@ -83,7 +95,18 @@ const sidebar = {
     'directives',
     'compile',
     'builtIn',
-    'extend'
+    'extend',
+    {
+      title: '响应性 API',
+      collapsable: false,
+      children: [
+        'reactivity-api/basic-reactivity',
+        'reactivity-api/refs-api',
+        'reactivity-api/computed-watch-api',
+        'reactivity-api/effect-scope'
+      ]
+    },
+    'composition-api'
   ],
   '/articles/': [
     { title: '滴滴开源小程序框架Mpx', path: '1.0' },
@@ -144,6 +167,10 @@ module.exports = {
     config.resolve.modules.add('node_modules')
   },
   markdown: {
-    // extractHeaders: [ 'h2', 'h3', 'h4' ]
+    // markdown-it-toc 的选项
+    extendMarkdown: md => {
+      // 使用更多的 markdown-it 插件!
+      md.use(headerPlugin)
+    }
   }
 }

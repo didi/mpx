@@ -2,14 +2,16 @@ const genComponentTag = require('../utils/gen-component-tag')
 const loaderUtils = require('loader-utils')
 const addQuery = require('../utils/add-query')
 const normalize = require('../utils/normalize')
+const hasOwn = require('../utils/has-own')
+const parseRequest = require('../utils/parse-request')
 const optionProcessorPath = normalize.lib('runtime/optionProcessor')
 const tabBarContainerPath = normalize.lib('runtime/components/web/mpx-tab-bar-container.vue')
 const tabBarPath = normalize.lib('runtime/components/web/mpx-tab-bar.vue')
 
 function shallowStringify (obj) {
-  let arr = []
-  for (let key in obj) {
-    if (obj.hasOwnProperty(key)) {
+  const arr = []
+  for (const key in obj) {
+    if (hasOwn(obj, key)) {
       let value = obj[key]
       if (Array.isArray(value)) {
         value = `[${value.join(',')}]`
@@ -49,6 +51,7 @@ module.exports = function (script, {
     projectRoot
   } = mpx
 
+  const { queryObj } = parseRequest(loaderContext.resource)
   const tabBar = jsonConfig.tabBar
 
   const emitWarning = (msg) => {
@@ -58,7 +61,7 @@ module.exports = function (script, {
   }
 
   const stringifyRequest = r => loaderUtils.stringifyRequest(loaderContext, r)
-  let tabBarPagesMap = {}
+  const tabBarPagesMap = {}
   if (tabBar && tabBarMap) {
     // 挂载tabBar组件
     const tabBarRequest = stringifyRequest(addQuery(tabBar.custom ? './custom-tab-bar/index' : tabBarPath, { isComponent: true }))
@@ -142,7 +145,9 @@ module.exports = function (script, {
         if (i18n) {
           const i18nObj = Object.assign({}, i18n)
           content += `  import VueI18n from 'vue-i18n'
-  Vue.use(VueI18n)\n`
+  import { createI18n } from 'vue-i18n-bridge'
+  
+  Vue.use(VueI18n , { bridge: true })\n`
           const requestObj = {}
           const i18nKeys = ['messages', 'dateTimeFormats', 'numberFormats']
           i18nKeys.forEach((key) => {
@@ -155,12 +160,9 @@ module.exports = function (script, {
           Object.keys(requestObj).forEach((key) => {
             content += `  i18nCfg.${key} = require(${requestObj[key]})\n`
           })
-          content += `  const i18n = new VueI18n(i18nCfg)
-  i18n.mergeMessages = (newMessages) => {
-    Object.keys(newMessages).forEach((locale) => {
-      i18n.mergeLocaleMessage(locale, newMessages[locale])
-    })
-  }
+          content += '  i18nCfg.legacy = false\n'
+          content += `  const i18n = createI18n(i18nCfg, VueI18n)
+  Vue.use(i18n)
   Mpx.i18n = i18n
   \n`
         }
@@ -219,11 +221,12 @@ module.exports = function (script, {
       // 为了正确获取currentSrcMode便于运行时进行转换，对于src引入的组件script采用require方式引入(由于webpack会将import的执行顺序上升至最顶)，这意味着对于src引入脚本中的named export将不会生效，不过鉴于mpx和小程序中本身也没有在组件script中声明export的用法，所以应该没有影响
       content += '\n\n\n/** Source start **/\n'
       content += script.src
-        ? `require(${stringifyRequest(script.src)})\n`
+        // 继承单文件组件query避免多个单文件模块实例引用一个src模块，因模块缓存导致createComponent不执行的问题
+        ? `require(${stringifyRequest(addQuery(script.src, queryObj))})\n`
         : script.content
       content += '\n/** Source end **/\n\n\n'
       // createApp/Page/Component执行完成后立刻获取当前的option并暂存
-      content += `  const currentOption = global.currentOption\n`
+      content += '  const currentOption = global.currentOption\n'
       // 获取pageConfig
       const pageConfig = {}
       if (ctorType === 'page') {
@@ -267,12 +270,8 @@ module.exports = function (script, {
         content += `,
     Vue,
     VueRouter`
-        if (i18n) {
-          content += `,
-    i18n`
-        }
       }
-      content += `\n  )\n`
+      content += '\n  )\n'
       return content
     }
   })

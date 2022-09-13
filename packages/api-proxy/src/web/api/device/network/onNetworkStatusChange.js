@@ -14,7 +14,7 @@ if (isBrowser) {
 
 export function onNetworkStatusChange (callbackFn) {
   if (navigator.connection) {
-    let proxyCallback = evt => {
+    const proxyCallback = evt => {
       const isConnected = navigator.onLine
       callbackFn({
         isConnected,

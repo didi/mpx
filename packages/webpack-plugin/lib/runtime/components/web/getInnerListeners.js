@@ -1,4 +1,4 @@
-import { isEmptyObject } from './util'
+import { isEmptyObject } from '../../utils'
 const isTouchDevice = document && ('ontouchstart' in document.documentElement)
 
 function processModel (listeners, context) {
