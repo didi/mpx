@@ -3,7 +3,7 @@ import addQuery from '@mpxjs/utils/add-query'
 import parseRequest from '@mpxjs/utils/parse-request'
 import loaderUtils from 'loader-utils'
 import isUrlRequestRaw from '@mpxjs/utils/is-url-request'
-import mpx from '../mpx'
+import mpx from '../../mpx'
 import resolve from '../utils/resolve'
 import { LoaderContext } from 'webpack'
 

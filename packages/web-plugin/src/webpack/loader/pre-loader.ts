@@ -4,7 +4,7 @@ import * as t from '@babel/types'
 import generate from '@babel/generator'
 import parseRequest from '@mpxjs/utils/parse-request'
 import isEmptyObject from '@mpxjs/utils/is-empty-object'
-import mpx from '../mpx'
+import mpx from '../../mpx'
 import { LoaderDefinition } from 'webpack'
 import { parseQuery } from 'loader-utils'
 

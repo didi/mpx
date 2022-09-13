@@ -1,5 +1,5 @@
 import parseRequest from '@mpxjs/utils/parse-request'
-import mpx from '../mpx'
+import mpx from '../../mpx'
 import { evalJSONJS } from '../../utils/evalJsonJs'
 import resolve from './resolve'
 import async from 'async'

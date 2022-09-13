@@ -2,7 +2,7 @@ import postcss from 'postcss'
 import { LoaderDefinition } from 'webpack'
 import {styleCompiler} from '@mpxjs/compiler'
 import { matchCondition } from '@mpxjs/utils/match-condition'
-import mpx from '../mpx'
+import mpx from '../../mpx'
 import loadPostcssConfig from '../../utils/loadPostcssConfig'
 
 const StyleCompiler: LoaderDefinition = function (css: string, map) {

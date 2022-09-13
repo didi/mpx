@@ -22,7 +22,7 @@ import { matchCondition } from '@mpxjs/utils/match-condition'
 import stringifyLoadersAndResource from '@mpxjs/utils/stringify-loaders-resource'
 import async from 'async'
 import { processOptions, Options } from '../options'
-import mpx, { processMpx } from './mpx'
+import mpx, { processMpx } from '../mpx'
 import { NormalModule, DefinePlugin, ExternalsPlugin, Compiler, Dependency, Module } from 'webpack'
 
 

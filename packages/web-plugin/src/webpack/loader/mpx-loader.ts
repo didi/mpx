@@ -14,7 +14,7 @@ import getEntryName from '../utils/get-entry-name'
 import RecordResourceMapDependency from '../dependencies/RecordResourceMapDependency'
 import { MPX_APP_MODULE_ID } from '../../constants'
 import path from 'path'
-import mpx from '../mpx'
+import mpx from '../../mpx'
 module.exports = function (content) {
   this.cacheable()
 
