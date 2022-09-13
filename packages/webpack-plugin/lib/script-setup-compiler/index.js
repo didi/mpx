@@ -245,6 +245,7 @@ function compileScriptSetup (
         node.arguments[0] || node
       )
     }
+    return true
   }
 
   function resolveQualifiedType (node, qualifier) {
@@ -268,7 +269,7 @@ function compileScriptSetup (
           return isQualifiedType(node.declaration)
         }
       }
-      const body = scriptSetupAst.body
+      const body = scriptSetupAst.program.body
       for (const node of body) {
         const qualified = isQualifiedType(node)
         if (qualified) {
@@ -321,13 +322,13 @@ function compileScriptSetup (
       } }`
     } else {
       return `${key}: { type: ${propRuntimeTypes.type}${
-        defaultString ? `, ${defaultString}` : ''
+        defaultString ? `, ${defaultString}` : null
       } }`
     }
   }).join(',\n    ')}
     }`
 
-    return `\n  props: ${propsDecls},`
+    return `\n  properties: ${propsDecls},`
   }
 
   function checkInvalidScopeReference (node, method) {
@@ -526,7 +527,7 @@ function compileScriptSetup (
                 (node.type === 'VariableDeclaration' && node.declare)
       ) {
         recordType(node, declaredTypes)
-        _s.move(start, end, 0)
+        _s.move(node.start, node.end, 0)
       }
     }
 
