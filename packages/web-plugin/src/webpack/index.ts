@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 'use strict'
 
-// import path from 'path'
 import ResolveDependency from './dependencies/ResolveDependency'
 import InjectDependency from './dependencies/InjectDependency'
 // @ts-ignore
@@ -21,8 +20,6 @@ import AddEnvPlugin from './resolver/AddEnvPlugin'
 import RecordResourceMapDependency from './dependencies/RecordResourceMapDependency'
 import parseRequest from '@mpxjs/utils/parse-request'
 import { matchCondition } from '@mpxjs/utils/match-condition'
-// import { preProcessDefs } from '@mpxjs/utils/index'
-// import hash from 'hash-sum'
 import stringifyLoadersAndResource from '@mpxjs/utils/stringify-loaders-resource'
 import async from 'async'
 import { processOptions, Options } from '../options'
@@ -72,7 +69,7 @@ class MpxWebpackPlugin {
   static loader(options: {[k: string]: any}) {
     if (options.transRpx) {
       warnings.push(
-        'Index loader option [transRpx] is deprecated now, please use mpx webpack plugin config [transRpxRules] instead!'
+        'Mpx loader option [transRpx] is deprecated now, please use mpx webpack plugin config [transRpxRules] instead!'
       )
     }
     return {

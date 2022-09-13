@@ -79,18 +79,18 @@
 
 ### 增强类型
 
-如果需要增加 Index 的属性和选项，可以自定义声明 TypeScript 补充现有的类型。
+如果需要增加 Mpx 的属性和选项，可以自定义声明 TypeScript 补充现有的类型。
 
 例如，首先创建一个 types.d.ts 文件
 
 ```ts
 // types.d.ts
 
-import { Index } from '@mpxjs/core'
+import { Mpx } from '@mpxjs/core'
 
 declare module '@mpxjs/core' {
-  // 声明为 Index 补充的属性
-  interface Index {
+  // 声明为 Mpx 补充的属性
+  interface Mpx {
     $myProperty: string
   }
 }

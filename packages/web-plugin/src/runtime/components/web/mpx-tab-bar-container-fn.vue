@@ -33,7 +33,7 @@ export default {
           components[name] = page
         } else {
           console.warn(
-            `[Index runtime warn]: TabBar page path ${pagePath} is not exist in local page map, please check!`
+            `[Mpx runtime warn]: TabBar page path ${pagePath} is not exist in local page map, please check!`
           )
         }
       })
