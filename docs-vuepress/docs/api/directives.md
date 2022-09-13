@@ -5,7 +5,7 @@
 * **预期：** `any`
 
 * **用法：**
-  
+
   根据表达式的值的 [truthiness](https://developer.mozilla.org/zh-CN/docs/Glossary/Truthy) 来有条件地渲染元素。在切换时元素及它的数据绑定 / 组件被销毁并重建。 **注意：如果元素是 `<block/>`, 注意它并不是一个组件，它仅仅是一个包装元素，不会在页面中做任何渲染，只接受控制属性**。
 
   ::: danger
@@ -21,7 +21,7 @@
 * **限制：** 前一兄弟元素必须有 `wx:if` 或 `wx:elif`
 
 * **用法：**
-  
+
   表示 `wx:if` 的“ `wx:elif` 块”。可以链式调用。
 
   ``` html
@@ -48,7 +48,7 @@
 * **限制：** 前一兄弟元素必须有 `wx:if` 或 `wx:elif`
 
 * **用法：**
-  
+
   为 `wx:if` 或者 `wx:elif` 添加 `wx:else` 块
 
   ``` html
@@ -67,7 +67,7 @@
 * **预期：** `Array | Object | number | string`
 
 * **用法：**
-  
+
   在组件上使用 `wx:for` 控制属性绑定一个数组，即可使用数组中各项的数据重复渲染该组件。默认数组的当前项的下标变量名默认为 `index`，数组当前项的变量名默认为 `item`
 
   ``` html
@@ -129,7 +129,7 @@
 * **用法：**
 
   使用 wx:for-index 可以指定数组当前下标的变量名：
-  
+
   ``` html
   <view wx:for="{{array}}" wx:key="id" wx:for-index="idx">
     {{ idx }}: {{ item.text }}
@@ -160,7 +160,7 @@
 * **用法：**
 
   使用 wx:for-item 可以指定数组当前元素的变量名：
-  
+
   ``` html
   <view wx:for="{{[1, 2, 3, 4, 5, 6, 7, 8, 9]}}" wx:for-item="i">
     <view wx:for="{{[1, 2, 3, 4, 5, 6, 7, 8, 9]}}" wx:for-item="j">
@@ -178,7 +178,7 @@
 * **预期：** `number | string`
 
 * **用法：**
-  
+
   如果列表中项目的位置会动态改变或者有新的项目添加到列表中，并且希望列表中的项目保持自己的特征和状态，需要使用 wx:key 来指定列表中项目的唯一的标识符。
   **注意：如不提供 wx:key，会报一个 warning， 如果明确知道该列表是静态，或者不必关注其顺序，可以选择忽略**。
 
@@ -197,7 +197,7 @@
 ## wx:class
 
 * **用法：**
-  
+
   绑定HTML Class: 类似vue的class绑定
 
   #对象用法
@@ -296,7 +296,7 @@
     })
   </script>
   ```
-  
+
   渲染为：
 
   ``` html
@@ -339,7 +339,7 @@
     这是一段测试文字
   </view>
   ```
-  
+
   ```js
   <script>
     import {createComponent} from '@mpxjs/core'
@@ -356,7 +356,7 @@
   ```
 
   示例：
-  
+
   ``` html
   <template>
     <view wx:for="{{list}}" wx:style="{{item.style}}">{{item.name}}</view>
@@ -378,7 +378,7 @@
             style: {
               color: 'blue'
             }
-          }         
+          }
         ]
       }
     })
@@ -436,7 +436,7 @@
 ## wx:model-prop
 
 wx:model 默认使用 `value` 属性传值，使用 `wx:model-prop` 定义 wx:model 指令对应的属性；
- 
+
 ## wx:model-event
 
 wx:model 默认监听 `input` 事件，可以使用 `wx:model-event` 定义 wx:model 指令对应的事件；
@@ -514,12 +514,12 @@ wx:model 默认监听 `input` 事件，可以使用 `wx:model-event` 定义 wx:m
 
 ## wx:model-filter
 
-在使用 `wx:model` 时我们可能需要像 Vue 的 `.trim` 、`.lazy` 这样的修饰符来对双向数据绑定的数据进行过滤和修饰；Mpx 通过增强指令 `wx:model-filter` 可以实现这一功能；
+在使用 `wx:model` 时我们可能需要像 Vue 的 `.trim` 、`.lazy` 这样的修饰符来对双向数据绑定的数据进行过滤和修饰；Index 通过增强指令 `wx:model-filter` 可以实现这一功能；
 该指令可以绑定内建的 filter 或者自定义的 filter 方法，该方法接收过滤前的值，返回过滤操作后的值。
 
 例如我们希望拿到的 input 元素中的数据是经过 trim 的。示例：
 
-> 当然，Mpx 已经内置了 trim 过滤器；可以通过 wx:model-filter="trim" 直接使用；
+> 当然，Index 已经内置了 trim 过滤器；可以通过 wx:model-filter="trim" 直接使用；
 
 ```html
 <template>
@@ -546,12 +546,12 @@ wx:model 默认监听 `input` 事件，可以使用 `wx:model-event` 定义 wx:m
     }
   })
 </script>
-``` 
+```
 
 filter 方法除可以是和 `methods` 平级的方法，还可以是 `methods` 中的方法。
 
 ```html
-<template>...</template>  
+<template>...</template>
 <script>
   import { createPage } from '@mpxjs/core'
   createPage({

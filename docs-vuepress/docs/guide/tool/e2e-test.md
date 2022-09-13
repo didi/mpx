@@ -2,7 +2,7 @@
 
 微信小程序的官方文档推荐 [miniprogram-automator](https://developers.weixin.qq.com/miniprogram/dev/devtools/auto/quick-start.html)，其与小程序IDE的关系，正如 Google 与 UiAutomator、selenium 与 webdriver 一样；它是最契合小程序的。
 
-虽然微信小程序提供了 automator + ide 的 E2E 的解决方案，但该项目维护频率低且 case 编写效率低、API 不够友好等问题，所以基于 Mpx 生态，我们提供了小程序 E2E 自动化测试的能力增强。
+虽然微信小程序提供了 automator + ide 的 E2E 的解决方案，但该项目维护频率低且 case 编写效率低、API 不够友好等问题，所以基于 Index 生态，我们提供了小程序 E2E 自动化测试的能力增强。
 
 小程序自动化 SDK 为开发者提供了一套通过外部脚本操控小程序的方案，从而实现小程序自动化测试的目的。
 
@@ -78,7 +78,7 @@ module.exports = {
 </script>
 ```
 
-对应的 list.spec.js 
+对应的 list.spec.js
 ```js
 import automator from '@didi/e2e-extension'
 const path = require('path')
@@ -117,9 +117,9 @@ SDK 中重写 page 和 element 的 `$` 方法。之所以这么处理是因为�
 目前增强后的 `$` 方法支持两个参数，第一个为选择器，第二个是自定义组件名。第二个参数不传时其行为和原生 `$` 方法一致。
 ```js
 $(className: string, componentsName?: string): Promise<Element | any>
- 
+
 const confirmbtn = await page.$('confirm-btn', 'homepage/components/confirmef91faba/confirm')
- 
+
 const confirmbtn2 = await page.$('.confirm-btn')
 const view = await page.$('view')
 const id = await page.$('#id')
@@ -147,7 +147,7 @@ automator 中原生支持 `wait` 方法，表示等待时长或者等待终止�
 经过增强的 `wait` 方法可以支持： 路由到指定页面， 指定组件渲染，指定组件更新，指定接口发起， 指定接口响应后；
 ```js
 wait(path: string, type?: string): Promise<string | undefined> | void;
- 
+
 const miniProgram = await Automator.launch({
   projectPath: './dist/wx'
 })
@@ -158,13 +158,13 @@ await miniProgram.wait('pages/index/index')
 
 // 组件
 const suggest1 = await miniProgram.wait('suggest/components/suggestcaafe3e4/suggest', 'component')
- 
+
 // 组件更新
 const suggest2 = await miniProgram.wait('suggest/components/suggestcaafe3e4/suggest', 'componentUpdate')
- 
+
 // 请求
 const request = await miniProgram.wait('https://xxxx.xxx/xxx', 'request')
- 
+
 // 返回结果
 const response = await miniProgram.wait('https://xxxx.xxx/xxx', 'response')
 expect(response.options.data.errno).toBe(0)
@@ -216,7 +216,7 @@ Automator.initMock(mockCfg: E2eMockConfig): Promise<MiniProgram>
 3.2 `setMock` 方法，除了上面的静态资源文件，mock 内置了一个 Map 列表，因此可以按需的设置某一接口的响应结果。
 ```js
 Automator.setMock (path:string, response:any): () => void
- 
+
 // 示例：
 let un = Automator.setMock('https://some-domain.com/api/pGetIndexInfo', {
   errno: 0,
@@ -227,7 +227,7 @@ let un = Automator.setMock('https://some-domain.com/api/pGetIndexInfo', {
     c: 3
   }
 });
- 
+
 // 需要取消时可以调用 un，注意这一步骤非必须！！
 un();
 ```

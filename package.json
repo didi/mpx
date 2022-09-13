@@ -12,7 +12,7 @@
     "fix": "eslint --fix --ext .js packages/",
     "test": "jest",
     "release": "npm run lint && npm run test && npx lerna version",
-    "dev": "node script/dev.js"
+    "dev": "pnpm -r --parallel --filter=./packages/* run dev"
   },
   "devDependencies": {
     "@babel/core": "^7.8.7",

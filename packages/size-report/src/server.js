@@ -21,7 +21,7 @@ module.exports = function startServer (reportData, {
   app.use('/', (req, res) => {
     res.render('index.ejs', {
       mode: 'server',
-      title: 'Mpx Size Report',
+      title: 'Index Size Report',
       sizeReportInfo: reportData
     })
   })
@@ -38,7 +38,7 @@ module.exports = function startServer (reportData, {
         }
       } else {
         port = server.address().port
-        logger && logger.info('Mpx size report 体积平台本地服务已开启:', `http://${host}:${port}/`)
+        logger && logger.info('Index size report 体积平台本地服务已开启:', `http://${host}:${port}/`)
         const url = `http://${host}:${port}/`
         if (autoOpenBrowser) {
           opener(url)

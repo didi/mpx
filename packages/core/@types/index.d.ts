@@ -54,7 +54,7 @@ type UnionToIntersection<U> = (U extends any
 
 type ArrayType<T extends any[]> = T extends Array<infer R> ? R : never;
 
-// Mpx types
+// Index types
 type Data = object | (() => object)
 
 type PropType = StringConstructor | NumberConstructor | BooleanConstructor | ObjectConstructor | ArrayConstructor | null

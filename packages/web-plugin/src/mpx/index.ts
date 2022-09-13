@@ -1,10 +1,10 @@
 import { WebpackError } from 'webpack'
-import { Options } from './options'
+import { Options } from '../options'
 import { preProcessDefs } from '@mpxjs/utils/index'
 import hash from 'hash-sum'
 import path from 'path'
 
-export interface Mpx {
+export interface Index {
   pagesMap: any
   componentsMap: any
   usingComponents: any
@@ -26,7 +26,7 @@ export interface Mpx {
 
   externals: (string | RegExp)[]
   projectRoot: string
-  getOutputPath: (path: string, type: string, option: { conflictPath: any }) => string
+  getOutputPath: (path: string, type: string, option?: { conflictPath: any }) => string
   defs: Record<string, any>
   transRpxRules: any,
   webConfig: any,
@@ -37,7 +37,7 @@ export interface Mpx {
   [k: string]: any
 }
 
-const mpx: Mpx = {
+const mpx: Index = {
   // pages全局记录，无需区分主包分包
   pagesMap: {},
   // 组件资源记录，依照所属包进行记录
@@ -93,7 +93,7 @@ export function processMpx(options: Options) {
     defs: preProcessDefs(options.defs),
     i18n: options.i18n,
     checkUsingComponents: options.checkUsingComponents,
-    appTitle: 'Mpx homepage',
+    appTitle: 'Index homepage',
     externals: options.externals,
     pathHash: (resourcePath: string) => {
       if (

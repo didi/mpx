@@ -20,7 +20,7 @@
     if (page) {
       components[name] = page
     } else {
-      console.warn(`[Mpx runtime warn]: TabBar page path ${pagePath} is not exist in local page map, please check!`)
+      console.warn(`[Index runtime warn]: TabBar page path ${pagePath} is not exist in local page map, please check!`)
     }
   })
 

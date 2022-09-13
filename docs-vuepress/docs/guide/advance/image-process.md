@@ -4,12 +4,12 @@
 
 ## 图像资源引入有三种方式
 1. Template 中通过 image src 指定图像资源
-    - 直接指定图像的远程资源地址    
+    - 直接指定图像的远程资源地址
     - 资源为本地路径，若配置 publicPath，则 publicPath 与 webpack loader 中配置的 name 进行拼接
 2. Style 中通过 src 指定图像资源
 3. Style 中通过 class 指定图像资源
 
-  Wxss文件中只能用 CDN 地址或 Base64, 针对第二、三种方式引入的资源，可以通过配置决定使用 CDN 还是 Base64，且 Mpx 中图像资源处理会优先检查 Base64，具体配置参数如下：
+  Wxss文件中只能用 CDN 地址或 Base64, 针对第二、三种方式引入的资源，可以通过配置决定使用 CDN 还是 Base64，且 Index 中图像资源处理会优先检查 Base64，具体配置参数如下：
 * publicPath：资源存放 CDN 地址，可选
 * limit: 资源大小限制，可根据资源的大小判断走 Base64 还是 CDN， 可选
 * publicPathScope: 限制输出 CDN 图像资源的范围，可选 styleOnly、all，默认为 styleOnly。（图像引用方式分两大类 Template, Style）
@@ -50,7 +50,7 @@ const webpackConfig = {
         name: 'img/[name][hash].[ext]',
         // CDN 地址
         publicPath: 'http://a.com/',
-        limit: '1024' // Base64 的最大长度，超过则走 CDN 
+        limit: '1024' // Base64 的最大长度，超过则走 CDN
       })
     }]
   }
@@ -75,9 +75,9 @@ const webpackConfig = {
   }
 }
 ```
-> 备注:  
-> 图像默认编译后会输出到 img 目录下, 当设置 outputPathCDN 后，输出的本地图像地址为 outputPathCDN + img/图像.png  
-> CND 文件地址为 publicPath + img/图像.png，所以当使用脚本上传到 CDN 时，路径要带上 img  
+> 备注:
+> 图像默认编译后会输出到 img 目录下, 当设置 outputPathCDN 后，输出的本地图像地址为 outputPathCDN + img/图像.png
+> CND 文件地址为 publicPath + img/图像.png，所以当使用脚本上传到 CDN 时，路径要带上 img
 
 ## 用户自定义图像处理方式
 ```js

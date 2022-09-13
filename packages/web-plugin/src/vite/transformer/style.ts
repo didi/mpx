@@ -1,13 +1,13 @@
+import { styleCompiler } from '@mpxjs/compiler'
+import genComponentTag from '@mpxjs/utils/gen-component-tag'
+import postcss from 'postcss'
 import { TransformPluginContext, TransformResult } from 'rollup'
 import { createFilter } from 'vite'
-import postcss from 'postcss'
 import { transformStyle as vueTransformStyle } from 'vite-plugin-vue2/dist/style.js'
 import { getDescriptor } from 'vite-plugin-vue2/dist/utils/descriptorCache'
-import genComponentTag from '@mpxjs/utils/gen-component-tag'
-import { styleCompiler } from '@mpxjs/compiler'
-import { SFCDescriptor } from '../compiler'
 import { ResolvedOptions } from '../../options'
 import loadPostcssConfig from '../../utils/loadPostcssConfig'
+import { SFCDescriptor } from '../compiler'
 
 async function mpxTransformStyle(
   code: string,

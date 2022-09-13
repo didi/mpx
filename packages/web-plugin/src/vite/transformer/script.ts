@@ -1,21 +1,21 @@
-import fs from 'fs'
-import { SourceMap, TransformPluginContext } from 'rollup'
-import MagicString from 'magic-string'
-import { transformWithEsbuild } from 'vite'
-import path from 'path'
 import genComponentTag from '@mpxjs/utils/gen-component-tag'
+import fs from 'fs'
+import MagicString from 'magic-string'
+import path from 'path'
+import { SourceMap, TransformPluginContext } from 'rollup'
+import { transformWithEsbuild } from 'vite'
+import { OPTION_PROCESSOR_PATH, TAB_BAR_CONTAINER_PATH } from '../../constants'
 import { ResolvedOptions } from '../../options'
+import { genImport } from '../../utils/genCode'
+import omit from '../../utils/omit'
+import parseRequest from '../../utils/parseRequest'
+import stringify, { shallowStringify } from '../../utils/stringify'
 import { SFCDescriptor } from '../compiler'
 import {
   APP_HELPER_CODE,
   I18N_HELPER_CODE,
   TAB_BAR_PAGE_HELPER_CODE
 } from '../helper'
-import omit from '../../utils/omit'
-import stringify, { shallowStringify } from '../../utils/stringify'
-import parseRequest from '../../utils/parseRequest'
-import { genImport } from '../../utils/genCode'
-import { OPTION_PROCESSOR_PATH, TAB_BAR_CONTAINER_PATH } from '../../constants'
 
 export const genComponentCode = (
   varName: string,

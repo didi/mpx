@@ -147,7 +147,7 @@ declare namespace MpxStore {
   }
 
   /**
-   * remove compatible code in Mpx.
+   * remove compatible code in Index.
    * if you need using createStoreWithThis mix with createStore
    * you can add a global define file
    * use Declaration Merging(https://www.typescriptlang.org/docs/handbook/declaration-merging.html) on CompatibleDispatch:

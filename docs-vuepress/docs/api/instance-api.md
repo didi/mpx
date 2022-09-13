@@ -12,14 +12,14 @@
 - **用法**：
 
   这是全局 `mpx.set` 的别名。向响应式对象中添加一个 property，并确保这个新 property 同样是响应式的，且触发视图更新。
-它必须用于向响应式对象上添加新 property，因为 Mpx 无法探测普通的新增 property (比如 this.myObject.newProperty = 'hi')
+它必须用于向响应式对象上添加新 property，因为 Index 无法探测普通的新增 property (比如 this.myObject.newProperty = 'hi')
 
 - **参考**：[mpx.set](global-api.html#set)
 
 ## $watch
 
 - **参数**：
-  - `{string | Function} expOrFn` 
+  - `{string | Function} expOrFn`
   - `{Function | Object} callback`
   - `{Object} [options]`
     - `{boolean} deep`
@@ -29,7 +29,7 @@
 
 - **用法**：
 
-  观察 Mpx 实例上的一个表达式或者一个函数计算结果的变化。回调函数得到的参数为新值和旧值。表达式只接受监督的键路径。对于更复杂的表达式，用一个函数取代。
+  观察 Index 实例上的一个表达式或者一个函数计算结果的变化。回调函数得到的参数为新值和旧值。表达式只接受监督的键路径。对于更复杂的表达式，用一个函数取代。
 
 - **示例**：
 
@@ -144,12 +144,12 @@
 - **参考**：[mpx.watch](global-api.html#watch)
 
 ## $delete
-* **参数：** 
+* **参数：**
   * `{Object | Array} target`
   * `{string | number} propertyName/index`
-* **用法：** 
+* **用法：**
   删除对象属性，如果该对象是响应式的，那么该方法可以触发观察器更新（视图更新 | watch回调）
-* **示例：** 
+* **示例：**
   ``` js
     import {createComponent} from '@mpxjs/core'
     createComponent({
@@ -170,7 +170,7 @@
     }
     })
   ```
-* **参考：** [Mpx.delete](global-api.html#delete)
+* **参考：** [Index.delete](global-api.html#delete)
 ## $refs
 * **类型：** `Object`
 * **详细：**
@@ -200,11 +200,11 @@
 * **参考：**
   [组件 ref](../guide/basic/refs.html)
 ## $forceUpdate
-* **参数：** 
+* **参数：**
   * `{Object} target`
   * `{Function} callback`
 * **用法**
-  
+
 
   用于强制刷新视图，正常情况下只有`发生了变化的数据`才会被发送到视图层进行渲染。强制更新时，会将某些数据强制发送到视图层渲染，无论是否发生了变化
 * **示例**
@@ -235,13 +235,13 @@
     })
   ```
 ## $nextTick
-* **参数：** 
+* **参数：**
   * `{Function} callback`
-* **用法：** 
-  
-  
+* **用法：**
+
+
   将回调延迟到下次 DOM 更新循环之后执行。在修改数据之后立即使用它，然后等待 DOM 更新。**注意：`callback`中`this`并不是绑定当前实例，你可以使用箭头函数避免this指向问题**。
-* **示例：** 
+* **示例：**
  ``` js
       import {createComponent} from '@mpxjs/core'
       createComponent({
@@ -270,9 +270,9 @@
   ```
 ## $i18n
 
-* **用法：** 
+* **用法：**
  组件中直接调用$i18n的方法，比如：$t，$tc，$te，$d，$n
-* **示例：** 
+* **示例：**
 
 首先在`mpx.plugin.conf.js`中配置i18n
   ``` js
@@ -304,22 +304,22 @@
     <template>
       <view>{{$t('message.hello')}}</view>
     </template>
-    
+
     import {createComponent} from '@mpxjs/core'
     createComponent({
 
     ready () {
        console.log(this.$t('message.hello', { msg: 'hello' }))
-       console.log(this.$te('message.hello')) 
+       console.log(this.$te('message.hello'))
        //...
     }
     })
   ```
   ## $getRenderWatcher
 * **返回值**：Watcher 实例
-* **用法：** 
+* **用法：**
   用来获取组件或者页面的 renderWatcher
-* **示例：** 
+* **示例：**
  ``` js
 import {createComponent} from '@mpxjs/core'
 createPage({
@@ -336,11 +336,11 @@ createPage({
   ```
 ## $getWatcherByName
 * **参数**：
-  - `{string} name` 
+  - `{string} name`
 * **返回值**：Watcher 实例
-* **用法：** 
+* **用法：**
   用来获取当前组件或者页面中命名为 name 的 Watcher 实例
-* **示例：** 
+* **示例：**
  ``` js
 import {createComponent} from '@mpxjs/core'
 createPage({
@@ -357,9 +357,9 @@ createPage({
   ```
   ## $getPausableWatchers
 * **返回值**：Watcher 实例
-* **用法：** 
+* **用法：**
   用来获取当前组件或者页面中所有设置了选项 pausable: true 的 Watcher 实例，获取之后可在页面 hide 时调用 watcher.pause() 暂停监听，在页面 show 时调用 watcher.resume() 来恢复监听。
-* **示例：** 
+* **示例：**
  ``` js
 import {createComponent} from '@mpxjs/core'
 createPage({
@@ -390,6 +390,6 @@ createPage({
   }
 })
   ```
-* **参考：** 
+* **参考：**
    * [Vue I18n](http://kazupon.github.io/vue-i18n/api/#vue-constructor-options)
    * [国际化i18n](../guide/tool/i18n.html)

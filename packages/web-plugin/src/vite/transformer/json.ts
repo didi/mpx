@@ -1,19 +1,19 @@
-import { TransformPluginContext } from 'rollup'
-import { normalizePath } from 'vite'
 import fs from 'fs'
 import json5 from 'json5'
 import path from 'path'
-import mpxJSON from '@mpxjs/utils/mpx-json'
+import { TransformPluginContext } from 'rollup'
+import { normalizePath } from 'vite'
 import { ResolvedOptions } from '../../options'
+import { proxyPluginContext } from '../../pluginContextProxy'
+import addQuery from '../../utils/addQuery'
+import getJSONContent from '../../utils/get-json-content'
+import parseRequest from '../../utils/parseRequest'
+import resolveModuleContext from '../../utils/resolveModuleContext'
+import stringify from '../../utils/stringify'
 import { SFCDescriptor } from '../compiler'
 import mpxGlobal from '../mpx'
-import parseRequest from '../../utils/parseRequest'
-import pathHash from '../utils/pageHash'
-import resolveModuleContext from '../../utils/resolveModuleContext'
-import addQuery from '../../utils/addQuery'
 import { createDescriptor } from '../utils/descriptorCache'
-import stringify from '../../utils/stringify'
-import { evalJSONJS } from '../../utils/evalJsonJs'
+import pathHash from '../utils/pageHash'
 
 /**
  * wechat miniprogram app/page/component config type
@@ -72,33 +72,15 @@ export async function resolveJson(
   const { defs } = options
   const { json } = descriptor
   let content = json?.content || '{}'
-  if (json?.src) {
-    const resolution = await pluginContext.resolve(
-      json.src,
-      descriptor.filename
-    )
-    if (resolution) {
-      pluginContext.addWatchFile(resolution.id)
-      content = await fs.promises.readFile(resolution.id, 'utf-8')
-      if (resolution.id.endsWith('.json.js')) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        content = (mpxJSON as any).compileMPXJSONText({
-          source: content,
-          defs,
-          filePath: resolution.id
-        })
-      }
-    }
-  }
-
-  if (json?.useJSONJS) {
-    content = JSON.stringify(
-      evalJSONJS(content, descriptor.filename, options.defs, fs, filename => {
-        pluginContext.addWatchFile(filename)
-      })
+  if (json) {
+    content = await getJSONContent(
+      json,
+      descriptor.filename,
+      proxyPluginContext(pluginContext),
+      defs,
+      fs
     )
   }
-
   return json5.parse(content)
 }
 
@@ -133,7 +115,7 @@ export async function processJSON(
   }
 
   function emitWarning(msg: string) {
-    pluginContext.warn(new Error('[json processor][' + filename + ']: ' + msg))
+    pluginContext.warn('[json processor]: ' + msg)
   }
 
   /**

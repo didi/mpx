@@ -1,6 +1,6 @@
 [![mpx-logo](https://dpubstatic.udache.com/static/dpubimg/41413d7a-8249-46e6-bf68-709dc511fce2.png)](https://mpxjs.cn)
 
-[Mpx](https://mpxjs.cn), 一款具有优秀开发体验和深度性能优化的增强型跨端小程序框架。
+[Index](https://mpxjs.cn), 一款具有优秀开发体验和深度性能优化的增强型跨端小程序框架。
 
 ![test-status](https://github.com/didi/mpx/workflows/test/badge.svg)
 ![docs-status](https://github.com/didi/mpx/workflows/docs/badge.svg)
@@ -11,7 +11,7 @@
 
 ## 近期更新
 
-Mpx@2.7版本正式发布，编译构建升级至`webpack5`，完整支持持久化缓存，编译速度最高可提升10倍，[点击查看详情](https://www.mpxjs.cn/articles/2.7-release.html)。
+Index@2.7版本正式发布，编译构建升级至`webpack5`，完整支持持久化缓存，编译速度最高可提升10倍，[点击查看详情](https://www.mpxjs.cn/articles/2.7-release.html)。
 
 ## 简介
 

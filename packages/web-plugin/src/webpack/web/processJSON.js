@@ -7,10 +7,11 @@ import toPosix from '@mpxjs/utils/to-posix'
 import addQuery from '@mpxjs/utils/add-query'
 import resolve from '../utils/resolve'
 import parser from '@mpxjs/compiler/template-compiler/parser'
-import getJSONContent from '../utils/get-json-content'
+import getJSONContent from '../../utils/get-json-content'
 import createJSONHelper from '../json-compiler/helper'
 import { RESOLVE_IGNORED_ERR } from '../../constants'
 import RecordResourceMapDependency from '../dependencies/RecordResourceMapDependency'
+import { proxyPluginContext } from 'src/pluginContextProxy'
 import mpx from '../../mpx'
 
 export default function (json, {
@@ -139,8 +140,17 @@ export default function (json, {
                 mode,
                 env
               })
-              getJSONContent(parts.json || {}, loaderContext, (err, content) => {
-                callback(err, result, content)
+              getJSONContent(
+                parts.json || {},
+                loaderContext.context,
+                proxyPluginContext(loaderContext),
+                mpx.defs,
+                loaderContext._compilation.inputFileSystem
+              ).then(res => {
+                console.log(res);
+                callback(null, result, res)
+              }).catch(err=> {
+                callback(err)
               })
             } else {
               callback(null, result, content)

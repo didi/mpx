@@ -1,13 +1,13 @@
 import { PluginContext } from 'rollup'
-import parseRequest from '../utils/parseRequest'
+import { OPTION_PROCESSOR_PATH, TAB_BAR_PATH } from '../constants'
 import { ResolvedOptions } from '../options'
 import addQuery from '../utils/addQuery'
+import { genImport } from '../utils/genCode'
+import parseRequest from '../utils/parseRequest'
 import stringify, { shallowStringify } from '../utils/stringify'
 import { SFCDescriptor } from './compiler'
 import mpxGlobal from './mpx'
 import { genComponentCode } from './transformer/script'
-import { genImport } from '../utils/genCode'
-import { OPTION_PROCESSOR_PATH, TAB_BAR_PATH } from '../constants'
 
 export const ENTRY_HELPER_CODE = '\0/vite/mpx-entry-helper'
 export const APP_HELPER_CODE = '\0/vite/mpx-app-helper'
@@ -146,9 +146,7 @@ export const renderTabBarPageCode = async (
   const tabBarPagesMap: Record<string, string> = {}
 
   const emitWarning = (msg: string) => {
-    pluginContext.warn(
-      new Error('[script processor][' + filename + ']: ' + msg)
-    )
+    pluginContext.warn('[script processor]: ' + msg)
   }
 
   if (tabBar && tabBarMap) {

@@ -178,7 +178,7 @@ class MpxWebpackPlugin {
 
   static loader (options = {}) {
     if (options.transRpx) {
-      warnings.push('Mpx loader option [transRpx] is deprecated now, please use mpx webpack plugin config [transRpxRules] instead!')
+      warnings.push('Index loader option [transRpx] is deprecated now, please use mpx webpack plugin config [transRpxRules] instead!')
     }
     return {
       loader: normalize.lib('loader'),
@@ -562,7 +562,7 @@ class MpxWebpackPlugin {
           i18n: this.options.i18n,
           checkUsingComponents: this.options.checkUsingComponents,
           forceDisableBuiltInLoader: this.options.forceDisableBuiltInLoader,
-          appTitle: 'Mpx homepage',
+          appTitle: 'Index homepage',
           attributes: this.options.attributes,
           externals: this.options.externals,
           useRelativePath: this.options.useRelativePath,

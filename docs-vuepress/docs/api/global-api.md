@@ -42,7 +42,7 @@ createApp(options)
 - **参数：**
     - `{Object} options`
 
-         具体形式除了 computed、watch 这类 Mpx 扩展特性之外，其他的属性都参照原生小程序的官方文档即可。
+         具体形式除了 computed、watch 这类 Index 扩展特性之外，其他的属性都参照原生小程序的官方文档即可。
     - `{Object} config`（可选参数）
 
          如果希望标识一个组件是最纯粹的原生组件，不用数据响应等能力，可通过 config.isNative 传 true 声明。
@@ -83,7 +83,7 @@ createPage(object)
 - **参数：**
     - `{Object} options`
 
-        具体形式除了 computed、watch 这类 Mpx 扩展特性之外，其他的属性都参照原生小程序的官方文档即可。
+        具体形式除了 computed、watch 这类 Index 扩展特性之外，其他的属性都参照原生小程序的官方文档即可。
     - `{Object} config`（可选参数）
 
         如果希望标识一个组件是最纯粹的原生组件，不用数据响应等能力，可通过 config.isNative 传 true 声明。
@@ -632,12 +632,12 @@ unwatch()
   ```
 - **选项**：once
 
-  在选项参数中指定 `once: true` 该回调方法只会执行一次，后续的改变将不会触发回调；  
+  在选项参数中指定 `once: true` 该回调方法只会执行一次，后续的改变将不会触发回调；
   该参数也可以是函数，若函数返回值为 `true` 时，则后续的改变将不会触发回调
 
   ```JavaScript
   import {watch} from '@mpxjs/core'
-  
+
   watch(() => {
     return this.a
   }, () => {
@@ -645,7 +645,7 @@ unwatch()
   }, {
     once: true
   })
-  
+
   // 当 once 是函数时
   watch(() => {
     return this.a
@@ -703,7 +703,7 @@ unwatch()
     immediate: true
   })
 
-- **参考**：另外 Mpx 还提供了实例方法 $watch，详见：[$watch](instance-api.html#watch)
+- **参考**：另外 Index 还提供了实例方法 $watch，详见：[$watch](instance-api.html#watch)
 
 ## use
 >用于安装外部扩展, 支持多参数
@@ -822,7 +822,7 @@ if (__mpx_mode__ === 'web') {
 }
 ```
 ## config
- Mpx 通过 config 暴露出 webRouteConfig 配置项，在 web 环境可以对路由进行配置
+ Index 通过 config 暴露出 webRouteConfig 配置项，在 web 环境可以对路由进行配置
 
 - **用法**:
 ```js

@@ -1,4 +1,8 @@
+import parseRequest from '@mpxjs/utils/parse-request'
 import path from 'path'
+import { promisify } from 'util'
+import { JSON_JS_EXT } from '../constants'
+import { PluginContext } from '../pluginContextProxy'
 
 export function evalJSONJS(
   source: string,
@@ -46,4 +50,38 @@ export function evalJSONJS(
   )
 
   return module.exports
+}
+
+export default async function getJSONContent(
+  json: {
+    src?: string
+    content: string
+    useJSONJS: boolean
+  },
+  filename: string,
+  pluginContext: PluginContext,
+  defs: Record<string, any>,
+  fs: any
+): Promise<string> {
+  let jsonContent = json.content
+  let useJSONJS = json.useJSONJS
+  let resourcePath = ''
+  if (json.src) {
+    const jsonPath = await pluginContext.resolve(json.src, filename)
+    if (jsonPath) {
+      const { rawResourcePath } = parseRequest(jsonPath.id)
+      useJSONJS = rawResourcePath.endsWith(JSON_JS_EXT)
+      const readFile = promisify(fs.readFile)
+      jsonContent = await readFile(rawResourcePath,'utf-8')
+      resourcePath = rawResourcePath
+    }
+  }
+  if (useJSONJS) {
+    return JSON.stringify(
+      evalJSONJS(jsonContent, resourcePath, defs, fs, filename => {
+        pluginContext.addWatchFile(filename)
+      })
+    )
+  }
+  return jsonContent
 }
