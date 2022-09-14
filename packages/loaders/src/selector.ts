@@ -1,10 +1,9 @@
 import parser from '@mpxjs/compiler/template-compiler/parser'
 import parseRequest from '@mpxjs/utils/parse-request'
-// todo 移除mpx访问依赖，支持thread-loader
-import mpx from '../../mpx'
 
 export default function selector (content) {
   this.cacheable()
+  const mpx = this.getMpx()
   if (!mpx) {
     return content
   }

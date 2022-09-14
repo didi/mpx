@@ -22,7 +22,9 @@
     "@mpxjs/compiler": "^2.7.40",
     "@mpxjs/core": "^2.7.37",
     "@mpxjs/utils": "^2.7.40",
+    "@mpxjs/loaders": "^2.7.40",
     "@mpxjs/web-plugin": "^2.7.40",
+    "@mpxjs/webpack-plugin": "^2.7.40",
     "mime": "^2.6.0",
     "vue": "^2.6.10",
     "vue-i18n": "^8.15.3"

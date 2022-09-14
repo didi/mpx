@@ -85,8 +85,6 @@
   },
   "dependencies": {
     "@babel/generator": "^7.16.0",
-    "@babel/parser": "^7.16.2",
-    "@babel/traverse": "^7.16.0",
     "@babel/types": "^7.16.0",
     "async": "^2.6.0",
     "debug": "^4.3.2",
@@ -113,7 +111,9 @@
     "@better-scroll/wheel": "^2.2.1",
     "@better-scroll/zoom": "^2.2.1",
     "@mpxjs/compiler": "^2.7.40",
+    "@mpxjs/webpack-plugin": "^2.7.40",
     "@mpxjs/utils": "^2.7.40",
+    "@mpxjs/loaders": "^2.7.40",
     "esbuild": "^0.14.14",
     "rollup": "^2.60.2",
     "vite": "^3.0.0",

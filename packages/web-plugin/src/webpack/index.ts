@@ -1,12 +1,13 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 'use strict'
 
-import ResolveDependency from './dependencies/ResolveDependency'
-import InjectDependency from './dependencies/InjectDependency'
+import ResolveDependency from '@mpxjs/webpack-plugin/lib/dependencies/ResolveDependency'
+import InjectDependency from '@mpxjs/webpack-plugin/lib/dependencies/InjectDependency'
+import CommonJsVariableDependency from '@mpxjs/webpack-plugin/lib/dependencies/CommonJsVariableDependency'
+import ReplaceDependency from '@mpxjs/webpack-plugin/lib/dependencies/ReplaceDependency'
+import RecordResourceMapDependency from '@mpxjs/webpack-plugin/lib/dependencies/RecordResourceMapDependency'
 // @ts-ignore
 import NullFactory from 'webpack/lib/NullFactory'
-import CommonJsVariableDependency from './dependencies/CommonJsVariableDependency'
-import ReplaceDependency from './dependencies/ReplaceDependency'
 // @ts-ignore
 import harmonySpecifierTag from 'webpack/lib/dependencies/HarmonyImportDependencyParserPlugin'
 // @ts-ignore
@@ -17,7 +18,6 @@ import toPosix from '@mpxjs/utils/to-posix'
 import addQuery from '@mpxjs/utils/add-query'
 import AddModePlugin from './resolver/AddModePlugin'
 import AddEnvPlugin from './resolver/AddEnvPlugin'
-import RecordResourceMapDependency from './dependencies/RecordResourceMapDependency'
 import parseRequest from '@mpxjs/utils/parse-request'
 import { matchCondition } from '@mpxjs/utils/match-condition'
 import stringifyLoadersAndResource from '@mpxjs/utils/stringify-loaders-resource'
@@ -28,7 +28,7 @@ import { NormalModule, DefinePlugin, ExternalsPlugin, Compiler, Dependency, Modu
 
 
 
-const styleCompilerPath = '@mpxjs/web-plugin/dist/webpack/loader/style-loader.js'
+const styleCompilerPath = '@mpxjs/loaders/dist/style-loader.js'
 const isProductionLikeMode = (options: any) => {
   return options.mode === 'production' || !options.mode
 }
@@ -73,27 +73,27 @@ class MpxWebpackPlugin {
       )
     }
     return {
-      loader: '@mpxjs/web-plugin/dist/webpack/loader/mpx-loader',
+      loader: '@mpxjs/web-plugin/dist/webpack/loader/web-loader',
       options
     }
   }
   static wxsPreLoader(options = {}) {
     return {
-      loader: '@mpxjs/web-plugin/dist/webpack/loader/pre-loader',
+      loader: '@mpxjs/loaders/dist/pre-loader',
       options
     }
   }
 
   static urlLoader(options = {}) {
     return {
-      loader: '@mpxjs/web-plugin/dist/webpack/loader/url-loader',
+      loader: '@mpxjs/loaders/dist/url-loader',
       options
     }
   }
 
   static fileLoader(options = {}) {
     return {
-      loader: '@mpxjs/web-plugin/dist/webpack/loader/file-loader',
+      loader: '@mpxjs/loaders/dist/file-loader',
       options
     }
   }
@@ -187,10 +187,13 @@ class MpxWebpackPlugin {
       (compilation, { normalModuleFactory }) => {
         NormalModule.getCompilationHooks(compilation).loader.tap(
           'MpxWebpackPlugin',
-          loaderContext => {
+          (loaderContext: any) => {
             // 设置loaderContext的minimize
             if (isProductionLikeMode(compiler.options)) {
               mpx.minimize = true
+            }
+            loaderContext.getMpx = () => {
+              return mpx
             }
           }
         )
@@ -497,7 +500,7 @@ class MpxWebpackPlugin {
             const { queryObj, resource } = parseRequest(request)
             if (queryObj.resolve) {
               // 此处的query用于将资源引用的当前包信息传递给resolveDependency
-              const resolveLoaderPath = '@mpxjs/web-plugin/dist/webpack/loader/resolve-loader'
+              const resolveLoaderPath = '@mpxjs/loaders/dist/resolve-loader'
               data.request = `!!${resolveLoaderPath}!${resource}`
             }
           }

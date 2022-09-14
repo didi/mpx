@@ -2,11 +2,11 @@ import postcss from 'postcss'
 import { LoaderDefinition } from 'webpack'
 import {styleCompiler} from '@mpxjs/compiler'
 import { matchCondition } from '@mpxjs/utils/match-condition'
-import mpx from '../../mpx'
-import loadPostcssConfig from '../../utils/loadPostcssConfig'
+import loadPostcssConfig from '@mpxjs/utils/loadPostcssConfig'
 
 const StyleCompiler: LoaderDefinition = function (css: string, map) {
   this.cacheable()
+  const mpx = this.getMpx()
   const cb = this.async()
   const defs = mpx.defs
   const transRpxRulesRaw = mpx.transRpxRules
@@ -57,10 +57,10 @@ const StyleCompiler: LoaderDefinition = function (css: string, map) {
           from: this.resourcePath,
           map: this.sourceMap
             ? {
-                inline: false,
-                annotation: false,
-                prev: map
-              }
+              inline: false,
+              annotation: false,
+              prev: map
+            }
             : false,
           ...config.options
         })

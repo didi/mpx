@@ -4,13 +4,13 @@ import * as t from '@babel/types'
 import generate from '@babel/generator'
 import parseRequest from '@mpxjs/utils/parse-request'
 import isEmptyObject from '@mpxjs/utils/is-empty-object'
-import mpx from '../../mpx'
 import { LoaderDefinition } from 'webpack'
 import { parseQuery } from 'loader-utils'
 
 const preLoader: LoaderDefinition = function (content) {
   this.cacheable()
   const module = this._module
+  const mpx = this.getMpx()
   const wxsModule = parseQuery(this.resourceQuery || '?').wxsModule
 
   // 处理内联wxs
