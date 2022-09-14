@@ -249,7 +249,7 @@ class SizeReportPlugin {
       function fillSizeReportGroups (entryModules, noEntryModules, packageName, fillType, fillInfo) {
         // 记录当前模块被哪些页面依赖
         const sharedModulesGroupsSet = new Set()
-        
+
         reportGroups.forEach((reportGroup) => {
           if (reportGroup.noEntryModules && noEntryModules && noEntryModules.size) {
             if (has(noEntryModules, (noEntryModule) => {
@@ -710,7 +710,7 @@ class SizeReportPlugin {
 
       await mkdirpPromise(path.dirname(reportFilePath))
 
-      await writeFilePromise(reportFilePath, JSON.stringify(reportData, null, 2))
+      await writeFilePromise(reportFilePath, JSON.stringify(reportData))
 
       logger.info(`Size report is generated in ${reportFilePath}!`)
 
