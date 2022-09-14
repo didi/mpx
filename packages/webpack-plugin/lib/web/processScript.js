@@ -200,20 +200,20 @@ module.exports = function (script, {
         componentsMap[componentName] = `getComponent(require(${componentRequest}), { __mpxBuiltIn: true })`
       })
 
-      content += `global.currentModuleId = ${JSON.stringify(moduleId)}\n`
+      content += `  global.currentModuleId = ${JSON.stringify(moduleId)}\n`
       content += `  global.currentSrcMode = ${JSON.stringify(scriptSrcMode)}\n`
       if (!isProduction) {
         content += `  global.currentResource = ${JSON.stringify(loaderContext.resourcePath)}\n`
       }
 
-      content += '\n/** script content **/\n'
+      content += '  /** script content **/\n'
 
       // 传递ctorType以补全js内容
       const extraOptions = {
         ctorType
       }
       // todo 仅靠vueContentCache保障模块唯一性还是不够严谨，后续需要考虑去除原始query后构建request
-      content += getRequire('script', script, extraOptions) + '\n'
+      content += `  ${getRequire('script', script, extraOptions)}\n`
 
       // createApp/Page/Component执行完成后立刻获取当前的option并暂存
       content += `  const currentOption = global.__mpxOptionsMap[${JSON.stringify(moduleId)}]\n`
