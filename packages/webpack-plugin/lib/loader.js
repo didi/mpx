@@ -16,6 +16,7 @@ const normalize = require('./utils/normalize')
 const getEntryName = require('./utils/get-entry-name')
 const AppEntryDependency = require('./dependencies/AppEntryDependency')
 const RecordResourceMapDependency = require('./dependencies/RecordResourceMapDependency')
+const RecordVueContentDependency = require('./dependencies/RecordVueContentDependency')
 const CommonJsVariableDependency = require('./dependencies/CommonJsVariableDependency')
 const { MPX_APP_MODULE_ID } = require('./utils/const')
 const path = require('path')
@@ -137,6 +138,10 @@ module.exports = function (content) {
           return callback(null, output)
         }
 
+        // 通过RecordVueContentDependency和vueContentCache确保子request不再重复生成vueContent
+        const cacheContent = mpx.vueContentCache.get(filePath)
+        if (cacheContent) return callback(null, cacheContent)
+
         return async.waterfall([
           (callback) => {
             async.parallel([
@@ -183,6 +188,7 @@ module.exports = function (content) {
               loaderContext,
               ctorType,
               srcMode,
+              moduleId,
               isProduction,
               componentGenerics,
               jsonConfig: jsonRes.jsonObj,
@@ -199,6 +205,7 @@ module.exports = function (content) {
         ], (err, scriptRes) => {
           if (err) return callback(err)
           output += scriptRes.output
+          this._module.addPresentationalDependency(new RecordVueContentDependency(filePath, output))
           callback(null, output)
         })
       }
@@ -266,10 +273,7 @@ module.exports = function (content) {
       if (template) {
         const extraOptions = {
           ...template.src
-            ? {
-                ...queryObj,
-                resourcePath
-              }
+            ? { ...queryObj, resourcePath }
             : null,
           hasScoped,
           hasComment,
@@ -293,11 +297,7 @@ module.exports = function (content) {
           const extraOptions = {
             // style src会被特殊处理为全局复用样式，不添加resourcePath，添加isStatic及issuerFile
             ...style.src
-              ? {
-                  ...queryObj,
-                  isStatic: true,
-                  issuerResource: addQuery(this.resource, { type: 'styles' }, true)
-                }
+              ? { ...queryObj, isStatic: true, issuerResource: addQuery(this.resource, { type: 'styles' }, true) }
               : null,
             moduleId,
             scoped
@@ -315,10 +315,7 @@ module.exports = function (content) {
       output += '/* json */\n'
       // 给予json默认值, 确保生成json request以自动补全json
       const json = parts.json || {}
-      output += getRequire('json', json, json.src && {
-        ...queryObj,
-        resourcePath
-      }) + '\n'
+      output += getRequire('json', json, json.src && { ...queryObj, resourcePath }) + '\n'
 
       // script
       output += '/* script */\n'
@@ -331,10 +328,7 @@ module.exports = function (content) {
         // 传递ctorType以补全js内容
         const extraOptions = {
           ...script.src
-            ? {
-                ...queryObj,
-                resourcePath
-              }
+            ? { ...queryObj, resourcePath }
             : null,
           ctorType
         }

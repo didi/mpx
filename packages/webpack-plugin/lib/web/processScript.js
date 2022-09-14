@@ -3,7 +3,6 @@ const loaderUtils = require('loader-utils')
 const addQuery = require('../utils/add-query')
 const normalize = require('../utils/normalize')
 const hasOwn = require('../utils/has-own')
-const parseRequest = require('../utils/parse-request')
 const createHelpers = require('../helpers')
 const optionProcessorPath = normalize.lib('runtime/optionProcessor')
 const tabBarContainerPath = normalize.lib('runtime/components/web/mpx-tab-bar-container.vue')
@@ -34,6 +33,7 @@ module.exports = function (script, {
   loaderContext,
   ctorType,
   srcMode,
+  moduleId,
   isProduction,
   componentGenerics,
   jsonConfig,
@@ -53,7 +53,6 @@ module.exports = function (script, {
   } = loaderContext.getMpx()
 
   const { getRequire } = createHelpers(loaderContext)
-  const { resourcePath, queryObj } = parseRequest(loaderContext.resource)
   const tabBar = jsonConfig.tabBar
 
   const emitWarning = (msg) => {
@@ -125,6 +124,7 @@ module.exports = function (script, {
   }
   global.__networkTimeout = ${JSON.stringify(jsonConfig.networkTimeout)}
   global.__mpxGenericsMap = {}
+  global.__mpxOptionsMap = {}
   global.__style = ${JSON.stringify(jsonConfig.style || 'v1')}
   global.__mpxPageConfig = ${JSON.stringify(jsonConfig.window)}
   global.__mpxTransRpxFn = ${webConfig.transRpxFn}\n`
@@ -200,6 +200,7 @@ module.exports = function (script, {
         componentsMap[componentName] = `getComponent(require(${componentRequest}), { __mpxBuiltIn: true })`
       })
 
+      content += `global.currentModuleId = ${JSON.stringify(moduleId)}\n`
       content += `  global.currentSrcMode = ${JSON.stringify(scriptSrcMode)}\n`
       if (!isProduction) {
         content += `  global.currentResource = ${JSON.stringify(loaderContext.resourcePath)}\n`
@@ -209,17 +210,13 @@ module.exports = function (script, {
 
       // 传递ctorType以补全js内容
       const extraOptions = {
-        ...script.src ? {
-          ...queryObj,
-          resourcePath
-        } : null,
         ctorType
       }
-
+      // todo 仅靠vueContentCache保障模块唯一性还是不够严谨，后续需要考虑去除原始query后构建request
       content += getRequire('script', script, extraOptions) + '\n'
 
       // createApp/Page/Component执行完成后立刻获取当前的option并暂存
-      content += '  const currentOption = global.currentOption\n'
+      content += `  const currentOption = global.__mpxOptionsMap[${JSON.stringify(moduleId)}]\n`
       // 获取pageConfig
       const pageConfig = {}
       if (ctorType === 'page') {
@@ -258,7 +255,6 @@ module.exports = function (script, {
     ${JSON.stringify(componentGenerics)},
     ${JSON.stringify(genericsInfo)},
     getWxsMixin(wxsModules)`
-
       if (ctorType === 'app') {
         content += `,
     Vue,
