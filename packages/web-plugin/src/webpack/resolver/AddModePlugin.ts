@@ -56,8 +56,7 @@ export default class AddModePlugin {
         queryObj.infix = `${queryObj.infix || ''}.${mode}`
         obj.query = stringifyQuery(queryObj)
         obj.path = addInfix(resourcePath, mode, extname)
-        obj.relativePath =
-          request.relativePath && addInfix(request.relativePath, mode, extname)
+        obj.relativePath = (request.relativePath && addInfix(request.relativePath, mode, extname)) || ''
         resolver.doResolve(
           target,
           Object.assign({}, request, obj),

@@ -11,8 +11,8 @@ import getJSONContent from '../../utils/get-json-content'
 import createJSONHelper from '../json-compiler/helper'
 import { RESOLVE_IGNORED_ERR } from '../../constants'
 import RecordResourceMapDependency from '../dependencies/RecordResourceMapDependency'
-import mpx from '../mpx'
 import { proxyPluginContext } from 'src/pluginContextProxy'
+import mpx from '../../mpx'
 
 export default function (json, {
   loaderContext,

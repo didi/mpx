@@ -15,6 +15,6 @@ type preProcessDefsOptType = {
   __mpx_env__: string;
 }
 declare module '@mpxjs/utils/index' {
-  export function preProcessDefs (option: preProcessDefsOptType): any {
+  export function preProcessDefs(option: Record<string, unknown> | undefined): any {
   }
 }

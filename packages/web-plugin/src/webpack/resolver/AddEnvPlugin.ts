@@ -55,8 +55,7 @@ export default class AddEnvPlugin {
         queryObj.infix = `${queryObj.infix || ''}.${env}`
         obj.query = stringifyQuery(queryObj)
         obj.path = addInfix(resourcePath, env, extname)
-        obj.relativePath =
-          request.relativePath && addInfix(request.relativePath, env, extname)
+        obj.relativePath = (request.relativePath && addInfix(request.relativePath, env, extname)) || ''
         resolver.doResolve(
           target,
           Object.assign({}, request, obj),

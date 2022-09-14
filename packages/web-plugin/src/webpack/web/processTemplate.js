@@ -1,7 +1,7 @@
 import genComponentTag from '@mpxjs/utils/gen-component-tag'
 import addQuery from '@mpxjs/utils/add-query'
 import parseRequest from '@mpxjs/utils/parse-request'
-import mpx from '../mpx'
+import mpx from '../../mpx'
 const templateCompiler = require('@mpxjs/compiler/template-compiler/compiler')
 
 function calculateRootEleChild (arr) {
