@@ -17,7 +17,7 @@ export interface Options {
   }
   transMpxRules?: Record<string, () => boolean>
   defs?: Record<string, unknown>
-  forceDisableProxyCtor?: boolean,
+  forceDisableProxyCtor?: boolean
   modeRules?: Record<string, unknown>
   externals?: string[] | RegExp[]
   projectRoot?: string
@@ -32,8 +32,10 @@ export interface Options {
     | 'relative'
     | ((resourcePath: string, projectRoot: string) => string)
   fileConditionRules?: Record<string, () => boolean>
-  customOutputPath?: Function | null
-  webConfig?:Record<string, unknown>,
+  customOutputPath?:
+    | ((type: string, name: string, hash: string, ext: string) => string)
+    | null
+  webConfig?: Record<string, unknown>
   hackResolveBuildDependencies?: (result?: string) => void
 }
 
@@ -82,7 +84,7 @@ export function processOptions(rawOptions: Options): ResolvedOptions {
   }
   // 批量指定源码mode
   rawOptions.modeRules = rawOptions.modeRules || {}
-  rawOptions.externals = (rawOptions.externals || []).map((external) => {
+  rawOptions.externals = (rawOptions.externals || []).map(external => {
     return typeof external === 'string'
       ? externalsMap[external] || external
       : external
