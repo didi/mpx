@@ -24,10 +24,19 @@ function install (proxyMPX, options, MPX) {
   })
 }
 
+function useFetch () {
+  if (global.__mpx && global.__mpx.xfetch) {
+    return global.__mpx.xfetch
+  } else {
+    console.error('useFetch method calls must be made after the @mpxjs/fetch plugin is used')
+  }
+}
+
 export { XFetch, CancelToken }
 
 export default {
   install,
   XFetch,
-  CancelToken
+  CancelToken,
+  useFetch
 }
