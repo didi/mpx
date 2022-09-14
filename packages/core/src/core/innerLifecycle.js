@@ -16,6 +16,9 @@ export const ONSHAREAPPMESSAGE = '__onShareAppMessage__'
 export const ONSHARETIMELINE = '__onShareTimeline__'
 export const ONADDTOFAVORITES = '__onAddToFavorites__'
 export const ONPAGESCROLL = '__onPageScroll__'
+export const ONTABITEMTAP = '__onTabItemTap__'
+export const ONSAVEEXITSTATE = '__onSaveExitState__'
+
 
 export const INNER_LIFECYCLES = [
   BEFORECREATE,
@@ -29,11 +32,5 @@ export const INNER_LIFECYCLES = [
   ONLOAD,
   ONSHOW,
   ONHIDE,
-  ONPULLDOWNREFRESH,
-  ONREACHBOTTOM,
-  ONSHAREAPPMESSAGE,
-  ONSHARETIMELINE,
-  ONADDTOFAVORITES,
-  ONPAGESCROLL,
   ONRESIZE
 ]

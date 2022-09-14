@@ -1,81 +1,51 @@
-function getCodeAst (types, sideEffectHookName) {
-  const newAst = types.ObjectProperty(
-    types.Identifier(sideEffectHookName),
-    types.FunctionExpression(
-      // id
-      null,
-      // params
-      [],
-      // body
-      types.BlockStatement(
-        // body
-        [types.ReturnStatement(
-          // argument
-          types.CallExpression(
-            // callee
-            types.MemberExpression(
-              types.MemberExpression(
-                types.ThisExpression(),
-                types.Identifier('__mpxProxy')
-              ),
-              types.Identifier('callHook')
-            ),
-            // arguments
-            [types.StringLiteral(`__${sideEffectHookName}__`)]
-          )
-        )]
-      )
-    )
-  )
-  return newAst
-}
-
-module.exports = ({ types }) => {
-  // Todo check 要处理的页面事件是不是以下这些
+module.exports = ({ parse }) => {
   const SideEffectHookName = [
     'onPullDownRefresh',
     'onReachBottom',
     'onShareAppMessage',
     'onShareTimeline',
     'onAddToFavorites',
-    'onPageScroll'
-    // 'onResize',
-    // 'onTabItemTap',
-    // 'onSaveExitState'
+    'onPageScroll',
+    'onTabItemTap',
+    'onSaveExitState'
   ]
+  const Page = 'createPage'
   return {
     name: 'inject-composition-api-page-event-function',
     visitor: {
-      Identifier (path, state) {
-        // 节点name
-        const name = path.node.name
-        // 标记是否为页面
-        if (name === 'createPage' && path.isReferencedIdentifier()) {
+      CallExpression (path, state) {
+        const callee = path.node.callee
+        const name = callee && callee.name
+        if (!name || name !== Page) path.skip()
+        if (name === Page) {
           state.isPage = true
           return
         }
-        // 节点name包含关键字 && 标识符被引用
-        if (SideEffectHookName.includes(name) && path.isReferencedIdentifier() && !state.sideEffectHooks.includes(name)) {
+        if (SideEffectHookName.includes(name) && !state.sideEffectHooks.includes(name)) {
           state.sideEffectHooks.push(name)
           return
         }
         path.skip()
       },
-      Property: {
+      Program: {
+        enter (path, state) {
+          state.sideEffectHooks = []
+          state.isPage = false
+        },
         exit (path, state) {
-          const node = path.node
-          if (types.isIdentifier(node.key) && node.key.name === 'setup' && types.isFunctionExpression(node.value) && state.sideEffectHooks.length) {
-            state.sideEffectHooks.forEach(item => {
-              const newAst = getCodeAst(types, item)
-              path.insertAfter(newAst)
+          if (state.isPage && state.sideEffectHooks.length) {
+            let pageEventsFun = ''
+            state.sideEffectHooks.forEach((item, idx) => {
+              pageEventsFun += `${item}: function ${item}(e) { return this.__mpxProxy.callHook('__${item}__', [e]) }`
+              if (idx + 1 !== state.sideEffectHooks.length) pageEventsFun += ','
             })
+            const code = `global.currentInject.pageEvents = {${pageEventsFun}}`
+            const newAst = parse(code)
+            path.node.body.unshift(newAst.program.body[0])
           }
-          path.skip()
+          // state.sideEffectHooks = []
+          // state.isPage = false
         }
-      },
-      Program (path, state) {
-        state.sideEffectHooks = []
-        state.isPage = false
       }
     }
   }

@@ -23,6 +23,9 @@ export default function transferOptions (options, type) {
     // 编译option注入,优先微信中的单独配置
     options.options = Object.assign({}, currentInject.injectOptions, options.options)
   }
+  if (currentInject && currentInject.pageEvents) {
+    options = Object.assign(options, currentInject.pageEvents)
+  }
   // 转换mode
   options.mpxConvertMode = options.mpxConvertMode || getConvertMode(global.currentSrcMode)
   const rawOptions = mergeOptions(options, type)

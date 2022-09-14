@@ -44,6 +44,8 @@ import {
   ONSHARETIMELINE,
   ONADDTOFAVORITES,
   ONPAGESCROLL,
+  ONTABITEMTAP,
+  ONSAVEEXITSTATE,
   ONRESIZE
 } from './innerLifecycle'
 import { warn, error } from '../helper/log'
@@ -587,10 +589,12 @@ export const onLoad = createHook(ONLOAD)
 export const onShow = createHook(ONSHOW)
 export const onHide = createHook(ONHIDE)
 export const onResize = createHook(ONRESIZE)
-export const onPullDownRefresh = (fn) => injectHook(ONPULLDOWNREFRESH, fn)
-export const onReachBottom = (fn) => injectHook(ONREACHBOTTOM, fn)
-export const onShareAppMessage = (fn) => injectHook(ONSHAREAPPMESSAGE, fn)
-export const onShareTimeline = (fn) => injectHook(ONSHARETIMELINE, fn)
-export const onAddToFavorites = (fn) => injectHook(ONADDTOFAVORITES, fn)
-export const onPageScroll = (fn) => injectHook(ONPAGESCROLL, fn)
+export const onPullDownRefresh = createHook(ONPULLDOWNREFRESH)
+export const onReachBottom = createHook(ONREACHBOTTOM)
+export const onShareAppMessage = createHook(ONSHAREAPPMESSAGE)
+export const onShareTimeline = createHook(ONSHARETIMELINE)
+export const onAddToFavorites = createHook(ONADDTOFAVORITES)
+export const onPageScroll = createHook(ONPAGESCROLL)
+export const onTabItemTap = createHook(ONTABITEMTAP)
+export const onSaveExitState = createHook(ONSAVEEXITSTATE)
 
