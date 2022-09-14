@@ -544,6 +544,7 @@ class MpxWebpackPlugin {
           usingComponents: {},
           // todo es6 map读写性能高于object，之后会逐步替换
           wxsAssetsCache: new Map(),
+          addEntryPromiseMap: new Map(),
           currentPackageRoot: '',
           wxsContentMap: {},
           forceUsePageCtor: this.options.forceUsePageCtor,
