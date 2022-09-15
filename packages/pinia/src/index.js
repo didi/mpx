@@ -1,3 +1,4 @@
+import { createPinia as WebCreatePinia } from 'pinia'
 import {
   computed,
   toRefs,
@@ -33,6 +34,9 @@ import {
   mapWritableState
 } from './mapHelper'
 import { storeToRefs } from './storeToRefs'
+
+// 将createPinia放在内部调用，mpx项目无需再手动use
+createPinia()
 
 const { assign } = Object
 
@@ -375,7 +379,6 @@ function defineStore (idOrOptions, setup, setupOptions) {
 }
 
 export {
-  createPinia,
   defineStore,
   getActivePinia,
   setActivePinia,

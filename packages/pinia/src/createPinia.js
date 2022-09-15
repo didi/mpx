@@ -11,9 +11,6 @@ export function createPinia () {
   const state = scope.run(() => ref({}))
   const _p = []
   const pinia = {
-    install () {
-      setActivePinia(pinia)
-    },
     use (plugin) {
       _p.push(plugin)
       return this
@@ -24,5 +21,5 @@ export function createPinia () {
     _s: new Map(),
     state
   }
-  return pinia
+  setActivePinia(pinia)
 }
