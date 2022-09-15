@@ -1,4 +1,3 @@
-import { createPinia as WebCreatePinia } from 'pinia'
 import {
   computed,
   toRefs,
