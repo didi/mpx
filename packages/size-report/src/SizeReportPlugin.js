@@ -178,7 +178,8 @@ class SizeReportPlugin {
         const sharedSet = new Set()
         const otherSelfEntryModules = new Set()
         entryModules.forEach((entryModule) => {
-          const entryNode = mpx.getEntryNode(entryModule)
+          // 处理ConcatenatedModule
+          const entryNode = mpx.getEntryNode(entryModule.rootModule || entryModule)
           if (entryNode) {
             selfSet.add(entryNode)
           } else {

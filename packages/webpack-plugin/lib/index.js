@@ -55,7 +55,7 @@ const extractorPath = normalize.lib('extractor')
 const async = require('async')
 const stringifyLoadersAndResource = require('./utils/stringify-loaders-resource')
 const emitFile = require('./utils/emit-file')
-const { MPX_PROCESSED_FLAG, MPX_DISABLE_EXTRACTOR_CACHE, MPX_CURRENT_CHUNK } = require('./utils/const')
+const { MPX_PROCESSED_FLAG, MPX_DISABLE_EXTRACTOR_CACHE } = require('./utils/const')
 const isEmptyObject = require('./utils/is-empty-object')
 
 const isProductionLikeMode = options => {
@@ -164,6 +164,7 @@ class MpxWebpackPlugin {
     }, options.nativeConfig)
     options.webConfig = options.webConfig || {}
     options.partialCompile = options.mode !== 'web' && options.partialCompile
+    options.retryRequireAsync = options.retryRequireAsync || false
     this.options = options
     // Hack for buildDependencies
     const rawResolveBuildDependencies = FileSystemInfo.prototype.resolveBuildDependencies
@@ -538,6 +539,7 @@ class MpxWebpackPlugin {
           usingComponents: {},
           // todo es6 map读写性能高于object，之后会逐步替换
           wxsAssetsCache: new Map(),
+          addEntryPromiseMap: new Map(),
           currentPackageRoot: '',
           wxsContentMap: {},
           forceUsePageCtor: this.options.forceUsePageCtor,
@@ -584,6 +586,11 @@ class MpxWebpackPlugin {
             if (!entryNode) {
               entryNode = new EntryNode(module, type)
               entryNodeModulesMap.set(module, entryNode)
+            } else if (type) {
+              if (entryNode.type && entryNode.type !== type) {
+                compilation.errors.push(`获取request为${module.request}的entryNode时类型与已有节点冲突, 当前注册的type为${type}, 已有节点的type为${entryNode.type}!`)
+              }
+              entryNode.type = type
             }
             return entryNode
           },
@@ -956,6 +963,7 @@ class MpxWebpackPlugin {
         parser.hooks.call.for('__mpx_dynamic_entry__').tap('MpxWebpackPlugin', (expr) => {
           const args = expr.arguments.map((i) => i.value)
           args.push(expr.range)
+
           const dep = new DynamicEntryDependency(...args)
           parser.state.current.addPresentationalDependency(dep)
           return true
@@ -972,7 +980,11 @@ class MpxWebpackPlugin {
               request = addQuery(request, {}, false, ['root'])
               // 目前仅wx支持require.async，其余平台使用CommonJsAsyncDependency进行模拟抹平
               if (mpx.mode === 'wx') {
-                const dep = new DynamicEntryDependency(request, 'export', '', queryObj.root, MPX_CURRENT_CHUNK, context, range)
+                const dep = new DynamicEntryDependency(request, 'export', '', queryObj.root, '', context, range, {
+                  isRequireAsync: true,
+                  retryRequireAsync: !!this.options.retryRequireAsync
+                })
+
                 parser.state.current.addPresentationalDependency(dep)
                 // 包含require.async的模块不能被concatenate，避免DynamicEntryDependency中无法获取模块chunk以计算相对路径
                 parser.state.module.buildInfo.moduleConcatenationBailout = 'require async'
