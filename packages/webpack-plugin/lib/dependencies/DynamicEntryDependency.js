@@ -68,24 +68,35 @@ class DynamicEntryDependency extends NullDependency {
         // export类型的resultPath需要添加.js后缀
         if (entryType === 'export') resultPath += '.js'
 
-        if (alreadyOutputted) return callback(null, { resultPath })
-
         // 对于常规js模块不应添加packageRoot避免冗余
         if (packageRoot && entryType !== 'export') {
           resource = addQuery(resource, { packageRoot }, true)
         }
 
-        mpx.addEntry(resource, filename, (err, entryModule) => {
-          if (err) return callback(err)
-          if (entryType === 'export') {
-            mpx.exportModules.add(entryModule)
-          }
-          originEntryNode.addChild(mpx.getEntryNode(entryModule, entryType))
-          return callback(null, {
-            resultPath,
-            entryModule
+        const key = resource + filename
+        let addEntryPromise
+
+        if (alreadyOutputted) {
+          addEntryPromise = mpx.addEntryPromiseMap.get(key) || Promise.resolve()
+        } else {
+          addEntryPromise = new Promise((resolve, reject) => {
+            mpx.addEntry(resource, filename, (err, entryModule) => {
+              if (err) return reject(err)
+              if (entryType === 'export') {
+                mpx.exportModules.add(entryModule)
+              }
+              resolve(entryModule)
+            })
           })
-        })
+          mpx.addEntryPromiseMap.set(key, addEntryPromise)
+        }
+
+        addEntryPromise
+          .then(entryModule => {
+            if (entryModule) originEntryNode.addChild(mpx.getEntryNode(entryModule, entryType))
+            callback(null, { resultPath })
+          })
+          .catch(err => callback(err))
       }
     ], callback)
   }
