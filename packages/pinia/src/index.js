@@ -10,7 +10,7 @@ import {
   nextTick,
   getCurrentInstance
 } from '@mpxjs/core'
-import { error, warn } from '@mpxjs/utils'
+import { error as Error, warn } from '@mpxjs/utils'
 import { createPinia } from './createPinia'
 import { MutationType } from './const'
 import {
@@ -107,7 +107,7 @@ function createSetupStore ($id, setup, options = {}, pinia, isOptionsStore = fal
         if (Array.isArray(debuggerEvents)) {
           debuggerEvents.push(event)
         } else {
-          error('🍍 debuggerEvents should be an array. This is most likely an internal Pinia bug.')
+          Error('🍍 debuggerEvents should be an array. This is most likely an internal Pinia bug.')
         }
       }
     }
@@ -349,7 +349,7 @@ function defineStore (idOrOptions, setup, setupOptions) {
   }
   function useStore (pinia) {
     if ((process.env.NODE_ENV !== 'production') && !activePinia) {
-      throw new Error('[🍍]: getActivePinia was called with no active Pinia. Did you forget to install pinia?\n' +
+      Error('[🍍]: getActivePinia was called with no active Pinia. Did you forget to install pinia?\n' +
           '\tconst pinia = createPinia()\n' +
           '\tapp.use(pinia)\n' +
           'This will fail in production.')
