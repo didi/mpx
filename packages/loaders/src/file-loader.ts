@@ -1,10 +1,11 @@
 import path from 'path'
 import loaderUtils from 'loader-utils'
+import { LoaderDefinition } from 'webpack'
 import toPosix from '@mpxjs/utils/to-posix'
 import parseRequest from '@mpxjs/utils/parse-request'
 import RecordResourceMapDependency from '@mpxjs/webpack-plugin/lib/dependencies/RecordResourceMapDependency'
 
-module.exports = function loader (content, prevOptions) {
+const loader:LoaderDefinition = function (content:string, prevOptions?: any) {
   const options = prevOptions || loaderUtils.getOptions(this) || {}
   const context = options.context || this.rootContext
 
@@ -28,7 +29,7 @@ module.exports = function loader (content, prevOptions) {
     const { resourcePath, queryObj } = parseRequest(this.resource)
     const packageRoot = queryObj.packageRoot || ''
     url = outputPath = toPosix(path.join(packageRoot, outputPath))
-    this._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, 'staticResource', outputPath, packageRoot))
+    this._module && this._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, 'staticResource', outputPath, packageRoot))
   }
 
   let publicPath = `__webpack_public_path__ + ${JSON.stringify(url)}`
@@ -50,4 +51,7 @@ module.exports = function loader (content, prevOptions) {
   return `module.exports = ${publicPath};`
 }
 
-module.exports.raw = true
+// @ts-ignore
+loader.raw = true
+
+export default loader

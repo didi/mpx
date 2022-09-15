@@ -10,6 +10,7 @@ import { parseQuery } from 'loader-utils'
 const preLoader: LoaderDefinition = function (content) {
   this.cacheable()
   const module = this._module
+  // @ts-ignore
   const mpx = this.getMpx()
   const wxsModule = parseQuery(this.resourceQuery || '?').wxsModule
 
@@ -21,6 +22,7 @@ const preLoader: LoaderDefinition = function (content) {
   }
 
   let visitor: Visitor = {}
+  // @ts-ignore
   if (!module?.wxs) {
     visitor = {
       ...visitor,
