@@ -26,7 +26,11 @@
     "mime": "^2.6.0"
   },
   "devDependencies": {
-    "tsup": "^6.2.2"
+    "tsup": "^6.2.2",
+    "@typescript-eslint/eslint-plugin": "^4.26.1",
+    "@typescript-eslint/parser": "^4.26.1",
+    "eslint": "^7.28.0",
+    "eslint-plugin-tsdoc": "^0.2.14"
   },
   "peerDependencies": {
     "@mpxjs/utils": "^2.7.40",
