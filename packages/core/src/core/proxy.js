@@ -597,4 +597,3 @@ export const onAddToFavorites = createHook(ONADDTOFAVORITES)
 export const onPageScroll = createHook(ONPAGESCROLL)
 export const onTabItemTap = createHook(ONTABITEMTAP)
 export const onSaveExitState = createHook(ONSAVEEXITSTATE)
-
