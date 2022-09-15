@@ -3,8 +3,14 @@ import mime from 'mime'
 import parseRequest from '@mpxjs/utils/parse-request'
 import { LoaderDefinition } from 'webpack'
 
-const getOptions = loaderUtils.getOptions
-
+export interface Options {
+  name?: string,
+  publicPathScope?: string,
+  mimetype?: string,
+  limit?: number,
+  publicPath?: string,
+  fallback?: string
+}
 function isStyleRequest(request:string) {
   const { loaderString, queryObj } = parseRequest(request)
   if (queryObj.type === 'styles') return true
@@ -12,13 +18,15 @@ function isStyleRequest(request:string) {
   return false
 }
 
-const urlLoader: LoaderDefinition = function urlLoader(src: string): string {
+const getOptions = loaderUtils.getOptions
+
+const urlLoader: LoaderDefinition = function urlLoader(src: string | Buffer): string {
   let transBase64 = false
-  const options = Object.assign({}, getOptions(this))
+  const options: Options = Object.assign({}, getOptions(this))
   const { resourcePath, queryObj } = parseRequest(this.resource)
   const mimetype = options.mimetype || mime.getType(resourcePath)
   const moduleGraph = this._compilation?.moduleGraph
-  const issuer = moduleGraph?.getIssuer(this._module!)
+  const issuer: Record<string, any> | undefined | null = moduleGraph?.getIssuer(this._module!)
   const publicPathScope =
     options.publicPathScope === 'all' ? 'all' : 'styleOnly'
   const limit = options.limit

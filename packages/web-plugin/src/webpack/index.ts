@@ -6,13 +6,9 @@ import InjectDependency from '@mpxjs/webpack-plugin/lib/dependencies/InjectDepen
 import CommonJsVariableDependency from '@mpxjs/webpack-plugin/lib/dependencies/CommonJsVariableDependency'
 import ReplaceDependency from '@mpxjs/webpack-plugin/lib/dependencies/ReplaceDependency'
 import RecordResourceMapDependency from '@mpxjs/webpack-plugin/lib/dependencies/RecordResourceMapDependency'
-// @ts-ignore
 import NullFactory from 'webpack/lib/NullFactory'
-// @ts-ignore
 import harmonySpecifierTag from 'webpack/lib/dependencies/HarmonyImportDependencyParserPlugin'
-// @ts-ignore
 import FlagEntryExportAsUsedPlugin from 'webpack/lib/FlagEntryExportAsUsedPlugin'
-// @ts-ignore
 import FileSystemInfo from 'webpack/lib/FileSystemInfo'
 import toPosix from '@mpxjs/utils/to-posix'
 import addQuery from '@mpxjs/utils/add-query'
@@ -27,12 +23,10 @@ import mpx, { processMpx } from '../mpx'
 import { NormalModule, DefinePlugin, ExternalsPlugin, Compiler, Dependency, Module } from 'webpack'
 
 
-
 const styleCompilerPath = '@mpxjs/loaders/dist/style-loader.js'
 const isProductionLikeMode = (options: any) => {
   return options.mode === 'production' || !options.mode
 }
-
 const warnings = [] as any[]
 const errors = [] as any[]
 
