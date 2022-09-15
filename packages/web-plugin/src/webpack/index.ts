@@ -22,7 +22,6 @@ import { processOptions, Options } from '../options'
 import mpx, { processMpx } from '../mpx'
 import { NormalModule, DefinePlugin, ExternalsPlugin, Compiler, Dependency, Module } from 'webpack'
 
-
 const styleCompilerPath = '@mpxjs/loaders/dist/style-loader.js'
 const isProductionLikeMode = (options: any) => {
   return options.mode === 'production' || !options.mode
@@ -192,43 +191,46 @@ class MpxWebpackPlugin {
           }
         )
         compilation.dependencyFactories.set(
-          ResolveDependency,
-          new NullFactory()
+          <DepConstructor>ResolveDependency,
+          <ModuleFactory>new NullFactory()
         )
         compilation.dependencyTemplates.set(
-          ResolveDependency,
-          new ResolveDependency.Template()
-        )
-
-        compilation.dependencyFactories.set(InjectDependency, new NullFactory())
-        compilation.dependencyTemplates.set(
-          InjectDependency,
-          new InjectDependency.Template()
+          <DepConstructor>ResolveDependency,
+          <DependencyTemplate>new ResolveDependency.Template()
         )
 
         compilation.dependencyFactories.set(
-          ReplaceDependency,
-          new NullFactory()
+          <DepConstructor>InjectDependency,
+          <ModuleFactory>new NullFactory()
         )
         compilation.dependencyTemplates.set(
-          ReplaceDependency,
-          new ReplaceDependency.Template()
+          <DepConstructor>InjectDependency,
+          <DependencyTemplate>new InjectDependency.Template()
+        )
+
+        compilation.dependencyFactories.set(
+          <DepConstructor>ReplaceDependency,
+          <ModuleFactory>new NullFactory()
+        )
+        compilation.dependencyTemplates.set(
+          <DepConstructor>ReplaceDependency,
+          <DependencyTemplate>new ReplaceDependency.Template()
         )
         compilation.dependencyFactories.set(
-          CommonJsVariableDependency,
+          <DepConstructor>CommonJsVariableDependency,
           normalModuleFactory
         )
         compilation.dependencyTemplates.set(
-          CommonJsVariableDependency,
-          new CommonJsVariableDependency.Template()
+          <DepConstructor>CommonJsVariableDependency,
+          <DependencyTemplate>new CommonJsVariableDependency.Template()
         )
         compilation.dependencyFactories.set(
-          RecordResourceMapDependency,
-          new NullFactory()
+          <DepConstructor>RecordResourceMapDependency,
+          <ModuleFactory>new NullFactory()
         )
         compilation.dependencyTemplates.set(
-          RecordResourceMapDependency,
-          new RecordResourceMapDependency.Template()
+          <DepConstructor>RecordResourceMapDependency,
+          <DependencyTemplate>new RecordResourceMapDependency.Template()
         )
       }
     )

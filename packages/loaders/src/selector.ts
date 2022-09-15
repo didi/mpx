@@ -1,8 +1,10 @@
 import parser from '@mpxjs/compiler/template-compiler/parser'
 import parseRequest from '@mpxjs/utils/parse-request'
+import { LoaderDefinition } from "webpack";
 
-export default function selector (content) {
+const selector: LoaderDefinition = function (content: string) {
   this.cacheable()
+  // @ts-ignore
   const mpx = this.getMpx()
   if (!mpx) {
     return content
@@ -47,3 +49,5 @@ export default function selector (content) {
   part = part || { content: '' }
   this.callback(null, part.content, part.map)
 }
+
+export default selector

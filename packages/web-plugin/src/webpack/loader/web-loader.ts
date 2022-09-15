@@ -17,6 +17,7 @@ import processJSON from '../web/processJSON'
 import processScript from '../web/processScript'
 import processStyles from '../web/processStyles'
 import processTemplate from '../web/processTemplate'
+import { Dependency } from 'webpack'
 
 export default function (
   this: LoaderContext<null>,
@@ -73,7 +74,7 @@ export default function (
       )
     ctorType = queryObj.isComponent ? 'component' : 'page'
     this._module?.addPresentationalDependency(
-      new RecordResourceMapDependency(
+      <Dependency>new RecordResourceMapDependency(
         resourcePath,
         ctorType,
         entryName,

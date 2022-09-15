@@ -71,3 +71,16 @@ declare module '@mpxjs/webpack-plugin/lib/dependencies/RecordResourceMapDependen
     constructor(resourcePath: string, resourceType: string, outputPath: string, packageRoot = '')
   }
 }
+
+declare interface DepConstructor {
+  new (...args: any[]): any;
+}
+
+declare class DependencyTemplate {
+  constructor();
+  apply(...args: any[]): void;
+}
+
+declare abstract class ModuleFactory {
+  create(...args: any[]): void;
+}

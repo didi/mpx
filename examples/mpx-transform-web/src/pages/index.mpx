@@ -1,6 +1,6 @@
 <template>
   <view bindtap="reload">__UNPLUGIN__</view>
-  <text wx:if="{{a === 1}}">test12331343342111</text>
+  <text wx:if="{{a === 1}}" bindtap="jumpPage">test</text>
   <view>{{$t('page_title')}}</view>
 <!--  <text wx:elseif="{{a === 2}}">w22223</text>-->
  <list list-class="list"></list>
@@ -15,8 +15,8 @@
 </template>
 
 <script lang="ts">
-  import { createPage } from '@mpxjs/core'
-
+  import mpx, { createPage } from '@mpxjs/core'
+  import swiperPage from '../packageA/pages/swiper?resolve'
   createPage({
     data: {
       a: 1,
@@ -29,6 +29,11 @@
     methods: {
       reload () {
         window.location.reload()
+      },
+      jumpPage () {
+        mpx.navigateTo({
+          url: swiperPage
+        })
       }
     }
   })
