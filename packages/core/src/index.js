@@ -7,6 +7,8 @@ import { createI18n } from './platform/builtInMixins/i18nMixin'
 
 export * from './platform/export/index'
 
+export { implement } from './core/implement'
+
 export {
   createApp,
   createPage,

@@ -562,7 +562,7 @@ state.push(4) // 不会触发 watchEffect
 </script>
 ```
 
-为什么会产生这个现象呢？原因在于在基于 `Object.defineProperty` 实现的数据响应系统中，我们会对对象的每个已有属性创建了一个 `Dep` 对象，在对该属性进行 `get` 访问时通过这个对象将其与依赖它的观察者 `ReactiveEffect` 关联起来，并在 `set` 操作时触发关联 `ReactiveEffect` 的更新，这是我们大家都知道的数据响应的基本原理。但是对于新增/删除对象属性和修改数组的场景，我们无法事先定义当前不存在属性的 `get/set` (当然这在 `proxy` 当中是可行的)，因此我们会把对象或者数组本身作为一个数据依赖创建 `Dep` 对象，**通过父级访问**该数据时定义的 `get/set` 将其关联到对应的 `ReactiveEffect`，并在对数据进行新增/删除属性或数组操作时通过数据本身持有的 `Dep` 对象触发关联 `ReactiveEffect` 的更新，如下图所示：
+为什么会产生这个现象呢？原因在于：基于 `Object.defineProperty` 实现的数据响应系统中，我们会对对象的每个已有属性创建了一个 `Dep` 对象，在对该属性进行 `get` 访问时通过这个对象将其与依赖它的观察者 `ReactiveEffect` 关联起来，并在 `set` 操作时触发关联 `ReactiveEffect` 的更新，这是我们大家都知道的数据响应的基本原理。但是对于新增/删除对象属性和修改数组的场景，我们无法事先定义当前不存在属性的 `get/set` (当然这在 `proxy` 当中是可行的)，因此我们会把对象或者数组本身作为一个数据依赖创建 `Dep` 对象，**通过父级访问**该数据时定义的 `get/set` 将其关联到对应的 `ReactiveEffect`，并在对数据进行新增/删除属性或数组操作时通过数据本身持有的 `Dep` 对象触发关联 `ReactiveEffect` 的更新，如下图所示：
 
 ![数据响应原理](https://dpubstatic.udache.com/static/dpubimg/YRhJioIUb17DrOyVft44g.png)
 

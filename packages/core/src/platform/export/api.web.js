@@ -1,5 +1,4 @@
 import Vue from '../../vue'
-import implement from '../../core/implement'
 import { injectMixins } from '../../core/injectMixins'
 
 function initApi () {
@@ -15,8 +14,7 @@ function initApi () {
     watch,
     // use,
     set,
-    delete: del,
-    implement
+    delete: del
   }
   return APIs
 }

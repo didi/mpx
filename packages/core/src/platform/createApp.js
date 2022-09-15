@@ -73,7 +73,8 @@ export default function createApp (option, config = {}) {
   const defaultOptions = filterOptions(spreadProp(mergeOptions(rawOptions, 'app', false), 'methods'), appData)
 
   if (__mpx_mode__ === 'web') {
-    global.currentOption = defaultOptions
+    global.__mpxOptionsMap = global.__mpxOptionsMap || {}
+    global.__mpxOptionsMap[global.currentModuleId] = defaultOptions
     global.getApp = function () {
       return appData
     }
