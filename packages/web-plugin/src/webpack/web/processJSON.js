@@ -12,7 +12,7 @@ import createJSONHelper from '../json-compiler/helper'
 import { RESOLVE_IGNORED_ERR } from '../../constants'
 import RecordResourceMapDependency from '@mpxjs/webpack-plugin/lib/dependencies/RecordResourceMapDependency'
 import { proxyPluginContext } from 'src/pluginContextProxy'
-import mpx from '../../mpx'
+import { mpx } from '../../mpx'
 
 export default function (json, {
   loaderContext,

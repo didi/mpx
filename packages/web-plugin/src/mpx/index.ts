@@ -1,10 +1,10 @@
 import { WebpackError } from 'webpack'
 import { Options } from '../options'
-import { preProcessDefs } from '@mpxjs/utils/index'
+import { preProcessDefs } from '@mpxjs/utils'
 import hash from 'hash-sum'
 import path from 'path'
 
-export interface Index {
+export interface Mpx {
   pagesMap: any
   componentsMap: any
   usingComponents: any
@@ -37,7 +37,7 @@ export interface Index {
   [k: string]: any
 }
 
-const mpx: Index = {
+const mpx: Mpx = {
   // pages全局记录，无需区分主包分包
   pagesMap: {},
   // 组件资源记录，依照所属包进行记录
@@ -63,7 +63,7 @@ const mpx: Index = {
   recordResourceMap: () => ''
 }
 
-export function processMpx(options: Options) {
+const createMpx = (options: Options) =>  {
   const initMpxData = {
     // pages全局记录，无需区分主包分包
     pagesMap: {},
@@ -188,4 +188,8 @@ export function processMpx(options: Options) {
   return mpx
 }
 
-export default mpx
+
+export {
+  createMpx,
+  mpx
+}

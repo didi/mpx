@@ -19,7 +19,7 @@ import { matchCondition } from '@mpxjs/utils/match-condition'
 import stringifyLoadersAndResource from '@mpxjs/utils/stringify-loaders-resource'
 import async from 'async'
 import { processOptions, Options } from '../options'
-import mpx, { processMpx } from '../mpx'
+import { mpx, createMpx } from '../mpx'
 import { NormalModule, DefinePlugin, ExternalsPlugin, Compiler, Dependency, Module } from 'webpack'
 
 const styleCompilerPath = '@mpxjs/loaders/dist/style-loader.js'
@@ -242,7 +242,7 @@ class MpxWebpackPlugin {
         compilation.errors = compilation.errors.concat(errors)
         const moduleGraph = compilation.moduleGraph
         if (!compilation.__mpx__) {
-          compilation.__mpx__ = processMpx(this.options)
+          compilation.__mpx__ = createMpx(this.options)
         }
         const rawProcessModuleDependencies =
           compilation.processModuleDependencies

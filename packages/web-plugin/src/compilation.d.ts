@@ -1,5 +1,5 @@
 import 'webpack'
-import Mpx from './mpx'
+import { Mpx } from './mpx'
 
 declare module 'webpack' {
   interface Compilation {
