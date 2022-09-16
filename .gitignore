@@ -9,3 +9,4 @@ pnpm-lock.yaml
 .DS_Store
 docs-vuepress/docs/.vuepress/dist
 elevate/
+.yarn/
