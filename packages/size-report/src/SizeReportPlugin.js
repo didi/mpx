@@ -252,7 +252,7 @@ class SizeReportPlugin {
         const sharedModulesGroupsSet = new Set()
         // 依赖当前模块的自定义分组
         const customGroupSharedModulesGroupsSet = new Set()
-        
+
         reportGroups.forEach((reportGroup) => {
           if (reportGroup.noEntryModules && noEntryModules && noEntryModules.size) {
             if (has(noEntryModules, (noEntryModule) => {
@@ -292,7 +292,7 @@ class SizeReportPlugin {
         })
 
         // 平均分配体积到指定分组的shareEquallySize
-        function divideEquallySize(groupsSet, size) {
+        function divideEquallySize (groupsSet, size) {
           if (groupsSet.size) {
             // 页面的均摊体积 = 共享资源文件体积 / 共享该资源的页面数量
             const sharedSize = size / groupsSet.size
@@ -720,7 +720,7 @@ class SizeReportPlugin {
 
       await mkdirpPromise(path.dirname(reportFilePath))
 
-      await writeFilePromise(reportFilePath, JSON.stringify(reportData, null, 2))
+      await writeFilePromise(reportFilePath, JSON.stringify(reportData))
 
       logger.info(`Size report is generated in ${reportFilePath}!`)
 
