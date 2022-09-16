@@ -30,6 +30,7 @@ export interface Mpx {
   defs: Record<string, any>
   transRpxRules: any,
   webConfig: any,
+  vueContentCache: Map<any, any>,
   postcssInlineConfig: any
   mode: any
   pathHash: (resourcePath: string) => string
@@ -56,6 +57,7 @@ const mpx: Mpx = {
   defs: {},
   transRpxRules: {},
   webConfig: {},
+  vueContentCache: new Map(),
   postcssInlineConfig: {},
   mode: '',
   pathHash: (resourcePath) => '',
@@ -90,6 +92,7 @@ const createMpx = (options: Options) =>  {
     decodeHTMLText: options.decodeHTMLText,
     // 输出web专用配置
     webConfig: options.webConfig,
+    vueContentCache: new Map(),
     defs: preProcessDefs(options.defs),
     i18n: options.i18n,
     checkUsingComponents: options.checkUsingComponents,

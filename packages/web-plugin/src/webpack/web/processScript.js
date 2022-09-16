@@ -1,7 +1,7 @@
 import { stringifyRequest as _stringifyRequest, urlToRequest } from 'loader-utils'
 import addQuery from '@mpxjs/utils/add-query'
 import genComponentTag from '@mpxjs/utils/gen-component-tag'
-import parseRequest from '@mpxjs/utils//parse-request'
+import createHelpers from '@mpxjs/utils/helpers'
 import { mpx } from '../../mpx'
 
 const optionProcessorPath = '@mpxjs/web-plugin/src/runtime/optionProcessor'
@@ -33,6 +33,7 @@ export default function (script, {
   loaderContext,
   ctorType,
   srcMode,
+  moduleId,
   isProduction,
   componentGenerics,
   jsonConfig,
@@ -47,10 +48,11 @@ export default function (script, {
 }, callback) {
   const {
     i18n,
-    projectRoot
+    projectRoot,
+    webConfig
   } = mpx
 
-  const { queryObj } = parseRequest(loaderContext.resource)
+  const { getRequire } = createHelpers(loaderContext)
   const tabBar = jsonConfig.tabBar
 
   const emitWarning = (msg) => {
@@ -87,23 +89,7 @@ export default function (script, {
   if (script) {
     scriptSrcMode = script.mode || scriptSrcMode
   } else {
-    script = {
-      tag: 'script',
-      content: ''
-    }
-    switch (ctorType) {
-      case 'app':
-        script.content = 'import {createApp} from "@mpxjs/core"\n' +
-          'createApp({})\n'
-        break
-      case 'page':
-        script.content = 'import {createPage} from "@mpxjs/core"\n' +
-          'createPage({})\n'
-        break
-      case 'component':
-        script.content = 'import {createComponent} from "@mpxjs/core"\n' +
-          'createComponent({})\n'
-    }
+    script = { tag: 'script' }
   }
   output += genComponentTag(script, {
     attrs (script) {
@@ -138,9 +124,10 @@ export default function (script, {
   }
   global.__networkTimeout = ${JSON.stringify(jsonConfig.networkTimeout)}
   global.__mpxGenericsMap = {}
+  global.__mpxOptionsMap = {}
   global.__style = ${JSON.stringify(jsonConfig.style || 'v1')}
   global.__mpxPageConfig = ${JSON.stringify(jsonConfig.window)}
-  global.__mpxTransRpxFn = ${mpx.webConfig.transRpxFn}\n`
+  global.__mpxTransRpxFn = ${webConfig.transRpxFn}\n`
         if (i18n) {
           const i18nObj = Object.assign({}, i18n)
           content += `  import VueI18n from 'vue-i18n'
@@ -213,20 +200,20 @@ export default function (script, {
         const componentRequest = stringifyRequest(componentCfg.resource)
         componentsMap[componentName] = `getComponent(require(${componentRequest}), { __mpxBuiltIn: true })`
       })
-
+      content += `  global.currentModuleId = ${JSON.stringify(moduleId)}\n`
       content += `  global.currentSrcMode = ${JSON.stringify(scriptSrcMode)}\n`
       if (!isProduction) {
         content += `  global.currentResource = ${JSON.stringify(loaderContext.resourcePath)}\n`
       }
-      // 为了正确获取currentSrcMode便于运行时进行转换，对于src引入的组件script采用require方式引入(由于webpack会将import的执行顺序上升至最顶)，这意味着对于src引入脚本中的named export将不会生效，不过鉴于mpx和小程序中本身也没有在组件script中声明export的用法，所以应该没有影响
-      content += '\n\n\n/** Source start **/\n'
-      content += script.src
-        // 继承单文件组件query避免多个单文件模块实例引用一个src模块，因模块缓存导致createComponent不执行的问题
-        ? `require(${stringifyRequest(addQuery(script.src, queryObj))})\n`
-        : script.content
-      content += '\n/** Source end **/\n\n\n'
+      content += '  /** script content **/\n'
+      // 传递ctorType以补全js内容
+      const extraOptions = {
+        ctorType
+      }
+      // todo 仅靠vueContentCache保障模块唯一性还是不够严谨，后续需要考虑去除原始query后构建request
+      content += `  ${getRequire('script', script, extraOptions)}\n`
       // createApp/Page/Component执行完成后立刻获取当前的option并暂存
-      content += `  const currentOption = global.currentOption\n`
+      content += `  const currentOption = global.__mpxOptionsMap[${JSON.stringify(moduleId)}]\n`
       // 获取pageConfig
       const pageConfig = {}
       if (ctorType === 'page') {

@@ -18,6 +18,7 @@ module.exports = {
     // Enable the TSDoc plugin
     'tsdoc/syntax': 'warn',
     'comma-dangle': ['error', 'never'],
-    'no-var-requires': 0
+    'no-var-requires': 0,
+    '@typescript-eslint/ban-ts-comment': 'off'
   }
 }

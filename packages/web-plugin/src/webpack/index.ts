@@ -6,14 +6,15 @@ import InjectDependency from '@mpxjs/webpack-plugin/lib/dependencies/InjectDepen
 import CommonJsVariableDependency from '@mpxjs/webpack-plugin/lib/dependencies/CommonJsVariableDependency'
 import ReplaceDependency from '@mpxjs/webpack-plugin/lib/dependencies/ReplaceDependency'
 import RecordResourceMapDependency from '@mpxjs/webpack-plugin/lib/dependencies/RecordResourceMapDependency'
+import RecordVueContentDependency from '@mpxjs/webpack-plugin/lib/dependencies/RecordVueContentDependency'
 import NullFactory from 'webpack/lib/NullFactory'
 import harmonySpecifierTag from 'webpack/lib/dependencies/HarmonyImportDependencyParserPlugin'
 import FlagEntryExportAsUsedPlugin from 'webpack/lib/FlagEntryExportAsUsedPlugin'
 import FileSystemInfo from 'webpack/lib/FileSystemInfo'
-import toPosix from '@mpxjs/utils/to-posix'
-import addQuery from '@mpxjs/utils/add-query'
 import AddModePlugin from './resolver/AddModePlugin'
 import AddEnvPlugin from './resolver/AddEnvPlugin'
+import toPosix from '@mpxjs/utils/to-posix'
+import addQuery from '@mpxjs/utils/add-query'
 import parseRequest from '@mpxjs/utils/parse-request'
 import { matchCondition } from '@mpxjs/utils/match-condition'
 import stringifyLoadersAndResource from '@mpxjs/utils/stringify-loaders-resource'
@@ -231,6 +232,14 @@ class MpxWebpackPlugin {
         compilation.dependencyTemplates.set(
           <DepConstructor>RecordResourceMapDependency,
           <DependencyTemplate>new RecordResourceMapDependency.Template()
+        )
+        compilation.dependencyFactories.set(
+          <DepConstructor>RecordVueContentDependency,
+          <ModuleFactory>new NullFactory()
+        )
+        compilation.dependencyTemplates.set(
+          <DepConstructor>RecordVueContentDependency,
+          <DependencyTemplate>new RecordVueContentDependency.Template()
         )
       }
     )

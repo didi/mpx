@@ -3,6 +3,7 @@ import addQuery from '@mpxjs/utils/add-query'
 import { matchCondition } from '@mpxjs/utils/match-condition'
 import parseRequest from '@mpxjs/utils/parse-request'
 import RecordResourceMapDependency from '@mpxjs/webpack-plugin/lib/dependencies/RecordResourceMapDependency'
+import RecordVueContentDependency from '@mpxjs/webpack-plugin/lib/dependencies/RecordVueContentDependency'
 import async from 'async'
 import JSON5 from 'json5'
 import loaderUtils from 'loader-utils'
@@ -153,7 +154,9 @@ export default function (
           this.loaderIndex = -1
           return callback(null, output)
         }
-
+        // 通过RecordVueContentDependency和vueContentCache确保子request不再重复生成vueContent
+        const cacheContent = mpx.vueContentCache.get(filePath)
+        if (cacheContent) return callback(null, cacheContent)
         return async.waterfall(
           [
             (callback: any) => {
@@ -222,6 +225,7 @@ export default function (
                   loaderContext,
                   ctorType,
                   srcMode,
+                  moduleId,
                   isProduction,
                   componentGenerics,
                   jsonConfig: jsonRes.jsonObj,
@@ -241,6 +245,7 @@ export default function (
           (err, scriptRes: any) => {
             if (err) return callback(err)
             output += scriptRes.output
+            this._module && this._module.addPresentationalDependency(<Dependency>new RecordVueContentDependency(filePath, output))
             callback(null, output)
           }
         )

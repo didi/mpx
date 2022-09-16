@@ -71,6 +71,15 @@ declare module '@mpxjs/webpack-plugin/lib/dependencies/RecordResourceMapDependen
     constructor(resourcePath: string, resourceType: string, outputPath: string, packageRoot = '')
   }
 }
+declare class RecordVueContentDependencyTemplate {
+  constructor();
+}
+declare module '@mpxjs/webpack-plugin/lib/dependencies/RecordVueContentDependency' {
+  export default class RecordVueContentDependency {
+    static Template: typeof RecordVueContentDependencyTemplate
+    constructor(resourcePath: string, content: string)
+  }
+}
 
 declare interface DepConstructor {
   new (...args: any[]): any;
