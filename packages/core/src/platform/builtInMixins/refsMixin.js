@@ -52,7 +52,7 @@ export default function getRefsMixin () {
         selectorQuery.exec = function (originalCb = noop) {
           const cb = function (results) {
             results.forEach((item, index) => {
-              cbs[index](item)
+              cbs[index] && cbs[index](item)
             })
             originalCb(results)
           }
