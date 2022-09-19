@@ -35,6 +35,7 @@ const RecordIndependentDependency = require('./dependencies/RecordIndependentDep
 const DynamicEntryDependency = require('./dependencies/DynamicEntryDependency')
 const FlagPluginDependency = require('./dependencies/FlagPluginDependency')
 const RemoveEntryDependency = require('./dependencies/RemoveEntryDependency')
+const RecordVueContentDependency = require('./dependencies/RecordVueContentDependency')
 const SplitChunksPlugin = require('webpack/lib/optimize/SplitChunksPlugin')
 const PartialCompilePlugin = require('./partial-compile/index')
 const fixRelative = require('./utils/fix-relative')
@@ -498,6 +499,9 @@ class MpxWebpackPlugin {
 
       compilation.dependencyFactories.set(CommonJsAsyncDependency, normalModuleFactory)
       compilation.dependencyTemplates.set(CommonJsAsyncDependency, new CommonJsAsyncDependency.Template())
+
+      compilation.dependencyFactories.set(RecordVueContentDependency, new NullFactory())
+      compilation.dependencyTemplates.set(RecordVueContentDependency, new RecordVueContentDependency.Template())
     })
 
     compiler.hooks.thisCompilation.tap('MpxWebpackPlugin', (compilation, { normalModuleFactory }) => {
@@ -539,6 +543,7 @@ class MpxWebpackPlugin {
           usingComponents: {},
           // todo es6 map读写性能高于object，之后会逐步替换
           wxsAssetsCache: new Map(),
+          addEntryPromiseMap: new Map(),
           currentPackageRoot: '',
           wxsContentMap: {},
           forceUsePageCtor: this.options.forceUsePageCtor,
@@ -557,6 +562,7 @@ class MpxWebpackPlugin {
           nativeConfig: this.options.nativeConfig,
           // 输出web专用配置
           webConfig: this.options.webConfig,
+          vueContentCache: new Map(),
           tabBarMap: {},
           defs: preProcessDefs(this.options.defs),
           i18n: this.options.i18n,
