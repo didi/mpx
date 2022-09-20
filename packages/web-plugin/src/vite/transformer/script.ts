@@ -132,6 +132,7 @@ export async function transformScript(
 
   s.prepend(
     [
+      `global.currentModuleId = ${stringify(descriptor.id)}`,
       !isProduction && `global.currentResource = ${stringify(filename)}`,
       app &&
         `${genImport(APP_HELPER_CODE)}
@@ -183,8 +184,11 @@ export async function transformScript(
 
   s.append(
     [
+      `const currentOption = global.__mpxOptionsMap[${stringify(
+        descriptor.id
+      )}]`,
       `\nexport default processOption(`,
-      `  global.currentOption,`,
+      `  currentOption,`,
       `  ${stringify(ctorType)},`,
       `  ${stringify(Object.keys(localPagesMap)[0])},`,
       `  ${stringify(componentId)},`,
