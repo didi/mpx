@@ -100,6 +100,7 @@ class SizeReportPlugin {
             name,
             resourcePath,
             isPage: true,
+            shareEquallySize: 0,
             entryRules: {
               include: resourcePath
             }
@@ -247,6 +248,9 @@ class SizeReportPlugin {
       }
 
       function fillSizeReportGroups (entryModules, noEntryModules, packageName, fillType, fillInfo) {
+        // 记录当前模块被哪些页面依赖
+        const sharedModulesGroupsSet = new Set()
+
         reportGroups.forEach((reportGroup) => {
           if (reportGroup.noEntryModules && noEntryModules && noEntryModules.size) {
             if (has(noEntryModules, (noEntryModule) => {
@@ -273,11 +277,24 @@ class SizeReportPlugin {
             } else if (has(entryModules, (entryModule) => {
               return reportGroup.selfEntryModules.has(entryModule) || reportGroup.sharedEntryModules.has(entryModule)
             })) {
+              // 页面的均摊体积单独计算
+              if (reportGroup.isPage) {
+                sharedModulesGroupsSet.add(reportGroup)
+              }
               reportGroup.sharedSize += fillInfo.size
               return fillSizeInfo(reportGroup.sharedSizeInfo, packageName, fillType, fillInfo)
             }
           }
         })
+
+        // 单独计算页面均摊体积
+        if (sharedModulesGroupsSet.size) {
+          // 页面的均摊体积 = 共享资源文件体积 / 共享该资源的页面数量
+          const sharedSize = fillInfo.size / sharedModulesGroupsSet.size
+          for (const reportGroup of sharedModulesGroupsSet) {
+            reportGroup.shareEquallySize += sharedSize
+          }
+        }
       }
 
       const resourcePathMap = {}
@@ -664,6 +681,7 @@ class SizeReportPlugin {
         readableInfo.selfSizeInfo = formatSizeInfo(reportGroup.selfSizeInfo)
         readableInfo.sharedSize = formatSize(reportGroup.sharedSize)
         readableInfo.sharedSizeInfo = formatSizeInfo(reportGroup.sharedSizeInfo)
+        readableInfo.shareEquallySize = formatSize(reportGroup.shareEquallySize + reportGroup.selfSize)
         return readableInfo
       })
 
@@ -693,7 +711,7 @@ class SizeReportPlugin {
 
       await mkdirpPromise(path.dirname(reportFilePath))
 
-      await writeFilePromise(reportFilePath, JSON.stringify(reportData, null, 2))
+      await writeFilePromise(reportFilePath, JSON.stringify(reportData))
 
       logger.info(`Size report is generated in ${reportFilePath}!`)
 
