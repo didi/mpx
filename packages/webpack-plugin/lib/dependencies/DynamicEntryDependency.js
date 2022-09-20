@@ -73,13 +73,20 @@ class DynamicEntryDependency extends NullDependency {
           resource = addQuery(resource, { packageRoot }, true)
         }
 
-        const key = resource + filename
-        let addEntryPromise
+        const key = [resource, filename].join('|')
 
         if (alreadyOutputted) {
-          addEntryPromise = mpx.addEntryPromiseMap.get(key) || Promise.resolve()
+          const addEntryPromise = mpx.addEntryPromiseMap.get(key)
+          if (addEntryPromise) {
+            addEntryPromise.then(entryModule => {
+              // 构建entry依赖图，针对alreadyOutputted的entry也需要记录
+              originEntryNode.addChild(mpx.getEntryNode(entryModule, entryType))
+            })
+          }
+          // alreadyOutputted时直接返回，避免存在模块循环引用时死循环
+          return callback(null, { resultPath })
         } else {
-          addEntryPromise = new Promise((resolve, reject) => {
+          const addEntryPromise = new Promise((resolve, reject) => {
             mpx.addEntry(resource, filename, (err, entryModule) => {
               if (err) return reject(err)
               if (entryType === 'export') {
@@ -88,15 +95,15 @@ class DynamicEntryDependency extends NullDependency {
               resolve(entryModule)
             })
           })
+          addEntryPromise
+            .then(entryModule => {
+              originEntryNode.addChild(mpx.getEntryNode(entryModule, entryType))
+              callback(null, { resultPath })
+            })
+            .catch(err => callback(err))
+
           mpx.addEntryPromiseMap.set(key, addEntryPromise)
         }
-
-        addEntryPromise
-          .then(entryModule => {
-            if (entryModule) originEntryNode.addChild(mpx.getEntryNode(entryModule, entryType))
-            callback(null, { resultPath })
-          })
-          .catch(err => callback(err))
       }
     ], callback)
   }
