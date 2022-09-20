@@ -50,7 +50,8 @@ export interface ResolvedOptions extends Required<Options> {
   sourceMap?: boolean
   devServer?: ViteDevServer
   root: string
-  isProduction: boolean
+  isProduction: boolean,
+  base?: string
 }
 
 const externalsMap: Record<string, RegExp> = {

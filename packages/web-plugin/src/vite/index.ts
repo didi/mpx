@@ -60,6 +60,7 @@ function createMpxPlugin(
     configResolved(config) {
       Object.assign(options, {
         ...options,
+        base: config.base,
         root: config.root,
         sourceMap: config.command === 'build' ? !!config.build.sourcemap : true,
         isProduction: config.isProduction
@@ -104,7 +105,7 @@ function createMpxPlugin(
       }
       const { filename, query } = parseRequest(id)
       if (query.resolve !== undefined) {
-        return renderPageRouteCode(filename)
+        return renderPageRouteCode(options, filename)
       }
       if (query.mpx !== undefined) {
         const descriptor = getDescriptor(filename)
@@ -170,7 +171,7 @@ export default function mpx(options: Options = {}): Plugin[] {
   const resolvedOptions = processOptions({ ...options })
   const { mode, env, fileConditionRules } = resolvedOptions
   const customExtensions = [mode, env, env && `${mode}.${env}`].filter(Boolean)
-  
+
   const plugins = [
     // mpx => vue
     createMpxPlugin(resolvedOptions, {
