@@ -329,6 +329,7 @@ export default function processOption (
         global.__mpxRouter.__mpxHistoryLength = global.history.length
       }
     }
+    // console.error('global====', )
   } else {
     // 局部注册页面和组件中依赖的组件
     for (const componentName in componentsMap) {
