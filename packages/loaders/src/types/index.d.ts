@@ -4,6 +4,6 @@ declare module '@mpxjs/compiler/template-compiler/parser' {
 }
 declare module '@mpxjs/webpack-plugin/lib/dependencies/RecordResourceMapDependency' {
   export default class RecordResourceMapDependency {
-    constructor(resourcePath: string, resourceType: string, outputPath: string, packageRoot = '')
+    constructor(resourcePath: string, resourceType: string, outputPath: string, packageRoot: string )
   }
 }

@@ -1,64 +1,46 @@
-import { WebpackError } from 'webpack'
-
-export interface Mpx {
+interface Mpx {
   pagesMap: any
   componentsMap: any
-  usingComponents: any
-  wxsAssetsCache: Map<any, any>
-  currentPackageRoot: string
-  wxsContentMap: any
-  minimize: boolean
-  staticResourcesMap: any
-
-  recordResourceMap(record: {
+  checkUsingComponents?: boolean;
+  srcMode?: 'wx' | 'web' | 'ali' | 'swan';
+  usingComponents?: Record<string, string>
+  wxsAssetsCache?: Map<any, any>
+  currentPackageRoot?: string
+  wxsContentMap?: any
+  minimize?: boolean
+  env?: string
+  staticResourcesMap?: Record<string, any>
+  mode?: 'wx' | 'web' | 'ali' | 'swan'
+  recordResourceMap?(record: {
     resourcePath: string
-    resourceType: string
+    resourceType: 'page' | 'component'
     outputPath: string
     packageRoot: string
     recordOnly: boolean
-    warn(e: WebpackError): void
-    error(e: WebpackError): void
+    warn(e: Error): void
+    error(e: Error): void
   }): void
-
-  externals: (string | RegExp)[]
-  projectRoot: string
-  getOutputPath: (path: string, type: 'component' | 'page', option?: { ext?: string, conflictPath?: string }) => string
-  defs: Record<string, any>
-  transRpxRules: any,
-  webConfig: any,
-  vueContentCache: Map<any, any>,
-  postcssInlineConfig: any
-  mode: any
-  pathHash: (resourcePath: string) => string
-
+  i18n?: Record<string, string> | null
+  externals?: (string | RegExp)[]
+  projectRoot?: string
+  getOutputPath?: (resourcePath: string, type: ('component' | 'page'), option?: { ext?: string, conflictPath?: string }) => string
+  defs?: Record<string, any>
+  transRpxRules?: any,
+  webConfig?:  Record<string, unknown>,
+  vueContentCache?: Map<any, any>,
+  postcssInlineConfig?: Record<string, unknown> | undefined
+  pathHash?: (resourcePath: string) => string
+  appTitle?: string
+  autoScopeRules?: any
+  decodeHTMLText?: boolean
   [k: string]: any
 }
 
-let mpx: Mpx = {
-  // pages全局记录，无需区分主包分包
+const mpx = {
   pagesMap: {},
-  // 组件资源记录，依照所属包进行记录
   componentsMap: {
     main: {}
-  },
-  usingComponents: {},
-  // todo es6 map读写性能高于object，之后会逐步替换
-  wxsAssetsCache: new Map(),
-  currentPackageRoot: '',
-  wxsContentMap: {},
-  minimize: false,
-  staticResourcesMap: undefined,
-  externals: [],
-  projectRoot: '',
-  defs: {},
-  transRpxRules: {},
-  webConfig: {},
-  vueContentCache: new Map(),
-  postcssInlineConfig: {},
-  mode: '',
-  pathHash: (resourcePath) => '',
-  getOutputPath: () => '',
-  recordResourceMap: () => ''
+  }
 }
 
 const createMpx = (options: Mpx) =>  {
@@ -67,5 +49,6 @@ const createMpx = (options: Mpx) =>  {
 
 
 export {
+  Mpx,
   createMpx
 }

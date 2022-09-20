@@ -1,6 +1,6 @@
+import path  from 'path'
 import { OptionObject, parseQuery } from 'loader-utils'
 const seen = new Map()
-const path = require('path')
 
 function genQueryObj(result: { queryObj: OptionObject; resourceQuery: any }) {
   // 避免外部修改queryObj影响缓存
@@ -12,9 +12,9 @@ export default function parseRequest(request: string) {
   if (seen.has(request)) {
     return genQueryObj(seen.get(request))
   }
-  let elements = request.split('!')
-  let resource = elements.pop() as string
-  let loaderString = elements.join('!')
+  const elements = request.split('!')
+  const resource = elements.pop() as string
+  const loaderString = elements.join('!')
   let resourcePath = resource
   let resourceQuery = ''
   const queryIndex = resource.indexOf('?')
@@ -31,7 +31,7 @@ export default function parseRequest(request: string) {
     const resourceBase = path.basename(resourcePath)
     resourcePath = path.join(
       resourceDir,
-      resourceBase.replace(queryObj.infix, '')
+      resourceBase.replace((queryObj.infix) as string, '')
     )
   }
   const result = {

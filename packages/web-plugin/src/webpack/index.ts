@@ -20,7 +20,8 @@ import { matchCondition } from '@mpxjs/utils/match-condition'
 import stringifyLoadersAndResource from '@mpxjs/utils/stringify-loaders-resource'
 import async from 'async'
 import { processOptions, Options } from '../options'
-import { mpx, createMpx } from '../mpx'
+import { createMpx } from '../mpx'
+import mpx from './mpx'
 import { NormalModule, DefinePlugin, ExternalsPlugin, Compiler, Dependency, Module } from 'webpack'
 import { preProcessDefs } from '@mpxjs/utils'
 import hash from 'hash-sum'
@@ -254,7 +255,7 @@ class MpxWebpackPlugin {
         compilation.errors = compilation.errors.concat(errors)
         const moduleGraph = compilation.moduleGraph
         if (!compilation.__mpx__) {
-          createMpx({
+          Object.assign(mpx, createMpx({
             // pages全局记录，无需区分主包分包
             pagesMap: {},
             // 组件资源记录，依照所属包进行记录
@@ -270,7 +271,7 @@ class MpxWebpackPlugin {
             wxsContentMap: {},
             minimize: false,
             mode: this.options.mode,
-            srcMode: this.options.srcMode,
+            srcMode: this.options.srcMode || 'wx',
             env: this.options.env,
             externalClasses: this.options.externalClasses,
             projectRoot: this.options.projectRoot || '',
@@ -303,7 +304,7 @@ class MpxWebpackPlugin {
               { ext = '', conflictPath = '' } = {}
             ) => {
               const name = path.parse(resourcePath).name
-              const hash = mpx.pathHash(resourcePath)
+              const hash = (mpx.pathHash && mpx.pathHash(resourcePath)) || ''
               const customOutputPath = this.options.customOutputPath
               if (conflictPath)
                 return conflictPath.replace(
@@ -319,10 +320,10 @@ class MpxWebpackPlugin {
                 return path.join(type + 's', name + hash, 'index' + ext)
               return path.join(type, name + hash + ext)
             },
-            recordResourceMap: ({ resourcePath, resourceType, outputPath, packageRoot = '', recordOnly, warn, error }: Record<string, any>) => {
+            recordResourceMap: ({ resourcePath, resourceType, outputPath, packageRoot = '', recordOnly, warn, error }) => {
               const packageName = packageRoot || 'main'
-              const resourceMap = mpx[`${resourceType}sMap`]
-              const currentResourceMap = resourceMap.main
+              const resourceMap = mpx[`${resourceType}sMap`] as any
+              const currentResourceMap = (resourceMap).main
                 ? (resourceMap[packageName] = resourceMap[packageName] || {})
                 : resourceMap
               let alreadyOutputted = false
@@ -339,15 +340,9 @@ class MpxWebpackPlugin {
                         currentResourceMap[key] === outputPath &&
                         key !== resourcePath
                       ) {
-                        outputPath = mpx.getOutputPath(
-                          resourcePath,
-                          resourceType,
-                          { conflictPath: outputPath }
-                        )
+                        outputPath = (mpx.getOutputPath && mpx.getOutputPath(resourcePath, resourceType, { conflictPath: outputPath })) || ''
                         warn && warn(
-                          new Error(
-                            `Current ${resourceType} [${resourcePath}] is registered with conflicted outputPath [${currentResourceMap[key]}] which is already existed in system, will be renamed with [${outputPath}], use ?resolve to get the real outputPath!`
-                          )
+                          new Error(`Current ${resourceType} [${resourcePath}] is registered with conflicted outputPath [${currentResourceMap[key]}] which is already existed in system, will be renamed with [${outputPath}], use ?resolve to get the real outputPath!`)
                         )
                         break
                       }
@@ -374,7 +369,7 @@ class MpxWebpackPlugin {
                 alreadyOutputted
               }
             }
-          })
+          }))
           compilation.__mpx__ = mpx
         }
         const rawProcessModuleDependencies =

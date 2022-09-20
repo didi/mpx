@@ -4,7 +4,7 @@
  * @param {boolean} useJSON
  * @return {string} queryString
  */
-const JSON5 = require('json5')
+import JSON5 from 'json5'
 
 function stringifyQuery(obj: any, useJSON?: boolean) {
   if (useJSON) return `?${JSON5.stringify(obj)}`

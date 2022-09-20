@@ -2,7 +2,7 @@ import { stringifyRequest as _stringifyRequest, urlToRequest } from 'loader-util
 import addQuery from '@mpxjs/utils/add-query'
 import genComponentTag from '@mpxjs/utils/gen-component-tag'
 import createHelpers from '@mpxjs/utils/helpers'
-import { mpx } from '../../mpx'
+import mpx from '../mpx'
 
 const optionProcessorPath = '@mpxjs/web-plugin/src/runtime/optionProcessor'
 const tabBarContainerPath = '@mpxjs/web-plugin/src/runtime/components/web/mpx-tab-bar-container.vue'

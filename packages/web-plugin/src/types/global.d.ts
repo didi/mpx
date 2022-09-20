@@ -68,7 +68,7 @@ declare class RecordResourceMapDependencyTemplate {
 declare module '@mpxjs/webpack-plugin/lib/dependencies/RecordResourceMapDependency' {
   export default class RecordResourceMapDependency {
     static Template: typeof RecordResourceMapDependencyTemplate
-    constructor(resourcePath: string, resourceType: string, outputPath: string, packageRoot = '')
+    constructor(resourcePath: string, resourceType: string, outputPath: string, packageRoot: string)
   }
 }
 declare class RecordVueContentDependencyTemplate {
