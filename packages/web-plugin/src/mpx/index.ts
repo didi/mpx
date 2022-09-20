@@ -62,11 +62,10 @@ let mpx: Mpx = {
 }
 
 const createMpx = (options: Mpx) =>  {
-  mpx = options
+  return Object.assign({}, mpx, options)
 }
 
 
 export {
-  createMpx,
-  mpx
+  createMpx
 }
