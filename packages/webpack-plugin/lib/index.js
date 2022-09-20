@@ -1418,7 +1418,7 @@ try {
               cssLoaderIndex = index
             } else if (currentLoader.includes('vue-loader/lib/loaders/stylePostLoader') && vueStyleLoaderIndex === -1) {
               vueStyleLoaderIndex = index
-            } else if (currentLoader.includes(styleCompilerPath)) {
+            } else if (currentLoader.includes(styleCompilerPath) && mpxStyleLoaderIndex === -1) {
               mpxStyleLoaderIndex = index
             }
           })
