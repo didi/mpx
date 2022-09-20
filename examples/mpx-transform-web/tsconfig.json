@@ -5,6 +5,7 @@
     "noImplicitThis": true,
     "noImplicitAny": true,
     "strictNullChecks": true,
+    "esModuleInterop": true,
     "moduleResolution": "node",
     "lib": [
       "esnext",
@@ -12,7 +13,7 @@
       "dom.iterable"
     ]
   },
-  "include": ["src"],
+  "include": ["src", "vite.config.ts"],
   "exclude": [
     "build",
     "dist",
