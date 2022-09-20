@@ -14,8 +14,13 @@ export const APP_HELPER_CODE = '\0/vite/mpx-app-helper'
 export const I18N_HELPER_CODE = '\0/vite/mpx-i18n-helper'
 export const TAB_BAR_PAGE_HELPER_CODE = '\0/vite/mpx-tab-bar-page-helper'
 
-export const renderPageRouteCode = (importer: string): string => {
-  return `export default ${stringify(mpxGlobal.pagesMap[importer])}`
+export const renderPageRouteCode = (
+  options: ResolvedOptions,
+  importer: string
+): string => {
+  return `export default ${stringify(
+    options.base + mpxGlobal.pagesMap[importer]
+  )}`
 }
 
 export const renderEntryCode = async (

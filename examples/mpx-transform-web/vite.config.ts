@@ -1,12 +1,10 @@
-const path = require('path')
-const mpx = require('@mpxjs/web-plugin/vite')
-const { defineConfig } = require('vite')
+import mpx from '@mpxjs/web-plugin/vite'
+import path from 'path'
+import { defineConfig } from 'vite'
 
-module.exports = defineConfig({
-
+export default defineConfig({
   plugins: [
     mpx({
-      env: 'didi',
       externalClasses: ['list-class'],
       // 定义一些全局环境变量，可在JS/模板/样式/JSON中使用
       defs: {
