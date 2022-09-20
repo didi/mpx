@@ -37,7 +37,7 @@
   },
   "scripts": {
     "test": "echo \"Error: run tests from root\" && exit 1",
-    "dev": "tsup --watch --dts",
+    "dev": "tsup --watch",
     "build": "tsup --env.NODE_ENV production"
   },
   "directories": {
