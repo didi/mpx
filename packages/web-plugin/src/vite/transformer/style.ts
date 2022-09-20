@@ -1,10 +1,8 @@
 import { styleCompiler } from '@mpxjs/compiler'
 import genComponentTag from '@mpxjs/utils/gen-component-tag'
 import postcss from 'postcss'
-import { TransformPluginContext, TransformResult } from 'rollup'
+import { SourceMapInput, TransformPluginContext, TransformResult } from 'rollup'
 import { createFilter } from 'vite'
-import { transformStyle as vueTransformStyle } from 'vite-plugin-vue2/dist/style.js'
-import { getDescriptor } from 'vite-plugin-vue2/dist/utils/descriptorCache'
 import { ResolvedOptions } from '../../options'
 import loadPostcssConfig from '../../utils/loadPostcssConfig'
 import { SFCDescriptor } from '../compiler'
@@ -15,7 +13,7 @@ async function mpxTransformStyle(
   descriptor: SFCDescriptor,
   options: ResolvedOptions,
   pluginContext: TransformPluginContext
-) {
+): Promise<TransformResult> {
   const { autoScopeRules, defs, transRpxRules: transRpxRulesRaw } = options
   const filter = createFilter(autoScopeRules.include, autoScopeRules.exclude)
   const autoScope = autoScopeRules.include && filter(filename)
@@ -30,7 +28,7 @@ async function mpxTransformStyle(
 
   if (autoScope) {
     const moduleId = descriptor.id
-    plugins.push(styleCompiler.scopeId({ id: moduleId }))
+    plugins.push(styleCompiler.scopeId({ id: `data-v-${moduleId}` }))
   }
 
   plugins.push(
@@ -70,10 +68,10 @@ async function mpxTransformStyle(
       }
     })
   }
-
+  // pluginContext.sourcemapChain.push(result.map && result.map.toJSON())
   return {
     code: result.css,
-    map: result.map && result.map.toJSON()
+    map: result.map && (result.map.toJSON() as SourceMapInput)
   }
 }
 
@@ -100,15 +98,7 @@ export async function transformStyle(
     options,
     pluginContext
   )
-  const vueStyle = await vueTransformStyle(
-    mpxStyle.code,
-    filename,
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    getDescriptor(descriptor.filename)!,
-    index,
-    pluginContext
-  )
-  return vueStyle
+  return mpxStyle
 }
 
 /**

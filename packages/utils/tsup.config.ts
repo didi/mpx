@@ -6,6 +6,7 @@ export default defineConfig({
   minify: false,
   clean: true,
   format: ['esm', 'cjs'],
+  dts: true,
   esbuildOptions: (options, context) => {
     // eslint-disable-next-line no-param-reassign
     if (context.format === 'cjs') {

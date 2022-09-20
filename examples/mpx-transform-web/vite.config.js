@@ -43,5 +43,8 @@ module.exports = defineConfig({
   },
   optimizeDeps: {
     include: ['lodash/throttle']
+  },
+  css: {
+    devSourcemap: true
   }
 })
