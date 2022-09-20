@@ -69,7 +69,7 @@
     },
     ready () {
       console.log('---进入picker页面')
-      wx.showToast({
+      mpx.showToast({
 	      title: '成功',
 	      icon: 'success',
 	      duration: 2000
