@@ -836,9 +836,15 @@ function parse (template, options) {
   })
 
   if (!tagNames.has('component')) {
-    options.usingComponents.forEach((item) => {
-      if (!tagNames.has(item) && !options.globalComponents.includes(item) && options.checkUsingComponents) warn$1(`${item}注册了，但是未被对应的模板引用，建议删除！`)
-    })
+    if (options.checkUsingComponents) {
+      const arr = []
+      options.usingComponents.forEach((item) => {
+        if (!tagNames.has(item) && !options.globalComponents.includes(item) && !options.componentPlaceholder.includes(item)) {
+          arr.push(item)
+        }
+      })
+      arr.length && warn$1(`\n ${options.filePath} \n 组件 ${arr.join(' | ')} 注册了，但是未被对应的模板引用，建议删除！`)
+    }
   }
 
   return {
