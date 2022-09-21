@@ -10,7 +10,10 @@
       a: 1
     },
     onLoad () {
-      console.log(2334)
+      console.log('onload index2')
+    },
+    onShow () {
+      console.log('onShow index2')
     },
     methods: {
       reload () {
