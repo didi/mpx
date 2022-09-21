@@ -28,6 +28,9 @@
   "homepage": "https://github.com/didi/mpx#readme",
   "peerDependencies": {
     "@mpxjs/core": "^2.8.0",
-    "@mpxjs/utils": "^2.8.0"
+    "@mpxjs/utils": "^2.8.0",
+    "pinia": "^2.0.14",
+    "vue": "^2.7.10",
+    "vue-demi": "^0.13.11"
   }
 }

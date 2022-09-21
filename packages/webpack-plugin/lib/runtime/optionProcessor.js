@@ -376,6 +376,11 @@ registered in parent context!`)
     }
   }
 
+  // option注入pinia
+  if (global.__mpx_pinia) {
+    option.pinia = global.__mpx_pinia
+  }
+
   if (option.mixins) {
     option.mixins.push(mixin)
   } else {

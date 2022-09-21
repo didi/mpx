@@ -1,4 +1,6 @@
+import vue from 'vue'
 import {
+  PiniaVuePlugin,
   createPinia as webCreatePinia,
   defineStore,
   getActivePinia,
@@ -12,11 +14,16 @@ import {
   storeToRefs
 } from 'pinia'
 
+vue.use(PiniaVuePlugin)
+
 function createPinia () {
   const webPinia = webCreatePinia()
-  global.__mpx_pinia = webPinia
+  webPinia.install = function () {
+    setActivePinia(webPinia)
+    global.__mpx_pinia = webPinia
+  }
+  return webPinia
 }
-
 
 export {
   createPinia,

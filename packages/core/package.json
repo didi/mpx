@@ -45,6 +45,6 @@
   },
   "sideEffects": false,
   "peerDependencies": {
-    "@mpxjs/utils": "^1.0.0"
+    "@mpxjs/utils": "^2.8.0"
   }
 }
