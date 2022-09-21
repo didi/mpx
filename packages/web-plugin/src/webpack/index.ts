@@ -645,13 +645,13 @@ class MpxWebpackPlugin {
             let mpxStyleLoaderIndex = -1
             loaders && loaders.forEach((loader, index) => {
               const currentLoader = toPosix(loader.loader)
-              if (currentLoader.includes('css-loader')) {
+              if (currentLoader.includes('css-loader') && cssLoaderIndex === -1) {
                 cssLoaderIndex = index
               } else if (
-                currentLoader.includes('vue-loader/lib/loaders/stylePostLoader')
+                currentLoader.includes('vue-loader/lib/loaders/stylePostLoader') && vueStyleLoaderIndex === -1
               ) {
                 vueStyleLoaderIndex = index
-              } else if (currentLoader.includes(styleCompilerPath)) {
+              } else if (currentLoader.includes(styleCompilerPath) && mpxStyleLoaderIndex === -1) {
                 mpxStyleLoaderIndex = index
               }
             })
@@ -667,13 +667,10 @@ class MpxWebpackPlugin {
                 loaderIndex = vueStyleLoaderIndex
               }
               if (loaderIndex > -1) {
-                // TODO:
+                // @ts-ignore
                 loaders && loaders.splice(loaderIndex + 1, 0, {
                   loader: styleCompilerPath,
-                  options:
-                    (mpxStyleOptions && JSON.parse(mpxStyleOptions)) || {},
-                  type: '',
-                  ident: ''
+                  options: (mpxStyleOptions && JSON.parse(mpxStyleOptions)) || {}
                 })
               }
             }
