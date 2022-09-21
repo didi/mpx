@@ -5,6 +5,9 @@ import { APIs, InstanceAPIs } from './platform/export/api'
 
 import { createI18n } from './platform/builtInMixins/i18nMixin'
 
+export * from '@mpxjs/store'
+export * from '@mpxjs/pinia'
+
 export * from './platform/export/index'
 
 export * from '@mpxjs/store'
