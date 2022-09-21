@@ -10,7 +10,7 @@
   createComponent({
     externalClasses: ['list-class'],
     data: {
-      listData: ['手机', '电视1', '电脑']
+      listData: ['手机', '电视', '电脑']
     }
   })
 </script>

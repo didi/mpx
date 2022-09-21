@@ -39,7 +39,10 @@
     },
     onLoad (query) {
       console.log(query,  __application_name__, 211132233)
-    }
+    },
+    onShow () {
+      console.log('onShow swiper')
+    },
   })
 </script>
 
