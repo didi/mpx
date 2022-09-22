@@ -11,6 +11,7 @@ export * from '@mpxjs/pinia'
 export * from './platform/export/index'
 
 export * from '@mpxjs/store'
+export { implement } from './core/implement'
 
 export {
   createApp,

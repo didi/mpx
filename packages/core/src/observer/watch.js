@@ -52,7 +52,7 @@ export function watch (source, cb, options = {}) {
   } else if (isArray(source)) {
     isMultiSource = true
     getter = () =>
-      source.forEach(s => {
+      source.map(s => {
         if (isRef(s)) {
           return s.value
         } else if (isReactive(s)) {
@@ -61,6 +61,7 @@ export function watch (source, cb, options = {}) {
           return callWithErrorHandling(s, instance, 'watch getter')
         } else {
           warnInvalidSource(s)
+          return s
         }
       })
   } else if (isFunction(source)) {

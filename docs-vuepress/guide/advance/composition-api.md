@@ -480,9 +480,10 @@ createComponent({
 和 Vue 一样，当使用 `<script setup>` 时，任何在 `<script setup>` 声明的顶层的绑定（包括变量，函数声明，以及 import 导入的内容） 都能在模版中直接使用：
 ```html
 <script setup>
-    const msg = 'hello';
+    import { ref } from '@mpxjs/core'
+    const msg = ref('hello');
     function log() {
-        console.log(msg)
+        console.log(msg.value)
     }
 </script>
 <template>
@@ -490,7 +491,9 @@ createComponent({
     <view ontap="log">click</view>
 </template>
 ```
-import 导入的内容也会以同样的方式暴露。这意味着我们可以直接在模版中使用引入的相关方法，而不需要通过 `methods` 选项来暴露:
+
+import 导入的内容，除了从 `@mpxjs/core` 中导入的变量或方法，其他模块导入的属性和方法全部都会暴露给模版。这意味着我们可以直接在模版中使用引入的相关方法，而不需要通过 `methods` 选项来暴露：
+
 ```html
 <template>
     <view ontap="clickTrigger">click</view>
@@ -499,6 +502,8 @@ import 导入的内容也会以同样的方式暴露。这意味着我们可以�
     import { clickTrigger } from './utils'
 </script>
 ```
+- 注意项：如果你 `script setup` 中有较多对象或方法的声明和引入，比如全局 store 这种十分复杂的对象，走默认逻辑暴露给模版会造成性能问题，因此建议使用 `defineExpose` 来手动定义暴露给模版的方法或变量。
+
 ### 响应式
 和 Vue 中一样，响应式状态需要明确使用响应性 API 来创建。和 `setup()` 函数的返回值一样，ref 在模版中使用的时候会自动解包：
 ```html
@@ -513,6 +518,7 @@ import 导入的内容也会以同样的方式暴露。这意味着我们可以�
     }
 </script>
 ```
+
 ### `defineProps()` 
 和 Vue 类似，为了在声明小程序组件 `properties` 选项时获得完整的类型推导支持，在 `<script setup>` 中，我们需要使用 `defineProps` API，它默认在 `<script setup>` 中可用：
 ```html
@@ -520,20 +526,20 @@ import 导入的内容也会以同样的方式暴露。这意味着我们可以�
     const props = defineProps({
         testA: String
     })
-    
 </script>
 ```
 * `defineProps` 是只能在 `<script setup>` 中使用的**编译宏**，不需要手动导入，会跟随 `<script setup>` 的处理过程一同被编译掉。
 * `defineProps` 接收与小程序 `properties` 选项相同的值。
 * 传入到 `defineProps` 的选项会从 setup 中提升到模块的作用域。因此传入的选项不能引用在 setup 作用域中声明的局部变量，否则会导致编译错误，不过可以引入导入的绑定。
 
-### `defineReturns()`
-在 `<script setup>` 声明的顶层的绑定(包括变量，函数声明，以及 import 导入的内容)，编译后在 `setup()` 都会统一被 return 出去，当开发者想对 `setup()` 中暴露给模版的变量和方法进行自定义，可以使用 `defineReturns` 编译宏进行定义。
+### `defineExpose()`
+在 `<script setup>` 声明的顶层的绑定(包括变量，函数声明，以及 import 导入的内容)，编译后在 `setup()` 中都会统一被 return 出去，当开发者想自定义暴露给模版的变量和方法，可以使用 `defineExpose` 编译宏进行定义。
+
 ```html
 <script setup>
     const count = ref(0)
     const name = ref('black')
-    defineReturns({
+    defineExpose({
         name
     })
 </script>
@@ -544,6 +550,11 @@ import 导入的内容也会以同样的方式暴露。这意味着我们可以�
     <view>{{count}}</view>
 </template>
 ```
+
+Mpx 中的 defineExpose 和 Vue3 中的不尽相同，在 Vue3 中，使用 `<scrip setup>` 的组件默认是关闭的-即通过模版引用或者 `$parent` 链获取到的组件实例中不会暴露任何在`<script setup>` 中声明的绑定。
+
+在 Mpx 中，`<script setup>` 中的声明绑定都会挂载到组件实例中，都可以通过组件实例来访问，Mpx `defineExpose` 更大的左右是假如你在 `<scrip setup>` 中引入了一些 store 实例，这些 store 实例默认会挂载到组件实例中，会导致后续的响应式处理以及组件更新速度变慢，这里我们就可以使用
+`defineExpose` 来规避掉这个问题。
 
 ### `defineOptions()`
 此编译宏相较于 Vue 是 Mpx 中独有的，主要是当开发者想在 `<script setup>` 中使用一些微信小程序中特有的选项式，例如 relations、moved 等，可以使用该编译宏进行定义。
@@ -571,6 +582,54 @@ import 导入的内容也会以同样的方式暴露。这意味着我们可以�
     console.log(context.refs)
 </script>
 ```
+
+### 针对 TypeScript 的功能
+
+#### 类型 props 的声明
+props 可以通过给 `defineProps` 传递纯类型函数的方式来声明：
+
+```ts
+    const props = defineProps<{
+        foo: string
+        bar: number
+    }>
+
+    // 构建转换为
+    {
+        properties: {
+            foo: {
+                type: String
+            },
+            bar: {
+                type: Number
+            }
+        }
+    }
+```
+* `defineProps` 要么使用运行时声明，要么使用类型声明。同时使用两种方式会导致编译报错。
+* 小程序中 `defineProps` 类型声明若有 optional 不会生效，因为小程序的 props 只要声明则一定会存在
+* 类型声明参数必须是一下内容之一，以确保正确的静态分析：
+  * 类型字面量
+  * 在同一文件中的接口或者类型字面量的引用
+
+#### 使用类型声明时的默认 props 值
+和 Vue3 一样，针对类型的 `defineProps` 声明的不足，它无法给 props 提供默认值。为了解决这个问题，我们也支持了 `withDefaults` 编译宏：
+
+```ts
+export interface Props {
+  msg: string
+  labels: string
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  msg: 'hello',
+  labels: 'world'
+})
+```
+上边代码会被编译为等价的运行时 props 的 `value` 选项。
+
+* 小程序 properties 定义中的 optionalTypes 和 observer 字段，无法使用 TypeScript 类型声明的方式定义，如果需要定义这两个字段，目前需要使用运行时的方式来定义。
+
 ### 限制
 由于模块执行语义的差异，`<script setup>` 中的代码依赖单文件组件的上下文，如果将其移动到外部的 `.js` 或者 `.ts` 的时候，对于开发者可工具来说都十分混乱。因此 `<script setup>` 不能和 `src` attribute 一起使用。
 
@@ -580,7 +639,7 @@ import 导入的内容也会以同样的方式暴露。这意味着我们可以�
 
 Mpx 作为一个跨端小程序框架，需要兼容不同小程序平台不同的生命周期，在选项式 API 中，我们在框架中内置了一套统一的生命周期，将不同小程序平台的生命周期转换映射为内置生命周期后再进行统一的驱动，以抹平不同小程序平台生命周期钩子的差异，如微信小程序的 `attached` 钩子和支付宝小程序的 `onInit` 钩子，在组合式 API 中，我们基于框架内置的生命周期暴露了一套统一的生命周期钩子函数，下表展示了框架内置生命周期/组合式 API 生命周期函数与不同小程序平台原生生命周期的对应关系：
 
-组件生命周期
+#### 组件生命周期
 
 |框架内置生命周期|Hook inside `setup`|微信原生|支付宝原生|
 |:------------|:------------------|:-----|:-------|
@@ -597,7 +656,7 @@ Mpx 作为一个跨端小程序框架，需要兼容不同小程序平台不同�
 
 > 除支付宝外的小程序平台支持使用Component构建页面，在页面中使用组件生命周期钩子与在组件中完全一致，并且框架在支付宝环境也进行了抹平实现。
 
-页面生命周期
+#### 页面生命周期
 
 |框架内置生命周期|Hook inside `setup`|微信原生|支付宝原生|
 |:------------|:------------------|:-----|:-------|
@@ -606,7 +665,7 @@ Mpx 作为一个跨端小程序框架，需要兼容不同小程序平台不同�
 |ONHIDE|onHide|onHide|onHide|
 |ONRESIZE|onResize|onResize|events.onResize|
 
-组件中访问页面生命周期
+#### 组件中访问页面生命周期
 
 |框架内置生命周期|Hook inside `setup`|微信原生|支付宝原生|
 |:------------|:------------------|:-----|:-------|
@@ -714,3 +773,11 @@ todo cr
 * `<script setup>` 不支持 `import` 快捷引入组件
 * 支持的生命周期钩子不同，详见[这里](#生命周期钩子)
 * 模板引用的方式不同，详见[这里](#模板引用)
+
+## 组合式 API 周边生态能力的使用
+
+我们对 Mpx 提供的周边生态能力也都进行了组合式 API 适配升级，详情如下：
+
+* `store` 在组合式 API 中使用，详见[这里](#todo-pinia-store)
+* `fetch` 在组合式 API 中使用，详见[这里](#todo-composition-api-fetch)
+* `i18n` 在组合式 API 中使用，详见[这里](#todo-composition-api-i18n)
