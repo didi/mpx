@@ -100,6 +100,7 @@ module.exports = function (content) {
       const isNative = false
 
       let usingComponents = [].concat(Object.keys(mpx.usingComponents))
+      let componentPlaceholder = []
 
       let componentGenerics = {}
 
@@ -109,6 +110,9 @@ module.exports = function (content) {
           if (ret.usingComponents) {
             fixUsingComponent(ret.usingComponents, mode)
             usingComponents = usingComponents.concat(Object.keys(ret.usingComponents))
+          }
+          if (ret.componentPlaceholder) {
+            componentPlaceholder = componentPlaceholder.concat(Object.values(ret.componentPlaceholder))
           }
           if (ret.componentGenerics) {
             componentGenerics = Object.assign({}, ret.componentGenerics)
@@ -279,7 +283,8 @@ module.exports = function (content) {
           hasComment,
           isNative,
           moduleId,
-          usingComponents
+          usingComponents,
+          componentPlaceholder
           // 添加babel处理渲染函数中可能包含的...展开运算符
           // 由于...运算符应用范围极小以及babel成本极高，先关闭此特性后续看情况打开
           // needBabel: true
