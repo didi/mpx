@@ -12,8 +12,8 @@ import {
   mapActions,
   mapWritableState
 } from 'pinia'
-import { isRef, isReactive, toRef } from '@mpxjs/core'
-import { isFunction } from '@mpxjs/utils'
+import { toRef } from '@mpxjs/core'
+import { propsBlackList } from './const'
 
 vue.use(PiniaVuePlugin)
 
@@ -25,12 +25,8 @@ function createPinia () {
 
 function storeToRefs (store) {
   let refs = {}
-  const isNotNativeProps = prop => {
-    return typeof prop === 'string' && prop[0] !== '$' && prop[0] !== '_'
-  }
   for (let key in store) {
-    const value = store[key]
-    if (isNotNativeProps(key) && !isRef(value) && !isReactive(value) && !isFunction(value)) {
+    if (!propsBlackList.includes(key)) {
       refs[key] = toRef(store, key)
     }
   }
