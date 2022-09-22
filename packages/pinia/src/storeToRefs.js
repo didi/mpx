@@ -6,8 +6,8 @@ import { propsBlackList } from './const'
  * @return {*} store
  */
 export function storeToRefs (store) {
-  let refs = {}
-  for (let key in store) {
+  const refs = {}
+  for (const key in store) {
     if (!propsBlackList.includes(key)) {
       refs[key] = toRef(store, key)
     }
