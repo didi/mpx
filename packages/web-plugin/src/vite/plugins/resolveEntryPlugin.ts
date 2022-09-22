@@ -4,7 +4,7 @@ import parseRequest from '../../utils/parseRequest'
 import { ENTRY_HELPER_CODE, renderEntryCode } from '../helper'
 import mpxGlobal from '../mpx'
 
-export default function resolveEntryPlugin(options: ResolvedOptions): Plugin {
+export function createResolveEntryPlugin(options: ResolvedOptions): Plugin {
   const filter = createFilter([/\.mpx$/])
   return {
     name: 'vite:mpx-resolve-entry',

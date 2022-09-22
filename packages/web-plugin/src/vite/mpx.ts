@@ -1,11 +1,13 @@
-export interface Mpx {
+import { Mpx } from "../mpx"
+
+export interface ViteMpx extends Mpx {
   entry?: string
   pagesMap: Record<string, string>
   componentsMap: Record<string, string>
   pagesEntryMap: Record<string, string>
 }
 
-const mpx: Mpx = {
+const mpx: ViteMpx = {
   entry: '',
   pagesMap: {},
   componentsMap: {},

@@ -18,7 +18,8 @@ import {
   customExtensionsPlugin,
   esbuildCustomExtensionsPlugin
 } from './plugins/addExtensionsPlugin'
-import mpxResolveEntryPlugin from './plugins/mpxResolveEntryPlugin'
+import { createResolveEntryPlugin } from './plugins/resolveEntryPlugin'
+import { createSplitPackageChunkPlugin } from './plugins/splitPackageChunkPlugin'
 import { createWxsPlugin } from './plugins/wxsPlugin'
 import { transformMain } from './transformer/main'
 import { transformStyle } from './transformer/style'
@@ -27,7 +28,7 @@ import { getDescriptor } from './utils/descriptorCache'
 
 function createMpxPlugin(
   options: ResolvedOptions,
-  config?: UserConfig
+  userConfig?: UserConfig
 ): Plugin {
   const { include, exclude } = options
   const filter = createFilter(include, exclude)
@@ -41,13 +42,13 @@ function createMpxPlugin(
 
     config() {
       return {
-        ...config,
+        ...userConfig,
         define: {
           global: 'globalThis', // polyfill node global
           'process.env.NODE_ENV': JSON.stringify(
             options.isProduction ? '"production"' : '"development"'
           ),
-          ...config?.define,
+          ...userConfig?.define,
           ...stringifyObject(options.defs)
         }
       }
@@ -196,7 +197,9 @@ export default function mpx(options: Options = {}): Plugin[] {
       extensions: customExtensions
     }),
     // ensure mpx entry point
-    mpxResolveEntryPlugin(resolvedOptions),
+    createResolveEntryPlugin(resolvedOptions),
+    // split subpackage chunk
+    createSplitPackageChunkPlugin(),
     // vue support for mpxjs/rumtime
     createVuePlugin()
   ]

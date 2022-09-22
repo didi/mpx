@@ -1202,6 +1202,11 @@
   dependencies:
     regenerator-runtime "^0.13.4"
 
+"@babel/standalone@^7.19.0":
+  version "7.19.2"
+  resolved "http://artifactory.intra.xiaojukeji.com/artifactory/api/npm/npm/@babel/standalone/-/standalone-7.19.2.tgz?dl=https%3A%2F%2Fregistry.npmmirror.com%2F%40babel%2Fstandalone%2F-%2Fstandalone-7.19.2.tgz#fd727f79ddddb88ff0d573ad2334e7a31f56eab6"
+  integrity sha1-/XJ/ed3duI/w1XOtIzTnox9W6rY=
+
 "@babel/template@7", "@babel/template@^7.12.7", "@babel/template@^7.18.10", "@babel/template@^7.3.3", "@babel/template@^7.4.0":
   version "7.18.10"
   resolved "https://registry.npmmirror.com/@babel/template/-/template-7.18.10.tgz#6f9134835970d1dbf0835c0d100c9f38de0c5e71"
@@ -3365,6 +3370,17 @@
   dependencies:
     "@popperjs/core" "^2.9.2"
 
+"@vitejs/plugin-legacy@2.2.0":
+  version "2.2.0"
+  resolved "http://artifactory.intra.xiaojukeji.com/artifactory/api/npm/npm/@vitejs/plugin-legacy/-/plugin-legacy-2.2.0.tgz?dl=https%3A%2F%2Fregistry.npmmirror.com%2F%40vitejs%2Fplugin-legacy%2F-%2Fplugin-legacy-2.2.0.tgz#eb76f43f51c1894cd7ae55ee2cc014b8acc00db0"
+  integrity sha1-63b0P1HBiUzXrlXuLMAUuKzADbA=
+  dependencies:
+    "@babel/standalone" "^7.19.0"
+    core-js "^3.25.1"
+    magic-string "^0.26.3"
+    regenerator-runtime "^0.13.9"
+    systemjs "^6.12.6"
+
 "@vue/babel-helper-vue-jsx-merge-props@^1.0.0", "@vue/babel-helper-vue-jsx-merge-props@^1.2.1", "@vue/babel-helper-vue-jsx-merge-props@^1.4.0":
   version "1.4.0"
   resolved "https://registry.npmmirror.com/@vue/babel-helper-vue-jsx-merge-props/-/babel-helper-vue-jsx-merge-props-1.4.0.tgz#8d53a1e21347db8edbe54d339902583176de09f2"
@@ -5456,6 +5472,11 @@ core-js@^3.11.0:
   version "3.25.0"
   resolved "https://registry.npmmirror.com/core-js/-/core-js-3.25.0.tgz#be71d9e0dd648ffd70c44a7ec2319d039357eceb"
   integrity sha512-CVU1xvJEfJGhyCpBrzzzU1kjCfgsGUxhEvwUV2e/cOedYWHdmluamx+knDnmhqALddMG16fZvIqvs9aijsHHaA==
+
+core-js@^3.25.1:
+  version "3.25.2"
+  resolved "http://artifactory.intra.xiaojukeji.com/artifactory/api/npm/npm/core-js/-/core-js-3.25.2.tgz?dl=https%3A%2F%2Fregistry.npmmirror.com%2Fcore-js%2F-%2Fcore-js-3.25.2.tgz#2d3670c1455432b53fa780300a6fc1bd8304932c"
+  integrity sha1-LTZwwUVUMrU/p4AwCm/BvYMEkyw=
 
 core-util-is@1.0.2:
   version "1.0.2"
@@ -10651,7 +10672,7 @@ magic-string@^0.25.2:
   dependencies:
     sourcemap-codec "^1.4.8"
 
-magic-string@^0.26.1:
+magic-string@^0.26.1, magic-string@^0.26.3:
   version "0.26.3"
   resolved "https://registry.npmmirror.com/magic-string/-/magic-string-0.26.3.tgz#25840b875140f7b4785ab06bddc384270b7dd452"
   integrity sha512-u1Po0NDyFcwdg2nzHT88wSK0+Rih0N1M+Ph1Sp08k8yvFFU3KR72wryS7e1qMPJypt99WB7fIFVCA92mQrMjrg==
@@ -13079,7 +13100,7 @@ regenerate@^1.4.2:
   resolved "https://registry.npmmirror.com/regenerate/-/regenerate-1.4.2.tgz#b9346d8827e8f5a32f7ba29637d398b69014848a"
   integrity sha512-zrceR/XhGYU/d/opr2EKO7aRHUeiBI8qjtfHqADTwZd6Szfy16la6kqD0MIUs5z5hx6AaKa+PixpPrR289+I0A==
 
-regenerator-runtime@^0.13.4:
+regenerator-runtime@^0.13.4, regenerator-runtime@^0.13.9:
   version "0.13.9"
   resolved "https://registry.npmmirror.com/regenerator-runtime/-/regenerator-runtime-0.13.9.tgz#8925742a98ffd90814988d7566ad30ca3b263b52"
   integrity sha512-p3VT+cOEgxFsRRA9X4lkI1E+k2/CtnKtU4gcxyaCUreilL/vqI6CdZ3wxVUx3UOUg+gnUOQQcRI7BmSI656MYA==
@@ -14433,6 +14454,11 @@ symbol-tree@^3.2.2, symbol-tree@^3.2.4:
   version "3.2.4"
   resolved "https://registry.npmmirror.com/symbol-tree/-/symbol-tree-3.2.4.tgz#430637d248ba77e078883951fb9aa0eed7c63fa2"
   integrity sha512-9QNk5KwDF+Bvz+PyObkmSYjI5ksVUYtjW7AU22r2NKcfLJcXp96hkDWU3+XndOsUb+AQ9QhfzfCT2O+CNWT5Tw==
+
+systemjs@^6.12.6:
+  version "6.12.6"
+  resolved "http://artifactory.intra.xiaojukeji.com/artifactory/api/npm/npm/systemjs/-/systemjs-6.12.6.tgz?dl=https%3A%2F%2Fregistry.npmmirror.com%2Fsystemjs%2F-%2Fsystemjs-6.12.6.tgz#147a2a9137b8f3fddaafac1d5060adf3d11212a6"
+  integrity sha1-FHoqkTe48/3ar6wdUGCt89ESEqY=
 
 table@^5.2.3:
   version "5.4.6"
