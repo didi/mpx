@@ -8,7 +8,8 @@ import {
   effectScope,
   watch,
   nextTick,
-  getCurrentInstance
+  getCurrentInstance,
+  markRaw
 } from '@mpxjs/core'
 import { error as Error, warn } from '@mpxjs/utils'
 import { createPinia } from './createPinia'
@@ -62,11 +63,11 @@ function createOptionsStore (id, options, pinia) {
     const localState = toRefs(pinia.state.value[id])
     return assign(localState, actions, Object.keys(getters || {}).reduce((computedGetters, name) => {
       // to wrap getters with computed to be reactive
-      computedGetters[name] = computed(() => {
+      computedGetters[name] = markRaw(computed(() => {
         setActivePinia(pinia)
         const store = pinia._s.get(id)
         return getters[name].call(store, store)
-      })
+      }))
       return computedGetters
     }, {}))
   }
@@ -116,8 +117,8 @@ function createSetupStore ($id, setup, options = {}, pinia, isOptionsStore = fal
   // internal state
   let isListening
   let isSyncListening
-  let subscriptions = []
-  let actionSubscriptions = []
+  let subscriptions = markRaw([])
+  let actionSubscriptions = markRaw([])
   let debuggerEvents
   const initialState = pinia.state.value[$id]
   if (!isOptionsStore && !initialState) {
@@ -225,7 +226,7 @@ function createSetupStore ($id, setup, options = {}, pinia, isOptionsStore = fal
     }
   }
   const partialStore = {
-    // _p: pinia, // open after markRaw provided
+    _p: pinia,
     _s: scope,
     $id,
     $onAction: addSubscription.bind(null, actionSubscriptions),
@@ -250,8 +251,6 @@ function createSetupStore ($id, setup, options = {}, pinia, isOptionsStore = fal
     $dispose
   }
   const store = reactive(assign({}, partialStore))
-  // remove after markRaw provided
-  store._p = pinia
   // store the partial store now so the setup of stores can instantiate each other before they are finished without
   // creating infinite loops.
   pinia._s.set($id, store)

@@ -1,4 +1,4 @@
-import { effectScope, ref } from '@mpxjs/core'
+import { effectScope, ref, markRaw } from '@mpxjs/core'
 import { setActivePinia } from './util'
 
 /**
@@ -10,7 +10,7 @@ export function createPinia () {
   // create ref state
   const state = scope.run(() => ref({}))
   const _p = []
-  const pinia = {
+  const pinia = markRaw({
     install () {
       setActivePinia(pinia)
     },
@@ -23,6 +23,6 @@ export function createPinia () {
     _e: scope,
     _s: new Map(),
     state
-  }
+  })
   return pinia
 }

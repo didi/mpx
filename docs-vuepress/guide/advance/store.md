@@ -940,7 +940,7 @@ setActivePinia(pinia)
 ```
 ### defineStore
 
-创建一个 useStore 方法，并返回该 store 实例，同时该实例上会暴露一系列属性和方法：
+创建一个 useStore 方法，并返回该 store 实例，用法见上面章节*创建 store*，同时该实例上会暴露一系列属性和方法：
 #### $id
 
 所创建 store 的唯一标识。
@@ -985,7 +985,7 @@ createComponent({
 ```
 #### $subscribe
 
-订阅 store 实例 state，当 state 变化时，可在回调函数中进行业务逻辑处理。
+订阅 store 实例状态 state 及其变化，当 state 变化时，可在回调函数中进行业务逻辑处理。
 
 ``` js
 import { createComponent } from '@mpxjs/core'
@@ -1009,7 +1009,7 @@ createComponent({
 > 注意：当设置 detached:true 时，当前组件销毁时，会自动停止订阅。
 #### $onAction
 
-订阅 store 实例上的方法，当触发该 store 实例上的方法时，可在回调函数中处理业务逻辑。
+订阅 store 实例上的方法，当触发该 store 实例上的 action，可在回调函数中处理业务逻辑。
 
 ``` js
 import { createComponent } from '@mpxjs/core'
@@ -1061,6 +1061,45 @@ createComponent({
   }
 })
 ```
+### mapStores
+
+在选项式 API（Options API）模式下，可直接使用 mapStores 方法，获取已创建的 store，用法如下：
+
+``` js
+import { createComponent } from '@mpxjs/core'
+import { mapStores } from '@mpxjs/pinia'
+import { useSetupStore as setupStore } from 'xxx/xxx'
+
+createComponent({
+  created () {
+    console.log(this.setupStore)
+  },
+  computed: {
+    ...mapStores(setupStore) // 这里传入的store名称是 storeId + 'Store'，而不是useSetupStore
+  }
+})
+```
+> 注意：为避免命名冲突，`mapStores` 方法内部实现会为 store 实例添加后缀，默认值是`Store`，即最终引用的 store 名称是：storeId + `Store`。因此，在使用 `mapStores` 方法获取 store 实例时，需正确命名，才能获取到 store 实例，同时 pinia 也支持用户自定义后缀，可调用方法`setMapStoreSuffix` 来实现。
+
+### setMapStoreSuffix
+
+支持用户自定义`mapStores`方法参数后缀，用法如下：
+
+``` js
+import { createComponent } from '@mpxjs/core'
+import { mapStores, setMapStoreSuffix } from '@mpxjs/pinia'
+import { useSetupStore as setupTest } from 'xxx/xxx'
+
+setMapStoreSuffix('Test')
+createComponent({
+  created () {
+    console.log(this.setupTest)
+  },
+  computed: {
+    ...mapStores(setupTest)
+  }
+})
+```
 ### mapState
 
 map函数，供 options API 模式下获取 state，用法见上面章节 *使用 store*。
@@ -1075,6 +1114,9 @@ map函数，供 options API 模式下获取 actions，用法见上面章节 *使
 ### storeToRefs
 
 创建 state 的引用，使 state 数据具备响应性，用法见上面章节 *使用 store*。
+
+### mapWritableState
+
 
 ## 插件
 
