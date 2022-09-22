@@ -109,7 +109,7 @@ function outPutByPath (context, path, isSimple, transfer) {
   return result
 }
 
-export default function getByPath (context, pathStrOrArr, transfer) {
+export default function _getByPath (context, pathStrOrArr, transfer) {
   if (!pathStrOrArr) {
     return context
   }
