@@ -1076,6 +1076,22 @@ map函数，供 options API 模式下获取 actions，用法见上面章节 *使
 
 创建 state 的引用，使 state 数据具备响应性，用法见上面章节 *使用 store*。
 
+## 插件
+
+此外，pinia 还支持使用插件扩展当前 store 功能，用法如下：
+
+``` js
+// app.mpx
+import mpx from '@mpxjs/core'
+import { createPinia } from '@mpxjs/pinia'
+import { myPiniaPlugin } from 'xxx/xxx'
+
+const pinia = createPinia()
+pinia.use(myPiniaPlugin)
+mpx.use(pinia)
+```
+
+
 
 
 
