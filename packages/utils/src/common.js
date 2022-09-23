@@ -3,6 +3,22 @@ import { doGetByPath } from './getByPath'
 
 const noop = () => {}
 
+function isString (str) {
+  return typeof str === 'string'
+}
+
+function isBoolean (bool) {
+  return typeof bool === 'boolean'
+}
+
+function isNumber (num) {
+  return typeof num === 'number'
+}
+
+function isArray (arr) {
+  return Array.isArray(arr)
+}
+
 function isFunction (fn) {
   return typeof fn === 'function'
 }
@@ -144,6 +160,10 @@ function stringifyClass (value) {
 
 export {
   noop,
+  isString,
+  isBoolean,
+  isNumber,
+  isArray,
   type,
   isDef,
   isFunction,

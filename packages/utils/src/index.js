@@ -7,7 +7,12 @@ export {
 
 export {
   noop,
+  isString,
+  isBoolean,
+  isNumber,
+  isArray,
   type,
+  isDef,
   isFunction,
   isObject,
   getByPath,

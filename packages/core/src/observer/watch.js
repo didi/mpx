@@ -4,13 +4,14 @@ import { isReactive } from './reactive'
 import { queuePreFlushCb, queuePostFlushCb } from './scheduler'
 import { callWithErrorHandling } from '../helper/errorHandling'
 import { currentInstance } from '../core/proxy'
-import { isArray, remove } from '../helper/utils'
+import { remove } from '../helper/utils'
 import {
   noop,
   isFunction,
   isObject,
   isPlainObject,
-  warn
+  warn,
+  isArray
 } from '@mpxjs/utils'
 
 export function watchEffect (effect, options) {

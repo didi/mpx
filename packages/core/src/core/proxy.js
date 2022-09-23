@@ -11,8 +11,7 @@ import {
   preProcessRenderData,
   mergeData,
   aIsSubPathOfB,
-  getFirstKey,
-  isString
+  getFirstKey
 } from '../helper/utils'
 import {
   noop,
@@ -28,7 +27,8 @@ import {
   diffAndCloneA,
   hasOwn,
   proxy,
-  makeMap
+  makeMap,
+  isString
 } from '@mpxjs/utils'
 import {
   BEFORECREATE,

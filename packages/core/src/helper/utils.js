@@ -31,18 +31,6 @@ export function merge (target, ...sources) {
   return target
 }
 
-export function isString (str) {
-  return typeof str === 'string'
-}
-
-export function isBoolean (bool) {
-  return typeof bool === 'boolean'
-}
-
-export function isNumber (num) {
-  return typeof num === 'number'
-}
-
 export const hasProto = '__proto__' in {}
 
 // 微信小程序插件环境2.8.3以下基础库protoAugment会失败，对环境进行测试按需降级为copyAugment
@@ -76,10 +64,6 @@ export function def (obj, key, val, enumerable) {
     writable: true,
     configurable: true
   })
-}
-
-export function isArray (arr) {
-  return Array.isArray(arr)
 }
 
 export function concat (a, b) {
