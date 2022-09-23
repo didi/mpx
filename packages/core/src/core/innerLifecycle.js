@@ -19,7 +19,6 @@ export const ONPAGESCROLL = '__onPageScroll__'
 export const ONTABITEMTAP = '__onTabItemTap__'
 export const ONSAVEEXITSTATE = '__onSaveExitState__'
 
-
 export const INNER_LIFECYCLES = [
   BEFORECREATE,
   CREATED,
