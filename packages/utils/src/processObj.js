@@ -165,11 +165,21 @@ function collectDataset (props) {
   return dataset
 }
 
+// 包含原型链上属性keys
+function enumerableKeys (obj) {
+  const keys = []
+  for (const key in obj) {
+    keys.push(key)
+  }
+  return keys
+}
+
 export {
   hasOwn,
   isPlainObject,
   diffAndCloneA,
   proxy,
   spreadProp,
-  collectDataset
+  collectDataset,
+  enumerableKeys
 }

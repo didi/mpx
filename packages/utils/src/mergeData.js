@@ -1,5 +1,6 @@
-import { setByPath } from './common'
+import { isObject } from './common'
 import { hasOwn } from './processObj'
+import { setByPath } from './processPath'
 
 function aIsSubPathOfB (a, b) {
   if (a.startsWith(b) && a !== b) {
@@ -51,7 +52,26 @@ function mergeData (target, ...sources) {
   return target
 }
 
+// deepMerge 用于合并i18n语言集
+function merge (target, ...sources) {
+  if (isObject(target)) {
+    for (const source of sources) {
+      if (isObject(source)) {
+        Object.keys(source).forEach((key) => {
+          if (isObject(source[key]) && isObject(target[key])) {
+            merge(target[key], source[key])
+          } else {
+            target[key] = source[key]
+          }
+        })
+      }
+    }
+  }
+  return target
+}
+
 export {
   aIsSubPathOfB,
-  mergeData
+  mergeData,
+  merge
 }

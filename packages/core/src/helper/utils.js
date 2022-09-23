@@ -1,34 +1,6 @@
 import {
-  isObject,
   hasOwn
 } from '@mpxjs/utils'
-
-// 包含原型链上属性keys
-export function enumerableKeys (obj) {
-  const keys = []
-  for (const key in obj) {
-    keys.push(key)
-  }
-  return keys
-}
-
-// deepMerge 用于合并i18n语言集
-export function merge (target, ...sources) {
-  if (isObject(target)) {
-    for (const source of sources) {
-      if (isObject(source)) {
-        Object.keys(source).forEach((key) => {
-          if (isObject(source[key]) && isObject(target[key])) {
-            merge(target[key], source[key])
-          } else {
-            target[key] = source[key]
-          }
-        })
-      }
-    }
-  }
-  return target
-}
 
 export const hasProto = '__proto__' in {}
 

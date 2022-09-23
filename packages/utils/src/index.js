@@ -42,5 +42,6 @@ export {
 
 export {
   aIsSubPathOfB,
-  mergeData
+  mergeData,
+  merge
 } from './mergeData'
