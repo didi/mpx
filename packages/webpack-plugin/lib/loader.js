@@ -330,6 +330,8 @@ module.exports = function (content) {
           ...script.src
             ? { ...queryObj, resourcePath }
             : null,
+          setup: script.attrs.setup,
+          lang: script.attrs.lang,
           ctorType
         }
         output += getRequire('script', script, extraOptions) + '\n'

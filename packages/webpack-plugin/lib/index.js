@@ -51,6 +51,7 @@ const wxsLoaderPath = normalize.lib('wxs/loader')
 const styleCompilerPath = normalize.lib('style-compiler/index')
 const templateCompilerPath = normalize.lib('template-compiler/index')
 const jsonCompilerPath = normalize.lib('json-compiler/index')
+const scriptSetupCompilerPath = normalize.lib('script-setup-compiler/index')
 const jsonThemeCompilerPath = normalize.lib('json-compiler/theme')
 const jsonPluginCompilerPath = normalize.lib('json-compiler/plugin')
 const extractorPath = normalize.lib('extractor')
@@ -1404,6 +1405,20 @@ try {
               loaders.unshift({
                 loader: wxsLoaderPath
               })
+              break
+            case 'script':
+              if (queryObj.setup) {
+                let selectorIndex = -1
+                loaders.forEach((loader, index) => {
+                  const currentLoader = toPosix(loader.loader)
+                  if (currentLoader.includes('selector') && selectorIndex === -1) {
+                    selectorIndex = index
+                  }
+                })
+                loaders.splice(selectorIndex, 0, {
+                  loader: scriptSetupCompilerPath
+                })
+              }
           }
           if (extract) {
             loaders.unshift({
