@@ -4,28 +4,20 @@ export {
 } from './log'
 
 export {
-  getByPath,
-  setByPath,
-  doGetByPath
-} from './processPath'
-
-export {
+  hasProto,
   noop,
+  type,
   isString,
   isBoolean,
   isNumber,
   isArray,
-  type,
-  isDef,
   isFunction,
   isObject,
   isEmptyObject,
+  isDef,
   isNumberStr,
   isValidIdentifierStr,
-  normalizeMap,
   aliasReplace,
-  stringifyClass,
-  hasProto,
   dash2hump,
   hump2dash,
   processUndefined,
@@ -34,31 +26,42 @@ export {
 } from './common'
 
 export {
+  getByPath,
+  setByPath,
+  doGetByPath,
+  getFirstKey
+} from './processPath'
+
+export {
   hasOwn,
   isPlainObject,
   diffAndCloneA,
   proxy,
   spreadProp,
-  collectDataset
+  collectDataset,
+  enumerableKeys
 } from './processObj'
 
 export {
+  arrayProtoAugment,
   makeMap,
   findItem,
   remove,
-  arrayProtoAugment,
-  isValidArrayIndex
+  isValidArrayIndex,
+  normalizeMap
 } from './processArray'
 
 export {
   aIsSubPathOfB,
   mergeData,
-  merge
+  deepMerge,
+  mergeObjectArray
 } from './mergeData'
 
 export {
   genStyleText,
-  normalizeDynamicStyle
+  normalizeDynamicStyle,
+  stringifyClass
 } from './processStyle'
 
 export {

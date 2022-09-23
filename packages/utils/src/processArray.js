@@ -38,10 +38,34 @@ function isValidArrayIndex (val) {
   return n >= 0 && Math.floor(n) === n && isFinite(val)
 }
 
+function normalizeMap (prefix, arr) {
+  if (typeof prefix !== 'string') {
+    arr = prefix
+    prefix = ''
+  }
+  if (Array.isArray(arr)) {
+    const map = {}
+    arr.forEach(value => {
+      map[value] = prefix ? `${prefix}.${value}` : value
+    })
+    return map
+  }
+  if (prefix && isObject(arr)) {
+    arr = Object.assign({}, arr)
+    Object.keys(arr).forEach(key => {
+      if (typeof arr[key] === 'string') {
+        arr[key] = `${prefix}.${arr[key]}`
+      }
+    })
+  }
+  return arr
+}
+
 export {
+  arrayProtoAugment,
   makeMap,
   findItem,
   remove,
-  arrayProtoAugment,
-  isValidArrayIndex
+  isValidArrayIndex,
+  normalizeMap
 }

@@ -53,7 +53,7 @@ function mergeData (target, ...sources) {
 }
 
 // deepMerge 用于合并i18n语言集
-function merge (target, ...sources) {
+function deepMerge (target, ...sources) {
   if (isObject(target)) {
     for (const source of sources) {
       if (isObject(source)) {
@@ -83,6 +83,6 @@ function mergeObjectArray (arr) {
 export {
   aIsSubPathOfB,
   mergeData,
-  merge,
+  deepMerge,
   mergeObjectArray
 }

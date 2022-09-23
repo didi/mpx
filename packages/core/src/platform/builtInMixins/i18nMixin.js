@@ -8,7 +8,7 @@ import {
   error,
   isPlainObject,
   isNumber,
-  merge,
+  deepMerge,
   isEmptyObject
 } from '@mpxjs/utils'
 
@@ -130,7 +130,7 @@ function createComposer (options) {
   }
 
   const mergeLocaleMessage = (locale, message) => {
-    messages.value[locale] = merge(messages.value[locale] || {}, message)
+    messages.value[locale] = deepMerge(messages.value[locale] || {}, message)
     triggerRef(messages)
   }
 

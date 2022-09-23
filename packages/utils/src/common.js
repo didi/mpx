@@ -95,29 +95,6 @@ function type (n) {
   return Object.prototype.toString.call(n).slice(8, -1)
 }
 
-function normalizeMap (prefix, arr) {
-  if (typeof prefix !== 'string') {
-    arr = prefix
-    prefix = ''
-  }
-  if (Array.isArray(arr)) {
-    const map = {}
-    arr.forEach(value => {
-      map[value] = prefix ? `${prefix}.${value}` : value
-    })
-    return map
-  }
-  if (prefix && isObject(arr)) {
-    arr = Object.assign({}, arr)
-    Object.keys(arr).forEach(key => {
-      if (typeof arr[key] === 'string') {
-        arr[key] = `${prefix}.${arr[key]}`
-      }
-    })
-  }
-  return arr
-}
-
 function aliasReplace (options = {}, alias, target) {
   if (options[alias]) {
     if (Array.isArray(options[alias])) {
@@ -132,59 +109,21 @@ function aliasReplace (options = {}, alias, target) {
   return options
 }
 
-function stringifyObject (value) {
-  let res = ''
-  for (const key in value) {
-    if (value[key]) {
-      if (res) res += ' '
-      res += key
-    }
-  }
-  return res
-}
-
-function stringifyArray (value) {
-  let res = ''
-  let stringified
-  for (let i = 0, l = value.length; i < l; i++) {
-    if (isDef(stringified = stringifyClass(value[i])) && stringified !== '') {
-      if (res) res += ' '
-      res += stringified
-    }
-  }
-  return res
-}
-
-function stringifyClass (value) {
-  if (Array.isArray(value)) {
-    return stringifyArray(value)
-  }
-  if (isObject(value)) {
-    return stringifyObject(value)
-  }
-  if (typeof value === 'string') {
-    return value
-  }
-  return ''
-}
-
 export {
+  hasProto,
   noop,
+  type,
   isString,
   isBoolean,
   isNumber,
   isArray,
-  type,
-  isDef,
   isFunction,
   isObject,
   isEmptyObject,
+  isDef,
   isNumberStr,
   isValidIdentifierStr,
-  normalizeMap,
   aliasReplace,
-  stringifyClass,
-  hasProto,
   dash2hump,
   hump2dash,
   processUndefined,
