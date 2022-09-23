@@ -1,9 +1,10 @@
-import { aliasReplace, findItem, makeMap } from '../helper/utils'
+import { findItem, makeMap } from '../helper/utils'
 import { getConvertRule } from '../convertor/convertor'
 import builtInKeysMap from '../platform/patch/builtInKeysMap'
 import { implemented } from './implement'
 import {
   isObject,
+  aliasReplace,
   error,
   warn
 } from '@mpxjs/utils'

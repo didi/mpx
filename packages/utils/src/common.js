@@ -1,5 +1,5 @@
-import EXPORT_MPX from '@mpxjs/core'
-import doGetByPath from './getByPath'
+import EXPORT_MPX, { set } from '@mpxjs/core'
+import { doGetByPath } from './getByPath'
 
 const noop = () => {}
 
@@ -109,6 +109,20 @@ function normalizeMap (prefix, arr) {
   return arr
 }
 
+function aliasReplace (options = {}, alias, target) {
+  if (options[alias]) {
+    if (Array.isArray(options[alias])) {
+      options[target] = options[alias].concat(options[target] || [])
+    } else if (isObject(options[alias])) {
+      options[target] = Object.assign({}, options[alias], options[target])
+    } else {
+      options[target] = options[alias]
+    }
+    delete options[alias]
+  }
+  return options
+}
+
 export {
   noop,
   type,
@@ -117,5 +131,6 @@ export {
   isPlainObject,
   getByPath,
   setByPath,
-  normalizeMap
+  normalizeMap,
+  aliasReplace
 }

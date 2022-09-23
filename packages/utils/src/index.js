@@ -12,5 +12,7 @@ export {
   isObject,
   isPlainObject,
   getByPath,
-  normalizeMap
+  setByPath,
+  normalizeMap,
+  aliasReplace
 } from './common'

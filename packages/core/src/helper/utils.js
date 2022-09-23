@@ -1,27 +1,11 @@
 import { isRef } from '../observer/ref'
 
-import { set } from '../observer/reactive'
-
 import {
   noop,
   isObject,
   isPlainObject,
   setByPath
 } from '@mpxjs/utils'
-
-export function aliasReplace (options = {}, alias, target) {
-  if (options[alias]) {
-    if (Array.isArray(options[alias])) {
-      options[target] = options[alias].concat(options[target] || [])
-    } else if (isObject(options[alias])) {
-      options[target] = Object.assign({}, options[alias], options[target])
-    } else {
-      options[target] = options[alias]
-    }
-    delete options[alias]
-  }
-  return options
-}
 
 export function findItem (arr = [], key) {
   for (const item of arr) {
