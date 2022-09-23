@@ -68,3 +68,8 @@ export {
 export {
   callWithErrorHandling
 } from './errorHandling'
+
+export {
+  walkChildren,
+  parseSelector
+} from './ProcessElement'
