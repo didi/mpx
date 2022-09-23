@@ -70,8 +70,19 @@ function merge (target, ...sources) {
   return target
 }
 
+function mergeObjectArray (arr) {
+  const res = {}
+  for (let i = 0; i < arr.length; i++) {
+    if (arr[i]) {
+      Object.assign(res, arr[i])
+    }
+  }
+  return res
+}
+
 export {
   aIsSubPathOfB,
   mergeData,
-  merge
+  merge,
+  mergeObjectArray
 }

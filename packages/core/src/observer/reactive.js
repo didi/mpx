@@ -1,12 +1,13 @@
 import Dep from './dep'
 import { arrayMethods } from './array'
-import { def, hasProto, isValidArrayIndex, arrayProtoAugment } from '../helper/utils'
+import { def, isValidArrayIndex, arrayProtoAugment } from '../helper/utils'
 import { ObKey } from '../helper/const'
 import { isRef } from './ref'
 import {
   hasOwn,
   isObject,
-  isPlainObject
+  isPlainObject,
+  hasProto
 } from '@mpxjs/utils'
 
 const arrayKeys = Object.getOwnPropertyNames(arrayMethods)

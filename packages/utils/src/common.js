@@ -36,6 +36,20 @@ function isValidIdentifierStr (str) {
   return /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(str)
 }
 
+const hasProto = '__proto__' in {}
+
+function dash2hump (value) {
+  return value.replace(/-([a-z])/g, function (match, p1) {
+    return p1.toUpperCase()
+  })
+}
+
+function hump2dash (value) {
+  return value.replace(/[A-Z]/g, function (match) {
+    return '-' + match.toLowerCase()
+  })
+}
+
 // type在支付宝环境下不一定准确，判断是普通对象优先使用isPlainObject（新版支付宝不复现，issue #644 修改isPlainObject实现与type等价）
 function type (n) {
   return Object.prototype.toString.call(n).slice(8, -1)
@@ -128,5 +142,8 @@ export {
   isValidIdentifierStr,
   normalizeMap,
   aliasReplace,
-  stringifyClass
+  stringifyClass,
+  hasProto,
+  dash2hump,
+  hump2dash
 }

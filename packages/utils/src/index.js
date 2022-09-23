@@ -23,7 +23,10 @@ export {
   isValidIdentifierStr,
   normalizeMap,
   aliasReplace,
-  stringifyClass
+  stringifyClass,
+  hasProto,
+  dash2hump,
+  hump2dash
 } from './common'
 
 export {
@@ -45,3 +48,8 @@ export {
   mergeData,
   merge
 } from './mergeData'
+
+export {
+  genStyleText,
+  normalizeDynamicStyle
+} from './processStyle'
