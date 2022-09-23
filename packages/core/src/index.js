@@ -1,6 +1,5 @@
 import Vue from './vue'
-import { makeMap } from './helper/utils'
-import { error, diffAndCloneA, hasOwn } from '@mpxjs/utils'
+import { error, diffAndCloneA, hasOwn, makeMap } from '@mpxjs/utils'
 import { APIs, InstanceAPIs } from './platform/export/api'
 
 import { createI18n } from './platform/builtInMixins/i18nMixin'

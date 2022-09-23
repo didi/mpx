@@ -23,3 +23,7 @@ export {
   diffAndCloneA,
   proxy
 } from './processObj'
+
+export {
+  makeMap
+} from './processArray'

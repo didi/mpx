@@ -12,7 +12,6 @@ import {
   mergeData,
   aIsSubPathOfB,
   getFirstKey,
-  makeMap,
   isString
 } from '../helper/utils'
 import {
@@ -28,7 +27,8 @@ import {
   error,
   diffAndCloneA,
   hasOwn,
-  proxy
+  proxy,
+  makeMap
 } from '@mpxjs/utils'
 import {
   BEFORECREATE,
