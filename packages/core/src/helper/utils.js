@@ -2,10 +2,11 @@ import { isRef } from '../observer/ref'
 
 import { set } from '../observer/reactive'
 
-import _getByPath, {
+import {
   noop,
   isObject,
-  isPlainObject
+  isPlainObject,
+  doGetByPath
 } from '@mpxjs/utils'
 
 export function aliasReplace (options = {}, alias, target) {
@@ -44,7 +45,7 @@ export function isExistAttr (obj, attr) {
 }
 
 export function setByPath (data, pathStrOrArr, value) {
-  _getByPath(data, pathStrOrArr, (current, key, meta) => {
+  doGetByPath(data, pathStrOrArr, (current, key, meta) => {
     if (meta.isEnd) {
       set(current, key, value)
     } else if (!current[key]) {
@@ -65,7 +66,7 @@ export function getByPath (data, pathStrOrArr, defaultVal, errTip) {
 
   normalizedArr.forEach(path => {
     if (!path) return
-    const result = _getByPath(data, path, (value, key) => {
+    const result = doGetByPath(data, path, (value, key) => {
       let newValue
       if (isExistAttr(value, key)) {
         newValue = value[key]

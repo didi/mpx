@@ -20,12 +20,13 @@ import {
   hasOwn,
   isString
 } from '../helper/utils'
-import _getByPath, {
+import {
   noop,
   type,
   isFunction,
   isObject,
   isPlainObject,
+  doGetByPath,
   warn,
   error
 } from '@mpxjs/utils'
@@ -378,7 +379,7 @@ export default class MpxProxy {
             const subPath = aIsSubPathOfB(key, tarKey)
             if (subPath) {
               // setByPath 更新miniRenderData中的子数据
-              _getByPath(this.miniRenderData[tarKey], subPath, (current, subKey, meta) => {
+              doGetByPath(this.miniRenderData[tarKey], subPath, (current, subKey, meta) => {
                 if (meta.isEnd) {
                   const { clone, diff, diffData } = diffAndCloneA(data, current[subKey])
                   if (diff) {

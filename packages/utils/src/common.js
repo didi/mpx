@@ -1,5 +1,5 @@
 import EXPORT_MPX from '@mpxjs/core'
-import _getByPath from './getByPath'
+import doGetByPath from './getByPath'
 
 const noop = () => {}
 
@@ -60,7 +60,7 @@ function getByPath (data, pathStrOrArr, defaultVal, errTip) {
 
   normalizedArr.forEach(path => {
     if (!path) return
-    const result = _getByPath(data, path, (value, key) => {
+    const result = doGetByPath(data, path, (value, key) => {
       let newValue
       if (isExistAttr(value, key)) {
         newValue = value[key]

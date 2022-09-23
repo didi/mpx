@@ -1,6 +1,5 @@
-import _getByPath from './getByPath'
+export { doGetByPath } from './getByPath'
 
-export default _getByPath
 export {
   warn,
   error
