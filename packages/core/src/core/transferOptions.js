@@ -24,7 +24,8 @@ export default function transferOptions (options, type) {
     options.options = Object.assign({}, currentInject.injectOptions, options.options)
   }
   if (currentInject && currentInject.pageEvents) {
-    options = Object.assign(options, currentInject.pageEvents)
+    options.mixins = options.mixins || []
+    options.mixins.unshift(currentInject.pageEvents)
   }
   // 转换mode
   options.mpxConvertMode = options.mpxConvertMode || getConvertMode(global.currentSrcMode)
