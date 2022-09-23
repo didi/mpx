@@ -5,6 +5,16 @@ function makeMap (arr) {
   }, {})
 }
 
+function findItem (arr = [], key) {
+  for (const item of arr) {
+    if ((key instanceof RegExp && key.test(item)) || item === key) {
+      return true
+    }
+  }
+  return false
+}
+
 export {
-  makeMap
+  makeMap,
+  findItem
 }

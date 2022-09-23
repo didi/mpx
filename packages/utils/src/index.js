@@ -25,5 +25,6 @@ export {
 } from './processObj'
 
 export {
-  makeMap
+  makeMap,
+  findItem
 } from './processArray'

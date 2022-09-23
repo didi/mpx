@@ -4,15 +4,6 @@ import {
   hasOwn
 } from '@mpxjs/utils'
 
-export function findItem (arr = [], key) {
-  for (const item of arr) {
-    if ((key instanceof RegExp && key.test(item)) || item === key) {
-      return true
-    }
-  }
-  return false
-}
-
 // 包含原型链上属性keys
 export function enumerableKeys (obj) {
   const keys = []
