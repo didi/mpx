@@ -176,7 +176,7 @@ function createSetupStore ($id, setup, options = {}, pinia, isOptionsStore = fal
     // clean data
     subscriptions = []
     actionSubscriptions = []
-    // pinia._s.delete($id)
+    pinia._s.delete($id)
   }
   /**
   * Wraps an action to handle subscriptions.
