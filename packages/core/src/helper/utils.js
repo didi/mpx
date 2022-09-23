@@ -1,6 +1,5 @@
 import {
   isObject,
-  isPlainObject,
   setByPath,
   hasOwn
 } from '@mpxjs/utils'
@@ -90,46 +89,6 @@ export function def (obj, key, val, enumerable) {
 
 export function isArray (arr) {
   return Array.isArray(arr)
-}
-
-export function isDef (v) {
-  return v !== undefined && v !== null
-}
-
-export function stringifyClass (value) {
-  if (Array.isArray(value)) {
-    return stringifyArray(value)
-  }
-  if (isObject(value)) {
-    return stringifyObject(value)
-  }
-  if (typeof value === 'string') {
-    return value
-  }
-  return ''
-}
-
-function stringifyArray (value) {
-  let res = ''
-  let stringified
-  for (let i = 0, l = value.length; i < l; i++) {
-    if (isDef(stringified = stringifyClass(value[i])) && stringified !== '') {
-      if (res) res += ' '
-      res += stringified
-    }
-  }
-  return res
-}
-
-function stringifyObject (value) {
-  let res = ''
-  for (const key in value) {
-    if (value[key]) {
-      if (res) res += ' '
-      res += key
-    }
-  }
-  return res
 }
 
 export function concat (a, b) {
@@ -269,89 +228,6 @@ export function processUndefined (obj) {
     }
   }
   return result
-}
-
-export function diffAndCloneA (a, b) {
-  let diffData = null
-  let curPath = ''
-  let diff = false
-
-  function deepDiffAndCloneA (a, b, currentDiff) {
-    const setDiff = (val) => {
-      if (val) {
-        currentDiff = val
-        if (curPath) {
-          diffData = diffData || {}
-          diffData[curPath] = clone
-        }
-      }
-    }
-    let clone = a
-    if (typeof a !== 'object' || a === null) {
-      if (!currentDiff) setDiff(a !== b)
-    } else {
-      const toString = Object.prototype.toString
-      const className = toString.call(a)
-      const sameClass = className === toString.call(b)
-      let length
-      let lastPath
-      if (isPlainObject(a)) {
-        const keys = Object.keys(a)
-        length = keys.length
-        clone = {}
-        if (!currentDiff) setDiff(!sameClass || length < Object.keys(b).length || !Object.keys(b).every((key) => hasOwn(a, key)))
-        lastPath = curPath
-        for (let i = 0; i < length; i++) {
-          const key = keys[i]
-          curPath += `.${key}`
-          clone[key] = deepDiffAndCloneA(a[key], sameClass ? b[key] : undefined, currentDiff)
-          curPath = lastPath
-        }
-        // 继承原始对象的freeze/seal/preventExtensions操作
-        if (Object.isFrozen(a)) {
-          Object.freeze(clone)
-        } else if (Object.isSealed(a)) {
-          Object.seal(clone)
-        } else if (!Object.isExtensible(a)) {
-          Object.preventExtensions(clone)
-        }
-      } else if (Array.isArray(a)) {
-        length = a.length
-        clone = []
-        if (!currentDiff) setDiff(!sameClass || length < b.length)
-        lastPath = curPath
-        for (let i = 0; i < length; i++) {
-          curPath += `[${i}]`
-          clone[i] = deepDiffAndCloneA(a[i], sameClass ? b[i] : undefined, currentDiff)
-          curPath = lastPath
-        }
-        // 继承原始数组的freeze/seal/preventExtensions操作
-        if (Object.isFrozen(a)) {
-          Object.freeze(clone)
-        } else if (Object.isSealed(a)) {
-          Object.seal(clone)
-        } else if (!Object.isExtensible(a)) {
-          Object.preventExtensions(clone)
-        }
-      } else if (a instanceof RegExp) {
-        if (!currentDiff) setDiff(!sameClass || '' + a !== '' + b)
-      } else if (a instanceof Date) {
-        if (!currentDiff) setDiff(!sameClass || +a !== +b)
-      } else {
-        if (!currentDiff) setDiff(!sameClass || a !== b)
-      }
-    }
-    if (currentDiff) {
-      diff = currentDiff
-    }
-    return clone
-  }
-
-  return {
-    clone: deepDiffAndCloneA(a, b, diff),
-    diff,
-    diffData
-  }
 }
 
 export function isValidIdentifierStr (str) {

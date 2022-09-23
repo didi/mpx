@@ -7,6 +7,10 @@ function isFunction (fn) {
   return typeof fn === 'function'
 }
 
+function isDef (v) {
+  return v !== undefined && v !== null
+}
+
 function isObject (obj) {
   return obj !== null && typeof obj === 'object'
 }
@@ -102,13 +106,51 @@ function aliasReplace (options = {}, alias, target) {
   return options
 }
 
+function stringifyObject (value) {
+  let res = ''
+  for (const key in value) {
+    if (value[key]) {
+      if (res) res += ' '
+      res += key
+    }
+  }
+  return res
+}
+
+function stringifyArray (value) {
+  let res = ''
+  let stringified
+  for (let i = 0, l = value.length; i < l; i++) {
+    if (isDef(stringified = stringifyClass(value[i])) && stringified !== '') {
+      if (res) res += ' '
+      res += stringified
+    }
+  }
+  return res
+}
+
+function stringifyClass (value) {
+  if (Array.isArray(value)) {
+    return stringifyArray(value)
+  }
+  if (isObject(value)) {
+    return stringifyObject(value)
+  }
+  if (typeof value === 'string') {
+    return value
+  }
+  return ''
+}
+
 export {
   noop,
   type,
+  isDef,
   isFunction,
   isObject,
   getByPath,
   setByPath,
   normalizeMap,
-  aliasReplace
+  aliasReplace,
+  stringifyClass
 }

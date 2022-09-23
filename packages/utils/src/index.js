@@ -13,7 +13,8 @@ export {
   getByPath,
   setByPath,
   normalizeMap,
-  aliasReplace
+  aliasReplace,
+  stringifyClass
 } from './common'
 
 export {
