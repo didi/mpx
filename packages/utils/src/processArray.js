@@ -1,3 +1,5 @@
+import { isObject } from './common'
+
 function makeMap (arr) {
   return arr.reduce((obj, item) => {
     obj[item] = true

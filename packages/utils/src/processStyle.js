@@ -1,5 +1,5 @@
 import { mergeObjectArray } from './mergeData'
-import { dash2hump, hump2dash } from './common'
+import { dash2hump, hump2dash, isDef, isObject } from './common'
 import { hasOwn } from './processObj'
 
 function parseStyleText (cssText) {

@@ -75,4 +75,4 @@ export {
 export {
   walkChildren,
   parseSelector
-} from './ProcessElement'
+} from './processElement'

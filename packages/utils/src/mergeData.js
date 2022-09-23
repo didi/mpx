@@ -59,7 +59,7 @@ function deepMerge (target, ...sources) {
       if (isObject(source)) {
         Object.keys(source).forEach((key) => {
           if (isObject(source[key]) && isObject(target[key])) {
-            merge(target[key], source[key])
+            deepMerge(target[key], source[key])
           } else {
             target[key] = source[key]
           }
