@@ -210,7 +210,8 @@ module.exports = function (script, {
 
       // 传递ctorType以补全js内容
       const extraOptions = {
-        ctorType
+        ctorType,
+        lang: script.lang || 'js'
       }
       // todo 仅靠vueContentCache保障模块唯一性还是不够严谨，后续需要考虑去除原始query后构建request
       content += `  ${getRequire('script', script, extraOptions)}\n`

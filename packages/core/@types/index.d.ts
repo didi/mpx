@@ -138,7 +138,9 @@ type UnboxMixinsField<Mi extends Array<any>, F> =
 interface Context {
   triggerEvent: WechatMiniprogram.Component.InstanceMethods<Record<string, any>>['triggerEvent']
   refs: ObjectOf<WechatMiniprogram.NodesRef & ComponentIns<{}, {}, {}, {}, []>>
+
   forceUpdate (params?: object, callback?: () => void): void
+
   selectComponent: ReplaceWxComponentIns['selectComponent']
   selectAllComponents: ReplaceWxComponentIns['selectAllComponents']
   createSelectorQuery: WechatMiniprogram.Component.InstanceMethods<Record<string, any>>['createSelectorQuery']
@@ -678,23 +680,9 @@ export const ONSHOW: string
 export const ONHIDE: string
 export const ONRESIZE: string
 
-
-export function defineExpose<Exposed extends Record<string, any> = Record<string, any>>(exposed?: Exposed): void
-
-export function defineProps<TypeProps>(props: TypeProps): Readonly<GetPropsType<TypeProps>>
-
-export function defineOptions<D extends Data = {}, P extends Properties = {}, C = {}, M extends Methods = {}, Mi extends Array<any> = [], O = {}> (opt: ThisTypedComponentOpt<D, P, C, M, Mi, O>, config?: CreateConfig): void
-
-export function useContext(): Context
-
-type _defineProps = typeof defineProps
-type _defineExpose = typeof defineExpose
-type _defineOptions = typeof defineOptions
-type _useContext = typeof useContext
-
 declare global {
-  const defineProps: _defineProps
-  const defineOptions: _defineOptions
-  const defineExpose: _defineExpose
-  const useContext: _useContext
+  const defineProps: <T>(props: T) => Readonly<GetPropsType<T>>
+  const defineOptions: <D extends Data = {}, P extends Properties = {}, C = {}, M extends Methods = {}, Mi extends Array<any> = [], O = {}> (opt: ThisTypedComponentOpt<D, P, C, M, Mi, O>) => void
+  const defineExpose: <E extends Record<string, any> = Record<string, any>>(exposed?: E) => void
+  const useContext: () => Context
 }
