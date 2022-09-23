@@ -1,8 +1,8 @@
 import { reactive, computed } from '@mpxjs/core'
-import { proxy } from './helper/utils'
 import {
   getByPath,
-  warn
+  warn,
+  proxy
 } from '@mpxjs/utils'
 
 // 兼容在web和小程序平台中创建表现一致的store

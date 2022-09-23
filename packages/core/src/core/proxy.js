@@ -6,7 +6,6 @@ import { computed } from '../observer/computed'
 import { queueJob, nextTick } from '../observer/scheduler'
 import EXPORT_MPX from '../index'
 import {
-  proxy,
   isEmptyObject,
   processUndefined,
   preProcessRenderData,
@@ -28,7 +27,8 @@ import {
   warn,
   error,
   diffAndCloneA,
-  hasOwn
+  hasOwn,
+  proxy
 } from '@mpxjs/utils'
 import {
   BEFORECREATE,

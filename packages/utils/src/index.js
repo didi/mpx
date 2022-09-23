@@ -19,5 +19,6 @@ export {
 export {
   hasOwn,
   isPlainObject,
-  diffAndCloneA
+  diffAndCloneA,
+  proxy
 } from './processObj'
