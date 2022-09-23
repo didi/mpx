@@ -142,9 +142,34 @@ function proxy (target, source, keys, readonly, onConflict) {
   return target
 }
 
+function spreadProp (obj, key) {
+  if (hasOwn(obj, key)) {
+    const temp = obj[key]
+    delete obj[key]
+    Object.assign(obj, temp)
+  }
+  return obj
+}
+
+const datasetReg = /^data-(.+)$/
+function collectDataset (props) {
+  const dataset = {}
+  for (const key in props) {
+    if (hasOwn(props, key)) {
+      const matched = datasetReg.exec(key)
+      if (matched) {
+        dataset[matched[1]] = props[key]
+      }
+    }
+  }
+  return dataset
+}
+
 export {
   hasOwn,
   isPlainObject,
   diffAndCloneA,
-  proxy
+  proxy,
+  spreadProp,
+  collectDataset
 }

@@ -15,6 +15,7 @@ export {
   isDef,
   isFunction,
   isObject,
+  isNumberStr,
   getByPath,
   setByPath,
   normalizeMap,
@@ -26,7 +27,9 @@ export {
   hasOwn,
   isPlainObject,
   diffAndCloneA,
-  proxy
+  proxy,
+  spreadProp,
+  collectDataset
 } from './processObj'
 
 export {

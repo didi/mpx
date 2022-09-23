@@ -31,6 +31,10 @@ function isObject (obj) {
   return obj !== null && typeof obj === 'object'
 }
 
+function isNumberStr (str) {
+  return /^\d+$/.test(str)
+}
+
 // type在支付宝环境下不一定准确，判断是普通对象优先使用isPlainObject（新版支付宝不复现，issue #644 修改isPlainObject实现与type等价）
 function type (n) {
   return Object.prototype.toString.call(n).slice(8, -1)
@@ -168,6 +172,7 @@ export {
   isDef,
   isFunction,
   isObject,
+  isNumberStr,
   getByPath,
   setByPath,
   normalizeMap,

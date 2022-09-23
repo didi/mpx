@@ -209,25 +209,6 @@ export function isValidIdentifierStr (str) {
   return /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(str)
 }
 
-export function isNumberStr (str) {
-  return /^\d+$/.test(str)
-}
-
-const datasetReg = /^data-(.+)$/
-
-export function collectDataset (props) {
-  const dataset = {}
-  for (const key in props) {
-    if (hasOwn(props, key)) {
-      const matched = datasetReg.exec(key)
-      if (matched) {
-        dataset[matched[1]] = props[key]
-      }
-    }
-  }
-  return dataset
-}
-
 /**
  * process renderData, remove sub node if visit parent node already
  * @param {Object} renderData
@@ -258,13 +239,4 @@ export function preProcessRenderData (renderData) {
     }
   })
   return processedRenderData
-}
-
-export function spreadProp (obj, key) {
-  if (hasOwn(obj, key)) {
-    const temp = obj[key]
-    delete obj[key]
-    Object.assign(obj, temp)
-  }
-  return obj
 }

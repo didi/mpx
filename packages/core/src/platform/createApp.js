@@ -1,8 +1,7 @@
 import transferOptions from '../core/transferOptions'
 import mergeOptions from '../core/mergeOptions'
 import builtInKeysMap from './patch/builtInKeysMap'
-import { spreadProp } from '../helper/utils'
-import { makeMap } from '@mpxjs/utils'
+import { makeMap, spreadProp } from '@mpxjs/utils'
 import * as webLifecycle from '../platform/patch/web/lifecycle'
 import EXPORT_MPX from '../index'
 
