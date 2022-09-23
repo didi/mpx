@@ -26,7 +26,8 @@ import {
   mergeData,
   processUndefined,
   getFirstKey,
-  preProcessRenderData
+  preProcessRenderData,
+  callWithErrorHandling
 } from '@mpxjs/utils'
 import {
   BEFORECREATE,
@@ -42,7 +43,6 @@ import {
   ONHIDE,
   ONRESIZE
 } from './innerLifecycle'
-import { callWithErrorHandling } from '../helper/errorHandling'
 
 let uid = 0
 

@@ -1,7 +1,6 @@
-import { warn, isArray } from '@mpxjs/utils'
+import { warn, isArray, callWithErrorHandling } from '@mpxjs/utils'
 import EXPORT_MPX from '../index'
 import { isDev } from '../helper/env'
-import { callWithErrorHandling } from '../helper/errorHandling'
 
 let isFlushing = false
 let isFlushPending = false
