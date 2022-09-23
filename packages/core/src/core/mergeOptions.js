@@ -4,10 +4,10 @@ import { implemented } from './implement'
 import {
   isObject,
   aliasReplace,
-  error,
-  warn,
   makeMap,
-  findItem
+  findItem,
+  error,
+  warn
 } from '@mpxjs/utils'
 
 let currentHooksMap = {}
