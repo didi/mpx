@@ -1,5 +1,5 @@
-import { setByPath, collectDataset } from '../../helper/utils'
-import { error } from '@mpxjs/utils'
+import { collectDataset } from '../../helper/utils'
+import { setByPath, error } from '@mpxjs/utils'
 import EXPORT_MPX from '../../index'
 
 export default function proxyEventMixin () {

@@ -9,8 +9,6 @@ import {
   proxy,
   isEmptyObject,
   processUndefined,
-  setByPath,
-  getByPath,
   diffAndCloneA,
   preProcessRenderData,
   mergeData,
@@ -27,6 +25,8 @@ import {
   isObject,
   isPlainObject,
   doGetByPath,
+  getByPath,
+  setByPath,
   warn,
   error
 } from '@mpxjs/utils'

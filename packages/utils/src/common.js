@@ -75,6 +75,17 @@ function getByPath (data, pathStrOrArr, defaultVal, errTip) {
   return results.length > 1 ? results : results[0]
 }
 
+function setByPath (data, pathStrOrArr, value) {
+  doGetByPath(data, pathStrOrArr, (current, key, meta) => {
+    if (meta.isEnd) {
+      set(current, key, value)
+    } else if (!current[key]) {
+      current[key] = {}
+    }
+    return current[key]
+  })
+}
+
 function normalizeMap (prefix, arr) {
   if (typeof prefix !== 'string') {
     arr = prefix
@@ -105,5 +116,6 @@ export {
   isObject,
   isPlainObject,
   getByPath,
+  setByPath,
   normalizeMap
 }
