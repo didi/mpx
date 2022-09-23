@@ -22,7 +22,6 @@ module.exports = ({ parse }) => {
         }
         if (SideEffectHookName.includes(name)) {
           state.sideEffectHooks.add(name)
-          return
         }
       },
       Program: {
