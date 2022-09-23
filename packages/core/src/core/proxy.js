@@ -9,13 +9,11 @@ import {
   proxy,
   isEmptyObject,
   processUndefined,
-  diffAndCloneA,
   preProcessRenderData,
   mergeData,
   aIsSubPathOfB,
   getFirstKey,
   makeMap,
-  hasOwn,
   isString
 } from '../helper/utils'
 import {
@@ -28,7 +26,9 @@ import {
   getByPath,
   setByPath,
   warn,
-  error
+  error,
+  diffAndCloneA,
+  hasOwn
 } from '@mpxjs/utils'
 import {
   BEFORECREATE,

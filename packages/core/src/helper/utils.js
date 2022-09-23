@@ -4,7 +4,8 @@ import {
   noop,
   isObject,
   isPlainObject,
-  setByPath
+  setByPath,
+  hasOwn
 } from '@mpxjs/utils'
 
 export function findItem (arr = [], key) {
@@ -84,12 +85,6 @@ export function isBoolean (bool) {
 
 export function isNumber (num) {
   return typeof num === 'number'
-}
-
-const hasOwnProperty = Object.prototype.hasOwnProperty
-
-export function hasOwn (obj, key) {
-  return hasOwnProperty.call(obj, key)
 }
 
 export const hasProto = '__proto__' in {}

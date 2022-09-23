@@ -10,9 +10,14 @@ export {
   type,
   isFunction,
   isObject,
-  isPlainObject,
   getByPath,
   setByPath,
   normalizeMap,
   aliasReplace
 } from './common'
+
+export {
+  hasOwn,
+  isPlainObject,
+  diffAndCloneA
+} from './processObj'

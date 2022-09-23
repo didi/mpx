@@ -1,9 +1,10 @@
 import Dep from './dep'
 import { arrayMethods } from './array'
-import { def, hasProto, hasOwn, isValidArrayIndex, arrayProtoAugment } from '../helper/utils'
+import { def, hasProto, isValidArrayIndex, arrayProtoAugment } from '../helper/utils'
 import { ObKey } from '../helper/const'
 import { isRef } from './ref'
 import {
+  hasOwn,
   isObject,
   isPlainObject
 } from '@mpxjs/utils'

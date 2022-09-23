@@ -1,10 +1,11 @@
 import * as wxLifecycle from '../platform/patch/wx/lifecycle'
 import * as webLifecycle from '../platform/patch/web/lifecycle'
 import { mergeLifecycle } from './mergeLifecycle'
-import { diffAndCloneA, hasOwn } from '../helper/utils'
 import {
   isObject,
-  error
+  diffAndCloneA,
+  error,
+  hasOwn
 } from '@mpxjs/utils'
 import { implemented } from '../core/implement'
 import { isDev } from '../helper/env'

@@ -1,9 +1,9 @@
 import { reactive, shallowReactive, set, isReactive, setForceTrigger } from './reactive'
 import { RefKey } from '../helper/const'
-import { hasOwn } from '../helper/utils'
 import {
   warn,
-  isPlainObject
+  isPlainObject,
+  hasOwn
 } from '@mpxjs/utils'
 
 export class RefImpl {

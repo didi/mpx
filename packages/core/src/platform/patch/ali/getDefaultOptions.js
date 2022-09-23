@@ -1,8 +1,7 @@
 import MpxProxy from '../../../core/proxy'
 import builtInKeysMap from '../builtInKeysMap'
 import mergeOptions from '../../../core/mergeOptions'
-import { isFunction, error } from '@mpxjs/utils'
-import { diffAndCloneA, hasOwn } from '../../../helper/utils'
+import { isFunction, error, diffAndCloneA, hasOwn } from '@mpxjs/utils'
 
 function transformApiForProxy (context, currentInject) {
   const rawSetData = context.setData.bind(context)

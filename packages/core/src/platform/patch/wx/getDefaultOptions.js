@@ -1,4 +1,4 @@
-import { hasOwn } from '../../../helper/utils'
+import { hasOwn } from '@mpxjs/utils'
 import MpxProxy from '../../../core/proxy'
 import builtInKeysMap from '../builtInKeysMap'
 import mergeOptions from '../../../core/mergeOptions'

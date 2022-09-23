@@ -2,9 +2,8 @@ import * as wxLifecycle from '../platform/patch/wx/lifecycle'
 import * as aliLifecycle from '../platform/patch/ali/lifecycle'
 import { mergeLifecycle } from './mergeLifecycle'
 import { mergeToArray } from '../core/mergeOptions'
-import { error } from '@mpxjs/utils'
+import { error, hasOwn } from '@mpxjs/utils'
 import { implemented } from '../core/implement'
-import { hasOwn } from '../helper/utils'
 import { isDev } from '../helper/env'
 
 const unsupported = ['moved', 'definitionFilter']
