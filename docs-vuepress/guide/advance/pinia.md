@@ -110,19 +110,19 @@ createComponent({
 })
 
 // 组合式API（Setup API）风格下使用
-const setupStore = useSetupStore()
-const optionsStore = useOptionsStore()
-
 createComponent({
   setup (props, context) {
+    const setupStore = useSetupStore()
+    const optionsStore = useOptionsStore()
     return {
       ...storeToRefs(setupStore),
       ...storeToRefs(optionsStore)
     }
-  }
+  },
+  ...mapActions(useSetupStore, ['increment'])
 })
 ```
-> 注意：在组合式 API（Setup API）模式下，直接解构获取到的 store 数据会失去响应性，需要通过 storeToRefs 方法处理赋予数据响应性。另外`storeToRefs`方法只会返回 state 或 getter 属性。
+> 注意：在组合式 API（Setup API）模式下，直接解构获取到的 store 数据会失去响应性，需要通过 storeToRefs 方法处理赋予数据响应性。另外`storeToRefs`方法只会返回 state 或 getter。
 
 ## 使用插件
 
