@@ -24,7 +24,6 @@ export interface Options {
   }
   transMpxRules?: Record<string, () => boolean>
   defs?: Record<string, unknown>
-  forceDisableProxyCtor?: boolean
   modeRules?: Record<string, unknown>
   externals?: string[] | RegExp[]
   projectRoot?: string
@@ -97,7 +96,6 @@ export function processOptions(rawOptions: Options): ResolvedOptions {
       ? externalsMap[external] || external
       : external
   })
-  rawOptions.forceDisableProxyCtor = rawOptions.forceDisableProxyCtor || false
   rawOptions.projectRoot = rawOptions.projectRoot || process.cwd()
   rawOptions.postcssInlineConfig = rawOptions.postcssInlineConfig || {}
   rawOptions.transRpxRules = rawOptions.transRpxRules || null

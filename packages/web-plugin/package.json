@@ -40,11 +40,9 @@
     "dev": "tsup --watch",
     "build": "tsup --env.NODE_ENV production"
   },
-  "directories": {
-    "lib": "lib"
-  },
   "files": [
-    "lib"
+    "dist",
+    "src/runtime"
   ],
   "publishConfig": {
     "registry": "https://registry.npmjs.org"

@@ -459,7 +459,7 @@ class MpxWebpackPlugin {
                   }
                 }
               })
-
+            console.log(mpx.srcMode, mpx.mode)
             // 处理跨平台转换
             if (mpx.srcMode !== mpx.mode) {
               // 处理跨平台全局对象转换
@@ -520,25 +520,6 @@ class MpxWebpackPlugin {
               parser.hooks.expression
                 .for('wx')
                 .tap('MpxWebpackPlugin', transGlobalObject)
-              // Proxy ctor for transMode
-              if (!this.options.forceDisableProxyCtor) {
-                parser.hooks.call.for('Page').tap('MpxWebpackPlugin', (expr: any) => {
-                  transGlobalObject(expr.callee)
-                })
-                parser.hooks.call
-                  .for('Component')
-                  .tap('MpxWebpackPlugin', (expr: any) => {
-                    transGlobalObject(expr.callee)
-                  })
-                parser.hooks.call.for('App').tap('MpxWebpackPlugin', (expr: any) => {
-                  transGlobalObject(expr.callee)
-                })
-                parser.hooks.call
-                  .for('Behavior')
-                  .tap('MpxWebpackPlugin', (expr: any) => {
-                    transGlobalObject(expr.callee)
-                  })
-              }
 
               // 为跨平台api调用注入srcMode参数指导api运行时转换
               const apiBlackListMap = [
