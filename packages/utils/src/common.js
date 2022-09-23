@@ -1,6 +1,3 @@
-import { set } from '@mpxjs/core'
-import { doGetByPath } from './getByPath'
-
 const noop = () => {}
 
 function isString (str) {
@@ -35,58 +32,13 @@ function isNumberStr (str) {
   return /^\d+$/.test(str)
 }
 
+function isValidIdentifierStr (str) {
+  return /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(str)
+}
+
 // type在支付宝环境下不一定准确，判断是普通对象优先使用isPlainObject（新版支付宝不复现，issue #644 修改isPlainObject实现与type等价）
 function type (n) {
   return Object.prototype.toString.call(n).slice(8, -1)
-}
-
-function isExistAttr (obj, attr) {
-  const type = typeof obj
-  const isNullOrUndefined = obj === null || obj === undefined
-  if (isNullOrUndefined) {
-    return false
-  } else if (type === 'object' || type === 'function') {
-    return attr in obj
-  } else {
-    return obj[attr] !== undefined
-  }
-}
-
-function getByPath (data, pathStrOrArr, defaultVal, errTip) {
-  const results = []
-  let normalizedArr = []
-  if (Array.isArray(pathStrOrArr)) {
-    normalizedArr = [pathStrOrArr]
-  } else if (typeof pathStrOrArr === 'string') {
-    normalizedArr = pathStrOrArr.split(',').map(str => str.trim())
-  }
-
-  normalizedArr.forEach(path => {
-    if (!path) return
-    const result = doGetByPath(data, path, (value, key) => {
-      let newValue
-      if (isExistAttr(value, key)) {
-        newValue = value[key]
-      } else {
-        newValue = errTip
-      }
-      return newValue
-    })
-    // 小程序setData时不允许undefined数据
-    results.push(result === undefined ? defaultVal : result)
-  })
-  return results.length > 1 ? results : results[0]
-}
-
-function setByPath (data, pathStrOrArr, value) {
-  doGetByPath(data, pathStrOrArr, (current, key, meta) => {
-    if (meta.isEnd) {
-      set(current, key, value)
-    } else if (!current[key]) {
-      current[key] = {}
-    }
-    return current[key]
-  })
 }
 
 function normalizeMap (prefix, arr) {
@@ -173,8 +125,7 @@ export {
   isFunction,
   isObject,
   isNumberStr,
-  getByPath,
-  setByPath,
+  isValidIdentifierStr,
   normalizeMap,
   aliasReplace,
   stringifyClass

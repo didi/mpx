@@ -1,9 +1,13 @@
-export { doGetByPath } from './getByPath'
-
 export {
   warn,
   error
 } from './log'
+
+export {
+  getByPath,
+  setByPath,
+  doGetByPath
+} from './processPath'
 
 export {
   noop,
@@ -16,8 +20,7 @@ export {
   isFunction,
   isObject,
   isNumberStr,
-  getByPath,
-  setByPath,
+  isValidIdentifierStr,
   normalizeMap,
   aliasReplace,
   stringifyClass
@@ -36,3 +39,8 @@ export {
   makeMap,
   findItem
 } from './processArray'
+
+export {
+  aIsSubPathOfB,
+  mergeData
+} from './mergeData'

@@ -9,8 +9,6 @@ import {
   isEmptyObject,
   processUndefined,
   preProcessRenderData,
-  mergeData,
-  aIsSubPathOfB,
   getFirstKey
 } from '../helper/utils'
 import {
@@ -28,7 +26,9 @@ import {
   hasOwn,
   proxy,
   makeMap,
-  isString
+  isString,
+  aIsSubPathOfB,
+  mergeData
 } from '@mpxjs/utils'
 import {
   BEFORECREATE,
