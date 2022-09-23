@@ -64,3 +64,7 @@ export {
 export {
   preProcessRenderData
 } from './processRender'
+
+export {
+  callWithErrorHandling
+} from './errorHandling'
