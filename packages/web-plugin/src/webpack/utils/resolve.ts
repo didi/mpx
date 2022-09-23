@@ -1,6 +1,6 @@
 import parseRequest from '@mpxjs/utils/parse-request'
 import { LoaderContext } from 'webpack'
-import { RESOLVE_IGNORED_ERR } from '../../constants/index'
+import { RESOLVE_IGNORED_ERR } from '../../constants'
 
 type LoaderContextResolveCallback = Parameters<LoaderContext<null>['resolve']>[2]
 

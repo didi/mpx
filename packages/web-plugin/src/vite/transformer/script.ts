@@ -8,7 +8,7 @@ import { OPTION_PROCESSOR_PATH, TAB_BAR_CONTAINER_PATH } from '../../constants'
 import { ResolvedOptions } from '../../options'
 import { genImport } from '../../utils/genCode'
 import omit from '../../utils/omit'
-import parseRequest from '../../utils/parseRequest'
+import parseRequest from '@mpxjs/utils/parse-request'
 import stringify, { shallowStringify } from '../../utils/stringify'
 import { SFCDescriptor } from '../compiler'
 import {
@@ -26,7 +26,7 @@ export const genComponentCode = (
   if (!async) {
     return `getComponent(${varName}, ${stringify(params)})`
   } else {
-    return `() => import(${stringify(resource)}).then(${varName} => 
+    return `() => import(${stringify(resource)}).then(${varName} =>
           getComponent(${varName}.default, ${stringify(params)})
         )`
   }
@@ -84,7 +84,7 @@ export async function transformScript(
     const newPagePath = isTabBar
       ? TAB_BAR_CONTAINER_PATH
       : localPagesMap[pageName]
-    const { query } = parseRequest(newPagePath)
+    const { queryObj: query } = parseRequest(newPagePath)
     const async = query.async !== undefined
     !async && s.append(genImport(newPagePath, varName))
     pagesMap[pageName] = genComponentCode(
@@ -103,7 +103,7 @@ export async function transformScript(
 
   Object.keys(localComponentsMap).forEach((componentName, index) => {
     const componentId = localComponentsMap[componentName]
-    const { query } = parseRequest(componentId)
+    const { queryObj: query } = parseRequest(componentId)
     const varName = `__mpx__component__${index}`
     const async = query.async !== undefined
     !async && s.append(genImport(componentId, varName))
@@ -159,7 +159,7 @@ export async function transformScript(
       // inline wxs module, transform to iife
       if (wxsModuleId.startsWith('~')) {
         const mpxWxsPath = wxsModuleId.split('!=!')[1]
-        const { filename, query } = parseRequest(mpxWxsPath)
+        const { resourcePath: filename, queryObj: query } = parseRequest(mpxWxsPath)
         const wxsContent = wxsContentMap[`${filename}~${query.wxsModule}`]
         if (wxsContent) {
           const varName = `__mpx__wxs__${i}`

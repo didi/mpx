@@ -1,6 +1,6 @@
 import { createFilter, Plugin } from 'vite'
 import { ResolvedOptions } from '../../options'
-import parseRequest from '../../utils/parseRequest'
+import parseRequest from '@mpxjs/utils/parse-request'
 import { ENTRY_HELPER_CODE, renderEntryCode } from '../helper'
 import mpxGlobal from '../mpx'
 
@@ -11,7 +11,7 @@ export function createResolveEntryPlugin(options: ResolvedOptions): Plugin {
     enforce: 'pre',
     async resolveId(source, importer, options) {
       if (!filter(source)) return
-      const { query } = parseRequest(source)
+      const { queryObj: query } = parseRequest(source)
       if (
         query.resolve === undefined &&
         query.mpx === undefined &&
