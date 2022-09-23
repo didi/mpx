@@ -6,16 +6,11 @@ import { computed } from '../observer/computed'
 import { queueJob, nextTick } from '../observer/scheduler'
 import EXPORT_MPX from '../index'
 import {
-  isEmptyObject,
-  processUndefined,
-  preProcessRenderData,
-  getFirstKey
-} from '../helper/utils'
-import {
   noop,
   type,
   isFunction,
   isObject,
+  isEmptyObject,
   isPlainObject,
   doGetByPath,
   getByPath,
@@ -28,7 +23,10 @@ import {
   makeMap,
   isString,
   aIsSubPathOfB,
-  mergeData
+  mergeData,
+  processUndefined,
+  getFirstKey,
+  preProcessRenderData
 } from '@mpxjs/utils'
 import {
   BEFORECREATE,

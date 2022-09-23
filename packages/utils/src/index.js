@@ -19,6 +19,7 @@ export {
   isDef,
   isFunction,
   isObject,
+  isEmptyObject,
   isNumberStr,
   isValidIdentifierStr,
   normalizeMap,
@@ -26,7 +27,10 @@ export {
   stringifyClass,
   hasProto,
   dash2hump,
-  hump2dash
+  hump2dash,
+  processUndefined,
+  concat,
+  defProp
 } from './common'
 
 export {
@@ -40,7 +44,10 @@ export {
 
 export {
   makeMap,
-  findItem
+  findItem,
+  remove,
+  arrayProtoAugment,
+  isValidArrayIndex
 } from './processArray'
 
 export {
@@ -53,3 +60,7 @@ export {
   genStyleText,
   normalizeDynamicStyle
 } from './processStyle'
+
+export {
+  preProcessRenderData
+} from './processRender'

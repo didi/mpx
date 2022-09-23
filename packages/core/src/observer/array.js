@@ -1,4 +1,4 @@
-import { def } from '../helper/utils'
+import { defProp } from '@mpxjs/utils'
 import { getObserver } from './reactive'
 
 const arrayProto = Array.prototype
@@ -15,7 +15,7 @@ export const arrayMethods = Object.create(arrayProto)
 ].forEach(function (method) {
   // cache original method
   const original = arrayProto[method]
-  def(arrayMethods, method, function mutator (...args) {
+  defProp(arrayMethods, method, function mutator (...args) {
     const result = original.apply(this, args)
     const ob = getObserver(this)
     if (ob) {

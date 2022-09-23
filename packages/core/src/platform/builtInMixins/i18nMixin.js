@@ -1,5 +1,4 @@
 import { BEFORECREATE } from '../../core/innerLifecycle'
-import { isEmptyObject } from '../../helper/utils'
 import { DefaultLocale } from '../../helper/const'
 import { ref, shallowRef, triggerRef } from '../../observer/ref'
 import { watch } from '../../observer/watch'
@@ -9,7 +8,8 @@ import {
   error,
   isPlainObject,
   isNumber,
-  merge
+  merge,
+  isEmptyObject
 } from '@mpxjs/utils'
 
 let i18n = null

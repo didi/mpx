@@ -1,3 +1,5 @@
+import { hasOwn } from './processObj'
+
 const noop = () => {}
 
 function isString (str) {
@@ -28,6 +30,17 @@ function isObject (obj) {
   return obj !== null && typeof obj === 'object'
 }
 
+function isEmptyObject (obj) {
+  if (!obj) {
+    return true
+  }
+  /* eslint-disable no-unreachable-loop */
+  for (const key in obj) {
+    return false
+  }
+  return true
+}
+
 function isNumberStr (str) {
   return /^\d+$/.test(str)
 }
@@ -47,6 +60,33 @@ function dash2hump (value) {
 function hump2dash (value) {
   return value.replace(/[A-Z]/g, function (match) {
     return '-' + match.toLowerCase()
+  })
+}
+
+function processUndefined (obj) {
+  const result = {}
+  for (const key in obj) {
+    if (hasOwn(obj, key)) {
+      if (obj[key] !== undefined) {
+        result[key] = obj[key]
+      } else {
+        result[key] = ''
+      }
+    }
+  }
+  return result
+}
+
+function concat (a, b) {
+  return a ? b ? (a + ' ' + b) : a : (b || '')
+}
+
+function defProp (obj, key, val, enumerable) {
+  Object.defineProperty(obj, key, {
+    value: val,
+    enumerable: !!enumerable,
+    writable: true,
+    configurable: true
   })
 }
 
@@ -138,6 +178,7 @@ export {
   isDef,
   isFunction,
   isObject,
+  isEmptyObject,
   isNumberStr,
   isValidIdentifierStr,
   normalizeMap,
@@ -145,5 +186,8 @@ export {
   stringifyClass,
   hasProto,
   dash2hump,
-  hump2dash
+  hump2dash,
+  processUndefined,
+  concat,
+  defProp
 }

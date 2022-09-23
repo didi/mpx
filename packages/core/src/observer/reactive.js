@@ -1,13 +1,15 @@
 import Dep from './dep'
 import { arrayMethods } from './array'
-import { def, isValidArrayIndex, arrayProtoAugment } from '../helper/utils'
 import { ObKey } from '../helper/const'
 import { isRef } from './ref'
 import {
   hasOwn,
   isObject,
   isPlainObject,
-  hasProto
+  hasProto,
+  defProp,
+  isValidArrayIndex,
+  arrayProtoAugment
 } from '@mpxjs/utils'
 
 const arrayKeys = Object.getOwnPropertyNames(arrayMethods)
@@ -31,7 +33,7 @@ export class Observer {
 
   constructor (value, shallow) {
     this.value = value
-    def(value, ObKey, this)
+    defProp(value, ObKey, this)
     if (Array.isArray(value)) {
       const augment = hasProto && arrayProtoAugment
         ? protoAugment
@@ -82,7 +84,7 @@ function protoAugment (target, src, keys) {
 function copyAugment (target, src, keys) {
   for (let i = 0, l = keys.length; i < l; i++) {
     const key = keys[i]
-    def(target, key, src[key])
+    defProp(target, key, src[key])
   }
 }
 

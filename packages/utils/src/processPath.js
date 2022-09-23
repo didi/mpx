@@ -177,8 +177,13 @@ function setByPath (data, pathStrOrArr, value) {
   })
 }
 
+function getFirstKey (path) {
+  return /^[^[.]*/.exec(path)[0]
+}
+
 export {
   getByPath,
   setByPath,
-  doGetByPath
+  doGetByPath,
+  getFirstKey
 }
