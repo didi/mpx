@@ -4,7 +4,7 @@ import parseRequest from '@mpxjs/utils/parse-request'
 import loaderUtils from 'loader-utils'
 import isUrlRequestRaw from '@mpxjs/utils/is-url-request'
 import mpx from '../mpx'
-import resolve from '../utils/resolve'
+import resolve from '@mpxjs/utils/resolve'
 import { LoaderContext } from 'webpack'
 
 interface EntryType {
