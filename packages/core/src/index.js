@@ -40,7 +40,15 @@ export {
   ONLOAD,
   ONSHOW,
   ONHIDE,
-  ONRESIZE
+  ONRESIZE,
+  ONPULLDOWNREFRESH,
+  ONREACHBOTTOM,
+  ONSHAREAPPMESSAGE,
+  ONSHARETIMELINE,
+  ONADDTOFAVORITES,
+  ONPAGESCROLL,
+  ONTABITEMTAP,
+  ONSAVEEXITSTATE
 } from './core/innerLifecycle'
 
 export {
@@ -53,7 +61,15 @@ export {
   onLoad,
   onShow,
   onHide,
-  onResize
+  onResize,
+  onPullDownRefresh,
+  onReachBottom,
+  onShareAppMessage,
+  onShareTimeline,
+  onAddToFavorites,
+  onPageScroll,
+  onTabItemTap,
+  onSaveExitState
 } from './core/proxy'
 
 export { getMixin } from './core/mergeOptions'

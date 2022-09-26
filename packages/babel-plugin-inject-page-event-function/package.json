@@ -1,0 +1,20 @@
+{
+  "name": "babel-plugin-inject-page-event-function",
+  "version": "0.0.1",
+  "description": "babel plugin for inject page event function in composition-api",
+  "license": "ISC",
+  "main": "src/index.js",
+  "scripts": {
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com/didi/mpx.git"
+  },
+  "homepage": "https://didi.github.io/mpx/",
+  "bugs": {
+    "url": "https://github.com/didi/mpx/issues"
+  }
+}
