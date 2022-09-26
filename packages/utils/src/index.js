@@ -21,7 +21,7 @@ export {
   dash2hump,
   hump2dash,
   def
-}from './base'
+} from './base'
 
 export {
   getByPath,

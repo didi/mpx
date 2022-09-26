@@ -4,7 +4,6 @@ import { storeRefsBlackList } from './const'
 
 const storeRefsBlackListMap = makeMap(storeRefsBlackList)
 
-
 export function storeToRefs (store) {
   const refs = {}
   for (const key in store) {

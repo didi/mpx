@@ -90,7 +90,6 @@ function preProcessRenderData (renderData) {
   return processedRenderData
 }
 
-
 export default class MpxProxy {
   constructor (options, target, reCreated) {
     this.target = target

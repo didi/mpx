@@ -192,7 +192,6 @@ function aIsSubPathOfB (a, b) {
   }
 }
 
-
 export {
   getByPath,
   setByPath,

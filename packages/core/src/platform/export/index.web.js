@@ -27,7 +27,7 @@ export {
   getCurrentScope,
   onScopeDispose,
   // instance
-  getCurrentInstance,
+  getCurrentInstance
 } from 'vue'
 
 export {

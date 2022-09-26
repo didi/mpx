@@ -160,7 +160,6 @@ function enumerableKeys (obj) {
   return keys
 }
 
-
 function processUndefined (obj) {
   const result = {}
   for (const key in obj) {
