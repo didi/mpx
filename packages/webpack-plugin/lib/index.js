@@ -1404,6 +1404,7 @@ try {
               loaders.unshift({
                 loader: wxsLoaderPath
               })
+              break
           }
           if (extract) {
             loaders.unshift({

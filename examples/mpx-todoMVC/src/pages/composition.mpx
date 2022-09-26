@@ -1,0 +1,79 @@
+<template>
+  <view class="body">
+    <view>测试composition api: {{readersNumber}} {{book.title}}</view>
+    <button bindtap="handleClick">Test Button</button>
+    <button bindtap="handleClick2">Test Button</button>
+    <app></app>
+  </view>
+</template>
+
+<script>
+  import { createPage, ref, reactive, onShareAppMessage, onReachBottom, onPageScroll } from '@mpxjs/core'
+
+  createPage({
+    setup () {
+      const readersNumber = ref(0)
+      const book = reactive({ title: 'Vue 3 Guide' })
+
+      const handleClick = () => {
+        readersNumber.value++
+      }
+      const handleClick2 = () => {
+        readersNumber.value = 0
+      }
+
+      onShareAppMessage(() => {
+        console.log('onShareAppMessage!')
+        return {
+          title: 'Test 分享'
+        }
+      })
+
+      onShareAppMessage(() => {
+        console.log('onShareAppMessage!')
+        return {
+          title: 'Test 分享2222'
+        }
+      })
+
+      onReachBottom(() => {
+        console.log('Test ===> onReachBottom!')
+      })
+
+      onPageScroll(() => {
+        console.log('Test ===> onPageScroll!')
+      })
+
+      // 暴露给模板
+      return {
+        readersNumber,
+        book,
+        handleClick,
+        handleClick2
+      }
+    }
+  })
+</script>
+
+<style>
+  .body {
+    font: 14px 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    line-height: 1.4em;
+    background: #f5f5f5;
+    color: #4d4d4d;
+    min-width: 230px;
+    max-width: 550px;
+    margin: 0 auto;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-weight: 300;
+  }
+</style>
+
+<script type="application/json">
+  {
+    "usingComponents": {
+      "app": "../components/app"
+    }
+  }
+</script>

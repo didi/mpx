@@ -96,8 +96,8 @@ module.exports = function (script, {
       const attrs = Object.assign({}, script.attrs)
       // src改为内联require，删除
       delete attrs.src
-      // 目前ts模式都建议使用src来引ts，不支持使用lang内联编写ts
-      // delete attrs.lang
+      // script setup通过mpx处理，删除该属性避免vue报错
+      delete attrs.setup
       return attrs
     },
     content (script) {
@@ -210,7 +210,8 @@ module.exports = function (script, {
 
       // 传递ctorType以补全js内容
       const extraOptions = {
-        ctorType
+        ctorType,
+        lang: script.lang || 'js'
       }
       // todo 仅靠vueContentCache保障模块唯一性还是不够严谨，后续需要考虑去除原始query后构建request
       content += `  ${getRequire('script', script, extraOptions)}\n`

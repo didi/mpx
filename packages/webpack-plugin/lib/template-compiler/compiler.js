@@ -579,6 +579,9 @@ function parseComponent (content, options) {
       if (attr.name === 'env') {
         block.env = attr.value
       }
+      if (attr.name === 'setup') {
+        block.setup = true
+      }
     }
   }
 

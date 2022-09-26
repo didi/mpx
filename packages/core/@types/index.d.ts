@@ -135,6 +135,18 @@ type UnboxMixinField<T extends Mixin<{}, {}, {}, {}>, F> = F extends keyof T ? T
 type UnboxMixinsField<Mi extends Array<any>, F> =
   UnionToIntersection<RequiredPropertiesForUnion<UnboxMixinField<ArrayType<Mi>, F>>>
 
+interface Context {
+  triggerEvent: WechatMiniprogram.Component.InstanceMethods<Record<string, any>>['triggerEvent']
+  refs: ObjectOf<WechatMiniprogram.NodesRef & ComponentIns<{}, {}, {}, {}, []>>
+
+  forceUpdate (params?: object, callback?: () => void): void
+
+  selectComponent: ReplaceWxComponentIns['selectComponent']
+  selectAllComponents: ReplaceWxComponentIns['selectAllComponents']
+  createSelectorQuery: WechatMiniprogram.Component.InstanceMethods<Record<string, any>>['createSelectorQuery']
+  createIntersectionObserver: WechatMiniprogram.Component.InstanceMethods<Record<string, any>>['createIntersectionObserver']
+}
+
 interface ComponentOpt<D, P, C, M, Mi extends Array<any>, S extends Record<any, any>> extends Partial<WechatMiniprogram.Component.Lifetimes> {
   data?: D
   properties?: P
@@ -149,15 +161,7 @@ interface ComponentOpt<D, P, C, M, Mi extends Array<any>, S extends Record<any, 
     styleIsolation: string
   }>
 
-  setup?: (props: GetPropsType<P & UnboxMixinsField<Mi, 'properties'>>, context: {
-    triggerEvent: WechatMiniprogram.Component.InstanceMethods<Record<string, any>>['triggerEvent']
-    refs: ObjectOf<WechatMiniprogram.NodesRef & ComponentIns<{}, {}, {}, {}, []>>
-    forceUpdate (params?: object, callback?: () => void): void
-    selectComponent: ReplaceWxComponentIns['selectComponent']
-    selectAllComponents: ReplaceWxComponentIns['selectAllComponents']
-    createSelectorQuery: WechatMiniprogram.Component.InstanceMethods<Record<string, any>>['createSelectorQuery']
-    createIntersectionObserver: WechatMiniprogram.Component.InstanceMethods<Record<string, any>>['createIntersectionObserver']
-  }) => S
+  setup?: (props: GetPropsType<P & UnboxMixinsField<Mi, 'properties'>>, context: Context) => S
 
   pageShow?: () => void
 
@@ -675,3 +679,10 @@ export const ONLOAD: string
 export const ONSHOW: string
 export const ONHIDE: string
 export const ONRESIZE: string
+
+declare global {
+  const defineProps: <T>(props: T) => Readonly<GetPropsType<T>>
+  const defineOptions: <D extends Data = {}, P extends Properties = {}, C = {}, M extends Methods = {}, Mi extends Array<any> = [], O = {}> (opt: ThisTypedComponentOpt<D, P, C, M, Mi, O>) => void
+  const defineExpose: <E extends Record<string, any> = Record<string, any>>(exposed?: E) => void
+  const useContext: () => Context
+}
