@@ -33,12 +33,12 @@ module.exports = ({ parse }) => {
           if (state.isPage && state.sideEffectHooks.size) {
             let pageEventsFun = ''
             state.sideEffectHooks.forEach((item, idx) => {
-              pageEventsFun += `${item}: function ${item}(e) { return this.__mpxProxy.callHook('__${item}__', [e]) }`
+              pageEventsFun += `${item}: function(e) { return this.__mpxProxy.callHook('__${item}__', [e]) }`
               if (idx + 1 !== state.sideEffectHooks.size) pageEventsFun += ','
             })
             const code = `global.currentInject.pageEvents = {${pageEventsFun}};`
             const newAst = parse(code)
-            path.unshiftContainer('body', newAst.program.body[0])
+            path.unshiftContainer('body', newAst.program.body)
           }
         }
       }
