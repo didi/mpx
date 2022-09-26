@@ -1,12 +1,27 @@
-import { setByPath, error, collectDataset } from '@mpxjs/utils'
-import EXPORT_MPX from '../../index'
+import { setByPath, error, hasOwn } from '@mpxjs/utils'
+import Mpx from '../../index'
+
+const datasetReg = /^data-(.+)$/
+
+function collectDataset (props) {
+  const dataset = {}
+  for (const key in props) {
+    if (hasOwn(props, key)) {
+      const matched = datasetReg.exec(key)
+      if (matched) {
+        dataset[matched[1]] = props[key]
+      }
+    }
+  }
+  return dataset
+}
 
 export default function proxyEventMixin () {
   const methods = {
     __invoke ($event) {
-      if (typeof EXPORT_MPX.config.proxyEventHandler === 'function') {
+      if (typeof Mpx.config.proxyEventHandler === 'function') {
         try {
-          EXPORT_MPX.config.proxyEventHandler($event)
+          Mpx.config.proxyEventHandler($event)
         } catch (e) {
         }
       }

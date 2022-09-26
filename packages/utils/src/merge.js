@@ -1,17 +1,6 @@
-import { isObject } from './common'
-import { hasOwn } from './processObj'
-import { setByPath } from './processPath'
-
-function aIsSubPathOfB (a, b) {
-  if (a.startsWith(b) && a !== b) {
-    const nextChar = a[b.length]
-    if (nextChar === '.') {
-      return a.slice(b.length + 1)
-    } else if (nextChar === '[') {
-      return a.slice(b.length)
-    }
-  }
-}
+import { isObject } from './base'
+import { hasOwn } from './object'
+import { setByPath, aIsSubPathOfB } from './path'
 
 function doMergeData (target, source) {
   Object.keys(source).forEach((srcKey) => {
@@ -52,14 +41,14 @@ function mergeData (target, ...sources) {
   return target
 }
 
-// deepMerge 用于合并i18n语言集
-function deepMerge (target, ...sources) {
+// 用于合并i18n语言集
+function mergeObj (target, ...sources) {
   if (isObject(target)) {
     for (const source of sources) {
       if (isObject(source)) {
         Object.keys(source).forEach((key) => {
           if (isObject(source[key]) && isObject(target[key])) {
-            deepMerge(target[key], source[key])
+            mergeObj(target[key], source[key])
           } else {
             target[key] = source[key]
           }
@@ -81,8 +70,7 @@ function mergeObjectArray (arr) {
 }
 
 export {
-  aIsSubPathOfB,
   mergeData,
-  deepMerge,
+  mergeObj,
   mergeObjectArray
 }

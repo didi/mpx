@@ -181,9 +181,22 @@ function getFirstKey (path) {
   return /^[^[.]*/.exec(path)[0]
 }
 
+function aIsSubPathOfB (a, b) {
+  if (a.startsWith(b) && a !== b) {
+    const nextChar = a[b.length]
+    if (nextChar === '.') {
+      return a.slice(b.length + 1)
+    } else if (nextChar === '[') {
+      return a.slice(b.length)
+    }
+  }
+}
+
+
 export {
   getByPath,
   setByPath,
   doGetByPath,
-  getFirstKey
+  getFirstKey,
+  aIsSubPathOfB
 }

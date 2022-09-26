@@ -1,5 +1,5 @@
-import EXPORT_MPX, { isRef } from '@mpxjs/core'
-import { type, noop } from './common'
+import Mpx, { isRef } from '@mpxjs/core'
+import { type, noop } from './base'
 
 const hasOwnProperty = Object.prototype.hasOwnProperty
 
@@ -15,7 +15,7 @@ function isPlainObject (value) {
   const innerProto = Object.getPrototypeOf(proto)
   if (proto === Object.prototype || innerProto === null) return true
   // issue #644
-  const observeClassInstance = EXPORT_MPX.config.observeClassInstance
+  const observeClassInstance = Mpx.config.observeClassInstance
   if (observeClassInstance) {
     if (Array.isArray(observeClassInstance)) {
       for (let i = 0; i < observeClassInstance.length; i++) {
@@ -151,20 +151,6 @@ function spreadProp (obj, key) {
   return obj
 }
 
-const datasetReg = /^data-(.+)$/
-function collectDataset (props) {
-  const dataset = {}
-  for (const key in props) {
-    if (hasOwn(props, key)) {
-      const matched = datasetReg.exec(key)
-      if (matched) {
-        dataset[matched[1]] = props[key]
-      }
-    }
-  }
-  return dataset
-}
-
 // 包含原型链上属性keys
 function enumerableKeys (obj) {
   const keys = []
@@ -174,12 +160,27 @@ function enumerableKeys (obj) {
   return keys
 }
 
+
+function processUndefined (obj) {
+  const result = {}
+  for (const key in obj) {
+    if (hasOwn(obj, key)) {
+      if (obj[key] !== undefined) {
+        result[key] = obj[key]
+      } else {
+        result[key] = ''
+      }
+    }
+  }
+  return result
+}
+
 export {
   hasOwn,
   isPlainObject,
   diffAndCloneA,
   proxy,
   spreadProp,
-  collectDataset,
-  enumerableKeys
+  enumerableKeys,
+  processUndefined
 }

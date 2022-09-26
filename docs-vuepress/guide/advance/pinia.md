@@ -158,10 +158,3 @@ const pinia = createPinia()
 pinia.use(onStoreAction)
 mpx.use(pinia)
 ```
-
-
-
-
-
-
-

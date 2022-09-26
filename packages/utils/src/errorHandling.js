@@ -1,4 +1,4 @@
-import { isFunction } from './common'
+import { isFunction } from './base'
 import { error } from './log'
 
 export function callWithErrorHandling (fn, instance, info, args) {

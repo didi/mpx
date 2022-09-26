@@ -11,7 +11,8 @@ export {
   isReactive,
   shallowReactive,
   set,
-  del
+  del,
+  markRaw
 } from '../../observer/reactive'
 
 export {
@@ -38,10 +39,6 @@ export {
 export {
   getCurrentInstance
 } from '../../core/proxy'
-
-export {
-  markRaw
-} from '../../observer/reactive'
 
 export {
   useI18n

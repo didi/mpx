@@ -20,17 +20,16 @@ export {
   aliasReplace,
   dash2hump,
   hump2dash,
-  processUndefined,
-  concat,
-  defProp
-} from './common'
+  def
+}from './base'
 
 export {
   getByPath,
   setByPath,
   doGetByPath,
-  getFirstKey
-} from './processPath'
+  getFirstKey,
+  aIsSubPathOfB
+} from './path'
 
 export {
   hasOwn,
@@ -38,35 +37,23 @@ export {
   diffAndCloneA,
   proxy,
   spreadProp,
-  collectDataset,
-  enumerableKeys
-} from './processObj'
+  enumerableKeys,
+  processUndefined
+} from './object'
 
 export {
   arrayProtoAugment,
   makeMap,
   findItem,
   remove,
-  isValidArrayIndex,
-  normalizeMap
-} from './processArray'
+  isValidArrayIndex
+} from './array'
 
 export {
-  aIsSubPathOfB,
   mergeData,
-  deepMerge,
+  mergeObj,
   mergeObjectArray
-} from './mergeData'
-
-export {
-  genStyleText,
-  normalizeDynamicStyle,
-  stringifyClass
-} from './processStyle'
-
-export {
-  preProcessRenderData
-} from './processRender'
+} from './merge'
 
 export {
   callWithErrorHandling
@@ -75,4 +62,10 @@ export {
 export {
   walkChildren,
   parseSelector
-} from './processElement'
+} from './element'
+
+export {
+  getEnvObj,
+  isBrowser,
+  isDev
+} from './env'

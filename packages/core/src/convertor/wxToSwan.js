@@ -1,9 +1,8 @@
-import { error } from '@mpxjs/utils'
+import { error, isDev } from '@mpxjs/utils'
 import { implemented } from '../core/implement'
 import { mergeLifecycle } from './mergeLifecycle'
 import * as wxLifecycle from '../platform/patch/wx/lifecycle'
 import * as swanLifecycle from '../platform/patch/swan/lifecycle'
-import { isDev } from '../helper/env'
 
 const BEHAVIORS_MAP = {
   'wx://form-field': 'swan://form-field',

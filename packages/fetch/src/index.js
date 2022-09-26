@@ -3,7 +3,7 @@ import CancelToken from './cancelToken'
 
 let installed = false
 
-function install (proxyMPX, options, MPX) {
+function install (proxyMpx, options, Mpx) {
   if (installed) return
   // add request queue when mode is qq
   const xfetch = __mpx_mode__ === 'qq'
@@ -13,11 +13,11 @@ function install (proxyMPX, options, MPX) {
         limit: 10,
         delay: 0 // ms
       }
-    }, options), MPX)
-    : new XFetch(options, MPX)
+    }, options), Mpx)
+    : new XFetch(options, Mpx)
   installed = true
-  proxyMPX.xfetch = xfetch
-  Object.defineProperty(proxyMPX.prototype, '$xfetch', {
+  proxyMpx.xfetch = xfetch
+  Object.defineProperty(proxyMpx.prototype, '$xfetch', {
     get () {
       return xfetch
     }

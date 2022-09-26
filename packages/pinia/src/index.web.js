@@ -12,25 +12,14 @@ import {
   mapActions,
   mapWritableState
 } from 'pinia'
-import { toRef } from '@mpxjs/core'
-import { propsBlackList } from './const'
+import { storeToRefs } from './storeToRefs'
 
 vue.use(PiniaVuePlugin)
 
 function createPinia () {
-  const webPinia = webCreatePinia()
-  global.__mpx_pinia = webPinia
-  return webPinia
-}
-
-function storeToRefs (store) {
-  const refs = {}
-  for (const key in store) {
-    if (!propsBlackList.includes(key)) {
-      refs[key] = toRef(store, key)
-    }
-  }
-  return refs
+  const pinia = webCreatePinia()
+  global.__mpxPinia = pinia
+  return pinia
 }
 
 export {

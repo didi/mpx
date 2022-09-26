@@ -7,7 +7,7 @@ import {
   isObject,
   isPlainObject,
   hasProto,
-  defProp,
+  def,
   isValidArrayIndex,
   arrayProtoAugment
 } from '@mpxjs/utils'
@@ -33,7 +33,7 @@ export class Observer {
 
   constructor (value, shallow) {
     this.value = value
-    defProp(value, ObKey, this)
+    def(value, ObKey, this)
     if (Array.isArray(value)) {
       const augment = hasProto && arrayProtoAugment
         ? protoAugment
@@ -84,7 +84,7 @@ function protoAugment (target, src, keys) {
 function copyAugment (target, src, keys) {
   for (let i = 0, l = keys.length; i < l; i++) {
     const key = keys[i]
-    defProp(target, key, src[key])
+    def(target, key, src[key])
   }
 }
 

@@ -8,7 +8,10 @@ export {
   reactive,
   isReactive,
   shallowReactive,
-  // ref环节
+  set,
+  del,
+  markRaw,
+  // ref
   ref,
   unref,
   toRef,
@@ -19,16 +22,15 @@ export {
   triggerRef,
   // computed
   computed,
-  // advanced
+  // effectScope
   effectScope,
   getCurrentScope,
   onScopeDispose,
   // instance
   getCurrentInstance,
-  set,
-  del
 } from 'vue'
 
 export {
+  // i18n
   useI18n
 } from 'vue-i18n-bridge'

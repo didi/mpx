@@ -5,10 +5,10 @@ import {
   isObject,
   diffAndCloneA,
   error,
-  hasOwn
+  hasOwn,
+  isDev
 } from '@mpxjs/utils'
 import { implemented } from '../core/implement'
-import { isDev } from '../helper/env'
 
 // 暂不支持的wx选项，后期需要各种花式支持
 const unsupported = ['moved', 'definitionFilter', 'onShareAppMessage']

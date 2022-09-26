@@ -1,5 +1,3 @@
-import { hasOwn } from './processObj'
-
 const noop = () => {}
 
 function isString (str) {
@@ -63,25 +61,7 @@ function hump2dash (value) {
   })
 }
 
-function processUndefined (obj) {
-  const result = {}
-  for (const key in obj) {
-    if (hasOwn(obj, key)) {
-      if (obj[key] !== undefined) {
-        result[key] = obj[key]
-      } else {
-        result[key] = ''
-      }
-    }
-  }
-  return result
-}
-
-function concat (a, b) {
-  return a ? b ? (a + ' ' + b) : a : (b || '')
-}
-
-function defProp (obj, key, val, enumerable) {
+function def (obj, key, val, enumerable) {
   Object.defineProperty(obj, key, {
     value: val,
     enumerable: !!enumerable,
@@ -126,7 +106,5 @@ export {
   aliasReplace,
   dash2hump,
   hump2dash,
-  processUndefined,
-  concat,
-  defProp
+  def
 }

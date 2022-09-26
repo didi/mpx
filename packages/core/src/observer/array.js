@@ -1,15 +1,8 @@
 import { getObserver } from './reactive'
+import { def } from '@mpxjs/utils'
 
 const arrayProto = Array.prototype
-// TODO 从mpxjs/utils引入defProp，项目会报错找不到，先这样处理，后续看下解决方案
-function def (obj, key, val, enumerable) {
-  Object.defineProperty(obj, key, {
-    value: val,
-    enumerable: !!enumerable,
-    writable: true,
-    configurable: true
-  })
-}
+
 export const arrayMethods = Object.create(arrayProto)
 
 ;[

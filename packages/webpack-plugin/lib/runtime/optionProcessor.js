@@ -329,7 +329,11 @@ export default function processOption (
         global.__mpxRouter.__mpxHistoryLength = global.history.length
       }
     }
-    // console.error('global====', )
+
+    // 注入pinia
+    if (global.__mpxPinia) {
+      option.pinia = global.__mpxPinia
+    }
   } else {
     // 局部注册页面和组件中依赖的组件
     for (const componentName in componentsMap) {
@@ -374,11 +378,6 @@ registered in parent context!`)
     if (ctorType === 'page') {
       option.__mpxPageConfig = Object.assign({}, global.__mpxPageConfig, pageConfig)
     }
-  }
-
-  // option注入pinia
-  if (global.__mpx_pinia) {
-    option.pinia = global.__mpx_pinia
   }
 
   if (option.mixins) {

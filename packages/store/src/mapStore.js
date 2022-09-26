@@ -2,8 +2,31 @@ import {
   warn,
   error,
   getByPath,
-  normalizeMap
+  isObject
 } from '@mpxjs/utils'
+
+function normalizeMap (prefix, arr) {
+  if (typeof prefix !== 'string') {
+    arr = prefix
+    prefix = ''
+  }
+  if (Array.isArray(arr)) {
+    const map = {}
+    arr.forEach(value => {
+      map[value] = prefix ? `${prefix}.${value}` : value
+    })
+    return map
+  }
+  if (prefix && isObject(arr)) {
+    arr = Object.assign({}, arr)
+    Object.keys(arr).forEach(key => {
+      if (typeof arr[key] === 'string') {
+        arr[key] = `${prefix}.${arr[key]}`
+      }
+    })
+  }
+  return arr
+}
 
 function mapFactory (type, store) {
   return function (depPath, maps) {
