@@ -1,5 +1,5 @@
 module.exports = ({ parse }) => {
-  const SideEffectHookName = [
+  const sideEffectHookNameMap = [
     'onPullDownRefresh',
     'onReachBottom',
     'onShareAppMessage',
@@ -8,7 +8,11 @@ module.exports = ({ parse }) => {
     'onPageScroll',
     'onTabItemTap',
     'onSaveExitState'
-  ]
+  ].reduce((obj, item) => {
+    obj[item] = true
+    return obj
+  }, {})
+
   const Page = 'createPage'
   return {
     name: 'inject-composition-api-page-event-function',
@@ -20,7 +24,7 @@ module.exports = ({ parse }) => {
           state.isPage = true
           return
         }
-        if (SideEffectHookName.includes(name)) {
+        if (sideEffectHookNameMap[name]) {
           state.sideEffectHooks.add(name)
         }
       },
