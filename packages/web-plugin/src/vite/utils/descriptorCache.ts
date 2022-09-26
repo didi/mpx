@@ -12,7 +12,7 @@ function genDescriptorTemplate() {
   const template: SFCDescriptor['template'] = {
     tag: 'template',
     type: 'template',
-    content: '<div class="app"><router-view class="page"></router-view></div>',
+    content: '<div class="app"><mpx-keep-alive><router-view class="page"></router-view></mpx-keep-alive></div>',
     attrs: {},
     start: 0,
     end: 0
