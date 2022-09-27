@@ -73,6 +73,7 @@ mpx.createPage({
 
 createPage(object)
 ```
+
 ## createComponent
 > 创建自定义组件，接受两个Object类型的参数。
 
@@ -285,7 +286,6 @@ const store2 = createStore({ ...options })
     ```
     创建组件方法提交 mutation。[详细介绍](../guide/advance/store.html#mutation)
 
-
 ## createStoreWithThis
 
 > createStoreWithThis 为 createStore 的变种方法，主要为了在 `Typescript` 环境中，可以更好地支持 store 中的类型推导。<br>
@@ -462,7 +462,6 @@ createComponent({
     }, { state })
     ```
 
-
 ## createActionsWithThis
 
 - **用法：**
@@ -543,6 +542,7 @@ mpx.mixin({
   stage: 100
 })
 ```
+
 ## injectMixins
 该方法是 `mpx.mixin` 方法的别名，`mpx.injectMixins({})` 等同于 `mpx.mixin({})`
 
@@ -821,6 +821,7 @@ if (__mpx_mode__ === 'web') {
   })
 }
 ```
+
 ## config
  Mpx 通过 config 暴露出 webRouteConfig 配置项，在 web 环境可以对路由进行配置
 
