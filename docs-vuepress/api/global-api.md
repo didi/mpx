@@ -1,4 +1,5 @@
-# 全局api
+# 全局 API
+`@mpxjs/core` 默认导出 mpx 全局实例对象，通过该实例对象
 
 ## createApp
 > 注册一个小程序，接受一个 Object 类型的参数
@@ -28,7 +29,7 @@ mpx.createApp({
   globalDataA: 'I am global dataA',
   globalDataB: 'I am global dataB'
 })
-
+// 或者
 createApp(options)
 ```
 
@@ -574,7 +575,11 @@ const pureObject = toPureObject(object)
 import mpx, {observable} from '@mpxjs/core'
 // mpx.observable(...)
 const a = observable(object)
+// 或者直接通过 mpx 对象访问
+const b = mpx.observable(object)
 ```
+- **注意：**
+Mpx 2.8 版本起该 API 将会被废弃，请使用 `reactive` 替代
 
 ## watch
 
@@ -728,21 +733,21 @@ mpx.use(test, {prefix: 'mpx'}, 'otherparams')
 
 - **示例：**
 ```js
-mport mpx, {observable} from '@mpxjs/core'
-const person = observable({name: 1})
-mpx.set(person, 'age', 17) // age 改变后会触发订阅者视图更新
+import { set, reactive } from '@mpxjs/core'
+const person = reactive({name: 1})
+set(person, 'age', 17) // age 改变后会触发订阅者视图更新
 ```
 
-## delete
+## del
 用于对一个响应式对象删除属性，会`触发订阅者更新操作`
 - **参数**：
   - `{Object | Array} target`
   - `{string | number} propertyName/index`
 - **示例：**
 ```js
-mport mpx, {observable} from '@mpxjs/core'
-const person = observable({name: 1})
-mpx.delete(person, 'age')
+import { del, reactive } from '@mpxjs/core'
+const person = reactive({name: 1})
+del(person, 'age')
 ```
 
 ## getMixin
@@ -750,10 +755,10 @@ mpx.delete(person, 'age')
 
 **使用**
 ```js
-import mpx, { createComponent } from '@mpxjs/core'
+import { createComponent, getMixin} from '@mpxjs/core'
 // 使用mixins，需要对每一个mixin子项进行getMixin辅助函数包裹，支持嵌套mixin
-const mixin = mpx.getMixin({
-  mixins: [mpx.getMixin({
+const mixin = getMixin({
+  mixins: [getMixin({
     data: {
       value1: 2
     },
@@ -762,7 +767,7 @@ const mixin = mpx.getMixin({
         console.log(this.value1, 'attached')
       }
     },
-    mixins: [mpx.getMixin({
+    mixins: [getMixin({
       data: {
         value2: 6
       },
@@ -809,12 +814,12 @@ createComponent({
 以微信为 base 将代码转换输出到其他平台时（如支付宝、web 平台等），会存在一些无法进行模拟的跨平台差异，会在运行时进行检测并报错指出，例如微信转支付宝时使用 moved 生命周期等。使用`implement`方法可以取消这种报错。您可以使用 mixin 自行实现跨平台差异，然后使用 implement 取消报错。
 
 ```js
-import mpx from '@mpxjs/core'
+import {implement} from '@mpxjs/core'
 
 if (__mpx_mode__ === 'web') {
   const processor = () => {
   }
-  mpx.implement('onShareAppMessage', {
+  implement('onShareAppMessage', {
     modes: ['web'], // 需要取消的平台，可配置多个
     remove: true, // 是否将此能力直接移除
     processor // 设置成功的回调函数
@@ -822,12 +827,3 @@ if (__mpx_mode__ === 'web') {
 }
 ```
 
-## config
- Mpx 通过 config 暴露出 webRouteConfig 配置项，在 web 环境可以对路由进行配置
-
-- **用法**:
-```js
-mpx.config.webRouteConfig = {
-  mode: 'history'
-}
-```

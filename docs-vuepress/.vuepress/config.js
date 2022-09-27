@@ -87,7 +87,7 @@ const sidebar = {
     }
   ],
   '/api/': [
-    'config',
+    'default-export',
     'global-api',
     'instance-api',
     'directives',
@@ -119,7 +119,7 @@ const sidebar = {
 
 const nav = [
   { text: '指南', link: '/guide/basic/start' },
-  { text: 'API', link: '/api/config' },
+  { text: 'API', link: '/api/default-export' },
   { text: '文章', link: '/articles/index' },
   { text: '更新记录', link: 'https://github.com/didi/mpx/releases' },
   { text: 'Github', link: 'https://github.com/didi/mpx' }
