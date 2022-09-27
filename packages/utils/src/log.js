@@ -1,5 +1,5 @@
 import Mpx from '@mpxjs/core'
-import { isFunction } from './common'
+import { isFunction } from './base'
 
 const isDev = process.env.NODE_ENV !== 'production'
 
