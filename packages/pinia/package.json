@@ -31,7 +31,7 @@
     "access": "public"
   },
   "dependencies": {
-    "@mpxjs/utils": "^2.8.0-beta.1"
+    "@mpxjs/utils": "^2.8.0-beta.2"
   },
   "peerDependencies": {
     "@mpxjs/core": "^2.8.0",
