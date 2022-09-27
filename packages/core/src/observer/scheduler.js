@@ -1,8 +1,5 @@
-import { warn } from '../helper/log'
-import EXPORT_MPX from '../index'
-import { isDev } from '../helper/env'
-import { callWithErrorHandling } from '../helper/errorHandling'
-import { isArray } from '../helper/utils'
+import { warn, isArray, callWithErrorHandling, isDev } from '@mpxjs/utils'
+import Mpx from '../index'
 
 let isFlushing = false
 let isFlushPending = false
@@ -87,7 +84,7 @@ export function queueJob (job) {
 function queueFlush () {
   if (!isFlushing && !isFlushPending) {
     isFlushPending = true
-    if (EXPORT_MPX.config.forceFlushSync) {
+    if (Mpx.config.forceFlushSync) {
       flushJobs()
     } else {
       currentFlushPromise = resolvedPromise.then(flushJobs)

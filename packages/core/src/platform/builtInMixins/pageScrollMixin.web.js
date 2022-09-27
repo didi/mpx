@@ -1,4 +1,4 @@
-import { error } from '../../helper/log'
+import { error } from '@mpxjs/utils'
 import MpxScroll from '../../helper/MpxScroll'
 import { getScrollTop } from '../../helper/MpxScroll/dom'
 

@@ -1,7 +1,8 @@
-import { def } from '../helper/utils'
 import { getObserver } from './reactive'
+import { def } from '@mpxjs/utils'
 
 const arrayProto = Array.prototype
+
 export const arrayMethods = Object.create(arrayProto)
 
 ;[

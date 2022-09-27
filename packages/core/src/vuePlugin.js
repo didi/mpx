@@ -1,5 +1,4 @@
-import { walkChildren, parseSelector } from './helper/element'
-import { error } from './helper/log'
+import { walkChildren, parseSelector, error } from '@mpxjs/utils'
 import * as webApi from '@mpxjs/api-proxy/src/web/api'
 
 export default function install (Vue) {

@@ -1,5 +1,5 @@
 module.exports = ({ parse }) => {
-  const SideEffectHookName = [
+  const sideEffectHookNameMap = [
     'onPullDownRefresh',
     'onReachBottom',
     'onShareAppMessage',
@@ -8,7 +8,11 @@ module.exports = ({ parse }) => {
     'onPageScroll',
     'onTabItemTap',
     'onSaveExitState'
-  ]
+  ].reduce((obj, item) => {
+    obj[item] = true
+    return obj
+  }, {})
+
   const Page = 'createPage'
   return {
     name: 'inject-composition-api-page-event-function',
@@ -20,7 +24,7 @@ module.exports = ({ parse }) => {
           state.isPage = true
           return
         }
-        if (SideEffectHookName.includes(name)) {
+        if (sideEffectHookNameMap[name]) {
           state.sideEffectHooks.add(name)
         }
       },
@@ -33,12 +37,12 @@ module.exports = ({ parse }) => {
           if (state.isPage && state.sideEffectHooks.size) {
             let pageEventsFun = ''
             state.sideEffectHooks.forEach((item, idx) => {
-              pageEventsFun += `${item}: function ${item}(e) { return this.__mpxProxy.callHook('__${item}__', [e]) }`
+              pageEventsFun += `${item}: function(e) { return this.__mpxProxy.callHook('__${item}__', [e]) }`
               if (idx + 1 !== state.sideEffectHooks.size) pageEventsFun += ','
             })
             const code = `global.currentInject.pageEvents = {${pageEventsFun}};`
             const newAst = parse(code)
-            path.unshiftContainer('body', newAst.program.body[0])
+            path.unshiftContainer('body', newAst.program.body)
           }
         }
       }

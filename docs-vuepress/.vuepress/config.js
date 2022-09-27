@@ -28,6 +28,7 @@ const sidebar = {
       // sidebarDepth: 2,
       children: [
         'advance/store',
+        'advance/pinia',
         'advance/mixin',
         'advance/npm',
         'advance/subpackage',

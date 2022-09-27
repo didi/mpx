@@ -1,6 +1,6 @@
 import builtInKeysMap from '../builtInKeysMap'
 import mergeOptions from '../../../core/mergeOptions'
-import { diffAndCloneA } from '../../../helper/utils'
+import { diffAndCloneA } from '@mpxjs/utils'
 import { getCurrentInstance as getVueCurrentInstance } from '../../export/index'
 import MpxProxy, { setCurrentInstance, unsetCurrentInstance } from '../../../core/proxy'
 import { BEFOREUPDATE, UPDATED, BEFOREUNMOUNT, UNMOUNTED } from '../../../core/innerLifecycle'

@@ -329,6 +329,11 @@ export default function processOption (
         global.__mpxRouter.__mpxHistoryLength = global.history.length
       }
     }
+
+    // 注入pinia
+    if (global.__mpxPinia) {
+      option.pinia = global.__mpxPinia
+    }
   } else {
     // 局部注册页面和组件中依赖的组件
     for (const componentName in componentsMap) {

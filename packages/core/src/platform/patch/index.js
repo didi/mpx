@@ -4,7 +4,7 @@ import { getDefaultOptions as getWxDefaultOptions } from './wx/getDefaultOptions
 import { getDefaultOptions as getAliDefaultOptions } from './ali/getDefaultOptions'
 import { getDefaultOptions as getSwanDefaultOptions } from './swan/getDefaultOptions'
 import { getDefaultOptions as getWebDefaultOptions } from './web/getDefaultOptions'
-import { error } from '../../helper/log'
+import { error } from '@mpxjs/utils'
 
 export default function createFactory (type) {
   return (options, { isNative, customCtor, customCtorType } = {}) => {

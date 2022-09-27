@@ -1,4 +1,4 @@
-import { isObject } from '../../helper/utils'
+import { isObject } from '@mpxjs/utils'
 import { CREATED, MOUNTED, BEFOREUNMOUNT } from '../../core/innerLifecycle'
 
 const targets = []
