@@ -117,7 +117,6 @@ module.exports = function (content) {
           return callback(e)
         }
       }
-
       // 处理mode为web时输出vue格式文件
       if (mode === 'web') {
         if (ctorType === 'app' && !queryObj.isApp) {

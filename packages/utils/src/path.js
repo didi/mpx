@@ -1,3 +1,5 @@
+import { set } from '@mpxjs/core'
+
 let curStack
 let targetStacks
 let property
@@ -109,7 +111,7 @@ function outPutByPath (context, path, isSimple, transfer) {
   return result
 }
 
-export default function getByPath (context, pathStrOrArr, transfer) {
+function doGetByPath (context, pathStrOrArr, transfer) {
   if (!pathStrOrArr) {
     return context
   }
@@ -124,4 +126,76 @@ export default function getByPath (context, pathStrOrArr, transfer) {
   if (!isSimple) pathStrOrArr = parse(pathStrOrArr)
 
   return outPutByPath(context, pathStrOrArr, isSimple, transfer)
+}
+
+function isExistAttr (obj, attr) {
+  const type = typeof obj
+  const isNullOrUndefined = obj === null || obj === undefined
+  if (isNullOrUndefined) {
+    return false
+  } else if (type === 'object' || type === 'function') {
+    return attr in obj
+  } else {
+    return obj[attr] !== undefined
+  }
+}
+
+function getByPath (data, pathStrOrArr, defaultVal, errTip) {
+  const results = []
+  let normalizedArr = []
+  if (Array.isArray(pathStrOrArr)) {
+    normalizedArr = [pathStrOrArr]
+  } else if (typeof pathStrOrArr === 'string') {
+    normalizedArr = pathStrOrArr.split(',').map(str => str.trim())
+  }
+
+  normalizedArr.forEach(path => {
+    if (!path) return
+    const result = doGetByPath(data, path, (value, key) => {
+      let newValue
+      if (isExistAttr(value, key)) {
+        newValue = value[key]
+      } else {
+        newValue = errTip
+      }
+      return newValue
+    })
+    // 小程序setData时不允许undefined数据
+    results.push(result === undefined ? defaultVal : result)
+  })
+  return results.length > 1 ? results : results[0]
+}
+
+function setByPath (data, pathStrOrArr, value) {
+  doGetByPath(data, pathStrOrArr, (current, key, meta) => {
+    if (meta.isEnd) {
+      set(current, key, value)
+    } else if (!current[key]) {
+      current[key] = {}
+    }
+    return current[key]
+  })
+}
+
+function getFirstKey (path) {
+  return /^[^[.]*/.exec(path)[0]
+}
+
+function aIsSubPathOfB (a, b) {
+  if (a.startsWith(b) && a !== b) {
+    const nextChar = a[b.length]
+    if (nextChar === '.') {
+      return a.slice(b.length + 1)
+    } else if (nextChar === '[') {
+      return a.slice(b.length)
+    }
+  }
+}
+
+export {
+  getByPath,
+  setByPath,
+  doGetByPath,
+  getFirstKey,
+  aIsSubPathOfB
 }

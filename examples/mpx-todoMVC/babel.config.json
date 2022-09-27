@@ -16,9 +16,7 @@
         "version": "^7.12.5"
       }
     ],
-    [
-      "lodash"
-    ]
+    "lodash"
   ],
   "sourceType": "unambiguous",
   "env": {

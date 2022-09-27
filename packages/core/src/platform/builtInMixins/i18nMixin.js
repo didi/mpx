@@ -1,11 +1,16 @@
 import { BEFORECREATE } from '../../core/innerLifecycle'
-import { merge, isEmptyObject, isPlainObject, isNumber } from '../../helper/utils'
 import { DefaultLocale } from '../../helper/const'
-import { error } from '../../helper/log'
 import { ref, shallowRef, triggerRef } from '../../observer/ref'
 import { watch } from '../../observer/watch'
 import { effectScope } from '../../observer/effectScope'
 import { getCurrentInstance, onUnmounted } from '../../core/proxy'
+import {
+  error,
+  isPlainObject,
+  isNumber,
+  mergeObj,
+  isEmptyObject
+} from '@mpxjs/utils'
 
 let i18n = null
 
@@ -125,7 +130,7 @@ function createComposer (options) {
   }
 
   const mergeLocaleMessage = (locale, message) => {
-    messages.value[locale] = merge(messages.value[locale] || {}, message)
+    messages.value[locale] = mergeObj(messages.value[locale] || {}, message)
     triggerRef(messages)
   }
 

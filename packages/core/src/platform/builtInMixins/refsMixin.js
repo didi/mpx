@@ -1,7 +1,5 @@
 import { CREATED, BEFOREMOUNT, BEFOREUPDATE, UNMOUNTED } from '../../core/innerLifecycle'
-import { noop } from '../../helper/utils'
-import { error } from '../../helper/log'
-import { getEnvObj } from '../../helper/env'
+import { noop, error, getEnvObj } from '@mpxjs/utils'
 
 const envObj = getEnvObj()
 

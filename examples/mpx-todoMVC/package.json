@@ -20,7 +20,7 @@
   "license": "ISC",
   "dependencies": {
     "@mpxjs/api-proxy": "^2.7.28",
-    "@mpxjs/core": "^2.7.26"
+    "@mpxjs/core": "^2.7.37"
   },
   "devDependencies": {
     "@babel/core": "7.12.10",
@@ -28,7 +28,7 @@
     "@babel/plugin-transform-runtime": "7.12.10",
     "@babel/preset-env": "7.12.11",
     "@babel/runtime-corejs3": "7.12.5",
-    "@mpxjs/webpack-plugin": "^2.7.27",
+    "@mpxjs/webpack-plugin": "^2.7.37",
     "@typescript-eslint/eslint-plugin": "^5.2.0",
     "@typescript-eslint/parser": "^5.2.0",
     "babel-jest": "^25.3.0",

@@ -17,7 +17,7 @@ const state = reactive({
 })
 ```
 
-你可以在[响应式基础 API](#todo-reactive-basic-api) 章节中了解更多关于 `reactive` 的信息。
+你可以在[响应式基础 API](../../api/reactivity-api/basic-reactivity.md) 章节中了解更多关于 `reactive` 的信息。
 
 ## 使用 `ref()` 创建独立的响应式值
 
@@ -139,7 +139,7 @@ age.value = 30 // age 现在是个 ref，我们需要使用 .value 进行访问�
 console.log(people.age) // 30
 ```
 
-你可以在[Refs API](#todo-refs-api) 章节中了解更多关于 `refs` 的信息。
+你可以在[Refs API](../../api/reactivity-api/refs-api.md) 章节中了解更多关于 `refs` 的信息。
 
 ## 计算值
 

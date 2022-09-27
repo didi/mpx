@@ -1,4 +1,4 @@
-import { noop } from '../helper/utils'
+import { noop } from '@mpxjs/utils'
 
 export const implemented = {}
 
