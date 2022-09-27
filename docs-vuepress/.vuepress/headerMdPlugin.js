@@ -1,6 +1,6 @@
 
 const rControl = /[\u0000-\u001f]/g;
-const rSpecial = /[\s~`!@#$%^&*()\-_+=[\]{}|\\;:"'<>,.?/]+/g;
+const rSpecial = /[\s~!@#$%^&*()\-_+=[\]{}|\\;:"'<>,.?/]+/g;
 const anchorReg = /\{#([a-z0-9\-_]+?)\}\s*$/
 const slugify$1 = (content) => {
     let str = content
