@@ -1,6 +1,6 @@
 
 const rControl = /[\u0000-\u001f]/g;
-const rSpecial = /[\s~!@#$%^&*()\-_+=[\]{}|\\;:"'<>,.?/]+/g;
+const rSpecial = /[\s~`!@#$%^&*()\-_+=[\]{}|\\;:"'<>,.?/]+/g;
 const anchorReg = /\{#([a-z0-9\-_]+?)\}\s*$/
 const slugify$1 = (content) => {
     let str = content
@@ -9,6 +9,14 @@ const slugify$1 = (content) => {
     }
     return str.replace(rControl, "").replace(rSpecial, "-").replace(/\-{2,}/g, "-").replace(/^\-+|\-+$/g, "").replace(/^(\d)/, "_$1").toLowerCase();
 };
+
+const removeSlug$1 = (content) => {
+    let str = content
+    if (anchorReg.test(content)) {
+        str = str.split('{#')[0]
+    }
+    return str
+}
 const parseEmojis = (str) => {
     return str.replace(/:(.+?):/g, (placeholder, key) => require$$0$3[key] || placeholder);
 };
@@ -17,7 +25,7 @@ const removeMarkdownTokens = (str) => str.replace(/(\[(.[^\]]+)\]\((.[^)]+)\))/g
 const remvoeCustomAnchor = (str) => str.replace(/\{#([a-z0-9\-_]+?)\}\s*$/, "");
 const trim = (str) => str.trim();
 const removeNonCodeWrappedHTML = (str) => {
-    return String(str).replace(/(^|[^><`\\])<.*>([^><`]|$)/g, "$1$2");
+    return String(str)
 };
 const compose = (...processors) => {
     if (processors.length === 0)
@@ -47,7 +55,7 @@ const headerPlugin = (md, include = ["h2", "h3"]) => {
             const nextToken = tokens[i + 1]
             if (nextToken.type === 'inline') {
                 const inlineTokenChild = nextToken.children
-                inlineTokenChild.forEach(child => {
+                inlineTokenChild.forEach((child, index) => {
                     if (child.type === 'link_open') {
                         child.attrs = child.attrs.map((item) => {
                             if (item[0] === 'href') {
@@ -57,7 +65,9 @@ const headerPlugin = (md, include = ["h2", "h3"]) => {
                         })
                     }
                     if (child.type === 'text' && child.content && child.content.trim()) {
-                        child.content = parseTitle
+                        if (child.content.includes('{#')) {
+                            child.content = removeSlug$1(child.content)
+                        }
                     }
                 })
             }

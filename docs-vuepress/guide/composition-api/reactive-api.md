@@ -19,7 +19,7 @@ const state = reactive({
 
 你可以在[响应式基础 API](../../api/reactivity-api/basic-reactivity.md) 章节中了解更多关于 `reactive` 的信息。
 
-## 使用`ref()`创建独立的响应式值
+## 使用`ref()`创建独立的响应式值 {#use-ref-create-reactive-value}
 
 上面提到 `reactive` 只能传入对象类型数据，当我们想将一个原始数据类型的值（如数字、字符串、布尔值）变成响应式时，我们不得不先将其包装为一个对象，使用起来较为繁琐，新的 `ref` 方法能够让我们便捷地达成上述目标：
 

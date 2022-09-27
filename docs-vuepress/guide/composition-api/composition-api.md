@@ -644,7 +644,7 @@ createComponent({
 </script>
 ```
 
-## <script setup>
+## `<script setup>`
 
 和 Vue 一样，`<script setup>` 是在 Mpx 单文件组件中使用组合式 API 时的编译时语法糖。相较于普通的 `<script>` 语法，它具有一些优势：
 * 更少的样板内容，更简洁的代码。
