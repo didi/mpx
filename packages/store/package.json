@@ -19,11 +19,16 @@
   "bugs": {
     "url": "https://github.com/didi/mpx/issues"
   },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
+  },
   "homepage": "https://github.com/didi/mpx#readme",
   "dependencies": {
     "@mpxjs/utils": "^2.8.0-beta.1"
   },
   "peerDependencies": {
     "@mpxjs/core": "^2.8.0"
-  }
+  },
+  "gitHead": "2d37697869b9bdda3efab92dda8c910b68fd05c0"
 }

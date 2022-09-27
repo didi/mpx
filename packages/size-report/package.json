@@ -31,6 +31,10 @@
     "opener": "^1.5.2",
     "ws": "^7.4.3"
   },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
+  },
   "peerDependencies": {
     "@mpxjs/webpack-plugin": "^2.8.0"
   },
@@ -44,5 +48,6 @@
     "eslint-plugin-node": "^8.0.0",
     "eslint-plugin-promise": "^4.0.1",
     "eslint-plugin-standard": "^5.0.0"
-  }
+  },
+  "gitHead": "2d37697869b9bdda3efab92dda8c910b68fd05c0"
 }

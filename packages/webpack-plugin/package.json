@@ -60,7 +60,8 @@
     "webpack": "^5.48.0"
   },
   "publishConfig": {
-    "registry": "https://registry.npmjs.org"
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
   },
   "repository": {
     "type": "git",
@@ -79,5 +80,6 @@
   },
   "engines": {
     "node": ">=14.14.0"
-  }
+  },
+  "gitHead": "2d37697869b9bdda3efab92dda8c910b68fd05c0"
 }
