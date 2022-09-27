@@ -652,6 +652,22 @@ export function onHide (callback: () => void): void
 
 export function onResize (callback: () => void): void
 
+export function onPullDownRefresh (callback: () => void): void
+
+export function onReachBottom (callback: () => void): void
+
+export function onShareAppMessage (callback: () => void): void
+
+export function onShareTimeline (callback: () => void): void
+
+export function onAddToFavorites (callback: () => void): void
+
+export function onPageScroll (callback: () => void): void
+
+export function onTabItemTap (callback: () => void): void
+
+export function onSaveExitState (callback: () => void): void
+
 // get instance
 export function getCurrentInstance<T extends object> (): { target: T }
 
