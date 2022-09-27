@@ -25,7 +25,6 @@ const sidebar = {
     {
       title: '进阶',
       collapsable: false,
-      // sidebarDepth: 2,
       children: [
         'advance/store',
         'advance/pinia',
@@ -33,24 +32,22 @@ const sidebar = {
         'advance/npm',
         'advance/subpackage',
         'advance/async-subpackage',
-        'advance/composition-api',
+        'advance/platform',
+        'advance/i18n',
+        'advance/size-report',
         'advance/image-process',
         'advance/progressive',
         'advance/ability-compatible',
         'advance/plugin',
-        'advance/platform',
-        'advance/size-report',
-        // 'advance/dll-plugin',
         'advance/custom-output-path',
       ]
     },
     {
-      title: '组合式API',
+      title: '组合式 API',
       collapsable: false,
       children: [
-        'composition-api/introduction',
-        'composition-api/lifecycle-hooks',
-        'composition-api/setup'
+        'composition-api/composition-api',
+        'composition-api/reactive-api'
       ]
     },
     {
@@ -58,7 +55,6 @@ const sidebar = {
       collapsable: false,
       children: [
         'tool/ts',
-        'tool/i18n',
         'tool/unit-test',
         'tool/e2e-test'
       ]
@@ -85,6 +81,7 @@ const sidebar = {
       title: '迁移',
       collapsable: false,
       children: [
+        'migrate/2.8',
         'migrate/2.7'
       ]
     }
@@ -96,10 +93,8 @@ const sidebar = {
     'directives',
     'compile',
     'builtIn',
-    'extend',
     {
-      title: '响应性 API',
-      collapsable: false,
+      title: '响应式 API',
       children: [
         'reactivity-api/basic-reactivity',
         'reactivity-api/refs-api',
@@ -107,7 +102,8 @@ const sidebar = {
         'reactivity-api/effect-scope'
       ]
     },
-    'composition-api'
+    'composition-api',
+    'extend'
   ],
   '/articles/': [
     { title: '滴滴开源小程序框架Mpx', path: '1.0' },
@@ -154,9 +150,9 @@ module.exports = {
   themeConfig: {
     // navbar: false,
     algolia: {
-			apiKey: '7849f511f78afc4383a81f0137a91c0f',
-			indexName: 'mpxjs',
-		},
+      apiKey: '7849f511f78afc4383a81f0137a91c0f',
+      indexName: 'mpxjs',
+    },
     sidebarDepth: 1,
     logo: '/logo.png',
     displayAllHeaders: false,

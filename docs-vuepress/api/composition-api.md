@@ -59,7 +59,7 @@ function setup(props: Data, context: SetupContext): Data
 ```
 
 ## 生命周期钩子
-可以通过直接导入 onX 函数来注册生命周期钩子：
+可以通过直接导入 on* 函数来注册生命周期钩子：
 
 ```js
 import { onMounted, onUpdated, onUnmounted, createComponent } from '@mpxjs/core'

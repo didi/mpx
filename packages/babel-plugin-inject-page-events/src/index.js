@@ -15,7 +15,7 @@ module.exports = ({ parse }) => {
 
   const Page = 'createPage'
   return {
-    name: 'inject-composition-api-page-event-function',
+    name: 'injectPageEvents',
     visitor: {
       CallExpression (path, state) {
         const callee = path.node.callee
