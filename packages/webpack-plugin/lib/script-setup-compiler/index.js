@@ -354,8 +354,8 @@ function compileScriptSetup (
     sourceType: 'module'
   })
   for (const node of scriptSetupAst.program.body) {
-    const start = node.start + startOffset
-    let end = node.end + startOffset
+    const start = node.start
+    let end = node.end
 
     // 定位comment，例如 var a= 1; // a为属性
     if (node.trailingComments && node.trailingComments.length > 0) {
@@ -605,7 +605,7 @@ function compileScriptSetup (
   _s.prependLeft(
     startOffset,
     `\nimport {${ctor}} from '${MPX_CORE}'\n${getCtor(ctorType)} ({${runtimeOptions}\n  ` +
-      `setup(${args}) {\n const useContext = () => { return __context }`
+      `setup(${args}) {\n const useContext = () => { return __context }\n`
   )
   _s.appendRight(endOffset, '})')
 
