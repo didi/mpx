@@ -1,5 +1,59 @@
 # 全局 API
-`@mpxjs/core` 默认导出 mpx 全局实例对象，通过该实例对象
+
+## 应用实例 API{#application}
+
+`@mpxjs/core` 默认导出 mpx 全局实例对象，通过该实例对象我们可以访问部分应用实例 API
+
+### mixin
+全局注入mixin方法接收两个参数：mpx.mixin(mixins, options)
+- 第一个参数是要混入的mixins，接收类型 `MixinObject|MixinObject[]`
+- 第二个参数是为全局混入配置，形如`{types:string|string[], stage:number}`，其中`types`用于控制mixin注入的范围，可选值有`'app'|'page'|'component'`；`stage`用于控制注入mixin的插入顺序，当stage为负数时，注入的mixin会被插入到构造函数配置中的`options.mixins`之前，数值越小约靠前，反之当stage为正数时，注入的mixin会被插入到`options.mixins`之后，数值越大越靠后。
+
+> 所有mixin中生命周期的执行均先于构造函数配置中直接声明的生命周期，mixin之间的执行顺序则遵从于其在`options.mixins`数组中的顺序
+
+> options的默认值为`{types: ['app','page','component'], stage: -1}`，不传stage时，全局注入mixin的声明周期默认在`options.mixins`之前执行
+
+**使用**
+```js
+import mpx from '@mpxjs/core'
+// 只在page中混入
+mpx.mixin({
+  methods: {
+    getData: function(){}
+  }
+}, {
+  types:'page'
+})
+
+// 默认混入，在app|page|component中都会混入
+mpx.mixin([
+  {
+    methods: {
+      getData: function(){}
+    }
+  },
+  {
+    methods: {
+      setData: function(){}
+    }
+  }
+])
+
+// 只在component中混入，且执行顺序在options.mixins之后
+mpx.mixin({
+  attached() {
+    console.log('com attached')
+  }
+}, {
+  types: 'component',
+  stage: 100
+})
+```
+
+### injectMixins
+该方法是 `mpx.mixin` 方法的别名，`mpx.injectMixins({})` 等同于 `mpx.mixin({})`
+
+
 
 ## createApp
 > 注册一个小程序，接受一个 Object 类型的参数
@@ -498,54 +552,6 @@ createComponent({
     })
     ```
 
-## mixin
-全局注入mixin方法接收两个参数：mpx.mixin(mixins, options)
-- 第一个参数是要混入的mixins，接收类型 `MixinObject|MixinObject[]`
-- 第二个参数是为全局混入配置，形如`{types:string|string[], stage:number}`，其中`types`用于控制mixin注入的范围，可选值有`'app'|'page'|'component'`；`stage`用于控制注入mixin的插入顺序，当stage为负数时，注入的mixin会被插入到构造函数配置中的`options.mixins`之前，数值越小约靠前，反之当stage为正数时，注入的mixin会被插入到`options.mixins`之后，数值越大越靠后。
-
-> 所有mixin中生命周期的执行均先于构造函数配置中直接声明的生命周期，mixin之间的执行顺序则遵从于其在`options.mixins`数组中的顺序
-
-> options的默认值为`{types: ['app','page','component'], stage: -1}`，不传stage时，全局注入mixin的声明周期默认在`options.mixins`之前执行
-
-**使用**
-```js
-import mpx from '@mpxjs/core'
-// 只在page中混入
-mpx.mixin({
-  methods: {
-    getData: function(){}
-  }
-}, {
-  types:'page'
-})
-
-// 默认混入，在app|page|component中都会混入
-mpx.mixin([
-  {
-    methods: {
-      getData: function(){}
-    }
-  },
-  {
-    methods: {
-      setData: function(){}
-    }
-  }
-])
-
-// 只在component中混入，且执行顺序在options.mixins之后
-mpx.mixin({
-  attached() {
-    console.log('com attached')
-  }
-}, {
-  types: 'component',
-  stage: 100
-})
-```
-
-## injectMixins
-该方法是 `mpx.mixin` 方法的别名，`mpx.injectMixins({})` 等同于 `mpx.mixin({})`
 
 ## toPureObject
 
