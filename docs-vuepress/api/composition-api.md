@@ -375,3 +375,5 @@ useFetch().fetch({
   console.log(res.data)
 })
 ```
+
+* **注意：** useFetch 调用前必须保证 `@mpxjs/fetch` 插件被 use。

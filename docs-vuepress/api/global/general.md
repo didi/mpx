@@ -1,5 +1,34 @@
-# 辅助 API
+# 通用 API
 
+## nextTick
+
+* **参数：**
+  * `{Function} callback`
+* **用法：**
+
+当我们在 Mpx 中更改响应性状态时，最终页面的更新并不是同步立即生效的，而是由 Mpx 将它们缓存在一个队列中， 等到下一个 tick 一起执行，
+从而保证了组件/页面无论发生多少状态改变，都仅执行一次更新，从而减少 `setData` 调用次数。
+
+`nextTick()` 可以在状态改变后立即调用，可以传递一个函数作为参数，在等待页面/组件更新完成后，函数参数会触发执行。
+* **示例：**
+ ``` js
+      import {createComponent, nextTick, ref} from '@mpxjs/core'
+      createComponent({
+        setup (props, context) {
+          const showChild = ref(false)
+          // DOM 还没有更新
+          setTimeOut(() => {
+             showChild.value = true
+          }, 2000)
+          nextTick(function() {
+            context.refs['child'].showToast()
+          })
+          return {
+            showChild
+          }
+        }
+      })
+  ```
 ## toPureObject
 
 - **参数**：

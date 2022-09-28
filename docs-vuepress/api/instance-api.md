@@ -240,35 +240,34 @@
 ## $nextTick
 * **参数：** 
   * `{Function} callback`
-* **用法：** 
-  
+* **用法：**
   
   将回调延迟到下次 DOM 更新循环之后执行。在修改数据之后立即使用它，然后等待 DOM 更新。**注意：`callback`中`this`并不是绑定当前实例，你可以使用箭头函数避免this指向问题**。
 * **示例：** 
  ``` js
       import {createComponent} from '@mpxjs/core'
-      createComponent({
-      data: {
-        info: {
-          name: 1
+        createComponent({
+        data: {
+          info: {
+            name: 1
+          }
+        },
+        attached () {
+          // 修改数据
+          this.info.name = 2
+          // DOM 还没有更新
+  
+          // this.$nextTick(function() {
+          //   // DOM 现在更新了
+          //   console.log('会在由name变化引起的视图更新之后执行')
+          //   this.doSomthing() // 报错
+          // })
+          this.$nextTick(() => {
+            // DOM 现在更新了
+            console.log('会在由name变化引起的视图更新之后执行')
+            this.doSomthing()
+          })
         }
-      },
-      attached () {
-        // 修改数据
-        this.info.name = 2
-        // DOM 还没有更新
-
-        // this.$nextTick(function() {
-        //   // DOM 现在更新了
-        //   console.log('会在由name变化引起的视图更新之后执行')
-        //   this.doSomthing() // 报错
-        // })
-        this.$nextTick(() => {
-          // DOM 现在更新了
-          console.log('会在由name变化引起的视图更新之后执行')
-          this.doSomthing()
-        })
-      }
       })
   ```
 
