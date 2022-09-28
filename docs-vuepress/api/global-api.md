@@ -53,7 +53,23 @@ mpx.mixin({
 ### injectMixins
 该方法是 `mpx.mixin` 方法的别名，`mpx.injectMixins({})` 等同于 `mpx.mixin({})`
 
+### observable
 
+- **参数**：
+    - `{Object} options`
+
+- **用法**:
+
+用于创建响应式数据。
+
+```js
+import mpx from '@mpxjs/core'
+// 直接通过 mpx 对象访问
+const b = mpx.observable(object)
+```
+- **注意：**
+
+  Mpx 2.8 版本后该 API 等同于 `reactive`，同时不支持具名导出方式，建议直接使用 `reactive` 替代。
 
 ## createApp
 > 注册一个小程序，接受一个 Object 类型的参数
@@ -567,25 +583,6 @@ import mpx, {toPureObject} from '@mpxjs/core'
 // mpx.toPureObject(...)
 const pureObject = toPureObject(object)
 ```
-
-## observable
-
-- **参数**：
-  - `{Object} options`
-
-- **用法**:
-
-用于创建响应式数据，属于 mobx 提供的能力。
-
-```js
-import mpx, {observable} from '@mpxjs/core'
-// mpx.observable(...)
-const a = observable(object)
-// 或者直接通过 mpx 对象访问
-const b = mpx.observable(object)
-```
-- **注意：**
-Mpx 2.8 版本起该 API 将会被废弃，请使用 `reactive` 替代
 
 ## watch
 
