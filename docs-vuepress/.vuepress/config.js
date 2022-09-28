@@ -88,7 +88,15 @@ const sidebar = {
   ],
   '/api/': [
     'default-export',
-    'global-api',
+    {
+      title: '全局 API',
+      children: [
+        'global/application',
+        'global/create-instance',
+        'global/store',
+        'global/general'
+      ]
+    },
     'instance-api',
     'directives',
     'compile',

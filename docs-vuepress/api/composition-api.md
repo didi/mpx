@@ -345,4 +345,33 @@ readonly messages: ComputedRef<{
 检查 key 是否存在。
 
 
+## useFetch
 
+组合式 API 中使用，用来获取 `@mpxjs/fetch` 插件的 xfetch 实例，等用于 `mpx.xfetch`。 关于 xfetch 实例的详细介绍，请点击[查看](/api/extend.html#mpx-fetch)
+
+示例：
+```js
+// app.mpx
+import mpx from '@mpxjs/core'
+import mpxFetch from '@mpxjs/fetch'
+mpx.use(mpxFetch)
+
+// script-setup.mpx
+import { useFetch } from '@mpxjs/core'
+useFetch().fetch({
+  url: 'http://xxx.com',
+  method: 'POST',
+  params: {
+    age: 10
+  },
+  data: {
+    name: 'test'
+  },
+  emulateJSON: true,
+  usePre: true,
+  cacheInvalidationTime: 3000,
+  ignorePreParamKeys: ['timestamp']
+}).then(res => {
+  console.log(res.data)
+})
+```

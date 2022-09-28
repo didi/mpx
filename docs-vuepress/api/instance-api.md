@@ -171,6 +171,7 @@
     })
   ```
 * **参考：** [Mpx.delete](global-api.html#delete)
+
 ## $refs
 * **类型：** `Object`
 * **详细：**
@@ -199,6 +200,7 @@
   ```
 * **参考：**
   [组件 ref](../guide/basic/refs.html)
+
 ## $forceUpdate
 * **参数：** 
   * `{Object} target`
@@ -234,6 +236,7 @@
     }
     })
   ```
+
 ## $nextTick
 * **参数：** 
   * `{Function} callback`
@@ -268,6 +271,7 @@
       }
       })
   ```
+
 ## $i18n
 
 * **用法：** 
@@ -315,7 +319,8 @@
     }
     })
   ```
-  ## $getRenderWatcher
+
+## $getRenderWatcher
 * **返回值**：Watcher 实例
 * **用法：** 
   用来获取组件或者页面的 renderWatcher
@@ -334,6 +339,7 @@ createPage({
   }
 })
   ```
+
 ## $getWatcherByName
 * **参数**：
   - `{string} name` 
@@ -355,7 +361,8 @@ createPage({
   }
 })
   ```
-  ## $getPausableWatchers
+
+## $getPausableWatchers
 * **返回值**：Watcher 实例
 * **用法：** 
   用来获取当前组件或者页面中所有设置了选项 pausable: true 的 Watcher 实例，获取之后可在页面 hide 时调用 watcher.pause() 暂停监听，在页面 show 时调用 watcher.resume() 来恢复监听。
@@ -393,3 +400,7 @@ createPage({
 * **参考：** 
    * [Vue I18n](http://kazupon.github.io/vue-i18n/api/#vue-constructor-options)
    * [国际化i18n](../guide/tool/i18n.html)
+
+
+## $rawOptions
+// todo
