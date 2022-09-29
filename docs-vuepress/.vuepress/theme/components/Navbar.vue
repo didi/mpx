@@ -49,7 +49,7 @@ export default {
       isSidebarOpen: false,
       list: [
         { title: '指南', link: '/guide/basic/start.html' },
-        { title: 'API', link: '/api/config.html' },
+        { title: 'API', link: '/api/default-export.html' },
         { title: '文章', link: '/articles/' },
         { title: '更新记录', link: 'https://github.com/didi/mpx/releases' },
         { title: 'GitHub', link: 'https://github.com/didi/mpx' }

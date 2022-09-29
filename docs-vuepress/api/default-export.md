@@ -1,3 +1,4 @@
+
 # 全局配置
 
 `Mpx.config` 是一个对象，包含 Mpx 的全局配置。可以在启动应用之前修改下列 property：
@@ -87,4 +88,14 @@ Mpx 实例上的 key（包括data、computed、methods）如果有重名冲突�
 ``` javascript
 import mpx from '@mpxjs/core'
 mpx.config.ignoreConflictWhiteList = ['id', 'test']
+```
+
+## config
+Mpx 通过 config 暴露出 webRouteConfig 配置项，在 web 环境可以对路由进行配置
+
+- **用法**:
+```js
+mpx.config.webRouteConfig = {
+  mode: 'history'
+}
 ```
