@@ -125,7 +125,7 @@ type GetComputedSetKeys<T> = {
   } ? K : never
 }[keyof T]
 
-type GetComputedType<T> = {
+export type GetComputedType<T> = {
   readonly [K in Exclude<keyof T, GetComputedSetKeys<T>>]: T[K] extends () => infer R ? R : T[K]
 } & {
     [K in GetComputedSetKeys<T>]: T[K] extends {
@@ -161,14 +161,14 @@ interface DeeperStateAndGetters {
  * you can add a global define file
  * use Declaration Merging(https://www.typescriptlang.org/docs/handbook/declaration-merging.html) on CompatibleDispatch:
  * @example
- * declare module MpxStore {
+ * declare module '@mpxjs/core' {
  *  interface CompatibleDispatch {
  *    dispatch(type: string, ...payload: any[]): any
  *    commit(type: string, ...payload: any[]): any
  *  }
  * }
  */
-interface CompatibleDispatch {
+export interface CompatibleDispatch {
   // dispatch(type: string, ...payload: any[]): any
   // commit(type: string, ...payload: any[]): any
 }
@@ -366,7 +366,7 @@ export function createActionsWithThis<S = {}, G = {}, M extends MutationsAndActi
   getters: GetComputedType<G> & UnboxDepsField<D, 'getters'>,
   dispatch: GetDispatchAndCommitWithThis<A & OA, D, 'actions'>,
   commit: GetDispatchAndCommitWithThis<M, D, 'mutations'>
-} & MpxStore.CompatibleDispatch>, options?: {
+} & CompatibleDispatch>, options?: {
   state?: S,
   getters?: G,
   mutations?: M,

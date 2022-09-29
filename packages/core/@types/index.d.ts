@@ -4,47 +4,32 @@
 // TypeScript Version: 4.1.3
 
 /// <reference types="miniprogram-api-typings" />
-/// <reference path="./mpx-store.d.ts" />
 /// <reference path="./global.d.ts" />
 /// <reference path="./node.d.ts" />
 
 // @ts-ignore
 import VueI18n from 'vue-i18n'
+import {
+  createStore,
+  createStoreWithThis
+} from '@mpxjs/store'
+
+import type { GetComputedType } from '@mpxjs/store'
+
+export * from '@mpxjs/store'
 
 declare module 'vue-i18n' {
   export default interface VueI18n {
     mergeMessages (messages: { [index: string]: VueI18n.LocaleMessageObject }): void;
   }
 }
-// declare Store types
-type StoreOpt<S, G, M, A, D extends MpxStore.Deps> = MpxStore.StoreOpt<S, G, M, A, D>
-
-type Store<S = {}, G = {}, M = {}, A = {}, D extends Deps = {}> = MpxStore.Store<S, G, M, A, D>
-
-type StoreOptWithThis<S, G, M, A, D extends Deps> = MpxStore.StoreOptWithThis<S, G, M, A, D>
-
-type StoreWithThis<S = {}, G = {}, M = {}, A = {}, D extends Deps = {}> = MpxStore.StoreWithThis<S, G, M, A, D>
-
-type UnboxDepsField<D extends Deps, F> = MpxStore.UnboxDepsField<D, F>
-
-type GetComputedType<T> = MpxStore.GetComputedType<T>
-
-type GetDispatchAndCommitWithThis<A, D extends Deps, AK extends 'actions' | 'mutations'> = MpxStore.GetDispatchAndCommitWithThis<A, D, AK>
-
-type MutationsAndActionsWithThis = MpxStore.MutationsAndActionsWithThis
-
-type Actions<S, G extends MpxStore.Getters<S>> = MpxStore.Actions<S, G>
-
-type Mutations<S> = MpxStore.Mutations<S>
-
-type Getters<S> = MpxStore.Getters<S>
-
-type Deps = MpxStore.Deps
 
 // utils
 type ObjectOf<T> = {
   [key: string]: T
 }
+
+type AnyObject = ObjectOf<any>
 
 type UnionToIntersection<U> = (U extends any
   ? (k: U) => void
@@ -182,11 +167,11 @@ type PageOpt<D, P, C, M, Mi extends Array<any>, S extends Record<any, any>> =
   ComponentOpt<D, P, C, M, Mi, S>
   & Partial<WechatMiniprogram.Page.ILifetime>
 
-type ThisTypedPageOpt<D, P, C, M, Mi extends Array<any>, S extends Record<any, any>, O = {}> =
+type ThisTypedPageOpt<D extends AnyObject, P, C, M, Mi extends Array<any>, S extends Record<any, any>, O = {}> =
   PageOpt<D, P, C, M, Mi, S>
   & ThisType<ComponentIns<D, P, C, M, Mi, S, O>> & O
 
-type ThisTypedComponentOpt<D, P, C, M, Mi extends Array<any>, S extends Record<any, any>, O = {}> =
+type ThisTypedComponentOpt<D extends AnyObject, P, C, M, Mi extends Array<any>, S extends Record<any, any>, O = {}> =
   ComponentOpt<D, P, C, M, Mi, S>
   & ThisType<ComponentIns<D, P, C, M, Mi, S, O>> & O
 
@@ -245,12 +230,12 @@ interface ReplaceWxComponentIns {
   selectAllComponents (selector: string): Array<ComponentIns<{}, {}, {}, {}, []>>
 }
 
-type WxComponentIns<D> =
+type WxComponentIns<D extends AnyObject> =
   ReplaceWxComponentIns
   & WechatMiniprogram.Component.InstanceProperties
   & WechatMiniprogram.Component.InstanceMethods<D>
 
-type ComponentIns<D, P, C, M, Mi extends Array<any>, S extends Record<any, any> = {}, O = {}> =
+type ComponentIns<D extends AnyObject, P, C, M, Mi extends Array<any>, S extends Record<any, any> = {}, O = {}> =
   GetDataType<D> & UnboxMixinsField<Mi, 'data'> &
   M & UnboxMixinsField<Mi, 'methods'> & { [K in keyof S]: S[K] extends Ref<infer V> ? V : S[K] } &
   GetPropsType<P & UnboxMixinsField<Mi, 'properties'>> &
@@ -261,9 +246,9 @@ interface CreateConfig {
   customCtor: any
 }
 
-export function createComponent<D extends Data = {}, P extends Properties = {}, C = {}, M extends Methods = {}, Mi extends Array<any> = [], O = {}> (opt: ThisTypedComponentOpt<D, P, C, M, Mi, O>, config?: CreateConfig): void
+export function createComponent<D extends Data = {}, P extends Properties = {}, C = {}, M extends Methods = {}, Mi extends Array<any> = [], S extends AnyObject = {}, O extends AnyObject = {}> (opt: ThisTypedComponentOpt<D, P, C, M, Mi, S, O>, config?: CreateConfig): void
 
-export function getMixin<D extends Data = {}, P extends Properties = {}, C = {}, M extends Methods = {}, Mi extends Array<any> = [], O = {}> (opt: ThisTypedComponentOpt<D, P, C, M, Mi, O>): {
+export function getMixin<D extends Data = {}, P extends Properties = {}, C = {}, M extends Methods = {}, Mi extends Array<any> = [], S extends AnyObject = {}, O extends AnyObject = {}> (opt: ThisTypedComponentOpt<D, P, C, M, Mi, S, O>): {
   data: GetDataType<D> & UnboxMixinsField<Mi, 'data'>
   properties: P & UnboxMixinsField<Mi, 'properties'>
   computed: C & UnboxMixinsField<Mi, 'computed'>
@@ -271,41 +256,9 @@ export function getMixin<D extends Data = {}, P extends Properties = {}, C = {},
   [index: string]: any
 }
 
-export function createPage<D extends Data = {}, P extends Properties = {}, C = {}, M extends Methods = {}, Mi extends Array<any> = [], O = {}> (opt: ThisTypedPageOpt<D, P, C, M, Mi, O>, config?: CreateConfig): void
+export function createPage<D extends Data = {}, P extends Properties = {}, C = {}, M extends Methods = {}, Mi extends Array<any> = [], O extends AnyObject = {}> (opt: ThisTypedPageOpt<D, P, C, M, Mi, O>, config?: CreateConfig): void
 
 export function createApp<T extends WechatMiniprogram.IAnyObject> (opt: WechatMiniprogram.App.Options<T>, config?: CreateConfig): void
-
-export function createStore<S, G extends Getters<S>, M extends Mutations<S>, A extends Actions<S, G>, D extends Deps = {}> (option: StoreOpt<S, G, M, A, D>): Store<S, G, M, A, D>
-
-export function createStoreWithThis<S = {}, G = {}, M extends MutationsAndActionsWithThis = {}, A extends MutationsAndActionsWithThis = {}, D extends Deps = {}> (option: StoreOptWithThis<S, G, M, A, D>): StoreWithThis<S, G, M, A, D>
-
-// auxiliary functions
-export function createStateWithThis<S = {}> (state: S): S
-
-export function createGettersWithThis<S = {}, D extends Deps = {}, G = {}, OG = {}> (getters: G & ThisType<{ state: S & UnboxDepsField<D, 'state'>, getters: GetComputedType<G & OG> & UnboxDepsField<D, 'getters'>, rootState: any }>, options?: {
-  state?: S,
-  getters?: OG,
-  deps?: D
-}): G
-
-export function createMutationsWithThis<S = {}, D extends Deps = {}, M extends MutationsAndActionsWithThis = {}> (mutations: M & ThisType<{ state: S & UnboxDepsField<D, 'state'>, commit: GetDispatchAndCommitWithThis<M, D, 'mutations'> }>, options?: {
-  state?: S,
-  deps?: D
-}): M
-
-export function createActionsWithThis<S = {}, G = {}, M extends MutationsAndActionsWithThis = {}, D extends Deps = {}, A extends MutationsAndActionsWithThis = {}, OA extends MutationsAndActionsWithThis = {}> (actions: A & ThisType<{
-  rootState: any,
-  state: S & UnboxDepsField<D, 'state'>,
-  getters: GetComputedType<G> & UnboxDepsField<D, 'getters'>,
-  dispatch: GetDispatchAndCommitWithThis<A & OA, D, 'actions'>,
-  commit: GetDispatchAndCommitWithThis<M, D, 'mutations'>
-} & MpxStore.CompatibleDispatch>, options?: {
-  state?: S,
-  getters?: G,
-  mutations?: M,
-  actions?: OA,
-  deps?: D
-}): A
 
 type MixinType = 'app' | 'page' | 'component'
 
@@ -703,7 +656,7 @@ export const ONRESIZE: string
 
 declare global {
   const defineProps: <T>(props: T) => Readonly<GetPropsType<T>>
-  const defineOptions: <D extends Data = {}, P extends Properties = {}, C = {}, M extends Methods = {}, Mi extends Array<any> = [], O = {}> (opt: ThisTypedComponentOpt<D, P, C, M, Mi, O>) => void
-  const defineExpose: <E extends Record<string, any> = Record<string, any>>(exposed?: E) => void
+  const defineOptions: <D extends Data = {}, P extends Properties = {}, C = {}, M extends Methods = {}, Mi extends Array<any> = [], S extends AnyObject = {}, O extends AnyObject = {}> (opt: ThisTypedComponentOpt<D, P, C, M, Mi, S, O>) => void
+  const defineExpose: <E extends AnyObject = AnyObject>(exposed?: E) => void
   const useContext: () => Context
 }
