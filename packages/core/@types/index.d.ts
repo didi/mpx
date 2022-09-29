@@ -488,9 +488,8 @@ type WatchCallback<T> = (
 
 type WatchSource<T> =
   | Ref<T> // ref
-  | ComputedRef<T>
-  | Reactive<T>
   | (() => T) // getter
+  | ComputedRef<T>
 
 type MultiWatchSources = (WatchSource<unknown> | object)[]
 
@@ -498,7 +497,7 @@ interface WatchEffectOptions {
   flush?: 'pre' | 'post' | 'sync' // default: 'pre'
 }
 
-interface WatchOptions extends WatchEffectOptions {
+export interface WatchOptions extends WatchEffectOptions {
   immediate?: boolean // 默认：false
   deep?: boolean // 默认：false
   flush?: 'pre' | 'post' | 'sync' // 默认：'pre'
