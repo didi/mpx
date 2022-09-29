@@ -341,6 +341,12 @@ interface ImplementOptions {
 
 export function toPureObject<T extends object> (obj: T): T
 
+declare type PluginInstallFunction = (app: Mpx, ...options: any[]) => any;
+
+export type Plugin = PluginInstallFunction | {
+  install: PluginInstallFunction;
+};
+
 export interface Mpx {
   createComponent: typeof createComponent
   createPage: typeof createPage
@@ -355,7 +361,7 @@ export interface Mpx {
 
   // watch: typeof watch
 
-  use (plugin: ((...args: any) => any) | { install: (...args: any) => any, [key: string]: any }, ...rest: any): Mpx
+  use (plugin: Plugin, ...rest: any[]): Mpx
 
   implement (name: string, options?: ImplementOptions): void
 
@@ -488,9 +494,8 @@ type WatchCallback<T> = (
 
 type WatchSource<T> =
   | Ref<T> // ref
-  | ComputedRef<T>
-  | Reactive<T>
   | (() => T) // getter
+  | ComputedRef<T>
 
 type MultiWatchSources = (WatchSource<unknown> | object)[]
 
@@ -498,7 +503,7 @@ interface WatchEffectOptions {
   flush?: 'pre' | 'post' | 'sync' // default: 'pre'
 }
 
-interface WatchOptions extends WatchEffectOptions {
+export interface WatchOptions extends WatchEffectOptions {
   immediate?: boolean // 默认：false
   deep?: boolean // 默认：false
   flush?: 'pre' | 'post' | 'sync' // 默认：'pre'
