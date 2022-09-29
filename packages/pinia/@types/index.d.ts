@@ -1,12 +1,4 @@
-import { Mpx } from '@mpxjs/core';
-import type { ComputedRef } from '@mpxjs/core';
-import type { Plugin as Plugin_2 } from '@mpxjs/core';
-import { Ref } from '@mpxjs/core';
-import { ToRefs } from '@mpxjs/core';
-import { UnwrapRef } from '@mpxjs/core';
-import type { WatchOptions } from '@mpxjs/core';
-
-
+import type { Mpx, ComputedRef, Plugin as Plugin_2, Ref, ToRefs, UnwrapRef, WatchOptions } from '@mpxjs/core'
 
 /**
  * Type of an object of Actions. For internal usage only.
@@ -809,7 +801,7 @@ export declare type SubscriptionCallback<S> = (
  * Object with information relative to the store mutation that triggered the
  * subscription.
  */
-mutation: SubscriptionCallbackMutation<S>, 
+mutation: SubscriptionCallbackMutation<S>,
 /**
  * State of the store when the subscription is triggered. Same as
  * `store.$state`.

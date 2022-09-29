@@ -5,6 +5,8 @@ import {
   isObject
 } from '@mpxjs/utils'
 
+import { computed } from '@mpxjs/core'
+
 function normalizeMap (prefix, arr) {
   if (typeof prefix !== 'string') {
     arr = prefix
@@ -81,37 +83,53 @@ function checkMapInstance (args) {
 }
 
 export default function (store) {
+  const mapState = mapFactory('state', store)
+  const mapGetters = mapFactory('getters', store)
+  const mapMutations = mapFactory('mutations', store)
+  const mapActions = mapFactory('actions', store)
+
   return {
-    mapGetters: mapFactory('getters', store),
-    mapMutations: mapFactory('mutations', store),
-    mapActions: mapFactory('actions', store),
-    mapState: mapFactory('state', store),
-    // 以下是map**ToInstance用于异步store的,参数args：depPath, maps, context
+    mapState,
+    mapGetters,
+    mapMutations,
+    mapActions,
+    // map*ToRefs用于组合式API解构获取响应式数据
+    mapStateToRefs: (...args) => {
+      const result = {}
+      Object.entries(mapState(...args)).forEach(([key, value]) => {
+        result[key] = computed(value)
+      })
+      return result
+    },
+    mapGettersToRefs: (...args) => {
+      const result = {}
+      Object.entries(mapGetters(...args)).forEach(([key, value]) => {
+        result[key] = computed(value)
+      })
+      return result
+    },
+    // 以下是map*ToInstance用于异步store的,参数args：depPath, maps, context
     mapStateToInstance: (...args) => {
       const { context, restParams } = checkMapInstance(args)
-      const mapStateFun = mapFactory('state', store)
-      const result = mapStateFun(...restParams)
+      const result = mapState(...restParams)
       // 将result挂载到mpxProxy实例属性上
       context.__mpxProxy.options.computed = context.__mpxProxy.options.computed || {}
       Object.assign(context.__mpxProxy.options.computed, result)
     },
     mapGettersToInstance: (...args) => {
       const { context, restParams } = checkMapInstance(args)
-      const mapGetFun = mapFactory('getters', store)
-      const result = mapGetFun(...restParams)
+      const result = mapGetters(...restParams)
       context.__mpxProxy.options.computed = context.__mpxProxy.options.computed || {}
       Object.assign(context.__mpxProxy.options.computed, result)
     },
     mapMutationsToInstance: (...args) => {
       const { context, restParams } = checkMapInstance(args)
-      const mapMutationFun = mapFactory('mutations', store)
-      const result = mapMutationFun(...restParams)
+      const result = mapMutations(...restParams)
       Object.assign(context, result)
     },
     mapActionsToInstance: (...args) => {
       const { context, restParams } = checkMapInstance(args)
-      const mapActionFun = mapFactory('actions', store)
-      const result = mapActionFun(...restParams)
+      const result = mapActions(...restParams)
       Object.assign(context, result)
     }
   }

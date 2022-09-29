@@ -1,4 +1,8 @@
+import type { ComputedRef } from '@mpxjs/core'
+
 type UnboxDepField<D, F> = F extends keyof D ? D[F] : {}
+
+type GetReturnOrSelf<T> = T extends (...args: any)=> infer R ? R : T
 
 interface compContext {
   __mpxProxy: object;
@@ -102,6 +106,25 @@ interface Store<S = {}, G = {}, M = {}, A = {}, D extends Deps = {}> {
   mapActions(depPath: string, maps: string[]): {
     [key: string]: (...payloads: any[]) => any
   }
+
+  // 组合式 API
+  mapStateToRefs<K extends keyof S>(maps: K[]): {
+    [I in K]: ComputedRef<S[I]>
+  }
+  mapStateToRefs(depPath: string, maps: string[]): object
+
+  // mapState support object
+  mapStateToRefs<T extends { [key: string]: keyof GetAllMapKeys<S, D, StateSymbol> }>(obj: T): {
+    [I in keyof T]: ComputedRef<GetAllMapKeys<S, D, StateSymbol>[T[I]]>
+  }
+
+  mapGettersToRefs<K extends keyof G>(maps: K[]): {
+    [I in K]: ComputedRef<GetGetters<G>[I]>
+  }
+  mapGettersToRefs(depPath: string, maps: string[]): {
+    [key: string]: ComputedRef<any>
+  }
+
   // 下面是新增的异步store的接口类型
   mapStateToInstance<K extends keyof S>(maps: K[], context: compContext): void
   mapStateToInstance(depPath: string, maps: string[], context: compContext): void
@@ -301,6 +324,47 @@ interface IStoreWithThis<S = {}, G = {}, M = {}, A = {}, D extends Deps = {}> {
   mapActions<T extends { [key: string]: string }>(obj: T): {
     [I in keyof T]: (...payloads: any[]) => any
   }
+
+  // 组合式 API
+  mapStateToRefs<K extends keyof S>(maps: K[]): {
+    [I in K]: ComputedRef<S[I]>
+  }
+  mapStateToRefs<T extends string, P extends string>(depPath: P, maps: readonly T[]): {
+    [K in T]: ComputedRef<CombineStringKey<P, K> extends keyof GetAllMapKeys<S, D, StateSymbol> ? GetAllMapKeys<S, D, StateSymbol>[CombineStringKey<P, K>] : any>
+  }
+  mapStateToRefs<T extends mapStateFunctionType<S & UnboxDepsField<D, 'state'>, GetComputedType<G> & UnboxDepsField<D, 'getters'>>>(obj: ThisType<any> & T): {
+    [I in keyof T]: ComputedRef<ReturnType<T[I]>>
+  }
+  // Support chain derivation
+  mapStateToRefs<T extends { [key: string]: keyof GetAllMapKeys<S, D, StateSymbol> }>(obj: T): {
+    [I in keyof T]: ComputedRef<GetAllMapKeys<S, D, StateSymbol>[T[I]]>
+  }
+  mapStateToRefs<T extends { [key: string]: keyof S }>(obj: T): {
+    [I in keyof T]: ComputedRef<S[T[I]]>
+  }
+  mapStateToRefs<T extends { [key: string]: string }>(obj: T): {
+    [I in keyof T]: ComputedRef<any>
+  }
+
+  mapGettersToRefs<K extends keyof G>(maps: K[]): {
+    [I in K]: ComputedRef<GetReturnOrSelf<G[I]>>
+  }
+  mapGettersToRefs<T extends string, P extends string>(depPath: P, maps: readonly T[]): {
+    // use GetComputedType to get getters' returns
+    [K in T]: ComputedRef<CombineStringKey<P, K> extends keyof GetAllMapKeys<GetComputedType<G>, D, GettersSymbol> ? GetAllMapKeys<GetComputedType<G>, D, GettersSymbol>[CombineStringKey<P, K>] : any>
+  }
+  // Support chain derivation
+  mapGettersToRefs<T extends { [key: string]: keyof GetAllMapKeys<GetComputedType<G>, D, GettersSymbol> }>(obj: T): {
+    [I in keyof T]: ComputedRef<GetAllMapKeys<GetComputedType<G>, D, GettersSymbol>[T[I]]>
+  }
+  mapGettersToRefs<T extends { [key: string]: keyof G }>(obj: T): {
+    [I in keyof T]: ComputedRef<GetReturnOrSelf<G[T[I]]>>
+  }
+  // When importing js in ts file, use this method to be compatible
+  mapGettersToRefs<T extends { [key: string]: string }>(obj: T): {
+    [I in keyof T]: ComputedRef<any>
+  }
+
   // 异步store api
   mapStateToInstance<K extends keyof S>(maps: K[], context: compContext): void
   mapStateToInstance<T extends string, P extends string>(depPath: P, maps: readonly T[], context: compContext): void
@@ -339,8 +403,6 @@ interface StoreOpt<S, G, M, A, D extends Deps> {
   deps?: D
   modules?: Record<string, StoreOpt<{}, {}, {}, {}, {}>>
 }
-
-
 
 export function createStore<S, G extends Getters<S>, M extends Mutations<S>, A extends Actions<S, G>, D extends Deps = {}>(option: StoreOpt<S, G, M, A, D>): Store<S, G, M, A, D>
 

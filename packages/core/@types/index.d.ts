@@ -4,7 +4,6 @@
 // TypeScript Version: 4.1.3
 
 /// <reference types="miniprogram-api-typings" />
-/// <reference path="./mpx-store.d.ts" />
 /// <reference path="./global.d.ts" />
 /// <reference path="./node.d.ts" />
 
@@ -16,30 +15,10 @@ declare module 'vue-i18n' {
     mergeMessages (messages: { [index: string]: VueI18n.LocaleMessageObject }): void;
   }
 }
-// declare Store types
-type StoreOpt<S, G, M, A, D extends MpxStore.Deps> = MpxStore.StoreOpt<S, G, M, A, D>
+// @ts-ignore
+export * from '@mpxjs/store'
 
-type Store<S = {}, G = {}, M = {}, A = {}, D extends Deps = {}> = MpxStore.Store<S, G, M, A, D>
-
-type StoreOptWithThis<S, G, M, A, D extends Deps> = MpxStore.StoreOptWithThis<S, G, M, A, D>
-
-type StoreWithThis<S = {}, G = {}, M = {}, A = {}, D extends Deps = {}> = MpxStore.StoreWithThis<S, G, M, A, D>
-
-type UnboxDepsField<D extends Deps, F> = MpxStore.UnboxDepsField<D, F>
-
-type GetComputedType<T> = MpxStore.GetComputedType<T>
-
-type GetDispatchAndCommitWithThis<A, D extends Deps, AK extends 'actions' | 'mutations'> = MpxStore.GetDispatchAndCommitWithThis<A, D, AK>
-
-type MutationsAndActionsWithThis = MpxStore.MutationsAndActionsWithThis
-
-type Actions<S, G extends MpxStore.Getters<S>> = MpxStore.Actions<S, G>
-
-type Mutations<S> = MpxStore.Mutations<S>
-
-type Getters<S> = MpxStore.Getters<S>
-
-type Deps = MpxStore.Deps
+import type { GetComputedType } from '@mpxjs/store'
 
 // utils
 type ObjectOf<T> = {
@@ -275,38 +254,6 @@ export function createPage<D extends Data = {}, P extends Properties = {}, C = {
 
 export function createApp<T extends WechatMiniprogram.IAnyObject> (opt: WechatMiniprogram.App.Options<T>, config?: CreateConfig): void
 
-export function createStore<S, G extends Getters<S>, M extends Mutations<S>, A extends Actions<S, G>, D extends Deps = {}> (option: StoreOpt<S, G, M, A, D>): Store<S, G, M, A, D>
-
-export function createStoreWithThis<S = {}, G = {}, M extends MutationsAndActionsWithThis = {}, A extends MutationsAndActionsWithThis = {}, D extends Deps = {}> (option: StoreOptWithThis<S, G, M, A, D>): StoreWithThis<S, G, M, A, D>
-
-// auxiliary functions
-export function createStateWithThis<S = {}> (state: S): S
-
-export function createGettersWithThis<S = {}, D extends Deps = {}, G = {}, OG = {}> (getters: G & ThisType<{ state: S & UnboxDepsField<D, 'state'>, getters: GetComputedType<G & OG> & UnboxDepsField<D, 'getters'>, rootState: any }>, options?: {
-  state?: S,
-  getters?: OG,
-  deps?: D
-}): G
-
-export function createMutationsWithThis<S = {}, D extends Deps = {}, M extends MutationsAndActionsWithThis = {}> (mutations: M & ThisType<{ state: S & UnboxDepsField<D, 'state'>, commit: GetDispatchAndCommitWithThis<M, D, 'mutations'> }>, options?: {
-  state?: S,
-  deps?: D
-}): M
-
-export function createActionsWithThis<S = {}, G = {}, M extends MutationsAndActionsWithThis = {}, D extends Deps = {}, A extends MutationsAndActionsWithThis = {}, OA extends MutationsAndActionsWithThis = {}> (actions: A & ThisType<{
-  rootState: any,
-  state: S & UnboxDepsField<D, 'state'>,
-  getters: GetComputedType<G> & UnboxDepsField<D, 'getters'>,
-  dispatch: GetDispatchAndCommitWithThis<A & OA, D, 'actions'>,
-  commit: GetDispatchAndCommitWithThis<M, D, 'mutations'>
-} & MpxStore.CompatibleDispatch>, options?: {
-  state?: S,
-  getters?: G,
-  mutations?: M,
-  actions?: OA,
-  deps?: D
-}): A
-
 type MixinType = 'app' | 'page' | 'component'
 
 export function injectMixins (mixins: object | Array<object>, options?: MixinType | MixinType[] | { types?: MixinType | MixinType[], stage?: number }): void
@@ -322,12 +269,12 @@ interface AnyConstructor {
 interface MpxConfig {
   useStrictDiff: boolean
   ignoreWarning: boolean | string | RegExp | ((msg: string, location: string, e: Error) => boolean)
-  ignoreConflictWhiteList: Array<string>
+  ignoreProxyWhiteList: Array<string>
   observeClassInstance: boolean | Array<AnyConstructor>
-  hookErrorHandler: (e: Error, target: ComponentIns<{}, {}, {}, {}, []>, hookName: string) => any | null
+  errorHandler: (e: Error, target: ComponentIns<{}, {}, {}, {}, []>, hookName: string) => any | null
   proxyEventHandler: (e: Event) => any | null
   setDataHandler: (data: object, target: ComponentIns<{}, {}, {}, {}, []>) => any | null
-  forceRunWatcherSync: boolean,
+  forceFlushSync: boolean,
   webRouteConfig: object
 }
 
@@ -348,11 +295,6 @@ export type Plugin = PluginInstallFunction | {
 };
 
 export interface Mpx {
-  createComponent: typeof createComponent
-  createPage: typeof createPage
-  createApp: typeof createApp
-  createStore: typeof createStore
-  createStoreWithThis: typeof createStoreWithThis
   getMixin: typeof getMixin
   mixin: typeof injectMixins
   injectMixins: typeof injectMixins
