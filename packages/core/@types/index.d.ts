@@ -10,20 +10,22 @@
 // @ts-ignore
 import VueI18n from 'vue-i18n'
 
+import type { GetComputedType } from '@mpxjs/store'
+
+export * from '@mpxjs/store'
+
 declare module 'vue-i18n' {
   export default interface VueI18n {
     mergeMessages (messages: { [index: string]: VueI18n.LocaleMessageObject }): void;
   }
 }
-// @ts-ignore
-export * from '@mpxjs/store'
-
-import type { GetComputedType } from '@mpxjs/store'
 
 // utils
 type ObjectOf<T> = {
   [key: string]: T
 }
+
+type AnyObject = ObjectOf<any>
 
 type UnionToIntersection<U> = (U extends any
   ? (k: U) => void
@@ -161,11 +163,11 @@ type PageOpt<D, P, C, M, Mi extends Array<any>, S extends Record<any, any>> =
   ComponentOpt<D, P, C, M, Mi, S>
   & Partial<WechatMiniprogram.Page.ILifetime>
 
-type ThisTypedPageOpt<D, P, C, M, Mi extends Array<any>, S extends Record<any, any>, O = {}> =
+type ThisTypedPageOpt<D extends AnyObject, P, C, M, Mi extends Array<any>, S extends Record<any, any>, O = {}> =
   PageOpt<D, P, C, M, Mi, S>
   & ThisType<ComponentIns<D, P, C, M, Mi, S, O>> & O
 
-type ThisTypedComponentOpt<D, P, C, M, Mi extends Array<any>, S extends Record<any, any>, O = {}> =
+type ThisTypedComponentOpt<D extends AnyObject, P, C, M, Mi extends Array<any>, S extends Record<any, any>, O = {}> =
   ComponentOpt<D, P, C, M, Mi, S>
   & ThisType<ComponentIns<D, P, C, M, Mi, S, O>> & O
 
@@ -224,12 +226,12 @@ interface ReplaceWxComponentIns {
   selectAllComponents (selector: string): Array<ComponentIns<{}, {}, {}, {}, []>>
 }
 
-type WxComponentIns<D> =
+type WxComponentIns<D extends AnyObject> =
   ReplaceWxComponentIns
   & WechatMiniprogram.Component.InstanceProperties
   & WechatMiniprogram.Component.InstanceMethods<D>
 
-type ComponentIns<D, P, C, M, Mi extends Array<any>, S extends Record<any, any> = {}, O = {}> =
+type ComponentIns<D extends AnyObject, P, C, M, Mi extends Array<any>, S extends Record<any, any> = {}, O = {}> =
   GetDataType<D> & UnboxMixinsField<Mi, 'data'> &
   M & UnboxMixinsField<Mi, 'methods'> & { [K in keyof S]: S[K] extends Ref<infer V> ? V : S[K] } &
   GetPropsType<P & UnboxMixinsField<Mi, 'properties'>> &
@@ -240,9 +242,9 @@ interface CreateConfig {
   customCtor: any
 }
 
-export function createComponent<D extends Data = {}, P extends Properties = {}, C = {}, M extends Methods = {}, Mi extends Array<any> = [], O = {}> (opt: ThisTypedComponentOpt<D, P, C, M, Mi, O>, config?: CreateConfig): void
+export function createComponent<D extends Data = {}, P extends Properties = {}, C = {}, M extends Methods = {}, Mi extends Array<any> = [], S extends AnyObject = {}, O extends AnyObject = {}> (opt: ThisTypedComponentOpt<D, P, C, M, Mi, S, O>, config?: CreateConfig): void
 
-export function getMixin<D extends Data = {}, P extends Properties = {}, C = {}, M extends Methods = {}, Mi extends Array<any> = [], O = {}> (opt: ThisTypedComponentOpt<D, P, C, M, Mi, O>): {
+export function getMixin<D extends Data = {}, P extends Properties = {}, C = {}, M extends Methods = {}, Mi extends Array<any> = [], S extends AnyObject = {}, O extends AnyObject = {}> (opt: ThisTypedComponentOpt<D, P, C, M, Mi, S, O>): {
   data: GetDataType<D> & UnboxMixinsField<Mi, 'data'>
   properties: P & UnboxMixinsField<Mi, 'properties'>
   computed: C & UnboxMixinsField<Mi, 'computed'>
@@ -250,7 +252,7 @@ export function getMixin<D extends Data = {}, P extends Properties = {}, C = {},
   [index: string]: any
 }
 
-export function createPage<D extends Data = {}, P extends Properties = {}, C = {}, M extends Methods = {}, Mi extends Array<any> = [], O = {}> (opt: ThisTypedPageOpt<D, P, C, M, Mi, O>, config?: CreateConfig): void
+export function createPage<D extends Data = {}, P extends Properties = {}, C = {}, M extends Methods = {}, Mi extends Array<any> = [], O extends AnyObject = {}> (opt: ThisTypedPageOpt<D, P, C, M, Mi, O>, config?: CreateConfig): void
 
 export function createApp<T extends WechatMiniprogram.IAnyObject> (opt: WechatMiniprogram.App.Options<T>, config?: CreateConfig): void
 
@@ -645,7 +647,7 @@ export const ONRESIZE: string
 
 declare global {
   const defineProps: <T>(props: T) => Readonly<GetPropsType<T>>
-  const defineOptions: <D extends Data = {}, P extends Properties = {}, C = {}, M extends Methods = {}, Mi extends Array<any> = [], O = {}> (opt: ThisTypedComponentOpt<D, P, C, M, Mi, O>) => void
-  const defineExpose: <E extends Record<string, any> = Record<string, any>>(exposed?: E) => void
+  const defineOptions: <D extends Data = {}, P extends Properties = {}, C = {}, M extends Methods = {}, Mi extends Array<any> = [], S extends AnyObject = {}, O extends AnyObject = {}> (opt: ThisTypedComponentOpt<D, P, C, M, Mi, S, O>) => void
+  const defineExpose: <E extends AnyObject = AnyObject>(exposed?: E) => void
   const useContext: () => Context
 }
