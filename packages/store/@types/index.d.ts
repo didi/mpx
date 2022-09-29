@@ -51,11 +51,21 @@ type GetDispatch<A, D> = keyof D extends never ? (<T extends keyof A>(type: T, .
 
 type GetCommit<M, D> = keyof D extends never ? (<T extends keyof M>(type: T, ...payload: M[T] extends (state: any, ...payload: infer P) => any ? P : never) => M[T] extends (state: any, ...payload: any[]) => infer R ? R : never) : ((type: string, ...payload: any[]) => any)
 
+
+// do not exist in tip
+declare const DEPS_SYMBOL: unique symbol;
+declare const STATE_SYMBOL: unique symbol;
+declare const GETTERS_SYMBOL: unique symbol;
+
+type DepsSymbol = typeof DEPS_SYMBOL
+type StateSymbol = typeof STATE_SYMBOL
+type GettersSymbol = typeof GETTERS_SYMBOL
+
 interface Store<S = {}, G = {}, M = {}, A = {}, D extends Deps = {}> {
 
-  __deps: D
-  __state: S
-  __getters: GetGetters<G>
+  [DEPS_SYMBOL]: D
+  [STATE_SYMBOL]: S
+  [GETTERS_SYMBOL]: GetGetters<G>
 
   state: S & UnboxDepsField<D, 'state'>
   getters: GetGetters<G> & UnboxDepsField<D, 'getters'>
@@ -72,8 +82,8 @@ interface Store<S = {}, G = {}, M = {}, A = {}, D extends Deps = {}> {
   mapState(depPath: string, maps: string[]): object
 
   // mapState support object
-  mapState<T extends { [key: string]: keyof GetAllMapKeys<S, D, 'state'> }>(obj: T): {
-    [I in keyof T]: () => GetAllMapKeys<S, D, 'state'>[T[I]]
+  mapState<T extends { [key: string]: keyof GetAllMapKeys<S, D, StateSymbol> }>(obj: T): {
+    [I in keyof T]: () => GetAllMapKeys<S, D, StateSymbol>[T[I]]
   }
 
   mapGetters<K extends keyof G>(maps: K[]): {
@@ -97,7 +107,7 @@ interface Store<S = {}, G = {}, M = {}, A = {}, D extends Deps = {}> {
   mapStateToInstance(depPath: string, maps: string[], context: compContext): void
 
   // mapState support object
-  mapStateToInstance<T extends { [key: string]: keyof GetAllMapKeys<S, D, 'state'> }>(obj: T, context: compContext): void
+  mapStateToInstance<T extends { [key: string]: keyof GetAllMapKeys<S, D, StateSymbol> }>(obj: T, context: compContext): void
 
   mapGettersToInstance<K extends keyof G>(maps: K[], context: compContext): void
   mapGettersToInstance(depPath: string, maps: string[], context: compContext): void
@@ -174,13 +184,13 @@ type GetActionsKey<A, P extends string | number = ''> = UnionToIntersection<{
   }[CombineStringKey<P, K>]
 }[StringKeyof<A>]> // {actA: () => void, storeB.actB: () => void}
 
-type GetStateAndGettersKey<D extends Deps, DK extends keyof D, T extends 'state' | 'getters', P extends string | number = ''> = UnionToIntersection<{
-  [K in StringKeyof<D[DK][`__${T}`]>]: {
-    [RK in CombineStringKey<P, K>]: D[DK][`__${T}`][K]
+type GetStateAndGettersKey<D extends Deps, DK extends keyof D, T extends StateSymbol | GettersSymbol, P extends string | number = ''> = UnionToIntersection<{
+  [K in StringKeyof<D[DK][T]>]: {
+    [RK in CombineStringKey<P, K>]: D[DK][T][K]
   }
-}[StringKeyof<D[DK][`__${T}`]>] | {
-  [K in StringKeyof<D[DK]['__deps']>]: GetStateAndGettersKey<D[DK]['__deps'], K, T, CombineStringKey<P, K>>
-}[StringKeyof<D[DK]['__deps']>]>
+}[StringKeyof<D[DK][T]>] | {
+  [K in StringKeyof<D[DK][DepsSymbol]>]: GetStateAndGettersKey<D[DK][DepsSymbol], K, T, CombineStringKey<P, K>>
+}[StringKeyof<D[DK][DepsSymbol]>]>
 
 // type GetStateAndGettersKey<S, P extends string | number = ''> = UnionToIntersection<{
 //   [K in StringKeyof<S>]: {
@@ -188,12 +198,12 @@ type GetStateAndGettersKey<D extends Deps, DK extends keyof D, T extends 'state'
 //   }[CombineStringKey<P, K>]
 // }[StringKeyof<S>]> // {stateA: any, storeB.stateB: any}
 
-type GetAllDepsType<A, D extends Deps, AK extends 'state' | 'getters' | 'actions' | 'mutations'> = {
+type GetAllDepsType<A, D extends Deps, AK extends StateSymbol | GettersSymbol | 'actions' | 'mutations'> = {
   [K in StringKeyof<A>]: A[K]
 } & UnionToIntersection<{
   [K in StringKeyof<D>]: AK extends 'actions' | 'mutations' ? {
     [P in keyof GetActionsKey<D[K][AK], K>]: GetActionsKey<D[K][AK], K>[P]
-  } : AK extends 'state' | 'getters' ? { // state, getters
+  } : AK extends StateSymbol | GettersSymbol ? { // state, getters
     [P in keyof GetStateAndGettersKey<D, K, AK, K>]: GetStateAndGettersKey<D, K, AK, K>[P]
     // [P in keyof GetStateAndGettersKey<D[K][AK], K>]: GetStateAndGettersKey<D[K][AK], K>[P]
   } : {}
@@ -201,7 +211,7 @@ type GetAllDepsType<A, D extends Deps, AK extends 'state' | 'getters' | 'actions
 type GetDispatchAndCommitWithThis<A, D extends Deps, AK extends 'actions' | 'mutations'> = (<T extends keyof GetAllDepsType<A, D, AK>>(type: T, ...payload: GetAllDepsType<A, D, AK>[T] extends (...payload: infer P) => any ? P : never) => GetAllDepsType<A, D, AK>[T] extends (...payload: any[]) => infer R ? R : never)
 
 // type GetAllMapKeys<S, D extends Deps, SK extends 'state' | 'getters'> = GetAllDepsType<S, D, SK> & GetStateAndGettersKey<S>
-type GetAllMapKeys<S, D extends Deps, SK extends 'state' | 'getters'> = GetAllDepsType<S, D, SK> // 关闭对state、getters本身传入对象的深层次推导，因为过深的递归会导致ts推导直接挂掉
+type GetAllMapKeys<S, D extends Deps, SK extends StateSymbol | GettersSymbol> = GetAllDepsType<S, D, SK> // 关闭对state、getters本身传入对象的深层次推导，因为过深的递归会导致ts推导直接挂掉
 
 interface StoreOptWithThis<S, G, M, A, D extends Deps> {
   state?: S
@@ -220,9 +230,9 @@ interface StoreOptWithThis<S, G, M, A, D extends Deps> {
 
 interface IStoreWithThis<S = {}, G = {}, M = {}, A = {}, D extends Deps = {}> {
 
-  __deps: D
-  __state: S
-  __getters: GetComputedType<G>
+  [DEPS_SYMBOL]: D
+  [STATE_SYMBOL]: S
+  [GETTERS_SYMBOL]: GetComputedType<G>
 
   state: S & UnboxDepsField<D, 'state'>
   getters: GetComputedType<G> & UnboxDepsField<D, 'getters'>
@@ -237,14 +247,14 @@ interface IStoreWithThis<S = {}, G = {}, M = {}, A = {}, D extends Deps = {}> {
     [I in K]: () => S[I]
   }
   mapState<T extends string, P extends string>(depPath: P, maps: readonly T[]): {
-    [K in T]: () => (CombineStringKey<P, K> extends keyof GetAllMapKeys<S, D, 'state'> ? GetAllMapKeys<S, D, 'state'>[CombineStringKey<P, K>] : any)
+    [K in T]: () => (CombineStringKey<P, K> extends keyof GetAllMapKeys<S, D, StateSymbol> ? GetAllMapKeys<S, D, StateSymbol>[CombineStringKey<P, K>] : any)
   }
   mapState<T extends mapStateFunctionType<S & UnboxDepsField<D, 'state'>, GetComputedType<G> & UnboxDepsField<D, 'getters'>>>(obj: ThisType<any> & T): {
     [I in keyof T]: () => ReturnType<T[I]>
   }
   // Support chain derivation
-  mapState<T extends { [key: string]: keyof GetAllMapKeys<S, D, 'state'> }>(obj: T): {
-    [I in keyof T]: () => GetAllMapKeys<S, D, 'state'>[T[I]]
+  mapState<T extends { [key: string]: keyof GetAllMapKeys<S, D, StateSymbol> }>(obj: T): {
+    [I in keyof T]: () => GetAllMapKeys<S, D, StateSymbol>[T[I]]
   }
   mapState<T extends { [key: string]: keyof S }>(obj: T): {
     [I in keyof T]: () => S[T[I]]
@@ -256,11 +266,11 @@ interface IStoreWithThis<S = {}, G = {}, M = {}, A = {}, D extends Deps = {}> {
   mapGetters<K extends keyof G>(maps: K[]): Pick<G, K>
   mapGetters<T extends string, P extends string>(depPath: P, maps: readonly T[]): {
     // use GetComputedType to get getters' returns
-    [K in T]: () => (CombineStringKey<P, K> extends keyof GetAllMapKeys<GetComputedType<G>, D, 'getters'> ? GetAllMapKeys<GetComputedType<G>, D, 'getters'>[CombineStringKey<P, K>] : any)
+    [K in T]: () => (CombineStringKey<P, K> extends keyof GetAllMapKeys<GetComputedType<G>, D, GettersSymbol> ? GetAllMapKeys<GetComputedType<G>, D, GettersSymbol>[CombineStringKey<P, K>] : any)
   }
   // Support chain derivation
-  mapGetters<T extends { [key: string]: keyof GetAllMapKeys<GetComputedType<G>, D, 'getters'> }>(obj: T): {
-    [I in keyof T]: () => GetAllMapKeys<GetComputedType<G>, D, 'getters'>[T[I]]
+  mapGetters<T extends { [key: string]: keyof GetAllMapKeys<GetComputedType<G>, D, GettersSymbol> }>(obj: T): {
+    [I in keyof T]: () => GetAllMapKeys<GetComputedType<G>, D, GettersSymbol>[T[I]]
   }
   mapGetters<T extends { [key: string]: keyof G }>(obj: T): {
     [I in keyof T]: G[T[I]]
@@ -296,14 +306,14 @@ interface IStoreWithThis<S = {}, G = {}, M = {}, A = {}, D extends Deps = {}> {
   mapStateToInstance<T extends string, P extends string>(depPath: P, maps: readonly T[], context: compContext): void
   mapStateToInstance<T extends mapStateFunctionType<S & UnboxDepsField<D, 'state'>, GetComputedType<G> & UnboxDepsField<D, 'getters'>>>(obj: ThisType<any> & T, context: compContext): void
   // Support chain derivation
-  mapStateToInstance<T extends { [key: string]: keyof GetAllMapKeys<S, D, 'state'> }>(obj: T, context: compContext): void
+  mapStateToInstance<T extends { [key: string]: keyof GetAllMapKeys<S, D, StateSymbol> }>(obj: T, context: compContext): void
   mapStateToInstance<T extends { [key: string]: keyof S }>(obj: T, context: compContext): void
   mapStateToInstance<T extends { [key: string]: string }>(obj: T, context: compContext): void
 
   mapGettersToInstance<K extends keyof G>(maps: K[], context: compContext): void
   mapGettersToInstance<T extends string, P extends string>(depPath: P, maps: readonly T[], context: compContext): void
   // Support chain derivation
-  mapGettersToInstance<T extends { [key: string]: keyof GetAllMapKeys<GetComputedType<G>, D, 'getters'> }>(obj: T, context: compContext): void
+  mapGettersToInstance<T extends { [key: string]: keyof GetAllMapKeys<GetComputedType<G>, D, GettersSymbol> }>(obj: T, context: compContext): void
   mapGettersToInstance<T extends { [key: string]: keyof G }>(obj: T, context: compContext): void
   // When importing js in ts file, use this method to be compatible
   mapGettersToInstance<T extends { [key: string]: string }>(obj: T, context: compContext): void
@@ -363,3 +373,6 @@ export function createActionsWithThis<S = {}, G = {}, M extends MutationsAndActi
   actions?: OA,
   deps?: D
 }): A
+
+// use this to avoid symbol export
+export { }
