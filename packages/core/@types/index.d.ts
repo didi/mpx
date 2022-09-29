@@ -9,10 +9,6 @@
 
 // @ts-ignore
 import VueI18n from 'vue-i18n'
-import {
-  createStore,
-  createStoreWithThis
-} from '@mpxjs/store'
 
 import type { GetComputedType } from '@mpxjs/store'
 
@@ -275,12 +271,12 @@ interface AnyConstructor {
 interface MpxConfig {
   useStrictDiff: boolean
   ignoreWarning: boolean | string | RegExp | ((msg: string, location: string, e: Error) => boolean)
-  ignoreConflictWhiteList: Array<string>
+  ignoreProxyWhiteList: Array<string>
   observeClassInstance: boolean | Array<AnyConstructor>
-  hookErrorHandler: (e: Error, target: ComponentIns<{}, {}, {}, {}, []>, hookName: string) => any | null
+  errorHandler: (e: Error, target: ComponentIns<{}, {}, {}, {}, []>, hookName: string) => any | null
   proxyEventHandler: (e: Event) => any | null
   setDataHandler: (data: object, target: ComponentIns<{}, {}, {}, {}, []>) => any | null
-  forceRunWatcherSync: boolean,
+  forceFlushSync: boolean,
   webRouteConfig: object
 }
 
@@ -301,11 +297,6 @@ export type Plugin = PluginInstallFunction | {
 };
 
 export interface Mpx {
-  createComponent: typeof createComponent
-  createPage: typeof createPage
-  createApp: typeof createApp
-  createStore: typeof createStore
-  createStoreWithThis: typeof createStoreWithThis
   getMixin: typeof getMixin
   mixin: typeof injectMixins
   injectMixins: typeof injectMixins

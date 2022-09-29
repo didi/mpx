@@ -1,7 +1,7 @@
 import builtInKeysMap from '../builtInKeysMap'
 import mergeOptions from '../../../core/mergeOptions'
 import { diffAndCloneA } from '@mpxjs/utils'
-import { getCurrentInstance as getVueCurrentInstance } from '../../export/index'
+import { getCurrentInstance as getCurrentVueInstance } from '../../export/index'
 import MpxProxy, { setCurrentInstance, unsetCurrentInstance } from '../../../core/proxy'
 import { BEFOREUPDATE, UPDATED, BEFOREUNMOUNT, UNMOUNTED } from '../../../core/innerLifecycle'
 
@@ -37,7 +37,7 @@ export function getDefaultOptions (type, { rawOptions = {} }) {
   const rawSetup = rawOptions.setup
   if (rawSetup) {
     rawOptions.setup = (props) => {
-      const instance = getVueCurrentInstance().proxy
+      const instance = getCurrentVueInstance().proxy
       initProxy(instance, rawOptions)
       setCurrentInstance(instance.__mpxProxy)
       const newContext = {
