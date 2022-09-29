@@ -1,4 +1,6 @@
+import { Mpx } from '@mpxjs/core';
 import type { ComputedRef } from '@mpxjs/core';
+import type { Plugin as Plugin_2 } from '@mpxjs/core';
 import { Ref } from '@mpxjs/core';
 import { ToRefs } from '@mpxjs/core';
 import { UnwrapRef } from '@mpxjs/core';
@@ -15,6 +17,11 @@ export declare type _ActionsTree = Record<string, _Method>;
 export declare type _Awaited<T> = T extends null | undefined ? T : T extends object & {
     then(onfulfilled: infer F): any;
 } ? F extends (value: infer V, ...args: any) => any ? _Awaited<V> : never : T;
+
+/**
+ * Creates a Pinia instance to be used by the application
+ */
+export declare function createPinia(): Pinia;
 
 /**
  * Recursive `Partial<T>`. Used by {@link Store['$patch']}.
@@ -440,10 +447,17 @@ export declare enum MutationType {
  * Every application must own its own pinia to be able to create stores
  */
 export declare interface Pinia {
+    install: (app: Mpx) => void;
     /**
      * root state
      */
     state: Ref<Record<string, StateTree>>;
+    /**
+     * Adds a store plugin to extend every store
+     *
+     * @param plugin - store plugin to add
+     */
+    use(plugin: PiniaPlugin): Pinia;
     /* Excluded from this release type: _p */
     /* Excluded from this release type: _a */
     /* Excluded from this release type: _e */
@@ -463,6 +477,70 @@ export declare interface PiniaCustomProperties<Id extends string = string, S ext
 export declare interface PiniaCustomStateProperties<S extends StateTree = StateTree> {
 }
 
+/**
+ * Plugin to extend every store.
+ */
+export declare interface PiniaPlugin {
+    /**
+     * Plugin to extend every store. Returns an object to extend the store or
+     * nothing.
+     *
+     * @param context - Context
+     */
+    (context: PiniaPluginContext): Partial<PiniaCustomProperties & PiniaCustomStateProperties> | void;
+}
+
+/**
+ * Context argument passed to Pinia plugins.
+ */
+export declare interface PiniaPluginContext<Id extends string = string, S extends StateTree = StateTree, G = _GettersTree<S>, A = _ActionsTree> {
+    /**
+     * pinia instance.
+     */
+    pinia: Pinia;
+    /**
+     * Current app created with `Vue.createApp()`.
+     */
+    app: Mpx;
+    /**
+     * Current store being extended.
+     */
+    store: Store<Id, S, G, A>;
+    /**
+     * Initial options defining the store when calling `defineStore()`.
+     */
+    options: DefineStoreOptionsInPlugin<Id, S, G, A>;
+}
+
+/**
+ * Plugin to extend every store.
+ * @deprecated use PiniaPlugin instead
+ */
+export declare type PiniaStorePlugin = PiniaPlugin;
+
+/**
+ * Vue 2 Plugin that must be installed for pinia to work. Note **you don't need
+ * this plugin if you are using Nuxt.js**. Use the `buildModule` instead:
+ * https://pinia.vuejs.org/ssr/nuxt.html.
+ *
+ * @example
+ * ```js
+ * import Vue from 'vue'
+ * import { PiniaVuePlugin, createPinia } from 'pinia'
+ *
+ * Vue.use(PiniaVuePlugin)
+ * const pinia = createPinia()
+ *
+ * new Vue({
+ *   el: '#app',
+ *   // ...
+ *   pinia,
+ * })
+ * ```
+ *
+ * @param _Vue - `Vue` imported from 'vue'.
+ */
+export declare const PiniaVuePlugin: Plugin_2;
 
 /**
  * Sets or unsets the active pinia. Used in SSR and internally when calling
