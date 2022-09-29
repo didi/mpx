@@ -207,6 +207,8 @@ export default class MpxProxy {
     if (this.options.__type__ === 'page' && !this.options.__pageCtor__) {
       proxy(this.target, this.options, this.options.mpxCustomKeysForBlend, false, this.createProxyConflictHandler('page options'))
     }
+    // 挂载$rawOptions
+    this.target.$rawOptions = this.options
     if (__mpx_mode__ !== 'web') {
       // 挂载$watch
       this.target.$watch = this.watch.bind(this)
