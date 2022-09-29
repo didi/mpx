@@ -1,3 +1,10 @@
+import {
+  effectScope as vueEffectScope,
+  getCurrentScope as getCurrentVueScope,
+  onScopeDispose,
+  getCurrentInstance as getCurrentVueInstance
+} from 'vue'
+
 export {
   // watch
   watchEffect,
@@ -24,13 +31,6 @@ export {
   computed
 } from 'vue'
 
-// effectScope
-import {
-  effectScope as vueEffectScope,
-  getCurrentScope as getCurrentVueScope,
-  onScopeDispose,
-} from 'vue'
-
 const noop = () => {
 }
 
@@ -47,9 +47,6 @@ export {
   getCurrentScope,
   onScopeDispose
 }
-
-// instance
-import { getCurrentInstance as getCurrentVueInstance } from 'vue'
 
 const getCurrentInstance = () => getCurrentVueInstance()?.__mpxProxy
 
