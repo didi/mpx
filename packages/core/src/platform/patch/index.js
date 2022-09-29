@@ -4,7 +4,7 @@ import { getDefaultOptions as getWxDefaultOptions } from './wx/getDefaultOptions
 import { getDefaultOptions as getAliDefaultOptions } from './ali/getDefaultOptions'
 import { getDefaultOptions as getSwanDefaultOptions } from './swan/getDefaultOptions'
 import { getDefaultOptions as getWebDefaultOptions } from './web/getDefaultOptions'
-import { error } from '../../helper/log'
+import { error } from '@mpxjs/utils'
 
 export default function createFactory (type) {
   return (options, { isNative, customCtor, customCtorType } = {}) => {
@@ -58,7 +58,8 @@ export default function createFactory (type) {
     rawOptions.mixins = getBuiltInMixins(rawOptions, type)
     const defaultOptions = getDefaultOptions(type, { rawOptions, currentInject })
     if (__mpx_mode__ === 'web') {
-      global.currentOption = defaultOptions
+      global.__mpxOptionsMap = global.__mpxOptionsMap || {}
+      global.__mpxOptionsMap[global.currentModuleId] = defaultOptions
     } else if (ctor) {
       return ctor(defaultOptions)
     }

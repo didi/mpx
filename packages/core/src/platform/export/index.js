@@ -11,7 +11,8 @@ export {
   isReactive,
   shallowReactive,
   set,
-  del
+  del,
+  markRaw
 } from '../../observer/reactive'
 
 export {

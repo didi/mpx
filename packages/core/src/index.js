@@ -1,26 +1,20 @@
 import Vue from './vue'
-import { diffAndCloneA, makeMap, hasOwn } from './helper/utils'
-import { error } from './helper/log'
+import { error, diffAndCloneA, hasOwn, makeMap } from '@mpxjs/utils'
 import { APIs, InstanceAPIs } from './platform/export/api'
 
 import { createI18n } from './platform/builtInMixins/i18nMixin'
 
 export * from './platform/export/index'
 
+export * from '@mpxjs/store'
+
+export { implement } from './core/implement'
+
 export {
   createApp,
   createPage,
   createComponent
 } from './platform/index'
-
-export {
-  createStore,
-  createStoreWithThis,
-  createStateWithThis,
-  createGettersWithThis,
-  createMutationsWithThis,
-  createActionsWithThis
-} from './core/createStore'
 
 export {
   nextTick
@@ -51,7 +45,15 @@ export {
   onLoad,
   onShow,
   onHide,
-  onResize
+  onResize,
+  onPullDownRefresh,
+  onReachBottom,
+  onShareAppMessage,
+  onShareTimeline,
+  onAddToFavorites,
+  onPageScroll,
+  onTabItemTap,
+  onSaveExitState
 } from './core/proxy'
 
 export { getMixin } from './core/mergeOptions'
@@ -89,19 +91,19 @@ function use (plugin, options = {}) {
   }
 
   const args = [options]
-  const proxyMPX = factory()
-  const rawProps = Object.getOwnPropertyNames(proxyMPX)
-  const rawPrototypeProps = Object.getOwnPropertyNames(proxyMPX.prototype)
-  args.unshift(proxyMPX)
+  const proxyMpx = factory()
+  const rawProps = Object.getOwnPropertyNames(proxyMpx)
+  const rawPrototypeProps = Object.getOwnPropertyNames(proxyMpx.prototype)
+  args.unshift(proxyMpx)
   // 传入真正的mpx对象供插件访问
-  args.push(EXPORT_MPX)
+  args.push(Mpx)
   if (typeof plugin.install === 'function') {
     plugin.install.apply(plugin, args)
   } else if (typeof plugin === 'function') {
     plugin.apply(null, args)
   }
-  extendProps(EXPORT_MPX, proxyMPX, rawProps, options)
-  extendProps(EXPORT_MPX.prototype, proxyMPX.prototype, rawPrototypeProps, options)
+  extendProps(Mpx, proxyMpx, rawProps, options)
+  extendProps(Mpx.prototype, proxyMpx.prototype, rawPrototypeProps, options)
   installedPlugins.push(plugin)
   return this
 }
@@ -110,21 +112,21 @@ APIs.use = use
 
 function factory () {
   // 作为原型挂载属性的中间层
-  function MPX () {
+  function Mpx () {
   }
 
-  Object.assign(MPX, APIs)
-  Object.assign(MPX.prototype, InstanceAPIs)
+  Object.assign(Mpx, APIs)
+  Object.assign(Mpx.prototype, InstanceAPIs)
   // 输出web时在mpx上挂载Vue对象
   if (__mpx_mode__ === 'web') {
-    MPX.__vue = Vue
+    Mpx.__vue = Vue
   }
-  return MPX
+  return Mpx
 }
 
-const EXPORT_MPX = factory()
+const Mpx = factory()
 
-EXPORT_MPX.config = {
+Mpx.config = {
   useStrictDiff: false,
   ignoreWarning: false,
   ignoreProxyWhiteList: ['id', 'dataset', 'data'],
@@ -136,12 +138,12 @@ EXPORT_MPX.config = {
   webRouteConfig: {}
 }
 
-global.__mpx = EXPORT_MPX
+global.__mpx = Mpx
 
 if (__mpx_mode__ !== 'web') {
   if (global.i18n) {
-    EXPORT_MPX.i18n = createI18n(global.i18n)
+    Mpx.i18n = createI18n(global.i18n)
   }
 }
 
-export default EXPORT_MPX
+export default Mpx

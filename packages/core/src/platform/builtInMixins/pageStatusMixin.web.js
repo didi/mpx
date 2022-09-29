@@ -4,8 +4,7 @@ import {
   ONSHOW,
   ONLOAD
 } from '../../core/innerLifecycle'
-import { isBrowser } from '../../helper/env'
-import { isFunction } from '../../helper/utils'
+import { isFunction, isBrowser } from '@mpxjs/utils'
 
 let systemInfo = {}
 

@@ -15,39 +15,39 @@ const MPX_CORE = '@mpxjs/core'
 
 const BindingTypes = {
   /**
-     * declared as a prop
-     */
+   * declared as a prop
+   */
   PROPS: 'props',
   /**
-     * a local alias of a `<script setup>` destructured prop.
-     * the original is stored in __propsAliases of the bindingMetadata object.
-     */
+   * a local alias of a `<script setup>` destructured prop.
+   * the original is stored in __propsAliases of the bindingMetadata object.
+   */
   PROPS_ALIASED: 'props-aliased',
   /**
-     * a let binding (may or may not be a ref)
-     */
+   * a let binding (may or may not be a ref)
+   */
   SETUP_LET: 'setup-let',
   /**
-     * a const binding that can never be a ref.
-     * these bindings don't need `unref()` calls when processed in inlined
-     * template expressions.
-     */
+   * a const binding that can never be a ref.
+   * these bindings don't need `unref()` calls when processed in inlined
+   * template expressions.
+   */
   SETUP_CONST: 'setup-const',
   /**
-     * a const binding that does not need `unref()`, but may be mutated.
-     */
+   * a const binding that does not need `unref()`, but may be mutated.
+   */
   SETUP_REACTIVE_CONST: 'setup-reactive-const',
   /**
-     * a const binding that may be a ref.
-     */
+   * a const binding that may be a ref.
+   */
   SETUP_MAYBE_REF: 'setup-maybe-ref',
   /**
-     * bindings that are guaranteed to be refs
-     */
+   * bindings that are guaranteed to be refs
+   */
   SETUP_REF: 'setup-ref',
   /**
-     * declared by other options, e.g. computed, inject
-     */
+   * declared by other options, e.g. computed, inject
+   */
   OPTIONS: 'options'
 }
 
@@ -80,8 +80,8 @@ function compileScriptSetup (
 
   const scriptSetupLang = scriptSetup && scriptSetup.lang
   const isTS =
-        scriptSetupLang === 'ts' ||
-        scriptSetupLang === 'tsx'
+    scriptSetupLang === 'ts' ||
+    scriptSetupLang === 'tsx'
   const plugins = []
 
   if (isTS) plugins.push('typescript', 'decorators-legacy')
@@ -181,16 +181,16 @@ function compileScriptSetup (
     propsRuntimeDecl = node.arguments[0]
 
     /**
-         * defineProps<{
-         *   foo: string
-         *   bar?: number
-         * }>()
-         */
+     * defineProps<{
+     *   foo: string
+     *   bar?: number
+     * }>()
+     */
     if (node.typeParameters) {
       if (propsRuntimeDecl) {
         error(
           `${DEFINE_PROPS}() cannot accept both type and non-type arguments ` +
-                    'at the same time. Use one or the other.',
+          'at the same time. Use one or the other.',
           node
         )
       }
@@ -204,7 +204,7 @@ function compileScriptSetup (
       if (!propsTypeDecl) {
         error(
           `type argument passed to ${DEFINE_PROPS}() must be a literal type, ` +
-                    'or a reference to an interface or literal type.',
+          'or a reference to an interface or literal type.',
           propsTypeDeclRaw
         )
       }
@@ -225,14 +225,14 @@ function compileScriptSetup (
       if (propsRuntimeDecl) {
         error(
           `${WITH_DEFAULTS} can only be used with type-based ` +
-                    `${DEFINE_PROPS} declaration.`,
+          `${DEFINE_PROPS} declaration.`,
           node
         )
       }
       propsRuntimeDefaults = node.arguments[1]
       if (
         !propsRuntimeDefaults ||
-                propsRuntimeDefaults.type !== 'ObjectExpression'
+        propsRuntimeDefaults.type !== 'ObjectExpression'
       ) {
         error(
           `The 2nd argument of ${WITH_DEFAULTS} must be an object literal.`,
@@ -282,12 +282,12 @@ function compileScriptSetup (
   function hasStaticWithDefaults () {
     return (
       propsRuntimeDefaults &&
-            propsRuntimeDefaults.type === 'ObjectExpression' &&
-            propsRuntimeDefaults.properties.every(
-              node =>
-                (node.type === 'ObjectProperty' && !node.computed) ||
-                    node.type === 'ObjectMethod'
-            )
+      propsRuntimeDefaults.type === 'ObjectExpression' &&
+      propsRuntimeDefaults.properties.every(
+        node =>
+          (node.type === 'ObjectProperty' && !node.computed) ||
+          node.type === 'ObjectMethod'
+      )
     )
   }
 
@@ -300,32 +300,32 @@ function compileScriptSetup (
     const scriptSetupSource = content
     const propsDecls = `{
     ${keys.map(key => {
-    let defaultString
-    if (hasStaticDefaults) {
-      const prop = propsRuntimeDefaults.properties.find(
-        node => node.key.name === key
-      )
-      if (prop) {
-        if (prop.type === 'ObjectProperty') {
-          defaultString = `value: ${scriptSetupSource.slice(
-            prop.value.start,
-            prop.value.end
-          )}`
+      let defaultString
+      if (hasStaticDefaults) {
+        const prop = propsRuntimeDefaults.properties.find(
+          node => node.key.name === key
+        )
+        if (prop) {
+          if (prop.type === 'ObjectProperty') {
+            defaultString = `value: ${scriptSetupSource.slice(
+              prop.value.start,
+              prop.value.end
+            )}`
+          }
         }
       }
-    }
-    const { type } = props[key]
-    const propRuntimeTypes = toRuntimeTypeString(type)
-    if (propRuntimeTypes.optionalTypes) {
-      return `${key}: { type: ${propRuntimeTypes.type}, optionalTypes: ${propRuntimeTypes.optionalTypes}${
-        defaultString ? `, ${defaultString}` : ''
-      } }`
-    } else {
-      return `${key}: { type: ${propRuntimeTypes.type}${
-        defaultString ? `, ${defaultString}` : null
-      } }`
-    }
-  }).join(',\n    ')}
+      const { type } = props[key]
+      const propRuntimeTypes = toRuntimeTypeString(type)
+      if (propRuntimeTypes.optionalTypes) {
+        return `${key}: { type: ${propRuntimeTypes.type}, optionalTypes: ${propRuntimeTypes.optionalTypes}${
+          defaultString ? `, ${defaultString}` : ''
+          } }`
+      } else {
+        return `${key}: { type: ${propRuntimeTypes.type}${
+          defaultString ? `, ${defaultString}` : null
+          } }`
+      }
+    }).join(',\n    ')}
     }`
 
     return `\n  properties: ${propsDecls},`
@@ -337,8 +337,8 @@ function compileScriptSetup (
       if (setupBindings[id.name]) {
         error(
           `\`${method}()\` in <script setup> cannot reference locally ` +
-                    'declared variables because it will be hoisted outside of the ' +
-                    'setup() function.',
+          'declared variables because it will be hoisted outside of the ' +
+          'setup() function.',
           id
         )
       }
@@ -360,7 +360,7 @@ function compileScriptSetup (
     // 定位comment，例如 var a= 1; // a为属性
     if (node.trailingComments && node.trailingComments.length > 0) {
       const lastCommentNode =
-                node.trailingComments[node.trailingComments.length - 1]
+        node.trailingComments[node.trailingComments.length - 1]
       end = lastCommentNode.end + startOffset
     }
 
@@ -415,8 +415,8 @@ function compileScriptSetup (
             specifier.local.name,
             imported,
             node.importKind === 'type' ||
-                        (specifier.type === 'ImportSpecifier' &&
-                            specifier.importKind === 'type'),
+            (specifier.type === 'ImportSpecifier' &&
+              specifier.importKind === 'type'),
             true
           )
         }
@@ -431,9 +431,9 @@ function compileScriptSetup (
     if (node.type === 'ExpressionStatement') {
       if (
         processDefineProps(node.expression) ||
-                processDefineOptions(node.expression) ||
-                processDefineExpose(node.expression) ||
-                processWithDefaults(node.expression)
+        processDefineOptions(node.expression) ||
+        processDefineExpose(node.expression) ||
+        processWithDefaults(node.expression)
       ) {
         _s.remove(node.start, node.end)
       }
@@ -472,9 +472,9 @@ function compileScriptSetup (
     // walk declarations to record declared bindings
     if (
       (node.type === 'VariableDeclaration' ||
-                node.type === 'FunctionDeclaration' ||
-                node.type === 'ClassDeclaration') &&
-            !node.declare
+        node.type === 'FunctionDeclaration' ||
+        node.type === 'ClassDeclaration') &&
+      !node.declare
     ) {
       walkDeclaration(node, setupBindings, userImportAlias)
     }
@@ -484,7 +484,7 @@ function compileScriptSetup (
     // { await someFunc ()}
     if (
       (node.type === 'VariableDeclaration' && !node.declare) ||
-            node.type.endsWith('Statement')
+      node.type.endsWith('Statement')
     ) {
       const scope = [scriptSetupAst.body]
       traverse(node, {
@@ -509,8 +509,8 @@ function compileScriptSetup (
 
     if (
       (node.type === 'ExportNamedDeclaration' && node.exportKind !== 'type') ||
-            node.type === 'ExportAllDeclaration' ||
-            node.type === 'ExportDefaultDeclaration'
+      node.type === 'ExportAllDeclaration' ||
+      node.type === 'ExportDefaultDeclaration'
     ) {
       error(
         '<script setup> cannot contain ES module exports. ',
@@ -522,9 +522,9 @@ function compileScriptSetup (
     if (isTS) {
       if (
         node.type.startsWith('TS') ||
-                (node.type === 'ExportNamedDeclaration' &&
-                    node.exportKind === 'type') ||
-                (node.type === 'VariableDeclaration' && node.declare)
+        (node.type === 'ExportNamedDeclaration' &&
+          node.exportKind === 'type') ||
+        (node.type === 'VariableDeclaration' && node.declare)
       ) {
         recordType(node, declaredTypes)
         _s.move(node.start, node.end, 0)
@@ -555,7 +555,7 @@ function compileScriptSetup (
       startOffset,
       `\nconst ${propsIdentifier} = __props${
         propsTypeDecl ? ' as any' : ''
-      }\n`)
+        }\n`)
   }
   // args 添加 __context
   args += `, __context${isTS ? ': any' : ''}`
@@ -620,11 +620,11 @@ function isCallOf (
 ) {
   return !!(
     node &&
-        node.type === 'CallExpression' &&
-        node.callee.type === 'Identifier' &&
-        (typeof test === 'string'
-          ? node.callee.name === test
-          : test(node.callee.name))
+    node.type === 'CallExpression' &&
+    node.callee.type === 'Identifier' &&
+    (typeof test === 'string'
+      ? node.callee.name === test
+      : test(node.callee.name))
   )
 }
 
@@ -681,10 +681,10 @@ function walkDeclaration (
     for (const { id, init } of node.declarations) {
       const isDefineCall = !!(
         isConst &&
-                isCallOf(
-                  init,
-                  isCompilerMacro
-                )
+        isCallOf(
+          init,
+          isCompilerMacro
+        )
       )
       if (id.type === 'Identifier') {
         let bindingType
@@ -696,7 +696,7 @@ function walkDeclaration (
             : BindingTypes.SETUP_LET
         } else if (
           isDefineCall ||
-                    (isConst && canNeverBeRef(init, userReactiveBinding))
+          (isConst && canNeverBeRef(init, userReactiveBinding))
         ) {
           bindingType = isCallOf(init, DEFINE_PROPS)
             ? BindingTypes.SETUP_REACTIVE_CONST
@@ -725,8 +725,8 @@ function walkDeclaration (
     }
   } else if (
     node.type === 'TSEnumDeclaration' ||
-        node.type === 'FunctionDeclaration' ||
-        node.type === 'ClassDeclaration'
+    node.type === 'FunctionDeclaration' ||
+    node.type === 'ClassDeclaration'
   ) {
     bindings[node.id.name] = BindingTypes.SETUP_CONST
   }
@@ -831,7 +831,7 @@ function extractRuntimeProps (
   for (const m of members) {
     if (
       (m.type === 'TSPropertySignature' || m.type === 'TSMethodSignature') &&
-            m.key.type === 'Identifier'
+      m.key.type === 'Identifier'
     ) {
       let type
       if (m.type === 'TSMethodSignature') {
@@ -935,18 +935,18 @@ function walkIdentifiers (
   knownIds = Object.create(null)
 ) {
   const rootExp =
-        root.type === 'Program' &&
-        root.body[0].type === 'ExpressionStatement' &&
-        root.body[0].expression
+    root.type === 'Program' &&
+    root.body[0].type === 'ExpressionStatement' &&
+    root.body[0].expression
   traverse(root, {
     enter (path) {
       const { node, parent } = path
       if (
         parent &&
-                parent.type.startsWith('TS') &&
-                parent.type !== 'TSAsExpression' &&
-                parent.type !== 'TSNonNullExpression' &&
-                parent.type !== 'TSTypeAssertion'
+        parent.type.startsWith('TS') &&
+        parent.type !== 'TSAsExpression' &&
+        parent.type !== 'TSNonNullExpression' &&
+        parent.type !== 'TSTypeAssertion'
       ) {
         return path.skip()
       }
@@ -958,7 +958,7 @@ function walkIdentifiers (
         }
       } else if (
         node.type === 'ObjectProperty' &&
-                parent.type === 'ObjectPattern'
+        parent.type === 'ObjectPattern'
       ) {
         node.inPattern = true
       } else if (isFunctionType(node)) {
@@ -1027,7 +1027,7 @@ function walkBlockDeclarations (
       }
     } else if (
       stmt.type === 'FunctionDeclaration' ||
-            stmt.type === 'ClassDeclaration'
+      stmt.type === 'ClassDeclaration'
     ) {
       if (stmt.declare || !stmt.id) continue
       onIndent(stmt.id)
@@ -1118,7 +1118,7 @@ function isInDestructureAssignment (
 ) {
   if (
     parent &&
-        (parent.type === 'ObjectProperty' || parent.type === 'ArrayPattern')
+    (parent.type === 'ObjectProperty' || parent.type === 'ArrayPattern')
   ) {
     let i = parentStack.length
     while (i--) {
@@ -1151,16 +1151,9 @@ function getCtor (ctorType) {
 }
 
 module.exports = function (content) {
-  const nativeCallback = this.async()
-  const mpx = this.getMpx()
-
-  if (!mpx) {
-    return nativeCallback(null, content)
-  }
   const { queryObj } = parseRequest(this.resource)
   const { ctorType, lang } = queryObj
   const filePath = this.resourcePath
-
   const { content: callbackContent } = compileScriptSetup({
     content,
     lang

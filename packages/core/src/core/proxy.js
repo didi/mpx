@@ -4,28 +4,30 @@ import { effectScope } from '../platform/export/index'
 import { watch } from '../observer/watch'
 import { computed } from '../observer/computed'
 import { queueJob, nextTick } from '../observer/scheduler'
-import EXPORT_MPX from '../index'
+import Mpx from '../index'
 import {
-  type,
   noop,
-  proxy,
+  type,
+  isFunction,
+  isObject,
   isEmptyObject,
   isPlainObject,
-  processUndefined,
-  setByPath,
+  doGetByPath,
   getByPath,
+  setByPath,
   diffAndCloneA,
-  preProcessRenderData,
-  mergeData,
-  aIsSubPathOfB,
-  getFirstKey,
-  makeMap,
   hasOwn,
-  isObject,
-  isFunction,
-  isString
-} from '../helper/utils'
-import _getByPath from '../helper/getByPath'
+  proxy,
+  makeMap,
+  isString,
+  aIsSubPathOfB,
+  mergeData,
+  processUndefined,
+  getFirstKey,
+  callWithErrorHandling,
+  warn,
+  error
+} from '@mpxjs/utils'
 import {
   BEFORECREATE,
   CREATED,
@@ -40,8 +42,6 @@ import {
   ONHIDE,
   ONRESIZE
 } from './innerLifecycle'
-import { warn, error } from '../helper/log'
-import { callWithErrorHandling } from '../helper/errorHandling'
 
 let uid = 0
 
@@ -58,6 +58,38 @@ class RenderTask {
   }
 }
 
+/**
+ * process renderData, remove sub node if visit parent node already
+ * @param {Object} renderData
+ * @return {Object} processedRenderData
+ */
+function preProcessRenderData (renderData) {
+  // method for get key path array
+  const processKeyPathMap = (keyPathMap) => {
+    const keyPath = Object.keys(keyPathMap)
+    return keyPath.filter((keyA) => {
+      return keyPath.every((keyB) => {
+        if (keyA.startsWith(keyB) && keyA !== keyB) {
+          const nextChar = keyA[keyB.length]
+          if (nextChar === '.' || nextChar === '[') {
+            return false
+          }
+        }
+        return true
+      })
+    })
+  }
+
+  const processedRenderData = {}
+  const renderDataFinalKey = processKeyPathMap(renderData)
+  Object.keys(renderData).forEach(item => {
+    if (renderDataFinalKey.indexOf(item) > -1) {
+      processedRenderData[item] = renderData[item]
+    }
+  })
+  return processedRenderData
+}
+
 export default class MpxProxy {
   constructor (options, target, reCreated) {
     this.target = target
@@ -67,7 +99,7 @@ export default class MpxProxy {
     this.options = options
     // beforeCreate -> created -> mounted -> unmounted
     this.state = BEFORECREATE
-    this.ignoreProxyMap = makeMap(EXPORT_MPX.config.ignoreProxyWhiteList)
+    this.ignoreProxyMap = makeMap(Mpx.config.ignoreProxyWhiteList)
     // 收集setup中动态注册的hooks，小程序与web环境都需要
     this.hooks = {}
     if (__mpx_mode__ !== 'web') {
@@ -170,7 +202,7 @@ export default class MpxProxy {
 
   initApi () {
     // 挂载扩展属性到实例上
-    proxy(this.target, EXPORT_MPX.prototype, undefined, true, this.createProxyConflictHandler('mpx.prototype'))
+    proxy(this.target, Mpx.prototype, undefined, true, this.createProxyConflictHandler('mpx.prototype'))
     // 挂载混合模式下createPage中的自定义属性，模拟原生Page构造器的表现
     if (this.options.__type__ === 'page' && !this.options.__pageCtor__) {
       proxy(this.target, this.options, this.options.mpxCustomKeysForBlend, false, this.createProxyConflictHandler('page options'))
@@ -355,7 +387,7 @@ export default class MpxProxy {
           clone = localClone
           if (diff) {
             this.miniRenderData[key] = clone
-            if (diffData && EXPORT_MPX.config.useStrictDiff) {
+            if (diffData && Mpx.config.useStrictDiff) {
               this.processRenderDataWithDiffData(result, key, diffData)
             } else {
               result[key] = clone
@@ -376,12 +408,12 @@ export default class MpxProxy {
             const subPath = aIsSubPathOfB(key, tarKey)
             if (subPath) {
               // setByPath 更新miniRenderData中的子数据
-              _getByPath(this.miniRenderData[tarKey], subPath, (current, subKey, meta) => {
+              doGetByPath(this.miniRenderData[tarKey], subPath, (current, subKey, meta) => {
                 if (meta.isEnd) {
                   const { clone, diff, diffData } = diffAndCloneA(data, current[subKey])
                   if (diff) {
                     current[subKey] = clone
-                    if (diffData && EXPORT_MPX.config.useStrictDiff) {
+                    if (diffData && Mpx.config.useStrictDiff) {
                       this.processRenderDataWithDiffData(result, key, diffData)
                     } else {
                       result[key] = clone
@@ -403,7 +435,7 @@ export default class MpxProxy {
               const { clone, diff, diffData } = diffAndCloneA(data, localInitialData)
               this.miniRenderData[key] = clone
               if (diff) {
-                if (diffData && EXPORT_MPX.config.useStrictDiff) {
+                if (diffData && Mpx.config.useStrictDiff) {
                   this.processRenderDataWithDiffData(result, key, diffData)
                 } else {
                   result[key] = clone
@@ -461,9 +493,9 @@ export default class MpxProxy {
       }
     }
     data = processUndefined(data)
-    if (typeof EXPORT_MPX.config.setDataHandler === 'function') {
+    if (typeof Mpx.config.setDataHandler === 'function') {
       try {
-        EXPORT_MPX.config.setDataHandler(data, this.target)
+        Mpx.config.setDataHandler(data, this.target)
       } catch (e) {
       }
     }
@@ -581,3 +613,11 @@ export const onLoad = createHook(ONLOAD)
 export const onShow = createHook(ONSHOW)
 export const onHide = createHook(ONHIDE)
 export const onResize = createHook(ONRESIZE)
+export const onPullDownRefresh = createHook('__onPullDownRefresh__')
+export const onReachBottom = createHook('__onReachBottom__')
+export const onShareAppMessage = createHook('__onShareAppMessage__')
+export const onShareTimeline = createHook('__onShareTimeline__')
+export const onAddToFavorites = createHook('__onAddToFavorites__')
+export const onPageScroll = createHook('__onPageScroll__')
+export const onTabItemTap = createHook('__onTabItemTap__')
+export const onSaveExitState = createHook('__onSaveExitState__')

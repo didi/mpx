@@ -1,11 +1,18 @@
-import { warn } from '../helper/log'
 import { ReactiveEffect } from './effect'
 import { isRef } from './ref'
 import { isReactive } from './reactive'
 import { queuePreFlushCb, queuePostFlushCb } from './scheduler'
-import { callWithErrorHandling } from '../helper/errorHandling'
 import { currentInstance } from '../core/proxy'
-import { isFunction, isObject, isArray, noop, remove, isPlainObject } from '../helper/utils'
+import {
+  noop,
+  isFunction,
+  isObject,
+  isPlainObject,
+  warn,
+  isArray,
+  remove,
+  callWithErrorHandling
+} from '@mpxjs/utils'
 
 export function watchEffect (effect, options) {
   return watch(effect, null, options)
@@ -46,7 +53,7 @@ export function watch (source, cb, options = {}) {
   } else if (isArray(source)) {
     isMultiSource = true
     getter = () =>
-      source.forEach(s => {
+      source.map(s => {
         if (isRef(s)) {
           return s.value
         } else if (isReactive(s)) {
@@ -55,6 +62,7 @@ export function watch (source, cb, options = {}) {
           return callWithErrorHandling(s, instance, 'watch getter')
         } else {
           warnInvalidSource(s)
+          return s
         }
       })
   } else if (isFunction(source)) {

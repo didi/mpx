@@ -171,6 +171,7 @@
     })
   ```
 * **参考：** [Mpx.delete](global-api.html#delete)
+
 ## $refs
 * **类型：** `Object`
 * **详细：**
@@ -199,6 +200,7 @@
   ```
 * **参考：**
   [组件 ref](../guide/basic/refs.html)
+
 ## $forceUpdate
 * **参数：** 
   * `{Object} target`
@@ -234,40 +236,41 @@
     }
     })
   ```
+
 ## $nextTick
 * **参数：** 
   * `{Function} callback`
-* **用法：** 
-  
+* **用法：**
   
   将回调延迟到下次 DOM 更新循环之后执行。在修改数据之后立即使用它，然后等待 DOM 更新。**注意：`callback`中`this`并不是绑定当前实例，你可以使用箭头函数避免this指向问题**。
 * **示例：** 
  ``` js
       import {createComponent} from '@mpxjs/core'
-      createComponent({
-      data: {
-        info: {
-          name: 1
+        createComponent({
+        data: {
+          info: {
+            name: 1
+          }
+        },
+        attached () {
+          // 修改数据
+          this.info.name = 2
+          // DOM 还没有更新
+  
+          // this.$nextTick(function() {
+          //   // DOM 现在更新了
+          //   console.log('会在由name变化引起的视图更新之后执行')
+          //   this.doSomthing() // 报错
+          // })
+          this.$nextTick(() => {
+            // DOM 现在更新了
+            console.log('会在由name变化引起的视图更新之后执行')
+            this.doSomthing()
+          })
         }
-      },
-      attached () {
-        // 修改数据
-        this.info.name = 2
-        // DOM 还没有更新
-
-        // this.$nextTick(function() {
-        //   // DOM 现在更新了
-        //   console.log('会在由name变化引起的视图更新之后执行')
-        //   this.doSomthing() // 报错
-        // })
-        this.$nextTick(() => {
-          // DOM 现在更新了
-          console.log('会在由name变化引起的视图更新之后执行')
-          this.doSomthing()
-        })
-      }
       })
   ```
+
 ## $i18n
 
 * **用法：** 
@@ -315,7 +318,8 @@
     }
     })
   ```
-  ## $getRenderWatcher
+
+## $getRenderWatcher
 * **返回值**：Watcher 实例
 * **用法：** 
   用来获取组件或者页面的 renderWatcher
@@ -334,6 +338,7 @@ createPage({
   }
 })
   ```
+
 ## $getWatcherByName
 * **参数**：
   - `{string} name` 
@@ -355,7 +360,8 @@ createPage({
   }
 })
   ```
-  ## $getPausableWatchers
+
+## $getPausableWatchers
 * **返回值**：Watcher 实例
 * **用法：** 
   用来获取当前组件或者页面中所有设置了选项 pausable: true 的 Watcher 实例，获取之后可在页面 hide 时调用 watcher.pause() 暂停监听，在页面 show 时调用 watcher.resume() 来恢复监听。
@@ -393,3 +399,7 @@ createPage({
 * **参考：** 
    * [Vue I18n](http://kazupon.github.io/vue-i18n/api/#vue-constructor-options)
    * [国际化i18n](../guide/tool/i18n.html)
+
+
+## $rawOptions
+// todo

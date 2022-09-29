@@ -1,5 +1,6 @@
-import vue from 'vue'
-import vuePlugin from './runtime/vuePlugin'
-vue.use(vuePlugin)
+import Vue from 'vue'
+import install from './vuePlugin'
 
-export default vue
+Vue.use(install)
+
+export default Vue

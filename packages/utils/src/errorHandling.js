@@ -1,5 +1,5 @@
+import { isFunction } from './base'
 import { error } from './log'
-import { isFunction } from './utils'
 
 export function callWithErrorHandling (fn, instance, info, args) {
   if (!isFunction(fn)) return

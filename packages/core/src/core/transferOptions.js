@@ -1,8 +1,7 @@
 import { mergeInjectedMixins } from './injectMixins'
 import mergeOptions from './mergeOptions'
 import { getConvertMode } from '../convertor/getConvertMode'
-import { findItem } from '../helper/utils'
-import { warn } from '../helper/log'
+import { warn, findItem } from '@mpxjs/utils'
 
 export default function transferOptions (options, type) {
   let currentInject
@@ -22,6 +21,10 @@ export default function transferOptions (options, type) {
   if (currentInject && currentInject.injectOptions) {
     // 编译option注入,优先微信中的单独配置
     options.options = Object.assign({}, currentInject.injectOptions, options.options)
+  }
+  if (currentInject && currentInject.pageEvents) {
+    options.mixins = options.mixins || []
+    options.mixins.unshift(currentInject.pageEvents)
   }
   // 转换mode
   options.mpxConvertMode = options.mpxConvertMode || getConvertMode(global.currentSrcMode)
