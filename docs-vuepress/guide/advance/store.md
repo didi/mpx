@@ -790,3 +790,54 @@ const store = createStoreWithThis({
 ```
 
 详细的使用方式及推导规则请查看 [Typescript 支持](../tool/ts.md)章节。
+
+## 在组合式 API 中使用 store
+
+Mpx 自 2.8 版本完整支持了组合式 API 的开发方式，虽然在组合式 API 中我们首推使用 [pinia](pinia.md) 作为外部状态管理方案，不过旧的 store 在组合式 API 中仍然可以使用，我们提供了新的 `mapStateToRefs` 和 `mapGettersToRefs` 便于用户在组合式 API 中访问 `state` 和 `getters`，而对于 `mutations` 和 `actions`，用户可以直接调用 store 实例上的 `commit` 和 `dispatch` 方法进行调用，或者使用原有的 `map*` API 进行映射访问，简单使用示例如下：
+
+```js
+import { createPage, createStoreWithThis, watchEffect } from '@mpxjs/core'
+
+const store = createStoreWithThis({
+  state: {
+    count: 123
+  },
+  getters: {
+    doubleCount () {
+      return this.state.count * 2
+    }
+  },
+  mutations: {
+    addCount () {
+      this.state.count++
+    },
+    subCount () {
+      this.state.count--
+    }
+  }
+})
+
+createPage({
+  setup () {
+    const { count } = store.mapStateToRefs(['count'])
+    const { doubleCount } = store.mapGettersToRefs(['doubleCount'])
+    const { addCount } = store.mapMutations(['addCount'])
+
+    watchEffect(() => {
+      console.log(count.value, doubleCount.value)
+    })
+
+    return {
+      count,
+      doubleCount,
+      addCount,
+      subCount () {
+        // 两种方式均可以进行 mutations 调用，actions 同理
+        store.commit('subCount')
+      }
+    }
+  }
+})
+```
+
+
