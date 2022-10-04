@@ -14,30 +14,7 @@
   </picker>
 </template>
 
-<script lang="ts">
-  import mpx, { createPage } from '@mpxjs/core'
-  import swiperPage from '../packageA/pages/swiper?resolve'
-  createPage({
-    data: {
-      a: 1,
-      index: 0,
-      array: ['美国', '中国', '巴西', '日本'],
-    },
-    onLoad () {
-      console.log(2334)
-    },
-    methods: {
-      reload () {
-        window.location.reload()
-      },
-      jumpPage () {
-        mpx.navigateTo({
-          url: swiperPage
-        })
-      }
-    }
-  })
-</script>
+<script lang="js" src="../common/js/index"></script>
 <style scoped>
   .list {
     background: red;
