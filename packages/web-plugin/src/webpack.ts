@@ -1,2 +1,4 @@
-export * from './webpack/index'
-export { default } from './webpack/index'
+import MpxWebpackPlugin from './webpack/index'
+
+export default MpxWebpackPlugin
+module.exports = MpxWebpackPlugin

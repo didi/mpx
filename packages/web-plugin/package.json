@@ -38,7 +38,9 @@
   "scripts": {
     "test": "echo \"Error: run tests from root\" && exit 1",
     "dev": "tsup --watch",
-    "build": "tsup --env.NODE_ENV production"
+    "build": "tsup --env.NODE_ENV production",
+    "tsc:dev": "rimraf -rf ./dist && tsc -w",
+    "rollup": "rimraf -rf ./dist && rollup -c"
   },
   "files": [
     "dist",
