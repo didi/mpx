@@ -1,3 +1,6 @@
+---
+sidebarDepth: 2
+---
 # Store API
 **注意：** 以下 API 在 **2.8** 版本后无法通过全局应用实例 `mpx` 访问。若项目中有类似 mpx.createStore 的用法，在升级到 **2.8** 版本后请进行修改。
 
@@ -117,51 +120,71 @@ const store1 = createStore({
 const store2 = createStore({ ...options })
 ```
 
-- **Store 实例属性**
-    - **state**
+### **Store 实例属性**
 
-        - 类型：`Object`
+* **state**
+    - 类型：`Object`
 
-          根状态。
+    根状态。
+*  **getters**
 
-    - **getters**
+   - 类型：`Object`
 
-        - 类型：`Object`
+   暴露出注册的 getter。
 
-          暴露出注册的 getter。
+### **Store 实例方法**
 
-- **Store 实例方法**
+* commit
+```js
+commit(type: string, payload?: any, options?: Object) | commit(mutation: Object, options?: Object)
+```
+提交 mutation。[详细介绍](../guide/advance/store.html#mutation)
 
-    ```js
-    commit(type: string, payload?: any, options?: Object) | commit(mutation: Object, options?: Object)
-     ```
+* dispatch
+```js
+dispatch(type: string, payload?: any, options?: Object) | dispatch(action: Object, options?: Object)
+```
+分发 action。返回一个Promise。[详细介绍](../guide/advance/store.html#action)
 
-  提交 mutation。[详细介绍](../guide/advance/store.html#mutation)
+* mapState
+```js
+mapState(map: Array<string> | Object): Object
+```
+为组件创建计算属性以返回 store 中的状态。[详细介绍](../guide/advance/store.html#state)
 
-    ```js
-    dispatch(type: string, payload?: any, options?: Object) | dispatch(action: Object, options?: Object)
-    ```
+* mapGetters
+```js
+mapGetters(map: Array<string> | Object): Object
+```
+为组件创建计算属性以返回 getter 的返回值。[详细介绍](../guide/advance/store.html#getter)
 
-  分发 action。返回一个Promise。[详细介绍](../guide/advance/store.html#action)
-    ```js
-    mapState(map: Array<string> | Object): Object
-    ```
-  为组件创建计算属性以返回 store 中的状态。[详细介绍](../guide/advance/store.html#state)
+* mapActions
+```js
+mapActions(map: Array<string> | Object): Object
+```
+创建组件方法分发 action。[详细介绍](../guide/advance/store.html#action)
 
-    ```js
-    mapGetters(map: Array<string> | Object): Object
-    ```
-  为组件创建计算属性以返回 getter 的返回值。[详细介绍](../guide/advance/store.html#getter)
+* mapMutations
+```js
+mapMutations(map: Array<string> | Object): Object
+```
+创建组件方法提交 mutation。[详细介绍](../guide/advance/store.html#mutation)
 
-    ```js
-    mapActions(map: Array<string> | Object): Object
-    ```
-  创建组件方法分发 action。[详细介绍](../guide/advance/store.html#action)
+* mapStateToRefs
+```ts
+mapStateToRefs(maps: Array<string> | Object): {
+    [key: string]: ComputedRef<any>
+}
+```
+**组合式 API 特有**，在组合式 API 场景下解构访问 getter 并保持 getter 响应性，可以使用该方法。[详细介绍](../guide/advance/store.html#use-store-in-composition-api)
 
-    ```js
-    mapMutations(map: Array<string> | Object): Object
-    ```
-  创建组件方法提交 mutation。[详细介绍](../guide/advance/store.html#mutation)
+* mapGettersToRefs
+```js
+mapGettersToRefs(maps: Array<string> | Object): {
+    [key: string]: ComputedRef<any>
+}
+```
+**组合式 API 特有**，在组合式 API 场景下需解构访问 state 并保持 state 响应性，可以使用该方法。[详细介绍](../guide/advance/store.html#use-store-in-composition-api)
 
 ## createStoreWithThis
 
@@ -373,3 +396,4 @@ createComponent({
       mutations
     })
     ```
+
