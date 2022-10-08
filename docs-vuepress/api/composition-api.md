@@ -86,31 +86,17 @@ createComponent({
 
 新版本的生命周期钩子我们基本上和 Vue 中的生命周期钩子对齐，相较于之前还是有部分生命周期钩子的改动。
 
-### onBeforeCreate
-- **类型：** `Function`
-- **详细：**
-
-在组件实例刚刚被创建时执行，在实例初始化之后、进行数据侦听和 data 初始化之前同步调用。
-
-
-### onCreated
-- **类型：** `Function`
-- **详细：**
-
-在组件实例刚刚被创建时执行。在这一步中，实例已完成对选项的处理，意味着以下内容已被配置完毕：数据侦听、计算属性、事件/侦听器的回调函数。
-然而，挂载阶段还没开始。
-
 ### onBeforeMount
 - **类型：** `Function`
 - **详细：**
 
-在组件布局完成后执行，refs 相关的前置工作在该钩子中执行
+在组件布局完成后执行，refs 相关的前置工作在该钩子中执行。
 
 ### onMounted
 - **类型：** `Function`
 - **详细：**
 
-在组件布局完成后执行，refs 可以直接获取
+在组件布局完成后执行，refs 可以直接获取。
 
 ### onBeforeUpdate
 -**类型：** `Function`
@@ -125,7 +111,7 @@ createComponent({
 
 在数据更改导致的页面/组件重新渲染和更新完毕之后被调用。
 
-注意，onUpdated 不会保证所有的子组件也都被重新渲染完毕。如果你希望等待整个视图都渲染完毕，可以在 onUpdated 内部使用 nextTick
+注意，onUpdated 不会保证所有的子组件也都被重新渲染完毕。如果你希望等待整个视图都渲染完毕，可以在 onUpdated 内部使用 nextTick。
 
 ### onBeforeUnmount
 - **类型：** `Function`
@@ -143,25 +129,80 @@ createComponent({
 - **类型：** `Function`
 - **详细：**
 
-微信小程序页面 onLoad 事件，监听页面加载
+小程序页面 onLoad 事件，监听页面加载。
 
 ### onShow
 - **类型：** `Function`
 - **详细：**
 
-微信小程序页面 onShow 事件，监听页面展示
+小程序页面 onShow 事件，监听页面展示。
 
 ### onHide
 - **类型：** `Function`
 - **详细：**
 
-微信小程序页面 onHide 事件，监听页面隐藏
+小程序页面 onHide 事件，监听页面隐藏。
 
 ### onResize
 - **类型：** `Function`
 - **详细：**
 
-微信小程序页面 onResize 事件，页面尺寸改变时触发
+小程序页面 onResize 事件，页面尺寸改变时触发。
+
+### onPullDownRefresh
+- **类型：** `Function`
+- **详细：**
+
+小程序监听用户下拉刷新事件。[详细介绍](https://developers.weixin.qq.com/miniprogram/dev/reference/api/Page.html#onPullDownRefresh)
+
+### onReachBottom
+- **类型：** `Function`
+- **详细：**
+
+小程序监听用户上拉触底事件。[详细介绍](https://developers.weixin.qq.com/miniprogram/dev/reference/api/Page.html#onReachBottom)
+
+### onShareAppMessage
+- **类型：** `Function`
+- **详细：**
+
+小程序监听用户点击页面内转发按钮（button 组件 open-type="share"）或右上角菜单“转发”按钮的行为，并自定义转发内容。[详细介绍](https://developers.weixin.qq.com/miniprogram/dev/reference/api/Page.html#onShareAppMessage-Object-object)
+
+### onShareTimeline
+
+- **类型：** `Function`
+- **详细：**
+
+小程序监听右上角菜单“分享到朋友圈”按钮的行为，并自定义分享内容。[详细介绍](https://developers.weixin.qq.com/miniprogram/dev/reference/api/Page.html#onShareTimeline)
+
+**注意：** 仅微信小程序支持
+
+### onAddToFavorites
+- **类型：** `Function`
+- **详细：**
+
+小程序监听用户点击右上角菜单“收藏”按钮的行为，并自定义收藏内容。[详细介绍](https://developers.weixin.qq.com/miniprogram/dev/reference/api/Page.html#onAddToFavorites-Object-object)
+
+**注意：** 仅微信小程序支持
+
+### onPageScroll
+- **类型：** `Function`
+- **详细：**
+
+小程序监听用户滑动页面事件。[详细介绍](https://developers.weixin.qq.com/miniprogram/dev/reference/api/Page.html#onPageScroll-Object-object)
+
+### onTabItemTap
+- **类型：** `Function`
+- **详细：**
+
+点击 tab 时触发。[详细介绍](https://developers.weixin.qq.com/miniprogram/dev/reference/api/Page.html#onTabItemTap-Object-object)
+
+### onSaveExitState
+- **类型：** `Function`
+- **详细：**
+
+每当小程序可能被销毁之前，页面回调函数 onSaveExitState 会被调用，可以进行退出状态的保存。[详细介绍](https://developers.weixin.qq.com/miniprogram/dev/reference/api/Page.html#onSaveExitState)
+
+**注意：** 仅微信小程序支持
 
 ## getCurrentInstance
 
