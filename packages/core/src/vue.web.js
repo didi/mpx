@@ -1,3 +1,3 @@
-import vue from 'vue'
+import Vue from 'vue'
 
-export default vue
+export default Vue
