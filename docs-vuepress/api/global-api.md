@@ -249,9 +249,6 @@ unwatch()
     immediate: true
   })
 
-
-
-
 ## createApp
 > 注册一个小程序，接受一个 Object 类型的参数
 - **用法：**
@@ -371,7 +368,6 @@ createComponent({
   }
 })
 ```
-
 
 ## nextTick
 
@@ -494,12 +490,88 @@ if (__mpx_mode__ === 'web') {
 }
 ```
 
+## 内建生命周期变量
+Mpx 在运行时自身有着一套内建生命周期，当开发者想使用内建生命周期时，可以通过内建生命周期变量进行对应生命周期的注册，
+需要注意的是，这部分内建生命周期变量**只能用于选项式 API 中**。
+
+### BEFORECREATE
+- **类型：** `String`
+- **详细：**
+
+在组件实例刚刚被创建时执行，在实例初始化之后、进行数据侦听和 data 初始化之前同步调用，注意此时不能调用 setData。
+
+```js
+import {createComponent, BEFORECREATE} from "@mpxjs/core"
+
+createComponent({
+  BEFORECREATE() {
+      console.log('beforecreate trigger')
+  }
+})
+```
+
+### CREATED
+- **类型：** `String`
+- **详细：**
+
+在组件实例刚刚被创建时执行。在这一步中，实例已完成对选项的处理，意味着以下内容已被配置完毕：数据侦听、计算属性、事件/侦听器的回调函数。
+然而，挂载阶段还没开始，注意此时不能调用 setData。
+
+```js
+import {createComponent, CREATED} from "@mpxjs/core"
+
+createComponent({
+  CREATED() {
+      console.log('beforecreate trigger')
+  }
+})
+```
+
+### BEFOREMOUNT
+
+选项式 API 中使用，作用同[onBeforeMount](/api/composition-api.html#onbeforemount)
+
+### MOUNTED
+
+选项式 API 中使用，作用同[onMounted](/api/composition-api.html#onmounted)
+
+### BEFOREUPDATE
+
+选项式 API 中使用，作用同[onBeforeUpdate](/api/composition-api.html#onbeforeupdate)
+
+### UPDATED
+
+选项式 API 中使用，作用同[onUpdated](/api/composition-api.html#onupdated)
+
+### BEFOREUNMOUNT
+
+选项式 API 中使用，作用同[onBeforeUnmount](/api/composition-api.html#onbeforeunmount)
+
+### UNMOUNTED
+
+选项式 API 中使用，作用同[onUnmounted](/api/composition-api.html#onunmounted)
+
+### ONLOAD
+
+选项式 API 中使用，作用同[onLoad](/api/composition-api.html#onload)
+
+### ONSHOW
+
+选项式 API 中使用，作用同[onShow](/api/composition-api.html#onshow)
+
+### ONHIDE
+
+选项式 API 中使用，作用同[onHide](/api/composition-api.html#onhide)
+
+### ONRESIZE
+
+选项式 API 中使用，作用同[onResize](/api/composition-api.html#onresize)
 
 ## 响应式 API
-请[点击](/api/reactivity-api/basic-reactivity.html)查看
+详情请[移步](/api/reactivity-api/basic-reactivity.html)
 
 ## 组合式 API
-请[点击](/api/composition-api.html)查看
+详情请[移步](/api/composition-api.html)
 
 ## store API
-请[点击](/api/store-api.html)查看
+详情请[移步](/api/store-api.html)
