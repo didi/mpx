@@ -319,5 +319,8 @@
     })
   ```
 
+## $asyncRefs
+字节小程序专属，todo
+
 ## $rawOptions
 // todo
