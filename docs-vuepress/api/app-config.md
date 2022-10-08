@@ -56,8 +56,7 @@ mpx.config.useStrictDiff = true
 </script>
 ```
 
-
-## ignoreRenderError
+## ignoreWarning
 
 - **类型**： `boolean`
 
@@ -65,15 +64,14 @@ mpx.config.useStrictDiff = true
 
 - **用法**：
 
-当数据发生变化时，会调用 render 函数更新视图（render 函数由 template 模板转化而来）。
-设置`ignoreRenderError`为`true`，会忽略 render 函数执行出错的警告。
+是否忽略运行时的 warning 信息，默认不忽略。
 
-``` javascript
+```js
 import mpx from '@mpxjs/core'
-mpx.config.ignoreRenderError = true
+mpx.config.ignoreWarning = true
 ```
 
-## ignoreConflictWhiteList
+## ignoreProxyWhiteList
 
 - **类型**： `Array<string>`
 
@@ -81,7 +79,7 @@ mpx.config.ignoreRenderError = true
 
 - **用法**：
 
-Mpx 实例上的 key（包括data、computed、methods）如果有重名冲突，在`ignoreConflictWhiteList`配置中的属性会被最新的覆盖；而不在`ignoreConflictWhiteList`配置中的属性，不会被覆盖。
+Mpx 实例上的 key（包括data、computed、methods）如果有重名冲突，在`ignoreProxyWhiteList`配置中的属性会被最新的覆盖；而不在`ignoreProxyWhiteList`配置中的属性，不会被覆盖。
 
 > 只要有重名冲突均会有报错提示。
 
@@ -90,7 +88,41 @@ import mpx from '@mpxjs/core'
 mpx.config.ignoreConflictWhiteList = ['id', 'test']
 ```
 
-## config
+## observeClassInstance
+
+- **类型**： `boolean`
+
+- **默认值**：`false`
+
+- **用法**：
+
+当需要对 class 对象的数据进行响应性转化，需要开启该选项。
+
+## proxyEventHandler
+todo
+
+## setDataHandler
+
+- **类型**：`(data: object, target: ComponentIns<{}, {}, {}, {}, []>) => any | null`
+
+- **默认值**：`null`
+
+- **用法**：
+
+页面/组件状态更新时，使用该方法可以对 setData 调用进行监听，可以用来统计 setData 调用次数和数据量的统计，方法的入参是 setData 传输的 data 和当前组件实例。
+
+```js
+import mpx from '@mpxjs/core'
+
+mpx.config.setDataHandler = function(data, comp) {
+    console.log('setData trigger', data, comp)
+}
+```
+
+## forceFlushSync
+todo
+
+## webRouteConfig
 Mpx 通过 config 暴露出 webRouteConfig 配置项，在 web 环境可以对路由进行配置
 
 - **用法**:
