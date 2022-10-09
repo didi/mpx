@@ -53,7 +53,7 @@ export async function transformScript(
     options,
     pluginContext
   )
-  const s = new MagicString('')
+  const s = new MagicString(code)
   const {
     id: componentId,
     app,
@@ -80,22 +80,33 @@ export async function transformScript(
 
   s.trimLines()
 
-  app &&
-    s.append(
-      `\n${genImport(APP_HELPER_CODE)}
-  ${genImport(TAB_BAR_PAGE_HELPER_CODE)}
-  ${genImport('vue', 'Vue')}
-  ${genImport('vue-router', 'VueRouter')}`
-    )
+  s.prepend('\n')
 
-  i18n && s.append(`\n${genImport(I18N_HELPER_CODE, '{ i18n }')}`)
+  s.prepend(
+    `\n${genImport(
+      addQuery(descriptor.filename, {
+        mpx: null,
+        type: 'global'
+      })
+    )}`
+  )
 
-  s.append(
+  s.prepend(
     `\n${genImport(
       OPTION_PROCESSOR_PATH,
       'processOption, { getComponent, getWxsMixin }'
     )}`
   )
+
+  i18n && s.prepend(`\n${genImport(I18N_HELPER_CODE, '{ i18n }')}`)
+
+  app &&
+    s.prepend(
+      `\n${genImport(APP_HELPER_CODE)}
+  ${genImport(TAB_BAR_PAGE_HELPER_CODE)}
+  ${genImport('vue', 'Vue')}
+  ${genImport('vue-router', 'VueRouter')}`
+    )
 
   // import page by page json config
   Object.keys(localPagesMap).forEach((pageName, index) => {
@@ -106,7 +117,7 @@ export async function transformScript(
       : localPagesMap[pageName]
     const { query } = parseRequest(newPagePath)
     const async = query.async !== undefined
-    !async && s.append(`\n${genImport(newPagePath, varName)}`)
+    !async && s.prepend(`\n${genImport(newPagePath, varName)}`)
     pagesMap[pageName] = genComponentCode(
       varName,
       newPagePath,
@@ -127,7 +138,7 @@ export async function transformScript(
     const { query } = parseRequest(componentId)
     const varName = `__mpx__component__${index}`
     const async = query.async !== undefined
-    !async && s.append(`\n${genImport(componentId, varName)}`)
+    !async && s.prepend(`\n${genImport(componentId, varName)}`)
     componentsMap[componentName] = genComponentCode(varName, componentId, {
       async
     })
@@ -137,7 +148,7 @@ export async function transformScript(
   Object.keys(builtInComponentsMap).forEach((componentName, index) => {
     const componentCfg = builtInComponentsMap[componentName]
     const varName = `__mpx__builtInComponent__${index}`
-    s.append(`\n${genImport(componentCfg.resource, varName)}`)
+    s.prepend(`\n${genImport(componentCfg.resource, varName)}`)
     componentsMap[componentName] = genComponentCode(
       varName,
       componentCfg.resource,
@@ -146,18 +157,7 @@ export async function transformScript(
     )
   })
 
-  s.append(
-    `\n${genImport(
-      addQuery(descriptor.filename, {
-        mpx: null,
-        type: 'global'
-      })
-    )}`
-  )
-
-  /** source code **/
-  s.append(`\n${code}`)
-
+  // after source code
   s.append(`\nconst wxsModules = {}`)
 
   if (wxsModuleMap) {
