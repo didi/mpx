@@ -6,6 +6,8 @@ import legacy from '@vitejs/plugin-legacy'
 export default defineConfig({
   plugins: [
     mpx({
+      env: 'didi',
+      mode: 'web',
       externalClasses: ['list-class'],
       // 定义一些全局环境变量，可在JS/模板/样式/JSON中使用
       defs: {

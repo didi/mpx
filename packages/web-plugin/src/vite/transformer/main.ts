@@ -1,7 +1,7 @@
 import { TransformPluginContext, TransformResult } from 'rollup'
 import { transformMain as vueTransformMain } from 'vite-plugin-vue2/dist/main.js'
 import { ResolvedOptions } from '../../options'
-import { Query } from '../../types/Query'
+import { Query } from '../../types/query'
 import { createDescriptor } from '../utils/descriptorCache'
 import { processJSON } from './json'
 import { genScriptBlock, transformScript } from './script'

@@ -24,7 +24,7 @@
 <script type="application/json">
   {
     "usingComponents": {
-      "list": "../components/list.mpx"
+      "list": "../components/list"
     }
   }
 </script>
