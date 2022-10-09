@@ -600,7 +600,7 @@ export function onTabItemTap (callback: () => void): void
 export function onSaveExitState (callback: () => void): void
 
 // get instance
-export function getCurrentInstance<T extends object> (): T
+export function getCurrentInstance<T extends MpxComponentIns> (): T
 
 // I18n
 export function useI18n<Options extends {
