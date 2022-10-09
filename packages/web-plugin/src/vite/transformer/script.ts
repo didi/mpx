@@ -1,8 +1,8 @@
 import genComponentTag from '@mpxjs/utils/gen-component-tag'
-import fs from 'fs'
 import MagicString from 'magic-string'
 import path from 'path'
 import { SourceMap, TransformPluginContext } from 'rollup'
+import addQuery from 'src/utils/addQuery'
 import { transformWithEsbuild } from 'vite'
 import { OPTION_PROCESSOR_PATH, TAB_BAR_CONTAINER_PATH } from '../../constants'
 import { ResolvedOptions } from '../../options'
@@ -53,7 +53,7 @@ export async function transformScript(
     options,
     pluginContext
   )
-  const s = new MagicString(code)
+  const s = new MagicString('')
   const {
     id: componentId,
     app,
@@ -71,13 +71,33 @@ export async function transformScript(
 
   const ctorType = app ? 'app' : page ? 'page' : 'component'
 
-  const { i18n, isProduction } = options
+  const { i18n } = options
 
   const componentGenerics = jsonConfig.componentGenerics
 
   const pagesMap: Record<string, string> = {}
   const componentsMap: Record<string, string> = {}
 
+  s.trimLines()
+
+  app &&
+    s.append(
+      `\n${genImport(APP_HELPER_CODE)}
+  ${genImport(TAB_BAR_PAGE_HELPER_CODE)}
+  ${genImport('vue', 'Vue')}
+  ${genImport('vue-router', 'VueRouter')}`
+    )
+
+  i18n && s.append(`\n${genImport(I18N_HELPER_CODE, '{ i18n }')}`)
+
+  s.append(
+    `\n${genImport(
+      OPTION_PROCESSOR_PATH,
+      'processOption, { getComponent, getWxsMixin }'
+    )}`
+  )
+
+  // import page by page json config
   Object.keys(localPagesMap).forEach((pageName, index) => {
     const varName = `__mpx__page__${index}`
     const isTabBar = tabBarMap && tabBarMap[pageName]
@@ -86,7 +106,7 @@ export async function transformScript(
       : localPagesMap[pageName]
     const { queryObj: query } = parseRequest(newPagePath)
     const async = query.async !== undefined
-    !async && s.append(genImport(newPagePath, varName))
+    !async && s.append(`\n${genImport(newPagePath, varName)}`)
     pagesMap[pageName] = genComponentCode(
       varName,
       newPagePath,
@@ -101,21 +121,23 @@ export async function transformScript(
     )
   })
 
+  // import component by component json config
   Object.keys(localComponentsMap).forEach((componentName, index) => {
     const componentId = localComponentsMap[componentName]
     const { queryObj: query } = parseRequest(componentId)
     const varName = `__mpx__component__${index}`
     const async = query.async !== undefined
-    !async && s.append(genImport(componentId, varName))
+    !async && s.append(`\n${genImport(componentId, varName)}`)
     componentsMap[componentName] = genComponentCode(varName, componentId, {
       async
     })
   })
 
+  // import runtime component
   Object.keys(builtInComponentsMap).forEach((componentName, index) => {
     const componentCfg = builtInComponentsMap[componentName]
     const varName = `__mpx__builtInComponent__${index}`
-    s.append(genImport(componentCfg.resource, varName))
+    s.append(`\n${genImport(componentCfg.resource, varName)}`)
     componentsMap[componentName] = genComponentCode(
       varName,
       componentCfg.resource,
@@ -124,32 +146,19 @@ export async function transformScript(
     )
   })
 
-  const pageConfig = page
-    ? omit(jsonConfig, ['usingComponents', 'style', 'singlePage'])
-    : {}
-
-  s.trimLines()
-
-  s.prepend(
-    [
-      `global.currentModuleId = ${stringify(descriptor.id)}`,
-      !isProduction && `global.currentResource = ${stringify(filename)}`,
-      app &&
-        `${genImport(APP_HELPER_CODE)}
-        ${genImport(TAB_BAR_PAGE_HELPER_CODE)}
-        ${genImport('vue', 'Vue')}
-        ${genImport('vue-router', 'VueRouter')}`,
-      i18n && genImport(I18N_HELPER_CODE, '{ i18n }'),
-      genImport(
-        OPTION_PROCESSOR_PATH,
-        'processOption, { getComponent, getWxsMixin }'
-      )
-    ]
-      .filter(Boolean)
-      .join('\n') + '\n'
+  s.append(
+    `\n${genImport(
+      addQuery(descriptor.filename, {
+        mpx: null,
+        type: 'global'
+      })
+    )}`
   )
 
-  s.append(`\nconst wxsModules = {}\n`)
+  /** source code **/
+  s.append(`\n${code}`)
+
+  s.append(`\nconst wxsModules = {}`)
 
   if (wxsModuleMap) {
     const wxsModuleKeys = Object.keys(wxsModuleMap)
@@ -167,41 +176,44 @@ export async function transformScript(
             globalName: varName,
             format: 'iife'
           })
-          s.append(result.code)
-          s.append(`wxsModules.${key} = ${varName}\n`)
+          s.append(`\n${result.code}`)
+          s.append(`\nwxsModules.${key} = ${varName}\n`)
         }
       } else {
         // wxs file, tranfrom to esm with wxsPlugin
         const resolved = await pluginContext.resolve(wxsModuleId, filename)
         if (resolved) {
           const varName = `__mpx__wxs__${i}`
-          s.append(genImport(resolved.id, varName))
-          s.append(`wxsModules.${key} = ${varName}\n`)
+          s.append(`\n${genImport(resolved.id, varName)}`)
+          s.append(`\nwxsModules.${key} = ${varName}\n`)
         }
       }
     }
   }
 
   s.append(
-    [
-      `const currentOption = global.__mpxOptionsMap[${stringify(
-        descriptor.id
-      )}]`,
-      `\nexport default processOption(`,
-      `  currentOption,`,
-      `  ${stringify(ctorType)},`,
-      `  ${stringify(Object.keys(localPagesMap)[0])},`,
-      `  ${stringify(componentId)},`,
-      `  ${stringify(pageConfig)},`,
-      `  ${shallowStringify(pagesMap)},`,
-      `  ${shallowStringify(componentsMap)},`,
-      `  ${stringify(tabBarMap)},`,
-      `  ${stringify(componentGenerics)},`,
-      `  ${stringify(genericsInfo)},`,
-      `  getWxsMixin(wxsModules),`,
-      `  ${app ? `Vue, VueRouter` : i18n ? 'i18n' : ''}`,
-      `)`
-    ].join('\n')
+    `\nconst currentOption = global.__mpxOptionsMap[${stringify(
+      descriptor.id
+    )}]`
+  )
+
+  s.append(
+    `\nexport default processOption(
+      currentOption,
+      ${stringify(ctorType)},
+      ${stringify(Object.keys(localPagesMap)[0])},
+      ${stringify(componentId)},
+      ${stringify(
+        page ? omit(jsonConfig, ['usingComponents', 'style', 'singlePage']) : {}
+      )},
+      ${shallowStringify(pagesMap)},
+      ${shallowStringify(componentsMap)},
+      ${stringify(tabBarMap)},
+      ${stringify(componentGenerics)},
+      ${stringify(genericsInfo)},
+      getWxsMixin(wxsModules),
+      ${app ? `Vue, VueRouter` : i18n ? 'i18n' : ''}
+    )`
   )
 
   // transform ts
@@ -254,7 +266,7 @@ export async function resolveScript(
     )
     if (resolvedId) {
       pluginContext.addWatchFile(resolvedId.id)
-      code = fs.readFileSync(resolvedId.id, 'utf-8')
+      code = `import "${script?.src}"\n`
       return {
         code,
         id: resolvedId.id

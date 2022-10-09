@@ -23,7 +23,7 @@
 
 <script>
   import mpx, { createPage } from '@mpxjs/core'
-  import swiperPage from './swiper.mpx?resolve'
+  // import swiperPage from './swiper.mpx?resolve'
   const date = new Date()
   const years = []
   const months = []
@@ -63,7 +63,7 @@
       },
 	    jump () {
 		    mpx.navigateTo({
-			    url: swiperPage
+			    // url: swiperPage
 		    })
       }
     },

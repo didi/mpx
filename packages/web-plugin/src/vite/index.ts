@@ -9,6 +9,7 @@ import {
   I18N_HELPER_CODE,
   renderAppHelpCode,
   renderI18nCode,
+  renderMpxPresetCode,
   renderPageRouteCode,
   renderTabBarPageCode,
   TAB_BAR_PAGE_HELPER_CODE
@@ -116,6 +117,10 @@ function createMpxPlugin(
             block = descriptor.template
           } else if (query.type === 'style') {
             block = descriptor.styles[Number(query.index)]
+          } else if (query.type === 'global'){
+            block = {
+              content: renderMpxPresetCode(descriptor, options)
+            }
           }
           if (block) {
             return block.content
