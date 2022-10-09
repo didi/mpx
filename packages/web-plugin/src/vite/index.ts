@@ -1,7 +1,7 @@
 import { createFilter, Plugin, UserConfig } from 'vite'
 import { createVuePlugin } from 'vite-plugin-vue2'
 import { Options, processOptions, ResolvedOptions } from '../options'
-import parseRequest from '../utils/parseRequest'
+import parseRequest from '@mpxjs/utils/parse-request'
 import { stringifyObject } from '../utils/stringify'
 import handleHotUpdate from './handleHotUpdate'
 import {
@@ -89,14 +89,14 @@ function createMpxPlugin(
 
     load(id) {
       if (id === APP_HELPER_CODE && mpxGlobal.entry) {
-        const { filename } = parseRequest(mpxGlobal.entry)
+        const { resourcePath: filename } = parseRequest(mpxGlobal.entry)
         const descriptor = getDescriptor(filename)
         if (descriptor) {
           return renderAppHelpCode(options, descriptor)
         }
       }
       if (id === TAB_BAR_PAGE_HELPER_CODE && mpxGlobal.entry) {
-        const { filename } = parseRequest(mpxGlobal.entry)
+        const { resourcePath: filename } = parseRequest(mpxGlobal.entry)
         const descriptor = getDescriptor(filename)
         if (descriptor) {
           return renderTabBarPageCode(options, descriptor, this)
@@ -105,7 +105,7 @@ function createMpxPlugin(
       if (id === I18N_HELPER_CODE) {
         return renderI18nCode(options)
       }
-      const { filename, query } = parseRequest(id)
+      const { resourcePath: filename, queryObj: query } = parseRequest(id)
       if (query.resolve !== undefined) {
         return renderPageRouteCode(options, filename)
       }
@@ -134,7 +134,7 @@ function createMpxPlugin(
     },
 
     async transform(code, id) {
-      const { filename, query } = parseRequest(id)
+      const { queryObj: query, resourcePath: filename } = parseRequest(id)
       if (!filter(filename)) return
       if (query.resolve !== undefined) return
       if (query.mpx === undefined) {

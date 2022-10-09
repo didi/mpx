@@ -5,7 +5,7 @@ import { TransformPluginContext } from 'rollup'
 import { TransformResult } from 'vite'
 import { compileSFCTemplate as vueTransformTemplate } from 'vite-plugin-vue2/dist/template.js'
 import { ResolvedOptions } from '../../options'
-import { resolveMpxRuntime } from '../../utils/resolveMpxRuntime'
+import * as normalize from '@mpxjs/utils/normalize'
 import templateCompiler, { SFCDescriptor } from '../compiler'
 
 const templateTransformCache: Record<string, string> = {}
@@ -50,7 +50,7 @@ export async function transformTemplate(
   }
 }
 
-const mpxKeepAlivePath = resolveMpxRuntime('components/web/mpx-keep-alive.vue')
+const mpxKeepAlivePath = normalize.runtime('components/web/mpx-keep-alive.vue')
 /**
  * collect template buildInComponent
  * @param descriptor - SFCDescriptor

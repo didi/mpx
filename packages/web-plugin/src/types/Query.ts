@@ -1,5 +1,3 @@
-import qs from 'qs'
-
 export interface Query {
   vue?: null
   mpx?: null
@@ -16,16 +14,4 @@ export interface Query {
   async?: null
   root?: string
   [key: string]: unknown
-}
-
-export default function parseRequest(id: string): {
-  filename: string
-  query: Query
-} {
-  const [filename, rawQuery] = id.split(`?`, 2)
-  const query = qs.parse(rawQuery, { strictNullHandling: true }) as Query
-  return {
-    filename,
-    query
-  }
 }
