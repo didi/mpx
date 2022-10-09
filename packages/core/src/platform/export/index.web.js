@@ -1,8 +1,7 @@
 import {
   effectScope as vueEffectScope,
   getCurrentScope as getCurrentVueScope,
-  onScopeDispose,
-  getCurrentInstance as getCurrentVueInstance
+  onScopeDispose
 } from 'vue'
 
 export {
@@ -28,7 +27,9 @@ export {
   shallowRef,
   triggerRef,
   // computed
-  computed
+  computed,
+  // instance
+  getCurrentInstance
 } from 'vue'
 
 const noop = () => {
@@ -43,15 +44,10 @@ const effectScope = (detached) => fixEffectScope(vueEffectScope(detached))
 const getCurrentScope = () => fixEffectScope(getCurrentVueScope())
 
 export {
+  // effectScope
   effectScope,
   getCurrentScope,
   onScopeDispose
-}
-
-const getCurrentInstance = () => getCurrentVueInstance()?.__mpxProxy
-
-export {
-  getCurrentInstance
 }
 
 export {
