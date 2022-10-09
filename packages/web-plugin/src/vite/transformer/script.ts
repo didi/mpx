@@ -1,6 +1,5 @@
 import genComponentTag from '@mpxjs/utils/gen-component-tag'
 import MagicString from 'magic-string'
-import path from 'path'
 import { SourceMap, TransformPluginContext } from 'rollup'
 import addQuery from 'src/utils/addQuery'
 import { transformWithEsbuild } from 'vite'
@@ -217,10 +216,7 @@ export async function transformScript(
   )
 
   // transform ts
-  if (
-    (script?.src && path.extname(filename) === '.ts') ||
-    script?.attrs.lang === 'ts'
-  ) {
+  if (script?.attrs.lang === 'ts' && !script.src) {
     const result = transformWithEsbuild(
       s.toString(),
       filename,
@@ -266,7 +262,7 @@ export async function resolveScript(
     )
     if (resolvedId) {
       pluginContext.addWatchFile(resolvedId.id)
-      code = `import "${script?.src}"\n`
+      code = `${genImport(resolvedId.id)}\n`
       return {
         code,
         id: resolvedId.id
