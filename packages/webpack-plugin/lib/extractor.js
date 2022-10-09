@@ -62,7 +62,8 @@ module.exports.pitch = async function (remainingRequest) {
 
   const extractedInfo = {
     content,
-    index
+    // isStatic时不需要关注引用索引
+    index: isStatic ? 0 : index
   }
 
   this.emitFile(file, '', undefined, {
