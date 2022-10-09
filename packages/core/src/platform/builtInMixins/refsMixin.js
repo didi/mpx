@@ -1,4 +1,4 @@
-import { CREATED, BEFOREMOUNT, BEFOREUPDATE, UNMOUNTED } from '../../core/innerLifecycle'
+import { CREATED, BEFORECREATE, BEFOREUPDATE, UNMOUNTED } from '../../core/innerLifecycle'
 import { noop, error } from '@mpxjs/utils'
 import { getEnvObj } from '@mpxjs/utils/src/env'
 
@@ -16,38 +16,42 @@ const setNodeRef = function (target, ref) {
 }
 
 const setComponentRef = function (target, ref, isAsync) {
-  let cacheRef = null
-  const targetRefs = isAsync ? (target.$asyncRefs || (target.$asyncRefs = {})) : target.$refs
-  Object.defineProperty(targetRefs, ref.key, {
+  const targetRefs = isAsync ? target.$asyncRefs : target.$refs
+  const cacheMap = isAsync ? target.__asyncRefCacheMap : target.__refCacheMap
+  const key = ref.key
+  Object.defineProperty(targetRefs, key, {
     enumerable: true,
     configurable: true,
     get () {
       // wx由于分包异步化的存在，每次访问refs都需要重新执行selectComponent，避免一直拿到缓存中的placeholder
-      if (__mpx_mode__ === 'wx' || !cacheRef) {
-        return (cacheRef = target.__getRefNode(ref, isAsync))
+      if (__mpx_mode__ === 'wx' || !cacheMap.get(key)) {
+        cacheMap.set(key, target.__getRefNode(ref, isAsync))
       }
-      return cacheRef
+      return cacheMap.get(key)
     }
   })
 }
 
 export default function getRefsMixin () {
   const refsMixin = {
-    [BEFOREMOUNT] () {
+    [BEFORECREATE] () {
+      this.$refs = {}
+      this.$asyncRefs = {}
+      this.__refCacheMap = new Map()
+      this.__asyncRefCacheMap = new Map()
       this.__getRefs()
     },
     [BEFOREUPDATE] () {
-      this.__getRefs()
+      this.__refCacheMap.clear()
+      this.__asyncRefCacheMap.clear()
     },
     methods: {
       __getRefs () {
         if (this.__getRefsData) {
           const refs = this.__getRefsData()
-
           refs.forEach(ref => {
             const setRef = ref.type === 'node' ? setNodeRef : setComponentRef
             setRef(this, ref)
-
             if (__mpx_mode__ === 'tt' && ref.type === 'component') {
               setComponentRef(this, ref, true)
             }

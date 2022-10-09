@@ -392,6 +392,8 @@ createComponent({
     console.log(context.triggerEvent)
     // 获取 NodesRef/组件实例，等价于 this.$refs
     console.log(context.refs)
+    // 字节小程序中异步获取组件实例，等价于 this.$asyncRefs
+    console.log(context.asyncRefs)
     // 获取组件实例，等价于 this.selectComponent，可用 this.$refs 替代
     console.log(context.selectComponent)
     // 批量获取组件实例，等价于 this.selectAllComponents，可用 $refs 替代
