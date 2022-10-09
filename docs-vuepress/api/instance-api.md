@@ -176,7 +176,6 @@
 * **类型：** `Object`
 * **详细：**
 
-
   一个对象，持有注册过 [ref](../api/directives.html#wx-ref)的所有 DOM 元素和组件实例，调用响应的组件方法或者获取视图节点信息。
 * **示例**
 
@@ -188,7 +187,7 @@
   javascript 中可以调用组件的方法
 
   ```javascript
-  import {createComponent} from '@mpxjs/core'
+  import { createComponent } from '@mpxjs/core'
   createComponent({
   ready (){
     // 调用child中的方法
@@ -200,6 +199,24 @@
   ```
 * **参考：**
   [组件 ref](../guide/basic/refs.html)
+
+## $asyncRefs
+**仅字节小程序可用**，因为字节小程序 `selectComponent` 和 `selectAllComponents` 方法为异步方法，因此提供对应的异步refs。
+
+```js
+import mpx, {createComponent} from '@mpxjs/core'
+
+createComponent({
+  ready() {
+    if (__mpx_mode__ === 'tt') {
+      this.$asyncRefs.mlist.then(res => {
+        const data = res.data
+        //......
+      })
+    }
+  }
+})
+```
 
 ## $forceUpdate
 * **参数：** 
@@ -319,8 +336,30 @@
     })
   ```
 
-## $asyncRefs
-字节小程序专属，todo
-
 ## $rawOptions
-// todo
+
+* **类型：** `Object`
+* **详细：**
+
+获取组件或页面构造器的构造参数。
+
+```js
+import { createComponent } from "@mpxjs/core"
+
+createComponent({
+  ready() {
+    console.log(this.$rawOptions)
+    /**
+     * attached
+     * detached
+     * methods
+     * mpxConvertMode
+     * mpxCustomKeysForBlend
+     * mpxFileResource
+     * ready
+     * setup
+     * ...其他构造参数
+     */
+  }
+})
+```

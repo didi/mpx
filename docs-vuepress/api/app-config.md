@@ -99,7 +99,21 @@ mpx.config.ignoreConflictWhiteList = ['id', 'test']
 当需要对 class 对象的数据进行响应性转化，需要开启该选项。
 
 ## proxyEventHandler
-todo
+- **类型**： `Function | null`
+
+- **默认值**：`null`
+
+- **用法**：
+
+需要代理的事件的钩子方法，该钩子方法仅对内联传参事件或 [forceProxyEventRules](/api/compile.html#forceproxyeventrules) 规则匹配的事件生效。
+
+```js
+import mpx from '@mpxjs/core'
+
+mpx.config.proxyEventHandler = function (event) {
+    // 入参为 event 事件对象
+}
+```
 
 ## setDataHandler
 
@@ -120,7 +134,17 @@ mpx.config.setDataHandler = function(data, comp) {
 ```
 
 ## forceFlushSync
-todo
+- **类型**： `boolean`
+
+- **默认值**：`false`
+
+Mpx 中更改响应性状态时，最终页面的更新并不是同步立即生效的，而是由 Mpx 将它们缓存在一个队列中， 异步等到下一个 tick 一起执行，如果想将所有队列的执行改为同步执行，我们可以通过该配置来实现。
+
+```js
+import mpx from '@mpxjs/core'
+
+mpx.config.forceFlushSync = true
+```
 
 ## webRouteConfig
 Mpx 通过 config 暴露出 webRouteConfig 配置项，在 web 环境可以对路由进行配置
