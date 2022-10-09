@@ -46,6 +46,7 @@ interface SetupContext {
             options?: TriggerEventOption
     ): void
     refs: ObjectOf<WechatMiniprogram.NodesRef & ComponentIns<{}, {}, {}, {}, []>>
+    asyncRefs: ObjectOf<Promise<WechatMiniprogram.NodesRef & ComponentIns<{}, {}, {}, {}, []>>> // 字节小程序特有
     nextTick: (fn: () => void) => void
     forceUpdate: (params?: object, callback?: () => void) => void
     selectComponent(selector: string): TrivialInstance

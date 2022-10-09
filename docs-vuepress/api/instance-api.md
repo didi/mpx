@@ -201,7 +201,7 @@
   [组件 ref](../guide/basic/refs.html)
 
 ## $asyncRefs
-**仅字节小程序可用**，因为字节小程序 `selectComponent` 和 `selectAllComponents` 方法为异步方法，因此提供对应的异步refs。
+**仅字节小程序可用**，因为字节小程序 `selectComponent` 和 `selectAllComponents` 方法为异步方法，因此使用 $refs 同步获取组件实例并不保证能够拿到正确的组件实例，需使用异步 `$asyncRefs`。
 
 ```js
 import mpx, {createComponent} from '@mpxjs/core'
