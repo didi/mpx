@@ -1,7 +1,7 @@
 import stringify from './stringify'
 
 export const genImport = (importer: string, name?: string): string => {
-  return `import ${name ? `${name} from` : ''} ${stringify(importer)}\n`
+  return `import ${name ? `${name} from` : ''} ${stringify(importer)}`
 }
 
 export const genAsyncImport = (
@@ -9,5 +9,5 @@ export const genAsyncImport = (
   name?: string,
   callback?: string
 ): string => {
-  return `import(${importer}).then((${name}) => ${callback})\n`
+  return `import(${importer}).then((${name}) => ${callback})`
 }

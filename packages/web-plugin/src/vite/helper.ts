@@ -203,3 +203,14 @@ export const renderTabBarPageCode = async (
   ]
   return content.join('\n')
 }
+
+export function renderMpxPresetCode(
+  descriptor: SFCDescriptor,
+  options: ResolvedOptions
+): string {
+  return [
+    !options.isProduction &&
+      `global.currentResource = ${stringify(descriptor.filename)}`,
+    `global.currentModuleId = ${stringify(descriptor.id)}`
+  ].join('\n')
+}
