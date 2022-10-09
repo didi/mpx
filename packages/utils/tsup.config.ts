@@ -1,11 +1,11 @@
 import { defineConfig } from 'tsup'
 
 export default defineConfig({
-  splitting: true,
+  splitting: false,
   sourcemap: false,
   minify: false,
   clean: true,
-  format: ['esm', 'cjs'],
+  format: ['cjs'],
   dts: true,
   esbuildOptions: (options, context) => {
     // eslint-disable-next-line no-param-reassign

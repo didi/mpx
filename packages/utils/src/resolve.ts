@@ -1,6 +1,5 @@
 import parseRequest from './parse-request'
 import { LoaderContext } from 'webpack'
-import { RESOLVE_IGNORED_ERR } from './const'
 
 type LoaderContextResolveCallback = Parameters<LoaderContext<null>['resolve']>[2]
 
@@ -15,7 +14,7 @@ export default (
   context = queryObj.context || context
   return loaderContext.resolve(context, request, (err, resource, info) => {
     if (err) return callback(err)
-    if (resource === false) return callback(RESOLVE_IGNORED_ERR)
+    if (resource === false) return callback(new Error('Resolve ignored!'))
     callback(null, resource, info)
   })
 }
