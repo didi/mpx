@@ -157,7 +157,7 @@ export async function processJSON(
       const pageSrc = !customPage ? page : page.src
       const pageModule = await pluginContext.resolve(
         addQuery(path.resolve(context, root, pageSrc), {
-          page: null
+          page: true
         }),
         path.join(context, root)
       )
@@ -193,7 +193,7 @@ export async function processJSON(
   ) => {
     if (componentPath) {
       const componetModule = await pluginContext.resolve(
-        addQuery(componentPath, { component: null }),
+        addQuery(componentPath, { component: true }),
         importer
       )
       if (componetModule) {

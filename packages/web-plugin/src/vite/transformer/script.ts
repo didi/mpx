@@ -84,28 +84,11 @@ export async function transformScript(
   s.prepend(
     `\n${genImport(
       addQuery(descriptor.filename, {
-        mpx: null,
+        mpx: true,
         type: 'global'
       })
     )}`
   )
-
-  s.prepend(
-    `\n${genImport(
-      OPTION_PROCESSOR_PATH,
-      'processOption, { getComponent, getWxsMixin }'
-    )}`
-  )
-
-  i18n && s.prepend(`\n${genImport(I18N_HELPER_CODE, '{ i18n }')}`)
-
-  app &&
-    s.prepend(
-      `\n${genImport(APP_HELPER_CODE)}
-  ${genImport(TAB_BAR_PAGE_HELPER_CODE)}
-  ${genImport('vue', 'Vue')}
-  ${genImport('vue-router', 'VueRouter')}`
-    )
 
   // import page by page json config
   Object.keys(localPagesMap).forEach((pageName, index) => {
@@ -155,6 +138,23 @@ export async function transformScript(
       { __mpxBuiltIn: true }
     )
   })
+
+  s.prepend(
+    `\n${genImport(
+      OPTION_PROCESSOR_PATH,
+      'processOption, { getComponent, getWxsMixin }'
+    )}`
+  )
+
+  i18n && s.prepend(`\n${genImport(I18N_HELPER_CODE, '{ i18n }')}`)
+
+  app &&
+    s.prepend(
+      `\n${genImport(APP_HELPER_CODE)}
+  ${genImport(TAB_BAR_PAGE_HELPER_CODE)}
+  ${genImport('vue', 'Vue')}
+  ${genImport('vue-router', 'VueRouter')}`
+    )
 
   // after source code
   s.append(`\nconst wxsModules = {}`)
