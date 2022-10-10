@@ -839,6 +839,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 我们对 Mpx 提供的周边生态能力也都进行了组合式 API 适配升级，详情如下：
 
-* `store` 在组合式 API 中使用，详见[这里](../advance/pinia.md)
-* `fetch` 在组合式 API 中使用，详见[这里](#todo-composition-api-fetch)
-* `i18n` 在组合式 API 中使用，详见[这里](#todo-composition-api-i18n)
+* `store` 在组合式 API 中使用，详见[这里](../advance/store.md#use-store-in-composition-api)
+* `pinia` 在组合式 API 中使用，详见[这里](../advance/pinia.md)
+* `fetch` 在组合式 API 中使用，详见[这里](../extend/fetch.md/#composition-api-usage)
+* `i18n` 在组合式 API 中使用，详见[这里](../advance/i18n.md#composition-api-usage)

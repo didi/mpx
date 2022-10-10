@@ -55,8 +55,10 @@ sidebarDepth: 2
 
           在 store 上注册 getter，getter 方法接受以下参数：
             ```js
-            state,     // 如果在模块中定义则为模块的局部状态
-            getters   // 等同于 store.getters
+            {
+              state,     // 如果在模块中定义则为模块的局部状态
+              getters   // 等同于 store.getters
+            }
             ```
           注册的 getter 暴露为 store.getters。
 
@@ -67,6 +69,7 @@ sidebarDepth: 2
           类型：`Object`
 
           包含了子模块的对象，会被合并到 store，大概长这样：
+          
             ```js
             {
               key: {
@@ -76,7 +79,7 @@ sidebarDepth: 2
                 getters?,
                 modules?
                },
-               ...
+               // ...
             }
             ```
 
