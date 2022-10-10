@@ -2,15 +2,16 @@ const genComponentTag = require('../utils/gen-component-tag')
 const loaderUtils = require('loader-utils')
 const addQuery = require('../utils/add-query')
 const normalize = require('../utils/normalize')
+const hasOwn = require('../utils/has-own')
 const createHelpers = require('../helpers')
 const optionProcessorPath = normalize.lib('runtime/optionProcessor')
 const tabBarContainerPath = normalize.lib('runtime/components/web/mpx-tab-bar-container.vue')
 const tabBarPath = normalize.lib('runtime/components/web/mpx-tab-bar.vue')
 
 function shallowStringify (obj) {
-  let arr = []
-  for (let key in obj) {
-    if (obj.hasOwnProperty(key)) {
+  const arr = []
+  for (const key in obj) {
+    if (hasOwn(obj, key)) {
       let value = obj[key]
       if (Array.isArray(value)) {
         value = `[${value.join(',')}]`
@@ -61,7 +62,7 @@ module.exports = function (script, {
   }
 
   const stringifyRequest = r => loaderUtils.stringifyRequest(loaderContext, r)
-  let tabBarPagesMap = {}
+  const tabBarPagesMap = {}
   if (tabBar && tabBarMap) {
     // 挂载tabBar组件
     const tabBarRequest = stringifyRequest(addQuery(tabBar.custom ? './custom-tab-bar/index' : tabBarPath, { isComponent: true }))
@@ -95,8 +96,8 @@ module.exports = function (script, {
       const attrs = Object.assign({}, script.attrs)
       // src改为内联require，删除
       delete attrs.src
-      // 目前ts模式都建议使用src来引ts，不支持使用lang内联编写ts
-      // delete attrs.lang
+      // script setup通过mpx处理，删除该属性避免vue报错
+      delete attrs.setup
       return attrs
     },
     content (script) {
@@ -130,7 +131,9 @@ module.exports = function (script, {
         if (i18n) {
           const i18nObj = Object.assign({}, i18n)
           content += `  import VueI18n from 'vue-i18n'
-  Vue.use(VueI18n)\n`
+  import { createI18n } from 'vue-i18n-bridge'
+  
+  Vue.use(VueI18n , { bridge: true })\n`
           const requestObj = {}
           const i18nKeys = ['messages', 'dateTimeFormats', 'numberFormats']
           i18nKeys.forEach((key) => {
@@ -143,12 +146,9 @@ module.exports = function (script, {
           Object.keys(requestObj).forEach((key) => {
             content += `  i18nCfg.${key} = require(${requestObj[key]})\n`
           })
-          content += `  const i18n = new VueI18n(i18nCfg)
-  i18n.mergeMessages = (newMessages) => {
-    Object.keys(newMessages).forEach((locale) => {
-      i18n.mergeLocaleMessage(locale, newMessages[locale])
-    })
-  }
+          content += '  i18nCfg.legacy = false\n'
+          content += `  const i18n = createI18n(i18nCfg, VueI18n)
+  Vue.use(i18n)
   Mpx.i18n = i18n
   \n`
         }
@@ -210,7 +210,8 @@ module.exports = function (script, {
 
       // 传递ctorType以补全js内容
       const extraOptions = {
-        ctorType
+        ctorType,
+        lang: script.lang || 'js'
       }
       // todo 仅靠vueContentCache保障模块唯一性还是不够严谨，后续需要考虑去除原始query后构建request
       content += `  ${getRequire('script', script, extraOptions)}\n`
@@ -259,12 +260,8 @@ module.exports = function (script, {
         content += `,
     Vue,
     VueRouter`
-        if (i18n) {
-          content += `,
-    i18n`
-        }
       }
-      content += `\n  )\n`
+      content += '\n  )\n'
       return content
     }
   })

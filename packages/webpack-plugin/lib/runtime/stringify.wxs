@@ -81,7 +81,7 @@ function isObject (obj) {
   return obj !== null && typeof obj === 'object'
 }
 
-function likeArray (arr) {
+function isArray (arr) {
   if (!__mpx_wxs__) {
     return Array.isArray(arr)
   } else {
@@ -95,7 +95,7 @@ function isDef (v) {
 
 function stringifyDynamicClass (value) {
   if (!value) return ''
-  if (likeArray(value)) {
+  if (isArray(value)) {
     return stringifyArray(value)
   }
   if (isObject(value)) {
@@ -195,7 +195,7 @@ function mergeObjectArray (arr) {
 
 function normalizeDynamicStyle (value) {
   if (!value) return {}
-  if (likeArray(value)) {
+  if (isArray(value)) {
     return mergeObjectArray(value)
   }
   if (typeof value === 'string') {

@@ -2,9 +2,8 @@ import * as wxLifecycle from '../platform/patch/wx/lifecycle'
 import * as aliLifecycle from '../platform/patch/ali/lifecycle'
 import { mergeLifecycle } from './mergeLifecycle'
 import { mergeToArray } from '../core/mergeOptions'
-import { error } from '../helper/log'
+import { error, hasOwn, isDev } from '@mpxjs/utils'
 import { implemented } from '../core/implement'
-import { hasOwn } from '../helper/utils'
 
 const unsupported = ['moved', 'definitionFilter']
 
@@ -16,7 +15,7 @@ function notSupportTip (options) {
   unsupported.forEach(key => {
     if (options[key]) {
       if (!implemented[key]) {
-        process.env.NODE_ENV !== 'production' && convertErrorDesc(key)
+        isDev && convertErrorDesc(key)
         delete options[key]
       } else if (implemented[key].remove) {
         delete options[key]
@@ -24,7 +23,7 @@ function notSupportTip (options) {
     }
   })
   // relations部分支持
-  const relations = options['relations']
+  const relations = options.relations
   if (relations) {
     Object.keys(relations).forEach(path => {
       const item = relations[path]
