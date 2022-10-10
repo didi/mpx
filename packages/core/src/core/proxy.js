@@ -215,8 +215,6 @@ export default class MpxProxy {
       // 强制执行render
       this.target.$forceUpdate = this.forceUpdate.bind(this)
       this.target.$nextTick = nextTick
-      // 挂载$refs对象
-      this.target.$refs = {}
     }
   }
 
@@ -234,6 +232,7 @@ export default class MpxProxy {
         {
           triggerEvent: this.target.triggerEvent.bind(this.target),
           refs: this.target.$refs,
+          asyncRefs: this.target.$asyncRefs,
           forceUpdate: this.forceUpdate.bind(this),
           selectComponent: this.target.selectComponent.bind(this.target),
           selectAllComponents: this.target.selectAllComponents.bind(this.target),
@@ -482,10 +481,8 @@ export default class MpxProxy {
       this.forceUpdateAll = false
     }
 
-    /**
-     * mounted之后才接收回调来触发updated钩子，换言之mounted之前修改数据是不会触发updated的
-     */
     let callback = cb
+    // mounted之后才会触发BEFOREUPDATE/UPDATED
     if (this.isMounted()) {
       this.callHook(BEFOREUPDATE)
       callback = () => {
@@ -494,6 +491,7 @@ export default class MpxProxy {
         renderTask && renderTask.resolve()
       }
     }
+
     data = processUndefined(data)
     if (typeof Mpx.config.setDataHandler === 'function') {
       try {
@@ -501,6 +499,7 @@ export default class MpxProxy {
       } catch (e) {
       }
     }
+
     this.target.__render(data, callback)
   }
 

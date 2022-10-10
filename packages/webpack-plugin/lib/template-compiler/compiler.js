@@ -794,10 +794,14 @@ function parse (template, options) {
     Array.isArray(val.errorArray) && val.errorArray.forEach(item => error$1(item))
   })
 
-  if (!tagNames.has('component')) {
+  if (!tagNames.has('component') && options.checkUsingComponents) {
+    const arr = []
     options.usingComponents.forEach((item) => {
-      if (!tagNames.has(item) && !options.globalComponents.includes(item) && options.checkUsingComponents) warn$1(`${item}注册了，但是未被对应的模板引用，建议删除！`)
+      if (!tagNames.has(item) && !options.globalComponents.includes(item) && !options.componentPlaceholder.includes(item)) {
+        arr.push(item)
+      }
     })
+    arr.length && warn$1(`\n ${options.filePath} \n 组件 ${arr.join(' | ')} 注册了，但是未被对应的模板引用，建议删除！`)
   }
 
   return {
@@ -1914,7 +1918,7 @@ function postProcessTemplate (el) {
   }
 }
 
-const isValidMode = makeMap('wx,ali,swan,tt,qq,web,qa,jd,dd')
+const isValidMode = makeMap('wx,ali,swan,tt,qq,web,qa,jd,dd,noMode')
 
 const wrapRE = /^\((.*)\)$/
 
@@ -1946,32 +1950,46 @@ function processAtMode (el) {
       return
     }
 
-    const conditionMap = {}
-
+    const conditionMap = new Map()
     modeStr.split('|').forEach(item => {
       const arr = item.split(':')
-      const key = arr[0] || mode
-      conditionMap[key] = arr.slice(1)
+      const key = arr[0] || 'noMode'
+      conditionMap.set(key, arr.slice(1))
     })
 
-    const modeArr = Object.keys(conditionMap)
+    const modeArr = [...conditionMap.keys()]
 
     if (modeArr.every(i => isValidMode(i))) {
       const attrValue = getAndRemoveAttr(el, attrName).val
       const replacedAttrName = attrArr.join('@')
-
       const processedAttr = { name: replacedAttrName, value: attrValue }
-      if (modeArr.includes(mode) && (!conditionMap[mode].length || conditionMap[mode].includes(env))) {
-        if (!replacedAttrName) {
-          el._atModeStatus = 'match'
+
+      for (const [defineMode, defineEnvArr] of conditionMap.entries()) {
+        if (defineMode === 'noMode' || defineMode === mode) {
+          // 命中 env 规则(没有定义env 或者定义的envArr包含当前env)
+          if (!defineEnvArr.length || defineEnvArr.includes(env)) {
+            el._atModeStatus = ''
+            if (!replacedAttrName) {
+              // 若defineMode 为 noMode，则不论是element，还是attr，都需要经过规则转换
+              if (defineMode !== 'noMode') {
+                el._atModeStatus = 'match'
+              }
+            } else {
+              // 如果命中了指定的mode，则先存在el上，等跑完转换后再挂回去
+              el.noTransAttrs ? el.noTransAttrs.push(processedAttr) : el.noTransAttrs = [processedAttr]
+            }
+            // 命中mode，命中env，完成匹配，直接退出
+            break
+          } else if (!replacedAttrName) {
+            // 命中mode规则，没有命中当前env规则，设置为 'mismatch'
+            el._atModeStatus = 'mismatch'
+          }
+        } else if (!replacedAttrName) {
+          // 没有命中当前mode规则，设置为 'mismatch'
+          el._atModeStatus = 'mismatch'
         } else {
-          // 如果命中了指定的mode，则先存在el上，等跑完转换后再挂回去
-          el.noTransAttrs ? el.noTransAttrs.push(processedAttr) : el.noTransAttrs = [processedAttr]
+          // 如果没命中指定的mode，则该属性删除
         }
-      } else if (!replacedAttrName) {
-        el._atModeStatus = 'mismatch'
-      } else {
-        // 如果没命中指定的mode，则该属性删除
       }
     }
   })

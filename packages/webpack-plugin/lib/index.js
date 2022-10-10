@@ -148,7 +148,7 @@ class MpxWebpackPlugin {
     options.auditResource = options.auditResource || false
     options.decodeHTMLText = options.decodeHTMLText || false
     options.i18n = options.i18n || null
-    options.checkUsingComponents = options.checkUsingComponents || false
+    options.checkUsingComponentsRules = options.checkUsingComponentsRules || (options.checkUsingComponents ? { include: () => true } : { exclude: () => true })
     options.reportSize = options.reportSize || null
     options.pathHashMode = options.pathHashMode || 'absolute'
     options.forceDisableBuiltInLoader = options.forceDisableBuiltInLoader || false
@@ -567,7 +567,7 @@ class MpxWebpackPlugin {
           tabBarMap: {},
           defs: processDefs(this.options.defs),
           i18n: this.options.i18n,
-          checkUsingComponents: this.options.checkUsingComponents,
+          checkUsingComponentsRules: this.options.checkUsingComponentsRules,
           forceDisableBuiltInLoader: this.options.forceDisableBuiltInLoader,
           appTitle: 'Mpx homepage',
           attributes: this.options.attributes,
@@ -1423,11 +1423,11 @@ try {
           let mpxStyleLoaderIndex = -1
           loaders.forEach((loader, index) => {
             const currentLoader = toPosix(loader.loader)
-            if (currentLoader.includes('css-loader')) {
+            if (currentLoader.includes('css-loader') && cssLoaderIndex === -1) {
               cssLoaderIndex = index
-            } else if (currentLoader.includes('vue-loader/lib/loaders/stylePostLoader')) {
+            } else if (currentLoader.includes('vue-loader/lib/loaders/stylePostLoader') && vueStyleLoaderIndex === -1) {
               vueStyleLoaderIndex = index
-            } else if (currentLoader.includes(styleCompilerPath)) {
+            } else if (currentLoader.includes(styleCompilerPath) && mpxStyleLoaderIndex === -1) {
               mpxStyleLoaderIndex = index
             }
           })

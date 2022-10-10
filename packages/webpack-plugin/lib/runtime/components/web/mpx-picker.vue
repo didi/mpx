@@ -18,8 +18,8 @@
                 <div class="wheel" v-for="(data, index) in pickerData" :key="index">
                   <ul class="wheel-scroll">
                     <li
-                            v-for="item in data" :key="item"
-                            class="wheel-item">{{item}}
+                      v-for="item in data" :key="item"
+                      class="wheel-item">{{item}}
                     </li>
                   </ul>
                 </div>
@@ -39,10 +39,10 @@
   import { type } from '../../utils'
   import { getCustomEvent } from './getInnerListeners'
 
-  const startYear = 1970
+  const startYear = 1900
   const modeOptions = {
     time: [23, 59],
-    date: [130, 11, 30]
+    date: [200, 11, 30]
   }
 
   BScroll.use(Wheel)
@@ -73,7 +73,7 @@
     let months = []
     let days = []
 
-    for (let i = 0; i <= 130; i++) {
+    for (let i = 0; i <= 200; i++) {
       years.push(`${startYear + i}年`)
     }
     if (fields === 'year') {
@@ -127,11 +127,17 @@
           }
         }
       },
-      start: String,
-      end: String,
+      start: {
+        type: String,
+        default: '1970-01-01'
+      },
+      end: {
+        type: String,
+        default: '2100-01-01'
+      },
       fields: {
         type: String,
-        value: 'day'
+        default: 'day'
       }
     },
     data () {

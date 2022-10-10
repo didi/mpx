@@ -220,7 +220,7 @@ getCurrentInstance 只暴露给高阶使用场景，典型的比如在库中。�
 getCurrentInstance 只能在 setup 或生命周期钩子中调用。
 
 ## useI18n
-点击[查看详情](/api/extend.html#usei18n)
+点击[查看详情](./extend.md#usei18n)
 
 ## useFetch
-点击[查看详情](/api/extend.html#usefetch)
+点击[查看详情](./extend.md#usefetch)

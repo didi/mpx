@@ -11,7 +11,7 @@
 
 ## 近期更新
 
-Mpx@2.8版本正式发布，正式支持组合式 API，[点击查看详情](https://www.mpxjs.cn/articles/2.8-release.html)。
+Mpx2.8 版本正式发布，完整支持组合式 API，更多详情查看[这里](https://mpxjs.cn/articles/2.8-release.html)，迁移指南查看[这里](https://mpxjs.cn/guide/migrate/2.8.html)，相关指南及 API 参考文档已更新。
 
 ## 简介
 

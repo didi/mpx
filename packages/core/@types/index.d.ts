@@ -107,7 +107,6 @@ interface Mixin<D, P, C, M> {
   properties?: P
   computed?: C
   methods?: M
-
   [index: string]: any
 }
 
@@ -119,9 +118,8 @@ type UnboxMixinsField<Mi extends Array<any>, F> =
 interface Context {
   triggerEvent: WechatMiniprogram.Component.InstanceMethods<Record<string, any>>['triggerEvent']
   refs: ObjectOf<WechatMiniprogram.NodesRef & ComponentIns<{}, {}, {}, {}, []>>
-
+  asyncRefs: ObjectOf<Promise<WechatMiniprogram.NodesRef & ComponentIns<{}, {}, {}, {}, []>>>
   forceUpdate (params?: object, callback?: () => void): void
-
   selectComponent: ReplaceWxComponentIns['selectComponent']
   selectAllComponents: ReplaceWxComponentIns['selectAllComponents']
   createSelectorQuery: WechatMiniprogram.Component.InstanceMethods<Record<string, any>>['createSelectorQuery']
@@ -194,29 +192,18 @@ export function observable<T extends object> (obj: T): T
 type MpxComProps<O> = { $rawOptions: O }
 
 export interface MpxComponentIns {
-
   $refs: ObjectOf<WechatMiniprogram.NodesRef & ComponentIns<{}, {}, {}, {}, []>>
-
+  $asyncRefs : ObjectOf<Promise<WechatMiniprogram.NodesRef & ComponentIns<{}, {}, {}, {}, []>>>
   $set: typeof set
-
   $remove: typeof del
-
   $delete: typeof del
-
   $watch (expr: string | (() => any), handler: WatchHandler | WatchOptWithHandler, options?: WatchOpt): () => void
-
   $forceUpdate (params?: object, callback?: () => void): void
-
   $nextTick (fn: () => void): void
-
   $t: typeof t
-
   $tc: typeof tc
-
   $te: typeof te
-
   $tm: typeof tm
-
   [k: string]: any
 }
 
@@ -516,11 +503,6 @@ export function reactive<T extends object> (target: T): Reactive<T>
 
 export function isReactive (value: unknown): boolean
 
-/**
- * Return a shallowly-reactive copy of the original object, where only the root
- * level properties are reactive. It also does not auto-unwrap refs (even at the
- * root level).
- */
 export function shallowReactive<T extends object> (target: T): ShallowReactive<T>
 
 export function computed<T> (
@@ -618,7 +600,7 @@ export function onTabItemTap (callback: () => void): void
 export function onSaveExitState (callback: () => void): void
 
 // get instance
-export function getCurrentInstance<T extends object> (): T
+export function getCurrentInstance<T extends MpxComponentIns> (): T
 
 // I18n
 export function useI18n<Options extends {
