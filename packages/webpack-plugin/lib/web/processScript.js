@@ -48,6 +48,7 @@ module.exports = function (script, {
   const {
     i18n,
     projectRoot,
+    webConfig,
     appInfo
   } = loaderContext.getMpx()
   const { getRequire } = createHelpers(loaderContext)
