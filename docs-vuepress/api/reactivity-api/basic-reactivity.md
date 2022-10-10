@@ -96,6 +96,7 @@ createComponent({
     }
 })
 ```
+
 ## markRaw
 标记一个对象，使其永远不会被抓换为响应性对象，并返回对象本身
 
@@ -161,4 +162,31 @@ state.nested.bar++
 
 // ref 属性不会解包
 state.head.value 
+```
+
+## set
+用于对一个响应式对象新增属性，会`触发订阅者更新操作`
+- **参数**：
+    - `{Object | Array} target`
+    - `{string | number} propertyName/index`
+    - `{any} value`
+
+- **示例：**
+```js
+import { set, reactive } from '@mpxjs/core'
+const person = reactive({name: 1})
+// 具名导出使用
+set(person, 'age', 17) // age 改变后会触发订阅者视图更新
+```
+
+## del
+用于对一个响应式对象删除属性，会`触发订阅者更新操作`
+- **参数**：
+    - `{Object | Array} target`
+    - `{string | number} propertyName/index`
+- **示例：**
+```js
+import {del, reactive } from '@mpxjs/core'
+const person = reactive({name: 1})
+del(person, 'age')
 ```

@@ -83,6 +83,40 @@ const data = [
       },
       {
         link: 'global-api',
+        text: '基础 API',
+        headers: [
+          {
+            text: 'createApp',
+            anchor: '#createApp'
+          },
+          {
+            text: 'createPage',
+            anchor: '#createPage'
+          },
+          {
+            text: 'createComponent',
+            anchor: '#createComponent'
+          },
+          {
+            text: 'nextTick',
+            anchor: '#nextTick'
+          },
+          {
+            text: 'toPureObject',
+            anchor: '#toPureObject'
+          },
+          {
+            text: 'getMixin',
+            anchor: '#getMixin'
+          },
+          {
+            text: 'implement',
+            anchor: '#implement'
+          }
+        ]
+      },
+      {
+        link: 'global-api',
         text: '内建生命周期变量',
         headers: [
           {
@@ -164,48 +198,6 @@ const data = [
             anchor: '#createActionsWithThis'
           }
         ]
-      },
-      {
-        link: 'global-api',
-        text: '其他',
-        headers: [
-          {
-            text: 'set',
-            anchor: '#set'
-          },
-          {
-            text: 'del',
-            anchor: '#del'
-          },
-          {
-            text: 'createApp',
-            anchor: '#createApp'
-          },
-          {
-            text: 'createPage',
-            anchor: '#createPage'
-          },
-          {
-            text: 'createComponent',
-            anchor: '#createComponent'
-          },
-          {
-            text: 'nextTick',
-            anchor: '#nextTick'
-          },
-          {
-            text: 'toPureObject',
-            anchor: '#toPureObject'
-          },
-          {
-            text: 'getMixin',
-            anchor: '#getMixin'
-          },
-          {
-            text: 'implement',
-            anchor: '#implement'
-          }
-        ]
       }
     ]
   },
@@ -216,6 +208,14 @@ const data = [
         link: 'reactivity-api/basic-reactivity',
         text: '响应式基础 API',
         headers: [
+          {
+            text: 'set',
+            anchor: '#set'
+          },
+          {
+            text: 'del',
+            anchor: '#del'
+          },
           {
             text: 'reactive',
             anchor: '#reactive'
