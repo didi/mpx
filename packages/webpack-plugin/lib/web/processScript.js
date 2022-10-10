@@ -156,7 +156,7 @@ module.exports = function (script, {
       let injectFilters = {}
       let injectDirectives = {}
       // 单独构建component 或 page
-      if (ctorType !== 'app' && JSON.stringify(appInfo) === '{}') {
+      if (ctorType !== 'app' && !appInfo.name) {
         injectFilters.transRpxStyle = require('../runtime/transRpxStyle')
         injectDirectives.animation = require('../runtime/animation')
       }
