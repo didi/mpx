@@ -205,7 +205,7 @@ const data = [
     text: '响应式 API',
     items: [
       {
-        link: 'reactivity-api/basic-reactivity',
+        link: 'reactivity-api',
         text: '响应式基础 API',
         headers: [
           {
@@ -235,7 +235,7 @@ const data = [
         ]
       },
       {
-        link: 'reactivity-api/refs-api',
+        link: 'reactivity-api',
         text: 'Refs',
         headers: [
           {
@@ -273,7 +273,7 @@ const data = [
         ]
       },
       {
-        link: 'reactivity-api/computed-watch-api',
+        link: 'reactivity-api',
         text: 'Computed 与 Watch',
         headers: [
           {
@@ -299,7 +299,7 @@ const data = [
         ]
       },
       {
-        link: 'reactivity-api/effect-scope',
+        link: 'reactivity-api',
         text: 'Effect 作用域 API',
         headers: [
           {

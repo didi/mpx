@@ -428,7 +428,7 @@ import mpxFetch from '@mpxjs/fetch'
 mpx.use(mpxFetch)
 
 // script-setup.mpx
-import { useFetch } from '@mpxjs/core'
+import { useFetch } from '@mpxjs/fetch'
 useFetch().fetch({
   url: 'http://xxx.com',
   method: 'POST',

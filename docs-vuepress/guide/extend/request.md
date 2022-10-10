@@ -61,6 +61,7 @@ mpx.xfetch.fetch({
 })
 cancelToken.exec('手动取消请求') // 执行后请求中断，返回abort fail
 ```
+
 ### 支持 emulateJSON
 
 ```js
@@ -73,6 +74,7 @@ mpx.xfetch.fetch({
 	emulateJSON: true // 等价于header = {'content-type': 'application/x-www-form-urlencoded'}
 })
 ```
+
 ### 支持 timeout
 
 ```js
@@ -106,4 +108,36 @@ mpx.xfetch.fetch({
 	},
 	emulateJSON: true // 等价于header = {'content-type': 'application/x-www-form-urlencoded'}
 })
+```
+
+
+### 在组合式 API 中发起请求
+在组合式 API 中我们提供了 [useFetch](/api/extend.html#usefetch) 方法来访问 `xfetch` 实例对象
+
+```js
+// app.mpx
+import mpx, { createComponent } from '@mpxjs/core'
+import { useFetch } from '@mpxjs/fetch'
+
+createComponent({
+  setup() {
+      useFetch().fetch({
+          url: 'http://xxx.com',
+          method: 'POST',
+          params: {
+              age: 10
+          },
+          data: {
+              name: 'test'
+          },
+          emulateJSON: true,
+          usePre: true,
+          cacheInvalidationTime: 3000,
+          ignorePreParamKeys: ['timestamp']
+      }).then(res => {
+          console.log(res.data)
+      })   
+  }
+})
+
 ```

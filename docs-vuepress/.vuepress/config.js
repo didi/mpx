@@ -103,6 +103,7 @@ const sidebar = {
         'reactivity-api/effect-scope'
       ]
     },
+    'reactivity-api',
     'composition-api',
     'extend'
   ],
