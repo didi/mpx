@@ -155,7 +155,7 @@ module.exports = function (script, {
       }
       let injectFilters = {}
       let injectDirectives = {}
-      // 单独构建component 或 page
+      // 单独构建 component 时注入内置的 filter 和 directive
       if (ctorType !== 'app' && !appInfo.name) {
         injectFilters.transRpxStyle = require('../runtime/transRpxStyle')
         injectDirectives.animation = require('../runtime/animation')
