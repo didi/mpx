@@ -129,7 +129,7 @@ mpx.xfetch.interceptors.response.use(function(res) {
 })
 ```
 
-### proxy 代理
+### proxy 代理{#proxy}
 #### setProxy
 > 配置代理项，可以传入一个数组或者一个对象，请求会按设置的规则进行代理
 

@@ -1,6 +1,3 @@
----
-sidebarDepth: 2
----
 # 全局 API
 
 ## 全局对象 Mpx
@@ -74,23 +71,7 @@ const b = mpx.observable(object)
   Mpx 2.8 版本后该 API 等同于 `reactive`，同时不再支持具名导出方式，建议直接使用 `reactive` 替代，请[点击](/api/reactivity-api/basic-reactivity.html#reactive)查看。
 
 ### set
-用于对一个响应式对象新增属性，会`触发订阅者更新操作`
-- **参数**：
-    - `{Object | Array} target`
-    - `{string | number} propertyName/index`
-    - `{any} value`
-
-- **示例：**
-```js
-import mpx, { set, reactive } from '@mpxjs/core'
-const person = reactive({name: 1})
-// 直接通过应用实例访问
-mpx.set(person, 'age', 19) 
-// 具名导出使用
-set(person, 'age', 17) // age 改变后会触发订阅者视图更新
-```
-- **注意：**
-  `set` 支持通过全局实例对象访问，同时也支持具名导入的方式使用。
+用于对一个响应式对象新增属性，会`触发订阅者更新操作`。[查看详情](/api/global-api.html#set)
 
 ### delete
 用于对一个响应式对象删除属性，会`触发订阅者更新操作`
@@ -104,7 +85,7 @@ const person = reactive({name: 1})
 mpx.delete(person, 'age')
 ```
 - **注意：**
-  `mpx.delete` 也可以使用具名导出的 `del` todo方法替换
+  `mpx.delete` 也可以使用具名导出的 `del`。[查看详情](/api/global-api.html#del)
 
 ### use
 >用于安装外部扩展, 支持多参数
@@ -122,132 +103,34 @@ mpx.use(test, {prefix: 'mpx'}, 'otherparams')
 
 ### watch
 
-watch 可以通过全局实例访问，也可以使用[具名导出的方式](reactivity-api/computed-watch-api.html#watch)，也可以在组件/页面实例访问[$watch](instance-api.html#watch)
+watch 可以通过全局实例访问，也可以使用具名导出的方式，二者逻辑相同，我们推荐使用具名导出的方式。[查看详情](reactivity-api/computed-watch-api.html#watch)
 
+## set
+用于对一个响应式对象新增属性，会`触发订阅者更新操作`
 - **参数**：
-    - `{Function} expr`
-    - `{Function | Object} callback`
-    - `{Object} [options]`
-        - `{boolean} deep`
-        - `{boolean | Function} once`
-        - `{boolean} immediate`
+  - `{Object | Array} target`
+  - `{string | number} propertyName/index`
+  - `{any} value`
 
-- **返回值**：`{Function} unwatch`
-
-- **用法**:
-
-  观察一个函数计算结果的变化。回调函数得到的参数分别为新值和旧值。参数详细说明：
-    1. `expr`：是函数类型，返回一个你需要观察的表达式，表达式的运算量需要是响应式数据。
-    2. `callback`：响应函数，如果是对象，则 callback.handler 为回调函数，其他参数作为 options。
-
-  返回值详细说明：
-
-  `unwatch`：返回一个函数，用来取消观察，停止触发回调。
-
-- **示例**：
-
+- **示例：**
 ```js
-import { watch } from '@mpxjs/core'
-
-let unwatch = mpx.watch(() => {
-  return this.a + this.b
-}, (newVal, oldVal) => {
-  // 做点什么
-})
-
-// 调用返回值unwatch可以取消观察
-unwatch()
+import { set, reactive } from '@mpxjs/core'
+const person = reactive({name: 1})
+// 具名导出使用
+set(person, 'age', 17) // age 改变后会触发订阅者视图更新
 ```
 
-- **选项**：deep
-
-  为了发现对象内部值的变化，可以在选项参数中指定 deep: true。
-
-  ``` javascript
-  import {watch} from '@mpxjs/core'
-
-  watch(() => {
-    return this.someObject
-  }, () => {
-    // 回调函数
-  }), {
-    deep: true
-  })
-  this.someObject.nestedValue = 123
-  // callback is fired
-  ```
-- **选项**：once
-
-  在选项参数中指定 `once: true` 该回调方法只会执行一次，后续的改变将不会触发回调；  
-  该参数也可以是函数，若函数返回值为 `true` 时，则后续的改变将不会触发回调
-
-  ```JavaScript
-  import {watch} from '@mpxjs/core'
-  
-  watch(() => {
-    return this.a
-  }, () => {
-    // 该回调函数只会执行一次
-  }, {
-    once: true
-  })
-  
-  // 当 once 是函数时
-  watch(() => {
-    return this.a
-   }, (val, newVal) => {
-    // 当 val 等于2时，this.a 的后续改变将不会被监听
-   }, {
-    once: (val, oldVal) => {
-      if (val == 2) {
-        return true
-      }
-    }
-  })
-  ```
-
-- **选项**：immediate
-
-  在选项参数中指定 `immediate: true` 将立即以表达式的当前值触发回调。
-
-  ``` javascript
-  import {watch} from '@mpxjs/core'
-
-  watch(() => {
-    return this.a
-  }, () => {
-    // 回调函数
-  }), {
-    immediate: true
-  })
-  // 立即以 `this.a` 的当前值触发回调
-  ```
-  注意在带有 immediate 选项时，你不能在第一次回调时取消侦听。
-  ``` javascript
-  import {watch} from '@mpxjs/core'
-
-  var unwatch = watch(() => {
-    return this.a
-  }, () => {
-    unwatch() // 这会导致报错！
-  }), {
-    immediate: true
-  })
-
-  ```
-  如果你仍然希望在回调内部调用取消侦听的函数，你应该先检查其可用性。
-  ``` javascript
-  import {watch} from '@mpxjs/core'
-
-  var unwatch = watch(() => {
-    return this.a
-  }, () => {
-    if (unwatch) { // 请先检查其可用性！
-      unwatch()
-    }
-  }), {
-    immediate: true
-  })
+## del
+用于对一个响应式对象删除属性，会`触发订阅者更新操作`
+- **参数**：
+  - `{Object | Array} target`
+  - `{string | number} propertyName/index`
+- **示例：**
+```js
+import {del, reactive } from '@mpxjs/core'
+const person = reactive({name: 1})
+del(person, 'age')
+```
 
 ## createApp
 > 注册一个小程序，接受一个 Object 类型的参数
