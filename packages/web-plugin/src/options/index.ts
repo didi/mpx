@@ -32,6 +32,7 @@ export interface Options {
   decodeHTMLText?: boolean
   i18n?: Record<string, string> | null
   checkUsingComponents?: boolean
+  checkUsingComponentsRules?: unknown
   reportSize?: boolean | null
   pathHashMode?:
     | 'absolute'
@@ -102,6 +103,7 @@ export function processOptions(rawOptions: Options): ResolvedOptions {
   rawOptions.decodeHTMLText = rawOptions.decodeHTMLText || false
   rawOptions.i18n = rawOptions.i18n || null
   rawOptions.checkUsingComponents = rawOptions.checkUsingComponents || false
+  rawOptions.checkUsingComponentsRules = rawOptions.checkUsingComponentsRules || (rawOptions.checkUsingComponents ? { include: () => true } : { exclude: () => true })
   rawOptions.pathHashMode = rawOptions.pathHashMode || 'absolute'
   rawOptions.fileConditionRules = rawOptions.fileConditionRules || {
     include: () => true

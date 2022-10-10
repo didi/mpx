@@ -14,11 +14,17 @@ export interface CustomExtensionsOptions {
 /**
  * generate file path with mode
  * @param originPath - path/to/index.js
+ * @param originPath - path/to/index.js
  * @param extendsion - string
  * @returns path/to/index.extendsion.js
  */
 function genExtensionsFilePath(filename: string, extendsion: string): string {
   const parseResult = path.parse(filename)
+  // console.log(111, path.format({
+  //   ...parseResult,
+  //   name: `${parseResult.name}.${extendsion}`,
+  //   base: undefined
+  // }))
   return path.format({
     ...parseResult,
     name: `${parseResult.name}.${extendsion}`,
