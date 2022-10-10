@@ -232,7 +232,8 @@ class SizeReportPlugin {
           selfSize: 0,
           selfSizeInfo: {},
           sharedSize: 0,
-          sharedSizeInfo: {}
+          sharedSizeInfo: {},
+          shareEquallySize: 0
         })
       })
 
@@ -247,6 +248,11 @@ class SizeReportPlugin {
       }
 
       function fillSizeReportGroups (entryModules, noEntryModules, packageName, fillType, fillInfo) {
+        // 依赖当前模块的页面分组
+        const sharedModulesGroupsSet = new Set()
+        // 依赖当前模块的自定义分组
+        const customGroupSharedModulesGroupsSet = new Set()
+
         reportGroups.forEach((reportGroup) => {
           if (reportGroup.noEntryModules && noEntryModules && noEntryModules.size) {
             if (has(noEntryModules, (noEntryModule) => {
@@ -261,6 +267,7 @@ class SizeReportPlugin {
               return reportGroup.noEntryModules.has(noEntryModule)
             })) {
               reportGroup.sharedSize += fillInfo.size
+              customGroupSharedModulesGroupsSet.add(reportGroup)
               return fillSizeInfo(reportGroup.sharedSizeInfo, packageName, fillType, fillInfo)
             }
           }
@@ -273,11 +280,29 @@ class SizeReportPlugin {
             } else if (has(entryModules, (entryModule) => {
               return reportGroup.selfEntryModules.has(entryModule) || reportGroup.sharedEntryModules.has(entryModule)
             })) {
+              if (reportGroup.isPage) {
+                sharedModulesGroupsSet.add(reportGroup)
+              } else {
+                customGroupSharedModulesGroupsSet.add(reportGroup)
+              }
               reportGroup.sharedSize += fillInfo.size
               return fillSizeInfo(reportGroup.sharedSizeInfo, packageName, fillType, fillInfo)
             }
           }
         })
+
+        // 平均分配体积到指定分组的shareEquallySize
+        function divideEquallySize (groupsSet, size) {
+          if (groupsSet.size) {
+            // 页面的均摊体积 = 共享资源文件体积 / 共享该资源的页面数量
+            const sharedSize = size / groupsSet.size
+            for (const reportGroup of groupsSet) {
+              reportGroup.shareEquallySize += sharedSize
+            }
+          }
+        }
+        divideEquallySize(sharedModulesGroupsSet, fillInfo.size)
+        divideEquallySize(customGroupSharedModulesGroupsSet, fillInfo.size)
       }
 
       const resourcePathMap = {}
@@ -651,6 +676,7 @@ class SizeReportPlugin {
         readableInfo.selfSizeInfo = formatSizeInfo(reportGroup.selfSizeInfo)
         readableInfo.sharedSize = formatSize(reportGroup.sharedSize)
         readableInfo.sharedSizeInfo = formatSizeInfo(reportGroup.sharedSizeInfo)
+        readableInfo.shareEquallySize = formatSize(reportGroup.shareEquallySize + reportGroup.selfSize)
         return readableInfo
       })
 
@@ -664,6 +690,7 @@ class SizeReportPlugin {
         readableInfo.selfSizeInfo = formatSizeInfo(reportGroup.selfSizeInfo)
         readableInfo.sharedSize = formatSize(reportGroup.sharedSize)
         readableInfo.sharedSizeInfo = formatSizeInfo(reportGroup.sharedSizeInfo)
+        readableInfo.shareEquallySize = formatSize(reportGroup.shareEquallySize + reportGroup.selfSize)
         return readableInfo
       })
 
@@ -693,7 +720,7 @@ class SizeReportPlugin {
 
       await mkdirpPromise(path.dirname(reportFilePath))
 
-      await writeFilePromise(reportFilePath, JSON.stringify(reportData, null, 2))
+      await writeFilePromise(reportFilePath, JSON.stringify(reportData))
 
       logger.info(`Size report is generated in ${reportFilePath}!`)
 
