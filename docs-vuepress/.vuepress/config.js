@@ -65,8 +65,8 @@ const sidebar = {
       path: '/guide/extend',
       children: [
         'extend/request',
-        'extend/mock',
-        'extend/api-proxy'
+        'extend/api-proxy',
+        'extend/mock'
       ]
     },
     {
