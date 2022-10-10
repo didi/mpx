@@ -147,7 +147,7 @@ class MpxWebpackPlugin {
     options.auditResource = options.auditResource || false
     options.decodeHTMLText = options.decodeHTMLText || false
     options.i18n = options.i18n || null
-    options.checkUsingComponents = options.checkUsingComponents || false
+    options.checkUsingComponentsRules = options.checkUsingComponentsRules || (options.checkUsingComponents ? { include: () => true } : { exclude: () => true })
     options.reportSize = options.reportSize || null
     options.pathHashMode = options.pathHashMode || 'absolute'
     options.forceDisableBuiltInLoader = options.forceDisableBuiltInLoader || false
@@ -566,7 +566,7 @@ class MpxWebpackPlugin {
           tabBarMap: {},
           defs: preProcessDefs(this.options.defs),
           i18n: this.options.i18n,
-          checkUsingComponents: this.options.checkUsingComponents,
+          checkUsingComponentsRules: this.options.checkUsingComponentsRules,
           forceDisableBuiltInLoader: this.options.forceDisableBuiltInLoader,
           appTitle: 'Mpx homepage',
           attributes: this.options.attributes,
