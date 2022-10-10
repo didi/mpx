@@ -146,6 +146,10 @@ module.exports = {
         message: '文档有更新啦！',
         buttonText: '刷新'
       }
+    },
+    '@vuepress/active-header-links': {
+      sidebarLinkSelector: '.header-anchor',
+      headerAnchorSelector: '.header-anchor'
     }
   },
   themeConfig: {
