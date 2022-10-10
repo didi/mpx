@@ -64,7 +64,7 @@ const sidebar = {
       collapsable: false,
       path: '/guide/extend',
       children: [
-        'extend/request',
+        'extend/fetch',
         'extend/api-proxy',
         'extend/mock'
       ]
