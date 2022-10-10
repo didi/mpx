@@ -1,4 +1,4 @@
-# Computed 与 watch
+# Computed 与 Watch
 
 ## computed
 
@@ -181,6 +181,7 @@ watch(count, (count, prevCount) => {
   /* ... */
 })
 ```
+
 ### 侦听多个源
 
 还可以使用数组的形式同时侦听多个数据源：
@@ -196,6 +197,106 @@ watch([aRef, bRef], ([a, b], [prevA, prevB]) => {
 
 **watch** 与 **watchEffect** 在手动停止侦听、清除副作用、副作用刷新时机方面有相同的行为。
 
-### watch 选项
-参考 全局 API 章节中的 watch
+```js
+import { watch } from '@mpxjs/core'
 
+let unwatch = watch(() => {
+  return a.value + b.value
+}, (newVal, oldVal) => {
+  // 做点什么
+})
+
+// 调用返回值unwatch可以取消观察
+unwatch()
+```
+
+### watch 选项
+- **选项**：deep
+
+  为了发现对象内部值的变化，可以在选项参数中指定 deep: true。
+
+  ``` javascript
+  import {watch} from '@mpxjs/core'
+
+  watch(() => {
+    return this.someObject
+  }, () => {
+    // 回调函数
+  }), {
+    deep: true
+  })
+  this.someObject.nestedValue = 123
+  // callback is fired
+  ```
+- **选项**：once
+
+  在选项参数中指定 `once: true` 该回调方法只会执行一次，后续的改变将不会触发回调；  
+  该参数也可以是函数，若函数返回值为 `true` 时，则后续的改变将不会触发回调
+
+  ```JavaScript
+  import {watch} from '@mpxjs/core'
+  
+  watch(() => {
+    return this.a
+  }, () => {
+    // 该回调函数只会执行一次
+  }, {
+    once: true
+  })
+  
+  // 当 once 是函数时
+  watch(() => {
+    return this.a
+   }, (val, newVal) => {
+    // 当 val 等于2时，this.a 的后续改变将不会被监听
+   }, {
+    once: (val, oldVal) => {
+      if (val == 2) {
+        return true
+      }
+    }
+  })
+  ```
+
+- **选项**：immediate
+
+  在选项参数中指定 `immediate: true` 将立即以表达式的当前值触发回调。
+
+  ``` javascript
+  import {watch} from '@mpxjs/core'
+
+  watch(() => {
+    return this.a
+  }, () => {
+    // 回调函数
+  }), {
+    immediate: true
+  })
+  // 立即以 `this.a` 的当前值触发回调
+  ```
+  注意在带有 immediate 选项时，你不能在第一次回调时取消侦听。
+  ``` javascript
+  import {watch} from '@mpxjs/core'
+
+  var unwatch = watch(() => {
+    return this.a
+  }, () => {
+    unwatch() // 这会导致报错！
+  }), {
+    immediate: true
+  })
+
+  ```
+  如果你仍然希望在回调内部调用取消侦听的函数，你应该先检查其可用性。
+  ``` javascript
+  import {watch} from '@mpxjs/core'
+
+  var unwatch = watch(() => {
+    return this.a
+  }, () => {
+    if (unwatch) { // 请先检查其可用性！
+      unwatch()
+    }
+  }), {
+    immediate: true
+  })
