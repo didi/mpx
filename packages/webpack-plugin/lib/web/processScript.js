@@ -48,9 +48,8 @@ module.exports = function (script, {
   const {
     i18n,
     projectRoot,
-    webConfig
+    appInfo
   } = loaderContext.getMpx()
-
   const { getRequire } = createHelpers(loaderContext)
   const tabBar = jsonConfig.tabBar
 
@@ -153,6 +152,13 @@ module.exports = function (script, {
   \n`
         }
       }
+      let injectFilters = {}
+      let injectDirectives = {}
+      // 单独构建component 或 page
+      if (ctorType !== 'app' && JSON.stringify(appInfo) === '{}') {
+        injectFilters.transRpxStyle = require('../runtime/transRpxStyle')
+        injectDirectives.animation = require('../runtime/animation')
+      }
       // 注入wxs模块
       content += '  const wxsModules = {}\n'
       if (wxsModuleMap) {
@@ -238,7 +244,6 @@ module.exports = function (script, {
   // @ts-ignore
   global.__tabBarPagesMap = ${shallowStringify(tabBarPagesMap)}\n`
       }
-
       // 配置平台转换通过createFactory在core中convertor中定义和进行
       // 通过processOption进行组件注册和路由注入
       content += `  export default processOption(
@@ -254,7 +259,9 @@ module.exports = function (script, {
     ${JSON.stringify(tabBarMap)},
     ${JSON.stringify(componentGenerics)},
     ${JSON.stringify(genericsInfo)},
-    getWxsMixin(wxsModules)`
+    getWxsMixin(wxsModules),
+    ${shallowStringify(injectDirectives)},
+    ${shallowStringify(injectFilters)}`
       if (ctorType === 'app') {
         content += `,
     Vue,

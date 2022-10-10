@@ -12,6 +12,8 @@ export default function processOption (
   componentGenerics,
   genericsInfo,
   mixin,
+  directives,
+  filters,
   Vue,
   VueRouter,
   i18n
@@ -26,108 +28,11 @@ export default function processOption (
     }
 
     Vue.directive('animation', (el, binding) => {
-      const newActions = binding && binding.value && binding.value.actions
-      if (el.actions === newActions) {
-        Promise.resolve().then(() => {
-          Object.assign(el.style, el.lastDynamicStyle)
-        })
-        return
-      }
-      el.actions = newActions
-      if (typeof el.setAnimation === 'function') {
-        el.removeEventListener('transitionend', el.setAnimation, false)
-        el.setAnimation = undefined
-      }
-      el.dynamicStyleQueue = []
-      el.lastDynamicStyle = undefined
-      if (Array.isArray(newActions) && newActions.length) {
-        newActions.forEach((item) => {
-          const property = []
-          const { animates, option } = item
-          // 存储动画需要改变的样式属性
-          const dynamicStyle = {
-            transform: ''
-          }
-          animates.forEach((itemAnimation) => {
-            switch (itemAnimation.type) {
-              case 'style':
-                const [key, value] = itemAnimation.args
-                dynamicStyle[key] = value
-                property.push(key)
-                break
-              default:
-                dynamicStyle.transform += `${itemAnimation.type}(${itemAnimation.args}) `
-                if (!property.includes('transform')) {
-                  property.push('transform')
-                }
-            }
-          })
-          Object.assign(dynamicStyle, {
-            transition: `${parseInt(option.duration)}ms ${option.timingFunction} ${parseInt(option.delay)}ms`,
-            transitionProperty: `${property}`,
-            transformOrigin: option.transformOrigin
-          })
-          el.dynamicStyleQueue.push(dynamicStyle)
-        })
-        el.setAnimation = function () {
-          if (!el.dynamicStyleQueue.length) {
-            el.removeEventListener('transitionend', el.setAnimation, false)
-            return
-          }
-          const dynamicStyle = el.dynamicStyleQueue.shift()
-          Object.assign(el.style, dynamicStyle)
-          el.lastDynamicStyle = dynamicStyle
-        }
-        // 首次动画属性设置
-        setTimeout(el.setAnimation, 0)
-        // 在transitionend事件内设置动画样式
-        el.addEventListener('transitionend', el.setAnimation, false)
-      }
+      return require('./animation')(el, binding)
     })
 
     Vue.filter('transRpxStyle', style => {
-      const defaultTransRpxFn = function (match, $1) {
-        const rpx2vwRatio = +(100 / 750).toFixed(8)
-        return '' + ($1 * rpx2vwRatio) + 'vw'
-      }
-      const transRpxFn = global.__mpxTransRpxFn || defaultTransRpxFn
-      const parsedStyleObj = {}
-      const rpxRegExpG = /\b(\d+(\.\d+)?)rpx\b/g
-      const parseStyleText = (cssText) => {
-        const listDelimiter = /;(?![^(]*\))/g
-        const propertyDelimiter = /:(.+)/
-        if (typeof cssText === 'string') {
-          cssText.split(listDelimiter).forEach((item) => {
-            if (item) {
-              var tmp = item.split(propertyDelimiter)
-              tmp.length > 1 && (parsedStyleObj[tmp[0].trim()] = tmp[1].trim())
-            }
-          })
-        } else if (typeof cssText === 'object') {
-          if (Array.isArray(cssText)) {
-            cssText.forEach(cssItem => {
-              parseStyleText(cssItem)
-            })
-          } else {
-            Object.assign(parsedStyleObj, cssText)
-          }
-        }
-      }
-      const transRpxStyleFn = (val) => {
-        if (typeof val === 'string' && val.indexOf('rpx') > 0) {
-          return val.replace(rpxRegExpG, transRpxFn).replace(/"/g, '')
-        }
-        return val
-      }
-      if (style) {
-        style.forEach(item => {
-          parseStyleText(item)
-          for (let key in parsedStyleObj) {
-            parsedStyleObj[key] = transRpxStyleFn(parsedStyleObj[key])
-          }
-        })
-      }
-      return parsedStyleObj
+      return require('./transRpxStyle')(style)
     })
 
     const routes = []
@@ -388,6 +293,12 @@ registered in parent context!`)
     option.componentPath = '/' + outputPath
   }
 
+  if (directives) {
+    option.directives = directives
+  }
+  if (filters) {
+    option.filters = filters
+  }
   return option
 }
 

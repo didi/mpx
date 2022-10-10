@@ -59,12 +59,15 @@ module.exports = function (content) {
   }
 
   // 支持资源query传入isPage或isComponent支持页面/组件单独编译
-  if (ctorType === 'app' && (queryObj.isComponent || queryObj.isPage)) {
-    const entryName = getEntryName(this) || mpx.getOutputPath(resourcePath, queryObj.isComponent ? 'component' : 'page')
-    ctorType = queryObj.isComponent ? 'component' : 'page'
-    this._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, ctorType, entryName, packageRoot))
+  if (ctorType === 'app') {
+    const appName = getEntryName(this)
+    this._module.addPresentationalDependency(new AppEntryDependency(resourcePath, appName))
+    if (queryObj.isComponent || queryObj.isPage) {
+      const entryName = appName || mpx.getOutputPath(resourcePath, queryObj.isComponent ? 'component' : 'page')
+      ctorType = queryObj.isComponent ? 'component' : 'page'
+      this._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, ctorType, entryName, packageRoot))
+    }
   }
-
   const loaderContext = this
   const stringifyRequest = r => loaderUtils.stringifyRequest(loaderContext, r)
   const isProduction = this.minimize || process.env.NODE_ENV === 'production'
@@ -220,11 +223,6 @@ module.exports = function (content) {
 
       if (issuer) {
         return callback(new Error(`Current ${ctorType} [${this.resourcePath}] is issued by [${issuer.resource}], which is not allowed!`))
-      }
-
-      if (ctorType === 'app') {
-        const appName = getEntryName(this)
-        this._module.addPresentationalDependency(new AppEntryDependency(resourcePath, appName))
       }
 
       // 注入模块id及资源路径
