@@ -1964,7 +1964,7 @@ function processAtMode (el) {
       const replacedAttrName = attrArr.join('@')
       const processedAttr = { name: replacedAttrName, value: attrValue }
 
-      for (let [defineMode, defineEnvArr] of conditionMap.entries()) {
+      for (const [defineMode, defineEnvArr] of conditionMap.entries()) {
         if (defineMode === 'noMode' || defineMode === mode) {
           // 命中 env 规则(没有定义env 或者定义的envArr包含当前env)
           if (!defineEnvArr.length || defineEnvArr.includes(env)) {
