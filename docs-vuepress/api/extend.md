@@ -109,7 +109,7 @@ cancelToken.exec('手动取消请求') // 执行后请求中断，返回abort fa
 - **参数类型**:
 
 ```ts
-interface IOptions{
+interface FetchOptions{
     useQueue: boolean // 是否开启队列功能
     proxy: boolean // 是否开启代理功能
 }
@@ -413,7 +413,7 @@ mpx.xfetch.clearProxy()
 
 ### useFetch
 ```ts
-useFetch(options?: Object):xfetch
+useFetch(options?: FetchOptions):xfetch
 ```
 
 在组合式 API 中使用，用来获取 `@mpxjs/fetch` 插件的 xfetch 实例，等用于 `mpx.xfetch`。 关于 xfetch 实例的详细介绍，请点击[查看](/api/extend.html#mpx-fetch)
