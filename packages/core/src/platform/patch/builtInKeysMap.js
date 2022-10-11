@@ -1,5 +1,5 @@
 import { INNER_LIFECYCLES } from '../../core/innerLifecycle'
-import { makeMap } from '@mpxjs/utils/src/array'
+import { makeMap } from '@mpxjs/utils'
 
 let bulitInKeys
 
