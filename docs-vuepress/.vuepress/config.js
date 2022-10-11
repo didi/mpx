@@ -94,15 +94,6 @@ const sidebar = {
     'directives',
     'compile',
     'builtIn',
-    {
-      title: '响应式 API',
-      children: [
-        'reactivity-api/basic-reactivity',
-        'reactivity-api/refs-api',
-        'reactivity-api/computed-watch-api',
-        'reactivity-api/effect-scope'
-      ]
-    },
     'reactivity-api',
     'composition-api',
     'extend'
