@@ -100,5 +100,32 @@ mpx.xfetch.fetch({
 ```
 
 ## 在组合式 API 中使用 {#composition-api-usage}
+在组合式 API 中我们提供了 [useFetch](/api/extend.html#usefetch) 方法来访问 `xfetch` 实例对象
 
-todo
+```js
+// app.mpx
+import mpx, { createComponent } from '@mpxjs/core'
+import { useFetch } from '@mpxjs/fetch'
+
+createComponent({
+  setup() {
+      useFetch().fetch({
+          url: 'http://xxx.com',
+          method: 'POST',
+          params: {
+              age: 10
+          },
+          data: {
+              name: 'test'
+          },
+          emulateJSON: true,
+          usePre: true,
+          cacheInvalidationTime: 3000,
+          ignorePreParamKeys: ['timestamp']
+      }).then(res => {
+          console.log(res.data)
+      })   
+  }
+})
+
+```

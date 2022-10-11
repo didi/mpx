@@ -105,33 +105,6 @@ mpx.use(test, {prefix: 'mpx'}, 'otherparams')
 
 watch 可以通过全局实例访问，也可以使用具名导出的方式，二者逻辑相同，我们推荐使用具名导出的方式。[查看详情](reactivity-api/computed-watch-api.html#watch)
 
-## set
-用于对一个响应式对象新增属性，会`触发订阅者更新操作`
-- **参数**：
-  - `{Object | Array} target`
-  - `{string | number} propertyName/index`
-  - `{any} value`
-
-- **示例：**
-```js
-import { set, reactive } from '@mpxjs/core'
-const person = reactive({name: 1})
-// 具名导出使用
-set(person, 'age', 17) // age 改变后会触发订阅者视图更新
-```
-
-## del
-用于对一个响应式对象删除属性，会`触发订阅者更新操作`
-- **参数**：
-  - `{Object | Array} target`
-  - `{string | number} propertyName/index`
-- **示例：**
-```js
-import {del, reactive } from '@mpxjs/core'
-const person = reactive({name: 1})
-del(person, 'age')
-```
-
 ## createApp
 > 注册一个小程序，接受一个 Object 类型的参数
 - **用法：**

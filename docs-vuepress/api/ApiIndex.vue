@@ -83,6 +83,40 @@ const data = [
       },
       {
         link: 'global-api',
+        text: '基础 API',
+        headers: [
+          {
+            text: 'createApp',
+            anchor: '#createApp'
+          },
+          {
+            text: 'createPage',
+            anchor: '#createPage'
+          },
+          {
+            text: 'createComponent',
+            anchor: '#createComponent'
+          },
+          {
+            text: 'nextTick',
+            anchor: '#nextTick'
+          },
+          {
+            text: 'toPureObject',
+            anchor: '#toPureObject'
+          },
+          {
+            text: 'getMixin',
+            anchor: '#getMixin'
+          },
+          {
+            text: 'implement',
+            anchor: '#implement'
+          }
+        ]
+      },
+      {
+        link: 'global-api',
         text: '内建生命周期变量',
         headers: [
           {
@@ -164,10 +198,15 @@ const data = [
             anchor: '#createActionsWithThis'
           }
         ]
-      },
+      }
+    ]
+  },
+  {
+    text: '响应式 API',
+    items: [
       {
-        link: 'global-api',
-        text: '其他',
+        link: 'reactivity-api',
+        text: '响应式基础 API',
         headers: [
           {
             text: 'set',
@@ -177,45 +216,6 @@ const data = [
             text: 'del',
             anchor: '#del'
           },
-          {
-            text: 'createApp',
-            anchor: '#createApp'
-          },
-          {
-            text: 'createPage',
-            anchor: '#createPage'
-          },
-          {
-            text: 'createComponent',
-            anchor: '#createComponent'
-          },
-          {
-            text: 'nextTick',
-            anchor: '#nextTick'
-          },
-          {
-            text: 'toPureObject',
-            anchor: '#toPureObject'
-          },
-          {
-            text: 'getMixin',
-            anchor: '#getMixin'
-          },
-          {
-            text: 'implement',
-            anchor: '#implement'
-          }
-        ]
-      }
-    ]
-  },
-  {
-    text: '响应式 API',
-    items: [
-      {
-        link: 'reactivity-api/basic-reactivity',
-        text: '响应式基础 API',
-        headers: [
           {
             text: 'reactive',
             anchor: '#reactive'
@@ -235,7 +235,7 @@ const data = [
         ]
       },
       {
-        link: 'reactivity-api/refs-api',
+        link: 'reactivity-api',
         text: 'Refs',
         headers: [
           {
@@ -273,7 +273,7 @@ const data = [
         ]
       },
       {
-        link: 'reactivity-api/computed-watch-api',
+        link: 'reactivity-api',
         text: 'Computed 与 Watch',
         headers: [
           {
@@ -299,7 +299,7 @@ const data = [
         ]
       },
       {
-        link: 'reactivity-api/effect-scope',
+        link: 'reactivity-api',
         text: 'Effect 作用域 API',
         headers: [
           {
