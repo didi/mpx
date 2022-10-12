@@ -15,7 +15,7 @@ let curType
 let convertRule
 let mpxCustomKeysMap
 
-export default function mergeOptions (options = {}, type, needConvert = true) {
+export default function mergeOptions (options = {}, type, needConvert) {
   // 缓存混合模式下的自定义属性列表
   mpxCustomKeysMap = makeMap(options.mpxCustomKeysForBlend || [])
   // needConvert为false，表示衔接原生的root配置，那么此时的配置都是当前原生环境支持的配置，不需要转换

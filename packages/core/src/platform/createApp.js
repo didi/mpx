@@ -68,7 +68,8 @@ export default function createApp (option, config = {}) {
       }
     })
   }
-  const { rawOptions } = transferOptions(option, 'app')
+  // app选项目前不需要进行转换
+  const { rawOptions } = transferOptions(option, 'app', false)
   rawOptions.mixins = builtInMixins
   const defaultOptions = filterOptions(spreadProp(mergeOptions(rawOptions, 'app', false), 'methods'), appData)
 
