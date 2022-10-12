@@ -20,11 +20,6 @@ export interface CustomExtensionsOptions {
  */
 function genExtensionsFilePath(filename: string, extendsion: string): string {
   const parseResult = path.parse(filename)
-  // console.log(111, path.format({
-  //   ...parseResult,
-  //   name: `${parseResult.name}.${extendsion}`,
-  //   base: undefined
-  // }))
   return path.format({
     ...parseResult,
     name: `${parseResult.name}.${extendsion}`,
