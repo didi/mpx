@@ -1,7 +1,7 @@
 const compiler = require('./compiler')
 const bindThis = require('./bind-this').transform
-const parseRequest = require('@mpxjs/utils/parse-request')
-const { matchCondition } = require('@mpxjs/utils/match-condition')
+const parseRequest = require('@mpxjs/compile-utils/parse-request')
+const { matchCondition } = require('@mpxjs/compile-utils/match-condition')
 const loaderUtils = require('loader-utils')
 
 module.exports = function (raw) {

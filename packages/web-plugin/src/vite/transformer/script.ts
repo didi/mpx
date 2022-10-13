@@ -1,4 +1,4 @@
-import genComponentTag from '@mpxjs/utils/gen-component-tag'
+import genComponentTag from '@mpxjs/compile-utils/gen-component-tag'
 import fs from 'fs'
 import MagicString from 'magic-string'
 import path from 'path'
@@ -26,7 +26,7 @@ export const genComponentCode = (
   if (!async) {
     return `getComponent(${varName}, ${stringify(params)})`
   } else {
-    return `() => import(${stringify(resource)}).then(${varName} => 
+    return `() => import(${stringify(resource)}).then(${varName} =>
           getComponent(${varName}.default, ${stringify(params)})
         )`
   }

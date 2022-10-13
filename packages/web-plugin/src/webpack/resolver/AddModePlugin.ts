@@ -1,8 +1,8 @@
 import path from 'path'
-import stringifyQuery from '@mpxjs/utils/stringify-query'
-import addInfix from '@mpxjs/utils/add-infix'
+import stringifyQuery from '@mpxjs/compile-utils/stringify-query'
+import addInfix from '@mpxjs/compile-utils/add-infix'
 import { parseQuery } from 'loader-utils'
-import { matchCondition } from '@mpxjs/utils/match-condition'
+import { matchCondition } from '@mpxjs/compile-utils/match-condition'
 import { JSON_JS_EXT } from '../../constants'
 import { Resolver } from 'webpack'
 

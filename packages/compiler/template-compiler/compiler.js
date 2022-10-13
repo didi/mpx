@@ -1,6 +1,6 @@
 const JSON5 = require('json5')
 const he = require('he')
-const normalize = require('@mpxjs/utils/normalize')
+const normalize = require('@mpxjs/compile-utils/normalize')
 const addQuery = require(normalize.utils('add-query'))
 const { inBrowser } = require(normalize.utils('env'))
 const { normalizeCondition } = require(normalize.utils('match-condition'))

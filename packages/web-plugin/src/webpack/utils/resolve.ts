@@ -1,4 +1,4 @@
-import parseRequest from '@mpxjs/utils/parse-request'
+import parseRequest from '@mpxjs/compile-utils/parse-request'
 import { LoaderContext } from 'webpack'
 import { RESOLVE_IGNORED_ERR } from '../../constants/index'
 

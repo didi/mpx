@@ -104,6 +104,6 @@ declare module 'lru-cache' {
   }
   export default LruCache
 }
-declare module '@mpxjs/utils' {
+declare module '@mpxjs/compile-utils' {
   export function preProcessDefs(option: Record<string, unknown> | undefined) : T
 }

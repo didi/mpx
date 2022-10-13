@@ -1,5 +1,5 @@
 import { styleCompiler } from '@mpxjs/compiler'
-import genComponentTag from '@mpxjs/utils/gen-component-tag'
+import genComponentTag from '@mpxjs/compile-utils/gen-component-tag'
 import postcss from 'postcss'
 import { SourceMapInput, TransformPluginContext, TransformResult } from 'rollup'
 import { createFilter } from 'vite'
