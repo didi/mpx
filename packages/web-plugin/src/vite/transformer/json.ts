@@ -5,9 +5,9 @@ import { TransformPluginContext } from 'rollup'
 import { normalizePath } from 'vite'
 import { ResolvedOptions } from '../../options'
 import { proxyPluginContext } from '../../pluginContextProxy'
-import addQuery from '../../utils/addQuery'
+import addQuery from '@mpxjs/utils/add-query'
 import getJSONContent from '../../utils/get-json-content'
-import parseRequest from '../../utils/parseRequest'
+import parseRequest from '@mpxjs/utils/parse-request'
 import resolveModuleContext from '../../utils/resolveModuleContext'
 import stringify from '../../utils/stringify'
 import { SFCDescriptor } from '../compiler'
@@ -157,13 +157,13 @@ export async function processJSON(
       const pageSrc = !customPage ? page : page.src
       const pageModule = await pluginContext.resolve(
         addQuery(path.resolve(context, root, pageSrc), {
-          page: null
+          page: true
         }),
         path.join(context, root)
       )
       if (pageModule) {
         const pageId = pageModule.id
-        const { filename: pageFileName } = parseRequest(pageModule.id)
+        const { resourcePath: pageFileName } = parseRequest(pageModule.id)
         const pageRoute = !customPage
           ? genPageRoute(pageFileName, context)
           : page.path
@@ -193,12 +193,12 @@ export async function processJSON(
   ) => {
     if (componentPath) {
       const componetModule = await pluginContext.resolve(
-        addQuery(componentPath, { component: null }),
+        addQuery(componentPath, { component: true }),
         importer
       )
       if (componetModule) {
         const componentId = componetModule.id
-        const { filename: componentFileName } = parseRequest(componentId)
+        const { resourcePath: componentFileName } = parseRequest(componentId)
         mpxGlobal.componentsMap[componentFileName] =
           componentFileName + pathHash(componentFileName)
         componentsMap[componentName] = componentId
@@ -232,7 +232,7 @@ export async function processJSON(
     context: string
   ) => {
     for (const packagePath of packages) {
-      const { filename, query } = parseRequest(packagePath)
+      const { resourcePath: filename, queryObj: query } = parseRequest(packagePath)
       const packageModule = await pluginContext.resolve(filename, context)
       if (packageModule) {
         const packageId = packageModule.id

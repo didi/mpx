@@ -285,6 +285,7 @@ class MpxWebpackPlugin {
             defs: preProcessDefs(this.options.defs),
             i18n: this.options.i18n,
             checkUsingComponents: this.options.checkUsingComponents,
+            checkUsingComponentsRules: this.options.checkUsingComponentsRules,
             appTitle: 'Index homepage',
             externals: this.options.externals || [],
             pathHash: (resourcePath: string) => {

@@ -2,25 +2,12 @@ import { stringifyRequest as _stringifyRequest, urlToRequest } from 'loader-util
 import addQuery from '@mpxjs/compile-utils/add-query'
 import genComponentTag from '@mpxjs/compile-utils/gen-component-tag'
 import createHelpers from '@mpxjs/compile-utils/helpers'
+import { shallowStringify } from '../../utils/stringify'
 import mpx from '../mpx'
 
 const optionProcessorPath = '@mpxjs/web-plugin/src/runtime/optionProcessor'
 const tabBarContainerPath = '@mpxjs/web-plugin/src/runtime/components/web/mpx-tab-bar-container.vue'
 const tabBarPath = '@mpxjs/web-plugin/src/runtime/components/web/mpx-tab-bar.vue'
-
-function shallowStringify (obj) {
-  let arr = []
-  for (let key in obj) {
-    if (obj.hasOwnProperty(key)) {
-      let value = obj[key]
-      if (Array.isArray(value)) {
-        value = `[${value.join(',')}]`
-      }
-      arr.push(`'${key}':${value}`)
-    }
-  }
-  return `{${arr.join(',')}}`
-}
 
 function getAsyncChunkName (chunkName) {
   if (chunkName && typeof chunkName !== 'boolean') {

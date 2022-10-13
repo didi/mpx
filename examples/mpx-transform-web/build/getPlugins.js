@@ -9,10 +9,10 @@ module.exports = function getPlugins (options) {
   const { mode, srcMode, env, subDir, production, report } = options
   const plugins = []
   const currentMpxPluginConf = getConf(mpxPluginConf, options)
-
   plugins.push(new MpxWebpackPlugin(Object.assign({}, currentMpxPluginConf, {
     mode,
     srcMode,
+    env: 'didi',
     // webConfig: {
     //   routeMode: 'history'
     // },

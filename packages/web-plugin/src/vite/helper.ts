@@ -1,9 +1,9 @@
 import { PluginContext } from 'rollup'
 import { OPTION_PROCESSOR_PATH, TAB_BAR_PATH } from '../constants'
 import { ResolvedOptions } from '../options'
-import addQuery from '../utils/addQuery'
+import addQuery from '@mpxjs/utils/add-query'
 import { genImport } from '../utils/genCode'
-import parseRequest from '../utils/parseRequest'
+import parseRequest from '@mpxjs/utils/parse-request'
 import stringify, { shallowStringify } from '../utils/stringify'
 import { SFCDescriptor } from './compiler'
 import mpxGlobal from './mpx'
@@ -170,7 +170,7 @@ export const renderTabBarPageCode = async (
       const tabBarId = localPagesMap[tarbarName]
       if (tabBarId) {
         const varName = `__mpx_tabBar__${index}`
-        const { query } = parseRequest(tabBarId)
+        const { queryObj: query } = parseRequest(tabBarId)
         const async = query.async !== undefined
         !async && tabBars.push(genImport(tabBarId, varName))
         tabBarPagesMap[tarbarName] = genComponentCode(
@@ -202,4 +202,15 @@ export const renderTabBarPageCode = async (
       global.__tabBarPagesMap = ${shallowStringify(tabBarPagesMap)}`
   ]
   return content.join('\n')
+}
+
+export function renderMpxPresetCode(
+  descriptor: SFCDescriptor,
+  options: ResolvedOptions
+): string {
+  return [
+    !options.isProduction &&
+      `global.currentResource = ${stringify(descriptor.filename)}`,
+    `global.currentModuleId = ${stringify(descriptor.id)}`
+  ].join('\n')
 }

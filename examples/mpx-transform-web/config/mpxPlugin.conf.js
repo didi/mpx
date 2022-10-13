@@ -1,9 +1,11 @@
-const userConf = require('./user.conf')
 const resolve = require('../build/utils').resolve
-
 // 可以在此配置mpx webpack plugin
 // 配置项文档： https://www.mpxjs.cn/api/compile.html#mpxwebpackplugin-options
 module.exports = {
+  mode: 'web',
+  srcMode: 'wx',
+  // env为mpx编译的目标环境，需自定义
+  // env: 'didi',
   // resolve的模式
   resolveMode: 'webpack', // 可选值 webpack / native，默认是webpack，原生迁移建议使用native
 

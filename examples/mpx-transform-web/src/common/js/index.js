@@ -10,7 +10,7 @@ createPage({
     console.log('load index')
   },
   onShow () {
-    console.log('show index')
+    console.log('show index123')
     console.log('test', swiperPage)
   },
   methods: {
