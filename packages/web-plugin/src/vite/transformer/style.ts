@@ -4,7 +4,7 @@ import postcss from 'postcss'
 import { SourceMapInput, TransformPluginContext, TransformResult } from 'rollup'
 import { createFilter } from 'vite'
 import { ResolvedOptions } from '../../options'
-import loadPostcssConfig from '@mpxjs/utils/loadPostcssConfig'
+import loadPostcssConfig from '@mpxjs/compile-utils/loadPostcssConfig'
 import { SFCDescriptor } from '../compiler'
 
 async function mpxTransformStyle(
