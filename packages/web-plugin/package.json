@@ -36,8 +36,8 @@
     }
   },
   "scripts": {
-    "dev": "tsc -p . -w --incremental",
-    "build": "rimraf dist && tsc -p"
+    "dev": "tsc -w",
+    "build": "rimraf ./dist && tsc -p"
   },
   "files": [
     "dist",

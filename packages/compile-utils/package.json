@@ -30,9 +30,9 @@
     }
   },
   "scripts": {
-    "dev": "tsc -p . -w --incremental",
-    "build": "rimraf dist && tsc -p",
-    "hack": "esno scripts/postbuild.js"
+    "dev": "tsc -w",
+    "build": "rimraf ./dist && tsc && npm run post-build",
+    "post-build": "esno scripts/postbuild.js"
   },
   "dependencies": {
     "@mpxjs/compiler": "^2.7.40",
