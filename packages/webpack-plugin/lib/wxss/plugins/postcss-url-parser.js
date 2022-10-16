@@ -1,151 +1,151 @@
-const valueParser = require("postcss-value-parser");
+const valueParser = require('postcss-value-parser')
 
 const {
   resolveRequests,
   normalizeUrl,
   requestify,
   isURLRequestable,
-  WEBPACK_IGNORE_COMMENT_REGEXP,
-} = require("../utils");
+  WEBPACK_IGNORE_COMMENT_REGEXP
+} = require('../utils')
 
-const isUrlFunc = /url/i;
-const isImageSetFunc = /^(?:-webkit-)?image-set$/i;
-const needParseDeclaration = /(?:url|(?:-webkit-)?image-set)\(/i;
+const isUrlFunc = /url/i
+const isImageSetFunc = /^(?:-webkit-)?image-set$/i
+const needParseDeclaration = /(?:url|(?:-webkit-)?image-set)\(/i
 
-function getNodeFromUrlFunc(node) {
-  return node.nodes && node.nodes[0];
+function getNodeFromUrlFunc (node) {
+  return node.nodes && node.nodes[0]
 }
 
-function getWebpackIgnoreCommentValue(index, nodes, inBetween) {
-  if (index === 0 && typeof inBetween !== "undefined") {
-    return inBetween;
+function getWebpackIgnoreCommentValue (index, nodes, inBetween) {
+  if (index === 0 && typeof inBetween !== 'undefined') {
+    return inBetween
   }
 
-  let prevValueNode = nodes[index - 1];
+  let prevValueNode = nodes[index - 1]
 
   if (!prevValueNode) {
     // eslint-disable-next-line consistent-return
-    return;
+    return
   }
 
-  if (prevValueNode.type === "space") {
+  if (prevValueNode.type === 'space') {
     if (!nodes[index - 2]) {
       // eslint-disable-next-line consistent-return
-      return;
+      return
     }
 
-    prevValueNode = nodes[index - 2];
+    prevValueNode = nodes[index - 2]
   }
 
-  if (prevValueNode.type !== "comment") {
+  if (prevValueNode.type !== 'comment') {
     // eslint-disable-next-line consistent-return
-    return;
+    return
   }
 
-  const matched = prevValueNode.value.match(WEBPACK_IGNORE_COMMENT_REGEXP);
+  const matched = prevValueNode.value.match(WEBPACK_IGNORE_COMMENT_REGEXP)
 
-  return matched && matched[2] === "true";
+  return matched && matched[2] === 'true'
 }
 
-function shouldHandleURL(url, declaration, result, options) {
+function shouldHandleURL (url, declaration, result, options) {
   if (url.length === 0) {
     result.warn(`Unable to find uri in '${declaration.toString()}'`, {
-      node: declaration,
-    });
+      node: declaration
+    })
 
-    return { requestable: false, needResolve: false };
+    return { requestable: false, needResolve: false }
   }
 
-  return isURLRequestable(url, options);
+  return isURLRequestable(url, options)
 }
 
-function parseDeclaration(declaration, key, result, options) {
+function parseDeclaration (declaration, key, result, options) {
   if (!needParseDeclaration.test(declaration[key])) {
-    return;
+    return
   }
 
   const parsed = valueParser(
     declaration.raws && declaration.raws.value && declaration.raws.value.raw
       ? declaration.raws.value.raw
       : declaration[key]
-  );
+  )
 
-  let inBetween;
+  let inBetween
 
   if (declaration.raws && declaration.raws.between) {
-    const lastCommentIndex = declaration.raws.between.lastIndexOf("/*");
+    const lastCommentIndex = declaration.raws.between.lastIndexOf('/*')
 
     const matched = declaration.raws.between
       .slice(lastCommentIndex)
-      .match(WEBPACK_IGNORE_COMMENT_REGEXP);
+      .match(WEBPACK_IGNORE_COMMENT_REGEXP)
 
     if (matched) {
-      inBetween = matched[2] === "true";
+      inBetween = matched[2] === 'true'
     }
   }
 
-  let isIgnoreOnDeclaration = false;
+  let isIgnoreOnDeclaration = false
 
-  const prevNode = declaration.prev();
+  const prevNode = declaration.prev()
 
-  if (prevNode && prevNode.type === "comment") {
-    const matched = prevNode.text.match(WEBPACK_IGNORE_COMMENT_REGEXP);
+  if (prevNode && prevNode.type === 'comment') {
+    const matched = prevNode.text.match(WEBPACK_IGNORE_COMMENT_REGEXP)
 
     if (matched) {
-      isIgnoreOnDeclaration = matched[2] === "true";
+      isIgnoreOnDeclaration = matched[2] === 'true'
     }
   }
 
-  let needIgnore;
+  let needIgnore
 
-  const parsedURLs = [];
+  const parsedURLs = []
 
   parsed.walk((valueNode, index, valueNodes) => {
-    if (valueNode.type !== "function") {
-      return;
+    if (valueNode.type !== 'function') {
+      return
     }
 
     if (isUrlFunc.test(valueNode.value)) {
-      needIgnore = getWebpackIgnoreCommentValue(index, valueNodes, inBetween);
+      needIgnore = getWebpackIgnoreCommentValue(index, valueNodes, inBetween)
 
       if (
-        (isIgnoreOnDeclaration && typeof needIgnore === "undefined") ||
+        (isIgnoreOnDeclaration && typeof needIgnore === 'undefined') ||
         needIgnore
       ) {
         if (needIgnore) {
           // eslint-disable-next-line no-undefined
-          needIgnore = undefined;
+          needIgnore = undefined
         }
 
-        return;
+        return
       }
 
-      const { nodes } = valueNode;
-      const isStringValue = nodes.length !== 0 && nodes[0].type === "string";
-      let url = isStringValue ? nodes[0].value : valueParser.stringify(nodes);
+      const { nodes } = valueNode
+      const isStringValue = nodes.length !== 0 && nodes[0].type === 'string'
+      let url = isStringValue ? nodes[0].value : valueParser.stringify(nodes)
 
-      url = normalizeUrl(url, isStringValue);
+      url = normalizeUrl(url, isStringValue)
 
       const { requestable, needResolve } = shouldHandleURL(
         url,
         declaration,
         result,
         options
-      );
+      )
 
       // Do not traverse inside `url`
       if (!requestable) {
         // eslint-disable-next-line consistent-return
-        return false;
+        return false
       }
 
-      const queryParts = url.split("!");
+      const queryParts = url.split('!')
 
-      let prefix;
+      let prefix
 
       if (queryParts.length > 1) {
-        url = queryParts.pop();
-        prefix = queryParts.join("!");
+        url = queryParts.pop()
+        prefix = queryParts.join('!')
       }
 
       parsedURLs.push({
@@ -155,63 +155,63 @@ function parseDeclaration(declaration, key, result, options) {
         prefix,
         url,
         needQuotes: false,
-        needResolve,
-      });
+        needResolve
+      })
 
       // eslint-disable-next-line consistent-return
-      return false;
+      return false
     } else if (isImageSetFunc.test(valueNode.value)) {
       for (const [innerIndex, nNode] of valueNode.nodes.entries()) {
-        const { type, value } = nNode;
+        const { type, value } = nNode
 
-        if (type === "function" && isUrlFunc.test(value)) {
+        if (type === 'function' && isUrlFunc.test(value)) {
           needIgnore = getWebpackIgnoreCommentValue(
             innerIndex,
             valueNode.nodes
-          );
+          )
 
           if (
-            (isIgnoreOnDeclaration && typeof needIgnore === "undefined") ||
+            (isIgnoreOnDeclaration && typeof needIgnore === 'undefined') ||
             needIgnore
           ) {
             if (needIgnore) {
               // eslint-disable-next-line no-undefined
-              needIgnore = undefined;
+              needIgnore = undefined
             }
 
             // eslint-disable-next-line no-continue
-            continue;
+            continue
           }
 
-          const { nodes } = nNode;
+          const { nodes } = nNode
           const isStringValue =
-            nodes.length !== 0 && nodes[0].type === "string";
+            nodes.length !== 0 && nodes[0].type === 'string'
           let url = isStringValue
             ? nodes[0].value
-            : valueParser.stringify(nodes);
+            : valueParser.stringify(nodes)
 
-          url = normalizeUrl(url, isStringValue);
+          url = normalizeUrl(url, isStringValue)
 
           const { requestable, needResolve } = shouldHandleURL(
             url,
             declaration,
             result,
             options
-          );
+          )
 
           // Do not traverse inside `url`
           if (!requestable) {
             // eslint-disable-next-line consistent-return
-            return false;
+            return false
           }
 
-          const queryParts = url.split("!");
+          const queryParts = url.split('!')
 
-          let prefix;
+          let prefix
 
           if (queryParts.length > 1) {
-            url = queryParts.pop();
-            prefix = queryParts.join("!");
+            url = queryParts.pop()
+            prefix = queryParts.join('!')
           }
 
           parsedURLs.push({
@@ -221,49 +221,49 @@ function parseDeclaration(declaration, key, result, options) {
             prefix,
             url,
             needQuotes: false,
-            needResolve,
-          });
-        } else if (type === "string") {
+            needResolve
+          })
+        } else if (type === 'string') {
           needIgnore = getWebpackIgnoreCommentValue(
             innerIndex,
             valueNode.nodes
-          );
+          )
 
           if (
-            (isIgnoreOnDeclaration && typeof needIgnore === "undefined") ||
+            (isIgnoreOnDeclaration && typeof needIgnore === 'undefined') ||
             needIgnore
           ) {
             if (needIgnore) {
               // eslint-disable-next-line no-undefined
-              needIgnore = undefined;
+              needIgnore = undefined
             }
 
             // eslint-disable-next-line no-continue
-            continue;
+            continue
           }
 
-          let url = normalizeUrl(value, true);
+          let url = normalizeUrl(value, true)
 
           const { requestable, needResolve } = shouldHandleURL(
             url,
             declaration,
             result,
             options
-          );
+          )
 
           // Do not traverse inside `url`
           if (!requestable) {
             // eslint-disable-next-line consistent-return
-            return false;
+            return false
           }
 
-          const queryParts = url.split("!");
+          const queryParts = url.split('!')
 
-          let prefix;
+          let prefix
 
           if (queryParts.length > 1) {
-            url = queryParts.pop();
-            prefix = queryParts.join("!");
+            url = queryParts.pop()
+            prefix = queryParts.join('!')
           }
 
           parsedURLs.push({
@@ -273,175 +273,175 @@ function parseDeclaration(declaration, key, result, options) {
             prefix,
             url,
             needQuotes: true,
-            needResolve,
-          });
+            needResolve
+          })
         }
       }
 
       // Do not traverse inside `image-set`
       // eslint-disable-next-line consistent-return
-      return false;
+      return false
     }
-  });
+  })
 
   // eslint-disable-next-line consistent-return
-  return parsedURLs;
+  return parsedURLs
 }
 
 const plugin = (options = {}) => {
   return {
-    postcssPlugin: "postcss-url-parser",
-    prepare(result) {
-      const parsedDeclarations = [];
+    postcssPlugin: 'postcss-url-parser',
+    prepare (result) {
+      const parsedDeclarations = []
 
       return {
-        Declaration(declaration) {
-          const { isSupportDataURL, isSupportAbsoluteURL } = options;
-          const parsedURL = parseDeclaration(declaration, "value", result, {
+        Declaration (declaration) {
+          const { isSupportDataURL, isSupportAbsoluteURL } = options
+          const parsedURL = parseDeclaration(declaration, 'value', result, {
             isSupportDataURL,
-            isSupportAbsoluteURL,
-          });
+            isSupportAbsoluteURL
+          })
 
           if (!parsedURL) {
-            return;
+            return
           }
 
-          parsedDeclarations.push(...parsedURL);
+          parsedDeclarations.push(...parsedURL)
         },
-        async OnceExit() {
+        async OnceExit () {
           if (parsedDeclarations.length === 0) {
-            return;
+            return
           }
 
           const resolvedDeclarations = await Promise.all(
             parsedDeclarations.map(async (parsedDeclaration) => {
-              const { url, needResolve } = parsedDeclaration;
+              const { url, needResolve } = parsedDeclaration
 
               if (options.filter) {
-                const needKeep = await options.filter(url);
+                const needKeep = await options.filter(url)
 
                 if (!needKeep) {
                   // eslint-disable-next-line consistent-return
-                  return;
+                  return
                 }
               }
 
               if (!needResolve) {
                 // eslint-disable-next-line consistent-return
-                return parsedDeclaration;
+                return parsedDeclaration
               }
 
-              const splittedUrl = url.split(/(\?)?#/);
-              const [pathname, query, hashOrQuery] = splittedUrl;
+              const splittedUrl = url.split(/(\?)?#/)
+              const [pathname, query, hashOrQuery] = splittedUrl
 
-              let hash = query ? "?" : "";
-              hash += hashOrQuery ? `#${hashOrQuery}` : "";
+              let hash = query ? '?' : ''
+              hash += hashOrQuery ? `#${hashOrQuery}` : ''
 
-              const { resolver, rootContext } = options;
+              const { resolver, rootContext } = options
               const request = requestify(
                 pathname,
                 rootContext,
                 Boolean(resolver)
-              );
+              )
 
               if (!resolver) {
                 // eslint-disable-next-line consistent-return
-                return { ...parsedDeclaration, url: request, hash };
+                return { ...parsedDeclaration, url: request, hash }
               }
 
               const resolvedURL = await resolveRequests(
                 resolver,
                 options.context,
                 [...new Set([request, url])]
-              );
+              )
 
               if (!resolvedURL) {
                 // eslint-disable-next-line consistent-return
-                return;
+                return
               }
 
               // eslint-disable-next-line consistent-return
-              return { ...parsedDeclaration, url: resolvedURL, hash };
+              return { ...parsedDeclaration, url: resolvedURL, hash }
             })
-          );
+          )
 
-          const urlToNameMap = new Map();
-          const urlToReplacementMap = new Map();
+          const urlToNameMap = new Map()
+          const urlToReplacementMap = new Map()
 
-          let hasUrlImportHelper = false;
+          let hasUrlImportHelper = false
 
           for (
             let index = 0;
             index <= resolvedDeclarations.length - 1;
             index++
           ) {
-            const item = resolvedDeclarations[index];
+            const item = resolvedDeclarations[index]
 
             if (!item) {
               // eslint-disable-next-line no-continue
-              continue;
+              continue
             }
 
             if (!hasUrlImportHelper) {
               options.imports.push({
-                type: "get_url_import",
-                importName: "___CSS_LOADER_GET_URL_IMPORT___",
+                type: 'get_url_import',
+                importName: '___CSS_LOADER_GET_URL_IMPORT___',
                 url: options.urlHandler(
-                  require.resolve("../runtime/getUrl.js")
+                  require.resolve('../runtime/getUrl.js')
                 ),
-                index: -1,
-              });
+                index: -1
+              })
 
-              hasUrlImportHelper = true;
+              hasUrlImportHelper = true
             }
 
-            const { url, prefix } = item;
-            const newUrl = prefix ? `${prefix}!${url}` : url;
-            let importName = urlToNameMap.get(newUrl);
+            const { url, prefix } = item
+            const newUrl = prefix ? `${prefix}!${url}` : url
+            let importName = urlToNameMap.get(newUrl)
 
             if (!importName) {
-              importName = `___CSS_LOADER_URL_IMPORT_${urlToNameMap.size}___`;
-              urlToNameMap.set(newUrl, importName);
+              importName = `___CSS_LOADER_URL_IMPORT_${urlToNameMap.size}___`
+              urlToNameMap.set(newUrl, importName)
 
               options.imports.push({
-                type: "url",
+                type: 'url',
                 importName,
                 url: options.resolver
                   ? options.urlHandler(newUrl)
                   : JSON.stringify(newUrl),
-                index,
-              });
+                index
+              })
             }
 
-            const { hash, needQuotes } = item;
-            const replacementKey = JSON.stringify({ newUrl, hash, needQuotes });
-            let replacementName = urlToReplacementMap.get(replacementKey);
+            const { hash, needQuotes } = item
+            const replacementKey = JSON.stringify({ newUrl, hash, needQuotes })
+            let replacementName = urlToReplacementMap.get(replacementKey)
 
             if (!replacementName) {
-              replacementName = `___CSS_LOADER_URL_REPLACEMENT_${urlToReplacementMap.size}___`;
-              urlToReplacementMap.set(replacementKey, replacementName);
+              replacementName = `___CSS_LOADER_URL_REPLACEMENT_${urlToReplacementMap.size}___`
+              urlToReplacementMap.set(replacementKey, replacementName)
 
               options.replacements.push({
                 replacementName,
                 importName,
                 hash,
-                needQuotes,
-              });
+                needQuotes
+              })
             }
 
             // eslint-disable-next-line no-param-reassign
-            item.node.type = "word";
+            item.node.type = 'word'
             // eslint-disable-next-line no-param-reassign
-            item.node.value = replacementName;
+            item.node.value = replacementName
             // eslint-disable-next-line no-param-reassign
-            item.declaration.value = item.parsed.toString();
+            item.declaration.value = item.parsed.toString()
           }
-        },
-      };
-    },
-  };
-};
+        }
+      }
+    }
+  }
+}
 
-plugin.postcss = true;
+plugin.postcss = true
 
-module.exports = plugin;
+module.exports = plugin

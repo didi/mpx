@@ -1,1 +1,1 @@
-module.exports = (i) => i[1];
+module.exports = (i) => i[1]

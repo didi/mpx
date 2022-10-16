@@ -1,21 +1,21 @@
-const valueParser = require("postcss-value-parser");
+const valueParser = require('postcss-value-parser')
 
 const {
   normalizeUrl,
   resolveRequests,
   isURLRequestable,
   requestify,
-  WEBPACK_IGNORE_COMMENT_REGEXP,
-} = require("../utils");
+  WEBPACK_IGNORE_COMMENT_REGEXP
+} = require('../utils')
 
 const STYLE_PRE_COMPILE_IGNORE_REGEXP = /^(preCompileIgnore\s).+/
 const GET_URL_FROM_IMPORT_REGEXP = /\@import\s+(.+)[^;]/
 
-function parseNode(atRule, key, options) {
+function parseNode (atRule, key, options) {
   // Convert only top-level @import
 
-  if (atRule.parent.type !== "root") {
-    return;
+  if (atRule.parent.type !== 'root') {
+    return
   }
 
   if (
@@ -23,25 +23,24 @@ function parseNode(atRule, key, options) {
     atRule.raws.afterName &&
     atRule.raws.afterName.trim().length > 0
   ) {
-    const lastCommentIndex = atRule.raws.afterName.lastIndexOf("/*");
+    const lastCommentIndex = atRule.raws.afterName.lastIndexOf('/*')
 
     const matched = atRule.raws.afterName
       .slice(lastCommentIndex)
-      .match(WEBPACK_IGNORE_COMMENT_REGEXP);
+      .match(WEBPACK_IGNORE_COMMENT_REGEXP)
 
-    if (matched && matched[2] === "true") {
-      return;
+    if (matched && matched[2] === 'true') {
+      return
     }
-
   }
 
-  const prevNode = atRule.prev();
+  const prevNode = atRule.prev()
 
-  if (prevNode && prevNode.type === "comment") {
-    const matched = prevNode.text.match(WEBPACK_IGNORE_COMMENT_REGEXP);
+  if (prevNode && prevNode.type === 'comment') {
+    const matched = prevNode.text.match(WEBPACK_IGNORE_COMMENT_REGEXP)
 
-    if (matched && matched[2] === "true") {
-      return;
+    if (matched && matched[2] === 'true') {
+      return
     }
   }
 
@@ -49,125 +48,125 @@ function parseNode(atRule, key, options) {
   if (atRule.nodes) {
     const error = new Error(
       "It looks like you didn't end your @import statement correctly. Child nodes are attached to it."
-    );
+    )
 
-    error.node = atRule;
+    error.node = atRule
 
-    throw error;
+    throw error
   }
 
   const rawParams =
     atRule.raws &&
     atRule.raws[key] &&
-    typeof atRule.raws[key].raw !== "undefined"
+    typeof atRule.raws[key].raw !== 'undefined'
       ? atRule.raws[key].raw
-      : atRule[key];
-  const { nodes: paramsNodes } = valueParser(rawParams);
+      : atRule[key]
+  const { nodes: paramsNodes } = valueParser(rawParams)
 
   // No nodes - `@import ;`
   // Invalid type - `@import foo-bar;`
   if (
     paramsNodes.length === 0 ||
-    (paramsNodes[0].type !== "string" && paramsNodes[0].type !== "function")
+    (paramsNodes[0].type !== 'string' && paramsNodes[0].type !== 'function')
   ) {
-    const error = new Error(`Unable to find uri in "${atRule.toString()}"`);
+    const error = new Error(`Unable to find uri in "${atRule.toString()}"`)
 
-    error.node = atRule;
+    error.node = atRule
 
-    throw error;
+    throw error
   }
 
-  let isStringValue;
-  let url;
+  let isStringValue
+  let url
 
-  if (paramsNodes[0].type === "string") {
-    isStringValue = true;
-    url = paramsNodes[0].value;
+  if (paramsNodes[0].type === 'string') {
+    isStringValue = true
+    url = paramsNodes[0].value
   } else {
     // Invalid function - `@import nourl(test.css);`
-    if (paramsNodes[0].value.toLowerCase() !== "url") {
-      const error = new Error(`Unable to find uri in "${atRule.toString()}"`);
+    if (paramsNodes[0].value.toLowerCase() !== 'url') {
+      const error = new Error(`Unable to find uri in "${atRule.toString()}"`)
 
-      error.node = atRule;
+      error.node = atRule
 
-      throw error;
+      throw error
     }
 
     isStringValue =
       paramsNodes[0].nodes.length !== 0 &&
-      paramsNodes[0].nodes[0].type === "string";
+      paramsNodes[0].nodes[0].type === 'string'
     url = isStringValue
       ? paramsNodes[0].nodes[0].value
-      : valueParser.stringify(paramsNodes[0].nodes);
+      : valueParser.stringify(paramsNodes[0].nodes)
   }
 
-  url = normalizeUrl(url, isStringValue);
+  url = normalizeUrl(url, isStringValue)
 
-  const { requestable, needResolve } = isURLRequestable(url, options);
+  const { requestable, needResolve } = isURLRequestable(url, options)
 
-  let prefix;
+  let prefix
 
   if (requestable && needResolve) {
-    const queryParts = url.split("!");
+    const queryParts = url.split('!')
 
     if (queryParts.length > 1) {
-      url = queryParts.pop();
-      prefix = queryParts.join("!");
+      url = queryParts.pop()
+      prefix = queryParts.join('!')
     }
   }
 
   // Empty url - `@import "";` or `@import url();`
   if (url.trim().length === 0) {
-    const error = new Error(`Unable to find uri in "${atRule.toString()}"`);
+    const error = new Error(`Unable to find uri in "${atRule.toString()}"`)
 
-    error.node = atRule;
+    error.node = atRule
 
-    throw error;
+    throw error
   }
 
-  const additionalNodes = paramsNodes.slice(1);
+  const additionalNodes = paramsNodes.slice(1)
 
-  let supports;
-  let layer;
-  let media;
+  let supports
+  let layer
+  let media
 
   if (additionalNodes.length > 0) {
-    let nodes = [];
+    let nodes = []
 
     for (const node of additionalNodes) {
-      nodes.push(node);
+      nodes.push(node)
 
       const isLayerFunction =
-        node.type === "function" && node.value.toLowerCase() === "layer";
+        node.type === 'function' && node.value.toLowerCase() === 'layer'
       const isLayerWord =
-        node.type === "word" && node.value.toLowerCase() === "layer";
+        node.type === 'word' && node.value.toLowerCase() === 'layer'
 
       if (isLayerFunction || isLayerWord) {
         if (isLayerFunction) {
-          nodes.splice(nodes.length - 1, 1, ...node.nodes);
+          nodes.splice(nodes.length - 1, 1, ...node.nodes)
         } else {
           nodes.splice(nodes.length - 1, 1, {
-            type: "string",
-            value: "",
-            unclosed: false,
-          });
+            type: 'string',
+            value: '',
+            unclosed: false
+          })
         }
 
-        layer = valueParser.stringify(nodes).trim().toLowerCase();
-        nodes = [];
+        layer = valueParser.stringify(nodes).trim().toLowerCase()
+        nodes = []
       } else if (
-        node.type === "function" &&
-        node.value.toLowerCase() === "supports"
+        node.type === 'function' &&
+        node.value.toLowerCase() === 'supports'
       ) {
-        nodes.splice(nodes.length - 1, 1, ...node.nodes);
+        nodes.splice(nodes.length - 1, 1, ...node.nodes)
 
-        supports = valueParser.stringify(nodes).trim().toLowerCase();
-        nodes = [];
+        supports = valueParser.stringify(nodes).trim().toLowerCase()
+        nodes = []
       }
     }
 
     if (nodes.length > 0) {
-      media = valueParser.stringify(nodes).trim().toLowerCase();
+      media = valueParser.stringify(nodes).trim().toLowerCase()
     }
   }
 
@@ -180,31 +179,31 @@ function parseNode(atRule, key, options) {
     supports,
     media,
     requestable,
-    needResolve,
-  };
+    needResolve
+  }
 }
 
 const plugin = (options = {}) => {
   return {
-    postcssPlugin: "postcss-import-parser",
-    prepare(result) {
-      const parsedAtRules = [];
+    postcssPlugin: 'postcss-import-parser',
+    prepare (result) {
+      const parsedAtRules = []
 
       return {
         Once (root, { AtRule }) {
-          // Calls once per file, since every file has single Root          
+          // Calls once per file, since every file has single Root
           // 遍历AST 找到注释节点进行@import 替换
           root.walkComments((comment) => {
-            if(STYLE_PRE_COMPILE_IGNORE_REGEXP.test(comment.text)) {
+            if (STYLE_PRE_COMPILE_IGNORE_REGEXP.test(comment.text)) {
               let importStatement = comment.text.replace(STYLE_PRE_COMPILE_IGNORE_REGEXP, (matchStr, $1) => {
                 return matchStr.replace($1, '')
               })
 
               const matched = importStatement.match(GET_URL_FROM_IMPORT_REGEXP)
 
-              if(matched && matched[1]) {
+              if (matched && matched[1]) {
                 let url = matched[1]
-                let importNode = new AtRule({ name: 'import', params: url, source: comment.source  })
+                let importNode = new AtRule({ name: 'import', params: url, source: comment.source })
                 comment.before(importNode)
                 comment.remove()
               }
@@ -212,7 +211,7 @@ const plugin = (options = {}) => {
           })
         },
         AtRule: {
-          import(atRule) {
+          import (atRule) {
             if (options.isCSSStyleSheet) {
               options.loaderContext.emitError(
                 new Error(
@@ -220,48 +219,46 @@ const plugin = (options = {}) => {
                     "'@import' rules are not allowed here and will not be processed"
                   ).message
                 )
-              );
+              )
 
-              return;
+              return
             }
 
-            const { isSupportDataURL, isSupportAbsoluteURL } = options;
+            const { isSupportDataURL, isSupportAbsoluteURL } = options
 
-            let parsedAtRule;
+            let parsedAtRule
 
             try {
-              parsedAtRule = parseNode(atRule, "params", {
+              parsedAtRule = parseNode(atRule, 'params', {
                 isSupportAbsoluteURL,
                 isSupportDataURL,
                 externals: options.externals
-              });
-
+              })
             } catch (error) {
-              result.warn(error.message, { node: error.node });
+              result.warn(error.message, { node: error.node })
             }
 
             if (!parsedAtRule) {
-              return;
+              return
             }
 
-            parsedAtRules.push(parsedAtRule);
-          },
+            parsedAtRules.push(parsedAtRule)
+          }
         },
-        async OnceExit() {
-
+        async OnceExit () {
           if (parsedAtRules.length === 0) {
-            return;
+            return
           }
 
-          const { loaderContext } = options;
+          const { loaderContext } = options
           const resolver = loaderContext.getResolve({
-            dependencyType: "css",
-            conditionNames: ["style"],
-            mainFields: ["css", "style", "main", "..."],
-            mainFiles: ["index", "..."],
-            extensions: [".css", "..."],
-            preferRelative: true,
-          });
+            dependencyType: 'css',
+            conditionNames: ['style'],
+            mainFields: ['css', 'style', 'main', '...'],
+            mainFiles: ['index', '...'],
+            extensions: ['.css', '...'],
+            preferRelative: true
+          })
 
           const resolvedAtRules = await Promise.all(
             parsedAtRules.map(async (parsedAtRule) => {
@@ -273,8 +270,8 @@ const plugin = (options = {}) => {
                 url,
                 layer,
                 supports,
-                media,
-              } = parsedAtRule;
+                media
+              } = parsedAtRule
 
               if (options.filter) {
                 const needKeep = await options.filter(
@@ -283,32 +280,32 @@ const plugin = (options = {}) => {
                   loaderContext.resourcePath,
                   supports,
                   layer
-                );
+                )
 
                 if (!needKeep) {
-                  return;
+                  return
                 }
               }
 
               if (needResolve) {
-                const request = requestify(url, loaderContext.rootContext);
+                const request = requestify(url, loaderContext.rootContext)
                 const resolvedUrl = await resolveRequests(
                   resolver,
                   loaderContext.context,
                   [...new Set([request, url])]
-                );
+                )
 
                 if (!resolvedUrl) {
-                  return;
+                  return
                 }
 
                 if (resolvedUrl === loaderContext.resourcePath) {
-                  atRule.remove();
+                  atRule.remove()
 
-                  return;
+                  return
                 }
 
-                atRule.remove();
+                atRule.remove()
 
                 // eslint-disable-next-line consistent-return
                 return {
@@ -317,60 +314,60 @@ const plugin = (options = {}) => {
                   supports,
                   media,
                   prefix,
-                  requestable,
-                };
+                  requestable
+                }
               }
 
-              atRule.remove();
+              atRule.remove()
 
               // eslint-disable-next-line consistent-return
-              return { url, layer, supports, media, prefix, requestable };
+              return { url, layer, supports, media, prefix, requestable }
             })
-          );
-          
-          const urlToNameMap = new Map();
+          )
+
+          const urlToNameMap = new Map()
 
           for (let index = 0; index <= resolvedAtRules.length - 1; index++) {
-            const resolvedAtRule = resolvedAtRules[index];
+            const resolvedAtRule = resolvedAtRules[index]
 
             if (!resolvedAtRule) {
               // eslint-disable-next-line no-continue
-              continue;
+              continue
             }
 
-            const { url, requestable, layer, supports, media } = resolvedAtRule;
+            const { url, requestable, layer, supports, media } = resolvedAtRule
 
             if (!requestable) {
-              options.api.push({ url, layer, supports, media, index });
+              options.api.push({ url, layer, supports, media, index })
 
               // eslint-disable-next-line no-continue
-              continue;
+              continue
             }
 
-            const { prefix } = resolvedAtRule;
-            const newUrl = prefix ? `${prefix}!${url}` : url;
-            let importName = urlToNameMap.get(newUrl);
+            const { prefix } = resolvedAtRule
+            const newUrl = prefix ? `${prefix}!${url}` : url
+            let importName = urlToNameMap.get(newUrl)
 
             if (!importName) {
-              importName = `___CSS_LOADER_AT_RULE_IMPORT_${urlToNameMap.size}___`;
-              urlToNameMap.set(newUrl, importName);
+              importName = `___CSS_LOADER_AT_RULE_IMPORT_${urlToNameMap.size}___`
+              urlToNameMap.set(newUrl, importName)
 
               options.imports.push({
-                type: "rule_import",
+                type: 'rule_import',
                 importName,
                 url: options.urlHandler(newUrl),
-                index,
-              });
+                index
+              })
 
-              options.api.push({ importName, layer, supports, media, index });
+              options.api.push({ importName, layer, supports, media, index })
             }
           }
-        },
-      };
-    },
-  };
-};
+        }
+      }
+    }
+  }
+}
 
-plugin.postcss = true;
+plugin.postcss = true
 
-module.exports = plugin;
+module.exports = plugin

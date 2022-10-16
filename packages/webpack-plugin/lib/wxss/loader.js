@@ -1,6 +1,5 @@
-const loader = require("./index");
+const loader = require('./index')
 
-module.exports = loader;
+module.exports = loader
 
-
-module.exports.defaultGetLocalIdent = require("./utils").defaultGetLocalIdent;
+module.exports.defaultGetLocalIdent = require('./utils').defaultGetLocalIdent

@@ -4,14 +4,14 @@
 */
 // base on css-loader@6.7.1
 
-const postcss = require("postcss");
-const postcssPkg = require("postcss/package.json");
-const { satisfies } = require("semver");
+const postcss = require('postcss')
+const postcssPkg = require('postcss/package.json')
+const { satisfies } = require('semver')
 
-const CssSyntaxError = require("./CssSyntaxError");
-const Warning = require("./Warning");
-const schema = require("./options.json");
-const { icssParser, importParser, urlParser } = require("./plugins");
+const CssSyntaxError = require('./CssSyntaxError')
+const Warning = require('./Warning')
+const schema = require('./options.json')
+const { icssParser, importParser, urlParser } = require('./plugins')
 const {
   normalizeOptions,
   shouldUseModulesPlugins,
@@ -27,44 +27,42 @@ const {
   normalizeSourceMap,
   sort,
   combineRequests,
-  stringifyRequest,
-} = require("./utils");
+  stringifyRequest
+} = require('./utils')
 const createHelpers = require('../helpers')
 
-module.exports =  async function loader(content, map, meta) {
-
-  let rawOptions = this.getOptions(schema);
-  const plugins = [];
-  const callback = this.async();
+module.exports = async function loader (content, map, meta) {
+  let rawOptions = this.getOptions(schema)
+  const plugins = []
+  const callback = this.async()
 
   const mpx = this.getMpx()
   const externals = mpx.externals
   const root = mpx.projectRoot
   const sourceMap = mpx.cssSourceMap || false
- 
 
-  let options;
+  let options
 
   try {
-    options = normalizeOptions(rawOptions, this);
+    options = normalizeOptions(rawOptions, this)
     options = Object.assign({}, options, { sourceMap, root, externals })
   } catch (error) {
-    callback(error);
+    callback(error)
 
-    return;
+    return
   }
 
-  const replacements = [];
-  const exports = [];
+  const replacements = []
+  const exports = []
 
   if (shouldUseModulesPlugins(options)) {
-    plugins.push(...getModulesPlugins(options, this));
+    plugins.push(...getModulesPlugins(options, this))
   }
 
-  let importPluginImports = [];
-  const importPluginApi = [];
+  let importPluginImports = []
+  const importPluginApi = []
 
-  let isSupportAbsoluteURL = false;
+  let isSupportAbsoluteURL = false
 
   // TODO enable by default in the next major release
   if (
@@ -73,17 +71,17 @@ module.exports =  async function loader(content, map, meta) {
     this._compilation.options.experiments &&
     this._compilation.options.experiments.buildHttp
   ) {
-    isSupportAbsoluteURL = true;
+    isSupportAbsoluteURL = true
   }
   const isSupportDataURL =
-    options.esModule && Boolean("fsStartTime" in this._compiler);
+    options.esModule && Boolean('fsStartTime' in this._compiler)
 
   if (shouldUseImportPlugin(options)) {
     plugins.push(
       importParser({
         isSupportAbsoluteURL: false,
         isSupportDataURL: false,
-        isCSSStyleSheet: options.exportType === "css-style-sheet",
+        isCSSStyleSheet: options.exportType === 'css-style-sheet',
         loaderContext: this,
         imports: importPluginImports,
         api: importPluginApi,
@@ -95,13 +93,13 @@ module.exports =  async function loader(content, map, meta) {
           ),
         externals: options.externals
       })
-    );
+    )
   }
 
-  const urlPluginImports = [];
+  const urlPluginImports = []
 
   if (shouldUseURLPlugin(options)) {
-    const needToResolveURL = !options.esModule;
+    const needToResolveURL = !options.esModule
 
     plugins.push(
       urlParser({
@@ -115,17 +113,17 @@ module.exports =  async function loader(content, map, meta) {
         resolver: needToResolveURL
           ? this.getResolve({ mainFiles: [], extensions: [] })
           : // eslint-disable-next-line no-undefined
-            undefined,
-        urlHandler: (url) => stringifyRequest(this, url),
+          undefined,
+        urlHandler: (url) => stringifyRequest(this, url)
         // Support data urls as input in new URL added in webpack@5.38.0
       })
-    );
+    )
   }
 
-  const icssPluginImports = [];
-  const icssPluginApi = [];
+  const icssPluginImports = []
+  const icssPluginApi = []
 
-  const needToUseIcssPlugin = shouldUseIcssPlugin(options);
+  const needToUseIcssPlugin = shouldUseIcssPlugin(options)
 
   if (needToUseIcssPlugin) {
     plugins.push(
@@ -139,28 +137,28 @@ module.exports =  async function loader(content, map, meta) {
           stringifyRequest(
             this,
             combineRequests(getPreRequester(this)(options.importLoaders), url)
-          ),
+          )
       })
-    );
+    )
   }
 
   // Reuse CSS AST (PostCSS AST e.g 'postcss-loader') to avoid reparsing
   if (meta) {
-    const { ast } = meta;
+    const { ast } = meta
 
     if (
       ast &&
-      ast.type === "postcss" &&
+      ast.type === 'postcss' &&
       satisfies(ast.version, `^${postcssPkg.version}`)
     ) {
       // eslint-disable-next-line no-param-reassign
-      content = ast.root;
+      content = ast.root
     }
   }
 
-  const { resourcePath } = this;
+  const { resourcePath } = this
 
-  let result;
+  let result
 
   try {
     result = await postcss(plugins).process(content, {
@@ -169,26 +167,26 @@ module.exports =  async function loader(content, map, meta) {
       to: resourcePath,
       map: options.sourceMap
         ? {
-            prev: map ? normalizeSourceMap(map, resourcePath) : null,
-            inline: false,
-            annotation: false,
-          }
-        : false,
-    });
+          prev: map ? normalizeSourceMap(map, resourcePath) : null,
+          inline: false,
+          annotation: false
+        }
+        : false
+    })
   } catch (error) {
     if (error.file) {
-      this.addDependency(error.file);
+      this.addDependency(error.file)
     }
 
     callback(
-      error.name === "CssSyntaxError" ? new CssSyntaxError(error) : error
-    );
+      error.name === 'CssSyntaxError' ? new CssSyntaxError(error) : error
+    )
 
-    return;
+    return
   }
 
   for (const warning of result.warnings()) {
-    this.emitWarning(new Warning(warning));
+    this.emitWarning(new Warning(warning))
   }
 
   const { getRequestString } = createHelpers(this)
@@ -209,43 +207,42 @@ module.exports =  async function loader(content, map, meta) {
 
   const imports = []
     .concat(icssPluginImports.sort(sort))
-    .concat(urlPluginImports.sort(sort));
-
+    .concat(urlPluginImports.sort(sort))
 
   const api = []
     .concat(importPluginApi.sort(sort))
-    .concat(icssPluginApi.sort(sort));
+    .concat(icssPluginApi.sort(sort))
 
   if (options.modules.exportOnlyLocals !== true) {
     imports.unshift({
-      type: "api_import",
-      importName: "___CSS_LOADER_API_IMPORT___",
-      url: stringifyRequest(this, require.resolve("./runtime/api")),
-    });
+      type: 'api_import',
+      importName: '___CSS_LOADER_API_IMPORT___',
+      url: stringifyRequest(this, require.resolve('./runtime/api'))
+    })
 
     if (options.sourceMap) {
       imports.unshift({
-        importName: "___CSS_LOADER_API_SOURCEMAP_IMPORT___",
-        url: stringifyRequest(this, require.resolve("./runtime/sourceMaps")),
-      });
+        importName: '___CSS_LOADER_API_SOURCEMAP_IMPORT___',
+        url: stringifyRequest(this, require.resolve('./runtime/sourceMaps'))
+      })
     } else {
       imports.unshift({
-        importName: "___CSS_LOADER_API_NO_SOURCEMAP_IMPORT___",
-        url: stringifyRequest(this, require.resolve("./runtime/noSourceMaps")),
-      });
+        importName: '___CSS_LOADER_API_NO_SOURCEMAP_IMPORT___',
+        url: stringifyRequest(this, require.resolve('./runtime/noSourceMaps'))
+      })
     }
   }
 
-  const importCode = getImportCode(imports, options);
+  const importCode = getImportCode(imports, options)
 
-  let moduleCode;
+  let moduleCode
 
   try {
-    moduleCode = getModuleCode(result, api, importPluginImports, replacements, options, this);
+    moduleCode = getModuleCode(result, api, importPluginImports, replacements, options, this)
   } catch (error) {
-    callback(error);
+    callback(error)
 
-    return;
+    return
   }
 
   const exportCode = getExportCode(
@@ -253,7 +250,7 @@ module.exports =  async function loader(content, map, meta) {
     replacements,
     needToUseIcssPlugin,
     options
-  );
+  )
 
-  callback(null, `${importCode}${moduleCode}${exportCode}`);
+  callback(null, `${importCode}${moduleCode}${exportCode}`)
 }
