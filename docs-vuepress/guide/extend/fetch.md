@@ -4,7 +4,7 @@
 Mpx 提供了网络请求库 fetch，抹平了微信，阿里等平台请求参数及响应数据的差异；同时支持请求拦截器，请求取消等
 
 
-### 使用说明
+## 使用说明
 
 ```js
 import mpx from '@mpxjs/core'
@@ -25,7 +25,7 @@ mpx.createApp({
 })
 ```
 
-### 导出说明
+## 导出说明
 
 mpx-fetch提供了一个实例 **xfetch** ，该实例包含以下api
 
@@ -33,7 +33,7 @@ mpx-fetch提供了一个实例 **xfetch** ，该实例包含以下api
 - CancelToken，实例属性，用于创建一个取消请求的凭证。
 - interceptors，实例属性，用于添加拦截器，包含两个属性，request & response
 
-### 请求拦截器
+## 请求拦截器
 
 ```js
 mpx.xfetch.interceptors.request.use(function(config) {
@@ -48,7 +48,7 @@ mpx.xfetch.interceptors.response.use(function(res) {
 })
 ```
 
-### 请求中断
+## 请求中断
 
 ```js
 const cancelToken = new mpx.xfetch.CancelToken()
@@ -61,19 +61,32 @@ mpx.xfetch.fetch({
 })
 cancelToken.exec('手动取消请求') // 执行后请求中断，返回abort fail
 ```
-### 支持 emulateJSON
 
+## 设置请求参数
 ```js
 mpx.xfetch.fetch({
 	url: 'http://xxx.com',
+	params: {
+		name: 'test'
+	}
+})
+
+mpx.xfetch.fetch({
+	url: 'http://xxx.com',
 	method: 'POST',
+	// params 参数等价于 url query
+	params: {
+		age: 10
+	},
 	data: {
 		name: 'test'
 	},
-	emulateJSON: true // 等价于header = {'content-type': 'application/x-www-form-urlencoded'}
+	// 设置参数序列化方式，等价于header = {'content-type': 'application/x-www-form-urlencoded'}
+	emulateJSON: true
 })
 ```
-### 支持 timeout
+
+## 设置请求 timeout
 
 ```js
 mpx.xfetch.fetch({
@@ -86,24 +99,33 @@ mpx.xfetch.fetch({
 })
 ```
 
-### 支持 params
+## 在组合式 API 中使用 {#composition-api-usage}
+在组合式 API 中我们提供了 [useFetch](/api/extend.html#usefetch) 方法来访问 `xfetch` 实例对象
+
 ```js
-mpx.xfetch.fetch({
-	url: 'http://xxx.com',
-	params: {
-		name: 'test'
-	}
+// app.mpx
+import mpx, { createComponent } from '@mpxjs/core'
+import { useFetch } from '@mpxjs/fetch'
+
+createComponent({
+  setup() {
+      useFetch().fetch({
+          url: 'http://xxx.com',
+          method: 'POST',
+          params: {
+              age: 10
+          },
+          data: {
+              name: 'test'
+          },
+          emulateJSON: true,
+          usePre: true,
+          cacheInvalidationTime: 3000,
+          ignorePreParamKeys: ['timestamp']
+      }).then(res => {
+          console.log(res.data)
+      })   
+  }
 })
 
-mpx.xfetch.fetch({
-	url: 'http://xxx.com',
-	method: 'POST',
-	params: {
-		age: 10
-	},
-	data: {
-		name: 'test'
-	},
-	emulateJSON: true // 等价于header = {'content-type': 'application/x-www-form-urlencoded'}
-})
 ```

@@ -64,9 +64,9 @@ const sidebar = {
       collapsable: false,
       path: '/guide/extend',
       children: [
-        'extend/request',
-        'extend/mock',
-        'extend/api-proxy'
+        'extend/fetch',
+        'extend/api-proxy',
+        'extend/mock'
       ]
     },
     {
@@ -94,15 +94,7 @@ const sidebar = {
     'directives',
     'compile',
     'builtIn',
-    {
-      title: '响应式 API',
-      children: [
-        'reactivity-api/basic-reactivity',
-        'reactivity-api/refs-api',
-        'reactivity-api/computed-watch-api',
-        'reactivity-api/effect-scope'
-      ]
-    },
+    'reactivity-api',
     'composition-api',
     'extend'
   ],
@@ -114,7 +106,8 @@ const sidebar = {
     { title: 'Mpx框架技术揭秘', path: 'mpx2' },
     { title: '基于Mpx的小程序体积优化', path: 'size-control' },
     { title: 'Mpx中基于 Typescript Template Literal Types 实现链式key的类型推导', path: 'ts-derivation' },
-    { title: 'Mpx2.7版本正式发布，大幅提升编译构建速度', path: '2.7-release' }
+    { title: 'Mpx2.7 版本正式发布，大幅提升编译构建速度', path: '2.7-release' },
+    { title: 'Mpx2.8 版本正式发布，使用组合式 API 开发小程序', path: '2.8-release' }
   ]
 }
 
@@ -146,6 +139,10 @@ module.exports = {
         message: '文档有更新啦！',
         buttonText: '刷新'
       }
+    },
+    '@vuepress/active-header-links': {
+      sidebarLinkSelector: '.header-anchor',
+      headerAnchorSelector: '.header-anchor'
     }
   },
   themeConfig: {

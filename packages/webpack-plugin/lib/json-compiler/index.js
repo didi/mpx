@@ -480,8 +480,9 @@ module.exports = function (content) {
             delete tabBar.custom
             return callback()
           }
+          if (err) return callback(err)
           tabBar.custom = entry // hack for javascript parser call hook.
-          callback(err)
+          callback()
         })
       } else {
         callback()

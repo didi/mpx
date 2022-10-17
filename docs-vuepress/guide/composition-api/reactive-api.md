@@ -361,7 +361,7 @@ createComponent({
 
 注意多个同步更改只会触发一次侦听器。
 
-通过更改设置 `flush: 'sync'`，我们可以为每个更改都强制触发侦听器，尽管这通常是不推荐的。或者，可以用 [nextTick](#todo-api-nextTick) 等待侦听器在下一步改变之前运行。例如：
+通过更改设置 `flush: 'sync'`，我们可以为每个更改都强制触发侦听器，尽管这通常是不推荐的。或者，可以用 [nextTick](../../api/global-api.md#nexttick) 等待侦听器在下一步改变之前运行。例如：
 
 ```js
 const changeValues = async () => {

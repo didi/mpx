@@ -1,6 +1,6 @@
 # 全局 API
 
-## 全局对象 Mpx
+## 全局对象 Mpx {#global-mpx}
 
 `@mpxjs/core` 默认导出 mpx 全局实例对象，通过该实例对象我们可以访问部分应用实例 API
 
@@ -104,33 +104,6 @@ mpx.use(test, {prefix: 'mpx'}, 'otherparams')
 ### watch
 
 watch 可以通过全局实例访问，也可以使用具名导出的方式，二者逻辑相同，我们推荐使用具名导出的方式。[查看详情](reactivity-api/computed-watch-api.html#watch)
-
-## set
-用于对一个响应式对象新增属性，会`触发订阅者更新操作`
-- **参数**：
-  - `{Object | Array} target`
-  - `{string | number} propertyName/index`
-  - `{any} value`
-
-- **示例：**
-```js
-import { set, reactive } from '@mpxjs/core'
-const person = reactive({name: 1})
-// 具名导出使用
-set(person, 'age', 17) // age 改变后会触发订阅者视图更新
-```
-
-## del
-用于对一个响应式对象删除属性，会`触发订阅者更新操作`
-- **参数**：
-  - `{Object | Array} target`
-  - `{string | number} propertyName/index`
-- **示例：**
-```js
-import {del, reactive } from '@mpxjs/core'
-const person = reactive({name: 1})
-del(person, 'age')
-```
 
 ## createApp
 > 注册一个小程序，接受一个 Object 类型的参数
@@ -373,7 +346,7 @@ if (__mpx_mode__ === 'web') {
 }
 ```
 
-## 内建生命周期变量
+## 内建生命周期变量 {#built-in-lifecycle-variable}
 Mpx 在运行时自身有着一套内建生命周期，当开发者想使用内建生命周期时，可以通过内建生命周期变量进行对应生命周期的注册，
 需要注意的是，这部分内建生命周期变量**只能用于选项式 API 中**。
 

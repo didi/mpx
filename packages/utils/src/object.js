@@ -1,4 +1,4 @@
-import Mpx, { isRef } from '@mpxjs/core'
+import { isRef } from '@mpxjs/core'
 import { type, noop } from './base'
 
 const hasOwnProperty = Object.prototype.hasOwnProperty
@@ -15,7 +15,7 @@ function isPlainObject (value) {
   const innerProto = Object.getPrototypeOf(proto)
   if (proto === Object.prototype || innerProto === null) return true
   // issue #644
-  const observeClassInstance = Mpx.config.observeClassInstance
+  const observeClassInstance = global.__mpx?.config.observeClassInstance
   if (observeClassInstance) {
     if (Array.isArray(observeClassInstance)) {
       for (let i = 0; i < observeClassInstance.length; i++) {

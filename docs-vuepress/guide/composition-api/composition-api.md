@@ -462,7 +462,7 @@ createComponent({
 
 > Mpx 的组合式 API 设计极力避免了用户需要在 `setup()` 中访问 `this` 的场景，不过在一些例外情况下，用户仍然可以通过 `getCurrentInstance()` 的方式获取到当前组件实例，注意该函数必须在 `setup()` 或生命周期钩子中同步调用。
 
-## 生命周期钩子
+## 生命周期钩子 {#lifecycle-hooks}
 
 组合式 API 中，我们通过 `on${Hookname}(fn)` 的方式注册访问生命周期钩子。
 
@@ -601,7 +601,7 @@ createComponent({
 
 > 特别注意，由于静态编译分析实现方式的限制，这类页面事件的组合式 API 使用需要满足页面事件注册函数的调用和 `createPage` 的调用位于同一个 js 文件当中。
 
-## 模板引用
+## 模板引用 {#template-ref}
 
 在 Vue3 的组合式 API 中，我们可以在 `setup` 函数中使用 `ref()` 创建引用数据获取模板中绑定了 `ref` 属性的组件或 DOM 节点，优雅地将**响应式引用**和**模板引用**进行了关联统一，但在 Mpx 中，受限于小程序的技术限制，我们无法在低性能损耗下实现相同的设计，因此我们在 setup 的 context 参数中提供了 refs 对象，结合模板中的`wx:ref`指令使用，与选项式 API 中的 $refs 保持一致。
 
@@ -651,9 +651,9 @@ createComponent({
 ## `<script setup>`
 
 和 Vue 一样，`<script setup>` 是在 Mpx 单文件组件中使用组合式 API 时的编译时语法糖。相较于普通的 `<script>` 语法，它具有一些优势：
-* 更少的样板内容，更简洁的代码。
-* 能够使用纯 TypeScript 声明 props 和自定义事件。
-* 更好的 IDE 类型推导性能。
+* 更少的样板内容，更简洁的代码
+* 能够使用纯 TypeScript 声明 props 类型
+* 更好的 IDE 类型推导性能
 
 ### 基本语法
 
@@ -839,6 +839,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 我们对 Mpx 提供的周边生态能力也都进行了组合式 API 适配升级，详情如下：
 
-* `store` 在组合式 API 中使用，详见[这里](../advance/pinia.md)
-* `fetch` 在组合式 API 中使用，详见[这里](#todo-composition-api-fetch)
-* `i18n` 在组合式 API 中使用，详见[这里](#todo-composition-api-i18n)
+* `store` 在组合式 API 中使用，详见[这里](../advance/store.md#use-store-in-composition-api)
+* `pinia` 在组合式 API 中使用，详见[这里](../advance/pinia.md)
+* `fetch` 在组合式 API 中使用，详见[这里](../extend/fetch.md/#composition-api-usage)
+* `i18n` 在组合式 API 中使用，详见[这里](../advance/i18n.md#composition-api-usage)

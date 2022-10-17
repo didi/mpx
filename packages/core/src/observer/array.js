@@ -1,5 +1,5 @@
 import { getObserver } from './reactive'
-import { def } from '@mpxjs/utils/src/base'
+import { def } from '@mpxjs/utils'
 
 const arrayProto = Array.prototype
 

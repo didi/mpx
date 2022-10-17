@@ -35,28 +35,32 @@ createComponent({
 
 - **类型声明**：
 ```ts
-interface Data {
-    [key: string]: unknown
-}
-
 interface SetupContext {
-    triggerEvent<DetailType = any>(
-            name: string,
-            detail?: DetailType,
-            options?: TriggerEventOption
+    triggerEvent(
+       name: string,
+       detail?: object, // detail对象，提供给事件监听函数
+       options?: {
+         bubbles?: boolean
+         composed?: boolean
+         capturePhase?: boolean
+       }
     ): void
-    refs: ObjectOf<WechatMiniprogram.NodesRef & ComponentIns<{}, {}, {}, {}, []>>
-    asyncRefs: ObjectOf<Promise<WechatMiniprogram.NodesRef & ComponentIns<{}, {}, {}, {}, []>>> // 字节小程序特有
+    refs: ObjectOf<NodesRef & ComponentIns>
+    asyncRefs: ObjectOf<Promise<NodesRef & ComponentIns>> // 字节小程序特有
     nextTick: (fn: () => void) => void
     forceUpdate: (params?: object, callback?: () => void) => void
-    selectComponent(selector: string): TrivialInstance
-    selectAllComponents(selector: string): TrivialInstance[]
+    selectComponent(selector: string): ComponentIns
+    selectAllComponents(selector: string): ComponentIns[]
     createSelectorQuery(): SelectorQuery
     createIntersectionObserver(
-            options: CreateIntersectionObserverOption
+      options: {
+        thresholds?: Array<number>
+        initialRatio?: number
+        observeAll?: boolean
+      }
     ): IntersectionObserver}
 
-function setup(props: Data, context: SetupContext): Data
+function setup(props: Record<string, any>, context: SetupContext): Record<string, any>
 ```
 
 ## 生命周期钩子
@@ -216,7 +220,7 @@ getCurrentInstance 只暴露给高阶使用场景，典型的比如在库中。�
 getCurrentInstance 只能在 setup 或生命周期钩子中调用。
 
 ## useI18n
-点击[查看详情](/api/extend.html#usei18n)
+点击[查看详情](./extend.md#usei18n)
 
 ## useFetch
-点击[查看详情](/api/extend.html#usefetch)
+点击[查看详情](./extend.md#usefetch)

@@ -1,8 +1,7 @@
 import transferOptions from '../core/transferOptions'
 import mergeOptions from '../core/mergeOptions'
 import builtInKeysMap from './patch/builtInKeysMap'
-import { spreadProp } from '@mpxjs/utils'
-import { makeMap } from '@mpxjs/utils/src/array'
+import { makeMap, spreadProp } from '@mpxjs/utils'
 import * as webLifecycle from '../platform/patch/web/lifecycle'
 import Mpx from '../index'
 
@@ -69,7 +68,8 @@ export default function createApp (option, config = {}) {
       }
     })
   }
-  const { rawOptions } = transferOptions(option, 'app')
+  // app选项目前不需要进行转换
+  const { rawOptions } = transferOptions(option, 'app', false)
   rawOptions.mixins = builtInMixins
   const defaultOptions = filterOptions(spreadProp(mergeOptions(rawOptions, 'app', false), 'methods'), appData)
 
