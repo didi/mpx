@@ -9,7 +9,7 @@ const {
 } = require('../utils')
 
 const STYLE_PRE_COMPILE_IGNORE_REGEXP = /^(preCompileIgnore\s).+/
-const GET_URL_FROM_IMPORT_REGEXP = /\@import\s+(.+)[^;]/
+const GET_URL_FROM_IMPORT_REGEXP = /@import\s+(.+)[^;]/
 
 function parseNode (atRule, key, options) {
   // Convert only top-level @import
