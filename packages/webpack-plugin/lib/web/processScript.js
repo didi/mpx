@@ -153,12 +153,9 @@ module.exports = function (script, {
   \n`
         }
       }
-      let injectFilters = {}
-      let injectDirectives = {}
-      // 单独构建 component 时注入内置的 filter 和 directive
-      if (ctorType !== 'app' && !appInfo.name) {
-        injectFilters.transRpxStyle = require('../runtime/transRpxStyle')
-        injectDirectives.animation = require('../runtime/animation')
+      let hasApp = true
+      if (!appInfo.name) {
+        hasApp = false
       }
       // 注入wxs模块
       content += '  const wxsModules = {}\n'
@@ -261,8 +258,7 @@ module.exports = function (script, {
     ${JSON.stringify(componentGenerics)},
     ${JSON.stringify(genericsInfo)},
     getWxsMixin(wxsModules),
-    ${shallowStringify(injectDirectives)},
-    ${shallowStringify(injectFilters)}`
+    ${hasApp}`
       if (ctorType === 'app') {
         content += `,
     Vue,

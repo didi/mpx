@@ -1,4 +1,6 @@
 import { inBrowser } from '../utils/env'
+import transRpxStyle from './transRpxStyle'
+import animation from './animation'
 
 export default function processOption (
   option,
@@ -12,8 +14,7 @@ export default function processOption (
   componentGenerics,
   genericsInfo,
   mixin,
-  directives,
-  filters,
+  hasApp,
   Vue,
   VueRouter,
   i18n
@@ -281,6 +282,10 @@ registered in parent context!`)
     if (ctorType === 'page') {
       option.__mpxPageConfig = Object.assign({}, global.__mpxPageConfig, pageConfig)
     }
+    if (!hasApp) {
+      option.directives = { animation }
+      option.filters = { transRpxStyle }
+    }
   }
 
   if (option.mixins) {
@@ -291,13 +296,6 @@ registered in parent context!`)
 
   if (outputPath) {
     option.componentPath = '/' + outputPath
-  }
-
-  if (directives) {
-    option.directives = directives
-  }
-  if (filters) {
-    option.filters = filters
   }
   return option
 }
