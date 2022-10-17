@@ -57,7 +57,7 @@
                 scrolling="no"
                 width="325"
                 height="617"
-                src="https://dpubstatic.udache.com/static/dpubimg/c3b0d3bc-1bb0-4bee-b6da-4205a2744e21.html"
+                src="https://gift-static.hongyibo.com.cn/static/kfpub/3547/index.html"
                 frameborder="0">
               </iframe>
             </div>
@@ -307,7 +307,7 @@ section
   left 45%
   width 100%
   height 100%
-  background url("https://dpubstatic.udache.com/static/dpubimg/RZO9xjPj0j/banner_bg.png") no-repeat top left
+  background url("https://gift-static.hongyibo.com.cn/static/kfpub/3547/banner_bg.png") no-repeat top left
   background-size auto 680px
 
 .one-section__img2
