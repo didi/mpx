@@ -1,4 +1,4 @@
-# mpx-cli从v2升级到v3
+# mpx-cli v2迁移到v3
 
 ## 升级`@mpxjs/cli`
 
@@ -7,6 +7,8 @@ npm install @mpxjs/cli@3.x -g
 ```
 
 ## 配置迁移
+
+> v3兼容了v2的所有配置，如果没有特殊修改，则不需要进行配置迁移。
 
 - `config/devServer.js`迁移到`vue.config.js`下的`devServer`
 - `config/mpxPlugin.conf.js`迁移到`vue.config.js`下的`pluginOptions.mpx.plugin`
