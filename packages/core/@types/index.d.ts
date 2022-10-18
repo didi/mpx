@@ -419,7 +419,7 @@ type WatchSource<T> =
   | (() => T) // getter
   | ComputedRef<T>
 
-// type MultiWatchSources = (WatchSource<unknown> | object)[]
+type MultiWatchSources = (WatchSource<unknown> | object)[]
 
 interface WatchEffectOptions {
   flush?: 'pre' | 'post' | 'sync' // default: 'pre'
@@ -519,7 +519,15 @@ export function watchPostEffect (
   options?: WatchEffectOptions
 ): void
 
-export function watch<T extends Readonly<(WatchSource<unknown> | object)[]>> (
+
+export function watch<T extends MultiWatchSources> (
+  sources: [...T],
+  callback: WatchCallback<{
+    [K in keyof T]: T[K] extends WatchSource<infer V> ? V : T[K] extends object ? T[K] : never
+  }>,
+  options?: WatchOptions
+): () => void
+export function watch<T extends Readonly<MultiWatchSources>> (
   sources: T,
   callback: WatchCallback<{
     [K in keyof T]: T[K] extends WatchSource<infer V> ? V : T[K] extends object ? T[K] : never
