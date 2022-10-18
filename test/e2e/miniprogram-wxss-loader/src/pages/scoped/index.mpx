@@ -13,8 +13,8 @@
 
 
 <style lang="less" scoped>
-  /*preCompileIgnore @import '../../styless/global.less';*/
-
+  /* @mpx-import  '../../styless/global.less'; */
+  
   .title-wrapper .title {
     color: red;
   }
