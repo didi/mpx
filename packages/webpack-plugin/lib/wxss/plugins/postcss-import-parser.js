@@ -8,8 +8,7 @@ const {
   WEBPACK_IGNORE_COMMENT_REGEXP
 } = require('../utils')
 
-const STYLE_PRE_COMPILE_IGNORE_REGEXP = /^(preCompileIgnore\s).+/
-const GET_URL_FROM_IMPORT_REGEXP = /@import\s+(.+)[^;]/
+const MPX_IMPORT_REGEXP = /^(@mpx-import\s+)/ // 例如匹配： ' @mpx-import "xxx"'
 
 function parseNode (atRule, key, options) {
   // Convert only top-level @import
@@ -192,14 +191,14 @@ const plugin = (options = {}) => {
       return {
         Once (root, { AtRule }) {
           // Calls once per file, since every file has single Root
-          // 遍历AST 找到注释节点进行@import 替换
+          // 遍历AST 找到注释节点(/* @mpx-import "xxx" */)进行@import 替换
           root.walkComments((comment) => {
-            if (STYLE_PRE_COMPILE_IGNORE_REGEXP.test(comment.text)) {
-              let importStatement = comment.text.replace(STYLE_PRE_COMPILE_IGNORE_REGEXP, (matchStr, $1) => {
+            if (MPX_IMPORT_REGEXP.test(comment.text)) {
+              let importStatement = comment.text.replace(MPX_IMPORT_REGEXP, (matchStr, $1) => {
                 return matchStr.replace($1, '')
               })
 
-              const matched = importStatement.match(GET_URL_FROM_IMPORT_REGEXP)
+              const matched = importStatement.match(/(["'].+["'])/)
 
               if (matched && matched[1]) {
                 let url = matched[1]
