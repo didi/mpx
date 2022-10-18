@@ -56,6 +56,7 @@ export function renderI18nCode(options: ResolvedOptions): string {
   if (i18n) {
     content.unshift(`import Vue from 'vue'`)
     content.unshift(`import VueI18n from 'vue-i18n'`)
+    content.unshift(`import Mpx from '@mpxjs/core'`)
     content.push(`Vue.use(VueI18n)`)
     const i18nObj = { ...i18n }
     const requestObj: Record<string, string> = {}
@@ -81,9 +82,7 @@ export function renderI18nCode(options: ResolvedOptions): string {
           i18n.mergeLocaleMessage(locale, newMessages[locale])
         })
       }`,
-      `if(global.__mpx) {
-        global.__mpx.i18n = i18n
-      }`
+      `Mpx.i18n = i18n`
     )
     content.push(`export { i18n } `)
   }
