@@ -92,7 +92,8 @@ module.exports = async function loader (content, map, meta) {
             this,
             combineRequests(getPreRequester(this)(options.importLoaders), url)
           ),
-        externals: options.externals
+        externals: options.externals,
+        root: options.root
       })
     )
   }

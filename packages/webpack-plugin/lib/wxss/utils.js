@@ -5,7 +5,7 @@
 */
 const { fileURLToPath } = require('url')
 const path = require('path')
-
+const isUrlRequest = require('../utils/is-url-request')
 const modulesValues = require('postcss-modules-values')
 const localByDefault = require('postcss-modules-local-by-default')
 const extractImports = require('postcss-modules-extract-imports')
@@ -1251,6 +1251,12 @@ async function resolveRequests (resolve, context, possibleRequests) {
 const tagRE = /\{\{((?:.|\n|\r)+?)\}\}(?!})/
 
 function isURLRequestable (url, options = {}) {
+
+  // 先用 mpx 内部维护方法判断
+  if( !isUrlRequest(url, options.root, options.externals) ) {
+    return { requestable: false, needResolve: false }
+  }
+
   // Protocol-relative URLs
   if (/^\/\//.test(url)) {
     return { requestable: false, needResolve: false }
@@ -1284,37 +1290,6 @@ function isURLRequestable (url, options = {}) {
     }
 
     return { requestable: false, needResolve: false }
-  }
-
-  // 对于url中存在Mustache插值的情况返回false
-  if (tagRE.test(url)) {
-    return { requestable: false, needResolve: false }
-  }
-
-  // 对于@开头且后续字符串为合法标识符的情况也返回false，识别为theme变量
-  if (/^@[A-Za-z_$][A-Za-z0-9_$]*$/.test(url)) {
-    return { requestable: false, needResolve: false }
-  }
-
-  // 例如：https://、wxs://
-  if (/^.+:\/\//.test(url)) {
-    return { requestable: false, needResolve: false }
-  }
-
-  // https://mpxjs.cn/api/compile.html#externals
-  const { externals } = options
-  if (externals) {
-    let isUrlInExternals = externals.some((external) => {
-      if (typeof external === 'string') {
-        return external === url
-      } else if (external instanceof RegExp) {
-        return external.test(url)
-      }
-      return false
-    })
-    if (isUrlInExternals) {
-      return { requestable: false, needResolve: false }
-    }
   }
 
   return { requestable: true, needResolve: true }
