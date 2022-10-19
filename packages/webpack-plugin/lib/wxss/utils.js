@@ -1055,7 +1055,6 @@ function getModuleCode (
       // 符合css后缀名的文件经过mpx处理后会带上相应的后缀防止使用 WebPack 的默认解析规则，此时 require/import 相应路径时，导出的不是一段 css 代码了，事实上是一个文件路径。
       const printedParam = printParams(media, dedupe, supports, layer)
       const otherParams = printedParam.length > 0 ? printedParam : ''
-      
       beforeCode += `___CSS_LOADER_EXPORT___.push([module.id, '@import "' + ${item.importName} + '";', ${JSON.stringify(otherParams)} ]);\n`
     }
   }
@@ -1231,14 +1230,11 @@ async function resolveRequests (resolve, context, possibleRequests) {
     })
 }
 
-
 function isURLRequestable (url, options = {}) {
-
   // 先用 mpx 内部维护方法判断
-  if( !isUrlRequest(url, options.root, options.externals) ) {
+  if (!isUrlRequest(url, options.root, options.externals)) {
     return { requestable: false, needResolve: false }
   }
-
   // Protocol-relative URLs
   if (/^\/\//.test(url)) {
     return { requestable: false, needResolve: false }

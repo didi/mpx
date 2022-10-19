@@ -7,6 +7,7 @@ module.exports = (item) => {
   }
 
   if (typeof btoa === 'function') {
+    // eslint-disable-next-line no-undef
     const base64 = btoa(
       unescape(encodeURIComponent(JSON.stringify(cssMapping)))
     )
