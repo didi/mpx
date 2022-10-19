@@ -7,18 +7,9 @@
 /// <reference path="./global.d.ts" />
 /// <reference path="./node.d.ts" />
 
-// @ts-ignore
-import VueI18n from 'vue-i18n'
-
 import type { GetComputedType } from '@mpxjs/store'
 
 export * from '@mpxjs/store'
-
-declare module 'vue-i18n' {
-  export default interface VueI18n {
-    mergeMessages (messages: { [index: string]: VueI18n.LocaleMessageObject }): void;
-  }
-}
 
 // utils
 type ObjectOf<T> = {
@@ -528,14 +519,19 @@ export function watchPostEffect (
   options?: WatchEffectOptions
 ): void
 
+
 export function watch<T extends MultiWatchSources> (
   sources: [...T],
-  callback: WatchCallback<T>,
+  callback: WatchCallback<{
+    [K in keyof T]: T[K] extends WatchSource<infer V> ? V : T[K] extends object ? T[K] : never
+  }>,
   options?: WatchOptions
 ): () => void
 export function watch<T extends Readonly<MultiWatchSources>> (
   sources: T,
-  callback: WatchCallback<T>,
+  callback: WatchCallback<{
+    [K in keyof T]: T[K] extends WatchSource<infer V> ? V : T[K] extends object ? T[K] : never
+  }>,
   options?: WatchOptions
 ): () => void
 export function watch<T> ( // for single watcher
