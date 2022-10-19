@@ -29,11 +29,11 @@ export default function processOption (
     }
 
     Vue.directive('animation', (el, binding) => {
-      return require('./animation')(el, binding)
+      return animation(el, binding)
     })
 
     Vue.filter('transRpxStyle', style => {
-      return require('./transRpxStyle')(style)
+      return transRpxStyle(style)
     })
 
     const routes = []
