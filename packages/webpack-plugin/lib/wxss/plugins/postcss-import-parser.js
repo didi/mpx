@@ -194,15 +194,15 @@ const plugin = (options = {}) => {
           // 遍历AST 找到注释节点(/* @mpx-import "xxx" */)进行@import 替换
           root.walkComments((comment) => {
             if (MPX_IMPORT_REGEXP.test(comment.text)) {
-              let importStatement = comment.text.replace(MPX_IMPORT_REGEXP, (matchStr, $1) => {
+              const importStatement = comment.text.replace(MPX_IMPORT_REGEXP, (matchStr, $1) => {
                 return matchStr.replace($1, '')
               })
 
               const matched = importStatement.match(/(["'].+["'])/)
 
               if (matched && matched[1]) {
-                let url = matched[1]
-                let importNode = new AtRule({ name: 'import', params: url, source: comment.source })
+                const url = matched[1]
+                const importNode = new AtRule({ name: 'import', params: url, source: comment.source })
                 comment.before(importNode)
                 comment.remove()
               }

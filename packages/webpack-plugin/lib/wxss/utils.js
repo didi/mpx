@@ -1121,7 +1121,7 @@ function getExportCode (exports, replacements, icssPluginUsed, options) {
           localsCode += `export var ${name} = ${JSON.stringify(value)};\n`
         } else {
           if (localsCode) {
-            localsCode += `,\n`
+            localsCode += ',\n'
           }
 
           localsCode += `\t${JSON.stringify(name)}: ${JSON.stringify(value)}`
@@ -1201,6 +1201,7 @@ function getExportCode (exports, replacements, icssPluginUsed, options) {
     case 'css-style-sheet':
       finalExport = '___CSS_LOADER_STYLE_SHEET___'
       break
+    /* eslint-disable default-case-last */
     default:
     case 'array':
       finalExport = '___CSS_LOADER_EXPORT___'
@@ -1210,8 +1211,6 @@ function getExportCode (exports, replacements, icssPluginUsed, options) {
   code += `${
     options.esModule ? 'export default ' : 'module.exports ='
   } ${finalExport};\n`
-
-  code += ``
 
   return code
 }

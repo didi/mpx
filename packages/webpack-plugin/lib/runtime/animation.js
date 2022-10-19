@@ -24,6 +24,7 @@ module.exports = function (el, binding) {
       animates.forEach((itemAnimation) => {
         switch (itemAnimation.type) {
           case 'style':
+            /* eslint-disable no-case-declarations */
             const [key, value] = itemAnimation.args
             dynamicStyle[key] = value
             property.push(key)

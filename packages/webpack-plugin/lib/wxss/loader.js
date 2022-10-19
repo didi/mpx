@@ -33,7 +33,7 @@ const {
 const createHelpers = require('../helpers')
 
 module.exports = async function loader (content, map, meta) {
-  let rawOptions = this.getOptions(schema)
+  const rawOptions = this.getOptions(schema)
   const plugins = []
   const callback = this.async()
 
@@ -169,10 +169,10 @@ module.exports = async function loader (content, map, meta) {
       to: resourcePath,
       map: options.sourceMap
         ? {
-          prev: map ? normalizeSourceMap(map, resourcePath) : null,
-          inline: false,
-          annotation: false
-        }
+            prev: map ? normalizeSourceMap(map, resourcePath) : null,
+            inline: false,
+            annotation: false
+          }
         : false
     })
   } catch (error) {

@@ -22,6 +22,7 @@ export default function processOption (
   if (ctorType === 'app') {
     // 对于app中的组件需要全局注册
     for (const componentName in componentsMap) {
+      /* eslint-disable no-prototype-builtins */
       if (componentsMap.hasOwnProperty(componentName)) {
         const component = componentsMap[componentName]
         Vue.component(componentName, component)
@@ -39,6 +40,7 @@ export default function processOption (
     const routes = []
 
     for (const pagePath in pagesMap) {
+      /* eslint-disable no-prototype-builtins */
       if (pagesMap.hasOwnProperty(pagePath)) {
         const page = pagesMap[pagePath]
         routes.push({
@@ -241,6 +243,7 @@ export default function processOption (
   } else {
     // 局部注册页面和组件中依赖的组件
     for (const componentName in componentsMap) {
+      /* eslint-disable no-prototype-builtins */
       if (componentsMap.hasOwnProperty(componentName)) {
         const component = componentsMap[componentName]
         if (!option.components) {
