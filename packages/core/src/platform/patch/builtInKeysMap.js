@@ -1,5 +1,5 @@
 import { INNER_LIFECYCLES } from '../../core/innerLifecycle'
-import { makeMap } from '../../helper/utils'
+import { makeMap } from '@mpxjs/utils'
 
 let bulitInKeys
 
@@ -16,6 +16,7 @@ if (__mpx_mode__ === 'web') {
   ]
 } else {
   bulitInKeys = [
+    'setup',
     'dataFn',
     'proto',
     'mixins',

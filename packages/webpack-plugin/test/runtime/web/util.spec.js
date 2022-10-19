@@ -1,4 +1,4 @@
-import { processSize } from '../../../lib/runtime/components/web/util'
+import { processSize } from '../../../lib/runtime/utils'
 
 describe('util case set', function () {
   it('should process size success with number and string', function () {

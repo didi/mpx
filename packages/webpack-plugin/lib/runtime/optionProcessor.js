@@ -1,4 +1,5 @@
-import { inBrowser } from '../utils/env'
+import { isBrowser } from './env'
+import { hasOwn } from './utils'
 import transRpxStyle from './transRpxStyle'
 import animation from './animation'
 
@@ -16,13 +17,12 @@ export default function processOption (
   mixin,
   hasApp,
   Vue,
-  VueRouter,
-  i18n
+  VueRouter
 ) {
   if (ctorType === 'app') {
     // 对于app中的组件需要全局注册
     for (const componentName in componentsMap) {
-      if (componentsMap.hasOwnProperty(componentName)) {
+      if (hasOwn(componentsMap, componentName)) {
         const component = componentsMap[componentName]
         Vue.component(componentName, component)
       }
@@ -39,7 +39,7 @@ export default function processOption (
     const routes = []
 
     for (const pagePath in pagesMap) {
-      if (pagesMap.hasOwnProperty(pagePath)) {
+      if (hasOwn(pagesMap, pagePath)) {
         const page = pagesMap[pagePath]
         routes.push({
           path: '/' + pagePath,
@@ -182,7 +182,7 @@ export default function processOption (
         next()
       })
       // 处理visibilitychange时触发当前活跃页面组件的onshow/onhide
-      if (inBrowser) {
+      if (isBrowser) {
         const errorHandler = function (args, fromVue) {
           if (global.__mpxAppCbs && global.__mpxAppCbs.error && global.__mpxAppCbs.error.length) {
             global.__mpxAppCbs.error.forEach((cb) => {
@@ -219,7 +219,7 @@ export default function processOption (
               if (global.__mpxAppCbs && global.__mpxAppCbs.show) {
                 global.__mpxAppCbs.show.forEach((cb) => {
                   // todo 实现app.onShow参数
-                  /* eslint-disable standard/no-callback-literal */
+                  /* eslint-disable node/no-callback-literal */
                   cb({})
                 })
               }
@@ -235,13 +235,14 @@ export default function processOption (
       }
     }
 
-    if (i18n) {
-      option.i18n = i18n
+    // 注入pinia
+    if (global.__mpxPinia) {
+      option.pinia = global.__mpxPinia
     }
   } else {
     // 局部注册页面和组件中依赖的组件
     for (const componentName in componentsMap) {
-      if (componentsMap.hasOwnProperty(componentName)) {
+      if (hasOwn(componentsMap, componentName)) {
         const component = componentsMap[componentName]
         if (!option.components) {
           option.components = {}

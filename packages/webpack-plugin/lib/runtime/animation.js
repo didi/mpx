@@ -23,11 +23,12 @@ module.exports = function (el, binding) {
       }
       animates.forEach((itemAnimation) => {
         switch (itemAnimation.type) {
-          case 'style':
+          case 'style': {
             const [key, value] = itemAnimation.args
             dynamicStyle[key] = value
             property.push(key)
             break
+          }
           default:
             dynamicStyle.transform += `${itemAnimation.type}(${itemAnimation.args}) `
             if (!property.includes('transform')) {

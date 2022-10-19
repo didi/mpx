@@ -1,9 +1,9 @@
-import { inBrowser } from '../../../../common/js/utils'
+import { isBrowser } from '../../../../common/js/utils'
 const fnMap = new Map()
 
 const oldObserveList = new Set()
 
-if (inBrowser) {
+if (isBrowser) {
   window.addEventListener('offline', () => {
     oldObserveList.forEach(fn => fn({ isConnected: false, type: 'none' }))
   })
@@ -14,7 +14,7 @@ if (inBrowser) {
 
 export function onNetworkStatusChange (callbackFn) {
   if (navigator.connection) {
-    let proxyCallback = evt => {
+    const proxyCallback = evt => {
       const isConnected = navigator.onLine
       callbackFn({
         isConnected,

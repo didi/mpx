@@ -197,25 +197,25 @@ createComponent({
 
 ### getMixin
 
-为 ts 项目提供的反向推导 mixin 的辅助函数，getMixin 接收一个对象作为参数，使用 mixins 时，支持嵌套 mixin。具体用法见[getMixin](../../../../api/global-api.md#getmixin)。
+为 ts 项目提供的反向推导 mixin 的辅助函数，getMixin 接收一个对象作为参数，使用 mixins 时，支持嵌套 mixin。具体用法见[getMixin](../../api/global-api.md#getmixin)。
 
 ### createStoreWithThis
 
-为了在 ts 项目中更好的支持 store 的类型推导，提供了 createStoreWithThis 进行 store 的创建，createStoreWithThis 接收一个 options 对象作为参数。通过 createStoreWithThis 创建 store 时，使用` this.state `，` this.getters `，` this.commit `, ` this.dispatch `对自身的相关属性进行获取。具体用法见[createStoreWithThis](../../../../api/global-api.md#createstorewiththis)。
+为了在 ts 项目中更好的支持 store 的类型推导，提供了 createStoreWithThis 进行 store 的创建，createStoreWithThis 接收一个 options 对象作为参数。通过 createStoreWithThis 创建 store 时，使用` this.state `，` this.getters `，` this.commit `, ` this.dispatch `对自身的相关属性进行获取。具体用法见[createStoreWithThis](../../api/store-api.md#createstorewiththis)。
 
 ### createStateWithThis
 
-创建一个 state，支持 state 类型推导的辅助函数，具体用法见[createStateWithThis](../../../../api/global-api.md#createstatewiththis)
+创建一个 state，支持 state 类型推导的辅助函数，具体用法见[createStateWithThis](../../api/store-api.md#createstatewiththis)
 
 ### createGettersWithThis
 
-创建一个 getters，支持 getters 类型推导的辅助函数，具体用法见[createGettersWithThis](../../../../api/global-api.md#creategetterswiththis)
+创建一个 getters，支持 getters 类型推导的辅助函数，具体用法见[createGettersWithThis](../../api/store-api.md#creategetterswiththis)
 
 ### createMutationsWithThis
 
-创建一个 mutations，支持 mutations 类型推导的辅助函数，具体用法见[createMutationsWithThis](../../../../api/global-api.md#createmutationswiththis)
+创建一个 mutations，支持 mutations 类型推导的辅助函数，具体用法见[createMutationsWithThis](../../api/store-api.md#createmutationswiththis)
 
 ### createActionsWithThis
 
-创建一个 actions，支持 actions 类型推导的辅助函数，具体用法见[createActionsWithThis](../../../../api/global-api.md#createactionswiththis)
+创建一个 actions，支持 actions 类型推导的辅助函数，具体用法见[createActionsWithThis](../../api/store-api.md#createactionswiththis)
 
