@@ -27,7 +27,7 @@ build 默认 prod，watch 默认 dev。另单独提供了 build:dev 和 watch:pr
 
 ```CSS
 <style lang="less">
-  /*preCompileIgnore @import '../../styless/global.less';*/
+  /* @mpx-import '../../styless/global.less' */
 
   .title-wrapper .title {
     color: red;
