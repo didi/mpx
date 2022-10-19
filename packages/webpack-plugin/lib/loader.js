@@ -110,7 +110,7 @@ module.exports = function (content) {
 
       if (parts.json && parts.json.content) {
         try {
-          let ret = JSON5.parse(parts.json.content)
+          const ret = JSON5.parse(parts.json.content)
           if (ret.usingComponents) {
             fixUsingComponent(ret.usingComponents, mode)
             usingComponents = usingComponents.concat(Object.keys(ret.usingComponents))
@@ -125,7 +125,6 @@ module.exports = function (content) {
           return callback(e)
         }
       }
-
       // 处理mode为web时输出vue格式文件
       if (mode === 'web') {
         if (ctorType === 'app' && !queryObj.isApp) {
@@ -334,7 +333,8 @@ module.exports = function (content) {
           ...script.src
             ? { ...queryObj, resourcePath }
             : null,
-          ctorType
+          ctorType,
+          lang: script.lang || 'js'
         }
         output += getRequire('script', script, extraOptions) + '\n'
       }

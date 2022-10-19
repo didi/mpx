@@ -2,7 +2,8 @@ module.exports = function isEmptyObject (obj) {
   if (!obj) {
     return true
   }
-  for (let key in obj) {
+  /* eslint-disable  no-unreachable-loop */
+  for (const key in obj) {
     return false
   }
   return true

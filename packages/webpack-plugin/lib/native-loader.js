@@ -197,7 +197,7 @@ module.exports = function (content) {
         output += `global.currentSrcMode = ${JSON.stringify(srcMode)}\n`
       }
 
-      for (let type in typeResourceMap) {
+      for (const type in typeResourceMap) {
         output += `/* ${type} */\n${getRequireByType(type)}\n\n`
       }
 
