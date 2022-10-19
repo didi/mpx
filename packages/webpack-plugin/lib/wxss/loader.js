@@ -193,7 +193,7 @@ module.exports = async function loader (content, map, meta) {
 
   const { getRequestString } = createHelpers(this)
 
-  // add
+  // 符合css后缀名的文件经过mpx处理后会带上相应的后缀防止 WebPack 的默认解析规则，后续 require/import 相应路径时，导出的不是一段 css 代码了，事实上是一个文件路径。
   importPluginImports = importPluginImports.map((importItem, index) => {
     const splittedUrl = importItem.url.slice(1, -1)
     const requestString = getRequestString('styles', { src: splittedUrl }, {
@@ -209,6 +209,7 @@ module.exports = async function loader (content, map, meta) {
 
   const imports = []
     .concat(icssPluginImports.sort(sort))
+    .concat(importPluginImports.sort())
     .concat(urlPluginImports.sort(sort))
 
   const api = []
@@ -240,7 +241,7 @@ module.exports = async function loader (content, map, meta) {
   let moduleCode
 
   try {
-    moduleCode = getModuleCode(result, api, importPluginImports, replacements, options, this)
+    moduleCode = getModuleCode(result, api, replacements, options, this)
   } catch (error) {
     callback(error)
 

@@ -92,7 +92,7 @@ describe('index page', () => {
     ).toBe(true)
   })
 
-  it("when wx mode, use /*preCompileIgnore @import 'xx.less';*/ note，the less-loader、stylus-loader or other preLoaders will ignore the import file compilation，finally draw out of this file", async () => {
+  it("when wx mode, use /* @mpx-import 'xx.less' */ note，the less-loader、stylus-loader or other preLoaders will ignore the import file compilation，finally draw out of this file", async () => {
     const { mode, css } = {
       mode: 'wx',
       css: '.wxss'
@@ -119,7 +119,7 @@ html body {
     ).toBe(true)
   })
 
-  it("when ali mode, use /*preCompileIgnore @import 'xx.less';*/ note，the less-loader、stylus-loader or other preLoaders will ignore the import file compilation，finally draw out of this file", async () => {
+  it("when ali mode, use /* @mpx-import 'xx.less' */ note，the less-loader、stylus-loader or other preLoaders will ignore the import file compilation，finally draw out of this file", async () => {
     const { mode, css } = {
       mode: 'ali',
       css: '.acss'
@@ -171,7 +171,7 @@ html body {
       mode
     )
     const listComponentCss = readFile(listComponentPath + css)
-    const REGEXP = /(\@import[\s]+[\"|\'].+wxss[\"|\'];)/g
+    const REGEXP = /(@import[\s]+["|'].+wxss["|'];)/g
     const matched = listComponentCss.match(REGEXP)
     expect(matched.length).toBe(1)
   })
