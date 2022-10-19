@@ -44,7 +44,7 @@ const { matchCondition } = require('./utils/match-condition')
 const { preProcessDefs } = require('./utils/index')
 const config = require('./config')
 const hash = require('hash-sum')
-const wxssLoaderPath = normalize.lib('wxss/loader')
+const wxssLoaderPath = normalize.lib('wxss/index')
 const wxmlLoaderPath = normalize.lib('wxml/loader')
 const wxsLoaderPath = normalize.lib('wxs/loader')
 const styleCompilerPath = normalize.lib('style-compiler/index')
@@ -196,7 +196,7 @@ class MpxWebpackPlugin {
 
   static wxssLoader (options) {
     return {
-      loader: normalize.lib('wxss/loader'),
+      loader: normalize.lib('wxss/index'),
       options
     }
   }
