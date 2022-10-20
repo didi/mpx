@@ -1,1 +1,0 @@
-{"version":3,"file":"is-empty-object.js","sourceRoot":"","sources":["../src/is-empty-object.ts"],"names":[],"mappings":";;AAAA,SAAwB,aAAa,CAAE,GAAQ;IAC7C,IAAI,CAAC,GAAG,EAAE;QACR,OAAO,IAAI,CAAA;KACZ;IACD,KAAK,IAAI,CAAC,IAAI,GAAG,EAAE;QACjB,OAAO,KAAK,CAAA;KACb;IACD,OAAO,IAAI,CAAA;AACb,CAAC;AARD,gCAQC"}
