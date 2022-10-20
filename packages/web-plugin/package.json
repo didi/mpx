@@ -36,8 +36,9 @@
     }
   },
   "scripts": {
-    "dev": "tsc -w",
-    "build": "rimraf ./dist && tsc -p"
+    "dev": "node scripts/tsc.js",
+    "build": "rimraf ./dist && tsc && npm run post-build",
+    "post-build": "node scripts/postbuild.js executive"
   },
   "files": [
     "dist",
