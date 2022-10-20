@@ -196,7 +196,7 @@ export default function mpx(options: Options = {}): Plugin[] {
     createWxsPlugin(),
     // add custom extensions
     customExtensionsPlugin({
-      include: /@mpxjs/,
+      include: /@mpxjs|\.mpx/,
       fileConditionRules,
       extensions: customExtensions
     }),
