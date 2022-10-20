@@ -39,12 +39,7 @@ function watchMain() {
 }
 
 function reportDiagnostic(diagnostic) {
-  consola.error(
-    'Error',
-    diagnostic.code,
-    ':',
-    ts.flattenDiagnosticMessageText(diagnostic.messageText, formatHost.getNewLine())
-  );
+  console.error(ts.flattenDiagnosticMessageText(diagnostic.messageText, formatHost.getNewLine()));
 }
 
 function reportWatchStatusChanged(diagnostic) {
