@@ -16,7 +16,7 @@ mpx init mpx-project
 也可以使用npx在不全局安装脚手架情况下创建项目。
 
 ```shell
-npx @mpxjs/cli init mpx-project
+npx @mpxjs/cli create mpx-project
 ```
 
 执行命令后会弹出一系列问题进行项目初始配置，根据自身需求进行选择，完成后进入项目目录进行依赖安装。
