@@ -1,14 +1,12 @@
-import { resolve } from 'path'
-import { promises as fs } from 'fs'
-import { fileURLToPath } from 'url'
-import fg from 'fast-glob'
+const fs = require('fs').promises
+const path= require('path')
+const fg = require('fast-glob')
 
 async function run() {
   // fix cjs exports
   const files = await fg('*.js', {
-    ignore: ['chunk-*'],
     absolute: true,
-    cwd: resolve(fileURLToPath(import.meta.url), '../../dist'),
+    cwd: path.resolve(__dirname, '../dist'),
   })
   for (const file of files) {
     let code = await fs.readFile(file, 'utf8')
@@ -17,4 +15,8 @@ async function run() {
   }
 }
 
-run()
+if(process.argv.find(item => item === 'executive')) {
+  run()
+}
+
+module.exports = run
