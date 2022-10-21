@@ -7,7 +7,7 @@ function initApi () {
   const watch = vm.$watch.bind(vm)
   const set = Vue.set.bind(Vue)
   const del = Vue.delete.bind(Vue)
-  APIs = {
+  return {
     injectMixins,
     mixin: injectMixins,
     observable,
@@ -16,7 +16,6 @@ function initApi () {
     set,
     delete: del
   }
-  return APIs
 }
 let APIs = initApi()
 const InstanceAPIs = {}
