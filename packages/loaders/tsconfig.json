@@ -1,9 +1,9 @@
 {
   "compilerOptions": {
     "outDir": "dist",
-    "target": "esnext",
+    "target": "es2015",
     "allowJs": true,
-    "module": "esnext",
+    "module": "commonjs",
     "moduleResolution": "node",
     "strict": true,
     "declaration": true,

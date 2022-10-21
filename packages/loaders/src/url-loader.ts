@@ -1,6 +1,6 @@
 import loaderUtils from 'loader-utils'
 import mime from 'mime'
-import parseRequest from '@mpxjs/utils/parse-request'
+import parseRequest from '@mpxjs/compile-utils/parse-request'
 import { LoaderDefinition } from 'webpack'
 
 export interface Options {

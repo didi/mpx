@@ -1,4 +1,4 @@
-import parseRequest from '@mpxjs/utils/parse-request'
+import parseRequest from '@mpxjs/compile-utils/parse-request'
 import path from 'path'
 import { promisify } from 'util'
 import { JSON_JS_EXT } from '../constants'

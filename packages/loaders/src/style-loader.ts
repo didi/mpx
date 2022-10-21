@@ -1,9 +1,9 @@
 import postcss from 'postcss'
 import { LoaderDefinition } from 'webpack'
 import {styleCompiler} from '@mpxjs/compiler'
-import loadPostcssConfig from '@mpxjs/utils/loadPostcssConfig'
-import { matchCondition } from '@mpxjs/utils/match-condition'
-import parseRequest from '@mpxjs/utils/parse-request'
+import loadPostcssConfig from '@mpxjs/compile-utils/loadPostcssConfig'
+import { matchCondition } from '@mpxjs/compile-utils/match-condition'
+import parseRequest from '@mpxjs/compile-utils/parse-request'
 import { MPX_ROOT_VIEW, MPX_APP_MODULE_ID } from './constants'
 
 const mpxStyleLoader: LoaderDefinition = function (css: string, map) {

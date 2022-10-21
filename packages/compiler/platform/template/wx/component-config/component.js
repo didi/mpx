@@ -1,6 +1,6 @@
 const templateCompiler = require('../../../../template-compiler/compiler')
 const parseMustache = templateCompiler.parseMustache
-const normalize = require('@mpxjs/utils/normalize')
+const normalize = require('@mpxjs/compile-utils/normalize')
 const TAG_NAME = 'component'
 
 /** is 属性格式化为中划线(-)连接 */

@@ -27,7 +27,7 @@ export default function loadPostcssConfig(
   }
 
   return load(ctx, config?.path, {
-    loaders: { '.json': (_, content) => JSON.parse(content) }
+    loaders: { '.json': (_: any, content: string) => JSON.parse(content) }
   })
     .catch(err => {
       // postcss-load-config throws error when no config file is found,

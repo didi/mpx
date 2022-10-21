@@ -1,8 +1,8 @@
 import { stringifyRequest as _stringifyRequest, urlToRequest } from 'loader-utils'
+import addQuery from '@mpxjs/compile-utils/add-query'
+import genComponentTag from '@mpxjs/compile-utils/gen-component-tag'
+import createHelpers from '@mpxjs/compile-utils/helpers'
 import { shallowStringify } from '../../utils/stringify'
-import addQuery from '@mpxjs/utils/add-query'
-import genComponentTag from '@mpxjs/utils/gen-component-tag'
-import createHelpers from '@mpxjs/utils/helpers'
 import mpx from '../mpx'
 
 const optionProcessorPath = '@mpxjs/web-plugin/src/runtime/optionProcessor'

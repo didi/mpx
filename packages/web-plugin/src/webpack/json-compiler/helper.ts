@@ -1,10 +1,10 @@
 import path from 'path'
-import addQuery from '@mpxjs/utils/add-query'
-import parseRequest from '@mpxjs/utils/parse-request'
+import addQuery from '@mpxjs/compile-utils/add-query'
+import parseRequest from '@mpxjs/compile-utils/parse-request'
 import loaderUtils from 'loader-utils'
-import isUrlRequestRaw from '@mpxjs/utils/is-url-request'
+import isUrlRequestRaw from '@mpxjs/compile-utils/is-url-request'
 import mpx from '../mpx'
-import resolve from '@mpxjs/utils/resolve'
+import resolve from '@mpxjs/compile-utils/resolve'
 import { LoaderContext } from 'webpack'
 
 interface EntryType {
@@ -34,7 +34,7 @@ export default function createJSONHelper({
   isUrlRequest: any
   urlToRequest: any
 } {
-  const externals = mpx.externals
+  const externals = mpx.externals || []
   const root = mpx.projectRoot
   const publicPath =
     (loaderContext._compilation &&
@@ -84,7 +84,7 @@ export default function createJSONHelper({
       }
 
       if (!outputPath) {
-        outputPath = getOutputPath(resourcePath, 'component')
+        outputPath = (getOutputPath && getOutputPath(resourcePath, 'component')) || ''
       }
 
       const entry = getDynamicEntry(
@@ -134,7 +134,7 @@ export default function createJSONHelper({
         const relative = path.relative(context, resourcePath)
         if (/^\./.test(relative)) {
           // 如果当前page不存在于context中，对其进行重命名
-          outputPath = getOutputPath(resourcePath, 'page')
+          outputPath = (getOutputPath && getOutputPath(resourcePath, 'page')) || ''
           emitWarning(
             `Current page [${resourcePath}] is not in current pages directory [${context}], the page path will be replaced with [${outputPath}], use ?resolve to get the page path and navigate to it!`
           )

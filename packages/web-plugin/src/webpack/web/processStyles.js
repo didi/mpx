@@ -1,4 +1,4 @@
-import genComponentTag from '@mpxjs/utils/gen-component-tag'
+import genComponentTag from '@mpxjs/compile-utils/gen-component-tag'
 
 export default function (styles, options, callback) {
   let output = '/* styles */\n'
