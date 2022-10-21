@@ -24,7 +24,7 @@ export default defineConfig({
         }
       ],
       i18n: {
-        locale: 'zh-CN',
+        locale: 'en-US',
         // messages既可以通过对象字面量传入，也可以通过messagesPath指定一个js模块路径，在该模块中定义配置并导出，dateTimeFormats/dateTimeFormatsPath和numberFormats/numberFormatsPath同理
         messagesPath: path.resolve('./src/i18n/index.js')
       }

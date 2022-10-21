@@ -11,7 +11,7 @@ createPage({
   },
   onShow () {
     console.log('show index123')
-    console.log('test', swiperPage)
+    console.log('test', swiperPage, mpx.i18n.locale)
   },
   methods: {
     reload () {
