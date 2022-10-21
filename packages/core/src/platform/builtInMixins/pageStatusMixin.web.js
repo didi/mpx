@@ -71,7 +71,7 @@ export default function pageStatusMixin (mixinType) {
   return {
     [CREATED] () {
       const pageInstance = getCurrentPageInstance()
-      if (!pageInstance) {
+      if (pageInstance) {
         this.$watch(() => pageInstance.mpxPageStatus, status => {
           if (!status) return
           if (status === 'show') this.__mpxProxy.callHook(ONSHOW)
