@@ -38,7 +38,7 @@ const getWxToAliApi = ({ optimize = false }) => {
         if (systemInfo) return systemInfo
       }
 
-      let res = ALI_OBJ.getSystemInfoSync() || {}
+      const res = ALI_OBJ.getSystemInfoSync() || {}
 
       res.system = `${res.platform} ${res.system}`
       res.SDKVersion = ALI_OBJ.SDKVersion
@@ -54,7 +54,7 @@ const getWxToAliApi = ({ optimize = false }) => {
     },
 
     nextTick (fn) {
-      setTimeout(fn)
+      Promise.resolve().then(fn)
     },
 
     /**
@@ -86,7 +86,7 @@ const getWxToAliApi = ({ optimize = false }) => {
         })
 
         handleSuccess(opts, res => {
-          return changeOpts(res, undefined, { 'cancel': !res.confirm })
+          return changeOpts(res, undefined, { cancel: !res.confirm })
         })
 
         ALI_OBJ.confirm(opts)
@@ -122,7 +122,7 @@ const getWxToAliApi = ({ optimize = false }) => {
       const cacheFail = opts.fail || noop
 
       opts.success = function (res) {
-        let sucRes = changeOpts(res, {
+        const sucRes = changeOpts(res, {
           index: 'tapIndex'
         })
         if (sucRes.tapIndex === -1) {
@@ -235,7 +235,7 @@ const getWxToAliApi = ({ optimize = false }) => {
       const opts = changeOpts(options)
 
       if (opts.current) {
-        let idx = options.urls.indexOf(opts.current)
+        const idx = options.urls.indexOf(opts.current)
         opts.current = idx !== -1 ? idx : 0
       }
 
@@ -328,7 +328,7 @@ const getWxToAliApi = ({ optimize = false }) => {
       handleSuccess(opts, res => {
         if (res.fileList) {
           res.fileList.forEach(file => {
-            let resFile = changeOpts(file, {
+            const resFile = changeOpts(file, {
               apFilePath: 'filePath'
             })
             file = resFile
@@ -490,10 +490,10 @@ const getWxToAliApi = ({ optimize = false }) => {
         warn(`支付宝不支持在 ${TIPS_NAME}.getUserInfo 中使用 lang 参数`)
       }
 
-      let opts = changeOpts(options)
+      const opts = changeOpts(options)
 
       handleSuccess(opts, res => {
-        let userInfo = changeOpts(res, { avatar: 'avatarUrl' }, { gender: 0 })
+        const userInfo = changeOpts(res, { avatar: 'avatarUrl' }, { gender: 0 })
         const params = ['country', 'province', 'city', 'language']
 
         params.forEach(key => {
@@ -518,7 +518,7 @@ const getWxToAliApi = ({ optimize = false }) => {
         error(`请在支付函数 ${TIPS_NAME}.requestPayment 中添加 tradeNO 参数用于支付宝支付`)
       }
 
-      let opts = changeOpts(options, {
+      const opts = changeOpts(options, {
         timeStamp: '',
         nonceStr: '',
         package: '',
@@ -556,7 +556,7 @@ const getWxToAliApi = ({ optimize = false }) => {
      */
 
     createCanvasContext (canvasId = {}) {
-      let ctx = ALI_OBJ.createCanvasContext(canvasId)
+      const ctx = ALI_OBJ.createCanvasContext(canvasId)
 
       CANVAS_MAP[canvasId] = ctx
 
@@ -620,6 +620,7 @@ const getWxToAliApi = ({ optimize = false }) => {
      * WXML
      */
 
+    // todo 支付宝基础库升级至2.7.4以上可去除
     createSelectorQuery (options = {}) {
       const selectorQuery = ALI_OBJ.createSelectorQuery(options)
       const proxyMethods = ['boundingClientRect', 'scrollOffset']
@@ -636,7 +637,7 @@ const getWxToAliApi = ({ optimize = false }) => {
       selectorQuery.exec = function (originalCb = noop) {
         const cb = function (results) {
           results.forEach((item, index) => {
-            cbs[index](item)
+            cbs[index] && cbs[index](item)
           })
           originalCb(results)
         }

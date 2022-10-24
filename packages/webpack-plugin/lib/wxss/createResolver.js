@@ -6,8 +6,8 @@ module.exports = function createResolver (alias) {
   }
 
   alias = Object.keys(alias).map(function (key) {
-    var onlyModule = false
-    var obj = alias[key]
+    let onlyModule = false
+    let obj = alias[key]
     if (/\$$/.test(key)) {
       onlyModule = true
       key = key.substr(0, key.length - 1)
@@ -26,7 +26,7 @@ module.exports = function createResolver (alias) {
 
   return function (url) {
     alias.forEach(function (obj) {
-      var name = obj.name
+      const name = obj.name
       if (url === name || (!obj.onlyModule && url.startsWith(name + '/'))) {
         url = obj.alias + url.substr(name.length)
       }

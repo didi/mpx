@@ -1,5 +1,6 @@
 <template>
-  <div style="position: relative; overflow: hidden;">
+<!-- style="background: #f5f5f5;" -->
+  <div style="position: relative; overflow: hidden; min-width: 950px; background: #f5f5f5;">
     <div class="one-section__img1"></div>
     <div class="one-section__img2"></div>
     <!-- 第一部分 -->
@@ -16,7 +17,7 @@
             </a>
           </button>
           <button class="one-section__btn one-section__github">
-            <a class="blue-link" :href="$page.frontmatter.githubLink">
+            <a class="blue-link" :href="$page.frontmatter.githubLink" target="_blank">
               {{$page.frontmatter.githubText}}
             </a>
           </button>
@@ -30,7 +31,7 @@
       <ul class="row">
         <li class="two-section__item" v-for="(item, index) in $page.frontmatter.features" :key="index">
           <img :src="item.icon" alt="svg" loading="lazy" width="80" height="80" />
-          <p class="two-section__title">{{item.item}}</p>
+          <p class="two-section__title">{{item.title}}</p>
           <p class="two-section__desc">{{item.details}}</p>
           <div class="two-section__line"></div>
         </li>
@@ -56,7 +57,7 @@
                 scrolling="no"
                 width="325"
                 height="617"
-                src="https://dpubstatic.udache.com/static/dpubimg/c3b0d3bc-1bb0-4bee-b6da-4205a2744e21.html"
+                src="https://gift-static.hongyibo.com.cn/static/kfpub/3547/index.html"
                 frameborder="0">
               </iframe>
             </div>
@@ -67,14 +68,19 @@
             <span class="dot-inner" style="background: #fff; margin: 0 auto;"></span>
             <p class="white-text title">{{$page.frontmatter.threeSection.title}}</p>
             <p class="white-text desc">
-              {{$page.frontmatter.threeSection.details}}
+              <!-- {{$page.frontmatter.threeSection.details}} -->
+              扫码体验Mpx版本的
+              <a class="target-link" href="https://github.com/didi/mpx/tree/master/examples/mpx-todoMVC">todoMVC</a>
+              在各个小程序平台和web中的一致表现 ，更多示例项目可点击
+              <a class="target-link" href="https://github.com/didi/mpx/tree/master/examples">这里</a>
+              进入查看。
             </p>
           </div>
-          <button class="three-section__btn btn">
+          <!-- <button class="three-section__btn btn">
             <a :href="$page.frontmatter.threeSection.actionLink" class="blue-link">
               {{$page.frontmatter.threeSection.actionText}}
             </a>
-          </button>
+          </button> -->
           <code-list :dataList="mvcList"></code-list>
         </div>
       </div>
@@ -140,7 +146,7 @@
             loading="lazy" />
         </div>
       </div>
-      
+
     </section>
 
     <!-- 第六部分 -->
@@ -301,7 +307,7 @@ section
   left 45%
   width 100%
   height 100%
-  background url("https://dpubstatic.udache.com/static/dpubimg/RZO9xjPj0j/banner_bg.png") no-repeat top left
+  background url("https://gift-static.hongyibo.com.cn/static/kfpub/3547/banner_bg.png") no-repeat top left
   background-size auto 680px
 
 .one-section__img2
@@ -360,15 +366,20 @@ section
   align-items center
   justify-content center
 
+.target-link
+  color #ffffff
+  font-weight 600
+  text-decoration underline
+
 .two-section
   padding-top 240px
   display flex
   justify-content center
 
-.two-section__item 
+.two-section__item
   width 280px
-  height 344px
-  padding 40px 18px 46px 18px
+  // height 344px
+  padding 40px 18px 40px 18px
   box-sizing border-box
   background #ffffff
   border 0 solid #efefef
@@ -379,7 +390,7 @@ section
   list-style none
   position relative
   overflow hidden
- 
+
 
 .two-section__item:nth-child(2)
   position relative
@@ -394,16 +405,16 @@ section
   opacity 0.6
   background-image linear-gradient(-58deg, #50BE97 30%, #31BC7F 79%)
 
-.two-section__title 
+.two-section__title
   font-size 20px
   margin 33px 0 21px 0
 
-.two-section__desc 
+.two-section__desc
   font-size 14px
   line-height 22px
- 
 
-.three-section 
+
+.three-section
   margin-top 183px
   display flex
   background-repeat no-repeat
@@ -422,7 +433,7 @@ section
   box-sizing border-box
   padding 0 40px
 
-.three-section__mvc 
+.three-section__mvc
   margin-left 60px
 
 .three-section__todo
@@ -455,13 +466,13 @@ section
   justify-content center
   align-items center
 
-.white-text 
+.white-text
   color #fff
 
-.three-section__btn 
+.three-section__btn
   background #fff
 
-.section 
+.section
   display flex
   align-items center
   height 520px
@@ -470,14 +481,14 @@ section
   position relative
   justify-content center
 
-.grow 
+.grow
   flex 1
 
 .four-section
   // width 1190px
 
-.four-section__bg 
-  background-repeat no-repeat   
+.four-section__bg
+  background-repeat no-repeat
   background-size auto 600px
   height 600px
   width 100%
@@ -486,7 +497,7 @@ section
   right 50%
   background-position top right
 
-.four-section__text 
+.four-section__text
   // box-sizing border-box
   // padding 0 24px 0 85px
 
@@ -497,8 +508,8 @@ section
   padding 0 40px
   box-sizing border-box
 
-.five-section__bg 
-  background-repeat no-repeat   
+.five-section__bg
+  background-repeat no-repeat
   background-size auto 600px
   height 600px
   width 100%
@@ -506,8 +517,8 @@ section
   position absolute
   left 50%
   background-position top left
- 
-.five-section__text 
+
+.five-section__text
   // padding 0 85px 0 24px
   // max-width 550px
 
@@ -517,8 +528,8 @@ section
   align-items center
   padding 0 40px
   box-sizing border-box
- 
-.six-section 
+
+.six-section
   margin-top 140px
   display flex
   align-items center
@@ -530,8 +541,8 @@ section
 
 .six-section__inner
   margin-bottom 50px
- 
-.six-section__item 
+
+.six-section__item
   background #ffffff
   border 0 solid #a4a4a4
   border-radius 4px
@@ -541,15 +552,15 @@ section
   padding 17px 0 17px 17px
   box-sizing border-box
 
-.six-section__step 
+.six-section__step
   margin-right 20px
 
-.six-section__row 
+.six-section__row
   margin-bottom 20px
   flex-wrap: wrap;
   justify-content: center;
 
-.six-section__list 
+.six-section__list
   display flex
   flex-direction column
   justify-content space-between
@@ -561,20 +572,20 @@ section
   font-weight 500
   white-space nowrap
 
-.six-section__title 
+.six-section__title
   margin-bottom 50px
   text-align center
   color #ffffff
 
-.six-section__icon 
+.six-section__icon
   margin-right 9px
 
-.seven-section 
+.seven-section
   margin-top 113px
   text-align center
   background #f5f5f5
- 
-.seven-section__center 
+
+.seven-section__center
   width 402px
   height 100%
   background-repeat no-repeat
@@ -600,7 +611,7 @@ section
   left 50%
   transform translate3d(-50%, 0, 0)
 
-.seven-section__title 
+.seven-section__title
   text-align right
   font-size 20px
   font-weight 600

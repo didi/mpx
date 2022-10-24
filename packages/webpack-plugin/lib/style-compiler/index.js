@@ -51,7 +51,7 @@ module.exports = function (css, map) {
       defs
     }))
 
-    for (let item of transRpxRules) {
+    for (const item of transRpxRules) {
       const {
         mode,
         comment,

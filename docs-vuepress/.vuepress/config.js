@@ -1,3 +1,5 @@
+const { headerPlugin } = require('./headerMdPlugin')
+
 const sidebar = {
   '/guide/': [
     {
@@ -25,17 +27,27 @@ const sidebar = {
       collapsable: false,
       children: [
         'advance/store',
+        'advance/pinia',
         'advance/mixin',
         'advance/npm',
         'advance/subpackage',
+        'advance/async-subpackage',
+        'advance/platform',
+        'advance/i18n',
+        'advance/size-report',
         'advance/image-process',
         'advance/progressive',
         'advance/ability-compatible',
         'advance/plugin',
-        'advance/platform',
-        'advance/size-report',
-        // 'advance/dll-plugin',
         'advance/custom-output-path',
+      ]
+    },
+    {
+      title: '组合式 API',
+      collapsable: false,
+      children: [
+        'composition-api/composition-api',
+        'composition-api/reactive-api'
       ]
     },
     {
@@ -43,8 +55,8 @@ const sidebar = {
       collapsable: false,
       children: [
         'tool/ts',
-        'tool/i18n',
-        'tool/unit-test'
+        'tool/unit-test',
+        'tool/e2e-test'
       ]
     },
     {
@@ -52,9 +64,9 @@ const sidebar = {
       collapsable: false,
       path: '/guide/extend',
       children: [
-        'extend/request',
-        'extend/mock',
-        'extend/api-proxy'
+        'extend/fetch',
+        'extend/api-proxy',
+        'extend/mock'
       ]
     },
     {
@@ -69,17 +81,21 @@ const sidebar = {
       title: '迁移',
       collapsable: false,
       children: [
+        'migrate/2.8',
         'migrate/2.7'
       ]
     }
   ],
   '/api/': [
-    'config',
+    'app-config',
     'global-api',
     'instance-api',
+    'store-api',
     'directives',
     'compile',
     'builtIn',
+    'reactivity-api',
+    'composition-api',
     'extend'
   ],
   '/articles/': [
@@ -90,16 +106,17 @@ const sidebar = {
     { title: 'Mpx框架技术揭秘', path: 'mpx2' },
     { title: '基于Mpx的小程序体积优化', path: 'size-control' },
     { title: 'Mpx中基于 Typescript Template Literal Types 实现链式key的类型推导', path: 'ts-derivation' },
-    { title: 'Mpx2.7版本正式发布，大幅提升编译构建速度', path: '2.7-release' }
+    { title: 'Mpx2.7 版本正式发布，大幅提升编译构建速度', path: '2.7-release' },
+    { title: 'Mpx2.8 版本正式发布，使用组合式 API 开发小程序', path: '2.8-release' }
   ]
 }
 
 const nav = [
   { text: '指南', link: '/guide/basic/start' },
-  { text: 'API', link: '/api/config' },
+  { text: 'API', link: '/api/index' },
   { text: '文章', link: '/articles/index' },
-  { text: '更新记录', link: 'https://github.com/didi/mpx/releases' },
-  { text: 'Github', link: 'https://github.com/didi/mpx' }
+  { text: '更新记录', link: 'https://github.com/didi/mpx/releases', target:'_blank'},
+  { text: 'Github', link: 'https://github.com/didi/mpx', target:'_blank'}
 ]
 
 module.exports = {
@@ -122,14 +139,18 @@ module.exports = {
         message: '文档有更新啦！',
         buttonText: '刷新'
       }
+    },
+    '@vuepress/active-header-links': {
+      sidebarLinkSelector: '.header-anchor',
+      headerAnchorSelector: '.header-anchor'
     }
   },
   themeConfig: {
-    navbar: false,
+    // navbar: false,
     algolia: {
-			apiKey: '7849f511f78afc4383a81f0137a91c0f',
-			indexName: 'mpxjs',
-		},
+      apiKey: '7849f511f78afc4383a81f0137a91c0f',
+      indexName: 'mpxjs',
+    },
     sidebarDepth: 1,
     logo: '/logo.png',
     displayAllHeaders: false,
@@ -139,5 +160,12 @@ module.exports = {
   chainWebpack: (config, isServer) => {
     // 添加node_modules避免resolve错误
     config.resolve.modules.add('node_modules')
+  },
+  markdown: {
+    // markdown-it-toc 的选项
+    extendMarkdown: md => {
+      // 使用更多的 markdown-it 插件!
+      md.use(headerPlugin)
+    }
   }
 }

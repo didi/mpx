@@ -57,7 +57,7 @@ module.exports = function (source) {
     if (err) return nativeCallback(err)
     let output = `var pluginEntry = ${JSON.stringify(pluginEntry, null, 2)};\n`
     if (processOutput) output = processOutput(output)
-    output += `module.exports = JSON.stringify(pluginEntry, null, 2);\n`
+    output += 'module.exports = JSON.stringify(pluginEntry, null, 2);\n'
     nativeCallback(null, output)
   }
 
@@ -105,9 +105,10 @@ module.exports = function (source) {
         const item = publicPages[key]
         reversedMap[item] = key
       })
-      pages = pages.reduce((page, target, index) => {
+      pages = pages.reduce((target, page, index) => {
         const key = reversedMap[page] || `__private_page_${index}__`
         target[key] = page
+        return target
       }, {})
     }
 
@@ -116,7 +117,7 @@ module.exports = function (source) {
       pluginEntry.pages = []
     }
 
-    async.eachOf(pages, (page, key) => {
+    async.eachOf(pages, (page, key, callback) => {
       processPage(page, context, '', (err, entry) => {
         if (err === RESOLVE_IGNORED_ERR) {
           delete pages[key]
@@ -133,7 +134,7 @@ module.exports = function (source) {
         }
         callback()
       })
-    })
+    }, callback)
   }
 
   async.parallel([

@@ -60,3 +60,6 @@ export * from './app'
 
 // createAnimation
 export * from './animation'
+
+// createIntersectionObserver
+export * from './create-intersection-observer'

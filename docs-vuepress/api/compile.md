@@ -284,6 +284,22 @@ new MpxWebpackPlugin({
 })
 ```
 
+### forceProxyEventRules
+
+- **类型**：`Rules`
+
+- **详细**：强制代理规则内配置的事件。
+
+- **示例**：
+
+```js
+new MpxWebpackPlugin({
+  forceProxyEventRules: {
+      include: ['bindtap']
+  },
+})
+```
+
 ### autoSplit
 
 - **类型**：`boolean`
@@ -645,12 +661,12 @@ new MpxWebpackPlugin({
 ```js
 new MpxWebpackPlugin ({
   postcssInlineConfig: {
-    plugins: {
-      // 'postcss-import': {},
-      // 'postcss-preset-env': {},
-      // 'cssnano': {},
-      // 'autoprefixer': {}
-    }
+    plugins: [
+      // require('postcss-import'),
+      // require('postcss-preset-env'),
+      // require('cssnano'),
+      // require('autoprefixer')
+    ]
   }
 })
 ```

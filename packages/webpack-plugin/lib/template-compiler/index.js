@@ -21,6 +21,7 @@ module.exports = function (raw) {
   const componentsMap = mpx.componentsMap[packageName]
   const wxsContentMap = mpx.wxsContentMap
   const usingComponents = queryObj.usingComponents || []
+  const componentPlaceholder = queryObj.componentPlaceholder || []
   const hasComment = queryObj.hasComment
   const isNative = queryObj.isNative
   const hasScoped = queryObj.hasScoped
@@ -42,6 +43,7 @@ module.exports = function (raw) {
     warn,
     error,
     usingComponents,
+    componentPlaceholder,
     hasComment,
     isNative,
     isComponent: !!componentsMap[resourcePath],
@@ -56,26 +58,26 @@ module.exports = function (raw) {
     // 这里需传递resourcePath和wxsContentMap保持一致
     filePath: resourcePath,
     i18n,
-    checkUsingComponents: mpx.checkUsingComponents,
+    checkUsingComponents: matchCondition(resourcePath, mpx.checkUsingComponentsRules),
     globalComponents: Object.keys(mpx.usingComponents),
     forceProxyEvent: matchCondition(resourcePath, mpx.forceProxyEventRules),
     hasVirtualHost: matchCondition(resourcePath, mpx.autoVirtualHostRules)
   })
 
   if (meta.wxsContentMap) {
-    for (let module in meta.wxsContentMap) {
+    for (const module in meta.wxsContentMap) {
       wxsContentMap[`${resourcePath}~${module}`] = meta.wxsContentMap[module]
     }
   }
 
   let resultSource = ''
 
-  for (let module in meta.wxsModuleMap) {
+  for (const module in meta.wxsModuleMap) {
     const src = loaderUtils.urlToRequest(meta.wxsModuleMap[module], root)
     resultSource += `var ${module} = require(${loaderUtils.stringifyRequest(this, src)});\n`
   }
 
-  let result = compiler.serialize(ast)
+  const result = compiler.serialize(ast)
 
   if (isNative) {
     return result

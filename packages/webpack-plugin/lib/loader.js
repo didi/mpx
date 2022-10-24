@@ -16,6 +16,7 @@ const normalize = require('./utils/normalize')
 const getEntryName = require('./utils/get-entry-name')
 const AppEntryDependency = require('./dependencies/AppEntryDependency')
 const RecordResourceMapDependency = require('./dependencies/RecordResourceMapDependency')
+const RecordVueContentDependency = require('./dependencies/RecordVueContentDependency')
 const CommonJsVariableDependency = require('./dependencies/CommonJsVariableDependency')
 const { MPX_APP_MODULE_ID } = require('./utils/const')
 const path = require('path')
@@ -46,7 +47,6 @@ module.exports = function (content) {
   const globalSrcMode = mpx.srcMode
   const localSrcMode = queryObj.mode
   const srcMode = localSrcMode || globalSrcMode
-  const vueContentCache = mpx.vueContentCache
   const autoScope = matchCondition(resourcePath, mpx.autoScopeRules)
 
   let ctorType = 'app'
@@ -60,7 +60,7 @@ module.exports = function (content) {
 
   // 支持资源query传入isPage或isComponent支持页面/组件单独编译
   if (ctorType === 'app' && (queryObj.isComponent || queryObj.isPage)) {
-    const entryName = getEntryName(this) || (queryObj.isComponent ? 'noEntryComponent' : 'noEntryPage')
+    const entryName = getEntryName(this) || mpx.getOutputPath(resourcePath, queryObj.isComponent ? 'component' : 'page')
     ctorType = queryObj.isComponent ? 'component' : 'page'
     this._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, ctorType, entryName, packageRoot))
   }
@@ -94,25 +94,25 @@ module.exports = function (content) {
       })
     },
     (callback) => {
-      // web输出模式下没有任何inject，可以通过cache直接返回，由于读取src json可能会新增模块依赖，需要在之后返回缓存内容
-      if (vueContentCache.has(filePath)) {
-        return callback(null, vueContentCache.get(filePath))
-      }
       const hasScoped = parts.styles.some(({ scoped }) => scoped) || autoScope
       const templateAttrs = parts.template && parts.template.attrs
       const hasComment = templateAttrs && templateAttrs.comments
       const isNative = false
 
       let usingComponents = [].concat(Object.keys(mpx.usingComponents))
+      let componentPlaceholder = []
 
       let componentGenerics = {}
 
       if (parts.json && parts.json.content) {
         try {
-          let ret = JSON5.parse(parts.json.content)
+          const ret = JSON5.parse(parts.json.content)
           if (ret.usingComponents) {
             fixUsingComponent(ret.usingComponents, mode)
             usingComponents = usingComponents.concat(Object.keys(ret.usingComponents))
+          }
+          if (ret.componentPlaceholder) {
+            componentPlaceholder = componentPlaceholder.concat(Object.values(ret.componentPlaceholder))
           }
           if (ret.componentGenerics) {
             componentGenerics = Object.assign({}, ret.componentGenerics)
@@ -121,16 +121,16 @@ module.exports = function (content) {
           return callback(e)
         }
       }
-
       // 处理mode为web时输出vue格式文件
       if (mode === 'web') {
         if (ctorType === 'app' && !queryObj.isApp) {
           const request = addQuery(this.resource, { isApp: true })
+          const el = mpx.webConfig.el || '#app'
           output += `
       import App from ${stringifyRequest(request)}
       import Vue from 'vue'
       new Vue({
-        el: '#app',
+        el: '${el}',
         render: function(h){
           return h(App)
         }
@@ -140,6 +140,10 @@ module.exports = function (content) {
           this.loaderIndex = -1
           return callback(null, output)
         }
+
+        // 通过RecordVueContentDependency和vueContentCache确保子request不再重复生成vueContent
+        const cacheContent = mpx.vueContentCache.get(filePath)
+        if (cacheContent) return callback(null, cacheContent)
 
         return async.waterfall([
           (callback) => {
@@ -187,6 +191,7 @@ module.exports = function (content) {
               loaderContext,
               ctorType,
               srcMode,
+              moduleId,
               isProduction,
               componentGenerics,
               jsonConfig: jsonRes.jsonObj,
@@ -203,7 +208,7 @@ module.exports = function (content) {
         ], (err, scriptRes) => {
           if (err) return callback(err)
           output += scriptRes.output
-          vueContentCache.set(filePath, output)
+          this._module.addPresentationalDependency(new RecordVueContentDependency(filePath, output))
           callback(null, output)
         })
       }
@@ -270,15 +275,15 @@ module.exports = function (content) {
 
       if (template) {
         const extraOptions = {
-          ...template.src ? {
-            ...queryObj,
-            resourcePath
-          } : null,
+          ...template.src
+            ? { ...queryObj, resourcePath }
+            : null,
           hasScoped,
           hasComment,
           isNative,
           moduleId,
-          usingComponents
+          usingComponents,
+          componentPlaceholder
           // 添加babel处理渲染函数中可能包含的...展开运算符
           // 由于...运算符应用范围极小以及babel成本极高，先关闭此特性后续看情况打开
           // needBabel: true
@@ -295,11 +300,9 @@ module.exports = function (content) {
           const scoped = style.scoped || autoScope
           const extraOptions = {
             // style src会被特殊处理为全局复用样式，不添加resourcePath，添加isStatic及issuerFile
-            ...style.src ? {
-              ...queryObj,
-              isStatic: true,
-              issuerResource: addQuery(this.resource, { type: 'styles' }, true)
-            } : null,
+            ...style.src
+              ? { ...queryObj, isStatic: true, issuerResource: addQuery(this.resource, { type: 'styles' }, true) }
+              : null,
             moduleId,
             scoped
           }
@@ -316,10 +319,7 @@ module.exports = function (content) {
       output += '/* json */\n'
       // 给予json默认值, 确保生成json request以自动补全json
       const json = parts.json || {}
-      output += getRequire('json', json, json.src && {
-        ...queryObj,
-        resourcePath
-      }) + '\n'
+      output += getRequire('json', json, json.src && { ...queryObj, resourcePath }) + '\n'
 
       // script
       output += '/* script */\n'
@@ -331,11 +331,11 @@ module.exports = function (content) {
         if (scriptSrcMode) output += `global.currentSrcMode = ${JSON.stringify(scriptSrcMode)}\n`
         // 传递ctorType以补全js内容
         const extraOptions = {
-          ...script.src ? {
-            ...queryObj,
-            resourcePath
-          } : null,
-          ctorType
+          ...script.src
+            ? { ...queryObj, resourcePath }
+            : null,
+          ctorType,
+          lang: script.lang || 'js'
         }
         output += getRequire('script', script, extraOptions) + '\n'
       }
