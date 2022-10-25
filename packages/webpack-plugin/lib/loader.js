@@ -87,7 +87,7 @@ module.exports = function (content) {
 
   async.waterfall([
     (callback) => {
-      getJSONContent(parts.json || {}, loaderContext, (err, content) => {
+      getJSONContent(parts.json || {}, null, loaderContext, (err, content) => {
         if (err) return callback(err)
         if (parts.json) parts.json.content = content
         callback()
