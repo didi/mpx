@@ -263,9 +263,7 @@ module.exports = function (json, {
     if (components) {
       async.eachOf(components, (component, name, callback) => {
         processComponent(component, context, {}, (err, { resource, outputPath } = {}) => {
-          if (err === RESOLVE_IGNORED_ERR) {
-            return callback()
-          }
+          if (err) return callback(err === RESOLVE_IGNORED_ERR ? null : err)
           const { resourcePath, queryObj } = parseRequest(resource)
           componentsMap[resourcePath] = outputPath
           loaderContext._module && loaderContext._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, 'component', outputPath))
