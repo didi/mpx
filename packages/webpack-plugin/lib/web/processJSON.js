@@ -139,7 +139,7 @@ module.exports = function (json, {
                 mode,
                 env
               })
-              getJSONContent(parts.json || {}, loaderContext, (err, content) => {
+              getJSONContent(parts.json || {}, result, loaderContext, (err, content) => {
                 callback(err, result, content)
               })
             } else {
