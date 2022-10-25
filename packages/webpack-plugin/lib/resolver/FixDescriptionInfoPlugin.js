@@ -4,6 +4,7 @@ module.exports = class FixDescriptionInfoPlugin {
   apply (resolver) {
     resolver.hooks.result.tap('FixDescriptionInfoPlugin', (request) => {
       const { path: resourcePath } = request
+      if (!resourcePath) return
       const segments = resourcePath.split(path.sep)
       let rootIndex = -1
       for (let i = segments.length - 1; i >= 0; i--) {
