@@ -117,7 +117,7 @@ module.exports = function (content) {
       getJSONContent({
         src: typeResourceMap.json,
         useJSONJS
-      }, this, callback)
+      }, null, this, callback)
     }, (content, callback) => {
       let json
       try {
