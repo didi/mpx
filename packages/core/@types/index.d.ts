@@ -573,27 +573,29 @@ export function onBeforeUnmount (callback: () => void): void
 
 export function onUnmounted (callback: () => void): void
 
-export function onLoad<T extends object> (callback: (query: T) => void): void
+export function onLoad<T extends Record<string, string | undefined>> (callback: (query: T) => void): void
+// wechat dose not have generics
+// export function onLoad (callback: WechatMiniprogram.Page.ILifetime['onLoad']): void
 
-export function onShow (callback: () => void): void
+export function onShow (callback: WechatMiniprogram.Page.ILifetime['onShow']): void
 
-export function onHide (callback: () => void): void
+export function onHide (callback: WechatMiniprogram.Page.ILifetime['onHide']): void
 
-export function onResize (callback: () => void): void
+export function onResize (callback: WechatMiniprogram.Page.ILifetime['onResize']): void
 
-export function onPullDownRefresh (callback: () => void): void
+export function onPullDownRefresh (callback: WechatMiniprogram.Page.ILifetime['onPullDownRefresh']): void
 
-export function onReachBottom (callback: () => void): void
+export function onReachBottom (callback: WechatMiniprogram.Page.ILifetime['onReachBottom']): void
 
-export function onShareAppMessage (callback: () => void): void
+export function onShareAppMessage (callback: WechatMiniprogram.Page.ILifetime['onShareAppMessage']): void
 
-export function onShareTimeline (callback: () => void): void
+export function onShareTimeline (callback: WechatMiniprogram.Page.ILifetime['onShareTimeline']): void
 
-export function onAddToFavorites (callback: () => void): void
+export function onAddToFavorites (callback: WechatMiniprogram.Page.ILifetime['onAddToFavorites']): void
 
-export function onPageScroll (callback: () => void): void
+export function onPageScroll (callback: WechatMiniprogram.Page.ILifetime['onPageScroll']): void
 
-export function onTabItemTap (callback: () => void): void
+export function onTabItemTap (callback: WechatMiniprogram.Page.ILifetime['onTabItemTap']): void
 
 export function onSaveExitState (callback: () => void): void
 
