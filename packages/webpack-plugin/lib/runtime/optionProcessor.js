@@ -213,7 +213,6 @@ export default function processOption (
               }
               if (currentPage) {
                 currentPage.mpxPageStatus = 'hide'
-                currentPage.onHide && currentPage.onHide()
               }
             } else {
               if (global.__mpxAppCbs && global.__mpxAppCbs.show) {
@@ -225,7 +224,6 @@ export default function processOption (
               }
               if (currentPage) {
                 currentPage.mpxPageStatus = 'show'
-                currentPage.onShow && currentPage.onShow()
               }
             }
           }
