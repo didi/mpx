@@ -1,4 +1,4 @@
-import * as normalize from '@mpxjs/utils/normalize'
+import * as normalize from '@mpxjs/compile-utils/normalize'
 
 export const RESOLVE_IGNORED_ERR = new Error('Resolve ignored!')
 export const JSON_JS_EXT = '.json.js'

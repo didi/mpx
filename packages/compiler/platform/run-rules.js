@@ -1,4 +1,4 @@
-const type = require('@mpxjs/utils/type')
+const type = require('@mpxjs/compile-utils/type')
 
 function defaultNormalizeTest (rawTest, context) {
   let testType = type(rawTest)

@@ -1,11 +1,11 @@
 import { ParseHtmlNode } from '@mpxjs/compiler'
-import genComponentTag from '@mpxjs/utils/gen-component-tag'
+import genComponentTag from '@mpxjs/compile-utils/gen-component-tag'
 import path from 'path'
 import { TransformPluginContext } from 'rollup'
 import { TransformResult } from 'vite'
 import { compileSFCTemplate as vueTransformTemplate } from 'vite-plugin-vue2/dist/template.js'
 import { ResolvedOptions } from '../../options'
-import * as normalize from '@mpxjs/utils/normalize'
+import * as normalize from '@mpxjs/compile-utils/normalize'
 import templateCompiler, { SFCDescriptor } from '../compiler'
 
 const templateTransformCache: Record<string, string> = {}

@@ -1,6 +1,6 @@
-import genComponentTag from '@mpxjs/utils/gen-component-tag'
-import addQuery from '@mpxjs/utils/add-query'
-import parseRequest from '@mpxjs/utils/parse-request'
+import genComponentTag from '@mpxjs/compile-utils/gen-component-tag'
+import addQuery from '@mpxjs/compile-utils/add-query'
+import parseRequest from '@mpxjs/compile-utils/parse-request'
 import templateCompiler from '@mpxjs/compiler/template-compiler/compiler'
 import mpx from '../mpx'
 

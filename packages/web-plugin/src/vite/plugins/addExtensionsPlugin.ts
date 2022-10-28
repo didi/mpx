@@ -1,4 +1,4 @@
-import { matchCondition } from '@mpxjs/utils/match-condition'
+import { matchCondition } from '@mpxjs/compile-utils/match-condition'
 import { Plugin as EsbuildPlugin } from 'esbuild'
 import fs from 'fs'
 import path from 'path'

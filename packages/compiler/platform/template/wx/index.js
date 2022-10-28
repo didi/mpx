@@ -1,5 +1,5 @@
 const JSON5 = require('json5')
-const normalize = require('@mpxjs/utils/normalize')
+const normalize = require('@mpxjs/compile-utils/normalize')
 const isValidIdentifierStr = require(normalize.utils('is-valid-identifier-str'))
 const runRules = require('../../run-rules')
 const getComponentConfigs = require('./component-config')

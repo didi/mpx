@@ -1,5 +1,5 @@
 import { createFilter, Plugin, transformWithEsbuild } from 'vite'
-import parseRequest from '@mpxjs/utils/parse-request'
+import parseRequest from '@mpxjs/compile-utils/parse-request'
 
 export function createWxsPlugin(): Plugin {
   const filter = createFilter([/\.wxs$/])

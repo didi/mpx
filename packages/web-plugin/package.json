@@ -8,7 +8,7 @@
   "author": "donghongping",
   "license": "Apache",
   "main": "dist/index.js",
-  "module": "dist/index.mjs",
+  "module": "dist/index.js",
   "types": "dist/index.d.ts",
   "typesVersions": {
     "*": {
@@ -21,24 +21,24 @@
     ".": {
       "types": "./dist/index.d.ts",
       "require": "./dist/index.js",
-      "import": "./dist/index.mjs"
+      "import": "./dist/index.js"
     },
     "./*": "./*",
     "./vite": {
       "types": "./dist/vite.d.ts",
       "require": "./dist/vite.js",
-      "import": "./dist/vite.mjs"
+      "import": "./dist/vite.js"
     },
     "./webpack": {
       "types": "./dist/webpack.d.ts",
       "require": "./dist/webpack.js",
-      "import": "./dist/webpack.mjs"
+      "import": "./dist/webpack.js"
     }
   },
   "scripts": {
-    "test": "echo \"Error: run tests from root\" && exit 1",
-    "dev": "tsup --watch",
-    "build": "tsup --env.NODE_ENV production"
+    "dev": "node scripts/tsc.js",
+    "build": "rimraf ./dist && tsc && npm run post-build",
+    "post-build": "node scripts/postbuild.js executive"
   },
   "files": [
     "dist",
@@ -57,7 +57,7 @@
   },
   "devDependencies": {
     "@mpxjs/compiler": "^2.7.40",
-    "@mpxjs/utils": "^2.7.40",
+    "@mpxjs/compile-utils": "^2.7.40",
     "@types/async": "^2.4.2",
     "@types/babel-traverse": "^6.25.4",
     "@types/babel-types": "^7.0.4",
@@ -76,7 +76,6 @@
     "eslint-plugin-promise": "^5.1.0",
     "eslint-plugin-tsdoc": "^0.2.14",
     "rollup": "^2.60.2",
-    "tsup": "^6.2.2",
     "typescript": "^4.3.2",
     "vite": "^3.0.0",
     "webpack": "^5.48.0"
@@ -110,7 +109,7 @@
     "@better-scroll/zoom": "^2.2.1",
     "@mpxjs/compiler": "^2.7.40",
     "@mpxjs/webpack-plugin": "^2.7.40",
-    "@mpxjs/utils": "^2.7.40",
+    "@mpxjs/compile-utils": "^2.7.40",
     "@mpxjs/loaders": "^2.7.40",
     "esbuild": "^0.14.14",
     "rollup": "^2.60.2",
