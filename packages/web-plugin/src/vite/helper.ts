@@ -31,7 +31,7 @@ export const renderEntryCode = async (
     ${genImport(addQuery(importer, { app: true }), 'App')}
     ${genImport('@mpxjs/web-plugin/src/runtime/base.styl')}
     ${genImport('vue', 'Vue')}
-    ${genImport(I18N_HELPER_CODE, '{ i18n }')}
+    ${options.i18n ? genImport(I18N_HELPER_CODE, '{ i18n }') : ''}
     ${genImport('vue-router', 'VueRouter')}
     ${genImport('@better-scroll/core', 'BScroll')}
     ${genImport('@better-scroll/pull-down', 'PullDown')}
@@ -86,6 +86,8 @@ export function renderI18nCode(options: ResolvedOptions): string {
     )
     content.push(`export { i18n } `)
   }
+  console.log(content.join('\n'));
+  
   return content.join('\n')
 }
 
@@ -106,7 +108,7 @@ export function renderAppHelpCode(
     `global.__mpxPageConfig = ${stringify(jsonConfig.window || {})}`,
     `global.__tabBar = ${tabBarStr}`,
     `global.currentSrcMode = "${options.srcMode}"`,
-    `global.getApp = function(){}`,
+    `global.getApp = function(){ return {} }`,
     `global.getCurrentPages = function(){
       if(!global.__mpxRouter) return []
       // @ts-ignore
