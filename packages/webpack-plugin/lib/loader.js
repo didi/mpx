@@ -65,6 +65,10 @@ module.exports = function (content) {
     this._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, ctorType, entryName, packageRoot))
   }
 
+  if (ctorType === 'app') {
+    const appName = getEntryName(this)
+    this._module.addPresentationalDependency(new AppEntryDependency(resourcePath, appName))
+  }
   const loaderContext = this
   const stringifyRequest = r => loaderUtils.stringifyRequest(loaderContext, r)
   const isProduction = this.minimize || process.env.NODE_ENV === 'production'
@@ -87,7 +91,7 @@ module.exports = function (content) {
 
   async.waterfall([
     (callback) => {
-      getJSONContent(parts.json || {}, loaderContext, (err, content) => {
+      getJSONContent(parts.json || {}, null, loaderContext, (err, content) => {
         if (err) return callback(err)
         if (parts.json) parts.json.content = content
         callback()
@@ -219,11 +223,6 @@ module.exports = function (content) {
 
       if (issuer) {
         return callback(new Error(`Current ${ctorType} [${this.resourcePath}] is issued by [${issuer.resource}], which is not allowed!`))
-      }
-
-      if (ctorType === 'app') {
-        const appName = getEntryName(this)
-        this._module.addPresentationalDependency(new AppEntryDependency(resourcePath, appName))
       }
 
       // 注入模块id及资源路径
