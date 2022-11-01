@@ -95,6 +95,10 @@ const getWxToAliApi = ({ optimize = false }) => {
           confirmText: 'buttonText'
         })
 
+        handleSuccess(opts, res => {
+          return changeOpts(res, undefined, { cancel: false, confirm: true })
+        })
+
         ALI_OBJ.alert(opts)
       }
     },
