@@ -7,7 +7,6 @@ const APIs = {
   mixin: injectMixins,
   observable: reactive,
   watch,
-  // use,
   set,
   delete: del
 }

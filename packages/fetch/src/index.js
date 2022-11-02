@@ -5,18 +5,17 @@ let installed = false
 
 let xfetch = null
 
+// RequestQueue Options
+const defaultRequestQueueOptions = {
+  limit: 10,
+  delay: 0 // ms
+}
+
 function install (proxyMpx, options, Mpx) {
   if (installed) return
   // add request queue when mode is qq
-  xfetch = __mpx_mode__ === 'qq'
-    ? new XFetch(Object.assign({
-      // RequestQueue Options
-      useQueue: {
-        limit: 10,
-        delay: 0 // ms
-      }
-    }, options), Mpx)
-    : new XFetch(options, Mpx)
+  const isqq = __mpx_mode__ === 'qq'
+  xfetch = new XFetch(isqq ? { useQueue: defaultRequestQueueOptions, ...options } : options, Mpx)
   installed = true
   proxyMpx.xfetch = xfetch
   Object.defineProperty(proxyMpx.prototype, '$xfetch', {
