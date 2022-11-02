@@ -48,30 +48,31 @@ if (isBrowser) {
 }
 
 export default function pageStatusMixin (mixinType) {
+  const mixin = {}
+
   if (mixinType === 'page') {
-    return {
+    Object.assign(mixin, {
       data: {
-        mpxPageStatus: 'show'
+        mpxPageStatus: null
       },
       activated () {
         this.mpxPageStatus = 'show'
-        this.__mpxProxy.callHook(ONSHOW)
       },
       deactivated () {
         this.mpxPageStatus = 'hide'
-        this.__mpxProxy.callHook(ONHIDE)
       },
       created () {
         // onLoad应该在用户声明周期CREATED后再执行，故此处使用原生created声明周期来触发onLoad
         const query = (global.__mpxRouter && global.__mpxRouter.currentRoute && global.__mpxRouter.currentRoute.query) || {}
         this.__mpxProxy.callHook(ONLOAD, [query])
       }
-    }
+    })
   }
-  return {
+
+  Object.assign(mixin, {
     [CREATED] () {
-      const pageInstance = getCurrentPageInstance()
-      if (!pageInstance) {
+      const pageInstance = mixinType === 'page' ? this : getCurrentPageInstance()
+      if (pageInstance) {
         this.$watch(() => pageInstance.mpxPageStatus, status => {
           if (!status) return
           if (status === 'show') this.__mpxProxy.callHook(ONSHOW)
@@ -91,5 +92,7 @@ export default function pageStatusMixin (mixinType) {
         })
       }
     }
-  }
+  })
+
+  return mixin
 }
